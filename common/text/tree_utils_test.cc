@@ -1077,5 +1077,96 @@ TEST(SymbolCastToLeafTest, InvalidInputNode) {
   EXPECT_DEATH(SymbolCastToLeaf(node_symbol), "");
 }
 
+TEST(GetSubtreeAsSymbolTest, OutOfBounds) {
+  auto root = TNode(1);
+  EXPECT_DEATH(GetSubtreeAsSymbol(*root, 1, 0), "");
+}
+
+TEST(GetSubtreeAsSymbolTest, WrongParentIntegerTag) {
+  auto root = TNode(1, TNode(4));
+  EXPECT_DEATH(GetSubtreeAsSymbol(*root, 2, 0), "");
+}
+
+enum class FakeEnum {
+  kZero,
+  kOne,
+  kTwo,
+};
+
+std::ostream& operator<<(std::ostream& stream, FakeEnum e) {
+  switch (e) {
+    case FakeEnum::kZero:
+      stream << "zero";
+      break;
+    case FakeEnum::kOne:
+      stream << "one";
+      break;
+    case FakeEnum::kTwo:
+      stream << "two";
+      break;
+  }
+  return stream;
+}
+
+TEST(GetSubtreeAsSymbolTest, WrongParentEnumTag) {
+  auto root = TNode(FakeEnum::kTwo, TNode(FakeEnum::kOne));
+  EXPECT_DEATH(GetSubtreeAsSymbol(*root, FakeEnum::kZero, 0), "");
+}
+
+TEST(GetSubtreeAsSymbolTest, ValidAccessNode) {
+  auto root = TNode(FakeEnum::kTwo, TNode(FakeEnum::kOne));
+  const auto* child = GetSubtreeAsSymbol(*root, FakeEnum::kTwo, 0);
+  const auto* child_node = down_cast<const SyntaxTreeNode*>(child);
+  EXPECT_EQ(FakeEnum(child_node->Tag().tag), FakeEnum::kOne);
+}
+
+TEST(GetSubtreeAsSymbolTest, ValidAccessLeaf) {
+  auto root = TNode(FakeEnum::kTwo, Leaf(6, "six"));
+  const auto* child = GetSubtreeAsSymbol(*root, FakeEnum::kTwo, 0);
+  const auto* child_leaf = down_cast<const SyntaxTreeLeaf*>(child);
+  EXPECT_EQ(child_leaf->get().token_enum, 6);
+}
+
+TEST(GetSubtreeAsSymbolTest, ValidAccessAtIndexOne) {
+  auto root =
+      TNode(FakeEnum::kTwo, TNode(FakeEnum::kZero), TNode(FakeEnum::kOne));
+  const auto* child = GetSubtreeAsSymbol(*root, FakeEnum::kTwo, 1);
+  const auto* child_node = down_cast<const SyntaxTreeNode*>(child);
+  EXPECT_EQ(FakeEnum(child_node->Tag().tag), FakeEnum::kOne);
+}
+
+TEST(GetSubtreeAsNodeTest, ValidatedFoundNodeEnum) {
+  auto root = TNode(FakeEnum::kZero, TNode(FakeEnum::kOne));
+  const auto& child = GetSubtreeAsNode(*root, FakeEnum::kZero, 0);
+  EXPECT_EQ(FakeEnum(child.Tag().tag), FakeEnum::kOne);
+}
+
+TEST(GetSubtreeAsNodeTest, GotLeafInsteadOfNode) {
+  auto root = TNode(FakeEnum::kZero, Leaf(1, "foo"));
+  EXPECT_DEATH(GetSubtreeAsNode(*root, FakeEnum::kZero, 0), "");
+}
+
+TEST(GetSubtreeAsNodeTest, ValidatedFoundNodeEnumChildMatches) {
+  auto root = TNode(FakeEnum::kZero, TNode(FakeEnum::kOne));
+  GetSubtreeAsNode(*root, FakeEnum::kZero, 0, FakeEnum::kOne);
+  // Internal checks passed.
+}
+
+TEST(GetSubtreeAsNodeTest, ValidatedFoundNodeEnumChildMismatches) {
+  auto root = TNode(FakeEnum::kZero, TNode(FakeEnum::kOne));
+  EXPECT_DEATH(GetSubtreeAsNode(*root, FakeEnum::kZero, 0, FakeEnum::kTwo), "");
+}
+
+TEST(GetSubtreeAsLeafTest, ValidatedFoundLeaf) {
+  auto root = TNode(FakeEnum::kZero, Leaf(7, "foo"));
+  const auto& leaf = GetSubtreeAsLeaf(*root, FakeEnum::kZero, 0);
+  EXPECT_EQ(leaf.get().token_enum, 7);
+}
+
+TEST(GetSubtreeAsLeafTest, GotNodeInsteadOfLeaf) {
+  auto root = TNode(FakeEnum::kZero, TNode(FakeEnum::kOne));
+  EXPECT_DEATH(GetSubtreeAsLeaf(*root, FakeEnum::kZero, 0), "");
+}
+
 }  // namespace
 }  // namespace verible

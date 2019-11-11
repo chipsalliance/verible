@@ -27,7 +27,7 @@ std::vector<verible::TreeSearchMatch> FindAllTaskDeclarations(
     const verible::Symbol&);
 
 // Returns the task declaration header
-const verible::Symbol* GetTaskHeader(const verible::Symbol&);
+const verible::SyntaxTreeNode& GetTaskHeader(const verible::Symbol&);
 
 // Returns the task lifetime of the node.
 const verible::Symbol* GetTaskLifetime(const verible::Symbol&);

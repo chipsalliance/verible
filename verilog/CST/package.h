@@ -23,7 +23,6 @@
 #include "common/analysis/syntax_tree_search.h"
 #include "common/text/symbol.h"
 #include "common/text/token_info.h"
-#include "common/util/statusor.h"
 
 namespace verilog {
 
@@ -32,8 +31,7 @@ std::vector<verible::TreeSearchMatch> FindAllPackageDeclarations(
     const verible::Symbol&);
 
 // Extract the subnode of a package declaration that is the package name.
-verible::util::StatusOr<verible::TokenInfo> GetPackageNameToken(
-    const verible::Symbol&);
+const verible::TokenInfo& GetPackageNameToken(const verible::Symbol&);
 
 }  // namespace verilog
 

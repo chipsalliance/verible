@@ -113,10 +113,10 @@ class SyntaxTreeNode : public Symbol {
   }
 
   // Children accessor (mutable).
-  SymbolPtr& operator[](const size_t i) { return children_[i]; }
+  SymbolPtr& operator[](const size_t i);
 
   // Children accessor (const).
-  const SymbolPtr& operator[](const size_t i) const { return children_[i]; }
+  const SymbolPtr& operator[](const size_t i) const;
 
   // Compares this node to an arbitrary symbol using the compare_tokens
   // function.

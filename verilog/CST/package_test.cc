@@ -97,9 +97,8 @@ TEST(GetPackageNameTokenTest, RootIsNotAPackage) {
   EXPECT_OK(analyzer.Analyze());
   const auto& root = analyzer.Data().SyntaxTree();
   // Root node is a description list, not a package.
-  auto status_or_token = GetPackageNameToken(*ABSL_DIE_IF_NULL(root));
-  EXPECT_EQ(status_or_token.status().code(),
-            verible::util::StatusCode::kInvalidArgument);
+  EXPECT_DEATH(GetPackageNameToken(*ABSL_DIE_IF_NULL(root)),
+               "kDescriptionList vs. kPackageDeclaration");
 }
 
 TEST(GetPackageNameTokenTest, ValidPackage) {
@@ -111,8 +110,8 @@ TEST(GetPackageNameTokenTest, ValidPackage) {
   const auto& package_node =
       down_cast<const SyntaxTreeNode&>(*package_declarations.front().match);
   // Root node is a description list, not a package.
-  auto status_or_token = GetPackageNameToken(package_node);
-  EXPECT_EQ(status_or_token.ValueOrDie().text, "foo");
+  const auto& token = GetPackageNameToken(package_node);
+  EXPECT_EQ(token.text, "foo");
 }
 
 }  // namespace

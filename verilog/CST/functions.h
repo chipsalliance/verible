@@ -70,7 +70,7 @@ std::vector<verible::TreeSearchMatch> FindAllFunctionDeclarations(
     const verible::Symbol&);
 
 // Returns the function declaration header (return type, id, ports)
-const verible::Symbol* GetFunctionHeader(const verible::Symbol&);
+const verible::SyntaxTreeNode& GetFunctionHeader(const verible::Symbol&);
 
 // Returns the function lifetime of the node.
 const verible::Symbol* GetFunctionLifetime(const verible::Symbol&);

@@ -127,8 +127,8 @@ TEST(GetTaskHeaderTest, Header) {
     ASSERT_EQ(task_declarations.size(), 1);
     const auto& task_node = down_cast<const verible::SyntaxTreeNode&>(
         *task_declarations.front().match);
-    const auto* lifetime = GetTaskHeader(task_node);
-    EXPECT_NE(lifetime, nullptr);
+    GetTaskHeader(task_node);
+    // Reaching here is success.  Function has internal checks already.
   }
 }
 

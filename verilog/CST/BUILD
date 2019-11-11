@@ -128,8 +128,7 @@ cc_library(
         "//common/analysis/matcher:matcher_builders",
         "//common/text:concrete_syntax_tree",
         "//common/text:symbol",
-        "//common/util:casts",
-        "//common/util:logging",
+        "//common/text:tree_utils",
     ],
 )
 
@@ -197,8 +196,7 @@ cc_library(
         "//common/analysis/matcher:matcher_builders",
         "//common/text:concrete_syntax_tree",
         "//common/text:symbol",
-        "//common/util:casts",
-        "//common/util:logging",
+        "//common/text:tree_utils",
     ],
 )
 
@@ -272,7 +270,6 @@ cc_library(
         "//common/text:symbol",
         "//common/text:token_info",
         "//common/text:tree_utils",
-        "//common/util:logging",
     ],
 )
 
@@ -334,6 +331,7 @@ cc_library(
         "//common/text:concrete_syntax_tree",
         "//common/text:symbol",
         "//common/text:token_info",
+        "//common/text:tree_utils",
         "//common/util:casts",
         "//common/util:status",
     ],
@@ -448,8 +446,7 @@ cc_library(
         "//common/analysis/matcher:matcher_builders",
         "//common/text:concrete_syntax_tree",
         "//common/text:symbol",
-        "//common/util:casts",
-        "//common/util:logging",
+        "//common/text:tree_utils",
     ],
 )
 
@@ -486,7 +483,6 @@ cc_library(
         "//common/text:concrete_syntax_tree",
         "//common/text:symbol",
         "//common/text:tree_utils",
-        "//common/util:logging",
     ],
 )
 

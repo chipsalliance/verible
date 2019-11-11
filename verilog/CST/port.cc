@@ -30,7 +30,6 @@
 namespace verilog {
 
 using verible::Symbol;
-using verible::SymbolKind;
 using verible::SyntaxTreeLeaf;
 
 std::vector<verible::TreeSearchMatch> FindAllModulePortDeclarations(
@@ -45,42 +44,31 @@ std::vector<verible::TreeSearchMatch> FindAllTaskFunctionPortDeclarations(
 
 const SyntaxTreeLeaf* GetIdentifierFromModulePortDeclaration(
     const Symbol& symbol) {
-  // Assert that symbol is a port declaration.
-  CHECK_EQ(symbol.Kind(), SymbolKind::kNode);
-  CHECK_EQ(NodeEnum(symbol.Tag().tag), NodeEnum::kPortDeclaration);
-
-  // Get the identifier symbol
-  constexpr auto kIdentifierIdx = 3;
-  const auto& node = verible::SymbolCastToNode(symbol);
-  const auto* identifier_symbol = node[kIdentifierIdx].get();
-
+  const auto* identifier_symbol =
+      verible::GetSubtreeAsSymbol(symbol, NodeEnum::kPortDeclaration, 3);
   return AutoUnwrapIdentifier(*ABSL_DIE_IF_NULL(identifier_symbol));
 }
 
-static const Symbol* GetTypeIdDimensionsFromTaskFunctionPortItem(
-    const Symbol& symbol) {
-  CHECK_EQ(symbol.Kind(), SymbolKind::kNode);
-  CHECK_EQ(NodeEnum(symbol.Tag().tag), NodeEnum::kPortItem);
-  const auto& node = verible::SymbolCastToNode(symbol);
-  return node[1].get();
+static const verible::SyntaxTreeNode&
+GetTypeIdDimensionsFromTaskFunctionPortItem(const Symbol& symbol) {
+  return verible::GetSubtreeAsNode(
+      symbol, NodeEnum::kPortItem, 1,
+      NodeEnum::kDataTypeImplicitBasicIdDimensions);
 }
 
 const Symbol* GetTypeOfTaskFunctionPortItem(const verible::Symbol& symbol) {
-  const Symbol* type_id_dimensions =
-      ABSL_DIE_IF_NULL(GetTypeIdDimensionsFromTaskFunctionPortItem(symbol));
-  const auto& node = verible::SymbolCastToNode(*type_id_dimensions);
-  const Symbol* data_type = node[0].get();
-  const auto& data_type_node = verible::SymbolCastToNode(*data_type);
-  CHECK_EQ(NodeEnum(data_type_node.Tag().tag), NodeEnum::kDataType);
-  return data_type;
+  const auto& type_id_dimensions =
+      GetTypeIdDimensionsFromTaskFunctionPortItem(symbol);
+  return &verible::GetSubtreeAsNode(
+      type_id_dimensions, NodeEnum::kDataTypeImplicitBasicIdDimensions, 0,
+      NodeEnum::kDataType);
 }
 
 const SyntaxTreeLeaf* GetIdentifierFromTaskFunctionPortItem(
     const verible::Symbol& symbol) {
-  const Symbol* type_id_dimensions =
-      ABSL_DIE_IF_NULL(GetTypeIdDimensionsFromTaskFunctionPortItem(symbol));
-  const auto& node = verible::SymbolCastToNode(*type_id_dimensions);
-  return AutoUnwrapIdentifier(*ABSL_DIE_IF_NULL(node[1].get()));
+  const auto& type_id_dimensions =
+      GetTypeIdDimensionsFromTaskFunctionPortItem(symbol);
+  return AutoUnwrapIdentifier(*ABSL_DIE_IF_NULL(type_id_dimensions[1].get()));
 }
 
 }  // namespace verilog

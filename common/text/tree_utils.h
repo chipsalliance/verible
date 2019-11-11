@@ -26,6 +26,7 @@
 #include "common/text/symbol.h"
 #include "common/text/token_info.h"
 #include "common/text/visitors.h"
+#include "common/util/logging.h"
 
 namespace verible {
 
@@ -52,6 +53,58 @@ const SyntaxTreeLeaf& SymbolCastToLeaf(const Symbol&);
 // Unwrap layers of only-child nodes until reaching a leaf or a node with
 // multiple children.
 const Symbol* DescendThroughSingletons(const Symbol& symbol);
+
+// Extracts a particular child of a node by position, verifying the parent's
+// node enumeration.
+template <typename E>
+const Symbol* GetSubtreeAsSymbol(const SyntaxTreeNode& node,
+                                 E parent_must_be_node_enum,
+                                 size_t child_position) {
+  // Uses operator<<(std::ostream&, E) for diagnostics.
+  CHECK_EQ(E(node.Tag().tag), parent_must_be_node_enum);
+  return node[child_position].get();
+}
+
+template <typename E>
+const Symbol* GetSubtreeAsSymbol(const Symbol& symbol,
+                                 E parent_must_be_node_enum,
+                                 size_t child_position) {
+  // TODO(fangism): eliminate SymbolKind, it is redundant with RTTI.
+  CHECK_EQ(symbol.Tag().kind, verible::SymbolKind::kNode);
+  return GetSubtreeAsSymbol(SymbolCastToNode(symbol), parent_must_be_node_enum,
+                            child_position);
+}
+
+// Same as GetSubtreeAsSymbol, but casts the result to a node.
+template <class S, class E>
+const SyntaxTreeNode& GetSubtreeAsNode(const S& symbol,
+                                       E parent_must_be_node_enum,
+                                       size_t child_position) {
+  return SymbolCastToNode(*ABSL_DIE_IF_NULL(
+      GetSubtreeAsSymbol(symbol, parent_must_be_node_enum, child_position)));
+}
+
+// This variant further checks the returned node's enumeration.
+template <class S, class E>
+const SyntaxTreeNode& GetSubtreeAsNode(const S& symbol,
+                                       E parent_must_be_node_enum,
+                                       size_t child_position,
+                                       E child_must_be_node_enum) {
+  const SyntaxTreeNode& node(
+      GetSubtreeAsNode(symbol, parent_must_be_node_enum, child_position));
+  // Uses operator<<(std::ostream&, E) for diagnostics.
+  CHECK_EQ(E(node.Tag().tag), child_must_be_node_enum);
+  return node;
+}
+
+// Same as GetSubtreeAsSymbol, but casts the result to a leaf.
+template <class S, class E>
+const SyntaxTreeLeaf& GetSubtreeAsLeaf(const S& symbol,
+                                       E parent_must_be_node_enum,
+                                       size_t child_position) {
+  return SymbolCastToLeaf(*ABSL_DIE_IF_NULL(
+      GetSubtreeAsSymbol(symbol, parent_must_be_node_enum, child_position)));
+}
 
 using TreePredicate = std::function<bool(const Symbol&)>;
 

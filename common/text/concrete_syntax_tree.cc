@@ -54,6 +54,16 @@ bool SyntaxTreeNode::equals(const SyntaxTreeNode* node,
   return true;
 }
 
+SymbolPtr& SyntaxTreeNode::operator[](const size_t i) {
+  CHECK_LT(i, children_.size());
+  return children_[i];
+}
+
+const SymbolPtr& SyntaxTreeNode::operator[](const size_t i) const {
+  CHECK_LT(i, children_.size());
+  return children_[i];
+}
+
 // visits self, then forwards visitor to every child
 void SyntaxTreeNode::Accept(TreeVisitorRecursive* visitor) const {
   visitor->Visit(*this);

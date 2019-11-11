@@ -24,12 +24,9 @@
 #include "common/text/symbol.h"
 #include "common/text/token_info.h"
 #include "common/text/tree_utils.h"
-#include "common/util/logging.h"
 #include "verilog/CST/verilog_matchers.h"  // IWYU pragma: keep
 
 namespace verilog {
-
-using verible::SymbolKind;
 
 std::vector<verible::TreeSearchMatch> FindAllModuleDeclarations(
     const verible::Symbol& root) {
@@ -38,17 +35,14 @@ std::vector<verible::TreeSearchMatch> FindAllModuleDeclarations(
 
 const verible::SyntaxTreeNode& GetModuleHeader(
     const verible::Symbol& module_symbol) {
-  const auto t = module_symbol.Tag();
-  CHECK_EQ(t.kind, SymbolKind::kNode);
-  CHECK_EQ(NodeEnum(t.tag), NodeEnum::kModuleDeclaration);
-  const auto& module_node = SymbolCastToNode(module_symbol);
-  // first child is the whole header
-  return verible::SymbolCastToNode(*ABSL_DIE_IF_NULL(module_node[0]));
+  return verible::GetSubtreeAsNode(module_symbol, NodeEnum::kModuleDeclaration,
+                                   0, NodeEnum::kModuleHeader);
 }
 
 const verible::TokenInfo& GetModuleNameToken(const verible::Symbol& s) {
   const auto& header_node = GetModuleHeader(s);
-  const auto& name_leaf = SymbolCastToLeaf(*ABSL_DIE_IF_NULL(header_node[2]));
+  const auto& name_leaf =
+      verible::GetSubtreeAsLeaf(header_node, NodeEnum::kModuleHeader, 2);
   return name_leaf.get();
 }
 

@@ -21,48 +21,29 @@
 #include "common/analysis/syntax_tree_search.h"
 #include "common/text/concrete_syntax_tree.h"
 #include "common/text/symbol.h"
-#include "common/util/casts.h"
-#include "common/util/logging.h"
+#include "common/text/tree_utils.h"
 #include "verilog/CST/verilog_matchers.h"  // pragma IWYU: keep
 
 namespace verilog {
-
-using verible::down_cast;
 
 std::vector<verible::TreeSearchMatch> FindAllTaskDeclarations(
     const verible::Symbol& root) {
   return verible::SearchSyntaxTree(root, NodekTaskDeclaration());
 }
 
-const verible::Symbol* GetTaskHeader(const verible::Symbol& symbol) {
-  // Assert that symbol is a task declaration.
-  auto t = symbol.Tag();
-  CHECK_EQ(t.kind, verible::SymbolKind::kNode);
-  CHECK_EQ(NodeEnum(t.tag), NodeEnum::kTaskDeclaration);
-
-  const auto& node = down_cast<const verible::SyntaxTreeNode&>(symbol);
-  // This is the sub-child of a TaskDeclaration node where header is
-  // expected
-  static const int kTaskHeaderIdx = 0;
-  return node[kTaskHeaderIdx].get();
+const verible::SyntaxTreeNode& GetTaskHeader(const verible::Symbol& symbol) {
+  return verible::GetSubtreeAsNode(symbol, NodeEnum::kTaskDeclaration, 0,
+                                   NodeEnum::kTaskHeader);
 }
 
 const verible::Symbol* GetTaskLifetime(const verible::Symbol& symbol) {
-  const auto* header = GetTaskHeader(symbol);
-  const auto& node = down_cast<const verible::SyntaxTreeNode&>(*header);
-  // This is the sub-child of a TaskDeclaration node where lifetime is
-  // expected
-  static const int kTaskLifetimeIdx = 2;
-  return node[kTaskLifetimeIdx].get();
+  const auto& header = GetTaskHeader(symbol);
+  return verible::GetSubtreeAsSymbol(header, NodeEnum::kTaskHeader, 2);
 }
 
 const verible::Symbol* GetTaskId(const verible::Symbol& symbol) {
-  const auto* header = GetTaskHeader(symbol);
-  const auto& node = down_cast<const verible::SyntaxTreeNode&>(*header);
-  // This is the sub-child of a TaskDeclaration node where task id is
-  // expected.
-  static const int kTaskIdIdx = 3;
-  return node[kTaskIdIdx].get();
+  const auto& header = GetTaskHeader(symbol);
+  return verible::GetSubtreeAsSymbol(header, NodeEnum::kTaskHeader, 3);
 }
 
 }  // namespace verilog

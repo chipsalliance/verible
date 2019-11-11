@@ -129,8 +129,8 @@ TEST(GetFunctionHeaderTest, Header) {
     ASSERT_EQ(function_declarations.size(), 1);
     const auto& function_node = down_cast<const verible::SyntaxTreeNode&>(
         *function_declarations.front().match);
-    const auto* lifetime = GetFunctionHeader(function_node);
-    EXPECT_NE(lifetime, nullptr);
+    GetFunctionHeader(function_node);
+    // Reaching here is success, function includes internal checks already.
   }
 }
 

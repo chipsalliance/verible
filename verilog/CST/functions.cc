@@ -21,48 +21,30 @@
 #include "common/analysis/syntax_tree_search.h"
 #include "common/text/concrete_syntax_tree.h"
 #include "common/text/symbol.h"
-#include "common/util/casts.h"
-#include "common/util/logging.h"
+#include "common/text/tree_utils.h"
 #include "verilog/CST/verilog_matchers.h"  // pragma IWYU: keep
 
 namespace verilog {
-
-using verible::down_cast;
 
 std::vector<verible::TreeSearchMatch> FindAllFunctionDeclarations(
     const verible::Symbol& root) {
   return verible::SearchSyntaxTree(root, NodekFunctionDeclaration());
 }
 
-const verible::Symbol* GetFunctionHeader(const verible::Symbol& symbol) {
-  // Assert that symbol is a function declaration.
-  auto t = symbol.Tag();
-  CHECK_EQ(t.kind, verible::SymbolKind::kNode);
-  CHECK_EQ(NodeEnum(t.tag), NodeEnum::kFunctionDeclaration);
-
-  const auto& node = down_cast<const verible::SyntaxTreeNode&>(symbol);
-  // This is the sub-child of a FunctionDeclaration node where the header is
-  // expected.
-  static const int kFunctionHeaderIdx = 0;
-  return node[kFunctionHeaderIdx].get();
+const verible::SyntaxTreeNode& GetFunctionHeader(
+    const verible::Symbol& symbol) {
+  return verible::GetSubtreeAsNode(symbol, NodeEnum::kFunctionDeclaration, 0,
+                                   NodeEnum::kFunctionHeader);
 }
 
 const verible::Symbol* GetFunctionLifetime(const verible::Symbol& symbol) {
-  const auto* header = GetFunctionHeader(symbol);
-  const auto& node = down_cast<const verible::SyntaxTreeNode&>(*header);
-  // This is the sub-child of a FunctionDeclaration node where lifetime is
-  // expected
-  static const int kFunctionLifetimeIdx = 2;
-  return node[kFunctionLifetimeIdx].get();
+  const auto& header = GetFunctionHeader(symbol);
+  return verible::GetSubtreeAsSymbol(header, NodeEnum::kFunctionHeader, 2);
 }
 
 const verible::Symbol* GetFunctionId(const verible::Symbol& symbol) {
-  const auto* header = GetFunctionHeader(symbol);
-  const auto& node = down_cast<const verible::SyntaxTreeNode&>(*header);
-  // This is the sub-child of a FunctionDeclaration node where function id is
-  // expected.
-  static const int kFunctionIdIdx = 4;
-  return node[kFunctionIdIdx].get();
+  const auto& header = GetFunctionHeader(symbol);
+  return verible::GetSubtreeAsSymbol(header, NodeEnum::kFunctionHeader, 4);
 }
 
 }  // namespace verilog

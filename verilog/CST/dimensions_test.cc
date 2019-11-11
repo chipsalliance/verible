@@ -260,7 +260,7 @@ TEST(GetDimensionRangeLeftBoundTest, CheckBounds) {
     const auto range_matches =
         SearchSyntaxTree(*ABSL_DIE_IF_NULL(root), NodekDimensionRange());
     ASSERT_EQ(range_matches.size(), 1);
-    const auto& left = GetDimensionRangeLeftBound(*range_matches.front().match);
+    const auto* left = GetDimensionRangeLeftBound(*range_matches.front().match);
     const SyntaxTreeLeaf* left_leaf = verible::GetLeftmostLeaf(*left);
     EXPECT_EQ(ABSL_DIE_IF_NULL(left_leaf)->get().text, test.expect_left);
   }
@@ -275,7 +275,7 @@ TEST(GetDimensionRangeRightBoundTest, CheckBounds) {
     const auto range_matches =
         SearchSyntaxTree(*ABSL_DIE_IF_NULL(root), NodekDimensionRange());
     ASSERT_EQ(range_matches.size(), 1);
-    const auto& right =
+    const auto* right =
         GetDimensionRangeRightBound(*range_matches.front().match);
     const SyntaxTreeLeaf* right_leaf = verible::GetLeftmostLeaf(*right);
     EXPECT_EQ(ABSL_DIE_IF_NULL(right_leaf)->get().text, test.expect_right);

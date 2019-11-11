@@ -21,46 +21,34 @@
 #include "common/analysis/syntax_tree_search.h"
 #include "common/text/concrete_syntax_tree.h"
 #include "common/text/symbol.h"
-#include "common/util/casts.h"
-#include "common/util/logging.h"
+#include "common/text/tree_utils.h"
 #include "verilog/CST/verilog_matchers.h"  // IWYU pragma: keep
 
 namespace verilog {
 
-using verible::down_cast;
 using verible::Symbol;
-using verible::SymbolKind;
-using verible::SymbolPtr;
-using verible::SyntaxTreeNode;
 
 std::vector<verible::TreeSearchMatch> FindAllPackedDimensions(
-    const verible::Symbol& root) {
+    const Symbol& root) {
   return SearchSyntaxTree(root, NodekPackedDimensions());
 }
 
 std::vector<verible::TreeSearchMatch> FindAllUnpackedDimensions(
-    const verible::Symbol& root) {
+    const Symbol& root) {
   return SearchSyntaxTree(root, NodekUnpackedDimensions());
 }
 
 std::vector<verible::TreeSearchMatch> FindAllDeclarationDimensions(
-    const verible::Symbol& root) {
+    const Symbol& root) {
   return SearchSyntaxTree(root, NodekDeclarationDimensions());
 }
 
-const verible::SymbolPtr& GetDimensionRangeLeftBound(const verible::Symbol& s) {
-  auto t = s.Tag();
-  CHECK_EQ(t.kind, SymbolKind::kNode);
-  CHECK_EQ(NodeEnum(t.tag), NodeEnum::kDimensionRange);
-  return down_cast<const SyntaxTreeNode&>(s).children()[1];
+const Symbol* GetDimensionRangeLeftBound(const Symbol& s) {
+  return verible::GetSubtreeAsSymbol(s, NodeEnum::kDimensionRange, 1);
 }
 
-const verible::SymbolPtr& GetDimensionRangeRightBound(
-    const verible::Symbol& s) {
-  auto t = s.Tag();
-  CHECK_EQ(t.kind, SymbolKind::kNode);
-  CHECK_EQ(NodeEnum(t.tag), NodeEnum::kDimensionRange);
-  return down_cast<const SyntaxTreeNode&>(s).children()[3];
+const Symbol* GetDimensionRangeRightBound(const verible::Symbol& s) {
+  return verible::GetSubtreeAsSymbol(s, NodeEnum::kDimensionRange, 3);
 }
 
 }  // namespace verilog

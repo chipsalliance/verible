@@ -23,34 +23,20 @@
 #include "common/text/concrete_syntax_tree.h"
 #include "common/text/symbol.h"
 #include "common/text/token_info.h"
-#include "common/util/casts.h"
-#include "common/util/statusor.h"
+#include "common/text/tree_utils.h"
 #include "verilog/CST/verilog_matchers.h"  // IWYU pragma: keep
 
 namespace verilog {
-
-using verible::down_cast;
-using verible::SymbolKind;
-using verible::SyntaxTreeLeaf;
-using verible::SyntaxTreeNode;
 
 std::vector<verible::TreeSearchMatch> FindAllPackageDeclarations(
     const verible::Symbol& root) {
   return SearchSyntaxTree(root, NodekPackageDeclaration());
 }
 
-verible::util::StatusOr<verible::TokenInfo> GetPackageNameToken(
-    const verible::Symbol& s) {
-  auto t = s.Tag();
-  if (t.kind != SymbolKind::kNode ||
-      NodeEnum(t.tag) != NodeEnum::kPackageDeclaration) {
-    return verible::util::InvalidArgumentError(
-        "GetPackageNameToken expects a PackageDeclaration node.");
-  }
-  const auto& node = down_cast<const SyntaxTreeNode&>(s);
-  const auto& subnodes = node.children();
-  const auto* name_node = down_cast<const SyntaxTreeLeaf*>(subnodes[2].get());
-  return name_node->get();
+const verible::TokenInfo& GetPackageNameToken(const verible::Symbol& s) {
+  const auto& name_node =
+      verible::GetSubtreeAsLeaf(s, NodeEnum::kPackageDeclaration, 2);
+  return name_node.get();
 }
 
 }  // namespace verilog

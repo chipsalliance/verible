@@ -109,6 +109,18 @@ TEST(MakeNodeTest, EmptyConstructor) {
   EXPECT_THAT(node, IsNull());
 }
 
+// Test that out-of-bounds is caught.
+TEST(MakeNodeTest, ChildrenOutOfBounds) {
+  SyntaxTreeNode node;
+  EXPECT_DEATH(node[0], "");
+}
+
+// Test that out-of-bounds is caught (const).
+TEST(MakeNodeTest, ChildrenOutOfBoundsConst) {
+  const SyntaxTreeNode node;
+  EXPECT_DEATH(node[0], "");
+}
+
 TEST(MakeNodeTest, SinkTemporary) { SinkValue(MakeNode()); }
 
 // Test construction of tagged node.

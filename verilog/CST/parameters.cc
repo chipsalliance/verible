@@ -36,7 +36,6 @@ namespace verilog {
 
 using verible::down_cast;
 using verible::SyntaxTreeLeaf;
-using verible::SyntaxTreeNode;
 
 std::vector<verible::TreeSearchMatch> FindAllParamDeclarations(
     const verible::Symbol& root) {
@@ -44,44 +43,30 @@ std::vector<verible::TreeSearchMatch> FindAllParamDeclarations(
 }
 
 int GetParamKeyword(const verible::Symbol& symbol) {
-  // Assert that symbol is a parameter declaration.
-  auto t = symbol.Tag();
-  CHECK_EQ(t.kind, verible::SymbolKind::kNode);
-  CHECK_EQ(NodeEnum(t.tag), NodeEnum::kParamDeclaration);
-  const auto& node = down_cast<const SyntaxTreeNode&>(symbol);
-
   // Currently the LRM is vague on what to do if no parameter/localparam is
   // declared, see example below. As such, if it's not declared, we will treat
   // it as a parameter.
   //
   // module foo #(int Bar = 1); endmodule
   //
-  const int kParamKeywordIdx = 0;
-  if (node[kParamKeywordIdx] == nullptr) return TK_parameter;
-  const auto* param_keyword_symbol = node[kParamKeywordIdx].get();
-  const auto* leaf = down_cast<const verible::SyntaxTreeLeaf*>(
-      ABSL_DIE_IF_NULL(param_keyword_symbol));
+  const auto* param_keyword_symbol =
+      verible::GetSubtreeAsSymbol(symbol, NodeEnum::kParamDeclaration, 0);
+  if (param_keyword_symbol == nullptr) return TK_parameter;
+  const auto* leaf =
+      down_cast<const SyntaxTreeLeaf*>(ABSL_DIE_IF_NULL(param_keyword_symbol));
   return leaf->get().token_enum;
 }
 
 const verible::Symbol* GetParamTypeSymbol(const verible::Symbol& symbol) {
-  // Assert that symbol is a parameter declaration.
-  auto t = symbol.Tag();
-  CHECK_EQ(t.kind, verible::SymbolKind::kNode);
-  CHECK_EQ(NodeEnum(t.tag), NodeEnum::kParamDeclaration);
-
-  const auto& node = down_cast<const SyntaxTreeNode&>(symbol);
-  constexpr int kParamTypeIdx = 1;
-  return node[kParamTypeIdx].get();
+  return verible::GetSubtreeAsSymbol(symbol, NodeEnum::kParamDeclaration, 1);
 }
 
 const verible::TokenInfo& GetParameterNameToken(const verible::Symbol& symbol) {
   const auto* param_type_symbol = GetParamTypeSymbol(symbol);
-  const auto& param_type_node =
-      down_cast<const SyntaxTreeNode&>(*param_type_symbol);
 
   // Check for implicit type declaration, in which case [2] will be a leaf.
-  const auto* identifier_symbol = param_type_node[2].get();
+  const auto* identifier_symbol =
+      verible::GetSubtreeAsSymbol(*param_type_symbol, NodeEnum::kParamType, 2);
   auto t = ABSL_DIE_IF_NULL(identifier_symbol)->Tag();
   const SyntaxTreeLeaf* identifier_leaf = nullptr;
   if (t.kind == verible::SymbolKind::kNode)
@@ -122,58 +107,31 @@ bool IsParamTypeDeclaration(const verible::Symbol& symbol) {
 
 const verible::Symbol* GetTypeAssignmentFromParamDeclaration(
     const verible::Symbol& symbol) {
-  // Assert that symbol is NodekParamDeclaration
-  CHECK_EQ(symbol.Kind(), verible::SymbolKind::kNode);
-  CHECK_EQ(NodeEnum(symbol.Tag().tag), NodeEnum::kParamDeclaration);
-
   // Get the Type AssignmentList or kTypeAssignment symbol.
-  const auto& node = down_cast<const SyntaxTreeNode&>(symbol);
-  constexpr int kTypeAssignmentIdx = 2;
-  const auto* assignment_symbol = node[kTypeAssignmentIdx].get();
-  CHECK_EQ(ABSL_DIE_IF_NULL(assignment_symbol)->Kind(),
-           verible::SymbolKind::kNode);
-  const auto assignment_tag = assignment_symbol->Tag();
+  const auto& assignment_symbol =
+      verible::GetSubtreeAsNode(symbol, NodeEnum::kParamDeclaration, 2);
+  const auto assignment_tag = assignment_symbol.Tag();
 
   // Check which type of node it is.
   if (NodeEnum(assignment_tag.tag) == NodeEnum::kTypeAssignment) {
-    CHECK_EQ(NodeEnum(assignment_symbol->Tag().tag), NodeEnum::kTypeAssignment);
-    return assignment_symbol;
+    return &assignment_symbol;
   } else {
-    CHECK_EQ(NodeEnum(assignment_symbol->Tag().tag),
-             NodeEnum::kTypeAssignmentList);
-
-    const auto& assignment_node =
-        down_cast<const SyntaxTreeNode&>(*assignment_symbol);
-    const auto* type_symbol = assignment_node[0].get();
-
-    // Make sure we're returning a NodekTypeAssignment.
-    CHECK_EQ(type_symbol->Kind(), verible::SymbolKind::kNode);
-    CHECK_EQ(NodeEnum(type_symbol->Tag().tag), NodeEnum::kTypeAssignment);
-    return type_symbol;
+    const auto& type_symbol = verible::GetSubtreeAsNode(
+        assignment_symbol, NodeEnum::kTypeAssignmentList, 0,
+        NodeEnum::kTypeAssignment);
+    return &type_symbol;
   }
 }
 
 const verible::SyntaxTreeLeaf* GetIdentifierLeafFromTypeAssignment(
     const verible::Symbol& symbol) {
-  // Assert that symbol is a kTypeAssignment node.
-  CHECK_EQ(symbol.Kind(), verible::SymbolKind::kNode);
-  CHECK_EQ(NodeEnum(symbol.Tag().tag), NodeEnum::kTypeAssignment);
-
-  const auto& type_assignment_node = down_cast<const SyntaxTreeNode&>(symbol);
-  // Get the SymbolIdentifier.
-  const auto* identifier_symbol = type_assignment_node[0].get();
-  return down_cast<const SyntaxTreeLeaf*>(ABSL_DIE_IF_NULL(identifier_symbol));
+  return &verible::GetSubtreeAsLeaf(symbol, NodeEnum::kTypeAssignment, 0);
 }
 
 const verible::Symbol* GetParamTypeInfoSymbol(const verible::Symbol& symbol) {
-  // Assert that symbol is NodekParamDeclaration
-  CHECK_EQ(symbol.Kind(), verible::SymbolKind::kNode);
-  CHECK_EQ(NodeEnum(symbol.Tag().tag), NodeEnum::kParamDeclaration);
-
   const auto* param_type_symbol = GetParamTypeSymbol(symbol);
-  const auto& node = verible::SymbolCastToNode(*param_type_symbol);
-  constexpr int kTypeInfoIdx = 0;
-  return node[kTypeInfoIdx].get();
+  return verible::GetSubtreeAsSymbol(*param_type_symbol, NodeEnum::kParamType,
+                                     0);
 }
 
 bool IsTypeInfoEmpty(const verible::Symbol& symbol) {

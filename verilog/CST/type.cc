@@ -22,7 +22,6 @@
 #include "common/text/concrete_syntax_tree.h"
 #include "common/text/symbol.h"
 #include "common/text/tree_utils.h"
-#include "common/util/logging.h"
 #include "verilog/CST/verilog_matchers.h"  // pragma IWYU: keep
 
 namespace verilog {
@@ -33,12 +32,9 @@ std::vector<verible::TreeSearchMatch> FindAllDataTypeDeclarations(
 }
 
 bool IsStorageTypeOfDataTypeSpecified(const verible::Symbol& symbol) {
-  // Assert that symbol is a kDataType node.
-  CHECK_EQ(symbol.Kind(), verible::SymbolKind::kNode);
-  CHECK_EQ(NodeEnum(symbol.Tag().tag), NodeEnum::kDataType);
-
-  const auto& node = verible::SymbolCastToNode(symbol);
-  return (node[0].get() != nullptr);
+  const auto* storage =
+      verible::GetSubtreeAsSymbol(symbol, NodeEnum::kDataType, 0);
+  return (storage != nullptr);
 }
 
 }  // namespace verilog

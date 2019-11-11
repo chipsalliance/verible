@@ -41,11 +41,11 @@ std::vector<verible::TreeSearchMatch> FindAllDeclarationDimensions(
 
 // Returns x from [x:y] declared dimensions.  Argument must be a DimensionRange
 // node.
-const verible::SymbolPtr& GetDimensionRangeLeftBound(const verible::Symbol&);
+const verible::Symbol* GetDimensionRangeLeftBound(const verible::Symbol&);
 
 // Returns y from [x:y] declared dimensions.  Argument must be a DimensionRange
 // node.
-const verible::SymbolPtr& GetDimensionRangeRightBound(const verible::Symbol&);
+const verible::Symbol* GetDimensionRangeRightBound(const verible::Symbol&);
 
 }  // namespace verilog
 

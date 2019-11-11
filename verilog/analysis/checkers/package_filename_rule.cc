@@ -73,8 +73,8 @@ void PackageFilenameRule::Lint(const TextStructureView& text_structure,
 
   // Report a violation on every package declaration, potentially.
   for (const auto& package_match : package_matches) {
-    const verible::TokenInfo package_name_token =
-        GetPackageNameToken(*package_match.match).ValueOrDie();
+    const verible::TokenInfo& package_name_token =
+        GetPackageNameToken(*package_match.match);
     absl::string_view package_id = package_name_token.text;
     auto package_stem = absl::StripSuffix(package_id, optional_suffix);
     if (package_stem != file_stem) {
