@@ -1,0 +1,154 @@
+// Copyright 2017-2019 The Verible Authors.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+#include "verilog/analysis/checkers/line_length_rule.h"
+
+#include <initializer_list>
+#include <iostream>
+#include <string>
+
+#include "gtest/gtest.h"
+#include "common/analysis/linter_test_utils.h"
+#include "common/analysis/text_structure_linter_test_utils.h"
+#include "common/text/symbol.h"
+#include "verilog/analysis/verilog_analyzer.h"
+#include "verilog/parser/verilog_token_enum.h"
+
+namespace verilog {
+namespace analysis {
+namespace {
+
+using verible::LintTestCase;
+using verible::RunLintTestCases;
+
+// Tests that space-only text passes.
+TEST(LineLengthRuleTest, AcceptsText) {
+  const std::initializer_list<LintTestCase> kTestCases = {
+      {""},
+      {" "},
+      {"\n"},
+      {" \n\n"},
+      {"module foo;\nendmodule\n"},
+      {
+          "aaaaaaaaaa"
+          "bbbbbbbbbb"
+          "cccccccccc"
+          "dddddddddd"
+          "eeeeeeeeee"
+          "ffffffffff"
+          "gggggggggg"
+          "hhhhhhhhhh"
+          "iiiiiiiiii"
+          "jjjjjjjjjj\n"  // 100 characters
+      },
+  };
+  RunLintTestCases<VerilogAnalyzer, LineLengthRule>(kTestCases);
+}
+
+// Tests that exceptional cases for long lines are allowed.
+TEST(LineLengthRuleTest, AcceptsTextExceptions) {
+  const std::initializer_list<LintTestCase> kTestCases = {
+      {"`ifdef "
+       "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
+       "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA\n"},
+      {"    `ifdef "  // ignore leading spaces
+       "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
+       "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA\n"},
+      {"`ifndef "
+       "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
+       "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA\n"},
+      {"`endif  //"
+       "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
+       "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA\n"},
+      {"`include \""
+       "AAAAAAAA/AAAAAAAAAAAAAAAAAAA/AAAAAAAAAAAAAAAAAAAAA/"
+       "AAAAAAAAA/AAAAAAA/AAAAAAAAAAAAAAAA/AAAAAAAAAAAA.svh\"\n"},
+      {"parameter foo = \""
+       "AAAAAAAA/AAAAAAAAAAAAAAAAAAA/AAAAAAAAAAAAAAAAAAAAA/"
+       "AAAAAAAAA/AAAAAAAAA/AAAAAAAA\";  // ri lint_check_waive RULE_NAME\n"},
+      {"parameter bar = \""
+       "AAAAAAAA/AAAAAAAAAAAAAAAAAAA/AAAAAAAAAAAAAAAAAAAAA/"
+       "AAAAAAAAA/AAAAAAAAA/AAAAAA\";  /* ri lint_check_waive RULE_NAME */\n"},
+      {"parameter foo = \""
+       "AAAAAAAA/AAAAAAAAAAAAAAAAAAA/AAAAAAAAAAAAAAAAAAAAA/"
+       "AAAAAAAAA/AAAAAAAAA/AAAAAAAA\";  // verilog_lint: blah blah\n"},
+      {"one_long_token_gooooooooooooooooo00000000000ooooooooooooooooooooo"
+       "ooooooooooooooooooooooooooooogle_com\n"},
+      {
+          "// http://www.foooooooooooooooooooooooooooooooooooooooooooooooooo"
+          "ooooooooooooooooooooooooooooogle.com\n"  // one token inside EOL
+                                                    // comment
+      },
+      {"//        gooooooooooooooooo00000000000oooooooooooooooooooooooooo"
+       "ooooooooooooooooooooooooooooogle_com\n"},
+  };
+  // Make sure that these lines would normally be flagged by this rule.
+  for (const auto& test : kTestCases) {
+    std::cout << "TEST: " << test.code << std::endl;
+    EXPECT_TRUE(test.code.length() > LineLengthRule::kMaxLineLength)
+        << "code:\n"
+        << test.code;
+  }
+  RunLintTestCases<VerilogAnalyzer, LineLengthRule>(kTestCases);
+}
+
+// Tests that length violations are caught.
+TEST(LineLengthRuleTest, RejectsText) {
+  const std::initializer_list<LintTestCase> kTestCases = {
+      {"aaaaaaaaaa"
+       "bbbbbbbbbb"
+       "cccccccccc"
+       "dddddddddd"
+       "eeeeeeeeee"
+       "ffff fffff"  // intentional space, so this is more than one token
+       "gggggggggg"
+       "hhhhhhhhhh"
+       "iiiiiiiiii"
+       "jjjjjjjjjj",  // 100 chars
+       {TK_OTHER, "k"},
+       "\n"},  // 101 characters
+      {"aaaaaaaaaa"
+       "bbbbbbbbbb"
+       "cccccccccc"
+       "dddddddddd"
+       "eeeeeeeeee"
+       "ffffffffff"
+       "gggggggggg"
+       "hhhhhhhhhh"
+       "iiiiiiiiii"  // 90 chars
+       " // not a ",
+       {TK_OTHER, "waiver comment"},
+       "\n"},
+  };
+  RunLintTestCases<VerilogAnalyzer, LineLengthRule>(kTestCases);
+}
+
+#if 0
+TEST(LineLengthRuleTest, Encrypted) {
+  const LintTestCase kTestCases[] = {
+      {// middle line is too long, but not tokenized by the lexer
+       // until b/134180314 is addressed.
+       R"(`pragma protect begin_protected
+`pragma protect key_keyowner = "Cyberdyne Technologies", key_keyname = "cdn_rsa_key", key_method = "rsa"
+`pragma protect end_protected
+)",
+       {/* for now, don't care about violations on encrypted lines */}},
+  };
+  RunLintTestCases<VerilogAnalyzer, LineLengthRule>(kTestCases);
+}
+#endif
+
+}  // namespace
+}  // namespace analysis
+}  // namespace verilog

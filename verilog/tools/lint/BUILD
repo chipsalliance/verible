@@ -1,0 +1,205 @@
+# This package only contains end-to-end tests for the style linter.
+
+load(
+    ":verilog_style_lint.bzl",
+    "verilog_style_lint",
+    "verilog_syntax",
+)
+
+licenses(["notice"])
+
+# Integration tests for different flags and configurations
+# These tests help confirm that rules' cc_libraries are properly alwayslink-ed.
+# TODO(fangism): re-organize this into structs instead of tuples,
+#   and provide the group in a .bzl macro,
+#   and define a test_suite for all of these.
+_linter_test_configs = [
+    # (rule-name, testdata/FILE.sv, default-enabled?)
+    # See verilog/analysis/default_rules.h for default-enabled rules.
+    ("always-comb", "always_comb_module", True),
+    ("case-missing-default", "case_missing_default", False),
+    ("endif-comment", "endif_comment", False),
+    ("explicit-function-lifetime", "explicit_function_lifetime", True),
+    ("explicit-function-task-parameter-type", "explicit_function_parameter_type", True),
+    ("explicit-function-task-parameter-type", "explicit_task_parameter_type", True),
+    ("explicit-parameter-storage-type", "explicit_parameter_storage_type", True),
+    ("explicit-task-lifetime", "explicit_task_lifetime", True),
+    ("generate-label", "generate_label_module", True),
+    ("generate-label", "generate-label-module-body", True),  # uses parse directive
+    ("invalid-system-task-function", "psprintf", True),
+    ("macro-name-style", "macro_name_style", True),
+    ("module-begin-block", "module_begin_block", True),
+    ("module-filename", "module_filename", True),
+    ("package-filename", "package_filename_pkg", True),
+    ("packed-dimensions-range-ordering", "packed_dimensions", True),
+    ("parameter-name-style", "localparam_name_style", True),
+    ("parameter-name-style", "parameter_name_style", True),
+    ("plusarg-assignment", "plusarg_assignment", True),
+    ("proper-parameter-declaration", "proper_parameter_declaration", False),
+    ("proper-parameter-declaration", "proper_localparam_declaration", False),
+    ("module-parameter", "instance_parameters", True),
+    ("module-port", "instance_ports", True),
+    ("module-port", "instance-ports-module-body", True),  # uses parse directive
+    ("signal-name-style", "signal_name_style", False),
+    ("v2001-generate-begin", "generate_begin_module", True),
+    ("void-cast", "void-cast", True),
+    ("undersized-binary-literal", "undersized_binary_literal", True),
+    ("unpacked-dimensions-range-ordering", "unpacked_dimensions", True),
+    ("forbidden-macro", "uvm_warning", True),
+    ("create-object-name-match", "object_creation_name", True),
+    ("posix-eof", "posix_eof", True),
+    ("no-tabs", "tabs", True),
+    ("line-length", "long_line", True),
+    ("no-trailing-spaces", "trailing_spaces", True),
+]
+
+[
+    (
+        # Verifies that with no lint rules, test case is syntactically valid.
+        verilog_style_lint.test(
+            name = testfilebase + "-syntax-test",
+            srcs = ["testdata/{}.sv".format(testfilebase)],
+            flags = ["--ruleset=none"],
+        ),
+        # Verifies that rule is available as part of the 'all' set.
+        verilog_style_lint.test(
+            name = testfilebase + "-allrules-test",
+            srcs = ["testdata/{}.sv".format(testfilebase)],
+            flags = ["--ruleset=all"],
+            expect_fail = True,
+        ),
+        # Verifies that the rule is/is not enabled in the 'default' set.
+        verilog_style_lint.test(
+            name = testfilebase + "-defaultrules-test",
+            srcs = ["testdata/{}.sv".format(testfilebase)],
+            expect_fail = default,
+        ),
+        # Verifies that one specific rule alone fails this test case.
+        verilog_style_lint.test(
+            name = testfilebase + "-onerule-test",
+            srcs = ["testdata/{}.sv".format(testfilebase)],
+            flags = [
+                "--ruleset=none",
+                "--rules=" + rule,
+            ],
+            expect_fail = True,
+        ),
+        # Verifies that all rules *except* this one is lint clean.
+        verilog_style_lint.test(
+            name = testfilebase + "-minusrule-test",
+            srcs = ["testdata/{}.sv".format(testfilebase)],
+            flags = [
+                "--ruleset=all",
+                "--rules=-" + rule,  # exclude one rule
+            ],
+        ),
+    )
+    for rule, testfilebase, default in _linter_test_configs
+]
+
+# Modify a file with a known violation by inserting a waiver above the offending line.
+genrule(
+    name = "psprintf-waived-next-line",
+    srcs = ["testdata/psprintf.sv"],
+    outs = ["psprintf-waived-next-line.sv"],
+    cmd = "sed -e '/psprintf/i\\\n  // verilog_lint: waive invalid-system-task-function\n' $< > $@",
+)
+
+# Modify a file with a known violation by inserting a waiver on the offending line.
+genrule(
+    name = "psprintf-waived-same-line",
+    srcs = ["testdata/psprintf.sv"],
+    outs = ["psprintf-waived-same-line.sv"],
+    cmd = "sed -e '/psprintf/s|$$|  // verilog_lint: waive invalid-system-task-function|' $< > $@",
+)
+
+# Modify a file with a known violation by inserting a waiver range around the offending line.
+genrule(
+    name = "psprintf-waived-line-range",
+    srcs = ["testdata/psprintf.sv"],
+    outs = ["psprintf-waived-line-range.sv"],
+    cmd = "sed " +
+          "-e '/psprintf/i\\\n  // verilog_lint: waive-start invalid-system-task-function\n' " +
+          "-e '/psprintf/a\\\n  // verilog_lint: waive-stop invalid-system-task-function\n' " +
+          "$< > $@",
+)
+
+# Test that waiver works on one rule, one line, and line range.
+[
+    verilog_style_lint.test(
+        name = "psprintf-waive-" + variant + "-test",
+        srcs = [
+            ":psprintf-waived-" + variant,
+        ],
+        flags = [
+            "--ruleset=none",
+            "--rules=invalid-system-task-function",
+        ],
+    )
+    for variant in ("same-line", "next-line", "line-range")
+]
+
+# Modify a file with a known violation by inserting a waiver on the offending line.
+genrule(
+    name = "line-length-in-module-body-waived",
+    srcs = ["testdata/line-length-in-module-body.sv"],
+    outs = ["line-length-in-module-body-waived.sv"],
+    cmd = "sed -e '$$s|$$|  // verilog_lint: waive line-length|' $< > $@",
+)
+
+# Test that one long line is caught.
+verilog_style_lint.test(
+    name = "line-length-in-module-body-fail-test",
+    srcs = [
+        "testdata/line-length-in-module-body.sv",
+    ],
+    flags = [
+        "--ruleset=none",
+        "--rules=line-length",
+    ],
+    expect_fail = True,
+)
+
+# Test that one long line is caught and waived.
+verilog_style_lint.test(
+    name = "line-length-in-module-body-waived-test",
+    srcs = [
+        ":line-length-in-module-body-waived",
+    ],
+    flags = [
+        "--ruleset=none",
+        "--rules=line-length",
+    ],
+    expect_fail = False,
+)
+
+# Verifies that lexer errors are properly rejected.
+verilog_style_lint.test(
+    name = "verilog_lint-lexer-fail-test",
+    srcs = ["testdata/bad-id-lex.sv"],
+    expect_fail = True,
+)
+
+verilog_syntax.test(
+    name = "verilog_syntax-lexer-fail-test",
+    srcs = ["testdata/bad-id-lex.sv"],
+    expect_fail = True,
+)
+
+# SystemVerilog-parser based linter
+cc_binary(
+    name = "verilog_lint",
+    srcs = ["verilog_lint.cc"],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//common/util:logging",
+        "//common/util:status",
+        "//verilog/analysis:verilog_linter",
+        "//verilog/analysis:verilog_linter_configuration",
+        "@com_google_absl//absl/flags:flag",
+        "@com_google_absl//absl/flags:parse",
+        "@com_google_absl//absl/flags:usage",
+        "@com_google_absl//absl/strings",
+        "@com_google_absl//absl/types:span",
+    ],
+)

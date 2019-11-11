@@ -1,0 +1,709 @@
+// Copyright 2017-2019 The Verible Authors.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+#include "common/formatting/state_node.h"
+
+#include <memory>
+#include <stack>
+#include <string>
+#include <vector>
+
+#include "gtest/gtest.h"
+#include "absl/memory/memory.h"
+#include "absl/strings/string_view.h"
+#include "common/formatting/basic_format_style.h"
+#include "common/formatting/format_token.h"
+#include "common/formatting/unwrapped_line.h"
+#include "common/formatting/unwrapped_line_test_utils.h"
+#include "common/util/logging.h"
+
+namespace verible {
+namespace {
+
+std::string RenderFormattedText(const StateNode& path,
+                                const UnwrappedLine& uwline) {
+  FormattedExcerpt formatted_line(uwline);
+  // Discard tokens that have not yet been explored in search.
+  formatted_line.MutableTokens().resize(path.Depth());
+  path.ReconstructFormatDecisions(&formatted_line);
+  return formatted_line.Render();
+}
+
+struct StateNodeTestFixture : public UnwrappedLineMemoryHandler,
+                              public ::testing::Test {
+  StateNodeTestFixture() {
+    style.column_limit = 30;
+    style.indentation_spaces = 2;
+    style.wrap_spaces = 4;
+    style.over_column_limit_penalty = 200;
+  }
+
+  void Initialize(int d, const std::vector<TokenInfo>& tokens) {
+    CreateTokenInfos(tokens);
+    uwline = absl::make_unique<UnwrappedLine>(d * style.indentation_spaces,
+                                              pre_format_tokens_.begin());
+    AddFormatTokens(uwline.get());
+  }
+
+  std::string Render(const StateNode& path, const UnwrappedLine& uwline) const {
+    return RenderFormattedText(path, uwline);
+  }
+
+  BasicFormatStyle style;
+  std::unique_ptr<UnwrappedLine> uwline;
+};
+
+// Tests that root StateNode of search can be initialized with full
+// sequence of FormatTokens.
+TEST_F(StateNodeTestFixture, ConstructionWithEmptyFormatTokens) {
+  static const int kInitialIndent = 3;
+  const std::vector<TokenInfo> tokens;
+  Initialize(kInitialIndent, tokens);  // empty tokens
+  StateNode s(*uwline, style);
+  EXPECT_TRUE(s.Done());  // because there is nothing to search
+  EXPECT_EQ(s.current_column, kInitialIndent * style.indentation_spaces);
+  EXPECT_EQ(s.wrap_column_positions.size(), 1);
+  EXPECT_EQ(s.wrap_column_positions.top(),
+            s.current_column + style.wrap_spaces);
+  EXPECT_EQ(s.spacing_choice, SpacingDecision::Append);
+  EXPECT_EQ(s.next(), nullptr);
+  EXPECT_EQ(s.cumulative_cost, 0);
+  EXPECT_TRUE(s.IsRootState());
+}
+
+// Tests that root StateNode of search can initialize to an array
+// of FormatTokens.
+TEST_F(StateNodeTestFixture, ConstructionWithOneFormatToken) {
+  static const int kInitialIndent = 1;
+  const std::vector<TokenInfo> tokens = {{0, "token1"}};
+  Initialize(kInitialIndent, tokens);
+  StateNode s(*uwline, style);
+  EXPECT_TRUE(s.Done());  // nothing to do after first and only token
+  EXPECT_EQ(s.current_column, kInitialIndent * style.indentation_spaces +
+                                  tokens[0].text.length());
+  EXPECT_EQ(s.wrap_column_positions.size(), 1);
+  EXPECT_EQ(s.wrap_column_positions.top(),
+            kInitialIndent * style.indentation_spaces + style.wrap_spaces);
+  EXPECT_EQ(s.spacing_choice, SpacingDecision::Append);
+  EXPECT_EQ(s.next(), nullptr);
+  EXPECT_EQ(s.cumulative_cost, 0);
+  EXPECT_TRUE(s.IsRootState());
+}
+
+// Tests new state can be built on top of previous state, appending token to
+// current line.
+TEST_F(StateNodeTestFixture, ConstructionAppendingPrevState) {
+  const int kInitialIndent = 1;
+  const std::vector<TokenInfo> tokens = {{0, "token1"}, {1, "TT2"}};
+  Initialize(kInitialIndent, tokens);
+  auto& ftokens = pre_format_tokens_;
+  ftokens[0].before.spaces_required = 1;
+  ftokens[1].before.spaces_required = 1;
+  ftokens[1].before.break_penalty = 5;
+  auto parent_state = std::make_shared<StateNode>(*uwline, style);
+  const int initial_column = kInitialIndent * style.indentation_spaces;  // 2
+  EXPECT_EQ(ABSL_DIE_IF_NULL(parent_state)->current_column,
+            initial_column + tokens[0].text.length());
+  EXPECT_EQ(parent_state->cumulative_cost, 0);
+  EXPECT_EQ(parent_state->wrap_column_positions.size(), 1);
+  EXPECT_EQ(parent_state->wrap_column_positions.top(),
+            initial_column + style.wrap_spaces);
+  EXPECT_TRUE(parent_state->IsRootState());
+
+  const auto& child_state = parent_state;
+  {
+    // Second token, also appended to same line as first:
+    auto child2_state = std::make_shared<StateNode>(child_state, style,
+                                                    SpacingDecision::Append);
+    EXPECT_EQ(child2_state->next(), child_state.get());
+    EXPECT_EQ(child2_state->current_column,
+              child_state->current_column +            // 8 +
+                  ftokens[1].before.spaces_required +  // 1 +
+                  tokens[1].text.length()              // 3: "TT2"
+    );
+    EXPECT_EQ(child2_state->cumulative_cost, 0);
+    EXPECT_FALSE(child2_state->IsRootState());
+    EXPECT_EQ(Render(*child2_state, *uwline), "  token1 TT2");
+  }
+  {
+    // Second token, but wrapped onto next line:
+    auto child2_state =
+        std::make_shared<StateNode>(child_state, style, SpacingDecision::Wrap);
+    EXPECT_EQ(child2_state->next(), child_state.get());
+    EXPECT_EQ(child2_state->current_column,
+              initial_column +             // 2 +
+                  style.wrap_spaces +      // 4 +
+                  tokens[1].text.length()  // 3: "TT2"
+    );
+    EXPECT_EQ(child2_state->cumulative_cost, ftokens[1].before.break_penalty);
+    EXPECT_FALSE(child2_state->IsRootState());
+    EXPECT_EQ(Render(*child2_state, *uwline),
+              "  token1\n"
+              "      TT2");
+  }
+}
+
+// Tests new state can be built on top of previous state, appending token to
+// current line.
+TEST_F(StateNodeTestFixture, ConstructionAppendingPrevStateWithGroupBalancing) {
+  const int kInitialIndent = 1;
+  const std::vector<TokenInfo> tokens = {
+      {0, "function_caller"}, {1, "("}, {2, "11"}, {3, ")"}};
+  Initialize(kInitialIndent, tokens);
+  auto& ftokens = pre_format_tokens_;
+  ftokens[0].before.spaces_required = 1;
+  ftokens[1].before.spaces_required = 1;
+  ftokens[1].before.break_penalty = 10;
+  ftokens[1].balancing = verible::GroupBalancing::Open;
+  ftokens[2].before.spaces_required = 1;
+  ftokens[2].before.break_penalty = 2;
+  ftokens[3].balancing = verible::GroupBalancing::Close;
+  ftokens[3].before.spaces_required = 1;
+  ftokens[3].before.break_penalty = 3;
+  auto parent_state = std::make_shared<StateNode>(*uwline, style);
+  const int initial_column = kInitialIndent * style.indentation_spaces;
+  EXPECT_EQ(ABSL_DIE_IF_NULL(parent_state)->current_column,
+            initial_column + tokens[0].text.length());
+  EXPECT_EQ(parent_state->cumulative_cost, 0);
+  EXPECT_EQ(parent_state->wrap_column_positions.size(), 1);
+  EXPECT_EQ(parent_state->wrap_column_positions.top(),
+            initial_column + style.wrap_spaces);
+  EXPECT_EQ(Render(*parent_state, *uwline), "  function_caller");
+
+  const auto& child_state = parent_state;
+  {
+    // Second token, also appended to same line as first:
+    // > function_caller (
+    // >     ^-- next wrap should be here
+    auto child2_state = std::make_shared<StateNode>(child_state, style,
+                                                    SpacingDecision::Append);
+    EXPECT_EQ(child2_state->next(), child_state.get());
+    EXPECT_EQ(child2_state->current_column,
+              child_state->current_column +            // 17 +
+                  ftokens[1].before.spaces_required +  // 1 +
+                  tokens[1].text.length()              // 1: "("
+    );
+    EXPECT_EQ(child2_state->cumulative_cost, 0);
+    EXPECT_EQ(child2_state->wrap_column_positions.size(), 1);
+    EXPECT_EQ(child2_state->wrap_column_positions.top(),
+              initial_column + style.wrap_spaces);
+    EXPECT_EQ(Render(*child2_state, *uwline), "  function_caller (");
+    {
+      // Third token, also appended to same line:
+      // > function_caller ( 11
+      // >                  ^-- next wrap should be here
+      auto child3_state = std::make_shared<StateNode>(child2_state, style,
+                                                      SpacingDecision::Append);
+      EXPECT_EQ(child3_state->next(), child2_state.get());
+      EXPECT_EQ(child3_state->current_column,
+                child2_state->current_column +           // 19 +
+                    ftokens[2].before.spaces_required +  // 1 +
+                    tokens[2].text.length()              // 2: "11"
+      );
+      EXPECT_EQ(child3_state->cumulative_cost, 0);
+      EXPECT_EQ(child3_state->wrap_column_positions.size(), 2);
+      EXPECT_EQ(child3_state->wrap_column_positions.top(),
+                child2_state->current_column);
+      EXPECT_EQ(Render(*child3_state, *uwline), "  function_caller ( 11");
+      {
+        // Fourth token, also appended to same line:
+        // > function_caller ( 11 )
+        // >     ^-- next wrap should be here, after closing balance group
+        auto child4_state = std::make_shared<StateNode>(
+            child3_state, style, SpacingDecision::Append);
+        EXPECT_EQ(child4_state->next(), child3_state.get());
+        EXPECT_EQ(child4_state->current_column,
+                  child3_state->current_column +           // 22 +
+                      ftokens[3].before.spaces_required +  // 1 +
+                      tokens[3].text.length()              // 1: ")"
+        );
+        EXPECT_EQ(child4_state->cumulative_cost, 0);
+        EXPECT_EQ(child4_state->wrap_column_positions.size(), 1);
+        EXPECT_EQ(child4_state->wrap_column_positions.top(),
+                  initial_column + style.wrap_spaces);
+        EXPECT_EQ(Render(*child4_state, *uwline), "  function_caller ( 11 )");
+      }
+      {
+        // Fourth token, wrapped onto next line:
+        // > function_caller ( 11
+        // >     )
+        // >     ^-- next wrap should be here, after closing balance group
+        // TODO(fangism): should this be aligned with corresponding open-group?
+        // >                 )  // aligned with open-group
+        // As-is, it is not because we pop the column stack on close-group
+        // first, which is not an unreasonable choice.
+        auto child4_state = std::make_shared<StateNode>(child3_state, style,
+                                                        SpacingDecision::Wrap);
+        EXPECT_EQ(child4_state->next(), child3_state.get());
+        EXPECT_EQ(child4_state->current_column,
+                  child2_state->wrap_column_positions
+                          .top() +  // not a typo: child2_state
+                      tokens[3].text.length());
+        EXPECT_EQ(child4_state->cumulative_cost,
+                  ftokens[3].before.break_penalty);
+        EXPECT_EQ(child4_state->wrap_column_positions.size(), 1);
+        EXPECT_EQ(child4_state->wrap_column_positions.top(),
+                  initial_column + style.wrap_spaces);
+        EXPECT_EQ(Render(*child4_state, *uwline),
+                  "  function_caller ( 11\n"
+                  "      )");
+      }
+    }
+    {
+      // Third token, wrapped onto next line:
+      // > function_caller (
+      // >     11
+      // >         ^-- next wrap should be here
+      auto child3_state = std::make_shared<StateNode>(child2_state, style,
+                                                      SpacingDecision::Wrap);
+      EXPECT_EQ(child3_state->next(), child2_state.get());
+      EXPECT_EQ(child3_state->current_column,
+                initial_column + style.wrap_spaces + tokens[2].text.length());
+      EXPECT_EQ(child3_state->cumulative_cost, ftokens[2].before.break_penalty);
+      EXPECT_EQ(child3_state->wrap_column_positions.size(), 2);
+      EXPECT_EQ(child3_state->wrap_column_positions.top(),
+                initial_column + style.wrap_spaces * 2);
+      EXPECT_EQ(Render(*child3_state, *uwline),
+                "  function_caller (\n"
+                "      11");
+      {
+        // Fourth token, appended onto same line:
+        // > function_caller (
+        // >     11 )
+        // >     ^-- next wrap should be here
+        auto child4_state = std::make_shared<StateNode>(
+            child3_state, style, SpacingDecision::Append);
+        EXPECT_EQ(child4_state->next(), child3_state.get());
+        EXPECT_EQ(child4_state->current_column,
+                  child3_state->current_column +           // 8
+                      ftokens[3].before.spaces_required +  // 1
+                      tokens[3].text.length()              // 1: ")"
+        );
+        EXPECT_EQ(child4_state->cumulative_cost, child3_state->cumulative_cost);
+        EXPECT_EQ(child4_state->wrap_column_positions.size(), 1);
+        EXPECT_EQ(child4_state->wrap_column_positions.top(),
+                  initial_column + style.wrap_spaces);
+        EXPECT_EQ(Render(*child4_state, *uwline),
+                  "  function_caller (\n"
+                  "      11 )");
+      }
+      {
+        // Fourth token, wrapped onto next line:
+        // > function_caller (
+        // >     11
+        // >     )
+        // >     ^-- next wrap should be here
+        auto child4_state = std::make_shared<StateNode>(child3_state, style,
+                                                        SpacingDecision::Wrap);
+        EXPECT_EQ(child4_state->next(), child3_state.get());
+        EXPECT_EQ(child4_state->current_column,
+                  initial_column + style.wrap_spaces + tokens[3].text.length());
+        EXPECT_EQ(
+            child4_state->cumulative_cost,
+            child3_state->cumulative_cost + ftokens[3].before.break_penalty);
+        EXPECT_EQ(child4_state->wrap_column_positions.size(), 1);
+        EXPECT_EQ(child4_state->wrap_column_positions.top(),
+                  initial_column + style.wrap_spaces);
+        EXPECT_EQ(Render(*child4_state, *uwline),
+                  "  function_caller (\n"
+                  "      11\n"
+                  "      )");
+      }
+    }
+  }
+  {
+    // Second token, but wrapped onto next line:
+    // > function_caller
+    // >     (
+    // >     ^-- next wrap should be here
+    auto child2_state =
+        std::make_shared<StateNode>(child_state, style, SpacingDecision::Wrap);
+    EXPECT_EQ(child2_state->next(), child_state.get());
+    EXPECT_EQ(child2_state->current_column,
+              initial_column +             // 2 +
+                  style.wrap_spaces +      // 4 +
+                  tokens[1].text.length()  // 1: "("
+    );
+    EXPECT_EQ(child2_state->cumulative_cost, ftokens[1].before.break_penalty);
+    // wrap_column_positions stack is pushed *after* seeing the next token.
+    EXPECT_EQ(child2_state->wrap_column_positions.size(), 1);
+    EXPECT_EQ(child2_state->wrap_column_positions.top(),
+              initial_column + style.wrap_spaces);
+    EXPECT_EQ(Render(*child2_state, *uwline),
+              "  function_caller\n"
+              "      (");
+    {
+      // Third token, appended to same line:
+      // > function_caller
+      // >     ( 11
+      // >     ^-- next wrap should be here
+      auto child3_state = std::make_shared<StateNode>(child2_state, style,
+                                                      SpacingDecision::Append);
+      EXPECT_EQ(child3_state->next(), child2_state.get());
+      EXPECT_EQ(child3_state->current_column,
+                child2_state->current_column +           // 7
+                    ftokens[2].before.spaces_required +  // 1
+                    tokens[2].text.length()              // 2: "11"
+      );
+      EXPECT_EQ(child3_state->cumulative_cost, child2_state->cumulative_cost);
+      EXPECT_EQ(child3_state->wrap_column_positions.size(), 2);
+      EXPECT_EQ(child3_state->wrap_column_positions.top(),
+                initial_column + style.wrap_spaces + tokens[1].text.length());
+      EXPECT_EQ(Render(*child3_state, *uwline),
+                "  function_caller\n"
+                "      ( 11");
+      {
+        // Fourth token, appended to same line:
+        // > function_caller
+        // >     ( 11 )
+        // >     ^-- next wrap should be here
+        auto child4_state = std::make_shared<StateNode>(
+            child3_state, style, SpacingDecision::Append);
+        EXPECT_EQ(child4_state->next(), child3_state.get());
+        EXPECT_EQ(child4_state->current_column,
+                  child3_state->current_column +           // 10
+                      ftokens[3].before.spaces_required +  // 1
+                      tokens[3].text.length()              // 1: ")"
+        );
+        EXPECT_EQ(child4_state->cumulative_cost, child3_state->cumulative_cost);
+        EXPECT_EQ(child4_state->wrap_column_positions.size(), 1);
+        EXPECT_EQ(child4_state->wrap_column_positions.top(),
+                  initial_column + style.wrap_spaces);
+        EXPECT_EQ(Render(*child4_state, *uwline),
+                  "  function_caller\n"
+                  "      ( 11 )");
+      }
+      {
+        // Fourth token, wrapped onto next line:
+        // > function_caller
+        // >     ( 11
+        // >     )
+        // >     ^-- next wrap should be here
+        auto child4_state = std::make_shared<StateNode>(child3_state, style,
+                                                        SpacingDecision::Wrap);
+        EXPECT_EQ(child4_state->next(), child3_state.get());
+        EXPECT_EQ(child4_state->current_column,
+                  child2_state->wrap_column_positions.top() +
+                      tokens[3].text.length()  // 1: ")"
+        );
+        EXPECT_EQ(
+            child4_state->cumulative_cost,
+            child3_state->cumulative_cost + ftokens[3].before.break_penalty);
+        EXPECT_EQ(child4_state->wrap_column_positions.size(), 1);
+        EXPECT_EQ(child4_state->wrap_column_positions.top(),
+                  initial_column + style.wrap_spaces);
+        EXPECT_EQ(Render(*child4_state, *uwline),
+                  "  function_caller\n"
+                  "      ( 11\n"
+                  "      )");
+      }
+    }
+    {
+      // Third token, wrapped onto next line:
+      // > function_caller
+      // >     (
+      // >         11
+      // >         ^-- next wrap should be here
+      auto child3_state = std::make_shared<StateNode>(child2_state, style,
+                                                      SpacingDecision::Wrap);
+      EXPECT_EQ(child3_state->next(), child2_state.get());
+      EXPECT_EQ(child3_state->current_column,
+                initial_column + (style.wrap_spaces * 2) +  // 10
+                    tokens[2].text.length()                 // 2: "11"
+      );
+      EXPECT_EQ(
+          child3_state->cumulative_cost,
+          child2_state->cumulative_cost + ftokens[2].before.break_penalty);
+      EXPECT_EQ(child3_state->wrap_column_positions.size(), 2);
+      EXPECT_EQ(child3_state->wrap_column_positions.top(),
+                initial_column + (style.wrap_spaces * 2));
+      EXPECT_EQ(Render(*child3_state, *uwline),
+                "  function_caller\n"
+                "      (\n"
+                "          11");
+      {
+        // Fourth token, appended to same line:
+        // > function_caller
+        // >     (
+        // >         11 )
+        // >     ^-- next wrap should be here
+        auto child4_state = std::make_shared<StateNode>(
+            child3_state, style, SpacingDecision::Append);
+        EXPECT_EQ(child4_state->next(), child3_state.get());
+        EXPECT_EQ(child4_state->current_column,
+                  child3_state->current_column +           // 10
+                      ftokens[3].before.spaces_required +  // 1
+                      tokens[3].text.length()              // 1: ")"
+        );
+        EXPECT_EQ(child4_state->cumulative_cost, child3_state->cumulative_cost);
+        EXPECT_EQ(child4_state->wrap_column_positions.size(), 1);
+        EXPECT_EQ(child4_state->wrap_column_positions.top(),
+                  initial_column + style.wrap_spaces);
+        EXPECT_EQ(Render(*child4_state, *uwline),
+                  "  function_caller\n"
+                  "      (\n"
+                  "          11 )");
+      }
+      {
+        // Fourth token, wrapped onto next line:
+        // > function_caller
+        // >     (
+        // >         11
+        // >     )
+        // >     ^-- next wrap should be here
+        auto child4_state = std::make_shared<StateNode>(child3_state, style,
+                                                        SpacingDecision::Wrap);
+        EXPECT_EQ(child4_state->next(), child3_state.get());
+        EXPECT_EQ(child4_state->current_column,
+                  child_state->wrap_column_positions.top() +
+                      tokens[3].text.length()  // 1: ")"
+        );
+        EXPECT_EQ(
+            child4_state->cumulative_cost,
+            child3_state->cumulative_cost + ftokens[3].before.break_penalty);
+        EXPECT_EQ(child4_state->wrap_column_positions.size(), 1);
+        EXPECT_EQ(child4_state->wrap_column_positions.top(),
+                  initial_column + style.wrap_spaces);
+        EXPECT_EQ(Render(*child4_state, *uwline),
+                  "  function_caller\n"
+                  "      (\n"
+                  "          11\n"
+                  "      )");
+      }
+    }
+  }
+}
+
+// Tests new state can be built on top of previous state, appending token to
+// current line, where second token exceeds line length.
+TEST_F(StateNodeTestFixture, ConstructionAppendingPrevStateOverflow) {
+  const int kInitialIndent = 1;
+  const std::vector<TokenInfo> tokens = {{0, "aaaaaaaaaaaaaaaaaaaaa"},
+                                         {1, "bbbbbbbbbbbbbbbbbb"}};
+  Initialize(kInitialIndent, tokens);
+  auto& ftokens = pre_format_tokens_;
+  ftokens[0].before.spaces_required = 1;
+  ftokens[1].before.spaces_required = 1;
+  ftokens[1].before.break_penalty = 8;
+
+  // First token on line:
+  auto parent_state = std::make_shared<StateNode>(*uwline, style);
+  const int initial_column = kInitialIndent * style.indentation_spaces;
+  EXPECT_EQ(ABSL_DIE_IF_NULL(parent_state)->current_column,
+            initial_column + tokens[0].text.length());
+  EXPECT_EQ(parent_state->cumulative_cost, 0);
+
+  auto child_state = parent_state;
+
+  {
+    // Second token, also appended to same line as first:
+    auto child2_state = std::make_shared<StateNode>(child_state, style,
+                                                    SpacingDecision::Append);
+    EXPECT_EQ(child2_state->next(), child_state.get());
+    EXPECT_EQ(child2_state->current_column,
+              child_state->current_column +            // 8 +
+                  ftokens[1].before.spaces_required +  // 1 +
+                  tokens[1].text.length()              // 3: "TT2"
+    );
+    EXPECT_EQ(child2_state->cumulative_cost, style.over_column_limit_penalty +
+                                                 child2_state->current_column -
+                                                 style.column_limit);
+  }
+  {
+    // Second token, but wrapped onto a new line:
+    auto child2_state =
+        std::make_shared<StateNode>(child_state, style, SpacingDecision::Wrap);
+    EXPECT_EQ(child2_state->next(), child_state.get());
+    EXPECT_EQ(child2_state->current_column,
+              initial_column +         // 2 +
+                  style.wrap_spaces +  // 4 +
+                  tokens[1].text.length());
+    EXPECT_EQ(child2_state->cumulative_cost, ftokens[1].before.break_penalty);
+  }
+}
+
+// Tests new state can be built on top of previous state, wrapping token to
+// new line.
+TEST_F(StateNodeTestFixture, ConstructionWrappingLinePrevState) {
+  const int kInitialIndent = 1;
+  const std::vector<TokenInfo> tokens = {{0, "token1"}, {1, "token2"}};
+  Initialize(kInitialIndent, tokens);
+  auto& ftokens = pre_format_tokens_;
+  ftokens[1].before.break_penalty = 7;
+  auto parent_state = std::make_shared<StateNode>(*uwline, style);
+  const int initial_column = kInitialIndent * style.indentation_spaces;
+  EXPECT_EQ(ABSL_DIE_IF_NULL(parent_state)->current_column,
+            initial_column + tokens[0].text.length());
+  EXPECT_EQ(parent_state->cumulative_cost, 0);
+
+  // Wrap the next token onto a new line.
+  auto child_state =
+      std::make_shared<StateNode>(parent_state, style, SpacingDecision::Wrap);
+  EXPECT_EQ(child_state->next(), parent_state.get());
+  EXPECT_EQ(child_state->current_column,
+            initial_column + style.wrap_spaces + tokens[1].text.length());
+  EXPECT_EQ(child_state->cumulative_cost, ftokens[1].before.break_penalty);
+  EXPECT_EQ(Render(*child_state, *uwline),
+            "  token1\n"
+            "      token2");
+}
+
+// Tests that the default next-state appends when a token fits (column limit),
+// and wraps when it doesn't fit.
+TEST_F(StateNodeTestFixture, AppendIfItFitsTryToAppend) {
+  const int kInitialIndent = 1;
+  // Tokens stay under column limit.
+  const std::vector<TokenInfo> tokens = {
+      {0, "xxxxxXXXXX"},
+      {1, "yyyyyYYYYY"},
+      {2, "zzzzzZZZZZ"},
+  };
+  Initialize(kInitialIndent, tokens);
+  auto& ftokens = pre_format_tokens_;
+  ftokens[0].before.spaces_required = 1;
+  ftokens[1].before.spaces_required = 1;
+  ftokens[2].before.spaces_required = 1;
+  auto parent_state = std::make_shared<StateNode>(*uwline, style);
+  const int initial_column = kInitialIndent * style.indentation_spaces;  // 2
+  EXPECT_EQ(ABSL_DIE_IF_NULL(parent_state)->current_column,
+            initial_column + tokens[0].text.length());
+  EXPECT_EQ(parent_state->wrap_column_positions.size(), 1);
+  EXPECT_EQ(parent_state->wrap_column_positions.top(),
+            initial_column + style.wrap_spaces);
+  EXPECT_TRUE(parent_state->IsRootState());
+
+  // Second token, also appended to same line as first:
+  auto child_state = StateNode::AppendIfItFits(parent_state, style);
+  EXPECT_EQ(child_state->spacing_choice, SpacingDecision::Append);
+  EXPECT_EQ(child_state->next(), parent_state.get());
+  EXPECT_EQ(child_state->current_column,
+            parent_state->current_column +           // 12 +
+                ftokens[1].before.spaces_required +  // 1 +
+                tokens[1].text.length()              // 10 = 23 (< 30)
+  );
+  EXPECT_FALSE(child_state->IsRootState());
+
+  // Third token, doesn't fit, and will be wrapped.
+  auto child2_state = StateNode::AppendIfItFits(child_state, style);
+  EXPECT_EQ(child2_state->spacing_choice, SpacingDecision::Wrap);
+  EXPECT_EQ(child2_state->next(), child_state.get());
+  EXPECT_EQ(child2_state->current_column,
+            initial_column + style.wrap_spaces + tokens[2].text.length());
+}
+
+// Tests that the default next-state respects forced line breaks.
+TEST_F(StateNodeTestFixture, AppendIfItFitsForcedWrap) {
+  const int kInitialIndent = 1;
+  const std::vector<TokenInfo> tokens = {
+      {0, "xxxxxXXXXX"},
+      {1, "yyyyyYYYYY"},
+  };
+  Initialize(kInitialIndent, tokens);
+  auto& ftokens = pre_format_tokens_;
+  ftokens[0].before.spaces_required = 1;
+  ftokens[1].before.spaces_required = 1;
+  // Tokens stay under column limit, but here, we force a wrap.
+  ftokens[1].before.break_decision = SpacingOptions::MustWrap;
+  auto parent_state = std::make_shared<StateNode>(*uwline, style);
+  const int initial_column = kInitialIndent * style.indentation_spaces;  // 2
+  EXPECT_EQ(ABSL_DIE_IF_NULL(parent_state)->current_column,
+            initial_column + tokens[0].text.length());
+  EXPECT_EQ(parent_state->wrap_column_positions.size(), 1);
+  EXPECT_EQ(parent_state->wrap_column_positions.top(),
+            initial_column + style.wrap_spaces);
+  EXPECT_TRUE(parent_state->IsRootState());
+
+  // Second token, forced to wrap onto new line.
+  auto child_state = StateNode::AppendIfItFits(parent_state, style);
+  EXPECT_EQ(child_state->spacing_choice, SpacingDecision::Wrap);
+  EXPECT_EQ(child_state->next(), parent_state.get());
+  EXPECT_EQ(child_state->current_column,
+            initial_column + style.wrap_spaces + tokens[0].text.length());
+  EXPECT_FALSE(child_state->IsRootState());
+}
+
+// Tests that QuickFinish repeatedly applies AppendIfItFits.
+TEST_F(StateNodeTestFixture, QuickFinish) {
+  const int kInitialIndent = 1;
+  // Tokens stay under column limit.
+  const std::vector<TokenInfo> tokens = {
+      {0, "xxxxxXXXXX"},
+      {1, "yyyyyYYYYY"},
+      {2, "zzzzzZZZZZ"},
+  };
+  Initialize(kInitialIndent, tokens);
+  auto& ftokens = pre_format_tokens_;
+  ftokens[0].before.spaces_required = 1;
+  ftokens[1].before.spaces_required = 1;
+  ftokens[2].before.spaces_required = 1;
+  auto parent_state = std::make_shared<StateNode>(*uwline, style);
+  const int initial_column = kInitialIndent * style.indentation_spaces;  // 2
+  EXPECT_EQ(ABSL_DIE_IF_NULL(parent_state)->current_column,
+            initial_column + tokens[0].text.length());
+  EXPECT_EQ(parent_state->wrap_column_positions.size(), 1);
+  EXPECT_EQ(parent_state->wrap_column_positions.top(),
+            initial_column + style.wrap_spaces);
+  EXPECT_TRUE(parent_state->IsRootState());
+
+  auto final_state = StateNode::QuickFinish(parent_state, style);
+
+  // Checking up the ancestry chain of previous states
+  // Third token, doesn't fit, and will be wrapped.
+  EXPECT_EQ(final_state->spacing_choice, SpacingDecision::Wrap);
+
+  // Second token, also appended to same line as first:
+  const auto* child_state = final_state->next();
+  EXPECT_EQ(child_state->spacing_choice, SpacingDecision::Append);
+
+  // Second state is decended from initial state.
+  EXPECT_EQ(child_state->next(), parent_state.get());
+}
+
+// Tests that equal cumulative penalty does not count as less.
+TEST_F(StateNodeTestFixture, OperatorLessSelf) {
+  const std::vector<TokenInfo> tokens;
+  Initialize(0, tokens);
+  StateNode s(*uwline, style);
+  EXPECT_FALSE(s < s);
+}
+
+// Tests for inequality of cumulative penalties.
+TEST_F(StateNodeTestFixture, OperatorLessUnequal) {
+  const std::vector<TokenInfo> tokens;
+  Initialize(0, tokens);
+  StateNode s(*uwline, style);
+  s.cumulative_cost = 3;
+  StateNode t(*uwline, style);
+  t.cumulative_cost = 4;
+  EXPECT_TRUE(s < t);
+  EXPECT_FALSE(t < s);
+}
+
+// Test that string representation is as expected.
+TEST_F(StateNodeTestFixture, Stringify) {
+  const std::vector<TokenInfo> tokens;
+  Initialize(0, tokens);
+  StateNode::path_type path;
+  StateNode s(*uwline, style);
+  s.spacing_choice = SpacingDecision::Wrap;
+  s.current_column = 7;
+  s.cumulative_cost = 11;
+  s.wrap_column_positions.top() = 3;
+  std::ostringstream stream;
+  stream << s;
+  EXPECT_EQ(stream.str(), "spacing:wrap, col@7, cost=11, [...3]");
+}
+
+}  // namespace
+}  // namespace verible

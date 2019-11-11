@@ -1,0 +1,257 @@
+// Copyright 2017-2019 The Verible Authors.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+#include "common/analysis/syntax_tree_linter.h"
+
+#include <memory>
+#include <vector>
+
+#include "gtest/gtest.h"
+#include "common/analysis/lint_rule_status.h"
+#include "common/analysis/syntax_tree_lint_rule.h"
+#include "common/text/concrete_syntax_leaf.h"
+#include "common/text/concrete_syntax_tree.h"
+#include "common/text/symbol.h"
+#include "common/text/syntax_tree_context.h"
+#include "common/text/token_info.h"
+#include "common/text/tree_builder_test_util.h"
+
+namespace verible {
+namespace {
+
+// Simple rule for testing that verifies that all leafs contained in tree
+// are tagged as a certain value. This value is passed in via the constructor
+class AllLeavesMustBeN : public SyntaxTreeLintRule {
+ public:
+  // Constructor that takes n, the number that this rule is checking for
+  explicit AllLeavesMustBeN(int n) : target_(n) {}
+
+  // When handling leaf, check that it has target tag and report a violation
+  // is not
+  void HandleLeaf(const SyntaxTreeLeaf& leaf,
+                  const SyntaxTreeContext& context) override {
+    if (leaf.get().token_enum != target_) {
+      violations_.push_back(LintViolation(leaf.get(), "", context));
+    }
+  }
+
+  // Do not operate on nodes
+  void HandleNode(const SyntaxTreeNode& node,
+                  const SyntaxTreeContext& context) override {}
+  LintRuleStatus Report() const override { return LintRuleStatus(violations_); }
+
+ private:
+  std::vector<LintViolation> violations_;
+  int target_;
+};
+
+std::unique_ptr<SyntaxTreeLintRule> MakeRuleN(int n) {
+  return std::unique_ptr<SyntaxTreeLintRule>(new AllLeavesMustBeN(n));
+}
+
+TEST(SyntaxTreeLinterTest, BasicUsageCorrect) {
+  const SymbolPtr root = Node(XLeaf(2), XLeaf(2), Node(XLeaf(2)), XLeaf(2));
+
+  SyntaxTreeLinter linter;
+  linter.AddRule(MakeRuleN(2));
+
+  ASSERT_NE(root, nullptr);
+  linter.Lint(*root);
+  std::vector<LintRuleStatus> statuses = linter.ReportStatus();
+  EXPECT_EQ(statuses.size(), 1);
+  EXPECT_TRUE(statuses[0].isOk());
+  EXPECT_EQ(statuses[0].violations.size(), 0);
+}
+
+TEST(SyntaxTreeLinterTest, BasicUsageFailure) {
+  SymbolPtr root = Node(XLeaf(2), XLeaf(2), Node(XLeaf(2)), XLeaf(3));
+
+  SyntaxTreeLinter linter;
+  linter.AddRule(MakeRuleN(2));
+
+  ASSERT_NE(root, nullptr);
+  linter.Lint(*root);
+  std::vector<LintRuleStatus> statuses = linter.ReportStatus();
+  EXPECT_EQ(statuses.size(), 1);
+  EXPECT_FALSE(statuses[0].isOk());
+  EXPECT_EQ(statuses[0].violations.size(), 1);
+}
+
+TEST(SyntaxTreeLinterTest, MultipleRules) {
+  SymbolPtr root = Node(XLeaf(2), XLeaf(2), Node(XLeaf(2)), XLeaf(2));
+
+  SyntaxTreeLinter linter;
+  linter.AddRule(MakeRuleN(2));
+  linter.AddRule(MakeRuleN(3));
+
+  ASSERT_NE(root, nullptr);
+  linter.Lint(*root);
+  std::vector<LintRuleStatus> statuses = linter.ReportStatus();
+  EXPECT_EQ(statuses.size(), 2);
+  EXPECT_TRUE(statuses[0].isOk());
+  EXPECT_FALSE(statuses[1].isOk());
+  EXPECT_EQ(statuses[0].violations.size(), 0);
+  EXPECT_EQ(statuses[1].violations.size(), 4);
+}
+
+// Simple testing rule that verifies that every node's leaf children have tags
+// that are in ascending order
+class ChildrenLeavesAscending : public SyntaxTreeLintRule {
+ public:
+  // Do not process leaves
+  void HandleLeaf(const SyntaxTreeLeaf& leaf,
+                  const SyntaxTreeContext& context) override {}
+
+  // When handling nodes, iterate through all children and check that tags
+  // are ascending. Report leafs nodes that have leaves that are out of order.
+  void HandleNode(const SyntaxTreeNode& node,
+                  const SyntaxTreeContext& context) override {
+    int last_tag = 0;
+    for (const auto& child : node.children()) {
+      if (child->Kind() == SymbolKind::kLeaf) {
+        const SyntaxTreeLeaf* leaf_child =
+            down_cast<SyntaxTreeLeaf*>(child.get());
+        const int current_tag = leaf_child->get().token_enum;
+        if (current_tag >= last_tag) {
+          last_tag = current_tag;
+        } else {
+          violations_.push_back(LintViolation(leaf_child->get(), "", context));
+          return;
+        }
+      }
+    }
+  }
+
+  LintRuleStatus Report() const override { return LintRuleStatus(violations_); }
+
+ private:
+  std::vector<LintViolation> violations_;
+};
+
+std::unique_ptr<SyntaxTreeLintRule> MakeAscending() {
+  return std::unique_ptr<SyntaxTreeLintRule>(new ChildrenLeavesAscending());
+}
+
+TEST(SyntaxTreeLinterTest, AscendingSuccess) {
+  SymbolPtr root =
+      Node(XLeaf(1), XLeaf(4), Node(XLeaf(2), XLeaf(10)), XLeaf(7));
+  SyntaxTreeLinter linter;
+  linter.AddRule(MakeAscending());
+  ASSERT_NE(root.get(), nullptr);
+  linter.Lint(*root.get());
+
+  std::vector<LintRuleStatus> statuses = linter.ReportStatus();
+  EXPECT_EQ(statuses.size(), 1);
+  EXPECT_TRUE(statuses[0].isOk());
+}
+
+TEST(SyntaxTreeLinterTest, AscendingFailsOnce) {
+  SymbolPtr root =
+      Node(XLeaf(1), XLeaf(4), Node(XLeaf(2), XLeaf(10)), XLeaf(1));
+  SyntaxTreeLinter linter;
+  linter.AddRule(MakeAscending());
+  ASSERT_NE(root.get(), nullptr);
+  linter.Lint(*root.get());
+
+  std::vector<LintRuleStatus> statuses = linter.ReportStatus();
+  EXPECT_EQ(statuses.size(), 1);
+  EXPECT_FALSE(statuses[0].isOk());
+  EXPECT_EQ(statuses[0].violations.size(), 1);
+}
+
+TEST(SyntaxTreeLinterTest, AscendingFailsTwice) {
+  SymbolPtr root =
+      Node(XLeaf(1), XLeaf(4), Node(XLeaf(210), XLeaf(10)), XLeaf(1));
+  SyntaxTreeLinter linter;
+  linter.AddRule(MakeAscending());
+  ASSERT_NE(root.get(), nullptr);
+  linter.Lint(*root.get());
+
+  std::vector<LintRuleStatus> statuses = linter.ReportStatus();
+  EXPECT_EQ(statuses.size(), 1);
+  EXPECT_FALSE(statuses[0].isOk());
+  EXPECT_EQ(statuses[0].violations.size(), 2);
+}
+
+TEST(SyntaxTreeLinterTest, HeterogenousTests) {
+  SymbolPtr root =
+      Node(XLeaf(1), XLeaf(4), Node(XLeaf(210), XLeaf(10)), XLeaf(1));
+  SyntaxTreeLinter linter;
+  linter.AddRule(MakeAscending());
+  linter.AddRule(MakeRuleN(1));
+  ASSERT_NE(root.get(), nullptr);
+  linter.Lint(*root.get());
+
+  std::vector<LintRuleStatus> statuses = linter.ReportStatus();
+  EXPECT_EQ(statuses.size(), 2);
+  EXPECT_FALSE(statuses[0].isOk());
+  EXPECT_EQ(statuses[0].violations.size(), 2);
+  EXPECT_FALSE(statuses[1].isOk());
+  EXPECT_EQ(statuses[1].violations.size(), 3);
+}
+
+// Simple testing rule that verifies that each leaf's tag is the same as its
+// depth in the tree.
+class TagMatchesContextDepth : public SyntaxTreeLintRule {
+ public:
+  // When handling a leaf, check leaf's tag vs the size of its context
+  void HandleLeaf(const SyntaxTreeLeaf& leaf,
+                  const SyntaxTreeContext& context) override {
+    if (static_cast<size_t>(leaf.get().token_enum) != context.size()) {
+      violations_.push_back(LintViolation(leaf.get(), "", context));
+    }
+  }
+  // Do not process nodes
+  void HandleNode(const SyntaxTreeNode& node,
+                  const SyntaxTreeContext& context) override {}
+
+  LintRuleStatus Report() const override { return LintRuleStatus(violations_); }
+
+ private:
+  std::vector<LintViolation> violations_;
+};
+
+std::unique_ptr<SyntaxTreeLintRule> MakeDepth() {
+  return std::unique_ptr<SyntaxTreeLintRule>(new TagMatchesContextDepth());
+}
+
+TEST(SyntaxTreeLinterTest, DepthFails) {
+  SymbolPtr root =
+      Node(XLeaf(1), XLeaf(4), Node(XLeaf(210), XLeaf(10)), XLeaf(1));
+  SyntaxTreeLinter linter;
+  linter.AddRule(MakeDepth());
+  ASSERT_NE(root.get(), nullptr);
+  linter.Lint(*root.get());
+
+  std::vector<LintRuleStatus> statuses = linter.ReportStatus();
+  EXPECT_EQ(statuses.size(), 1);
+  EXPECT_FALSE(statuses[0].isOk());
+  EXPECT_EQ(statuses[0].violations.size(), 3);
+}
+
+TEST(SyntaxTreeLinterTest, DepthSuccess) {
+  SymbolPtr root = Node(XLeaf(1), XLeaf(1), Node(XLeaf(2), XLeaf(2)), XLeaf(1));
+  SyntaxTreeLinter linter;
+  linter.AddRule(MakeDepth());
+  ASSERT_NE(root.get(), nullptr);
+  linter.Lint(*root.get());
+
+  std::vector<LintRuleStatus> statuses = linter.ReportStatus();
+  EXPECT_EQ(statuses.size(), 1);
+  EXPECT_TRUE(statuses[0].isOk());
+  EXPECT_EQ(statuses[0].violations.size(), 0);
+}
+
+}  // namespace
+}  // namespace verible

@@ -1,0 +1,30 @@
+// Copyright 2017-2019 The Verible Authors.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+#ifndef VERIBLE_COMMON_STRINGS_RANGE_H_
+#define VERIBLE_COMMON_STRINGS_RANGE_H_
+
+#include "absl/strings/string_view.h"
+
+namespace verible {
+
+// Construct a string_view from two end-points.
+// string_view lacks the two-iterator constructor that (iterator) ranges and
+// containers do.
+// This exploits the fact that string_view's iterators are just const char*.
+absl::string_view make_string_view_range(const char* begin, const char* end);
+
+}  // namespace verible
+
+#endif  // VERIBLE_COMMON_STRINGS_RANGE_H_

@@ -1,0 +1,998 @@
+// Copyright 2017-2019 The Verible Authors.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+#include "common/util/vector_tree.h"
+
+#include <cstddef>
+#include <initializer_list>
+#include <iterator>
+#include <sstream>
+#include <string>
+#include <utility>
+#include <vector>
+
+#include "gmock/gmock.h"
+#include "gtest/gtest.h"
+#include "absl/strings/str_cat.h"
+#include "absl/strings/str_join.h"
+#include "absl/strings/string_view.h"
+#include "common/util/vector_tree_test_util.h"
+
+namespace verible {
+namespace {
+
+using ::testing::ElementsAre;
+using verible::testing::MakePath;
+using verible::testing::NamedInterval;
+using verible::testing::VectorTreeTestType;
+
+template <class Tree>
+void ExpectPath(const Tree& tree, absl::string_view expect) {
+  std::ostringstream stream;
+  stream << NodePath(tree);
+  EXPECT_EQ(stream.str(), expect);
+}
+
+// Test that basic Tree construction works on a singleton node.
+TEST(VectorTreeTest, RootOnly) {
+  const VectorTreeTestType tree(verible::testing::MakeRootOnlyExampleTree());
+  EXPECT_TRUE(tree.Children().empty());
+  EXPECT_EQ(tree.Parent(), nullptr);
+  EXPECT_EQ(tree.NumAncestors(), 0);
+  EXPECT_EQ(tree.BirthRank(), 0);  // no parent
+  EXPECT_EQ(tree.Root(), &tree);
+
+  const auto& value = tree.Value();
+  EXPECT_EQ(value.left, 0);
+  EXPECT_EQ(value.right, 2);
+  EXPECT_EQ(value.name, "root");
+
+  ExpectPath(tree, "{}");
+}
+
+TEST(VectorTreeTest, RootOnlyDescendants) {
+  VectorTreeTestType tree(verible::testing::MakeRootOnlyExampleTree());
+  EXPECT_EQ(tree.LeftmostDescendant(), &tree);
+  EXPECT_EQ(tree.RightmostDescendant(), &tree);
+  {  // Test const method variants.
+    const auto& ctree(tree);
+    EXPECT_EQ(ctree.LeftmostDescendant(), &ctree);
+    EXPECT_EQ(ctree.RightmostDescendant(), &ctree);
+  }
+}
+
+TEST(VectorTreeTest, RootOnlyContainsAncestor) {
+  VectorTreeTestType tree(verible::testing::MakeRootOnlyExampleTree());
+  EXPECT_FALSE(tree.ContainsAncestor(nullptr));
+  EXPECT_FALSE(tree.ContainsAncestor(&tree));
+
+  // Separate tree
+  VectorTreeTestType tree2(verible::testing::MakeRootOnlyExampleTree());
+  EXPECT_FALSE(tree2.ContainsAncestor(&tree));
+  EXPECT_FALSE(tree.ContainsAncestor(&tree2));
+}
+
+TEST(VectorTreeTest, RootOnlyLeafIteration) {
+  VectorTreeTestType tree(verible::testing::MakeRootOnlyExampleTree());
+  EXPECT_EQ(tree.NextLeaf(), nullptr);
+  EXPECT_EQ(tree.PreviousLeaf(), nullptr);
+  {  // const method variants
+    const auto& ctree(tree);
+    EXPECT_EQ(ctree.NextLeaf(), nullptr);
+    EXPECT_EQ(ctree.PreviousLeaf(), nullptr);
+  }
+}
+
+TEST(VectorTreeTest, RootOnlySiblingIteration) {
+  VectorTreeTestType tree(verible::testing::MakeRootOnlyExampleTree());
+  EXPECT_EQ(tree.NextSibling(), nullptr);
+  EXPECT_EQ(tree.PreviousSibling(), nullptr);
+  {  // const method variants
+    const auto& ctree(tree);
+    EXPECT_EQ(ctree.NextSibling(), nullptr);
+    EXPECT_EQ(ctree.PreviousSibling(), nullptr);
+  }
+}
+
+TEST(VectorTreeTest, StructureEqualRootToRoot) {
+  const VectorTreeTestType ltree(verible::testing::MakeRootOnlyExampleTree());
+  const VectorTreeTestType rtree(verible::testing::MakeRootOnlyExampleTree());
+  const auto result_pair = StructureEqual(ltree, rtree);
+  EXPECT_EQ(result_pair.left, nullptr);
+  EXPECT_EQ(result_pair.right, nullptr);
+}
+
+TEST(VectorTreeTest, StructureEqualRootToRootIgnoringValue) {
+  VectorTreeTestType ltree(verible::testing::MakeRootOnlyExampleTree());
+  VectorTreeTestType rtree(verible::testing::MakeRootOnlyExampleTree());
+  ltree.Value().left = 11;
+  rtree.Value().left = 34;
+  const auto result_pair = StructureEqual(ltree, rtree);
+  EXPECT_EQ(result_pair.left, nullptr);
+  EXPECT_EQ(result_pair.right, nullptr);
+}
+
+TEST(VectorTreeTest, DeepEqualRootToRoot) {
+  const VectorTreeTestType ltree(verible::testing::MakeRootOnlyExampleTree());
+  const VectorTreeTestType rtree(verible::testing::MakeRootOnlyExampleTree());
+  const auto result_pair = DeepEqual(ltree, rtree);
+  EXPECT_EQ(result_pair.left, nullptr);
+  EXPECT_EQ(result_pair.right, nullptr);
+}
+
+TEST(VectorTreeTest, DeepEqualRootToRootValueDifferent) {
+  VectorTreeTestType ltree(verible::testing::MakeRootOnlyExampleTree());
+  VectorTreeTestType rtree(verible::testing::MakeRootOnlyExampleTree());
+  ltree.Value().left = 11;
+  rtree.Value().left = 34;
+  const auto result_pair = DeepEqual(ltree, rtree);
+  EXPECT_EQ(result_pair.left, &ltree);
+  EXPECT_EQ(result_pair.right, &rtree);
+}
+
+struct NameOnly {
+  absl::string_view name;
+
+  explicit NameOnly(const NamedInterval& v) : name(v.name) {}
+};
+
+std::ostream& operator<<(std::ostream& stream, const NameOnly& n) {
+  return stream << '(' << n.name << ")\n";
+}
+
+static NameOnly NameOnlyConverter(const VectorTreeTestType& node) {
+  return NameOnly(node.Value());
+}
+
+// Heterogeneous comparison.
+bool operator==(const NamedInterval& left, const NameOnly& right) {
+  return left.name == right.name;
+}
+
+TEST(VectorTreeTest, RootOnlyTreeTransformConstruction) {
+  const VectorTreeTestType tree(verible::testing::MakeRootOnlyExampleTree());
+  const auto other_tree = tree.Transform<NameOnly>(NameOnlyConverter);
+  EXPECT_TRUE(other_tree.Children().empty());
+  EXPECT_EQ(other_tree.Parent(), nullptr);
+  EXPECT_EQ(other_tree.NumAncestors(), 0);
+  EXPECT_EQ(other_tree.BirthRank(), 0);  // no parent
+
+  const auto& value = other_tree.Value();
+  EXPECT_EQ(value.name, "root");
+}
+
+TEST(VectorTreeTest, RootOnlyTreeTransformComparisonMatches) {
+  const VectorTreeTestType tree(verible::testing::MakeRootOnlyExampleTree());
+  const auto other_tree = tree.Transform<NameOnly>(NameOnlyConverter);
+  {
+    const auto result_pair = StructureEqual(tree, other_tree);
+    EXPECT_EQ(result_pair.left, nullptr);
+    EXPECT_EQ(result_pair.right, nullptr);
+  }
+  {
+    const auto result_pair = StructureEqual(other_tree, tree);  // swapped
+    EXPECT_EQ(result_pair.left, nullptr);
+    EXPECT_EQ(result_pair.right, nullptr);
+  }
+  {
+    // Uses hetergeneous value comparison.
+    const auto result_pair = DeepEqual(tree, other_tree);
+    EXPECT_EQ(result_pair.left, nullptr);
+    EXPECT_EQ(result_pair.right, nullptr);
+  }
+}
+
+TEST(VectorTreeTest, RootOnlyTreeTransformComparisonDiffer) {
+  const VectorTreeTestType tree(verible::testing::MakeRootOnlyExampleTree());
+  auto other_tree = tree.Transform<NameOnly>(NameOnlyConverter);
+  other_tree.Value().name = "groot";
+  {
+    const auto result_pair = StructureEqual(tree, other_tree);
+    EXPECT_EQ(result_pair.left, nullptr);
+    EXPECT_EQ(result_pair.right, nullptr);
+  }
+  {
+    // Uses hetergeneous value comparison.
+    const auto result_pair = DeepEqual(tree, other_tree);
+    EXPECT_EQ(result_pair.left, &tree);
+    EXPECT_EQ(result_pair.right, &other_tree);
+  }
+}
+
+TEST(VectorTreeTest, NewChild) {
+  VectorTreeTestType tree(verible::testing::MakeRootOnlyExampleTree());
+  {
+    auto* child = tree.NewChild(NamedInterval(1, 2, "child"));
+    EXPECT_EQ(child->Parent(), &tree);
+    EXPECT_EQ(child->Root(), &tree);
+    EXPECT_TRUE(child->Children().empty());
+
+    const auto& value(child->Value());
+    EXPECT_EQ(value.left, 1);
+    EXPECT_EQ(value.right, 2);
+    EXPECT_EQ(value.name, "child");
+
+    ExpectPath(*child, "{0}");
+  }
+  {
+    auto* child = tree.NewChild(NamedInterval(2, 3, "lil-bro"));
+    EXPECT_EQ(child->Parent(), &tree);
+    EXPECT_EQ(child->Root(), &tree);
+    EXPECT_TRUE(child->Children().empty());
+
+    const auto& value(child->Value());
+    EXPECT_EQ(value.left, 2);
+    EXPECT_EQ(value.right, 3);
+    EXPECT_EQ(value.name, "lil-bro");
+    // Note: first child may have moved due to realloc
+
+    ExpectPath(*child, "{1}");
+  }
+}
+
+TEST(VectorTreeTest, NewSibling) {
+  VectorTreeTestType tree(verible::testing::MakeRootOnlyExampleTree());
+  {
+    auto* first_child = tree.NewChild(NamedInterval(1, 2, "child"));
+    ExpectPath(*first_child, "{0}");
+
+    auto* second_child =
+        first_child->NewSibling(NamedInterval(2, 3, "lil-bro"));
+    // Recall that NewSibling() may invalidate reference to first_child.
+    EXPECT_EQ(second_child->Parent(), &tree);
+    EXPECT_EQ(second_child->Root(), &tree);
+    EXPECT_TRUE(second_child->Children().empty());
+
+    const auto& value(second_child->Value());
+    EXPECT_EQ(value.left, 2);
+    EXPECT_EQ(value.right, 3);
+    EXPECT_EQ(value.name, "lil-bro");
+
+    ExpectPath(*second_child, "{1}");
+  }
+}
+
+TEST(VectorTreeTest, OneChildPolicy) {
+  const auto tree = verible::testing::MakeOneChildPolicyExampleTree();
+  EXPECT_EQ(tree.Parent(), nullptr);
+  EXPECT_FALSE(tree.Children().empty());
+
+  const auto& value = tree.Value();
+  EXPECT_EQ(value.left, 0);
+  EXPECT_EQ(value.right, 3);
+  EXPECT_EQ(value.name, "root");
+
+  {
+    const auto& child = tree.Children().front();
+    EXPECT_EQ(child.Parent(), &tree);
+    EXPECT_EQ(child.Root(), &tree);
+    EXPECT_FALSE(child.Children().empty());
+    EXPECT_EQ(child.NumAncestors(), 1);
+    EXPECT_EQ(child.BirthRank(), 0);
+
+    const auto& cvalue = child.Value();
+    EXPECT_EQ(cvalue.left, 0);
+    EXPECT_EQ(cvalue.right, 3);
+    EXPECT_EQ(cvalue.name, "gen1");
+    ExpectPath(child, "{0}");
+
+    EXPECT_EQ(child.NextSibling(), nullptr);
+    EXPECT_EQ(child.PreviousSibling(), nullptr);
+
+    // The invoking node need not be a leaf.
+    EXPECT_EQ(child.NextLeaf(), nullptr);
+    EXPECT_EQ(child.PreviousLeaf(), nullptr);
+
+    {
+      const auto& grandchild = child.Children().front();
+      EXPECT_EQ(grandchild.Parent(), &child);
+      EXPECT_EQ(grandchild.Root(), &tree);
+      EXPECT_TRUE(grandchild.Children().empty());
+      EXPECT_EQ(grandchild.NumAncestors(), 2);
+      EXPECT_EQ(grandchild.BirthRank(), 0);
+
+      const auto& gcvalue = grandchild.Value();
+      EXPECT_EQ(gcvalue.left, 0);
+      EXPECT_EQ(gcvalue.right, 3);
+      EXPECT_EQ(gcvalue.name, "gen2");
+      ExpectPath(grandchild, "{0,0}");
+
+      // As the ancestry chain is linear, Leftmost == Rightmost.
+      EXPECT_EQ(child.LeftmostDescendant(), &grandchild);
+      EXPECT_EQ(child.RightmostDescendant(), &grandchild);
+      EXPECT_EQ(tree.LeftmostDescendant(), &grandchild);
+      EXPECT_EQ(tree.RightmostDescendant(), &grandchild);
+
+      EXPECT_EQ(grandchild.NextSibling(), nullptr);
+      EXPECT_EQ(grandchild.PreviousSibling(), nullptr);
+
+      // There is still only a single leaf in a one-child tree,
+      // thus next and previous do not exist.
+      EXPECT_EQ(grandchild.NextLeaf(), nullptr);
+      EXPECT_EQ(grandchild.PreviousLeaf(), nullptr);
+    }
+  }
+}
+
+TEST(VectorTreeTest, OneChildPolicyContainsAncestor) {
+  const auto tree = verible::testing::MakeOneChildPolicyExampleTree();
+
+  {
+    const auto& child = tree.Children().front();
+
+    EXPECT_FALSE(tree.ContainsAncestor(&child));
+    EXPECT_TRUE(child.ContainsAncestor(&tree));
+
+    {
+      const auto& grandchild = child.Children().front();
+
+      EXPECT_FALSE(child.ContainsAncestor(&grandchild));
+      EXPECT_TRUE(grandchild.ContainsAncestor(&child));
+
+      EXPECT_FALSE(tree.ContainsAncestor(&grandchild));
+      EXPECT_TRUE(grandchild.ContainsAncestor(&tree));
+    }
+  }
+}
+
+TEST(VectorTreeTest, StructureEqualOneChild) {
+  const VectorTreeTestType ltree(
+      verible::testing::MakeOneChildPolicyExampleTree());
+  const VectorTreeTestType rtree(
+      verible::testing::MakeOneChildPolicyExampleTree());
+  const auto result_pair = StructureEqual(ltree, rtree);
+  EXPECT_EQ(result_pair.left, nullptr);
+  EXPECT_EQ(result_pair.right, nullptr);
+}
+
+TEST(VectorTreeTest, StructureEqualOneChildIgnoreValues) {
+  VectorTreeTestType ltree(verible::testing::MakeOneChildPolicyExampleTree());
+  VectorTreeTestType rtree(verible::testing::MakeOneChildPolicyExampleTree());
+  ltree.Children()[0].Value().right = 32;
+  rtree.Children()[0].Value().right = 77;
+  const auto result_pair = StructureEqual(ltree, rtree);
+  EXPECT_EQ(result_pair.left, nullptr);
+  EXPECT_EQ(result_pair.right, nullptr);
+}
+
+TEST(VectorTreeTest, DeepEqualOneChild) {
+  const VectorTreeTestType ltree(
+      verible::testing::MakeOneChildPolicyExampleTree());
+  const VectorTreeTestType rtree(
+      verible::testing::MakeOneChildPolicyExampleTree());
+  const auto result_pair = DeepEqual(ltree, rtree);
+  EXPECT_EQ(result_pair.left, nullptr);
+  EXPECT_EQ(result_pair.right, nullptr);
+}
+
+TEST(VectorTreeTest, DeepEqualOneChildDifferentChildValues) {
+  VectorTreeTestType ltree(verible::testing::MakeOneChildPolicyExampleTree());
+  VectorTreeTestType rtree(verible::testing::MakeOneChildPolicyExampleTree());
+  auto& lchild = ltree.Children()[0];
+  auto& rchild = rtree.Children()[0];
+  lchild.Value().right = 32;
+  rchild.Value().right = 77;
+  const auto result_pair = DeepEqual(ltree, rtree);
+  EXPECT_EQ(result_pair.left, &lchild);
+  EXPECT_EQ(result_pair.right, &rchild);
+}
+
+TEST(VectorTreeTest, DeepEqualOneChildDifferentGrandchildValues) {
+  VectorTreeTestType ltree(verible::testing::MakeOneChildPolicyExampleTree());
+  VectorTreeTestType rtree(verible::testing::MakeOneChildPolicyExampleTree());
+  auto& lchild = ltree.Children()[0].Children()[0];  // only grandchild
+  auto& rchild = rtree.Children()[0].Children()[0];  // only grandchild
+  lchild.Value().right = 32;
+  rchild.Value().right = 77;
+  const auto result_pair = DeepEqual(ltree, rtree);
+  EXPECT_EQ(result_pair.left, &lchild);
+  EXPECT_EQ(result_pair.right, &rchild);
+}
+
+TEST(VectorTreeTest, DeepEqualOneChildGrandchildValuesHeterogeneous) {
+  VectorTreeTestType ltree(verible::testing::MakeOneChildPolicyExampleTree());
+  auto rtree = ltree.Transform<NameOnly>(NameOnlyConverter);
+  {  // Match
+    const auto result_pair = DeepEqual(ltree, rtree);
+    EXPECT_EQ(result_pair.left, nullptr);
+    EXPECT_EQ(result_pair.right, nullptr);
+  }
+  {                                          // Mismatch
+    const std::vector<size_t> path({0, 0});  // only grandchild
+    auto& lchild = ltree.DescendPath(path.begin(), path.end());
+    auto& rchild = rtree.DescendPath(path.begin(), path.end());
+    lchild.Value().name = "alex";
+    rchild.Value().name = "james";
+    const auto result_pair = DeepEqual(ltree, rtree);
+    EXPECT_EQ(result_pair.left, &lchild);
+    EXPECT_EQ(result_pair.right, &rchild);
+  }
+}
+
+template <typename T>
+void VerifyFamilyTree(const VectorTree<T>& tree) {
+  EXPECT_EQ(tree.Parent(), nullptr);
+  EXPECT_EQ(tree.Root(), &tree);
+  EXPECT_FALSE(tree.Children().empty());
+  EXPECT_EQ(tree.NumAncestors(), 0);
+  EXPECT_EQ(tree.BirthRank(), 0);
+
+  const auto tree_path = MakePath(tree);
+  EXPECT_TRUE(tree_path.empty());
+  EXPECT_EQ(&tree.DescendPath(tree_path.begin(), tree_path.end()), &tree);
+
+  for (int i = 0; i < 2; ++i) {
+    const auto& child = tree.Children()[i];
+    EXPECT_EQ(child.Parent(), &tree);
+    EXPECT_EQ(child.Root(), &tree);
+    EXPECT_FALSE(child.Children().empty());
+    EXPECT_EQ(child.NumAncestors(), 1);
+    EXPECT_EQ(child.BirthRank(), i);
+
+    const auto child_path = MakePath(child);
+    EXPECT_THAT(child_path, ElementsAre(i));
+    EXPECT_EQ(&tree.DescendPath(child_path.begin(), child_path.end()), &child);
+
+    for (int j = 0; j < 2; ++j) {
+      const auto& grandchild = child.Children()[j];
+      EXPECT_EQ(grandchild.Parent(), &child);
+      EXPECT_EQ(grandchild.Root(), &tree);
+      EXPECT_TRUE(grandchild.Children().empty());
+      EXPECT_EQ(grandchild.NumAncestors(), 2);
+      EXPECT_EQ(grandchild.BirthRank(), j);
+
+      const auto grandchild_path = MakePath(grandchild);
+      EXPECT_THAT(grandchild_path, ElementsAre(i, j));
+      const auto begin = grandchild_path.begin(), end = grandchild_path.end();
+      EXPECT_EQ(&tree.DescendPath(begin, end), &grandchild);
+      EXPECT_EQ(&child.DescendPath(begin + 1, end), &grandchild);
+      ExpectPath(grandchild, absl::StrCat("{", i, ",", j, "}"));
+    }
+  }
+}
+
+// Tests internal consistency of BirthRank and Path properties.
+TEST(VectorTreeTest, FamilyTreeMembers) {
+  const auto tree = verible::testing::MakeExampleFamilyTree();
+  VerifyFamilyTree(tree);
+}
+
+// Tests internal consistency and properties of copied tree.
+TEST(VectorTreeTest, FamilyTreeCopiedMembers) {
+  const auto orig_tree = verible::testing::MakeExampleFamilyTree();
+  const auto tree(orig_tree);  // copied
+  VerifyFamilyTree(orig_tree);
+  VerifyFamilyTree(tree);
+
+  const auto result_pair = DeepEqual(orig_tree, tree);
+  EXPECT_EQ(result_pair.left, nullptr);
+  EXPECT_EQ(result_pair.right, nullptr);
+}
+
+// Tests internal consistency and properties of moved tree.
+TEST(VectorTreeTest, FamilyTreeMovedMembers) {
+  auto orig_tree = verible::testing::MakeExampleFamilyTree();
+  const auto tree(std::move(orig_tree));  // moved
+  VerifyFamilyTree(tree);
+}
+
+TEST(VectorTreeTest, FamilyTreeLeftRightmostDescendants) {
+  auto tree = verible::testing::MakeExampleFamilyTree();
+  const auto left_path = {0, 0};
+  const auto right_path = {1, 1};
+  {  // Test mutable method variants.
+    EXPECT_EQ(tree.LeftmostDescendant(),
+              &tree.DescendPath(left_path.begin(), left_path.end()));
+    EXPECT_EQ(tree.RightmostDescendant(),
+              &tree.DescendPath(right_path.begin(), right_path.end()));
+  }
+  {  // Test const method variants.
+    const auto& ctree(tree);
+    EXPECT_EQ(ctree.LeftmostDescendant(),
+              &ctree.DescendPath(left_path.begin(), left_path.end()));
+    EXPECT_EQ(ctree.RightmostDescendant(),
+              &ctree.DescendPath(right_path.begin(), right_path.end()));
+  }
+}
+
+TEST(VectorTreeTest, FamilyTreeContainsAncestor) {
+  const auto tree = verible::testing::MakeExampleFamilyTree();
+  const auto& child_0 = tree.Children()[0];
+  const auto& child_1 = tree.Children()[1];
+  const auto& grandchild_00 = child_0.Children()[0];
+  const auto& grandchild_01 = child_0.Children()[1];
+  const auto& grandchild_10 = child_1.Children()[0];
+  const auto& grandchild_11 = child_1.Children()[1];
+
+  EXPECT_FALSE(tree.ContainsAncestor(&child_0));
+  EXPECT_FALSE(tree.ContainsAncestor(&child_1));
+  EXPECT_FALSE(tree.ContainsAncestor(&grandchild_00));
+  EXPECT_FALSE(tree.ContainsAncestor(&grandchild_01));
+  EXPECT_FALSE(tree.ContainsAncestor(&grandchild_10));
+  EXPECT_FALSE(tree.ContainsAncestor(&grandchild_11));
+
+  EXPECT_TRUE(child_0.ContainsAncestor(&tree));
+  EXPECT_TRUE(child_1.ContainsAncestor(&tree));
+  EXPECT_TRUE(grandchild_00.ContainsAncestor(&tree));
+  EXPECT_TRUE(grandchild_01.ContainsAncestor(&tree));
+  EXPECT_TRUE(grandchild_10.ContainsAncestor(&tree));
+  EXPECT_TRUE(grandchild_11.ContainsAncestor(&tree));
+
+  EXPECT_FALSE(child_0.ContainsAncestor(&child_1));
+  EXPECT_FALSE(child_1.ContainsAncestor(&child_0));
+
+  EXPECT_FALSE(child_0.ContainsAncestor(&grandchild_00));
+  EXPECT_FALSE(child_0.ContainsAncestor(&grandchild_01));
+  EXPECT_FALSE(child_0.ContainsAncestor(&grandchild_10));
+  EXPECT_FALSE(child_0.ContainsAncestor(&grandchild_11));
+  EXPECT_FALSE(child_1.ContainsAncestor(&grandchild_00));
+  EXPECT_FALSE(child_1.ContainsAncestor(&grandchild_01));
+  EXPECT_FALSE(child_1.ContainsAncestor(&grandchild_10));
+  EXPECT_FALSE(child_1.ContainsAncestor(&grandchild_11));
+
+  EXPECT_TRUE(grandchild_00.ContainsAncestor(&child_0));
+  EXPECT_FALSE(grandchild_00.ContainsAncestor(&child_1));
+  EXPECT_TRUE(grandchild_01.ContainsAncestor(&child_0));
+  EXPECT_FALSE(grandchild_01.ContainsAncestor(&child_1));
+  EXPECT_FALSE(grandchild_10.ContainsAncestor(&child_0));
+  EXPECT_TRUE(grandchild_10.ContainsAncestor(&child_1));
+  EXPECT_FALSE(grandchild_11.ContainsAncestor(&child_0));
+  EXPECT_TRUE(grandchild_11.ContainsAncestor(&child_1));
+}
+
+TEST(VectorTreeTest, FamilyTreeNextPreviousSiblings) {
+  auto tree = verible::testing::MakeExampleFamilyTree();
+  auto& child_0 = tree.Children()[0];
+  auto& child_1 = tree.Children()[1];
+  auto& grandchild_00 = child_0.Children()[0];
+  auto& grandchild_01 = child_0.Children()[1];
+  auto& grandchild_10 = child_1.Children()[0];
+  auto& grandchild_11 = child_1.Children()[1];
+
+  // Verify child generation.
+  EXPECT_EQ(child_0.NextSibling(), &child_1);
+  EXPECT_EQ(child_1.NextSibling(), nullptr);
+  EXPECT_EQ(child_0.PreviousSibling(), nullptr);
+  EXPECT_EQ(child_1.PreviousSibling(), &child_0);
+
+  // Verify grandchild generation.
+  EXPECT_EQ(grandchild_00.NextSibling(), &grandchild_01);
+  EXPECT_EQ(grandchild_01.NextSibling(), nullptr);
+  EXPECT_EQ(grandchild_10.NextSibling(), &grandchild_11);
+  EXPECT_EQ(grandchild_11.NextSibling(), nullptr);
+  EXPECT_EQ(grandchild_00.PreviousSibling(), nullptr);
+  EXPECT_EQ(grandchild_01.PreviousSibling(), &grandchild_00);
+  EXPECT_EQ(grandchild_10.PreviousSibling(), nullptr);
+  EXPECT_EQ(grandchild_11.PreviousSibling(), &grandchild_10);
+
+  {  // same but testing const method variants.
+    const auto& cchild_0(child_0);
+    const auto& cchild_1(child_1);
+    const auto& cgrandchild_00(grandchild_00);
+    const auto& cgrandchild_01(grandchild_01);
+    const auto& cgrandchild_10(grandchild_10);
+    const auto& cgrandchild_11(grandchild_11);
+
+    // Verify child generation.
+    EXPECT_EQ(cchild_0.NextSibling(), &cchild_1);
+    EXPECT_EQ(cchild_1.NextSibling(), nullptr);
+    EXPECT_EQ(cchild_0.PreviousSibling(), nullptr);
+    EXPECT_EQ(cchild_1.PreviousSibling(), &cchild_0);
+
+    // Verify grandchild generation.
+    EXPECT_EQ(cgrandchild_00.NextSibling(), &cgrandchild_01);
+    EXPECT_EQ(cgrandchild_01.NextSibling(), nullptr);
+    EXPECT_EQ(cgrandchild_10.NextSibling(), &cgrandchild_11);
+    EXPECT_EQ(cgrandchild_11.NextSibling(), nullptr);
+    EXPECT_EQ(cgrandchild_00.PreviousSibling(), nullptr);
+    EXPECT_EQ(cgrandchild_01.PreviousSibling(), &cgrandchild_00);
+    EXPECT_EQ(cgrandchild_10.PreviousSibling(), nullptr);
+    EXPECT_EQ(cgrandchild_11.PreviousSibling(), &cgrandchild_10);
+  }
+}
+
+TEST(VectorTreeTest, FamilyTreeNextPreviousLeafChain) {
+  auto tree = verible::testing::MakeExampleFamilyTree();
+  auto& grandchild_00 = tree.Children()[0].Children()[0];
+  auto& grandchild_01 = tree.Children()[0].Children()[1];
+  auto& grandchild_10 = tree.Children()[1].Children()[0];
+  auto& grandchild_11 = tree.Children()[1].Children()[1];
+
+  // Verify forward links.
+  EXPECT_EQ(grandchild_00.NextLeaf(), &grandchild_01);
+  EXPECT_EQ(grandchild_01.NextLeaf(), &grandchild_10);
+  EXPECT_EQ(grandchild_10.NextLeaf(), &grandchild_11);
+  EXPECT_EQ(grandchild_11.NextLeaf(), nullptr);
+
+  // Verify reverse links.
+  EXPECT_EQ(grandchild_00.PreviousLeaf(), nullptr);
+  EXPECT_EQ(grandchild_01.PreviousLeaf(), &grandchild_00);
+  EXPECT_EQ(grandchild_10.PreviousLeaf(), &grandchild_01);
+  EXPECT_EQ(grandchild_11.PreviousLeaf(), &grandchild_10);
+
+  {  // same but testing const method variants.
+    const auto& cgrandchild_00(grandchild_00);
+    const auto& cgrandchild_01(grandchild_01);
+    const auto& cgrandchild_10(grandchild_10);
+    const auto& cgrandchild_11(grandchild_11);
+
+    // Verify forward links.
+    EXPECT_EQ(cgrandchild_00.NextLeaf(), &cgrandchild_01);
+    EXPECT_EQ(cgrandchild_01.NextLeaf(), &cgrandchild_10);
+    EXPECT_EQ(cgrandchild_10.NextLeaf(), &cgrandchild_11);
+    EXPECT_EQ(cgrandchild_11.NextLeaf(), nullptr);
+
+    // Verify reverse links.
+    EXPECT_EQ(cgrandchild_00.PreviousLeaf(), nullptr);
+    EXPECT_EQ(cgrandchild_01.PreviousLeaf(), &cgrandchild_00);
+    EXPECT_EQ(cgrandchild_10.PreviousLeaf(), &cgrandchild_01);
+    EXPECT_EQ(cgrandchild_11.PreviousLeaf(), &cgrandchild_10);
+  }
+}
+
+TEST(VectorTreeTest, FamilyTreeMembersTransformed) {
+  const auto orig_tree = verible::testing::MakeExampleFamilyTree();
+  const auto tree = orig_tree.Transform<NameOnly>(NameOnlyConverter);
+  VerifyFamilyTree(orig_tree);
+  VerifyFamilyTree(tree);
+
+  {
+    const auto result_pair = StructureEqual(orig_tree, tree);
+    EXPECT_EQ(result_pair.left, nullptr);
+    EXPECT_EQ(result_pair.right, nullptr);
+  }
+  {  // Converse comparison.
+    const auto result_pair = StructureEqual(tree, orig_tree);
+    EXPECT_EQ(result_pair.left, nullptr);
+    EXPECT_EQ(result_pair.right, nullptr);
+  }
+
+  {
+    // Uses hetergeneous value comparison.
+    const auto result_pair = DeepEqual(orig_tree, tree);
+    EXPECT_EQ(result_pair.left, nullptr);
+    EXPECT_EQ(result_pair.right, nullptr);
+  }
+
+  // Mutate one grandchild at a time.
+  for (size_t i = 0; i < 2; ++i) {
+    for (size_t j = 0; j < 2; ++j) {
+      auto ltree(orig_tree);  // copy
+      auto rtree(tree);       // copy
+      const std::vector<size_t> path({i, j});
+      auto& lchild = ltree.DescendPath(path.begin(), path.end());
+      auto& rchild = rtree.DescendPath(path.begin(), path.end());
+
+      lchild.Value().name = "foo";
+      rchild.Value().name = "bar";
+      const auto result_pair = DeepEqual(ltree, rtree);
+      EXPECT_EQ(result_pair.left, &lchild);
+      EXPECT_EQ(result_pair.right, &rchild);
+    }
+  }
+}
+
+TEST(VectorTreeTest, FamilyTreeMembersDifferentStructureExtraGreatGrand) {
+  // Mutate grandchildren structure.
+  for (size_t i = 0; i < 2; ++i) {
+    for (size_t j = 0; j < 2; ++j) {
+      auto ltree = verible::testing::MakeExampleFamilyTree();
+      auto rtree = verible::testing::MakeExampleFamilyTree();
+      const std::vector<size_t> path({i, j});
+      auto& lchild = ltree.DescendPath(path.begin(), path.end());
+      auto& rchild = rtree.DescendPath(path.begin(), path.end());
+
+      rchild.NewChild(NamedInterval(8, 9, "black-sheep"));
+      const auto result_pair = StructureEqual(ltree, rtree);
+      EXPECT_EQ(result_pair.left, &lchild);
+      EXPECT_EQ(result_pair.right, &rchild);
+    }
+  }
+}
+
+TEST(VectorTreeTest, FamilyTreeMembersDifferentStructureExtraGrand) {
+  // Mutate grandchildren structure.
+  for (size_t i = 0; i < 2; ++i) {
+    for (size_t j = 0; j < 2; ++j) {
+      auto ltree = verible::testing::MakeExampleFamilyTree();
+      auto rtree = verible::testing::MakeExampleFamilyTree();
+      const std::vector<size_t> path({i, j});
+      const auto& lparent = ltree.DescendPath(path.begin(), path.end() - 1);
+      const auto& rparent = rtree.DescendPath(path.begin(), path.end() - 1);
+      auto& rchild = rtree.DescendPath(path.begin(), path.end());
+
+      rchild.NewSibling(NamedInterval(8, 9, "black-sheep"));
+      const auto result_pair = StructureEqual(ltree, rtree);
+      EXPECT_EQ(result_pair.left, &lparent);
+      EXPECT_EQ(result_pair.right, &rparent);
+    }
+  }
+}
+
+TEST(VectorTreeTest, FamilyTreeMembersDifferentStructureMissingGrand) {
+  // Remove one set of grandchildren.
+  for (size_t i = 0; i < 2; ++i) {
+    auto ltree = verible::testing::MakeExampleFamilyTree();
+    auto rtree = verible::testing::MakeExampleFamilyTree();
+    const std::vector<size_t> path({i});
+    auto& lchild = ltree.DescendPath(path.begin(), path.end());
+    auto& rchild = rtree.DescendPath(path.begin(), path.end());
+
+    lchild.Children().clear();
+    const auto result_pair = StructureEqual(ltree, rtree);
+    EXPECT_EQ(result_pair.left, &lchild);
+    EXPECT_EQ(result_pair.right, &rchild);
+  }
+}
+
+bool EqualNamedIntervalIgnoreName(const NamedInterval& l,
+                                  const NamedInterval& r) {
+  return l.left == r.left && l.right == r.right;  // ignore .name
+}
+
+TEST(VectorTreeTest, FamilyTreeMembersDeepEqualCustomComparator) {
+  // Mutate grandchildren structure.
+  for (size_t i = 0; i < 2; ++i) {
+    for (size_t j = 0; j < 2; ++j) {
+      auto ltree = verible::testing::MakeExampleFamilyTree();
+      auto rtree = verible::testing::MakeExampleFamilyTree();
+      const std::vector<size_t> path({i, j});
+      auto& lchild = ltree.DescendPath(path.begin(), path.end());
+      auto& rchild = rtree.DescendPath(path.begin(), path.end());
+      lchild.Value().name = "larry";
+      rchild.Value().name = "sergey";
+
+      {
+        const auto result_pair = DeepEqual(ltree, rtree);
+        EXPECT_EQ(result_pair.left, &lchild);
+        EXPECT_EQ(result_pair.right, &rchild);
+      }
+      {
+        const auto result_pair =
+            DeepEqual(ltree, rtree, EqualNamedIntervalIgnoreName);
+        EXPECT_EQ(result_pair.left, nullptr);
+        EXPECT_EQ(result_pair.right, nullptr);
+      }
+    }
+  }
+}
+
+TEST(VectorTreeTest, ApplyPreOrderPrint) {
+  const auto tree = verible::testing::MakeExampleFamilyTree();
+
+  std::ostringstream stream;
+  tree.ApplyPreOrder([&stream](const NamedInterval& interval) {
+    IntervalPrinter(&stream, interval);
+  });
+  EXPECT_EQ(stream.str(), absl::StrJoin(
+                              {
+                                  "(0, 4, grandparent)",
+                                  "(0, 2, parent1)",
+                                  "(0, 1, child1)",
+                                  "(1, 2, child2)",
+                                  "(2, 4, parent2)",
+                                  "(2, 3, child3)",
+                                  "(3, 4, child4)",
+                              },
+                              "\n") +
+                              "\n");
+}
+
+TEST(VectorTreeTest, ApplyPreOrderPrintTransformed) {
+  const auto orig_tree = verible::testing::MakeExampleFamilyTree();
+  const auto tree = orig_tree.Transform<NameOnly>(NameOnlyConverter);
+
+  std::ostringstream stream;
+  tree.ApplyPreOrder([&stream](const NameOnly& n) { stream << n; });
+  EXPECT_EQ(stream.str(), absl::StrJoin(
+                              {
+                                  "(grandparent)",
+                                  "(parent1)",
+                                  "(child1)",
+                                  "(child2)",
+                                  "(parent2)",
+                                  "(child3)",
+                                  "(child4)",
+                              },
+                              "\n") +
+                              "\n");
+}
+
+TEST(VectorTreeTest, ApplyPostOrderPrint) {
+  const auto tree = verible::testing::MakeExampleFamilyTree();
+
+  std::ostringstream stream;
+  tree.ApplyPostOrder([&stream](const NamedInterval& interval) {
+    IntervalPrinter(&stream, interval);
+  });
+  EXPECT_EQ(stream.str(), absl::StrJoin(
+                              {
+                                  "(0, 1, child1)",
+                                  "(1, 2, child2)",
+                                  "(0, 2, parent1)",
+                                  "(2, 3, child3)",
+                                  "(3, 4, child4)",
+                                  "(2, 4, parent2)",
+                                  "(0, 4, grandparent)",
+                              },
+                              "\n") +
+                              "\n");
+}
+
+TEST(VectorTreeTest, ApplyPreOrderVerify) {
+  const auto tree = verible::testing::MakeExampleFamilyTree();
+  // Verify invariant at every node.
+  tree.ApplyPreOrder(verible::testing::VerifyInterval);
+}
+
+TEST(VectorTreeTest, ApplyPostOrderVerify) {
+  const auto tree = verible::testing::MakeExampleFamilyTree();
+  // Verify invariant at every node.
+  tree.ApplyPostOrder(verible::testing::VerifyInterval);
+}
+
+TEST(VectorTreeTest, ApplyPreOrderTransformValue) {
+  auto tree = verible::testing::MakeExampleFamilyTree();
+
+  // Transform intervals.
+  std::vector<absl::string_view> visit_order;
+  const int shift = 2;
+  tree.ApplyPreOrder([=, &visit_order](NamedInterval& interval) {
+    visit_order.push_back(interval.name);
+    interval.left += shift;
+    interval.right += shift;
+  });
+  EXPECT_THAT(visit_order,
+              ElementsAre("grandparent", "parent1", "child1", "child2",
+                          "parent2", "child3", "child4"));
+
+  // Print output for verification.
+  std::ostringstream stream;
+  tree.ApplyPreOrder([&stream](const NamedInterval& interval) {
+    IntervalPrinter(&stream, interval);
+  });
+  EXPECT_EQ(stream.str(), absl::StrJoin(
+                              {
+                                  "(2, 6, grandparent)",
+                                  "(2, 4, parent1)",
+                                  "(2, 3, child1)",
+                                  "(3, 4, child2)",
+                                  "(4, 6, parent2)",
+                                  "(4, 5, child3)",
+                                  "(5, 6, child4)",
+                              },
+                              "\n") +
+                              "\n");
+}
+
+TEST(VectorTreeTest, ApplyPreOrderTransformNode) {
+  auto tree = verible::testing::MakeExampleFamilyTree();
+
+  // Transform intervals.
+  std::vector<absl::string_view> visit_order;
+  const int shift = 2;
+  tree.ApplyPreOrder([=, &visit_order](VectorTreeTestType& node) {
+    auto& interval = node.Value();
+    visit_order.push_back(interval.name);
+    interval.left += shift;
+    interval.right += shift;
+  });
+  EXPECT_THAT(visit_order,
+              ElementsAre("grandparent", "parent1", "child1", "child2",
+                          "parent2", "child3", "child4"));
+
+  // Print output for verification.
+  std::ostringstream stream;
+  tree.ApplyPreOrder([&stream](const NamedInterval& interval) {
+    IntervalPrinter(&stream, interval);
+  });
+  EXPECT_EQ(stream.str(), absl::StrJoin(
+                              {
+                                  "(2, 6, grandparent)",
+                                  "(2, 4, parent1)",
+                                  "(2, 3, child1)",
+                                  "(3, 4, child2)",
+                                  "(4, 6, parent2)",
+                                  "(4, 5, child3)",
+                                  "(5, 6, child4)",
+                              },
+                              "\n") +
+                              "\n");
+}
+
+TEST(VectorTreeTest, ApplyPostOrderTransformValue) {
+  auto tree = verible::testing::MakeExampleFamilyTree();
+
+  // Transform intervals.
+  std::vector<absl::string_view> visit_order;
+  const int shift = 1;
+  tree.ApplyPostOrder([=, &visit_order](NamedInterval& interval) {
+    visit_order.push_back(interval.name);
+    interval.left += shift;
+    interval.right += shift;
+  });
+  EXPECT_THAT(visit_order, ElementsAre("child1", "child2", "parent1", "child3",
+                                       "child4", "parent2", "grandparent"));
+
+  // Print output for verification.
+  std::ostringstream stream;
+  tree.ApplyPostOrder([&stream](const NamedInterval& interval) {
+    IntervalPrinter(&stream, interval);
+  });
+  EXPECT_EQ(stream.str(), absl::StrJoin(
+                              {
+                                  "(1, 2, child1)",
+                                  "(2, 3, child2)",
+                                  "(1, 3, parent1)",
+                                  "(3, 4, child3)",
+                                  "(4, 5, child4)",
+                                  "(3, 5, parent2)",
+                                  "(1, 5, grandparent)",
+                              },
+                              "\n") +
+                              "\n");
+}
+
+TEST(VectorTreeTest, ApplyPostOrderTransformNode) {
+  auto tree = verible::testing::MakeExampleFamilyTree();
+
+  // Transform intervals.
+  std::vector<absl::string_view> visit_order;
+  const int shift = 1;
+  tree.ApplyPostOrder([=, &visit_order](VectorTreeTestType& node) {
+    auto& interval = node.Value();
+    visit_order.push_back(interval.name);
+    interval.left += shift;
+    interval.right += shift;
+  });
+  EXPECT_THAT(visit_order, ElementsAre("child1", "child2", "parent1", "child3",
+                                       "child4", "parent2", "grandparent"));
+
+  // Print output for verification.
+  std::ostringstream stream;
+  tree.ApplyPostOrder([&stream](const NamedInterval& interval) {
+    IntervalPrinter(&stream, interval);
+  });
+  EXPECT_EQ(stream.str(), absl::StrJoin(
+                              {
+                                  "(1, 2, child1)",
+                                  "(2, 3, child2)",
+                                  "(1, 3, parent1)",
+                                  "(3, 4, child3)",
+                                  "(4, 5, child4)",
+                                  "(3, 5, parent2)",
+                                  "(1, 5, grandparent)",
+                              },
+                              "\n") +
+                              "\n");
+}
+
+TEST(VectorTreeTest, PrintTree) {
+  const auto tree = verible::testing::MakeExampleFamilyTree();
+  std::ostringstream stream;
+  stream << tree;
+  EXPECT_EQ(stream.str(), R"({ ((0, 4, grandparent))
+  { ((0, 2, parent1))
+    { ((0, 1, child1)) }
+    { ((1, 2, child2)) }
+  }
+  { ((2, 4, parent2))
+    { ((2, 3, child3)) }
+    { ((3, 4, child4)) }
+  }
+})");
+}
+
+}  // namespace
+}  // namespace verible

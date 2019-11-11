@@ -1,0 +1,89 @@
+// Copyright 2017-2019 The Verible Authors.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+#include "common/text/token_info.h"
+
+#include <algorithm>
+#include <cstddef>
+#include <iterator>
+#include <sstream>  // IWYU pragma: keep  // for ostringstream
+#include <string>
+#include <vector>
+
+#include "absl/strings/string_view.h"
+#include "common/strings/rebase.h"
+#include "common/util/logging.h"
+#include "common/util/range.h"
+
+namespace verible {
+
+TokenInfo TokenInfo::EOFToken() {
+  static constexpr absl::string_view null_text;
+  return TokenInfo(TK_EOF, null_text, 0);
+}
+
+bool TokenInfo::operator==(const TokenInfo& token) const {
+  return token_enum == token.token_enum &&
+         (token_enum == TK_EOF ||  // All EOF tokens considered equal.
+          BoundsEqual(text, token.text));
+}
+
+TokenInfo::Context::Context(absl::string_view b)
+    : base(b),
+      // By default, just print the enum integer value, un-translated.
+      token_enum_translator([](std::ostream& stream, int e) { stream << e; }) {}
+
+// TODO(fangism): pass in a token_enum interpreter for human readability
+std::ostream& TokenInfo::ToStream(std::ostream& output_stream,
+                                  const Context& context) const {
+  output_stream << "(#";
+  context.token_enum_translator(output_stream, token_enum);
+  output_stream << " @" << left(context.base) << '-' << right(context.base)
+                << ": \"" << text << "\")";
+  CHECK(IsSubRange(text, context.base));
+  return output_stream;
+}
+
+std::ostream& TokenInfo::ToStream(std::ostream& output_stream) const {
+  return output_stream << "(#" << token_enum << ": \"" << text << "\")";
+}
+
+std::string TokenInfo::ToString(const Context& context) const {
+  std::ostringstream output_stream;
+  ToStream(output_stream, context);
+  return output_stream.str();
+}
+
+std::string TokenInfo::ToString() const {
+  std::ostringstream output_stream;
+  ToStream(output_stream);
+  return output_stream.str();
+}
+
+void TokenInfo::RebaseStringView(absl::string_view new_text) {
+  verible::RebaseStringView(&text, new_text);
+}
+
+void TokenInfo::Concatenate(std::string* out, std::vector<TokenInfo>* tokens) {
+  ConcatenateTokenInfos(out, tokens->begin(), tokens->end());
+}
+
+// Print human-readable token information.
+std::ostream& operator<<(std::ostream& output_stream, const TokenInfo& token) {
+  // This will exclude any byte offset information because the base address
+  // of the enclosing stream is not known to this function.
+  return token.ToStream(output_stream);
+}
+
+}  // namespace verible
