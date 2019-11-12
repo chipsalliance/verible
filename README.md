@@ -26,7 +26,13 @@ To build, you need the [bazel] build system.
 ```bash
 # Build all tools and libraries
 bazel build --cxxopt='-std=c++17' //...
+```
 
+### Test
+
+To run the tests in [bazel]:
+
+```bash
 # Run all tests
 bazel test --cxxopt='-std=c++17' //...
 ```
@@ -34,6 +40,17 @@ bazel test --cxxopt='-std=c++17' //...
 You can access the generated artifacts under `bazel-bin/`. For instance the
 syntax checker will be at `bazel-bin/verilog/tools/syntax/verilog_syntax`
 (corresponding to the target name `//verilog/tools/syntax:verilog_syntax`).
+
+### Install
+
+Install in the preferred way on your operating system. On Unix-like systems,
+this would be commands like (for the tools described below):
+
+```bash
+sudo install bazel-bin/verilog/tools/syntax/verilog_syntax /usr/local/bin
+sudo install bazel-bin/verilog/tools/formatter/verilog_format /usr/local/bin
+sudo install bazel-bin/verilog/tools/lint/verilog_lint /usr/local/bin
+```
 
 ## SystemVerilog Support
 
@@ -58,12 +75,8 @@ lookahead) where required by the language.
 The parser can be tested as a standalone program,
 `//verilog/tools/syntax:verilog_syntax`.
 
-Install in the preferred way on your operating systm. On Unix-like systems, this
-would be `sudo install bazel-bin/verilog/tools/syntax/verilog_syntax
-/usr/local/bin`
-
 ```
-verilog_syntax: usage: /usr/local/bin/verilog_syntax [options] <file> [<file>...]
+verilog_syntax: usage: verilog_syntax [options] <file> [<file>...]
 
   Flags from verilog/tools/syntax/verilog_syntax.cc:
     -printrawtokens (Prints all lexed tokens, including filtered ones.);
@@ -228,11 +241,8 @@ syntax tree pattern matching to find style violations.
 
 The linter tool is available as `//verilog/tools/lint:verilog_lint`.
 
-Install in the preferred way on your operating systm. On Unix-like systems, this
-would be `sudo install bazel-bin/verilog/tools/lint/verilog_lint /usr/local/bin`
-
 ```
-verilog_lint: usage: /usr/local/bin/verilog_lint [options] <file> [<file>...]
+verilog_lint: usage: verilog_lint [options] <file> [<file>...]
 
   Flags from verilog/tools/lint/verilog_lint.cc:
     -generate_markdown (If true, print the description of every rule formatted
@@ -256,10 +266,6 @@ manually manage whitespace, wrapping, and indentation, and to provide a tool
 that can be integrated into any editor to enable editor-independent consistency.
 
 The formatter tool is available as `//verilog/tools/formatter:verilog_format`.
-
-Install in the preferred way on your operating systm. On Unix-like systems, this
-would be `sudo install bazel-bin/verilog/tools/formatter/verilog_format
-/usr/local/bin`
 
 ```
 verilog_format: usage: verilog_format [options] <file>
