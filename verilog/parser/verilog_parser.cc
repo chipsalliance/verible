@@ -27,7 +27,7 @@ namespace verilog {
 
 // Bison-generated parsing function.
 // Its implementation is in the generated file verilog.tab.cc,
-// from verilog.yc, by the genyacc rule for 'verilog_y'.
+// from verilog.y, by the genyacc rule for 'verilog_y'.
 extern int verilog_parse(::verible::ParserParam* param);
 
 // Controls yacc's detailed verilog traces

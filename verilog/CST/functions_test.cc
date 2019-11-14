@@ -112,7 +112,7 @@ TEST(FindAllFunctionDeclarationsTest, FunctionInsideModule) {
 }
 
 // TODO(kathuriac): Add test case for function inside cross_body_item see
-// (verilog.yc)
+// (verilog.y)
 
 TEST(GetFunctionHeaderTest, Header) {
   const char* kTestCases[] = {

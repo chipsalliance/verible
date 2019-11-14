@@ -1,19 +1,19 @@
 # This package implements a SystemVerilog lexer and parser.
 
-licenses(["notice"])
-
-package(
-    default_visibility = [
-        "//verilog:__subpackages__",
-    ],
-)
-
 load("//bazel:bison.bzl", "genyacc")
 load("//bazel:flex.bzl", "genlex")
 load(
     "//common/parser:yacc.bzl",
     "record_recovered_syntax_errors",
     "std_move_parser_symbols",
+)
+
+licenses(["notice"])
+
+package(
+    default_visibility = [
+        "//verilog:__subpackages__",
+    ],
 )
 
 genlex(
@@ -90,7 +90,7 @@ genrule(
 
 genyacc(
     name = "verilog_y",
-    src = "verilog.yc",
+    src = "verilog.y",
     extra_options = [
         "--report-file=$(location verilog.output)",
         "--graph=$(location verilog.dot)",

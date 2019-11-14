@@ -17,7 +17,7 @@
 /* verilog.lex is a flex-generated lexer for Verilog and SystemVerilog.
  *
  * Token enumerations come from verilog_token_enum.h,
- * (generated from verilog.tab.hh, generated from verilog.yc).
+ * (generated from verilog.tab.hh, generated from verilog.y).
  *
  */
 

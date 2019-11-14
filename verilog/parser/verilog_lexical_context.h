@@ -229,7 +229,7 @@ class LexicalContext {
   LexicalContext& operator=(const LexicalContext&) = delete;
 
   // Re-writes some token enums in-place using context-sensitivity.
-  // This function must re-tag tokens enumerated (_TK_*), see verilog.yc and
+  // This function must re-tag tokens enumerated (_TK_*), see verilog.y and
   // verilog.lex for all such enumerations.
   // This function must accept both valid and invalid inputs, but is only
   // required to operate correctly on valid inputs.

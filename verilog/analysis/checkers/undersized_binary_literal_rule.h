@@ -34,7 +34,7 @@ namespace analysis {
 // UndersizedBinaryLiteralRule checks binary literals match their declared
 // width.  This needs a syntax tree analysis because the numbers of
 // interest are composed of a constant width and based numeric literal.
-// See the 'number' rule in verilog.yc.
+// See the 'number' rule in verilog.y.
 class UndersizedBinaryLiteralRule : public verible::SyntaxTreeLintRule {
  public:
   using rule_type = verible::SyntaxTreeLintRule;

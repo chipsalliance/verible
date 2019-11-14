@@ -39,7 +39,7 @@ std::ostream& operator<<(std::ostream& stream, const BasedNumber& number) {
 
 BasedNumber::BasedNumber(absl::string_view base_sign, absl::string_view digits)
     : ok(false) {
-  // See definition of 'based_number' nonterminal rule in verilog.yc.
+  // See definition of 'based_number' nonterminal rule in verilog.y.
   if (!absl::ConsumePrefix(&base_sign, "\'")) return;
 
   // Optional signedness is before the base.

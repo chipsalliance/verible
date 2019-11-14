@@ -110,7 +110,7 @@ TEST(FindAllTaskDeclarationsTest, TaskInsideModule) {
 }
 
 // TODO(kathuriac): Add test case for task inside cross_body_item see
-// (verilog.yc)
+// (verilog.y)
 
 TEST(GetTaskHeaderTest, Header) {
   const char* kTestCases[] = {

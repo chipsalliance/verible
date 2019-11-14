@@ -92,7 +92,7 @@ void _ConstraintBlockStateMachine::UpdateState(int token_enum) {
     }
     return;
   }
-  // In verilog.yc grammar:
+  // In verilog.y grammar:
   // see constraint_block, constraint_block_item, constraint_expression rules.
   State& top(states_.top());
   switch (top) {
@@ -689,7 +689,7 @@ bool LexicalContext::ExpectingStatement() const {
     return ExpectingBodyItemStart();
   }
   // TODO(fangism): There are many more contexts that expect statements, add
-  // them as they are needed.  In verilog.yc (grammar), see statement_or_null.
+  // them as they are needed.  In verilog.y (grammar), see statement_or_null.
   return false;
 }
 

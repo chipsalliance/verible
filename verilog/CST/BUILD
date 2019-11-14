@@ -1,5 +1,5 @@
 # This package contains utility functions that extract or operate on
-# the concrete syntax tree (cst) structure built up by verilog.yc.
+# the concrete syntax tree (cst) structure built up by verilog.y.
 # Any code that relies on the internal tree structure should be isolated in
 # here.
 

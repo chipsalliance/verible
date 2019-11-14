@@ -605,7 +605,7 @@ bool IsComment(yytokentype token_type) {
 
 bool IsUnaryOperator(yytokentype token_type) {
   switch (static_cast<int>(token_type)) {
-    // See verilog/parser/verilog.yc
+    // See verilog/parser/verilog.y
     // TODO(fangism): find a way to generate this function automatically
     // from the yacc file, perhaps with extra annotations or metadata.
     case '+':
