@@ -226,6 +226,10 @@ static WithReason<int> SpacesRequiredBetween(const PreFormatToken& left,
     return {0, "No spaces separating multidimensional arrays/indices"};
   }
 
+  if (left.TokenEnum() == '#') {
+    return {0, "No spaces after # (delay expressions, parameters)."};
+  }
+
   // Case was not explicitly handled.
   return {kUnhandledSpacesRequired, "Default: spacing not explicitly handled"};
 }

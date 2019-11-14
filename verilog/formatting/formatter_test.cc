@@ -454,6 +454,14 @@ static const std::initializer_list<FormatterTestCase> kFormatterTestCases = {
         "  always @(posedge clk) z <= y;\n"
         "endmodule\n",
     },
+    {
+        "module m ;initial  begin #  1 x<=y ;end endmodule",
+        "module m;\n"
+        "  initial begin\n"
+        "    #1 x <= y;\n"
+        "  end\n"
+        "endmodule\n",
+    },
 
     // class test cases
     {"class action;int xyz;endclass  :  action\n",
@@ -531,7 +539,7 @@ static const std::initializer_list<FormatterTestCase> kFormatterTestCases = {
      "endtask endclass",
      "class c;\n"
      "  task automatic delayed_assigner;\n"
-     "    # 100 y = w;\n"  // TODO(b/143479005): no space after #
+     "    #100 y = w;\n"
      "  endtask\n"
      "endclass\n"},
     {"class c; task automatic labeled_assigner;"
@@ -549,7 +557,7 @@ static const std::initializer_list<FormatterTestCase> kFormatterTestCases = {
      "class c;\n"
      "  task automatic waiter;\n"
      "    if (count == 0) begin\n"
-     "      # 0;\n"  // TODO(b/143479005): no space after #
+     "      #0;\n"
      "      return;\n"
      "    end\n"
      "  endtask\n"
@@ -947,6 +955,15 @@ static const std::initializer_list<FormatterTestCase> kFormatterTestCases = {
      "logic [K:1][W:1] a;\n"},
     {"logic b [K:1] [W:1] ;",  //
      "logic b[K:1][W:1];\n"},
+
+    // task test cases
+    {"task t ;#   10 ;# 5ns ; # 0.1 ; # 1step ;endtask",
+     "task t;\n"
+     "  #10;\n"  // no space in delay expression
+     "  #5ns;\n"
+     "  #0.1;\n"
+     "  #1step;\n"
+     "endtask\n"},
 };
 
 // Tests that formatter produces expected results, end-to-end.

@@ -98,7 +98,8 @@ bool CorrectExpectedFormatTokens(
   const int mismatch_position =
       std::distance(expected.begin(), first_mismatch.first);
   EXPECT_TRUE(all_match) << "mismatch at [" << mismatch_position
-                         << "], expected: " << *first_mismatch.first
+                         << "]: " << *first_mismatch.second->token
+                         << "\nexpected: " << *first_mismatch.first
                          << "\ngot: " << first_mismatch.second->before;
   return all_match;
 }
@@ -1193,6 +1194,62 @@ TEST(TokenAnnotatorTest, AnnotateFormattingInfoTest) {
                {yytokentype::SymbolIdentifier, "foo_pkg"},
                {yytokentype::TK_SCOPE_RES, "::"},
                {'*', "*"},
+               {';', ";"},
+           }},
+
+          // #0; (delay, unitless integer)
+          {DefaultStyle,
+           1,
+           {
+               {0, SpacingOptions::Undecided},  // #
+               {0, SpacingOptions::Undecided},  // 0
+               {0, SpacingOptions::Undecided},  // ;
+           },
+           {
+               {'#', "#"},
+               {yytokentype::TK_DecNumber, "0"},
+               {';', ";"},
+           }},
+
+          // #0.5; (delay, real-value)
+          {DefaultStyle,
+           1,
+           {
+               {0, SpacingOptions::Undecided},  // #
+               {0, SpacingOptions::Undecided},  // 0.5
+               {0, SpacingOptions::Undecided},  // ;
+           },
+           {
+               {'#', "#"},
+               {yytokentype::TK_RealTime, "0.5"},
+               {';', ";"},
+           }},
+
+          // #0ns; (delay, time-literal)
+          {DefaultStyle,
+           1,
+           {
+               {0, SpacingOptions::Undecided},  // #
+               {0, SpacingOptions::Undecided},  // 0ns
+               {0, SpacingOptions::Undecided},  // ;
+           },
+           {
+               {'#', "#"},
+               {yytokentype::TK_TimeLiteral, "0ns"},
+               {';', ";"},
+           }},
+
+          // #1step; (delay, 1step)
+          {DefaultStyle,
+           1,
+           {
+               {0, SpacingOptions::Undecided},  // #
+               {0, SpacingOptions::Undecided},  // 1step
+               {0, SpacingOptions::Undecided},  // ;
+           },
+           {
+               {'#', "#"},
+               {yytokentype::TK_1step, "1step"},
                {';', ";"},
            }},
       };
