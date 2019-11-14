@@ -80,10 +80,14 @@ void TokenInfo::Concatenate(std::string* out, std::vector<TokenInfo>* tokens) {
 }
 
 // Print human-readable token information.
-std::ostream& operator<<(std::ostream& output_stream, const TokenInfo& token) {
+std::ostream& operator<<(std::ostream& stream, const TokenInfo& token) {
   // This will exclude any byte offset information because the base address
   // of the enclosing stream is not known to this function.
-  return token.ToStream(output_stream);
+  return token.ToStream(stream);
+}
+
+std::ostream& operator<<(std::ostream& stream, const TokenWithContext& t) {
+  return t.token.ToStream(stream, t.context);
 }
 
 }  // namespace verible

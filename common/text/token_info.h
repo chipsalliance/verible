@@ -155,6 +155,14 @@ struct TokenInfo {
 
 std::ostream& operator<<(std::ostream&, const TokenInfo&);
 
+// Streamable structure that combines a token with its detailed context.
+struct TokenWithContext {
+  TokenInfo token;
+  TokenInfo::Context context;
+};
+
+std::ostream& operator<<(std::ostream&, const TokenWithContext&);
+
 // Joins a range of TokenInfo-like objects to form a string whose contents
 // match those of the elements's ranges, and also points the elements
 // to the corresponding matching substrings of the new string (rebase).

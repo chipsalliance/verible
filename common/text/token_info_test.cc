@@ -158,6 +158,15 @@ TEST(TokenInfoTest, ToStringWithBaseAndTranslator) {
   EXPECT_EQ(token_info.ToString(context), "(#lucky-seven @9-12: \"cat\")");
 }
 
+TEST(TokenWithContextTest, StreamOutput) {
+  const absl::string_view base("basement cat");
+  const TokenInfo::Context context(base, TokenTranslator);
+  TokenInfo token_info(7, base.substr(9, 3));
+  std::ostringstream stream;
+  stream << TokenWithContext{token_info, context};
+  EXPECT_EQ(stream.str(), "(#lucky-seven @9-12: \"cat\")");
+}
+
 // RebaseStringView() tests
 
 // Test that empty string token rebases correctly.
