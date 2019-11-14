@@ -72,8 +72,7 @@ struct RejectedToken {
 // FileAnalyzer holds the results of lexing and parsing.
 class FileAnalyzer : public TextStructure {
  public:
-  explicit FileAnalyzer(const std::string& contents,
-                        const std::string& filename)
+  explicit FileAnalyzer(absl::string_view contents, absl::string_view filename)
       : TextStructure(contents), filename_(filename), rejected_tokens_() {}
 
   virtual ~FileAnalyzer() {}

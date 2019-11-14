@@ -427,7 +427,7 @@ void TextStructureView::ConsumeDeferredExpansion(
   ++*next_token_view_iter;
 }
 
-TextStructure::TextStructure(const std::string& contents)
+TextStructure::TextStructure(absl::string_view contents)
     : owned_contents_(contents), data_(owned_contents_) {
   // Internal string_view must point to memory owned by owned_contents_.
   const util::Status status = InternalConsistencyCheck();

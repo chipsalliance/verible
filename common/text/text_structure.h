@@ -215,7 +215,7 @@ class TextStructureView {
 // the same owned memory can be used for multiple analysis views.
 class TextStructure {
  public:
-  explicit TextStructure(const std::string& contents);
+  explicit TextStructure(absl::string_view contents);
 
   // DeferredExpansion::subanalysis requires this destructor to be virtual.
   virtual ~TextStructure();
@@ -235,6 +235,8 @@ class TextStructure {
  protected:
   // This string owns the memory referenced by all substring string_views
   // in this object.
+  // TODO(hzeller): avoid local copy and just require that the string-view
+  // we are called with outlives this object?
   const std::string owned_contents_;
 
   // The data_ object's string_views are owned by owned_contents_.

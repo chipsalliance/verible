@@ -126,7 +126,7 @@ static const absl::string_view FailingTokenKeywordToParsingMode(
 }
 
 std::unique_ptr<VerilogAnalyzer> VerilogAnalyzer::AnalyzeAutomaticMode(
-    const std::string& text, const std::string& name) {
+    absl::string_view text, absl::string_view name) {
   VLOG(2) << __FUNCTION__;
   auto analyzer = absl::make_unique<VerilogAnalyzer>(text, name);
   if (analyzer == nullptr) return analyzer;

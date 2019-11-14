@@ -70,7 +70,7 @@ int LintOneFile(std::ostream* stream, absl::string_view filename,
 
   // Lex and parse the contents of the file.
   const auto analyzer =
-      VerilogAnalyzer::AnalyzeAutomaticMode(content, std::string(filename));
+      VerilogAnalyzer::AnalyzeAutomaticMode(content, filename);
   const auto lex_status = ABSL_DIE_IF_NULL(analyzer)->LexStatus();
   const auto parse_status = analyzer->ParseStatus();
   if (!lex_status.ok() || !parse_status.ok()) {

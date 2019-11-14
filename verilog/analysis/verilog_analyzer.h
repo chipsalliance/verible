@@ -31,7 +31,7 @@ namespace verilog {
 // VerilogAnalyzer analyzes Verilog and SystemVerilog code syntax.
 class VerilogAnalyzer : public verible::FileAnalyzer {
  public:
-  VerilogAnalyzer(const std::string& text, const std::string& name,
+  VerilogAnalyzer(absl::string_view text, absl::string_view name,
                   bool use_parser_directive_comments = true)
       : verible::FileAnalyzer(text, name),
         max_used_stack_size_(0),
@@ -58,7 +58,7 @@ class VerilogAnalyzer : public verible::FileAnalyzer {
   // Automatically analyze with the correct parsing mode, as detected
   // by parser directive comments.
   static std::unique_ptr<VerilogAnalyzer> AnalyzeAutomaticMode(
-      const std::string& text, const std::string& name);
+      absl::string_view text, absl::string_view name);
 
   const VerilogPreprocessData& PreprocessorData() const {
     return preprocessor_data_;

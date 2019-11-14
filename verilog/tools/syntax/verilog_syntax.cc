@@ -73,8 +73,8 @@ static void VerifyParseTree(const TextStructureView& text_structure) {
   }
 }
 
-static int AnalyzeOneFile(const std::string& content,
-                          const std::string& filename) {
+static int AnalyzeOneFile(absl::string_view content,
+                          absl::string_view filename) {
   int exit_status = 0;
   const auto analyzer =
       verilog::VerilogAnalyzer::AnalyzeAutomaticMode(content, filename);
@@ -152,7 +152,7 @@ int main(int argc, char** argv) {
       continue;
     }
 
-    int file_status = AnalyzeOneFile(content, std::string(filename));
+    int file_status = AnalyzeOneFile(content, filename);
     exit_status = std::max(exit_status, file_status);
   }
   return exit_status;
