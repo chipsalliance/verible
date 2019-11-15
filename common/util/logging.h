@@ -455,13 +455,13 @@ int64_t MinVLogLevelFromEnv();
 // instance will be called from whichever thread is performing a logging
 // operation.
 class VeribleLogEntry {
-  static absl::LogSeverity AsAbslLogSecurity(int severity) {
+  static absl::LogSeverity AsAbslLogSeverity(int severity) {
     return static_cast<absl::LogSeverity>(severity);
   }
 
  public:
   explicit VeribleLogEntry(int severity, absl::string_view log_line)
-      : severity_(AsAbslLogSecurity(severity)), log_line_(log_line) {}
+      : severity_(AsAbslLogSeverity(severity)), log_line_(log_line) {}
 
   absl::LogSeverity log_severity() const { return severity_; }
   std::string ToString() const { return std::string(log_line_); }
