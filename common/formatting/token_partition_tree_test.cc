@@ -170,7 +170,7 @@ TEST_F(FindLargestPartitionsTest, VectorTree) {
 class TokenPartitionTreePrinterTest : public TokenPartitionTreeTestFixture {};
 
 // Verify specialized tree printing of UnwrappedLines.
-TEST_F(TokenPartitionTreePrinterTest, VectorTree) {
+TEST_F(TokenPartitionTreePrinterTest, VectorTreeShallow) {
   // Construct three partitions, sizes: 1, 3, 2
   const auto& preformat_tokens = pre_format_tokens_;
   const auto begin = preformat_tokens.begin();
@@ -194,10 +194,63 @@ TEST_F(TokenPartitionTreePrinterTest, VectorTree) {
 
   std::ostringstream stream;
   stream << TokenPartitionTreePrinter(tree);
-  EXPECT_EQ(stream.str(), R"({ ([<auto>])
+  EXPECT_EQ(stream.str(), R"({ ([<auto>]) @{}
   { (  [one]) }
   { (  [two three four]) }
   { (  [five six]) }
+})");
+}
+
+TEST_F(TokenPartitionTreePrinterTest, VectorTreeDeep) {
+  // Construct partitions, sizes: 1, (2, 1), (1, 1)
+  const auto& preformat_tokens = pre_format_tokens_;
+  const auto begin = preformat_tokens.begin();
+  UnwrappedLine all(0, begin);
+  all.SpanUpToToken(preformat_tokens.end());
+  UnwrappedLine partition0(2, begin);
+  partition0.SpanUpToToken(begin + 1);
+  UnwrappedLine partition1(2, partition0.TokensRange().end());
+  partition1.SpanUpToToken(begin + 4);
+  UnwrappedLine partition1a(4, partition1.TokensRange().begin());
+  partition1a.SpanUpToToken(begin + 3);
+  UnwrappedLine partition1b(4, partition1a.TokensRange().end());
+  partition1b.SpanUpToToken(begin + 4);
+  UnwrappedLine partition2(2, partition1.TokensRange().end());
+  partition2.SpanUpToToken(preformat_tokens.end());
+  UnwrappedLine partition2a(4, partition2.TokensRange().begin());
+  partition2a.SpanUpToToken(begin + 5);
+  UnwrappedLine partition2b(4, partition2a.TokensRange().end());
+  partition2b.SpanUpToToken(preformat_tokens.end());
+
+  // Construct an artificial tree using the above partitions.
+  using tree_type = TokenPartitionTree;
+  tree_type tree{
+      all,
+      tree_type{partition0},
+      tree_type{
+          partition1,
+          tree_type{partition1a},
+          tree_type{partition1b},
+      },
+      tree_type{
+          partition2,
+          tree_type{partition2a},
+          tree_type{partition2b},
+      },
+  };
+
+  std::ostringstream stream;
+  stream << TokenPartitionTreePrinter(tree);
+  EXPECT_EQ(stream.str(), R"({ ([<auto>]) @{}
+  { (  [one]) }
+  { (  [<auto>]) @{1}
+    { (    [two three]) }
+    { (    [four]) }
+  }
+  { (  [<auto>]) @{2}
+    { (    [five]) }
+    { (    [six]) }
+  }
 })");
 }
 

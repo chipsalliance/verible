@@ -75,6 +75,7 @@ void VerifyTreeNodeFormatTokenRanges(
 void VerifyFullTreeFormatTokenRanges(
     const TokenPartitionTree& tree,
     std::vector<PreFormatToken>::const_iterator base) {
+  VLOG(4) << __FUNCTION__ << '\n' << TokenPartitionTreePrinter{tree};
   tree.ApplyPreOrder([=](const TokenPartitionTree& node) {
     VerifyTreeNodeFormatTokenRanges(node, base);
   });
@@ -107,7 +108,8 @@ std::ostream& TokenPartitionTreePrinter::PrintTree(std::ostream& stream,
   if (children.empty()) {
     stream << '(' << value << ") }";
   } else {
-    stream << '(' << Spacer(value.IndentationSpaces()) << "[<auto>])\n";
+    stream << '(' << Spacer(value.IndentationSpaces()) << "[<auto>]) @"
+           << NodePath(node) << '\n';
     // token range spans all of children nodes
     for (const auto& child : children) {
       TokenPartitionTreePrinter(child).PrintTree(stream, indent + 2) << '\n';
