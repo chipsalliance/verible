@@ -1146,7 +1146,7 @@ class_items_opt
   : class_items
     { $$ = move($1); }
   | /* empty */
-    { $$ = nullptr; }
+    { $$ = MakeTaggedNode(N::kClassItems);}
   ;
 class_items
   : class_items class_item

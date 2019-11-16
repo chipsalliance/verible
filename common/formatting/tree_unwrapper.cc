@@ -62,6 +62,9 @@ TreeUnwrapper::TreeUnwrapper(
 }
 
 const TokenPartitionTree* TreeUnwrapper::Unwrap() {
+  // Collect tokens that appear before first syntax tree leaf, e.g. comments.
+  CollectLeadingFilteredTokens();
+
   // Traverse the concrete syntax tree to build up token partitions.
   ABSL_DIE_IF_NULL(text_structure_view_.SyntaxTree())->Accept(this);
 
@@ -252,6 +255,19 @@ void TreeUnwrapper::AdvanceNextUnfilteredToken() {
   }
 }
 
+void TreeUnwrapper::TraverseChildren(const verible::SyntaxTreeNode& node) {
+  // Can't just use TreeContextVisitor::Visit(node) because we need to
+  // call a visit hook between children.
+  const verible::SyntaxTreeContext::AutoPop p(&current_context_, node);
+  InterChildNodeHook(node);
+  for (const auto& child : node.children()) {
+    if (child) {
+      child->Accept(this);
+      InterChildNodeHook(node);
+    }
+  }
+}
+
 TreeUnwrapper::preformatted_tokens_type::const_iterator
 TreeUnwrapper::VisitIndentedChildren(
     const SyntaxTreeNode& node, int indentation_delta,
@@ -275,8 +291,6 @@ TreeUnwrapper::VisitIndentedChildren(
   VLOG(3) << __FUNCTION__ << ", new node " << NodePath(*active_unwrapped_lines_)
           << ", indented " << current_indentation_spaces_;
   TraverseChildren(node);
-  // Actions that should be taken before returning from this context.
-  PostVisitNodeHook(node);
 
   return CurrentFormatTokenIterator();
 

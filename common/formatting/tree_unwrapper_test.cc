@@ -66,6 +66,7 @@ class FakeTreeUnwrapper : public TreeUnwrapperData, public TreeUnwrapper {
         TreeUnwrapper(view, TreeUnwrapperData::preformatted_tokens_) {}
 
   // There are no filtered-out tokens in this fake.
+  void CollectLeadingFilteredTokens() override {}
   void CollectTrailingFilteredTokens() override {}
 
   // Leaf visit that adds a PreFormatToken from the leaf's TokenInfo
@@ -79,8 +80,9 @@ class FakeTreeUnwrapper : public TreeUnwrapperData, public TreeUnwrapper {
   void Visit(const SyntaxTreeNode& node) override {
     StartNewUnwrappedLine();
     TraverseChildren(node);
-    PostVisitNodeHook(node);
   }
+
+  void InterChildNodeHook(const SyntaxTreeNode& node) override {}
 
   using TreeUnwrapper::StartNewUnwrappedLine;
 

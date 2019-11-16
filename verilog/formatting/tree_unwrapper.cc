@@ -281,7 +281,7 @@ static bool IsPreprocessorClause(NodeEnum e) {
 }
 
 void TreeUnwrapper::UpdateInterLeafScanner(yytokentype token_type) {
-  VLOG(4) << __FUNCTION__;
+  VLOG(4) << __FUNCTION__ << ", token: " << verilog_symbol_name(token_type);
   inter_leaf_scanner_->UpdateState(token_type);
   if (inter_leaf_scanner_->ShouldStartNewPartition()) {
     VLOG(4) << "new partition";
@@ -297,6 +297,7 @@ void TreeUnwrapper::AdvanceLastVisitedLeaf() {
   const yytokentype token_enum = yytokentype(next_token.token_enum);
   UpdateInterLeafScanner(token_enum);
   AdvanceNextUnfilteredToken();
+  VLOG(4) << "end of " << __FUNCTION__;
 }
 
 verible::TokenWithContext TreeUnwrapper::VerboseToken(
@@ -402,33 +403,54 @@ static verible::TokenSequence::const_iterator StopAtLastNewlineBeforeTreeLeaf(
 
 // Scan forward for comments between leaf tokens, and append them to a partition
 // with the correct amount of indentation.
-void TreeUnwrapper::LookAheadBeyondCurrentNode(
-    const verible::SyntaxTreeNode& node) {
+void TreeUnwrapper::LookAheadBeyondCurrentNode() {
   VLOG(4) << __FUNCTION__;
   // Scan until token is reached, or the last newline before token is reached.
   const auto token_begin = NextUnfilteredToken();
   const auto token_end =
       StopAtLastNewlineBeforeTreeLeaf(token_begin, token_context_);
+  VLOG(4) << "stop before: " << VerboseToken(*token_end);
   while (NextUnfilteredToken() != token_end) {
-    VLOG(4) << "token: " << VerboseToken(*NextUnfilteredToken());
-    AdvanceLastVisitedLeaf();
+    // Almost like AdvanceLastVisitedLeaf(), except suppress the last
+    // advancement.
+    EatSpaces();
+    const auto next_token_iter = NextUnfilteredToken();
+    const auto& next_token = *next_token_iter;
+    VLOG(4) << "token: " << VerboseToken(next_token);
+    const yytokentype token_enum = yytokentype(next_token.token_enum);
+    UpdateInterLeafScanner(token_enum);
+    if (next_token_iter != token_end) {
+      AdvanceNextUnfilteredToken();
+    } else {
+      break;
+    }
   }
   VLOG(4) << "end of " << __FUNCTION__;
 }
 
-void TreeUnwrapper::PostVisitNodeHook(const verible::SyntaxTreeNode& node) {
+void TreeUnwrapper::InterChildNodeHook(const verible::SyntaxTreeNode& node) {
   const auto tag = NodeEnum(node.Tag().tag);
   VLOG(4) << __FUNCTION__ << " node type: " << tag;
   switch (tag) {
+    // TODO(fangism): cover all other major lists
     case NodeEnum::kPortDeclarationList:
     // case NodeEnum::kPortList:  // TODO(fangism): for task/function ports
     case NodeEnum::kModuleItemList:
-      LookAheadBeyondCurrentNode(node);
+    case NodeEnum::kClassItems:
+    case NodeEnum::kDescriptionList:  // top-level item comments
+      LookAheadBeyondCurrentNode();
       break;
     default:
       break;
   }
   VLOG(4) << "end of " << __FUNCTION__ << " node type: " << tag;
+}
+
+void TreeUnwrapper::CollectLeadingFilteredTokens() {
+  VLOG(4) << __FUNCTION__;
+  // inter_leaf_scanner_ is already initialized to kStart state
+  LookAheadBeyondCurrentNode();
+  VLOG(4) << "end of " << __FUNCTION__;
 }
 
 void TreeUnwrapper::CollectTrailingFilteredTokens() {

@@ -981,11 +981,8 @@ const TreeUnwrapperTestData kUnwrapCommentsTestCases[] = {
         "// start comment\n"
         "module foo (); endmodule\n"
         "// end comment\n",
-        ModuleHeader(0,
-                     // currently "start comment" gets pulled into this level,
-                     // but doesn't impact final output.
-                     L(0, {"// start comment"}), L(0, {"module", "foo", "("}),
-                     L(0, {")", ";"})),
+        L(0, {"// start comment"}),
+        ModuleHeader(0, L(0, {"module", "foo", "("}), L(0, {")", ";"})),
         L(0, {"endmodule"}),       //
         L(0, {"// end comment"}),  // comment on own line
     },
@@ -998,16 +995,12 @@ const TreeUnwrapperTestData kUnwrapCommentsTestCases[] = {
         "// comment3\n"
         "module bar (); endmodule\n"
         "// comment4\n",
-        ModuleHeader(0, L(0, {"// comment1"}), L(0, {"module", "foo", "("}),
-                     L(0, {")", ";"})),
-        L(0, {"endmodule"}),  //
-        ModuleHeader(0,
-                     // currently, both comment2 and comment3 get pulled into
-                     // module bar's header, but this doesn't impact final
-                     // output.
-                     L(0, {"// comment2"}),  // comment on own line
-                     L(0, {"// comment3"}), L(0, {"module", "bar", "("}),
-                     L(0, {")", ";"})),
+        L(0, {"// comment1"}),
+        ModuleHeader(0, L(0, {"module", "foo", "("}), L(0, {")", ";"})),
+        L(0, {"endmodule"}),    //
+        L(0, {"// comment2"}),  // comment on own line
+        L(0, {"// comment3"}),  //
+        ModuleHeader(0, L(0, {"module", "bar", "("}), L(0, {")", ";"})),
         L(0, {"endmodule"}),    //
         L(0, {"// comment4"}),  // comment on own line
     },
@@ -1035,8 +1028,8 @@ const TreeUnwrapperTestData kUnwrapCommentsTestCases[] = {
         "// item comment 1\n"
         "// item comment 2\n"
         "endmodule\n",
-        ModuleHeader(0, L(0, {"// humble module"}),
-                     L(0, {"module", "foo", "(", "// non-port comment"}),
+        L(0, {"// humble module"}),
+        ModuleHeader(0, L(0, {"module", "foo", "(", "// non-port comment"}),
                      ModulePortList(2, L(2, {"// port comment 1"}),
                                     L(2, {"// port comment 2"})),
                      L(0, {")", ";", "// header trailing comment"})),
@@ -1055,8 +1048,8 @@ const TreeUnwrapperTestData kUnwrapCommentsTestCases[] = {
         "; // comment at end of module\n"
         "endmodule\n"
         "// end comment\n",
-        ModuleHeader(0, L(0, {"// start comment"}),
-                     L(0, {"module", "foo", "("}),
+        L(0, {"// start comment"}),
+        ModuleHeader(0, L(0, {"module", "foo", "("}),
                      L(0, {")", ";", "// comment at end of module"})),
         L(0, {"endmodule"}),  // comment separated to next line
         L(0, {"// end comment"}),
@@ -1069,9 +1062,9 @@ const TreeUnwrapperTestData kUnwrapCommentsTestCases[] = {
         "// comment 2\n"
         "module foo();"
         "endmodule",
-        ModuleHeader(0, L(0, {"// comment 1"}),  //
-                     L(0, {"// comment 2"}), L(0, {"module", "foo", "("}),
-                     L(0, {")", ";"})),
+        L(0, {"// comment 1"}),  //
+        L(0, {"// comment 2"}),
+        ModuleHeader(0, L(0, {"module", "foo", "("}), L(0, {")", ";"})),
         L(0, {"endmodule"}),
     },
 
@@ -1238,6 +1231,28 @@ const TreeUnwrapperTestData kClassTestCases[] = {
                     3, L(3, {"$write", "(", "\"Hello, world!\"", ")", ";"})),
                 L(2, {"end"})),
             L(1, {"endtask"})),
+        L(0, {"endclass"}),
+    },
+
+    {
+        "class with function and task and comments",
+        "class c; // c is for cookie\n"
+        "// f is for false\n"
+        "function f (integer size);\n"
+        "endfunction\n"
+        "// t is for true\n"
+        "task t();\n"
+        "endtask\n"
+        "// class is about to end\n"
+        "endclass",
+        ClassHeader(0, L(0, {"class", "c", ";", "// c is for cookie"})),
+        ClassItemList(1, L(1, {"// f is for false"}),
+                      FunctionHeader(1, L(1, {"function", "f", "("}),
+                                     TFPortList(3, L(3, {"integer", "size"})),
+                                     L(1, {")", ";"})),
+                      L(1, {"endfunction"}), L(1, {"// t is for true"}),
+                      TaskHeader(1, L(1, {"task", "t", "(", ")", ";"})),
+                      L(1, {"endtask"}), L(1, {"// class is about to end"})),
         L(0, {"endclass"}),
     },
 

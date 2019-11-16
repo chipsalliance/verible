@@ -31,7 +31,6 @@ class TreeContextVisitor : public SymbolVisitor {
 
   const SyntaxTreeContext& Context() const { return current_context_; }
 
- private:
   // Keeps track of ancestors as the visitor traverses tree.
   SyntaxTreeContext current_context_;
 };

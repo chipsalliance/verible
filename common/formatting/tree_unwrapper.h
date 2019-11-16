@@ -62,6 +62,9 @@ class TreeUnwrapper : public TreeContextVisitor {
   // partitions of format token ranges one might work with.
   std::vector<UnwrappedLine> FullyPartitionedUnwrappedLines() const;
 
+  // Collects filtered tokens *before* the first syntax tree leaf.
+  virtual void CollectLeadingFilteredTokens() = 0;
+
   // Collects filtered tokens *after* the last syntax tree leaf, up to EOF.
   virtual void CollectTrailingFilteredTokens() = 0;
 
@@ -85,13 +88,11 @@ class TreeUnwrapper : public TreeContextVisitor {
 
   // Traverses the children of a node in postorder, recursively accepting this
   // visitor.
-  void TraverseChildren(const verible::SyntaxTreeNode& node) {
-    TreeContextVisitor::Visit(node);
-  }
+  void TraverseChildren(const verible::SyntaxTreeNode& node);
 
   // Override-able hook for actions that should be taken while in the
   // context of traversing children.
-  virtual void PostVisitNodeHook(const verible::SyntaxTreeNode&) {}
+  virtual void InterChildNodeHook(const verible::SyntaxTreeNode&) {}
 
   // Visits a subtree with (possibly) additional indentation.
   // TODO(fangism): NOW: rename this to VisitSubPartition.

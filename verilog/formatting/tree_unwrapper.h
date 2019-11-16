@@ -78,8 +78,10 @@ class TreeUnwrapper : public verible::TreeUnwrapper {
   void CatchUpToCurrentLeaf(const verible::TokenInfo& leaf_token);
 
   void LookAheadBeyondCurrentLeaf();
-  void LookAheadBeyondCurrentNode(const verible::SyntaxTreeNode&);
-  void PostVisitNodeHook(const verible::SyntaxTreeNode&) override;
+  void LookAheadBeyondCurrentNode();
+  void InterChildNodeHook(const verible::SyntaxTreeNode&) override;
+
+  void CollectLeadingFilteredTokens() override;
 
   // Collects filtered tokens into the UnwrappedLines from
   // next_unfiltered_token_ until EOF.

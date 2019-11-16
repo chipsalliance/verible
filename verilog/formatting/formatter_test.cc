@@ -616,6 +616,44 @@ static const std::initializer_list<FormatterTestCase> kFormatterTestCases = {
      "    @(negedge clk) z = w;\n"
      "  endtask\n"
      "endclass\n"},
+    {
+        // classes with surrrounding comments
+        "\n// pre-c\n\n"
+        "  class   c  ;\n"
+        "// c stuff\n"
+        "endclass\n"
+        "  // pre-d\n"
+        "\n\nclass d ;\n"
+        " // d stuff\n"
+        "endclass\n"
+        "\n// the end\n",
+        "// pre-c\n"
+        "class c;\n"
+        "  // c stuff\n"
+        "endclass\n"
+        "// pre-d\n"
+        "class d;\n"
+        "  // d stuff\n"
+        "endclass\n"
+        "// the end\n",
+    },
+    {// class with comments around task/function declarations
+     "class c;      // c is for cookie\n"
+     "    // f is for false\n"
+     "\tfunction f(integer size) ; endfunction\n"
+     " // t is for true\n"
+     "task t();endtask\n"
+     " // class is about to end\n"
+     "endclass",
+     "class c;  // c is for cookie\n"
+     "  // f is for false\n"
+     "  function f(integer size);\n"
+     "  endfunction\n"
+     "  // t is for true\n"
+     "  task t();\n"
+     "  endtask\n"
+     "  // class is about to end\n"
+     "endclass\n"},
 
     // constraint test cases
     {
