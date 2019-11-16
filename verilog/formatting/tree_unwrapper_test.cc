@@ -2016,6 +2016,15 @@ const TreeUnwrapperTestData kUnwrapTaskTestCases[] = {
     },
 
     {
+        "task with multiple nonblocking assignments",
+        "task t; a<=b; c<=d; endtask",
+        TaskHeader(0, L(0, {"task", "t", ";"})),
+        StatementList(1, L(1, {"a", "<=", "b", ";"}),
+                      L(1, {"c", "<=", "d", ";"})),
+        L(0, {"endtask"}),
+    },
+
+    {
         "task with fork-join",
         "task foo;"
         "fork "

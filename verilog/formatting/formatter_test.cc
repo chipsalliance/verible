@@ -462,6 +462,24 @@ static const std::initializer_list<FormatterTestCase> kFormatterTestCases = {
         "  end\n"
         "endmodule\n",
     },
+    {
+        "module m ;initial  begin x<=y ;  y<=z;end endmodule",
+        "module m;\n"
+        "  initial begin\n"
+        "    x <= y;\n"
+        "    y <= z;\n"
+        "  end\n"
+        "endmodule\n",
+    },
+    {
+        "module m ;initial  begin # 10 x<=y ;  # 20  y<=z;end endmodule",
+        "module m;\n"
+        "  initial begin\n"
+        "    #10 x <= y;\n"
+        "    #20 y <= z;\n"
+        "  end\n"
+        "endmodule\n",
+    },
 
     // class test cases
     {"class action;int xyz;endclass  :  action\n",
@@ -964,6 +982,19 @@ static const std::initializer_list<FormatterTestCase> kFormatterTestCases = {
      "  #0.1;\n"
      "  #1step;\n"
      "endtask\n"},
+    {"task t\n;a<=b ;c<=d ;endtask\n",
+     "task t;\n"
+     "  a <= b;\n"
+     "  c <= d;\n"
+     "endtask\n"},
+    {"class c;   virtual protected task\tt  ( foo bar);"
+     "a.a<=b.b;\t\tc.c\n<=   d.d; endtask   endclass",
+     "class c;\n"
+     "  virtual protected task t(foo bar);\n"
+     "    a.a <= b.b;\n"
+     "    c.c <= d.d;\n"
+     "  endtask\n"
+     "endclass\n"},
 };
 
 // Tests that formatter produces expected results, end-to-end.

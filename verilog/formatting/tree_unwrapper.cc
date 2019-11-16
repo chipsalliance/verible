@@ -289,6 +289,7 @@ void TreeUnwrapper::Visit(const verible::SyntaxTreeNode& node) {
     case NodeEnum::kContinuousAssign:               // e.g. assign a=0, b=2;
     case NodeEnum::kContinuousAssignmentStatement:  // e.g. x=y
     case NodeEnum::kBlockingAssignmentStatement:    // id=expr
+    case NodeEnum::kNonblockingAssignmentStatement:  // dest <= src;
     case NodeEnum::kAssignmentStatement:            // id=expr
     case NodeEnum::kProceduralTimingControlStatement: {
       if (Context().DirectParentIsOneOf(
