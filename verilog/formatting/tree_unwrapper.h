@@ -15,6 +15,7 @@
 #ifndef VERIBLE_VERILOG_FORMATTING_TREE_UNWRAPPER_H_
 #define VERIBLE_VERILOG_FORMATTING_TREE_UNWRAPPER_H_
 
+#include <memory>
 #include <vector>
 
 #include "common/formatting/basic_format_style.h"
@@ -26,7 +27,7 @@
 #include "common/text/text_structure.h"
 #include "common/text/token_info.h"
 #include "common/text/token_stream_view.h"
-#include "verilog/formatting/token_scanner.h"
+#include "verilog/parser/verilog_token_enum.h"
 
 namespace verilog {
 namespace formatter {
@@ -53,6 +54,8 @@ class TreeUnwrapper : public verible::TreeUnwrapper {
                          const verible::BasicFormatStyle& style,
                          const preformatted_tokens_type&);
 
+  ~TreeUnwrapper();
+
   // Deleted standard interfaces:
   TreeUnwrapper() = delete;
   TreeUnwrapper(const TreeUnwrapper&) = delete;
@@ -65,6 +68,9 @@ class TreeUnwrapper : public verible::TreeUnwrapper {
  private:
   typedef std::vector<verible::PreFormatToken> preformatted_tokens_type;
 
+  // Private implementation type for handling tokens between syntax tree leaves.
+  class TokenScanner;
+
   // Collects filtered tokens into the UnwrappedLines from
   // next_unfiltered_token_ up until the TokenInfo referenced by leaf.
   // \postcondition next_unfiltered_token_ points to token corresponding to
@@ -72,6 +78,8 @@ class TreeUnwrapper : public verible::TreeUnwrapper {
   void CatchUpToCurrentLeaf(const verible::TokenInfo& leaf_token);
 
   void LookAheadBeyondCurrentLeaf();
+  void LookAheadBeyondCurrentNode(const verible::SyntaxTreeNode&);
+  void PostVisitNodeHook(const verible::SyntaxTreeNode&) override;
 
   // Collects filtered tokens into the UnwrappedLines from
   // next_unfiltered_token_ until EOF.
@@ -97,19 +105,26 @@ class TreeUnwrapper : public verible::TreeUnwrapper {
   // traverse unfiltered tokens.
   void EatSpaces();
 
-  // Adds the current token to the UnwrappedLine from the non-filtered token
-  // stream and advances next_unfiltered_token_.
+  // Update token tracking, and possibly start a new partition.
+  void UpdateInterLeafScanner(yytokentype);
+
   // This should only be called directly from CatchUpToCurrentLeaf and
   // LookAheadBeyondCurrentLeaf.
-  // TODO(fangism): remove parameter if it is always true.
-  void AdvanceLastVisitedLeaf(bool new_unwrapped_lines_allowed);
+  void AdvanceLastVisitedLeaf();
+
+  // For print debugging.
+  verible::TokenWithContext VerboseToken(const verible::TokenInfo&) const;
 
   // Data members:
   const verible::BasicFormatStyle& style_;
 
   // State machine for visiting non-syntax-tree tokens between leaves.
   // This determines placement of comments on unwrapped lines.
-  TokenScanner inter_leaf_scanner_;
+  // (Private-implementation idiom)
+  std::unique_ptr<TokenScanner> inter_leaf_scanner_;
+
+  // For debug printing.
+  verible::TokenInfo::Context token_context_;
 };
 
 }  // namespace formatter

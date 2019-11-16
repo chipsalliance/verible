@@ -18,6 +18,7 @@
 #include <iterator>
 #include <vector>
 
+#include "absl/base/macros.h"
 #include "common/formatting/basic_format_style.h"
 #include "common/formatting/format_token.h"
 #include "common/formatting/token_partition_tree.h"
@@ -32,10 +33,10 @@
 #include "common/text/token_info.h"
 #include "common/text/token_stream_view.h"
 #include "common/util/container_iterator_range.h"
+#include "common/util/enum_flags.h"
 #include "common/util/logging.h"
 #include "common/util/value_saver.h"
 #include "verilog/CST/verilog_nonterminals.h"
-#include "verilog/formatting/token_scanner.h"
 #include "verilog/formatting/verilog_token.h"
 #include "verilog/parser/verilog_parser.h"
 #include "verilog/parser/verilog_token_enum.h"
@@ -46,6 +47,7 @@ namespace formatter {
 using ::verible::PartitionPolicyEnum;
 using ::verible::PreFormatToken;
 using ::verible::TokenInfo;
+using ::verible::TokenWithContext;
 
 // Used to filter the TokenStreamView by discarding space-only tokens.
 static bool KeepNonWhitespace(const TokenInfo& t) {
@@ -99,15 +101,172 @@ UnwrapperData::UnwrapperData(const verible::TokenSequence& tokens) {
   }
 }
 
+// Represents a state of scanning tokens between syntax tree leaves.
+enum TokenScannerState {
+  // Initial state: immediately after a leaf token
+  kStart,
+
+  // While encountering any string of consecutive newlines
+  kHaveNewline,
+
+  // Transition from newline to non-newline
+  kNewPartition,
+
+  // Reached next leaf token, stop.  Preserve existing newline.
+  kEndWithNewline,
+
+  // Reached next leaf token, stop.
+  kEndNoNewline,
+};
+
+static const std::initializer_list<
+    std::pair<const absl::string_view, TokenScannerState>>
+    kTokenScannerStateStringMap = {
+        {"kStart", TokenScannerState::kStart},
+        {"kHaveNewline", TokenScannerState::kHaveNewline},
+        {"kNewPartition", TokenScannerState::kNewPartition},
+        {"kEndWithNewline", TokenScannerState::kEndWithNewline},
+        {"kEndNoNewline", TokenScannerState::kEndNoNewline},
+};
+
+// Conventional stream printer (declared in header providing enum).
+std::ostream& operator<<(std::ostream& stream, TokenScannerState p) {
+  static const auto* flag_map =
+      verible::MakeEnumToStringMap(kTokenScannerStateStringMap);
+  return stream << flag_map->find(p)->second;
+}
+
+// This finite state machine class is used to determine the placement of
+// non-whitespace and non-syntax-tree-node tokens such as comments in
+// UnwrappedLines.  The input to this FSM is a Verilog-specific token enum.
+// This class is an internal implementation detail of the TreeUnwrapper class.
+// TODO(fangism): handle attributes.
+class TreeUnwrapper::TokenScanner {
+ public:
+  TokenScanner() = default;
+
+  // Deleted standard interfaces:
+  TokenScanner(const TokenScanner&) = delete;
+  TokenScanner(TokenScanner&&) = delete;
+  TokenScanner& operator=(const TokenScanner&) = delete;
+  TokenScanner& operator=(TokenScanner&&) = delete;
+
+  // Re-initializes state.
+  void Reset() {
+    current_state_ = State::kStart;
+    seen_any_nonspace_ = false;
+  }
+
+  // Calls TransitionState using current_state_ and the tranition token_Type
+  void UpdateState(yytokentype token_type) {
+    current_state_ = TransitionState(current_state_, token_type);
+    seen_any_nonspace_ |= IsComment(token_type);
+  }
+
+  // Returns true if this is a state that should start a new token partition.
+  bool ShouldStartNewPartition() const {
+    return current_state_ == State::kNewPartition ||
+           (current_state_ == State::kEndWithNewline && seen_any_nonspace_);
+  }
+
+ protected:
+  typedef TokenScannerState State;
+
+  // The current state of the TokenScanner.
+  State current_state_ = kStart;
+  bool seen_any_nonspace_ = false;
+
+  // Transitions the TokenScanner given a TokenState and a yytokentype
+  // transition
+  static State TransitionState(const State& old_state, yytokentype token_type);
+};
+
+static bool IsNewlineOrEOF(yytokentype token_type) {
+  return token_type == yytokentype::TK_NEWLINE || token_type == verible::TK_EOF;
+}
+
+/*
+ * TransitionState computes the next state in the state machine given
+ * a current TokenScanner::State and token_type transition.
+ * This state machine is only expected to handle tokens that can appear
+ * between syntax tree leaves (whitespace, comments, attributes).
+ *
+ * Transitions are expected to take place across 3 phases of inter-leaf
+ * scanning:
+ *   TreeUnwrapper::LookAheadBeyondCurrentLeaf()
+ *   TreeUnwrapper::LookAheadBeyondCurrentNode()
+ *   TreeUnwrapper::CatchUpToCurrentLeaf()
+ */
+TokenScannerState TreeUnwrapper::TokenScanner::TransitionState(
+    const State& old_state, yytokentype token_type) {
+  VLOG(4) << "state transition on: " << old_state
+          << ", token: " << verilog_symbol_name(token_type);
+  State new_state = old_state;
+  switch (old_state) {
+    case kStart: {
+      if (IsNewlineOrEOF(token_type)) {
+        new_state = kHaveNewline;
+      } else if (IsComment(token_type)) {
+        new_state = kStart;  // same state
+      } else {
+        new_state = kEndNoNewline;
+      }
+      break;
+    }
+    case kHaveNewline: {
+      if (IsNewlineOrEOF(token_type)) {
+        new_state = kHaveNewline;  // same state
+      } else if (IsComment(token_type)) {
+        new_state = kNewPartition;
+      } else {
+        new_state = kEndWithNewline;
+      }
+      break;
+    }
+    case kNewPartition: {
+      if (IsNewlineOrEOF(token_type)) {
+        new_state = kHaveNewline;
+      } else if (IsComment(token_type)) {
+        new_state = kStart;
+      } else {
+        new_state = kEndNoNewline;
+      }
+      break;
+    }
+    case kEndWithNewline:
+    case kEndNoNewline: {
+      // Terminal states.  Must Reset() next.
+      break;
+    }
+    default:
+      break;
+  }
+  VLOG(4) << "new state: " << new_state;
+  return new_state;
+}
+
 void TreeUnwrapper::EatSpaces() {
+  // TODO(fangism): consider a NextNonSpaceToken() method that combines
+  // NextUnfilteredToken with EatSpaces.
+  const auto before = NextUnfilteredToken();
   SkipUnfilteredTokens(
       [](const TokenInfo& token) { return token.token_enum == TK_SPACE; });
+  const auto after = NextUnfilteredToken();
+  VLOG(4) << __FUNCTION__ << " ate " << std::distance(before, after)
+          << " space tokens";
 }
 
 TreeUnwrapper::TreeUnwrapper(const verible::TextStructureView& view,
                              const verible::BasicFormatStyle& style,
                              const preformatted_tokens_type& ftokens)
-    : verible::TreeUnwrapper(view, ftokens), style_(style) {}
+    : verible::TreeUnwrapper(view, ftokens),
+      style_(style),
+      inter_leaf_scanner_(new TokenScanner),
+      token_context_(FullText(), [](std::ostream& stream, int e) {
+        stream << verilog_symbol_name(e);
+      }) {}
+
+TreeUnwrapper::~TreeUnwrapper() {}
 
 static bool IsPreprocessorClause(NodeEnum e) {
   switch (e) {
@@ -121,42 +280,56 @@ static bool IsPreprocessorClause(NodeEnum e) {
   }
 }
 
-void TreeUnwrapper::AdvanceLastVisitedLeaf(bool new_unwrapped_lines_allowed) {
+void TreeUnwrapper::UpdateInterLeafScanner(yytokentype token_type) {
+  VLOG(4) << __FUNCTION__;
+  inter_leaf_scanner_->UpdateState(token_type);
+  if (inter_leaf_scanner_->ShouldStartNewPartition()) {
+    VLOG(4) << "new partition";
+    StartNewUnwrappedLine();
+  }
+  VLOG(4) << "end of " << __FUNCTION__;
+}
+
+void TreeUnwrapper::AdvanceLastVisitedLeaf() {
+  VLOG(4) << __FUNCTION__;
+  EatSpaces();
   const auto& next_token = *NextUnfilteredToken();
   const yytokentype token_enum = yytokentype(next_token.token_enum);
-  inter_leaf_scanner_.UpdateState(token_enum);
-
-  if (new_unwrapped_lines_allowed) {
-    if (inter_leaf_scanner_.EndState()) {
-      CurrentUnwrappedLine().only_comments_ = true;
-      StartNewUnwrappedLine();
-    } else if (inter_leaf_scanner_.RepeatNewlineState()) {
-      StartNewUnwrappedLine();
-    }
-  }
+  UpdateInterLeafScanner(token_enum);
   AdvanceNextUnfilteredToken();
 }
 
-void TreeUnwrapper::CatchUpToCurrentLeaf(const verible::TokenInfo& leaf_token) {
-  // "Catch up" NextUnfilteredToken() to the current leaf.
-  // Assigns non-whitespace tokens such as comments into UnwrappedLines.
-  // Recall that SyntaxTreeLeaf has its own copy of TokenInfo,
-  // so we need to compare a unique property instead of address.
-  const bool can_create_unwrapped_lines = CurrentUnwrappedLine().IsEmpty();
-  while (!NextUnfilteredToken()->isEOF() &&
-         // compare const char* addresses:
-         NextUnfilteredToken()->text.begin() != leaf_token.text.begin()) {
-    AdvanceLastVisitedLeaf(can_create_unwrapped_lines);
-  }
+verible::TokenWithContext TreeUnwrapper::VerboseToken(
+    const verible::TokenInfo& token) const {
+  return TokenWithContext{token, token_context_};
 }
 
-void TreeUnwrapper::LookAheadBeyondCurrentLeaf() {
-  // Re-initialize internal token-scanning state machine.
-  inter_leaf_scanner_.Reset();
+void TreeUnwrapper::CatchUpToCurrentLeaf(const verible::TokenInfo& leaf_token) {
+  VLOG(4) << __FUNCTION__ << " to " << VerboseToken(leaf_token);
+  // "Catch up" NextUnfilteredToken() to the current leaf.
+  // Assigns non-whitespace tokens such as comments into UnwrappedLines.
+  // Recall that SyntaxTreeLeaf has its own copy of TokenInfo, so we need to
+  // compare a unique property of TokenInfo instead of its address.
+  while (!NextUnfilteredToken()->isEOF()) {
+    EatSpaces();
+    // compare const char* addresses:
+    if (NextUnfilteredToken()->text.begin() != leaf_token.text.begin()) {
+      VLOG(4) << "token: " << VerboseToken(*NextUnfilteredToken());
+      AdvanceLastVisitedLeaf();
+    } else {
+      break;
+    }
+  }
+  VLOG(4) << "end of " << __FUNCTION__;
+}
 
-  // If current unwrapped line already contains a tree leaf token,
-  // then only scan up to the next newline without creating new unwrapped lines.
-  const bool can_create_unwrapped_lines = CurrentUnwrappedLine().IsEmpty();
+// Scan forward from the current leaf token, until some implementation-defined
+// stopping condition.  This collects comments up until the first newline,
+// and appends them to the most recent partition.
+void TreeUnwrapper::LookAheadBeyondCurrentLeaf() {
+  VLOG(4) << __FUNCTION__;
+  // Re-initialize internal token-scanning state machine.
+  inter_leaf_scanner_->Reset();
 
   // Consume trailing comments after the last leaf token.
   // Ignore spaces but stop at newline.
@@ -172,26 +345,108 @@ void TreeUnwrapper::LookAheadBeyondCurrentLeaf() {
   //
   while (!NextUnfilteredToken()->isEOF()) {
     EatSpaces();
+    VLOG(4) << "token: " << VerboseToken(*NextUnfilteredToken());
     if (IsComment(yytokentype(NextUnfilteredToken()->token_enum))) {
-      AdvanceLastVisitedLeaf(can_create_unwrapped_lines);
+      // TODO(fangism): or IsAttribute().  Basically, any token that is not
+      // in the syntax tree and not a space.
+      AdvanceLastVisitedLeaf();
     } else {  // including newline
       // Don't advance NextUnfilteredToken() in this case.
+      VLOG(4) << "no advance";
       break;
     }
   }
+  VLOG(4) << "end of " << __FUNCTION__;
+}
+
+// Scan forward up to a synta tree leaf token, but return (possibly) the
+// position of the last newline *before* that leaf token.
+// This allows prefix comments and attributes to stick with their
+// intended token that immediately follows.
+static verible::TokenSequence::const_iterator StopAtLastNewlineBeforeTreeLeaf(
+    const verible::TokenSequence::const_iterator token_begin,
+    const TokenInfo::Context& context) {
+  VLOG(4) << __FUNCTION__;
+  auto token_end = token_begin;
+  auto last_newline = token_begin;
+  bool have_last_newline = false;
+
+  // Find next syntax tree token or EOF.
+  bool break_while = false;
+  while (!token_end->isEOF() && !break_while) {
+    VLOG(4) << "scan: " << TokenWithContext{*token_end, context};
+    switch (token_end->token_enum) {
+      // TODO(fangism): this token-case logic is redundant with other places,
+      // plumb that through to here instead of replicating it.
+      case TK_NEWLINE:
+        have_last_newline = true;
+        last_newline = token_end;
+        ABSL_FALLTHROUGH_INTENDED;
+      case TK_SPACE:
+      case TK_EOL_COMMENT:
+      case TK_COMMENT_BLOCK:
+      case TK_ATTRIBUTE:
+        ++token_end;
+        break;
+      default:
+        break_while = true;
+        break;
+    }
+  }
+
+  const auto result = have_last_newline ? last_newline : token_end;
+  VLOG(4) << "end of " << __FUNCTION__ << ", advanced "
+          << std::distance(token_begin, result) << " tokens";
+  return result;
+}
+
+// Scan forward for comments between leaf tokens, and append them to a partition
+// with the correct amount of indentation.
+void TreeUnwrapper::LookAheadBeyondCurrentNode(
+    const verible::SyntaxTreeNode& node) {
+  VLOG(4) << __FUNCTION__;
+  // Scan until token is reached, or the last newline before token is reached.
+  const auto token_begin = NextUnfilteredToken();
+  const auto token_end =
+      StopAtLastNewlineBeforeTreeLeaf(token_begin, token_context_);
+  while (NextUnfilteredToken() != token_end) {
+    VLOG(4) << "token: " << VerboseToken(*NextUnfilteredToken());
+    AdvanceLastVisitedLeaf();
+  }
+  VLOG(4) << "end of " << __FUNCTION__;
+}
+
+void TreeUnwrapper::PostVisitNodeHook(const verible::SyntaxTreeNode& node) {
+  const auto tag = NodeEnum(node.Tag().tag);
+  VLOG(4) << __FUNCTION__ << " node type: " << tag;
+  switch (tag) {
+    case NodeEnum::kPortDeclarationList:
+    // case NodeEnum::kPortList:  // TODO(fangism): for task/function ports
+    case NodeEnum::kModuleItemList:
+      LookAheadBeyondCurrentNode(node);
+      break;
+    default:
+      break;
+  }
+  VLOG(4) << "end of " << __FUNCTION__ << " node type: " << tag;
 }
 
 void TreeUnwrapper::CollectTrailingFilteredTokens() {
+  VLOG(4) << __FUNCTION__;
   // This should emulate ::Visit(leaf == EOF token).
 
   // A newline means there are no comments to add to this UnwrappedLine
-  if (NextUnfilteredToken()->token_enum == yytokentype::TK_NEWLINE) {
+  // TODO(fangism): fold this logic into CatchUpToCurrentLeaf()
+  if (NextUnfilteredToken()->token_enum == yytokentype::TK_NEWLINE ||
+      NextUnfilteredToken()->isEOF()) {
     StartNewUnwrappedLine();
   }
 
   // "Catch up" to EOF.
   // The very last unfiltered token scanned should be the EOF.
+  // The byte offset of the EOF token is used as the stop-condition.
   CatchUpToCurrentLeaf(EOFToken());
+  VLOG(4) << "end of " << __FUNCTION__;
 }
 
 // Visitor to determine which node enum function to call
@@ -420,15 +675,24 @@ void TreeUnwrapper::Visit(const verible::SyntaxTreeNode& node) {
     default:
       break;
   }
-
   VLOG(3) << "end of " << __FUNCTION__ << " node: " << tag;
 }
 
 // Visitor to determine which leaf enum function to call
 void TreeUnwrapper::Visit(const verible::SyntaxTreeLeaf& leaf) {
+  VLOG(3) << __FUNCTION__ << " leaf: " << VerboseToken(leaf.get());
   const yytokentype tag = yytokentype(leaf.Tag().tag);
-  const auto symbol_name = verilog_symbol_name(tag);  // only needed for debug
-  VLOG(3) << __FUNCTION__ << " leaf: " << symbol_name;
+
+  // Catch up on any non-whitespace tokens that fall between the syntax tree
+  // leaves, such as comments and attributes, stopping at the current leaf.
+  CatchUpToCurrentLeaf(leaf.get());
+  VLOG(4) << "Visit leaf: after CatchUp";
+
+  // Possibly start new partition (without advancing token iterator).
+  UpdateInterLeafScanner(tag);
+
+  // Sanity check that NextUnfilteredToken() is aligned to the current leaf.
+  CHECK_EQ(NextUnfilteredToken()->text.begin(), leaf.get().text.begin());
 
   switch (tag) {
     case yytokentype::PP_endif: {
@@ -457,13 +721,6 @@ void TreeUnwrapper::Visit(const verible::SyntaxTreeLeaf& leaf) {
       break;
   }
 
-  // Catch up on any non-whitespace tokens that fall between the syntax tree
-  // leaves, such as comments and attributes, stopping at the current leaf.
-  CatchUpToCurrentLeaf(leaf.get());
-
-  // Sanity check that NextUnfilteredToken() is aligned to the current leaf.
-  CHECK_EQ(NextUnfilteredToken()->text.begin(), leaf.get().text.begin());
-
   // Advances NextUnfilteredToken(), and extends CurrentUnwrappedLine().
   // Should be equivalent to AdvanceNextUnfilteredToken().
   AddTokenToCurrentUnwrappedLine();
@@ -472,7 +729,7 @@ void TreeUnwrapper::Visit(const verible::SyntaxTreeLeaf& leaf) {
   // up to a newline.
   LookAheadBeyondCurrentLeaf();
 
-  VLOG(3) << "end of " << __FUNCTION__ << " leaf: " << symbol_name;
+  VLOG(3) << "end of " << __FUNCTION__ << " leaf: " << VerboseToken(leaf.get());
 }
 
 // Specialized node visitors

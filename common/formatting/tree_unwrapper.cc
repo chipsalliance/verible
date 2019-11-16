@@ -177,9 +177,19 @@ void TreeUnwrapper::StartNewUnwrappedLine() {
   // TODO(fangism): Take an optional indentation depth override parameter.
 
   auto& current_unwrapped_line = CurrentUnwrappedLine();
-  if (current_unwrapped_line.IsEmpty()) {
+  if (current_unwrapped_line.IsEmpty()) {  // token range is empty
     // Re-use previously created unwrapped line.
     current_unwrapped_line.SetIndentationSpaces(current_indentation_spaces_);
+    VLOG(4) << "re-using node at " << NodePath(*active_unwrapped_lines_)
+            << ", indented " << current_indentation_spaces_;
+    // There may have been subtrees created with empty ranges, e.g.
+    // for the sake of being able to correctly indent comments inside blocks.
+    // If so, delete those so that token partition range invariants are
+    // maintained through re-use of an existing node.
+    if (!active_unwrapped_lines_->Children().empty()) {
+      VLOG(4) << "removed pre-existing child partitions.";
+      active_unwrapped_lines_->Children().clear();
+    }
   } else {
     // To maintain the invariant that a parent range's upper-bound is equal
     // to the upper-bound of its last child, we may have to add one more
@@ -191,7 +201,8 @@ void TreeUnwrapper::StartNewUnwrappedLine() {
     // Create new sibling to current unwrapped line, maintaining same level.
     active_unwrapped_lines_ = active_unwrapped_lines_->NewSibling(UnwrappedLine(
         current_indentation_spaces_, CurrentFormatTokenIterator()));
-    VLOG(3) << "new node at " << NodePath(*active_unwrapped_lines_);
+    VLOG(4) << "new node " << NodePath(*active_unwrapped_lines_)
+            << ", indented " << current_indentation_spaces_;
   }
 }
 
@@ -199,6 +210,7 @@ void TreeUnwrapper::AddTokenToCurrentUnwrappedLine() {
   CHECK(NextUnfilteredTokenIsRetained());
   // Advance CurrentFormatTokenIterator().
   CurrentUnwrappedLine().SpanNextToken();
+  VLOG(4) << "appended: " << *CurrentUnwrappedLine().TokensRange().back().token;
   ++next_unfiltered_token_;
 }
 
@@ -260,8 +272,11 @@ TreeUnwrapper::VisitIndentedChildren(
           current_indentation_spaces_, CurrentFormatTokenIterator()
           // TODO(fangism): specify first child's partition policy?
           )));
-  VLOG(3) << "new node at " << NodePath(*active_unwrapped_lines_);
+  VLOG(3) << __FUNCTION__ << ", new node " << NodePath(*active_unwrapped_lines_)
+          << ", indented " << current_indentation_spaces_;
   TraverseChildren(node);
+  // Actions that should be taken before returning from this context.
+  PostVisitNodeHook(node);
 
   return CurrentFormatTokenIterator();
 

@@ -180,6 +180,7 @@ cc_test(
         "//common/text:token_info",
         "//common/text:token_stream_view",
         "//common/util:container_iterator_range",
+        "//common/util:range",
         "@com_google_absl//absl/strings",
         "@com_google_googletest//:gtest_main",
     ],

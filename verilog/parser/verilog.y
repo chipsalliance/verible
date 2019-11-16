@@ -4865,7 +4865,7 @@ list_of_ports_or_port_declarations_opt
   : list_of_ports_or_port_declarations
     { $$ = move($1); }
   | /* empty */
-    { $$ = nullptr; }
+    { $$ = MakeTaggedNode(N::kPortDeclarationList); }
   ;
 list_of_ports_or_port_declarations
   /* This serves as list_of_ports or list_of_port_declarations.
@@ -5693,7 +5693,7 @@ module_item_list_opt
   : module_item_list
     { $$ = move($1); }
   | /* empty */
-    { $$ = nullptr; }  // TODO(b/144182895): create node of kModuleItemList
+    { $$ = MakeTaggedNode(N::kModuleItemList); }
   ;
 genvar_opt
   : TK_genvar

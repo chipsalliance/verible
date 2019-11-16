@@ -94,10 +94,6 @@ class UnwrappedLine {
   // Currently for debugging, prints the UnwrappedLine as Code
   std::ostream* AsCode(std::ostream*) const;
 
-  // True if the unwrapped line contains only comments
-  // TODO(fangism): this looks unused, so delete it.
-  bool only_comments_ = false;
-
  private:
   // Data members:
 

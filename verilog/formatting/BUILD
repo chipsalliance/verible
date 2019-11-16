@@ -15,7 +15,6 @@ cc_library(
     srcs = ["tree_unwrapper.cc"],
     hdrs = ["tree_unwrapper.h"],
     deps = [
-        ":token_scanner",
         ":verilog_token",
         "//common/formatting:basic_format_style",
         "//common/formatting:format_token",
@@ -31,11 +30,13 @@ cc_library(
         "//common/text:token_info",
         "//common/text:token_stream_view",
         "//common/util:container_iterator_range",
+        "//common/util:enum_flags",
         "//common/util:logging",
         "//common/util:value_saver",
         "//verilog/CST:verilog_nonterminals",
         "//verilog/parser:verilog_parser",  # only for verilog_symbol_name
         "//verilog/parser:verilog_token_enum",
+        "@com_google_absl//absl/base:core_headers",
     ],
 )
 
@@ -191,26 +192,6 @@ cc_test(
         "//verilog/parser:verilog_parser",
         "//verilog/parser:verilog_token_enum",
         "@com_google_absl//absl/strings",
-        "@com_google_googletest//:gtest_main",
-    ],
-)
-
-cc_library(
-    name = "token_scanner",
-    srcs = ["token_scanner.cc"],
-    hdrs = ["token_scanner.h"],
-    deps = [
-        ":verilog_token",
-        "//verilog/parser:verilog_token_enum",
-    ],
-)
-
-cc_test(
-    name = "token_scanner_test",
-    srcs = ["token_scanner_test.cc"],
-    deps = [
-        ":token_scanner",
-        "//verilog/parser:verilog_token_enum",
         "@com_google_googletest//:gtest_main",
     ],
 )

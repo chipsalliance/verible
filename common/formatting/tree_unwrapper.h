@@ -76,6 +76,9 @@ class TreeUnwrapper : public TreeContextVisitor {
     return active_unwrapped_lines_;
   }
 
+  // Returns text spanned by the syntax tree being traversed.
+  absl::string_view FullText() const { return text_structure_view_.Contents(); }
+
  protected:
   // Begins a new UnwrappedLine to span a new sub-range of format tokens.
   void StartNewUnwrappedLine();
@@ -85,6 +88,10 @@ class TreeUnwrapper : public TreeContextVisitor {
   void TraverseChildren(const verible::SyntaxTreeNode& node) {
     TreeContextVisitor::Visit(node);
   }
+
+  // Override-able hook for actions that should be taken while in the
+  // context of traversing children.
+  virtual void PostVisitNodeHook(const verible::SyntaxTreeNode&) {}
 
   // Visits a subtree with (possibly) additional indentation.
   // TODO(fangism): NOW: rename this to VisitSubPartition.

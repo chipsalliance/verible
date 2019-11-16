@@ -346,7 +346,7 @@ const TreeUnwrapperTestData kUnwrapModuleTestCases[] = {
         "empty module",
         "module foo ();"
         "endmodule",
-        ModuleHeader(0, L(0, {"module", "foo", "(", ")", ";"})),
+        ModuleHeader(0, L(0, {"module", "foo", "("}), L(0, {")", ";"})),
         L(0, {"endmodule"}),
     },
 
@@ -354,7 +354,7 @@ const TreeUnwrapperTestData kUnwrapModuleTestCases[] = {
         "empty module extra spaces",  // verifying space-insensitivity
         "  module\tfoo   (\t) ;    "
         "endmodule   ",
-        ModuleHeader(0, L(0, {"module", "foo", "(", ")", ";"})),
+        ModuleHeader(0, L(0, {"module", "foo", "("}), L(0, {")", ";"})),
         L(0, {"endmodule"}),
     },
 
@@ -362,7 +362,7 @@ const TreeUnwrapperTestData kUnwrapModuleTestCases[] = {
         "empty module extra newlines",  // verifying space-insensitivity
         "module foo (\n\n);\n"
         "endmodule\n",
-        ModuleHeader(0, L(0, {"module", "foo", "(", ")", ";"})),
+        ModuleHeader(0, L(0, {"module", "foo", "("}), L(0, {")", ";"})),
         L(0, {"endmodule"}),
     },
 
@@ -458,7 +458,7 @@ const TreeUnwrapperTestData kUnwrapModuleTestCases[] = {
         "endmodule : foo "
         "module zoo;"
         "endmodule : zoo",
-        ModuleHeader(0, L(0, {"module", "foo", "(", ")", ";"})),
+        ModuleHeader(0, L(0, {"module", "foo", "("}), L(0, {")", ";"})),
         L(0, {"endmodule", ":", "foo"}),
         ModuleHeader(0, L(0, {"module", "zoo", ";"})),
         L(0, {"endmodule", ":", "zoo"}),
@@ -981,9 +981,69 @@ const TreeUnwrapperTestData kUnwrapCommentsTestCases[] = {
         "// start comment\n"
         "module foo (); endmodule\n"
         "// end comment\n",
-        ModuleHeader(0, L(0, {"// start comment"}),
-                     L(0, {"module", "foo", "(", ")", ";"})),
-        L(0, {"endmodule"}), L(0, {"// end comment"}),  // comment on own line
+        ModuleHeader(0,
+                     // currently "start comment" gets pulled into this level,
+                     // but doesn't impact final output.
+                     L(0, {"// start comment"}), L(0, {"module", "foo", "("}),
+                     L(0, {")", ";"})),
+        L(0, {"endmodule"}),       //
+        L(0, {"// end comment"}),  // comment on own line
+    },
+
+    {
+        "two modules surrounded by comments",
+        "// comment1\n"
+        "module foo (); endmodule\n"
+        "// comment2\n\n"
+        "// comment3\n"
+        "module bar (); endmodule\n"
+        "// comment4\n",
+        ModuleHeader(0, L(0, {"// comment1"}), L(0, {"module", "foo", "("}),
+                     L(0, {")", ";"})),
+        L(0, {"endmodule"}),  //
+        ModuleHeader(0,
+                     // currently, both comment2 and comment3 get pulled into
+                     // module bar's header, but this doesn't impact final
+                     // output.
+                     L(0, {"// comment2"}),  // comment on own line
+                     L(0, {"// comment3"}), L(0, {"module", "bar", "("}),
+                     L(0, {")", ";"})),
+        L(0, {"endmodule"}),    //
+        L(0, {"// comment4"}),  // comment on own line
+    },
+
+    {
+        "module item comments only",
+        "module foo ();\n"
+        "// item comment 1\n"
+        "// item comment 2\n"
+        "endmodule\n",
+        ModuleHeader(0, L(0, {"module", "foo", "("}), L(0, {")", ";"})),
+        ModuleItemList(1, L(1, {"// item comment 1"}),  //
+                       L(1, {"// item comment 2"})      //
+                       ),
+        L(0, {"endmodule"}),
+    },
+
+    {
+        "module item and ports comments only",
+        "  // humble module\n"
+        "  module foo ( // non-port comment\n"
+        "// port comment 1\n"
+        "// port comment 2\n"
+        ");  // header trailing comment\n"
+        "// item comment 1\n"
+        "// item comment 2\n"
+        "endmodule\n",
+        ModuleHeader(0, L(0, {"// humble module"}),
+                     L(0, {"module", "foo", "(", "// non-port comment"}),
+                     ModulePortList(2, L(2, {"// port comment 1"}),
+                                    L(2, {"// port comment 2"})),
+                     L(0, {")", ";", "// header trailing comment"})),
+        ModuleItemList(1, L(1, {"// item comment 1"}),  //
+                       L(1, {"// item comment 2"})      //
+                       ),
+        L(0, {"endmodule"}),
     },
 
     {
@@ -996,8 +1056,8 @@ const TreeUnwrapperTestData kUnwrapCommentsTestCases[] = {
         "endmodule\n"
         "// end comment\n",
         ModuleHeader(0, L(0, {"// start comment"}),
-                     L(0, {"module", "foo", "(", ")", ";",
-                           "// comment at end of module"})),
+                     L(0, {"module", "foo", "("}),
+                     L(0, {")", ";", "// comment at end of module"})),
         L(0, {"endmodule"}),  // comment separated to next line
         L(0, {"// end comment"}),
     },
@@ -1009,9 +1069,24 @@ const TreeUnwrapperTestData kUnwrapCommentsTestCases[] = {
         "// comment 2\n"
         "module foo();"
         "endmodule",
-        ModuleHeader(0, L(0, {"// comment 1"}), L(0, {"// comment 2"}),
-                     L(0, {"module", "foo", "(", ")", ";"})),
+        ModuleHeader(0, L(0, {"// comment 1"}),  //
+                     L(0, {"// comment 2"}), L(0, {"module", "foo", "("}),
+                     L(0, {")", ";"})),
         L(0, {"endmodule"}),
+    },
+
+    {
+        "module with end of line comments in empty ports",
+        "module foo ( // comment1\n"
+        "// comment2\n"
+        "// comment3\n"
+        "); // comment4\n"
+        "endmodule // endmodule comment\n",
+        ModuleHeader(
+            0, L(0, {"module", "foo", "(", "// comment1"}),
+            ModulePortList(2, L(2, {"// comment2"}), L(2, {"// comment3"})),
+            L(0, {")", ";", "// comment4"})),
+        L(0, {"endmodule", "// endmodule comment"}),
     },
 
     {
@@ -1056,55 +1131,38 @@ const TreeUnwrapperTestData kUnwrapCommentsTestCases[] = {
     // as must-break
     {
         "module with in-line comments",
-        "module foo ( /* module foo ( comment */"
-        " input /* comment after input token */ bar,"
-        "/*comment before output token */ output /* comment after output "
-        "token */ "
-        "baz"
-        ") /* comment before semicolon */;\n"
-        "/* comment before endmodule*/endmodule\n",
-        ModuleHeader(
-            0, L(0, {"module", "foo", "(", "/* module foo ( comment */"}),
-            ModulePortList(
-                2,
-                L(2, {"input", "/* comment after input token */", "bar", ",",
-                      "/*comment before output token */"}),
-                L(2, {"output", "/* comment after output token */", "baz"})),
-            L(0, {")", "/* comment before semicolon */", ";"})),
-        L(0, {"/* comment before endmodule*/", "endmodule"}),
+        "module foo ( /* comment1 */"
+        " input /* comment2 */ bar,"
+        "/*comment3 */ output /* comment4 */ baz"
+        ") /* comment5 */;\n"
+        "/* comment6 */endmodule\n",
+        ModuleHeader(0, L(0, {"module", "foo", "(", "/* comment1 */"}),
+                     ModulePortList(2,
+                                    L(2, {"input", "/* comment2 */", "bar", ",",
+                                          "/*comment3 */"}),
+                                    L(2, {"output", "/* comment4 */", "baz"})),
+                     L(0, {")", "/* comment5 */", ";"})),
+        L(0, {"/* comment6 */"}),
+        L(0, {"endmodule"}),
     },
 
     // This test case mixes types of comments to ensure they are in the
-    // correct
-    // UnwrappedLines
+    // correct UnwrappedLines
     {
         "module with end of line and in-line comments",
-        "module /* comment after module token */ foo ( // module foo ( "
-        "comment!\n"
-        "input bar,/* inline comment // before end of line comment */ // "
-        "input "
-        "bar, comment\n"
-        "output baz // output baz comment /* this should be in the end of "
-        "line "
-        "comment */\n"
-        "); // ); comment\n"
-        "/* comment after end of line comment */ endmodule //endmodule "
-        "comment\n",
-        ModuleHeader(0,
-                     L(0, {"module", "/* comment after module token */", "foo",
-                           "(", "// module foo ( comment!"}),
-                     ModulePortList(2,
-                                    L(2, {"input", "bar", ",",
-                                          "/* inline comment // before end of "
-                                          "line comment */",
-                                          "// input bar, comment"}),
-                                    L(2, {"output", "baz",
-                                          "// output baz comment /* this "
-                                          "should be in the end of line "
-                                          "comment */"})),
-                     L(0, {")", ";", "// ); comment"})),
-        L(0, {"/* comment after end of line comment */", "endmodule",
-              "//endmodule comment"}),
+        "module /* comment1 */ foo ( // comment2\n"
+        "input bar,/* comment3 */ // comment4\n"
+        "output baz // comment5\n"
+        "); // comment6\n"
+        "/* comment7 */ endmodule //comment8\n",
+        ModuleHeader(
+            0, L(0, {"module", "/* comment1 */", "foo", "(", "// comment2"}),
+            ModulePortList(
+                2, L(2, {"input", "bar", ",", "/* comment3 */", "// comment4"}),
+                L(2, {"output", "baz", "// comment5"})),
+            L(0, {")", ";", "// comment6"})),
+        L(0, {"/* comment7 */"}),
+        L(0, {"endmodule", "//comment8"}),
     },
 };
 
@@ -1116,7 +1174,9 @@ TEST_F(TreeUnwrapperTest, UnwrapCommentsTests) {
     TreeUnwrapper tree_unwrapper = CreateTreeUnwrapper(test_case.source_code);
     const auto* uwline_tree = tree_unwrapper.Unwrap();
     EXPECT_TRUE(VerifyUnwrappedLines(&std::cout, *ABSL_DIE_IF_NULL(uwline_tree),
-                                     test_case));
+                                     test_case))
+        << "code:\n"
+        << test_case.source_code;
   }
 }
 

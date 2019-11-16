@@ -31,6 +31,7 @@
 #include "common/text/token_info.h"
 #include "common/text/token_stream_view.h"
 #include "common/util/container_iterator_range.h"
+#include "common/util/range.h"
 
 namespace verible {
 
@@ -78,6 +79,7 @@ class FakeTreeUnwrapper : public TreeUnwrapperData, public TreeUnwrapper {
   void Visit(const SyntaxTreeNode& node) override {
     StartNewUnwrappedLine();
     TraverseChildren(node);
+    PostVisitNodeHook(node);
   }
 
   using TreeUnwrapper::StartNewUnwrappedLine;
@@ -113,6 +115,8 @@ TEST(TreeUnwrapperTest, EmptyStartNewUnwrappedLine) {
 TEST(TreeUnwrapperTest, NonEmptyUnwrap) {
   std::unique_ptr<TextStructureView> view = MakeTextStructureViewHelloWorld();
   FakeTreeUnwrapper tree_unwrapper(*view);
+  EXPECT_TRUE(
+      verible::BoundsEqual(tree_unwrapper.FullText(), view->Contents()));
 
   tree_unwrapper.Unwrap();
   const auto unwrapped_lines = tree_unwrapper.FullyPartitionedUnwrappedLines();

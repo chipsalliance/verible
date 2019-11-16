@@ -1107,13 +1107,59 @@ TEST(FormatterEndToEndTest, PreserveVSpacesOnly) {
       // Module with comments intermingled.
       {
           "//1\nmodule foo;//2\nwire w;//3\n//4\nendmodule\n",
-          "//1\nmodule foo;  //2\n  wire w;  //3\n//4\nendmodule\n"
+          "//1\nmodule foo;  //2\n  wire w;  //3\n  //4\nendmodule\n"
           // TODO(fangism): whether or not //4 should be indented is
           // questionable (in similar cases below too).
       },
       {// now with extra blank lines
        "//1\n\nmodule foo;//2\n\nwire w;//3\n\n//4\n\nendmodule\n\n",
-       "//1\n\nmodule foo;  //2\n\n  wire w;  //3\n\n//4\n\nendmodule\n\n"},
+       "//1\n\nmodule foo;  //2\n\n  wire w;  //3\n\n  //4\n\nendmodule\n\n"},
+
+      {
+          // module with comments-only in some empty blocks, properly indented
+          "  // humble module\n"
+          "  module foo (// non-port comment\n"
+          "// port comment 1\n"
+          "// port comment 2\n"
+          ");// header trailing comment\n"
+          "// item comment 1\n"
+          "// item comment 2\n"
+          "endmodule\n",
+          "// humble module\n"
+          "module foo(// non-port comment\n"  // TODO(fangism): 2 spaces before
+                                              // //
+          "    // port comment 1\n"
+          "    // port comment 2\n"
+          ");  // header trailing comment\n"
+          "  // item comment 1\n"
+          "  // item comment 2\n"
+          "endmodule\n",
+      },
+
+      {
+          // module with comments around non-empty blocks
+          "  // humble module\n"
+          "  module foo (// non-port comment\n"
+          "// port comment 1\n"
+          "input   logic   f  \n"
+          "// port comment 2\n"
+          ");// header trailing comment\n"
+          "// item comment 1\n"
+          "wire w ; \n"
+          "// item comment 2\n"
+          "endmodule\n",
+          "// humble module\n"
+          "module foo(// non-port comment\n"  // TODO(fangism): 2 spaces before
+                                              // //
+          "    // port comment 1\n"
+          "    input logic f\n"
+          "    // port comment 2\n"
+          ");  // header trailing comment\n"
+          "  // item comment 1\n"
+          "  wire w;\n"
+          "  // item comment 2\n"
+          "endmodule\n",
+      },
   };
   FormatStyle style;
   style.preserve_horizontal_spaces = PreserveSpaces::None;
