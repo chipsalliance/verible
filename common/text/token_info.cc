@@ -44,14 +44,14 @@ TokenInfo::Context::Context(absl::string_view b)
       // By default, just print the enum integer value, un-translated.
       token_enum_translator([](std::ostream& stream, int e) { stream << e; }) {}
 
-// TODO(fangism): pass in a token_enum interpreter for human readability
 std::ostream& TokenInfo::ToStream(std::ostream& output_stream,
                                   const Context& context) const {
   output_stream << "(#";
   context.token_enum_translator(output_stream, token_enum);
   output_stream << " @" << left(context.base) << '-' << right(context.base)
                 << ": \"" << text << "\")";
-  CHECK(IsSubRange(text, context.base));
+  const auto dist = std::distance(context.base.end(), text.end());
+  CHECK(IsSubRange(text, context.base)) << "text.end() is off by " << dist;
   return output_stream;
 }
 

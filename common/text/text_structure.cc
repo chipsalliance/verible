@@ -145,6 +145,16 @@ void TextStructureView::FilterTokens(const TokenFilterPredicate& keep) {
   FilterTokenStreamViewInPlace(keep, &tokens_view_);
 }
 
+static void TerminateTokenStream(TokenSequence* tokens) {
+  if (!tokens->empty()) {
+    if (!tokens->back().isEOF()) {
+      const TokenInfo new_eof(TK_EOF,
+                              absl::string_view(tokens->back().text.end(), 0));
+      tokens->push_back(new_eof);  // might cause re-alloc.
+    }
+  }
+}
+
 void TextStructureView::FocusOnSubtreeSpanningSubstring(int left_offset,
                                                         int length) {
   VLOG(2) << __FUNCTION__ << " at " << left_offset << " +" << length;
@@ -173,6 +183,8 @@ void TextStructureView::TrimSyntaxTree(int first_token_offset,
 }
 
 // Reduces the set of tokens to that spanned by [left_offset, right_offset).
+// The resulting token stream is terminated with an EOF token, whose range
+// reflects the right_offset.
 void TextStructureView::TrimTokensToSubstring(int left_offset,
                                               int right_offset) {
   VLOG(2) << __FUNCTION__;
@@ -194,6 +206,7 @@ void TextStructureView::TrimTokensToSubstring(int left_offset,
 
   // Copy subset of tokens to new token sequence.
   TokenSequence trimmed_stream(view_trim_range.begin(), view_trim_range.end());
+  TerminateTokenStream(&trimmed_stream);  // Append EOF token.
 
   // Recalculate iterators for new token stream view, pointing into new
   // token sequence.
@@ -298,8 +311,7 @@ util::Status TextStructureView::FastTokenRangeConsistencyCheck() const {
       if (line_token_map_.front() != tokens_.begin()) {
         return util::InternalError(
             "Per-line token iterator map does not start with the beginning of "
-            "the "
-            "token sequence.");
+            "the token sequence.");
       }
       if (line_token_map_.back() != tokens_.end()) {
         return util::InternalError(
@@ -415,6 +427,11 @@ void TextStructureView::ConsumeDeferredExpansion(
                                      std::distance(contents_.begin(), offset));
 
   // Translate token_view's iterators into array indices.
+  if (!sub_data.tokens_.empty() && sub_data.tokens_.back().isEOF()) {
+    // Remove auxiliary data's end-token sentinel before copying.
+    // Don't want to splice it into result.
+    sub_data.tokens_.pop_back();
+  }
   CopyTokensAndView(combined_tokens, token_view_indices, sub_data.tokens_,
                     sub_data.tokens_view_);
 

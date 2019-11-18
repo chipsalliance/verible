@@ -280,10 +280,14 @@ class MacroCallArgExpander : public MutableTreeVisitorRecursive {
           expr_analyzer->ParseStatus().ok()) {
         VLOG(3) << "  ... is a parse-able expression, saving for expansion.";
         const auto& token_sequence = expr_analyzer->Data().TokenStream();
+        const verible::TokenInfo::Context token_context{
+            expr_analyzer->Data().Contents(), [](std::ostream& stream, int e) {
+              stream << verilog_symbol_name(e);
+            }};
         if (VLOG_IS_ON(4)) {
           LOG(INFO) << "macro call-arg's lexed tokens: ";
           for (const auto& t : token_sequence) {
-            LOG(INFO) << t;
+            LOG(INFO) << verible::TokenWithContext{t, token_context};
           }
         }
         CHECK_EQ(token_sequence.back().right(expr_analyzer->Data().Contents()),

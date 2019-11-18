@@ -80,6 +80,8 @@ struct TokenInfo {
     Context(absl::string_view b,
             std::function<void(std::ostream&, int)> translator)
         : base(b), token_enum_translator(translator) {}
+
+    Context(const Context&) = default;
   };
 
   // Return position of this token's text start relative to a base buffer.

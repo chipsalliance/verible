@@ -264,7 +264,15 @@ TreeUnwrapper::TreeUnwrapper(const verible::TextStructureView& view,
       inter_leaf_scanner_(new TokenScanner),
       token_context_(FullText(), [](std::ostream& stream, int e) {
         stream << verilog_symbol_name(e);
-      }) {}
+      }) {
+  // Verify that unfiltered token stream is properly EOF terminated,
+  // so that stream scanners (inter_leaf_scanner_) know when to stop.
+  const auto& tokens = view.TokenStream();
+  CHECK(!tokens.empty());
+  const auto& back(tokens.back());
+  CHECK(back.isEOF());
+  CHECK(back.text.empty());
+}
 
 TreeUnwrapper::~TreeUnwrapper() {}
 
@@ -360,7 +368,7 @@ void TreeUnwrapper::LookAheadBeyondCurrentLeaf() {
   VLOG(4) << "end of " << __FUNCTION__;
 }
 
-// Scan forward up to a synta tree leaf token, but return (possibly) the
+// Scan forward up to a syntax tree leaf token, but return (possibly) the
 // position of the last newline *before* that leaf token.
 // This allows prefix comments and attributes to stick with their
 // intended token that immediately follows.

@@ -164,6 +164,7 @@ class TextStructureView {
   std::vector<absl::string_view> lines_;
 
   // Tokens that constitute the original file (contents_).
+  // This should always be terminated with a sentinel EOF token.
   TokenSequence tokens_;
 
   // Possibly modified view of the tokens_ token sequence.
@@ -182,13 +183,8 @@ class TextStructureView {
 
   void TrimTokensToSubstring(int left_offset, int right_offset);
 
-#if 0
-  int TrimContentsToTokens();
-  void TrimContentsAndTokenLocations();
-#else
   void TrimContents(int left_offset, int length);
   void SplitLines();
-#endif
 
   void ConsumeDeferredExpansion(
       TokenSequence::const_iterator* next_token_iter,

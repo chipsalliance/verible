@@ -327,8 +327,12 @@ TEST_F(TextStructureViewInternalsTest, TrimSyntaxTreeLastLeaf) {
 // Test that trimming tokens changes nothing when range spans whole contents.
 TEST_F(TextStructureViewInternalsTest, TrimTokensToSubstringKeepEverything) {
   TrimTokensToSubstring(0, contents_.length());
-  EXPECT_THAT(tokens_, SizeIs(4));
+  EXPECT_THAT(tokens_, SizeIs(5));
   EXPECT_THAT(tokens_view_, SizeIs(3));
+  const TokenInfo& back(tokens_.back());
+  EXPECT_TRUE(back.isEOF());
+  EXPECT_TRUE(
+      BoundsEqual(back.text, make_range(contents_.end(), contents_.end())));
 }
 
 // Test that trimming tokens changes nothing when range is empty.
@@ -341,15 +345,23 @@ TEST_F(TextStructureViewInternalsTest, TrimTokensToSubstringKeepNothing) {
 // Test that trimming tokens can reduce to a subset.
 TEST_F(TextStructureViewInternalsTest, TrimTokensToSubstringKeepSubset) {
   TrimTokensToSubstring(3, 12);
-  EXPECT_THAT(tokens_, SizeIs(3));
+  EXPECT_THAT(tokens_, SizeIs(4));
   EXPECT_THAT(tokens_view_, SizeIs(2));
+  const TokenInfo& back(tokens_.back());
+  EXPECT_TRUE(back.isEOF());
+  EXPECT_TRUE(BoundsEqual(
+      back.text, make_range(contents_.begin() + 12, contents_.begin() + 12)));
 }
 
 // Test that trimming tokens can reduce to one leaf.
 TEST_F(TextStructureViewInternalsTest, TrimTokensToSubstringKeepLeaf) {
   TrimTokensToSubstring(0, 6);
-  EXPECT_THAT(tokens_, SizeIs(2));
+  EXPECT_THAT(tokens_, SizeIs(3));
   EXPECT_THAT(tokens_view_, SizeIs(2));
+  const TokenInfo& back(tokens_.back());
+  EXPECT_TRUE(back.isEOF());
+  EXPECT_TRUE(BoundsEqual(
+      back.text, make_range(contents_.begin() + 6, contents_.begin() + 6)));
 }
 
 // Test trimming the contents to narrower range of text.
@@ -365,18 +377,20 @@ TEST_F(TextStructureViewPublicTest, FocusOnSubtreeSpanningSubstringWholeTree) {
   const auto expect_tree =
       Node(Leaf(tokens_[0]), Leaf(tokens_[1]), Leaf(tokens_[3]));
   FocusOnSubtreeSpanningSubstring(0, contents_.length());
-  EXPECT_THAT(tokens_, SizeIs(4));
+  EXPECT_THAT(tokens_, SizeIs(5));
   EXPECT_THAT(tokens_view_, SizeIs(3));
   EXPECT_TRUE(EqualTrees(syntax_tree_.get(), expect_tree.get()));
+  EXPECT_TRUE(tokens_.back().isEOF());
 }
 
 // Test that a substring range yields a subtree.
 TEST_F(TextStructureViewPublicTest, FocusOnSubtreeSpanningSubstringFirstLeaf) {
   const auto expect_tree = Leaf(tokens_[0]);
   FocusOnSubtreeSpanningSubstring(0, tokens_[0].text.length());
-  EXPECT_THAT(tokens_, SizeIs(1));
+  EXPECT_THAT(tokens_, SizeIs(2));
   EXPECT_THAT(tokens_view_, SizeIs(1));
   EXPECT_TRUE(EqualTrees(syntax_tree_.get(), expect_tree.get()));
+  EXPECT_TRUE(tokens_.back().isEOF());
 }
 
 // Test that ExpandSubtrees on an empty map changes nothing.
