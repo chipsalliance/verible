@@ -1540,7 +1540,11 @@ zi_zp { UpdateLocation(); return TK_zi_zp; }
   /* All other single-character tokens */
 . { UpdateLocation(); return yytext[0]; }
 
-"\\\n" { UpdateLocation(); /* ignore line continuations */ }
+{LineContinuation} {
+  yyless(yyleng-1);  /* return \n to input stream */
+  UpdateLocation();
+  return TK_LINE_CONT;
+}
 
 {BadIdentifier} { UpdateLocation(); return TK_OTHER; }
 {BadMacroIdentifier} { UpdateLocation(); return TK_OTHER; }

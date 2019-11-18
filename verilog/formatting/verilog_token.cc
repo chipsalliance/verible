@@ -547,6 +547,8 @@ static const auto* FormatTokenTypeMap =
 
         // end of line comment
         {yytokentype::TK_EOL_COMMENT, FTT::eol_comment},
+
+        // TODO(fangism): {yytokentype::TK_LINE_CONT, FTT::???},
     });
 
 FTT GetFormatTokenType(yytokentype e) {

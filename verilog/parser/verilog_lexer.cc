@@ -48,6 +48,7 @@ bool VerilogLexer::KeepSyntaxTreeTokens(const verible::TokenInfo& t) {
     case TK_ATTRIBUTE:      // fall-through
     case TK_SPACE:          // fall-through
     case TK_NEWLINE:
+    case TK_LINE_CONT:
       // TODO(fangism): preserve newlines until after some preprocessing steps.
       return false;
     default:

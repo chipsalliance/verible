@@ -93,6 +93,13 @@ static const char* kPreprocessorTests[] = {
     "`WE(`MUST(`GO(\\deeper )))\n",
 };
 
+// Make sure line continuations, newlines and spaces get filtered out
+static const char* kLexerFilterTests[] = {
+    "parameter \tfoo =\t\t0;",
+    "parameter\n\nfoo =\n 0;",
+    "parameter \\\nfoo =\\\n 0;",
+};
+
 // Numbers are parsed as ([width], [signed]base, digits)
 static const char* kNumberTests[] = {
     "parameter foo = 0;",
@@ -5379,6 +5386,7 @@ static void TestVerilogParserMatchAll(const char* (&data)[N]) {
 }
 
 // Tests on valid code.
+TEST(VerilogParserTest, LexerFilter) { TestVerilogParser(kLexerFilterTests); }
 TEST(VerilogParserTest, Empty) { TestVerilogParser(kEmptyTests); }
 TEST(VerilogParserTest, Preprocessor) { TestVerilogParser(kPreprocessorTests); }
 TEST(VerilogParserTest, Numbers) { TestVerilogParser(kNumberTests); }
@@ -5484,6 +5492,10 @@ TEST(VerilogParserTestMatchAll, Empty) {
 
 TEST(VerilogParserTestMatchAll, Preprocessor) {
   TestVerilogParserMatchAll(kPreprocessorTests);
+}
+
+TEST(VerilogParserTestMatchAll, LexerFilter) {
+  TestVerilogParserMatchAll(kLexerFilterTests);
 }
 
 TEST(VerilogParserTestMatchAll, Numbers) {
