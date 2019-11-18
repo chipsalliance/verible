@@ -2012,6 +2012,26 @@ const TreeUnwrapperTestData kUnwrapTaskTestCases[] = {
     },
 
     {
+        "empty task, statement comment",
+        "task foo;\n"
+        "// statement comment\n"
+        "endtask",
+        TaskHeader(0, L(0, {"task", "foo", ";"})),
+        StatementList(1, L(1, {"// statement comment"})),
+        L(0, {"endtask"}),
+    },
+
+    {
+        "empty task, empty ports, statement comment",
+        "task foo();\n"
+        "// statement comment\n"
+        "endtask",
+        TaskHeader(0, L(0, {"task", "foo", "(", ")", ";"})),
+        StatementList(1, L(1, {"// statement comment"})),
+        L(0, {"endtask"}),
+    },
+
+    {
         "empty task with qualifier",
         "task automatic foo;"
         "endtask",
@@ -2315,6 +2335,16 @@ const TreeUnwrapperTestData kUnwrapFunctionTestCases[] = {
     },
 
     {
+        "empty function, comment statement",
+        "function foo;// foo does x\n"
+        "// statement comment\n"
+        "endfunction : foo",
+        FunctionHeader(0, L(0, {"function", "foo", ";", "// foo does x"})),
+        StatementList(1, L(1, {"// statement comment"})),
+        L(0, {"endfunction", ":", "foo"}),
+    },
+
+    {
         "two empty functions",
         "function funk;"
         "endfunction : funk "
@@ -2323,6 +2353,16 @@ const TreeUnwrapperTestData kUnwrapFunctionTestCases[] = {
         FunctionHeader(0, L(0, {"function", "funk", ";"})),
         L(0, {"endfunction", ":", "funk"}),
         FunctionHeader(0, L(0, {"function", "foo", ";"})),
+        L(0, {"endfunction", ":", "foo"}),
+    },
+
+    {
+        "empty function, empty ports, comment statement",
+        "function foo();// foo\n"
+        "// statement comment\n"
+        "endfunction : foo",
+        FunctionHeader(0, L(0, {"function", "foo", "(", ")", ";", "// foo"})),
+        StatementList(1, L(1, {"// statement comment"})),
         L(0, {"endfunction", ":", "foo"}),
     },
 

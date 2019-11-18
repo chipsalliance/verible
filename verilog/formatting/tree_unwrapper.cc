@@ -428,6 +428,9 @@ void TreeUnwrapper::LookAheadBeyondCurrentNode() {
   VLOG(4) << "end of " << __FUNCTION__;
 }
 
+// This hook is called between the children nodes of the handled node types.
+// This is what allows partitions containing only comments to be properly
+// indented to the same level that non-comment sub-partitions would.
 void TreeUnwrapper::InterChildNodeHook(const verible::SyntaxTreeNode& node) {
   const auto tag = NodeEnum(node.Tag().tag);
   VLOG(4) << __FUNCTION__ << " node type: " << tag;
@@ -438,6 +441,8 @@ void TreeUnwrapper::InterChildNodeHook(const verible::SyntaxTreeNode& node) {
     case NodeEnum::kModuleItemList:
     case NodeEnum::kClassItems:
     case NodeEnum::kDescriptionList:  // top-level item comments
+    case NodeEnum::kStatementList:
+    case NodeEnum::kBlockItemStatementList:
       LookAheadBeyondCurrentNode();
       break;
     default:

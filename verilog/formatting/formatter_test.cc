@@ -718,6 +718,24 @@ static const std::initializer_list<FormatterTestCase> kFormatterTestCases = {
      "function f(input bit x);\nendfunction\n"},
     {"function f (input bit x,logic y );endfunction",
      "function f(input bit x, logic y);\nendfunction\n"},
+    {"function f;\n// statement comment\nendfunction\n",
+     "function f;\n"
+     "  // statement comment\n"  // indented
+     "endfunction\n"},
+    {"function f();\n// statement comment\nendfunction\n",
+     "function f();\n"
+     "  // statement comment\n"  // indented
+     "endfunction\n"},
+    {"function f(input int x);\n"
+     "// statement comment\n"
+     "f=x;\n"
+     "// statement comment\n"
+     "endfunction\n",
+     "function f(input int x);\n"
+     "  // statement comment\n"  // indented
+     "  f = x;\n"
+     "  // statement comment\n"  // indented
+     "endfunction\n"},
     {// port declaration exceeds line length limit
      "function f (loooong_type if_it_fits_I_sits);endfunction",
      "function f(\n"
@@ -1033,6 +1051,24 @@ static const std::initializer_list<FormatterTestCase> kFormatterTestCases = {
      "    c.c <= d.d;\n"
      "  endtask\n"
      "endclass\n"},
+    {"task t;\n// statement comment\nendtask\n",
+     "task t;\n"
+     "  // statement comment\n"  // indented
+     "endtask\n"},
+    {"task t( );\n// statement comment\nendtask\n",
+     "task t();\n"
+     "  // statement comment\n"  // indented
+     "endtask\n"},
+    {"task t( input x  );\n"
+     "// statement comment\n"
+     "s();\n"
+     "// statement comment\n"
+     "endtask\n",
+     "task t(input x);\n"
+     "  // statement comment\n"  // indented
+     "  s();\n"
+     "  // statement comment\n"  // indented
+     "endtask\n"},
 };
 
 // Tests that formatter produces expected results, end-to-end.

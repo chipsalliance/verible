@@ -2983,7 +2983,7 @@ block_item_or_statement_or_null_list_opt
   : block_item_or_statement_or_null_list
     { $$ = move($1); }
   | /* empty */
-    { $$ = nullptr; }
+    { $$ = MakeTaggedNode(N::kBlockItemStatementList); }
   ;
 stream_expression
   : expression
@@ -6651,7 +6651,7 @@ statement_or_null_list_opt
   : statement_or_null_list
     { $$ = move($1); }
   | /* empty */
-    { $$ = nullptr; }
+    { $$ = MakeTaggedNode(N::kStatementList); }
   ;
 statement_or_null_list
   : statement_or_null_list statement_or_null
@@ -6698,7 +6698,7 @@ tf_item_or_statement_or_null_list_opt
   : tf_item_or_statement_or_null_list
     { $$ = move($1); }
   | /* empty */
-    { $$ = nullptr; }
+    { $$ = MakeTaggedNode(N::kStatementList); }
   ;
 
 tf_port_list_paren_opt
