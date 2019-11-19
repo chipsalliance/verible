@@ -2223,6 +2223,48 @@ const TreeUnwrapperTestData kUnwrapTaskTestCases[] = {
     },
 
     {
+        "task with empty fork-join pairs",
+        "task forkit;"
+        "fork join fork join "
+        "endtask",
+        TaskHeader(0, L(0, {"task", "forkit", ";"})),
+        StatementList(1, L(1, {"fork"}), L(1, {"join"}), L(1, {"fork"}),
+                      L(1, {"join"})),
+        L(0, {"endtask"}),
+    },
+
+    {
+        "task with empty fork-join pairs, labeled",
+        "task forkit;"
+        "fork:a join:a fork:b join:b "
+        "endtask",
+        TaskHeader(0, L(0, {"task", "forkit", ";"})),
+        StatementList(1, L(1, {"fork", ":", "a"}), L(1, {"join", ":", "a"}),
+                      L(1, {"fork", ":", "b"}), L(1, {"join", ":", "b"})),
+        L(0, {"endtask"}),
+    },
+
+    {
+        "task with fork-join around comments",
+        "task forkit;"
+        "fork\n"
+        "// comment1\n"
+        "join\n"
+        "fork\n"
+        "// comment2\n"
+        "join "
+        "endtask",
+        TaskHeader(0, L(0, {"task", "forkit", ";"})),
+        StatementList(1, L(1, {"fork"}),
+                      StatementList(2, L(2, {"// comment1"})),  //
+                      L(1, {"join"}),                           //
+                      L(1, {"fork"}),                           //
+                      StatementList(2, L(2, {"// comment2"})),  //
+                      L(1, {"join"})),
+        L(0, {"endtask"}),
+    },
+
+    {
         "task with fork-join",
         "task foo;"
         "fork "

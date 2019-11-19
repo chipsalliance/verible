@@ -1146,6 +1146,58 @@ static const std::initializer_list<FormatterTestCase> kFormatterTestCases = {
      "  s();\n"
      "  // statement comment\n"  // indented
      "endtask\n"},
+    {"task fj;fork join fork join\tendtask",
+     "task fj;\n"
+     "  fork\n"
+     "  join\n"
+     "  fork\n"
+     "  join\n"
+     "endtask\n"},
+    {"task fj;fork join_any fork join_any\tendtask",
+     "task fj;\n"
+     "  fork\n"
+     "  join_any\n"
+     "  fork\n"
+     "  join_any\n"
+     "endtask\n"},
+    {"task fj;fork join_none fork join_none\tendtask",
+     "task fj;\n"
+     "  fork\n"
+     "  join_none\n"
+     "  fork\n"
+     "  join_none\n"
+     "endtask\n"},
+    {"task fj;fork\n"
+     "//c1\njoin\n"
+     "//c2\n"
+     "fork  \n"
+     "//c3\n"
+     "join\tendtask",
+     "task fj;\n"
+     "  fork\n"
+     "    //c1\n"
+     "  join\n"
+     "  //c2\n"
+     "  fork\n"
+     "    //c3\n"
+     "  join\n"
+     "endtask\n"},
+    {"task fj;\n"
+     "fork "
+     "begin "
+     "end "
+     "foo();"
+     "begin "
+     "end "
+     "join_any endtask",
+     "task fj;\n"
+     "  fork\n"
+     "    begin\n"
+     "    end\n"
+     "    foo(); begin\n"  // TODO(b/144796060): begin start own partition
+     "    end\n"
+     "  join_any\n"
+     "endtask\n"},
 };
 
 // Tests that formatter produces expected results, end-to-end.

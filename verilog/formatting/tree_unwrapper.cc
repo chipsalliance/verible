@@ -547,6 +547,7 @@ void TreeUnwrapper::Visit(const verible::SyntaxTreeNode& node) {
     case NodeEnum::kForInitialization:
     case NodeEnum::kForCondition:
     case NodeEnum::kForStepList:
+    case NodeEnum::kParBlock:
     case NodeEnum::kRegisterVariable:
     case NodeEnum::kGateInstance:
     case NodeEnum::kActualNamedPort:
