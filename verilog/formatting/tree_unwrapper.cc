@@ -447,6 +447,7 @@ void TreeUnwrapper::InterChildNodeHook(const verible::SyntaxTreeNode& node) {
     case NodeEnum::kPortDeclarationList:
     // case NodeEnum::kPortList:  // TODO(fangism): for task/function ports
     case NodeEnum::kModuleItemList:
+    case NodeEnum::kGenerateItemList:
     case NodeEnum::kClassItems:
     case NodeEnum::kDescriptionList:  // top-level item comments
     case NodeEnum::kStatementList:
@@ -584,7 +585,8 @@ void TreeUnwrapper::Visit(const verible::SyntaxTreeNode& node) {
     case NodeEnum::kProceduralTimingControlStatement: {
       if (Context().DirectParentIsOneOf(
               {NodeEnum::kStatementList, NodeEnum::kModuleItemList,
-               NodeEnum::kClassItems, NodeEnum::kBlockItemStatementList})) {
+               NodeEnum::kGenerateItemList, NodeEnum::kClassItems,
+               NodeEnum::kBlockItemStatementList})) {
         VisitNewUnwrappedLine(node);
       } else {
         // Otherwise extend previous token partition.

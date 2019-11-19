@@ -5681,7 +5681,7 @@ generate_item_list_opt
   : generate_item_list
     { $$ = move($1); }
   | /* empty */
-    { $$ = nullptr; }
+    { $$ = MakeTaggedNode(N::kGenerateItemList); }
   ;
 
 module_item_list

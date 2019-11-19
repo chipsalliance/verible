@@ -470,6 +470,60 @@ static const std::initializer_list<FormatterTestCase> kFormatterTestCases = {
         "endmodule\n",
     },
     {
+        "module conditional_generate;\n"
+        "if(foo)begin\n"
+        "`ASSERT()\n"
+        "`COVER()\n"
+        " end\n"
+        "endmodule\n",
+        "module conditional_generate;\n"
+        "  if (foo) begin\n"
+        "    `ASSERT()\n"
+        "    `COVER()\n"
+        "  end\n"
+        "endmodule\n",
+    },
+    {
+        "module conditional_generate;\n"
+        "`ASSERT()\n"
+        "if(foo)begin\n"
+        " end\n"
+        "`COVER()\n"
+        "endmodule\n",
+        "module conditional_generate;\n"
+        "  `ASSERT()\n"
+        "  if (foo) begin\n"
+        "  end\n"
+        "  `COVER()\n"
+        "endmodule\n",
+    },
+    {
+        "module conditional_generate;\n"
+        "if(foo)begin\n"
+        "           // comment1\n"
+        " // comment2\n"
+        " end\n"
+        "endmodule\n",
+        "module conditional_generate;\n"
+        "  if (foo) begin\n"
+        "    // comment1\n"
+        "    // comment2\n"
+        "  end\n"
+        "endmodule\n",
+    },
+    {
+        "module m ;"
+        "for (genvar f = 0; f < N; f++) begin "
+        "assign x = y; assign y = z;"
+        "end endmodule",
+        "module m;\n"
+        "  for (genvar f = 0; f < N; f++) begin\n"
+        "    assign x = y;\n"
+        "    assign y = z;\n"
+        "  end\n"
+        "endmodule\n",
+    },
+    {
         "module event_control ;"
         "always@ ( posedge   clk )z<=y;"
         "endmodule\n",

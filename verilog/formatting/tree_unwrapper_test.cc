@@ -735,6 +735,38 @@ const TreeUnwrapperTestData kUnwrapModuleTestCases[] = {
         L(0, {"endmodule"}),
     },
 
+    {
+        "module with conditional generate block and macro call item",
+        "module conditional_generate_macros;\n"
+        "if (foo) begin\n"
+        "`COVER()\n"
+        "`ASSERT()\n"
+        "end\n"
+        "endmodule\n",
+        ModuleHeader(0, L(0, {"module", "conditional_generate_macros", ";"})),
+        ModuleItemList(1, L(1, {"if", "(", "foo", ")", "begin"}),
+                       ModuleItemList(2, L(2, {"`COVER", "(", ")"}),
+                                      L(2, {"`ASSERT", "(", ")"})),
+                       L(1, {"end"})),
+        L(0, {"endmodule"}),
+    },
+
+    {
+        "module with conditional generate block and comments",
+        "module conditional_generate_comments;\n"
+        "if (foo) begin\n"
+        "// comment1\n"
+        "// comment2\n"
+        "end\n"
+        "endmodule\n",
+        ModuleHeader(0, L(0, {"module", "conditional_generate_comments", ";"})),
+        ModuleItemList(
+            1, L(1, {"if", "(", "foo", ")", "begin"}),
+            ModuleItemList(2, L(2, {"// comment1"}), L(2, {"// comment2"})),
+            L(1, {"end"})),
+        L(0, {"endmodule"}),
+    },
+
     /* TODO(fangism): Adding another level of non-indented nesting may be needed
      * to handle the following single-statement conditional form gracefully.
     {
@@ -764,6 +796,27 @@ const TreeUnwrapperTestData kUnwrapModuleTestCases[] = {
                            Instantiation(2,            //
                                          L(2, {"a"}),  //
                                          InstanceList(4, L(4, {"aa", ";"})))),
+            L(1, {"end"})),
+        L(0, {"endmodule"}),
+    },
+
+    {
+        "module with loop generate continuous assignments",
+        "module loop_generate_assign;\n"
+        "for (genvar x=1;x<N;++x) begin"
+        "  assign x = y;assign y = z;"
+        "end\n"
+        "endmodule",
+        ModuleHeader(0, L(0, {"module", "loop_generate_assign", ";"})),
+        ModuleItemList(
+            1,
+            LoopHeader(1, L(1, {"for", "("}),
+                       ForSpec(3, L(3, {"genvar", "x", "=", "1", ";"}),
+                               L(3, {"x", "<", "N", ";"}), L(3, {"++", "x"})),
+                       L(1, {")", "begin"})),
+            ModuleItemList(2,  //
+                           L(2, {"assign", "x", "=", "y", ";"}),
+                           L(2, {"assign", "y", "=", "z", ";"})),
             L(1, {"end"})),
         L(0, {"endmodule"}),
     },
