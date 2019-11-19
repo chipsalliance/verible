@@ -413,6 +413,29 @@ static const std::initializer_list<FormatterTestCase> kFormatterTestCases = {
      "module bar;\n"
      "endmodule\n"
      "`endif\n"},
+    {// module items mixed with preprocessor conditionals and comments
+     "    module foo;\n"
+     "// comment1\n"
+     "  `ifdef SIM\n"
+     "// comment2\n"
+     " `elsif SYN\n"
+     " // comment3\n"
+     "       `else\n"
+     "// comment4\n"
+     " `endif\n"
+     "// comment5\n"
+     "  endmodule",
+     "module foo;\n"
+     "  // comment1\n"
+     "`ifdef SIM\n"
+     "  // comment2\n"
+     "`elsif SYN\n"
+     "  // comment3\n"
+     "`else\n"
+     "  // comment4\n"
+     "`endif\n"
+     "  // comment5\n"
+     "endmodule\n"},
     {"  module bar;wire foo;reg bear;endmodule\n",
      "module bar;\n"
      "  wire foo;\n"

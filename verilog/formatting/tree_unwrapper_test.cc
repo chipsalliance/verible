@@ -1923,6 +1923,56 @@ const TreeUnwrapperTestData kUnwrapPreprocessorTestCases[] = {
         L(0, {"endmodule"}),
     },
 
+    {
+        "`ifdefs's inside module should flush left, even with leading comment",
+        "module foo;\n"
+        "// comment\n"
+        "`ifdef SIM\n"
+        "  wire w;\n"
+        "`endif\n"
+        "endmodule",
+        ModuleHeader(0, L(0, {"module", "foo", ";"})),
+        ModuleItemList(1, L(1, {"// comment"}), L(0, {"`ifdef", "SIM"}),
+                       L(1, {"wire", "w", ";"}), L(0, {"`endif"})),
+        L(0, {"endmodule"}),
+    },
+
+    {
+        "`ifndefs's inside module should flush left, even with leading comment",
+        "module foo;\n"
+        "// comment\n"
+        "`ifndef SIM\n"
+        "`endif\n"
+        "  wire w;\n"
+        "endmodule",
+        ModuleHeader(0, L(0, {"module", "foo", ";"})),
+        ModuleItemList(1, L(1, {"// comment"}), L(0, {"`ifndef", "SIM"}),
+                       L(0, {"`endif"}), L(1, {"wire", "w", ";"})),
+        L(0, {"endmodule"}),
+    },
+
+    {
+        "module items with preprocessor conditionals and comments",
+        "module foo;\n"
+        "// comment1\n"
+        "`ifdef SIM\n"
+        "// comment2\n"
+        "`elsif SYN\n"
+        "// comment3\n"
+        "`else\n"
+        "// comment4\n"
+        "`endif\n"
+        "// comment5\n"
+        "endmodule",
+        ModuleHeader(0, L(0, {"module", "foo", ";"})),
+        ModuleItemList(1, L(1, {"// comment1"}), L(0, {"`ifdef", "SIM"}),
+                       L(1, {"// comment2"}), L(0, {"`elsif", "SYN"}),
+                       L(1, {"// comment3"}), L(0, {"`else"}),
+                       L(1, {"// comment4"}), L(0, {"`endif"}),
+                       L(1, {"// comment5"})),
+        L(0, {"endmodule"}),
+    },
+
     // TODO(fangism): decide/test/support indenting preprocessor directives
     // nested inside `ifdefs.  Should `define inside `ifdef be indented?
 };

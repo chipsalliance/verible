@@ -376,26 +376,26 @@ static verible::TokenSequence::const_iterator StopAtLastNewlineBeforeTreeLeaf(
     const verible::TokenSequence::const_iterator token_begin,
     const TokenInfo::Context& context) {
   VLOG(4) << __FUNCTION__;
-  auto token_end = token_begin;
+  auto token_iter = token_begin;
   auto last_newline = token_begin;
   bool have_last_newline = false;
 
   // Find next syntax tree token or EOF.
   bool break_while = false;
-  while (!token_end->isEOF() && !break_while) {
-    VLOG(4) << "scan: " << TokenWithContext{*token_end, context};
-    switch (token_end->token_enum) {
-      // TODO(fangism): this token-case logic is redundant with other places,
-      // plumb that through to here instead of replicating it.
+  while (!token_iter->isEOF() && !break_while) {
+    VLOG(4) << "scan: " << TokenWithContext{*token_iter, context};
+    switch (token_iter->token_enum) {
+      // TODO(b/144653479): this token-case logic is redundant with other
+      // places; plumb that through to here instead of replicating it.
       case TK_NEWLINE:
         have_last_newline = true;
-        last_newline = token_end;
+        last_newline = token_iter;
         ABSL_FALLTHROUGH_INTENDED;
       case TK_SPACE:
       case TK_EOL_COMMENT:
       case TK_COMMENT_BLOCK:
       case TK_ATTRIBUTE:
-        ++token_end;
+        ++token_iter;
         break;
       default:
         break_while = true;
@@ -403,7 +403,7 @@ static verible::TokenSequence::const_iterator StopAtLastNewlineBeforeTreeLeaf(
     }
   }
 
-  const auto result = have_last_newline ? last_newline : token_end;
+  const auto result = have_last_newline ? last_newline : token_iter;
   VLOG(4) << "end of " << __FUNCTION__ << ", advanced "
           << std::distance(token_begin, result) << " tokens";
   return result;
@@ -730,6 +730,11 @@ void TreeUnwrapper::Visit(const verible::SyntaxTreeLeaf& leaf) {
   CHECK_EQ(NextUnfilteredToken()->text.begin(), leaf.get().text.begin());
 
   switch (tag) {
+    // Un-indent preprocessor control-flow directives.
+    case yytokentype::PP_ifdef:
+    case yytokentype::PP_ifndef:
+    case yytokentype::PP_elsif:
+    case yytokentype::PP_else:
     case yytokentype::PP_endif: {
       StartNewUnwrappedLine();
       CurrentUnwrappedLine().SetIndentationSpaces(0);
