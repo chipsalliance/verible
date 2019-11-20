@@ -1,0 +1,19 @@
+dist: bionic
+
+language: cpp
+
+compiler:
+  - gcc
+
+addons:
+  apt:
+    sources:
+      - ubuntu-toolchain-r-test
+
+    packages:
+      - bazel
+      - g++-8
+
+script:
+  - bazel build --cxxopt='-std=c++17' //...
+  - bazel test --cxxopt='-std=c++17' //...
