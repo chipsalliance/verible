@@ -1,0 +1,19 @@
+dist: bionic
+
+language: cpp
+
+compiler:
+  - gcc
+
+addons:
+  apt:
+    packages:
+      - g++-8
+
+before_install:
+  - wget https://github.com/bazelbuild/bazel/releases/download/1.1.0/bazel_1.1.0-linux-x86_64.deb
+  - sudo dpkg -i bazel_1.1.0-linux-x86_64.deb
+
+script:
+  - bazel build --cxxopt='-std=c++17' //...
+  - bazel test --cxxopt='-std=c++17' //...
