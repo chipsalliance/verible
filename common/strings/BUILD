@@ -62,6 +62,24 @@ cc_test(
 )
 
 cc_library(
+    name = "position",
+    srcs = ["position.cc"],
+    hdrs = ["position.h"],
+    deps = [
+        "@com_google_absl//absl/strings",
+    ],
+)
+
+cc_test(
+    name = "position_test",
+    srcs = ["position_test.cc"],
+    deps = [
+        ":position",
+        "@com_google_googletest//:gtest_main",
+    ],
+)
+
+cc_library(
     name = "range",
     srcs = ["range.cc"],
     hdrs = ["range.h"],
