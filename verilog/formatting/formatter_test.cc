@@ -1194,7 +1194,8 @@ static const std::initializer_list<FormatterTestCase> kFormatterTestCases = {
      "  fork\n"
      "    begin\n"
      "    end\n"
-     "    foo(); begin\n"  // TODO(b/144796060): begin start own partition
+     "    foo();\n"
+     "    begin\n"
      "    end\n"
      "  join_any\n"
      "endtask\n"},

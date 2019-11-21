@@ -2281,6 +2281,19 @@ const TreeUnwrapperTestData kUnwrapTaskTestCases[] = {
         L(0, {"endtask"}),
     },
 
+    {
+        "task with sequential-block inside parallel-block",
+        "task fj; fork foo(); begin end join endtask",
+        TaskHeader(0, L(0, {"task", "fj", ";"})),
+        StatementList(1, L(1, {"fork"}),
+                      StatementList(2,                             //
+                                    L(2, {"foo", "(", ")", ";"}),  //
+                                    L(2, {"begin"}),               //
+                                    L(2, {"end"})),
+                      L(1, {"join"})),
+        L(0, {"endtask"}),
+    },
+
     // TODO(fangism): "task with while loop and single statement"
 
     {

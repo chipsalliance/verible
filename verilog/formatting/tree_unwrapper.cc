@@ -562,6 +562,15 @@ void TreeUnwrapper::Visit(const verible::SyntaxTreeNode& node) {
       VisitNewUnwrappedLine(node);
       break;
     }
+    case NodeEnum::kSeqBlock:
+      if (Context().DirectParentsAre(
+              {NodeEnum::kBlockItemStatementList, NodeEnum::kParBlock})) {
+        // begin inside fork
+        VisitNewUnwrappedLine(node);
+      } else {
+        TraverseChildren(node);
+      }
+      break;
 
       // For the following items, start a new unwrapped line only if they are
       // *direct* descendants of list elements.  This effectively suppresses
@@ -578,11 +587,11 @@ void TreeUnwrapper::Visit(const verible::SyntaxTreeNode& node) {
     case NodeEnum::kStatement:
     case NodeEnum::kLabeledStatement:  // e.g. foo_label : do_something();
     case NodeEnum::kJumpStatement:
-    case NodeEnum::kContinuousAssign:               // e.g. assign a=0, b=2;
-    case NodeEnum::kContinuousAssignmentStatement:  // e.g. x=y
-    case NodeEnum::kBlockingAssignmentStatement:    // id=expr
+    case NodeEnum::kContinuousAssign:                // e.g. assign a=0, b=2;
+    case NodeEnum::kContinuousAssignmentStatement:   // e.g. x=y
+    case NodeEnum::kBlockingAssignmentStatement:     // id=expr
     case NodeEnum::kNonblockingAssignmentStatement:  // dest <= src;
-    case NodeEnum::kAssignmentStatement:            // id=expr
+    case NodeEnum::kAssignmentStatement:             // id=expr
     case NodeEnum::kProceduralTimingControlStatement: {
       if (Context().DirectParentIsOneOf(
               {NodeEnum::kStatementList, NodeEnum::kModuleItemList,
@@ -707,7 +716,7 @@ void TreeUnwrapper::Visit(const verible::SyntaxTreeNode& node) {
         verible::MoveLastLeafIntoPreviousSibling(
             CurrentTokenPartition()->Root());
       }
-      // close-out current token partition?
+      // else close-out current token partition?
       break;
     }
     default:
