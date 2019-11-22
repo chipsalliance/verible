@@ -6506,6 +6506,7 @@ wait_statement
     { $$ = MakeTaggedNode(N::kWaitStatement, $1, MakeParenGroup($2, $3, $4), $5);}
   | TK_wait TK_fork ';'
     { $$ = MakeTaggedNode(N::kWaitStatement, $1, $2, $3);}
+    /* TODO(b/144972702): wait_order ... */
   ;
 
 statement_item

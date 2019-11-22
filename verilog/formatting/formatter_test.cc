@@ -1217,11 +1217,16 @@ static const std::initializer_list<FormatterTestCase> kFormatterTestCases = {
         "task  t ;Fire() ;assert ( x);assert(y );endtask",
         "task t;\n"
         "  Fire();\n"
-        "  assert (x);\n"  // TODO(b/144605476): no space between 'assert' and
-                           // '('
+        "  assert (x);\n"  // TODO(b/144605476): no space between 'assert' '('
         "  assert (y);\n"
         "endtask\n",
     },
+    {// wait statements (null)
+     "task t; wait  (a==b);wait(c<d); endtask",
+     "task t;\n"
+     "  wait (a == b);\n"  // TODO(b/144605476): no space between 'wait' '('
+     "  wait (c < d);\n"
+     "endtask\n"},
 };
 
 // Tests that formatter produces expected results, end-to-end.
