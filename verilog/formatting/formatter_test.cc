@@ -558,6 +558,19 @@ static const std::initializer_list<FormatterTestCase> kFormatterTestCases = {
         "endmodule\n",
     },
 
+    {
+        // clocking declarations in modules
+        " module mcd ; "
+        "clocking   cb @( posedge clk);\t\tendclocking "
+        "clocking cb2   @ (posedge  clk\n); endclocking endmodule",
+        "module mcd;\n"
+        "  clocking cb @(posedge clk);\n"
+        "  endclocking\n"
+        "  clocking cb2 @(posedge clk);\n"
+        "  endclocking\n"
+        "endmodule\n",
+    },
+
     // class test cases
     {"class action;int xyz;endclass  :  action\n",
      "class action;\n"

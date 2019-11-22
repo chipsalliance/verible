@@ -970,6 +970,21 @@ const TreeUnwrapperTestData kUnwrapModuleTestCases[] = {
                        L(1, {"final", "begin"}), L(1, {"end"})),
         L(0, {"endmodule"}),
     },
+
+    {
+        "module with clocking declarations",
+        "module mcd;"
+        "clocking cb @(posedge clk); endclocking "
+        "clocking cb2 @(posedge clk); endclocking endmodule",
+        ModuleHeader(0, L(0, {"module", "mcd", ";"})),
+        ModuleItemList(
+            1,  //
+            L(1, {"clocking", "cb", "@", "(", "posedge", "clk", ")", ";"}),
+            L(1, {"endclocking"}),
+            L(1, {"clocking", "cb2", "@", "(", "posedge", "clk", ")", ";"}),
+            L(1, {"endclocking"})),
+        L(0, {"endmodule"}),
+    },
 };
 
 // Test that TreeUnwrapper produces the correct UnwrappedLines from module tests

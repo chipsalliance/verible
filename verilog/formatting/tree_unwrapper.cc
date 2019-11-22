@@ -558,6 +558,7 @@ void TreeUnwrapper::Visit(const verible::SyntaxTreeNode& node) {
     case NodeEnum::kSequenceDeclaration:
     case NodeEnum::kPortDeclaration:
     case NodeEnum::kParamDeclaration:
+    case NodeEnum::kClockingDeclaration:
     case NodeEnum::kForwardDeclaration: {
       VisitNewUnwrappedLine(node);
       break;
@@ -764,6 +765,7 @@ void TreeUnwrapper::Visit(const verible::SyntaxTreeLeaf& leaf) {
     case yytokentype::TK_endfunction:
     case yytokentype::TK_endtask:
     case yytokentype::TK_endproperty:
+    case yytokentype::TK_endclocking:
     case yytokentype::TK_endclass:
     case yytokentype::TK_endmodule: {
       StartNewUnwrappedLine();
