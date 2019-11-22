@@ -100,14 +100,21 @@ InterTokenDecision::InterTokenDecision(const InterTokenInfo& info)
       action(ConvertSpacing(info.break_decision)),
       preserved_space_start(info.preserved_space_start) {}
 
-absl::string_view FormattedToken::OriginalLeadingSpaces() const {
-  const auto begin = token->text.begin();
-  if (before.preserved_space_start == nullptr) {
-    return make_string_view_range(begin, begin);  // empty range
+static absl::string_view OriginalLeadingSpacesRange(const char* begin,
+                                                    const char* end) {
+  if (begin == nullptr) {
+    VLOG(4) << "no original space range";
+    return make_string_view_range(end, end);  // empty range
   }
   // The original spacing points into the original string buffer, and may span
   // multiple whitespace tokens.
-  return make_string_view_range(before.preserved_space_start, begin);
+  VLOG(4) << "non-null original space range";
+  return make_string_view_range(begin, end);
+}
+
+absl::string_view FormattedToken::OriginalLeadingSpaces() const {
+  return OriginalLeadingSpacesRange(before.preserved_space_start,
+                                    token->text.begin());
 }
 
 std::ostream& FormattedToken::FormattedText(std::ostream& stream) const {
@@ -136,6 +143,11 @@ std::ostream& FormattedToken::FormattedText(std::ostream& stream) const {
 
 std::ostream& operator<<(std::ostream& stream, const FormattedToken& token) {
   return token.FormattedText(stream);
+}
+
+absl::string_view PreFormatToken::OriginalLeadingSpaces() const {
+  return OriginalLeadingSpacesRange(before.preserved_space_start,
+                                    token->text.begin());
 }
 
 std::string PreFormatToken::ToString() const {

@@ -56,6 +56,14 @@ struct StateNodeTestFixture : public UnwrappedLineMemoryHandler,
     AddFormatTokens(uwline.get());
   }
 
+  void InitializeExternalTextBuffer(int d,
+                                    const std::vector<TokenInfo>& tokens) {
+    CreateTokenInfosExternalStringBuffer(tokens);
+    uwline = absl::make_unique<UnwrappedLine>(d * style.indentation_spaces,
+                                              pre_format_tokens_.begin());
+    AddFormatTokens(uwline.get());
+  }
+
   std::string Render(const StateNode& path, const UnwrappedLine& uwline) const {
     return RenderFormattedText(path, uwline);
   }
@@ -152,6 +160,106 @@ TEST_F(StateNodeTestFixture, ConstructionAppendingPrevState) {
               "  token1\n"
               "      TT2");
   }
+}
+
+// Tests that preserving spaces results in correct column position.
+TEST_F(StateNodeTestFixture, ConstructionPreserveSpacesFromPrevStateNoGap) {
+  const absl::string_view text("aaabbb");  // no gap between "aaa" and "bbb"
+  const int kInitialIndent = 1;
+  const std::vector<TokenInfo> tokens = {{0, text.substr(0, 3)},
+                                         {1, text.substr(3, 3)}};
+  InitializeExternalTextBuffer(kInitialIndent, tokens);
+  auto& ftokens = pre_format_tokens_;
+  ftokens[0].before.spaces_required = 1;
+  ftokens[1].before.spaces_required = 4;  // ignored because of preserving
+  ftokens[1].before.preserved_space_start = ftokens[0].Text().end();
+  ftokens[1].before.break_penalty = 5;  // ignored because of preserving
+  auto parent_state = std::make_shared<StateNode>(*uwline, style);
+  const int initial_column = kInitialIndent * style.indentation_spaces;  // 2
+  EXPECT_EQ(ABSL_DIE_IF_NULL(parent_state)->current_column,
+            initial_column + tokens[0].text.length());  // 2 + 3
+  EXPECT_EQ(parent_state->cumulative_cost, 0);
+  EXPECT_TRUE(parent_state->IsRootState());
+
+  // Appended with preserved spaces from original text.
+  auto child_state = std::make_shared<StateNode>(parent_state, style,
+                                                 SpacingDecision::Preserve);
+  EXPECT_EQ(child_state->next(), parent_state.get());
+  EXPECT_EQ(child_state->current_column,
+            parent_state->current_column +  // 5 +
+                tokens[1].text.length()     // 3
+  );
+  EXPECT_EQ(child_state->cumulative_cost, parent_state->cumulative_cost);
+  EXPECT_FALSE(child_state->IsRootState());
+  EXPECT_EQ(Render(*child_state, *uwline), "  aaabbb");
+}
+
+// Tests that preserving spaces results in correct column position.
+TEST_F(StateNodeTestFixture, ConstructionPreserveSpacesFromPrevStateSpaces) {
+  const absl::string_view text(
+      "aaa    bbb");  // 4 spaces between "aaa" and "bbb"
+  const int kInitialIndent = 1;
+  const std::vector<TokenInfo> tokens = {{1, text.substr(0, 3)},
+                                         {2, text.substr(7, 3)}};
+  InitializeExternalTextBuffer(kInitialIndent, tokens);
+  auto& ftokens = pre_format_tokens_;
+  ftokens[0].before.spaces_required = 1;
+  ftokens[1].before.spaces_required = 2;  // ignored because of preserving
+  ftokens[1].before.preserved_space_start = ftokens[0].Text().end();
+  ftokens[1].before.break_penalty = 5;  // ignored because of preserving
+
+  auto parent_state = std::make_shared<StateNode>(*uwline, style);
+  const int initial_column = kInitialIndent * style.indentation_spaces;  // 2
+  EXPECT_EQ(ABSL_DIE_IF_NULL(parent_state)->current_column,
+            initial_column + tokens[0].text.length());  // 2 + 3
+  EXPECT_EQ(parent_state->cumulative_cost, 0);
+  EXPECT_TRUE(parent_state->IsRootState());
+
+  // Appended with preserved spaces from original text.
+  auto child_state = std::make_shared<StateNode>(parent_state, style,
+                                                 SpacingDecision::Preserve);
+  EXPECT_EQ(child_state->next(), parent_state.get());
+  EXPECT_EQ(child_state->current_column,
+            parent_state->current_column +  // 5 +
+                4 +                         // spaces
+                tokens[1].text.length()     // 3
+  );
+  EXPECT_EQ(child_state->cumulative_cost, parent_state->cumulative_cost);
+  EXPECT_FALSE(child_state->IsRootState());
+  EXPECT_EQ(Render(*child_state, *uwline), "  aaa    bbb");
+}
+
+// Tests that preserving spaces results in correct column position.
+TEST_F(StateNodeTestFixture, ConstructionPreserveSpacesFromPrevStateNewline) {
+  const absl::string_view text("aaa  \n bbb");  // newline in between
+  const int kInitialIndent = 1;
+  const std::vector<TokenInfo> tokens = {{1, text.substr(0, 3)},
+                                         {2, text.substr(7, 3)}};
+  InitializeExternalTextBuffer(kInitialIndent, tokens);
+  auto& ftokens = pre_format_tokens_;
+  ftokens[0].before.spaces_required = 1;
+  ftokens[1].before.spaces_required = 2;  // ignored because of preserving
+  ftokens[1].before.preserved_space_start = ftokens[0].Text().end();
+  ftokens[1].before.break_penalty = 5;  // ignored because of preserving
+
+  auto parent_state = std::make_shared<StateNode>(*uwline, style);
+  const int initial_column = kInitialIndent * style.indentation_spaces;  // 2
+  EXPECT_EQ(ABSL_DIE_IF_NULL(parent_state)->current_column,
+            initial_column + tokens[0].text.length());  // 2 + 3
+  EXPECT_EQ(parent_state->cumulative_cost, 0);
+  EXPECT_TRUE(parent_state->IsRootState());
+
+  // Appended with preserved spaces from original text.
+  auto child_state = std::make_shared<StateNode>(parent_state, style,
+                                                 SpacingDecision::Preserve);
+  EXPECT_EQ(child_state->next(), parent_state.get());
+  EXPECT_EQ(child_state->current_column,
+            1 +                          // space after last newline
+                tokens[1].text.length()  // 3
+  );
+  EXPECT_EQ(child_state->cumulative_cost, parent_state->cumulative_cost);
+  EXPECT_FALSE(child_state->IsRootState());
+  EXPECT_EQ(Render(*child_state, *uwline), "  aaa  \n bbb");
 }
 
 // Tests new state can be built on top of previous state, appending token to

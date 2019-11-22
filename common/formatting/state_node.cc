@@ -24,6 +24,8 @@
 #include "common/formatting/basic_format_style.h"
 #include "common/formatting/format_token.h"
 #include "common/formatting/unwrapped_line.h"
+#include "common/strings/position.h"
+#include "common/strings/range.h"
 #include "common/text/token_info.h"
 #include "common/util/iterator_adaptors.h"
 #include "common/util/iterator_range.h"
@@ -139,9 +141,15 @@ void StateNode::_UpdateColumnPosition() {
         current_column += token_length;
       }
       break;
-    case SpacingDecision::Preserve:
-      // TODO(b/134711965): calculate column position using original spaces
+    case SpacingDecision::Preserve: {
+      const absl::string_view original_spacing_text =
+          current_format_token.OriginalLeadingSpaces();
+      current_column = AdvancingTextNewColumnPosition(
+          prev_state->current_column, original_spacing_text);
+      current_column += token_length;
+      VLOG(4) << " new column position (preserved): " << current_column;
       break;
+    }
   }
 }
 

@@ -122,6 +122,25 @@ TEST(PreFormatTokenTest, VectorResizeable) {
   EXPECT_EQ(ftokens.size(), 4);
 }
 
+TEST(PreFormatTokenTest, OriginalLeadingSpaces) {
+  const absl::string_view text("abcdefgh");
+  const TokenInfo tok1(1, text.substr(1, 3)), tok2(2, text.substr(5, 2));
+  {
+    PreFormatToken p1(&tok1), p2(&tok2);
+    // original spacing not set
+    EXPECT_TRUE(p1.OriginalLeadingSpaces().empty());
+    EXPECT_TRUE(p2.OriginalLeadingSpaces().empty());
+  }
+  {
+    PreFormatToken p1(&tok1), p2(&tok2);
+    // set original spacing
+    p1.before.preserved_space_start = text.begin();
+    p2.before.preserved_space_start = tok1.text.end();
+    EXPECT_TRUE(BoundsEqual(p1.OriginalLeadingSpaces(), text.substr(0, 1)));
+    EXPECT_TRUE(BoundsEqual(p2.OriginalLeadingSpaces(), text.substr(4, 1)));
+  }
+}
+
 // Test that FormattedText prints correctly.
 TEST(FormattedTokenTest, FormattedText) {
   TokenInfo token(0, "roobar");

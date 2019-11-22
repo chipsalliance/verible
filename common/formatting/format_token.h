@@ -127,6 +127,9 @@ struct PreFormatToken {
   // Returns the enum of the TokenInfo token held by this PreFormatToken
   int TokenEnum() const { return token->token_enum; }
 
+  // Reconstructs the original spacing that preceded this token.
+  absl::string_view OriginalLeadingSpaces() const;
+
   // Returns a human-readable string representation of the FormatToken.
   // This is only intended for debugging.
   std::string ToString() const;

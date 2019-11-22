@@ -196,6 +196,8 @@ cc_library(
         ":basic_format_style",
         ":format_token",
         ":unwrapped_line",
+        "//common/strings:position",
+        "//common/strings:range",
         "//common/text:token_info",
         "//common/util:container_iterator_range",
         "//common/util:iterator_adaptors",

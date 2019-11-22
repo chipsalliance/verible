@@ -1395,6 +1395,45 @@ TEST(FormatterEndToEndTest, PreserveVSpacesOnly) {
   }
 }
 
+static const std::initializer_list<FormatterTestCase>
+    kFormatterTestCasesWithWrapping = {
+        {"module m;"
+         "assign wwwwww[77:66]"
+         "= sss(qqqq[33:22],"
+         "vv[44:1]);"
+         "endmodule",
+         "module m;\n"
+         "  assign wwwwww[77 : 66] =\n"
+         "      sss(qqqq[33 : 22], vv[44 : 1]);\n"
+         "endmodule\n"},
+};
+
+// These formatter tests involve line wrapping and hence line-wrap penalty
+// tuning.  Keep these short and minimal where possible.
+TEST(FormatterEndToEndTest, PenaltySensitiveLineWrapping) {
+  // Use a fixed style.
+  FormatStyle style;
+  style.column_limit = 40;
+  style.indentation_spaces = 2;
+  style.wrap_spaces = 4;
+  style.over_column_limit_penalty = 50;
+  style.preserve_horizontal_spaces = PreserveSpaces::None;
+  style.preserve_vertical_spaces = PreserveSpaces::None;
+  for (const auto& test_case : kFormatterTestCasesWithWrapping) {
+    VLOG(1) << "code-to-format:\n" << test_case.input << "<EOF>";
+    const std::unique_ptr<VerilogAnalyzer> analyzer =
+        VerilogAnalyzer::AnalyzeAutomaticMode(test_case.input, "<filename>");
+    // Require these test cases to be valid.
+    ASSERT_OK(ABSL_DIE_IF_NULL(analyzer)->LexStatus());
+    ASSERT_OK(analyzer->ParseStatus());
+    Formatter formatter(analyzer->Data(), style);
+    EXPECT_OK(formatter.Format());
+    std::ostringstream stream;
+    formatter.Emit(stream);
+    EXPECT_EQ(stream.str(), test_case.expected) << "code:\n" << test_case.input;
+  }
+}
+
 TEST(FormatterEndToEndTest, DiagnosticShowFullTree) {
   // Use a fixed style.
   FormatStyle style;
