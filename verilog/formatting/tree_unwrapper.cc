@@ -587,6 +587,7 @@ void TreeUnwrapper::Visit(const verible::SyntaxTreeNode& node) {
     case NodeEnum::kStatement:
     case NodeEnum::kLabeledStatement:  // e.g. foo_label : do_something();
     case NodeEnum::kJumpStatement:
+    case NodeEnum::kAssertionStatement:              // assert(expr);
     case NodeEnum::kContinuousAssign:                // e.g. assign a=0, b=2;
     case NodeEnum::kContinuousAssignmentStatement:   // e.g. x=y
     case NodeEnum::kBlockingAssignmentStatement:     // id=expr

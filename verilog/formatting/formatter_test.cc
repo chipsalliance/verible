@@ -1199,6 +1199,16 @@ static const std::initializer_list<FormatterTestCase> kFormatterTestCases = {
      "    end\n"
      "  join_any\n"
      "endtask\n"},
+    {
+        // assertion statements
+        "task  t ;Fire() ;assert ( x);assert(y );endtask",
+        "task t;\n"
+        "  Fire();\n"
+        "  assert (x);\n"  // TODO(b/144605476): no space between 'assert' and
+                           // '('
+        "  assert (y);\n"
+        "endtask\n",
+    },
 };
 
 // Tests that formatter produces expected results, end-to-end.
