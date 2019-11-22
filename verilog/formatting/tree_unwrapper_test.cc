@@ -2506,6 +2506,15 @@ const TreeUnwrapperTestData kUnwrapTaskTestCases[] = {
         L(0, {"endtask"}),
     },
 
+    {
+        "task with wait fork statements",
+        "task t; wait fork ; wait fork; endtask",
+        TaskHeader(0, L(0, {"task", "t", ";"})),
+        StatementList(1,  //
+                      L(1, {"wait", "fork", ";"}), L(1, {"wait", "fork", ";"})),
+        L(0, {"endtask"}),
+    },
+
     // TODO(fangism): test calls to UVM macros
 };
 

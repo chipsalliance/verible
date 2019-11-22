@@ -1227,6 +1227,12 @@ static const std::initializer_list<FormatterTestCase> kFormatterTestCases = {
      "  wait (a == b);\n"  // TODO(b/144605476): no space between 'wait' '('
      "  wait (c < d);\n"
      "endtask\n"},
+    {// wait fork statements
+     "task t ; wait\tfork;wait   fork ;endtask",
+     "task t;\n"
+     "  wait fork;\n"
+     "  wait fork;\n"
+     "endtask\n"},
 };
 
 // Tests that formatter produces expected results, end-to-end.
