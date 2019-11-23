@@ -59,6 +59,41 @@ static bool IsUnaryPrefixExpressionOperand(const PreFormatToken& left,
                                {NodeEnum::kExpression});
 }
 
+// Returns true if keyword can be used like a function/method call.
+// Based on various LRM sections mentioning subroutine calls.
+static bool IsKeywordCallable(yytokentype e) {
+  switch (e) {
+    case TK_and:  // array method
+    case TK_assert:
+    case TK_assume:
+    case TK_find:
+    case TK_find_index:
+    case TK_find_first:
+    case TK_find_first_index:
+    case TK_find_last:
+    case TK_find_last_index:
+    case TK_min:
+    case TK_max:
+    case TK_new:
+    case TK_or:  // array method
+    case TK_product:
+    case TK_randomize:
+    case TK_reverse:
+    case TK_rsort:
+    case TK_shuffle:
+    case TK_sort:
+    case TK_sum:
+    case TK_unique:  // array method
+    case TK_wait:    // wait statement
+    case TK_xor:     // array method
+      // TODO(fangism): Verilog-AMS functions, like sin, cos, ...
+      return true;
+    default:
+      break;
+  }
+  return false;
+}
+
 // Returns minimum number of spaces required between left and right token.
 // Returning kUnhandledSpacesRequired means the case was not explicitly
 // handled, and it is up to the caller to decide what to do when this happens.
@@ -173,7 +208,7 @@ static WithReason<int> SpacesRequiredBetween(const PreFormatToken& left,
 
     // This case intended to cover function/task/macro calls:
     if (left.format_token_enum == FormatTokenType::identifier ||
-        left.TokenEnum() == TK_new) {
+        IsKeywordCallable(yytokentype(left.TokenEnum()))) {
       // TODO(fangism): other keywords that behave like built-in functions
       // should not have a space before the (.
       return {0, "Function/constructor calls: no space before ("};

@@ -1064,6 +1064,20 @@ static const std::initializer_list<FormatterTestCase> kFormatterTestCases = {
         "endfunction\n",
     },
 
+    {
+        // randomize function
+        "function r ;"
+        "if ( ! randomize (bar )) begin    end "
+        "if ( ! obj.randomize (bar )) begin    end "
+        "endfunction",
+        "function r;\n"
+        "  if (!randomize(bar)) begin\n"
+        "  end\n"
+        "  if (!obj.randomize(bar)) begin\n"
+        "  end\n"
+        "endfunction\n",
+    },
+
     // module instantiation test cases
     {"  module foo   ; bar bq();endmodule\n",
      "module foo;\n"
@@ -1251,15 +1265,30 @@ static const std::initializer_list<FormatterTestCase> kFormatterTestCases = {
         "task  t ;Fire() ;assert ( x);assert(y );endtask",
         "task t;\n"
         "  Fire();\n"
-        "  assert (x);\n"  // TODO(b/144605476): no space between 'assert' '('
-        "  assert (y);\n"
+        "  assert(x);\n"
+        "  assert(y);\n"
         "endtask\n",
     },
+    {
+        // assume statements
+        "task  t ;Fire() ;assume ( x);assume(y );endtask",
+        "task t;\n"
+        "  Fire();\n"
+        "  assume(x);\n"
+        "  assume(y);\n"
+        "endtask\n",
+    },
+    {// shuffle calls
+     "task t; foo. shuffle  ( );bar .shuffle( ); endtask",
+     "task t;\n"
+     "  foo.shuffle();\n"
+     "  bar.shuffle();\n"
+     "endtask\n"},
     {// wait statements (null)
      "task t; wait  (a==b);wait(c<d); endtask",
      "task t;\n"
-     "  wait (a == b);\n"  // TODO(b/144605476): no space between 'wait' '('
-     "  wait (c < d);\n"
+     "  wait(a == b);\n"
+     "  wait(c < d);\n"
      "endtask\n"},
     {// wait fork statements
      "task t ; wait\tfork;wait   fork ;endtask",
