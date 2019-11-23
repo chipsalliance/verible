@@ -201,10 +201,16 @@ static WithReason<int> SpacesRequiredBetween(const PreFormatToken& left,
 
   // Keywords:
 
+  if (right.TokenEnum() == ':') {
+    if (left.TokenEnum() == TK_default) {
+      return {0, "No space inside \"default:\""};
+    }
+  }
+
   // "if (...)", "for (...) instead of "if(...)", "for(...)",
   // "case ...", "return ..."
   if (left.format_token_enum == FormatTokenType::keyword) {
-    // Make sure function-like keywords, however, to not get a space.
+    // TODO(b/144605476): function-like keywords, however, do not get a space.
     return {1, "Space between flow control keywords and ("};
   }
 

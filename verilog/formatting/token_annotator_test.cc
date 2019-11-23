@@ -1252,6 +1252,14 @@ TEST(TokenAnnotatorTest, AnnotateFormattingInfoTest) {
                {yytokentype::TK_1step, "1step"},
                {';', ";"},
            }},
+
+          // default:
+          {DefaultStyle,
+           0,
+           {{0, SpacingOptions::Undecided}, {0, SpacingOptions::Undecided}},
+           {{yytokentype::TK_default, "default"}, {':', ":"}}},
+
+          // TODO(fangism): ": ;"
       };
 
   int test_index = 0;
