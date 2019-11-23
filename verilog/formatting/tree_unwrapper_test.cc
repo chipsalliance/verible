@@ -2096,6 +2096,22 @@ const TreeUnwrapperTestData kUnwrapInterfaceTestCases[] = {
         ModuleItemList(1, L(1, {"localparam", "size", "=", "2", ";"})),
         L(0, {"endinterface"}),
     },
+
+    // modport declarations
+    {
+        "interface with modport declarations",
+        "interface foo_if;"
+        "modport mp1 (output a, input b);"
+        "modport mp2 (output c, input d);"
+        "endinterface",
+        ModuleHeader(0, L(0, {"interface", "foo_if", ";"})),
+        ModuleItemList(1,  //
+                       L(1, {"modport", "mp1", "(", "output", "a", ",", "input",
+                             "b", ")", ";"}),
+                       L(1, {"modport", "mp2", "(", "output", "c", ",", "input",
+                             "d", ")", ";"})),
+        L(0, {"endinterface"}),
+    },
 };
 
 // Test that TreeUnwrapper produces correct UnwrappedLines from interface tests

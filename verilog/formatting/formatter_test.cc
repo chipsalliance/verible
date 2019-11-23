@@ -571,6 +571,26 @@ static const std::initializer_list<FormatterTestCase> kFormatterTestCases = {
         "endmodule\n",
     },
 
+    // interface test cases
+    {// two interface declarations
+     " interface if1 ; endinterface\t\t"
+     "interface  if2; endinterface   ",
+     "interface if1;\n"
+     "endinterface\n"
+     "interface if2;\n"
+     "endinterface\n"},
+    {
+        // interface with modport declarations
+        "interface\tfoo_if  ;"
+        "modport  mp1\t( output a, input b);"
+        "modport\tmp2  (output c,input d );\t"
+        "endinterface",
+        "interface foo_if;\n"
+        "  modport mp1(output a, input b);\n"
+        "  modport mp2(output c, input d);\n"
+        "endinterface\n",
+    },
+
     // class test cases
     {"class action;int xyz;endclass  :  action\n",
      "class action;\n"

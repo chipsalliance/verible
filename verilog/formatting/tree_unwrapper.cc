@@ -525,6 +525,7 @@ void TreeUnwrapper::Visit(const verible::SyntaxTreeNode& node) {
     case NodeEnum::kTaskDeclaration:
     case NodeEnum::kTFPortDeclaration:
     case NodeEnum::kTypeDeclaration:
+    case NodeEnum::kModportDeclaration:
     case NodeEnum::kConstraintDeclaration:
     case NodeEnum::kConstraintExpression:
     case NodeEnum::kCovergroupDeclaration:
