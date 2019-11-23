@@ -570,6 +570,19 @@ static const std::initializer_list<FormatterTestCase> kFormatterTestCases = {
         "  endclocking\n"
         "endmodule\n",
     },
+    {
+        // DPI import declarations in modules
+        "module mdi;"
+        "import   \"DPI-C\" function  int add(\n) ;"
+        "import \"DPI-C\"\t\tfunction int\nsleep( input int secs );"
+        "endmodule",
+        "module mdi;\n"
+        "  import \"DPI-C\" function int add();\n"
+        "  import \"DPI-C\" function int sleep(\n"  // doesn't fit in 40-col
+        "      input int secs\n"
+        "  );\n"
+        "endmodule\n",
+    },
 
     // interface test cases
     {// two interface declarations

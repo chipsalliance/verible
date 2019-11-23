@@ -515,6 +515,8 @@ void TreeUnwrapper::Visit(const verible::SyntaxTreeNode& node) {
     case NodeEnum::kClassDeclaration:
     case NodeEnum::kClassConstructor:
     case NodeEnum::kPackageImportDeclaration:
+    case NodeEnum::kDPIImportItem:
+    // TODO(fangism): case NodeEnum::kDPIExportItem:
     case NodeEnum::kPreprocessorInclude:
     case NodeEnum::kPreprocessorDefine:
     case NodeEnum::kPreprocessorUndef:

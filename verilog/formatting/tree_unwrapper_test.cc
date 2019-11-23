@@ -985,6 +985,22 @@ const TreeUnwrapperTestData kUnwrapModuleTestCases[] = {
             L(1, {"endclocking"})),
         L(0, {"endmodule"}),
     },
+
+    {
+        "module with DPI import declarations",
+        "module mdi;"
+        "import   \"DPI-C\" function int add();"
+        "import \"DPI-C\"  function int  sleep( input int secs );"
+        "endmodule",
+        ModuleHeader(0, L(0, {"module", "mdi", ";"})),
+        ModuleItemList(
+            1,  //
+            L(1,
+              {"import", "\"DPI-C\"", "function", "int", "add", "(", ")", ";"}),
+            L(1, {"import", "\"DPI-C\"", "function", "int", "sleep", "("}),
+            TFPortList(3, L(3, {"input", "int", "secs"})), L(1, {")", ";"})),
+        L(0, {"endmodule"}),
+    },
 };
 
 // Test that TreeUnwrapper produces the correct UnwrappedLines from module tests
