@@ -113,7 +113,12 @@ static WithReason<int> SpacesRequiredBetween(const PreFormatToken& left,
   if (right.TokenEnum() == ',') return {0, "No space before comma"};
   if (left.TokenEnum() == ',') return {1, "Require space after comma"};
 
-  if (right.TokenEnum() == ';') return {0, "No space before semicolon"};
+  if (right.TokenEnum() == ';') {
+    if (left.TokenEnum() == ':') {
+      return {1, "Space between semicolon and colon, (e.g. \"default: ;\")"};
+    }
+    return {0, "No space before semicolon"};
+  }
   if (left.TokenEnum() == ';') return {1, "Require space after semicolon"};
 
   // Add missing space around either side of all types of assignment operator.

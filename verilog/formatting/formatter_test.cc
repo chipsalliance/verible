@@ -968,6 +968,13 @@ static const std::initializer_list<FormatterTestCase> kFormatterTestCases = {
      "    default: x = y;\n"
      "  endcase\n"
      "endfunction\n"},
+    {// default with null statement: "default: ;", not "default :;"
+     "function f; case (x) default :; endcase endfunction\n",
+     "function f;\n"
+     "  case (x)\n"
+     "    default: ;\n"
+     "  endcase\n"
+     "endfunction\n"},
 
     // This tests checks for not breaking around hierarchy operators.
     {"function\nvoid\twarranty;"

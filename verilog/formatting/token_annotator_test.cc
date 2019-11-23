@@ -1253,13 +1253,19 @@ TEST(TokenAnnotatorTest, AnnotateFormattingInfoTest) {
                {';', ";"},
            }},
 
-          // default:
+          // default: ;
           {DefaultStyle,
            0,
-           {{0, SpacingOptions::Undecided}, {0, SpacingOptions::Undecided}},
-           {{yytokentype::TK_default, "default"}, {':', ":"}}},
-
-          // TODO(fangism): ": ;"
+           {
+               {0, SpacingOptions::Undecided},
+               {0, SpacingOptions::Undecided},
+               {1, SpacingOptions::Undecided},
+           },
+           {
+               {yytokentype::TK_default, "default"},
+               {':', ":"},
+               {';', ";"},
+           }},
       };
 
   int test_index = 0;
