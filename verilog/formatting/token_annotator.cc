@@ -94,6 +94,17 @@ static bool IsKeywordCallable(yytokentype e) {
   return false;
 }
 
+// The following combinations cannot be merged without a space:
+//   number number : would result in one different number
+//   number id/kw : would result in a bad identifier (lexer)
+//   id/kw number : would result in a (different) identifier
+//   id/kw id/kw : would result in a (different) identifier
+static bool PairwiseNonmergeable(const PreFormatToken& ftoken) {
+  return ftoken.TokenEnum() == TK_DecNumber ||
+         ftoken.format_token_enum == FormatTokenType::identifier ||
+         ftoken.format_token_enum == FormatTokenType::keyword;
+}
+
 // Returns minimum number of spaces required between left and right token.
 // Returning kUnhandledSpacesRequired means the case was not explicitly
 // handled, and it is up to the caller to decide what to do when this happens.
@@ -209,8 +220,6 @@ static WithReason<int> SpacesRequiredBetween(const PreFormatToken& left,
     // This case intended to cover function/task/macro calls:
     if (left.format_token_enum == FormatTokenType::identifier ||
         IsKeywordCallable(yytokentype(left.TokenEnum()))) {
-      // TODO(fangism): other keywords that behave like built-in functions
-      // should not have a space before the (.
       return {0, "Function/constructor calls: no space before ("};
     }
   }
@@ -237,6 +246,11 @@ static WithReason<int> SpacesRequiredBetween(const PreFormatToken& left,
       return {1, "spacing after [packed dimensions] of declarations"};
     }
     // Not sure if "] id" appears in any other context, so leave it unhandled.
+  }
+
+  // Cannot merge tokens that would result in a different token.
+  if (PairwiseNonmergeable(left) && PairwiseNonmergeable(right)) {
+    return {1, "Cannot pair {number, identifier, keyword} without space."};
   }
 
   // Keywords:

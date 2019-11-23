@@ -584,6 +584,16 @@ static const std::initializer_list<FormatterTestCase> kFormatterTestCases = {
         "endmodule\n",
     },
 
+    {// module with system task call
+     "module m; initial begin #10 $display(\"foo\"); $display(\"bar\");"
+     "end endmodule",
+     "module m;\n"
+     "  initial begin\n"
+     "    #10 $display(\"foo\");\n"
+     "    $display(\"bar\");\n"
+     "  end\n"
+     "endmodule\n"},
+
     // interface test cases
     {// two interface declarations
      " interface if1 ; endinterface\t\t"

@@ -386,6 +386,90 @@ TEST(TokenAnnotatorTest, AnnotateFormattingInfoTest) {
             {yytokentype::SymbolIdentifier, "s"},
             {')', ")"}}},
 
+          // #1 $display
+          {
+              DefaultStyle,
+              0,
+              {{0, SpacingOptions::Undecided},
+               {0, SpacingOptions::Undecided},
+               {1, SpacingOptions::Undecided}},
+              {{'#', "#"},
+               {yytokentype::TK_DecNumber, "1"},
+               {yytokentype::SystemTFIdentifier, "$display"}},
+          },
+
+          // 666 777
+          {
+              DefaultStyle,
+              0,
+              {{0, SpacingOptions::Undecided}, {1, SpacingOptions::Undecided}},
+              {{yytokentype::TK_DecNumber, "666"},
+               {yytokentype::TK_DecNumber, "777"}},
+          },
+
+          // 5678 dance
+          {
+              DefaultStyle,
+              0,
+              {{0, SpacingOptions::Undecided}, {1, SpacingOptions::Undecided}},
+              {{yytokentype::TK_DecNumber, "5678"},
+               {yytokentype::SymbolIdentifier, "dance"}},
+          },
+
+          // id 4321
+          {
+              DefaultStyle,
+              0,
+              {{0, SpacingOptions::Undecided}, {1, SpacingOptions::Undecided}},
+              {{yytokentype::SymbolIdentifier, "id"},
+               {yytokentype::TK_DecNumber, "4321"}},
+          },
+
+          // id1 id2
+          {
+              DefaultStyle,
+              0,
+              {{0, SpacingOptions::Undecided}, {1, SpacingOptions::Undecided}},
+              {{yytokentype::SymbolIdentifier, "id1"},
+               {yytokentype::SymbolIdentifier, "id2"}},
+          },
+
+          // class mate
+          {
+              DefaultStyle,
+              0,
+              {{0, SpacingOptions::Undecided}, {1, SpacingOptions::Undecided}},
+              {{yytokentype::TK_class, "class"},
+               {yytokentype::SymbolIdentifier, "mate"}},
+          },
+
+          // id module
+          {
+              DefaultStyle,
+              0,
+              {{0, SpacingOptions::Undecided}, {1, SpacingOptions::Undecided}},
+              {{yytokentype::SymbolIdentifier, "lunar"},
+               {yytokentype::TK_module, "module"}},
+          },
+
+          // class 1337
+          {
+              DefaultStyle,
+              0,
+              {{0, SpacingOptions::Undecided}, {1, SpacingOptions::Undecided}},
+              {{yytokentype::TK_class, "class"},
+               {yytokentype::TK_DecNumber, "1337"}},
+          },
+
+          // 987 module
+          {
+              DefaultStyle,
+              0,
+              {{0, SpacingOptions::Undecided}, {1, SpacingOptions::Undecided}},
+              {{yytokentype::TK_DecNumber, "987"},
+               {yytokentype::TK_module, "module"}},
+          },
+
           // a = 16'hf00d;
           {DefaultStyle,
            0,
@@ -812,7 +896,7 @@ TEST(TokenAnnotatorTest, AnnotateFormattingInfoTest) {
            1,
            {
                {0, SpacingOptions::Undecided},
-               kUnhandledSpacing,  // TODO(fangism): adjacent identifiers
+               {1, SpacingOptions::Undecided},
                {0, SpacingOptions::Undecided},  // '('
                {0, SpacingOptions::Undecided},  // '.'
                {0, SpacingOptions::Undecided},  // "f1"
@@ -1001,10 +1085,10 @@ TEST(TokenAnnotatorTest, AnnotateFormattingInfoTest) {
            {
                {0, SpacingOptions::Undecided},  // `define
                {1, SpacingOptions::Undecided},  // FOO
-               kUnhandledSpacing,               // 1
+               {1, SpacingOptions::Undecided},  // 1
                {1, SpacingOptions::MustWrap},   // `define
                {1, SpacingOptions::Undecided},  // BAR
-               kUnhandledSpacing,               // 2
+               {1, SpacingOptions::Undecided},  // 2
            },
            {
                {yytokentype::PP_define, "`define"},
