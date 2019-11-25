@@ -52,6 +52,7 @@ constexpr const char* kDefaultRuleSet[] = {
     // TODO(b/117554159): "case-missing-default",
     // TODO(b/117131903): "proper-parameter-declaration",
     // TODO(b/131637160): "signal-name-style",
+    // TODO(b/138351837): "forbid-defparam",
     // "endif-comment",
 };
 }  // namespace analysis
