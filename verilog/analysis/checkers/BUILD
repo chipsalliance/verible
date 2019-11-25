@@ -22,6 +22,7 @@ cc_library(
         ":explicit_function_task_parameter_type_rule",
         ":explicit_parameter_storage_type_rule",
         ":explicit_task_lifetime_rule",
+        ":forbid_defparam_rule",
         ":forbidden_macro_rule",
         ":forbidden_symbol_rule",
         ":generate_label_rule",
@@ -176,6 +177,27 @@ cc_test(
         "//verilog/parser:verilog_token_enum",
         "@com_google_googletest//:gtest_main",
     ],
+)
+
+cc_library(
+    name = "forbid_defparam_rule",
+    srcs = ["forbid_defparam_rule.cc"],
+    hdrs = ["forbid_defparam_rule.h"],
+    deps = [
+        "//common/analysis:citation",
+        "//common/analysis:lint_rule_status",
+        "//common/analysis:syntax_tree_lint_rule",
+        "//common/analysis/matcher",
+        "//common/analysis/matcher:bound_symbol_manager",
+        "//common/analysis/matcher:matcher_builders",
+        "//common/text:symbol",
+        "//common/text:syntax_tree_context",
+        "//verilog/CST:verilog_matchers",  # fixdeps: keep
+        "//verilog/analysis:descriptions",
+        "//verilog/analysis:lint_rule_registry",
+        "@com_google_absl//absl/strings",
+    ],
+    alwayslink = 1,
 )
 
 cc_library(
