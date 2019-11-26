@@ -369,11 +369,11 @@ static const std::initializer_list<FormatterTestCase> kFormatterTestCases = {
      "`endif\n"
      "`endif\n"},
     {"module foo(  input x  , output y ) ;endmodule:foo\n",
-     "module foo(input x, output y);\n"  // entire header fits on one line
+     "module foo (input x, output y);\n"  // entire header fits on one line
      "endmodule : foo\n"},
     {"module foo(  input[2:0]x  , output y [3:0] ) ;endmodule:foo\n",
      // TODO(fangism): reduce spaces around ':' in dimensions
-     "module foo(\n"
+     "module foo (\n"
      "    input [2:0] x, output y[3:0]\n"
      // module header and port list fits on one line
      ");\n"
@@ -403,8 +403,8 @@ static const std::initializer_list<FormatterTestCase> kFormatterTestCases = {
      "bar#(  \"test\"  ,5) bar(  );"
      "endmodule\n",
      "module top;\n"
-     "  foo #(\"test\") foo();\n"  // module instantiation, string arg
-     "  bar #(\"test\", 5) bar();\n"
+     "  foo #(\"test\") foo ();\n"  // module instantiation, string arg
+     "  bar #(\"test\", 5) bar ();\n"
      "endmodule\n"},
     {"`ifdef FOO\n"
      "  module bar;endmodule\n"
@@ -601,6 +601,27 @@ static const std::initializer_list<FormatterTestCase> kFormatterTestCases = {
      "interface if1;\n"
      "endinterface\n"
      "interface if2;\n"
+     "endinterface\n"},
+    {// interface declaration with parameters
+     " interface if1#( parameter int W= 8 );endinterface\t\t",
+     "interface if1 #(parameter int W = 8);\n"
+     "endinterface\n"},
+    {// interface declaration with ports (empty)
+     " interface if1()\n;endinterface\t\t",
+     "interface if1 ();\n"
+     "endinterface\n"},
+    {// interface declaration with ports
+     " interface if1( input\tlogic   z)\n;endinterface\t\t",
+     "interface if1 (input logic z);\n"
+     "endinterface\n"},
+    {// interface declaration with parameters and ports
+     " interface if1#( parameter int W= 8 )(input logic z);endinterface\t\t",
+     // doesn't fit on one line
+     "interface if1 #(\n"
+     "    parameter int W = 8\n"
+     ") (\n"
+     "    input logic z\n"
+     ");\n"
      "endinterface\n"},
     {
         // interface with modport declarations
@@ -1104,36 +1125,36 @@ static const std::initializer_list<FormatterTestCase> kFormatterTestCases = {
     // module instantiation test cases
     {"  module foo   ; bar bq();endmodule\n",
      "module foo;\n"
-     "  bar bq();\n"  // single instance
+     "  bar bq ();\n"  // single instance
      "endmodule\n"},
     {"  module foo   ; bar bq(), bq2(  );endmodule\n",
      "module foo;\n"
-     "  bar bq(), bq2();\n"  // multiple instances, still fitting on one line
+     "  bar bq (), bq2 ();\n"  // multiple instances, still fitting on one line
      "endmodule\n"},
     {"module foo; bar #(.N(N)) bq (.bus(bus));endmodule\n",
      // instance parameter and port fits on line
      "module foo;\n"
-     "  bar #(.N(N)) bq(.bus(bus));\n"
+     "  bar #(.N(N)) bq (.bus(bus));\n"
      "endmodule\n"},
     {"  module foo   ; bar bq(aa,bb,cc);endmodule\n",
      "module foo;\n"
-     "  bar bq(aa, bb, cc);\n"  // multiple positional ports
+     "  bar bq (aa, bb, cc);\n"  // multiple positional ports
      "endmodule\n"},
     {"  module foo   ; bar bq(.aa(aa),.bb(bb));endmodule\n",
      "module foo;\n"
-     "  bar bq(.aa(aa), .bb(bb));\n"  // multiple named ports
+     "  bar bq (.aa(aa), .bb(bb));\n"  // multiple named ports
      "endmodule\n"},
     {"  module foo   ; bar#(NNNNNNNN)"
      "bq(.aa(aaaaaa),.bb(bbbbbb));endmodule\n",
      "module foo;\n"
      "  bar #(NNNNNNNN)\n"
-     "      bq(.aa(aaaaaa), .bb(bbbbbb));\n"
+     "      bq (.aa(aaaaaa), .bb(bbbbbb));\n"
      "endmodule\n"},
     {" module foo   ; barrrrrrr "
      "bq(.aaaaaa(aaaaaa),.bbbbbb(bbbbbb));endmodule\n",
      "module foo;\n"
      "  barrrrrrr\n"
-     "      bq(\n"
+     "      bq (\n"
      "          .aaaaaa(aaaaaa),\n"
      "          .bbbbbb(bbbbbb)\n"
      "      );\n"
@@ -1149,15 +1170,15 @@ static const std::initializer_list<FormatterTestCase> kFormatterTestCases = {
 
     {// tests bind declaration
      "bind   foo   bar baz  ( . clk ( clk  ) ) ;",
-     "bind foo bar baz(.clk(clk));\n"},
+     "bind foo bar baz (.clk(clk));\n"},
     {// tests bind declaration, with type params
      "bind   foo   bar# ( . W ( W ) ) baz  ( . clk ( clk  ) ) ;",
-     "bind foo bar #(.W(W)) baz(.clk(clk));\n"},
+     "bind foo bar #(.W(W)) baz (.clk(clk));\n"},
     {// tests bind declarations
      "bind   foo   bar baz  ( ) ;"
      "bind goo  car  caz (   );",
-     "bind foo bar baz();\n"
-     "bind goo car caz();\n"},
+     "bind foo bar baz ();\n"
+     "bind goo car caz ();\n"},
 
     {
         // tests import declaration
@@ -1450,8 +1471,8 @@ TEST(FormatterEndToEndTest, PreserveVSpacesOnly) {
           "// item comment 2\n"
           "endmodule\n",
           "// humble module\n"
-          "module foo(// non-port comment\n"  // TODO(fangism): 2 spaces before
-                                              // //
+          // TODO(fangism): 2 spaces before //
+          "module foo (// non-port comment\n"
           "    // port comment 1\n"
           "    // port comment 2\n"
           ");  // header trailing comment\n"
@@ -1473,8 +1494,8 @@ TEST(FormatterEndToEndTest, PreserveVSpacesOnly) {
           "// item comment 2\n"
           "endmodule\n",
           "// humble module\n"
-          "module foo(// non-port comment\n"  // TODO(fangism): 2 spaces before
-                                              // //
+          // TODO(fangism): 2 spaces before //
+          "module foo (// non-port comment\n"
           "    // port comment 1\n"
           "    input logic f\n"
           "    // port comment 2\n"

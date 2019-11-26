@@ -217,9 +217,21 @@ static WithReason<int> SpacesRequiredBetween(const PreFormatToken& left,
       return {1, "Separate \") (\" between parameters and ports"};
     }
 
-    // This case intended to cover function/task/macro calls:
+    // General handling of ID '(' spacing:
     if (left.format_token_enum == FormatTokenType::identifier ||
         IsKeywordCallable(yytokentype(left.TokenEnum()))) {
+      if (context.IsInside(NodeEnum::kModuleHeader)) {
+        return {1,
+                "Module/interface declarations: want space between ID and '('"};
+      }
+      if (context.IsInside(NodeEnum::kActualNamedPort)) {
+        return {0, "Named port: no space between ID and '('"};
+      }
+      if (context.IsInside(NodeEnum::kGateInstance)) {
+        return {1, "Module instance: want space between ID and '('"};
+      }
+
+      // Default: This case intended to cover function/task/macro calls:
       return {0, "Function/constructor calls: no space before ("};
     }
   }

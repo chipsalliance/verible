@@ -1636,16 +1636,55 @@ TEST(TokenAnnotatorTest, AnnotateFormattingWithContextTest) {
           DefaultStyle,
           {']', "]"},
           {yytokentype::SymbolIdentifier, "id_b"},
-          {NodeEnum::kUnqualifiedId},  // unspecified context
-          kUnhandledSpacing,           // TODO(fangism): pick reasonable default
+          {NodeEnum::kUnqualifiedId},
+          kUnhandledSpacing,  // TODO(fangism): pick reasonable default
       },
       {
           DefaultStyle,
           {']', "]"},
           {yytokentype::SymbolIdentifier, "id_c"},
           {NodeEnum::kDataTypeImplicitBasicIdDimensions,
-           NodeEnum::kUnqualifiedId},  // unspecified context
+           NodeEnum::kUnqualifiedId},
           {1, SpacingOptions::Undecided},
+      },
+
+      // "foo ()" in "module foo();"
+      {
+          DefaultStyle,
+          {yytokentype::SymbolIdentifier, "foo"},
+          {'(', "("},
+          {/* unspecified context */},
+          {0, SpacingOptions::Undecided},
+      },
+      {
+          DefaultStyle,
+          {yytokentype::SymbolIdentifier, "foo"},
+          {'(', "("},
+          {NodeEnum::kModuleHeader},
+          {1, SpacingOptions::Undecided},
+      },
+
+      // "a(" in "foo bar (.a(b));": instantiation with named ports
+      {
+          DefaultStyle,
+          {yytokentype::SymbolIdentifier, "foo"},
+          {'(', "("},
+          {NodeEnum::kGateInstance},
+          {1, SpacingOptions::Undecided},
+      },
+      {
+          DefaultStyle,
+          {yytokentype::SymbolIdentifier, "foo"},
+          {'(', "("},
+          {NodeEnum::kActualNamedPort},
+          {0, SpacingOptions::Undecided},
+      },
+      {
+          DefaultStyle,
+          {yytokentype::SymbolIdentifier, "foo"},
+          {'(', "("},
+          {NodeEnum::kGateInstance, NodeEnum::kActualNamedPort},
+          {0, SpacingOptions::Undecided},
       },
   };
   int test_index = 0;
