@@ -200,6 +200,20 @@ cc_library(
     alwayslink = 1,
 )
 
+cc_test(
+    name = "forbid_defparam_rule_test",
+    srcs = ["forbid_defparam_rule_test.cc"],
+    deps = [
+        ":forbid_defparam_rule",
+        "//common/analysis:linter_test_utils",
+        "//common/analysis:syntax_tree_linter_test_utils",
+        "//common/text:symbol",
+        "//verilog/CST:verilog_nonterminals",
+        "//verilog/analysis:verilog_analyzer",
+        "@com_google_googletest//:gtest_main",
+    ],
+)
+
 cc_library(
     name = "module_begin_block_rule",
     srcs = ["module_begin_block_rule.cc"],
