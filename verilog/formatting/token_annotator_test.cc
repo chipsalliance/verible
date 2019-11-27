@@ -629,6 +629,7 @@ TEST(TokenAnnotatorTest, AnnotateFormattingInfoTest) {
             {';', ";"}}},
 
           // a ? b : c
+          // (test cases around ':' are handled in context-sensitive section)
           {
               DefaultStyle,
               0,
@@ -636,15 +637,11 @@ TEST(TokenAnnotatorTest, AnnotateFormattingInfoTest) {
                   {0, SpacingOptions::Undecided},  //  a
                   {1, SpacingOptions::Undecided},  //  ?
                   {1, SpacingOptions::Undecided},  //  b
-                  kUnhandledSpacing,               //  :
-                  kUnhandledSpacing,               //  c
               },
               {
                   {yytokentype::SymbolIdentifier, "a"},
                   {'?', "?"},
                   {yytokentype::SymbolIdentifier, "b"},
-                  {':', ":"},
-                  {yytokentype::SymbolIdentifier, "c"},
               },
           },
 
@@ -656,15 +653,11 @@ TEST(TokenAnnotatorTest, AnnotateFormattingInfoTest) {
                   {0, SpacingOptions::Undecided},  //  1
                   {1, SpacingOptions::Undecided},  //  ?
                   {1, SpacingOptions::Undecided},  //  2
-                  kUnhandledSpacing,               //  :
-                  kUnhandledSpacing,               //  3
               },
               {
                   {yytokentype::TK_DecNumber, "1"},
                   {'?', "?"},
                   {yytokentype::TK_DecNumber, "2"},
-                  {':', ":"},
-                  {yytokentype::TK_DecNumber, "3"},
               },
           },
 
@@ -676,36 +669,26 @@ TEST(TokenAnnotatorTest, AnnotateFormattingInfoTest) {
                   {0, SpacingOptions::Undecided},  //  "1"
                   {1, SpacingOptions::Undecided},  //  ?
                   {1, SpacingOptions::Undecided},  //  "2"
-                  kUnhandledSpacing,               //  :
-                  kUnhandledSpacing,               //  "3"
               },
               {
                   {yytokentype::TK_StringLiteral, "1"},
                   {'?', "?"},
                   {yytokentype::TK_StringLiteral, "2"},
-                  {':', ":"},
-                  {yytokentype::TK_StringLiteral, "3"},
               },
           },
 
-          // assign a = b ? 8'o100 : '0;
+          // b ? 8'o100 : '0;
           {DefaultStyle,
            0,
-           {{0, SpacingOptions::Undecided},   //  assign
-            {1, SpacingOptions::Undecided},   //  a
-            {1, SpacingOptions::Undecided},   //  =
-            {1, SpacingOptions::Undecided},   //  b
+           {{0, SpacingOptions::Undecided},   //  b
             {1, SpacingOptions::Undecided},   //  ?
             {1, SpacingOptions::Undecided},   //  8
             {0, SpacingOptions::Undecided},   //  'o
             {0, SpacingOptions::Undecided},   //  100
             kUnhandledSpacing,                //  :
-            kUnhandledSpacing,                //  '0
+            {1, SpacingOptions::Undecided},   //  '0
             {0, SpacingOptions::Undecided}},  //  ;
-           {{yytokentype::TK_assign, "assign"},
-            {yytokentype::SymbolIdentifier, "a"},
-            {'=', "="},
-            {yytokentype::SymbolIdentifier, "b"},
+           {{yytokentype::SymbolIdentifier, "b"},
             {'?', "?"},
             {yytokentype::TK_DecNumber, "8"},
             {yytokentype::TK_OctBase, "'o"},
@@ -777,7 +760,7 @@ TEST(TokenAnnotatorTest, AnnotateFormattingInfoTest) {
            1,
            {{0, SpacingOptions::Undecided},
             {1, SpacingOptions::Undecided},
-            kUnhandledSpacing},
+            {1, SpacingOptions::Undecided}},
            {
                {yytokentype::TK_endfunction, "endfunction"},
                {':', ":"},
@@ -1685,6 +1668,232 @@ TEST(TokenAnnotatorTest, AnnotateFormattingWithContextTest) {
           {'(', "("},
           {NodeEnum::kGateInstance, NodeEnum::kActualNamedPort},
           {0, SpacingOptions::Undecided},
+      },
+
+      // cases for the heavily overloaded ':'
+
+      // ':' on the right, anything else on the left
+      {
+          DefaultStyle,
+          {yytokentype::SymbolIdentifier, "x"},
+          {':', ":"},
+          {/* unspecified context */},
+          kUnhandledSpacing,
+      },
+      {
+          // a ? b : c (ternary expression)
+          DefaultStyle,
+          {yytokentype::SymbolIdentifier, "b"},
+          {':', ":"},
+          {NodeEnum::kTernaryExpression},
+          {1, SpacingOptions::Undecided},
+      },
+      {
+          // a ? 111 : c (ternary expression)
+          DefaultStyle,
+          {yytokentype::TK_DecNumber, "111"},
+          {':', ":"},
+          {NodeEnum::kTernaryExpression},
+          {1, SpacingOptions::Undecided},
+      },
+      {
+          // a ? "1" : c (ternary expression)
+          DefaultStyle,
+          {yytokentype::TK_StringLiteral, "\"1\""},
+          {':', ":"},
+          {NodeEnum::kTernaryExpression},
+          {1, SpacingOptions::Undecided},
+      },
+      {
+          // a ? (1) : c (ternary expression)
+          DefaultStyle,
+          {')', ":"},
+          {':', ":"},
+          {NodeEnum::kTernaryExpression},
+          {1, SpacingOptions::Undecided},
+      },
+
+      // ':' on the left, anything else on the right
+      {
+          DefaultStyle,
+          {':', ":"},
+          {yytokentype::SymbolIdentifier, "x"},
+          {/* unspecified context */},
+          {1, SpacingOptions::Undecided},
+      },
+      {
+          // a ? b : c (ternary expression)
+          DefaultStyle,
+          {':', ":"},
+          {yytokentype::SymbolIdentifier, "c"},
+          {NodeEnum::kTernaryExpression},
+          {1, SpacingOptions::Undecided},
+      },
+      {
+          // a ? b : 7 (ternary expression)
+          DefaultStyle,
+          {':', ":"},
+          {yytokentype::TK_DecNumber, "7"},
+          {NodeEnum::kTernaryExpression},
+          {1, SpacingOptions::Undecided},
+      },
+      {
+          // a ? b : "7" (ternary expression)
+          DefaultStyle,
+          {':', ":"},
+          {yytokentype::TK_StringLiteral, "\"7\""},
+          {NodeEnum::kTernaryExpression},
+          {1, SpacingOptions::Undecided},
+      },
+      {
+          // a ? b : (7) (ternary expression)
+          DefaultStyle,
+          {':', ":"},
+          {'(', "("},
+          {NodeEnum::kTernaryExpression},
+          {1, SpacingOptions::Undecided},
+      },
+
+      // ':' in labels
+      // ':' before and after keywords:
+      {
+          // "begin :"
+          DefaultStyle,
+          {yytokentype::TK_begin, "begin"},
+          {':', ":"},
+          {/* unspecified context */},
+          {1, SpacingOptions::Undecided},
+      },
+      {
+          // ": begin"
+          DefaultStyle,
+          {':', ":"},
+          {yytokentype::TK_begin, "begin"},
+          {/* unspecified context */},
+          {1, SpacingOptions::Undecided},
+      },
+      {
+          // "fork :"
+          DefaultStyle,
+          {yytokentype::TK_fork, "fork"},
+          {':', ":"},
+          {/* unspecified context */},
+          {1, SpacingOptions::Undecided},
+      },
+      {
+          // "end :"
+          DefaultStyle,
+          {yytokentype::TK_end, "end"},
+          {':', ":"},
+          {/* unspecified context */},
+          {1, SpacingOptions::Undecided},
+      },
+      {
+          // "endclass :"
+          DefaultStyle,
+          {yytokentype::TK_endclass, "endclass"},
+          {':', ":"},
+          {/* unspecified context */},
+          {1, SpacingOptions::Undecided},
+      },
+      {
+          // "endfunction :"
+          DefaultStyle,
+          {yytokentype::TK_endfunction, "endfunction"},
+          {':', ":"},
+          {/* unspecified context */},
+          {1, SpacingOptions::Undecided},
+      },
+      {
+          // "endtask :"
+          DefaultStyle,
+          {yytokentype::TK_endtask, "endtask"},
+          {':', ":"},
+          {/* unspecified context */},
+          {1, SpacingOptions::Undecided},
+      },
+      {
+          // "endmodule :"
+          DefaultStyle,
+          {yytokentype::TK_endmodule, "endmodule"},
+          {':', ":"},
+          {/* unspecified context */},
+          {1, SpacingOptions::Undecided},
+      },
+      {
+          // "endpackage :"
+          DefaultStyle,
+          {yytokentype::TK_endpackage, "endpackage"},
+          {':', ":"},
+          {/* unspecified context */},
+          {1, SpacingOptions::Undecided},
+      },
+      {
+          // "endinterface :"
+          DefaultStyle,
+          {yytokentype::TK_endinterface, "endinterface"},
+          {':', ":"},
+          {/* unspecified context */},
+          {1, SpacingOptions::Undecided},
+      },
+      {
+          // "endproperty :"
+          DefaultStyle,
+          {yytokentype::TK_endproperty, "endproperty"},
+          {':', ":"},
+          {/* unspecified context */},
+          {1, SpacingOptions::Undecided},
+      },
+      {
+          // "endclocking :"
+          DefaultStyle,
+          {yytokentype::TK_endclocking, "endclocking"},
+          {':', ":"},
+          {/* unspecified context */},
+          {1, SpacingOptions::Undecided},
+      },
+      // endcase and endgenerate do not get labels
+
+      // ':' before and after label identifiers:
+      {
+          // "id :"
+          DefaultStyle,
+          {yytokentype::SymbolIdentifier, "id"},
+          {':', ":"},
+          {/* unspecified context */},
+          kUnhandledSpacing,
+      },
+      {
+          // "id :"
+          DefaultStyle,
+          {yytokentype::SymbolIdentifier, "id"},
+          {':', ":"},
+          {NodeEnum::kBlockIdentifier},
+          {1, SpacingOptions::Undecided},
+      },
+      {
+          // "id : begin ..."
+          DefaultStyle,
+          {yytokentype::SymbolIdentifier, "id"},
+          {':', ":"},
+          {NodeEnum::kLabeledStatement},
+          {1, SpacingOptions::Undecided},
+      },
+      {
+          // ": id"
+          DefaultStyle,
+          {':', ":"},
+          {yytokentype::SymbolIdentifier, "id"},
+          {/* unspecified context */},
+          {1, SpacingOptions::Undecided},
+      },
+      {
+          // ": id"
+          DefaultStyle,
+          {':', ":"},
+          {yytokentype::SymbolIdentifier, "id"},
+          {NodeEnum::kLabel},
+          {1, SpacingOptions::Undecided},
       },
   };
   int test_index = 0;

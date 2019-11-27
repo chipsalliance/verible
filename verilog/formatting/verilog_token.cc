@@ -628,5 +628,41 @@ bool IsUnaryOperator(yytokentype token_type) {
   }
 }
 
+bool IsPreprocessorControlFlow(yytokentype token_type) {
+  switch (static_cast<int>(token_type)) {
+    case yytokentype::PP_ifdef:
+    case yytokentype::PP_ifndef:
+    case yytokentype::PP_elsif:
+    case yytokentype::PP_else:
+    case yytokentype::PP_endif:
+      return true;
+    default:
+      break;
+  }
+  return false;
+}
+
+bool IsEndKeyword(yytokentype token_type) {
+  switch (static_cast<int>(token_type)) {
+    case yytokentype::TK_end:
+    case yytokentype::TK_endcase:
+    case yytokentype::TK_endgroup:
+    case yytokentype::TK_endpackage:
+    case yytokentype::TK_endgenerate:
+    case yytokentype::TK_endinterface:
+    case yytokentype::TK_endfunction:
+    case yytokentype::TK_endtask:
+    case yytokentype::TK_endproperty:
+    case yytokentype::TK_endclocking:
+    case yytokentype::TK_endclass:
+    case yytokentype::TK_endmodule:
+      // TODO(fangism): join and join* keywords?
+      return true;
+    default:
+      break;
+  }
+  return false;
+}
+
 }  // namespace formatter
 }  // namespace verilog

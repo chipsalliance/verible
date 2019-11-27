@@ -271,6 +271,57 @@ static WithReason<int> SpacesRequiredBetween(const PreFormatToken& left,
     if (left.TokenEnum() == TK_default) {
       return {0, "No space inside \"default:\""};
     }
+    // TODO(fangism): Everything that resembles a case-item should have 0 spaces
+    // before the ':'.
+    //   kCaseItem, kCaseInsideItem, kCasePatternItem
+    //   kGenerateCaseItem
+    //   kPropertyCaseItem
+    //   kRandSequenceCaseItem
+    //   (and corresponding DefaultItems)
+
+    // Everything that resembles an end-label should have 1 space
+    //   example nodes: kLabel, kEndNew, kFunctionEndLabel
+    if (IsEndKeyword(yytokentype(left.TokenEnum()))) {
+      return {1, "Want 1 space between end-keyword and ':'"};
+    }
+
+    // Spacing between 'begin' and ':' is already covered
+    // Spacing between 'fork' and ':' is already covered
+
+    // Everything that resembles a prefix-statement label,
+    // and label before 'begin'
+    if (context.DirectParentIsOneOf({NodeEnum::kBlockIdentifier,
+                                     NodeEnum::kLabeledStatement,
+                                     NodeEnum::kGenerateBlock})) {
+      return {1, "1 space before ':' in prefix block labels"};
+    }
+
+    // kTernaryExpression should have 1 space
+    if (context.DirectParentIs(NodeEnum::kTernaryExpression)) {
+      return {1, "Ternary ?: expression wants 1 space around ':'"};
+    }
+
+    // TODO(fangism): Everything that resembles a range (in index, dimensions)
+    // should have 1 space.
+    //   kSelectVariableDimension, kDimensionRange
+    //   kValueRange, kCycleRange
+    //   kMinTypMax expressions?
+
+    // TODO(fangism): Other unknowns:
+    //   'enum_name' in verilog.y
+    //   kMemberPattern?
+    //   kPatternExpression?
+    //   ':' as a polarity operator?
+    //   as a UDP combinational entry? UDP sequence entry?
+    //   kBindDirective?
+    //   kCoverCross? kCoverPoint?
+    //   kProduction? (randsequence)
+
+    // For now, if case is not explicitly handled, preserve existing space.
+  }
+  if (left.TokenEnum() == ':') {
+    // Most contexts want a space after ':'.
+    return {1, "Default to 1 space after ':'"};
   }
 
   // "if (...)", "for (...) instead of "if(...)", "for(...)",

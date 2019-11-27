@@ -52,6 +52,12 @@ bool IsComment(yytokentype token_type);
 // Returns true if token enum *can* be a unary operator.
 bool IsUnaryOperator(yytokentype);
 
+// Returns true for `ifdef, `else, etc.
+bool IsPreprocessorControlFlow(yytokentype);
+
+// Returns true if token enum is 'end', 'endmodule', or 'end*'
+bool IsEndKeyword(yytokentype);
+
 // TODO(fangism): Identify specially lexed tokens that require a newline after.
 // e.g. MacroIdItem, TK_EOL_COMMENT, ...
 // bool RequiresNewlineAfterToken(yytokentype);

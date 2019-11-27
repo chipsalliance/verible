@@ -747,37 +747,13 @@ void TreeUnwrapper::Visit(const verible::SyntaxTreeLeaf& leaf) {
   // Sanity check that NextUnfilteredToken() is aligned to the current leaf.
   CHECK_EQ(NextUnfilteredToken()->text.begin(), leaf.get().text.begin());
 
-  switch (tag) {
-    // Un-indent preprocessor control-flow directives.
-    case yytokentype::PP_ifdef:
-    case yytokentype::PP_ifndef:
-    case yytokentype::PP_elsif:
-    case yytokentype::PP_else:
-    case yytokentype::PP_endif: {
-      StartNewUnwrappedLine();
-      CurrentUnwrappedLine().SetIndentationSpaces(0);
-      break;
-    }
-    // TODO(fangism): restructure CST so that optional end labels can be
-    // handled as being part of a single node.
-    case yytokentype::TK_end:
-    case yytokentype::TK_endcase:
-    case yytokentype::TK_endgroup:
-    case yytokentype::TK_endpackage:
-    case yytokentype::TK_endgenerate:
-    case yytokentype::TK_endinterface:
-    case yytokentype::TK_endfunction:
-    case yytokentype::TK_endtask:
-    case yytokentype::TK_endproperty:
-    case yytokentype::TK_endclocking:
-    case yytokentype::TK_endclass:
-    case yytokentype::TK_endmodule: {
-      StartNewUnwrappedLine();
-      break;
-    }
-    default:
-      // In most other cases, do nothing.
-      break;
+  // Start a new partition in the following cases.
+  // In most other cases, do nothing.
+  if (IsPreprocessorControlFlow(tag)) {
+    StartNewUnwrappedLine();
+    CurrentUnwrappedLine().SetIndentationSpaces(0);
+  } else if (IsEndKeyword(tag)) {
+    StartNewUnwrappedLine();
   }
 
   // Advances NextUnfilteredToken(), and extends CurrentUnwrappedLine().

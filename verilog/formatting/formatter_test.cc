@@ -342,6 +342,22 @@ static const std::initializer_list<FormatterTestCase> kFormatterTestCases = {
     "parameter int foo = - -1;\n",
     },
     */
+    {
+        "  parameter  int   ternary=1?2:3;",
+        "parameter int ternary = 1 ? 2 : 3;\n",
+    },
+    {
+        "  parameter  int   ternary=a?b:c;",
+        "parameter int ternary = a ? b : c;\n",
+    },
+    {
+        "  parameter  int   ternary=\"a\"?\"b\":\"c\";",
+        "parameter int ternary = \"a\" ? \"b\" : \"c\";\n",
+    },
+    {
+        "  parameter  int   ternary=(a)?(b):(c);",
+        "parameter int ternary = (a) ? (b) : (c);\n",
+    },
 
     // basic module test cases
     {"module foo;endmodule:foo\n",
@@ -532,6 +548,33 @@ static const std::initializer_list<FormatterTestCase> kFormatterTestCases = {
         "endmodule\n",
     },
     {
+        // begin/end with labels
+        "module m ;initial  begin:yyy\tend:yyy endmodule",
+        "module m;\n"
+        "  initial begin : yyy\n"
+        "  end : yyy\n"
+        "endmodule\n",
+    },
+    {
+        // conditional generate begin/end with labels
+        "module m ;if\n( 1)  begin:yyy\tend:yyy endmodule",
+        "module m;\n"
+        "  if (1) begin : yyy\n"
+        "  end : yyy\n"
+        "endmodule\n",
+    },
+    {
+        // begin/end with labels, nested
+        "module m ;initial  begin:yyy if(1)begin:zzz "
+        "end:zzz\tend:yyy endmodule",
+        "module m;\n"
+        "  initial begin : yyy\n"
+        "    if (1) begin : zzz\n"
+        "    end : zzz\n"
+        "  end : yyy\n"
+        "endmodule\n",
+    },
+    {
         "module m ;initial  begin #  1 x<=y ;end endmodule",
         "module m;\n"
         "  initial begin\n"
@@ -571,6 +614,18 @@ static const std::initializer_list<FormatterTestCase> kFormatterTestCases = {
         "endmodule\n",
     },
     {
+        // clocking declarations in modules, with end labels
+        " module mcd ; "
+        "clocking   cb @( posedge clk);\t\tendclocking:  cb "
+        "clocking cb2   @ (posedge  clk\n); endclocking   :cb2 endmodule",
+        "module mcd;\n"
+        "  clocking cb @(posedge clk);\n"
+        "  endclocking : cb\n"
+        "  clocking cb2 @(posedge clk);\n"
+        "  endclocking : cb2\n"
+        "endmodule\n",
+    },
+    {
         // DPI import declarations in modules
         "module mdi;"
         "import   \"DPI-C\" function  int add(\n) ;"
@@ -602,6 +657,13 @@ static const std::initializer_list<FormatterTestCase> kFormatterTestCases = {
      "endinterface\n"
      "interface if2;\n"
      "endinterface\n"},
+    {// two interface declarations, end labels
+     " interface if1 ; endinterface:if1\t\t"
+     "interface  if2; endinterface    :  if2   ",
+     "interface if1;\n"
+     "endinterface : if1\n"
+     "interface if2;\n"
+     "endinterface : if2\n"},
     {// interface declaration with parameters
      " interface if1#( parameter int W= 8 );endinterface\t\t",
      "interface if1 #(parameter int W = 8);\n"
@@ -867,6 +929,7 @@ static const std::initializer_list<FormatterTestCase> kFormatterTestCases = {
 
     // function test cases
     {"function f ;endfunction", "function f;\nendfunction\n"},
+    {"function f ;endfunction:   f", "function f;\nendfunction : f\n"},
     {"function f ( );endfunction", "function f();\nendfunction\n"},
     {"function f (input bit x);endfunction",
      "function f(input bit x);\nendfunction\n"},
@@ -1213,6 +1276,9 @@ static const std::initializer_list<FormatterTestCase> kFormatterTestCases = {
      "logic b[K:1][W:1];\n"},
 
     // task test cases
+    {"task t ;endtask:t",  //
+     "task t;\n"
+     "endtask : t\n"},
     {"task t ;#   10 ;# 5ns ; # 0.1 ; # 1step ;endtask",
      "task t;\n"
      "  #10;\n"  // no space in delay expression
@@ -1340,6 +1406,43 @@ static const std::initializer_list<FormatterTestCase> kFormatterTestCases = {
      "  wait fork;\n"
      "  wait fork;\n"
      "endtask\n"},
+    {// labeled single statements (prefix-style)
+     "task t;l1:x<=y ;endtask",
+     "task t;\n"
+     "  l1 : x <= y;\n"
+     "endtask\n"},
+    {// labeled block statements (prefix-style)
+     "task t;l1:begin end:l1 endtask",
+     "task t;\n"
+     "  l1 : begin\n"
+     "  end : l1\n"
+     "endtask\n"},
+    {// labeled seq block statements
+     "task t;begin:l1 end:l1 endtask",
+     "task t;\n"
+     "  begin : l1\n"
+     "  end : l1\n"
+     "endtask\n"},
+    {// labeled par block statements
+     "task t;fork:l1 join:l1 endtask",
+     "task t;\n"
+     "  fork : l1\n"
+     "  join : l1\n"
+     "endtask\n"},
+
+    // property test cases
+    {"module mp ;property p1 ; a|->b;endproperty endmodule",
+     "module mp;\n"
+     "  property p1 ;\n"  // TODO(fangism): unwanted space before ';'
+     "    a |-> b;\n"
+     "  endproperty\n"
+     "endmodule\n"},
+    {"module mp ;property p1 ; a|->b;endproperty:p1 endmodule",
+     "module mp;\n"
+     "  property p1 ;\n"  // TODO(fangism): unwanted space before ';'
+     "    a |-> b;\n"
+     "  endproperty : p1\n"  // with end label
+     "endmodule\n"},
 };
 
 // Tests that formatter produces expected results, end-to-end.
