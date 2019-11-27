@@ -992,6 +992,7 @@ zi_zp { UpdateLocation(); return TK_zi_zp; }
     return TK_XZDigits;
   }
   {Space}+ { UpdateLocation(); return TK_SPACE; }
+  {LineTerminator} { UpdateLocation(); return TK_NEWLINE; }
   /* any other tokens, return to previous state */
   . { yyless(0); yy_pop_state(); }
 }
@@ -1008,6 +1009,7 @@ zi_zp { UpdateLocation(); return TK_zi_zp; }
     return TK_BinDigits;
   }
   {Space}+ { UpdateLocation(); return TK_SPACE; }
+  {LineTerminator} { UpdateLocation(); return TK_NEWLINE; }
   /* any other tokens, return to previous state */
   . { yyless(0); yy_pop_state(); }
 }
@@ -1024,6 +1026,7 @@ zi_zp { UpdateLocation(); return TK_zi_zp; }
     return TK_OctDigits;
   }
   {Space}+ { UpdateLocation(); return TK_SPACE; }
+  {LineTerminator} { UpdateLocation(); return TK_NEWLINE; }
   /* any other tokens, return to previous state */
   . { yyless(0); yy_pop_state(); }
 }
@@ -1040,6 +1043,7 @@ zi_zp { UpdateLocation(); return TK_zi_zp; }
     return TK_HexDigits;
   }
   {Space}+ { UpdateLocation(); return TK_SPACE; }
+  {LineTerminator} { UpdateLocation(); return TK_NEWLINE; }
   /* any other tokens, return to previous state */
   . { yyless(0); yy_pop_state(); }
 }
