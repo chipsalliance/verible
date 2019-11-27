@@ -59,6 +59,13 @@ static bool IsUnaryPrefixExpressionOperand(const PreFormatToken& left,
                                {NodeEnum::kExpression});
 }
 
+static bool IsInsideNumericLiteral(const PreFormatToken& left,
+                                   const PreFormatToken& right) {
+  return (left.format_token_enum == FormatTokenType::numeric_literal &&
+          right.format_token_enum == FormatTokenType::numeric_base) ||
+         left.format_token_enum == FormatTokenType::numeric_base;
+}
+
 // Returns true if keyword can be used like a function/method call.
 // Based on various LRM sections mentioning subroutine calls.
 static bool IsKeywordCallable(yytokentype e) {
@@ -184,10 +191,9 @@ static WithReason<int> SpacesRequiredBetween(const PreFormatToken& left,
 
   // Remove any extra spaces between numeric literals' width, base and digits.
   // "16'h123, 'h123" instead of "16 'h123", "16'h 123, 'h 123"
-  if ((left.format_token_enum == FormatTokenType::numeric_literal &&
-       right.format_token_enum == FormatTokenType::numeric_base) ||
-      left.format_token_enum == FormatTokenType::numeric_base)
+  if (IsInsideNumericLiteral(left, right)) {
     return {0, "No space inside based numeric literals"};
+  }
 
   // TODO(fangism): Never insert trailing spaces before a newline.
 
@@ -471,11 +477,9 @@ static WithReason<SpacingOptions> BreakDecisionBetween(
             "Never separate unary prefix operator from its operand"};
   }
 
-  if (left.TokenEnum() == TK_DecNumber &&
-      right.TokenEnum() == TK_UnBasedNumber) {
-    // e.g. 1'b1, 16'hbabe
+  if (IsInsideNumericLiteral(left, right)) {
     return {SpacingOptions::MustAppend,
-            "Never separate numeric width from rest of numeric literal"};
+            "Never separate numeric width, base, and digits"};
   }
 
   // Preprocessor macro definitions with args: no space between ID and '('.

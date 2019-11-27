@@ -476,8 +476,8 @@ TEST(TokenAnnotatorTest, AnnotateFormattingInfoTest) {
            {{0, SpacingOptions::Undecided},
             {1, SpacingOptions::Undecided},
             {1, SpacingOptions::Undecided},
-            {0, SpacingOptions::Undecided},
-            {0, SpacingOptions::Undecided},
+            {0, SpacingOptions::MustAppend},
+            {0, SpacingOptions::MustAppend},
             {0, SpacingOptions::Undecided}},
            {{yytokentype::SymbolIdentifier, "a"},
             {'=', "="},
@@ -492,8 +492,8 @@ TEST(TokenAnnotatorTest, AnnotateFormattingInfoTest) {
            {{0, SpacingOptions::Undecided},
             {1, SpacingOptions::Undecided},
             {1, SpacingOptions::Undecided},
-            {0, SpacingOptions::Undecided},
-            {0, SpacingOptions::Undecided},
+            {0, SpacingOptions::MustAppend},
+            {0, SpacingOptions::MustAppend},
             {0, SpacingOptions::Undecided}},
            {{yytokentype::SymbolIdentifier, "a"},
             {'=', "="},
@@ -508,8 +508,8 @@ TEST(TokenAnnotatorTest, AnnotateFormattingInfoTest) {
            {{0, SpacingOptions::Undecided},
             {1, SpacingOptions::Undecided},
             {1, SpacingOptions::Undecided},
-            {0, SpacingOptions::Undecided},
-            {0, SpacingOptions::Undecided},
+            {0, SpacingOptions::MustAppend},
+            {0, SpacingOptions::MustAppend},
             {0, SpacingOptions::Undecided}},
            {{yytokentype::SymbolIdentifier, "a"},
             {'=', "="},
@@ -524,8 +524,8 @@ TEST(TokenAnnotatorTest, AnnotateFormattingInfoTest) {
            {{0, SpacingOptions::Undecided},
             {1, SpacingOptions::Undecided},
             {1, SpacingOptions::Undecided},
-            {0, SpacingOptions::Undecided},
-            {0, SpacingOptions::Undecided},
+            {0, SpacingOptions::MustAppend},
+            {0, SpacingOptions::MustAppend},
             {0, SpacingOptions::Undecided}},
            {{yytokentype::SymbolIdentifier, "a"},
             {'=', "="},
@@ -540,7 +540,7 @@ TEST(TokenAnnotatorTest, AnnotateFormattingInfoTest) {
            {{0, SpacingOptions::Undecided},
             {1, SpacingOptions::Undecided},
             {1, SpacingOptions::Undecided},
-            {0, SpacingOptions::Undecided},
+            {0, SpacingOptions::MustAppend},
             {0, SpacingOptions::Undecided}},
            {{yytokentype::SymbolIdentifier, "a"},
             {'=', "="},
@@ -556,10 +556,10 @@ TEST(TokenAnnotatorTest, AnnotateFormattingInfoTest) {
             {1, SpacingOptions::Undecided},
             {0, SpacingOptions::Undecided},
             {0, SpacingOptions::Undecided},
-            {0, SpacingOptions::Undecided},
+            {0, SpacingOptions::MustAppend},
             {0, SpacingOptions::Undecided},
             {1, SpacingOptions::Undecided},
-            {0, SpacingOptions::Undecided},
+            {0, SpacingOptions::MustAppend},
             {0, SpacingOptions::Undecided},
             {0, SpacingOptions::Undecided}},
            {{yytokentype::SymbolIdentifier, "a"},
@@ -580,10 +580,10 @@ TEST(TokenAnnotatorTest, AnnotateFormattingInfoTest) {
            {{0, SpacingOptions::Undecided},
             {1, SpacingOptions::Undecided},
             {1, SpacingOptions::Undecided},
-            {0, SpacingOptions::Undecided},
+            {0, SpacingOptions::MustAppend},
             {1, SpacingOptions::Undecided},
             {1, SpacingOptions::Undecided},
-            {0, SpacingOptions::Undecided},
+            {0, SpacingOptions::MustAppend},
             {0, SpacingOptions::Undecided}},
            {{yytokentype::SymbolIdentifier, "a"},
             {'=', "="},
@@ -603,12 +603,12 @@ TEST(TokenAnnotatorTest, AnnotateFormattingInfoTest) {
             {0, SpacingOptions::Undecided},  //  3
             kUnhandledSpacing,
             {0, SpacingOptions::Undecided},
-            {0, SpacingOptions::Undecided},
-            {0, SpacingOptions::Undecided},
+            {0, SpacingOptions::MustAppend},
+            {0, SpacingOptions::MustAppend},
             {0, SpacingOptions::Undecided},  //  ,
             {1, SpacingOptions::Undecided},
-            {0, SpacingOptions::Undecided},
-            {0, SpacingOptions::Undecided},  //  z
+            {0, SpacingOptions::MustAppend},
+            {0, SpacingOptions::MustAppend},  //  z
             {0, SpacingOptions::Undecided},
             {0, SpacingOptions::Undecided},
             {0, SpacingOptions::Undecided}},
@@ -683,8 +683,8 @@ TEST(TokenAnnotatorTest, AnnotateFormattingInfoTest) {
            {{0, SpacingOptions::Undecided},   //  b
             {1, SpacingOptions::Undecided},   //  ?
             {1, SpacingOptions::Undecided},   //  8
-            {0, SpacingOptions::Undecided},   //  'o
-            {0, SpacingOptions::Undecided},   //  100
+            {0, SpacingOptions::MustAppend},  //  'o
+            {0, SpacingOptions::MustAppend},  //  100
             kUnhandledSpacing,                //  :
             {1, SpacingOptions::Undecided},   //  '0
             {0, SpacingOptions::Undecided}},  //  ;
