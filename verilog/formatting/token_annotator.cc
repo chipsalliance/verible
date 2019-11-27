@@ -271,13 +271,12 @@ static WithReason<int> SpacesRequiredBetween(const PreFormatToken& left,
     if (left.TokenEnum() == TK_default) {
       return {0, "No space inside \"default:\""};
     }
-    // TODO(fangism): Everything that resembles a case-item should have 0 spaces
-    // before the ':'.
-    //   kCaseItem, kCaseInsideItem, kCasePatternItem
-    //   kGenerateCaseItem
-    //   kPropertyCaseItem
-    //   kRandSequenceCaseItem
-    //   (and corresponding DefaultItems)
+    if (context.DirectParentIsOneOf(
+            {NodeEnum::kCaseItem, NodeEnum::kCaseInsideItem,
+             NodeEnum::kCasePatternItem, NodeEnum::kGenerateCaseItem,
+             NodeEnum::kPropertyCaseItem, NodeEnum::kRandSequenceCaseItem})) {
+      return {0, "Case-like items, no space before ':'"};
+    }
 
     // Everything that resembles an end-label should have 1 space
     //   example nodes: kLabel, kEndNew, kFunctionEndLabel

@@ -338,6 +338,7 @@ ExpectedUnwrappedLineTree L(int spaces,
 #define DistItemList N
 #define LoopHeader N
 #define ForSpec N
+#define CaseItemList N
 
 // Test data for unwrapping Verilog modules
 // Test case format: test name, source code, ExpectedUnwrappedLines
@@ -866,16 +867,16 @@ const TreeUnwrapperTestData kUnwrapModuleTestCases[] = {
         ModuleHeader(0, L(0, {"module", "multi_cases", ";"})),
         ModuleItemList(
             1, L(1, {"case", "(", "foo", ")"}),
-            ModuleItemList(2,
-                           // TODO(fangism): merge label prefix to following
-                           // subtree if it fits
-                           L(2, {"A", ":"}),
-                           Instantiation(2, L(2, {"a"}),
-                                         InstanceList(4, L(4, {"aa", ";"})))),
+            CaseItemList(2,
+                         // TODO(fangism): merge label prefix to following
+                         // subtree if it fits
+                         L(2, {"A", ":"}),
+                         Instantiation(2, L(2, {"a"}),
+                                       InstanceList(4, L(4, {"aa", ";"})))),
             L(1, {"endcase"}), L(1, {"case", "(", "bar", ")"}),
-            ModuleItemList(2, L(2, {"B", ":"}),
-                           Instantiation(2, L(2, {"b"}),
-                                         InstanceList(4, L(4, {"bb", ";"})))),
+            CaseItemList(2, L(2, {"B", ":"}),
+                         Instantiation(2, L(2, {"b"}),
+                                       InstanceList(4, L(4, {"bb", ";"})))),
             L(1, {"endcase"})),
         L(0, {"endmodule"}),
     },
@@ -895,7 +896,7 @@ const TreeUnwrapperTestData kUnwrapModuleTestCases[] = {
             1, L(1, {"always_comb", "begin"}),
             StatementList(
                 2, L(2, {"case", "(", "blah", ".", "blah", ")"}),
-                StatementList(
+                CaseItemList(
                     3, L(3, {"aaa", ",", "bbb", ":", "x", "=", "y", ";"}),
                     L(3, {"ccc", ",", "ddd", ":", "w", "=", "z", ";"})),
                 L(2, {"endcase"})),
@@ -917,11 +918,11 @@ const TreeUnwrapperTestData kUnwrapModuleTestCases[] = {
         ModuleItemList(
             1, L(1, {"initial", "begin"}),
             StatementList(2, L(2, {"case", "(", "blah", ".", "blah", ")"}),
-                          StatementList(3,
-                                        L(3, {"aaa", ",", "bbb", ":", "x", "=",
-                                              "`YYY", "(", ")", ";"}),
-                                        L(3, {"default", ":", "w", "=", "`ZZZ",
-                                              "(", ")", ";"})),
+                          CaseItemList(3,
+                                       L(3, {"aaa", ",", "bbb", ":", "x", "=",
+                                             "`YYY", "(", ")", ";"}),
+                                       L(3, {"default", ":", "w", "=", "`ZZZ",
+                                             "(", ")", ";"})),
                           L(2, {"endcase"})),
             L(1, {"end"})),
         L(0, {"endmodule"}),
@@ -943,12 +944,12 @@ const TreeUnwrapperTestData kUnwrapModuleTestCases[] = {
         ModuleItemList(
             1, L(1, {"always_comb", "begin"}),
             StatementList(2, L(2, {"case", "(", "blah", ".", "blah", ")"}),
-                          StatementList(3, L(3, {"aaa", ",", "bbb", ":", "x",
-                                                 "=", "y", ";"})),
+                          CaseItemList(3, L(3, {"aaa", ",", "bbb", ":", "x",
+                                                "=", "y", ";"})),
                           L(2, {"endcase"}),
                           L(2, {"case", "(", "blah", ".", "blah", ")"}),
-                          StatementList(3, L(3, {"ccc", ",", "ddd", ":", "w",
-                                                 "=", "z", ";"})),
+                          CaseItemList(3, L(3, {"ccc", ",", "ddd", ":", "w",
+                                                "=", "z", ";"})),
                           L(2, {"endcase"})),
             L(1, {"end"})),
         L(0, {"endmodule"}),
@@ -3022,6 +3023,84 @@ const TreeUnwrapperTestData kUnwrapFunctionTestCases[] = {
     },
 
     {
+        "function with case statements",
+        "function foo_case;"
+        "case (y) "
+        "k1: return 0;"
+        "k2: return 1;"
+        "endcase "
+        "case (z) "
+        "k3: return 0;"
+        "k4: return 1;"
+        "endcase "
+        "endfunction",
+        FunctionHeader(0, L(0, {"function", "foo_case", ";"})),
+        StatementList(1, L(1, {"case", "(", "y", ")"}),
+                      CaseItemList(2,  //
+                                   L(2, {"k1", ":", "return", "0", ";"}),
+                                   L(2, {"k2", ":", "return", "1", ";"})),
+                      L(1, {"endcase"}),              //
+                      L(1, {"case", "(", "z", ")"}),  //
+                      CaseItemList(2,                 //
+                                   L(2, {"k3", ":", "return", "0", ";"}),
+                                   L(2, {"k4", ":", "return", "1", ";"})),
+                      L(1, {"endcase"})),
+        L(0, {"endfunction"}),
+    },
+
+    {
+        "function with case inside statements",
+        "function foo_case_inside;"
+        "case (y) inside "
+        "k1: return 0;"
+        "k2: return 1;"
+        "endcase "
+        "case (z) inside "
+        "k3: return 0;"
+        "k4: return 1;"
+        "endcase "
+        "endfunction",
+        FunctionHeader(0, L(0, {"function", "foo_case_inside", ";"})),
+        StatementList(1, L(1, {"case", "(", "y", ")", "inside"}),
+                      CaseItemList(2,  //
+                                   L(2, {"k1", ":", "return", "0", ";"}),
+                                   L(2, {"k2", ":", "return", "1", ";"})),
+                      L(1, {"endcase"}),                        //
+                      L(1, {"case", "(", "z", ")", "inside"}),  //
+                      CaseItemList(2,                           //
+                                   L(2, {"k3", ":", "return", "0", ";"}),
+                                   L(2, {"k4", ":", "return", "1", ";"})),
+                      L(1, {"endcase"})),
+        L(0, {"endfunction"}),
+    },
+
+    {
+        "function with case pattern statements",
+        "function foo_case_pattern;"
+        "case (y) matches "
+        ".foo: return 0;"
+        ".*: return 1;"
+        "endcase "
+        "case (z) matches "
+        ".foo: return 0;"
+        ".*: return 1;"
+        "endcase "
+        "endfunction",
+        FunctionHeader(0, L(0, {"function", "foo_case_pattern", ";"})),
+        StatementList(1, L(1, {"case", "(", "y", ")", "matches"}),
+                      CaseItemList(2,  //
+                                   L(2, {".", "foo", ":", "return", "0", ";"}),
+                                   L(2, {".*", ":", "return", "1", ";"})),
+                      L(1, {"endcase"}),                         //
+                      L(1, {"case", "(", "z", ")", "matches"}),  //
+                      CaseItemList(2,                            //
+                                   L(2, {".", "foo", ":", "return", "0", ";"}),
+                                   L(2, {".*", ":", "return", "1", ";"})),
+                      L(1, {"endcase"})),
+        L(0, {"endfunction"}),
+    },
+
+    {
         "function with array formal parameters and return statement",
         "function automatic logic checkit ("
         "input logic [4:0] a,"
@@ -3278,6 +3357,25 @@ const TreeUnwrapperTestData kUnwrapPropertyTestCases[] = {
                        L(1, {"endproperty"})),
         L(0, {"endmodule"}),
     },
+    /* TODO(b/145241765): fix property-case parsing
+    {
+        "property declaration with property case statement",
+        "module m;"
+        "property p;"
+        "case (g) h:a < b; i:c<d endcase "
+        "endproperty "
+        "endmodule",
+        ModuleHeader(0, L(0, {"module", "m", ";"})),
+        ModuleItemList(1, L(1, {"property", "p", ";"}),
+                       PropertyItemList(
+                           2, L(2, {"case", "(", "g", ")"}),
+                           CaseItemList(3, L(3, {"h", ":", "a", "<", "b", ";"}),
+                                        L(3, {"i", ":", "c", "<", "d", ";"})),
+                           L(2, {"endcase"})),
+                       L(1, {"endproperty"})),
+        L(0, {"endmodule"}),
+    },
+    */
 };
 
 // Test that TreeUnwrapper produces correct UnwrappedLines from properties

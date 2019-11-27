@@ -1088,6 +1088,17 @@ static const std::initializer_list<FormatterTestCase> kFormatterTestCases = {
      "    assign a = 1;\n"
      "  end\n"
      "endmodule\n"},
+    {// conditional generate (case)
+     "module mc; case(s)a : bb c ; d : ee f; endcase endmodule",
+     "module mc;\n"
+     "  case (s)\n"
+     "    a:\n"
+     "    bb c;\n"  // TODO(fangism): these instantiations fit on prev. line
+     "    d:\n"
+     "    ee f;\n"
+     "  endcase\n"
+     "endmodule\n"},
+
     {// "default:", not "default :"
      "function f; case (x) default: x=y; endcase endfunction\n",
      "function f;\n"
@@ -1100,6 +1111,60 @@ static const std::initializer_list<FormatterTestCase> kFormatterTestCases = {
      "function f;\n"
      "  case (x)\n"
      "    default: ;\n"
+     "  endcase\n"
+     "endfunction\n"},
+    {// case statement
+     "function f; case (x) State0 : a=b; State1 : begin a=b; end "
+     "endcase endfunction\n",
+     "function f;\n"
+     "  case (x)\n"
+     "    State0: a = b;\n"
+     "    State1: begin\n"
+     "      a = b;\n"
+     "    end\n"
+     "  endcase\n"
+     "endfunction\n"},
+    {// case inside statement
+     "function f; case (x)inside k1 : return b; k2 : begin return b; end "
+     "endcase endfunction\n",
+     "function f;\n"
+     "  case (x) inside\n"
+     "    k1: return b;\n"
+     "    k2: begin\n"
+     "      return b;\n"
+     "    end\n"
+     "  endcase\n"
+     "endfunction\n"},
+    {// case inside statement, with ranges
+     "function f; case (x) inside[a:b] : return b; [c:d] : return b; "
+     "default :return z;"
+     "endcase endfunction\n",
+     "function f;\n"
+     "  case (x) inside\n"
+     "    [a : b]: return b;\n"
+     "    [c : d]: return b;\n"
+     "    default: return z;\n"
+     "  endcase\n"
+     "endfunction\n"},
+    {// case pattern statement
+     "function f;"
+     "case (y) matches "
+     ".foo   : return 0;"
+     ".*\t: return 1;"
+     "endcase "
+     "case (z) matches "
+     ".foo\t\t: return 0;"
+     ".*   : return 1;"
+     "endcase "
+     "endfunction",
+     "function f;\n"
+     "  case (y) matches\n"
+     "    .foo: return 0;\n"
+     "    .*: return 1;\n"
+     "  endcase\n"
+     "  case (z) matches\n"
+     "    .foo: return 0;\n"
+     "    .*: return 1;\n"
      "  endcase\n"
      "endfunction\n"},
 

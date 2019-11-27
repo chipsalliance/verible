@@ -1880,6 +1880,54 @@ TEST(TokenAnnotatorTest, AnnotateFormattingWithContextTest) {
           {1, SpacingOptions::Undecided},
       },
       {
+          // "id :"
+          DefaultStyle,
+          {yytokentype::SymbolIdentifier, "id"},
+          {':', ":"},
+          {NodeEnum::kCaseItem},
+          {0, SpacingOptions::Undecided},
+      },
+      {
+          // "id :"
+          DefaultStyle,
+          {yytokentype::SymbolIdentifier, "id"},
+          {':', ":"},
+          {NodeEnum::kCaseInsideItem},
+          {0, SpacingOptions::Undecided},
+      },
+      {
+          // "id :"
+          DefaultStyle,
+          {yytokentype::SymbolIdentifier, "id"},
+          {':', ":"},
+          {NodeEnum::kCasePatternItem},
+          {0, SpacingOptions::Undecided},
+      },
+      {
+          // "id :"
+          DefaultStyle,
+          {yytokentype::SymbolIdentifier, "id"},
+          {':', ":"},
+          {NodeEnum::kGenerateCaseItem},
+          {0, SpacingOptions::Undecided},
+      },
+      {
+          // "id :"
+          DefaultStyle,
+          {yytokentype::SymbolIdentifier, "id"},
+          {':', ":"},
+          {NodeEnum::kPropertyCaseItem},
+          {0, SpacingOptions::Undecided},
+      },
+      {
+          // "id :"
+          DefaultStyle,
+          {yytokentype::SymbolIdentifier, "id"},
+          {':', ":"},
+          {NodeEnum::kRandSequenceCaseItem},
+          {0, SpacingOptions::Undecided},
+      },
+      {
           // ": id"
           DefaultStyle,
           {':', ":"},

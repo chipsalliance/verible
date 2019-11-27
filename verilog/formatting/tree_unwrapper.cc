@@ -538,6 +538,8 @@ void TreeUnwrapper::Visit(const verible::SyntaxTreeNode& node) {
     case NodeEnum::kBinsSelection:
     case NodeEnum::kDistributionItem:
     case NodeEnum::kCaseItem:
+    case NodeEnum::kCaseInsideItem:
+    case NodeEnum::kCasePatternItem:
     case NodeEnum::kGenerateCaseItem:
     case NodeEnum::kDefaultItem:
     case NodeEnum::kStructUnionMember:
@@ -632,6 +634,8 @@ void TreeUnwrapper::Visit(const verible::SyntaxTreeNode& node) {
     case NodeEnum::kInterfaceClassDeclaration:
     case NodeEnum::kGenerateItemList:
     case NodeEnum::kCaseItemList:
+    case NodeEnum::kCaseInsideItemList:
+    case NodeEnum::kCasePatternItemList:
     case NodeEnum::kGenerateCaseItemList:
     case NodeEnum::kStructUnionMemberList:
     case NodeEnum::kEnumNameList:
