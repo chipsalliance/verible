@@ -290,6 +290,11 @@ static const std::initializer_list<FormatterTestCase> kFormatterTestCases = {
      "`define FOO \\\n"
      "1\n"  // TODO(b/141517267): Reflowing macro definitions
      "// trailing comment\n"},
+    {// macro call after define
+     "`define   FOO   BAR\n"
+     "  `FOO( bar )\n",
+     "`define FOO BAR\n"
+     "`FOO(bar)\n"},
 
     // parameter test cases
     {

@@ -1863,6 +1863,14 @@ const TreeUnwrapperTestData kUnwrapPreprocessorTestCases[] = {
     },
 
     {
+        "`define's followed by top-level macro call",
+        "`define FOO BAR\n"
+        "`FOO(baz)\n",
+        L(0, {"`define", "FOO", "BAR"}),
+        L(0, {"`FOO", "(", "baz", ")"}),
+    },
+
+    {
         "consecutive `undef's",
         "`undef FOO\n"
         "`undef BAR\n",

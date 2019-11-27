@@ -729,6 +729,10 @@ void TreeUnwrapper::Visit(const verible::SyntaxTreeNode& node) {
       // else close-out current token partition?
       break;
     }
+    // In the following cases, forcibly close out the current partition.
+    case NodeEnum::kPreprocessorDefine:
+      StartNewUnwrappedLine();
+      break;
     default:
       break;
   }
