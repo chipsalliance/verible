@@ -21,6 +21,8 @@
 #include <vector>
 
 #include "common/analysis/syntax_tree_search.h"
+#include "common/text/concrete_syntax_leaf.h"
+#include "common/text/concrete_syntax_tree.h"
 #include "common/text/symbol.h"
 
 namespace verilog {
@@ -31,6 +33,10 @@ namespace verilog {
 // TODO(b/132652866): handle data declarations like 'logic' and 'reg'.
 std::vector<verible::TreeSearchMatch> FindAllNetDeclarations(
     const verible::Symbol&);
+
+// Returns tokens that correspond to declared names in net declarations
+std::vector<const verible::TokenInfo*> GetIdentifiersFromNetDeclaration(
+    const verible::Symbol& symbol);
 
 }  // namespace verilog
 

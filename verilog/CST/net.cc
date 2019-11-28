@@ -19,14 +19,63 @@
 #include "common/analysis/matcher/matcher.h"
 #include "common/analysis/matcher/matcher_builders.h"
 #include "common/analysis/syntax_tree_search.h"
+#include "common/text/concrete_syntax_leaf.h"
+#include "common/text/concrete_syntax_tree.h"
 #include "common/text/symbol.h"
+#include "common/text/tree_utils.h"
+#include "verilog/CST/identifier.h"
 #include "verilog/CST/verilog_matchers.h"  // IWYU pragma: keep
 
 namespace verilog {
 
+using verible::Symbol;
+using verible::TokenInfo;
+
 std::vector<verible::TreeSearchMatch> FindAllNetDeclarations(
     const verible::Symbol& root) {
   return SearchSyntaxTree(root, NodekNetDeclaration());
+}
+
+// Helper predicate to match all types of applicable nets
+static bool ExpectedTagPredicate(const Symbol& symbol) {
+  verible::SymbolTag var_symbol =
+      {verible::SymbolKind::kNode,
+       static_cast<int>(NodeEnum::kNetVariable)};
+  verible::SymbolTag assign_symbol =
+      {verible::SymbolKind::kNode,
+       static_cast<int>(NodeEnum::kNetDeclarationAssignment)};
+
+  // This exploits the fact that net identifiers can be found in:
+  // - kNetVariable, e.g.:
+  //     module top; wire x; endmodule;
+  //
+  // - as well as kNetDeclarationAssignment, e.g.:
+  //     module top; wire x = 1; endmodule;
+
+  return symbol.Tag() == var_symbol || symbol.Tag() == assign_symbol;
+}
+
+std::vector<const TokenInfo*> GetIdentifiersFromNetDeclaration(
+    const Symbol& symbol) {
+  std::vector<const TokenInfo*> identifiers;
+
+  auto matcher = verible::matcher::Matcher(
+      ExpectedTagPredicate, verible::matcher::InnerMatchAll);
+
+  std::vector<verible::TreeSearchMatch> identifier_nodes =
+      SearchSyntaxTree(symbol, matcher);
+
+  for (auto &id : identifier_nodes) {
+    const auto* identifier =
+        SymbolCastToNode(*id.match)[0].get();
+
+    const auto* identifier_leaf =
+            AutoUnwrapIdentifier(*ABSL_DIE_IF_NULL(identifier));
+
+    identifiers.push_back(&identifier_leaf->get());
+  }
+
+  return identifiers;
 }
 
 }  // namespace verilog

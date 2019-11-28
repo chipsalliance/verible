@@ -294,10 +294,14 @@ cc_library(
     srcs = ["net.cc"],
     hdrs = ["net.h"],
     deps = [
+        ":identifier",
         ":verilog_matchers",  # fixdeps: keep
         "//common/analysis:syntax_tree_search",
         "//common/analysis/matcher",
         "//common/analysis/matcher:matcher_builders",
+        "//common/text:concrete_syntax_leaf",
+        "//common/text:concrete_syntax_tree",
+        "//common/text:tree_utils",
         "//common/text:symbol",
     ],
 )
