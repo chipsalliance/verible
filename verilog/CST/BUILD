@@ -323,6 +323,23 @@ cc_test(
 )
 
 cc_library(
+    name = "data",
+    srcs = ["data.cc"],
+    hdrs = ["data.h"],
+    deps = [
+        ":identifier",
+        ":verilog_matchers",  # fixdeps: keep
+        "//common/analysis:syntax_tree_search",
+        "//common/analysis/matcher",
+        "//common/analysis/matcher:matcher_builders",
+        "//common/text:concrete_syntax_leaf",
+        "//common/text:concrete_syntax_tree",
+        "//common/text:tree_utils",
+        "//common/text:symbol",
+    ],
+)
+
+cc_library(
     name = "package",
     srcs = ["package.cc"],
     hdrs = ["package.h"],
