@@ -113,6 +113,10 @@ static WithReason<int> SpacesRequiredBetween(const PreFormatToken& left,
   if (right.TokenEnum() == ',') return {0, "No space before comma"};
   if (left.TokenEnum() == ',') return {1, "Require space after comma"};
 
+  if (left.TokenEnum() == ':' && right.TokenEnum() == ';') {
+    return {1, "Require space after null statement in case statement"};
+  }
+
   if (right.TokenEnum() == ';') return {0, "No space before semicolon"};
   if (left.TokenEnum() == ';') return {1, "Require space after semicolon"};
 
