@@ -339,6 +339,22 @@ cc_library(
     ],
 )
 
+cc_test(
+    name = "data_test",
+    srcs = ["data_test.cc"],
+    deps = [
+        ":data",
+        ":verilog_nonterminals",
+        "//common/analysis:syntax_tree_search",
+        "//common/text:syntax_tree_context",
+        "//common/text:text_structure",
+        "//common/util:logging",
+        "//verilog/analysis:verilog_analyzer",
+        "@com_google_absl//absl/strings",
+        "@com_google_googletest//:gtest_main",
+    ],
+)
+
 cc_library(
     name = "package",
     srcs = ["package.cc"],
