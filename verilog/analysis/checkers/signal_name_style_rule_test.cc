@@ -34,6 +34,7 @@ TEST(SignalNameStyleRuleTest, ModulePortTests) {
   constexpr int kToken = SymbolIdentifier;
   const std::initializer_list<LintTestCase> kTestCases = {
       {""},
+      // Tests for module ports
       {"module foo(input logic b_a_r); endmodule"},
       {"module foo(input wire hello_world1); endmodule"},
       {"module foo(wire ", {kToken, "HelloWorld"}, "); endmodule"},
@@ -63,6 +64,34 @@ TEST(SignalNameStyleRuleTest, ModulePortTests) {
        {kToken, "Bad"},
        "); "
        "endmodule"},
+      // Tests for nets
+      {"module foo; wire single_net; endmodule"},
+      {"module foo; wire first_net, second_net; endmodule"},
+      {"module foo; "
+       "wire ", {kToken, "SingleNet"}, "; endmodule"},
+      {"module foo; "
+       "wire ", {kToken, "FirstNet"}, ";"
+       "wire second_net; endmodule"},
+      {"module foo; "
+       "wire ", {kToken, "FirstNet"}, ";"
+       "wire ", {kToken, "SecondNet"}, "; endmodule"},
+      {"module foo; "
+       "wire ", {kToken, "FirstNet"}, ", ", {kToken, "SecondNet"},
+       "; endmodule"},
+      {"module foo; wire first_net, ", {kToken, "SecondNet"}, "; endmodule"},
+      {"module foo; wire ", {kToken, "FirstNet"}, ", second_net; endmodule"},
+      // Tests for data
+      {"module foo; logic okay_name; endmodule"},
+      {"module foo; logic ", {kToken, "NotOkayName"}, "; endmodule"},
+      {"module foo; logic m_ultiple, o_kay, n_ames; endmodule"},
+      {"module foo; "
+       "logic the_middle, ", {kToken, "NameIs"}, ", not_okay; endmodule"},
+      {"module foo; logic a = 1, b = 0, c = 1; endmodule"},
+      {"module foo; logic a = 1, ", {kToken, "B"}, "= 0, c = 1; endmodule"},
+      {"module top; foo baz(0); endmodule"},
+      {"module top; foo ba_x(0), ba_y(1), ba_z(0); endmodule"},
+      {"module top; foo ", {kToken, "Baz"}, "(0); endmodule"},
+      {"module top; foo ba_x(0), ", {kToken, "BaY"}, "(1); endmodule"},
   };
   RunLintTestCases<VerilogAnalyzer, SignalNameStyleRule>(kTestCases);
 }
