@@ -1192,6 +1192,38 @@ TEST(TokenAnnotatorTest, AnnotateFormattingInfoTest) {
                {';', ";"},
            }},
 
+          // end endfunction endclass (end* keywords)
+          {DefaultStyle,
+           1,
+           {
+               {0, SpacingOptions::Undecided},  // end
+               {1, SpacingOptions::MustWrap},   // end
+               {1, SpacingOptions::MustWrap},   // endfunction
+               {1, SpacingOptions::MustWrap},   // endclass
+               {1, SpacingOptions::MustWrap},   // endpackage
+           },
+           {
+               {yytokentype::TK_end, "end"},
+               {yytokentype::TK_end, "end"},
+               {yytokentype::TK_endfunction, "endfunction"},
+               {yytokentype::TK_endclass, "endclass"},
+               {yytokentype::TK_endpackage, "endpackage"},
+           }},
+          {DefaultStyle,
+           1,
+           {
+               {0, SpacingOptions::Undecided},  // end
+               {1, SpacingOptions::MustWrap},   // end
+               {1, SpacingOptions::MustWrap},   // endtask
+               {1, SpacingOptions::MustWrap},   // endmodule
+           },
+           {
+               {yytokentype::TK_end, "end"},
+               {yytokentype::TK_end, "end"},
+               {yytokentype::TK_endtask, "endtask"},
+               {yytokentype::TK_endmodule, "endmodule"},
+           }},
+
           // various built-in function calls
           {DefaultStyle,
            1,

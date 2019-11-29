@@ -971,6 +971,13 @@ static const std::initializer_list<FormatterTestCase> kFormatterTestCases = {
      "function void warranty;\n"
      "  return to_sender;\n"
      "endfunction : warranty\n"},
+    {// if statement that fits on one line
+     "function if_i_fits_i_sits;"
+     "if(x)y=x;"
+     "endfunction",
+     "function if_i_fits_i_sits;\n"
+     "  if (x) y = x;\n"
+     "endfunction\n"},
     {// for loop
      "function\nvoid\twarranty;for(j=0; j<k; --k)begin "
      "++j\n;end endfunction   :warranty\n",
@@ -1002,6 +1009,21 @@ static const std::initializer_list<FormatterTestCase> kFormatterTestCases = {
      "    ++j;\n"
      "  end\n"
      "endfunction : warranty\n"},
+    {// for loop that fits on one line
+     "function loop_fits;"
+     "for(x=0;x<N;++x) y=x;"
+     "endfunction",
+     "function loop_fits;\n"
+     "  for (x = 0; x < N; ++x) y = x;\n"
+     "endfunction\n"},
+    {// for loop that would fit on one line, but is force-split with //comment
+     "function loop_fits;"
+     "for(x=0;x<N;++x) //\n y=x;"
+     "endfunction",
+     "function loop_fits;\n"
+     "  for (x = 0; x < N; ++x)  //\n"
+     "  y = x;\n"  // TODO(fangism): single-statement needs +2 indentation
+     "endfunction\n"},
     {// forever loop
      "function\nvoid\tforevah;forever  begin "
      "++k\n;end endfunction\n",

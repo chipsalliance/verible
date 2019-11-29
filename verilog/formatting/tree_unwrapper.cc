@@ -288,6 +288,13 @@ static bool IsPreprocessorClause(NodeEnum e) {
   }
 }
 
+static bool IsTopLevelListItem(const verible::SyntaxTreeContext& context) {
+  return context.DirectParentIsOneOf(
+      {NodeEnum::kStatementList, NodeEnum::kModuleItemList,
+       NodeEnum::kGenerateItemList, NodeEnum::kClassItems,
+       NodeEnum::kBlockItemStatementList});
+}
+
 void TreeUnwrapper::UpdateInterLeafScanner(yytokentype token_type) {
   VLOG(4) << __FUNCTION__ << ", token: " << verilog_symbol_name(token_type);
   inter_leaf_scanner_->UpdateState(token_type);
@@ -511,7 +518,6 @@ void TreeUnwrapper::Visit(const verible::SyntaxTreeNode& node) {
     case NodeEnum::kGenerateRegion:
     case NodeEnum::kConditionalGenerateConstruct:
     case NodeEnum::kLoopGenerateConstruct:
-    case NodeEnum::kCaseStatement:
     case NodeEnum::kClassDeclaration:
     case NodeEnum::kClassConstructor:
     case NodeEnum::kPackageImportDeclaration:
@@ -578,18 +584,34 @@ void TreeUnwrapper::Visit(const verible::SyntaxTreeNode& node) {
       }
       break;
 
-      // For the following items, start a new unwrapped line only if they are
-      // *direct* descendants of list elements.  This effectively suppresses
-      // starting a new line when single statements are found to extend other
-      // statements, delayed assignments, single-statement if/for loops.
-    case NodeEnum::kMacroCall:
+    // For the following items, start a new partition group (no additional
+    // indentation) only if they are *direct* descendants of list elements.
+    // This effectively suppresses starting a new partition when single
+    // statements are found to extend other statements, delayed assignments,
+    // single-statement if/for loops.
+    case NodeEnum::kCaseStatement:
     case NodeEnum::kForLoopStatement:
     case NodeEnum::kForeverLoopStatement:
     case NodeEnum::kRepeatLoopStatement:
     case NodeEnum::kWhileLoopStatement:
     case NodeEnum::kDoWhileLoopStatement:
     case NodeEnum::kForeachLoopStatement:
-    case NodeEnum::kConditionalStatement:
+    case NodeEnum::kConditionalStatement: {
+      if (IsTopLevelListItem(Context())) {
+        // Create a level of grouping without additional indentation.
+        VisitIndentedSection(node, 0,
+                             PartitionPolicyEnum::kFitOnLineElseExpand);
+      } else {
+        TraverseChildren(node);
+      }
+      break;
+    }
+
+    // For the following items, start a new unwrapped line only if they are
+    // *direct* descendants of list elements.  This effectively suppresses
+    // starting a new line when single statements are found to extend other
+    // statements, delayed assignments, single-statement if/for loops.
+    case NodeEnum::kMacroCall:
     case NodeEnum::kStatement:
     case NodeEnum::kLabeledStatement:  // e.g. foo_label : do_something();
     case NodeEnum::kJumpStatement:
@@ -601,10 +623,7 @@ void TreeUnwrapper::Visit(const verible::SyntaxTreeNode& node) {
     case NodeEnum::kNonblockingAssignmentStatement:  // dest <= src;
     case NodeEnum::kAssignmentStatement:             // id=expr
     case NodeEnum::kProceduralTimingControlStatement: {
-      if (Context().DirectParentIsOneOf(
-              {NodeEnum::kStatementList, NodeEnum::kModuleItemList,
-               NodeEnum::kGenerateItemList, NodeEnum::kClassItems,
-               NodeEnum::kBlockItemStatementList})) {
+      if (IsTopLevelListItem(Context())) {
         VisitNewUnwrappedLine(node);
       } else {
         // Otherwise extend previous token partition.

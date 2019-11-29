@@ -489,6 +489,10 @@ static WithReason<SpacingOptions> BreakDecisionBetween(
 
   // TODO(fangism): No break between `define and PP_Identifier.
 
+  if (IsEndKeyword(yytokentype(right.TokenEnum()))) {
+    return {SpacingOptions::MustWrap, "end* keywords should start own lines"};
+  }
+
   // By default, leave undecided for penalty minimization.
   return {SpacingOptions::Undecided,
           "Default: leave wrap decision to algorithm"};
