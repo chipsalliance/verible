@@ -18,6 +18,7 @@ _linter_test_configs = [
     # See verilog/analysis/default_rules.h for default-enabled rules.
     ("always-comb", "always_comb_module", True),
     ("always-comb-blocking", "always_comb_blocking", False),
+    ("always-ff-non-blocking", "always_ff_non_blocking", False),
     ("case-missing-default", "case_missing_default", False),
     ("endif-comment", "endif_comment", False),
     ("explicit-function-lifetime", "explicit_function_lifetime", True),

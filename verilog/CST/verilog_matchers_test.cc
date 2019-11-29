@@ -462,6 +462,26 @@ TEST(VerilogMatchers, AlwaysCombKeywordTests) {
     verible::matcher::RunRawMatcherTestCase<VerilogAnalyzer>(test);
 }
 
+// Tests for AlwaysFFKeyword matching
+TEST(VerilogMatchers, AlwaysFFKeywordTests) {
+  const verible::matcher::RawMatcherTestCase tests[] = {
+      {AlwaysFFKeyword(), EmbedInModule(""), 0},
+      {AlwaysFFKeyword(), EmbedInModule("initial begin a <= 0; end"), 0},
+      {AlwaysFFKeyword(), EmbedInModule("always_ff begin a <= b; end"), 1},
+      {AlwaysFFKeyword(), EmbedInModule("always_comb begin a = b; end"), 0},
+      {AlwaysFFKeyword(), EmbedInModule("always @* begin a = b; end"), 0},
+      {AlwaysFFKeyword(), EmbedInModule("always @(*) begin a = b; end"), 0},
+      {AlwaysFFKeyword(),
+       EmbedInModule("always @(posedge foo) begin a <= b; end"), 0},
+      {AlwaysFFKeyword(),
+       EmbedInModule("always_ff begin a <= b; end\n"
+                     "always_comb begin a = b; end"),
+       1},
+  };
+  for (const auto& test : tests)
+    verible::matcher::RunRawMatcherTestCase<VerilogAnalyzer>(test);
+}
+
 // Tests for AlwaysStatementHasEventControlStar matching
 TEST(VerilogMatchers, AlwaysStatementHasEventControlStarTests) {
   const verible::matcher::RawMatcherTestCase tests[] = {
