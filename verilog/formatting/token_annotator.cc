@@ -146,10 +146,12 @@ static WithReason<int> SpacesRequiredBetween(const PreFormatToken& left,
   }
 
   // Unary operators (context-sensitive)
-  if (IsUnaryPrefixExpressionOperand(left, context)) {
-    // TODO(b/143739545): Don't accidentally join into valid tokens, e.g.:
-    //   '-' and '-' could form '--' (decrement).
-    //   '-' and '=' could form '-=' (subtract-assign).
+  if (IsUnaryPrefixExpressionOperand(left, context) &&
+      (left.format_token_enum != FormatTokenType::binary_operator ||
+       !IsUnaryOperator(static_cast<yytokentype>(right.TokenEnum())))) {
+    // TODO: There are _some_ unary operators on the right that could
+    // be formatted with 0-space, for example:
+    // 'a = & ~b'; could be 'a = &~b;'
     return {0, "Bind unary prefix operator close to its operand."};
   }
 
