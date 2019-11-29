@@ -48,6 +48,7 @@ constexpr const char* kDefaultRuleSet[] = {
     "plusarg-assignment",
     "macro-name-style",
     "parameter-name-style",
+    // (b/138352825): "always-comb-blocking",
     // TODO(fangism): enable in production:
     // TODO(b/117554159): "case-missing-default",
     // TODO(b/117131903): "proper-parameter-declaration",
