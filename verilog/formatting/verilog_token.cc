@@ -563,6 +563,7 @@ FTT GetFormatTokenType(yytokentype e) {
       case '+':
       case '*':
       case '-':
+      case '&':
         return FTT::binary_operator;
       case '?':
         // Technically, ?: is a ternary operator, but nonetheless we
