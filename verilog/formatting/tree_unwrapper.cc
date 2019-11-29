@@ -295,6 +295,26 @@ static bool IsTopLevelListItem(const verible::SyntaxTreeContext& context) {
        NodeEnum::kBlockItemStatementList});
 }
 
+// These are constructs where it is permissible to fit on one line, but in the
+// event that the statement body is split, we need to ensure it is properly
+// indented, even if it is a single statement.
+// Keep this list in sync below where the same function name appears in comment.
+static bool DirectParentIsFlowControlConstruct(
+    const verible::SyntaxTreeContext& context) {
+  return context.DirectParentIsOneOf({
+      // LINT.IfChange(flow_control_parents)
+      NodeEnum::kCaseStatement,         //
+      NodeEnum::kForLoopStatement,      //
+      NodeEnum::kForeverLoopStatement,  //
+      NodeEnum::kRepeatLoopStatement,   //
+      NodeEnum::kWhileLoopStatement,    //
+      NodeEnum::kDoWhileLoopStatement,  //
+      NodeEnum::kForeachLoopStatement,  //
+      NodeEnum::kConditionalStatement,
+      // LINT.ThenChange(:flow_control_cases)
+  });
+}
+
 void TreeUnwrapper::UpdateInterLeafScanner(yytokentype token_type) {
   VLOG(4) << __FUNCTION__ << ", token: " << verilog_symbol_name(token_type);
   inter_leaf_scanner_->UpdateState(token_type);
@@ -589,6 +609,9 @@ void TreeUnwrapper::Visit(const verible::SyntaxTreeNode& node) {
     // This effectively suppresses starting a new partition when single
     // statements are found to extend other statements, delayed assignments,
     // single-statement if/for loops.
+    // Keep this group of cases in sync with (earlier in this file):
+    // DirectParentIsFlowControlConstruct()
+    // LINT.IfChange(flow_control_cases)
     case NodeEnum::kCaseStatement:
     case NodeEnum::kForLoopStatement:
     case NodeEnum::kForeverLoopStatement:
@@ -596,16 +619,18 @@ void TreeUnwrapper::Visit(const verible::SyntaxTreeNode& node) {
     case NodeEnum::kWhileLoopStatement:
     case NodeEnum::kDoWhileLoopStatement:
     case NodeEnum::kForeachLoopStatement:
-    case NodeEnum::kConditionalStatement: {
-      if (IsTopLevelListItem(Context())) {
-        // Create a level of grouping without additional indentation.
-        VisitIndentedSection(node, 0,
-                             PartitionPolicyEnum::kFitOnLineElseExpand);
-      } else {
-        TraverseChildren(node);
+    case NodeEnum::kConditionalStatement:
+      // LINT.IfChange(:flow_control_parents)
+      {
+        if (IsTopLevelListItem(Context())) {
+          // Create a level of grouping without additional indentation.
+          VisitIndentedSection(node, 0,
+                               PartitionPolicyEnum::kFitOnLineElseExpand);
+        } else {
+          TraverseChildren(node);
+        }
+        break;
       }
-      break;
-    }
 
     // For the following items, start a new unwrapped line only if they are
     // *direct* descendants of list elements.  This effectively suppresses
@@ -625,6 +650,11 @@ void TreeUnwrapper::Visit(const verible::SyntaxTreeNode& node) {
     case NodeEnum::kProceduralTimingControlStatement: {
       if (IsTopLevelListItem(Context())) {
         VisitNewUnwrappedLine(node);
+      } else if (DirectParentIsFlowControlConstruct(Context())) {
+        // This is a single statement directly inside a flow-control construct,
+        // and thus should be properly indented one level.
+        VisitIndentedSection(node, style_.indentation_spaces,
+                             PartitionPolicyEnum::kFitOnLineElseExpand);
       } else {
         // Otherwise extend previous token partition.
         TraverseChildren(node);

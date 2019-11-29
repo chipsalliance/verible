@@ -1022,7 +1022,7 @@ static const std::initializer_list<FormatterTestCase> kFormatterTestCases = {
      "endfunction",
      "function loop_fits;\n"
      "  for (x = 0; x < N; ++x)  //\n"
-     "  y = x;\n"  // TODO(fangism): single-statement needs +2 indentation
+     "    y = x;\n"
      "endfunction\n"},
     {// forever loop
      "function\nvoid\tforevah;forever  begin "
@@ -1038,6 +1038,13 @@ static const std::initializer_list<FormatterTestCase> kFormatterTestCases = {
      "function void forevah;\n"
      "  forever ++k;\n"
      "endfunction\n"},
+    {// forever loop, forced break
+     "function\nvoid\tforevah;forever     //\n"
+     "++k\n;endfunction\n",
+     "function void forevah;\n"
+     "  forever  //\n"
+     "    ++k;\n"
+     "endfunction\n"},
     {// repeat loop
      "function\nvoid\tpete;repeat(3)  begin "
      "++k\n;end endfunction\n",
@@ -1051,6 +1058,13 @@ static const std::initializer_list<FormatterTestCase> kFormatterTestCases = {
      "++k\n;endfunction\n",
      "function void pete;\n"
      "  repeat (3)++k;\n"  // TODO(fangism): space before ++
+     "endfunction\n"},
+    {// repeat loop, forced break
+     "function\nvoid\tpete;repeat(3)//\n"
+     "++k\n;endfunction\n",
+     "function void pete;\n"
+     "  repeat (3)  //\n"
+     "    ++k;\n"
      "endfunction\n"},
     {// while loop
      "function\nvoid\twily;while( coyote )  begin "
@@ -1066,6 +1080,13 @@ static const std::initializer_list<FormatterTestCase> kFormatterTestCases = {
      "function void wily;\n"
      "  while (coyote)++super_genius;\n"  // TODO(fangism): space before ++
      "endfunction\n"},
+    {// while loop, forced break
+     "function\nvoid\twily;while( coyote ) //\n "
+     "++ super_genius\n;   endfunction\n",
+     "function void wily;\n"
+     "  while (coyote)  //\n"
+     "    ++super_genius;\n"
+     "endfunction\n"},
     {// do-while loop
      "function\nvoid\tdonot;do  begin "
      "++s\n;end  while( z);endfunction\n",
@@ -1074,11 +1095,19 @@ static const std::initializer_list<FormatterTestCase> kFormatterTestCases = {
      "    ++s;\n"
      "  end while (z);\n"
      "endfunction\n"},
-    {// do-while loop
+    {// do-while loop, single statement
      "function\nvoid\tdonot;do  "
      "++s\n;  while( z);endfunction\n",
      "function void donot;\n"
      "  do ++s; while (z);\n"
+     "endfunction\n"},
+    {// do-while loop, single statement, forced break
+     "function\nvoid\tdonot;do  "
+     "++s\n;//\n  while( z);endfunction\n",
+     "function void donot;\n"
+     "  do\n"
+     "    ++s;  //\n"
+     "  while (z);\n"
      "endfunction\n"},
     {// foreach loop
      "function\nvoid\tforeacher;foreach( m [n] )  begin "
@@ -1242,6 +1271,48 @@ static const std::initializer_list<FormatterTestCase> kFormatterTestCases = {
         "  if (yy) return 1;\n"
         "endfunction\n",
     },
+
+    {
+        // This tests for if-statement mixed with plain statements
+        "function foo;"
+        "a=b;"
+        "if (zz) return 0;"
+        "c=d;"
+        "endfunction",
+        "function foo;\n"
+        "  a = b;\n"
+        "  if (zz) return 0;\n"
+        "  c = d;\n"
+        "endfunction\n",
+    },
+
+    {
+        // This tests for if-statement with forced break mixed with others
+        "function foo;"
+        "a=b;"
+        "if (zz)//\n return 0;"
+        "c=d;"
+        "endfunction",
+        "function foo;\n"
+        "  a = b;\n"
+        "  if (zz)  //\n"
+        "    return 0;\n"
+        "  c = d;\n"
+        "endfunction\n",
+    },
+
+    {// This tests for for-statement with forced break mixed with others
+     "function f;"
+     "x=y;"
+     "for (int i=0; i<S*IPS; i++) #1ps a += $urandom();"
+     "return 2;"
+     "endfunction",
+     "function f;\n"
+     "  x = y;\n"
+     "  for (int i = 0; i < S * IPS; i++)\n"  // doesn't fit, so indents
+     "    #1ps a += $urandom();\n"
+     "  return 2;\n"
+     "endfunction\n"},
 
     {
         // This tests for end-else-begin.

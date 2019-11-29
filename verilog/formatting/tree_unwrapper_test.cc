@@ -308,6 +308,13 @@ ExpectedUnwrappedLineTree L(int spaces,
   return ExpectedUnwrappedLineTree(ExpectedUnwrappedLine(spaces, tokens));
 }
 
+// NL composes the above node and leaf where the indentation level is the same.
+// This is useful for contexts like single-statement lists.
+ExpectedUnwrappedLineTree NL(int spaces,
+                             std::initializer_list<absl::string_view> tokens) {
+  return N(spaces, L(spaces, tokens));
+}
+
 // Node function aliases for readability.
 // Can't use const auto& Alias = N; because N is overloaded.
 #define ModuleHeader N
@@ -2481,10 +2488,11 @@ const TreeUnwrapperTestData kUnwrapTaskTestCases[] = {
         ClassHeader(0, L(0, {"class", "c", ";"})),
         ClassItemList(
             1, TaskHeader(1, L(1, {"task", "automatic", "clocker", ";"})),
-            StatementList(2,  //
-                          FlowControl(2, L(2, {"repeat", "(", "2", ")", "@",
-                                               "(", "posedge", "clk", ")",
-                                               ";"})  // event control
+            StatementList(2,              //
+                          FlowControl(2,  //
+                                      L(2, {"repeat", "(", "2", ")"}),
+                                      NL(3, {"@", "(", "posedge", "clk", ")",
+                                             ";"})  // event control
                                       )),
             L(1, {"endtask"})),
         L(0, {"endclass"}),
@@ -2499,11 +2507,13 @@ const TreeUnwrapperTestData kUnwrapTaskTestCases[] = {
         ClassItemList(
             1, TaskHeader(1, L(1, {"task", "automatic", "clocker", ";"})),
             StatementList(
-                2,  //
-                FlowControl(2, L(2, {"repeat", "(", "2", ")", "@", "(",
-                                     "posedge", "clk", ")", ";"})),
-                FlowControl(2, L(2, {"repeat", "(", "4", ")", "@", "(",
-                                     "negedge", "clk", ")", ";"}))),
+                2,              //
+                FlowControl(2,  //
+                            L(2, {"repeat", "(", "2", ")"}),
+                            NL(3, {"@", "(", "posedge", "clk", ")", ";"})),
+                FlowControl(2,  //
+                            L(2, {"repeat", "(", "4", ")"}),
+                            NL(3, {"@", "(", "negedge", "clk", ")", ";"}))),
             L(1, {"endtask"})),
         L(0, {"endclass"}),
     },
@@ -2515,12 +2525,13 @@ const TreeUnwrapperTestData kUnwrapTaskTestCases[] = {
         ClassHeader(0, L(0, {"class", "c", ";"})),
         ClassItemList(
             1, TaskHeader(1, L(1, {"task", "automatic", "clocker", ";"})),
-            StatementList(
-                2,  //
-                FlowControl(2, L(2, {"repeat", "(", "n", ")", "repeat", "(",
-                                     "m", ")", "@", "(", "posedge", "clk", ")",
-                                     ";"})  // single null-statement
-                            )),
+            StatementList(2,              //
+                          FlowControl(2,  //
+                                      L(2, {"repeat", "(", "n", ")", "repeat",
+                                            "(", "m", ")"}),
+                                      NL(3, {"@", "(", "posedge", "clk", ")",
+                                             ";"})  // single null-statement
+                                      )),
             L(1, {"endtask"})),
         L(0, {"endclass"}),
     },
@@ -2532,11 +2543,13 @@ const TreeUnwrapperTestData kUnwrapTaskTestCases[] = {
         ClassHeader(0, L(0, {"class", "c", ";"})),
         ClassItemList(
             1, TaskHeader(1, L(1, {"task", "automatic", "iffer", ";"})),
-            StatementList(2,  //
-                          FlowControl(2, L(2, {"if", "(", "n", ")", "if", "(",
-                                               "m", ")", "y", "=", "x",
-                                               ";"})  // single statement body
-                                      )),
+            StatementList(
+                2,  //
+                FlowControl(
+                    2,  //
+                    L(2, {"if", "(", "n", ")", "if", "(", "m", ")"}),
+                    NL(3, {"y", "=", "x", ";"})  // single statement body
+                    )),
             L(1, {"endtask"})),
         L(0, {"endclass"}),
     },
@@ -2718,9 +2731,10 @@ const TreeUnwrapperTestData kUnwrapFunctionTestCases[] = {
         "endfunction",
         FunctionHeader(0, L(0, {"function", "foo", ";"})),
         StatementList(
-            1, FlowControl(1, L(1, {"foreach", "(", "x", "[", "i", "]", ")",
-                                    "y", "=", "twister", "(", "x", "[", "i",
-                                    "]", ",", "1", ")", ";"}))),
+            1, FlowControl(1,  //
+                           L(1, {"foreach", "(", "x", "[", "i", "]", ")"}),
+                           NL(2, {"y", "=", "twister", "(", "x", "[", "i", "]",
+                                  ",", "1", ")", ";"}))),
         L(0, {"endfunction"}),
     },
 
@@ -2731,9 +2745,10 @@ const TreeUnwrapperTestData kUnwrapFunctionTestCases[] = {
         "endfunction",
         FunctionHeader(0, L(0, {"function", "foo", ";"})),
         StatementList(
-            1, FlowControl(1, L(1, {"foreach", "(", "x", "[", "i", "]", ")",  //
-                                    "foreach", "(", "j", "[", "k", "]", ")",  //
-                                    "y", "=", "x", ";"}))),
+            1, FlowControl(1,                                                //
+                           L(1, {"foreach", "(", "x", "[", "i", "]", ")",    //
+                                 "foreach", "(", "j", "[", "k", "]", ")"}),  //
+                           NL(2, {"y", "=", "x", ";"}))),
         L(0, {"endfunction"}),
     },
 
@@ -2812,9 +2827,13 @@ const TreeUnwrapperTestData kUnwrapFunctionTestCases[] = {
         "return 1;"
         "endfunction",
         FunctionHeader(0, L(0, {"function", "foo", ";"})),
-        StatementList(
-            1, FlowControl(1, L(1, {"if", "(", "zz", ")", "return", "0", ";"})),
-            FlowControl(1, L(1, {"if", "(", "yy", ")", "return", "1", ";"}))),
+        StatementList(1,
+                      FlowControl(1,  //
+                                  L(1, {"if", "(", "zz", ")"}),
+                                  NL(2, {"return", "0", ";"})),
+                      FlowControl(1,  //
+                                  L(1, {"if", "(", "yy", ")"}),
+                                  NL(2, {"return", "1", ";"}))),
         L(0, {"endfunction"}),
     },
 
@@ -2829,7 +2848,8 @@ const TreeUnwrapperTestData kUnwrapFunctionTestCases[] = {
         "endfunction",
         FunctionHeader(0, L(0, {"function", "foo", ";"})),
         StatementList(1,
-                      FlowControl(1, L(1, {"if", "(", "zz", ")", "begin"}),
+                      FlowControl(1,  //
+                                  L(1, {"if", "(", "zz", ")", "begin"}),
                                   StatementList(2, L(2, {"return", "0", ";"})),
                                   L(1, {"end", "else", "begin"}),
                                   StatementList(2, L(2, {"return", "1", ";"})),
@@ -2870,7 +2890,7 @@ const TreeUnwrapperTestData kUnwrapFunctionTestCases[] = {
                                               L(3, {"x", "<", "N", ";"}),
                                               L(3, {"++", "x"})),
                                       L(1, {")"})),
-                           L(1, {"y", "=", "x", ";"}))),
+                           NL(2, {"y", "=", "x", ";"}))),
         L(0, {"endfunction"}),
     },
 
@@ -2915,7 +2935,10 @@ const TreeUnwrapperTestData kUnwrapFunctionTestCases[] = {
         "forever break; "
         "endfunction",
         FunctionHeader(0, L(0, {"function", "foo", ";"})),
-        StatementList(1, FlowControl(1, L(1, {"forever", "break", ";"}))),
+        StatementList(1,
+                      FlowControl(1,                  //
+                                  L(1, {"forever"}),  //
+                                  NL(2, {"break", ";"}))),
         L(0, {"endfunction"}),
     },
 
@@ -2928,7 +2951,8 @@ const TreeUnwrapperTestData kUnwrapFunctionTestCases[] = {
         "endfunction",
         FunctionHeader(0, L(0, {"function", "foo", ";"})),
         StatementList(1,
-                      FlowControl(1, L(1, {"repeat", "(", "2", ")", "begin"}),
+                      FlowControl(1,  //
+                                  L(1, {"repeat", "(", "2", ")", "begin"}),
                                   StatementList(2, L(2, {"return", "1", ";"})),
                                   L(1, {"end"}))),
         L(0, {"endfunction"}),
@@ -2940,8 +2964,9 @@ const TreeUnwrapperTestData kUnwrapFunctionTestCases[] = {
         "repeat (2) continue; "
         "endfunction",
         FunctionHeader(0, L(0, {"function", "foo", ";"})),
-        StatementList(1, FlowControl(1, L(1, {"repeat", "(", "2", ")",
-                                              "continue", ";"}))),
+        StatementList(1, FlowControl(1,  //
+                                     L(1, {"repeat", "(", "2", ")"}),
+                                     NL(2, {"continue", ";"}))),
         L(0, {"endfunction"}),
     },
 
@@ -2967,8 +2992,8 @@ const TreeUnwrapperTestData kUnwrapFunctionTestCases[] = {
         "endfunction",
         FunctionHeader(0, L(0, {"function", "foo", ";"})),
         StatementList(
-            1, FlowControl(1, L(1, {"while", "(", "e", ")", "coyote", "(",
-                                    "sooper_genius", ")", ";"}))),
+            1, FlowControl(1, L(1, {"while", "(", "e", ")"}),
+                           NL(2, {"coyote", "(", "sooper_genius", ")", ";"}))),
         L(0, {"endfunction"}),
     },
 
@@ -2978,9 +3003,10 @@ const TreeUnwrapperTestData kUnwrapFunctionTestCases[] = {
         "while (e) while (e) coyote(sooper_genius); "
         "endfunction",
         FunctionHeader(0, L(0, {"function", "foo", ";"})),
-        StatementList(1, FlowControl(1, L(1, {"while", "(", "e", ")", "while",
-                                              "(", "e", ")", "coyote", "(",
-                                              "sooper_genius", ")", ";"}))),
+        StatementList(
+            1, FlowControl(
+                   1, L(1, {"while", "(", "e", ")", "while", "(", "e", ")"}),
+                   NL(2, {"coyote", "(", "sooper_genius", ")", ";"}))),
         L(0, {"endfunction"}),
     },
 
@@ -3018,8 +3044,8 @@ const TreeUnwrapperTestData kUnwrapFunctionTestCases[] = {
         "while (y);"
         "endfunction",
         FunctionHeader(0, L(0, {"function", "foo", ";"})),
-        StatementList(1, FlowControl(1, L(1, {"do", "--", "y", ";", "while",
-                                              "(", "y", ")", ";"}))),
+        StatementList(1, FlowControl(1, L(1, {"do"}), NL(2, {"--", "y", ";"}),
+                                     L(1, {"while", "(", "y", ")", ";"}))),
         L(0, {"endfunction"}),
     },
 
