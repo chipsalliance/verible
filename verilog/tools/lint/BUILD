@@ -51,6 +51,7 @@ _linter_test_configs = [
     ("no-tabs", "tabs", True),
     ("line-length", "long_line", True),
     ("no-trailing-spaces", "trailing_spaces", True),
+    ("typedef-enums", "typedef_enums", False),
 ]
 
 [
