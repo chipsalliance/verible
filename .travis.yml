@@ -1,22 +1,90 @@
-dist: bionic
-
 language: cpp
 
-compiler:
-  - gcc
-
-addons:
-  apt:
-    packages:
-      - g++-8
+jobs:
+  include:
+   - stage: "Test"
+     name: "Ubuntu Trusty"
+     os: linux
+     dist: trusty
+     addons:
+       apt:
+         sources:
+         - ubuntu-toolchain-r-test
+         packages:
+         - g++-9
+         - gcc-9
+   - stage: "Test"
+     name: "Ubuntu Xenial"
+     os: linux
+     dist: xenial
+     addons:
+       apt:
+         sources:
+         - ubuntu-toolchain-r-test
+         packages:
+         - g++-9
+         - gcc-9
+   - stage: "Test"
+     name: "Ubuntu Bionic"
+     os: linux
+     dist: bionic
+     addons:
+       apt:
+         sources:
+         - ubuntu-toolchain-r-test
+         packages:
+         - g++-9
+         - gcc-9
 
 before_install:
-  - wget https://github.com/bazelbuild/bazel/releases/download/1.1.0/bazel_1.1.0-linux-x86_64.deb
-  - sudo dpkg -i bazel_1.1.0-linux-x86_64.deb
+  - sudo dpkg --list | grep gcc
+  - sudo ln -sf /usr/bin/gcc-9 /usr/bin/gcc
+  - sudo ln -sf /usr/bin/g++-9 /usr/bin/g++
+  - gcc --version || true
+  - wget https://github.com/bazelbuild/bazel/releases/download/1.2.0/bazel_1.2.0-linux-x86_64.deb
+  - sudo dpkg -i bazel_1.2.0-linux-x86_64.deb || true
+  - sudo apt-get -f install
+  - gcc --version || true
+  - bazel --version
 
 script:
   - bazel build --noshow_progress --cxxopt='-std=c++17' //...
   - bazel test --noshow_progress --cxxopt='-std=c++17' //...
 
+after_success:
+  - ls bazel-bin/verilog/tools/lint/verilog_lint
+  - file bazel-bin/verilog/tools/lint/verilog_lint
+  - ldd bazel-bin/verilog/tools/lint/verilog_lint
+  - ls bazel-bin/verilog/tools/formatter/verilog_format
+  - file bazel-bin/verilog/tools/formatter/verilog_format
+  - ldd bazel-bin/verilog/tools/formatter/verilog_format
+
 after_failure:
   - source .github/travis/output-logs.sh
+
+before_deploy:
+  # Set up git user name and tag this commit
+  - git config --local user.name "YOUR GIT USER NAME"
+  - git config --local user.email "YOUR GIT USER EMAIL"
+  - export TRAVIS_TAG=${TRAVIS_TAG:-$(date +'%Y%m%d%H%M%S')-$(git log --format=%h -1)}
+  - git tag $TRAVIS_TAG
+  - mkdir /tmp/pages
+  - cp *.md > /tmp/pages
+  - bazel-bin/verilog/tools/lint/verilog_lint -generate_markdown > /tmp/pages/lint.md
+
+deploy:
+ - provider: pages
+   skip_cleanup: true
+   github_token: $GITHUB_TOKEN
+   keep_history: true
+   local_dir: /tmp/pages
+   on:
+     branch: master
+ - provider: releases
+   user: $GITHUB_USER
+   password: $GITHUB_TOKEN
+   file:
+    - bazel-bin/verilog/tools/lint/verilog_lint
+    - bazel-bin/verilog/tools/lint/verilog_format
+   overwrite: true
+   skip_cleanup: true
