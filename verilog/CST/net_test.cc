@@ -35,6 +35,7 @@
 
 #undef EXPECT_OK
 #define EXPECT_OK(value) EXPECT_TRUE((value).ok())
+#define ASSERT_OK(value) ASSERT_TRUE((value).ok())
 
 namespace verilog {
 namespace {
@@ -122,14 +123,118 @@ TEST(FindAllNetDeclarationsTest, OneLocalNetInModule) {
   for (auto test : kSingleDeclTestCases) {
     VerilogAnalyzer analyzer(absl::StrCat("module m;", test, "; endmodule"),
                              "");
-    EXPECT_OK(analyzer.Analyze());
+    ASSERT_OK(analyzer.Analyze());
     const auto& root = analyzer.Data().SyntaxTree();
     const auto net_declarations =
         FindAllNetDeclarations(*ABSL_DIE_IF_NULL(root));
-    EXPECT_EQ(net_declarations.size(), 1);
+    ASSERT_EQ(net_declarations.size(), 1);
     const auto& decl = net_declarations.front();
     EXPECT_TRUE(decl.context.IsInside(NodeEnum::kModuleDeclaration));
   }
+}
+
+TEST(GetIdentifiersFromNetDeclarationTest, EmptySource) {
+  VerilogAnalyzer analyzer("", "");
+  ASSERT_OK(analyzer.Analyze());
+  const auto& root = analyzer.Data().SyntaxTree();
+  const auto net_declarations =
+      GetIdentifiersFromNetDeclaration(*ABSL_DIE_IF_NULL(root));
+  EXPECT_TRUE(net_declarations.empty());
+}
+
+TEST(GetIdentifiersFromNetDeclarationTest, NoNet) {
+  VerilogAnalyzer analyzer("module foo; endmodule", "");
+  ASSERT_OK(analyzer.Analyze());
+  const auto& root = analyzer.Data().SyntaxTree();
+  const auto net_declarations =
+      GetIdentifiersFromNetDeclaration(*ABSL_DIE_IF_NULL(root));
+  EXPECT_TRUE(net_declarations.empty());
+}
+
+TEST(GetIdentifiersFromNetDeclarationTest, OneVariable) {
+  VerilogAnalyzer analyzer("module foo; wire v; endmodule", "");
+  ASSERT_OK(analyzer.Analyze());
+  const auto& root = analyzer.Data().SyntaxTree();
+  const auto net_declarations =
+      GetIdentifiersFromNetDeclaration(*ABSL_DIE_IF_NULL(root));
+  ASSERT_EQ(net_declarations.size(), 1);
+  EXPECT_EQ(net_declarations[0]->text, "v");
+}
+
+TEST(GetIdentifiersFromNetDeclarationTest, MultipleVariables) {
+  VerilogAnalyzer analyzer("module foo; wire x; wire y; endmodule", "");
+  ASSERT_OK(analyzer.Analyze());
+  const auto& root = analyzer.Data().SyntaxTree();
+  const auto net_declarations =
+      GetIdentifiersFromNetDeclaration(*ABSL_DIE_IF_NULL(root));
+  ASSERT_EQ(net_declarations.size(), 2);
+  ASSERT_EQ(net_declarations[0]->text, "x");
+  ASSERT_EQ(net_declarations[1]->text, "y");
+}
+
+TEST(GetIdentifiersFromNetDeclarationTest, MultipleInlineVariables) {
+  VerilogAnalyzer analyzer("module foo; wire x, y, z; endmodule", "");
+  ASSERT_OK(analyzer.Analyze());
+  const auto& root = analyzer.Data().SyntaxTree();
+  const auto net_declarations =
+      GetIdentifiersFromNetDeclaration(*ABSL_DIE_IF_NULL(root));
+  ASSERT_EQ(net_declarations.size(), 3);
+  EXPECT_EQ(net_declarations[0]->text, "x");
+  EXPECT_EQ(net_declarations[1]->text, "y");
+  EXPECT_EQ(net_declarations[2]->text, "z");
+}
+
+TEST(GetIdentifiersFromNetDeclarationTest, MultipleMixedVariables) {
+  VerilogAnalyzer analyzer("module foo; wire x, y, z; wire a; endmodule", "");
+  ASSERT_OK(analyzer.Analyze());
+  const auto& root = analyzer.Data().SyntaxTree();
+  const auto net_declarations =
+      GetIdentifiersFromNetDeclaration(*ABSL_DIE_IF_NULL(root));
+  ASSERT_EQ(net_declarations.size(), 4);
+  EXPECT_EQ(net_declarations[0]->text, "x");
+  EXPECT_EQ(net_declarations[1]->text, "y");
+  EXPECT_EQ(net_declarations[2]->text, "z");
+  EXPECT_EQ(net_declarations[3]->text, "a");
+}
+
+TEST(GetIdentifiersFromNetDeclarationTest, DoNotMatchArrayDeclarations) {
+  VerilogAnalyzer analyzer("module top; wire v[M:N]; endmodule", "");
+  ASSERT_OK(analyzer.Analyze());
+  const auto& root = analyzer.Data().SyntaxTree();
+  const auto net_declarations =
+      GetIdentifiersFromNetDeclaration(*ABSL_DIE_IF_NULL(root));
+  ASSERT_EQ(net_declarations.size(), 1);
+  EXPECT_EQ(net_declarations[0]->text, "v");
+}
+
+TEST(GetIdentifiersFromNetDeclarationTest, DoNotMatchNetArrayDeclarations) {
+  VerilogAnalyzer analyzer("module top; wire[X:Z] v[M:N]; endmodule", "");
+  ASSERT_OK(analyzer.Analyze());
+  const auto& root = analyzer.Data().SyntaxTree();
+  const auto net_declarations =
+      GetIdentifiersFromNetDeclaration(*ABSL_DIE_IF_NULL(root));
+  ASSERT_EQ(net_declarations.size(), 1);
+  EXPECT_EQ(net_declarations[0]->text, "v");
+}
+
+TEST(GetIdentifiersFromNetDeclarationTest, DoNotMatchNetType) {
+  VerilogAnalyzer analyzer("module top; wire othertype v; endmodule", "");
+  ASSERT_OK(analyzer.Analyze());
+  const auto& root = analyzer.Data().SyntaxTree();
+  const auto net_declarations =
+      GetIdentifiersFromNetDeclaration(*ABSL_DIE_IF_NULL(root));
+  ASSERT_EQ(net_declarations.size(), 1);
+  EXPECT_EQ(net_declarations[0]->text, "v");
+}
+
+TEST(GetIdentifiersFromNetDeclarationTest, DoNotMatchAssignedVariables) {
+  VerilogAnalyzer analyzer("module top; wire v = z; endmodule", "");
+  ASSERT_OK(analyzer.Analyze());
+  const auto& root = analyzer.Data().SyntaxTree();
+  const auto net_declarations =
+      GetIdentifiersFromNetDeclaration(*ABSL_DIE_IF_NULL(root));
+  ASSERT_EQ(net_declarations.size(), 1);
+  EXPECT_EQ(net_declarations[0]->text, "v");
 }
 
 }  // namespace
