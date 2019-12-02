@@ -342,11 +342,38 @@ static const std::initializer_list<FormatterTestCase> kFormatterTestCases = {
         "  parameter  int   foo=$bar(-  z,- y ) ;",
         "parameter int foo = $bar(-z, -y);\n",
     },
-    /* TODO(b/143739545): prevent token joining
-    {"  parameter  int   foo=- - 1 ;",   // double negative
-    "parameter int foo = - -1;\n",
+    {
+        "  parameter int a=b&~(c<<d);",
+        "parameter int a = b & ~(c << d);\n"
     },
-    */
+    {
+        "  parameter int a=~~~~b;",
+        "parameter int a = ~~~~b;\n"
+    },
+    {
+        "  parameter int a = ~ ~ ~ ~ b;",
+        "parameter int a = ~~~~b;\n"
+    },
+    {
+        "  parameter int a   =   ~--b;",
+        "parameter int a = ~--b;\n"
+    },
+    {
+        "  parameter int a   =   ~ --b;",
+        "parameter int a = ~--b;\n"
+    },
+    {
+        "  parameter int a = ~ ++ b;",
+        "parameter int a = ~++b;\n"
+    },
+    {
+        "  parameter int a=--b- --c;",
+        "parameter int a = --b - --c;\n"
+    },
+    {
+        "  parameter  int   foo=- - 1 ;",   // double negative
+        "parameter int foo = - -1;\n",
+    },
     {
         "  parameter  int   ternary=1?2:3;",
         "parameter int ternary = 1 ? 2 : 3;\n",
