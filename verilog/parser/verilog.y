@@ -1970,6 +1970,18 @@ type_identifier_or_implicit_basic_followed_by_id_and_dimensions_opt
    */
   ;
 
+data_type_or_implicit
+  : decl_dimensions delay3_or_drive_opt
+    { $$ = MakeTaggedNode(N::kDataTypeImplicitIdDimensions,
+                          MakeTaggedNode(N::kDataType, nullptr,
+                                         MakePackedDimensionsNode($1)),
+                          $2, nullptr, nullptr); }
+  | GenericIdentifier decl_dimensions_opt delay3_or_drive_opt
+    { $$ = MakeTaggedNode(N::kDataTypeImplicitIdDimensions,
+                          MakeTaggedNode(N::kDataType, $1,
+                                         MakePackedDimensionsNode($2)),
+                          $3, nullptr, nullptr); }
+  ;
 
 /* For declaring net_type or function_declaration return type, followed by declared name */
 data_type_or_implicit_followed_by_id_and_dimensions_opt
@@ -5212,13 +5224,10 @@ module_parameter_port_list_item_last
   ;
 
 net_declaration
-  : net_type data_type_or_implicit_followed_by_id_and_dimensions_opt
-    trailing_assign_opt ',' net_variable_or_decl_assigns ';'
-    // TODO(fangism): unpack/repack $2..$5
-    { $$ = MakeTaggedNode(N::kNetDeclaration, $1, $2, $3, $4, $5, $6); }
-  | net_type data_type_or_implicit_followed_by_id_and_dimensions_opt
-    trailing_assign_opt ';'
-    { $$ = MakeTaggedNode(N::kNetDeclaration, $1, $2, $3, nullptr, nullptr, $4); }
+  : net_type net_variable_or_decl_assigns ';'
+    { $$ = MakeTaggedNode(N::kNetDeclaration, $1, nullptr, $2, $3); }
+  | net_type data_type_or_implicit net_variable_or_decl_assigns ';'
+    { $$ = MakeTaggedNode(N::kNetDeclaration, $1, $2, $3, $4); }
     /* TODO(fangism): support drive_strength and charge_strength */
   // : net_type data_type_or_implicit delay3_opt net_variable_list ';'
   // : net_type data_type_or_implicit delay3 net_variable_list ';'
