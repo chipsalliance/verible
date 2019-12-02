@@ -302,7 +302,6 @@ static bool IsTopLevelListItem(const verible::SyntaxTreeContext& context) {
 static bool DirectParentIsFlowControlConstruct(
     const verible::SyntaxTreeContext& context) {
   return context.DirectParentIsOneOf({
-      // LINT.IfChange(flow_control_parents)
       NodeEnum::kCaseStatement,         //
       NodeEnum::kForLoopStatement,      //
       NodeEnum::kForeverLoopStatement,  //
@@ -311,7 +310,6 @@ static bool DirectParentIsFlowControlConstruct(
       NodeEnum::kDoWhileLoopStatement,  //
       NodeEnum::kForeachLoopStatement,  //
       NodeEnum::kConditionalStatement,
-      // LINT.ThenChange(:flow_control_cases)
   });
 }
 
@@ -611,7 +609,6 @@ void TreeUnwrapper::Visit(const verible::SyntaxTreeNode& node) {
     // single-statement if/for loops.
     // Keep this group of cases in sync with (earlier in this file):
     // DirectParentIsFlowControlConstruct()
-    // LINT.IfChange(flow_control_cases)
     case NodeEnum::kCaseStatement:
     case NodeEnum::kForLoopStatement:
     case NodeEnum::kForeverLoopStatement:
@@ -620,7 +617,6 @@ void TreeUnwrapper::Visit(const verible::SyntaxTreeNode& node) {
     case NodeEnum::kDoWhileLoopStatement:
     case NodeEnum::kForeachLoopStatement:
     case NodeEnum::kConditionalStatement:
-      // LINT.IfChange(:flow_control_parents)
       {
         if (IsTopLevelListItem(Context())) {
           // Create a level of grouping without additional indentation.
