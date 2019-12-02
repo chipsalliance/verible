@@ -32,6 +32,10 @@ using verible::RunLintTestCases;
 TEST(ForbiddenAnonymousEnumsTest, AcceptsTypedefedEnums) {
   const std::initializer_list<LintTestCase> kTestCases = {
       {"typedef enum { OneValue, TwoValue } my_name_e;\nmy_name_e a_instance;"},
+      {"typedef enum logic [1:0] { Fir, Oak, Pine } tree_e;\ntree_e a_tree;"},
+      {"typedef enum { Red=3, Green=5 } state_e;\nstate_e a_state;"},
+      {"typedef // We declare a type here"
+        "enum { Idle, Busy } status_e;\nstatus_e a_status;"},
   };
   RunLintTestCases<VerilogAnalyzer, ForbiddenAnonymousEnumsRule>(kTestCases);
 }
@@ -40,6 +44,9 @@ TEST(ForbiddenAnonymousEnumsTest, AcceptsTypedefedEnums) {
 TEST(ForbiddenAnonymousEnumsTest, RejectsAnonymousEnums) {
   const std::initializer_list<LintTestCase> kTestCases = {
       {{TK_enum, "enum"}, " { OneValue, TwoValue } a_instance;"},
+      {{TK_enum, "enum"}, " logic [1:0] { Fir, Oak, Pine, Larch } tree;"},
+      {{TK_enum, "enum"}, " { Red=3, Green=5 } state;"},
+      {{TK_enum, "enum"}, " { Idle, Busy } status;"},
   };
   RunLintTestCases<VerilogAnalyzer, ForbiddenAnonymousEnumsRule>(kTestCases);
 }
