@@ -13,14 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-find -L -name \*.log
-for F in $(find -L -name \*.log); do
-    echo
-    export FOLD_NAME=$(echo $F | sed -e's/[^A-Za-z0-9]/_/g')
-    travis_fold start $FOLD_NAME
-    echo -e "\n\n$F\n--------------"
-    cat $F
-    echo "--------------"
-    travis_fold end $FOLD_NAME
-    echo
-done
+wget https://github.com/bazelbuild/bazel/releases/download/1.2.0/bazel_1.2.0-linux-x86_64.deb -O /tmp/bazel.deb
+sudo dpkg -i /tmp/bazel.deb || true
+sudo apt-get -f install
+bazel --version

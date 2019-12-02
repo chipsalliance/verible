@@ -1,18 +1,57 @@
-dist: bionic
-
 language: cpp
 
-compiler:
-  - gcc
+# Don't build auto-generated tags
+if: NOT tag =~ /v[0-9.]*-.*/
 
-addons:
-  apt:
-    packages:
-      - g++-8
+git:
+  depth: false
+
+jobs:
+  include:
+   - stage: "Test"
+     name: "Ubuntu Trusty"
+     os: linux
+     dist: trusty
+     addons:
+       apt:
+         sources:
+         - ubuntu-toolchain-r-test
+         packages:
+         - g++-9
+         - gcc-9
+         - pandoc
+         - python-gflags
+   - stage: "Test"
+     name: "Ubuntu Xenial"
+     os: linux
+     dist: xenial
+     addons:
+       apt:
+         sources:
+         - ubuntu-toolchain-r-test
+         packages:
+         - g++-9
+         - gcc-9
+         - pandoc
+         - python-gflags
+#   - stage: "Test"
+#     name: "Ubuntu Bionic"
+#     os: linux
+#     dist: bionic
+#     addons:
+#       apt:
+#         sources:
+#         - ubuntu-toolchain-r-test
+#         packages:
+#         - g++-9
+#         - gcc-9
+#         - pandoc
+#         - python-gflags
 
 before_install:
-  - wget https://github.com/bazelbuild/bazel/releases/download/1.1.0/bazel_1.1.0-linux-x86_64.deb
-  - sudo dpkg -i bazel_1.1.0-linux-x86_64.deb
+  - ./.github/travis/set-compiler.sh 9
+  - ./.github/travis/install-bazel.sh 9
+  - git fetch --tags
 
 script:
   - bazel build --noshow_progress --cxxopt='-std=c++17' //...
@@ -20,3 +59,40 @@ script:
 
 after_failure:
   - source .github/travis/output-logs.sh
+
+after_success:
+  - git config --local user.name "Deployment Bot"
+  - git config --local user.email "verible-dev@googlegroups.com"
+  # Create a tag of form v0.0-183-gdf2b162-20191112132344
+  - export TRAVIS_TAG=${TRAVIS_TAG:-$(git describe --match=v*)}
+  - git tag $TRAVIS_TAG || true
+  # Set up things for GitHub Pages deployment
+  - ./.github/travis/github-pages-setup.sh
+  # Set up things for GitHub Releases deployment
+  - ./.github/travis/github-releases-setup.sh
+
+before_deploy:
+  - find /tmp/pages | sort
+  - find /tmp/releases | sort
+
+# For deploy to work, you must https://travis-ci.org/$USER/verible/settings and
+# add the following environment values;
+# OCTOKIT_ACCESS_TOKEN - Personal access token from https://github.com/settings/tokens
+# OCTOKIT_LOGIN - Your Github username
+# OCTOKIT_PASSWORD - Same as OCTOKIT_ACCESS_TOKEN above
+deploy:
+ - provider: pages
+   skip_cleanup: true
+   keep_history: true
+   github_token: $OCTOKIT_ACCESS_TOKEN
+   local_dir: /tmp/pages
+   on:
+     branch: master
+ - provider: releases
+   file_glob: true
+   username: $OCTOKIT_LOGIN
+   password: $OCTOKIT_PASSWORD
+   file:
+    - /tmp/releases/verible-*.tar.gz
+   overwrite: true
+   skip_cleanup: true
