@@ -1549,6 +1549,38 @@ TEST(TokenAnnotatorTest, AnnotateFormattingWithContextTest) {
           {0, SpacingOptions::MustAppend},
       },
 
+      // Handle '&' as binary
+      {
+          DefaultStyle,
+          {'&', "&"},
+          {'~', "~"},
+          {},  // unspecified context
+          {1, SpacingOptions::Undecided},
+      },
+
+      // Handle '&' as unary
+      {
+          DefaultStyle,
+          {'&', "&"},
+          {yytokentype::TK_DecNumber, "42"},
+          {NodeEnum::kUnaryPrefixExpression},
+          {0, SpacingOptions::MustAppend},
+      },
+      {
+          DefaultStyle,
+          {'&', "&"},
+          {yytokentype::SymbolIdentifier, "foo"},
+          {NodeEnum::kUnaryPrefixExpression},
+          {0, SpacingOptions::MustAppend},
+      },
+      {
+          DefaultStyle,
+          {'&', "&"},
+          {'(', "("},
+          {NodeEnum::kUnaryPrefixExpression},
+          {0, SpacingOptions::MustAppend},
+      },
+
       // Inside dimension ranges, force space preservation
       {
           DefaultStyle,
