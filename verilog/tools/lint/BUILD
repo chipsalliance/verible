@@ -55,6 +55,8 @@ _linter_test_configs = [
     ("no-trailing-spaces", "trailing_spaces", True),
     ("forbid-defparam", "defparam_usage", False),
     ("typedef-enums", "typedef_enums", False),
+    ("typedef-structs-unions", "typedef_structs", False),
+    ("typedef-structs-unions", "typedef_unions", False),
 ]
 
 [

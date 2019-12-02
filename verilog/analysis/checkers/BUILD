@@ -26,6 +26,7 @@ cc_library(
         ":explicit_task_lifetime_rule",
         ":forbid_defparam_rule",
         ":forbidden_anonymous_enums_rule",
+        ":forbidden_anonymous_structs_unions_rule",
         ":forbidden_macro_rule",
         ":forbidden_symbol_rule",
         ":generate_label_rule",
@@ -454,6 +455,39 @@ cc_library(
         "@com_google_absl//absl/strings",
     ],
     alwayslink = 1,
+)
+
+cc_library(
+    name = "forbidden_anonymous_structs_unions_rule",
+    srcs = ["forbidden_anonymous_structs_unions_rule.cc"],
+    hdrs = ["forbidden_anonymous_structs_unions_rule.h"],
+    deps = [
+        "//common/analysis:citation",
+        "//common/analysis:lint_rule_status",
+        "//common/analysis:syntax_tree_lint_rule",
+        "//common/analysis/matcher",
+        "//common/analysis/matcher:bound_symbol_manager",
+        "//common/analysis/matcher:matcher_builders",
+        "//common/text:symbol",
+        "//common/text:syntax_tree_context",
+        "//verilog/CST:verilog_matchers",
+        "//verilog/analysis:descriptions",
+        "//verilog/analysis:lint_rule_registry",
+        "@com_google_absl//absl/strings",
+    ],
+    alwayslink = 1,
+)
+
+cc_test(
+    name = "forbidden_anonymous_structs_unions_rule_test",
+    srcs = ["forbidden_anonymous_structs_unions_rule_test.cc"],
+    deps = [
+        ":forbidden_anonymous_structs_unions_rule",
+        "//common/analysis:syntax_tree_linter_test_utils",
+        "//common/text:symbol",
+        "//verilog/analysis:verilog_analyzer",
+        "@com_google_googletest//:gtest_main",
+    ],
 )
 
 cc_test(
