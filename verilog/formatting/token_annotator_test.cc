@@ -1581,6 +1581,31 @@ TEST(TokenAnnotatorTest, AnnotateFormattingWithContextTest) {
           {0, SpacingOptions::MustAppend},
       },
 
+      // Test '~' unary token
+      {
+          DefaultStyle,
+          {'~', "~"},
+          {'(', "("},
+          {NodeEnum::kUnaryPrefixExpression},
+          {0, SpacingOptions::MustAppend},
+      },
+      {
+          DefaultStyle,
+          {'~', "~"},
+          {yytokentype::SymbolIdentifier, "foo"},
+          {NodeEnum::kUnaryPrefixExpression},
+          {0, SpacingOptions::MustAppend},
+      },
+
+      // Two unary operators
+      {
+          DefaultStyle,
+          {'~', "~"},
+          {'~', "~"},
+          {NodeEnum::kUnaryPrefixExpression},
+          {0, SpacingOptions::MustAppend},
+      },
+
       // Inside dimension ranges, force space preservation
       {
           DefaultStyle,
