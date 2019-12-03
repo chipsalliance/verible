@@ -65,7 +65,7 @@ sudo update-alternatives --install /usr/bin/cpp cpp-bin /usr/bin/cpp-8 100
 sudo update-alternatives --install /usr/bin/cpp cpp-bin /usr/bin/cpp-7 50
 sudo update-alternatives --install /usr/bin/cpp cpp-bin /usr/bin/cpp-6 25
 # set alternatives
-sudo update-alternatives --set g++ /usr/bin/g++-9
-sudo update-alternatives --set gcc /usr/bin/gcc-9
-sudo update-alternatives --set cpp-bin /usr/bin/cpp-9
+sudo update-alternatives --set g++ /usr/bin/g++-7
+sudo update-alternatives --set gcc /usr/bin/gcc-7
+sudo update-alternatives --set cpp-bin /usr/bin/cpp-7
 echo "----------------------------------------"
