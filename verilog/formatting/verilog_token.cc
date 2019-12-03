@@ -560,10 +560,16 @@ FTT GetFormatTokenType(yytokentype e) {
   } else {
     // single char tokens which use ASCII values as enum.
     switch (static_cast<int>(e)) {
+      /* arithmetic */
       case '+':
-      case '*':
       case '-':
+      case '*':
+      case '/':
+      case '%':
+      /* bitwise */
       case '&':
+      case '|':
+      case '^':
         return FTT::binary_operator;
       case '?':
         // Technically, ?: is a ternary operator, but nonetheless we
