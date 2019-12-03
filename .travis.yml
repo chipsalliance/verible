@@ -19,4 +19,5 @@ script:
   - bazel test --cxxopt='-std=c++17' //...
 
 after_failure:
-  - more $(find -name *.log)
+  - find -L -name \*.log
+  - for F in $(find -L -name \*.log); do echo -e "\n\n$F\n--------------"; cat $F; echo "--------------"; done
