@@ -17,18 +17,35 @@ cd github/$KOKORO_DIR
 . $SCRIPT_DIR/steps/hostinfo.sh
 . $SCRIPT_DIR/steps/compiler.sh
 
+set +e
+
 echo
 echo "---------------------------------------------------------------"
 echo " Building Verible"
 echo "---------------------------------------------------------------"
 set -x
 bazel build --cxxopt='-std=c++17' //...
+RET=$?
 set +x
+
+if [[ $RET = 0 ]]; then
+	echo
+	echo "---------------------------------------------------------------"
+	echo " Testing Verible"
+	echo "---------------------------------------------------------------"
+	set -x
+	bazel test --cxxopt='-std=c++17' //...
+	RET=$?
+	set +x
+else
+	echo
+	echo "Not testing as building failed."
+fi
 
 echo
 echo "---------------------------------------------------------------"
-echo " Testing Verible"
+echo " Converting test logs"
 echo "---------------------------------------------------------------"
-set -x
-bazel test --cxxopt='-std=c++17' //...
-set +x
+. $SCRIPT_DIR/steps/convert-logs.sh
+
+exit $RET
