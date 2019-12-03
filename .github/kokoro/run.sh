@@ -24,7 +24,7 @@ echo "---------------------------------------------------------------"
 echo " Building Verible"
 echo "---------------------------------------------------------------"
 set -x
-bazel build --cxxopt='-std=c++17' //...
+bazel build --noshow_progress --cxxopt='-std=c++17' //...
 RET=$?
 set +x
 
@@ -34,7 +34,7 @@ if [[ $RET = 0 ]]; then
 	echo " Testing Verible"
 	echo "---------------------------------------------------------------"
 	set -x
-	bazel test --cxxopt='-std=c++17' //...
+	bazel test --noshow_progress --cxxopt='-std=c++17' //...
 	RET=$?
 	set +x
 else
