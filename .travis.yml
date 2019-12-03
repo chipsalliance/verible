@@ -19,5 +19,4 @@ script:
   - bazel test --cxxopt='-std=c++17' //...
 
 after_failure:
-  - find -L -name \*.log
-  - for F in $(find -L -name \*.log); do echo -e "\n\n$F\n--------------"; cat $F; echo "--------------"; done
+  - source .github/travis/output-logs.sh
