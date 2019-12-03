@@ -100,11 +100,6 @@ class UnwrappedLine {
   // indentation_spaces_ is the number of spaces to indent from the left.
   int indentation_spaces_;
 
-  // indicates that this unwrapped line is enabled for formatting or disabled
-  // A disabled unwrapped line will not be formatted and output the original
-  // text.
-  bool enable_ = true;
-
   // The range of sequential PreFormatTokens spanned by this UnwrappedLine.
   // These represent the tokens that will be formatted independently.
   // The memory for these must be owned elsewhere.
