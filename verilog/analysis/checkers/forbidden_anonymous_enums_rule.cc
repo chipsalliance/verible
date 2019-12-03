@@ -46,7 +46,7 @@ const char ForbiddenAnonymousEnumsRule::kMessage[] =
 std::string ForbiddenAnonymousEnumsRule::GetDescription(DescriptionType description_type) {
   return absl::StrCat("Checks that a Verilog ",
                       Codify("enum", description_type),
-                      " declaration is named using",
+                      " declaration is named using ",
                       Codify("typedef", description_type), ". See ",
                       GetStyleGuideCitation(kTopic), ".");
 }
