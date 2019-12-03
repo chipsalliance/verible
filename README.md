@@ -52,6 +52,13 @@ sudo install bazel-bin/verilog/tools/formatter/verilog_format /usr/local/bin
 sudo install bazel-bin/verilog/tools/lint/verilog_lint /usr/local/bin
 ```
 
+## Mailing Lists
+
+Join the Verible community!
+
+*   Developers: verible-dev@groups.google.com
+*   Users: verible-users@groups.google.com
+
 ## SystemVerilog Support
 
 ### Parser
