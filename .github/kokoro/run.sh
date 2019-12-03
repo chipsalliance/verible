@@ -15,6 +15,7 @@ cd github/$KOKORO_DIR
 . $SCRIPT_DIR/steps/git.sh
 . $SCRIPT_DIR/steps/hostsetup.sh
 . $SCRIPT_DIR/steps/hostinfo.sh
+. $SCRIPT_DIR/steps/compiler.sh
 
 echo
 echo "---------------------------------------------------------------"

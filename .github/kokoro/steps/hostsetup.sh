@@ -2,19 +2,6 @@
 
 set -e
 
-# LLVM - Sources
-# wget -O - https://apt.llvm.org/llvm-snapshot.gpg.key | apt-key add -
-# LLVM_VERSION_STRING = 8, 9, etc
-# add-apt-repository "deb http://apt.llvm.org/bionic/   llvm-toolchain-bionic$LLVM_VERSION_STRING main"
-
-echo
-echo "========================================"
-echo "Adding Ubuntu Toolchain PPA"
-echo "----------------------------------------"
-sudo add-apt-repository ppa:ubuntu-toolchain-r/test
-echo "----------------------------------------"
-
-
 echo
 echo "========================================"
 echo "Host updating packages"
@@ -32,14 +19,11 @@ sudo apt-get install -y \
         ca-certificates \
         colordiff \
         coreutils \
-        g++-9 \
-        gcc-9 \
         git \
         m4 \
         make \
         psmisc \
         wget \
-
 
 echo "----------------------------------------"
 
