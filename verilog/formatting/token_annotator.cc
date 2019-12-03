@@ -423,6 +423,9 @@ static int BreakPenaltyBetween(const verible::PreFormatToken& left,
   // Prefer to split after commas than before them.
   if (right.TokenEnum() == ',') return 10;
 
+  // Prefer to not split directly at an assignment.
+  if (left.TokenEnum() == '=') return 2;
+
   // Prefer to keep '(' with whatever is on the left.
   // TODO(fangism): ... except when () is used as precedence.
   if (right.format_token_enum == FormatTokenType::open_group) return 5;

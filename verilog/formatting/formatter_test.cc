@@ -226,7 +226,7 @@ TEST(FormatterFinalOutputTest, FormattedLinesToStringEmptyTest) {
 
 struct FormatterTestCase {
   std::string input;
-  absl::string_view expected;
+  std::string expected;
 };
 
 static const std::initializer_list<FormatterTestCase> kFormatterTestCases = {
@@ -1800,8 +1800,8 @@ static const std::initializer_list<FormatterTestCase>
          "vv[44:1]);"
          "endmodule",
          "module m;\n"
-         "  assign wwwwww[77 : 66] =\n"
-         "      sss(qqqq[33 : 22], vv[44 : 1]);\n"
+         "  assign wwwwww[77 : 66] = sss(\n"
+         "      qqqq[33 : 22], vv[44 : 1]);\n"
          "endmodule\n"},
 };
 
