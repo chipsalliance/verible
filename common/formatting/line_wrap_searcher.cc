@@ -143,15 +143,17 @@ FormattedExcerpt SearchLineWraps(const UnwrappedLine& uwline,
       SearchState next(worklist.top());
       worklist.pop();
       if (winning_path->cumulative_cost == next.state->cumulative_cost) {
-        ++ties;
+        if (next.state->Done()) {
+          ++ties;
+        }
       } else {
         break;  // Stop as soon as a state has higher cost.
       }
     }
     LOG(INFO) << "There is/are " << ties << " paths with equally minimal cost.";
-    // TODO(fangism): In a special mode, show what these equal cost solutions
-    // look like, to make it easier to improve differentiation by tuning
-    // penalty values.
+    // TODO(b/145615062): In a special mode, show what these equal-cost
+    // solutions look like, to make it easier to improve differentiation by
+    // tuning penalty values.
   }
 
   // Reconstruct the unwrapped_line to reflect the decisions made to reach the
