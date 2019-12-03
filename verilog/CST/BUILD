@@ -514,10 +514,12 @@ cc_library(
     hdrs = ["type.h"],
     deps = [
         ":verilog_matchers",  # fixdeps: keep
+        ":identifier",
         "//common/analysis:syntax_tree_search",
         "//common/analysis/matcher",
         "//common/analysis/matcher:matcher_builders",
         "//common/text:concrete_syntax_tree",
+        "//common/text:concrete_syntax_leaf",
         "//common/text:symbol",
         "//common/text:tree_utils",
     ],

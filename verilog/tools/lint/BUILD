@@ -43,6 +43,8 @@ _linter_test_configs = [
     ("module-port", "instance_ports", True),
     ("module-port", "instance-ports-module-body", True),  # uses parse directive
     ("signal-name-style", "signal_name_style", False),
+    ("struct-union-name-style", "struct_name_style", False),
+    ("struct-union-name-style", "union_name_style", False),
     ("v2001-generate-begin", "generate_begin_module", True),
     ("void-cast", "void-cast", True),
     ("undersized-binary-literal", "undersized_binary_literal", True),

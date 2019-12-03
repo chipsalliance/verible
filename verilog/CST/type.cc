@@ -19,9 +19,11 @@
 #include "common/analysis/matcher/matcher.h"
 #include "common/analysis/matcher/matcher_builders.h"
 #include "common/analysis/syntax_tree_search.h"
+#include "common/text/concrete_syntax_leaf.h"
 #include "common/text/concrete_syntax_tree.h"
 #include "common/text/symbol.h"
 #include "common/text/tree_utils.h"
+#include "verilog/CST/identifier.h"
 #include "verilog/CST/verilog_matchers.h"  // pragma IWYU: keep
 
 namespace verilog {
@@ -31,10 +33,33 @@ std::vector<verible::TreeSearchMatch> FindAllDataTypeDeclarations(
   return verible::SearchSyntaxTree(root, NodekDataType());
 }
 
+std::vector<verible::TreeSearchMatch> FindAllTypeDeclarations(
+    const verible::Symbol& root) {
+  return verible::SearchSyntaxTree(root, NodekTypeDeclaration());
+}
+
+std::vector<verible::TreeSearchMatch> FindAllStructDataTypeDeclarations(
+    const verible::Symbol& root) {
+  return verible::SearchSyntaxTree(root, NodekStructDataType());
+}
+
+std::vector<verible::TreeSearchMatch> FindAllUnionDataTypeDeclarations(
+    const verible::Symbol& root) {
+  return verible::SearchSyntaxTree(root, NodekUnionDataType());
+}
+
 bool IsStorageTypeOfDataTypeSpecified(const verible::Symbol& symbol) {
   const auto* storage =
       verible::GetSubtreeAsSymbol(symbol, NodeEnum::kDataType, 0);
   return (storage != nullptr);
+}
+
+const verible::SyntaxTreeLeaf* GetIdentifierFromTypeDeclaration(
+    const verible::Symbol& symbol) {
+  // For enum, struct and union identifier is found at the same position
+  const auto* identifier_symbol =
+      verible::GetSubtreeAsSymbol(symbol, NodeEnum::kTypeDeclaration, 3);
+  return AutoUnwrapIdentifier(*ABSL_DIE_IF_NULL(identifier_symbol));
 }
 
 }  // namespace verilog
