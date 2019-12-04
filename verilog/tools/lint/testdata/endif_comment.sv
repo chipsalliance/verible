@@ -1,4 +1,4 @@
-package endif_comment_pkg;
+package endif_comment;
 `ifdef FOOBAR
   parameter int P = 4;
 `endif

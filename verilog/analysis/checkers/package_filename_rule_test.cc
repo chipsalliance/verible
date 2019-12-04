@@ -57,9 +57,86 @@ TEST(PackageFilenameRuleTest, PackageMatchesFilename) {
        "package ",
        {kToken, "o"},
        "; endpackage"},
+      {"package ", {kToken, "m_pkg"}, "; endpackage"},
   };
   const std::string filename = "/path/to/m.sv";
   RunLintTestCases<VerilogAnalyzer, PackageFilenameRule>(kTestCases, filename);
+}
+
+// Test that as every package that doesn't match begets a violation.
+TEST(PackageFilenameRuleTest, PackagePlusPkgMatchesFilename) {
+  const std::initializer_list<LintTestCase> kTestCases = {
+      {""},
+      {"package m; endpackage"},
+      {"package ", {kToken, "n"}, "; endpackage\npackage m; endpackage"},
+      {"package m; endpackage\npackage ", {kToken, "n"}, "; endpackage"},
+      {"package m; endpackage\n"
+       "package ",
+       {kToken, "n"},
+       "; endpackage\n"
+       "package ",
+       {kToken, "o"},
+       "; endpackage"},
+      {"package m_pkg; endpackage"},
+  };
+  const std::string filename = "/path/to/m_pkg.sv";
+  RunLintTestCases<VerilogAnalyzer, PackageFilenameRule>(kTestCases, filename);
+}
+
+// Test that we correctly discard everything in the filename after the first
+// dot.
+TEST(PackageFilenameRuleTest, UnitNameIsFilenameBeforeTheFirstDot) {
+  const std::initializer_list<LintTestCase> kTestCases = {
+      {""},
+      {"package m; endpackage"},
+      {"package ", {kToken, "n"}, "; endpackage\npackage m; endpackage"},
+      {"package m; endpackage\npackage ", {kToken, "n"}, "; endpackage"},
+      {"package m; endpackage\n"
+       "package ",
+       {kToken, "n"},
+       "; endpackage\n"
+       "package ",
+       {kToken, "o"},
+       "; endpackage"},
+      {"package m_pkg; endpackage"},
+  };
+  const std::string filename = "/path/to/m_pkg.sv";
+  RunLintTestCases<VerilogAnalyzer, PackageFilenameRule>(kTestCases, filename);
+  const std::string filename2 = "/path/to/m_pkg.this.is.junk.sv";
+  RunLintTestCases<VerilogAnalyzer, PackageFilenameRule>(kTestCases, filename2);
+}
+
+TEST(PackageFilenameRuleTest, LegalPackagesForFooPkgSv) {
+  const std::initializer_list<LintTestCase> kTestCasesForFooPkgSv = {
+      {"package foo; endpackage"},
+      {"package foo_pkg; endpackage"},
+  };
+  const std::string foo_pkg_sv = "/path/to/foo_pkg.sv";
+  RunLintTestCases<VerilogAnalyzer, PackageFilenameRule>(kTestCasesForFooPkgSv,
+                                                         foo_pkg_sv);
+}
+
+TEST(PackageFilenameRuleTest, LegalPackagesForFooSv) {
+  const std::initializer_list<LintTestCase> kTestCasesForFooSv = {
+      {"package foo; endpackage"},
+      {"package ", {kToken, "foo_pkg"}, "; endpackage"},
+  };
+  const std::string foo_sv = "/path/to/foo.sv";
+  RunLintTestCases<VerilogAnalyzer, PackageFilenameRule>(kTestCasesForFooSv,
+                                                         foo_sv);
+}
+
+TEST(PackageFilenameRuleTest, LegalPackagesForFooPkgPkgSv) {
+  // It is weird, but legal, to put package "foo_pkg" in "foo_pkg_pkg.sv".
+  const std::initializer_list<LintTestCase> kTestCasesForFooPkgPkgSv = {
+      {"package ", {kToken, "foo"}, "; endpackage"},
+      {"package foo_pkg; endpackage"},
+      {"package foo_pkg_pkg; endpackage"},
+      {"package ", {kToken, "foo_pkg_pkg_pkg"}, "; endpackage"},
+  };
+  const std::string foo_pkg_pkg_sv = "/path/to/foo_pkg_pkg.sv";
+  RunLintTestCases<VerilogAnalyzer, PackageFilenameRule>(
+      kTestCasesForFooPkgPkgSv, foo_pkg_pkg_sv);
 }
 
 // Test that violations are reporter for every mismatch against absolute path.
@@ -92,11 +169,11 @@ TEST(PackageFilenameRuleTest, NoPackageMatchesFilenameRelPath) {
   RunLintTestCases<VerilogAnalyzer, PackageFilenameRule>(kTestCases, filename);
 }
 
-// Test that optional _pkg suffixes on declaration are forgiven.
+// Test that optional _pkg suffixes on declaration are illegal.
 TEST(PackageFilenameRuleTest, PackageMatchesOptionalDeclarationSuffix) {
   const std::initializer_list<LintTestCase> kTestCases = {
       {"package q; endpackage"},
-      {"package q_pkg; endpackage"},
+      {"package ", {kToken, "q_pkg"}, "; endpackage"},
   };
   const std::string filename = "/path/to/q.sv";
   RunLintTestCases<VerilogAnalyzer, PackageFilenameRule>(kTestCases, filename);

@@ -19,6 +19,7 @@
 #include <vector>
 
 #include "absl/strings/str_cat.h"
+#include "absl/strings/str_split.h"
 #include "absl/strings/string_view.h"
 #include "absl/strings/strip.h"
 #include "common/analysis/citation.h"
@@ -48,7 +49,7 @@ absl::string_view PackageFilenameRule::Name() { return "package-filename"; }
 const char PackageFilenameRule::kTopic[] = "file-names";
 const char PackageFilenameRule::kMessage[] =
     "Package declaration name must match the file name "
-    "(ignoring optional \"_pkg\" suffix).  ";
+    "(ignoring optional \"_pkg\" file name suffix).  ";
 
 std::string PackageFilenameRule::GetDescription(
     DescriptionType description_type) {
@@ -65,26 +66,32 @@ void PackageFilenameRule::Lint(const TextStructureView& text_structure,
   auto package_matches = FindAllPackageDeclarations(*tree);
 
   // See if names match the stem of the filename.
+  //
+  // Note:  package name | filename   | allowed ?
+  //        -------------+------------+-----------
+  //        foo          | foo.sv     | yes
+  //        foo          | foo_pkg.sv | yes
+  //        foo_pkg      | foo_pkg.sv | yes
+  //        foo_pkg      | foo.sv     | NO.
   const absl::string_view basename =
       verible::file::Basename(verible::file::Stem(filename));
-  const absl::string_view file_stem =
-      absl::StripSuffix(basename, optional_suffix);
-  if (file_stem.empty()) return;
+  std::vector<absl::string_view> basename_components =
+      absl::StrSplit(basename, '.');
+  const absl::string_view unitname = basename_components[0];
+  if (unitname.empty()) return;
 
   // Report a violation on every package declaration, potentially.
   for (const auto& package_match : package_matches) {
     const verible::TokenInfo& package_name_token =
         GetPackageNameToken(*package_match.match);
     absl::string_view package_id = package_name_token.text;
-    auto package_stem = absl::StripSuffix(package_id, optional_suffix);
-    if (package_stem != file_stem) {
+    auto package_id_plus_suffix = absl::StrCat(package_id, optional_suffix);
+    if ((package_id != unitname) && (package_id_plus_suffix != unitname)) {
       violations_.push_back(verible::LintViolation(
           package_name_token,
           absl::StrCat(kMessage, "declaration: \"", package_id,
-                       "\" vs. basename(file): \"", basename, "\"")));
+                       "\" vs. basename(file): \"", unitname, "\"")));
     }
-    // TODO(jonmayer): Also reject package foo_pkg vs. foo.sv case after
-    // clarifying the style guide.
   }
 }
 
