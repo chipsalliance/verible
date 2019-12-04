@@ -1430,6 +1430,19 @@ static const char* kModuleTests[] = {
     "module foo (\n"
     "  input real bar);\n"  // wreal port
     "endmodule",
+    "module foo (\n"
+    "  input var i,\n"  // var keyword
+    "  output var o);\n"
+    "endmodule",
+    "module foo (\n"
+    "  ref int o);\n"  // ref declaration
+    "endmodule",
+    "module foo (\n"
+    "  ref var o);\n"  // ref declaration
+    "endmodule",
+    "module foo (\n"
+    "  ref var int o);\n"  // ref declaration
+    "endmodule",
     // port connections
     "module tryme;\n"
     "foo a;\n"

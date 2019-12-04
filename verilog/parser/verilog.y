@@ -4985,17 +4985,19 @@ port_declaration_noattr
    */
   // TODO(jeremycs): make this look more like type_identifier_followed_by_ ... rules
   /* originally: data_type_or_implicit, but restricted to resolve conflict */
-  // : dir net_type_opt data_type_or_implicit GenericIdentifier decl_dimensions_opt
-  // | dir net_type_opt data_type_or_implicit GenericIdentifier '=' expression
+  // : dir var_or_net_type_opt data_type_or_implicit GenericIdentifier decl_dimensions_opt
+  // | dir var_or_net_type_opt data_type_or_implicit GenericIdentifier '=' expression
   //
   // NodekPortDeclaration will have children in the following format:
-  // dir, net_type_opt, data_type (includes packed dimensions), id,
+  // dir, var_or_net_type_opt, data_type (includes packed dimensions), id,
   // unpacked dimensions, trailing_assign_opt
   //
-  : port_direction net_type_opt
+  : port_direction var_or_net_type_opt
     data_type_or_implicit_basic_followed_by_id_and_dimensions_opt
     trailing_assign_opt
     { $$ = MakeTaggedNode(N::kPortDeclaration, $1, $2, ForwardChildren($3), $4); }
+    // TODO(fangism): inout's cannot have variable port types,
+    // so this needs to be enforced in CST validation.
   | net_type data_type_or_implicit_basic_followed_by_id_and_dimensions_opt
     trailing_assign_opt
     { $$ = MakeTaggedNode(N::kPortDeclaration, nullptr, $1,
@@ -5010,8 +5012,10 @@ port_declaration_noattr
     { $$ = MakeTaggedNode(N::kPortDeclaration, nullptr, nullptr, ForwardChildren($1),
                           MakeUnpackedDimensionsNode($2), $3); }
   ;
-net_type_opt
+var_or_net_type_opt
   : net_type
+    { $$ = move($1); }
+  | TK_var
     { $$ = move($1); }
   | /* empty */
     { $$ = nullptr; }
