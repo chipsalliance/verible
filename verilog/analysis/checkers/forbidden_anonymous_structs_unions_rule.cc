@@ -40,9 +40,9 @@ VERILOG_REGISTER_LINT_RULE(ForbiddenAnonymousStructsUnionsRule);
 
 absl::string_view ForbiddenAnonymousStructsUnionsRule::Name() { return "typedef-structs-unions"; }
 const char ForbiddenAnonymousStructsUnionsRule::kTopic[] = "typedef-structs-unions";
-const char ForbiddenAnonymousStructsUnionsRule::kMessage_struct[] =
+const char ForbiddenAnonymousStructsUnionsRule::kMessageStruct[] =
     "struct definitions always should be named using typedef.";
-const char ForbiddenAnonymousStructsUnionsRule::kMessage_union[] =
+const char ForbiddenAnonymousStructsUnionsRule::kMessageUnion[] =
     "union definitions always should be named using typedef.";
 
 std::string ForbiddenAnonymousStructsUnionsRule::GetDescription(DescriptionType description_type) {
@@ -64,7 +64,7 @@ void ForbiddenAnonymousStructsUnionsRule::HandleSymbol(const verible::Symbol& sy
           {NodeEnum::kDataTypePrimitive,
            NodeEnum::kTypeDeclaration})) {
       violations_.push_back(LintViolation(
-        symbol, kMessage_struct, context));
+        symbol, kMessageStruct, context));
     }
   } else if (matcher_union_.Matches(symbol, &manager)) {
     // Check if it is preceded by a typedef
@@ -72,7 +72,7 @@ void ForbiddenAnonymousStructsUnionsRule::HandleSymbol(const verible::Symbol& sy
           {NodeEnum::kDataTypePrimitive,
            NodeEnum::kTypeDeclaration})) {
       violations_.push_back(LintViolation(
-        symbol, kMessage_union, context));
+        symbol, kMessageUnion, context));
     }
   }
 }

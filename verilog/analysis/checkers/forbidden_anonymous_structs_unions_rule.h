@@ -66,8 +66,8 @@ class ForbiddenAnonymousStructsUnionsRule : public verible::SyntaxTreeLintRule {
   static const char kTopic[];
 
   // Diagnostic message.
-  static const char kMessage_struct[];
-  static const char kMessage_union[];
+  static const char kMessageStruct[];
+  static const char kMessageUnion[];
 
   using Matcher = verible::matcher::Matcher;
 
