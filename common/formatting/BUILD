@@ -248,6 +248,7 @@ cc_test(
         ":line_wrap_searcher",
         ":unwrapped_line",
         ":unwrapped_line_test_utils",
+        "@com_google_absl//absl/strings",
         "@com_google_googletest//:gtest_main",
     ],
 )
