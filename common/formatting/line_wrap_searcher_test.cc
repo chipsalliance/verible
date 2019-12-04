@@ -16,6 +16,7 @@
 
 #include <vector>
 
+#include "gmock/gmock.h"
 #include "gtest/gtest.h"
 #include "common/formatting/basic_format_style.h"
 #include "common/formatting/format_token.h"
@@ -44,9 +45,10 @@ class SearchLineWrapsTestFixture : public UnwrappedLineMemoryHandler,
   FormattedExcerpt SearchLineWraps(const UnwrappedLine& uwline,
                                    const BasicFormatStyle& style) {
     // Bound the size of search for unit testing.
-    const auto result = verible::SearchLineWraps(uwline, style, 1000);
-    EXPECT_TRUE(result.CompletedFormatting());
-    return result;
+    const auto results = verible::SearchLineWraps(uwline, style, 1000);
+    EXPECT_FALSE(results.empty());
+    EXPECT_TRUE(results.front().CompletedFormatting());
+    return results.front();
   }
 
  protected:
@@ -316,6 +318,46 @@ TEST_F(SearchLineWrapsTestFixture, ForcedWraps) {
             "         bbbbb ccccc");
 }
 
+// Test multiple equally good wrapping solutions can be found and diagnosed.
+TEST_F(SearchLineWrapsTestFixture, DisplayEquallyOptimalWrappings) {
+  const std::vector<TokenInfo> tokens = {
+      {0, "aaaaaaaaaa"},
+      {0, "bbbbb"},
+      {0, "ccccc"},
+  };
+  CreateTokenInfos(tokens);
+  UnwrappedLine uwline_in(LevelsToSpaces(1), pre_format_tokens_.begin());
+  AddFormatTokens(&uwline_in);
+  EXPECT_EQ(uwline_in.Size(), tokens.size());
+  auto& ftokens_in = pre_format_tokens_;
+  ftokens_in[0].before.break_penalty = 1;
+  ftokens_in[0].before.spaces_required = 11;  // should be ignored
+  ftokens_in[1].before.break_penalty = 3;
+  ftokens_in[1].before.spaces_required = 1;
+  ftokens_in[2].before.break_penalty = ftokens_in[1].before.break_penalty;
+  ftokens_in[2].before.spaces_required = 1;
+  const auto formatted_lines = verible::SearchLineWraps(uwline_in, style_, 10);
+  EXPECT_EQ(formatted_lines.size(), 2);
+  // Solutions are: break before token[1] and break before token[2].
+  // Cannot guarantee which solution is first due to different heap
+  // implementations.
+  const auto& first = formatted_lines.front();
+  const auto& second = formatted_lines.back();
+  EXPECT_TRUE((first.Tokens()[1].before.action == SpacingDecision::Wrap &&
+               first.Tokens()[2].before.action == SpacingDecision::Append &&
+               second.Tokens()[1].before.action == SpacingDecision::Append &&
+               second.Tokens()[2].before.action == SpacingDecision::Wrap) ||
+              (first.Tokens()[1].before.action == SpacingDecision::Append &&
+               first.Tokens()[2].before.action == SpacingDecision::Wrap &&
+               second.Tokens()[1].before.action == SpacingDecision::Wrap &&
+               second.Tokens()[2].before.action == SpacingDecision::Append));
+  std::ostringstream stream;
+  DisplayEquallyOptimalWrappings(stream, uwline_in, formatted_lines);
+  // Limited output checking.
+  EXPECT_TRUE(absl::StrContains(stream.str(), "Found 2 equally good"));
+  EXPECT_TRUE(absl::StrContains(stream.str(), "============"));
+}
+
 TEST_F(SearchLineWrapsTestFixture, FitsOnLine) {
   const std::vector<TokenInfo> tokens = {
       {0, "aaaaaa"},
@@ -373,8 +415,8 @@ TEST_F(SearchLineWrapsTestFixture, AbortedSearch) {
   ftokens_in[2].before.break_penalty = 1;
   ftokens_in[2].before.spaces_required = 1;
   // Intentionally limit search space to a small count to force early abort.
-  const FormattedExcerpt formatted_line =
-      verible::SearchLineWraps(uwline_in, style_, 2);
+  const auto formatted_lines = verible::SearchLineWraps(uwline_in, style_, 2);
+  const FormattedExcerpt& formatted_line = formatted_lines.front();
   EXPECT_EQ(formatted_line.Tokens().size(), tokens.size());
   EXPECT_FALSE(formatted_line.CompletedFormatting());
   // The resulting state is unpredictable, because the search terminated early.

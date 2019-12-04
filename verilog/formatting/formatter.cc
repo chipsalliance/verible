@@ -202,8 +202,15 @@ verible::util::Status Formatter::Format(const ExecutionControl& control) {
   for (const auto& uwline : unwrapped_lines) {
     // TODO(fangism): Use different formatting strategies depending on
     // uwline.PartitionPolicy().
-    formatted_lines_.push_back(
-        verible::SearchLineWraps(uwline, style_, control.max_search_states));
+    const auto optimal_solutions =
+        verible::SearchLineWraps(uwline, style_, control.max_search_states);
+    if (control.show_equally_optimal_wrappings &&
+        optimal_solutions.size() > 1) {
+      verible::DisplayEquallyOptimalWrappings(control.Stream(), uwline,
+                                              optimal_solutions);
+    }
+    // Arbitrarily choose the first solution, if there are multiple.
+    formatted_lines_.push_back(optimal_solutions.front());
     if (!formatted_lines_.back().CompletedFormatting()) {
       // Copy over any lines that did not finish wrap searching.
       partially_formatted_lines.push_back(&uwline);

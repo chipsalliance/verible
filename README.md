@@ -294,6 +294,9 @@ verilog_format: usage: verilog_format [options] <file>
       none: disregard all original spacing
       all: keep original vertical spacing (newlines only, no spaces/tabs)
       unhandled: same as 'all' (for now).); default: unhandled;
+    -show_equally_optimal_wrappings (If true, print when multiple optimal
+      solutions are found (stderr), but continue to operate normally.);
+      default: false;
     -show_largest_token_partitions (If > 0, print token partitioning and then
       exit without formatting output.); default: 0;
     -show_token_partition_tree (If true, print diagnostics after token

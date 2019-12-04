@@ -218,6 +218,7 @@ cc_library(
         ":unwrapped_line",
         "//common/text:token_info",
         "//common/util:logging",
+        "//common/util:spacer",
         "@com_google_absl//absl/strings",
     ],
 )

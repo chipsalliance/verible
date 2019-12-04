@@ -15,7 +15,8 @@
 #ifndef VERIBLE_COMMON_FORMATTING_LINE_WRAP_SEARCHER_H_
 #define VERIBLE_COMMON_FORMATTING_LINE_WRAP_SEARCHER_H_
 
-// TODO(fangism): re-organize under common/formatter.
+#include <iosfwd>
+#include <vector>
 
 #include "common/formatting/basic_format_style.h"
 #include "common/formatting/unwrapped_line.h"
@@ -23,16 +24,24 @@
 namespace verible {
 
 // SearchLineWraps takes an UnwrappedLine with formatting annotations,
-// and a style structure, and returns a new FormattedExcerpt with formatting
-// decisions (wraps, spaces) committed.  This minimizes the numeric penalty
-// during search to yield an optimal result.
+// and a style structure, and returns equally-good FormattedExcerpts with
+// formatting decisions (wraps, spaces) committed.
+// This minimizes the numeric penalty during search to yield optimal results,
+// which can result in multiple optimal formattings.
 // max_search_states limits the size of the optimization search.
 // When the number of states evaluated exceeds this, this will abort by
 // returning a greedily formatted result (which can still be rendered)
 // that will be marked as !CompletedFormatting().
-FormattedExcerpt SearchLineWraps(const UnwrappedLine& uwline,
-                                 const BasicFormatStyle& style,
-                                 int max_search_states);
+// This is guaranteed to return at least one result.
+std::vector<FormattedExcerpt> SearchLineWraps(const UnwrappedLine& uwline,
+                                              const BasicFormatStyle& style,
+                                              int max_search_states);
+
+// Diagnostic helper for displaying when multiple optimal wrappings are found
+// by SearchLineWraps.  This aids in development around wrap penalty tuning.
+void DisplayEquallyOptimalWrappings(
+    std::ostream& stream, const UnwrappedLine& uwline,
+    const std::vector<FormattedExcerpt>& solutions);
 
 // Returns false as soon as calculated line length exceeds maximum, or a token
 // that requires a newline is encountered.  If everything fits, then return

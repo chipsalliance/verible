@@ -39,6 +39,10 @@ class Formatter {
     // If true, print the token partition tree, and halt without formatting.
     bool show_token_partition_tree = false;
 
+    // If true, print (stderr) when there are multiple equally optimal wrapping
+    // formattings on any token partition, but continue to operate.
+    bool show_equally_optimal_wrappings = false;
+
     // Limit the size of search space for wrapping lines.
     // If this limit is exceeded, error out with a diagnostic message.
     int max_search_states = 10000;

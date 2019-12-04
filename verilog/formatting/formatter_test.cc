@@ -1883,6 +1883,31 @@ TEST(FormatterEndToEndTest, DiagnosticLargestPartitions) {
   }
 }
 
+TEST(FormatterEndToEndTest, DiagnosticEquallyOptimalWrappings) {
+  // Use a fixed style.
+  FormatStyle style;
+  style.column_limit = 40;
+  style.indentation_spaces = 2;
+  style.wrap_spaces = 4;
+  style.over_column_limit_penalty = 50;
+  for (const auto& test_case : kFormatterTestCases) {
+    std::unique_ptr<VerilogAnalyzer> analyzer =
+        VerilogAnalyzer::AnalyzeAutomaticMode(test_case.input, "<filename>");
+    // Require these test cases to be valid.
+    ASSERT_OK(ABSL_DIE_IF_NULL(analyzer)->LexStatus());
+    ASSERT_OK(analyzer->ParseStatus());
+    Formatter formatter(analyzer->Data(), style);
+
+    std::ostringstream stream;
+    Formatter::ExecutionControl control;
+    control.stream = &stream;
+    control.show_equally_optimal_wrappings = true;
+
+    EXPECT_OK(formatter.Format(control));
+    // Cannot guarantee among unit tests that there will be >1 solution.
+  }
+}
+
 // Test that hitting search space limit results in correct error status.
 TEST(FormatterEndToEndTest, UnfinishedLineWrapSearching) {
   FormatStyle style;

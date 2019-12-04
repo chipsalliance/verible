@@ -25,6 +25,7 @@
 #include "common/formatting/unwrapped_line.h"
 #include "common/text/token_info.h"
 #include "common/util/logging.h"
+#include "common/util/spacer.h"
 
 namespace verible {
 namespace {
@@ -43,14 +44,17 @@ struct SearchState {
 };
 }  // namespace
 
-FormattedExcerpt SearchLineWraps(const UnwrappedLine& uwline,
-                                 const BasicFormatStyle& style,
-                                 int max_search_states) {
+std::vector<FormattedExcerpt> SearchLineWraps(const UnwrappedLine& uwline,
+                                              const BasicFormatStyle& style,
+                                              int max_search_states) {
   // Dijkstra's algorithm for now: prioritize searching minimum penalty path
   // until destination is reached.
 
   VLOG(2) << "SearchLineWraps on: " << uwline;
-  if (uwline.TokensRange().empty()) return FormattedExcerpt();
+  if (uwline.TokensRange().empty()) {
+    std::vector<FormattedExcerpt> result(1);
+    return result;
+  }
 
   // Worklist for decision searching, ordered by cumulative penalty.
   // Note: a heap-based priority-queue will not guarantee stable ordering
@@ -63,7 +67,7 @@ FormattedExcerpt SearchLineWraps(const UnwrappedLine& uwline,
   worklist.push(seed);
 
   bool aborted_search = false;
-  std::shared_ptr<const StateNode> winning_path;
+  std::vector<std::shared_ptr<const StateNode>> winning_paths;
   int state_count = 0;
   while (!worklist.empty()) {
     ++state_count;
@@ -75,21 +79,32 @@ FormattedExcerpt SearchLineWraps(const UnwrappedLine& uwline,
             << "\ncurrent cost: " << next.state->cumulative_cost
             << "\ncurrent column: " << next.state->current_column;
 
+    if (!winning_paths.empty()) {
+      // We already found at least one winning solution.
+      // As soon as the current cost exceeds the optimal (by 1), then stop.
+      // This guarantees that we've collected all equally optimal solutions.
+      if (next.state->cumulative_cost >
+          winning_paths.front()->cumulative_cost) {
+        break;
+      }
+    }
+
     // Check for done condition: reached the end of the UnwrappedLine's
     // FormatTokens.
     // First to reach the end has the lowest penalty and wins.
     // TODO(fangism): if we compare against uwline.end() iterator, we could save
     // some space from each StateNode object.
     if (next.state->Done()) {
-      winning_path = next.state;
+      winning_paths.push_back(next.state);
       VLOG(3) << "winning path cost: " << next.state->cumulative_cost;
-      break;
+      // Continue until all equally good solutions have been found.
+      continue;
     }
 
     if (state_count >= max_search_states) {
       // Search limit exceeded, abandon search.
       // Greedily finish formatting this partition, and return it.
-      winning_path = StateNode::QuickFinish(next.state, style);
+      winning_paths.push_back(StateNode::QuickFinish(next.state, style));
       aborted_search = true;
       break;
     }
@@ -132,39 +147,34 @@ FormattedExcerpt SearchLineWraps(const UnwrappedLine& uwline,
     // With heuristic pruning, this is A* (A-star).
   }  // while (!worklist.empty())
 
-  if (VLOG_IS_ON(2) && !aborted_search) {
-    // Count the number of equally good solutions without using them.
-    // Having to arbitrarily pick among equal solutions can make integration
-    // testing slightly unpredictable and fragile.
-    // It is also an indicator that penalty costs are too similar in value,
-    // which is a sign that the search state space may grow too quickly.
-    int ties = 1;  // count the winning_path as one
-    while (!worklist.empty()) {
-      SearchState next(worklist.top());
-      worklist.pop();
-      if (winning_path->cumulative_cost == next.state->cumulative_cost) {
-        if (next.state->Done()) {
-          ++ties;
-        }
-      } else {
-        break;  // Stop as soon as a state has higher cost.
-      }
-    }
-    LOG(INFO) << "There is/are " << ties << " paths with equally minimal cost.";
-    // TODO(b/145615062): In a special mode, show what these equal-cost
-    // solutions look like, to make it easier to improve differentiation by
-    // tuning penalty values.
-  }
+  CHECK_GE(winning_paths.size(), 1);
 
   // Reconstruct the unwrapped_line to reflect the decisions made to reach the
-  // winning_path.  Return a modified copy of the original UnwrappedLine.
-  FormattedExcerpt result(uwline);
-  CHECK_EQ(winning_path->Depth(), result.Tokens().size());
-  winning_path->ReconstructFormatDecisions(&result);
-  if (aborted_search) {
-    result.MarkIncomplete();
+  // winning_paths.  Return a modified copy of the original UnwrappedLine.
+  std::vector<FormattedExcerpt> results;
+  results.reserve(winning_paths.size());
+  for (const auto& path : winning_paths) {
+    results.emplace_back(uwline);
+    auto& result = results.back();
+    CHECK_EQ(path->Depth(), result.Tokens().size());
+    path->ReconstructFormatDecisions(&result);
+    if (aborted_search) {
+      result.MarkIncomplete();
+    }
   }
-  return result;
+  return results;
+}
+
+void DisplayEquallyOptimalWrappings(
+    std::ostream& stream, const UnwrappedLine& uwline,
+    const std::vector<FormattedExcerpt>& solutions) {
+  stream << "Found " << solutions.size()
+         << " equally good solutions for the partition: " << uwline
+         << std::endl;
+  for (const auto& solution : solutions) {
+    stream << Spacer(40, '-') << std::endl << solution.Render() << std::endl;
+  }
+  stream << Spacer(40, '=') << std::endl;
 }
 
 bool FitsOnLine(const UnwrappedLine& uwline, const BasicFormatStyle& style) {
