@@ -2838,7 +2838,7 @@ const TreeUnwrapperTestData kUnwrapFunctionTestCases[] = {
     },
 
     {
-        "function with if-else branches",
+        "function with if-else branches in begin/end",
         "function foo;"
         "if (zz) begin "
         "return 0;"
@@ -2854,6 +2854,62 @@ const TreeUnwrapperTestData kUnwrapFunctionTestCases[] = {
                                   L(1, {"end", "else", "begin"}),
                                   StatementList(2, L(2, {"return", "1", ";"})),
                                   L(1, {"end"}))),
+        L(0, {"endfunction"}),
+    },
+
+    {
+        "function with if-else branches, single-statements",
+        "function foo;"
+        "if (zz) "
+        "return 0;"
+        "else "
+        "return 1;"
+        "endfunction",
+        FunctionHeader(0, L(0, {"function", "foo", ";"})),
+        StatementList(1,
+                      FlowControl(1,  //
+                                  L(1, {"if", "(", "zz", ")"}),
+                                  NL(2, {"return", "0", ";"}), L(1, {"else"}),
+                                  NL(2, {"return", "1", ";"}))),
+        L(0, {"endfunction"}),
+    },
+
+    {
+        "function with else-if branches in begin/end",
+        "function foo;"
+        "if (zz) begin "
+        "return 0;"
+        "end else if (yy) begin "
+        "return 1;"
+        "end "
+        "endfunction",
+        FunctionHeader(0, L(0, {"function", "foo", ";"})),
+        StatementList(
+            1,
+            FlowControl(1,  //
+                        L(1, {"if", "(", "zz", ")", "begin"}),
+                        StatementList(2, L(2, {"return", "0", ";"})),
+                        L(1, {"end", "else", "if", "(", "yy", ")", "begin"}),
+                        StatementList(2, L(2, {"return", "1", ";"})),
+                        L(1, {"end"}))),
+        L(0, {"endfunction"}),
+    },
+
+    {
+        "function with else-if branches, single-statements",
+        "function foo;"
+        "if (zz) "
+        "return 0;"
+        "else if (yy) "
+        "return 1;"
+        "endfunction",
+        FunctionHeader(0, L(0, {"function", "foo", ";"})),
+        StatementList(1,
+                      FlowControl(1,  //
+                                  L(1, {"if", "(", "zz", ")"}),
+                                  NL(2, {"return", "0", ";"}),
+                                  L(1, {"else", "if", "(", "yy", ")"}),
+                                  NL(2, {"return", "1", ";"}))),
         L(0, {"endfunction"}),
     },
 

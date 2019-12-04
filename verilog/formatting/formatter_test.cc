@@ -1333,6 +1333,25 @@ static const std::initializer_list<FormatterTestCase> kFormatterTestCases = {
         "  end\n"
         "endfunction\n",
     },
+    {
+        // This tests for end-else-if
+        "function foo;"
+        "if (zz) begin "
+        "return 0;"
+        "end "
+        "else "
+        "if(yy)begin "
+        "return 1;"
+        "end "
+        "endfunction",
+        "function foo;\n"
+        "  if (zz) begin\n"
+        "    return 0;\n"
+        "  end else if (yy) begin\n"
+        "    return 1;\n"
+        "  end\n"
+        "endfunction\n",
+    },
 
     {
         // randomize function
