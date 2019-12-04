@@ -71,7 +71,7 @@ cc_library(
         "//common/text:token_info",
         "//common/text:token_info_test_util",
         "//common/util:status",
-        "@com_google_googletest//:gtest",
+        "@com_google_googletest//:gtest",  # for library
     ],
 )
 

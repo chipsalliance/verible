@@ -206,7 +206,7 @@ cc_library(
         "//common/text:symbol",
         "//common/util:logging",
         "//common/util:status",
-        "@com_google_googletest//:gtest",
+        "@com_google_googletest//:gtest",  # for library testonly
     ],
 )
 

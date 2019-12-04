@@ -122,7 +122,7 @@ cc_library(
     hdrs = ["enum_flags_test_util.h"],
     deps = [
         "@com_google_absl//absl/strings",
-        "@com_google_googletest//:gtest",
+        "@com_google_googletest//:gtest",  # for library testonly
     ],
 )
 
@@ -154,7 +154,7 @@ cc_library(
     deps = [
         ":vector_tree",
         "@com_google_absl//absl/strings",
-        "@com_google_googletest//:gtest",
+        "@com_google_googletest//:gtest",  # for library testonly
     ],
 )
 

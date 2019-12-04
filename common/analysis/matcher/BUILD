@@ -152,6 +152,6 @@ cc_library(
         "//common/text:visitors",
         "//common/util:status",
         "@com_google_absl//absl/strings",
-        "@com_google_googletest//:gtest",
+        "@com_google_googletest//:gtest",  # for library
     ],
 )
