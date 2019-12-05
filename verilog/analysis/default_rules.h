@@ -21,6 +21,7 @@ namespace analysis {
 // List of rule that are enabled by default in production
 // Use --ruleset default
 // clang-format off
+// LINT.IfChange
 constexpr const char* kDefaultRuleSet[] = {
     "invalid-system-task-function",
     "module-begin-block",
@@ -54,6 +55,9 @@ constexpr const char* kDefaultRuleSet[] = {
     // TODO(b/131637160): "signal-name-style",
     // "endif-comment",
 };
+// LINT.ThenChange(../tools/lint/BUILD)
+//   Update integration tests for rulesets.
+// clang-format on
 }  // namespace analysis
 }  // namespace verilog
 

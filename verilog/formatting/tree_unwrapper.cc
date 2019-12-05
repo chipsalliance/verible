@@ -302,6 +302,7 @@ static bool IsTopLevelListItem(const verible::SyntaxTreeContext& context) {
 static bool DirectParentIsFlowControlConstruct(
     const verible::SyntaxTreeContext& context) {
   return context.DirectParentIsOneOf({
+      // LINT.IfChange(flow_control_parents)
       NodeEnum::kCaseStatement,         //
       NodeEnum::kForLoopStatement,      //
       NodeEnum::kForeverLoopStatement,  //
@@ -310,6 +311,7 @@ static bool DirectParentIsFlowControlConstruct(
       NodeEnum::kDoWhileLoopStatement,  //
       NodeEnum::kForeachLoopStatement,  //
       NodeEnum::kConditionalStatement,
+      // LINT.ThenChange(:flow_control_cases)
   });
 }
 

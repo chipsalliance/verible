@@ -142,6 +142,7 @@ static SymbolPtr MakeUnpackedDimensionsNode(SymbolPtr& arg) {
 /* TODO(fangism): this prefix name should point to an adaptation of yylex */
 %name-prefix "verilog_"
 
+// LINT.IfChange
 %token PP_Identifier
 %token PP_include "`include"
 %token PP_define "`define"
@@ -692,6 +693,7 @@ is not locally defined, so the grammar here uses only generic identifiers.
 
 /* most likely a lexical error */
 %token TK_OTHER
+// LINT.ThenChange(../formatting/verilog_token.cc)
 
 /* A glorified ';' specialized to mark the end of an
    assertion_variable_declaration list inside the
