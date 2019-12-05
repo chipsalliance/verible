@@ -499,6 +499,12 @@ static WithReason<SpacingOptions> BreakDecisionBetween(
   if (right.TokenEnum() == TK_else) {
     if (left.TokenEnum() != TK_end)
       return {SpacingOptions::MustWrap, "'else' token should start its own line unless preceded by 'end' without label."};
+    else
+      return {SpacingOptions::MustAppend, "'end'-'else' tokens should be together on one line."};
+  }
+
+  if ( (left.TokenEnum() == TK_else) && (right.TokenEnum() == TK_begin) ) {
+    return {SpacingOptions::MustAppend, "'else'-'begin' tokens should be together on one line."};
   }
 
   // By default, leave undecided for penalty minimization.

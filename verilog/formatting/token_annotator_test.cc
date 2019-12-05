@@ -1277,6 +1277,74 @@ TEST(TokenAnnotatorTest, AnnotateFormattingInfoTest) {
                {';', ";"},
            }},
 
+          // if (r == t) begin
+          //   a.b(c);
+          // end else begin
+          //   d.e(f);
+          // end
+          {DefaultStyle,
+           1,
+           {
+               {0, SpacingOptions::Undecided},  // if
+               {1, SpacingOptions::Undecided},  // (
+               {0, SpacingOptions::Undecided},  // r
+               {1, SpacingOptions::Undecided},  // ==
+               {1, SpacingOptions::Undecided},  // t
+               {0, SpacingOptions::Undecided},  // )
+
+               {1, SpacingOptions::Preserve},   // begin
+               {1, SpacingOptions::Undecided},  // a
+               {0, SpacingOptions::Undecided},  // .
+               {0, SpacingOptions::Undecided},  // b
+               {0, SpacingOptions::Undecided},  // (
+               {0, SpacingOptions::Undecided},  // c
+               {0, SpacingOptions::Undecided},  // )
+               {0, SpacingOptions::Undecided},  // ;
+               {1, SpacingOptions::MustWrap},   // end
+
+               {1, SpacingOptions::MustAppend}, // else
+
+               {1, SpacingOptions::MustAppend}, // begin
+               {1, SpacingOptions::Undecided},  // d
+               {0, SpacingOptions::Undecided},  // .
+               {0, SpacingOptions::Undecided},  // e
+               {0, SpacingOptions::Undecided},  // (
+               {0, SpacingOptions::Undecided},  // f
+               {0, SpacingOptions::Undecided},  // )
+               {0, SpacingOptions::Undecided},  // ;
+               {1, SpacingOptions::MustWrap},   // end
+           },
+           {
+               {yytokentype::TK_if, "if"},
+               {'(', "("},
+               {yytokentype::SymbolIdentifier, "r"},
+               {yytokentype::TK_EQ, "=="},
+               {yytokentype::SymbolIdentifier, "t"},
+               {')', ")"},
+
+               {yytokentype::TK_begin, "begin"},
+               {yytokentype::SymbolIdentifier, "a"},
+               {'.', "."},
+               {yytokentype::SymbolIdentifier, "b"},
+               {'(', "("},
+               {yytokentype::SymbolIdentifier, "c"},
+               {')', ")"},
+               {';', ";"},
+               {yytokentype::TK_end, "end"},
+
+               {yytokentype::TK_else, "else"},
+
+               {yytokentype::TK_begin, "begin"},
+               {yytokentype::SymbolIdentifier, "d"},
+               {'.', "."},
+               {yytokentype::SymbolIdentifier, "e"},
+               {'(', "("},
+               {yytokentype::SymbolIdentifier, "f"},
+               {')', ")"},
+               {';', ";"},
+               {yytokentype::TK_end, "end"},
+           }},
+
           // various built-in function calls
           {DefaultStyle,
            1,

@@ -1844,6 +1844,18 @@ static const std::initializer_list<FormatterTestCase>
          "      d.e(f);\n"
          "  endtask;\n"
          "endmodule\n"},
+        {"module m;"
+         "task static t; if (r == t) begin a.b(c); end else begin d.e(f); end endtask;"
+         "endmodule",
+         "module m;\n"
+         "  task static t;\n"
+         "    if (r == t) begin\n"
+         "      a.b(c);\n"
+         "    end else begin\n"
+         "      d.e(f);\n"
+         "    end\n"
+         "  endtask;\n"
+         "endmodule\n"},
 };
 
 TEST(FormatterEndToEndTest, FormatElseStatements) {
