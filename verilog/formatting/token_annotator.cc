@@ -496,6 +496,11 @@ static WithReason<SpacingOptions> BreakDecisionBetween(
     return {SpacingOptions::MustWrap, "end* keywords should start own lines"};
   }
 
+  if (right.TokenEnum() == TK_else) {
+    if (left.TokenEnum() != TK_end)
+      return {SpacingOptions::MustWrap, "'else' token should start its own line unless preceded by 'end' without label."};
+  }
+
   // By default, leave undecided for penalty minimization.
   return {SpacingOptions::Undecided,
           "Default: leave wrap decision to algorithm"};
