@@ -172,7 +172,12 @@ TEST(TokenWithContextTest, StreamOutput) {
 // Test that empty string token rebases correctly.
 TEST(RebaseStringViewTest, EmptyStringsZeroOffset) {
   const std::string text = "";
-  const std::string substr = "";  // different memory space
+  // We want another empty string, but we need to trick too smart compilers
+  // to give us a different memory address.
+  std::string substr = "foo";
+  substr.resize(0);  // Force empty string such as 'text' but memory space
+  ASSERT_NE(text.c_str(), substr.c_str()) << "Mismatch in memory assumption";
+
   EXPECT_FALSE(BoundsEqual(text, substr));
   TokenInfo token(0, text);
   EXPECT_EQ(token.left(text), 0);
