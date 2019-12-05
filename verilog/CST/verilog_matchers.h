@@ -280,6 +280,16 @@ static const auto AlwaysStatementHasEventControlStar =
 static const auto AlwaysKeyword =
     verible::matcher::MakePathMatcher({L(TK_always)});
 
+// Matches occurrence of the 'always_comb' keyword.
+// This is needed to distinguish between various kAlwaysStatement's.
+static const auto AlwaysCombKeyword =
+    verible::matcher::MakePathMatcher({L(TK_always_comb)});
+
+// Matches occurrence of the 'always_ff' keyword.
+// This is needed to distinguish between various kAlwaysStatement's.
+static const auto AlwaysFFKeyword =
+    verible::matcher::MakePathMatcher({L(TK_always_ff)});
+
 // Matches legacy-style begin-block inside generate region.
 //
 // For instance, matches:
