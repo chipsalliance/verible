@@ -124,18 +124,19 @@ std::ostream& operator<<(std::ostream& stream,
   return printer.PrintTree(stream);
 }
 
-void MoveLastLeafIntoPreviousSibling(TokenPartitionTree* tree) {
+TokenPartitionTree* MoveLastLeafIntoPreviousSibling(TokenPartitionTree* tree) {
   auto* rightmost_leaf = tree->RightmostDescendant();
   auto* target_leaf = rightmost_leaf->PreviousLeaf();
-  if (target_leaf == nullptr) return;
+  if (target_leaf == nullptr) return nullptr;
 
   // if 'tree' is not an ancestor of target_leaf, do not modify.
-  if (!target_leaf->ContainsAncestor(tree)) return;
+  if (!target_leaf->ContainsAncestor(tree)) return nullptr;
 
   // Verify continuity of token ranges between adjacent leaves.
   CHECK(target_leaf->Value().TokensRange().end() ==
         rightmost_leaf->Value().TokensRange().begin());
 
+  auto* rightmost_leaf_parent = rightmost_leaf->Parent();
   {
     // Extend the upper-bound of the previous leaf partition to cover the
     // partition that is about to be removed.
@@ -151,12 +152,16 @@ void MoveLastLeafIntoPreviousSibling(TokenPartitionTree* tree) {
     node->Value().SpanUpToToken(range_end);
 
     // Remove the obsolete partition, rightmost_leaf.
-    rightmost_leaf->Parent()->Children().pop_back();
+    // Caution: Existing references to the obsolete partition will be
+    // invalidated!
+    rightmost_leaf_parent->Children().pop_back();
   }
 
   // Sanity check invariants.
   VerifyFullTreeFormatTokenRanges(
       *tree, tree->LeftmostDescendant()->Value().TokensRange().begin());
+
+  return rightmost_leaf_parent;
 }
 
 }  // namespace verible

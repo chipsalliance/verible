@@ -73,7 +73,9 @@ std::ostream& operator<<(std::ostream& stream,
 // Transformations (modifying):
 
 // Moves the rightmost leaf to the leaf partition that precedes it.
-void MoveLastLeafIntoPreviousSibling(TokenPartitionTree*);
+// Returns the parent of the leaf partition that was moved if the move
+// occurred, else nullptr.
+TokenPartitionTree* MoveLastLeafIntoPreviousSibling(TokenPartitionTree*);
 
 }  // namespace verible
 

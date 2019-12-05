@@ -768,8 +768,11 @@ void TreeUnwrapper::Visit(const verible::SyntaxTreeNode& node) {
               {NodeEnum::kGenerateBlock, NodeEnum::kLoopGenerateConstruct}))) {
         // TODO(b/142684459): same for if-statement case, and other situations
         // where we want 'begin' to continue a previous partition.
-        verible::MoveLastLeafIntoPreviousSibling(
-            CurrentTokenPartition()->Root());
+
+        // Similar to verible::MoveLastLeafIntoPreviousSibling(), but
+        // ensures that the CurrentTokenPartition() is updated to not reference
+        // a potentially invalid removed partition.
+        MergeLastTwoPartitions();
       }
       // else close-out current token partition?
       break;
