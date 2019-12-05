@@ -15,29 +15,21 @@
 // This unit provides helper functions that pertain to SystemVerilog
 // net declaration nodes in the parser-generated concrete syntax tree.
 
-#ifndef VERIBLE_VERILOG_CST_NET_H_
-#define VERIBLE_VERILOG_CST_NET_H_
+#ifndef VERIBLE_VERILOG_CST_DATA_H_
+#define VERIBLE_VERILOG_CST_DATA_H_
 
 #include <vector>
 
-#include "common/analysis/syntax_tree_search.h"
 #include "common/text/concrete_syntax_leaf.h"
 #include "common/text/concrete_syntax_tree.h"
 #include "common/text/symbol.h"
 
 namespace verilog {
 
-// Find all net declarations.  In the grammar, net_declaration only falls under
-// package_or_generate_item, so this excludes nets declared as ports.
-// See port.h for port declarations.
-// TODO(b/132652866): handle data declarations like 'logic' and 'reg'.
-std::vector<verible::TreeSearchMatch> FindAllNetDeclarations(
-    const verible::Symbol&);
-
-// Returns tokens that correspond to declared names in net declarations
-std::vector<const verible::TokenInfo*> GetIdentifiersFromNetDeclaration(
+// Returns tokens that correspond to declared names in data declarations
+std::vector<const verible::TokenInfo*> GetIdentifiersFromDataDeclaration(
     const verible::Symbol& symbol);
 
 }  // namespace verilog
 
-#endif  // VERIBLE_VERILOG_CST_NET_H_
+#endif  // VERIBLE_VERILOG_CST_DATA_H_

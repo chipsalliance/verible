@@ -27,6 +27,9 @@
 #include "common/text/syntax_tree_context.h"
 #include "common/text/token_info.h"
 #include "common/util/logging.h"
+#include "verilog/CST/data.h"
+#include "verilog/CST/identifier.h"
+#include "verilog/CST/net.h"
 #include "verilog/CST/port.h"
 #include "verilog/analysis/descriptions.h"
 #include "verilog/analysis/lint_rule_registry.h"
@@ -58,14 +61,27 @@ std::string SignalNameStyleRule::GetDescription(
 void SignalNameStyleRule::HandleSymbol(const verible::Symbol& symbol,
                                        const SyntaxTreeContext& context) {
   verible::matcher::BoundSymbolManager manager;
-  if (matcher_.Matches(symbol, &manager)) {
-    // TODO(kathuriac): Check for module body signal declarations.
+  if (matcher_port_.Matches(symbol, &manager)) {
     const auto* identifier_leaf =
         GetIdentifierFromModulePortDeclaration(symbol);
     const auto name = ABSL_DIE_IF_NULL(identifier_leaf)->get().text;
     if (!verible::IsLowerSnakeCaseWithDigits(name))
       violations_.push_back(
           LintViolation(identifier_leaf->get(), kMessage, context));
+  } else if (matcher_net_.Matches(symbol, &manager)) {
+    const auto identifier_leaves = GetIdentifiersFromNetDeclaration(symbol);
+    for (auto& leaf : identifier_leaves) {
+      const auto name = leaf->text;
+      if (!verible::IsLowerSnakeCaseWithDigits(name))
+        violations_.push_back(LintViolation(*leaf, kMessage, context));
+    }
+  } else if (matcher_data_.Matches(symbol, &manager)) {
+    const auto identifier_leaves = GetIdentifiersFromDataDeclaration(symbol);
+    for (auto& leaf : identifier_leaves) {
+      const auto name = leaf->text;
+      if (!verible::IsLowerSnakeCaseWithDigits(name))
+        violations_.push_back(LintViolation(*leaf, kMessage, context));
+    }
   }
 }
 

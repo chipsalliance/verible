@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "verilog/CST/net.h"
+#include "verilog/CST/data.h"
 
 #include <vector>
 
@@ -31,30 +31,25 @@ namespace verilog {
 using verible::Symbol;
 using verible::TokenInfo;
 
-std::vector<verible::TreeSearchMatch> FindAllNetDeclarations(
-    const verible::Symbol& root) {
-  return SearchSyntaxTree(root, NodekNetDeclaration());
-}
-
-// Helper predicate to match all types of applicable nets
+// Helper predicate to match all types of applicable variables
 static bool ExpectedTagPredicate(const Symbol& symbol) {
-  verible::SymbolTag var_symbol = {verible::SymbolKind::kNode,
-                                   static_cast<int>(NodeEnum::kNetVariable)};
-  verible::SymbolTag assign_symbol = {
+  verible::SymbolTag reg_symbol = {
       verible::SymbolKind::kNode,
-      static_cast<int>(NodeEnum::kNetDeclarationAssignment)};
+      static_cast<int>(NodeEnum::kRegisterVariable)};
+  verible::SymbolTag gate_symbol = {verible::SymbolKind::kNode,
+                                    static_cast<int>(NodeEnum::kGateInstance)};
 
-  // This exploits the fact that net identifiers can be found in:
-  // - kNetVariable, e.g.:
-  //     module top; wire x; endmodule;
+  // This exploits the fact that data identifiers can be found in:
+  // - kRegisterVariable, e.g.:
+  //     module top; logic x; endmodule;
   //
-  // - as well as kNetDeclarationAssignment, e.g.:
-  //     module top; wire x = 1; endmodule;
+  // - as well as kGateInstance, e.g.:
+  //     module top; foo bar(0); endmodule;
 
-  return symbol.Tag() == var_symbol || symbol.Tag() == assign_symbol;
+  return symbol.Tag() == reg_symbol || symbol.Tag() == gate_symbol;
 }
 
-std::vector<const TokenInfo*> GetIdentifiersFromNetDeclaration(
+std::vector<const TokenInfo*> GetIdentifiersFromDataDeclaration(
     const Symbol& symbol) {
   std::vector<const TokenInfo*> identifiers;
 

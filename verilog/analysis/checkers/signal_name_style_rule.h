@@ -56,7 +56,9 @@ class SignalNameStyleRule : public verible::SyntaxTreeLintRule {
 
   using Matcher = verible::matcher::Matcher;
 
-  Matcher matcher_ = NodekPortDeclaration();
+  Matcher matcher_port_ = NodekPortDeclaration();
+  Matcher matcher_net_ = NodekNetDeclaration();
+  Matcher matcher_data_ = NodekDataDeclaration();
 
   std::vector<verible::LintViolation> violations_;
 };
