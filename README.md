@@ -56,8 +56,8 @@ sudo install bazel-bin/verilog/tools/lint/verilog_lint /usr/local/bin
 
 Join the Verible community!
 
-*   Developers: verible-dev@googlegroups.com ([join](https://groups.google.com/forum/#!forum/verible-dev/join))
-*   Users: verible-users@googlegroups.com ([join](https://groups.google.com/forum/#!forum/verible-users/join))
+*   Developers: verible-dev@groups.google.com
+*   Users: verible-users@groups.google.com
 
 ## SystemVerilog Support
 
