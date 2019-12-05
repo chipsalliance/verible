@@ -18,6 +18,7 @@
 #include <vector>
 
 #include "absl/strings/str_cat.h"
+#include "absl/strings/match.h"
 #include "common/analysis/citation.h"
 #include "common/analysis/lint_rule_status.h"
 #include "common/analysis/matcher/bound_symbol_manager.h"
@@ -63,9 +64,9 @@ void StructUnionNameStyleRule::HandleSymbol(const verible::Symbol& symbol,
   if (matcher_typedef_.Matches(symbol, &manager)) {
     const char* msg;
     if (!FindAllStructDataTypeDeclarations(symbol).empty()) {
-      msg = StructUnionNameStyleRule::kMessageStruct;
+      msg = kMessageStruct;
     } else if (!FindAllUnionDataTypeDeclarations(symbol).empty()) {
-      msg = StructUnionNameStyleRule::kMessageUnion;
+      msg = kMessageUnion;
     } else {
       // Neither a struct nor union definition
       return;
@@ -74,7 +75,7 @@ void StructUnionNameStyleRule::HandleSymbol(const verible::Symbol& symbol,
               GetIdentifierFromTypeDeclaration(symbol);
     const auto name = ABSL_DIE_IF_NULL(identifier_leaf)->get().text;
     if (!verible::IsLowerSnakeCaseWithDigits(name)
-        || (name.compare(name.size()-2, 2, "_t") != 0)) {
+        || !absl::EndsWith(name, "_t")) {
       violations_.push_back(
           LintViolation(identifier_leaf->get(), msg, context));
     }
