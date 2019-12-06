@@ -55,6 +55,7 @@ constexpr const char* kDefaultRuleSet[] = {
     // TODO(b/117554159): "case-missing-default",
     // TODO(b/117131903): "proper-parameter-declaration",
     // TODO(b/131637160): "signal-name-style",
+    // TODO(b/145244869): "struct-union-name-style",
     // TODO(b/138351837): "forbid-defparam",
     // TODO(b/63778426): "typedef-enums",
     // TODO(b/145245466): "typedef-structs-unions",

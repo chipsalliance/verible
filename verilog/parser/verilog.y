@@ -3404,12 +3404,26 @@ type_declaration
     { $$ = MakeTaggedNode(N::kTypeDeclaration, $1, $2, $3, $4, $5); }
   | TK_typedef interface_type GenericIdentifier ';'
     { $$ = MakeTaggedNode(N::kTypeDeclaration, $1, $2, nullptr, $3, $4, nullptr); }
+  /* TODO: Figure out how to make the braced members list optional
+     to make these more robust */
   | TK_typedef TK_enum GenericIdentifier ';'
-    { $$ = MakeTaggedNode(N::kTypeDeclaration, $1, $2, nullptr, $3, $4, nullptr); }
+    { $$ = MakeTaggedNode(N::kTypeDeclaration, $1,
+                          MakeTaggedNode(N::kDataTypePrimitive,
+                                         MakeTaggedNode(N::kEnumDataType,
+                                                        $2, nullptr, nullptr)),
+                          nullptr, $3, $4, nullptr); }
   | TK_typedef TK_struct GenericIdentifier ';'
-    { $$ = MakeTaggedNode(N::kTypeDeclaration, $1, $2, nullptr, $3, $4, nullptr); }
+    { $$ = MakeTaggedNode(N::kTypeDeclaration, $1,
+                          MakeTaggedNode(N::kDataTypePrimitive,
+                                         MakeTaggedNode(N::kStructDataType,
+                                                        $2, nullptr, nullptr)),
+                          nullptr, $3, $4, nullptr); }
   | TK_typedef TK_union GenericIdentifier ';'
-    { $$ = MakeTaggedNode(N::kTypeDeclaration, $1, $2, nullptr, $3, $4, nullptr); }
+    { $$ = MakeTaggedNode(N::kTypeDeclaration, $1,
+                          MakeTaggedNode(N::kDataTypePrimitive,
+                                         MakeTaggedNode(N::kUnionDataType,
+                                                        $2, nullptr, nullptr)),
+                          nullptr, $3, $4, nullptr); }
   | TK_typedef GenericIdentifier ';'
     { $$ = MakeTaggedNode(N::kTypeDeclaration, $1, nullptr, nullptr, $2, $3, nullptr); }
   ;

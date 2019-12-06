@@ -29,8 +29,27 @@ namespace verilog {
 std::vector<verible::TreeSearchMatch> FindAllDataTypeDeclarations(
     const verible::Symbol&);
 
+// Finds all kTypeDeclaration nodes. Used for testing the functions below.
+std::vector<verible::TreeSearchMatch> FindAllTypeDeclarations(
+    const verible::Symbol&);
+
+// Finds all node kStructDataType declarations. Used for testing if the type
+// declaration is a struct.
+std::vector<verible::TreeSearchMatch> FindAllStructDataTypeDeclarations(
+    const verible::Symbol& root);
+
+// Finds all node kUnionDataType declarations. Used for testing if the type
+// declaration is a union.
+std::vector<verible::TreeSearchMatch> FindAllUnionDataTypeDeclarations(
+    const verible::Symbol& root);
+
 // Returns true if the node kDataType has declared a storage type.
 bool IsStorageTypeOfDataTypeSpecified(const verible::Symbol&);
+
+// Extract the name of the typedef identifier from an enum, struct or union
+// declaration.
+const verible::SyntaxTreeLeaf* GetIdentifierFromTypeDeclaration(
+    const verible::Symbol& symbol);
 
 }  // namespace verilog
 
