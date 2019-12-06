@@ -489,8 +489,6 @@ static const auto* FormatTokenTypeMap =
         {yytokentype::TK_LOR, FTT::binary_operator},
         {yytokentype::TK_LAND, FTT::binary_operator},
         {yytokentype::TK_TAND, FTT::binary_operator},
-        {yytokentype::TK_NAND, FTT::binary_operator},
-        {yytokentype::TK_NOR, FTT::binary_operator},
         {yytokentype::TK_NXOR, FTT::binary_operator},
         {yytokentype::TK_LOGEQUIV, FTT::binary_operator},
         {yytokentype::TK_TRIGGER, FTT::binary_operator},
@@ -535,6 +533,8 @@ static const auto* FormatTokenTypeMap =
         // unary operators
         {yytokentype::TK_INCR, FTT::unary_operator},
         {yytokentype::TK_DECR, FTT::unary_operator},
+        {yytokentype::TK_NAND, FTT::unary_operator},
+        {yytokentype::TK_NOR, FTT::unary_operator},
 
         // hierarchy
         {yytokentype::TK_SCOPE_RES, FTT::hierarchy},
@@ -560,9 +560,16 @@ FTT GetFormatTokenType(yytokentype e) {
   } else {
     // single char tokens which use ASCII values as enum.
     switch (static_cast<int>(e)) {
+      /* arithmetic */
       case '+':
-      case '*':
       case '-':
+      case '*':
+      case '/':
+      case '%':
+      /* bitwise */
+      case '&':
+      case '|':
+      case '^':
         return FTT::binary_operator;
       case '?':
         // Technically, ?: is a ternary operator, but nonetheless we
