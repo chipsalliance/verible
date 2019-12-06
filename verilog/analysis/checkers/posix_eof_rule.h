@@ -28,6 +28,9 @@ namespace verilog {
 namespace analysis {
 
 // Detects whether last line ends with newline.
+// See
+// https://pubs.opengroup.org/onlinepubs/9699919799/basedefs/V1_chap03.html#tag_03_206
+// for the formal definition of a line.
 // Rather than implement as a LineLintRule which would traverse the entire
 // file unnecessarily, implementing as a TextStructureLintRule efficiently
 // examines only the last line of the file, because all previous lines have

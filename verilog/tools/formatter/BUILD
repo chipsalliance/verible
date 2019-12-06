@@ -1,4 +1,5 @@
 # 'verilog_format' is a SystemVerilog source code formatter.
+#
 
 licenses(["notice"])
 

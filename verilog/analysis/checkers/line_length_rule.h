@@ -34,6 +34,7 @@ namespace analysis {
 class LineLengthRule : public verible::TextStructureLintRule {
  public:
   enum {
+    // Dictated by line-length styleguide rule.
     kMaxLineLength = 100
   };
 

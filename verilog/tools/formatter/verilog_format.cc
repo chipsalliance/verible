@@ -183,14 +183,14 @@ int main(int argc, char** argv) {
       if (!verilog::LexicallyEquivalent(original_tokens, formatted_tokens,
                                         &std::cerr)) {
         std::cerr << "Formatted output is lexically different from the input.  "
-                  << std::endl;
+                  << "Please file a bug." << std::endl;
         exit_code = 1;
       }
     }
 
     if (!relex_status.ok() || !reparse_status.ok()) {
       std::cerr << "Error lex/parsing-ing formatted output.  "
-                << std::endl;
+                << "Please file a bug." << std::endl;
       const auto& token_errors = reanalyzer->TokenErrorMessages();
       // Only print the first error.
       if (!token_errors.empty()) {

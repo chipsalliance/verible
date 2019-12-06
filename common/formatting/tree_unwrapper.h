@@ -34,7 +34,8 @@ namespace verible {
 // tree visitor interleaved with a raw, unfiltered token stream. This allows the
 // visitor to visit tokens between tree leaves, such as comments from the raw
 // token stream, while building the unwrapped lines.
-// For more information about the (unfiltered) TokenStreamView, see:
+// For more information about the (unfiltered) TokenStreamView, see
+// design documentation.
 class TreeUnwrapper : public TreeContextVisitor {
  protected:
   typedef std::vector<verible::PreFormatToken> preformatted_tokens_type;
