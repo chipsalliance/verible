@@ -63,6 +63,8 @@ void StructUnionNameStyleRule::HandleSymbol(const verible::Symbol& symbol,
   verible::matcher::BoundSymbolManager manager;
   if (matcher_typedef_.Matches(symbol, &manager)) {
     const char* msg;
+    //TODO: This can be changed to checking type of child (by index) when we
+    // have consistent shape for all kTypeDeclaration nodes.
     if (!FindAllStructDataTypeDeclarations(symbol).empty()) {
       msg = kMessageStruct;
     } else if (!FindAllUnionDataTypeDeclarations(symbol).empty()) {
