@@ -54,6 +54,7 @@ _linter_test_configs = [
     ("line-length", "long_line", True),
     ("no-trailing-spaces", "trailing_spaces", True),
     ("forbid-defparam", "defparam_usage", False),
+    ("typedef-enums", "typedef_enums", False),
 ]
 
 [

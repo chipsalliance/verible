@@ -56,6 +56,7 @@ constexpr const char* kDefaultRuleSet[] = {
     // TODO(b/117131903): "proper-parameter-declaration",
     // TODO(b/131637160): "signal-name-style",
     // TODO(b/138351837): "forbid-defparam",
+    // TODO(b/63778426): "typedef-enums",
     // "endif-comment",
 };
 // LINT.ThenChange(../tools/lint/BUILD)
