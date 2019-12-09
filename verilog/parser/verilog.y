@@ -7743,7 +7743,6 @@ goto_repetition
   ;
 
 covergroup_declaration
-  // TODO(fangism): introduce a kCovergroupHeader that spans up to ';'
   : TK_covergroup GenericIdentifier tf_port_list_paren_opt coverage_event_opt ';'
     coverage_spec_or_option_list_opt
     TK_endgroup label_opt
