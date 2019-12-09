@@ -337,6 +337,7 @@ ExpectedUnwrappedLineTree NL(int spaces,
 #define StructUnionMemberList N
 #define PropertyItemList N
 #define VarDeclList N
+#define CovergroupHeader N
 #define CovergroupItemList N
 #define CoverpointItemList N
 #define CrossItemList N
@@ -3537,13 +3538,15 @@ const TreeUnwrapperTestData kUnwrapCovergroupTestCases[] = {
         "endgroup "
         "covergroup cg2(string s);"
         "endgroup ",
-        L(0, {"covergroup", "cg", "("}),
-        TFPortList(2, L(2, {"string", "s"})),
-        L(0, {")", ";"}),
+        CovergroupHeader(
+            0, L(0, {"covergroup", "cg", "("}),
+            TFPortList(2, L(2, {"string", "s"})),
+            L(0, {")", ";"})),
         L(0, {"endgroup"}),
-        L(0, {"covergroup", "cg2", "("}),
-        TFPortList(2, L(2, {"string", "s"})),
-        L(0, {")", ";"}),
+        CovergroupHeader(
+            0, L(0, {"covergroup", "cg2", "("}),
+            TFPortList(2, L(2, {"string", "s"})),
+            L(0, {")", ";"})),
         L(0, {"endgroup"}),
     },
 
@@ -3553,9 +3556,10 @@ const TreeUnwrapperTestData kUnwrapCovergroupTestCases[] = {
         "option.name = cg_name;"
         "option.per_instance=1;"
         "endgroup ",
-        L(0, {"covergroup", "cg", "("}),
-        TFPortList(2, L(2, {"string", "s"})),
-        L(0, {")", ";"}),
+        CovergroupHeader(
+            0, L(0, {"covergroup", "cg", "("}),
+            TFPortList(2, L(2, {"string", "s"})),
+            L(0, {")", ";"})),
         CovergroupItemList(
             1, L(1, {"option", ".", "name", "=", "cg_name", ";"}),
             L(1, {"option", ".", "per_instance", "=", "1", ";"})),
@@ -3568,9 +3572,10 @@ const TreeUnwrapperTestData kUnwrapCovergroupTestCases[] = {
         "q_cp : coverpoint cp;"
         "q_cp2 : coverpoint cp2;"
         "endgroup ",
-        L(0, {"covergroup", "cg", "("}),
-        TFPortList(2, L(2, {"string", "s"})),
-        L(0, {")", ";"}),
+        CovergroupHeader(
+            0, L(0, {"covergroup", "cg", "("}),
+            TFPortList(2, L(2, {"string", "s"})),
+            L(0, {")", ";"})),
         CovergroupItemList(1, L(1, {"q_cp", ":", "coverpoint", "cp", ";"}),
                            L(1, {"q_cp2", ":", "coverpoint", "cp2", ";"})),
         L(0, {"endgroup"}),
@@ -3584,9 +3589,10 @@ const TreeUnwrapperTestData kUnwrapCovergroupTestCases[] = {
         "  bins zoo = {pig};"
         "}"
         "endgroup ",
-        L(0, {"covergroup", "cg", "("}),
-        TFPortList(2, L(2, {"string", "s"})),
-        L(0, {")", ";"}),
+        CovergroupHeader(
+            0, L(0, {"covergroup", "cg", "("}),
+            TFPortList(2, L(2, {"string", "s"})),
+            L(0, {")", ";"})),
         CovergroupItemList(
             1, L(1, {"q_cp", ":", "coverpoint", "cp", "{"}),
             CoverpointItemList(
@@ -3602,9 +3608,10 @@ const TreeUnwrapperTestData kUnwrapCovergroupTestCases[] = {
         "x_cross : cross s1, s2;"
         "x_cross2 : cross s2, s1;"
         "endgroup ",
-        L(0, {"covergroup", "cg", "("}),
-        TFPortList(2, L(2, {"string", "s"})),
-        L(0, {")", ";"}),
+        CovergroupHeader(
+            0, L(0, {"covergroup", "cg", "("}),
+            TFPortList(2, L(2, {"string", "s"})),
+            L(0, {")", ";"})),
         CovergroupItemList(
             1, L(1, {"x_cross", ":", "cross", "s1", ",", "s2", ";"}),
             L(1, {"x_cross2", ":", "cross", "s2", ",", "s1", ";"})),
@@ -3619,9 +3626,10 @@ const TreeUnwrapperTestData kUnwrapCovergroupTestCases[] = {
         "  bins b = binsof(y) intersect {e};"
         "}"
         "endgroup ",
-        L(0, {"covergroup", "cg", "("}),
-        TFPortList(2, L(2, {"string", "s"})),
-        L(0, {")", ";"}),
+        CovergroupHeader(
+            0, L(0, {"covergroup", "cg", "("}),
+            TFPortList(2, L(2, {"string", "s"})),
+            L(0, {")", ";"})),
         CovergroupItemList(
             1, L(1, {"x_cross", ":", "cross", "s1", ",", "s2", "{"}),
             CrossItemList(2,
