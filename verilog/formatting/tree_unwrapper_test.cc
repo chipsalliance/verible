@@ -3640,6 +3640,18 @@ const TreeUnwrapperTestData kUnwrapCovergroupTestCases[] = {
             L(1, {"}"})),
         L(0, {"endgroup"}),
     },
+    {
+        "covergroup declaration with a function",
+        "covergroup cg(string s) with function sample(bit pending);"
+        "endgroup ",
+        CovergroupHeader(
+            0, L(0, {"covergroup", "cg", "("}),
+            TFPortList(2, L(2, {"string", "s"})),
+            L(0, {")", "with", "function", "sample", "("}),
+            N(2, L(2, {"bit", "pending"})),
+            L(0, {")", ";"})),
+        L(0, {"endgroup"}),
+    },
 };
 
 // Test that TreeUnwrapper produces correct UnwrappedLines from covergroups
