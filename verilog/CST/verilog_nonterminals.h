@@ -382,6 +382,7 @@ enum class NodeEnum {
   kGotoRepetition,
   kSequenceRepetitionExpression,
   kCovergroupDeclaration,
+  kCovergroupHeader,
   kCoverageSpecOptionList,
   kCoverageOption,
   kCoverageEvent,
