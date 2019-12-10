@@ -7743,11 +7743,13 @@ goto_repetition
   ;
 
 covergroup_declaration
-  // TODO(fangism): introduce a kCovergroupHeader that spans up to ';'
   : TK_covergroup GenericIdentifier tf_port_list_paren_opt coverage_event_opt ';'
     coverage_spec_or_option_list_opt
     TK_endgroup label_opt
-    { $$ = MakeTaggedNode(N::kCovergroupDeclaration, $1, $2, $3, $4, $5, $6, $7, $8); }
+    { $$ = MakeTaggedNode(N::kCovergroupDeclaration,
+                               MakeTaggedNode(N::kCovergroupHeader,
+                                              $1, $2, $3, $4, $5),
+                               $6, $7, $8); }
   ;
 
 coverage_spec_or_option_list_opt

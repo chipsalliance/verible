@@ -1644,6 +1644,41 @@ static const std::initializer_list<FormatterTestCase> kFormatterTestCases = {
      "    a |-> b;\n"
      "  endproperty : p1\n"  // with end label
      "endmodule\n"},
+
+    // covergroup test cases
+    {// Minimal case
+     "covergroup c; endgroup\n",
+     "covergroup c;\n"
+     "endgroup\n"},
+    {// Minimal useful case
+     "covergroup c @ (posedge clk); coverpoint a; endgroup\n",
+     "covergroup c @(posedge clk);\n"
+     "  coverpoint a;\n"
+     "endgroup\n"},
+    {// Multiple coverpoints
+     "covergroup foo @(posedge clk); coverpoint a; coverpoint b; "
+     "coverpoint c; coverpoint d; endgroup\n",
+     "covergroup foo @(posedge clk);\n"
+     "  coverpoint a;\n"
+     "  coverpoint b;\n"
+     "  coverpoint c;\n"
+     "  coverpoint d;\n"
+     "endgroup\n"},
+    {// Multiple bins
+     "covergroup memory @ (posedge ce); address:coverpoint addr {"
+     "bins low={0,127}; bins high={128,255};} endgroup\n",
+     "covergroup memory @(posedge ce);\n"
+     "  address : coverpoint addr {\n"
+     "    bins low = {0, 127};\n"
+     "    bins high = {128, 255};\n"
+     "  }\n"
+     "endgroup\n"},
+    {// Custom sample() function
+     "covergroup c with function sample(bit i); endgroup\n",
+     "covergroup c with function sample (\n"
+     "    bit i\n"  // test cases are wrapped at 40
+     ");\n"
+     "endgroup\n"},
 };
 
 // Tests that formatter produces expected results, end-to-end.
