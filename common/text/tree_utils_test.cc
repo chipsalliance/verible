@@ -124,27 +124,41 @@ static constexpr absl::string_view kTestToken[] = {
     "test_token4",
 };
 
-TEST(TreeUtilsTest, GetLeftmostLeafLeaf) {
+TEST(GetLeftmostLeafTest, LeafOnly) {
   SymbolPtr leaf = Leaf(0, kTestToken[0]);
   auto leaf_opt = GetLeftmostLeaf(*leaf);
   EXPECT_TRUE(leaf_opt);
   EXPECT_EQ(leaf_opt->get().text, kTestToken[0]);
 }
 
-TEST(TreeUtilsTest, GetLeftmostLeafEmptyNode) {
+TEST(GetLeftmostLeafTest, EmptyNode) {
   SymbolPtr leaf = Node();
   auto leaf_opt = GetLeftmostLeaf(*leaf);
   EXPECT_FALSE(leaf_opt);
 }
 
-TEST(TreeUtilsTest, GetLeftmostLeafSingleChild) {
+TEST(GetLeftmostLeafTest, SingleChild) {
   SymbolPtr leaf = Node(Leaf(0, kTestToken[1]));
   auto leaf_opt = GetLeftmostLeaf(*leaf);
   EXPECT_TRUE(leaf_opt);
   EXPECT_EQ(leaf_opt->get().text, kTestToken[1]);
 }
 
-TEST(TreeUtilsTest, GetLeftmostLeafComplexTree) {
+TEST(GetLeftmostLeafTest, SingleChildWithNull) {
+  SymbolPtr leaf = Node(nullptr, Leaf(0, kTestToken[1]));
+  auto leaf_opt = GetLeftmostLeaf(*leaf);
+  EXPECT_TRUE(leaf_opt);
+  EXPECT_EQ(leaf_opt->get().text, kTestToken[1]);
+}
+
+TEST(GetLeftmostLeafTest, SingleChildNullFromNode) {
+  SymbolPtr leaf = Node(Node(nullptr), Node(Leaf(0, kTestToken[1])));
+  auto leaf_opt = GetLeftmostLeaf(*leaf);
+  EXPECT_TRUE(leaf_opt);
+  EXPECT_EQ(leaf_opt->get().text, kTestToken[1]);
+}
+
+TEST(GetLeftmostLeafTest, ComplexTree) {
   SymbolPtr leaf = Node(Node(Leaf(0, kTestToken[0])), Leaf(0, kTestToken[1]),
                         Node(Leaf(0, kTestToken[2]), Leaf(0, kTestToken[3])));
   auto leaf_opt = GetLeftmostLeaf(*leaf);
@@ -152,27 +166,41 @@ TEST(TreeUtilsTest, GetLeftmostLeafComplexTree) {
   EXPECT_EQ(leaf_opt->get().text, kTestToken[0]);
 }
 
-TEST(TreeUtilsTest, GetRightmostLeafLeaf) {
+TEST(GetRightmostLeafTest, LeafOnly) {
   SymbolPtr leaf = Leaf(0, kTestToken[0]);
   auto leaf_opt = GetRightmostLeaf(*leaf);
   EXPECT_TRUE(leaf_opt);
   EXPECT_EQ(leaf_opt->get().text, kTestToken[0]);
 }
 
-TEST(TreeUtilsTest, GetRightmostLeafEmptyNode) {
+TEST(GetRightmostLeafTest, EmptyNode) {
   SymbolPtr leaf = Node();
   auto leaf_opt = GetRightmostLeaf(*leaf);
   EXPECT_FALSE(leaf_opt);
 }
 
-TEST(TreeUtilsTest, GetRightmostLeafSingleChild) {
+TEST(GetRightmostLeafTest, SingleChild) {
   SymbolPtr leaf = Node(Leaf(0, kTestToken[2]));
   auto leaf_opt = GetRightmostLeaf(*leaf);
   EXPECT_TRUE(leaf_opt);
   EXPECT_EQ(leaf_opt->get().text, kTestToken[2]);
 }
 
-TEST(TreeUtilsTest, GetRightmostLeafComplexTree) {
+TEST(GetRightmostLeafTest, SingleChildWithNull) {
+  SymbolPtr leaf = Node(Leaf(0, kTestToken[2]), nullptr);
+  auto leaf_opt = GetRightmostLeaf(*leaf);
+  EXPECT_TRUE(leaf_opt);
+  EXPECT_EQ(leaf_opt->get().text, kTestToken[2]);
+}
+
+TEST(GetRightmostLeafTest, SingleChildNullFromNode) {
+  SymbolPtr leaf = Node(Node(Leaf(0, kTestToken[2])), Node(nullptr));
+  auto leaf_opt = GetRightmostLeaf(*leaf);
+  EXPECT_TRUE(leaf_opt);
+  EXPECT_EQ(leaf_opt->get().text, kTestToken[2]);
+}
+
+TEST(GetRightmostLeafTest, ComplexTree) {
   SymbolPtr leaf = Node(Node(Leaf(0, kTestToken[0])), Leaf(0, kTestToken[1]),
                         Node(Leaf(0, kTestToken[2]), Leaf(0, kTestToken[3])));
   auto leaf_opt = GetRightmostLeaf(*leaf);

@@ -62,7 +62,10 @@ const SyntaxTreeLeaf* GetRightmostLeaf(const Symbol& symbol) {
 
     for (const auto& child : reversed_view(node.children())) {
       if (child != nullptr) {
-        return GetRightmostLeaf(*child);
+        const auto* leaf = GetRightmostLeaf(*child);
+        if (leaf != nullptr) {
+          return leaf;
+        }
       }
     }
   }
@@ -81,7 +84,10 @@ const SyntaxTreeLeaf* GetLeftmostLeaf(const Symbol& symbol) {
 
     for (const auto& child : node.children()) {
       if (child != nullptr) {
-        return GetLeftmostLeaf(*child);
+        const auto* leaf = GetLeftmostLeaf(*child);
+        if (leaf != nullptr) {
+          return leaf;
+        }
       }
     }
   }
