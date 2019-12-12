@@ -136,11 +136,15 @@ ConcreteSyntaxTree* FindSubtreeStartingAtOffset(ConcreteSyntaxTree* tree,
 // This will never prune away the root node.
 void PruneSyntaxTreeAfterOffset(ConcreteSyntaxTree* tree, const char* offset);
 
-// Replace the syntax tree pointer with the largest subtree wholly contained
+// Returns the pointer to the largest subtree wholly contained
 // inside the text range spanned by trim_range.
 // tree must not be null.  Tokens outside of this range are discarded.
 // If there are multiple eligible subtrees in range, then this chooses the
 // first one.
+ConcreteSyntaxTree* ZoomSyntaxTree(ConcreteSyntaxTree* tree,
+                                   absl::string_view trim_range);
+
+// Same as ZoomSyntaxTree(), except that it modifies 'tree' in-place.
 void TrimSyntaxTree(ConcreteSyntaxTree* tree, absl::string_view trim_range);
 
 using LeafMutator = std::function<void(TokenInfo*)>;

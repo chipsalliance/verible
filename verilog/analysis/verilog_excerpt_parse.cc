@@ -29,9 +29,9 @@
 #include "common/util/status.h"
 #include "verilog/analysis/verilog_analyzer.h"
 
-using verible::container::FindOrNull;
-
 namespace verilog {
+
+using verible::container::FindOrNull;
 
 // Function template to create any mini-parser for Verilog.
 // 'prolog' and 'epilog' are text that wrap around the 'text' argument to
@@ -53,7 +53,10 @@ static std::unique_ptr<VerilogAnalyzer> AnalyzeVerilogConstruct(
       /* use_parser_directive_comments_ */ false);
 
   if (!ABSL_DIE_IF_NULL(analyzer_ptr)->Analyze().ok()) {
-    VLOG(2) << __FUNCTION__ << ": Analyze() failed.";
+    VLOG(2) << __FUNCTION__ << ": Analyze() failed.  code:\n" << analyze_text;
+    // Continue to processes, even if there's an error, so that token
+    // string_views can be properly rebased.
+    // There may or may not be a formed syntax tree.
   }
 
   // Trim off prolog and epilog from internal text structure to make it look

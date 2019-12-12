@@ -396,6 +396,34 @@ TEST(AnalyzeVerilogAutomaticMode, InferredModuleBodyMode) {
   }
 }
 
+struct TestCase {
+  const char* code;
+  bool valid;
+};
+
+// Tests that various invalid input does not crash.
+TEST(AnalyzeVerilogAutomaticMode, InvalidInputs) {
+  constexpr TestCase test_cases[] = {
+      {"`s(\n", false},
+      {"`s(}\n", false},
+      {"`s(};\n", false},
+      {"`s(};if\n", false},
+      {"`s(};if(\n", false},
+      {"`s(};if(k\n", false},
+      {"`s(};if(k)\n",
+       // valid because it is macro call is un-expanded, closed at ')'
+       true},
+      {"`s(};if(k);\n", true},
+  };
+  for (const auto& test : test_cases) {
+    std::unique_ptr<VerilogAnalyzer> analyzer_ptr =
+        VerilogAnalyzer::AnalyzeAutomaticMode(test.code, "<file>");
+    EXPECT_EQ(ABSL_DIE_IF_NULL(analyzer_ptr)->ParseStatus().ok(), test.valid)
+        << "code was:\n"
+        << test.code;
+  }
+}
+
 // Tests that when retrying parsing in a different mode fails, we get the result
 // of the analyzer that got further before the first syntax error.
 TEST(AnalyzeVerilogAutomaticMode, InferredModuleBodyModeFarthestFirstError) {

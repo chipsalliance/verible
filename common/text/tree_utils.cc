@@ -14,9 +14,8 @@
 
 #include "common/text/tree_utils.h"
 
-#include <stdlib.h>
-
 #include <algorithm>
+#include <cstdlib>
 #include <functional>
 #include <iostream>
 #include <memory>
@@ -128,7 +127,7 @@ const SyntaxTreeLeaf& SymbolCastToLeaf(const Symbol& symbol) {
 
 namespace {
 // FirstSubtreeFinderMutable is a visitor class that supports the implementation
-// of FirstSubtreeFinderMutable().  It is derived from
+// of FindFirstSubtreeMutable().  It is derived from
 // MutableTreeVisitorRecursive because it is intended for use with pruning and
 // modifying syntax trees.
 class FirstSubtreeFinderMutable : public MutableTreeVisitorRecursive {
@@ -241,7 +240,7 @@ ConcreteSyntaxTree* FindSubtreeStartingAtOffset(
     ConcreteSyntaxTree* tree, const char* first_token_offset) {
   auto predicate = [=](const Symbol& s) {
     const SyntaxTreeLeaf* leftmost = GetLeftmostLeaf(s);
-    if (leftmost) {
+    if (leftmost != nullptr) {
       if (std::distance(first_token_offset, leftmost->get().text.begin()) >=
           0) {
         return true;
@@ -297,7 +296,7 @@ void PruneSyntaxTreeAfterOffset(ConcreteSyntaxTree* tree, const char* offset) {
   PruneTreeFromRight(tree, offset);
 }
 
-// Helper functions for TrimSyntaxTree
+// Helper functions for ZoomSyntaxTree
 namespace {
 // Return the upper bound offset of the rightmost token in the tree.
 const char* RightmostOffset(const Symbol& symbol) {
@@ -305,55 +304,45 @@ const char* RightmostOffset(const Symbol& symbol) {
   return ABSL_DIE_IF_NULL(leaf_ptr)->get().text.end();
 }
 
-// Return the first child node/leaf of the immediate subtree.
+// Return the first non-null child node/leaf of the immediate subtree.
 ConcreteSyntaxTree* LeftSubtree(ConcreteSyntaxTree* tree) {
-  if (*ABSL_DIE_IF_NULL(tree) == nullptr) {
-    return nullptr;
-  }
-  if ((*tree)->Kind() == verible::SymbolKind::kLeaf) {
+  if ((ABSL_DIE_IF_NULL(*tree))->Kind() == verible::SymbolKind::kLeaf) {
     // Leaves don't have subtrees.
     return nullptr;
   }
   auto& children = down_cast<SyntaxTreeNode&>(*tree->get()).mutable_children();
-  if (children.empty()) {
-    return nullptr;
+  for (auto& child : children) {
+    if (child != nullptr) return &child;
   }
-  return &children.front();
+  return nullptr;
 }
 }  // namespace
 
-void TrimSyntaxTree(ConcreteSyntaxTree* tree, absl::string_view trim_range) {
-  const auto left_offset = trim_range.begin();
-  const auto right_offset = trim_range.end();
-  // Find shallowest syntax tree node that starts at the given byte offset.
-  ConcreteSyntaxTree* const shallowest_match =
-      FindSubtreeStartingAtOffset(ABSL_DIE_IF_NULL(tree), left_offset);
-  if (shallowest_match == nullptr) {
-    // If no match found, clear out the tree.
-    *tree = nullptr;
-    return;
-  }
+ConcreteSyntaxTree* ZoomSyntaxTree(ConcreteSyntaxTree* tree,
+                                   absl::string_view trim_range) {
+  if (*tree == nullptr) return nullptr;
 
-  if (*tree != *shallowest_match) {
-    // Replace this syntax tree.
-    *tree = std::move(*shallowest_match);
-  }
+  const auto left_offset = trim_range.begin();
+  // Find shallowest syntax tree node that starts at the given byte offset.
+  ConcreteSyntaxTree* match =
+      FindSubtreeStartingAtOffset(ABSL_DIE_IF_NULL(tree), left_offset);
 
   // Take leftmost subtree until its right bound falls within offset.
-  while (RightmostOffset(**tree) > right_offset) {
-    ConcreteSyntaxTree* sub = LeftSubtree(tree);
-    if (sub != nullptr) {
-      *tree = std::move(*sub);
-    } else {
-      // No matches remaining.
-      *tree = nullptr;
-      return;
-    }
+  const auto right_offset = trim_range.end();
+  while (match != nullptr && *match != nullptr &&
+         RightmostOffset(*ABSL_DIE_IF_NULL(*match)) > right_offset) {
+    match = LeftSubtree(match);
   }
+  return match;
+}
 
-  // Remove nodes and leaves that lie beyond the right_offset.
-  // TODO(fangism): Is this no longer needed after the previous step?
-  PruneSyntaxTreeAfterOffset(tree, right_offset);
+void TrimSyntaxTree(ConcreteSyntaxTree* tree, absl::string_view trim_range) {
+  auto* replacement = ZoomSyntaxTree(tree, trim_range);
+  if (replacement == nullptr || *replacement == nullptr) {
+    *tree = nullptr;
+  } else {
+    *tree = std::move(*replacement);
+  }
 }
 
 namespace {

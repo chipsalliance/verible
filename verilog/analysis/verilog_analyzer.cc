@@ -247,7 +247,7 @@ verible::util::Status VerilogAnalyzer::Analyze() {
   max_used_stack_size_ = parser.MaxUsedStackSize();
 
   // Expand macro arguments that are parseable as expressions.
-  if (SyntaxTree() != nullptr) {
+  if (parse_status_.ok() && SyntaxTree() != nullptr) {
     ExpandMacroCallArgExpressions();
   }
 
