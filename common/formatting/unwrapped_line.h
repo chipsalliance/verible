@@ -53,6 +53,10 @@ class UnwrappedLine {
   typedef container_iterator_range<token_iterator> range_type;
 
  public:
+  enum {
+    kIndentationMarker = '>'  // for readable debug printing
+  };
+
   // Parameter d is the indentation level, and iterator b points to the first
   // PreFormatToken spanned by this range, which is initially empty.
   UnwrappedLine(int d, token_iterator b,

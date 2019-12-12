@@ -374,7 +374,7 @@ TEST_F(UnwrappedLineTest, AsCodeEmptyIndent) {
   UnwrappedLine uwline(1, pre_format_tokens_.begin());
   std::ostringstream stream;
   stream << uwline;
-  EXPECT_EQ(stream.str(), " []");
+  EXPECT_EQ(stream.str(), ">[]");
 }
 
 // Testing AsCode() with one token and no indentation
@@ -408,7 +408,7 @@ TEST_F(UnwrappedLineTest, AsCodeTextIndent) {
   CreateTokenInfos(tokens);
   UnwrappedLine uwline(5, pre_format_tokens_.begin());
   AddFormatTokens(&uwline);
-  const char expected[] = "     [const void foo ( ) ;]";
+  const char expected[] = ">>>>>[const void foo ( ) ;]";
   std::ostringstream stream;
   stream << uwline;
   EXPECT_EQ(stream.str(), expected);

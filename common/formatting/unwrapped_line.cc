@@ -47,7 +47,7 @@ static void TokenFormatter(std::string* out, const PreFormatToken& token) {
 }
 
 std::ostream* UnwrappedLine::AsCode(std::ostream* stream) const {
-  *stream << Spacer(indentation_spaces_) << '['
+  *stream << Spacer(indentation_spaces_, kIndentationMarker) << '['
           << absl::StrJoin(tokens_, " ", TokenFormatter) << ']';
   return stream;
 }

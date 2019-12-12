@@ -195,9 +195,9 @@ TEST_F(TokenPartitionTreePrinterTest, VectorTreeShallow) {
   std::ostringstream stream;
   stream << TokenPartitionTreePrinter(tree);
   EXPECT_EQ(stream.str(), R"({ ([<auto>]) @{}
-  { (  [one]) }
-  { (  [two three four]) }
-  { (  [five six]) }
+  { (>>[one]) }
+  { (>>[two three four]) }
+  { (>>[five six]) }
 })");
 }
 
@@ -242,14 +242,14 @@ TEST_F(TokenPartitionTreePrinterTest, VectorTreeDeep) {
   std::ostringstream stream;
   stream << TokenPartitionTreePrinter(tree);
   EXPECT_EQ(stream.str(), R"({ ([<auto>]) @{}
-  { (  [one]) }
-  { (  [<auto>]) @{1}
-    { (    [two three]) }
-    { (    [four]) }
+  { (>>[one]) }
+  { (>>[<auto>]) @{1}
+    { (>>>>[two three]) }
+    { (>>>>[four]) }
   }
-  { (  [<auto>]) @{2}
-    { (    [five]) }
-    { (    [six]) }
+  { (>>[<auto>]) @{2}
+    { (>>>>[five]) }
+    { (>>>>[six]) }
   }
 })");
 }
