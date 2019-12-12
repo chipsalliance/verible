@@ -36,6 +36,8 @@ struct NamedInterval {
 
   NamedInterval(const NamedInterval&) = default;
   NamedInterval(NamedInterval&&) = default;
+  NamedInterval& operator=(const NamedInterval&) = default;
+  NamedInterval& operator=(NamedInterval&&) = default;
 
   bool operator==(const NamedInterval& other) const {
     return left == other.left && right == other.right && name == other.name;

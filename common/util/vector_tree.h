@@ -519,6 +519,26 @@ class VectorTree : private _VectorTreeImpl {
     return return_tree;  // Rely on copy-elision.
   }
 
+  // If this node has exatly one child, replace this node with that child
+  // and return true, otherwise, do nothing and return false.
+  bool HoistOnlyChild() {
+    if (Children().size() == 1) {
+      auto& only = Children().front();
+      only.parent_ = nullptr;  // disconnect from parent
+      std::swap(node_value_, only.node_value_);
+
+      // children_.swap(only.children_);  // but this leaks
+      // so we swap through a temporary, which still avoids any copying.
+      subnodes_type temp;
+      temp.swap(only.children_);
+      children_.swap(temp);
+
+      Relink();
+      return true;
+    }
+    return false;
+  }
+
   // Pretty-print in tree-form.  Value() is enclosed in parens, and the whole
   // node is enclosed in braces.
   std::ostream& PrintTree(std::ostream* stream, size_t indent = 0) const {

@@ -978,6 +978,133 @@ TEST(VectorTreeTest, ApplyPostOrderTransformNode) {
                               "\n");
 }
 
+TEST(VectorTreeTest, HoistOnlyChildRootOnly) {
+  VectorTreeTestType tree(verible::testing::MakeRootOnlyExampleTree());
+  // No children, no change.
+  EXPECT_FALSE(tree.HoistOnlyChild());
+
+  EXPECT_TRUE(tree.Children().empty());
+  EXPECT_EQ(tree.Parent(), nullptr);
+  EXPECT_EQ(tree.NumAncestors(), 0);
+  EXPECT_EQ(tree.BirthRank(), 0);  // no parent
+  EXPECT_EQ(tree.Root(), &tree);
+
+  const auto& value = tree.Value();
+  EXPECT_EQ(value.left, 0);
+  EXPECT_EQ(value.right, 2);
+  EXPECT_EQ(value.name, "root");
+
+  ExpectPath(tree, "{}");
+}
+
+TEST(VectorTreeTest, HoistOnlyChildOneChildTreeGreatestAncestor) {
+  VectorTreeTestType tree(verible::testing::MakeOneChildPolicyExampleTree());
+  // effectively remove the "root" generation
+  EXPECT_TRUE(tree.HoistOnlyChild());
+  {
+    const auto& child = tree;
+    EXPECT_EQ(child.Parent(), nullptr);
+    EXPECT_EQ(child.Root(), &tree);
+    EXPECT_FALSE(child.Children().empty());
+    EXPECT_EQ(child.NumAncestors(), 0);
+    EXPECT_EQ(child.BirthRank(), 0);
+
+    const auto& cvalue = child.Value();
+    EXPECT_EQ(cvalue.left, 0);
+    EXPECT_EQ(cvalue.right, 3);
+    EXPECT_EQ(cvalue.name, "gen1");
+    ExpectPath(child, "{}");
+
+    EXPECT_EQ(child.NextSibling(), nullptr);
+    EXPECT_EQ(child.PreviousSibling(), nullptr);
+
+    // The invoking node need not be a leaf.
+    EXPECT_EQ(child.NextLeaf(), nullptr);
+    EXPECT_EQ(child.PreviousLeaf(), nullptr);
+
+    {
+      const auto& grandchild = child.Children().front();
+      EXPECT_EQ(grandchild.Parent(), &child);
+      EXPECT_EQ(grandchild.Root(), &tree);
+      EXPECT_TRUE(grandchild.Children().empty());
+      EXPECT_EQ(grandchild.NumAncestors(), 1);
+      EXPECT_EQ(grandchild.BirthRank(), 0);
+
+      const auto& gcvalue = grandchild.Value();
+      EXPECT_EQ(gcvalue.left, 0);
+      EXPECT_EQ(gcvalue.right, 3);
+      EXPECT_EQ(gcvalue.name, "gen2");
+      ExpectPath(grandchild, "{0}");
+
+      // As the ancestry chain is linear, Leftmost == Rightmost.
+      EXPECT_EQ(child.LeftmostDescendant(), &grandchild);
+      EXPECT_EQ(child.RightmostDescendant(), &grandchild);
+      EXPECT_EQ(tree.LeftmostDescendant(), &grandchild);
+      EXPECT_EQ(tree.RightmostDescendant(), &grandchild);
+
+      EXPECT_EQ(grandchild.NextSibling(), nullptr);
+      EXPECT_EQ(grandchild.PreviousSibling(), nullptr);
+
+      // There is still only a single leaf in a one-child tree,
+      // thus next and previous do not exist.
+      EXPECT_EQ(grandchild.NextLeaf(), nullptr);
+      EXPECT_EQ(grandchild.PreviousLeaf(), nullptr);
+    }
+  }
+}
+
+TEST(VectorTreeTest, HoistOnlyChildOneChildTreeMiddleAncestor) {
+  VectorTreeTestType tree(verible::testing::MakeOneChildPolicyExampleTree());
+  EXPECT_TRUE(tree.Children().front().HoistOnlyChild());
+  {
+    const auto& value = tree.Value();
+    EXPECT_EQ(value.left, 0);
+    EXPECT_EQ(value.right, 3);
+    EXPECT_EQ(value.name, "root");
+
+    EXPECT_EQ(tree.NextSibling(), nullptr);
+    EXPECT_EQ(tree.PreviousSibling(), nullptr);
+
+    // The invoking node need not be a leaf.
+    EXPECT_EQ(tree.NextLeaf(), nullptr);
+    EXPECT_EQ(tree.PreviousLeaf(), nullptr);
+
+    // The "gen1" node is removed, and now the grandchild is directly linked.
+    {
+      const auto& grandchild = tree.Children().front();
+      EXPECT_EQ(grandchild.Parent(), &tree);
+      EXPECT_EQ(grandchild.Root(), &tree);
+      EXPECT_TRUE(grandchild.Children().empty());
+      EXPECT_EQ(grandchild.NumAncestors(), 1);
+      EXPECT_EQ(grandchild.BirthRank(), 0);
+
+      const auto& gcvalue = grandchild.Value();
+      EXPECT_EQ(gcvalue.left, 0);
+      EXPECT_EQ(gcvalue.right, 3);
+      EXPECT_EQ(gcvalue.name, "gen2");
+      ExpectPath(grandchild, "{0}");
+
+      // As the ancestry chain is linear, Leftmost == Rightmost.
+      EXPECT_EQ(tree.LeftmostDescendant(), &grandchild);
+      EXPECT_EQ(tree.RightmostDescendant(), &grandchild);
+
+      EXPECT_EQ(grandchild.NextSibling(), nullptr);
+      EXPECT_EQ(grandchild.PreviousSibling(), nullptr);
+
+      // There is still only a single leaf in a one-child tree,
+      // thus next and previous do not exist.
+      EXPECT_EQ(grandchild.NextLeaf(), nullptr);
+      EXPECT_EQ(grandchild.PreviousLeaf(), nullptr);
+    }
+  }
+}
+
+TEST(VectorTreeTest, HoistOnlyChildFamilyTree) {
+  VectorTreeTestType tree(verible::testing::MakeExampleFamilyTree());
+  // No change because each generation has more than one child.
+  EXPECT_FALSE(tree.HoistOnlyChild());
+}
+
 TEST(VectorTreeTest, PrintTree) {
   const auto tree = verible::testing::MakeExampleFamilyTree();
   std::ostringstream stream;
