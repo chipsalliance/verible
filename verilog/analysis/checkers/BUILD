@@ -33,6 +33,7 @@ cc_library(
         ":generate_label_rule",
         ":line_length_rule",
         ":macro_name_style_rule",
+        ":mismatched_labels_rule",
         ":module_begin_block_rule",
         ":module_filename_rule",
         ":module_instantiation_rules",
@@ -218,6 +219,30 @@ cc_test(
         "//verilog/analysis:verilog_analyzer",
         "@com_google_googletest//:gtest_main",
     ],
+)
+
+cc_library(
+    name = "mismatched_labels_rule",
+    srcs = ["mismatched_labels_rule.cc"],
+    hdrs = ["mismatched_labels_rule.h"],
+    deps = [
+        "//common/analysis:citation",
+        "//common/analysis:lint_rule_status",
+        "//common/analysis:syntax_tree_lint_rule",
+        "//common/analysis:syntax_tree_search",
+        "//common/analysis/matcher",
+        "//common/analysis/matcher:bound_symbol_manager",
+        "//common/analysis/matcher:matcher_builders",
+        "//common/text:symbol",
+        "//common/text:syntax_tree_context",
+        "//verilog/CST:identifier",
+        "//verilog/CST:seq_block",
+        "//verilog/CST:verilog_matchers",  # fixdeps: keep
+        "//verilog/analysis:descriptions",
+        "//verilog/analysis:lint_rule_registry",
+        "@com_google_absl//absl/strings",
+    ],
+    alwayslink = 1,
 )
 
 cc_library(
