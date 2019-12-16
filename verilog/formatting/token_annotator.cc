@@ -132,8 +132,10 @@ static WithReason<int> SpacesRequiredBetween(const PreFormatToken& left,
             "Prefer \"(foo)\" over \"( foo )\", \"[x]\" over \"[ x ]\", "
             "and \"{y}\" over \"{ y }\"."};
   }
-  if(context.IsInside(NodeEnum::kMacroArgList)) {
-      return {kUnhandledSpacesRequired, "Keep macro arguments' formatting"};
+
+  if (context.IsInside(NodeEnum::kMacroArgList)
+      && right.TokenEnum() != ',') {  // Separator handled further down
+    return {kUnhandledSpacesRequired, "Keep macro arguments' formatting"};
   }
 
   // For now, leave everything inside [dimensions] alone.

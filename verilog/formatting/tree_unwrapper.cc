@@ -649,7 +649,8 @@ void TreeUnwrapper::Visit(const verible::SyntaxTreeNode& node) {
     case NodeEnum::kAssignmentStatement:             // id=expr
     case NodeEnum::kProceduralTimingControlStatement: {
       if (IsTopLevelListItem(Context())) {
-        VisitNewUnwrappedLine(node);
+        VisitIndentedSection(node, 0,
+                             PartitionPolicyEnum::kFitOnLineElseExpand);
       } else if (DirectParentIsFlowControlConstruct(Context())) {
         // This is a single statement directly inside a flow-control construct,
         // and thus should be properly indented one level.
@@ -658,6 +659,19 @@ void TreeUnwrapper::Visit(const verible::SyntaxTreeNode& node) {
       } else {
         // Otherwise extend previous token partition.
         TraverseChildren(node);
+      }
+      break;
+    }
+    case NodeEnum::kMacroArgList: {
+      if (suppress_indentation
+          || Context().DirectParentsAre({NodeEnum::kMacroCall,
+                                         NodeEnum::kDescriptionList})) {
+        // Top-level macro call
+        // Do not artificially indent parameters
+        TraverseChildren(node);
+      } else {
+        VisitIndentedSection(node, style_.indentation_spaces,
+                             PartitionPolicyEnum::kFitOnLineElseExpand);
       }
       break;
     }

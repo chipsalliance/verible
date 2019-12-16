@@ -298,6 +298,16 @@ static const std::initializer_list<FormatterTestCase> kFormatterTestCases = {
     {// multiple argument macro call
      "  `FOO( bar , baz )\n",
      "`FOO(bar, baz)\n"},
+    {// macro call in function
+     "function void foo( );   foo=`FOO( bar , baz ) ; endfunction\n",
+     "function void foo();\n"
+     "  foo = `FOO(bar, baz);\n"
+     "endfunction\n"},
+    {// macro call in class
+     "class foo;    `FOO  ( bar , baz ) ; endclass\n",
+     "class foo;\n"
+     "  `FOO(bar, baz);\n"
+     "endclass\n"},
 
     // `uvm macros indenting
     {
