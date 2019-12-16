@@ -584,7 +584,6 @@ void TreeUnwrapper::Visit(const verible::SyntaxTreeNode& node) {
     case NodeEnum::kActualNamedPort:
     case NodeEnum::kActualPositionalPort:
     case NodeEnum::kAssertionVariableDeclaration:
-    case NodeEnum::kPortItem:
     case NodeEnum::kPropertyDeclaration:
     case NodeEnum::kSequenceDeclaration:
     case NodeEnum::kPortDeclaration:
@@ -594,6 +593,16 @@ void TreeUnwrapper::Visit(const verible::SyntaxTreeNode& node) {
       VisitNewUnwrappedLine(node);
       break;
     }
+
+    case NodeEnum::kPortItem:
+      if (Context().IsInside(NodeEnum::kTaskHeader) ||
+          Context().IsInside(NodeEnum::kFunctionHeader)) { // TODO: DirectParentsAre?
+        TraverseChildren(node);
+      } else {
+        VisitNewUnwrappedLine(node);
+      }
+      break;
+
     case NodeEnum::kSeqBlock:
       if (Context().DirectParentsAre(
               {NodeEnum::kBlockItemStatementList, NodeEnum::kParBlock})) {
@@ -718,9 +727,23 @@ void TreeUnwrapper::Visit(const verible::SyntaxTreeNode& node) {
     case NodeEnum::kGateInstanceRegisterVariableList:
     case NodeEnum::kPortActualList:
     case NodeEnum::kFormalParameterList:
-    case NodeEnum::kPortList:
     case NodeEnum::kPortDeclarationList: {
       if (suppress_indentation) {
+        // Do not further indent preprocessor clauses.
+        // Maintain same level as before.
+        TraverseChildren(node);
+      } else {
+        VisitIndentedSection(node, style_.wrap_spaces,
+                             PartitionPolicyEnum::kFitOnLineElseExpand);
+      }
+      break;
+    }
+
+    case NodeEnum::kPortList: {
+      if (Context().IsInside(NodeEnum::kTaskHeader) ||
+          Context().IsInside(NodeEnum::kFunctionHeader)) {
+        TraverseChildren(node);
+      } else if (suppress_indentation) {
         // Do not further indent preprocessor clauses.
         // Maintain same level as before.
         TraverseChildren(node);

@@ -771,7 +771,8 @@ static const std::initializer_list<FormatterTestCase> kFormatterTestCases = {
      "endclass\n"},
     {"class c;function int f ( int  ii ,bit  bb );endfunction endclass",
      "class c;\n"
-     "  function int f(int ii, bit bb);\n"
+     "  function int f(int ii,\n"
+     "                 bit bb);\n"
      "  endfunction\n"
      "endclass\n"},
     {"class c;task t ;endtask endclass",
@@ -781,7 +782,8 @@ static const std::initializer_list<FormatterTestCase> kFormatterTestCases = {
      "endclass\n"},
     {"class c;task t ( int  ii ,bit  bb );endtask endclass",
      "class c;\n"
-     "  task t(int ii, bit bb);\n"
+     "  task t(int ii,\n"
+     "         bit bb);\n"
      "  endtask\n"
      "endclass\n"},
     {"class c; task automatic repeated_assigner;"
@@ -958,7 +960,8 @@ static const std::initializer_list<FormatterTestCase> kFormatterTestCases = {
     {"function f (input bit x);endfunction",
      "function f(input bit x);\nendfunction\n"},
     {"function f (input bit x,logic y );endfunction",
-     "function f(input bit x, logic y);\nendfunction\n"},
+     "function f(input bit x,\n"
+     "           logic y);\nendfunction\n"},
     {"function f;\n// statement comment\nendfunction\n",
      "function f;\n"
      "  // statement comment\n"  // indented
@@ -979,9 +982,9 @@ static const std::initializer_list<FormatterTestCase> kFormatterTestCases = {
      "endfunction\n"},
     {// port declaration exceeds line length limit
      "function f (loooong_type if_it_fits_I_sits);endfunction",
-     "function f(\n"
-     "    loooong_type if_it_fits_I_sits\n"
-     ");\nendfunction\n"},
+     "function f(loooong_type\n"
+     "           if_it_fits_I_sits);\n"
+     "endfunction\n"},
     {"function\nvoid\tspace;a=( b+c )\n;endfunction   :space\n",
      "function void space;\n"
      "  a = (b + c);\n"

@@ -513,6 +513,10 @@ static WithReason<SpacingOptions> BreakDecisionBetween(
             "'else'-'begin' tokens should be together on one line."};
   }
 
+  if ( (context.IsInside(NodeEnum::kTaskHeader) ||
+        context.IsInside(NodeEnum::kFunctionHeader)) && (left.TokenEnum() == ',') )
+    return {SpacingOptions::MustWrap, "Wrap arguments in 'task' declaration"};
+
   // By default, leave undecided for penalty minimization.
   return {SpacingOptions::Undecided,
           "Default: leave wrap decision to algorithm"};

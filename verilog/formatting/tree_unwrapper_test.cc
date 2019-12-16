@@ -1347,9 +1347,7 @@ const TreeUnwrapperTestData kClassTestCases[] = {
         "endclass",
         ClassHeader(0, L(0, {"class", "c", ";", "// c is for cookie"})),
         ClassItemList(1, L(1, {"// f is for false"}),
-                      FunctionHeader(1, L(1, {"function", "f", "("}),
-                                     TFPortList(3, L(3, {"integer", "size"})),
-                                     L(1, {")", ";"})),
+                      FunctionHeader(1, L(1, {"function", "f", "(", "integer", "size", ")", ";"})),
                       L(1, {"endfunction"}), L(1, {"// t is for true"}),
                       TaskHeader(1, L(1, {"task", "t", "(", ")", ";"})),
                       L(1, {"endtask"}), L(1, {"// class is about to end"})),
@@ -2229,8 +2227,7 @@ const TreeUnwrapperTestData kUnwrapTaskTestCases[] = {
         "task with formal argument",
         "task foo(string name);"
         "endtask",
-        TaskHeader(0, L(0, {"task", "foo", "("}),
-                   TFPortList(2, L(2, {"string", "name"})), L(0, {")", ";"})),
+        TaskHeader(0, L(0, {"task", "foo", "(", "string", "name", ")", ";"})),
         L(0, {"endtask"}),
     },
 
@@ -2238,10 +2235,7 @@ const TreeUnwrapperTestData kUnwrapTaskTestCases[] = {
         "task with multiple formal arguments",
         "task foo(string name, int a);"
         "endtask",
-        TaskHeader(
-            0, L(0, {"task", "foo", "("}),
-            TFPortList(2, L(2, {"string", "name", ","}), L(2, {"int", "a"})),
-            L(0, {")", ";"})),
+        TaskHeader(0, L(0, {"task", "foo", "(", "string", "name", ",", "int", "a", ")", ";"})),
         L(0, {"endtask"}),
     },
 
@@ -2652,9 +2646,7 @@ const TreeUnwrapperTestData kUnwrapFunctionTestCases[] = {
         "function with formal argument",
         "function foo(string name);"
         "endfunction : foo",
-        FunctionHeader(0, L(0, {"function", "foo", "("}),
-                       TFPortList(2, L(2, {"string", "name"})),
-                       L(0, {")", ";"})),
+        FunctionHeader(0, L(0, {"function", "foo", "(", "string", "name", ")", ";"})),
         L(0, {"endfunction", ":", "foo"}),
     },
 
@@ -2663,9 +2655,7 @@ const TreeUnwrapperTestData kUnwrapFunctionTestCases[] = {
         "function foo(string name, int a);"
         "endfunction",
         FunctionHeader(
-            0, L(0, {"function", "foo", "("}),
-            TFPortList(2, L(2, {"string", "name", ","}), L(2, {"int", "a"})),
-            L(0, {")", ";"})),
+            0, L(0, {"function", "foo", "(", "string", "name", ",", "int", "a", ")", ";"})),
         L(0, {"endfunction"}),
     },
 
@@ -2773,11 +2763,9 @@ const TreeUnwrapperTestData kUnwrapFunctionTestCases[] = {
         "return a ^ b;"
         "endfunction",
         FunctionHeader(
-            0, L(0, {"function", "automatic", "logic", "checkit", "("}),
-            TFPortList(
-                2, L(2, {"input", "logic", "[", "4", ":", "0", "]", "a", ","}),
-                L(2, {"input", "logic", "[", "4", ":", "0", "]", "b"})),
-            L(0, {")", ";"})),
+            0, L(0, {"function", "automatic", "logic", "checkit", "(",
+                     "input", "logic", "[", "4", ":", "0", "]", "a", ",",
+                     "input", "logic", "[", "4", ":", "0", "]", "b", ")", ";"})),
         StatementList(1, L(1, {"return", "a", "^", "b", ";"})),
         L(0, {"endfunction"}),
     },
@@ -3248,11 +3236,10 @@ const TreeUnwrapperTestData kUnwrapFunctionTestCases[] = {
         "return a ^ b;"
         "endfunction",
         FunctionHeader(
-            0, L(0, {"function", "automatic", "logic", "checkit", "("}),
-            TFPortList(
-                2, L(2, {"input", "logic", "[", "4", ":", "0", "]", "a", ","}),
-                L(2, {"input", "logic", "[", "4", ":", "0", "]", "b"})),
-            L(0, {")", ";"})),
+            0, L(0, {"function", "automatic", "logic", "checkit", "(",
+                     "input", "logic", "[", "4", ":", "0", "]", "a", ",",
+                     "input", "logic", "[", "4", ":", "0", "]", "b",
+                     ")", ";"})),
         StatementList(1, L(1, {"return", "a", "^", "b", ";"})),
         L(0, {"endfunction"}),
     },
