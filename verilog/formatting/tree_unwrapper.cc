@@ -554,7 +554,6 @@ void TreeUnwrapper::Visit(const verible::SyntaxTreeNode& node) {
     case NodeEnum::kTaskDeclaration:
     case NodeEnum::kTFPortDeclaration:
     case NodeEnum::kTypeDeclaration:
-    case NodeEnum::kModportDeclaration:
     case NodeEnum::kConstraintDeclaration:
     case NodeEnum::kConstraintExpression:
     case NodeEnum::kCovergroupDeclaration:
@@ -672,11 +671,18 @@ void TreeUnwrapper::Visit(const verible::SyntaxTreeNode& node) {
     case NodeEnum::kLoopHeader:
     case NodeEnum::kClassHeader:
     case NodeEnum::kCovergroupHeader:
+    case NodeEnum::kModportDeclaration:
     case NodeEnum::kModuleHeader:
     case NodeEnum::kInstantiationType:
     case NodeEnum::kRegisterVariable:
     case NodeEnum::kGateInstance: {
       VisitIndentedSection(node, 0, PartitionPolicyEnum::kFitOnLineElseExpand);
+      break;
+    }
+    case NodeEnum::kModportSimplePortsDeclaration:
+    case NodeEnum::kModportTFPortsDeclaration: {
+      VisitIndentedSection(node, style_.wrap_spaces,
+                           PartitionPolicyEnum::kFitOnLineElseExpand);
       break;
     }
 
