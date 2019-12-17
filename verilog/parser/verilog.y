@@ -1978,6 +1978,11 @@ data_type_or_implicit
                           MakeTaggedNode(N::kDataType, nullptr,
                                          MakePackedDimensionsNode($1)),
                           $2, nullptr, nullptr); }
+  | signing decl_dimensions_opt delay3_or_drive_opt
+    { $$ = MakeTaggedNode(N::kDataTypeImplicitIdDimensions,
+                          MakeTaggedNode(N::kDataType, $1,
+                                         MakePackedDimensionsNode($2)),
+                          $3, nullptr, nullptr); }
   | GenericIdentifier decl_dimensions_opt delay3_or_drive_opt
     { $$ = MakeTaggedNode(N::kDataTypeImplicitIdDimensions,
                           MakeTaggedNode(N::kDataType, $1,

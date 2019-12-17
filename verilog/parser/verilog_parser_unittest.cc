@@ -1516,6 +1516,14 @@ static const char* kModuleTests[] = {
     "Blackjack table;\n"
     "swimming bool;  // bool is an Icarus Verilog extension\n"
     "endmodule",
+    // net declarations
+    "module m; wire signed foo; endmodule\n",
+    "module m; wire signed [7:0] foo; endmodule\n",
+    "module m; wire unsigned foo; endmodule\n",
+    "module m; wire unsigned [7:0][3:0] foo; endmodule\n",
+    "module m(input wire signed foo); endmodule\n",
+    "module m(input wire signed [1:0] foo); endmodule\n",
+    "module m(input wire unsigned foo); endmodule\n",
     // system task calls
     "module caller;\n"
     "initial begin\n"
