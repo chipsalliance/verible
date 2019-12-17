@@ -303,10 +303,20 @@ static const std::initializer_list<FormatterTestCase> kFormatterTestCases = {
      "function void foo();\n"
      "  foo = `FOO(bar, baz);\n"
      "endfunction\n"},
+    {// nested macro call in function
+     "function void foo( );   foo=`FOO( `BAR ( baz ) ) ; endfunction\n",
+     "function void foo();\n"
+     "  foo = `FOO(`BAR(baz));\n"
+     "endfunction\n"},
     {// macro call in class
      "class foo;    `FOO  ( bar , baz ) ; endclass\n",
      "class foo;\n"
      "  `FOO(bar, baz);\n"
+     "endclass\n"},
+    {// nested macro call in class
+     "class foo;    `FOO  ( `BAR ( baz1 , baz2 ) ) ; endclass\n",
+     "class foo;\n"
+     "  `FOO(`BAR(baz1, baz2));\n"
      "endclass\n"},
 
     // `uvm macros indenting
