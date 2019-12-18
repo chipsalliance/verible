@@ -60,6 +60,10 @@ void AlwaysFFNonBlockingRule::HandleSymbol(const verible::Symbol &symbol,
   if (always_ff_matcher_.Matches(symbol, &manager)) {
     for (const auto &match :
          SearchSyntaxTree(symbol, NodekAssignmentStatement())) {
+      // this is intended to ignore assignments in for loop step statements like
+      // i=i+1
+      if (match.context.IsInside(NodeEnum::kLoopHeader)) continue;
+
       auto *node = dynamic_cast<const verible::SyntaxTreeNode *>(match.match);
 
       if (node == nullptr) continue;
