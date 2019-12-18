@@ -273,12 +273,17 @@ class MacroCallArgExpander : public MutableTreeVisitorRecursive {
     const TokenInfo& token(leaf.get());
     if (token.token_enum == MacroArg) {
       VLOG(3) << "MacroCallArgExpander: examining token: " << token;
-      // Attempt to parse text as an expression.
+      // Attempt to parse text, taking directives in comments into account
       std::unique_ptr<VerilogAnalyzer> expr_analyzer =
-          AnalyzeVerilogExpression(token.text, "<macro-arg-expander>");
+          VerilogAnalyzer::AnalyzeAutomaticMode(token.text, "<macro-arg-expander>");
+      if (!expr_analyzer->ParseStatus().ok()) {
+        // Fall back to explicitly parse-as-expression
+        expr_analyzer =
+           AnalyzeVerilogExpression(token.text, "<macro-arg-expander>");
+      }
       if (ABSL_DIE_IF_NULL(expr_analyzer)->LexStatus().ok() &&
           expr_analyzer->ParseStatus().ok()) {
-        VLOG(3) << "  ... is a parse-able expression, saving for expansion.";
+        VLOG(3) << "  ... content is is a parse-able, saving for expansion.";
         const auto& token_sequence = expr_analyzer->Data().TokenStream();
         const verible::TokenInfo::Context token_context{
             expr_analyzer->Data().Contents(), [](std::ostream& stream, int e) {
@@ -303,7 +308,7 @@ class MacroCallArgExpander : public MutableTreeVisitorRecursive {
         analysis_slot.subanalysis = std::move(expr_analyzer);
       } else {
         // Ignore parse failures.
-        VLOG(3) << "Ignoring parse-as-expression failure: " << token;
+        VLOG(3) << "Ignoring parsing failure: " << token;
       }
     }
   }

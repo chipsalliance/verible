@@ -133,9 +133,7 @@ static WithReason<int> SpacesRequiredBetween(const PreFormatToken& left,
             "and \"{y}\" over \"{ y }\"."};
   }
 
-  if (context.IsInside(NodeEnum::kMacroArgList)
-      && right.TokenEnum() != '('  //TODO: Why is it not caught by open_group above?
-      && right.TokenEnum() != ',') {  // Separator handled further down
+  if (right.TokenEnum() == MacroArg) {
     return {kUnhandledSpacesRequired, "Keep macro arguments' formatting"};
   }
 

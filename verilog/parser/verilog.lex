@@ -1372,15 +1372,6 @@ zi_zp { UpdateLocation(); return TK_zi_zp; }
   /* Ignore leading space before macro arguments. */
   {Space}+ { UpdateLocation(); return TK_SPACE; }
   {LineTerminator} { UpdateLocation(); return TK_NEWLINE; }
-  {TraditionalComment} {
-    UpdateLocation();
-    return TK_COMMENT_BLOCK;
-  }
-  {EndOfLineComment} {
-    yyless(yyleng-1);  /* return \n to input stream */
-    UpdateLocation();
-    return TK_EOL_COMMENT;
-  }
   . {
     yyless(0);
     UpdateLocation();
