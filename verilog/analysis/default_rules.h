@@ -50,6 +50,7 @@ constexpr const char* kDefaultRuleSet[] = {
     "macro-name-style",
     "parameter-name-style",
     "typedef-enums",
+    "typedef-structs-unions",
     "always-comb-blocking",
     // (b/138352825): "always-ff-non-blocking",
     // TODO(fangism): enable in production:
@@ -58,7 +59,6 @@ constexpr const char* kDefaultRuleSet[] = {
     // TODO(b/131637160): "signal-name-style",
     // TODO(b/145244869): "struct-union-name-style",
     // TODO(b/138351837): "forbid-defparam",
-    // TODO(b/145245466): "typedef-structs-unions",
     // "endif-comment",
 };
 // LINT.ThenChange(../tools/lint/BUILD)
