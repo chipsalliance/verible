@@ -52,7 +52,7 @@ constexpr const char* kDefaultRuleSet[] = {
     "typedef-enums",
     "typedef-structs-unions",
     "always-comb-blocking",
-    // (b/138352825): "always-ff-non-blocking",
+    "always-ff-non-blocking",
     // TODO(fangism): enable in production:
     // TODO(b/117554159): "case-missing-default",
     // TODO(b/117131903): "proper-parameter-declaration",
