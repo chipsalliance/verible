@@ -56,6 +56,10 @@ TEST(AlwaysFFNonBlockingRule, FunctionFailures) {
       {"module m;\nalways_ff @(posedge c) begin a <= b; end\nendmodule"},
       {"module m;\nalways_comb a = b;\nendmodule"},
       {"module m;\nalways_comb begin a = b; end\nendmodule"},
+      {"module m;\nalways_ff @(posedge c) begin\n  for (int i=0 ; i<3 ; i=i+1) begin\n"
+       "    a <= b;\nend\nend\nendmodule"},
+      {"module m;\nalways_ff @(posedge c) begin\n  for (int i=0 ; i<3 ; i=i+1) begin\n"
+       "    a ", {kToken, "="}, " b;\n  end\nend\nendmodule"},
   };
 
   RunLintTestCases<VerilogAnalyzer, AlwaysFFNonBlockingRule>(
