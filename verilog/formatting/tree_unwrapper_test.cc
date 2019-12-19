@@ -2249,10 +2249,31 @@ const TreeUnwrapperTestData kUnwrapInterfaceTestCases[] = {
         "endinterface",
         ModuleHeader(0, L(0, {"interface", "foo_if", ";"})),
         ModuleItemList(1,  //
-                       L(1, {"modport", "mp1", "(", "output", "a", ",", "input",
-                             "b", ")", ";"}),
-                       L(1, {"modport", "mp2", "(", "output", "c", ",", "input",
-                             "d", ")", ";"})),
+                       N(1,
+                          L(1,{"modport", "mp1", "("}),
+                          N(3, L(3, {"output", "a", ","})),
+                          N(3, L(3, {"input", "b"})),
+                          L(1, {")", ";"})),
+                       N(1,
+                          L(1,{"modport", "mp2", "("}),
+                          N(3, L(3, {"output", "c", ","})),
+                          N(3, L(3, {"input", "d"})),
+                          L(1, {")", ";"}))),
+        L(0, {"endinterface"}),
+    },
+    {
+        "interface with modport TF ports",
+        "interface foo_if;"
+        "modport mp1 (output a, input b, import c);"
+        "endinterface",
+        ModuleHeader(0, L(0, {"interface", "foo_if", ";"})),
+        ModuleItemList(1,  //
+                       N(1,
+                          L(1,{"modport", "mp1", "("}),
+                          N(3, L(3, {"output", "a", ","})),
+                          N(3, L(3, {"input", "b", ","})),
+                          N(3, L(3, {"import", "c"})),
+                          L(1, {")", ";"}))),
         L(0, {"endinterface"}),
     },
 };
