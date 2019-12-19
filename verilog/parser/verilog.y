@@ -1815,6 +1815,9 @@ type_identifier_or_implicit_followed_by_id_and_dimensions_opt
   | GenericIdentifier scope_or_if_res GenericIdentifier
     delay3_or_drive_opt decl_dimensions_opt
     GenericIdentifier decl_dimensions_opt
+    /* TODO(fangism): separate scope_or_if_res into different node tags cases,
+     * one for TK_SCOPE (qualified_id), one for '.' (interface port).
+     */
     { $$ = MakeTaggedNode(N::kDataTypeImplicitIdDimensions,
                           MakeTaggedNode(N::kDataType,
                                          MakeTaggedNode(N::kInterfacePortHeader,
@@ -1988,6 +1991,16 @@ data_type_or_implicit
                           MakeTaggedNode(N::kDataType, $1,
                                          MakePackedDimensionsNode($2)),
                           $3, nullptr, nullptr); }
+  | GenericIdentifier TK_SCOPE_RES GenericIdentifier decl_dimensions_opt delay3_or_drive_opt
+    { $$ = MakeTaggedNode(N::kDataTypeImplicitIdDimensions,
+                          MakeTaggedNode(
+                              N::kDataType,
+                              MakeTaggedNode(N::kQualifiedId, $1, $2, $3),
+                              MakePackedDimensionsNode($4)),
+                          $5, nullptr, nullptr); }
+  /* want to use just 'class_id' to cover all qualified and unqualified types,
+   * including parameterized types, but encounter grammar conflicts
+   */
   ;
 
 /* For declaring net_type or function_declaration return type, followed by declared name */

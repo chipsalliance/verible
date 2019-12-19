@@ -1524,6 +1524,16 @@ static const char* kModuleTests[] = {
     "module m(input wire signed foo); endmodule\n",
     "module m(input wire signed [1:0] foo); endmodule\n",
     "module m(input wire unsigned foo); endmodule\n",
+    "module m; wire foo_t foo; endmodule\n",
+    "module m(wire foo_t foo); endmodule\n",
+    "module m; wire foo_t [1:0] foo [0:2]; endmodule\n",
+    "module m(wire foo_t [1:0] foo [0:3]); endmodule\n",
+    "module m; wire p_pkg::foo_t foo; endmodule\n",
+    "module m(wire p_pkg::foo_t foo); endmodule\n",
+    "module m; wire p_pkg::foo_t [2:0] foo [0:1]; endmodule\n",
+    "module m(wire p_pkg::foo_t [2:0] foo [0:2]); endmodule\n",
+    "interface _if; wire p_pkg::foo_t foo; endinterface\n",
+    "interface _if; wire p_pkg::foo_t [1:0] foo [0:1]; endinterface\n",
     // system task calls
     "module caller;\n"
     "initial begin\n"
