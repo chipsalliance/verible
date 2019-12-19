@@ -752,15 +752,25 @@ void TreeUnwrapper::Visit(const verible::SyntaxTreeNode& node) {
 
   // post-traversal token partition adjustments
   switch (tag) {
-    case NodeEnum::kDataDeclaration:
-    case NodeEnum::kBindDirective: {
-      // Attach the trailing ';' partition to the previous sibling leaf.
-      // VisitIndentedSection() finished by starting a new partition,
-      // so we need to back-track to the previous sibling partition.
-      auto* recent_partition = CurrentTokenPartition()->PreviousSibling();
-      if (recent_partition != nullptr) {
-        verible::MoveLastLeafIntoPreviousSibling(recent_partition);
+    case NodeEnum::kDataDeclaration: {
+      AttachTrailingSemicolonToPreviousPartition();
+      auto& data_declaration_partition =
+          *ABSL_DIE_IF_NULL(CurrentTokenPartition()->PreviousSibling());
+      VLOG(4) << "kDataDeclaration: "
+              << verible::TokenPartitionTreePrinter(data_declaration_partition);
+      auto& children = data_declaration_partition.Children();
+      CHECK(!children.empty());
+      auto& instance_list_partition = children.back();
+      if (instance_list_partition.Children().size() == 1) {
+        // Flatten partition tree by one level.
+        instance_list_partition.HoistOnlyChild();
       }
+      // TODO(b/146083526): manipulation partitions to create a partition like:
+      //   ") instance_name (".
+      break;
+    }
+    case NodeEnum::kBindDirective: {
+      AttachTrailingSemicolonToPreviousPartition();
       break;
     }
     case NodeEnum::kBegin: {  // may contain label
@@ -790,6 +800,16 @@ void TreeUnwrapper::Visit(const verible::SyntaxTreeNode& node) {
       break;
   }
   VLOG(3) << "end of " << __FUNCTION__ << " node: " << tag;
+}
+
+void TreeUnwrapper::AttachTrailingSemicolonToPreviousPartition() {
+  // Attach the trailing ';' partition to the previous sibling leaf.
+  // VisitIndentedSection() finished by starting a new partition,
+  // so we need to back-track to the previous sibling partition.
+  auto* recent_partition = CurrentTokenPartition()->PreviousSibling();
+  if (recent_partition != nullptr) {
+    verible::MoveLastLeafIntoPreviousSibling(recent_partition);
+  }
 }
 
 // Visitor to determine which leaf enum function to call

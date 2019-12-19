@@ -114,6 +114,8 @@ class TreeUnwrapper : public verible::TreeUnwrapper {
   // LookAheadBeyondCurrentLeaf.
   void AdvanceLastVisitedLeaf();
 
+  void AttachTrailingSemicolonToPreviousPartition();
+
   // For print debugging.
   verible::TokenWithContext VerboseToken(const verible::TokenInfo&) const;
 

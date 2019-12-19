@@ -65,6 +65,7 @@ class UnwrappedLine {
 
   UnwrappedLine(const UnwrappedLine&) = default;
   UnwrappedLine(UnwrappedLine&&) = default;
+  UnwrappedLine& operator=(UnwrappedLine&&) = default;
 
   // Deleted interfaces.
   UnwrappedLine() = delete;

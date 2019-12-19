@@ -69,7 +69,9 @@ struct ExpectedUnwrappedLine {
 // Mimic operator << (ostream&, const UnwrappedLine&).
 std::ostream& operator<<(std::ostream& stream,
                          const ExpectedUnwrappedLine& expected_uwline) {
-  stream << verible::Spacer(expected_uwline.indentation_spaces) << '[';
+  stream << verible::Spacer(expected_uwline.indentation_spaces,
+                            UnwrappedLine::kIndentationMarker)
+         << '[';
   if (expected_uwline.tokens.empty()) {
     // Empty really means don't-care -- this is not a leaf level
     // UnwrappedLine, but rather, an enclosing level.
@@ -204,7 +206,8 @@ bool VerifyUnwrappedLines(std::ostream* stream,
             << verible::TokenPartitionTreePrinter(*diff.left) << std::endl;
     const auto left_children = diff.left->Children().size();
     const auto right_children = diff.right->Children().size();
-    EXPECT_EQ(left_children, right_children);
+    EXPECT_EQ(left_children, right_children) << "code:\n"
+                                             << test_case.source_code;
     if (first_diff_stream.str().length()) {
       // The Value()s at these nodes are different.
       *stream << "value difference: " << first_diff_stream.str();
@@ -511,9 +514,8 @@ const TreeUnwrapperTestData kUnwrapModuleTestCases[] = {
         ModuleItemList(
             1,
             Instantiation(1, L(1, {"foo"}),  // instantiation type
-                          InstanceList(3, L(3, {"a", ";"}))),
-            Instantiation(1, L(1, {"foo"}),
-                          InstanceList(3, L(3, {"b", "(", ")", ";"})))),
+                          L(3, {"a", ";"})),
+            Instantiation(1, L(1, {"foo"}), L(3, {"b", "(", ")", ";"}))),
         L(0, {"endmodule"}),
     },
 
@@ -734,14 +736,10 @@ const TreeUnwrapperTestData kUnwrapModuleTestCases[] = {
         ModuleHeader(0, L(0, {"module", "conditionals", ";"})),
         ModuleItemList(
             1, L(1, {"if", "(", "foo", ")", "begin"}),
-            ModuleItemList(2,
-                           Instantiation(2, L(2, {"a"}),
-                                         InstanceList(4, L(4, {"aa", ";"})))),
+            ModuleItemList(2, Instantiation(2, L(2, {"a"}), L(4, {"aa", ";"}))),
             L(1, {"end"}),  //
             L(1, {"if", "(", "bar", ")", "begin"}),
-            ModuleItemList(2,
-                           Instantiation(2, L(2, {"b"}),
-                                         InstanceList(4, L(4, {"bb", ";"})))),
+            ModuleItemList(2, Instantiation(2, L(2, {"b"}), L(4, {"bb", ";"}))),
             L(1, {"end"})),
         L(0, {"endmodule"}),
     },
@@ -806,7 +804,7 @@ const TreeUnwrapperTestData kUnwrapModuleTestCases[] = {
             ModuleItemList(2,                          //
                            Instantiation(2,            //
                                          L(2, {"a"}),  //
-                                         InstanceList(4, L(4, {"aa", ";"})))),
+                                         L(4, {"aa", ";"}))),
             L(1, {"end"})),
         L(0, {"endmodule"}),
     },
@@ -851,7 +849,7 @@ const TreeUnwrapperTestData kUnwrapModuleTestCases[] = {
             ModuleItemList(2,                          //
                            Instantiation(2,            //
                                          L(2, {"a"}),  //
-                                         InstanceList(4, L(4, {"aa", ";"})))),
+                                         L(4, {"aa", ";"}))),
             L(1, {"end"}),  //
             LoopHeader(1, L(1, {"for", "("}),
                        ForSpec(3, L(3, {"y", "=", "0", ";"}), L(3, {";"})),
@@ -859,7 +857,7 @@ const TreeUnwrapperTestData kUnwrapModuleTestCases[] = {
             ModuleItemList(2,                          //
                            Instantiation(2,            //
                                          L(2, {"b"}),  //
-                                         InstanceList(4, L(4, {"bb", ";"})))),
+                                         L(4, {"bb", ";"}))),
             L(1, {"end"})),
         L(0, {"endmodule"}),
     },
@@ -881,12 +879,10 @@ const TreeUnwrapperTestData kUnwrapModuleTestCases[] = {
                          // TODO(fangism): merge label prefix to following
                          // subtree if it fits
                          L(2, {"A", ":"}),
-                         Instantiation(2, L(2, {"a"}),
-                                       InstanceList(4, L(4, {"aa", ";"})))),
+                         Instantiation(2, L(2, {"a"}), L(4, {"aa", ";"}))),
             L(1, {"endcase"}), L(1, {"case", "(", "bar", ")"}),
             CaseItemList(2, L(2, {"B", ":"}),
-                         Instantiation(2, L(2, {"b"}),
-                                       InstanceList(4, L(4, {"bb", ";"})))),
+                         Instantiation(2, L(2, {"b"}), L(4, {"bb", ";"}))),
             L(1, {"endcase"})),
         L(0, {"endmodule"}),
     },
@@ -2252,8 +2248,7 @@ const TreeUnwrapperTestData kUnwrapTaskTestCases[] = {
         "endtask",
         TaskHeader(0, L(0, {"task", "foo", ";"})),
         StatementList(
-            1, DataDeclaration(1, L(1, {"int"}),
-                               InstanceList(3, L(3, {"return_value", ";"})))),
+            1, DataDeclaration(1, L(1, {"int"}), L(3, {"return_value", ";"}))),
         L(0, {"endtask"}),
     },
 
@@ -2347,12 +2342,10 @@ const TreeUnwrapperTestData kUnwrapTaskTestCases[] = {
         "join "
         "endtask",
         TaskHeader(0, L(0, {"task", "foo", ";"})),
-        StatementList(
-            1, L(1, {"fork"}),
-            StatementList(
-                2, DataDeclaration(2, L(2, {"int"}),
-                                   InstanceList(4, L(4, {"value", ";"})))),
-            L(1, {"join"})),
+        StatementList(1, L(1, {"fork"}),
+                      StatementList(2, DataDeclaration(2, L(2, {"int"}),
+                                                       L(4, {"value", ";"}))),
+                      L(1, {"join"})),
         L(0, {"endtask"}),
     },
 
@@ -2676,8 +2669,7 @@ const TreeUnwrapperTestData kUnwrapFunctionTestCases[] = {
         "endfunction",
         FunctionHeader(0, L(0, {"function", "foo", ";"})),
         StatementList(1,
-                      DataDeclaration(1, L(1, {"int"}),
-                                      InstanceList(3, L(3, {"value", ";"})))),
+                      DataDeclaration(1, L(1, {"int"}), L(3, {"value", ";"}))),
         L(0, {"endfunction"}),
     },
 
