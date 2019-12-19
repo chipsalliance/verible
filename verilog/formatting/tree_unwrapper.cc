@@ -579,8 +579,6 @@ void TreeUnwrapper::Visit(const verible::SyntaxTreeNode& node) {
     case NodeEnum::kForCondition:
     case NodeEnum::kForStepList:
     case NodeEnum::kParBlock:
-    case NodeEnum::kRegisterVariable:
-    case NodeEnum::kGateInstance:
     case NodeEnum::kActualNamedPort:
     case NodeEnum::kActualPositionalPort:
     case NodeEnum::kAssertionVariableDeclaration:
@@ -672,7 +670,9 @@ void TreeUnwrapper::Visit(const verible::SyntaxTreeNode& node) {
     case NodeEnum::kLoopHeader:
     case NodeEnum::kClassHeader:
     case NodeEnum::kCovergroupHeader:
-    case NodeEnum::kModuleHeader: {
+    case NodeEnum::kModuleHeader:
+    case NodeEnum::kRegisterVariable:
+    case NodeEnum::kGateInstance: {
       VisitIndentedSection(node, 0, PartitionPolicyEnum::kFitOnLineElseExpand);
       break;
     }
@@ -844,6 +844,25 @@ void TreeUnwrapper::Visit(const verible::SyntaxTreeLeaf& leaf) {
   // Look-ahead to any trailing comments that are associated with this leaf,
   // up to a newline.
   LookAheadBeyondCurrentLeaf();
+
+  switch (leaf.Tag().tag) {
+    case ',': {
+      // In many cases (in particular lists), we want to attach delimiters like
+      // ',' to the item that preceded it (on its rightmost leaf).
+      // This adjustment is necessary for lists of element types that beget
+      // their own indented sections.
+      if (current_context_.DirectParentIsOneOf({
+              // NodeEnum:xxxx                             // due to element:
+              NodeEnum::kGateInstanceRegisterVariableList  // kGateInstance,
+                                                           // kRegisterVariable
+          })) {
+        MergeLastTwoPartitions();
+      }
+      break;
+    }
+    default:
+      break;
+  }
 
   VLOG(3) << "end of " << __FUNCTION__ << " leaf: " << VerboseToken(leaf.get());
 }
