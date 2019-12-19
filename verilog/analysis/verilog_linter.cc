@@ -238,10 +238,8 @@ verible::util::Status VerilogLintTextStructure(
     VLOG(1) << "Lint Violations (" << total_violations << "): " << std::endl;
     // Output results to stream using formatter.
     verible::LintStatusFormatter formatter(contents);
-    for (const auto& report_status : linter_statuses) {
-      formatter.FormatLintRuleStatus(stream, report_status, text_base,
+    formatter.FormatLintRuleStatuses(stream, linter_statuses, text_base,
                                      filename);
-    }
   }
   return verible::util::OkStatus();
 }

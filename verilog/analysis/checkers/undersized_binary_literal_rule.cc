@@ -15,8 +15,8 @@
 #include "verilog/analysis/checkers/undersized_binary_literal_rule.h"
 
 #include <cstddef>
+#include <set>
 #include <string>
-#include <vector>
 
 #include "absl/strings/numbers.h"
 #include "absl/strings/str_cat.h"
@@ -81,7 +81,7 @@ void UndersizedBinaryLiteralRule::HandleSymbol(
             CHECK_EQ(number.base,
                      'b');  // guaranteed by matching TK_BinBase
             if (width > number.literal.length() && number.literal != "0") {
-              violations_.push_back(LintViolation(
+              violations_.insert(LintViolation(
                   digits_leaf->get(),
                   FormatReason(width_text, base_text, digits_text), context));
             }

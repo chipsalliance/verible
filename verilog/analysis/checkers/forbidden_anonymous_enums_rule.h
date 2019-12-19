@@ -15,8 +15,8 @@
 #ifndef VERIBLE_VERILOG_ANALYSIS_CHECKERS_FORBIDDEN_ANONYMOUS_ENUMS_RULE_H_
 #define VERIBLE_VERILOG_ANALYSIS_CHECKERS_FORBIDDEN_ANONYMOUS_ENUMS_RULE_H_
 
+#include <set>
 #include <string>
-#include <vector>
 
 #include "common/analysis/lint_rule_status.h"
 #include "common/analysis/matcher/matcher.h"
@@ -71,7 +71,7 @@ class ForbiddenAnonymousEnumsRule : public verible::SyntaxTreeLintRule {
   Matcher matcher_ = NodekEnumDataType();
 
   // Collection of found violations.
-  std::vector<verible::LintViolation> violations_;
+  std::set<verible::LintViolation> violations_;
 };
 
 }  // namespace analysis

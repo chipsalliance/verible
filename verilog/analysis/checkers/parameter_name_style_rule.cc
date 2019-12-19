@@ -14,8 +14,8 @@
 
 #include "verilog/analysis/checkers/parameter_name_style_rule.h"
 
+#include <set>
 #include <string>
-#include <vector>
 
 #include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
@@ -75,12 +75,12 @@ void ParameterNameStyleRule::HandleSymbol(const verible::Symbol& symbol,
     const auto param_name = param_name_token->text;
     if (param_decl_token == TK_localparam) {
       if (!verible::IsUpperCamelCaseWithDigits(param_name))
-        violations_.push_back(
+        violations_.insert(
             LintViolation(*param_name_token, kLocalParamMessage, context));
     } else if (param_decl_token == TK_parameter) {
       if (!verible::IsUpperCamelCaseWithDigits(param_name) &&
           !verible::IsNameAllCapsUnderscoresDigits(param_name))
-        violations_.push_back(
+        violations_.insert(
             LintViolation(*param_name_token, kParameterMessage, context));
     }
   }

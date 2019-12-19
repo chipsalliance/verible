@@ -14,8 +14,8 @@
 
 #include "verilog/analysis/checkers/explicit_function_lifetime_rule.h"
 
+#include <set>
 #include <string>
-#include <vector>
 
 #include "absl/strings/str_cat.h"
 #include "common/analysis/citation.h"
@@ -74,7 +74,7 @@ void ExplicitFunctionLifetimeRule::HandleSymbol(
       // Point to the function id.
       const verible::TokenInfo token(SymbolIdentifier,
                                      verible::StringSpanOfSymbol(*function_id));
-      violations_.push_back(LintViolation(token, kMessage, context));
+      violations_.insert(LintViolation(token, kMessage, context));
     }
   }
 }

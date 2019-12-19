@@ -29,7 +29,7 @@ namespace {
 
 TEST(LintTestCaseExactMatchFindingsTest, AllEmpty) {
   const LintTestCase test{};
-  const std::vector<LintViolation> found_violations;
+  const std::set<LintViolation> found_violations;
   const absl::string_view text;
   std::ostringstream diffstream;
   EXPECT_TRUE(test.ExactMatchFindings(found_violations, text, &diffstream));
@@ -49,7 +49,7 @@ TEST(LintTestCaseExactMatchFindingsTest, OneMatchingViolation) {
   EXPECT_FALSE(BoundsEqual(absl::string_view(test.code), text_view));
 
   const absl::string_view bad_text = text_view.substr(3, 3);
-  const std::vector<LintViolation> found_violations{
+  const std::set<LintViolation> found_violations{
       {{kToken, bad_text}, "some reason"},
   };
   std::ostringstream diffstream;
@@ -74,7 +74,7 @@ TEST(LintTestCaseExactMatchFindingsTest, MultipleMatchingViolations) {
 
   const absl::string_view bad_text1 = text_view.substr(3, 3);
   const absl::string_view bad_text2 = text_view.substr(9, 3);
-  const std::vector<LintViolation> found_violations{
+  const std::set<LintViolation> found_violations{
       // must be sorted on location
       {{kToken, bad_text1}, "some reason"},
       {{kToken, bad_text2}, "different reason"},
@@ -100,7 +100,7 @@ TEST(LintTestCaseExactMatchFindingsTest, OneFoundNotExpected) {
   EXPECT_FALSE(BoundsEqual(absl::string_view(test.code), text_view));
 
   const absl::string_view bad_text = text_view.substr(3, 3);
-  const std::vector<LintViolation> found_violations{
+  const std::set<LintViolation> found_violations{
       {{kToken, bad_text}, "some reason"},
   };
   std::ostringstream diffstream;
@@ -121,7 +121,7 @@ TEST(LintTestCaseExactMatchFindingsTest, OneExpectedNotFound) {
   EXPECT_FALSE(BoundsEqual(absl::string_view(test.code), text_view));
 
   const absl::string_view bad_text = text_view.substr(3, 3);
-  const std::vector<LintViolation> found_violations;  // none expected
+  const std::set<LintViolation> found_violations;  // none expected
   std::ostringstream diffstream;
   EXPECT_FALSE(
       test.ExactMatchFindings(found_violations, text_view, &diffstream));
@@ -140,7 +140,7 @@ TEST(LintTestCaseExactMatchFindingsTest, OneMismatchEach) {
   EXPECT_FALSE(BoundsEqual(absl::string_view(test.code), text_view));
 
   const absl::string_view bad_text = text_view.substr(4, 3);  // "efg"
-  const std::vector<LintViolation> found_violations{
+  const std::set<LintViolation> found_violations{
       {{kToken, bad_text}, "some reason"},
   };
   std::ostringstream diffstream;

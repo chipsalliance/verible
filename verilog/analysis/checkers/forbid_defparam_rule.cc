@@ -14,8 +14,8 @@
 
 #include "verilog/analysis/checkers/forbid_defparam_rule.h"
 
+#include <set>
 #include <string>
-#include <vector>
 
 #include "absl/strings/str_cat.h"
 #include "common/analysis/citation.h"
@@ -52,7 +52,7 @@ void ForbidDefparamRule::HandleSymbol(
     const auto& defparam_token =
         GetSubtreeAsLeaf(symbol, NodeEnum::kParameterOverride, 0).get();
     CHECK_EQ(defparam_token.token_enum, TK_defparam);
-    violations_.push_back(
+    violations_.insert(
         verible::LintViolation(defparam_token, kMessage, context));
   }
 }

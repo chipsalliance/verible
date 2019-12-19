@@ -43,14 +43,14 @@ class RequireHelloRule : public TextStructureLintRule {
     const absl::string_view contents = text_structure.Contents();
     if (!lines.empty() && !absl::StartsWith(contents, "Hello")) {
       const TokenInfo token(1, lines[0]);
-      violations_.emplace_back(token, "Text must begin with Hello");
+      violations_.emplace(token, "Text must begin with Hello");
     }
   }
 
   LintRuleStatus Report() const override { return LintRuleStatus(violations_); }
 
  private:
-  std::vector<LintViolation> violations_;
+  std::set<LintViolation> violations_;
 };
 
 std::unique_ptr<TextStructureLintRule> MakeHelloRule() {

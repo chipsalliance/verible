@@ -15,8 +15,8 @@
 #ifndef VERIBLE_VERILOG_ANALYSIS_CHECKERS_LINE_LENGTH_RULE_H_
 #define VERIBLE_VERILOG_ANALYSIS_CHECKERS_LINE_LENGTH_RULE_H_
 
+#include <set>
 #include <string>
-#include <vector>
 
 #include "absl/strings/string_view.h"
 #include "common/analysis/lint_rule_status.h"
@@ -59,7 +59,7 @@ class LineLengthRule : public verible::TextStructureLintRule {
   static const char kMessage[];
 
   // Collection of found violations.
-  std::vector<verible::LintViolation> violations_;
+  std::set<verible::LintViolation> violations_;
 };
 
 }  // namespace analysis

@@ -16,7 +16,6 @@
 
 #include <set>
 #include <string>
-#include <vector>
 
 #include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
@@ -69,8 +68,8 @@ void VoidCastRule::HandleSymbol(const verible::Symbol& symbol,
     if (auto function_id = manager.GetAs<verible::SyntaxTreeLeaf>("id")) {
       const auto& bfs = BlacklistedFunctionsSet();
       if (bfs.find(std::string(function_id->get().text)) != bfs.end()) {
-        violations_.push_back(LintViolation(
-            function_id->get(), FormatReason(*function_id), context));
+        violations_.insert(LintViolation(function_id->get(),
+                                         FormatReason(*function_id), context));
       }
     }
   }
@@ -81,7 +80,7 @@ void VoidCastRule::HandleSymbol(const verible::Symbol& symbol,
     if (auto randomize_node = manager.GetAs<verible::SyntaxTreeNode>("id")) {
       auto leaf_ptr = verible::GetLeftmostLeaf(*randomize_node);
       const verible::TokenInfo token = ABSL_DIE_IF_NULL(leaf_ptr)->get();
-      violations_.push_back(LintViolation(
+      violations_.insert(LintViolation(
           token, "randomize() is forbidden within void casts", context));
     }
   }

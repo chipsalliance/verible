@@ -15,8 +15,8 @@
 #include "verilog/analysis/checkers/forbidden_macro_rule.h"
 
 #include <map>
+#include <set>
 #include <string>
-#include <vector>
 
 #include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
@@ -67,7 +67,7 @@ void ForbiddenMacroRule::HandleSymbol(
     if (auto leaf = manager.GetAs<verible::SyntaxTreeLeaf>("name")) {
       const auto& imm = InvalidMacrosMap();
       if (imm.find(std::string(leaf->get().text)) != imm.end()) {
-        violations_.push_back(
+        violations_.insert(
             verible::LintViolation(leaf->get(), FormatReason(*leaf), context));
       }
     }

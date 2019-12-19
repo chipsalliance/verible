@@ -15,8 +15,8 @@
 #include "verilog/analysis/checkers/forbidden_symbol_rule.h"
 
 #include <map>
+#include <set>
 #include <string>
-#include <vector>
 
 #include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
@@ -85,7 +85,7 @@ void ForbiddenSystemTaskFunctionRule::HandleSymbol(
     if (auto leaf = manager.GetAs<verible::SyntaxTreeLeaf>("name")) {
       const auto& ism = InvalidSymbolsMap();
       if (ism.find(std::string(leaf->get().text)) != ism.end()) {
-        violations_.push_back(
+        violations_.insert(
             verible::LintViolation(leaf->get(), FormatReason(*leaf), context));
       }
     }

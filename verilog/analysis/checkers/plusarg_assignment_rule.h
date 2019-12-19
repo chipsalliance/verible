@@ -15,8 +15,8 @@
 #ifndef VERIBLE_VERILOG_ANALYSIS_CHECKERS_PLUSARG_ASSIGNMENT_RULE_H_
 #define VERIBLE_VERILOG_ANALYSIS_CHECKERS_PLUSARG_ASSIGNMENT_RULE_H_
 
+#include <set>
 #include <string>
-#include <vector>
 
 #include "common/analysis/lint_rule_status.h"
 #include "common/analysis/matcher/matcher.h"
@@ -67,7 +67,7 @@ class PlusargAssignmentRule : public verible::SyntaxTreeLintRule {
       SystemTFIdentifierLeaf().Bind("name");
 
  private:
-  std::vector<verible::LintViolation> violations_;
+  std::set<verible::LintViolation> violations_;
 };
 
 }  // namespace analysis

@@ -38,14 +38,14 @@ class ForbidTokenRule : public TokenStreamLintRule {
 
   void HandleToken(const TokenInfo& token) override {
     if (token.token_enum == target_) {
-      violations_.push_back(LintViolation(token, "some reason"));
+      violations_.insert(LintViolation(token, "some reason"));
     }
   }
 
   LintRuleStatus Report() const override { return LintRuleStatus(violations_); }
 
  private:
-  std::vector<LintViolation> violations_;
+  std::set<LintViolation> violations_;
   int target_;
 };
 

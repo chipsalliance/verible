@@ -15,8 +15,8 @@
 #ifndef VERIBLE_VERILOG_ANALYSIS_CHECKERS_FORBIDDEN_ANONYMOUS_STRUCTS_UNIONS_RULE_H_  // NOLINT
 #define VERIBLE_VERILOG_ANALYSIS_CHECKERS_FORBIDDEN_ANONYMOUS_STRUCTS_UNIONS_RULE_H_  // NOLINT
 
+#include <set>
 #include <string>
-#include <vector>
 
 #include "common/analysis/lint_rule_status.h"
 #include "common/analysis/matcher/matcher.h"
@@ -74,7 +74,7 @@ class ForbiddenAnonymousStructsUnionsRule : public verible::SyntaxTreeLintRule {
   Matcher matcher_union_ = NodekUnionDataType();
 
   // Collection of found violations.
-  std::vector<verible::LintViolation> violations_;
+  std::set<verible::LintViolation> violations_;
 };
 
 }  // namespace analysis

@@ -14,8 +14,8 @@
 
 #include "verilog/analysis/checkers/explicit_function_task_parameter_type_rule.h"
 
+#include <set>
 #include <string>
-#include <vector>
 
 #include "absl/strings/str_cat.h"
 #include "common/analysis/citation.h"
@@ -64,7 +64,7 @@ void ExplicitFunctionTaskParameterTypeRule::HandleSymbol(
     const auto* type_node = GetTypeOfTaskFunctionPortItem(symbol);
     if (!IsStorageTypeOfDataTypeSpecified(*ABSL_DIE_IF_NULL(type_node))) {
       const auto* port_id = GetIdentifierFromTaskFunctionPortItem(symbol);
-      violations_.push_back(LintViolation(*port_id, kMessage, context));
+      violations_.insert(LintViolation(*port_id, kMessage, context));
     }
   }
 }

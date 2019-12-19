@@ -15,8 +15,8 @@
 #ifndef VERIBLE_VERILOG_ANALYSIS_CHECKERS_ALWAYS_FF_NON_BLOCKING_RULE_H_
 #define VERIBLE_VERILOG_ANALYSIS_CHECKERS_ALWAYS_FF_NON_BLOCKING_RULE_H_
 
+#include <set>
 #include <string>
-#include <vector>
 
 #include "common/analysis/lint_rule_status.h"
 #include "common/analysis/matcher/matcher.h"
@@ -55,7 +55,7 @@ class AlwaysFFNonBlockingRule : public verible::SyntaxTreeLintRule {
 
   const Matcher always_ff_matcher_ = NodekAlwaysStatement(AlwaysFFKeyword());
 
-  std::vector<verible::LintViolation> violations_;
+  std::set<verible::LintViolation> violations_;
 };
 
 }  // namespace analysis

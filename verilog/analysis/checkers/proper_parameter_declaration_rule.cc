@@ -14,8 +14,8 @@
 
 #include "verilog/analysis/checkers/proper_parameter_declaration_rule.h"
 
+#include <set>
 #include <string>
-#include <vector>
 
 #include "absl/strings/str_cat.h"
 #include "common/analysis/citation.h"
@@ -73,18 +73,15 @@ void ProperParameterDeclarationRule::HandleSymbol(
       // kFormalParameterList.
       if (ContextIsInsideClass(context) &&
           !ContextIsInsideFormalParameterList(context)) {
-        violations_.push_back(
-            LintViolation(symbol, kParameterMessage, context));
+        violations_.insert(LintViolation(symbol, kParameterMessage, context));
       } else if (ContextIsInsideModule(context) &&
                  !ContextIsInsideFormalParameterList(context)) {
-        violations_.push_back(
-            LintViolation(symbol, kParameterMessage, context));
+        violations_.insert(LintViolation(symbol, kParameterMessage, context));
       }
     } else if (param_decl_token == TK_localparam) {
       // If the context is not inside a class or module, report violation.
       if (!ContextIsInsideClass(context) && !ContextIsInsideModule(context))
-        violations_.push_back(
-            LintViolation(symbol, kLocalParamMessage, context));
+        violations_.insert(LintViolation(symbol, kLocalParamMessage, context));
     }
   }
 }

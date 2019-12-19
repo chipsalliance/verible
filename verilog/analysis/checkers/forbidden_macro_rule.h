@@ -16,8 +16,8 @@
 #define VERIBLE_VERILOG_ANALYSIS_CHECKERS_FORBIDDEN_MACRO_RULE_H_
 
 #include <map>
+#include <set>
 #include <string>
-#include <vector>
 
 #include "common/analysis/lint_rule_status.h"
 #include "common/analysis/matcher/matcher.h"
@@ -68,7 +68,7 @@ class ForbiddenMacroRule : public verible::SyntaxTreeLintRule {
   const verible::matcher::Matcher matcher_ = MacroCallIdLeaf().Bind("name");
 
  private:
-  std::vector<verible::LintViolation> violations_;
+  std::set<verible::LintViolation> violations_;
 };
 
 }  // namespace analysis

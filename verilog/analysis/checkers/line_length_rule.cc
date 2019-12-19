@@ -16,8 +16,8 @@
 
 #include <cstddef>
 #include <iterator>
+#include <set>
 #include <string>
-#include <vector>
 
 #include "absl/strings/ascii.h"
 #include "absl/strings/match.h"
@@ -153,7 +153,7 @@ void LineLengthRule::Lint(const TextStructureView& text_structure,
       if (!AllowLongLineException(token_range.begin(), token_range.end())) {
         // Fake a token that marks the offending range of text.
         TokenInfo token(TK_OTHER, line.substr(kMaxLineLength));
-        violations_.push_back(LintViolation(token, kMessage));
+        violations_.insert(LintViolation(token, kMessage));
       }
     }
     ++lineno;

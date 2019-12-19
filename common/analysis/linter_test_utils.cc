@@ -48,7 +48,7 @@ static int CompareViolation(const LintViolation& lhs, const TokenInfo& rhs) {
 }
 
 bool LintTestCase::ExactMatchFindings(
-    const std::vector<LintViolation>& found_violations, absl::string_view base,
+    const std::set<LintViolation>& found_violations, absl::string_view base,
     std::ostream* diffstream) const {
   // Due to the order in which violations are visited, we can assert that
   // the reported violations are thus ordered.

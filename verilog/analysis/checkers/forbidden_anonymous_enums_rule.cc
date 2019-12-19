@@ -14,8 +14,8 @@
 
 #include "verilog/analysis/checkers/forbidden_anonymous_enums_rule.h"
 
+#include <set>
 #include <string>
-#include <vector>
 
 #include "absl/strings/str_cat.h"
 #include "common/analysis/citation.h"
@@ -58,7 +58,7 @@ void ForbiddenAnonymousEnumsRule::HandleSymbol(
     // Check if it is preceded by a typedef
     if (!context.DirectParentsAre(
             {NodeEnum::kDataTypePrimitive, NodeEnum::kTypeDeclaration})) {
-      violations_.push_back(LintViolation(symbol, kMessage, context));
+      violations_.insert(LintViolation(symbol, kMessage, context));
     }
   }
 }

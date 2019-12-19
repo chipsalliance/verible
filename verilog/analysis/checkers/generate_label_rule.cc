@@ -14,8 +14,8 @@
 
 #include "verilog/analysis/checkers/generate_label_rule.h"
 
+#include <set>
 #include <string>
-#include <vector>
 
 #include "absl/strings/str_cat.h"
 #include "common/analysis/citation.h"
@@ -51,7 +51,7 @@ void GenerateLabelRule::HandleSymbol(
     const verible::Symbol& symbol, const verible::SyntaxTreeContext& context) {
   verible::matcher::BoundSymbolManager manager;
   if (matcher_.Matches(symbol, &manager)) {
-    violations_.push_back(verible::LintViolation(symbol, kMessage, context));
+    violations_.insert(verible::LintViolation(symbol, kMessage, context));
   }
 }
 

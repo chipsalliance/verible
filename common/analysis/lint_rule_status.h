@@ -19,6 +19,7 @@
 
 #include <functional>
 #include <iosfwd>
+#include <set>
 #include <string>
 #include <vector>
 
@@ -63,18 +64,23 @@ struct LintViolation {
   // The context (list of ancestors) of the offending token.
   // For non-syntax-tree analyses, leave this blank.
   const SyntaxTreeContext context;
+
+  bool operator<(const LintViolation& r) const {
+    // compares addresses of violations, which correspond to substring
+    // locations
+    return token.text.data() < r.token.text.data();
+  }
 };
 
 // LintRuleStatus represents the result of running a single lint rule.
 struct LintRuleStatus {
   LintRuleStatus() : violations() {}
 
-  LintRuleStatus(const std::vector<LintViolation>& vs,
-                 absl::string_view rule_name, const std::string& url)
+  LintRuleStatus(const std::set<LintViolation>& vs, absl::string_view rule_name,
+                 const std::string& url)
       : lint_rule_name(rule_name), url(url), violations(vs) {}
 
-  explicit LintRuleStatus(const std::vector<LintViolation>& vs)
-      : violations(vs) {}
+  explicit LintRuleStatus(const std::set<LintViolation>& vs) : violations(vs) {}
 
   bool isOk() const { return violations.empty(); }
 
@@ -89,7 +95,7 @@ struct LintRuleStatus {
   std::string url;
 
   // Contains all violations of the LintRule
-  std::vector<LintViolation> violations;
+  std::set<LintViolation> violations;
 };
 
 // LintStatusFormatter is a class for printing LintRuleStatus's and
@@ -115,6 +121,18 @@ class LintStatusFormatter {
   void FormatLintRuleStatus(std::ostream* stream, const LintRuleStatus& status,
                             absl::string_view base,
                             absl::string_view path) const;
+
+  // Formats, sorts and outputs status to stream.
+  // The violations contained in the statuses are sorted by their occurrence
+  // in the code and are not grouped by the status object.
+  // Path is the file path of original file. This is needed because it is not
+  // contained in status.
+  // Base is the string_view of the entire contents, used only for byte offset
+  // calculation.
+  void FormatLintRuleStatuses(std::ostream* stream,
+                              const std::vector<LintRuleStatus>& statuses,
+                              absl::string_view base,
+                              absl::string_view path) const;
 
   // Formats and outputs violation on stream.
   // Path is file path of original file and url is a link to the ratified rule

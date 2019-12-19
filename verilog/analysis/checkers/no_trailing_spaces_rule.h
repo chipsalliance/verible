@@ -17,8 +17,8 @@
 
 #include <stddef.h>
 
+#include <set>
 #include <string>
-#include <vector>
 
 #include "absl/strings/string_view.h"
 #include "common/analysis/line_lint_rule.h"
@@ -52,7 +52,7 @@ class NoTrailingSpacesRule : public verible::LineLintRule {
   static const char kMessage[];
 
   // Collection of found violations.
-  std::vector<verible::LintViolation> violations_;
+  std::set<verible::LintViolation> violations_;
 };
 
 }  // namespace analysis

@@ -16,8 +16,8 @@
 
 #include <algorithm>
 #include <memory>
+#include <set>
 #include <string>
-#include <vector>
 
 #include "absl/strings/str_cat.h"
 #include "common/analysis/citation.h"
@@ -112,7 +112,7 @@ void ModuleParameterRule::HandleSymbol(
       if (parameter_count > 1) {  // Determine the spanning location
         const auto leaf_ptr = verible::GetLeftmostLeaf(*list);
         const verible::TokenInfo token = ABSL_DIE_IF_NULL(leaf_ptr)->get();
-        violations_.push_back(verible::LintViolation(token, kMessage, context));
+        violations_.insert(verible::LintViolation(token, kMessage, context));
       }
     }
   }
@@ -145,7 +145,7 @@ void ModulePortRule::HandleSymbol(const verible::Symbol& symbol,
         // Determine the leftmost location
         const auto leaf_ptr = verible::GetLeftmostLeaf(*port_list_node);
         const verible::TokenInfo token = ABSL_DIE_IF_NULL(leaf_ptr)->get();
-        violations_.push_back(verible::LintViolation(token, kMessage, context));
+        violations_.insert(verible::LintViolation(token, kMessage, context));
       }
     }
   }

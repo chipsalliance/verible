@@ -14,8 +14,8 @@
 
 #include "verilog/analysis/checkers/always_ff_non_blocking_rule.h"
 
+#include <set>
 #include <string>
-#include <vector>
 
 #include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
@@ -74,7 +74,7 @@ void AlwaysFFNonBlockingRule::HandleSymbol(const verible::Symbol &symbol,
       if (leaf == nullptr) continue;
 
       if (leaf->get().token_enum == '=')
-        violations_.push_back(LintViolation(*leaf, kMessage, match.context));
+        violations_.insert(LintViolation(*leaf, kMessage, match.context));
     }
   }
 }

@@ -15,8 +15,8 @@
 #ifndef VERIBLE_VERILOG_ANALYSIS_CHECKERS_MODULE_INSTANTIATION_RULES_H_
 #define VERIBLE_VERILOG_ANALYSIS_CHECKERS_MODULE_INSTANTIATION_RULES_H_
 
+#include <set>
 #include <string>
-#include <vector>
 
 #include "common/analysis/lint_rule_status.h"
 #include "common/analysis/matcher/matcher.h"
@@ -60,7 +60,7 @@ class ModuleParameterRule : public verible::SyntaxTreeLintRule {
   // Diagnostic message.
   static const char kMessage[];
 
-  std::vector<verible::LintViolation> violations_;
+  std::set<verible::LintViolation> violations_;
 };
 
 // ModuleParamRule is an implementation of LintRule that handles incorrect
@@ -97,7 +97,7 @@ class ModulePortRule : public verible::SyntaxTreeLintRule {
   // true if it is not.
   bool IsPortListCompliant(const verible::SyntaxTreeNode& port_list_node) const;
 
-  std::vector<verible::LintViolation> violations_;
+  std::set<verible::LintViolation> violations_;
 };
 
 }  // namespace analysis

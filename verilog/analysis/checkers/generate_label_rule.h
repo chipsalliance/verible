@@ -15,8 +15,8 @@
 #ifndef VERIBLE_VERILOG_ANALYSIS_CHECKERS_GENERATE_LABEL_RULE_H_
 #define VERIBLE_VERILOG_ANALYSIS_CHECKERS_GENERATE_LABEL_RULE_H_
 
+#include <set>
 #include <string>
-#include <vector>
 
 #include "common/analysis/lint_rule_status.h"
 #include "common/analysis/matcher/core_matchers.h"
@@ -75,7 +75,7 @@ class GenerateLabelRule : public verible::SyntaxTreeLintRule {
   // Diagnostic message.
   static const char kMessage[];
 
-  std::vector<verible::LintViolation> violations_;
+  std::set<verible::LintViolation> violations_;
 };
 
 }  // namespace analysis

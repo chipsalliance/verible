@@ -14,8 +14,8 @@
 
 #include "verilog/analysis/checkers/plusarg_assignment_rule.h"
 
+#include <set>
 #include <string>
-#include <vector>
 
 #include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
@@ -56,7 +56,7 @@ void PlusargAssignmentRule::HandleSymbol(
   if (matcher_.Matches(symbol, &manager)) {
     if (auto leaf = manager.GetAs<verible::SyntaxTreeLeaf>("name")) {
       if (kForbiddenFunctionName == leaf->get().text) {
-        violations_.push_back(
+        violations_.insert(
             verible::LintViolation(leaf->get(), FormatReason(), context));
       }
     }
