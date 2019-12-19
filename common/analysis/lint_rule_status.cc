@@ -58,6 +58,44 @@ void LintStatusFormatter::FormatLintRuleStatus(std::ostream* stream,
   }
 }
 
+struct LintViolationWithStatus {
+  const LintViolation *violation;
+  const LintRuleStatus *status;
+
+  LintViolationWithStatus(const LintViolation *v, const LintRuleStatus *s)
+      : violation(v), status(s) {}
+
+  bool operator<(const LintViolationWithStatus& r) const {
+    // compares addresses which correspond to locations within the same string
+    return violation->token.text.data() < r.violation->token.text.data();
+  };
+};
+
+void LintStatusFormatter::FormatLintRuleStatuses(
+    std::ostream* stream,
+    const std::vector<LintRuleStatus> &statuses,
+    absl::string_view base,
+    absl::string_view path) const {
+
+  std::set<LintViolationWithStatus> violations;
+
+  // TODO(fangism): rewrite as a linear time merge of pre-ordered sub-sequences
+  for (auto &status : statuses) {
+    for (auto &violation : status.violations) {
+      violations.insert(LintViolationWithStatus(&violation, &status));
+    }
+  }
+
+  for (auto violation : violations) {
+    FormatViolation(stream,
+                    *violation.violation,
+                    base, path,
+                    violation.status->url,
+                    violation.status->lint_rule_name);
+    *stream << std::endl;
+  }
+}
+
 // Formats and outputs violation on stream
 // Path is file path of original file and url is a link to violated rule
 void LintStatusFormatter::FormatViolation(std::ostream* stream,

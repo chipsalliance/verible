@@ -144,5 +144,67 @@ TEST(LintRuleStatusFormatterTest, NoOutput) {
   RunLintStatusTest(test);
 }
 
+void RunLintStatusesTest(const LintStatusTest& test)
+{
+  // Dummy tree so we have something for test cases to point at
+  SymbolPtr root = Node();
+
+  std::vector<LintRuleStatus> statuses;
+  LintRuleStatus status0;
+  status0.url = test.url;
+  status0.lint_rule_name = test.rule_name;
+
+  LintRuleStatus status1;
+  status1.url = test.url;
+  status1.lint_rule_name = test.rule_name;
+
+  ASSERT_EQ(test.violations.size(), 2);
+
+  // Insert the violations in the wrong order
+  status0.violations.insert(
+      LintViolation(test.violations[1].token,
+                    test.violations[1].reason));
+
+  status1.violations.insert(
+      LintViolation(test.violations[0].token,
+                    test.violations[0].reason));
+
+  statuses.push_back(status0);
+  statuses.push_back(status1);
+
+  std::ostringstream ss;
+
+  LintStatusFormatter formatter(test.text);
+  formatter.FormatLintRuleStatuses(&ss, statuses, test.text, test.path);
+  auto result_parts = absl::StrSplit(ss.str(), '\n');
+  auto part_iterator = result_parts.begin();
+
+  for (const auto& violation_test : test.violations) {
+    EXPECT_EQ(*part_iterator, violation_test.expected_output);
+    part_iterator++;
+  }
+}
+
+TEST(LintRuleStatusFormatterTest, MultipleStatusesSimpleOutput) {
+  SymbolPtr root = Node();
+  static const int dont_care_tag = 0;
+  constexpr absl::string_view text(
+      "This is some code\n"
+      "That you are looking at right now\n"
+      "It is nice code, make no mistake\n"
+      "Very nice");
+  LintStatusTest test = {
+      "test-rule",
+      "http://foobar",
+      "some/path/to/somewhere.fvg",
+      text,
+      {{"reason1", TokenInfo(dont_care_tag, text.substr(0, 5)),
+        "some/path/to/somewhere.fvg:1:1: reason1 http://foobar [test-rule]"},
+       {"reason2", TokenInfo(dont_care_tag, text.substr(21, 4)),
+        "some/path/to/somewhere.fvg:2:4: reason2 http://foobar [test-rule]"}}};
+
+  RunLintStatusesTest(test);
+}
+
 }  // namespace
 }  // namespace verible
