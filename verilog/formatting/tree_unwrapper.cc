@@ -341,6 +341,33 @@ verible::TokenWithContext TreeUnwrapper::VerboseToken(
   return TokenWithContext{token, token_context_};
 }
 
+void TreeUnwrapper::AppendTokenToPreviousUnwrappedLine() {
+    AddTokenToCurrentUnwrappedLine();
+    auto* target_leaf =
+      CurrentTokenPartition()->PreviousSibling()->RightmostDescendant();
+
+    ABSL_DIE_IF_NULL(target_leaf);
+    auto* current_leaf = CurrentTokenPartition();
+    auto* current_leaf_parent = CurrentTokenPartition()->Parent();
+
+    // Verify continuity of token ranges between current and target leaves.
+    CHECK(target_leaf->Value().TokensRange().end() ==
+      current_leaf->Value().TokensRange().begin());
+
+    const auto range_end = current_leaf->Value().TokensRange().end();
+    auto* node = target_leaf;
+
+    while (node != current_leaf_parent) {
+      node->Value().SpanUpToToken(range_end);
+      node = node->Parent();
+    }
+
+    node->Value().SpanUpToToken(range_end);
+    // Remove the now empty partition
+    current_leaf_parent->Children().pop_back();
+
+}
+
 void TreeUnwrapper::CatchUpToCurrentLeaf(const verible::TokenInfo& leaf_token) {
   VLOG(4) << __FUNCTION__ << " to " << VerboseToken(leaf_token);
   // "Catch up" NextUnfilteredToken() to the current leaf.
@@ -894,9 +921,15 @@ void TreeUnwrapper::Visit(const verible::SyntaxTreeLeaf& leaf) {
     StartNewUnwrappedLine();
   }
 
-  // Advances NextUnfilteredToken(), and extends CurrentUnwrappedLine().
-  // Should be equivalent to AdvanceNextUnfilteredToken().
-  AddTokenToCurrentUnwrappedLine();
+  if (tag == ',' && CurrentUnwrappedLine().IsEmpty()) {
+    // Partition would begin with a comma,
+    // instead add this token to previous partition
+    AppendTokenToPreviousUnwrappedLine();
+  } else {
+    // Advances NextUnfilteredToken(), and extends CurrentUnwrappedLine().
+    // Should be equivalent to AdvanceNextUnfilteredToken().
+    AddTokenToCurrentUnwrappedLine();
+  }
 
   // Look-ahead to any trailing comments that are associated with this leaf,
   // up to a newline.
