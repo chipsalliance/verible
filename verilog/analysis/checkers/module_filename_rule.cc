@@ -18,6 +18,7 @@
 #include <iterator>
 #include <memory>
 #include <string>
+#include <set>
 #include <vector>
 
 #include "absl/strings/str_cat.h"
@@ -93,7 +94,7 @@ void ModuleFilenameRule::Lint(const TextStructureView& text_structure,
 
   // Only report a violation on the last module declaration.
   const auto& last_module_id = GetModuleNameToken(*module_matches.back().match);
-  violations_.push_back(verible::LintViolation(
+  violations_.insert(verible::LintViolation(
       last_module_id, absl::StrCat(kMessage, "\"", unitname, "\"")));
 }
 

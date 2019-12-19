@@ -16,7 +16,7 @@
 #define VERIBLE_VERILOG_ANALYSIS_CHECKERS_ALWAYS_COMB_BLOCKING_RULE_H_
 
 #include <string>
-#include <vector>
+#include <set>
 
 #include "common/analysis/lint_rule_status.h"
 #include "common/analysis/matcher/matcher.h"
@@ -56,7 +56,7 @@ class AlwaysCombBlockingRule : public verible::SyntaxTreeLintRule {
   const Matcher always_comb_matcher_ =
       NodekAlwaysStatement(AlwaysCombKeyword());
 
-  std::vector<verible::LintViolation> violations_;
+  std::set<verible::LintViolation> violations_;
 };
 
 }  // namespace analysis

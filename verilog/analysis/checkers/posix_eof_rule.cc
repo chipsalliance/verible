@@ -15,7 +15,7 @@
 #include "verilog/analysis/checkers/posix_eof_rule.h"
 
 #include <string>
-#include <vector>
+#include <set>
 
 #include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
@@ -55,7 +55,7 @@ void PosixEOFRule::Lint(const TextStructureView& text_structure,
     if (!last_line.empty()) {
       // Point to the end of the line (also EOF).
       const TokenInfo token(TK_OTHER, last_line.substr(last_line.length(), 0));
-      violations_.push_back(LintViolation(token, kMessage));
+      violations_.insert(LintViolation(token, kMessage));
     }
   }
 }

@@ -15,7 +15,7 @@
 #include "verilog/analysis/checkers/forbidden_anonymous_structs_unions_rule.h"
 
 #include <string>
-#include <vector>
+#include <set>
 
 #include "absl/strings/str_cat.h"
 #include "common/analysis/citation.h"
@@ -62,13 +62,13 @@ void ForbiddenAnonymousStructsUnionsRule::HandleSymbol(
     // Check if it is preceded by a typedef
     if (!context.DirectParentsAre(
             {NodeEnum::kDataTypePrimitive, NodeEnum::kTypeDeclaration})) {
-      violations_.push_back(LintViolation(symbol, kMessageStruct, context));
+      violations_.insert(LintViolation(symbol, kMessageStruct, context));
     }
   } else if (matcher_union_.Matches(symbol, &manager)) {
     // Check if it is preceded by a typedef
     if (!context.DirectParentsAre(
             {NodeEnum::kDataTypePrimitive, NodeEnum::kTypeDeclaration})) {
-      violations_.push_back(LintViolation(symbol, kMessageUnion, context));
+      violations_.insert(LintViolation(symbol, kMessageUnion, context));
     }
   }
 }

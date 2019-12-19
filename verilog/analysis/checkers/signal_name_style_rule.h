@@ -16,7 +16,7 @@
 #define VERIBLE_VERILOG_ANALYSIS_CHECKERS_SIGNAL_NAME_STYLE_RULE_H_
 
 #include <string>
-#include <vector>
+#include <set>
 
 #include "common/analysis/lint_rule_status.h"
 #include "common/analysis/matcher/matcher.h"
@@ -60,7 +60,7 @@ class SignalNameStyleRule : public verible::SyntaxTreeLintRule {
   Matcher matcher_net_ = NodekNetDeclaration();
   Matcher matcher_data_ = NodekDataDeclaration();
 
-  std::vector<verible::LintViolation> violations_;
+  std::set<verible::LintViolation> violations_;
 };
 
 }  // namespace analysis

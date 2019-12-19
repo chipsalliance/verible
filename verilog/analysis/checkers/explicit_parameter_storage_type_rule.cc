@@ -15,7 +15,7 @@
 #include "verilog/analysis/checkers/explicit_parameter_storage_type_rule.h"
 
 #include <string>
-#include <vector>
+#include <set>
 
 #include "absl/strings/str_cat.h"
 #include "common/analysis/citation.h"
@@ -65,7 +65,7 @@ void ExplicitParameterStorageTypeRule::HandleSymbol(
     const auto* type_info_symbol = GetParamTypeInfoSymbol(symbol);
     if (IsTypeInfoEmpty(*ABSL_DIE_IF_NULL(type_info_symbol))) {
       const verible::TokenInfo& param_name = GetParameterNameToken(symbol);
-      violations_.push_back(LintViolation(
+      violations_.insert(LintViolation(
           param_name, absl::StrCat(kMessage, "(", param_name.text, ")."),
           context));
     }

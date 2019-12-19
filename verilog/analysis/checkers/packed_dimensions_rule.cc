@@ -16,7 +16,7 @@
 
 #include <algorithm>  // for std::distance
 #include <string>
-#include <vector>
+#include <set>
 
 #include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
@@ -82,7 +82,7 @@ void PackedDimensionsRule::HandleSymbol(
         (left_is_constant && right_is_constant && left_value < right_value)) {
       const verible::TokenInfo token(TK_OTHER,
                                      verible::StringSpanOfSymbol(left, right));
-      violations_.push_back(LintViolation(token, kMessage, context));
+      violations_.insert(LintViolation(token, kMessage, context));
     }
   }
 }

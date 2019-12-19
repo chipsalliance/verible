@@ -42,7 +42,7 @@ class AllLeavesMustBeN : public SyntaxTreeLintRule {
   void HandleLeaf(const SyntaxTreeLeaf& leaf,
                   const SyntaxTreeContext& context) override {
     if (leaf.get().token_enum != target_) {
-      violations_.push_back(LintViolation(leaf.get(), "", context));
+      violations_.insert(LintViolation(leaf.get(), "", context));
     }
   }
 
@@ -52,7 +52,7 @@ class AllLeavesMustBeN : public SyntaxTreeLintRule {
   LintRuleStatus Report() const override { return LintRuleStatus(violations_); }
 
  private:
-  std::vector<LintViolation> violations_;
+  std::set<LintViolation> violations_;
   int target_;
 };
 
@@ -61,7 +61,11 @@ std::unique_ptr<SyntaxTreeLintRule> MakeRuleN(int n) {
 }
 
 TEST(SyntaxTreeLinterTest, BasicUsageCorrect) {
-  const SymbolPtr root = Node(XLeaf(2), XLeaf(2), Node(XLeaf(2)), XLeaf(2));
+  const SymbolPtr root =
+      Node(XLeaf(2),
+           XLeaf(2),
+           Node(XLeaf(2)),
+           XLeaf(2));
 
   SyntaxTreeLinter linter;
   linter.AddRule(MakeRuleN(2));
@@ -75,7 +79,11 @@ TEST(SyntaxTreeLinterTest, BasicUsageCorrect) {
 }
 
 TEST(SyntaxTreeLinterTest, BasicUsageFailure) {
-  SymbolPtr root = Node(XLeaf(2), XLeaf(2), Node(XLeaf(2)), XLeaf(3));
+  SymbolPtr root =
+      Node(XLeaf(2),
+           XLeaf(2),
+           Node(XLeaf(2)),
+           XLeaf(3));
 
   SyntaxTreeLinter linter;
   linter.AddRule(MakeRuleN(2));
@@ -89,7 +97,12 @@ TEST(SyntaxTreeLinterTest, BasicUsageFailure) {
 }
 
 TEST(SyntaxTreeLinterTest, MultipleRules) {
-  SymbolPtr root = Node(XLeaf(2), XLeaf(2), Node(XLeaf(2)), XLeaf(2));
+  constexpr absl::string_view text("abcd");
+  SymbolPtr root =
+      Node(Leaf(2, text.substr(0, 1)),
+           Leaf(2, text.substr(1, 1)),
+           Node(Leaf(2, text.substr(2, 1))),
+           Leaf(2, text.substr(3, 1)));
 
   SyntaxTreeLinter linter;
   linter.AddRule(MakeRuleN(2));
@@ -126,7 +139,7 @@ class ChildrenLeavesAscending : public SyntaxTreeLintRule {
         if (current_tag >= last_tag) {
           last_tag = current_tag;
         } else {
-          violations_.push_back(LintViolation(leaf_child->get(), "", context));
+          violations_.insert(LintViolation(leaf_child->get(), "", context));
           return;
         }
       }
@@ -136,7 +149,7 @@ class ChildrenLeavesAscending : public SyntaxTreeLintRule {
   LintRuleStatus Report() const override { return LintRuleStatus(violations_); }
 
  private:
-  std::vector<LintViolation> violations_;
+  std::set<LintViolation> violations_;
 };
 
 std::unique_ptr<SyntaxTreeLintRule> MakeAscending() {
@@ -144,8 +157,13 @@ std::unique_ptr<SyntaxTreeLintRule> MakeAscending() {
 }
 
 TEST(SyntaxTreeLinterTest, AscendingSuccess) {
+  constexpr absl::string_view text("abcde");
   SymbolPtr root =
-      Node(XLeaf(1), XLeaf(4), Node(XLeaf(2), XLeaf(10)), XLeaf(7));
+      Node(Leaf(1, text.substr(0, 1)),
+           Leaf(4, text.substr(1, 1)),
+           Node(Leaf(2, text.substr(2, 1)),
+                Leaf(10, text.substr(3, 1))),
+           Leaf(7, text.substr(4, 1)));
   SyntaxTreeLinter linter;
   linter.AddRule(MakeAscending());
   ASSERT_NE(root.get(), nullptr);
@@ -157,8 +175,13 @@ TEST(SyntaxTreeLinterTest, AscendingSuccess) {
 }
 
 TEST(SyntaxTreeLinterTest, AscendingFailsOnce) {
+  constexpr absl::string_view text("abcde");
   SymbolPtr root =
-      Node(XLeaf(1), XLeaf(4), Node(XLeaf(2), XLeaf(10)), XLeaf(1));
+      Node(Leaf(1, text.substr(0, 1)),
+           Leaf(4, text.substr(1, 1)),
+           Node(Leaf(2, text.substr(2, 1)),
+                Leaf(10, text.substr(3, 1))),
+           Leaf(1, text.substr(4, 1)));
   SyntaxTreeLinter linter;
   linter.AddRule(MakeAscending());
   ASSERT_NE(root.get(), nullptr);
@@ -171,8 +194,13 @@ TEST(SyntaxTreeLinterTest, AscendingFailsOnce) {
 }
 
 TEST(SyntaxTreeLinterTest, AscendingFailsTwice) {
+  constexpr absl::string_view text("abcde");
   SymbolPtr root =
-      Node(XLeaf(1), XLeaf(4), Node(XLeaf(210), XLeaf(10)), XLeaf(1));
+      Node(Leaf(1, text.substr(0, 1)),
+           Leaf(4, text.substr(1, 1)),
+           Node(Leaf(210, text.substr(2, 1)),
+                Leaf(10, text.substr(3, 1))),
+           Leaf(1, text.substr(4, 1)));
   SyntaxTreeLinter linter;
   linter.AddRule(MakeAscending());
   ASSERT_NE(root.get(), nullptr);
@@ -185,8 +213,13 @@ TEST(SyntaxTreeLinterTest, AscendingFailsTwice) {
 }
 
 TEST(SyntaxTreeLinterTest, HeterogenousTests) {
+  constexpr absl::string_view text("abcde");
   SymbolPtr root =
-      Node(XLeaf(1), XLeaf(4), Node(XLeaf(210), XLeaf(10)), XLeaf(1));
+      Node(Leaf(1, text.substr(0, 1)),
+           Leaf(4, text.substr(1, 1)),
+           Node(Leaf(210, text.substr(2, 1)),
+                Leaf(10, text.substr(3, 1))),
+           Leaf(1, text.substr(4, 1)));
   SyntaxTreeLinter linter;
   linter.AddRule(MakeAscending());
   linter.AddRule(MakeRuleN(1));
@@ -209,7 +242,7 @@ class TagMatchesContextDepth : public SyntaxTreeLintRule {
   void HandleLeaf(const SyntaxTreeLeaf& leaf,
                   const SyntaxTreeContext& context) override {
     if (static_cast<size_t>(leaf.get().token_enum) != context.size()) {
-      violations_.push_back(LintViolation(leaf.get(), "", context));
+      violations_.insert(LintViolation(leaf.get(), "", context));
     }
   }
   // Do not process nodes
@@ -219,7 +252,7 @@ class TagMatchesContextDepth : public SyntaxTreeLintRule {
   LintRuleStatus Report() const override { return LintRuleStatus(violations_); }
 
  private:
-  std::vector<LintViolation> violations_;
+  std::set<LintViolation> violations_;
 };
 
 std::unique_ptr<SyntaxTreeLintRule> MakeDepth() {
@@ -227,8 +260,13 @@ std::unique_ptr<SyntaxTreeLintRule> MakeDepth() {
 }
 
 TEST(SyntaxTreeLinterTest, DepthFails) {
+  constexpr absl::string_view text("abcde");
   SymbolPtr root =
-      Node(XLeaf(1), XLeaf(4), Node(XLeaf(210), XLeaf(10)), XLeaf(1));
+      Node(Leaf(1, text.substr(0, 1)),
+           Leaf(4, text.substr(1, 1)),
+           Node(Leaf(210, text.substr(2, 1)),
+                Leaf(10, text.substr(3, 1))),
+           Leaf(1, text.substr(4, 1)));
   SyntaxTreeLinter linter;
   linter.AddRule(MakeDepth());
   ASSERT_NE(root.get(), nullptr);
@@ -241,7 +279,13 @@ TEST(SyntaxTreeLinterTest, DepthFails) {
 }
 
 TEST(SyntaxTreeLinterTest, DepthSuccess) {
-  SymbolPtr root = Node(XLeaf(1), XLeaf(1), Node(XLeaf(2), XLeaf(2)), XLeaf(1));
+  constexpr absl::string_view text("abcde");
+  SymbolPtr root =
+      Node(Leaf(1, text.substr(0, 1)),
+           Leaf(1, text.substr(1, 1)),
+           Node(Leaf(2, text.substr(2, 1)),
+                Leaf(2, text.substr(3, 1))),
+           Leaf(1, text.substr(4, 1)));
   SyntaxTreeLinter linter;
   linter.AddRule(MakeDepth());
   ASSERT_NE(root.get(), nullptr);

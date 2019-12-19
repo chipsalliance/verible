@@ -21,6 +21,7 @@
 #include <iosfwd>
 #include <string>
 #include <vector>
+#include <set>
 
 #include "absl/strings/string_view.h"
 #include "common/text/line_column_map.h"
@@ -63,17 +64,23 @@ struct LintViolation {
   // The context (list of ancestors) of the offending token.
   // For non-syntax-tree analyses, leave this blank.
   const SyntaxTreeContext context;
+
+  bool operator<(const LintViolation& r) const {
+    // compares addresses of violations, which correspond to substring
+    // locations
+    return token.text.data() < r.token.text.data();
+  };
 };
 
 // LintRuleStatus represents the result of running a single lint rule.
 struct LintRuleStatus {
   LintRuleStatus() : violations() {}
 
-  LintRuleStatus(const std::vector<LintViolation>& vs,
+  LintRuleStatus(const std::set<LintViolation>& vs,
                  absl::string_view rule_name, const std::string& url)
       : lint_rule_name(rule_name), url(url), violations(vs) {}
 
-  explicit LintRuleStatus(const std::vector<LintViolation>& vs)
+  explicit LintRuleStatus(const std::set<LintViolation>& vs)
       : violations(vs) {}
 
   bool isOk() const { return violations.empty(); }
@@ -89,7 +96,7 @@ struct LintRuleStatus {
   std::string url;
 
   // Contains all violations of the LintRule
-  std::vector<LintViolation> violations;
+  std::set<LintViolation> violations;
 };
 
 // LintStatusFormatter is a class for printing LintRuleStatus's and

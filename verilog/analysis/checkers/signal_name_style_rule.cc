@@ -15,7 +15,7 @@
 #include "verilog/analysis/checkers/signal_name_style_rule.h"
 
 #include <string>
-#include <vector>
+#include <set>
 
 #include "absl/strings/str_cat.h"
 #include "common/analysis/citation.h"
@@ -66,21 +66,21 @@ void SignalNameStyleRule::HandleSymbol(const verible::Symbol& symbol,
         GetIdentifierFromModulePortDeclaration(symbol);
     const auto name = ABSL_DIE_IF_NULL(identifier_leaf)->get().text;
     if (!verible::IsLowerSnakeCaseWithDigits(name))
-      violations_.push_back(
+      violations_.insert(
           LintViolation(identifier_leaf->get(), kMessage, context));
   } else if (matcher_net_.Matches(symbol, &manager)) {
     const auto identifier_leaves = GetIdentifiersFromNetDeclaration(symbol);
     for (auto& leaf : identifier_leaves) {
       const auto name = leaf->text;
       if (!verible::IsLowerSnakeCaseWithDigits(name))
-        violations_.push_back(LintViolation(*leaf, kMessage, context));
+        violations_.insert(LintViolation(*leaf, kMessage, context));
     }
   } else if (matcher_data_.Matches(symbol, &manager)) {
     const auto identifier_leaves = GetIdentifiersFromDataDeclaration(symbol);
     for (auto& leaf : identifier_leaves) {
       const auto name = leaf->text;
       if (!verible::IsLowerSnakeCaseWithDigits(name))
-        violations_.push_back(LintViolation(*leaf, kMessage, context));
+        violations_.insert(LintViolation(*leaf, kMessage, context));
     }
   }
 }

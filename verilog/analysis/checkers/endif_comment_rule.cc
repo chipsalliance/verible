@@ -17,7 +17,7 @@
 #include <deque>
 #include <stack>
 #include <string>
-#include <vector>
+#include <set>
 
 #include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
@@ -107,7 +107,7 @@ void EndifCommentRule::HandleToken(const TokenInfo& token) {
           const absl::string_view contents =
               verible::StripCommentAndSpacePadding(token.text);
           if (contents != expect) {
-            violations_.push_back(LintViolation(
+            violations_.insert(LintViolation(
                 last_endif_, absl::StrCat(kMessage, " (", expect, ")")));
           }
           conditional_scopes_.pop();
@@ -116,7 +116,7 @@ void EndifCommentRule::HandleToken(const TokenInfo& token) {
         }
         default:
           // includes TK_NEWLINE and TK_EOF.
-          violations_.push_back(LintViolation(
+          violations_.insert(LintViolation(
               last_endif_, absl::StrCat(kMessage, " (", expect, ")")));
           conditional_scopes_.pop();
           state_ = State::kNormal;

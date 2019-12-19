@@ -15,7 +15,7 @@
 #include "verilog/analysis/checkers/unpacked_dimensions_rule.h"
 
 #include <string>
-#include <vector>
+#include <set>
 
 #include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
@@ -89,14 +89,14 @@ void UnpackedDimensionsRule::HandleSymbol(
     const verible::TokenInfo token(TK_OTHER,
                                    verible::StringSpanOfSymbol(left, right));
     if (left_is_zero) {
-      violations_.push_back(
+      violations_.insert(
           LintViolation(token, kMessageScalarInOrder, context));
     } else if (right_is_zero) {
-      violations_.push_back(
+      violations_.insert(
           LintViolation(token, kMessageScalarReversed, context));
     } else if (left_is_constant && right_is_constant &&
                left_value > right_value) {
-      violations_.push_back(LintViolation(token, kMessageReorder, context));
+      violations_.insert(LintViolation(token, kMessageReorder, context));
     }
   }
 }

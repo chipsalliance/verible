@@ -17,7 +17,7 @@
 
 #include <stack>
 #include <string>
-#include <vector>
+#include <set>
 
 #include "common/analysis/lint_rule_status.h"
 #include "common/analysis/token_stream_lint_rule.h"
@@ -83,7 +83,7 @@ class EndifCommentRule : public verible::TokenStreamLintRule {
   std::stack<verible::TokenInfo> conditional_scopes_;
 
   // Collection of found violations.
-  std::vector<verible::LintViolation> violations_;
+  std::set<verible::LintViolation> violations_;
 };
 
 }  // namespace analysis

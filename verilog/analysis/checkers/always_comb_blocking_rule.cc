@@ -15,7 +15,7 @@
 #include "verilog/analysis/checkers/always_comb_blocking_rule.h"
 
 #include <string>
-#include <vector>
+#include <set>
 
 #include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
@@ -68,7 +68,7 @@ void AlwaysCombBlockingRule::HandleSymbol(const verible::Symbol& symbol,
           *node, NodeEnum::kNonblockingAssignmentStatement, 1);
 
       if (leaf.get().token_enum == TK_LE)
-        violations_.push_back(LintViolation(leaf, kMessage, match.context));
+        violations_.insert(LintViolation(leaf, kMessage, match.context));
     }
   }
 }

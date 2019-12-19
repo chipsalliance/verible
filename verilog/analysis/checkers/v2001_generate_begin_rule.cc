@@ -15,7 +15,7 @@
 #include "verilog/analysis/checkers/v2001_generate_begin_rule.h"
 
 #include <string>
-#include <vector>
+#include <set>
 
 #include "absl/strings/str_cat.h"
 #include "common/analysis/citation.h"
@@ -59,7 +59,7 @@ void V2001GenerateBeginRule::HandleSymbol(
   verible::matcher::BoundSymbolManager manager;
   if (matcher_.Matches(symbol, &manager)) {
     if (const auto* block = manager.GetAs<verible::SyntaxTreeNode>("block")) {
-      violations_.push_back(LintViolation(
+      violations_.insert(LintViolation(
           verible::GetLeftmostLeaf(*block)->get(), kMessage, context));
     }
   }

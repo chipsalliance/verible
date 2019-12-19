@@ -16,7 +16,7 @@
 #define VERIBLE_VERILOG_ANALYSIS_CHECKERS_V2001_GENERATE_BEGIN_RULE_H_
 
 #include <string>
-#include <vector>
+#include <set>
 
 #include "common/analysis/lint_rule_status.h"
 #include "common/analysis/matcher/matcher.h"
@@ -66,7 +66,7 @@ class V2001GenerateBeginRule : public verible::SyntaxTreeLintRule {
   // Diagnostic message.
   static const char kMessage[];
 
-  std::vector<verible::LintViolation> violations_;
+  std::set<verible::LintViolation> violations_;
 };
 
 }  // namespace analysis

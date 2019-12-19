@@ -16,7 +16,7 @@
 
 #include <cstddef>
 #include <string>
-#include <vector>
+#include <set>
 
 #include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
@@ -55,7 +55,7 @@ void NoTabsRule::HandleLine(absl::string_view line) {
   const auto tab_pos = line.find('\t');
   if (tab_pos != absl::string_view::npos) {
     TokenInfo token(TK_SPACE, line.substr(tab_pos, 1));
-    violations_.push_back(LintViolation(token, kMessage));
+    violations_.insert(LintViolation(token, kMessage));
   }
 }
 

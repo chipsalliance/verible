@@ -20,7 +20,7 @@
 #include <cctype>
 #include <iterator>
 #include <string>
-#include <vector>
+#include <set>
 
 #include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
@@ -65,7 +65,7 @@ void NoTrailingSpacesRule::HandleLine(absl::string_view line) {
     if (trailing != 0) {
       const int column = line.length() - trailing;
       const TokenInfo token(TK_SPACE, line.substr(column));
-      violations_.push_back(LintViolation(token, kMessage));
+      violations_.insert(LintViolation(token, kMessage));
     }
   }
 }

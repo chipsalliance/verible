@@ -16,7 +16,7 @@
 #define VERIBLE_VERILOG_ANALYSIS_CHECKERS_MODULE_BEGIN_BLOCK_RULE_H_
 
 #include <string>
-#include <vector>
+#include <set>
 
 #include "common/analysis/lint_rule_status.h"
 #include "common/analysis/matcher/matcher.h"
@@ -63,7 +63,7 @@ class ModuleBeginBlockRule : public verible::SyntaxTreeLintRule {
   // Diagnostic message.
   static const char kMessage[];
 
-  std::vector<verible::LintViolation> violations_;
+  std::set<verible::LintViolation> violations_;
 };
 
 }  // namespace analysis

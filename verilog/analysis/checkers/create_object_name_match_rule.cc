@@ -17,7 +17,7 @@
 #include <cstddef>
 #include <memory>
 #include <string>
-#include <vector>
+#include <set>
 
 #include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
@@ -173,7 +173,7 @@ void CreateObjectNameMatchRule::HandleSymbol(const verible::Symbol& symbol,
     if (const auto* expr = GetFirstExpressionFromArgs(*args)) {
       if (const TokenInfo* name_token = ExtractStringLiteralToken(*expr)) {
         if (StripOuterQuotes(name_token->text) != lval_token.text) {
-          violations_.push_back(LintViolation(
+          violations_.insert(LintViolation(
               *name_token, FormatReason(lval_token.text, name_token->text)));
         }
       }

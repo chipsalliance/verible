@@ -15,7 +15,7 @@
 #include "verilog/analysis/checkers/struct_union_name_style_rule.h"
 
 #include <string>
-#include <vector>
+#include <set>
 
 #include "absl/strings/match.h"
 #include "absl/strings/str_cat.h"
@@ -75,7 +75,7 @@ void StructUnionNameStyleRule::HandleSymbol(const verible::Symbol& symbol,
     const auto name = ABSL_DIE_IF_NULL(identifier_leaf)->get().text;
     if (!verible::IsLowerSnakeCaseWithDigits(name) ||
         !absl::EndsWith(name, "_t")) {
-      violations_.push_back(
+      violations_.insert(
           LintViolation(identifier_leaf->get(), msg, context));
     }
   }

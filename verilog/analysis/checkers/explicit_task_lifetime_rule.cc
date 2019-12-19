@@ -15,7 +15,7 @@
 #include "verilog/analysis/checkers/explicit_task_lifetime_rule.h"
 
 #include <string>
-#include <vector>
+#include <set>
 
 #include "absl/strings/str_cat.h"
 #include "common/analysis/citation.h"
@@ -74,7 +74,7 @@ void ExplicitTaskLifetimeRule::HandleSymbol(const verible::Symbol& symbol,
       // Point to the task id.
       const verible::TokenInfo token(SymbolIdentifier,
                                      verible::StringSpanOfSymbol(*task_id));
-      violations_.push_back(LintViolation(token, kMessage, context));
+      violations_.insert(LintViolation(token, kMessage, context));
     }
   }
 }

@@ -15,7 +15,7 @@
 #include "verilog/analysis/checkers/always_comb_rule.h"
 
 #include <string>
-#include <vector>
+#include <set>
 
 #include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
@@ -55,7 +55,7 @@ void AlwaysCombRule::HandleSymbol(const verible::Symbol& symbol,
   // Check for offending use of always @*
   verible::matcher::BoundSymbolManager manager;
   if (always_star_matcher_.Matches(symbol, &manager)) {
-    violations_.push_back(LintViolation(symbol, kMessage, context));
+    violations_.insert(LintViolation(symbol, kMessage, context));
   }
 }
 

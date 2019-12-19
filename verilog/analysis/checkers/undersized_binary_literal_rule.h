@@ -16,7 +16,7 @@
 #define VERIBLE_VERILOG_ANALYSIS_CHECKERS_UNDERSIZED_BINARY_LITERAL_RULE_H_
 
 #include <string>
-#include <vector>
+#include <set>
 
 #include "absl/strings/string_view.h"
 #include "common/analysis/lint_rule_status.h"
@@ -67,7 +67,7 @@ class UndersizedBinaryLiteralRule : public verible::SyntaxTreeLintRule {
       NumberHasBasedLiteral(NumberIsBinary().Bind("base"),
                             NumberHasBinaryDigits().Bind("digits")));
 
-  std::vector<verible::LintViolation> violations_;
+  std::set<verible::LintViolation> violations_;
 };
 
 }  // namespace analysis

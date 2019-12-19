@@ -30,7 +30,7 @@ namespace {
 
 // Tests initialization of LintRuleStatus.
 TEST(LintRuleStatusTest, Construction) {
-  std::vector<LintViolation> violations;
+  std::set<LintViolation> violations;
   LintRuleStatus status(violations, "RULE_NAME", "http://example.com/svstyle");
   EXPECT_TRUE(status.violations.empty());
   EXPECT_EQ(status.lint_rule_name, "RULE_NAME");
@@ -41,7 +41,7 @@ TEST(LintRuleStatusTest, Construction) {
 // Tests adding violations to LintRuleStatus.
 TEST(LintRuleStatusTest, ConstructWithViolation) {
   const TokenInfo token(1, "1bad-id");
-  std::vector<LintViolation> violations({LintViolation(token, "invalid id")});
+  std::set<LintViolation> violations({LintViolation(token, "invalid id")});
   LintRuleStatus status(violations, "RULE_NAME", "http://example.com/svstyle");
   EXPECT_FALSE(status.violations.empty());
   EXPECT_FALSE(status.isOk());
@@ -50,7 +50,7 @@ TEST(LintRuleStatusTest, ConstructWithViolation) {
 // Tests waiving violations and removing them from LintRuleStatus.
 TEST(LintRuleStatusTest, WaiveViolations) {
   const TokenInfo token(1, "1bad-id");
-  std::vector<LintViolation> violations({LintViolation(token, "invalid id")});
+  std::set<LintViolation> violations({LintViolation(token, "invalid id")});
   LintRuleStatus status(violations, "RULE_NAME", "http://example.com/svstyle");
   EXPECT_FALSE(status.violations.empty());
   EXPECT_FALSE(status.isOk());
@@ -92,7 +92,7 @@ void RunLintStatusTest(const LintStatusTest& test) {
   status.url = test.url;
   status.lint_rule_name = test.rule_name;
   for (const auto& violation_test : test.violations) {
-    status.violations.push_back(
+    status.violations.insert(
         LintViolation(violation_test.token, violation_test.reason));
   }
 

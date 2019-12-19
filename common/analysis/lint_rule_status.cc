@@ -75,10 +75,11 @@ void LintStatusFormatter::FormatViolation(std::ostream* stream,
 
 void LintRuleStatus::WaiveViolations(
     std::function<bool(const LintViolation&)>&& is_waived) {
-  std::vector<LintViolation> filtered_violations;
-  filtered_violations.reserve(violations.size());
+  std::set<LintViolation> filtered_violations;
   std::remove_copy_if(violations.begin(), violations.end(),
-                      std::back_inserter(filtered_violations), is_waived);
+                      std::inserter(filtered_violations,
+                                    filtered_violations.begin()),
+                      is_waived);
   violations.swap(filtered_violations);
 }
 

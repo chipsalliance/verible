@@ -16,6 +16,7 @@
 
 #include <memory>
 #include <string>
+#include <set>
 #include <vector>
 
 #include "absl/strings/str_cat.h"
@@ -87,7 +88,7 @@ void PackageFilenameRule::Lint(const TextStructureView& text_structure,
     absl::string_view package_id = package_name_token.text;
     auto package_id_plus_suffix = absl::StrCat(package_id, optional_suffix);
     if ((package_id != unitname) && (package_id_plus_suffix != unitname)) {
-      violations_.push_back(verible::LintViolation(
+      violations_.insert(verible::LintViolation(
           package_name_token,
           absl::StrCat(kMessage, "declaration: \"", package_id,
                        "\" vs. basename(file): \"", unitname, "\"")));

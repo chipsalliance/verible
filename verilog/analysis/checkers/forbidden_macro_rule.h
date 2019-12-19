@@ -17,7 +17,7 @@
 
 #include <map>
 #include <string>
-#include <vector>
+#include <set>
 
 #include "common/analysis/lint_rule_status.h"
 #include "common/analysis/matcher/matcher.h"
@@ -68,7 +68,7 @@ class ForbiddenMacroRule : public verible::SyntaxTreeLintRule {
   const verible::matcher::Matcher matcher_ = MacroCallIdLeaf().Bind("name");
 
  private:
-  std::vector<verible::LintViolation> violations_;
+  std::set<verible::LintViolation> violations_;
 };
 
 }  // namespace analysis

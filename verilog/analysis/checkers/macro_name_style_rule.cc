@@ -15,7 +15,7 @@
 #include "verilog/analysis/checkers/macro_name_style_rule.h"
 
 #include <string>
-#include <vector>
+#include <set>
 
 #include "absl/strings/str_cat.h"
 #include "common/analysis/citation.h"
@@ -71,7 +71,7 @@ void MacroNameStyleRule::HandleToken(const TokenInfo& token) {
           break;
         case PP_Identifier: {
           if (!verible::IsNameAllCapsUnderscoresDigits(token.text))
-            violations_.push_back(LintViolation(token, kMessage));
+            violations_.insert(LintViolation(token, kMessage));
           state_ = State::kNormal;
           break;
         }

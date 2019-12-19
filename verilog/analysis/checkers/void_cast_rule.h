@@ -17,7 +17,7 @@
 
 #include <set>
 #include <string>
-#include <vector>
+#include <set>
 
 #include "common/analysis/lint_rule_status.h"
 #include "common/analysis/matcher/core_matchers.h"
@@ -82,7 +82,7 @@ class VoidCastRule : public verible::SyntaxTreeLintRule {
       verible::matcher::AnyOf(ExpressionHasRandomizeCallExtension().Bind("id"),
                               ExpressionHasRandomizeFunction().Bind("id"))));
 
-  std::vector<verible::LintViolation> violations_;
+  std::set<verible::LintViolation> violations_;
 };
 
 }  // namespace analysis
