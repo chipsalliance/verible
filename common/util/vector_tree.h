@@ -238,6 +238,36 @@ class VectorTree : private _VectorTreeImpl {
 
   ~VectorTree() { CHECK(CheckIntegrity()); }
 
+  // Swaps values and subtrees of two nodes.
+  // This operation is safe for unrelated trees (no common ancestor).
+  // This operation is safe when the two nodes share a common ancestor,
+  // excluding the case where one node is a direct ancestor of the other.
+  // TODO(fangism): Add a proper check for this property, and test.
+  void swap(this_type& other) {
+    // parent_'s are unchanged.
+    std::swap(node_value_, other.node_value_);
+    children_.swap(other.children_);  // efficient O(1) vector::swap
+    Relink();                         // O(|children|)
+    other.Relink();                   // O(|children|)
+  }
+
+  // TODO(fangism): enable copy-assign when needed
+  VectorTree& operator=(const this_type&) = delete;
+
+  // Explicit move-assignability needed for vector::erase()
+  // No need to change parent links when children keep same parent.
+  VectorTree& operator=(this_type&& source) {
+    // Keep this->parent_.  Ignore source.parent_.
+
+    node_value_ = std::move(source.node_value_);
+
+    children_.clear();
+    // vector::swap only moves pointers, not elements
+    children_.swap(source.children_);
+    Relink();  // because the address of 'this' changes.
+    return *this;
+  }
+
   // Builders
 
   // Appends a new child node to the tree at this level.
@@ -682,6 +712,12 @@ VectorTreeNodePair<LT, RT> StructureEqual(const LT& left, const RT& right) {
   return DeepEqual(left, right,
                    [](const typename LT::value_type&,
                       const typename RT::value_type&) { return true; });
+}
+
+// Provide ADL-enabled overload for use by swap implementations.
+template <class T>
+void swap(VectorTree<T>& left, VectorTree<T>& right) {
+  left.swap(right);
 }
 
 }  // namespace verible

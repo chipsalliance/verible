@@ -105,6 +105,147 @@ TEST(VectorTreeTest, RootOnlySiblingIteration) {
   }
 }
 
+TEST(VectorTreeTest, CopyInitializeEmpty) {
+  typedef VectorTree<int> tree_type;
+  const tree_type tree(1);  // Root only tree.
+  const tree_type expected(1);
+  tree_type tree2 = tree;
+  const auto result_pair = DeepEqual(tree2, expected);
+  EXPECT_EQ(result_pair.left, nullptr);
+  EXPECT_EQ(result_pair.right, nullptr);
+}
+
+TEST(VectorTreeTest, CopyInitializeDeep) {
+  typedef VectorTree<int> tree_type;
+  const tree_type tree(1,
+                       tree_type(2, tree_type(3, tree_type(4, tree_type(5)))));
+  const tree_type expected(
+      1, tree_type(2, tree_type(3, tree_type(4, tree_type(5)))));
+  tree_type tree2 = tree;
+  const auto result_pair = DeepEqual(tree2, expected);
+  EXPECT_EQ(result_pair.left, nullptr);
+  EXPECT_EQ(result_pair.right, nullptr);
+}
+
+TEST(VectorTreeTest, MoveInitializeEmpty) {
+  typedef VectorTree<int> tree_type;
+  tree_type tree(1);  // Root only tree.
+  const tree_type expected(1);
+  tree_type tree2 = std::move(tree);
+  const auto result_pair = DeepEqual(tree2, expected);
+  EXPECT_EQ(result_pair.left, nullptr);
+  EXPECT_EQ(result_pair.right, nullptr);
+}
+
+TEST(VectorTreeTest, MoveInitializeDeep) {
+  typedef VectorTree<int> tree_type;
+  tree_type tree(1, tree_type(2, tree_type(3, tree_type(4, tree_type(5)))));
+  const tree_type expected(
+      1, tree_type(2, tree_type(3, tree_type(4, tree_type(5)))));
+  tree_type tree2 = std::move(tree);
+  const auto result_pair = DeepEqual(tree2, expected);
+  EXPECT_EQ(result_pair.left, nullptr);
+  EXPECT_EQ(result_pair.right, nullptr);
+}
+
+TEST(VectorTreeTest, MoveAssignEmpty) {
+  typedef VectorTree<int> tree_type;
+  tree_type tree(1);  // Root only tree.
+  const tree_type expected(1);
+  tree_type tree2(2);
+  VLOG(4) << "about to move.";
+  tree2 = std::move(tree);
+  VLOG(4) << "done moving.";
+  const auto result_pair = DeepEqual(tree2, expected);
+  EXPECT_EQ(result_pair.left, nullptr);
+  EXPECT_EQ(result_pair.right, nullptr);
+}
+
+TEST(VectorTreeTest, MoveAssignDeep) {
+  typedef VectorTree<int> tree_type;
+  tree_type tree(1, tree_type(2, tree_type(3, tree_type(4, tree_type(5)))));
+  tree_type tree2(7, tree_type(8, tree_type(9)));
+  tree2 = std::move(tree);
+  const tree_type expected(
+      1, tree_type(2, tree_type(3, tree_type(4, tree_type(5)))));
+  const auto result_pair = DeepEqual(tree2, expected);
+  EXPECT_EQ(result_pair.left, nullptr);
+  EXPECT_EQ(result_pair.right, nullptr);
+}
+
+TEST(VectorTreeTest, SwapUnrelatedRoots) {
+  typedef VectorTree<int> tree_type;
+  tree_type tree(1, tree_type(2, tree_type(3, tree_type(4, tree_type(5)))));
+  tree_type tree2(7, tree_type(8, tree_type(9)));
+  const tree_type t1_expected(tree2);  // deep-copy
+  const tree_type t2_expected(tree);   // deep-copy
+  swap(tree, tree2);                   // verible::swap, using ADL
+  {
+    const auto result_pair = DeepEqual(tree, t1_expected);
+    EXPECT_EQ(result_pair.left, nullptr);
+    EXPECT_EQ(result_pair.right, nullptr);
+  }
+  {
+    const auto result_pair = DeepEqual(tree2, t2_expected);
+    EXPECT_EQ(result_pair.left, nullptr);
+    EXPECT_EQ(result_pair.right, nullptr);
+  }
+}
+
+TEST(VectorTreeTest, SwapUnrelatedSubtrees) {
+  typedef VectorTree<int> tree_type;
+  tree_type tree(1, tree_type(2, tree_type(3, tree_type(4, tree_type(5)))));
+  tree_type tree2(7, tree_type(8, tree_type(9, tree_type(10))));
+  swap(tree.Children()[0], tree2.Children()[0]);
+  {
+    const tree_type expected(1, tree_type(8, tree_type(9, tree_type(10))));
+    const auto result_pair = DeepEqual(tree, expected);
+    EXPECT_EQ(result_pair.left, nullptr);
+    EXPECT_EQ(result_pair.right, nullptr);
+  }
+  {
+    const tree_type expected(
+        7, tree_type(2, tree_type(3, tree_type(4, tree_type(5)))));
+    const auto result_pair = DeepEqual(tree2, expected);
+    EXPECT_EQ(result_pair.left, nullptr);
+    EXPECT_EQ(result_pair.right, nullptr);
+  }
+}
+
+TEST(VectorTreeTest, SwapSiblings) {
+  typedef VectorTree<int> tree_type;
+  tree_type tree(1,  //
+                 tree_type(0),
+                 tree_type(2, tree_type(3, tree_type(4, tree_type(5)))),
+                 tree_type(7, tree_type(8, tree_type(9))), tree_type(11));
+  swap(tree.Children()[2], tree.Children()[1]);
+
+  const tree_type expected(
+      1,  //
+      tree_type(0), tree_type(7, tree_type(8, tree_type(9))),
+      tree_type(2, tree_type(3, tree_type(4, tree_type(5)))), tree_type(11));
+  const auto result_pair = DeepEqual(tree, expected);
+  EXPECT_EQ(result_pair.left, nullptr);
+  EXPECT_EQ(result_pair.right, nullptr);
+}
+
+TEST(VectorTreeTest, SwapDistantCousins) {
+  typedef VectorTree<int> tree_type;
+  tree_type tree(1,  //
+                 tree_type(0),
+                 tree_type(2, tree_type(3, tree_type(4, tree_type(5)))),
+                 tree_type(7, tree_type(8, tree_type(9))), tree_type(11));
+  swap(tree.Children()[2], tree.Children()[1].Children()[0]);
+
+  const tree_type expected(
+      1,  //
+      tree_type(0), tree_type(2, tree_type(7, tree_type(8, tree_type(9)))),
+      tree_type(3, tree_type(4, tree_type(5))), tree_type(11));
+  const auto result_pair = DeepEqual(tree, expected);
+  EXPECT_EQ(result_pair.left, nullptr);
+  EXPECT_EQ(result_pair.right, nullptr);
+}
+
 TEST(VectorTreeTest, StructureEqualRootToRoot) {
   const VectorTreeTestType ltree(verible::testing::MakeRootOnlyExampleTree());
   const VectorTreeTestType rtree(verible::testing::MakeRootOnlyExampleTree());
