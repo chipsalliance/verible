@@ -1246,6 +1246,147 @@ TEST(VectorTreeTest, HoistOnlyChildFamilyTree) {
   EXPECT_FALSE(tree.HoistOnlyChild());
 }
 
+// Copy-extract tree values from a node's direct children only.
+// TODO(fangism): Adapt this into a public method of VectorTree.
+template <typename T>
+static std::vector<typename T::value_type> NodeValues(const T& node) {
+  std::vector<typename T::value_type> result;
+  result.reserve(node.Children().size());
+  for (const auto& child : node.Children()) {
+    result.emplace_back(child.Value());
+  }
+  return result;
+}
+
+TEST(VectorTreeTest, AdoptSubtreesFromEmptyToEmpty) {
+  typedef VectorTree<int> tree_type;
+  tree_type tree1(1), tree2(2);  // no subtrees
+  EXPECT_TRUE(tree1.Children().empty());
+  EXPECT_TRUE(tree2.Children().empty());
+
+  tree1.AdoptSubtreesFrom(&tree2);
+  EXPECT_TRUE(tree1.Children().empty());
+  EXPECT_TRUE(tree2.Children().empty());
+}
+
+TEST(VectorTreeTest, AdoptSubtreesFromEmptyToNonempty) {
+  typedef VectorTree<int> tree_type;
+  tree_type tree1(1, tree_type(4)), tree2(2);
+  EXPECT_THAT(NodeValues(tree1), ElementsAre(4));
+  EXPECT_THAT(NodeValues(tree2), ElementsAre());
+
+  tree1.AdoptSubtreesFrom(&tree2);
+  EXPECT_THAT(NodeValues(tree1), ElementsAre(4));
+  EXPECT_THAT(NodeValues(tree2), ElementsAre());
+}
+
+TEST(VectorTreeTest, AdoptSubtreesFromNonemptyToEmpty) {
+  typedef VectorTree<int> tree_type;
+  tree_type tree1(1), tree2(2, tree_type(5));
+  EXPECT_THAT(NodeValues(tree1), ElementsAre());
+  EXPECT_THAT(NodeValues(tree2), ElementsAre(5));
+
+  tree1.AdoptSubtreesFrom(&tree2);
+  EXPECT_THAT(NodeValues(tree1), ElementsAre(5));
+  EXPECT_THAT(NodeValues(tree2), ElementsAre());
+}
+
+TEST(VectorTreeTest, AdoptSubtreesFromNonemptyToNonempty) {
+  typedef VectorTree<int> tree_type;
+  tree_type tree1(1, tree_type(3), tree_type(6)),
+      tree2(2, tree_type(5), tree_type(8));
+  EXPECT_THAT(NodeValues(tree1), ElementsAre(3, 6));
+  EXPECT_THAT(NodeValues(tree2), ElementsAre(5, 8));
+
+  tree1.AdoptSubtreesFrom(&tree2);
+  EXPECT_THAT(NodeValues(tree1), ElementsAre(3, 6, 5, 8));
+  EXPECT_THAT(NodeValues(tree2), ElementsAre());
+}
+
+TEST(VectorTreeTest, MergeConsecutiveSiblingsTooFewElements) {
+  typedef VectorTree<int> tree_type;
+  tree_type tree(1, tree_type(2));
+  auto adder = [](int* left, const int& right) { *left += right; };
+  EXPECT_THAT(NodeValues(tree), ElementsAre(2));
+  EXPECT_DEATH(tree.MergeConsecutiveSiblings(0, adder), "");
+}
+
+TEST(VectorTreeTest, MergeConsecutiveSiblingsOutOfBounds) {
+  typedef VectorTree<int> tree_type;
+  tree_type tree(1, tree_type(2), tree_type(3));
+  auto adder = [](int* left, const int& right) { *left += right; };
+  EXPECT_THAT(NodeValues(tree), ElementsAre(2, 3));
+  EXPECT_DEATH(tree.MergeConsecutiveSiblings(1, adder), "");
+}
+
+TEST(VectorTreeTest, MergeConsecutiveSiblingsAddLeaves) {
+  typedef VectorTree<int> tree_type;
+  tree_type tree(1, tree_type(2), tree_type(3), tree_type(4), tree_type(5));
+  auto adder = [](int* left, const int& right) { *left += right; };
+  EXPECT_THAT(NodeValues(tree), ElementsAre(2, 3, 4, 5));
+
+  VLOG(1) << __FUNCTION__ << ": before first merge";
+
+  tree.MergeConsecutiveSiblings(1, adder);  // combine middle two subtrees
+  EXPECT_THAT(NodeValues(tree), ElementsAre(2, 7, 5));
+  VLOG(1) << __FUNCTION__ << ": after first merge";
+
+  tree.MergeConsecutiveSiblings(1, adder);  // combine last two subtrees
+  EXPECT_THAT(NodeValues(tree), ElementsAre(2, 12));
+  VLOG(1) << __FUNCTION__ << ": after second merge";
+
+  tree.MergeConsecutiveSiblings(0, adder);  // combine only two subtrees
+  EXPECT_THAT(NodeValues(tree), ElementsAre(14));
+  VLOG(1) << __FUNCTION__ << ": after third merge";
+}
+
+TEST(VectorTreeTest, MergeConsecutiveSiblingsConcatenateSubtreesOnce) {
+  typedef VectorTree<int> tree_type;
+  tree_type tree(1,            //
+                 tree_type(2,  //
+                           tree_type(6), tree_type(7)),
+                 tree_type(3,  //
+                           tree_type(8), tree_type(9)),
+                 tree_type(4,  //
+                           tree_type(10), tree_type(11)),
+                 tree_type(5,  //
+                           tree_type(12), tree_type(13)));
+  auto subtractor = [](int* left, const int& right) { *left -= right; };
+  EXPECT_THAT(NodeValues(tree), ElementsAre(2, 3, 4, 5));
+
+  tree.MergeConsecutiveSiblings(1, subtractor);  // combine middle two subtrees
+  EXPECT_THAT(NodeValues(tree), ElementsAre(2, /* 3 - 4 */ -1, 5));
+  EXPECT_THAT(NodeValues(tree.Children()[1]), ElementsAre(8, 9, 10, 11));
+}
+
+TEST(VectorTreeTest, MergeConsecutiveSiblingsConcatenateSubtrees) {
+  typedef VectorTree<int> tree_type;
+  tree_type tree(1,            //
+                 tree_type(2,  //
+                           tree_type(6), tree_type(7)),
+                 tree_type(3,  //
+                           tree_type(8), tree_type(9)),
+                 tree_type(4,  //
+                           tree_type(10), tree_type(11)),
+                 tree_type(5,  //
+                           tree_type(12), tree_type(13)));
+  auto subtractor = [](int* left, const int& right) { *left -= right; };
+  EXPECT_THAT(NodeValues(tree), ElementsAre(2, 3, 4, 5));
+
+  tree.MergeConsecutiveSiblings(0, subtractor);  // combine first two subtrees
+  EXPECT_THAT(NodeValues(tree), ElementsAre(/* 2 - 3 */ -1, 4, 5));
+  EXPECT_THAT(NodeValues(tree.Children()[0]), ElementsAre(6, 7, 8, 9));
+
+  tree.MergeConsecutiveSiblings(1, subtractor);  // combine last two subtrees
+  EXPECT_THAT(NodeValues(tree), ElementsAre(-1, /* 4 - 5 */ -1));
+  EXPECT_THAT(NodeValues(tree.Children()[1]), ElementsAre(10, 11, 12, 13));
+
+  tree.MergeConsecutiveSiblings(0, subtractor);  // combine only two subtrees
+  EXPECT_THAT(NodeValues(tree), ElementsAre(/* -1 - -1 */ 0));
+  EXPECT_THAT(NodeValues(tree.Children()[0]),
+              ElementsAre(6, 7, 8, 9, 10, 11, 12, 13));
+}
+
 TEST(VectorTreeTest, PrintTree) {
   const auto tree = verible::testing::MakeExampleFamilyTree();
   std::ostringstream stream;

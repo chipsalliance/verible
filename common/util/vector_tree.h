@@ -307,6 +307,17 @@ class VectorTree : private _VectorTreeImpl {
     AdoptSubtree(std::forward<Args>(args)...);
   }
 
+  // This node takes/moves subtrees from another node (concatenates).
+  // There need not be any relationship between this node and the other.
+  void AdoptSubtreesFrom(this_type* other) {
+    auto& src_children = other->Children();
+    children_.reserve(children_.size() + src_children.size());
+    for (auto& child : src_children) {
+      AdoptSubtree(std::move(child));  // already Relink()s
+    }
+    src_children.clear();
+  }
+
   // Accessors
 
   T& Value() { return node_value_; }
@@ -567,6 +578,28 @@ class VectorTree : private _VectorTreeImpl {
       return true;
     }
     return false;
+  }
+
+  // Combines the Nth and (N+1) sibling using a custom function 'joiner' on the
+  // nodes' values, and the Nth sibling will adopt N+1's children.
+  // The 'joiner' function does: *left = f(*left, *right);
+  // The (N+1) sibling will be erased in the process, and every sibling
+  // thereafter will be shifted back one position (same inefficiency as shifting
+  // vector contents).  This invalidates all iterators after position N,
+  // and iterators to the Nth node's children (possible realloc).
+  void MergeConsecutiveSiblings(
+      size_t N, std::function<void(value_type*, const value_type&)> joiner) {
+    CHECK_LT(N + 1, children_.size());
+
+    // Combine value into node[N].
+    joiner(&Children()[N].node_value_, Children()[N + 1].node_value_);
+
+    // Move-concatenate children to node[N].
+    const auto next_iter = children_.begin() + N + 1;
+    Children()[N].AdoptSubtreesFrom(&*next_iter);
+
+    // Shift-left children_ by 1 beyond N.
+    children_.erase(next_iter);  // done via move-assignment
   }
 
   // Pretty-print in tree-form.  Value() is enclosed in parens, and the whole
