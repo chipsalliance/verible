@@ -2276,6 +2276,45 @@ const TreeUnwrapperTestData kUnwrapInterfaceTestCases[] = {
                           L(1, {")", ";"}))),
         L(0, {"endinterface"}),
     },
+    {
+        "interface with more modport ports",
+        "interface foo_if;"
+        "modport mp1 (output a1, a2, input b1, b2, import c1, c2);"
+        "endinterface",
+        ModuleHeader(0, L(0, {"interface", "foo_if", ";"})),
+        ModuleItemList(1,  //
+                       N(1,
+                          L(1,{"modport", "mp1", "("}),
+                          N(3, L(3, {"output", "a1", ",", "a2", ","})),
+                          N(3, L(3, {"input", "b1", ",", "b2", ","})),
+                          N(3, L(3, {"import", "c1", ",", "c2"})),
+                          L(1, {")", ";"}))),
+        L(0, {"endinterface"}),
+    },
+    {
+        "interface with modport and comments between ports",
+        "interface foo_if;"
+        " modport mp1(\n"
+        "  // Our output\n"
+        "     output a,\n"
+        "  /* Inputs */\n"
+        "      input b1, b_f /*last*/,"
+        "  import c\n"
+        "  );\n"
+        "endinterface",
+        ModuleHeader(0, L(0, {"interface", "foo_if", ";"})),
+        ModuleItemList(1,  //
+                       N(1,
+                          L(1,{"modport", "mp1", "("}),
+                          N(3, L(3, {"// Our output"}),
+                               L(3, {"output", "a", ","})),
+                          N(3, L(3, {"/* Inputs */"}),
+                               L(3, {"input", "b1", ",", "b_f",
+                                     "/*last*/", ","})),
+                          N(3, L(3, {"import", "c"})),
+                          L(1, {")", ";"}))),
+        L(0, {"endinterface"}),
+    },
 };
 
 // Test that TreeUnwrapper produces correct UnwrappedLines from interface tests

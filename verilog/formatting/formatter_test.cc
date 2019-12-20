@@ -784,6 +784,27 @@ static const std::initializer_list<FormatterTestCase> kFormatterTestCases = {
         "  );\n"
         "endinterface\n",
     },
+    {
+        // interface with modports and comments inside
+        "interface foo_if;\n"
+        " modport mp1(\n"
+        "  // Our output\n"
+        "     output a,\n"
+        "  /* Inputs */\n"
+        "      input b1, b_f /*last*/,"
+        "  import c\n"
+        "  );\n"
+        "endinterface\n",
+        "interface foo_if;\n"
+        "  modport mp1(\n"
+        "      // Our output\n"
+        "      output a,\n"
+        "      /* Inputs */\n"
+        "      input b1, b_f  /*last*/,\n"
+        "      import c\n"
+        "  );\n"
+        "endinterface\n",
+    },
 
     // class test cases
     {"class action;int xyz;endclass  :  action\n",

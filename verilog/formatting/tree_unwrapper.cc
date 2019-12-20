@@ -348,7 +348,7 @@ void TreeUnwrapper::AppendTokenToPreviousUnwrappedLine() {
 
     ABSL_DIE_IF_NULL(target_leaf);
     auto* current_leaf = CurrentTokenPartition();
-    auto* current_leaf_parent = CurrentTokenPartition()->Parent();
+    auto* current_leaf_parent = current_leaf->Parent();
 
     // Verify continuity of token ranges between current and target leaves.
     CHECK(target_leaf->Value().TokensRange().end() ==
