@@ -110,10 +110,6 @@ class TreeUnwrapper : public verible::TreeUnwrapper {
   // Update token tracking, and possibly start a new partition.
   void UpdateInterLeafScanner(yytokentype);
 
-  // Appends first token in current partition to previous one by merging
-  // them.
-  void AppendTokenToPreviousUnwrappedLine();
-
   // This should only be called directly from CatchUpToCurrentLeaf and
   // LookAheadBeyondCurrentLeaf.
   void AdvanceLastVisitedLeaf();
