@@ -679,12 +679,6 @@ void TreeUnwrapper::Visit(const verible::SyntaxTreeNode& node) {
       VisitIndentedSection(node, 0, PartitionPolicyEnum::kFitOnLineElseExpand);
       break;
     }
-    case NodeEnum::kModportSimplePortsDeclaration:
-    case NodeEnum::kModportTFPortsDeclaration: {
-      VisitIndentedSection(node, style_.wrap_spaces,
-                           PartitionPolicyEnum::kFitOnLineElseExpand);
-      break;
-    }
 
     // Add an additional level of indentation.
     case NodeEnum::kClassItems:
@@ -724,6 +718,8 @@ void TreeUnwrapper::Visit(const verible::SyntaxTreeNode& node) {
 
       // Add a level of grouping that is treated as wrapping.
     case NodeEnum::kForSpec:
+    case NodeEnum::kModportSimplePortsDeclaration:
+    case NodeEnum::kModportTFPortsDeclaration:
     case NodeEnum::kGateInstanceRegisterVariableList:
     case NodeEnum::kPortActualList:  // TODO(b/146083526): one port per line
     case NodeEnum::kActualParameterByNameList:
