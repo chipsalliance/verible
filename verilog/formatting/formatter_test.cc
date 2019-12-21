@@ -931,6 +931,27 @@ static const std::initializer_list<FormatterTestCase> kFormatterTestCases = {
      "  }\n"
      "endclass\n"},
 
+    // class with empty parameter list
+    {"class foo #(); endclass",
+     "class foo #();\n"
+     "endclass\n"},
+
+    // class with one parameter list
+    {"class foo #(type a = b); endclass",
+     "class foo #(\n"
+     "    type a = b\n"
+     ");\n"
+     "endclass\n"},
+
+    // class with multiple paramter list
+    {"class foo #(type a = b, type c = d, type e = f); endclass",
+     "class foo #(\n"
+     "    type a = b,\n"
+     "    type c = d,\n"
+     "    type e = f\n"
+     ");\n"
+     "endclass\n"},
+
     // package test cases
     {"package fedex;localparam  int  www=3 ;endpackage   :  fedex\n",
      "package fedex;\n"

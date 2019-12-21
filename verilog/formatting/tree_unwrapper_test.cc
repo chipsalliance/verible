@@ -332,6 +332,7 @@ ExpectedUnwrappedLineTree NL(int spaces,
 #define StatementList N
 #define ClassHeader N
 #define ClassItemList N
+#define ClassParameterList N
 #define FunctionHeader N
 #define TaskHeader N
 #define TFPortList N
@@ -1754,6 +1755,33 @@ const TreeUnwrapperTestData kClassTestCases[] = {
                              L(3, {"10", ":/", "80"})),
                 L(2, {"}", ";"})),
             L(1, {"}"})),
+        L(0, {"endclass"}),
+    },
+
+    {
+        "class with empty parameter list",
+        "class Foo #(); endclass",
+        ClassHeader(0, L(0, {"class", "Foo", "#", "(", ")", ";"})),
+        L(0, {"endclass"}),
+    },
+
+    {
+        "class with one parameter list",
+        "class Foo #(type a = b); endclass",
+        ClassHeader(0, L(0, {"class", "Foo", "#", "("}),
+                    ClassParameterList(2, L(2, {"type", "a", "=", "b"})),
+                    L(0, {")", ";"})),
+        L(0, {"endclass"}),
+    },
+
+    {
+        "class with multiple parameter list",
+        "class Foo #(type a = b, type c = d, type e = f); endclass",
+        ClassHeader(0, L(0, {"class", "Foo", "#", "("}),
+                    ClassParameterList(2, L(2, {"type", "a", "=", "b", ","}),
+                                       L(2, {"type", "c", "=", "d", ","}),
+                                       L(2, {"type", "e", "=", "f"})),
+                    L(0, {")", ";"})),
         L(0, {"endclass"}),
     },
 };

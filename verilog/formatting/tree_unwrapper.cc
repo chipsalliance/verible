@@ -717,13 +717,27 @@ void TreeUnwrapper::Visit(const verible::SyntaxTreeNode& node) {
     case NodeEnum::kForSpec:
     case NodeEnum::kGateInstanceRegisterVariableList:
     case NodeEnum::kPortActualList:
-    case NodeEnum::kFormalParameterList:
     case NodeEnum::kPortList:
     case NodeEnum::kPortDeclarationList: {
       if (suppress_indentation) {
         // Do not further indent preprocessor clauses.
         // Maintain same level as before.
         TraverseChildren(node);
+      } else {
+        VisitIndentedSection(node, style_.wrap_spaces,
+                             PartitionPolicyEnum::kFitOnLineElseExpand);
+      }
+      break;
+    }
+
+    case NodeEnum::kFormalParameterList: {
+      if (suppress_indentation) {
+        // Do not further indent preprocessor clauses.
+        // Maintain same level as before.
+        TraverseChildren(node);
+      } else if (Context().IsInside(NodeEnum::kClassHeader)) {
+        VisitIndentedSection(node, style_.wrap_spaces,
+                             PartitionPolicyEnum::kAlwaysExpand);
       } else {
         VisitIndentedSection(node, style_.wrap_spaces,
                              PartitionPolicyEnum::kFitOnLineElseExpand);
