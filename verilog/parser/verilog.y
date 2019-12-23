@@ -3701,17 +3701,33 @@ optional_semicolon
   ;
 discipline_declaration
   : TK_discipline GenericIdentifier optional_semicolon
-    discipline_items TK_enddiscipline
+    discipline_items_opt TK_enddiscipline
+    { $$ = MakeTaggedNode(N::kDisciplineDeclaration, $1, $2, $3, $4, $5); }
+  ;
+discipline_items_opt
+  : discipline_items
+    { $$ = move($1); }
+  | /* empty */
+    { $$ = nullptr; }
   ;
 discipline_items
   : discipline_items discipline_item
+    { $$ = ExtendNode($1, $2); }
   | discipline_item
+    { $$ = MakeTaggedNode(N::kDisciplineItemList, $1); }
   ;
 discipline_item
+  /* discipline_domain_bindings: */
   : TK_domain TK_discrete ';'
+    { $$ = MakeTaggedNode(N::kDisciplineDomainBinding, $1, $2, $3); }
   | TK_domain TK_continuous ';'
+    { $$ = MakeTaggedNode(N::kDisciplineDomainBinding, $1, $2, $3); }
+  /* nature_bindings: potential_or_flow nature_identifier ';' */
   | TK_potential GenericIdentifier ';'
+    { $$ = MakeTaggedNode(N::kDisciplinePotential, $1, $2, $3); }
   | TK_flow GenericIdentifier ';'
+    { $$ = MakeTaggedNode(N::kDisciplineFlow, $1, $2, $3); }
+  /* TODO(fangism): nature_attribute_override */
   ;
 nature_declaration
   : TK_nature GenericIdentifier optional_semicolon

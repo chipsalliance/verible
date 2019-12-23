@@ -4860,6 +4860,25 @@ static const char* kPrimitiveTests[] = {
     "endprimitive",
 };
 
+static const char* kDisciplineTests[] = {
+    "discipline d;\n"
+    "enddiscipline\n",
+    "discipline d \n"  // no ';'
+    "enddiscipline\n",
+    "discipline d;\n"
+    "  domain discrete;\n"
+    "enddiscipline\n",
+    "discipline d;\n"
+    "  domain continuous;\n"
+    "enddiscipline\n",
+    "discipline d;\n"
+    "  potential pot;\n"
+    "enddiscipline\n",
+    "discipline d;\n"
+    "  flow joe;\n"
+    "enddiscipline\n",
+};
+
 static const char* kMultiBlockTests[] = {
     // check for correct scope switching around timescale and module
     "module modular_thing1;\n"
@@ -5447,6 +5466,7 @@ TEST(VerilogParserTest, InterfaceClass) {
 }
 TEST(VerilogParserTest, Configs) { TestVerilogParser(kConfigTests); }
 TEST(VerilogParserTest, Primitives) { TestVerilogParser(kPrimitiveTests); }
+TEST(VerilogParserTest, Disciplines) { TestVerilogParser(kDisciplineTests); }
 TEST(VerilogParserTest, MultiBlockTests) {
   TestVerilogParser(kMultiBlockTests);
 }
@@ -5607,6 +5627,10 @@ TEST(VerilogParserTestMatchAll, Configs) {
 
 TEST(VerilogParserTestMatchAll, Primitives) {
   TestVerilogParserMatchAll(kPrimitiveTests);
+}
+
+TEST(VerilogParserTestMatchAll, Disciplines) {
+  TestVerilogParserMatchAll(kDisciplineTests);
 }
 
 TEST(VerilogParserTestMatchAll, MultiBlock) {

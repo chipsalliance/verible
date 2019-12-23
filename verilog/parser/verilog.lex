@@ -79,6 +79,7 @@
 %x ATTRIBUTE_START
 %x ATTRIBUTE_MIDDLE
 %s COVERGROUP
+%s DISCIPLINE
 %s PRIMITIVE
 %x PP_EXPECT_DEF_ID
 %x PP_EXPECT_IF_ID
@@ -680,12 +681,21 @@ cosh { UpdateLocation(); return TK_cosh; }
 ddt { UpdateLocation(); return TK_ddt; }
 ddt_nature { UpdateLocation(); return TK_ddt_nature; }  /* Verilog-AMS */
 ddx { UpdateLocation(); return TK_ddx; }
-discipline { UpdateLocation(); return TK_discipline; }  /* Verilog-AMS */
+discipline {  /* Verilog-AMS */
+  UpdateLocation();
+  yy_push_state(DISCIPLINE);
+  return TK_discipline;
+}
 discrete { UpdateLocation(); return TK_discrete; }  /* Verilog-AMS */
-domain { UpdateLocation(); return TK_domain; }
+<DISCIPLINE>domain { UpdateLocation(); return TK_domain; }
+domain { UpdateLocation(); return SymbolIdentifier; }
 driver_update { UpdateLocation(); return TK_driver_update; }
 endconnectrules { UpdateLocation(); return TK_endconnectrules; }
-enddiscipline { UpdateLocation(); return TK_enddiscipline; }  /* Verilog-AMS */
+enddiscipline {  /* Verilog-AMS */
+  UpdateLocation();
+  yy_safe_pop_state();
+  return TK_enddiscipline;
+}
 endnature { UpdateLocation(); return TK_endnature; }  /* Verilog-AMS */
 endparamset { UpdateLocation(); return TK_endparamset; }
 exclude { UpdateLocation(); return TK_exclude; }  /* Verilog-AMS */

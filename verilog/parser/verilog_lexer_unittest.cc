@@ -1087,7 +1087,7 @@ static std::initializer_list<LexerTestData> kKeywordTests = {
     {{TK_ddx, "ddx"}},
     {{TK_discipline, "discipline"}},
     {{TK_discrete, "discrete"}},
-    {{TK_domain, "domain"}},
+    {{SymbolIdentifier, "domain"}},  // is keyword in discipline context
     {{TK_driver_update, "driver_update"}},
     {{TK_endconnectrules, "endconnectrules"}},
     {{TK_enddiscipline, "enddiscipline"}},
@@ -1349,6 +1349,9 @@ static std::initializer_list<GenericTestDataSequence> kContextKeywordTests = {
       SymbolIdentifier}},
     {"with covergroup with endgroup with",
      {TK_with, TK_covergroup, TK_with__covergroup, TK_endgroup, TK_with}},
+    {"domain discipline domain enddiscipline domain",
+     {SymbolIdentifier, TK_discipline, TK_domain, TK_enddiscipline,
+      SymbolIdentifier}},
 };
 
 static std::initializer_list<GenericTestDataSequence>
