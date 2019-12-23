@@ -1455,8 +1455,7 @@ static const std::initializer_list<FormatterTestCase> kFormatterTestCases = {
      "endmodule\n"},
     {"module foo; bar #(//\n.N(N)) bq (.bus(bus));endmodule\n",
      "module foo;\n"
-     "  bar #(//\n"  // would fit on one line, but forced to expand by //
-                     // TODO(b/144576835): two spaces before // comment
+     "  bar #(  //\n"  // would fit on one line, but forced to expand by //
      "      .N(N)\n"
      "  ) bq (\n"
      "      .bus(bus)\n"
@@ -1474,8 +1473,7 @@ static const std::initializer_list<FormatterTestCase> kFormatterTestCases = {
      "module foo;\n"
      "  bar #(\n"  // would fit on one line, but forced to expand by //
      "      .N(N)\n"
-     "  ) bq (//\n"
-     // TODO(b/144576835): two spaces before // comment
+     "  ) bq (  //\n"
      "      .bus(bus)\n"
      "  );\n"
      "endmodule\n"},
@@ -1912,8 +1910,7 @@ TEST(FormatterEndToEndTest, PreserveVSpacesOnly) {
           "// item comment 2\n"
           "endmodule\n",
           "// humble module\n"
-          // TODO(b/144576835): 2 spaces before //
-          "module foo (// non-port comment\n"
+          "module foo (  // non-port comment\n"
           "    // port comment 1\n"
           "    // port comment 2\n"
           ");  // header trailing comment\n"
@@ -1935,8 +1932,7 @@ TEST(FormatterEndToEndTest, PreserveVSpacesOnly) {
           "// item comment 2\n"
           "endmodule\n",
           "// humble module\n"
-          // TODO(b/144576835): 2 spaces before //
-          "module foo (// non-port comment\n"
+          "module foo (  // non-port comment\n"
           "    // port comment 1\n"
           "    input logic f\n"
           "    // port comment 2\n"

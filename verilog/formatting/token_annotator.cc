@@ -127,6 +127,11 @@ static WithReason<int> SpacesRequiredBetween(const PreFormatToken& left,
     return {1, "Escaped identifiers must end with whitespace."};
   }
 
+  if (IsComment(FormatTokenType(right.format_token_enum))) {
+    return {2, "Style: require 2+ spaces before comments"};
+    // TODO(fangism): Take this from FormatStyle.
+  }
+
   if (left.format_token_enum == FormatTokenType::open_group ||
       right.format_token_enum == FormatTokenType::close_group) {
     return {0,
@@ -153,11 +158,6 @@ static WithReason<int> SpacesRequiredBetween(const PreFormatToken& left,
     // be formatted with 0-space, for example:
     // 'a = & ~b'; could be 'a = &~b;'
     return {0, "Bind unary prefix operator close to its operand."};
-  }
-
-  if (IsComment(FormatTokenType(right.format_token_enum))) {
-    return {2, "Style: require 2+ spaces before comments"};
-    // TODO(fangism): Take this from FormatStyle.
   }
 
   if (left.TokenEnum() == TK_SCOPE_RES) {

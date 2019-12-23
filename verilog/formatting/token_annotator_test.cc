@@ -202,6 +202,41 @@ TEST(TokenAnnotatorTest, AnnotateFormattingInfoTest) {
            {{yytokentype::TK_EOL_COMMENT, "//comment1"},
             {yytokentype::TK_EOL_COMMENT, "//comment2"}}},
 
+          // (  //comment
+          {DefaultStyle,
+           0,
+           {{0, SpacingOptions::Undecided},  //
+            {2, SpacingOptions::Undecided}},
+           {{'(', "("}, {yytokentype::TK_EOL_COMMENT, "//comment"}}},
+
+          // [  //comment
+          {DefaultStyle,
+           0,
+           {{0, SpacingOptions::Undecided},  //
+            {2, SpacingOptions::Undecided}},
+           {{'[', "["}, {yytokentype::TK_EOL_COMMENT, "//comment"}}},
+
+          // {  //comment
+          {DefaultStyle,
+           0,
+           {{0, SpacingOptions::Undecided},  //
+            {2, SpacingOptions::Undecided}},
+           {{'{', "{"}, {yytokentype::TK_EOL_COMMENT, "//comment"}}},
+
+          // ,  //comment
+          {DefaultStyle,
+           0,
+           {{0, SpacingOptions::Undecided},  //
+            {2, SpacingOptions::Undecided}},
+           {{',', ","}, {yytokentype::TK_EOL_COMMENT, "//comment"}}},
+
+          // ;  //comment
+          {DefaultStyle,
+           0,
+           {{0, SpacingOptions::Undecided},  //
+            {2, SpacingOptions::Undecided}},
+           {{';', ";"}, {yytokentype::TK_EOL_COMMENT, "//comment"}}},
+
           // module foo();
           {DefaultStyle,
            0,
