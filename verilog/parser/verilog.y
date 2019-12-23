@@ -3850,9 +3850,9 @@ named_parameter_assignment_list
 named_parameter_assignment
   /* subset of: parameter_value_byname */
   : '.' member_name '(' parameter_expr ')'
-    { $$ = MakeTaggedNode(N::kParamByname, $1, $2, MakeParenGroup($3, $4, $5)); }
+    { $$ = MakeTaggedNode(N::kParamByName, $1, $2, MakeParenGroup($3, $4, $5)); }
   | '.' member_name '(' ')'
-    { $$ = MakeTaggedNode(N::kParamByname, $1, $2, MakeParenGroup($3, nullptr, $4)); }
+    { $$ = MakeTaggedNode(N::kParamByName, $1, $2, MakeParenGroup($3, nullptr, $4)); }
   ;
 opt_config
   : ':' TK_config
@@ -5982,11 +5982,11 @@ parameter_expr_list
   ;
 parameter_value_byname
   : '.' member_name '(' parameter_expr ')'
-    { $$ = MakeTaggedNode(N::kParamByname, $1, $2, MakeParenGroup($3, $4, $5)); }
+    { $$ = MakeTaggedNode(N::kParamByName, $1, $2, MakeParenGroup($3, $4, $5)); }
   | '.' member_name '(' ')'
-    { $$ = MakeTaggedNode(N::kParamByname, $1, $2, MakeParenGroup($3, nullptr, $4)); }
+    { $$ = MakeTaggedNode(N::kParamByName, $1, $2, MakeParenGroup($3, nullptr, $4)); }
   | '.' member_name
-    { $$ = MakeTaggedNode(N::kParamByname, $1, $2, nullptr); }
+    { $$ = MakeTaggedNode(N::kParamByName, $1, $2, nullptr); }
   ;
 parameter_value_byname_list
   /* named arguments */

@@ -114,7 +114,7 @@ enum class NodeEnum {
   kDimensionAssociativeType,
   kDimensionAssociativeIntegral,
   kParamType,
-  kParamByname,
+  kParamByName,
   kTrailingAssign,
   kParameterAssign,
   kParameterAssignList,

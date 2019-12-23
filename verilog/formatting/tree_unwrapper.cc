@@ -671,6 +671,7 @@ void TreeUnwrapper::Visit(const verible::SyntaxTreeNode& node) {
     case NodeEnum::kClassHeader:
     case NodeEnum::kCovergroupHeader:
     case NodeEnum::kModuleHeader:
+    case NodeEnum::kInstantiationType:
     case NodeEnum::kRegisterVariable:
     case NodeEnum::kGateInstance: {
       VisitIndentedSection(node, 0, PartitionPolicyEnum::kFitOnLineElseExpand);
