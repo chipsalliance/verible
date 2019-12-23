@@ -579,6 +579,7 @@ void TreeUnwrapper::Visit(const verible::SyntaxTreeNode& node) {
     case NodeEnum::kForCondition:
     case NodeEnum::kForStepList:
     case NodeEnum::kParBlock:
+    case NodeEnum::kParamByName:
     case NodeEnum::kActualNamedPort:
     case NodeEnum::kActualPositionalPort:
     case NodeEnum::kAssertionVariableDeclaration:
@@ -718,6 +719,7 @@ void TreeUnwrapper::Visit(const verible::SyntaxTreeNode& node) {
     case NodeEnum::kForSpec:
     case NodeEnum::kGateInstanceRegisterVariableList:
     case NodeEnum::kPortActualList:
+    case NodeEnum::kActualParameterByNameList:
     case NodeEnum::kPortList:
     case NodeEnum::kPortDeclarationList: {
       if (suppress_indentation) {
@@ -745,6 +747,11 @@ void TreeUnwrapper::Visit(const verible::SyntaxTreeNode& node) {
       }
       break;
     }
+
+      // Since NodeEnum::kActualParameterPositionalList consists of a
+      // comma-separated list of expressions, we let those default to appending
+      // to current token partition, and let the line-wrap-optimizer handle the
+      // enclosing construct, such as a parameterized type like "foo #(1, 2)".
 
       // Special cases:
 

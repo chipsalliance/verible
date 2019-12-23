@@ -560,6 +560,66 @@ const TreeUnwrapperTestData kUnwrapModuleTestCases[] = {
     },
 
     {
+        "module with instantiations with parameterized types (positional)",
+        "module tryme;"
+        "foo #(1) a;"
+        "bar #(2, 3) b();"
+        "endmodule",
+        ModuleHeader(0, L(0, {"module", "tryme", ";"})),
+        ModuleItemList(
+            1,
+            Instantiation(
+                1, NL(1, {"foo", "#", "(", "1", ")"}),  // instantiation type
+                NL(3, {"a", ";"})),
+            Instantiation(1,
+                          NL(1, {"bar", "#", "(", "2", ",", "3",
+                                 ")"}),  // instantiation type
+                          NL(3, {"b", "(", ")", ";"}))),
+        L(0, {"endmodule"}),
+    },
+
+    {
+        "module with instantiations with single-parameterized types (named)",
+        "module tryme;"
+        "foo #(.N(1)) a;"
+        "bar #(.M(2)) b();"
+        "endmodule",
+        ModuleHeader(0, L(0, {"module", "tryme", ";"})),
+        ModuleItemList(
+            1,
+            Instantiation(1,
+                          N(1,  // instantiation type
+                            L(1, {"foo", "#", "("}),
+                            NL(3, {".", "N", "(", "1", ")"}), L(1, {")"})),
+                          NL(3, {"a", ";"})),
+            Instantiation(1,
+                          N(1,  // instantiation type
+                            L(1, {"bar", "#", "("}),
+                            NL(3, {".", "M", "(", "2", ")"}), L(1, {")"})),
+                          NL(3, {"b", "(", ")", ";"}))),
+        L(0, {"endmodule"}),
+    },
+
+    {
+        "module with instantiations with multi-parameterized types (named)",
+        "module tryme;"
+        "foo #(.N(1), .M(4)) a;"
+        "endmodule",
+        ModuleHeader(0, L(0, {"module", "tryme", ";"})),
+        ModuleItemList(
+            1,
+            Instantiation(1,
+                          N(1,  // instantiation type
+                            L(1, {"foo", "#", "("}),
+                            N(3, L(3, {".", "N", "(", "1", ")", ","}),
+                              // note how comma is attached to above partition
+                              L(3, {".", "M", "(", "4", ")"})),
+                            L(1, {")"})),
+                          NL(3, {"a", ";"}))),
+        L(0, {"endmodule"}),
+    },
+
+    {
         "module with instances and various port actuals",
         "module got_ports;"
         "foo c(x, y, z);"
@@ -1874,7 +1934,8 @@ const TreeUnwrapperTestData kDescriptionTestCases[] = {
         "one bind declaration",
         "bind foo bar#(.x(y)) baz(.clk(clk));",
         N(0,  // kBindDeclaration
-          L(0, {"bind", "foo", "bar", "#", "(", ".", "x", "(", "y", ")", ")"}),
+          L(0, {"bind", "foo", "bar", "#", "("}),
+          NL(2, {".", "x", "(", "y", ")"}), L(0, {")"}),
           InstanceList(
               2,                                                      //
               N(2,                                                    //
