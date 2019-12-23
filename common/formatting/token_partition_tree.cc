@@ -40,6 +40,7 @@ void VerifyTreeNodeFormatTokenRanges(
 
   const auto& children = node.Children();
   if (!children.empty()) {
+    const TokenPartitionTreePrinter node_printer(node);
     {
       // Hierarchy invariant: parent's range == range spanned by children.
       // Check against first child's begin, and last child's end.
@@ -51,8 +52,8 @@ void VerifyTreeNodeFormatTokenRanges(
           TokenIndex(children.front().Value().TokensRange().begin());
       const int children_end =
           TokenIndex(children.back().Value().TokensRange().end());
-      CHECK_EQ(parent_begin, children_begin);
-      CHECK_EQ(parent_end, children_end);
+      CHECK_EQ(parent_begin, children_begin) << "node:\n" << node_printer;
+      CHECK_EQ(parent_end, children_end) << "node:\n" << node_printer;
     }
     {
       // Sibling continuity invariant:
@@ -64,7 +65,7 @@ void VerifyTreeNodeFormatTokenRanges(
         const auto child_range = iter->Value().TokensRange();
         const int current_begin = TokenIndex(child_range.begin());
         const int previous_end = TokenIndex(prev_upper_bound);
-        CHECK_EQ(current_begin, previous_end);
+        CHECK_EQ(current_begin, previous_end) << "node:\n" << node_printer;
         prev_upper_bound = child_range.end();
       }
     }

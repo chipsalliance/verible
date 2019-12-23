@@ -48,6 +48,7 @@ using ::verible::PartitionPolicyEnum;
 using ::verible::PreFormatToken;
 using ::verible::TokenInfo;
 using ::verible::TokenWithContext;
+using ::verible::UnwrappedLine;
 
 // Used to filter the TokenStreamView by discarding space-only tokens.
 static bool KeepNonWhitespace(const TokenInfo& t) {
@@ -718,7 +719,7 @@ void TreeUnwrapper::Visit(const verible::SyntaxTreeNode& node) {
       // Add a level of grouping that is treated as wrapping.
     case NodeEnum::kForSpec:
     case NodeEnum::kGateInstanceRegisterVariableList:
-    case NodeEnum::kPortActualList:
+    case NodeEnum::kPortActualList:  // TODO(b/146083526): one port per line
     case NodeEnum::kActualParameterByNameList:
     case NodeEnum::kPortList:
     case NodeEnum::kPortDeclarationList: {
@@ -778,17 +779,45 @@ void TreeUnwrapper::Visit(const verible::SyntaxTreeNode& node) {
       AttachTrailingSemicolonToPreviousPartition();
       auto& data_declaration_partition =
           *ABSL_DIE_IF_NULL(CurrentTokenPartition()->PreviousSibling());
-      VLOG(4) << "kDataDeclaration: "
-              << verible::TokenPartitionTreePrinter(data_declaration_partition);
       auto& children = data_declaration_partition.Children();
       CHECK(!children.empty());
+
       auto& instance_list_partition = children.back();
       if (instance_list_partition.Children().size() == 1) {
         // Flatten partition tree by one level.
         instance_list_partition.HoistOnlyChild();
+
+        // Undo the indentation of the only instance in the hoisted subtree.
+        instance_list_partition.ApplyPreOrder([&](UnwrappedLine& uwline) {
+          uwline.SetIndentationSpaces(uwline.IndentationSpaces() -
+                                      style_.wrap_spaces);
+        });
+
+        // Reshape type-instance partitions.
+
+        // Compute end-of-type position before flattening (and invalidating
+        // references).
+        const auto& instance_type_partition = children.front();
+        const size_t fuse_position =
+            instance_type_partition.Children().size() - 1;
+
+        // data_declaration_partition now consists of exactly:
+        //   instance_type_partition, instance_list_partition (single instance)
+        // Flatten these (which will invalidate their references).
+        data_declaration_partition.FlattenOnce();
+
+        // Join the rightmost of instance_type_partition with the leftmost of
+        // instance_list_partition.  Keep the type's indentation.
+        // This can yield an intermediate partition that contains:
+        // ") instance_name (".
+        data_declaration_partition.MergeConsecutiveSiblings(
+            fuse_position,
+            [](UnwrappedLine* left_uwline, const UnwrappedLine& right_uwline) {
+              CHECK(left_uwline->TokensRange().end() ==
+                    right_uwline.TokensRange().begin());
+              left_uwline->SpanUpToToken(right_uwline.TokensRange().end());
+            });
       }
-      // TODO(b/146083526): manipulation partitions to create a partition like:
-      //   ") instance_name (".
       break;
     }
     case NodeEnum::kBindDirective: {

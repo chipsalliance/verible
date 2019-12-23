@@ -1432,17 +1432,98 @@ static const std::initializer_list<FormatterTestCase> kFormatterTestCases = {
     {"  module foo   ; bar#(NNNNNNNN)"
      "bq(.aa(aaaaaa),.bb(bbbbbb));endmodule\n",
      "module foo;\n"
-     "  bar #(NNNNNNNN)\n"
-     "      bq (.aa(aaaaaa), .bb(bbbbbb));\n"
+     "  bar #(NNNNNNNN) bq (\n"
+     "      .aa(aaaaaa), .bb(bbbbbb)\n"  // TODO(b/146083526): one port/line
+     "  );\n"
      "endmodule\n"},
     {" module foo   ; barrrrrrr "
      "bq(.aaaaaa(aaaaaa),.bbbbbb(bbbbbb));endmodule\n",
      "module foo;\n"
-     "  barrrrrrr\n"
-     "      bq (\n"
-     "          .aaaaaa(aaaaaa),\n"
-     "          .bbbbbb(bbbbbb)\n"
-     "      );\n"
+     "  barrrrrrr bq (\n"
+     // TODO(b/146083526): one port/line
+     "      .aaaaaa(aaaaaa), .bbbbbb(bbbbbb)\n"
+     "  );\n"
+     "endmodule\n"},
+    {"module foo; bar #(.NNNNN(NNNNN)) bq (.bussss(bussss));endmodule\n",
+     // instance parameter and port does not fit on line
+     "module foo;\n"
+     "  bar #(\n"
+     "      .NNNNN(NNNNN)\n"
+     "  ) bq (\n"
+     "      .bussss(bussss)\n"
+     "  );\n"
+     "endmodule\n"},
+    {"module foo; bar #(//\n.N(N)) bq (.bus(bus));endmodule\n",
+     "module foo;\n"
+     "  bar #(//\n"  // would fit on one line, but forced to expand by //
+                     // TODO(b/144576835): two spaces before // comment
+     "      .N(N)\n"
+     "  ) bq (\n"
+     "      .bus(bus)\n"
+     "  );\n"
+     "endmodule\n"},
+    {"module foo; bar #(.N(N)//\n) bq (.bus(bus));endmodule\n",
+     "module foo;\n"
+     "  bar #(\n"  // would fit on one line, but forced to expand by //
+     "      .N(N)  //\n"
+     "  ) bq (\n"
+     "      .bus(bus)\n"
+     "  );\n"
+     "endmodule\n"},
+    {"module foo; bar #(.N(N)) bq (//\n.bus(bus));endmodule\n",
+     "module foo;\n"
+     "  bar #(\n"  // would fit on one line, but forced to expand by //
+     "      .N(N)\n"
+     "  ) bq (//\n"
+     // TODO(b/144576835): two spaces before // comment
+     "      .bus(bus)\n"
+     "  );\n"
+     "endmodule\n"},
+    {"module foo; bar #(.N(N)) bq (.bus(bus)//\n);endmodule\n",
+     "module foo;\n"
+     "  bar #(\n"  // would fit on one line, but forced to expand by //
+     "      .N(N)\n"
+     "  ) bq (\n"
+     "      .bus(bus)  //\n"
+     "  );\n"
+     "endmodule\n"},
+    {" module foo   ; bar "
+     "bq(.aaa(aaa),.bbb(bbb),.ccc(ccc),.ddd(ddd));endmodule\n",
+     "module foo;\n"
+     "  bar bq (\n"
+     "      .aaa(aaa),\n"  // ports don't fit on one line, so expanded
+     "      .bbb(bbb),\n"
+     "      .ccc(ccc),\n"
+     "      .ddd(ddd)\n"
+     "  );\n"
+     "endmodule\n"},
+    {" module foo   ; bar "
+     "bq(.aa(aa),.bb(bb),.cc(cc),.dd(dd));endmodule\n",
+     "module foo;\n"
+     "  bar bq (\n"
+     // TODO(b/146083526): one port/line
+     "      .aa(aa), .bb(bb), .cc(cc), .dd(dd)\n"
+     "  );\n"
+     "endmodule\n"},
+    {" module foo   ; bar "
+     "bq(.aa(aa),//\n.bb(bb),.cc(cc),.dd(dd));endmodule\n",
+     "module foo;\n"
+     "  bar bq (\n"
+     "      .aa(aa),  //\n"  // forced to expand by //
+     "      .bb(bb),\n"
+     "      .cc(cc),\n"
+     "      .dd(dd)\n"
+     "  );\n"
+     "endmodule\n"},
+    {" module foo   ; bar "
+     "bq(.aa(aa),.bb(bb),.cc(cc),.dd(dd)//\n);endmodule\n",
+     "module foo;\n"
+     "  bar bq (\n"
+     "      .aa(aa),\n"
+     "      .bb(bb),\n"
+     "      .cc(cc),\n"
+     "      .dd(dd)  //\n"  // forced to expand by //
+     "  );\n"
      "endmodule\n"},
 
     {
@@ -1831,7 +1912,7 @@ TEST(FormatterEndToEndTest, PreserveVSpacesOnly) {
           "// item comment 2\n"
           "endmodule\n",
           "// humble module\n"
-          // TODO(fangism): 2 spaces before //
+          // TODO(b/144576835): 2 spaces before //
           "module foo (// non-port comment\n"
           "    // port comment 1\n"
           "    // port comment 2\n"
@@ -1854,7 +1935,7 @@ TEST(FormatterEndToEndTest, PreserveVSpacesOnly) {
           "// item comment 2\n"
           "endmodule\n",
           "// humble module\n"
-          // TODO(fangism): 2 spaces before //
+          // TODO(b/144576835): 2 spaces before //
           "module foo (// non-port comment\n"
           "    // port comment 1\n"
           "    input logic f\n"

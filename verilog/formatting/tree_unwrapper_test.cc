@@ -508,15 +508,14 @@ const TreeUnwrapperTestData kUnwrapModuleTestCases[] = {
     {
         "module with kModuleItemList and kDataDeclarations",
         "module tryme;"
-        "foo a;"
-        "foo b();"
+        "foo1 a;"
+        "foo2 b();"
         "endmodule",
         ModuleHeader(0, L(0, {"module", "tryme", ";"})),
-        ModuleItemList(
-            1,
-            Instantiation(1, NL(1, {"foo"}),  // instantiation type
-                          NL(3, {"a", ";"})),
-            Instantiation(1, NL(1, {"foo"}), NL(3, {"b", "(", ")", ";"}))),
+        ModuleItemList(1,
+                       Instantiation(1,  // fused single instance
+                                     L(1, {"foo1", "a", ";"})),
+                       Instantiation(1, L(1, {"foo2", "b", "(", ")", ";"}))),
         L(0, {"endmodule"}),
     },
 
@@ -568,13 +567,10 @@ const TreeUnwrapperTestData kUnwrapModuleTestCases[] = {
         ModuleHeader(0, L(0, {"module", "tryme", ";"})),
         ModuleItemList(
             1,
-            Instantiation(
-                1, NL(1, {"foo", "#", "(", "1", ")"}),  // instantiation type
-                NL(3, {"a", ";"})),
-            Instantiation(1,
-                          NL(1, {"bar", "#", "(", "2", ",", "3",
-                                 ")"}),  // instantiation type
-                          NL(3, {"b", "(", ")", ";"}))),
+            // These are both single instances, fused with type partition.
+            Instantiation(1, L(1, {"foo", "#", "(", "1", ")", "a", ";"})),
+            Instantiation(1, L(1, {"bar", "#", "(", "2", ",", "3", ")", "b",
+                                   "(", ")", ";"}))),
         L(0, {"endmodule"}),
     },
 
@@ -585,18 +581,15 @@ const TreeUnwrapperTestData kUnwrapModuleTestCases[] = {
         "bar #(.M(2)) b();"
         "endmodule",
         ModuleHeader(0, L(0, {"module", "tryme", ";"})),
-        ModuleItemList(
-            1,
-            Instantiation(1,
-                          N(1,  // instantiation type
-                            L(1, {"foo", "#", "("}),
-                            NL(3, {".", "N", "(", "1", ")"}), L(1, {")"})),
-                          NL(3, {"a", ";"})),
-            Instantiation(1,
-                          N(1,  // instantiation type
-                            L(1, {"bar", "#", "("}),
-                            NL(3, {".", "M", "(", "2", ")"}), L(1, {")"})),
-                          NL(3, {"b", "(", ")", ";"}))),
+        ModuleItemList(1,
+                       // single instances fused with instantiation type
+                       Instantiation(1, L(1, {"foo", "#", "("}),
+                                     NL(3, {".", "N", "(", "1", ")"}),  //
+                                     L(1, {")", "a", ";"})),
+                       Instantiation(1, L(1, {"bar", "#", "("}),
+                                     NL(3, {".", "M", "(", "2", ")"}),  //
+                                     L(1, {")", "b", "(", ")", ";"}))   //
+                       ),
         L(0, {"endmodule"}),
     },
 
@@ -608,14 +601,12 @@ const TreeUnwrapperTestData kUnwrapModuleTestCases[] = {
         ModuleHeader(0, L(0, {"module", "tryme", ";"})),
         ModuleItemList(
             1,
-            Instantiation(1,
-                          N(1,  // instantiation type
-                            L(1, {"foo", "#", "("}),
-                            N(3, L(3, {".", "N", "(", "1", ")", ","}),
-                              // note how comma is attached to above partition
-                              L(3, {".", "M", "(", "4", ")"})),
-                            L(1, {")"})),
-                          NL(3, {"a", ";"}))),
+            // single instances fused with instantiation type
+            Instantiation(1, L(1, {"foo", "#", "("}),
+                          N(3, L(3, {".", "N", "(", "1", ")", ","}),
+                            // note how comma is attached to above partition
+                            L(3, {".", "M", "(", "4", ")"})),
+                          L(1, {")", "a", ";"}))),
         L(0, {"endmodule"}),
     },
 
@@ -629,29 +620,22 @@ const TreeUnwrapperTestData kUnwrapModuleTestCases[] = {
         ModuleHeader(0, L(0, {"module", "got_ports", ";"})),
         ModuleItemList(
             1,
+            Instantiation(1, L(1, {"foo", "c", "("}),
+                          PortActualList(3, L(3, {"x", ","}), L(3, {"y", ","}),
+                                         L(3, {"z"})),
+                          L(1, {")", ";"})  // TODO(fangism): attach to 'z'?
+                          ),
             Instantiation(
-                1, NL(1, {"foo"}),
-                InstanceList(3, L(3, {"c", "("}),
-                             PortActualList(5, L(5, {"x", ","}),
-                                            L(5, {"y", ","}), L(5, {"z"})),
-                             L(3, {")", ";"})  // TODO(fangism): attach to 'z'?
-                             )),
-            Instantiation(
-                1, NL(1, {"foo"}),
-                InstanceList(
-                    3, L(3, {"d", "("}),
-                    PortActualList(5, L(5, {".", "x", "(", "x", ")", ","}),
-                                   L(5, {".", "y", "(", "y", ")", ","}),
-                                   L(5, {".", "w", "(", "z", ")"})),
-                    L(3, {")", ";"}))),
-            Instantiation(
-                1, NL(1, {"foo"}),
-                InstanceList(
-                    3, L(3, {"e", "("}),
-                    PortActualList(5, L(5, {"x", ","}), L(5, {"a", ","}),
-                                   L(5, {".", "y", "(", "y", ")", ","}),
-                                   L(5, {".", "w", "(", "z", ")"})),
-                    L(3, {")", ";"})))),
+                1, L(1, {"foo", "d", "("}),
+                PortActualList(3, L(3, {".", "x", "(", "x", ")", ","}),
+                               L(3, {".", "y", "(", "y", ")", ","}),
+                               L(3, {".", "w", "(", "z", ")"})),
+                L(1, {")", ";"})),
+            Instantiation(1, L(1, {"foo", "e", "("}),
+                          PortActualList(3, L(3, {"x", ","}), L(3, {"a", ","}),
+                                         L(3, {".", "y", "(", "y", ")", ","}),
+                                         L(3, {".", "w", "(", "z", ")"})),
+                          L(1, {")", ";"}))),
         L(0, {"endmodule"}),
     },
 
@@ -680,22 +664,19 @@ const TreeUnwrapperTestData kUnwrapModuleTestCases[] = {
             1,
             Instantiation(
                 1,  //
-                NL(1, {"foo"}),
-                InstanceList(
+                L(1, {"foo", "dut", "("}),
+                PortActualList(
                     3,  //
-                    L(3, {"dut", "("}),
-                    PortActualList(
-                        5,  //
-                        L(5, {".",          "bus_in", "(",     "{", "brn", "::",
-                              "Num_blocks", "{",      "$bits", "(", "dbg", "::",
-                              "bus_t",      ")",      "'",     "(", "0",   ")",
-                              "}",          "}",      ")",     ","}),
-                        L(5, {".",        "bus_mid", "(",      "{", "brn", "::",
-                              "Num_bits", "{",       "$clog2", "(", "dbg", "::",
-                              "bus_t",    ")",       "'",      "(", "1",   ")",
-                              "}",        "}",       ")",      ","}),
-                        L(5, {".", "bus_out", "(", "out", ")"})),
-                    L(3, {")", ";"})))),
+                    L(3, {".",          "bus_in", "(",     "{", "brn", "::",
+                          "Num_blocks", "{",      "$bits", "(", "dbg", "::",
+                          "bus_t",      ")",      "'",     "(", "0",   ")",
+                          "}",          "}",      ")",     ","}),
+                    L(3, {".",        "bus_mid", "(",      "{", "brn", "::",
+                          "Num_bits", "{",       "$clog2", "(", "dbg", "::",
+                          "bus_t",    ")",       "'",      "(", "1",   ")",
+                          "}",        "}",       ")",      ","}),
+                    L(3, {".", "bus_out", "(", "out", ")"})),
+                L(1, {")", ";"}))),
         L(0, {"endmodule"}),
     },
 
@@ -821,14 +802,13 @@ const TreeUnwrapperTestData kUnwrapModuleTestCases[] = {
         "end\n"
         "endmodule",
         ModuleHeader(0, L(0, {"module", "conditionals", ";"})),
-        ModuleItemList(1, L(1, {"if", "(", "foo", ")", "begin"}),
-                       ModuleItemList(2, Instantiation(2, NL(2, {"a"}),
-                                                       NL(4, {"aa", ";"}))),
-                       L(1, {"end"}),  //
-                       L(1, {"if", "(", "bar", ")", "begin"}),
-                       ModuleItemList(2, Instantiation(2, NL(2, {"b"}),
-                                                       NL(4, {"bb", ";"}))),
-                       L(1, {"end"})),
+        ModuleItemList(
+            1, L(1, {"if", "(", "foo", ")", "begin"}),
+            ModuleItemList(2, Instantiation(2, L(2, {"a", "aa", ";"}))),
+            L(1, {"end"}),  //
+            L(1, {"if", "(", "bar", ")", "begin"}),
+            ModuleItemList(2, Instantiation(2, L(2, {"b", "bb", ";"}))),
+            L(1, {"end"})),
         L(0, {"endmodule"}),
     },
 
@@ -889,10 +869,8 @@ const TreeUnwrapperTestData kUnwrapModuleTestCases[] = {
                        ForSpec(3, L(3, {"genvar", "x", "=", "1", ";"}),
                                L(3, {"x", "<", "N", ";"}), L(3, {"++", "x"})),
                        L(1, {")", "begin"})),
-            ModuleItemList(2,                           //
-                           Instantiation(2,             //
-                                         NL(2, {"a"}),  //
-                                         NL(4, {"aa", ";"}))),
+            ModuleItemList(2,  //
+                           Instantiation(2, L(2, {"a", "aa", ";"}))),
             L(1, {"end"})),
         L(0, {"endmodule"}),
     },
@@ -934,18 +912,16 @@ const TreeUnwrapperTestData kUnwrapModuleTestCases[] = {
             LoopHeader(1, L(1, {"for", "("}),
                        ForSpec(3, L(3, {"x", "=", "1", ";"}), L(3, {";"})),
                        L(1, {")", "begin"})),
-            ModuleItemList(2,                           //
-                           Instantiation(2,             //
-                                         NL(2, {"a"}),  //
-                                         NL(4, {"aa", ";"}))),
+            ModuleItemList(2,                //
+                           Instantiation(2,  //
+                                         L(2, {"a", "aa", ";"}))),
             L(1, {"end"}),  //
             LoopHeader(1, L(1, {"for", "("}),
                        ForSpec(3, L(3, {"y", "=", "0", ";"}), L(3, {";"})),
                        L(1, {")", "begin"})),
-            ModuleItemList(2,                           //
-                           Instantiation(2,             //
-                                         NL(2, {"b"}),  //
-                                         NL(4, {"bb", ";"}))),
+            ModuleItemList(2,                //
+                           Instantiation(2,  //
+                                         L(2, {"b", "bb", ";"}))),
             L(1, {"end"})),
         L(0, {"endmodule"}),
     },
@@ -961,17 +937,16 @@ const TreeUnwrapperTestData kUnwrapModuleTestCases[] = {
         "endcase\n"
         "endmodule",
         ModuleHeader(0, L(0, {"module", "multi_cases", ";"})),
-        ModuleItemList(
-            1, L(1, {"case", "(", "foo", ")"}),
-            CaseItemList(2,
-                         // TODO(fangism): merge label prefix to following
-                         // subtree if it fits
-                         L(2, {"A", ":"}),
-                         Instantiation(2, NL(2, {"a"}), NL(4, {"aa", ";"}))),
-            L(1, {"endcase"}), L(1, {"case", "(", "bar", ")"}),
-            CaseItemList(2, L(2, {"B", ":"}),
-                         Instantiation(2, NL(2, {"b"}), NL(4, {"bb", ";"}))),
-            L(1, {"endcase"})),
+        ModuleItemList(1, L(1, {"case", "(", "foo", ")"}),
+                       CaseItemList(2,
+                                    // TODO(fangism): merge label prefix to
+                                    // following subtree if it fits
+                                    L(2, {"A", ":"}),
+                                    Instantiation(2, L(2, {"a", "aa", ";"}))),
+                       L(1, {"endcase"}), L(1, {"case", "(", "bar", ")"}),
+                       CaseItemList(2, L(2, {"B", ":"}),
+                                    Instantiation(2, L(2, {"b", "bb", ";"}))),
+                       L(1, {"endcase"})),
         L(0, {"endmodule"}),
     },
 
@@ -2375,8 +2350,8 @@ const TreeUnwrapperTestData kUnwrapTaskTestCases[] = {
         "int return_value;"
         "endtask",
         TaskHeader(0, L(0, {"task", "foo", ";"})),
-        StatementList(1, DataDeclaration(1, NL(1, {"int"}),
-                                         NL(3, {"return_value", ";"}))),
+        StatementList(1,
+                      DataDeclaration(1, L(1, {"int", "return_value", ";"}))),
         L(0, {"endtask"}),
     },
 
@@ -2484,10 +2459,10 @@ const TreeUnwrapperTestData kUnwrapTaskTestCases[] = {
         "join "
         "endtask",
         TaskHeader(0, L(0, {"task", "foo", ";"})),
-        StatementList(1, L(1, {"fork"}),
-                      StatementList(2, DataDeclaration(2, NL(2, {"int"}),
-                                                       NL(4, {"value", ";"}))),
-                      L(1, {"join"})),
+        StatementList(
+            1, L(1, {"fork"}),
+            StatementList(2, DataDeclaration(2, L(2, {"int", "value", ";"}))),
+            L(1, {"join"})),
         L(0, {"endtask"}),
     },
 
@@ -2810,8 +2785,7 @@ const TreeUnwrapperTestData kUnwrapFunctionTestCases[] = {
         "int value;"
         "endfunction",
         FunctionHeader(0, L(0, {"function", "foo", ";"})),
-        StatementList(
-            1, DataDeclaration(1, NL(1, {"int"}), NL(3, {"value", ";"}))),
+        StatementList(1, DataDeclaration(1, L(1, {"int", "value", ";"}))),
         L(0, {"endfunction"}),
     },
 
