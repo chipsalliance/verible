@@ -312,10 +312,7 @@ class VectorTree : private _VectorTreeImpl {
   void AdoptSubtreesFrom(this_type* other) {
     auto& src_children = other->Children();
     children_.reserve(children_.size() + src_children.size());
-    for (auto& child : src_children) {
-      AdoptSubtree(std::move(child));  // already Relink()s
-    }
-    src_children.clear();
+    AdoptSubtreesFromUnreserved(&src_children);
   }
 
   // Accessors
@@ -560,7 +557,7 @@ class VectorTree : private _VectorTreeImpl {
     return return_tree;  // Rely on copy-elision.
   }
 
-  // If this node has exatly one child, replace this node with that child
+  // If this node has exactly one child, replace this node with that child
   // and return true, otherwise, do nothing and return false.
   bool HoistOnlyChild() {
     if (Children().size() == 1) {
@@ -602,6 +599,30 @@ class VectorTree : private _VectorTreeImpl {
     children_.erase(next_iter);  // done via move-assignment
   }
 
+  // Replace all direct children of this node with concatenated grandchildren.
+  // Retains the value of this node.  Discards direct childrens' values.
+  void FlattenOnce() {
+    // Emancipate children from this node without discarding them yet.
+    subnodes_type temp;
+    temp.swap(children_);
+
+    // Reserve space for all grandchildren.
+    {
+      size_t num_grandchildren = 0;
+      for (const auto& child : temp) {
+        num_grandchildren += child.Children().size();
+      }
+      children_.reserve(num_grandchildren);
+    }
+
+    // Concatenate all grandchildren.
+    for (auto& child : temp) {
+      AdoptSubtreesFromUnreserved(&child.Children());
+    }
+
+    // temp, which holds the discarded children, is destroyed.
+  }
+
   // Pretty-print in tree-form.  Value() is enclosed in parens, and the whole
   // node is enclosed in braces.
   std::ostream& PrintTree(std::ostream* stream, size_t indent = 0) const {
@@ -624,6 +645,14 @@ class VectorTree : private _VectorTreeImpl {
     for (auto& child : children_) {
       child.parent_ = this;
     }
+  }
+
+  // This node takes/moves subtrees from another array of node (concatenates).
+  void AdoptSubtreesFromUnreserved(subnodes_type* other) {
+    for (auto& child : *other) {
+      AdoptSubtree(std::move(child));  // already Relink()s
+    }
+    other->clear();
   }
 
   // Singular value stored at this node.

@@ -1387,6 +1387,118 @@ TEST(VectorTreeTest, MergeConsecutiveSiblingsConcatenateSubtrees) {
               ElementsAre(6, 7, 8, 9, 10, 11, 12, 13));
 }
 
+TEST(VectorTreeTest, FlattenOnceNoChildren) {
+  typedef VectorTree<int> tree_type;
+  tree_type tree(1);
+  EXPECT_THAT(NodeValues(tree), ElementsAre());
+
+  const tree_type expect_tree(1);
+  tree.FlattenOnce();
+  const auto result_pair = DeepEqual(tree, expect_tree);
+  EXPECT_EQ(result_pair.left, nullptr);
+  EXPECT_EQ(result_pair.right, nullptr);
+}
+
+TEST(VectorTreeTest, FlattenOnceNoGrandchildren) {
+  typedef VectorTree<int> tree_type;
+  tree_type tree(1,  // no grandchildren
+                 tree_type(2), tree_type(3), tree_type(4), tree_type(5));
+  EXPECT_THAT(NodeValues(tree), ElementsAre(2, 3, 4, 5));
+
+  const tree_type expect_tree(1);
+  tree.FlattenOnce();
+  const auto result_pair = DeepEqual(tree, expect_tree);
+  EXPECT_EQ(result_pair.left, nullptr);
+  EXPECT_EQ(result_pair.right, nullptr);
+}
+
+TEST(VectorTreeTest, FlattenOnceOneGrandchild) {
+  typedef VectorTree<int> tree_type;
+  tree_type tree(1, tree_type(2, tree_type(3)));
+  EXPECT_THAT(NodeValues(tree), ElementsAre(2));
+
+  const tree_type expect_tree(1, tree_type(3));
+  tree.FlattenOnce();
+  const auto result_pair = DeepEqual(tree, expect_tree);
+  EXPECT_EQ(result_pair.left, nullptr);
+  EXPECT_EQ(result_pair.right, nullptr);
+}
+
+TEST(VectorTreeTest, FlattenOnceMixed) {
+  typedef VectorTree<int> tree_type;
+  tree_type tree(1,             //
+                 tree_type(2),  // no grandchildren
+                 tree_type(3,   //
+                           tree_type(8), tree_type(9)),
+                 tree_type(4),  // no grandchildren
+                 tree_type(5,   //
+                           tree_type(12), tree_type(13)));
+  EXPECT_THAT(NodeValues(tree), ElementsAre(2, 3, 4, 5));
+
+  const tree_type expect_tree(1,  //
+                              tree_type(8), tree_type(9), tree_type(12),
+                              tree_type(13));
+  tree.FlattenOnce();
+  const auto result_pair = DeepEqual(tree, expect_tree);
+  EXPECT_EQ(result_pair.left, nullptr);
+  EXPECT_EQ(result_pair.right, nullptr);
+}
+
+TEST(VectorTreeTest, FlattenOnceAllNonempty) {
+  typedef VectorTree<int> tree_type;
+  tree_type tree(1,            //
+                 tree_type(2,  //
+                           tree_type(6), tree_type(7)),
+                 tree_type(3,  //
+                           tree_type(8), tree_type(9)),
+                 tree_type(4,  //
+                           tree_type(10), tree_type(11)),
+                 tree_type(5,  //
+                           tree_type(12), tree_type(13)));
+  EXPECT_THAT(NodeValues(tree), ElementsAre(2, 3, 4, 5));
+
+  const tree_type expect_tree(1,  //
+                              tree_type(6), tree_type(7), tree_type(8),
+                              tree_type(9), tree_type(10), tree_type(11),
+                              tree_type(12), tree_type(13));
+  tree.FlattenOnce();
+  const auto result_pair = DeepEqual(tree, expect_tree);
+  EXPECT_EQ(result_pair.left, nullptr);
+  EXPECT_EQ(result_pair.right, nullptr);
+}
+
+TEST(VectorTreeTest, FlattenOnceGreatgrandchildren) {
+  typedef VectorTree<int> tree_type;
+  tree_type tree(1,                      //
+                 tree_type(2,            //
+                           tree_type(6,  //
+                                     tree_type(7))),
+                 tree_type(3,            //
+                           tree_type(8,  //
+                                     tree_type(9))),
+                 tree_type(4,             //
+                           tree_type(10,  //
+                                     tree_type(11))),
+                 tree_type(5,             //
+                           tree_type(12,  //
+                                     tree_type(13))));
+  EXPECT_THAT(NodeValues(tree), ElementsAre(2, 3, 4, 5));
+
+  const tree_type expect_tree(1,            //
+                              tree_type(6,  //
+                                        tree_type(7)),
+                              tree_type(8,  //
+                                        tree_type(9)),
+                              tree_type(10,  //
+                                        tree_type(11)),
+                              tree_type(12,  //
+                                        tree_type(13)));
+  tree.FlattenOnce();
+  const auto result_pair = DeepEqual(tree, expect_tree);
+  EXPECT_EQ(result_pair.left, nullptr);
+  EXPECT_EQ(result_pair.right, nullptr);
+}
+
 TEST(VectorTreeTest, PrintTree) {
   const auto tree = verible::testing::MakeExampleFamilyTree();
   std::ostringstream stream;
