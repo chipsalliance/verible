@@ -37,6 +37,9 @@ bool IdIsQualified(const verible::Symbol&);
 // Extracts identifier leaf from a kUnqualifiedId node.
 const verible::SyntaxTreeLeaf* GetIdentifier(const verible::Symbol&);
 
+// Extracts macro name from a kMacroCall node.
+absl::string_view GetMacroCallId(const verible::Symbol& symbol);
+
 // Extracts identifier leaf from a kUnqualifiedId node, or returns the leaf
 // as-is.  This automatically peels away the kUnqualifiedId node layer.
 const verible::SyntaxTreeLeaf* AutoUnwrapIdentifier(const verible::Symbol&);
