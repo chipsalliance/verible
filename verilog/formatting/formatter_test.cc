@@ -296,6 +296,151 @@ static const std::initializer_list<FormatterTestCase> kFormatterTestCases = {
      "`define FOO BAR\n"
      "`FOO(bar)\n"},
 
+    // `uvm macros indenting
+    { // simple test case
+        "`uvm_object_utils_begin(aa)\n"
+        "`uvm_field_int(bb, UVM_DEFAULT)\n"
+        "`uvm_field_int(cc, UVM_DEFAULT)\n"
+        "`uvm_object_utils_end\n",
+        "`uvm_object_utils_begin(aa)\n"
+        "  `uvm_field_int(bb, UVM_DEFAULT)\n"
+        "  `uvm_field_int(cc, UVM_DEFAULT)\n"
+        "`uvm_object_utils_end\n",
+    },
+    { // multiple uvm.*begin - uvm.*end ranges
+        "`uvm_object_utils_begin(aa)\n"
+        "`uvm_field_int(bb, UVM_DEFAULT)\n"
+        "`uvm_field_int(cc, UVM_DEFAULT)\n"
+        "`uvm_object_utils_end\n"
+        "`uvm_field_int(bb, UVM_DEFAULT)\n"
+        "`uvm_field_int(cc, UVM_DEFAULT)\n"
+        "`uvm_object_utils_begin(bb)\n"
+        "`uvm_field_int(bb, UVM_DEFAULT)\n"
+        "`uvm_field_int(cc, UVM_DEFAULT)\n"
+        "`uvm_object_utils_end\n"
+        "`uvm_field_int(bb, UVM_DEFAULT)\n"
+        "`uvm_field_int(cc, UVM_DEFAULT)\n",
+        "`uvm_object_utils_begin(aa)\n"
+        "  `uvm_field_int(bb, UVM_DEFAULT)\n"
+        "  `uvm_field_int(cc, UVM_DEFAULT)\n"
+        "`uvm_object_utils_end\n"
+        "`uvm_field_int(bb, UVM_DEFAULT)\n"
+        "`uvm_field_int(cc, UVM_DEFAULT)\n"
+        "`uvm_object_utils_begin(bb)\n"
+        "  `uvm_field_int(bb, UVM_DEFAULT)\n"
+        "  `uvm_field_int(cc, UVM_DEFAULT)\n"
+        "`uvm_object_utils_end\n"
+        "`uvm_field_int(bb, UVM_DEFAULT)\n"
+        "`uvm_field_int(cc, UVM_DEFAULT)\n"
+    },
+    { // empty uvm.*begin - uvm.*end range
+        "`uvm_component_utils_begin(aa)\n"
+        "`uvm_component_utils_end\n",
+        "`uvm_component_utils_begin(aa)\n"
+        "`uvm_component_utils_end\n",
+    },
+    { // uvm_field_utils
+        "`uvm_field_utils_begin(aa)\n"
+        "`uvm_field_int(bb, UVM_DEFAULT)\n"
+        "`uvm_field_int(cc, UVM_DEFAULT)\n"
+        "`uvm_field_utils_end\n",
+        "`uvm_field_utils_begin(aa)\n"
+        "  `uvm_field_int(bb, UVM_DEFAULT)\n"
+        "  `uvm_field_int(cc, UVM_DEFAULT)\n"
+        "`uvm_field_utils_end\n",
+    },
+    { // uvm_component
+        "`uvm_component_utils_begin(aa)\n"
+        "`uvm_field_int(bb, UVM_DEFAULT)\n"
+        "`uvm_field_int(cc, UVM_DEFAULT)\n"
+        "`uvm_component_utils_end\n",
+        "`uvm_component_utils_begin(aa)\n"
+        "  `uvm_field_int(bb, UVM_DEFAULT)\n"
+        "  `uvm_field_int(cc, UVM_DEFAULT)\n"
+        "`uvm_component_utils_end\n",
+    },
+    { // nested uvm macros
+        "`uvm_field_int(l0, UVM_DEFAULT)\n"
+        "`uvm_component_utils_begin(l0)\n"
+        "`uvm_field_int(l1, UVM_DEFAULT)\n"
+        "`uvm_component_utils_begin(l1)\n"
+        "`uvm_field_int(l2, UVM_DEFAULT)\n"
+        "`uvm_component_utils_begin(l2)\n"
+        "`uvm_field_int(l3, UVM_DEFAULT)\n"
+        "`uvm_component_utils_end\n"
+        "`uvm_field_int(l2, UVM_DEFAULT)\n"
+        "`uvm_component_utils_end\n"
+        "`uvm_field_int(l1, UVM_DEFAULT)\n"
+        "`uvm_component_utils_end\n"
+        "`uvm_field_int(l0, UVM_DEFAULT)\n",
+        "`uvm_field_int(l0, UVM_DEFAULT)\n"
+        "`uvm_component_utils_begin(l0)\n"
+        "  `uvm_field_int(l1, UVM_DEFAULT)\n"
+        "  `uvm_component_utils_begin(l1)\n"
+        "    `uvm_field_int(l2, UVM_DEFAULT)\n"
+        "    `uvm_component_utils_begin(l2)\n"
+        "      `uvm_field_int(l3, UVM_DEFAULT)\n"
+        "    `uvm_component_utils_end\n"
+        "    `uvm_field_int(l2, UVM_DEFAULT)\n"
+        "  `uvm_component_utils_end\n"
+        "  `uvm_field_int(l1, UVM_DEFAULT)\n"
+        "`uvm_component_utils_end\n"
+        "`uvm_field_int(l0, UVM_DEFAULT)\n",
+    },
+    { // non-uvm macro
+        "`my_macro_begin(aa)\n"
+        "`my_field(b)\n"
+        "`my_field(c)\n"
+        "`my_macro_end\n",
+        "`my_macro_begin(aa) `my_field(\n"
+        "    b) `my_field(c) `my_macro_end\n",
+    },
+    { // unbalanced uvm macros: missing uvm.*end macro
+        "`uvm_component_utils_begin(aa)\n"
+        "`uvm_field_int(bb, UVM_DEFAULT)\n"
+        "`uvm_field_int(cc, UVM_DEFAULT)\n",
+        "`uvm_component_utils_begin(aa)\n"
+        "`uvm_field_int(bb, UVM_DEFAULT)\n"
+        "`uvm_field_int(cc, UVM_DEFAULT)\n",
+    },
+    { // unbalanced uvm macros: missing uvm.*begin macro
+        "`uvm_field_int(bb, UVM_DEFAULT)\n"
+        "`uvm_field_int(cc, UVM_DEFAULT)\n"
+        "`uvm_component_utils_end\n",
+        "`uvm_field_int(bb, UVM_DEFAULT)\n"
+        "`uvm_field_int(cc, UVM_DEFAULT)\n"
+        "`uvm_component_utils_end\n",
+    },
+    { // unbalanced uvm macros: missing _begin macro between
+      // matching uvm.*begin-uvm.*end macros
+        "`uvm_component_utils_begin(aa)\n"
+        "`uvm_field_int(bb, UVM_DEFAULT)\n"
+        "`uvm_field_int(cc, UVM_DEFAULT)\n"
+        "`uvm_component_utils_end\n"
+        "`uvm_field_int(bb, UVM_DEFAULT)\n"
+        "`uvm_field_int(bb, UVM_DEFAULT)\n"
+        "`uvm_field_int(cc, UVM_DEFAULT)\n"
+        "`uvm_component_utils_end\n"
+        "`uvm_field_int(bb, UVM_DEFAULT)\n"
+        "`uvm_component_utils_begin(aa)\n"
+        "`uvm_field_int(bb, UVM_DEFAULT)\n"
+        "`uvm_field_int(cc, UVM_DEFAULT)\n"
+        "`uvm_component_utils_end\n",
+        "`uvm_component_utils_begin(aa)\n"
+        "  `uvm_field_int(bb, UVM_DEFAULT)\n"
+        "  `uvm_field_int(cc, UVM_DEFAULT)\n"
+        "`uvm_component_utils_end\n"
+        "`uvm_field_int(bb, UVM_DEFAULT)\n"
+        "`uvm_field_int(bb, UVM_DEFAULT)\n"
+        "`uvm_field_int(cc, UVM_DEFAULT)\n"
+        "`uvm_component_utils_end\n"
+        "`uvm_field_int(bb, UVM_DEFAULT)\n"
+        "`uvm_component_utils_begin(aa)\n"
+        "  `uvm_field_int(bb, UVM_DEFAULT)\n"
+        "  `uvm_field_int(cc, UVM_DEFAULT)\n"
+        "`uvm_component_utils_end\n"
+    },
+
     // parameter test cases
     {
         "  parameter  int   foo=0 ;",
