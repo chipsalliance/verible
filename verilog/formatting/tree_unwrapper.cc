@@ -554,7 +554,6 @@ void TreeUnwrapper::Visit(const verible::SyntaxTreeNode& node) {
     case NodeEnum::kTaskDeclaration:
     case NodeEnum::kTFPortDeclaration:
     case NodeEnum::kTypeDeclaration:
-    case NodeEnum::kModportDeclaration:
     case NodeEnum::kConstraintDeclaration:
     case NodeEnum::kConstraintExpression:
     case NodeEnum::kCovergroupDeclaration:
@@ -672,6 +671,7 @@ void TreeUnwrapper::Visit(const verible::SyntaxTreeNode& node) {
     case NodeEnum::kLoopHeader:
     case NodeEnum::kClassHeader:
     case NodeEnum::kCovergroupHeader:
+    case NodeEnum::kModportDeclaration:
     case NodeEnum::kModuleHeader:
     case NodeEnum::kInstantiationType:
     case NodeEnum::kRegisterVariable:
@@ -718,6 +718,8 @@ void TreeUnwrapper::Visit(const verible::SyntaxTreeNode& node) {
 
       // Add a level of grouping that is treated as wrapping.
     case NodeEnum::kForSpec:
+    case NodeEnum::kModportSimplePortsDeclaration:
+    case NodeEnum::kModportTFPortsDeclaration:
     case NodeEnum::kGateInstanceRegisterVariableList:
     case NodeEnum::kPortActualList:  // TODO(b/146083526): one port per line
     case NodeEnum::kActualParameterByNameList:
@@ -907,6 +909,10 @@ void TreeUnwrapper::Visit(const verible::SyntaxTreeLeaf& leaf) {
               NodeEnum::kGateInstanceRegisterVariableList  // kGateInstance,
                                                            // kRegisterVariable
           })) {
+        MergeLastTwoPartitions();
+      } else if (CurrentUnwrappedLine().Size() == 1) {
+        // Partition would begin with a comma,
+        // instead add this token to previous partition
         MergeLastTwoPartitions();
       }
       break;

@@ -720,6 +720,91 @@ static const std::initializer_list<FormatterTestCase> kFormatterTestCases = {
         "  modport mp2(output c, input d);\n"
         "endinterface\n",
     },
+    {
+        // interface with long modport port names
+        "interface\tfoo_if  ;"
+        "modport  mp1\t( output a_long_output, input detailed_input_name);"
+        "endinterface",
+        "interface foo_if;\n"
+        "  modport mp1(\n"
+        "      output a_long_output,\n"
+        "      input detailed_input_name\n"
+        "  );\n"
+        "endinterface\n",
+    },
+    {
+        // interface with modport declaration with multiple ports
+        "interface\tfoo_if  ;"
+        "modport  mp1\t( output a_long_output, input detailed_input_name);"
+        "endinterface",
+        "interface foo_if;\n"
+        "  modport mp1(\n"
+        "      output a_long_output,\n"
+        "      input detailed_input_name\n"
+        "  );\n"
+        "endinterface\n",
+    },
+    {
+        // interface with modport TF port declaration
+        "interface\tfoo_if  ;"
+        "modport  mp1\t( output a, input b, import c);"
+        "endinterface",
+        "interface foo_if;\n"
+        "  modport mp1(\n"
+        "      output a,\n"
+        "      input b,\n"
+        "      import c\n"
+        "  );\n"
+        "endinterface\n",
+    },
+    {
+        // interface with complex modport ports list
+        "interface\tfoo_if  ;"
+        "modport producer\t(input ready,\toutput data, valid, user,"
+        " strobe, keep, last,\timport producer_reset, producer_tick,"
+        " produce_blocked, produce);\n"
+        "modport consumer\t(input data, valid, user, strobe, keep, last,"
+        " output ready,\timport consumer_reset, consumer_tick, consume);"
+        "endinterface",
+        "interface foo_if;\n"
+        "  modport producer(\n"
+        "      input ready,\n"
+        "      output data, valid, user, strobe,\n"
+        "          keep, last,\n"
+        "      import producer_reset,\n"
+        "          producer_tick,\n"
+        "          produce_blocked, produce\n"
+        "  );\n"
+        "  modport consumer(\n"
+        "      input data, valid, user, strobe,\n"
+        "          keep, last,\n"
+        "      output ready,\n"
+        "      import consumer_reset,\n"
+        "          consumer_tick, consume\n"
+        "  );\n"
+        "endinterface\n",
+    },
+    {
+        // interface with modports and comments inside
+        "interface foo_if;\n"
+        " modport mp1(\n"
+        "  // Our output\n"
+        "     output a,\n"
+        "  /* Inputs */\n"
+        "      input b1, b_f /*last*/,"
+        "  import c\n"
+        "  );\n"
+        "endinterface\n",
+        "interface foo_if;\n"
+        "  modport mp1(\n"
+        "      // Our output\n"
+        "      output a,\n"
+        "      /* Inputs */\n"
+        "      input b1, b_f  /*last*/,\n"
+        "      import c\n"
+        "  );\n"
+        "endinterface\n",
+    },
 
     // class test cases
     {"class action;int xyz;endclass  :  action\n",
