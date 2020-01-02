@@ -84,6 +84,69 @@ TEST(FindAllTypeDeclarationsTest, BasicTests) {
     EXPECT_EQ(type_declarations.size(), test.second);
   }
 }
+
+// Tests that no enums are found in an empty source.
+TEST(FindAllEnumDataTypeDeclarationsTest, EmptySource) {
+  VerilogAnalyzer analyzer("", "");
+  ASSERT_OK(analyzer.Analyze());
+  const auto& root = analyzer.Data().SyntaxTree();
+  const auto enum_declarations =
+      FindAllEnumDataTypeDeclarations(*ABSL_DIE_IF_NULL(root));
+  EXPECT_TRUE(enum_declarations.empty());
+}
+
+// Tests that no enums are found in a struct declaration
+TEST(FindAllEnumDataTypeDeclarationsTest, EnumSource) {
+  VerilogAnalyzer analyzer("typedef struct { int a; bit [8:0] flags; } name;",
+                           "");
+  ASSERT_OK(analyzer.Analyze());
+  const auto& root = analyzer.Data().SyntaxTree();
+  const auto enum_declarations =
+      FindAllEnumDataTypeDeclarations(*ABSL_DIE_IF_NULL(root));
+  EXPECT_TRUE(enum_declarations.empty());
+}
+
+// Tests that no enums are found in a union declaration
+TEST(FindAllEnumDataTypeDeclarationsTest, StructSource) {
+  VerilogAnalyzer analyzer("typedef union { int a; bit [8:0] flags; } name;",
+                           "");
+  ASSERT_OK(analyzer.Analyze());
+  const auto& root = analyzer.Data().SyntaxTree();
+  const auto enum_declarations =
+      FindAllEnumDataTypeDeclarations(*ABSL_DIE_IF_NULL(root));
+  EXPECT_TRUE(enum_declarations.empty());
+}
+
+// Tests that the correct amount of node kEnumDataType declarations
+// are found.
+TEST(FindAllEnumDataTypeDeclarationsTest, BasicTests) {
+  const std::pair<std::string, int> kTestCases[] = {
+      {"", 0},
+      {"typedef enum { Red, Green, Blue } name;", 1},
+      {"typedef enum { Red, Green, Blue } name; "
+       "typedef enum { Yellow, Orange, Violet } other_name;",
+       2},
+      {"typedef enum { Idle, Busy } name; "
+       "typedef struct { int c; bit [8:0] d; } other_name;",
+       1},
+      {"typedef union { int a; bit [8:0] b; } name; "
+       "typedef enum { Oak, Larch } other_name;",
+       1},
+      {"typedef struct { int a; bit [8:0] b; } name; "
+       "typedef union { int c; bit [8:0] d; } other_name; "
+       "typedef enum { Idle, Busy } another_name;",
+       1},
+  };
+  for (const auto& test : kTestCases) {
+    VerilogAnalyzer analyzer(test.first, "");
+    ASSERT_OK(analyzer.Analyze());
+    const auto& root = analyzer.Data().SyntaxTree();
+    const auto enum_data_type_declarations =
+        FindAllEnumDataTypeDeclarations(*ABSL_DIE_IF_NULL(root));
+    EXPECT_EQ(enum_data_type_declarations.size(), test.second);
+  }
+}
+
 // Tests that no structs are found from an empty source.
 TEST(FindAllStructDataTypeDeclarationsTest, EmptySource) {
   VerilogAnalyzer analyzer("", "");

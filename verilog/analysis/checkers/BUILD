@@ -20,6 +20,7 @@ cc_library(
         ":case_missing_default_rule",
         ":create_object_name_match_rule",
         ":endif_comment_rule",
+        ":enum_name_style_rule",
         ":explicit_function_lifetime_rule",
         ":explicit_function_task_parameter_type_rule",
         ":explicit_parameter_storage_type_rule",
@@ -429,6 +430,43 @@ cc_test(
         ":forbidden_anonymous_enums_rule",
         "//common/analysis:syntax_tree_linter_test_utils",
         "//common/text:symbol",
+        "//verilog/analysis:verilog_analyzer",
+        "@com_google_googletest//:gtest_main",
+    ],
+)
+
+cc_library(
+    name = "enum_name_style_rule",
+    srcs = ["enum_name_style_rule.cc"],
+    hdrs = ["enum_name_style_rule.h"],
+    deps = [
+        "//common/analysis:citation",
+        "//common/analysis:lint_rule_status",
+        "//common/analysis:syntax_tree_lint_rule",
+        "//common/analysis/matcher",
+        "//common/analysis/matcher:bound_symbol_manager",
+        "//common/analysis/matcher:matcher_builders",
+        "//common/strings:naming_utils",
+        "//common/text:symbol",
+        "//common/text:syntax_tree_context",
+        "//verilog/CST:type",
+        "//verilog/CST:verilog_matchers",
+        "//verilog/analysis:descriptions",
+        "//verilog/analysis:lint_rule_registry",
+        "@com_google_absl//absl/strings",
+    ],
+    alwayslink = 1,
+)
+
+cc_test(
+    name = "enum_name_style_rule_test",
+    srcs = ["enum_name_style_rule_test.cc"],
+    deps = [
+        ":enum_name_style_rule",
+        "//common/analysis:linter_test_utils",
+        "//common/analysis:syntax_tree_linter_test_utils",
+        "//common/text:symbol",
+        "//verilog/CST:verilog_nonterminals",
         "//verilog/analysis:verilog_analyzer",
         "@com_google_googletest//:gtest_main",
     ],

@@ -38,6 +38,11 @@ std::vector<verible::TreeSearchMatch> FindAllTypeDeclarations(
   return verible::SearchSyntaxTree(root, NodekTypeDeclaration());
 }
 
+std::vector<verible::TreeSearchMatch> FindAllEnumDataTypeDeclarations(
+    const verible::Symbol& root) {
+  return verible::SearchSyntaxTree(root, NodekEnumDataType());
+}
+
 std::vector<verible::TreeSearchMatch> FindAllStructDataTypeDeclarations(
     const verible::Symbol& root) {
   return verible::SearchSyntaxTree(root, NodekStructDataType());
