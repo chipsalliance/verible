@@ -133,10 +133,6 @@ static WithReason<int> SpacesRequiredBetween(const PreFormatToken& left,
             "and \"{y}\" over \"{ y }\"."};
   }
 
-  if (right.TokenEnum() == MacroArg) {
-    return {kUnhandledSpacesRequired, "Keep macro arguments' formatting"};
-  }
-
   // For now, leave everything inside [dimensions] alone.
   if (context.IsInsideFirst(
           {NodeEnum::kDimensionRange, NodeEnum::kDimensionScalar}, {})) {

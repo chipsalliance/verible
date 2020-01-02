@@ -520,11 +520,14 @@ void TreeUnwrapper::Visit(const verible::SyntaxTreeNode& node) {
   const auto tag = static_cast<NodeEnum>(node.Tag().tag);
   VLOG(3) << __FUNCTION__ << " node: " << tag;
 
-  // Suppress additional indentation when at the syntax tree root and
-  // when direct parent is `ifdef/`ifndef/`else/`elsif clause.
+  // Suppress additional indentation when:
+  // - at the syntax tree root
+  // - direct parent is `ifdef/`ifndef/`else/`elsif clause
+  // - at the first level of macro argument expansion
   const bool suppress_indentation =
       Context().empty() ||
-      IsPreprocessorClause(NodeEnum(Context().top().Tag().tag));
+      IsPreprocessorClause(NodeEnum(Context().top().Tag().tag)) ||
+      Context().DirectParentIs(NodeEnum::kMacroArgList);
 
   // Traversal control section.
   switch (tag) {
