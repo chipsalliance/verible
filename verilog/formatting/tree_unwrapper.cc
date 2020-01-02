@@ -890,19 +890,9 @@ void TreeUnwrapper::Visit(const verible::SyntaxTreeLeaf& leaf) {
     StartNewUnwrappedLine();
   }
 
-  if (tag == ',' && CurrentUnwrappedLine().IsEmpty()) {
-    // Partition would begin with a comma,
-    // instead add this token to previous partition
-    AddTokenToCurrentUnwrappedLine();
-    MergeLastTwoPartitions();
-    // Put next token on new partition.
-    // If that token starts a new partition as well, it will just be reused.
-    StartNewUnwrappedLine();
-  } else {
-    // Advances NextUnfilteredToken(), and extends CurrentUnwrappedLine().
-    // Should be equivalent to AdvanceNextUnfilteredToken().
-    AddTokenToCurrentUnwrappedLine();
-  }
+  // Advances NextUnfilteredToken(), and extends CurrentUnwrappedLine().
+  // Should be equivalent to AdvanceNextUnfilteredToken().
+  AddTokenToCurrentUnwrappedLine();
 
   // Look-ahead to any trailing comments that are associated with this leaf,
   // up to a newline.
@@ -920,6 +910,13 @@ void TreeUnwrapper::Visit(const verible::SyntaxTreeLeaf& leaf) {
                                                            // kRegisterVariable
           })) {
         MergeLastTwoPartitions();
+      } else if (CurrentUnwrappedLine().Size() == 1) {
+        // Partition would begin with a comma,
+        // instead add this token to previous partition
+        MergeLastTwoPartitions();
+        // Put next token on new partition.
+        // If that token starts a new partition as well, it will just be reused.
+        //StartNewUnwrappedLine();
       }
       break;
     }
