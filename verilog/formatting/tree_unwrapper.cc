@@ -673,7 +673,7 @@ void TreeUnwrapper::Visit(const verible::SyntaxTreeNode& node) {
         // Do not artificially indent parameters
         TraverseChildren(node);
       } else {
-        VisitIndentedSection(node, style_.indentation_spaces,
+        VisitIndentedSection(node, style_.wrap_spaces,
                              PartitionPolicyEnum::kFitOnLineElseExpand);
       }
       break;
@@ -681,7 +681,8 @@ void TreeUnwrapper::Visit(const verible::SyntaxTreeNode& node) {
 
     case NodeEnum::kMacroCall: {
       if (IsTopLevelListItem(Context())) {
-        VisitNewUnwrappedLine(node);
+        VisitIndentedSection(node, 0,
+                             PartitionPolicyEnum::kFitOnLineElseExpand);
       } else if (DirectParentIsFlowControlConstruct(Context())) {
         // This is a single statement directly inside a flow-control construct,
         // and thus should be properly indented one level.

@@ -1790,6 +1790,29 @@ static const std::initializer_list<FormatterTestCase> kFormatterTestCases = {
         "// verilog_syntax: parse-as-module-body\n"
         "`define FOO\n",
     },
+    {// test alternate parsing mode in macro expansion
+     "class foo;\n"
+     "`MY_MACRO(\n"
+     " // verilog_syntax: parse-as-statements\n"
+     " // EOL comment\n"
+     " int count;\n"
+     " if(cfg.enable) begin\n"
+     "   count = 1;\n"
+     " end,\n"
+     " utils_pkg::decrement())\n"
+     "endclass\n",
+     "class foo;\n"
+     "  `MY_MACRO(\n"
+     "      // verilog_syntax: parse-as-statements\n"
+     "      // EOL comment\n"
+     "      int count;\n"
+     "      if (cfg.enable) begin\n"
+     "        count = 1;\n"
+     "      end,\n"
+     "      utils_pkg::decrement()\n"
+     "  )\n"
+     "endclass\n",
+    },
 
     {// tests bind declaration
      "bind   foo   bar baz  ( . clk ( clk  ) ) ;",

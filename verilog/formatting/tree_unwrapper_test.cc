@@ -724,7 +724,7 @@ const TreeUnwrapperTestData kUnwrapModuleTestCases[] = {
         ModuleItemList(
                 1,
                 N(1, L(1, {"assign", "`BIT_ASSIGN_MACRO", "("}),
-                    MacroArgList(2, L(2, {"l1", ",", "r1"})),
+                    MacroArgList(3, L(3, {"l1", ",", "r1"})),
                     L(1, {")"}))),
         L(0, {"endmodule"}),
     },
@@ -738,7 +738,7 @@ const TreeUnwrapperTestData kUnwrapModuleTestCases[] = {
         ModuleItemList(
                 1,
                 N(1, L(1, {"assign", "`BIT_ASSIGN_MACRO", "("}),
-                    MacroArgList(2, L(2, {"l1", ",", "r1"})),
+                    MacroArgList(3, L(3, {"l1", ",", "r1"})),
                     L(1, {")", ";"}))),
         L(0, {"endmodule"}),
     },
@@ -753,7 +753,7 @@ const TreeUnwrapperTestData kUnwrapModuleTestCases[] = {
         ModuleHeader(0, L(0, {"module", "foob", ";"})),
         ModuleItemList(1, L(1, {"initial", "begin"}),
                        StatementList(2, N(2, L(2, {"assign", "`BIT_ASSIGN_MACRO", "("}),
-                                            MacroArgList(3, L(3, {"l1", ",", "r1"})),
+                                            MacroArgList(4, L(4, {"l1", ",", "r1"})),
                                             L(2, {")"}))),
                        L(1, {"end"})),
         L(0, {"endmodule"}),
@@ -797,7 +797,7 @@ const TreeUnwrapperTestData kUnwrapModuleTestCases[] = {
         ModuleItemList(
                 1,
                 N(1, L(1, {"`ASSERT", "("}),
-                    MacroArgList(2, L(2, {"blah"})),
+                    MacroArgList(3, L(3, {"blah"})),
                     L(1, {")"})
                     ),
                 L(1, {"generate"}), L(1, {"endgenerate"})),
@@ -3028,7 +3028,7 @@ const TreeUnwrapperTestData kUnwrapFunctionTestCases[] = {
         StatementList(
             1,
             N(1, L(1, {"y", "=", "`TWISTER", "("}),
-              MacroArgList(2, L(2, {"x", ",", "y"})),
+              MacroArgList(3, L(3, {"x", ",", "y"})),
               L(1, {")", ";"}))),
         L(0, {"endfunction"}),
     },
