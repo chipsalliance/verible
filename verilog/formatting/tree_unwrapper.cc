@@ -921,50 +921,53 @@ void TreeUnwrapper::Visit(const verible::SyntaxTreeLeaf& leaf) {
   // up to a newline.
   LookAheadBeyondCurrentLeaf();
 
-  // TODO(fangism): push this case handling into the switch statement below
-  if ((static_cast<int>(tag) == yytokentype::MacroIdItem) &&
-      absl::StartsWith(leaf.get().text, "`uvm_") &&
-      absl::EndsWith(leaf.get().text, "_end")) {
-    unsigned int uvm_level = 1;
-    std::vector<verible::TokenPartitionTree*> uvm_range;
-
-    for (auto* itr = CurrentTokenPartition()->PreviousSibling(); itr;
-         itr = itr->PreviousSibling()) {
-      const auto macroId = itr->Value().TokensRange().begin()->Text();
-
-      // Indent only uvm macros
-      if (!absl::StartsWith(macroId, "`uvm_")) {
-        continue;
-      }
-
-      // Count uvm indentation level
-      if (absl::EndsWith(macroId, "_end")) {
-        uvm_level++;
-      } else if (absl::EndsWith(macroId, "_begin")) {
-        uvm_level--;
-      }
-
-      // Break before indenting matching _begin macro
-      if (uvm_level == 0) {
-        break;
-      }
-
-      uvm_range.push_back(itr);
-    }
-
-    // Found matching _begin-_end macros
-    if ((uvm_level == 0) && !uvm_range.empty()) {
-      for (auto* itr : uvm_range) {
-        // Indent uvm macros inside `uvm.*begin - `uvm.*end
-        itr->ApplyPreOrder([&](verible::UnwrappedLine& line) {
-          line.SetIndentationSpaces(line.IndentationSpaces() +
-                                    style_.indentation_spaces);
-        });
-      }
-    }
-  }
-
+  // Post-token-handling token partition adjustments:
   switch (leaf.Tag().tag) {
+    case yytokentype::MacroIdItem: {
+      if (absl::StartsWith(leaf.get().text, "`uvm_") &&
+          absl::EndsWith(leaf.get().text, "_end")) {
+        // Indent elements between UVM begin/end macro calls
+        unsigned int uvm_level = 1;
+        std::vector<verible::TokenPartitionTree*> uvm_range;
+
+        // Search backwards for matching _begin.
+        for (auto* itr = CurrentTokenPartition()->PreviousSibling(); itr;
+             itr = itr->PreviousSibling()) {
+          const auto macroId = itr->Value().TokensRange().begin()->Text();
+
+          // Indent only uvm macros
+          if (!absl::StartsWith(macroId, "`uvm_")) {
+            continue;
+          }
+
+          // Count uvm indentation level
+          if (absl::EndsWith(macroId, "_end")) {
+            uvm_level++;
+          } else if (absl::EndsWith(macroId, "_begin")) {
+            uvm_level--;
+          }
+
+          // Break before indenting matching _begin macro
+          if (uvm_level == 0) {
+            break;
+          }
+
+          uvm_range.push_back(itr);
+        }
+
+        // Found matching _begin-_end macros
+        if ((uvm_level == 0) && !uvm_range.empty()) {
+          for (auto* itr : uvm_range) {
+            // Indent uvm macros inside `uvm.*begin - `uvm.*end
+            itr->ApplyPreOrder([&](verible::UnwrappedLine& line) {
+              line.SetIndentationSpaces(line.IndentationSpaces() +
+                                        style_.indentation_spaces);
+            });
+          }
+        }
+      }
+      break;
+    }
     case ',': {
       // In many cases (in particular lists), we want to attach delimiters like
       // ',' to the item that preceded it (on its rightmost leaf).
