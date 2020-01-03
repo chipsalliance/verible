@@ -158,6 +158,11 @@ cc_library(
     ],
 )
 
+cc_library(
+    name = "with_reason",
+    hdrs = ["with_reason.h"],
+)
+
 cc_test(
     name = "algorithm_test",
     srcs = ["algorithm_test.cc"],
@@ -273,6 +278,15 @@ cc_test(
         ":vector_tree",
         ":vector_tree_test_util",
         "@com_google_absl//absl/strings",
+        "@com_google_googletest//:gtest_main",
+    ],
+)
+
+cc_test(
+    name = "with_reason_test",
+    srcs = ["with_reason_test.cc"],
+    deps = [
+        ":with_reason",
         "@com_google_googletest//:gtest_main",
     ],
 )

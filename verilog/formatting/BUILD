@@ -167,6 +167,7 @@ cc_library(
         "//common/text:token_info",
         "//common/util:iterator_range",
         "//common/util:logging",
+        "//common/util:with_reason",
         "//verilog/CST:verilog_nonterminals",
         "//verilog/parser:verilog_parser",
         "//verilog/parser:verilog_token_enum",

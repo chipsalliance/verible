@@ -26,6 +26,7 @@
 #include "common/text/token_info.h"
 #include "common/util/iterator_range.h"
 #include "common/util/logging.h"
+#include "common/util/with_reason.h"
 #include "verilog/CST/verilog_nonterminals.h"
 #include "verilog/formatting/format_style.h"
 #include "verilog/formatting/verilog_token.h"
@@ -38,15 +39,8 @@ namespace formatter {
 using ::verible::PreFormatToken;
 using ::verible::SpacingOptions;
 using ::verible::SyntaxTreeContext;
+using ::verible::WithReason;
 using FTT = FormatTokenType;
-
-// In functions with priority-ordered return statements, this helps with
-// identifying the statement that took effect.
-template <typename T>
-struct WithReason {
-  T value;
-  const char* reason;  // A simple string literal shall suffice.
-};
 
 // Signal that spacing was not explicitly handled in case logic.
 // This value must be negative.
