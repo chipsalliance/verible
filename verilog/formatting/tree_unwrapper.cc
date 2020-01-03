@@ -19,6 +19,7 @@
 #include <vector>
 
 #include "absl/base/macros.h"
+#include "absl/strings/match.h"
 #include "common/formatting/basic_format_style.h"
 #include "common/formatting/format_token.h"
 #include "common/formatting/token_partition_tree.h"
@@ -36,6 +37,7 @@
 #include "common/util/enum_flags.h"
 #include "common/util/logging.h"
 #include "common/util/value_saver.h"
+#include "verilog/CST/identifier.h"
 #include "verilog/CST/verilog_nonterminals.h"
 #include "verilog/formatting/verilog_token.h"
 #include "verilog/parser/verilog_parser.h"
@@ -635,7 +637,6 @@ void TreeUnwrapper::Visit(const verible::SyntaxTreeNode& node) {
     // *direct* descendants of list elements.  This effectively suppresses
     // starting a new line when single statements are found to extend other
     // statements, delayed assignments, single-statement if/for loops.
-    case NodeEnum::kMacroCall:
     case NodeEnum::kStatement:
     case NodeEnum::kLabeledStatement:  // e.g. foo_label : do_something();
     case NodeEnum::kJumpStatement:
@@ -654,6 +655,24 @@ void TreeUnwrapper::Visit(const verible::SyntaxTreeNode& node) {
         // and thus should be properly indented one level.
         VisitIndentedSection(node, style_.indentation_spaces,
                              PartitionPolicyEnum::kFitOnLineElseExpand);
+      } else {
+        // Otherwise extend previous token partition.
+        TraverseChildren(node);
+      }
+      break;
+    }
+
+    case NodeEnum::kMacroCall: {
+      if (IsTopLevelListItem(Context())) {
+        VisitNewUnwrappedLine(node);
+      } else if (DirectParentIsFlowControlConstruct(Context())) {
+        // This is a single statement directly inside a flow-control construct,
+        // and thus should be properly indented one level.
+        VisitIndentedSection(node, style_.indentation_spaces,
+                             PartitionPolicyEnum::kFitOnLineElseExpand);
+      } else if (absl::StartsWith(verilog::GetMacroCallId(node), "`uvm_")) {
+        // For each `uvm macro start a new unwrapped line
+        VisitNewUnwrappedLine(node);
       } else {
         // Otherwise extend previous token partition.
         TraverseChildren(node);
@@ -888,6 +907,10 @@ void TreeUnwrapper::Visit(const verible::SyntaxTreeLeaf& leaf) {
     CurrentUnwrappedLine().SetIndentationSpaces(0);
   } else if (IsEndKeyword(tag)) {
     StartNewUnwrappedLine();
+  } else if ((static_cast<int>(tag) == yytokentype::MacroIdItem) &&
+             absl::StartsWith(leaf.get().text, "`uvm")) {
+    // For each `uvm macro start a new unwrapped line
+    StartNewUnwrappedLine();
   }
 
   // Advances NextUnfilteredToken(), and extends CurrentUnwrappedLine().
@@ -897,6 +920,49 @@ void TreeUnwrapper::Visit(const verible::SyntaxTreeLeaf& leaf) {
   // Look-ahead to any trailing comments that are associated with this leaf,
   // up to a newline.
   LookAheadBeyondCurrentLeaf();
+
+  // TODO(fangism): push this case handling into the switch statement below
+  if ((static_cast<int>(tag) == yytokentype::MacroIdItem) &&
+      absl::StartsWith(leaf.get().text, "`uvm_") &&
+      absl::EndsWith(leaf.get().text, "_end")) {
+    unsigned int uvm_level = 1;
+    std::vector<verible::TokenPartitionTree*> uvm_range;
+
+    for (auto* itr = CurrentTokenPartition()->PreviousSibling(); itr;
+         itr = itr->PreviousSibling()) {
+      const auto macroId = itr->Value().TokensRange().begin()->Text();
+
+      // Indent only uvm macros
+      if (!absl::StartsWith(macroId, "`uvm_")) {
+        continue;
+      }
+
+      // Count uvm indentation level
+      if (absl::EndsWith(macroId, "_end")) {
+        uvm_level++;
+      } else if (absl::EndsWith(macroId, "_begin")) {
+        uvm_level--;
+      }
+
+      // Break before indenting matching _begin macro
+      if (uvm_level == 0) {
+        break;
+      }
+
+      uvm_range.push_back(itr);
+    }
+
+    // Found matching _begin-_end macros
+    if ((uvm_level == 0) && !uvm_range.empty()) {
+      for (auto* itr : uvm_range) {
+        // Indent uvm macros inside `uvm.*begin - `uvm.*end
+        itr->ApplyPreOrder([&](verible::UnwrappedLine& line) {
+          line.SetIndentationSpaces(line.IndentationSpaces() +
+                                    style_.indentation_spaces);
+        });
+      }
+    }
+  }
 
   switch (leaf.Tag().tag) {
     case ',': {

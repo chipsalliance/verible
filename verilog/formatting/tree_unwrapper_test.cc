@@ -1332,6 +1332,92 @@ TEST_F(TreeUnwrapperTest, UnwrapCommentsTests) {
   }
 }
 
+// Test data for unwrapping Verilog `uvm.* macros
+// Test case format: test name, source code, ExpectedUnwrappedLines
+const TreeUnwrapperTestData kUnwrapUvmTestCases[] = {
+    {
+        "simple uvm test case",
+        "`uvm_object_utils_begin(l0)\n"
+        "`uvm_field_int(l1a, UVM_DEFAULT)\n"
+        "`uvm_field_int(l1b, UVM_DEFAULT)\n"
+        "`uvm_object_utils_end\n",
+        L(0, {"`uvm_object_utils_begin", "(", "l0", ")"}),
+        L(1, {"`uvm_field_int", "(", "l1a", ",", "UVM_DEFAULT", ")"}),
+        L(1, {"`uvm_field_int", "(", "l1b", ",", "UVM_DEFAULT", ")"}),
+        L(0, {"`uvm_object_utils_end"}),
+    },
+
+    {
+        "simple uvm field utils test case",
+        "`uvm_field_utils_begin(l0)\n"
+        "`uvm_field_int(l1a, UVM_DEFAULT)\n"
+        "`uvm_field_int(l1b, UVM_DEFAULT)\n"
+        "`uvm_field_utils_end\n",
+        L(0, {"`uvm_field_utils_begin", "(", "l0", ")"}),
+        L(1, {"`uvm_field_int", "(", "l1a", ",", "UVM_DEFAULT", ")"}),
+        L(1, {"`uvm_field_int", "(", "l1b", ",", "UVM_DEFAULT", ")"}),
+        L(0, {"`uvm_field_utils_end"}),
+    },
+
+    {
+        "nested uvm test case",
+        "`uvm_object_utils_begin(l0)\n"
+        "`uvm_field_int(l1a, UVM_DEFAULT)\n"
+        "`uvm_object_utils_begin(l1)\n"
+        "`uvm_field_int(l2a, UVM_DEFAULT)\n"
+        "`uvm_object_utils_begin(l2)\n"
+        "`uvm_field_int(l3a, UVM_DEFAULT)\n"
+        "`uvm_object_utils_end\n"
+        "`uvm_object_utils_end\n"
+        "`uvm_field_int(l1b, UVM_DEFAULT)\n"
+        "`uvm_object_utils_end\n",
+        L(0, {"`uvm_object_utils_begin", "(", "l0", ")"}),
+        L(1, {"`uvm_field_int", "(", "l1a", ",", "UVM_DEFAULT", ")"}),
+        L(1, {"`uvm_object_utils_begin", "(", "l1", ")"}),
+        L(2, {"`uvm_field_int", "(", "l2a", ",", "UVM_DEFAULT", ")"}),
+        L(2, {"`uvm_object_utils_begin", "(", "l2", ")"}),
+        L(3, {"`uvm_field_int", "(", "l3a", ",", "UVM_DEFAULT", ")"}),
+        L(2, {"`uvm_object_utils_end"}),
+        L(1, {"`uvm_object_utils_end"}),
+        L(1, {"`uvm_field_int", "(", "l1b", ",", "UVM_DEFAULT", ")"}),
+        L(0, {"`uvm_object_utils_end"}),
+    },
+
+    {
+        "missing uvm.*end macro test case",
+        "`uvm_field_utils_begin(l0)\n"
+        "`uvm_field_int(l1a, UVM_DEFAULT)\n"
+        "`uvm_field_int(l1b, UVM_DEFAULT)\n",
+        L(0, {"`uvm_field_utils_begin", "(", "l0", ")"}),
+        L(0, {"`uvm_field_int", "(", "l1a", ",", "UVM_DEFAULT", ")"}),
+        L(0, {"`uvm_field_int", "(", "l1b", ",", "UVM_DEFAULT", ")"}),
+    },
+
+    {
+        "missing uvm.*begin macro test case",
+        "`uvm_field_int(l1a, UVM_DEFAULT)\n"
+        "`uvm_field_int(l1b, UVM_DEFAULT)\n"
+        "`uvm_field_utils_end\n",
+        L(0, {"`uvm_field_int", "(", "l1a", ",", "UVM_DEFAULT", ")"}),
+        L(0, {"`uvm_field_int", "(", "l1b", ",", "UVM_DEFAULT", ")"}),
+        L(0, {"`uvm_field_utils_end"}),
+    },
+};
+
+// Test that TreeUnwrapper produces the correct UnwrappedLines from code with
+// uvm macros
+TEST_F(TreeUnwrapperTest, UnwrapUvmTests) {
+  for (const auto& test_case : kUnwrapUvmTestCases) {
+    VLOG(1) << "Test: " << test_case.test_name;
+    auto tree_unwrapper = CreateTreeUnwrapper(test_case.source_code);
+    const auto* uwline_tree = tree_unwrapper->Unwrap();
+    EXPECT_TRUE(VerifyUnwrappedLines(&std::cout, *ABSL_DIE_IF_NULL(uwline_tree),
+                                     test_case))
+        << "code:\n"
+        << test_case.source_code;
+  }
+}
+
 // Test data for unwrapping Verilog classes
 // Test case format: test name, source code, ExpectedUnwrappedLine
 const TreeUnwrapperTestData kClassTestCases[] = {

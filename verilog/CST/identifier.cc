@@ -58,6 +58,10 @@ const verible::SyntaxTreeLeaf* GetIdentifier(const verible::Symbol& symbol) {
   return leaf;
 }
 
+absl::string_view GetMacroCallId(const verible::Symbol& symbol) {
+  return GetSubtreeAsLeaf(symbol, NodeEnum::kMacroCall, 0).get().text;
+}
+
 const verible::SyntaxTreeLeaf* AutoUnwrapIdentifier(
     const verible::Symbol& symbol) {
   // If it's a leaf, then just return that leaf. Otherwise it is an
