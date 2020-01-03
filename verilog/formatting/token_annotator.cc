@@ -170,6 +170,17 @@ static WithReason<int> SpacesRequiredBetween(const PreFormatToken& left,
   }
   if (left.TokenEnum() == ';') return {1, "Require space after semicolon"};
 
+  if(context.IsInsideFirst({NodeEnum::kStreamingConcatenation}, {})) {
+    if (left.TokenEnum() == TK_LS
+         || left.TokenEnum() == TK_RS) {
+      return {0, "No space around streaming operators"};
+    } else if (left.format_token_enum  == FormatTokenType::numeric_literal
+               || left.format_token_enum  == FormatTokenType::identifier
+               || left.format_token_enum == FormatTokenType::keyword) {
+      return {0, "No space around streaming operator slice size"};
+    }
+  }
+
   // Add missing space around either side of all types of assignment operator.
   // "assign foo = bar;"  instead of "assign foo =bar;"
   // Consider assignment operators in the same class as binary operators.
