@@ -41,7 +41,7 @@ using verible::SyntaxTreeContext;
 absl::string_view EnumNameStyleRule::Name() {
   return "enum-name-style";
 }
-const char EnumNameStyleRule::kTopic[] = "enum-conventions";
+const char EnumNameStyleRule::kTopic[] = "enumerations";
 const char EnumNameStyleRule::kMessage[] =
     "Enum names must use lower_snake_case naming convention "
     "and end with _t or _e.";

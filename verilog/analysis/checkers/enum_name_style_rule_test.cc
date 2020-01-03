@@ -49,6 +49,24 @@ TEST(EnumNameStyleRuleTest, ValidEnumNames) {
       {"typedef enum { Red=3, Green=5 } state_t;\nstate_t a_state;"},
       {"typedef // We declare a type here"
        "enum { Idle, Busy } status_t;\nstatus_t a_status;"},
+      // Declarations inside a class
+      {"class foo;\n"
+       "typedef enum { Red=3, Green=5 } state_e;\n"
+       "state_e a_state;\n"
+       "endclass"},
+      {"class foo;\n"
+       "typedef enum logic [1:0] { Fir, Oak, Pine } tree_t;\n"
+       "tree_t a_tree;\n"
+       "endclass"},
+      // Declarations inside a module
+      {"module foo;\n"
+       "typedef enum { Red=3, Green=5 } state_e;\n"
+       "state_e a_state;\n"
+       "endmodule"},
+      {"module foo;\n"
+       "typedef enum logic [1:0] { Fir, Oak, Pine } tree_t;\n"
+       "tree_t a_tree;\n"
+       "endmodule"},
   };
   RunLintTestCases<VerilogAnalyzer, EnumNameStyleRule>(kTestCases);
 }
@@ -92,10 +110,47 @@ TEST(EnumNameStyleRuleTest, InvalidEnumNames) {
       {"typedef enum {foo, bar} ", {kToken, "E"}, ";"},
       {"typedef enum {foo, bar} ", {kToken, "_"}, ";"},
       {"typedef enum {foo, bar} ", {kToken, "foo_"}, ";"},
+      // Declarations inside a class
+      {"class foo;\n"
+       "typedef enum {foo, bar} ", {kToken, "HelloWorld"}, ";\n"
+       "HelloWorld hi;\n"
+       "endclass"},
+      {"class foo;\n"
+       "typedef enum {bar, baz} ", {kToken, "bad_"}, ";\n"
+       "bad_ hi;\n"
+       "endclass"},
+      // Declarations inside a module
+      {"module foo;\n"
+       "typedef enum {bar, baz} ", {kToken, "HelloWorld"}, ";\n"
+       "HelloWorld hi;\n"
+       "endmodule"},
+      {"module foo;\n"
+       "typedef enum {bar, baz} ", {kToken, "bad_"}, ";\n"
+       "bad_ hi;\n"
+       "endmodule"},
   };
   RunLintTestCases<VerilogAnalyzer, EnumNameStyleRule>(kTestCases);
 }
 
+TEST(EnumNameStyleRuleTest, UncheckedCases) {
+  constexpr int kToken = SymbolIdentifier;
+  const std::initializer_list<LintTestCase> kTestCases = {
+      // No name to check
+      {"enum {foo, bar} baz;"},
+      {"class foo;\n"
+       "enum {foo, bar} baz;\n"
+       "endclass"},
+      {"module foo;\n"
+       "enum {foo, bar} baz;\n"
+       "endmodule"},
+      // Struct and unions typedefs should not be checked here
+      {"typedef struct {logic foo; logic bar;} baz_t;"},
+      {"typedef union {logic [8:0] foo; int bar;} baz_t;"},
+      {"typedef struct {logic foo; logic bar;} badStruct;"},
+      {"typedef union {logic [8:0] foo; int bar;} invalid_Union_name;"},
+  };
+  RunLintTestCases<VerilogAnalyzer, EnumNameStyleRule>(kTestCases);
+}
 }  // namespace
 }  // namespace analysis
 }  // namespace verilog
