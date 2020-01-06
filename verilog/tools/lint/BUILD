@@ -55,7 +55,7 @@ _linter_test_configs = [
     ("no-tabs", "tabs", True),
     ("line-length", "long_line", True),
     ("no-trailing-spaces", "trailing_spaces", True),
-    ("forbid-defparam", "defparam_usage", False),
+    ("forbid-defparam", "defparam_usage", True),
     ("typedef-enums", "typedef_enums", True),
     ("typedef-structs-unions", "typedef_structs", True),
     ("typedef-structs-unions", "typedef_unions", True),
