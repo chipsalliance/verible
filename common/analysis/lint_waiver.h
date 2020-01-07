@@ -30,8 +30,8 @@ namespace verible {
 // LintWaiver maintains a set of line ranges per lint rule that should be
 // exempt from each rule.
 class LintWaiver {
-  // TODO: integer interval sets (internal representation) would be more
-  // memory-efficient, given the sparsity of sets.
+  // TODO(b/147247103): integer interval sets (internal representation) would
+  // be more memory-efficient, given the sparsity of sets.
   using LineSet = std::vector<bool>;  // Needs to store O(line number) elements.
 
  public:

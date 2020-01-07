@@ -94,6 +94,7 @@ cc_library(
         "formatter.h",
     ],
     deps = [
+        ":comment_controls",
         ":format_style",
         ":token_annotator",
         ":tree_unwrapper",
@@ -128,6 +129,30 @@ cc_test(
         "//common/util:status",
         "//verilog/analysis:verilog_analyzer",
         "@com_google_absl//absl/strings",
+        "@com_google_googletest//:gtest_main",
+    ],
+)
+
+cc_library(
+    name = "comment_controls",
+    srcs = ["comment_controls.cc"],
+    hdrs = ["comment_controls.h"],
+    deps = [
+        "//common/strings:comment_utils",
+        "//common/text:token_stream_view",
+        "//common/util:logging",
+        "//verilog/parser:verilog_parser",
+        "//verilog/parser:verilog_token_enum",
+        "@com_google_absl//absl/strings",
+    ],
+)
+
+cc_test(
+    name = "comment_controls_test",
+    srcs = ["comment_controls_test.cc"],
+    deps = [
+        ":comment_controls",
+        "//verilog/analysis:verilog_analyzer",
         "@com_google_googletest//:gtest_main",
     ],
 )

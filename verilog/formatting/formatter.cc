@@ -34,6 +34,7 @@
 #include "common/util/spacer.h"
 #include "common/util/status.h"
 #include "common/util/vector_tree.h"
+#include "verilog/formatting/comment_controls.h"
 #include "verilog/formatting/format_style.h"
 #include "verilog/formatting/token_annotator.h"
 #include "verilog/formatting/tree_unwrapper.h"
@@ -149,6 +150,10 @@ std::ostream& Formatter::ExecutionControl::Stream() const {
 }
 
 verible::util::Status Formatter::Format(const ExecutionControl& control) {
+  // Determine ranges of disabling the formatter.
+  auto disabled_ranges = DisableFormattingRanges(text_structure_.Contents(),
+                                                 text_structure_.TokenStream());
+
   // Initialize auxiliary data needed for TreeUnwrapper.
   UnwrapperData unwrapper_data(text_structure_.TokenStream());
 
@@ -200,6 +205,7 @@ verible::util::Status Formatter::Format(const ExecutionControl& control) {
   std::vector<const UnwrappedLine*> partially_formatted_lines;
   formatted_lines_.reserve(unwrapped_lines.size());
   for (const auto& uwline : unwrapped_lines) {
+    // TODO(b/110300827): honor comment-controlled disabling here
     // TODO(fangism): Use different formatting strategies depending on
     // uwline.PartitionPolicy().
     const auto optimal_solutions =
