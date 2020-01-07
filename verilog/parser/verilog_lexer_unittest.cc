@@ -302,6 +302,23 @@ static std::initializer_list<LexerTestData> kMacroCallTests = {
     {{MacroCallId, "`FOO"}, '(', {MacroArg, "\\BAR"}, " ", ')'},
     {{MacroCallId, "`FOO"}, '(', {MacroArg, "\\BAR"}, "\t", ')'},
     {{MacroCallId, "`FOO"}, '(', {MacroArg, "\\BAR"}, "\n", ')'},
+
+    // Comments are lexed together with macro arguments
+    {{MacroCallId, "`FOO"}, '(', "\n",
+     {MacroArg, "/*comment*/ bar"}, "\n",
+     ')'},
+    {{MacroCallId, "`FOO"}, '(', "\n",
+     {MacroArg, "bar /*comment*/"}, "\n",
+     ')'},
+    {{MacroCallId, "`FOO"}, '(', "\n",
+     {MacroArg, "/*\nmulti\nline\n*/ bar"}, "\n",
+     ')'},
+    {{MacroCallId, "`FOO"}, '(', "\n",
+     {MacroArg, "//comment\n bar"}, "\n",
+     ')'},
+    {{MacroCallId, "`FOO"}, '(', "\n",
+     {MacroArg, "//multi\n//line\n//comment\n bar"}, "\n",
+     ')'},
 };
 
 static std::initializer_list<LexerTestData> kUnfilteredMacroCallTests = {

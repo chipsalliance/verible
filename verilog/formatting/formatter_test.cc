@@ -1797,7 +1797,7 @@ static const std::initializer_list<FormatterTestCase> kFormatterTestCases = {
      " // EOL comment\n"
      " int count;\n"
      " if(cfg.enable) begin\n"
-     "   count = 1;\n"
+     " count = 1;\n"
      " end,\n"
      " utils_pkg::decrement())\n"
      "endclass\n",

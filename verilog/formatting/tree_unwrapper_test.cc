@@ -1549,6 +1549,53 @@ const TreeUnwrapperTestData kClassTestCases[] = {
     },
 
     {
+        "class macro unwrapping",
+        "class macro_unwrapping;\n"
+        " `MACRO_CALL(\n"
+        " // verilog_syntax: parse-as-statements\n"
+        " int count;\n"
+        " if(cfg) begin\n"
+        " count = 1;\n"
+        " end)\n"
+        "endclass",
+        ClassHeader(0, L(0, {"class", "macro_unwrapping", ";"})),
+        ClassItemList(
+                1,
+                N(1, L(1, {"`MACRO_CALL", "("}),
+                     N(3, L(3, {"// verilog_syntax: parse-as-statements"}),
+                          NL(3, {"int", "count", ";"}),
+                          N(3, L(3, {"if", "(", "cfg", ")", "begin"}),
+                               N(4, NL(4, {"count", "=", "1", ";"})),
+                               L(3, {"end"}))),
+                     L(1, {")"}))),
+        L(0, {"endclass"}),
+    },
+    {
+        "class macro unwrapping with comment",
+        "class macro_unwrapping_with_comment;\n"
+        " `MACRO_CALL(\n"
+        " // verilog_syntax: parse-as-statements\n"
+        " int count;\n"
+        " if(cfg) begin\n"
+        " // parsed comment\n"
+        " count = 1;\n"
+        " end)\n"
+        "endclass",
+        ClassHeader(0, L(0, {"class", "macro_unwrapping_with_comment", ";"})),
+        ClassItemList(
+                1,
+                N(1, L(1, {"`MACRO_CALL", "("}),
+                     N(3, L(3, {"// verilog_syntax: parse-as-statements"}),
+                          NL(3, {"int", "count", ";"}),
+                          N(3, L(3, {"if", "(", "cfg", ")", "begin"}),
+                               N(4, L(4, {"// parsed comment"}),
+                                    NL(4, {"count", "=", "1", ";"})),
+                               L(3, {"end"}))),
+                     L(1, {")"}))),
+        L(0, {"endclass"}),
+    },
+
+    {
         "class with parameters as class items",
         "class params_as_class_item;\n"
         "  parameter N = 2;\n"

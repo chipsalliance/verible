@@ -1372,6 +1372,7 @@ zi_zp { UpdateLocation(); return TK_zi_zp; }
   /* Ignore leading space before macro arguments. */
   {Space}+ { UpdateLocation(); return TK_SPACE; }
   {LineTerminator} { UpdateLocation(); return TK_NEWLINE; }
+  /* We intentionally defer comment-lexing until macro argument expansion. */
   . {
     yyless(0);
     UpdateLocation();

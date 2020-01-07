@@ -273,17 +273,17 @@ class MacroCallArgExpander : public MutableTreeVisitorRecursive {
     const TokenInfo& token(leaf.get());
     if (token.token_enum == MacroArg) {
       VLOG(3) << "MacroCallArgExpander: examining token: " << token;
-      // Attempt to parse text, taking directives in comments into account
+      // Attempt to parse text as an expression.
       std::unique_ptr<VerilogAnalyzer> expr_analyzer =
-          VerilogAnalyzer::AnalyzeAutomaticMode(token.text, "<macro-arg-expander>");
+          AnalyzeVerilogExpression(token.text, "<macro-arg-expander>");
       if (!expr_analyzer->ParseStatus().ok()) {
-        // Fall back to explicitly parse-as-expression
+        // If that failed: try to infer parsing mode from comments
         expr_analyzer =
-           AnalyzeVerilogExpression(token.text, "<macro-arg-expander>");
+           VerilogAnalyzer::AnalyzeAutomaticMode(token.text, "<macro-arg-expander>");
       }
       if (ABSL_DIE_IF_NULL(expr_analyzer)->LexStatus().ok() &&
           expr_analyzer->ParseStatus().ok()) {
-        VLOG(3) << "  ... content is is a parse-able, saving for expansion.";
+        VLOG(3) << "  ... content is parse-able, saving for expansion.";
         const auto& token_sequence = expr_analyzer->Data().TokenStream();
         const verible::TokenInfo::Context token_context{
             expr_analyzer->Data().Contents(), [](std::ostream& stream, int e) {
