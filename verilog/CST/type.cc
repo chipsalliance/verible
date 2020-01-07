@@ -38,19 +38,19 @@ std::vector<verible::TreeSearchMatch> FindAllTypeDeclarations(
   return verible::SearchSyntaxTree(root, NodekTypeDeclaration());
 }
 
-std::vector<verible::TreeSearchMatch> FindAllEnumDataTypeDeclarations(
+std::vector<verible::TreeSearchMatch> FindAllEnumTypes(
     const verible::Symbol& root) {
-  return verible::SearchSyntaxTree(root, NodekEnumDataType());
+  return verible::SearchSyntaxTree(root, NodekEnumType());
 }
 
-std::vector<verible::TreeSearchMatch> FindAllStructDataTypeDeclarations(
+std::vector<verible::TreeSearchMatch> FindAllStructTypes(
     const verible::Symbol& root) {
-  return verible::SearchSyntaxTree(root, NodekStructDataType());
+  return verible::SearchSyntaxTree(root, NodekStructType());
 }
 
-std::vector<verible::TreeSearchMatch> FindAllUnionDataTypeDeclarations(
+std::vector<verible::TreeSearchMatch> FindAllUnionTypes(
     const verible::Symbol& root) {
-  return verible::SearchSyntaxTree(root, NodekUnionDataType());
+  return verible::SearchSyntaxTree(root, NodekUnionType());
 }
 
 bool IsStorageTypeOfDataTypeSpecified(const verible::Symbol& symbol) {

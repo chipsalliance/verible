@@ -61,7 +61,7 @@ void EnumNameStyleRule::HandleSymbol(const verible::Symbol& symbol,
   if (matcher_typedef_.Matches(symbol, &manager)) {
     // TODO: This can be changed to checking type of child (by index) when we
     // have consistent shape for all kTypeDeclaration nodes.
-    if (!FindAllEnumDataTypeDeclarations(symbol).empty()) {
+    if (!FindAllEnumTypes(symbol).empty()) {
       const auto* identifier_leaf = GetIdentifierFromTypeDeclaration(symbol);
       const auto name = ABSL_DIE_IF_NULL(identifier_leaf)->get().text;
       if (!verible::IsLowerSnakeCaseWithDigits(name) ||

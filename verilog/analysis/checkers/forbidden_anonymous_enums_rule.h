@@ -68,7 +68,7 @@ class ForbiddenAnonymousEnumsRule : public verible::SyntaxTreeLintRule {
 
   using Matcher = verible::matcher::Matcher;
 
-  Matcher matcher_ = NodekEnumDataType();
+  Matcher matcher_ = NodekEnumType();
 
   // Collection of found violations.
   std::set<verible::LintViolation> violations_;

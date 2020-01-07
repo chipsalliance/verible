@@ -63,9 +63,9 @@ void StructUnionNameStyleRule::HandleSymbol(const verible::Symbol& symbol,
     const char* msg;
     // TODO: This can be changed to checking type of child (by index) when we
     // have consistent shape for all kTypeDeclaration nodes.
-    if (!FindAllStructDataTypeDeclarations(symbol).empty()) {
+    if (!FindAllStructTypes(symbol).empty()) {
       msg = kMessageStruct;
-    } else if (!FindAllUnionDataTypeDeclarations(symbol).empty()) {
+    } else if (!FindAllUnionTypes(symbol).empty()) {
       msg = kMessageUnion;
     } else {
       // Neither a struct nor union definition

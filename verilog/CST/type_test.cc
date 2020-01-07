@@ -86,40 +86,40 @@ TEST(FindAllTypeDeclarationsTest, BasicTests) {
 }
 
 // Tests that no enums are found in an empty source.
-TEST(FindAllEnumDataTypeDeclarationsTest, EmptySource) {
+TEST(FindAllEnumTypesTest, EmptySource) {
   VerilogAnalyzer analyzer("", "");
   ASSERT_OK(analyzer.Analyze());
   const auto& root = analyzer.Data().SyntaxTree();
   const auto enum_declarations =
-      FindAllEnumDataTypeDeclarations(*ABSL_DIE_IF_NULL(root));
+      FindAllEnumTypes(*ABSL_DIE_IF_NULL(root));
   EXPECT_TRUE(enum_declarations.empty());
 }
 
 // Tests that no enums are found in a struct declaration
-TEST(FindAllEnumDataTypeDeclarationsTest, EnumSource) {
+TEST(FindAllEnumTypesTest, EnumSource) {
   VerilogAnalyzer analyzer("typedef struct { int a; bit [8:0] flags; } name;",
                            "");
   ASSERT_OK(analyzer.Analyze());
   const auto& root = analyzer.Data().SyntaxTree();
   const auto enum_declarations =
-      FindAllEnumDataTypeDeclarations(*ABSL_DIE_IF_NULL(root));
+      FindAllEnumTypes(*ABSL_DIE_IF_NULL(root));
   EXPECT_TRUE(enum_declarations.empty());
 }
 
 // Tests that no enums are found in a union declaration
-TEST(FindAllEnumDataTypeDeclarationsTest, StructSource) {
+TEST(FindAllEnumTypesTest, StructSource) {
   VerilogAnalyzer analyzer("typedef union { int a; bit [8:0] flags; } name;",
                            "");
   ASSERT_OK(analyzer.Analyze());
   const auto& root = analyzer.Data().SyntaxTree();
   const auto enum_declarations =
-      FindAllEnumDataTypeDeclarations(*ABSL_DIE_IF_NULL(root));
+      FindAllEnumTypes(*ABSL_DIE_IF_NULL(root));
   EXPECT_TRUE(enum_declarations.empty());
 }
 
-// Tests that the correct amount of node kEnumDataType declarations
+// Tests that the correct amount of node kEnumType declarations
 // are found.
-TEST(FindAllEnumDataTypeDeclarationsTest, BasicTests) {
+TEST(FindAllEnumTypesTest, BasicTests) {
   const std::pair<std::string, int> kTestCases[] = {
       {"", 0},
       {"typedef enum { Red, Green, Blue } name;", 1},
@@ -142,45 +142,45 @@ TEST(FindAllEnumDataTypeDeclarationsTest, BasicTests) {
     ASSERT_OK(analyzer.Analyze());
     const auto& root = analyzer.Data().SyntaxTree();
     const auto enum_data_type_declarations =
-        FindAllEnumDataTypeDeclarations(*ABSL_DIE_IF_NULL(root));
+        FindAllEnumTypes(*ABSL_DIE_IF_NULL(root));
     EXPECT_EQ(enum_data_type_declarations.size(), test.second);
   }
 }
 
 // Tests that no structs are found from an empty source.
-TEST(FindAllStructDataTypeDeclarationsTest, EmptySource) {
+TEST(FindAllStructTypesTest, EmptySource) {
   VerilogAnalyzer analyzer("", "");
   ASSERT_OK(analyzer.Analyze());
   const auto& root = analyzer.Data().SyntaxTree();
   const auto struct_declarations =
-      FindAllStructDataTypeDeclarations(*ABSL_DIE_IF_NULL(root));
+      FindAllStructTypes(*ABSL_DIE_IF_NULL(root));
   EXPECT_TRUE(struct_declarations.empty());
 }
 
 // Tests that no structs are found in an enum declaration
-TEST(FindAllStructDataTypeDeclarationsTest, EnumSource) {
+TEST(FindAllStructTypesTest, EnumSource) {
   VerilogAnalyzer analyzer("typedef enum { aVal, bVal } name;", "");
   ASSERT_OK(analyzer.Analyze());
   const auto& root = analyzer.Data().SyntaxTree();
   const auto struct_declarations =
-      FindAllStructDataTypeDeclarations(*ABSL_DIE_IF_NULL(root));
+      FindAllStructTypes(*ABSL_DIE_IF_NULL(root));
   EXPECT_TRUE(struct_declarations.empty());
 }
 
 // Tests that no structs are found in a union declaration
-TEST(FindAllStructDataTypeDeclarationsTest, UnionSource) {
+TEST(FindAllStructTypesTest, UnionSource) {
   VerilogAnalyzer analyzer("typedef union { int a; bit [8:0] flags; } name;",
                            "");
   ASSERT_OK(analyzer.Analyze());
   const auto& root = analyzer.Data().SyntaxTree();
   const auto struct_declarations =
-      FindAllStructDataTypeDeclarations(*ABSL_DIE_IF_NULL(root));
+      FindAllStructTypes(*ABSL_DIE_IF_NULL(root));
   EXPECT_TRUE(struct_declarations.empty());
 }
 
-// Tests that the correct amount of node kStructDataType declarations
+// Tests that the correct amount of node kStructType declarations
 // are found.
-TEST(FindAllStructDataTypeDeclarationsTest, BasicTests) {
+TEST(FindAllStructTypesTest, BasicTests) {
   const std::pair<std::string, int> kTestCases[] = {
       {"", 0},
       {"typedef struct { int a; bit [8:0] b; } name;", 1},
@@ -200,45 +200,45 @@ TEST(FindAllStructDataTypeDeclarationsTest, BasicTests) {
     ASSERT_OK(analyzer.Analyze());
     const auto& root = analyzer.Data().SyntaxTree();
     const auto struct_data_type_declarations =
-        FindAllStructDataTypeDeclarations(*ABSL_DIE_IF_NULL(root));
+        FindAllStructTypes(*ABSL_DIE_IF_NULL(root));
     EXPECT_EQ(struct_data_type_declarations.size(), test.second);
   }
 }
 
 // Tests that no unions are found from an empty source.
-TEST(FindAllUnionDataTypeDeclarationsTest, EmptySource) {
+TEST(FindAllUnionTypesTest, EmptySource) {
   VerilogAnalyzer analyzer("", "");
   ASSERT_OK(analyzer.Analyze());
   const auto& root = analyzer.Data().SyntaxTree();
   const auto union_declarations =
-      FindAllUnionDataTypeDeclarations(*ABSL_DIE_IF_NULL(root));
+      FindAllUnionTypes(*ABSL_DIE_IF_NULL(root));
   EXPECT_TRUE(union_declarations.empty());
 }
 
 // Tests that no unions are found in an enum declaration
-TEST(FindAllUnionDataTypeDeclarationsTest, EnumSource) {
+TEST(FindAllUnionTypesTest, EnumSource) {
   VerilogAnalyzer analyzer("typedef enum { aVal, bVal } name;", "");
   ASSERT_OK(analyzer.Analyze());
   const auto& root = analyzer.Data().SyntaxTree();
   const auto union_declarations =
-      FindAllUnionDataTypeDeclarations(*ABSL_DIE_IF_NULL(root));
+      FindAllUnionTypes(*ABSL_DIE_IF_NULL(root));
   EXPECT_TRUE(union_declarations.empty());
 }
 
 // Tests that no unions are found in a struct declaration
-TEST(FindAllUnionDataTypeDeclarationsTest, StructSource) {
+TEST(FindAllUnionTypesTest, StructSource) {
   VerilogAnalyzer analyzer("typedef struct { int a; bit [8:0] flags; } name;",
                            "");
   ASSERT_OK(analyzer.Analyze());
   const auto& root = analyzer.Data().SyntaxTree();
   const auto union_declarations =
-      FindAllUnionDataTypeDeclarations(*ABSL_DIE_IF_NULL(root));
+      FindAllUnionTypes(*ABSL_DIE_IF_NULL(root));
   EXPECT_TRUE(union_declarations.empty());
 }
 
-// Tests that the correct amount of node kUnionDataType declarations
+// Tests that the correct amount of node kUnionType declarations
 // are found.
-TEST(FindAllUnionDataTypeDeclarationsTest, BasicTests) {
+TEST(FindAllUnionTypesTest, BasicTests) {
   const std::pair<std::string, int> kTestCases[] = {
       {"", 0},
       {"typedef union { int a; bit [8:0] b; } name;", 1},
@@ -258,7 +258,7 @@ TEST(FindAllUnionDataTypeDeclarationsTest, BasicTests) {
     ASSERT_OK(analyzer.Analyze());
     const auto& root = analyzer.Data().SyntaxTree();
     const auto union_data_type_declarations =
-        FindAllUnionDataTypeDeclarations(*ABSL_DIE_IF_NULL(root));
+        FindAllUnionTypes(*ABSL_DIE_IF_NULL(root));
     EXPECT_EQ(union_data_type_declarations.size(), test.second);
   }
 }
