@@ -31,7 +31,7 @@ namespace formatter {
 void SetRange(std::vector<bool>* disable_set, int start, int end) {
   CHECK_GE(start, 0);
   CHECK_LE(start, end);
-  if (end > disable_set->size()) {
+  if (end > static_cast<int>(disable_set->size())) {
     disable_set->resize(end, false);
   }
   for (int i = start; i < end; ++i) {
@@ -42,7 +42,7 @@ void SetRange(std::vector<bool>* disable_set, int start, int end) {
 std::vector<bool> DisableFormattingRanges(
     absl::string_view text, const verible::TokenSequence& tokens) {
   static constexpr absl::string_view kTrigger = "verilog_format:";
-  static const auto kDelimiters = strings::delimiter::AnyOf(" \t");
+  static const auto kDelimiters = absl::ByAnyChar(" \t");
   static constexpr int kNullOffset = -1;
   const verible::TokenInfo::Context context(
       text,
@@ -95,7 +95,7 @@ bool ContainsRange(const std::vector<bool>& intervals, int start, int end) {
   CHECK_GE(start, 0);
   CHECK_LE(start, end);
   if (start == end) return true;  // degenerate case
-  if (end > intervals.size()) return false;
+  if (end > static_cast<int>(intervals.size())) return false;
   for (int i = start; i < end; ++i) {
     if (!intervals[i]) return false;
   }
