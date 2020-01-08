@@ -621,7 +621,7 @@ void TreeUnwrapper::Visit(const verible::SyntaxTreeNode& node) {
     case NodeEnum::kDoWhileLoopStatement:
     case NodeEnum::kForeachLoopStatement:
     case NodeEnum::kConditionalStatement:
-      // LINT.IfChange(:flow_control_parents)
+      // LINT.ThenChange(:flow_control_parents)
       {
         if (IsTopLevelListItem(Context())) {
           // Create a level of grouping without additional indentation.
