@@ -797,6 +797,27 @@ static const std::initializer_list<FormatterTestCase> kFormatterTestCases = {
         "  end\n"
         "endmodule\n",
     },
+    {
+        // qualified variables
+        "module m ;initial  begin automatic int a; "
+        " static byte s=0;end endmodule",
+        "module m;\n"
+        "  initial begin\n"
+        "    automatic int a;\n"
+        "    static byte s = 0;\n"
+        "  end\n"
+        "endmodule\n",
+    },
+    {
+        "module m ;initial  begin automatic int a,b; "
+        " static byte s,t;end endmodule",
+        "module m;\n"
+        "  initial begin\n"
+        "    automatic int a, b;\n"
+        "    static byte s, t;\n"
+        "  end\n"
+        "endmodule\n",
+    },
 
     {
         // clocking declarations in modules

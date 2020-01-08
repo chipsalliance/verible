@@ -774,6 +774,39 @@ const TreeUnwrapperTestData kUnwrapModuleTestCases[] = {
     },
 
     {
+        "module with static variable",
+        "module static_variable;\n"
+        "initial begin\n"
+        "  static int a = 0;\n"
+        "end\n"
+        "endmodule",
+        ModuleHeader(0, L(0, {"module", "static_variable", ";"})),
+        ModuleItemList(1, L(1, {"initial", "begin"}),
+                       StatementList(2, N(2, L(2, {"static"}), L(2, {"int"}),
+                                             L(2, {"a", "=", "0", ";"}))),
+                       L(1, {"end"})),
+        L(0, {"endmodule"}),
+    },
+
+    {
+        "module with static and automatic variables",
+        "module static_automatic;\n"
+        "initial begin\n"
+        "  static int a = 0;\n"
+        "  automatic byte b = 1;\n"
+        "end\n"
+        "endmodule",
+        ModuleHeader(0, L(0, {"module", "static_automatic", ";"})),
+        ModuleItemList(1, L(1, {"initial", "begin"}),
+                       StatementList(2, N(2, L(2, {"static"}), L(2, {"int"}),
+                                             L(2, {"a", "=", "0", ";"})),
+                                        N(2, L(2, {"automatic"}), L(2, {"byte"}),
+                                             L(2, {"b", "=", "1", ";"}))),
+                       L(1, {"end"})),
+        L(0, {"endmodule"}),
+    },
+
+    {
         "module with block generate statements",
         "module block_generate;\n"
         "generate\n"
@@ -2556,6 +2589,19 @@ const TreeUnwrapperTestData kUnwrapTaskTestCases[] = {
                                            NL(3, {"r1", ","}),  //
                                            NL(3, {"r2", ";"})   //
                                            ))),
+        L(0, {"endtask"}),
+    },
+
+    {
+        "task with local variable and qualifier",
+        "task foo;"
+        "static int return_value;"
+        "endtask",
+        TaskHeader(0, L(0, {"task", "foo", ";"})),
+        StatementList(1,
+                      DataDeclaration(1, L(1, {"static"}),
+                                         L(1, { "int"}),
+                                         L(1, {"return_value", ";"}))),
         L(0, {"endtask"}),
     },
 

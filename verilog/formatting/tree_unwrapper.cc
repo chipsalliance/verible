@@ -834,28 +834,36 @@ void TreeUnwrapper::Visit(const verible::SyntaxTreeNode& node) {
 
         // Reshape type-instance partitions.
 
-        // Compute end-of-type position before flattening (and invalidating
-        // references).
-        const auto& instance_type_partition = children.front();
-        const size_t fuse_position =
-            instance_type_partition.Children().size() - 1;
+        const auto& instance_type_partition = children.back().PreviousSibling();
 
-        // data_declaration_partition now consists of exactly:
-        //   instance_type_partition, instance_list_partition (single instance)
-        // Flatten these (which will invalidate their references).
-        data_declaration_partition.FlattenOnce();
+        if (instance_type_partition == &children.front()) {
+          // data_declaration_partition now consists of exactly:
+          //   instance_type_partition, instance_list_partition (single instance)
 
-        // Join the rightmost of instance_type_partition with the leftmost of
-        // instance_list_partition.  Keep the type's indentation.
-        // This can yield an intermediate partition that contains:
-        // ") instance_name (".
-        data_declaration_partition.MergeConsecutiveSiblings(
-            fuse_position,
-            [](UnwrappedLine* left_uwline, const UnwrappedLine& right_uwline) {
-              CHECK(left_uwline->TokensRange().end() ==
-                    right_uwline.TokensRange().begin());
-              left_uwline->SpanUpToToken(right_uwline.TokensRange().end());
-            });
+          // Compute end-of-type position before flattening (and invalidating
+          // references).
+          const size_t fuse_position =
+              instance_type_partition->Children().size() - 1;
+          // Flatten these (which will invalidate their references).
+          data_declaration_partition.FlattenOnce();
+
+          // Join the rightmost of instance_type_partition with the leftmost of
+          // instance_list_partition.  Keep the type's indentation.
+          // This can yield an intermediate partition that contains:
+          // ") instance_name (".
+          data_declaration_partition.MergeConsecutiveSiblings(
+              fuse_position,
+              [](UnwrappedLine* left_uwline, const UnwrappedLine& right_uwline) {
+                CHECK(left_uwline->TokensRange().end() ==
+                      right_uwline.TokensRange().begin());
+                left_uwline->SpanUpToToken(right_uwline.TokensRange().end());
+              });
+        } else {
+          // There is a qualifier before instance_type_partition, so we cannot
+          // just flatten it. Manually flatten subpartitions.
+          instance_type_partition->HoistOnlyChild();
+          instance_list_partition.HoistOnlyChild();
+        }
       }
       break;
     }
