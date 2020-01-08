@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "verilog/analysis/checkers/struct_union_name_style_rule.h"
+#include "verilog/analysis/checkers/enum_name_style_rule.h"
 
 #include <set>
 #include <string>
@@ -31,56 +31,49 @@
 namespace verilog {
 namespace analysis {
 
-VERILOG_REGISTER_LINT_RULE(StructUnionNameStyleRule);
+VERILOG_REGISTER_LINT_RULE(EnumNameStyleRule);
 
 using verible::GetStyleGuideCitation;
 using verible::LintRuleStatus;
 using verible::LintViolation;
 using verible::SyntaxTreeContext;
 
-absl::string_view StructUnionNameStyleRule::Name() {
-  return "struct-union-name-style";
-}
-const char StructUnionNameStyleRule::kTopic[] = "struct-union-conventions";
-const char StructUnionNameStyleRule::kMessageStruct[] =
-    "Struct names must use lower_snake_case naming convention and end with _t.";
-const char StructUnionNameStyleRule::kMessageUnion[] =
-    "Union names must use lower_snake_case naming convention and end with _t.";
+absl::string_view EnumNameStyleRule::Name() { return "enum-name-style"; }
+const char EnumNameStyleRule::kTopic[] = "enumerations";
+const char EnumNameStyleRule::kMessage[] =
+    "Enum names must use lower_snake_case naming convention "
+    "and end with _t or _e.";
 
-std::string StructUnionNameStyleRule::GetDescription(
+std::string EnumNameStyleRule::GetDescription(
     DescriptionType description_type) {
-  return absl::StrCat(
-      "Checks that ", Codify("struct", description_type), " and ",
-      Codify("union", description_type),
-      " names use lower_snake_case naming convention and end with '_t'. See ",
-      GetStyleGuideCitation(kTopic), ".");
+  return absl::StrCat("Checks that ", Codify("enum", description_type),
+                      " names use lower_snake_case naming convention"
+                      " and end with '_t' or '_e'. See ",
+                      GetStyleGuideCitation(kTopic), ".");
 }
 
-void StructUnionNameStyleRule::HandleSymbol(const verible::Symbol& symbol,
-                                            const SyntaxTreeContext& context) {
+void EnumNameStyleRule::HandleSymbol(const verible::Symbol& symbol,
+                                     const SyntaxTreeContext& context) {
   verible::matcher::BoundSymbolManager manager;
   if (matcher_typedef_.Matches(symbol, &manager)) {
-    const char* msg;
     // TODO: This can be changed to checking type of child (by index) when we
     // have consistent shape for all kTypeDeclaration nodes.
-    if (!FindAllStructTypes(symbol).empty()) {
-      msg = kMessageStruct;
-    } else if (!FindAllUnionTypes(symbol).empty()) {
-      msg = kMessageUnion;
+    if (!FindAllEnumTypes(symbol).empty()) {
+      const auto* identifier_leaf = GetIdentifierFromTypeDeclaration(symbol);
+      const auto name = ABSL_DIE_IF_NULL(identifier_leaf)->get().text;
+      if (!verible::IsLowerSnakeCaseWithDigits(name) ||
+          !(absl::EndsWith(name, "_t") || absl::EndsWith(name, "_e"))) {
+        violations_.insert(
+            LintViolation(identifier_leaf->get(), kMessage, context));
+      }
     } else {
-      // Neither a struct nor union definition
+      // Not an enum definition
       return;
-    }
-    const auto* identifier_leaf = GetIdentifierFromTypeDeclaration(symbol);
-    const auto name = ABSL_DIE_IF_NULL(identifier_leaf)->get().text;
-    if (!verible::IsLowerSnakeCaseWithDigits(name) ||
-        !absl::EndsWith(name, "_t")) {
-      violations_.insert(LintViolation(identifier_leaf->get(), msg, context));
     }
   }
 }
 
-LintRuleStatus StructUnionNameStyleRule::Report() const {
+LintRuleStatus EnumNameStyleRule::Report() const {
   return LintRuleStatus(violations_, Name(), GetStyleGuideCitation(kTopic));
 }
 

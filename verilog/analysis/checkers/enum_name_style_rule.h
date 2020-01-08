@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef VERIBLE_VERILOG_ANALYSIS_CHECKERS_FORBIDDEN_ANONYMOUS_ENUMS_RULE_H_
-#define VERIBLE_VERILOG_ANALYSIS_CHECKERS_FORBIDDEN_ANONYMOUS_ENUMS_RULE_H_
+#ifndef VERIBLE_VERILOG_ANALYSIS_CHECKERS_ENUM_NAME_STYLE_RULE_H_
+#define VERIBLE_VERILOG_ANALYSIS_CHECKERS_ENUM_NAME_STYLE_RULE_H_
 
 #include <set>
 #include <string>
@@ -30,22 +30,9 @@
 namespace verilog {
 namespace analysis {
 
-// Detects whether a Verilog enum directive falls inside a typedef.
-//
-// Accepted examples:
-//    typedef enum logic {
-//      firstSignal,
-//      secondSignal,
-//    } type_name_e;
-//    type_name_e my_instance;
-//
-// Rejected examples:
-//    enum logic {
-//      firstSignal,
-//      secondSignal,
-//    } my_instance;
-//
-class ForbiddenAnonymousEnumsRule : public verible::SyntaxTreeLintRule {
+// EnumNameStyleRule checks that all enum names use
+// lower_snake_case naming convention and end with "_e" or "_t".
+class EnumNameStyleRule : public verible::SyntaxTreeLintRule {
  public:
   using rule_type = verible::SyntaxTreeLintRule;
   static absl::string_view Name();
@@ -63,18 +50,17 @@ class ForbiddenAnonymousEnumsRule : public verible::SyntaxTreeLintRule {
   // Link to style guide rule.
   static const char kTopic[];
 
-  // Diagnosic message.
+  // Diagnostic message.
   static const char kMessage[];
 
   using Matcher = verible::matcher::Matcher;
 
-  Matcher matcher_ = NodekEnumType();
+  Matcher matcher_typedef_ = NodekTypeDeclaration();
 
-  // Collection of found violations.
   std::set<verible::LintViolation> violations_;
 };
 
 }  // namespace analysis
 }  // namespace verilog
 
-#endif  // VERIBLE_VERILOG_ANALYSIS_CHECKERS_FORBIDDEN_ANONYMOUS_ENUMS_RULE_H
+#endif  // VERIBLE_VERILOG_ANALYSIS_CHECKERS_ENUM_NAME_STYLE_RULE_H_

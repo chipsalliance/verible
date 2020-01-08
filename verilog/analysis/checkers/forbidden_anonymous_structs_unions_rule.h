@@ -70,8 +70,8 @@ class ForbiddenAnonymousStructsUnionsRule : public verible::SyntaxTreeLintRule {
 
   using Matcher = verible::matcher::Matcher;
 
-  Matcher matcher_struct_ = NodekStructDataType();
-  Matcher matcher_union_ = NodekUnionDataType();
+  Matcher matcher_struct_ = NodekStructType();
+  Matcher matcher_union_ = NodekUnionType();
 
   // Collection of found violations.
   std::set<verible::LintViolation> violations_;

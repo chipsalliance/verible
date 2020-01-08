@@ -3427,19 +3427,19 @@ type_declaration
   | TK_typedef TK_enum GenericIdentifier ';'
     { $$ = MakeTaggedNode(N::kTypeDeclaration, $1,
                           MakeTaggedNode(N::kDataTypePrimitive,
-                                         MakeTaggedNode(N::kEnumDataType,
+                                         MakeTaggedNode(N::kEnumType,
                                                         $2, nullptr, nullptr)),
                           nullptr, $3, $4, nullptr); }
   | TK_typedef TK_struct GenericIdentifier ';'
     { $$ = MakeTaggedNode(N::kTypeDeclaration, $1,
                           MakeTaggedNode(N::kDataTypePrimitive,
-                                         MakeTaggedNode(N::kStructDataType,
+                                         MakeTaggedNode(N::kStructType,
                                                         $2, nullptr, nullptr)),
                           nullptr, $3, $4, nullptr); }
   | TK_typedef TK_union GenericIdentifier ';'
     { $$ = MakeTaggedNode(N::kTypeDeclaration, $1,
                           MakeTaggedNode(N::kDataTypePrimitive,
-                                         MakeTaggedNode(N::kUnionDataType,
+                                         MakeTaggedNode(N::kUnionType,
                                                         $2, nullptr, nullptr)),
                           nullptr, $3, $4, nullptr); }
   | TK_typedef GenericIdentifier ';'
@@ -3448,9 +3448,9 @@ type_declaration
 /* enums only become named via typedef */
 enum_data_type
   : TK_enum '{' enum_name_list '}'
-    { $$ = MakeTaggedNode(N::kEnumDataType, $1, nullptr, MakeBraceGroup($2, $3, $4)); }
+    { $$ = MakeTaggedNode(N::kEnumType, $1, nullptr, MakeBraceGroup($2, $3, $4)); }
   | TK_enum data_type '{' enum_name_list '}'
-    { $$ = MakeTaggedNode(N::kEnumDataType, $1, $2, MakeBraceGroup($3, $4, $5)); }
+    { $$ = MakeTaggedNode(N::kEnumType, $1, $2, MakeBraceGroup($3, $4, $5)); }
   ;
 enum_name_list
   : enum_name_list_preprocessor_last
@@ -3504,9 +3504,9 @@ enum_name
 /* structs only become named via typedef */
 struct_data_type
   : TK_struct packed_signing_opt '{' struct_union_member_list '}'
-    { $$ = MakeTaggedNode(N::kStructDataType, $1, $2, MakeBraceGroup($3, $4, $5)); }
+    { $$ = MakeTaggedNode(N::kStructType, $1, $2, MakeBraceGroup($3, $4, $5)); }
   | TK_union TK_tagged_opt packed_signing_opt '{' struct_union_member_list '}'
-    { $$ = MakeTaggedNode(N::kUnionDataType, $1, $2, $3,
+    { $$ = MakeTaggedNode(N::kUnionType, $1, $2, $3,
                           MakeBraceGroup($4, $5, $6)); }
   ;
 packed_signing_opt

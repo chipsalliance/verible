@@ -33,14 +33,19 @@ std::vector<verible::TreeSearchMatch> FindAllDataTypeDeclarations(
 std::vector<verible::TreeSearchMatch> FindAllTypeDeclarations(
     const verible::Symbol&);
 
-// Finds all node kStructDataType declarations. Used for testing if the type
-// declaration is a struct.
-std::vector<verible::TreeSearchMatch> FindAllStructDataTypeDeclarations(
+// Finds all node kEnumType declarations. Used for testing if the type
+// declaration is an enum.
+std::vector<verible::TreeSearchMatch> FindAllEnumTypes(
     const verible::Symbol& root);
 
-// Finds all node kUnionDataType declarations. Used for testing if the type
+// Finds all node kStructType declarations. Used for testing if the type
+// declaration is a struct.
+std::vector<verible::TreeSearchMatch> FindAllStructTypes(
+    const verible::Symbol& root);
+
+// Finds all node kUnionType declarations. Used for testing if the type
 // declaration is a union.
-std::vector<verible::TreeSearchMatch> FindAllUnionDataTypeDeclarations(
+std::vector<verible::TreeSearchMatch> FindAllUnionTypes(
     const verible::Symbol& root);
 
 // Returns true if the node kDataType has declared a storage type.
