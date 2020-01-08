@@ -295,6 +295,28 @@ static const std::initializer_list<FormatterTestCase> kFormatterTestCases = {
      "  `FOO( bar )\n",
      "`define FOO BAR\n"
      "`FOO(bar)\n"},
+    {// multiple argument macro call
+     "  `FOO( bar , baz )\n", "`FOO(bar, baz)\n"},
+    {// macro call in function
+     "function void foo( );   foo=`FOO( bar , baz ) ; endfunction\n",
+     "function void foo();\n"
+     "  foo = `FOO(bar, baz);\n"
+     "endfunction\n"},
+    {// nested macro call in function
+     "function void foo( );   foo=`FOO( `BAR ( baz ) ) ; endfunction\n",
+     "function void foo();\n"
+     "  foo = `FOO(`BAR(baz));\n"
+     "endfunction\n"},
+    {// macro call in class
+     "class foo;    `FOO  ( bar , baz ) ; endclass\n",
+     "class foo;\n"
+     "  `FOO(bar, baz);\n"
+     "endclass\n"},
+    {// nested macro call in class
+     "class foo;    `FOO  ( `BAR ( baz1 , baz2 ) ) ; endclass\n",
+     "class foo;\n"
+     "  `FOO(`BAR(baz1, baz2));\n"
+     "endclass\n"},
 
     // `uvm macros indenting
     {
@@ -1766,6 +1788,30 @@ static const std::initializer_list<FormatterTestCase> kFormatterTestCases = {
         "`define           FOO\n",
         "// verilog_syntax: parse-as-module-body\n"
         "`define FOO\n",
+    },
+    {
+        // test alternate parsing mode in macro expansion
+        "class foo;\n"
+        "`MY_MACRO(\n"
+        " // verilog_syntax: parse-as-statements\n"
+        " // EOL comment\n"
+        " int count;\n"
+        " if(cfg.enable) begin\n"
+        " count = 1;\n"
+        " end,\n"
+        " utils_pkg::decrement())\n"
+        "endclass\n",
+        "class foo;\n"
+        "  `MY_MACRO(\n"
+        "      // verilog_syntax: parse-as-statements\n"
+        "      // EOL comment\n"
+        "      int count;\n"
+        "      if (cfg.enable) begin\n"
+        "        count = 1;\n"
+        "      end,\n"
+        "      utils_pkg::decrement()\n"
+        "  )\n"
+        "endclass\n",
     },
 
     {// tests bind declaration

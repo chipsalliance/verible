@@ -520,11 +520,14 @@ void TreeUnwrapper::Visit(const verible::SyntaxTreeNode& node) {
   const auto tag = static_cast<NodeEnum>(node.Tag().tag);
   VLOG(3) << __FUNCTION__ << " node: " << tag;
 
-  // Suppress additional indentation when at the syntax tree root and
-  // when direct parent is `ifdef/`ifndef/`else/`elsif clause.
+  // Suppress additional indentation when:
+  // - at the syntax tree root
+  // - direct parent is `ifdef/`ifndef/`else/`elsif clause
+  // - at the first level of macro argument expansion
   const bool suppress_indentation =
       Context().empty() ||
-      IsPreprocessorClause(NodeEnum(Context().top().Tag().tag));
+      IsPreprocessorClause(NodeEnum(Context().top().Tag().tag)) ||
+      Context().DirectParentIs(NodeEnum::kMacroArgList);
 
   // Traversal control section.
   switch (tag) {
@@ -649,7 +652,8 @@ void TreeUnwrapper::Visit(const verible::SyntaxTreeNode& node) {
     case NodeEnum::kAssignmentStatement:             // id=expr
     case NodeEnum::kProceduralTimingControlStatement: {
       if (IsTopLevelListItem(Context())) {
-        VisitNewUnwrappedLine(node);
+        VisitIndentedSection(node, 0,
+                             PartitionPolicyEnum::kFitOnLineElseExpand);
       } else if (DirectParentIsFlowControlConstruct(Context())) {
         // This is a single statement directly inside a flow-control construct,
         // and thus should be properly indented one level.
@@ -661,10 +665,24 @@ void TreeUnwrapper::Visit(const verible::SyntaxTreeNode& node) {
       }
       break;
     }
+    case NodeEnum::kMacroArgList: {
+      if (suppress_indentation ||
+          Context().DirectParentsAre(
+              {NodeEnum::kMacroCall, NodeEnum::kDescriptionList})) {
+        // Top-level macro call
+        // Do not artificially indent parameters
+        TraverseChildren(node);
+      } else {
+        VisitIndentedSection(node, style_.wrap_spaces,
+                             PartitionPolicyEnum::kFitOnLineElseExpand);
+      }
+      break;
+    }
 
     case NodeEnum::kMacroCall: {
       if (IsTopLevelListItem(Context())) {
-        VisitNewUnwrappedLine(node);
+        VisitIndentedSection(node, 0,
+                             PartitionPolicyEnum::kFitOnLineElseExpand);
       } else if (DirectParentIsFlowControlConstruct(Context())) {
         // This is a single statement directly inside a flow-control construct,
         // and thus should be properly indented one level.
