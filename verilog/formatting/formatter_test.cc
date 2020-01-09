@@ -907,6 +907,22 @@ static const std::initializer_list<FormatterTestCase> kFormatterTestCases = {
         "  end\n"
         "endmodule\n",
     },
+    {
+        "module m ;initial  begin static byte s  ={<<{a}};end endmodule",
+        "module m;\n"
+        "  initial begin\n"
+        "    static byte s = {<<{a}};\n"
+        "  end\n"
+        "endmodule\n",
+    },
+    {
+        "module m ;initial  begin static int s  ={>>4{a}};end endmodule",
+        "module m;\n"
+        "  initial begin\n"
+        "    static int s = {>>4{a}};\n"
+        "  end\n"
+        "endmodule\n",
+    },
 
     {
         // clocking declarations in modules

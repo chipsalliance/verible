@@ -1612,6 +1612,167 @@ TEST(TokenAnnotatorTest, AnnotateFormattingInfoTest) {
                {':', ":"},
                {';', ";"},
            }},
+
+          // foo = 1 << bar;
+          {DefaultStyle,
+           0,
+           {
+               {0, SpacingOptions::Undecided},
+               {1, SpacingOptions::Undecided},
+               {1, SpacingOptions::Undecided},
+               {1, SpacingOptions::Undecided},
+               {1, SpacingOptions::Undecided},
+               {0, SpacingOptions::Undecided},
+           },
+           {
+               {yytokentype::SymbolIdentifier, "foo"},
+               {'=', "="},
+               {yytokentype::TK_DecNumber, "1"},
+               {yytokentype::TK_LS, "<<"},
+               {yytokentype::SymbolIdentifier, "bar"},
+               {';', ";"},
+           }},
+
+          // foo = bar << 1;
+          {DefaultStyle,
+           0,
+           {
+               {0, SpacingOptions::Undecided},
+               {1, SpacingOptions::Undecided},
+               {1, SpacingOptions::Undecided},
+               {1, SpacingOptions::Undecided},
+               {1, SpacingOptions::Undecided},
+               {0, SpacingOptions::Undecided},
+           },
+           {
+               {yytokentype::SymbolIdentifier, "foo"},
+               {'=', "="},
+               {yytokentype::SymbolIdentifier, "bar"},
+               {yytokentype::TK_LS, "<<"},
+               {yytokentype::TK_DecNumber, "1"},
+               {';', ";"},
+           }},
+
+          // foo = `BAR << 1;
+          {DefaultStyle,
+           0,
+           {
+               {0, SpacingOptions::Undecided},
+               {1, SpacingOptions::Undecided},
+               {1, SpacingOptions::Undecided},
+               {1, SpacingOptions::Undecided},
+               {1, SpacingOptions::Undecided},
+               {0, SpacingOptions::Undecided},
+           },
+           {
+               {yytokentype::SymbolIdentifier, "foo"},
+               {'=', "="},
+               {yytokentype::MacroIdentifier, "`BAR"},
+               {yytokentype::TK_LS, "<<"},
+               {yytokentype::TK_DecNumber, "1"},
+               {';', ";"},
+           }},
+
+          // foo = 1 << `BAR;
+          {DefaultStyle,
+           0,
+           {
+               {0, SpacingOptions::Undecided},
+               {1, SpacingOptions::Undecided},
+               {1, SpacingOptions::Undecided},
+               {1, SpacingOptions::Undecided},
+               {1, SpacingOptions::Undecided},
+               {0, SpacingOptions::Undecided},
+           },
+           {
+               {yytokentype::SymbolIdentifier, "foo"},
+               {'=', "="},
+               {yytokentype::TK_DecNumber, "1"},
+               {yytokentype::TK_LS, "<<"},
+               {yytokentype::MacroIdentifier, "`BAR"},
+               {';', ";"},
+           }},
+
+          // foo = 1 >> bar;
+          {DefaultStyle,
+           0,
+           {
+               {0, SpacingOptions::Undecided},
+               {1, SpacingOptions::Undecided},
+               {1, SpacingOptions::Undecided},
+               {1, SpacingOptions::Undecided},
+               {1, SpacingOptions::Undecided},
+               {0, SpacingOptions::Undecided},
+           },
+           {
+               {yytokentype::SymbolIdentifier, "foo"},
+               {'=', "="},
+               {yytokentype::TK_DecNumber, "1"},
+               {yytokentype::TK_RS, ">>"},
+               {yytokentype::SymbolIdentifier, "bar"},
+               {';', ";"},
+           }},
+
+          // foo = bar >> 1;
+          {DefaultStyle,
+           0,
+           {
+               {0, SpacingOptions::Undecided},
+               {1, SpacingOptions::Undecided},
+               {1, SpacingOptions::Undecided},
+               {1, SpacingOptions::Undecided},
+               {1, SpacingOptions::Undecided},
+               {0, SpacingOptions::Undecided},
+           },
+           {
+               {yytokentype::SymbolIdentifier, "foo"},
+               {'=', "="},
+               {yytokentype::SymbolIdentifier, "bar"},
+               {yytokentype::TK_RS, ">>"},
+               {yytokentype::TK_DecNumber, "1"},
+               {';', ";"},
+           }},
+
+          // foo = `BAR >> 1;
+          {DefaultStyle,
+           0,
+           {
+               {0, SpacingOptions::Undecided},
+               {1, SpacingOptions::Undecided},
+               {1, SpacingOptions::Undecided},
+               {1, SpacingOptions::Undecided},
+               {1, SpacingOptions::Undecided},
+               {0, SpacingOptions::Undecided},
+           },
+           {
+               {yytokentype::SymbolIdentifier, "foo"},
+               {'=', "="},
+               {yytokentype::MacroIdentifier, "`BAR"},
+               {yytokentype::TK_RS, ">>"},
+               {yytokentype::TK_DecNumber, "1"},
+               {';', ";"},
+           }},
+
+          // foo = 1 >> `BAR;
+          {DefaultStyle,
+           0,
+           {
+               {0, SpacingOptions::Undecided},
+               {1, SpacingOptions::Undecided},
+               {1, SpacingOptions::Undecided},
+               {1, SpacingOptions::Undecided},
+               {1, SpacingOptions::Undecided},
+               {0, SpacingOptions::Undecided},
+           },
+           {
+               {yytokentype::SymbolIdentifier, "foo"},
+               {'=', "="},
+               {yytokentype::TK_DecNumber, "1"},
+               {yytokentype::TK_RS, ">>"},
+               {yytokentype::MacroIdentifier, "`BAR"},
+               {';', ";"},
+           }},
+
       };
 
   int test_index = 0;
@@ -2187,6 +2348,312 @@ TEST(TokenAnnotatorTest, AnnotateFormattingWithContextTest) {
           {yytokentype::SymbolIdentifier, "id"},
           {NodeEnum::kLabel},
           {1, SpacingOptions::Undecided},
+      },
+      // Shift operators
+      {
+          // foo = 1 << width;
+          DefaultStyle,
+          {yytokentype::TK_DecNumber, "1"},
+          {yytokentype::TK_LS, "<<"},
+          {/* unspecified context */},
+          {1, SpacingOptions::Undecided},
+      },
+      {
+          // foo = 1 << width;
+          DefaultStyle,
+          {yytokentype::TK_LS, "<<"},
+          {yytokentype::SymbolIdentifier, "width"},
+          {/* unspecified context */},
+          {1, SpacingOptions::Undecided},
+      },
+      {
+          // foo = bar << 4;
+          DefaultStyle,
+          {yytokentype::SymbolIdentifier, "bar"},
+          {yytokentype::TK_LS, "<<"},
+          {/* unspecified context */},
+          {1, SpacingOptions::Undecided},
+      },
+      {
+          // foo = bar << 4;
+          DefaultStyle,
+          {yytokentype::TK_LS, "<<"},
+          {yytokentype::TK_DecNumber, "4"},
+          {/* unspecified context */},
+          {1, SpacingOptions::Undecided},
+      },
+      {
+          // foo = `VAL << 4;
+          DefaultStyle,
+          {yytokentype::MacroIdentifier, "`VAL"},
+          {yytokentype::TK_LS, "<<"},
+          {/* unspecified context */},
+          {1, SpacingOptions::Undecided},
+      },
+      {
+          // foo = bar << `SIZE;
+          DefaultStyle,
+          {yytokentype::TK_LS, "<<"},
+          {yytokentype::MacroIdentifier, "`SIZE"},
+          {/* unspecified context */},
+          {1, SpacingOptions::Undecided},
+      },
+      {
+          // foo = 1 >> width;
+          DefaultStyle,
+          {yytokentype::TK_DecNumber, "1"},
+          {yytokentype::TK_RS, ">>"},
+          {/* unspecified context */},
+          {1, SpacingOptions::Undecided},
+      },
+      {
+          // foo = 1 >> width;
+          DefaultStyle,
+          {yytokentype::TK_RS, ">>"},
+          {yytokentype::SymbolIdentifier, "width"},
+          {/* unspecified context */},
+          {1, SpacingOptions::Undecided},
+      },
+      {
+          // foo = bar >> 4;
+          DefaultStyle,
+          {yytokentype::SymbolIdentifier, "bar"},
+          {yytokentype::TK_RS, ">>"},
+          {/* unspecified context */},
+          {1, SpacingOptions::Undecided},
+      },
+      {
+          // foo = bar >> 4;
+          DefaultStyle,
+          {yytokentype::TK_RS, ">>"},
+          {yytokentype::TK_DecNumber, "4"},
+          {/* unspecified context */},
+          {1, SpacingOptions::Undecided},
+      },
+      {
+          // foo = `VAL >> 4;
+          DefaultStyle,
+          {yytokentype::MacroIdentifier, "`VAL"},
+          {yytokentype::TK_RS, ">>"},
+          {/* unspecified context */},
+          {1, SpacingOptions::Undecided},
+      },
+      {
+          // foo = bar >> `SIZE;
+          DefaultStyle,
+          {yytokentype::TK_RS, ">>"},
+          {yytokentype::MacroIdentifier, "`SIZE"},
+          {/* unspecified context */},
+          {1, SpacingOptions::Undecided},
+      },
+      // Streaming operators
+      {
+          // foo = {<<{bar}};
+          DefaultStyle,
+          {'=', "="},
+          {'{', "{"},
+          {NodeEnum::kStreamingConcatenation},
+          {1, SpacingOptions::Undecided},
+      },
+      {
+          // foo = {<<{bar}};
+          DefaultStyle,
+          {'{', "{"},
+          {yytokentype::TK_LS, "<<"},
+          {NodeEnum::kStreamingConcatenation},
+          {0, SpacingOptions::Undecided},
+      },
+      {
+          // foo = {<<{bar}};
+          DefaultStyle,
+          {yytokentype::TK_LS, "<<"},
+          {'{', "{"},
+          {NodeEnum::kStreamingConcatenation},
+          {0, SpacingOptions::Undecided},
+      },
+      {
+          // foo = {<<{bar}};
+          DefaultStyle,
+          {'{', "{"},
+          {yytokentype::SymbolIdentifier, "bar"},
+          {NodeEnum::kStreamingConcatenation},
+          {0, SpacingOptions::Undecided},
+      },
+      {
+          // foo = {<<{bar}};
+          DefaultStyle,
+          {yytokentype::SymbolIdentifier, "bar"},
+          {'}', "}"},
+          {NodeEnum::kStreamingConcatenation},
+          {0, SpacingOptions::Undecided},
+      },
+      {
+          // foo = {<<4{bar}};
+          DefaultStyle,
+          {yytokentype::TK_LS, "<<"},
+          {yytokentype::TK_DecNumber, "4"},
+          {NodeEnum::kStreamingConcatenation},
+          {0, SpacingOptions::Undecided},
+      },
+      {
+          // foo = {<<4{bar}};
+          DefaultStyle,
+          {yytokentype::TK_DecNumber, "4"},
+          {'{', "{"},
+          {NodeEnum::kStreamingConcatenation},
+          {0, SpacingOptions::Undecided},
+      },
+      {
+          // foo = {<<byte{bar}};
+          DefaultStyle,
+          {yytokentype::TK_LS, "<<"},
+          {yytokentype::TK_byte, "byte"},
+          {NodeEnum::kStreamingConcatenation},
+          {0, SpacingOptions::Undecided},
+      },
+      {
+          // foo = {<<byte{bar}};
+          DefaultStyle,
+          {yytokentype::TK_byte, "byte"},
+          {'{', "{"},
+          {NodeEnum::kStreamingConcatenation},
+          {0, SpacingOptions::Undecided},
+      },
+      {
+          // foo = {<<type_t{bar}};
+          DefaultStyle,
+          {yytokentype::TK_LS, "<<"},
+          {yytokentype::SymbolIdentifier, "type_t"},
+          {NodeEnum::kStreamingConcatenation},
+          {0, SpacingOptions::Undecided},
+      },
+      {
+          // foo = {<<type_t{bar}};
+          DefaultStyle,
+          {yytokentype::SymbolIdentifier, "type_t"},
+          {'{', "{"},
+          {NodeEnum::kStreamingConcatenation},
+          {0, SpacingOptions::Undecided},
+      },
+      {
+          // foo = {<<`GET_TYPE{bar}};
+          DefaultStyle,
+          {yytokentype::TK_LS, "<<"},
+          {yytokentype::MacroIdentifier, "`GET_TYPE"},
+          {NodeEnum::kStreamingConcatenation},
+          {0, SpacingOptions::Undecided},
+      },
+      {
+          // foo = {<<`GET_TYPE{bar}};
+          DefaultStyle,
+          {yytokentype::MacroIdentifier, "`GET_TYPE"},
+          {'{', "{"},
+          {NodeEnum::kStreamingConcatenation},
+          {0, SpacingOptions::Undecided},
+      },
+      {
+          // foo = {>>{bar}};
+          DefaultStyle,
+          {'=', "="},
+          {'{', "{"},
+          {NodeEnum::kStreamingConcatenation},
+          {1, SpacingOptions::Undecided},
+      },
+      {
+          // foo = {>>{bar}};
+          DefaultStyle,
+          {'{', "{"},
+          {yytokentype::TK_RS, ">>"},
+          {NodeEnum::kStreamingConcatenation},
+          {0, SpacingOptions::Undecided},
+      },
+      {
+          // foo = {>>{bar}};
+          DefaultStyle,
+          {yytokentype::TK_RS, ">>"},
+          {'{', "{"},
+          {NodeEnum::kStreamingConcatenation},
+          {0, SpacingOptions::Undecided},
+      },
+      {
+          // foo = {>>{bar}};
+          DefaultStyle,
+          {'{', "{"},
+          {yytokentype::SymbolIdentifier, "bar"},
+          {NodeEnum::kStreamingConcatenation},
+          {0, SpacingOptions::Undecided},
+      },
+      {
+          // foo = {>>{bar}};
+          DefaultStyle,
+          {yytokentype::SymbolIdentifier, "bar"},
+          {'}', "}"},
+          {NodeEnum::kStreamingConcatenation},
+          {0, SpacingOptions::Undecided},
+      },
+      {
+          // foo = {>>4{bar}};
+          DefaultStyle,
+          {yytokentype::TK_RS, ">>"},
+          {yytokentype::TK_DecNumber, "4"},
+          {NodeEnum::kStreamingConcatenation},
+          {0, SpacingOptions::Undecided},
+      },
+      {
+          // foo = {>>4{bar}};
+          DefaultStyle,
+          {yytokentype::TK_DecNumber, "4"},
+          {'{', "{"},
+          {NodeEnum::kStreamingConcatenation},
+          {0, SpacingOptions::Undecided},
+      },
+      {
+          // foo = {>>byte{bar}};
+          DefaultStyle,
+          {yytokentype::TK_RS, ">>"},
+          {yytokentype::TK_byte, "byte"},
+          {NodeEnum::kStreamingConcatenation},
+          {0, SpacingOptions::Undecided},
+      },
+      {
+          // foo = {>>byte{bar}};
+          DefaultStyle,
+          {yytokentype::TK_byte, "byte"},
+          {'{', "{"},
+          {NodeEnum::kStreamingConcatenation},
+          {0, SpacingOptions::Undecided},
+      },
+      {
+          // foo = {>>type_t{bar}};
+          DefaultStyle,
+          {yytokentype::TK_RS, ">>"},
+          {yytokentype::SymbolIdentifier, "type_t"},
+          {NodeEnum::kStreamingConcatenation},
+          {0, SpacingOptions::Undecided},
+      },
+      {
+          // foo = {>>type_t{bar}};
+          DefaultStyle,
+          {yytokentype::SymbolIdentifier, "type_t"},
+          {'{', "{"},
+          {NodeEnum::kStreamingConcatenation},
+          {0, SpacingOptions::Undecided},
+      },
+      {
+          // foo = {>>`GET_TYPE{bar}};
+          DefaultStyle,
+          {yytokentype::TK_RS, ">>"},
+          {yytokentype::MacroIdentifier, "`GET_TYPE"},
+          {NodeEnum::kStreamingConcatenation},
+          {0, SpacingOptions::Undecided},
+      },
+      {
+          // foo = {>>`GET_TYPE{bar}};
+          DefaultStyle,
+          {yytokentype::MacroIdentifier, "`GET_TYPE"},
+          {'{', "{"},
+          {NodeEnum::kStreamingConcatenation},
+          {0, SpacingOptions::Undecided},
       },
   };
   int test_index = 0;
