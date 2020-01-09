@@ -168,13 +168,14 @@ struct TreeUnwrapperTestData {
   const char* test_name;
 
   // The source code for testing must be syntactically correct.
-  std::string source_code;
+  absl::string_view source_code;
 
   // The reference values and structure of UnwrappedLines to expect.
   ExpectedUnwrappedLineTree expected_unwrapped_lines;
 
   template <typename... Args>
-  TreeUnwrapperTestData(const char* name, std::string code, Args&&... nodes)
+  TreeUnwrapperTestData(const char* name, absl::string_view code,
+                        Args&&... nodes)
       : test_name(name),
         source_code(code),
         expected_unwrapped_lines(ExpectedUnwrappedLine{0},
@@ -230,7 +231,7 @@ class TreeUnwrapperTest : public ::testing::Test {
   // Takes a string representation of a verilog file and creates a
   // VerilogAnalyzer which holds a concrete syntax tree and token stream view
   // of the file.
-  void MakeTree(const std::string& content) {
+  void MakeTree(absl::string_view content) {
     analyzer_ = absl::make_unique<VerilogAnalyzer>(content, "TEST_FILE");
     verible::util::Status status = ABSL_DIE_IF_NULL(analyzer_)->Analyze();
     EXPECT_OK(status) << "Rejected code: " << std::endl << content;
@@ -248,7 +249,7 @@ class TreeUnwrapperTest : public ::testing::Test {
   // Creates a TreeUnwrapper populated with a concrete syntax tree and
   // token stream view from the file input
   std::unique_ptr<TreeUnwrapper> CreateTreeUnwrapper(
-      const std::string& source_code) {
+      absl::string_view source_code) {
     MakeTree(source_code);
     const verible::TextStructureView& text_structure_view = analyzer_->Data();
     unwrapper_data_ =
@@ -271,7 +272,7 @@ class TreeUnwrapperTest : public ::testing::Test {
 // Test that TreeUnwrapper produces the correct UnwrappedLines from an empty
 // file
 TEST_F(TreeUnwrapperTest, UnwrapEmptyFile) {
-  const std::string source_code = "";
+  const absl::string_view source_code = "";
 
   auto tree_unwrapper = CreateTreeUnwrapper(source_code);
   tree_unwrapper->Unwrap();
@@ -284,7 +285,7 @@ TEST_F(TreeUnwrapperTest, UnwrapEmptyFile) {
 // Test that TreeUnwrapper produces the correct UnwrappedLines from a blank
 // line.
 TEST_F(TreeUnwrapperTest, UnwrapBlankLineOnly) {
-  const std::string source_code = "\n";
+  const absl::string_view source_code = "\n";
 
   auto tree_unwrapper = CreateTreeUnwrapper(source_code);
   tree_unwrapper->Unwrap();
