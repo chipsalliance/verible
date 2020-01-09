@@ -3216,6 +3216,23 @@ const TreeUnwrapperTestData kUnwrapFunctionTestCases[] = {
     },
 
     {
+        "function with if-else branches, single-assign-modify-statements",
+        "function foo;"
+        "if (zz) "
+        "a |= b;"
+        "else "
+        "a &= ~b;"
+        "endfunction",
+        FunctionHeader(0, L(0, {"function", "foo", ";"})),
+        StatementList(1,
+                      FlowControl(1,  //
+                                  L(1, {"if", "(", "zz", ")"}),
+                                  NL(2, {"a", "|=", "b", ";"}), L(1, {"else"}),
+                                  NL(2, {"a", "&=", "~", "b", ";"}))),
+        L(0, {"endfunction"}),
+    },
+
+    {
         "function with for loop",
         "function foo;"
         "for (x=0;x<N;++x) begin "

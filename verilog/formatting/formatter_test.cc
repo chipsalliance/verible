@@ -2321,6 +2321,17 @@ static const std::initializer_list<FormatterTestCase>
          "      f.g(h);\n"
          "  end\n"
          "endmodule\n"},
+        {"module m;initial begin if(a==b)"
+         "a|=b;else\n"
+         "a&=~b;end endmodule",
+         "module m;\n"
+         "  initial begin\n"
+         "    if (a == b)\n"
+         "      a |= b;\n"
+         "    else\n"
+         "      a &= ~b;\n"
+         "  end\n"
+         "endmodule\n"},
         {"   module m;  always_comb    begin     \n"
          "        if      ( a   ) b =  16'hdead    ; \n"
          "  else if (   c     )  d= 16 'hbeef  ;   \n"
