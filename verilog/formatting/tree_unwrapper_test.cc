@@ -805,6 +805,79 @@ const TreeUnwrapperTestData kUnwrapModuleTestCases[] = {
                        L(1, {"end"})),
         L(0, {"endmodule"}),
     },
+    {
+        "module with multiple static variables in one declaration",
+        "module multi_static;\n"
+        "initial begin\n"
+        "  static int a, b, c = 0;\n"
+        "end\n"
+        "endmodule",
+        ModuleHeader(0, L(0, {"module", "multi_static", ";"})),
+        ModuleItemList(1, L(1, {"initial", "begin"}),
+                       StatementList(2, N(2, L(2, {"static"}), NL(2, {"int"}),
+                                             N(4, NL(4, {"a", ","}),
+                                                  NL(4, {"b", ","}),
+                                                  NL(4, {"c", "=", "0", ";"})))),
+                       L(1, {"end"})),
+        L(0, {"endmodule"}),
+    },
+    {
+        "module with multiple initialized static variables",
+        "module multi_static;\n"
+        "initial begin\n"
+        "  static int a = 1, b = 0;\n"
+        "end\n"
+        "endmodule",
+        ModuleHeader(0, L(0, {"module", "multi_static", ";"})),
+        ModuleItemList(1, L(1, {"initial", "begin"}),
+                       StatementList(2, N(2, L(2, {"static"}), NL(2, {"int"}),
+                                             N(4, NL(4, {"a", "=", "1", ","}),
+                                                  NL(4, {"b", "=", "0", ";"})))),
+                       L(1, {"end"})),
+        L(0, {"endmodule"}),
+    },
+    {
+        "module with const variable",
+        "module const_variable;\n"
+        "initial begin\n"
+        "  const int a = 0;\n"
+        "end\n"
+        "endmodule",
+        ModuleHeader(0, L(0, {"module", "const_variable", ";"})),
+        ModuleItemList(1, L(1, {"initial", "begin"}),
+                       StatementList(2, N(2, L(2, {"const"}), L(2, {"int"}),
+                                             L(2, {"a", "=", "0", ";"}))),
+                       L(1, {"end"})),
+        L(0, {"endmodule"}),
+    },
+    {
+        "module with const automatic variable",
+        "module const_variable;\n"
+        "initial begin\n"
+        "  automatic const int a = 0;\n"
+        "end\n"
+        "endmodule",
+        ModuleHeader(0, L(0, {"module", "const_variable", ";"})),
+        ModuleItemList(1, L(1, {"initial", "begin"}),
+                       StatementList(2, N(2, L(2, {"automatic", "const"}), L(2, {"int"}),
+                                             L(2, {"a", "=", "0", ";"}))),
+                       L(1, {"end"})),
+        L(0, {"endmodule"}),
+    },
+    {
+        "module with variable using multiple qualifiers",
+        "module qualified;\n"
+        "initial begin\n"
+        "  const var automatic int a = 0;\n"
+        "end\n"
+        "endmodule",
+        ModuleHeader(0, L(0, {"module", "qualified", ";"})),
+        ModuleItemList(1, L(1, {"initial", "begin"}),
+                       StatementList(2, N(2, L(2, {"const", "var", "automatic"}), L(2, {"int"}),
+                                             L(2, {"a", "=", "0", ";"}))),
+                       L(1, {"end"})),
+        L(0, {"endmodule"}),
+    },
 
     {
         "module with block generate statements",
