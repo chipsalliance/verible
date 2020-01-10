@@ -1499,10 +1499,8 @@ static const std::initializer_list<FormatterTestCase> kFormatterTestCases = {
      "module mc; case(s)a : bb c ; d : ee f; endcase endmodule",
      "module mc;\n"
      "  case (s)\n"
-     "    a:\n"
-     "    bb c;\n"  // TODO(fangism): these instantiations fit on prev. line
-     "    d:\n"
-     "    ee f;\n"
+     "    a: bb c;\n"
+     "    d: ee f;\n"
      "  endcase\n"
      "endmodule\n"},
 
@@ -1571,6 +1569,46 @@ static const std::initializer_list<FormatterTestCase> kFormatterTestCases = {
      "  endcase\n"
      "  case (z) matches\n"
      "    .foo: return 0;\n"
+     "    .*: return 1;\n"
+     "  endcase\n"
+     "endfunction\n"},
+    {// keep short case items on one line
+     "function f; case (x)k1 : if( b )break; default :return 2;"
+     "endcase endfunction\n",
+     "function f;\n"
+     "  case (x)\n"
+     "    k1: if (b) break;\n"
+     "    default: return 2;\n"
+     "  endcase\n"
+     "endfunction\n"},
+    {// keep short default items on one line
+     "function f; case (x)k1 :break; default :if( c )return 2;"
+     "endcase endfunction\n",
+     "function f;\n"
+     "  case (x)\n"
+     "    k1: break;\n"
+     "    default: if (c) return 2;\n"
+     "  endcase\n"
+     "endfunction\n"},
+    {// keep short case inside items on one line
+     "function f; case (x)inside k1 : if( b )return c; k2 : return a;"
+     "endcase endfunction\n",
+     "function f;\n"
+     "  case (x) inside\n"
+     "    k1: if (b) return c;\n"
+     "    k2: return a;\n"
+     "  endcase\n"
+     "endfunction\n"},
+    {// keep short case pattern items on one line
+     "function f;"
+     "case (y) matches "
+     ".foo   :if( n )return 0;"
+     ".*\t: return 1;"
+     "endcase "
+     "endfunction",
+     "function f;\n"
+     "  case (y) matches\n"
+     "    .foo: if (n) return 0;\n"
      "    .*: return 1;\n"
      "  endcase\n"
      "endfunction\n"},
