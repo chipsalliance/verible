@@ -2065,6 +2065,37 @@ static const std::initializer_list<FormatterTestCase> kFormatterTestCases = {
      "  fork : l1\n"
      "  join : l1\n"
      "endtask\n"},
+    {// task with disable statements
+     "task  t ;fork\tjoin\tdisable\tfork;endtask",
+     "task t;\n"
+     "  fork\n"
+     "  join\n"
+     "  disable fork;\n"
+     "endtask\n"},
+    {"task  t ;fork\tjoin_any\tdisable\tfork  ;endtask",
+     "task t;\n"
+     "  fork\n"
+     "  join_any\n"
+     "  disable fork;\n"
+     "endtask\n"},
+    {"task  t ;disable\tbean_counter  ;endtask",
+     "task t;\n"
+     "  disable bean_counter;\n"
+     "endtask\n"},
+
+    {// module with disable statements
+     "module m;always begin :block disable m.block; end endmodule",
+     "module m;\n"
+     "  always begin : block\n"
+     "    disable m.block;\n"
+     "  end\n"
+     "endmodule\n"},
+    {"module m;always begin disable m.block; end endmodule",
+     "module m;\n"
+     "  always begin\n"
+     "    disable m.block;\n"
+     "  end\n"
+     "endmodule\n"},
 
     // property test cases
     {"module mp ;property p1 ; a|->b;endproperty endmodule",
