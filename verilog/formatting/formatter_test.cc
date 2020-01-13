@@ -555,6 +555,63 @@ static const std::initializer_list<FormatterTestCase> kFormatterTestCases = {
         "  parameter  int   ternary=(a)?(b):(c);",
         "parameter int ternary = (a) ? (b) : (c);\n",
     },
+    // streaming operators
+    {
+        "   parameter  int  b={ >>   { a } } ;",
+        "parameter int b = {>>{a}};\n",
+    },
+    {
+        "   parameter  int  b={ >>   { a , b,  c } } ;",
+        "parameter int b = {>>{a, b, c}};\n",
+    },
+    {
+        "   parameter  int  b={ >> 4  { a } } ;",
+        "parameter int b = {>>4{a}};\n",
+    },
+    {
+        "   parameter  int  b={ >> byte  { a } } ;",
+        "parameter int b = {>>byte{a}};\n",
+    },
+    {
+        "   parameter  int  b={ >> my_type_t  { a } } ;",
+        "parameter int b = {>>my_type_t{a}};\n",
+    },
+    {
+        "   parameter  int  b={ >> `GET_TYPE  { a } } ;",
+        "parameter int b = {>>`GET_TYPE{a}};\n",
+    },
+    {
+        "   parameter  int  b={ >> 4  {{ >> 2 { a }  }} } ;",
+        "parameter int b = {>>4{{>>2{a}}}};\n",
+    },
+    {
+        "   parameter  int  b={ <<   { a } } ;",
+        "parameter int b = {<<{a}};\n",
+    },
+    {
+        "   parameter  int  b={ <<   { a , b,  c } } ;",
+        "parameter int b = {<<{a, b, c}};\n",
+    },
+    {
+        "   parameter  int  b={ << 4  { a } } ;",
+        "parameter int b = {<<4{a}};\n",
+    },
+    {
+        "   parameter  int  b={ << byte  { a } } ;",
+        "parameter int b = {<<byte{a}};\n",
+    },
+    {
+        "   parameter  int  b={ << my_type_t  { a } } ;",
+        "parameter int b = {<<my_type_t{a}};\n",
+    },
+    {
+        "   parameter  int  b={ << `GET_TYPE  { a } } ;",
+        "parameter int b = {<<`GET_TYPE{a}};\n",
+    },
+    {
+        "   parameter  int  b={ << 4  {{ << 2 { a }  }} } ;",
+        "parameter int b = {<<4{{<<2{a}}}};\n",
+    },
 
     // basic module test cases
     {"module foo;endmodule:foo\n",
@@ -847,6 +904,22 @@ static const std::initializer_list<FormatterTestCase> kFormatterTestCases = {
         "module m;\n"
         "  initial begin\n"
         "    const var automatic int a = 0;\n"
+        "  end\n"
+        "endmodule\n",
+    },
+    {
+        "module m ;initial  begin static byte s  ={<<{a}};end endmodule",
+        "module m;\n"
+        "  initial begin\n"
+        "    static byte s = {<<{a}};\n"
+        "  end\n"
+        "endmodule\n",
+    },
+    {
+        "module m ;initial  begin static int s  ={>>4{a}};end endmodule",
+        "module m;\n"
+        "  initial begin\n"
+        "    static int s = {>>4{a}};\n"
         "  end\n"
         "endmodule\n",
     },
