@@ -2654,6 +2654,23 @@ TEST(TokenAnnotatorTest, AnnotateFormattingWithContextTest) {
           {NodeEnum::kStreamingConcatenation},
           {0, SpacingOptions::Undecided},
       },
+      // ':' in bit slicing
+      {
+          // [1:0]
+          DefaultStyle,
+          {yytokentype::TK_DecNumber, "1"},
+          {':', ":"},
+          {NodeEnum::kSelectVariableDimension},
+          {0, SpacingOptions::Undecided},
+      },
+      {
+          // [1:0]
+          DefaultStyle,
+          {':', ":"},
+          {yytokentype::TK_DecNumber, "0"},
+          {NodeEnum::kSelectVariableDimension},
+          {0, SpacingOptions::Undecided},
+      },
   };
   int test_index = 0;
   for (const auto& test_case : kTestCases) {

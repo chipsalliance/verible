@@ -2021,6 +2021,15 @@ static const std::initializer_list<FormatterTestCase> kFormatterTestCases = {
      "logic [K:1][W:1] a;\n"},
     {"logic b [K:1] [W:1] ;",  //
      "logic b[K:1][W:1];\n"},
+    // spaces in bit slicing
+    {
+        "always_ff @(posedge clk) begin "
+        "dummy  <=\tfoo  [  7  :  2  ] ; "
+        "end",
+        "always_ff @(posedge clk) begin\n"
+        "  dummy <= foo[7:2];\n"
+        "end\n",
+    },
 
     // task test cases
     {"task t ;endtask:t",  //
@@ -2448,8 +2457,8 @@ static const std::initializer_list<FormatterTestCase>
          "vv[44:1]);"
          "endmodule",
          "module m;\n"
-         "  assign wwwwww[77 : 66] = sss(\n"
-         "      qqqq[33 : 22], vv[44 : 1]);\n"
+         "  assign wwwwww[77:66] = sss(\n"
+         "      qqqq[33:22], vv[44:1]);\n"
          "endmodule\n"},
 };
 

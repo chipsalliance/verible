@@ -312,6 +312,11 @@ static WithReason<int> SpacesRequiredBetween(const PreFormatToken& left,
       return {1, "Ternary ?: expression wants 1 space around ':'"};
     }
 
+    // Spacing in bit slicing
+    if (context.IsInsideFirst({NodeEnum::kSelectVariableDimension}, {})) {
+      return {0, "No space before ':' in bit slice"};
+    }
+
     // TODO(fangism): Everything that resembles a range (in index, dimensions)
     // should have 1 space.
     //   kSelectVariableDimension, kDimensionRange
@@ -331,8 +336,12 @@ static WithReason<int> SpacesRequiredBetween(const PreFormatToken& left,
     // For now, if case is not explicitly handled, preserve existing space.
   }
   if (left.TokenEnum() == ':') {
-    // Most contexts want a space after ':'.
-    return {1, "Default to 1 space after ':'"};
+    if (context.IsInsideFirst({NodeEnum::kSelectVariableDimension}, {})) {
+      return {0, "No space after ':' in bit slice"};
+    } else {
+      // Most contexts want a space after ':'.
+      return {1, "Default to 1 space after ':'"};
+    }
   }
 
   // "if (...)", "for (...) instead of "if(...)", "for(...)",
