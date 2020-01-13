@@ -140,6 +140,7 @@ cc_library(
     deps = [
         "//common/strings:comment_utils",
         "//common/text:token_stream_view",
+        "//common/util:interval_set",
         "//common/util:logging",
         "//verilog/parser:verilog_parser",
         "//verilog/parser:verilog_token_enum",
@@ -152,6 +153,7 @@ cc_test(
     srcs = ["comment_controls_test.cc"],
     deps = [
         ":comment_controls",
+        "//common/text:token_info_test_util",
         "//verilog/analysis:verilog_analyzer",
         "@com_google_googletest//:gtest_main",
     ],

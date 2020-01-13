@@ -28,19 +28,8 @@
 namespace verilog {
 namespace formatter {
 
-void SetRange(std::vector<bool>* disable_set, int start, int end) {
-  CHECK_GE(start, 0);
-  CHECK_LE(start, end);
-  if (end > static_cast<int>(disable_set->size())) {
-    disable_set->resize(end, false);
-  }
-  for (int i = start; i < end; ++i) {
-    (*disable_set)[i] = true;
-  }
-}
-
-std::vector<bool> DisableFormattingRanges(
-    absl::string_view text, const verible::TokenSequence& tokens) {
+ByteOffsetSet DisableFormattingRanges(absl::string_view text,
+                                      const verible::TokenSequence& tokens) {
   static constexpr absl::string_view kTrigger = "verilog_format:";
   static const auto kDelimiters = absl::ByAnyChar(" \t");
   static constexpr int kNullOffset = -1;
@@ -50,29 +39,33 @@ std::vector<bool> DisableFormattingRanges(
 
   // By default, no text ranges are formatter-disabled.
   int begin_disable_offset = kNullOffset;
-  std::vector<bool> disable_set(text.length(), false);
+  ByteOffsetSet disable_set;
   for (const auto& token : tokens) {
     VLOG(2) << verible::TokenWithContext{token, context};
     switch (token.token_enum) {
-      case TK_COMMENT_BLOCK:
-      case TK_EOL_COMMENT: {
+      case TK_EOL_COMMENT:
+      case TK_COMMENT_BLOCK: {
         // Focus on the space-delimited tokens in the comment text.
         auto commands = verible::StripCommentAndSpacePadding(token.text);
         if (absl::ConsumePrefix(&commands, kTrigger)) {
           const std::vector<absl::string_view> comment_tokens(
               absl::StrSplit(commands, kDelimiters, absl::SkipEmpty()));
           if (!comment_tokens.empty()) {
-            // "off" marks the start of a disabling range.
-            // "on" marks the end of disabling range.
+            // "off" marks the start of a disabling range, at end of comment.
+            // "on" marks the end of disabling range, at start of comment.
             if (comment_tokens.front() == "off") {
               if (begin_disable_offset == kNullOffset) {
-                begin_disable_offset = token.left(text);
+                begin_disable_offset = token.right(text);
+                if (token.token_enum == TK_EOL_COMMENT) {
+                  ++begin_disable_offset;  // to cover the trailing '\n'
+                }
               }  // else ignore
             } else if (comment_tokens.front() == "on") {
               if (begin_disable_offset != kNullOffset) {
-                const int end_disable_offset = token.right(text);
-                SetRange(&disable_set, begin_disable_offset,
-                         end_disable_offset);
+                const int end_disable_offset = token.left(text);
+                if (begin_disable_offset != end_disable_offset) {
+                  disable_set.Add({begin_disable_offset, end_disable_offset});
+                }
                 begin_disable_offset = kNullOffset;
               }  // else ignore
             }
@@ -86,20 +79,9 @@ std::vector<bool> DisableFormattingRanges(
   }
   // If the disabling interval remains open, close it (to end-of-buffer).
   if (begin_disable_offset != kNullOffset) {
-    SetRange(&disable_set, begin_disable_offset, text.length());
+    disable_set.Add({begin_disable_offset, text.length()});
   }
   return disable_set;
-}
-
-bool ContainsRange(const std::vector<bool>& intervals, int start, int end) {
-  CHECK_GE(start, 0);
-  CHECK_LE(start, end);
-  if (start == end) return true;  // degenerate case
-  if (end > static_cast<int>(intervals.size())) return false;
-  for (int i = start; i < end; ++i) {
-    if (!intervals[i]) return false;
-  }
-  return true;
 }
 
 }  // namespace formatter
