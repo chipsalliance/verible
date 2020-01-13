@@ -49,6 +49,7 @@ cc_library(
         "//common/text:token_info",
         "//common/text:token_stream_view",
         "//common/util:container_util",
+        "//common/util:interval_set",
         "//common/util:iterator_range",
         "//common/util:logging",
         "@com_google_absl//absl/strings",

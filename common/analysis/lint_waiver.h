@@ -24,15 +24,15 @@
 #include "common/text/text_structure.h"
 #include "common/text/token_stream_view.h"
 #include "common/util/container_util.h"
+#include "common/util/interval_set.h"
 
 namespace verible {
 
 // LintWaiver maintains a set of line ranges per lint rule that should be
 // exempt from each rule.
 class LintWaiver {
-  // TODO(b/147247103): integer interval sets (internal representation) would
-  // be more memory-efficient, given the sparsity of sets.
-  using LineSet = std::vector<bool>;  // Needs to store O(line number) elements.
+  // Compact set of line numbers.
+  using LineSet = IntervalSet<size_t>;
 
  public:
   LintWaiver() {}
@@ -69,7 +69,7 @@ class LintWaiver {
 
   // Test if a particular line is included in the set.
   static bool LineSetContains(const LineSet& line_set, size_t line) {
-    return line_set.size() > line && line_set[line];
+    return line_set.Contains(line);
   }
 
  private:

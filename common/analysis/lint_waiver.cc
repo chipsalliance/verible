@@ -42,12 +42,7 @@ void LintWaiver::WaiveOneLine(absl::string_view rule_name, size_t line_number) {
 void LintWaiver::WaiveLineRange(absl::string_view rule_name, size_t line_begin,
                                 size_t line_end) {
   LineSet& line_set = waiver_map_[rule_name];
-  if (line_set.size() < line_end) {
-    line_set.resize(line_end);
-  }
-  for (size_t line = line_begin; line < line_end; ++line) {
-    line_set[line] = true;
-  }
+  line_set.Add({line_begin, line_end});
 }
 
 bool LintWaiver::RuleIsWaivedOnLine(absl::string_view rule_name,
