@@ -1197,6 +1197,36 @@ const TreeUnwrapperTestData kUnwrapModuleTestCases[] = {
             TFPortList(3, L(3, {"input", "int", "secs"})), L(1, {")", ";"})),
         L(0, {"endmodule"}),
     },
+
+    {
+        "module using disable statements labelled begin.",
+        "module disable_self;\n"
+        "  always begin : block\n"
+        "    disable disable_self.block;\n"
+        "  end\n"
+        "endmodule\n",
+        ModuleHeader(0, L(0, {"module", "disable_self", ";"})),
+        ModuleItemList(
+            1, L(1, {"always", "begin", ":", "block"}),
+            N(2, L(2, {"disable", "disable_self", ".", "block", ";"})),
+            L(1, {"end"})),
+        L(0, {"endmodule"}),
+    },
+
+    {
+        "module using disable statements",
+        "module disable_other;\n"
+        "  always begin\n"
+        "    disable disable_other.block;\n"
+        "  end\n"
+        "endmodule\n",
+        ModuleHeader(0, L(0, {"module", "disable_other", ";"})),
+        ModuleItemList(
+            1, L(1, {"always", "begin"}),
+            N(2, L(2, {"disable", "disable_other", ".", "block", ";"})),
+            L(1, {"end"})),
+        L(0, {"endmodule"}),
+    },
 };
 
 // Test that TreeUnwrapper produces the correct UnwrappedLines from module tests
@@ -2774,6 +2804,45 @@ const TreeUnwrapperTestData kUnwrapTaskTestCases[] = {
             1, L(1, {"fork"}),
             StatementList(2, DataDeclaration(2, L(2, {"int", "value", ";"}))),
             L(1, {"join"})),
+        L(0, {"endtask"}),
+    },
+
+    {
+        "task with fork-join-disable",
+        "task foo;"
+        "fork "
+        "int value;"
+        "join "
+        "disable fork;"
+        "endtask",
+        TaskHeader(0, L(0, {"task", "foo", ";"})),
+        StatementList(
+            1, L(1, {"fork"}),
+            StatementList(2, DataDeclaration(2, L(2, {"int", "value", ";"}))),
+            L(1, {"join"}), L(1, {"disable", "fork", ";"})),
+        L(0, {"endtask"}),
+    },
+
+    {
+        "task with fork-join_any-disable",
+        "task foo;"
+        "fork "
+        "join_any "
+        "disable fork;"
+        "endtask",
+        TaskHeader(0, L(0, {"task", "foo", ";"})),
+        StatementList(1, L(1, {"fork"}), L(1, {"join_any"}),
+                      L(1, {"disable", "fork", ";"})),
+        L(0, {"endtask"}),
+    },
+
+    {
+        "task with disable",
+        "task foo;"
+        "disable other;"
+        "endtask",
+        TaskHeader(0, L(0, {"task", "foo", ";"})),
+        StatementList(1, L(1, {"disable", "other", ";"})),
         L(0, {"endtask"}),
     },
 

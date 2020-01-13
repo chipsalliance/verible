@@ -575,6 +575,7 @@ void TreeUnwrapper::Visit(const verible::SyntaxTreeNode& node) {
     case NodeEnum::kAlwaysStatement:
     case NodeEnum::kInitialStatement:
     case NodeEnum::kFinalStatement:
+    case NodeEnum::kDisableStatement:
     case NodeEnum::kForInitialization:
     case NodeEnum::kForCondition:
     case NodeEnum::kForStepList:
