@@ -1056,16 +1056,14 @@ const TreeUnwrapperTestData kUnwrapModuleTestCases[] = {
         "endcase\n"
         "endmodule",
         ModuleHeader(0, L(0, {"module", "multi_cases", ";"})),
-        ModuleItemList(1, L(1, {"case", "(", "foo", ")"}),
-                       CaseItemList(2,
-                                    // TODO(fangism): merge label prefix to
-                                    // following subtree if it fits
-                                    L(2, {"A", ":"}),
-                                    Instantiation(2, L(2, {"a", "aa", ";"}))),
-                       L(1, {"endcase"}), L(1, {"case", "(", "bar", ")"}),
-                       CaseItemList(2, L(2, {"B", ":"}),
-                                    Instantiation(2, L(2, {"b", "bb", ";"}))),
-                       L(1, {"endcase"})),
+        ModuleItemList(
+            1, L(1, {"case", "(", "foo", ")"}),
+            CaseItemList(2, N(2, L(2, {"A", ":"}),
+                              Instantiation(2, L(2, {"a", "aa", ";"})))),
+            L(1, {"endcase"}), L(1, {"case", "(", "bar", ")"}),
+            CaseItemList(2, N(2, L(2, {"B", ":"}),
+                              Instantiation(2, L(2, {"b", "bb", ";"})))),
+            L(1, {"endcase"})),
         L(0, {"endmodule"}),
     },
 
@@ -1087,8 +1085,8 @@ const TreeUnwrapperTestData kUnwrapModuleTestCases[] = {
                 FlowControl(
                     2, L(2, {"case", "(", "blah", ".", "blah", ")"}),
                     CaseItemList(
-                        3, L(3, {"aaa", ",", "bbb", ":", "x", "=", "y", ";"}),
-                        L(3, {"ccc", ",", "ddd", ":", "w", "=", "z", ";"})),
+                        3, NL(3, {"aaa", ",", "bbb", ":", "x", "=", "y", ";"}),
+                        NL(3, {"ccc", ",", "ddd", ":", "w", "=", "z", ";"})),
                     L(2, {"endcase"}))),
             L(1, {"end"})),
         L(0, {"endmodule"}),
@@ -1108,15 +1106,17 @@ const TreeUnwrapperTestData kUnwrapModuleTestCases[] = {
         ModuleItemList(
             1, L(1, {"initial", "begin"}),
             StatementList(
-                2, FlowControl(2, L(2, {"case", "(", "blah", ".", "blah", ")"}),
-                               CaseItemList(3,
-                                            L(3, {"aaa", ",", "bbb", ":", "x",
-                                                  "=", "`YYY", "("}),
-                                            L(3, {")", ";"}),
-                                            L(3, {"default", ":", "w", "=",
-                                                  "`ZZZ", "("}),
-                                            L(3, {")", ";"})),
-                               L(2, {"endcase"}))),
+                2,
+                FlowControl(
+                    2, L(2, {"case", "(", "blah", ".", "blah", ")"}),
+                    CaseItemList(
+                        3,
+                        N(3,
+                          L(3, {"aaa", ",", "bbb", ":", "x", "=", "`YYY", "("}),
+                          L(3, {")", ";"})),
+                        N(3, L(3, {"default", ":", "w", "=", "`ZZZ", "("}),
+                          L(3, {")", ";"}))),
+                    L(2, {"endcase"}))),
             L(1, {"end"})),
         L(0, {"endmodule"}),
     },
@@ -1139,12 +1139,12 @@ const TreeUnwrapperTestData kUnwrapModuleTestCases[] = {
             StatementList(
                 2,
                 FlowControl(2, L(2, {"case", "(", "blah", ".", "blah", ")"}),
-                            CaseItemList(3, L(3, {"aaa", ",", "bbb", ":", "x",
-                                                  "=", "y", ";"})),
+                            CaseItemList(3, NL(3, {"aaa", ",", "bbb", ":", "x",
+                                                   "=", "y", ";"})),
                             L(2, {"endcase"})),
                 FlowControl(2, L(2, {"case", "(", "blah", ".", "blah", ")"}),
-                            CaseItemList(3, L(3, {"ccc", ",", "ddd", ":", "w",
-                                                  "=", "z", ";"})),
+                            CaseItemList(3, NL(3, {"ccc", ",", "ddd", ":", "w",
+                                                   "=", "z", ";"})),
                             L(2, {"endcase"}))),
             L(1, {"end"})),
         L(0, {"endmodule"}),
@@ -3590,13 +3590,13 @@ const TreeUnwrapperTestData kUnwrapFunctionTestCases[] = {
             1,
             FlowControl(1, L(1, {"case", "(", "y", ")"}),
                         CaseItemList(2,  //
-                                     L(2, {"k1", ":", "return", "0", ";"}),
-                                     L(2, {"k2", ":", "return", "1", ";"})),
+                                     NL(2, {"k1", ":", "return", "0", ";"}),
+                                     NL(2, {"k2", ":", "return", "1", ";"})),
                         L(1, {"endcase"})),                //
             FlowControl(1, L(1, {"case", "(", "z", ")"}),  //
                         CaseItemList(2,                    //
-                                     L(2, {"k3", ":", "return", "0", ";"}),
-                                     L(2, {"k4", ":", "return", "1", ";"})),
+                                     NL(2, {"k3", ":", "return", "0", ";"}),
+                                     NL(2, {"k4", ":", "return", "1", ";"})),
                         L(1, {"endcase"}))),
         L(0, {"endfunction"}),
     },
@@ -3618,14 +3618,14 @@ const TreeUnwrapperTestData kUnwrapFunctionTestCases[] = {
             1,
             FlowControl(1, L(1, {"case", "(", "y", ")", "inside"}),
                         CaseItemList(2,  //
-                                     L(2, {"k1", ":", "return", "0", ";"}),
-                                     L(2, {"k2", ":", "return", "1", ";"})),
+                                     NL(2, {"k1", ":", "return", "0", ";"}),
+                                     NL(2, {"k2", ":", "return", "1", ";"})),
                         L(1, {"endcase"})),                       //
             FlowControl(1,                                        //
                         L(1, {"case", "(", "z", ")", "inside"}),  //
                         CaseItemList(2,                           //
-                                     L(2, {"k3", ":", "return", "0", ";"}),
-                                     L(2, {"k4", ":", "return", "1", ";"})),
+                                     NL(2, {"k3", ":", "return", "0", ";"}),
+                                     NL(2, {"k4", ":", "return", "1", ";"})),
                         L(1, {"endcase"}))),
         L(0, {"endfunction"}),
     },
@@ -3648,15 +3648,15 @@ const TreeUnwrapperTestData kUnwrapFunctionTestCases[] = {
             FlowControl(
                 1, L(1, {"case", "(", "y", ")", "matches"}),
                 CaseItemList(2,  //
-                             L(2, {".", "foo", ":", "return", "0", ";"}),
-                             L(2, {".*", ":", "return", "1", ";"})),
+                             NL(2, {".", "foo", ":", "return", "0", ";"}),
+                             NL(2, {".*", ":", "return", "1", ";"})),
                 L(1, {"endcase"})),  //
             FlowControl(
                 1,                                         //
                 L(1, {"case", "(", "z", ")", "matches"}),  //
                 CaseItemList(2,                            //
-                             L(2, {".", "foo", ":", "return", "0", ";"}),
-                             L(2, {".*", ":", "return", "1", ";"})),
+                             NL(2, {".", "foo", ":", "return", "0", ";"}),
+                             NL(2, {".*", ":", "return", "1", ";"})),
                 L(1, {"endcase"}))),
         L(0, {"endfunction"}),
     },
