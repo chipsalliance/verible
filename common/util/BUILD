@@ -43,6 +43,22 @@ cc_library(
 )
 
 cc_library(
+    name = "interval",
+    hdrs = ["interval.h"],
+)
+
+cc_library(
+    name = "interval_set",
+    hdrs = ["interval_set.h"],
+    deps = [
+        ":auto_iterator",
+        ":interval",
+        ":logging",
+        "@com_google_absl//absl/strings",
+    ],
+)
+
+cc_library(
     name = "logging",
     srcs = ["logging.cc"],
     hdrs = ["logging.h"],
@@ -77,9 +93,15 @@ cc_library(
 )
 
 cc_library(
+    name = "auto_iterator",
+    hdrs = ["auto_iterator.h"],
+)
+
+cc_library(
     name = "iterator_adaptors",
     hdrs = ["iterator_adaptors.h"],
     deps = [
+        ":auto_iterator",
         ":iterator_range",
     ],
 )
@@ -179,6 +201,24 @@ cc_test(
     srcs = ["file_util_test.cc"],
     deps = [
         ":file_util",
+        "@com_google_googletest//:gtest_main",
+    ],
+)
+
+cc_test(
+    name = "interval_test",
+    srcs = ["interval_test.cc"],
+    deps = [
+        ":interval",
+        "@com_google_googletest//:gtest_main",
+    ],
+)
+
+cc_test(
+    name = "interval_set_test",
+    srcs = ["interval_set_test.cc"],
+    deps = [
+        ":interval_set",
         "@com_google_googletest//:gtest_main",
     ],
 )

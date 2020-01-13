@@ -16,8 +16,8 @@
 #define VERIBLE_COMMON_UTIL_ITERATOR_ADAPTORS_H_
 
 #include <iterator>
-#include <type_traits>  // for std::conditional
 
+#include "common/util/auto_iterator.h"
 #include "common/util/iterator_range.h"
 
 namespace verible {
@@ -30,24 +30,6 @@ constexpr std::reverse_iterator<Iter> make_reverse_iterator(Iter i) {
   return std::reverse_iterator<Iter>(i);
 }
 
-namespace internal {
-// Type-selector to choose the appropriate iterator type, based on const-ness.
-// (template metaprogramming)
-// Equivalent to using partial specialization (pre-c++11):
-//   template <class T>
-//   struct _iterator_selector {
-//     typedef typename T::iterator type;
-//   };
-//   template <class T>
-//   struct _iterator_selector<const T> {
-//     typedef typename T::const_iterator type;
-//   };
-template <class T>
-using iterator_selector =
-    std::conditional<std::is_const<T>::value, typename T::const_iterator,
-                     typename T::iterator>;
-}  // namespace internal
-
 // Construct a reverse-iterator range from a forward-iterating range.
 // Type T can be a (memory-owning) container or a (non-owning) iterator range.
 // The use of _iterator_selector allows this to automatically select the
@@ -57,7 +39,7 @@ using iterator_selector =
 // It is written as such to accommodate c++11 builds.
 template <class T>
 verible::iterator_range<
-    std::reverse_iterator<typename internal::iterator_selector<T>::type>>
+    std::reverse_iterator<typename auto_iterator_selector<T>::type>>
 reversed_view(T& t) {
   // equivalent to:
   // return make_range(t.rbegin(), t.rend());
