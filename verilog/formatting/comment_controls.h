@@ -23,7 +23,7 @@ namespace verilog {
 namespace formatter {
 
 // Collection of ranges of byte offsets.
-using ByteOffsetSet = verible::IntervalSet<size_t>;
+using ByteOffsetSet = verible::IntervalSet<int>;
 
 // Returns a representation of byte offsets where true (membership) means
 // formatting is disabled.

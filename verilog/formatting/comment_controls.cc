@@ -32,13 +32,13 @@ ByteOffsetSet DisableFormattingRanges(absl::string_view text,
                                       const verible::TokenSequence& tokens) {
   static constexpr absl::string_view kTrigger = "verilog_format:";
   static const auto kDelimiters = absl::ByAnyChar(" \t");
-  static constexpr size_t kNullOffset = static_cast<size_t>(-1);
+  static constexpr int kNullOffset = -1;
   const verible::TokenInfo::Context context(
       text,
       [](std::ostream& stream, int e) { stream << verilog_symbol_name(e); });
 
   // By default, no text ranges are formatter-disabled.
-  size_t begin_disable_offset = kNullOffset;
+  int begin_disable_offset = kNullOffset;
   ByteOffsetSet disable_set;
   for (const auto& token : tokens) {
     VLOG(2) << verible::TokenWithContext{token, context};
@@ -62,7 +62,7 @@ ByteOffsetSet DisableFormattingRanges(absl::string_view text,
               }  // else ignore
             } else if (comment_tokens.front() == "on") {
               if (begin_disable_offset != kNullOffset) {
-                const size_t end_disable_offset = token.left(text);
+                const int end_disable_offset = token.left(text);
                 if (begin_disable_offset != end_disable_offset) {
                   disable_set.Add({begin_disable_offset, end_disable_offset});
                 }
@@ -79,7 +79,7 @@ ByteOffsetSet DisableFormattingRanges(absl::string_view text,
   }
   // If the disabling interval remains open, close it (to end-of-buffer).
   if (begin_disable_offset != kNullOffset) {
-    disable_set.Add({begin_disable_offset, text.length()});
+    disable_set.Add({begin_disable_offset, static_cast<int>(text.length())});
   }
   return disable_set;
 }
