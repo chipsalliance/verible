@@ -6446,6 +6446,8 @@ case_modifier_opt
     { $$ = move($1); }
   | TK_unique
     { $$ = move($1); }
+  | TK_unique0
+    { $$ = move($1); } 
   | /* empty */
     { $$ = nullptr; }
   ;
