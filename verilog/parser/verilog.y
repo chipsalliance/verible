@@ -6441,14 +6441,6 @@ spec_notifier
     { $$ = MakeTaggedNode(N::kSpecifyNotifier, $1); }
   ;
 
-case_modifier_opt
-  : TK_priority
-    { $$ = move($1); }
-  | TK_unique
-    { $$ = move($1); }
-  | /* empty */
-    { $$ = nullptr; }
-  ;
 
 case_any
   : TK_case
@@ -6506,16 +6498,16 @@ procedural_continuous_assignment
 case_statement
   /* TODO(jeremycs): maybe add structure */
   /* includes randcase_statement */
-  : case_modifier_opt case_any '(' expression ')' case_items TK_endcase
+  : unique_priority_opt case_any '(' expression ')' case_items TK_endcase
     { $$ = MakeTaggedNode(N::kCaseStatement, $1, $2, MakeParenGroup($3, $4, $5), $6, $7);}
-  | case_modifier_opt case_any '(' expression ')' TK_matches
+  | unique_priority_opt case_any '(' expression ')' TK_matches
     case_pattern_items TK_endcase
     { $$ = MakeTaggedNode(N::kCaseStatement, $1, $2, MakeParenGroup($3, $4, $5), $6, $7, $8);}
-  | case_modifier_opt case_any '(' expression ')' TK_inside
+  | unique_priority_opt case_any '(' expression ')' TK_inside
     case_inside_items TK_endcase
     { $$ = MakeTaggedNode(N::kCaseStatement, $1, $2, MakeParenGroup($3, $4, $5), $6, $7, $8);}
     /* $2 should only be TK_case, but case_any avoids S/R conflict. */
-  | case_modifier_opt TK_randcase case_items TK_endcase
+  | unique_priority_opt TK_randcase case_items TK_endcase
     { $$ = MakeTaggedNode(N::kCaseStatement, $1, $2, $3, $4);}
   /**
   | TK_case '(' expression ')' case_items TK_endcase
@@ -6710,6 +6702,7 @@ unique_priority_opt
   | TK_priority
     { $$ = move($1); }
   | /* empty */
+    { $$ = nullptr; }
   ;
 statement_or_null_list_opt
   : statement_or_null_list
