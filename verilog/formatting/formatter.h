@@ -21,6 +21,7 @@
 #include "common/formatting/unwrapped_line.h"
 #include "common/text/text_structure.h"
 #include "common/util/status.h"
+#include "verilog/formatting/comment_controls.h"
 #include "verilog/formatting/format_style.h"
 
 namespace verilog {
@@ -81,6 +82,9 @@ class Formatter {
 
   // The style configuration for the formatter
   FormatStyle style_;
+
+  // Ranges of text where formatter is disabled (by comment directives).
+  ByteOffsetSet disabled_ranges_;
 
   // Set of formatted lines, populated by calling Format().
   std::vector<verible::FormattedExcerpt> formatted_lines_;

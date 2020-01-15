@@ -2256,6 +2256,71 @@ static const std::initializer_list<FormatterTestCase> kFormatterTestCases = {
      "    bit i\n"  // test cases are wrapped at 40
      ");\n"
      "endgroup\n"},
+
+    // comment-controlled formatter disabling
+    {"// verilog_format: off\n"  // disables whole file
+     "  `include  \t\t  \"path/to/file.vh\"\n",
+     "// verilog_format: off\n"
+     "  `include  \t\t  \"path/to/file.vh\"\n"},  // keeps bad spacing
+    {"/* verilog_format: off */\n"                // disables whole file
+     "  `include  \t\t  \"path/to/file.svh\"  \n",
+     "/* verilog_format: off */\n"
+     "  `include  \t\t  \"path/to/file.svh\"  \n"},  // keeps bad spacing
+    {"// verilog_format: on\n"  // already enabled, no effect
+     "  `include  \t  \"path/to/file.svh\"  \t\n",
+     "// verilog_format: on\n"
+     "`include \"path/to/file.svh\"\n"},
+    {"// verilog_format: off\n"
+     "// verilog_format: on\n"  // re-enable right away
+     "  `include  \t\t  \"path/to/file.svh\"  \n",
+     "// verilog_format: off\n"
+     "// verilog_format: on\n"
+     "`include \"path/to/file.svh\"\n"},
+    {"/* aaa *//* bbb */\n"                         // not formatting controls
+     "  `include  \t\t  \"path/to/file.svh\"  \n",  // should format
+     "/* aaa */  /* bbb */\n"  // currently inserts 2 spaces
+     "`include \"path/to/file.svh\"\n"},
+    {"/* verilog_format: off *//* verilog_format: on */\n"  // re-enable
+     "  `include  \t\t  \"path/to/file.svh\"  \n",
+     // Note that this case normally wouldn't fit in 40 columns,
+     // but disabling formatting lets it overflow.
+     "/* verilog_format: off *//* verilog_format: on */\n"
+     "`include \"path/to/file.svh\"\n"},
+    {"// verilog_format: off\n"
+     "  `include  \t\t  \"path/to/fileA.svh\"  // verilog_format: on\n"
+     "  `include  \t\t  \"path/to/fileB.svh\"  \n",
+     // re-enable formatting with comment trailing other tokens
+     "// verilog_format: off\n"
+     "  `include  \t\t  \"path/to/fileA.svh\"  // verilog_format: on\n"
+     "`include \"path/to/fileB.svh\"\n"},
+    {"  `include  \t\t  \"path/to/file1.vh\" \n"  // format this
+     "// verilog_format: off\n"                   // start disabling
+     "  `include  \t\t  \"path/to/file2.vh\" \n"
+     "\t\t\n"
+     "  `include  \t\t  \"path/to/file3.vh\" \n"
+     "// verilog_format: on\n"                     // stop disabling
+     "  `include  \t\t  \"path/to/file4.vh\" \n",  // format this
+     "`include \"path/to/file1.vh\"\n"
+     "// verilog_format: off\n"  // start disabling
+     "  `include  \t\t  \"path/to/file2.vh\" \n"
+     "\t\t\n"
+     "  `include  \t\t  \"path/to/file3.vh\" \n"
+     "// verilog_format: on\n"  // stop disabling
+     "`include \"path/to/file4.vh\"\n"},
+    {// disabling formatting on a module (to end of file)
+     "// verilog_format: off\n"
+     "module m;endmodule\n",
+     "// verilog_format: off\n"
+     "module m;endmodule\n"},
+    {// disabling formatting on a module (to end of file)
+     "// verilog_format: off\n"
+     "module m;\n"
+     "unindented instantiation;\n"
+     "endmodule\n",
+     "// verilog_format: off\n"
+     "module m;\n"
+     "unindented instantiation;\n"
+     "endmodule\n"},
 };
 
 // Tests that formatter produces expected results, end-to-end.
@@ -2274,7 +2339,7 @@ TEST(FormatterEndToEndTest, VerilogFormatTest) {
         VerilogAnalyzer::AnalyzeAutomaticMode(test_case.input, "<filename>");
     // Require these test cases to be valid.
     ASSERT_OK(ABSL_DIE_IF_NULL(analyzer)->LexStatus());
-    ASSERT_OK(analyzer->ParseStatus());
+    ASSERT_OK(analyzer->ParseStatus()) << "code:\n" << test_case.input;
     Formatter formatter(analyzer->Data(), style);
     EXPECT_OK(formatter.Format());
     std::ostringstream stream;
@@ -2302,7 +2367,7 @@ TEST(FormatterEndToEndTest, NoFormatTest) {
     EXPECT_OK(formatter.Format());
     std::ostringstream stream;
     formatter.Emit(stream);
-    EXPECT_EQ(stream.str(), test_case.input);
+    EXPECT_EQ(stream.str(), test_case.input) << "code:\n" << test_case.input;
   }
 }
 

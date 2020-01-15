@@ -120,17 +120,17 @@ TEST(DisableFormattingRangesTest, FormatOffDisableToEndBlockComment) {
        {kOff, "\n\t\t"}},
       {"xxx yyy;\n  /* verilog_format: off  // reason why... */",
        {kOff, "\n \t"}},
-      {"  /* verilog_format: off */", "/* verilog_format:on */\n"},
-      {"  /* verilog_format: off */", {kOff, " "}, "/* verilog_format:on */\n"},
+      {"  /* verilog_format: off */", {kOff, "/* verilog_format:on */"}, "\n"},
+      {"  /* verilog_format: off */", {kOff, " /* verilog_format:on */"}, "\n"},
       {"  /* verilog_format: off */",
-       {kOff, "  \t  "},
-       "/* verilog_format:on */\n"},
+       {kOff, "  \t  /* verilog_format:on */"},
+       "\n"},
       {"  /* verilog_format: off */",
-       {kOff, "\n"},
-       "/* verilog_format:on */\n"},
+       {kOff, "\n/* verilog_format:on */"},
+       "\n"},
       {"  /* verilog_format: off */",
-       {kOff, "\n\n"},
-       "/* verilog_format:on */\n"},
+       {kOff, "\n\n/* verilog_format:on */"},
+       "\n"},
   };
   for (const auto& test : kTestCases) {
     VerilogAnalyzer analyzer(test.code, "<file>");
@@ -145,20 +145,21 @@ TEST(DisableFormattingRangesTest, FormatOffVarious) {
   const DisableRangeTestData kTestCases[] = {
       {// one disabled interval, very brief (off and on again)
        "xxx yyy;\n"
-       "// verilog_format: off\n"
-       "// verilog_format: on\n"
+       "// verilog_format: off\n",
+       {kOff, "// verilog_format: on"},
+       "\n"
        "ppp qqq;\n"},
-      {// one disabled interval affecting one line
+      {// one disabled interval affecting one line (extra blank line)
        "xxx yyy;\n"
        "// verilog_format: off\n",
-       {kOff, "\n"},
-       "// verilog_format: on\n"
+       {kOff, "\n// verilog_format: on"},
+       "\n"
        "ppp qqq;\n"},
       {// one disabled interval affecting multiple lines
        "xxx yyy;\n"
        "// verilog_format: off\n",
-       {kOff, "\n\n\n"},
-       "// verilog_format: on\n"
+       {kOff, "\n\n\n// verilog_format: on"},
+       "\n"
        "ppp qqq;\n"},
       {// disable to end-of-file, second command is neither on/off
        "xxx yyy;\n"
@@ -169,28 +170,30 @@ TEST(DisableFormattingRangesTest, FormatOffVarious) {
       {// one disabled interval in the middle
        "xxx yyy;\n"
        "// verilog_format: off\n",
-       {kOff, "zzz www;\n"},
-       "// verilog_format: on\n"
+       {kOff, "zzz www;\n// verilog_format: on"},
+       "\n"
        "ppp qqq;\n"},
       {// one disabled interval in the middle
        "xxx yyy;\n"
        "/*    verilog_format: off */",
-       {kOff, "\nzzz www;\n"},
-       "/* verilog_format:   on */\n"
+       {kOff, "\nzzz www;\n/* verilog_format:   on */"},
+       "\n"
        "ppp qqq;\n"},
       {// null interval
        "xxx yyy;\n"
-       "/*    verilog_format: off *//* verilog_format:   on */\n"
+       "/*    verilog_format: off */",
+       {kOff, "/* verilog_format:   on */"},
+       "\n"
        "ppp qqq;\n"},
       {// two disabled intervals
        "xxx yyy;\n"
        "// verilog_format: off\n",
-       {kOff, "zzz www;\n"},
-       "// verilog_format: on\n"
+       {kOff, "zzz www;\n// verilog_format: on"},
+       "\n"
        "ppp qqq;\n"
        "// verilog_format:off\n",
-       {kOff, "aa bb;\n"},
-       "// verilog_format:on\n"
+       {kOff, "aa bb;\n// verilog_format:on"},
+       "\n"
        "cc dd;\n"},
   };
   for (const auto& test : kTestCases) {
@@ -198,7 +201,7 @@ TEST(DisableFormattingRangesTest, FormatOffVarious) {
     EXPECT_TRUE(analyzer.Tokenize().ok());
     const auto disable_ranges = DisableFormattingRanges(
         analyzer.Data().Contents(), analyzer.Data().TokenStream());
-    EXPECT_EQ(disable_ranges, test.expected);
+    EXPECT_EQ(disable_ranges, test.expected) << "code:\n" << test.code;
   }
 }
 

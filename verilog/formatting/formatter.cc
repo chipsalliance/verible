@@ -38,6 +38,7 @@
 #include "verilog/formatting/format_style.h"
 #include "verilog/formatting/token_annotator.h"
 #include "verilog/formatting/tree_unwrapper.h"
+#include "verilog/parser/verilog_token_enum.h"
 
 namespace verilog {
 namespace formatter {
@@ -149,13 +150,73 @@ std::ostream& Formatter::ExecutionControl::Stream() const {
   return (stream != nullptr) ? *stream : std::cout;
 }
 
+static verible::iterator_range<std::vector<verible::PreFormatToken>::iterator>
+FindFormatTokensInByteOffsetRange(
+    std::vector<verible::PreFormatToken>::iterator begin,
+    std::vector<verible::PreFormatToken>::iterator end,
+    std::pair<int, int> byte_offset_range, absl::string_view base_text) {
+  const auto tokens_begin =
+      std::lower_bound(begin, end, byte_offset_range.first,
+                       [=](const verible::PreFormatToken& t, size_t position) {
+                         return t.token->left(base_text) < position;
+                       });
+  const auto tokens_end =
+      std::upper_bound(tokens_begin, end, byte_offset_range.second,
+                       [=](size_t position, const verible::PreFormatToken& t) {
+                         return position < t.token->right(base_text);
+                       });
+  return verible::make_range(tokens_begin, tokens_end);
+}
+
+static void PreserveSpacesOnDisabledTokenRanges(
+    std::vector<verible::PreFormatToken>* ftokens,
+    const ByteOffsetSet& disabled_ranges, absl::string_view base_text) {
+  VLOG(2) << __FUNCTION__;
+  // saved_iter: shrink bounds of binary search with every iteration,
+  // due to monotonic, non-overlapping intervals.
+  auto saved_iter = ftokens->begin();
+  for (const auto& range : disabled_ranges) {
+    // 'range' is in byte offsets.
+    // [begin_disable, end_disable) mark the range of format tokens to be
+    // marked as preserving original spacing (i.e. not formatted).
+    VLOG(2) << "disabling: [" << range.first << ',' << range.second << ')';
+    const auto disable_range = FindFormatTokensInByteOffsetRange(
+        saved_iter, ftokens->end(), range, base_text);
+    const auto begin_disable = disable_range.begin();
+    const auto end_disable = disable_range.end();
+    VLOG(2) << "tokens: [" << std::distance(ftokens->begin(), begin_disable)
+            << ',' << std::distance(ftokens->begin(), end_disable) << ')';
+
+    // Mark tokens in the disabled range as preserving original spaces.
+    for (auto& ft : disable_range) {
+      VLOG(2) << "disable-format preserve spaces before: " << *ft.token;
+      ft.before.break_decision = verible::SpacingOptions::Preserve;
+    }
+
+    // kludge: When the disabled range immediately follows a //-style
+    // comment, skip past the trailing '\n' (not included in the comment
+    // token), which will be printed by the Emit() method, and preserve the
+    // whitespaces *beyond* that point up to the start of the following
+    // token's text.  This way, rendering the start of the format-disabled
+    // excerpt won't get redundant '\n's.
+    if (begin_disable != ftokens->begin() && begin_disable != end_disable) {
+      const auto prev_ftoken = std::prev(begin_disable);
+      if (prev_ftoken->token->token_enum == TK_EOL_COMMENT) {
+        // consume the trailing '\n' from the preceding //-comment
+        ++begin_disable->before.preserved_space_start;
+      }
+    }
+    // start next iteration search from previous iteration's end
+    saved_iter = end_disable;
+  }
+}
+
 verible::util::Status Formatter::Format(const ExecutionControl& control) {
-  // Determine ranges of disabling the formatter.
-  auto disabled_ranges = DisableFormattingRanges(text_structure_.Contents(),
-                                                 text_structure_.TokenStream());
+  const absl::string_view full_text(text_structure_.Contents());
+  const auto& token_stream(text_structure_.TokenStream());
 
   // Initialize auxiliary data needed for TreeUnwrapper.
-  UnwrapperData unwrapper_data(text_structure_.TokenStream());
+  UnwrapperData unwrapper_data(token_stream);
 
   // Partition input token stream into hierarchical set of UnwrappedLines.
   TreeUnwrapper tree_unwrapper(text_structure_, style_,
@@ -172,6 +233,13 @@ verible::util::Status Formatter::Format(const ExecutionControl& control) {
                                   unwrapper_data.preformatted_tokens.begin(),
                                   unwrapper_data.preformatted_tokens.end());
 
+    if (style_.preserve_horizontal_spaces != PreserveSpaces::All) {
+      // Determine ranges of disabling the formatter.
+      disabled_ranges_ = DisableFormattingRanges(full_text, token_stream);
+      PreserveSpacesOnDisabledTokenRanges(&unwrapper_data.preformatted_tokens,
+                                          disabled_ranges_, full_text);
+    }  // else don't bother, when already preserving all spaces
+
     // Partition PreFormatTokens into candidate unwrapped lines.
     format_tokens_partitions = tree_unwrapper.Unwrap();
   }
@@ -187,8 +255,7 @@ verible::util::Status Formatter::Format(const ExecutionControl& control) {
     if (control.show_largest_token_partitions != 0) {
       PrintLargestPartitions(control.Stream(), *format_tokens_partitions,
                              control.show_largest_token_partitions,
-                             text_structure_.GetLineColumnMap(),
-                             text_structure_.Contents());
+                             text_structure_.GetLineColumnMap(), full_text);
     }
     if (control.AnyStop()) {
       return verible::util::OkStatus();
@@ -205,7 +272,6 @@ verible::util::Status Formatter::Format(const ExecutionControl& control) {
   std::vector<const UnwrappedLine*> partially_formatted_lines;
   formatted_lines_.reserve(unwrapped_lines.size());
   for (const auto& uwline : unwrapped_lines) {
-    // TODO(b/110300827): honor comment-controlled disabling here
     // TODO(fangism): Use different formatting strategies depending on
     // uwline.PartitionPolicy().
     const auto optimal_solutions =
@@ -261,6 +327,7 @@ absl::string_view Formatter::TrailingWhiteSpaces() const {
 }
 
 void Formatter::Emit(std::ostream& stream) const {
+  const absl::string_view full_text(text_structure_.Contents());
   if (style_.preserve_horizontal_spaces == PreserveSpaces::All) {
     // Need to track pre-existing spaces between token partitions.
     for (const auto& line : formatted_lines_) {
@@ -270,11 +337,22 @@ void Formatter::Emit(std::ostream& stream) const {
     stream << TrailingWhiteSpaces();
   } else {  // (horizontal) PreserveSpaces::None or UnhandledCasesOnly
     switch (style_.preserve_vertical_spaces) {
-      case PreserveSpaces::None:
+      case PreserveSpaces::None: {
         for (const auto& line : formatted_lines_) {
-          stream << line << '\n';
+          stream << line;
+          // Normally, print a '\n' after this FormattedExcerpt.
+          // The exception is when the space that follows the last token
+          // on this line is covered by one of the formatting-disabled
+          // intervals.  In that case, print the original spacing instead.
+          const auto back_offset = line.Tokens().back().token->right(full_text);
+          if (!disabled_ranges_.Contains(back_offset)) stream << '\n';
+        }
+        // possibly preserve spaces after the last token
+        if (disabled_ranges_.Contains(full_text.length() - 1)) {
+          stream << TrailingWhiteSpaces();
         }
         break;
+      }
       case PreserveSpaces::All:
       case PreserveSpaces::UnhandledCasesOnly:
         bool is_first_line = true;

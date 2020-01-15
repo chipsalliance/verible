@@ -52,7 +52,7 @@ ByteOffsetSet DisableFormattingRanges(absl::string_view text,
               absl::StrSplit(commands, kDelimiters, absl::SkipEmpty()));
           if (!comment_tokens.empty()) {
             // "off" marks the start of a disabling range, at end of comment.
-            // "on" marks the end of disabling range, at start of comment.
+            // "on" marks the end of disabling range, up to the end of comment.
             if (comment_tokens.front() == "off") {
               if (begin_disable_offset == kNullOffset) {
                 begin_disable_offset = token.right(text);
@@ -62,7 +62,7 @@ ByteOffsetSet DisableFormattingRanges(absl::string_view text,
               }  // else ignore
             } else if (comment_tokens.front() == "on") {
               if (begin_disable_offset != kNullOffset) {
-                const int end_disable_offset = token.left(text);
+                const int end_disable_offset = token.right(text);
                 if (begin_disable_offset != end_disable_offset) {
                   disable_set.Add({begin_disable_offset, end_disable_offset});
                 }

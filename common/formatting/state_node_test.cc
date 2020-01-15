@@ -109,6 +109,23 @@ TEST_F(StateNodeTestFixture, ConstructionWithOneFormatToken) {
   EXPECT_TRUE(s.IsRootState());
 }
 
+// Tests that the first token can be marked as preserve, when disabling
+// formatting.
+TEST_F(StateNodeTestFixture, ConstructionWithPreserveLeadingSpace) {
+  static const int kInitialIndent = 1;
+  const std::vector<TokenInfo> tokens = {{0, "token1"}};
+  Initialize(kInitialIndent, tokens);
+  // One way of disabling formatting is setting break_decision to Preserve.
+  pre_format_tokens_.front().before.break_decision = SpacingOptions::Preserve;
+  StateNode s(*uwline, style);
+  EXPECT_TRUE(s.Done());  // nothing to do after first and only token
+  EXPECT_EQ(s.current_column, tokens[0].text.length());
+  EXPECT_EQ(s.spacing_choice, SpacingDecision::Preserve);
+  EXPECT_EQ(s.next(), nullptr);
+  EXPECT_EQ(s.cumulative_cost, 0);
+  EXPECT_TRUE(s.IsRootState());
+}
+
 // Tests new state can be built on top of previous state, appending token to
 // current line.
 TEST_F(StateNodeTestFixture, ConstructionAppendingPrevState) {

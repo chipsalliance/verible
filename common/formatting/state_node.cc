@@ -37,7 +37,12 @@ StateNode::StateNode(const UnwrappedLine& uwline, const BasicFormatStyle& style)
     : prev_state(nullptr),
       undecided_path(uwline.TokensRange().begin(), uwline.TokensRange().end()),
       spacing_choice(
-          SpacingDecision::Append),  // Treat first token as appended.
+          // Treat first token as appended, unless explicitly preserving spaces.
+          (!uwline.TokensRange().empty() &&
+           uwline.TokensRange().front().before.break_decision ==
+               SpacingOptions::Preserve)
+              ? SpacingDecision::Preserve
+              : SpacingDecision::Append),
       // Kludge: This leaks into the resulting FormattedExcerpt, which means
       // additional logic is needed to handle preservation of (vertical) spacing
       // between formatted token partitions.
@@ -116,7 +121,7 @@ const PreFormatToken& StateNode::_GetPreviousToken() const {
 }
 
 void StateNode::_UpdateColumnPosition() {
-  VLOG(4) << __FUNCTION__;
+  VLOG(4) << __FUNCTION__ << " spacing decision: " << spacing_choice;
   const PreFormatToken& current_format_token(GetCurrentToken());
   const int token_length = current_format_token.Length();
   switch (spacing_choice) {
@@ -144,8 +149,14 @@ void StateNode::_UpdateColumnPosition() {
     case SpacingDecision::Preserve: {
       const absl::string_view original_spacing_text =
           current_format_token.OriginalLeadingSpaces();
-      current_column = AdvancingTextNewColumnPosition(
-          prev_state->current_column, original_spacing_text);
+      // prev_state is null when the first token of the unwrapped line was
+      // marked as SpacingOptions::Preserve, which indicates that formatting
+      // was disabled in this range.  In this case, we don't really care about
+      // column position accuracy since we are using original spacing.
+      current_column =
+          prev_state ? AdvancingTextNewColumnPosition(
+                           prev_state->current_column, original_spacing_text)
+                     : 0;
       current_column += token_length;
       VLOG(4) << " new column position (preserved): " << current_column;
       break;
