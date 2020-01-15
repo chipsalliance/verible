@@ -6527,12 +6527,17 @@ case_statement
 conditional_statement
   : unique_priority_opt TK_if '(' expression ')' statement_or_null
     %prec less_than_TK_else
-    { $$ = MakeTaggedNode(N::kConditionalStatement, $1, $2,
-                          MakeParenGroup($3, $4, $5), $6);}
+    { $$ = MakeTaggedNode(N::kConditionalStatement,
+             MakeTaggedNode(N::kIfClause,
+               MakeTaggedNode(N::kIfHeader, $1, $2, MakeParenGroup($3, $4, $5)),
+               MakeTaggedNode(N::kIfBody, $6)));}
   | unique_priority_opt TK_if '(' expression ')' statement_or_null
     TK_else statement_or_null
-    { $$ = MakeTaggedNode(N::kConditionalStatement, $1, $2,
-                          MakeParenGroup($3, $4, $5), $6, $7, $8);}
+    { $$ = MakeTaggedNode(N::kConditionalStatement,
+             MakeTaggedNode(N::kIfClause,
+               MakeTaggedNode(N::kIfHeader, $1, $2, MakeParenGroup($3, $4, $5)),
+               MakeTaggedNode(N::kIfBody, $6)),
+             MakeTaggedNode(N::kElseClause, $7, MakeTaggedNode(N::kElseBody, $8)));}
   ;
 
 event_trigger
