@@ -632,6 +632,64 @@ void TreeUnwrapper::Visit(const verible::SyntaxTreeNode& node) {
         break;
       }
 
+    case NodeEnum::kIfClause:
+    case NodeEnum::kIfBody: {
+      const verible::SyntaxTreeNode* subnode;
+
+      if (tag == NodeEnum::kIfClause)
+        subnode = &GetSubtreeAsNode(node, NodeEnum::kIfClause, 1);
+      else
+        subnode = &node;
+
+      if (GetSubtreeNodeEnum(*subnode, NodeEnum::kIfBody, 0) == NodeEnum::kSeqBlock) {
+        // Extend current token partition with following begin keyword,
+        // kBlockItemStatementList would create indented section anyway
+        TraverseChildren(node);
+      } else {
+        // Otherwise create indented section by ourselves.
+        // It's for single-statement branches
+        if (tag == NodeEnum::kIfBody) {
+          // indent if-branch
+          VisitIndentedSection(node, style_.indentation_spaces, PartitionPolicyEnum::kFitOnLineElseExpand);
+        } else {
+          VisitIndentedSection(node, 0, PartitionPolicyEnum::kFitOnLineElseExpand);
+        }
+      }
+      break;
+    }
+
+    case NodeEnum::kElseClause:
+    case NodeEnum::kElseBody: {
+      const verible::SyntaxTreeNode* subnode;
+
+      if (tag == NodeEnum::kElseClause)
+        subnode = &GetSubtreeAsNode(node, NodeEnum::kElseClause, 1);
+      else
+        subnode = &node;
+
+      const auto subtag = GetSubtreeNodeEnum(*subnode, NodeEnum::kElseBody, 0);
+      switch (subtag) {
+      case NodeEnum::kSeqBlock:
+      case NodeEnum::kConditionalStatement:
+        // Extend current token partition by begin keyword and if keyword
+        // Plus keep else-if-else... structure flat
+        TraverseChildren(node);
+        break;
+
+      default:
+        // Otherwise create indented section by ourselves.
+        // It's for single-statement branches
+        if (tag == NodeEnum::kElseBody) {
+          // indent else-branch statement
+          VisitIndentedSection(node, style_.indentation_spaces, PartitionPolicyEnum::kFitOnLineElseExpand);
+        } else {
+          VisitIndentedSection(node, 0, PartitionPolicyEnum::kFitOnLineElseExpand);
+        }
+        break;
+      }
+      break;
+    }
+
     // For the following items, start a new unwrapped line only if they are
     // *direct* descendants of list elements.  This effectively suppresses
     // starting a new line when single statements are found to extend other
@@ -890,6 +948,21 @@ void TreeUnwrapper::Visit(const verible::SyntaxTreeNode& node) {
         MergeLastTwoPartitions();
       }
       // else close-out current token partition?
+      break;
+    }
+    case NodeEnum::kConditionalStatement: {
+      CurrentTokenPartition()->Parent()->ApplyPreOrder([](verible::VectorTree<UnwrappedLine>& node) {
+        const auto& range = node.Value().TokensRange();
+        if ((range.back().TokenEnum() == yytokentype::TK_else) &&
+            (range.end()->TokenEnum() == yytokentype::TK_if)) {
+          // Extend [if ( )] partition of [else] token
+          node.NextLeaf()->Value().SpanPrevToken();
+          // Update partition parent token range
+          node.NextLeaf()->Parent()->Value().SpanPrevToken();
+          // Delete unneeded [else] partition
+          node.Parent()->Children().erase(node.Parent()->Children().begin() + node.BirthRank());
+        }
+      });
       break;
     }
     // In the following cases, forcibly close out the current partition.
