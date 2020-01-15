@@ -106,6 +106,14 @@ const SyntaxTreeLeaf& GetSubtreeAsLeaf(const S& symbol,
       GetSubtreeAsSymbol(symbol, parent_must_be_node_enum, child_position)));
 }
 
+template <class S, class E>
+E GetSubtreeNodeEnum(const S& symbol,
+                           E parent_must_be_node_enum,
+                           size_t child_position) {
+  return static_cast<E>(
+      GetSubtreeAsNode(symbol, parent_must_be_node_enum, child_position).Tag().tag);
+}
+
 using TreePredicate = std::function<bool(const Symbol&)>;
 
 // Returns the first syntax tree leaf or node that matches the given predicate.
