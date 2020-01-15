@@ -3039,9 +3039,13 @@ const TreeUnwrapperTestData kUnwrapTaskTestCases[] = {
                 2,  //
                 FlowControl(
                     2,  //
-                    L(2, {"if", "(", "n", ")", "if", "(", "m", ")"}),
-                    NL(3, {"y", "=", "x", ";"})  // single statement body
-                    )),
+                    N(2,  //
+                      L(2, {"if", "(", "n", ")"}),
+                      N(3, //
+                        N(3,  //
+                          L(3, {"if", "(", "m", ")"}),
+                          NL(4, {"y", "=", "x", ";"})  // single statement body
+                          ))))),
             L(1, {"endtask"})),
         L(0, {"endclass"}),
     },
@@ -3321,11 +3325,13 @@ const TreeUnwrapperTestData kUnwrapFunctionTestCases[] = {
         FunctionHeader(0, L(0, {"function", "foo", ";"})),
         StatementList(1,
                       FlowControl(1,  //
-                                  L(1, {"if", "(", "zz", ")"}),
-                                  NL(2, {"return", "0", ";"})),
+                                  N(1,  //
+                                    L(1, {"if", "(", "zz", ")"}),
+                                    NL(2, {"return", "0", ";"}))),
                       FlowControl(1,  //
-                                  L(1, {"if", "(", "yy", ")"}),
-                                  NL(2, {"return", "1", ";"}))),
+                                  N(1,  //
+                                    L(1, {"if", "(", "yy", ")"}),
+                                    NL(2, {"return", "1", ";"})))),
         L(0, {"endfunction"}),
     },
 
@@ -3360,9 +3366,12 @@ const TreeUnwrapperTestData kUnwrapFunctionTestCases[] = {
         FunctionHeader(0, L(0, {"function", "foo", ";"})),
         StatementList(1,
                       FlowControl(1,  //
-                                  L(1, {"if", "(", "zz", ")"}),
-                                  NL(2, {"return", "0", ";"}), L(1, {"else"}),
-                                  NL(2, {"return", "1", ";"}))),
+                                  N(1,  //
+                                    L(1, {"if", "(", "zz", ")"}), // same level
+                                    NL(2, {"return", "0", ";"})),
+                                  N(1,  //
+                                    L(1, {"else"}), // same level
+                                    NL(2, {"return", "1", ";"})))),
         L(0, {"endfunction"}),
     },
 
@@ -3398,10 +3407,97 @@ const TreeUnwrapperTestData kUnwrapFunctionTestCases[] = {
         FunctionHeader(0, L(0, {"function", "foo", ";"})),
         StatementList(1,
                       FlowControl(1,  //
-                                  L(1, {"if", "(", "zz", ")"}),
-                                  NL(2, {"return", "0", ";"}),
-                                  L(1, {"else", "if", "(", "yy", ")"}),
-                                  NL(2, {"return", "1", ";"}))),
+                                  N(1,  //
+                                    L(1, {"if", "(", "zz", ")"}), // same level
+                                    NL(2, {"return", "0", ";"})),
+                                  N(1,  //
+                                    L(1, {"else", "if", "(", "yy", ")"}), // same level
+                                    NL(2, {"return", "1", ";"})))),
+        L(0, {"endfunction"}),
+    },
+
+    {
+        "function with two else-if branches, single-statements",
+        "function foo;"
+        "if (zz) "
+        "return 0;"
+        "else if (yy) "
+        "return 1;"
+        "else if (xx) "
+        "return 2;"
+        "endfunction",
+        FunctionHeader(0, L(0, {"function", "foo", ";"})),
+        StatementList(1,
+                      FlowControl(1,  //
+                                  N(1,  //
+                                    L(1, {"if", "(", "zz", ")"}), // same level
+                                    NL(2, {"return", "0", ";"})),
+                                  N(1,  //
+                                    L(1, {"else", "if", "(", "yy", ")"}), // same level
+                                    NL(2, {"return", "1", ";"})),
+                                  N(1,  //
+                                    L(1, {"else", "if", "(", "xx", ")"}), // same level
+                                    NL(2, {"return", "2", ";"})))),
+        L(0, {"endfunction"}),
+    },
+
+    {
+        "function with else-if branches, trailing else branch, single-statements",
+        "function foo;"
+        "if (zz) "
+        "return 0;"
+        "else if (yy) "
+        "return 1;"
+        "else "
+        "return 2;"
+        "endfunction",
+        FunctionHeader(0, L(0, {"function", "foo", ";"})),
+        StatementList(1,
+                      FlowControl(1,  //
+                                  N(1,  //
+                                    L(1, {"if", "(", "zz", ")"}), // same level
+                                    NL(2, {"return", "0", ";"})),
+                                  N(1,  //
+                                    L(1, {"else", "if", "(", "yy", ")"}), // same level
+                                    NL(2, {"return", "1", ";"})),
+                                  N(1,  //
+                                    L(1, {"else"}), // same level
+                                    NL(2, {"return", "2", ";"})))),
+        L(0, {"endfunction"}),
+    },
+
+    {
+        "function with many else-if branches, single-statements",
+        "function foo;"
+        "if (zz) "
+        "return 0;"
+        "else if (yy) "
+        "return 1;"
+        "else if (xx) "
+        "return 2;"
+        "else if (ww) "
+        "return 3;"
+        "else if (vv) "
+        "return 4;"
+        "endfunction",
+        FunctionHeader(0, L(0, {"function", "foo", ";"})),
+        StatementList(1,
+                      FlowControl(1,  //
+                                  N(1,  //
+                                    L(1, {"if", "(", "zz", ")"}), // same level
+                                    NL(2, {"return", "0", ";"})),
+                                  N(1,  //
+                                    L(1, {"else", "if", "(", "yy", ")"}), // same level
+                                    NL(2, {"return", "1", ";"})),
+                                  N(1,  //
+                                    L(1, {"else", "if", "(", "xx", ")"}), // same level
+                                    NL(2, {"return", "2", ";"})),
+                                  N(1,  //
+                                    L(1, {"else", "if", "(", "ww", ")"}), // same level
+                                    NL(2, {"return", "3", ";"})),
+                                  N(1,  //
+                                    L(1, {"else", "if", "(", "vv", ")"}), // same level
+                                    NL(2, {"return", "4", ";"})))),
         L(0, {"endfunction"}),
     },
 
