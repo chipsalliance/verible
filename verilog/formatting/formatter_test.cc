@@ -2007,11 +2007,14 @@ static const std::initializer_list<FormatterTestCase> kFormatterTestCases = {
         "import foo_pkg::*;\n"
         "import goo_pkg::thing;\n",
     },
-    // preserve spaces inside [] dimensions, but adjust everything else
+    // preserve spaces inside [] dimensions, but limit spaces around ':' to one
+    // and adjust everything else
     {"foo[W-1:0]a[0:K-1];",  // data declaration
      "foo [W-1:0] a[0:K-1];\n"},
+    {"foo[W-1 : 0]a[0 : K-1];",
+     "foo [W-1 : 0] a[0 : K-1];\n"},
     {"foo[W  -  1 : 0 ]a [ 0  :  K  -  1] ;",
-     "foo [W  -  1 : 0] a[0  :  K  -  1];\n"},
+     "foo [W  -  1 : 0] a[0 : K  -  1];\n"},
     // remove spaces between [...] [...] in multi-dimension arrays
     {"foo[K] [W]a;",  //
      "foo [K][W] a;\n"},
@@ -2023,11 +2026,30 @@ static const std::initializer_list<FormatterTestCase> kFormatterTestCases = {
      "logic b[K:1][W:1];\n"},
     // spaces in bit slicing
     {
+        // preserve 0 spaces
+        "always_ff @(posedge clk) begin "
+        "dummy  <=\tfoo  [  7:2  ] ; "
+        "end",
+        "always_ff @(posedge clk) begin\n"
+        "  dummy <= foo[7:2];\n"
+        "end\n",
+    },
+    {
+        // preserve 1 space
+        "always_ff @(posedge clk) begin "
+        "dummy  <=\tfoo  [  7 : 2  ] ; "
+        "end",
+        "always_ff @(posedge clk) begin\n"
+        "  dummy <= foo[7 : 2];\n"
+        "end\n",
+    },
+    {
+        // limit multiple spaces to 1
         "always_ff @(posedge clk) begin "
         "dummy  <=\tfoo  [  7  :  2  ] ; "
         "end",
         "always_ff @(posedge clk) begin\n"
-        "  dummy <= foo[7:2];\n"
+        "  dummy <= foo[7 : 2];\n"
         "end\n",
     },
 

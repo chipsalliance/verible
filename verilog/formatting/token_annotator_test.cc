@@ -1922,7 +1922,7 @@ TEST(TokenAnnotatorTest, AnnotateFormattingWithContextTest) {
           {0, SpacingOptions::MustAppend},
       },
 
-      // Inside dimension ranges, force space preservation
+      // Inside dimension ranges, force space preservation if not around ':'
       {
           DefaultStyle,
           {'*', "*"},
@@ -1956,14 +1956,14 @@ TEST(TokenAnnotatorTest, AnnotateFormattingWithContextTest) {
           {':', ":"},
           {yytokentype::SymbolIdentifier, "foo"},
           {NodeEnum::kDimensionRange},
-          {1, SpacingOptions::Preserve},
+          {0, SpacingOptions::Undecided},
       },
       {
           DefaultStyle,
           {yytokentype::SymbolIdentifier, "foo"},
           {':', ":"},
           {NodeEnum::kDimensionRange},
-          {1, SpacingOptions::Preserve},
+          {0, SpacingOptions::Undecided},
       },
 
       // spacing between ranges of multi-dimension arrays
@@ -2661,6 +2661,7 @@ TEST(TokenAnnotatorTest, AnnotateFormattingWithContextTest) {
           {yytokentype::TK_DecNumber, "1"},
           {':', ":"},
           {NodeEnum::kSelectVariableDimension},
+          // no spaces preceding ':' in unit test context
           {0, SpacingOptions::Undecided},
       },
       {
@@ -2669,6 +2670,7 @@ TEST(TokenAnnotatorTest, AnnotateFormattingWithContextTest) {
           {':', ":"},
           {yytokentype::TK_DecNumber, "0"},
           {NodeEnum::kSelectVariableDimension},
+          // no spaces preceding ':' in unit test context
           {0, SpacingOptions::Undecided},
       },
   };
