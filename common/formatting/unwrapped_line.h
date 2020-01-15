@@ -71,8 +71,11 @@ class UnwrappedLine {
   UnwrappedLine() = delete;
   UnwrappedLine& operator=(const UnwrappedLine&) = delete;
 
-  // Extends PreFormatToken range spanned by this UnwrappedLine by one token.
+  // Extends PreFormatToken range spanned by this UnwrappedLine by one token at the back.
   void SpanNextToken() { tokens_.extend_back(); }
+
+  // Extends PreFormatToken range spanned by this UnwrappedLine by one token at the front.
+  void SpanPrevToken() { tokens_.extend_front(); }
 
   // Extends PreFormatToken range up to the given token (exclusive).
   void SpanUpToToken(token_iterator iter) { tokens_.set_end(iter); }
