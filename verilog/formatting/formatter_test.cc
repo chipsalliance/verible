@@ -2052,6 +2052,56 @@ static const std::initializer_list<FormatterTestCase> kFormatterTestCases = {
         "  dummy <= foo[7 : 2];\n"
         "end\n",
     },
+    {
+        "always_ff @(posedge clk) begin "
+        "dummy  <=\tfoo  [  7  : 2  ] ; "
+        "end",
+        "always_ff @(posedge clk) begin\n"
+        "  dummy <= foo[7 : 2];\n"
+        "end\n",
+    },
+    {
+        // keep value on the left when symmetrizing
+        "always_ff @(posedge clk) begin "
+        "dummy  <=\tfoo  [  7: 2  ] ; "
+        "end",
+        "always_ff @(posedge clk) begin\n"
+        "  dummy <= foo[7:2];\n"
+        "end\n",
+    },
+    {
+        "always_ff @(posedge clk) begin "
+        "dummy  <=\tfoo  [  7:  2  ] ; "
+        "end",
+        "always_ff @(posedge clk) begin\n"
+        "  dummy <= foo[7:2];\n"
+        "end\n",
+    },
+    {
+        "always_ff @(posedge clk) begin "
+        "dummy  <=\tfoo  [  7 :2  ] ; "
+        "end",
+        "always_ff @(posedge clk) begin\n"
+        "  dummy <= foo[7 : 2];\n"
+        "end\n",
+    },
+    {
+        "always_ff @(posedge clk) begin "
+        "dummy  <=\tfoo  [  7 :  2  ] ; "
+        "end",
+        "always_ff @(posedge clk) begin\n"
+        "  dummy <= foo[7 : 2];\n"
+        "end\n",
+    },
+    {
+        // use value on the left, but limit to 1 space
+        "always_ff @(posedge clk) begin "
+        "dummy  <=\tfoo  [  7  :2  ] ; "
+        "end",
+        "always_ff @(posedge clk) begin\n"
+        "  dummy <= foo[7 : 2];\n"
+        "end\n",
+    },
 
     // task test cases
     {"task t ;endtask:t",  //
