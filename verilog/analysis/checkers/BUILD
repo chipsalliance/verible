@@ -40,6 +40,7 @@ cc_library(
         ":module_instantiation_rules",
         ":no_tabs_rule",
         ":no_trailing_spaces_rule",
+        ":one_module_per_file_rule",
         ":package_filename_rule",
         ":packed_dimensions_rule",
         ":parameter_name_style_rule",
@@ -442,6 +443,41 @@ cc_test(
         "//common/text:symbol",
         "//verilog/CST:verilog_nonterminals",
         "//verilog/CST:verilog_treebuilder_utils",
+        "//verilog/analysis:verilog_analyzer",
+        "//verilog/parser:verilog_token_enum",
+        "@com_google_googletest//:gtest_main",
+    ],
+)
+
+cc_library(
+    name = "one_module_per_file_rule",
+    srcs = ["one_module_per_file_rule.cc"],
+    hdrs = ["one_module_per_file_rule.h"],
+    deps = [
+        "//common/analysis:citation",
+        "//common/analysis:lint_rule_status",
+        "//common/analysis:syntax_tree_search",
+        "//common/analysis:text_structure_lint_rule",
+        "//common/text:symbol",
+        "//common/text:text_structure",
+        "//common/text:token_info",
+        "//common/util:file_util",
+        "//verilog/CST:module",
+        "//verilog/analysis:descriptions",
+        "//verilog/analysis:lint_rule_registry",
+        "@com_google_absl//absl/strings",
+    ],
+    alwayslink = 1,
+)
+
+cc_test(
+    name = "one_module_per_file_rule_test",
+    srcs = ["one_module_per_file_rule_test.cc"],
+    deps = [
+        ":one_module_per_file_rule",
+        "//common/analysis:linter_test_utils",
+        "//common/analysis:text_structure_linter_test_utils",
+        "//common/text:symbol",
         "//verilog/analysis:verilog_analyzer",
         "//verilog/parser:verilog_token_enum",
         "@com_google_googletest//:gtest_main",
