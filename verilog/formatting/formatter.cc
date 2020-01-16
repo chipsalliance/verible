@@ -157,12 +157,12 @@ FindFormatTokensInByteOffsetRange(
     std::pair<int, int> byte_offset_range, absl::string_view base_text) {
   const auto tokens_begin =
       std::lower_bound(begin, end, byte_offset_range.first,
-                       [=](const verible::PreFormatToken& t, size_t position) {
+                       [=](const verible::PreFormatToken& t, int position) {
                          return t.token->left(base_text) < position;
                        });
   const auto tokens_end =
       std::upper_bound(tokens_begin, end, byte_offset_range.second,
-                       [=](size_t position, const verible::PreFormatToken& t) {
+                       [=](int position, const verible::PreFormatToken& t) {
                          return position < t.token->right(base_text);
                        });
   return verible::make_range(tokens_begin, tokens_end);
