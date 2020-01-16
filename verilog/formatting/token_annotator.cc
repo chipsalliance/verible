@@ -136,8 +136,10 @@ static WithReason<int> SpacesRequiredBetween(const PreFormatToken& left,
   // For now, leave everything inside [dimensions] alone.
   if (context.IsInsideFirst(
           {NodeEnum::kDimensionRange, NodeEnum::kDimensionScalar}, {})) {
-    // ... except for the spacing before '[', which is covered elsewhere.
-    if (right.TokenEnum() != '[') {
+    // ... except for the spacing before '[' and around ':',
+    // which are covered elsewhere.
+    if (right.TokenEnum() != '[' && left.TokenEnum() != ':' &&
+        right.TokenEnum() != ':') {
       return {kUnhandledSpacesRequired,
               "Leave [expressions] inside scalar and range dimensions alone "
               "(for now)."};
@@ -312,9 +314,20 @@ static WithReason<int> SpacesRequiredBetween(const PreFormatToken& left,
       return {1, "Ternary ?: expression wants 1 space around ':'"};
     }
 
+    // Spacing in ranges
+    if (context.IsInsideFirst(
+            {NodeEnum::kSelectVariableDimension, NodeEnum::kDimensionRange,
+             NodeEnum::kDimensionSlice},
+            {})) {
+      int spaces = right.OriginalLeadingSpaces().length();
+      if (spaces > 1) {
+        spaces = 1;
+      }
+      return {spaces, "Limit spaces before ':' in bit slice to 0 or 1"};
+    }
+
     // TODO(fangism): Everything that resembles a range (in index, dimensions)
     // should have 1 space.
-    //   kSelectVariableDimension, kDimensionRange
     //   kValueRange, kCycleRange
     //   kMinTypMax expressions?
 
@@ -331,8 +344,18 @@ static WithReason<int> SpacesRequiredBetween(const PreFormatToken& left,
     // For now, if case is not explicitly handled, preserve existing space.
   }
   if (left.TokenEnum() == ':') {
-    // Most contexts want a space after ':'.
-    return {1, "Default to 1 space after ':'"};
+    // Spacing in ranges
+    if (context.IsInsideFirst(
+            {NodeEnum::kSelectVariableDimension, NodeEnum::kDimensionRange,
+             NodeEnum::kDimensionSlice},
+            {})) {
+      // Take advantage here that the left token was already annotated (above)
+      return {left.before.spaces_required,
+              "Symmetrize spaces before and after ':' in bit slice"};
+    } else {
+      // Most contexts want a space after ':'.
+      return {1, "Default to 1 space after ':'"};
+    }
   }
 
   // "if (...)", "for (...) instead of "if(...)", "for(...)",
@@ -463,7 +486,8 @@ static WithReason<SpacingOptions> BreakDecisionBetween(
     // ... except for the spacing immediately around '[' and ']',
     // which is covered by other rules.
     if (left.TokenEnum() != '[' && left.TokenEnum() != ']' &&
-        right.TokenEnum() != '[' && right.TokenEnum() != ']') {
+        right.TokenEnum() != '[' && right.TokenEnum() != ']' &&
+        left.TokenEnum() != ':' && right.TokenEnum() != ':') {
       return {SpacingOptions::Preserve,
               "For now, leave spaces inside [] untouched."};
     }
