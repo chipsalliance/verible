@@ -31,6 +31,7 @@ _linter_test_configs = [
     ("generate-label", "generate-label-module-body", True),  # uses parse directive
     ("invalid-system-task-function", "psprintf", True),
     ("macro-name-style", "macro_name_style", True),
+    ("mismatched-labels", "mismatched_labels", False),
     ("module-begin-block", "module_begin_block", True),
     ("module-filename", "module_filename", True),
     ("package-filename", "package_filename_pkg", True),

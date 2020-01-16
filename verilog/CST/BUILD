@@ -473,6 +473,41 @@ cc_test(
 )
 
 cc_library(
+    name = "seq_block",
+    srcs = ["seq_block.cc"],
+    hdrs = ["seq_block.h"],
+    deps = [
+        ":identifier",
+        ":verilog_matchers",  # fixdeps: keep
+        "//common/analysis:syntax_tree_search",
+        "//common/analysis/matcher",
+        "//common/analysis/matcher:matcher_builders",
+        "//common/text:concrete_syntax_leaf",
+        "//common/text:concrete_syntax_tree",
+        "//common/text:symbol",
+        "//common/text:syntax_tree_context",
+        "//common/text:tree_utils",
+    ],
+)
+
+cc_test(
+    name = "seq_block_test",
+    srcs = ["seq_block_test.cc"],
+    deps = [
+        ":seq_block",
+        ":verilog_matchers",
+        ":verilog_nonterminals",
+        "//common/analysis:syntax_tree_search",
+        "//common/text:syntax_tree_context",
+        "//common/text:text_structure",
+        "//common/util:logging",
+        "//verilog/analysis:verilog_analyzer",
+        "@com_google_absl//absl/strings",
+        "@com_google_googletest//:gtest_main",
+    ],
+)
+
+cc_library(
     name = "tasks",
     srcs = ["tasks.cc"],
     hdrs = ["tasks.h"],
