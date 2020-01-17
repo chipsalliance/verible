@@ -1621,6 +1621,38 @@ static const char* kModuleTests[] = {
     "  endcase\n"
     "end\n"
     "endmodule",
+    "module case_statements;\n"  // unique case statements
+    "always_comb begin\n"
+    "  unique case (blah.blah)\n"
+    "    aaa,bbb: x = y;\n"
+    "    ccc,ddd: w = z;\n"
+    "  endcase\n"
+    "end\n"
+    "endmodule",
+    "module case_statements;\n"  // unique0 case statements
+    "always_comb begin\n"
+    "  unique0 case (blah.blah)\n"
+    "    aaa,bbb: x = y;\n"
+    "    ccc,ddd: w = z;\n"
+    "  endcase\n"
+    "end\n"
+    "endmodule",
+    "module case_statements;\n"  // unique0 casex statements
+    "always_comb begin\n"
+    "  unique0 casex (blah.blah)\n"
+    "    aaa,bbb: x = y;\n"
+    "    ccc,ddd: w = z;\n"
+    "  endcase\n"
+    "end\n"
+    "endmodule",
+    "module case_statements;\n"  // unique0 casez statements
+    "always_comb begin\n"
+    "  unique0 casez (blah.blah)\n"
+    "    aaa,bbb: x = y;\n"
+    "    ccc,ddd: w = z;\n"
+    "  endcase\n"
+    "end\n"
+    "endmodule",
     "module case_statements;\n"
     "always_comb begin\n"
     "  case (blah.blah)\n"
