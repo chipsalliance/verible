@@ -2751,6 +2751,63 @@ const TreeUnwrapperTestData kUnwrapTaskTestCases[] = {
     },
 
     {
+        "task with arithmetic assignment operators",
+        "task t; a=b; c+=d; e-=f; endtask",
+        TaskHeader(0, L(0, {"task", "t", ";"})),
+        StatementList(1, NL(1, {"a", "=", "b", ";"}),
+                      NL(1, {"c", "+=", "d", ";"}),
+                      NL(1, {"e", "-=", "f", ";"})),
+        L(0, {"endtask"}),
+    },
+
+    {
+        "task with arithmetic assignment operators",
+        "task t; a*=b; c=d; e/=f; endtask",
+        TaskHeader(0, L(0, {"task", "t", ";"})),
+        StatementList(1, NL(1, {"a", "*=", "b", ";"}),
+                      NL(1, {"c", "=", "d", ";"}),
+                      NL(1, {"e", "/=", "f", ";"})),
+        L(0, {"endtask"}),
+    },
+
+    {
+        "task with modulus assignment operator",
+        "task t; a%=b; c=d; endtask",
+        TaskHeader(0, L(0, {"task", "t", ";"})),
+        StatementList(1, NL(1, {"a", "%=", "b", ";"}),
+                      NL(1, {"c", "=", "d", ";"})),
+        L(0, {"endtask"}),
+    },
+
+    {
+        "task with bitwise assignment operators",
+        "task t; a&=b; c|=d; e^=f; endtask",
+        TaskHeader(0, L(0, {"task", "t", ";"})),
+        StatementList(1, NL(1, {"a", "&=", "b", ";"}),
+                      NL(1, {"c", "|=", "d", ";"}),
+                      NL(1, {"e", "^=", "f", ";"})),
+        L(0, {"endtask"}),
+    },
+
+    {
+        "task with logical shift assignment operators",
+        "task t; a<<=b; c>>=d; endtask",
+        TaskHeader(0, L(0, {"task", "t", ";"})),
+        StatementList(1, NL(1, {"a", "<<=", "b", ";"}),
+                      NL(1, {"c", ">>=", "d", ";"})),
+        L(0, {"endtask"}),
+    },
+
+    {
+        "task with arithmetic shift assignment operators",
+        "task t; a<<<=b; c>>>=d; endtask",
+        TaskHeader(0, L(0, {"task", "t", ";"})),
+        StatementList(1, NL(1, {"a", "<<<=", "b", ";"}),
+                      NL(1, {"c", ">>>=", "d", ";"})),
+        L(0, {"endtask"}),
+    },
+
+    {
         "task with empty fork-join pairs",
         "task forkit;"
         "fork join fork join "

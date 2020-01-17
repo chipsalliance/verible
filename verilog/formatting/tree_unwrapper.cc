@@ -709,6 +709,7 @@ void TreeUnwrapper::Visit(const verible::SyntaxTreeNode& node) {
     case NodeEnum::kBlockingAssignmentStatement:     // id=expr
     case NodeEnum::kNonblockingAssignmentStatement:  // dest <= src;
     case NodeEnum::kAssignmentStatement:             // id=expr
+    case NodeEnum::kAssignModifyStatement:           // id+=expr
     case NodeEnum::kProceduralTimingControlStatement: {
       if (IsTopLevelListItem(Context())) {
         VisitIndentedSection(node, 0,

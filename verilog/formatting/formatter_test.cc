@@ -1382,6 +1382,23 @@ static const std::initializer_list<FormatterTestCase> kFormatterTestCases = {
      "  f = x;\n"
      "  // statement comment\n"  // indented
      "endfunction\n"},
+    {// line breaks around assignments
+     "function f;a=b;c+=d;endfunction",
+     "function f;\n"
+     "  a = b;\n"
+     "  c += d;\n"
+     "endfunction\n"},
+    {"function f;a&=b;c=d;endfunction",
+     "function f;\n"
+     "  a &= b;\n"
+     "  c = d;\n"
+     "endfunction\n"},
+    {"function f;a<<=b;c=b;d>>>=b;endfunction",
+     "function f;\n"
+     "  a <<= b;\n"
+     "  c = b;\n"
+     "  d >>>= b;\n"
+     "endfunction\n"},
     {// port declaration exceeds line length limit
      "function f (loooong_type if_it_fits_I_sits);endfunction",
      "function f(\n"
