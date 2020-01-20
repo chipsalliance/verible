@@ -2563,6 +2563,20 @@ static const std::initializer_list<FormatterTestCase> kFormatterTestCases = {
         "  // a really long comment on its own line to be left alone\n"
         "endmodule\n",
     },
+    {// primitive declaration
+     "primitive primitive1(o, s, r);output o;reg o;input s;input r;table 1 ? :"
+     " ? : 0; ? 1    : 0   : -; endtable endprimitive",
+     "primitive primitive1(o, s, r);\n"
+     "  output o;\n"
+     "  reg o;\n"
+     "  input s;\n"
+     "  input r;\n"
+     "  table\n"
+     "    1 ? : ? : 0;\n"
+     "    ? 1 : 0 : -;\n"
+     "  endtable\n"
+     "endprimitive\n",
+    },
 };
 
 // Tests that formatter produces expected results, end-to-end.

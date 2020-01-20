@@ -355,6 +355,8 @@ ExpectedUnwrappedLineTree NL(int spaces,
 #define ForSpec N
 #define CaseItemList N
 #define FlowControl N  // for loops and conditional whole constructs
+#define UdpPrimitive N
+#define UdpBody N
 
 // Test data for unwrapping Verilog modules
 // Test case format: test name, source code, ExpectedUnwrappedLines
@@ -4544,6 +4546,43 @@ TEST_F(TreeUnwrapperTest, UnwrapSequenceTests) {
   }
 }
 
+const TreeUnwrapperTestData kUnwrapPrimitivesTestCases[] = {
+    {
+        "sequential UDP",
+        "primitive primitive1(o, s, r); "
+        "output o; "
+        "reg o; "
+        "input s; "
+        "input r; "
+        "table "
+        "1 ? : ? : 0; "
+        "? 1 : 0 : -; "
+        "endtable "
+        "endprimitive ",
+        L(0, {"primitive", "primitive1",
+              "(", "o", ",", "s", ",", "r", ")", ";"}),
+        NL(1, {"output", "o", ";"}),
+        NL(1, {"reg", "o", ";"}),
+        NL(1, {"input", "s", ";"}),
+        NL(1, {"input", "r", ";"}),
+        UdpBody(1, L(1, {"table"}),
+                   NL(2, {"1", "?", ":", "?", ":", "0", ";"}),
+                   NL(2, {"?", "1", ":", "0", ":", "-", ";"}),
+                   L(1, {"endtable"})
+               ),
+        L(0, {"endprimitive"}),
+    },
+};
+
+// Test that TreeUnwrapper produces correct UnwrappedLines from primitives
+TEST_F(TreeUnwrapperTest, UnwrapPrimitivesTests) {
+  for (const auto& test_case : kUnwrapPrimitivesTestCases) {
+    auto tree_unwrapper = CreateTreeUnwrapper(test_case.source_code);
+    const auto* uwline_tree = tree_unwrapper->Unwrap();
+    EXPECT_TRUE(VerifyUnwrappedLines(&std::cout, *ABSL_DIE_IF_NULL(uwline_tree),
+                                     test_case));
+  }
+}
 }  // namespace
 }  // namespace formatter
 }  // namespace verilog
