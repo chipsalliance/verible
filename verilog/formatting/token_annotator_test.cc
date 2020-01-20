@@ -1327,7 +1327,7 @@ TEST(TokenAnnotatorTest, AnnotateFormattingInfoTest) {
                {1, SpacingOptions::Undecided},  // t
                {0, SpacingOptions::Undecided},  // )
 
-               {1, SpacingOptions::Preserve},   // begin
+               {1, SpacingOptions::MustAppend}, // begin
                {1, SpacingOptions::Undecided},  // a
                {0, SpacingOptions::Undecided},  // .
                {0, SpacingOptions::Undecided},  // b

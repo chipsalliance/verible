@@ -387,6 +387,11 @@ static WithReason<int> SpacesRequiredBetween(const PreFormatToken& left,
     return {0, "No spaces after # (delay expressions, parameters)."};
   }
 
+  // e.g. always_ff @(posedge clk) begin ...
+  if (left.TokenEnum() == ')' && right.TokenEnum() == TK_begin) {
+    return {1, "Space between ) and begin keyword"};
+  }
+
   // Case was not explicitly handled.
   return {kUnhandledSpacesRequired, "Default: spacing not explicitly handled"};
 }
@@ -539,6 +544,11 @@ static WithReason<SpacingOptions> BreakDecisionBetween(
   if ((left.TokenEnum() == TK_else) && (right.TokenEnum() == TK_begin)) {
     return {SpacingOptions::MustAppend,
             "'else'-'begin' tokens should be together on one line."};
+  }
+
+  if ((left.TokenEnum() == ')') && (right.TokenEnum() == TK_begin)) {
+    return {SpacingOptions::MustAppend,
+            "')'-'begin' tokens should be together on one line."};
   }
 
   // By default, leave undecided for penalty minimization.
