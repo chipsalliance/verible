@@ -391,6 +391,9 @@ static WithReason<int> SpacesRequiredBetween(const PreFormatToken& left,
   if (left.TokenEnum() == ')' && right.TokenEnum() == TK_begin) {
     return {1, "Space between ) and begin keyword"};
   }
+  if (left.TokenEnum() == ')' && right.TokenEnum() == SymbolIdentifier) {
+    return {1, "Space between ) and SymbolIdentifier"};
+  }
 
   // Case was not explicitly handled.
   return {kUnhandledSpacesRequired, "Default: spacing not explicitly handled"};

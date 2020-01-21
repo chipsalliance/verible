@@ -1779,6 +1779,15 @@ static const std::initializer_list<FormatterTestCase> kFormatterTestCases = {
         "  c = d;\n"
         "endfunction\n",
     },
+    {
+        "function t;"
+        "if (r == t)"
+        "a.b(c);"
+        "endfunction",
+        "function t;\n"
+        "  if (r == t) a.b(c);\n"
+        "endfunction\n",
+    },
 
     {// This tests for for-statement with forced break mixed with others
      "function f;"
@@ -2290,6 +2299,16 @@ static const std::initializer_list<FormatterTestCase> kFormatterTestCases = {
      "task t;\n"
      "  disable bean_counter;\n"
      "endtask\n"},
+    {
+        // task with if-statement
+        "task t;"
+        "if (r == t)"
+        "a.b(c);"
+        "endtask",
+        "task t;\n"
+        "  if (r == t) a.b(c);\n"
+        "endtask\n",
+    },
 
     {// module with disable statements
      "module m;always begin :block disable m.block; end endmodule",
