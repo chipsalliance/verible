@@ -355,7 +355,6 @@ ExpectedUnwrappedLineTree NL(int spaces,
 #define ForSpec N
 #define CaseItemList N
 #define FlowControl N  // for loops and conditional whole constructs
-#define UdpPrimitive N
 #define UdpBody N
 
 // Test data for unwrapping Verilog modules
@@ -4548,8 +4547,84 @@ TEST_F(TreeUnwrapperTest, UnwrapSequenceTests) {
 
 const TreeUnwrapperTestData kUnwrapPrimitivesTestCases[] = {
     {
-        "sequential UDP",
-        "primitive primitive1(o, s, r); "
+        "one input combinatorial UDP",
+        "primitive comb(o, i);\n"
+        "  output o;\n"
+        "  input i;\n"
+        "  table\n"
+        "    1 : 0;\n"
+        "    0 : 1;\n"
+        "  endtable\n"
+        "endprimitive",
+        L(0, {"primitive", "comb",
+              "(", "o", ",", "i", ")", ";"}),
+        NL(1, {"output", "o", ";"}),
+        NL(1, {"input", "i", ";"}),
+        UdpBody(1, L(1, {"table"}),
+                   NL(2, {"1", ":", "0", ";"}),
+                   NL(2, {"0", ":", "1", ";"}),
+                   L(1, {"endtable"})
+               ),
+        L(0, {"endprimitive"}),
+    },
+    {
+        "double input UDP",
+        "primitive comb2(o, s, r); "
+        "output o; "
+        "input s; "
+        "input r; "
+        "table "
+        "1 ? : 0; "
+        "? 1 : 1; "
+        "endtable "
+        "endprimitive ",
+        L(0, {"primitive", "comb2",
+              "(", "o", ",", "s", ",", "r", ")", ";"}),
+        NL(1, {"output", "o", ";"}),
+        NL(1, {"input", "s", ";"}),
+        NL(1, {"input", "r", ";"}),
+        UdpBody(1, L(1, {"table"}),
+                   NL(2, {"1", "?", ":", "0", ";"}),
+                   NL(2, {"?", "1", ":", "1", ";"}),
+                   L(1, {"endtable"})
+               ),
+        L(0, {"endprimitive"}),
+    },
+    {
+        "10-input UDP",
+        "primitive comb10(o, i0, i1, i2, i3, i4, i5, i6, i7, i8, i9); "
+        "  output o; "
+        "  input i0, i1, i2, i3, i4, i5, i6, i7, i8, i9; "
+        "  table "
+        "    0 ? ? ? ? ? ? ? ? 0 : 0;"
+        "    1 ? ? ? ? ? ? ? ? 0 : 1;"
+        "    1 ? ? ? ? ? ? ? ? 1 : 1;"
+        "    0 ? ? ? ? ? ? ? ? 1 : 0;"
+        "  endtable "
+        "endprimitive ",
+        L(0, {"primitive", "comb10",
+              "(", "o", ",", "i0", ",", "i1", ",", "i2", ",", "i3", ",",
+              "i4", ",", "i5", ",", "i6", ",", "i7", ",", "i8", ",", "i9",
+              ")", ";"}),
+        NL(1, {"output", "o", ";"}),
+        NL(1, {"input", "i0", ",", "i1", ",", "i2", ",", "i3", ",", "i4", ",",
+               "i5", ",", "i6", ",", "i7", ",", "i8", ",", "i9", ";"}),
+        UdpBody(1, L(1, {"table"}),
+                   NL(2, {"0", "?", "?", "?", "?", "?", "?", "?", "?", "0",
+                       ":", "0", ";"}),
+                   NL(2, {"1", "?", "?", "?", "?", "?", "?", "?", "?", "0",
+                       ":", "1", ";"}),
+                   NL(2, {"1", "?", "?", "?", "?", "?", "?", "?", "?", "1",
+                       ":", "1", ";"}),
+                   NL(2, {"0", "?", "?", "?", "?", "?", "?", "?", "?", "1",
+                       ":", "0", ";"}),
+                   L(1, {"endtable"})
+               ),
+        L(0, {"endprimitive"}),
+    },
+    {
+        "level-sensitive sequential UDP",
+        "primitive level_seq(o, s, r); "
         "output o; "
         "reg o; "
         "input s; "
@@ -4559,7 +4634,7 @@ const TreeUnwrapperTestData kUnwrapPrimitivesTestCases[] = {
         "? 1 : 0 : -; "
         "endtable "
         "endprimitive ",
-        L(0, {"primitive", "primitive1",
+        L(0, {"primitive", "level_seq",
               "(", "o", ",", "s", ",", "r", ")", ";"}),
         NL(1, {"output", "o", ";"}),
         NL(1, {"reg", "o", ";"}),
@@ -4568,6 +4643,89 @@ const TreeUnwrapperTestData kUnwrapPrimitivesTestCases[] = {
         UdpBody(1, L(1, {"table"}),
                    NL(2, {"1", "?", ":", "?", ":", "0", ";"}),
                    NL(2, {"?", "1", ":", "0", ":", "-", ";"}),
+                   L(1, {"endtable"})
+               ),
+        L(0, {"endprimitive"}),
+    },
+    {
+        "edge-sensitive sequential UDP",
+        "primitive edge_seq(o, c, d); "
+        "  output o; "
+        "  reg o; "
+        "  input c; "
+        "  input d; "
+        "  table "
+        "      (01) 0 : ? :  0; "
+        "      (01) 1 : ? :  1; "
+        "      (0?) 1 : 1 :  1; "
+        "      (0?) 0 : 0 :  0; "
+        "      (?0) ? : ? :  -; "
+        "       ?  (??) : ? :  -; "
+        "  endtable "
+        "endprimitive ",
+        L(0, {"primitive", "edge_seq",
+              "(", "o", ",", "c", ",", "d", ")", ";"}),
+        NL(1, {"output", "o", ";"}),
+        NL(1, {"reg", "o", ";"}),
+        NL(1, {"input", "c", ";"}),
+        NL(1, {"input", "d", ";"}),
+        UdpBody(1, L(1, {"table"}),
+                   NL(2, {"(01)", "0", ":", "?", ":", "0", ";"}),
+                   NL(2, {"(01)", "1", ":", "?", ":", "1", ";"}),
+                   NL(2, {"(0?)", "1", ":", "1", ":", "1", ";"}),
+                   NL(2, {"(0?)", "0", ":", "0", ":", "0", ";"}),
+                   NL(2, {"(?0)", "?", ":", "?", ":", "-", ";"}),
+                   NL(2, {"?", "(??)", ":", "?", ":", "-", ";"}),
+                   L(1, {"endtable"})
+               ),
+        L(0, {"endprimitive"}),
+    },
+    {
+        "mixed sensitivity sequential UDP",
+        "primitive mixed(o, clk, j, k, preset, clear); "
+        "  output o; "
+        "  reg o; "
+        "  input c; "
+        "  input j, k; "
+        "  input preset, clear; "
+        "  table "
+        "    ?  ??  01  : ? :  1 ; "
+        "    ?  ??  *1  : 1 :  1 ; "
+        "    ?  ??  10  : ? :  0 ; "
+        "    ?  ??  1*  : 0 :  0 ; "
+        "    r  00  00  : 0 :  1 ; "
+        "    r  00  11  : ? :  - ; "
+        "    r  01  11  : ? :  0 ; "
+        "    r  10  11  : ? :  1 ; "
+        "    r  11  11  : 0 :  1 ; "
+        "    r  11  11  : 1 :  0 ; "
+        "    f  ??  ??  : ? :  - ; "
+        "    b  *?  ??  : ? :  - ; "
+        "    b  ?*  ??  : ? :  - ; "
+        "  endtable "
+        "endprimitive ",
+        L(0, {"primitive", "mixed",
+              "(", "o", ",", "clk", ",", "j", ",", "k", ",",
+              "preset", ",", "clear", ")", ";"}),
+        NL(1, {"output", "o", ";"}),
+        NL(1, {"reg", "o", ";"}),
+        NL(1, {"input", "c", ";"}),
+        NL(1, {"input", "j", ",", "k", ";"}),
+        NL(1, {"input", "preset", ",", "clear", ";"}),
+        UdpBody(1, L(1, {"table"}),
+                   NL(2, {"?", "?", "?", "0", "1", ":", "?", ":", "1", ";"}),
+                   NL(2, {"?", "?", "?", "*", "1", ":", "1", ":", "1", ";"}),
+                   NL(2, {"?", "?", "?", "1", "0", ":", "?", ":", "0", ";"}),
+                   NL(2, {"?", "?", "?", "1", "*", ":", "0", ":", "0", ";"}),
+                   NL(2, {"r", "0", "0", "0", "0", ":", "0", ":", "1", ";"}),
+                   NL(2, {"r", "0", "0", "1", "1", ":", "?", ":", "-", ";"}),
+                   NL(2, {"r", "0", "1", "1", "1", ":", "?", ":", "0", ";"}),
+                   NL(2, {"r", "1", "0", "1", "1", ":", "?", ":", "1", ";"}),
+                   NL(2, {"r", "1", "1", "1", "1", ":", "0", ":", "1", ";"}),
+                   NL(2, {"r", "1", "1", "1", "1", ":", "1", ":", "0", ";"}),
+                   NL(2, {"f", "?", "?", "?", "?", ":", "?", ":", "-", ";"}),
+                   NL(2, {"b", "*", "?", "?", "?", ":", "?", ":", "-", ";"}),
+                   NL(2, {"b", "?", "*", "?", "?", ":", "?", ":", "-", ";"}),
                    L(1, {"endtable"})
                ),
         L(0, {"endprimitive"}),
