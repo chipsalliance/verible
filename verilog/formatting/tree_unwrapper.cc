@@ -674,9 +674,14 @@ void TreeUnwrapper::Visit(const verible::SyntaxTreeNode& node) {
       switch (subtag) {
         case NodeEnum::kSeqBlock:
         case NodeEnum::kConditionalStatement:
-          // Extend current token partition by begin keyword and if keyword
-          // Plus keep else-if-else... structure flat
-          TraverseChildren(node);
+          if (std::prev(CurrentFormatTokenIterator())->TokenEnum() == yytokentype::SymbolIdentifier) {
+            // Start new token partition if current token is label identifier
+            VisitNewUnwrappedLine(node);
+          } else {
+            // Extend current token partition by begin keyword and if keyword
+            // Plus keep else-if-else... structure flat
+            TraverseChildren(node);
+          }
           break;
 
         default:
