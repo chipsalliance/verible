@@ -25,6 +25,7 @@ cc_library(
         ":explicit_function_task_parameter_type_rule",
         ":explicit_parameter_storage_type_rule",
         ":explicit_task_lifetime_rule",
+        ":forbid_consecutive_null_statements_rule",
         ":forbid_defparam_rule",
         ":forbidden_anonymous_enums_rule",
         ":forbidden_anonymous_structs_unions_rule",
@@ -182,6 +183,42 @@ cc_test(
         "//common/text:symbol",
         "//verilog/analysis:verilog_analyzer",
         "//verilog/parser:verilog_token_enum",
+        "@com_google_googletest//:gtest_main",
+    ],
+)
+
+cc_library(
+    name = "forbid_consecutive_null_statements_rule",
+    srcs = ["forbid_consecutive_null_statements_rule.cc"],
+    hdrs = ["forbid_consecutive_null_statements_rule.h"],
+    deps = [
+        "//common/analysis:citation",
+        "//common/analysis:lint_rule_status",
+        "//common/analysis:syntax_tree_lint_rule",
+        "//common/analysis/matcher",
+        "//common/analysis/matcher:bound_symbol_manager",
+        "//common/analysis/matcher:matcher_builders",
+        "//common/text:symbol",
+        "//common/text:syntax_tree_context",
+        "//verilog/CST:verilog_matchers",  # fixdeps: keep
+        "//verilog/analysis:descriptions",
+        "//verilog/analysis:lint_rule_registry",
+        "@com_google_absl//absl/strings",
+    ],
+    alwayslink = 1,
+)
+
+cc_test(
+    name = "forbid_consecutive_null_statements_rule_test",
+    srcs = ["forbid_consecutive_null_statements_rule_test.cc"],
+    deps = [
+        ":forbid_consecutive_null_statements_rule",
+        "//common/analysis:linter_test_utils",
+        "//common/analysis:syntax_tree_linter_test_utils",
+        "//common/text:symbol",
+        "//verilog/CST:verilog_nonterminals",
+        "//verilog/CST:verilog_treebuilder_utils",
+        "//verilog/analysis:verilog_analyzer",
         "@com_google_googletest//:gtest_main",
     ],
 )
