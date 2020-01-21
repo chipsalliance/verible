@@ -32,6 +32,7 @@
 #include "common/text/token_info.h"
 #include "common/util/file_util.h"
 #include "verilog/CST/module.h"
+#include "verilog/CST/verilog_matchers.h"
 #include "verilog/analysis/descriptions.h"
 #include "verilog/analysis/lint_rule_registry.h"
 
@@ -72,6 +73,14 @@ void ModuleFilenameRule::Lint(const TextStructureView& text_structure,
 
   // Find all module declarations.
   auto module_matches = FindAllModuleDeclarations(*tree);
+
+  // Remove nested module declarations
+  module_matches.erase(std::remove_if(module_matches.begin(),
+              module_matches.end(),
+              [](verible::TreeSearchMatch& m) {
+                  return m.context.IsInside(NodeEnum::kModuleDeclaration);
+              }),
+          module_matches.end());
 
   // See if any names match the stem of the filename.
   const absl::string_view basename = verible::file::Basename(filename);

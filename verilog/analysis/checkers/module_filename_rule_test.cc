@@ -85,6 +85,22 @@ TEST(ModuleFilenameRuleTest, NoModuleMatchesFilenameAbsPath) {
       {"package q; endpackage\n"},
       {"module ", {kToken, "m"}, "; endmodule"},
       {"module m; endmodule\nmodule ", {kToken, "n"}, "; endmodule"},
+      {"module ", {kToken, "m"}, ";\n"
+       "  module q;\n"  // Matches, but is not an outermost declaration
+       "  endmodule : q\n"
+       "endmodule : m"},
+      {"module ", {kToken, "m"}, ";\n"
+       "  module foo;\n"
+       "  endmodule : foo\n"
+       "  module q;\n"
+       "  endmodule : q\n"
+       "endmodule : m"},
+      {"module ", {kToken, "m"}, ";\n"
+       "  module foo;\n"
+       "    module q;\n"
+       "    endmodule : q\n"
+       "  endmodule : foo\n"
+       "endmodule : m"},
   };
   RunLintTestCases<VerilogAnalyzer, ModuleFilenameRule>(kTestCases,
                                                         "/path/to/q.sv");
@@ -100,6 +116,22 @@ TEST(ModuleFilenameRuleTest, NoModuleMatchesFilenameRelPath) {
       {""},
       {"module ", {kToken, "m"}, "; endmodule"},
       {"module m; endmodule\nmodule ", {kToken, "n"}, "; endmodule"},
+      {"module ", {kToken, "m"}, ";\n"
+       "  module r;\n"  // Matches, but is not an outermost declaration
+       "  endmodule : r\n"
+       "endmodule : m"},
+      {"module ", {kToken, "m"}, ";\n"
+       "  module foo;\n"
+       "  endmodule : foo\n"
+       "  module r;\n"
+       "  endmodule : r\n"
+       "endmodule : m"},
+      {"module ", {kToken, "m"}, ";\n"
+       "  module foo;\n"
+       "    module r;\n"
+       "    endmodule : r\n"
+       "  endmodule : foo\n"
+       "endmodule : m"},
   };
   const std::string filename = "path/to/r.sv";
   RunLintTestCases<VerilogAnalyzer, ModuleFilenameRule>(kTestCases, filename);
