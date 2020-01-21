@@ -32,6 +32,7 @@
 #include "common/text/token_info.h"
 #include "common/util/file_util.h"
 #include "verilog/CST/module.h"
+#include "verilog/CST/verilog_matchers.h"
 #include "verilog/analysis/descriptions.h"
 #include "verilog/analysis/lint_rule_registry.h"
 
@@ -63,6 +64,15 @@ void OneModulePerFileRule::Lint(const TextStructureView& text_structure,
   if (tree == nullptr) return;
 
   auto module_matches = FindAllModuleDeclarations(*tree);
+
+  // Nested module declarations are allowed, remove those
+  module_matches.erase(std::remove_if(module_matches.begin(),
+              module_matches.end(),
+              [](verible::TreeSearchMatch& m) {
+                  return m.context.IsInside(NodeEnum::kModuleDeclaration);
+              }),
+          module_matches.end());
+
   if (module_matches.size() > 1) {
       // Report second module declaration
       const auto& second_module_id = GetModuleNameToken(

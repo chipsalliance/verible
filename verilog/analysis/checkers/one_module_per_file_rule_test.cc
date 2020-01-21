@@ -54,6 +54,29 @@ TEST(OneModulePerFileRuleTest, OneModule) {
   RunLintTestCases<VerilogAnalyzer, OneModulePerFileRule>(kTestCases, "");
 }
 
+// Test that nested module declarations are not reported
+TEST(OneModulePerFileRuleTest, NestedModules) {
+  const std::initializer_list<LintTestCase> kTestCases = {
+      {"module foo;\n"
+       "  module moo;\n"
+       "  endmodule : moo\n"
+       "endmodule : foo"},
+      {"module foo;\n"
+       "  module moo;\n"
+       "  endmodule : moo\n"
+       "  module roo;\n"
+       "  endmodule : roo\n"
+       "endmodule : foo"},
+      {"module foo;\n"
+       "  module moo;\n"
+       "    module roo;\n"
+       "    endmodule : roo\n"
+       "  endmodule : moo\n"
+       "endmodule : foo"},
+  };
+  RunLintTestCases<VerilogAnalyzer, OneModulePerFileRule>(kTestCases, "");
+}
+
 // Test that multiple module declarations are picked up
 TEST(OneModulePerFileRuleTest, MultipleModules) {
   const std::initializer_list<LintTestCase> kTestCases = {
