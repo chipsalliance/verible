@@ -387,6 +387,10 @@ static WithReason<int> SpacesRequiredBetween(const PreFormatToken& left,
     return {0, "No spaces after # (delay expressions, parameters)."};
   }
 
+  if (left.TokenEnum() == ')' && right.TokenEnum() == SymbolIdentifier) {
+    return {1, "Space between ) and SymbolIdentifier"};
+  }
+
   // Case was not explicitly handled.
   return {kUnhandledSpacesRequired, "Default: spacing not explicitly handled"};
 }
