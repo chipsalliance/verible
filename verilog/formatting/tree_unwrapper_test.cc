@@ -3564,6 +3564,55 @@ const TreeUnwrapperTestData kUnwrapFunctionTestCases[] = {
     },
 
     {
+        "function with else-if branches, labeled begin and end",
+        "function foo;"
+        "if (zz) begin : label1 "
+        "return 0;"
+        "end : label1 "
+        "else if (yy) begin : label2 "
+        "return 1;"
+        "end : label2 "
+        "endfunction",
+        FunctionHeader(0, L(0, {"function", "foo", ";"})),
+        StatementList(
+            1,
+            FlowControl(
+                1, L(1, {"if", "(", "zz", ")", "begin", ":", "label1"}),
+                N(2, NL(2, {"return", "0", ";"})), L(1, {"end", ":", "label1"}),
+                L(1, {"else", "if", "(", "yy", ")", "begin", ":", "label2"}),
+                N(2, NL(2, {"return", "1", ";"})),
+                L(1, {"end", ":", "label2"}))),
+        L(0, {"endfunction"}),
+    },
+
+    {
+        "function with else-if-else branches, labeled begin and end",
+        "function foo;"
+        "if (zz) begin : label1 "
+        "return 0;"
+        "end : label1 "
+        "else if (yy) begin : label2 "
+        "return 1;"
+        "end : label2 "
+        "else begin : label3 "
+        "return 2;"
+        "end : label3 "
+        "endfunction",
+        FunctionHeader(0, L(0, {"function", "foo", ";"})),
+        StatementList(
+            1,
+            FlowControl(
+                1, L(1, {"if", "(", "zz", ")", "begin", ":", "label1"}),
+                N(2, NL(2, {"return", "0", ";"})), L(1, {"end", ":", "label1"}),
+                L(1, {"else", "if", "(", "yy", ")", "begin", ":", "label2"}),
+                N(2, NL(2, {"return", "1", ";"})), L(1, {"end", ":", "label2"}),
+                L(1, {"else", "begin", ":", "label3"}),
+                N(2, NL(2, {"return", "2", ";"})),
+                L(1, {"end", ":", "label3"}))),
+        L(0, {"endfunction"}),
+    },
+
+    {
         "function with for loop",
         "function foo;"
         "for (x=0;x<N;++x) begin "
