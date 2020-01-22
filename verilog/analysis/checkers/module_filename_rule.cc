@@ -74,13 +74,19 @@ void ModuleFilenameRule::Lint(const TextStructureView& text_structure,
   // Find all module declarations.
   auto module_matches = FindAllModuleDeclarations(*tree);
 
+  // If there are no modules in this source unit, suppress finding.
+  if (module_matches.empty()) return;
+
   // Remove nested module declarations
-  module_matches.erase(std::remove_if(module_matches.begin(),
-              module_matches.end(),
+  std::vector<verible::TreeSearchMatch> module_cleaned;
+  module_cleaned.reserve(module_matches.size());
+  std::back_insert_iterator<std::vector<verible::TreeSearchMatch>> back_it(module_cleaned);
+  std::remove_copy_if(module_matches.begin(),
+                      module_matches.end(),
+                      back_it,
               [](verible::TreeSearchMatch& m) {
                   return m.context.IsInside(NodeEnum::kModuleDeclaration);
-              }),
-          module_matches.end());
+              });
 
   // See if any names match the stem of the filename.
   const absl::string_view basename = verible::file::Basename(filename);
@@ -90,19 +96,17 @@ void ModuleFilenameRule::Lint(const TextStructureView& text_structure,
   if (unitname.empty()) return;
 
   auto matching_module_iter =
-      std::find_if(module_matches.begin(), module_matches.end(),
+      std::find_if(module_cleaned.begin(), module_cleaned.end(),
                    [=](const verible::TreeSearchMatch& m) {
                      return ModuleNameMatches(*m.match, unitname);
                    });
 
-  // If there are no modules in this source unit, suppress finding.
-  if (module_matches.empty()) return;
 
   // If there is at least one module with a matching name, suppress finding.
-  if (matching_module_iter != module_matches.end()) return;
+  if (matching_module_iter != module_cleaned.end()) return;
 
   // Only report a violation on the last module declaration.
-  const auto& last_module_id = GetModuleNameToken(*module_matches.back().match);
+  const auto& last_module_id = GetModuleNameToken(*module_cleaned.back().match);
   violations_.insert(verible::LintViolation(
       last_module_id, absl::StrCat(kMessage, "\"", unitname, "\"")));
 }

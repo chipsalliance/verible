@@ -64,21 +64,27 @@ void OneModulePerFileRule::Lint(const TextStructureView& text_structure,
   if (tree == nullptr) return;
 
   auto module_matches = FindAllModuleDeclarations(*tree);
+  if (module_matches.empty()) {
+      return;
+  }
 
   // Nested module declarations are allowed, remove those
-  module_matches.erase(std::remove_if(module_matches.begin(),
-              module_matches.end(),
+  std::vector<verible::TreeSearchMatch> module_cleaned;
+  module_cleaned.reserve(module_matches.size());
+  std::back_insert_iterator<std::vector<verible::TreeSearchMatch>> back_it(module_cleaned);
+  std::remove_copy_if(module_matches.begin(),
+                      module_matches.end(),
+                      back_it,
               [](verible::TreeSearchMatch& m) {
                   return m.context.IsInside(NodeEnum::kModuleDeclaration);
-              }),
-          module_matches.end());
+              });
 
-  if (module_matches.size() > 1) {
+  if (module_cleaned.size() > 1) {
       // Report second module declaration
       const auto& second_module_id = GetModuleNameToken(
-              *module_matches[1].match);
+              *module_cleaned[1].match);
       violations_.insert(verible::LintViolation(
-          second_module_id, absl::StrCat(kMessage, module_matches.size())));
+          second_module_id, absl::StrCat(kMessage, module_cleaned.size())));
   }
 
 }
