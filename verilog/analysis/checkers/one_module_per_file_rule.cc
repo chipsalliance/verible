@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "verilog/analysis/checkers/module_filename_rule.h"
+#include "verilog/analysis/checkers/one_module_per_file_rule.h"
 
 #include <algorithm>
 #include <iterator>
@@ -44,40 +44,31 @@ using verible::LintRuleStatus;
 using verible::TextStructureView;
 
 // Register the lint rule
-VERILOG_REGISTER_LINT_RULE(ModuleFilenameRule);
+VERILOG_REGISTER_LINT_RULE(OneModulePerFileRule);
 
-absl::string_view ModuleFilenameRule::Name() { return "module-filename"; }
-const char ModuleFilenameRule::kTopic[] = "file-names";
-const char ModuleFilenameRule::kMessage[] =
-    "Declared module does not match the first dot-delimited component "
-    "of file name: ";
+absl::string_view OneModulePerFileRule::Name() { return "one-module-per-file"; }
+const char OneModulePerFileRule::kTopic[] = "file-extensions";
+const char OneModulePerFileRule::kMessage[] =
+    "Each file should have only one module declaration. Found: ";
 
-std::string ModuleFilenameRule::GetDescription(
+std::string OneModulePerFileRule::GetDescription(
     DescriptionType description_type) {
   return absl::StrCat(
-      "If a module is declared, checks that at least one module matches "
-      "the first dot-delimited component of the file name.  See ",
+      "Checks that at most one module is declared per file. See ",
       GetStyleGuideCitation(kTopic), ".");
 }
 
-static bool ModuleNameMatches(const verible::Symbol& s,
-                              absl::string_view name) {
-  const auto& token_info = GetModuleNameToken(s);
-  return token_info.text == name;
-}
-
-void ModuleFilenameRule::Lint(const TextStructureView& text_structure,
-                              absl::string_view filename) {
+void OneModulePerFileRule::Lint(const TextStructureView& text_structure,
+                                absl::string_view) {
   const auto& tree = text_structure.SyntaxTree();
   if (tree == nullptr) return;
 
-  // Find all module declarations.
   auto module_matches = FindAllModuleDeclarations(*tree);
+  if (module_matches.empty()) {
+    return;
+  }
 
-  // If there are no modules in this source unit, suppress finding.
-  if (module_matches.empty()) return;
-
-  // Remove nested module declarations
+  // Nested module declarations are allowed, remove those
   std::vector<verible::TreeSearchMatch> module_cleaned;
   module_cleaned.reserve(module_matches.size());
   std::back_insert_iterator<std::vector<verible::TreeSearchMatch>> back_it(
@@ -87,29 +78,15 @@ void ModuleFilenameRule::Lint(const TextStructureView& text_structure,
                         return m.context.IsInside(NodeEnum::kModuleDeclaration);
                       });
 
-  // See if any names match the stem of the filename.
-  const absl::string_view basename = verible::file::Basename(filename);
-  std::vector<absl::string_view> basename_components =
-      absl::StrSplit(basename, '.');
-  const absl::string_view unitname = basename_components[0];
-  if (unitname.empty()) return;
-
-  auto matching_module_iter =
-      std::find_if(module_cleaned.begin(), module_cleaned.end(),
-                   [=](const verible::TreeSearchMatch& m) {
-                     return ModuleNameMatches(*m.match, unitname);
-                   });
-
-  // If there is at least one module with a matching name, suppress finding.
-  if (matching_module_iter != module_cleaned.end()) return;
-
-  // Only report a violation on the last module declaration.
-  const auto& last_module_id = GetModuleNameToken(*module_cleaned.back().match);
-  violations_.insert(verible::LintViolation(
-      last_module_id, absl::StrCat(kMessage, "\"", unitname, "\"")));
+  if (module_cleaned.size() > 1) {
+    // Report second module declaration
+    const auto& second_module_id = GetModuleNameToken(*module_cleaned[1].match);
+    violations_.insert(verible::LintViolation(
+        second_module_id, absl::StrCat(kMessage, module_cleaned.size())));
+  }
 }
 
-LintRuleStatus ModuleFilenameRule::Report() const {
+LintRuleStatus OneModulePerFileRule::Report() const {
   return LintRuleStatus(violations_, Name(), GetStyleGuideCitation(kTopic));
 }
 
