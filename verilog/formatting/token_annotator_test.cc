@@ -2676,6 +2676,87 @@ TEST(TokenAnnotatorTest, AnnotateFormattingWithContextTest) {
           // no spaces preceding ':' in unit test context
           {0, SpacingOptions::Undecided},
       },
+      // Entries spacing in primitives
+      {
+          // 1 0 : ? : -;
+          DefaultStyle,
+          {'1', "1"},
+          {'0', "0"},
+          {NodeEnum::kUdpSequenceEntry},
+          {1, SpacingOptions::Undecided},
+      },
+      {
+          // 1 0 : ? : -;
+          DefaultStyle,
+          {'0', "0"},
+          {':', ":"},
+          {NodeEnum::kUdpSequenceEntry},
+          {1, SpacingOptions::Undecided},
+      },
+      {
+          // 1 0 : ? : -;
+          DefaultStyle,
+          {':', ":"},
+          {'?', "?"},
+          {NodeEnum::kUdpSequenceEntry},
+          {1, SpacingOptions::Undecided},
+      },
+      {
+          // 1 0 : ? : -;
+          DefaultStyle,
+          {'?', "?"},
+          {':', ":"},
+          {NodeEnum::kUdpSequenceEntry},
+          {1, SpacingOptions::Undecided},
+      },
+      {
+          // 1 0 : ? : -;
+          DefaultStyle,
+          {':', ":"},
+          {'-', "-"},
+          {NodeEnum::kUdpSequenceEntry},
+          {1, SpacingOptions::Undecided},
+      },
+      {
+          // 1 0 : ? : -;
+          DefaultStyle,
+          {'-', "-"},
+          {';', ";"},
+          {NodeEnum::kUdpSequenceEntry},
+          {0, SpacingOptions::Undecided},
+      },
+      {
+          // 1 0 : -;
+          DefaultStyle,
+          {'1', "1"},
+          {'0', "0"},
+          {NodeEnum::kUdpCombEntry},
+          {1, SpacingOptions::Undecided},
+      },
+      {
+          // 1 0 : -;
+          DefaultStyle,
+          {'0', "0"},
+          {':', ":"},
+          {NodeEnum::kUdpCombEntry},
+          {1, SpacingOptions::Undecided},
+      },
+      {
+          // 1 0 : -;
+          DefaultStyle,
+          {':', ":"},
+          {'-', "-"},
+          {NodeEnum::kUdpCombEntry},
+          {1, SpacingOptions::Undecided},
+      },
+      {
+          // 1 0 : -;
+          DefaultStyle,
+          {'-', "-"},
+          {';', ";"},
+          {NodeEnum::kUdpCombEntry},
+          {0, SpacingOptions::Undecided},
+      },
   };
   int test_index = 0;
   for (const auto& test_case : kTestCases) {
