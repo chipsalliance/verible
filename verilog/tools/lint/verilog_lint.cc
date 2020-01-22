@@ -25,11 +25,9 @@
 #include <vector>
 
 #include "absl/flags/flag.h"
-#include "absl/flags/parse.h"
-#include "absl/flags/usage.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
-#include "absl/types/span.h"  // for MakeArraySlice
+#include "common/util/init_command_line.h"
 #include "common/util/logging.h"  // for operator<<, LOG, LogMessage, etc
 #include "common/util/status.h"
 #include "verilog/analysis/verilog_linter.h"
@@ -55,9 +53,9 @@ ABSL_FLAG(
 using verilog::LinterConfiguration;
 
 int main(int argc, char** argv) {
-  absl::SetProgramUsageMessage(
-      absl::StrCat("usage: ", argv[0], " [options] <file> [<file>...]"));
-  const auto args = absl::ParseCommandLine(argc, argv);
+  const auto usage =
+      absl::StrCat("usage: ", argv[0], " [options] <file> [<file>...]");
+  const auto args = verible::InitCommandLine(usage, &argc, &argv);
 
   std::string help_flag = absl::GetFlag(FLAGS_help_rules);
   if (!help_flag.empty()) {

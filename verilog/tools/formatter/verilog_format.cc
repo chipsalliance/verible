@@ -30,12 +30,11 @@
 #include <vector>
 
 #include "absl/flags/flag.h"
-#include "absl/flags/parse.h"
-#include "absl/flags/usage.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
 #include "common/text/text_structure.h"
 #include "common/util/file_util.h"
+#include "common/util/init_command_line.h"
 #include "common/util/logging.h"  // for operator<<, LOG, LogMessage, etc
 #include "common/util/status.h"
 #include "verilog/analysis/verilog_analyzer.h"
@@ -80,10 +79,8 @@ This only takes any effect when preserve_hspaces != all.
   unhandled: same as 'all' (for now).)");
 
 int main(int argc, char** argv) {
-  absl::SetProgramUsageMessage(
-      absl::StrCat("usage: ", argv[0], " [options] <file>"));
-
-  auto file_args = absl::ParseCommandLine(argc, argv);
+  const auto usage = absl::StrCat("usage: ", argv[0], " [options] <file>");
+  const auto file_args = verible::InitCommandLine(usage, &argc, &argv);
 
   // Currently accepts only one file positional argument.
   // TODO(fangism): Support multiple file names.

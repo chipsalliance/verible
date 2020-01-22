@@ -43,6 +43,18 @@ cc_library(
 )
 
 cc_library(
+    name = "init_command_line",
+    srcs = ["init_command_line.cc"],
+    hdrs = ["init_command_line.h"],
+    deps = [
+        "@com_google_absl//absl/flags:flag",
+        "@com_google_absl//absl/flags:parse",
+        "@com_google_absl//absl/flags:usage",
+        "@com_google_absl//absl/strings",
+    ],
+)
+
+cc_library(
     name = "interval",
     hdrs = ["interval.h"],
 )
