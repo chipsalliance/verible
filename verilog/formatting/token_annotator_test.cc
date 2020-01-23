@@ -202,39 +202,40 @@ TEST(TokenAnnotatorTest, AnnotateFormattingInfoTest) {
            {{yytokentype::TK_EOL_COMMENT, "//comment1"},
             {yytokentype::TK_EOL_COMMENT, "//comment2"}}},
 
+          // If there is no newline before comment, it will be appended
           // (  //comment
           {DefaultStyle,
            0,
            {{0, SpacingOptions::Undecided},  //
-            {2, SpacingOptions::Undecided}},
+            {2, SpacingOptions::MustAppend}},
            {{'(', "("}, {yytokentype::TK_EOL_COMMENT, "//comment"}}},
 
           // [  //comment
           {DefaultStyle,
            0,
            {{0, SpacingOptions::Undecided},  //
-            {2, SpacingOptions::Undecided}},
+            {2, SpacingOptions::MustAppend}},
            {{'[', "["}, {yytokentype::TK_EOL_COMMENT, "//comment"}}},
 
           // {  //comment
           {DefaultStyle,
            0,
            {{0, SpacingOptions::Undecided},  //
-            {2, SpacingOptions::Undecided}},
+            {2, SpacingOptions::MustAppend}},
            {{'{', "{"}, {yytokentype::TK_EOL_COMMENT, "//comment"}}},
 
           // ,  //comment
           {DefaultStyle,
            0,
            {{0, SpacingOptions::Undecided},  //
-            {2, SpacingOptions::Undecided}},
+            {2, SpacingOptions::MustAppend}},
            {{',', ","}, {yytokentype::TK_EOL_COMMENT, "//comment"}}},
 
           // ;  //comment
           {DefaultStyle,
            0,
            {{0, SpacingOptions::Undecided},  //
-            {2, SpacingOptions::Undecided}},
+            {2, SpacingOptions::MustAppend}},
            {{';', ";"}, {yytokentype::TK_EOL_COMMENT, "//comment"}}},
 
           // module foo();
