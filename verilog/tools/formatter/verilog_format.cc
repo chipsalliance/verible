@@ -79,7 +79,9 @@ This only takes any effect when preserve_hspaces != all.
   unhandled: same as 'all' (for now).)");
 
 int main(int argc, char** argv) {
-  const auto usage = absl::StrCat("usage: ", argv[0], " [options] <file>");
+  const auto usage = absl::StrCat("usage: ", argv[0],
+                                  " [options] <file>\n"
+                                  "To pipe from stdin, use '-' as <file>.");
   const auto file_args = verible::InitCommandLine(usage, &argc, &argv);
 
   // Currently accepts only one file positional argument.
@@ -87,6 +89,15 @@ int main(int argc, char** argv) {
   QCHECK_GT(file_args.size(), 1)
       << "Missing required positional argument (filename).";
   const absl::string_view filename = file_args[1];
+
+  const bool inplace = FLAGS_inplace.Get();
+  const bool is_stdin = filename == "-";
+
+  if (inplace && is_stdin) {
+    std::cerr << "--inplace is incompatible with stdin.  Ignoring --inplace "
+                 "and writing to stdout."
+              << std::endl;
+  }
 
   // Read contents into memory first.
   std::string content;
@@ -108,9 +119,8 @@ int main(int argc, char** argv) {
     formatter_control.max_search_states = FLAGS_max_search_states.Get();
   }
 
-  const std::string filename_str(filename);
   const auto analyzer =
-      VerilogAnalyzer::AnalyzeAutomaticMode(content, filename_str);
+      VerilogAnalyzer::AnalyzeAutomaticMode(content, filename);
   {
     // Lex and parse code.  Exit on failure.
     const auto lex_status = ABSL_DIE_IF_NULL(analyzer)->LexStatus();
@@ -168,7 +178,7 @@ int main(int argc, char** argv) {
     // performs additional transformations like expanding MacroArgs to
     // expression subtrees.
     const auto reanalyzer =
-        VerilogAnalyzer::AnalyzeAutomaticMode(formatted_output, filename_str);
+        VerilogAnalyzer::AnalyzeAutomaticMode(formatted_output, filename);
     const auto relex_status = ABSL_DIE_IF_NULL(reanalyzer)->LexStatus();
     const auto reparse_status = reanalyzer->ParseStatus();
 
@@ -210,7 +220,7 @@ int main(int argc, char** argv) {
     // Safe to write out result, having passed above verification.
     std::ostream* output_stream = &std::cout;
     std::ofstream inplace_file;
-    if (FLAGS_inplace.Get()) {
+    if (inplace && !is_stdin) {
       inplace_file.open(filename.data());
       if (inplace_file.good()) {
         output_stream = &inplace_file;

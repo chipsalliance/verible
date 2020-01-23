@@ -17,6 +17,7 @@
 #include <string>
 
 #include "gtest/gtest.h"
+#include "absl/strings/string_view.h"
 
 namespace verible {
 namespace util {
@@ -40,7 +41,7 @@ TEST(FileUtil, Stem) {
 TEST(FileUtil, CreateDir) {
   const std::string test_dir = file::JoinPath(testing::TempDir(), "test_dir");
   const std::string test_file = file::JoinPath(test_dir, "foo");
-  const std::string test_content = "directory create test";
+  const absl::string_view test_content = "directory create test";
 
   EXPECT_TRUE(file::CreateDir(test_dir));
 
@@ -51,12 +52,24 @@ TEST(FileUtil, CreateDir) {
 }
 
 TEST(FileUtil, ScopedTestFile) {
-  const std::string test_content = "Hello World!";
+  const absl::string_view test_content = "Hello World!";
   file::testing::ScopedTestFile test_file(testing::TempDir(), test_content);
   std::string read_back_content;
   EXPECT_TRUE(file::GetContents(test_file.filename(), &read_back_content));
   EXPECT_EQ(test_content, read_back_content);
 }
+
+TEST(FileUtil, ScopedTestFileStdin) {
+  // When running interactively, skip this test to avoid waiting for stdin.
+  if (isatty(STDIN_FILENO)) return;
+  // Testing is non-interactive, so reading from stdin will be immediately
+  // closed, resulting in an empty string.
+  const absl::string_view test_content = "";
+  std::string read_back_content;
+  EXPECT_TRUE(file::GetContents("-", &read_back_content));
+  EXPECT_EQ(test_content, read_back_content);
+}
+
 }  // namespace
 }  // namespace util
 }  // namespace verible

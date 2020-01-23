@@ -47,9 +47,17 @@ absl::string_view Stem(absl::string_view filename) {
 }
 
 bool GetContents(absl::string_view filename, std::string *content) {
-  std::ifstream fs(std::string(filename).c_str());
-  if (!fs.good()) return false;
-  content->assign((std::istreambuf_iterator<char>(fs)),
+  std::ifstream fs;
+  std::istream* stream = nullptr;
+  if (filename == "-") {
+    // convention: honor "-" as stdin
+    stream = &std::cin;
+  } else {
+    fs.open(std::string(filename).c_str());
+    stream = &fs;
+  }
+  if (!stream->good()) return false;
+  content->assign((std::istreambuf_iterator<char>(*stream)),
                   std::istreambuf_iterator<char>());
   return true;
 }

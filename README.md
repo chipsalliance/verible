@@ -279,30 +279,31 @@ The formatter tool is available as `//verilog/tools/formatter:verilog_format`.
 
 ```
 verilog_format: usage: verilog_format [options] <file>
+To pipe from stdin, use '-' as <file>.
 
   Flags from verilog/tools/formatter/verilog_format.cc:
-    -inplace (If true, overwrite the input file on successful conditions.);
+    --inplace (If true, overwrite the input file on successful conditions.);
       default: false;
-    -max_search_states (Limits the number of search states explored during line
+    --max_search_states (Limits the number of search states explored during line
       wrap optimization.); default: 100000;
-    -preserve_hspaces (Mode that controls how original inter-token (horizontal)
+    --preserve_hspaces (Mode that controls how original inter-token (horizontal)
       spacing is used.
       none: disregard all original spacing
       all: only use original spacing (does no formatting)
       unhandled: fall-back to original spacing in unhandled cases.);
       default: unhandled;
-    -preserve_vspaces (Mode that controls how original inter-line (vertical)
+    --preserve_vspaces (Mode that controls how original inter-line (vertical)
       spacing is used.
       This only takes any effect when preserve_hspaces != all.
       none: disregard all original spacing
       all: keep original vertical spacing (newlines only, no spaces/tabs)
       unhandled: same as 'all' (for now).); default: unhandled;
-    -show_equally_optimal_wrappings (If true, print when multiple optimal
+    --show_equally_optimal_wrappings (If true, print when multiple optimal
       solutions are found (stderr), but continue to operate normally.);
       default: false;
-    -show_largest_token_partitions (If > 0, print token partitioning and then
+    --show_largest_token_partitions (If > 0, print token partitioning and then
       exit without formatting output.); default: 0;
-    -show_token_partition_tree (If true, print diagnostics after token
+    --show_token_partition_tree (If true, print diagnostics after token
       partitioning and then exit without formatting output.); default: false;
 
 Try --helpfull to get a list of all flags.
