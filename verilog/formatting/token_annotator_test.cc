@@ -2757,6 +2757,87 @@ TEST(TokenAnnotatorTest, AnnotateFormattingWithContextTest) {
           {NodeEnum::kUdpCombEntry},
           {0, SpacingOptions::Undecided},
       },
+      // Comments in UDP entries
+      {
+          // 1  /*comment*/ 0 : -;
+          DefaultStyle,
+          {'1', "1"},
+          {yytokentype::TK_COMMENT_BLOCK, "/* comment */"},
+          {NodeEnum::kUdpCombEntry},
+          {2, SpacingOptions::Undecided},
+      },
+      {
+          // 1  /*comment*/ 0 : -;
+          DefaultStyle,
+          {yytokentype::TK_COMMENT_BLOCK, "/* comment */"},
+          {'0', "0"},
+          {NodeEnum::kUdpCombEntry},
+          {1, SpacingOptions::Undecided},
+      },
+      {
+          // 1 0  // comment\n : -;
+          DefaultStyle,
+          {'0', "0"},
+          {yytokentype::TK_EOL_COMMENT, "// comment"},
+          {NodeEnum::kUdpCombEntry},
+          {2, SpacingOptions::Undecided},
+      },
+      {
+          // 1  /*comment*/ 0 : -;
+          DefaultStyle,
+          {'1', "1"},
+          {yytokentype::TK_COMMENT_BLOCK, "/* comment */"},
+          {NodeEnum::kUdpSequenceEntry},
+          {2, SpacingOptions::Undecided},
+      },
+      {
+          // 1  /*comment*/ 0 : -;
+          DefaultStyle,
+          {yytokentype::TK_COMMENT_BLOCK, "/* comment */"},
+          {'0', "0"},
+          {NodeEnum::kUdpSequenceEntry},
+          {1, SpacingOptions::Undecided},
+      },
+      {
+          // 1 0  // comment\n : -;
+          DefaultStyle,
+          {'0', "0"},
+          {yytokentype::TK_EOL_COMMENT, "// comment"},
+          {NodeEnum::kUdpSequenceEntry},
+          {2, SpacingOptions::Undecided},
+      },
+      {
+          // input  /* comment */ i;
+          DefaultStyle,
+          {yytokentype::TK_input, "input"},
+          {yytokentype::TK_COMMENT_BLOCK, "/* comment */"},
+          {NodeEnum::kUdpPortDeclaration},
+          {2, SpacingOptions::Undecided},
+      },
+      {
+          // input  /* comment */ i;
+          DefaultStyle,
+          {yytokentype::TK_COMMENT_BLOCK, "/* comment */"},
+          {yytokentype::SymbolIdentifier, "i"},
+          {NodeEnum::kUdpPortDeclaration},
+          {1, SpacingOptions::Preserve},
+      },
+      {
+          // input i  /* comment */;
+          DefaultStyle,
+          {yytokentype::SymbolIdentifier, "i"},
+          {yytokentype::TK_COMMENT_BLOCK, "/* comment */"},
+          {NodeEnum::kUdpPortDeclaration},
+          {2, SpacingOptions::Undecided},
+      },
+      {
+          // input i;  // comment\n
+          DefaultStyle,
+          {';', ";"},
+          {yytokentype::TK_EOL_COMMENT, "// comment"},
+          {NodeEnum::kUdpPortDeclaration},
+          {2, SpacingOptions::Undecided},
+      },
   };
   int test_index = 0;
   for (const auto& test_case : kTestCases) {

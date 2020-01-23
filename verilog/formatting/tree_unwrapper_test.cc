@@ -4591,6 +4591,31 @@ const TreeUnwrapperTestData kUnwrapPrimitivesTestCases[] = {
         L(0, {"endprimitive"}),
     },
     {
+        "double input UDP with comments",
+        "primitive comb2(o, s, r); "
+        "output /* only one */ o;\n"
+        "// inputs section\n"
+        "input s; "
+        "input r; // two of them\n"
+        "table "
+        "1 ? : 0; "
+        "? 1 : 1; "
+        "endtable "
+        "endprimitive ",
+        L(0, {"primitive", "comb2",
+              "(", "o", ",", "s", ",", "r", ")", ";"}),
+        NL(1, {"output", "/* only one */", "o", ";"}),
+        N(1, L(1, {"// inputs section"}),
+             L(1, {"input", "s", ";"})),
+        NL(1, {"input", "r", ";", "// two of them"}),
+        UdpBody(1, L(1, {"table"}),
+                   NL(2, {"1", "?", ":", "0", ";"}),
+                   NL(2, {"?", "1", ":", "1", ";"}),
+                   L(1, {"endtable"})
+               ),
+        L(0, {"endprimitive"}),
+    },
+    {
         "10-input UDP",
         "primitive comb10(o, i0, i1, i2, i3, i4, i5, i6, i7, i8, i9); "
         "  output o; "
@@ -4643,6 +4668,34 @@ const TreeUnwrapperTestData kUnwrapPrimitivesTestCases[] = {
         UdpBody(1, L(1, {"table"}),
                    NL(2, {"1", "?", ":", "?", ":", "0", ";"}),
                    NL(2, {"?", "1", ":", "0", ":", "-", ";"}),
+                   L(1, {"endtable"})
+               ),
+        L(0, {"endprimitive"}),
+    },
+    {
+        "sequential UDP with comments",
+        "primitive level_seq(o, s, r); "
+        "output o; "
+        "reg o; "
+        "input s; "
+        "input r; "
+        "table\n"
+        "// r s state next\n"
+        "1 /* rst */ ? : ? : 0; "
+        "? 1 /* set */ : 0 : -; // no change here\n"
+        "endtable "
+        "endprimitive ",
+        L(0, {"primitive", "level_seq",
+              "(", "o", ",", "s", ",", "r", ")", ";"}),
+        NL(1, {"output", "o", ";"}),
+        NL(1, {"reg", "o", ";"}),
+        NL(1, {"input", "s", ";"}),
+        NL(1, {"input", "r", ";"}),
+        UdpBody(1, L(1, {"table"}),
+                   N(2, L(2, {"// r s state next"}),
+                        L(2, {"1", "/* rst */", "?", ":", "?", ":", "0", ";"})),
+                   NL(2, {"?", "1", "/* set */", ":", "0", ":", "-", ";",
+                          "// no change here"}),
                    L(1, {"endtable"})
                ),
         L(0, {"endprimitive"}),
