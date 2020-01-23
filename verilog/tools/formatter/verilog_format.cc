@@ -50,6 +50,9 @@ using verilog::formatter::PreserveSpaces;
 // TODO(fangism): Provide -i alias, as it is canonical to many formatters
 ABSL_FLAG(bool, inplace, false,
           "If true, overwrite the input file on successful conditions.");
+ABSL_FLAG(std::string, stdin_name, "<stdin>",
+          "When using '-' to read from stdin, this gives an alternate name for "
+          "diagnostic purposes.  Otherwise this is ignored.");
 
 ABSL_FLAG(int, show_largest_token_partitions, 0,
           "If > 0, print token partitioning and then "
@@ -92,11 +95,16 @@ int main(int argc, char** argv) {
 
   const bool inplace = FLAGS_inplace.Get();
   const bool is_stdin = filename == "-";
+  const auto& stdin_name = FLAGS_stdin_name.Get();
 
   if (inplace && is_stdin) {
     std::cerr << "--inplace is incompatible with stdin.  Ignoring --inplace "
                  "and writing to stdout."
               << std::endl;
+  }
+  absl::string_view diagnostic_filename = filename;
+  if (is_stdin) {
+    diagnostic_filename = stdin_name;
   }
 
   // Read contents into memory first.
@@ -120,7 +128,7 @@ int main(int argc, char** argv) {
   }
 
   const auto analyzer =
-      VerilogAnalyzer::AnalyzeAutomaticMode(content, filename);
+      VerilogAnalyzer::AnalyzeAutomaticMode(content, diagnostic_filename);
   {
     // Lex and parse code.  Exit on failure.
     const auto lex_status = ABSL_DIE_IF_NULL(analyzer)->LexStatus();
@@ -177,8 +185,8 @@ int main(int argc, char** argv) {
     // Note: We cannot just Tokenize() and compare because Analyze()
     // performs additional transformations like expanding MacroArgs to
     // expression subtrees.
-    const auto reanalyzer =
-        VerilogAnalyzer::AnalyzeAutomaticMode(formatted_output, filename);
+    const auto reanalyzer = VerilogAnalyzer::AnalyzeAutomaticMode(
+        formatted_output, diagnostic_filename);
     const auto relex_status = ABSL_DIE_IF_NULL(reanalyzer)->LexStatus();
     const auto reparse_status = reanalyzer->ParseStatus();
 

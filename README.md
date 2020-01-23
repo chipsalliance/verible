@@ -305,6 +305,9 @@ To pipe from stdin, use '-' as <file>.
       exit without formatting output.); default: 0;
     --show_token_partition_tree (If true, print diagnostics after token
       partitioning and then exit without formatting output.); default: false;
+    --stdin_name (When using '-' to read from stdin, this gives an alternate
+      name for diagnostic purposes. Otherwise this is ignored.);
+      default: "<stdin>";
 
 Try --helpfull to get a list of all flags.
 ```
