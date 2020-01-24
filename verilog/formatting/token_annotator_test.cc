@@ -2693,6 +2693,121 @@ TEST(TokenAnnotatorTest, AnnotateFormattingWithContextTest) {
   }
 }
 
+struct AnnotateBreakAroundCommentsTestCase {
+  FormatStyle style;
+
+  int left_token_enum;
+  std::string left_token_string;
+
+  std::string whitespace_between;
+
+  int right_token_enum;
+  std::string right_token_string;
+
+  InitializedSyntaxTreeContext context;
+  ExpectedInterTokenInfo expected_annotation;
+};
+
+TEST(TokenAnnotatorTest, AnnotateBreakAroundComments) {
+  const std::initializer_list<AnnotateBreakAroundCommentsTestCase> kTestCases = {
+      {
+          // No comments
+          DefaultStyle,
+          '=', "=",
+          "   ",
+          yytokentype::TK_DecNumber, "0",
+          {/* unspecified context */},
+          {1, SpacingOptions::Undecided}
+      },
+      {
+          // 0 // comment
+          DefaultStyle,
+          yytokentype::TK_DecNumber, "0",
+          "   ",
+          yytokentype::TK_EOL_COMMENT, "// comment",
+          {/* unspecified context */},
+          {2, SpacingOptions::MustAppend}
+      },
+      {
+          // 0// comment
+          DefaultStyle,
+          yytokentype::TK_DecNumber, "0",
+          "",
+          yytokentype::TK_EOL_COMMENT, "// comment",
+          {/* unspecified context */},
+          {2, SpacingOptions::MustAppend}
+      },
+      {
+          // 0 \n  // comment
+          DefaultStyle,
+          yytokentype::TK_DecNumber, "0",
+          " \n  ",
+          yytokentype::TK_EOL_COMMENT, "// comment",
+          {/* unspecified context */},
+          {2, SpacingOptions::Undecided}
+      },
+      {
+          // // comment 1 \n  // comment 2
+          DefaultStyle,
+          yytokentype::TK_EOL_COMMENT, "// comment 1",
+          " \n  ",
+          yytokentype::TK_EOL_COMMENT, "// comment 2",
+          {/* unspecified context */},
+          {2, SpacingOptions::MustWrap}
+      },
+      {
+          // /* comment 1 */ \n  // comment 2
+          DefaultStyle,
+          yytokentype::TK_COMMENT_BLOCK, "/* comment 1 */",
+          " \n  ",
+          yytokentype::TK_EOL_COMMENT, "// comment 2",
+          {/* unspecified context */},
+          {2, SpacingOptions::Undecided}
+      },
+      {
+          // /* comment 1 */  // comment 2
+          DefaultStyle,
+          yytokentype::TK_COMMENT_BLOCK, "/* comment 1 */",
+          " ",
+          yytokentype::TK_EOL_COMMENT, "// comment 2",
+          {/* unspecified context */},
+          {2, SpacingOptions::MustAppend}
+      }
+  };
+  int test_index = 0;
+  for (const auto& test_case : kTestCases) {
+    VLOG(1) << "test_index[" << test_index << "]:";
+
+    std::string line = test_case.left_token_string
+                       + test_case.whitespace_between
+                       + test_case.right_token_string;
+
+    verible::TokenInfo LeftTokenInfo =
+        {test_case.left_token_enum,
+         absl::string_view(line.data(),
+                           test_case.left_token_string.size())};
+    verible::TokenInfo RightTokenInfo =
+        {test_case.right_token_enum,
+         absl::string_view(line.data()
+                           + test_case.left_token_string.size()
+                           + test_case.whitespace_between.size(),
+                           test_case.right_token_string.size())};
+
+    PreFormatToken left(&LeftTokenInfo);
+    PreFormatToken right(&RightTokenInfo);
+
+    left.format_token_enum = GetFormatTokenType(yytokentype(left.TokenEnum()));
+    right.format_token_enum =
+        GetFormatTokenType(yytokentype(right.TokenEnum()));
+
+    VLOG(1) << "context: " << test_case.context;
+    AnnotateFormatToken(test_case.style, left, &right, test_case.context);
+    EXPECT_EQ(test_case.expected_annotation, right.before)
+        << " with left=" << left.Text() << " and right=" << right.Text();
+    ++test_index;
+  }
+}
+
 }  // namespace
 }  // namespace formatter
 }  // namespace verilog
