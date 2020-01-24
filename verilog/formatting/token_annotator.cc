@@ -507,13 +507,20 @@ static WithReason<SpacingOptions> BreakDecisionBetween(
   ) {
     return {SpacingOptions::MustWrap, "Token must be newline-terminated"};
   }
+
   if (right.format_token_enum == FTT::eol_comment) {
+    // Check if there are is a newline in whitespace directly before this token
     auto preceding_whitespace = verible::make_string_view_range(left.token->text.end(),
         right.token->text.begin());
+
     auto pos = preceding_whitespace.find_first_of('\n', 0);
-    if (pos == static_cast<size_t>(-1))
-      return {SpacingOptions::MustAppend, "Comment cannot break"};
+    if (pos == static_cast<size_t>(-1)) {
+      // There are other tokens on this line
+      return {SpacingOptions::MustAppend, "EOL comment cannot break from "
+                                          "tokens to the left on its line"};
+    }
   }
+
   // TODO(fangism): check for all token types in verilog.lex that
   // scan to an end-of-line, even if it returns the newline to scanning with
   // yyless().

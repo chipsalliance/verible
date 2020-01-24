@@ -2482,7 +2482,7 @@ static const std::initializer_list<FormatterTestCase> kFormatterTestCases = {
      "unindented instantiation;\n"
      "endmodule\n"},
     {
-     //"long line with EOL comment",
+     // multiple tokens with EOL comment
      "module please;  // don't break before the comment\n"
      "endmodule\n",
      "module please\n"
@@ -2490,19 +2490,19 @@ static const std::initializer_list<FormatterTestCase> kFormatterTestCases = {
      "endmodule\n"
     },
     {
-     //"long line with EOL comment",
+     // one token with EOL comment
      "module please;\n"
      "endmodule  // don't break before the comment\n",
      "module please;\n"
      "endmodule  // don't break before the comment\n"
     },
     {
-     //"long line with EOL comment",
+     // line with only an EOL comment
      "module wild;\n"
-     "// a really long (for unit tests) comment on its own to be left alone\n"
+     "// a really long comment on its own line to be left alone\n"
      "endmodule",
      "module wild;\n"
-     "  // a really long (for unit tests) comment on its own to be left alone\n"
+     "  // a really long comment on its own line to be left alone\n"
      "endmodule\n",
     },
 };
