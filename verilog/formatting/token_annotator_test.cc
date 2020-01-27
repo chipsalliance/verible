@@ -22,11 +22,13 @@
 
 #include "gtest/gtest.h"
 #include "absl/strings/string_view.h"
+#include "absl/strings/str_cat.h"
 #include "common/formatting/format_token.h"
 #include "common/formatting/unwrapped_line.h"
 #include "common/formatting/unwrapped_line_test_utils.h"
 #include "common/text/syntax_tree_context.h"
 #include "common/text/tree_builder_test_util.h"
+#include "common/text/token_info_test_util.h"
 #include "common/util/casts.h"
 #include "common/util/iterator_adaptors.h"
 #include "verilog/CST/verilog_nonterminals.h"
@@ -2697,12 +2699,12 @@ struct AnnotateBreakAroundCommentsTestCase {
   FormatStyle style;
 
   int left_token_enum;
-  std::string left_token_string;
+  absl::string_view left_token_string;
 
-  std::string whitespace_between;
+  absl::string_view whitespace_between;
 
   int right_token_enum;
-  std::string right_token_string;
+  absl::string_view right_token_string;
 
   InitializedSyntaxTreeContext context;
   ExpectedInterTokenInfo expected_annotation;
@@ -2772,29 +2774,148 @@ TEST(TokenAnnotatorTest, AnnotateBreakAroundComments) {
           yytokentype::TK_EOL_COMMENT, "// comment 2",
           {/* unspecified context */},
           {2, SpacingOptions::MustAppend}
-      }
+      },
+      {
+          // ;  // comment 2
+          DefaultStyle,
+          ';', ";",
+          " ",
+          yytokentype::TK_EOL_COMMENT, "// comment 2",
+          {/* unspecified context */},
+          {2, SpacingOptions::MustAppend}
+      },
+      {
+          // ; \n // comment 2
+          DefaultStyle,
+          ';', ";",
+          " \n",
+          yytokentype::TK_EOL_COMMENT, "// comment 2",
+          {/* unspecified context */},
+          {2, SpacingOptions::Undecided}
+      },
+      {
+          // ,  // comment 2
+          DefaultStyle,
+          ',', ",",
+          " ",
+          yytokentype::TK_EOL_COMMENT, "// comment 2",
+          {/* unspecified context */},
+          {2, SpacingOptions::MustAppend}
+      },
+      {
+          // , \n // comment 2
+          DefaultStyle,
+          ',', ",",
+          "\n ",
+          yytokentype::TK_EOL_COMMENT, "// comment 2",
+          {/* unspecified context */},
+          {2, SpacingOptions::Undecided}
+      },
+      {
+          // begin  // comment 2
+          DefaultStyle,
+          yytokentype::TK_begin, "begin",
+          " ",
+          yytokentype::TK_EOL_COMMENT, "// comment 2",
+          {/* unspecified context */},
+          {2, SpacingOptions::MustAppend}
+      },
+      {
+          // begin \n // comment 2
+          DefaultStyle,
+          yytokentype::TK_begin, "begin",
+          "\n",
+          yytokentype::TK_EOL_COMMENT, "// comment 2",
+          {/* unspecified context */},
+          {2, SpacingOptions::Undecided}
+      },
+      {
+          // else  // comment 2
+          DefaultStyle,
+          yytokentype::TK_else, "else",
+          " ",
+          yytokentype::TK_EOL_COMMENT, "// comment 2",
+          {/* unspecified context */},
+          {2, SpacingOptions::MustAppend}
+      },
+      {
+          // else \n // comment 2
+          DefaultStyle,
+          yytokentype::TK_else, "else",
+          " \n  ",
+          yytokentype::TK_EOL_COMMENT, "// comment 2",
+          {/* unspecified context */},
+          {2, SpacingOptions::Undecided}
+      },
+      {
+          // end  // comment 2
+          DefaultStyle,
+          yytokentype::TK_end, "end",
+          " ",
+          yytokentype::TK_EOL_COMMENT, "// comment 2",
+          {/* unspecified context */},
+          {2, SpacingOptions::MustAppend}
+      },
+      {
+          // end \n // comment 2
+          DefaultStyle,
+          yytokentype::TK_end, "end",
+          "  \n ",
+          yytokentype::TK_EOL_COMMENT, "// comment 2",
+          {/* unspecified context */},
+          {2, SpacingOptions::Undecided}
+      },
+      {
+          // generate  // comment 2
+          DefaultStyle,
+          yytokentype::TK_generate, "generate",
+          " ",
+          yytokentype::TK_EOL_COMMENT, "// comment 2",
+          {/* unspecified context */},
+          {2, SpacingOptions::MustAppend}
+      },
+      {
+          // generate \n // comment 2
+          DefaultStyle,
+          yytokentype::TK_generate, "generate",
+          "  \n",
+          yytokentype::TK_EOL_COMMENT, "// comment 2",
+          {/* unspecified context */},
+          {2, SpacingOptions::Undecided}
+      },
+      {
+          // if  // comment 2
+          DefaultStyle,
+          yytokentype::TK_if, "if",
+          " ",
+          yytokentype::TK_EOL_COMMENT, "// comment 2",
+          {/* unspecified context */},
+          {2, SpacingOptions::MustAppend}
+      },
+      {
+          // if \n\n // comment 2
+          DefaultStyle,
+          yytokentype::TK_if, "if",
+          " \n\n ",
+          yytokentype::TK_EOL_COMMENT, "// comment 2",
+          {/* unspecified context */},
+          {2, SpacingOptions::Undecided}
+      },
   };
   int test_index = 0;
   for (const auto& test_case : kTestCases) {
     VLOG(1) << "test_index[" << test_index << "]:";
 
-    std::string line = test_case.left_token_string
-                       + test_case.whitespace_between
-                       + test_case.right_token_string;
+    verible::TokenInfoTestData test_data = {
+        {test_case.left_token_enum, test_case.left_token_string},
+        test_case.whitespace_between,
+        {test_case.right_token_enum, test_case.right_token_string}};
 
-    verible::TokenInfo LeftTokenInfo =
-        {test_case.left_token_enum,
-         absl::string_view(line.data(),
-                           test_case.left_token_string.size())};
-    verible::TokenInfo RightTokenInfo =
-        {test_case.right_token_enum,
-         absl::string_view(line.data()
-                           + test_case.left_token_string.size()
-                           + test_case.whitespace_between.size(),
-                           test_case.right_token_string.size())};
+    auto token_vector = test_data.FindImportantTokens();
+    ASSERT_EQ(token_vector.size(), 2);
 
-    PreFormatToken left(&LeftTokenInfo);
-    PreFormatToken right(&RightTokenInfo);
+    PreFormatToken left(&token_vector[0]);
+    PreFormatToken right(&token_vector[1]);
 
     left.format_token_enum = GetFormatTokenType(yytokentype(left.TokenEnum()));
     right.format_token_enum =

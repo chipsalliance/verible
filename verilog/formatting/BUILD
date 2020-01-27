@@ -217,6 +217,7 @@ cc_test(
         "//common/formatting:unwrapped_line_test_utils",
         "//common/text:syntax_tree_context",
         "//common/text:tree_builder_test_util",
+        "//common/text:token_info_test_util",
         "//common/util:casts",
         "//common/util:iterator_adaptors",
         "//verilog/CST:verilog_nonterminals",

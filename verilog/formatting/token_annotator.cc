@@ -514,7 +514,7 @@ static WithReason<SpacingOptions> BreakDecisionBetween(
         right.token->text.begin());
 
     auto pos = preceding_whitespace.find_first_of('\n', 0);
-    if (pos == static_cast<size_t>(-1)) {
+    if (pos == absl::string_view::npos) {
       // There are other tokens on this line
       return {SpacingOptions::MustAppend, "EOL comment cannot break from "
                                           "tokens to the left on its line"};
