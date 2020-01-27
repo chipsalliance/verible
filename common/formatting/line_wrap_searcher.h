@@ -45,8 +45,13 @@ void DisplayEquallyOptimalWrappings(
 
 // Returns false as soon as calculated line length exceeds maximum, or a token
 // that requires a newline is encountered.  If everything fits, then return
-// true.
-bool FitsOnLine(const UnwrappedLine& uwline, const BasicFormatStyle& style);
+// true. Beside fitting result function returns final column value.
+struct FitResult {
+  bool fits;
+  int  final_column;
+};
+
+FitResult FitsOnLine(const UnwrappedLine& uwline, const BasicFormatStyle& style);
 
 }  // namespace verible
 

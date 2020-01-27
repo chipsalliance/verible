@@ -368,28 +368,34 @@ TEST_F(SearchLineWrapsTestFixture, FitsOnLine) {
   ftokens_in[0].before.spaces_required = 99;  // irrelevant
   ftokens_in[1].before.spaces_required = 1;
   ftokens_in[2].before.spaces_required = 1;
-  EXPECT_TRUE(FitsOnLine(uwline_in, style_));
+  EXPECT_TRUE(FitsOnLine(uwline_in, style_).fits);
+  EXPECT_EQ(FitsOnLine(uwline_in, style_).final_column, 18);
 
   uwline_in.SetIndentationSpaces(2);
   // fits: 2 + 6 + 1 + 5 + 1 + 5 = 20
-  EXPECT_TRUE(FitsOnLine(uwline_in, style_));
+  EXPECT_TRUE(FitsOnLine(uwline_in, style_).fits);
+  EXPECT_EQ(FitsOnLine(uwline_in, style_).final_column, 20);
 
   uwline_in.SetIndentationSpaces(3);
   // not fits: 3 + 6 + 1 + 5 + 1 + 5 = 21
-  EXPECT_FALSE(FitsOnLine(uwline_in, style_));
+  EXPECT_FALSE(FitsOnLine(uwline_in, style_).fits);
+  EXPECT_EQ(FitsOnLine(uwline_in, style_).final_column, 21);
 
   uwline_in.SetIndentationSpaces(2);
   ftokens_in[1].before.spaces_required = 2;
   // not fits: 2 + 6 + 2 + 5 + 1 + 5 = 21
-  EXPECT_FALSE(FitsOnLine(uwline_in, style_));
+  EXPECT_FALSE(FitsOnLine(uwline_in, style_).fits);
+  EXPECT_EQ(FitsOnLine(uwline_in, style_).final_column, 21);
 
   ftokens_in[1].before.spaces_required = 1;
   // fits: 2 + 6 + 1 + 5 + 1 + 5 = 20
-  EXPECT_TRUE(FitsOnLine(uwline_in, style_));
+  EXPECT_TRUE(FitsOnLine(uwline_in, style_).fits);
+  EXPECT_EQ(FitsOnLine(uwline_in, style_).final_column, 20);
 
   ftokens_in[2].before.break_decision =
       SpacingOptions::MustWrap;  // forced break
-  EXPECT_FALSE(FitsOnLine(uwline_in, style_));
+  EXPECT_FALSE(FitsOnLine(uwline_in, style_).fits);
+  EXPECT_EQ(FitsOnLine(uwline_in, style_).final_column, 14);
 }
 
 // Test that aborted wrap search works returns a result marked as incomplete.

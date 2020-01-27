@@ -236,7 +236,7 @@ static void DeterminePartitionExpansion(partition_node_type* node,
       break;
     }
     case PartitionPolicyEnum::kFitOnLineElseExpand: {
-      if (verible::FitsOnLine(uwline, style)) {
+      if (verible::FitsOnLine(uwline, style).fits) {
         VLOG(3) << "Fits, un-expanding.";
         node_view.Unexpand();
       } else {

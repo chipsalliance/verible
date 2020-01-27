@@ -177,14 +177,14 @@ void DisplayEquallyOptimalWrappings(
   stream << Spacer(40, '=') << std::endl;
 }
 
-bool FitsOnLine(const UnwrappedLine& uwline, const BasicFormatStyle& style) {
+FitResult FitsOnLine(const UnwrappedLine& uwline, const BasicFormatStyle& style) {
   VLOG(3) << __FUNCTION__;
   // Leverage search functionality to compute effective line length of a slice
   // of tokens, taking into account minimum spacing requirements.
   // Similar to SearchLineWraps, but only calculates by appending tokens until
   // a line break is required.
 
-  if (uwline.TokensRange().empty()) return true;
+  if (uwline.TokensRange().empty()) return {true, 0};
 
   // Initialize on first token.
   // This accounts for space consumed by left-indentation.
@@ -194,18 +194,18 @@ bool FitsOnLine(const UnwrappedLine& uwline, const BasicFormatStyle& style) {
     const auto& token = state->GetNextToken();
     // If a line break is required before this token, return false.
     if (token.before.break_decision == SpacingOptions::MustWrap) {
-      return false;
+      return {false, state->current_column};
     }
 
     // Append token onto same line while it fits.
     state = std::make_shared<StateNode>(state, style, SpacingDecision::Append);
     if (state->current_column > style.column_limit) {
-      return false;
+      return {false, state->current_column};
     }
   }  // while (!state->Done())
 
   // Reached the end of token-range, thus, it fits.
-  return true;
+  return {true, state->current_column};
 }
 
 }  // namespace verible
