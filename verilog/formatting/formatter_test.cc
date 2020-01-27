@@ -257,6 +257,36 @@ static const std::initializer_list<FormatterTestCase> kFormatterTestCases = {
      "`ifndef FOO\n"
      "`define BAR\n"  // TODO(fangism): preserve some blank lines from input
      "`endif\n"},
+    {"`ifdef      FOO\n"
+     "  `fine()\n"
+     "`else\n"
+     "  `error()\n"
+     "`endif\n",
+     "`ifdef FOO\n"
+     "`fine()\n"
+     "`else\n"
+     "`error()\n"
+     "`endif\n"},
+    {"`ifdef      FOO\n"
+     "  `fine()\n"
+     "`else // trouble\n"
+     "  `error()\n"
+     "`endif\n",
+     "`ifdef FOO\n"
+     "`fine()\n"
+     "`else  // trouble\n"
+     "`error()\n"
+     "`endif\n"},
+    {"`ifdef      FOO\n"
+     "  `fine()\n"
+     "`else /* trouble */\n"
+     "  `error()\n"
+     "`endif\n",
+     "`ifdef FOO\n"
+     "`fine()\n"
+     "`else  /* trouble */\n"
+     "`error()\n"
+     "`endif\n"},
     {"    // lonely comment\n", "// lonely comment\n"},
     {"    // first comment\n"
      "  // last comment\n",
@@ -681,6 +711,40 @@ static const std::initializer_list<FormatterTestCase> kFormatterTestCases = {
      "`endif\n",
      "`ifdef FOO\n"
      "module bar;\n"
+     "endmodule\n"
+     "`endif\n"},
+    {"`ifdef FOO\n"
+     "  module bar;endmodule\n"
+     "`else module baz;endmodule\n"
+     "`endif\n",
+     "`ifdef FOO\n"
+     "module bar;\n"
+     "endmodule\n"
+     "`else\n"
+     "module baz;\n"
+     "endmodule\n"
+     "`endif\n"},
+    {"`ifdef FOO\n"
+     "  module bar;endmodule\n"
+     "`else /* glue me */ module baz;endmodule\n"
+     "`endif\n",
+     "`ifdef FOO\n"
+     "module bar;\n"
+     "endmodule\n"
+     "`else  /* glue me */\n"
+     "module baz;\n"
+     "endmodule\n"
+     "`endif\n"},
+    {"`ifdef FOO\n"
+     "  module bar;endmodule\n"
+     "`else// different unit\n"
+     "  module baz;endmodule\n"
+     "`endif\n",
+     "`ifdef FOO\n"
+     "module bar;\n"
+     "endmodule\n"
+     "`else  // different unit\n"
+     "module baz;\n"
      "endmodule\n"
      "`endif\n"},
     {// module items mixed with preprocessor conditionals and comments

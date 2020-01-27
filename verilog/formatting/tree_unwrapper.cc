@@ -590,6 +590,7 @@ void TreeUnwrapper::Visit(const verible::SyntaxTreeNode& node) {
     case NodeEnum::kPortDeclaration:
     case NodeEnum::kParamDeclaration:
     case NodeEnum::kClockingDeclaration:
+    case NodeEnum::kDescriptionList:
     case NodeEnum::kForwardDeclaration: {
       VisitNewUnwrappedLine(node);
       break;
@@ -1099,6 +1100,12 @@ void TreeUnwrapper::Visit(const verible::SyntaxTreeLeaf& leaf) {
         // instead add this token to previous partition
         MergeLastTwoPartitions();
       }
+      break;
+    }
+    case PP_else: {
+      // Do not allow non-comment tokens on the same line as `else
+      // (comments were handled above)
+      StartNewUnwrappedLine();
       break;
     }
     default:
