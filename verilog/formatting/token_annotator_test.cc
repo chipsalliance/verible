@@ -21,11 +21,13 @@
 #include <vector>
 
 #include "gtest/gtest.h"
+#include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
 #include "common/formatting/format_token.h"
 #include "common/formatting/unwrapped_line.h"
 #include "common/formatting/unwrapped_line_test_utils.h"
 #include "common/text/syntax_tree_context.h"
+#include "common/text/token_info_test_util.h"
 #include "common/text/tree_builder_test_util.h"
 #include "common/util/casts.h"
 #include "common/util/iterator_adaptors.h"
@@ -202,39 +204,40 @@ TEST(TokenAnnotatorTest, AnnotateFormattingInfoTest) {
            {{yytokentype::TK_EOL_COMMENT, "//comment1"},
             {yytokentype::TK_EOL_COMMENT, "//comment2"}}},
 
+          // If there is no newline before comment, it will be appended
           // (  //comment
           {DefaultStyle,
            0,
            {{0, SpacingOptions::Undecided},  //
-            {2, SpacingOptions::Undecided}},
+            {2, SpacingOptions::MustAppend}},
            {{'(', "("}, {yytokentype::TK_EOL_COMMENT, "//comment"}}},
 
           // [  //comment
           {DefaultStyle,
            0,
            {{0, SpacingOptions::Undecided},  //
-            {2, SpacingOptions::Undecided}},
+            {2, SpacingOptions::MustAppend}},
            {{'[', "["}, {yytokentype::TK_EOL_COMMENT, "//comment"}}},
 
           // {  //comment
           {DefaultStyle,
            0,
            {{0, SpacingOptions::Undecided},  //
-            {2, SpacingOptions::Undecided}},
+            {2, SpacingOptions::MustAppend}},
            {{'{', "{"}, {yytokentype::TK_EOL_COMMENT, "//comment"}}},
 
           // ,  //comment
           {DefaultStyle,
            0,
            {{0, SpacingOptions::Undecided},  //
-            {2, SpacingOptions::Undecided}},
+            {2, SpacingOptions::MustAppend}},
            {{',', ","}, {yytokentype::TK_EOL_COMMENT, "//comment"}}},
 
           // ;  //comment
           {DefaultStyle,
            0,
            {{0, SpacingOptions::Undecided},  //
-            {2, SpacingOptions::Undecided}},
+            {2, SpacingOptions::MustAppend}},
            {{';', ";"}, {yytokentype::TK_EOL_COMMENT, "//comment"}}},
 
           // module foo();
@@ -2680,6 +2683,241 @@ TEST(TokenAnnotatorTest, AnnotateFormattingWithContextTest) {
     PreFormatToken left(&test_case.left_token);
     PreFormatToken right(&test_case.right_token);
     // Classify token type into major category
+    left.format_token_enum = GetFormatTokenType(yytokentype(left.TokenEnum()));
+    right.format_token_enum =
+        GetFormatTokenType(yytokentype(right.TokenEnum()));
+
+    VLOG(1) << "context: " << test_case.context;
+    AnnotateFormatToken(test_case.style, left, &right, test_case.context);
+    EXPECT_EQ(test_case.expected_annotation, right.before)
+        << " with left=" << left.Text() << " and right=" << right.Text();
+    ++test_index;
+  }
+}
+
+struct AnnotateBreakAroundCommentsTestCase {
+  FormatStyle style;
+
+  int left_token_enum;
+  absl::string_view left_token_string;
+
+  absl::string_view whitespace_between;
+
+  int right_token_enum;
+  absl::string_view right_token_string;
+
+  InitializedSyntaxTreeContext context;
+  ExpectedInterTokenInfo expected_annotation;
+};
+
+TEST(TokenAnnotatorTest, AnnotateBreakAroundComments) {
+  const std::initializer_list<AnnotateBreakAroundCommentsTestCase> kTestCases =
+      {
+          {// No comments
+           DefaultStyle,
+           '=',
+           "=",
+           "   ",
+           yytokentype::TK_DecNumber,
+           "0",
+           {/* unspecified context */},
+           {1, SpacingOptions::Undecided}},
+          {// 0 // comment
+           DefaultStyle,
+           yytokentype::TK_DecNumber,
+           "0",
+           "   ",
+           yytokentype::TK_EOL_COMMENT,
+           "// comment",
+           {/* unspecified context */},
+           {2, SpacingOptions::MustAppend}},
+          {// 0// comment
+           DefaultStyle,
+           yytokentype::TK_DecNumber,
+           "0",
+           "",
+           yytokentype::TK_EOL_COMMENT,
+           "// comment",
+           {/* unspecified context */},
+           {2, SpacingOptions::MustAppend}},
+          {// 0 \n  // comment
+           DefaultStyle,
+           yytokentype::TK_DecNumber,
+           "0",
+           " \n  ",
+           yytokentype::TK_EOL_COMMENT,
+           "// comment",
+           {/* unspecified context */},
+           {2, SpacingOptions::Undecided}},
+          {// // comment 1 \n  // comment 2
+           DefaultStyle,
+           yytokentype::TK_EOL_COMMENT,
+           "// comment 1",
+           " \n  ",
+           yytokentype::TK_EOL_COMMENT,
+           "// comment 2",
+           {/* unspecified context */},
+           {2, SpacingOptions::MustWrap}},
+          {// /* comment 1 */ \n  // comment 2
+           DefaultStyle,
+           yytokentype::TK_COMMENT_BLOCK,
+           "/* comment 1 */",
+           " \n  ",
+           yytokentype::TK_EOL_COMMENT,
+           "// comment 2",
+           {/* unspecified context */},
+           {2, SpacingOptions::Undecided}},
+          {// /* comment 1 */  // comment 2
+           DefaultStyle,
+           yytokentype::TK_COMMENT_BLOCK,
+           "/* comment 1 */",
+           " ",
+           yytokentype::TK_EOL_COMMENT,
+           "// comment 2",
+           {/* unspecified context */},
+           {2, SpacingOptions::MustAppend}},
+          {// ;  // comment 2
+           DefaultStyle,
+           ';',
+           ";",
+           " ",
+           yytokentype::TK_EOL_COMMENT,
+           "// comment 2",
+           {/* unspecified context */},
+           {2, SpacingOptions::MustAppend}},
+          {// ; \n // comment 2
+           DefaultStyle,
+           ';',
+           ";",
+           " \n",
+           yytokentype::TK_EOL_COMMENT,
+           "// comment 2",
+           {/* unspecified context */},
+           {2, SpacingOptions::Undecided}},
+          {// ,  // comment 2
+           DefaultStyle,
+           ',',
+           ",",
+           " ",
+           yytokentype::TK_EOL_COMMENT,
+           "// comment 2",
+           {/* unspecified context */},
+           {2, SpacingOptions::MustAppend}},
+          {// , \n // comment 2
+           DefaultStyle,
+           ',',
+           ",",
+           "\n ",
+           yytokentype::TK_EOL_COMMENT,
+           "// comment 2",
+           {/* unspecified context */},
+           {2, SpacingOptions::Undecided}},
+          {// begin  // comment 2
+           DefaultStyle,
+           yytokentype::TK_begin,
+           "begin",
+           " ",
+           yytokentype::TK_EOL_COMMENT,
+           "// comment 2",
+           {/* unspecified context */},
+           {2, SpacingOptions::MustAppend}},
+          {// begin \n // comment 2
+           DefaultStyle,
+           yytokentype::TK_begin,
+           "begin",
+           "\n",
+           yytokentype::TK_EOL_COMMENT,
+           "// comment 2",
+           {/* unspecified context */},
+           {2, SpacingOptions::Undecided}},
+          {// else  // comment 2
+           DefaultStyle,
+           yytokentype::TK_else,
+           "else",
+           " ",
+           yytokentype::TK_EOL_COMMENT,
+           "// comment 2",
+           {/* unspecified context */},
+           {2, SpacingOptions::MustAppend}},
+          {// else \n // comment 2
+           DefaultStyle,
+           yytokentype::TK_else,
+           "else",
+           " \n  ",
+           yytokentype::TK_EOL_COMMENT,
+           "// comment 2",
+           {/* unspecified context */},
+           {2, SpacingOptions::Undecided}},
+          {// end  // comment 2
+           DefaultStyle,
+           yytokentype::TK_end,
+           "end",
+           " ",
+           yytokentype::TK_EOL_COMMENT,
+           "// comment 2",
+           {/* unspecified context */},
+           {2, SpacingOptions::MustAppend}},
+          {// end \n // comment 2
+           DefaultStyle,
+           yytokentype::TK_end,
+           "end",
+           "  \n ",
+           yytokentype::TK_EOL_COMMENT,
+           "// comment 2",
+           {/* unspecified context */},
+           {2, SpacingOptions::Undecided}},
+          {// generate  // comment 2
+           DefaultStyle,
+           yytokentype::TK_generate,
+           "generate",
+           " ",
+           yytokentype::TK_EOL_COMMENT,
+           "// comment 2",
+           {/* unspecified context */},
+           {2, SpacingOptions::MustAppend}},
+          {// generate \n // comment 2
+           DefaultStyle,
+           yytokentype::TK_generate,
+           "generate",
+           "  \n",
+           yytokentype::TK_EOL_COMMENT,
+           "// comment 2",
+           {/* unspecified context */},
+           {2, SpacingOptions::Undecided}},
+          {// if  // comment 2
+           DefaultStyle,
+           yytokentype::TK_if,
+           "if",
+           " ",
+           yytokentype::TK_EOL_COMMENT,
+           "// comment 2",
+           {/* unspecified context */},
+           {2, SpacingOptions::MustAppend}},
+          {// if \n\n // comment 2
+           DefaultStyle,
+           yytokentype::TK_if,
+           "if",
+           " \n\n ",
+           yytokentype::TK_EOL_COMMENT,
+           "// comment 2",
+           {/* unspecified context */},
+           {2, SpacingOptions::Undecided}},
+      };
+  int test_index = 0;
+  for (const auto& test_case : kTestCases) {
+    VLOG(1) << "test_index[" << test_index << "]:";
+
+    verible::TokenInfoTestData test_data = {
+        {test_case.left_token_enum, test_case.left_token_string},
+        test_case.whitespace_between,
+        {test_case.right_token_enum, test_case.right_token_string}};
+
+    auto token_vector = test_data.FindImportantTokens();
+    ASSERT_EQ(token_vector.size(), 2);
+
+    PreFormatToken left(&token_vector[0]);
+    PreFormatToken right(&token_vector[1]);
+
     left.format_token_enum = GetFormatTokenType(yytokentype(left.TokenEnum()));
     right.format_token_enum =
         GetFormatTokenType(yytokentype(right.TokenEnum()));

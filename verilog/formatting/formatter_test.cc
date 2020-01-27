@@ -2481,6 +2481,26 @@ static const std::initializer_list<FormatterTestCase> kFormatterTestCases = {
      "module m;\n"
      "unindented instantiation;\n"
      "endmodule\n"},
+    {// multiple tokens with EOL comment
+     "module please;  // don't break before the comment\n"
+     "endmodule\n",
+     "module please\n"
+     "    ;  // don't break before the comment\n"
+     "endmodule\n"},
+    {// one token with EOL comment
+     "module please;\n"
+     "endmodule  // don't break before the comment\n",
+     "module please;\n"
+     "endmodule  // don't break before the comment\n"},
+    {
+        // line with only an EOL comment
+        "module wild;\n"
+        "// a really long comment on its own line to be left alone\n"
+        "endmodule",
+        "module wild;\n"
+        "  // a really long comment on its own line to be left alone\n"
+        "endmodule\n",
+    },
 };
 
 // Tests that formatter produces expected results, end-to-end.
