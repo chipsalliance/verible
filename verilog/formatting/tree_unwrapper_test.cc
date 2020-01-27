@@ -2370,6 +2370,48 @@ const TreeUnwrapperTestData kUnwrapPreprocessorTestCases[] = {
     },
 
     {
+        "new partition after `else",
+        "`ifdef FOO\n"
+        "`fine\n"
+        "`else\n"
+        "`error\n"
+        "`endif\n",
+        L(0, {"`ifdef", "FOO"}),
+        L(0, {"`fine"}),
+        L(0, {"`else"}),
+        L(0, {"`error"}),
+        L(0, {"`endif"}),
+    },
+
+    {
+        "new partition after `else with EOL comment",
+        "`ifdef FOO\n"
+        "`fine\n"
+        "`else  // not good\n"
+        "`error\n"
+        "`endif\n",
+        L(0, {"`ifdef", "FOO"}),
+        L(0, {"`fine"}),
+        L(0, {"`else", "// not good"}),
+        L(0, {"`error"}),
+        L(0, {"`endif"}),
+    },
+
+    {
+        "new partition after `else with block comment",
+        "`ifdef FOO\n"
+        "`fine\n"
+        "`else  /* not good */\n"
+        "`error\n"
+        "`endif\n",
+        L(0, {"`ifdef", "FOO"}),
+        L(0, {"`fine"}),
+        L(0, {"`else", "/* not good */"}),
+        L(0, {"`error"}),
+        L(0, {"`endif"}),
+    },
+
+    {
         "`include's inside module should be flushed left",
         "module includer;\n"
         "`include \"header1.vh\"\n"
@@ -2409,6 +2451,80 @@ const TreeUnwrapperTestData kUnwrapPreprocessorTestCases[] = {
             1, L(1, {"always_comb", "begin"}),
             StatementList(2, NL(2, {"x", "=", "y", ";"}),
                           L(0, {"`ifdef", "FOO"}), NL(2, {"z", "=", "0", ";"}),
+                          L(0, {"`endif"}), NL(2, {"w", "=", "z", ";"})),
+            L(1, {"end"})),
+        L(0, {"endmodule"}),
+    },
+
+    {
+        "new partition after `else in module",
+        "module foo;\n"
+        "always_comb begin\n"
+        "  x = y;\n"
+        "`ifdef FOO\n"
+        "  z = 0;\n"
+        "`else\n"
+        "  x = z;\n"
+        "`endif\n"
+        "  w = z;\n"
+        "end\n"
+        "endmodule",
+        ModuleHeader(0, L(0, {"module", "foo", ";"})),
+        ModuleItemList(
+            1, L(1, {"always_comb", "begin"}),
+            StatementList(2, NL(2, {"x", "=", "y", ";"}),
+                          L(0, {"`ifdef", "FOO"}), NL(2, {"z", "=", "0", ";"}),
+                          L(0, {"`else"}), NL(2, {"x", "=", "z", ";"}),
+                          L(0, {"`endif"}), NL(2, {"w", "=", "z", ";"})),
+            L(1, {"end"})),
+        L(0, {"endmodule"}),
+    },
+
+    {
+        "new partition after `else with EOL comment in module",
+        "module foo;\n"
+        "always_comb begin\n"
+        "  x = y;\n"
+        "`ifdef FOO\n"
+        "  z = 0;\n"
+        "`else  // FOO not defined\n"
+        "  x = z;\n"
+        "`endif\n"
+        "  w = z;\n"
+        "end\n"
+        "endmodule",
+        ModuleHeader(0, L(0, {"module", "foo", ";"})),
+        ModuleItemList(
+            1, L(1, {"always_comb", "begin"}),
+            StatementList(2, NL(2, {"x", "=", "y", ";"}),
+                          L(0, {"`ifdef", "FOO"}), NL(2, {"z", "=", "0", ";"}),
+                          L(0, {"`else", "// FOO not defined"}),
+                          NL(2, {"x", "=", "z", ";"}),
+                          L(0, {"`endif"}), NL(2, {"w", "=", "z", ";"})),
+            L(1, {"end"})),
+        L(0, {"endmodule"}),
+    },
+
+    {
+        "new partition after `else with block comment in module",
+        "module foo;\n"
+        "always_comb begin\n"
+        "  x = y;\n"
+        "`ifdef FOO\n"
+        "  z = 0;\n"
+        "`else  /* z is available */\n"
+        "  x = z;\n"
+        "`endif\n"
+        "  w = z;\n"
+        "end\n"
+        "endmodule",
+        ModuleHeader(0, L(0, {"module", "foo", ";"})),
+        ModuleItemList(
+            1, L(1, {"always_comb", "begin"}),
+            StatementList(2, NL(2, {"x", "=", "y", ";"}),
+                          L(0, {"`ifdef", "FOO"}), NL(2, {"z", "=", "0", ";"}),
+                          L(0, {"`else", "/* z is available */"}),
+                          NL(2, {"x", "=", "z", ";"}),
                           L(0, {"`endif"}), NL(2, {"w", "=", "z", ";"})),
             L(1, {"end"})),
         L(0, {"endmodule"}),
