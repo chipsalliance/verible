@@ -81,10 +81,10 @@ std::vector<FormattedExcerpt> SearchLineWraps(const UnwrappedLine& uwline,
 
     if (!winning_paths.empty()) {
       // We already found at least one winning solution.
-      // As soon as the current cost exceeds the optimal (by 1), then stop.
+      // As soon as the current cost exceeds the optimal (by 1 or tie-breaker),
+      // then stop.
       // This guarantees that we've collected all equally optimal solutions.
-      if (next.state->cumulative_cost >
-          winning_paths.front()->cumulative_cost) {
+      if (*winning_paths.front() < *next.state) {
         break;
       }
     }

@@ -449,8 +449,8 @@ static const std::initializer_list<FormatterTestCase> kFormatterTestCases = {
         "`my_field(b)\n"
         "`my_field(c)\n"
         "`my_macro_end\n",
-        "`my_macro_begin(aa) `my_field(\n"
-        "    b) `my_field(c) `my_macro_end\n",
+        "`my_macro_begin(aa) `my_field(b)\n"
+        "    `my_field(c) `my_macro_end\n",
     },
     {
         // unbalanced uvm macros: missing uvm.*end macro
@@ -1124,8 +1124,7 @@ static const std::initializer_list<FormatterTestCase> kFormatterTestCases = {
         // interface with complex modport ports list
         "interface\tfoo_if  ;"
         "modport producer\t(input ready,\toutput data, valid, user,"
-        " strobe, keep, last,\timport producer_reset, producer_tick,"
-        " produce_blocked, produce);\n"
+        " strobe, keep, last,\timport producer_reset, producer_tick);"
         "modport consumer\t(input data, valid, user, strobe, keep, last,"
         " output ready,\timport consumer_reset, consumer_tick, consume);"
         "endinterface",
@@ -1135,8 +1134,7 @@ static const std::initializer_list<FormatterTestCase> kFormatterTestCases = {
         "      output data, valid, user, strobe,\n"
         "          keep, last,\n"
         "      import producer_reset,\n"
-        "          producer_tick,\n"
-        "          produce_blocked, produce\n"
+        "          producer_tick\n"
         "  );\n"
         "  modport consumer(\n"
         "      input data, valid, user, strobe,\n"
@@ -2784,13 +2782,11 @@ TEST(FormatterEndToEndTest, PenaltySensitiveLineWrapping) {
     EXPECT_OK(formatter.Format());
     std::ostringstream stream;
     formatter.Emit(stream);
-#if 0
     // Currently not stable decision which alternative is chosen as they
     // reach equal penalty.
     // TODO(b/145558510): re-enable tests after guaranteeing unique best
     // solutions
     EXPECT_EQ(stream.str(), test_case.expected) << "code:\n" << test_case.input;
-#endif
   }
 }
 

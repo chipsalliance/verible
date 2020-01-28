@@ -338,24 +338,19 @@ TEST_F(SearchLineWrapsTestFixture, DisplayEquallyOptimalWrappings) {
   ftokens_in[2].before.break_penalty = ftokens_in[1].before.break_penalty;
   ftokens_in[2].before.spaces_required = 1;
   const auto formatted_lines = verible::SearchLineWraps(uwline_in, style_, 10);
-  EXPECT_EQ(formatted_lines.size(), 2);
-  // Solutions are: break before token[1] and break before token[2].
-  // Cannot guarantee which solution is first due to different heap
-  // implementations.
+  EXPECT_EQ(formatted_lines.size(), 1);
+  // By total cost alone, expected solutions are:
+  //   break before token[1] and
+  //   break before token[2].
+  // However, using a tie-breaker like terminal-column position, will favor
+  // equally good solutions that break earlier.
   const auto& first = formatted_lines.front();
-  const auto& second = formatted_lines.back();
-  EXPECT_TRUE((first.Tokens()[1].before.action == SpacingDecision::Wrap &&
-               first.Tokens()[2].before.action == SpacingDecision::Append &&
-               second.Tokens()[1].before.action == SpacingDecision::Append &&
-               second.Tokens()[2].before.action == SpacingDecision::Wrap) ||
-              (first.Tokens()[1].before.action == SpacingDecision::Append &&
-               first.Tokens()[2].before.action == SpacingDecision::Wrap &&
-               second.Tokens()[1].before.action == SpacingDecision::Wrap &&
-               second.Tokens()[2].before.action == SpacingDecision::Append));
+  EXPECT_EQ(first.Tokens()[1].before.action, SpacingDecision::Append);
+  EXPECT_EQ(first.Tokens()[2].before.action, SpacingDecision::Wrap);
   std::ostringstream stream;
   DisplayEquallyOptimalWrappings(stream, uwline_in, formatted_lines);
   // Limited output checking.
-  EXPECT_TRUE(absl::StrContains(stream.str(), "Found 2 equally good"));
+  EXPECT_TRUE(absl::StrContains(stream.str(), "Found 1 equally good"));
   EXPECT_TRUE(absl::StrContains(stream.str(), "============"));
 }
 

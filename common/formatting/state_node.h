@@ -137,7 +137,14 @@ struct StateNode {
   // when maintained in a priority queue.  For Dijsktra-style algorithms,
   // we want to explore the min-cost paths first.
   bool operator<(const StateNode& r) const {
-    return cumulative_cost < r.cumulative_cost;
+    return cumulative_cost < r.cumulative_cost ||
+           // TODO(b/145558510): Favor solutions that use fewer lines.
+           // To do that would require counting number of wrap decisions,
+           // which is slow, unless we keep track of that number in StateNode.
+
+           // tie-breaker: All else being equal, use terminal column position.
+           (cumulative_cost == r.cumulative_cost &&
+            current_column < r.current_column);
   }
 
   // Applies decisions from a path search to the set of format tokens in a
