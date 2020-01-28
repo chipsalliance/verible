@@ -18,6 +18,9 @@
 #include <iostream>
 #include <utility>
 
+#include "absl/strings/numbers.h"
+#include "absl/strings/string_view.h"
+
 namespace verible {
 
 // An integer-valued interval, representing [min, max).
@@ -30,6 +33,7 @@ struct Interval {
   T min;
   T max;
 
+  Interval() = default;
   Interval(const T& f, const T& s) : min(f), max(s) {}
 
   // Want this implicit constructor so that one can pass an initializer list
@@ -87,6 +91,30 @@ Interval<T> AsInterval(const std::pair<T, T>& p) {
 template <typename T>
 std::ostream& operator<<(std::ostream& stream, const Interval<T>& interval) {
   return stream << '[' << interval.min << ", " << interval.max << ')';
+}
+
+// Parses "N", "M" into an interval [N, M+1) == [N, M] (inclusive).
+// Since range is inclusive, we automatically rectify backward ranges.
+// Returns true on success, false on parse error.
+template <typename T>
+bool ParseInclusiveRange(Interval<T>* interval, absl::string_view first_str,
+                         absl::string_view last_str, std::ostream* errstream) {
+  T first, last;
+  if (!absl::SimpleAtoi(first_str, &first)) {
+    *errstream << "Expected number, but got: \"" << first_str << "\"."
+               << std::endl;
+    return false;
+  }
+  if (!absl::SimpleAtoi(last_str, &last)) {
+    *errstream << "Expected number, but got: \"" << last_str << "\"."
+               << std::endl;
+    return false;
+  }
+  if (last < first) {
+    std::swap(first, last);
+  }
+  *interval = {first, last + 1};  // convert inclusive range to half-open range
+  return true;
 }
 
 }  // namespace verible

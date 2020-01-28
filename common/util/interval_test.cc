@@ -113,5 +113,46 @@ TEST(IntervalTest, Stream) {
   EXPECT_EQ(stream.str(), "[1, 2)");
 }
 
+TEST(ParseInclusiveRangeTest, EmptyStrings) {
+  interval_type interval;
+  {
+    std::ostringstream errstream;
+    EXPECT_FALSE(ParseInclusiveRange(&interval, "", "1", &errstream));
+    EXPECT_FALSE(errstream.str().empty());
+  }
+  {
+    std::ostringstream errstream;
+    EXPECT_FALSE(ParseInclusiveRange(&interval, "1", "", &errstream));
+    EXPECT_FALSE(errstream.str().empty());
+  }
+}
+
+TEST(ParseInclusiveRangeTest, ValidRangeSingleValue) {
+  interval_type interval;
+  std::ostringstream errstream;
+  EXPECT_TRUE(ParseInclusiveRange(&interval, "3", "3", &errstream));
+  EXPECT_TRUE(errstream.str().empty());
+  EXPECT_EQ(interval.min, 3);
+  EXPECT_EQ(interval.max, 4);  // half-open
+}
+
+TEST(ParseInclusiveRangeTest, ValidRangeBigInterval) {
+  interval_type interval;
+  std::ostringstream errstream;
+  EXPECT_TRUE(ParseInclusiveRange(&interval, "3", "30", &errstream));
+  EXPECT_TRUE(errstream.str().empty());
+  EXPECT_EQ(interval.min, 3);
+  EXPECT_EQ(interval.max, 31);  // half-open
+}
+
+TEST(ParseInclusiveRangeTest, ValidRangeReversed) {
+  interval_type interval;
+  std::ostringstream errstream;
+  EXPECT_TRUE(ParseInclusiveRange(&interval, "5", "3", &errstream));
+  EXPECT_TRUE(errstream.str().empty());
+  EXPECT_EQ(interval.min, 3);
+  EXPECT_EQ(interval.max, 6);  // half-open
+}
+
 }  // namespace
 }  // namespace verible

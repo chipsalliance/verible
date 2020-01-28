@@ -474,9 +474,407 @@ TEST(IntervalSetTest, AddInvalidInterval) {
   EXPECT_DEATH((iset.Add({2, 1})), "");
 }
 
-// Add empty intervals
+typedef AddIntervalTestData DifferenceIntervalTestData;
 
-// ExpectDEath on malformed UnsafeIntervalSet
+TEST(IntervalSetTest, DifferenceInvalidInterval) {
+  UnsafeIntervalSet iset{};
+  EXPECT_DEATH((iset.Difference({2, 1})), "");
+}
+
+TEST(IntervalSetTest, DifferenceEmptyIntervalFromEmptySet) {
+  UnsafeIntervalSet init{};
+  for (int i = 5; i < 45; ++i) {
+    init.Difference({i, i});
+    EXPECT_TRUE(init.empty());
+  }
+}
+
+TEST(IntervalSetTest, DifferenceEmptyIntervalFromNonEmptySet) {
+  const UnsafeIntervalSet init{{10, 20}, {30, 40}};
+  UnsafeIntervalSet copy(init);
+  for (int i = 5; i < 45; ++i) {
+    copy.Difference({i, i});
+    EXPECT_EQ(copy, init);
+  }
+}
+
+typedef AddSingleValueTestData DifferenceSingleValueTestData;
+
+TEST(IntervalSetTest, DifferenceSingleValue) {
+  const UnsafeIntervalSet init{{10, 20}, {30, 40}};
+  const DifferenceSingleValueTestData kTestCases[] = {
+      {9, {{10, 20}, {30, 40}}},
+      {10, {{11, 20}, {30, 40}}},
+      {11, {{10, 11}, {12, 20}, {30, 40}}},
+      {18, {{10, 18}, {19, 20}, {30, 40}}},
+      {19, {{10, 19}, {30, 40}}},
+      {20, {{10, 20}, {30, 40}}},
+      {21, {{10, 20}, {30, 40}}},
+      {29, {{10, 20}, {30, 40}}},
+      {30, {{10, 20}, {31, 40}}},
+      {31, {{10, 20}, {30, 31}, {32, 40}}},
+      {38, {{10, 20}, {30, 38}, {39, 40}}},
+      {39, {{10, 20}, {30, 39}}},
+      {40, {{10, 20}, {30, 40}}},
+      {41, {{10, 20}, {30, 40}}},
+  };
+  for (const auto& test : kTestCases) {
+    VLOG(1) << "remove: " << test.value << " expect: " << test.expected;
+    UnsafeIntervalSet copy(init);
+    copy.Difference(test.value);
+    EXPECT_EQ(copy, test.expected);
+  }
+}
+
+TEST(IntervalSetTest, DifferenceIntervalNonEmpty) {
+  const UnsafeIntervalSet init{{10, 20}, {30, 40}};
+  const DifferenceIntervalTestData kTestCases[] = {
+      {{5, 9}, {{10, 20}, {30, 40}}},
+      {{5, 10}, {{10, 20}, {30, 40}}},
+      {{5, 11}, {{11, 20}, {30, 40}}},
+      {{5, 19}, {{19, 20}, {30, 40}}},
+      {{5, 20}, {{30, 40}}},
+      {{5, 21}, {{30, 40}}},
+      {{5, 29}, {{30, 40}}},
+      {{5, 30}, {{30, 40}}},
+      {{5, 31}, {{31, 40}}},
+      {{5, 39}, {{39, 40}}},
+      {{5, 40}, {}},
+      {{5, 41}, {}},
+      {{10, 10}, {{10, 20}, {30, 40}}},  // ok to remove empty interval
+      {{10, 11}, {{11, 20}, {30, 40}}},
+      {{10, 19}, {{19, 20}, {30, 40}}},
+      {{10, 20}, {{30, 40}}},
+      {{10, 21}, {{30, 40}}},
+      {{10, 29}, {{30, 40}}},
+      {{10, 30}, {{30, 40}}},
+      {{10, 31}, {{31, 40}}},
+      {{10, 39}, {{39, 40}}},
+      {{10, 40}, {}},
+      {{10, 41}, {}},
+      {{11, 11}, {{10, 20}, {30, 40}}},
+      {{11, 19}, {{10, 11}, {19, 20}, {30, 40}}},
+      {{11, 20}, {{10, 11}, {30, 40}}},
+      {{11, 21}, {{10, 11}, {30, 40}}},
+      {{11, 29}, {{10, 11}, {30, 40}}},
+      {{11, 30}, {{10, 11}, {30, 40}}},
+      {{11, 31}, {{10, 11}, {31, 40}}},
+      {{11, 39}, {{10, 11}, {39, 40}}},
+      {{11, 40}, {{10, 11}}},
+      {{11, 41}, {{10, 11}}},
+      {{19, 19}, {{10, 20}, {30, 40}}},
+      {{19, 20}, {{10, 19}, {30, 40}}},
+      {{19, 21}, {{10, 19}, {30, 40}}},
+      {{19, 29}, {{10, 19}, {30, 40}}},
+      {{19, 30}, {{10, 19}, {30, 40}}},
+      {{19, 31}, {{10, 19}, {31, 40}}},
+      {{19, 39}, {{10, 19}, {39, 40}}},
+      {{19, 40}, {{10, 19}}},
+      {{19, 41}, {{10, 19}}},
+      {{20, 20}, {{10, 20}, {30, 40}}},
+      {{20, 21}, {{10, 20}, {30, 40}}},
+      {{20, 29}, {{10, 20}, {30, 40}}},
+      {{20, 30}, {{10, 20}, {30, 40}}},
+      {{20, 31}, {{10, 20}, {31, 40}}},
+      {{20, 39}, {{10, 20}, {39, 40}}},
+      {{20, 40}, {{10, 20}}},
+      {{20, 41}, {{10, 20}}},
+      {{21, 21}, {{10, 20}, {30, 40}}},
+      {{21, 29}, {{10, 20}, {30, 40}}},
+      {{21, 30}, {{10, 20}, {30, 40}}},
+      {{21, 31}, {{10, 20}, {31, 40}}},
+      {{21, 39}, {{10, 20}, {39, 40}}},
+      {{21, 40}, {{10, 20}}},
+      {{21, 41}, {{10, 20}}},
+      {{29, 29}, {{10, 20}, {30, 40}}},
+      {{29, 30}, {{10, 20}, {30, 40}}},
+      {{29, 31}, {{10, 20}, {31, 40}}},
+      {{29, 39}, {{10, 20}, {39, 40}}},
+      {{29, 40}, {{10, 20}}},
+      {{29, 41}, {{10, 20}}},
+      {{30, 30}, {{10, 20}, {30, 40}}},
+      {{30, 31}, {{10, 20}, {31, 40}}},
+      {{30, 39}, {{10, 20}, {39, 40}}},
+      {{30, 40}, {{10, 20}}},
+      {{30, 41}, {{10, 20}}},
+      {{31, 31}, {{10, 20}, {30, 40}}},
+      {{31, 39}, {{10, 20}, {30, 31}, {39, 40}}},
+      {{31, 40}, {{10, 20}, {30, 31}}},
+      {{39, 39}, {{10, 20}, {30, 40}}},
+      {{39, 40}, {{10, 20}, {30, 39}}},
+      {{39, 41}, {{10, 20}, {30, 39}}},
+      {{40, 40}, {{10, 20}, {30, 40}}},
+      {{40, 41}, {{10, 20}, {30, 40}}},
+      {{41, 41}, {{10, 20}, {30, 40}}},
+  };
+  for (const auto& test : kTestCases) {
+    VLOG(1) << "remove: " << test.value << " expect: " << test.expected;
+    UnsafeIntervalSet copy(init);
+    copy.Difference(test.value);
+    EXPECT_EQ(copy, test.expected);
+  }
+}
+
+struct SetOperationTestData {
+  // roles of a,b,c can be interchanged, e.g. op(a,b)=c vs. op(c,a)=b
+  UnsafeIntervalSet a;
+  UnsafeIntervalSet b;
+  UnsafeIntervalSet c;
+};
+
+TEST(IntervalSetTest, SetDifferences) {
+  const SetOperationTestData kTestCases[] = {
+      {{}, {}, {}},                              // empty - empty = empty
+      {{}, {{5, 6}}, {}},                        // empty - anything = empty
+      {{}, {{5, 6}, {7, 8}}, {}},                // empty - anything = empty
+      {{{1, 2}}, {}, {{1, 2}}},                  // anything - empty = (same)
+      {{{1, 2}, {7, 9}}, {}, {{1, 2}, {7, 9}}},  // anything - empty = (same)
+      {{{0, 100}}, {{30, 40}, {60, 70}}, {{0, 30}, {40, 60}, {70, 100}}},
+      {{{0, 50}}, {{30, 40}, {60, 70}}, {{0, 30}, {40, 50}}},
+      {{{50, 100}}, {{30, 40}, {60, 70}}, {{50, 60}, {70, 100}}},
+      {{{10, 20}, {30, 40}}, {{5, 9}}, {{10, 20}, {30, 40}}},
+      {{{1, 2}, {3, 4}, {5, 6}, {7, 8}}, {{2, 7}}, {{1, 2}, {7, 8}}},
+      {{{1, 2}, {3, 4}, {5, 6}, {7, 8}}, {{4, 9}}, {{1, 2}, {3, 4}}},
+      {{{1, 2}, {3, 4}, {5, 6}, {7, 8}}, {{0, 4}}, {{5, 6}, {7, 8}}},
+      {{{1, 2}, {3, 4}, {5, 6}, {7, 8}}, {{1, 9}}, {}},
+  };
+  for (const auto& test : kTestCases) {
+    VLOG(1) << test.a << " - " << test.b << " == " << test.c;
+    UnsafeIntervalSet set(test.a);
+    set.Difference(test.b);
+    EXPECT_EQ(set, test.c);
+  }
+}
+
+TEST(IntervalSetTest, SetUnions) {
+  const SetOperationTestData kTestCases[] = {
+      {{}, {}, {}},  // empty U empty = empty
+      {{}, {{3, 7}}, {{3, 7}}},
+      {{{3, 7}}, {{3, 7}}, {{3, 7}}},
+      {{{4, 6}}, {{3, 7}}, {{3, 7}}},
+      {{{12, 14}}, {{3, 7}}, {{3, 7}, {12, 14}}},
+      {{{1, 3}}, {{3, 7}}, {{1, 7}}},
+      {{{1, 2}, {3, 4}, {5, 6}}, {{2, 3}, {4, 5}, {6, 7}}, {{1, 7}}},
+      {{{1, 2}, {3, 4}, {5, 6}}, {{2, 7}}, {{1, 7}}},
+      {{{1, 2}, {5, 6}}, {{3, 4}, {7, 8}}, {{1, 2}, {3, 4}, {5, 6}, {7, 8}}},
+  };
+  for (const auto& test : kTestCases) {
+    VLOG(1) << test.a << " U " << test.b << " == " << test.c;
+    UnsafeIntervalSet set(test.a);
+    set.Union(test.b);
+    EXPECT_EQ(set, test.c);
+  }
+  // commutative test
+  for (const auto& test : kTestCases) {
+    VLOG(1) << test.b << " U " << test.a << " == " << test.c;
+    UnsafeIntervalSet set(test.b);
+    set.Union(test.a);
+    EXPECT_EQ(set, test.c);
+  }
+}
+
+typedef AddIntervalTestData ComplementTestData;
+
+TEST(IntervalSetTest, ComplementEmptyInitial) {
+  const interval_type kTestCases[] = {
+      {0, 0},     //
+      {0, 1},     //
+      {1, 10},    //
+      {10, 100},  //
+  };
+  for (const auto& test : kTestCases) {
+    interval_set_type set;
+    set.Complement(test);
+    EXPECT_EQ(set, interval_set_type{test});
+  }
+}
+
+TEST(IntervalSetTest, ComplementGeneral) {
+  const UnsafeIntervalSet initial{{10, 20}, {30, 40}};
+  const ComplementTestData kTestCases[] = {
+      {{5, 10}, {{5, 10}}},
+      {{5, 11}, {{5, 10}}},
+      {{5, 20}, {{5, 10}}},
+      {{5, 21}, {{5, 10}, {20, 21}}},
+      {{5, 29}, {{5, 10}, {20, 29}}},
+      {{5, 30}, {{5, 10}, {20, 30}}},
+      {{5, 31}, {{5, 10}, {20, 30}}},
+      {{5, 39}, {{5, 10}, {20, 30}}},
+      {{5, 40}, {{5, 10}, {20, 30}}},
+      {{5, 41}, {{5, 10}, {20, 30}, {40, 41}}},
+      {{10, 11}, {}},
+      {{10, 20}, {}},
+      {{10, 21}, {{20, 21}}},
+      {{10, 29}, {{20, 29}}},
+      {{10, 30}, {{20, 30}}},
+      {{10, 31}, {{20, 30}}},
+      {{10, 39}, {{20, 30}}},
+      {{10, 40}, {{20, 30}}},
+      {{10, 41}, {{20, 30}, {40, 41}}},
+      {{20, 21}, {{20, 21}}},
+      {{20, 29}, {{20, 29}}},
+      {{20, 30}, {{20, 30}}},
+      {{20, 31}, {{20, 30}}},
+      {{20, 39}, {{20, 30}}},
+      {{20, 40}, {{20, 30}}},
+      {{20, 41}, {{20, 30}, {40, 41}}},
+      {{21, 29}, {{21, 29}}},
+      {{21, 30}, {{21, 30}}},
+      {{21, 31}, {{21, 30}}},
+      {{21, 39}, {{21, 30}}},
+      {{21, 40}, {{21, 30}}},
+      {{21, 41}, {{21, 30}, {40, 41}}},
+      {{29, 29}, {}},
+      {{29, 30}, {{29, 30}}},
+      {{29, 31}, {{29, 30}}},
+      {{29, 39}, {{29, 30}}},
+      {{29, 40}, {{29, 30}}},
+      {{29, 41}, {{29, 30}, {40, 41}}},
+      {{30, 30}, {}},
+      {{30, 31}, {}},
+      {{30, 39}, {}},
+      {{30, 40}, {}},
+      {{30, 41}, {{40, 41}}},
+      {{39, 39}, {}},
+      {{39, 40}, {}},
+      {{39, 41}, {{40, 41}}},
+      {{40, 40}, {}},
+      {{40, 41}, {{40, 41}}},
+      {{40, 45}, {{40, 45}}},
+  };
+  for (const auto& test : kTestCases) {
+    VLOG(1) << "comp " << test.value << " == " << test.expected;
+    UnsafeIntervalSet set(initial);
+    set.Complement(test.value);
+    EXPECT_EQ(set, test.expected);
+  }
+}
+
+TEST(IntervalSetTest, MonotonicTransformShiftUp) {
+  const UnsafeIntervalSet initial{{10, 20}, {30, 40}};
+  const interval_set_type result =
+      initial.MonotonicTransform<int>([](const int x) { return x + 5; });
+  const UnsafeIntervalSet expected{{15, 25}, {35, 45}};
+  EXPECT_EQ(result, expected);
+}
+
+TEST(IntervalSetTest, MonotonicTransformScaleUp) {
+  const UnsafeIntervalSet initial{{10, 20}, {30, 40}};
+  const interval_set_type result =
+      initial.MonotonicTransform<int>([](const int x) { return x * 2; });
+  const UnsafeIntervalSet expected{{20, 40}, {60, 80}};
+  EXPECT_EQ(result, expected);
+}
+
+TEST(IntervalSetTest, MonotonicTransformScaleDown) {
+  const UnsafeIntervalSet initial{{10, 11}, {13, 14}, {30, 40}};
+  const interval_set_type result =
+      initial.MonotonicTransform<int>([](const int x) { return x / 2; });
+  // Note that {10,11} -> {5,5} (empty) when truncated (integer division),
+  // so the result doesn't include it.
+  const UnsafeIntervalSet expected{{6, 7}, {15, 20}};
+  EXPECT_EQ(result, expected);
+}
+
+TEST(IntervalSetTest, MonotonicTransformReflect) {
+  const UnsafeIntervalSet initial{{10, 20}, {30, 50}};
+  // function is inverting
+  const interval_set_type result =
+      initial.MonotonicTransform<int>([](const int x) { return 100 - x; });
+  const UnsafeIntervalSet expected{{50, 70}, {80, 90}};
+  EXPECT_EQ(result, expected);
+}
+
+TEST(IntervalSetTest, StreamOutputEmpty) {
+  const UnsafeIntervalSet initial{};
+  std::ostringstream stream;
+  stream << initial;
+  EXPECT_EQ(stream.str(), "");
+}
+
+TEST(IntervalSetTest, StreamOutputNonEmpty) {
+  const UnsafeIntervalSet initial{{3, 5}, {7, 9}};
+  std::ostringstream stream;
+  stream << initial;
+  EXPECT_EQ(stream.str(), "[3, 5), [7, 9)");
+}
+
+TEST(ParseInclusivesRangesTest, Empty) {
+  const std::initializer_list<absl::string_view> kRanges{};
+  interval_set_type iset;
+  std::ostringstream errstream;
+  EXPECT_TRUE(
+      ParseInclusiveRanges(&iset, kRanges.begin(), kRanges.end(), &errstream));
+  EXPECT_TRUE(errstream.str().empty());
+  EXPECT_TRUE(iset.empty());
+}
+
+TEST(ParseInclusivesRangesTest, ParseErrorSingle) {
+  const std::initializer_list<absl::string_view> kRanges{"yyy"};
+  interval_set_type iset;
+  std::ostringstream errstream;
+  EXPECT_FALSE(
+      ParseInclusiveRanges(&iset, kRanges.begin(), kRanges.end(), &errstream));
+  EXPECT_FALSE(errstream.str().empty());
+  EXPECT_TRUE(iset.empty());
+}
+
+TEST(ParseInclusivesRangesTest, ParseErrorRange) {
+  const std::initializer_list<absl::string_view> kRanges{"1-x"};
+  interval_set_type iset;
+  std::ostringstream errstream;
+  EXPECT_FALSE(
+      ParseInclusiveRanges(&iset, kRanges.begin(), kRanges.end(), &errstream));
+  EXPECT_FALSE(errstream.str().empty());
+  EXPECT_TRUE(iset.empty());
+}
+
+TEST(ParseInclusivesRangesTest, SingleValues) {
+  const std::initializer_list<absl::string_view> kRanges{"1", "3", "4", "5"};
+  interval_set_type iset;
+  std::ostringstream errstream;
+  EXPECT_TRUE(
+      ParseInclusiveRanges(&iset, kRanges.begin(), kRanges.end(), &errstream));
+  EXPECT_TRUE(errstream.str().empty());
+  const UnsafeIntervalSet expected{{1, 2}, {3, 6}};
+  EXPECT_EQ(iset, expected);
+}
+
+TEST(ParseInclusivesRangesTest, PairValues) {
+  const std::initializer_list<absl::string_view> kRanges{"1-10", "3-11",
+                                                         "41-52"};
+  interval_set_type iset;
+  std::ostringstream errstream;
+  EXPECT_TRUE(
+      ParseInclusiveRanges(&iset, kRanges.begin(), kRanges.end(), &errstream));
+  EXPECT_TRUE(errstream.str().empty());
+  const UnsafeIntervalSet expected{{1, 12}, {41, 53}};
+  EXPECT_EQ(iset, expected);
+}
+
+TEST(ParseInclusivesRangesTest, PairValuesCustomSeparator) {
+  const std::initializer_list<absl::string_view> kRanges{"1:10", "3:11",
+                                                         "41:52"};
+  interval_set_type iset;
+  std::ostringstream errstream;
+  EXPECT_TRUE(ParseInclusiveRanges(&iset, kRanges.begin(), kRanges.end(),
+                                   &errstream, ':'));
+  EXPECT_TRUE(errstream.str().empty());
+  const UnsafeIntervalSet expected{{1, 12}, {41, 53}};
+  EXPECT_EQ(iset, expected);
+}
+
+TEST(ParseInclusivesRangesTest, MixedValues) {
+  const std::initializer_list<absl::string_view> kRanges{"2-10", "11-3", "41",
+                                                         "42-52"};
+  interval_set_type iset;
+  std::ostringstream errstream;
+  EXPECT_TRUE(
+      ParseInclusiveRanges(&iset, kRanges.begin(), kRanges.end(), &errstream));
+  EXPECT_TRUE(errstream.str().empty());
+  const UnsafeIntervalSet expected{{2, 12}, {41, 53}};
+  EXPECT_EQ(iset, expected);
+}
 
 }  // namespace
 }  // namespace verible

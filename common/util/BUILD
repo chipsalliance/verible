@@ -57,6 +57,7 @@ cc_library(
 cc_library(
     name = "interval",
     hdrs = ["interval.h"],
+    deps = ["@com_google_absl//absl/strings"],
 )
 
 cc_library(
@@ -65,6 +66,7 @@ cc_library(
     deps = [
         ":auto_iterator",
         ":interval",
+        ":iterator_range",
         ":logging",
         "@com_google_absl//absl/strings",
     ],
