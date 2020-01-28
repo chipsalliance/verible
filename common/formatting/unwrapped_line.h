@@ -82,6 +82,9 @@ class UnwrappedLine {
   // Extends PreFormatToken range up to the given token (exclusive).
   void SpanUpToToken(token_iterator iter) { tokens_.set_end(iter); }
 
+  // Extends PreFormatToken range to start from the given token (inclusive).
+  void SpanFromToken(token_iterator iter) { tokens_.set_begin(iter); }
+
   int IndentationSpaces() const { return indentation_spaces_; }
 
   void SetIndentationSpaces(int spaces) { indentation_spaces_ = spaces; }

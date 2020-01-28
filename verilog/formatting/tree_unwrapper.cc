@@ -1030,6 +1030,58 @@ void TreeUnwrapper::Visit(const verible::SyntaxTreeNode& node) {
     }
     case NodeEnum::kBindDirective: {
       AttachTrailingSemicolonToPreviousPartition();
+      auto& bind_target_instance_partiton =
+          *ABSL_DIE_IF_NULL(CurrentTokenPartition()->PreviousSibling());
+      auto& bind_instantiation_partition =
+          bind_target_instance_partiton.Children().back();
+
+      // Flatten partition tree by one level.
+      bind_instantiation_partition.FlattenOnce();
+      auto& children = bind_instantiation_partition.Children();
+      CHECK(!children.empty());
+
+      if (children.size() == 1) {
+        // One instance, no parameters, append to previous partition
+        bind_instantiation_partition.HoistOnlyChild();
+        // Undo the indentation of the only instance in the hoisted subtree.
+        bind_instantiation_partition.ApplyPreOrder([&](UnwrappedLine& uwline) {
+          uwline.SetIndentationSpaces(uwline.IndentationSpaces() -
+                                      style_.wrap_spaces);
+        });
+
+        // Compute instance name position - before last child
+        const size_t fuse_position =
+            bind_target_instance_partiton.Children().size() - 2;
+        // Merge instance name with target instance partition
+        bind_target_instance_partiton.MergeConsecutiveSiblings(
+                fuse_position, [](UnwrappedLine* left_uwline,
+                                  const UnwrappedLine& right_uwline) {
+                  CHECK(left_uwline->TokensRange().end() ==
+                        right_uwline.TokensRange().begin());
+                  left_uwline->SpanUpToToken(right_uwline.TokensRange().end());
+                });
+      } else if (children.size() == 3) {
+        // One instance with parameters
+        // In that case we have a leaf for name, leaf for parameters
+        // and a leaf for ')'
+
+        // Move the instance name to previous partition
+        // Those are not siblings, so move it manually
+        auto parameters_node = *children.back().PreviousSibling();
+        const auto& close_parenthesis_partition =
+          bind_instantiation_partition.PreviousSibling();
+
+        // Move instance name to previous partition
+        close_parenthesis_partition->Value().SpanUpToToken(
+            parameters_node.Value().TokensRange().begin());
+        // Update instance name node range
+        bind_instantiation_partition.Value().SpanFromToken(
+            parameters_node.Value().TokensRange().begin());
+        // Delete now-obsolete name leaf
+        bind_instantiation_partition.Children().erase(children.begin());
+      } else {
+        // Not a unique instance, make no adjustments
+      }
       break;
     }
     case NodeEnum::kBegin: {  // may contain label
