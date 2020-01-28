@@ -113,6 +113,33 @@ TEST(LineColumnMapTest, OffsetsFromLines) {
   }
 }
 
+TEST(LineColumnMapTest, EndOffsetNoLines) {
+  const std::vector<absl::string_view> lines;
+  const LineColumnMap map(lines);
+  EXPECT_EQ(map.EndOffset(), 0);
+}
+
+struct EndOffsetTestCase {
+  absl::string_view text;
+  int expected_offset;
+};
+
+TEST(LineColumnMapTest, EndOffsetVarious) {
+  const EndOffsetTestCase kTestCases[] = {
+      {"", 0},             // empty text
+      {"aaaa", 0},         // missing EOL
+      {"aaaa\nbbb", 5},    // missing EOL
+      {"\n", 1},           //
+      {"aaaa\n", 5},       //
+      {"aaaa\nbbb\n", 9},  //
+      {"\n\n", 2},
+  };
+  for (const auto& test : kTestCases) {
+    const LineColumnMap map(test.text);
+    EXPECT_EQ(map.EndOffset(), test.expected_offset) << "text:\n" << test.text;
+  }
+}
+
 // This test verifies the translation from byte-offset to line-column.
 TEST(LineColumnMapTest, Lookup) {
   for (const auto& test_case : map_test_data) {

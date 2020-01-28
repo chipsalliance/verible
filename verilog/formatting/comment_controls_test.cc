@@ -18,6 +18,8 @@
 
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
+#include "absl/strings/str_join.h"
+#include "common/text/line_column_map.h"
 #include "common/text/token_info_test_util.h"
 #include "verilog/analysis/verilog_analyzer.h"
 
@@ -26,6 +28,7 @@ namespace formatter {
 namespace {
 
 using ::testing::ElementsAre;
+using verible::LineColumnMap;
 
 TEST(DisableFormattingRangesTest, EmptyFile) {
   VerilogAnalyzer analyzer("", "<file>");
@@ -202,6 +205,109 @@ TEST(DisableFormattingRangesTest, FormatOffVarious) {
     const auto disable_ranges = DisableFormattingRanges(
         analyzer.Data().Contents(), analyzer.Data().TokenStream());
     EXPECT_EQ(disable_ranges, test.expected) << "code:\n" << test.code;
+  }
+}
+
+struct DisabledBytesTestCase {
+  absl::string_view text;
+  LineNumberSet enabled_lines;
+  ByteOffsetSet expected_bytes;
+};
+
+TEST(EnabledLinesToDisabledByteRangesTest, AllCases) {
+  const DisabledBytesTestCase kTestCases[] = {
+      {"", {}, {}},  // empty text
+      {"aaaa\n"
+       "bbbbbb\n"
+       "cccc\n",
+       {},  // no disabled lines
+       {}},
+      {
+          "aaaa\n"
+          "bbbbbb\n"
+          "cccc\n",
+          {{1, 2}},  // enabled first line only
+          {{5, 17}}  // disable all other lines
+      },
+      {
+          "aaaa\n"
+          "bbbbbb\n"
+          "cccc\n",
+          {{2, 3}},           // enabled second line only
+          {{0, 5}, {12, 17}}  // disable all other lines
+      },
+      {
+          "aaaa\n"
+          "bbbbbb\n"
+          "cccc\n",
+          {{3, 4}},  // enabled third line only
+          {{0, 12}}  // disable all other lines
+      },
+      {
+          "aaaa\n"
+          "bbbbbb\n"
+          "cccc\n",
+          {{1, 3}},   // enabled first two lines only
+          {{12, 17}}  // disable all other lines
+      },
+      {
+          "aaaa\n"
+          "bbbbbb\n"
+          "cccc\n",
+          {{2, 4}},  // enabled last two lines only
+          {{0, 5}}   // disable all other lines
+      },
+      {
+          "aaaa\n"
+          "bbbbbb\n"
+          "cccc\n",
+          {{1, 4}},  // enabled no lines only
+          {}         // disable no lines
+      },
+      {
+          "aaaa\n"
+          "bbbbbb\n"
+          "cccc\n",
+          {{0, 5}},  // excess range
+          {}         // disable no lines
+      },
+      {
+          "aaaa\n"
+          "bbbbbb\n"
+          "cccc",    // missing terminating '\n' (POSIX)
+          {{1, 4}},  // excess range
+          {}         // disable no lines
+      },
+      {
+          "aaaa\n"
+          "bbbbbb\n"
+          "cccc",    // missing terminating '\n' (POSIX)
+          {{0, 5}},  // excess range
+          {}         // disable no lines
+      },
+      {
+          "aaaa\n"
+          "bbbbbb\n"
+          "cccc",    // missing terminating '\n' (POSIX)
+          {{4, 8}},  // excess range
+          {{0, 12}}  // disable all (whole) lines
+      },
+      {
+          "aaaa\n"
+          "bbbbbb\n"
+          "cccc\n",
+          {{4, 8}},  // range outside, interpret as disable all other lines
+          {{0, 17}}  // disable all lines
+      },
+  };
+  for (const auto& test : kTestCases) {
+    LineColumnMap line_map(test.text);
+    const ByteOffsetSet result(
+        EnabledLinesToDisabledByteRanges(test.enabled_lines, line_map));
+    EXPECT_EQ(result, test.expected_bytes)
+        << "lines: " << test.enabled_lines << "\ncolumn map: "
+        << absl::StrJoin(line_map.GetBeginningOfLineOffsets(), ",",
+                         absl::StreamFormatter());
   }
 }
 

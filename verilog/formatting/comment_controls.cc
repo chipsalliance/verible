@@ -84,5 +84,24 @@ ByteOffsetSet DisableFormattingRanges(absl::string_view text,
   return disable_set;
 }
 
+ByteOffsetSet EnabledLinesToDisabledByteRanges(
+    const LineNumberSet& line_numbers,
+    const verible::LineColumnMap& line_column_map) {
+  // Interpret empty line numbers as enabling all lines for formatting.
+  if (line_numbers.empty()) return ByteOffsetSet();
+  // Translate lines to byte offsets (strictly monotonic).
+  const int max_line = line_column_map.GetBeginningOfLineOffsets().size() + 1;
+  ByteOffsetSet byte_offsets(
+      line_numbers.MonotonicTransform<int>([&](int line_number) {
+        // line_numbers are 1-based, while OffsetAtLine is 0-based
+        const int n = std::max(std::min(line_number, max_line), 1);
+        return line_column_map.OffsetAtLine(n - 1);
+      }));
+  // Invert set to get disabled ranges.
+  const int end_byte = line_column_map.EndOffset();
+  byte_offsets.Complement({0, end_byte});
+  return byte_offsets;
+}
+
 }  // namespace formatter
 }  // namespace verilog

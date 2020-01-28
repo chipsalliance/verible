@@ -36,7 +36,7 @@ std::ostream& operator<<(std::ostream& output_stream,
 // offsets into line:column numbers.
 // Offsets are guaranteed to be monotonically increasing (sorted), and
 // thus, are binary-searchable.
-LineColumnMap::LineColumnMap(const absl::string_view text) {
+LineColumnMap::LineColumnMap(absl::string_view text) {
   // The column number after every line break is 0.
   // The first line always starts at offset 0.
   beginning_of_line_offsets_.push_back(0);

@@ -16,6 +16,7 @@
 #define VERIBLE_VERILOG_FORMATTING_COMMENT_CONTROLS_H_
 
 #include "absl/strings/string_view.h"
+#include "common/text/line_column_map.h"
 #include "common/text/token_stream_view.h"
 #include "common/util/interval_set.h"
 
@@ -25,10 +26,18 @@ namespace formatter {
 // Collection of ranges of byte offsets.
 using ByteOffsetSet = verible::IntervalSet<int>;
 
+// Collection of line numbers, 1-based.
+using LineNumberSet = verible::IntervalSet<int>;
+
 // Returns a representation of byte offsets where true (membership) means
 // formatting is disabled.
 ByteOffsetSet DisableFormattingRanges(absl::string_view text,
                                       const verible::TokenSequence& tokens);
+
+// Translates line numbers into a set of byte ranges to disable formatting.
+ByteOffsetSet EnabledLinesToDisabledByteRanges(
+    const LineNumberSet& line_numbers,
+    const verible::LineColumnMap& line_column_map);
 
 }  // namespace formatter
 }  // namespace verilog

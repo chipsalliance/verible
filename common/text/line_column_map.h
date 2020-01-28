@@ -47,7 +47,7 @@ std::ostream& operator<<(std::ostream&, const LineColumn&);
 
 class LineColumnMap {
  public:
-  explicit LineColumnMap(const absl::string_view);
+  explicit LineColumnMap(absl::string_view);
 
   explicit LineColumnMap(const std::vector<absl::string_view>& lines);
 
@@ -57,7 +57,7 @@ class LineColumnMap {
 
   // Returns byte offset corresponding to the 0-based line number.
   // If lineno exceeds number of lines, return the final byte offset.
-  size_t OffsetAtLine(size_t lineno) const {
+  int OffsetAtLine(size_t lineno) const {
     const size_t index =
         std::min(lineno, beginning_of_line_offsets_.size() - 1);
     return beginning_of_line_offsets_[index];
@@ -70,11 +70,16 @@ class LineColumnMap {
     return beginning_of_line_offsets_;
   }
 
+  int EndOffset() const {
+    if (Empty()) return 0;
+    return beginning_of_line_offsets_.back();
+  }
+
  private:
   // Index: line number, Value: byte offset that starts the line.
   // The first value will always be 0 because the beginning of the first line
   // has offset 0.  The last value will be the offset following the last
-  // newline.
+  // newline, which is the length of the original text.
   std::vector<int> beginning_of_line_offsets_;
 };
 
