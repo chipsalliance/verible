@@ -2780,7 +2780,7 @@ TEST(TokenAnnotatorTest, AnnotateFormattingWithContextTest) {
           {'0', "0"},
           {yytokentype::TK_EOL_COMMENT, "// comment"},
           {NodeEnum::kUdpCombEntry},
-          {2, SpacingOptions::Undecided},
+          {2, SpacingOptions::MustAppend},
       },
       {
           // 1  /*comment*/ 0 : -;
@@ -2804,7 +2804,7 @@ TEST(TokenAnnotatorTest, AnnotateFormattingWithContextTest) {
           {'0', "0"},
           {yytokentype::TK_EOL_COMMENT, "// comment"},
           {NodeEnum::kUdpSequenceEntry},
-          {2, SpacingOptions::Undecided},
+          {2, SpacingOptions::MustAppend},
       },
       {
           // input  /* comment */ i;
@@ -2836,7 +2836,7 @@ TEST(TokenAnnotatorTest, AnnotateFormattingWithContextTest) {
           {';', ";"},
           {yytokentype::TK_EOL_COMMENT, "// comment"},
           {NodeEnum::kUdpPortDeclaration},
-          {2, SpacingOptions::Undecided},
+          {2, SpacingOptions::MustAppend},
       },
   };
   int test_index = 0;
