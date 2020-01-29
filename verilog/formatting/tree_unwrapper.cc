@@ -544,7 +544,7 @@ void TreeUnwrapper::Visit(const verible::SyntaxTreeNode& node) {
     // The following constructs start a new UnwrappedLine indented to the
     // current level.
     case NodeEnum::kGenerateRegion:
-    case NodeEnum::kConditionalGenerateConstruct:
+    case NodeEnum::kCaseGenerateConstruct:
     case NodeEnum::kLoopGenerateConstruct:
     case NodeEnum::kClassDeclaration:
     case NodeEnum::kClassConstructor:
@@ -595,6 +595,16 @@ void TreeUnwrapper::Visit(const verible::SyntaxTreeNode& node) {
     case NodeEnum::kDescriptionList:
     case NodeEnum::kForwardDeclaration: {
       VisitNewUnwrappedLine(node);
+      break;
+    }
+    case NodeEnum::kConditionalGenerateConstruct: {
+      if (IsTopLevelListItem(Context())) {
+        // Create a level of grouping without additional indentation.
+        VisitIndentedSection(node, 0,
+                             PartitionPolicyEnum::kFitOnLineElseExpand);
+      } else {
+        TraverseChildren(node);
+      }
       break;
     }
     case NodeEnum::kSeqBlock:
@@ -692,6 +702,74 @@ void TreeUnwrapper::Visit(const verible::SyntaxTreeNode& node) {
           // Otherwise create indented section by ourselves.
           // It's for single-statement branches
           if (tag == NodeEnum::kElseBody) {
+            // indent else-branch statement
+            VisitIndentedSection(node, style_.indentation_spaces,
+                                 PartitionPolicyEnum::kFitOnLineElseExpand);
+          } else {
+            VisitIndentedSection(node, 0,
+                                 PartitionPolicyEnum::kFitOnLineElseExpand);
+          }
+          break;
+      }
+      break;
+    }
+    case NodeEnum::kGenerateIfClause:
+    case NodeEnum::kGenerateIfBody: {
+      const verible::SyntaxTreeNode* subnode;
+
+      if (tag == NodeEnum::kGenerateIfClause)
+        subnode = &GetSubtreeAsNode(node, NodeEnum::kGenerateIfClause, 1);
+      else
+        subnode = &node;
+
+      if (GetSubtreeNodeEnum(*subnode, NodeEnum::kGenerateIfBody, 0) ==
+          NodeEnum::kGenerateBlock) {
+        // Extend current token partition with following begin keyword,
+        // kBlockItemStatementList would create indented section anyway
+        TraverseChildren(node);
+      } else {
+        // Otherwise create indented section by ourselves.
+        // It's for single-statement branches
+        if (tag == NodeEnum::kGenerateIfBody) {
+          // indent if-branch
+          VisitIndentedSection(node, style_.indentation_spaces,
+                               PartitionPolicyEnum::kFitOnLineElseExpand);
+        } else {
+          VisitIndentedSection(node, 0,
+                               PartitionPolicyEnum::kFitOnLineElseExpand);
+        }
+      }
+      break;
+    }
+
+    case NodeEnum::kGenerateElseClause:
+    case NodeEnum::kGenerateElseBody: {
+      const verible::SyntaxTreeNode* subnode;
+
+      if (tag == NodeEnum::kGenerateElseClause)
+        subnode = &GetSubtreeAsNode(node, NodeEnum::kGenerateElseClause, 1);
+      else
+        subnode = &node;
+
+      const auto subtag = GetSubtreeNodeEnum(*subnode, NodeEnum::kGenerateElseBody, 0);
+      switch (subtag) {
+        case NodeEnum::kGenerateBlock:
+        case NodeEnum::kConditionalGenerateConstruct:
+          if (std::prev(CurrentFormatTokenIterator())->TokenEnum() ==
+              yytokentype::SymbolIdentifier) {
+            // Start new token partition if current token is label identifier
+            VisitNewUnwrappedLine(node);
+          } else {
+            // Extend current token partition by begin keyword and if keyword
+            // Plus keep else-if-else... structure flat
+            TraverseChildren(node);
+          }
+          break;
+
+        default:
+          // Otherwise create indented section by ourselves.
+          // It's for single-statement branches
+          if (tag == NodeEnum::kGenerateElseBody) {
             // indent else-branch statement
             VisitIndentedSection(node, style_.indentation_spaces,
                                  PartitionPolicyEnum::kFitOnLineElseExpand);
