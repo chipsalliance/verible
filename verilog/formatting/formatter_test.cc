@@ -1419,6 +1419,52 @@ static const std::initializer_list<FormatterTestCase> kFormatterTestCases = {
      "    D = 1\n"
      "  } bar_t;\n"
      "endpackage : typey\n"},
+    {"package foo_pkg; \n"
+     "// function description.......\n"
+     "function automatic void bar();"
+     "endfunction "
+     "endpackage\n",
+     "package foo_pkg;\n"
+     "  // function description.......\n"
+     "  function automatic void bar();\n"
+     "  endfunction\n"
+     "endpackage\n"},
+    {"package foo_pkg; \n"
+     "// function description.......\n"
+     "function void bar(string name=\"x\" ) ;"
+     "endfunction "
+     "endpackage\n",
+     "package foo_pkg;\n"
+     "  // function description.......\n"
+     "  function void bar(string name = \"x\");\n"
+     "  endfunction\n"
+     "endpackage\n"},
+    {" package foo_pkg; \n"
+     "// class description.............\n"
+     "class classy;"
+     "endclass "
+     "endpackage\n",
+     "package foo_pkg;\n"
+     "  // class description.............\n"
+     "  class classy;\n"
+     "  endclass\n"
+     "endpackage\n"},
+    {"package\tfoo_pkg; \n"
+     "// class description.............\n"
+     "class   classy;    \n"
+     "// function description.......\n"
+     "function\nautomatic   void bar( );"
+     "endfunction   "
+     "endclass\t"
+     "endpackage\n",
+     "package foo_pkg;\n"
+     "  // class description.............\n"
+     "  class classy;\n"
+     "    // function description.......\n"
+     "    function automatic void bar();\n"
+     "    endfunction\n"
+     "  endclass\n"
+     "endpackage\n"},
 
     // function test cases
     {"function f ;endfunction", "function f;\nendfunction\n"},

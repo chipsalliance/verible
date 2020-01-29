@@ -2171,7 +2171,57 @@ const TreeUnwrapperTestData kUnwrapPackageTestCases[] = {
         L(0, {"endpackage"}),
     },
 
-    // TODO(fangism): test packages with class declaration
+    {
+        "package with function declaration, commented",
+        "package foo_pkg; \n"
+        "// function description\n"
+        "function automatic void bar();"
+        "endfunction "
+        " endpackage\n",
+        L(0, {"package", "foo_pkg", ";"}),
+        PackageItemList(1, L(1, {"// function description"}),
+                        FunctionHeader(1, L(1, {"function", "automatic", "void",
+                                                "bar", "(", ")", ";"})),
+                        L(1, {"endfunction"})),
+        L(0, {"endpackage"}),
+    },
+
+    {
+        "package with class declaration, commented",
+        "package foo_pkg; \n"
+        "// class description\n"
+        "class classy;"
+        "endclass "
+        " endpackage\n",
+        L(0, {"package", "foo_pkg", ";"}),
+        PackageItemList(1, L(1, {"// class description"}),
+                        ClassHeader(1, L(1, {"class", "classy", ";"})),
+                        L(1, {"endclass"})),
+        L(0, {"endpackage"}),
+    },
+
+    {
+        "package with class and function declaration, commented",
+        "package foo_pkg; \n"
+        "// class description\n"
+        "class classy;\n"
+        "// function description\n"
+        "function automatic void bar();"
+        "endfunction "
+        "endclass "
+        " endpackage\n",
+        L(0, {"package", "foo_pkg", ";"}),
+        PackageItemList(
+            1, L(1, {"// class description"}),
+            ClassHeader(1, L(1, {"class", "classy", ";"})),
+            ClassItemList(
+                2, L(2, {"// function description"}),
+                FunctionHeader(2, L(2, {"function", "automatic", "void", "bar",
+                                        "(", ")", ";"})),
+                L(2, {"endfunction"})),
+            L(1, {"endclass"})),
+        L(0, {"endpackage"}),
+    },
 };
 
 // Test that TreeUnwrapper produces correct UnwrappedLines from package tests

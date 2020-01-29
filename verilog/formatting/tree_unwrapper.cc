@@ -295,7 +295,8 @@ static bool IsTopLevelListItem(const verible::SyntaxTreeContext& context) {
   return context.DirectParentIsOneOf(
       {NodeEnum::kStatementList, NodeEnum::kModuleItemList,
        NodeEnum::kGenerateItemList, NodeEnum::kClassItems,
-       NodeEnum::kBlockItemStatementList, NodeEnum::kDescriptionList});
+       NodeEnum::kBlockItemStatementList, NodeEnum::kDescriptionList,
+       NodeEnum::kPackageItemList});
 }
 
 // These are constructs where it is permissible to fit on one line, but in the
@@ -481,6 +482,7 @@ void TreeUnwrapper::InterChildNodeHook(const verible::SyntaxTreeNode& node) {
     case NodeEnum::kClassItems:
     case NodeEnum::kDescriptionList:  // top-level item comments
     case NodeEnum::kStatementList:
+    case NodeEnum::kPackageItemList:
     case NodeEnum::kBlockItemStatementList:
       LookAheadBeyondCurrentNode();
       break;
