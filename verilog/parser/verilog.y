@@ -5431,11 +5431,21 @@ loop_generate_construct
 
 conditional_generate_construct
   : generate_if generate_item TK_else generate_item
-    { $$ = MakeTaggedNode(N::kConditionalGenerateConstruct, $1, $2, $3, $4); }
+    { $$ = MakeTaggedNode(N::kConditionalGenerateConstruct,
+             MakeTaggedNode(N::kGenerateIfClause,
+               MakeTaggedNode(N::kGenerateIfHeader, $1),
+               MakeTaggedNode(N::kGenerateIfBody, $2)),
+           MakeTaggedNode(N::kGenerateElseClause,
+               $3,
+               MakeTaggedNode(N::kGenerateElseBody, $4))); }
   | generate_if generate_item %prec less_than_TK_else
-    { $$ = MakeTaggedNode(N::kConditionalGenerateConstruct, $1, $2); }
+    { $$ = MakeTaggedNode(N::kConditionalGenerateConstruct,
+             MakeTaggedNode(N::kGenerateIfClause,
+               MakeTaggedNode(N::kGenerateIfHeader, $1),
+               MakeTaggedNode(N::kGenerateIfBody, $2)),
+           nullptr); }
   | TK_case '(' expression ')' generate_case_items TK_endcase
-    { $$ = MakeTaggedNode(N::kConditionalGenerateConstruct, $1,
+    { $$ = MakeTaggedNode(N::kCaseGenerateConstruct, $1,
                           MakeParenGroup($2, $3, $4), $5, $6); }
   ;
 
