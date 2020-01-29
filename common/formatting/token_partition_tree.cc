@@ -112,7 +112,8 @@ std::ostream& TokenPartitionTreePrinter::PrintTree(std::ostream& stream,
     stream << '('
            << Spacer(value.IndentationSpaces(),
                      UnwrappedLine::kIndentationMarker)
-           << "[<auto>]) @" << NodePath(node) << '\n';
+           << "[<auto>]) @" << NodePath(node)
+           << ", policy: " << value.PartitionPolicy() << '\n';
     // token range spans all of children nodes
     for (const auto& child : children) {
       TokenPartitionTreePrinter(child).PrintTree(stream, indent + 2) << '\n';

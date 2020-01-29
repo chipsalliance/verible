@@ -570,6 +570,9 @@ FTT GetFormatTokenType(yytokentype e) {
       case '&':
       case '|':
       case '^':
+      /* relational */
+      case '<':
+      case '>':
         return FTT::binary_operator;
       case '?':
         // Technically, ?: is a ternary operator, but nonetheless we
@@ -642,6 +645,23 @@ bool IsPreprocessorControlFlow(yytokentype token_type) {
     case yytokentype::PP_elsif:
     case yytokentype::PP_else:
     case yytokentype::PP_endif:
+      return true;
+    default:
+      break;
+  }
+  return false;
+}
+
+bool IsPreprocessorKeyword(yytokentype token_type) {
+  switch (static_cast<int>(token_type)) {
+    case yytokentype::PP_include:
+    case yytokentype::PP_define:
+    case yytokentype::PP_ifdef:
+    case yytokentype::PP_ifndef:
+    case yytokentype::PP_else:
+    case yytokentype::PP_elsif:
+    case yytokentype::PP_endif:
+    case yytokentype::PP_undef:
       return true;
     default:
       break;

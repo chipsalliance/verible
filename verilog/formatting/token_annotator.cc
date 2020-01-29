@@ -106,6 +106,20 @@ static bool PairwiseNonmergeable(const PreFormatToken& ftoken) {
          ftoken.format_token_enum == FormatTokenType::keyword;
 }
 
+static bool InRangeLikeContext(const SyntaxTreeContext& context) {
+  return context.IsInsideFirst(
+      {NodeEnum::kSelectVariableDimension, NodeEnum::kDimensionRange,
+       NodeEnum::kDimensionSlice},
+      {});
+}
+
+static bool IsAnySemicolon(const PreFormatToken& ftoken) {
+  // These are just syntactically disambiguated versions of ';'.
+  return ftoken.TokenEnum() == ';' ||
+         ftoken.TokenEnum() ==
+             yytokentype::SemicolonEndOfAssertionVariableDeclarations;
+}
+
 // Returns minimum number of spaces required between left and right token.
 // Returning kUnhandledSpacesRequired means the case was not explicitly
 // handled, and it is up to the caller to decide what to do when this happens.
@@ -164,13 +178,15 @@ static WithReason<int> SpacesRequiredBetween(const PreFormatToken& left,
   if (right.TokenEnum() == ',') return {0, "No space before comma"};
   if (left.TokenEnum() == ',') return {1, "Require space after comma"};
 
-  if (right.TokenEnum() == ';') {
+  if (IsAnySemicolon(right)) {
     if (left.TokenEnum() == ':') {
       return {1, "Space between semicolon and colon, (e.g. \"default: ;\")"};
     }
     return {0, "No space before semicolon"};
   }
-  if (left.TokenEnum() == ';') return {1, "Require space after semicolon"};
+  if (IsAnySemicolon(left)) {
+    return {1, "Require space after semicolon"};
+  }
 
   if (context.IsInsideFirst({NodeEnum::kStreamingConcatenation}, {})) {
     if (left.TokenEnum() == TK_LS || left.TokenEnum() == TK_RS) {
@@ -180,6 +196,15 @@ static WithReason<int> SpacesRequiredBetween(const PreFormatToken& left,
                left.format_token_enum == FormatTokenType::keyword) {
       return {0, "No space around streaming operator slice size"};
     }
+  }
+
+  // "@(" vs. "@ (" for event control
+  // "@*" vs. "@ *" for event control, '*' is not a binary operator here
+  if (left.TokenEnum() == '@') {
+    return {0, "No space after \"@\" in most cases."};
+  }
+  if (right.TokenEnum() == '@') {
+    return {1, "Space before \"@\" in most cases."};
   }
 
   // Add missing space around either side of all types of assignment operator.
@@ -223,9 +248,6 @@ static WithReason<int> SpacesRequiredBetween(const PreFormatToken& left,
     // "#(" vs. "# (" for parameter formals and arguments
     if (left.TokenEnum() == '#') return {0, "Fuse \"#(\""};
 
-    // "@(" vs. "@ (" for event control
-    if (left.TokenEnum() == '@') return {0, "Fuse \"@(\""};
-
     // ") (" vs. ")(" for between parameter and port formals
     if (left.TokenEnum() == ')') {
       return {1, "Separate \") (\" between parameters and ports"};
@@ -248,6 +270,25 @@ static WithReason<int> SpacesRequiredBetween(const PreFormatToken& left,
       // Default: This case intended to cover function/task/macro calls:
       return {0, "Function/constructor calls: no space before ("};
     }
+  }
+
+  if (left.TokenEnum() == '}') {
+    // e.g. typedef struct { ... } foo_t;
+    return {1, "Space after '}' in most other cases."};
+  }
+  if (right.TokenEnum() == '{') {
+    if (left.format_token_enum == FormatTokenType::keyword) {
+      return {1, "Space between keyword and '{'."};
+    }
+    if (context.DirectParentsAre(
+            {NodeEnum::kBraceGroup, NodeEnum::kConstraintDeclaration})) {
+      return {1, "Space before '{' when opening a constraint definition body."};
+    }
+    if (context.DirectParentsAre(
+            {NodeEnum::kBraceGroup, NodeEnum::kCoverPoint})) {
+      return {1, "Space before '{' when opening a coverpoint body."};
+    }
+    return {0, "No space before '{' in most other contexts."};
   }
 
   // Handle padding around packed array dimensions like "type [N] id;"
@@ -279,8 +320,6 @@ static WithReason<int> SpacesRequiredBetween(const PreFormatToken& left,
     return {1, "Cannot pair {number, identifier, keyword} without space."};
   }
 
-  // Keywords:
-
   if (right.TokenEnum() == ':') {
     if (left.TokenEnum() == TK_default) {
       return {0, "No space inside \"default:\""};
@@ -288,7 +327,8 @@ static WithReason<int> SpacesRequiredBetween(const PreFormatToken& left,
     if (context.DirectParentIsOneOf(
             {NodeEnum::kCaseItem, NodeEnum::kCaseInsideItem,
              NodeEnum::kCasePatternItem, NodeEnum::kGenerateCaseItem,
-             NodeEnum::kPropertyCaseItem, NodeEnum::kRandSequenceCaseItem})) {
+             NodeEnum::kPropertyCaseItem, NodeEnum::kRandSequenceCaseItem,
+             NodeEnum::kCoverPoint})) {
       return {0, "Case-like items, no space before ':'"};
     }
 
@@ -315,15 +355,15 @@ static WithReason<int> SpacesRequiredBetween(const PreFormatToken& left,
     }
 
     // Spacing in ranges
-    if (context.IsInsideFirst(
-            {NodeEnum::kSelectVariableDimension, NodeEnum::kDimensionRange,
-             NodeEnum::kDimensionSlice},
-            {})) {
+    if (InRangeLikeContext(context)) {
       int spaces = right.OriginalLeadingSpaces().length();
       if (spaces > 1) {
         spaces = 1;
       }
       return {spaces, "Limit spaces before ':' in bit slice to 0 or 1"};
+    }
+    if (context.DirectParentIs(NodeEnum::kValueRange)) {
+      return {1, "Spaces around ':' in value ranges."};
     }
 
     // TODO(fangism): Everything that resembles a range (in index, dimensions)
@@ -345,17 +385,13 @@ static WithReason<int> SpacesRequiredBetween(const PreFormatToken& left,
   }
   if (left.TokenEnum() == ':') {
     // Spacing in ranges
-    if (context.IsInsideFirst(
-            {NodeEnum::kSelectVariableDimension, NodeEnum::kDimensionRange,
-             NodeEnum::kDimensionSlice},
-            {})) {
+    if (InRangeLikeContext(context)) {
       // Take advantage here that the left token was already annotated (above)
       return {left.before.spaces_required,
               "Symmetrize spaces before and after ':' in bit slice"};
-    } else {
-      // Most contexts want a space after ':'.
-      return {1, "Default to 1 space after ':'"};
     }
+    // Most contexts want a space after ':'.
+    return {1, "Default to 1 space after ':'"};
   }
 
   // "if (...)", "for (...) instead of "if(...)", "for(...)",
@@ -386,13 +422,49 @@ static WithReason<int> SpacesRequiredBetween(const PreFormatToken& left,
   if (left.TokenEnum() == '#') {
     return {0, "No spaces after # (delay expressions, parameters)."};
   }
+  if (right.TokenEnum() == '#') {
+    // This may be controversial or context-dependent, as parameterized
+    // classes often appear with method calls like:
+    //   type#(params...)::method(...);
+    return {1, "Spaces before # in most other contexts."};
+  }
+
+  if (right.format_token_enum == FormatTokenType::keyword) {
+    return {1, "Space before keywords in most other cases."};
+  }
 
   // e.g. always_ff @(posedge clk) begin ...
-  if (left.TokenEnum() == ')' && right.TokenEnum() == TK_begin) {
-    return {1, "Space between ) and begin keyword"};
+  // e.g. case (expr): ...
+  if (left.TokenEnum() == ')') {
+    switch (right.TokenEnum()) {
+      case ':':
+        return {0, "No space between ')' and ':'."};
+      default:
+        break;
+    }
+    return {1, "Space between ')' and most other tokens"};
   }
-  if (left.TokenEnum() == ')' && right.TokenEnum() == SymbolIdentifier) {
-    return {1, "Space between ) and SymbolIdentifier"};
+  if (left.TokenEnum() == yytokentype::MacroCallCloseToEndLine) {
+    if (IsAnySemicolon(right)) {
+      return {0, "No space between macro-closing ')' and ';'"};
+    }
+    // Really only expect comments to follow macro-closing ')'
+    return {1, "Space between macro-closing ')' and most other tokens"};
+  }
+  if (left.TokenEnum() == ']') {
+    return {1, "Space between ']' and most other tokens"};
+  }
+
+  if (IsPreprocessorKeyword(static_cast<yytokentype>(right.TokenEnum()))) {
+    // most of these should start on their own line anyway
+    return {1, "Preprocessor keywords should be separated from token on left."};
+  }
+
+  if (IsComment(FormatTokenType(left.format_token_enum))) {
+    // Nothing should ever be to the right of an EOL comment.
+    // But we have to explicitly handle these cases to prevent them from
+    // unintentionally preserving spacing after comments.
+    return {1, "Handle left=comment to avoid preserving unwanted spaces."};
   }
 
   // Case was not explicitly handled.
@@ -509,7 +581,9 @@ static WithReason<SpacingOptions> BreakDecisionBetween(
   }
 
   if (right.format_token_enum == FTT::eol_comment) {
-    // Check if there are is a newline in whitespace directly before this token
+    // Check if there are any newlines between these tokens' texts.
+    // Caution: when testing this case, must provide valid text between
+    // tokens to avoid reading uninitialized memory.
     auto preceding_whitespace = verible::make_string_view_range(
         left.token->text.end(), right.token->text.begin());
 
@@ -567,6 +641,29 @@ static WithReason<SpacingOptions> BreakDecisionBetween(
   if ((left.TokenEnum() == ')') && (right.TokenEnum() == TK_begin)) {
     return {SpacingOptions::MustAppend,
             "')'-'begin' tokens should be together on one line."};
+  }
+
+  if (left.TokenEnum() == yytokentype::MacroCallCloseToEndLine) {
+    if (!IsComment(FormatTokenType(right.format_token_enum)) &&
+        !IsAnySemicolon(right)) {
+      return {SpacingOptions::MustWrap,
+              "Macro-closing ')' should end its own line except for comments "
+              "nad ';'."};
+    }
+  }
+
+  if (left.TokenEnum() == PP_else || left.TokenEnum() == PP_endif) {
+    if (IsComment(FormatTokenType(right.format_token_enum))) {
+      return {SpacingOptions::Undecided, "Comment may follow `else and `end"};
+    }
+    return {SpacingOptions::MustWrap,
+            "`end and `else should be on their own line except for comments."};
+  }
+
+  if (IsPreprocessorKeyword(static_cast<yytokentype>(right.TokenEnum()))) {
+    // The tree unwrapper should make sure these start their own partition.
+    return {SpacingOptions::MustWrap,
+            "Preprocessor directives should start their own line."};
   }
 
   // By default, leave undecided for penalty minimization.

@@ -55,6 +55,9 @@ bool IsUnaryOperator(yytokentype);
 // Returns true for `ifdef, `else, etc.
 bool IsPreprocessorControlFlow(yytokentype);
 
+// Returns true for `ifdef, `define, `include, `undef, etc.
+bool IsPreprocessorKeyword(yytokentype);
+
 // Returns true if token enum is 'end', 'endmodule', or 'end*'
 bool IsEndKeyword(yytokentype);
 

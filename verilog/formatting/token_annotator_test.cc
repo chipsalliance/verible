@@ -279,7 +279,7 @@ TEST(TokenAnnotatorTest, AnnotateFormattingInfoTest) {
            0,
            {{0, SpacingOptions::Undecided},
             {1, SpacingOptions::Undecided},   // with_params
-            kUnhandledSpacing,                // #
+            {1, SpacingOptions::Undecided},   // #
             {0, SpacingOptions::Undecided},   // (
             {0, SpacingOptions::Undecided},   // )
             {1, SpacingOptions::Undecided},   // (
@@ -639,7 +639,7 @@ TEST(TokenAnnotatorTest, AnnotateFormattingInfoTest) {
             {1, SpacingOptions::Undecided},
             {1, SpacingOptions::Undecided},
             {0, SpacingOptions::Undecided},  //  3
-            kUnhandledSpacing,
+            {0, SpacingOptions::Undecided},
             {0, SpacingOptions::Undecided},
             {0, SpacingOptions::MustAppend},
             {0, SpacingOptions::MustAppend},
@@ -813,7 +813,7 @@ TEST(TokenAnnotatorTest, AnnotateFormattingInfoTest) {
                {1, SpacingOptions::Undecided},
                {0, SpacingOptions::Undecided},
                {0, SpacingOptions::Undecided},
-               kUnhandledSpacing,  // TODO(fangism): no space before case colon
+               {0, SpacingOptions::Undecided},
            },
            {
                {yytokentype::TK_case, "case"},
@@ -1184,7 +1184,7 @@ TEST(TokenAnnotatorTest, AnnotateFormattingInfoTest) {
                   {0, SpacingOptions::Undecided},   // ,
                   {1, SpacingOptions::Undecided},   // z
                   {0, SpacingOptions::Undecided},   // )
-                  kUnhandledSpacing,                // "y+z"
+                  {1, SpacingOptions::Undecided},   // "y+z"
               },
               {
                   {yytokentype::PP_define, "`define"},
@@ -1808,6 +1808,8 @@ TEST(TokenAnnotatorTest, AnnotateFormattingInfoTest) {
   }
 }  // NOLINT(readability/fn_size)
 
+// These test cases support the use of syntactic context, but it is not
+// required to specify context.
 TEST(TokenAnnotatorTest, AnnotateFormattingWithContextTest) {
   const std::initializer_list<AnnotateWithContextTestCase> kTestCases = {
       // //comment1
@@ -1820,6 +1822,339 @@ TEST(TokenAnnotatorTest, AnnotateFormattingWithContextTest) {
           // ExpectedInterTokenInfo:
           // spaces_required, break_decision
           {2, SpacingOptions::MustWrap},
+      },
+
+      // Test cases covering right token as a preprocessor directive:
+      {
+          DefaultStyle,
+          {yytokentype::TK_EOL_COMMENT, "//comment1"},
+          {yytokentype::PP_ifdef, "`ifdef"},
+          {},  // any context
+          {1, SpacingOptions::MustWrap},
+      },
+      {
+          DefaultStyle,
+          {yytokentype::SymbolIdentifier, "id"},
+          {yytokentype::PP_ifdef, "`ifdef"},
+          {},  // any context
+          {1, SpacingOptions::MustWrap},
+      },
+      {
+          DefaultStyle,
+          {';', ";"},
+          {yytokentype::PP_ifdef, "`ifdef"},
+          {},  // any context
+          {1, SpacingOptions::MustWrap},
+      },
+      {
+          DefaultStyle,
+          {yytokentype::PP_else, "`else"},
+          {yytokentype::PP_ifdef, "`ifdef"},
+          {},  // any context
+          {1, SpacingOptions::MustWrap},
+      },
+      {
+          DefaultStyle,
+          {yytokentype::PP_endif, "`endif"},
+          {yytokentype::PP_ifdef, "`ifdef"},
+          {},  // any context
+          {1, SpacingOptions::MustWrap},
+      },
+      {
+          DefaultStyle,
+          {yytokentype::TK_EOL_COMMENT, "//comment1"},
+          {yytokentype::PP_ifndef, "`ifndef"},
+          {},  // any context
+          {1, SpacingOptions::MustWrap},
+      },
+      {
+          DefaultStyle,
+          {yytokentype::SymbolIdentifier, "id"},
+          {yytokentype::PP_ifndef, "`ifndef"},
+          {},  // any context
+          {1, SpacingOptions::MustWrap},
+      },
+      {
+          DefaultStyle,
+          {';', ";"},
+          {yytokentype::PP_ifndef, "`ifndef"},
+          {},  // any context
+          {1, SpacingOptions::MustWrap},
+      },
+      {
+          DefaultStyle,
+          {SymbolIdentifier, "ID"},
+          {yytokentype::PP_else, "`else"},
+          {},  // any context
+          {1, SpacingOptions::MustWrap},
+      },
+      {
+          DefaultStyle,
+          {';', ";"},
+          {yytokentype::PP_else, "`else"},
+          {},  // any context
+          {1, SpacingOptions::MustWrap},
+      },
+      {
+          DefaultStyle,
+          {yytokentype::PP_endif, "`endif"},
+          {yytokentype::PP_else, "`else"},
+          {},  // any context
+          {1, SpacingOptions::MustWrap},
+      },
+      {
+          DefaultStyle,
+          {TK_StringLiteral, "\"lost/file.svh\""},
+          {yytokentype::PP_include, "`include"},
+          {},  // any context
+          {1, SpacingOptions::MustWrap},
+      },
+      {
+          DefaultStyle,
+          {yytokentype::PP_else, "`else"},
+          {yytokentype::PP_include, "`include"},
+          {},  // any context
+          {1, SpacingOptions::MustWrap},
+      },
+      {
+          DefaultStyle,
+          {';', ";"},
+          {yytokentype::PP_include, "`include"},
+          {},  // any context
+          {1, SpacingOptions::MustWrap},
+      },
+      {
+          DefaultStyle,
+          {SymbolIdentifier, "ID"},
+          {yytokentype::PP_include, "`include"},
+          {},  // any context
+          {1, SpacingOptions::MustWrap},
+      },
+      {
+          DefaultStyle,
+          {TK_StringLiteral, "\"lost/file.svh\""},
+          {yytokentype::PP_define, "`define"},
+          {},  // any context
+          {1, SpacingOptions::MustWrap},
+      },
+      {
+          DefaultStyle,
+          {yytokentype::PP_else, "`else"},
+          {yytokentype::PP_define, "`define"},
+          {},  // any context
+          {1, SpacingOptions::MustWrap},
+      },
+      {
+          DefaultStyle,
+          {';', ";"},
+          {yytokentype::PP_define, "`define"},
+          {},  // any context
+          {1, SpacingOptions::MustWrap},
+      },
+      {
+          DefaultStyle,
+          {SymbolIdentifier, "ID"},
+          {yytokentype::PP_define, "`define"},
+          {},  // any context
+          {1, SpacingOptions::MustWrap},
+      },
+      {
+          DefaultStyle,
+          {TK_StringLiteral, "\"lost/file.svh\""},
+          {yytokentype::PP_undef, "`undef"},
+          {},  // any context
+          {1, SpacingOptions::MustWrap},
+      },
+      {
+          DefaultStyle,
+          {yytokentype::PP_else, "`else"},
+          {yytokentype::PP_undef, "`undef"},
+          {},  // any context
+          {1, SpacingOptions::MustWrap},
+      },
+      {
+          DefaultStyle,
+          {';', ";"},
+          {yytokentype::PP_undef, "`undef"},
+          {},  // any context
+          {1, SpacingOptions::MustWrap},
+      },
+      {
+          DefaultStyle,
+          {SymbolIdentifier, "ID"},
+          {yytokentype::PP_undef, "`undef"},
+          {},  // any context
+          {1, SpacingOptions::MustWrap},
+      },
+      {
+          DefaultStyle,
+          {yytokentype::TK_endfunction, "endfunction"},
+          {yytokentype::PP_undef, "`undef"},
+          {},  // any context
+          {1, SpacingOptions::MustWrap},
+      },
+      {
+          DefaultStyle,
+          {yytokentype::TK_end, "end"},
+          {yytokentype::PP_undef, "`undef"},
+          {},  // any context
+          {1, SpacingOptions::MustWrap},
+      },
+      {
+          DefaultStyle,
+          {yytokentype::MacroCallCloseToEndLine, ")"},
+          {yytokentype::PP_undef, "`undef"},
+          {},  // any context
+          {1, SpacingOptions::MustWrap},
+      },
+
+      // right token = MacroCallId or MacroIdentifier
+      {
+          DefaultStyle,
+          {SymbolIdentifier, "ID"},
+          {yytokentype::MacroCallId, "`uvm_foo_macro"},
+          {},  // any context
+          {1, SpacingOptions::Undecided},
+      },
+      {
+          DefaultStyle,
+          {SymbolIdentifier, "ID"},
+          {yytokentype::MacroIdentifier, "`uvm_foo_id"},
+          {},  // any context
+          {1, SpacingOptions::Undecided},
+      },
+      {
+          DefaultStyle,
+          {';', ";"},
+          {yytokentype::MacroCallId, "`uvm_foo_macro"},
+          {},  // any context
+          {1, SpacingOptions::Undecided},
+      },
+      {
+          DefaultStyle,
+          {';', ";"},
+          {yytokentype::MacroIdentifier, "`uvm_foo_id"},
+          {},  // any context
+          {1, SpacingOptions::Undecided},
+      },
+      {
+          DefaultStyle,
+          {TK_EOL_COMMENT, "//comment"},
+          {yytokentype::MacroCallId, "`uvm_foo_macro"},
+          {},  // any context
+          {1, SpacingOptions::MustWrap},
+      },
+      {
+          DefaultStyle,
+          {TK_EOL_COMMENT, "//comment"},
+          {yytokentype::MacroIdentifier, "`uvm_foo_id"},
+          {},  // any context
+          {1, SpacingOptions::MustWrap},
+      },
+      {
+          DefaultStyle,
+          {TK_COMMENT_BLOCK, "/*comment*/"},
+          {yytokentype::MacroCallId, "`uvm_foo_macro"},
+          {},  // any context
+          {1, SpacingOptions::Undecided},
+      },
+      {
+          DefaultStyle,
+          {TK_COMMENT_BLOCK, "/*comment*/"},
+          {yytokentype::MacroIdentifier, "`uvm_foo_id"},
+          {},  // any context
+          {1, SpacingOptions::Undecided},
+      },
+      {
+          DefaultStyle,
+          {PP_else, "`else"},
+          {yytokentype::MacroCallId, "`uvm_foo_macro"},
+          {},  // any context
+          {1, SpacingOptions::MustWrap},
+      },
+      {
+          DefaultStyle,
+          {PP_else, "`else"},
+          {yytokentype::MacroIdentifier, "`uvm_foo_id"},
+          {},  // any context
+          {1, SpacingOptions::MustWrap},
+      },
+      {
+          DefaultStyle,
+          {PP_endif, "`endif"},
+          {yytokentype::MacroCallId, "`uvm_foo_macro"},
+          {},  // any context
+          {1, SpacingOptions::MustWrap},
+      },
+      {
+          DefaultStyle,
+          {PP_endif, "`endif"},
+          {yytokentype::MacroIdentifier, "`uvm_foo_id"},
+          {},  // any context
+          {1, SpacingOptions::MustWrap},
+      },
+      {
+          DefaultStyle,
+          {yytokentype::MacroCallId, "`uvm_foo_macro"},
+          {yytokentype::MacroCallId, "`uvm_foo_macro"},
+          {},  // any context
+          {1, SpacingOptions::Undecided},
+      },
+      {
+          DefaultStyle,
+          {yytokentype::MacroCallId, "`uvm_foo_macro"},
+          {yytokentype::MacroIdentifier, "`uvm_foo_id"},
+          {},  // any context
+          {1, SpacingOptions::Undecided},
+      },
+      {
+          DefaultStyle,
+          {yytokentype::MacroIdentifier, "`uvm_foo_id"},
+          {yytokentype::MacroCallId, "`uvm_foo_macro"},
+          {},  // any context
+          {1, SpacingOptions::Undecided},
+      },
+      {
+          DefaultStyle,
+          {yytokentype::MacroIdentifier, "`uvm_foo_id"},
+          {yytokentype::MacroIdentifier, "`uvm_foo_id"},
+          {},  // any context
+          {1, SpacingOptions::Undecided},
+      },
+      {
+          DefaultStyle,
+          {')', ")"},
+          {yytokentype::MacroCallId, "`uvm_foo_macro"},
+          {},  // any context
+          {1, SpacingOptions::Undecided},
+      },
+      {
+          DefaultStyle,
+          {')', ")"},
+          {yytokentype::MacroIdentifier, "`uvm_foo_id"},
+          {},  // any context
+          {1, SpacingOptions::Undecided},
+      },
+      {
+          DefaultStyle,
+          {yytokentype::MacroCallCloseToEndLine, ")"},
+          {yytokentype::MacroCallId, "`uvm_foo_macro"},
+          {},  // any context
+          {1, SpacingOptions::MustWrap},
+      },
+      {
+          DefaultStyle,
+          {yytokentype::MacroCallCloseToEndLine, ")"},
+          {yytokentype::MacroIdentifier, "`uvm_foo_id"},
+          {},  // any context
+          {1, SpacingOptions::MustWrap},
+      },
+      {
+          DefaultStyle,
+          {yytokentype::MacroCallCloseToEndLine, ")"},
+          {';', ";"},
+          {},  // any context
+          {0, SpacingOptions::Undecided},
       },
 
       // Without context, default is to treat '-' as binary.
@@ -2020,15 +2355,15 @@ TEST(TokenAnnotatorTest, AnnotateFormattingWithContextTest) {
           DefaultStyle,
           {']', "]"},
           {yytokentype::SymbolIdentifier, "id_a"},
-          {},                 // unspecified context
-          kUnhandledSpacing,  // TODO(fangism): pick reasonable default
+          {},  // unspecified context
+          {1, SpacingOptions::Undecided},
       },
       {
           DefaultStyle,
           {']', "]"},
           {yytokentype::SymbolIdentifier, "id_b"},
           {NodeEnum::kUnqualifiedId},
-          kUnhandledSpacing,  // TODO(fangism): pick reasonable default
+          {1, SpacingOptions::Undecided},
       },
       {
           DefaultStyle,
@@ -2657,7 +2992,7 @@ TEST(TokenAnnotatorTest, AnnotateFormattingWithContextTest) {
           {NodeEnum::kStreamingConcatenation},
           {0, SpacingOptions::Undecided},
       },
-      // ':' in bit slicing
+      // ':' in bit slicing and array indexing
       {
           // [1:0]
           DefaultStyle,
@@ -2676,6 +3011,576 @@ TEST(TokenAnnotatorTest, AnnotateFormattingWithContextTest) {
           // no spaces preceding ':' in unit test context
           {0, SpacingOptions::Undecided},
       },
+      {
+          // [a:b]
+          DefaultStyle,
+          {SymbolIdentifier, "a"},
+          {':', ":"},
+          {NodeEnum::kSelectVariableDimension},
+          // no spaces preceding ':' in unit test context
+          {0, SpacingOptions::Undecided},
+      },
+      {
+          // [a:b]
+          DefaultStyle,
+          {':', ":"},
+          {SymbolIdentifier, "b"},
+          {NodeEnum::kSelectVariableDimension},
+          // no spaces preceding ':' in unit test context
+          {0, SpacingOptions::Undecided},
+      },
+      {
+          // [1:0]
+          DefaultStyle,
+          {yytokentype::TK_DecNumber, "1"},
+          {':', ":"},
+          {NodeEnum::kDimensionRange},
+          // no spaces preceding ':' in unit test context
+          {0, SpacingOptions::Undecided},
+      },
+      {
+          // [1:0]
+          DefaultStyle,
+          {':', ":"},
+          {yytokentype::TK_DecNumber, "0"},
+          {NodeEnum::kDimensionRange},
+          // no spaces preceding ':' in unit test context
+          {0, SpacingOptions::Undecided},
+      },
+      {
+          // [a:b]
+          DefaultStyle,
+          {SymbolIdentifier, "a"},
+          {':', ":"},
+          {NodeEnum::kDimensionRange},
+          // no spaces preceding ':' in unit test context
+          {0, SpacingOptions::Undecided},
+      },
+      {
+          // [a:b]
+          DefaultStyle,
+          {':', ":"},
+          {SymbolIdentifier, "b"},
+          {NodeEnum::kDimensionRange},
+          // no spaces preceding ':' in unit test context
+          {0, SpacingOptions::Undecided},
+      },
+      {
+          // [1:0]
+          DefaultStyle,
+          {yytokentype::TK_DecNumber, "1"},
+          {':', ":"},
+          {NodeEnum::kDimensionSlice},
+          // no spaces preceding ':' in unit test context
+          {0, SpacingOptions::Undecided},
+      },
+      {
+          // [1:0]
+          DefaultStyle,
+          {':', ":"},
+          {yytokentype::TK_DecNumber, "0"},
+          {NodeEnum::kDimensionSlice},
+          // no spaces preceding ':' in unit test context
+          {0, SpacingOptions::Undecided},
+      },
+      {
+          // [a:b]
+          DefaultStyle,
+          {SymbolIdentifier, "a"},
+          {':', ":"},
+          {NodeEnum::kDimensionSlice},
+          // no spaces preceding ':' in unit test context
+          {0, SpacingOptions::Undecided},
+      },
+      {
+          // [a:b]
+          DefaultStyle,
+          {':', ":"},
+          {SymbolIdentifier, "b"},
+          {NodeEnum::kDimensionSlice},
+          // no spaces preceding ':' in unit test context
+          {0, SpacingOptions::Undecided},
+      },
+      {
+          // [1:0]
+          DefaultStyle,
+          {yytokentype::TK_DecNumber, "1"},
+          {':', ":"},
+          {NodeEnum::kValueRange},
+          // no spaces preceding ':' in unit test context
+          {1, SpacingOptions::Undecided},
+      },
+      {
+          // [1:0]
+          DefaultStyle,
+          {':', ":"},
+          {yytokentype::TK_DecNumber, "0"},
+          {NodeEnum::kValueRange},
+          // no spaces preceding ':' in unit test context
+          {1, SpacingOptions::Undecided},
+      },
+      {
+          // [a:b]
+          DefaultStyle,
+          {SymbolIdentifier, "a"},
+          {':', ":"},
+          {NodeEnum::kValueRange},
+          // no spaces preceding ':' in unit test context
+          {1, SpacingOptions::Undecided},
+      },
+      {
+          // [a:b]
+          DefaultStyle,
+          {':', ":"},
+          {SymbolIdentifier, "b"},
+          {NodeEnum::kValueRange},
+          // no spaces preceding ':' in unit test context
+          {1, SpacingOptions::Undecided},
+      },
+
+      // name: coverpoint
+      {
+          DefaultStyle,
+          {SymbolIdentifier, "foo_cp"},
+          {':', ":"},
+          {NodeEnum::kCoverPoint},
+          {0, SpacingOptions::Undecided},
+      },
+      // coverpoint foo {
+      {
+          DefaultStyle,
+          {SymbolIdentifier, "cpaddr"},
+          {'{', "{"},
+          {NodeEnum::kCoverPoint, NodeEnum::kBraceGroup},
+          {1, SpacingOptions::Undecided},
+      },
+
+      // x < y (binary operator)
+      {
+          DefaultStyle,
+          {SymbolIdentifier, "id"},
+          {'<', "<"},
+          {},  // default context
+          {1, SpacingOptions::Undecided},
+      },
+      {
+          DefaultStyle,
+          {TK_DecNumber, "7"},
+          {'<', "<"},
+          {},  // default context
+          {1, SpacingOptions::Undecided},
+      },
+      {
+          DefaultStyle,
+          {')', ")"},
+          {'<', "<"},
+          {},  // default context
+          {1, SpacingOptions::Undecided},
+      },
+      {
+          DefaultStyle,
+          {'<', "<"},
+          {SymbolIdentifier, "id"},
+          {},  // default context
+          {1, SpacingOptions::Undecided},
+      },
+      {
+          DefaultStyle,
+          {'<', "<"},
+          {TK_DecNumber, "7"},
+          {},  // default context
+          {1, SpacingOptions::Undecided},
+      },
+      {
+          DefaultStyle,
+          {'<', "<"},
+          {'(', "("},
+          {},  // default context
+          {1, SpacingOptions::Undecided},
+      },
+
+      // x > y (binary operator)
+      {
+          DefaultStyle,
+          {SymbolIdentifier, "id"},
+          {'>', ">"},
+          {},  // default context
+          {1, SpacingOptions::Undecided},
+      },
+      {
+          DefaultStyle,
+          {TK_DecNumber, "7"},
+          {'>', ">"},
+          {},  // default context
+          {1, SpacingOptions::Undecided},
+      },
+      {
+          DefaultStyle,
+          {')', ")"},
+          {'>', ">"},
+          {},  // default context
+          {1, SpacingOptions::Undecided},
+      },
+      {
+          DefaultStyle,
+          {'>', ">"},
+          {SymbolIdentifier, "id"},
+          {},  // default context
+          {1, SpacingOptions::Undecided},
+      },
+      {
+          DefaultStyle,
+          {'>', ">"},
+          {TK_DecNumber, "7"},
+          {},  // default context
+          {1, SpacingOptions::Undecided},
+      },
+      {
+          DefaultStyle,
+          {'>', ">"},
+          {'(', "("},
+          {},  // default context
+          {1, SpacingOptions::Undecided},
+      },
+
+      // '@' on the right
+      {
+          DefaultStyle,
+          {TK_always, "always"},
+          {'@', "@"},
+          {},  // default context
+          {1, SpacingOptions::Undecided},
+      },
+      {
+          DefaultStyle,
+          {SymbolIdentifier, "cblock"},
+          {'@', "@"},
+          {},  // default context
+          {1, SpacingOptions::Undecided},
+      },
+      // '@' on the left
+      {
+          DefaultStyle,
+          {'@', "@"},
+          {'(', "("},
+          {},  // default context
+          {0, SpacingOptions::Undecided},
+      },
+      {
+          DefaultStyle,
+          {'@', "@"},
+          {'*', "*"},  // not a binary operator in this case
+          {},          // default context
+          {0, SpacingOptions::Undecided},
+      },
+      {
+          DefaultStyle,
+          {'@', "@"},
+          {SymbolIdentifier, "clock_a"},
+          {},  // default context
+          {0, SpacingOptions::Undecided},
+      },
+
+      // '#' on the right
+      {
+          DefaultStyle,
+          {SymbolIdentifier, "id_before_pound"},
+          {'#', "#"},
+          {},  // default context
+          // no spaces preceding ':' in unit test context
+          {1, SpacingOptions::Undecided},
+      },
+
+      // '}' on the left
+      {
+          DefaultStyle,
+          {'}', "}"},
+          {SymbolIdentifier, "id_before_open_brace"},
+          {},  // default context
+          {1, SpacingOptions::Undecided},
+      },
+      {
+          DefaultStyle,
+          {'}', "}"},
+          {',', ","},
+          {},  // default context
+          {0, SpacingOptions::Undecided},
+      },
+      {
+          DefaultStyle,
+          {'}', "}"},
+          {';', ";"},
+          {},  // default context
+          {0, SpacingOptions::Undecided},
+      },
+      {
+          DefaultStyle,
+          {'}', "}"},
+          {'}', "}"},
+          {},  // default context
+          {0, SpacingOptions::Undecided},
+      },
+
+      // '{' on the right
+      {
+          DefaultStyle,
+          {SymbolIdentifier, "id_before_open_brace"},
+          {'{', "{"},
+          {},  // default context
+          {0, SpacingOptions::Undecided},
+      },
+      {
+          DefaultStyle,
+          {TK_unique, "unique"},
+          {'{', "{"},
+          {},  // default context
+          {1, SpacingOptions::Undecided},
+      },
+      {
+          DefaultStyle,
+          {TK_with, "with"},
+          {'{', "{"},
+          {},  // default context
+          {1, SpacingOptions::Undecided},
+      },
+      {
+          // constraint c_id {
+          DefaultStyle,
+          {SymbolIdentifier, "id_before_open_brace"},
+          {'{', "{"},
+          {NodeEnum::kConstraintDeclaration, NodeEnum::kBraceGroup},
+          {1, SpacingOptions::Undecided},
+      },
+
+      // ';' on the left
+      {
+          DefaultStyle,
+          {';', ";"},
+          {SymbolIdentifier, "id_after_semi"},
+          {},  // default context
+          {1, SpacingOptions::Undecided},
+      },
+      {
+          DefaultStyle,
+          {SemicolonEndOfAssertionVariableDeclarations, ";"},
+          {SymbolIdentifier, "id_after_semi"},
+          {},  // default context
+          {1, SpacingOptions::Undecided},
+      },
+
+      // ';' on the right
+      {
+          DefaultStyle,
+          {SymbolIdentifier, "id"},
+          {';', ";"},
+          {},  // default context
+          {0, SpacingOptions::Undecided},
+      },
+      {
+          DefaultStyle,
+          {SymbolIdentifier, "id"},
+          {SemicolonEndOfAssertionVariableDeclarations, ";"},
+          {},  // default context
+          {0, SpacingOptions::Undecided},
+      },
+      {
+          DefaultStyle,
+          {')', ")"},
+          {';', ";"},
+          {},                              // default context
+          {0, SpacingOptions::Undecided},  // could be MustAppend too
+      },
+      {
+          DefaultStyle,
+          {')', ")"},
+          {SemicolonEndOfAssertionVariableDeclarations, ";"},
+          {},                              // default context
+          {0, SpacingOptions::Undecided},  // could be MustAppend too
+      },
+
+      // keyword on right
+      {
+          DefaultStyle,
+          {TK_DecNumber, "1"},
+          {TK_begin, "begin"},
+          {},  // default context
+          {1, SpacingOptions::Undecided},
+      },
+      {
+          DefaultStyle,
+          {TK_begin, "begin"},
+          {TK_begin, "begin"},
+          {},  // default context
+          {1, SpacingOptions::Undecided},
+      },
+      {
+          DefaultStyle,
+          {TK_begin, "begin"},
+          {TK_end, "end"},
+          {},  // default context
+          {1, SpacingOptions::MustWrap},
+      },
+      {
+          DefaultStyle,
+          {TK_end, "end"},
+          {TK_begin, "begin"},
+          {},  // default context
+          {1, SpacingOptions::Undecided},
+      },
+      {
+          DefaultStyle,
+          {TK_default, "default"},
+          {TK_clocking, "clocking"},
+          {},  // default context
+          {1, SpacingOptions::Undecided},
+      },
+      {
+          DefaultStyle,
+          {TK_default, "default"},
+          {TK_disable, "disable"},
+          {},  // default context
+          {1, SpacingOptions::Undecided},
+      },
+      {
+          DefaultStyle,
+          {TK_disable, "disable"},
+          {TK_iff, "iff"},
+          {},  // default context
+          {1, SpacingOptions::Undecided},
+      },
+      {
+          DefaultStyle,
+          {TK_disable, "disable"},
+          {TK_soft, "soft"},
+          {},  // default context
+          {1, SpacingOptions::Undecided},
+      },
+      {
+          DefaultStyle,
+          {TK_extern, "extern"},
+          {TK_forkjoin, "forkjoin"},
+          {},  // default context
+          {1, SpacingOptions::Undecided},
+      },
+      {
+          DefaultStyle,
+          {TK_input, "input"},
+          {TK_logic, "logic"},
+          {},  // default context
+          {1, SpacingOptions::Undecided},
+      },
+      {
+          DefaultStyle,
+          {TK_var, "var"},
+          {TK_logic, "logic"},
+          {},  // default context
+          {1, SpacingOptions::Undecided},
+      },
+      {
+          DefaultStyle,
+          {TK_output, "output"},
+          {TK_reg, "reg"},
+          {},  // default context
+          {1, SpacingOptions::Undecided},
+      },
+      {
+          DefaultStyle,
+          {TK_static, "static"},
+          {TK_constraint, "constraint"},
+          {},  // default context
+          {1, SpacingOptions::Undecided},
+      },
+      {
+          DefaultStyle,
+          {TK_parameter, "parameter"},
+          {TK_type, "type"},
+          {},  // default context
+          {1, SpacingOptions::Undecided},
+      },
+      {
+          DefaultStyle,
+          {TK_virtual, "virtual"},
+          {TK_interface, "interface"},
+          {},  // default context
+          {1, SpacingOptions::Undecided},
+      },
+      {
+          DefaultStyle,
+          {TK_const, "const"},
+          {TK_ref, "ref"},
+          {},  // default context
+          {1, SpacingOptions::Undecided},
+      },
+      {
+          DefaultStyle,
+          {TK_union, "union"},
+          {TK_tagged, "tagged"},
+          {},  // default context
+          {1, SpacingOptions::Undecided},
+      },
+      {
+          DefaultStyle,
+          {';', ";"},
+          {TK_end, "end"},
+          {},  // default context
+          {1, SpacingOptions::MustWrap},
+      },
+      {
+          DefaultStyle,
+          {';', ";"},
+          {TK_endfunction, "endfunction"},
+          {},  // default context
+          {1, SpacingOptions::MustWrap},
+      },
+      {
+          DefaultStyle,
+          {';', ";"},
+          {TK_endtask, "endtask"},
+          {},  // default context
+          {1, SpacingOptions::MustWrap},
+      },
+      {
+          DefaultStyle,
+          {';', ";"},
+          {TK_endclass, "endclass"},
+          {},  // default context
+          {1, SpacingOptions::MustWrap},
+      },
+      {
+          DefaultStyle,
+          {';', ";"},
+          {TK_endpackage, "endpackage"},
+          {},  // default context
+          {1, SpacingOptions::MustWrap},
+      },
+      {
+          DefaultStyle,
+          {SymbolIdentifier, "nettype_id"},
+          {TK_with, "with"},
+          {},  // default context
+          {1, SpacingOptions::Undecided},
+      },
+      {
+          DefaultStyle,
+          {SymbolIdentifier, "id"},
+          {TK_until, "until"},
+          {},  // default context
+          {1, SpacingOptions::Undecided},
+      },
+      {
+          DefaultStyle,
+          {',', ","},
+          {TK_highz0, "highz0"},
+          {},  // default context
+          {1, SpacingOptions::Undecided},
+      },
+      {
+          DefaultStyle,
+          {',', ","},
+          {TK_highz1, "highz1"},
+          {},  // default context
+          {1, SpacingOptions::Undecided},
+      },
   };
   int test_index = 0;
   for (const auto& test_case : kTestCases) {
@@ -2693,7 +3598,7 @@ TEST(TokenAnnotatorTest, AnnotateFormattingWithContextTest) {
         << " with left=" << left.Text() << " and right=" << right.Text();
     ++test_index;
   }
-}
+}  // NOLINT(readability/fn_size)
 
 struct AnnotateBreakAroundCommentsTestCase {
   FormatStyle style;
@@ -2902,6 +3807,46 @@ TEST(TokenAnnotatorTest, AnnotateBreakAroundComments) {
            "// comment 2",
            {/* unspecified context */},
            {2, SpacingOptions::Undecided}},
+          {
+              DefaultStyle,
+              yytokentype::MacroCallCloseToEndLine,
+              ")",
+              " ",
+              yytokentype::TK_COMMENT_BLOCK,
+              "/*comment*/",
+              {/* unspecified context */},
+              {2, SpacingOptions::Undecided},  // could be append
+          },
+          {
+              DefaultStyle,
+              yytokentype::MacroCallCloseToEndLine,
+              ")",
+              "\n",
+              yytokentype::TK_COMMENT_BLOCK,
+              "/*comment*/",
+              {/* unspecified context */},
+              {2, SpacingOptions::Undecided},
+          },
+          {
+              DefaultStyle,
+              yytokentype::MacroCallCloseToEndLine,
+              ")",
+              " ",
+              yytokentype::TK_EOL_COMMENT,
+              "//comment",
+              {/* unspecified context */},
+              {2, SpacingOptions::MustAppend},
+          },
+          {
+              DefaultStyle,
+              yytokentype::MacroCallCloseToEndLine,
+              ")",
+              "\n",
+              yytokentype::TK_EOL_COMMENT,
+              "//comment",
+              {/* unspecified context */},
+              {2, SpacingOptions::Undecided},
+          },
       };
   int test_index = 0;
   for (const auto& test_case : kTestCases) {

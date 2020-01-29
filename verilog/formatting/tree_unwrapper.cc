@@ -295,7 +295,7 @@ static bool IsTopLevelListItem(const verible::SyntaxTreeContext& context) {
   return context.DirectParentIsOneOf(
       {NodeEnum::kStatementList, NodeEnum::kModuleItemList,
        NodeEnum::kGenerateItemList, NodeEnum::kClassItems,
-       NodeEnum::kBlockItemStatementList});
+       NodeEnum::kBlockItemStatementList, NodeEnum::kDescriptionList});
 }
 
 // These are constructs where it is permissible to fit on one line, but in the
@@ -978,6 +978,13 @@ void TreeUnwrapper::Visit(const verible::SyntaxTreeNode& node) {
                   node.Parent()->Children().begin() + node.BirthRank());
             }
           });
+      break;
+    }
+    case NodeEnum::kMacroCall: {
+      if (IsTopLevelListItem(Context())) {
+        auto* prev = CurrentTokenPartition()->PreviousSibling();
+        if (prev != nullptr) prev->HoistOnlyChild();
+      }
       break;
     }
     // In the following cases, forcibly close out the current partition.

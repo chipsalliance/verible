@@ -449,8 +449,10 @@ static const std::initializer_list<FormatterTestCase> kFormatterTestCases = {
         "`my_field(b)\n"
         "`my_field(c)\n"
         "`my_macro_end\n",
-        "`my_macro_begin(aa) `my_field(b)\n"
-        "    `my_field(c) `my_macro_end\n",
+        "`my_macro_begin(aa)\n"
+        "`my_field(b)\n"
+        "`my_field(c)\n"
+        "`my_macro_end\n",
     },
     {
         // unbalanced uvm macros: missing uvm.*end macro
@@ -2433,13 +2435,13 @@ static const std::initializer_list<FormatterTestCase> kFormatterTestCases = {
     // property test cases
     {"module mp ;property p1 ; a|->b;endproperty endmodule",
      "module mp;\n"
-     "  property p1 ;\n"  // TODO(fangism): unwanted space before ';'
+     "  property p1;\n"
      "    a |-> b;\n"
      "  endproperty\n"
      "endmodule\n"},
     {"module mp ;property p1 ; a|->b;endproperty:p1 endmodule",
      "module mp;\n"
-     "  property p1 ;\n"  // TODO(fangism): unwanted space before ';'
+     "  property p1;\n"
      "    a |-> b;\n"
      "  endproperty : p1\n"  // with end label
      "endmodule\n"},
@@ -2464,10 +2466,10 @@ static const std::initializer_list<FormatterTestCase> kFormatterTestCases = {
      "  coverpoint d;\n"
      "endgroup\n"},
     {// Multiple bins
-     "covergroup memory @ (posedge ce); address:coverpoint addr {"
+     "covergroup memory @ (posedge ce); address  :coverpoint addr {"
      "bins low={0,127}; bins high={128,255};} endgroup\n",
      "covergroup memory @(posedge ce);\n"
-     "  address : coverpoint addr {\n"
+     "  address: coverpoint addr {\n"
      "    bins low = {0, 127};\n"
      "    bins high = {128, 255};\n"
      "  }\n"
