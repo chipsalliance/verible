@@ -286,15 +286,8 @@ To pipe from stdin, use '-' as <file>.
       default: false;
     --max_search_states (Limits the number of search states explored during line
       wrap optimization.); default: 100000;
-    --preserve_hspaces (Mode that controls how original inter-token (horizontal)
-      spacing is used.
-      none: disregard all original spacing
-      all: only use original spacing (does no formatting)
-      unhandled: fall-back to original spacing in unhandled cases.);
-      default: unhandled;
     --preserve_vspaces (Mode that controls how original inter-line (vertical)
       spacing is used.
-      This only takes any effect when preserve_hspaces != all.
       none: disregard all original spacing
       all: keep original vertical spacing (newlines only, no spaces/tabs)
       unhandled: same as 'all' (for now).); default: unhandled;

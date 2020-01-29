@@ -233,12 +233,10 @@ verible::util::Status Formatter::Format(const ExecutionControl& control) {
                                   unwrapper_data.preformatted_tokens.begin(),
                                   unwrapper_data.preformatted_tokens.end());
 
-    if (style_.preserve_horizontal_spaces != PreserveSpaces::All) {
-      // Determine ranges of disabling the formatter.
-      disabled_ranges_ = DisableFormattingRanges(full_text, token_stream);
-      PreserveSpacesOnDisabledTokenRanges(&unwrapper_data.preformatted_tokens,
-                                          disabled_ranges_, full_text);
-    }  // else don't bother, when already preserving all spaces
+    // Determine ranges of disabling the formatter.
+    disabled_ranges_ = DisableFormattingRanges(full_text, token_stream);
+    PreserveSpacesOnDisabledTokenRanges(&unwrapper_data.preformatted_tokens,
+                                        disabled_ranges_, full_text);
 
     // Partition PreFormatTokens into candidate unwrapped lines.
     format_tokens_partitions = tree_unwrapper.Unwrap();
@@ -328,49 +326,40 @@ absl::string_view Formatter::TrailingWhiteSpaces() const {
 
 void Formatter::Emit(std::ostream& stream) const {
   const absl::string_view full_text(text_structure_.Contents());
-  if (style_.preserve_horizontal_spaces == PreserveSpaces::All) {
-    // Need to track pre-existing spaces between token partitions.
-    for (const auto& line : formatted_lines_) {
-      line.FormatLinePreserveLeadingSpace(stream);
-    }
-    // Handle trailing spaces after last token.
-    stream << TrailingWhiteSpaces();
-  } else {  // (horizontal) PreserveSpaces::None or UnhandledCasesOnly
-    switch (style_.preserve_vertical_spaces) {
-      case PreserveSpaces::None: {
-        for (const auto& line : formatted_lines_) {
-          stream << line;
-          // Normally, print a '\n' after this FormattedExcerpt.
-          // The exception is when the space that follows the last token
-          // on this line is covered by one of the formatting-disabled
-          // intervals.  In that case, print the original spacing instead.
-          const auto back_offset = line.Tokens().back().token->right(full_text);
-          if (!disabled_ranges_.Contains(back_offset)) stream << '\n';
-        }
-        // possibly preserve spaces after the last token
-        if (disabled_ranges_.Contains(full_text.length() - 1)) {
-          stream << TrailingWhiteSpaces();
-        }
-        break;
+  switch (style_.preserve_vertical_spaces) {
+    case PreserveSpaces::None: {
+      for (const auto& line : formatted_lines_) {
+        stream << line;
+        // Normally, print a '\n' after this FormattedExcerpt.
+        // The exception is when the space that follows the last token
+        // on this line is covered by one of the formatting-disabled
+        // intervals.  In that case, print the original spacing instead.
+        const auto back_offset = line.Tokens().back().token->right(full_text);
+        if (!disabled_ranges_.Contains(back_offset)) stream << '\n';
       }
-      case PreserveSpaces::All:
-      case PreserveSpaces::UnhandledCasesOnly:
-        bool is_first_line = true;
-        for (const auto& line : formatted_lines_) {
-          line.FormatLinePreserveLeadingNewlines(stream, is_first_line);
-          is_first_line = false;
-        }
-        // Handle trailing spaces after last token.
-        const size_t newline_count =
-            verible::FormattedExcerpt::PreservedNewlinesCount(
-                TrailingWhiteSpaces(), is_first_line);
-        stream << verible::Spacer(newline_count, '\n');
-        break;
+      // possibly preserve spaces after the last token
+      if (disabled_ranges_.Contains(full_text.length() - 1)) {
+        stream << TrailingWhiteSpaces();
+      }
+      break;
     }
-    // TODO(fangism): This currently doesn't adequately handle anything betweeen
-    // PreserveSpace::None and ::All, needs a clean policy for
-    // PreserveSpace::UnhandledCasesOnly.
+    case PreserveSpaces::All:
+    case PreserveSpaces::UnhandledCasesOnly:
+      bool is_first_line = true;
+      for (const auto& line : formatted_lines_) {
+        line.FormatLinePreserveLeadingNewlines(stream, is_first_line);
+        is_first_line = false;
+      }
+      // Handle trailing spaces after last token.
+      const size_t newline_count =
+          verible::FormattedExcerpt::PreservedNewlinesCount(
+              TrailingWhiteSpaces(), is_first_line);
+      stream << verible::Spacer(newline_count, '\n');
+      break;
   }
+  // TODO(fangism): This currently doesn't adequately handle anything betweeen
+  // PreserveSpace::None and ::All, needs a clean policy for
+  // PreserveSpace::UnhandledCasesOnly.
 }
 
 }  // namespace formatter

@@ -68,15 +68,8 @@ ABSL_FLAG(int, max_search_states, 100000,
           "line wrap optimization.");
 
 ABSL_FLAG(
-    PreserveSpaces, preserve_hspaces, PreserveSpaces::UnhandledCasesOnly,
-    R"(Mode that controls how original inter-token (horizontal) spacing is used.
-  none: disregard all original spacing
-  all: only use original spacing (does no formatting)
-  unhandled: fall-back to original spacing in unhandled cases.)");
-ABSL_FLAG(
     PreserveSpaces, preserve_vspaces, PreserveSpaces::UnhandledCasesOnly,
     R"(Mode that controls how original inter-line (vertical) spacing is used.
-This only takes any effect when preserve_hspaces != all.
   none: disregard all original spacing
   all: keep original vertical spacing (newlines only, no spaces/tabs)
   unhandled: same as 'all' (for now).)");
@@ -151,7 +144,6 @@ int main(int argc, char** argv) {
     // TODO(fangism) support style customization
     FormatStyle format_style;
     {
-      format_style.preserve_horizontal_spaces = FLAGS_preserve_hspaces.Get();
       format_style.preserve_vertical_spaces = FLAGS_preserve_vspaces.Get();
     }
     Formatter formatter(text_structure, format_style);

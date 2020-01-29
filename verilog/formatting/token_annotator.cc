@@ -481,40 +481,19 @@ static SpacePolicy SpacesRequiredBetween(const FormatStyle& style,
                                          const PreFormatToken& right,
                                          const SyntaxTreeContext& context) {
   // Default for unhandled cases, 1 space to be conservative.
-  // TODO(fangism): return a strange value like 3 once we have covered the vast
-  // majority of cases above -- then omissions will stand out clearly.
-  // Having this return a default value of 1 may result in mutation testing
-  // reporting false positives about vacuous "return 1" statements above,
-  // but this is intentional; we do not actually want to reach this this final
-  // return statement most of the time (in the long run).
   constexpr int kUnhandledSpacesDefault = 1;
   const auto spaces = SpacesRequiredBetween(left, right, context);
   VLOG(1) << "spaces: " << spaces.value << ", reason: " << spaces.reason;
 
-  // We switch on style.preserve_horizontal_spaces even though there may be
-  // newlines and vertical spacing between tokens.
   if (spaces.value == kUnhandledSpacesRequired) {
     VLOG(1) << "Unhandled inter-token spacing between "
             << verilog_symbol_name(left.TokenEnum()) << " and "
             << verilog_symbol_name(right.TokenEnum()) << ", defaulting to "
             << kUnhandledSpacesDefault;
-    switch (style.preserve_horizontal_spaces) {
-      case PreserveSpaces::None:
-        return SpacePolicy{kUnhandledSpacesDefault, false};
-      case PreserveSpaces::All:
-      case PreserveSpaces::UnhandledCasesOnly:
-        return SpacePolicy{kUnhandledSpacesDefault, true};
-    }
-  } else {  // spacing was explicitly handled in a case
-    switch (style.preserve_horizontal_spaces) {
-      case PreserveSpaces::All:
-        return SpacePolicy{spaces.value, true};
-      case PreserveSpaces::None:
-      case PreserveSpaces::UnhandledCasesOnly:
-        return SpacePolicy{spaces.value, false};
-    }
+    return SpacePolicy{kUnhandledSpacesDefault, true};
   }
-  return {};  // not reached.
+  // else spacing was explicitly handled in a case
+  return SpacePolicy{spaces.value, false};
 }
 
 // Returns the split penalty for line-breaking before the right token.

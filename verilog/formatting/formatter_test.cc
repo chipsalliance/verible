@@ -2575,7 +2575,6 @@ TEST(FormatterEndToEndTest, VerilogFormatTest) {
   style.indentation_spaces = 2;
   style.wrap_spaces = 4;
   style.over_column_limit_penalty = 50;
-  style.preserve_horizontal_spaces = PreserveSpaces::None;
   style.preserve_vertical_spaces = PreserveSpaces::None;
   for (const auto& test_case : kFormatterTestCases) {
     VLOG(1) << "code-to-format:\n" << test_case.input << "<EOF>";
@@ -2589,29 +2588,6 @@ TEST(FormatterEndToEndTest, VerilogFormatTest) {
     std::ostringstream stream;
     formatter.Emit(stream);
     EXPECT_EQ(stream.str(), test_case.expected) << "code:\n" << test_case.input;
-  }
-}
-
-// Tests that formatter preserves all original spaces when so asked.
-TEST(FormatterEndToEndTest, NoFormatTest) {
-  FormatStyle style;
-  // basically disable formatting
-  style.preserve_horizontal_spaces = PreserveSpaces::All;
-  // Vertical space policy actually has no effect, because horizontal spacing
-  // policy has higher precedence.
-  style.preserve_vertical_spaces = PreserveSpaces::All;
-  for (const auto& test_case : kFormatterTestCases) {
-    VLOG(1) << "code-to-not-format:\n" << test_case.input << "<EOF>";
-    const std::unique_ptr<VerilogAnalyzer> analyzer =
-        VerilogAnalyzer::AnalyzeAutomaticMode(test_case.input, "<filename>");
-    // Require these test cases to be valid.
-    ASSERT_OK(ABSL_DIE_IF_NULL(analyzer)->LexStatus());
-    ASSERT_OK(analyzer->ParseStatus());
-    Formatter formatter(analyzer->Data(), style);
-    EXPECT_OK(formatter.Format());
-    std::ostringstream stream;
-    formatter.Emit(stream);
-    EXPECT_EQ(stream.str(), test_case.input) << "code:\n" << test_case.input;
   }
 }
 
@@ -2730,9 +2706,7 @@ TEST(FormatterEndToEndTest, PreserveVSpacesOnly) {
       },
   };
   FormatStyle style;
-  style.preserve_horizontal_spaces = PreserveSpaces::None;
-  // Here, the vertical spacing policy does have effect because the horizontal
-  // spacing policy has deferred control of vertical spacing.
+  // In this mode, preserve vertical spaces.
   style.preserve_vertical_spaces = PreserveSpaces::All;
   for (const auto& test_case : kTestCases) {
     VLOG(1) << "code-to-format:\n" << test_case.input << "<EOF>";
@@ -2771,7 +2745,6 @@ TEST(FormatterEndToEndTest, PenaltySensitiveLineWrapping) {
   style.indentation_spaces = 2;
   style.wrap_spaces = 4;
   style.over_column_limit_penalty = 50;
-  style.preserve_horizontal_spaces = PreserveSpaces::None;
   style.preserve_vertical_spaces = PreserveSpaces::None;
   for (const auto& test_case : kFormatterTestCasesWithWrapping) {
     VLOG(1) << "code-to-format:\n" << test_case.input << "<EOF>";
@@ -2927,7 +2900,6 @@ TEST(FormatterEndToEndTest, FormatElseStatements) {
   style.indentation_spaces = 2;
   style.wrap_spaces = 4;
   style.over_column_limit_penalty = 50;
-  style.preserve_horizontal_spaces = PreserveSpaces::None;
   style.preserve_vertical_spaces = PreserveSpaces::None;
   for (const auto& test_case : kFormatterTestCasesElseStatements) {
     VLOG(1) << "code-to-format:\n" << test_case.input << "<EOF>";

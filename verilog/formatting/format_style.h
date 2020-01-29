@@ -57,12 +57,7 @@ struct FormatStyle : public verible::BasicFormatStyle {
   // generally discouraged.
   // int break_before_separator_penalty = 20;
 
-  // Horizontal (inter-token) space preservation policy.
-  PreserveSpaces preserve_horizontal_spaces =
-      PreserveSpaces::UnhandledCasesOnly;
-
   // Vertical (inter-line) space preservation policy.
-  // This takes effect only if preserve_horizontal_spaces != All.
   PreserveSpaces preserve_vertical_spaces = PreserveSpaces::None;
 };
 
