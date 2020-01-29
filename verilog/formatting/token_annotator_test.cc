@@ -1810,24 +1810,14 @@ TEST(TokenAnnotatorTest, AnnotateFormattingInfoTest) {
 
 TEST(TokenAnnotatorTest, AnnotateFormattingWithContextTest) {
   const std::initializer_list<AnnotateWithContextTestCase> kTestCases = {
-      // //comment1
-      // //comment2
-      {
-          DefaultStyle,
-          {yytokentype::TK_EOL_COMMENT, "//comment1"},  // left token
-          {yytokentype::TK_EOL_COMMENT, "//comment2"},  // right token
-          {},                                           // context
-          // ExpectedInterTokenInfo:
-          // spaces_required, break_decision
-          {2, SpacingOptions::MustWrap},
-      },
-
       // Without context, default is to treat '-' as binary.
       {
           DefaultStyle,
           {'-', "-"},                         // left token
           {yytokentype::TK_DecNumber, "42"},  // right token
           {},                                 // context
+          // ExpectedInterTokenInfo:
+          // spaces_required, break_decision
           {1, SpacingOptions::Undecided},
       },
       {
@@ -2757,87 +2747,6 @@ TEST(TokenAnnotatorTest, AnnotateFormattingWithContextTest) {
           {NodeEnum::kUdpCombEntry},
           {0, SpacingOptions::Undecided},
       },
-      // Comments in UDP entries
-      {
-          // 1  /*comment*/ 0 : -;
-          DefaultStyle,
-          {'1', "1"},
-          {yytokentype::TK_COMMENT_BLOCK, "/* comment */"},
-          {NodeEnum::kUdpCombEntry},
-          {2, SpacingOptions::Undecided},
-      },
-      {
-          // 1  /*comment*/ 0 : -;
-          DefaultStyle,
-          {yytokentype::TK_COMMENT_BLOCK, "/* comment */"},
-          {'0', "0"},
-          {NodeEnum::kUdpCombEntry},
-          {1, SpacingOptions::Undecided},
-      },
-      {
-          // 1 0  // comment\n : -;
-          DefaultStyle,
-          {'0', "0"},
-          {yytokentype::TK_EOL_COMMENT, "// comment"},
-          {NodeEnum::kUdpCombEntry},
-          {2, SpacingOptions::MustAppend},
-      },
-      {
-          // 1  /*comment*/ 0 : -;
-          DefaultStyle,
-          {'1', "1"},
-          {yytokentype::TK_COMMENT_BLOCK, "/* comment */"},
-          {NodeEnum::kUdpSequenceEntry},
-          {2, SpacingOptions::Undecided},
-      },
-      {
-          // 1  /*comment*/ 0 : -;
-          DefaultStyle,
-          {yytokentype::TK_COMMENT_BLOCK, "/* comment */"},
-          {'0', "0"},
-          {NodeEnum::kUdpSequenceEntry},
-          {1, SpacingOptions::Undecided},
-      },
-      {
-          // 1 0  // comment\n : -;
-          DefaultStyle,
-          {'0', "0"},
-          {yytokentype::TK_EOL_COMMENT, "// comment"},
-          {NodeEnum::kUdpSequenceEntry},
-          {2, SpacingOptions::MustAppend},
-      },
-      {
-          // input  /* comment */ i;
-          DefaultStyle,
-          {yytokentype::TK_input, "input"},
-          {yytokentype::TK_COMMENT_BLOCK, "/* comment */"},
-          {NodeEnum::kUdpPortDeclaration},
-          {2, SpacingOptions::Undecided},
-      },
-      {
-          // input  /* comment */ i;
-          DefaultStyle,
-          {yytokentype::TK_COMMENT_BLOCK, "/* comment */"},
-          {yytokentype::SymbolIdentifier, "i"},
-          {NodeEnum::kUdpPortDeclaration},
-          {1, SpacingOptions::Preserve},
-      },
-      {
-          // input i  /* comment */;
-          DefaultStyle,
-          {yytokentype::SymbolIdentifier, "i"},
-          {yytokentype::TK_COMMENT_BLOCK, "/* comment */"},
-          {NodeEnum::kUdpPortDeclaration},
-          {2, SpacingOptions::Undecided},
-      },
-      {
-          // input i;  // comment\n
-          DefaultStyle,
-          {';', ";"},
-          {yytokentype::TK_EOL_COMMENT, "// comment"},
-          {NodeEnum::kUdpPortDeclaration},
-          {2, SpacingOptions::MustAppend},
-      },
   };
   int test_index = 0;
   for (const auto& test_case : kTestCases) {
@@ -2848,6 +2757,10 @@ TEST(TokenAnnotatorTest, AnnotateFormattingWithContextTest) {
     left.format_token_enum = GetFormatTokenType(yytokentype(left.TokenEnum()));
     right.format_token_enum =
         GetFormatTokenType(yytokentype(right.TokenEnum()));
+
+    ASSERT_NE(right.format_token_enum, FormatTokenType::eol_comment) <<
+      "This test does not support cases examining intertoken text. "
+      "Move the test case to AnnotateBreakAroundComments instead.";
 
     VLOG(1) << "context: " << test_case.context;
     AnnotateFormatToken(test_case.style, left, &right, test_case.context);
@@ -2877,13 +2790,23 @@ TEST(TokenAnnotatorTest, AnnotateBreakAroundComments) {
       {
           {// No comments
            DefaultStyle,
-           '=',
+           '=',                             // left token
            "=",
-           "   ",
-           yytokentype::TK_DecNumber,
+           "   ",                           // whitespace between
+           yytokentype::TK_DecNumber,       // right token
            "0",
            {/* unspecified context */},
            {1, SpacingOptions::Undecided}},
+          {// //comment1
+           // //comment2
+           DefaultStyle,
+           yytokentype::TK_EOL_COMMENT,
+           "//comment1",
+           "\n",
+           yytokentype::TK_EOL_COMMENT,
+           "//comment2",
+           {},
+           {2, SpacingOptions::MustWrap}},
           {// 0 // comment
            DefaultStyle,
            yytokentype::TK_DecNumber,
@@ -3064,6 +2987,87 @@ TEST(TokenAnnotatorTest, AnnotateBreakAroundComments) {
            "// comment 2",
            {/* unspecified context */},
            {2, SpacingOptions::Undecided}},
+          // Comments in UDP entries
+          {// 1  /*comment*/ 0 : -;
+           DefaultStyle,
+           '1', "1",
+           "",
+           yytokentype::TK_COMMENT_BLOCK, "/* comment */",
+           {NodeEnum::kUdpCombEntry},
+           {2, SpacingOptions::Undecided},
+          },
+          {// 1  /*comment*/ 0 : -;
+           DefaultStyle,
+           yytokentype::TK_COMMENT_BLOCK, "/* comment */",
+           "",
+           '0', "0",
+           {NodeEnum::kUdpCombEntry},
+           {1, SpacingOptions::Undecided},
+          },
+          {// 1 0  // comment\n : -;
+           DefaultStyle,
+           '0', "0",
+           "",
+           yytokentype::TK_EOL_COMMENT, "// comment",
+           {NodeEnum::kUdpCombEntry},
+           {2, SpacingOptions::MustAppend},
+          },
+          {// 1  /*comment*/ 0 : -;
+           DefaultStyle,
+           '1', "1",
+           "",
+           yytokentype::TK_COMMENT_BLOCK, "/* comment */",
+           {NodeEnum::kUdpSequenceEntry},
+           {2, SpacingOptions::Undecided},
+          },
+          {// 1  /*comment*/ 0 : -;
+           DefaultStyle,
+           yytokentype::TK_COMMENT_BLOCK, "/* comment */",
+           "",
+           '0', "0",
+           {NodeEnum::kUdpSequenceEntry},
+           {1, SpacingOptions::Undecided},
+          },
+          {// 1 0  // comment\n : -;
+           DefaultStyle,
+           '0', "0",
+           "",
+           yytokentype::TK_EOL_COMMENT, "// comment",
+           {NodeEnum::kUdpSequenceEntry},
+           {2, SpacingOptions::MustAppend},
+          },
+          {// input  /* comment */ i;
+           DefaultStyle,
+           yytokentype::TK_input, "input",
+           "",
+           yytokentype::TK_COMMENT_BLOCK, "/* comment */",
+           {NodeEnum::kUdpPortDeclaration},
+           {2, SpacingOptions::Undecided},
+          },
+          {// input  /* comment */ i;
+           DefaultStyle,
+           yytokentype::TK_COMMENT_BLOCK, "/* comment */",
+           "",
+           yytokentype::SymbolIdentifier, "i",
+           {NodeEnum::kUdpPortDeclaration},
+           {1, SpacingOptions::Preserve},
+          },
+          {// input i  /* comment */;
+           DefaultStyle,
+           yytokentype::SymbolIdentifier, "i",
+           "",
+           yytokentype::TK_COMMENT_BLOCK, "/* comment */",
+           {NodeEnum::kUdpPortDeclaration},
+           {2, SpacingOptions::Undecided},
+          },
+          {// input i;  // comment\n
+           DefaultStyle,
+           ';', ";",
+           "",
+           yytokentype::TK_EOL_COMMENT, "// comment",
+           {NodeEnum::kUdpPortDeclaration},
+           {2, SpacingOptions::MustAppend},
+          },
       };
   int test_index = 0;
   for (const auto& test_case : kTestCases) {
