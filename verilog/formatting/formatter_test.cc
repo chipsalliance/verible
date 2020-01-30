@@ -24,9 +24,6 @@
 #include "gtest/gtest.h"
 #include "absl/strings/match.h"
 #include "absl/strings/string_view.h"
-#include "common/formatting/format_token.h"
-#include "common/formatting/unwrapped_line.h"
-#include "common/formatting/unwrapped_line_test_utils.h"
 #include "common/text/text_structure.h"
 #include "common/util/logging.h"
 #include "common/util/status.h"
@@ -41,193 +38,94 @@
 
 namespace verilog {
 namespace formatter {
+using verible::util::Status;
+
+// private, extern function in formatter.cc, directly tested here.
+Status VerifyFormatting(const verible::TextStructureView& text_structure,
+                        absl::string_view formatted_output,
+                        absl::string_view filename);
+
 namespace {
 
-using verible::PreFormatToken;
-using verible::TokenInfo;
-using verible::UnwrappedLine;
 using verible::util::StatusCode;
 
-class FakeFormatter : public Formatter {
- public:
-  // Creates an empty TextStructureView since only the functionality using
-  // mocked UnwrappedLines is needed.
-  explicit FakeFormatter(const FormatStyle& style)
-      : Formatter(verible::TextStructureView(""), style) {}
-
-  void SetUnwrappedLines(const std::vector<UnwrappedLine>& lines) {
-    formatted_lines_.reserve(lines.size());
-    for (const auto& uwline : lines) {
-      formatted_lines_.emplace_back(uwline);
-    }
-  }
-};
-
-// Use only for passing constant literal test data.
-// Construction and concatenation of string buffers (for backing tokens' texts)
-// will be done in UnwrappedLineMemoryHandler.
-struct UnwrappedLineData {
-  int indentation;
-  std::initializer_list<verible::TokenInfo> tokens;
-  std::initializer_list<int> tokens_spaces_required;
-};
-
-struct FormattedLinesToStringTestCase {
-  std::string expected;
-  std::initializer_list<UnwrappedLineData> unwrapped_line_datas;
-};
-
-// Add in the spaces required to format tokens for testing
-void AddSpacesRequired(std::vector<verible::PreFormatToken>* tokens,
-                       const std::vector<int>& token_spacings) {
-  for (size_t i = 0; i < tokens->size(); ++i) {
-    (*tokens)[i].before.spaces_required = token_spacings[i];
-  }
+// Tests that clean output passes.
+TEST(VerifyFormattingTest, NoError) {
+  const absl::string_view code("class c;endclass\n");
+  const std::unique_ptr<VerilogAnalyzer> analyzer =
+      VerilogAnalyzer::AnalyzeAutomaticMode(code, "<filename>");
+  const auto& text_structure = ABSL_DIE_IF_NULL(analyzer)->Data();
+  const auto status = VerifyFormatting(text_structure, code, "<filename>");
+  EXPECT_OK(status);
 }
 
-// Test data for outputting the formatted UnwrappedLines in the Formatter
-// Test case format: expected code output, vector of UnwrappedLineData objects,
-// which contains an indentation for the UnwrappedLine and
-// TokenInfos to create FormatTokens from.
-const std::initializer_list<FormattedLinesToStringTestCase>
-    kFormattedLinesToStringTestCases = {
-        {"module foo();\nendmodule\n",
-         {
-             UnwrappedLineData{
-                 0,
-                 {{0, "module"}, {0, "foo"}, {0, "("}, {0, ")"}, {0, ";"}},
-                 {0, 1, 0, 0, 0}},
-             UnwrappedLineData{0, {{0, "endmodule"}}, {0}},
-         }},
-
-        {"class event_calendar;\n"
-         "  event birthday;\n"
-         "  event first_date, anniversary;\n"
-         "  event revolution[4:0], independence[2:0];\n"
-         "endclass\n",
-         {UnwrappedLineData{
-              0, {{0, "class"}, {0, "event_calendar"}, {0, ";"}}, {0, 1, 0}},
-          UnwrappedLineData{
-              1, {{0, "event"}, {0, "birthday"}, {0, ";"}}, {0, 1, 0}},
-          UnwrappedLineData{1,
-                            {{0, "event"},
-                             {0, "first_date"},
-                             {0, ","},
-                             {0, "anniversary"},
-                             {0, ";"}},
-                            {0, 1, 0, 1, 0}},
-          UnwrappedLineData{1,
-                            {{0, "event"},
-                             {0, "revolution"},
-                             {0, "["},
-                             {0, "4"},
-                             {0, ":"},
-                             {0, "0"},
-                             {0, "]"},
-                             {0, ","},
-                             {0, "independence"},
-                             {0, "["},
-                             {0, "2"},
-                             {0, ":"},
-                             {0, "0"},
-                             {0, "]"},
-                             {0, ";"}},
-                            {0, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0}},
-          UnwrappedLineData{0, {{0, "endclass"}}, {0}}}},
-
-        {"  indentation\n"
-         "    is\n"
-         "                increased!\n",
-         {UnwrappedLineData{1, {{0, "indentation"}}, {0}},
-          UnwrappedLineData{2, {{0, "is"}}, {0}},
-          UnwrappedLineData{8, {{0, "increased!"}}, {0}}}},
-};
-
-// This will test that the formatter properly formats an empty TextStructureView
-TEST(FormatterTest, FormatEmptyTest) {
-  // Option to modify the style for the Formatter output
-  FormatStyle style;
-  FakeFormatter formatter(style);
-  std::ostringstream stream;
-  formatter.Emit(stream);
-  EXPECT_EQ("", stream.str());
+// Tests that un-lexable outputs are caught as errors.
+TEST(VerifyFormattingTest, LexError) {
+  const absl::string_view code("class c;endclass\n");
+  const std::unique_ptr<VerilogAnalyzer> analyzer =
+      VerilogAnalyzer::AnalyzeAutomaticMode(code, "<filename>");
+  const auto& text_structure = ABSL_DIE_IF_NULL(analyzer)->Data();
+  const absl::string_view bad_code("1class c;endclass\n");  // lexical error
+  const auto status = VerifyFormatting(text_structure, bad_code, "<filename>");
+  EXPECT_FALSE(status.ok());
+  EXPECT_EQ(status.code(), StatusCode::kDataLoss);
 }
+
+// Tests that un-parseable outputs are caught as errors.
+TEST(VerifyFormattingTest, ParseError) {
+  const absl::string_view code("class c;endclass\n");
+  const std::unique_ptr<VerilogAnalyzer> analyzer =
+      VerilogAnalyzer::AnalyzeAutomaticMode(code, "<filename>");
+  const auto& text_structure = ABSL_DIE_IF_NULL(analyzer)->Data();
+  const absl::string_view bad_code("classc;endclass\n");  // syntax error
+  const auto status = VerifyFormatting(text_structure, bad_code, "<filename>");
+  EXPECT_FALSE(status.ok());
+  EXPECT_EQ(status.code(), StatusCode::kDataLoss);
+}
+
+// Tests that lexical differences are caught as errors.
+TEST(VerifyFormattingTest, LexicalDifference) {
+  const absl::string_view code("class c;endclass\n");
+  const std::unique_ptr<VerilogAnalyzer> analyzer =
+      VerilogAnalyzer::AnalyzeAutomaticMode(code, "<filename>");
+  const auto& text_structure = ABSL_DIE_IF_NULL(analyzer)->Data();
+  const absl::string_view bad_code("class c;;endclass\n");  // different tokens
+  const auto status = VerifyFormatting(text_structure, bad_code, "<filename>");
+  EXPECT_FALSE(status.ok());
+  EXPECT_EQ(status.code(), StatusCode::kDataLoss);
+}
+
+struct FormatterTestCase {
+  absl::string_view input;
+  absl::string_view expected;
+};
 
 // Test that the expected output is produced with the formatter using a custom
 // FormatStyle.
 TEST(FormatterTest, FormatCustomStyleTest) {
-  std::vector<TokenInfo> tokens = {
-      {1, "Turn"}, {1, "Up"}, {2, "The"}, {3, "Spaces"}, {4, ";"}};
-  verible::UnwrappedLineMemoryHandler handler;
-  handler.CreateTokenInfos(tokens);
-  std::vector<verible::UnwrappedLine> unwrapped_lines;
+  const std::initializer_list<FormatterTestCase> kTestCases = {
+      {"", ""},
+      {"module m;wire w;endmodule\n",
+       "module m;\n"
+       "          wire w;\n"
+       "endmodule\n"},
+  };
 
   FormatStyle style;
-  style.indentation_spaces = 10;
-  unwrapped_lines.emplace_back(2 * style.indentation_spaces,
-                               handler.GetPreFormatTokensBegin());
-  std::vector<int> token_spacings = {0, 1, 1, 1, 0};
-
-  auto& last_uwline = unwrapped_lines.back();
-  handler.AddFormatTokens(&last_uwline);
-
-  AddSpacesRequired(&handler.pre_format_tokens_, token_spacings);
-
-  // Option to modify the style for the Formatter output
-  FakeFormatter formatter(style);
-  formatter.SetUnwrappedLines(unwrapped_lines);
-  std::ostringstream stream;
-  formatter.Emit(stream);
-  EXPECT_EQ("                    Turn Up The Spaces;\n", stream.str());
-}
-
-// Test that the expected output is produced from UnwrappedLines
-TEST(FormatterFinalOutputTest, FormattedLinesToStringEmptyTest) {
-  FormatStyle style;  // Option to modify the style for the Formatter output
-  for (const auto& test_case : kFormattedLinesToStringTestCases) {
-    // For each test case, a vector of UnwrappedLines and
-    // UnwrappedLineMemoryHandlers is created to ensure the string_view,
-    // TokenInfo, and FormatTokens are properly maintained for a given
-    // UnwrappedLine.
-    std::vector<verible::UnwrappedLineMemoryHandler> memory_handlers;
-    std::vector<verible::UnwrappedLine> unwrapped_lines;
-
-    for (const auto& unwrapped_line_data : test_case.unwrapped_line_datas) {
-      // Passes a new UnwrappedLine owned by unwrapped_lines to a MemoryHandler
-      // owned by memory_handlers to fill the data from the
-      // UnwrappedLineDatas in the given FormattedLinesToStringTestCase.
-      memory_handlers.emplace_back();
-      auto& last_mem_handler(memory_handlers.back());
-      last_mem_handler.CreateTokenInfosExternalStringBuffer(
-          unwrapped_line_data.tokens);
-      unwrapped_lines.emplace_back(
-          unwrapped_line_data.indentation * style.indentation_spaces,
-          last_mem_handler.GetPreFormatTokensBegin());
-      auto& last_unwrapped_line(unwrapped_lines.back());
-      last_mem_handler.AddFormatTokens(&last_unwrapped_line);
-      AddSpacesRequired(&last_mem_handler.pre_format_tokens_,
-                        unwrapped_line_data.tokens_spaces_required);
-
-      // Sanity check that UnwrappedLine has same number of tokens as test
-      ASSERT_EQ(unwrapped_line_data.tokens.size(), last_unwrapped_line.Size());
-    }
-
-    // Sanity check that the number of UnwrappedLines is equal to the number of
-    // UnwrappedLineDatas in the test case
-    ASSERT_EQ(test_case.unwrapped_line_datas.size(), unwrapped_lines.size());
-
-    FakeFormatter formatter(style);
-    formatter.SetUnwrappedLines(unwrapped_lines);
+  style.column_limit = 40;
+  style.indentation_spaces = 10;  // unconventional indentation
+  style.wrap_spaces = 4;
+  style.over_column_limit_penalty = 50;
+  style.preserve_vertical_spaces = PreserveSpaces::None;
+  for (const auto& test_case : kTestCases) {
+    VLOG(1) << "code-to-format:\n" << test_case.input << "<EOF>";
     std::ostringstream stream;
-    formatter.Emit(stream);
-    EXPECT_EQ(test_case.expected, stream.str());
+    const auto status =
+        FormatVerilog(test_case.input, "<filename>", style, stream);
+    EXPECT_OK(status);
+    EXPECT_EQ(stream.str(), test_case.expected) << "code:\n" << test_case.input;
   }
 }
-
-struct FormatterTestCase {
-  std::string input;
-  std::string expected;
-};
 
 static const std::initializer_list<FormatterTestCase> kFormatterTestCases = {
     {"", ""},
@@ -2624,15 +2522,11 @@ TEST(FormatterEndToEndTest, VerilogFormatTest) {
   style.preserve_vertical_spaces = PreserveSpaces::None;
   for (const auto& test_case : kFormatterTestCases) {
     VLOG(1) << "code-to-format:\n" << test_case.input << "<EOF>";
-    const std::unique_ptr<VerilogAnalyzer> analyzer =
-        VerilogAnalyzer::AnalyzeAutomaticMode(test_case.input, "<filename>");
-    // Require these test cases to be valid.
-    ASSERT_OK(ABSL_DIE_IF_NULL(analyzer)->LexStatus());
-    ASSERT_OK(analyzer->ParseStatus()) << "code:\n" << test_case.input;
-    Formatter formatter(analyzer->Data(), style);
-    EXPECT_OK(formatter.Format());
     std::ostringstream stream;
-    formatter.Emit(stream);
+    const auto status =
+        FormatVerilog(test_case.input, "<filename>", style, stream);
+    // Require these test cases to be valid.
+    EXPECT_OK(status);
     EXPECT_EQ(stream.str(), test_case.expected) << "code:\n" << test_case.input;
   }
 }
@@ -2756,19 +2650,15 @@ TEST(FormatterEndToEndTest, PreserveVSpacesOnly) {
   style.preserve_vertical_spaces = PreserveSpaces::All;
   for (const auto& test_case : kTestCases) {
     VLOG(1) << "code-to-format:\n" << test_case.input << "<EOF>";
-    const std::unique_ptr<VerilogAnalyzer> analyzer =
-        VerilogAnalyzer::AnalyzeAutomaticMode(test_case.input, "<filename>");
-    // Require these test cases to be valid.
-    ASSERT_OK(ABSL_DIE_IF_NULL(analyzer)->LexStatus());
-    ASSERT_OK(analyzer->ParseStatus());
-    Formatter formatter(analyzer->Data(), style);
-    EXPECT_OK(formatter.Format());
     std::ostringstream stream;
-    formatter.Emit(stream);
-    EXPECT_EQ(stream.str(), test_case.expected);
+    const auto status =
+        FormatVerilog(test_case.input, "<filename>", style, stream);
+    EXPECT_OK(status);
+    EXPECT_EQ(stream.str(), test_case.expected) << "code:\n" << test_case.input;
   }
 }
 
+// TODO(b/145558510): these tests must maintain unique-best solutions
 static const std::initializer_list<FormatterTestCase>
     kFormatterTestCasesWithWrapping = {
         {"module m;"
@@ -2794,20 +2684,14 @@ TEST(FormatterEndToEndTest, PenaltySensitiveLineWrapping) {
   style.preserve_vertical_spaces = PreserveSpaces::None;
   for (const auto& test_case : kFormatterTestCasesWithWrapping) {
     VLOG(1) << "code-to-format:\n" << test_case.input << "<EOF>";
-    const std::unique_ptr<VerilogAnalyzer> analyzer =
-        VerilogAnalyzer::AnalyzeAutomaticMode(test_case.input, "<filename>");
-    // Require these test cases to be valid.
-    ASSERT_OK(ABSL_DIE_IF_NULL(analyzer)->LexStatus());
-    ASSERT_OK(analyzer->ParseStatus());
-    Formatter formatter(analyzer->Data(), style);
-    EXPECT_OK(formatter.Format());
-    std::ostringstream stream;
-    formatter.Emit(stream);
-    // Currently not stable decision which alternative is chosen as they
-    // reach equal penalty.
-    // TODO(b/145558510): re-enable tests after guaranteeing unique best
-    // solutions
+    std::ostringstream stream, debug_stream;
+    ExecutionControl control;
+    control.stream = &debug_stream;
+    const auto status =
+        FormatVerilog(test_case.input, "<filename>", style, stream, control);
+    EXPECT_OK(status);
     EXPECT_EQ(stream.str(), test_case.expected) << "code:\n" << test_case.input;
+    EXPECT_TRUE(debug_stream.str().empty());
   }
 }
 
@@ -2949,15 +2833,10 @@ TEST(FormatterEndToEndTest, FormatElseStatements) {
   style.preserve_vertical_spaces = PreserveSpaces::None;
   for (const auto& test_case : kFormatterTestCasesElseStatements) {
     VLOG(1) << "code-to-format:\n" << test_case.input << "<EOF>";
-    const std::unique_ptr<VerilogAnalyzer> analyzer =
-        VerilogAnalyzer::AnalyzeAutomaticMode(test_case.input, "<filename>");
-    // Require these test cases to be valid.
-    ASSERT_OK(ABSL_DIE_IF_NULL(analyzer)->LexStatus());
-    ASSERT_OK(analyzer->ParseStatus());
-    Formatter formatter(analyzer->Data(), style);
-    EXPECT_OK(formatter.Format());
     std::ostringstream stream;
-    formatter.Emit(stream);
+    const auto status =
+        FormatVerilog(test_case.input, "<filename>", style, stream);
+    EXPECT_OK(status);
     EXPECT_EQ(stream.str(), test_case.expected) << "code:\n" << test_case.input;
   }
 }
@@ -2969,22 +2848,16 @@ TEST(FormatterEndToEndTest, DiagnosticShowFullTree) {
   style.indentation_spaces = 2;
   style.wrap_spaces = 4;
   style.over_column_limit_penalty = 50;
-
   for (const auto& test_case : kFormatterTestCases) {
-    std::unique_ptr<VerilogAnalyzer> analyzer =
-        VerilogAnalyzer::AnalyzeAutomaticMode(test_case.input, "<filename>");
-    // Require these test cases to be valid.
-    ASSERT_OK(ABSL_DIE_IF_NULL(analyzer)->LexStatus());
-    ASSERT_OK(analyzer->ParseStatus());
-    Formatter formatter(analyzer->Data(), style);
-
-    std::ostringstream stream;
-    Formatter::ExecutionControl control;
-    control.stream = &stream;
+    std::ostringstream stream, debug_stream;
+    ExecutionControl control;
+    control.stream = &debug_stream;
     control.show_token_partition_tree = true;
-
-    EXPECT_OK(formatter.Format(control));
-    EXPECT_TRUE(absl::StartsWith(stream.str(), "Full token partition tree"));
+    const auto status =
+        FormatVerilog(test_case.input, "<filename>", style, stream, control);
+    EXPECT_EQ(status.code(), StatusCode::kCancelled);
+    EXPECT_TRUE(
+        absl::StartsWith(debug_stream.str(), "Full token partition tree"));
   }
 }
 
@@ -2996,21 +2869,15 @@ TEST(FormatterEndToEndTest, DiagnosticLargestPartitions) {
   style.wrap_spaces = 4;
   style.over_column_limit_penalty = 50;
   for (const auto& test_case : kFormatterTestCases) {
-    std::unique_ptr<VerilogAnalyzer> analyzer =
-        VerilogAnalyzer::AnalyzeAutomaticMode(test_case.input, "<filename>");
-    // Require these test cases to be valid.
-    ASSERT_OK(ABSL_DIE_IF_NULL(analyzer)->LexStatus());
-    ASSERT_OK(analyzer->ParseStatus());
-    Formatter formatter(analyzer->Data(), style);
-
-    std::ostringstream stream;
-    Formatter::ExecutionControl control;
-    control.stream = &stream;
+    std::ostringstream stream, debug_stream;
+    ExecutionControl control;
+    control.stream = &debug_stream;
     control.show_largest_token_partitions = 2;
-
-    EXPECT_OK(formatter.Format(control));
-    EXPECT_TRUE(absl::StartsWith(stream.str(), "Showing the "))
-        << "got: " << stream.str();
+    const auto status =
+        FormatVerilog(test_case.input, "<filename>", style, stream, control);
+    EXPECT_EQ(status.code(), StatusCode::kCancelled);
+    EXPECT_TRUE(absl::StartsWith(debug_stream.str(), "Showing the "))
+        << "got: " << debug_stream.str();
   }
 }
 
@@ -3022,20 +2889,18 @@ TEST(FormatterEndToEndTest, DiagnosticEquallyOptimalWrappings) {
   style.wrap_spaces = 4;
   style.over_column_limit_penalty = 50;
   for (const auto& test_case : kFormatterTestCases) {
-    std::unique_ptr<VerilogAnalyzer> analyzer =
-        VerilogAnalyzer::AnalyzeAutomaticMode(test_case.input, "<filename>");
-    // Require these test cases to be valid.
-    ASSERT_OK(ABSL_DIE_IF_NULL(analyzer)->LexStatus());
-    ASSERT_OK(analyzer->ParseStatus());
-    Formatter formatter(analyzer->Data(), style);
-
-    std::ostringstream stream;
-    Formatter::ExecutionControl control;
-    control.stream = &stream;
+    std::ostringstream stream, debug_stream;
+    ExecutionControl control;
+    control.stream = &debug_stream;
     control.show_equally_optimal_wrappings = true;
-
-    EXPECT_OK(formatter.Format(control));
-    // Cannot guarantee among unit tests that there will be >1 solution.
+    const auto status =
+        FormatVerilog(test_case.input, "<filename>", style, stream, control);
+    EXPECT_OK(status);
+    if (!debug_stream.str().empty()) {
+      EXPECT_TRUE(absl::StartsWith(debug_stream.str(), "Showing the "))
+          << "got: " << debug_stream.str();
+      // Cannot guarantee among unit tests that there will be >1 solution.
+    }
   }
 }
 
@@ -3047,20 +2912,13 @@ TEST(FormatterEndToEndTest, UnfinishedLineWrapSearching) {
   style.wrap_spaces = 4;
   style.over_column_limit_penalty = 50;
 
-  std::unique_ptr<VerilogAnalyzer> analyzer =
-      VerilogAnalyzer::AnalyzeAutomaticMode("parameter int x = 1+1;",
-                                            "<filename>");
-  // Require these test cases to be valid.
-  ASSERT_OK(ABSL_DIE_IF_NULL(analyzer)->LexStatus());
-  ASSERT_OK(analyzer->ParseStatus());
-  Formatter formatter(analyzer->Data(), style);
+  const absl::string_view code("parameter int x = 1+1;\n");
 
-  std::ostringstream stream;
-  Formatter::ExecutionControl control;
-  control.stream = &stream;
+  std::ostringstream stream, debug_stream;
+  ExecutionControl control;
   control.max_search_states = 2;  // Cause search to abort early.
-
-  const auto status = formatter.Format(control);
+  control.stream = &debug_stream;
+  const auto status = FormatVerilog(code, "<filename>", style, stream, control);
   EXPECT_EQ(status.code(), StatusCode::kResourceExhausted);
   EXPECT_TRUE(absl::StartsWith(status.message(), "***"));
 }

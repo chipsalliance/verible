@@ -112,6 +112,7 @@ cc_library(
         "//common/util:spacer",
         "//common/util:status",
         "//common/util:vector_tree",
+        "//verilog/analysis:verilog_analyzer",
         "//verilog/parser:verilog_token_enum",
     ],
 )

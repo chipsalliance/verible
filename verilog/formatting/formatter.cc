@@ -34,6 +34,7 @@
 #include "common/util/spacer.h"
 #include "common/util/status.h"
 #include "common/util/vector_tree.h"
+#include "verilog/analysis/verilog_analyzer.h"
 #include "verilog/formatting/comment_controls.h"
 #include "verilog/formatting/format_style.h"
 #include "verilog/formatting/token_annotator.h"
@@ -49,8 +50,148 @@ using verible::TokenPartitionTree;
 using verible::TreeViewNodeInfo;
 using verible::UnwrappedLine;
 using verible::VectorTree;
+using verible::util::Status;
+using verible::util::StatusCode;
 
 typedef VectorTree<TreeViewNodeInfo<UnwrappedLine>> partition_node_type;
+
+// Takes a TextStructureView and FormatStyle, and formats UnwrappedLines.
+class Formatter {
+ public:
+  Formatter(const verible::TextStructureView& text_structure,
+            const FormatStyle& style)
+      : text_structure_(text_structure), style_(style) {}
+
+  // Formats the source code
+  Status Format(const ExecutionControl&);
+
+  Status Format() { return Format(ExecutionControl()); }
+
+  // Outputs all of the FormattedExcerpt lines to stream.
+  void Emit(std::ostream& stream) const;
+
+ private:
+  absl::string_view TrailingWhiteSpaces() const;
+
+  // protected for testing
+ protected:
+  // Contains structural information about the code to format, such as
+  // TokenSequence from lexing, and ConcreteSyntaxTree from parsing
+  const verible::TextStructureView& text_structure_;
+
+  // The style configuration for the formatter
+  FormatStyle style_;
+
+  // Ranges of text where formatter is disabled (by comment directives).
+  ByteOffsetSet disabled_ranges_;
+
+  // Set of formatted lines, populated by calling Format().
+  std::vector<verible::FormattedExcerpt> formatted_lines_;
+};
+
+// TODO(b/148482625): make this public/re-usable for general content comparison.
+Status VerifyFormatting(const verible::TextStructureView& text_structure,
+                        absl::string_view formatted_output,
+                        absl::string_view filename) {
+  // Verify that the formatted output creates the same lexical
+  // stream (filtered) as the original.  If any tokens were lost, fall back to
+  // printing the original source unformatted.
+  // Note: We cannot just Tokenize() and compare because Analyze()
+  // performs additional transformations like expanding MacroArgs to
+  // expression subtrees.
+  const auto reanalyzer =
+      VerilogAnalyzer::AnalyzeAutomaticMode(formatted_output, filename);
+  const auto relex_status = ABSL_DIE_IF_NULL(reanalyzer)->LexStatus();
+  const auto reparse_status = reanalyzer->ParseStatus();
+
+  if (!relex_status.ok() || !reparse_status.ok()) {
+    const auto& token_errors = reanalyzer->TokenErrorMessages();
+    // Only print the first error.
+    if (!token_errors.empty()) {
+      return Status(StatusCode::kDataLoss,
+                    absl::StrCat("Error lex/parsing-ing formatted output.  "
+                                 "Please file a bug.\nFirst error: ",
+                                 token_errors.front()));
+    }
+  }
+
+  {
+    const auto& original_tokens = text_structure.TokenStream();
+    const auto& formatted_tokens = reanalyzer->Data().TokenStream();
+    // Filter out only whitespaces and compare.
+    // First difference will be printed to cerr for debugging.
+    std::ostringstream errstream;
+    if (!verilog::LexicallyEquivalent(original_tokens, formatted_tokens,
+                                      &errstream)) {
+      return Status(
+          StatusCode::kDataLoss,
+          absl::StrCat(
+              "Formatted output is lexically different from the input.    "
+              "Please file a bug.  Details:\n",
+              errstream.str()));
+    }
+  }
+
+  // TODO(b/138868051): Verify output stability/convergence.
+  //   format(text) should == format(format(text))
+  return verible::util::OkStatus();
+}
+
+Status FormatVerilog(absl::string_view text, absl::string_view filename,
+                     const FormatStyle& style, std::ostream& formatted_stream,
+                     const ExecutionControl& control) {
+  const auto analyzer = VerilogAnalyzer::AnalyzeAutomaticMode(text, filename);
+  {
+    // Lex and parse code.  Exit on failure.
+    const auto lex_status = ABSL_DIE_IF_NULL(analyzer)->LexStatus();
+    const auto parse_status = analyzer->ParseStatus();
+    if (!lex_status.ok() || !parse_status.ok()) {
+      std::ostringstream errstream;
+      const std::vector<std::string> syntax_error_messages(
+          analyzer->LinterTokenErrorMessages());
+      for (const auto& message : syntax_error_messages) {
+        errstream << message << std::endl;
+      }
+      // Don't bother printing original code
+      return Status(StatusCode::kInvalidArgument, errstream.str());
+    }
+  }
+
+  const verible::TextStructureView& text_structure = analyzer->Data();
+  Formatter fmt(text_structure, style);
+
+  // Format code.
+  const Status format_status = fmt.Format(control);
+  if (!format_status.ok()) {
+    if (format_status.code() != StatusCode::kResourceExhausted) {
+      // Some more fatal error, halt immediately.
+      return format_status;
+    }
+    // Else allow remainder of this function to execute, and print partially
+    // formatted code, but force a non-zero exit status in the end.
+  }
+
+  // In any diagnostic mode, proceed no further.
+  if (control.AnyStop()) {
+    return Status(StatusCode::kCancelled, "Halting for diagnostic operation.");
+  }
+
+  // Render formatted text to a temporary buffer, so that it can be verified.
+  std::ostringstream output_buffer;
+  fmt.Emit(output_buffer);
+  const std::string& formatted_text(output_buffer.str());
+
+  // For now, unconditionally verify.
+  const Status verify_status =
+      VerifyFormatting(text_structure, formatted_text, filename);
+  if (!verify_status.ok()) {
+    return verify_status;
+  }
+
+  // Commit verified formatted text to the output stream.
+  formatted_stream << formatted_text;
+  return format_status;
+}
 
 // Decided at each node in UnwrappedLine partition tree whether or not
 // it should be expanded or unexpanded.
@@ -146,7 +287,7 @@ static void PrintLargestPartitions(
   stream << hline << std::endl;
 }
 
-std::ostream& Formatter::ExecutionControl::Stream() const {
+std::ostream& ExecutionControl::Stream() const {
   return (stream != nullptr) ? *stream : std::cout;
 }
 
@@ -211,7 +352,7 @@ static void PreserveSpacesOnDisabledTokenRanges(
   }
 }
 
-verible::util::Status Formatter::Format(const ExecutionControl& control) {
+Status Formatter::Format(const ExecutionControl& control) {
   const absl::string_view full_text(text_structure_.Contents());
   const auto& token_stream(text_structure_.TokenStream());
 
