@@ -146,7 +146,7 @@ int main(int argc, char** argv) {
   std::ostream* output_stream = &std::cout;
   std::ofstream inplace_file;
   if (inplace && !is_stdin) {
-    inplace_file.open(filename.data());
+    inplace_file.open(std::string(filename));
     if (inplace_file.good()) {
       output_stream = &inplace_file;
     } else {
