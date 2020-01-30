@@ -815,6 +815,10 @@ void TreeUnwrapper::Visit(const verible::SyntaxTreeNode& node) {
     case NodeEnum::kCoverageSpecOptionList:
     case NodeEnum::kBinOptionList:
     case NodeEnum::kCrossBodyItemList:
+    case NodeEnum::kUdpBody:
+    case NodeEnum::kUdpPortDeclaration:
+    case NodeEnum::kUdpSequenceEntry:
+    case NodeEnum::kUdpCombEntry:
     case NodeEnum::kStatementList: {
       if (suppress_indentation) {
         // Do not further indent preprocessor clauses.

@@ -228,6 +228,12 @@ static WithReason<int> SpacesRequiredBetween(const PreFormatToken& left,
     return {0, "No space inside based numeric literals"};
   }
 
+  if (context.IsInsideFirst(
+          {NodeEnum::kUdpCombEntry, NodeEnum::kUdpSequenceEntry}, {})) {
+    // Spacing before ';' is handled above
+    return {1, "One space around UDP entries"};
+  }
+
   // TODO(fangism): Never insert trailing spaces before a newline.
 
   // Hierarchy examples: "a.b", "a::b"

@@ -2509,6 +2509,149 @@ static const std::initializer_list<FormatterTestCase> kFormatterTestCases = {
         "  // a really long comment on its own line to be left alone\n"
         "endmodule\n",
     },
+    {
+        // primitive declaration
+        "primitive primitive1(o, s, r);output o;reg o;input s;input r;table 1 "
+        "? :"
+        " ? : 0; ? 1    : 0   : -; endtable endprimitive",
+        "primitive primitive1(o, s, r);\n"
+        "  output o;\n"
+        "  reg o;\n"
+        "  input s;\n"
+        "  input r;\n"
+        "  table\n"
+        "    1 ? : ? : 0;\n"
+        "    ? 1 : 0 : -;\n"
+        "  endtable\n"
+        "endprimitive\n",
+    },
+    {
+        // one-input combinatorial UDP
+        "primitive primitive1 ( o,i ) ;output o;input i;"
+        " table 1  :   0 ;   0  :  1 ; endtable endprimitive",
+        "primitive primitive1(o, i);\n"
+        "  output o;\n"
+        "  input i;\n"
+        "  table\n"
+        "    1 : 0;\n"
+        "    0 : 1;\n"
+        "  endtable\n"
+        "endprimitive\n",
+    },
+    {
+        // two-input combinatorial UDP
+        "primitive primitive2(o, s, r);output o;input s;input r;"
+        "table 1 ? : 0;? 1 : -; endtable endprimitive",
+        "primitive primitive2(o, s, r);\n"
+        "  output o;\n"
+        "  input s;\n"
+        "  input r;\n"
+        "  table\n"
+        "    1 ? : 0;\n"
+        "    ? 1 : -;\n"
+        "  endtable\n"
+        "endprimitive\n",
+    },
+    {
+        // ten-input combinatorial UDP
+        "primitive comb10(o, i0, i1, i2, i3, i4, i5, i6, i7, i8, i9);"
+        "output o;input i0, i1, i2, i3, i4, i5, i6, i7, i8, i9;"
+        "table 0 ? ? ? ? ? ? ? ? 0 : 0;1 ? ? ? ? ? ? ? ? 0 : 1;"
+        "1 ? ? ? ? ? ? ? ? 1 : 1;0 ? ? ? ? ? ? ? ? 1 : 0;endtable endprimitive",
+        "primitive comb10(o, i0, i1, i2, i3, i4,\n"
+        "                 i5, i6, i7, i8, i9);\n"
+        "  output o;\n"
+        "  input i0, i1, i2, i3, i4, i5, i6, i7,\n"
+        "      i8, i9;\n"
+        "  table\n"
+        "    0 ? ? ? ? ? ? ? ? 0 : 0;\n"
+        "    1 ? ? ? ? ? ? ? ? 0 : 1;\n"
+        "    1 ? ? ? ? ? ? ? ? 1 : 1;\n"
+        "    0 ? ? ? ? ? ? ? ? 1 : 0;\n"
+        "  endtable\n"
+        "endprimitive\n",
+    },
+    {
+        // sequential level-sensitive UDP
+        "primitive level_seq(o, c, d);output o;reg o;"
+        "  input c;input d;table\n"
+        "//  C D  state O\n"
+        "0   ? : ? :  -;  // No Change\n"
+        "? 0   : 0 :  0;  // Unknown\n"
+        "endtable endprimitive",
+        "primitive level_seq(o, c, d);\n"
+        "  output o;\n"
+        "  reg o;\n"
+        "  input c;\n"
+        "  input d;\n"
+        "  table\n"
+        "    //  C D  state O\n"
+        "    0 ? : ? : -;  // No Change\n"
+        "    ? 0 : 0 : 0;  // Unknown\n"
+        "  endtable\n"
+        "endprimitive\n",
+    },
+    {
+        // sequential edge-sensitive UDP
+        "primitive edge_seq(o, c, d);output o;reg o;input c;input d;"
+        "table (01) 0 : ? :  0;(01) 1 : ? :  1;(0?) 1 : 1 :  1;(0?) 0 : 0 :  "
+        "0;\n"
+        "// ignore negative c\n"
+        "(?0) ? : ? :  -;\n"
+        "// ignore changes on steady c\n"
+        "?  (??) : ? :  -; endtable endprimitive",
+        "primitive edge_seq(o, c, d);\n"
+        "  output o;\n"
+        "  reg o;\n"
+        "  input c;\n"
+        "  input d;\n"
+        "  table\n"
+        "    (01) 0 : ? : 0;\n"
+        "    (01) 1 : ? : 1;\n"
+        "    (0?) 1 : 1 : 1;\n"
+        "    (0?) 0 : 0 : 0;\n"
+        "    // ignore negative c\n"
+        "    (?0) ? : ? : -;\n"
+        "    // ignore changes on steady c\n"
+        "    ? (??) : ? : -;\n"
+        "  endtable\n"
+        "endprimitive\n",
+    },
+    {
+        // mixed sequential UDP
+        "primitive mixed(o, clk, j, k, preset, clear);output o;reg o;"
+        "input c;input j, k;input preset, clear;table "
+        "?  ??  01:?:1 ; // preset logic\n"
+        "?  ??  *1:1:1 ;?  ??  10:?:0 ; // clear logic\n"
+        "?  ??  1*:0:0 ;r  00  00:0:1 ; // normal\n"
+        "r  00  11:?:- ;r  01  11:?:0 ;r  10  11:?:1 ;r  11  11:0:1 ;"
+        "r  11  11:1:0 ;f  ??  ??:?:- ;b  *?  ??:?:- ;"
+        " // j and k\n"
+        "b  ?*  ??:?:- ;endtable endprimitive\n",
+        "primitive mixed(o, clk, j, k, preset,\n"
+        "                clear);\n"
+        "  output o;\n"
+        "  reg o;\n"
+        "  input c;\n"
+        "  input j, k;\n"
+        "  input preset, clear;\n"
+        "  table\n"
+        "    ? ? ? 0 1 : ? : 1;  // preset logic\n"
+        "    ? ? ? * 1 : 1 : 1;\n"
+        "    ? ? ? 1 0 : ? : 0;  // clear logic\n"
+        "    ? ? ? 1 * : 0 : 0;\n"
+        "    r 0 0 0 0 : 0 : 1;  // normal\n"
+        "    r 0 0 1 1 : ? : -;\n"
+        "    r 0 1 1 1 : ? : 0;\n"
+        "    r 1 0 1 1 : ? : 1;\n"
+        "    r 1 1 1 1 : 0 : 1;\n"
+        "    r 1 1 1 1 : 1 : 0;\n"
+        "    f ? ? ? ? : ? : -;\n"
+        "    b * ? ? ? : ? : -;  // j and k\n"
+        "    b ? * ? ? : ? : -;\n"
+        "  endtable\n"
+        "endprimitive\n",
+    },
 };
 
 // Tests that formatter produces expected results, end-to-end.
