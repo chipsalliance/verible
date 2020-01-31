@@ -457,6 +457,30 @@ static const std::initializer_list<FormatterTestCase> kFormatterTestCases = {
     {"  parameter int a=b~^(c<<d);", "parameter int a = b ~^ (c << d);\n"},
     {"  parameter int a=b^ ~ (c<<d);", "parameter int a = b ^ ~(c << d);\n"},
     {"  parameter int a=b ^ ~(c<<d);", "parameter int a = b ^ ~(c << d);\n"},
+
+    {"  parameter int a=b^~{c};", "parameter int a = b ^~ {c};\n"},
+    {"  parameter int a=b~^{c};", "parameter int a = b ~^ {c};\n"},
+    {"  parameter int a=b^ ~ {c};", "parameter int a = b ^ ~{c};\n"},
+    {"  parameter int a=b ^ ~{c};", "parameter int a = b ^ ~{c};\n"},
+
+    {"  parameter int a={a}^{b};", "parameter int a = {a} ^ {b};\n"},
+    {"  parameter int a={b}^(c);", "parameter int a = {b} ^ (c);\n"},
+    {"  parameter int a=b[0]^ {c};", "parameter int a = b[0] ^ {c};\n"},
+    {"  parameter int a={c}^a[b];", "parameter int a = {c} ^ a[b];\n"},
+    {"  parameter int a=(c)^{a[b]};", "parameter int a = (c) ^ {a[b]};\n"},
+
+    {"  parameter int a={^{a,^b},c};", "parameter int a = {^{a, ^b}, c};\n"},
+    {"  parameter int a=(a)^(^d[e]^{c});", "parameter int a = (a) ^ (^d[e] ^ {c});\n"},
+    {"  parameter int a=(a)^(^d[e]^f[g]);", "parameter int a = (a) ^ (^d[e] ^ f[g]);\n"},
+    {"  parameter int a=(b^(c^(d^e)));", "parameter int a = (b ^ (c ^ (d ^ e)));\n"},
+    {"  parameter int a={b^{c^{d^e}}};", "parameter int a = {b ^ {c ^ {d ^ e}}};\n"},
+    {"  parameter int a={b^{c[d^e]}};", "parameter int a = {b ^ {c[d ^ e]}};\n"},
+    {"  parameter int a={(b^c),(d^^e)};", "parameter int a = {(b ^ c), (d ^ ^e)};\n"},
+
+    {"  parameter int a={(b[x]^{c[y]}),d^^e[f] ^ (g)};",
+     "parameter int a = {(b[x] ^ {c[y]}), d\n"
+     "                   ^ ^e[f] ^ (g)};\n"},
+
     // ~| is unary reduction NOR, |~ and | ~ aren't
     {"  parameter int a=b| ~(c<<d);", "parameter int a = b | ~(c << d);\n"},
     {"  parameter int a=b|~(c<<d);", "parameter int a = b | ~(c << d);\n"},
@@ -647,6 +671,279 @@ static const std::initializer_list<FormatterTestCase> kFormatterTestCases = {
      "module baz;\n"
      "endmodule\n"
      "`endif\n"},
+
+    // unary: + - !  ~ & | ^  ~& ~| ~^ ^~
+    {"module m;foo bar(.x(-{a,b}));endmodule",
+     "module m;\n"
+     "  foo bar (.x(-{a, b}));\n"
+     "endmodule\n"},
+    {"module m;foo bar(.x(!{a,b}));endmodule",
+     "module m;\n"
+     "  foo bar (.x(!{a, b}));\n"
+     "endmodule\n"},
+    {"module m;foo bar(.x(~{a,b}));endmodule",
+     "module m;\n"
+     "  foo bar (.x(~{a, b}));\n"
+     "endmodule\n"},
+    {"module m;foo bar(.x(&{a,b}));endmodule",
+     "module m;\n"
+     "  foo bar (.x(&{a, b}));\n"
+     "endmodule\n"},
+    {"module m;foo bar(.x(|{a,b}));endmodule",
+     "module m;\n"
+     "  foo bar (.x(|{a, b}));\n"
+     "endmodule\n"},
+    {"module m;foo bar(.x(^{a,b}));endmodule",
+     "module m;\n"
+     "  foo bar (.x(^{a, b}));\n"
+     "endmodule\n"},
+    {"module m;foo bar(.x(~&{a,b}));endmodule",
+     "module m;\n"
+     "  foo bar (.x(~&{a, b}));\n"
+     "endmodule\n"},
+    {"module m;foo bar(.x(~|{a,b}));endmodule",
+     "module m;\n"
+     "  foo bar (.x(~|{a, b}));\n"
+     "endmodule\n"},
+    {"module m;foo bar(.x(~^{a,b}));endmodule",
+     "module m;\n"
+     "  foo bar (.x(~^{a, b}));\n"
+     "endmodule\n"},
+    {"module m;foo bar(.x(^~{a,b}));endmodule",
+     "module m;\n"
+     "  foo bar (.x(^~{a, b}));\n"
+     "endmodule\n"},
+
+    // binary: + - * / % & | ^ ^~ ~^ && ||
+    {"module m;foo bar(.x(a+b));endmodule",
+     "module m;\n"
+     "  foo bar (.x(a + b));\n"
+     "endmodule\n"},
+    {"module m;foo bar(.x(a-b));endmodule",
+     "module m;\n"
+     "  foo bar (.x(a - b));\n"
+     "endmodule\n"},
+    {"module m;foo bar(.x(a*b));endmodule",
+     "module m;\n"
+     "  foo bar (.x(a * b));\n"
+     "endmodule\n"},
+    {"module m;foo bar(.x(a/b));endmodule",
+     "module m;\n"
+     "  foo bar (.x(a / b));\n"
+     "endmodule\n"},
+    {"module m;foo bar(.x(a%b));endmodule",
+     "module m;\n"
+     "  foo bar (.x(a % b));\n"
+     "endmodule\n"},
+    {"module m;foo bar(.x(a&b));endmodule",
+     "module m;\n"
+     "  foo bar (.x(a & b));\n"
+     "endmodule\n"},
+    {"module m;foo bar(.x(a|b));endmodule",
+     "module m;\n"
+     "  foo bar (.x(a | b));\n"
+     "endmodule\n"},
+    {"module m;foo bar(.x(a^b));endmodule",
+     "module m;\n"
+     "  foo bar (.x(a ^ b));\n"
+     "endmodule\n"},
+    {"module m;foo bar(.x(a^~b));endmodule",
+     "module m;\n"
+     "  foo bar (.x(a ^~ b));\n"
+     "endmodule\n"},
+    {"module m;foo bar(.x(a~^b));endmodule",
+     "module m;\n"
+     "  foo bar (.x(a ~^ b));\n"
+     "endmodule\n"},
+    {"module m;foo bar(.x(a&&b));endmodule",
+     "module m;\n"
+     "  foo bar (.x(a && b));\n"
+     "endmodule\n"},
+    {"module m;foo bar(.x(a||b));endmodule",
+     "module m;\n"
+     "  foo bar (.x(a || b));\n"
+     "endmodule\n"},
+
+    // {a} op {b}
+    {"module m;foo bar(.x({a}+{b}));endmodule",
+     "module m;\n"
+     "  foo bar (.x({a} + {b}));\n"
+     "endmodule\n"},
+    {"module m;foo bar(.x({a}-{b}));endmodule",
+     "module m;\n"
+     "  foo bar (.x({a} - {b}));\n"
+     "endmodule\n"},
+    {"module m;foo bar(.x({a}*{b}));endmodule",
+     "module m;\n"
+     "  foo bar (.x({a} * {b}));\n"
+     "endmodule\n"},
+    {"module m;foo bar(.x({a}/{b}));endmodule",
+     "module m;\n"
+     "  foo bar (.x({a} / {b}));\n"
+     "endmodule\n"},
+    {"module m;foo bar(.x({a}%{b}));endmodule",
+     "module m;\n"
+     "  foo bar (.x({a} % {b}));\n"
+     "endmodule\n"},
+    {"module m;foo bar(.x({a}&{b}));endmodule",
+     "module m;\n"
+     "  foo bar (.x({a} & {b}));\n"
+     "endmodule\n"},
+    {"module m;foo bar(.x({a}|{b}));endmodule",
+     "module m;\n"
+     "  foo bar (.x({a} | {b}));\n"
+     "endmodule\n"},
+    {"module m;foo bar(.x({a}^{b}));endmodule",
+     "module m;\n"
+     "  foo bar (.x({a} ^ {b}));\n"
+     "endmodule\n"},
+    {"module m;foo bar(.x({a}^~{b}));endmodule",
+     "module m;\n"
+     "  foo bar (.x({a} ^~ {b}));\n"
+     "endmodule\n"},
+    {"module m;foo bar(.x({a}~^{b}));endmodule",
+     "module m;\n"
+     "  foo bar (.x({a} ~^ {b}));\n"
+     "endmodule\n"},
+    {"module m;foo bar(.x({a}&&{b}));endmodule",
+     "module m;\n"
+     "  foo bar (.x({a} && {b}));\n"
+     "endmodule\n"},
+    {"module m;foo bar(.x({a}||{b}));endmodule",
+     "module m;\n"
+     "  foo bar (.x({a} || {b}));\n"
+     "endmodule\n"},
+
+    // (a) op (b)
+    {"module m;foo bar(.x((a)+(b)));endmodule",
+     "module m;\n"
+     "  foo bar (.x((a) + (b)));\n"
+     "endmodule\n"},
+    {"module m;foo bar(.x((a)-(b)));endmodule",
+     "module m;\n"
+     "  foo bar (.x((a) - (b)));\n"
+     "endmodule\n"},
+    {"module m;foo bar(.x((a)*(b)));endmodule",
+     "module m;\n"
+     "  foo bar (.x((a) * (b)));\n"
+     "endmodule\n"},
+    {"module m;foo bar(.x((a)/(b)));endmodule",
+     "module m;\n"
+     "  foo bar (.x((a) / (b)));\n"
+     "endmodule\n"},
+    {"module m;foo bar(.x((a)%(b)));endmodule",
+     "module m;\n"
+     "  foo bar (.x((a) % (b)));\n"
+     "endmodule\n"},
+    {"module m;foo bar(.x((a)&(b)));endmodule",
+     "module m;\n"
+     "  foo bar (.x((a) & (b)));\n"
+     "endmodule\n"},
+    {"module m;foo bar(.x((a)|(b)));endmodule",
+     "module m;\n"
+     "  foo bar (.x((a) | (b)));\n"
+     "endmodule\n"},
+    {"module m;foo bar(.x((a)^(b)));endmodule",
+     "module m;\n"
+     "  foo bar (.x((a) ^ (b)));\n"
+     "endmodule\n"},
+    {"module m;foo bar(.x((a)^~(b)));endmodule",
+     "module m;\n"
+     "  foo bar (.x((a) ^~ (b)));\n"
+     "endmodule\n"},
+    {"module m;foo bar(.x((a)~^(b)));endmodule",
+     "module m;\n"
+     "  foo bar (.x((a) ~^ (b)));\n"
+     "endmodule\n"},
+    {"module m;foo bar(.x((a)&&(b)));endmodule",
+     "module m;\n"
+     "  foo bar (.x((a) && (b)));\n"
+     "endmodule\n"},
+    {"module m;foo bar(.x((a)||(b)));endmodule",
+     "module m;\n"
+     "  foo bar (.x((a) || (b)));\n"
+     "endmodule\n"},
+
+    // a[b] op c
+    {"module m;foo bar(.x(a[b]+c));endmodule",
+     "module m;\n"
+     "  foo bar (.x(a[b] + c));\n"
+     "endmodule\n"},
+    {"module m;foo bar(.x(a[b]-c));endmodule",
+     "module m;\n"
+     "  foo bar (.x(a[b] - c));\n"
+     "endmodule\n"},
+    {"module m;foo bar(.x(a[b]*c));endmodule",
+     "module m;\n"
+     "  foo bar (.x(a[b] * c));\n"
+     "endmodule\n"},
+    {"module m;foo bar(.x(a[b]/c));endmodule",
+     "module m;\n"
+     "  foo bar (.x(a[b] / c));\n"
+     "endmodule\n"},
+    {"module m;foo bar(.x(a[b]%c));endmodule",
+     "module m;\n"
+     "  foo bar (.x(a[b] % c));\n"
+     "endmodule\n"},
+    {"module m;foo bar(.x(a[b]&c));endmodule",
+     "module m;\n"
+     "  foo bar (.x(a[b] & c));\n"
+     "endmodule\n"},
+    {"module m;foo bar(.x(a[b]|c));endmodule",
+     "module m;\n"
+     "  foo bar (.x(a[b] | c));\n"
+     "endmodule\n"},
+    {"module m;foo bar(.x(a[b]^c));endmodule",
+     "module m;\n"
+     "  foo bar (.x(a[b] ^ c));\n"
+     "endmodule\n"},
+    {"module m;foo bar(.x(a[b]^~c));endmodule",
+     "module m;\n"
+     "  foo bar (.x(a[b] ^~ c));\n"
+     "endmodule\n"},
+    {"module m;foo bar(.x(a[b]~^c));endmodule",
+     "module m;\n"
+     "  foo bar (.x(a[b] ~^ c));\n"
+     "endmodule\n"},
+    {"module m;foo bar(.x(a[b]&&c));endmodule",
+     "module m;\n"
+     "  foo bar (.x(a[b] && c));\n"
+     "endmodule\n"},
+    {"module m;foo bar(.x(a[b]||c));endmodule",
+     "module m;\n"
+     "  foo bar (.x(a[b] || c));\n"
+     "endmodule\n"},
+
+    // misc
+    {"module m;foo bar(.x(a[1:0]^b[2:1]));endmodule",
+     "module m;\n"
+     "  foo bar (.x(a[1:0] ^ b[2:1]));\n"
+     "endmodule\n"},
+
+    {"module m;foo bar(.x(a[b] | b[c]));endmodule",
+     "module m;\n"
+     "  foo bar (.x(a[b] | b[c]));\n"
+     "endmodule\n"},
+    {"module m;foo bar(.x(a[b] & b[c]));endmodule",
+     "module m;\n"
+     "  foo bar (.x(a[b] & b[c]));\n"
+     "endmodule\n"},
+
+    {"module m;foo bar(.x((a^c)^(b^ ~c)));endmodule",
+     "module m;\n"
+     "  foo bar (.x((a ^ c) ^ (b ^ ~c)));\n"
+     "endmodule\n"},
+    {"module m;foo bar(.x((a^c)^(b^~c)));endmodule",
+     "module m;\n"
+     "  foo bar (.x((a ^ c) ^ (b ^~ c)));\n"
+     "endmodule\n"},
+    {"module m;foo bar(.x((a^{c,d})^(b^^{c,d})));endmodule",
+     "module m;\n"
+     "  foo bar (\n"
+     "      .x((a ^ {c, d}) ^ (b ^ ^{c, d}))\n"
+     "  );\n"
+     "endmodule\n"},
+
     {// module items mixed with preprocessor conditionals and comments
      "    module foo;\n"
      "// comment1\n"
