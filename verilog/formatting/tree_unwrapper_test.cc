@@ -934,6 +934,108 @@ const TreeUnwrapperTestData kUnwrapModuleTestCases[] = {
     },
 
     {
+        "module with conditional generate statement blocks with labels",
+        "module zv;\n"
+        "if (x) begin\n"
+        "end : l1\n"
+        "else begin\n"
+        "end\n"
+        "endmodule;\n",
+        ModuleHeader(0, L(0, {"module", "zv", ";"})),
+        ModuleItemList(1,
+            N(1,
+              L(1, {"if", "(", "x", ")", "begin"}),
+              L(1, {"end", ":", "l1"}),
+              L(1, {"else", "begin"}),
+              L(1, {"end"}))),
+        L(0, {"endmodule", ";"}),
+    },
+
+    {
+        "module with conditional generate statement blocks",
+        "module zw;\n"
+        "if (x) begin\n"
+        "end\n"
+        "else begin\n"
+        "end\n"
+        "endmodule;\n",
+        ModuleHeader(0, L(0, {"module", "zw", ";"})),
+        ModuleItemList(1,
+            N(1,
+              L(1, {"if", "(", "x", ")", "begin"}),
+              L(1, {"end", "else", "begin"}),
+              L(1, {"end"}))),
+        L(0, {"endmodule", ";"}),
+    },
+
+    {
+        "module with conditional generate single-statements",
+        "module zx;\n"
+        "if (x) assign z=y;\n"
+        "else assign x=y;\n"
+        "endmodule;\n",
+        ModuleHeader(0, L(0, {"module", "zx", ";"})),
+        ModuleItemList(1,
+            N(1,
+              N(1,
+                L(1, {"if", "(", "x", ")"}),
+                NL(2, {"assign", "z", "=", "y", ";"})),
+              N(1,
+                L(1, {"else"}),
+                NL(2, {"assign", "x", "=", "y", ";"})))),
+        L(0, {"endmodule", ";"}),
+    },
+
+    {
+        "module with conditional generate statement blocks with labels",
+        "module zy;\n"
+        "if (x) begin:z1\n"
+        "assign x=y;\n"
+        "end\n"
+        "else\n"
+        "if (y) begin:z2\n"
+        "assign z=y;\n"
+        "end\n"
+        "endmodule;\n",
+        ModuleHeader(0, L(0, {"module", "zy", ";"})),
+        ModuleItemList(1,
+            N(1,
+              L(1, {"if", "(", "x", ")", "begin", ":", "z1"}),
+              N(2,
+                NL(2, {"assign", "x", "=", "y", ";"})),
+              L(1, {"end", "else", "if", "(", "y", ")", "begin", ":", "z2"}),
+              N(2,
+                NL(2, {"assign", "z", "=", "y", ";"})),
+              L(1, {"end"}))),
+        L(0, {"endmodule", ";"}),
+    },
+
+    {
+        "module with conditional generate statement blocks with labels",
+        "module zz;\n"
+        "if (x) begin:z1\n"
+        "assign x=y;\n"
+        "end\n"
+        "if (y) begin:z2\n"
+        "assign z=y;\n"
+        "end\n"
+        "endmodule;\n",
+        ModuleHeader(0, L(0, {"module", "zz", ";"})),
+        ModuleItemList(1,
+            N(1,
+              L(1, {"if", "(", "x", ")", "begin", ":", "z1"}),
+              N(2,
+                NL(2, {"assign", "x", "=", "y", ";"})),
+              L(1, {"end"})),
+            N(1,
+              L(1, {"if", "(", "y", ")", "begin", ":", "z2"}),
+              N(2,
+                NL(2, {"assign", "z", "=", "y", ";"})),
+              L(1, {"end"}))),
+        L(0, {"endmodule", ";"}),
+    },
+
+    {
         "module with conditional generate block and macro call item",
         "module conditional_generate_macros;\n"
         "if (foo) begin\n"
