@@ -24,31 +24,6 @@
 namespace verilog {
 namespace formatter {
 
-// Formatting policy around using original input spaces.
-enum class PreserveSpaces {
-  // Completely discards all white space information from original input.
-  // Performs wrapping optimization.
-  None,
-
-  // Use original spacing in inter-token cases that are not explicitly handled
-  // in case logic.  Performs wrapping optimization on explicitly covered
-  // inter-token cases.
-  UnhandledCasesOnly,
-
-  // Do NO formatting and print the pre-existing spaces between tokens
-  // instead of calculating ideal spaces.  This is only used for internal
-  // testing and debugging, and not intended for production use.
-  All,
-};
-
-std::ostream& operator<<(std::ostream&, PreserveSpaces);
-
-// Flag handling for PreserveSpaces.
-bool AbslParseFlag(absl::string_view, PreserveSpaces*, std::string*);
-std::string AbslUnparseFlag(const PreserveSpaces& mode);
-
-// TODO(b/140277909): separate policy for vertical spaces and line breaks.
-
 // Style parameters that are specific to Verilog formatter
 struct FormatStyle : public verible::BasicFormatStyle {
   // TODO(fangism): introduce the following knobs:
@@ -57,8 +32,8 @@ struct FormatStyle : public verible::BasicFormatStyle {
   // generally discouraged.
   // int break_before_separator_penalty = 20;
 
-  // Vertical (inter-line) space preservation policy.
-  PreserveSpaces preserve_vertical_spaces = PreserveSpaces::None;
+  // TODO(fangism): parameter to limit number of consecutive blank lines to
+  // preserve between partitions.
 };
 
 }  // namespace formatter

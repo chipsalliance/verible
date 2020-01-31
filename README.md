@@ -286,11 +286,6 @@ To pipe from stdin, use '-' as <file>.
       default: false;
     --max_search_states (Limits the number of search states explored during line
       wrap optimization.); default: 100000;
-    --preserve_vspaces (Mode that controls how original inter-line (vertical)
-      spacing is used.
-      none: disregard all original spacing
-      all: keep original vertical spacing (newlines only, no spaces/tabs)
-      unhandled: same as 'all' (for now).); default: unhandled;
     --show_equally_optimal_wrappings (If true, print when multiple optimal
       solutions are found (stderr), but continue to operate normally.);
       default: false;

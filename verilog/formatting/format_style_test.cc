@@ -22,26 +22,7 @@
 
 namespace verilog {
 namespace formatter {
-
-extern const std::initializer_list<
-    std::pair<const absl::string_view, PreserveSpaces>>
-    kPreserveSpacesStringMap;
-
 namespace {
-TEST(EnumFlagsTest, ParseFlagValidValues) {
-  verible::EnumFlagsParseValidValuesTester<PreserveSpaces>(
-      kPreserveSpacesStringMap);
-}
-
-TEST(EnumFlagsTest, ParseFlagTestInvalidValue) {
-  verible::EnumFlagsParseInvalidValuesTester<PreserveSpaces>(
-      kPreserveSpacesStringMap, "strawberry_preserves");
-}
-
-TEST(EnumFlagsTest, UnparseFlags) {
-  verible::EnumFlagsUnparseFlagsTester<PreserveSpaces>(
-      kPreserveSpacesStringMap);
-}
 
 }  // namespace
 }  // namespace formatter

@@ -70,83 +70,34 @@ FormattedExcerpt::FormattedExcerpt(const UnwrappedLine& uwline)
   }
 }
 
-static size_t NewlineCount(absl::string_view s) {
-  return std::count(s.begin(), s.end(), '\n');
-}
-
-// Preserve only the newlines of a string of whitespaces.
-size_t FormattedExcerpt::PreservedNewlinesCount(absl::string_view text,
-                                                bool is_first_line) {
-  // There is a minimum of 1 because this is being printed before
-  // a formatter partition that starts on a new line.
-  // The very first line, however, is already at the start of a newline,
-  // so the minimum need not apply.
-  const size_t original_newlines = NewlineCount(text);
-  return is_first_line ? original_newlines
-                       : std::max(original_newlines, size_t(1));
-  // TODO(fangism): max of 1 blank line, even if count>2?
-}
-
-std::ostream& FormattedExcerpt::FormatLinePreserveLeadingSpace(
-    std::ostream& stream) const {
-  if (tokens_.empty()) return stream;
-
-  // Explicitly preserve spaces before first token in each line.
-  {
-    auto replaced_first_token(tokens_.front());  // copy, then modify
-    replaced_first_token.before.action = SpacingDecision::Preserve;
-    stream << replaced_first_token;
-  }
-
-  const auto remaining_tokens = make_range(tokens_.begin() + 1, tokens_.end());
-  for (const auto& ftoken : remaining_tokens) {
-    stream << ftoken;
-    // Don't print newline here, let next line print pre-existing space.
-  }
-  return stream;
-}
-
-std::ostream& FormattedExcerpt::FormatLinePreserveLeadingNewlines(
-    std::ostream& stream, bool is_first_line) const {
-  if (tokens_.empty()) return stream;
-
-  // Explicitly preserve newlines before first token in each line.
-  {
-    auto replaced_first_token(tokens_.front());  // copy, then modify
-    const auto original_spacing = replaced_first_token.OriginalLeadingSpaces();
-    replaced_first_token.before.action = SpacingDecision::Append;
-    // Print preserved newlines, then indentation spaces, then token text.
-    stream << Spacer(PreservedNewlinesCount(original_spacing, is_first_line),
-                     '\n')
-           << replaced_first_token;
-  }
-
-  const auto remaining_tokens = make_range(tokens_.begin() + 1, tokens_.end());
-  for (const auto& ftoken : remaining_tokens) {
-    stream << ftoken;
-    // Don't print newline here, let next line print pre-existing space.
-  }
-  return stream;
-}
-
-std::ostream& FormattedExcerpt::FormattedText(std::ostream& stream) const {
+std::ostream& FormattedExcerpt::FormattedText(std::ostream& stream,
+                                              bool indent) const {
   // Let caller print the preceding/trailing newline.
-  // Indentation is expected to be accounted for in the first token.
-  for (const auto& ftoken : tokens_) {
-    stream << ftoken;
+  if (indent) {
+    // Indentation is expected to be accounted for in the first token.
+    for (const auto& ftoken : tokens_) {
+      stream << ftoken;
+    }
+  } else {
+    // We do not want the indentation before the first token, if it was
+    // already handled separately.
+    stream << tokens_.front().token->text;
+    for (const auto& ftoken :
+         verible::make_range(tokens_.begin() + 1, tokens_.end())) {
+      stream << ftoken;
+    }
   }
-  // TODO(fangism): if (!enabled_) print out original formatting.
   return stream;
 }
 
 std::ostream& operator<<(std::ostream& stream,
                          const FormattedExcerpt& excerpt) {
-  return excerpt.FormattedText(stream);
+  return excerpt.FormattedText(stream, true);
 }
 
 std::string FormattedExcerpt::Render() const {
   std::ostringstream stream;
-  FormattedText(stream);
+  FormattedText(stream, true);
   return stream.str();
 }
 

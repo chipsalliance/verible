@@ -25,35 +25,5 @@
 namespace verilog {
 namespace formatter {
 
-// This mapping defines how this enum is displayed and parsed.
-// This is given extern linkage for the sake of testing, but not exposed
-// in the public header.
-extern const std::initializer_list<
-    std::pair<const absl::string_view, PreserveSpaces>>
-    kPreserveSpacesStringMap = {
-        {"none", PreserveSpaces::None},
-        {"unhandled", PreserveSpaces::UnhandledCasesOnly},
-        {"all", PreserveSpaces::All},
-};
-
-std::ostream& operator<<(std::ostream& stream, PreserveSpaces p) {
-  static const auto* flag_map =
-      verible::MakeEnumToStringMap(kPreserveSpacesStringMap);
-  return stream << flag_map->find(p)->second;
-}
-
-bool AbslParseFlag(absl::string_view text, PreserveSpaces* mode,
-                   std::string* error) {
-  static const auto* flag_map =
-      verible::MakeStringToEnumMap(kPreserveSpacesStringMap);
-  return EnumMapParseFlag(*flag_map, text, mode, error);
-}
-
-std::string AbslUnparseFlag(const PreserveSpaces& mode) {
-  std::ostringstream stream;
-  stream << mode;
-  return stream.str();
-}
-
 }  // namespace formatter
 }  // namespace verilog

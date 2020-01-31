@@ -140,22 +140,9 @@ class FormattedExcerpt {
   // Note: The mutable variant is only intended for use in StateNode.
   std::vector<FormattedToken>& MutableTokens() { return tokens_; }
 
-  // Returns the number of newlines that should be preserved, given text.
-  // If is_first_line is true, suppress the 1-newline minimum.
-  static size_t PreservedNewlinesCount(absl::string_view text,
-                                       bool is_first_line);
-
-  // Formats text spanned by format tokens, and preserves leading horizontal
-  // (and vertical) spacing before first token.
-  std::ostream& FormatLinePreserveLeadingSpace(std::ostream& stream) const;
-
-  // Formats text spanned by format tokens, and preserves leading vertical
-  // spacing before first token.
-  std::ostream& FormatLinePreserveLeadingNewlines(std::ostream& stream,
-                                                  bool is_first_line) const;
-
-  // Prints formatted text.
-  std::ostream& FormattedText(std::ostream&) const;
+  // Prints formatted text.  If indent is true, include the spacing
+  // that is to the left of the first token.
+  std::ostream& FormattedText(std::ostream&, bool indent) const;
 
   // Returns formatted code as a string.
   std::string Render() const;

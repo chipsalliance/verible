@@ -43,7 +43,6 @@ using verible::util::StatusCode;
 using verilog::formatter::ExecutionControl;
 using verilog::formatter::FormatStyle;
 using verilog::formatter::FormatVerilog;
-using verilog::formatter::PreserveSpaces;
 
 // TODO(fangism): Provide -i alias, as it is canonical to many formatters
 ABSL_FLAG(bool, inplace, false,
@@ -64,13 +63,6 @@ ABSL_FLAG(bool, show_equally_optimal_wrappings, false,
 ABSL_FLAG(int, max_search_states, 100000,
           "Limits the number of search states explored during "
           "line wrap optimization.");
-
-ABSL_FLAG(
-    PreserveSpaces, preserve_vspaces, PreserveSpaces::UnhandledCasesOnly,
-    R"(Mode that controls how original inter-line (vertical) spacing is used.
-  none: disregard all original spacing
-  all: keep original vertical spacing (newlines only, no spaces/tabs)
-  unhandled: same as 'all' (for now).)");
 
 int main(int argc, char** argv) {
   const auto usage = absl::StrCat("usage: ", argv[0],
@@ -119,7 +111,7 @@ int main(int argc, char** argv) {
   }
 
   FormatStyle format_style;
-  { format_style.preserve_vertical_spaces = FLAGS_preserve_vspaces.Get(); }
+  // TODO(fangism): support style configuration from flags.
 
   std::ostringstream stream;
   const auto format_status = FormatVerilog(

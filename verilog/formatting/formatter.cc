@@ -71,10 +71,6 @@ class Formatter {
   void Emit(std::ostream& stream) const;
 
  private:
-  absl::string_view TrailingWhiteSpaces() const;
-
-  // protected for testing
- protected:
   // Contains structural information about the code to format, such as
   // TokenSequence from lexing, and ConcreteSyntaxTree from parsing
   const verible::TextStructureView& text_structure_;
@@ -445,62 +441,26 @@ Status Formatter::Format(const ExecutionControl& control) {
   return verible::util::OkStatus();
 }
 
-// Returns text between last token and EOF.
-absl::string_view Formatter::TrailingWhiteSpaces() const {
-  const absl::string_view full_text(text_structure_.Contents());
-  if (formatted_lines_.empty()) {
-    // Text contains only whitespace tokens.
-    return full_text;
-  } else {
-    // Preserve vertical spaces between last token and EOF.
-    const auto& last_line = formatted_lines_.back().Tokens();
-    const auto* end_of_buffer = full_text.end();
-    if (last_line.empty()) {
-      return absl::string_view(end_of_buffer, 0);
-    } else {
-      const auto* last_printed_offset = last_line.back().token->text.end();
-      return verible::make_string_view_range(last_printed_offset,
-                                             end_of_buffer);
-    }
-  }
-}
-
 void Formatter::Emit(std::ostream& stream) const {
   const absl::string_view full_text(text_structure_.Contents());
-  switch (style_.preserve_vertical_spaces) {
-    case PreserveSpaces::None: {
-      for (const auto& line : formatted_lines_) {
-        stream << line;
-        // Normally, print a '\n' after this FormattedExcerpt.
-        // The exception is when the space that follows the last token
-        // on this line is covered by one of the formatting-disabled
-        // intervals.  In that case, print the original spacing instead.
-        const auto back_offset = line.Tokens().back().token->right(full_text);
-        if (!disabled_ranges_.Contains(back_offset)) stream << '\n';
-      }
-      // possibly preserve spaces after the last token
-      if (disabled_ranges_.Contains(full_text.length() - 1)) {
-        stream << TrailingWhiteSpaces();
-      }
-      break;
-    }
-    case PreserveSpaces::All:
-    case PreserveSpaces::UnhandledCasesOnly:
-      bool is_first_line = true;
-      for (const auto& line : formatted_lines_) {
-        line.FormatLinePreserveLeadingNewlines(stream, is_first_line);
-        is_first_line = false;
-      }
-      // Handle trailing spaces after last token.
-      const size_t newline_count =
-          verible::FormattedExcerpt::PreservedNewlinesCount(
-              TrailingWhiteSpaces(), is_first_line);
-      stream << verible::Spacer(newline_count, '\n');
-      break;
+  int position = 0;  // tracks with the position in the original full_text
+  for (const auto& line : formatted_lines_) {
+    const auto front_offset = line.Tokens().front().token->left(full_text);
+    const absl::string_view leading_whitespace(
+        full_text.substr(position, front_offset - position));
+    FormatWhitespaceWithDisabledByteRanges(full_text, leading_whitespace,
+                                           disabled_ranges_, stream);
+    // When front of first token is format-disabled, the previous call will
+    // already cover the space up to the front token, in which case,
+    // the left-indentation for this line should be suppressed to avoid
+    // being printed twice.
+    line.FormattedText(stream, !disabled_ranges_.Contains(front_offset));
+    position = line.Tokens().back().token->right(full_text);
   }
-  // TODO(fangism): This currently doesn't adequately handle anything betweeen
-  // PreserveSpace::None and ::All, needs a clean policy for
-  // PreserveSpace::UnhandledCasesOnly.
+  // Handle trailing spaces after last token.
+  const absl::string_view trailing_whitespace(full_text.substr(position));
+  FormatWhitespaceWithDisabledByteRanges(full_text, trailing_whitespace,
+                                         disabled_ranges_, stream);
 }
 
 }  // namespace formatter

@@ -116,7 +116,6 @@ TEST(FormatterTest, FormatCustomStyleTest) {
   style.indentation_spaces = 10;  // unconventional indentation
   style.wrap_spaces = 4;
   style.over_column_limit_penalty = 50;
-  style.preserve_vertical_spaces = PreserveSpaces::None;
   for (const auto& test_case : kTestCases) {
     VLOG(1) << "code-to-format:\n" << test_case.input << "<EOF>";
     std::ostringstream stream;
@@ -129,8 +128,8 @@ TEST(FormatterTest, FormatCustomStyleTest) {
 
 static const std::initializer_list<FormatterTestCase> kFormatterTestCases = {
     {"", ""},
-    {"\n", ""},    // TODO(b/140277909): preserve blank lines
-    {"\n\n", ""},  // TODO(b/140277909): preserve blank lines
+    {"\n", "\n"},
+    {"\n\n", "\n\n"},
     // preprocessor test cases
     {"`include    \"path/to/file.vh\"\n", "`include \"path/to/file.vh\"\n"},
     {"`define    FOO\n", "`define FOO\n"},
@@ -153,7 +152,7 @@ static const std::initializer_list<FormatterTestCase> kFormatterTestCases = {
      "`define   BAR\n\n"  // one more blank line
      "`endif\n",
      "`ifndef FOO\n"
-     "`define BAR\n"  // TODO(fangism): preserve some blank lines from input
+     "`define BAR\n\n"
      "`endif\n"},
     {"`ifdef      FOO\n"
      "  `fine()\n"
@@ -1204,6 +1203,7 @@ static const std::initializer_list<FormatterTestCase> kFormatterTestCases = {
      "endclass\n"},
     {
         // classes with surrrounding comments
+        // vertical spacing preserved
         "\n// pre-c\n\n"
         "  class   c  ;\n"
         "// c stuff\n"
@@ -1213,14 +1213,14 @@ static const std::initializer_list<FormatterTestCase> kFormatterTestCases = {
         " // d stuff\n"
         "endclass\n"
         "\n// the end\n",
-        "// pre-c\n"
+        "\n// pre-c\n\n"
         "class c;\n"
         "  // c stuff\n"
         "endclass\n"
-        "// pre-d\n"
+        "// pre-d\n\n\n"
         "class d;\n"
         "  // d stuff\n"
-        "endclass\n"
+        "endclass\n\n"
         "// the end\n",
     },
     {// class with comments around task/function declarations
@@ -2677,7 +2677,6 @@ TEST(FormatterEndToEndTest, VerilogFormatTest) {
   style.indentation_spaces = 2;
   style.wrap_spaces = 4;
   style.over_column_limit_penalty = 50;
-  style.preserve_vertical_spaces = PreserveSpaces::None;
   for (const auto& test_case : kFormatterTestCases) {
     VLOG(1) << "code-to-format:\n" << test_case.input << "<EOF>";
     std::ostringstream stream;
@@ -2804,8 +2803,6 @@ TEST(FormatterEndToEndTest, PreserveVSpacesOnly) {
       },
   };
   FormatStyle style;
-  // In this mode, preserve vertical spaces.
-  style.preserve_vertical_spaces = PreserveSpaces::All;
   for (const auto& test_case : kTestCases) {
     VLOG(1) << "code-to-format:\n" << test_case.input << "<EOF>";
     std::ostringstream stream;
@@ -2839,7 +2836,6 @@ TEST(FormatterEndToEndTest, PenaltySensitiveLineWrapping) {
   style.indentation_spaces = 2;
   style.wrap_spaces = 4;
   style.over_column_limit_penalty = 50;
-  style.preserve_vertical_spaces = PreserveSpaces::None;
   for (const auto& test_case : kFormatterTestCasesWithWrapping) {
     VLOG(1) << "code-to-format:\n" << test_case.input << "<EOF>";
     std::ostringstream stream, debug_stream;
@@ -2965,16 +2961,16 @@ static const std::initializer_list<FormatterTestCase>
          "          vv = tt;\n"
          "        end\n"
          "      end\n"
-         "    end else if (uu) begin\n"
+         "    end else if (uu) begin\n\n"
          "      a = b;\n"
-         "      if (aa) b = c;\n"
-         "      else if (bb) c = d;\n"
-         "      else e = h;\n"
+         "      if (aa) b = c;\n\n"
+         "      else if (bb) c = d;\n\n\n\n\n"
+         "      else e = h;\n\n"
          "    end else begin\n"
          "      if (x) y = a;\n"
-         "      else begin\n"
+         "      else begin\n\n\n\n"
          "        a = y;\n"
-         "        if (a) b = c;\n"
+         "        if (a) b = c;\n\n\n\n"
          "        else d = e;\n"
          "      end\n"
          "    end\n"
@@ -2988,7 +2984,6 @@ TEST(FormatterEndToEndTest, FormatElseStatements) {
   style.indentation_spaces = 2;
   style.wrap_spaces = 4;
   style.over_column_limit_penalty = 50;
-  style.preserve_vertical_spaces = PreserveSpaces::None;
   for (const auto& test_case : kFormatterTestCasesElseStatements) {
     VLOG(1) << "code-to-format:\n" << test_case.input << "<EOF>";
     std::ostringstream stream;
