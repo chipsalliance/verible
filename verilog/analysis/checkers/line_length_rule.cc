@@ -146,14 +146,17 @@ void LineLengthRule::Lint(const TextStructureView& text_structure,
   size_t lineno = 0;
   for (const auto& line : text_structure.Lines()) {
     VLOG(2) << "Examining line: " << lineno + 1;
-    if (line.length() > kMaxLineLength) {
+    const int observed_line_length = line.length();
+    if (observed_line_length > kMaxLineLength) {
       const auto token_range = text_structure.TokenRangeOnLine(lineno);
       // Recall that token_range is *unfiltered* and may contain non-essential
       // whitespace 'tokens'.
       if (!AllowLongLineException(token_range.begin(), token_range.end())) {
         // Fake a token that marks the offending range of text.
         TokenInfo token(TK_OTHER, line.substr(kMaxLineLength));
-        violations_.insert(LintViolation(token, kMessage));
+        const std::string msg = absl::StrCat(kMessage, kMaxLineLength,
+                                             "; is: ", observed_line_length);
+        violations_.insert(LintViolation(token, msg));
       }
     }
     ++lineno;

@@ -283,7 +283,8 @@ TEST_F(VerilogLinterTest, KnownTextStructureLintViolation) {
       "endmodule\n");
   EXPECT_TRUE(diagnostics.first.ok());
   EXPECT_THAT(diagnostics.second,
-              StartsWith("long.sv:2:101: Line length exceeds max:  "));
+              StartsWith("long.sv:2:101: Line length exceeds "
+                         "max: 100; is: 114"));
   EXPECT_THAT(diagnostics.second, EndsWith("[line-length]\n"));
 }
 
@@ -312,7 +313,7 @@ TEST_F(VerilogLinterTest, ModuleBodyLineLength) {
       "yyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyy[777777777777];\n");
   EXPECT_TRUE(diagnostics.first.ok());
   EXPECT_THAT(diagnostics.second,
-              StartsWith("module-body.sv:3:101: Line length exceeds max:  "));
+              StartsWith("module-body.sv:3:101: Line length exceeds max: "));
   EXPECT_THAT(diagnostics.second, EndsWith("[line-length]\n"));
 }
 
