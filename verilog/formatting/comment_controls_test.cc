@@ -311,6 +311,77 @@ TEST(EnabledLinesToDisabledByteRangesTest, AllCases) {
   }
 }
 
+struct FormatWhitespaceTestCase {
+  absl::string_view full_text;
+  std::pair<int, int> substring_range;
+  ByteOffsetSet disabled_ranges;
+  absl::string_view expected;
+};
+
+TEST(FormatWhitespaceWithDisabledByteRangesTest, InvalidSubstring) {
+  const absl::string_view foo("foo"), bar("bar");
+  std::ostringstream stream;
+  EXPECT_DEATH(FormatWhitespaceWithDisabledByteRanges(foo, bar, {}, stream),
+               "IsSubRange");
+}
+
+TEST(FormatWhitespaceWithDisabledByteRangesTest, EmptyStrings) {
+  // The only special character in these functions/tests is '\n',
+  // everything else is treated the same, space or not.
+  // We use nonspace characters for positional readability.
+  const FormatWhitespaceTestCase kTestCases[] = {
+      {"", {0, 0}, {}, ""},
+      {"\n", {0, 0}, {}, ""},
+      {"\n", {0, 1}, {}, "\n"},
+      {"\n\n", {0, 1}, {}, "\n"},
+      {"\n\n", {1, 2}, {}, "\n"},
+      {"\n\n", {1, 1}, {}, "\n"},  // space text is ""
+      {"\n\n", {0, 2}, {}, "\n\n"},
+      {"\n\n", {0, 2}, {{0, 1}}, "\n\n"},
+      {"\n\n", {0, 2}, {{1, 2}}, "\n\n"},
+      {"\n\n", {0, 2}, {{0, 2}}, "\n\n"},
+      {"abcd", {0, 2}, {}, ""},
+      {"abcd", {1, 3}, {}, "\n"},
+      {"abcd", {1, 3}, {{0, 1}, {3, 4}}, "\n"},
+      {"abcd", {1, 3}, {{0, 4}}, "bc"},
+      {"abcd", {0, 2}, {{0, 4}}, "ab"},
+      {"abcd", {2, 4}, {{0, 4}}, "cd"},
+      {"abcd", {1, 3}, {{0, 2}}, "b\n"},  // semi-disabled
+      {"abcd", {1, 3}, {{2, 4}}, "c\n"},  // semi-disabled
+      {"abcd", {0, 0}, {{0, 4}}, ""},
+      {"abcd", {1, 1}, {{0, 4}}, ""},
+      {"abcd", {0, 0}, {}, ""},
+      {"abcd", {1, 1}, {}, "\n"},
+      {"ab\ncd\nef\n", {2, 5}, {}, "\n"},
+      {"ab\ncd\nef\n", {2, 6}, {}, "\n\n"},
+      {"ab\ncd\nef\n", {3, 6}, {}, "\n"},
+      {"ab\ncd\nef\n", {3, 7}, {}, "\n"},
+      {"ab\ncd\nef\n", {2, 5}, {{0, 9}}, "\ncd"},
+      {"ab\ncd\nef\n", {2, 6}, {{0, 9}}, "\ncd\n"},
+      {"ab\ncd\nef\n", {3, 6}, {{0, 9}}, "cd\n"},
+      {"ab\ncd\nef\n", {3, 7}, {{0, 9}}, "cd\ne"},
+      {"ab\ncd\nef\n", {3, 9}, {{0, 9}}, "cd\nef\n"},
+      {"ab\ncd\nef\n", {3, 9}, {}, "\n\n"},
+      {"ab\ncd\nef\n", {3, 9}, {{3, 4}}, "c\n\n"},
+      {"ab\ncd\nef\n", {3, 9}, {{4, 5}}, "d\n\n"},
+      {"ab\ncd\nef\n", {3, 9}, {{5, 6}}, "\n\n"},
+      {"ab\ncd\nef\n", {3, 9}, {{6, 7}}, "\ne\n"},
+      {"ab\ncd\nef\n", {3, 9}, {{7, 8}}, "\nf\n"},
+      {"ab\ncd\nef\n", {3, 9}, {{8, 9}}, "\n\n"},
+  };
+  for (const auto& test : kTestCases) {
+    std::ostringstream stream;
+    const auto substr = test.full_text.substr(
+        test.substring_range.first,
+        test.substring_range.second - test.substring_range.first);
+    FormatWhitespaceWithDisabledByteRanges(test.full_text, substr,
+                                           test.disabled_ranges, stream);
+    EXPECT_EQ(stream.str(), test.expected)
+        << "text: \"" << test.full_text << "\", sub: \"" << substr
+        << "\", disabled: " << test.disabled_ranges;
+  }
+}
+
 }  // namespace
 }  // namespace formatter
 }  // namespace verilog

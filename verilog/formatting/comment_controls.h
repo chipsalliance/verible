@@ -34,10 +34,24 @@ using LineNumberSet = verible::IntervalSet<int>;
 ByteOffsetSet DisableFormattingRanges(absl::string_view text,
                                       const verible::TokenSequence& tokens);
 
+// TODO(fangism): Move these next functions into common/formatting.
+// Same with the above types.
+
 // Translates line numbers into a set of byte ranges to disable formatting.
 ByteOffsetSet EnabledLinesToDisabledByteRanges(
     const LineNumberSet& line_numbers,
     const verible::LineColumnMap& line_column_map);
+
+// Formats space between tokens while honoring formatting-disabled ranges.
+// 'text_base' is the entire original text that was formatted.
+// 'space_text' should be a slice of text inside 'text_base' containing only
+// whitespace, including tabs/newlines.
+// 'disabled_ranges' is the set of byte offsets in the original text to
+// preserve.
+// Output is written to 'stream'.
+void FormatWhitespaceWithDisabledByteRanges(
+    absl::string_view text_base, absl::string_view space_text,
+    const ByteOffsetSet& disabled_ranges, std::ostream& stream);
 
 }  // namespace formatter
 }  // namespace verilog

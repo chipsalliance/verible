@@ -22,6 +22,8 @@
 #include "absl/strings/strip.h"
 #include "common/strings/comment_utils.h"
 #include "common/util/logging.h"
+#include "common/util/range.h"
+#include "common/util/spacer.h"
 #include "verilog/parser/verilog_parser.h"
 #include "verilog/parser/verilog_token_enum.h"
 
@@ -101,6 +103,58 @@ ByteOffsetSet EnabledLinesToDisabledByteRanges(
   const int end_byte = line_column_map.EndOffset();
   byte_offsets.Complement({0, end_byte});
   return byte_offsets;
+}
+
+static size_t NewlineCount(absl::string_view s) {
+  return std::count(s.begin(), s.end(), '\n');
+}
+
+void FormatWhitespaceWithDisabledByteRanges(
+    absl::string_view text_base, absl::string_view space_text,
+    const ByteOffsetSet& disabled_ranges, std::ostream& stream) {
+  CHECK(verible::IsSubRange(space_text, text_base));
+  const int start = std::distance(text_base.begin(), space_text.begin());
+  const int end = start + space_text.length();
+  ByteOffsetSet enabled_ranges{{start, end}};  // initial interval set mask
+  enabled_ranges.Difference(disabled_ranges);
+
+  // Special case if space_text is empty.
+  if (space_text.empty() && start != 0) {
+    if (!disabled_ranges.Contains(start)) {
+      stream << '\n';
+      return;
+    }
+  }
+
+  // Traverse alternating disabled and enabled ranges.
+  bool partially_enabled = false;
+  size_t total_enabled_newlines = 0;
+  int next_start = start;  // keep track of last consumed position
+  for (const auto& range : enabled_ranges) {
+    {  // for disabled intervals, print the original spacing
+      const absl::string_view disabled(
+          text_base.substr(next_start, range.first - next_start));
+      stream << disabled;
+    }
+    {  // for enabled intervals, preserve only newlines
+      const absl::string_view enabled(
+          text_base.substr(range.first, range.second - range.first));
+      const size_t newline_count = NewlineCount(enabled);
+      stream << verible::Spacer(newline_count, '\n');
+      partially_enabled = true;
+      total_enabled_newlines += newline_count;
+    }
+    next_start = range.second;
+  }
+  // If there is a disabled interval left over, print that.
+  const absl::string_view final_disabled(
+      text_base.substr(next_start, end - next_start));
+  stream << final_disabled;
+
+  // Print at least one newline if some subrange was format-enabled.
+  if (partially_enabled && total_enabled_newlines == 0 && start != 0) {
+    stream << '\n';
+  }
 }
 
 }  // namespace formatter

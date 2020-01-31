@@ -145,6 +145,8 @@ cc_library(
         "//common/text:token_stream_view",
         "//common/util:interval_set",
         "//common/util:logging",
+        "//common/util:range",
+        "//common/util:spacer",
         "//verilog/parser:verilog_parser",
         "//verilog/parser:verilog_token_enum",
         "@com_google_absl//absl/strings",
