@@ -4745,7 +4745,7 @@ const TreeUnwrapperTestData kUnwrapPrimitivesTestCases[] = {
         "      (0?) 1 : 1 :  1; "
         "      (0?) 0 : 0 :  0; "
         "      (?0) ? : ? :  -; "
-        "       ?  (??) : ? :  -; "
+        "       ?  (?\?) : ? :  -; "
         "  endtable "
         "endprimitive ",
         L(0, {"primitive", "edge_seq", "(", "o", ",", "c", ",", "d", ")", ";"}),
@@ -4759,7 +4759,7 @@ const TreeUnwrapperTestData kUnwrapPrimitivesTestCases[] = {
             NL(2, {"(0?)", "1", ":", "1", ":", "1", ";"}),
             NL(2, {"(0?)", "0", ":", "0", ":", "0", ";"}),
             NL(2, {"(?0)", "?", ":", "?", ":", "-", ";"}),
-            NL(2, {"?", "(??)", ":", "?", ":", "-", ";"}), L(1, {"endtable"})),
+            NL(2, {"?", "(?\?)", ":", "?", ":", "-", ";"}), L(1, {"endtable"})),
         L(0, {"endprimitive"}),
     },
     {

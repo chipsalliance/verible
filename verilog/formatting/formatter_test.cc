@@ -2599,7 +2599,7 @@ static const std::initializer_list<FormatterTestCase> kFormatterTestCases = {
         "// ignore negative c\n"
         "(?0) ? : ? :  -;\n"
         "// ignore changes on steady c\n"
-        "?  (??) : ? :  -; endtable endprimitive",
+        "?  (?\?) : ? :  -; endtable endprimitive",
         "primitive edge_seq(o, c, d);\n"
         "  output o;\n"
         "  reg o;\n"
@@ -2613,7 +2613,7 @@ static const std::initializer_list<FormatterTestCase> kFormatterTestCases = {
         "    // ignore negative c\n"
         "    (?0) ? : ? : -;\n"
         "    // ignore changes on steady c\n"
-        "    ? (??) : ? : -;\n"
+        "    ? (?\?) : ? : -;\n"
         "  endtable\n"
         "endprimitive\n",
     },
