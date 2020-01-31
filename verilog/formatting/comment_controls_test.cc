@@ -368,6 +368,12 @@ TEST(FormatWhitespaceWithDisabledByteRangesTest, EmptyStrings) {
       {"ab\ncd\nef\n", {3, 9}, {{6, 7}}, "\ne\n"},
       {"ab\ncd\nef\n", {3, 9}, {{7, 8}}, "\nf\n"},
       {"ab\ncd\nef\n", {3, 9}, {{8, 9}}, "\n\n"},
+      {"ab\ncd\nef\n", {2, 5}, {{0, 3}}, "\n"},
+      {"ab\ncd\nef\n", {2, 6}, {{0, 3}}, "\n\n"},
+      {"ab\ncd\nef\n", {3, 6}, {{0, 3}}, "\n"},
+      {"ab\ncd\nef\n", {3, 6}, {{5, 6}}, "\n"},
+      {"ab\ncd\nef\n", {3, 6}, {{5, 9}}, "\n"},
+      {"ab\ncd\nef\n", {3, 6}, {{6, 9}}, "\n"},
   };
   for (const auto& test : kTestCases) {
     std::ostringstream stream;

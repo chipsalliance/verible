@@ -135,6 +135,7 @@ void FormatWhitespaceWithDisabledByteRanges(
       const absl::string_view disabled(
           text_base.substr(next_start, range.first - next_start));
       stream << disabled;
+      total_enabled_newlines += NewlineCount(disabled);
     }
     {  // for enabled intervals, preserve only newlines
       const absl::string_view enabled(
@@ -150,6 +151,7 @@ void FormatWhitespaceWithDisabledByteRanges(
   const absl::string_view final_disabled(
       text_base.substr(next_start, end - next_start));
   stream << final_disabled;
+  total_enabled_newlines += NewlineCount(final_disabled);
 
   // Print at least one newline if some subrange was format-enabled.
   if (partially_enabled && total_enabled_newlines == 0 && start != 0) {
