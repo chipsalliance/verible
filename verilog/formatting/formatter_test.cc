@@ -1907,6 +1907,21 @@ static const std::initializer_list<FormatterTestCase> kFormatterTestCases = {
         "endfunction\n",
     },
 
+    // module declaration test cases
+    {"   module       foo  ;     endmodule\n",
+     "module foo;\n"
+     "endmodule\n"},
+    {"   module       foo   (    )   ;     endmodule\n",
+     "module foo ();\n"
+     "endmodule\n"},
+    {"   module       foo   (  .x (  x) );     endmodule\n",
+     "module foo (.x(x));\n"
+     "endmodule\n"},
+    {"   module       foo   (  .x (  x)  \n,\n . y "
+     "  ( \ny) );     endmodule\n",
+     "module foo (.x(x), .y(y));\n"
+     "endmodule\n"},
+
     // module instantiation test cases
     {"  module foo   ; bar bq();endmodule\n",
      "module foo;\n"

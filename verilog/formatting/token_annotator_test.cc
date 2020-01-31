@@ -2402,6 +2402,13 @@ TEST(TokenAnnotatorTest, AnnotateFormattingWithContextTest) {
           {NodeEnum::kGateInstance, NodeEnum::kActualNamedPort},
           {0, SpacingOptions::Undecided},
       },
+      {
+          DefaultStyle,
+          {yytokentype::SymbolIdentifier, "foo"},
+          {'(', "("},
+          {NodeEnum::kModuleHeader, NodeEnum::kPort},
+          {0, SpacingOptions::Undecided},
+      },
 
       // cases for the heavily overloaded ':'
 
