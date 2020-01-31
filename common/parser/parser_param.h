@@ -19,7 +19,6 @@
 #ifndef VERIBLE_COMMON_PARSER_PARSER_PARAM_H_
 #define VERIBLE_COMMON_PARSER_PARSER_PARAM_H_
 
-#include <cstddef>  // for size_t
 #include <cstdint>
 #include <utility>
 #include <vector>
@@ -60,12 +59,14 @@ class ParserParam {
   // to the new (larger) ones and stack pointers are updated.
   // All stacks must be of the same size which is updated too.
   void ResizeStacks(bison_state_int_type** state_stack, SymbolPtr** value_stack,
-                    size_t* size);
+                    long* size);  // NOLINT(runtime/int)
 
   // Returns the maximum allocated size of parser stacks or 0
   // if ResizeStacks() was never called.
   // This is useful to determine a reasonable default parser stack size.
-  size_t MaxUsedStackSize() const { return max_used_stack_size_; }
+  long MaxUsedStackSize() const {  // NOLINT(runtime/int)
+    return max_used_stack_size_;
+  }
 
   const ConcreteSyntaxTree& Root() const { return root_; }
 
@@ -88,7 +89,7 @@ class ParserParam {
   // Overflow storage for parser's internal symbol and value stack.
   StateStack state_stack_;
   ValueStack value_stack_;
-  size_t max_used_stack_size_;
+  long max_used_stack_size_;  // NOLINT(runtime/int)
 
   ParserParam(const ParserParam&) = delete;
   ParserParam& operator=(const ParserParam&) = delete;

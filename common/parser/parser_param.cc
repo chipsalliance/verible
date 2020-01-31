@@ -52,14 +52,16 @@ void ParserParam::RecordSyntaxError(const SymbolPtr& symbol_ptr) {
 }
 
 template <typename T>
-static void move_stack(T** raw_stack, size_t* size, std::vector<T>* stack) {
+static void move_stack(T** raw_stack, long* size,  // NOLINT(runtime/int)
+                       std::vector<T>* stack) {
   stack->resize(*size);
   std::move(*raw_stack, *raw_stack + *size, stack->begin());
 }
 
 // See bison_parser_common.h for use of this (yyoverflow).
 void ParserParam::ResizeStacks(bison_state_int_type** state_stack,
-                               SymbolPtr** value_stack, size_t* size) {
+                               SymbolPtr** value_stack,
+                               long* size) {  // NOLINT(runtime/int)
   if (state_stack_.empty()) {
     // This is the first reallocation case.
     move_stack(state_stack, size, &state_stack_);
