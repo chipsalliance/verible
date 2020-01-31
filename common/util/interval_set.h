@@ -453,9 +453,12 @@ bool ParseInclusiveRanges(IntervalSet<T>* iset, Iter begin, Iter end,
   for (const auto& range : verible::make_range(begin, end)) {
     bounds = absl::StrSplit(range, sep);
     if (bounds.size() == 1) {
+      const auto& arg = bounds.front();
+      // ignore blanks, which comes from splitting ""
+      if (arg.empty()) continue;
       int line_number;
-      if (!absl::SimpleAtoi(bounds.front(), &line_number)) {
-        *errstream << "Expected number, but got: \"" << bounds.front() << "\"."
+      if (!absl::SimpleAtoi(arg, &line_number)) {
+        *errstream << "Expected number, but got: \"" << arg << "\"."
                    << std::endl;
         return false;
       }

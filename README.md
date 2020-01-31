@@ -284,6 +284,9 @@ To pipe from stdin, use '-' as <file>.
   Flags from verilog/tools/formatter/verilog_format.cc:
     --inplace (If true, overwrite the input file on successful conditions.);
       default: false;
+    --lines (Specific lines to format, 1-based, comma-separated, inclusive N-M
+      ranges, N is short for N-N. By default, left unspecified, all lines are
+      enabled for formatting. (repeatable, cumulative)); default: ;
     --max_search_states (Limits the number of search states explored during line
       wrap optimization.); default: 100000;
     --show_equally_optimal_wrappings (If true, print when multiple optimal

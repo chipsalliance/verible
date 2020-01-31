@@ -31,9 +31,12 @@
 
 #include "absl/flags/flag.h"
 #include "absl/strings/str_cat.h"
+#include "absl/strings/str_join.h"
+#include "absl/strings/str_split.h"
 #include "absl/strings/string_view.h"
 #include "common/util/file_util.h"
 #include "common/util/init_command_line.h"
+#include "common/util/interval_set.h"
 #include "common/util/logging.h"  // for operator<<, LOG, LogMessage, etc
 #include "common/util/status.h"
 #include "verilog/formatting/format_style.h"
@@ -44,12 +47,47 @@ using verilog::formatter::ExecutionControl;
 using verilog::formatter::FormatStyle;
 using verilog::formatter::FormatVerilog;
 
+// Pseudo-singleton, so that repeated flag occurrences accumulate values.
+//   --flag x --flag y yields [x, y]
+struct LineRanges {
+  // need to copy string, cannot just use string_view
+  typedef std::vector<std::string> storage_type;
+  static storage_type values;
+};
+
+LineRanges::storage_type LineRanges::values;  // global initializer
+
+bool AbslParseFlag(absl::string_view flag_arg, LineRanges* /* unused */,
+                   std::string* error) {
+  auto& values = LineRanges::values;
+  // Pre-split strings, so that "--flag v1,v2" and "--flag v1 --flag v2" are
+  // equivalent.
+  const std::vector<absl::string_view> tokens = absl::StrSplit(flag_arg, ',');
+  values.reserve(values.size() + tokens.size());
+  for (const auto& token : tokens) {
+    // need to copy string, cannot just use string_view
+    values.push_back(std::string(token.begin(), token.end()));
+  }
+  // Range validation done later.
+  return true;
+}
+
+std::string AbslUnparseFlag(LineRanges /* unused */) {
+  const auto& values = LineRanges::values;
+  return absl::StrJoin(values.begin(), values.end(), ",",
+                       absl::StreamFormatter());
+}
+
 // TODO(fangism): Provide -i alias, as it is canonical to many formatters
 ABSL_FLAG(bool, inplace, false,
           "If true, overwrite the input file on successful conditions.");
 ABSL_FLAG(std::string, stdin_name, "<stdin>",
           "When using '-' to read from stdin, this gives an alternate name for "
           "diagnostic purposes.  Otherwise this is ignored.");
+ABSL_FLAG(LineRanges, lines, {},
+          "Specific lines to format, 1-based, comma-separated, inclusive N-M "
+          "ranges, N is short for N-N.  By default, left unspecified, "
+          "all lines are enabled for formatting.  (repeatable, cumulative)");
 
 ABSL_FLAG(int, show_largest_token_partitions, 0,
           "If > 0, print token partitioning and then "
@@ -90,6 +128,16 @@ int main(int argc, char** argv) {
     diagnostic_filename = stdin_name;
   }
 
+  // Parse LineRanges into a line set, to validate the --lines flag(s)
+  verilog::formatter::LineNumberSet lines_to_format;
+  if (!verible::ParseInclusiveRanges(
+          &lines_to_format, LineRanges::values.begin(),
+          LineRanges::values.end(), &std::cerr, '-')) {
+    std::cerr << "Error parsing --lines." << std::endl;
+    std::cerr << "Got: --lines=" << AbslUnparseFlag(LineRanges()) << std::endl;
+    return 1;
+  }
+
   // Read contents into memory first.
   std::string content;
   if (!verible::file::GetContents(filename, &content)) return 1;
@@ -114,8 +162,9 @@ int main(int argc, char** argv) {
   // TODO(fangism): support style configuration from flags.
 
   std::ostringstream stream;
-  const auto format_status = FormatVerilog(
-      content, diagnostic_filename, format_style, stream, formatter_control);
+  const auto format_status =
+      FormatVerilog(content, diagnostic_filename, format_style, stream,
+                    lines_to_format, formatter_control);
 
   const std::string& formatted_output(stream.str());
   if (!format_status.ok()) {

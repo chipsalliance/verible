@@ -107,6 +107,7 @@ cc_library(
         "//common/text:text_structure",
         "//common/text:token_info",
         "//common/util:expandable_tree_view",
+        "//common/util:interval_set",
         "//common/util:iterator_range",
         "//common/util:logging",
         "//common/util:spacer",

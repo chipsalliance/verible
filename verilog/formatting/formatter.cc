@@ -67,6 +67,8 @@ class Formatter {
 
   Status Format() { return Format(ExecutionControl()); }
 
+  void SelectLines(const LineNumberSet& lines);
+
   // Outputs all of the FormattedExcerpt lines to stream.
   void Emit(std::ostream& stream) const;
 
@@ -135,6 +137,7 @@ Status VerifyFormatting(const verible::TextStructureView& text_structure,
 
 Status FormatVerilog(absl::string_view text, absl::string_view filename,
                      const FormatStyle& style, std::ostream& formatted_stream,
+                     const LineNumberSet& lines,
                      const ExecutionControl& control) {
   const auto analyzer = VerilogAnalyzer::AnalyzeAutomaticMode(text, filename);
   {
@@ -155,6 +158,7 @@ Status FormatVerilog(absl::string_view text, absl::string_view filename,
 
   const verible::TextStructureView& text_structure = analyzer->Data();
   Formatter fmt(text_structure, style);
+  fmt.SelectLines(lines);
 
   // Format code.
   const Status format_status = fmt.Format(control);
@@ -348,6 +352,11 @@ static void PreserveSpacesOnDisabledTokenRanges(
   }
 }
 
+void Formatter::SelectLines(const LineNumberSet& lines) {
+  disabled_ranges_ = EnabledLinesToDisabledByteRanges(
+      lines, text_structure_.GetLineColumnMap());
+}
+
 Status Formatter::Format(const ExecutionControl& control) {
   const absl::string_view full_text(text_structure_.Contents());
   const auto& token_stream(text_structure_.TokenStream());
@@ -371,7 +380,7 @@ Status Formatter::Format(const ExecutionControl& control) {
                                   unwrapper_data.preformatted_tokens.end());
 
     // Determine ranges of disabling the formatter.
-    disabled_ranges_ = DisableFormattingRanges(full_text, token_stream);
+    disabled_ranges_.Union(DisableFormattingRanges(full_text, token_stream));
     PreserveSpacesOnDisabledTokenRanges(&unwrapper_data.preformatted_tokens,
                                         disabled_ranges_, full_text);
 

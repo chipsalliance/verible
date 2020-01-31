@@ -57,11 +57,13 @@ struct ExecutionControl {
 };
 
 // Formats Verilog/SystemVerilog source code.
-// TODO(b/122330156): specify formatting line ranges
+// 'lines' controls which lines have formattting explicitly enabled.
+// If this is empty, interpret as all lines enabled for formatting.
 verible::util::Status FormatVerilog(absl::string_view text,
                                     absl::string_view filename,
                                     const FormatStyle& style,
                                     std::ostream& formatted_stream,
+                                    const LineNumberSet& lines = {},
                                     const ExecutionControl& control = {});
 
 }  // namespace formatter

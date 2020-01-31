@@ -100,6 +100,8 @@ struct FormatterTestCase {
   absl::string_view expected;
 };
 
+static const LineNumberSet kEnableAllLines;
+
 // Test that the expected output is produced with the formatter using a custom
 // FormatStyle.
 TEST(FormatterTest, FormatCustomStyleTest) {
@@ -2688,6 +2690,172 @@ TEST(FormatterEndToEndTest, VerilogFormatTest) {
   }
 }
 
+struct SelectLinesTestCase {
+  absl::string_view input;
+  LineNumberSet lines;  // explicit set of lines to enable formatting
+  absl::string_view expected;
+};
+
+// Tests that formatter honors selected line numbers.
+TEST(FormatterEndToEndTest, SelectLines) {
+  const SelectLinesTestCase kTestCases[] = {
+      {"", {}, ""},
+      {"", {{1, 2}}, ""},
+      {// expect all three lines for format
+       "  parameter    int foo_line1 =     0 ;\n"
+       "  parameter    int foo_line2 =     0 ;\n"
+       "  parameter    int foo_line3 =     0 ;\n",
+       {},
+       "parameter int foo_line1 = 0;\n"
+       "parameter int foo_line2 = 0;\n"
+       "parameter int foo_line3 = 0;\n"},
+      {// expect only one line to format
+       "  parameter    int foo_line1 =     0 ;\n"
+       "  parameter    int foo_line2 =     0 ;\n"
+       "  parameter    int foo_line3 =     0 ;\n",
+       {{1, 2}},
+       "parameter int foo_line1 = 0;\n"
+       "  parameter    int foo_line2 =     0 ;\n"
+       "  parameter    int foo_line3 =     0 ;\n"},
+      {// expect only one line to format
+       "  parameter    int foo_line1 =     0 ;\n"
+       "  parameter    int foo_line2 =     0 ;\n"
+       "  parameter    int foo_line3 =     0 ;\n",
+       {{2, 3}},
+       "  parameter    int foo_line1 =     0 ;\n"
+       "parameter int foo_line2 = 0;\n"
+       "  parameter    int foo_line3 =     0 ;\n"},
+      {// expect only one line to format
+       "  parameter    int foo_line1 =     0 ;\n"
+       "  parameter    int foo_line2 =     0 ;\n"
+       "  parameter    int foo_line3 =     0 ;\n",
+       {{3, 4}},
+       "  parameter    int foo_line1 =     0 ;\n"
+       "  parameter    int foo_line2 =     0 ;\n"
+       "parameter int foo_line3 = 0;\n"},
+      {// expect to format two lines
+       "  parameter    int foo_line1 =     0 ;\n"
+       "  parameter    int foo_line2 =     0 ;\n"
+       "  parameter    int foo_line3 =     0 ;\n",
+       {{1, 3}},
+       "parameter int foo_line1 = 0;\n"
+       "parameter int foo_line2 = 0;\n"
+       "  parameter    int foo_line3 =     0 ;\n"},
+      {// expect to format two lines
+       "  parameter    int foo_line1 =     0 ;\n"
+       "  parameter    int foo_line2 =     0 ;\n"
+       "  parameter    int foo_line3 =     0 ;\n",
+       {{2, 4}},
+       "  parameter    int foo_line1 =     0 ;\n"
+       "parameter int foo_line2 = 0;\n"
+       "parameter int foo_line3 = 0;\n"},
+      {// expect to format two lines
+       "  parameter    int foo_line1 =     0 ;\n"
+       "  parameter    int foo_line2 =     0 ;\n"
+       "  parameter    int foo_line3 =     0 ;\n",
+       {{1, 2}, {3, 4}},
+       "parameter int foo_line1 = 0;\n"
+       "  parameter    int foo_line2 =     0 ;\n"
+       "parameter int foo_line3 = 0;\n"},
+      {// expect to format all lines
+       "  parameter    int foo_line1 =     0 ;\n"
+       "  parameter    int foo_line2 =     0 ;\n"
+       "  parameter    int foo_line3 =     0 ;\n",
+       {{1, 4}},
+       "parameter int foo_line1 = 0;\n"
+       "parameter int foo_line2 = 0;\n"
+       "parameter int foo_line3 = 0;\n"},
+      {// expect to format no lines (line numbers out of bounds)
+       "  parameter    int foo_line1 =     0 ;\n"
+       "  parameter    int foo_line2 =     0 ;\n"
+       "  parameter    int foo_line3 =     0 ;\n",
+       {{4, 6}},
+       "  parameter    int foo_line1 =     0 ;\n"
+       "  parameter    int foo_line2 =     0 ;\n"
+       "  parameter    int foo_line3 =     0 ;\n"},
+      {// expect to format all lines
+       "// verilog_format: on\n"
+       "  parameter    int foo_line2 =     0 ;\n"
+       "  parameter    int foo_line3 =     0 ;\n"
+       "  parameter    int foo_line4 =     0 ;\n",
+       {},
+       "// verilog_format: on\n"
+       "parameter int foo_line2 = 0;\n"
+       "parameter int foo_line3 = 0;\n"
+       "parameter int foo_line4 = 0;\n"},
+      {// expect to format no lines
+       "// verilog_format: off\n"
+       "  parameter    int foo_line2 =     0 ;\n"
+       "  parameter    int foo_line3 =     0 ;\n"
+       "  parameter    int foo_line4 =     0 ;\n",
+       {},
+       "// verilog_format: off\n"
+       "  parameter    int foo_line2 =     0 ;\n"
+       "  parameter    int foo_line3 =     0 ;\n"
+       "  parameter    int foo_line4 =     0 ;\n"},
+      {// expect to format some lines
+       "// verilog_format: on\n"
+       "  parameter    int foo_line2 =     0 ;\n"
+       "  parameter    int foo_line3 =     0 ;\n"
+       "  parameter    int foo_line4 =     0 ;\n",
+       {{3, 5}},
+       "// verilog_format: on\n"
+       "  parameter    int foo_line2 =     0 ;\n"
+       "parameter int foo_line3 = 0;\n"  // disable lines 3,4
+       "parameter int foo_line4 = 0;\n"},
+      {// enable all lines, but respect format-off
+       "  parameter    int foo_line1 =     0 ;\n"
+       "  parameter    int foo_line2 =     0 ;\n"
+       "// verilog_format: off\n"
+       "  parameter    int foo_line4 =     0 ;\n",
+       {{1, 5}},
+       "parameter int foo_line1 = 0;\n"
+       "parameter int foo_line2 = 0;\n"
+       "// verilog_format: off\n"
+       "  parameter    int foo_line4 =     0 ;\n"},
+      {// enable all lines, but respect format-off
+       "  parameter    int foo_line1 =     0 ;\n"
+       "// verilog_format: off\n"
+       "  parameter    int foo_line3 =     0 ;\n"
+       "// verilog_format: on\n"
+       "  parameter    int foo_line5 =     0 ;\n",
+       {{1, 6}},
+       "parameter int foo_line1 = 0;\n"
+       "// verilog_format: off\n"
+       "  parameter    int foo_line3 =     0 ;\n"
+       "// verilog_format: on\n"
+       "parameter int foo_line5 = 0;\n"},
+      {// enable all lines, but respect format-off
+       "// verilog_format: off\n"
+       "  parameter    int foo_line2 =     0 ;\n"
+       "  parameter    int foo_line3 =     0 ;\n"
+       "// verilog_format: on\n"
+       "  parameter    int foo_line5 =     0 ;\n",
+       {{1, 6}},
+       "// verilog_format: off\n"
+       "  parameter    int foo_line2 =     0 ;\n"
+       "  parameter    int foo_line3 =     0 ;\n"
+       "// verilog_format: on\n"
+       "parameter int foo_line5 = 0;\n"},
+  };
+  // Use a fixed style.
+  FormatStyle style;
+  style.column_limit = 40;
+  style.indentation_spaces = 2;
+  style.wrap_spaces = 4;
+  style.over_column_limit_penalty = 50;
+  for (const auto& test_case : kTestCases) {
+    VLOG(1) << "code-to-format:\n" << test_case.input << "<EOF>";
+    std::ostringstream stream;
+    const auto status = FormatVerilog(test_case.input, "<filename>", style,
+                                      stream, test_case.lines);
+    EXPECT_OK(status);
+    EXPECT_EQ(stream.str(), test_case.expected)
+        << "code:\n"
+        << test_case.input << "\nlines: " << test_case.lines;
+  }
+}
+
 // These tests verify the mode where horizontal spacing is discarded while
 // vertical spacing is preserved.
 TEST(FormatterEndToEndTest, PreserveVSpacesOnly) {
@@ -2841,8 +3009,8 @@ TEST(FormatterEndToEndTest, PenaltySensitiveLineWrapping) {
     std::ostringstream stream, debug_stream;
     ExecutionControl control;
     control.stream = &debug_stream;
-    const auto status =
-        FormatVerilog(test_case.input, "<filename>", style, stream, control);
+    const auto status = FormatVerilog(test_case.input, "<filename>", style,
+                                      stream, kEnableAllLines, control);
     EXPECT_OK(status);
     EXPECT_EQ(stream.str(), test_case.expected) << "code:\n" << test_case.input;
     EXPECT_TRUE(debug_stream.str().empty());
@@ -3006,8 +3174,8 @@ TEST(FormatterEndToEndTest, DiagnosticShowFullTree) {
     ExecutionControl control;
     control.stream = &debug_stream;
     control.show_token_partition_tree = true;
-    const auto status =
-        FormatVerilog(test_case.input, "<filename>", style, stream, control);
+    const auto status = FormatVerilog(test_case.input, "<filename>", style,
+                                      stream, kEnableAllLines, control);
     EXPECT_EQ(status.code(), StatusCode::kCancelled);
     EXPECT_TRUE(
         absl::StartsWith(debug_stream.str(), "Full token partition tree"));
@@ -3026,8 +3194,8 @@ TEST(FormatterEndToEndTest, DiagnosticLargestPartitions) {
     ExecutionControl control;
     control.stream = &debug_stream;
     control.show_largest_token_partitions = 2;
-    const auto status =
-        FormatVerilog(test_case.input, "<filename>", style, stream, control);
+    const auto status = FormatVerilog(test_case.input, "<filename>", style,
+                                      stream, kEnableAllLines, control);
     EXPECT_EQ(status.code(), StatusCode::kCancelled);
     EXPECT_TRUE(absl::StartsWith(debug_stream.str(), "Showing the "))
         << "got: " << debug_stream.str();
@@ -3046,8 +3214,8 @@ TEST(FormatterEndToEndTest, DiagnosticEquallyOptimalWrappings) {
     ExecutionControl control;
     control.stream = &debug_stream;
     control.show_equally_optimal_wrappings = true;
-    const auto status =
-        FormatVerilog(test_case.input, "<filename>", style, stream, control);
+    const auto status = FormatVerilog(test_case.input, "<filename>", style,
+                                      stream, kEnableAllLines, control);
     EXPECT_OK(status);
     if (!debug_stream.str().empty()) {
       EXPECT_TRUE(absl::StartsWith(debug_stream.str(), "Showing the "))
@@ -3071,7 +3239,8 @@ TEST(FormatterEndToEndTest, UnfinishedLineWrapSearching) {
   ExecutionControl control;
   control.max_search_states = 2;  // Cause search to abort early.
   control.stream = &debug_stream;
-  const auto status = FormatVerilog(code, "<filename>", style, stream, control);
+  const auto status = FormatVerilog(code, "<filename>", style, stream,
+                                    kEnableAllLines, control);
   EXPECT_EQ(status.code(), StatusCode::kResourceExhausted);
   EXPECT_TRUE(absl::StartsWith(status.message(), "***"));
 }

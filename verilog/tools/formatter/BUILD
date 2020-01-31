@@ -11,6 +11,7 @@ cc_binary(
         "//common/text:text_structure",
         "//common/util:file_util",
         "//common/util:init_command_line",
+        "//common/util:interval_set",
         "//common/util:logging",
         "//common/util:status",
         "//verilog/analysis:verilog_analyzer",

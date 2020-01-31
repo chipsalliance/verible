@@ -829,6 +829,19 @@ TEST(ParseInclusivesRangesTest, ParseErrorRange) {
   EXPECT_TRUE(iset.empty());
 }
 
+TEST(ParseInclusivesRangesTest, EmptyString) {
+  // Empty string can come from splitting.
+  const std::initializer_list<absl::string_view> kRanges{""};
+  interval_set_type iset;
+  std::ostringstream errstream;
+  EXPECT_TRUE(
+      ParseInclusiveRanges(&iset, kRanges.begin(), kRanges.end(), &errstream));
+  EXPECT_TRUE(errstream.str().empty());
+  EXPECT_TRUE(iset.empty());
+  const UnsafeIntervalSet expected{};
+  EXPECT_EQ(iset, expected);
+}
+
 TEST(ParseInclusivesRangesTest, SingleValues) {
   const std::initializer_list<absl::string_view> kRanges{"1", "3", "4", "5"};
   interval_set_type iset;
@@ -837,6 +850,17 @@ TEST(ParseInclusivesRangesTest, SingleValues) {
       ParseInclusiveRanges(&iset, kRanges.begin(), kRanges.end(), &errstream));
   EXPECT_TRUE(errstream.str().empty());
   const UnsafeIntervalSet expected{{1, 2}, {3, 6}};
+  EXPECT_EQ(iset, expected);
+}
+
+TEST(ParseInclusivesRangesTest, SingleValuesAndEmpty) {
+  const std::initializer_list<absl::string_view> kRanges{"1", "", "4", "5"};
+  interval_set_type iset;
+  std::ostringstream errstream;
+  EXPECT_TRUE(
+      ParseInclusiveRanges(&iset, kRanges.begin(), kRanges.end(), &errstream));
+  EXPECT_TRUE(errstream.str().empty());
+  const UnsafeIntervalSet expected{{1, 2}, {4, 6}};
   EXPECT_EQ(iset, expected);
 }
 
