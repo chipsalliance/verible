@@ -921,13 +921,15 @@ const TreeUnwrapperTestData kUnwrapModuleTestCases[] = {
         "end\n"
         "endmodule",
         ModuleHeader(0, L(0, {"module", "conditionals", ";"})),
-        ModuleItemList(
-            1, L(1, {"if", "(", "foo", ")", "begin"}),
-            ModuleItemList(2, Instantiation(2, L(2, {"a", "aa", ";"}))),
-            L(1, {"end"}),  //
-            L(1, {"if", "(", "bar", ")", "begin"}),
-            ModuleItemList(2, Instantiation(2, L(2, {"b", "bb", ";"}))),
-            L(1, {"end"})),
+        ModuleItemList(1,
+            N(1,
+              L(1, {"if", "(", "foo", ")", "begin"}),
+              ModuleItemList(2, Instantiation(2, L(2, {"a", "aa", ";"}))),
+              L(1, {"end"})),  //
+            N(1,
+              L(1, {"if", "(", "bar", ")", "begin"}),
+              ModuleItemList(2, Instantiation(2, L(2, {"b", "bb", ";"}))),
+              L(1, {"end"}))),
         L(0, {"endmodule"}),
     },
 
@@ -940,11 +942,12 @@ const TreeUnwrapperTestData kUnwrapModuleTestCases[] = {
         "end\n"
         "endmodule\n",
         ModuleHeader(0, L(0, {"module", "conditional_generate_macros", ";"})),
-        ModuleItemList(
-            1, L(1, {"if", "(", "foo", ")", "begin"}),
-            ModuleItemList(2, N(2, L(2, {"`COVER", "("}), L(2, {")"})),
-                           N(2, L(2, {"`ASSERT", "("}), L(2, {")"}))),
-            L(1, {"end"})),
+        ModuleItemList(1,
+            N(
+              1, L(1, {"if", "(", "foo", ")", "begin"}),
+              ModuleItemList(2, N(2, L(2, {"`COVER", "("}), L(2, {")"})),
+                             N(2, L(2, {"`ASSERT", "("}), L(2, {")"}))),
+              L(1, {"end"}))),
         L(0, {"endmodule"}),
     },
 
@@ -957,10 +960,11 @@ const TreeUnwrapperTestData kUnwrapModuleTestCases[] = {
         "end\n"
         "endmodule\n",
         ModuleHeader(0, L(0, {"module", "conditional_generate_comments", ";"})),
-        ModuleItemList(
+        ModuleItemList(1,
+          N(
             1, L(1, {"if", "(", "foo", ")", "begin"}),
             ModuleItemList(2, L(2, {"// comment1"}), L(2, {"// comment2"})),
-            L(1, {"end"})),
+            L(1, {"end"}))),
         L(0, {"endmodule"}),
     },
 
