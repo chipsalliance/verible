@@ -911,9 +911,15 @@ static const std::initializer_list<FormatterTestCase> kFormatterTestCases = {
         "  endclocking : cb2\n"
         "endmodule\n",
     },
+    {
+        // clocking declarations with ports in modules
+        " module mcd ; "
+        "clocking cb   @ (posedge  clk\n); input a; output b; endclocking endmodule",
+        "module mcd;\n"
+        "  clocking cb @(posedge clk);\n"
         "    input a;\n"
         "    output b;\n"
-        "  endclocking : cb2\n"
+        "  endclocking\n"
         "endmodule\n",
     },
     {
