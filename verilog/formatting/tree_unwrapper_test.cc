@@ -1169,11 +1169,23 @@ const TreeUnwrapperTestData kUnwrapModuleTestCases[] = {
     },
 
     {
-        "module with clocking declarations",
+        "module with two consecutive clocking declarations",
         "module mcd;\n"
         "  clocking cb @(posedge clk);\n"
         "  endclocking\n"
         "  clocking cb2 @(posedge clk);\n"
+        "  endclocking\n"
+        "endmodule",
+        ModuleHeader(0, L(0, {"module", "mcd", ";"})),
+        ModuleItemList(
+            1,  //
+            L(1, {"clocking", "cb", "@", "(", "posedge", "clk", ")", ";"}),
+            L(1, {"endclocking"}),
+            L(1, {"clocking", "cb2", "@", "(", "posedge", "clk", ")", ";"}),
+            L(1, {"endclocking"})),
+        L(0, {"endmodule"}),
+    },
+
         "    input a;\n"
         "    output b;\n"
         "  endclocking\n"
