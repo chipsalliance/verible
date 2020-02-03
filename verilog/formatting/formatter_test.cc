@@ -887,16 +887,17 @@ static const std::initializer_list<FormatterTestCase> kFormatterTestCases = {
         "  end\n"
         "endmodule\n",
     },
-
     {
         // clocking declarations in modules
         " module mcd ; "
         "clocking   cb @( posedge clk);\t\tendclocking "
-        "clocking cb2   @ (posedge  clk\n); endclocking endmodule",
+        "clocking cb2   @ (posedge  clk\n); input a; output b; endclocking endmodule",
         "module mcd;\n"
         "  clocking cb @(posedge clk);\n"
         "  endclocking\n"
         "  clocking cb2 @(posedge clk);\n"
+        "    input a;\n"
+        "    output b;\n"
         "  endclocking\n"
         "endmodule\n",
     },
@@ -904,11 +905,13 @@ static const std::initializer_list<FormatterTestCase> kFormatterTestCases = {
         // clocking declarations in modules, with end labels
         " module mcd ; "
         "clocking   cb @( posedge clk);\t\tendclocking:  cb "
-        "clocking cb2   @ (posedge  clk\n); endclocking   :cb2 endmodule",
+        "clocking cb2   @ (posedge  clk\n); input a; output b; endclocking   :cb2 endmodule",
         "module mcd;\n"
         "  clocking cb @(posedge clk);\n"
         "  endclocking : cb\n"
         "  clocking cb2 @(posedge clk);\n"
+        "    input a;\n"
+        "    output b;\n"
         "  endclocking : cb2\n"
         "endmodule\n",
     },
