@@ -90,10 +90,20 @@ static bool AllowLongLineException(TokenSequence::const_iterator token_begin,
   if (token_begin == last_token) {
     switch (token_begin->token_enum) {
       case TK_EOL_COMMENT: {
-        const absl::string_view text =
-            verible::StripCommentAndSpacePadding(token_begin->text);
+        // TODO(b/72010240): formatter: reflow comments
+        // Ideally, a comment whose contents can be split on spaces
+        // should be reflowed to spill onto new commented lines.
+        // However the formatter hasn't implemented this yet, and comments
+        // remain as atomic tokens, so fixing comment indentation may cause
+        // line-length violations.  The compromise for now is to forgive
+        // this case (no matter what the length).
+        return true;
+
+        // Once comment-reflowing is implemented, re-enable the following:
         // If comment consist of more than one token, it should be split.
-        return !ContainsAnyWhitespace(text);
+        // const absl::string_view comment_contents =
+        //     verible::StripCommentAndSpacePadding(token_begin->text);
+        // return !ContainsAnyWhitespace(comment_contents);
       }
       // TODO(fangism): examine "long string literals"
       // TODO(fangism): case TK_COMMENT_BLOCK:

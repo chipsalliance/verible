@@ -52,6 +52,44 @@ TEST(LineLengthRuleTest, AcceptsText) {
           "iiiiiiiiii"
           "jjjjjjjjjj\n"  // 100 characters
       },
+      {
+          "// aaaaaaa"
+          "bbbbbbbbbb"
+          "cccccccccc"
+          "dddddddddd"
+          "eeeeeeeeee"
+          "ffffffffff"
+          "gggggggggg"
+          "hhhhhhhhhh"
+          "iiiiiiiiii"
+          "jjjjjjjjjj\n"  // 100 characters
+      },
+      {
+          "// aaaaaaa"
+          "bbbbbbbbbb"
+          "cccccccccc"
+          "dddddddddd"
+          "eeeeeeeeee"
+          "ffffffffff"
+          "gggggggggg"
+          "hhhhhhhhhh"
+          "iiiiiiiiii"
+          "jjjjjjjjjj"
+          "k\n"  // 101 characters, in a single comment, forgiven
+      },
+      {
+          "    // aaa"  // indented comment
+          "bbbbbbbbbb"
+          "cccccccccc"
+          "dddddddddd"
+          "eeeeeeeeee"
+          "ffffffffff"
+          "gggggggggg"
+          "hhhhhhhhhh"
+          "iiiiiiiiii"
+          "jjjjjjjjjj"
+          "k\n"  // 101 characters, in a single indented comment, forgiven
+      },
   };
   RunLintTestCases<VerilogAnalyzer, LineLengthRule>(kTestCases);
 }
@@ -95,7 +133,7 @@ TEST(LineLengthRuleTest, AcceptsTextExceptions) {
   };
   // Make sure that these lines would normally be flagged by this rule.
   for (const auto& test : kTestCases) {
-    std::cout << "TEST: " << test.code << std::endl;
+    VLOG(1) << "TEST: " << test.code;
     EXPECT_TRUE(test.code.length() > LineLengthRule::kMaxLineLength)
         << "code:\n"
         << test.code;
