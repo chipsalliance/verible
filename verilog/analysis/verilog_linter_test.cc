@@ -30,6 +30,7 @@
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 #include "absl/memory/memory.h"
+#include "absl/strings/match.h"
 #include "absl/strings/string_view.h"
 #include "common/util/file_util.h"
 #include "common/util/logging.h"
@@ -329,6 +330,26 @@ TEST_F(VerilogLinterTest, ModuleBodyLineLengthWaived) {
       "// verilog_lint: waive line-length\n");
   EXPECT_TRUE(diagnostics.first.ok());
   EXPECT_EQ(diagnostics.second, "");
+}
+
+TEST(VerilogLinterDocumentationTest, AllRulesHelpDescriptions) {
+  std::ostringstream stream;
+  verilog::GetLintRuleDescriptionsHelpFlag(&stream, "all");
+  // Spot-check a few patterns, must mostly make sure generation
+  // works without any fatal errors.
+  EXPECT_TRUE(absl::StrContains(stream.str(), "line-length"));
+  EXPECT_TRUE(absl::StrContains(stream.str(), "posix-eof"));
+  EXPECT_TRUE(absl::StrContains(stream.str(), "Enabled by default:"));
+}
+
+TEST(VerilogLinterDocumentationTest, AllRulesMarkdown) {
+  std::ostringstream stream;
+  verilog::GetLintRuleDescriptionsMarkdown(&stream);
+  // Spot-check a few patterns, must mostly make sure generation
+  // works without any fatal errors.
+  EXPECT_TRUE(absl::StrContains(stream.str(), "line-length"));
+  EXPECT_TRUE(absl::StrContains(stream.str(), "posix-eof"));
+  EXPECT_TRUE(absl::StrContains(stream.str(), "Enabled by default:"));
 }
 
 }  // namespace
