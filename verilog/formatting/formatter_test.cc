@@ -1075,6 +1075,50 @@ static const std::initializer_list<FormatterTestCase> kFormatterTestCases = {
         "endmodule\n",
     },
     {
+        // standalone genvar statement
+        "module m ;"
+        "genvar f;"
+        "for(f=0; f<N; f ++ )begin "
+        "end endmodule",
+        "module m;\n"
+        "  genvar f;\n"
+        "  for (f = 0; f < N; f++) begin\n"
+        "  end\n"
+        "endmodule\n",
+    },
+    {
+        // multiple arguments to genvar statement
+        "module m ;"
+        "genvar f, g;"
+        "for(f=0; f<N; f ++ )begin "
+        "end for(g=N; g>0; g -- )begin "
+        "end endmodule",
+        "module m;\n"
+        "  genvar f, g;\n"
+        "  for (f = 0; f < N; f++) begin\n"
+        "  end\n"
+        "  for (g = N; g > 0; g--) begin\n"
+        "  end\n"
+        "endmodule\n",
+    },
+    {
+        // multiple genvar statements
+        "module m ;"
+        "genvar f;"
+        "genvar g;"
+        "for(f=0; f<N; f ++ )begin "
+        "end for(g=N; g>0; g -- )begin "
+        "end endmodule",
+        "module m;\n"
+        "  genvar f;\n"
+        "  genvar g;\n"
+        "  for (f = 0; f < N; f++) begin\n"
+        "  end\n"
+        "  for (g = N; g > 0; g--) begin\n"
+        "  end\n"
+        "endmodule\n",
+    },
+    {
         "module event_control ;"
         "always@ ( posedge   clk )z<=y;"
         "endmodule\n",

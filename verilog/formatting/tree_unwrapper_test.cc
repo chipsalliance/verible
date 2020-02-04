@@ -1102,6 +1102,79 @@ const TreeUnwrapperTestData kUnwrapModuleTestCases[] = {
     },
 
     {
+        "module with standalone genvar statement",
+        "module loop_standalone_genvar;\n"
+        "genvar i;"
+        "for (i=1;i<N;++i) begin\n"
+        "end\n"
+        "endmodule",
+        ModuleHeader(0, L(0, {"module", "loop_standalone_genvar", ";"})),
+        ModuleItemList(
+            1,
+            L(1, {"genvar", "i", ";"}),
+            LoopHeader(1, L(1, {"for", "("}),
+                       ForSpec(3, L(3, {"i", "=", "1", ";"}),
+                               L(3, {"i", "<", "N", ";"}), L(3, {"++", "i"})),
+                       L(1, {")", "begin"})),
+            L(1, {"end"})),
+        L(0, {"endmodule"}),
+    },
+
+    {
+        "module with multiple arguments to genvar statement",
+        "module loop_multiarg_genvar;\n"
+        "genvar i,j;"
+        "for (i=1;i<N;++i) begin\n"
+        "end\n"
+        "for (j=N;j>0;--j) begin\n"
+        "end\n"
+        "endmodule",
+        ModuleHeader(0, L(0, {"module", "loop_multiarg_genvar", ";"})),
+        ModuleItemList(
+            1,
+            L(1, {"genvar", "i", ",", "j", ";"}),
+            LoopHeader(1, L(1, {"for", "("}),
+                       ForSpec(3, L(3, {"i", "=", "1", ";"}),
+                               L(3, {"i", "<", "N", ";"}), L(3, {"++", "i"})),
+                       L(1, {")", "begin"})),
+            L(1, {"end"}),
+            LoopHeader(1, L(1, {"for", "("}),
+                       ForSpec(3, L(3, {"j", "=", "N", ";"}),
+                               L(3, {"j", ">", "0", ";"}), L(3, {"--", "j"})),
+                       L(1, {")", "begin"})),
+            L(1, {"end"})),
+        L(0, {"endmodule"}),
+    },
+
+    {
+        "module with multiple genvar statements",
+        "module loop_multi_genvar;\n"
+        "genvar i;"
+        "genvar j;"
+        "for (i=1;i<N;++i) begin\n"
+        "end\n"
+        "for (j=N;j>0;--j) begin\n"
+        "end\n"
+        "endmodule",
+        ModuleHeader(0, L(0, {"module", "loop_multi_genvar", ";"})),
+        ModuleItemList(
+            1,
+            L(1, {"genvar", "i", ";"}),
+            L(1, {"genvar", "j", ";"}),
+            LoopHeader(1, L(1, {"for", "("}),
+                       ForSpec(3, L(3, {"i", "=", "1", ";"}),
+                               L(3, {"i", "<", "N", ";"}), L(3, {"++", "i"})),
+                       L(1, {")", "begin"})),
+            L(1, {"end"}),
+            LoopHeader(1, L(1, {"for", "("}),
+                       ForSpec(3, L(3, {"j", "=", "N", ";"}),
+                               L(3, {"j", ">", "0", ";"}), L(3, {"--", "j"})),
+                       L(1, {")", "begin"})),
+            L(1, {"end"})),
+        L(0, {"endmodule"}),
+    },
+
+    {
         "module with multiple loop generate statements",
         "module loop_generates;\n"
         "for (x=1;;) begin\n"

@@ -593,6 +593,7 @@ void TreeUnwrapper::Visit(const verible::SyntaxTreeNode& node) {
     case NodeEnum::kParamDeclaration:
     case NodeEnum::kClockingDeclaration:
     case NodeEnum::kClockingItem:
+    case NodeEnum::kGenvarDeclaration:
     case NodeEnum::kDescriptionList:
     case NodeEnum::kForwardDeclaration: {
       VisitNewUnwrappedLine(node);
