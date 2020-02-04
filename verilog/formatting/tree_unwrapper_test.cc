@@ -2412,30 +2412,43 @@ TEST_F(TreeUnwrapperTest, UnwrapPackageTests) {
 
 const TreeUnwrapperTestData kDescriptionTestCases[] = {
     {
+        "one simple bind declaration",
+        "bind foo bar baz();",
+        N(0,  // kBindDeclaration
+          L(0, {"bind", "foo", "bar", "baz", "(", ")", ";"})),
+    },
+
+    {
+        "one bind declaration with type params",
+        "bind foo bar#(.x(y)) baz();",
+        N(0,  // kBindDeclaration
+          L(0, {"bind", "foo", "bar", "#", "("}),
+          NL(2, {".", "x", "(", "y", ")"}),
+          L(0, {")", "baz", "(", ")", ";"})),
+    },
+
+    {
         "one bind declaration",
         "bind foo bar#(.x(y)) baz(.clk(clk));",
         N(0,  // kBindDeclaration
           L(0, {"bind", "foo", "bar", "#", "("}),
-          NL(2, {".", "x", "(", "y", ")"}), L(0, {")"}),
+          NL(2, {".", "x", "(", "y", ")"}),
+          L(0, {")", "baz", "("}),
           InstanceList(
               2,                                                      //
-              N(2,                                                    //
-                L(2, {"baz", "("}),                                   //
-                ModulePortList(4,                                     //
-                               L(4, {".", "clk", "(", "clk", ")"})),  //
-                L(2, {")", ";"})  // ';' is attached to end of bind directive
-                ))),
+              ModulePortList(4,                                     //
+                             L(4, {".", "clk", "(", "clk", ")"})),  //
+              L(2, {")", ";"})  // ';' is attached to end of bind directive
+              )),
     },
 
     {"multiple bind declarations",
      "bind foo bar baz();"
      "bind goo car caz();",
      N(0,  // kBindDeclaration
-       L(0, {"bind", "foo", "bar"}),
-       InstanceList(2, NL(2, {"baz", "(", ")", ";"}))),
+       L(0, {"bind", "foo", "bar", "baz", "(", ")", ";"})),
      N(0,  // kBindDeclaration
-       L(0, {"bind", "goo", "car"}),
-       InstanceList(2, NL(2, {"caz", "(", ")", ";"})))},
+       L(0, {"bind", "goo", "car", "caz", "(", ")", ";"}))},
 
     {
         "multi-instance bind declaration",
@@ -2443,8 +2456,8 @@ const TreeUnwrapperTestData kDescriptionTestCases[] = {
         N(0,  // kBindDeclaration
           L(0, {"bind", "foo", "bar"}),
           InstanceList(2,                               //
-                       NL(2, {"baz1", "(", ")", ","}),  //
-                       NL(2, {"baz2", "(", ")", ";"})   //
+                       L(2, {"baz1", "(", ")", ","}),  //
+                       L(2, {"baz2", "(", ")", ";"})   //
                        )),
     },
 };
