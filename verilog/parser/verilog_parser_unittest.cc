@@ -5352,7 +5352,8 @@ static const verible::ErrorRecoveryTestCase kErrorRecoveryTests[] = {
      "endmodule\n",
      {NodeTag(kModuleDeclaration), NodeTag(kModuleItemList),
       NodeTag(kGenerateRegion), NodeTag(kGenerateItemList),
-      NodeTag(kConditionalGenerateConstruct), NodeTag(kGenerateIf)}},
+      NodeTag(kConditionalGenerateConstruct), NodeTag(kGenerateIfClause),
+      NodeTag(kGenerateIfBody)}},
     // function/task statement_item error tests
     {"function void foobar(int a, int b);\n"
      "  8 9;\n"  // expression error

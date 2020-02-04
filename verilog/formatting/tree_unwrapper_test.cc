@@ -922,13 +922,98 @@ const TreeUnwrapperTestData kUnwrapModuleTestCases[] = {
         "endmodule",
         ModuleHeader(0, L(0, {"module", "conditionals", ";"})),
         ModuleItemList(
-            1, L(1, {"if", "(", "foo", ")", "begin"}),
-            ModuleItemList(2, Instantiation(2, L(2, {"a", "aa", ";"}))),
-            L(1, {"end"}),  //
-            L(1, {"if", "(", "bar", ")", "begin"}),
-            ModuleItemList(2, Instantiation(2, L(2, {"b", "bb", ";"}))),
-            L(1, {"end"})),
+            1,
+            N(1, L(1, {"if", "(", "foo", ")", "begin"}),
+              ModuleItemList(2, Instantiation(2, L(2, {"a", "aa", ";"}))),
+              L(1, {"end"})),  //
+            N(1, L(1, {"if", "(", "bar", ")", "begin"}),
+              ModuleItemList(2, Instantiation(2, L(2, {"b", "bb", ";"}))),
+              L(1, {"end"}))),
         L(0, {"endmodule"}),
+    },
+
+    {
+        "module with conditional generate statement blocks with labels",
+        "module zv;\n"
+        "if (x) begin\n"
+        "end : l1\n"
+        "else begin\n"
+        "end\n"
+        "endmodule;\n",
+        ModuleHeader(0, L(0, {"module", "zv", ";"})),
+        ModuleItemList(1, N(1, L(1, {"if", "(", "x", ")", "begin"}),
+                            L(1, {"end", ":", "l1"}), L(1, {"else", "begin"}),
+                            L(1, {"end"}))),
+        L(0, {"endmodule", ";"}),
+    },
+
+    {
+        "module with conditional generate statement blocks",
+        "module zw;\n"
+        "if (x) begin\n"
+        "end\n"
+        "else begin\n"
+        "end\n"
+        "endmodule;\n",
+        ModuleHeader(0, L(0, {"module", "zw", ";"})),
+        ModuleItemList(1, N(1, L(1, {"if", "(", "x", ")", "begin"}),
+                            L(1, {"end", "else", "begin"}), L(1, {"end"}))),
+        L(0, {"endmodule", ";"}),
+    },
+
+    {
+        "module with conditional generate single-statements",
+        "module zx;\n"
+        "if (x) assign z=y;\n"
+        "else assign x=y;\n"
+        "endmodule;\n",
+        ModuleHeader(0, L(0, {"module", "zx", ";"})),
+        ModuleItemList(
+            1, N(1,
+                 N(1, L(1, {"if", "(", "x", ")"}),
+                   NL(2, {"assign", "z", "=", "y", ";"})),
+                 N(1, L(1, {"else"}), NL(2, {"assign", "x", "=", "y", ";"})))),
+        L(0, {"endmodule", ";"}),
+    },
+
+    {
+        "module with conditional generate statement blocks with labels",
+        "module zy;\n"
+        "if (x) begin:z1\n"
+        "assign x=y;\n"
+        "end\n"
+        "else\n"
+        "if (y) begin:z2\n"
+        "assign z=y;\n"
+        "end\n"
+        "endmodule;\n",
+        ModuleHeader(0, L(0, {"module", "zy", ";"})),
+        ModuleItemList(
+            1, N(1, L(1, {"if", "(", "x", ")", "begin", ":", "z1"}),
+                 N(2, NL(2, {"assign", "x", "=", "y", ";"})),
+                 L(1, {"end", "else", "if", "(", "y", ")", "begin", ":", "z2"}),
+                 N(2, NL(2, {"assign", "z", "=", "y", ";"})), L(1, {"end"}))),
+        L(0, {"endmodule", ";"}),
+    },
+
+    {
+        "module with conditional generate statement blocks with labels",
+        "module zz;\n"
+        "if (x) begin:z1\n"
+        "assign x=y;\n"
+        "end\n"
+        "if (y) begin:z2\n"
+        "assign z=y;\n"
+        "end\n"
+        "endmodule;\n",
+        ModuleHeader(0, L(0, {"module", "zz", ";"})),
+        ModuleItemList(
+            1,
+            N(1, L(1, {"if", "(", "x", ")", "begin", ":", "z1"}),
+              N(2, NL(2, {"assign", "x", "=", "y", ";"})), L(1, {"end"})),
+            N(1, L(1, {"if", "(", "y", ")", "begin", ":", "z2"}),
+              N(2, NL(2, {"assign", "z", "=", "y", ";"})), L(1, {"end"}))),
+        L(0, {"endmodule", ";"}),
     },
 
     {
@@ -941,10 +1026,10 @@ const TreeUnwrapperTestData kUnwrapModuleTestCases[] = {
         "endmodule\n",
         ModuleHeader(0, L(0, {"module", "conditional_generate_macros", ";"})),
         ModuleItemList(
-            1, L(1, {"if", "(", "foo", ")", "begin"}),
-            ModuleItemList(2, N(2, L(2, {"`COVER", "("}), L(2, {")"})),
-                           N(2, L(2, {"`ASSERT", "("}), L(2, {")"}))),
-            L(1, {"end"})),
+            1, N(1, L(1, {"if", "(", "foo", ")", "begin"}),
+                 ModuleItemList(2, N(2, L(2, {"`COVER", "("}), L(2, {")"})),
+                                N(2, L(2, {"`ASSERT", "("}), L(2, {")"}))),
+                 L(1, {"end"}))),
         L(0, {"endmodule"}),
     },
 
@@ -957,10 +1042,10 @@ const TreeUnwrapperTestData kUnwrapModuleTestCases[] = {
         "end\n"
         "endmodule\n",
         ModuleHeader(0, L(0, {"module", "conditional_generate_comments", ";"})),
-        ModuleItemList(
-            1, L(1, {"if", "(", "foo", ")", "begin"}),
-            ModuleItemList(2, L(2, {"// comment1"}), L(2, {"// comment2"})),
-            L(1, {"end"})),
+        ModuleItemList(1, N(1, L(1, {"if", "(", "foo", ")", "begin"}),
+                            ModuleItemList(2, L(2, {"// comment1"}),
+                                           L(2, {"// comment2"})),
+                            L(1, {"end"}))),
         L(0, {"endmodule"}),
     },
 
