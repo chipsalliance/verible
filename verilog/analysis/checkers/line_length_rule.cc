@@ -55,12 +55,14 @@ absl::string_view LineLengthRule::Name() { return "line-length"; }
 const char LineLengthRule::kTopic[] = "line-length";
 const char LineLengthRule::kMessage[] = "Line length exceeds max: ";
 
+#if 0  // See comment below about comment-reflowing being implemented
 static bool ContainsAnyWhitespace(absl::string_view s) {
   for (char c : s) {
     if (absl::ascii_isspace(c)) return true;
   }
   return false;
 }
+#endif
 
 std::string LineLengthRule::GetDescription(DescriptionType description_type) {
   return absl::StrCat(
