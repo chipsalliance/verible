@@ -24,17 +24,17 @@ jobs:
          packages:
          - g++-9
          - gcc-9
-   - stage: "Test"
-     name: "Ubuntu Bionic"
-     os: linux
-     dist: bionic
-     addons:
-       apt:
-         sources:
-         - ubuntu-toolchain-r-test
-         packages:
-         - g++-9
-         - gcc-9
+#   - stage: "Test"
+#     name: "Ubuntu Bionic"
+#     os: linux
+#     dist: bionic
+#     addons:
+#       apt:
+#         sources:
+#         - ubuntu-toolchain-r-test
+#         packages:
+#         - g++-9
+#         - gcc-9
 
 before_install:
   - sudo dpkg --list | grep gcc
