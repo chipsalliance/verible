@@ -15,7 +15,6 @@
 #ifndef VERIBLE_VERILOG_ANALYSIS_VERILOG_LINTER_CONFIGURATION_H_
 #define VERIBLE_VERILOG_ANALYSIS_VERILOG_LINTER_CONFIGURATION_H_
 
-#include <initializer_list>
 #include <iosfwd>
 #include <map>
 #include <memory>
@@ -90,22 +89,22 @@ struct ProjectPolicy {
 
   // Raw string to check for being part of the path.  Not a regex pattern.
   // Apply this exemption only if substring occurs in the file path.
-  std::initializer_list<const char*> path_substrings;
+  std::vector<const char*> path_substrings;
 
   // Raw string to check for being part of the path.  Not a regex pattern.
   // Files that match the exclusion will not be analyzed.
   // This is suitable for paths that contain files that no human will ever
   // read.
-  std::initializer_list<const char*> path_exclusions;
+  std::vector<const char*> path_exclusions;
 
   // Reviewers to involve for policy changes.  At least two.
-  std::initializer_list<const char*> owners;
+  std::vector<const char*> owners;
 
   // Names of lint rules to disable.
-  std::initializer_list<const char*> disabled_rules;
+  std::vector<const char*> disabled_rules;
 
   // Names of lint rules to enable (takes precedence over disabled_rules).
-  std::initializer_list<const char*> enabled_rules;
+  std::vector<const char*> enabled_rules;
 
   // Returns a path if filename matches any of path_substrings,
   // otherwise nullptr.
