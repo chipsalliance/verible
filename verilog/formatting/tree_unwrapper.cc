@@ -592,6 +592,7 @@ void TreeUnwrapper::Visit(const verible::SyntaxTreeNode& node) {
     case NodeEnum::kPortDeclaration:
     case NodeEnum::kParamDeclaration:
     case NodeEnum::kClockingDeclaration:
+    case NodeEnum::kClockingItem:
     case NodeEnum::kDescriptionList:
     case NodeEnum::kForwardDeclaration: {
       VisitNewUnwrappedLine(node);
@@ -898,7 +899,8 @@ void TreeUnwrapper::Visit(const verible::SyntaxTreeNode& node) {
     case NodeEnum::kUdpPortDeclaration:
     case NodeEnum::kUdpSequenceEntry:
     case NodeEnum::kUdpCombEntry:
-    case NodeEnum::kStatementList: {
+    case NodeEnum::kStatementList:
+    case NodeEnum::kClockingItemList: {
       if (suppress_indentation) {
         // Do not further indent preprocessor clauses.
         // Maintain same level as before.
