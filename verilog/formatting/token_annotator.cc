@@ -502,43 +502,67 @@ static SpacePolicy SpacesRequiredBetween(const FormatStyle& style,
   return SpacePolicy{spaces.value, false};
 }
 
-// Returns the split penalty for line-breaking before the right token.
-// TODO(b/143789697): accompany return value WithReason.
-static int BreakPenaltyBetween(const verible::PreFormatToken& left,
-                               const verible::PreFormatToken& right) {
-  // TODO(fangism): populate this.
-
+static WithReason<int> BreakPenaltyBetweenTokens(
+    const verible::PreFormatToken& left, const verible::PreFormatToken& right) {
+  // Higher precedence rules should be handled earlier in this function.
+  if (left.format_token_enum == FormatTokenType::identifier &&
+      right.format_token_enum == FormatTokenType::open_group) {
+    return {20, "identifier, open-group"};
+  }
   // Hierarchy examples: "a.b", "a::b"
   // TODO(fangism): '.' is not always hierarchy, differentiate by context.
-  if (left.format_token_enum == FormatTokenType::hierarchy) return 50;
+  // slightly prefer to break on the left: "a .b" better than "a. b"
+  if (left.format_token_enum == FormatTokenType::hierarchy)
+    return {50, "hierarchy separator on left"};
   if (right.format_token_enum == FormatTokenType::hierarchy)
-    return 45;  // slightly prefer to break on the left
+    return {45, "hierarchy separator on right"};
 
-  // Prefer to split after commas than before them.
-  if (right.TokenEnum() == ',') return 10;
+  // Prefer to split after commas rather than before them.
+  if (right.TokenEnum() == ',') return {10, "avoid breaking before ','"};
 
   // Prefer to not split directly at an assignment.
-  if (left.TokenEnum() == '=') return 2;
+  if (left.TokenEnum() == '=') return {2, "right is '='"};
 
   // Prefer to keep '(' with whatever is on the left.
   // TODO(fangism): ... except when () is used as precedence.
-  if (right.format_token_enum == FormatTokenType::open_group) return 5;
+  if (right.format_token_enum == FormatTokenType::open_group)
+    return {5, "right is open-group"};
 
   if (left.TokenEnum() == TK_DecNumber &&
       right.TokenEnum() == TK_UnBasedNumber) {
     // e.g. 1'b1, 16'hbabe
-    return 90;  // doesn't really matter, because we never break here
+    // doesn't really matter, because we never break here
+    return {90, "numeric width, base"};
   }
 
-  // Default penalty should be non-zero to favor fitting more tokens on
-  // the same line.
-  // TODO(fangism): This value should come from the BasicFormatStyle.
+  // TODO(b/148552963): make this return 0, as relative incremental cost
+  // return {0, "no further adjustment (default)"};
+  // The default cost of 1 is too low, and is terrible for search convergence.
+
   constexpr int kUnhandledWrapPenalty = 1;
-  VLOG(1) << "Unhandled line-wrap penalty between "
+  return {kUnhandledWrapPenalty, "Unhandled wrap penalty."};
+}
+
+// Returns the split penalty for line-breaking before the right token.
+static WithReason<int> BreakPenaltyBetween(const verible::PreFormatToken& left,
+                                           const verible::PreFormatToken& right,
+                                           const SyntaxTreeContext& context) {
+  VLOG(3) << "Inter-token penalty between "
           << verilog_symbol_name(left.TokenEnum()) << " and "
-          << verilog_symbol_name(right.TokenEnum()) << ", defaulting to "
-          << kUnhandledWrapPenalty;
-  return kUnhandledWrapPenalty;
+          << verilog_symbol_name(right.TokenEnum());
+
+  constexpr int kMinPenalty = 1;  // absolute minimum
+
+  // This factor only looks at left and right tokens:
+  const auto inter_token_penalty = BreakPenaltyBetweenTokens(left, right);
+  VLOG(3) << "inter-token break penalty: " << inter_token_penalty.value << ", "
+          << inter_token_penalty.reason;
+
+  // TODO(b/148552963): impose depth_penalty (not death penalty)
+  const int total_penalty = std::max(inter_token_penalty.value, kMinPenalty);
+
+  VLOG(3) << "total break penalty: " << total_penalty;
+  return {total_penalty, inter_token_penalty.reason};
 }
 
 // Returns decision whether to break, not break, or evaluate both choices.
@@ -690,8 +714,9 @@ void AnnotateFormatToken(const FormatStyle& style,
   } else {
     // Update the break penalty and if the curr_token is allowed to
     // break before it.
-    curr_token->before.break_penalty =
-        BreakPenaltyBetween(prev_token, *curr_token);
+    const auto break_penalty =
+        BreakPenaltyBetween(prev_token, *curr_token, context);
+    curr_token->before.break_penalty = break_penalty.value;
     const auto breaker =
         BreakDecisionBetween(style, prev_token, *curr_token, context);
     curr_token->before.break_decision = breaker.value;
