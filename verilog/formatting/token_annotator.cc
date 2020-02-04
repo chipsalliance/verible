@@ -590,6 +590,18 @@ static WithReason<SpacingOptions> BreakDecisionBetween(
     }
   }
 
+  if (left.TokenEnum() == PP_define) {
+    return {SpacingOptions::MustAppend,
+            "Keep `define and macro name together."};
+  }
+  if (right.TokenEnum() == PP_define_body) {
+    // TODO(b/141517267): reflow macro definition text with flexible
+    // line-continuations.
+    return {SpacingOptions::MustAppend,
+            "Macro definition body must start on same line (but may be "
+            "line-continued)."};
+  }
+
   // Check for mandatory line breaks.
   if (left.format_token_enum == FTT::eol_comment ||
       left.TokenEnum() == PP_define_body  // definition excludes trailing '\n'

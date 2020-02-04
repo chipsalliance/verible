@@ -157,6 +157,14 @@ static const std::initializer_list<FormatterTestCase> kFormatterTestCases = {
      "`ifndef FOO\n"
      "`define BAR\n\n"
      "`endif\n"},
+    {"`define    FOO   \\\n"
+     "  BAR\n",
+     "`define FOO \\\n"  // TODO(b/72527558): right align '\'s to column limit
+     "  BAR\n"},
+    {"`define    FOOOOOOOOOOOOOOOO   \\\n"
+     "  BAAAAAAAAAAAAAAAAR BAAAAAAAAAAAAAZ;\n",
+     "`define FOOOOOOOOOOOOOOOO \\\n"  // macro text starts at '\'
+     "  BAAAAAAAAAAAAAAAAR BAAAAAAAAAAAAAZ;\n"},
     {"`ifdef      FOO\n"
      "  `fine()\n"
      "`else\n"

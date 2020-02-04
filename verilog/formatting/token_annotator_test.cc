@@ -782,7 +782,7 @@ TEST(TokenAnnotatorTest, AnnotateFormattingInfoTest) {
           {DefaultStyle,
            0,
            {{0, SpacingOptions::Undecided},   //  `define
-            {1, SpacingOptions::Undecided},   //  FOO
+            {1, SpacingOptions::MustAppend},  //  FOO
             {0, SpacingOptions::Undecided},   //  (
             {0, SpacingOptions::Undecided},   //  name
             {1, SpacingOptions::Undecided},   //  =
@@ -1086,12 +1086,12 @@ TEST(TokenAnnotatorTest, AnnotateFormattingInfoTest) {
           {DefaultStyle,
            1,
            {
-               {0, SpacingOptions::Undecided},  // `define
-               {1, SpacingOptions::Undecided},  // FOO
-               {0, SpacingOptions::Undecided},  // "" (empty definition body)
-               {0, SpacingOptions::MustWrap},   // `define
-               {1, SpacingOptions::Undecided},  // BAR
-               {0, SpacingOptions::Undecided},  // "" (empty definition body)
+               {0, SpacingOptions::Undecided},   // `define
+               {1, SpacingOptions::MustAppend},  // FOO
+               {0, SpacingOptions::MustAppend},  // "" (empty definition body)
+               {0, SpacingOptions::MustWrap},    // `define
+               {1, SpacingOptions::MustAppend},  // BAR
+               {0, SpacingOptions::MustAppend},  // "" (empty definition body)
            },
            {
                {yytokentype::PP_define, "`define"},
@@ -1107,12 +1107,12 @@ TEST(TokenAnnotatorTest, AnnotateFormattingInfoTest) {
           {DefaultStyle,
            1,
            {
-               {0, SpacingOptions::Undecided},  // `define
-               {1, SpacingOptions::Undecided},  // FOO
-               {1, SpacingOptions::Undecided},  // 1
-               {1, SpacingOptions::MustWrap},   // `define
-               {1, SpacingOptions::Undecided},  // BAR
-               {1, SpacingOptions::Undecided},  // 2
+               {0, SpacingOptions::Undecided},   // `define
+               {1, SpacingOptions::MustAppend},  // FOO
+               {1, SpacingOptions::MustAppend},  // 1
+               {1, SpacingOptions::MustWrap},    // `define
+               {1, SpacingOptions::MustAppend},  // BAR
+               {1, SpacingOptions::MustAppend},  // 2
            },
            {
                {yytokentype::PP_define, "`define"},
@@ -1130,26 +1130,26 @@ TEST(TokenAnnotatorTest, AnnotateFormattingInfoTest) {
            1,
            {
                {0, SpacingOptions::Undecided},   // `define
-               {1, SpacingOptions::Undecided},   // FOO
+               {1, SpacingOptions::MustAppend},  // FOO
                {0, SpacingOptions::MustAppend},  // (
                {0, SpacingOptions::Undecided},   // )
-               {0, SpacingOptions::Undecided},   // "" (empty definition body)
+               {0, SpacingOptions::MustAppend},  // "" (empty definition body)
 
                {0, SpacingOptions::MustWrap},    // `define
-               {1, SpacingOptions::Undecided},   // BAR
+               {1, SpacingOptions::MustAppend},  // BAR
                {0, SpacingOptions::MustAppend},  // (
                {0, SpacingOptions::Undecided},   // x
                {0, SpacingOptions::Undecided},   // )
-               {0, SpacingOptions::Undecided},   // "" (empty definition body)
+               {0, SpacingOptions::MustAppend},  // "" (empty definition body)
 
                {0, SpacingOptions::MustWrap},    // `define
-               {1, SpacingOptions::Undecided},   // BAZ
+               {1, SpacingOptions::MustAppend},  // BAZ
                {0, SpacingOptions::MustAppend},  // (
                {0, SpacingOptions::Undecided},   // y
                {0, SpacingOptions::Undecided},   // ,
                {1, SpacingOptions::Undecided},   // z
                {0, SpacingOptions::Undecided},   // )
-               {0, SpacingOptions::Undecided},   // "" (empty definition body)
+               {0, SpacingOptions::MustAppend},  // "" (empty definition body)
            },
            {
                {yytokentype::PP_define, "`define"},
@@ -1181,13 +1181,13 @@ TEST(TokenAnnotatorTest, AnnotateFormattingInfoTest) {
               1,
               {
                   {0, SpacingOptions::Undecided},   // `define
-                  {1, SpacingOptions::Undecided},   // ADD
+                  {1, SpacingOptions::MustAppend},  // ADD
                   {0, SpacingOptions::MustAppend},  // (
                   {0, SpacingOptions::Undecided},   // y
                   {0, SpacingOptions::Undecided},   // ,
                   {1, SpacingOptions::Undecided},   // z
                   {0, SpacingOptions::Undecided},   // )
-                  {1, SpacingOptions::Undecided},   // "y+z"
+                  {1, SpacingOptions::MustAppend},  // "y+z"
               },
               {
                   {yytokentype::PP_define, "`define"},
@@ -1976,6 +1976,13 @@ TEST(TokenAnnotatorTest, AnnotateFormattingWithContextTest) {
           {yytokentype::PP_define, "`define"},
           {},  // any context
           {1, SpacingOptions::MustWrap},
+      },
+      {
+          DefaultStyle,
+          {yytokentype::PP_define, "`define"},
+          {SymbolIdentifier, "ID"},
+          {},  // any context
+          {1, SpacingOptions::MustAppend},
       },
       {
           DefaultStyle,
