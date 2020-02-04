@@ -26,6 +26,7 @@
 #include "common/analysis/citation.h"
 #include "common/analysis/lint_rule_status.h"
 #include "common/strings/comment_utils.h"
+#include "common/strings/utf8.h"
 #include "common/text/constants.h"
 #include "common/text/text_structure.h"
 #include "common/text/token_info.h"
@@ -156,7 +157,7 @@ void LineLengthRule::Lint(const TextStructureView& text_structure,
   size_t lineno = 0;
   for (const auto& line : text_structure.Lines()) {
     VLOG(2) << "Examining line: " << lineno + 1;
-    const int observed_line_length = line.length();
+    const int observed_line_length = verible::utf8_len(line);
     if (observed_line_length > kMaxLineLength) {
       const auto token_range = text_structure.TokenRangeOnLine(lineno);
       // Recall that token_range is *unfiltered* and may contain non-essential

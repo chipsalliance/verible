@@ -120,3 +120,21 @@ cc_test(
         "@com_google_googletest//:gtest_main",
     ],
 )
+
+cc_library(
+    name = "utf8",
+    hdrs = ["utf8.h"],
+    deps = [
+        "@com_google_absl//absl/strings",
+    ],
+)
+
+cc_test(
+    name = "utf8_test",
+    srcs = ["utf8_test.cc"],
+    deps = [
+        ":utf8",
+        "@com_google_absl//absl/strings",
+        "@com_google_googletest//:gtest_main",
+    ],
+)

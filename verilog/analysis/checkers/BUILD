@@ -159,6 +159,7 @@ cc_library(
         "//common/analysis:lint_rule_status",
         "//common/analysis:text_structure_lint_rule",
         "//common/strings:comment_utils",
+        "//common/strings:utf8",
         "//common/text:constants",
         "//common/text:text_structure",
         "//common/text:token_info",

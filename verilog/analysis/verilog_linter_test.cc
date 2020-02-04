@@ -332,6 +332,19 @@ TEST_F(VerilogLinterTest, ModuleBodyLineLengthWaived) {
   EXPECT_EQ(diagnostics.second, "");
 }
 
+TEST_F(VerilogLinterTest, MultiByteUTF8CharactersAreOnlyCountedOnce) {
+  // Typical comment that might be found in verilog: some ASCII-art diagram
+  // except that the 'ˉ'-'overscore' is actually a two-byte UTF8 character.
+  constexpr char comment_with_utf8[] =
+      "module utf8_short;\n"
+      R"(initial a = 42; // __/ˉˉˉˉˉˉˉˉˉ\___/ˉˉˉˉˉˉˉˉˉˉˉˉˉˉˉˉˉˉˉˉˉˉˉ\___/ˉˉˉˉˉ)"
+      "\nendmodule\n";
+
+  const auto diagnostics = LintAnalyzeText("utf8_short.sv", comment_with_utf8);
+  EXPECT_TRUE(diagnostics.first.ok());
+  EXPECT_EQ(diagnostics.second, "");
+}
+
 TEST(VerilogLinterDocumentationTest, AllRulesHelpDescriptions) {
   std::ostringstream stream;
   verilog::GetLintRuleDescriptionsHelpFlag(&stream, "all");
