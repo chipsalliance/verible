@@ -207,6 +207,14 @@ static WithReason<int> SpacesRequiredBetween(const PreFormatToken& left,
     return {1, "Space before \"@\" in most cases."};
   }
 
+  // Do not force space between '^' and '{' operators
+  if (context.IsInsideFirst({NodeEnum::kUnaryPrefixExpression}, {})) {
+    if (IsUnaryOperator(static_cast<yytokentype>(left.TokenEnum())) &&
+        right.TokenEnum() == '{') {
+      return {0, "No space between unary and concatenation operators"};
+    }
+  }
+
   // Add missing space around either side of all types of assignment operator.
   // "assign foo = bar;"  instead of "assign foo =bar;"
   // Consider assignment operators in the same class as binary operators.
