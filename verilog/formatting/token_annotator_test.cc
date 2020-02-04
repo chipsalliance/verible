@@ -58,6 +58,9 @@ namespace {
 // We do not want to compare break penalties, because that would be too
 // change-detector-y.
 struct ExpectedInterTokenInfo {
+  constexpr ExpectedInterTokenInfo(int spaces, const SpacingOptions& bd)
+      : spaces_required(spaces), break_decision(bd) {}
+
   int spaces_required = 0;
   SpacingOptions break_decision = SpacingOptions::Undecided;
 

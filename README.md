@@ -21,12 +21,12 @@ languages.
 
 Verible's code base is written in C++.
 
-To build, you need the [bazel] build system and a C++17 compatible compiler
+To build, you need the [bazel] build system and a C++11 compatible compiler
 (e.g. >= g++-7; Using clang currently fails to compile the m4 dependency).
 
 ```bash
 # Build all tools and libraries
-bazel build --cxxopt='-std=c++17' //...
+bazel build //...
 ```
 
 ### Test
@@ -35,7 +35,7 @@ To run the tests in [bazel]:
 
 ```bash
 # Run all tests
-bazel test --cxxopt='-std=c++17' //...
+bazel test //...
 ```
 
 You can access the generated artifacts under `bazel-bin/`. For instance the

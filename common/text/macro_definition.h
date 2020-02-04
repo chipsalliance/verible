@@ -46,11 +46,15 @@ struct DefaultTokenInfo : public TokenInfo {
 
 // Macro formal parameter specification: name with optional default.
 struct MacroParameterInfo {
+  MacroParameterInfo(const TokenInfo& n = TokenInfo::EOFToken(),
+                     const TokenInfo& d = TokenInfo::EOFToken())
+      : name(n), default_value(d) {}
+
   // Name of macro parameter.
-  TokenInfo name = TokenInfo::EOFToken();
+  TokenInfo name;
 
   // Macro parameters may have default values.  [Verilog]
-  TokenInfo default_value = TokenInfo::EOFToken();
+  TokenInfo default_value;
 
   bool HasDefaultText() const { return !default_value.text.empty(); }
 };

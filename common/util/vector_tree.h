@@ -698,6 +698,8 @@ std::ostream& operator<<(std::ostream& stream, const VectorTree<T>& node) {
 // traversal.
 template <typename LT, typename RT>
 struct VectorTreeNodePair {
+  VectorTreeNodePair() {}
+  VectorTreeNodePair(const LT* l, const RT* r) : left(l), right(r) {}
   const LT* left = nullptr;
   const RT* right = nullptr;
 };
