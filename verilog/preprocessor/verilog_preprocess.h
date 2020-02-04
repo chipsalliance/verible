@@ -96,6 +96,7 @@ class VerilogPreprocess {
   VerilogPreprocessData ScanStream(const TokenStreamView& token_stream);
 
   // TODO(fangism): ExpandMacro, ExpandMacroCall
+  // TODO(b/111544845): ExpandEvalStringLiteral
 
  private:
   using StreamIteratorGenerator =

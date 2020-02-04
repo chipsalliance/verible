@@ -559,6 +559,20 @@ TEST(VerilogAnalyzerExpandsMacroArgsTest, StringArg) {
   EXPECT_TRUE(TreeContainsToken(tree, search_tokens[0]));
 }
 
+// Test that an eval string expression macro arg expands properly.
+TEST(VerilogAnalyzerExpandsMacroArgsTest, EvalStringArg) {
+  const TokenInfoTestData test = {
+      "`FOO(", {TK_EvalStringLiteral, "`\"`hello(world)`\""}, ")\n"};
+  const auto analyzer =
+      absl::make_unique<VerilogAnalyzer>(test.code, "<<inline>>");
+  EXPECT_OK(analyzer->Analyze());
+  const ConcreteSyntaxTree& tree = analyzer->SyntaxTree();
+  const auto search_tokens =
+      test.FindImportantTokens(analyzer->Data().Contents());
+  ASSERT_EQ(search_tokens.size(), 1);
+  EXPECT_TRUE(TreeContainsToken(tree, search_tokens[0]));
+}
+
 // Test that an binary expression macro arg expands properly.
 TEST(VerilogAnalyzerExpandsMacroArgsTest, BinaryExprArg) {
   const TokenInfoTestData test = {

@@ -1812,6 +1812,20 @@ TEST(TokenAnnotatorTest, AnnotateFormattingInfoTest) {
 // required to specify context.
 TEST(TokenAnnotatorTest, AnnotateFormattingWithContextTest) {
   const std::initializer_list<AnnotateWithContextTestCase> kTestCases = {
+      {
+          DefaultStyle,
+          {'=', "="},
+          {yytokentype::TK_StringLiteral, "\"hello\""},
+          {},  // any context
+          {1, SpacingOptions::Undecided},
+      },
+      {
+          DefaultStyle,
+          {'=', "="},
+          {yytokentype::TK_EvalStringLiteral, "`\"hello`\""},
+          {},  // any context
+          {1, SpacingOptions::Undecided},
+      },
       // Test cases covering right token as a preprocessor directive:
       {
           DefaultStyle,
@@ -1889,6 +1903,20 @@ TEST(TokenAnnotatorTest, AnnotateFormattingWithContextTest) {
           {yytokentype::PP_else, "`else"},
           {},  // any context
           {1, SpacingOptions::MustWrap},
+      },
+      {
+          DefaultStyle,
+          {yytokentype::PP_include, "`include"},
+          {TK_StringLiteral, "\"lost/file.svh\""},
+          {},                             // any context
+          {1, SpacingOptions::Undecided}, /* or MustAppend? */
+      },
+      {
+          DefaultStyle,
+          {yytokentype::PP_include, "`include"},
+          {TK_EvalStringLiteral, "`\"lost/file.svh`\""},
+          {},                             // any context
+          {1, SpacingOptions::Undecided}, /* or MustAppend? */
       },
       {
           DefaultStyle,
@@ -3284,7 +3312,7 @@ TEST(TokenAnnotatorTest, AnnotateFormattingWithContextTest) {
           {SymbolIdentifier, "id_before_pound"},
           {'#', "#"},
           {},  // default context
-          // no spaces preceding ':' in unit test context
+               // no spaces preceding ':' in unit test context
           {1, SpacingOptions::Undecided},
       },
 

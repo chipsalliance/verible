@@ -220,6 +220,7 @@ is not locally defined, so the grammar here uses only generic identifiers.
 
 // gen_tokenizer start STRING_LITERAL
 %token TK_StringLiteral         // STRING
+%token TK_EvalStringLiteral     // STRING
 // gen_tokenizer stop
 
 // gen_tokenizer start KEYWORD
@@ -911,7 +912,7 @@ macro_formal_parameter
   ;
 
 preprocess_include_argument
-  : TK_StringLiteral
+  : string_literal
     { $$ = move($1); }
   | MacroIdentifier
     { $$ = move($1); }
@@ -4479,6 +4480,13 @@ local_root
 
   ;
 
+string_literal
+  : TK_StringLiteral
+    { $$ = move($1); }
+  | TK_EvalStringLiteral
+    { $$ = move($1); }
+  ;
+
 expr_primary_no_groups
   : number
     { $$ = move($1); }
@@ -4488,7 +4496,7 @@ expr_primary_no_groups
   //   e.g. #(10ps) or #(N *5ps)
   | TK_TimeLiteral
     { $$ = move($1); }
-  | TK_StringLiteral
+  | string_literal
     { $$ = move($1); }
   | cast
     { $$ = move($1); }

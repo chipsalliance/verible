@@ -529,6 +529,7 @@ static const auto* FormatTokenTypeMap =
 
         // string_literal
         {yytokentype::TK_StringLiteral, FTT::string_literal},
+        {yytokentype::TK_EvalStringLiteral, FTT::string_literal},
 
         // unary operators
         {yytokentype::TK_INCR, FTT::unary_operator},

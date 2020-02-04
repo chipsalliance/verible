@@ -134,6 +134,7 @@ static const std::initializer_list<FormatterTestCase> kFormatterTestCases = {
     {"\n\n", "\n\n"},
     // preprocessor test cases
     {"`include    \"path/to/file.vh\"\n", "`include \"path/to/file.vh\"\n"},
+    {"`include    `\"path/to/file.vh`\"\n", "`include `\"path/to/file.vh`\"\n"},
     {"`define    FOO\n", "`define FOO\n"},
     {"`define    FOO   BAR\n", "`define FOO BAR\n"},
     {"`define    FOO\n"
@@ -483,6 +484,10 @@ static const std::initializer_list<FormatterTestCase> kFormatterTestCases = {
         "parameter int ternary = \"a\" ? \"b\" : \"c\";\n",
     },
     {
+        "  parameter  int   t=`\"a`\"?`\"b`\":`\"c`\";",
+        "parameter int t = `\"a`\" ? `\"b`\" : `\"c`\";\n",
+    },
+    {
         "  parameter  int   ternary=(a)?(b):(c);",
         "parameter int ternary = (a) ? (b) : (c);\n",
     },
@@ -606,6 +611,14 @@ static const std::initializer_list<FormatterTestCase> kFormatterTestCases = {
      "module top;\n"
      "  foo #(\"test\") foo ();\n"  // module instantiation, string arg
      "  bar #(\"test\", 5) bar ();\n"
+     "endmodule\n"},
+    {"module    top;"
+     "foo#(  `\"test`\"  ) foo(  );"
+     "bar#(  `\"test`\"  ,5) bar(  );"
+     "endmodule\n",
+     "module top;\n"
+     "  foo #(`\"test`\") foo ();\n"  // module instantiation, eval string arg
+     "  bar #(`\"test`\", 5) bar ();\n"
      "endmodule\n"},
     {"`ifdef FOO\n"
      "  module bar;endmodule\n"

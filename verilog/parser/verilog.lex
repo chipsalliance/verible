@@ -154,8 +154,14 @@ BadMacroIdentifier `{DecNumber}{BasicIdentifier}
 EscapeSequence "\\"{InputCharacter}
 
 /* String literal */
-UnterminatedStringLiteral  \"([^\r\n"\\]|{EscapeSequence}|\\{LineTerminator})*
+StringContent  ([^\r\n"\\]|{EscapeSequence}|\\{LineTerminator})*
+UnterminatedStringLiteral  \"{StringContent}
 StringLiteral  {UnterminatedStringLiteral}\"
+
+/* Preprocessor-evaluated string literal */
+EvalStringLiteralContent ([^`]|(`[^"]))*
+UnterminatedEvalStringLiteral `\"{EvalStringLiteralContent}
+EvalStringLiteral {UnterminatedEvalStringLiteral}`\"
 
 /* attribute lists, treated like comments */
 AttributesBegin "(*"
@@ -881,8 +887,13 @@ zi_zp { UpdateLocation(); return TK_zi_zp; }
 [}{;:\[\],()'#=@&!?<>%|^~+*/-] { UpdateLocation(); return yytext[0]; }
 
 {StringLiteral} { UpdateLocation(); return TK_StringLiteral; }
+{EvalStringLiteral} { UpdateLocation(); return TK_EvalStringLiteral; }
 {UnterminatedStringLiteral} {
   /* TODO(fangism): Is it worth returning the \n back to the input stream? */
+  UpdateLocation();
+  return TK_OTHER;
+}
+{UnterminatedEvalStringLiteral} {
   UpdateLocation();
   return TK_OTHER;
 }
@@ -1331,6 +1342,7 @@ zi_zp { UpdateLocation(); return TK_zi_zp; }
     yymore();
     macro_arg_length_ = yyleng;
   }
+  /* Do macro default values need {EvalStringLiteral}? */
 }  /* <PP_MACRO_DEFAULT> */
 
 `{Space} { UpdateLocation(); return TK_OTHER; /* should be an error */ }
@@ -1392,6 +1404,7 @@ zi_zp { UpdateLocation(); return TK_zi_zp; }
 
   {Comment} { macro_arg_length_ = yyleng; yymore(); }
   {StringLiteral} { macro_arg_length_ = yyleng; yymore(); }
+  {EvalStringLiteral} { macro_arg_length_ = yyleng; yymore(); }
   /* [^(){},"]+ { yymore(); } */
 
   "{" { macro_arg_length_ = yyleng; yymore(); ++balance_; }

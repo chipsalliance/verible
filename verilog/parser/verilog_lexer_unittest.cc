@@ -118,6 +118,18 @@ static std::initializer_list<LexerTestData> kMacroCallTests = {
      {MacroArg, "\"bar\""},
      {MacroCallCloseToEndLine, ")"},
      "\n"},
+    {{MacroCallId, "`FOO11b"},
+     "  ",
+     '(',
+     {MacroArg, "`\"bar`\""},  // preprocess-evaluated string literal
+     {MacroCallCloseToEndLine, ")"},
+     "\n"},
+    {{MacroCallId, "`FOO11c"},
+     "  ",
+     '(',
+     {MacroArg, "`\"bar()`\""},  // preprocess-evaluated string literal
+     {MacroCallCloseToEndLine, ")"},
+     "\n"},
     {{MacroCallId, "`FOO12"},
      '(',
      {MacroArg, "BAR"},
@@ -1327,6 +1339,23 @@ static std::initializer_list<SimpleTestData> kStringLiteralTests = {
     {"\"the\\\\great\\\\escape\""},
     {"\"the\\\"great\\\"escape\""},
     {"\"the\\nGREAT\\nescape\""},  // with line continuations
+    {"\"`abc\""},
+    {"\"`abc()\""},
+    {"\"`abc(d)\""},
+    {"\"`abc(d,e)\""},
+};
+
+// `"...`" preprocessor-evaluated string literals
+static std::initializer_list<SimpleTestData> kEvalStringLiteralTests = {
+    {"`\"`\""},           //
+    {"`\" `\""},          //
+    {"`\"123`\""},        //
+    {"`\"abc`\""},        //
+    {"`\"`abc`\""},       //
+    {"`\"`abc()`\""},     //
+    {"`\"`abc(d)`\""},    //
+    {"`\"`abc(d,e)`\""},  //
+    {"`\"```\""},         //
 };
 
 // tokens with special handling in lexer
@@ -1655,6 +1684,9 @@ static std::initializer_list<GenericTestDataSequence> kLexicalErrorTests = {
     {"\"unterminated string literal", {TK_OTHER}},
     {"\"unterminated string literal\n", {TK_OTHER}},
     {"\"unterminated \\\nstring \\\nliteral\n", {TK_OTHER}},
+    {"`\"unterminated eval string literal", {TK_OTHER}},
+    {"`\"unterminated eval string literal\n", {TK_OTHER}},
+    {"`\"unterminated \"eval\" string literal", {TK_OTHER}},
     {"/*", {TK_OTHER}},
     {"/*\n", {TK_OTHER}},
     {"/* interminated comment", {TK_OTHER}},
@@ -1698,6 +1730,9 @@ TEST(VerilogLexerTest, Tricky) { TestLexer(kTrickyTests); }
 TEST(VerilogLexerTest, Sequence) { TestFilteredLexer(kSequenceTests); }
 TEST(VerilogLexerTest, StringLiteral) {
   TestLexer(kStringLiteralTests, TK_StringLiteral);
+}
+TEST(VerilogLexerTest, EvalStringLiteral) {
+  TestLexer(kEvalStringLiteralTests, TK_EvalStringLiteral);
 }
 TEST(VerilogLexerTest, Edges) { TestFilteredLexer(kEdgeTests); }
 TEST(VerilogLexerTest, UDP) { TestFilteredLexer(kUDPTests); }
