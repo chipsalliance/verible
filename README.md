@@ -99,6 +99,34 @@ verilog_syntax: usage: verilog_syntax [options] <file> [<file>...]
 Try --helpfull to get a list of all flags.
 ```
 
+#### Selecting Parsing Mode {#parsing-mode}
+
+If your source file is not a standalone Verilog description as defined by the
+LRM, (e.g. a body snippet of a module, class, task, or function without the
+header or end) the parser can use an alternate parsing mode by using a comment
+directive before the first (non-comment) token.
+
+```verilog
+// This file is `included inside a module definition body.
+// verilog_syntax: parse-as-module-body
+wire x;
+initial begin
+  x = 0;
+end
+```
+
+The `verilog_syntax` directive tells the parser that the contents of this file
+are to be treated as if they are inside a module declaration.
+
+Available parser selection modes include:
+
+*   `parse-as-statements`: Text contains only statements (e.g. inside function,
+    always, ...)
+*   `parse-as-expression`: Text occurs inside an expression.
+*   `parse-as-module-body`: Text occurs inside a module definition.
+*   `parse-as-class-body`: Text occurs inside a class definition.
+*   `parse-as-package-body`: Text occurs inside a package definition.
+
 #### Token Stream
 
 The lexer partitions a text buffer into a sequence of tokens with annotations
@@ -268,6 +296,41 @@ verilog_lint: usage: verilog_lint [options] <file> [<file>...]
 Try --helpfull to get a list of all flags.
 ```
 
+#### Waiving Lint Violations {#lint-waiver}
+
+In the rare circumstance where a line needs to be waived from a particular lint
+rule, you can use the following waiver comment:
+
+```
+// This example waives the line after the waiver.
+// verilog_lint: waive rule-name
+The next non-comment line like this one is waived.
+
+// This example waives the same line as the waiver.
+This line is waived.  // verilog_lint: waive rule-name
+
+// This example shows accumulation of waivers over multiple lines.
+// verilog_lint: waive rule-name-1
+// verilog_lint: waive rule-name-2
+// Other comments, possibly waivers for other tools.
+This line will be waived for both rule-name-1 and rule-name-2.
+
+// This example shows how to waive an entire range of lines.
+// verilog_lint: waive-start rule-X
+...
+All lines in between will be waived for rule-X
+...
+// verilog_lint: waive-stop rule-X
+```
+
+The name of the rule to waive is at the end of each diagnostic message in `[]`.
+
+Syntax errors cannot be waived. A common source of syntax errors is if the file
+is not a standalone Verilog program as defined by the LRM, e.g. a body snippet
+of a module, class, task, or function. In such cases, the syntax parser can be
+directed to treat the code as a snippet by selecting a
+[parsing mode](#parsing-mode).
+
 ### Formatter
 
 The formatter is a transformative tool that manages whitespace in accordance
@@ -302,6 +365,34 @@ To pipe from stdin, use '-' as <file>.
 
 Try --helpfull to get a list of all flags.
 ```
+
+#### Disabling Formatting {#disable-formatting}
+
+When you want to exempt a range of text from formatting, write:
+
+```
+// verilog_format: off
+... untouched code ...
+// verilog_format: on
+```
+
+or
+
+```
+/* verilog_format: off */
+... untouched code ...
+/* verilog_format: on */
+```
+
+As a good practice, include a reason why you choose to disable a section.
+
+```
+// verilog_format: off  // my alignment is prettier than the tool's
+
+// verilog_format: off  // issue #N: working around.
+```
+
+These directives take precedence over `--lines` specifications.
 
 ### Future Intent
 
