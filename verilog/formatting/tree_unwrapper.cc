@@ -984,18 +984,6 @@ void TreeUnwrapper::Visit(const verible::SyntaxTreeNode& node) {
 
       auto& instance_list_partition = children.back();
       const auto& instance_type_partition = children.back().PreviousSibling();
-      //if (tag==NodeEnum::kBindDirective) {
-      //  // append target instance to the bind directive partition
-      //  instance_type_partition->FlattenOnce();
-      //    data_declaration_partition.MergeConsecutiveSiblings(
-      //        0, [](UnwrappedLine* left_uwline,
-      //                          const UnwrappedLine& right_uwline) {
-      //          CHECK(left_uwline->TokensRange().end() ==
-      //                right_uwline.TokensRange().begin());
-      //          left_uwline->SpanUpToToken(right_uwline.TokensRange().end());
-      //        });
-      //  // update references
-      //}
 
       if (instance_list_partition.Children().size() == 1) {
         // Flatten partition tree by one level.
@@ -1037,6 +1025,19 @@ void TreeUnwrapper::Visit(const verible::SyntaxTreeNode& node) {
           // just flatten it. Manually flatten subpartitions.
           instance_type_partition->HoistOnlyChild();
           instance_list_partition.HoistOnlyChild();
+          if (instance_list_partition.Children().empty()) {
+            //TODO: rename this, we just move a leaf to its sibling here
+            AttachTrailingSemicolonToPreviousPartition();
+          }
+          if (instance_type_partition->Children().empty()) {
+            data_declaration_partition.MergeConsecutiveSiblings(
+                0, [](UnwrappedLine* left_uwline,
+                                  const UnwrappedLine& right_uwline) {
+                  CHECK(left_uwline->TokensRange().end() ==
+                        right_uwline.TokensRange().begin());
+                  left_uwline->SpanUpToToken(right_uwline.TokensRange().end());
+                });
+          }
         }
       }
       break;
