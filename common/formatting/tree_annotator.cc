@@ -74,6 +74,10 @@ class TreeAnnotator : public TreeContextVisitor {
   std::vector<PreFormatToken>::iterator next_filtered_token_;
   // Pointer to end() of preformatted_tokens.
   const std::vector<PreFormatToken>::iterator end_filtered_token_;
+
+  // Copy of current_context_ that is saved for use as a left-token's context
+  // passed into the token_annotator_ function.
+  SyntaxTreeContext saved_left_context_;
 };
 
 void TreeAnnotator::Annotate() {
@@ -99,15 +103,21 @@ void TreeAnnotator::CatchUpToCurrentLeaf(const TokenInfo& leaf_token) {
   // so we need to compare a unique property instead of address.
   // The very last token (before end_filtered_token) is an EOF token,
   // which doesn't need to be annotated.
+  // TODO(fangism): efficiently compute greatest-common-ancestor between
+  // left- and right- context.  Ideally this should be memo-ized as the
+  // traversal occurs, to avoid any unnecessary (linear) searches.
   while (std::distance(next_filtered_token_, end_filtered_token_) > 1 &&
          // compare const char* addresses:
          next_filtered_token_->token->text.begin() != leaf_token.text.begin()) {
     const auto& left_token = *next_filtered_token_;
     ++next_filtered_token_;
     auto& right_token = *next_filtered_token_;
-    token_annotator_(left_token, &right_token, Context());
+    token_annotator_(left_token, &right_token, saved_left_context_, Context());
   }
   // next_filtered_token_ now points to leaf_token, now caught up.
+  // TODO(fangism): This costs an entire vector/stack-copy for every leaf token.
+  // May need to choose a different structure for SyntaxTreeContext.
+  saved_left_context_ = Context();
 }
 
 }  // namespace

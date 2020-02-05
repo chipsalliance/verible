@@ -123,9 +123,10 @@ static bool IsAnySemicolon(const PreFormatToken& ftoken) {
 // Returns minimum number of spaces required between left and right token.
 // Returning kUnhandledSpacesRequired means the case was not explicitly
 // handled, and it is up to the caller to decide what to do when this happens.
-static WithReason<int> SpacesRequiredBetween(const PreFormatToken& left,
-                                             const PreFormatToken& right,
-                                             const SyntaxTreeContext& context) {
+static WithReason<int> SpacesRequiredBetween(
+    const PreFormatToken& left, const PreFormatToken& right,
+    const SyntaxTreeContext& left_context,
+    const SyntaxTreeContext& right_context) {
   VLOG(3) << "Spacing between " << verilog_symbol_name(left.TokenEnum())
           << " and " << verilog_symbol_name(right.TokenEnum());
   // Higher precedence rules should be handled earlier in this function.
@@ -148,7 +149,7 @@ static WithReason<int> SpacesRequiredBetween(const PreFormatToken& left,
   }
 
   // For now, leave everything inside [dimensions] alone.
-  if (context.IsInsideFirst(
+  if (right_context.IsInsideFirst(
           {NodeEnum::kDimensionRange, NodeEnum::kDimensionScalar}, {})) {
     // ... except for the spacing before '[' and around ':',
     // which are covered elsewhere.
@@ -161,7 +162,7 @@ static WithReason<int> SpacesRequiredBetween(const PreFormatToken& left,
   }
 
   // Unary operators (context-sensitive)
-  if (IsUnaryPrefixExpressionOperand(left, context) &&
+  if (IsUnaryPrefixExpressionOperand(left, right_context) &&
       (left.format_token_enum != FormatTokenType::binary_operator ||
        !IsUnaryOperator(static_cast<yytokentype>(right.TokenEnum())))) {
     // TODO: There are _some_ unary operators on the right that could
@@ -188,7 +189,7 @@ static WithReason<int> SpacesRequiredBetween(const PreFormatToken& left,
     return {1, "Require space after semicolon"};
   }
 
-  if (context.IsInsideFirst({NodeEnum::kStreamingConcatenation}, {})) {
+  if (right_context.IsInsideFirst({NodeEnum::kStreamingConcatenation}, {})) {
     if (left.TokenEnum() == TK_LS || left.TokenEnum() == TK_RS) {
       return {0, "No space around streaming operators"};
     } else if (left.format_token_enum == FormatTokenType::numeric_literal ||
@@ -208,7 +209,7 @@ static WithReason<int> SpacesRequiredBetween(const PreFormatToken& left,
   }
 
   // Do not force space between '^' and '{' operators
-  if (context.IsInsideFirst({NodeEnum::kUnaryPrefixExpression}, {})) {
+  if (right_context.IsInsideFirst({NodeEnum::kUnaryPrefixExpression}, {})) {
     if (IsUnaryOperator(static_cast<yytokentype>(left.TokenEnum())) &&
         right.TokenEnum() == '{') {
       return {0, "No space between unary and concatenation operators"};
@@ -236,7 +237,7 @@ static WithReason<int> SpacesRequiredBetween(const PreFormatToken& left,
     return {0, "No space inside based numeric literals"};
   }
 
-  if (context.IsInsideFirst(
+  if (right_context.IsInsideFirst(
           {NodeEnum::kUdpCombEntry, NodeEnum::kUdpSequenceEntry}, {})) {
     // Spacing before ';' is handled above
     return {1, "One space around UDP entries"};
@@ -270,14 +271,14 @@ static WithReason<int> SpacesRequiredBetween(const PreFormatToken& left,
     // General handling of ID '(' spacing:
     if (left.format_token_enum == FormatTokenType::identifier ||
         IsKeywordCallable(yytokentype(left.TokenEnum()))) {
-      if (context.IsInside(NodeEnum::kActualNamedPort) ||
-          context.IsInside(NodeEnum::kPort)) {
+      if (right_context.IsInside(NodeEnum::kActualNamedPort) ||
+          right_context.IsInside(NodeEnum::kPort)) {
         return {0, "Named port: no space between ID and '('"};
       }
-      if (context.IsInside(NodeEnum::kGateInstance)) {
+      if (right_context.IsInside(NodeEnum::kGateInstance)) {
         return {1, "Module instance: want space between ID and '('"};
       }
-      if (context.IsInside(NodeEnum::kModuleHeader)) {
+      if (right_context.IsInside(NodeEnum::kModuleHeader)) {
         return {1,
                 "Module/interface declarations: want space between ID and '('"};
       }
@@ -294,11 +295,11 @@ static WithReason<int> SpacesRequiredBetween(const PreFormatToken& left,
     if (left.format_token_enum == FormatTokenType::keyword) {
       return {1, "Space between keyword and '{'."};
     }
-    if (context.DirectParentsAre(
+    if (right_context.DirectParentsAre(
             {NodeEnum::kBraceGroup, NodeEnum::kConstraintDeclaration})) {
       return {1, "Space before '{' when opening a constraint definition body."};
     }
-    if (context.DirectParentsAre(
+    if (right_context.DirectParentsAre(
             {NodeEnum::kBraceGroup, NodeEnum::kCoverPoint})) {
       return {1, "Space before '{' when opening a coverpoint body."};
     }
@@ -309,8 +310,8 @@ static WithReason<int> SpacesRequiredBetween(const PreFormatToken& left,
   if ((left.format_token_enum == FormatTokenType::keyword ||
        left.format_token_enum == FormatTokenType::identifier) &&
       right.TokenEnum() == '[') {
-    if (context.IsInsideFirst({NodeEnum::kPackedDimensions},
-                              {NodeEnum::kExpression})) {
+    if (right_context.IsInsideFirst({NodeEnum::kPackedDimensions},
+                                    {NodeEnum::kExpression})) {
       // "type [packed...]" (space between type and packed dimensions)
       // avoid touching any expressions inside the packed dimensions
       return {1, "spacing before [packed dimensions] of declarations"};
@@ -320,7 +321,7 @@ static WithReason<int> SpacesRequiredBetween(const PreFormatToken& left,
   }
   if (left.TokenEnum() == ']' &&
       right.format_token_enum == FormatTokenType::identifier) {
-    if (context.DirectParentsAre(
+    if (right_context.DirectParentsAre(
             {NodeEnum::kUnqualifiedId,
              NodeEnum::kDataTypeImplicitBasicIdDimensions})) {
       // "[packed...] id" (space between packed dimensions and id)
@@ -338,7 +339,7 @@ static WithReason<int> SpacesRequiredBetween(const PreFormatToken& left,
     if (left.TokenEnum() == TK_default) {
       return {0, "No space inside \"default:\""};
     }
-    if (context.DirectParentIsOneOf(
+    if (right_context.DirectParentIsOneOf(
             {NodeEnum::kCaseItem, NodeEnum::kCaseInsideItem,
              NodeEnum::kCasePatternItem, NodeEnum::kGenerateCaseItem,
              NodeEnum::kPropertyCaseItem, NodeEnum::kRandSequenceCaseItem,
@@ -357,26 +358,26 @@ static WithReason<int> SpacesRequiredBetween(const PreFormatToken& left,
 
     // Everything that resembles a prefix-statement label,
     // and label before 'begin'
-    if (context.DirectParentIsOneOf({NodeEnum::kBlockIdentifier,
-                                     NodeEnum::kLabeledStatement,
-                                     NodeEnum::kGenerateBlock})) {
+    if (right_context.DirectParentIsOneOf({NodeEnum::kBlockIdentifier,
+                                           NodeEnum::kLabeledStatement,
+                                           NodeEnum::kGenerateBlock})) {
       return {1, "1 space before ':' in prefix block labels"};
     }
 
     // kTernaryExpression should have 1 space
-    if (context.DirectParentIs(NodeEnum::kTernaryExpression)) {
+    if (right_context.DirectParentIs(NodeEnum::kTernaryExpression)) {
       return {1, "Ternary ?: expression wants 1 space around ':'"};
     }
 
     // Spacing in ranges
-    if (InRangeLikeContext(context)) {
+    if (InRangeLikeContext(right_context)) {
       int spaces = right.OriginalLeadingSpaces().length();
       if (spaces > 1) {
         spaces = 1;
       }
       return {spaces, "Limit spaces before ':' in bit slice to 0 or 1"};
     }
-    if (context.DirectParentIs(NodeEnum::kValueRange)) {
+    if (right_context.DirectParentIs(NodeEnum::kValueRange)) {
       return {1, "Spaces around ':' in value ranges."};
     }
 
@@ -399,7 +400,7 @@ static WithReason<int> SpacesRequiredBetween(const PreFormatToken& left,
   }
   if (left.TokenEnum() == ':') {
     // Spacing in ranges
-    if (InRangeLikeContext(context)) {
+    if (InRangeLikeContext(right_context)) {
       // Take advantage here that the left token was already annotated (above)
       return {left.before.spaces_required,
               "Symmetrize spaces before and after ':' in bit slice"};
@@ -490,13 +491,14 @@ struct SpacePolicy {
   bool force_preserve_spaces;
 };
 
-static SpacePolicy SpacesRequiredBetween(const FormatStyle& style,
-                                         const PreFormatToken& left,
-                                         const PreFormatToken& right,
-                                         const SyntaxTreeContext& context) {
+static SpacePolicy SpacesRequiredBetween(
+    const FormatStyle& style, const PreFormatToken& left,
+    const PreFormatToken& right, const SyntaxTreeContext& left_context,
+    const SyntaxTreeContext& right_context) {
   // Default for unhandled cases, 1 space to be conservative.
   constexpr int kUnhandledSpacesDefault = 1;
-  const auto spaces = SpacesRequiredBetween(left, right, context);
+  const auto spaces =
+      SpacesRequiredBetween(left, right, left_context, right_context);
   VLOG(1) << "spaces: " << spaces.value << ", reason: " << spaces.reason;
 
   if (spaces.value == kUnhandledSpacesRequired) {
@@ -552,9 +554,10 @@ static WithReason<int> BreakPenaltyBetweenTokens(
 }
 
 // Returns the split penalty for line-breaking before the right token.
-static WithReason<int> BreakPenaltyBetween(const verible::PreFormatToken& left,
-                                           const verible::PreFormatToken& right,
-                                           const SyntaxTreeContext& context) {
+static WithReason<int> BreakPenaltyBetween(
+    const verible::PreFormatToken& left, const verible::PreFormatToken& right,
+    const SyntaxTreeContext& left_context,
+    const SyntaxTreeContext& right_context) {
   VLOG(3) << "Inter-token penalty between "
           << verilog_symbol_name(left.TokenEnum()) << " and "
           << verilog_symbol_name(right.TokenEnum());
@@ -576,9 +579,10 @@ static WithReason<int> BreakPenaltyBetween(const verible::PreFormatToken& left,
 // Returns decision whether to break, not break, or evaluate both choices.
 static WithReason<SpacingOptions> BreakDecisionBetween(
     const FormatStyle& style, const PreFormatToken& left,
-    const PreFormatToken& right, const SyntaxTreeContext& context) {
+    const PreFormatToken& right, const SyntaxTreeContext& left_context,
+    const SyntaxTreeContext& right_context) {
   // For now, leave everything inside [dimensions] alone.
-  if (context.IsInsideFirst(
+  if (right_context.IsInsideFirst(
           {NodeEnum::kDimensionRange, NodeEnum::kDimensionScalar}, {})) {
     // ... except for the spacing immediately around '[' and ']',
     // which is covered by other rules.
@@ -631,7 +635,7 @@ static WithReason<SpacingOptions> BreakDecisionBetween(
 
   // Unary operators (context-sensitive)
   // For now, never separate unary prefix operators from their operands.
-  if (IsUnaryPrefixExpressionOperand(left, context)) {
+  if (IsUnaryPrefixExpressionOperand(left, right_context)) {
     return {SpacingOptions::MustAppend,
             "Never separate unary prefix operator from its operand"};
   }
@@ -725,8 +729,10 @@ static void AnnotateOriginalSpacing(
 void AnnotateFormatToken(const FormatStyle& style,
                          const PreFormatToken& prev_token,
                          PreFormatToken* curr_token,
-                         const SyntaxTreeContext& context) {
-  const auto p = SpacesRequiredBetween(style, prev_token, *curr_token, context);
+                         const SyntaxTreeContext& prev_context,
+                         const SyntaxTreeContext& curr_context) {
+  const auto p = SpacesRequiredBetween(style, prev_token, *curr_token,
+                                       prev_context, curr_context);
   curr_token->before.spaces_required = p.spaces_required;
   if (p.force_preserve_spaces) {
     // forego all inter-token calculations
@@ -734,11 +740,11 @@ void AnnotateFormatToken(const FormatStyle& style,
   } else {
     // Update the break penalty and if the curr_token is allowed to
     // break before it.
-    const auto break_penalty =
-        BreakPenaltyBetween(prev_token, *curr_token, context);
+    const auto break_penalty = BreakPenaltyBetween(prev_token, *curr_token,
+                                                   prev_context, curr_context);
     curr_token->before.break_penalty = break_penalty.value;
-    const auto breaker =
-        BreakDecisionBetween(style, prev_token, *curr_token, context);
+    const auto breaker = BreakDecisionBetween(style, prev_token, *curr_token,
+                                              prev_context, curr_context);
     curr_token->before.break_decision = breaker.value;
     VLOG(3) << "line break constraint: " << breaker.reason;
   }
@@ -776,8 +782,10 @@ void AnnotateFormattingInformation(
       syntax_tree_root, eof_token, tokens_begin, tokens_end,
       // lambda: bind the FormatStyle, forwarding all other arguments
       [&style](const PreFormatToken& prev_token, PreFormatToken* curr_token,
-               const SyntaxTreeContext& context) {
-        AnnotateFormatToken(style, prev_token, curr_token, context);
+               const SyntaxTreeContext& prev_context,
+               const SyntaxTreeContext& current_context) {
+        AnnotateFormatToken(style, prev_token, curr_token, prev_context,
+                            current_context);
       });
 }
 

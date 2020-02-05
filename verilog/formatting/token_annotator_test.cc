@@ -48,7 +48,8 @@ using ::verible::SpacingOptions;
 extern void AnnotateFormatToken(const FormatStyle& style,
                                 const PreFormatToken& prev_token,
                                 PreFormatToken* curr_token,
-                                const verible::SyntaxTreeContext& context);
+                                const verible::SyntaxTreeContext& prev_context,
+                                const verible::SyntaxTreeContext& curr_context);
 
 namespace {
 
@@ -175,7 +176,7 @@ struct AnnotateWithContextTestCase {
   FormatStyle style;
   verible::TokenInfo left_token;
   verible::TokenInfo right_token;
-  InitializedSyntaxTreeContext context;
+  InitializedSyntaxTreeContext right_context;
   ExpectedInterTokenInfo expected_annotation;
 };
 
@@ -3797,8 +3798,10 @@ TEST(TokenAnnotatorTest, AnnotateFormattingWithContextTest) {
         << "This test does not support cases examining intertoken text. "
            "Move the test case to AnnotateBreakAroundComments instead.";
 
-    VLOG(1) << "context: " << test_case.context;
-    AnnotateFormatToken(test_case.style, left, &right, test_case.context);
+    VLOG(1) << "right context: " << test_case.right_context;
+    // TODO(fangism): support test cases that need a left-token-context
+    AnnotateFormatToken(test_case.style, left, &right, {},
+                        test_case.right_context);
     EXPECT_EQ(test_case.expected_annotation, right.before)
         << " with left=" << left.Text() << " and right=" << right.Text();
     ++test_index;
@@ -3816,7 +3819,7 @@ struct AnnotateBreakAroundCommentsTestCase {
   int right_token_enum;
   absl::string_view right_token_string;
 
-  InitializedSyntaxTreeContext context;
+  InitializedSyntaxTreeContext right_context;
   ExpectedInterTokenInfo expected_annotation;
 };
 
@@ -4193,10 +4196,11 @@ TEST(TokenAnnotatorTest, AnnotateBreakAroundComments) {
     right.format_token_enum =
         GetFormatTokenType(yytokentype(right.TokenEnum()));
 
-    VLOG(1) << "context: " << test_case.context;
-    AnnotateFormatToken(test_case.style, left, &right, test_case.context);
+    VLOG(1) << "right context: " << test_case.right_context;
+    AnnotateFormatToken(test_case.style, left, &right, {},
+                        test_case.right_context);
     EXPECT_EQ(test_case.expected_annotation, right.before)
-        << "Index: " << test_index << " Context: " << test_case.context << " "
+        << "Index: " << test_index << " Context: " << test_case.right_context
         << " with left=" << left.Text() << " and right=" << right.Text();
     ++test_index;
   }
