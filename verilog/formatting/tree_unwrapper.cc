@@ -997,6 +997,7 @@ void TreeUnwrapper::Visit(const verible::SyntaxTreeNode& node) {
 
         // Reshape type-instance partitions.
 
+        size_t fuse_position;
         if (instance_type_partition == &children.front()) {
           // data_declaration_partition now consists of exactly:
           //   instance_type_partition, instance_list_partition (single
@@ -1004,41 +1005,38 @@ void TreeUnwrapper::Visit(const verible::SyntaxTreeNode& node) {
 
           // Compute end-of-type position before flattening (and invalidating
           // references).
-          const size_t fuse_position =
-              instance_type_partition->Children().size() - 1;
+          // This will be used for merge with instance name below.
+          fuse_position = instance_type_partition->Children().size() - 1;
           // Flatten these (which will invalidate their references).
           data_declaration_partition.FlattenOnce();
 
-          // Join the rightmost of instance_type_partition with the leftmost of
-          // instance_list_partition.  Keep the type's indentation.
-          // This can yield an intermediate partition that contains:
-          // ") instance_name (".
-          data_declaration_partition.MergeConsecutiveSiblings(
-              fuse_position, [](UnwrappedLine* left_uwline,
-                                const UnwrappedLine& right_uwline) {
-                CHECK(left_uwline->TokensRange().end() ==
-                      right_uwline.TokensRange().begin());
-                left_uwline->SpanUpToToken(right_uwline.TokensRange().end());
-              });
         } else {
-          // There is a qualifier before instance_type_partition, so we cannot
-          // just flatten it. Manually flatten subpartitions.
+          // There is a qualifier or bind directive before
+          // instance_type_partition, so we cannot just flatten it.
+          // Manually flatten subpartitions.
           instance_type_partition->HoistOnlyChild();
           instance_list_partition.HoistOnlyChild();
+
           if (instance_list_partition.Children().empty()) {
+            // Attach instance name to its type
             //TODO: rename this, we just move a leaf to its sibling here
             AttachTrailingSemicolonToPreviousPartition();
           }
           if (instance_type_partition->Children().empty()) {
-            data_declaration_partition.MergeConsecutiveSiblings(
-                0, [](UnwrappedLine* left_uwline,
-                                  const UnwrappedLine& right_uwline) {
-                  CHECK(left_uwline->TokensRange().end() ==
-                        right_uwline.TokensRange().begin());
-                  left_uwline->SpanUpToToken(right_uwline.TokensRange().end());
-                });
+            // Merge instance qualifier leaf with type
+            fuse_position = 0;
+          } else {
+            // We're done, do not attempt to merge below
+            break;
           }
         }
+        data_declaration_partition.MergeConsecutiveSiblings(
+            fuse_position, [](UnwrappedLine* left_uwline,
+                              const UnwrappedLine& right_uwline) {
+              CHECK(left_uwline->TokensRange().end() ==
+                    right_uwline.TokensRange().begin());
+              left_uwline->SpanUpToToken(right_uwline.TokensRange().end());
+            });
       }
       break;
     }
