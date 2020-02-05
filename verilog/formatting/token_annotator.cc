@@ -529,9 +529,14 @@ static WithReason<int> BreakPenaltyBetweenTokens(
 
   // Prefer to split after commas rather than before them.
   if (right.TokenEnum() == ',') return {10, "avoid breaking before ','"};
+  if (right.TokenEnum() == ';') return {10, "avoid breaking before ';'"};
 
-  // Prefer to not split directly at an assignment.
-  if (left.TokenEnum() == '=') return {2, "right is '='"};
+  if (left.TokenEnum() == ',') return {-5, "encourage breaking after ','"};
+  if (left.TokenEnum() == ';') return {-5, "encourage breaking after ';'"};
+
+  // Prefer to split after an assignment operator, rather than before.
+  // TODO(fangism): use context to cover all assignment-like cases
+  if (right.TokenEnum() == '=') return {5, "right is '='"};
 
   // Prefer to keep '(' with whatever is on the left.
   // TODO(fangism): ... except when () is used as precedence.
@@ -545,12 +550,35 @@ static WithReason<int> BreakPenaltyBetweenTokens(
     return {90, "numeric width, base"};
   }
 
-  // TODO(b/148552963): make this return 0, as relative incremental cost
-  // return {0, "no further adjustment (default)"};
-  // The default cost of 1 is too low, and is terrible for search convergence.
+  return {0, "no further adjustment (default)"};
+}
 
-  constexpr int kUnhandledWrapPenalty = 1;
-  return {kUnhandledWrapPenalty, "Unhandled wrap penalty."};
+static int CommonAncestors(const SyntaxTreeContext& left,
+                           const SyntaxTreeContext& right) {
+  // TODO(fangism): re-check of common ancestry is slow (linear-time),
+  // and could be avoided by memoizing the point of common ancestry between
+  // leaves *during* the traversal.
+  const auto first_mismatches =
+      std::mismatch(left.begin(), left.end(), right.begin(), right.end());
+  const int left_common = std::distance(left.begin(), first_mismatches.first);
+  const int right_common =
+      std::distance(right.begin(), first_mismatches.second);
+  CHECK_GE(left_common, 0);
+  CHECK_EQ(left_common, right_common);
+  return left_common;
+}
+
+static int ContextBasedPenalty(const SyntaxTreeContext& left_context,
+                               const SyntaxTreeContext& right_context) {
+  // This factor takes into account syntax tree depth, favoring keeping
+  // elements deeper in the tree closer together.
+  // The current simple model gives equal weight to every element in the
+  // context stack.
+  // TODO(fangism): custom weights by syntax tree node type.
+  constexpr int kDepthScaleFactor = 2;
+  const int num_common = CommonAncestors(left_context, right_context);
+  const int penalty = num_common * kDepthScaleFactor;
+  return penalty;
 }
 
 // Returns the split penalty for line-breaking before the right token.
@@ -562,15 +590,19 @@ static WithReason<int> BreakPenaltyBetween(
           << verilog_symbol_name(left.TokenEnum()) << " and "
           << verilog_symbol_name(right.TokenEnum());
 
-  constexpr int kMinPenalty = 1;  // absolute minimum
+  constexpr int kMinPenalty = 1;   // absolute minimum
+  constexpr int kPenaltyBias = 5;  // baseline penalty value
+
+  const int depth_penalty = ContextBasedPenalty(left_context, right_context);
+  VLOG(3) << "context break penalty: " << depth_penalty;
 
   // This factor only looks at left and right tokens:
   const auto inter_token_penalty = BreakPenaltyBetweenTokens(left, right);
   VLOG(3) << "inter-token break penalty: " << inter_token_penalty.value << ", "
           << inter_token_penalty.reason;
 
-  // TODO(b/148552963): impose depth_penalty (not death penalty)
-  const int total_penalty = std::max(inter_token_penalty.value, kMinPenalty);
+  const int total_penalty = std::max(
+      kPenaltyBias + depth_penalty + inter_token_penalty.value, kMinPenalty);
 
   VLOG(3) << "total break penalty: " << total_penalty;
   return {total_penalty, inter_token_penalty.reason};

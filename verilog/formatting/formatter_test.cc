@@ -493,9 +493,10 @@ static const std::initializer_list<FormatterTestCase> kFormatterTestCases = {
     {"  parameter int a={(b^c),(d^^e)};",
      "parameter int a = {(b ^ c), (d ^ ^e)};\n"},
 
-    {"  parameter int a={(b[x]^{c[y]}),d^^e[f] ^ (g)};",
-     "parameter int a = {(b[x] ^ {c[y]}), d\n"
-     "                   ^ ^e[f] ^ (g)};\n"},
+    {"  parameter int a={(b[x]^{c[y]})};",
+     "parameter int a = {(b[x] ^ {c[y]})};\n"},
+    {"  parameter int a={d^^e[f] ^ (g)};",
+     "parameter int a = {d ^ ^e[f] ^ (g)};\n"},
 
     // ~| is unary reduction NOR, |~ and | ~ aren't
     {"  parameter int a=b| ~(c<<d);", "parameter int a = b | ~(c << d);\n"},
@@ -3363,14 +3364,15 @@ TEST(FormatterEndToEndTest, PreserveVSpacesOnly) {
 // TODO(b/145558510): these tests must maintain unique-best solutions
 static const std::initializer_list<FormatterTestCase>
     kFormatterTestCasesWithWrapping = {
-        {"module m;"
+        {// TODO(b/148972363): might want to attract "= sss(" more
+         "module m;"
          "assign wwwwww[77:66]"
          "= sss(qqqq[33:22],"
          "vv[44:1]);"
          "endmodule",
          "module m;\n"
-         "  assign wwwwww[77:66] = sss(\n"
-         "      qqqq[33:22], vv[44:1]);\n"
+         "  assign wwwwww[77:66] =\n"
+         "      sss(qqqq[33:22], vv[44:1]);\n"
          "endmodule\n"},
 };
 

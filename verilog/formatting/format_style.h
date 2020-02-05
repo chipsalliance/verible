@@ -26,6 +26,10 @@ namespace formatter {
 
 // Style parameters that are specific to Verilog formatter
 struct FormatStyle : public verible::BasicFormatStyle {
+  FormatStyle() : verible::BasicFormatStyle() {
+    over_column_limit_penalty = 10000;
+  }
+
   // TODO(fangism): introduce the following knobs:
   //
   // Unless forced by previous line, starting a line with a comma is
