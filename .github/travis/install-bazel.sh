@@ -13,12 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-mkdir -p "$KOKORO_ARTIFACTS_DIR/bazel_test_logs"
-# rename all test.log to sponge_log.log and then copy them to the kokoro
-# artifacts directory.
-find -L . -name "test.log" -exec rename 's/test.log/sponge_log.log/' {} \;
-find -L . -name "sponge_log.log" -exec cp --parents {} "$KOKORO_ARTIFACTS_DIR/bazel_test_logs" \;
-# rename all test.xml to sponge_log.xml and then copy them to kokoro
-# artifacts directory.
-find -L . -name "test.xml" -exec rename 's/test.xml/sponge_log.xml/' {} \;
-find -L . -name "sponge_log.xml" -exec cp --parents {} "$KOKORO_ARTIFACTS_DIR/bazel_test_logs" \;
+wget https://github.com/bazelbuild/bazel/releases/download/1.2.0/bazel_1.2.0-linux-x86_64.deb -O /tmp/bazel.deb
+sudo dpkg -i /tmp/bazel.deb || true
+sudo apt-get -f install
+bazel --version
