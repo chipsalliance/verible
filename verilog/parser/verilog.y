@@ -7037,9 +7037,13 @@ bind_target_instance
   ;
 bind_instantiation
   /* similar to block_item_decl instantiation */
-  : class_id gate_instance_or_register_variable_list
+  : bind_class_id gate_instance_or_register_variable_list
     { $$ = MakeTaggedNode(N::kBindTargetInstance, $1, $2); }
     /* covers: program, module, interface, checker instantiation */
+  ;
+bind_class_id
+  : class_id
+    { $$ = MakeTaggedNode(N::kInstantiationType, $1); }
   ;
 
 clocking_declaration
