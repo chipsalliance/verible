@@ -34,9 +34,14 @@ std::vector<verible::TreeSearchMatch> FindAllModuleDeclarations(
 // Returns the full header of a module (params, ports, etc...).
 const verible::SyntaxTreeNode& GetModuleHeader(const verible::Symbol&);
 
+// Returns the full header of an interface (params, ports, etc...).
+const verible::SyntaxTreeNode& GetInterfaceHeader(const verible::Symbol&);
+
 // Extract the subnode of a module declaration that is the module name.
 const verible::TokenInfo& GetModuleNameToken(const verible::Symbol&);
 
+// Extract the subnode of an interface declaration that is the module name.
+const verible::TokenInfo& GetInterfaceNameToken(const verible::Symbol&);
 }  // namespace verilog
 
 #endif  // VERIBLE_VERILOG_CST_MODULE_H_
