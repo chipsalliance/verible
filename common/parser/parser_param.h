@@ -58,8 +58,17 @@ class ParserParam {
   // Resizes parser stacks. All data from the current stacks is copied
   // to the new (larger) ones and stack pointers are updated.
   // All stacks must be of the same size which is updated too.
+  // Method updates the *size ptr with the new size.
+  //
+  // New bison (at least 3.5) define the size type to be ptrdiff_t, while old
+  // bisons use size_t. Be compatible with any reasonable long-ish type.
+  template <typename SizeType>
   void ResizeStacks(bison_state_int_type** state_stack, SymbolPtr** value_stack,
-                    long* size);  // NOLINT(runtime/int)
+                    SizeType* size) {
+    int64_t s = *size;
+    ResizeStacksInternal(state_stack, value_stack, &s);
+    *size = s;
+  }
 
   // Returns the maximum allocated size of parser stacks or 0
   // if ResizeStacks() was never called.
@@ -77,6 +86,9 @@ class ParserParam {
   void SetRoot(ConcreteSyntaxTree r) { root_ = std::move(r); }
 
  private:
+  void ResizeStacksInternal(bison_state_int_type** state_stack,
+                            SymbolPtr** value_stack, int64_t* size);
+
   // Container of syntax-rejected tokens.
   // TODO(fangism): Pair this with recovery token, the point at which
   // error-recovery is complete and parsing resumes (for diagnostic purposes).
@@ -89,7 +101,7 @@ class ParserParam {
   // Overflow storage for parser's internal symbol and value stack.
   StateStack state_stack_;
   ValueStack value_stack_;
-  long max_used_stack_size_;  // NOLINT(runtime/int)
+  int64_t max_used_stack_size_;
 
   ParserParam(const ParserParam&) = delete;
   ParserParam& operator=(const ParserParam&) = delete;
