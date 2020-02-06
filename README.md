@@ -275,7 +275,9 @@ An abstract syntax tree (AST) does not exist yet, but is planned.
 The style linter is an analysis tool that identifies constructs or patterns
 deemed undesirable according to a style guide. The main goal is to relieve
 humans the burden of reviewing code for style compliance. Many lint rules use
-syntax tree pattern matching to find style violations.
+syntax tree pattern matching to find style violations. The tool provides
+generating a [built-in lint documentation][lint-rule-list] with details to each
+rule.
 
 The linter tool is available as `//verilog/tools/lint:verilog_lint`.
 
@@ -402,3 +404,4 @@ abstract syntax tree (AST). If you are interested in collaborating, contact us.
 
 [bazel]: https://bazel.build/
 [SV-LRM]: https://ieeexplore.ieee.org/document/8299595
+[lint-rule-list]: https://google.github.io/verible/lint.html
