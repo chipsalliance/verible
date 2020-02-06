@@ -42,7 +42,7 @@ std::vector<verible::TreeSearchMatch> FindAllParamDeclarations(
   return verible::SearchSyntaxTree(root, NodekParamDeclaration());
 }
 
-int GetParamKeyword(const verible::Symbol& symbol) {
+verilog_tokentype GetParamKeyword(const verible::Symbol& symbol) {
   // Currently the LRM is vague on what to do if no parameter/localparam is
   // declared, see example below. As such, if it's not declared, we will treat
   // it as a parameter.
@@ -54,7 +54,7 @@ int GetParamKeyword(const verible::Symbol& symbol) {
   if (param_keyword_symbol == nullptr) return TK_parameter;
   const auto* leaf =
       down_cast<const SyntaxTreeLeaf*>(ABSL_DIE_IF_NULL(param_keyword_symbol));
-  return leaf->get().token_enum;
+  return static_cast<verilog_tokentype>(leaf->get().token_enum);
 }
 
 const verible::Symbol* GetParamTypeSymbol(const verible::Symbol& symbol) {

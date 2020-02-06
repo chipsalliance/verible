@@ -108,7 +108,7 @@ class TreeUnwrapper : public verible::TreeUnwrapper {
   void EatSpaces();
 
   // Update token tracking, and possibly start a new partition.
-  void UpdateInterLeafScanner(yytokentype);
+  void UpdateInterLeafScanner(verilog_tokentype);
 
   // This should only be called directly from CatchUpToCurrentLeaf and
   // LookAheadBeyondCurrentLeaf.

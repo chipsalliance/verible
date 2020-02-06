@@ -95,7 +95,7 @@ absl::string_view VerilogAnalyzer::ScanParsingModeDirective(
 // Return a secondary parsing mode to attempt, depending on the token type of
 // the first rejected token from parsing as top-level.
 static const absl::string_view FailingTokenKeywordToParsingMode(
-    yytokentype token_type) {
+    verilog_tokentype token_type) {
   switch (token_type) {
     // For starting keywords that uniquely identify a parsing context,
     // retry parsing using that context.
@@ -106,15 +106,15 @@ static const absl::string_view FailingTokenKeywordToParsingMode(
     // multiple parsing modes to try, but for now, we limit to one re-parse.
 
     // Keywords that are unique to module items:
-    case yytokentype::TK_always:
-    case yytokentype::TK_always_ff:
-    case yytokentype::TK_always_comb:
-    case yytokentype::TK_always_latch:
-    case yytokentype::TK_assign:
+    case verilog_tokentype::TK_always:
+    case verilog_tokentype::TK_always_ff:
+    case verilog_tokentype::TK_always_comb:
+    case verilog_tokentype::TK_always_latch:
+    case verilog_tokentype::TK_assign:
       // TK_assign could be procedural_continuous_assignment
       // statement as well (function/task).
-    case yytokentype::TK_final:
-    case yytokentype::TK_initial:  // also used in UDP blocks
+    case verilog_tokentype::TK_final:
+    case verilog_tokentype::TK_initial:  // also used in UDP blocks
       return "parse-as-module-body";
 
       // TODO(b/134023515): handle class-unique keywords
@@ -159,7 +159,7 @@ std::unique_ptr<VerilogAnalyzer> VerilogAnalyzer::AnalyzeAutomaticMode(
       const auto& first_reject = rejected_tokens.front();
       const absl::string_view retry_parse_mode =
           FailingTokenKeywordToParsingMode(
-              yytokentype(first_reject.token_info.token_enum));
+              verilog_tokentype(first_reject.token_info.token_enum));
       VLOG(1) << "Retrying parsing in mode: " << retry_parse_mode;
       if (!retry_parse_mode.empty()) {
         auto retry_analyzer =

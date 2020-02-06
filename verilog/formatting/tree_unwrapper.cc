@@ -55,8 +55,8 @@ using ::verible::UnwrappedLine;
 // Used to filter the TokenStreamView by discarding space-only tokens.
 static bool KeepNonWhitespace(const TokenInfo& t) {
   switch (t.token_enum) {
-    case yytokentype::TK_NEWLINE:  // fall-through
-    case yytokentype::TK_SPACE:
+    case verilog_tokentype::TK_NEWLINE:  // fall-through
+    case verilog_tokentype::TK_SPACE:
     case verible::TK_EOF:  // omit the EOF token
       return false;
     default:
@@ -69,7 +69,7 @@ static bool KeepNonWhitespace(const TokenInfo& t) {
 static PreFormatToken CreateFormatToken(const TokenInfo& token) {
   PreFormatToken format_token(&token);
   format_token.format_token_enum =
-      GetFormatTokenType(yytokentype(format_token.TokenEnum()));
+      GetFormatTokenType(verilog_tokentype(format_token.TokenEnum()));
   switch (format_token.format_token_enum) {
     case FormatTokenType::open_group:
       format_token.balancing = verible::GroupBalancing::Open;
@@ -161,7 +161,7 @@ class TreeUnwrapper::TokenScanner {
   }
 
   // Calls TransitionState using current_state_ and the tranition token_Type
-  void UpdateState(yytokentype token_type) {
+  void UpdateState(verilog_tokentype token_type) {
     current_state_ = TransitionState(current_state_, token_type);
     seen_any_nonspace_ |= IsComment(token_type);
   }
@@ -179,13 +179,15 @@ class TreeUnwrapper::TokenScanner {
   State current_state_ = kStart;
   bool seen_any_nonspace_ = false;
 
-  // Transitions the TokenScanner given a TokenState and a yytokentype
+  // Transitions the TokenScanner given a TokenState and a verilog_tokentype
   // transition
-  static State TransitionState(const State& old_state, yytokentype token_type);
+  static State TransitionState(const State& old_state,
+                               verilog_tokentype token_type);
 };
 
-static bool IsNewlineOrEOF(yytokentype token_type) {
-  return token_type == yytokentype::TK_NEWLINE || token_type == verible::TK_EOF;
+static bool IsNewlineOrEOF(verilog_tokentype token_type) {
+  return token_type == verilog_tokentype::TK_NEWLINE ||
+         token_type == verible::TK_EOF;
 }
 
 /*
@@ -201,7 +203,7 @@ static bool IsNewlineOrEOF(yytokentype token_type) {
  *   TreeUnwrapper::CatchUpToCurrentLeaf()
  */
 TokenScannerState TreeUnwrapper::TokenScanner::TransitionState(
-    const State& old_state, yytokentype token_type) {
+    const State& old_state, verilog_tokentype token_type) {
   VLOG(4) << "state transition on: " << old_state
           << ", token: " << verilog_symbol_name(token_type);
   State new_state = old_state;
@@ -319,7 +321,7 @@ static bool DirectParentIsFlowControlConstruct(
   });
 }
 
-void TreeUnwrapper::UpdateInterLeafScanner(yytokentype token_type) {
+void TreeUnwrapper::UpdateInterLeafScanner(verilog_tokentype token_type) {
   VLOG(4) << __FUNCTION__ << ", token: " << verilog_symbol_name(token_type);
   inter_leaf_scanner_->UpdateState(token_type);
   if (inter_leaf_scanner_->ShouldStartNewPartition()) {
@@ -333,7 +335,7 @@ void TreeUnwrapper::AdvanceLastVisitedLeaf() {
   VLOG(4) << __FUNCTION__;
   EatSpaces();
   const auto& next_token = *NextUnfilteredToken();
-  const yytokentype token_enum = yytokentype(next_token.token_enum);
+  const verilog_tokentype token_enum = verilog_tokentype(next_token.token_enum);
   UpdateInterLeafScanner(token_enum);
   AdvanceNextUnfilteredToken();
   VLOG(4) << "end of " << __FUNCTION__;
@@ -386,7 +388,7 @@ void TreeUnwrapper::LookAheadBeyondCurrentLeaf() {
   while (!NextUnfilteredToken()->isEOF()) {
     EatSpaces();
     VLOG(4) << "token: " << VerboseToken(*NextUnfilteredToken());
-    if (IsComment(yytokentype(NextUnfilteredToken()->token_enum))) {
+    if (IsComment(verilog_tokentype(NextUnfilteredToken()->token_enum))) {
       // TODO(fangism): or IsAttribute().  Basically, any token that is not
       // in the syntax tree and not a space.
       AdvanceLastVisitedLeaf();
@@ -456,7 +458,8 @@ void TreeUnwrapper::LookAheadBeyondCurrentNode() {
     const auto next_token_iter = NextUnfilteredToken();
     const auto& next_token = *next_token_iter;
     VLOG(4) << "token: " << VerboseToken(next_token);
-    const yytokentype token_enum = yytokentype(next_token.token_enum);
+    const verilog_tokentype token_enum =
+        verilog_tokentype(next_token.token_enum);
     UpdateInterLeafScanner(token_enum);
     if (next_token_iter != token_end) {
       AdvanceNextUnfilteredToken();
@@ -505,7 +508,7 @@ void TreeUnwrapper::CollectTrailingFilteredTokens() {
 
   // A newline means there are no comments to add to this UnwrappedLine
   // TODO(fangism): fold this logic into CatchUpToCurrentLeaf()
-  if (NextUnfilteredToken()->token_enum == yytokentype::TK_NEWLINE ||
+  if (NextUnfilteredToken()->token_enum == verilog_tokentype::TK_NEWLINE ||
       NextUnfilteredToken()->isEOF()) {
     StartNewUnwrappedLine();
   }
@@ -690,7 +693,7 @@ void TreeUnwrapper::Visit(const verible::SyntaxTreeNode& node) {
         case NodeEnum::kSeqBlock:
         case NodeEnum::kConditionalStatement:
           if (std::prev(CurrentFormatTokenIterator())->TokenEnum() ==
-              yytokentype::SymbolIdentifier) {
+              verilog_tokentype::SymbolIdentifier) {
             // Start new token partition if current token is label identifier
             VisitNewUnwrappedLine(node);
           } else {
@@ -759,7 +762,7 @@ void TreeUnwrapper::Visit(const verible::SyntaxTreeNode& node) {
         case NodeEnum::kGenerateBlock:
         case NodeEnum::kConditionalGenerateConstruct:
           if (std::prev(CurrentFormatTokenIterator())->TokenEnum() ==
-              yytokentype::SymbolIdentifier) {
+              verilog_tokentype::SymbolIdentifier) {
             // Start new token partition if current token is label identifier
             VisitNewUnwrappedLine(node);
           } else {
@@ -1055,8 +1058,8 @@ void TreeUnwrapper::Visit(const verible::SyntaxTreeNode& node) {
       CurrentTokenPartition()->Parent()->ApplyPreOrder(
           [](verible::VectorTree<UnwrappedLine>& node) {
             const auto& range = node.Value().TokensRange();
-            if ((range.back().TokenEnum() == yytokentype::TK_else) &&
-                (range.end()->TokenEnum() == yytokentype::TK_if)) {
+            if ((range.back().TokenEnum() == verilog_tokentype::TK_else) &&
+                (range.end()->TokenEnum() == verilog_tokentype::TK_if)) {
               // Extend [if ( )] partition of [else] token
               node.NextLeaf()->Value().SpanPrevToken();
               // Update partition parent token range
@@ -1098,7 +1101,7 @@ void TreeUnwrapper::AttachTrailingSemicolonToPreviousPartition() {
 // Visitor to determine which leaf enum function to call
 void TreeUnwrapper::Visit(const verible::SyntaxTreeLeaf& leaf) {
   VLOG(3) << __FUNCTION__ << " leaf: " << VerboseToken(leaf.get());
-  const yytokentype tag = yytokentype(leaf.Tag().tag);
+  const verilog_tokentype tag = verilog_tokentype(leaf.Tag().tag);
 
   // Catch up on any non-whitespace tokens that fall between the syntax tree
   // leaves, such as comments and attributes, stopping at the current leaf.
@@ -1118,7 +1121,7 @@ void TreeUnwrapper::Visit(const verible::SyntaxTreeLeaf& leaf) {
     CurrentUnwrappedLine().SetIndentationSpaces(0);
   } else if (IsEndKeyword(tag)) {
     StartNewUnwrappedLine();
-  } else if ((static_cast<int>(tag) == yytokentype::MacroIdItem) &&
+  } else if ((static_cast<int>(tag) == verilog_tokentype::MacroIdItem) &&
              absl::StartsWith(leaf.get().text, "`uvm")) {
     // For each `uvm macro start a new unwrapped line
     StartNewUnwrappedLine();
@@ -1134,7 +1137,7 @@ void TreeUnwrapper::Visit(const verible::SyntaxTreeLeaf& leaf) {
 
   // Post-token-handling token partition adjustments:
   switch (leaf.Tag().tag) {
-    case yytokentype::MacroIdItem: {
+    case verilog_tokentype::MacroIdItem: {
       if (absl::StartsWith(leaf.get().text, "`uvm_") &&
           absl::EndsWith(leaf.get().text, "_end")) {
         // Indent elements between UVM begin/end macro calls

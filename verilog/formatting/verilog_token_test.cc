@@ -31,50 +31,50 @@ TEST(VerilogTokenTest, GetFormatTokenTypeTestUnknown) {
   const int FAKE_TOKEN = 9999;
   verible::TokenInfo token_info(FAKE_TOKEN, "FakeToken");
   verible::PreFormatToken format_token(&token_info);
-  EXPECT_EQ(FTT::unknown, GetFormatTokenType(yytokentype(FAKE_TOKEN)));
+  EXPECT_EQ(FTT::unknown, GetFormatTokenType(verilog_tokentype(FAKE_TOKEN)));
 }
 
 struct GetFormatTokenTypeTestCase {
-  yytokentype token_info_type;
+  verilog_tokentype token_info_type;
   FormatTokenType format_token_type;
 };
 
 const GetFormatTokenTypeTestCase GetFormatTokenTypeTestCases[] = {
-    {yytokentype::PP_Identifier, FTT::identifier},
-    {yytokentype::MacroIdItem, FTT::identifier},
-    {yytokentype::MacroCallId, FTT::identifier},
-    {yytokentype::PP_include, FTT::keyword},
-    {yytokentype::TK_INCR, FTT::unary_operator},
-    {yytokentype::TK_PIPEARROW, FTT::binary_operator},
-    {yytokentype::TK_SCOPE_RES, FTT::hierarchy},
-    {yytokentype::TK_LE, FTT::binary_operator},
-    {yytokentype('='), FTT::binary_operator},  // consistent with TK_LE
-    {yytokentype('.'), FTT::hierarchy},
-    {yytokentype::TK_edge_descriptor, FTT::edge_descriptor},
-    {yytokentype::TK_EOL_COMMENT, FTT::eol_comment},
-    {yytokentype::TK_COMMENT_BLOCK, FTT::comment_block},
-    {yytokentype('('), FTT::open_group},
-    {yytokentype('['), FTT::open_group},
-    {yytokentype('{'), FTT::open_group},
-    {yytokentype::TK_LP, FTT::open_group},
-    {yytokentype(')'), FTT::close_group},
-    {yytokentype(']'), FTT::close_group},
-    {yytokentype('}'), FTT::close_group},
-    {yytokentype::MacroNumericWidth, FTT::numeric_literal},
-    {yytokentype::TK_DecNumber, FTT::numeric_literal},
-    {yytokentype::TK_RealTime, FTT::numeric_literal},
-    {yytokentype::TK_TimeLiteral, FTT::numeric_literal},
-    {yytokentype::TK_BinDigits, FTT::numeric_literal},
-    {yytokentype::TK_OctDigits, FTT::numeric_literal},
-    {yytokentype::TK_HexDigits, FTT::numeric_literal},
-    {yytokentype::TK_UnBasedNumber, FTT::numeric_literal},
-    {yytokentype::TK_DecBase, FTT::numeric_base},
-    {yytokentype::TK_BinBase, FTT::numeric_base},
-    {yytokentype::TK_OctBase, FTT::numeric_base},
-    {yytokentype::TK_HexBase, FTT::numeric_base},
+    {verilog_tokentype::PP_Identifier, FTT::identifier},
+    {verilog_tokentype::MacroIdItem, FTT::identifier},
+    {verilog_tokentype::MacroCallId, FTT::identifier},
+    {verilog_tokentype::PP_include, FTT::keyword},
+    {verilog_tokentype::TK_INCR, FTT::unary_operator},
+    {verilog_tokentype::TK_PIPEARROW, FTT::binary_operator},
+    {verilog_tokentype::TK_SCOPE_RES, FTT::hierarchy},
+    {verilog_tokentype::TK_LE, FTT::binary_operator},
+    {verilog_tokentype('='), FTT::binary_operator},  // consistent with TK_LE
+    {verilog_tokentype('.'), FTT::hierarchy},
+    {verilog_tokentype::TK_edge_descriptor, FTT::edge_descriptor},
+    {verilog_tokentype::TK_EOL_COMMENT, FTT::eol_comment},
+    {verilog_tokentype::TK_COMMENT_BLOCK, FTT::comment_block},
+    {verilog_tokentype('('), FTT::open_group},
+    {verilog_tokentype('['), FTT::open_group},
+    {verilog_tokentype('{'), FTT::open_group},
+    {verilog_tokentype::TK_LP, FTT::open_group},
+    {verilog_tokentype(')'), FTT::close_group},
+    {verilog_tokentype(']'), FTT::close_group},
+    {verilog_tokentype('}'), FTT::close_group},
+    {verilog_tokentype::MacroNumericWidth, FTT::numeric_literal},
+    {verilog_tokentype::TK_DecNumber, FTT::numeric_literal},
+    {verilog_tokentype::TK_RealTime, FTT::numeric_literal},
+    {verilog_tokentype::TK_TimeLiteral, FTT::numeric_literal},
+    {verilog_tokentype::TK_BinDigits, FTT::numeric_literal},
+    {verilog_tokentype::TK_OctDigits, FTT::numeric_literal},
+    {verilog_tokentype::TK_HexDigits, FTT::numeric_literal},
+    {verilog_tokentype::TK_UnBasedNumber, FTT::numeric_literal},
+    {verilog_tokentype::TK_DecBase, FTT::numeric_base},
+    {verilog_tokentype::TK_BinBase, FTT::numeric_base},
+    {verilog_tokentype::TK_OctBase, FTT::numeric_base},
+    {verilog_tokentype::TK_HexBase, FTT::numeric_base},
 };
 
-// Test that every type yytokentype properly maps to its respective
+// Test that every type verilog_tokentype properly maps to its respective
 // FormatTokenType.
 // Yes, this is change-detector test, but it says that the included test cases
 // have actually been reviewed, whereas other entries in the map have not
@@ -94,35 +94,35 @@ TEST(VerilogTokenTest, IsCommentFormatTokenTypeTest) {
   EXPECT_FALSE(IsComment(FTT::keyword));
 }
 
-// Given a yytokentype, test that IsComment returns true only for comments
-TEST(VerilogTokenTest, IsCommentyytokentypeTest) {
-  EXPECT_TRUE(IsComment(yytokentype::TK_COMMENT_BLOCK));
-  EXPECT_TRUE(IsComment(yytokentype::TK_EOL_COMMENT));
-  EXPECT_FALSE(IsComment(yytokentype::DR_begin_keywords));
-  EXPECT_FALSE(IsComment(yytokentype::SymbolIdentifier));
+// Given a verilog_tokentype, test that IsComment returns true only for comments
+TEST(VerilogTokenTest, IsCommentverilog_tokentypeTest) {
+  EXPECT_TRUE(IsComment(verilog_tokentype::TK_COMMENT_BLOCK));
+  EXPECT_TRUE(IsComment(verilog_tokentype::TK_EOL_COMMENT));
+  EXPECT_FALSE(IsComment(verilog_tokentype::DR_begin_keywords));
+  EXPECT_FALSE(IsComment(verilog_tokentype::SymbolIdentifier));
 }
 
 TEST(VerilogTokenTest, IsUnaryOperatorTest) {
-  EXPECT_FALSE(IsUnaryOperator(yytokentype('*')));
-  EXPECT_FALSE(IsUnaryOperator(yytokentype('/')));
-  EXPECT_TRUE(IsUnaryOperator(yytokentype('+')));
-  EXPECT_TRUE(IsUnaryOperator(yytokentype('-')));
-  EXPECT_TRUE(IsUnaryOperator(yytokentype('~')));
-  EXPECT_TRUE(IsUnaryOperator(yytokentype('&')));
-  EXPECT_TRUE(IsUnaryOperator(yytokentype('!')));
-  EXPECT_TRUE(IsUnaryOperator(yytokentype('|')));
-  EXPECT_TRUE(IsUnaryOperator(yytokentype('^')));
-  EXPECT_TRUE(IsUnaryOperator(yytokentype::TK_NAND));
-  EXPECT_TRUE(IsUnaryOperator(yytokentype::TK_NOR));
-  EXPECT_TRUE(IsUnaryOperator(yytokentype::TK_NXOR));
-  EXPECT_TRUE(IsUnaryOperator(yytokentype::TK_INCR));
-  EXPECT_TRUE(IsUnaryOperator(yytokentype::TK_DECR));
-  EXPECT_FALSE(IsUnaryOperator(yytokentype(':')));
-  EXPECT_FALSE(IsUnaryOperator(yytokentype('?')));
-  EXPECT_FALSE(IsUnaryOperator(yytokentype(',')));
-  EXPECT_FALSE(IsUnaryOperator(yytokentype('.')));
-  EXPECT_FALSE(IsUnaryOperator(yytokentype(';')));
-  EXPECT_FALSE(IsUnaryOperator(yytokentype('#')));
+  EXPECT_FALSE(IsUnaryOperator(verilog_tokentype('*')));
+  EXPECT_FALSE(IsUnaryOperator(verilog_tokentype('/')));
+  EXPECT_TRUE(IsUnaryOperator(verilog_tokentype('+')));
+  EXPECT_TRUE(IsUnaryOperator(verilog_tokentype('-')));
+  EXPECT_TRUE(IsUnaryOperator(verilog_tokentype('~')));
+  EXPECT_TRUE(IsUnaryOperator(verilog_tokentype('&')));
+  EXPECT_TRUE(IsUnaryOperator(verilog_tokentype('!')));
+  EXPECT_TRUE(IsUnaryOperator(verilog_tokentype('|')));
+  EXPECT_TRUE(IsUnaryOperator(verilog_tokentype('^')));
+  EXPECT_TRUE(IsUnaryOperator(verilog_tokentype::TK_NAND));
+  EXPECT_TRUE(IsUnaryOperator(verilog_tokentype::TK_NOR));
+  EXPECT_TRUE(IsUnaryOperator(verilog_tokentype::TK_NXOR));
+  EXPECT_TRUE(IsUnaryOperator(verilog_tokentype::TK_INCR));
+  EXPECT_TRUE(IsUnaryOperator(verilog_tokentype::TK_DECR));
+  EXPECT_FALSE(IsUnaryOperator(verilog_tokentype(':')));
+  EXPECT_FALSE(IsUnaryOperator(verilog_tokentype('?')));
+  EXPECT_FALSE(IsUnaryOperator(verilog_tokentype(',')));
+  EXPECT_FALSE(IsUnaryOperator(verilog_tokentype('.')));
+  EXPECT_FALSE(IsUnaryOperator(verilog_tokentype(';')));
+  EXPECT_FALSE(IsUnaryOperator(verilog_tokentype('#')));
 }
 
 }  // namespace

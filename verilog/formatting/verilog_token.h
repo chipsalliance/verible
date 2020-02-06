@@ -41,29 +41,29 @@ enum FormatTokenType {
 // Converts a leaf token enum into a FormatTokenType enum for categorizing
 // FormatTokens. This is used for determining spaces between tokens.
 // An unknown return value is an error condition the caller should handle.
-FormatTokenType GetFormatTokenType(yytokentype e);
+FormatTokenType GetFormatTokenType(verilog_tokentype e);
 
 // Returns true if the FormatTokenType is a comment
 bool IsComment(FormatTokenType token_type);
 
-// Returns true if the yytokentype is a comment
-bool IsComment(yytokentype token_type);
+// Returns true if the verilog_tokentype is a comment
+bool IsComment(verilog_tokentype token_type);
 
 // Returns true if token enum *can* be a unary operator.
-bool IsUnaryOperator(yytokentype);
+bool IsUnaryOperator(verilog_tokentype);
 
 // Returns true for `ifdef, `else, etc.
-bool IsPreprocessorControlFlow(yytokentype);
+bool IsPreprocessorControlFlow(verilog_tokentype);
 
 // Returns true for `ifdef, `define, `include, `undef, etc.
-bool IsPreprocessorKeyword(yytokentype);
+bool IsPreprocessorKeyword(verilog_tokentype);
 
 // Returns true if token enum is 'end', 'endmodule', or 'end*'
-bool IsEndKeyword(yytokentype);
+bool IsEndKeyword(verilog_tokentype);
 
 // TODO(fangism): Identify specially lexed tokens that require a newline after.
 // e.g. MacroIdItem, TK_EOL_COMMENT, ...
-// bool RequiresNewlineAfterToken(yytokentype);
+// bool RequiresNewlineAfterToken(verilog_tokentype);
 
 }  // namespace formatter
 }  // namespace verilog

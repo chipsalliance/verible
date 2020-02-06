@@ -29,6 +29,7 @@
 #include "common/text/symbol.h"
 #include "common/text/token_info.h"
 #include "verilog/CST/verilog_nonterminals.h"
+#include "verilog/parser/verilog_token_enum.h"
 
 namespace verilog {
 
@@ -61,9 +62,7 @@ std::vector<verible::TreeSearchMatch> FindAllParamDeclarations(
 
 // Returns the token_enum of the parameter keyword from the node
 // kParamDeclaration (either TK_parameter or TK_localparam).
-// TODO(fangism): We would like a yytokentype return value but more verilog
-// specific yytokentype.
-int GetParamKeyword(const verible::Symbol&);
+verilog_tokentype GetParamKeyword(const verible::Symbol&);
 
 // Returns a pointer to either TK_type or kParamType node, which holds the param
 // type, id, and dimensions info for that parameter.

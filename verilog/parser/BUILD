@@ -65,12 +65,12 @@ genrule(
     srcs = ["verilog.tab.hh"],
     outs = ["verilog_token_enum.h"],
     # Needs own include-guard.
-    cmd = "{ echo '#ifndef DEVTOOLS_VERILOG_VERILOG_TOKEN_ENUM_H_' ; " +
-          "echo '#define DEVTOOLS_VERILOG_VERILOG_TOKEN_ENUM_H_' ; " +
+    cmd = "{ echo '#ifndef VERIBLE_VERILOG_TOKEN_ENUM_H_' ; " +
+          "echo '#define VERIBLE_VERILOG_TOKEN_ENUM_H_' ; " +
           "echo '// DO NOT EDIT -- generated from $<' ; " +
           # Grab the enumeration definition.
-          "sed -n '/#ifndef YYTOKENTYPE/,/#endif/p' $< ; " +
-          "echo '#endif  // DEVTOOLS_VERILOG_VERILOG_TOKEN_ENUM_H_' ;} > $@",
+          "sed -n '/#ifndef VERILOG_TOKENTYPE/,/#endif/p' $< ; " +
+          "echo '#endif  // VERIBLE_VERILOG_VERILOG_TOKEN_ENUM_H_' ;} > $@",
 )
 
 cc_library(

@@ -68,7 +68,7 @@ const verible::SyntaxTreeLeaf* AutoUnwrapIdentifier(
   // kUnqualifiedId
   const auto t = symbol.Tag();
   if (t.kind == SymbolKind::kLeaf) {
-    CHECK_EQ(t.tag, yytokentype::SymbolIdentifier);
+    CHECK_EQ(t.tag, verilog_tokentype::SymbolIdentifier);
     return &verible::SymbolCastToLeaf(symbol);
   }
   CHECK_EQ(NodeEnum(t.tag), NodeEnum::kUnqualifiedId);

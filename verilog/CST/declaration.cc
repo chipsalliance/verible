@@ -42,7 +42,7 @@ verible::SymbolPtr RepackReturnTypeId(verible::SymbolPtr type_id_tuple) {
 }
 
 NodeEnum DeclarationKeywordToNodeEnum(const verible::Symbol& symbol) {
-  static const auto* node_map = new std::map<yytokentype, NodeEnum>{
+  static const auto* node_map = new std::map<verilog_tokentype, NodeEnum>{
       {TK_module, NodeEnum::kModuleDeclaration},
       {TK_macromodule, NodeEnum::kMacroModuleDeclaration},
       {TK_program, NodeEnum::kProgramDeclaration},
@@ -50,7 +50,7 @@ NodeEnum DeclarationKeywordToNodeEnum(const verible::Symbol& symbol) {
   };
   return FindWithDefault(
       *node_map,
-      yytokentype(verible::SymbolCastToLeaf(symbol).get().token_enum),
+      verilog_tokentype(verible::SymbolCastToLeaf(symbol).get().token_enum),
       NodeEnum(verible::kUntagged));
 }
 

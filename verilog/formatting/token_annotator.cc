@@ -48,7 +48,7 @@ static constexpr int kUnhandledSpacesRequired = -1;
 
 static bool IsUnaryPrefixExpressionOperand(const PreFormatToken& left,
                                            const SyntaxTreeContext& context) {
-  return IsUnaryOperator(yytokentype(left.TokenEnum())) &&
+  return IsUnaryOperator(verilog_tokentype(left.TokenEnum())) &&
          context.IsInsideFirst({NodeEnum::kUnaryPrefixExpression},
                                {NodeEnum::kExpression});
 }
@@ -62,7 +62,7 @@ static bool IsInsideNumericLiteral(const PreFormatToken& left,
 
 // Returns true if keyword can be used like a function/method call.
 // Based on various LRM sections mentioning subroutine calls.
-static bool IsKeywordCallable(yytokentype e) {
+static bool IsKeywordCallable(verilog_tokentype e) {
   switch (e) {
     case TK_and:  // array method
     case TK_assert:
@@ -117,7 +117,7 @@ static bool IsAnySemicolon(const PreFormatToken& ftoken) {
   // These are just syntactically disambiguated versions of ';'.
   return ftoken.TokenEnum() == ';' ||
          ftoken.TokenEnum() ==
-             yytokentype::SemicolonEndOfAssertionVariableDeclarations;
+             verilog_tokentype::SemicolonEndOfAssertionVariableDeclarations;
 }
 
 // Returns minimum number of spaces required between left and right token.
@@ -164,7 +164,7 @@ static WithReason<int> SpacesRequiredBetween(
   // Unary operators (context-sensitive)
   if (IsUnaryPrefixExpressionOperand(left, right_context) &&
       (left.format_token_enum != FormatTokenType::binary_operator ||
-       !IsUnaryOperator(static_cast<yytokentype>(right.TokenEnum())))) {
+       !IsUnaryOperator(static_cast<verilog_tokentype>(right.TokenEnum())))) {
     // TODO: There are _some_ unary operators on the right that could
     // be formatted with 0-space, for example:
     // 'a = & ~b'; could be 'a = &~b;'
@@ -210,7 +210,7 @@ static WithReason<int> SpacesRequiredBetween(
 
   // Do not force space between '^' and '{' operators
   if (right_context.IsInsideFirst({NodeEnum::kUnaryPrefixExpression}, {})) {
-    if (IsUnaryOperator(static_cast<yytokentype>(left.TokenEnum())) &&
+    if (IsUnaryOperator(static_cast<verilog_tokentype>(left.TokenEnum())) &&
         right.TokenEnum() == '{') {
       return {0, "No space between unary and concatenation operators"};
     }
@@ -226,7 +226,7 @@ static WithReason<int> SpacesRequiredBetween(
 
   // If the token on either side is an empty string, do not inject any
   // additional spaces.  This can occur with some lexical tokens like
-  // yytokentype::PP_define_body.
+  // verilog_tokentype::PP_define_body.
   if (left.token->text.empty() || right.token->text.empty()) {
     return {0, "No additional space around empty-string tokens."};
   }
@@ -270,7 +270,7 @@ static WithReason<int> SpacesRequiredBetween(
 
     // General handling of ID '(' spacing:
     if (left.format_token_enum == FormatTokenType::identifier ||
-        IsKeywordCallable(yytokentype(left.TokenEnum()))) {
+        IsKeywordCallable(verilog_tokentype(left.TokenEnum()))) {
       if (right_context.IsInside(NodeEnum::kActualNamedPort) ||
           right_context.IsInside(NodeEnum::kPort)) {
         return {0, "Named port: no space between ID and '('"};
@@ -349,7 +349,7 @@ static WithReason<int> SpacesRequiredBetween(
 
     // Everything that resembles an end-label should have 1 space
     //   example nodes: kLabel, kEndNew, kFunctionEndLabel
-    if (IsEndKeyword(yytokentype(left.TokenEnum()))) {
+    if (IsEndKeyword(verilog_tokentype(left.TokenEnum()))) {
       return {1, "Want 1 space between end-keyword and ':'"};
     }
 
@@ -459,7 +459,7 @@ static WithReason<int> SpacesRequiredBetween(
     }
     return {1, "Space between ')' and most other tokens"};
   }
-  if (left.TokenEnum() == yytokentype::MacroCallCloseToEndLine) {
+  if (left.TokenEnum() == verilog_tokentype::MacroCallCloseToEndLine) {
     if (IsAnySemicolon(right)) {
       return {0, "No space between macro-closing ')' and ';'"};
     }
@@ -470,7 +470,8 @@ static WithReason<int> SpacesRequiredBetween(
     return {1, "Space between ']' and most other tokens"};
   }
 
-  if (IsPreprocessorKeyword(static_cast<yytokentype>(right.TokenEnum()))) {
+  if (IsPreprocessorKeyword(
+          static_cast<verilog_tokentype>(right.TokenEnum()))) {
     // most of these should start on their own line anyway
     return {1, "Preprocessor keywords should be separated from token on left."};
   }
@@ -684,7 +685,7 @@ static WithReason<SpacingOptions> BreakDecisionBetween(
 
   // TODO(fangism): No break between `define and PP_Identifier.
 
-  if (IsEndKeyword(yytokentype(right.TokenEnum()))) {
+  if (IsEndKeyword(verilog_tokentype(right.TokenEnum()))) {
     return {SpacingOptions::MustWrap, "end* keywords should start own lines"};
   }
 
@@ -708,7 +709,7 @@ static WithReason<SpacingOptions> BreakDecisionBetween(
             "')'-'begin' tokens should be together on one line."};
   }
 
-  if (left.TokenEnum() == yytokentype::MacroCallCloseToEndLine) {
+  if (left.TokenEnum() == verilog_tokentype::MacroCallCloseToEndLine) {
     if (!IsComment(FormatTokenType(right.format_token_enum)) &&
         !IsAnySemicolon(right)) {
       return {SpacingOptions::MustWrap,
@@ -725,7 +726,8 @@ static WithReason<SpacingOptions> BreakDecisionBetween(
             "`end and `else should be on their own line except for comments."};
   }
 
-  if (IsPreprocessorKeyword(static_cast<yytokentype>(right.TokenEnum()))) {
+  if (IsPreprocessorKeyword(
+          static_cast<verilog_tokentype>(right.TokenEnum()))) {
     // The tree unwrapper should make sure these start their own partition.
     return {SpacingOptions::MustWrap,
             "Preprocessor directives should start their own line."};
