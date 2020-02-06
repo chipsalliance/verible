@@ -21,34 +21,7 @@ RELEASE_DIR=/tmp/releases
 rm -rf $RELEASE_DIR
 
 PREFIX=$RELEASE_DIR/verible-$TRAVIS_TAG
-PREFIX_BIN=$PREFIX/bin
-PREFIX_DOC=$PREFIX/share/verible
-PREFIX_MAN=$PREFIX/share/man/man1
-mkdir -p $PREFIX
-mkdir -p $PREFIX_BIN
-mkdir -p $PREFIX_DOC
-mkdir -p $PREFIX_MAN
-
-# Binaries
-cp -a bazel-bin/verilog/tools/syntax/verilog_syntax     $PREFIX_BIN
-cp -a bazel-bin/verilog/tools/lint/verilog_lint         $PREFIX_BIN
-cp -a bazel-bin/verilog/tools/formatter/verilog_format  $PREFIX_BIN
-
-for BIN in $PREFIX_BIN/*; do
-    ls -l $BIN
-    file $BIN
-    ldd $BIN
-done
-
-# Documentation
-cp -a /tmp/pages/* $PREFIX_DOC
-# Man pages
-gflags2man --help_flag="--helpfull" --dest_dir $PREFIX_MAN bazel-bin/verilog/tools/syntax/verilog_syntax
-gzip $PREFIX_MAN/verilog_lint.1
-gflags2man --help_flag="--helpfull" --dest_dir $PREFIX_MAN bazel-bin/verilog/tools/lint/verilog_lint
-gzip $PREFIX_MAN/verilog_lint.1
-gflags2man  --help_flag="--helpfull" --dest_dir $PREFIX_MAN bazel-bin/verilog/tools/formatter/verilog_format
-gzip $PREFIX_MAN/verilog_format.1
+make PREFIX=$PREFIX install
 
 DISTRO=$(lsb_release --short --id)
 DISTRO_RELEASE=$(lsb_release --short --release)
