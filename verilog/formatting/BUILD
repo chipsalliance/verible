@@ -124,13 +124,23 @@ cc_test(
     deps = [
         ":format_style",
         ":formatter",
-        "//common/formatting:format_token",
-        "//common/formatting:unwrapped_line",
-        "//common/formatting:unwrapped_line_test_utils",
         "//common/text:text_structure",
         "//common/util:logging",
         "//common/util:status",
         "//verilog/analysis:verilog_analyzer",
+        "@com_google_absl//absl/strings",
+        "@com_google_googletest//:gtest_main",
+    ],
+)
+
+cc_test(
+    name = "formatter_tuning_test",
+    srcs = ["formatter_tuning_test.cc"],
+    deps = [
+        ":format_style",
+        ":formatter",
+        "//common/util:logging",
+        "//common/util:status",
         "@com_google_absl//absl/strings",
         "@com_google_googletest//:gtest_main",
     ],

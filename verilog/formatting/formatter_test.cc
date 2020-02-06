@@ -12,6 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+// Test cases in this file should be *insensitive* to wrapping penalties.
+// Penalty-sensitive tests belong in formatter_tuning_test.cc.
+// Methods for keeping tests penalty insensitive:
+//   * Short lines and partitions.  Lines that fit need no wrapping.
+//   * Forced line breaks using //comments (reduce decision-making)
+
 #include "verilog/formatting/formatter.h"
 
 #include <initializer_list>
@@ -3358,43 +3364,6 @@ TEST(FormatterEndToEndTest, PreserveVSpacesOnly) {
         FormatVerilog(test_case.input, "<filename>", style, stream);
     EXPECT_OK(status);
     EXPECT_EQ(stream.str(), test_case.expected) << "code:\n" << test_case.input;
-  }
-}
-
-// TODO(b/145558510): these tests must maintain unique-best solutions
-static const std::initializer_list<FormatterTestCase>
-    kFormatterTestCasesWithWrapping = {
-        {// TODO(b/148972363): might want to attract "= sss(" more
-         "module m;"
-         "assign wwwwww[77:66]"
-         "= sss(qqqq[33:22],"
-         "vv[44:1]);"
-         "endmodule",
-         "module m;\n"
-         "  assign wwwwww[77:66] =\n"
-         "      sss(qqqq[33:22], vv[44:1]);\n"
-         "endmodule\n"},
-};
-
-// These formatter tests involve line wrapping and hence line-wrap penalty
-// tuning.  Keep these short and minimal where possible.
-TEST(FormatterEndToEndTest, PenaltySensitiveLineWrapping) {
-  // Use a fixed style.
-  FormatStyle style;
-  style.column_limit = 40;
-  style.indentation_spaces = 2;
-  style.wrap_spaces = 4;
-  style.over_column_limit_penalty = 50;
-  for (const auto& test_case : kFormatterTestCasesWithWrapping) {
-    VLOG(1) << "code-to-format:\n" << test_case.input << "<EOF>";
-    std::ostringstream stream, debug_stream;
-    ExecutionControl control;
-    control.stream = &debug_stream;
-    const auto status = FormatVerilog(test_case.input, "<filename>", style,
-                                      stream, kEnableAllLines, control);
-    EXPECT_OK(status);
-    EXPECT_EQ(stream.str(), test_case.expected) << "code:\n" << test_case.input;
-    EXPECT_TRUE(debug_stream.str().empty());
   }
 }
 

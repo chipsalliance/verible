@@ -1,0 +1,87 @@
+// Copyright 2017-2020 The Verible Authors.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+#include "verilog/formatting/formatter.h"
+
+#include <initializer_list>
+#include <sstream>
+
+#include "gmock/gmock.h"
+#include "gtest/gtest.h"
+#include "absl/strings/string_view.h"
+#include "common/util/logging.h"
+#include "common/util/status.h"
+#include "verilog/formatting/format_style.h"
+
+#undef EXPECT_OK
+#define EXPECT_OK(value) EXPECT_TRUE((value).ok())
+
+#undef ASSERT_OK
+#define ASSERT_OK(value) ASSERT_TRUE((value).ok())
+
+namespace verilog {
+namespace formatter {
+namespace {
+
+struct FormatterTestCase {
+  absl::string_view input;
+  absl::string_view expected;
+};
+
+static const LineNumberSet kEnableAllLines;
+
+// Tests in this file are intended to be sensitive to wrapping penalty tuning.
+// These test cases should be kept short, small enough to be directed
+// at particular desirable characteristics.
+
+// TODO(b/145558510): these tests must maintain unique-best solutions
+static const std::initializer_list<FormatterTestCase>
+    kFormatterTestCasesWithWrapping = {
+        {// TODO(b/148972363): might want to attract "= sss(" more
+         "module m;"
+         "assign wwwwww[77:66]"
+         "= sss(qqqq[33:22],"
+         "vv[44:1]);"
+         "endmodule",
+         "module m;\n"
+         "  assign wwwwww[77:66] =\n"
+         "      sss(qqqq[33:22], vv[44:1]);\n"
+         "endmodule\n"},
+};
+
+// These formatter tests involve line wrapping and hence line-wrap penalty
+// tuning.  Keep these short and minimal where possible.
+TEST(FormatterEndToEndTest, PenaltySensitiveLineWrapping) {
+  // Use a fixed style.
+  FormatStyle style;
+  style.column_limit = 40;
+  style.indentation_spaces = 2;
+  style.wrap_spaces = 4;
+  style.over_column_limit_penalty = 50;
+  for (const auto& test_case : kFormatterTestCasesWithWrapping) {
+    VLOG(1) << "code-to-format:\n" << test_case.input << "<EOF>";
+    std::ostringstream stream, debug_stream;
+    ExecutionControl control;
+    control.stream = &debug_stream;
+    const auto status = FormatVerilog(test_case.input, "<filename>", style,
+                                      stream, kEnableAllLines, control);
+    EXPECT_OK(status);
+    EXPECT_EQ(stream.str(), test_case.expected) << "code:\n" << test_case.input;
+    EXPECT_TRUE(debug_stream.str().empty());
+  }
+}
+
+}  // namespace
+}  // namespace formatter
+}  // namespace verilog
