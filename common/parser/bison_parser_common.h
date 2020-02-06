@@ -45,14 +45,6 @@
 // Same as %debug in .yc file.
 #define YYDEBUG 1
 
-// Semantic value type. Can't apparently be typedef due to bison/yacc fun.
-// This is the same generic type for all parsers using this library.
-// TODO(hzeller): this now is language specific. We should probalby just have
-//   a `typedef ::verible::SymbolPtr VeribleSymbol` here and move this #define
-//   the *.y file. Or maybe there is a %-directive that can be used in the bison
-//   file ?
-#define VERILOG_STYPE ::verible::SymbolPtr
-
 // A macro to turn a symbol into a string
 // These should be used judiciously in modern code. Prefer raw-string literal
 // should you simply need to specify a large string.

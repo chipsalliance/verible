@@ -141,6 +141,7 @@ static SymbolPtr MakeUnpackedDimensionsNode(SymbolPtr& arg) {
 %param { ::verible::ParserParam* param }
 /* TODO(fangism): this prefix name should point to an adaptation of yylex */
 %define api.prefix {verilog_}
+%define api.value.type {::verible::SymbolPtr}
 
 // LINT.IfChange
 %token PP_Identifier
