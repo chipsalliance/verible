@@ -559,14 +559,19 @@ static int CommonAncestors(const SyntaxTreeContext& left,
   // TODO(fangism): re-check of common ancestry is slow (linear-time),
   // and could be avoided by memoizing the point of common ancestry between
   // leaves *during* the traversal.
+  const auto* shorter = &left;
+  const auto* longer = &right;
+  // For C++11 compatibility, we use the 3-iterator form of std::mismatch().
+  if (shorter->size() > longer->size()) std::swap(shorter, longer);
   const auto first_mismatches =
-      std::mismatch(left.begin(), left.end(), right.begin(), right.end());
-  const int left_common = std::distance(left.begin(), first_mismatches.first);
-  const int right_common =
-      std::distance(right.begin(), first_mismatches.second);
-  CHECK_GE(left_common, 0);
-  CHECK_EQ(left_common, right_common);
-  return left_common;
+      std::mismatch(shorter->begin(), shorter->end(), longer->begin());
+  const int short_common =
+      std::distance(shorter->begin(), first_mismatches.first);
+  const int long_common =
+      std::distance(longer->begin(), first_mismatches.second);
+  CHECK_GE(short_common, 0);
+  CHECK_EQ(short_common, long_common);
+  return short_common;
 }
 
 static int ContextBasedPenalty(const SyntaxTreeContext& left_context,
