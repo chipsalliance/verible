@@ -60,6 +60,13 @@ static const std::initializer_list<FormatterTestCase> kTestCases = {
      "  assign wwwwww[77:66] =\n"
      "      sss(qqqq[33:22], vv[44:1]);\n"
      "endmodule\n"},
+    {"module m;\n"
+     "localparam int foo = xxxxxxxxxx + yyyyyyyyyyyyyy + zzzzzzzzzzz;\n"
+     "endmodule\n",
+     "module m;\n"
+     "  localparam int foo = xxxxxxxxxx +\n"
+     "      yyyyyyyyyyyyyy + zzzzzzzzzzz;\n"
+     "endmodule\n"},
 };
 
 // These formatter tests involve line wrapping and hence line-wrap penalty
@@ -71,6 +78,43 @@ TEST(FormatterEndToEndTest, PenaltySensitiveLineWrapping) {
   style.indentation_spaces = 2;
   style.wrap_spaces = 4;
   for (const auto& test_case : kTestCases) {
+    VLOG(1) << "code-to-format:\n" << test_case.input << "<EOF>";
+    std::ostringstream stream, debug_stream;
+    ExecutionControl control;
+    control.stream = &debug_stream;
+    const auto status = FormatVerilog(test_case.input, "<filename>", style,
+                                      stream, kEnableAllLines, control);
+    EXPECT_OK(status);
+    EXPECT_EQ(stream.str(), test_case.expected) << "code:\n" << test_case.input;
+    EXPECT_TRUE(debug_stream.str().empty());
+  }
+}
+
+// Sometimes it's hard to reduce a real test case to a 40 column version,
+// so this set of tests uses 100-column.  Use raw string literals here.
+static const std::initializer_list<FormatterTestCase> k100ColTestCases = {
+    {
+        R"sv(
+module m;
+localparam int DDDDDDDDDDD = pppppppppppppppppp + LLLLLLLLLLLLLL
++ ((EEEEEEEEEEEE && FFFFFFFFFFFFFF > 0) ? hhhhhhhhhhhhhhhhhhhhhhhhhhhhhh : 0);
+endmodule
+)sv",
+        // make sure the '+' after 'pppppppppppppppppp' is on the same line
+        R"sv(
+module m;
+  localparam int DDDDDDDDDDD = pppppppppppppppppp +
+      LLLLLLLLLLLLLL + ((EEEEEEEEEEEE && FFFFFFFFFFFFFF > 0) ? hhhhhhhhhhhhhhhhhhhhhhhhhhhhhh : 0);
+endmodule
+)sv"},
+};
+
+TEST(FormatterEndToEndTest, PenaltySensitiveLineWrapping100Col) {
+  FormatStyle style;
+  style.column_limit = 100;
+  style.indentation_spaces = 2;
+  style.wrap_spaces = 4;
+  for (const auto& test_case : k100ColTestCases) {
     VLOG(1) << "code-to-format:\n" << test_case.input << "<EOF>";
     std::ostringstream stream, debug_stream;
     ExecutionControl control;

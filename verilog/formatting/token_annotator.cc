@@ -513,6 +513,7 @@ static SpacePolicy SpacesRequiredBetween(
   return SpacePolicy{spaces.value, false};
 }
 
+// Context-independent break penalty factor.
 static WithReason<int> BreakPenaltyBetweenTokens(
     const verible::PreFormatToken& left, const verible::PreFormatToken& right) {
   // Higher precedence rules should be handled earlier in this function.
@@ -574,6 +575,7 @@ static int CommonAncestors(const SyntaxTreeContext& left,
   return short_common;
 }
 
+// Token-independent break penalty factor.
 static int ContextBasedPenalty(const SyntaxTreeContext& left_context,
                                const SyntaxTreeContext& right_context) {
   // This factor takes into account syntax tree depth, favoring keeping
@@ -587,6 +589,21 @@ static int ContextBasedPenalty(const SyntaxTreeContext& left_context,
   return penalty;
 }
 
+static WithReason<int> TokensWithContextBreakPenalty(
+    const verible::PreFormatToken& left, const verible::PreFormatToken& right,
+    const SyntaxTreeContext& left_context,
+    const SyntaxTreeContext& right_context) {
+  if (right_context.DirectParentIs(NodeEnum::kBinaryExpression) &&
+      right.format_token_enum == FormatTokenType::binary_operator) {
+    return {10, "Prefer to split after binary operators (+10 on left)."};
+  }
+  if (left_context.DirectParentIs(NodeEnum::kBinaryExpression) &&
+      left.format_token_enum == FormatTokenType::binary_operator) {
+    return {0, "Prefer to split after binary operators (+0 on right)."};
+  }
+  return {0, "No adjustment."};
+}
+
 // Returns the split penalty for line-breaking before the right token.
 static WithReason<int> BreakPenaltyBetween(
     const verible::PreFormatToken& left, const verible::PreFormatToken& right,
@@ -596,9 +613,6 @@ static WithReason<int> BreakPenaltyBetween(
           << verilog_symbol_name(left.TokenEnum()) << " and "
           << verilog_symbol_name(right.TokenEnum());
 
-  constexpr int kMinPenalty = 1;   // absolute minimum
-  constexpr int kPenaltyBias = 5;  // baseline penalty value
-
   const int depth_penalty = ContextBasedPenalty(left_context, right_context);
   VLOG(3) << "context break penalty: " << depth_penalty;
 
@@ -607,8 +621,17 @@ static WithReason<int> BreakPenaltyBetween(
   VLOG(3) << "inter-token break penalty: " << inter_token_penalty.value << ", "
           << inter_token_penalty.reason;
 
-  const int total_penalty = std::max(
-      kPenaltyBias + depth_penalty + inter_token_penalty.value, kMinPenalty);
+  const auto token_with_context_penalty =
+      TokensWithContextBreakPenalty(left, right, left_context, right_context);
+  VLOG(3) << "token+context break penalty: " << token_with_context_penalty.value
+          << ", " << token_with_context_penalty.reason;
+
+  constexpr int kMinPenalty = 1;   // absolute minimum
+  constexpr int kPenaltyBias = 5;  // baseline penalty value
+  const int total_penalty =
+      std::max(kPenaltyBias + depth_penalty + inter_token_penalty.value +
+                   token_with_context_penalty.value,
+               kMinPenalty);
 
   VLOG(3) << "total break penalty: " << total_penalty;
   return {total_penalty, inter_token_penalty.reason};
