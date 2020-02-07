@@ -30,96 +30,75 @@ namespace {
 using verible::LintTestCase;
 using verible::RunLintTestCases;
 
-TEST(InterfaceNameStyleRuleTest, ValidStructNames) {
+TEST(InterfaceNameStyleRuleTest, ValidInterfaceDeclarationNames) {
   const std::initializer_list<LintTestCase> kTestCases = {
       {""},
-      {"typedef struct baz_t;"},
-      {"typedef struct good_name_t;"},
-      {"typedef struct b_a_z_t;"},
-      {"typedef struct {logic foo; logic bar;} baz_t;"},
-      {"typedef struct {logic foo; logic bar;} good_name_t;"},
-      {"typedef struct {logic foo; logic bar;} b_a_z_t;"},
+      {"interface foo_if; endinterface"},
+      {"interface good_name_if; endinterface"},
+      {"interface b_a_z_if; endinterface"},
   };
   RunLintTestCases<VerilogAnalyzer, InterfaceNameStyleRule>(kTestCases);
 }
 
-TEST(InterfaceNameStyleRuleTest, InvalidStructNames) {
+TEST(InterfaceNameStyleRuleTest, InvalidInterfaceDeclarationNames) {
   constexpr int kToken = SymbolIdentifier;
   const std::initializer_list<LintTestCase> kTestCases = {
-      {"typedef struct ", {kToken, "HelloWorld"}, ";"},
-      {"typedef struct ", {kToken, "_baz"}, ";"},
-      {"typedef struct ", {kToken, "Bad_name"}, ";"},
-      {"typedef struct ", {kToken, "bad_Name"}, ";"},
-      {"typedef struct ", {kToken, "Bad2"}, ";"},
-      {"typedef struct ", {kToken, "very_Bad_name"}, ";"},
-      {"typedef struct ", {kToken, "wrong_ending"}, ";"},
-      {"typedef struct ", {kToken, "_t"}, ";"},
-      {"typedef struct ", {kToken, "t"}, ";"},
-      {"typedef struct ", {kToken, "_"}, ";"},
-      {"typedef struct ", {kToken, "foo_"}, ";"},
-      {"typedef struct {logic foo; logic bar;} ", {kToken, "HelloWorld"}, ";"},
-      {"typedef struct {logic foo; logic bar;} ", {kToken, "_baz"}, ";"},
-      {"typedef struct {logic foo; logic bar;} ", {kToken, "Bad_name"}, ";"},
-      {"typedef struct {logic foo; logic bar;} ", {kToken, "bad_Name"}, ";"},
-      {"typedef struct {logic foo; logic bar;} ", {kToken, "Bad2"}, ";"},
-      {"typedef struct {logic foo; logic bar;} ",
-       {kToken, "very_Bad_name"},
-       ";"},
-      {"typedef struct {logic foo; logic bar;} ",
-       {kToken, "wrong_ending"},
-       ";"},
-      {"typedef struct {logic foo; logic bar;} ", {kToken, "_t"}, ";"},
-      {"typedef struct {logic foo; logic bar;} ", {kToken, "t"}, ";"},
-      {"typedef struct {logic foo; logic bar;} ", {kToken, "_"}, ";"},
-      {"typedef struct {logic foo; logic bar;} ", {kToken, "foo_"}, ";"},
+      {"interface ", {kToken, "HelloWorld"}, "; endinterface"},
+      {"interface ", {kToken, "_baz"}, "; endinterface"},
+      {"interface ", {kToken, "Bad_name"}, "; endinterface"},
+      {"interface ", {kToken, "bad_Name"}, "; endinterface"},
+      {"interface ", {kToken, "Bad2"}, "; endinterface"},
+      {"interface ", {kToken, "very_Bad_name"}, "; endinterface"},
+      {"interface ", {kToken, "wrong_ending"}, "; endinterface"},
+      {"interface ", {kToken, "_if"}, "; endinterface"},
+      {"interface ", {kToken, "_i_f"}, "; endinterface"},
+      {"interface ", {kToken, "i_f"}, "; endinterface"},
+      {"interface ", {kToken, "_"}, "; endinterface"},
+      {"interface ", {kToken, "foo_"}, "; endinterface"},
   };
   RunLintTestCases<VerilogAnalyzer, InterfaceNameStyleRule>(kTestCases);
 }
 
-TEST(InterfaceNameStyleRuleTest, ValidUnionNames) {
+TEST(InterfaceNameStyleRuleTest, ValidInterfaceTypeNames) {
   const std::initializer_list<LintTestCase> kTestCases = {
       {""},
-      {"typedef union baz_t;"},
-      {"typedef union good_name_t;"},
-      {"typedef union b_a_z_t;"},
-      {"typedef union {logic [8:0] foo; int bar;} baz_t;"},
-      {"typedef union {logic [8:0] foo; int bar;} good_name_t;"},
-      {"typedef union {logic [8:0] foo; int bar;} b_a_z_t;"},
+      {"typedef virtual interface foo foo_if;"},
+      {"typedef virtual interface foo good_name_if;"},
+      {"typedef virtual interface foo b_a_z_if;"},
+      {"typedef virtual foo foo_if;"},
+      {"typedef virtual foo good_name_if;"},
+      {"typedef virtual foo b_a_z_if;"},
   };
   RunLintTestCases<VerilogAnalyzer, InterfaceNameStyleRule>(kTestCases);
 }
 
-TEST(InterfaceNameStyleRuleTest, InvalidUnionNames) {
+TEST(InterfaceNameStyleRuleTest, InvalidInterfaceTypeNames) {
   constexpr int kToken = SymbolIdentifier;
   const std::initializer_list<LintTestCase> kTestCases = {
-      {"typedef union ", {kToken, "HelloWorld"}, ";"},
-      {"typedef union ", {kToken, "_baz"}, ";"},
-      {"typedef union ", {kToken, "Bad_name"}, ";"},
-      {"typedef union ", {kToken, "bad_Name"}, ";"},
-      {"typedef union ", {kToken, "Bad2"}, ";"},
-      {"typedef union ", {kToken, "very_Bad_name"}, ";"},
-      {"typedef union ", {kToken, "wrong_ending"}, ";"},
-      {"typedef union ", {kToken, "_t"}, ";"},
-      {"typedef union ", {kToken, "t"}, ";"},
-      {"typedef union ", {kToken, "_"}, ";"},
-      {"typedef union ", {kToken, "foo_"}, ";"},
-      {"typedef union {logic [8:0] foo; int bar;} ",
-       {kToken, "HelloWorld"},
-       ";"},
-      {"typedef union {logic [8:0] foo; int bar;} ", {kToken, "_baz"}, ";"},
-      {"typedef union {logic [8:0] foo; int bar;} ", {kToken, "Bad_name"}, ";"},
-      {"typedef union {logic [8:0] foo; int bar;} ", {kToken, "bad_Name"}, ";"},
-      {"typedef union {logic [8:0] foo; int bar;} ", {kToken, "Bad2"}, ";"},
-      {"typedef union {logic [8:0] foo; int bar;} ",
-       {kToken, "very_Bad_name"},
-       ";"},
-      {"typedef union {logic [8:0] foo; int bar;} ",
-       {kToken, "wrong_ending"},
-       ";"},
-      {"typedef union {logic [8:0] foo; int bar;} ", {kToken, "_t"}, ";"},
-      {"typedef union {logic [8:0] foo; int bar;} ", {kToken, "t"}, ";"},
-      {"typedef union {logic [8:0] foo; int bar;} ", {kToken, "_"}, ";"},
-      {"typedef union {logic [8:0] foo; int bar;} ", {kToken, "foo_"}, ";"},
+      {"typedef virtual interface foo ", {kToken, "HelloWorld"}, ";"},
+      {"typedef virtual interface foo ", {kToken, "_baz"}, ";"},
+      {"typedef virtual interface foo ", {kToken, "Bad_name"}, ";"},
+      {"typedef virtual interface foo ", {kToken, "bad_Name"}, ";"},
+      {"typedef virtual interface foo ", {kToken, "Bad2"}, ";"},
+      {"typedef virtual interface foo ", {kToken, "very_Bad_name"}, ";"},
+      {"typedef virtual interface foo ", {kToken, "wrong_ending"}, ";"},
+      {"typedef virtual interface foo ", {kToken, "_if"}, ";"},
+      {"typedef virtual interface foo ", {kToken, "_i_f"}, ";"},
+      {"typedef virtual interface foo ", {kToken, "i_f"}, ";"},
+      {"typedef virtual interface foo ", {kToken, "_"}, ";"},
+      {"typedef virtual interface foo ", {kToken, "foo_"}, ";"},
+      {"typedef virtual foo ", {kToken, "HelloWorld"}, ";"},
+      {"typedef virtual foo ", {kToken, "_baz"}, ";"},
+      {"typedef virtual foo ", {kToken, "Bad_name"}, ";"},
+      {"typedef virtual foo ", {kToken, "bad_Name"}, ";"},
+      {"typedef virtual foo ", {kToken, "Bad2"}, ";"},
+      {"typedef virtual foo ", {kToken, "very_Bad_name"}, ";"},
+      {"typedef virtual foo ", {kToken, "wrong_ending"}, ";"},
+      {"typedef virtual foo ", {kToken, "_if"}, ";"},
+      {"typedef virtual foo ", {kToken, "_i_f"}, ";"},
+      {"typedef virtual foo ", {kToken, "i_f"}, ";"},
+      {"typedef virtual foo ", {kToken, "_"}, ";"},
+      {"typedef virtual foo ", {kToken, "foo_"}, ";"},
   };
   RunLintTestCases<VerilogAnalyzer, InterfaceNameStyleRule>(kTestCases);
 }
