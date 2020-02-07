@@ -53,6 +53,11 @@ std::vector<verible::TreeSearchMatch> FindAllUnionTypes(
   return verible::SearchSyntaxTree(root, NodekUnionType());
 }
 
+std::vector<verible::TreeSearchMatch> FindAllInterfaceTypes(
+    const verible::Symbol& root) {
+  return verible::SearchSyntaxTree(root, NodekInterfaceType());
+}
+
 bool IsStorageTypeOfDataTypeSpecified(const verible::Symbol& symbol) {
   const auto* storage =
       verible::GetSubtreeAsSymbol(symbol, NodeEnum::kDataType, 0);

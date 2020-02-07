@@ -58,14 +58,28 @@ std::string InterfaceNameStyleRule::GetDescription(
 void InterfaceNameStyleRule::HandleSymbol(const verible::Symbol& symbol,
                                             const SyntaxTreeContext& context) {
   verible::matcher::BoundSymbolManager manager;
+  absl::string_view name;
+  const verible::TokenInfo* identifier_token;
   if (matcher_interface_.Matches(symbol, &manager)) {
-    const auto identifier_token = GetInterfaceNameToken(symbol);
-    const auto name = identifier_token.text;
-    if (!verible::IsLowerSnakeCaseWithDigits(name) ||
-        !absl::EndsWith(name, "_if")) {
-      violations_.insert(LintViolation(identifier_token,
-            kMessage, context));
+    identifier_token = &GetInterfaceNameToken(symbol);
+    name = identifier_token->text;
+  } else if (matcher_typedef_.Matches(symbol, &manager)) {
+    // TODO: This can be changed to checking type of child (by index) when we
+    // have consistent shape for all kTypeDeclaration nodes.
+    if (!FindAllInterfaceTypes(symbol).empty()) {
+      identifier_token = &GetIdentifierFromTypeDeclaration(symbol)->get();
+      name = identifier_token->text;
+    } else {
+      return; // not an interface typedef
     }
+  } else {
+    return; // not an interface symbol
+  }
+
+  if (!verible::IsLowerSnakeCaseWithDigits(name) ||
+      !absl::EndsWith(name, "_if")) {
+    violations_.insert(LintViolation(*identifier_token,
+          kMessage, context));
   }
 }
 

@@ -56,6 +56,7 @@ class InterfaceNameStyleRule : public verible::SyntaxTreeLintRule {
   using Matcher = verible::matcher::Matcher;
 
   Matcher matcher_interface_ = NodekInterfaceDeclaration();
+  Matcher matcher_typedef_ = NodekTypeDeclaration();
 
   std::set<verible::LintViolation> violations_;
 };

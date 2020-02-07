@@ -48,6 +48,11 @@ std::vector<verible::TreeSearchMatch> FindAllStructTypes(
 std::vector<verible::TreeSearchMatch> FindAllUnionTypes(
     const verible::Symbol& root);
 
+// Finds all node kInterfaceType declarations. Used for testing if the type
+// declaration is an interface.
+std::vector<verible::TreeSearchMatch> FindAllInterfaceTypes(
+    const verible::Symbol& root);
+
 // Returns true if the node kDataType has declared a storage type.
 bool IsStorageTypeOfDataTypeSpecified(const verible::Symbol&);
 
