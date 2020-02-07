@@ -13,10 +13,28 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-VERSION=$1
+set -x
+set -e
+export TRAVIS_TAG=${TRAVIS_TAG:-$(git describe --match=v*)}
 
-sudo dpkg --list | grep gcc
-sudo dpkg --list | grep libstdc++
-sudo ln -sf /usr/bin/gcc-$VERSION /usr/bin/gcc
-sudo ln -sf /usr/bin/g++-$VERSION /usr/bin/g++
-gcc --version || true
+git config --local user.name "Deployment Bot"
+git config --local user.email "verible-dev@googlegroups.com"
+
+case $MODE in
+compile-n-test)
+    # Set up things for GitHub Pages deployment
+    ./.github/travis/github-pages-setup.sh
+    ;;
+
+bin)
+    # Create a tag of form v0.0-183-gdf2b162-20191112132344
+    rm -rf Docker/out
+    git tag $TRAVIS_TAG || true
+    ls -l /tmp/releases
+    ;;
+
+*)
+    echo "success.sh: Unknown mode $MODE"
+    exit 1
+    ;;
+esac

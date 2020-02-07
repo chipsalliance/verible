@@ -13,10 +13,18 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-VERSION=$1
+set -x
+set -e
 
-sudo dpkg --list | grep gcc
-sudo dpkg --list | grep libstdc++
-sudo ln -sf /usr/bin/gcc-$VERSION /usr/bin/gcc
-sudo ln -sf /usr/bin/g++-$VERSION /usr/bin/g++
-gcc --version || true
+DIRS=${1:-$(find -mindepth 1 -maxdepth 1 -type d)}
+export TRAVIS_TAG=${TRAVIS_TAG:-$(git describe --match=v*)}
+
+./docker-generate.sh $DIRS
+
+for DIR in $DIRS; do
+    IMAGE=verible:$DIR-$TRAVIS_TAG
+    docker build --tag $IMAGE  $DIR
+    DOCKER_ID=$(docker create $IMAGE)
+    docker cp $DOCKER_ID:/out - | tar xvf -
+    docker rm -v $DOCKER_ID
+done

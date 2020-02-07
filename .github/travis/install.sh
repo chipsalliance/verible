@@ -13,10 +13,23 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-VERSION=$1
+set -x
+set -e
+export TRAVIS_TAG=${TRAVIS_TAG:-$(git describe --match=v*)}
 
-sudo dpkg --list | grep gcc
-sudo dpkg --list | grep libstdc++
-sudo ln -sf /usr/bin/gcc-$VERSION /usr/bin/gcc
-sudo ln -sf /usr/bin/g++-$VERSION /usr/bin/g++
-gcc --version || true
+case $MODE in
+compile-n-test)
+    ./.github/travis/set-compiler.sh 9
+    ./.github/travis/install-bazel.sh
+    git fetch --tags
+    ;;
+
+bin)
+    docker pull $OS:$OS_VERSION
+    ;;
+
+*)
+    echo "install.sh: Unknown mode $MODE"
+    exit 1
+    ;;
+esac
