@@ -62,6 +62,7 @@ constexpr const char* kDefaultRuleSet[] = {
     // TODO(b/138750548): "enum-name-style",
     // TODO(b/143470672): "forbid-consecutive-null-statements",
     // TODO: "one-module-per-file",
+    // TODO(b/148915651): "interface-name-style",
     // "endif-comment",
 };
 // LINT.ThenChange(../tools/lint/BUILD)

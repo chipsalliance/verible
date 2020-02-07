@@ -39,8 +39,22 @@ const verible::SyntaxTreeNode& GetModuleHeader(
                                    0, NodeEnum::kModuleHeader);
 }
 
+const verible::SyntaxTreeNode& GetInterfaceHeader(
+    const verible::Symbol& module_symbol) {
+  return verible::GetSubtreeAsNode(module_symbol,
+                                   NodeEnum::kInterfaceDeclaration, 0,
+                                   NodeEnum::kModuleHeader);
+}
+
 const verible::TokenInfo& GetModuleNameToken(const verible::Symbol& s) {
   const auto& header_node = GetModuleHeader(s);
+  const auto& name_leaf =
+      verible::GetSubtreeAsLeaf(header_node, NodeEnum::kModuleHeader, 2);
+  return name_leaf.get();
+}
+
+const verible::TokenInfo& GetInterfaceNameToken(const verible::Symbol& s) {
+  const auto& header_node = GetInterfaceHeader(s);
   const auto& name_leaf =
       verible::GetSubtreeAsLeaf(header_node, NodeEnum::kModuleHeader, 2);
   return name_leaf.get();
