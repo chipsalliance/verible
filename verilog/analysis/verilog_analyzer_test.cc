@@ -361,6 +361,18 @@ TEST(AnalyzeVerilogAutomaticMode, ModuleBodyMode) {
   EXPECT_OK(ABSL_DIE_IF_NULL(analyzer_ptr)->ParseStatus());
 }
 
+TEST(AnalyzeVerilogAutomaticMode, ModuleBodyModeSyntaxError) {
+  const absl::string_view filename = "wirefile.sv";
+  std::unique_ptr<VerilogAnalyzer> analyzer_ptr =
+      VerilogAnalyzer::AnalyzeAutomaticMode(
+          "// verilog_syntax: parse-as-module-body\n"
+          "wire wire;\n",
+          filename);
+  const auto status = ABSL_DIE_IF_NULL(analyzer_ptr)->ParseStatus();
+  EXPECT_FALSE(status.ok());
+  DiagnosticMessagesContainFilename(*analyzer_ptr, filename);
+}
+
 TEST(AnalyzeVerilogAutomaticMode, ClassBodyMode) {
   std::unique_ptr<VerilogAnalyzer> analyzer_ptr =
       VerilogAnalyzer::AnalyzeAutomaticMode(

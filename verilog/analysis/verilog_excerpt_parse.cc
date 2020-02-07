@@ -49,7 +49,7 @@ static std::unique_ptr<VerilogAnalyzer> AnalyzeVerilogConstruct(
   // Disable parser directive comments because a specific parser
   // is already being selected.
   auto analyzer_ptr = absl::make_unique<VerilogAnalyzer>(
-      analyze_text, std::string(filename),
+      analyze_text, filename,
       /* use_parser_directive_comments_ */ false);
 
   if (!ABSL_DIE_IF_NULL(analyzer_ptr)->Analyze().ok()) {
