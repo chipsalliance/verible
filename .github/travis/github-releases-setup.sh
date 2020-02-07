@@ -53,7 +53,7 @@ gzip $PREFIX_MAN/verilog_format.1
 DISTRO=$(lsb_release --short --id)
 DISTRO_RELEASE=$(lsb_release --short --release)
 DISTRO_CODENAME=$(lsb_release --short --codename)
-TARBALL=$RELEASE_DIR/verible-$TRAVIS_TAG-$TRAVIS_OS_NAME-$TRAVIS_CPU_ARCH-$DISTRO-$DISTRO_RELEASE-$DISTRO_CODENAME.tar.gz
+TARBALL=$RELEASE_DIR/verible-$TRAVIS_TAG-$TRAVIS_OS_NAME-$TRAVIS_CPU_ARCH-$DISTRO-$DISTRO_RELEASE-$DISTRO_CODENAME-gcc$GCC_VERSION.tar.gz
 (
     cd $RELEASE_DIR
     tar -zcvf $TARBALL verible-$TRAVIS_TAG

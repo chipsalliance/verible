@@ -9,7 +9,7 @@ git:
 jobs:
   include:
    - stage: "Test"
-     name: "Ubuntu Trusty"
+     name: "Ubuntu Trusty - gcc-9"
      os: linux
      dist: trusty
      addons:
@@ -21,6 +21,68 @@ jobs:
          - gcc-9
          - pandoc
          - python-gflags
+     env:
+      - GCC_VERSION=9
+   - stage: "Test"
+     name: "Ubuntu Trusty - gcc-8"
+     os: linux
+     dist: trusty
+     addons:
+       apt:
+         sources:
+         - ubuntu-toolchain-r-test
+         packages:
+         - g++-8
+         - gcc-8
+         - pandoc
+         - python-gflags
+     env:
+      - GCC_VERSION=8
+   - stage: "Test"
+     name: "Ubuntu Trusty - gcc-8"
+     os: linux
+     dist: trusty
+     addons:
+       apt:
+         sources:
+         - ubuntu-toolchain-r-test
+         packages:
+         - g++-8
+         - gcc-8
+         - pandoc
+         - python-gflags
+     env:
+      - GCC_VERSION=8
+   - stage: "Test"
+     name: "Ubuntu Trusty - gcc-6"
+     os: linux
+     dist: trusty
+     addons:
+       apt:
+         sources:
+         - ubuntu-toolchain-r-test
+         packages:
+         - g++-6
+         - gcc-6
+         - pandoc
+         - python-gflags
+     env:
+      - GCC_VERSION=6
+   - stage: "Test"
+     name: "Ubuntu Trusty - gcc-5"
+     os: linux
+     dist: trusty
+     addons:
+       apt:
+         sources:
+         - ubuntu-toolchain-r-test
+         packages:
+         - g++-5
+         - gcc-5
+         - pandoc
+         - python-gflags
+     env:
+      - GCC_VERSION=5
    - stage: "Test"
      name: "Ubuntu Xenial"
      os: linux
@@ -34,6 +96,8 @@ jobs:
          - gcc-9
          - pandoc
          - python-gflags
+     env:
+      - GCC_VERSION=9
 #   - stage: "Test"
 #     name: "Ubuntu Bionic"
 #     os: linux
@@ -47,15 +111,17 @@ jobs:
 #         - gcc-9
 #         - pandoc
 #         - python-gflags
+#     env:
+#      - GCC_VERSION=9
 
 before_install:
-  - ./.github/travis/set-compiler.sh 9
-  - ./.github/travis/install-bazel.sh 9
+  - ./.github/travis/set-compiler.sh $GCC_VERSION
+  - ./.github/travis/install-bazel.sh
   - git fetch --tags
 
 script:
-  - bazel build --noshow_progress --cxxopt='-std=c++17' //...
-  - bazel test --noshow_progress --cxxopt='-std=c++17' //...
+  - bazel build --noshow_progress --cxxopt='-std=c++11' //...
+  - bazel test --noshow_progress --cxxopt='-std=c++11' //...
 
 after_failure:
   - source .github/travis/output-logs.sh
