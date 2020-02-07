@@ -35,9 +35,10 @@ shift
 shift
 # remaining positional arguments are paths...
 
+date=$(date +%Y%m%d-%H%M%S)
 globs=("*.sv" "*.svh" "*.v" "*.vh")
 temproot=${TMPDIR:=/tmp}
-tempdir="$temproot/$(basename $0)-$$.tmp"
+tempdir="$temproot/$(basename $0).tmp/run-$date"
 
 # Restrict paths, so it is (a little safer) to concatenate them
 # relative to a temporary dir.
@@ -53,8 +54,8 @@ mkdir -p "$tempdir"
 {
 for path
 do for glob in "${globs[@]}"
-  do find "$path" -type f -name "$glob" &
-  done &
+  do find "$path" -type f -name "$glob"
+  done
 done
 wait
 } | sort > "$tempdir/filelist"
