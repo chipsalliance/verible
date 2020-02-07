@@ -123,7 +123,6 @@ TEST(FormatterTest, FormatCustomStyleTest) {
   style.column_limit = 40;
   style.indentation_spaces = 10;  // unconventional indentation
   style.wrap_spaces = 4;
-  style.over_column_limit_penalty = 50;
   for (const auto& test_case : kTestCases) {
     VLOG(1) << "code-to-format:\n" << test_case.input << "<EOF>";
     std::ostringstream stream;
@@ -3064,7 +3063,6 @@ TEST(FormatterEndToEndTest, VerilogFormatTest) {
   style.column_limit = 40;
   style.indentation_spaces = 2;
   style.wrap_spaces = 4;
-  style.over_column_limit_penalty = 50;
   for (const auto& test_case : kFormatterTestCases) {
     VLOG(1) << "code-to-format:\n" << test_case.input << "<EOF>";
     std::ostringstream stream;
@@ -3229,7 +3227,6 @@ TEST(FormatterEndToEndTest, SelectLines) {
   style.column_limit = 40;
   style.indentation_spaces = 2;
   style.wrap_spaces = 4;
-  style.over_column_limit_penalty = 50;
   for (const auto& test_case : kTestCases) {
     VLOG(1) << "code-to-format:\n" << test_case.input << "<EOF>";
     std::ostringstream stream;
@@ -3501,7 +3498,6 @@ TEST(FormatterEndToEndTest, FormatElseStatements) {
   style.column_limit = 40;
   style.indentation_spaces = 2;
   style.wrap_spaces = 4;
-  style.over_column_limit_penalty = 50;
   for (const auto& test_case : kFormatterTestCasesElseStatements) {
     VLOG(1) << "code-to-format:\n" << test_case.input << "<EOF>";
     std::ostringstream stream;
@@ -3518,7 +3514,6 @@ TEST(FormatterEndToEndTest, DiagnosticShowFullTree) {
   style.column_limit = 40;
   style.indentation_spaces = 2;
   style.wrap_spaces = 4;
-  style.over_column_limit_penalty = 50;
   for (const auto& test_case : kFormatterTestCases) {
     std::ostringstream stream, debug_stream;
     ExecutionControl control;
@@ -3538,7 +3533,6 @@ TEST(FormatterEndToEndTest, DiagnosticLargestPartitions) {
   style.column_limit = 40;
   style.indentation_spaces = 2;
   style.wrap_spaces = 4;
-  style.over_column_limit_penalty = 50;
   for (const auto& test_case : kFormatterTestCases) {
     std::ostringstream stream, debug_stream;
     ExecutionControl control;
@@ -3558,7 +3552,6 @@ TEST(FormatterEndToEndTest, DiagnosticEquallyOptimalWrappings) {
   style.column_limit = 40;
   style.indentation_spaces = 2;
   style.wrap_spaces = 4;
-  style.over_column_limit_penalty = 50;
   for (const auto& test_case : kFormatterTestCases) {
     std::ostringstream stream, debug_stream;
     ExecutionControl control;
@@ -3581,7 +3574,6 @@ TEST(FormatterEndToEndTest, UnfinishedLineWrapSearching) {
   style.column_limit = 40;
   style.indentation_spaces = 2;
   style.wrap_spaces = 4;
-  style.over_column_limit_penalty = 50;
 
   const absl::string_view code("parameter int x = 1+1;\n");
 

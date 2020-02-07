@@ -14,6 +14,8 @@
 
 #include "verilog/formatting/formatter.h"
 
+// prevent header re-ordering
+
 #include <initializer_list>
 #include <sstream>
 
@@ -44,20 +46,20 @@ static const LineNumberSet kEnableAllLines;
 // Tests in this file are intended to be sensitive to wrapping penalty tuning.
 // These test cases should be kept short, small enough to be directed
 // at particular desirable characteristics.
-
 // TODO(b/145558510): these tests must maintain unique-best solutions
-static const std::initializer_list<FormatterTestCase>
-    kFormatterTestCasesWithWrapping = {
-        {// TODO(b/148972363): might want to attract "= sss(" more
-         "module m;"
-         "assign wwwwww[77:66]"
-         "= sss(qqqq[33:22],"
-         "vv[44:1]);"
-         "endmodule",
-         "module m;\n"
-         "  assign wwwwww[77:66] =\n"
-         "      sss(qqqq[33:22], vv[44:1]);\n"
-         "endmodule\n"},
+
+static const std::initializer_list<FormatterTestCase> kTestCases = {
+    //----------- 40 column marker --------->|
+    {// TODO(b/148972363): might want to attract "= sss(" more
+     "module m;"
+     "assign wwwwww[77:66]"
+     "= sss(qqqq[33:22],"
+     "vv[44:1]);"
+     "endmodule",
+     "module m;\n"
+     "  assign wwwwww[77:66] =\n"
+     "      sss(qqqq[33:22], vv[44:1]);\n"
+     "endmodule\n"},
 };
 
 // These formatter tests involve line wrapping and hence line-wrap penalty
@@ -68,8 +70,7 @@ TEST(FormatterEndToEndTest, PenaltySensitiveLineWrapping) {
   style.column_limit = 40;
   style.indentation_spaces = 2;
   style.wrap_spaces = 4;
-  style.over_column_limit_penalty = 50;
-  for (const auto& test_case : kFormatterTestCasesWithWrapping) {
+  for (const auto& test_case : kTestCases) {
     VLOG(1) << "code-to-format:\n" << test_case.input << "<EOF>";
     std::ostringstream stream, debug_stream;
     ExecutionControl control;
