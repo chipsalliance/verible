@@ -108,7 +108,7 @@ class FlexLexerAdapter : private CodeStreamHolder, protected L, public Lexer {
   }
 
   // Overrides yyFlexLexer's implementation to handle unrecognized chars.
-  virtual void LexerOutput(const char* buf, int size) {
+  void LexerOutput(const char* buf, int size) override {
     VLOG(1) << "LexerOutput: rejected text: \"" << std::string(buf, size)
             << '\"';
 
@@ -122,7 +122,7 @@ class FlexLexerAdapter : private CodeStreamHolder, protected L, public Lexer {
   }
 
   // Overrides yyFlexLexer's implementation to do proper error handling.
-  virtual void LexerError(const char* msg) {
+  void LexerError(const char* msg) override {
     std::cerr << "Fatal LexerError: " << msg;
     abort();
   }
