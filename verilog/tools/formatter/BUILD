@@ -21,3 +21,8 @@ cc_binary(
         "@com_google_absl//absl/strings",
     ],
 )
+
+sh_binary(
+    name = "diff_formatter",
+    srcs = ["diff_formatter.sh"],
+)
