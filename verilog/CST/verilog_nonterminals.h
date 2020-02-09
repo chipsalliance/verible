@@ -154,6 +154,7 @@ enum class NodeEnum {
   kScopePrefix,
   kParamDeclaration,
   kTypeDeclaration,
+  kTypeReference,
   kLetDeclaration,
   kDataType,
   kDataTypePrimitive,

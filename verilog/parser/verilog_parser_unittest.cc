@@ -2324,6 +2324,41 @@ static const char* kModuleTests[] = {
     "  type Ztype = bit\n"
     ") ();\n"
     "endmodule",
+    "module typer #(\n"
+    "  parameter type Mtype = type(Xtype)\n"
+    ") ();\n"
+    "endmodule",
+    // type references
+    "module type_reffer;\n"
+    "real a = 4.76;\n"
+    "var type(a) c;\n"
+    "endmodule\n",
+    "module type_reffer;\n"
+    "real a = 4.76;\n"
+    "real b = 0.74;\n"
+    "var type(a+b) c;\n"
+    "endmodule\n",
+    "module type_reffer;\n"
+    "type(a) c;\n"
+    "endmodule\n",
+    "module type_reffer;\n"
+    "type(a::b) c;\n"
+    "endmodule\n",
+    "module type_reffer;\n"
+    "type(f()) c;\n"
+    "endmodule\n",
+    "module type_reffer;\n"
+    "type(f(x)) c;\n"
+    "endmodule\n",
+    "module type_reffer;\n"
+    "type(f(x, y)) c;\n"
+    "endmodule\n",
+    "module type_reffer;\n"
+    "type(a::b()) c;\n"
+    "endmodule\n",
+    "module type_reffer;\n"
+    "type(type(a)) c;\n"
+    "endmodule\n",
     "module preprocessor_in_parameters #(\n"
     "  parameter int M = 4\n"
     "`ifdef MORE_PARAMS\n"  // preprocessor directive
@@ -2484,23 +2519,6 @@ static const char* kModuleTests[] = {
     "  abc[`INDEX(2)] = jkl;\n"    // as an index
     "end\n"
     "endmodule",
-    // assignment patterns
-    "module assignment_test1;\n"
-    "initial begin\n"
-    "  xx = \'{a, b, c};\n"
-    "  xy = \'{4{a}};\n"
-    "  xz = \'{4{a, b}};\n"
-    "end\n"
-    "endmodule",
-    "module assignment_test1;\n"
-    "initial begin\n"
-    "  x1 = \'{default:0};\n"
-    "  x[2] = \'{int:1};\n"
-    "  x3 = \'{byte:127,bit:1};\n"
-    "  x4 = \'{bool:1};\n"
-    "  x5 = \'{bit:0};\n"
-    "end\n"
-    "endmodule",
     // event control
     "module moofar;\n"
     "always @ (*) begin end\n"
@@ -2531,7 +2549,7 @@ static const char* kModuleTests[] = {
     "  xz = \'{4{a, b}};\n"
     "end\n"
     "endmodule",
-    "module assignment_test1;\n"
+    "module assignment_test2;\n"
     "initial begin\n"
     "  x1 = \'{default:0};\n"
     "  x[2] = \'{int:1};\n"
@@ -2540,6 +2558,13 @@ static const char* kModuleTests[] = {
     "  x5 = \'{bit:0};\n"
     "end\n"
     "endmodule",
+    /* TODO(b/149152101): optional assignment pattern expression type
+    "module assignment_test3;\n"
+    "initial begin\n"
+    "  xx = byte\'{a, b, c};\n"
+    "end\n"
+    "endmodule",
+    */
     // assertion items
     "module assertion_items;\n"
     "assert property ( A + B <= C );\n"

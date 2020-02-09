@@ -1742,6 +1742,16 @@ data_type_base
    * but it is handled specially in class_item, to avoid a conflict on
    * the 'virtual' keyword.
    */
+  | type_reference
+    { $$ = move($1); }
+  ;
+
+type_reference
+  : TK_type '(' expression ')'
+    { $$ = MakeTaggedNode(N::kTypeReference, $1, MakeParenGroup($2, $3, $4)); }
+  /* TODO(fangism): some data types are not covered
+   | TK_type '(' data_type ')'
+   */
   ;
 
  /* pulled decl_dimensions_opt outside of data_type to other rules */
@@ -4511,6 +4521,8 @@ expr_primary_no_groups
   | TK_null
     { $$ = move($1); }
   | system_tf_call
+    { $$ = move($1); }
+  | type_reference
     { $$ = move($1); }
   | MacroGenericItem
     { $$ = move($1); }
