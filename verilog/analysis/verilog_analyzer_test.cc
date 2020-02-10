@@ -393,6 +393,19 @@ TEST(AnalyzeVerilogAutomaticMode, PackageBodyMode) {
   EXPECT_OK(ABSL_DIE_IF_NULL(analyzer_ptr)->ParseStatus());
 }
 
+TEST(AnalyzeVerilogAutomaticMode, PropertySpecMode) {
+  std::unique_ptr<VerilogAnalyzer> analyzer_ptr =
+      VerilogAnalyzer::AnalyzeAutomaticMode(
+          "// verilog_syntax: parse-as-property-spec\n"
+          "bb|=>cc\n",
+          "<file>");
+  EXPECT_OK(ABSL_DIE_IF_NULL(analyzer_ptr)->ParseStatus());
+
+  // Check parse status
+  const verible::TextStructureView& text_structure_view = analyzer_ptr->Data();
+  const auto& stream = text_structure_view.TokenStream();
+}
+
 // Tests that automatic mode parsing can detect that some first failing
 // keywords will trigger (successful) re-parsing as a module-body.
 TEST(AnalyzeVerilogAutomaticMode, InferredModuleBodyMode) {
