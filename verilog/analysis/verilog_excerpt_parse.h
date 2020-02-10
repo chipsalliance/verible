@@ -30,6 +30,10 @@ namespace verilog {
 // The interface for these functions should all be:
 //   std::unique_ptr<VerilogAnalyzer> (const string& text);
 
+// Analyzes test as Verilog property_spec
+std::unique_ptr<VerilogAnalyzer> AnalyzeVerilogPropertySpec(
+    absl::string_view text, absl::string_view filename);
+
 // Analyzes text as Verilog statements.
 std::unique_ptr<VerilogAnalyzer> AnalyzeVerilogStatements(
     absl::string_view text, absl::string_view filename);

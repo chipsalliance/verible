@@ -69,6 +69,12 @@ static std::unique_ptr<VerilogAnalyzer> AnalyzeVerilogConstruct(
   return analyzer_ptr;  // Let caller check analyzer_ptr's status.
 }
 
+std::unique_ptr<VerilogAnalyzer> AnalyzeVerilogPropertySpec(
+    absl::string_view text, absl::string_view filename) {
+  return AnalyzeVerilogConstruct("module foo;\nproperty p;\n", text, "\nendproperty;\nendmodule;\n",
+                                 filename);
+}
+
 std::unique_ptr<VerilogAnalyzer> AnalyzeVerilogStatements(
     absl::string_view text, absl::string_view filename) {
   return AnalyzeVerilogConstruct("function foo();\n", text, "\nendfunction\n",
@@ -115,6 +121,7 @@ std::unique_ptr<VerilogAnalyzer> AnalyzeVerilogWithMode(
           {"parse-as-module-body", &AnalyzeVerilogModuleBody},
           {"parse-as-class-body", &AnalyzeVerilogClassBody},
           {"parse-as-package-body", &AnalyzeVerilogPackageBody},
+          {"parse-as-property-spec", &AnalyzeVerilogPropertySpec},
       };
   auto func_ptr = FindOrNull(*func_map, mode);
   if (func_ptr == nullptr) return nullptr;
