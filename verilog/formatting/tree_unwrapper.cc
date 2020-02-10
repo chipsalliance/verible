@@ -819,16 +819,9 @@ void TreeUnwrapper::Visit(const verible::SyntaxTreeNode& node) {
       break;
     }
     case NodeEnum::kMacroArgList: {
-      if (suppress_indentation ||
-          Context().DirectParentsAre(
-              {NodeEnum::kMacroCall, NodeEnum::kDescriptionList})) {
-        // Top-level macro call
-        // Do not artificially indent parameters
-        TraverseChildren(node);
-      } else {
-        VisitIndentedSection(node, style_.wrap_spaces,
-                             PartitionPolicyEnum::kFitOnLineElseExpand);
-      }
+      // Indentation at wrap level until proper partition policy implemented
+      VisitIndentedSection(node, style_.wrap_spaces,
+                           PartitionPolicyEnum::kFitOnLineElseExpand);
       break;
     }
 
@@ -964,6 +957,18 @@ void TreeUnwrapper::Visit(const verible::SyntaxTreeNode& node) {
         // which (optionally) appears before the final property_spec.
         VisitIndentedSection(node, style_.indentation_spaces,
                              PartitionPolicyEnum::kAlwaysExpand);
+      } else if (Context().DirectParentIs(NodeEnum::kMacroArgList)) {
+        VisitIndentedSection(node, 0,
+                             PartitionPolicyEnum::kFitOnLineElseExpand);
+      } else {
+        TraverseChildren(node);
+      }
+      break;
+    }
+
+    case NodeEnum::kExpression: {
+      if (Context().DirectParentIs(NodeEnum::kMacroArgList)) {
+        VisitNewUnwrappedLine(node);
       } else {
         TraverseChildren(node);
       }
