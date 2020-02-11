@@ -30,8 +30,8 @@
 namespace verilog {
 namespace analysis {
 
-// ParameterNameStyleRule checks that each parameter/localparam follows the
-// correct naming convention.
+// ParameterNameStyleRule checks that each non-type parameter/localparam
+// follows the correct naming convention.
 // parameter should follow UpperCamelCase (preferred) or ALL_CAPS.
 // localparam should follow UpperCamelCase.
 class ParameterNameStyleRule : public verible::SyntaxTreeLintRule {

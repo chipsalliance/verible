@@ -47,16 +47,16 @@ absl::string_view ParameterNameStyleRule::Name() {
 }
 const char ParameterNameStyleRule::kTopic[] = "constants";
 const char ParameterNameStyleRule::kParameterMessage[] =
-    "Parameter names must be styled with UpperCamelCase or ALL_CAPS.";
+    "Non-type parameter names must be styled with UpperCamelCase or ALL_CAPS.";
 const char ParameterNameStyleRule::kLocalParamMessage[] =
-    "Localparam names must be styled with UpperCamelCase.";
+    "Non-type localparam names must be styled with UpperCamelCase.";
 
 std::string ParameterNameStyleRule::GetDescription(
     DescriptionType description_type) {
   return absl::StrCat(
-      "Checks that parameter names follow UpperCamelCase or ALL_CAPS naming "
-      "convention and that localparam names follow UpperCamelCase naming "
-      "convention. See ",
+      "Checks that non-type parameter names follow UpperCamelCase or ALL_CAPS "
+      "naming convention and that localparam names follow UpperCamelCase "
+      "naming convention. See ",
       GetStyleGuideCitation(kTopic), ".");
 }
 
@@ -68,9 +68,9 @@ void ParameterNameStyleRule::HandleSymbol(const verible::Symbol& symbol,
 
     const verible::TokenInfo* param_name_token = nullptr;
     if (IsParamTypeDeclaration(symbol))
-      param_name_token = &GetSymbolIdentifierFromParamDeclaration(symbol);
-    else
-      param_name_token = &GetParameterNameToken(symbol);
+      return;
+
+    param_name_token = &GetParameterNameToken(symbol);
 
     const auto param_name = param_name_token->text;
     if (param_decl_token == TK_localparam) {

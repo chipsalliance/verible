@@ -36,8 +36,8 @@ TEST(ParameterNameStyleRuleTest, AcceptTests) {
       {""},
       {"module foo; endmodule"},
       {"module foo (input bar); endmodule"},
-      {"module foo; localparam Bar = 1; endmodule"},
       {"module foo; localparam type Bar_1 = 1; endmodule"},
+      {"module foo; localparam Bar = 1; endmodule"},
       {"module foo; localparam int Bar = 1; endmodule"},
       {"module foo; parameter int HelloWorld = 1; endmodule"},
       {"module foo #(parameter int HelloWorld_1 = 1); endmodule"},
@@ -53,6 +53,11 @@ TEST(ParameterNameStyleRuleTest, AcceptTests) {
       {"parameter int Foo = 1;"},
       {"parameter type FooBar;"},
       {"parameter Foo = 1;"},
+
+      // Make sure parameter type triggers no violation
+      {"module foo; localparam type Bar_Hello_1 = 1; endmodule"},
+      {"module foo #(parameter type Bar_1_Hello__); endmodule"},
+      {"package foo; parameter type Hello_world; endpackage"},
   };
   RunLintTestCases<VerilogAnalyzer, ParameterNameStyleRule>(kTestCases);
 }
@@ -63,16 +68,10 @@ TEST(ParameterNameStyleRuleTest, RejectTests) {
   const std::initializer_list<LintTestCase> kTestCases = {
       {"module foo; localparam ", {kToken, "Bar_Hello"}, " = 1; endmodule"},
       {"module foo; localparam int ", {kToken, "Bar_Hello"}, " = 1; endmodule"},
-      {"module foo; localparam type ",
-       {kToken, "Bar_Hello_1"},
-       " = 1; endmodule"},
       {"module foo; parameter int ", {kToken, "__Bar"}, " = 1; endmodule"},
       {"module foo #(parameter int ",
        {kToken, "Bar_1_Hello"},
        " = 1); endmodule"},
-      {"module foo #(parameter type ",
-       {kToken, "Bar_1_Hello__"},
-       "); endmodule"},
       {"module foo #(int ", {kToken, "Bar_1_Two"}, "); endmodule"},
       {"module foo; localparam int ",
        {kToken, "bar"},
@@ -91,7 +90,6 @@ TEST(ParameterNameStyleRuleTest, RejectTests) {
       {"package foo; parameter ", {kToken, "hello__1"}, " = 1; endpackage"},
       {"package foo; parameter ", {kToken, "HELLO_WORLd"}, " = 1; endpackage"},
       {"package foo; parameter int ", {kToken, "_1Bar"}, " = 1; endpackage"},
-      {"package foo; parameter type ", {kToken, "Hello_world"}, "; endpackage"},
       {"package foo; parameter int ",
        {kToken, "HELLO_World"},
        " = 1; parameter int ",
