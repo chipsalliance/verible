@@ -1,2 +1,4 @@
 /bazel-*
 tags
+Docker/centos*
+Docker/ubuntu*

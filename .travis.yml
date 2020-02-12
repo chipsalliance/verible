@@ -1,93 +1,79 @@
+# For deploy to work, you must https://travis-ci.org/$USER/verible/settings and
+# add the following environment values;
+# OCTOKIT_ACCESS_TOKEN - Personal access token from https://github.com/settings/tokens
+# OCTOKIT_LOGIN - Your Github username
+# OCTOKIT_PASSWORD - Same as OCTOKIT_ACCESS_TOKEN above
+
 language: cpp
 
 # Don't build auto-generated tags
 if: NOT tag =~ /v[0-9.]*-.*/
+
+services:
+  - docker
+
+addons:
+  apt:
+    sources:
+    - ubuntu-toolchain-r-test
+    packages:
+    - g++-9
+    - gcc-9
+    - pandoc
+    - python-gflags
 
 git:
   depth: false
 
 jobs:
   include:
-   - stage: "Test"
-     name: "Ubuntu Trusty"
-     os: linux
-     dist: trusty
-     addons:
-       apt:
-         sources:
-         - ubuntu-toolchain-r-test
-         packages:
-         - g++-9
-         - gcc-9
-         - pandoc
-         - python-gflags
-   - stage: "Test"
-     name: "Ubuntu Xenial"
-     os: linux
-     dist: xenial
-     addons:
-       apt:
-         sources:
-         - ubuntu-toolchain-r-test
-         packages:
-         - g++-9
-         - gcc-9
-         - pandoc
-         - python-gflags
-#   - stage: "Test"
-#     name: "Ubuntu Bionic"
-#     os: linux
-#     dist: bionic
-#     addons:
-#       apt:
-#         sources:
-#         - ubuntu-toolchain-r-test
-#         packages:
-#         - g++-9
-#         - gcc-9
-#         - pandoc
-#         - python-gflags
+   - stage: Check
+     name: "Compile & Test"
+     env:
+      - MODE=compile-n-test
+     deploy:
+      - provider: pages
+        cleanup: true
+        keep_history: true
+        github_token: $OCTOKIT_ACCESS_TOKEN
+        local_dir: /tmp/pages
+        on:
+          branch: master
+
+   # Build and release binaries
+   - stage: Deploy
+     name: "Ubuntu Trusty (14.04 LTS)"
+     env:
+      - MODE=bin OS=ubuntu OS_VERSION=trusty
+   - name: "Ubuntu Xenial (16.04 LTS)"
+     env:
+      - MODE=bin OS=ubuntu OS_VERSION=xenial
+   - name: "Ubuntu Bionic (18.04 LTS)"
+     env:
+      - MODE=bin OS=ubuntu OS_VERSION=bionic
+   - name: "Ubuntu Eoan (19.10 latest)"
+     env:
+      - MODE=bin OS=ubuntu OS_VERSION=eoan
+   - name: "Centos 6"
+     env:
+      - MODE=bin OS=centos OS_VERSION=6
+   - name: "Centos 7"
+     env:
+      - MODE=bin OS=centos OS_VERSION=7
+   - name: "Centos 8"
+     env:
+      - MODE=bin OS=centos OS_VERSION=8
 
 before_install:
-  - ./.github/travis/set-compiler.sh 9
-  - ./.github/travis/install-bazel.sh 9
-  - git fetch --tags
+  - ./.github/travis/install.sh
 
 script:
-  - bazel build --noshow_progress --cxxopt='-std=c++17' //...
-  - bazel test --noshow_progress --cxxopt='-std=c++17' //...
-
-after_failure:
-  - source .github/travis/output-logs.sh
+  - ./.github/travis/script.sh
 
 after_success:
-  - git config --local user.name "Deployment Bot"
-  - git config --local user.email "verible-dev@googlegroups.com"
-  # Create a tag of form v0.0-183-gdf2b162-20191112132344
-  - export TRAVIS_TAG=${TRAVIS_TAG:-$(git describe --match=v*)}
-  - git tag $TRAVIS_TAG || true
-  # Set up things for GitHub Pages deployment
-  - ./.github/travis/github-pages-setup.sh
-  # Set up things for GitHub Releases deployment
-  - ./.github/travis/github-releases-setup.sh
+  - ./.github/travis/success.sh
 
-before_deploy:
-  - find /tmp/pages | sort
-  - find /tmp/releases | sort
-
-# For deploy to work, you must https://travis-ci.org/$USER/verible/settings and
-# add the following environment values;
-# OCTOKIT_ACCESS_TOKEN - Personal access token from https://github.com/settings/tokens
-# OCTOKIT_LOGIN - Your Github username
-# OCTOKIT_PASSWORD - Same as OCTOKIT_ACCESS_TOKEN above
 deploy:
- - provider: pages
-   skip_cleanup: true
-   keep_history: true
-   github_token: $OCTOKIT_ACCESS_TOKEN
-   local_dir: /tmp/pages
-   on:
-     branch: master
  - provider: releases
    file_glob: true
    username: $OCTOKIT_LOGIN
@@ -95,4 +81,6 @@ deploy:
    file:
     - /tmp/releases/verible-*.tar.gz
    overwrite: true
-   skip_cleanup: true
+   cleanup: true
+   on:
+     condition: $MODE = "bin"

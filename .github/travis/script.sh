@@ -13,10 +13,26 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-VERSION=$1
+set -x
+set -e
+export TRAVIS_TAG=${TRAVIS_TAG:-$(git describe --match=v*)}
 
-sudo dpkg --list | grep gcc
-sudo dpkg --list | grep libstdc++
-sudo ln -sf /usr/bin/gcc-$VERSION /usr/bin/gcc
-sudo ln -sf /usr/bin/g++-$VERSION /usr/bin/g++
-gcc --version || true
+case $MODE in
+compile-n-test)
+    bazel build --noshow_progress --cxxopt='-std=c++11' //...
+    bazel test --noshow_progress --cxxopt='-std=c++11' //...
+    ;;
+
+bin)
+    cd Docker
+    ./docker-generate.sh ${OS}-${OS_VERSION}
+    ./docker-run.sh ${OS}-${OS_VERSION}
+    mkdir -p /tmp/releases
+    cp out/*.tar.gz /tmp/releases/
+    ;;
+
+*)
+    echo "script.sh: Unknown mode $MODE"
+    exit 1
+    ;;
+esac

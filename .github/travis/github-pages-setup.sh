@@ -17,9 +17,14 @@
 # ---------------
 # Generate the GitHub pages to deploy
 
-GIT_DATE=$(git show -s --format=%ci)
-GIT_VERSION=$(git describe --match=v*)
-GIT_HASH=$(git rev-parse HEAD)
+REPO_SLUG=${REPO_SLUG:-${TRAVIS_REPO_SLUG:-google/verible}}
+GIT_DATE=${GIT_DATE:-$(git show -s --format=%ci)}
+GIT_HASH=${GIT_HASH:-$(git rev-parse HEAD)}
+GIT_VERSION=${GIT_VERSION:-$(git describe --match=v*)}
+
+echo "Git date:    $GIT_DATE"
+echo "Git hash:    $GIT_HASH"
+echo "Git version: $GIT_VERSION"
 
 PAGES_DIR=/tmp/pages
 rm -rf $PAGES_DIR
@@ -49,9 +54,9 @@ See the [README file for further information.](README.md)
 
 ## Information
 
- * [Code - https://github.com/$TRAVIS_REPO_SLUG](https://github.com/$TRAVIS_REPO_SLUG)
- * [Binaries - https://github.com/$TRAVIS_REPO_SLUG/releases](https://github.com/$TRAVIS_REPO_SLUG/releases)
- * [Bug Reports - https://github.com/$TRAVIS_REPO_SLUG/issues/new](https://github.com/$TRAVIS_REPO_SLUG/issues/new)
+ * [Code - https://github.com/$REPO_SLUG](https://github.com/$REPO_SLUG)
+ * [Binaries - https://github.com/$REPO_SLUG/releases](https://github.com/$REPO_SLUG/releases)
+ * [Bug Reports - https://github.com/$REPO_SLUG/issues/new](https://github.com/$REPO_SLUG/issues/new)
  * [Lint Rules](lint.md)
  * [Further Information](README.md)
 
@@ -63,7 +68,7 @@ See the [README file for further information.](README.md)
 
 ## Version
 
-Generated on $GIT_DATE from [$GIT_VERSION](https://github.com/$TRAVIS_REPO_SLUG/commit/$GIT_HASH)
+Generated on $GIT_DATE from [$GIT_VERSION](https://github.com/$REPO_SLUG/commit/$GIT_HASH)
 EOF
 
 # Add markdown version of Apache 2.0 license
@@ -77,7 +82,7 @@ cat >> $PAGES_DIR/lint.md <<EOF
 
 ## Version
 
-Generated on $GIT_DATE from [$GIT_VERSION](https://github.com/$TRAVIS_REPO_SLUG/commit/$GIT_HASH)
+Generated on $GIT_DATE from [$GIT_VERSION](https://github.com/$REPO_SLUG/commit/$GIT_HASH)
 EOF
 
 # Generate docs for verilog_syntax
@@ -98,7 +103,7 @@ cat >> $SYNTAX_DOC <<EOF
 
 ## Version
 
-Generated on $GIT_DATE from [$GIT_VERSION](https://github.com/$TRAVIS_REPO_SLUG/commit/$GIT_HASH)
+Generated on $GIT_DATE from [$GIT_VERSION](https://github.com/$REPO_SLUG/commit/$GIT_HASH)
 EOF
 
 
@@ -127,7 +132,7 @@ cat >> $LINT_DOC <<EOF
 
 ## Version
 
-Generated on $GIT_DATE from [$GIT_VERSION](https://github.com/$TRAVIS_REPO_SLUG/commit/$GIT_HASH)
+Generated on $GIT_DATE from [$GIT_VERSION](https://github.com/$REPO_SLUG/commit/$GIT_HASH)
 EOF
 
 # Generate docs for verilog_format
@@ -148,7 +153,7 @@ cat >> $FORMAT_DOC <<EOF
 
 ## Version
 
-Generated on $GIT_DATE from [$GIT_VERSION](https://github.com/$TRAVIS_REPO_SLUG/commit/$GIT_HASH)
+Generated on $GIT_DATE from [$GIT_VERSION](https://github.com/$REPO_SLUG/commit/$GIT_HASH)
 EOF
 
 # Add jekyll front matter to all markdown pages.
