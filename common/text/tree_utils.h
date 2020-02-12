@@ -46,6 +46,8 @@ absl::string_view StringSpanOfSymbol(const Symbol& lsym, const Symbol& rsym);
 
 // Returns a SyntaxTreeNode down_casted from a Symbol.
 const SyntaxTreeNode& SymbolCastToNode(const Symbol&);
+// Mutable variant.
+SyntaxTreeNode& SymbolCastToNode(Symbol&);
 
 // Returns a SyntaxTreeLeaf down_casted from a Symbol.
 const SyntaxTreeLeaf& SymbolCastToLeaf(const Symbol&);
@@ -63,6 +65,13 @@ const SyntaxTreeNode& CheckNodeEnum(const SyntaxTreeNode& node, E node_enum) {
   CHECK_EQ(E(node.Tag().tag), node_enum);
   return node;
 }
+// Mutable variant.
+template <typename E>
+SyntaxTreeNode& CheckNodeEnum(SyntaxTreeNode& node, E node_enum) {
+  // Uses operator<<(std::ostream&, E) for diagnostics.
+  CHECK_EQ(E(node.Tag().tag), node_enum);
+  return node;
+}
 
 template <typename E>
 const SyntaxTreeLeaf& CheckLeafEnum(const SyntaxTreeLeaf& leaf, E token_enum) {
@@ -75,6 +84,11 @@ const SyntaxTreeLeaf& CheckLeafEnum(const SyntaxTreeLeaf& leaf, E token_enum) {
 // Returns a casted reference on success.
 template <typename E>
 const SyntaxTreeNode& CheckSymbolAsNode(const Symbol& symbol, E node_enum) {
+  return CheckNodeEnum(SymbolCastToNode(symbol), node_enum);
+}
+// Mutable variant.
+template <typename E>
+SyntaxTreeNode& CheckSymbolAsNode(Symbol& symbol, E node_enum) {
   return CheckNodeEnum(SymbolCastToNode(symbol), node_enum);
 }
 

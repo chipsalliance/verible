@@ -118,6 +118,13 @@ const SyntaxTreeNode& SymbolCastToNode(const Symbol& symbol) {
   return down_cast<const SyntaxTreeNode&>(symbol);
 }
 
+SyntaxTreeNode& SymbolCastToNode(Symbol& symbol) {
+  // Assert the symbol is a node.
+  CHECK_EQ(symbol.Kind(), SymbolKind::kNode)
+      << "got: " << RawTreePrinter(symbol);
+  return down_cast<SyntaxTreeNode&>(symbol);
+}
+
 const SyntaxTreeLeaf& SymbolCastToLeaf(const Symbol& symbol) {
   // Assert the symbol is a leaf.
   CHECK_EQ(symbol.Kind(), SymbolKind::kLeaf)

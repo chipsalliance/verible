@@ -1084,12 +1084,23 @@ TEST(TrimSyntaxTreeTest, ComplexMidSpanSubtree2) {
 }
 
 TEST(SymbolCastToNodeTest, BasicTest) {
-  SyntaxTreeNode node_symbol;
+  const SyntaxTreeNode node_symbol;
   const auto& node = SymbolCastToNode(node_symbol);
   CHECK_EQ(node.Kind(), SymbolKind::kNode);
 }
 
+TEST(SymbolCastToNodeTest, BasicTestMutable) {
+  SyntaxTreeNode node_symbol;
+  SyntaxTreeNode& node = SymbolCastToNode(node_symbol);
+  CHECK_EQ(node.Kind(), SymbolKind::kNode);
+}
+
 TEST(SymbolCastToNodeTest, InvalidInputLeaf) {
+  const SyntaxTreeLeaf leaf_symbol(3, "foo");
+  EXPECT_DEATH(SymbolCastToNode(leaf_symbol), "");
+}
+
+TEST(SymbolCastToNodeTest, InvalidInputLeafMutable) {
   SyntaxTreeLeaf leaf_symbol(3, "foo");
   EXPECT_DEATH(SymbolCastToNode(leaf_symbol), "");
 }
@@ -1146,6 +1157,16 @@ TEST(CheckNodeEnumTest, NonMatchingEnum) {
   EXPECT_DEATH(CheckNodeEnum(SymbolCastToNode(*root), FakeEnum::kZero), "");
 }
 
+TEST(CheckNodeEnumTest, MatchingEnumMutable) {
+  auto root = TNode(FakeEnum::kTwo);
+  CheckNodeEnum(SymbolCastToNode(*root), FakeEnum::kTwo);
+}
+
+TEST(CheckNodeEnumTest, NonMatchingEnumMutable) {
+  auto root = TNode(FakeEnum::kTwo);
+  EXPECT_DEATH(CheckNodeEnum(SymbolCastToNode(*root), FakeEnum::kZero), "");
+}
+
 TEST(CheckLeafEnumTest, MatchingEnum) {
   const auto root = Leaf(6, "six");
   CheckLeafEnum(SymbolCastToLeaf(*root), 6);
@@ -1168,6 +1189,21 @@ TEST(CheckSymbolAsNodeTest, NonMatchingEnum) {
 
 TEST(CheckSymbolAsNodeTest, NotNode) {
   const auto root = Leaf(4, "x");
+  EXPECT_DEATH(CheckSymbolAsNode(*root, FakeEnum::kZero), "");
+}
+
+TEST(CheckSymbolAsNodeTest, MatchingEnumMutable) {
+  auto root = TNode(FakeEnum::kZero);
+  CheckSymbolAsNode(*root, FakeEnum::kZero);
+}
+
+TEST(CheckSymbolAsNodeTest, NonMatchingEnumMutable) {
+  auto root = TNode(FakeEnum::kOne);
+  EXPECT_DEATH(CheckSymbolAsNode(*root, FakeEnum::kZero), "");
+}
+
+TEST(CheckSymbolAsNodeTest, NotNodeMutable) {
+  auto root = Leaf(4, "x");
   EXPECT_DEATH(CheckSymbolAsNode(*root, FakeEnum::kZero), "");
 }
 
