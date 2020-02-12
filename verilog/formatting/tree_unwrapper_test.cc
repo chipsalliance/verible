@@ -1922,11 +1922,16 @@ const TreeUnwrapperTestData kClassTestCases[] = {
         ClassHeader(0, L(0, {"class", "event_calendar", ";"})),
         ClassItemList(
             1, DataDeclaration(1, L(1, {"event", "birthday", ";"})),
+            DataDeclaration(1, NL(1, {"event"}),
+                            InstanceList(3,  //
+                                         NL(3, {"first_date", ","}),
+                                         NL(3, {"anniversary", ";"}))),
             DataDeclaration(
-                1, L(1, {"event", "first_date", ",", "anniversary", ";"})),
-            DataDeclaration(
-                1, L(1, {"event", "revolution", "[", "4", ":", "0", "]", ",",
-                         "independence", "[", "2", ":", "0", "]", ";"}))),
+                1, NL(1, {"event"}),
+                InstanceList(
+                    3,  //
+                    NL(3, {"revolution", "[", "4", ":", "0", "]", ","}),
+                    NL(3, {"independence", "[", "2", ":", "0", "]", ";"})))),
         L(0, {"endclass"}),
     },
 
@@ -1952,10 +1957,19 @@ const TreeUnwrapperTestData kClassTestCases[] = {
         ClassHeader(0, L(0, {"class", "fields_with_modifiers", ";"})),
         ClassItemList(
             1,
-            DataDeclaration(1, L(1, {"const", "data_type_or_module_type",
-                                     "foo1", "=", "4", "'h", "f", ";"})),
-            DataDeclaration(1, L(1, {"static", "data_type_or_module_type",
-                                     "foo3", ",", "foo4", ";"}))),
+            DataDeclaration(1,  //
+                                // TODO(b/149343440): merge qualifiers and type
+                                // partitions together.
+                            L(1, {"const"}), L(1, {"data_type_or_module_type"}),
+                            L(1,  // TODO(b/149344110): should indent to level 3
+                              {"foo1", "=", "4", "'h", "f", ";"})),
+            DataDeclaration(
+                1,
+                // TODO(b/149343440): merge qualifiers and type
+                // partitions together.
+                L(1, {"static"}), NL(1, {"data_type_or_module_type"}),
+                InstanceList(3,  //
+                             NL(3, {"foo3", ","}), NL(3, {"foo4", ";"})))),
         L(0, {"endclass"}),
     },
 
@@ -2029,7 +2043,12 @@ const TreeUnwrapperTestData kClassTestCases[] = {
         "endclass",
         ClassHeader(0, L(0, {"class", "protected_stuff", ";"})),
         ClassItemList(
-            1, DataDeclaration(1, L(1, {"protected", "int", "count", ";"}))),
+            1, DataDeclaration(1,
+                               // TODO(b/149343440): merge qualifiers and type
+                               // partitions together.
+                               L(1, {"protected"}), L(1, {"int"}),
+                               // TODO(b/149344110): indent variable to level 3
+                               L(1, {"count", ";"}))),
         L(0, {"endclass"}),
     },
 

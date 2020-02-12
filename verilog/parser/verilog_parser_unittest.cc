@@ -370,6 +370,24 @@ static const char* kClassTests[] = {
     "  Packet pNP3 [ * ];\n"
     "endclass",
     // class property declarations
+    "class c;\n"
+    "  foo bar;\n"
+    "endclass\n",
+    "class c;\n"
+    "  const foo bar;\n"
+    "endclass\n",
+    "class c;\n"
+    "  protected int count;\n"
+    "endclass\n",
+    "class c;\n"
+    "  foo #(.baz) bar;\n"
+    "endclass\n",
+    "class c;\n"
+    "  foo #(.baz(bah)) bar;\n"
+    "endclass\n",
+    "class c;\n"
+    "  foo #(.baz) bar1, bar2;\n"
+    "endclass\n",
     "class Driver;\n"
     "  data_type_or_module_type foo1;\n"
     "  data_type_or_module_type foo2 = 1'b1;\n"

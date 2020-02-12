@@ -865,6 +865,7 @@ void TreeUnwrapper::Visit(const verible::SyntaxTreeNode& node) {
     case NodeEnum::kModuleHeader:
     case NodeEnum::kInstantiationType:
     case NodeEnum::kRegisterVariable:
+    case NodeEnum::kVariableDeclarationAssignment:
     case NodeEnum::kCaseItem:
     case NodeEnum::kDefaultItem:
     case NodeEnum::kCaseInsideItem:
@@ -921,6 +922,7 @@ void TreeUnwrapper::Visit(const verible::SyntaxTreeNode& node) {
     case NodeEnum::kModportSimplePortsDeclaration:
     case NodeEnum::kModportTFPortsDeclaration:
     case NodeEnum::kGateInstanceRegisterVariableList:
+    case NodeEnum::kVariableDeclarationAssignmentList:
     case NodeEnum::kPortActualList:  // TODO(b/146083526): one port per line
     case NodeEnum::kActualParameterByNameList:
     case NodeEnum::kPortList:
@@ -977,6 +979,8 @@ void TreeUnwrapper::Visit(const verible::SyntaxTreeNode& node) {
 
   // post-traversal token partition adjustments
   switch (tag) {
+    // Note: this is also being applied to variable declaration lists,
+    // which may want different handling than instantiations.
     case NodeEnum::kDataDeclaration: {
       AttachTrailingSemicolonToPreviousPartition();
       auto& data_declaration_partition =
@@ -1189,8 +1193,10 @@ void TreeUnwrapper::Visit(const verible::SyntaxTreeLeaf& leaf) {
       // their own indented sections.
       if (current_context_.DirectParentIsOneOf({
               // NodeEnum:xxxx                             // due to element:
-              NodeEnum::kGateInstanceRegisterVariableList  // kGateInstance,
-                                                           // kRegisterVariable
+              NodeEnum::kGateInstanceRegisterVariableList,  // kGateInstance,
+                                                            // kRegisterVariable
+              NodeEnum::kVariableDeclarationAssignmentList  // due to element:
+              // kVariableDeclarationAssignment
           })) {
         MergeLastTwoPartitions();
       } else if (CurrentUnwrappedLine().Size() == 1) {

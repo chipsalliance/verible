@@ -29,12 +29,11 @@
 #include "verilog/parser/verilog_token_enum.h"
 
 namespace verilog {
-using verible::down_cast;
 using verible::container::FindWithDefault;
 
 verible::SymbolPtr RepackReturnTypeId(verible::SymbolPtr type_id_tuple) {
-  // type_id_tuple should come from MakeTypeIdDimensionsTuple.
-  auto& node = down_cast<verible::SyntaxTreeNode&>(*type_id_tuple);
+  auto& node = CheckSymbolAsNode(*type_id_tuple,
+                                 NodeEnum::kDataTypeImplicitBasicIdDimensions);
   return verible::MakeNode(std::move(node[0]) /* type */,
                            std::move(node[1]) /* id */);
   // Discard unpacked dimensions node[2], should be nullptr, and not

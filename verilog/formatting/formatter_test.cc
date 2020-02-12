@@ -1685,6 +1685,47 @@ static const std::initializer_list<FormatterTestCase> kFormatterTestCases = {
      ");\n"
      "endclass\n"},
 
+    // class with data members
+    {"class  i_love_data ;const\ninteger  sizer\t;endclass",
+     "class i_love_data;\n"
+     "  const integer sizer;\n"
+     "endclass\n"},
+    {"class  i_love_data ;const\ninteger  sizer=3\t;endclass",
+     "class i_love_data;\n"
+     "  const integer sizer = 3;\n"
+     "endclass\n"},
+    {"class  i_love_data ;protected\nint  count  \t;endclass",
+     "class i_love_data;\n"
+     "  protected int count;\n"
+     "endclass\n"},
+    {"class  i_love_data ;\t\nint  counter\n ;int  countess \t;endclass",
+     "class i_love_data;\n"
+     "  int counter;\n"
+     "  int countess;\n"
+     "endclass\n"},
+    {"class  i_love_params ;foo#( . bar)  baz\t;endclass",
+     "class i_love_params;\n"
+     "  foo #(.bar) baz;\n"
+     "endclass\n"},
+    {"class  i_love_params ;foo#( . bar ( bah ))  baz\t;endclass",
+     "class i_love_params;\n"
+     "  foo #(.bar(bah)) baz;\n"
+     "endclass\n"},
+    {"class  i_love_params ;foo#( . bar ( bah\n),"
+     ".\ncat( dog) )  baz\t;endclass",
+     "class i_love_params;\n"
+     "  foo #(.bar(bah), .cat(dog)) baz;\n"
+     "endclass\n"},
+    {"class  i_love_params ;foo#( . bar)  baz1,baz2\t;endclass",
+     "class i_love_params;\n"
+     "  foo #(.bar) baz1, baz2;\n"
+     "endclass\n"},
+    {"class  i_love_params ;foo#( . bar)  baz\t;baz#(.foo)bar;endclass",
+     "class i_love_params;\n"
+     "  foo #(.bar) baz;\n"
+     "  baz #(.foo) bar;\n"
+     "endclass\n"},
+
     // package test cases
     {"package fedex;localparam  int  www=3 ;endpackage   :  fedex\n",
      "package fedex;\n"

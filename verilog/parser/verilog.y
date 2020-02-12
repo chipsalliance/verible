@@ -1201,17 +1201,28 @@ class_item
 
   /* originally: property_qualifier_list_opt data_type list_of_variable_decl_assignments ';' */
   /* or: property_qualifier_list_opt data_declaration */
-  /* TODO(jeremycs): include helper function to build data declarations, attempt to
-   *                 standardize format with data_declaration's */
   | method_property_qualifier_list_not_starting_with_virtual
     const_opt var_opt data_type list_of_variable_decl_assignments ';'
-    { $$ = MakeTaggedNode(N::kDataDeclaration, $1, $2, $3, $4, $5, $6); }
+    { $$ = MakeDataDeclaration(
+                          ExtendNode($1, $2, $3),
+                          MakeInstantiationBase(
+                              MakeTaggedNode(N::kInstantiationType, $4),
+                              $5),
+                          $6); }
   | data_type list_of_variable_decl_assignments ';'
-    { $$ = MakeTaggedNode(N::kDataDeclaration, $1, $2, $3); }
+    { $$ = MakeDataDeclaration(
+                          qualifier_placeholder,
+                          MakeInstantiationBase(
+                              MakeTaggedNode(N::kInstantiationType, $1),
+                              $2),
+                          $3); }
   | TK_const class_item_qualifier_list_opt data_type list_of_variable_decl_assignments ';'
-    { $$ = MakeTaggedNode(N::kDataDeclaration,
+    { $$ = MakeDataDeclaration(
                           MakeTaggedNode(N::kQualifierList, $1, ForwardChildren($2)),
-                          $3, $4, $5); }
+                          MakeInstantiationBase(
+                              MakeTaggedNode(N::kInstantiationType, $3),
+                              $4),
+                          $5); }
   | interface_data_declaration
     { $$ = move($1); }
 
@@ -1282,7 +1293,12 @@ class_item
 
 interface_data_declaration
   : interface_type list_of_variable_decl_assignments ';'
-    { $$ = MakeTaggedNode(N::kDataDeclaration, $1, $2, $3); }
+    { $$ = MakeDataDeclaration(
+               qualifier_placeholder,
+               MakeInstantiationBase(
+                   MakeTaggedNode(N::kInstantiationType, $1),
+                   $2),
+               $3); }
     /* interface instantiation: virtual type_if inst_if */
   ;
 
@@ -1672,19 +1688,48 @@ data_declaration_base
   /* very similar to struct_union_member and block_item_decl */
   : data_type_or_implicit_basic_followed_by_id_and_dimensions_opt
     trailing_decl_assignment_opt ',' list_of_variable_decl_assignments ';'
-    { $$ = MakeTaggedNode(N::kDataDeclaration, $1, $2, $3, $4, $5); }
+    { /* re-shape subtree to pass onto MakeDataDeclaration */
+      auto& node = SymbolCastToNode(*$1);
+      $$ = MakeNode(
+               MakeInstantiationBase(
+                    MakeTaggedNode(N::kInstantiationType, node[0]),  /* data type */
+            /* declaration assignment list is similar to instantiation list */
+                    MakeTaggedNode(N::kVariableDeclarationAssignmentList,
+                                   MakeTaggedNode(
+                                       N::kVariableDeclarationAssignment,
+                                       node[1],  /* id */
+                                       node[2],  /* unpacked dimensions */
+                                       $2),
+                                   $3,  /* ',' */
+                                   ForwardChildren($4))),
+                $5);
+    }
   | data_type_or_implicit_basic_followed_by_id_and_dimensions_opt
     trailing_decl_assignment_opt ';'
-    { $$ = MakeTaggedNode(N::kDataDeclaration, $1, $2, $3); }
+    { /* re-shape subtree to pass onto MakeDataDeclaration */
+      auto& node = SymbolCastToNode(*$1);
+      $$ = MakeNode(
+               MakeInstantiationBase(
+                    MakeTaggedNode(N::kInstantiationType, node[0]),  /* data type */
+            /* declaration assignment list is similar to instantiation list */
+                    MakeTaggedNode(N::kVariableDeclarationAssignmentList,
+                                   MakeTaggedNode(
+                                       N::kVariableDeclarationAssignment,
+                                       node[1],  /* id */
+                                       node[2],  /* unpacked dimensions */
+                                       $2))),
+               $3);
+    }
   ;
 data_declaration_modifiers_opt
-  // TODO(jeremycs): standardize format for data declaration
   : const_opt var_opt lifetime_opt
     { $$ = MakeTaggedNode(N::kQualifierList, $1, $2, $3); }
   ;
 data_declaration
   : data_declaration_modifiers_opt data_declaration_base
-    { $$ = MakeTaggedNode(N::kDataDeclaration, $1, ForwardChildren($2)); }
+    { auto& node = SymbolCastToNode(*$2);
+      $$ = MakeDataDeclaration($1, node[0], node[1]);
+    }
   /* In the LRM, data_declaration also includes:
    *   type_declaration
    *   package_import_declaration
@@ -2245,7 +2290,8 @@ function_return_type_and_id
   /* $1 should not have unpacked dimensions */
     { $$ = RepackReturnTypeId(move($1)); }
   | interface_type class_id
-    { $$ = RepackReturnTypeId(MakeTypeIdDimensionsTuple($1, $2, nullptr)); }
+    { $$ = RepackReturnTypeId(MakeTypeIdDimensionsTuple(
+               MakeTaggedNode(N::kDataType, $1, nullptr), $2, nullptr)); }
   ;
 
 function_declaration
@@ -3371,7 +3417,7 @@ instantiation_type
 
 instantiation_base
   : instantiation_type gate_instance_or_register_variable_list
-    { $$ = MakeTaggedNode(N::kInstantiationBase, $1, $2); }
+    { $$ = MakeInstantiationBase($1, $2); }
   ;
 
 data_declaration_or_module_instantiation
@@ -3382,19 +3428,19 @@ data_declaration_or_module_instantiation
    * to avoid S/R conflict.
    */
   : instantiation_base ';'
-    { $$ = MakeTaggedNode(N::kDataDeclaration, qualifier_placeholder, $1, $2); }
+    { $$ = MakeDataDeclaration(qualifier_placeholder, $1, $2); }
   | lifetime const_opt instantiation_base ';'
-    { $$ = MakeTaggedNode(N::kDataDeclaration,
+    { $$ = MakeDataDeclaration(
                           MakeTaggedNode(N::kQualifierList, $1, $2), $3, $4); }
     /* const_opt was added here to support "static const" (vs. "const static")
      * which is not explicitly permitted by the LRM grammar, but is interpreted
      * by some vendors as intended to be permitted.
      */
   | TK_var lifetime_opt instantiation_base ';'
-    { $$ = MakeTaggedNode(N::kDataDeclaration,
+    { $$ = MakeDataDeclaration(
                           MakeTaggedNode(N::kQualifierList, $1, $2), $3, $4); }
   | TK_const var_opt lifetime_opt instantiation_base ';'
-      { $$ = MakeTaggedNode(N::kDataDeclaration,
+      { $$ = MakeDataDeclaration(
                             MakeTaggedNode(N::kQualifierList, $1, $2, $3),
                             $4, $5); }
   /* Using data_declaration_modifiers_opt causes S/R conflict.  */
