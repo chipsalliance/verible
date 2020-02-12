@@ -54,23 +54,65 @@ const SyntaxTreeLeaf& SymbolCastToLeaf(const Symbol&);
 // multiple children.
 const Symbol* DescendThroughSingletons(const Symbol& symbol);
 
+// Succeeds if node's enum matches 'node_enum'.
+// Returns same node reference, so that anywhere that expects a SyntaxTreeNode
+// can be passed CheckNodeEnum(node, node_enum).
+template <typename E>
+const SyntaxTreeNode& CheckNodeEnum(const SyntaxTreeNode& node, E node_enum) {
+  // Uses operator<<(std::ostream&, E) for diagnostics.
+  CHECK_EQ(E(node.Tag().tag), node_enum);
+  return node;
+}
+
+template <typename E>
+const SyntaxTreeLeaf& CheckLeafEnum(const SyntaxTreeLeaf& leaf, E token_enum) {
+  // Uses operator<<(std::ostream&, E) for diagnostics.
+  CHECK_EQ(E(leaf.get().token_enum), token_enum);
+  return leaf;
+}
+
+// Succeeds if symbol is a node enumerated 'node_enum'.
+// Returns a casted reference on success.
+template <typename E>
+const SyntaxTreeNode& CheckSymbolAsNode(const Symbol& symbol, E node_enum) {
+  return CheckNodeEnum(SymbolCastToNode(symbol), node_enum);
+}
+
+// Succeeds if symbol is a leaf enumerated 'leaf_enum'.
+// Returns a casted reference on success.
+template <typename E>
+const SyntaxTreeLeaf& CheckSymbolAsLeaf(const Symbol& symbol, E token_enum) {
+  return CheckLeafEnum(SymbolCastToLeaf(symbol), token_enum);
+}
+
+// Succeeds if symbol is nullptr (returning nullptr), or it is a node
+// enumerated 'node_enum' (returns casted non-nullptr).
+template <typename SPtr, typename E>
+const SyntaxTreeNode* CheckOptionalSymbolAsNode(const SPtr& symbol,
+                                                E node_enum) {
+  if (symbol == nullptr) return nullptr;
+  return &CheckSymbolAsNode(*symbol, node_enum);
+}
+
+// Specialization for nullptr_t.
+template <typename E>
+const SyntaxTreeNode* CheckOptionalSymbolAsNode(const nullptr_t& symbol, E) {
+  return nullptr;
+}
+
 // Extracts a particular child of a node by position, verifying the parent's
 // node enumeration.
 template <typename E>
 const Symbol* GetSubtreeAsSymbol(const SyntaxTreeNode& node,
                                  E parent_must_be_node_enum,
                                  size_t child_position) {
-  // Uses operator<<(std::ostream&, E) for diagnostics.
-  CHECK_EQ(E(node.Tag().tag), parent_must_be_node_enum);
-  return node[child_position].get();
+  return CheckNodeEnum(node, parent_must_be_node_enum)[child_position].get();
 }
 
 template <typename E>
 const Symbol* GetSubtreeAsSymbol(const Symbol& symbol,
                                  E parent_must_be_node_enum,
                                  size_t child_position) {
-  // TODO(fangism): eliminate SymbolKind, it is redundant with RTTI.
-  CHECK_EQ(symbol.Tag().kind, verible::SymbolKind::kNode);
   return GetSubtreeAsSymbol(SymbolCastToNode(symbol), parent_must_be_node_enum,
                             child_position);
 }
@@ -92,9 +134,7 @@ const SyntaxTreeNode& GetSubtreeAsNode(const S& symbol,
                                        E child_must_be_node_enum) {
   const SyntaxTreeNode& node(
       GetSubtreeAsNode(symbol, parent_must_be_node_enum, child_position));
-  // Uses operator<<(std::ostream&, E) for diagnostics.
-  CHECK_EQ(E(node.Tag().tag), child_must_be_node_enum);
-  return node;
+  return CheckNodeEnum(node, child_must_be_node_enum);
 }
 
 // Same as GetSubtreeAsSymbol, but casts the result to a leaf.
