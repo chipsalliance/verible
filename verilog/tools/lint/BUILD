@@ -42,6 +42,8 @@ _linter_test_configs = [
     ("packed-dimensions-range-ordering", "packed_dimensions", True),
     ("parameter-name-style", "localparam_name_style", True),
     ("parameter-name-style", "parameter_name_style", True),
+    ("parameter-type-name-style", "parameter_type_name_style", False),
+    ("parameter-type-name-style", "localparam_type_name_style", False),
     ("plusarg-assignment", "plusarg_assignment", True),
     ("proper-parameter-declaration", "proper_parameter_declaration", False),
     ("proper-parameter-declaration", "proper_localparam_declaration", False),

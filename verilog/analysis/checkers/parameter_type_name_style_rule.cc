@@ -12,11 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "verilog/analysis/checkers/parameter_name_style_rule.h"
+#include "verilog/analysis/checkers/parameter_type_name_style_rule.h"
 
 #include <set>
 #include <string>
 
+#include "absl/strings/match.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
 #include "common/analysis/citation.h"
@@ -39,53 +40,43 @@ using verible::LintRuleStatus;
 using verible::LintViolation;
 using verible::SyntaxTreeContext;
 
-// Register ParameterNameStyleRule.
-VERILOG_REGISTER_LINT_RULE(ParameterNameStyleRule);
+// Register ParameterTypeNameStyleRule.
+VERILOG_REGISTER_LINT_RULE(ParameterTypeNameStyleRule);
 
-absl::string_view ParameterNameStyleRule::Name() {
-  return "parameter-name-style";
+absl::string_view ParameterTypeNameStyleRule::Name() {
+  return "parameter-type-name-style";
 }
-const char ParameterNameStyleRule::kTopic[] = "constants";
-const char ParameterNameStyleRule::kParameterMessage[] =
-    "Non-type parameter names must be styled with UpperCamelCase or ALL_CAPS.";
-const char ParameterNameStyleRule::kLocalParamMessage[] =
-    "Non-type localparam names must be styled with UpperCamelCase.";
+const char ParameterTypeNameStyleRule::kTopic[] = "parametrized-objects";
 
-std::string ParameterNameStyleRule::GetDescription(
+const char ParameterTypeNameStyleRule::kMessage[] =
+    "Parameter type names must use the lower_snake_case naming convention"
+    " and end with _t.";
+
+std::string ParameterTypeNameStyleRule::GetDescription(
     DescriptionType description_type) {
   return absl::StrCat(
-      "Checks that non-type parameter names follow UpperCamelCase or ALL_CAPS "
-      "naming convention and that localparam names follow UpperCamelCase "
-      "naming convention. See ",
+      "Checks that parameter type names follow the lower_snake_case naming "
+      "convention and end with _t. See ",
       GetStyleGuideCitation(kTopic), ".");
 }
 
-void ParameterNameStyleRule::HandleSymbol(const verible::Symbol& symbol,
-                                          const SyntaxTreeContext& context) {
+void ParameterTypeNameStyleRule::HandleSymbol(
+    const verible::Symbol& symbol, const SyntaxTreeContext& context) {
   verible::matcher::BoundSymbolManager manager;
   if (matcher_.Matches(symbol, &manager)) {
-    const auto param_decl_token = GetParamKeyword(symbol);
-
     const verible::TokenInfo* param_name_token = nullptr;
-    if (IsParamTypeDeclaration(symbol)) return;
+    if (!IsParamTypeDeclaration(symbol)) return;
 
-    param_name_token = &GetParameterNameToken(symbol);
-
+    param_name_token = &GetSymbolIdentifierFromParamDeclaration(symbol);
     const auto param_name = param_name_token->text;
-    if (param_decl_token == TK_localparam) {
-      if (!verible::IsUpperCamelCaseWithDigits(param_name))
-        violations_.insert(
-            LintViolation(*param_name_token, kLocalParamMessage, context));
-    } else if (param_decl_token == TK_parameter) {
-      if (!verible::IsUpperCamelCaseWithDigits(param_name) &&
-          !verible::IsNameAllCapsUnderscoresDigits(param_name))
-        violations_.insert(
-            LintViolation(*param_name_token, kParameterMessage, context));
-    }
+
+    if (!verible::IsLowerSnakeCaseWithDigits(param_name) ||
+        !absl::EndsWith(param_name, "_t"))
+      violations_.insert(LintViolation(*param_name_token, kMessage, context));
   }
 }
 
-LintRuleStatus ParameterNameStyleRule::Report() const {
+LintRuleStatus ParameterTypeNameStyleRule::Report() const {
   return LintRuleStatus(violations_, Name(), GetStyleGuideCitation(kTopic));
 }
 

@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef VERIBLE_VERILOG_ANALYSIS_CHECKERS_PARAMETER_NAME_STYLE_RULE_H_
-#define VERIBLE_VERILOG_ANALYSIS_CHECKERS_PARAMETER_NAME_STYLE_RULE_H_
+#ifndef VERIBLE_VERILOG_ANALYSIS_CHECKERS_PARAMETER_TYPE_NAME_STYLE_RULE_H_
+#define VERIBLE_VERILOG_ANALYSIS_CHECKERS_PARAMETER_TYPE_NAME_STYLE_RULE_H_
 
 #include <set>
 #include <string>
@@ -30,11 +30,9 @@
 namespace verilog {
 namespace analysis {
 
-// ParameterNameStyleRule checks that each non-type parameter/localparam
-// follows the correct naming convention.
-// parameter should follow UpperCamelCase (preferred) or ALL_CAPS.
-// localparam should follow UpperCamelCase.
-class ParameterNameStyleRule : public verible::SyntaxTreeLintRule {
+// ParameterTypeNameStyleRule checks that each parameter type name follows the
+// correct naming convention.
+class ParameterTypeNameStyleRule : public verible::SyntaxTreeLintRule {
  public:
   using rule_type = verible::SyntaxTreeLintRule;
   static absl::string_view Name();
@@ -52,11 +50,8 @@ class ParameterNameStyleRule : public verible::SyntaxTreeLintRule {
   // Link to style guide rule.
   static const char kTopic[];
 
-  // Diagnostic message for parameter violations.
-  static const char kParameterMessage[];
-
-  // Diagnostic message for localparam violations.
-  static const char kLocalParamMessage[];
+  // Diagnostic message for type name violations.
+  static const char kMessage[];
 
   using Matcher = verible::matcher::Matcher;
 
@@ -68,4 +63,4 @@ class ParameterNameStyleRule : public verible::SyntaxTreeLintRule {
 }  // namespace analysis
 }  // namespace verilog
 
-#endif  // VERIBLE_VERILOG_ANALYSIS_CHECKERS_PARAMETER_NAME_STYLE_RULE_H_
+#endif  // VERIBLE_VERILOG_ANALYSIS_CHECKERS_PARAMETER_TYPE_NAME_STYLE_RULE_H_

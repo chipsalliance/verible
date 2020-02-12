@@ -45,6 +45,7 @@ cc_library(
         ":package_filename_rule",
         ":packed_dimensions_rule",
         ":parameter_name_style_rule",
+        ":parameter_type_name_style_rule",
         ":plusarg_assignment_rule",
         ":posix_eof_rule",
         ":proper_parameter_declaration_rule",
@@ -1267,6 +1268,45 @@ cc_test(
     srcs = ["parameter_name_style_rule_test.cc"],
     deps = [
         ":parameter_name_style_rule",
+        "//common/analysis:linter_test_utils",
+        "//common/analysis:syntax_tree_linter_test_utils",
+        "//common/text:symbol",
+        "//verilog/CST:verilog_nonterminals",
+        "//verilog/analysis:verilog_analyzer",
+        "@com_google_googletest//:gtest_main",
+    ],
+)
+
+cc_library(
+    name = "parameter_type_name_style_rule",
+    srcs = ["parameter_type_name_style_rule.cc"],
+    hdrs = ["parameter_type_name_style_rule.h"],
+    deps = [
+        "//common/analysis:citation",
+        "//common/analysis:lint_rule_status",
+        "//common/analysis:syntax_tree_lint_rule",
+        "//common/analysis/matcher",
+        "//common/analysis/matcher:bound_symbol_manager",
+        "//common/analysis/matcher:matcher_builders",
+        "//common/strings:naming_utils",
+        "//common/text:symbol",
+        "//common/text:syntax_tree_context",
+        "//common/text:token_info",
+        "//verilog/CST:parameters",
+        "//verilog/CST:verilog_matchers",
+        "//verilog/analysis:descriptions",
+        "//verilog/analysis:lint_rule_registry",
+        "//verilog/parser:verilog_token_enum",
+        "@com_google_absl//absl/strings",
+    ],
+    alwayslink = 1,
+)
+
+cc_test(
+    name = "parameter_type_name_style_rule_test",
+    srcs = ["parameter_type_name_style_rule_test.cc"],
+    deps = [
+        ":parameter_type_name_style_rule",
         "//common/analysis:linter_test_utils",
         "//common/analysis:syntax_tree_linter_test_utils",
         "//common/text:symbol",
