@@ -93,7 +93,7 @@ Enabled by default: false
 ### enum-name-style
 Checks that `enum` names use lower_snake_case naming convention and end with '_t' or '_e'. See [Style: enumerations].
 
-Enabled by default: false
+Enabled by default: true
 
 ### explicit-function-lifetime
 Checks that every function declared outside of a class is declared with an explicit lifetime (static or automatic). See [Style: function-task-explicit-lifetime].
@@ -118,7 +118,7 @@ Enabled by default: true
 ### forbid-consecutive-null-statements
 Checks that there are no occurrences of consecutive null statements like `;;`
 
-Enabled by default: false
+Enabled by default: true
 
 ### forbid-defparam
 Do not use defparam. See:[Style: defparam].
@@ -206,9 +206,14 @@ Checks that packed dimension ranges are declare in little-endian (decreasing) or
 Enabled by default: true
 
 ### parameter-name-style
-Checks that parameter names follow UpperCamelCase or ALL_CAPS naming convention and that localparam names follow UpperCamelCase naming convention. See [Style: constants].
+Checks that non-type parameter names follow UpperCamelCase or ALL_CAPS naming convention and that localparam names follow UpperCamelCase naming convention. See [Style: constants].
 
 Enabled by default: true
+
+### parameter-type-name-style
+Checks that parameter type names follow the lower_snake_case naming convention and end with _t. See [Style: parametrized-objects].
+
+Enabled by default: false
 
 ### plusarg-assignment
 Checks that plusargs are always assigned a value, by ensuring that plusargs are never accessed using the `$test$plusargs` system task. See [Style: plusarg-value-assignment].
@@ -268,4 +273,4 @@ Enabled by default: true
 
 ## Version
 
-Generated on 2020-02-07 13:55:43 -0800 from [v0.0-200-gc0dfb45](https://github.com/google/verible/commit/c0dfb452e875aafe09d0b943211e8ba6fe8c35be)
+Generated on 2020-02-12 12:30:21 -0800 from [v0.0-209-g14ee469](https://github.com/google/verible/commit/14ee46902e9af1c8a50f1ac3a478cf9daf2777d0)
