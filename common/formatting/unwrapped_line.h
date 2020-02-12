@@ -40,6 +40,12 @@ enum class PartitionPolicyEnum {
 
   // This is where future formatting configuration policies could go:
   // e.g. kColumnarAlignment, kOneItemPerLine, kCompactItems
+
+  // Treats subpartitions as units, and appends them to the same line as
+  // long as they fit, else wrap them aligned to the position of the first element
+  // It uses first subpartition length to compute indentation spaces or
+  // FormatStyle.wrap_spaces when wrapping.
+  kAppendFittingSubPartitions,
 };
 
 std::ostream& operator<<(std::ostream&, PartitionPolicyEnum);

@@ -38,6 +38,7 @@ std::ostream& operator<<(std::ostream& stream, PartitionPolicyEnum p) {
       new std::map<PartitionPolicyEnum, const char*>{
           {PartitionPolicyEnum::kAlwaysExpand, "always-expand"},
           {PartitionPolicyEnum::kFitOnLineElseExpand, "fit-else-expand"},
+          {PartitionPolicyEnum::kAppendFittingSubPartitions, "append-fitting-sub-partitions"},
       };
   return stream << FindOrDie(*enum_names, p);
 }
