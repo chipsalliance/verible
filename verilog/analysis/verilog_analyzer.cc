@@ -277,9 +277,14 @@ class MacroCallArgExpander : public MutableTreeVisitorRecursive {
       std::unique_ptr<VerilogAnalyzer> expr_analyzer =
           AnalyzeVerilogExpression(token.text, "<macro-arg-expander>");
       if (!expr_analyzer->ParseStatus().ok()) {
-        // If that failed: try to infer parsing mode from comments
-        expr_analyzer = VerilogAnalyzer::AnalyzeAutomaticMode(
-            token.text, "<macro-arg-expander>");
+        // If that failed, try to parse text as a property.
+        expr_analyzer =
+            AnalyzeVerilogPropertySpec(token.text, "<macro-arg-expander>");
+        if (!expr_analyzer->ParseStatus().ok()) {
+          // If that failed: try to infer parsing mode from comments
+          expr_analyzer = VerilogAnalyzer::AnalyzeAutomaticMode(
+              token.text, "<macro-arg-expander>");
+        }
       }
       if (ABSL_DIE_IF_NULL(expr_analyzer)->LexStatus().ok() &&
           expr_analyzer->ParseStatus().ok()) {
