@@ -37,7 +37,7 @@ echo "---------------------------------------------------------------"
 echo " Building Verible"
 echo "---------------------------------------------------------------"
 set -x
-bazel build --noshow_progress --cxxopt='-std=c++17' //...
+bazel build -c opt --noshow_progress --cxxopt='-std=c++17' //...
 RET=$?
 set +x
 
