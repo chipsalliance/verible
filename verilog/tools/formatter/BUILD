@@ -26,3 +26,8 @@ sh_binary(
     name = "diff_formatter",
     srcs = ["diff_formatter.sh"],
 )
+
+sh_binary(
+    name = "triage_formatter",
+    srcs = ["triage_formatter.sh"],
+)
