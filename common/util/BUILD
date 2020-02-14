@@ -42,9 +42,26 @@ cc_library(
     ],
 )
 
+# Due to the hermetic builds bazel offers, we can't just fill a header file
+# with a git hash. We have to use the workspace stamping features bazel
+# offers.
+# https://docs.bazel.build/versions/master/user-manual.html#workspace_status
+# to contain a proper git timestamp, bazel has to be invoked with
+#  bazel build --workspace_status_command=bazel/build-version.sh
+genrule(
+    name = "version_header",
+    outs = ["verible_build_version.h"],
+    cmd = "./$(location create_version_header.sh) > $@",
+    stamp = 1,  # Tell bazel that we really are interested in the status file
+    tools = ["create_version_header.sh"],
+)
+
 cc_library(
     name = "init_command_line",
-    srcs = ["init_command_line.cc"],
+    srcs = [
+        "init_command_line.cc",
+        "verible_build_version.h",
+    ],
     hdrs = ["init_command_line.h"],
     deps = [
         "@com_google_absl//absl/flags:flag",
