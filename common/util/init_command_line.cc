@@ -25,13 +25,18 @@
 namespace verible {
 
 static std::string GetBuildVersion() {
-#ifdef VERIBLE_GIT_HASH
-  return VERIBLE_GIT_HASH "\n";
-#elif defined(VERIBLE_BUILD_TIMESTAMP)
-  return "Built: " VERIBLE_BUILD_TIMESTAMP "\n";
-#else
-  return "<unknown>\n";
+  std::string result;
+  // Build a version string with as much as possible info.
+#ifdef VERIBLE_GIT_DESC
+  result.append(VERIBLE_GIT_DESC).append("\n");
 #endif
+#ifdef VERIBLE_GIT_DATE
+  result.append("Commit\t").append(VERIBLE_GIT_DATE).append("\n");
+#endif
+#ifdef VERIBLE_BUILD_TIMESTAMP
+  result.append("Built\t").append(VERIBLE_BUILD_TIMESTAMP).append("\n");
+#endif
+  return result;
 }
 
 std::vector<char*> InitCommandLine(absl::string_view usage, int* argc,

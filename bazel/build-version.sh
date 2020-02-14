@@ -15,5 +15,9 @@
 
 # Invoke bazel with --workspace_status_command=bazel/build-version.sh to
 # get this invoked and populate bazel-out/volatile-status.sh
-echo "GIT_HASH $(git log -n1 --date=short --format='"verible_%cd_%h"' || echo '"<unknown>"')"
+GIT_DATE="$(git log -n1 --format='"%cs"')"
+GIT_DESCRIBE="$(git describe)"
+
+test -z "$GIT_DATE" || echo "GIT_DATE $GIT_DATE"
+test -z "$GIT_DESCRIBE" || echo "GIT_DESCRIBE \"$GIT_DESCRIBE\""
 
