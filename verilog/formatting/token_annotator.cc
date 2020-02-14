@@ -595,7 +595,9 @@ static WithReason<int> TokensWithContextBreakPenalty(
     const SyntaxTreeContext& right_context) {
   if (right_context.DirectParentIs(NodeEnum::kBinaryExpression) &&
       right.format_token_enum == FormatTokenType::binary_operator) {
-    return {10, "Prefer to split after binary operators (+10 on left)."};
+    // This value should be kept small so that binding affinity still honors
+    // operator precedence which is currently reflected in syntax tree depth.
+    return {8, "Prefer to split after binary operators (+8 on left)."};
   }
   if (left_context.DirectParentIs(NodeEnum::kBinaryExpression) &&
       left.format_token_enum == FormatTokenType::binary_operator) {
