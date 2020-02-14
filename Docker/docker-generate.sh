@@ -171,7 +171,7 @@ ENV GIT_HASH $GIT_HASH
 
 ADD verible-$GIT_VERSION.tar.gz /src/verible
 WORKDIR /src/verible/verible-$GIT_VERSION
-RUN bazel build -c opt --cxxopt='-std=c++11' //...
+RUN bazel build --workspace_status_command=bazel/build-version.sh -c opt //...
 RUN echo $REPO_SLUG
 RUN echo $GIT_DATE
 RUN echo $GIT_HASH
