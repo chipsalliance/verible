@@ -15,7 +15,7 @@
 
 # Invoke bazel with --workspace_status_command=bazel/build-version.sh to
 # get this invoked and populate bazel-out/volatile-status.sh
-LOCAL_GIT_DATE="$(git log -n1 --format='%cs' 2>/dev/null)"
+LOCAL_GIT_DATE="$(git log -n1 --date=short --format='%cd' 2>/dev/null)"
 LOCAL_GIT_VERSION="$(git describe 2>/dev/null)"
 
 # If we get these values above, overwrite potentially set environment variables.
