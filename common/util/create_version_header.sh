@@ -13,11 +13,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-GIT_DATE="$(grep -s GIT_DATE bazel-out/volatile-status.txt | cut -f2 -d' ')"
-GIT_DESC="$(grep -s GIT_DESCRIBE bazel-out/volatile-status.txt | cut -f2 -d' ')"
+# The file where bazel stores name/value pairs
+BAZEL_VOLATILE=bazel-out/volatile-status.txt
+
+GIT_DATE="$(grep -s GIT_DATE $BAZEL_VOLATILE | cut -f2- -d' ')"
+GIT_DESC="$(grep -s GIT_DESCRIBE $BAZEL_VOLATILE | cut -f2- -d' ')"
 
 # Timestamp is always provided by bazel.
-TS_INT=$(grep -s BUILD_TIMESTAMP bazel-out/volatile-status.txt | cut -f2 -d' ')
+TS_INT="$(grep -s BUILD_TIMESTAMP $BAZEL_VOLATILE | cut -f2 -d' ')"
 test -z "$TS_INT" || TS_STRING="$(date +"%Y-%m-%dT%H:%M:%SZ" -u -d @$TS_INT)"
 
 test -z "$GIT_DATE"  || echo "#define VERIBLE_GIT_DATE $GIT_DATE"
