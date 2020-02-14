@@ -19,11 +19,31 @@
 #include "absl/flags/flag.h"
 #include "absl/flags/parse.h"
 #include "absl/flags/usage.h"
+#include "absl/flags/usage_config.h"
+#include "common/util/verible_build_version.h"
 
 namespace verible {
 
+static std::string GetBuildVersion() {
+  std::string result;
+  // Build a version string with as much as possible info.
+#ifdef VERIBLE_GIT_DESC
+  result.append(VERIBLE_GIT_DESC).append("\n");
+#endif
+#ifdef VERIBLE_GIT_DATE
+  result.append("Commit\t").append(VERIBLE_GIT_DATE).append("\n");
+#endif
+#ifdef VERIBLE_BUILD_TIMESTAMP
+  result.append("Built\t").append(VERIBLE_BUILD_TIMESTAMP).append("\n");
+#endif
+  return result;
+}
+
 std::vector<char*> InitCommandLine(absl::string_view usage, int* argc,
                                    char*** argv) {
+  absl::FlagsUsageConfig usage_config;
+  usage_config.version_string = GetBuildVersion;
+  absl::SetFlagsUsageConfig(usage_config);
   absl::SetProgramUsageMessage(usage);  // copies usage string
   return absl::ParseCommandLine(*argc, *argv);
 }

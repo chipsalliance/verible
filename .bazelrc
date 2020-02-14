@@ -1,0 +1,1 @@
+build --workspace_status_command=bazel/build-version.sh
