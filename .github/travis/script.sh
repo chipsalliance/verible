@@ -19,8 +19,8 @@ export TRAVIS_TAG=${TRAVIS_TAG:-$(git describe --match=v*)}
 
 case $MODE in
 compile-n-test)
-    bazel build --noshow_progress --cxxopt='-std=c++11' //...
     bazel test --noshow_progress --cxxopt='-std=c++11' //...
+    bazel build -c opt --noshow_progress --cxxopt='-std=c++11' //...
     ;;
 
 bin)
