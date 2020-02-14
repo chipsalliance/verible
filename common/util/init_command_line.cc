@@ -24,7 +24,7 @@
 
 namespace verible {
 
-std::string GetBuildVersion() {
+static std::string GetBuildVersion() {
 #ifdef VERIBLE_GIT_HASH
   return VERIBLE_GIT_HASH "\n";
 #elif defined(VERIBLE_BUILD_TIMESTAMP)

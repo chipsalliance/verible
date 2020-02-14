@@ -14,15 +14,8 @@
 # limitations under the License.
 
 GIT_HASH=$(grep GIT_HASH bazel-out/volatile-status.txt | cut -f2 -d' ')
-
-if [ ! -z "$GIT_HASH" ] ; then
-  echo "#define VERIBLE_GIT_HASH $GIT_HASH"
-fi
-
 TS_INT=$(grep BUILD_TIMESTAMP bazel-out/volatile-status.txt | cut -f2 -d' ')
 TS_STRING=$(date +"%Y-%m-%d %H:%M UTC" -u -d @$TS_INT)
 
-if [ ! -z "$TS_STRING" ] ; then
-  echo "#define VERIBLE_BUILD_TIMESTAMP \"$TS_STRING\""
-fi
-
+test -z "$GIT_HASH" || echo "#define VERIBLE_GIT_HASH $GIT_HASH"
+test -z "$TS_STRING" || echo "#define VERIBLE_BUILD_TIMESTAMP \"$TS_STRING\""
