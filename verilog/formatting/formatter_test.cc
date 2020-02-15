@@ -2499,6 +2499,67 @@ static const std::initializer_list<FormatterTestCase> kFormatterTestCases = {
         "endclass\n",
     },
 
+    // tests top-level data declarations
+    {"a;",  // implicit type
+     "a;\n"},
+    {"a\tb;",  // explicit type
+     "a b;\n"},
+    {"a;b;",
+     "a;\n"
+     "b;\n"},
+    {"a ,b;",  // implicit type
+     "a, b;\n"},
+    /* TODO(b/149591599): implicit type data declarations in module body
+    {"module\tm ;a ;endmodule",
+     "module m;\n"
+     "  a;\n"
+     "endmodule\n"},
+    */
+    {"package\tp ;a ;endpackage",  // implicit type
+     "package p;\n"
+     "  a;\n"
+     "endpackage\n"},
+    {"package\tp ;a ,b ;endpackage",  // implicit type
+     "package p;\n"
+     "  a, b;\n"
+     "endpackage\n"},
+    {"package\tp ;a ;b ;endpackage",  // implicit type
+     "package p;\n"
+     "  a;\n"
+     "  b;\n"
+     "endpackage\n"},
+    /* TODO(b/149591627) : implicit type data declarations in class body
+    {"class\tc ;a ;endclass",
+     "class c;\n"
+     "  a;\n"
+     "endclass\n"},
+     */
+    {"function\tf ;a ;endfunction",  // implicit type
+     "function f;\n"
+     "  a;\n"
+     "endfunction\n"},
+    {"function\tf ;a   ;x ;endfunction",  // implicit type
+     "function f;\n"
+     "  a;\n"
+     "  x;\n"
+     "endfunction\n"},
+    /* TODO(b/149592527): multi-variable data declaration as block_item_decl
+     // same inside tasks
+    {"function\tf ;a  \t,x ;endfunction",  // implicit type
+     "function f;\n"
+     "  a, x;\n"
+     "endfunction\n"},
+     */
+    {"task\tt ;a ;endtask",  // implicit type
+     "task t;\n"
+     "  a;\n"
+     "endtask\n"},
+    {"task\tt ;a   ;x ;endtask",  // implicit type
+     "task t;\n"
+     "  a;\n"
+     "  x;\n"
+     "endtask\n"},
+
     {// tests bind declaration
      "bind   foo   bar baz  ( . clk ( clk  ) ) ;",
      "bind foo bar baz (.clk(clk));\n"},

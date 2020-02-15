@@ -993,8 +993,13 @@ void TreeUnwrapper::Visit(const verible::SyntaxTreeNode& node) {
       auto& children = data_declaration_partition.Children();
       CHECK(!children.empty());
 
+      // The instances/variable declaration list is always in last position.
       auto& instance_list_partition = children.back();
-      if (instance_list_partition.Children().size() == 1) {
+      if (instance_list_partition.BirthRank() == 0) {
+        // This means there are no qualifiers and type was implicit,
+        // so no partition precedes this.
+        instance_list_partition.HoistOnlyChild();
+      } else if (instance_list_partition.Children().size() == 1) {
         // Flatten partition tree by one level.
         instance_list_partition.HoistOnlyChild();
 
@@ -1016,7 +1021,7 @@ void TreeUnwrapper::Visit(const verible::SyntaxTreeNode& node) {
           // Compute end-of-type position before flattening (and invalidating
           // references).
           const size_t fuse_position =
-              instance_type_partition->Children().size() - 1;
+              ABSL_DIE_IF_NULL(instance_type_partition)->Children().size() - 1;
           // Flatten these (which will invalidate their references).
           data_declaration_partition.FlattenOnce();
 
@@ -1034,7 +1039,7 @@ void TreeUnwrapper::Visit(const verible::SyntaxTreeNode& node) {
         } else {
           // There is a qualifier before instance_type_partition, so we cannot
           // just flatten it. Manually flatten subpartitions.
-          instance_type_partition->HoistOnlyChild();
+          ABSL_DIE_IF_NULL(instance_type_partition)->HoistOnlyChild();
           instance_list_partition.HoistOnlyChild();
         }
       }

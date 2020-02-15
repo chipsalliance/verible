@@ -2346,6 +2346,37 @@ const TreeUnwrapperTestData kUnwrapPackageTestCases[] = {
     },
 
     {
+        "in package, implicit-type data declaration, singleton",
+        "package p ;a;endpackage",
+        L(0, {"package", "p", ";"}),
+        N(1,    // kPackageItemList
+          N(1,  // kDataDeclaration
+            NL(3, {"a", ";"}))),
+        L(0, {"endpackage"}),
+    },
+    {
+        "in package, two implicit-type data declaration",
+        "package p;a;b;endpackage",
+        L(0, {"package", "p", ";"}),
+        N(1,    // kPackageItemList
+          N(1,  // kDataDeclaration
+            NL(3, {"a", ";"})),
+          N(1,  // kDataDeclaration
+            NL(3, {"b", ";"}))),
+        L(0, {"endpackage"}),
+    },
+    {
+        "in package, implicit-type data declaration, two variables",
+        "package p;a,b;\tendpackage",
+        L(0, {"package", "p", ";"}),
+        N(1,      // kDataDeclaration
+          N(1,    // kDataDeclaration
+            N(3,  // TODO(fangism): this case could be flattened one level
+              NL(3, {"a", ","}), NL(3, {"b", ";"})))),
+        L(0, {"endpackage"}),
+    },
+
+    {
         "package with one parameter declaration",
         "package foo_pkg;"
         "parameter size=4;"
@@ -2446,6 +2477,27 @@ TEST_F(TreeUnwrapperTest, UnwrapPackageTests) {
 }
 
 const TreeUnwrapperTestData kDescriptionTestCases[] = {
+    {
+        "implicit-type data declaration, singleton",
+        "a;",
+        N(0,  // kDataDeclaration
+          NL(2, {"a", ";"})),
+    },
+    {
+        "two implicit-type data declaration",
+        "a;b;",
+        N(0,  // kDataDeclaration
+          NL(2, {"a", ";"})),
+        N(0,  // kDataDeclaration
+          NL(2, {"b", ";"})),
+    },
+    {
+        "implicit-type data declaration, two variables",
+        "a,b;",
+        N(0,    // kDataDeclaration
+          N(2,  // TODO(fangism): this case could be flattened one level
+            NL(2, {"a", ","}), NL(2, {"b", ";"}))),
+    },
     {
         "one bind declaration",
         "bind foo bar#(.x(y)) baz(.clk(clk));",
@@ -3173,6 +3225,27 @@ const TreeUnwrapperTestData kUnwrapTaskTestCases[] = {
     },
 
     {
+        "in task, implicit-type data declaration, singleton",
+        "task t ;a;endtask",
+        TaskHeader(0, L(0, {"task", "t", ";"})),
+        StatementList(1,                  //
+                      DataDeclaration(1,  //
+                                      L(1, {"a", ";"}))),
+        L(0, {"endtask"}),
+    },
+    {
+        "in task, two implicit-type data declaration",
+        "task t;a;b;endtask",
+        TaskHeader(0, L(0, {"task", "t", ";"})),
+        StatementList(1,                  //
+                      DataDeclaration(1,  //
+                                      L(1, {"a", ";"})),
+                      DataDeclaration(1,  //
+                                      L(1, {"b", ";"}))),
+        L(0, {"endtask"}),
+    },
+
+    {
         "task with multiple local variables in single declaration",
         "task foo;"
         "int r1, r2;"
@@ -3715,6 +3788,27 @@ const TreeUnwrapperTestData kUnwrapFunctionTestCases[] = {
         "endfunction",
         FunctionHeader(0, L(0, {"function", "foo", ";"})),
         StatementList(1, DataDeclaration(1, L(1, {"int", "value", ";"}))),
+        L(0, {"endfunction"}),
+    },
+
+    {
+        "in function, implicit-type data declaration, singleton",
+        "function f ;a;endfunction",
+        FunctionHeader(0, L(0, {"function", "f", ";"})),
+        StatementList(1,                  //
+                      DataDeclaration(1,  //
+                                      L(1, {"a", ";"}))),
+        L(0, {"endfunction"}),
+    },
+    {
+        "in function, two implicit-type data declaration",
+        "function f;a;b;endfunction",
+        FunctionHeader(0, L(0, {"function", "f", ";"})),
+        StatementList(1,                  //
+                      DataDeclaration(1,  //
+                                      L(1, {"a", ";"})),
+                      DataDeclaration(1,  //
+                                      L(1, {"b", ";"}))),
         L(0, {"endfunction"}),
     },
 
