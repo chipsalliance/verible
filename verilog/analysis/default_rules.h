@@ -56,11 +56,11 @@ constexpr const char* kDefaultRuleSet[] = {
     "always-ff-non-blocking",
     "forbid-consecutive-null-statements",
     "enum-name-style",
+    "struct-union-name-style",
     // TODO(fangism): enable in production:
     // TODO(b/117554159): "case-missing-default",
     // TODO(b/117131903): "proper-parameter-declaration",
     // TODO(b/131637160): "signal-name-style",
-    // TODO(b/145244869): "struct-union-name-style",
     // TODO: "one-module-per-file",
     // TODO(b/148915651): "interface-name-style",
     // "endif-comment",
