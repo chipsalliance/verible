@@ -618,6 +618,20 @@ static const std::initializer_list<FormatterTestCase> kFormatterTestCases = {
      "`ifndef BAR\n"
      "`endif\n"
      "`endif\n"},
+    {"module foo(\n"
+     "       `include \"ports.svh\"\n"
+     "         ) ; endmodule\n",
+     "module foo (\n"
+     "    `include \"ports.svh\"\n"  // TODO(b/149503062): remove wrap indent
+     ");\n"
+     "endmodule\n"},
+    {"module foo(\n"
+     "       `define FOO\n"
+     "         ) ; endmodule\n",
+     "module foo (\n"
+     "    `define FOO\n"  // TODO(b/149503062): remove wrap indent
+     ");\n"
+     "endmodule\n"},
     {"module foo(  input x  , output y ) ;endmodule:foo\n",
      "module foo (input x, output y);\n"  // entire header fits on one line
      "endmodule : foo\n"},

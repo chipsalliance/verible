@@ -5050,6 +5050,8 @@ preprocessor_balanced_port_declarations
     }
   | MacroGenericItem
     { $$ = move($1); }
+  | preprocessor_action
+    { $$ = move($1); }
   ;
 preprocessor_elsif_port_declarations_opt
   : preprocessor_elsif_port_declarations

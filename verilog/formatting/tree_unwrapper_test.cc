@@ -416,6 +416,19 @@ const TreeUnwrapperTestData kUnwrapModuleTestCases[] = {
     },
 
     {
+        "module with `include port declarations",
+        "module foo ("
+        "`include \"ports.svh\"\n"
+        ");"
+        "endmodule",
+        ModuleHeader(0, L(0, {"module", "foo", "("}),
+                     ModulePortList(2,  // TODO(b/149503062): un-indent `include
+                                    L(2, {"`include", "\"ports.svh\""})),
+                     L(0, {")", ";"})),
+        L(0, {"endmodule"}),
+    },
+
+    {
         "module with parameters",
         "module foo #("
         "parameter bar =1,"

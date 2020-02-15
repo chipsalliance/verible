@@ -1428,6 +1428,63 @@ static const char* kModuleTests[] = {
     "    input clk\n"
     "  );\n"
     "endmodule",
+    "module preprocessor_pain (\n"
+    "`include \"BLAH.svh\"\n"
+    "  );\n"
+    "endmodule",
+    "module preprocessor_pain (\n"
+    "`define FOO BAR\n"
+    "  );\n"
+    "endmodule",
+    "module preprocessor_pain (\n"
+    "`undef FOO\n"
+    "  );\n"
+    "endmodule",
+    "module preprocessor_pain (\n"
+    "  input foo,\n"  // with comma
+    "`include \"BLAH.svh\"\n"
+    "  );\n"
+    "endmodule",
+    "module preprocessor_pain (\n"
+    "  input foo\n"  // without comma
+    "`include \"BLAH.svh\"\n"
+    "  );\n"
+    "endmodule",
+    "module preprocessor_pain (\n"
+    "`include \"BLAH.svh\"\n"
+    "  , output bar\n"  // without comma
+    "  );\n"
+    "endmodule",
+    "module preprocessor_pain (\n"
+    "`include \"BLAH.svh\"\n"
+    "  , output bar\n"  // with comma
+    "  );\n"
+    "endmodule",
+    "module preprocessor_pain (\n"
+    "`ifdef V1\n"
+    "`include \"BLAH_V1.svh\"\n"
+    "`else\n"
+    "`include \"BLAH_V2.svh\"\n"
+    "`endif\n"
+    "  );\n"
+    "endmodule",
+    "module preprocessor_pain (\n"
+    "`ifdef V1\n"
+    "`include \"BLAH_V1.svh\"\n"
+    "`elsif V2\n"
+    "`include \"BLAH_V2.svh\"\n"
+    "`else\n"
+    "`include \"BLAH_V3.svh\"\n"
+    "`endif\n"
+    "  );\n"
+    "endmodule",
+    "module preprocessor_pain (\n"
+    "`ifndef V1\n"
+    "`define FOO\n"
+    "`include \"BLAH_V1.svh\"\n"
+    "`endif\n"
+    "  );\n"
+    "endmodule",
     "module clkgen (\n"
     "  output bit clk=0, input bit run_clock,\n"
     "  int clock_phase_a, int clock_phase_b,\n"  // int port
