@@ -1232,6 +1232,20 @@ cc_library(
     alwayslink = 1,
 )
 
+cc_test(
+    name = "constraint_name_style_rule_test",
+    srcs = ["constraint_name_style_rule_test.cc"],
+    deps = [
+        ":constraint_name_style_rule",
+        "//common/analysis:linter_test_utils",
+        "//common/analysis:syntax_tree_linter_test_utils",
+        "//common/text:symbol",
+        "//verilog/CST:verilog_nonterminals",
+        "//verilog/analysis:verilog_analyzer",
+        "@com_google_googletest//:gtest_main",
+    ],
+)
+
 cc_library(
     name = "macro_name_style_rule",
     srcs = ["macro_name_style_rule.cc"],
