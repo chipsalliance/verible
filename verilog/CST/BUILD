@@ -101,6 +101,49 @@ cc_library(
 )
 
 cc_library(
+    name = "constraints",
+    srcs = ["constraints.cc"],
+    hdrs = ["constraints.h"],
+    deps = [
+        ":identifier",
+        ":verilog_matchers",  # fixdeps: keep
+        ":verilog_nonterminals",
+        "//common/analysis:syntax_tree_search",
+        "//common/analysis/matcher",
+        "//common/analysis/matcher:matcher_builders",
+        "//common/text:concrete_syntax_leaf",
+        "//common/text:concrete_syntax_tree",
+        "//common/text:symbol",
+        "//common/text:token_info",
+        "//common/text:tree_utils",
+        "//common/util:casts",
+        "//common/util:logging",
+        "//verilog/parser:verilog_token_enum",
+        "@com_google_absl//absl/strings",
+    ],
+)
+
+cc_test(
+    name = "constraints_test",
+    srcs = ["constraints_test.cc"],
+    deps = [
+        ":constraints",
+        ":verilog_nonterminals",
+        "//common/text:concrete_syntax_leaf",
+        "//common/text:concrete_syntax_tree",
+        "//common/text:symbol",
+        "//common/text:text_structure",
+        "//common/text:token_info",
+        "//common/util:casts",
+        "//common/util:logging",
+        "//verilog/analysis:verilog_analyzer",
+        "//verilog/parser:verilog_token_enum",
+        "@com_google_absl//absl/strings",
+        "@com_google_googletest//:gtest_main",
+    ],
+)
+
+cc_library(
     name = "declaration",
     srcs = ["declaration.cc"],
     hdrs = ["declaration.h"],
