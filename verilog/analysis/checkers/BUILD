@@ -147,6 +147,20 @@ cc_library(
     alwayslink = 1,
 )
 
+cc_test(
+    name = "positive_meaning_parameter_name_rule_test",
+    srcs = ["positive_meaning_parameter_name_rule_test.cc"],
+    deps = [
+        ":positive_meaning_parameter_name_rule",
+        "//common/analysis:linter_test_utils",
+        "//common/analysis:syntax_tree_linter_test_utils",
+        "//common/text:symbol",
+        "//verilog/CST:verilog_nonterminals",
+        "//verilog/analysis:verilog_analyzer",
+        "@com_google_googletest//:gtest_main",
+    ],
+)
+
 cc_library(
     name = "posix_eof_rule",
     srcs = ["posix_eof_rule.cc"],
