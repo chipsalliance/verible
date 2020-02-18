@@ -46,6 +46,7 @@ _linter_test_configs = [
     ("parameter-type-name-style", "parameter_type_name_style", False),
     ("parameter-type-name-style", "localparam_type_name_style", False),
     ("plusarg-assignment", "plusarg_assignment", True),
+    ("positive-meaning-parameter-name", "positive_meaning_parameter_name", False),
     ("proper-parameter-declaration", "proper_parameter_declaration", False),
     ("proper-parameter-declaration", "proper_localparam_declaration", False),
     ("module-parameter", "instance_parameters", True),
