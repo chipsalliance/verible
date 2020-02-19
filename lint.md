@@ -179,7 +179,7 @@ Enabled by default: false
 ### struct-union-name-style
 Checks that `struct` and `union` names use lower_snake_case naming convention and end with '_t'. See [Style: struct-union-conventions].
 
-Enabled by default: false
+Enabled by default: true
 
 ### typedef-enums
 Checks that a Verilog `enum` declaration is named using `typedef`. See [Style: typedef-enums].
@@ -214,4 +214,4 @@ Enabled by default: true
 
 ## Version
 
-Generated on 2020-02-14 15:18:37 -0800 from [v0.0-216-ga7e4127](https://github.com/google/verible/commit/a7e41275519f656f1d89abc3da27476dd626c2d5)
+Generated on 2020-02-19 10:00:56 -0800 from [v0.0-219-gcbd1e55](https://github.com/google/verible/commit/cbd1e55655918a9aae7e54787c3083549c995906)
