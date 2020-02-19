@@ -310,6 +310,7 @@ static bool DirectParentIsFlowControlConstruct(
   return context.DirectParentIsOneOf({
       // LINT.IfChange(flow_control_parents)
       NodeEnum::kCaseStatement,         //
+      NodeEnum::kRandCaseStatement,     //
       NodeEnum::kForLoopStatement,      //
       NodeEnum::kForeverLoopStatement,  //
       NodeEnum::kRepeatLoopStatement,   //
@@ -631,6 +632,7 @@ void TreeUnwrapper::Visit(const verible::SyntaxTreeNode& node) {
     // DirectParentIsFlowControlConstruct()
     // LINT.IfChange(flow_control_cases)
     case NodeEnum::kCaseStatement:
+    case NodeEnum::kRandCaseStatement:
     case NodeEnum::kForLoopStatement:
     case NodeEnum::kForeverLoopStatement:
     case NodeEnum::kRepeatLoopStatement:

@@ -32,6 +32,7 @@ namespace verilog {
 namespace analysis {
 
 // CaseMissingDefaultRule checks that a default case-item is always defined.
+// randcase is exempt from this rule.
 class CaseMissingDefaultRule : public verible::SyntaxTreeLintRule {
  public:
   using rule_type = verible::SyntaxTreeLintRule;

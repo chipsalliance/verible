@@ -167,6 +167,7 @@ enum class NodeEnum {
   kContinuousAssignmentStatement,
   kAssignmentStatement,
   kCaseStatement,
+  kRandCaseStatement,
   kConditionalStatement,
   kIfClause,
   kElseClause,

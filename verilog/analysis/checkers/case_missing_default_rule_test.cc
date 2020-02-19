@@ -98,6 +98,17 @@ TEST(CaseMissingDefaultRuleTest, CaseInsideFunctionTests) {
          endcase
        endfunction
        )"},
+
+      // randcase should not be flagged
+      {R"(
+       function automatic int foo (input in);
+         randcase
+           3: return 3;
+           4: return 4;
+           5: return 5;
+         endcase
+       endfunction
+       )"},
   };
 
   RunLintTestCases<VerilogAnalyzer, CaseMissingDefaultRule>(kTestCases);
@@ -157,6 +168,17 @@ TEST(CaseMissingDefaultRuleTest, CaseInsideTaskTests) {
            )",
        {TK_DecNumber, "1"},
        R"(: return 0;
+         endcase
+       endtask
+       )"},
+
+      // randcase should not be flagged
+      {R"(
+       task automatic foo (input in);
+         randcase
+           3: return 3;
+           4: return 4;
+           5: return 5;
          endcase
        endtask
        )"},

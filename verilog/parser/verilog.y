@@ -6587,7 +6587,7 @@ case_statement
     { $$ = MakeTaggedNode(N::kCaseStatement, $1, $2, MakeParenGroup($3, $4, $5), $6, $7, $8);}
     /* $2 should only be TK_case, but case_any avoids S/R conflict. */
   | unique_priority_opt TK_randcase case_items TK_endcase
-    { $$ = MakeTaggedNode(N::kCaseStatement, $1, $2, $3, $4);}
+    { $$ = MakeTaggedNode(N::kRandCaseStatement, $1, $2, $3, $4);}
   /**
   | TK_case '(' expression ')' case_items TK_endcase
   | TK_casex '(' expression ')' case_items TK_endcase

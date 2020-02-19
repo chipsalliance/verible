@@ -2152,6 +2152,15 @@ static const std::initializer_list<FormatterTestCase> kFormatterTestCases = {
      "    .*: return 1;\n"
      "  endcase\n"
      "endfunction\n"},
+    {// randcase
+     "function f; randcase k1 : return c; k2 : return a;"
+     "endcase endfunction\n",
+     "function f;\n"
+     "  randcase\n"
+     "    k1: return c;\n"
+     "    k2: return a;\n"
+     "  endcase\n"
+     "endfunction\n"},
 
     // This tests checks for not breaking around hierarchy operators.
     {"function\nvoid\twarranty;"

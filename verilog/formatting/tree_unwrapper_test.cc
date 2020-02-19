@@ -4532,6 +4532,34 @@ const TreeUnwrapperTestData kUnwrapFunctionTestCases[] = {
     },
 
     {
+        "function with randcase statements",
+        "function foo_randcase;"
+        "randcase "
+        "k1: return 0;"
+        "k2: return 1;"
+        "endcase "
+        "randcase "
+        "k3: return 0;"
+        "k4: return 1;"
+        "endcase "
+        "endfunction",
+        FunctionHeader(0, L(0, {"function", "foo_randcase", ";"})),
+        StatementList(
+            1,
+            FlowControl(1, L(1, {"randcase"}),
+                        CaseItemList(2,  //
+                                     NL(2, {"k1", ":", "return", "0", ";"}),
+                                     NL(2, {"k2", ":", "return", "1", ";"})),
+                        L(1, {"endcase"})),     //
+            FlowControl(1, L(1, {"randcase"}),  //
+                        CaseItemList(2,         //
+                                     NL(2, {"k3", ":", "return", "0", ";"}),
+                                     NL(2, {"k4", ":", "return", "1", ";"})),
+                        L(1, {"endcase"}))),
+        L(0, {"endfunction"}),
+    },
+
+    {
         "function with array formal parameters and return statement",
         "function automatic logic checkit ("
         "input logic [4:0] a,"

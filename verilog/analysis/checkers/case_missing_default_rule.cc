@@ -53,8 +53,10 @@ std::string CaseMissingDefaultRule::GetDescription(
 void CaseMissingDefaultRule::HandleSymbol(
     const verible::Symbol& symbol, const verible::SyntaxTreeContext& context) {
   verible::matcher::BoundSymbolManager manager;
-  if (matcher_.Matches(symbol, &manager))
+  if (context.DirectParentIs(NodeEnum::kCaseStatement) &&
+      matcher_.Matches(symbol, &manager)) {
     violations_.insert(LintViolation(symbol, kMessage, context));
+  }
 }
 
 LintRuleStatus CaseMissingDefaultRule::Report() const {
