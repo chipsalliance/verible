@@ -46,6 +46,28 @@ cc_test(
 )
 
 cc_library(
+    name = "obfuscator",
+    srcs = ["obfuscator.cc"],
+    hdrs = ["obfuscator.h"],
+    deps = [
+        ":random",
+        "//common/util:bijective_map",
+        "//common/util:logging",
+        "@com_google_absl//absl/strings",
+    ],
+)
+
+cc_test(
+    name = "obfuscator_test",
+    srcs = ["obfuscator_test.cc"],
+    deps = [
+        ":obfuscator",
+        "//common/util:bijective_map",
+        "@com_google_googletest//:gtest_main",
+    ],
+)
+
+cc_library(
     name = "naming_utils",
     srcs = ["naming_utils.cc"],
     hdrs = ["naming_utils.h"],
