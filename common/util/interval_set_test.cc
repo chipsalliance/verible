@@ -900,5 +900,37 @@ TEST(ParseInclusivesRangesTest, MixedValues) {
   EXPECT_EQ(iset, expected);
 }
 
+TEST(UniformRandomGeneratorTest, EmptyInvalid) {
+  interval_set_type iset;
+  EXPECT_DEATH(iset.UniformRandomGenerator(),
+               "Non-empty interval set required");
+}
+
+TEST(UniformRandomGeneratorTest, Singleton) {
+  interval_set_type iset{{42, 43}};
+  const auto gen = iset.UniformRandomGenerator();
+  for (int i = 0; i < 10; ++i) {
+    EXPECT_EQ(gen(), 42);
+  }
+}
+
+TEST(UniformRandomGeneratorTest, SingleRange) {
+  interval_set_type iset{{42, 49}};
+  const auto gen = iset.UniformRandomGenerator();
+  for (int i = 0; i < 20; ++i) {
+    const auto sample = gen();
+    EXPECT_TRUE(iset.Contains(sample)) << "got: " << sample;
+  }
+}
+
+TEST(UniformRandomGeneratorTest, MultiRanges) {
+  interval_set_type iset{{42, 49}, {99, 104}, {200, 244}};
+  const auto gen = iset.UniformRandomGenerator();
+  for (int i = 0; i < 100; ++i) {
+    const auto sample = gen();
+    EXPECT_TRUE(iset.Contains(sample)) << "got: " << sample;
+  }
+}
+
 }  // namespace
 }  // namespace verible

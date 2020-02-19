@@ -21,6 +21,7 @@
 #include <sstream>
 #include <utility>
 
+#include "absl/random/random.h"
 #include "absl/strings/numbers.h"
 #include "absl/strings/str_join.h"
 #include "absl/strings/str_split.h"
@@ -371,6 +372,49 @@ class IntervalSet : private _IntervalSetImpl {
     }
     result.CheckIntegrity();
     return result;
+  }
+
+  // Returns a generator that returns a random element of the interval set,
+  // uniformly distributed.  The distribution is taken as a snapshot of the
+  // current interval set; subsequent modifications will not affect the returned
+  // generator; this object is safe to destroy with the generator still being
+  // valid.
+  std::function<T()> UniformRandomGenerator() const {
+    struct cumulative_weighted_interval {
+      // cumulative distribution from lowest interval to the highest interval
+      size_t cumulative_weight;
+      Interval<T> interval;
+    };
+    // comparator for binary search
+    auto less = [](size_t l, const cumulative_weighted_interval& r) {
+      return l < r.cumulative_weight;
+    };
+
+    // build cumulative distribution array for weighted random sampling
+    std::vector<cumulative_weighted_interval> interval_map;
+    CHECK(!empty()) << "Non-empty interval set required for random generator";
+    size_t cumulative_size = 0;
+    for (const auto& range : intervals_) {
+      const auto interval = AsInterval(range);
+      interval_map.push_back({cumulative_size, interval});
+      cumulative_size += interval.length();
+    }
+    // here, cumulative_size == sum_of_sizes().
+
+    return [=]() {
+      static absl::BitGen gen;
+      const size_t rand = absl::Uniform<size_t>(gen, 0, cumulative_size);
+      // Convert effectively from uniform to weighted random, by interval size.
+      // binary_search (upper_bound) is O(lg N) where N is the number
+      // of disjoint intervals.
+      const auto interval_iter = std::prev(std::upper_bound(
+          interval_map.begin(), interval_map.end(), rand, less));
+      const auto& sampling_interval = interval_iter->interval;
+      // rand - interval_iter->cumulative_weight can be used as the offset
+      // into the chosen interval, which is already uniformly distributed.
+      return interval_iter->interval.min + rand -
+             interval_iter->cumulative_weight;
+    };
   }
 
  protected:

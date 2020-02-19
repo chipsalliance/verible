@@ -85,6 +85,7 @@ cc_library(
         ":interval",
         ":iterator_range",
         ":logging",
+        "@com_google_absl//absl/random",
         "@com_google_absl//absl/strings",
     ],
 )
