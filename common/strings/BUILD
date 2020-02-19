@@ -80,6 +80,28 @@ cc_test(
 )
 
 cc_library(
+    name = "random",
+    srcs = ["random.cc"],
+    hdrs = ["random.h"],
+    deps = [
+        "//common/util:interval_set",
+        "//common/util:logging",
+        "//common/util:range",
+        "@com_google_absl//absl/random",
+        "@com_google_absl//absl/strings",
+    ],
+)
+
+cc_test(
+    name = "random_test",
+    srcs = ["random_test.cc"],
+    deps = [
+        ":random",
+        "@com_google_googletest//:gtest_main",
+    ],
+)
+
+cc_library(
     name = "range",
     srcs = ["range.cc"],
     hdrs = ["range.h"],
