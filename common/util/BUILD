@@ -180,6 +180,11 @@ cc_library(
 )
 
 cc_library(
+    name = "bijective_map",
+    hdrs = ["bijective_map.h"],
+)
+
+cc_library(
     name = "vector_tree",
     srcs = ["vector_tree.cc"],
     hdrs = ["vector_tree.h"],
@@ -327,6 +332,16 @@ cc_test(
         ":enum_flags",
         ":enum_flags_test_util",
         "@com_google_absl//absl/strings",
+        "@com_google_googletest//:gtest_main",
+    ],
+)
+
+cc_test(
+    name = "bijective_map_test",
+    srcs = ["bijective_map_test.cc"],
+    deps = [
+        ":bijective_map",
+        ":logging",
         "@com_google_googletest//:gtest_main",
     ],
 )

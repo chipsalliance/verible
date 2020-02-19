@@ -1,0 +1,111 @@
+// Copyright 2017-2020 The Verible Authors.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+#include "common/util/bijective_map.h"
+
+#include <string>
+
+#include "gmock/gmock.h"
+#include "gtest/gtest.h"
+#include "common/util/logging.h"
+
+namespace verible {
+namespace {
+
+using TestMapType = BijectiveMap<std::string, int>;
+
+TEST(BijectiveMapTest, DefaultCtor) {
+  TestMapType m;
+  EXPECT_EQ(m.size(), 0);
+  EXPECT_TRUE(m.empty());
+  EXPECT_FALSE(m.find_forward("a"));
+  EXPECT_FALSE(m.find_reverse(1));
+  EXPECT_TRUE(m.forward_view().empty());
+  EXPECT_TRUE(m.reverse_view().empty());
+}
+
+TEST(BijectiveMapTest, OneElement) {
+  TestMapType m;
+  EXPECT_TRUE(m.insert("a", 1));
+  EXPECT_EQ(m.size(), 1);
+  EXPECT_FALSE(m.empty());
+  EXPECT_EQ(*ABSL_DIE_IF_NULL(m.find_forward("a")), 1);
+  EXPECT_EQ(*ABSL_DIE_IF_NULL(m.find_reverse(1)), "a");
+  EXPECT_EQ(m.find_forward("b"), nullptr);
+  EXPECT_EQ(m.find_reverse(2), nullptr);
+}
+
+TEST(BijectiveMapTest, InsertPair) {
+  TestMapType m;
+  EXPECT_TRUE(m.insert(std::make_pair("b", 2)));
+  EXPECT_EQ(m.size(), 1);
+  EXPECT_FALSE(m.empty());
+  EXPECT_EQ(*ABSL_DIE_IF_NULL(m.find_forward("b")), 2);
+  EXPECT_EQ(*ABSL_DIE_IF_NULL(m.find_reverse(2)), "b");
+  EXPECT_EQ(m.find_forward("a"), nullptr);
+  EXPECT_EQ(m.find_reverse(1), nullptr);
+}
+
+TEST(BijectiveMapTest, InsertKeyAlreadyExists) {
+  TestMapType m;
+  EXPECT_TRUE(m.insert("a", 1));
+  EXPECT_FALSE(m.insert("a", 3));
+  EXPECT_EQ(m.size(), 1);
+}
+
+TEST(BijectiveMapTest, InsertValueAlreadyExists) {
+  TestMapType m;
+  EXPECT_TRUE(m.insert("a", 1));
+  EXPECT_FALSE(m.insert("z", 1));
+  EXPECT_EQ(m.size(), 1);
+}
+
+TEST(BijectiveMapTest, InsertNewPairs) {
+  TestMapType m;
+  EXPECT_TRUE(m.insert("a", 1));
+  EXPECT_TRUE(m.insert("z", 4));
+  EXPECT_EQ(m.size(), 2);
+  EXPECT_EQ(*ABSL_DIE_IF_NULL(m.find_forward("a")), 1);
+  EXPECT_EQ(*ABSL_DIE_IF_NULL(m.find_reverse(1)), "a");
+  EXPECT_EQ(*ABSL_DIE_IF_NULL(m.find_forward("z")), 4);
+  EXPECT_EQ(*ABSL_DIE_IF_NULL(m.find_reverse(4)), "z");
+  EXPECT_EQ(m.find_forward("b"), nullptr);
+  EXPECT_EQ(m.find_reverse(3), nullptr);
+}
+
+static std::function<int()> LoopGeneratorGenerator(
+    std::initializer_list<int> values) {
+  return [=]() {  // fake random generator
+    static const std::vector<int> v(values);
+    static std::vector<int>::const_iterator iter = v.begin();
+    if (iter == v.end()) {
+      iter = v.begin();
+    }  // loop
+    return *iter++;
+  };
+}
+
+TEST(BijectiveMapTest, InsertRandom) {
+  TestMapType m;
+  auto gen = LoopGeneratorGenerator({1, 1, 2, 2, 3, 3});
+  EXPECT_EQ(*ABSL_DIE_IF_NULL(m.insert_using_value_generator("b", gen)), 1);
+  EXPECT_EQ(*ABSL_DIE_IF_NULL(m.insert_using_value_generator("b", gen)), 1);
+  EXPECT_EQ(*ABSL_DIE_IF_NULL(m.insert_using_value_generator("g", gen)), 2);
+  EXPECT_EQ(*ABSL_DIE_IF_NULL(m.insert_using_value_generator("g", gen)), 2);
+  EXPECT_EQ(*ABSL_DIE_IF_NULL(m.insert_using_value_generator("f", gen)), 3);
+  EXPECT_EQ(*ABSL_DIE_IF_NULL(m.insert_using_value_generator("f", gen)), 3);
+}
+
+}  // namespace
+}  // namespace verible
