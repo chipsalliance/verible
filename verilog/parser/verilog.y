@@ -5479,6 +5479,18 @@ continuous_assign
     { $$ = MakeTaggedNode(N::kContinuousAssign, $1, $2, $3, $4, nullptr); }
   ;
 
+net_alias_assign_lvalue_list
+  : net_alias_assign_lvalue_list '=' lpvalue
+    { $$ = ExtendNode($1, $2, $3); }
+  | lpvalue '=' lpvalue
+    { $$ = MakeTaggedNode(N::kNetAliasLvalueList, $1, $2, $3); }
+  ;
+
+net_alias
+  : TK_alias net_alias_assign_lvalue_list ';'
+    { $$ = MakeTaggedNode(N::kNetAlias, $1, $2, $3); }
+  ;
+
 loop_generate_construct
   : TK_for '(' genvar_opt GenericIdentifier '=' expression ';'
     expression_opt ';' for_step_opt ')'
@@ -5556,7 +5568,8 @@ module_common_item
     { $$ = move($1); }
   | continuous_assign
     { $$ = move($1); }
-  /* TODO(fangism): net_alias */
+  | net_alias
+    { $$ = move($1); }
   | loop_generate_construct
     { $$ = move($1); }
   | conditional_generate_construct
