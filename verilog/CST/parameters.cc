@@ -77,6 +77,41 @@ const verible::TokenInfo& GetParameterNameToken(const verible::Symbol& symbol) {
   return ABSL_DIE_IF_NULL(identifier_leaf)->get();
 }
 
+std::vector<const verible::TokenInfo*> GetAllParameterNameTokens(
+    const verible::Symbol& symbol) {
+  //Can be used only in kParamDeclaration context
+  auto t = symbol.Tag();
+  CHECK_EQ(t.kind, verible::SymbolKind::kNode);
+  CHECK_EQ(NodeEnum(t.tag), NodeEnum::kParamDeclaration);
+
+  std::vector<const verible::TokenInfo*> identifiers;
+  identifiers.push_back(&GetParameterNameToken(symbol));
+
+  for (const auto* s : GetAllAssignedParameterSymbols(symbol)) {
+    identifiers.push_back(&GetAssignedParameterNameToken(*s));
+  }
+
+  return identifiers;
+}
+
+const verible::TokenInfo& GetAssignedParameterNameToken(
+    const verible::Symbol& symbol) {
+    const auto* identifier = SymbolCastToNode(symbol)[0].get();
+
+    return AutoUnwrapIdentifier(*ABSL_DIE_IF_NULL(identifier))->get();
+}
+
+std::vector<const verible::Symbol*> GetAllAssignedParameterSymbols(
+    const verible::Symbol& root) {
+  std::vector<const verible::Symbol*> symbols;
+
+  for (auto id : SearchSyntaxTree(root, NodekParameterAssign())) {
+    symbols.push_back(id.match);
+  }
+
+  return symbols;
+}
+
 const verible::TokenInfo& GetSymbolIdentifierFromParamDeclaration(
     const verible::Symbol& symbol) {
   // Assert that symbol is a 'parameter type' declaration.

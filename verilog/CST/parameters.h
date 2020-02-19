@@ -75,6 +75,18 @@ const verible::Symbol* GetParamTypeInfoSymbol(const verible::Symbol&);
 // Returns the token of the declared parameter.
 const verible::TokenInfo& GetParameterNameToken(const verible::Symbol&);
 
+// Returns all tokens for a parameter declaration.
+std::vector<const verible::TokenInfo*> GetAllParameterNameTokens(
+    const verible::Symbol&);
+
+// Get the token info for a given kParameterAssign node symbol
+const verible::TokenInfo& GetAssignedParameterNameToken(
+    const verible::Symbol& symbol);
+
+// Get the symbols for all kParameterAssign nodes
+std::vector<const verible::Symbol*> GetAllAssignedParameterSymbols(
+    const verible::Symbol& root);
+
 // Returns the token of the SymbolIdentifier from the node kParamDeclaration.
 // Used specifically for 'parameter type' declarations.
 const verible::TokenInfo& GetSymbolIdentifierFromParamDeclaration(
