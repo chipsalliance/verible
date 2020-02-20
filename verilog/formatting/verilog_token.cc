@@ -639,6 +639,16 @@ bool IsUnaryOperator(verilog_tokentype token_type) {
   }
 }
 
+bool IsTernaryOperator(verilog_tokentype token_type) {
+  switch (static_cast<int>(token_type)) {
+    case '?':
+    case ':':
+      return true;
+    default:
+      return false;
+  }
+}
+
 bool IsPreprocessorControlFlow(verilog_tokentype token_type) {
   switch (static_cast<int>(token_type)) {
     case verilog_tokentype::PP_ifdef:

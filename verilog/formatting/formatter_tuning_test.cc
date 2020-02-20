@@ -107,6 +107,43 @@ module m;
       LLLLLLLLLLLLLL + ((EEEEEEEEEEEE && FFFFFFFFFFFFFF > 0) ? hhhhhhhhhhhhhhhhhhhhhhhhhhhhhh : 0);
 endmodule
 )sv"},
+    {
+        R"sv(
+module m;
+assign bbbbbbbbbbbbbbbbb =
+      iiiiiiiiiiiiiiiiiiiii ?
+      xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx :
+      yyyyyyyyyyyyyyyyyyyyyy;
+endmodule
+)sv",
+        // make sure break happens after '?' and ':'
+        R"sv(
+module m;
+  assign bbbbbbbbbbbbbbbbb = iiiiiiiiiiiiiiiiiiiii ?
+      xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx : yyyyyyyyyyyyyyyyyyyyyy;
+endmodule
+)sv"},
+    {
+        R"sv(
+module m;
+  if (x) begin
+    assign {ooooooooooooooooooo, ssssssssss} =
+    bbbbbbbbbbbbbbbbb >= cccccccccccccccccccccccc
+        ? ddddd - (qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq) :
+       eeeee - (rrrrrrrrrrrrrrrrrrfffjjjjjjjjjjjjjjjjjgggkkkkkkkkkkkkkkkkkkkkkkkk);
+ end
+endmodule
+)sv",
+        // make sure break happens after '?' and ':'
+        R"sv(
+module m;
+  if (x) begin
+    assign {ooooooooooooooooooo, ssssssssss} = bbbbbbbbbbbbbbbbb >= cccccccccccccccccccccccc ?
+        ddddd - (qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq) :
+        eeeee - (rrrrrrrrrrrrrrrrrrfffjjjjjjjjjjjjjjjjjgggkkkkkkkkkkkkkkkkkkkkkkkk);
+  end
+endmodule
+)sv"},
 };
 
 TEST(FormatterEndToEndTest, PenaltySensitiveLineWrapping100Col) {

@@ -593,6 +593,18 @@ static WithReason<int> TokensWithContextBreakPenalty(
     const verible::PreFormatToken& left, const verible::PreFormatToken& right,
     const SyntaxTreeContext& left_context,
     const SyntaxTreeContext& right_context) {
+  const verilog_tokentype left_type =
+      static_cast<verilog_tokentype>(left.TokenEnum());
+  const verilog_tokentype right_type =
+      static_cast<verilog_tokentype>(right.TokenEnum());
+  if (right_context.DirectParentIs(NodeEnum::kTernaryExpression) &&
+      IsTernaryOperator(right_type)) {
+    return {3, "Prefer to split after ternary operators (+3 on left)."};
+  }
+  if (left_context.DirectParentIs(NodeEnum::kTernaryExpression) &&
+      IsTernaryOperator(left_type)) {
+    return {-1, "Prefer to split after ternary operators (-1 on right)."};
+  }
   if (right_context.DirectParentIs(NodeEnum::kBinaryExpression) &&
       right.format_token_enum == FormatTokenType::binary_operator) {
     // This value should be kept small so that binding affinity still honors

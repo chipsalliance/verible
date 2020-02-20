@@ -125,6 +125,15 @@ TEST(VerilogTokenTest, IsUnaryOperatorTest) {
   EXPECT_FALSE(IsUnaryOperator(verilog_tokentype('#')));
 }
 
+TEST(VerilogTokenTest, IsTernaryOperatorTest) {
+  EXPECT_FALSE(IsTernaryOperator(verilog_tokentype('*')));
+  EXPECT_FALSE(IsTernaryOperator(verilog_tokentype('/')));
+  EXPECT_FALSE(IsTernaryOperator(verilog_tokentype('+')));
+  EXPECT_FALSE(IsTernaryOperator(verilog_tokentype('-')));
+  EXPECT_TRUE(IsTernaryOperator(verilog_tokentype('?')));
+  EXPECT_TRUE(IsTernaryOperator(verilog_tokentype(':')));
+}
+
 }  // namespace
 }  // namespace formatter
 }  // namespace verilog
