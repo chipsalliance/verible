@@ -199,6 +199,37 @@ TEST(GetParameterNameTokenTest, BasicTests) {
   }
 }
 
+// Test that GetAllParameterNameTokens correctly returns all tokens
+TEST(GetAllParameterNameTokensTest, BasicTests) {
+  const std::pair<std::string, int> kTestCases[] = {
+      {"module foo; parameter Bar = 1; endmodule", 1},
+      {"module foo; localparam Bar_1 = 1; endmodule", 1},
+      {"module foo; localparam int HelloWorld = 1; endmodule", 1},
+      {"module foo #(parameter int HelloWorld1 = 1); endmodule", 1},
+      {"class foo; parameter HelloWorld_1 = 1; endclass", 1},
+      {"class foo; localparam FooBar = 1; endclass", 1},
+      {"class foo; localparam int Bar_1_1 = 1; endclass", 1},
+      {"package foo; parameter BAR = 1; endpackage", 1},
+      {"package foo; parameter int HELLO_WORLD = 1; endpackage", 1},
+      {"parameter int Bar = 1;", 1},
+      {"parameter int Bar = 1, Foo = 1;", 2},
+      {"parameter int Bar = 1, Foo = 1, Baz = 1;", 3},
+      {"module foo; parameter int Bar = 1; endmodule;", 1},
+      {"module foo; parameter int Bar = 1, Foo = 1; endmodule;", 2},
+      {"module foo; parameter int Bar = 1, Foo = 1, Baz = 1; endmodule;", 3},
+  };
+
+  for (const auto& test : kTestCases) {
+    VerilogAnalyzer analyzer(test.first, "");
+    ASSERT_OK(analyzer.Analyze());
+    const auto& root = analyzer.Data().SyntaxTree();
+    const auto param_declarations = FindAllParamDeclarations(*root);
+    const auto name_tokens =
+        GetAllParameterNameTokens(*param_declarations.front().match);
+    EXPECT_EQ(name_tokens.size(), test.second);
+  }
+}
+
 // Tests that GetSymbolIdentifierFromParamDeclaration correctly returns the
 // token of the symbol identifier.
 TEST(GetSymbolIdentifierFromParamDeclarationTest, BasicTests) {

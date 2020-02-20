@@ -69,6 +69,18 @@ TEST(ParameterNameStyleRuleTest, RejectTests) {
       {"module foo; localparam ", {kToken, "Bar_Hello"}, " = 1; endmodule"},
       {"module foo; localparam int ", {kToken, "Bar_Hello"}, " = 1; endmodule"},
       {"module foo; parameter int ", {kToken, "__Bar"}, " = 1; endmodule"},
+      {"module foo; parameter int ",
+       {kToken, "__Foo"},
+       " = 1, ",
+       {kToken, "__Bar"},
+       " = 1; "
+       "endmodule"},
+      {"module foo; localparam int ",
+       {kToken, "__Foo"},
+       " = 1, ",
+       {kToken, "__Bar"},
+       " = 1; "
+       "endmodule"},
       {"module foo #(parameter int ",
        {kToken, "Bar_1_Hello"},
        " = 1); endmodule"},

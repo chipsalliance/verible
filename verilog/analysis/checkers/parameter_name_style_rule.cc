@@ -64,23 +64,22 @@ void ParameterNameStyleRule::HandleSymbol(const verible::Symbol& symbol,
                                           const SyntaxTreeContext& context) {
   verible::matcher::BoundSymbolManager manager;
   if (matcher_.Matches(symbol, &manager)) {
-    const auto param_decl_token = GetParamKeyword(symbol);
-
-    const verible::TokenInfo* param_name_token = nullptr;
     if (IsParamTypeDeclaration(symbol)) return;
 
-    param_name_token = &GetParameterNameToken(symbol);
+    const auto param_decl_token = GetParamKeyword(symbol);
 
-    const auto param_name = param_name_token->text;
-    if (param_decl_token == TK_localparam) {
-      if (!verible::IsUpperCamelCaseWithDigits(param_name))
-        violations_.insert(
-            LintViolation(*param_name_token, kLocalParamMessage, context));
-    } else if (param_decl_token == TK_parameter) {
-      if (!verible::IsUpperCamelCaseWithDigits(param_name) &&
-          !verible::IsNameAllCapsUnderscoresDigits(param_name))
-        violations_.insert(
-            LintViolation(*param_name_token, kParameterMessage, context));
+    auto identifiers = GetAllParameterNameTokens(symbol);
+
+    for (auto id : identifiers) {
+      const auto param_name = id->text;
+      if (param_decl_token == TK_localparam) {
+        if (!verible::IsUpperCamelCaseWithDigits(param_name))
+          violations_.insert(LintViolation(*id, kLocalParamMessage, context));
+      } else if (param_decl_token == TK_parameter) {
+        if (!verible::IsUpperCamelCaseWithDigits(param_name) &&
+            !verible::IsNameAllCapsUnderscoresDigits(param_name))
+          violations_.insert(LintViolation(*id, kParameterMessage, context));
+      }
     }
   }
 }
