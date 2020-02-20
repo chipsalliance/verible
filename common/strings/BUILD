@@ -63,6 +63,7 @@ cc_test(
     deps = [
         ":obfuscator",
         "//common/util:bijective_map",
+        "//common/util:logging",
         "@com_google_googletest//:gtest_main",
     ],
 )
