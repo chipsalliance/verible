@@ -60,11 +60,16 @@ std::vector<const UnwrappedLine*> FindLargestPartitions(
 // that of all of its children.
 // Usage: stream << TokenPartitionTreePrinter(tree) << std::endl;
 struct TokenPartitionTreePrinter {
-  explicit TokenPartitionTreePrinter(const TokenPartitionTree& n) : node(n) {}
+  explicit TokenPartitionTreePrinter(const TokenPartitionTree& n,
+                                     bool verbose = false)
+      : node(n), verbose(verbose) {}
 
   std::ostream& PrintTree(std::ostream& stream, int indent = 0) const;
 
+  // The (sub)tree to display.
   const TokenPartitionTree& node;
+  // If true, display inter-token information.
+  bool verbose;
 };
 
 std::ostream& operator<<(std::ostream& stream,

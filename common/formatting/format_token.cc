@@ -69,6 +69,28 @@ std::ostream& operator<<(std::ostream& stream, const InterTokenInfo& t) {
   return stream;
 }
 
+std::ostream& InterTokenInfo::CompactNotation(std::ostream& stream) const {
+  stream << '<';
+  // break_penalty is irrelevant when the options are constrained,
+  // so don't bother showing it in those cases.
+  switch (break_decision) {
+    case SpacingOptions::Undecided:
+      stream << '_' << spaces_required << ',' << break_penalty;
+      break;
+    case SpacingOptions::MustAppend:
+      stream << "+_" << spaces_required;
+      break;
+    case SpacingOptions::MustWrap:
+      // spaces_required is irrelevant
+      stream << "\\n";
+      break;
+    case SpacingOptions::Preserve:
+      stream << "pre";
+      break;
+  }
+  return stream << '>';
+}
+
 std::ostream& operator<<(std::ostream& stream, SpacingDecision d) {
   switch (d) {
     case SpacingDecision::Append:

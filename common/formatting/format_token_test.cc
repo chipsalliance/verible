@@ -239,6 +239,41 @@ TEST(InterTokenInfoTest, StringRep) {
       stream.str());
 }
 
+TEST(InterTokenInfoTest, CompactNotationUndecided) {
+  std::ostringstream stream;
+  InterTokenInfo info;
+  info.break_decision = SpacingOptions::Undecided;
+  info.spaces_required = 3;
+  info.break_penalty = 25;
+  info.CompactNotation(stream);
+  EXPECT_EQ(stream.str(), "<_3,25>");
+}
+
+TEST(InterTokenInfoTest, CompactNotationMustAppend) {
+  std::ostringstream stream;
+  InterTokenInfo info;
+  info.break_decision = SpacingOptions::MustAppend;
+  info.spaces_required = 2;
+  info.CompactNotation(stream);
+  EXPECT_EQ(stream.str(), "<+_2>");
+}
+
+TEST(InterTokenInfoTest, CompactNotationMustWrap) {
+  std::ostringstream stream;
+  InterTokenInfo info;
+  info.break_decision = SpacingOptions::MustWrap;
+  info.CompactNotation(stream);
+  EXPECT_EQ(stream.str(), "<\\n>");
+}
+
+TEST(InterTokenInfoTest, CompactNotationPreserve) {
+  std::ostringstream stream;
+  InterTokenInfo info;
+  info.break_decision = SpacingOptions::Preserve;
+  info.CompactNotation(stream);
+  EXPECT_EQ(stream.str(), "<pre>");
+}
+
 // Test that Length() returns the correct distance between L and R location of
 // an Empty TokenInfo
 TEST(PreFormatTokenTest, FormatTokenLengthEmptyTest) {

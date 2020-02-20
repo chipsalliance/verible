@@ -35,6 +35,10 @@ struct ExecutionControl {
   // If true, print the token partition tree, and halt without formatting.
   bool show_token_partition_tree = false;
 
+  // If true, show_token_partition_tree will also include inter-token
+  // information, such as spacings and break penalties.
+  bool show_inter_token_info = false;
+
   // If true, print (stderr) when there are multiple equally optimal wrapping
   // formattings on any token partition, but continue to operate.
   bool show_equally_optimal_wrappings = false;

@@ -393,7 +393,8 @@ Status Formatter::Format(const ExecutionControl& control) {
     if (control.show_token_partition_tree) {
       control.Stream() << "Full token partition tree:\n"
                        << verible::TokenPartitionTreePrinter(
-                              *format_tokens_partitions)
+                              *format_tokens_partitions,
+                              control.show_inter_token_info)
                        << std::endl;
     }
     if (control.show_largest_token_partitions != 0) {

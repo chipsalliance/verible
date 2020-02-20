@@ -42,13 +42,23 @@ std::ostream& operator<<(std::ostream& stream, PartitionPolicyEnum p) {
   return stream << FindOrDie(*enum_names, p);
 }
 
-static void TokenFormatter(std::string* out, const PreFormatToken& token) {
+static void TokenFormatter(std::string* out, const PreFormatToken& token,
+                           bool verbose) {
+  if (verbose) {
+    std::ostringstream oss;
+    token.before.CompactNotation(oss);
+    absl::StrAppend(out, oss.str());
+  }
   absl::StrAppend(out, token.Text());
 }
 
-std::ostream* UnwrappedLine::AsCode(std::ostream* stream) const {
+std::ostream* UnwrappedLine::AsCode(std::ostream* stream, bool verbose) const {
   *stream << Spacer(indentation_spaces_, kIndentationMarker) << '['
-          << absl::StrJoin(tokens_, " ", TokenFormatter) << ']';
+          << absl::StrJoin(tokens_, " ",
+                           [=](std::string* out, const PreFormatToken& token) {
+                             TokenFormatter(out, token, verbose);
+                           })
+          << ']';
   return stream;
 }
 

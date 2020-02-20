@@ -95,6 +95,9 @@ ABSL_FLAG(int, show_largest_token_partitions, 0,
 ABSL_FLAG(bool, show_token_partition_tree, false,
           "If true, print diagnostics after token partitioning and then "
           "exit without formatting output.");
+ABSL_FLAG(bool, show_inter_token_info, false,
+          "If true, along with show_token_partition_tree, include inter-token "
+          "information such as spacing and break penalties.");
 ABSL_FLAG(bool, show_equally_optimal_wrappings, false,
           "If true, print when multiple optimal solutions are found (stderr), "
           "but continue to operate normally.");
@@ -153,6 +156,7 @@ int main(int argc, char** argv) {
         FLAGS_show_largest_token_partitions.Get();
     formatter_control.show_token_partition_tree =
         FLAGS_show_token_partition_tree.Get();
+    formatter_control.show_inter_token_info = FLAGS_show_inter_token_info.Get();
     formatter_control.show_equally_optimal_wrappings =
         FLAGS_show_equally_optimal_wrappings.Get();
     formatter_control.max_search_states = FLAGS_max_search_states.Get();

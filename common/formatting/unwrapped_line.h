@@ -102,7 +102,7 @@ class UnwrappedLine {
   bool IsEmpty() const { return tokens_.empty(); }
 
   // Currently for debugging, prints the UnwrappedLine as Code
-  std::ostream* AsCode(std::ostream*) const;
+  std::ostream* AsCode(std::ostream*, bool verbose = false) const;
 
  private:
   // Data members:

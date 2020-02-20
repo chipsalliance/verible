@@ -172,6 +172,11 @@ class TokenPartitionTreePrinterTest : public TokenPartitionTreeTestFixture {};
 // Verify specialized tree printing of UnwrappedLines.
 TEST_F(TokenPartitionTreePrinterTest, VectorTreeShallow) {
   // Construct three partitions, sizes: 1, 3, 2
+  // Change some attributes that will appear in the verbose rendition.
+  pre_format_tokens_[2].before.spaces_required = 1;
+  pre_format_tokens_[3].before.break_decision = SpacingOptions::MustAppend;
+  pre_format_tokens_[4].before.break_penalty = 22;
+  pre_format_tokens_[5].before.break_decision = SpacingOptions::MustWrap;
   const auto& preformat_tokens = pre_format_tokens_;
   const auto begin = preformat_tokens.begin();
   UnwrappedLine all(0, begin);
@@ -192,13 +197,24 @@ TEST_F(TokenPartitionTreePrinterTest, VectorTreeShallow) {
       tree_type{partition2},
   };
 
-  std::ostringstream stream;
-  stream << TokenPartitionTreePrinter(tree);
-  EXPECT_EQ(stream.str(), R"({ ([<auto>]) @{}, policy: always-expand
+  {
+    std::ostringstream stream;
+    stream << TokenPartitionTreePrinter(tree);
+    EXPECT_EQ(stream.str(), R"({ ([<auto>]) @{}, policy: always-expand
   { (>>[one]) }
   { (>>[two three four]) }
   { (>>[five six]) }
 })");
+  }
+  {
+    std::ostringstream stream;
+    stream << TokenPartitionTreePrinter(tree, true);  // verbose
+    EXPECT_EQ(stream.str(), R"({ ([<auto>]) @{}, policy: always-expand
+  { (>>[<_0,0>one]) }
+  { (>>[<_0,0>two <_1,0>three <+_0>four]) }
+  { (>>[<_0,22>five <\n>six]) }
+})");
+  }
 }
 
 TEST_F(TokenPartitionTreePrinterTest, VectorTreeDeep) {

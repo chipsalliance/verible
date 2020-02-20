@@ -86,6 +86,9 @@ struct InterTokenInfo {
   }
 
   bool operator!=(const InterTokenInfo& r) const { return !((*this) == r); }
+
+  // For debug printing.
+  std::ostream& CompactNotation(std::ostream&) const;
 };
 
 // Human-readable form, for debugging.
