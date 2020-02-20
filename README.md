@@ -360,6 +360,9 @@ To pipe from stdin, use '-' as <file>.
     --show_equally_optimal_wrappings (If true, print when multiple optimal
       solutions are found (stderr), but continue to operate normally.);
       default: false;
+    --show_inter_token_info (If true, along with show_token_partition_tree,
+      include inter-token information such as spacing and break penalties.);
+      default: false;
     --show_largest_token_partitions (If > 0, print token partitioning and then
       exit without formatting output.); default: 0;
     --show_token_partition_tree (If true, print diagnostics after token

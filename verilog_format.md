@@ -51,6 +51,9 @@ To pipe from stdin, use '-' as <file>.
     -show_equally_optimal_wrappings (If true, print when multiple optimal
       solutions are found (stderr), but continue to operate normally.);
       default: false;
+    -show_inter_token_info (If true, along with show_token_partition_tree,
+      include inter-token information such as spacing and break penalties.);
+      default: false;
     -show_largest_token_partitions (If > 0, print token partitioning and then
       exit without formatting output.); default: 0;
     -show_token_partition_tree (If true, print diagnostics after token
@@ -61,4 +64,4 @@ To pipe from stdin, use '-' as <file>.
 
 ## Version
 
-Generated on 2020-02-20 13:18:40 -0800 from [v0.0-221-geafb36e](https://github.com/google/verible/commit/eafb36e2cc3be8b13fe532761a300366a9eab985)
+Generated on 2020-02-20 14:27:47 -0800 from [v0.0-233-gb166cab](https://github.com/google/verible/commit/b166cabe23b67d140633e54bc82c5a18b5969372)
