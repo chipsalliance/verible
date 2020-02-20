@@ -282,6 +282,8 @@ enum class NodeEnum {
   kNetVariableDeclarationAssign,
   kNetDeclarationAssignment,
   kNetVariable,
+  kNetAlias,
+  kNetAliasLvalueList,
   kModulePortDeclaration,
   kGenerateRegion,
   kGenerateItemList,

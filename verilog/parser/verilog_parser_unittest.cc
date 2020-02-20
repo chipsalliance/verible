@@ -5203,6 +5203,38 @@ static const char* kRandSequenceTests[] = {
     "endtask\n",
 };
 
+static const char* kNetAliasTests[] = {
+    "module byte_swap (inout wire [31:0] A, inout wire [31:0] B);\n"
+    "  alias {A[7:0],A[15:8],A[23:16],A[31:24]} = B;\n"
+    "endmodule\n",
+
+    "module byte_rip (inout wire [31:0] W, inout wire [7:0] LSB, MSB);\n"
+    "  alias W[7:0] = LSB;\n"
+    "  alias W[31:24] = MSB;\n"
+    "endmodule\n",
+
+    "module lib1_dff(Reset, Clk, Data, Q, Q_Bar);\n"
+    "endmodule\n"
+    "module lib2_dff(reset, clock, data, q, qbar);\n"
+    "endmodule\n"
+    "module lib3_dff(RST, CLK, D, Q, Q_);\n"
+    "endmodule\n"
+    "module my_dff(rst, clk, d, q, q_bar);\n"
+    "  input rst, clk, d;\n"
+    "  output q, q_bar;\n"
+    "  alias rst = Reset = reset = RST;\n"
+    "  alias clk = Clk = clock = CLK;\n"
+    "  alias d = Data = data = D;\n"
+    "  alias q = Q;\n"
+    "  alias Q_ = q_bar = Q_Bar = qbar;\n"
+    "endmodule\n",
+
+    "module foo;\n"
+    "  logic a, b, c, d, e, f, g, h;\n"
+    "  alias a = b = c = d = e = f = g = h;\n"
+    "endmodule;\n",
+};
+
 // In the positions where we specify a token via {enum, string} or single
 // character like 'x', is where we expect an error to be found.
 // All other string literals are only used for concatenating the test case's
@@ -5606,6 +5638,7 @@ TEST(VerilogParserTest, MultiBlockTests) {
 TEST(VerilogParserTest, RandSequenceTests) {
   TestVerilogParser(kRandSequenceTests);
 }
+TEST(VerilogParserTest, Aliases) { TestVerilogParserMatchAll(kNetAliasTests); }
 
 // Tests on invalid code.
 TEST(VerilogParserTest, InvalidCode) {
@@ -5772,6 +5805,10 @@ TEST(VerilogParserTestMatchAll, MultiBlock) {
 
 TEST(VerilogParserTestMatchAll, RandSequence) {
   TestVerilogParserMatchAll(kRandSequenceTests);
+}
+
+TEST(VerilogParserTestMatchAll, NetAlias) {
+  TestVerilogParserMatchAll(kNetAliasTests);
 }
 
 }  // namespace
