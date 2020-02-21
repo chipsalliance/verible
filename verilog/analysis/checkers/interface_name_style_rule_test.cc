@@ -36,6 +36,38 @@ TEST(InterfaceNameStyleRuleTest, ValidInterfaceDeclarationNames) {
       {"interface foo_if; endinterface"},
       {"interface good_name_if; endinterface"},
       {"interface b_a_z_if; endinterface"},
+
+      // Should not apply to typedefs of virtual interfaces
+      {"typedef virtual interface foo foo_if;"},
+      {"typedef virtual interface foo good_name_if;"},
+      {"typedef virtual interface foo b_a_z_if;"},
+      {"typedef virtual foo foo_if;"},
+      {"typedef virtual foo good_name_if;"},
+      {"typedef virtual foo b_a_z_if;"},
+      {"typedef virtual interface foo HelloWorld;"},
+      {"typedef virtual interface foo _baz;"},
+      {"typedef virtual interface foo Bad_name;"},
+      {"typedef virtual interface foo bad_Name;"},
+      {"typedef virtual interface foo Bad2;"},
+      {"typedef virtual interface foo very_Bad_name;"},
+      {"typedef virtual interface foo wrong_ending;"},
+      {"typedef virtual interface foo _if;"},
+      {"typedef virtual interface foo _i_f;"},
+      {"typedef virtual interface foo i_f;"},
+      {"typedef virtual interface foo _;"},
+      {"typedef virtual interface foo foo_;"},
+      {"typedef virtual foo HelloWorld;"},
+      {"typedef virtual foo _baz;"},
+      {"typedef virtual foo Bad_name;"},
+      {"typedef virtual foo bad_Name;"},
+      {"typedef virtual foo Bad2;"},
+      {"typedef virtual foo very_Bad_name;"},
+      {"typedef virtual foo wrong_ending;"},
+      {"typedef virtual foo _if;"},
+      {"typedef virtual foo _i_f;"},
+      {"typedef virtual foo i_f;"},
+      {"typedef virtual foo _;"},
+      {"typedef virtual foo foo_;"},
   };
   RunLintTestCases<VerilogAnalyzer, InterfaceNameStyleRule>(kTestCases);
 }
@@ -55,50 +87,6 @@ TEST(InterfaceNameStyleRuleTest, InvalidInterfaceDeclarationNames) {
       {"interface ", {kToken, "i_f"}, "; endinterface"},
       {"interface ", {kToken, "_"}, "; endinterface"},
       {"interface ", {kToken, "foo_"}, "; endinterface"},
-  };
-  RunLintTestCases<VerilogAnalyzer, InterfaceNameStyleRule>(kTestCases);
-}
-
-TEST(InterfaceNameStyleRuleTest, ValidInterfaceTypeNames) {
-  const std::initializer_list<LintTestCase> kTestCases = {
-      {""},
-      {"typedef virtual interface foo foo_if;"},
-      {"typedef virtual interface foo good_name_if;"},
-      {"typedef virtual interface foo b_a_z_if;"},
-      {"typedef virtual foo foo_if;"},
-      {"typedef virtual foo good_name_if;"},
-      {"typedef virtual foo b_a_z_if;"},
-  };
-  RunLintTestCases<VerilogAnalyzer, InterfaceNameStyleRule>(kTestCases);
-}
-
-TEST(InterfaceNameStyleRuleTest, InvalidInterfaceTypeNames) {
-  constexpr int kToken = SymbolIdentifier;
-  const std::initializer_list<LintTestCase> kTestCases = {
-      {"typedef virtual interface foo ", {kToken, "HelloWorld"}, ";"},
-      {"typedef virtual interface foo ", {kToken, "_baz"}, ";"},
-      {"typedef virtual interface foo ", {kToken, "Bad_name"}, ";"},
-      {"typedef virtual interface foo ", {kToken, "bad_Name"}, ";"},
-      {"typedef virtual interface foo ", {kToken, "Bad2"}, ";"},
-      {"typedef virtual interface foo ", {kToken, "very_Bad_name"}, ";"},
-      {"typedef virtual interface foo ", {kToken, "wrong_ending"}, ";"},
-      {"typedef virtual interface foo ", {kToken, "_if"}, ";"},
-      {"typedef virtual interface foo ", {kToken, "_i_f"}, ";"},
-      {"typedef virtual interface foo ", {kToken, "i_f"}, ";"},
-      {"typedef virtual interface foo ", {kToken, "_"}, ";"},
-      {"typedef virtual interface foo ", {kToken, "foo_"}, ";"},
-      {"typedef virtual foo ", {kToken, "HelloWorld"}, ";"},
-      {"typedef virtual foo ", {kToken, "_baz"}, ";"},
-      {"typedef virtual foo ", {kToken, "Bad_name"}, ";"},
-      {"typedef virtual foo ", {kToken, "bad_Name"}, ";"},
-      {"typedef virtual foo ", {kToken, "Bad2"}, ";"},
-      {"typedef virtual foo ", {kToken, "very_Bad_name"}, ";"},
-      {"typedef virtual foo ", {kToken, "wrong_ending"}, ";"},
-      {"typedef virtual foo ", {kToken, "_if"}, ";"},
-      {"typedef virtual foo ", {kToken, "_i_f"}, ";"},
-      {"typedef virtual foo ", {kToken, "i_f"}, ";"},
-      {"typedef virtual foo ", {kToken, "_"}, ";"},
-      {"typedef virtual foo ", {kToken, "foo_"}, ";"},
   };
   RunLintTestCases<VerilogAnalyzer, InterfaceNameStyleRule>(kTestCases);
 }
