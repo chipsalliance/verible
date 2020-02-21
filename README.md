@@ -29,7 +29,30 @@ To build, you need the [bazel] build system and a C++11 compatible compiler
 
 ```bash
 # Build all tools and libraries
-bazel build //...
+bazel build -c opt //...
+```
+
+You can access the generated artifacts under `bazel-bin/`. For instance the
+syntax checker will be at `bazel-bin/verilog/tools/syntax/verilog_syntax`
+(corresponding to the target name `//verilog/tools/syntax:verilog_syntax`).
+
+### Installation
+
+For simple installation, we provide regular [binary releases].
+
+If you prefer to install the binaries on your workstation yourself, use the
+`:install` target which you invoke with `bazel run`.
+
+The following builds and installs the `verilog_format`, `verilog_lint` and
+`verilog_syntax` binaries in the provided location:
+
+```bash
+# In your home directory
+bazel run :install -c opt -- ~/bin
+
+# For a system directory that requires root-access, call with -s option.
+# (Do _not_ run bazel with sudo.)
+bazel run :install -c opt -- -s /usr/local/bin
 ```
 
 ### Test
@@ -39,21 +62,6 @@ To run the tests in [bazel]:
 ```bash
 # Run all tests
 bazel test //...
-```
-
-You can access the generated artifacts under `bazel-bin/`. For instance the
-syntax checker will be at `bazel-bin/verilog/tools/syntax/verilog_syntax`
-(corresponding to the target name `//verilog/tools/syntax:verilog_syntax`).
-
-### Install
-
-Install in the preferred way on your operating system. On Unix-like systems,
-this would be commands like (for the tools described below):
-
-```bash
-sudo install bazel-bin/verilog/tools/syntax/verilog_syntax /usr/local/bin
-sudo install bazel-bin/verilog/tools/formatter/verilog_format /usr/local/bin
-sudo install bazel-bin/verilog/tools/lint/verilog_lint /usr/local/bin
 ```
 
 ## Mailing Lists
@@ -411,3 +419,4 @@ abstract syntax tree (AST). If you are interested in collaborating, contact us.
 [bazel]: https://bazel.build/
 [SV-LRM]: https://ieeexplore.ieee.org/document/8299595
 [lint-rule-list]: https://google.github.io/verible/lint.html
+[binary releases]: https://github.com/google/verible/releases
