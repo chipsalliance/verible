@@ -779,15 +779,15 @@ bool _EquivalentTokenStreams(const VerilogAnalyzer& a1,
                              std::ostream* errstream = &std::cout) {
   const auto& tokens1(a1.Data().TokenStream());
   const auto& tokens2(a2.Data().TokenStream());
-  const bool eq = LexicallyEquivalent(tokens1, tokens2, errstream);
+  const bool eq = FormatEquivalent(tokens1, tokens2, errstream);
   // Check that commutative comparison yields same result.
   // Don't bother with the error stream.
-  const bool commutative = LexicallyEquivalent(tokens2, tokens1);
+  const bool commutative = FormatEquivalent(tokens2, tokens1);
   EXPECT_EQ(eq, commutative);
   return eq;
 }
 
-TEST(LexicallyEquivalentTest, Spaces) {
+TEST(FormatEquivalentTest, Spaces) {
   const char* kTestCases[] = {
       "",
       " ",
@@ -805,7 +805,7 @@ TEST(LexicallyEquivalentTest, Spaces) {
   EXPECT_TRUE(_EquivalentTokenStreams(*analyzers[2], *analyzers[3]));
 }
 
-TEST(LexicallyEquivalentTest, ShortSequences) {
+TEST(FormatEquivalentTest, ShortSequences) {
   const char* kTestCases[] = {
       "1",
       "2",
@@ -823,7 +823,7 @@ TEST(LexicallyEquivalentTest, ShortSequences) {
   EXPECT_TRUE(_EquivalentTokenStreams(*analyzers[2], *analyzers[3]));
 }
 
-TEST(LexicallyEquivalentTest, Identifiers) {
+TEST(FormatEquivalentTest, Identifiers) {
   const char* kTestCases[] = {
       "foo bar;",
       "   foo\t\tbar    ;   ",
@@ -841,7 +841,7 @@ TEST(LexicallyEquivalentTest, Identifiers) {
   EXPECT_FALSE(_EquivalentTokenStreams(*analyzers[2], *analyzers[3]));
 }
 
-TEST(LexicallyEquivalentTest, Keyword) {
+TEST(FormatEquivalentTest, Keyword) {
   const char* kTestCases[] = {
       "wire foo;",
       "  wire  \n\t\t   foo  ;\n",
@@ -852,7 +852,7 @@ TEST(LexicallyEquivalentTest, Keyword) {
   EXPECT_TRUE(_EquivalentTokenStreams(*analyzers[0], *analyzers[1]));
 }
 
-TEST(LexicallyEquivalentTest, Comments) {
+TEST(FormatEquivalentTest, Comments) {
   const char* kTestCases[] = {
       "// comment1\n",        //
       "// comment1 \n",       //
@@ -880,7 +880,7 @@ TEST(LexicallyEquivalentTest, Comments) {
   }
 }
 
-TEST(LexicallyEquivalentTest, DiagnosticLength) {
+TEST(FormatEquivalentTest, DiagnosticLength) {
   const char* kTestCases[] = {
       "module foo\n",
       "module foo;\n",
@@ -904,7 +904,7 @@ TEST(LexicallyEquivalentTest, DiagnosticLength) {
   }
 }
 
-TEST(LexicallyEquivalentTest, DiagnosticLengthTrimEnd) {
+TEST(FormatEquivalentTest, DiagnosticLengthTrimEnd) {
   const char* kTestCases[] = {
       "module foo;",
   };
@@ -919,7 +919,7 @@ TEST(LexicallyEquivalentTest, DiagnosticLengthTrimEnd) {
   shorter.pop_back();
   {
     std::ostringstream errs;
-    EXPECT_FALSE(LexicallyEquivalent(shorter, longer, &errs));
+    EXPECT_FALSE(FormatEquivalent(shorter, longer, &errs));
     EXPECT_TRUE(absl::StartsWith(
         errs.str(), "Mismatch in token sequence lengths: 2 vs. 3"));
     EXPECT_TRUE(
@@ -927,7 +927,7 @@ TEST(LexicallyEquivalentTest, DiagnosticLengthTrimEnd) {
   }
   {
     std::ostringstream errs;
-    EXPECT_FALSE(LexicallyEquivalent(longer, shorter, &errs));
+    EXPECT_FALSE(FormatEquivalent(longer, shorter, &errs));
     EXPECT_TRUE(absl::StartsWith(
         errs.str(), "Mismatch in token sequence lengths: 3 vs. 2"));
     EXPECT_TRUE(
@@ -935,7 +935,7 @@ TEST(LexicallyEquivalentTest, DiagnosticLengthTrimEnd) {
   }
 }
 
-TEST(LexicallyEquivalentTest, DiagnosticMismatch) {
+TEST(FormatEquivalentTest, DiagnosticMismatch) {
   const char* kTestCases[] = {
       "module foo;\n",
       "module bar;\n",

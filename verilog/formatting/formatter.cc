@@ -119,8 +119,8 @@ Status VerifyFormatting(const verible::TextStructureView& text_structure,
     // Filter out only whitespaces and compare.
     // First difference will be printed to cerr for debugging.
     std::ostringstream errstream;
-    if (!verilog::LexicallyEquivalent(original_tokens, formatted_tokens,
-                                      &errstream)) {
+    if (!verilog::FormatEquivalent(original_tokens, formatted_tokens,
+                                   &errstream)) {
       return Status(
           StatusCode::kDataLoss,
           absl::StrCat(

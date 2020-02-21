@@ -25,6 +25,7 @@
 #include "common/util/range.h"
 #include "common/util/spacer.h"
 #include "verilog/parser/verilog_parser.h"
+#include "verilog/parser/verilog_token_classifications.h"
 #include "verilog/parser/verilog_token_enum.h"
 
 namespace verilog {
@@ -44,39 +45,34 @@ ByteOffsetSet DisableFormattingRanges(absl::string_view text,
   ByteOffsetSet disable_set;
   for (const auto& token : tokens) {
     VLOG(2) << verible::TokenWithContext{token, context};
-    switch (token.token_enum) {
-      case TK_EOL_COMMENT:
-      case TK_COMMENT_BLOCK: {
-        // Focus on the space-delimited tokens in the comment text.
-        auto commands = verible::StripCommentAndSpacePadding(token.text);
-        if (absl::ConsumePrefix(&commands, kTrigger)) {
-          const std::vector<absl::string_view> comment_tokens(
-              absl::StrSplit(commands, kDelimiters, absl::SkipEmpty()));
-          if (!comment_tokens.empty()) {
-            // "off" marks the start of a disabling range, at end of comment.
-            // "on" marks the end of disabling range, up to the end of comment.
-            if (comment_tokens.front() == "off") {
-              if (begin_disable_offset == kNullOffset) {
-                begin_disable_offset = token.right(text);
-                if (token.token_enum == TK_EOL_COMMENT) {
-                  ++begin_disable_offset;  // to cover the trailing '\n'
-                }
-              }  // else ignore
-            } else if (comment_tokens.front() == "on") {
-              if (begin_disable_offset != kNullOffset) {
-                const int end_disable_offset = token.right(text);
-                if (begin_disable_offset != end_disable_offset) {
-                  disable_set.Add({begin_disable_offset, end_disable_offset});
-                }
-                begin_disable_offset = kNullOffset;
-              }  // else ignore
-            }
+    const auto vtoken_enum = verilog_tokentype(token.token_enum);
+    if (IsComment(vtoken_enum)) {
+      // Focus on the space-delimited tokens in the comment text.
+      auto commands = verible::StripCommentAndSpacePadding(token.text);
+      if (absl::ConsumePrefix(&commands, kTrigger)) {
+        const std::vector<absl::string_view> comment_tokens(
+            absl::StrSplit(commands, kDelimiters, absl::SkipEmpty()));
+        if (!comment_tokens.empty()) {
+          // "off" marks the start of a disabling range, at end of comment.
+          // "on" marks the end of disabling range, up to the end of comment.
+          if (comment_tokens.front() == "off") {
+            if (begin_disable_offset == kNullOffset) {
+              begin_disable_offset = token.right(text);
+              if (vtoken_enum == TK_EOL_COMMENT) {
+                ++begin_disable_offset;  // to cover the trailing '\n'
+              }
+            }  // else ignore
+          } else if (comment_tokens.front() == "on") {
+            if (begin_disable_offset != kNullOffset) {
+              const int end_disable_offset = token.right(text);
+              if (begin_disable_offset != end_disable_offset) {
+                disable_set.Add({begin_disable_offset, end_disable_offset});
+              }
+              begin_disable_offset = kNullOffset;
+            }  // else ignore
           }
         }
-        break;
       }
-      default:
-        break;
     }
   }
   // If the disabling interval remains open, close it (to end-of-buffer).

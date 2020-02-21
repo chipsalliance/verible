@@ -16,6 +16,7 @@
 #define VERIBLE_VERILOG_ANALYSIS_VERILOG_ANALYZER_H_
 
 #include <cstddef>
+#include <functional>
 #include <iosfwd>
 #include <memory>
 #include <string>
@@ -109,11 +110,21 @@ class VerilogAnalyzer : public verible::FileAnalyzer {
   verible::util::Status parse_status_;
 };
 
+// Returns true if both token sequences are equivalent, ignoring tokens filtered
+// out by remove_predicate, and using the equal_comparator binary predicate.
+// If errstream is provided, print detailed error message to that stream.
+bool LexicallyEquivalent(
+    const verible::TokenSequence& left, const verible::TokenSequence& right,
+    std::function<bool(const verible::TokenInfo&)> remove_predicate,
+    std::function<bool(const verible::TokenInfo&, const verible::TokenInfo&)>
+        equal_comparator,
+    std::ostream* errstream = nullptr);
+
 // Returns true if both token sequences are equivalent, ignoring whitespace.
 // If errstream is provided, print detailed error message to that stream.
-bool LexicallyEquivalent(const verible::TokenSequence&,
-                         const verible::TokenSequence&,
-                         std::ostream* = nullptr);
+bool FormatEquivalent(const verible::TokenSequence& left,
+                      const verible::TokenSequence& right,
+                      std::ostream* errstream = nullptr);
 
 }  // namespace verilog
 

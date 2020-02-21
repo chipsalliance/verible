@@ -172,6 +172,7 @@ cc_library(
         "//verilog/analysis:descriptions",
         "//verilog/analysis:lint_rule_registry",
         "//verilog/analysis:verilog_linter_constants",
+        "//verilog/parser:verilog_token_classifications",
         "//verilog/parser:verilog_token_enum",
         "@com_google_absl//absl/strings",
     ],

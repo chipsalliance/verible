@@ -41,25 +41,6 @@ using verible::TokenInfo;
 using verible::TokenStreamView;
 using verible::container::InsertOrUpdate;
 
-bool IsPreprocessorControlToken(const TokenInfo& token) {
-  switch (token.token_enum) {
-    case PP_Identifier:
-    case PP_include:
-    case PP_define:
-    case PP_define_body:
-    case PP_ifdef:
-    case PP_ifndef:
-    case PP_else:
-    case PP_elsif:
-    case PP_endif:
-    case PP_undef:
-    case PP_default_text:
-      // Excludes macro call tokens.
-      return true;
-  }
-  return false;
-}
-
 // Copies `define token iterators into a temporary buffer.
 // Assumes that the last token of a definition is the un-lexed definition body.
 // Tokens are copied from the 'generator' into 'define_tokens'.

@@ -92,6 +92,25 @@ bool IsPreprocessorKeyword(verilog_tokentype token_type) {
   return false;
 }
 
+bool IsPreprocessorControlToken(verilog_tokentype token_type) {
+  switch (static_cast<int>(token_type)) {
+    case verilog_tokentype::PP_Identifier:
+    case verilog_tokentype::PP_include:
+    case verilog_tokentype::PP_define:
+    case verilog_tokentype::PP_define_body:
+    case verilog_tokentype::PP_ifdef:
+    case verilog_tokentype::PP_ifndef:
+    case verilog_tokentype::PP_else:
+    case verilog_tokentype::PP_elsif:
+    case verilog_tokentype::PP_endif:
+    case verilog_tokentype::PP_undef:
+    case verilog_tokentype::PP_default_text:
+      // Excludes macro call tokens.
+      return true;
+  }
+  return false;
+}
+
 bool IsEndKeyword(verilog_tokentype token_type) {
   switch (static_cast<int>(token_type)) {
     case verilog_tokentype::TK_end:

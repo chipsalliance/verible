@@ -72,8 +72,8 @@ verible::util::Status VerilogAnalyzer::Tokenize() {
 absl::string_view VerilogAnalyzer::ScanParsingModeDirective(
     const TokenSequence& raw_tokens) {
   for (const auto& token : raw_tokens) {
-    if (token.token_enum == TK_COMMENT_BLOCK ||
-        token.token_enum == TK_EOL_COMMENT) {
+    const auto vtoken_enum = verilog_tokentype(token.token_enum);
+    if (IsComment(vtoken_enum)) {
       const absl::string_view comment_text =
           verible::StripCommentAndSpacePadding(token.text);
       const std::vector<absl::string_view> comment_tokens =
@@ -87,7 +87,7 @@ absl::string_view VerilogAnalyzer::ScanParsingModeDirective(
     }
     // if encountered a non-preprocessing token, stop scanning.
     if (!VerilogLexer::KeepSyntaxTreeTokens(token)) continue;
-    if (IsPreprocessorControlToken(token)) continue;
+    if (IsPreprocessorControlToken(vtoken_enum)) continue;
     break;
   }
   return "";
@@ -351,17 +351,21 @@ void VerilogAnalyzer::ExpandMacroCallArgExpressions() {
   VLOG(2) << "end of " << __FUNCTION__;
 }
 
-bool LexicallyEquivalent(const TokenSequence& left, const TokenSequence& right,
-                         std::ostream* errstream) {
+bool LexicallyEquivalent(
+    const TokenSequence& left, const TokenSequence& right,
+    std::function<bool(const verible::TokenInfo&)> remove_predicate,
+    std::function<bool(const verible::TokenInfo&, const verible::TokenInfo&)>
+        equal_comparator,
+    std::ostream* errstream) {
   // Filter out whitespaces from both token sequences.
   verible::TokenStreamView left_filtered, right_filtered;
   verible::InitTokenStreamView(left, &left_filtered);
   verible::InitTokenStreamView(right, &right_filtered);
-  verible::TokenFilterPredicate not_whitespace = [](const TokenInfo& t) {
-    return !IsWhitespace(verilog_tokentype(t.token_enum));
+  verible::TokenFilterPredicate keep_predicate = [&](const TokenInfo& t) {
+    return !remove_predicate(t);
   };
-  verible::FilterTokenStreamViewInPlace(not_whitespace, &left_filtered);
-  verible::FilterTokenStreamViewInPlace(not_whitespace, &right_filtered);
+  verible::FilterTokenStreamViewInPlace(keep_predicate, &left_filtered);
+  verible::FilterTokenStreamViewInPlace(keep_predicate, &right_filtered);
 
   // Compare filtered views, starting with sizes.
   const size_t l_size = left_filtered.size();
@@ -379,10 +383,10 @@ bool LexicallyEquivalent(const TokenSequence& left, const TokenSequence& right,
   auto left_filtered_stop_iter = left_filtered.begin() + min_size;
   auto mismatch_pair = std::mismatch(
       left_filtered.begin(), left_filtered_stop_iter, right_filtered.begin(),
-      [](const TokenSequence::const_iterator l,
-         const TokenSequence::const_iterator r) {
+      [&](const TokenSequence::const_iterator l,
+          const TokenSequence::const_iterator r) {
         // Ignore location/offset differences.
-        return l->EquivalentWithoutLocation(*r);
+        return equal_comparator(*l, *r);
       });
   if (mismatch_pair.first == left_filtered_stop_iter) {
     if (size_match) {
@@ -410,6 +414,19 @@ bool LexicallyEquivalent(const TokenSequence& left, const TokenSequence& right,
                << right_token << std::endl;
   }
   return false;
+}
+
+bool FormatEquivalent(const TokenSequence& left, const TokenSequence& right,
+                      std::ostream* errstream) {
+  return LexicallyEquivalent(
+      left, right,
+      [](const TokenInfo& t) {
+        return IsWhitespace(verilog_tokentype(t.token_enum));
+      },
+      [](const TokenInfo& l, const TokenInfo& r) {
+        return l.EquivalentWithoutLocation(r);
+      },
+      errstream);
 }
 
 }  // namespace verilog

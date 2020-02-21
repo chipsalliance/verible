@@ -37,6 +37,9 @@ bool IsPreprocessorControlFlow(verilog_tokentype);
 // Returns true for `ifdef, `define, `include, `undef, etc.
 bool IsPreprocessorKeyword(verilog_tokentype);
 
+// Returns true for any preprocessing token, not just control flow.
+bool IsPreprocessorControlToken(verilog_tokentype token_type);
+
 // Returns true if token enum is 'end', 'endmodule', or 'end*'
 bool IsEndKeyword(verilog_tokentype);
 

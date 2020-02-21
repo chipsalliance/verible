@@ -160,6 +160,7 @@ cc_library(
         "//common/util:range",
         "//common/util:spacer",
         "//verilog/parser:verilog_parser",
+        "//verilog/parser:verilog_token_classifications",
         "//verilog/parser:verilog_token_enum",
         "@com_google_absl//absl/strings",
     ],

@@ -51,10 +51,6 @@ namespace verilog {
 
 // TODO(fangism): configuration policy enums.
 
-// Returns true if token particpates in preprocessos control flow
-// `ifndef, `else, `endif, etc.
-bool IsPreprocessorControlToken(const verible::TokenInfo& token);
-
 // VerilogPreprocessError contains preprocessor error information.
 struct VerilogPreprocessError {
   verible::TokenInfo token_info;  // offending token

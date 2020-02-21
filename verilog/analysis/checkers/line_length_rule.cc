@@ -36,6 +36,7 @@
 #include "verilog/analysis/descriptions.h"
 #include "verilog/analysis/lint_rule_registry.h"
 #include "verilog/analysis/verilog_linter_constants.h"
+#include "verilog/parser/verilog_token_classifications.h"
 #include "verilog/parser/verilog_token_enum.h"
 
 namespace verilog {
@@ -135,8 +136,7 @@ static bool AllowLongLineException(TokenSequence::const_iterator token_begin,
       break;
   }
 
-  if (last_token->token_enum == TK_COMMENT_BLOCK ||
-      last_token->token_enum == TK_EOL_COMMENT) {
+  if (IsComment(verilog_tokentype(last_token->token_enum))) {
     // Check for end-of-line comment that contain lint waivers.
     const absl::string_view text =
         verible::StripCommentAndSpacePadding(last_token->text);
