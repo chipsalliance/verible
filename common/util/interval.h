@@ -30,8 +30,8 @@ struct Interval {
   typedef T value_type;
 
   // Allow direct access.  Use responsibly.  Check valid()-ity.
-  T min;
-  T max;
+  T min = {};
+  T max = {};
 
   Interval() = default;
   Interval(const T& f, const T& s) : min(f), max(s) {}

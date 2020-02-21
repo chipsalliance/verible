@@ -409,7 +409,6 @@ class IntervalSet : private _IntervalSetImpl {
       // of disjoint intervals.
       const auto interval_iter = std::prev(std::upper_bound(
           interval_map.begin(), interval_map.end(), rand, less));
-      const auto& sampling_interval = interval_iter->interval;
       // rand - interval_iter->cumulative_weight can be used as the offset
       // into the chosen interval, which is already uniformly distributed.
       return interval_iter->interval.min + rand -
