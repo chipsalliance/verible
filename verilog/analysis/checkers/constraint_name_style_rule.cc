@@ -62,6 +62,14 @@ void ConstraintNameStyleRule::HandleSymbol(const verible::Symbol& symbol,
                                            const SyntaxTreeContext& context) {
   verible::matcher::BoundSymbolManager manager;
   if (matcher_.Matches(symbol, &manager)) {
+    // Since an out-of-line definition is always followed by a forward
+    // declaration somewhere else (in this case inside a class), we can just
+    // ignore all out-of-line definitions to  avoid duplicate lint errors on
+    // the same name.
+    if (IsOutOfLineConstraintDefinition(symbol)) {
+      return;
+    }
+
     const auto& identifier_token =
         GetSymbolIdentifierFromConstraintDeclaration(symbol);
 

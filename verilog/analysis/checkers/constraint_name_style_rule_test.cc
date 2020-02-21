@@ -41,6 +41,11 @@ TEST(ConstraintNameStyleRuleTest, AcceptTests) {
       {"class foo; rand logic a; constraint foo_bar_c { a == 16; } endclass"},
       {"class foo; rand logic a; constraint foo2_c { a == 16; } endclass"},
       {"class foo; rand logic a; constraint foo_2_bar_c { a == 16; } endclass"},
+
+      /* Ignore out of line definitions */
+      {"constraint classname::constraint_c { a <= b; }"},
+      {"constraint classname::MY_CONSTRAINT { a <= b; }"},
+      {"constraint classname::MyConstraint { a <= b; }"},
   };
   RunLintTestCases<VerilogAnalyzer, ConstraintNameStyleRule>(kTestCases);
 }
