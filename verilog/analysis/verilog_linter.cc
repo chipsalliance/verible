@@ -48,6 +48,7 @@
 #include "verilog/analysis/verilog_analyzer.h"
 #include "verilog/analysis/verilog_linter_configuration.h"
 #include "verilog/analysis/verilog_linter_constants.h"
+#include "verilog/parser/verilog_token_classifications.h"
 #include "verilog/parser/verilog_token_enum.h"
 
 ABSL_FLAG(verilog::RuleBundle, rules, {}, "List of lint rules to enable");
@@ -105,11 +106,10 @@ int LintOneFile(std::ostream* stream, absl::string_view filename,
 VerilogLinter::VerilogLinter()
     : lint_waiver_(
           [](const TokenInfo& t) {
-            return t.token_enum == TK_COMMENT_BLOCK ||
-                   t.token_enum == TK_EOL_COMMENT;
+            return IsComment(verilog_tokentype(t.token_enum));
           },
           [](const TokenInfo& t) {
-            return t.token_enum == TK_SPACE || t.token_enum == TK_NEWLINE;
+            return IsWhitespace(verilog_tokentype(t.token_enum));
           },
           kLinterTrigger, kLinterWaiveLineCommand, kLinterWaiveStartCommand,
           kLinterWaiveStopCommand) {}

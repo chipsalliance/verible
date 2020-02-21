@@ -41,6 +41,7 @@
 #include "verilog/CST/verilog_nonterminals.h"
 #include "verilog/formatting/verilog_token.h"
 #include "verilog/parser/verilog_parser.h"
+#include "verilog/parser/verilog_token_classifications.h"
 #include "verilog/parser/verilog_token_enum.h"
 
 namespace verilog {
@@ -51,18 +52,12 @@ using ::verible::PreFormatToken;
 using ::verible::TokenInfo;
 using ::verible::TokenWithContext;
 using ::verible::UnwrappedLine;
+using ::verilog::IsComment;
 
 // Used to filter the TokenStreamView by discarding space-only tokens.
 static bool KeepNonWhitespace(const TokenInfo& t) {
-  switch (t.token_enum) {
-    case verilog_tokentype::TK_NEWLINE:  // fall-through
-    case verilog_tokentype::TK_SPACE:
-    case verible::TK_EOF:  // omit the EOF token
-      return false;
-    default:
-      break;
-  }
-  return true;
+  if (t.token_enum == verible::TK_EOF) return false;  // omit the EOF token
+  return !IsWhitespace(verilog_tokentype(t.token_enum));
 }
 
 // Creates a PreFormatToken given a TokenInfo and returns it
@@ -509,8 +504,7 @@ void TreeUnwrapper::CollectTrailingFilteredTokens() {
 
   // A newline means there are no comments to add to this UnwrappedLine
   // TODO(fangism): fold this logic into CatchUpToCurrentLeaf()
-  if (NextUnfilteredToken()->token_enum == verilog_tokentype::TK_NEWLINE ||
-      NextUnfilteredToken()->isEOF()) {
+  if (IsNewlineOrEOF(verilog_tokentype(NextUnfilteredToken()->token_enum))) {
     StartNewUnwrappedLine();
   }
 

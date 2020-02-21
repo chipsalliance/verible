@@ -200,3 +200,22 @@ cc_test(
         "@com_google_googletest//:gtest_main",
     ],
 )
+
+cc_library(
+    name = "verilog_token_classifications",
+    srcs = ["verilog_token_classifications.cc"],
+    hdrs = ["verilog_token_classifications.h"],
+    deps = [
+        ":verilog_token_enum",
+    ],
+)
+
+cc_test(
+    name = "verilog_token_classifications_test",
+    srcs = ["verilog_token_classifications_test.cc"],
+    deps = [
+        ":verilog_token_classifications",
+        ":verilog_token_enum",
+        "@com_google_googletest//:gtest_main",
+    ],
+)

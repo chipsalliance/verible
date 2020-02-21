@@ -47,6 +47,7 @@
 #include "verilog/parser/verilog_lexer.h"
 #include "verilog/parser/verilog_lexical_context.h"
 #include "verilog/parser/verilog_parser.h"
+#include "verilog/parser/verilog_token_classifications.h"
 #include "verilog/parser/verilog_token_enum.h"
 #include "verilog/preprocessor/verilog_preprocess.h"
 
@@ -357,7 +358,7 @@ bool LexicallyEquivalent(const TokenSequence& left, const TokenSequence& right,
   verible::InitTokenStreamView(left, &left_filtered);
   verible::InitTokenStreamView(right, &right_filtered);
   verible::TokenFilterPredicate not_whitespace = [](const TokenInfo& t) {
-    return t.token_enum != TK_SPACE && t.token_enum != TK_NEWLINE;
+    return !IsWhitespace(verilog_tokentype(t.token_enum));
   };
   verible::FilterTokenStreamViewInPlace(not_whitespace, &left_filtered);
   verible::FilterTokenStreamViewInPlace(not_whitespace, &right_filtered);

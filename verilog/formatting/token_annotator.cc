@@ -31,6 +31,7 @@
 #include "verilog/formatting/format_style.h"
 #include "verilog/formatting/verilog_token.h"
 #include "verilog/parser/verilog_parser.h"
+#include "verilog/parser/verilog_token_classifications.h"
 #include "verilog/parser/verilog_token_enum.h"
 
 namespace verilog {

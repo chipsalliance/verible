@@ -46,28 +46,6 @@ FormatTokenType GetFormatTokenType(verilog_tokentype e);
 // Returns true if the FormatTokenType is a comment
 bool IsComment(FormatTokenType token_type);
 
-// Returns true if the verilog_tokentype is a comment
-bool IsComment(verilog_tokentype token_type);
-
-// Returns true if token enum *can* be a unary operator.
-bool IsUnaryOperator(verilog_tokentype);
-
-// Returns true if token enum *can* be a ternary operator.
-bool IsTernaryOperator(verilog_tokentype);
-
-// Returns true for `ifdef, `else, etc.
-bool IsPreprocessorControlFlow(verilog_tokentype);
-
-// Returns true for `ifdef, `define, `include, `undef, etc.
-bool IsPreprocessorKeyword(verilog_tokentype);
-
-// Returns true if token enum is 'end', 'endmodule', or 'end*'
-bool IsEndKeyword(verilog_tokentype);
-
-// TODO(fangism): Identify specially lexed tokens that require a newline after.
-// e.g. MacroIdItem, TK_EOL_COMMENT, ...
-// bool RequiresNewlineAfterToken(verilog_tokentype);
-
 }  // namespace formatter
 }  // namespace verilog
 

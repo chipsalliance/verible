@@ -94,46 +94,6 @@ TEST(VerilogTokenTest, IsCommentFormatTokenTypeTest) {
   EXPECT_FALSE(IsComment(FTT::keyword));
 }
 
-// Given a verilog_tokentype, test that IsComment returns true only for comments
-TEST(VerilogTokenTest, IsCommentverilog_tokentypeTest) {
-  EXPECT_TRUE(IsComment(verilog_tokentype::TK_COMMENT_BLOCK));
-  EXPECT_TRUE(IsComment(verilog_tokentype::TK_EOL_COMMENT));
-  EXPECT_FALSE(IsComment(verilog_tokentype::DR_begin_keywords));
-  EXPECT_FALSE(IsComment(verilog_tokentype::SymbolIdentifier));
-}
-
-TEST(VerilogTokenTest, IsUnaryOperatorTest) {
-  EXPECT_FALSE(IsUnaryOperator(verilog_tokentype('*')));
-  EXPECT_FALSE(IsUnaryOperator(verilog_tokentype('/')));
-  EXPECT_TRUE(IsUnaryOperator(verilog_tokentype('+')));
-  EXPECT_TRUE(IsUnaryOperator(verilog_tokentype('-')));
-  EXPECT_TRUE(IsUnaryOperator(verilog_tokentype('~')));
-  EXPECT_TRUE(IsUnaryOperator(verilog_tokentype('&')));
-  EXPECT_TRUE(IsUnaryOperator(verilog_tokentype('!')));
-  EXPECT_TRUE(IsUnaryOperator(verilog_tokentype('|')));
-  EXPECT_TRUE(IsUnaryOperator(verilog_tokentype('^')));
-  EXPECT_TRUE(IsUnaryOperator(verilog_tokentype::TK_NAND));
-  EXPECT_TRUE(IsUnaryOperator(verilog_tokentype::TK_NOR));
-  EXPECT_TRUE(IsUnaryOperator(verilog_tokentype::TK_NXOR));
-  EXPECT_TRUE(IsUnaryOperator(verilog_tokentype::TK_INCR));
-  EXPECT_TRUE(IsUnaryOperator(verilog_tokentype::TK_DECR));
-  EXPECT_FALSE(IsUnaryOperator(verilog_tokentype(':')));
-  EXPECT_FALSE(IsUnaryOperator(verilog_tokentype('?')));
-  EXPECT_FALSE(IsUnaryOperator(verilog_tokentype(',')));
-  EXPECT_FALSE(IsUnaryOperator(verilog_tokentype('.')));
-  EXPECT_FALSE(IsUnaryOperator(verilog_tokentype(';')));
-  EXPECT_FALSE(IsUnaryOperator(verilog_tokentype('#')));
-}
-
-TEST(VerilogTokenTest, IsTernaryOperatorTest) {
-  EXPECT_FALSE(IsTernaryOperator(verilog_tokentype('*')));
-  EXPECT_FALSE(IsTernaryOperator(verilog_tokentype('/')));
-  EXPECT_FALSE(IsTernaryOperator(verilog_tokentype('+')));
-  EXPECT_FALSE(IsTernaryOperator(verilog_tokentype('-')));
-  EXPECT_TRUE(IsTernaryOperator(verilog_tokentype('?')));
-  EXPECT_TRUE(IsTernaryOperator(verilog_tokentype(':')));
-}
-
 }  // namespace
 }  // namespace formatter
 }  // namespace verilog

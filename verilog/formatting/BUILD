@@ -36,6 +36,7 @@ cc_library(
         "//verilog/CST:identifier",
         "//verilog/CST:verilog_nonterminals",
         "//verilog/parser:verilog_parser",  # only for verilog_symbol_name
+        "//verilog/parser:verilog_token_classifications",
         "//verilog/parser:verilog_token_enum",
         "@com_google_absl//absl/base:core_headers",
         "@com_google_absl//absl/strings",
@@ -217,6 +218,7 @@ cc_library(
         "//common/util:with_reason",
         "//verilog/CST:verilog_nonterminals",
         "//verilog/parser:verilog_parser",
+        "//verilog/parser:verilog_token_classifications",
         "//verilog/parser:verilog_token_enum",
         "@com_google_absl//absl/strings",
     ],
