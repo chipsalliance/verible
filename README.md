@@ -285,7 +285,16 @@ deemed undesirable according to a style guide. The main goal is to relieve
 humans the burden of reviewing code for style compliance. Many lint rules use
 syntax tree pattern matching to find style violations. The tool provides
 generating a [built-in lint documentation][lint-rule-list] with details to each
-rule.
+rule; you can generate it by invoking the linter with `--generate_markdown` or
+use the build script:
+
+```bash
+# Generating documentation
+bazel build :lint_doc
+
+# It will be generated into
+bazel-bin/documentation_verible_lint_rules.md
+```
 
 The linter tool is available as `//verilog/tools/lint:verilog_lint`.
 

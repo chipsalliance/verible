@@ -20,3 +20,13 @@ installer(
         "//verilog/tools/syntax:verilog_syntax",
     ],
 )
+
+genrule(
+    name = "lint_doc",
+    outs = ["documentation_verible_lint_rules.md"],
+    cmd = "$(location //verilog/tools/lint:verilog_lint) --generate_markdown " +
+          "> $(OUTS)",
+    tools = [
+        "//verilog/tools/lint:verilog_lint",
+    ],
+)
