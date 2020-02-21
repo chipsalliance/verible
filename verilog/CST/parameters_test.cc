@@ -230,6 +230,59 @@ TEST(GetAllParameterNameTokensTest, BasicTests) {
   }
 }
 
+// Tests that GetAllAssignedParameterSymbols correctly returns all the
+// symbols for each kParameterAssign node
+TEST(GetAllAssignedParameterSymbolsTest, BasicTests) {
+  const std::pair<std::string, int> kTestCases[] = {
+      {"module foo; parameter Bar = 1; endmodule", 0},
+      {"module foo; localparam Bar_1 = 1; endmodule", 0},
+      {"module foo; localparam int HelloWorld = 1; endmodule", 0},
+      {"module foo #(parameter int HelloWorld1 = 1); endmodule", 0},
+      {"class foo; parameter HelloWorld_1 = 1; endclass", 0},
+      {"class foo; localparam FooBar = 1; endclass", 0},
+      {"class foo; localparam int Bar_1_1 = 1; endclass", 0},
+      {"package foo; parameter BAR = 1; endpackage", 0},
+      {"package foo; parameter int HELLO_WORLD = 1; endpackage", 0},
+      {"parameter int Bar = 1;", 0},
+      {"parameter int Bar = 1, Foo = 1;", 1},
+      {"parameter int Bar = 1, Foo = 1, Baz = 1;", 2},
+      {"module foo; parameter int Bar = 1; endmodule;", 0},
+      {"module foo; parameter int Bar = 1, Foo = 1; endmodule;", 1},
+      {"module foo; parameter int Bar = 1, Foo = 1, Baz = 1; endmodule;", 2},
+  };
+
+  for (const auto& test : kTestCases) {
+    VerilogAnalyzer analyzer(test.first, "");
+    ASSERT_OK(analyzer.Analyze());
+    const auto& root = analyzer.Data().SyntaxTree();
+    const auto param_declarations = FindAllParamDeclarations(*root);
+    const auto assigned_parameters =
+        GetAllAssignedParameterSymbols(*param_declarations.front().match);
+    EXPECT_EQ(assigned_parameters.size(), test.second);
+  }
+}
+
+TEST(GetAssignedParameterNameToken, BasicTests) {
+  const std::pair<std::string, absl::string_view> kTestCases[] = {
+      {"parameter int Bar = 1, Foo = 1;", "Foo"},
+      {"module foo; parameter int Bar = 1, Fox = 1; endmodule;", "Fox"},
+  };
+
+  for (const auto& test : kTestCases) {
+    VerilogAnalyzer analyzer(test.first, "");
+    ASSERT_OK(analyzer.Analyze());
+    const auto& root = analyzer.Data().SyntaxTree();
+    const auto param_declarations = FindAllParamDeclarations(*root);
+    const auto assigned_parameters =
+        GetAllAssignedParameterSymbols(*param_declarations.front().match);
+    EXPECT_EQ(assigned_parameters.size(), 1);
+
+    const auto name_token =
+        GetAssignedParameterNameToken(*assigned_parameters.front());
+    EXPECT_EQ(name_token.text, test.second);
+  }
+}
+
 // Tests that GetSymbolIdentifierFromParamDeclaration correctly returns the
 // token of the symbol identifier.
 TEST(GetSymbolIdentifierFromParamDeclarationTest, BasicTests) {
