@@ -79,11 +79,6 @@ const verible::TokenInfo& GetParameterNameToken(const verible::Symbol& symbol) {
 
 std::vector<const verible::TokenInfo*> GetAllParameterNameTokens(
     const verible::Symbol& symbol) {
-  // Can be used only in kParamDeclaration context
-  auto t = symbol.Tag();
-  CHECK_EQ(t.kind, verible::SymbolKind::kNode);
-  CHECK_EQ(NodeEnum(t.tag), NodeEnum::kParamDeclaration);
-
   std::vector<const verible::TokenInfo*> identifiers;
   identifiers.push_back(&GetParameterNameToken(symbol));
 
