@@ -4,8 +4,19 @@
 # Run tests with
 #  bazel test ...
 
+load("@com_github_google_rules_install//installer:def.bzl", "installer")
+
 licenses(["notice"])  # Apache 2.0
 
 exports_files([
     "LICENSE",
 ])
+
+installer(
+    name = "install",
+    data = [
+        "//verilog/tools/formatter:verilog_format",
+        "//verilog/tools/lint:verilog_lint",
+        "//verilog/tools/syntax:verilog_syntax",
+    ],
+)

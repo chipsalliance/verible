@@ -43,6 +43,22 @@ load("@rules_foreign_cc//:workspace_definitions.bzl", "rules_foreign_cc_dependen
 
 rules_foreign_cc_dependencies()
 
+# 'make install' equivalent rule
+http_archive(
+    name = "com_github_google_rules_install",
+    sha256 = "ea2a9f94fed090859589ac851af3a1c6034c5f333804f044f8f094257c33bdb3",
+    strip_prefix = "bazel_rules_install-0.3",
+    urls = ["https://github.com/google/bazel_rules_install/releases/download/0.3/bazel_rules_install-0.3.tar.gz"],
+)
+
+load("@com_github_google_rules_install//:deps.bzl", "install_rules_dependencies")
+
+install_rules_dependencies()
+
+load("@com_github_google_rules_install//:setup.bzl", "install_rules_setup")
+
+install_rules_setup()
+
 all_content = """filegroup(name = "all", srcs = glob(["**"]), visibility = ["//visibility:public"])"""
 
 http_archive(
