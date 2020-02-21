@@ -48,6 +48,7 @@ cc_library(
         ":parameter_name_style_rule",
         ":parameter_type_name_style_rule",
         ":plusarg_assignment_rule",
+        ":positive_meaning_parameter_name_rule",
         ":posix_eof_rule",
         ":proper_parameter_declaration_rule",
         ":signal_name_style_rule",
@@ -117,6 +118,45 @@ cc_test(
         "//common/text:symbol",
         "//verilog/analysis:verilog_analyzer",
         "//verilog/parser:verilog_token_enum",
+        "@com_google_googletest//:gtest_main",
+    ],
+)
+
+cc_library(
+    name = "positive_meaning_parameter_name_rule",
+    srcs = ["positive_meaning_parameter_name_rule.cc"],
+    hdrs = ["positive_meaning_parameter_name_rule.h"],
+    deps = [
+        "//common/analysis:citation",
+        "//common/analysis:lint_rule_status",
+        "//common/analysis:syntax_tree_lint_rule",
+        "//common/analysis/matcher",
+        "//common/analysis/matcher:bound_symbol_manager",
+        "//common/analysis/matcher:matcher_builders",
+        "//common/strings:naming_utils",
+        "//common/text:symbol",
+        "//common/text:syntax_tree_context",
+        "//common/text:token_info",
+        "//verilog/CST:parameters",
+        "//verilog/CST:verilog_matchers",
+        "//verilog/analysis:descriptions",
+        "//verilog/analysis:lint_rule_registry",
+        "//verilog/parser:verilog_token_enum",
+        "@com_google_absl//absl/strings",
+    ],
+    alwayslink = 1,
+)
+
+cc_test(
+    name = "positive_meaning_parameter_name_rule_test",
+    srcs = ["positive_meaning_parameter_name_rule_test.cc"],
+    deps = [
+        ":positive_meaning_parameter_name_rule",
+        "//common/analysis:linter_test_utils",
+        "//common/analysis:syntax_tree_linter_test_utils",
+        "//common/text:symbol",
+        "//verilog/CST:verilog_nonterminals",
+        "//verilog/analysis:verilog_analyzer",
         "@com_google_googletest//:gtest_main",
     ],
 )
