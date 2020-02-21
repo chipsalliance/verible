@@ -36,6 +36,13 @@ std::vector<verible::TreeSearchMatch> FindAllConstraintDeclarations(
   return verible::SearchSyntaxTree(root, NodekConstraintDeclaration());
 }
 
+bool IsOutOfLineConstraintDefinition(const verible::Symbol& symbol) {
+  const auto* identifier_symbol =
+      verible::GetSubtreeAsSymbol(symbol, NodeEnum::kConstraintDeclaration, 2);
+
+  return IdIsQualified(*identifier_symbol);
+}
+
 const verible::TokenInfo& GetSymbolIdentifierFromConstraintDeclaration(
     const verible::Symbol& symbol) {
   const auto* identifier_symbol =

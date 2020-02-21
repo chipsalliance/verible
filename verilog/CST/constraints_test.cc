@@ -66,6 +66,26 @@ TEST(FindAllConstraintDeclarationsTest, BasicTests) {
   }
 }
 
+TEST(IsOutOfLineConstraintDefinitionTest, BasicTests) {
+  const std::pair<std::string, bool> kTestCases[] = {
+      {"class foo; rand logic a; constraint Bar { a < 16; } endclass", false},
+      {"constraint classname::constraint_c { a <= b; }", true},
+  };
+  for (const auto& test : kTestCases) {
+    VerilogAnalyzer analyzer(test.first, "");
+    ASSERT_OK(analyzer.Analyze());
+    const auto& root = analyzer.Data().SyntaxTree();
+
+    std::vector<verible::TreeSearchMatch> constraint_declarations =
+        FindAllConstraintDeclarations(*root);
+    EXPECT_EQ(constraint_declarations.size(), 1);
+
+    bool out_of_line =
+        IsOutOfLineConstraintDefinition(*constraint_declarations.front().match);
+    EXPECT_EQ(out_of_line, test.second);
+  }
+}
+
 // Tests that GetSymbolIdentifierFromConstraintDeclaration correctly returns
 // the token of the symbol identifier.
 TEST(GetSymbolIdentifierFromConstraintDeclarationTest, BasicTests) {
