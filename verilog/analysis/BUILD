@@ -124,6 +124,22 @@ cc_library(
 )
 
 cc_library(
+    name = "verilog_equivalence",
+    srcs = ["verilog_equivalence.cc"],
+    hdrs = ["verilog_equivalence.h"],
+    deps = [
+        "//common/text:token_info",
+        "//common/text:token_stream_view",
+        "//common/util:logging",
+        "//verilog/parser:verilog_lexer",
+        "//verilog/parser:verilog_parser",
+        "//verilog/parser:verilog_token_classifications",
+        "//verilog/parser:verilog_token_enum",
+        "@com_google_absl//absl/strings",
+    ],
+)
+
+cc_library(
     name = "verilog_linter_configuration",
     srcs = ["verilog_linter_configuration.cc"],
     hdrs = ["verilog_linter_configuration.h"],

@@ -35,6 +35,7 @@
 #include "common/util/status.h"
 #include "common/util/vector_tree.h"
 #include "verilog/analysis/verilog_analyzer.h"
+#include "verilog/analysis/verilog_equivalence.h"
 #include "verilog/formatting/comment_controls.h"
 #include "verilog/formatting/format_style.h"
 #include "verilog/formatting/token_annotator.h"

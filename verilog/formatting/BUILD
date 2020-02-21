@@ -35,6 +35,7 @@ cc_library(
         "//common/util:value_saver",
         "//verilog/CST:identifier",
         "//verilog/CST:verilog_nonterminals",
+        "//verilog/analysis:verilog_equivalence",
         "//verilog/parser:verilog_parser",  # only for verilog_symbol_name
         "//verilog/parser:verilog_token_classifications",
         "//verilog/parser:verilog_token_enum",
@@ -108,13 +109,13 @@ cc_library(
         "//common/text:text_structure",
         "//common/text:token_info",
         "//common/util:expandable_tree_view",
-        "//common/util:interval_set",
         "//common/util:iterator_range",
         "//common/util:logging",
         "//common/util:spacer",
         "//common/util:status",
         "//common/util:vector_tree",
         "//verilog/analysis:verilog_analyzer",
+        "//verilog/analysis:verilog_equivalence",
         "//verilog/parser:verilog_token_enum",
     ],
 )
