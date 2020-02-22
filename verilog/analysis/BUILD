@@ -266,3 +266,20 @@ cc_test(
         "@com_google_googletest//:gtest_main",
     ],
 )
+
+cc_test(
+    name = "verilog_equivalence_test",
+    srcs = ["verilog_equivalence_test.cc"],
+    deps = [
+        ":verilog_analyzer",
+        ":verilog_equivalence",
+        "//common/text:constants",
+        "//common/text:token_info",
+        "//common/text:token_stream_view",
+        "//common/util:logging",
+        "//common/util:status",
+        "//verilog/parser:verilog_token_enum",
+        "@com_google_absl//absl/strings",
+        "@com_google_googletest//:gtest_main",
+    ],
+)

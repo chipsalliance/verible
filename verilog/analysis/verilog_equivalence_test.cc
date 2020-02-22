@@ -12,6 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include "verilog/analysis/verilog_equivalence.h"
+
 #include <iostream>
 #include <memory>
 #include <vector>
@@ -35,7 +37,6 @@
 namespace verilog {
 namespace {
 
-using verible::SyntaxTreeLeaf;
 using verible::TokenInfo;
 
 template <typename T>
