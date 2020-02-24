@@ -44,8 +44,11 @@ struct TokenInfo {
   // Note, however, that the bounds of the internal string_view in this case
   // do not correspond to any subrange of valid string.
   // If you need the string_view range to refer to (the end of) another string,
-  // explicitly initialize using one of the constructors with string_view.
+  // use the following overload that accepts a string.
   static TokenInfo EOFToken();
+
+  // Construct an EOF token that points to the end of a string buffer.
+  static TokenInfo EOFToken(absl::string_view);
 
   // Hide default constructor, force explicit initialization or call to
   // EOFToken().
@@ -53,13 +56,6 @@ struct TokenInfo {
 
   TokenInfo(int token_enum, absl::string_view text)
       : token_enum(token_enum), text(text) {}
-
-  // Call this with length 0 to initialize a null token that points to
-  // the beginning of string buffer, along which the string_view can advance.
-  // This is particularly useful in lexer initialization, where tokenization
-  // advances substring ranges along a string buffer.
-  TokenInfo(int token_enum, absl::string_view text, int length)
-      : token_enum(token_enum), text(text.substr(0, length)) {}
 
   TokenInfo(const TokenInfo&) = default;
   TokenInfo(TokenInfo&&) = default;
@@ -150,6 +146,14 @@ struct TokenInfo {
   bool EquivalentWithoutLocation(const TokenInfo& token) const {
     return token_enum == token.token_enum &&
            (token_enum == TK_EOF || text == token.text);
+  }
+
+  // Returns true if tokens have equal enum and equal string length (but
+  // otherwise ignoring string contents).  This is useful for verifying
+  // space-preserving obfuscation transformations.
+  bool EquivalentBySpace(const TokenInfo& token) const {
+    return token_enum == token.token_enum &&
+           (token_enum == TK_EOF || text.length() == token.text.length());
   }
 
   bool isEOF() const { return token_enum == TK_EOF; }

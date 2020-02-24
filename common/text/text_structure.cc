@@ -136,7 +136,7 @@ TokenRange TextStructureView::TokenRangeOnLine(size_t lineno) const {
 }
 
 TokenInfo TextStructureView::EOFToken() const {
-  return TokenInfo(verible::TK_EOF, absl::string_view(Contents().end(), 0));
+  return TokenInfo::EOFToken(Contents());
 }
 
 // Removes tokens from the TokenStreamView that do not satisfy the keep

@@ -41,7 +41,7 @@ TEST(TokenInfoTest, EnumTextConstruction) {
 // Test updating text.
 TEST(TokenInfoTest, AdvanceText) {
   constexpr absl::string_view text = "This quick brown fox...";
-  TokenInfo token_info(1, text, 0);
+  TokenInfo token_info(1, text.substr(0, 0));
   EXPECT_TRUE(BoundsEqual(token_info.text, text.substr(0, 0)));
   token_info.AdvanceText(3);
   EXPECT_TRUE(BoundsEqual(token_info.text, text.substr(0, 3)));
@@ -73,13 +73,21 @@ TEST(TokenInfoTest, EOFEquality) {
   EXPECT_EQ(token_info_2, token_info_1);
 }
 
+TEST(TokenInfoTest, EOFWithBuffer) {
+  constexpr absl::string_view text("string of length 21");
+  TokenInfo token_info = TokenInfo::EOFToken(text);
+  EXPECT_EQ(token_info.token_enum, TK_EOF);
+  EXPECT_EQ(token_info.text.begin(), text.end());
+  EXPECT_EQ(token_info.text.end(), text.end());
+}
+
 // Test operator !=.
 TEST(TokenInfoTest, Inequality) {
-  constexpr char text[] = "string of length 21";
+  constexpr absl::string_view text("string of length 21");
   const std::vector<TokenInfo> token_infos = {
       TokenInfo(143, text),
       TokenInfo(43, text),
-      TokenInfo(143, text, 1),  // substring length 1
+      TokenInfo(143, text.substr(0, 1)),  // substring length 1
       TokenInfo(143, "different string"),
   };
   const auto N = token_infos.size();
@@ -113,6 +121,42 @@ TEST(TokenInfoTest, EquivalentEOF) {
   EXPECT_TRUE(token_1.EquivalentWithoutLocation(token_0));
   EXPECT_TRUE(token_0.EquivalentWithoutLocation(token_2));
   EXPECT_TRUE(token_2.EquivalentWithoutLocation(token_0));
+}
+
+TEST(TokenInfoTest, EquivalentBySpaceEmpty) {
+  TokenInfo t0(1, "");
+  TokenInfo t1(1, "");
+  EXPECT_TRUE(t0.EquivalentBySpace(t1));
+  EXPECT_TRUE(t1.EquivalentBySpace(t0));
+}
+
+TEST(TokenInfoTest, EquivalentBySpaceDiffEnum) {
+  TokenInfo t0(1, "");
+  TokenInfo t1(2, "");
+  EXPECT_FALSE(t0.EquivalentBySpace(t1));
+  EXPECT_FALSE(t1.EquivalentBySpace(t0));
+}
+
+TEST(TokenInfoTest, EquivalentBySpaceDiffLengthText) {
+  TokenInfo t0(1, "a");
+  TokenInfo t1(1, "aa");
+  EXPECT_FALSE(t0.EquivalentBySpace(t1));
+  EXPECT_FALSE(t1.EquivalentBySpace(t0));
+}
+
+TEST(TokenInfoTest, EquivalentBySpaceDiffTextEqualLength) {
+  TokenInfo t0(1, "bb");
+  TokenInfo t1(1, "aa");
+  EXPECT_TRUE(t0.EquivalentBySpace(t1));
+  EXPECT_TRUE(t1.EquivalentBySpace(t0));
+}
+
+TEST(TokenInfoTest, EquivalentBySpaceEOF) {
+  // text is ignored in EOF case
+  TokenInfo t0(TK_EOF, "xyz");
+  TokenInfo t1(TK_EOF, "12345");
+  EXPECT_TRUE(t0.EquivalentBySpace(t1));
+  EXPECT_TRUE(t1.EquivalentBySpace(t0));
 }
 
 // This test verifies comparison against EOF.
