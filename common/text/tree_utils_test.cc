@@ -618,7 +618,10 @@ TEST_F(FindSubtreeStartingAtOffsetTest, LeafOnlyOffsetGreaterThan) {
   EXPECT_EQ(subtree, nullptr);
 }
 
-constexpr absl::string_view kBaseText("abcdefghijklmnopqrst");
+// Allow to look beyond kBaseText by cutting it out of a larger string.
+constexpr absl::string_view kBaseTextPadded("_abcdefghijklmnopqrst_");
+constexpr absl::string_view kBaseText = {kBaseTextPadded.data() + 1,
+                                         kBaseTextPadded.length() - 2};
 
 // Return a tree with monotonically increasing token locations.
 // This is suitable for tests that require only location offsets,
@@ -644,6 +647,7 @@ struct FindSubtreeStartingAtOffsetFakeTreeTest : public testing::Test {
 
 // Test that a whole tree is returned when offset is less than leftmost token.
 TEST_F(FindSubtreeStartingAtOffsetFakeTreeTest, TreeOffsetLessThanFirstToken) {
+  // Note: begin() - 1 points to a valid location due to kBaseTextPadded
   SymbolPtr* subtree =
       FindSubtreeStartingAtOffset(&tree, kBaseText.begin() - 1);
   EXPECT_EQ(*subtree, tree);
