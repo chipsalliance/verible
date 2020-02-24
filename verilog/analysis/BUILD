@@ -279,7 +279,9 @@ cc_test(
         "//common/util:logging",
         "//common/util:status",
         "//verilog/parser:verilog_token_enum",
+        "@com_google_absl//absl/memory",
         "@com_google_absl//absl/strings",
+        "@com_google_absl//absl/types:span",
         "@com_google_googletest//:gtest_main",
     ],
 )
