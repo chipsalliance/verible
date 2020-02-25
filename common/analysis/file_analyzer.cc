@@ -22,6 +22,7 @@
 
 #include "absl/strings/string_view.h"
 #include "common/lexer/lexer.h"
+#include "common/lexer/token_stream_adapter.h"
 #include "common/parser/parse.h"
 #include "common/text/concrete_syntax_tree.h"
 #include "common/text/line_column_map.h"
@@ -56,26 +57,18 @@ std::ostream& operator<<(std::ostream& stream, const AnalysisPhase& phase) {
 
 // Grab tokens until EOF, and initialize a stream view with all tokens.
 util::Status FileAnalyzer::Tokenize(Lexer* lexer) {
-  // TODO(fangism): provide a Lexer interface to grab all tokens en masse,
-  // which would save virtual function dispatch overhead.
-  lexer->Restart(Data().Contents());
+  const auto buffer = Data().Contents();
   TokenSequence& tokens = MutableData().MutableTokenStream();
-  do {
-    const auto& new_token = lexer->DoNextToken();
-    tokens.push_back(new_token);
-    if (lexer->TokenIsError(new_token)) {  // one more virtual function call
-      VLOG(1) << "Lexical error with token: " << new_token;
-      rejected_tokens_.push_back(
-          RejectedToken{new_token, AnalysisPhase::kLexPhase,
-                        "" /* no detailed explanation */});
-      // Stop-on-first-error.  Error details are in the RejectedToken.
-      return util::InvalidArgumentError("Lexical error.");
-    }
-  } while (!tokens.back().isEOF());
-  // Final token is EOF.
-  // Force EOF token's text range to be empty, pointing to end of original
-  // string.  Otherwise, its range ends up overlapping with the previous token.
-  tokens.back() = Data().EOFToken();
+
+  const auto lex_status = MakeTokenSequence(
+      lexer, buffer, &tokens, [&](const TokenInfo& error_token) {
+        VLOG(1) << "Lexical error with token: " << error_token;
+        // Save error details in rejected_tokens_.
+        rejected_tokens_.push_back(
+            RejectedToken{error_token, AnalysisPhase::kLexPhase,
+                          "" /* no detailed explanation */});
+      });
+  if (!lex_status.ok()) return lex_status;
 
   // Partition token stream into line-by-line slices.
   MutableData().CalculateFirstTokensPerLine();

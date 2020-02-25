@@ -36,6 +36,21 @@
 
 namespace verible {
 
+// Modeled after the Lexer base class.
+class FakeLexer {
+ protected:
+  explicit FakeLexer() {}
+
+  void SetTokensData(const std::vector<TokenInfo>& tokens);
+
+ public:
+  const TokenInfo& DoNextToken();
+
+ protected:
+  std::vector<TokenInfo> tokens_;
+  std::vector<TokenInfo>::const_iterator tokens_iter_;
+};
+
 // Streamable adaptor for displaying code on error.
 // Usage: stream << ShowCode{text};
 // Consider this private, only intended for use in this library.

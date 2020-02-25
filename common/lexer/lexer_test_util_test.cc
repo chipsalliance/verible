@@ -35,27 +35,6 @@ TEST(ShowCodeStreamableTest, ContainsCode) {
   EXPECT_TRUE(absl::StrContains(stream.str(), code));
 }
 
-// Modeled after Lexer base class in lexer.h.
-class FakeLexer {
- protected:
-  explicit FakeLexer() {}
-
-  void SetTokensData(std::initializer_list<TokenInfo> tokens) {
-    tokens_ = tokens;
-    tokens_iter_ = tokens_.begin();
-  }
-
- public:
-  const TokenInfo& DoNextToken() {
-    CHECK(tokens_iter_ != tokens_.cend());
-    return *tokens_iter_++;
-  }
-
- private:
-  std::vector<TokenInfo> tokens_;
-  std::vector<TokenInfo>::const_iterator tokens_iter_;
-};
-
 // For use with TestDriverTokenInfos only
 class TestDriverTokenInfosFakeLexer : public FakeLexer {
  public:

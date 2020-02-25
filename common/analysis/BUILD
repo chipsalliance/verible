@@ -62,6 +62,7 @@ cc_library(
     hdrs = ["file_analyzer.h"],
     deps = [
         "//common/lexer",
+        "//common/lexer:token_stream_adapter",
         "//common/parser:parse",
         "//common/text:concrete_syntax_tree",
         "//common/text:line_column_map",

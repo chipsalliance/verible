@@ -21,14 +21,22 @@
 #include <iterator>
 #include <type_traits>
 
+#include "absl/strings/string_view.h"
 #include "common/lexer/lexer.h"
 #include "common/lexer/token_generator.h"
 #include "common/text/token_info.h"
+#include "common/text/token_stream_view.h"
+#include "common/util/status.h"
 
 namespace verible {
 
 // Creates a TokenInfo generator from a Lexer object.
 TokenGenerator MakeTokenGenerator(Lexer* l);
+
+// Populates a TokenSequence with lexed tokens.
+util::Status MakeTokenSequence(
+    Lexer* lexer, absl::string_view text, TokenSequence* tokens,
+    std::function<void(const TokenInfo&)> error_token_handler);
 
 // Generic container-to-iterator-generator adapter.
 // Once the end is reached, keep returning the end iterator.

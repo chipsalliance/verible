@@ -27,6 +27,9 @@ cc_library(
         ":lexer",
         ":token_generator",
         "//common/text:token_info",
+        "//common/text:token_stream_view",
+        "//common/util:status",
+        "@com_google_absl//absl/strings",
     ],
 )
 
@@ -74,6 +77,19 @@ cc_test(
         "//common/text:token_info",
         "//common/util:logging",
         "@com_google_absl//absl/strings",
+        "@com_google_googletest//:gtest_main",
+    ],
+)
+
+cc_test(
+    name = "token_stream_adapter_test",
+    srcs = ["token_stream_adapter_test.cc"],
+    deps = [
+        ":lexer",
+        ":lexer_test_util",
+        ":token_stream_adapter",
+        "//common/text:token_info",
+        "//common/util:status",
         "@com_google_googletest//:gtest_main",
     ],
 )
