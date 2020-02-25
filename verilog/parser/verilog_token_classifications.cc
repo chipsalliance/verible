@@ -62,7 +62,7 @@ bool IsTernaryOperator(verilog_tokentype token_type) {
 }
 
 bool IsPreprocessorControlFlow(verilog_tokentype token_type) {
-  switch (static_cast<int>(token_type)) {
+  switch (token_type) {
     case verilog_tokentype::PP_ifdef:
     case verilog_tokentype::PP_ifndef:
     case verilog_tokentype::PP_elsif:
@@ -70,13 +70,12 @@ bool IsPreprocessorControlFlow(verilog_tokentype token_type) {
     case verilog_tokentype::PP_endif:
       return true;
     default:
-      break;
+      return false;
   }
-  return false;
 }
 
 bool IsPreprocessorKeyword(verilog_tokentype token_type) {
-  switch (static_cast<int>(token_type)) {
+  switch (token_type) {
     case verilog_tokentype::PP_include:
     case verilog_tokentype::PP_define:
     case verilog_tokentype::PP_ifdef:
@@ -87,13 +86,12 @@ bool IsPreprocessorKeyword(verilog_tokentype token_type) {
     case verilog_tokentype::PP_undef:
       return true;
     default:
-      break;
+      return false;
   }
-  return false;
 }
 
 bool IsPreprocessorControlToken(verilog_tokentype token_type) {
-  switch (static_cast<int>(token_type)) {
+  switch (token_type) {
     case verilog_tokentype::PP_Identifier:
     case verilog_tokentype::PP_include:
     case verilog_tokentype::PP_define:
@@ -107,12 +105,13 @@ bool IsPreprocessorControlToken(verilog_tokentype token_type) {
     case verilog_tokentype::PP_default_text:
       // Excludes macro call tokens.
       return true;
+    default:
+      return false;
   }
-  return false;
 }
 
 bool IsEndKeyword(verilog_tokentype token_type) {
-  switch (static_cast<int>(token_type)) {
+  switch (token_type) {
     case verilog_tokentype::TK_end:
     case verilog_tokentype::TK_endcase:
     case verilog_tokentype::TK_endgroup:
@@ -128,9 +127,18 @@ bool IsEndKeyword(verilog_tokentype token_type) {
       // TODO(fangism): join and join* keywords?
       return true;
     default:
-      break;
+      return false;
   }
-  return false;
+}
+
+bool IsUnlexed(verilog_tokentype token_type) {
+  switch (token_type) {
+    case verilog_tokentype::MacroArg:
+    case verilog_tokentype::PP_define_body:
+      return true;
+    default:
+      return false;
+  }
 }
 
 }  // namespace verilog

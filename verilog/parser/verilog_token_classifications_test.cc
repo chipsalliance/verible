@@ -67,5 +67,12 @@ TEST(VerilogTokenTest, IsTernaryOperatorTest) {
   EXPECT_TRUE(IsTernaryOperator(verilog_tokentype(':')));
 }
 
+TEST(VerilogTokenTest, IsUnlexedTest) {
+  EXPECT_TRUE(IsUnlexed(verilog_tokentype::PP_define_body));
+  EXPECT_TRUE(IsUnlexed(verilog_tokentype::MacroArg));
+  EXPECT_FALSE(IsUnlexed(verilog_tokentype::TK_COMMENT_BLOCK));
+  EXPECT_FALSE(IsUnlexed(verilog_tokentype::SymbolIdentifier));
+}
+
 }  // namespace
 }  // namespace verilog
