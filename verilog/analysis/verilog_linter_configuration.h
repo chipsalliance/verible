@@ -31,8 +31,11 @@
 
 namespace verilog {
 
-// Enum to determine if a rule is on or off
-enum class RuleSetting { kRuleOn, kRuleOff };
+// Setting for a configuration
+struct RuleSetting {
+  bool enabled;
+  std::string configuration;
+};
 
 // Enum denoting a ruleset
 //   kNone     no rules are enabled
@@ -142,11 +145,11 @@ class LinterConfiguration {
   LinterConfiguration(const LinterConfiguration&) = default;
 
   void TurnOn(const analysis::LintRuleId& rule) {
-    configuration_[rule] = RuleSetting::kRuleOn;
+    configuration_[rule] = {true, ""};
   }
 
   void TurnOff(const analysis::LintRuleId& rule) {
-    configuration_[rule] = RuleSetting::kRuleOff;
+    configuration_[rule] = {false, ""};
   }
 
   bool RuleIsOn(const analysis::LintRuleId& rule) const;

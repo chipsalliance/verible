@@ -19,6 +19,7 @@
 #include <string>
 
 #include "gtest/gtest.h"
+#include "absl/strings/match.h"
 #include "common/analysis/linter_test_utils.h"
 #include "common/analysis/text_structure_linter_test_utils.h"
 #include "common/text/symbol.h"
@@ -31,6 +32,22 @@ namespace {
 
 using verible::LintTestCase;
 using verible::RunLintTestCases;
+
+TEST(LineLengthRuleTest, Configuration) {
+  LineLengthRule rule;
+  verible::util::Status status;
+  EXPECT_TRUE((status = rule.Configure("")).ok()) << status.message();
+  EXPECT_TRUE((status = rule.Configure("length:50")).ok()) << status.message();
+
+  EXPECT_FALSE((status = rule.Configure("foo:42")).ok());
+  EXPECT_TRUE(absl::StrContains(status.message(), "supported parameter"));
+
+  EXPECT_FALSE((status = rule.Configure("length:hello")).ok());
+  EXPECT_TRUE(absl::StrContains(status.message(), "integer value"));
+
+  EXPECT_FALSE((status = rule.Configure("length:-1")).ok());
+  EXPECT_TRUE(absl::StrContains(status.message(), "out of range"));
+}
 
 // Tests that space-only text passes.
 TEST(LineLengthRuleTest, AcceptsText) {
@@ -134,7 +151,7 @@ TEST(LineLengthRuleTest, AcceptsTextExceptions) {
   // Make sure that these lines would normally be flagged by this rule.
   for (const auto& test : kTestCases) {
     VLOG(1) << "TEST: " << test.code;
-    EXPECT_TRUE(test.code.length() > LineLengthRule::kMaxLineLength)
+    EXPECT_TRUE(test.code.length() > LineLengthRule::kDefaultLineLength)
         << "code:\n"
         << test.code;
   }

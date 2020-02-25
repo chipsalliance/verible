@@ -22,6 +22,7 @@
 #include "absl/strings/ascii.h"
 #include "absl/strings/match.h"
 #include "absl/strings/str_cat.h"
+#include "absl/strings/str_split.h"
 #include "absl/strings/string_view.h"
 #include "common/analysis/citation.h"
 #include "common/analysis/lint_rule_status.h"
@@ -66,11 +67,15 @@ static bool ContainsAnyWhitespace(absl::string_view s) {
 #endif
 
 std::string LineLengthRule::GetDescription(DescriptionType description_type) {
-  return absl::StrCat(
-      "Checks that all lines do not exceed the maximum allowed length, "
-      "currently set to ",
-      LineLengthRule::kMaxLineLength, " characters. See ",
-      GetStyleGuideCitation(kTopic), ".");
+  static std::string basic_desc = absl::StrCat(
+      "Checks that all lines do not exceed the maximum allowed length. ",
+      "See ", GetStyleGuideCitation(kTopic), ".\n");
+  if (description_type == DescriptionType::kHelpRulesFlag) {
+    return absl::StrCat(basic_desc, "Parameters: length:", kDefaultLineLength);
+  } else {
+    return absl::StrCat(basic_desc, "##### Parameters\n",
+                        "  * length Default: ", kDefaultLineLength);
+  }
 }
 
 // Returns true if line is an exceptional case that should allow excessive
@@ -160,20 +165,46 @@ void LineLengthRule::Lint(const TextStructureView& text_structure,
   for (const auto& line : text_structure.Lines()) {
     VLOG(2) << "Examining line: " << lineno + 1;
     const int observed_line_length = verible::utf8_len(line);
-    if (observed_line_length > kMaxLineLength) {
+    if (observed_line_length > line_length_limit_) {
       const auto token_range = text_structure.TokenRangeOnLine(lineno);
       // Recall that token_range is *unfiltered* and may contain non-essential
       // whitespace 'tokens'.
       if (!AllowLongLineException(token_range.begin(), token_range.end())) {
         // Fake a token that marks the offending range of text.
-        TokenInfo token(TK_OTHER, line.substr(kMaxLineLength));
-        const std::string msg = absl::StrCat(kMessage, kMaxLineLength,
+        TokenInfo token(TK_OTHER, line.substr(line_length_limit_));
+        const std::string msg = absl::StrCat(kMessage, line_length_limit_,
                                              "; is: ", observed_line_length);
         violations_.insert(LintViolation(token, msg));
       }
     }
     ++lineno;
   }
+}
+
+verible::util::Status LineLengthRule::Configure(
+    absl::string_view configuration) {
+  if (configuration.empty()) return verible::util::OkStatus();
+  using verible::util::InvalidArgumentError;
+  const std::pair<absl::string_view, absl::string_view> nv_pair =
+      absl::StrSplit(configuration, ':', absl::SkipEmpty());
+  if (nv_pair.first != "length") {
+    return InvalidArgumentError(absl::StrCat(
+        "Only supported parameter 'length' (got '", nv_pair.first, "')"));
+  }
+  int value;
+  if (!absl::SimpleAtoi(nv_pair.second, &value)) {
+    return InvalidArgumentError(
+        absl::StrCat("Can not parse ", nv_pair.second,
+                     " as integer value for 'length:' parameter"));
+  }
+  // Plausible range ?
+  if (value < kMinimumLineLength || value > kMaximumLineLength) {
+    return InvalidArgumentError(
+        absl::StrCat("Value 'length:", value, "' out of range [",
+                     kMinimumLineLength, "...", kMaximumLineLength, "]"));
+  }
+  line_length_limit_ = value;
+  return verible::util::OkStatus();
 }
 
 LintRuleStatus LineLengthRule::Report() const {

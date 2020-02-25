@@ -585,17 +585,22 @@ TEST(RuleSetTest, UnparseRuleSetSuccess) {
 // Tests for parse / unparse on RuleBundle
 //
 TEST(RuleBundleTest, UnparseRuleBundleSeveral) {
-  RuleBundle bundle = {
-      {{"flag1", RuleSetting::kRuleOn}, {"flag2", RuleSetting::kRuleOn}}};
+  RuleBundle bundle = {{{"flag1", {true, ""}}, {"flag2", {true, ""}}}};
   std::string expected = "flag2,flag1";
   std::string result = AbslUnparseFlag(bundle);
   EXPECT_EQ(result, expected);
 }
 
 TEST(RuleBundleTest, UnparseRuleBundleSeveralTurnOff) {
-  RuleBundle bundle = {
-      {{"flag1", RuleSetting::kRuleOff}, {"flag2", RuleSetting::kRuleOn}}};
+  RuleBundle bundle = {{{"flag1", {false, ""}}, {"flag2", {true, ""}}}};
   std::string expected = "flag2,-flag1";
+  std::string result = AbslUnparseFlag(bundle);
+  EXPECT_EQ(result, expected);
+}
+
+TEST(RuleBundleTest, UnparseRuleBundleSeveralConfiguration) {
+  RuleBundle bundle = {{{"flag1", {false, "foo"}}, {"flag2", {true, "bar"}}}};
+  std::string expected = "flag2=bar,-flag1=foo";
   std::string result = AbslUnparseFlag(bundle);
   EXPECT_EQ(result, expected);
 }
@@ -623,8 +628,29 @@ TEST(RuleBundleTest, ParseRuleBundleAcceptSeveral) {
   bool success = AbslParseFlag(text, &bundle, &error);
   ASSERT_TRUE(success);
   ASSERT_THAT(bundle.rules, SizeIs(2));
-  EXPECT_EQ(bundle.rules["test-rule-1"], RuleSetting::kRuleOn);
-  EXPECT_EQ(bundle.rules["test-rule-2"], RuleSetting::kRuleOn);
+  EXPECT_TRUE(bundle.rules["test-rule-1"].enabled);
+  EXPECT_TRUE(bundle.rules["test-rule-2"].enabled);
+}
+
+TEST(RuleBundleTest, ParseRuleBundleAcceptConfiguration) {
+  auto text = "test-rule-1=foo,test-rule-2=,test-rule-3,-test-rule-4=bar";
+  RuleBundle bundle;
+  std::string error;
+  bool success = AbslParseFlag(text, &bundle, &error);
+  ASSERT_TRUE(success);
+  ASSERT_THAT(bundle.rules, SizeIs(4));
+
+  EXPECT_TRUE(bundle.rules["test-rule-1"].enabled);
+  EXPECT_EQ("foo", bundle.rules["test-rule-1"].configuration);
+
+  EXPECT_TRUE(bundle.rules["test-rule-2"].enabled);
+  EXPECT_TRUE(bundle.rules["test-rule-2"].configuration.empty());
+
+  EXPECT_TRUE(bundle.rules["test-rule-3"].enabled);
+  EXPECT_TRUE(bundle.rules["test-rule-3"].configuration.empty());
+
+  EXPECT_FALSE(bundle.rules["test-rule-4"].enabled);
+  EXPECT_EQ("bar", bundle.rules["test-rule-4"].configuration);
 }
 
 TEST(RuleBundleTest, ParseRuleBundleAcceptOne) {
@@ -634,7 +660,7 @@ TEST(RuleBundleTest, ParseRuleBundleAcceptOne) {
   bool success = AbslParseFlag(text, &bundle, &error);
   ASSERT_TRUE(success);
   ASSERT_THAT(bundle.rules, SizeIs(1));
-  EXPECT_EQ(bundle.rules["test-rule-1"], RuleSetting::kRuleOn);
+  EXPECT_TRUE(bundle.rules["test-rule-1"].enabled);
 }
 
 TEST(RuleBundleTest, ParseRuleBundleAcceptSeveralTurnOff) {
@@ -644,8 +670,8 @@ TEST(RuleBundleTest, ParseRuleBundleAcceptSeveralTurnOff) {
   bool success = AbslParseFlag(text, &bundle, &error);
   ASSERT_TRUE(success);
   ASSERT_THAT(bundle.rules, SizeIs(2));
-  EXPECT_EQ(bundle.rules["test-rule-1"], RuleSetting::kRuleOn);
-  EXPECT_EQ(bundle.rules["test-rule-2"], RuleSetting::kRuleOff);
+  EXPECT_TRUE(bundle.rules["test-rule-1"].enabled);
+  EXPECT_FALSE(bundle.rules["test-rule-2"].enabled);
 }
 
 TEST(RuleBundleTest, ParseRuleBundleAcceptOneTurnOff) {
@@ -655,7 +681,7 @@ TEST(RuleBundleTest, ParseRuleBundleAcceptOneTurnOff) {
   bool success = AbslParseFlag(text, &bundle, &error);
   ASSERT_TRUE(success);
   ASSERT_THAT(bundle.rules, SizeIs(1));
-  EXPECT_EQ(bundle.rules["test-rule-1"], RuleSetting::kRuleOff);
+  EXPECT_FALSE(bundle.rules["test-rule-1"].enabled);
 }
 
 TEST(RuleBundleTest, ParseRuleBundleReject) {

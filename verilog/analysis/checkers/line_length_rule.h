@@ -22,6 +22,7 @@
 #include "common/analysis/lint_rule_status.h"
 #include "common/analysis/text_structure_lint_rule.h"
 #include "common/text/text_structure.h"
+#include "common/util/status.h"
 #include "verilog/analysis/descriptions.h"
 
 namespace verilog {
@@ -35,7 +36,9 @@ class LineLengthRule : public verible::TextStructureLintRule {
  public:
   enum {
     // Dictated by line-length styleguide rule.
-    kMaxLineLength = 100
+    kDefaultLineLength = 100,
+    kMinimumLineLength = 40,
+    kMaximumLineLength = 1000,
   };
 
   using rule_type = verible::TextStructureLintRule;
@@ -47,6 +50,8 @@ class LineLengthRule : public verible::TextStructureLintRule {
 
   LineLengthRule() {}
 
+  verible::util::Status Configure(absl::string_view configuration) override;
+
   void Lint(const verible::TextStructureView&, absl::string_view) override;
 
   verible::LintRuleStatus Report() const override;
@@ -57,6 +62,8 @@ class LineLengthRule : public verible::TextStructureLintRule {
 
   // Diagnostic message.
   static const char kMessage[];
+
+  int line_length_limit_ = kDefaultLineLength;
 
   // Collection of found violations.
   std::set<verible::LintViolation> violations_;

@@ -36,7 +36,11 @@ cc_library(
 cc_library(
     name = "lint_rule",
     hdrs = ["lint_rule.h"],
-    deps = [":lint_rule_status"],
+    deps = [
+        ":lint_rule_status",
+        "//common/util:status",
+        "@com_google_absl//absl/strings",
+    ],
 )
 
 cc_library(

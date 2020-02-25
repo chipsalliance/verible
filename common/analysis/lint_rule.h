@@ -18,7 +18,11 @@
 #ifndef VERIBLE_COMMON_ANALYSIS_LINT_RULE_H_
 #define VERIBLE_COMMON_ANALYSIS_LINT_RULE_H_
 
+#include <string>
+
+#include "absl/strings/string_view.h"
 #include "common/analysis/lint_rule_status.h"
+#include "common/util/status.h"
 
 namespace verible {
 
@@ -26,6 +30,19 @@ namespace verible {
 class LintRule {
  public:
   virtual ~LintRule() {}
+
+  // If there is a configuration string for this rule, it will be passed to this
+  // rule before use. This is a single string and the rule is free to impose
+  // its own style of configuration (might be more formalized later).
+  //
+  // Returns OK-status if  configuration could be parsed successfully;
+  // on failure, the Error-status will contain a message.
+  // By default, rules don't accept any configuration, so only an empty
+  // configuration is valid.
+  virtual util::Status Configure(absl::string_view configuration) {
+    if (configuration.empty()) return util::OkStatus();
+    return util::InvalidArgumentError("Rule does not support configuration.");
+  }
 
   // Report() returns a LintRuleStatus, which summarizes the results so
   // far of running the LintRule.

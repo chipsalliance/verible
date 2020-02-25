@@ -22,6 +22,7 @@
 #include <utility>
 
 #include "gtest/gtest.h"
+#include "absl/strings/match.h"
 #include "absl/strings/string_view.h"
 #include "common/analysis/line_lint_rule.h"
 #include "common/analysis/lint_rule_status.h"
@@ -225,6 +226,17 @@ TEST(LintRuleRegistryTest, CreateTextLintRuleValid) {
   EXPECT_NE(any_rule, nullptr);
   auto rule_1 = dynamic_cast<TextRule1*>(any_rule.get());
   EXPECT_NE(rule_1, nullptr);
+}
+
+TEST(LintRuleRegistryTest, ConfigureFactoryCreatedRule) {
+  auto any_rule = CreateTextStructureLintRule("text-rule-1");
+  EXPECT_NE(any_rule, nullptr);
+  // Test configuration of freshly instantiated rule.
+  verible::util::Status status = any_rule->Configure("");
+  EXPECT_TRUE(status.ok()) << status.message();
+  status = any_rule->Configure("bogus");
+  EXPECT_FALSE(status.ok());
+  EXPECT_TRUE(absl::StrContains(status.message(), "not support configuration"));
 }
 
 // Verifies that GetAllRuleDescriptionsHelpFlag correctly gets the descriptions

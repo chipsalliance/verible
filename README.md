@@ -315,6 +315,22 @@ verilog_lint: usage: verilog_lint [options] <file> [<file>...]
 Try --helpfull to get a list of all flags.
 ```
 
+#### Rule configuration
+
+The `--rules` flag allows to enable/disable rules as well as pass configuration
+to rules that accept them. It accepts a comma-separated list
+[rule names][lint-rule-list]. If prefixed with a `-` (minus), the rule is
+disabled. An optional configuration can be passed after an `=` assignment.
+
+The following example enables the
+[`enum-name-style`][lint-rule-list_enum-name-style] rule, enables and configures
+the [`line-length`][lint-rule-list_line-length] rule (80 characters length) and
+disables the [`no-tabs`][lint-rule-list_no-tabs] rule.
+
+```
+verilog_lint --rules=enum-name-style,line-length=length:80,-no-tabs ...
+```
+
 #### Waiving Lint Violations {#lint-waiver}
 
 In the rare circumstance where a line needs to be waived from a particular lint
@@ -425,4 +441,7 @@ abstract syntax tree (AST). If you are interested in collaborating, contact us.
 [bazel]: https://bazel.build/
 [SV-LRM]: https://ieeexplore.ieee.org/document/8299595
 [lint-rule-list]: https://google.github.io/verible/lint.html
+[lint-rule-list_enum-name-style]: https://google.github.io/verible/lint.html#enum-name-style
+[lint-rule-list_line-length]: https://google.github.io/verible/lint.html#line-length
+[lint-rule-list_no-tabs]: https://google.github.io/verible/lint.html#no-tabs
 [binary releases]: https://github.com/google/verible/releases

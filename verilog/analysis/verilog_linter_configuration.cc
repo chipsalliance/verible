@@ -15,6 +15,7 @@
 #include "verilog/analysis/verilog_linter_configuration.h"
 
 #include <algorithm>
+#include <functional>
 #include <initializer_list>
 #include <map>
 #include <memory>
@@ -33,6 +34,7 @@
 #include "common/util/container_util.h"
 #include "common/util/enum_flags.h"
 #include "common/util/logging.h"
+#include "common/util/status.h"
 #include "verilog/analysis/default_rules.h"
 #include "verilog/analysis/lint_rule_registry.h"
 
@@ -84,7 +86,7 @@ std::string ProjectPolicy::ListPathGlobs() const {
 bool LinterConfiguration::RuleIsOn(const analysis::LintRuleId& rule) const {
   const auto* entry = FindOrNull(configuration_, rule);
   if (entry == nullptr) return false;
-  return *entry == RuleSetting::kRuleOn;
+  return entry->enabled;
 }
 
 void LinterConfiguration::UseRuleSet(const RuleSet& rules) {
@@ -142,65 +144,66 @@ void LinterConfiguration::UseProjectPolicy(const ProjectPolicy& policy,
 std::set<analysis::LintRuleId> LinterConfiguration::ActiveRuleIds() const {
   std::set<analysis::LintRuleId> result;
   for (const auto& rule_pair : configuration_) {
-    if (rule_pair.second == RuleSetting::kRuleOn) {
+    if (rule_pair.second.enabled) {
       result.insert(rule_pair.first);
     }
   }
   return result;
 }
 
-// Iterates through all stored syntax tree rules that are turned on.
-// Looks up each of those rules in registry_ in order to construct instances
-// that are added to the returned vector.
+// Iterates through all rules that are mentioned and enabled
+// in the "config" map. Constructs instances using the
+// "factory"-function, and configures them if a configuration string is
+// available. Returns a vector of all successfully created instances.
+//
+// T should be a descendant of verible::LintRule.
+template <typename T>
+static std::vector<std::unique_ptr<T>> CreateRules(
+    const std::map<analysis::LintRuleId, RuleSetting>& config,
+    std::function<std::unique_ptr<T>(const analysis::LintRuleId&)> factory) {
+  std::vector<std::unique_ptr<T>> rule_instances;
+  for (const auto& rule_pair : config) {
+    const RuleSetting& setting = rule_pair.second;
+    if (!setting.enabled) continue;
+
+    std::unique_ptr<T> rule_ptr = factory(rule_pair.first);
+    if (rule_ptr == nullptr) continue;
+
+    if (!setting.configuration.empty()) {
+      verible::util::Status status;
+      if (!(status = rule_ptr->Configure(setting.configuration)).ok()) {
+        // TODO(hzeller): return error message to caller to handle ?
+        LOG(QFATAL) << rule_pair.first << ": " << status.message();
+      }
+    }
+
+    rule_instances.push_back(std::move(rule_ptr));
+  }
+  return rule_instances;
+}
+
 std::vector<std::unique_ptr<SyntaxTreeLintRule>>
 LinterConfiguration::CreateSyntaxTreeRules() const {
-  std::vector<std::unique_ptr<SyntaxTreeLintRule>> rule_instances;
-  for (const auto& rule_pair : configuration_) {
-    if (rule_pair.second == RuleSetting::kRuleOn) {
-      std::unique_ptr<SyntaxTreeLintRule> rule_ptr =
-          analysis::CreateSyntaxTreeLintRule(rule_pair.first);
-      if (rule_ptr != nullptr) {
-        rule_instances.push_back(std::move(rule_ptr));
-      }
-    }
-  }
-  return rule_instances;
+  return CreateRules<SyntaxTreeLintRule>(configuration_,
+                                         analysis::CreateSyntaxTreeLintRule);
 }
 
-// Iterates through all stored token-stream rules that are turned on.
-// Looks up each of those rules in registry_ in order to construct instances
-// that are added to the returned vector.
 std::vector<std::unique_ptr<TokenStreamLintRule>>
 LinterConfiguration::CreateTokenStreamRules() const {
-  std::vector<std::unique_ptr<TokenStreamLintRule>> rule_instances;
-  for (const auto& rule_pair : configuration_) {
-    if (rule_pair.second == RuleSetting::kRuleOn) {
-      std::unique_ptr<TokenStreamLintRule> rule_ptr =
-          analysis::CreateTokenStreamLintRule(rule_pair.first);
-      if (rule_ptr != nullptr) {
-        rule_instances.push_back(std::move(rule_ptr));
-      }
-    }
-  }
-  return rule_instances;
+  return CreateRules<TokenStreamLintRule>(configuration_,
+                                          analysis::CreateTokenStreamLintRule);
 }
 
-// Iterates through all stored line-based rules that are turned on.
-// Looks up each of those rules in registry_ in order to construct instances
-// that are added to the returned vector.
 std::vector<std::unique_ptr<LineLintRule>>
 LinterConfiguration::CreateLineRules() const {
-  std::vector<std::unique_ptr<LineLintRule>> rule_instances;
-  for (const auto& rule_pair : configuration_) {
-    if (rule_pair.second == RuleSetting::kRuleOn) {
-      std::unique_ptr<LineLintRule> rule_ptr =
-          analysis::CreateLineLintRule(rule_pair.first);
-      if (rule_ptr != nullptr) {
-        rule_instances.push_back(std::move(rule_ptr));
-      }
-    }
-  }
-  return rule_instances;
+  return CreateRules<LineLintRule>(configuration_,
+                                   analysis::CreateLineLintRule);
+}
+
+std::vector<std::unique_ptr<TextStructureLintRule>>
+LinterConfiguration::CreateTextStructureRules() const {
+  return CreateRules<TextStructureLintRule>(
+      configuration_, analysis::CreateTextStructureLintRule);
 }
 
 bool LinterConfiguration::operator==(const LinterConfiguration& config) const {
@@ -212,24 +215,6 @@ std::ostream& operator<<(std::ostream& stream,
   const auto rules = config.ActiveRuleIds();
   return stream << "{ " << absl::StrJoin(rules.begin(), rules.end(), ", ")
                 << " }";
-}
-
-// Iterates through all stored line-based rules that are turned on.
-// Looks up each of those rules in registry_ in order to construct instances
-// that are added to the returned vector.
-std::vector<std::unique_ptr<TextStructureLintRule>>
-LinterConfiguration::CreateTextStructureRules() const {
-  std::vector<std::unique_ptr<TextStructureLintRule>> rule_instances;
-  for (const auto& rule_pair : configuration_) {
-    if (rule_pair.second == RuleSetting::kRuleOn) {
-      std::unique_ptr<TextStructureLintRule> rule_ptr =
-          analysis::CreateTextStructureLintRule(rule_pair.first);
-      if (rule_ptr != nullptr) {
-        rule_instances.push_back(std::move(rule_ptr));
-      }
-    }
-  }
-  return rule_instances;
 }
 
 static const std::initializer_list<std::pair<const absl::string_view, RuleSet>>
@@ -266,7 +251,10 @@ std::string AbslUnparseFlag(const RuleBundle& bundle) {
   for (const auto& rule : bundle.rules) {
     switches.push_back(absl::StrCat(
         // If rule is set off, prepend "-"
-        rule.second == RuleSetting::kRuleOn ? "" : "-", rule.first));
+        rule.second.enabled ? "" : "-", rule.first,
+        // If we have a configuration, append assignment.
+        rule.second.configuration.empty() ? "" : "=",
+        rule.second.configuration));
   }
   // Concatenates all of rules into text.
   return absl::StrJoin(switches.rbegin(), switches.rend(), ",");
@@ -278,29 +266,29 @@ bool AbslParseFlag(absl::string_view text, RuleBundle* bundle,
   bundle->rules.clear();
 
   for (absl::string_view part : absl::StrSplit(text, ',', absl::SkipEmpty())) {
-    // Get the prefix so we can check for "-"
+    // If prefix is '-', the rule is disabled.
     // Note that part is guaranteed to be at least one character because
     // of absl::SkipEmpty()
-    const char prefix = part[0];
+    const bool prefix_minus = (part[0] == '-');
 
-    absl::string_view stripped_rule_text = part;
-    RuleSetting setting = RuleSetting::kRuleOn;
+    RuleSetting setting = {!prefix_minus, ""};
 
-    // Update stripped_rule_text and setting if prefix is "-"
-    if (prefix == '-') {
-      setting = RuleSetting::kRuleOff;
-      if (part.size() >= 2)
-        stripped_rule_text = part.substr(1, part.size() - 1);
-      else
-        stripped_rule_text = "";
+    const auto rule_name_with_config = part.substr(prefix_minus ? 1 : 0);
+
+    // Independent of the enabled-ness: extract a configuration string
+    // if there is any assignment.
+    const auto equals_pos = rule_name_with_config.find('=');
+    if (equals_pos != absl::string_view::npos) {
+      const auto config = rule_name_with_config.substr(equals_pos + 1);
+      setting.configuration.assign(config.data(), config.size());
     }
-
+    const auto rule_name = rule_name_with_config.substr(0, equals_pos);
     const auto rule_name_set = analysis::GetAllRegisteredLintRuleNames();
-    const auto rule_iter = rule_name_set.find(stripped_rule_text);
+    const auto rule_iter = rule_name_set.find(rule_name);
 
     // Check if text is a valid lint rule.
     if (rule_iter == rule_name_set.end()) {
-      *error = absl::StrCat("invalid flag \"", stripped_rule_text, "\"");
+      *error = absl::StrCat("invalid flag \"", rule_name, "\"");
       return false;
     } else {
       // Map keys must use canonical registered string_views for guaranteed

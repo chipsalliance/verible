@@ -153,6 +153,7 @@ cc_library(
         "//common/util:container_util",
         "//common/util:enum_flags",
         "//common/util:logging",
+        "//common/util:status",
         "@com_google_absl//absl/strings",
     ],
 )

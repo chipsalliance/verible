@@ -209,6 +209,7 @@ cc_library(
         "//common/text:token_stream_view",
         "//common/util:iterator_range",
         "//common/util:logging",
+        "//common/util:status",
         "//verilog/analysis:descriptions",
         "//verilog/analysis:lint_rule_registry",
         "//verilog/analysis:verilog_linter_constants",
@@ -229,6 +230,7 @@ cc_test(
         "//common/text:symbol",
         "//verilog/analysis:verilog_analyzer",
         "//verilog/parser:verilog_token_enum",
+        "@com_google_absl//absl/strings",
         "@com_google_googletest//:gtest_main",
     ],
 )
