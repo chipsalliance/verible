@@ -28,7 +28,7 @@ cc_library(
         ":token_generator",
         "//common/text:token_info",
         "//common/text:token_stream_view",
-        "//common/util:status",
+        "@com_google_absl//absl/status",
         "@com_google_absl//absl/strings",
     ],
 )
@@ -89,7 +89,7 @@ cc_test(
         ":lexer_test_util",
         ":token_stream_adapter",
         "//common/text:token_info",
-        "//common/util:status",
+        "@com_google_absl//absl/status",
         "@com_google_googletest//:gtest_main",
     ],
 )

@@ -19,6 +19,7 @@
 #include <string>
 #include <vector>
 
+#include "absl/status/status.h"
 #include "absl/strings/string_view.h"
 #include "common/analysis/line_linter.h"
 #include "common/analysis/lint_rule_status.h"
@@ -28,7 +29,6 @@
 #include "common/analysis/token_stream_linter.h"
 #include "common/text/line_column_map.h"
 #include "common/text/text_structure.h"
-#include "common/util/status.h"
 #include "verilog/analysis/lint_rule_registry.h"
 #include "verilog/analysis/verilog_linter_configuration.h"
 
@@ -102,16 +102,16 @@ LinterConfiguration LinterConfigurationFromFlags();
 //   text_structure: contains the syntax tree that will be lint-analyzed.
 //
 // Returns:
-//   util::Status that reflects whether linter linter ran successfully.
-verible::util::Status VerilogLintTextStructure(
+//   absl::Status that reflects whether linter linter ran successfully.
+absl::Status VerilogLintTextStructure(
     std::ostream* stream, const std::string& filename,
     const std::string& contents, const LinterConfiguration& config,
     const verible::TextStructureView& text_structure);
 
 // Prints the rule, description and default_enabled.
-verible::util::Status PrintRuleInfo(std::ostream*,
-                                    const analysis::LintRuleDescriptionsMap&,
-                                    absl::string_view);
+absl::Status PrintRuleInfo(std::ostream*,
+                           const analysis::LintRuleDescriptionsMap&,
+                           absl::string_view);
 
 // Outputs the descriptions for every rule for the --help_rules flag.
 void GetLintRuleDescriptionsHelpFlag(std::ostream*, absl::string_view);

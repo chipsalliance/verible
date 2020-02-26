@@ -23,9 +23,9 @@
 #include <string>
 #include <vector>
 
+#include "absl/status/status.h"
 #include "absl/strings/string_view.h"
 #include "common/text/token_info.h"
-#include "common/util/status.h"
 
 namespace verible {
 
@@ -106,7 +106,7 @@ class MacroDefinition {
   typedef std::map<absl::string_view, DefaultTokenInfo> substitution_map_type;
 
   // Create a text substitution map to be used for macro expansion.
-  util::Status PopulateSubstitutionMap(const std::vector<TokenInfo>&,
+  absl::Status PopulateSubstitutionMap(const std::vector<TokenInfo>&,
                                        substitution_map_type*) const;
 
   // Replace formal parameter references with actuals.

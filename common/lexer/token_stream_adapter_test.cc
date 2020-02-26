@@ -16,10 +16,10 @@
 
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
+#include "absl/status/status.h"
 #include "common/lexer/lexer.h"
 #include "common/lexer/lexer_test_util.h"
 #include "common/text/token_info.h"
-#include "common/util/status.h"
 
 namespace verible {
 namespace {

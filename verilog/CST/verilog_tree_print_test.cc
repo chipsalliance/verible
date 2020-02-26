@@ -20,8 +20,8 @@
 
 #include "gtest/gtest.h"
 #include "absl/memory/memory.h"
+#include "absl/status/status.h"
 #include "common/text/symbol.h"
-#include "common/util/status.h"
 #include "verilog/analysis/verilog_analyzer.h"
 
 namespace verilog {

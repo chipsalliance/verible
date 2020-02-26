@@ -13,11 +13,11 @@ cc_binary(
         "//common/util:init_command_line",
         "//common/util:interval_set",
         "//common/util:logging",
-        "//common/util:status",
         "//verilog/analysis:verilog_analyzer",
         "//verilog/formatting:format_style",
         "//verilog/formatting:formatter",
         "@com_google_absl//absl/flags:flag",
+        "@com_google_absl//absl/status",
         "@com_google_absl//absl/strings",
     ],
 )

@@ -38,7 +38,7 @@ cc_library(
     hdrs = ["lint_rule.h"],
     deps = [
         ":lint_rule_status",
-        "//common/util:status",
+        "@com_google_absl//absl/status",
         "@com_google_absl//absl/strings",
     ],
 )
@@ -73,7 +73,7 @@ cc_library(
         "//common/text:text_structure",
         "//common/text:token_info",
         "//common/text:token_stream_view",
-        "//common/util:status",
+        "@com_google_absl//absl/status",
         "@com_google_absl//absl/strings",
     ],
 )
@@ -88,7 +88,7 @@ cc_library(
         "//common/lexer:lexer_test_util",
         "//common/text:token_info",
         "//common/util:algorithm",
-        "//common/util:status",
+        "@com_google_absl//absl/status",
         "@com_google_absl//absl/strings",
         "@com_google_googletest//:gtest",
     ],
@@ -211,7 +211,7 @@ cc_library(
         ":text_structure_linter",
         "//common/text:symbol",
         "//common/util:logging",
-        "//common/util:status",
+        "@com_google_absl//absl/status",
         "@com_google_googletest//:gtest",  # for library testonly
     ],
 )
@@ -295,7 +295,7 @@ cc_test(
         ":file_analyzer",
         "//common/text:text_structure",
         "//common/text:token_info",
-        "//common/util:status",
+        "@com_google_absl//absl/status",
         "@com_google_absl//absl/strings",
         "@com_google_googletest//:gtest_main",
     ],

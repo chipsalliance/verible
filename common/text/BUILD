@@ -204,7 +204,8 @@ cc_library(
         "//common/util:iterator_range",
         "//common/util:logging",
         "//common/util:range",
-        "//common/util:status",
+        "//common/util:status_macros",
+        "@com_google_absl//absl/status",
         "@com_google_absl//absl/strings",
     ],
 )
@@ -233,7 +234,7 @@ cc_library(
     deps = [
         ":token_info",
         "//common/util:container_util",
-        "//common/util:status",
+        "@com_google_absl//absl/status",
         "@com_google_absl//absl/strings",
     ],
 )
@@ -373,9 +374,9 @@ cc_test(
         "//common/util:iterator_range",
         "//common/util:logging",
         "//common/util:range",
-        "//common/util:status",
         "//common/util:value_saver",
         "@com_google_absl//absl/memory",
+        "@com_google_absl//absl/status",
         "@com_google_absl//absl/strings",
         "@com_google_googletest//:gtest_main",
     ],
@@ -388,7 +389,7 @@ cc_test(
         ":macro_definition",
         ":token_info",
         "//common/util:container_util",
-        "//common/util:status",
+        "@com_google_absl//absl/status",
         "@com_google_googletest//:gtest_main",
     ],
 )

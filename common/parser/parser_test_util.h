@@ -21,23 +21,23 @@
 #include <vector>
 
 #include "gtest/gtest.h"
+#include "absl/status/status.h"
 #include "common/analysis/matcher/descent_path.h"
 #include "common/text/parser_verifier.h"
 #include "common/text/symbol.h"
 #include "common/text/token_info.h"
 #include "common/text/token_info_test_util.h"
-#include "common/util/status.h"
 
 namespace verible {
 
 // Tests the parser on source text that is valid input.
-// class AnalyzerType is any class with a util::Status AnalyzerType::Analyze()
+// class AnalyzerType is any class with a absl::Status AnalyzerType::Analyze()
 // method.
 template <class AnalyzerType>
 void TestParserAcceptValid(const std::string& code, int i) {
   VLOG(1) << "test_data[" << i << "] = '" << code << "'\n";
   AnalyzerType analyzer(code, "<<inline-test>>");
-  util::Status status = analyzer.Analyze();
+  absl::Status status = analyzer.Analyze();
   if (!status.ok()) {
     // Print more detailed error message.
     const auto& rejected_tokens = analyzer.GetRejectedTokens();
@@ -53,7 +53,7 @@ void TestParserAcceptValid(const std::string& code, int i) {
 }
 
 // Tests the parser on source text that is invalid input.
-// class AnalyzerType is any class with a util::Status AnalyzerType::Analyze()
+// class AnalyzerType is any class with a absl::Status AnalyzerType::Analyze()
 // method.
 template <class AnalyzerType>
 void TestParserRejectInvalid(const TokenInfoTestData& test, int i) {
@@ -63,7 +63,7 @@ void TestParserRejectInvalid(const TokenInfoTestData& test, int i) {
   int iteration = 0;
   do {
     AnalyzerType analyzer(test.code, "<<inline-test>>");  // copies code
-    const util::Status status = analyzer.Analyze();
+    const absl::Status status = analyzer.Analyze();
     EXPECT_FALSE(status.ok())
         << "Accepted invalid code (iteration: " << iteration << "):\n"
         << test.code;
@@ -96,7 +96,7 @@ void TestParserErrorRecovered(const ErrorRecoveryTestCase& test, int i) {
   int iteration = 0;
   do {
     AnalyzerType analyzer(test.code, "<<inline-test>>");
-    util::Status status = analyzer.Analyze();
+    absl::Status status = analyzer.Analyze();
     EXPECT_FALSE(status.ok())
         << "Accepted invalid code (iteration: " << iteration << "):\n"
         << test.code;
@@ -120,7 +120,7 @@ void TestParserAllMatched(const std::string& code, int i) {
   VLOG(1) << "test_data[" << i << "] = '" << code << "'\n";
 
   AnalyzerType analyzer(code, "<<inline-test>>");
-  util::Status status = analyzer.Analyze();
+  absl::Status status = analyzer.Analyze();
   EXPECT_TRUE(status.ok());
 
   const Symbol* tree_ptr = analyzer.SyntaxTree().get();

@@ -21,12 +21,12 @@
 #include <iterator>
 #include <type_traits>
 
+#include "absl/status/status.h"
 #include "absl/strings/string_view.h"
 #include "common/lexer/lexer.h"
 #include "common/lexer/token_generator.h"
 #include "common/text/token_info.h"
 #include "common/text/token_stream_view.h"
-#include "common/util/status.h"
 
 namespace verible {
 
@@ -34,7 +34,7 @@ namespace verible {
 TokenGenerator MakeTokenGenerator(Lexer* l);
 
 // Populates a TokenSequence with lexed tokens.
-util::Status MakeTokenSequence(
+absl::Status MakeTokenSequence(
     Lexer* lexer, absl::string_view text, TokenSequence* tokens,
     std::function<void(const TokenInfo&)> error_token_handler);
 

@@ -25,6 +25,7 @@
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 #include "absl/memory/memory.h"
+#include "absl/status/status.h"
 #include "absl/strings/str_join.h"
 #include "absl/strings/string_view.h"
 #include "common/formatting/basic_format_style.h"
@@ -35,7 +36,6 @@
 #include "common/util/container_iterator_range.h"
 #include "common/util/logging.h"
 #include "common/util/spacer.h"
-#include "common/util/status.h"
 #include "common/util/vector_tree.h"
 #include "verilog/analysis/verilog_analyzer.h"
 
@@ -233,7 +233,7 @@ class TreeUnwrapperTest : public ::testing::Test {
   // of the file.
   void MakeTree(absl::string_view content) {
     analyzer_ = absl::make_unique<VerilogAnalyzer>(content, "TEST_FILE");
-    verible::util::Status status = ABSL_DIE_IF_NULL(analyzer_)->Analyze();
+    absl::Status status = ABSL_DIE_IF_NULL(analyzer_)->Analyze();
     EXPECT_OK(status) << "Rejected code: " << std::endl << content;
 
     // Since source code is required to be valid, this error-handling is just

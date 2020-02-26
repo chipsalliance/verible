@@ -24,6 +24,7 @@
 #include "gtest/gtest.h"
 #include "absl/base/casts.h"
 #include "absl/memory/memory.h"
+#include "absl/status/status.h"
 #include "absl/strings/match.h"
 #include "absl/strings/string_view.h"
 #include "absl/types/span.h"
@@ -39,7 +40,6 @@
 #include "common/text/tree_utils.h"
 #include "common/util/casts.h"
 #include "common/util/logging.h"
-#include "common/util/status.h"
 #include "verilog/analysis/verilog_excerpt_parse.h"
 #include "verilog/parser/verilog_token_enum.h"
 

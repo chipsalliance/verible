@@ -35,7 +35,7 @@ using verible::RunLintTestCases;
 
 TEST(LineLengthRuleTest, Configuration) {
   LineLengthRule rule;
-  verible::util::Status status;
+  absl::Status status;
   EXPECT_TRUE((status = rule.Configure("")).ok()) << status.message();
   EXPECT_TRUE((status = rule.Configure("length:50")).ok()) << status.message();
 

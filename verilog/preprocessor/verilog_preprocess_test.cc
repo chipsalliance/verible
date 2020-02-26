@@ -19,10 +19,10 @@
 
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
+#include "absl/status/status.h"
 #include "common/text/macro_definition.h"
 #include "common/text/token_info.h"
 #include "common/util/container_util.h"
-#include "common/util/status.h"
 #include "verilog/analysis/verilog_analyzer.h"
 
 namespace verilog {
@@ -43,13 +43,13 @@ class PreprocessorTester {
     return analyzer_.PreprocessorData();
   }
 
-  const verible::util::Status& Status() const { return status_; }
+  const absl::Status& Status() const { return status_; }
 
   const VerilogAnalyzer& Analyzer() const { return analyzer_; }
 
  private:
   VerilogAnalyzer analyzer_;
-  verible::util::Status status_;
+  absl::Status status_;
 };
 
 struct FailTest {

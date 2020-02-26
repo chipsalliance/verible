@@ -20,6 +20,7 @@
 #include <string>
 
 #include "gtest/gtest.h"
+#include "absl/status/status.h"
 #include "absl/strings/str_cat.h"
 #include "common/parser/bison_parser_common.h"
 #include "common/parser/parser_test_util.h"
@@ -27,7 +28,6 @@
 #include "common/text/symbol.h"
 #include "common/text/token_info.h"
 #include "common/text/token_info_test_util.h"
-#include "common/util/status.h"
 #include "verilog/CST/verilog_nonterminals.h"
 #include "verilog/analysis/verilog_analyzer.h"
 #include "verilog/parser/verilog_token_enum.h"

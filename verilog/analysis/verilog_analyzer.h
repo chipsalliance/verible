@@ -20,10 +20,10 @@
 #include <memory>
 #include <string>
 
+#include "absl/status/status.h"
 #include "absl/strings/string_view.h"
 #include "common/analysis/file_analyzer.h"
 #include "common/text/token_stream_view.h"
-#include "common/util/status.h"
 #include "verilog/preprocessor/verilog_preprocess.h"
 
 namespace verilog {
@@ -38,7 +38,7 @@ class VerilogAnalyzer : public verible::FileAnalyzer {
         use_parser_directive_comments_(use_parser_directive_comments) {}
 
   // Lex-es the input text into tokens.
-  verible::util::Status Tokenize() override;
+  absl::Status Tokenize() override;
 
   // Create token stream view without comments and whitespace.
   // The retained tokens will become leaves of a concrete syntax tree.
@@ -47,11 +47,11 @@ class VerilogAnalyzer : public verible::FileAnalyzer {
   // Analyzes the syntax and structure of a source file (lex and parse).
   // Result of parsing is stored in syntax_tree_, which may contain gaps
   // if there are syntax errors.
-  verible::util::Status Analyze();
+  absl::Status Analyze();
 
-  verible::util::Status LexStatus() const { return lex_status_; }
+  absl::Status LexStatus() const { return lex_status_; }
 
-  verible::util::Status ParseStatus() const { return parse_status_; }
+  absl::Status ParseStatus() const { return parse_status_; }
 
   size_t MaxUsedStackSize() const { return max_used_stack_size_; }
 
@@ -103,10 +103,10 @@ class VerilogAnalyzer : public verible::FileAnalyzer {
   bool use_parser_directive_comments_ = true;
 
   // Status of lexing.
-  verible::util::Status lex_status_;
+  absl::Status lex_status_;
 
   // Status of parsing.
-  verible::util::Status parse_status_;
+  absl::Status parse_status_;
 };
 
 }  // namespace verilog

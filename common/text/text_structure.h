@@ -32,13 +32,13 @@
 #include <string>
 #include <vector>
 
+#include "absl/status/status.h"
 #include "absl/strings/string_view.h"
 #include "common/text/concrete_syntax_tree.h"
 #include "common/text/line_column_map.h"
 #include "common/text/symbol.h"
 #include "common/text/token_stream_view.h"
 #include "common/text/tree_utils.h"
-#include "common/util/status.h"
 
 namespace verible {
 
@@ -151,7 +151,7 @@ class TextStructureView {
   void ExpandSubtrees(NodeExpansionMap* expansions);
 
   // All of this class's consistency checks combined.
-  util::Status InternalConsistencyCheck() const;
+  absl::Status InternalConsistencyCheck() const;
 
  protected:
   // This is the text that is spanned by the token sequence and syntax tree.
@@ -195,15 +195,15 @@ class TextStructureView {
   // Verify that internal iterators point to locations owned by this object,
   // and that all string_views in the tokens_view_ are substring views of the
   // contents_ string view.
-  util::Status FastTokenRangeConsistencyCheck() const;
+  absl::Status FastTokenRangeConsistencyCheck() const;
 
   // Verify that line-based view of contents_ is consistent with the
   // contents_ text itself.
-  util::Status FastLineRangeConsistencyCheck() const;
+  absl::Status FastLineRangeConsistencyCheck() const;
 
   // Verify that the string views in the syntax tree are contained within
   // the contents_ string view.
-  util::Status SyntaxTreeConsistencyCheck() const;
+  absl::Status SyntaxTreeConsistencyCheck() const;
 };
 
 // TextStructure holds the results of lexing and parsing.
@@ -223,10 +223,10 @@ class TextStructure {
   const ConcreteSyntaxTree& SyntaxTree() const { return data_.SyntaxTree(); }
 
   // Verify that string_views are inside memory owned by owned_contents_.
-  util::Status StringViewConsistencyCheck() const;
+  absl::Status StringViewConsistencyCheck() const;
 
   // Verify that internal data structures have valid ranges.
-  util::Status InternalConsistencyCheck() const;
+  absl::Status InternalConsistencyCheck() const;
 
  protected:
   // This string owns the memory referenced by all substring string_views

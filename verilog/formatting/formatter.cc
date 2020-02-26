@@ -20,6 +20,7 @@
 #include <iterator>
 #include <vector>
 
+#include "absl/status/status.h"
 #include "common/formatting/format_token.h"
 #include "common/formatting/line_wrap_searcher.h"
 #include "common/formatting/token_partition_tree.h"
@@ -32,7 +33,6 @@
 #include "common/util/iterator_range.h"
 #include "common/util/logging.h"
 #include "common/util/spacer.h"
-#include "common/util/status.h"
 #include "common/util/vector_tree.h"
 #include "verilog/analysis/verilog_analyzer.h"
 #include "verilog/analysis/verilog_equivalence.h"
@@ -44,6 +44,8 @@
 
 namespace verilog {
 namespace formatter {
+using absl::Status;
+using absl::StatusCode;
 
 using verible::ExpandableTreeView;
 using verible::PartitionPolicyEnum;
@@ -51,8 +53,6 @@ using verible::TokenPartitionTree;
 using verible::TreeViewNodeInfo;
 using verible::UnwrappedLine;
 using verible::VectorTree;
-using verible::util::Status;
-using verible::util::StatusCode;
 
 typedef VectorTree<TreeViewNodeInfo<UnwrappedLine>> partition_node_type;
 
@@ -133,7 +133,7 @@ Status VerifyFormatting(const verible::TextStructureView& text_structure,
 
   // TODO(b/138868051): Verify output stability/convergence.
   //   format(text) should == format(format(text))
-  return verible::util::OkStatus();
+  return absl::OkStatus();
 }
 
 Status FormatVerilog(absl::string_view text, absl::string_view filename,
@@ -404,7 +404,7 @@ Status Formatter::Format(const ExecutionControl& control) {
                              text_structure_.GetLineColumnMap(), full_text);
     }
     if (control.AnyStop()) {
-      return verible::util::OkStatus();
+      return absl::OkStatus();
     }
   }
 
@@ -446,10 +446,10 @@ Status Formatter::Format(const ExecutionControl& control) {
     }
     err_stream << "*** end of partially formatted partition list" << std::endl;
     // Treat search state limit like a limited resource.
-    return verible::util::ResourceExhaustedError(err_stream.str());
+    return absl::ResourceExhaustedError(err_stream.str());
   }
 
-  return verible::util::OkStatus();
+  return absl::OkStatus();
 }
 
 void Formatter::Emit(std::ostream& stream) const {

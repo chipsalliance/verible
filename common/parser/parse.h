@@ -19,9 +19,9 @@
 
 #include <vector>
 
+#include "absl/status/status.h"
 #include "common/text/concrete_syntax_tree.h"
 #include "common/text/token_info.h"
-#include "common/util/status.h"
 
 namespace verible {
 
@@ -29,7 +29,7 @@ namespace verible {
 class Parser {
  public:
   // Parse a sequence of tokens.
-  virtual util::Status Parse() = 0;
+  virtual absl::Status Parse() = 0;
 
   // Return the tree built by the parser, if applicable.
   virtual const ConcreteSyntaxTree& Root() const = 0;

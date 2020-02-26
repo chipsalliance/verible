@@ -23,6 +23,7 @@
 #include <utility>
 #include <vector>
 
+#include "absl/status/status.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/str_join.h"
 #include "absl/strings/str_split.h"
@@ -34,7 +35,6 @@
 #include "common/util/container_util.h"
 #include "common/util/enum_flags.h"
 #include "common/util/logging.h"
-#include "common/util/status.h"
 #include "verilog/analysis/default_rules.h"
 #include "verilog/analysis/lint_rule_registry.h"
 
@@ -170,7 +170,7 @@ static std::vector<std::unique_ptr<T>> CreateRules(
     if (rule_ptr == nullptr) continue;
 
     if (!setting.configuration.empty()) {
-      verible::util::Status status;
+      absl::Status status;
       if (!(status = rule_ptr->Configure(setting.configuration)).ok()) {
         // TODO(hzeller): return error message to caller to handle ?
         LOG(QFATAL) << rule_pair.first << ": " << status.message();

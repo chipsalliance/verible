@@ -20,7 +20,7 @@
 namespace verible {
 namespace util {
 
-// Run a command that returns a util::Status.  If the called code returns an
+// Run a command that returns a absl::Status.  If the called code returns an
 // error status, return that status up out of this method too.
 //
 // Example:
@@ -28,7 +28,7 @@ namespace util {
 #define RETURN_IF_ERROR(expr)                                                \
   do {                                                                       \
     /* Using _status below to avoid capture problems if expr is "status". */ \
-    const ::verible::util::Status _status = (expr);                          \
+    const absl::Status _status = (expr);                                     \
     if (ABSL_PREDICT_FALSE(!_status.ok())) return _status;                   \
   } while (0)
 

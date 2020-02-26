@@ -25,6 +25,7 @@
 #include <utility>
 #include <vector>
 
+#include "absl/status/status.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/str_split.h"
 #include "absl/strings/string_view.h"
@@ -38,7 +39,6 @@
 #include "common/util/iterator_range.h"
 #include "common/util/logging.h"
 #include "common/util/range.h"
-#include "common/util/status.h"
 #include "common/util/status_macros.h"
 
 namespace verible {
@@ -50,14 +50,14 @@ TextStructureView::TextStructureView(absl::string_view contents)
   // more than sufficient memory as number-of-tokens <= bytes-in-file,
   // push_back() should never re-alloc because size <= initial capacity.
   tokens_.reserve(contents.length());
-  const util::Status status = InternalConsistencyCheck();
+  const absl::Status status = InternalConsistencyCheck();
   CHECK(status.ok())
       << "Failed internal iterator/string_view consistency check in ctor:\n  "
       << status.message();
 }
 
 TextStructureView::~TextStructureView() {
-  const util::Status status = InternalConsistencyCheck();
+  const absl::Status status = InternalConsistencyCheck();
   CHECK(status.ok())
       << "Failed internal iterator/string_view consistency check in dtor:\n  "
       << status.message();
@@ -165,7 +165,7 @@ void TextStructureView::FocusOnSubtreeSpanningSubstring(int left_offset,
   SplitLines();
   RecalculateLineColumnMap();
   CalculateFirstTokensPerLine();
-  const util::Status status = InternalConsistencyCheck();
+  const absl::Status status = InternalConsistencyCheck();
   CHECK(status.ok())
       << "Failed internal iterator/string_view consistency check:\n  "
       << status.message();
@@ -268,7 +268,7 @@ static const TokenInfo* FindLastNonEOFToken(const TokenSequence& tokens) {
   return iter != tokens.rend() ? &*iter : nullptr;
 }
 
-util::Status TextStructureView::FastTokenRangeConsistencyCheck() const {
+absl::Status TextStructureView::FastTokenRangeConsistencyCheck() const {
   VLOG(2) << __FUNCTION__;
   // Check the ranges of the first and last element of the critical arrays.
   // A more thorough full-check would scan every single token.
@@ -278,66 +278,66 @@ util::Status TextStructureView::FastTokenRangeConsistencyCheck() const {
     // Check that extremities of first and last token lie inside contents_.
     const TokenInfo& first = tokens_.front();
     if (!first.isEOF() && lower_bound > first.text.cbegin()) {
-      return util::InternalError(absl::StrCat(
+      return absl::InternalError(absl::StrCat(
           "Token offset points before beginning of string contents.  delta=",
           std::distance(first.text.cbegin(), lower_bound)));
     }
     const TokenInfo* last = FindLastNonEOFToken(tokens_);
     if (last != nullptr && last->text.cend() > upper_bound) {
-      return util::InternalError(absl::StrCat(
+      return absl::InternalError(absl::StrCat(
           "Token offset points past end of string contents.  delta=",
           std::distance(upper_bound, last->text.cend())));
     }
     if (!tokens_view_.empty()) {
       // Check that TokenSequence iterators point into tokens_.
       if (tokens_.begin() > tokens_view_.front()) {
-        return util::InternalError(
+        return absl::InternalError(
             "First token iterator points before beginning of array.");
       }
       if (tokens_view_.front() >= tokens_.end()) {
-        return util::InternalError(
+        return absl::InternalError(
             "First token iterator points past end of array.");
       }
       if (tokens_.begin() > tokens_view_.back()) {
-        return util::InternalError(
+        return absl::InternalError(
             "Last token iterator points before beginning of array.");
       }
       if (tokens_view_.back() >= tokens_.end()) {
-        return util::InternalError(
+        return absl::InternalError(
             "Last token iterator points past end of array.");
       }
     }
     if (!line_token_map_.empty()) {
       if (line_token_map_.front() != tokens_.begin()) {
-        return util::InternalError(
+        return absl::InternalError(
             "Per-line token iterator map does not start with the beginning of "
             "the token sequence.");
       }
       if (line_token_map_.back() != tokens_.end()) {
-        return util::InternalError(
+        return absl::InternalError(
             "Per-line token iterator map does not end with to the end of the "
             "token sequence.");
       }
     }
   }
-  return util::OkStatus();
+  return absl::OkStatus();
 }
 
-util::Status TextStructureView::FastLineRangeConsistencyCheck() const {
+absl::Status TextStructureView::FastLineRangeConsistencyCheck() const {
   VLOG(2) << __FUNCTION__;
   if (!lines_.empty()) {
     if (lines_.front().cbegin() != contents_.cbegin()) {
-      return util::InternalError(
+      return absl::InternalError(
           "First line does not match beginning of text.");
     }
     if (lines_.back().cend() != contents_.cend()) {
-      return util::InternalError("Last line does not match end of text.");
+      return absl::InternalError("Last line does not match end of text.");
     }
   }
-  return util::OkStatus();
+  return absl::OkStatus();
 }
 
-util::Status TextStructureView::SyntaxTreeConsistencyCheck() const {
+absl::Status TextStructureView::SyntaxTreeConsistencyCheck() const {
   VLOG(2) << __FUNCTION__;
   // Check that first and last token in syntax_tree_ point to text
   // inside contents_.
@@ -345,21 +345,21 @@ util::Status TextStructureView::SyntaxTreeConsistencyCheck() const {
   const char* const upper_bound = lower_bound + contents_.length();
   if (syntax_tree_ != nullptr) {
     const SyntaxTreeLeaf* left = GetLeftmostLeaf(*syntax_tree_);
-    if (!left) return util::OkStatus();
+    if (!left) return absl::OkStatus();
     const SyntaxTreeLeaf* right = GetRightmostLeaf(*syntax_tree_);
     if (lower_bound > left->get().text.cbegin()) {
-      return util::InternalError(
+      return absl::InternalError(
           "Left-most tree leaf points before beginning of contents.");
     }
     if (right->get().text.cend() > upper_bound) {
-      return util::InternalError(
+      return absl::InternalError(
           "Right-most tree leaf points past end of contents.");
     }
   }
-  return util::OkStatus();
+  return absl::OkStatus();
 }
 
-util::Status TextStructureView::InternalConsistencyCheck() const {
+absl::Status TextStructureView::InternalConsistencyCheck() const {
   RETURN_IF_ERROR(FastLineRangeConsistencyCheck());
   RETURN_IF_ERROR(FastTokenRangeConsistencyCheck());
   return SyntaxTreeConsistencyCheck();
@@ -447,12 +447,12 @@ void TextStructureView::ConsumeDeferredExpansion(
 TextStructure::TextStructure(absl::string_view contents)
     : owned_contents_(contents), data_(owned_contents_) {
   // Internal string_view must point to memory owned by owned_contents_.
-  const util::Status status = InternalConsistencyCheck();
+  const absl::Status status = InternalConsistencyCheck();
   CHECK(status.ok()) << status.message() << " (in ctor)";
 }
 
 TextStructure::~TextStructure() {
-  const util::Status status = StringViewConsistencyCheck();
+  const absl::Status status = StringViewConsistencyCheck();
   CHECK(status.ok()) << status.message() << " (in dtor)";
 }
 
@@ -491,18 +491,18 @@ void TextStructureView::ExpandSubtrees(NodeExpansionMap* expansions) {
   CalculateFirstTokensPerLine();
 }
 
-util::Status TextStructure::StringViewConsistencyCheck() const {
+absl::Status TextStructure::StringViewConsistencyCheck() const {
   const absl::string_view contents = data_.Contents();
   if (!contents.empty() &&
       !IsSubRange(contents, absl::string_view(owned_contents_))) {
-    return util::InternalError(
+    return absl::InternalError(
         "string_view contents_ is not a substring of owned_contents_, "
         "contents_ might reference deallocated memory!");
   }
-  return util::OkStatus();
+  return absl::OkStatus();
 }
 
-util::Status TextStructure::InternalConsistencyCheck() const {
+absl::Status TextStructure::InternalConsistencyCheck() const {
   RETURN_IF_ERROR(StringViewConsistencyCheck());
   return data_.InternalConsistencyCheck();
 }

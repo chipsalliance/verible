@@ -413,7 +413,7 @@ cc_library(
         "//common/text:token_info",
         "//common/text:tree_utils",
         "//common/util:casts",
-        "//common/util:status",
+        "@com_google_absl//absl/status",
     ],
 )
 
@@ -428,8 +428,8 @@ cc_test(
         "//common/text:token_info",
         "//common/util:casts",
         "//common/util:logging",
-        "//common/util:status",
         "//verilog/analysis:verilog_analyzer",
+        "@com_google_absl//absl/status",
         "@com_google_googletest//:gtest_main",
     ],
 )
@@ -684,9 +684,9 @@ cc_test(
     deps = [
         ":verilog_tree_print",
         "//common/text:symbol",
-        "//common/util:status",
         "//verilog/analysis:verilog_analyzer",
         "@com_google_absl//absl/memory",
+        "@com_google_absl//absl/status",
         "@com_google_googletest//:gtest_main",
     ],
 )

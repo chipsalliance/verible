@@ -22,13 +22,13 @@
 // usage:
 // class MyLangFileAnalyzer : public FileAnalyzer {
 //  public:
-//   util::Status Analyze(void) {
+//   absl::Status Analyze(void) {
 //     MyLangLexer lexer{data_.Contents()};
-//     util::Status lex_status = Tokenize(&lexer);
+//     absl::Status lex_status = Tokenize(&lexer);
 //     // diagnostics
 //     // optional: filter or modify tokens_view_
 //     MyLangParser parser;
-//     util::Status parse_status = Parse(&parser);
+//     absl::Status parse_status = Parse(&parser);
 //     // diagnostics
 //   }
 //
@@ -43,11 +43,11 @@
 #include <string>
 #include <vector>
 
+#include "absl/status/status.h"
 #include "common/lexer/lexer.h"
 #include "common/parser/parse.h"
 #include "common/text/text_structure.h"
 #include "common/text/token_info.h"
-#include "common/util/status.h"
 
 namespace verible {
 
@@ -77,13 +77,13 @@ class FileAnalyzer : public TextStructure {
 
   virtual ~FileAnalyzer() {}
 
-  virtual util::Status Tokenize() = 0;
+  virtual absl::Status Tokenize() = 0;
 
   // Break file contents (string) into tokens.
-  util::Status Tokenize(Lexer* lexer);
+  absl::Status Tokenize(Lexer* lexer);
 
   // Construct ConcreteSyntaxTree from TokenStreamView.
-  util::Status Parse(Parser* parser);
+  absl::Status Parse(Parser* parser);
 
   // Diagnostic message for one rejected token.
   std::string TokenErrorMessage(const TokenInfo&) const;

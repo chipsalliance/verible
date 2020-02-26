@@ -18,7 +18,7 @@
 #include <iosfwd>
 #include <vector>
 
-#include "common/util/status.h"
+#include "absl/status/status.h"
 #include "verilog/formatting/comment_controls.h"
 #include "verilog/formatting/format_style.h"
 
@@ -63,12 +63,11 @@ struct ExecutionControl {
 // Formats Verilog/SystemVerilog source code.
 // 'lines' controls which lines have formattting explicitly enabled.
 // If this is empty, interpret as all lines enabled for formatting.
-verible::util::Status FormatVerilog(absl::string_view text,
-                                    absl::string_view filename,
-                                    const FormatStyle& style,
-                                    std::ostream& formatted_stream,
-                                    const LineNumberSet& lines = {},
-                                    const ExecutionControl& control = {});
+absl::Status FormatVerilog(absl::string_view text, absl::string_view filename,
+                           const FormatStyle& style,
+                           std::ostream& formatted_stream,
+                           const LineNumberSet& lines = {},
+                           const ExecutionControl& control = {});
 
 }  // namespace formatter
 }  // namespace verilog

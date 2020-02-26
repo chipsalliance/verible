@@ -28,11 +28,11 @@
 
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
+#include "absl/status/status.h"
 #include "absl/strings/match.h"
 #include "absl/strings/string_view.h"
 #include "common/text/text_structure.h"
 #include "common/util/logging.h"
-#include "common/util/status.h"
 #include "verilog/analysis/verilog_analyzer.h"
 #include "verilog/formatting/format_style.h"
 
@@ -44,16 +44,15 @@
 
 namespace verilog {
 namespace formatter {
-using verible::util::Status;
 
 // private, extern function in formatter.cc, directly tested here.
-Status VerifyFormatting(const verible::TextStructureView& text_structure,
-                        absl::string_view formatted_output,
-                        absl::string_view filename);
+absl::Status VerifyFormatting(const verible::TextStructureView& text_structure,
+                              absl::string_view formatted_output,
+                              absl::string_view filename);
 
 namespace {
 
-using verible::util::StatusCode;
+using absl::StatusCode;
 
 // Tests that clean output passes.
 TEST(VerifyFormattingTest, NoError) {

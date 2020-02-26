@@ -35,11 +35,11 @@ absl::string_view Basename(absl::string_view filename);
 absl::string_view Stem(absl::string_view filename);
 
 // Read file "filename" and store its content in "content"
-// TODO(hzeller): consider util::Status return?
+// TODO(hzeller): consider absl::Status return?
 bool GetContents(absl::string_view filename, std::string *content);
 
 // Create file "filename" and store given content in it.
-// TODO(hzeller): consider util::Status return ?
+// TODO(hzeller): consider absl::Status return ?
 bool SetContents(absl::string_view filename, absl::string_view content);
 
 // Join directory + filename

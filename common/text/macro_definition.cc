@@ -19,11 +19,11 @@
 #include <string>
 #include <vector>
 
+#include "absl/status/status.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
 #include "common/text/token_info.h"
 #include "common/util/container_util.h"
-#include "common/util/status.h"
 
 namespace verible {
 
@@ -40,11 +40,11 @@ bool MacroDefinition::AppendParameter(const MacroParameterInfo& param_info) {
   return inserted;
 }
 
-util::Status MacroDefinition::PopulateSubstitutionMap(
+absl::Status MacroDefinition::PopulateSubstitutionMap(
     const std::vector<TokenInfo>& macro_call_args,
     substitution_map_type* arg_map) const {
   if (macro_call_args.size() != parameter_info_array_.size()) {
-    return util::InvalidArgumentError(
+    return absl::InvalidArgumentError(
         absl::StrCat("Error calling macro ", name_.text, " with ",
                      macro_call_args.size(), " arguments, but definition has ",
                      parameter_info_array_.size(), " formal parameters."));
@@ -64,7 +64,7 @@ util::Status MacroDefinition::PopulateSubstitutionMap(
     }
     // else leave blank as empty string.
   }
-  return util::OkStatus();
+  return absl::OkStatus();
 }
 
 const TokenInfo& MacroDefinition::SubstituteText(

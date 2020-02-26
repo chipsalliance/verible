@@ -20,6 +20,7 @@
 
 #include "gtest/gtest.h"
 #include "absl/memory/memory.h"
+#include "absl/status/status.h"
 #include "common/analysis/lint_rule_status.h"
 #include "common/analysis/linter_test_utils.h"
 #include "common/analysis/syntax_tree_lint_rule.h"
@@ -27,7 +28,6 @@
 #include "common/analysis/syntax_tree_linter_test_utils.h"
 #include "common/text/symbol.h"
 #include "common/text/token_info.h"
-#include "common/util/status.h"
 #include "verilog/analysis/verilog_analyzer.h"
 #include "verilog/parser/verilog_token_enum.h"
 

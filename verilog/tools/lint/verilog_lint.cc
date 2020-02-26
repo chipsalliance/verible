@@ -25,11 +25,11 @@
 #include <vector>
 
 #include "absl/flags/flag.h"
+#include "absl/status/status.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
 #include "common/util/init_command_line.h"
 #include "common/util/logging.h"  // for operator<<, LOG, LogMessage, etc
-#include "common/util/status.h"
 #include "verilog/analysis/verilog_linter.h"
 #include "verilog/analysis/verilog_linter_configuration.h"
 

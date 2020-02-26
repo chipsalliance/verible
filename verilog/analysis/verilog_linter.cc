@@ -24,6 +24,7 @@
 #include <vector>
 
 #include "absl/flags/flag.h"
+#include "absl/status/status.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
 #include "common/analysis/line_lint_rule.h"
@@ -42,7 +43,6 @@
 #include "common/text/token_info.h"
 #include "common/util/file_util.h"
 #include "common/util/logging.h"
-#include "common/util/status.h"
 #include "verilog/analysis/default_rules.h"
 #include "verilog/analysis/lint_rule_registry.h"
 #include "verilog/analysis/verilog_analyzer.h"
@@ -89,7 +89,7 @@ int LintOneFile(std::ostream* stream, absl::string_view filename,
 
   // Analyze the parsed structure for lint violations.
   std::ostringstream lint_stream;
-  const verible::util::Status lint_status = VerilogLintTextStructure(
+  const absl::Status lint_status = VerilogLintTextStructure(
       &lint_stream, std::string(filename), content, config, analyzer->Data());
   if (!lint_status.ok()) {
     // Something went wrong with running the lint analysis itself.
@@ -214,10 +214,11 @@ LinterConfiguration LinterConfigurationFromFlags() {
   return config;
 }
 
-verible::util::Status VerilogLintTextStructure(
-    std::ostream* stream, const std::string& filename,
-    const std::string& contents, const LinterConfiguration& config,
-    const TextStructureView& text_structure) {
+absl::Status VerilogLintTextStructure(std::ostream* stream,
+                                      const std::string& filename,
+                                      const std::string& contents,
+                                      const LinterConfiguration& config,
+                                      const TextStructureView& text_structure) {
   // Create the linter, add rules, and run it.
   VerilogLinter linter;
   linter.Configure(config);
@@ -241,18 +242,18 @@ verible::util::Status VerilogLintTextStructure(
     formatter.FormatLintRuleStatuses(stream, linter_statuses, text_base,
                                      filename);
   }
-  return verible::util::OkStatus();
+  return absl::OkStatus();
 }
 
-verible::util::Status PrintRuleInfo(
-    std::ostream* os, const analysis::LintRuleDescriptionsMap& rule_map,
-    absl::string_view rule_name) {
+absl::Status PrintRuleInfo(std::ostream* os,
+                           const analysis::LintRuleDescriptionsMap& rule_map,
+                           absl::string_view rule_name) {
   constexpr int kRuleWidth = 35;
   constexpr char kFill = ' ';
 
   const auto it = rule_map.find(rule_name);
   if (it == rule_map.end())
-    return verible::util::NotFoundError(absl::StrCat(
+    return absl::NotFoundError(absl::StrCat(
         "Rule: \'", rule_name,
         "\' not found. Please specify a rule name or \"all\" for help on "
         "the rules.\n"));
@@ -264,7 +265,7 @@ verible::util::Status PrintRuleInfo(
   *os << std::left << std::setw(kRuleWidth) << std::setfill(kFill) << " "
       << "Enabled by default: " << std::boolalpha << it->second.default_enabled
       << "\n\n";
-  return verible::util::OkStatus();
+  return absl::OkStatus();
 }
 
 void GetLintRuleDescriptionsHelpFlag(std::ostream* os,

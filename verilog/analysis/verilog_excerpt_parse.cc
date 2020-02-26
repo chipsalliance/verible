@@ -20,13 +20,13 @@
 #include <string>
 
 #include "absl/memory/memory.h"
+#include "absl/status/status.h"
 #include "absl/strings/ascii.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
 #include "common/text/text_structure.h"
 #include "common/util/container_util.h"
 #include "common/util/logging.h"
-#include "common/util/status.h"
 #include "verilog/analysis/verilog_analyzer.h"
 
 namespace verilog {

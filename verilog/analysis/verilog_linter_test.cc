@@ -30,12 +30,11 @@
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 #include "absl/memory/memory.h"
+#include "absl/status/status.h"
 #include "absl/strings/match.h"
 #include "absl/strings/string_view.h"
 #include "common/util/file_util.h"
 #include "common/util/logging.h"
-#include "common/util/status.h"
-#include "common/util/statusor.h"
 #include "verilog/analysis/default_rules.h"
 #include "verilog/analysis/verilog_analyzer.h"
 #include "verilog/analysis/verilog_linter_configuration.h"
@@ -141,11 +140,11 @@ class VerilogLinterTest : public DefaultLinterConfigTestFixture,
 
  protected:
   // Returns diagnostic text from analyzing source code.
-  std::pair<verible::util::Status, std::string> LintAnalyzeText(
+  std::pair<absl::Status, std::string> LintAnalyzeText(
       const std::string& filename, const std::string& content) const {
     // Run the analyzer to produce a syntax tree from source code.
     const auto analyzer = absl::make_unique<VerilogAnalyzer>(content, filename);
-    const verible::util::Status status = ABSL_DIE_IF_NULL(analyzer)->Analyze();
+    const absl::Status status = ABSL_DIE_IF_NULL(analyzer)->Analyze();
     std::ostringstream diagnostics;
     if (!status.ok()) {
       const std::vector<std::string> syntax_error_messages(
@@ -157,7 +156,7 @@ class VerilogLinterTest : public DefaultLinterConfigTestFixture,
     // For testing purposes we want the status returned to reflect
     // lint success, so as long as we have a syntax tree (even if there
     // are errors), run the lint checks.
-    const verible::util::Status lint_status = VerilogLintTextStructure(
+    const absl::Status lint_status = VerilogLintTextStructure(
         &diagnostics, filename, content, config_, analyzer->Data());
     return {lint_status, diagnostics.str()};
   }

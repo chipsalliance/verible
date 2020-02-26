@@ -18,11 +18,11 @@
 #include <set>
 #include <string>
 
+#include "absl/status/status.h"
 #include "absl/strings/string_view.h"
 #include "common/analysis/lint_rule_status.h"
 #include "common/analysis/text_structure_lint_rule.h"
 #include "common/text/text_structure.h"
-#include "common/util/status.h"
 #include "verilog/analysis/descriptions.h"
 
 namespace verilog {
@@ -50,7 +50,7 @@ class LineLengthRule : public verible::TextStructureLintRule {
 
   LineLengthRule() {}
 
-  verible::util::Status Configure(absl::string_view configuration) override;
+  absl::Status Configure(absl::string_view configuration) override;
 
   void Lint(const verible::TextStructureView&, absl::string_view) override;
 

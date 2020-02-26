@@ -21,9 +21,9 @@
 
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
+#include "absl/status/status.h"
 #include "absl/strings/string_view.h"
 #include "common/util/logging.h"
-#include "common/util/status.h"
 #include "verilog/formatting/format_style.h"
 
 #undef EXPECT_OK

@@ -19,17 +19,9 @@ cc_library(
 )
 
 cc_library(
-    name = "status",
-    srcs = ["status.cc"],
-    hdrs = [
-        "status.h",
-        "status_macros.h",
-        "statusor.h",
-    ],
-    deps = [
-        "@com_google_absl//absl/base:core_headers",
-        "@com_google_absl//absl/strings",
-    ],
+    name = "status_macros",
+    hdrs = ["status_macros.h"],
+    deps = ["@com_google_absl//absl/base:core_headers"],
 )
 
 cc_library(

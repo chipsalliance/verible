@@ -20,6 +20,7 @@
 #include <string>
 #include <vector>
 
+#include "absl/status/status.h"
 #include "absl/strings/string_view.h"
 #include "common/lexer/lexer.h"
 #include "common/lexer/token_stream_adapter.h"
@@ -29,7 +30,6 @@
 #include "common/text/text_structure.h"
 #include "common/text/token_info.h"
 #include "common/text/token_stream_view.h"
-#include "common/util/status.h"
 
 namespace verible {
 
@@ -56,7 +56,7 @@ std::ostream& operator<<(std::ostream& stream, const AnalysisPhase& phase) {
 }
 
 // Grab tokens until EOF, and initialize a stream view with all tokens.
-util::Status FileAnalyzer::Tokenize(Lexer* lexer) {
+absl::Status FileAnalyzer::Tokenize(Lexer* lexer) {
   const auto buffer = Data().Contents();
   TokenSequence& tokens = MutableData().MutableTokenStream();
 
@@ -75,12 +75,12 @@ util::Status FileAnalyzer::Tokenize(Lexer* lexer) {
 
   // Initialize filtered view of token stream.
   InitTokenStreamView(tokens, &MutableData().MutableTokenStreamView());
-  return util::OkStatus();
+  return absl::OkStatus();
 }
 
 // Runs the parser on the current TokenStreamView.
-util::Status FileAnalyzer::Parse(Parser* parser) {
-  const util::Status status = parser->Parse();
+absl::Status FileAnalyzer::Parse(Parser* parser) {
+  const absl::Status status = parser->Parse();
   // Transfer syntax tree root, even if there were (recovered) syntax errors,
   // because the partial tree can still be useful to analyze.
   MutableData().MutableSyntaxTree() = parser->TakeRoot();

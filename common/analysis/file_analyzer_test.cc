@@ -19,11 +19,11 @@
 #include <string>
 
 #include "gtest/gtest.h"
+#include "absl/status/status.h"
 #include "absl/strings/match.h"
 #include "absl/strings/string_view.h"
 #include "common/text/text_structure.h"
 #include "common/text/token_info.h"
-#include "common/util/status.h"
 
 namespace verible {
 namespace {
@@ -34,10 +34,10 @@ class FakeFileAnalyzer : public FileAnalyzer {
   FakeFileAnalyzer(const std::string& text, const std::string& filename)
       : FileAnalyzer(text, filename) {}
 
-  util::Status Tokenize() override {
+  absl::Status Tokenize() override {
     // TODO(fangism): Tokenize(lexer) interface is not directly tested, but
     // covered elsewhere.
-    return util::OkStatus();
+    return absl::OkStatus();
   }
 };
 

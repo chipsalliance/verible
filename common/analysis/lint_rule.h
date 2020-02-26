@@ -20,9 +20,9 @@
 
 #include <string>
 
+#include "absl/status/status.h"
 #include "absl/strings/string_view.h"
 #include "common/analysis/lint_rule_status.h"
-#include "common/util/status.h"
 
 namespace verible {
 
@@ -39,9 +39,9 @@ class LintRule {
   // on failure, the Error-status will contain a message.
   // By default, rules don't accept any configuration, so only an empty
   // configuration is valid.
-  virtual util::Status Configure(absl::string_view configuration) {
-    if (configuration.empty()) return util::OkStatus();
-    return util::InvalidArgumentError("Rule does not support configuration.");
+  virtual absl::Status Configure(absl::string_view configuration) {
+    if (configuration.empty()) return absl::OkStatus();
+    return absl::InvalidArgumentError("Rule does not support configuration.");
   }
 
   // Report() returns a LintRuleStatus, which summarizes the results so

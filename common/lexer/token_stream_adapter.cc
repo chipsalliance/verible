@@ -14,10 +14,10 @@
 
 #include "common/lexer/token_stream_adapter.h"
 
+#include "absl/status/status.h"
 #include "common/lexer/lexer.h"
 #include "common/lexer/token_generator.h"
 #include "common/text/token_info.h"
-#include "common/util/status.h"
 
 namespace verible {
 
@@ -25,7 +25,7 @@ TokenGenerator MakeTokenGenerator(Lexer* l) {
   return [=]() { return l->DoNextToken(); };
 }
 
-util::Status MakeTokenSequence(
+absl::Status MakeTokenSequence(
     Lexer* lexer, absl::string_view text, TokenSequence* tokens,
     std::function<void(const TokenInfo&)> error_token_handler) {
   // TODO(fangism): provide a Lexer interface to grab all tokens en masse,
@@ -37,14 +37,14 @@ util::Status MakeTokenSequence(
     if (lexer->TokenIsError(new_token)) {  // one more virtual function call
       error_token_handler(new_token);
       // Stop-on-first-error.
-      return util::InvalidArgumentError("Lexical error.");
+      return absl::InvalidArgumentError("Lexical error.");
     }
   } while (!tokens->back().isEOF());
   // Final token is EOF.
   // Force EOF token's text range to be empty, pointing to end of original
   // string.  Otherwise, its range ends up overlapping with the previous token.
   tokens->back() = TokenInfo::EOFToken(text);
-  return util::OkStatus();
+  return absl::OkStatus();
 }
 
 }  // namespace verible

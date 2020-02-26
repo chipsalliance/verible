@@ -27,14 +27,13 @@
 
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
+#include "absl/status/status.h"
 #include "common/text/concrete_syntax_tree.h"
 #include "common/text/symbol.h"
 #include "common/text/text_structure.h"
 #include "common/text/token_info.h"
 #include "common/util/casts.h"
 #include "common/util/logging.h"
-#include "common/util/status.h"
-#include "common/util/statusor.h"
 #include "verilog/analysis/verilog_analyzer.h"
 
 #undef EXPECT_OK

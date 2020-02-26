@@ -27,6 +27,7 @@
 #include <vector>
 
 #include "absl/flags/flag.h"
+#include "absl/status/status.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
 #include "absl/types/span.h"  // for MakeArraySlice
@@ -37,7 +38,6 @@
 #include "common/util/file_util.h"
 #include "common/util/init_command_line.h"
 #include "common/util/logging.h"  // for operator<<, LOG, LogMessage, etc
-#include "common/util/status.h"
 #include "verilog/CST/verilog_tree_print.h"
 #include "verilog/analysis/verilog_analyzer.h"
 #include "verilog/parser/verilog_parser.h"

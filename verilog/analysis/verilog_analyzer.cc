@@ -26,6 +26,7 @@
 #include <vector>
 
 #include "absl/memory/memory.h"
+#include "absl/status/status.h"
 #include "absl/strings/str_split.h"
 #include "absl/strings/string_view.h"
 #include "common/analysis/file_analyzer.h"
@@ -40,7 +41,6 @@
 #include "common/text/visitors.h"
 #include "common/util/container_util.h"
 #include "common/util/logging.h"
-#include "common/util/status.h"
 #include "common/util/status_macros.h"
 #include "verilog/analysis/verilog_excerpt_parse.h"
 #include "verilog/parser/verilog_lexer.h"
@@ -59,7 +59,7 @@ using verible::container::InsertKeyOrDie;
 
 const char VerilogAnalyzer::kParseDirectiveName[] = "verilog_syntax:";
 
-verible::util::Status VerilogAnalyzer::Tokenize() {
+absl::Status VerilogAnalyzer::Tokenize() {
   if (!tokenized_) {
     VerilogLexer lexer{Data().Contents()};
     tokenized_ = true;
@@ -209,7 +209,7 @@ void VerilogAnalyzer::ContextualizeTokens() {
 // Analyzes Verilog code: lexer, filter, parser.
 // Result of parsing is stored in syntax_tree_ (if passed)
 // or rejected_token_ (if failed).
-verible::util::Status VerilogAnalyzer::Analyze() {
+absl::Status VerilogAnalyzer::Analyze() {
   // Lex into tokens.
   RETURN_IF_ERROR(Tokenize());
 
@@ -231,8 +231,7 @@ verible::util::Status VerilogAnalyzer::Analyze() {
             error.token_info, verible::AnalysisPhase::kPreprocessPhase,
             error.error_message});
       }
-      parse_status_ =
-          verible::util::InvalidArgumentError("Preprocessor error.");
+      parse_status_ = absl::InvalidArgumentError("Preprocessor error.");
       return parse_status_;
     }
     MutableData().MutableTokenStreamView() =

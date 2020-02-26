@@ -150,7 +150,7 @@ cc_library(
         "//common/text:concrete_syntax_tree",
         "//common/text:symbol",
         "//common/text:visitors",
-        "//common/util:status",
+        "@com_google_absl//absl/status",
         "@com_google_absl//absl/strings",
         "@com_google_googletest//:gtest",  # for library
     ],

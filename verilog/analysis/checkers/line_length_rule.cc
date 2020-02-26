@@ -181,10 +181,9 @@ void LineLengthRule::Lint(const TextStructureView& text_structure,
   }
 }
 
-verible::util::Status LineLengthRule::Configure(
-    absl::string_view configuration) {
-  if (configuration.empty()) return verible::util::OkStatus();
-  using verible::util::InvalidArgumentError;
+absl::Status LineLengthRule::Configure(absl::string_view configuration) {
+  if (configuration.empty()) return absl::OkStatus();
+  using absl::InvalidArgumentError;
   const std::pair<absl::string_view, absl::string_view> nv_pair =
       absl::StrSplit(configuration, ':', absl::SkipEmpty());
   if (nv_pair.first != "length") {
@@ -204,7 +203,7 @@ verible::util::Status LineLengthRule::Configure(
                      kMinimumLineLength, "...", kMaximumLineLength, "]"));
   }
   line_length_limit_ = value;
-  return verible::util::OkStatus();
+  return absl::OkStatus();
 }
 
 LintRuleStatus LineLengthRule::Report() const {

@@ -41,11 +41,11 @@
 #include <string>
 #include <vector>
 
+#include "absl/status/status.h"
 #include "absl/strings/string_view.h"
 #include "common/text/macro_definition.h"
 #include "common/text/token_info.h"
 #include "common/text/token_stream_view.h"
-#include "common/util/status.h"
 
 namespace verilog {
 
@@ -98,11 +98,11 @@ class VerilogPreprocess {
   using StreamIteratorGenerator =
       std::function<TokenStreamView::const_iterator()>;
 
-  verible::util::Status HandleTokenIterator(
-      const TokenStreamView::const_iterator, const StreamIteratorGenerator&);
+  absl::Status HandleTokenIterator(const TokenStreamView::const_iterator,
+                                   const StreamIteratorGenerator&);
 
-  verible::util::Status HandleDefine(const TokenStreamView::const_iterator,
-                                     const StreamIteratorGenerator&);
+  absl::Status HandleDefine(const TokenStreamView::const_iterator,
+                            const StreamIteratorGenerator&);
 
   // The following functions return nullptr when there is no error:
   static std::unique_ptr<VerilogPreprocessError> ConsumeMacroDefinition(

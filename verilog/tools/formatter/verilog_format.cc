@@ -30,6 +30,7 @@
 #include <vector>
 
 #include "absl/flags/flag.h"
+#include "absl/status/status.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/str_join.h"
 #include "absl/strings/str_split.h"
@@ -38,11 +39,10 @@
 #include "common/util/init_command_line.h"
 #include "common/util/interval_set.h"
 #include "common/util/logging.h"  // for operator<<, LOG, LogMessage, etc
-#include "common/util/status.h"
 #include "verilog/formatting/format_style.h"
 #include "verilog/formatting/formatter.h"
 
-using verible::util::StatusCode;
+using absl::StatusCode;
 using verilog::formatter::ExecutionControl;
 using verilog::formatter::FormatStyle;
 using verilog::formatter::FormatVerilog;

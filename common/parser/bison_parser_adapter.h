@@ -27,12 +27,12 @@
 #include <cstddef>  // for size_t
 #include <vector>
 
+#include "absl/status/status.h"
 #include "common/lexer/token_generator.h"
 #include "common/parser/parse.h"
 #include "common/parser/parser_param.h"
 #include "common/text/concrete_syntax_tree.h"
 #include "common/text/token_info.h"
-#include "common/util/status.h"
 
 namespace verible {
 
@@ -43,16 +43,16 @@ class BisonParserAdapter : public Parser {
   explicit BisonParserAdapter(TokenGenerator* token_generator)
       : Parser(), param_(token_generator) {}
 
-  util::Status Parse() override {
+  absl::Status Parse() override {
     int result = ParseFunc(&param_);
     // Results of parsing are stored in param_.
     VLOG(3) << "max_used_stack_size : " << MaxUsedStackSize();
     if (result == 0 && param_.RecoveredSyntaxErrors().empty()) {
-      return util::OkStatus();
+      return absl::OkStatus();
     } else {
       // We could potentially dump the parser's symbol stack from ParserParam.
       // We could also print information about recovered errors.
-      return util::InvalidArgumentError("Syntax error.");
+      return absl::InvalidArgumentError("Syntax error.");
       // More detailed error information is stored inside param_.
     }
   }

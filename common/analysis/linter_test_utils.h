@@ -23,11 +23,11 @@
 #include <vector>
 
 #include "gtest/gtest.h"
+#include "absl/status/status.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
 #include "common/analysis/lint_rule_status.h"
 #include "common/lexer/lexer_test_util.h"
-#include "common/util/status.h"
 
 namespace verible {
 
@@ -67,7 +67,7 @@ void RunLintTestCase(const LintTestCase& test,
                      const std::string& filename) {
   // All linters start by parsing to yield a TextStructure.
   AnalyzerType analyzer(test.code, filename);
-  util::Status unused_parser_status = analyzer.Analyze();
+  absl::Status unused_parser_status = analyzer.Analyze();
 
   // Instantiate a linter that runs a single rule to analyze text.
   LintRunner<RuleType> lint_runner(make_rule());

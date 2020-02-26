@@ -19,7 +19,7 @@ cc_library(
         "//common/lexer:token_generator",
         "//common/text:concrete_syntax_tree",
         "//common/text:token_info",
-        "//common/util:status",
+        "@com_google_absl//absl/status",
     ],
 )
 
@@ -42,7 +42,7 @@ cc_library(
     deps = [
         "//common/text:concrete_syntax_tree",
         "//common/text:token_info",
-        "//common/util:status",
+        "@com_google_absl//absl/status",
     ],
     alwayslink = 1,
 )
@@ -70,7 +70,7 @@ cc_library(
         "//common/text:symbol",
         "//common/text:token_info",
         "//common/text:token_info_test_util",
-        "//common/util:status",
+        "@com_google_absl//absl/status",
         "@com_google_googletest//:gtest",  # for library
     ],
 )

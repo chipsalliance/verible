@@ -19,11 +19,11 @@
 #include <string>
 
 #include "gtest/gtest.h"
+#include "absl/status/status.h"
 #include "absl/strings/string_view.h"
 #include "common/analysis/matcher/matcher.h"
 #include "common/text/concrete_syntax_tree.h"
 #include "common/text/symbol.h"
-#include "common/util/status.h"
 
 namespace verible {
 namespace matcher {
@@ -49,7 +49,7 @@ void ExpectMatchesInAST(const Symbol& tree, const Matcher& matcher,
 template <class A>
 void RunRawMatcherTestCase(const RawMatcherTestCase& test) {
   A analyzer(test.code, "<<inline-test>>");
-  util::Status status = analyzer.Analyze();
+  absl::Status status = analyzer.Analyze();
   EXPECT_TRUE(status.ok()) << "code with error:\n" << test.code;
 
   auto* tree = analyzer.SyntaxTree().get();

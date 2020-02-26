@@ -21,6 +21,7 @@
 #include <vector>
 
 #include "absl/memory/memory.h"
+#include "absl/status/status.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
 #include "common/lexer/token_generator.h"
@@ -30,7 +31,6 @@
 #include "common/text/token_stream_view.h"
 #include "common/util/container_util.h"
 #include "common/util/logging.h"
-#include "common/util/status.h"
 #include "verilog/parser/verilog_parser.h"  // for verilog_symbol_name()
 #include "verilog/parser/verilog_token_enum.h"
 
@@ -177,7 +177,7 @@ std::unique_ptr<VerilogPreprocessError> VerilogPreprocess::ParseMacroDefinition(
 
 // Interprets preprocessor tokens as directives that act on this preprocessor
 // object and possibly transform the input token stream.
-verible::util::Status VerilogPreprocess::HandleTokenIterator(
+absl::Status VerilogPreprocess::HandleTokenIterator(
     const TokenStreamView::const_iterator iter,
     const StreamIteratorGenerator& generator) {
   // For now, pass through all macro definition tokens to next consumer
@@ -188,7 +188,7 @@ verible::util::Status VerilogPreprocess::HandleTokenIterator(
     default:
       // All other tokens are passed through unmodified.
       preprocess_data_.preprocessed_token_stream.push_back(*iter);
-      return verible::util::OkStatus();
+      return absl::OkStatus();
   }
 }
 
@@ -207,7 +207,7 @@ void VerilogPreprocess::RegisterMacroDefinition(
 
 // Responds to `define directives.  Macro definitions are parsed and saved
 // for use within the same file.
-verible::util::Status VerilogPreprocess::HandleDefine(
+absl::Status VerilogPreprocess::HandleDefine(
     const TokenStreamView::const_iterator iter,  // points to `define token
     const StreamIteratorGenerator& generator) {
   TokenStreamView define_tokens;
@@ -216,8 +216,7 @@ verible::util::Status VerilogPreprocess::HandleDefine(
       ConsumeMacroDefinition(generator, &define_tokens);
   if (consume_error_ptr) {
     preprocess_data_.errors.push_back(*consume_error_ptr);
-    return verible::util::InvalidArgumentError(
-        "Error parsing macro definition.");
+    return absl::InvalidArgumentError("Error parsing macro definition.");
   }
   CHECK_GE(define_tokens.size(), 3)
       << "Macro definition should span at least 3 tokens, but only got "
@@ -228,15 +227,14 @@ verible::util::Status VerilogPreprocess::HandleDefine(
       ParseMacroDefinition(define_tokens, &macro_definition);
   if (parse_error_ptr) {
     preprocess_data_.errors.push_back(*parse_error_ptr);
-    return verible::util::InvalidArgumentError(
-        "Error parsing macro definition.");
+    return absl::InvalidArgumentError("Error parsing macro definition.");
   }
   // For now, forward all definition tokens.
   RegisterMacroDefinition(macro_definition);
   for (const auto& token : define_tokens) {
     preprocess_data_.preprocessed_token_stream.push_back(token);
   }
-  return verible::util::OkStatus();
+  return absl::OkStatus();
 }
 
 VerilogPreprocessData VerilogPreprocess::ScanStream(

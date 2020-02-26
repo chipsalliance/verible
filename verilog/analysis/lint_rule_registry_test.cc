@@ -232,7 +232,7 @@ TEST(LintRuleRegistryTest, ConfigureFactoryCreatedRule) {
   auto any_rule = CreateTextStructureLintRule("text-rule-1");
   EXPECT_NE(any_rule, nullptr);
   // Test configuration of freshly instantiated rule.
-  verible::util::Status status = any_rule->Configure("");
+  absl::Status status = any_rule->Configure("");
   EXPECT_TRUE(status.ok()) << status.message();
   status = any_rule->Configure("bogus");
   EXPECT_FALSE(status.ok());

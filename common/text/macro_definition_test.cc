@@ -19,9 +19,9 @@
 #include <vector>
 
 #include "gtest/gtest.h"
+#include "absl/status/status.h"
 #include "common/text/token_info.h"
 #include "common/util/container_util.h"
-#include "common/util/status.h"
 
 namespace verible {
 namespace {
