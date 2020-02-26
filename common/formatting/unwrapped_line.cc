@@ -52,6 +52,11 @@ static void TokenFormatter(std::string* out, const PreFormatToken& token,
   absl::StrAppend(out, token.Text());
 }
 
+void UnwrappedLine::SetIndentationSpaces(int spaces) {
+  CHECK_GE(spaces, 0);
+  indentation_spaces_ = spaces;
+}
+
 std::ostream* UnwrappedLine::AsCode(std::ostream* stream, bool verbose) const {
   *stream << Spacer(indentation_spaces_, kIndentationMarker) << '['
           << absl::StrJoin(tokens_, " ",

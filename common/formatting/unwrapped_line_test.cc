@@ -66,6 +66,12 @@ TEST_F(UnwrappedLineTest, DepthTests) {
   EXPECT_EQ(uwline_depth.IndentationSpaces(), 22);
 }
 
+// Testing SetIndentationSpaces() should assert-fail with a negative value.
+TEST_F(UnwrappedLineTest, SetIndentationSpacesNegative) {
+  UnwrappedLine uwline(0, pre_format_tokens_.begin());
+  EXPECT_DEATH(uwline.SetIndentationSpaces(-1), "");
+}
+
 // Testing PartitionPolicy()
 TEST_F(UnwrappedLineTest, PartitionPolicyTests) {
   UnwrappedLine uwline(0, pre_format_tokens_.begin(),

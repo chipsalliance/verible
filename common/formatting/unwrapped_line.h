@@ -84,7 +84,7 @@ class UnwrappedLine {
 
   int IndentationSpaces() const { return indentation_spaces_; }
 
-  void SetIndentationSpaces(int spaces) { indentation_spaces_ = spaces; }
+  void SetIndentationSpaces(int spaces);
 
   PartitionPolicyEnum PartitionPolicy() const { return partition_policy_; }
 

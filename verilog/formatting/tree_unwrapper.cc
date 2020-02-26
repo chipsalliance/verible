@@ -1001,8 +1001,11 @@ void TreeUnwrapper::Visit(const verible::SyntaxTreeNode& node) {
 
         // Undo the indentation of the only instance in the hoisted subtree.
         instance_list_partition.ApplyPreOrder([&](UnwrappedLine& uwline) {
-          uwline.SetIndentationSpaces(uwline.IndentationSpaces() -
-                                      style_.wrap_spaces);
+          // If there were any unindented lines like preprocessing directives,
+          // leave those unindented (without going negative).
+          const int unindentation =
+              std::max(uwline.IndentationSpaces() - style_.wrap_spaces, 0);
+          uwline.SetIndentationSpaces(unindentation);
         });
 
         // Reshape type-instance partitions.

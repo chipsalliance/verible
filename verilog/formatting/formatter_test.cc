@@ -2489,6 +2489,71 @@ static const std::initializer_list<FormatterTestCase> kFormatterTestCases = {
      "      .dd(dd)  //\n"  // forced to expand by //
      "  );\n"
      "endmodule\n"},
+    {// ifdef inside port actuals
+     "module m;  foo bar   (\n"
+     "`ifdef   BAZ\n"
+     "`endif\n"
+     ")  ;endmodule\n",
+     "module m;\n"
+     "  foo bar (\n"
+     "`ifdef BAZ\n"
+     "`endif\n"
+     "  );\n"
+     "endmodule\n"},
+    {// ifdef inside port actuals after a port connection
+     "module m;  foo bar   ( .a (a) ,\n"
+     "`ifdef   BAZ\n"
+     "`endif\n"
+     ")  ;endmodule\n",
+     "module m;\n"
+     "  foo bar (\n"
+     "      .a(a),\n"
+     "`ifdef BAZ\n"
+     "`endif\n"
+     "  );\n"
+     "endmodule\n"},
+    {// ifdef inside port actuals before a port connection
+     "module m;  foo bar   (\n"
+     "`ifdef   BAZ\n"
+     "`endif\n"
+     ". b(b) )  ;endmodule\n",
+     "module m;\n"
+     "  foo bar (\n"
+     "`ifdef BAZ\n"
+     "`endif\n"
+     "      .b(b)\n"
+     "  );\n"
+     "endmodule\n"},
+    {// ifdef-conditional port connection
+     "module m;  foo bar   (\n"
+     "`ifdef   BAZ\n"
+     ". c (\tc) \n"
+     "`endif\n"
+     " )  ;endmodule\n",
+     "module m;\n"
+     "  foo bar (\n"
+     "`ifdef BAZ\n"
+     "      .c(c)\n"
+     "`endif\n"
+     "  );\n"
+     "endmodule\n"},
+    {// ifndef-else-conditional port connection
+     "module m;  foo bar   (\n"
+     "`ifndef   BAZ\n"
+     ". c (\tc) \n"
+     "  `else\n"
+     " . d(d\t)\n"
+     "  `endif\n"
+     " )  ;endmodule\n",
+     "module m;\n"
+     "  foo bar (\n"
+     "`ifndef BAZ\n"
+     "      .c(c)\n"
+     "`else\n"
+     "      .d(d)\n"
+     "`endif\n"
+     "  );\n"
+     "endmodule\n"},
 
     {
         // test that alternate top-syntax mode works

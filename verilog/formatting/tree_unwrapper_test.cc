@@ -656,6 +656,139 @@ const TreeUnwrapperTestData kUnwrapModuleTestCases[] = {
     },
 
     {
+        "module with instances with ifdef in ports",
+        "module ifdef_ports;"
+        "foo bar(\n"
+        "`ifdef BAZ\n"
+        "`endif\n"
+        ");"
+        "endmodule",
+        ModuleHeader(0, L(0, {"module", "ifdef_ports", ";"})),
+        ModuleItemList(1, Instantiation(1, L(1, {"foo", "bar", "("}),
+                                        PortActualList(3,  //
+                                                       L(0, {"`ifdef", "BAZ"}),
+                                                       L(0, {"`endif"})),
+                                        L(1, {")", ";"}))),
+        L(0, {"endmodule"}),
+    },
+
+    {
+        "module with instances with ifdef-else in ports",
+        "module ifdef_else_ports;"
+        "foo bar(\n"
+        "`ifdef BAZ\n"
+        "`else\n"
+        "`endif\n"
+        ");"
+        "endmodule",
+        ModuleHeader(0, L(0, {"module", "ifdef_else_ports", ";"})),
+        ModuleItemList(
+            1, Instantiation(1, L(1, {"foo", "bar", "("}),
+                             PortActualList(3,  //
+                                            L(0, {"`ifdef", "BAZ"}),
+                                            L(0, {"`else"}), L(0, {"`endif"})),
+                             L(1, {")", ";"}))),
+        L(0, {"endmodule"}),
+    },
+
+    {
+        "module with instances with ifndef in ports",
+        "module ifndef_ports;"
+        "foo bar(\n"
+        "`ifndef BAZ\n"
+        "`endif\n"
+        ");"
+        "endmodule",
+        ModuleHeader(0, L(0, {"module", "ifndef_ports", ";"})),
+        ModuleItemList(1, Instantiation(1, L(1, {"foo", "bar", "("}),
+                                        PortActualList(3,  //
+                                                       L(0, {"`ifndef", "BAZ"}),
+                                                       L(0, {"`endif"})),
+                                        L(1, {")", ";"}))),
+        L(0, {"endmodule"}),
+    },
+
+    {
+        "module with instances with actuals and ifdef in ports",
+        "module ifdef_ports;"
+        "foo bar(\n"
+        ".a(a),\n"  // with comma
+        "`ifdef BAZ\n"
+        "`endif\n"
+        ");"
+        "endmodule",
+        ModuleHeader(0, L(0, {"module", "ifdef_ports", ";"})),
+        ModuleItemList(
+            1, Instantiation(
+                   1, L(1, {"foo", "bar", "("}),
+                   PortActualList(3,  //
+                                  L(3, {".", "a", "(", "a", ")", ","}),
+                                  L(0, {"`ifdef", "BAZ"}), L(0, {"`endif"})),
+                   L(1, {")", ";"}))),
+        L(0, {"endmodule"}),
+    },
+
+    {
+        "module with instances with actuals and ifdef in ports (no comma)",
+        "module ifdef_ports;"
+        "foo bar(\n"
+        ".a(a)\n"  // no comma
+        "`ifdef BAZ\n"
+        "`endif\n"
+        ");"
+        "endmodule",
+        ModuleHeader(0, L(0, {"module", "ifdef_ports", ";"})),
+        ModuleItemList(
+            1, Instantiation(
+                   1, L(1, {"foo", "bar", "("}),
+                   PortActualList(3,  //
+                                  L(3, {".", "a", "(", "a", ")"}),
+                                  L(0, {"`ifdef", "BAZ"}), L(0, {"`endif"})),
+                   L(1, {")", ";"}))),
+        L(0, {"endmodule"}),
+    },
+
+    {
+        "module with instances with ifdef and actuals in ports",
+        "module ifdef_ports;"
+        "foo bar(\n"
+        "`ifdef BAZ\n"
+        "`endif\n"
+        ".a(a)\n"
+        ");"
+        "endmodule",
+        ModuleHeader(0, L(0, {"module", "ifdef_ports", ";"})),
+        ModuleItemList(
+            1, Instantiation(
+                   1, L(1, {"foo", "bar", "("}),
+                   PortActualList(3,  //
+                                  L(0, {"`ifdef", "BAZ"}), L(0, {"`endif"}),
+                                  L(3, {".", "a", "(", "a", ")"})),
+                   L(1, {")", ";"}))),
+        L(0, {"endmodule"}),
+    },
+
+    {
+        "module with instances with ifdef conditional port",
+        "module ifdef_ports;"
+        "foo bar(\n"
+        "`ifdef BAZ\n"
+        ".a(a)\n"
+        "`endif\n"
+        ");"
+        "endmodule",
+        ModuleHeader(0, L(0, {"module", "ifdef_ports", ";"})),
+        ModuleItemList(
+            1, Instantiation(1, L(1, {"foo", "bar", "("}),
+                             PortActualList(3,  //
+                                            L(0, {"`ifdef", "BAZ"}),
+                                            L(3, {".", "a", "(", "a", ")"}),
+                                            L(0, {"`endif"})),
+                             L(1, {")", ";"}))),
+        L(0, {"endmodule"}),
+    },
+
+    {
         "module interface ports",
         "module foo ("
         "interface bar_if, interface baz_if);"
