@@ -74,5 +74,26 @@ TEST(VerilogTokenTest, IsUnlexedTest) {
   EXPECT_FALSE(IsUnlexed(verilog_tokentype::SymbolIdentifier));
 }
 
+TEST(VerilogTokenTest, IsIdentifierLikeTest) {
+  EXPECT_TRUE(IsIdentifierLike(verilog_tokentype::SymbolIdentifier));
+  EXPECT_TRUE(IsIdentifierLike(verilog_tokentype::PP_Identifier));
+  EXPECT_TRUE(IsIdentifierLike(verilog_tokentype::MacroIdentifier));
+  EXPECT_TRUE(IsIdentifierLike(verilog_tokentype::MacroIdItem));
+  EXPECT_TRUE(IsIdentifierLike(verilog_tokentype::MacroCallId));
+  EXPECT_TRUE(IsIdentifierLike(verilog_tokentype::SystemTFIdentifier));
+  EXPECT_TRUE(IsIdentifierLike(verilog_tokentype::EscapedIdentifier));
+  EXPECT_FALSE(IsIdentifierLike(verilog_tokentype::TK_StringLiteral));
+  EXPECT_FALSE(IsIdentifierLike(verilog_tokentype::TK_DecNumber));
+  EXPECT_FALSE(IsIdentifierLike(verilog_tokentype::TK_DecBase));
+  EXPECT_FALSE(IsIdentifierLike(verilog_tokentype::TK_DecDigits));
+  EXPECT_FALSE(IsIdentifierLike(verilog_tokentype::TK_always));
+  EXPECT_FALSE(IsIdentifierLike(verilog_tokentype::TK_wire));
+  EXPECT_FALSE(IsIdentifierLike(verilog_tokentype::TK_EOL_COMMENT));
+  EXPECT_FALSE(IsIdentifierLike(verilog_tokentype::TK_COMMENT_BLOCK));
+  EXPECT_FALSE(IsIdentifierLike(verilog_tokentype::TKK_attribute));
+  EXPECT_FALSE(IsIdentifierLike(verilog_tokentype::TK_ATTRIBUTE));
+  EXPECT_FALSE(IsIdentifierLike(verilog_tokentype('+')));
+}
+
 }  // namespace
 }  // namespace verilog

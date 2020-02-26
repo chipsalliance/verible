@@ -26,11 +26,12 @@
 #include <vector>
 
 #include "absl/strings/string_view.h"
+#include "common/lexer/token_stream_adapter.h"
 #include "common/text/token_info.h"
 #include "common/text/token_stream_view.h"
 #include "common/util/logging.h"
 #include "verilog/parser/verilog_lexer.h"
-#include "verilog/parser/verilog_parser.h"
+#include "verilog/parser/verilog_parser.h"  // for verilog_symbol_name()
 #include "verilog/parser/verilog_token_classifications.h"
 #include "verilog/parser/verilog_token_enum.h"
 
@@ -39,7 +40,41 @@ namespace verilog {
 using verible::TokenInfo;
 using verible::TokenSequence;
 
-bool LexicallyEquivalent(
+// TODO(fangism): majority of this code is not Verilog-specific and could
+// be factored into a common/analysis library.
+
+// Lex a token into smaller substrings/subtokens.
+// Lexical errors are reported to errstream.
+static TokenSequence LexText(absl::string_view text, const char* label,
+                             std::ostream* errstream) {
+  TokenSequence subtokens;
+  VerilogLexer lexer(text);
+  // Reservation slot to capture first error token, if any.
+  auto err_tok = TokenInfo::EOFToken(text);
+  // Lex token's text into subtokens.
+  const auto status = MakeTokenSequence(
+      &lexer, text, &subtokens, [&](const TokenInfo& err) { err_tok = err; });
+  if (!status.ok() && (errstream != nullptr)) {
+    (*errstream) << "Error lexing " << label << " text: " << text << std::endl
+                 << "subtoken: " << err_tok << std::endl
+                 << status.message();
+  }
+  return subtokens;
+}
+
+// Recursively lex a token into smaller substrings/subtokens.
+// The comparator function itself can invoke another lex-and-compare-like
+// function.
+static bool RecursivelyLexAndCompare(
+    absl::string_view left, absl::string_view right, std::ostream* errstream,
+    std::function<bool(absl::string_view, absl::string_view, std::ostream*)>
+        comp) {
+  return comp(left, right, errstream);
+}
+
+// Compares two (already lexed) token sequences one token at a time,
+// stopping an report the first mismatch.
+static bool LexicallyEquivalentTokens(
     const TokenSequence& left, const TokenSequence& right,
     std::function<bool(const verible::TokenInfo&)> remove_predicate,
     std::function<bool(const verible::TokenInfo&, const verible::TokenInfo&)>
@@ -104,15 +139,75 @@ bool LexicallyEquivalent(
   return false;
 }
 
-bool FormatEquivalent(const TokenSequence& left, const TokenSequence& right,
+// This variant expects two strings and lexes both into corresponding
+// token streams to do the comparison.
+bool LexicallyEquivalent(
+    absl::string_view left, absl::string_view right,
+    std::function<bool(const verible::TokenInfo&)> remove_predicate,
+    std::function<bool(const verible::TokenInfo&, const verible::TokenInfo&)>
+        equal_comparator,
+    std::ostream* errstream) {
+  const TokenSequence left_subtokens = LexText(left, "left", errstream);
+  const TokenSequence right_subtokens = LexText(right, "right", errstream);
+  return LexicallyEquivalentTokens(left_subtokens, right_subtokens,
+                                   remove_predicate, equal_comparator,
+                                   errstream);
+}
+
+// Token comparator for format-equivalence.
+static bool FormatEquivalentTokens(const TokenInfo& l, const TokenInfo& r,
+                                   std::ostream* errstream) {
+  if (IsUnlexed(verilog_tokentype(l.token_enum))) {
+    return RecursivelyLexAndCompare(l.text, r.text, errstream,
+                                    FormatEquivalent);
+  }
+  return l.EquivalentWithoutLocation(r);
+}
+
+bool FormatEquivalent(absl::string_view left, absl::string_view right,
                       std::ostream* errstream) {
   return LexicallyEquivalent(
       left, right,
       [](const TokenInfo& t) {
         return IsWhitespace(verilog_tokentype(t.token_enum));
       },
-      [](const TokenInfo& l, const TokenInfo& r) {
-        return l.EquivalentWithoutLocation(r);
+      [=](const TokenInfo& l, const TokenInfo& r) {
+        return FormatEquivalentTokens(l, r, errstream);
+      },
+      errstream);
+}
+
+// Token comparator for obfuscation-equivalence.
+static bool ObfuscationEquivalentTokens(const TokenInfo& l, const TokenInfo& r,
+                                        std::ostream* errstream) {
+  const auto l_vtoken_enum = verilog_tokentype(l.token_enum);
+  if (l.token_enum != r.token_enum) {
+    if (errstream != nullptr) {
+      (*errstream) << "Mismatched token enums.  got: "
+                   << verilog_symbol_name(l.token_enum) << " vs. "
+                   << verilog_symbol_name(r.token_enum) << std::endl;
+    }
+    return false;
+  }
+  if (IsIdentifierLike(l_vtoken_enum)) {
+    return l.EquivalentBySpace(r);
+  } else if (IsUnlexed(l_vtoken_enum)) {
+    return RecursivelyLexAndCompare(l.text, r.text, errstream,
+                                    ObfuscationEquivalent);
+  }
+  return l.EquivalentWithoutLocation(r);
+}
+
+bool ObfuscationEquivalent(absl::string_view left, absl::string_view right,
+                           std::ostream* errstream) {
+  return LexicallyEquivalent(
+      left, right,
+      [](const TokenInfo&) {
+        // Whitespaces are required to match exactly.
+        return false;
+      },
+      [=](const TokenInfo& l, const TokenInfo& r) {
+        return ObfuscationEquivalentTokens(l, r, errstream);
       },
       errstream);
 }

@@ -115,12 +115,17 @@ Status VerifyFormatting(const verible::TextStructureView& text_structure,
   }
 
   {
-    const auto& original_tokens = text_structure.TokenStream();
-    const auto& formatted_tokens = reanalyzer->Data().TokenStream();
     // Filter out only whitespaces and compare.
     // First difference will be printed to cerr for debugging.
     std::ostringstream errstream;
-    if (!verilog::FormatEquivalent(original_tokens, formatted_tokens,
+    // Note: text_structure.TokenStream() and reanalyzer->Data().TokenStream()
+    // contain already lexed tokens, so this comparison check is repeating the
+    // work done by the lexers.
+    // Should performance be a concern, we could pass in those tokens to
+    // avoid lexing twice, but for now, using plain strings as an interface
+    // to comparator functions is simpler and more intuitive.
+    // See analysis/verilog_equivalence.cc implementation.
+    if (!verilog::FormatEquivalent(text_structure.Contents(), formatted_output,
                                    &errstream)) {
       return Status(
           StatusCode::kDataLoss,

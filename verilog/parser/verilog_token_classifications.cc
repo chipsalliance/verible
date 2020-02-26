@@ -141,4 +141,20 @@ bool IsUnlexed(verilog_tokentype token_type) {
   }
 }
 
+bool IsIdentifierLike(verilog_tokentype token_type) {
+  switch (token_type) {
+    case verilog_tokentype::SymbolIdentifier:
+    case verilog_tokentype::PP_Identifier:
+    case verilog_tokentype::MacroIdentifier:
+    case verilog_tokentype::MacroIdItem:
+    case verilog_tokentype::MacroCallId:
+    case verilog_tokentype::SystemTFIdentifier:
+    case verilog_tokentype::EscapedIdentifier:
+      return true;
+    default:
+      break;
+  }
+  return false;
+}
+
 }  // namespace verilog

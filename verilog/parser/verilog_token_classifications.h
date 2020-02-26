@@ -46,6 +46,11 @@ bool IsEndKeyword(verilog_tokentype);
 // Returns true if token is unlexed text that can be further expanded.
 bool IsUnlexed(verilog_tokentype);
 
+// Returns true if token is a type that corresponds to a user-written symbol
+// name.  Includes regular identifiers, system-task identifiers, macro
+// identifiers.
+bool IsIdentifierLike(verilog_tokentype);
+
 // TODO(fangism): Identify specially lexed tokens that require a newline after.
 // e.g. MacroIdItem, TK_EOL_COMMENT, ...
 // bool RequiresNewlineAfterToken(verilog_tokentype);

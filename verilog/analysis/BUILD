@@ -129,6 +129,7 @@ cc_library(
     srcs = ["verilog_equivalence.cc"],
     hdrs = ["verilog_equivalence.h"],
     deps = [
+        "//common/lexer:token_stream_adapter",
         "//common/text:token_info",
         "//common/text:token_stream_view",
         "//common/util:logging",
@@ -273,14 +274,10 @@ cc_test(
     name = "verilog_equivalence_test",
     srcs = ["verilog_equivalence_test.cc"],
     deps = [
-        ":verilog_analyzer",
         ":verilog_equivalence",
-        "//common/text:constants",
         "//common/text:token_info",
-        "//common/text:token_stream_view",
         "//common/util:logging",
         "//verilog/parser:verilog_token_enum",
-        "@com_google_absl//absl/memory",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/strings",
         "@com_google_absl//absl/types:span",

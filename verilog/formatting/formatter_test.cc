@@ -3258,7 +3258,7 @@ TEST(FormatterEndToEndTest, VerilogFormatTest) {
     const auto status =
         FormatVerilog(test_case.input, "<filename>", style, stream);
     // Require these test cases to be valid.
-    EXPECT_OK(status);
+    EXPECT_OK(status) << status.message();
     EXPECT_EQ(stream.str(), test_case.expected) << "code:\n" << test_case.input;
   }
 }
@@ -3421,7 +3421,7 @@ TEST(FormatterEndToEndTest, SelectLines) {
     std::ostringstream stream;
     const auto status = FormatVerilog(test_case.input, "<filename>", style,
                                       stream, test_case.lines);
-    EXPECT_OK(status);
+    EXPECT_OK(status) << status.message();
     EXPECT_EQ(stream.str(), test_case.expected)
         << "code:\n"
         << test_case.input << "\nlines: " << test_case.lines;
@@ -3548,7 +3548,7 @@ TEST(FormatterEndToEndTest, PreserveVSpacesOnly) {
     std::ostringstream stream;
     const auto status =
         FormatVerilog(test_case.input, "<filename>", style, stream);
-    EXPECT_OK(status);
+    EXPECT_OK(status) << status.message();
     EXPECT_EQ(stream.str(), test_case.expected) << "code:\n" << test_case.input;
   }
 }
@@ -3692,7 +3692,7 @@ TEST(FormatterEndToEndTest, FormatElseStatements) {
     std::ostringstream stream;
     const auto status =
         FormatVerilog(test_case.input, "<filename>", style, stream);
-    EXPECT_OK(status);
+    EXPECT_OK(status) << status.message();
     EXPECT_EQ(stream.str(), test_case.expected) << "code:\n" << test_case.input;
   }
 }
@@ -3748,7 +3748,7 @@ TEST(FormatterEndToEndTest, DiagnosticEquallyOptimalWrappings) {
     control.show_equally_optimal_wrappings = true;
     const auto status = FormatVerilog(test_case.input, "<filename>", style,
                                       stream, kEnableAllLines, control);
-    EXPECT_OK(status);
+    EXPECT_OK(status) << status.message();
     if (!debug_stream.str().empty()) {
       EXPECT_TRUE(absl::StartsWith(debug_stream.str(), "Showing the "))
           << "got: " << debug_stream.str();

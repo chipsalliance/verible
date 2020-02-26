@@ -19,15 +19,15 @@
 #include <iosfwd>
 
 #include "absl/strings/string_view.h"
-#include "common/text/token_stream_view.h"
+#include "common/text/token_info.h"
 
 namespace verilog {
 
-// Returns true if both token sequences are equivalent, ignoring tokens filtered
+// Returns true if both texts are 'equivalent', ignoring tokens filtered
 // out by remove_predicate, and using the equal_comparator binary predicate.
 // If errstream is provided, print detailed error message to that stream.
 bool LexicallyEquivalent(
-    const verible::TokenSequence& left, const verible::TokenSequence& right,
+    absl::string_view left, absl::string_view right,
     std::function<bool(const verible::TokenInfo&)> remove_predicate,
     std::function<bool(const verible::TokenInfo&, const verible::TokenInfo&)>
         equal_comparator,
@@ -35,9 +35,16 @@ bool LexicallyEquivalent(
 
 // Returns true if both token sequences are equivalent, ignoring whitespace.
 // If errstream is provided, print detailed error message to that stream.
-bool FormatEquivalent(const verible::TokenSequence& left,
-                      const verible::TokenSequence& right,
+bool FormatEquivalent(absl::string_view left, absl::string_view right,
                       std::ostream* errstream = nullptr);
+
+// Similar to FormatEquivalent except that:
+//   1) whitespaces must match
+//   2) identifiers only need to match in length and not string content to be
+//      considered equal.
+// Such equivalence is good for formatter test cases.
+bool ObfuscationEquivalent(absl::string_view left, absl::string_view right,
+                           std::ostream* errstream = nullptr);
 
 }  // namespace verilog
 
