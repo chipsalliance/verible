@@ -19,6 +19,7 @@
 #include <iosfwd>
 #include <vector>
 
+#include "common/formatting/basic_format_style.h"
 #include "common/formatting/format_token.h"
 #include "common/formatting/unwrapped_line.h"
 #include "common/util/vector_tree.h"
@@ -84,6 +85,84 @@ void MergeConsecutiveSiblings(TokenPartitionTree* tree, size_t pos);
 // Returns the parent of the leaf partition that was moved if the move
 // occurred, else nullptr.
 TokenPartitionTree* MoveLastLeafIntoPreviousSibling(TokenPartitionTree*);
+
+// Evalautes two partitioning schemes wrapped and appended first
+// subpartition. Then reshapes node tree according to scheme with less
+// grouping nodes (if both have same number of grouping nodes uses one
+// with appended first subpartition).
+//
+// Example input:
+// --------------
+// { (>>[<auto>]) @{1,0}, policy: append-fitting-sub-partitions
+//   { (>>[function fffffffffff (]) }
+//   { (>>>>>>[<auto>]) @{1,0,1}, policy: fit-else-expand
+//     { (>>>>>>[type_a aaaa ,]) }
+//     { (>>>>>>[type_b bbbbb ,]) }
+//     { (>>>>>>[type_c cccccc ,]) }
+//     { (>>>>>>[type_d dddddddd ,]) }
+//     { (>>>>>>[type_e eeeeeeee ,]) }
+//     { (>>>>>>[type_f ffff ) ;]) }
+//   }
+// }
+//
+// Example outputs:
+// ----------------
+//
+// style.column_limit = 100:
+//
+// { (>>[<auto>]) @{1,0}, policy: append-fitting-sub-partitions
+//   { (>>[<auto>]) @{1,0,0}, policy: fit-else-expand
+//     { (>>[function fffffffffff (]) }
+//     { (>>>>>>[type_a aaaa ,]) }
+//     { (>>>>>>[type_b bbbbb ,]) }
+//     { (>>>>>>[type_c cccccc ,]) }
+//     { (>>>>>>[type_d dddddddd ,]) }
+//     { (>>>>>>[type_e eeeeeeee ,]) }
+//   }
+//   { (>>>>>>>>>>>>>>>>>>>>>>>[<auto>]) @{1,0,1}, policy: fit-else-expand
+//     { (>>>>>>[type_f ffff ) ;]) }
+//   }
+// }
+//
+// style.column_limit = 56:
+//
+// { (>>[<auto>]) @{1,0}, policy: append-fitting-sub-partitions
+//   { (>>[<auto>]) @{1,0,0}, policy: fit-else-expand
+//     { (>>[function fffffffffff (]) }
+//     { (>>>>>>[type_a aaaa ,]) }
+//     { (>>>>>>[type_b bbbbb ,]) }
+//   }
+//   { (>>>>>>>>>>>>>>>>>>>>>>>[<auto>]) @{1,0,1}, policy: fit-else-expand
+//     { (>>>>>>[type_c cccccc ,]) }
+//     { (>>>>>>[type_d dddddddd ,]) }
+//   }
+//   { (>>>>>>>>>>>>>>>>>>>>>>>[<auto>]) @{1,0,2}, policy: fit-else-expand
+//     { (>>>>>>[type_e eeeeeeee ,]) }
+//     { (>>>>>>[type_f ffff ) ;]) }
+//   }
+// }
+//
+// style.column_limit = 40:
+//
+// { (>>[<auto>]) @{1,0}, policy: append-fitting-sub-partitions
+//   { (>>[<auto>]) @{1,0,0}, policy: fit-else-expand
+//     { (>>[function fffffffffff (]) }
+//   }
+//   { (>>>>>>[<auto>]) @{1,0,1}, policy: fit-else-expand
+//     { (>>>>>>[type_a aaaa ,]) }
+//     { (>>>>>>[type_b bbbbb ,]) }
+//   }
+//   { (>>>>>>[<auto>]) @{1,0,2}, policy: fit-else-expand
+//     { (>>>>>>[type_c cccccc ,]) }
+//     { (>>>>>>[type_d dddddddd ,]) }
+//   }
+//   { (>>>>>>[<auto>]) @{1,0,3}, policy: fit-else-expand
+//     { (>>>>>>[type_e eeeeeeee ,]) }
+//     { (>>>>>>[type_f ffff ) ;]) }
+//   }
+// }
+void ReshapeFittingSubpartitions(TokenPartitionTree* node,
+                                 const verible::BasicFormatStyle& style);
 
 }  // namespace verible
 
