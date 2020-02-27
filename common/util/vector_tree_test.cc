@@ -105,14 +105,59 @@ TEST(VectorTreeTest, RootOnlySiblingIteration) {
   }
 }
 
+TEST(VectorTreeTest, CopyAssignEmpty) {
+  typedef VectorTree<int> tree_type;
+  const tree_type tree(1);  // Root only tree.
+  const tree_type expected(1);
+  tree_type tree2(5);
+  tree2 = tree;
+  {
+    const auto result_pair = DeepEqual(tree2, expected);
+    EXPECT_EQ(result_pair.left, nullptr) << *result_pair.left;
+    EXPECT_EQ(result_pair.right, nullptr) << *result_pair.right;
+  }
+  {  // verify original copy
+    const auto result_pair = DeepEqual(tree, expected);
+    EXPECT_EQ(result_pair.left, nullptr) << *result_pair.left;
+    EXPECT_EQ(result_pair.right, nullptr) << *result_pair.right;
+  }
+}
+
+TEST(VectorTreeTest, CopyAssignDeep) {
+  typedef VectorTree<int> tree_type;
+  const tree_type tree(1,
+                       tree_type(2, tree_type(3, tree_type(4, tree_type(5)))));
+  const tree_type expected(
+      1, tree_type(2, tree_type(3, tree_type(4, tree_type(5)))));
+  tree_type tree2(6);
+  tree2 = tree;
+  {
+    const auto result_pair = DeepEqual(tree2, expected);
+    EXPECT_EQ(result_pair.left, nullptr) << *result_pair.left;
+    EXPECT_EQ(result_pair.right, nullptr) << *result_pair.right;
+  }
+  {  // verify original copy
+    const auto result_pair = DeepEqual(tree, expected);
+    EXPECT_EQ(result_pair.left, nullptr) << *result_pair.left;
+    EXPECT_EQ(result_pair.right, nullptr) << *result_pair.right;
+  }
+}
+
 TEST(VectorTreeTest, CopyInitializeEmpty) {
   typedef VectorTree<int> tree_type;
   const tree_type tree(1);  // Root only tree.
   const tree_type expected(1);
   tree_type tree2 = tree;
-  const auto result_pair = DeepEqual(tree2, expected);
-  EXPECT_EQ(result_pair.left, nullptr);
-  EXPECT_EQ(result_pair.right, nullptr);
+  {
+    const auto result_pair = DeepEqual(tree2, expected);
+    EXPECT_EQ(result_pair.left, nullptr) << *result_pair.left;
+    EXPECT_EQ(result_pair.right, nullptr) << *result_pair.right;
+  }
+  {  // verify original copy
+    const auto result_pair = DeepEqual(tree, expected);
+    EXPECT_EQ(result_pair.left, nullptr) << *result_pair.left;
+    EXPECT_EQ(result_pair.right, nullptr) << *result_pair.right;
+  }
 }
 
 TEST(VectorTreeTest, CopyInitializeDeep) {
@@ -122,9 +167,16 @@ TEST(VectorTreeTest, CopyInitializeDeep) {
   const tree_type expected(
       1, tree_type(2, tree_type(3, tree_type(4, tree_type(5)))));
   tree_type tree2 = tree;
-  const auto result_pair = DeepEqual(tree2, expected);
-  EXPECT_EQ(result_pair.left, nullptr);
-  EXPECT_EQ(result_pair.right, nullptr);
+  {
+    const auto result_pair = DeepEqual(tree2, expected);
+    EXPECT_EQ(result_pair.left, nullptr) << *result_pair.left;
+    EXPECT_EQ(result_pair.right, nullptr) << *result_pair.right;
+  }
+  {  // verify original copy
+    const auto result_pair = DeepEqual(tree, expected);
+    EXPECT_EQ(result_pair.left, nullptr) << *result_pair.left;
+    EXPECT_EQ(result_pair.right, nullptr) << *result_pair.right;
+  }
 }
 
 TEST(VectorTreeTest, MoveInitializeEmpty) {
@@ -133,8 +185,8 @@ TEST(VectorTreeTest, MoveInitializeEmpty) {
   const tree_type expected(1);
   tree_type tree2 = std::move(tree);
   const auto result_pair = DeepEqual(tree2, expected);
-  EXPECT_EQ(result_pair.left, nullptr);
-  EXPECT_EQ(result_pair.right, nullptr);
+  EXPECT_EQ(result_pair.left, nullptr) << *result_pair.left;
+  EXPECT_EQ(result_pair.right, nullptr) << *result_pair.right;
 }
 
 TEST(VectorTreeTest, MoveInitializeDeep) {
@@ -144,8 +196,8 @@ TEST(VectorTreeTest, MoveInitializeDeep) {
       1, tree_type(2, tree_type(3, tree_type(4, tree_type(5)))));
   tree_type tree2 = std::move(tree);
   const auto result_pair = DeepEqual(tree2, expected);
-  EXPECT_EQ(result_pair.left, nullptr);
-  EXPECT_EQ(result_pair.right, nullptr);
+  EXPECT_EQ(result_pair.left, nullptr) << *result_pair.left;
+  EXPECT_EQ(result_pair.right, nullptr) << *result_pair.right;
 }
 
 TEST(VectorTreeTest, MoveAssignEmpty) {
@@ -157,8 +209,8 @@ TEST(VectorTreeTest, MoveAssignEmpty) {
   tree2 = std::move(tree);
   VLOG(4) << "done moving.";
   const auto result_pair = DeepEqual(tree2, expected);
-  EXPECT_EQ(result_pair.left, nullptr);
-  EXPECT_EQ(result_pair.right, nullptr);
+  EXPECT_EQ(result_pair.left, nullptr) << *result_pair.left;
+  EXPECT_EQ(result_pair.right, nullptr) << *result_pair.right;
 }
 
 TEST(VectorTreeTest, MoveAssignDeep) {
@@ -169,8 +221,8 @@ TEST(VectorTreeTest, MoveAssignDeep) {
   const tree_type expected(
       1, tree_type(2, tree_type(3, tree_type(4, tree_type(5)))));
   const auto result_pair = DeepEqual(tree2, expected);
-  EXPECT_EQ(result_pair.left, nullptr);
-  EXPECT_EQ(result_pair.right, nullptr);
+  EXPECT_EQ(result_pair.left, nullptr) << *result_pair.left;
+  EXPECT_EQ(result_pair.right, nullptr) << *result_pair.right;
 }
 
 TEST(VectorTreeTest, SwapUnrelatedRoots) {
@@ -182,13 +234,13 @@ TEST(VectorTreeTest, SwapUnrelatedRoots) {
   swap(tree, tree2);                   // verible::swap, using ADL
   {
     const auto result_pair = DeepEqual(tree, t1_expected);
-    EXPECT_EQ(result_pair.left, nullptr);
-    EXPECT_EQ(result_pair.right, nullptr);
+    EXPECT_EQ(result_pair.left, nullptr) << *result_pair.left;
+    EXPECT_EQ(result_pair.right, nullptr) << *result_pair.right;
   }
   {
     const auto result_pair = DeepEqual(tree2, t2_expected);
-    EXPECT_EQ(result_pair.left, nullptr);
-    EXPECT_EQ(result_pair.right, nullptr);
+    EXPECT_EQ(result_pair.left, nullptr) << *result_pair.left;
+    EXPECT_EQ(result_pair.right, nullptr) << *result_pair.right;
   }
 }
 
@@ -200,15 +252,15 @@ TEST(VectorTreeTest, SwapUnrelatedSubtrees) {
   {
     const tree_type expected(1, tree_type(8, tree_type(9, tree_type(10))));
     const auto result_pair = DeepEqual(tree, expected);
-    EXPECT_EQ(result_pair.left, nullptr);
-    EXPECT_EQ(result_pair.right, nullptr);
+    EXPECT_EQ(result_pair.left, nullptr) << *result_pair.left;
+    EXPECT_EQ(result_pair.right, nullptr) << *result_pair.right;
   }
   {
     const tree_type expected(
         7, tree_type(2, tree_type(3, tree_type(4, tree_type(5)))));
     const auto result_pair = DeepEqual(tree2, expected);
-    EXPECT_EQ(result_pair.left, nullptr);
-    EXPECT_EQ(result_pair.right, nullptr);
+    EXPECT_EQ(result_pair.left, nullptr) << *result_pair.left;
+    EXPECT_EQ(result_pair.right, nullptr) << *result_pair.right;
   }
 }
 
@@ -225,8 +277,8 @@ TEST(VectorTreeTest, SwapSiblings) {
       tree_type(0), tree_type(7, tree_type(8, tree_type(9))),
       tree_type(2, tree_type(3, tree_type(4, tree_type(5)))), tree_type(11));
   const auto result_pair = DeepEqual(tree, expected);
-  EXPECT_EQ(result_pair.left, nullptr);
-  EXPECT_EQ(result_pair.right, nullptr);
+  EXPECT_EQ(result_pair.left, nullptr) << *result_pair.left;
+  EXPECT_EQ(result_pair.right, nullptr) << *result_pair.right;
 }
 
 TEST(VectorTreeTest, SwapDistantCousins) {
@@ -242,16 +294,16 @@ TEST(VectorTreeTest, SwapDistantCousins) {
       tree_type(0), tree_type(2, tree_type(7, tree_type(8, tree_type(9)))),
       tree_type(3, tree_type(4, tree_type(5))), tree_type(11));
   const auto result_pair = DeepEqual(tree, expected);
-  EXPECT_EQ(result_pair.left, nullptr);
-  EXPECT_EQ(result_pair.right, nullptr);
+  EXPECT_EQ(result_pair.left, nullptr) << *result_pair.left;
+  EXPECT_EQ(result_pair.right, nullptr) << *result_pair.right;
 }
 
 TEST(VectorTreeTest, StructureEqualRootToRoot) {
   const VectorTreeTestType ltree(verible::testing::MakeRootOnlyExampleTree());
   const VectorTreeTestType rtree(verible::testing::MakeRootOnlyExampleTree());
   const auto result_pair = StructureEqual(ltree, rtree);
-  EXPECT_EQ(result_pair.left, nullptr);
-  EXPECT_EQ(result_pair.right, nullptr);
+  EXPECT_EQ(result_pair.left, nullptr) << *result_pair.left;
+  EXPECT_EQ(result_pair.right, nullptr) << *result_pair.right;
 }
 
 TEST(VectorTreeTest, StructureEqualRootToRootIgnoringValue) {
@@ -260,16 +312,16 @@ TEST(VectorTreeTest, StructureEqualRootToRootIgnoringValue) {
   ltree.Value().left = 11;
   rtree.Value().left = 34;
   const auto result_pair = StructureEqual(ltree, rtree);
-  EXPECT_EQ(result_pair.left, nullptr);
-  EXPECT_EQ(result_pair.right, nullptr);
+  EXPECT_EQ(result_pair.left, nullptr) << *result_pair.left;
+  EXPECT_EQ(result_pair.right, nullptr) << *result_pair.right;
 }
 
 TEST(VectorTreeTest, DeepEqualRootToRoot) {
   const VectorTreeTestType ltree(verible::testing::MakeRootOnlyExampleTree());
   const VectorTreeTestType rtree(verible::testing::MakeRootOnlyExampleTree());
   const auto result_pair = DeepEqual(ltree, rtree);
-  EXPECT_EQ(result_pair.left, nullptr);
-  EXPECT_EQ(result_pair.right, nullptr);
+  EXPECT_EQ(result_pair.left, nullptr) << *result_pair.left;
+  EXPECT_EQ(result_pair.right, nullptr) << *result_pair.right;
 }
 
 TEST(VectorTreeTest, DeepEqualRootToRootValueDifferent) {
@@ -318,19 +370,19 @@ TEST(VectorTreeTest, RootOnlyTreeTransformComparisonMatches) {
   const auto other_tree = tree.Transform<NameOnly>(NameOnlyConverter);
   {
     const auto result_pair = StructureEqual(tree, other_tree);
-    EXPECT_EQ(result_pair.left, nullptr);
-    EXPECT_EQ(result_pair.right, nullptr);
+    EXPECT_EQ(result_pair.left, nullptr) << *result_pair.left;
+    EXPECT_EQ(result_pair.right, nullptr) << *result_pair.right;
   }
   {
     const auto result_pair = StructureEqual(other_tree, tree);  // swapped
-    EXPECT_EQ(result_pair.left, nullptr);
-    EXPECT_EQ(result_pair.right, nullptr);
+    EXPECT_EQ(result_pair.left, nullptr) << *result_pair.left;
+    EXPECT_EQ(result_pair.right, nullptr) << *result_pair.right;
   }
   {
     // Uses hetergeneous value comparison.
     const auto result_pair = DeepEqual(tree, other_tree);
-    EXPECT_EQ(result_pair.left, nullptr);
-    EXPECT_EQ(result_pair.right, nullptr);
+    EXPECT_EQ(result_pair.left, nullptr) << *result_pair.left;
+    EXPECT_EQ(result_pair.right, nullptr) << *result_pair.right;
   }
 }
 
@@ -340,8 +392,8 @@ TEST(VectorTreeTest, RootOnlyTreeTransformComparisonDiffer) {
   other_tree.Value().name = "groot";
   {
     const auto result_pair = StructureEqual(tree, other_tree);
-    EXPECT_EQ(result_pair.left, nullptr);
-    EXPECT_EQ(result_pair.right, nullptr);
+    EXPECT_EQ(result_pair.left, nullptr) << *result_pair.left;
+    EXPECT_EQ(result_pair.right, nullptr) << *result_pair.right;
   }
   {
     // Uses hetergeneous value comparison.
@@ -493,8 +545,8 @@ TEST(VectorTreeTest, StructureEqualOneChild) {
   const VectorTreeTestType rtree(
       verible::testing::MakeOneChildPolicyExampleTree());
   const auto result_pair = StructureEqual(ltree, rtree);
-  EXPECT_EQ(result_pair.left, nullptr);
-  EXPECT_EQ(result_pair.right, nullptr);
+  EXPECT_EQ(result_pair.left, nullptr) << *result_pair.left;
+  EXPECT_EQ(result_pair.right, nullptr) << *result_pair.right;
 }
 
 TEST(VectorTreeTest, StructureEqualOneChildIgnoreValues) {
@@ -503,8 +555,8 @@ TEST(VectorTreeTest, StructureEqualOneChildIgnoreValues) {
   ltree.Children()[0].Value().right = 32;
   rtree.Children()[0].Value().right = 77;
   const auto result_pair = StructureEqual(ltree, rtree);
-  EXPECT_EQ(result_pair.left, nullptr);
-  EXPECT_EQ(result_pair.right, nullptr);
+  EXPECT_EQ(result_pair.left, nullptr) << *result_pair.left;
+  EXPECT_EQ(result_pair.right, nullptr) << *result_pair.right;
 }
 
 TEST(VectorTreeTest, DeepEqualOneChild) {
@@ -513,8 +565,8 @@ TEST(VectorTreeTest, DeepEqualOneChild) {
   const VectorTreeTestType rtree(
       verible::testing::MakeOneChildPolicyExampleTree());
   const auto result_pair = DeepEqual(ltree, rtree);
-  EXPECT_EQ(result_pair.left, nullptr);
-  EXPECT_EQ(result_pair.right, nullptr);
+  EXPECT_EQ(result_pair.left, nullptr) << *result_pair.left;
+  EXPECT_EQ(result_pair.right, nullptr) << *result_pair.right;
 }
 
 TEST(VectorTreeTest, DeepEqualOneChildDifferentChildValues) {
@@ -546,8 +598,8 @@ TEST(VectorTreeTest, DeepEqualOneChildGrandchildValuesHeterogeneous) {
   auto rtree = ltree.Transform<NameOnly>(NameOnlyConverter);
   {  // Match
     const auto result_pair = DeepEqual(ltree, rtree);
-    EXPECT_EQ(result_pair.left, nullptr);
-    EXPECT_EQ(result_pair.right, nullptr);
+    EXPECT_EQ(result_pair.left, nullptr) << *result_pair.left;
+    EXPECT_EQ(result_pair.right, nullptr) << *result_pair.right;
   }
   {                                          // Mismatch
     const std::vector<size_t> path({0, 0});  // only grandchild
@@ -617,8 +669,8 @@ TEST(VectorTreeTest, FamilyTreeCopiedMembers) {
   VerifyFamilyTree(tree);
 
   const auto result_pair = DeepEqual(orig_tree, tree);
-  EXPECT_EQ(result_pair.left, nullptr);
-  EXPECT_EQ(result_pair.right, nullptr);
+  EXPECT_EQ(result_pair.left, nullptr) << *result_pair.left;
+  EXPECT_EQ(result_pair.right, nullptr) << *result_pair.right;
 }
 
 // Tests internal consistency and properties of moved tree.
@@ -790,20 +842,20 @@ TEST(VectorTreeTest, FamilyTreeMembersTransformed) {
 
   {
     const auto result_pair = StructureEqual(orig_tree, tree);
-    EXPECT_EQ(result_pair.left, nullptr);
-    EXPECT_EQ(result_pair.right, nullptr);
+    EXPECT_EQ(result_pair.left, nullptr) << *result_pair.left;
+    EXPECT_EQ(result_pair.right, nullptr) << *result_pair.right;
   }
   {  // Converse comparison.
     const auto result_pair = StructureEqual(tree, orig_tree);
-    EXPECT_EQ(result_pair.left, nullptr);
-    EXPECT_EQ(result_pair.right, nullptr);
+    EXPECT_EQ(result_pair.left, nullptr) << *result_pair.left;
+    EXPECT_EQ(result_pair.right, nullptr) << *result_pair.right;
   }
 
   {
     // Uses hetergeneous value comparison.
     const auto result_pair = DeepEqual(orig_tree, tree);
-    EXPECT_EQ(result_pair.left, nullptr);
-    EXPECT_EQ(result_pair.right, nullptr);
+    EXPECT_EQ(result_pair.left, nullptr) << *result_pair.left;
+    EXPECT_EQ(result_pair.right, nullptr) << *result_pair.right;
   }
 
   // Mutate one grandchild at a time.
@@ -902,8 +954,8 @@ TEST(VectorTreeTest, FamilyTreeMembersDeepEqualCustomComparator) {
       {
         const auto result_pair =
             DeepEqual(ltree, rtree, EqualNamedIntervalIgnoreName);
-        EXPECT_EQ(result_pair.left, nullptr);
-        EXPECT_EQ(result_pair.right, nullptr);
+        EXPECT_EQ(result_pair.left, nullptr) << *result_pair.left;
+        EXPECT_EQ(result_pair.right, nullptr) << *result_pair.right;
       }
     }
   }
@@ -1395,8 +1447,8 @@ TEST(VectorTreeTest, FlattenOnceNoChildren) {
   const tree_type expect_tree(1);
   tree.FlattenOnce();
   const auto result_pair = DeepEqual(tree, expect_tree);
-  EXPECT_EQ(result_pair.left, nullptr);
-  EXPECT_EQ(result_pair.right, nullptr);
+  EXPECT_EQ(result_pair.left, nullptr) << *result_pair.left;
+  EXPECT_EQ(result_pair.right, nullptr) << *result_pair.right;
 }
 
 TEST(VectorTreeTest, FlattenOnceNoGrandchildren) {
@@ -1408,8 +1460,8 @@ TEST(VectorTreeTest, FlattenOnceNoGrandchildren) {
   const tree_type expect_tree(1);
   tree.FlattenOnce();
   const auto result_pair = DeepEqual(tree, expect_tree);
-  EXPECT_EQ(result_pair.left, nullptr);
-  EXPECT_EQ(result_pair.right, nullptr);
+  EXPECT_EQ(result_pair.left, nullptr) << *result_pair.left;
+  EXPECT_EQ(result_pair.right, nullptr) << *result_pair.right;
 }
 
 TEST(VectorTreeTest, FlattenOnceOneGrandchild) {
@@ -1420,8 +1472,8 @@ TEST(VectorTreeTest, FlattenOnceOneGrandchild) {
   const tree_type expect_tree(1, tree_type(3));
   tree.FlattenOnce();
   const auto result_pair = DeepEqual(tree, expect_tree);
-  EXPECT_EQ(result_pair.left, nullptr);
-  EXPECT_EQ(result_pair.right, nullptr);
+  EXPECT_EQ(result_pair.left, nullptr) << *result_pair.left;
+  EXPECT_EQ(result_pair.right, nullptr) << *result_pair.right;
 }
 
 TEST(VectorTreeTest, FlattenOnceMixed) {
@@ -1440,8 +1492,8 @@ TEST(VectorTreeTest, FlattenOnceMixed) {
                               tree_type(13));
   tree.FlattenOnce();
   const auto result_pair = DeepEqual(tree, expect_tree);
-  EXPECT_EQ(result_pair.left, nullptr);
-  EXPECT_EQ(result_pair.right, nullptr);
+  EXPECT_EQ(result_pair.left, nullptr) << *result_pair.left;
+  EXPECT_EQ(result_pair.right, nullptr) << *result_pair.right;
 }
 
 TEST(VectorTreeTest, FlattenOnceAllNonempty) {
@@ -1463,8 +1515,8 @@ TEST(VectorTreeTest, FlattenOnceAllNonempty) {
                               tree_type(12), tree_type(13));
   tree.FlattenOnce();
   const auto result_pair = DeepEqual(tree, expect_tree);
-  EXPECT_EQ(result_pair.left, nullptr);
-  EXPECT_EQ(result_pair.right, nullptr);
+  EXPECT_EQ(result_pair.left, nullptr) << *result_pair.left;
+  EXPECT_EQ(result_pair.right, nullptr) << *result_pair.right;
 }
 
 TEST(VectorTreeTest, FlattenOnceGreatgrandchildren) {
@@ -1495,8 +1547,112 @@ TEST(VectorTreeTest, FlattenOnceGreatgrandchildren) {
                                         tree_type(13)));
   tree.FlattenOnce();
   const auto result_pair = DeepEqual(tree, expect_tree);
-  EXPECT_EQ(result_pair.left, nullptr);
-  EXPECT_EQ(result_pair.right, nullptr);
+  EXPECT_EQ(result_pair.left, nullptr) << *result_pair.left;
+  EXPECT_EQ(result_pair.right, nullptr) << *result_pair.right;
+}
+
+TEST(VectorTreeTest, FlattenOneChildEmpty) {
+  typedef VectorTree<int> tree_type;
+  tree_type tree(4);  // no children
+  EXPECT_DEATH(tree.FlattenOneChild(0), "");
+}
+
+TEST(VectorTreeTest, FlattenOneChildOnlyChildNoGrandchildren) {
+  typedef VectorTree<int> tree_type;
+  tree_type tree(4, tree_type(2));  // no grandchildren
+  const tree_type expect_tree(4);
+  tree.FlattenOneChild(0);
+  const auto result_pair = DeepEqual(tree, expect_tree);
+  EXPECT_EQ(result_pair.left, nullptr) << *result_pair.left;
+  EXPECT_EQ(result_pair.right, nullptr) << *result_pair.right;
+}
+
+TEST(VectorTreeTest, FlattenOneChildOnlyChildOneGrandchild) {
+  typedef VectorTree<int> tree_type;
+  tree_type tree(4, tree_type(2, tree_type(11)));  // with grandchild
+  const tree_type expect_tree(4, tree_type(11));
+  tree.FlattenOneChild(0);
+  const auto result_pair = DeepEqual(tree, expect_tree);
+  EXPECT_EQ(result_pair.left, nullptr) << *result_pair.left;
+  EXPECT_EQ(result_pair.right, nullptr) << *result_pair.right;
+}
+
+TEST(VectorTreeTest, FlattenOneChildFirstChildInFamilyTree) {
+  typedef VectorTree<int> tree_type;
+  tree_type tree(1,            //
+                 tree_type(2,  //
+                           tree_type(6), tree_type(7)),
+                 tree_type(3,  //
+                           tree_type(8), tree_type(9)),
+                 tree_type(4,  //
+                           tree_type(10), tree_type(11)),
+                 tree_type(5,  //
+                           tree_type(12), tree_type(13)));
+  const tree_type expect_tree(1,             //
+                              tree_type(6),  //
+                              tree_type(7),  //
+                              tree_type(3,   //
+                                        tree_type(8), tree_type(9)),
+                              tree_type(4,  //
+                                        tree_type(10), tree_type(11)),
+                              tree_type(5,  //
+                                        tree_type(12), tree_type(13)));
+  tree.FlattenOneChild(0);
+  const auto result_pair = DeepEqual(tree, expect_tree);
+  EXPECT_EQ(result_pair.left, nullptr) << *result_pair.left;
+  EXPECT_EQ(result_pair.right, nullptr) << *result_pair.right;
+}
+
+TEST(VectorTreeTest, FlattenOneChildMiddleChildInFamilyTree) {
+  typedef VectorTree<int> tree_type;
+  tree_type tree(1,            //
+                 tree_type(2,  //
+                           tree_type(6), tree_type(7)),
+                 tree_type(3,  //
+                           tree_type(8), tree_type(9)),
+                 tree_type(4,  //
+                           tree_type(10), tree_type(11)),
+                 tree_type(5,  //
+                           tree_type(12), tree_type(13)));
+  const tree_type expect_tree(1,            //
+                              tree_type(2,  //
+                                        tree_type(6), tree_type(7)),
+                              tree_type(8),  //
+                              tree_type(9),  //
+                              tree_type(4,   //
+                                        tree_type(10), tree_type(11)),
+                              tree_type(5,  //
+                                        tree_type(12), tree_type(13)));
+  tree.FlattenOneChild(1);
+  const auto result_pair = DeepEqual(tree, expect_tree);
+  EXPECT_EQ(result_pair.left, nullptr) << *result_pair.left;
+  EXPECT_EQ(result_pair.right, nullptr) << *result_pair.right;
+}
+
+TEST(VectorTreeTest, FlattenOneChildLastChildInFamilyTree) {
+  typedef VectorTree<int> tree_type;
+  tree_type tree(1,            //
+                 tree_type(2,  //
+                           tree_type(6), tree_type(7)),
+                 tree_type(3,  //
+                           tree_type(8), tree_type(9)),
+                 tree_type(4,  //
+                           tree_type(10), tree_type(11)),
+                 tree_type(5,  //
+                           tree_type(12), tree_type(13)));
+  const tree_type expect_tree(1,            //
+                              tree_type(2,  //
+                                        tree_type(6), tree_type(7)),
+                              tree_type(3,  //
+                                        tree_type(8), tree_type(9)),
+                              tree_type(4,  //
+                                        tree_type(10), tree_type(11)),
+                              tree_type(12),  //
+                              tree_type(13));
+  tree.FlattenOneChild(3);
+  const auto result_pair = DeepEqual(tree, expect_tree);
+  EXPECT_EQ(result_pair.left, nullptr) << *result_pair.left;
+  EXPECT_EQ(result_pair.right, nullptr) << *result_pair.right;
 }
 
 TEST(VectorTreeTest, PrintTree) {

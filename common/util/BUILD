@@ -182,6 +182,7 @@ cc_library(
     srcs = ["vector_tree.cc"],
     hdrs = ["vector_tree.h"],
     deps = [
+        ":iterator_range",
         ":logging",
         ":spacer",
         "@com_google_absl//absl/strings",

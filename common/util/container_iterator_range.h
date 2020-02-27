@@ -45,8 +45,8 @@ class container_iterator_range : public iterator_range<IT> {
   using value_type = typename std::iterator_traits<IT>::value_type;
   using reference = typename std::iterator_traits<IT>::reference;
 
-  // Disallow initialization to invalid iterators.
-  container_iterator_range() = delete;
+  // Allow default initialization to be usable inside resize-able containers.
+  container_iterator_range() = default;
 
   explicit container_iterator_range(std::pair<IT, IT> p)
       : range_type(std::move(p.first), std::move(p.second)) {}

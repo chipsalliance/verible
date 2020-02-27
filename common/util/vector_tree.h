@@ -23,6 +23,7 @@
 #include <utility>
 #include <vector>
 
+#include "common/util/iterator_range.h"
 #include "common/util/logging.h"
 #include "common/util/spacer.h"
 
@@ -198,6 +199,9 @@ class VectorTree : private _VectorTreeImpl {
 
   typedef _VectorTreeImpl impl_type;
 
+  // Private default constructor.
+  VectorTree() = default;
+
  public:
   typedef T value_type;
 
@@ -251,8 +255,13 @@ class VectorTree : private _VectorTreeImpl {
     other.Relink();                   // O(|children|)
   }
 
-  // TODO(fangism): enable copy-assign when needed
-  VectorTree& operator=(const this_type&) = delete;
+  // Copy value and children, but relink new children to this node.
+  VectorTree& operator=(const this_type& source) {
+    node_value_ = source.node_value_;
+    children_ = source.Children();
+    Relink();
+    return *this;
+  }
 
   // Explicit move-assignability needed for vector::erase()
   // No need to change parent links when children keep same parent.
@@ -621,6 +630,36 @@ class VectorTree : private _VectorTreeImpl {
     }
 
     // temp, which holds the discarded children, is destroyed.
+  }
+
+  // Replace the i'th child with its children.  This may result in increasing
+  // the number of direct children of this node.
+  void FlattenOneChild(size_t i) {
+    const size_t original_size = Children().size();
+    CHECK_LT(i, original_size);
+    // Unlink the grandchildren that will be adopted (in staging area).
+    subnodes_type adopted_grandchildren;
+    adopted_grandchildren.swap(Children()[i].Children());
+    {
+      // Remove i'th child.
+      const auto insert_iter = children_.begin() + i;
+      children_.erase(insert_iter);
+      // Allocate room for new children.
+      this_type dummy_node;
+      children_.insert(insert_iter, adopted_grandchildren.size(), dummy_node);
+      // insert_iter is invalidated here, due to potential re-allocation
+    }
+    {
+      // Insert adopted grandchildren (via move-swap to avoid copying).
+      const auto insert_iter = children_.begin() + i;
+      std::swap_ranges(adopted_grandchildren.begin(),
+                       adopted_grandchildren.end(), insert_iter);
+      // Relink them to this node.
+      for (auto& child : verible::make_range(
+               insert_iter, insert_iter + adopted_grandchildren.size())) {
+        child.parent_ = this;
+      }
+    }
   }
 
   // Pretty-print in tree-form.  Value() is enclosed in parens, and the whole

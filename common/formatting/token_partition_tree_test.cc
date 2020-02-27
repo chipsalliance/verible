@@ -398,4 +398,106 @@ TEST_F(MoveLastLeafIntoPreviousSiblingTest, TwoGenerations) {
                                     << *diff.right << '\n';
 }
 
+class MergeConsecutiveSiblingsTest : public TokenPartitionTreeTestFixture {};
+
+TEST_F(MergeConsecutiveSiblingsTest, OneChild) {
+  const auto& preformat_tokens = pre_format_tokens_;
+  const auto begin = preformat_tokens.begin();
+  UnwrappedLine all(0, begin);
+  all.SpanUpToToken(preformat_tokens.end());
+
+  // Construct an artificial tree using the above partitions.
+  using tree_type = TokenPartitionTree;
+  tree_type tree{
+      all, tree_type{all},  // subtree spans same range
+  };
+
+  // Need at least 2 sliblings to join.
+  EXPECT_DEATH(MergeConsecutiveSiblings(&tree, 0), "");
+}
+
+TEST_F(MergeConsecutiveSiblingsTest, TwoChild) {
+  const auto& preformat_tokens = pre_format_tokens_;
+  const auto begin = preformat_tokens.begin();
+
+  // Construct an artificial tree using the following partitions.
+  UnwrappedLine all(0, begin);
+  all.SpanUpToToken(preformat_tokens.end());
+  UnwrappedLine part1(0, begin);
+  part1.SpanUpToToken(begin + 3);
+  UnwrappedLine part2(0, part1.TokensRange().end());
+  part2.SpanUpToToken(all.TokensRange().end());
+
+  using tree_type = TokenPartitionTree;
+  tree_type tree{
+      all,
+      tree_type{part1},
+      tree_type{part2},
+  };
+
+  const tree_type expected_tree{
+      all, tree_type{all},  // concatenated unwrapped line ranges
+  };
+
+  MergeConsecutiveSiblings(&tree, 0);
+  const auto diff = DeepEqual(tree, expected_tree, TokenRangeEqual);
+  EXPECT_TRUE(diff.left == nullptr) << "First differing node at:\n"
+                                    << *diff.left << "\nand:\n"
+                                    << *diff.right << '\n';
+}
+
+TEST_F(MergeConsecutiveSiblingsTest, TwoGenerations) {
+  const auto& preformat_tokens = pre_format_tokens_;
+  const auto begin = preformat_tokens.begin();
+
+  // Construct an artificial tree using the following partitions.
+  UnwrappedLine all(0, begin);
+  all.SpanUpToToken(preformat_tokens.end());
+  UnwrappedLine part1(0, begin);
+  part1.SpanUpToToken(begin + 3);
+  UnwrappedLine part1a(0, begin);
+  part1a.SpanUpToToken(begin + 2);
+  UnwrappedLine part1b(0, part1a.TokensRange().end());
+  part1b.SpanUpToToken(part1.TokensRange().end());
+  UnwrappedLine part2(0, part1.TokensRange().end());
+  part2.SpanUpToToken(all.TokensRange().end());
+  UnwrappedLine part2a(0, begin);
+  part2a.SpanUpToToken(begin + 1);
+  UnwrappedLine part2b(0, part1a.TokensRange().end());
+  part2b.SpanUpToToken(part2.TokensRange().end());
+
+  using tree_type = TokenPartitionTree;
+  tree_type tree{
+      all,
+      tree_type{
+          part1,
+          tree_type{part1a},
+          tree_type{part1b},
+      },
+      tree_type{
+          part2,
+          tree_type{part2a},
+          tree_type{part2b},
+      },
+  };
+
+  const tree_type expected_tree{
+      all,
+      tree_type{
+          all,  // part1 + part2
+          // children of part1 and part2 are concatenated
+          tree_type{part1a},
+          tree_type{part1b},
+          tree_type{part2a},
+          tree_type{part2b},
+      },
+  };
+
+  MergeConsecutiveSiblings(&tree, 0);
+  const auto diff = DeepEqual(tree, expected_tree, TokenRangeEqual);
+  EXPECT_TRUE(diff.left == nullptr) << "First differing node at:\n"
+                                    << *diff.left << "\nand:\n"
+                                    << *diff.right << '\n';
+}
+
 }  // namespace verible

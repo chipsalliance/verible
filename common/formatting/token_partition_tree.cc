@@ -131,6 +131,16 @@ std::ostream& operator<<(std::ostream& stream,
   return printer.PrintTree(stream);
 }
 
+void MergeConsecutiveSiblings(TokenPartitionTree* tree, size_t pos) {
+  // Effectively concatenate unwrapped line ranges of sibling subpartitions.
+  tree->MergeConsecutiveSiblings(
+      pos, [](UnwrappedLine* left, const UnwrappedLine& right) {
+        // Verify token range continuity.
+        CHECK(left->TokensRange().end() == right.TokensRange().begin());
+        left->SpanUpToToken(right.TokensRange().end());
+      });
+}
+
 TokenPartitionTree* MoveLastLeafIntoPreviousSibling(TokenPartitionTree* tree) {
   auto* rightmost_leaf = tree->RightmostDescendant();
   auto* target_leaf = rightmost_leaf->PreviousLeaf();

@@ -63,13 +63,12 @@ class UnwrappedLine {
                 PartitionPolicyEnum p = PartitionPolicyEnum::kAlwaysExpand)
       : indentation_spaces_(d), tokens_(b, b), partition_policy_(p) {}
 
+  // Allow default construction for use in resize-able containers.
+  UnwrappedLine() = default;
   UnwrappedLine(const UnwrappedLine&) = default;
   UnwrappedLine(UnwrappedLine&&) = default;
+  UnwrappedLine& operator=(const UnwrappedLine&) = default;
   UnwrappedLine& operator=(UnwrappedLine&&) = default;
-
-  // Deleted interfaces.
-  UnwrappedLine() = delete;
-  UnwrappedLine& operator=(const UnwrappedLine&) = delete;
 
   // Extends PreFormatToken range spanned by this UnwrappedLine by one token at
   // the back.

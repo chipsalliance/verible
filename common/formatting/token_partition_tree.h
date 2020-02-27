@@ -77,6 +77,9 @@ std::ostream& operator<<(std::ostream& stream,
 
 // Transformations (modifying):
 
+// Merges the two subpartitions of tree at index pos and pos+1.
+void MergeConsecutiveSiblings(TokenPartitionTree* tree, size_t pos);
+
 // Moves the rightmost leaf to the leaf partition that precedes it.
 // Returns the parent of the leaf partition that was moved if the move
 // occurred, else nullptr.
