@@ -12,49 +12,50 @@ suite.
 verilog_lint: usage: bazel-bin/verilog/tools/lint/verilog_lint [options] <file> [<file>...]
 
   Flags from external/com_google_absl/absl/flags/parse.cc:
-    -flagfile (comma-separated list of files to load flags from); default: ;
-    -fromenv (comma-separated list of flags to set from the environment [use
+    --flagfile (comma-separated list of files to load flags from); default: ;
+    --fromenv (comma-separated list of flags to set from the environment [use
       'export FLAGS_flag1=value']); default: ;
-    -tryfromenv (comma-separated list of flags to try to set from the
+    --tryfromenv (comma-separated list of flags to try to set from the
       environment if present); default: ;
-    -undefok (comma-separated list of flag names that it is okay to specify on
+    --undefok (comma-separated list of flag names that it is okay to specify on
       the command line even if the program does not define a flag with that
       name); default: ;
 
 
   Flags from external/com_google_absl/absl/flags/internal/usage.cc:
-    -help (show help on important flags for this binary [tip: all flags can have
-      two dashes]); default: false;
-    -helpfull (show help on all flags); default: false; currently: true;
-    -helpmatch (show help on modules whose name contains the specified substr);
+    --help (show help on important flags for this binary [tip: all flags can
+      have two dashes]); default: false;
+    --helpfull (show help on all flags); default: false; currently: true;
+    --helpmatch (show help on modules whose name contains the specified substr);
       default: "";
-    -helpon (show help on the modules named by this flag value); default: "";
-    -helppackage (show help on all modules in the main package); default: false;
-    -helpshort (show help on only the main module for this program);
+    --helpon (show help on the modules named by this flag value); default: "";
+    --helppackage (show help on all modules in the main package);
       default: false;
-    -only_check_args (exit after checking all flags); default: false;
-    -version (show version and build info and exit); default: false;
+    --helpshort (show help on only the main module for this program);
+      default: false;
+    --only_check_args (exit after checking all flags); default: false;
+    --version (show version and build info and exit); default: false;
 
 
   Flags from verilog/analysis/verilog_linter.cc:
-    -rules (List of lint rules to enable); default: ;
-    -ruleset ([default|all|none], the base set of rules used by linter);
+    --rules (List of lint rules to enable); default: ;
+    --ruleset ([default|all|none], the base set of rules used by linter);
       default: default;
 
 
   Flags from verilog/parser/verilog_parser.cc:
-    -verilog_trace_parser (Trace verilog parser); default: false;
+    --verilog_trace_parser (Trace verilog parser); default: false;
 
 
   Flags from verilog/tools/lint/verilog_lint.cc:
-    -generate_markdown (If true, print the description of every rule formatted
+    --generate_markdown (If true, print the description of every rule formatted
       for the markdown and exit immediately. Intended for the output to be
       written to a snippet of markdown.); default: false;
-    -help_rules ([all|<rule-name>], print the description of one rule/all rules
+    --help_rules ([all|<rule-name>], print the description of one rule/all rules
       and exit immediately.); default: "";
-    -lint_fatal (If true, exit nonzero if linter finds violations.);
+    --lint_fatal (If true, exit nonzero if linter finds violations.);
       default: false;
-    -parse_fatal (If true, exit nonzero if there are any syntax errors.);
+    --parse_fatal (If true, exit nonzero if there are any syntax errors.);
       default: false;
 ```
 
@@ -285,4 +286,4 @@ Enabled by default: true
 
 ## Version
 
-Generated on 2020-02-25 13:48:51 -0800 from [v0.0-250-g64a4e8f](https://github.com/google/verible/commit/64a4e8f0a448a93ee845442ff7074402820fac08)
+Generated on 2020-02-26 16:02:51 -0800 from [v0.0-253-gc0dce5a](https://github.com/google/verible/commit/c0dce5af2f3ce5c669a6f6a1061c81db0c6e1423)
