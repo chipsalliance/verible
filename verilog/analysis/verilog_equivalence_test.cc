@@ -58,8 +58,8 @@ TEST(FormatEquivalentTest, Spaces) {
       "\n",
       "\t",
   };
-  for (int i = 0; i < kTestCases.size(); ++i) {
-    for (int j = i + 1; j < kTestCases.size(); ++j) {
+  for (size_t i = 0; i < kTestCases.size(); ++i) {
+    for (size_t j = i + 1; j < kTestCases.size(); ++j) {
       ExpectCompareWithErrstream(FormatEquivalent, true, kTestCases[i],
                                  kTestCases[j]);
     }
