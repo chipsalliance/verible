@@ -51,7 +51,10 @@
 #include "verilog/parser/verilog_token_classifications.h"
 #include "verilog/parser/verilog_token_enum.h"
 
-ABSL_FLAG(verilog::RuleBundle, rules, {}, "List of lint rules to enable");
+// TODO(hzeller): make --rules repeatable and cumulative
+ABSL_FLAG(verilog::RuleBundle, rules, {},
+          "List of lint rules to enable.  "
+          "Prefix a rule name with '-' to disable it.");
 ABSL_FLAG(verilog::RuleSet, ruleset, verilog::RuleSet::kDefault,
           "[default|all|none], the base set of rules used by linter");
 
