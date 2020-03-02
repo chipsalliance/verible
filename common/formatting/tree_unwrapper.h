@@ -83,6 +83,18 @@ class TreeUnwrapper : public TreeContextVisitor {
   // Returns text spanned by the syntax tree being traversed.
   absl::string_view FullText() const { return text_structure_view_.Contents(); }
 
+  // Transformation
+
+  // Apply a mutating transformation to this class tree, pre-order traversal.
+  void ApplyPreOrder(const std::function<void(TokenPartitionTree&)>& f) {
+    unwrapped_lines_.ApplyPreOrder(f);
+  }
+
+  // Apply a mutating transformation to this class tree, post-order traversal.
+  void ApplyPostOrder(const std::function<void(TokenPartitionTree&)>& f) {
+    unwrapped_lines_.ApplyPostOrder(f);
+  }
+
  protected:
   // Begins a new UnwrappedLine to span a new sub-range of format tokens.
   void StartNewUnwrappedLine();
