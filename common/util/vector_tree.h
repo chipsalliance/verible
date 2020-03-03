@@ -569,21 +569,20 @@ class VectorTree : private _VectorTreeImpl {
   // If this node has exactly one child, replace this node with that child
   // and return true, otherwise, do nothing and return false.
   bool HoistOnlyChild() {
-    if (Children().size() == 1) {
-      auto& only = Children().front();
-      only.parent_ = nullptr;  // disconnect from parent
-      std::swap(node_value_, only.node_value_);
+    if (Children().size() != 1) return false;
 
-      // children_.swap(only.children_);  // but this leaks
-      // so we swap through a temporary, which still avoids any copying.
-      subnodes_type temp;
-      temp.swap(only.children_);
-      children_.swap(temp);
+    auto& only = Children().front();
+    only.parent_ = nullptr;  // disconnect from parent
+    std::swap(node_value_, only.node_value_);
 
-      Relink();
-      return true;
-    }
-    return false;
+    // children_.swap(only.children_);  // but this leaks
+    // so we swap through a temporary, which still avoids any copying.
+    subnodes_type temp;
+    temp.swap(only.children_);
+    children_.swap(temp);
+
+    Relink();
+    return true;
   }
 
   // Combines the Nth and (N+1) sibling using a custom function 'joiner' on the
@@ -627,6 +626,34 @@ class VectorTree : private _VectorTreeImpl {
     // Concatenate all grandchildren.
     for (auto& child : temp) {
       AdoptSubtreesFromUnreserved(&child.Children());
+    }
+
+    // temp, which holds the discarded children, is destroyed.
+  }
+
+  // For every child, if that child has grandchildren, replace that child with
+  // its grandchildren, else preserve that child.
+  void FlattenOnlyChildrenWithChildren() {
+    // Emancipate children from this node without discarding them yet.
+    subnodes_type temp;
+    temp.swap(children_);
+
+    // Reserve space.
+    {
+      size_t num_grandchildren = 0;
+      for (const auto& child : temp) {
+        num_grandchildren += std::max(child.Children().size(), size_t(1));
+      }
+      children_.reserve(num_grandchildren);
+    }
+
+    // Concatenate children-without-grandchildren and grandchildren.
+    for (auto& child : temp) {
+      if (child.Children().empty()) {
+        children_.emplace_back(std::move(child));
+      } else {
+        AdoptSubtreesFromUnreserved(&child.Children());
+      }
     }
 
     // temp, which holds the discarded children, is destroyed.
