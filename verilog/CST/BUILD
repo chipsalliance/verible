@@ -300,6 +300,37 @@ cc_test(
 )
 
 cc_library(
+    name = "macro",
+    srcs = ["macro.cc"],
+    hdrs = ["macro.h"],
+    deps = [
+        ":verilog_matchers",
+        ":verilog_nonterminals",
+        "//common/analysis:syntax_tree_search",
+        "//common/text:concrete_syntax_tree",
+        "//common/text:symbol",
+        "//common/text:token_info",
+        "//common/text:tree_utils",
+    ],
+)
+
+cc_test(
+    name = "macro_test",
+    srcs = ["macro_test.cc"],
+    deps = [
+        ":macro",
+        "//common/text:concrete_syntax_tree",
+        "//common/text:symbol",
+        "//common/text:text_structure",
+        "//common/text:token_info",
+        "//common/util:casts",
+        "//common/util:logging",
+        "//verilog/analysis:verilog_analyzer",
+        "@com_google_googletest//:gtest_main",
+    ],
+)
+
+cc_library(
     name = "module",
     srcs = ["module.cc"],
     hdrs = ["module.h"],

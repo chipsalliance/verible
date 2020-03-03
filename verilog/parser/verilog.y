@@ -925,8 +925,7 @@ preprocess_include_argument
 
 MacroGenericItem
   : MacroCallId '(' macro_args_opt MacroCallCloseToEndLine
-    // TODO(fangism): add MakeParenGroup here after adding backtracing to lexer
-    { $$ = MakeTaggedNode(N::kMacroCall, $1, $2, $3, $4); }
+    { $$ = MakeTaggedNode(N::kMacroCall, $1, MakeParenGroup($2, $3, $4)); }
   | MacroIdItem
     { $$ = move($1); }
   ;

@@ -37,7 +37,7 @@
 #include "common/util/enum_flags.h"
 #include "common/util/logging.h"
 #include "common/util/value_saver.h"
-#include "verilog/CST/identifier.h"
+#include "verilog/CST/macro.h"
 #include "verilog/CST/verilog_nonterminals.h"
 #include "verilog/formatting/verilog_token.h"
 #include "verilog/parser/verilog_parser.h"
@@ -830,7 +830,7 @@ void TreeUnwrapper::Visit(const verible::SyntaxTreeNode& node) {
         // and thus should be properly indented one level.
         VisitIndentedSection(node, style_.indentation_spaces,
                              PartitionPolicyEnum::kFitOnLineElseExpand);
-      } else if (absl::StartsWith(verilog::GetMacroCallId(node), "`uvm_")) {
+      } else if (absl::StartsWith(GetMacroCallId(node).text, "`uvm_")) {
         // For each `uvm macro start a new unwrapped line
         VisitNewUnwrappedLine(node);
       } else {

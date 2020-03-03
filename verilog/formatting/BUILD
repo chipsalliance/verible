@@ -34,6 +34,7 @@ cc_library(
         "//common/util:logging",
         "//common/util:value_saver",
         "//verilog/CST:identifier",
+        "//verilog/CST:macro",
         "//verilog/CST:verilog_nonterminals",
         "//verilog/analysis:verilog_equivalence",
         "//verilog/parser:verilog_parser",  # only for verilog_symbol_name
