@@ -304,6 +304,12 @@ The linter tool is available as `//verilog/tools/lint:verilog_lint`.
 ```
 verilog_lint: usage: verilog_lint [options] <file> [<file>...]
 
+  Flags from verilog/analysis/verilog_linter.cc:
+    --rules (List of lint rules to enable. Prefix a rule name with '-' to
+      disable it.); default: ;
+    --ruleset ([default|all|none], the base set of rules used by linter);
+      default: default;
+
   Flags from verilog/tools/lint/verilog_lint.cc:
     -generate_markdown (If true, print the description of every rule formatted
       for the markdown and exit immediately. Intended for the output to be

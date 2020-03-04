@@ -38,7 +38,8 @@ verilog_lint: usage: bazel-bin/verilog/tools/lint/verilog_lint [options] <file> 
 
 
   Flags from verilog/analysis/verilog_linter.cc:
-    --rules (List of lint rules to enable); default: ;
+    --rules (List of lint rules to enable. Prefix a rule name with '-' to
+      disable it.); default: ;
     --ruleset ([default|all|none], the base set of rules used by linter);
       default: default;
 
@@ -286,4 +287,4 @@ Enabled by default: true
 
 ## Version
 
-Generated on 2020-02-27 15:24:18 -0800 from [v0.0-255-ga6b4ab6](https://github.com/google/verible/commit/a6b4ab6d12a414c7fc71f389e463c3109848956a)
+Generated on 2020-03-03 18:29:24 -0800 from [v0.0-262-gb920203](https://github.com/google/verible/commit/b92020313fd03758dfe7e110465fd8f4344cfc8b)
