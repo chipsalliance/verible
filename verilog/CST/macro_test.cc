@@ -19,6 +19,9 @@
 #include "common/text/text_structure.h"
 #include "verilog/analysis/verilog_analyzer.h"
 
+#undef EXPECT_OK
+#define EXPECT_OK(value) EXPECT_TRUE((value).ok())
+
 namespace verilog {
 namespace {
 
