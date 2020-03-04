@@ -564,7 +564,6 @@ void TreeUnwrapper::SetIndentationsAndCreatePartitions(
     case NodeEnum::kClassDeclaration:
     case NodeEnum::kClassConstructor:
     case NodeEnum::kPackageImportDeclaration:
-    case NodeEnum::kDPIImportItem:
     // TODO(fangism): case NodeEnum::kDPIExportItem:
     case NodeEnum::kPreprocessorInclude:
     case NodeEnum::kPreprocessorDefine:
@@ -883,6 +882,11 @@ void TreeUnwrapper::SetIndentationsAndCreatePartitions(
       break;
     }
 
+    case NodeEnum::kDPIImportItem: {
+      VisitIndentedSection(node, 0, PartitionPolicyEnum::kAppendFittingSubPartitions);
+      break;
+    }
+
     // Add an additional level of indentation.
     case NodeEnum::kClassItems:
     case NodeEnum::kModuleItemList:
@@ -1073,6 +1077,8 @@ void TreeUnwrapper::ReshapeTokenPartitions(
       }
       break;
     }
+
+    case NodeEnum::kDPIImportItem:
     case NodeEnum::kBindDirective: {
       AttachTrailingSemicolonToPreviousPartition();
       break;

@@ -1332,8 +1332,7 @@ static const std::initializer_list<FormatterTestCase> kFormatterTestCases = {
         "module mdi;\n"
         "  import \"DPI-C\" function int add();\n"
         "  import \"DPI-C\" function int sleep(\n"  // doesn't fit in 40-col
-        "      input int secs\n"
-        "  );\n"
+        "      input int secs);\n"
         "endmodule\n",
     },
 
