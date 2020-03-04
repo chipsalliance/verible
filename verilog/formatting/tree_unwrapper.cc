@@ -383,7 +383,7 @@ void TreeUnwrapper::LookAheadBeyondCurrentLeaf() {
   //
   while (!NextUnfilteredToken()->isEOF()) {
     EatSpaces();
-    VLOG(4) << "token: " << VerboseToken(*NextUnfilteredToken());
+    VLOG(4) << "lookahead token: " << VerboseToken(*NextUnfilteredToken());
     if (IsComment(verilog_tokentype(NextUnfilteredToken()->token_enum))) {
       // TODO(fangism): or IsAttribute().  Basically, any token that is not
       // in the syntax tree and not a space.
@@ -517,6 +517,23 @@ void TreeUnwrapper::CollectTrailingFilteredTokens() {
 
 // Visitor to determine which node enum function to call
 void TreeUnwrapper::Visit(const verible::SyntaxTreeNode& node) {
+  const auto tag = static_cast<NodeEnum>(node.Tag().tag);
+  VLOG(3) << __FUNCTION__ << " node: " << tag;
+
+  // This phase is only concerned with creating token partitions (during tree
+  // recursive descent) and setting correct indentation values.  It is ok to
+  // have excessive partitioning during this phase.
+  SetIndentationsAndCreatePartitions(node);
+
+  // This phase is only concerned with reshaping operations on token partitions,
+  // such as merging, flattening, hoisting.  Reshaping should only occur on the
+  // return path of tree traversal (here).
+  ReshapeTokenPartitions(node);
+}
+
+// CST-descending phase that creates partitions with correct indentation.
+void TreeUnwrapper::SetIndentationsAndCreatePartitions(
+    const verible::SyntaxTreeNode& node) {
   const auto tag = static_cast<NodeEnum>(node.Tag().tag);
   VLOG(3) << __FUNCTION__ << " node: " << tag;
 
@@ -977,7 +994,14 @@ void TreeUnwrapper::Visit(const verible::SyntaxTreeNode& node) {
       TraverseChildren(node);
     }
   }
+}
 
+// This phase is strictly concerned with reshaping token partitions,
+// and occurs on the return path of partition tree construction.
+void TreeUnwrapper::ReshapeTokenPartitions(
+    const verible::SyntaxTreeNode& node) {
+  const auto tag = static_cast<NodeEnum>(node.Tag().tag);
+  VLOG(3) << __FUNCTION__ << " node: " << tag;
   // post-traversal token partition adjustments
   switch (tag) {
     // Note: this is also being applied to variable declaration lists,

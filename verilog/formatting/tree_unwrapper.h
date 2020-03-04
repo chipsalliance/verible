@@ -90,6 +90,9 @@ class TreeUnwrapper : public verible::TreeUnwrapper {
   void Visit(const verible::SyntaxTreeLeaf& leaf) override;
   void Visit(const verible::SyntaxTreeNode& node) override;
 
+  void SetIndentationsAndCreatePartitions(const verible::SyntaxTreeNode& node);
+  void ReshapeTokenPartitions(const verible::SyntaxTreeNode& node);
+
   // Visits a node which requires a new UnwrappedLine, followed by
   // traversing all children
   void VisitNewUnwrappedLine(const verible::SyntaxTreeNode& node);
