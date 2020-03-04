@@ -860,7 +860,6 @@ void TreeUnwrapper::SetIndentationsAndCreatePartitions(
 
     // Add a level of grouping without indentation.
     // This should include most declaration headers.
-    case NodeEnum::kClassConstructorPrototype:
     case NodeEnum::kBindDirective:
     case NodeEnum::kDataDeclaration:
     case NodeEnum::kLoopHeader:
@@ -881,6 +880,7 @@ void TreeUnwrapper::SetIndentationsAndCreatePartitions(
       break;
     }
 
+    case NodeEnum::kClassConstructorPrototype:
     case NodeEnum::kTaskHeader:
     case NodeEnum::kFunctionHeader: {
       VisitIndentedSection(node, 0, PartitionPolicyEnum::kAppendFittingSubPartitions);
@@ -1077,6 +1077,7 @@ void TreeUnwrapper::ReshapeTokenPartitions(
       }
       break;
     }
+    case NodeEnum::kClassConstructorPrototype:
     case NodeEnum::kTaskHeader:
     case NodeEnum::kFunctionHeader:
     case NodeEnum::kBindDirective: {

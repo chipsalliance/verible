@@ -1952,8 +1952,7 @@ const TreeUnwrapperTestData kClassTestCases[] = {
         ClassHeader(0, L(0, {"class", "Foo", ";"})),
         ClassItemList(1, DataDeclaration(1, L(1, {"integer", "sizer", ";"})),
                       FunctionHeader(1, L(1, {"function", "new", "("}),
-                                     TFPortList(3, L(3, {"integer", "size"})),
-                                     L(1, {")", ";"})),
+                                     TFPortList(3, L(3, {"integer", "size", ")", ";"}))),
                       StatementList(2, L(2, {"begin"}),
                                     StatementList(3, NL(3, {"this", ".", "size",
                                                             "=", "size", ";"})),
@@ -4720,8 +4719,7 @@ const TreeUnwrapperTestData kUnwrapFunctionTestCases[] = {
         ClassItemList(
             1,
             FunctionHeader(1, L(1, {"function", "new", "("}),
-                           TFPortList(3, L(3, {"string", "name"})),
-                           L(1, {")", ";"})),
+                           TFPortList(3, L(3, {"string", "name", ")", ";"}))),
             StatementList(
                 2, NL(2, {"super", ".", "new", "(", "name", ")", ";"}),
                 FlowControl(
