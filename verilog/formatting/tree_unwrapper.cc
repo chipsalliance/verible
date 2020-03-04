@@ -931,8 +931,7 @@ void TreeUnwrapper::SetIndentationsAndCreatePartitions(
     case NodeEnum::kVariableDeclarationAssignmentList:
     case NodeEnum::kPortActualList:  // TODO(b/146083526): one port per line
     case NodeEnum::kActualParameterByNameList:
-    case NodeEnum::kPortList:
-    case NodeEnum::kPortDeclarationList: {
+    case NodeEnum::kPortList: {
       if (suppress_indentation) {
         // Do not further indent preprocessor clauses.
         // Maintain same level as before.
@@ -944,12 +943,17 @@ void TreeUnwrapper::SetIndentationsAndCreatePartitions(
       break;
     }
 
+    case NodeEnum::kPortDeclarationList:
     case NodeEnum::kFormalParameterList: {
       if (suppress_indentation) {
         // Do not further indent preprocessor clauses.
         // Maintain same level as before.
         TraverseChildren(node);
       } else if (Context().IsInside(NodeEnum::kClassHeader)) {
+        VisitIndentedSection(node, style_.wrap_spaces,
+                             PartitionPolicyEnum::kAlwaysExpand);
+      } else if (Context().IsInside(NodeEnum::kInterfaceDeclaration) ||
+                 Context().IsInside(NodeEnum::kModuleDeclaration)) {
         VisitIndentedSection(node, style_.wrap_spaces,
                              PartitionPolicyEnum::kAlwaysExpand);
       } else {
