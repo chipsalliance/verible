@@ -632,26 +632,38 @@ static const std::initializer_list<FormatterTestCase> kFormatterTestCases = {
      ");\n"
      "endmodule\n"},
     {"module foo(  input x  , output y ) ;endmodule:foo\n",
-     "module foo (input x, output y);\n"  // entire header fits on one line
+     "module foo (\n"
+     "    input x,\n"
+     "    output y\n"
+     ");\n"  // entire header fits on one line
      "endmodule : foo\n"},
     {"module foo(  input[2:0]x  , output y [3:0] ) ;endmodule:foo\n",
      // TODO(fangism): reduce spaces around ':' in dimensions
+     // each port item should be on its own line
      "module foo (\n"
-     "    input [2:0] x, output y[3:0]\n"
-     // module header and port list fits on one line
+     "    input [2:0] x,\n"
+     "    output y[3:0]\n"
      ");\n"
      "endmodule : foo\n"},
     {"module foo #(int x,int y) ;endmodule:foo\n",  // parameters
-     "module foo #(int x, int y);\n"  // entire header fits on one line
+     "module foo #(\n"
+     "    int x,\n"
+     "    int y\n"
+     ");\n"  // each paramater on its own line
      "endmodule : foo\n"},
     {"module foo #(int x)(input y) ;endmodule:foo\n",
      // parameter and port
-     "module foo #(int x) (input y);\n"  // entire header fits on one line
+     "module foo #(\n"
+     "    int x\n"
+     ") (\n"
+     "    input y\n"
+     ");\n"  // each paramater and port item should be on its own line
      "endmodule : foo\n"},
     {"module foo #(parameter int x,parameter int y) ;endmodule:foo\n",
-     // parameters don't fit
+     // parameters don't fit (also should be on its own line)
      "module foo #(\n"
-     "    parameter int x, parameter int y\n"
+     "    parameter int x,\n"
+     "    parameter int y\n"
      ");\n"
      "endmodule : foo\n"},
     {"module foo #(parameter int xxxx,parameter int yyyy) ;endmodule:foo\n",
@@ -1352,7 +1364,9 @@ static const std::initializer_list<FormatterTestCase> kFormatterTestCases = {
      "endinterface : if2\n"},
     {// interface declaration with parameters
      " interface if1#( parameter int W= 8 );endinterface\t\t",
-     "interface if1 #(parameter int W = 8);\n"
+     "interface if1 #(\n"
+     "    parameter int W = 8\n"
+     ");\n"
      "endinterface\n"},
     {// interface declaration with ports (empty)
      " interface if1()\n;endinterface\t\t",
@@ -1360,7 +1374,9 @@ static const std::initializer_list<FormatterTestCase> kFormatterTestCases = {
      "endinterface\n"},
     {// interface declaration with ports
      " interface if1( input\tlogic   z)\n;endinterface\t\t",
-     "interface if1 (input logic z);\n"
+     "interface if1 (\n"
+     "    input logic z\n"
+     ");\n"
      "endinterface\n"},
     {// interface declaration with parameters and ports
      " interface if1#( parameter int W= 8 )(input logic z);endinterface\t\t",
@@ -2365,11 +2381,16 @@ static const std::initializer_list<FormatterTestCase> kFormatterTestCases = {
      "module foo ();\n"
      "endmodule\n"},
     {"   module       foo   (  .x (  x) );     endmodule\n",
-     "module foo (.x(x));\n"
+     "module foo (\n"
+     "    .x(x)\n"
+     ");\n"
      "endmodule\n"},
     {"   module       foo   (  .x (  x)  \n,\n . y "
      "  ( \ny) );     endmodule\n",
-     "module foo (.x(x), .y(y));\n"
+     "module foo (\n"
+     "    .x(x),\n"
+     "    .y(y)\n"
+     ");\n"
      "endmodule\n"},
 
     // module instantiation test cases

@@ -507,8 +507,12 @@ const TreeUnwrapperTestData kUnwrapModuleTestCases[] = {
         "end "
         "endmodule",
         ModuleHeader(0, L(0, {"module", "addf", "("}),
-                     ModulePortList(2, L(2, {"a", ",", "b", ",", "ci", ",", "s",
-                                             ",", "co"})),
+                     ModulePortList(2,  //
+                                    L(2, {"a", ","}),
+                                    L(2, {"b", ","}),
+                                    L(2, {"ci", ","}),
+                                    L(2, {"s", ","}),
+                                    L(2, {"co"})),
                      L(0, {")", ";"})),
         ModuleItemList(
             1, L(1, {"input", "a", ",", "b", ",", "ci", ";"}),
