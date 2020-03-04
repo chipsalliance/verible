@@ -31,6 +31,7 @@ namespace analysis {
 namespace {
 
 using verible::LintTestCase;
+using verible::RunConfiguredLintTestCases;
 using verible::RunLintTestCases;
 
 TEST(LineLengthRuleTest, Configuration) {
@@ -187,6 +188,15 @@ TEST(LineLengthRuleTest, RejectsText) {
        "\n"},
   };
   RunLintTestCases<VerilogAnalyzer, LineLengthRule>(kTestCases);
+}
+
+TEST(LineLengthRuleTest, RejectsTextConfigured) {
+  const std::initializer_list<LintTestCase> kTestCases = {
+      {"aaaaaaaaaabbbbbbbbbbcccc cccccdddddddddd", {TK_OTHER, "X"}, "\n"},
+      {"aaaaaaaaaabbbbbbbbbbcccc cccccdddddddddd\n"},  // shorter line ok.
+  };
+  RunConfiguredLintTestCases<VerilogAnalyzer, LineLengthRule>(kTestCases,
+                                                              "length:40");
 }
 
 #if 0
