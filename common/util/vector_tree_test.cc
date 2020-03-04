@@ -1557,7 +1557,21 @@ TEST(VectorTreeTest, FlattenOnlyChildrenWithChildrenNoChildren) {
   EXPECT_THAT(NodeValues(tree), ElementsAre());
 
   const tree_type expect_tree(1);
-  tree.FlattenOnlyChildrenWithChildren();
+  std::vector<size_t> new_offsets;
+  tree.FlattenOnlyChildrenWithChildren(&new_offsets);
+  const auto result_pair = DeepEqual(tree, expect_tree);
+  EXPECT_EQ(result_pair.left, nullptr) << *result_pair.left;
+  EXPECT_EQ(result_pair.right, nullptr) << *result_pair.right;
+  EXPECT_TRUE(new_offsets.empty());
+}
+
+TEST(VectorTreeTest, FlattenOnlyChildrenWithChildrenNoChildrenNoOffsets) {
+  typedef VectorTree<int> tree_type;
+  tree_type tree(1);
+  EXPECT_THAT(NodeValues(tree), ElementsAre());
+
+  const tree_type expect_tree(1);
+  tree.FlattenOnlyChildrenWithChildren(/* no offsets */);
   const auto result_pair = DeepEqual(tree, expect_tree);
   EXPECT_EQ(result_pair.left, nullptr) << *result_pair.left;
   EXPECT_EQ(result_pair.right, nullptr) << *result_pair.right;
@@ -1572,10 +1586,12 @@ TEST(VectorTreeTest, FlattenOnlyChildrenWithChildrenNoGrandchildren) {
   const tree_type expect_tree(1,  // all children preserved
                               tree_type(2), tree_type(3), tree_type(4),
                               tree_type(5));
-  tree.FlattenOnlyChildrenWithChildren();
+  std::vector<size_t> new_offsets;
+  tree.FlattenOnlyChildrenWithChildren(&new_offsets);
   const auto result_pair = DeepEqual(tree, expect_tree);
   EXPECT_EQ(result_pair.left, nullptr) << *result_pair.left;
   EXPECT_EQ(result_pair.right, nullptr) << *result_pair.right;
+  EXPECT_THAT(new_offsets, ElementsAre(0, 1, 2, 3));
 }
 
 TEST(VectorTreeTest, FlattenOnlyChildrenWithChildrenOneGrandchild) {
@@ -1584,7 +1600,21 @@ TEST(VectorTreeTest, FlattenOnlyChildrenWithChildrenOneGrandchild) {
   EXPECT_THAT(NodeValues(tree), ElementsAre(2));
 
   const tree_type expect_tree(1, tree_type(3));
-  tree.FlattenOnlyChildrenWithChildren();
+  std::vector<size_t> new_offsets;
+  tree.FlattenOnlyChildrenWithChildren(&new_offsets);
+  const auto result_pair = DeepEqual(tree, expect_tree);
+  EXPECT_EQ(result_pair.left, nullptr) << *result_pair.left;
+  EXPECT_EQ(result_pair.right, nullptr) << *result_pair.right;
+  EXPECT_THAT(new_offsets, ElementsAre(0));
+}
+
+TEST(VectorTreeTest, FlattenOnlyChildrenWithChildrenOneGrandchildNoOffsets) {
+  typedef VectorTree<int> tree_type;
+  tree_type tree(1, tree_type(2, tree_type(3)));
+  EXPECT_THAT(NodeValues(tree), ElementsAre(2));
+
+  const tree_type expect_tree(1, tree_type(3));
+  tree.FlattenOnlyChildrenWithChildren(/* no offsets */);
   const auto result_pair = DeepEqual(tree, expect_tree);
   EXPECT_EQ(result_pair.left, nullptr) << *result_pair.left;
   EXPECT_EQ(result_pair.right, nullptr) << *result_pair.right;
@@ -1596,10 +1626,12 @@ TEST(VectorTreeTest, FlattenOnlyChildrenWithChildrenTwoGrandchildren) {
   EXPECT_THAT(NodeValues(tree), ElementsAre(2));
 
   const tree_type expect_tree(1, tree_type(3), tree_type(7));
-  tree.FlattenOnlyChildrenWithChildren();
+  std::vector<size_t> new_offsets;
+  tree.FlattenOnlyChildrenWithChildren(&new_offsets);
   const auto result_pair = DeepEqual(tree, expect_tree);
   EXPECT_EQ(result_pair.left, nullptr) << *result_pair.left;
   EXPECT_EQ(result_pair.right, nullptr) << *result_pair.right;
+  EXPECT_THAT(new_offsets, ElementsAre(0));
 }
 
 TEST(VectorTreeTest, FlattenOnlyChildrenWithChildrenMixed) {
@@ -1618,10 +1650,12 @@ TEST(VectorTreeTest, FlattenOnlyChildrenWithChildrenMixed) {
                               tree_type(8), tree_type(9),  //
                               tree_type(4),                //
                               tree_type(12), tree_type(13));
-  tree.FlattenOnlyChildrenWithChildren();
+  std::vector<size_t> new_offsets;
+  tree.FlattenOnlyChildrenWithChildren(&new_offsets);
   const auto result_pair = DeepEqual(tree, expect_tree);
   EXPECT_EQ(result_pair.left, nullptr) << *result_pair.left;
   EXPECT_EQ(result_pair.right, nullptr) << *result_pair.right;
+  EXPECT_THAT(new_offsets, ElementsAre(0, 1, 3, 4));
 }
 
 TEST(VectorTreeTest, FlattenOnlyChildrenWithChildrenAllNonempty) {
@@ -1641,10 +1675,12 @@ TEST(VectorTreeTest, FlattenOnlyChildrenWithChildrenAllNonempty) {
                               tree_type(6), tree_type(7), tree_type(8),
                               tree_type(9), tree_type(10), tree_type(11),
                               tree_type(12), tree_type(13));
-  tree.FlattenOnlyChildrenWithChildren();
+  std::vector<size_t> new_offsets;
+  tree.FlattenOnlyChildrenWithChildren(&new_offsets);
   const auto result_pair = DeepEqual(tree, expect_tree);
   EXPECT_EQ(result_pair.left, nullptr) << *result_pair.left;
   EXPECT_EQ(result_pair.right, nullptr) << *result_pair.right;
+  EXPECT_THAT(new_offsets, ElementsAre(0, 2, 4, 6));
 }
 
 TEST(VectorTreeTest, FlattenOnlyChildrenWithChildrenGreatgrandchildren) {
@@ -1673,10 +1709,12 @@ TEST(VectorTreeTest, FlattenOnlyChildrenWithChildrenGreatgrandchildren) {
                                         tree_type(11)),
                               tree_type(12,  //
                                         tree_type(13)));
-  tree.FlattenOnlyChildrenWithChildren();
+  std::vector<size_t> new_offsets;
+  tree.FlattenOnlyChildrenWithChildren(&new_offsets);
   const auto result_pair = DeepEqual(tree, expect_tree);
   EXPECT_EQ(result_pair.left, nullptr) << *result_pair.left;
   EXPECT_EQ(result_pair.right, nullptr) << *result_pair.right;
+  EXPECT_THAT(new_offsets, ElementsAre(0, 1, 2, 3));
 }
 
 TEST(VectorTreeTest, FlattenOneChildEmpty) {

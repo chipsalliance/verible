@@ -633,15 +633,25 @@ class VectorTree : private _VectorTreeImpl {
 
   // For every child, if that child has grandchildren, replace that child with
   // its grandchildren, else preserve that child.
-  void FlattenOnlyChildrenWithChildren() {
+  // If new_offsets is provided, populate that array with indices into the
+  // resulting children that correspond to the start locations of the original
+  // children's children.  This lets the caller reference and operate on
+  // subranges of the original set of grandchildren.
+  void FlattenOnlyChildrenWithChildren(
+      std::vector<size_t>* new_offsets = nullptr) {
     // Emancipate children from this node without discarding them yet.
     subnodes_type temp;
     temp.swap(children_);
 
     // Reserve space.
     {
+      if (new_offsets != nullptr) {
+        new_offsets->clear();
+        new_offsets->reserve(temp.size());
+      }
       size_t num_grandchildren = 0;
       for (const auto& child : temp) {
+        if (new_offsets != nullptr) new_offsets->push_back(num_grandchildren);
         num_grandchildren += std::max(child.Children().size(), size_t(1));
       }
       children_.reserve(num_grandchildren);
