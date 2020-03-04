@@ -46,7 +46,9 @@ cc_library(
         "token_partition_tree.h",
     ],
     deps = [
+        ":basic_format_style",
         ":format_token",
+        ":line_wrap_searcher",
         ":unwrapped_line",
         "//common/util:container_iterator_range",
         "//common/util:logging",

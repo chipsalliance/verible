@@ -500,4 +500,779 @@ TEST_F(MergeConsecutiveSiblingsTest, TwoGenerations) {
                                     << *diff.right << '\n';
 }
 
+class ReshapeFittingSubpartitionsTest : public TokenPartitionTreeTestFixture {};
+
+TEST_F(ReshapeFittingSubpartitionsTest, NoArguments) {
+  const auto& preformat_tokens = pre_format_tokens_;
+  const auto begin = preformat_tokens.begin();
+
+  UnwrappedLine header(0, begin);
+  header.SpanUpToToken(begin + 1);
+
+  using tree_type = TokenPartitionTree;
+  tree_type tree{
+      header,
+      tree_type{header},
+  };
+
+  const tree_type tree_expected{
+      header,
+      tree_type{header},
+  };
+
+  verible::BasicFormatStyle style;  // default
+  ReshapeFittingSubpartitions(&tree, style);
+
+  // Check tree structure
+  const auto diff = DeepEqual(tree, tree_expected, TokenRangeEqual);
+  EXPECT_EQ(diff.left, nullptr) << "Expected:\n"
+                                << tree_expected << "\nGot:" << tree << "\n";
+
+  // Check indentation
+  EXPECT_EQ(tree.Children()[0].Value().IndentationSpaces(), 0);
+}
+
+TEST_F(ReshapeFittingSubpartitionsTest, OneArgument) {
+  const auto& preformat_tokens = pre_format_tokens_;
+  const auto begin = preformat_tokens.begin();
+
+  UnwrappedLine header(0, begin);
+  header.SpanUpToToken(begin + 1);
+  UnwrappedLine arg1(0, header.TokensRange().end());
+  arg1.SpanUpToToken(begin + 2);
+
+  UnwrappedLine all(0, begin);
+  all.SpanUpToToken(arg1.TokensRange().end());
+
+  using tree_type = TokenPartitionTree;
+  tree_type tree{
+      all,
+      tree_type{header},
+      tree_type{
+          arg1,
+          tree_type{arg1},
+      },
+  };
+
+  const tree_type tree_expected{
+      all,
+      tree_type{
+          all,
+          tree_type{header},
+          tree_type{arg1},
+      },
+  };
+
+  verible::BasicFormatStyle style;  // default
+  ReshapeFittingSubpartitions(&tree, style);
+
+  const auto diff = DeepEqual(tree, tree_expected, TokenRangeEqual);
+  EXPECT_EQ(diff.left, nullptr) << "Expected:\n"
+                                << tree_expected << "\nGot:" << tree << "\n";
+
+  // Check indentation
+  EXPECT_EQ(tree.Children()[0].Value().IndentationSpaces(), 0);
+}
+
+TEST_F(ReshapeFittingSubpartitionsTest, TwoArguments) {
+  const auto& preformat_tokens = pre_format_tokens_;
+  const auto begin = preformat_tokens.begin();
+
+  UnwrappedLine header(0, begin);
+  header.SpanUpToToken(begin + 1);
+
+  UnwrappedLine arg1(0, header.TokensRange().end());
+  arg1.SpanUpToToken(begin + 2);
+  UnwrappedLine arg2(0, arg1.TokensRange().end());
+  arg2.SpanUpToToken(begin + 3);
+
+  UnwrappedLine args(0, arg1.TokensRange().begin());
+  args.SpanUpToToken(arg2.TokensRange().end());
+
+  UnwrappedLine all(0, header.TokensRange().begin());
+  all.SpanUpToToken(arg2.TokensRange().end());
+
+  using tree_type = TokenPartitionTree;
+  tree_type tree{
+      all,
+      tree_type{header},
+      tree_type{
+          args,
+          tree_type{arg1},
+          tree_type{arg2},
+      },
+  };
+
+  const tree_type tree_expected{
+      all,
+      tree_type{
+          all,
+          tree_type{header},
+          tree_type{arg1},
+          tree_type{arg2},
+      },
+  };
+
+  verible::BasicFormatStyle style;  // default
+  ReshapeFittingSubpartitions(&tree, style);
+
+  const auto diff = DeepEqual(tree, tree_expected, TokenRangeEqual);
+  EXPECT_EQ(diff.left, nullptr) << "Expected:\n"
+                                << tree_expected << "\nGot:" << tree << "\n";
+
+  // Check indentation
+  EXPECT_EQ(tree.Children()[0].Value().IndentationSpaces(), 0);
+}
+
+// All fits in one partition
+TEST_F(ReshapeFittingSubpartitionsTest, OnePartition) {
+  const auto& preformat_tokens = pre_format_tokens_;
+  const auto begin = preformat_tokens.begin();
+
+  UnwrappedLine header(0, begin);
+  header.SpanUpToToken(begin + 1);
+
+  UnwrappedLine arg1(0, header.TokensRange().end());
+  arg1.SpanUpToToken(begin + 2);
+  UnwrappedLine arg2(0, arg1.TokensRange().end());
+  arg2.SpanUpToToken(begin + 3);
+  UnwrappedLine arg3(0, arg2.TokensRange().end());
+  arg3.SpanUpToToken(begin + 4);
+  UnwrappedLine arg4(0, arg3.TokensRange().end());
+  arg4.SpanUpToToken(begin + 5);
+  UnwrappedLine arg5(0, arg4.TokensRange().end());
+  arg5.SpanUpToToken(begin + 6);
+
+  UnwrappedLine args(0, arg1.TokensRange().begin());
+  args.SpanUpToToken(arg5.TokensRange().end());
+
+  UnwrappedLine all(0, header.TokensRange().begin());
+  all.SpanUpToToken(arg5.TokensRange().end());
+
+  using tree_type = TokenPartitionTree;
+  tree_type tree{
+      all,
+      tree_type{header},
+      tree_type{
+          args,
+          tree_type{arg1},
+          tree_type{arg2},
+          tree_type{arg3},
+          tree_type{arg4},
+          tree_type{arg5},
+      },
+  };
+
+  const tree_type tree_expected{
+      all,
+      tree_type{
+          all,
+          tree_type{header},
+          tree_type{arg1},
+          tree_type{arg2},
+          tree_type{arg3},
+          tree_type{arg4},
+          tree_type{arg5},
+      },
+  };
+
+  verible::BasicFormatStyle style;  // default
+  ReshapeFittingSubpartitions(&tree, style);
+
+  const auto diff = DeepEqual(tree, tree_expected, TokenRangeEqual);
+  EXPECT_EQ(diff.left, nullptr) << "Expected:\n"
+                                << tree_expected << "\nGot:" << tree << "\n";
+
+  // Check indentation
+  EXPECT_EQ(tree.Children()[0].Value().IndentationSpaces(), 0);
+}
+
+// Wrap into two partitions
+TEST_F(ReshapeFittingSubpartitionsTest, TwoPartitions) {
+  const auto& preformat_tokens = pre_format_tokens_;
+  const auto begin = preformat_tokens.begin();
+
+  UnwrappedLine header(0, begin);
+  header.SpanUpToToken(begin + 1);
+
+  UnwrappedLine arg1(0, header.TokensRange().end());
+  arg1.SpanUpToToken(begin + 2);
+  UnwrappedLine arg2(0, arg1.TokensRange().end());
+  arg2.SpanUpToToken(begin + 3);
+  UnwrappedLine arg3(0, arg2.TokensRange().end());
+  arg3.SpanUpToToken(begin + 4);
+  UnwrappedLine arg4(0, arg3.TokensRange().end());
+  arg4.SpanUpToToken(begin + 5);
+  UnwrappedLine arg5(0, arg4.TokensRange().end());
+  arg5.SpanUpToToken(begin + 6);
+
+  UnwrappedLine args(0, arg1.TokensRange().begin());
+  args.SpanUpToToken(arg5.TokensRange().end());
+
+  UnwrappedLine all(0, header.TokensRange().begin());
+  all.SpanUpToToken(arg5.TokensRange().end());
+
+  using tree_type = TokenPartitionTree;
+  tree_type tree{
+      all,
+      tree_type{header},
+      tree_type{
+          args,
+          tree_type{arg1},
+          tree_type{arg2},
+          tree_type{arg3},
+          tree_type{arg4},
+          tree_type{arg5},
+      },
+  };
+
+  UnwrappedLine group1(0, header.TokensRange().begin());
+  group1.SpanUpToToken(arg2.TokensRange().end());
+  UnwrappedLine group2(0, arg3.TokensRange().begin());
+  group2.SpanUpToToken(arg5.TokensRange().end());
+
+  const tree_type tree_expected{
+      all,
+      tree_type{
+          group1,
+          tree_type{header},
+          tree_type{arg1},
+          tree_type{arg2},
+      },
+      tree_type{
+          group2,
+          tree_type{arg3},
+          tree_type{arg4},
+          tree_type{arg5},
+      },
+  };
+
+  verible::BasicFormatStyle style;  // default
+  style.column_limit = 14;
+  ReshapeFittingSubpartitions(&tree, style);
+
+  const auto diff = DeepEqual(tree, tree_expected, TokenRangeEqual);
+  EXPECT_EQ(diff.left, nullptr) << "Expected:\n"
+                                << tree_expected << "\nGot:" << tree << "\n";
+
+  // Check indentation
+  EXPECT_EQ(tree.Children()[0].Value().IndentationSpaces(), 0);
+  EXPECT_EQ(
+      tree.Children()[1].Value().IndentationSpaces(),
+      header.TokensRange()[0].Length());  // indenation equal first token length
+}
+
+// None fits
+TEST_F(ReshapeFittingSubpartitionsTest, NoneOneFits) {
+  const auto& preformat_tokens = pre_format_tokens_;
+  const auto begin = preformat_tokens.begin();
+
+  UnwrappedLine header(0, begin);
+  header.SpanUpToToken(begin + 1);
+
+  UnwrappedLine arg1(0, header.TokensRange().end());
+  arg1.SpanUpToToken(begin + 2);
+  UnwrappedLine arg2(0, arg1.TokensRange().end());
+  arg2.SpanUpToToken(begin + 3);
+  UnwrappedLine arg3(0, arg2.TokensRange().end());
+  arg3.SpanUpToToken(begin + 4);
+  UnwrappedLine arg4(0, arg3.TokensRange().end());
+  arg4.SpanUpToToken(begin + 5);
+  UnwrappedLine arg5(0, arg4.TokensRange().end());
+  arg5.SpanUpToToken(begin + 6);
+
+  UnwrappedLine args(0, arg1.TokensRange().begin());
+  args.SpanUpToToken(arg5.TokensRange().end());
+
+  UnwrappedLine all(0, header.TokensRange().begin());
+  all.SpanUpToToken(arg5.TokensRange().end());
+
+  using tree_type = TokenPartitionTree;
+  tree_type tree{
+      all,
+      tree_type{header},
+      tree_type{
+          args,
+          tree_type{arg1},
+          tree_type{arg2},
+          tree_type{arg3},
+          tree_type{arg4},
+          tree_type{arg5},
+      },
+  };
+
+  const tree_type tree_expected{
+      all,
+      tree_type{header, tree_type{header}},
+      tree_type{arg1, tree_type{arg1}},
+      tree_type{arg2, tree_type{arg2}},
+      tree_type{arg3, tree_type{arg3}},
+      tree_type{arg4, tree_type{arg4}},
+      tree_type{arg5, tree_type{arg5}},
+  };
+
+  verible::BasicFormatStyle style;  // default
+  style.column_limit = 2;
+  ReshapeFittingSubpartitions(&tree, style);
+
+  const auto diff = DeepEqual(tree, tree_expected, TokenRangeEqual);
+  EXPECT_EQ(diff.left, nullptr) << "Expected:\n"
+                                << tree_expected << "\nGot:" << tree << "\n";
+
+  EXPECT_EQ(tree.Children()[0].Value().IndentationSpaces(), 0);
+  EXPECT_EQ(tree.Children()[1].Value().IndentationSpaces(), style.wrap_spaces);
+  EXPECT_EQ(tree.Children()[2].Value().IndentationSpaces(), style.wrap_spaces);
+  EXPECT_EQ(tree.Children()[3].Value().IndentationSpaces(), style.wrap_spaces);
+  EXPECT_EQ(tree.Children()[4].Value().IndentationSpaces(), style.wrap_spaces);
+}
+
+// All fits in one partition
+TEST_F(ReshapeFittingSubpartitionsTest, IndentationOnePartition) {
+  const auto& preformat_tokens = pre_format_tokens_;
+  const auto begin = preformat_tokens.begin();
+
+  UnwrappedLine header(0, begin);
+  header.SpanUpToToken(begin + 1);
+
+  UnwrappedLine arg1(0, header.TokensRange().end());
+  arg1.SpanUpToToken(begin + 2);
+  UnwrappedLine arg2(0, arg1.TokensRange().end());
+  arg2.SpanUpToToken(begin + 3);
+  UnwrappedLine arg3(0, arg2.TokensRange().end());
+  arg3.SpanUpToToken(begin + 4);
+  UnwrappedLine arg4(0, arg3.TokensRange().end());
+  arg4.SpanUpToToken(begin + 5);
+  UnwrappedLine arg5(0, arg4.TokensRange().end());
+  arg5.SpanUpToToken(begin + 6);
+
+  UnwrappedLine args(0, arg1.TokensRange().begin());
+  args.SpanUpToToken(arg5.TokensRange().end());
+
+  UnwrappedLine all(0, header.TokensRange().begin());
+  all.SpanUpToToken(arg5.TokensRange().end());
+
+  verible::BasicFormatStyle style;  // default
+
+  using tree_type = TokenPartitionTree;
+  tree_type tree{
+      all,
+      tree_type{header},
+      tree_type{
+          args,
+          tree_type{arg1},
+          tree_type{arg2},
+          tree_type{arg3},
+          tree_type{arg4},
+          tree_type{arg5},
+      },
+  };
+
+  tree.Children()[1].ApplyPreOrder([&style](TokenPartitionTree& node) {
+    auto& uwline = node.Value();
+    uwline.SetIndentationSpaces(3 + style.indentation_spaces);
+  });
+
+  tree.Children()[0].Value().SetIndentationSpaces(3);
+  tree.Value().SetIndentationSpaces(3);
+
+  const tree_type tree_expected{
+      all,
+      tree_type{
+          all,
+          tree_type{header},
+          tree_type{arg1},
+          tree_type{arg2},
+          tree_type{arg3},
+          tree_type{arg4},
+          tree_type{arg5},
+      },
+  };
+
+  auto saved_tree(tree);
+  ReshapeFittingSubpartitions(&tree, style);
+
+  const auto diff = DeepEqual(tree, tree_expected, TokenRangeEqual);
+  EXPECT_EQ(diff.left, nullptr) << "Expected:\n"
+                                << tree_expected << "\nGot:" << tree << "\n";
+
+  // keep orig indentation
+  EXPECT_EQ(tree.Children()[0].Value().IndentationSpaces(),
+            saved_tree.Value().IndentationSpaces());
+}
+
+// Wrap into two partitions
+TEST_F(ReshapeFittingSubpartitionsTest, IndentationTwoPartitions) {
+  const auto& preformat_tokens = pre_format_tokens_;
+  const auto begin = preformat_tokens.begin();
+
+  UnwrappedLine header(0, begin);
+  header.SpanUpToToken(begin + 1);
+
+  UnwrappedLine arg1(0, header.TokensRange().end());
+  arg1.SpanUpToToken(begin + 2);
+  UnwrappedLine arg2(0, arg1.TokensRange().end());
+  arg2.SpanUpToToken(begin + 3);
+  UnwrappedLine arg3(0, arg2.TokensRange().end());
+  arg3.SpanUpToToken(begin + 4);
+  UnwrappedLine arg4(0, arg3.TokensRange().end());
+  arg4.SpanUpToToken(begin + 5);
+  UnwrappedLine arg5(0, arg4.TokensRange().end());
+  arg5.SpanUpToToken(begin + 6);
+
+  UnwrappedLine args(0, arg1.TokensRange().begin());
+  args.SpanUpToToken(arg5.TokensRange().end());
+
+  UnwrappedLine all(0, header.TokensRange().begin());
+  all.SpanUpToToken(arg5.TokensRange().end());
+
+  using tree_type = TokenPartitionTree;
+  tree_type tree{
+      all,
+      tree_type{header},
+      tree_type{
+          args,
+          tree_type{arg1},
+          tree_type{arg2},
+          tree_type{arg3},
+          tree_type{arg4},
+          tree_type{arg5},
+      },
+  };
+
+  verible::BasicFormatStyle style;  // default
+  style.column_limit = 14 + 7;
+
+  tree.Children()[1].ApplyPreOrder([&style](TokenPartitionTree& node) {
+    auto& uwline = node.Value();
+    uwline.SetIndentationSpaces(7 + style.indentation_spaces);
+  });
+
+  tree.Children()[0].Value().SetIndentationSpaces(7);
+  tree.Value().SetIndentationSpaces(7);
+
+  UnwrappedLine group1(0, header.TokensRange().begin());
+  group1.SpanUpToToken(arg2.TokensRange().end());
+  UnwrappedLine group2(0, arg3.TokensRange().begin());
+  group2.SpanUpToToken(arg5.TokensRange().end());
+
+  const tree_type tree_expected{
+      all,
+      tree_type{
+          group1,
+          tree_type{header},
+          tree_type{arg1},
+          tree_type{arg2},
+      },
+      tree_type{
+          group2,
+          tree_type{arg3},
+          tree_type{arg4},
+          tree_type{arg5},
+      },
+  };
+
+  auto saved_tree(tree);
+  ReshapeFittingSubpartitions(&tree, style);
+
+  const auto diff = DeepEqual(tree, tree_expected, TokenRangeEqual);
+  EXPECT_EQ(diff.left, nullptr) << "Expected:\n"
+                                << tree_expected << "\nGot:" << tree << "\n";
+
+  // Check group nodes indentation
+  EXPECT_EQ(tree.Children()[0].Value().IndentationSpaces(), 7);
+  EXPECT_EQ(tree.Children()[1].Value().IndentationSpaces(),
+            header.TokensRange()[0].Length() + 7);  // appended
+
+  EXPECT_EQ(saved_tree.Children()[0].Value().IndentationSpaces(),
+            tree.Children()[0].Children()[0].Value().IndentationSpaces());
+  EXPECT_EQ(saved_tree.Children()[1].Children()[0].Value().IndentationSpaces(),
+            tree.Children()[0].Children()[1].Value().IndentationSpaces());
+  EXPECT_EQ(saved_tree.Children()[1].Children()[1].Value().IndentationSpaces(),
+            tree.Children()[0].Children()[2].Value().IndentationSpaces());
+
+  EXPECT_EQ(saved_tree.Children()[1].Children()[2].Value().IndentationSpaces(),
+            tree.Children()[1].Children()[0].Value().IndentationSpaces());
+  EXPECT_EQ(saved_tree.Children()[1].Children()[3].Value().IndentationSpaces(),
+            tree.Children()[1].Children()[1].Value().IndentationSpaces());
+  EXPECT_EQ(saved_tree.Children()[1].Children()[4].Value().IndentationSpaces(),
+            tree.Children()[1].Children()[2].Value().IndentationSpaces());
+}
+
+// Tests with real-world example
+class ReshapeFittingSubpartitionsTestFixture
+    : public ::testing::Test,
+      public UnwrappedLineMemoryHandler {
+ public:
+  ReshapeFittingSubpartitionsTestFixture()
+      // combining what would normally be a type and a variable name
+      // into a single string for testing convenience
+      : sample_(
+            "function_fffffffffff( "
+            "type_a_aaaa, type_b_bbbbb, "
+            "type_c_cccccc, type_d_dddddddd, "
+            "type_e_eeeeeeee, type_f_ffff);"),
+        tokens_(absl::StrSplit(sample_, ' ')) {
+    for (const auto token : tokens_) {
+      ftokens_.emplace_back(TokenInfo{1, token});
+    }
+    CreateTokenInfos(ftokens_);
+  }
+
+ protected:
+  const std::string sample_;
+  const std::vector<absl::string_view> tokens_;
+  std::vector<TokenInfo> ftokens_;
+};
+
+class ReshapeFittingSubpartitionsFunctionTest
+    : public ReshapeFittingSubpartitionsTestFixture {};
+
+TEST_F(ReshapeFittingSubpartitionsFunctionTest,
+       FunctionWithSixArgumentsAndColumnLimit20Characters) {
+  const auto& preformat_tokens = pre_format_tokens_;
+  const auto begin = preformat_tokens.begin();
+
+  UnwrappedLine all(0, begin);
+  all.SpanUpToToken(preformat_tokens.end());
+
+  // 'function_fffffffffff('
+  UnwrappedLine header(0, begin);
+  header.SpanUpToToken(begin + 1);
+
+  // function arguments
+  UnwrappedLine arg1(0, header.TokensRange().end());
+  arg1.SpanUpToToken(begin + 2);
+  UnwrappedLine arg2(0, arg1.TokensRange().end());
+  arg2.SpanUpToToken(begin + 3);
+  UnwrappedLine arg3(0, arg2.TokensRange().end());
+  arg3.SpanUpToToken(begin + 4);
+  UnwrappedLine arg4(0, arg3.TokensRange().end());
+  arg4.SpanUpToToken(begin + 5);
+  UnwrappedLine arg5(0, arg4.TokensRange().end());
+  arg5.SpanUpToToken(begin + 6);
+  UnwrappedLine arg6(0, arg5.TokensRange().end());
+  arg6.SpanUpToToken(all.TokensRange().end());
+
+  UnwrappedLine args(0, arg1.TokensRange().begin());
+  args.SpanUpToToken(arg6.TokensRange().end());
+
+  using tree_type = TokenPartitionTree;
+  tree_type tree{
+      all,
+      tree_type{header},
+      tree_type{
+          args,
+          tree_type{arg1},
+          tree_type{arg2},
+          tree_type{arg3},
+          tree_type{arg4},
+          tree_type{arg5},
+          tree_type{arg6},
+      },
+  };
+
+  // Expect each subpartition in its own partition...
+  const tree_type tree_expected{
+      all,
+      tree_type{header, tree_type{header}},
+      tree_type{arg1, tree_type{arg1}},
+      tree_type{arg2, tree_type{arg2}},
+      tree_type{arg3, tree_type{arg3}},
+      tree_type{arg4, tree_type{arg4}},
+      tree_type{arg5, tree_type{arg5}},
+      tree_type{arg6, tree_type{arg6}},
+  };
+
+  verible::BasicFormatStyle style;
+  style.column_limit = 20;
+  ReshapeFittingSubpartitions(&tree, style);
+
+  const auto diff = DeepEqual(tree, tree_expected, TokenRangeEqual);
+  EXPECT_EQ(diff.left, nullptr) << "Expected:\n"
+                                << tree_expected << "\nGot:" << tree << "\n";
+
+  // Check indentations
+  EXPECT_EQ(tree.Children()[0].Value().IndentationSpaces(), 0);
+  EXPECT_EQ(tree.Children()[1].Value().IndentationSpaces(), style.wrap_spaces);
+  EXPECT_EQ(tree.Children()[2].Value().IndentationSpaces(), style.wrap_spaces);
+  EXPECT_EQ(tree.Children()[3].Value().IndentationSpaces(), style.wrap_spaces);
+  EXPECT_EQ(tree.Children()[4].Value().IndentationSpaces(), style.wrap_spaces);
+  EXPECT_EQ(tree.Children()[5].Value().IndentationSpaces(), style.wrap_spaces);
+  EXPECT_EQ(tree.Children()[6].Value().IndentationSpaces(), style.wrap_spaces);
+}
+
+TEST_F(ReshapeFittingSubpartitionsFunctionTest,
+       FunctionWithSixArgumentsAndColumnLimit40Characters) {
+  const auto& preformat_tokens = pre_format_tokens_;
+  const auto begin = preformat_tokens.begin();
+
+  UnwrappedLine all(0, begin);
+  all.SpanUpToToken(preformat_tokens.end());
+
+  // 'function_fffffffffff('
+  UnwrappedLine header(0, begin);
+  header.SpanUpToToken(begin + 1);
+
+  // function arguments
+  UnwrappedLine arg1(0, header.TokensRange().end());
+  arg1.SpanUpToToken(begin + 2);
+  UnwrappedLine arg2(0, arg1.TokensRange().end());
+  arg2.SpanUpToToken(begin + 3);
+  UnwrappedLine arg3(0, arg2.TokensRange().end());
+  arg3.SpanUpToToken(begin + 4);
+  UnwrappedLine arg4(0, arg3.TokensRange().end());
+  arg4.SpanUpToToken(begin + 5);
+  UnwrappedLine arg5(0, arg4.TokensRange().end());
+  arg5.SpanUpToToken(begin + 6);
+  UnwrappedLine arg6(0, arg5.TokensRange().end());
+  arg6.SpanUpToToken(all.TokensRange().end());
+
+  UnwrappedLine args(0, arg1.TokensRange().begin());
+  args.SpanUpToToken(arg6.TokensRange().end());
+
+  using tree_type = TokenPartitionTree;
+  tree_type tree{
+      all,
+      tree_type{header},
+      tree_type{
+          args,
+          tree_type{arg1},
+          tree_type{arg2},
+          tree_type{arg3},
+          tree_type{arg4},
+          tree_type{arg5},
+          tree_type{arg6},
+      },
+  };
+
+  UnwrappedLine group1(0, begin);
+  group1.SpanUpToToken(header.TokensRange().end());
+  UnwrappedLine group2(0, arg1.TokensRange().begin());
+  group2.SpanUpToToken(arg2.TokensRange().end());
+  UnwrappedLine group3(0, arg3.TokensRange().begin());
+  group3.SpanUpToToken(arg4.TokensRange().end());
+  UnwrappedLine group4(0, arg5.TokensRange().begin());
+  group4.SpanUpToToken(arg6.TokensRange().end());
+
+  const tree_type tree_expected{all,
+                                tree_type{
+                                    group1,
+                                    tree_type{header},
+                                },
+                                tree_type{
+                                    group2,
+                                    tree_type{arg1},
+                                    tree_type{arg2},
+                                },
+                                tree_type{
+                                    group3,
+                                    tree_type{arg3},
+                                    tree_type{arg4},
+                                },
+                                tree_type{
+                                    group4,
+                                    tree_type{arg5},
+                                    tree_type{arg6},
+                                }};
+
+  verible::BasicFormatStyle style;
+  style.column_limit = 40;
+  ReshapeFittingSubpartitions(&tree, style);
+
+  const auto diff = DeepEqual(tree, tree_expected, TokenRangeEqual);
+  EXPECT_EQ(diff.left, nullptr) << "Expected:\n"
+                                << tree_expected << "\nGot:" << tree << "\n";
+
+  // Check indentations
+  EXPECT_EQ(tree.Children()[0].Value().IndentationSpaces(), 0);
+  EXPECT_EQ(tree.Children()[1].Value().IndentationSpaces(), style.wrap_spaces);
+  EXPECT_EQ(tree.Children()[2].Value().IndentationSpaces(), style.wrap_spaces);
+  EXPECT_EQ(tree.Children()[3].Value().IndentationSpaces(), style.wrap_spaces);
+}
+
+TEST_F(ReshapeFittingSubpartitionsFunctionTest,
+       FunctionWithSixArgumentsAndColumnLimit56Characters) {
+  const auto& preformat_tokens = pre_format_tokens_;
+  const auto begin = preformat_tokens.begin();
+
+  UnwrappedLine all(0, begin);
+  all.SpanUpToToken(preformat_tokens.end());
+
+  // 'function_fffffffffff('
+  UnwrappedLine header(0, begin);
+  header.SpanUpToToken(begin + 1);
+
+  // function arguments
+  UnwrappedLine arg1(0, header.TokensRange().end());
+  arg1.SpanUpToToken(begin + 2);
+  UnwrappedLine arg2(0, arg1.TokensRange().end());
+  arg2.SpanUpToToken(begin + 3);
+  UnwrappedLine arg3(0, arg2.TokensRange().end());
+  arg3.SpanUpToToken(begin + 4);
+  UnwrappedLine arg4(0, arg3.TokensRange().end());
+  arg4.SpanUpToToken(begin + 5);
+  UnwrappedLine arg5(0, arg4.TokensRange().end());
+  arg5.SpanUpToToken(begin + 6);
+  UnwrappedLine arg6(0, arg5.TokensRange().end());
+  arg6.SpanUpToToken(all.TokensRange().end());
+
+  UnwrappedLine args(0, arg1.TokensRange().begin());
+  args.SpanUpToToken(arg6.TokensRange().end());
+
+  using tree_type = TokenPartitionTree;
+  tree_type tree{
+      all,
+      tree_type{header},
+      tree_type{
+          args,
+          tree_type{arg1},
+          tree_type{arg2},
+          tree_type{arg3},
+          tree_type{arg4},
+          tree_type{arg5},
+          tree_type{arg6},
+      },
+  };
+
+  UnwrappedLine group1(0, begin);
+  group1.SpanUpToToken(arg2.TokensRange().end());
+  UnwrappedLine group2(0, arg3.TokensRange().begin());
+  group2.SpanUpToToken(arg4.TokensRange().end());
+  UnwrappedLine group3(0, arg5.TokensRange().begin());
+  group3.SpanUpToToken(arg6.TokensRange().end());
+
+  const tree_type tree_expected{all,
+                                tree_type{
+                                    group1,
+                                    tree_type{header},
+                                    tree_type{arg1},
+                                    tree_type{arg2},
+                                },
+                                tree_type{
+                                    group2,
+                                    tree_type{arg3},
+                                    tree_type{arg4},
+                                },
+                                tree_type{
+                                    group3,
+                                    tree_type{arg5},
+                                    tree_type{arg6},
+                                }};
+
+  verible::BasicFormatStyle style;
+  style.column_limit = 56;
+  ReshapeFittingSubpartitions(&tree, style);
+
+  const auto diff = DeepEqual(tree, tree_expected, TokenRangeEqual);
+  EXPECT_EQ(diff.left, nullptr) << "Expected:\n"
+                                << tree_expected << "\nGot:" << tree << "\n";
+
+  // Check indentations (appending)
+  EXPECT_EQ(tree.Children()[0].Value().IndentationSpaces(), 0);
+  EXPECT_EQ(tree.Children()[1].Value().IndentationSpaces(),
+            header.TokensRange()[0].Length());
+  EXPECT_EQ(tree.Children()[2].Value().IndentationSpaces(),
+            header.TokensRange()[0].Length());
+}
+
 }  // namespace verible

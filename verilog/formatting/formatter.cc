@@ -231,12 +231,18 @@ static void DeterminePartitionExpansion(partition_node_type* node,
   const auto partition_policy = uwline.PartitionPolicy();
   VLOG(3) << "partition policy: " << partition_policy;
   switch (partition_policy) {
+    // Expand kAppendFittingSubPartitions partition and let us see it's
+    // grouped and (mostly) fitted childrens
+    case PartitionPolicyEnum::kAppendFittingSubPartitions: {
+      node_view.Expand();
+      break;
+    }
     case PartitionPolicyEnum::kAlwaysExpand: {
       node_view.Expand();
       break;
     }
     case PartitionPolicyEnum::kFitOnLineElseExpand: {
-      if (verible::FitsOnLine(uwline, style)) {
+      if (verible::FitsOnLine(uwline, style).fits) {
         VLOG(3) << "Fits, un-expanding.";
         node_view.Unexpand();
       } else {
@@ -411,6 +417,19 @@ Status Formatter::Format(const ExecutionControl& control) {
     if (control.AnyStop()) {
       return absl::OkStatus();
     }
+  }
+
+  {
+    // Reshape partition tree with kAppendFittingSubPartitions policy
+    tree_unwrapper.ApplyPreOrder([this](TokenPartitionTree& node) {
+      const auto& uwline = node.Value();
+      const auto partition_policy = uwline.PartitionPolicy();
+
+      if (partition_policy ==
+          PartitionPolicyEnum::kAppendFittingSubPartitions) {
+        verible::ReshapeFittingSubpartitions(&node, style_);
+      }
+    });
   }
 
   // Produce sequence of independently operable UnwrappedLines.
