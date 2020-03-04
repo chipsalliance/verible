@@ -601,6 +601,7 @@ void TreeUnwrapper::SetIndentationsAndCreatePartitions(
     case NodeEnum::kActualNamedPort:
     case NodeEnum::kActualPositionalPort:
     case NodeEnum::kAssertionVariableDeclaration:
+    case NodeEnum::kPort:
     case NodeEnum::kPortItem:
     case NodeEnum::kPropertyDeclaration:
     case NodeEnum::kSequenceDeclaration:
