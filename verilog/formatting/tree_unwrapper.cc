@@ -564,7 +564,6 @@ void TreeUnwrapper::SetIndentationsAndCreatePartitions(
     case NodeEnum::kClassDeclaration:
     case NodeEnum::kClassConstructor:
     case NodeEnum::kPackageImportDeclaration:
-    case NodeEnum::kDPIImportItem:
     // TODO(fangism): case NodeEnum::kDPIExportItem:
     case NodeEnum::kPreprocessorInclude:
     case NodeEnum::kPreprocessorDefine:
@@ -882,7 +881,8 @@ void TreeUnwrapper::SetIndentationsAndCreatePartitions(
 
     case NodeEnum::kClassConstructorPrototype:
     case NodeEnum::kTaskHeader:
-    case NodeEnum::kFunctionHeader: {
+    case NodeEnum::kFunctionHeader:
+    case NodeEnum::kDPIImportItem: {
       VisitIndentedSection(node, 0,
                            PartitionPolicyEnum::kAppendFittingSubPartitions);
       break;
@@ -1081,6 +1081,7 @@ void TreeUnwrapper::ReshapeTokenPartitions(
     case NodeEnum::kClassConstructorPrototype:
     case NodeEnum::kTaskHeader:
     case NodeEnum::kFunctionHeader:
+    case NodeEnum::kDPIImportItem:
     case NodeEnum::kBindDirective: {
       AttachTrailingSemicolonToPreviousPartition();
       break;

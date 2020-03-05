@@ -1515,10 +1515,11 @@ const TreeUnwrapperTestData kUnwrapModuleTestCases[] = {
         ModuleHeader(0, L(0, {"module", "mdi", ";"})),
         ModuleItemList(
             1,  //
-            L(1,
-              {"import", "\"DPI-C\"", "function", "int", "add", "(", ")", ";"}),
-            L(1, {"import", "\"DPI-C\"", "function", "int", "sleep", "("}),
-            TFPortList(3, L(3, {"input", "int", "secs"})), L(1, {")", ";"})),
+            NL(1, {"import", "\"DPI-C\"", "function", "int", "add", "(", ")",
+                   ";"}),
+            N(1,  //
+              L(1, {"import", "\"DPI-C\"", "function", "int", "sleep", "("}),
+              TFPortList(3, L(3, {"input", "int", "secs", ")", ";"})))),
         L(0, {"endmodule"}),
     },
 
