@@ -1867,8 +1867,8 @@ static const std::initializer_list<FormatterTestCase> kFormatterTestCases = {
     {// port declaration exceeds line length limit
      "function f (loooong_type if_it_fits_I_sits);endfunction",
      "function f(\n"
-     "    loooong_type if_it_fits_I_sits\n"
-     ");\nendfunction\n"},
+     "    loooong_type if_it_fits_I_sits);\n"
+     "endfunction\n"},
     {"function\nvoid\tspace;a=( b+c )\n;endfunction   :space\n",
      "function void space;\n"
      "  a = (b + c);\n"

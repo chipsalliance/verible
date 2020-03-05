@@ -1950,22 +1950,22 @@ const TreeUnwrapperTestData kClassTestCases[] = {
         "endtask\n"
         "endclass",
         ClassHeader(0, L(0, {"class", "Foo", ";"})),
-        ClassItemList(1, DataDeclaration(1, L(1, {"integer", "sizer", ";"})),
-                      FunctionHeader(1, L(1, {"function", "new", "("}),
-                                     TFPortList(3, L(3, {"integer", "size"})),
-                                     L(1, {")", ";"})),
-                      StatementList(2, L(2, {"begin"}),
-                                    StatementList(3, NL(3, {"this", ".", "size",
-                                                            "=", "size", ";"})),
-                                    L(2, {"end"})),
-                      L(1, {"endfunction"}),
-                      TaskHeader(1, L(1, {"task", "print", "(", ")", ";"})),
-                      StatementList(2, L(2, {"begin"}),
-                                    StatementList(3, NL(3, {"$write", "(",
-                                                            "\"Hello, world!\"",
-                                                            ")", ";"})),
-                                    L(2, {"end"})),
-                      L(1, {"endtask"})),
+        ClassItemList(
+            1, DataDeclaration(1, L(1, {"integer", "sizer", ";"})),
+            FunctionHeader(1, L(1, {"function", "new", "("}),
+                           TFPortList(3, L(3, {"integer", "size", ")", ";"}))),
+            StatementList(2, L(2, {"begin"}),
+                          StatementList(3, NL(3, {"this", ".", "size", "=",
+                                                  "size", ";"})),
+                          L(2, {"end"})),
+            L(1, {"endfunction"}),
+            TaskHeader(1, L(1, {"task", "print", "(", ")", ";"})),
+            StatementList(
+                2, L(2, {"begin"}),
+                StatementList(
+                    3, NL(3, {"$write", "(", "\"Hello, world!\"", ")", ";"})),
+                L(2, {"end"})),
+            L(1, {"endtask"})),
         L(0, {"endclass"}),
     },
 
@@ -1981,13 +1981,13 @@ const TreeUnwrapperTestData kClassTestCases[] = {
         "// class is about to end\n"
         "endclass",
         ClassHeader(0, L(0, {"class", "c", ";", "// c is for cookie"})),
-        ClassItemList(1, L(1, {"// f is for false"}),
-                      FunctionHeader(1, L(1, {"function", "f", "("}),
-                                     TFPortList(3, L(3, {"integer", "size"})),
-                                     L(1, {")", ";"})),
-                      L(1, {"endfunction"}), L(1, {"// t is for true"}),
-                      TaskHeader(1, L(1, {"task", "t", "(", ")", ";"})),
-                      L(1, {"endtask"}), L(1, {"// class is about to end"})),
+        ClassItemList(
+            1, L(1, {"// f is for false"}),
+            FunctionHeader(1, L(1, {"function", "f", "("}),
+                           TFPortList(3, L(3, {"integer", "size", ")", ";"}))),
+            L(1, {"endfunction"}), L(1, {"// t is for true"}),
+            TaskHeader(1, L(1, {"task", "t", "(", ")", ";"})),
+            L(1, {"endtask"}), L(1, {"// class is about to end"})),
         L(0, {"endclass"}),
     },
 
@@ -3346,7 +3346,7 @@ const TreeUnwrapperTestData kUnwrapTaskTestCases[] = {
         "task foo(string name);"
         "endtask",
         TaskHeader(0, L(0, {"task", "foo", "("}),
-                   TFPortList(2, L(2, {"string", "name"})), L(0, {")", ";"})),
+                   TFPortList(2, L(2, {"string", "name", ")", ";"}))),
         L(0, {"endtask"}),
     },
 
@@ -3354,10 +3354,9 @@ const TreeUnwrapperTestData kUnwrapTaskTestCases[] = {
         "task with multiple formal arguments",
         "task foo(string name, int a);"
         "endtask",
-        TaskHeader(
-            0, L(0, {"task", "foo", "("}),
-            TFPortList(2, L(2, {"string", "name", ","}), L(2, {"int", "a"})),
-            L(0, {")", ";"})),
+        TaskHeader(0, L(0, {"task", "foo", "("}),
+                   TFPortList(2, L(2, {"string", "name", ","}),
+                              L(2, {"int", "a", ")", ";"}))),
         L(0, {"endtask"}),
     },
 
@@ -3913,8 +3912,7 @@ const TreeUnwrapperTestData kUnwrapFunctionTestCases[] = {
         "function foo(string name);"
         "endfunction : foo",
         FunctionHeader(0, L(0, {"function", "foo", "("}),
-                       TFPortList(2, L(2, {"string", "name"})),
-                       L(0, {")", ";"})),
+                       TFPortList(2, L(2, {"string", "name", ")", ";"}))),
         L(0, {"endfunction", ":", "foo"}),
     },
 
@@ -3922,10 +3920,9 @@ const TreeUnwrapperTestData kUnwrapFunctionTestCases[] = {
         "function with multiple formal arguments",
         "function foo(string name, int a);"
         "endfunction",
-        FunctionHeader(
-            0, L(0, {"function", "foo", "("}),
-            TFPortList(2, L(2, {"string", "name", ","}), L(2, {"int", "a"})),
-            L(0, {")", ";"})),
+        FunctionHeader(0, L(0, {"function", "foo", "("}),
+                       TFPortList(2, L(2, {"string", "name", ","}),
+                                  L(2, {"int", "a", ")", ";"}))),
         L(0, {"endfunction"}),
     },
 
@@ -4056,8 +4053,8 @@ const TreeUnwrapperTestData kUnwrapFunctionTestCases[] = {
             0, L(0, {"function", "automatic", "logic", "checkit", "("}),
             TFPortList(
                 2, L(2, {"input", "logic", "[", "4", ":", "0", "]", "a", ","}),
-                L(2, {"input", "logic", "[", "4", ":", "0", "]", "b"})),
-            L(0, {")", ";"})),
+                L(2,
+                  {"input", "logic", "[", "4", ":", "0", "]", "b", ")", ";"}))),
         StatementList(1, NL(1, {"return", "a", "^", "b", ";"})),
         L(0, {"endfunction"}),
     },
@@ -4705,8 +4702,8 @@ const TreeUnwrapperTestData kUnwrapFunctionTestCases[] = {
             0, L(0, {"function", "automatic", "logic", "checkit", "("}),
             TFPortList(
                 2, L(2, {"input", "logic", "[", "4", ":", "0", "]", "a", ","}),
-                L(2, {"input", "logic", "[", "4", ":", "0", "]", "b"})),
-            L(0, {")", ";"})),
+                L(2,
+                  {"input", "logic", "[", "4", ":", "0", "]", "b", ")", ";"}))),
         StatementList(1, NL(1, {"return", "a", "^", "b", ";"})),
         L(0, {"endfunction"}),
     },
@@ -4726,8 +4723,7 @@ const TreeUnwrapperTestData kUnwrapFunctionTestCases[] = {
         ClassItemList(
             1,
             FunctionHeader(1, L(1, {"function", "new", "("}),
-                           TFPortList(3, L(3, {"string", "name"})),
-                           L(1, {")", ";"})),
+                           TFPortList(3, L(3, {"string", "name", ")", ";"}))),
             StatementList(
                 2, NL(2, {"super", ".", "new", "(", "name", ")", ";"}),
                 FlowControl(
