@@ -226,4 +226,4 @@ Enabled by default: true
 
 ## Version
 
-Generated on 2020-03-04 13:20:24 -0800 from [v0.0-264-g55adfae](https://github.com/google/verible/commit/55adfae335c461612416c98a5fae08fa859e219c)
+Generated on 2020-03-05 10:50:32 -0800 from [v0.0-266-g9e55307](https://github.com/google/verible/commit/9e55307aa29837cc06c943bf9d8ac51bc1389e13)
