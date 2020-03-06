@@ -189,6 +189,8 @@ enum class NodeEnum {
   kWhileLoopStatement,
   kDoWhileLoopStatement,
   kForeachLoopStatement,
+  kRepeatControl,
+  kRepeatEventControl,
   kLPValue,
   kOpenRangeList,
   kValueRange,

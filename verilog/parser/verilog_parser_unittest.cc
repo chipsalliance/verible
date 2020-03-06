@@ -1889,6 +1889,48 @@ static const char* kModuleTests[] = {
     "  z5 <= #(20ps) y;\n"
     "end\n"
     "endmodule",
+    "module assigner;\n"
+    "  initial begin\n"
+    "    n1 <= @(negedge k) r1;\n"  // nonblocking assign, edge
+    "  end\n"
+    "endmodule\n",
+    "module assigner;\n"
+    "  initial begin\n"
+    "    n1 = @(negedge k) r1;\n"  // blocking assign, edge
+    "  end\n"
+    "endmodule\n",
+    "module assigner;\n"
+    "  initial begin\n"
+    "    n1 <= @foo r1;\n"  // nonblocking assign, event control
+    "  end\n"
+    "endmodule\n",
+    "module assigner;\n"
+    "  initial begin\n"
+    "    n2 = @bar r1;\n"  // blocking assign, event control
+    "  end\n"
+    "endmodule\n",
+    "module assigner;\n"
+    "  initial begin\n"
+    "    n1 <= repeat(k) @foo r1;\n"  // nonblocking assign, repeat control
+    "  end\n"
+    "endmodule\n",
+    "module assigner;\n"
+    "  initial begin\n"
+    "    n2 = repeat(k) @bar r1;\n"  // blocking assign, repeat control
+    "  end\n"
+    "endmodule\n",
+    "module triggerer;\n"
+    "  always @* begin\n"
+    "    ->a;\n"  // blocking event trigger
+    "    x = 0;\n"
+    "  end\n"
+    "endmodule\n",
+    "module triggerer;\n"
+    "  always @* begin\n"
+    "    ->a.b[1].c;\n"  // blocking event trigger
+    "    x = 0;\n"
+    "  end\n"
+    "endmodule\n",
     // streaming concatenations with macros
     "module streaming_cats;\n"
     "assign s1 = {>>`BAR};\n"

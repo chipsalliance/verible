@@ -2404,8 +2404,8 @@ loop_statement
           $9); }
   | TK_forever statement_or_null
     { $$ = MakeTaggedNode(N::kForeverLoopStatement, $1, $2); }
-  | TK_repeat '(' expression ')' statement_or_null
-    { $$ = MakeTaggedNode(N::kRepeatLoopStatement, $1, $2, $3, $4, $5); }
+  | repeat_control statement_or_null
+    { $$ = MakeTaggedNode(N::kRepeatLoopStatement, $1, $2); }
   | TK_while '(' expression ')' statement_or_null
     { $$ = MakeTaggedNode(N::kWhileLoopStatement, $1, $2, $3, $4, $5); }
   | TK_do statement_or_null TK_while '(' expression ')' ';'
@@ -6543,13 +6543,8 @@ case_any
   ;
 
 blocking_assignment
-  : lpvalue '=' delay1 expression ';'
+  : lpvalue '=' delay_or_event_control expression ';'
     { $$ = MakeTaggedNode(N::kBlockingAssignmentStatement, $1, $2, $3, $4, $5); }
-  | lpvalue '=' event_control expression ';'
-    { $$ = MakeTaggedNode(N::kBlockingAssignmentStatement, $1, $2, $3, $4, $5); }
-  | lpvalue '=' TK_repeat '(' expression ')' event_control expression ';'
-    // TODO(jeremycs): introduce a unique form here as needed
-    { $$ = MakeTaggedNode(N::kBlockingAssignmentStatement, $1, $2, $3, MakeParenGroup($4, $5, $6), $7, $8, $9); }
   | lpvalue '=' dynamic_array_new ';'
     { $$ = MakeTaggedNode(N::kBlockingAssignmentStatement, $1, $2, $3, $4); }
   | lpvalue '=' class_new ';'
@@ -6557,15 +6552,9 @@ blocking_assignment
   ;
 
 nonblocking_assignment
-  : lpvalue TK_LE expression ';'
-    { $$ = MakeTaggedNode(N::kNonblockingAssignmentStatement, $1, $2, $3, $4); }
+  : lpvalue TK_LE delay_or_event_control_opt expression ';'
+    { $$ = MakeTaggedNode(N::kNonblockingAssignmentStatement, $1, $2, $3, $4, $5); }
     /* This rule overlaps with clocking_drive. */
-  | lpvalue TK_LE delay1 expression ';'
-    { $$ = MakeTaggedNode(N::kNonblockingAssignmentStatement, $1, $2, $3, $4, $5); }
-  | lpvalue TK_LE event_control expression ';'
-    { $$ = MakeTaggedNode(N::kNonblockingAssignmentStatement, $1, $2, $3, $4, $5); }
-  | lpvalue TK_LE TK_repeat '(' expression ')' event_control expression ';'
-    { $$ = MakeTaggedNode(N::kNonblockingAssignmentStatement, $1, $2, $3, MakeParenGroup($4, $5, $6), $7, $8 ,$9); }
   ;
 clocking_drive_only
   : lpvalue TK_LE cycle_delay expression ';'
@@ -6627,6 +6616,27 @@ event_trigger
   : TK_TRIGGER reference ';'
     { $$ = MakeTaggedNode(N::kEventTriggerStatement, $1, $2, $3); }
   /* TODO(fangism): ->> operator */
+  ;
+
+repeat_control
+  : TK_repeat '(' expression ')'
+    { $$ = MakeTaggedNode(N::kRepeatControl, $1, MakeParenGroup($2, $3, $4)); }
+  ;
+
+delay_or_event_control
+  : delay1
+    { $$ = move($1); }
+  | event_control
+    { $$ = move($1); }
+  | repeat_control event_control
+    { $$ = MakeTaggedNode(N::kRepeatEventControl, $1, $2); }
+  ;
+
+delay_or_event_control_opt
+  : delay_or_event_control
+    { $$ = move($1); }
+  | /* empty */
+    { $$ = nullptr; }
   ;
 
 par_block
@@ -8336,9 +8346,8 @@ rs_if_else
   ;
 
 rs_repeat
-  : TK_repeat '(' expression ')' production_item
-    { $$ = MakeTaggedNode(N::kRandSequenceLoop,
-                          $1, MakeParenGroup($2, $3, $4), $5); }
+  : repeat_control production_item
+    { $$ = MakeTaggedNode(N::kRandSequenceLoop, $1, $2); }
   ;
 
 rs_case
