@@ -1931,6 +1931,26 @@ static const char* kModuleTests[] = {
     "    x = 0;\n"
     "  end\n"
     "endmodule\n",
+    "module triggerer;\n"
+    "  always @* begin\n"
+    "    ->>c;\n"  // nonblocking event trigger
+    "  end\n"
+    "endmodule\n",
+    "module triggerer;\n"
+    "  always @* begin\n"
+    "    ->> #5 c;\n"  // nonblocking event trigger, delayed
+    "  end\n"
+    "endmodule\n",
+    "module triggerer;\n"
+    "  always @* begin\n"
+    "    ->> @(posedge y) c;\n"  // nonblocking event trigger, edge
+    "  end\n"
+    "endmodule\n",
+    "module triggerer;\n"
+    "  always @* begin\n"
+    "    ->> repeat(2) @foo c;\n"  // nonblocking event trigger, repeat
+    "  end\n"
+    "endmodule\n",
     // streaming concatenations with macros
     "module streaming_cats;\n"
     "assign s1 = {>>`BAR};\n"

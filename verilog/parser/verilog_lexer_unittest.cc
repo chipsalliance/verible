@@ -1223,6 +1223,7 @@ static std::initializer_list<LexerTestData> kKeywordTests = {
     {{TK_NAND, "~&"}},
     {{TK_NOR, "~|"}},
     {{TK_NXOR, "~^"}},
+    {{TK_NONBLOCKING_TRIGGER, "->>"}},
     {{_TK_RARROW, "->"}},  // This can disambiguate to different enums,
                            // depending on context.
     {{TK_LOGEQUIV, "<->"}},

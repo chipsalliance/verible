@@ -795,6 +795,7 @@ zi_zp { UpdateLocation(); return TK_zi_zp; }
 "~^" { UpdateLocation(); return TK_NXOR; }
 "^~" { UpdateLocation(); return TK_NXOR; }
 "~&" { UpdateLocation(); return TK_NAND; }
+"->>" { UpdateLocation(); return TK_NONBLOCKING_TRIGGER; }
 "->" { UpdateLocation(); return _TK_RARROW; }
 "<->" { UpdateLocation(); return TK_LOGEQUIV; }
 "+:" { UpdateLocation(); return TK_PO_POS; }

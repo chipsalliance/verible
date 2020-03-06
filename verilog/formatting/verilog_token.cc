@@ -491,7 +491,6 @@ static const auto* FormatTokenTypeMap =
         {verilog_tokentype::TK_TAND, FTT::binary_operator},
         {verilog_tokentype::TK_NXOR, FTT::binary_operator},
         {verilog_tokentype::TK_LOGEQUIV, FTT::binary_operator},
-        {verilog_tokentype::TK_TRIGGER, FTT::binary_operator},
         {verilog_tokentype::TK_LOGICAL_IMPLIES, FTT::binary_operator},
         {verilog_tokentype::TK_CONSTRAINT_IMPLIES, FTT::binary_operator},
         {verilog_tokentype::TK_COLON_EQ, FTT::binary_operator},
@@ -536,6 +535,8 @@ static const auto* FormatTokenTypeMap =
         {verilog_tokentype::TK_DECR, FTT::unary_operator},
         {verilog_tokentype::TK_NAND, FTT::unary_operator},
         {verilog_tokentype::TK_NOR, FTT::unary_operator},
+        {verilog_tokentype::TK_TRIGGER, FTT::unary_operator},
+        {verilog_tokentype::TK_NONBLOCKING_TRIGGER, FTT::unary_operator},
 
         // hierarchy
         {verilog_tokentype::TK_SCOPE_RES, FTT::hierarchy},

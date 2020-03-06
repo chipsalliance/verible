@@ -2375,6 +2375,52 @@ TEST(TokenAnnotatorTest, AnnotateFormattingWithContextTest) {
           {0, SpacingOptions::MustAppend},
       },
 
+      // Handle '->' as a unary prefix expression.
+      {
+          DefaultStyle,
+          {TK_TRIGGER, "->"},
+          {verilog_tokentype::SymbolIdentifier, "a"},
+          {/* any context */},             // context
+          {0, SpacingOptions::Undecided},  // could be MustAppend though
+      },
+      {
+          DefaultStyle,
+          {TK_NONBLOCKING_TRIGGER, "->>"},
+          {verilog_tokentype::SymbolIdentifier, "a"},
+          {/* any context */},             // context
+          {0, SpacingOptions::Undecided},  // could be MustAppend though
+      },
+
+      // Handle '->' as a binary operator
+      {
+          DefaultStyle,
+          {TK_LOGICAL_IMPLIES, "->"},
+          {verilog_tokentype::SymbolIdentifier, "right"},
+          {/* any context */},  // context
+          {1, SpacingOptions::Undecided},
+      },
+      {
+          DefaultStyle,
+          {verilog_tokentype::SymbolIdentifier, "left"},
+          {TK_LOGICAL_IMPLIES, "->"},
+          {/* any context */},  // context
+          {1, SpacingOptions::Undecided},
+      },
+      {
+          DefaultStyle,
+          {TK_CONSTRAINT_IMPLIES, "->"},
+          {verilog_tokentype::SymbolIdentifier, "right"},
+          {/* any context */},  // context
+          {1, SpacingOptions::Undecided},
+      },
+      {
+          DefaultStyle,
+          {verilog_tokentype::SymbolIdentifier, "left"},
+          {TK_CONSTRAINT_IMPLIES, "->"},
+          {/* any context */},  // context
+          {1, SpacingOptions::Undecided},
+      },
+
       // Inside dimension ranges, force space preservation if not around ':'
       {
           DefaultStyle,

@@ -659,6 +659,7 @@ is not locally defined, so the grammar here uses only generic identifiers.
 // or "^~"
 %token TK_LOGEQUIV "<->"
 
+%token TK_NONBLOCKING_TRIGGER "->>"
 %token _TK_RARROW "->"
 // _TK_RARROW is disambiguated into one of the following symbols
 // (see verilog_lexical_context.cc):
@@ -6614,8 +6615,10 @@ conditional_statement
 
 event_trigger
   : TK_TRIGGER reference ';'
-    { $$ = MakeTaggedNode(N::kEventTriggerStatement, $1, $2, $3); }
-  /* TODO(fangism): ->> operator */
+    { $$ = MakeTaggedNode(N::kBlockingEventTriggerStatement, $1, $2, $3); }
+  | TK_NONBLOCKING_TRIGGER delay_or_event_control_opt reference ';'
+    { $$ = MakeTaggedNode(N::kNonblockingEventTriggerStatement,
+                          $1, $2, $3, $4); }
   ;
 
 repeat_control
