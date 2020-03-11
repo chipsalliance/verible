@@ -60,23 +60,25 @@ const Symbol* DescendThroughSingletons(const Symbol& symbol);
 // Returns same node reference, so that anywhere that expects a SyntaxTreeNode
 // can be passed CheckNodeEnum(node, node_enum).
 template <typename E>
-const SyntaxTreeNode& CheckNodeEnum(const SyntaxTreeNode& node, E node_enum) {
+const SyntaxTreeNode& CheckNodeEnum(const SyntaxTreeNode& node,
+                                    E expected_node_enum) {
   // Uses operator<<(std::ostream&, E) for diagnostics.
-  CHECK_EQ(E(node.Tag().tag), node_enum);
+  CHECK_EQ(E(node.Tag().tag), expected_node_enum);
   return node;
 }
 // Mutable variant.
 template <typename E>
-SyntaxTreeNode& CheckNodeEnum(SyntaxTreeNode& node, E node_enum) {
+SyntaxTreeNode& CheckNodeEnum(SyntaxTreeNode& node, E expected_node_enum) {
   // Uses operator<<(std::ostream&, E) for diagnostics.
-  CHECK_EQ(E(node.Tag().tag), node_enum);
+  CHECK_EQ(E(node.Tag().tag), expected_node_enum);
   return node;
 }
 
 template <typename E>
-const SyntaxTreeLeaf& CheckLeafEnum(const SyntaxTreeLeaf& leaf, E token_enum) {
+const SyntaxTreeLeaf& CheckLeafEnum(const SyntaxTreeLeaf& leaf,
+                                    E expected_token_enum) {
   // Uses operator<<(std::ostream&, E) for diagnostics.
-  CHECK_EQ(E(leaf.get().token_enum), token_enum);
+  CHECK_EQ(E(leaf.get().token_enum), expected_token_enum);
   return leaf;
 }
 
