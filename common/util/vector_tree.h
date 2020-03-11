@@ -20,6 +20,7 @@
 #include <functional>
 #include <iosfwd>  // IWYU pragma: keep
 #include <iterator>
+#include <set>
 #include <utility>
 #include <vector>
 
@@ -156,6 +157,38 @@ class _VectorTreeImpl {
       // Root node has no previous sibling, this is the reverse-end().
       return nullptr;
     }
+  }
+
+  // Returns the nearest common ancestor node to two nodes if a common ancestor
+  // exists, else nullptr.
+  // Run time: let L and R be the number of ancestors of left and right,
+  // respectively.  In the worst case, there will be L and R set insertions,
+  // so O(L lg L) + I(R lg R) and L and R membership checks, so O(L lg R) + O(R
+  // lg L).  With K = max(L, R), overall this is no worse than O(K lg K).
+  template <typename TP>
+  static TP* _NearestCommonAncestor(TP* left, TP* right) {
+    std::set<TP*> left_ancestors, right_ancestors;
+    // In alternation, insert left/right into its respective set of ancestors,
+    // and check for membership in the other ancestor set.
+    // Return as soon as one is found in the other's set of ancestors.
+    while (left != nullptr || right != nullptr) {
+      if (left != nullptr) {
+        left_ancestors.insert(left);
+        if (right_ancestors.find(left) != right_ancestors.end()) {
+          return left;
+        }
+        left = left->Parent();
+      }
+      if (right != nullptr) {
+        right_ancestors.insert(right);
+        if (left_ancestors.find(right) != left_ancestors.end()) {
+          return right;
+        }
+        right = right->Parent();
+      }
+    }
+    // Once this point is reached, there are no common ancestors.
+    return nullptr;
   }
 };
 
@@ -382,7 +415,17 @@ class VectorTree : private _VectorTreeImpl {
   // Returns mutable pointer to the tree root.
   this_type* Root() { return impl_type::_Root(this); }
 
-  // TODO(fangism): NearestCommonAncestor(const this_type* other)
+  // Returns the closest common ancestor to this and the other, else nullptr.
+  // This is the const pointer overload.
+  const this_type* NearestCommonAncestor(const this_type* other) const {
+    return impl_type::_NearestCommonAncestor(this, other);
+  }
+
+  // Returns the closest common ancestor to this and the other, else nullptr.
+  // This is the mutable pointer overload.
+  this_type* NearestCommonAncestor(this_type* other) {
+    return impl_type::_NearestCommonAncestor(this, other);
+  }
 
   // Construct a path of BirthRank()s from root to this.
   // Root node's 'path' is empty.  Passing the resulting path to
@@ -446,6 +489,19 @@ class VectorTree : private _VectorTreeImpl {
     return impl_type::_RightmostDescendant(this);
   }
 
+  // Returns true if this node has no parent, or it has BirthRank 0.
+  bool IsFirstChild() const {
+    if (Parent() == nullptr) return true;
+    return BirthRank() == 0;
+  }
+
+  // Returns true if this node has no parent, or it is the last child of its
+  // parent.
+  bool IsLastChild() const {
+    if (Parent() == nullptr) return true;
+    return BirthRank() == Parent()->Children().size() - 1;
+  }
+
   // Navigates to the next leaf (node without Children()) in the tree
   // (if it exists), else returns nullptr.
   const this_type* NextLeaf() const { return impl_type::_NextLeaf(this); }
@@ -461,6 +517,21 @@ class VectorTree : private _VectorTreeImpl {
 
   // Mutable variant of PreviousLeaf().
   this_type* PreviousLeaf() { return impl_type::_PreviousLeaf(this); }
+
+  // Removes this node from its parent, and shifts ths siblings that follow this
+  // node lower in BirthRank().
+  // Any iterators that pointed to this node or its later siblings are
+  // invalidated.
+  // This node is destroyed in the process.
+  // This operation is only valid on non-root nodes.
+  // It is the caller's responsibility to maintain invariants before
+  // destroying this node.
+  void RemoveSelfFromParent() {
+    auto& siblings = ABSL_DIE_IF_NULL(Parent())->Children();
+    auto self_iter = siblings.begin() + BirthRank();
+    CHECK_EQ(&*self_iter, this);
+    siblings.erase(self_iter);
+  }
 
   // TODO(fangism): provide unidirectional iterator views, forward and reversed,
   // using NextLeaf() and PreviousLeaf().
