@@ -113,10 +113,12 @@ std::ostream& TokenPartitionTreePrinter::PrintTree(std::ostream& stream,
     stream << ") }";
   } else {
     stream << '('
+           // similar to UnwrappedLine::AsCode()
            << Spacer(value.IndentationSpaces(),
                      UnwrappedLine::kIndentationMarker)
-           << "[<auto>]) @" << NodePath(node)
-           << ", policy: " << value.PartitionPolicy() << '\n';
+           // <auto> just means the concatenation of all subpartitions
+           << "[<auto>], policy: " << value.PartitionPolicy() << ") @"
+           << NodePath(node) << '\n';
     // token range spans all of children nodes
     for (const auto& child : children) {
       TokenPartitionTreePrinter(child, verbose).PrintTree(stream, indent + 2)

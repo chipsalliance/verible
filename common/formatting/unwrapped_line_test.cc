@@ -129,6 +129,55 @@ TEST_F(UnwrappedLineTest, SpanUpToToken) {
   EXPECT_EQ(range.end(), end - 1);
 }
 
+// Testing SpanPrevToken()
+TEST_F(UnwrappedLineTest, SpanPrevToken) {
+  const std::vector<TokenInfo> tokens = {{1, "test_token1"},
+                                         {2, "test_token2"}};
+  CreateTokenInfos(tokens);
+  UnwrappedLine uwline(0, pre_format_tokens_.begin());
+  AddFormatTokens(&uwline);
+
+  const auto& front_token = tokens.front();
+  const auto& back_token = tokens.back();
+  const auto range = uwline.TokensRange();
+  EXPECT_EQ(range.front().TokenEnum(), front_token.token_enum);
+  EXPECT_EQ(range.back().TokenEnum(), back_token.token_enum);
+  EXPECT_EQ(uwline.Size(), 2);
+
+  uwline.SpanBackToToken(range.end());  // clear range
+  EXPECT_TRUE(uwline.IsEmpty());
+
+  uwline.SpanPrevToken();
+  EXPECT_FALSE(uwline.IsEmpty());
+  EXPECT_EQ(uwline.Size(), 1);
+}
+
+// Testing that SpanBackToToken resets the lower-bound.
+TEST_F(UnwrappedLineTest, SpanBackToToken) {
+  const std::vector<TokenInfo> tokens = {
+      {0, "test_token1"}, {1, "test_token2"}, {2, "test_token3"}};
+  CreateTokenInfos(tokens);
+  UnwrappedLine uwline(0, pre_format_tokens_.begin());
+  AddFormatTokens(&uwline);
+
+  EXPECT_EQ(uwline.Size(), 3);
+  auto range = uwline.TokensRange();
+  EXPECT_EQ(range.size(), 3);
+  const auto begin = range.begin();
+  const auto end = range.end();
+
+  uwline.SpanBackToToken(range.end());  // clear range
+  EXPECT_TRUE(uwline.IsEmpty());
+  range = uwline.TokensRange();
+  EXPECT_TRUE(range.empty());
+
+  uwline.SpanBackToToken(begin + 1);
+  range = uwline.TokensRange();
+  EXPECT_EQ(range.size(), 2);
+  EXPECT_EQ(range.begin(), begin + 1);
+  EXPECT_EQ(range.end(), end);
+}
+
 // Testing AddToken(PreFormatToken& token) with multiple tokens
 TEST_F(UnwrappedLineTest, AddMultipleTokens) {
   const std::vector<TokenInfo> tokens = {
@@ -291,7 +340,7 @@ TEST_F(UnwrappedLineTest, AsCodeEmptyNoIndent) {
   UnwrappedLine uwline(0, pre_format_tokens_.begin());
   std::ostringstream stream;
   stream << uwline;
-  EXPECT_EQ(stream.str(), "[]");
+  EXPECT_EQ(stream.str(), "[], policy: always-expand");
 }
 
 // Testing AsCode() with no tokens and indentation
@@ -301,7 +350,7 @@ TEST_F(UnwrappedLineTest, AsCodeEmptyIndent) {
   UnwrappedLine uwline(1, pre_format_tokens_.begin());
   std::ostringstream stream;
   stream << uwline;
-  EXPECT_EQ(stream.str(), ">[]");
+  EXPECT_EQ(stream.str(), ">[], policy: always-expand");
 }
 
 // Testing AsCode() with one token and no indentation
@@ -313,7 +362,7 @@ TEST_F(UnwrappedLineTest, AsCodeOneTokenNoIndent) {
   AddFormatTokens(&uwline);
   std::ostringstream stream;
   stream << uwline;
-  EXPECT_EQ(stream.str(), "[endmodule]");
+  EXPECT_EQ(stream.str(), "[endmodule], policy: always-expand");
 }
 
 // Testing AsCode() with tokens and no indentation
@@ -322,7 +371,7 @@ TEST_F(UnwrappedLineTest, AsCodeTextNoIndent) {
   CreateTokenInfos(tokens);
   UnwrappedLine uwline(0, pre_format_tokens_.begin());
   AddFormatTokens(&uwline);
-  const char expected[] = "[module foo #(]";
+  const char expected[] = "[module foo #(], policy: always-expand";
   std::ostringstream stream;
   stream << uwline;
   EXPECT_EQ(stream.str(), expected);
@@ -335,7 +384,7 @@ TEST_F(UnwrappedLineTest, AsCodeTextIndent) {
   CreateTokenInfos(tokens);
   UnwrappedLine uwline(5, pre_format_tokens_.begin());
   AddFormatTokens(&uwline);
-  const char expected[] = ">>>>>[const void foo ( ) ;]";
+  const char expected[] = ">>>>>[const void foo ( ) ;], policy: always-expand";
   std::ostringstream stream;
   stream << uwline;
   EXPECT_EQ(stream.str(), expected);

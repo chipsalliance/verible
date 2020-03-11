@@ -84,7 +84,11 @@ class UnwrappedLine {
   // the front.
   void SpanPrevToken() { tokens_.extend_front(); }
 
-  // Extends PreFormatToken range up to the given token (exclusive).
+  // Extends PreFormatToken range's lower bound to the given token (inclusive).
+  void SpanBackToToken(token_iterator iter) { tokens_.set_begin(iter); }
+
+  // Extends PreFormatToken range's upper bound up to the given token
+  // (exclusive).
   void SpanUpToToken(token_iterator iter) { tokens_.set_end(iter); }
 
   int IndentationSpaces() const { return indentation_spaces_; }
@@ -97,7 +101,8 @@ class UnwrappedLine {
     partition_policy_ = policy;
   }
 
-  // Returns the range of PreFormatTokens spanned by this UnwrappedLine
+  // Returns the range of PreFormatTokens spanned by this UnwrappedLine.
+  // Note that this is a *copy*, and not a reference to the underlying range.
   range_type TokensRange() const { return tokens_; }
 
   // Returns the number of tokens in this UnwrappedLine

@@ -65,7 +65,7 @@ std::ostream* UnwrappedLine::AsCode(std::ostream* stream, bool verbose) const {
                            [=](std::string* out, const PreFormatToken& token) {
                              TokenFormatter(out, token, verbose);
                            })
-          << ']';
+          << "], policy: " << partition_policy_;
   return stream;
 }
 
