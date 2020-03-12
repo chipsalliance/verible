@@ -81,13 +81,41 @@ std::ostream& operator<<(std::ostream& stream,
 
 // Transformations (modifying):
 
+// Adds or removes a constant amount of indentation from entire token
+// partition tree.  Relative indentation amount may be positive or negative.
+// Final indentation will be at least 0, and never go negative.
+void AdjustIndentationRelative(TokenPartitionTree* tree, int amount);
+
+// Adjusts indentation to align root of partition tree to new indentation
+// amount.
+void AdjustIndentationAbsolute(TokenPartitionTree* tree, int amount);
+
 // Merges the two subpartitions of tree at index pos and pos+1.
 void MergeConsecutiveSiblings(TokenPartitionTree* tree, size_t pos);
 
 // Moves the rightmost leaf to the leaf partition that precedes it.
 // Returns the parent of the leaf partition that was moved if the move
 // occurred, else nullptr.
+// DEPRECATED, soon to be replaced by the following MergeLeaf* functions.
 TokenPartitionTree* MoveLastLeafIntoPreviousSibling(TokenPartitionTree*);
+
+// Merges this leaf into the leaf partition that preceded it, which could be
+// a distant relative.  The leaf is destroyed in the process.
+// The destination partition retains its indentation level and partition
+// policies, but those of the leaf are discarded.
+// (If you need that information, save it before moving the leaf.)
+// Returns the parent of the leaf partition that was moved if the move
+// occurred, else nullptr.
+TokenPartitionTree* MergeLeafIntoPreviousLeaf(TokenPartitionTree* leaf);
+
+// Merges this leaf into the leaf partition that follows it, which could be
+// a distant relative.  The leaf is destroyed in the process.
+// The destination partition retains its indentation level and partition
+// policies, but those of the leaf are discarded.
+// (If you need that information, save it before moving the leaf.)
+// Returns the parent of the leaf partition that was moved if the move
+// occurred, else nullptr.
+TokenPartitionTree* MergeLeafIntoNextLeaf(TokenPartitionTree* leaf);
 
 // Evaluates two partitioning schemes wrapped and appended first
 // subpartition. Then reshapes node tree according to scheme with less
