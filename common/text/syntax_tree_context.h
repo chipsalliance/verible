@@ -45,6 +45,7 @@ class SyntaxTreeContext {
   // All elements of stack are non-null because they refer to traversed nodes.
   typedef std::vector<const SyntaxTreeNode*> stack_type;
   typedef stack_type::const_iterator const_iterator;
+  typedef stack_type::const_reverse_iterator const_reverse_iterator;
 
   // returns depth of context stack
   size_t size() const { return stack_.size(); }
@@ -59,8 +60,9 @@ class SyntaxTreeContext {
   const_iterator begin() const { return stack_.begin(); }
   const_iterator end() const { return stack_.end(); }
 
-  // TODO(fangism): reverse iterators, rbegin(), rend().
-  // These might be useful for searching from the top-of-stack downward.
+  // Reverse iterators be useful for searching from the top-of-stack downward.
+  const_reverse_iterator rbegin() const { return stack_.rbegin(); }
+  const_reverse_iterator rend() const { return stack_.rend(); }
 
   // IsInside returns true if there is a node of the specified
   // tag on the TreeContext stack.  Search occurs from the bottom of the

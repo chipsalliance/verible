@@ -14,11 +14,15 @@
 
 #include "common/text/syntax_tree_context.h"
 
+#include "gmock/gmock.h"
 #include "gtest/gtest.h"
 #include "common/text/concrete_syntax_tree.h"
+#include "common/util/iterator_range.h"
 
 namespace verible {
 namespace {
+
+using ::testing::ElementsAre;
 
 // Test that AutoPop properly pushes and pops nodes on and off the stack
 TEST(SyntaxTreeContextTest, PushPopTest) {
@@ -41,6 +45,28 @@ TEST(SyntaxTreeContextTest, PushPopTest) {
     EXPECT_EQ(&context.top(), &node4);
   }
   EXPECT_EQ(&context.top(), &node2);
+}
+
+// Test that forward/reverse iterators correctly look down/up the stack.
+TEST(SyntaxTreeContextTest, IteratorsTest) {
+  SyntaxTreeContext context;
+  {
+    SyntaxTreeNode node1(1);
+    SyntaxTreeContext::AutoPop p1(&context, node1);
+    {
+      SyntaxTreeNode node2(2);
+      SyntaxTreeContext::AutoPop p2(&context, node2);
+      {
+        SyntaxTreeNode node3(3);
+        SyntaxTreeContext::AutoPop p3(&context, node3);
+
+        EXPECT_THAT(verible::make_range(context.begin(), context.end()),
+                    ElementsAre(&node1, &node2, &node3));
+        EXPECT_THAT(verible::make_range(context.rbegin(), context.rend()),
+                    ElementsAre(&node3, &node2, &node1));
+      }
+    }
+  }
 }
 
 // Test that IsInside correctly reports whether context matches.

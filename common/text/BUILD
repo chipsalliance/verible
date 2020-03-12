@@ -354,6 +354,7 @@ cc_test(
     deps = [
         ":concrete_syntax_tree",
         ":syntax_tree_context",
+        "//common/util:iterator_range",
         "@com_google_googletest//:gtest_main",
     ],
 )
