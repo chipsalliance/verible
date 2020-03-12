@@ -31,6 +31,9 @@ namespace verible {
 //   1) The format token range spanned by any tree node (UnwrappedLine) is
 //      equal to that of its children.
 //   2) Adjacent siblings begin/end iterators are equal (continuity).
+//
+// TODO(fangism): Promote this to a class that privately inherits the base.
+// Methods on this class will preserve invariants.
 using TokenPartitionTree = VectorTree<UnwrappedLine>;
 
 // Analyses (non-modifying):
@@ -103,6 +106,13 @@ TokenPartitionTree* MoveLastLeafIntoPreviousSibling(TokenPartitionTree*);
 //     { (>>>>>>[type_e eeeeeeee ,]) }
 //     { (>>>>>>[type_f ffff ) ;]) }
 //   }
+// }
+//
+// The special case of a singleton argument being flattened is also supported.
+// --------------
+// { (>>[<auto>]) @{1,0}, policy: append-fitting-sub-partitions
+//   { (>>[function fffffffffff (]) }
+//   { (>>>>>>[type_a aaaa ) ;]) }
 // }
 //
 // Example outputs:

@@ -29,13 +29,14 @@
 
 namespace verible {
 
-void VerifyTreeNodeFormatTokenRanges(
-    const TokenPartitionTree& node,
-    std::vector<PreFormatToken>::const_iterator base) {
+using format_token_iterator = std::vector<PreFormatToken>::const_iterator;
+
+void VerifyTreeNodeFormatTokenRanges(const TokenPartitionTree& node,
+                                     format_token_iterator base) {
   VLOG(4) << __FUNCTION__ << " @ node path: " << NodePath(node);
 
   // Converting an iterator to an index is easier for debugging.
-  auto TokenIndex = [=](std::vector<PreFormatToken>::const_iterator iter) {
+  auto TokenIndex = [=](format_token_iterator iter) {
     return std::distance(base, iter);
   };
 
@@ -74,9 +75,8 @@ void VerifyTreeNodeFormatTokenRanges(
   VLOG(4) << __FUNCTION__ << " (verified)";
 }
 
-void VerifyFullTreeFormatTokenRanges(
-    const TokenPartitionTree& tree,
-    std::vector<PreFormatToken>::const_iterator base) {
+void VerifyFullTreeFormatTokenRanges(const TokenPartitionTree& tree,
+                                     format_token_iterator base) {
   VLOG(4) << __FUNCTION__ << '\n' << TokenPartitionTreePrinter{tree};
   tree.ApplyPreOrder([=](const TokenPartitionTree& node) {
     VerifyTreeNodeFormatTokenRanges(node, base);
@@ -136,7 +136,7 @@ std::ostream& operator<<(std::ostream& stream,
 
 void MergeConsecutiveSiblings(TokenPartitionTree* tree, size_t pos) {
   // Effectively concatenate unwrapped line ranges of sibling subpartitions.
-  tree->MergeConsecutiveSiblings(
+  ABSL_DIE_IF_NULL(tree)->MergeConsecutiveSiblings(
       pos, [](UnwrappedLine* left, const UnwrappedLine& right) {
         // Verify token range continuity.
         CHECK(left->TokensRange().end() == right.TokensRange().begin());
@@ -256,13 +256,16 @@ class TokenPartitionTreeWrapper {
   std::unique_ptr<UnwrappedLine> unwrapped_line_;
 };
 
+using partition_iterator = std::vector<TokenPartitionTree>::const_iterator;
+using partition_range = verible::container_iterator_range<partition_iterator>;
+
 // Reshapes unfitted_partitions and returns result via fitted_partitions.
 // Function creates VectorTree<> with additional level of grouping.
 // Function expects two partitions: first used for computing indentation
 // second with subpartitions, e.g.
 // { (>>[<auto>]) @{1,0} // tree root
-//   { (>>[function fffffffffff (]) } // first subpartition
-//   { (>>>>>>[<auto>]) @{1,0,1}, // root node with subpartitions
+//   { (>>[function fffffffffff (]) } // first subpartition 'header'
+//   { (>>>>>>[<auto>]) @{1,0,1}, // root node with subpartitions 'args'
 //     { (>>>>>>[type_a aaaa ,]) }
 //     { (>>>>>>[type_b bbbbb ,]) }
 //     { (>>>>>>[type_c cccccc ,]) }
@@ -277,18 +280,16 @@ class TokenPartitionTreeWrapper {
 // Return value signalise whether first subpartition was wrapped.
 static bool AppendFittingSubpartitions(
     VectorTree<TokenPartitionTreeWrapper>* fitted_partitions,
-    const TokenPartitionTree& unfitted_partitions,
-    const verible::BasicFormatStyle& style, bool wrap_first_subpartition) {
+    const TokenPartitionTree& unfitted_partitions_header,
+    const partition_range& unfitted_partitions_args,
+    const BasicFormatStyle& style, bool wrap_first_subpartition) {
   bool wrapped_first_subpartition;
 
-  // expects two partitions
-  CHECK_EQ(unfitted_partitions.Children().size(), 2);
-
   // first with header
-  const auto& header = unfitted_partitions.Children()[0];
+  const auto& header = unfitted_partitions_header;
 
   // arguments
-  const auto& args = unfitted_partitions.Children()[1].Children();
+  const auto& args = unfitted_partitions_args;
 
   // at least one argument
   CHECK_GE(args.size(), 1);
@@ -301,15 +302,16 @@ static bool AppendFittingSubpartitions(
   int indent;
 
   // Try appending first argument
-  auto group_value_arg = group->Value().Value(args[0]);
+  const auto& first_arg = args[0];
+  auto group_value_arg = group->Value().Value(first_arg);
   if (wrap_first_subpartition ||
-      (verible::FitsOnLine(group_value_arg, style).fits == false)) {
+      (FitsOnLine(group_value_arg, style).fits == false)) {
     // Use wrap indentation
     indent = style.wrap_spaces + group_value_arg.IndentationSpaces();
 
     // wrap line
-    group = group->NewSibling(args[0].Value());  // start new group
-    child = group->NewChild(args[0]);  // append not fitting 1st argument
+    group = group->NewSibling(first_arg.Value());  // start new group
+    child = group->NewChild(first_arg);  // append not fitting 1st argument
     group->Value().SetIndentationSpaces(indent);
 
     // Wrapped first argument
@@ -318,7 +320,7 @@ static bool AppendFittingSubpartitions(
     // Compute new indentation level based on first partition
     const auto& group_value = group->Value().Value();
     const UnwrappedLine& uwline = group_value;
-    indent = verible::FitsOnLine(uwline, style).final_column;
+    indent = FitsOnLine(uwline, style).final_column;
 
     // Append first argument to current group
     child = group->NewChild(args[0]);
@@ -329,15 +331,15 @@ static bool AppendFittingSubpartitions(
     wrapped_first_subpartition = false;
   }
 
-  for (size_t idx = 1; idx < args.size(); ++idx) {
-    const auto& arg = args[idx];
-
+  const auto remaining_args =
+      make_container_range(args.begin() + 1, args.end());
+  for (const auto& arg : remaining_args) {
     // Every group should have at least one child
     CHECK_GT(group->Children().size(), 0);
 
     // Try appending current argument to current line
     UnwrappedLine uwline = group->Value().Value(arg);
-    if (verible::FitsOnLine(uwline, style).fits) {
+    if (FitsOnLine(uwline, style).fits) {
       // Fits, appending child
       child = group->NewChild(arg);
       group->Value().Update(child);
@@ -357,7 +359,8 @@ static bool AppendFittingSubpartitions(
 }
 
 void ReshapeFittingSubpartitions(TokenPartitionTree* node,
-                                 const verible::BasicFormatStyle& style) {
+                                 const BasicFormatStyle& style) {
+  VLOG(4) << __FUNCTION__ << ", partition:\n" << *node;
   VectorTree<TokenPartitionTreeWrapper>* fitted_tree = nullptr;
 
   // Leaf or simple node, e.g. '[function foo ( ) ;]'
@@ -367,15 +370,24 @@ void ReshapeFittingSubpartitions(TokenPartitionTree* node,
   }
 
   // Partition with arguments should have at least one argument
-  const auto& args = node->Children()[1].Children();
-  CHECK_GT(args.size(), 0);
+  const auto& children = node->Children();
+  const auto& header = children[0];
+  const auto& args = children[1].Children();
+  partition_range args_range;
+  if (args.empty()) {
+    // Partitions with one argument may have been flattened one level.
+    args_range = make_container_range(children.begin() + 1, children.end());
+  } else {
+    // Arguments exist in a nested subpartition.
+    args_range = make_container_range(args.begin(), args.end());
+  }
 
   VectorTree<TokenPartitionTreeWrapper> unwrapped_tree(node->Value());
   VectorTree<TokenPartitionTreeWrapper> wrapped_tree(node->Value());
 
   // Format unwrapped_lines. At first without forced wrap after first line
-  bool wrapped_first_token =
-      AppendFittingSubpartitions(&unwrapped_tree, *node, style, false);
+  bool wrapped_first_token = AppendFittingSubpartitions(
+      &unwrapped_tree, header, args_range, style, false);
 
   if (wrapped_first_token) {
     // First token was forced to wrap so there's no need to
@@ -388,7 +400,7 @@ void ReshapeFittingSubpartitions(TokenPartitionTree* node,
     // and leaves optimization to line_wrap_searcher.
     // In this approach generated result may not be
     // exactly correct beacause of additional line break done later.
-    AppendFittingSubpartitions(&wrapped_tree, *node, style, true);
+    AppendFittingSubpartitions(&wrapped_tree, header, args_range, style, true);
 
     // Compare number of grouping nodes
     // If number of grouped node is equal then prefer unwrapped result
