@@ -1226,6 +1226,41 @@ TEST(CheckSymbolAsLeafTest, NotLeaf) {
   EXPECT_DEATH(CheckSymbolAsLeaf(*root, FakeEnum::kZero), "");
 }
 
+TEST(CheckOptionalSymbolAsLeafTest, Nullptr) {
+  constexpr nullptr_t n = nullptr;
+  EXPECT_EQ(CheckOptionalSymbolAsLeaf(n, FakeEnum::kZero), nullptr);
+}
+
+TEST(CheckOptionalSymbolAsLeafTest, NullBarePtr) {
+  const Symbol* root = nullptr;
+  EXPECT_EQ(CheckOptionalSymbolAsLeaf(root, FakeEnum::kOne), nullptr);
+}
+
+TEST(CheckOptionalSymbolAsLeafTest, NullUniquePtr) {
+  const std::unique_ptr<Symbol> root(nullptr);
+  EXPECT_EQ(CheckOptionalSymbolAsLeaf(root, FakeEnum::kOne), nullptr);
+}
+
+TEST(CheckOptionalSymbolAsLeafTest, NullSharedPtr) {
+  const std::shared_ptr<Symbol> root(nullptr);
+  EXPECT_EQ(CheckOptionalSymbolAsLeaf(root, FakeEnum::kOne), nullptr);
+}
+
+TEST(CheckOptionalSymbolAsLeafTest, MatchingEnum) {
+  const auto root = Leaf(6, "a");
+  EXPECT_EQ(CheckOptionalSymbolAsLeaf(root, 6), &*root);
+}
+
+TEST(CheckOptionalSymbolAsLeafTest, NonMatchingEnum) {
+  const auto root = Leaf(7, "a");
+  EXPECT_DEATH(CheckOptionalSymbolAsLeaf(root, 6), "");
+}
+
+TEST(CheckOptionalSymbolAsLeafTest, NotLeaf) {
+  const auto root = Leaf(4, "x");
+  EXPECT_DEATH(CheckOptionalSymbolAsLeaf(root, FakeEnum::kZero), "");
+}
+
 TEST(CheckOptionalSymbolAsNodeTest, Nullptr) {
   constexpr nullptr_t n = nullptr;
   EXPECT_EQ(CheckOptionalSymbolAsNode(n, FakeEnum::kZero), nullptr);

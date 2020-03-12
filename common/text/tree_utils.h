@@ -116,6 +116,21 @@ const SyntaxTreeNode* CheckOptionalSymbolAsNode(const nullptr_t& symbol, E) {
   return nullptr;
 }
 
+// Succeeds if symbol is nullptr (returning nullptr), or it is a leaf
+// enumerated 'token_enum' (returns casted non-nullptr).
+template <typename SPtr, typename E>
+const SyntaxTreeLeaf* CheckOptionalSymbolAsLeaf(const SPtr& symbol,
+                                                E token_enum) {
+  if (symbol == nullptr) return nullptr;
+  return &CheckSymbolAsLeaf(*symbol, token_enum);
+}
+
+// Specialization for nullptr_t.
+template <typename E>
+const SyntaxTreeLeaf* CheckOptionalSymbolAsLeaf(const nullptr_t& symbol, E) {
+  return nullptr;
+}
+
 // Extracts a particular child of a node by position, verifying the parent's
 // node enumeration.
 template <typename E>
