@@ -110,53 +110,59 @@ class _VectorTreeImpl {
   // (if it exists), else returns nullptr.
   template <typename TP>
   static TP* _NextLeaf(TP* node) {
-    if (node->Parent() != nullptr) {
-      // Find the next sibling, if there is one.
-      const size_t birth_rank = node->BirthRank();
-      const size_t next_rank = birth_rank + 1;
-      if (next_rank == node->Parent()->Children().size()) {
-        // This is the last child of the group.
-        // Find the nearest parent that has a next child (ascending).
-        auto* next_ancestor = node->Parent()->NextLeaf();
-        if (next_ancestor != nullptr) {
-          return next_ancestor->LeftmostDescendant();
-        } else {
-          return nullptr;
-        }
-      } else {
-        // More children follow this one.
-        return node->Parent()->Children()[next_rank].LeftmostDescendant();
-      }
-    } else {
+    auto* parent = node->Parent();
+    if (parent == nullptr) {
       // Root node has no next sibling, this is the end().
       return nullptr;
     }
+
+    // Find the next sibling, if there is one.
+    auto& siblings = parent->Children();
+    const size_t birth_rank = node->BirthRank();
+    const size_t next_rank = birth_rank + 1;
+    if (next_rank != siblings.size()) {
+      // More children follow this one.
+      return siblings[next_rank].LeftmostDescendant();
+    }
+
+    // This is the last child of the group.
+    // Find the nearest parent that has a next child (ascending).
+    // TODO(fangism): rewrite without recursion
+    auto* next_ancestor = parent->NextLeaf();
+    if (next_ancestor == nullptr) return nullptr;
+
+    // next_ancestor is the NearestCommonAncestor() to the original
+    // node and the resulting node.
+    return next_ancestor->LeftmostDescendant();
   }
 
   // Navigates to the previous leaf (node without Children()) in the tree
   // (if it exists), else returns nullptr.
   template <typename TP>
   static TP* _PreviousLeaf(TP* node) {
-    if (node->Parent() != nullptr) {
-      // Find the next sibling, if there is one.
-      const size_t birth_rank = node->BirthRank();
-      if (birth_rank == 0) {
-        // This is the first child of the group.
-        // Find the nearest parent that has a previous child (dsecending).
-        auto* prev_ancestor = node->Parent()->PreviousLeaf();
-        if (prev_ancestor != nullptr) {
-          return prev_ancestor->RightmostDescendant();
-        } else {
-          return nullptr;
-        }
-      } else {
-        // More children precede this one.
-        return node->Parent()->Children()[birth_rank - 1].RightmostDescendant();
-      }
-    } else {
+    auto* parent = node->Parent();
+    if (parent == nullptr) {
       // Root node has no previous sibling, this is the reverse-end().
       return nullptr;
     }
+
+    // Find the next sibling, if there is one.
+    auto& siblings = parent->Children();
+    const size_t birth_rank = node->BirthRank();
+    if (birth_rank > 0) {
+      // More children precede this one.
+      return siblings[birth_rank - 1].RightmostDescendant();
+    }
+
+    // This is the first child of the group.
+    // Find the nearest parent that has a previous child (descending).
+    // TODO(fangism): rewrite without recursion
+    auto* prev_ancestor = parent->PreviousLeaf();
+    if (prev_ancestor == nullptr) return nullptr;
+
+    // prev_ancestor is the NearestCommonAncestor() to the original
+    // node and the resulting node.
+    return prev_ancestor->RightmostDescendant();
   }
 
   // Returns the nearest common ancestor node to two nodes if a common ancestor
