@@ -337,6 +337,10 @@ disables the [`no-tabs`][lint-rule-list_no-tabs] rule.
 verilog_lint --rules=enum-name-style,line-length=length:80,-no-tabs ...
 ```
 
+Additionally, the `--rules_config` flag can be used to read configuration stored
+in a file. The syntax is the same as above, except the rules can be also
+separated with the newline character.
+
 #### Waiving Lint Violations {#lint-waiver}
 
 In the rare circumstance where a line needs to be waived from a particular lint
