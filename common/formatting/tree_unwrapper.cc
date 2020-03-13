@@ -45,9 +45,9 @@ TreeUnwrapper::TreeUnwrapper(
     : text_structure_view_(view),
       preformatted_tokens_(preformatted_tokens),
       next_unfiltered_token_(text_structure_view_.TokenStream().begin()),
-      unwrapped_lines_(UnwrappedLine(
-          current_indentation_spaces_, preformatted_tokens_.begin(),
-          verible::PartitionPolicyEnum::kAlwaysExpand)),
+      unwrapped_lines_(UnwrappedLine(current_indentation_spaces_,
+                                     preformatted_tokens_.begin(),
+                                     PartitionPolicyEnum::kAlwaysExpand)),
       // The "top-most" UnwrappedLine spans the entire file, so the first
       // unwrapped line should be a considered a partition (child) thereof.
       // This acts like 'pushing' the first child onto a stack.
@@ -176,15 +176,16 @@ void TreeUnwrapper::FinishUnwrappedLine() {
                                   preformatted_tokens_.begin());
 }
 
-void TreeUnwrapper::StartNewUnwrappedLine() {
+void TreeUnwrapper::StartNewUnwrappedLine(PartitionPolicyEnum partitioning) {
   // TODO(fangism): Take an optional indentation depth override parameter.
 
   auto& current_unwrapped_line = CurrentUnwrappedLine();
   if (current_unwrapped_line.IsEmpty()) {  // token range is empty
     // Re-use previously created unwrapped line.
     current_unwrapped_line.SetIndentationSpaces(current_indentation_spaces_);
-    VLOG(4) << "re-using node at " << NodePath(*active_unwrapped_lines_)
-            << ", indented " << current_indentation_spaces_;
+    current_unwrapped_line.SetPartitionPolicy(partitioning);
+    VLOG(4) << "re-using node at " << NodePath(*active_unwrapped_lines_) << ": "
+            << current_unwrapped_line;
     // There may have been subtrees created with empty ranges, e.g.
     // for the sake of being able to correctly indent comments inside blocks.
     // If so, delete those so that token partition range invariants are
@@ -202,22 +203,26 @@ void TreeUnwrapper::StartNewUnwrappedLine() {
     FinishUnwrappedLine();
 
     // Create new sibling to current unwrapped line, maintaining same level.
-    active_unwrapped_lines_ = active_unwrapped_lines_->NewSibling(UnwrappedLine(
-        current_indentation_spaces_, CurrentFormatTokenIterator()));
-    VLOG(4) << "new node " << NodePath(*active_unwrapped_lines_)
-            << ", indented " << current_indentation_spaces_;
+    active_unwrapped_lines_ = active_unwrapped_lines_->NewSibling(
+        UnwrappedLine(current_indentation_spaces_, CurrentFormatTokenIterator(),
+                      partitioning));
+    VLOG(4) << "new node " << NodePath(*active_unwrapped_lines_) << ": "
+            << CurrentUnwrappedLine();
   }
 }
 
 void TreeUnwrapper::MergeLastTwoPartitions() {
-  auto* parent = MoveLastLeafIntoPreviousSibling(&unwrapped_lines_);
+  auto* parent =
+      MergeLeafIntoPreviousLeaf(unwrapped_lines_.RightmostDescendant());
   if (parent != nullptr) {
     // Pre-existing partition no longer exists, update active_unwrapped_lines_
     // to point to a new empty partition at the current indentation level.
     const auto current_token_iter =
         unwrapped_lines_.RightmostDescendant()->Value().TokensRange().end();
-    active_unwrapped_lines_ = parent->NewChild(
-        UnwrappedLine(current_indentation_spaces_, current_token_iter));
+    active_unwrapped_lines_ = parent->NewChild(UnwrappedLine(
+        current_indentation_spaces_, current_token_iter
+        // TODO(fangism): partitioning policy?
+        ));
   }
 }
 
@@ -281,27 +286,25 @@ void TreeUnwrapper::TraverseChildren(const verible::SyntaxTreeNode& node) {
 }
 
 TreeUnwrapper::preformatted_tokens_type::const_iterator
-TreeUnwrapper::VisitIndentedChildren(
-    const SyntaxTreeNode& node, int indentation_delta,
-    verible::PartitionPolicyEnum partitioning) {
+TreeUnwrapper::VisitIndentedChildren(const SyntaxTreeNode& node,
+                                     int indentation_delta,
+                                     PartitionPolicyEnum partitioning) {
   // Visit subtree with increased indentation level.
   const ValueSaver<int> depth_saver(
       &current_indentation_spaces_,
       current_indentation_spaces_ + indentation_delta);
 
   // Mark a new sibling at the new indentation level, apply partition policy.
-  StartNewUnwrappedLine();
-  CurrentUnwrappedLine().SetPartitionPolicy(partitioning);
+  StartNewUnwrappedLine(partitioning);
 
   // Start first child right away.
   const ValueSaver<TokenPartitionTree*> tree_saver(
       &active_unwrapped_lines_,
-      active_unwrapped_lines_->NewChild(UnwrappedLine(
-          current_indentation_spaces_, CurrentFormatTokenIterator()
-          // TODO(fangism): specify first child's partition policy?
-          )));
+      active_unwrapped_lines_->NewChild(
+          UnwrappedLine(current_indentation_spaces_,
+                        CurrentFormatTokenIterator(), partitioning)));
   VLOG(3) << __FUNCTION__ << ", new node " << NodePath(*active_unwrapped_lines_)
-          << ", indented " << current_indentation_spaces_;
+          << ": " << CurrentUnwrappedLine();
   TraverseChildren(node);
 
   return CurrentFormatTokenIterator();
@@ -314,9 +317,9 @@ TreeUnwrapper::VisitIndentedChildren(
   // See StartNewUnwrappedLine().
 }
 
-void TreeUnwrapper::VisitIndentedSection(
-    const SyntaxTreeNode& node, int indentation_delta,
-    verible::PartitionPolicyEnum partitioning) {
+void TreeUnwrapper::VisitIndentedSection(const SyntaxTreeNode& node,
+                                         int indentation_delta,
+                                         PartitionPolicyEnum partitioning) {
   const auto last_ftoken_iter =
       VisitIndentedChildren(node, indentation_delta, partitioning);
 
@@ -327,8 +330,7 @@ void TreeUnwrapper::VisitIndentedSection(
   active_unwrapped_lines_->Value().SpanUpToToken(last_ftoken_iter);
 
   // Start new empty UnwrappedLine at the previous indentation level.
-  // Note: This will have a default partitioning policy.
-  StartNewUnwrappedLine();
+  StartNewUnwrappedLine(partitioning);
 }
 
 std::ostream& operator<<(std::ostream& stream, const TreeUnwrapper& unwrapper) {

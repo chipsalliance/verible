@@ -97,7 +97,7 @@ class TreeUnwrapper : public TreeContextVisitor {
 
  protected:
   // Begins a new UnwrappedLine to span a new sub-range of format tokens.
-  void StartNewUnwrappedLine();
+  void StartNewUnwrappedLine(PartitionPolicyEnum);
 
   // Traverses the children of a node in postorder, recursively accepting this
   // visitor.
@@ -110,8 +110,7 @@ class TreeUnwrapper : public TreeContextVisitor {
   // Visits a subtree with (possibly) additional indentation.
   // TODO(fangism): NOW: rename this to VisitSubPartition.
   void VisitIndentedSection(const verible::SyntaxTreeNode& node,
-                            int indentation_delta,
-                            verible::PartitionPolicyEnum);
+                            int indentation_delta, PartitionPolicyEnum);
 
   // Adds a token to CurrentUnwrappedLine() by advancing the end-iterator
   // of the range spanned by the current unwrapped line, and advances the
@@ -175,7 +174,7 @@ class TreeUnwrapper : public TreeContextVisitor {
   // This automatically restores active_unwrapped_lines_ on return.
   preformatted_tokens_type::const_iterator VisitIndentedChildren(
       const verible::SyntaxTreeNode& node, int indentation_delta,
-      verible::PartitionPolicyEnum);
+      PartitionPolicyEnum);
 
   // Verifies parent-child token range equivalence in the entire tree of
   // unwrapped_lines_.

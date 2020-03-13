@@ -78,7 +78,7 @@ class FakeTreeUnwrapper : public TreeUnwrapperData, public TreeUnwrapper {
 
   // Node visit that always starts a new unwrapped line
   void Visit(const SyntaxTreeNode& node) override {
-    StartNewUnwrappedLine();
+    StartNewUnwrappedLine(PartitionPolicyEnum::kAlwaysExpand);
     TraverseChildren(node);
   }
 
@@ -106,7 +106,7 @@ TEST(TreeUnwrapperTest, EmptyStartNewUnwrappedLine) {
   // Do not call .Unwrap() for this test.
 
   const auto& current = const_tree_unwrapper.CurrentUnwrappedLine();
-  tree_unwrapper.StartNewUnwrappedLine();
+  tree_unwrapper.StartNewUnwrappedLine(PartitionPolicyEnum::kAlwaysExpand);
   const auto& next = const_tree_unwrapper.CurrentUnwrappedLine();
   EXPECT_EQ(&current, &next);
 }
@@ -145,6 +145,20 @@ TEST(TreeUnwrapperTest, UnwrapNoLeaves) {
   tree_unwrapper.Unwrap();
   const auto unwrapped_lines = tree_unwrapper.FullyPartitionedUnwrappedLines();
   EXPECT_TRUE(unwrapped_lines.empty());  // Blank line removed.
+}
+
+TEST(TreeUnwrapperTest, StreamPrinting) {
+  std::unique_ptr<TextStructureView> view = MakeTextStructureViewHelloWorld();
+  FakeTreeUnwrapper tree_unwrapper(*view);
+  EXPECT_TRUE(
+      verible::BoundsEqual(tree_unwrapper.FullText(), view->Contents()));
+
+  tree_unwrapper.Unwrap();
+  std::ostringstream stream;
+  stream << tree_unwrapper;
+  EXPECT_EQ(stream.str(),  //
+            "[hello ,], policy: always-expand\n"
+            "[world], policy: always-expand\n");
 }
 
 }  // namespace verible

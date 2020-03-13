@@ -322,7 +322,7 @@ void TreeUnwrapper::UpdateInterLeafScanner(verilog_tokentype token_type) {
   inter_leaf_scanner_->UpdateState(token_type);
   if (inter_leaf_scanner_->ShouldStartNewPartition()) {
     VLOG(4) << "new partition";
-    StartNewUnwrappedLine();
+    StartNewUnwrappedLine(PartitionPolicyEnum::kFitOnLineElseExpand);
   }
   VLOG(4) << "end of " << __FUNCTION__;
 }
@@ -505,7 +505,7 @@ void TreeUnwrapper::CollectTrailingFilteredTokens() {
   // A newline means there are no comments to add to this UnwrappedLine
   // TODO(fangism): fold this logic into CatchUpToCurrentLeaf()
   if (IsNewlineOrEOF(verilog_tokentype(NextUnfilteredToken()->token_enum))) {
-    StartNewUnwrappedLine();
+    StartNewUnwrappedLine(PartitionPolicyEnum::kFitOnLineElseExpand);
   }
 
   // "Catch up" to EOF.
@@ -1131,7 +1131,7 @@ void TreeUnwrapper::ReshapeTokenPartitions(
     }
     // In the following cases, forcibly close out the current partition.
     case NodeEnum::kPreprocessorDefine:
-      StartNewUnwrappedLine();
+      StartNewUnwrappedLine(PartitionPolicyEnum::kFitOnLineElseExpand);
       break;
     default:
       break;
@@ -1168,14 +1168,16 @@ void TreeUnwrapper::Visit(const verible::SyntaxTreeLeaf& leaf) {
   // Start a new partition in the following cases.
   // In most other cases, do nothing.
   if (IsPreprocessorControlFlow(tag)) {
-    StartNewUnwrappedLine();
+    VLOG(4) << "handling preprocessor control flow token";
+    StartNewUnwrappedLine(PartitionPolicyEnum::kFitOnLineElseExpand);
     CurrentUnwrappedLine().SetIndentationSpaces(0);
   } else if (IsEndKeyword(tag)) {
-    StartNewUnwrappedLine();
+    VLOG(4) << "handling end* keyword";
+    StartNewUnwrappedLine(PartitionPolicyEnum::kAlwaysExpand);
   } else if ((static_cast<int>(tag) == verilog_tokentype::MacroIdItem) &&
              absl::StartsWith(leaf.get().text, "`uvm")) {
     // For each `uvm macro start a new unwrapped line
-    StartNewUnwrappedLine();
+    StartNewUnwrappedLine(PartitionPolicyEnum::kFitOnLineElseExpand);
   }
 
   // Advances NextUnfilteredToken(), and extends CurrentUnwrappedLine().
@@ -1256,7 +1258,7 @@ void TreeUnwrapper::Visit(const verible::SyntaxTreeLeaf& leaf) {
     case PP_else: {
       // Do not allow non-comment tokens on the same line as `else
       // (comments were handled above)
-      StartNewUnwrappedLine();
+      StartNewUnwrappedLine(PartitionPolicyEnum::kFitOnLineElseExpand);
       break;
     }
     default:
@@ -1269,13 +1271,13 @@ void TreeUnwrapper::Visit(const verible::SyntaxTreeLeaf& leaf) {
 // Specialized node visitors
 
 void TreeUnwrapper::VisitNewUnwrappedLine(const verible::SyntaxTreeNode& node) {
-  StartNewUnwrappedLine();
+  StartNewUnwrappedLine(PartitionPolicyEnum::kFitOnLineElseExpand);
   TraverseChildren(node);
 }
 
 void TreeUnwrapper::VisitNewUnindentedUnwrappedLine(
     const verible::SyntaxTreeNode& node) {
-  StartNewUnwrappedLine();
+  StartNewUnwrappedLine(PartitionPolicyEnum::kFitOnLineElseExpand);
   // Force the current line to be unindented without losing track of where
   // the current indentation level is for children.
   CurrentUnwrappedLine().SetIndentationSpaces(0);
