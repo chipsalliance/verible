@@ -41,7 +41,7 @@ const Symbol* DescendThroughSingletons(const Symbol& symbol) {
     return &symbol;
   }
   // else is a kNode
-  const auto& node = down_cast<const SyntaxTreeNode&>(symbol);
+  const auto& node = SymbolCastToNode(symbol);
   const auto& children = node.children();
   if (children.size() == 1 && children.front() != nullptr) {
     // If only child is non-null, descend.
@@ -52,19 +52,16 @@ const Symbol* DescendThroughSingletons(const Symbol& symbol) {
 
 const SyntaxTreeLeaf* GetRightmostLeaf(const Symbol& symbol) {
   if (symbol.Kind() == SymbolKind::kLeaf) {
-    const auto* leaf = down_cast<const SyntaxTreeLeaf*>(&symbol);
-    return leaf;
+    return &SymbolCastToLeaf(symbol);
   }
 
-  if (symbol.Kind() == SymbolKind::kNode) {
-    const auto& node = down_cast<const SyntaxTreeNode&>(symbol);
+  const auto& node = SymbolCastToNode(symbol);
 
-    for (const auto& child : reversed_view(node.children())) {
-      if (child != nullptr) {
-        const auto* leaf = GetRightmostLeaf(*child);
-        if (leaf != nullptr) {
-          return leaf;
-        }
+  for (const auto& child : reversed_view(node.children())) {
+    if (child != nullptr) {
+      const auto* leaf = GetRightmostLeaf(*child);
+      if (leaf != nullptr) {
+        return leaf;
       }
     }
   }
@@ -74,19 +71,16 @@ const SyntaxTreeLeaf* GetRightmostLeaf(const Symbol& symbol) {
 
 const SyntaxTreeLeaf* GetLeftmostLeaf(const Symbol& symbol) {
   if (symbol.Kind() == SymbolKind::kLeaf) {
-    const auto* leaf = down_cast<const SyntaxTreeLeaf*>(&symbol);
-    return leaf;
+    return &SymbolCastToLeaf(symbol);
   }
 
-  if (symbol.Kind() == SymbolKind::kNode) {
-    const auto& node = down_cast<const SyntaxTreeNode&>(symbol);
+  const auto& node = SymbolCastToNode(symbol);
 
-    for (const auto& child : node.children()) {
-      if (child != nullptr) {
-        const auto* leaf = GetLeftmostLeaf(*child);
-        if (leaf != nullptr) {
-          return leaf;
-        }
+  for (const auto& child : node.children()) {
+    if (child != nullptr) {
+      const auto* leaf = GetLeftmostLeaf(*child);
+      if (leaf != nullptr) {
+        return leaf;
       }
     }
   }

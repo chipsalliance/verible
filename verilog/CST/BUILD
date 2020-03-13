@@ -177,7 +177,9 @@ cc_library(
     srcs = ["declaration.cc"],
     hdrs = ["declaration.h"],
     deps = [
+        ":verilog_matchers",
         ":verilog_nonterminals",
+        "//common/analysis:syntax_tree_search",
         "//common/text:concrete_syntax_leaf",
         "//common/text:concrete_syntax_tree",
         "//common/text:constants",
@@ -186,6 +188,19 @@ cc_library(
         "//common/text:tree_utils",
         "//common/util:container_util",
         "//verilog/parser:verilog_token_enum",
+    ],
+)
+
+cc_test(
+    name = "declaration_test",
+    srcs = ["declaration_test.cc"],
+    deps = [
+        ":declaration",
+        "//common/text:token_info_test_util",
+        "//common/text:tree_utils",
+        "//common/util:range",
+        "//verilog/analysis:verilog_analyzer",
+        "@com_google_googletest//:gtest_main",
     ],
 )
 

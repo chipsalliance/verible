@@ -51,6 +51,8 @@ static bool ExpectedTagPredicate(const Symbol& symbol) {
 
 std::vector<const TokenInfo*> GetIdentifiersFromDataDeclaration(
     const Symbol& symbol) {
+  // TODO(fangism): leverage GetInstanceListFromDataDeclaration().
+  // Instead of searching, use direct access.  See CST/declaration.h.
   std::vector<const TokenInfo*> identifiers;
 
   auto matcher = verible::matcher::Matcher(ExpectedTagPredicate,

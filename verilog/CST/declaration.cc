@@ -25,13 +25,17 @@
 #include "common/text/token_info.h"
 #include "common/text/tree_utils.h"
 #include "common/util/container_util.h"
+#include "verilog/CST/verilog_matchers.h"
 #include "verilog/CST/verilog_nonterminals.h"
 #include "verilog/parser/verilog_token_enum.h"
 
 namespace verilog {
+using verible::Symbol;
+using verible::SymbolPtr;
+using verible::SyntaxTreeNode;
 using verible::container::FindWithDefault;
 
-verible::SymbolPtr RepackReturnTypeId(verible::SymbolPtr type_id_tuple) {
+SymbolPtr RepackReturnTypeId(SymbolPtr type_id_tuple) {
   auto& node = CheckSymbolAsNode(*type_id_tuple,
                                  NodeEnum::kDataTypeImplicitBasicIdDimensions);
   return verible::MakeNode(std::move(node[0]) /* type */,
@@ -40,7 +44,7 @@ verible::SymbolPtr RepackReturnTypeId(verible::SymbolPtr type_id_tuple) {
   // syntactically valid.
 }
 
-NodeEnum DeclarationKeywordToNodeEnum(const verible::Symbol& symbol) {
+NodeEnum DeclarationKeywordToNodeEnum(const Symbol& symbol) {
   static const auto* node_map = new std::map<verilog_tokentype, NodeEnum>{
       {TK_module, NodeEnum::kModuleDeclaration},
       {TK_macromodule, NodeEnum::kMacroModuleDeclaration},
@@ -51,6 +55,38 @@ NodeEnum DeclarationKeywordToNodeEnum(const verible::Symbol& symbol) {
       *node_map,
       verilog_tokentype(verible::SymbolCastToLeaf(symbol).get().token_enum),
       NodeEnum(verible::kUntagged));
+}
+
+std::vector<verible::TreeSearchMatch> FindAllDataDeclarations(
+    const Symbol& root) {
+  return SearchSyntaxTree(root, NodekDataDeclaration());
+}
+
+// Don't want to expose kInstantiationBase because it is an artificial grouping.
+static const SyntaxTreeNode& GetInstantiationBaseFromDataDeclaration(
+    const Symbol& data_declaration) {
+  return GetSubtreeAsNode(data_declaration, NodeEnum::kDataDeclaration, 1,
+                          NodeEnum::kInstantiationBase);
+}
+
+const SyntaxTreeNode* GetQualifiersOfDataDeclaration(
+    const Symbol& data_declaration) {
+  const auto* quals =
+      GetSubtreeAsSymbol(data_declaration, NodeEnum::kDataDeclaration, 0);
+  return verible::CheckOptionalSymbolAsNode(quals, NodeEnum::kQualifierList);
+}
+
+const SyntaxTreeNode& GetTypeOfDataDeclaration(const Symbol& data_declaration) {
+  return GetSubtreeAsNode(
+      GetInstantiationBaseFromDataDeclaration(data_declaration),
+      NodeEnum::kInstantiationBase, 0);
+}
+
+const SyntaxTreeNode& GetInstanceListFromDataDeclaration(
+    const Symbol& data_declaration) {
+  return GetSubtreeAsNode(
+      GetInstantiationBaseFromDataDeclaration(data_declaration),
+      NodeEnum::kInstantiationBase, 1);
 }
 
 }  // namespace verilog

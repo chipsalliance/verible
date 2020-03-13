@@ -21,6 +21,7 @@
 
 #include <utility>
 
+#include "common/analysis/syntax_tree_search.h"
 #include "common/text/concrete_syntax_tree.h"
 #include "common/text/symbol.h"
 #include "common/text/tree_utils.h"
@@ -68,6 +69,31 @@ verible::SymbolPtr MakeDataDeclaration(T1&& qualifiers, T2&& inst_base,
       NodeEnum::kDataDeclaration, std::forward<T1>(qualifiers),
       std::forward<T2>(inst_base), std::forward<T3>(semicolon));
 }
+
+// Find all data declarations.
+std::vector<verible::TreeSearchMatch> FindAllDataDeclarations(
+    const verible::Symbol&);
+
+// For a given data declaration (includes module instantiation), returns the
+// subtree containing qualifiers.  e.g. from "const foo bar, baz;",
+// this returns the subtree spanning "const".  Returns nullptr if there
+// are no qualifiers.
+const verible::SyntaxTreeNode* GetQualifiersOfDataDeclaration(
+    const verible::Symbol& data_declaration);
+
+// For a given data declaration (includes module instantiation), returns the
+// subtree containing the type.  e.g. from "foo #(...) bar..., baz...;",
+// this returns the subtree spanning "foo #(...)".
+// It is possible for type to be implicit, in which case, the node
+// will be an empty subtree.
+const verible::SyntaxTreeNode& GetTypeOfDataDeclaration(
+    const verible::Symbol& data_declaration);
+
+// For a given data declaration (includes module instantiation), returns the
+// subtree containing instances.  e.g. from "foo bar..., baz...;",
+// this returns the subtree spanning "bar..., baz..."
+const verible::SyntaxTreeNode& GetInstanceListFromDataDeclaration(
+    const verible::Symbol& data_declaration);
 
 }  // namespace verilog
 

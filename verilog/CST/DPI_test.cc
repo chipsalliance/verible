@@ -117,8 +117,6 @@ TEST(GetDPIImportPrototypeTest, Various) {
     ASSERT_TRUE(verible::IsSubRange(expected_span, code_copy));
     EXPECT_EQ(prototype_span, expected_span);
     EXPECT_TRUE(verible::BoundsEqual(prototype_span, expected_span));
-    // Can't use verible::BoundsEqual() to check ranges, because they belong to
-    // different buffers, so we just leave the testing to string comparison.
   }
 }
 
