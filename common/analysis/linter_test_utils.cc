@@ -47,6 +47,7 @@ static int CompareViolation(const LintViolation& lhs, const TokenInfo& rhs) {
   return rhs.token_enum - lhs.token.token_enum;
 }
 
+// TODO(b/151371397): refactor this for re-use for multi-findings style tests.
 bool LintTestCase::ExactMatchFindings(
     const std::set<LintViolation>& found_violations, absl::string_view base,
     std::ostream* diffstream) const {

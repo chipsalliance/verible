@@ -144,6 +144,35 @@ cc_test(
 )
 
 cc_library(
+    name = "DPI",
+    srcs = ["DPI.cc"],
+    hdrs = ["DPI.h"],
+    deps = [
+        ":verilog_matchers",
+        ":verilog_nonterminals",
+        ":verilog_treebuilder_utils",
+        "//common/analysis:syntax_tree_search",
+        "//common/text:concrete_syntax_tree",
+        "//common/text:symbol",
+        "//common/text:tree_utils",
+        "//verilog/parser:verilog_token_enum",
+    ],
+)
+
+cc_test(
+    name = "DPI_test",
+    srcs = ["DPI_test.cc"],
+    deps = [
+        ":DPI",
+        "//common/text:token_info_test_util",
+        "//common/text:tree_utils",
+        "//common/util:range",
+        "//verilog/analysis:verilog_analyzer",
+        "@com_google_googletest//:gtest_main",
+    ],
+)
+
+cc_library(
     name = "declaration",
     srcs = ["declaration.cc"],
     hdrs = ["declaration.h"],

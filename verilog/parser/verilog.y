@@ -33,6 +33,7 @@ Functionality that relies directly on this structure should be isolated under
 #include "common/util/casts.h"
 #include "common/util/logging.h"
 #include "verilog/CST/declaration.h"
+#include "verilog/CST/DPI.h"
 #include "verilog/CST/expression.h"
 #include "verilog/CST/functions.h"
 #include "verilog/CST/parameters.h"
@@ -2603,9 +2604,9 @@ dpi_import_item
    */
   : TK_import dpi_spec_string dpi_import_property_opt
     GenericIdentifier '=' modport_tf_port ';'
-    { $$ = MakeTaggedNode(N::kDPIImportItem, $1, $2, $3, $4, $5, $6, $7); }
+    { $$ = MakeDPIImport($1, $2, $3, $4, $5, $6, $7); }
   | TK_import dpi_spec_string dpi_import_property_opt modport_tf_port ';'
-    { $$ = MakeTaggedNode(N::kDPIImportItem, $1, $2, $3, nullptr, nullptr, $4, $5); }
+    { $$ = MakeDPIImport($1, $2, $3, nullptr, nullptr, $4, $5); }
   ;
 
 modport_ports_declaration_trailing_comma

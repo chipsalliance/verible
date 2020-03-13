@@ -127,6 +127,7 @@ cc_library(
         "//common/text:tree_utils",
         "//common/util:casts",
         "//common/util:logging",
+        "//verilog/CST:DPI",
         "//verilog/CST:declaration",
         "//verilog/CST:expression",
         "//verilog/CST:functions",
