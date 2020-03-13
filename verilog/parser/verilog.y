@@ -36,6 +36,7 @@ Functionality that relies directly on this structure should be isolated under
 #include "verilog/CST/DPI.h"
 #include "verilog/CST/expression.h"
 #include "verilog/CST/functions.h"
+#include "verilog/CST/module.h"
 #include "verilog/CST/parameters.h"
 #include "verilog/CST/port.h"
 #include "verilog/CST/verilog_nonterminals.h"
@@ -5208,9 +5209,8 @@ module_or_interface_declaration
     label_opt
     { const auto node_enum = DeclarationKeywordToNodeEnum(*$1);
       $$ = MakeTaggedNode(node_enum,
-                               MakeTaggedNode(N::kModuleHeader,
-                                              $1, $2, $3, $4, $5, $6, $7, $8),
-                               $9, $10, $11); }
+                          MakeModuleHeader($1, $2, $3, $4, $5, $6, $7, $8),
+                          $9, $10, $11); }
   /* TODO(fangism): check that module_start and module_end match */
   /* TODO(fangism): extern {module,interface,program} declarations, ANSI and non-ANSI */
   ;

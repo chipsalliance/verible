@@ -380,6 +380,7 @@ cc_library(
     hdrs = ["module.h"],
     deps = [
         ":verilog_matchers",  # fixdeps: keep
+        ":verilog_nonterminals",
         "//common/analysis:syntax_tree_search",
         "//common/analysis/matcher",
         "//common/analysis/matcher:matcher_builders",
@@ -388,6 +389,7 @@ cc_library(
         "//common/text:symbol",
         "//common/text:token_info",
         "//common/text:tree_utils",
+        "//verilog/parser:verilog_token_enum",
     ],
 )
 

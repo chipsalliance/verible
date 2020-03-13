@@ -24,8 +24,34 @@
 #include "common/text/concrete_syntax_tree.h"
 #include "common/text/symbol.h"
 #include "common/text/token_info.h"
+#include "common/text/tree_utils.h"
+#include "verilog/CST/verilog_nonterminals.h"
+#include "verilog/parser/verilog_token_enum.h"
 
 namespace verilog {
+
+template <typename T0, typename T1, typename T2, typename T3, typename T4,
+          typename T5, typename T6, typename T7>
+verible::SymbolPtr MakeModuleHeader(T0&& keyword, T1&& lifetime, T2&& id,
+                                    T3&& imports, T4&& parameters, T5&& ports,
+                                    T6&& attribute, T7&& semi) {
+  verible::SymbolCastToLeaf(*keyword);
+  if (lifetime != nullptr) verible::SymbolCastToLeaf(*lifetime);
+  verible::SymbolCastToLeaf(*id);  // SymbolIdentifier or other identifier
+  verible::CheckOptionalSymbolAsNode(imports, NodeEnum::kPackageImportList);
+  verible::CheckOptionalSymbolAsNode(parameters,
+                                     NodeEnum::kFormalParameterListDeclaration);
+  verible::CheckOptionalSymbolAsNode(ports, NodeEnum::kParenGroup);
+  verible::CheckOptionalSymbolAsNode(attribute,
+                                     NodeEnum::kModuleAttributeForeign);
+  ExpectString(semi, ";");
+  return verible::MakeTaggedNode(
+      NodeEnum::kModuleHeader, std::forward<T0>(keyword),
+      std::forward<T1>(lifetime), std::forward<T2>(id),
+      std::forward<T3>(imports), std::forward<T4>(parameters),
+      std::forward<T5>(ports), std::forward<T6>(attribute),
+      std::forward<T7>(semi));
+}
 
 // Find all module declarations.
 std::vector<verible::TreeSearchMatch> FindAllModuleDeclarations(

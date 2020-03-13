@@ -131,6 +131,7 @@ cc_library(
         "//verilog/CST:declaration",
         "//verilog/CST:expression",
         "//verilog/CST:functions",
+        "//verilog/CST:module",
         "//verilog/CST:parameters",
         "//verilog/CST:port",
         "//verilog/CST:verilog_nonterminals",
