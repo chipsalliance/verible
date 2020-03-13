@@ -58,11 +58,11 @@ constexpr const char* kDefaultRuleSet[] = {
     "enum-name-style",
     "struct-union-name-style",
     "case-missing-default",
+    "interface-name-style",
     // TODO(fangism): enable in production:
     // TODO(b/117131903): "proper-parameter-declaration",
     // TODO(b/131637160): "signal-name-style",
     // TODO: "one-module-per-file",
-    // TODO(b/148915651): "interface-name-style",
     // TODO(b/148911813): "constraint-name-style",
     // "endif-comment",
 };
