@@ -23,6 +23,9 @@
 #include "common/util/range.h"
 #include "verilog/analysis/verilog_analyzer.h"
 
+#undef ASSERT_OK
+#define ASSERT_OK(value) ASSERT_TRUE((value).ok())
+
 namespace verilog {
 namespace {
 
