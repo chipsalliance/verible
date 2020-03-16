@@ -34,7 +34,7 @@
 namespace verilog {
 
 // Creates a node tagged kParamType.
-// From "paramater type [dim] id [dim] = value;",
+// From "parameter type [dim] id [dim] = value;",
 // this node spans "type [dim] id [dim]."
 template <typename T0, typename T1, typename T2, typename T3>
 verible::SymbolPtr MakeParamTypeDeclaration(T0&& type_info,
@@ -71,6 +71,9 @@ const verible::Symbol* GetParamTypeSymbol(const verible::Symbol&);
 // Returns a pointer to the symbol holding the node kTypeInfo under the node
 // kParamDeclaration.
 const verible::Symbol* GetParamTypeInfoSymbol(const verible::Symbol&);
+
+// Get right-hand side of a parameter assignment expression.
+const verible::Symbol* GetParamAssignExpression(const verible::Symbol& symbol);
 
 // Returns the token of the declared parameter.
 const verible::TokenInfo& GetParameterNameToken(const verible::Symbol&);

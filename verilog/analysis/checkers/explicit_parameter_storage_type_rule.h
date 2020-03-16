@@ -46,12 +46,17 @@ class ExplicitParameterStorageTypeRule : public verible::SyntaxTreeLintRule {
 
   verible::LintRuleStatus Report() const override;
 
+  absl::Status Configure(absl::string_view configuration) override;
+
  private:
   // Link to style guide rule.
   static const char kTopic[];
 
   // Diagnostic message.
   static const char kMessage[];
+
+  // TODO(hzeller): would other exempt types be interesting?
+  bool exempt_string_ = false;
 
   using Matcher = verible::matcher::Matcher;
 

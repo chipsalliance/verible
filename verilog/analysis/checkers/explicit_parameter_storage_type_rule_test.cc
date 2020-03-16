@@ -17,6 +17,7 @@
 #include <initializer_list>
 
 #include "gtest/gtest.h"
+#include "absl/strings/match.h"
 #include "common/analysis/linter_test_utils.h"
 #include "common/analysis/syntax_tree_linter_test_utils.h"
 #include "common/text/symbol.h"
@@ -28,7 +29,23 @@ namespace analysis {
 namespace {
 
 using verible::LintTestCase;
+using verible::RunConfiguredLintTestCases;
 using verible::RunLintTestCases;
+
+TEST(ExplicitParameterStorageTypeRuleTest, Configuration) {
+  ExplicitParameterStorageTypeRule rule;
+  absl::Status status;
+  EXPECT_TRUE((status = rule.Configure("")).ok()) << status.message();
+  EXPECT_TRUE((status = rule.Configure("exempt_type:string")).ok())
+      << status.message();
+
+  EXPECT_FALSE((status = rule.Configure("foo:string")).ok());
+  EXPECT_TRUE(absl::StrContains(status.message(), "supported parameter"));
+
+  EXPECT_FALSE((status = rule.Configure("exempt_type:int")).ok());
+  EXPECT_TRUE(
+      absl::StrContains(status.message(), "supported exempt type is 'string'"));
+}
 
 // Tests that ExplicitParameterStorageTypeRule correctly accepts
 // parameters/localparams with explicitly defined storage types.
@@ -73,6 +90,31 @@ TEST(ExplicitParameterStorageTypeRuleTest, RejectTests) {
   };
   RunLintTestCases<VerilogAnalyzer, ExplicitParameterStorageTypeRule>(
       kTestCases);
+}
+
+TEST(ExplicitParameterStorageTypeRuleTest, AcceptConfiguredStringExcemption) {
+  constexpr int kToken = SymbolIdentifier;
+  // No configuration; none of these is allowed.
+  {
+    const std::initializer_list<LintTestCase> kTestCases = {
+        {"parameter ", {kToken, "Bar"}, " = \"Bar\";"},
+        {"parameter ", {kToken, "Baz"}, " = 42;"},
+    };
+    RunConfiguredLintTestCases<VerilogAnalyzer,
+                               ExplicitParameterStorageTypeRule>(kTestCases,
+                                                                 "");
+  }
+
+  // Configured to allow string exemption
+  {
+    const std::initializer_list<LintTestCase> kTestCases = {
+        {"parameter Bar = \"Bar\";"},               // string: ok
+        {"parameter ", {kToken, "Baz"}, " = 42;"},  // int: still not ok
+    };
+    RunConfiguredLintTestCases<VerilogAnalyzer,
+                               ExplicitParameterStorageTypeRule>(
+        kTestCases, "exempt_type:string");
+  }
 }
 
 }  // namespace

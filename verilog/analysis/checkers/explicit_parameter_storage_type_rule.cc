@@ -18,6 +18,7 @@
 #include <string>
 
 #include "absl/strings/str_cat.h"
+#include "absl/strings/str_split.h"
 #include "common/analysis/citation.h"
 #include "common/analysis/lint_rule_status.h"
 #include "common/analysis/matcher/bound_symbol_manager.h"
@@ -48,11 +49,28 @@ const char ExplicitParameterStorageTypeRule::kMessage[] =
 
 std::string ExplicitParameterStorageTypeRule::GetDescription(
     DescriptionType description_type) {
-  return absl::StrCat("Checks that every ",
-                      Codify("parameter", description_type), " and ",
-                      Codify("localparam", description_type),
-                      " is declared with an explicit storage type. See ",
-                      GetStyleGuideCitation(kTopic), ".");
+  const std::string basic_desc =
+      absl::StrCat("Checks that every ", Codify("parameter", description_type),
+                   " and ", Codify("localparam", description_type),
+                   " is declared with an explicit storage type. See ",
+                   GetStyleGuideCitation(kTopic), ".");
+  if (description_type == DescriptionType::kHelpRulesFlag) {
+    return absl::StrCat(basic_desc, "Parameters: exempt_type: (default '')");
+  } else {
+    return absl::StrCat(basic_desc, "\n##### Parameters\n",
+                        "  * exempt_type (optional 'string'. Default: empty)");
+  }
+}
+
+static bool HasStringAssignment(const verible::Symbol& param_decl) {
+  const auto* s = GetParamAssignExpression(param_decl);
+  if (s == nullptr) return false;
+  // We can't really do expression evaluation and determine the type of the
+  // RHS, so here we focus on the simple case in which the RHS is a
+  // string literal.
+  if (s->Kind() != verible::SymbolKind::kLeaf) return false;
+  return verible::SymbolCastToLeaf(*s).get().token_enum ==
+         verilog_tokentype::TK_StringLiteral;
 }
 
 void ExplicitParameterStorageTypeRule::HandleSymbol(
@@ -64,12 +82,33 @@ void ExplicitParameterStorageTypeRule::HandleSymbol(
 
     const auto* type_info_symbol = GetParamTypeInfoSymbol(symbol);
     if (IsTypeInfoEmpty(*ABSL_DIE_IF_NULL(type_info_symbol))) {
+      if (exempt_string_ && HasStringAssignment(symbol)) return;
       const verible::TokenInfo& param_name = GetParameterNameToken(symbol);
       violations_.insert(LintViolation(
           param_name, absl::StrCat(kMessage, "(", param_name.text, ")."),
           context));
     }
   }
+}
+
+// The only allowed exemption right now is 'string', as this is
+// a common type that can't be handled well in some old tools.
+absl::Status ExplicitParameterStorageTypeRule::Configure(
+    absl::string_view configuration) {
+  if (configuration.empty()) return absl::OkStatus();
+  // TODO(hzeller): unify the common 'name:value' pair parsing
+  const std::pair<absl::string_view, absl::string_view> nv_pair =
+      absl::StrSplit(configuration, ':', absl::SkipEmpty());
+  if (nv_pair.first != "exempt_type") {
+    return absl::InvalidArgumentError(absl::StrCat(
+        "Only supported parameter 'exempt_type' (got '", nv_pair.first, "')"));
+  }
+
+  if (nv_pair.second == "string") {
+    exempt_string_ = true;
+    return absl::OkStatus();
+  }
+  return absl::InvalidArgumentError("Only supported exempt type is 'string'");
 }
 
 LintRuleStatus ExplicitParameterStorageTypeRule::Report() const {

@@ -164,6 +164,29 @@ const verible::Symbol* GetParamTypeInfoSymbol(const verible::Symbol& symbol) {
                                      0);
 }
 
+namespace {
+// TODO(hzeller): provide something like this in tree_utils.h ?
+struct EnumTokenIndex {
+  NodeEnum expected_type;
+  int next_index;
+};
+const verible::Symbol* TryDescentPath(
+    const verible::Symbol& symbol, std::initializer_list<EnumTokenIndex> path) {
+  const verible::Symbol* value = &symbol;
+  for (auto p : path) {
+    value = GetSubtreeAsSymbol(*value, p.expected_type, p.next_index);
+    if (value == nullptr) return nullptr;
+  }
+  return value;
+}
+}  // namespace
+
+const verible::Symbol* GetParamAssignExpression(const verible::Symbol& symbol) {
+  return TryDescentPath(symbol, {{NodeEnum::kParamDeclaration, 2},
+                                 {NodeEnum::kTrailingAssign, 1},
+                                 {NodeEnum::kExpression, 0}});
+}
+
 bool IsTypeInfoEmpty(const verible::Symbol& symbol) {
   // Assert that symbol is NodekTypeInfo
   CHECK_EQ(symbol.Kind(), verible::SymbolKind::kNode);
