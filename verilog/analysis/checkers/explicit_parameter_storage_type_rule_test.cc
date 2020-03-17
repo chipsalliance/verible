@@ -92,7 +92,7 @@ TEST(ExplicitParameterStorageTypeRuleTest, RejectTests) {
       kTestCases);
 }
 
-TEST(ExplicitParameterStorageTypeRuleTest, AcceptConfiguredStringExcemption) {
+TEST(ExplicitParameterStorageTypeRuleTest, AcceptConfiguredStringExemption) {
   constexpr int kToken = SymbolIdentifier;
   // No configuration; none of these is allowed.
   {
