@@ -306,14 +306,6 @@ static bool IsPreprocessorClause(NodeEnum e) {
   }
 }
 
-static bool IsTopLevelListItem(const verible::SyntaxTreeContext& context) {
-  return context.DirectParentIsOneOf(
-      {NodeEnum::kStatementList, NodeEnum::kModuleItemList,
-       NodeEnum::kGenerateItemList, NodeEnum::kClassItems,
-       NodeEnum::kBlockItemStatementList, NodeEnum::kDescriptionList,
-       NodeEnum::kPackageItemList});
-}
-
 // These are constructs where it is permissible to fit on one line, but in the
 // event that the statement body is split, we need to ensure it is properly
 // indented, even if it is a single statement.

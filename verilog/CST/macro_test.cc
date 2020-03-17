@@ -25,6 +25,9 @@
 #undef EXPECT_OK
 #define EXPECT_OK(value) EXPECT_TRUE((value).ok())
 
+#undef ASSERT_OK
+#define ASSERT_OK(value) ASSERT_TRUE((value).ok())
+
 namespace verilog {
 namespace {
 
