@@ -313,13 +313,6 @@ ExpectedUnwrappedLineTree L(int spaces,
   return ExpectedUnwrappedLineTree(ExpectedUnwrappedLine(spaces, tokens));
 }
 
-// NL composes the above node and leaf where the indentation level is the same.
-// This is useful for contexts like single-statement lists.
-ExpectedUnwrappedLineTree NL(int spaces,
-                             std::initializer_list<absl::string_view> tokens) {
-  return N(spaces, L(spaces, tokens));
-}
-
 // Node function aliases for readability.
 // Can't use const auto& Alias = N; because N is overloaded.
 #define ModuleDeclaration N
