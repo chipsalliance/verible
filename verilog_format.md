@@ -42,6 +42,8 @@ To pipe from stdin, use '-' as <file>.
 
 
   Flags from verilog/tools/formatter/verilog_format.cc:
+    --format_module_port_declarations (If true, format module declarations' list
+      of port declarations, else leave them unformatted.); default: false;
     --inplace (If true, overwrite the input file on successful conditions.);
       default: false;
     --lines (Specific lines to format, 1-based, comma-separated, inclusive N-M
@@ -66,4 +68,4 @@ To pipe from stdin, use '-' as <file>.
 
 ## Version
 
-Generated on 2020-03-17 12:38:58 -0700 from [v0.0-285-gc2e5040](https://github.com/google/verible/commit/c2e5040c9c5f35538891b34f3a322e1110137013)
+Generated on 2020-03-17 16:23:20 -0700 from [v0.0-291-g3bd3970](https://github.com/google/verible/commit/3bd3970f109e36875c3a70cfe7ea2d621323a836)
