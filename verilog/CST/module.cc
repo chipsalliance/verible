@@ -28,36 +28,46 @@
 
 namespace verilog {
 
+using verible::Symbol;
+using verible::SyntaxTreeNode;
+using verible::TokenInfo;
+
 std::vector<verible::TreeSearchMatch> FindAllModuleDeclarations(
-    const verible::Symbol& root) {
+    const Symbol& root) {
   return SearchSyntaxTree(root, NodekModuleDeclaration());
 }
 
-const verible::SyntaxTreeNode& GetModuleHeader(
-    const verible::Symbol& module_symbol) {
+const SyntaxTreeNode& GetModuleHeader(const Symbol& module_symbol) {
   return verible::GetSubtreeAsNode(module_symbol, NodeEnum::kModuleDeclaration,
                                    0, NodeEnum::kModuleHeader);
 }
 
-const verible::SyntaxTreeNode& GetInterfaceHeader(
-    const verible::Symbol& module_symbol) {
+const SyntaxTreeNode& GetInterfaceHeader(const Symbol& module_symbol) {
   return verible::GetSubtreeAsNode(module_symbol,
                                    NodeEnum::kInterfaceDeclaration, 0,
                                    NodeEnum::kModuleHeader);
 }
 
-const verible::TokenInfo& GetModuleNameToken(const verible::Symbol& s) {
+const TokenInfo& GetModuleNameToken(const Symbol& s) {
   const auto& header_node = GetModuleHeader(s);
   const auto& name_leaf =
       verible::GetSubtreeAsLeaf(header_node, NodeEnum::kModuleHeader, 2);
   return name_leaf.get();
 }
 
-const verible::TokenInfo& GetInterfaceNameToken(const verible::Symbol& s) {
+const TokenInfo& GetInterfaceNameToken(const Symbol& s) {
   const auto& header_node = GetInterfaceHeader(s);
   const auto& name_leaf =
       verible::GetSubtreeAsLeaf(header_node, NodeEnum::kModuleHeader, 2);
   return name_leaf.get();
+}
+
+const SyntaxTreeNode* GetModulePortDeclarationList(
+    const Symbol& module_declaration) {
+  const auto& header_node = GetModuleHeader(module_declaration);
+  const auto* ports =
+      verible::GetSubtreeAsSymbol(header_node, NodeEnum::kModuleHeader, 5);
+  return verible::CheckOptionalSymbolAsNode(ports, NodeEnum::kParenGroup);
 }
 
 }  // namespace verilog

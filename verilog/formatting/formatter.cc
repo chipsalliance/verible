@@ -29,11 +29,14 @@
 #include "common/text/line_column_map.h"
 #include "common/text/text_structure.h"
 #include "common/text/token_info.h"
+#include "common/text/tree_utils.h"
 #include "common/util/expandable_tree_view.h"
 #include "common/util/iterator_range.h"
 #include "common/util/logging.h"
+#include "common/util/range.h"
 #include "common/util/spacer.h"
 #include "common/util/vector_tree.h"
+#include "verilog/CST/module.h"
 #include "verilog/analysis/verilog_analyzer.h"
 #include "verilog/analysis/verilog_equivalence.h"
 #include "verilog/formatting/comment_controls.h"
@@ -371,6 +374,18 @@ void Formatter::SelectLines(const LineNumberSet& lines) {
       lines, text_structure_.GetLineColumnMap());
 }
 
+static verible::Interval<int> ByteOffsetRange(absl::string_view substring,
+                                              absl::string_view superstring) {
+  CHECK(verible::IsSubRange(substring, superstring));
+  CHECK(!substring.empty());
+  const int disable_begin =
+      std::distance(superstring.begin(), substring.begin());
+  const int disable_end = std::distance(superstring.begin(), substring.end());
+  // +1 so that formatting can still occur on the space before the start
+  // of the disabled range.
+  return {disable_begin + 1, disable_end};
+}
+
 Status Formatter::Format(const ExecutionControl& control) {
   const absl::string_view full_text(text_structure_.Contents());
   const auto& token_stream(text_structure_.TokenStream());
@@ -395,6 +410,21 @@ Status Formatter::Format(const ExecutionControl& control) {
 
     // Determine ranges of disabling the formatter.
     disabled_ranges_.Union(DisableFormattingRanges(full_text, token_stream));
+
+    // Find disabled formatting ranges for specific syntax tree node types.
+    if (const auto& root = text_structure_.SyntaxTree()) {
+      if (!style_.format_module_port_declarations) {
+        for (const auto& match : FindAllModuleDeclarations(*root)) {
+          const auto* ports = GetModulePortDeclarationList(*match.match);
+          if (ports == nullptr) continue;
+          const auto ports_text = verible::StringSpanOfSymbol(*ports);
+          VLOG(4) << "disabled: " << ports_text;
+          disabled_ranges_.Add(ByteOffsetRange(ports_text, full_text));
+        }
+      }
+    }
+
+    // Disable formatting ranges.
     PreserveSpacesOnDisabledTokenRanges(&unwrapper_data.preformatted_tokens,
                                         disabled_ranges_, full_text);
 

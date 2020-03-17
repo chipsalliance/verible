@@ -105,6 +105,11 @@ ABSL_FLAG(int, max_search_states, 100000,
           "Limits the number of search states explored during "
           "line wrap optimization.");
 
+// These flags exist in the short term to disable formatting of some regions.
+ABSL_FLAG(bool, format_module_port_declarations, false,
+          "If true, format module declarations' list of port declarations, "
+          "else leave them unformatted.");
+
 int main(int argc, char** argv) {
   const auto usage = absl::StrCat("usage: ", argv[0],
                                   " [options] <file>\n"
@@ -148,9 +153,13 @@ int main(int argc, char** argv) {
   // TODO(fangism): When requesting --inplace, verify that file
   // is write-able, and fail-early if it is not.
 
+  // TODO(fangism): support style configuration from flags.
+  FormatStyle format_style;
+
   // Handle special debugging modes.
   ExecutionControl formatter_control;
   {
+    // execution control flags
     formatter_control.stream = &std::cout;  // for diagnostics only
     formatter_control.show_largest_token_partitions =
         FLAGS_show_largest_token_partitions.Get();
@@ -160,10 +169,11 @@ int main(int argc, char** argv) {
     formatter_control.show_equally_optimal_wrappings =
         FLAGS_show_equally_optimal_wrappings.Get();
     formatter_control.max_search_states = FLAGS_max_search_states.Get();
-  }
 
-  FormatStyle format_style;
-  // TODO(fangism): support style configuration from flags.
+    // formatting style flags
+    format_style.format_module_port_declarations =
+        FLAGS_format_module_port_declarations.Get();
+  }
 
   std::ostringstream stream;
   const auto format_status =

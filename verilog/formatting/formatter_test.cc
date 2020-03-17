@@ -3283,6 +3283,50 @@ TEST(FormatterEndToEndTest, VerilogFormatTest) {
   }
 }
 
+TEST(FormatterEndToEndTest, DisableModulePortDeclarations) {
+  const std::initializer_list<FormatterTestCase> kTestCases = {
+      {"", ""},
+      {"\n", "\n"},
+      {"\n\n", "\n\n"},
+      {"module  m  ;\t\n"
+       "  endmodule\n",
+       "module m;\n"
+       "endmodule\n"},
+      {"module  m(   ) ;\n"
+       "  endmodule\n",
+       "module m (   );\n"  // space between () preserved
+       "endmodule\n"},
+      {"module  m   ( input     clk  )\t;\n"
+       "  endmodule\n",
+       "module m ( input     clk  );\n"
+       "endmodule\n"},
+      {"module  m   (\n"
+       "input  clk,\n"
+       "output bar\n"
+       ")\t;\n"
+       "  endmodule\n",
+       "module m (\n"
+       "input  clk,\n"  // disabled, pre-existing alignment maintained
+       "output bar\n"   // disabled, pre-existing alignment maintained
+       ");\n"
+       "endmodule\n"},
+  };
+  FormatStyle style;
+  style.column_limit = 40;
+  style.indentation_spaces = 2;
+  style.wrap_spaces = 4;
+  style.format_module_port_declarations = false;
+  for (const auto& test_case : kTestCases) {
+    VLOG(1) << "code-to-format:\n" << test_case.input << "<EOF>";
+    std::ostringstream stream;
+    const auto status =
+        FormatVerilog(test_case.input, "<filename>", style, stream);
+    // Require these test cases to be valid.
+    EXPECT_OK(status) << status.message();
+    EXPECT_EQ(stream.str(), test_case.expected) << "code:\n" << test_case.input;
+  }
+}
+
 struct SelectLinesTestCase {
   absl::string_view input;
   LineNumberSet lines;  // explicit set of lines to enable formatting

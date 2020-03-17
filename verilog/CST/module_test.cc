@@ -31,18 +31,24 @@
 #include "common/text/symbol.h"
 #include "common/text/text_structure.h"
 #include "common/text/token_info.h"
+#include "common/text/token_info_test_util.h"
 #include "common/util/casts.h"
 #include "common/util/logging.h"
+#include "common/util/range.h"
 #include "verilog/analysis/verilog_analyzer.h"
 
 #undef EXPECT_OK
 #define EXPECT_OK(value) EXPECT_TRUE((value).ok())
+
+#undef ASSERT_OK
+#define ASSERT_OK(value) ASSERT_TRUE((value).ok())
 
 namespace verilog {
 namespace {
 
 using verible::down_cast;
 using verible::SyntaxTreeNode;
+using verible::TokenInfoTestData;
 
 TEST(FindAllModuleDeclarationsTest, EmptySource) {
   VerilogAnalyzer analyzer("", "");
@@ -111,6 +117,68 @@ TEST(GetModuleNameTokenTest, ValidModule) {
   // Root node is a description list, not a module.
   const auto& token = GetModuleNameToken(module_node);
   EXPECT_EQ(token.text, "foo");
+}
+
+TEST(GetModulePortDeclarationListTest, NoPorts) {
+  const verible::TokenInfoTestData kTestCases[] = {
+      // No () ports lists.
+      {"module m;\nendmodule\n"},
+      {"module m\t;  \n  endmodule\n"},
+      {"module m;\nfunction f;\nendfunction\nendmodule\n"},
+  };
+  for (const auto& test : kTestCases) {
+    const absl::string_view code(test.code);
+    VerilogAnalyzer analyzer(code, "test-file");
+    ASSERT_OK(analyzer.Analyze()) << "failed on:\n" << code;
+    const auto& root = analyzer.Data().SyntaxTree();
+
+    const auto modules = FindAllModuleDeclarations(*root);
+    ASSERT_EQ(modules.size(), 1);
+    const auto& module = *modules.front().match;
+    const auto* return_type = GetModulePortDeclarationList(module);
+    EXPECT_EQ(return_type, nullptr);
+  }
+}
+
+TEST(GetModulePortDeclarationListTest, WithPorts) {
+  constexpr int kTag = 1;  // value not important
+  const verible::TokenInfoTestData kTestCases[] = {
+      {"module m", {kTag, "()"}, ";\nendmodule\n"},
+      {"module m    ", {kTag, "()"}, "   ;\nendmodule\n"},
+      {"module m", {kTag, "(input clk)"}, ";\nendmodule\n"},
+      {"module m", {kTag, "(  input   clk  )"}, ";\nendmodule\n"},
+      {"module m", {kTag, "(\ninput   clk\n)"}, ";\nendmodule\n"},
+      {"module m", {kTag, "(\ninput   clk,\noutput foo\n)"}, ";\nendmodule\n"},
+  };
+  for (const auto& test : kTestCases) {
+    const absl::string_view code(test.code);
+    VerilogAnalyzer analyzer(code, "test-file");
+    const absl::string_view code_copy(analyzer.Data().Contents());
+    ASSERT_OK(analyzer.Analyze()) << "failed on:\n" << code;
+    const auto& root = analyzer.Data().SyntaxTree();
+
+    const auto modules = FindAllModuleDeclarations(*root);
+    ASSERT_EQ(modules.size(), 1);
+    const auto& module = *modules.front().match;
+    const auto* ports = GetModulePortDeclarationList(module);
+    ASSERT_NE(ports, nullptr);
+    const auto ports_span = verible::StringSpanOfSymbol(*ports);
+    EXPECT_FALSE(ports_span.empty());
+
+    // TODO(b/151371397): Refactor this test code along with
+    // common/analysis/linter_test_util.h to be able to compare set-symmetric
+    // differences in 'findings'.
+
+    // Find the tokens, rebased into the other buffer.
+    const auto expected_excerpts = test.FindImportantTokens(code_copy);
+    ASSERT_EQ(expected_excerpts.size(), 1);
+    // Compare the string_views and their exact spans.
+    const auto expected_span = expected_excerpts.front().text;
+    ASSERT_TRUE(verible::IsSubRange(ports_span, code_copy));
+    ASSERT_TRUE(verible::IsSubRange(expected_span, code_copy));
+    EXPECT_EQ(ports_span, expected_span);
+    EXPECT_TRUE(verible::BoundsEqual(ports_span, expected_span));
+  }
 }
 
 }  // namespace

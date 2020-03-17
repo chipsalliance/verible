@@ -30,6 +30,15 @@ struct FormatStyle : public verible::BasicFormatStyle {
     over_column_limit_penalty = 10000;
   }
 
+  // If true, format module declarations' port declarations, else leave those
+  // regions unformatted.
+  // A user may wish to disable this in favor of their own aligned formatting.
+  // The default value here is true so that compact formatting can continue to
+  // be covered in integration tests.
+  // This flag is prone to change or be removed in the future.
+  // TODO(b/70310743): implement aligned formatting for this section.
+  bool format_module_port_declarations = true;
+
   // TODO(fangism): introduce the following knobs:
   //
   // Unless forced by previous line, starting a line with a comma is
