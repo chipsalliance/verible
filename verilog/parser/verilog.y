@@ -930,7 +930,7 @@ MacroGenericItem
   : MacroCallId '(' macro_args_opt MacroCallCloseToEndLine
     { $$ = MakeTaggedNode(N::kMacroCall, $1, MakeParenGroup($2, $3, $4)); }
   | MacroIdItem
-    { $$ = move($1); }
+    { $$ = MakeTaggedNode(N::kMacroGenericItem, $1); }
   ;
 MacroCall
   : MacroCallId '(' macro_args_opt ')'

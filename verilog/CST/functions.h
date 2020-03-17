@@ -25,6 +25,7 @@
 #include "common/analysis/syntax_tree_search.h"
 #include "common/text/concrete_syntax_tree.h"
 #include "common/text/symbol.h"
+#include "common/text/tree_utils.h"
 #include "verilog/CST/verilog_nonterminals.h"
 #include "verilog/CST/verilog_treebuilder_utils.h"
 
@@ -35,7 +36,9 @@ template <typename T0, typename T1, typename T2, typename T3, typename T4,
 verible::SymbolPtr MakeFunctionHeader(T0&& qualifiers, T1&& function_start,
                                       T2&& lifetime, T3&& return_type_id,
                                       T4&& ports, T5&& semicolon) {
+  verible::CheckOptionalSymbolAsNode(qualifiers, NodeEnum::kQualifierList);
   ExpectString(function_start, "function");
+  verible::CheckOptionalSymbolAsNode(ports, NodeEnum::kParenGroup);
   ExpectString(semicolon, ";");
   return verible::MakeTaggedNode(
       NodeEnum::kFunctionHeader, std::forward<T0>(qualifiers),
@@ -55,9 +58,9 @@ verible::SymbolPtr MakeFunctionDeclaration(T0&& qualifiers, T1&& function_start,
   ExpectString(function_end, "endfunction");
   return verible::MakeTaggedNode(
       NodeEnum::kFunctionDeclaration,
-      verible::MakeTaggedNode(
-          NodeEnum::kFunctionHeader, std::forward<T0>(qualifiers),
-          std::forward<T1>(function_start), std::forward<T2>(lifetime),
+      MakeFunctionHeader(
+          std::forward<T0>(qualifiers), std::forward<T1>(function_start),
+          std::forward<T2>(lifetime),
           std::forward<T3>(
               return_type_id) /* flattens to separate type and id nodes */,
           std::forward<T4>(ports), std::forward<T5>(semicolon)),
@@ -70,13 +73,43 @@ std::vector<verible::TreeSearchMatch> FindAllFunctionDeclarations(
     const verible::Symbol&);
 
 // Returns the function declaration header (return type, id, ports)
-const verible::SyntaxTreeNode& GetFunctionHeader(const verible::Symbol&);
+const verible::SyntaxTreeNode& GetFunctionHeader(
+    const verible::Symbol& function_decl);
+
+// FunctionHeader accessors
+
+// Returns the function lifetime of the function header.
+const verible::Symbol* GetFunctionHeaderLifetime(
+    const verible::Symbol& function_header);
+
+// Returns the parenthesis group containing the formal ports list, or nullptr.
+const verible::Symbol* GetFunctionHeaderFormalPortsGroup(
+    const verible::Symbol& function_header);
+
+// Returns the return type of the function header.
+const verible::Symbol* GetFunctionHeaderReturnType(
+    const verible::Symbol& function_header);
+
+// Returns the id of the function header.
+const verible::Symbol* GetFunctionHeaderId(
+    const verible::Symbol& function_header);
+
+// FunctionDeclaration acccessors
 
 // Returns the function lifetime of the node.
-const verible::Symbol* GetFunctionLifetime(const verible::Symbol&);
+const verible::Symbol* GetFunctionLifetime(
+    const verible::Symbol& function_decl);
+
+// Returns the parenthesis group containing the formal ports list, or nullptr.
+const verible::Symbol* GetFunctionFormalPortsGroup(
+    const verible::Symbol& function_decl);
+
+// Returns the return type of the function declaration.
+const verible::Symbol* GetFunctionReturnType(
+    const verible::Symbol& function_decl);
 
 // Returns the id of the function declaration.
-const verible::Symbol* GetFunctionId(const verible::Symbol&);
+const verible::Symbol* GetFunctionId(const verible::Symbol& function_decl);
 
 }  // namespace verilog
 

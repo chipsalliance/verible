@@ -17,6 +17,9 @@
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 #include "common/text/text_structure.h"
+#include "common/text/token_info_test_util.h"
+#include "common/util/range.h"
+#include "verilog/CST/verilog_nonterminals.h"
 #include "verilog/analysis/verilog_analyzer.h"
 
 #undef EXPECT_OK
@@ -59,6 +62,7 @@ TEST(FindAllMacroCallsTest, Various) {
     const auto macro_calls = FindAllMacroCalls(*ABSL_DIE_IF_NULL(root));
     EXPECT_EQ(macro_calls.size(), test.expected_matches) << "code:\n"
                                                          << test.code;
+    // TODO(b/151371397): check exact substrings
   }
 }
 
@@ -93,6 +97,7 @@ TEST(GetMacroCallIdsTest, Various) {
     EXPECT_THAT(found_names, ElementsAreArray(test.expected_names))
         << "code:\n"
         << test.code;
+    // TODO(b/151371397): check exact substrings
   }
 }
 
@@ -123,6 +128,46 @@ TEST(MacroCallArgsTest, Emptiness) {
     const auto& args = GetMacroCallArgs(*macro_calls.front().match);
     EXPECT_EQ(MacroCallArgsIsEmpty(args), test.expect_empty) << "code:\n"
                                                              << test.code;
+    // TODO(b/151371397): check exact substrings
+  }
+}
+
+TEST(GetFunctionFormalPortsGroupTest, WithFormalPorts) {
+  constexpr int kTag = 1;  // value not important
+  const verible::TokenInfoTestData kTestCases[] = {
+      {{kTag, "`FOO"}, "\n"},
+      {"package p;\n", {kTag, "`FOO"}, "\nendpackage\n"},
+      {"class c;\n", {kTag, "`FOO"}, "\nendclass\n"},
+      {"function f;\n", {kTag, "`FOO"}, "\nendfunction\n"},
+      {"task t;\n", {kTag, "`FOO"}, "\nendtask\n"},
+      {"module m;\n", {kTag, "`FOO"}, "\nendmodule\n"},
+  };
+  for (const auto& test : kTestCases) {
+    const absl::string_view code(test.code);
+    VerilogAnalyzer analyzer(code, "test-file");
+    const absl::string_view code_copy(analyzer.Data().Contents());
+    ASSERT_OK(analyzer.Analyze()) << "failed on:\n" << code;
+    const auto& root = analyzer.Data().SyntaxTree();
+
+    const auto macro_items = FindAllMacroGenericItems(*root);
+    ASSERT_EQ(macro_items.size(), 1);
+    const auto& macro_item = *macro_items.front().match;
+    const auto& id = GetMacroGenericItemId(macro_item);
+    const absl::string_view id_text = id.text;
+
+    // TODO(b/151371397): Refactor this test code along with
+    // common/analysis/linter_test_util.h to be able to compare set-symmetric
+    // differences in 'findings'.
+
+    // Find the tokens, rebased into the other buffer.
+    const auto expected_excerpts = test.FindImportantTokens(code_copy);
+    ASSERT_EQ(expected_excerpts.size(), 1);
+    // Compare the string_views and their exact spans.
+    const auto expected_span = expected_excerpts.front().text;
+    ASSERT_TRUE(verible::IsSubRange(id_text, code_copy));
+    ASSERT_TRUE(verible::IsSubRange(expected_span, code_copy));
+    EXPECT_EQ(id_text, expected_span);
+    EXPECT_TRUE(verible::BoundsEqual(id_text, expected_span));
   }
 }
 

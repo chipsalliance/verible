@@ -30,8 +30,16 @@ namespace verilog {
 // Find all macro calls.
 std::vector<verible::TreeSearchMatch> FindAllMacroCalls(const verible::Symbol&);
 
+// Find all macro calls that are whole item-level constructs.
+// Compared to FindAllMacroCalls, this excludes macro call expressions.
+std::vector<verible::TreeSearchMatch> FindAllMacroGenericItems(
+    const verible::Symbol&);
+
 // Returns the leaf containing the macro call name.
 const verible::TokenInfo& GetMacroCallId(const verible::Symbol&);
+
+// Returns the leaf containing the macro (as generic item) name.
+const verible::TokenInfo& GetMacroGenericItemId(const verible::Symbol&);
 
 // Returns the node containing the macro call arguments (without parentheses).
 const verible::SyntaxTreeNode& GetMacroCallArgs(const verible::Symbol&);

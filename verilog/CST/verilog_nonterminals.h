@@ -234,6 +234,7 @@ enum class NodeEnum {
   kPreprocessorBalancedDescriptionItems,
   kMacroArgList,
   kMacroCall,
+  kMacroGenericItem,
   kAssignmentPattern,
   kPatternExpression,
   kMinTypMaxList,

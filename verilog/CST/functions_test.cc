@@ -22,14 +22,18 @@
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 #include "absl/strings/string_view.h"
+#include "common/analysis/matcher/matcher_builders.h"
 #include "common/analysis/syntax_tree_search.h"
 #include "common/text/concrete_syntax_leaf.h"
 #include "common/text/concrete_syntax_tree.h"
 #include "common/text/symbol.h"
 #include "common/text/text_structure.h"
 #include "common/text/token_info.h"
+#include "common/text/token_info_test_util.h"
+#include "common/text/tree_utils.h"
 #include "common/util/casts.h"
 #include "common/util/logging.h"
+#include "common/util/range.h"
 #include "verilog/CST/identifier.h"
 #include "verilog/analysis/verilog_analyzer.h"
 #include "verilog/parser/verilog_token_enum.h"
@@ -40,7 +44,8 @@
 namespace verilog {
 namespace {
 
-using verible::down_cast;
+using verible::CheckSymbolAsLeaf;
+using verible::SymbolCastToNode;
 
 TEST(FindAllFunctionDeclarationsTest, EmptySource) {
   VerilogAnalyzer analyzer("", "");
@@ -127,10 +132,11 @@ TEST(GetFunctionHeaderTest, Header) {
     const auto& root = analyzer.Data().SyntaxTree();
     const auto function_declarations = FindAllFunctionDeclarations(*root);
     ASSERT_EQ(function_declarations.size(), 1);
-    const auto& function_node = down_cast<const verible::SyntaxTreeNode&>(
-        *function_declarations.front().match);
+    const auto& function_node =
+        SymbolCastToNode(*function_declarations.front().match);
     GetFunctionHeader(function_node);
     // Reaching here is success, function includes internal checks already.
+    // TODO(b/151371397): verify substring range
   }
 }
 
@@ -141,8 +147,8 @@ TEST(GetFunctionLifetimeTest, NoLifetimeDeclared) {
   const auto& root = analyzer.Data().SyntaxTree();
   const auto function_declarations = FindAllFunctionDeclarations(*root);
   ASSERT_EQ(function_declarations.size(), 1);
-  const auto& function_node = down_cast<const verible::SyntaxTreeNode&>(
-      *function_declarations.front().match);
+  const auto& function_node =
+      SymbolCastToNode(*function_declarations.front().match);
   const auto* lifetime = GetFunctionLifetime(function_node);
   EXPECT_EQ(lifetime, nullptr);
 }
@@ -154,11 +160,11 @@ TEST(GetFunctionLifetimeTest, StaticLifetimeDeclared) {
   const auto& root = analyzer.Data().SyntaxTree();
   const auto function_declarations = FindAllFunctionDeclarations(*root);
   ASSERT_EQ(function_declarations.size(), 1);
-  const auto& function_node = down_cast<const verible::SyntaxTreeNode&>(
-      *function_declarations.front().match);
+  const auto& function_node =
+      SymbolCastToNode(*function_declarations.front().match);
   const auto* lifetime = GetFunctionLifetime(function_node);
-  const auto* leaf = down_cast<const verible::SyntaxTreeLeaf*>(lifetime);
-  EXPECT_EQ(leaf->get().token_enum, TK_static);
+  CheckSymbolAsLeaf(*ABSL_DIE_IF_NULL(lifetime), TK_static);
+  // TODO(b/151371397): verify substring range
 }
 
 TEST(GetFunctionLifetimeTest, AutomaticLifetimeDeclared) {
@@ -168,11 +174,11 @@ TEST(GetFunctionLifetimeTest, AutomaticLifetimeDeclared) {
   const auto& root = analyzer.Data().SyntaxTree();
   const auto function_declarations = FindAllFunctionDeclarations(*root);
   ASSERT_EQ(function_declarations.size(), 1);
-  const auto& function_node = down_cast<const verible::SyntaxTreeNode&>(
-      *function_declarations.front().match);
+  const auto& function_node =
+      SymbolCastToNode(*function_declarations.front().match);
   const auto* lifetime = GetFunctionLifetime(function_node);
-  const auto* leaf = down_cast<const verible::SyntaxTreeLeaf*>(lifetime);
-  EXPECT_EQ(leaf->get().token_enum, TK_automatic);
+  CheckSymbolAsLeaf(*ABSL_DIE_IF_NULL(lifetime), TK_automatic);
+  // TODO(b/151371397): verify substring range
 }
 
 TEST(GetFunctionIdTest, UnqualifiedIds) {
@@ -191,8 +197,8 @@ TEST(GetFunctionIdTest, UnqualifiedIds) {
     const auto& root = analyzer.Data().SyntaxTree();
     const auto function_declarations = FindAllFunctionDeclarations(*root);
     ASSERT_EQ(function_declarations.size(), 1);
-    const auto& function_node = down_cast<const verible::SyntaxTreeNode&>(
-        *function_declarations.front().match);
+    const auto& function_node =
+        SymbolCastToNode(*function_declarations.front().match);
     const auto* function_id = GetFunctionId(function_node);
     const auto ids = FindAllUnqualifiedIds(*function_id);
     std::vector<absl::string_view> got_ids;
@@ -201,6 +207,7 @@ TEST(GetFunctionIdTest, UnqualifiedIds) {
       got_ids.push_back(ABSL_DIE_IF_NULL(base)->get().text);
     }
     EXPECT_EQ(got_ids, test.second);
+    // TODO(b/151371397): verify substring range
   }
 }
 
@@ -216,11 +223,168 @@ TEST(GetFunctionIdTest, QualifiedIds) {
     const auto& root = analyzer.Data().SyntaxTree();
     const auto function_declarations = FindAllFunctionDeclarations(*root);
     ASSERT_EQ(function_declarations.size(), 1);
-    const auto& function_node = down_cast<const verible::SyntaxTreeNode&>(
-        *function_declarations.front().match);
+    const auto& function_node =
+        SymbolCastToNode(*function_declarations.front().match);
     const auto* function_id = GetFunctionId(function_node);
     const auto ids = FindAllQualifiedIds(*function_id);
     EXPECT_EQ(ids.size(), test.second);
+    // TODO(b/151371397): verify substring range
+  }
+}
+
+struct SubtreeTestData {
+  NodeEnum expected_construct;
+  verible::TokenInfoTestData token_data;
+};
+
+TEST(GetFunctionReturnTypeTest, NoReturnType) {
+  const SubtreeTestData kTestCases[] = {
+      {NodeEnum::kFunctionDeclaration, {"function f;endfunction\n"}},
+      {NodeEnum::kFunctionDeclaration,
+       {"package p;\nfunction f;\nendfunction\nendpackage\n"}},
+      {NodeEnum::kFunctionDeclaration,
+       {"class c;\nfunction f;\nendfunction\nendclass\n"}},
+      {NodeEnum::kFunctionDeclaration,
+       {"module m;\nfunction f;\nendfunction\nendmodule\n"}},
+  };
+  for (const auto& test : kTestCases) {
+    const absl::string_view code(test.token_data.code);
+    VerilogAnalyzer analyzer(code, "test-file");
+    ASSERT_OK(analyzer.Analyze()) << "failed on:\n" << code;
+    const auto& root = analyzer.Data().SyntaxTree();
+
+    const auto statements = FindAllFunctionDeclarations(*root);
+    ASSERT_EQ(statements.size(), 1);
+    const auto& statement = *statements.front().match;
+    const auto* return_type = GetFunctionReturnType(statement);
+    // Expect a type node, even when type is implicit or empty.
+    ASSERT_NE(return_type, nullptr);
+    const auto return_type_span = verible::StringSpanOfSymbol(*return_type);
+    EXPECT_TRUE(return_type_span.empty());
+  }
+}
+
+TEST(GetFunctionReturnTypeTest, WithReturnType) {
+  constexpr int kTag = 1;  // value not important
+  const SubtreeTestData kTestCases[] = {
+      {NodeEnum::kFunctionDeclaration,
+       {"function ", {kTag, "void"}, " f;endfunction\n"}},
+      {NodeEnum::kFunctionDeclaration,
+       {"package p;\nfunction ",
+        {kTag, "int"},
+        " f;\nendfunction\nendpackage\n"}},
+      {NodeEnum::kFunctionDeclaration,
+       {"class c;\nfunction ",
+        {kTag, "foo_pkg::bar_t"},
+        " f;\nendfunction\nendclass\n"}},
+      {NodeEnum::kFunctionDeclaration,
+       {"module m;\nfunction ",
+        {kTag, "foo#(bar)"},
+        " f;\nendfunction\nendmodule\n"}},
+  };
+  for (const auto& test : kTestCases) {
+    const absl::string_view code(test.token_data.code);
+    VerilogAnalyzer analyzer(code, "test-file");
+    const absl::string_view code_copy(analyzer.Data().Contents());
+    ASSERT_OK(analyzer.Analyze()) << "failed on:\n" << code;
+    const auto& root = analyzer.Data().SyntaxTree();
+
+    const auto statements = FindAllFunctionDeclarations(*root);
+    ASSERT_EQ(statements.size(), 1);
+    const auto& statement = *statements.front().match;
+    const auto* return_type = GetFunctionReturnType(statement);
+    ASSERT_NE(return_type, nullptr);
+    const auto return_type_span = verible::StringSpanOfSymbol(*return_type);
+    EXPECT_FALSE(return_type_span.empty());
+
+    // TODO(b/151371397): Refactor this test code along with
+    // common/analysis/linter_test_util.h to be able to compare set-symmetric
+    // differences in 'findings'.
+
+    // Find the tokens, rebased into the other buffer.
+    const auto expected_excerpts =
+        test.token_data.FindImportantTokens(code_copy);
+    ASSERT_EQ(expected_excerpts.size(), 1);
+    // Compare the string_views and their exact spans.
+    const auto expected_span = expected_excerpts.front().text;
+    ASSERT_TRUE(verible::IsSubRange(return_type_span, code_copy));
+    ASSERT_TRUE(verible::IsSubRange(expected_span, code_copy));
+    EXPECT_EQ(return_type_span, expected_span);
+    EXPECT_TRUE(verible::BoundsEqual(return_type_span, expected_span));
+  }
+}
+
+TEST(GetFunctionFormalPortsGroupTest, NoFormalPorts) {
+  const SubtreeTestData kTestCases[] = {
+      {NodeEnum::kFunctionDeclaration, {"function f;endfunction\n"}},
+      {NodeEnum::kFunctionDeclaration,
+       {"package p;\nfunction f;\nendfunction\nendpackage\n"}},
+      {NodeEnum::kFunctionDeclaration,
+       {"class c;\nfunction f;\nendfunction\nendclass\n"}},
+      {NodeEnum::kFunctionDeclaration,
+       {"module m;\nfunction f;\nendfunction\nendmodule\n"}},
+  };
+  for (const auto& test : kTestCases) {
+    const absl::string_view code(test.token_data.code);
+    VerilogAnalyzer analyzer(code, "test-file");
+    ASSERT_OK(analyzer.Analyze()) << "failed on:\n" << code;
+    const auto& root = analyzer.Data().SyntaxTree();
+
+    const auto statements = FindAllFunctionDeclarations(*root);
+    ASSERT_EQ(statements.size(), 1);
+    const auto& statement = *statements.front().match;
+    const auto* return_type = GetFunctionFormalPortsGroup(statement);
+    EXPECT_EQ(return_type, nullptr);
+  }
+}
+
+TEST(GetFunctionFormalPortsGroupTest, WithFormalPorts) {
+  constexpr int kTag = 1;  // value not important
+  const SubtreeTestData kTestCases[] = {
+      {NodeEnum::kFunctionDeclaration,
+       {"function f", {kTag, "()"}, ";endfunction\n"}},
+      {NodeEnum::kFunctionDeclaration,
+       {"package p;\nfunction f",
+        {kTag, "(string s)"},
+        ";\nendfunction\nendpackage\n"}},
+      {NodeEnum::kFunctionDeclaration,
+       {"class c;\nfunction f",
+        {kTag, "(int i, string s)"},
+        ";\nendfunction\nendclass\n"}},
+      {NodeEnum::kFunctionDeclaration,
+       {"module m;\nfunction f",
+        {kTag, "(input logic foo, bar)"},
+        ";\nendfunction\nendmodule\n"}},
+  };
+  for (const auto& test : kTestCases) {
+    const absl::string_view code(test.token_data.code);
+    VerilogAnalyzer analyzer(code, "test-file");
+    const absl::string_view code_copy(analyzer.Data().Contents());
+    ASSERT_OK(analyzer.Analyze()) << "failed on:\n" << code;
+    const auto& root = analyzer.Data().SyntaxTree();
+
+    const auto statements = FindAllFunctionDeclarations(*root);
+    ASSERT_EQ(statements.size(), 1);
+    const auto& statement = *statements.front().match;
+    const auto* port_formals = GetFunctionFormalPortsGroup(statement);
+    ASSERT_NE(port_formals, nullptr);
+    const auto port_formals_span = verible::StringSpanOfSymbol(*port_formals);
+    EXPECT_FALSE(port_formals_span.empty());
+
+    // TODO(b/151371397): Refactor this test code along with
+    // common/analysis/linter_test_util.h to be able to compare set-symmetric
+    // differences in 'findings'.
+
+    // Find the tokens, rebased into the other buffer.
+    const auto expected_excerpts =
+        test.token_data.FindImportantTokens(code_copy);
+    ASSERT_EQ(expected_excerpts.size(), 1);
+    // Compare the string_views and their exact spans.
+    const auto expected_span = expected_excerpts.front().text;
+    ASSERT_TRUE(verible::IsSubRange(port_formals_span, code_copy));
+    ASSERT_TRUE(verible::IsSubRange(expected_span, code_copy));
+    EXPECT_EQ(port_formals_span, expected_span);
+    EXPECT_TRUE(verible::BoundsEqual(port_formals_span, expected_span));
   }
 }
 

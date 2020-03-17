@@ -26,25 +26,55 @@
 
 namespace verilog {
 
+using verible::GetSubtreeAsNode;
+using verible::GetSubtreeAsSymbol;
+using verible::Symbol;
+using verible::SyntaxTreeNode;
+
 std::vector<verible::TreeSearchMatch> FindAllFunctionDeclarations(
-    const verible::Symbol& root) {
+    const Symbol& root) {
   return verible::SearchSyntaxTree(root, NodekFunctionDeclaration());
 }
 
-const verible::SyntaxTreeNode& GetFunctionHeader(
-    const verible::Symbol& symbol) {
-  return verible::GetSubtreeAsNode(symbol, NodeEnum::kFunctionDeclaration, 0,
-                                   NodeEnum::kFunctionHeader);
+const verible::SyntaxTreeNode& GetFunctionHeader(const Symbol& function_decl) {
+  return GetSubtreeAsNode(function_decl, NodeEnum::kFunctionDeclaration, 0,
+                          NodeEnum::kFunctionHeader);
 }
 
-const verible::Symbol* GetFunctionLifetime(const verible::Symbol& symbol) {
-  const auto& header = GetFunctionHeader(symbol);
-  return verible::GetSubtreeAsSymbol(header, NodeEnum::kFunctionHeader, 2);
+const Symbol* GetFunctionHeaderLifetime(const Symbol& function_header) {
+  return GetSubtreeAsSymbol(function_header, NodeEnum::kFunctionHeader, 2);
 }
 
-const verible::Symbol* GetFunctionId(const verible::Symbol& symbol) {
-  const auto& header = GetFunctionHeader(symbol);
-  return verible::GetSubtreeAsSymbol(header, NodeEnum::kFunctionHeader, 4);
+const Symbol* GetFunctionHeaderReturnType(const Symbol& function_header) {
+  return GetSubtreeAsSymbol(function_header, NodeEnum::kFunctionHeader, 3);
+}
+
+const Symbol* GetFunctionHeaderId(const Symbol& function_header) {
+  return GetSubtreeAsSymbol(function_header, NodeEnum::kFunctionHeader, 4);
+}
+
+const Symbol* GetFunctionHeaderFormalPortsGroup(const Symbol& function_header) {
+  return GetSubtreeAsSymbol(function_header, NodeEnum::kFunctionHeader, 5);
+}
+
+const Symbol* GetFunctionLifetime(const Symbol& function_decl) {
+  const auto& header = GetFunctionHeader(function_decl);
+  return GetFunctionHeaderLifetime(header);
+}
+
+const Symbol* GetFunctionReturnType(const Symbol& function_decl) {
+  const auto& header = GetFunctionHeader(function_decl);
+  return GetFunctionHeaderReturnType(header);
+}
+
+const Symbol* GetFunctionId(const Symbol& function_decl) {
+  const auto& header = GetFunctionHeader(function_decl);
+  return GetFunctionHeaderId(header);
+}
+
+const Symbol* GetFunctionFormalPortsGroup(const Symbol& function_decl) {
+  const auto& header = GetFunctionHeader(function_decl);
+  return GetFunctionHeaderFormalPortsGroup(header);
 }
 
 }  // namespace verilog

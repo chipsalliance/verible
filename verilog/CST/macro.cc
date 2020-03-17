@@ -31,8 +31,17 @@ std::vector<verible::TreeSearchMatch> FindAllMacroCalls(const Symbol& root) {
   return SearchSyntaxTree(root, NodekMacroCall());
 }
 
+std::vector<verible::TreeSearchMatch> FindAllMacroGenericItems(
+    const Symbol& root) {
+  return SearchSyntaxTree(root, NodekMacroGenericItem());
+}
+
 const TokenInfo& GetMacroCallId(const Symbol& s) {
   return GetSubtreeAsLeaf(s, NodeEnum::kMacroCall, 0).get();
+}
+
+const TokenInfo& GetMacroGenericItemId(const Symbol& s) {
+  return GetSubtreeAsLeaf(s, NodeEnum::kMacroGenericItem, 0).get();
 }
 
 const SyntaxTreeNode& GetMacroCallArgs(const Symbol& s) {
