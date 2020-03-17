@@ -114,6 +114,8 @@ Enabled by default: true
 
 ### explicit-parameter-storage-type
 Checks that every `parameter` and `localparam` is declared with an explicit storage type. See [Style: constants].
+##### Parameters
+  * exempt_type (optional 'string'. Default: empty)
 
 Enabled by default: true
 
@@ -145,7 +147,7 @@ Enabled by default: true
 ### interface-name-style
 Checks that `interface` names use lower_snake_case naming convention and end with '_if'. See [Style: interface-conventions].
 
-Enabled by default: false
+Enabled by default: true
 
 ### invalid-system-task-function
 Checks that no forbidden system tasks or functions are used. These consist of the following functions: `$psprintf`, `$random`, and `$dist_*`. Also non-LRM function `$srandom`. See [Verification-Style: forbidden-system-functions].
@@ -287,4 +289,4 @@ Enabled by default: true
 
 ## Version
 
-Generated on 2020-03-11 21:57:37 -0700 from [v0.0-273-gaac6cdb](https://github.com/google/verible/commit/aac6cdbfcf84ada23764d2c93b2e6b659f1345fe)
+Generated on 2020-03-17 12:38:58 -0700 from [v0.0-285-gc2e5040](https://github.com/google/verible/commit/c2e5040c9c5f35538891b34f3a322e1110137013)
