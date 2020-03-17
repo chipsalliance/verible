@@ -69,7 +69,7 @@ class CreateObjectNameMatchRule : public verible::SyntaxTreeLintRule {
   // Here, the LHS var_h will be bound to "lval" (only for simple references),
   // the qualified function call (mytype::type_id::create) will be bound to
   // "func", and the list of function call arguments will be bound to "args".
-  const Matcher create_assignment_matcher_ = NodekAssignmentStatement(
+  const Matcher create_assignment_matcher_ = NodekNetVariableAssignment(
       LValueOfAssignment(
           PathkReference(UnqualifiedReferenceHasId().Bind("lval")),
           verible::matcher::Unless(ReferenceHasHierarchy()),

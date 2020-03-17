@@ -158,46 +158,6 @@ void MergeConsecutiveSiblings(TokenPartitionTree* tree, size_t pos) {
       });
 }
 
-TokenPartitionTree* MoveLastLeafIntoPreviousSibling(TokenPartitionTree* tree) {
-  auto* rightmost_leaf = tree->RightmostDescendant();
-  auto* target_leaf = rightmost_leaf->PreviousLeaf();
-  if (target_leaf == nullptr) return nullptr;
-
-  // if 'tree' is not an ancestor of target_leaf, do not modify.
-  if (!target_leaf->ContainsAncestor(tree)) return nullptr;
-
-  // Verify continuity of token ranges between adjacent leaves.
-  CHECK(target_leaf->Value().TokensRange().end() ==
-        rightmost_leaf->Value().TokensRange().begin());
-
-  auto* rightmost_leaf_parent = rightmost_leaf->Parent();
-  {
-    // Extend the upper-bound of the previous leaf partition to cover the
-    // partition that is about to be removed.
-    const auto range_end = rightmost_leaf->Value().TokensRange().end();
-
-    // Update ancestry chain of the updated leaf, to maintain the parent-child
-    // range equivalence invariant.
-    auto* node = target_leaf;
-    while (node != tree) {
-      node->Value().SpanUpToToken(range_end);
-      node = node->Parent();
-    }
-    node->Value().SpanUpToToken(range_end);
-
-    // Remove the obsolete partition, rightmost_leaf.
-    // Caution: Existing references to the obsolete partition will be
-    // invalidated!
-    rightmost_leaf_parent->Children().pop_back();
-  }
-
-  // Sanity check invariants.
-  VerifyFullTreeFormatTokenRanges(
-      *tree, tree->LeftmostDescendant()->Value().TokensRange().begin());
-
-  return rightmost_leaf_parent;
-}
-
 // From leaf node's parent upwards, update the left bound of the UnwrappedLine's
 // TokenRange.  Stop as soon as a node is not a (leftmost) first child.
 static void UpdateTokenRangeLowerBound(TokenPartitionTree* leaf,

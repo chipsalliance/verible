@@ -33,11 +33,15 @@
 #include "common/text/text_structure.h"
 #include "common/text/token_info.h"
 #include "common/text/token_stream_view.h"
+#include "common/text/tree_utils.h"
 #include "common/util/container_iterator_range.h"
 #include "common/util/enum_flags.h"
 #include "common/util/logging.h"
 #include "common/util/value_saver.h"
+#include "verilog/CST/declaration.h"
+#include "verilog/CST/functions.h"
 #include "verilog/CST/macro.h"
+#include "verilog/CST/statement.h"
 #include "verilog/CST/verilog_nonterminals.h"
 #include "verilog/formatting/verilog_token.h"
 #include "verilog/parser/verilog_parser.h"
@@ -49,15 +53,29 @@ namespace formatter {
 
 using ::verible::PartitionPolicyEnum;
 using ::verible::PreFormatToken;
+using ::verible::SyntaxTreeNode;
 using ::verible::TokenInfo;
+using ::verible::TokenPartitionTree;
 using ::verible::TokenWithContext;
-using ::verible::UnwrappedLine;
 using ::verilog::IsComment;
 
 // Used to filter the TokenStreamView by discarding space-only tokens.
 static bool KeepNonWhitespace(const TokenInfo& t) {
   if (t.token_enum == verible::TK_EOF) return false;  // omit the EOF token
   return !IsWhitespace(verilog_tokentype(t.token_enum));
+}
+
+static bool NodeIsBeginEndBlock(const SyntaxTreeNode& node) {
+  return node.MatchesTagAnyOf({NodeEnum::kSeqBlock, NodeEnum::kGenerateBlock});
+}
+
+static bool NodeIsConditionalConstruct(const SyntaxTreeNode& node) {
+  return node.MatchesTagAnyOf({NodeEnum::kConditionalStatement,
+                               NodeEnum::kConditionalGenerateConstruct});
+}
+
+static bool NodeIsConditionalOrBlock(const SyntaxTreeNode& node) {
+  return NodeIsBeginEndBlock(node) || NodeIsConditionalConstruct(node);
 }
 
 // Creates a PreFormatToken given a TokenInfo and returns it
@@ -303,7 +321,7 @@ static bool IsTopLevelListItem(const verible::SyntaxTreeContext& context) {
 static bool DirectParentIsFlowControlConstruct(
     const verible::SyntaxTreeContext& context) {
   return context.DirectParentIsOneOf({
-      // LINT.IfChange(flow_control_parents)
+      //
       NodeEnum::kCaseStatement,         //
       NodeEnum::kRandCaseStatement,     //
       NodeEnum::kForLoopStatement,      //
@@ -312,8 +330,12 @@ static bool DirectParentIsFlowControlConstruct(
       NodeEnum::kWhileLoopStatement,    //
       NodeEnum::kDoWhileLoopStatement,  //
       NodeEnum::kForeachLoopStatement,  //
-      NodeEnum::kConditionalStatement,
-      // LINT.ThenChange(:flow_control_cases)
+      NodeEnum::kConditionalStatement,  //
+      NodeEnum::kIfClause,              //
+      NodeEnum::kGenerateIfClause,      //
+      NodeEnum::kProceduralTimingControlStatement,
+      // Do not further indent under kElseClause and kElseGenerateClause,
+      // so that chained else-ifs remain flat.
   });
 }
 
@@ -338,11 +360,11 @@ void TreeUnwrapper::AdvanceLastVisitedLeaf() {
 }
 
 verible::TokenWithContext TreeUnwrapper::VerboseToken(
-    const verible::TokenInfo& token) const {
+    const TokenInfo& token) const {
   return TokenWithContext{token, token_context_};
 }
 
-void TreeUnwrapper::CatchUpToCurrentLeaf(const verible::TokenInfo& leaf_token) {
+void TreeUnwrapper::CatchUpToCurrentLeaf(const TokenInfo& leaf_token) {
   VLOG(4) << __FUNCTION__ << " to " << VerboseToken(leaf_token);
   // "Catch up" NextUnfilteredToken() to the current leaf.
   // Assigns non-whitespace tokens such as comments into UnwrappedLines.
@@ -469,7 +491,7 @@ void TreeUnwrapper::LookAheadBeyondCurrentNode() {
 // This hook is called between the children nodes of the handled node types.
 // This is what allows partitions containing only comments to be properly
 // indented to the same level that non-comment sub-partitions would.
-void TreeUnwrapper::InterChildNodeHook(const verible::SyntaxTreeNode& node) {
+void TreeUnwrapper::InterChildNodeHook(const SyntaxTreeNode& node) {
   const auto tag = NodeEnum(node.Tag().tag);
   VLOG(4) << __FUNCTION__ << " node type: " << tag;
   switch (tag) {
@@ -516,7 +538,7 @@ void TreeUnwrapper::CollectTrailingFilteredTokens() {
 }
 
 // Visitor to determine which node enum function to call
-void TreeUnwrapper::Visit(const verible::SyntaxTreeNode& node) {
+void TreeUnwrapper::Visit(const SyntaxTreeNode& node) {
   const auto tag = static_cast<NodeEnum>(node.Tag().tag);
   VLOG(3) << __FUNCTION__ << " node: " << tag;
 
@@ -528,14 +550,32 @@ void TreeUnwrapper::Visit(const verible::SyntaxTreeNode& node) {
   // This phase is only concerned with reshaping operations on token partitions,
   // such as merging, flattening, hoisting.  Reshaping should only occur on the
   // return path of tree traversal (here).
-  ReshapeTokenPartitions(node);
+
+  auto* partition = CurrentTokenPartition()->PreviousSibling();
+  if (partition != nullptr) {
+    ReshapeTokenPartitions(node, style_, partition);
+  }
 }
 
 // CST-descending phase that creates partitions with correct indentation.
 void TreeUnwrapper::SetIndentationsAndCreatePartitions(
-    const verible::SyntaxTreeNode& node) {
+    const SyntaxTreeNode& node) {
   const auto tag = static_cast<NodeEnum>(node.Tag().tag);
   VLOG(3) << __FUNCTION__ << " node: " << tag;
+
+  // Tips:
+  // In addition to the handling based on the node enum,
+  // indentation decisions can be based on the following:
+  //   * Context() -- lookup upwards
+  //   * node.children() substructure -- look downwards
+  //     + prefer to use more robust CST functions that have abstracted
+  //       away positional and structural details.
+  //   * Localize examination of the above to 1 or 2 levels (up/down)
+  //     where possible.
+  //
+  // Do not:
+  //   * try to manipulate the partition structures; reshaping is left to a
+  //     different phase, ReshapeTokenPartitions().
 
   // Suppress additional indentation when:
   // - at the syntax tree root
@@ -548,6 +588,16 @@ void TreeUnwrapper::SetIndentationsAndCreatePartitions(
 
   // Traversal control section.
   switch (tag) {
+    case NodeEnum::kDescriptionList: {
+      // top-level doesn't need to open a new partition level
+      // This is because the TreeUnwrapper base class created this partition
+      // already.
+      // TODO(fangism): make this consistent with style of other cases
+      // and call VisitIndentedSection(node, 0, kAlwaysExpand);
+      VisitNewUnwrappedLine(node);
+      break;
+    }
+
     // The following constructs are flushed-left, not indented:
     case NodeEnum::kPreprocessorIfdefClause:
     case NodeEnum::kPreprocessorIfndefClause:
@@ -556,6 +606,7 @@ void TreeUnwrapper::SetIndentationsAndCreatePartitions(
       VisitNewUnindentedUnwrappedLine(node);
       break;
     }
+
     // The following constructs start a new UnwrappedLine indented to the
     // current level.
     case NodeEnum::kGenerateRegion:
@@ -569,12 +620,14 @@ void TreeUnwrapper::SetIndentationsAndCreatePartitions(
     case NodeEnum::kPreprocessorDefine:
     case NodeEnum::kPreprocessorUndef:
     case NodeEnum::kModuleDeclaration:
+    case NodeEnum::kProgramDeclaration:
     case NodeEnum::kPackageDeclaration:
     case NodeEnum::kInterfaceDeclaration:
     case NodeEnum::kFunctionDeclaration:
     case NodeEnum::kTaskDeclaration:
     case NodeEnum::kTFPortDeclaration:
     case NodeEnum::kTypeDeclaration:
+    case NodeEnum::kForwardDeclaration:
     case NodeEnum::kConstraintDeclaration:
     case NodeEnum::kConstraintExpression:
     case NodeEnum::kCovergroupDeclaration:
@@ -595,53 +648,23 @@ void TreeUnwrapper::SetIndentationsAndCreatePartitions(
     case NodeEnum::kForInitialization:
     case NodeEnum::kForCondition:
     case NodeEnum::kForStepList:
-    case NodeEnum::kParBlock:
     case NodeEnum::kParamByName:
     case NodeEnum::kActualNamedPort:
     case NodeEnum::kActualPositionalPort:
     case NodeEnum::kAssertionVariableDeclaration:
-    case NodeEnum::kPort:
     case NodeEnum::kPortItem:
     case NodeEnum::kPropertyDeclaration:
     case NodeEnum::kSequenceDeclaration:
+    case NodeEnum::kPort:
     case NodeEnum::kPortDeclaration:
     case NodeEnum::kParamDeclaration:
     case NodeEnum::kClockingDeclaration:
     case NodeEnum::kClockingItem:
+    case NodeEnum::kUdpPrimitive:
     case NodeEnum::kGenvarDeclaration:
-    case NodeEnum::kDescriptionList:
-    case NodeEnum::kForwardDeclaration: {
-      VisitNewUnwrappedLine(node);
-      break;
-    }
-    case NodeEnum::kConditionalGenerateConstruct: {
-      if (IsTopLevelListItem(Context())) {
-        // Create a level of grouping without additional indentation.
-        VisitIndentedSection(node, 0,
-                             PartitionPolicyEnum::kFitOnLineElseExpand);
-      } else {
-        TraverseChildren(node);
-      }
-      break;
-    }
-    case NodeEnum::kSeqBlock:
-      if (Context().DirectParentsAre(
-              {NodeEnum::kBlockItemStatementList, NodeEnum::kParBlock})) {
-        // begin inside fork
-        VisitNewUnwrappedLine(node);
-      } else {
-        TraverseChildren(node);
-      }
-      break;
+    case NodeEnum::kConditionalGenerateConstruct:
 
-    // For the following items, start a new partition group (no additional
-    // indentation) only if they are *direct* descendants of list elements.
-    // This effectively suppresses starting a new partition when single
-    // statements are found to extend other statements, delayed assignments,
-    // single-statement if/for loops.
-    // Keep this group of cases in sync with (earlier in this file):
-    // DirectParentIsFlowControlConstruct()
-    // LINT.IfChange(flow_control_cases)
+      // various flow control constructs
     case NodeEnum::kCaseStatement:
     case NodeEnum::kRandCaseStatement:
     case NodeEnum::kForLoopStatement:
@@ -651,221 +674,14 @@ void TreeUnwrapper::SetIndentationsAndCreatePartitions(
     case NodeEnum::kDoWhileLoopStatement:
     case NodeEnum::kForeachLoopStatement:
     case NodeEnum::kConditionalStatement:
-      // LINT.ThenChange(:flow_control_parents)
-      {
-        if (IsTopLevelListItem(Context())) {
-          // Create a level of grouping without additional indentation.
-          VisitIndentedSection(node, 0,
-                               PartitionPolicyEnum::kFitOnLineElseExpand);
-        } else {
-          TraverseChildren(node);
-        }
-        break;
-      }
 
-    case NodeEnum::kIfClause:
-    case NodeEnum::kIfBody: {
-      const verible::SyntaxTreeNode* subnode;
-
-      if (tag == NodeEnum::kIfClause)
-        subnode = &GetSubtreeAsNode(node, NodeEnum::kIfClause, 1);
-      else
-        subnode = &node;
-
-      if (GetSubtreeNodeEnum(*subnode, NodeEnum::kIfBody, 0) ==
-          NodeEnum::kSeqBlock) {
-        // Extend current token partition with following begin keyword,
-        // kBlockItemStatementList would create indented section anyway
-        TraverseChildren(node);
-      } else {
-        // Otherwise create indented section by ourselves.
-        // It's for single-statement branches
-        if (tag == NodeEnum::kIfBody) {
-          // indent if-branch
-          VisitIndentedSection(node, style_.indentation_spaces,
-                               PartitionPolicyEnum::kFitOnLineElseExpand);
-        } else {
-          VisitIndentedSection(node, 0,
-                               PartitionPolicyEnum::kFitOnLineElseExpand);
-        }
-      }
-      break;
-    }
-
-    case NodeEnum::kElseClause:
-    case NodeEnum::kElseBody: {
-      const verible::SyntaxTreeNode* subnode;
-
-      if (tag == NodeEnum::kElseClause)
-        subnode = &GetSubtreeAsNode(node, NodeEnum::kElseClause, 1);
-      else
-        subnode = &node;
-
-      const auto subtag = GetSubtreeNodeEnum(*subnode, NodeEnum::kElseBody, 0);
-      switch (subtag) {
-        case NodeEnum::kSeqBlock:
-        case NodeEnum::kConditionalStatement:
-          if (std::prev(CurrentFormatTokenIterator())->TokenEnum() ==
-              verilog_tokentype::SymbolIdentifier) {
-            // Start new token partition if current token is label identifier
-            VisitNewUnwrappedLine(node);
-          } else {
-            // Extend current token partition by begin keyword and if keyword
-            // Plus keep else-if-else... structure flat
-            TraverseChildren(node);
-          }
-          break;
-
-        default:
-          // Otherwise create indented section by ourselves.
-          // It's for single-statement branches
-          if (tag == NodeEnum::kElseBody) {
-            // indent else-branch statement
-            VisitIndentedSection(node, style_.indentation_spaces,
-                                 PartitionPolicyEnum::kFitOnLineElseExpand);
-          } else {
-            VisitIndentedSection(node, 0,
-                                 PartitionPolicyEnum::kFitOnLineElseExpand);
-          }
-          break;
-      }
-      break;
-    }
-    case NodeEnum::kGenerateIfClause:
-    case NodeEnum::kGenerateIfBody: {
-      const verible::SyntaxTreeNode* subnode;
-
-      if (tag == NodeEnum::kGenerateIfClause)
-        subnode = &GetSubtreeAsNode(node, NodeEnum::kGenerateIfClause, 1);
-      else
-        subnode = &node;
-
-      if (GetSubtreeNodeEnum(*subnode, NodeEnum::kGenerateIfBody, 0) ==
-          NodeEnum::kGenerateBlock) {
-        // Extend current token partition with following begin keyword,
-        // kBlockItemStatementList would create indented section anyway
-        TraverseChildren(node);
-      } else {
-        // Otherwise create indented section by ourselves.
-        // It's for single-statement branches
-        if (tag == NodeEnum::kGenerateIfBody) {
-          // indent if-branch
-          VisitIndentedSection(node, style_.indentation_spaces,
-                               PartitionPolicyEnum::kFitOnLineElseExpand);
-        } else {
-          VisitIndentedSection(node, 0,
-                               PartitionPolicyEnum::kFitOnLineElseExpand);
-        }
-      }
-      break;
-    }
-
-    case NodeEnum::kGenerateElseClause:
-    case NodeEnum::kGenerateElseBody: {
-      const verible::SyntaxTreeNode* subnode;
-
-      if (tag == NodeEnum::kGenerateElseClause)
-        subnode = &GetSubtreeAsNode(node, NodeEnum::kGenerateElseClause, 1);
-      else
-        subnode = &node;
-
-      const auto subtag =
-          GetSubtreeNodeEnum(*subnode, NodeEnum::kGenerateElseBody, 0);
-      switch (subtag) {
-        case NodeEnum::kGenerateBlock:
-        case NodeEnum::kConditionalGenerateConstruct:
-          if (std::prev(CurrentFormatTokenIterator())->TokenEnum() ==
-              verilog_tokentype::SymbolIdentifier) {
-            // Start new token partition if current token is label identifier
-            VisitNewUnwrappedLine(node);
-          } else {
-            // Extend current token partition by begin keyword and if keyword
-            // Plus keep else-if-else... structure flat
-            TraverseChildren(node);
-          }
-          break;
-
-        default:
-          // Otherwise create indented section by ourselves.
-          // It's for single-statement branches
-          if (tag == NodeEnum::kGenerateElseBody) {
-            // indent else-branch statement
-            VisitIndentedSection(node, style_.indentation_spaces,
-                                 PartitionPolicyEnum::kFitOnLineElseExpand);
-          } else {
-            VisitIndentedSection(node, 0,
-                                 PartitionPolicyEnum::kFitOnLineElseExpand);
-          }
-          break;
-      }
-      break;
-    }
-
-    // For the following items, start a new unwrapped line only if they are
-    // *direct* descendants of list elements.  This effectively suppresses
-    // starting a new line when single statements are found to extend other
-    // statements, delayed assignments, single-statement if/for loops.
-    case NodeEnum::kStatement:
-    case NodeEnum::kLabeledStatement:  // e.g. foo_label : do_something();
-    case NodeEnum::kJumpStatement:
-    case NodeEnum::kWaitStatement:                   // wait(expr) ...
-    case NodeEnum::kAssertionStatement:              // assert(expr);
-    case NodeEnum::kContinuousAssign:                // e.g. assign a=0, b=2;
-    case NodeEnum::kContinuousAssignmentStatement:   // e.g. x=y
-    case NodeEnum::kBlockingAssignmentStatement:     // id=expr
-    case NodeEnum::kNonblockingAssignmentStatement:  // dest <= src;
-    case NodeEnum::kAssignmentStatement:             // id=expr
-    case NodeEnum::kAssignModifyStatement:           // id+=expr
-    case NodeEnum::kProceduralTimingControlStatement: {
-      if (IsTopLevelListItem(Context())) {
-        VisitIndentedSection(node, 0,
-                             PartitionPolicyEnum::kFitOnLineElseExpand);
-      } else if (DirectParentIsFlowControlConstruct(Context())) {
-        // This is a single statement directly inside a flow-control construct,
-        // and thus should be properly indented one level.
-        VisitIndentedSection(node, style_.indentation_spaces,
-                             PartitionPolicyEnum::kFitOnLineElseExpand);
-      } else {
-        // Otherwise extend previous token partition.
-        TraverseChildren(node);
-      }
-      break;
-    }
-    case NodeEnum::kMacroArgList: {
-      // Indentation at wrap level until proper partition policy implemented
-      VisitIndentedSection(node, style_.wrap_spaces,
-                           PartitionPolicyEnum::kFitOnLineElseExpand);
-      break;
-    }
-
-    case NodeEnum::kMacroCall: {
-      if (IsTopLevelListItem(Context())) {
-        VisitIndentedSection(node, 0,
-                             PartitionPolicyEnum::kFitOnLineElseExpand);
-      } else if (DirectParentIsFlowControlConstruct(Context())) {
-        // This is a single statement directly inside a flow-control construct,
-        // and thus should be properly indented one level.
-        VisitIndentedSection(node, style_.indentation_spaces,
-                             PartitionPolicyEnum::kFitOnLineElseExpand);
-      } else if (absl::StartsWith(GetMacroCallId(node).text, "`uvm_")) {
-        // For each `uvm macro start a new unwrapped line
-        VisitNewUnwrappedLine(node);
-      } else {
-        // Otherwise extend previous token partition.
-        TraverseChildren(node);
-      }
-      break;
-    }
-
-    // Add a level of grouping without indentation.
-    // This should include most declaration headers.
+    case NodeEnum::kMacroGenericItem:
+    case NodeEnum::kModuleHeader:
     case NodeEnum::kBindDirective:
     case NodeEnum::kDataDeclaration:
     case NodeEnum::kLoopHeader:
-    case NodeEnum::kClassHeader:
     case NodeEnum::kCovergroupHeader:
     case NodeEnum::kModportDeclaration:
-    case NodeEnum::kModuleHeader:
     case NodeEnum::kInstantiationType:
     case NodeEnum::kRegisterVariable:
     case NodeEnum::kVariableDeclarationAssignment:
@@ -874,21 +690,100 @@ void TreeUnwrapper::SetIndentationsAndCreatePartitions(
     case NodeEnum::kCaseInsideItem:
     case NodeEnum::kCasePatternItem:
     case NodeEnum::kGenerateCaseItem:
-    case NodeEnum::kGateInstance: {
+    case NodeEnum::kGateInstance:
+    case NodeEnum::kGenerateIfClause:
+    case NodeEnum::kGenerateElseClause:
+    case NodeEnum::kIfClause:
+    case NodeEnum::kElseClause: {
       VisitIndentedSection(node, 0, PartitionPolicyEnum::kFitOnLineElseExpand);
       break;
     }
 
+      // The following cases will always expand into their constituent
+      // partitions:
+    case NodeEnum::kClassHeader:
+    case NodeEnum::kBegin:
+    case NodeEnum::kEnd:
+    // case NodeEnum::kFork:  // TODO(fangism): introduce this node enum
+    // case NodeEnum::kJoin:  // TODO(fangism): introduce this node enum
+    case NodeEnum::kParBlock:
+    case NodeEnum::kSeqBlock:
+    case NodeEnum::kGenerateBlock: {
+      VisitIndentedSection(node, 0, PartitionPolicyEnum::kAlwaysExpand);
+      break;
+    }
+
+    // The following set of cases are related to flow-control (loops and
+    // conditionals) for statements and generate items:
+    case NodeEnum::kGenerateIfBody:
+    case NodeEnum::kIfBody: {
+      // In the case of if-begin, let the 'begin'-'end' block indent its own
+      // section.  Othewise for single statements/items, indent here.
+      const auto& subnode = GetSubtreeAsNode(node, tag, 0);
+      const auto next_indent =
+          NodeIsBeginEndBlock(subnode) ? 0 : style_.indentation_spaces;
+      VisitIndentedSection(node, next_indent,
+                           PartitionPolicyEnum::kFitOnLineElseExpand);
+      break;
+    }
+    case NodeEnum::kGenerateElseBody:
+    case NodeEnum::kElseBody: {
+      // In the case of else-begin, let the 'begin'-'end' block indent its own
+      // section, otherwise, indent single statements here.
+      // In the case of else-if, suppress further indentation, deferring to
+      // the conditional construct.
+      const auto& subnode = GetSubtreeAsNode(node, tag, 0);
+      const auto next_indent =
+          NodeIsConditionalOrBlock(subnode) ? 0 : style_.indentation_spaces;
+      VisitIndentedSection(node, next_indent,
+                           PartitionPolicyEnum::kFitOnLineElseExpand);
+      break;
+    }
+
+    // For the following items, start a new unwrapped line only if they are
+    // *direct* descendants of list elements.  This effectively suppresses
+    // starting a new line when single statements are found to extend other
+    // statements, delayed assignments, single-statement if/for loops.
+    // search-anchor: STATEMENT_TYPES
+    case NodeEnum::kStatement:
+    case NodeEnum::kLabeledStatement:  // e.g. foo_label : do_something();
+    case NodeEnum::kJumpStatement:
+    case NodeEnum::kWaitStatement:                   // wait(expr) ...
+    case NodeEnum::kAssertionStatement:              // assert(expr);
+    case NodeEnum::kContinuousAssignmentStatement:   // e.g. assign x=y;
+    case NodeEnum::kNetVariableAssignment:           // e.g. x=y
+    case NodeEnum::kBlockingAssignmentStatement:     // id=expr
+    case NodeEnum::kNonblockingAssignmentStatement:  // dest <= src;
+    case NodeEnum::kAssignModifyStatement:           // id+=expr
+    case NodeEnum::kIncrementDecrementExpression:    // --y
+    case NodeEnum::kProceduralTimingControlStatement:
+    case NodeEnum::kMacroCall: {
+      // Single statements directly inside a flow-control construct
+      // should be properly indented one level.
+      const int indent = DirectParentIsFlowControlConstruct(Context())
+                             ? style_.indentation_spaces
+                             : 0;
+      VisitIndentedSection(node, indent,
+                           PartitionPolicyEnum::kFitOnLineElseExpand);
+      break;
+    }
+
+      // The following constructs wish to use the partition policy of appending
+      // trailing subpartitions greedily as long as they fit, wrapping as
+      // needed.
     case NodeEnum::kClassConstructorPrototype:
     case NodeEnum::kTaskHeader:
     case NodeEnum::kFunctionHeader:
+    case NodeEnum::kTaskPrototype:
+    case NodeEnum::kFunctionPrototype:
     case NodeEnum::kDPIImportItem: {
       VisitIndentedSection(node, 0,
                            PartitionPolicyEnum::kAppendFittingSubPartitions);
       break;
     }
 
-    // Add an additional level of indentation.
+    // For the following constructs, always expand the view to subpartitions.
+    // Add a level of indentation.
     case NodeEnum::kClassItems:
     case NodeEnum::kModuleItemList:
     case NodeEnum::kPackageItemList:
@@ -918,18 +813,14 @@ void TreeUnwrapper::SetIndentationsAndCreatePartitions(
     case NodeEnum::kUdpCombEntry:
     case NodeEnum::kStatementList:
     case NodeEnum::kClockingItemList: {
-      if (suppress_indentation) {
-        // Do not further indent preprocessor clauses.
-        // Maintain same level as before.
-        TraverseChildren(node);
-      } else {
-        VisitIndentedSection(node, style_.indentation_spaces,
-                             PartitionPolicyEnum::kAlwaysExpand);
-      }
+      // Do not further indent preprocessor clauses.
+      const int indent = suppress_indentation ? 0 : style_.indentation_spaces;
+      VisitIndentedSection(node, indent, PartitionPolicyEnum::kAlwaysExpand);
       break;
     }
 
       // Add a level of grouping that is treated as wrapping.
+    case NodeEnum::kMacroArgList:
     case NodeEnum::kForSpec:
     case NodeEnum::kModportSimplePortsDeclaration:
     case NodeEnum::kModportTFPortsDeclaration:
@@ -938,32 +829,23 @@ void TreeUnwrapper::SetIndentationsAndCreatePartitions(
     case NodeEnum::kPortActualList:  // TODO(b/146083526): one port per line
     case NodeEnum::kActualParameterByNameList:
     case NodeEnum::kPortList: {
-      if (suppress_indentation) {
-        // Do not further indent preprocessor clauses.
-        // Maintain same level as before.
-        TraverseChildren(node);
-      } else {
-        VisitIndentedSection(node, style_.wrap_spaces,
-                             PartitionPolicyEnum::kFitOnLineElseExpand);
-      }
+      // Do not further indent preprocessor clauses.
+      const int indent = suppress_indentation ? 0 : style_.wrap_spaces;
+      VisitIndentedSection(node, indent,
+                           PartitionPolicyEnum::kFitOnLineElseExpand);
       break;
     }
 
     case NodeEnum::kPortDeclarationList:
     case NodeEnum::kFormalParameterList: {
-      if (suppress_indentation) {
-        // Do not further indent preprocessor clauses.
-        // Maintain same level as before.
-        TraverseChildren(node);
-      } else if (Context().IsInside(NodeEnum::kClassHeader)) {
-        VisitIndentedSection(node, style_.wrap_spaces,
-                             PartitionPolicyEnum::kAlwaysExpand);
-      } else if (Context().IsInside(NodeEnum::kInterfaceDeclaration) ||
-                 Context().IsInside(NodeEnum::kModuleDeclaration)) {
-        VisitIndentedSection(node, style_.wrap_spaces,
-                             PartitionPolicyEnum::kAlwaysExpand);
+      // Do not further indent preprocessor clauses.
+      const int indent = suppress_indentation ? 0 : style_.wrap_spaces;
+      if (Context().IsInside(NodeEnum::kClassHeader) ||
+          Context().IsInside(NodeEnum::kInterfaceDeclaration) ||
+          Context().IsInside(NodeEnum::kModuleDeclaration)) {
+        VisitIndentedSection(node, indent, PartitionPolicyEnum::kAlwaysExpand);
       } else {
-        VisitIndentedSection(node, style_.wrap_spaces,
+        VisitIndentedSection(node, indent,
                              PartitionPolicyEnum::kFitOnLineElseExpand);
       }
       break;
@@ -975,7 +857,6 @@ void TreeUnwrapper::SetIndentationsAndCreatePartitions(
       // enclosing construct, such as a parameterized type like "foo #(1, 2)".
 
       // Special cases:
-
     case NodeEnum::kPropertySpec: {
       if (Context().IsInside(NodeEnum::kPropertyDeclaration)) {
         // indent the same level as kAssertionVariableDeclarationList
@@ -993,6 +874,7 @@ void TreeUnwrapper::SetIndentationsAndCreatePartitions(
 
     case NodeEnum::kExpression: {
       if (Context().DirectParentIs(NodeEnum::kMacroArgList)) {
+        // original un-lexed macro argument was successfully expanded
         VisitNewUnwrappedLine(node);
       } else {
         TraverseChildren(node);
@@ -1002,6 +884,149 @@ void TreeUnwrapper::SetIndentationsAndCreatePartitions(
 
     default: {
       TraverseChildren(node);
+      // TODO(fangism): Eventually replace this case with:
+      // VisitIndentedSection(node, 0,
+      //     PartitionPolicyEnum::kFitOnLineElseExpand);
+    }
+  }
+}
+
+static bool PartitionStartsWithSemicolon(const TokenPartitionTree& partition) {
+  const auto& uwline = partition.RightmostDescendant()->Value();
+  return !uwline.IsEmpty() && uwline.TokensRange().front().TokenEnum() == ';';
+}
+
+static bool PartitionIsCloseParenSemi(const TokenPartitionTree& partition) {
+  const auto ftokens = partition.Value().TokensRange();
+  if (ftokens.size() < 2) return false;
+  if (ftokens.front().TokenEnum() != ')') return false;
+  return ftokens.back().TokenEnum() == ';';
+}
+
+static void AttachTrailingSemicolonToPreviousPartition(
+    TokenPartitionTree* partition) {
+  // Attach the trailing ';' partition to the previous sibling leaf.
+  // VisitIndentedSection() finished by starting a new partition,
+  // so we need to back-track to the previous sibling partition.
+
+  // In some cases where macros are involved, there may not necessarily
+  // be a semicolon where one is grammatically expected.
+  // In those cases, do nothing.
+  if (PartitionStartsWithSemicolon(*partition)) {
+    verible::MergeLeafIntoPreviousLeaf(partition->RightmostDescendant());
+    VLOG(4) << "after moving semicolon:\n" << *partition;
+  }
+}
+
+static void ReshapeIfClause(const SyntaxTreeNode& node,
+                            TokenPartitionTree* partition_ptr) {
+  const auto tag = NodeEnum(node.Tag().tag);
+  auto& partition = *partition_ptr;
+  if (tag == NodeEnum::kIfClause) {
+    const auto& body = GetSubtreeAsNode(node, tag, 1, NodeEnum::kIfBody);
+    if (body.children().size() != 1) return;
+    if (!GetSubtreeAsNode(body, NodeEnum::kIfBody, 0)
+             .MatchesTag(NodeEnum::kSeqBlock)) {
+      VLOG(4) << "if-body was not a begin-end block.";
+      return;
+    }
+  } else {
+    CHECK_EQ(tag, NodeEnum::kGenerateIfClause);
+    const auto& body =
+        GetSubtreeAsNode(node, tag, 1, NodeEnum::kGenerateIfBody);
+    if (body.children().size() != 1) return;
+    if (!GetSubtreeAsNode(body, NodeEnum::kGenerateIfBody, 0)
+             .MatchesTag(NodeEnum::kGenerateBlock)) {
+      VLOG(4) << "if-body was not a begin-end block.";
+      return;
+    }
+  }
+
+  // Then fuse the 'begin' partition with the preceding 'if (...)'
+  auto& if_body_partition = partition.Children().back();
+  auto& begin_partition = if_body_partition.Children().front();
+  partition.Value().SetPartitionPolicy(
+      begin_partition.Value().PartitionPolicy());
+  verible::MergeLeafIntoPreviousLeaf(&begin_partition);
+  // if seq_block body was empty, that leaves only 'end', so hoist.
+  // if if-header was flat, hoist that too.
+  partition.FlattenOneChild(if_body_partition.BirthRank());
+}
+
+static void ReshapeElseClause(const SyntaxTreeNode& node,
+                              TokenPartitionTree* partition_ptr) {
+  const auto tag = NodeEnum(node.Tag().tag);
+  auto& partition = *partition_ptr;
+  const SyntaxTreeNode* else_body_subnode;
+  if (tag == NodeEnum::kGenerateElseClause) {
+    else_body_subnode = &GetElseClauseGenerateBody(node);
+  } else {
+    CHECK_EQ(tag, NodeEnum::kElseClause);
+    else_body_subnode = &GetElseClauseStatementBody(node);
+  }
+  if (!NodeIsConditionalOrBlock(*else_body_subnode)) {
+    return;
+  }
+
+  // Then fuse 'else' and 'begin' partitions together
+  // or fuse the 'else' and 'if' (header) partitions together
+  auto& else_partition = partition.Children().front();
+  verible::MergeLeafIntoNextLeaf(&else_partition);
+}
+
+static void PushEndIntoElsePartition(TokenPartitionTree* partition_ptr) {
+  // Then combine 'end' with the following 'else' ...
+  // Do not flatten, so that if- and else- clauses can make formatting
+  // decisions independently from each other.
+  auto& partition = *partition_ptr;
+  auto& if_clause_partition = partition.Children().front();
+  auto* end_partition = if_clause_partition.RightmostDescendant();
+  auto* end_parent = verible::MergeLeafIntoNextLeaf(end_partition);
+  // if moving leaf results in any singleton partitions, hoist.
+  if (end_parent != nullptr) end_parent->HoistOnlyChild();
+}
+
+static void IndentBetweenUVMBeginEndMacros(TokenPartitionTree* partition_ptr,
+                                           int indentation_spaces) {
+  auto& partition = *partition_ptr;
+  // Indent elements between UVM begin/end macro calls
+  unsigned int uvm_level = 1;
+  std::vector<TokenPartitionTree*> uvm_range;
+
+  // Search backwards for matching _begin.
+  for (auto* itr = partition.PreviousSibling(); itr;
+       itr = itr->PreviousSibling()) {
+    VLOG(4) << "Scanning previous sibling:\n" << *itr;
+    const auto macroId =
+        itr->LeftmostDescendant()->Value().TokensRange().front().Text();
+    VLOG(4) << "macro id: " << macroId;
+
+    // Indent only uvm macros
+    if (!absl::StartsWith(macroId, "`uvm_")) {
+      continue;
+    }
+
+    // Count uvm indentation level
+    if (absl::EndsWith(macroId, "_end")) {
+      uvm_level++;
+    } else if (absl::EndsWith(macroId, "_begin")) {
+      uvm_level--;
+    }
+
+    // Break before indenting matching _begin macro
+    if (uvm_level == 0) {
+      break;
+    }
+
+    uvm_range.push_back(itr);
+  }
+
+  // Found matching _begin-_end macros
+  if ((uvm_level == 0) && !uvm_range.empty()) {
+    VLOG(4) << "Found matching uvm-begin/end macros";
+    for (auto* itr : uvm_range) {
+      // Indent uvm macros inside `uvm.*begin - `uvm.*end
+      verible::AdjustIndentationRelative(itr, +indentation_spaces);
     }
   }
 }
@@ -1009,144 +1034,394 @@ void TreeUnwrapper::SetIndentationsAndCreatePartitions(
 // This phase is strictly concerned with reshaping token partitions,
 // and occurs on the return path of partition tree construction.
 void TreeUnwrapper::ReshapeTokenPartitions(
-    const verible::SyntaxTreeNode& node) {
+    const SyntaxTreeNode& node, const verible::BasicFormatStyle& style,
+    TokenPartitionTree* recent_partition) {
   const auto tag = static_cast<NodeEnum>(node.Tag().tag);
   VLOG(3) << __FUNCTION__ << " node: " << tag;
-  // post-traversal token partition adjustments
+  auto& partition = *recent_partition;
+  VLOG(4) << "before reshaping " << tag << ":\n" << partition;
+
+  // Tips, when making reshaping decisions based on subtrees:
+  //   * Manipulate the partition *incrementally* and as close to the
+  //     corresponding node enum case that produced it as possible.
+  //     In otherwords, minimize the depth of examination needed to
+  //     make a reshaping decision.  If there is insufficient information to
+  //     make a decision, that would be a good reason to defer to a parent node.
+  //   * Prefer to examine the SyntaxTreeNode& node instead of the token
+  //     partition tree because the token partition tree may include
+  //     EOL-comments as nodes.  Use/create CST functions to abstract away
+  //     the precise structural details.
+  //   * Altering the indentation and partition policy itself is allowed,
+  //     even though they were set during the
+  //     SetIndentationsAndCreatePartitions() phase.
+
+  // post-creation token partition adjustments
   switch (tag) {
     // Note: this is also being applied to variable declaration lists,
     // which may want different handling than instantiations.
     case NodeEnum::kDataDeclaration: {
-      AttachTrailingSemicolonToPreviousPartition();
-      auto& data_declaration_partition =
-          *ABSL_DIE_IF_NULL(CurrentTokenPartition()->PreviousSibling());
+      AttachTrailingSemicolonToPreviousPartition(&partition);
+      auto& data_declaration_partition = partition;
       auto& children = data_declaration_partition.Children();
       CHECK(!children.empty());
 
+      // TODO(fangism): fuse qualifiers (if any) with type partition
+
       // The instances/variable declaration list is always in last position.
       auto& instance_list_partition = children.back();
-      if (instance_list_partition.BirthRank() == 0) {
+      if (  // TODO(fangism): get type and qualifiers from declaration node,
+            // and check whether type node is implicit, using CST functions.
+          instance_list_partition.BirthRank() == 0) {
+        VLOG(4) << "No qualifiers and type is implicit";
         // This means there are no qualifiers and type was implicit,
         // so no partition precedes this.
+        // Use the declaration (parent) level's indentation.
+        verible::AdjustIndentationAbsolute(
+            &instance_list_partition,
+            data_declaration_partition.Value().IndentationSpaces());
         instance_list_partition.HoistOnlyChild();
-      } else if (instance_list_partition.Children().size() == 1) {
-        // Flatten partition tree by one level.
-        instance_list_partition.HoistOnlyChild();
+      } else if (GetInstanceListFromDataDeclaration(node).children().size() ==
+                 1) {
+        VLOG(4) << "Instance list has only one child, singleton.";
 
         // Undo the indentation of the only instance in the hoisted subtree.
-        instance_list_partition.ApplyPreOrder([&](UnwrappedLine& uwline) {
-          // If there were any unindented lines like preprocessing directives,
-          // leave those unindented (without going negative).
-          const int unindentation =
-              std::max(uwline.IndentationSpaces() - style_.wrap_spaces, 0);
-          uwline.SetIndentationSpaces(unindentation);
-        });
+        verible::AdjustIndentationRelative(&instance_list_partition,
+                                           -style.wrap_spaces);
+        VLOG(4) << "After un-indenting, instance list:\n"
+                << instance_list_partition;
 
         // Reshape type-instance partitions.
-
-        const auto& instance_type_partition = children.back().PreviousSibling();
+        auto* instance_type_partition =
+            ABSL_DIE_IF_NULL(children.back().PreviousSibling());
+        VLOG(4) << "instance type:\n" << *instance_type_partition;
 
         if (instance_type_partition == &children.front()) {
           // data_declaration_partition now consists of exactly:
           //   instance_type_partition, instance_list_partition (single
           //   instance)
 
-          // Compute end-of-type position before flattening (and invalidating
-          // references).
-          const size_t fuse_position =
-              ABSL_DIE_IF_NULL(instance_type_partition)->Children().size() - 1;
           // Flatten these (which will invalidate their references).
-          data_declaration_partition.FlattenOnce();
+          std::vector<size_t> offsets;
+          data_declaration_partition.FlattenOnlyChildrenWithChildren(&offsets);
+          // This position in the flattened result will be merged.
+          const size_t fuse_position = offsets.back() - 1;
 
           // Join the rightmost of instance_type_partition with the leftmost of
           // instance_list_partition.  Keep the type's indentation.
           // This can yield an intermediate partition that contains:
           // ") instance_name (".
-          data_declaration_partition.MergeConsecutiveSiblings(
-              fuse_position, [](UnwrappedLine* left_uwline,
-                                const UnwrappedLine& right_uwline) {
-                CHECK(left_uwline->TokensRange().end() ==
-                      right_uwline.TokensRange().begin());
-                left_uwline->SpanUpToToken(right_uwline.TokensRange().end());
-              });
+          MergeConsecutiveSiblings(&data_declaration_partition, fuse_position);
         } else {
-          // There is a qualifier before instance_type_partition, so we cannot
-          // just flatten it. Manually flatten subpartitions.
-          ABSL_DIE_IF_NULL(instance_type_partition)->HoistOnlyChild();
-          instance_list_partition.HoistOnlyChild();
+          // There is a qualifier before instance_type_partition.
+          data_declaration_partition.FlattenOnlyChildrenWithChildren();
         }
+      } else {
+        VLOG(4) << "None of the special cases apply.";
       }
       break;
     }
-    case NodeEnum::kClassConstructorPrototype:
-    case NodeEnum::kTaskHeader:
-    case NodeEnum::kFunctionHeader:
-    case NodeEnum::kDPIImportItem:
-    case NodeEnum::kBindDirective: {
-      AttachTrailingSemicolonToPreviousPartition();
-      break;
-    }
-    case NodeEnum::kBegin: {  // may contain label
-      // If begin is part of a conditional or for-loop block, attach it to the
-      // end of the previous header, right after the close-paren.
-      // e.g. "for (...; ...; ...) begin : label"
-      if ((Context().DirectParentsAre(
-              {NodeEnum::kSeqBlock, NodeEnum::kForLoopStatement})) ||
-          (Context().DirectParentsAre(
-              {NodeEnum::kGenerateBlock, NodeEnum::kLoopGenerateConstruct}))) {
-        // TODO(b/142684459): same for if-statement case, and other situations
-        // where we want 'begin' to continue a previous partition.
 
-        // Similar to verible::MoveLastLeafIntoPreviousSibling(), but
-        // ensures that the CurrentTokenPartition() is updated to not reference
-        // a potentially invalid removed partition.
-        MergeLastTwoPartitions();
+    // For these cases, the leading sub-partition is merged into its next
+    // relative.  This is useful for constructs that are repeatedly prefixed
+    // with attributes, but otherwise maintain the same subpartition shape.
+    case NodeEnum::kForwardDeclaration:
+      // partition consists of (example):
+      //   [pure virtual]
+      //   [task ... ] (task header/prototype)
+      // Push the qualifiers down.
+    case NodeEnum::kDPIImportItem:
+      // partition consists of (example):
+      //   [import "DPI-C"]
+      //   [function ... ] (task header/prototype)
+      // Push the "import..." down.
+      {
+        verible::MergeLeafIntoNextLeaf(&partition.Children().front());
+        break;
       }
-      // else close-out current token partition?
+    case NodeEnum::kBindDirective: {
+      AttachTrailingSemicolonToPreviousPartition(&partition);
+      break;
+    }
+    case NodeEnum::kModuleHeader: {
+      // If there were any parameters or ports at all, expand.
+      // TODO(fangism): This should be done by inspecting the CST node,
+      // instead of the partition structure.
+      if (partition.Children().size() > 2) {
+        partition.Value().SetPartitionPolicy(
+            PartitionPolicyEnum::kAlwaysExpand);
+      }
+      break;
+    }
+
+      // The following partitions may end up with a trailing ");" subpartition
+      // and want to attach it to the item that preceded it.
+    case NodeEnum::kClassConstructorPrototype:
+    case NodeEnum::kFunctionHeader:
+    case NodeEnum::kFunctionPrototype:
+    case NodeEnum::kTaskHeader:
+    case NodeEnum::kTaskPrototype: {
+      auto& last = *ABSL_DIE_IF_NULL(partition.RightmostDescendant());
+      if (PartitionIsCloseParenSemi(last)) {
+        verible::MergeLeafIntoPreviousLeaf(&last);
+      }
+      break;
+    }
+
+      // The following cases handle reshaping around if/else/begin/end.
+    case NodeEnum::kIfClause:
+    case NodeEnum::kGenerateIfClause: {
+      ReshapeIfClause(node, &partition);
+      break;
+    }
+    case NodeEnum::kGenerateElseClause:
+    case NodeEnum::kElseClause: {
+      ReshapeElseClause(node, &partition);
       break;
     }
     case NodeEnum::kConditionalStatement: {
-      CurrentTokenPartition()->Parent()->ApplyPreOrder(
-          [](verible::VectorTree<UnwrappedLine>& node) {
-            const auto& range = node.Value().TokensRange();
-            if ((range.back().TokenEnum() == verilog_tokentype::TK_else) &&
-                (range.end()->TokenEnum() == verilog_tokentype::TK_if)) {
-              // Extend [if ( )] partition of [else] token
-              node.NextLeaf()->Value().SpanPrevToken();
-              // Update partition parent token range
-              node.NextLeaf()->Parent()->Value().SpanPrevToken();
-              // Delete unneeded [else] partition
-              node.Parent()->Children().erase(
-                  node.Parent()->Children().begin() + node.BirthRank());
-            }
-          });
-      break;
-    }
-    case NodeEnum::kMacroCall: {
-      if (IsTopLevelListItem(Context())) {
-        auto* prev = CurrentTokenPartition()->PreviousSibling();
-        if (prev != nullptr) prev->HoistOnlyChild();
+      // Contains an kIfClause and possibly a kElseClause
+      const auto* else_clause = GetConditionalStatementElseClause(node);
+      if (else_clause == nullptr) {
+        VLOG(4) << "there was no else clause";
+        break;
+      }
+      VLOG(4) << "there was an else clause";
+      // Handle merging of 'else' partition with (possibly)
+      // a previous 'end' partition.
+      // Do not flatten, so that if- and else- clauses can make formatting
+      // decisions independently from each other.
+      const auto& if_body_subnode =
+          GetIfClauseStatementBody(GetConditionalStatementIfClause(node));
+      if (if_body_subnode.MatchesTag(NodeEnum::kSeqBlock)) {
+        VLOG(4) << "if body was a begin-end block";
+        const auto& seq_block = if_body_subnode;
+        const auto& end_node =
+            GetSubtreeAsNode(seq_block, NodeEnum::kSeqBlock, 2);
+        const auto* end_label = GetSubtreeAsSymbol(end_node, NodeEnum::kEnd, 1);
+        if (end_label == nullptr) {
+          VLOG(4) << "No 'end' label, merge 'end' and 'else...' partitions";
+          PushEndIntoElsePartition(&partition);
+        } else {
+          VLOG(4) << "'end' came with label, no merge";
+        }
+      } else {
+        VLOG(4) << "if-body was not begin-end block";
+      }
+      // Keep chained else-if-else conditionals in a flat structure.
+      const auto& else_body_subnode = GetElseClauseStatementBody(*else_clause);
+      if (else_body_subnode.MatchesTag(NodeEnum::kConditionalStatement) &&
+          GetConditionalStatementElseClause(else_body_subnode) != nullptr) {
+        partition.FlattenOneChild(partition.Children().size() - 1);
       }
       break;
     }
-    // In the following cases, forcibly close out the current partition.
-    case NodeEnum::kPreprocessorDefine:
-      StartNewUnwrappedLine(PartitionPolicyEnum::kFitOnLineElseExpand);
+    case NodeEnum::kConditionalGenerateConstruct: {
+      // Contains an kGenerateIfClause and possibly a kGenerateElseClause
+      const auto* else_clause = GetConditionalGenerateElseClause(node);
+      if (else_clause == nullptr) {
+        VLOG(4) << "there was no else clause";
+        break;
+      }
+      VLOG(4) << "there was an else clause";
+      // Handle merging of 'else' partition with (possibly)
+      // a previous 'end' partition.
+      // Do not flatten, so that if- and else- clauses can make formatting
+      // decisions independently from each other.
+      const auto& if_body_subnode =
+          GetIfClauseGenerateBody(GetConditionalGenerateIfClause(node));
+      if (if_body_subnode.MatchesTag(NodeEnum::kGenerateBlock)) {
+        VLOG(4) << "if body was a begin-end block";
+        const auto& seq_block = if_body_subnode;
+        const auto& end_node =
+            GetSubtreeAsNode(seq_block, NodeEnum::kGenerateBlock, 2);
+        const auto* end_label = GetSubtreeAsSymbol(end_node, NodeEnum::kEnd, 1);
+        if (end_label == nullptr) {
+          VLOG(4) << "No 'end' label, merge 'end' and 'else...' partitions";
+          PushEndIntoElsePartition(&partition);
+        } else {
+          VLOG(4) << "'end' came with label, no merge";
+        }
+      } else {
+        VLOG(4) << "if-body was not begin-end block";
+      }
+      // Keep chained else-if-else conditionals in a flat structure.
+      const auto& else_body_subnode = GetElseClauseGenerateBody(*else_clause);
+      if (else_body_subnode.MatchesTag(
+              NodeEnum::kConditionalGenerateConstruct) &&
+          GetConditionalGenerateElseClause(else_body_subnode) != nullptr) {
+        partition.FlattenOneChild(partition.Children().size() - 1);
+      }
       break;
+    }
+
+    case NodeEnum::kMacroCall: {
+      // If there are no call args, join the '(' and ')' together.
+      if (MacroCallArgsIsEmpty(GetMacroCallArgs(node))) {
+        // FIXME HERE: flattening wrong place!  Should merge instead.
+        partition.FlattenOnce();
+        VLOG(4) << "NODE: kMacroCall (flattened):\n" << partition;
+      }
+      break;
+    }
+
+      // This group of cases is temporary: simplify these during the
+      // rewrite/refactor of this function.
+      // See search-anchor: STATEMENT_TYPES
+    case NodeEnum::kNetVariableAssignment:           // e.g. x=y
+    case NodeEnum::kBlockingAssignmentStatement:     // id=expr
+    case NodeEnum::kNonblockingAssignmentStatement:  // dest <= src;
+    case NodeEnum::kAssignModifyStatement: {         // id+=expr
+      std::vector<size_t> offsets;
+      partition.FlattenOnlyChildrenWithChildren(&offsets);
+      VLOG(4) << "before moving semicolon:\n" << partition;
+      AttachTrailingSemicolonToPreviousPartition(&partition);
+      // Check body, for kSeqBlock, merge 'begin' with previous sibling
+      if (partition.Children().size() > 1) {
+        verible::MergeConsecutiveSiblings(&partition, 0);
+        VLOG(4) << "after merge siblings:\n" << partition;
+      }
+      break;
+    }
+    case NodeEnum::kProceduralTimingControlStatement: {
+      std::vector<size_t> offsets;
+      partition.FlattenOnlyChildrenWithChildren(&offsets);
+      VLOG(4) << "before moving semicolon:\n" << partition;
+      AttachTrailingSemicolonToPreviousPartition(&partition);
+      // Check body, for kSeqBlock, merge 'begin' with previous sibling
+      if (NodeIsBeginEndBlock(GetProceduralTimingControlStatementBody(node))) {
+        verible::MergeConsecutiveSiblings(&partition, offsets[1] - 1);
+        VLOG(4) << "after merge siblings:\n" << partition;
+      }
+      break;
+    }
+    case NodeEnum::kContinuousAssignmentStatement: {  // e.g. assign a=0, b=2;
+      partition.FlattenOnlyChildrenWithChildren();
+      VLOG(4) << "after flatten:\n" << partition;
+      AttachTrailingSemicolonToPreviousPartition(&partition);
+      // Merge the 'assign' keyword with the (first) x=y assignment.
+      // TODO(fangism): reshape for multiple assignments.
+      verible::MergeConsecutiveSiblings(&partition, 0);
+      VLOG(4) << "after merging 'assign':\n" << partition;
+      break;
+    }
+    case NodeEnum::kForSpec: {
+      // This applies to loop statements and loop generate constructs.
+      // There are two 'partitions' with ';'.
+      // Merge those with their predecessor sibling partitions.
+      const auto& children = partition.Children();
+      const auto iter1 = std::find_if(children.begin(), children.end(),
+                                      PartitionStartsWithSemicolon);
+      CHECK(iter1 != children.end());
+      const auto iter2 =
+          std::find_if(iter1 + 1, children.end(), PartitionStartsWithSemicolon);
+      CHECK(iter2 != children.end());
+      const int dist1 = std::distance(children.begin(), iter1);
+      const int dist2 = std::distance(children.begin(), iter2);
+      VLOG(4) << "kForSpec got ';' at " << dist1 << " and " << dist2;
+      // Merge from back-to-front to keep indices valid.
+      if (dist2 > 0 && (dist2 - dist1 > 1)) {
+        verible::MergeConsecutiveSiblings(&partition, dist2 - 1);
+      }
+      if (dist1 > 0) {
+        verible::MergeConsecutiveSiblings(&partition, dist1 - 1);
+      }
+      break;
+    }
+    case NodeEnum::kLoopGenerateConstruct:
+    case NodeEnum::kForLoopStatement:
+    case NodeEnum::kForeverLoopStatement:
+    case NodeEnum::kRepeatLoopStatement:
+    case NodeEnum::kWhileLoopStatement:
+    case NodeEnum::kForeachLoopStatement:
+    case NodeEnum::kLabeledStatement:
+    case NodeEnum::kCaseItem:
+    case NodeEnum::kDefaultItem:
+    case NodeEnum::kCaseInsideItem:
+    case NodeEnum::kCasePatternItem:
+    case NodeEnum::kGenerateCaseItem:
+    // case NodeEnum::kAlwaysStatement:  // handled differently below
+    case NodeEnum::kInitialStatement:
+    case NodeEnum::kFinalStatement: {
+      // In these cases, merge the 'begin' partition of the statement block
+      // with the preceding keyword or header partition.
+      if (verible::SymbolCastToNode(*node.children().back())
+              .MatchesTagAnyOf(
+                  {NodeEnum::kSeqBlock, NodeEnum::kGenerateBlock})) {
+        auto& seq_block_partition = partition.Children().back();
+        VLOG(4) << "block partition: " << seq_block_partition;
+        auto& begin_partition = *seq_block_partition.LeftmostDescendant();
+        VLOG(4) << "begin partition: " << begin_partition;
+        CHECK(begin_partition.Children().empty());
+        verible::MergeLeafIntoPreviousLeaf(&begin_partition);
+        VLOG(4) << "after merging 'begin' to predecessor:\n" << partition;
+        // Flatten only the statement block so that the control partition
+        // can retain its own partition policy.
+        partition.FlattenOneChild(seq_block_partition.BirthRank());
+      }
+      break;
+    }
+    case NodeEnum::kDoWhileLoopStatement: {
+      if (NodeIsBeginEndBlock(GetDoWhileStatementBody(node))) {
+        // between do... and while (...);
+        auto& seq_block_partition = partition.Children()[1];
+
+        // merge "do" <- "begin"
+        auto& begin_partition = *seq_block_partition.LeftmostDescendant();
+        verible::MergeLeafIntoPreviousLeaf(&begin_partition);
+
+        // merge "end" -> "while"
+        auto& end_partition = *seq_block_partition.RightmostDescendant();
+        verible::MergeLeafIntoNextLeaf(&end_partition);
+
+        // Flatten only the statement block so that the control partition
+        // can retain its own partition policy.
+        partition.FlattenOneChild(seq_block_partition.BirthRank());
+      }
+      break;
+    }
+
+    case NodeEnum::kAlwaysStatement: {
+      if (GetSubtreeAsNode(node, tag, node.children().size() - 1)
+              .MatchesTagAnyOf({NodeEnum::kProceduralTimingControlStatement,
+                                NodeEnum::kSeqBlock})) {
+        // Merge 'always' keyword with next sibling.
+        partition.FlattenOneChild(1);
+        MergeConsecutiveSiblings(&partition, 0);
+        VLOG(4) << "after merging 'always':\n" << partition;
+      }
+      break;
+    }
+
+    case NodeEnum::kMacroGenericItem: {
+      const auto& token = GetMacroGenericItemId(node);
+      if (absl::StartsWith(token.text, "`uvm_") &&
+          absl::EndsWith(token.text, "_end")) {
+        VLOG(4) << "Found `uvm_*_end macro call";
+        IndentBetweenUVMBeginEndMacros(&partition, style.indentation_spaces);
+      }
+      break;
+    }
     default:
       break;
   }
-  VLOG(3) << "end of " << __FUNCTION__ << " node: " << tag;
-}
 
-void TreeUnwrapper::AttachTrailingSemicolonToPreviousPartition() {
-  // Attach the trailing ';' partition to the previous sibling leaf.
-  // VisitIndentedSection() finished by starting a new partition,
-  // so we need to back-track to the previous sibling partition.
-  auto* recent_partition = CurrentTokenPartition()->PreviousSibling();
-  if (recent_partition != nullptr) {
-    verible::MoveLastLeafIntoPreviousSibling(recent_partition);
+  // In the majority of cases, automatically hoist singletons.
+  // A few node types, however, will wish to delay the hoisting change,
+  // so that the parent node can make reshaping decisions based on the
+  // child node's original unhoisted form.
+  // Exceptions:
+  if (!node.MatchesTagAnyOf({
+          //
+          NodeEnum::kGateInstanceRegisterVariableList  // parent:
+                                                       // kDataDeclaration)
+      })) {
+    if (partition.HoistOnlyChild()) {
+      VLOG(4) << "reshape: hoisted, using child partition policy";
+    }
   }
+
+  VLOG(4) << "after reshaping " << tag << ":\n" << partition;
+  VLOG(3) << "end of " << __FUNCTION__ << " node: " << tag;
 }
 
 // Visitor to determine which leaf enum function to call
@@ -1174,11 +1449,11 @@ void TreeUnwrapper::Visit(const verible::SyntaxTreeLeaf& leaf) {
   } else if (IsEndKeyword(tag)) {
     VLOG(4) << "handling end* keyword";
     StartNewUnwrappedLine(PartitionPolicyEnum::kAlwaysExpand);
-  } else if ((static_cast<int>(tag) == verilog_tokentype::MacroIdItem) &&
-             absl::StartsWith(leaf.get().text, "`uvm")) {
-    // For each `uvm macro start a new unwrapped line
-    StartNewUnwrappedLine(PartitionPolicyEnum::kFitOnLineElseExpand);
   }
+
+  auto& partition = *ABSL_DIE_IF_NULL(CurrentTokenPartition());
+  VLOG(4) << "before adding token " << VerboseToken(leaf.get()) << ":\n"
+          << partition;
 
   // Advances NextUnfilteredToken(), and extends CurrentUnwrappedLine().
   // Should be equivalent to AdvanceNextUnfilteredToken().
@@ -1188,60 +1463,25 @@ void TreeUnwrapper::Visit(const verible::SyntaxTreeLeaf& leaf) {
   // up to a newline.
   LookAheadBeyondCurrentLeaf();
 
+  VLOG(4) << "before reshaping " << VerboseToken(leaf.get()) << ":\n"
+          << partition;
+
   // Post-token-handling token partition adjustments:
   switch (leaf.Tag().tag) {
-    case verilog_tokentype::MacroIdItem: {
-      if (absl::StartsWith(leaf.get().text, "`uvm_") &&
-          absl::EndsWith(leaf.get().text, "_end")) {
-        // Indent elements between UVM begin/end macro calls
-        unsigned int uvm_level = 1;
-        std::vector<verible::TokenPartitionTree*> uvm_range;
-
-        // Search backwards for matching _begin.
-        for (auto* itr = CurrentTokenPartition()->PreviousSibling(); itr;
-             itr = itr->PreviousSibling()) {
-          const auto macroId = itr->Value().TokensRange().begin()->Text();
-
-          // Indent only uvm macros
-          if (!absl::StartsWith(macroId, "`uvm_")) {
-            continue;
-          }
-
-          // Count uvm indentation level
-          if (absl::EndsWith(macroId, "_end")) {
-            uvm_level++;
-          } else if (absl::EndsWith(macroId, "_begin")) {
-            uvm_level--;
-          }
-
-          // Break before indenting matching _begin macro
-          if (uvm_level == 0) {
-            break;
-          }
-
-          uvm_range.push_back(itr);
-        }
-
-        // Found matching _begin-_end macros
-        if ((uvm_level == 0) && !uvm_range.empty()) {
-          for (auto* itr : uvm_range) {
-            // Indent uvm macros inside `uvm.*begin - `uvm.*end
-            itr->ApplyPreOrder([&](verible::UnwrappedLine& line) {
-              line.SetIndentationSpaces(line.IndentationSpaces() +
-                                        style_.indentation_spaces);
-            });
-          }
-        }
-      }
-      break;
-    }
     case ',': {
       // In many cases (in particular lists), we want to attach delimiters like
       // ',' to the item that preceded it (on its rightmost leaf).
       // This adjustment is necessary for lists of element types that beget
       // their own indented sections.
+      //
+      // TODO(fangism): See also AttachTrailingSemicolonToPreviousPartition().
+      // There should be one consistent way of attaching trailing delimiters.
+      // Pick one, even if both work.
       if (current_context_.DirectParentIsOneOf({
               // NodeEnum:xxxx                             // due to element:
+              NodeEnum::kPortDeclarationList,  // kPort, kPortDeclaration
+              NodeEnum::kPortActualList,       // kActualNamedPort,
+                                               // kActualPositionalPort
               NodeEnum::kGateInstanceRegisterVariableList,  // kGateInstance,
                                                             // kRegisterVariable
               NodeEnum::kVariableDeclarationAssignmentList  // due to element:
@@ -1251,6 +1491,14 @@ void TreeUnwrapper::Visit(const verible::SyntaxTreeLeaf& leaf) {
       } else if (CurrentUnwrappedLine().Size() == 1) {
         // Partition would begin with a comma,
         // instead add this token to previous partition
+        MergeLastTwoPartitions();
+      }
+      break;
+    }
+    case verilog_tokentype::SemicolonEndOfAssertionVariableDeclarations: {
+      // is a ';'
+      if (current_context_.DirectParentIs(
+              NodeEnum::kAssertionVariableDeclarationList)) {
         MergeLastTwoPartitions();
       }
       break;
@@ -1270,13 +1518,13 @@ void TreeUnwrapper::Visit(const verible::SyntaxTreeLeaf& leaf) {
 
 // Specialized node visitors
 
-void TreeUnwrapper::VisitNewUnwrappedLine(const verible::SyntaxTreeNode& node) {
+void TreeUnwrapper::VisitNewUnwrappedLine(const SyntaxTreeNode& node) {
   StartNewUnwrappedLine(PartitionPolicyEnum::kFitOnLineElseExpand);
   TraverseChildren(node);
 }
 
 void TreeUnwrapper::VisitNewUnindentedUnwrappedLine(
-    const verible::SyntaxTreeNode& node) {
+    const SyntaxTreeNode& node) {
   StartNewUnwrappedLine(PartitionPolicyEnum::kFitOnLineElseExpand);
   // Force the current line to be unindented without losing track of where
   // the current indentation level is for children.

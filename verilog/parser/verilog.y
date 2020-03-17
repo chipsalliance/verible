@@ -1163,11 +1163,11 @@ class_items
   ;
 
 class_constructor_prototype
-  : TK_function TK_new '(' tf_port_list_opt ')'
-    { $$ = MakeTaggedNode(N::kClassConstructorPrototype, $1, $2,
-                          MakeParenGroup($3, $4, $5));  }
-  | TK_function TK_new
-    { $$ = MakeTaggedNode(N::kClassConstructorPrototype, $1, $2, nullptr);  }
+  : TK_function TK_new tf_port_list_paren_opt
+    { $$ = MakeTaggedNode(N::kClassConstructorPrototype, $1, $2, $3); }
+  /* users of this rule may append a trailing ';' to this node
+   * TODO(fangism): move the ';' into this rule
+   */
   ;
 
 class_constructor
@@ -1259,16 +1259,16 @@ class_item
   | TK_pure TK_virtual class_item_qualifier_list_opt method_prototype ';'
    { $$ = MakeTaggedNode(N::kForwardDeclaration,
                         MakeTaggedNode(N::kQualifierList, $1, $2, ForwardChildren($3)),
-                        $4, $5); }
+                        ExtendNode($4, $5)); }
   /* forward declarations (excludes definition body): */
   | TK_extern method_qualifier_list_opt method_prototype ';'
      { $$ = MakeTaggedNode(N::kForwardDeclaration,
                         MakeTaggedNode(N::kQualifierList, $1, ForwardChildren($2)),
-                        $3, $4); }
+                        ExtendNode($3, $4)); }
   | TK_extern method_qualifier_list_opt class_constructor_prototype ';'
      { $$ = MakeTaggedNode(N::kForwardDeclaration,
                         MakeTaggedNode(N::kQualifierList, $1, ForwardChildren($2)),
-                        $3, $4); }
+                        ExtendNode($3, $4)); }
   | class_declaration
     { $$ = move($1); }
   | interface_class_declaration
@@ -2257,34 +2257,31 @@ for_step
   | assignment_statement
     { $$ = MakeTaggedNode(N::kForStepList, $1); }
   ;
+/* LRM: this is named for_step_assignment */
 assignment_statement
   : assignment_statement_no_expr
     { $$ = move($1); }
   | inc_or_dec_expression
-    { $$ = MakeTaggedNode(N::kAssignmentStatement, $1); }
+    { $$ = move($1); }
+  /* TODO(b/150645241): function_subroutine_call */
   ;
 assignment_statement_no_expr
   : lpvalue '=' expression
-    { $$ = MakeTaggedNode(N::kAssignmentStatement, $1, $2, $3); }
+    { $$ = MakeTaggedNode(N::kNetVariableAssignment, $1, $2, $3); }
   | assign_modify_statement
     { $$ = move($1); }
   ;
 
 function_prototype
   /* TODO(fangism): can this be structured like FunctionHeader? */
+  /* users of this rule may append a trailing ';' */
   : TK_function lifetime_opt
     /* data_type_or_implicit_or_void GenericIdentifier */
     data_type_or_implicit_basic_followed_by_id_and_dimensions_opt
-    '(' tf_port_list_opt ')'
-    { $$ = MakeTaggedNode(N::kFunctionPrototype, nullptr, $1, $2, $3,
-                          MakeParenGroup($4, $5, $6)); }
-  | TK_function lifetime_opt
-    data_type_or_implicit_basic_followed_by_id_and_dimensions_opt
-    { $$ = MakeTaggedNode(N::kFunctionPrototype, qualifier_placeholder,
-                          $1, $2, $3); }
-
-
-    /* No port list, suitable for export declarations. */
+    tf_port_list_paren_opt
+    { $$ = MakeTaggedNode(N::kFunctionPrototype,
+                          qualifier_placeholder, $1, $2, $3, $4); }
+    /* Without port list, is suitable for export declarations. */
   ;
 
 function_return_type_and_id
@@ -3137,6 +3134,7 @@ slice_size
   ;
 task_prototype
   : TK_task lifetime_opt GenericIdentifier tf_port_list_paren_opt
+  /* users of this rule may append a trailing ';' */
     { $$ = MakeTaggedNode(N::kTaskPrototype, qualifier_placeholder,
                           $1, $2, $3, $4); }
 
@@ -3664,17 +3662,16 @@ charge_strength_opt
     { $$ = nullptr; }
   ;
 
-/* TODO(fangism): rename to defparam_assignment for consistency with LRM */
 defparam_assign
   : reference '=' expression
-    { $$ = MakeTaggedNode(N::kAssignmentStatement, $1, $2, $3); }
+    { $$ = MakeTaggedNode(N::kDefParamAssignment, $1, $2, $3); }
   ;
 defparam_assign_list
   : defparam_assign
-    { $$ = MakeTaggedNode(N::kDefParamAssignList, nullptr, $1); }
+    { $$ = MakeTaggedNode(N::kDefParamAssignmentList, nullptr, $1); }
   /* TODO(fangism): The following doesn't seem valid, so remove it. */
   | decl_dimensions defparam_assign
-    { $$ = MakeTaggedNode(N::kDefParamAssignList,
+    { $$ = MakeTaggedNode(N::kDefParamAssignmentList,
                           MakeUnpackedDimensionsNode($1),
                           $2); }
   | defparam_assign_list ',' defparam_assign
@@ -4970,13 +4967,17 @@ list_of_module_item_identifiers
 list_of_port_identifiers
   /* TODO(fangism): This probably needs decl_dimensions_opt after identifiers. */
   : GenericIdentifier
-    { $$ = MakeTaggedNode(N::kPortIdentifierList, $1); }
+    { $$ = MakeTaggedNode(N::kPortIdentifierList,
+                          MakeTaggedNode(N::kPortIdentifier, $1)); }
   | GenericIdentifier '=' expression
-    { $$ = MakeTaggedNode(N::kPortIdentifierList, $1, $2, $3); }
+    /* port identifier with '=' default value */
+    { $$ = MakeTaggedNode(N::kPortIdentifierList,
+                          MakeTaggedNode(N::kPortIdentifier, $1, $2, $3)); }
   | list_of_port_identifiers ',' GenericIdentifier
-    { $$ = ExtendNode($1, $2, $3); }
+    { $$ = ExtendNode($1, $2, MakeTaggedNode(N::kPortIdentifier, $3)); }
   | list_of_port_identifiers ',' GenericIdentifier '=' expression
-    { $$ = ExtendNode($1, $2, MakeTaggedNode(N::kAssignmentStatement, $3, $4, $5)); }
+    /* port identifier with '=' default value */
+    { $$ = ExtendNode($1, $2, MakeTaggedNode(N::kPortIdentifier, $3, $4, $5)); }
   ;
 
 identifier_opt
@@ -5177,7 +5178,7 @@ lpvalue
   ;
 cont_assign
   : lpvalue '=' expression
-    { $$ = MakeTaggedNode(N::kContinuousAssignmentStatement, $1, $2, $3); }
+    { $$ = MakeTaggedNode(N::kNetVariableAssignment, $1, $2, $3); }
 
   // FIXME: allow just lpvalue to permit just reference for MacroCall
   ;
@@ -5474,10 +5475,11 @@ generate_region
 
 continuous_assign
   : TK_assign drive_strength_opt delay3_opt cont_assign_list ';'
-    { $$ = MakeTaggedNode(N::kContinuousAssign, $1, $2, $3, $4, $5); }
+    { $$ = MakeTaggedNode(N::kContinuousAssignmentStatement, $1, $2, $3, $4, $5); }
   /* Allowed the following because they have been observed in practice: */
   | TK_assign drive_strength_opt delay3_opt macro_call_or_item
-    { $$ = MakeTaggedNode(N::kContinuousAssign, $1, $2, $3, $4, nullptr); }
+    { $$ = MakeTaggedNode(N::kContinuousAssignmentStatement, $1, $2, $3, $4, nullptr); }
+  /* TODO(fangism): shape kContinuousAssignmentStatement consistently */
   ;
 
 net_alias_assign_lvalue_list
@@ -6545,6 +6547,7 @@ case_any
   ;
 
 blocking_assignment
+  /* TODO(fangism): structure kBlockingAssignmentStatement consistently */
   : lpvalue '=' delay_or_event_control expression ';'
     { $$ = MakeTaggedNode(N::kBlockingAssignmentStatement, $1, $2, $3, $4, $5); }
   | lpvalue '=' dynamic_array_new ';'
@@ -6554,6 +6557,7 @@ blocking_assignment
   ;
 
 nonblocking_assignment
+  /* TODO(fangism): structure kNonblockingAssignmentStatement consistently */
   : lpvalue TK_LE delay_or_event_control_opt expression ';'
     { $$ = MakeTaggedNode(N::kNonblockingAssignmentStatement, $1, $2, $3, $4, $5); }
     /* This rule overlaps with clocking_drive. */
@@ -6565,14 +6569,18 @@ clocking_drive_only
 
 procedural_continuous_assignment
   : TK_assign lpvalue '=' expression ';'
-    { $$ = MakeTaggedNode(N::kContinuousAssignmentStatement, $1, $2, $3, $4, $5); }
+    { $$ = MakeTaggedNode(N::kContinuousAssignmentStatement, $1,
+                          MakeTaggedNode(N::kNetVariableAssignment, $2, $3, $4),
+                          $5); }
   | TK_assign macro_call_or_item
     { $$ = MakeTaggedNode(N::kContinuousAssignmentStatement, $1, $2); }
     /* allowed because this has been observed in practice */
   | TK_deassign lpvalue ';'
     { $$ = MakeTaggedNode(N::kContinuousAssignmentStatement, $1, $2, $3); }
   | TK_force lpvalue '=' expression ';'
-    { $$ = MakeTaggedNode(N::kContinuousAssignmentStatement, $1, $2, $3, $4, $5); }
+    { $$ = MakeTaggedNode(N::kContinuousAssignmentStatement, $1,
+                          MakeTaggedNode(N::kNetVariableAssignment, $2, $3, $4),
+                          $5); }
   | TK_release lpvalue ';'
     { $$ = MakeTaggedNode(N::kContinuousAssignmentStatement, $1, $2, $3); }
   ;
@@ -6648,6 +6656,7 @@ par_block
     /* merged: block_item_decls_opt statement_or_null_list_opt */
     block_item_or_statement_or_null_list_opt
     join_keyword label_opt
+    /* TODO(fangism): pair ($1,$2) and ($4,$5) together, like kBegin,kEnd */
     { $$ = MakeTaggedNode(N::kParBlock, $1, $2, $3, $4, $5); }
   ;
 
@@ -6690,6 +6699,7 @@ statement_item
   | assignment_statement ';'
     { $$ = ExtendNode($1, $2); }
     /* includes inc_or_dec_expression */
+    /* TODO(fangism): expand this from for_step_assignment */
   | disable_statement
     { $$ = move($1); }
   | event_trigger

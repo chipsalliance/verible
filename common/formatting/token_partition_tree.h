@@ -93,12 +93,6 @@ void AdjustIndentationAbsolute(TokenPartitionTree* tree, int amount);
 // Merges the two subpartitions of tree at index pos and pos+1.
 void MergeConsecutiveSiblings(TokenPartitionTree* tree, size_t pos);
 
-// Moves the rightmost leaf to the leaf partition that precedes it.
-// Returns the parent of the leaf partition that was moved if the move
-// occurred, else nullptr.
-// DEPRECATED, soon to be replaced by the following MergeLeaf* functions.
-TokenPartitionTree* MoveLastLeafIntoPreviousSibling(TokenPartitionTree*);
-
 // Merges this leaf into the leaf partition that preceded it, which could be
 // a distant relative.  The leaf is destroyed in the process.
 // The destination partition retains its indentation level and partition

@@ -3582,7 +3582,8 @@ static const std::initializer_list<FormatterTestCase>
          "  task static t;\n"
          "    if (r == t) a.b(c);\n"
          "    else d.e(f);\n"
-         "  endtask;\n"
+         "  endtask\n"
+         "  ;\n"  // possibly unintended stray ';'
          "endmodule\n"},
         {"module m;"
          "task static t; if (r == t) begin a.b(c); end else begin d.e(f); end "
@@ -3595,7 +3596,8 @@ static const std::initializer_list<FormatterTestCase>
          "    end else begin\n"
          "      d.e(f);\n"
          "    end\n"
-         "  endtask;\n"
+         "  endtask\n"
+         "  ;\n"  // stray ';'
          "endmodule\n"},
         {"module m;initial begin if(a==b)"
          "c.d(e);else\n"

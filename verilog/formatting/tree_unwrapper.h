@@ -20,6 +20,7 @@
 
 #include "common/formatting/basic_format_style.h"
 #include "common/formatting/format_token.h"
+#include "common/formatting/token_partition_tree.h"
 #include "common/formatting/tree_unwrapper.h"
 #include "common/text/concrete_syntax_leaf.h"
 #include "common/text/concrete_syntax_tree.h"
@@ -91,7 +92,11 @@ class TreeUnwrapper : public verible::TreeUnwrapper {
   void Visit(const verible::SyntaxTreeNode& node) override;
 
   void SetIndentationsAndCreatePartitions(const verible::SyntaxTreeNode& node);
-  void ReshapeTokenPartitions(const verible::SyntaxTreeNode& node);
+
+  static void ReshapeTokenPartitions(
+      const verible::SyntaxTreeNode& node,
+      const verible::BasicFormatStyle& style,
+      verible::TokenPartitionTree* recent_partition);
 
   // Visits a node which requires a new UnwrappedLine, followed by
   // traversing all children
@@ -116,8 +121,6 @@ class TreeUnwrapper : public verible::TreeUnwrapper {
   // This should only be called directly from CatchUpToCurrentLeaf and
   // LookAheadBeyondCurrentLeaf.
   void AdvanceLastVisitedLeaf();
-
-  void AttachTrailingSemicolonToPreviousPartition();
 
   // For print debugging.
   verible::TokenWithContext VerboseToken(const verible::TokenInfo&) const;

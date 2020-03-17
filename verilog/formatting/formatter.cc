@@ -238,7 +238,9 @@ static void DeterminePartitionExpansion(partition_node_type* node,
       break;
     }
     case PartitionPolicyEnum::kAlwaysExpand: {
-      node_view.Expand();
+      if (children.size() > 1) {
+        node_view.Expand();
+      }
       break;
     }
     case PartitionPolicyEnum::kFitOnLineElseExpand: {
