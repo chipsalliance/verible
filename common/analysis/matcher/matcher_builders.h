@@ -28,6 +28,12 @@
 namespace verible {
 namespace matcher {
 
+// Basic information about tree matchers can be found in:
+//   common/analysis/matcher/matcher.h
+//
+// This file provides utilities for programmatically constructing
+// higher-level matchers.
+
 // Collections of symbol predicates used by Matcher builders.
 // Some of these are parameterized with template arguments, other are
 // parameterized as functors
@@ -105,10 +111,10 @@ PathMatchBuilder<N> MakePathMatcher(const SymbolTag (&path)[N]) {
   return PathMatchBuilder<N>(path);
 }
 
-// TagMatcherBuilder is a Matcher generator that is parameterized over
+// TagMatchBuilder is a Matcher generator that is parameterized over
 // Kind and Tag.
 //
-// Note: TagMatcherBuilder has trivial destructor, so it is fit for const
+// Note: TagMatchBuilder has trivial destructor, so it is fit for const
 //       declarations at a global scope.
 //
 // The generated matcher will match when the examined symbol has equal Kind and
@@ -134,6 +140,41 @@ class TagMatchBuilder {
     matcher.AddMatchers(std::forward<Args>(args)...);
     return matcher;
   }
+};
+
+// DynamicTagMatchBuilder is a Matcher generator that takes a Kind and Tag
+// at run time.
+//
+// Note: DynamicTagMatchBuilder has trivial destructor, so it is fit for
+//       const declarations at a global scope.
+//
+// The generated matcher will match when the examined symbol has equal Kind and
+// Equal tag and when that symbol also matches all inner matchers.
+//
+// Generated matcher implements the Bind interface. The bound symbols are
+// the matched node.
+//
+// Usage:
+// TagMatcherBuilder Node1(SymbolTag{SymbolKind::kNode, kNodeEnum});
+// auto matcher = SomeOutMatcher(Node1(...inner matchers...));
+// matcher.Matches(some_tree);
+//
+// TODO(fangism): Make this a degenerate case of PathMatchBuilder<1>.
+class DynamicTagMatchBuilder {
+ public:
+  // tag is a combination of {node,leaf} and enumeration.
+  DynamicTagMatchBuilder(SymbolTag tag) : tag_(tag) {}
+
+  template <typename... Args>
+  BindableMatcher operator()(Args... args) const {
+    BindableMatcher matcher([this](const Symbol& s) { return s.Tag() == tag_; },
+                            InnerMatchAll);
+    matcher.AddMatchers(std::forward<Args>(args)...);
+    return matcher;
+  }
+
+ private:
+  SymbolTag tag_;
 };
 
 }  // namespace matcher

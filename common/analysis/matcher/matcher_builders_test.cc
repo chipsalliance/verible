@@ -33,6 +33,9 @@ namespace {
 const TagMatchBuilder<SymbolKind::kNode, int, 5> Node5;
 const TagMatchBuilder<SymbolKind::kNode, int, 1> Node1;
 const TagMatchBuilder<SymbolKind::kLeaf, int, 1> Leaf1;
+const DynamicTagMatchBuilder DNode5{SymbolTag{SymbolKind::kNode, 5}};
+const DynamicTagMatchBuilder DNode1{SymbolTag{SymbolKind::kNode, 1}};
+const DynamicTagMatchBuilder DLeaf1{SymbolTag{SymbolKind::kLeaf, 1}};
 const auto Path543 = MakePathMatcher({NodeTag(3), NodeTag(4), LeafTag(10)});
 const auto PathNode1 = MakePathMatcher({NodeTag(1)});
 const auto PathLeaf1 = MakePathMatcher({LeafTag(1)});
@@ -96,6 +99,72 @@ TEST(MatcherBuildersTest, MatcherTestCases) {
        {{"node1", NodeTag(1)}}},
       // Repeated traversal to downward to leaves should fail
       {Node5(PathLeaf1(PathLeaf1())), TNode(5, XLeaf(1), XLeaf(1)), false, {}},
+  };
+
+  for (const auto& test_case : test_cases) {
+    RunMatcherTestCase(test_case);
+  }
+}
+
+TEST(MatcherBuildersTest, DynamicMatcherTestCases) {
+  const MatcherTestCase test_cases[] = {
+      // Test cases with embedded nulls in structure
+      {DNode5(), TNode(5, nullptr), true, {}},
+      {DNode5().Bind("foo"), TNode(5, nullptr), true, {{"foo", NodeTag(5)}}},
+      {DNode5(), TNode(6, nullptr), false, {}},
+      {DNode5(PathNode1()), TNode(5, nullptr, TNode(1, nullptr)), true, {}},
+      {DNode5(PathNode1()), TNode(5, nullptr, TNode(4, nullptr)), false, {}},
+      {DNode5(PathNode1(DNode1(PathNode1(DNode1())))),
+       TNode(5, nullptr, TNode(1, nullptr)),
+       false,
+       {}},
+      {DNode5(Path543().Bind("inner")).Bind("outer"),
+       TNode(5, nullptr, TNode(3, nullptr, TNode(4, nullptr, XLeaf(10)))),
+       true,
+       {{"inner", LeafTag(10)}, {"outer", NodeTag(5)}}},
+
+      {DNode5(), TNode(5), true, {}},
+      {DNode5().Bind("foo"), TNode(5), true, {{"foo", NodeTag(5)}}},
+      {DNode5(), TNode(6), false, {}},
+      {DNode5(Path543().Bind("inner")).Bind("outer"),
+       TNode(5, TNode(3, TNode(4, XLeaf(10)))),
+       true,
+       {{"inner", LeafTag(10)}, {"outer", NodeTag(5)}}},
+      {DNode5(Path543().Bind("inner")).Bind("outer"),
+       TNode(6, TNode(3, TNode(4, XLeaf(10)))),
+       false,
+       {}},
+      {DNode5(PathNode1()), TNode(5, TNode(1)), true, {}},
+      {DNode5(PathNode1()), TNode(5, TNode(4)), false, {}},
+      {DNode5(PathNode1(DNode1(PathNode1(DNode1())))),
+       TNode(5, TNode(1)),
+       false,
+       {}},
+      // Complicated nested statement
+      {DNode5(PathNode1(DNode1(PathNode1(DNode1())))),
+       TNode(5, TNode(1, TNode(1))),
+       true,
+       {}},
+      // A complicated nested statement with many binds
+      {DNode5(PathNode1(DNode1(PathLeaf1(DLeaf1().Bind("leaf1")).Bind("pleaf1"))
+                            .Bind("node1"))
+                  .Bind("pnode1"))
+           .Bind("node5"),
+       TNode(5, TNode(1, XLeaf(1))),
+       true,
+       {{"node5", NodeTag(5)},
+        {"leaf1", LeafTag(1)},
+        {"pleaf1", LeafTag(1)},
+        {"node1", NodeTag(1)},
+        {"pnode1", NodeTag(1)}}},
+      // TODO(jeremycs): update this when we add branching
+      // Examines simple branching behavior
+      {DNode5(PathNode1().Bind("node1")),
+       TNode(5, TNode(1), TNode(1)),
+       true,
+       {{"node1", NodeTag(1)}}},
+      // Repeated traversal to downward to leaves should fail
+      {DNode5(PathLeaf1(PathLeaf1())), TNode(5, XLeaf(1), XLeaf(1)), false, {}},
   };
 
   for (const auto& test_case : test_cases) {
