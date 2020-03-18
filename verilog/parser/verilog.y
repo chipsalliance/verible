@@ -6569,20 +6569,20 @@ clocking_drive_only
 
 procedural_continuous_assignment
   : TK_assign lpvalue '=' expression ';'
-    { $$ = MakeTaggedNode(N::kContinuousAssignmentStatement, $1,
+    { $$ = MakeTaggedNode(N::kProceduralContinuousAssignmentStatement, $1,
                           MakeTaggedNode(N::kNetVariableAssignment, $2, $3, $4),
                           $5); }
   | TK_assign macro_call_or_item
-    { $$ = MakeTaggedNode(N::kContinuousAssignmentStatement, $1, $2); }
+    { $$ = MakeTaggedNode(N::kProceduralContinuousAssignmentStatement, $1, $2); }
     /* allowed because this has been observed in practice */
   | TK_deassign lpvalue ';'
-    { $$ = MakeTaggedNode(N::kContinuousAssignmentStatement, $1, $2, $3); }
+    { $$ = MakeTaggedNode(N::kProceduralContinuousDeassignmentStatement, $1, $2, $3); }
   | TK_force lpvalue '=' expression ';'
-    { $$ = MakeTaggedNode(N::kContinuousAssignmentStatement, $1,
+    { $$ = MakeTaggedNode(N::kProceduralContinuousForceStatement, $1,
                           MakeTaggedNode(N::kNetVariableAssignment, $2, $3, $4),
                           $5); }
   | TK_release lpvalue ';'
-    { $$ = MakeTaggedNode(N::kContinuousAssignmentStatement, $1, $2, $3); }
+    { $$ = MakeTaggedNode(N::kProceduralContinuousReleaseStatement, $1, $2, $3); }
   ;
 
 case_statement

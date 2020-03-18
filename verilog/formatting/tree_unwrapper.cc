@@ -743,6 +743,11 @@ void TreeUnwrapper::SetIndentationsAndCreatePartitions(
     case NodeEnum::kWaitStatement:                   // wait(expr) ...
     case NodeEnum::kAssertionStatement:              // assert(expr);
     case NodeEnum::kContinuousAssignmentStatement:   // e.g. assign x=y;
+    case NodeEnum::kProceduralContinuousAssignmentStatement:  // e.g. assign
+                                                              // x=y;
+    case NodeEnum::kProceduralContinuousDeassignmentStatement:
+    case NodeEnum::kProceduralContinuousForceStatement:
+    case NodeEnum::kProceduralContinuousReleaseStatement:
     case NodeEnum::kNetVariableAssignment:           // e.g. x=y
     case NodeEnum::kBlockingAssignmentStatement:     // id=expr
     case NodeEnum::kNonblockingAssignmentStatement:  // dest <= src;
@@ -1286,6 +1291,8 @@ void TreeUnwrapper::ReshapeTokenPartitions(
       }
       break;
     }
+    case NodeEnum::kProceduralContinuousAssignmentStatement:
+    case NodeEnum::kProceduralContinuousForceStatement:
     case NodeEnum::kContinuousAssignmentStatement: {  // e.g. assign a=0, b=2;
       partition.FlattenOnlyChildrenWithChildren();
       VLOG(4) << "after flatten:\n" << partition;

@@ -2049,6 +2049,40 @@ static const std::initializer_list<FormatterTestCase> kFormatterTestCases = {
      "    assign a = 1;\n"
      "  end\n"
      "endmodule\n"},
+    {"module proc_cont_assigner;\n"
+     "always begin\n"
+     "assign x1 =   y1;\n"
+     "deassign   x2 ;\n"
+     "force x3=y3;\n"
+     "release   x4 ;\n"
+     "end\n"
+     "endmodule\n",
+     "module proc_cont_assigner;\n"
+     "  always begin\n"
+     "    assign x1 = y1;\n"
+     "    deassign x2;\n"
+     "    force x3 = y3;\n"
+     "    release x4;\n"
+     "  end\n"
+     "endmodule\n"},
+    {"module g_test(  );\n"
+     "\tinitial begin:main_test \t"
+     "for(int i=0;i<k;i++)begin "
+     "case(i )\n"
+     " 6'd0  :release in[0];  \n"
+     "   endcase  "
+     " \t\tend \t"
+     "\t end:main_test\n"
+     "endmodule:g_test\n",
+     "module g_test ();\n"
+     "  initial begin : main_test\n"
+     "    for (int i = 0; i < k; i++) begin\n"
+     "      case (i)\n"
+     "        6'd0: release in[0];\n"
+     "      endcase\n"
+     "    end\n"
+     "  end : main_test\n"
+     "endmodule : g_test\n"},
     {// conditional generate (case)
      "module mc; case(s)a : bb c ; d : ee f; endcase endmodule",
      "module mc;\n"

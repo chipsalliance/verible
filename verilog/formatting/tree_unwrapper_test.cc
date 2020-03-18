@@ -1758,6 +1758,90 @@ const TreeUnwrapperTestData kUnwrapModuleTestCases[] = {
     },
 
     {
+        "module with pair of procedural continuous assignment statements",
+        "module proc_cont_assigner;\n"
+        "always begin\n"
+        "assign x1 = y1;\n"
+        "assign x2 = y2;\n"
+        "end\n"
+        "endmodule\n",
+        ModuleDeclaration(0, L(0, {"module", "proc_cont_assigner", ";"}),
+                          N(1, L(1, {"always", "begin"}),
+                            N(2, L(2, {"assign", "x1", "=", "y1", ";"}),
+                              L(2, {"assign", "x2", "=", "y2", ";"})),
+                            L(1, {"end"})),
+                          L(0, {"endmodule"})),
+    },
+
+    {
+        "module with pair of procedural continuous force statements",
+        "module proc_cont_forcer;\n"
+        "always begin\n"
+        "force x1 = y1;\n"
+        "force x2 = y2;\n"
+        "end\n"
+        "endmodule\n",
+        ModuleDeclaration(0, L(0, {"module", "proc_cont_forcer", ";"}),
+                          N(1, L(1, {"always", "begin"}),
+                            N(2, L(2, {"force", "x1", "=", "y1", ";"}),
+                              L(2, {"force", "x2", "=", "y2", ";"})),
+                            L(1, {"end"})),
+                          L(0, {"endmodule"})),
+    },
+
+    {
+        "module with pair of procedural continuous de-assignment statements",
+        "module proc_cont_deassigner;\n"
+        "always begin\n"
+        "deassign x1 ;\n"
+        "deassign x2 ;\n"
+        "end\n"
+        "endmodule\n",
+        ModuleDeclaration(0, L(0, {"module", "proc_cont_deassigner", ";"}),
+                          N(1, L(1, {"always", "begin"}),
+                            N(2, L(2, {"deassign", "x1", ";"}),
+                              L(2, {"deassign", "x2", ";"})),
+                            L(1, {"end"})),
+                          L(0, {"endmodule"})),
+    },
+
+    {
+        "module with pair of procedural continuous release statements",
+        "module proc_cont_releaser;\n"
+        "always begin\n"
+        "release x1 ;\n"
+        "release x2 ;\n"
+        "end\n"
+        "endmodule\n",
+        ModuleDeclaration(
+            0, L(0, {"module", "proc_cont_releaser", ";"}),
+            N(1, L(1, {"always", "begin"}),
+              N(2, L(2, {"release", "x1", ";"}), L(2, {"release", "x2", ";"})),
+              L(1, {"end"})),
+            L(0, {"endmodule"})),
+    },
+
+    {
+        "module with various procedural continuous assignment statements",
+        "module proc_cont_assigner;\n"
+        "always begin\n"
+        "assign x1 = y1;\n"
+        "deassign x2;\n"
+        "force x3 = y3;\n"
+        "release x4;\n"
+        "end\n"
+        "endmodule\n",
+        ModuleDeclaration(0, L(0, {"module", "proc_cont_assigner", ";"}),
+                          N(1, L(1, {"always", "begin"}),
+                            N(2, L(2, {"assign", "x1", "=", "y1", ";"}),
+                              L(2, {"deassign", "x2", ";"}),
+                              L(2, {"force", "x3", "=", "y3", ";"}),
+                              L(2, {"release", "x4", ";"})),
+                            L(1, {"end"})),
+                          L(0, {"endmodule"})),
+    },
+
+    {
         "module using disable statements labelled begin.",
         "module disable_self;\n"
         "  always begin : block\n"
