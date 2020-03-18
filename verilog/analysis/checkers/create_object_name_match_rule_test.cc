@@ -110,6 +110,16 @@ TEST(CreateObjectNameMatchTest, FunctionFailures) {
        "for (int i = 0; i<N; ++i)\n"
        "  foo_h[i] = foo::type_id::create($sformat(\"asdf_%d\", i)); "
        "endfunction endclass"},  // array assignments are not checked
+      {"class crash2;\n"
+       "  virtual function void a();\n"
+       "    abc = foo::type_id::create(xyz);\n"
+       "  endfunction\n"
+       "endclass\n"}, // non string literal - not verified
+      {"class c;\n"
+       "  virtual function void g();\n"
+       "    foo = s::type_id::create(l(\"bar\"));\n"
+       "  endfunction\n"
+       "endclass\n"}, // non string literal - not verified
   };
 
   RunLintTestCases<VerilogAnalyzer, CreateObjectNameMatchRule>(kTestCases);
