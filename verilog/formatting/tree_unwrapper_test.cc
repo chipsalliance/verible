@@ -2919,6 +2919,11 @@ const TreeUnwrapperTestData kDescriptionTestCases[] = {
         L(0, {"a", ";"}),
     },
     {
+        "implicit-type data declaration, singleton, with var keyword",
+        "\t var a;",
+        L(0, {"var", "a", ";"}),
+    },
+    {
         "two implicit-type data declaration",
         "a;b;",
         L(0, {"a", ";"}),
@@ -2930,6 +2935,15 @@ const TreeUnwrapperTestData kDescriptionTestCases[] = {
         DataDeclaration(0,                 //
                         L(0, {"a", ","}),  //
                         L(0, {"b", ";"})),
+    },
+    {
+        "implicit-type data declaration, two variables, with var keyword",
+        "var a,b;",
+        DataDeclaration(0,                   //
+                        L(0, {"var"}),       //
+                        N(2,                 //
+                          L(2, {"a", ","}),  //
+                          L(2, {"b", ";"}))),
     },
     {
         "one bind declaration",
