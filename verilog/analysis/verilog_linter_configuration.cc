@@ -83,6 +83,63 @@ std::string ProjectPolicy::ListPathGlobs() const {
                        });
 }
 
+bool RuleBundle::ParseConfiguration(absl::string_view text,
+                                    std::string* error) {
+  // Clear the vector to overwrite any existing value.
+  rules.clear();
+
+  for (absl::string_view part :
+       absl::StrSplit(text, absl::ByAnyChar(",\n"), absl::SkipEmpty())) {
+    // If prefix is '-', the rule is disabled.
+    // Note that part is guaranteed to be at least one character because
+    // of absl::SkipEmpty()
+    const bool prefix_minus = (part[0] == '-');
+
+    RuleSetting setting = {!prefix_minus, ""};
+
+    const auto rule_name_with_config = part.substr(prefix_minus ? 1 : 0);
+
+    // Independent of the enabled-ness: extract a configuration string
+    // if there is any assignment.
+    const auto equals_pos = rule_name_with_config.find('=');
+    if (equals_pos != absl::string_view::npos) {
+      const auto config = rule_name_with_config.substr(equals_pos + 1);
+      setting.configuration.assign(config.data(), config.size());
+    }
+    const auto rule_name = rule_name_with_config.substr(0, equals_pos);
+    const auto rule_name_set = analysis::GetAllRegisteredLintRuleNames();
+    const auto rule_iter = rule_name_set.find(rule_name);
+
+    // Check if text is a valid lint rule.
+    if (rule_iter == rule_name_set.end()) {
+      *error = absl::StrCat("invalid flag \"", rule_name, "\"");
+      return false;
+    } else {
+      // Map keys must use canonical registered string_views for guaranteed
+      // lifetime, not just any string-equivalent copy.
+      rules[*rule_iter] = setting;
+    }
+  }
+
+  return true;
+}
+
+// Parse and unparse for RuleBundle (for commandlineflags)
+std::string RuleBundle::UnparseConfiguration(const char separator) const {
+  std::vector<std::string> switches;
+  for (const auto& rule : rules) {
+    switches.push_back(absl::StrCat(
+        // If rule is set off, prepend "-"
+        rule.second.enabled ? "" : "-", rule.first,
+        // If we have a configuration, append assignment.
+        rule.second.configuration.empty() ? "" : "=",
+        rule.second.configuration));
+  }
+  // Concatenates all of rules into text.
+  return absl::StrJoin(switches.rbegin(), switches.rend(),
+                       std::string(1, separator));
+}
+
 bool LinterConfiguration::RuleIsOn(const analysis::LintRuleId& rule) const {
   const auto* entry = FindOrNull(configuration_, rule);
   if (entry == nullptr) return false;
@@ -245,59 +302,13 @@ bool AbslParseFlag(absl::string_view text, RuleSet* rules, std::string* error) {
   return EnumMapParseFlag(*flag_map, text, rules, error);
 }
 
-// Parse and unparse for RuleBundle (for commandlineflags)
 std::string AbslUnparseFlag(const RuleBundle& bundle) {
-  std::vector<std::string> switches;
-  for (const auto& rule : bundle.rules) {
-    switches.push_back(absl::StrCat(
-        // If rule is set off, prepend "-"
-        rule.second.enabled ? "" : "-", rule.first,
-        // If we have a configuration, append assignment.
-        rule.second.configuration.empty() ? "" : "=",
-        rule.second.configuration));
-  }
-  // Concatenates all of rules into text.
-  return absl::StrJoin(switches.rbegin(), switches.rend(), ",");
+  return bundle.UnparseConfiguration(',');
 }
 
 bool AbslParseFlag(absl::string_view text, RuleBundle* bundle,
                    std::string* error) {
-  // Clear the vector to overwrite any existing value.
-  bundle->rules.clear();
-
-  for (absl::string_view part : absl::StrSplit(text, ',', absl::SkipEmpty())) {
-    // If prefix is '-', the rule is disabled.
-    // Note that part is guaranteed to be at least one character because
-    // of absl::SkipEmpty()
-    const bool prefix_minus = (part[0] == '-');
-
-    RuleSetting setting = {!prefix_minus, ""};
-
-    const auto rule_name_with_config = part.substr(prefix_minus ? 1 : 0);
-
-    // Independent of the enabled-ness: extract a configuration string
-    // if there is any assignment.
-    const auto equals_pos = rule_name_with_config.find('=');
-    if (equals_pos != absl::string_view::npos) {
-      const auto config = rule_name_with_config.substr(equals_pos + 1);
-      setting.configuration.assign(config.data(), config.size());
-    }
-    const auto rule_name = rule_name_with_config.substr(0, equals_pos);
-    const auto rule_name_set = analysis::GetAllRegisteredLintRuleNames();
-    const auto rule_iter = rule_name_set.find(rule_name);
-
-    // Check if text is a valid lint rule.
-    if (rule_iter == rule_name_set.end()) {
-      *error = absl::StrCat("invalid flag \"", rule_name, "\"");
-      return false;
-    } else {
-      // Map keys must use canonical registered string_views for guaranteed
-      // lifetime, not just any string-equivalent copy.
-      bundle->rules[*rule_iter] = setting;
-    }
-  }
-
-  return true;
+  return bundle->ParseConfiguration(text, error);
 }
 
 }  // namespace verilog

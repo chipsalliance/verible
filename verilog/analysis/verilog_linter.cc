@@ -55,6 +55,8 @@
 ABSL_FLAG(verilog::RuleBundle, rules, {},
           "List of lint rules to enable.  "
           "Prefix a rule name with '-' to disable it.");
+ABSL_FLAG(std::string, rules_config, ".rules.verible_lint",
+          "Path to lint rules configuration file.");
 ABSL_FLAG(verilog::RuleSet, ruleset, verilog::RuleSet::kDefault,
           "[default|all|none], the base set of rules used by linter");
 
@@ -209,6 +211,23 @@ LinterConfiguration LinterConfigurationFromFlags() {
   // Turn on default ruleset.
   const auto& ruleset = absl::GetFlag(FLAGS_ruleset);
   config.UseRuleSet(ruleset);
+
+  // Read local configuration file
+  std::string content;
+  if (verible::file::GetContents(absl::GetFlag(FLAGS_rules_config), &content)) {
+    RuleBundle local_rules_bundle;
+    std::string error;
+    if (local_rules_bundle.ParseConfiguration(content, &error)) {
+      config.UseRuleBundle(local_rules_bundle);
+    } else {
+      LOG(ERROR) << "Unable to fully parse configuration: " << error
+                 << std::endl;
+    }
+  } else if (FLAGS_rules_config.IsModified()) {
+    // If flag is modified and  we were unable to open the file, report that
+    LOG(WARNING) << "Unable to open rules configuration file: "
+                 << absl::GetFlag(FLAGS_rules_config) << std::endl;
+  }
 
   // Turn on rules found in config flags.
   const auto& rules = absl::GetFlag(FLAGS_rules);

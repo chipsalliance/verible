@@ -61,6 +61,8 @@ bool AbslParseFlag(absl::string_view text, RuleSet* rules, std::string* error);
 // equivalent) for the lifetime guarantee.
 struct RuleBundle {
   std::map<absl::string_view, RuleSetting> rules;
+  bool ParseConfiguration(absl::string_view text, std::string* error);
+  std::string UnparseConfiguration(const char separator) const;
 };
 
 // Pair of functions that perform stringification and destringification

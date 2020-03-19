@@ -586,38 +586,58 @@ TEST(RuleSetTest, UnparseRuleSetSuccess) {
 //
 TEST(RuleBundleTest, UnparseRuleBundleSeveral) {
   RuleBundle bundle = {{{"flag1", {true, ""}}, {"flag2", {true, ""}}}};
-  std::string expected = "flag2,flag1";
-  std::string result = AbslUnparseFlag(bundle);
-  EXPECT_EQ(result, expected);
+  std::string expected_comma = "flag2,flag1";
+  std::string expected_newline = "flag2\nflag1";
+
+  std::string result_comma = bundle.UnparseConfiguration(',');
+  EXPECT_EQ(result_comma, expected_comma);
+
+  std::string result_newline = bundle.UnparseConfiguration('\n');
+  EXPECT_EQ(result_newline, expected_newline);
 }
 
 TEST(RuleBundleTest, UnparseRuleBundleSeveralTurnOff) {
   RuleBundle bundle = {{{"flag1", {false, ""}}, {"flag2", {true, ""}}}};
-  std::string expected = "flag2,-flag1";
-  std::string result = AbslUnparseFlag(bundle);
-  EXPECT_EQ(result, expected);
+  std::string expected_comma = "flag2,-flag1";
+  std::string expected_newline = "flag2\n-flag1";
+
+  std::string result_comma = bundle.UnparseConfiguration(',');
+  EXPECT_EQ(result_comma, expected_comma);
+
+  std::string result_newline = bundle.UnparseConfiguration('\n');
+  EXPECT_EQ(result_newline, expected_newline);
 }
 
 TEST(RuleBundleTest, UnparseRuleBundleSeveralConfiguration) {
   RuleBundle bundle = {{{"flag1", {false, "foo"}}, {"flag2", {true, "bar"}}}};
-  std::string expected = "flag2=bar,-flag1=foo";
-  std::string result = AbslUnparseFlag(bundle);
-  EXPECT_EQ(result, expected);
+  std::string expected_comma = "flag2=bar,-flag1=foo";
+  std::string expected_newline = "flag2=bar\n-flag1=foo";
+
+  std::string result_comma = bundle.UnparseConfiguration(',');
+  EXPECT_EQ(result_comma, expected_comma);
+
+  std::string result_newline = bundle.UnparseConfiguration('\n');
+  EXPECT_EQ(result_newline, expected_newline);
 }
 
 TEST(RuleBundleTest, UnparseRuleBundleEmpty) {
   RuleBundle bundle = {};
   std::string expected = "";
-  std::string result = AbslUnparseFlag(bundle);
-  EXPECT_EQ(result, expected);
+
+  std::string result_comma = bundle.UnparseConfiguration(',');
+  EXPECT_EQ(result_comma, expected);
+
+  std::string result_newline = bundle.UnparseConfiguration('\n');
+  EXPECT_EQ(result_newline, expected);
 }
 
 TEST(RuleBundleTest, ParseRuleBundleEmpty) {
   std::string text = "";
   RuleBundle bundle;
   std::string error;
-  bool success = AbslParseFlag(text, &bundle, &error);
+  bool success = bundle.ParseConfiguration(text, &error);
   EXPECT_TRUE(success);
+  EXPECT_TRUE(error.empty());
   EXPECT_TRUE(bundle.rules.empty());
 }
 
@@ -625,9 +645,10 @@ TEST(RuleBundleTest, ParseRuleBundleAcceptSeveral) {
   std::string text = "test-rule-1,test-rule-2";
   RuleBundle bundle;
   std::string error;
-  bool success = AbslParseFlag(text, &bundle, &error);
+  bool success = bundle.ParseConfiguration(text, &error);
   ASSERT_TRUE(success);
   ASSERT_THAT(bundle.rules, SizeIs(2));
+  EXPECT_TRUE(error.empty());
   EXPECT_TRUE(bundle.rules["test-rule-1"].enabled);
   EXPECT_TRUE(bundle.rules["test-rule-2"].enabled);
 }
@@ -636,9 +657,10 @@ TEST(RuleBundleTest, ParseRuleBundleAcceptConfiguration) {
   auto text = "test-rule-1=foo,test-rule-2=,test-rule-3,-test-rule-4=bar";
   RuleBundle bundle;
   std::string error;
-  bool success = AbslParseFlag(text, &bundle, &error);
+  bool success = bundle.ParseConfiguration(text, &error);
   ASSERT_TRUE(success);
   ASSERT_THAT(bundle.rules, SizeIs(4));
+  EXPECT_TRUE(error.empty());
 
   EXPECT_TRUE(bundle.rules["test-rule-1"].enabled);
   EXPECT_EQ("foo", bundle.rules["test-rule-1"].configuration);
@@ -657,7 +679,8 @@ TEST(RuleBundleTest, ParseRuleBundleAcceptOne) {
   std::string text = "test-rule-1";
   RuleBundle bundle;
   std::string error;
-  bool success = AbslParseFlag(text, &bundle, &error);
+  bool success = bundle.ParseConfiguration(text, &error);
+  EXPECT_TRUE(error.empty());
   ASSERT_TRUE(success);
   ASSERT_THAT(bundle.rules, SizeIs(1));
   EXPECT_TRUE(bundle.rules["test-rule-1"].enabled);
@@ -667,9 +690,10 @@ TEST(RuleBundleTest, ParseRuleBundleAcceptSeveralTurnOff) {
   std::string text = "test-rule-1,-test-rule-2";
   RuleBundle bundle;
   std::string error;
-  bool success = AbslParseFlag(text, &bundle, &error);
+  bool success = bundle.ParseConfiguration(text, &error);
   ASSERT_TRUE(success);
   ASSERT_THAT(bundle.rules, SizeIs(2));
+  EXPECT_TRUE(error.empty());
   EXPECT_TRUE(bundle.rules["test-rule-1"].enabled);
   EXPECT_FALSE(bundle.rules["test-rule-2"].enabled);
 }
@@ -678,9 +702,10 @@ TEST(RuleBundleTest, ParseRuleBundleAcceptOneTurnOff) {
   std::string text = "-test-rule-1";
   RuleBundle bundle;
   std::string error;
-  bool success = AbslParseFlag(text, &bundle, &error);
+  bool success = bundle.ParseConfiguration(text, &error);
   ASSERT_TRUE(success);
   ASSERT_THAT(bundle.rules, SizeIs(1));
+  EXPECT_TRUE(error.empty());
   EXPECT_FALSE(bundle.rules["test-rule-1"].enabled);
 }
 
@@ -688,7 +713,28 @@ TEST(RuleBundleTest, ParseRuleBundleReject) {
   std::string text = "test-rule-1,bad-flag";
   RuleBundle bundle;
   std::string error;
-  bool success = AbslParseFlag(text, &bundle, &error);
+  bool success = bundle.ParseConfiguration(text, &error);
+  EXPECT_FALSE(success);
+  EXPECT_EQ(error, "invalid flag \"bad-flag\"");
+}
+
+TEST(RuleBundleTest, ParseRuleBundleAcceptMultiline) {
+  std::string text = "test-rule-1\n-test-rule-2";
+  RuleBundle bundle;
+  std::string error;
+  bool success = bundle.ParseConfiguration(text, &error);
+  ASSERT_TRUE(success);
+  ASSERT_THAT(bundle.rules, SizeIs(2));
+  EXPECT_TRUE(error.empty());
+  EXPECT_TRUE(bundle.rules["test-rule-1"].enabled);
+  EXPECT_FALSE(bundle.rules["test-rule-2"].enabled);
+}
+
+TEST(RuleBundleTest, ParseRuleBundleRejectMultiline) {
+  std::string text = "test-rule-1\nbad-flag\n-test-rule-2";
+  RuleBundle bundle;
+  std::string error;
+  bool success = bundle.ParseConfiguration(text, &error);
   EXPECT_FALSE(success);
   EXPECT_EQ(error, "invalid flag \"bad-flag\"");
 }
