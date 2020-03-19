@@ -132,6 +132,7 @@ cc_library(
         "//common/lexer:token_stream_adapter",
         "//common/text:token_info",
         "//common/text:token_stream_view",
+        "//common/util:enum_flags",
         "//common/util:logging",
         "//verilog/parser:verilog_lexer",
         "//verilog/parser:verilog_parser",

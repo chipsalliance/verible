@@ -29,16 +29,43 @@
 
 #undef EXPECT_OK
 #define EXPECT_OK(value) EXPECT_TRUE((value).ok())
+
 #undef ASSERT_OK
 #define ASSERT_OK(value) ASSERT_TRUE((value).ok())
 
 namespace verilog {
 namespace {
 
+TEST(DiffStatusTest, Print) {
+  // check a few enums
+  {
+    std::ostringstream stream;
+    stream << DiffStatus::kDifferent;
+    EXPECT_EQ(stream.str(), "different");
+  }
+  {
+    std::ostringstream stream;
+    stream << DiffStatus::kEquivalent;
+    EXPECT_EQ(stream.str(), "equivalent");
+  }
+}
+
+static DiffStatus FlipStatus(DiffStatus status) {
+  switch (status) {
+    case DiffStatus::kLeftError:
+      return DiffStatus::kRightError;
+    case DiffStatus::kRightError:
+      return DiffStatus::kLeftError;
+    default:
+      return status;
+  }
+}
+
 static void ExpectCompareWithErrstream(
-    std::function<bool(absl::string_view, absl::string_view, std::ostream*)>
+    std::function<DiffStatus(absl::string_view, absl::string_view,
+                             std::ostream*)>
         func,
-    bool expect_compare, absl::string_view left, absl::string_view right,
+    DiffStatus expect_compare, absl::string_view left, absl::string_view right,
     std::ostream* errstream = &std::cout) {
   EXPECT_EQ(func(left, right, errstream), expect_compare)
       << "left:\n"
@@ -46,7 +73,7 @@ static void ExpectCompareWithErrstream(
       << right;
   {  // commutative comparison check (should be same)
     std::ostringstream errstream;
-    EXPECT_EQ(func(right, left, &errstream), expect_compare)
+    EXPECT_EQ(func(right, left, &errstream), FlipStatus(expect_compare))
         << "(commutative) " << errstream.str();
   }
 }
@@ -60,8 +87,8 @@ TEST(FormatEquivalentTest, Spaces) {
   };
   for (size_t i = 0; i < kTestCases.size(); ++i) {
     for (size_t j = i + 1; j < kTestCases.size(); ++j) {
-      ExpectCompareWithErrstream(FormatEquivalent, true, kTestCases[i],
-                                 kTestCases[j]);
+      ExpectCompareWithErrstream(FormatEquivalent, DiffStatus::kEquivalent,
+                                 kTestCases[i], kTestCases[j]);
     }
   }
 }
@@ -73,18 +100,18 @@ TEST(FormatEquivalentTest, ShortSequences) {
       "1;",
       "1 ;",
   };
-  ExpectCompareWithErrstream(FormatEquivalent, false, kTestCases[0],
-                             kTestCases[1]);
-  ExpectCompareWithErrstream(FormatEquivalent, false, kTestCases[0],
-                             kTestCases[2]);
-  ExpectCompareWithErrstream(FormatEquivalent, false, kTestCases[0],
-                             kTestCases[3]);
-  ExpectCompareWithErrstream(FormatEquivalent, false, kTestCases[1],
-                             kTestCases[2]);
-  ExpectCompareWithErrstream(FormatEquivalent, false, kTestCases[1],
-                             kTestCases[3]);
-  ExpectCompareWithErrstream(FormatEquivalent, true, kTestCases[2],
-                             kTestCases[3]);
+  ExpectCompareWithErrstream(FormatEquivalent, DiffStatus::kDifferent,
+                             kTestCases[0], kTestCases[1]);
+  ExpectCompareWithErrstream(FormatEquivalent, DiffStatus::kDifferent,
+                             kTestCases[0], kTestCases[2]);
+  ExpectCompareWithErrstream(FormatEquivalent, DiffStatus::kDifferent,
+                             kTestCases[0], kTestCases[3]);
+  ExpectCompareWithErrstream(FormatEquivalent, DiffStatus::kDifferent,
+                             kTestCases[1], kTestCases[2]);
+  ExpectCompareWithErrstream(FormatEquivalent, DiffStatus::kDifferent,
+                             kTestCases[1], kTestCases[3]);
+  ExpectCompareWithErrstream(FormatEquivalent, DiffStatus::kEquivalent,
+                             kTestCases[2], kTestCases[3]);
 }
 
 TEST(FormatEquivalentTest, Identifiers) {
@@ -94,18 +121,18 @@ TEST(FormatEquivalentTest, Identifiers) {
       "foobar;",  // only 2 tokens
       "foo bar\n;\n",
   };
-  ExpectCompareWithErrstream(FormatEquivalent, true, kTestCases[0],
-                             kTestCases[1]);
-  ExpectCompareWithErrstream(FormatEquivalent, false, kTestCases[0],
-                             kTestCases[2]);
-  ExpectCompareWithErrstream(FormatEquivalent, true, kTestCases[0],
-                             kTestCases[3]);
-  ExpectCompareWithErrstream(FormatEquivalent, false, kTestCases[1],
-                             kTestCases[2]);
-  ExpectCompareWithErrstream(FormatEquivalent, true, kTestCases[1],
-                             kTestCases[3]);
-  ExpectCompareWithErrstream(FormatEquivalent, false, kTestCases[2],
-                             kTestCases[3]);
+  ExpectCompareWithErrstream(FormatEquivalent, DiffStatus::kEquivalent,
+                             kTestCases[0], kTestCases[1]);
+  ExpectCompareWithErrstream(FormatEquivalent, DiffStatus::kDifferent,
+                             kTestCases[0], kTestCases[2]);
+  ExpectCompareWithErrstream(FormatEquivalent, DiffStatus::kEquivalent,
+                             kTestCases[0], kTestCases[3]);
+  ExpectCompareWithErrstream(FormatEquivalent, DiffStatus::kDifferent,
+                             kTestCases[1], kTestCases[2]);
+  ExpectCompareWithErrstream(FormatEquivalent, DiffStatus::kEquivalent,
+                             kTestCases[1], kTestCases[3]);
+  ExpectCompareWithErrstream(FormatEquivalent, DiffStatus::kDifferent,
+                             kTestCases[2], kTestCases[3]);
 }
 
 TEST(FormatEquivalentTest, Keyword) {
@@ -113,8 +140,8 @@ TEST(FormatEquivalentTest, Keyword) {
       "wire foo;",
       "  wire  \n\t\t   foo  ;\n",
   };
-  ExpectCompareWithErrstream(FormatEquivalent, true, kTestCases[0],
-                             kTestCases[1]);
+  ExpectCompareWithErrstream(FormatEquivalent, DiffStatus::kEquivalent,
+                             kTestCases[0], kTestCases[1]);
 }
 
 TEST(FormatEquivalentTest, Comments) {
@@ -134,11 +161,11 @@ TEST(FormatEquivalentTest, Comments) {
   for (size_t i = 0; i < span.size(); ++i) {
     for (size_t j = i + 1; j < span.size(); ++j) {
       if (i == 2 && j == 3) {
-        ExpectCompareWithErrstream(FormatEquivalent, true, kTestCases[i],
-                                   kTestCases[j]);
+        ExpectCompareWithErrstream(FormatEquivalent, DiffStatus::kEquivalent,
+                                   kTestCases[i], kTestCases[j]);
       } else {
-        ExpectCompareWithErrstream(FormatEquivalent, false, kTestCases[i],
-                                   kTestCases[j]);
+        ExpectCompareWithErrstream(FormatEquivalent, DiffStatus::kDifferent,
+                                   kTestCases[i], kTestCases[j]);
       }
     }
   }
@@ -151,20 +178,65 @@ TEST(FormatEquivalentTest, DiagnosticLength) {
   };
   {
     std::ostringstream errs;
-    ExpectCompareWithErrstream(FormatEquivalent, false, kTestCases[0],
-                               kTestCases[1], &errs);
+    ExpectCompareWithErrstream(FormatEquivalent, DiffStatus::kDifferent,
+                               kTestCases[0], kTestCases[1], &errs);
     EXPECT_TRUE(absl::StartsWith(
         errs.str(), "Mismatch in token sequence lengths: 3 vs. 4"));
     EXPECT_TRUE(absl::StrContains(errs.str(), "First mismatched token [2]:"));
   }
   {
     std::ostringstream errs;
-    ExpectCompareWithErrstream(FormatEquivalent, false, kTestCases[1],
-                               kTestCases[0], &errs);
+    ExpectCompareWithErrstream(FormatEquivalent, DiffStatus::kDifferent,
+                               kTestCases[1], kTestCases[0], &errs);
     EXPECT_TRUE(absl::StartsWith(
         errs.str(), "Mismatch in token sequence lengths: 4 vs. 3"));
     EXPECT_TRUE(absl::StrContains(errs.str(), "First mismatched token [2]:"));
   }
+}
+
+TEST(FormatEquivalentTest, MismatchNumberOfTokens) {
+  {
+    std::ostringstream errs;
+    ExpectCompareWithErrstream(FormatEquivalent, DiffStatus::kDifferent,
+                               "module ", "module extra_token", &errs);
+    EXPECT_TRUE(absl::StrContains(
+        errs.str(), "Mismatch in token sequence lengths: 2 vs. 3"))
+        << "full message:\n"
+        << errs.str();
+    EXPECT_TRUE(absl::StrContains(errs.str(), "extra_token"))
+        << "full message:\n"
+        << errs.str();
+  }
+  {
+    std::ostringstream errs;
+    ExpectCompareWithErrstream(FormatEquivalent, DiffStatus::kDifferent,
+                               "module extra_token;", "module ", &errs);
+    EXPECT_TRUE(absl::StrContains(
+        errs.str(), "Mismatch in token sequence lengths: 4 vs. 2"))
+        << "full message:\n"
+        << errs.str();
+    EXPECT_TRUE(absl::StrContains(errs.str(), "extra_token"))
+        << "full message:\n"
+        << errs.str();
+  }
+}
+
+TEST(FormatEquivalentTest, MismatchTokenType) {
+  std::ostringstream errs;
+  ExpectCompareWithErrstream(FormatEquivalent, DiffStatus::kDifferent,
+                             "module k1;", "module 1;", &errs);
+  EXPECT_TRUE(absl::StrContains(errs.str(), "Mismatched token enums."))
+      << "full message:\n"
+      << errs.str();
+  EXPECT_TRUE(absl::StrContains(errs.str(), "First mismatched token [1]:"))
+      << "full message:\n"
+      << errs.str();
+  EXPECT_TRUE(absl::StrContains(errs.str(), "SymbolIdentifier"))
+      << "full message:\n"
+      << errs.str();
+  EXPECT_TRUE(absl::StrContains(errs.str(), "TK_DecNumber"))
+      << "full message:\n"
+      << errs.str();
 }
 
 TEST(FormatEquivalentTest, DiagnosticMismatch) {
@@ -175,117 +247,156 @@ TEST(FormatEquivalentTest, DiagnosticMismatch) {
   };
   {
     std::ostringstream errs;
-    ExpectCompareWithErrstream(FormatEquivalent, false, kTestCases[0],
-                               kTestCases[1], &errs);
-    EXPECT_TRUE(absl::StartsWith(errs.str(), "First mismatched token [1]:"));
+    ExpectCompareWithErrstream(FormatEquivalent, DiffStatus::kDifferent,
+                               kTestCases[0], kTestCases[1], &errs);
+    EXPECT_TRUE(absl::StrContains(errs.str(), "First mismatched token [1]:"))
+        << "full message:\n"
+        << errs.str();
+    EXPECT_TRUE(absl::StrContains(errs.str(), "foo")) << "full message:\n"
+                                                      << errs.str();
+    EXPECT_TRUE(absl::StrContains(errs.str(), "bar")) << "full message:\n"
+                                                      << errs.str();
   }
   {
     std::ostringstream errs;
-    ExpectCompareWithErrstream(FormatEquivalent, false, kTestCases[0],
-                               kTestCases[2], &errs);
-    EXPECT_TRUE(absl::StartsWith(errs.str(), "First mismatched token [2]:"));
+    ExpectCompareWithErrstream(FormatEquivalent, DiffStatus::kDifferent,
+                               kTestCases[0], kTestCases[2], &errs);
+    EXPECT_TRUE(absl::StrContains(errs.str(), "First mismatched token [2]:"))
+        << "full message:\n"
+        << errs.str();
+    EXPECT_TRUE(absl::StrContains(errs.str(), "','")) << "full message:\n"
+                                                      << errs.str();
+    EXPECT_TRUE(absl::StrContains(errs.str(), "';'")) << "full message:\n"
+                                                      << errs.str();
   }
 }
 
 TEST(FormatEquivalentTest, LexErrorOnLeft) {
   std::ostringstream errs;
-  ExpectCompareWithErrstream(FormatEquivalent, false, "hello 123badid\n",
-                             "hello good_id", &errs);
-  EXPECT_TRUE(absl::StrContains(errs.str(), "Error lexing left text"));
-  EXPECT_TRUE(absl::StrContains(errs.str(), "123badid"));
+  ExpectCompareWithErrstream(FormatEquivalent, DiffStatus::kLeftError,
+                             "hello 123badid\n", "hello good_id", &errs);
+  EXPECT_TRUE(absl::StrContains(errs.str(), "error from left input"))
+      << "full message:\n"
+      << errs.str();
+  EXPECT_TRUE(absl::StrContains(errs.str(), "123badid")) << "full message:\n"
+                                                         << errs.str();
 }
 
 TEST(FormatEquivalentTest, LexErrorOnRight) {
   std::ostringstream errs;
-  ExpectCompareWithErrstream(FormatEquivalent, false, "hello good_id\n",
-                             "hello 432_bad_id", &errs);
-  EXPECT_TRUE(absl::StrContains(errs.str(), "Error lexing right text"));
-  EXPECT_TRUE(absl::StrContains(errs.str(), "432_bad_id"));
+  ExpectCompareWithErrstream(FormatEquivalent, DiffStatus::kRightError,
+                             "hello good_id\n", "hello 432_bad_id", &errs);
+  EXPECT_TRUE(absl::StrContains(errs.str(), "error from right input"))
+      << "full message:\n"
+      << errs.str();
+  EXPECT_TRUE(absl::StrContains(errs.str(), "432_bad_id")) << "full message:\n"
+                                                           << errs.str();
 }
 
 struct ObfuscationTestCase {
   absl::string_view before;
   absl::string_view after;
-  bool expect_match;
+  DiffStatus expect_match;
 };
 
 TEST(ObfuscationEquivalentTest, Various) {
   const ObfuscationTestCase kTestCases[] = {
-      {"", "", true},
-      {"\n", "\n", true},
-      {"\n", "\n\n", false},
-      {"\n", "\t", false},  // whitespace must match to be be equivalent
-      {"  ", "\t", false},  // whitespace must match to be be equivalent
-      {" ", "\t", false},   // whitespace must match to be be equivalent
-      {" ", "\n", false},   // whitespace must match to be be equivalent
-      {"aabbcc\n", "doremi\n", true},
-      {"aabbcc\n", "dorem\n", false},
-      {"11\n", "22\n", false},
-      {"\"11\"\n", "\"22\"\n", false},
-      {"wire\n", "wire\n", true},
-      {"wire\n", "logic\n", false},
-      {"wire w;\n", "wire w;\n", true},
-      {"wire w;", "wire w;\n", false},
-      {"wire xxx;\n", "wire yyy;\n", true},  // identifiers changed
-      {"$zzz;\n", "$yyy;\n", true},          // identifiers changed
-      {"$zzz();\n", "$yyy();\n", true},      // identifiers changed
-      {"$zzz;\n", "$yyyy;\n", false},
-      {"ff(gg, hh) + ii\n", "pp(qq, rr) + ss\n", true},
-      {"ff(gg, hh) + ii\n", "pp(qq, rr) - ss\n", false},
-      {"ff(gg, hh) + ii\n", "pp[qq, rr] + ss\n", false},
-      {"ff(gg, hh) + ii\n", "pp(qq,  rr) + ss\n", false},
-      {"ff(gg, hh) + ii\n", "pp(qq, rrr) + ss\n", false},
-      {"ff(gg, hh) + ii\n", "pp(12, rr) + ss\n", false},
-      {"ff(gg, hh) + ii\n", "pp(qq, rr)+ss\n", false},
-      {"`define FOO\n", "`define BAR\n", true},
-      {"`define FOO\n", "`define BARR\n", false},
-      {"`define FOO\n", "`define  BAR\n", false},
-      {"`define FOO\n", "`define BAR \n", false},
-      {"`define FOO xx\n", "`define BAR yy\n", true},
-      {"`define FOO xx\n", "`define BAR yyz\n", false},
-      {"`define FOO \\\nxx\n", "`define BAR \\\nyy\n", true},
-      {"`define FOO \\\nxxx\n", "`define BAR \\\nyy\n", false},
-      {"`define FOO \\\nxx\n", "`define BAR \\\n\tyy\n", false},
-      {"`define FOO \\\nxx\n", "`define BAR \\\n\nyy\n", false},
-      {"`define FOO \\\nxx\n", "`define BAR \\\nyy\n\n", false},
+      {"", "", DiffStatus::kEquivalent},
+      {"\n", "\n", DiffStatus::kEquivalent},
+      {"\n", "\n\n", DiffStatus::kDifferent},
+      {"\n", "\t",
+       DiffStatus::kDifferent},  // whitespace must match to be be equivalent
+      {"  ", "\t",
+       DiffStatus::kDifferent},  // whitespace must match to be be equivalent
+      {" ", "\t",
+       DiffStatus::kDifferent},  // whitespace must match to be be equivalent
+      {" ", "\n",
+       DiffStatus::kDifferent},  // whitespace must match to be be equivalent
+      {"aabbcc\n", "doremi\n", DiffStatus::kEquivalent},
+      {"aabbcc\n", "dorem\n", DiffStatus::kDifferent},
+      {"11\n", "22\n", DiffStatus::kDifferent},
+      {"\"11\"\n", "\"22\"\n", DiffStatus::kDifferent},
+      {"wire\n", "wire\n", DiffStatus::kEquivalent},
+      {"wire\n", "logic\n", DiffStatus::kDifferent},
+      {"wire w;\n", "wire w;\n", DiffStatus::kEquivalent},
+      {"wire w;", "wire w;\n", DiffStatus::kDifferent},
+      {"wire xxx;\n", "wire yyy;\n",
+       DiffStatus::kEquivalent},                        // identifiers changed
+      {"$zzz;\n", "$yyy;\n", DiffStatus::kEquivalent},  // identifiers changed
+      {"$zzz();\n", "$yyy();\n",
+       DiffStatus::kEquivalent},  // identifiers changed
+      {"$zzz;\n", "$yyyy;\n", DiffStatus::kDifferent},
+      {"ff(gg, hh) + ii\n", "pp(qq, rr) + ss\n", DiffStatus::kEquivalent},
+      {"ff(gg, hh) + ii\n", "pp(qq, rr) - ss\n", DiffStatus::kDifferent},
+      {"ff(gg, hh) + ii\n", "pp[qq, rr] + ss\n", DiffStatus::kDifferent},
+      {"ff(gg, hh) + ii\n", "pp(qq,  rr) + ss\n", DiffStatus::kDifferent},
+      {"ff(gg, hh) + ii\n", "pp(qq, rrr) + ss\n", DiffStatus::kDifferent},
+      {"ff(gg, hh) + ii\n", "pp(12, rr) + ss\n", DiffStatus::kDifferent},
+      {"ff(gg, hh) + ii\n", "pp(qq, rr)+ss\n", DiffStatus::kDifferent},
+      {"`define FOO\n", "`define BAR\n", DiffStatus::kEquivalent},
+      {"`define FOO\n", "`define BARR\n", DiffStatus::kDifferent},
+      {"`define FOO\n", "`define  BAR\n", DiffStatus::kDifferent},
+      {"`define FOO\n", "`define BAR \n", DiffStatus::kDifferent},
+      {"`define FOO xx\n", "`define BAR yy\n", DiffStatus::kEquivalent},
+      {"`define FOO xx\n", "`define BAR yyz\n", DiffStatus::kDifferent},
+      {"`define FOO \\\nxx\n", "`define BAR \\\nyy\n", DiffStatus::kEquivalent},
+      {"`define FOO \\\nxxx\n", "`define BAR \\\nyy\n", DiffStatus::kDifferent},
+      {"`define FOO \\\nxx\n", "`define BAR \\\n\tyy\n",
+       DiffStatus::kDifferent},
+      {"`define FOO \\\nxx\n", "`define BAR \\\n\nyy\n",
+       DiffStatus::kDifferent},
+      {"`define FOO \\\nxx\n", "`define BAR \\\nyy\n\n",
+       DiffStatus::kDifferent},
       /* TODO(b/150174736): recursive lexing looks erroneous
       {"`define FOO \\\n`define INNERFOO \\\nxx\n\n",  // `define inside `define
-       "`define BAR \\\n`define INNERBAR \\\nyy\n\n", true},
+       "`define BAR \\\n`define INNERBAR \\\nyy\n\n", DiffStatus::kEquivalent},
        */
-      {"`ifdef FOO\n`endif\n", "`ifdef BAR\n`endif\n", true},
-      {"`ifndef FOO\n`endif\n", "`ifndef BAR\n`endif\n", true},
-      {"`ifdef FOO\n`endif\n", "`ifndef BAR\n`endif\n", false},
+      {"`ifdef FOO\n`endif\n", "`ifdef BAR\n`endif\n", DiffStatus::kEquivalent},
+      {"`ifndef FOO\n`endif\n", "`ifndef BAR\n`endif\n",
+       DiffStatus::kEquivalent},
+      {"`ifdef FOO\n`endif\n", "`ifndef BAR\n`endif\n", DiffStatus::kDifferent},
       {"`ifdef FOO\n`elsif BLEH\n`endif\n", "`ifdef BAR\n`elsif BLAH\n`endif\n",
-       true},
-      {"`ifdef FOOO\n`endif\n", "`ifdef BAR\n`endif\n", false},
+       DiffStatus::kEquivalent},
+      {"`ifdef FOOO\n`endif\n", "`ifdef BAR\n`endif\n", DiffStatus::kDifferent},
       {"`ifdef FOO\n`elsif BLEH\n`endif\n",
-       "`ifdef BAR\n`elsif BLAHH\n`endif\n", false},
-      {"`FOO\n", "`BAR\n", true},
-      {"`FOO;\n", "`BAR;\n", true},
-      {"`FOO()\n", "`BAR()\n", true},
-      {"`FOO(77)\n", "`BAR(77)\n", true},
-      {"`FOO();\n", "`BAR();\n", true},
-      {"`FOO()\n", "`BAAR()\n", false},
-      {"`FOO()\n", " `BAR()\n", false},
-      {"`FOO()\n", "`BAR ()\n", false},
-      {"`FOO()\n", "`BAR( )\n", false},
-      {"`FOO(77)\n", "`BAR(78)\n", false},
-      {"`FOO(`BLAH)\n", "`BAR(`BLEH)\n", true},
-      {"`FOO(`BLAH)\n", "`BAR(`BLE)\n", false},
-      {"`FOO(`BLAH + `BLIPP)\n", "`BAR(`BLEH + `BLOOP)\n", true},
-      {"`FOO(`BLAH + `BLIPP)\n", "`BAR(`BLEH +`BLOOP)\n", false},
-      {"`FOO(`BLAH + `BLIPP)\n", "`BAR(`BLEH + `BLOP)\n", false},
-      {"`FOO(`BLAH + `BLIPP)\n", "`BAR(`BLEH * `BLOOP)\n", false},
-      {"`FOO(`BLAH(`BLIPP))\n", "`BAR(`BLEH(`BLOOP))\n", true},
-      {"`FOO(`BLAH(`BLIP))\n", "`BAR(`BLEH(`BLOOP))\n", false},
-      {"`FOO(`BLAH(`BLIPP))\n", "`BAR(`BLEH(`BLOOP ))\n", false},
-      {"`FOO(`BLAH(`BLIPP))\n", "`BAR(`BLEH( `BLOOP))\n", false},
-      {"`FOO(`BLAH(`BLIPP))\n", "`BAR(`BLEH (`BLOOP))\n", false},
-      {"`FOO(`BLAH(`BLIPP))\n", "`BAR( `BLEH(`BLOOP))\n", false},
-      {"`FOO(`BLAH(`BLIPP))\n", "`BAR(`BLEH(`BLOOP) )\n", false},
-      {"\\FOO;!@#$% ", "\\BAR;%$#@! ", true},  // escaped identifier
+       "`ifdef BAR\n`elsif BLAHH\n`endif\n", DiffStatus::kDifferent},
+      {"`FOO\n", "`BAR\n", DiffStatus::kEquivalent},
+      {"`FOO;\n", "`BAR;\n", DiffStatus::kEquivalent},
+      {"`FOO()\n", "`BAR()\n", DiffStatus::kEquivalent},
+      {"`FOO(77)\n", "`BAR(77)\n", DiffStatus::kEquivalent},
+      {"`FOO();\n", "`BAR();\n", DiffStatus::kEquivalent},
+      {"`FOO()\n", "`BAAR()\n", DiffStatus::kDifferent},
+      {"`FOO()\n", " `BAR()\n", DiffStatus::kDifferent},
+      {"`FOO()\n", "`BAR ()\n", DiffStatus::kDifferent},
+      {"`FOO()\n", "`BAR( )\n", DiffStatus::kDifferent},
+      {"`FOO(77)\n", "`BAR(78)\n", DiffStatus::kDifferent},
+      {"`FOO(`BLAH)\n", "`BAR(`BLEH)\n", DiffStatus::kEquivalent},
+      {"`FOO(`BLAH)\n", "`BAR(`BLE)\n", DiffStatus::kDifferent},
+      {"`FOO(`BLAH + `BLIPP)\n", "`BAR(`BLEH + `BLOOP)\n",
+       DiffStatus::kEquivalent},
+      {"`FOO(`BLAH + `BLIPP)\n", "`BAR(`BLEH +`BLOOP)\n",
+       DiffStatus::kDifferent},
+      {"`FOO(`BLAH + `BLIPP)\n", "`BAR(`BLEH + `BLOP)\n",
+       DiffStatus::kDifferent},
+      {"`FOO(`BLAH + `BLIPP)\n", "`BAR(`BLEH * `BLOOP)\n",
+       DiffStatus::kDifferent},
+      {"`FOO(`BLAH(`BLIPP))\n", "`BAR(`BLEH(`BLOOP))\n",
+       DiffStatus::kEquivalent},
+      {"`FOO(`BLAH(`BLIP))\n", "`BAR(`BLEH(`BLOOP))\n", DiffStatus::kDifferent},
+      {"`FOO(`BLAH(`BLIPP))\n", "`BAR(`BLEH(`BLOOP ))\n",
+       DiffStatus::kDifferent},
+      {"`FOO(`BLAH(`BLIPP))\n", "`BAR(`BLEH( `BLOOP))\n",
+       DiffStatus::kDifferent},
+      {"`FOO(`BLAH(`BLIPP))\n", "`BAR(`BLEH (`BLOOP))\n",
+       DiffStatus::kDifferent},
+      {"`FOO(`BLAH(`BLIPP))\n", "`BAR( `BLEH(`BLOOP))\n",
+       DiffStatus::kDifferent},
+      {"`FOO(`BLAH(`BLIPP))\n", "`BAR(`BLEH(`BLOOP) )\n",
+       DiffStatus::kDifferent},
+      {"\\FOO;!@#$% ", "\\BAR;%$#@! ",
+       DiffStatus::kEquivalent},  // escaped identifier
       {"\\FOO;!@#$% ", "\\BARR;%$#@! ",
-       false},  // escaped identifier (!= length)
+       DiffStatus::kDifferent},  // escaped identifier (!= length)
   };
   for (const auto& test : kTestCases) {
     ExpectCompareWithErrstream(ObfuscationEquivalent, test.expect_match,
@@ -295,18 +406,24 @@ TEST(ObfuscationEquivalentTest, Various) {
 
 TEST(ObfuscationEquivalentTest, LexErrorOnLeft) {
   std::ostringstream errs;
-  ExpectCompareWithErrstream(ObfuscationEquivalent, false, "hello 123badid\n",
-                             "hello good_id", &errs);
-  EXPECT_TRUE(absl::StrContains(errs.str(), "Error lexing left text"));
-  EXPECT_TRUE(absl::StrContains(errs.str(), "123badid"));
+  ExpectCompareWithErrstream(ObfuscationEquivalent, DiffStatus::kLeftError,
+                             "hello 123badid\n", "hello good_id", &errs);
+  EXPECT_TRUE(absl::StrContains(errs.str(), "error from left input"))
+      << "full message:\n"
+      << errs.str();
+  EXPECT_TRUE(absl::StrContains(errs.str(), "123badid")) << "full message:\n"
+                                                         << errs.str();
 }
 
 TEST(ObfuscationEquivalentTest, LexErrorOnRight) {
   std::ostringstream errs;
-  ExpectCompareWithErrstream(ObfuscationEquivalent, false, "hello good_id\n",
-                             "hello 432_bad_id", &errs);
-  EXPECT_TRUE(absl::StrContains(errs.str(), "Error lexing right text"));
-  EXPECT_TRUE(absl::StrContains(errs.str(), "432_bad_id"));
+  ExpectCompareWithErrstream(ObfuscationEquivalent, DiffStatus::kRightError,
+                             "hello good_id\n", "hello 432_bad_id", &errs);
+  EXPECT_TRUE(absl::StrContains(errs.str(), "error from right input"))
+      << "full message:\n"
+      << errs.str();
+  EXPECT_TRUE(absl::StrContains(errs.str(), "432_bad_id")) << "full message:\n"
+                                                           << errs.str();
 }
 
 }  // namespace

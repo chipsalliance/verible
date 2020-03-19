@@ -20,13 +20,44 @@
 
 #include "absl/strings/string_view.h"
 #include "common/text/token_info.h"
+#include "common/text/token_stream_view.h"
 
 namespace verilog {
 
-// Returns true if both texts are 'equivalent', ignoring tokens filtered
+// Encode different results of diff-ing two inputs.
+enum class DiffStatus {
+  kEquivalent,  // inputs are considered equivalent
+  kDifferent,   // inputs are considered different
+  kLeftError,   // some error processing left input
+  kRightError,  // some error processing right input
+};
+
+std::ostream& operator<<(std::ostream&, DiffStatus);
+
+// Compares two strings for equivalence.
+// Returns a DiffStatus that captures 'equivalence' ignoring tokens filtered
+// out by remove_predicate, and using the equal_comparator binary predicate.
+// 'lexer' tokenizes a string into substrings (tokens), and is used to
+// recursively lex expandable tokens as determined by recursion_predicate.
+// (Some tokens like macro definition bodies are initially read as one large
+// token by some lexers.)
+// 'token_printer' reports diagnostics on token differences and errors.
+// If errstream is provided, print detailed error message to that stream.
+// TODO(fangism): move this to language-agnostic common/analysis library.
+DiffStatus LexicallyEquivalent(
+    absl::string_view left, absl::string_view right,
+    std::function<bool(absl::string_view, verible::TokenSequence*)> lexer,
+    std::function<bool(const verible::TokenInfo&)> recursion_predicate,
+    std::function<bool(const verible::TokenInfo&)> remove_predicate,
+    std::function<bool(const verible::TokenInfo&, const verible::TokenInfo&)>
+        equal_comparator,
+    std::function<void(const verible::TokenInfo&, std::ostream&)> token_printer,
+    std::ostream* errstream = nullptr);
+
+// Returns a DiffStatus that captures 'equivalence' ignoring tokens filtered
 // out by remove_predicate, and using the equal_comparator binary predicate.
 // If errstream is provided, print detailed error message to that stream.
-bool LexicallyEquivalent(
+DiffStatus VerilogLexicallyEquivalent(
     absl::string_view left, absl::string_view right,
     std::function<bool(const verible::TokenInfo&)> remove_predicate,
     std::function<bool(const verible::TokenInfo&, const verible::TokenInfo&)>
@@ -35,16 +66,17 @@ bool LexicallyEquivalent(
 
 // Returns true if both token sequences are equivalent, ignoring whitespace.
 // If errstream is provided, print detailed error message to that stream.
-bool FormatEquivalent(absl::string_view left, absl::string_view right,
-                      std::ostream* errstream = nullptr);
+DiffStatus FormatEquivalent(absl::string_view left, absl::string_view right,
+                            std::ostream* errstream = nullptr);
 
 // Similar to FormatEquivalent except that:
 //   1) whitespaces must match
 //   2) identifiers only need to match in length and not string content to be
 //      considered equal.
 // Such equivalence is good for formatter test cases.
-bool ObfuscationEquivalent(absl::string_view left, absl::string_view right,
-                           std::ostream* errstream = nullptr);
+DiffStatus ObfuscationEquivalent(absl::string_view left,
+                                 absl::string_view right,
+                                 std::ostream* errstream = nullptr);
 
 }  // namespace verilog
 

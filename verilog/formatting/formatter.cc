@@ -128,8 +128,8 @@ Status VerifyFormatting(const verible::TextStructureView& text_structure,
     // avoid lexing twice, but for now, using plain strings as an interface
     // to comparator functions is simpler and more intuitive.
     // See analysis/verilog_equivalence.cc implementation.
-    if (!verilog::FormatEquivalent(text_structure.Contents(), formatted_output,
-                                   &errstream)) {
+    if (verilog::FormatEquivalent(text_structure.Contents(), formatted_output,
+                                  &errstream) != DiffStatus::kEquivalent) {
       return Status(
           StatusCode::kDataLoss,
           absl::StrCat(

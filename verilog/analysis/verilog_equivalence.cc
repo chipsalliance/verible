@@ -19,16 +19,17 @@
 
 #include <algorithm>
 #include <cstddef>
+#include <initializer_list>
 #include <iterator>
 #include <memory>
 #include <string>
 #include <utility>
-#include <vector>
 
 #include "absl/strings/string_view.h"
 #include "common/lexer/token_stream_adapter.h"
 #include "common/text/token_info.h"
 #include "common/text/token_stream_view.h"
+#include "common/util/enum_flags.h"
 #include "common/util/logging.h"
 #include "verilog/parser/verilog_lexer.h"
 #include "verilog/parser/verilog_parser.h"  // for verilog_symbol_name()
@@ -43,47 +44,101 @@ using verible::TokenSequence;
 // TODO(fangism): majority of this code is not Verilog-specific and could
 // be factored into a common/analysis library.
 
+static const std::initializer_list<
+    std::pair<const absl::string_view, DiffStatus>>
+    kDiffStatusStringMap = {
+        {"equivalent", DiffStatus::kEquivalent},
+        {"different", DiffStatus::kDifferent},
+        {"left-error", DiffStatus::kLeftError},
+        {"right-error", DiffStatus::kRightError},
+};
+
+std::ostream& operator<<(std::ostream& stream, DiffStatus status) {
+  static const auto* flag_map =
+      verible::MakeEnumToStringMap(kDiffStatusStringMap);
+  return stream << flag_map->find(status)->second;
+}
+
 // Lex a token into smaller substrings/subtokens.
 // Lexical errors are reported to errstream.
-static TokenSequence LexText(absl::string_view text, const char* label,
-                             std::ostream* errstream) {
-  TokenSequence subtokens;
+// Returns true if lexing succeeded, false on error.
+static bool LexText(absl::string_view text, TokenSequence* subtokens,
+                    std::ostream* errstream) {
   VerilogLexer lexer(text);
   // Reservation slot to capture first error token, if any.
   auto err_tok = TokenInfo::EOFToken(text);
   // Lex token's text into subtokens.
   const auto status = MakeTokenSequence(
-      &lexer, text, &subtokens, [&](const TokenInfo& err) { err_tok = err; });
+      &lexer, text, subtokens, [&](const TokenInfo& err) { err_tok = err; });
   if (!status.ok() && (errstream != nullptr)) {
-    (*errstream) << "Error lexing " << label << " text: " << text << std::endl
+    (*errstream) << "Error lexing text: " << text << std::endl
                  << "subtoken: " << err_tok << std::endl
-                 << status.message();
+                 << status.message() << std::endl;
+    // TODO(fangism): print relative offsets
+    return false;
   }
-  return subtokens;
+  return true;
 }
 
-// Recursively lex a token into smaller substrings/subtokens.
-// The comparator function itself can invoke another lex-and-compare-like
-// function.
-static bool RecursivelyLexAndCompare(
-    absl::string_view left, absl::string_view right, std::ostream* errstream,
-    std::function<bool(absl::string_view, absl::string_view, std::ostream*)>
-        comp) {
-  return comp(left, right, errstream);
+static void VerilogTokenPrinter(const TokenInfo& token, std::ostream& stream) {
+  stream << '(' << verilog_symbol_name(token.token_enum) << ") " << token;
 }
 
-// Compares two (already lexed) token sequences one token at a time,
-// stopping an report the first mismatch.
-static bool LexicallyEquivalentTokens(
-    const TokenSequence& left, const TokenSequence& right,
+static bool ShouldRecursivelyAnalyzeToken(const TokenInfo& token) {
+  return IsUnlexed(verilog_tokentype(token.token_enum));
+}
+
+DiffStatus VerilogLexicallyEquivalent(
+    absl::string_view left, absl::string_view right,
     std::function<bool(const verible::TokenInfo&)> remove_predicate,
     std::function<bool(const verible::TokenInfo&, const verible::TokenInfo&)>
         equal_comparator,
     std::ostream* errstream) {
-  // Filter out whitespaces from both token sequences.
+  // Bind some Verilog-specific parameters.
+  return LexicallyEquivalent(
+      left, right,
+      [=](absl::string_view text, TokenSequence* tokens) {
+        return LexText(text, tokens, errstream);
+      },
+      ShouldRecursivelyAnalyzeToken,  //
+      remove_predicate,               //
+      equal_comparator,               //
+      VerilogTokenPrinter,            //
+      errstream);
+}
+
+DiffStatus LexicallyEquivalent(
+    absl::string_view left_text, absl::string_view right_text,
+    std::function<bool(absl::string_view, TokenSequence*)> lexer,
+    std::function<bool(const verible::TokenInfo&)> recursion_predicate,
+    std::function<bool(const verible::TokenInfo&)> remove_predicate,
+    std::function<bool(const verible::TokenInfo&, const verible::TokenInfo&)>
+        equal_comparator,
+    std::function<void(const verible::TokenInfo&, std::ostream&)> token_printer,
+    std::ostream* errstream) {
+  // Lex texts into token sequences.
+  verible::TokenSequence left_tokens, right_tokens;
+  {
+    const bool left_success = lexer(left_text, &left_tokens);
+    if (!left_success) {
+      if (errstream != nullptr) {
+        *errstream << "Lexical error from left input text." << std::endl;
+      }
+      return DiffStatus::kLeftError;
+    }
+    const bool right_success = lexer(right_text, &right_tokens);
+    if (!right_success) {
+      if (errstream != nullptr) {
+        *errstream << "Lexical error from right input text." << std::endl;
+      }
+      return DiffStatus::kRightError;
+    }
+  }
+
+  // Filter out ignored tokens from both token sequences.
   verible::TokenStreamView left_filtered, right_filtered;
-  verible::InitTokenStreamView(left, &left_filtered);
-  verible::InitTokenStreamView(right, &right_filtered);
+  verible::InitTokenStreamView(left_tokens, &left_filtered);
+  verible::InitTokenStreamView(right_tokens, &right_filtered);
   verible::TokenFilterPredicate keep_predicate = [&](const TokenInfo& t) {
     return !remove_predicate(t);
   };
@@ -101,20 +156,45 @@ static bool LexicallyEquivalentTokens(
     }
   }
 
+  // This comparator is a composition of the non-recursive equal_comparator
+  // and self-recursion, depending on recursion_predicate.
+  auto recursive_comparator = [&](const TokenSequence::const_iterator l,
+                                  const TokenSequence::const_iterator r) {
+    if (l->token_enum != r->token_enum) {
+      if (errstream != nullptr) {
+        *errstream << "Mismatched token enums.  got: ";
+        token_printer(*l, *errstream);
+        *errstream << " vs. ";
+        token_printer(*r, *errstream);
+        *errstream << std::endl;
+      }
+      return false;
+    }
+    if (recursion_predicate(*l)) {
+      // Recursively lex and compare.
+      const auto diff_status = LexicallyEquivalent(
+          l->text, r->text, lexer, recursion_predicate, remove_predicate,
+          equal_comparator, token_printer, errstream);
+      return diff_status == DiffStatus::kEquivalent;
+      // Note: Any lexical errors in either stream will make this
+      // predicate return false.
+    }
+    return equal_comparator(*l, *r);  // non-recursive comparator
+  };
+
   // Compare element-by-element up to the common length.
   const size_t min_size = std::min(l_size, r_size);
   auto left_filtered_stop_iter = left_filtered.begin() + min_size;
-  auto mismatch_pair = std::mismatch(
-      left_filtered.begin(), left_filtered_stop_iter, right_filtered.begin(),
-      [&](const TokenSequence::const_iterator l,
-          const TokenSequence::const_iterator r) {
-        // Ignore location/offset differences.
-        return equal_comparator(*l, *r);
-      });
+
+  auto mismatch_pair =
+      std::mismatch(left_filtered.begin(), left_filtered_stop_iter,
+                    right_filtered.begin(), recursive_comparator);
+
+  // Report differences.
   if (mismatch_pair.first == left_filtered_stop_iter) {
     if (size_match) {
       // Lengths match, and end of both sequences reached without mismatch.
-      return true;
+      return DiffStatus::kEquivalent;
     } else if (l_size < r_size) {
       *errstream << "First excess token in right sequence: "
                  << *right_filtered[min_size] << std::endl;
@@ -122,7 +202,7 @@ static bool LexicallyEquivalentTokens(
       *errstream << "First excess token in left sequence: "
                  << *left_filtered[min_size] << std::endl;
     }
-    return false;
+    return DiffStatus::kDifferent;
   }
   // else there was a mismatch
   if (errstream != nullptr) {
@@ -130,86 +210,48 @@ static bool LexicallyEquivalentTokens(
         std::distance(left_filtered.begin(), mismatch_pair.first);
     const auto& left_token = **mismatch_pair.first;
     const auto& right_token = **mismatch_pair.second;
-    *errstream << "First mismatched token [" << mismatch_index << "]: ("
-               << verilog_symbol_name(left_token.token_enum) << ") "
-               << left_token << " vs. ("
-               << verilog_symbol_name(right_token.token_enum) << ") "
-               << right_token << std::endl;
+    *errstream << "First mismatched token [" << mismatch_index << "]: ";
+    token_printer(left_token, *errstream);
+    *errstream << " vs. ";
+    token_printer(right_token, *errstream);
+    *errstream << std::endl;
+    // TODO(fangism): print human-digestable location information.
   }
-  return false;
+  return DiffStatus::kDifferent;
 }
 
-// This variant expects two strings and lexes both into corresponding
-// token streams to do the comparison.
-bool LexicallyEquivalent(
-    absl::string_view left, absl::string_view right,
-    std::function<bool(const verible::TokenInfo&)> remove_predicate,
-    std::function<bool(const verible::TokenInfo&, const verible::TokenInfo&)>
-        equal_comparator,
-    std::ostream* errstream) {
-  const TokenSequence left_subtokens = LexText(left, "left", errstream);
-  const TokenSequence right_subtokens = LexText(right, "right", errstream);
-  return LexicallyEquivalentTokens(left_subtokens, right_subtokens,
-                                   remove_predicate, equal_comparator,
-                                   errstream);
-}
-
-// Token comparator for format-equivalence.
-static bool FormatEquivalentTokens(const TokenInfo& l, const TokenInfo& r,
-                                   std::ostream* errstream) {
-  if (IsUnlexed(verilog_tokentype(l.token_enum))) {
-    return RecursivelyLexAndCompare(l.text, r.text, errstream,
-                                    FormatEquivalent);
-  }
-  return l.EquivalentWithoutLocation(r);
-}
-
-bool FormatEquivalent(absl::string_view left, absl::string_view right,
-                      std::ostream* errstream) {
-  return LexicallyEquivalent(
+DiffStatus FormatEquivalent(absl::string_view left, absl::string_view right,
+                            std::ostream* errstream) {
+  return VerilogLexicallyEquivalent(
       left, right,
       [](const TokenInfo& t) {
         return IsWhitespace(verilog_tokentype(t.token_enum));
       },
       [=](const TokenInfo& l, const TokenInfo& r) {
-        return FormatEquivalentTokens(l, r, errstream);
+        return l.EquivalentWithoutLocation(r);
       },
       errstream);
 }
 
-// Token comparator for obfuscation-equivalence.
-static bool ObfuscationEquivalentTokens(const TokenInfo& l, const TokenInfo& r,
-                                        std::ostream* errstream) {
+static bool ObfuscationEquivalentTokens(const TokenInfo& l,
+                                        const TokenInfo& r) {
   const auto l_vtoken_enum = verilog_tokentype(l.token_enum);
-  if (l.token_enum != r.token_enum) {
-    if (errstream != nullptr) {
-      (*errstream) << "Mismatched token enums.  got: "
-                   << verilog_symbol_name(l.token_enum) << " vs. "
-                   << verilog_symbol_name(r.token_enum) << std::endl;
-    }
-    return false;
-  }
   if (IsIdentifierLike(l_vtoken_enum)) {
     return l.EquivalentBySpace(r);
-  } else if (IsUnlexed(l_vtoken_enum)) {
-    return RecursivelyLexAndCompare(l.text, r.text, errstream,
-                                    ObfuscationEquivalent);
   }
   return l.EquivalentWithoutLocation(r);
 }
 
-bool ObfuscationEquivalent(absl::string_view left, absl::string_view right,
-                           std::ostream* errstream) {
-  return LexicallyEquivalent(
+DiffStatus ObfuscationEquivalent(absl::string_view left,
+                                 absl::string_view right,
+                                 std::ostream* errstream) {
+  return VerilogLexicallyEquivalent(
       left, right,
       [](const TokenInfo&) {
         // Whitespaces are required to match exactly.
         return false;
       },
-      [=](const TokenInfo& l, const TokenInfo& r) {
-        return ObfuscationEquivalentTokens(l, r, errstream);
-      },
-      errstream);
+      ObfuscationEquivalentTokens, errstream);
 }
 
 }  // namespace verilog
