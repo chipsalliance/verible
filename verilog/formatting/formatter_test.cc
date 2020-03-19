@@ -1742,7 +1742,10 @@ static const std::initializer_list<FormatterTestCase> kFormatterTestCases = {
     {"class  i_love_params ;foo#( . bar ( bah\n),"
      ".\ncat( dog) )  baz\t;endclass",
      "class i_love_params;\n"
-     "  foo #(.bar(bah), .cat(dog)) baz;\n"
+     "  foo #(\n"
+     "      .bar(bah),\n"
+     "      .cat(dog)\n"
+     "  ) baz;\n"
      "endclass\n"},
     {"class  i_love_params ;foo#( . bar)  baz1,baz2\t;endclass",
      "class i_love_params;\n"
@@ -2442,25 +2445,73 @@ static const std::initializer_list<FormatterTestCase> kFormatterTestCases = {
      "endmodule\n"},
     {"  module foo   ; bar bq(aa,bb,cc);endmodule\n",
      "module foo;\n"
-     "  bar bq (aa, bb, cc);\n"  // multiple positional ports
+     "  bar bq (\n"
+     "      aa,\n"
+     "      bb,\n"
+     "      cc\n"
+     "  );\n"  // multiple positional ports, one per line
+     "endmodule\n"},
+    {"  module foo   ; bar bq(aa,\n"
+     "`ifdef BB\n"
+     "bb,\n"
+     "`endif\n"
+     "cc);endmodule\n",
+     "module foo;\n"
+     "  bar bq (\n"
+     "      aa,\n"
+     "`ifdef BB\n"
+     "      bb,\n"  // keep same indentation as outside conditional
+     "`endif\n"
+     "      cc\n"
+     "  );\n"  // multiple positional ports, one per line
+     "endmodule\n"},
+    {"  module foo   ; bar bq(.aa,.bb);endmodule\n",
+     "module foo;\n"
+     "  bar bq (\n"
+     "      .aa,\n"
+     "      .bb\n"
+     "  );\n"  // multiple named ports, one per line
      "endmodule\n"},
     {"  module foo   ; bar bq(.aa(aa),.bb(bb));endmodule\n",
      "module foo;\n"
-     "  bar bq (.aa(aa), .bb(bb));\n"  // multiple named ports
+     "  bar bq (\n"
+     "      .aa(aa),\n"
+     "      .bb(bb)\n"
+     "  );\n"  // multiple named ports, one per line
+     "endmodule\n"},
+    {"  module foo   ; bar bq(.aa(aa),\n"
+     "`ifdef ZZ\n"
+     ".zz(  zz  ),\n"
+     "`else\n"
+     ".yy(  yy  ),\n"
+     "`endif\n"
+     ".bb(bb)\n"
+     ");endmodule\n",
+     "module foo;\n"
+     "  bar bq (\n"
+     "      .aa(aa),\n"
+     "`ifdef ZZ\n"
+     "      .zz(zz),\n"
+     "`else\n"
+     "      .yy(yy),\n"
+     "`endif\n"
+     "      .bb(bb)\n"
+     "  );\n"  // multiple named ports, one per line
      "endmodule\n"},
     {"  module foo   ; bar#(NNNNNNNN)"
      "bq(.aa(aaaaaa),.bb(bbbbbb));endmodule\n",
      "module foo;\n"
      "  bar #(NNNNNNNN) bq (\n"
-     "      .aa(aaaaaa), .bb(bbbbbb)\n"  // TODO(b/146083526): one port/line
+     "      .aa(aaaaaa),\n"
+     "      .bb(bbbbbb)\n"
      "  );\n"
      "endmodule\n"},
     {" module foo   ; barrrrrrr "
      "bq(.aaaaaa(aaaaaa),.bbbbbb(bbbbbb));endmodule\n",
      "module foo;\n"
      "  barrrrrrr bq (\n"
-     // TODO(b/146083526): one port/line
-     "      .aaaaaa(aaaaaa), .bbbbbb(bbbbbb)\n"
+     "      .aaaaaa(aaaaaa),\n"
+     "      .bbbbbb(bbbbbb)\n"
      "  );\n"
      "endmodule\n"},
     {"module foo; bar #(.NNNNN(NNNNN)) bq (.bussss(bussss));endmodule\n",
@@ -2476,6 +2527,24 @@ static const std::initializer_list<FormatterTestCase> kFormatterTestCases = {
      "module foo;\n"
      "  bar #(  //\n"  // would fit on one line, but forced to expand by //
      "      .N(N)\n"
+     "  ) bq (\n"
+     "      .bus(bus)\n"
+     "  );\n"
+     "endmodule\n"},
+    {"module foo; bar #(\n"
+     "`ifdef MM\n"
+     ".M(M)\n"
+     "`else\n"
+     ".N(N)\n"
+     "`endif\n"
+     ") bq (.bus(bus));endmodule\n",
+     "module foo;\n"
+     "  bar #(\n"
+     "`ifdef MM\n"
+     "      .M(M)\n"
+     "`else\n"
+     "      .N(N)\n"
+     "`endif\n"
      "  ) bq (\n"
      "      .bus(bus)\n"
      "  );\n"
@@ -2518,8 +2587,10 @@ static const std::initializer_list<FormatterTestCase> kFormatterTestCases = {
      "bq(.aa(aa),.bb(bb),.cc(cc),.dd(dd));endmodule\n",
      "module foo;\n"
      "  bar bq (\n"
-     // TODO(b/146083526): one port/line
-     "      .aa(aa), .bb(bb), .cc(cc), .dd(dd)\n"
+     "      .aa(aa),\n"  // one named port per line
+     "      .bb(bb),\n"
+     "      .cc(cc),\n"
+     "      .dd(dd)\n"
      "  );\n"
      "endmodule\n"},
     {" module foo   ; bar "

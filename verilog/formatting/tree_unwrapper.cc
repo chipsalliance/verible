@@ -823,13 +823,24 @@ void TreeUnwrapper::SetIndentationsAndCreatePartitions(
     case NodeEnum::kModportTFPortsDeclaration:
     case NodeEnum::kGateInstanceRegisterVariableList:
     case NodeEnum::kVariableDeclarationAssignmentList:
-    case NodeEnum::kPortActualList:  // TODO(b/146083526): one port per line
-    case NodeEnum::kActualParameterByNameList:
     case NodeEnum::kPortList: {
       // Do not further indent preprocessor clauses.
       const int indent = suppress_indentation ? 0 : style_.wrap_spaces;
       VisitIndentedSection(node, indent,
                            PartitionPolicyEnum::kFitOnLineElseExpand);
+      break;
+    }
+
+      // module instantiations (which look like data declarations) want to
+      // expand one parameter/port per line.
+    case NodeEnum::kActualParameterByNameList:
+    case NodeEnum::kPortActualList:  // covers named and positional ports
+    {
+      const int indent = suppress_indentation ? 0 : style_.wrap_spaces;
+      const auto policy = Context().IsInside(NodeEnum::kDataDeclaration)
+                              ? PartitionPolicyEnum::kAlwaysExpand
+                              : PartitionPolicyEnum::kFitOnLineElseExpand;
+      VisitIndentedSection(node, indent, policy);
       break;
     }
 
