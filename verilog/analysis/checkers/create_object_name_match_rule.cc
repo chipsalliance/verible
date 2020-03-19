@@ -121,6 +121,13 @@ static absl::string_view StripOuterQuotes(absl::string_view text) {
 static const TokenInfo* ExtractStringLiteralToken(
     const SyntaxTreeNode& expr_node) {
   if (!expr_node.MatchesTag(NodeEnum::kExpression)) return nullptr;
+
+  // this check is limited to only checking string literal leaf tokens
+  if (expr_node.children().front().get()->Kind() !=
+      verible::SymbolKind::kLeaf) {
+    return nullptr;
+  }
+
   const auto* leaf_ptr =
       down_cast<const SyntaxTreeLeaf*>(expr_node.children().front().get());
   if (leaf_ptr != nullptr) {
