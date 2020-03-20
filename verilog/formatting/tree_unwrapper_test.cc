@@ -3262,6 +3262,64 @@ const TreeUnwrapperTestData kUnwrapPreprocessorTestCases[] = {
     },
 
     {
+        "lone macro call, with space before semicolon",
+        "`FOO() ;\n",
+        L(0, {"`FOO", "(", ")", ";"}),
+    },
+
+    {
+        "macro call with one argument and with semicolon",
+        "`FOO(arg);\n",
+        N(0,
+          L(0, {"`FOO", "("}),
+          L(2, {"arg", ")", ";"})),
+    },
+
+    {
+        "macro call with one argument and with space before semicolon",
+        "`FOO(arg) ;\n",
+        N(0,
+          L(0, {"`FOO", "("}),
+          L(2, {"arg", ")", ";"})),
+    },
+
+    {
+        "macro call with comments in argument list",
+        "`FOO(aa, //aa\nbb , // bb\ncc)\n",
+        N(0,
+          L(0, {"`FOO", "("}),
+          N(2,
+            L(2, {"aa"}),
+            L(2, {",", "//aa"}),
+            L(2, {"bb"}),
+            L(2, {",", "// bb"}),
+            L(2, {"cc", ")"}))),
+    },
+
+    {
+        "macro call with comment before first argument",
+        "`FOO(// aa\naa, // bb\nbb, // cc\ncc)\n",
+        N(0,
+          L(0, {"`FOO", "(", "// aa"}),
+          N(2,
+            L(2, {"aa"}),
+            L(2, {",", "// bb"}),
+            L(2, {"bb"}),
+            L(2, {",", "// cc"}),
+            L(2, {"cc", ")"}))),
+    },
+
+    {   // TODO(fangism): Improve formatting arguments with comments
+        "macro call with argument including comment",
+        "`FOO(aa, bb // cc\ndd)\n",
+        N(0,
+          L(0, {"`FOO", "("}),
+          N(2,
+            L(2, {"aa", ","}),
+            L(2, {"bb // cc\ndd", ")"}))),
+    },
+
+    {
         "lone macro item",
         "`FOO\n",
         L(0, {"`FOO"}),
