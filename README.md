@@ -307,6 +307,8 @@ verilog_lint: usage: verilog_lint [options] <file> [<file>...]
   Flags from verilog/analysis/verilog_linter.cc:
     --rules (List of lint rules to enable. Prefix a rule name with '-' to
       disable it.); default: ;
+    --rules_config (Path to lint rules configuration file.);
+      default: ".rules.verible_lint";
     --ruleset ([default|all|none], the base set of rules used by linter);
       default: default;
 
@@ -339,6 +341,10 @@ disables the [`no-tabs`][lint-rule-list_no-tabs] rule.
 ```
 verilog_lint --rules=enum-name-style,line-length=length:80,-no-tabs ...
 ```
+
+Additionally, the `--rules_config` flag can be used to read configuration stored
+in a file. The syntax is the same as above, except the rules can be also
+separated with the newline character.
 
 #### Waiving Lint Violations {#lint-waiver}
 
