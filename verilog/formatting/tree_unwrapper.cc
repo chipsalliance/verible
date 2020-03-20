@@ -757,8 +757,7 @@ void TreeUnwrapper::SetIndentationsAndCreatePartitions(
     case NodeEnum::kNonblockingAssignmentStatement:  // dest <= src;
     case NodeEnum::kAssignModifyStatement:           // id+=expr
     case NodeEnum::kIncrementDecrementExpression:    // --y
-    case NodeEnum::kProceduralTimingControlStatement:
-    case NodeEnum::kMacroCall: {
+    case NodeEnum::kProceduralTimingControlStatement: {
       // Single statements directly inside a flow-control construct
       // should be properly indented one level.
       const int indent = DirectParentIsFlowControlConstruct(Context())
@@ -766,6 +765,17 @@ void TreeUnwrapper::SetIndentationsAndCreatePartitions(
                              : 0;
       VisitIndentedSection(node, indent,
                            PartitionPolicyEnum::kFitOnLineElseExpand);
+      break;
+    }
+
+    case NodeEnum::kMacroCall: {
+      // Single statements directly inside a flow-control construct
+      // should be properly indented one level.
+      const int indent = DirectParentIsFlowControlConstruct(Context())
+                             ? style_.indentation_spaces
+                             : 0;
+      VisitIndentedSection(node, indent,
+                           PartitionPolicyEnum::kAppendFittingSubPartitions);
       break;
     }
 
