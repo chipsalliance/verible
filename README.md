@@ -444,6 +444,42 @@ As a good practice, include a reason why you choose to disable a section.
 
 These directives take precedence over `--lines` specifications.
 
+### Lexical Diff
+
+`verilog_diff` compares two input files for equivalence, where equivalence is
+determined by the `--mode` of operation.
+
+```
+verilog_diff: usage: verilog_diff [options] file1 file2
+
+  Flags from verilog/tools/diff/verilog_diff.cc:
+    --mode (Defines difference functions.
+      format: ignore whitespaces, compare token texts
+        This is useful for verifying formatter (e.g. verilog_format) output.
+      obfuscate: preserve whitespaces, compare token texts' lengths only.
+        This is useful for verifying verilog_obfuscate output.
+      ); default: format;
+```
+
+Exit codes:
+
+*   0: files are equivalent
+*   1: files differ, or contain lexical errors
+*   2: error reading file
+
+### Code Obfuscator
+
+`verilog_obfuscate` transforms Verilog code by replacing identifiers with
+obfuscated names of equal length, and preserving all other text, including
+spaces. Output is written to stdout. The resulting file size is the same as the
+original.
+
+This is useful for preparing potentially sensitive test cases with tool vendors.
+
+```
+verilog_obfuscate: usage: verilog_obfuscate [options] < original_file > output
+```
+
 ### Future Intent
 
 The Verible team is interested in exploring how it can help other tool

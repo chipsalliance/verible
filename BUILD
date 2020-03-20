@@ -15,8 +15,10 @@ exports_files([
 installer(
     name = "install",
     data = [
+        "//verilog/tools/diff:verilog_diff",
         "//verilog/tools/formatter:verilog_format",
         "//verilog/tools/lint:verilog_lint",
+        "//verilog/tools/obfuscator:verilog_obfuscate",
         "//verilog/tools/syntax:verilog_syntax",
     ],
 )
