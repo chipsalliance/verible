@@ -234,18 +234,15 @@ static void DeterminePartitionExpansion(partition_node_type* node,
   const auto partition_policy = uwline.PartitionPolicy();
   VLOG(3) << "partition policy: " << partition_policy;
   switch (partition_policy) {
-    // Expand kAppendFittingSubPartitions partition and let us see it's
-    // grouped and (mostly) fitted childrens
-    case PartitionPolicyEnum::kAppendFittingSubPartitions: {
-      node_view.Expand();
-      break;
-    }
     case PartitionPolicyEnum::kAlwaysExpand: {
       if (children.size() > 1) {
         node_view.Expand();
       }
       break;
     }
+    // Try to fit kAppendFittingSubPartitions partition into single line.
+    // If it doesn't fit expand to grouped nodes.
+    case PartitionPolicyEnum::kAppendFittingSubPartitions:
     case PartitionPolicyEnum::kFitOnLineElseExpand: {
       if (verible::FitsOnLine(uwline, style).fits) {
         VLOG(3) << "Fits, un-expanding.";
