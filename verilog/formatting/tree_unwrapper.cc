@@ -911,6 +911,13 @@ static bool PartitionIsCloseParenSemi(const TokenPartitionTree& partition) {
   return ftokens.back().TokenEnum() == ';';
 }
 
+static bool PartitionIsCloseParen(const TokenPartitionTree& partition) {
+  const auto ftokens = partition.Value().TokensRange();
+  if (ftokens.size() != 1) return false;
+  const auto token_enum = ftokens.front().TokenEnum();
+  return ((token_enum == ')') || (token_enum == MacroCallCloseToEndLine));
+}
+
 static void AttachTrailingSemicolonToPreviousPartition(
     TokenPartitionTree* partition) {
   // Attach the trailing ';' partition to the previous sibling leaf.
@@ -1268,6 +1275,14 @@ void TreeUnwrapper::ReshapeTokenPartitions(
         // FIXME HERE: flattening wrong place!  Should merge instead.
         partition.FlattenOnce();
         VLOG(4) << "NODE: kMacroCall (flattened):\n" << partition;
+      } else {
+        // Merge closing parenthesis into last argument partition
+        // Test for ')' and MacroCallCloseToEndLine because macros
+        // use its own token 'MacroCallCloseToEndLine'
+        auto& last = *ABSL_DIE_IF_NULL(partition.RightmostDescendant());
+        if (PartitionIsCloseParen(last) || PartitionIsCloseParenSemi(last)) {
+          verible::MergeLeafIntoPreviousLeaf(&last);
+        }
       }
       break;
     }
