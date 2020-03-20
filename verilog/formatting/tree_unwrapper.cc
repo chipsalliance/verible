@@ -499,8 +499,12 @@ void TreeUnwrapper::InterChildNodeHook(const SyntaxTreeNode& node) {
     case NodeEnum::kBlockItemStatementList:
       LookAheadBeyondCurrentNode();
       break;
-    default:
+    default: {
+      if (Context().DirectParentIs(NodeEnum::kMacroArgList)) {
+        StartNewUnwrappedLine(PartitionPolicyEnum::kFitOnLineElseExpand);
+      }
       break;
+    }
   }
   VLOG(4) << "end of " << __FUNCTION__ << " node type: " << tag;
 }
