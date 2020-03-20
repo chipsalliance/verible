@@ -942,7 +942,7 @@ const TreeUnwrapperTestData kUnwrapModuleTestCases[] = {
         ModuleDeclaration(
             0, L(0, {"module", "foob", ";"}),
             N(1, L(1, {"assign", "`BIT_ASSIGN_MACRO", "("}),
-              MacroArgList(3, L(3, {"l1", ","}), L(3, {"r1"})), L(1, {")"})),
+              MacroArgList(3, L(3, {"l1", ","}), L(3, {"r1", ")"}))),
             L(0, {"endmodule"})),
     },
 
@@ -953,8 +953,7 @@ const TreeUnwrapperTestData kUnwrapModuleTestCases[] = {
         "endmodule",
         ModuleDeclaration(0, L(0, {"module", "foob", ";"}),
                           N(1, L(1, {"assign", "`BIT_ASSIGN_MACRO", "("}),
-                            MacroArgList(3, L(3, {"l1", ","}), L(3, {"r1"})),
-                            L(1, {")", ";"})),
+                            MacroArgList(3, L(3, {"l1", ","}), L(3, {"r1", ")", ";"}))),
                           L(0, {"endmodule"})),
     },
 
@@ -970,8 +969,7 @@ const TreeUnwrapperTestData kUnwrapModuleTestCases[] = {
             ModuleItemList(
                 1, L(1, {"initial", "begin"}),
                 StatementList(2, L(2, {"assign", "`BIT_ASSIGN_MACRO", "("}),
-                              MacroArgList(4, L(4, {"l1", ","}), L(4, {"r1"})),
-                              L(2, {")"})),
+                              MacroArgList(4, L(4, {"l1", ","}), L(4, {"r1", ")"}))),
                 L(1, {"end"})),
             L(0, {"endmodule"})),
     },
@@ -1167,7 +1165,7 @@ const TreeUnwrapperTestData kUnwrapModuleTestCases[] = {
             ModuleItemList(
                 1,
                 N(1,  //
-                  L(1, {"`ASSERT", "("}), L(3, {"blah"}), L(1, {")"})),
+                  L(1, {"`ASSERT", "("}), L(3, {"blah", ")"})),
                 N(1,  //
                   L(1, {"generate"}), L(1, {"endgenerate"}))),
             L(0, {"endmodule"})),
@@ -2156,11 +2154,11 @@ const TreeUnwrapperTestData kUnwrapUvmTestCases[] = {
         "`uvm_field_int(l1a, UVM_DEFAULT)\n"
         "`uvm_field_int(l1b, UVM_DEFAULT)\n"
         "`uvm_object_utils_end\n",
-        N(0, L(0, {"`uvm_object_utils_begin", "("}), L(2, {"l0"}), L(0, {")"})),
+        N(0, L(0, {"`uvm_object_utils_begin", "("}), L(2, {"l0", ")"})),
         N(1, L(1, {"`uvm_field_int", "("}),
-          N(3, L(3, {"l1a", ","}), L(3, {"UVM_DEFAULT"})), L(1, {")"})),
+          N(3, L(3, {"l1a", ","}), L(3, {"UVM_DEFAULT", ")"}))),
         N(1, L(1, {"`uvm_field_int", "("}),
-          N(3, L(3, {"l1b", ","}), L(3, {"UVM_DEFAULT"})), L(1, {")"})),
+          N(3, L(3, {"l1b", ","}), L(3, {"UVM_DEFAULT", ")"}))),
         L(0, {"`uvm_object_utils_end"}),
     },
 
@@ -2170,11 +2168,11 @@ const TreeUnwrapperTestData kUnwrapUvmTestCases[] = {
         "`uvm_field_int(l1a, UVM_DEFAULT)\n"
         "`uvm_field_int(l1b, UVM_DEFAULT)\n"
         "`uvm_field_utils_end\n",
-        N(0, L(0, {"`uvm_field_utils_begin", "("}), L(2, {"l0"}), L(0, {")"})),
+        N(0, L(0, {"`uvm_field_utils_begin", "("}), L(2, {"l0", ")"})),
         N(1, L(1, {"`uvm_field_int", "("}),
-          N(3, L(3, {"l1a", ","}), L(3, {"UVM_DEFAULT"})), L(1, {")"})),
+          N(3, L(3, {"l1a", ","}), L(3, {"UVM_DEFAULT", ")"}))),
         N(1, L(1, {"`uvm_field_int", "("}),
-          N(3, L(3, {"l1b", ","}), L(3, {"UVM_DEFAULT"})), L(1, {")"})),
+          N(3, L(3, {"l1b", ","}), L(3, {"UVM_DEFAULT", ")"}))),
         L(0, {"`uvm_field_utils_end"}),
     },
 
@@ -2190,19 +2188,19 @@ const TreeUnwrapperTestData kUnwrapUvmTestCases[] = {
         "`uvm_object_utils_end\n"
         "`uvm_field_int(l1b, UVM_DEFAULT)\n"
         "`uvm_object_utils_end\n",
-        N(0, L(0, {"`uvm_object_utils_begin", "("}), L(2, {"l0"}), L(0, {")"})),
+        N(0, L(0, {"`uvm_object_utils_begin", "("}), L(2, {"l0", ")"})),
         N(1, L(1, {"`uvm_field_int", "("}),
-          N(3, L(3, {"l1a", ","}), L(3, {"UVM_DEFAULT"})), L(1, {")"})),
-        N(1, L(1, {"`uvm_object_utils_begin", "("}), L(3, {"l1"}), L(1, {")"})),
+          N(3, L(3, {"l1a", ","}), L(3, {"UVM_DEFAULT", ")"}))),
+        N(1, L(1, {"`uvm_object_utils_begin", "("}), L(3, {"l1", ")"})),
         N(2, L(2, {"`uvm_field_int", "("}),
-          N(4, L(4, {"l2a", ","}), L(4, {"UVM_DEFAULT"})), L(2, {")"})),
-        N(2, L(2, {"`uvm_object_utils_begin", "("}), L(4, {"l2"}), L(2, {")"})),
+          N(4, L(4, {"l2a", ","}), L(4, {"UVM_DEFAULT", ")"}))),
+        N(2, L(2, {"`uvm_object_utils_begin", "("}), L(4, {"l2", ")"})),
         N(3, L(3, {"`uvm_field_int", "("}),
-          N(5, L(5, {"l3a", ","}), L(5, {"UVM_DEFAULT"})), L(3, {")"})),
+          N(5, L(5, {"l3a", ","}), L(5, {"UVM_DEFAULT", ")"}))),
         L(2, {"`uvm_object_utils_end"}),
         L(1, {"`uvm_object_utils_end"}),
         N(1, L(1, {"`uvm_field_int", "("}),
-          N(3, L(3, {"l1b", ","}), L(3, {"UVM_DEFAULT"})), L(1, {")"})),
+          N(3, L(3, {"l1b", ","}), L(3, {"UVM_DEFAULT", ")"}))),
         L(0, {"`uvm_object_utils_end"}),
     },
 
@@ -2211,11 +2209,11 @@ const TreeUnwrapperTestData kUnwrapUvmTestCases[] = {
         "`uvm_field_utils_begin(l0)\n"
         "`uvm_field_int(l1a, UVM_DEFAULT)\n"
         "`uvm_field_int(l1b, UVM_DEFAULT)\n",
-        N(0, L(0, {"`uvm_field_utils_begin", "("}), L(2, {"l0"}), L(0, {")"})),
+        N(0, L(0, {"`uvm_field_utils_begin", "("}), L(2, {"l0", ")"})),
         N(0, L(0, {"`uvm_field_int", "("}),
-          N(2, L(2, {"l1a", ","}), L(2, {"UVM_DEFAULT"})), L(0, {")"})),
+          N(2, L(2, {"l1a", ","}), L(2, {"UVM_DEFAULT", ")"}))),
         N(0, L(0, {"`uvm_field_int", "("}),
-          N(2, L(2, {"l1b", ","}), L(2, {"UVM_DEFAULT"})), L(0, {")"})),
+          N(2, L(2, {"l1b", ","}), L(2, {"UVM_DEFAULT", ")"}))),
     },
 
     {
@@ -2224,9 +2222,9 @@ const TreeUnwrapperTestData kUnwrapUvmTestCases[] = {
         "`uvm_field_int(l1b, UVM_DEFAULT)\n"
         "`uvm_field_utils_end\n",
         N(0, L(0, {"`uvm_field_int", "("}),
-          N(2, L(2, {"l1a", ","}), L(2, {"UVM_DEFAULT"})), L(0, {")"})),
+          N(2, L(2, {"l1a", ","}), L(2, {"UVM_DEFAULT", ")"}))),
         N(0, L(0, {"`uvm_field_int", "("}),
-          N(2, L(2, {"l1b", ","}), L(2, {"UVM_DEFAULT"})), L(0, {")"})),
+          N(2, L(2, {"l1b", ","}), L(2, {"UVM_DEFAULT", ")"}))),
         L(0, {"`uvm_field_utils_end"}),
     },
 };
@@ -2378,8 +2376,7 @@ const TreeUnwrapperTestData kClassTestCases[] = {
               N(3, L(3, {"// verilog_syntax: parse-as-statements"}),
                 L(3, {"int", "count", ";"}),
                 FlowControl(3, L(3, {"if", "(", "cfg", ")", "begin"}),
-                            L(4, {"count", "=", "1", ";"}), L(3, {"end"}))),
-              L(1, {")"})),
+                            L(4, {"count", "=", "1", ";"}), L(3, {"end", ")"})))),
             L(0, {"endclass"})),
     },
     {
@@ -2401,8 +2398,7 @@ const TreeUnwrapperTestData kClassTestCases[] = {
                 FlowControl(3, L(3, {"if", "(", "cfg", ")", "begin"}),
                             N(4, L(4, {"// parsed comment"}),
                               L(4, {"count", "=", "1", ";"})),
-                            L(3, {"end"}))),
-              L(1, {")"})),
+                            L(3, {"end", ")"})))),
             L(0, {"endclass"})),
     },
 
@@ -3105,7 +3101,7 @@ const TreeUnwrapperTestData kUnwrapPreprocessorTestCases[] = {
         "`define FOO BAR\n"
         "`FOO(baz)\n",
         L(0, {"`define", "FOO", "BAR"}),
-        N(0, L(0, {"`FOO", "("}), L(2, {"baz"}), L(0, {")"})),
+        N(0, L(0, {"`FOO", "("}), L(2, {"baz", ")"})),
     },
 
     {
@@ -3305,8 +3301,7 @@ const TreeUnwrapperTestData kUnwrapPreprocessorTestCases[] = {
                                             ":",          "2",
                                             "]",          ")",
                                             ","}),
-            L(2, {"clk_i", ","}), L(2, {"!", "rst_ni"})),
-          L(0, {")"})),
+            L(2, {"clk_i", ","}), L(2, {"!", "rst_ni", ")"}))),
     },
 
     {
@@ -3343,8 +3338,7 @@ const TreeUnwrapperTestData kUnwrapPreprocessorTestCases[] = {
                       ":",          "2",
                       "]",          ")",
                       ","}),
-                L(3, {"clk_i", ","}), L(3, {"!", "rst_ni"})),
-              L(1, {")"})),
+                L(3, {"clk_i", ","}), L(3, {"!", "rst_ni", ")"}))),
             L(0, {"endmodule"})),
     },
 
@@ -3386,8 +3380,7 @@ const TreeUnwrapperTestData kUnwrapPreprocessorTestCases[] = {
                         ":",          "2",
                         "]",          ")",
                         ","}),
-                  L(4, {"clk_i", ","}), L(4, {"!", "rst_ni"})),
-                L(2, {")"})),
+                  L(4, {"clk_i", ","}), L(4, {"!", "rst_ni", ")"}))),
               L(1, {"end"})),
             L(0, {"endmodule"})),
     },
@@ -4465,7 +4458,7 @@ const TreeUnwrapperTestData kUnwrapFunctionTestCases[] = {
         FunctionDeclaration(
             0, FunctionHeader(0, {"function", "foo", ";"}),
             N(1, L(1, {"y", "=", "`TWISTER", "("}),
-              MacroArgList(3, L(3, {"x", ","}), L(3, {"y"})), L(1, {")", ";"})),
+              MacroArgList(3, L(3, {"x", ","}), L(3, {"y", ")", ";"}))),
             L(0, {"endfunction"})),
     },
 

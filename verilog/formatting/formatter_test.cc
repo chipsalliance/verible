@@ -2706,8 +2706,7 @@ static const std::initializer_list<FormatterTestCase> kFormatterTestCases = {
         "      if (cfg.enable) begin\n"
         "        count = 1;\n"
         "      end,\n"
-        "      utils_pkg::decrement()\n"
-        "  )\n"
+        "      utils_pkg::decrement())\n"
         "endclass\n",
     },
 
