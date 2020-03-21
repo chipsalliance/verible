@@ -28,6 +28,8 @@
 
 #include "absl/status/status.h"
 #include "absl/strings/str_cat.h"
+#include "absl/strings/str_split.h"
+#include "absl/strings/str_join.h"
 #include "absl/strings/string_view.h"
 #include "common/util/logging.h"
 
@@ -67,6 +69,50 @@ static absl::Status CreateErrorStatusFromErrno(const char *fallback_msg) {
     default:
       return absl::Status(StatusCode::kUnknown, system_msg);
   }
+}
+
+// TODO (after bump to c++17) rewrite this function to use std::filesystem
+absl::Status UpwardFileSearch(absl::string_view start,
+                              absl::string_view filename,
+                              std::string* result) {
+  static constexpr char dir_separator[] = "/";
+
+  /* Convert to absolute path */
+  char absolute_path[PATH_MAX];
+  if (realpath(std::string(start).c_str(), absolute_path) < 0) {
+    return absl::InvalidArgumentError("Invalid config path specified.\n");
+  }
+
+  /* Add trailing slash */
+  const std::string full_path = absl::StrCat(absolute_path, dir_separator);
+
+  VLOG(1) << "Upward search for " << filename << ", starting in " << start;
+
+  size_t search_up_to = full_path.length();
+  do {
+    const size_t separator_pos = full_path.rfind(dir_separator, search_up_to);
+
+    if (separator_pos == search_up_to || separator_pos == std::string::npos) {
+      break;
+    }
+
+    const std::string candidate =
+      absl::StrCat(full_path.substr(0, separator_pos + 1), filename);
+
+    if (access(candidate.c_str(), R_OK) != -1) {
+      *result = candidate;
+      VLOG(1) << "Found: " << *result;
+      return absl::OkStatus();
+    }
+
+    search_up_to = separator_pos - 1;
+
+    if (separator_pos == 0) {
+      break;
+    }
+  } while (true);
+
+  return absl::NotFoundError("No matching file found.\n");
 }
 
 absl::Status GetContents(absl::string_view filename, std::string *content) {
