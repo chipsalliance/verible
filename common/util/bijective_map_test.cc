@@ -18,6 +18,7 @@
 
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
+#include "common/strings/compare.h"
 #include "common/util/logging.h"
 
 namespace verible {
@@ -105,6 +106,23 @@ TEST(BijectiveMapTest, InsertRandom) {
   EXPECT_EQ(*ABSL_DIE_IF_NULL(m.insert_using_value_generator("g", gen)), 2);
   EXPECT_EQ(*ABSL_DIE_IF_NULL(m.insert_using_value_generator("f", gen)), 3);
   EXPECT_EQ(*ABSL_DIE_IF_NULL(m.insert_using_value_generator("f", gen)), 3);
+}
+
+// Testing heterogenous lookup: internally stored std::string, supporting
+// copy-less lookup with absl::string_view.
+using StringMapType = BijectiveMap<std::string, std::string, StringViewCompare,
+                                   StringViewCompare>;
+
+TEST(BijectiveMapTest, HeterogeneousStringLookup) {
+  StringMapType m;
+  EXPECT_TRUE(m.insert("a", "G"));
+  EXPECT_TRUE(m.insert("z", "Q"));
+  EXPECT_EQ(*ABSL_DIE_IF_NULL(m.find_forward(absl::string_view("a"))), "G");
+  EXPECT_EQ(*ABSL_DIE_IF_NULL(m.find_reverse(absl::string_view("G"))), "a");
+  EXPECT_EQ(*ABSL_DIE_IF_NULL(m.find_forward(absl::string_view("z"))), "Q");
+  EXPECT_EQ(*ABSL_DIE_IF_NULL(m.find_reverse(absl::string_view("Q"))), "z");
+  EXPECT_EQ(m.find_forward(absl::string_view("b")), nullptr);
+  EXPECT_EQ(m.find_reverse(absl::string_view("3")), nullptr);
 }
 
 }  // namespace

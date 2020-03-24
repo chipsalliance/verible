@@ -26,18 +26,17 @@ namespace verible {
 // maps point to each other's keys.
 // Using std::map internally because it provides stable iterators
 // across insertion/deletion operations.
-template <class K, class V>
+template <class K, class V, class KComp = std::less<K>,
+          class VComp = std::less<V>>
 class BijectiveMap {
   // Map of keys to values (by pointer).
   // Would really rather have value_type be a reverse_map_type::const_iterator
-  // but cannot due to mutually recursive template.
-  // TODO(fangism): allow heterogenous compare on key type
-  typedef std::map<K, const V*> forward_map_type;
+  // but cannot due to mutually recursive template type.
+  typedef std::map<K, const V*, KComp> forward_map_type;
   // Map of values to keys (by pointer).
   // Would really rather have value_type be a forward_map_type::const_iterator
-  // but cannot due to mutually recursive template.
-  // TODO(fangism): allow heterogenous compare on value type
-  typedef std::map<V, const K*> reverse_map_type;
+  // but cannot due to mutually recursive template type.
+  typedef std::map<V, const K*, VComp> reverse_map_type;
 
  public:
   BijectiveMap() = default;
@@ -52,18 +51,20 @@ class BijectiveMap {
   const reverse_map_type& reverse_view() const { return reverse_map; }
 
   // Lookup value given key.
-  const V* find_forward(const K& k) const {
-    auto iter = forward_map.find(k);
+  template <typename ConvertibleToKey>
+  const V* find_forward(const ConvertibleToKey& k) const {
+    auto iter = forward_map.find(k);  // heterogeneous lookup enabled
     return iter == forward_map.end() ? nullptr : iter->second;
   }
 
   // Lookup key given value.
-  const K* find_reverse(const V& v) const {
-    auto iter = reverse_map.find(v);
+  template <typename ConvertibleToValue>
+  const K* find_reverse(const ConvertibleToValue& v) const {
+    auto iter = reverse_map.find(v);  // heterogeneous lookup enabled
     return iter == reverse_map.end() ? nullptr : iter->second;
   }
 
-  bool insert(const std::pair<K, V> p) { return insert(p.first, p.second); }
+  bool insert(const std::pair<K, V>& p) { return insert(p.first, p.second); }
 
   // Establishes 1-1 association between key and value.
   bool insert(const K& k, const V& v) {

@@ -336,6 +336,7 @@ cc_test(
     deps = [
         ":bijective_map",
         ":logging",
+        "//common/strings:compare",
         "@com_google_googletest//:gtest_main",
     ],
 )
