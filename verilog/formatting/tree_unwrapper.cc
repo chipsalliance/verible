@@ -1506,6 +1506,7 @@ void TreeUnwrapper::Visit(const verible::SyntaxTreeLeaf& leaf) {
       // Pick one, even if both work.
       if (current_context_.DirectParentIsOneOf({
               // NodeEnum:xxxx                             // due to element:
+              NodeEnum::kMacroArgList,         // MacroArg
               NodeEnum::kPortDeclarationList,  // kPort, kPortDeclaration
               NodeEnum::kPortActualList,       // kActualNamedPort,
                                                // kActualPositionalPort

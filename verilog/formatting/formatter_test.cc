@@ -343,10 +343,15 @@ static const std::initializer_list<FormatterTestCase> kFormatterTestCases = {
      "    aa,  //bb\n"
      "    bb,  // cc\n"
      "    cc)\n"},
-    {// macro call with argument including comment
-     "`FOO(aa, bb//cc\ndd)\n",
-     "`FOO(aa, bb//cc\n"
-     "dd)\n"},  // TODO(fangism): Improve formatting arguments with comments
+    {// macro call with argument including trailing EOL comment
+     "`FOO(aa, bb,//cc\ndd)\n",
+     "`FOO(aa, bb,  //cc\n"
+     "     dd)\n"},
+    {// macro call with argument including EOL comment on own line
+     "`FOOOO(aa, bb,\n//cc\ndd)\n",
+     "`FOOOO(aa, bb,  //cc\n"
+     // TODO(b/152324712): //cc comment should start its own line
+     "       dd)\n"},
     {"  // leading comment\n"
      "  `define   FOO    \\\n"  // multiline macro definition
      "1\n"
