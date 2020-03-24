@@ -310,22 +310,28 @@ static bool IsPreprocessorClause(NodeEnum e) {
 // event that the statement body is split, we need to ensure it is properly
 // indented, even if it is a single statement.
 // Keep this list in sync below where the same function name appears in comment.
-static bool DirectParentIsFlowControlConstruct(
+static bool ShouldIndentRelativeToDirectParent(
     const verible::SyntaxTreeContext& context) {
+  // TODO(fangism): flip logic to check that item/statement is *not* a direct
+  // child of one of the exceptions: sequential/parallel/generate blocks.
   return context.DirectParentIsOneOf({
       //
-      NodeEnum::kCaseStatement,         //
-      NodeEnum::kRandCaseStatement,     //
-      NodeEnum::kForLoopStatement,      //
-      NodeEnum::kForeverLoopStatement,  //
-      NodeEnum::kRepeatLoopStatement,   //
-      NodeEnum::kWhileLoopStatement,    //
-      NodeEnum::kDoWhileLoopStatement,  //
-      NodeEnum::kForeachLoopStatement,  //
-      NodeEnum::kConditionalStatement,  //
-      NodeEnum::kIfClause,              //
-      NodeEnum::kGenerateIfClause,      //
-      NodeEnum::kProceduralTimingControlStatement,
+      NodeEnum::kCaseStatement,                     //
+      NodeEnum::kRandCaseStatement,                 //
+      NodeEnum::kForLoopStatement,                  //
+      NodeEnum::kForeverLoopStatement,              //
+      NodeEnum::kRepeatLoopStatement,               //
+      NodeEnum::kWhileLoopStatement,                //
+      NodeEnum::kDoWhileLoopStatement,              //
+      NodeEnum::kForeachLoopStatement,              //
+      NodeEnum::kConditionalStatement,              //
+      NodeEnum::kIfClause,                          //
+      NodeEnum::kGenerateIfClause,                  //
+      NodeEnum::kProceduralTimingControlStatement,  //
+      NodeEnum::kAssertionStatement,                //
+      NodeEnum::kInitialStatement,                  //
+      NodeEnum::kAlwaysStatement,                   //
+      NodeEnum::kFinalStatement,                    //
       // Do not further indent under kElseClause and kElseGenerateClause,
       // so that chained else-ifs remain flat.
   });
@@ -740,9 +746,9 @@ void TreeUnwrapper::SetIndentationsAndCreatePartitions(
     case NodeEnum::kStatement:
     case NodeEnum::kLabeledStatement:  // e.g. foo_label : do_something();
     case NodeEnum::kJumpStatement:
-    case NodeEnum::kWaitStatement:                   // wait(expr) ...
-    case NodeEnum::kAssertionStatement:              // assert(expr);
-    case NodeEnum::kContinuousAssignmentStatement:   // e.g. assign x=y;
+    case NodeEnum::kWaitStatement:                  // wait(expr) ...
+    case NodeEnum::kAssertionStatement:             // assert(expr);
+    case NodeEnum::kContinuousAssignmentStatement:  // e.g. assign x=y;
     case NodeEnum::kProceduralContinuousAssignmentStatement:  // e.g. assign
                                                               // x=y;
     case NodeEnum::kProceduralContinuousDeassignmentStatement:
@@ -755,9 +761,9 @@ void TreeUnwrapper::SetIndentationsAndCreatePartitions(
     case NodeEnum::kIncrementDecrementExpression:    // --y
     case NodeEnum::kProceduralTimingControlStatement:
     case NodeEnum::kMacroCall: {
-      // Single statements directly inside a flow-control construct
+      // Single statements directly inside a controlled construct
       // should be properly indented one level.
-      const int indent = DirectParentIsFlowControlConstruct(Context())
+      const int indent = ShouldIndentRelativeToDirectParent(Context())
                              ? style_.indentation_spaces
                              : 0;
       VisitIndentedSection(node, indent,
@@ -1374,9 +1380,11 @@ void TreeUnwrapper::ReshapeTokenPartitions(
       if (GetSubtreeAsNode(node, tag, node.children().size() - 1)
               .MatchesTagAnyOf({NodeEnum::kProceduralTimingControlStatement,
                                 NodeEnum::kSeqBlock})) {
-        // Merge 'always' keyword with next sibling.
-        partition.FlattenOneChild(1);
-        MergeConsecutiveSiblings(&partition, 0);
+        // Merge 'always' keyword with next sibling, and adjust subtree indent.
+        verible::MergeLeafIntoNextLeaf(&partition.Children().front());
+        verible::AdjustIndentationAbsolute(
+            &partition.Children().front(),
+            partition.Value().IndentationSpaces());
         VLOG(4) << "after merging 'always':\n" << partition;
       }
       break;

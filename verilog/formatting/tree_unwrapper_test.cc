@@ -1870,6 +1870,70 @@ const TreeUnwrapperTestData kUnwrapModuleTestCases[] = {
                                          L(1, {"end"})),
                           L(0, {"endmodule"})),
     },
+
+    {
+        "module with simple immediate assertion statement, inside initial",
+        "module m_assert; initial assert (x); endmodule",
+        ModuleDeclaration(0,  //
+                          L(0, {"module", "m_assert", ";"}),
+                          N(1,                  //
+                            L(1, {"initial"}),  //
+                            L(2, {"assert", "(", "x", ")", ";"})),
+                          L(0, {"endmodule"})),
+    },
+    {
+        "module with simple immediate assertion statement, inside final",
+        "module m_assert; final assert (z); endmodule",
+        ModuleDeclaration(0,  //
+                          L(0, {"module", "m_assert", ";"}),
+                          N(1,                //
+                            L(1, {"final"}),  //
+                            L(2, {"assert", "(", "z", ")", ";"})),
+                          L(0, {"endmodule"})),
+    },
+    {
+        "module with simple immediate assertion statement, inside always",
+        "module m_assert; always_comb assert (y); endmodule",
+        ModuleDeclaration(0,  //
+                          L(0, {"module", "m_assert", ";"}),
+                          N(1,                      //
+                            L(1, {"always_comb"}),  //
+                            L(2, {"assert", "(", "y", ")", ";"})),
+                          L(0, {"endmodule"})),
+    },
+    {
+        "module: simple immediate assertion statement, inside initial block",
+        "module m_assert; initial begin assert (x); end endmodule",
+        ModuleDeclaration(0,  //
+                          L(0, {"module", "m_assert", ";"}),
+                          N(1,                                     //
+                            L(1, {"initial", "begin"}),            //
+                            L(2, {"assert", "(", "x", ")", ";"}),  //
+                            L(1, {"end"})),
+                          L(0, {"endmodule"})),
+    },
+    {
+        "module: simple immediate assertion statement, inside final block",
+        "module m_assert; final begin assert (x); end endmodule",
+        ModuleDeclaration(0,  //
+                          L(0, {"module", "m_assert", ";"}),
+                          N(1,                                     //
+                            L(1, {"final", "begin"}),              //
+                            L(2, {"assert", "(", "x", ")", ";"}),  //
+                            L(1, {"end"})),
+                          L(0, {"endmodule"})),
+    },
+    {
+        "module: simple immediate assertion statement, inside always block",
+        "module m_assert; always_comb begin assert (x); end endmodule",
+        ModuleDeclaration(0,  //
+                          L(0, {"module", "m_assert", ";"}),
+                          N(1,                                     //
+                            L(1, {"always_comb", "begin"}),        //
+                            L(2, {"assert", "(", "x", ")", ";"}),  //
+                            L(1, {"end"})),
+                          L(0, {"endmodule"})),
+    },
 };
 
 // Test that TreeUnwrapper produces the correct UnwrappedLines from module tests

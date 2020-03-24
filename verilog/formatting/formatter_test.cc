@@ -1288,6 +1288,20 @@ static const std::initializer_list<FormatterTestCase> kFormatterTestCases = {
         "endmodule\n",
     },
     {
+        "module m; final  assert   (expr ) ;endmodule",
+        "module m;\n"
+        "  final assert(expr);\n"  // TODO(b/152253364): space after assert
+        "endmodule\n",
+    },
+    {
+        "module m; final  begin\tassert   (expr ) ;end  endmodule",
+        "module m;\n"
+        "  final begin\n"
+        "    assert(expr);\n"  // TODO(b/152253364): space after assert
+        "  end\n"
+        "endmodule\n",
+    },
+    {
         // two consecutive clocking declarations in modules
         " module mcd ; "
         "clocking   cb @( posedge clk);\t\tendclocking "
