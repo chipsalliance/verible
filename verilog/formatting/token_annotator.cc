@@ -66,8 +66,6 @@ static bool IsInsideNumericLiteral(const PreFormatToken& left,
 static bool IsKeywordCallable(verilog_tokentype e) {
   switch (e) {
     case TK_and:  // array method
-    case TK_assert:
-    case TK_assume:
     case TK_find:
     case TK_find_index:
     case TK_find_first:

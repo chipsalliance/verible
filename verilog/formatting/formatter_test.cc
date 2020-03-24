@@ -1290,15 +1290,27 @@ static const std::initializer_list<FormatterTestCase> kFormatterTestCases = {
     {
         "module m; final  assert   (expr ) ;endmodule",
         "module m;\n"
-        "  final assert(expr);\n"  // TODO(b/152253364): space after assert
+        "  final assert (expr);\n"
         "endmodule\n",
     },
     {
         "module m; final  begin\tassert   (expr ) ;end  endmodule",
         "module m;\n"
         "  final begin\n"
-        "    assert(expr);\n"  // TODO(b/152253364): space after assert
+        "    assert (expr);\n"
         "  end\n"
+        "endmodule\n",
+    },
+    {
+        "module m; final  assume   (expr ) ;endmodule",
+        "module m;\n"
+        "  final assume (expr);\n"
+        "endmodule\n",
+    },
+    {
+        "module m; final  cover   (expr ) ;endmodule",
+        "module m;\n"
+        "  final cover (expr);\n"
         "endmodule\n",
     },
     {
@@ -3006,12 +3018,12 @@ static const std::initializer_list<FormatterTestCase> kFormatterTestCases = {
      "  join_any\n"
      "endtask\n"},
     {
-        // assertion statements
+        // call and assertion statements
         "task  t ;Fire() ;assert ( x);assert(y );endtask",
         "task t;\n"
         "  Fire();\n"
-        "  assert(x);\n"
-        "  assert(y);\n"
+        "  assert (x);\n"
+        "  assert (y);\n"
         "endtask\n",
     },
     {
@@ -3019,8 +3031,8 @@ static const std::initializer_list<FormatterTestCase> kFormatterTestCases = {
         "task  t ;Fire() ;assume ( x);assume(y );endtask",
         "task t;\n"
         "  Fire();\n"
-        "  assume(x);\n"
-        "  assume(y);\n"
+        "  assume (x);\n"
+        "  assume (y);\n"
         "endtask\n",
     },
     {// shuffle calls
