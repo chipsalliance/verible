@@ -224,6 +224,129 @@ static const std::initializer_list<FormatterTestCase> kFormatterTestCases = {
         "`define FOO \\\n"
         " 1\n"  // TODO(b/141517267): Reflowing macro definitions
     },
+    {// macro with MacroArg tokens as arguments
+     "`FOOOOOO(\nbar1...\n,\nbar2...\n,\nbar3...\n,\nbar4\n)\n",
+     "`FOOOOOO(bar1..., bar2..., bar3...,\n"
+     "         bar4)\n"},
+    {// macro declaration exceeds line length limit
+     "`F_MACRO(looooooong_type if_it_fits_I_sits)\n",
+     "`F_MACRO(\n"
+     "    looooooong_type if_it_fits_I_sits)\n"},
+    {// macro call with not fitting arguments
+     "`MACRO_FFFFFFFFFFF("
+     "type_a_aaaa,type_b_bbbbb,"
+     "type_c_cccccc,type_d_dddddddd,"
+     "type_e_eeeeeeee,type_f_ffff)\n",
+     "`MACRO_FFFFFFFFFFF(\n"
+     "    type_a_aaaa, type_b_bbbbb,\n"
+     "    type_c_cccccc, type_d_dddddddd,\n"
+     "    type_e_eeeeeeee, type_f_ffff)\n"},
+    {// nested macro call
+     "`MACRO_FFFFFFFFFFF( "
+     "`A(type_a_aaaa), `B(type_b_bbbbb), "
+     "`C(type_c_cccccc), `D(type_d_dddddddd), "
+     "`E(type_e_eeeeeeee), `F(type_f_ffff))\n",
+     "`MACRO_FFFFFFFFFFF(`A(type_a_aaaa),\n"
+     "                   `B(type_b_bbbbb),\n"
+     "                   `C(type_c_cccccc),\n"
+     "                   `D(type_d_dddddddd),\n"
+     "                   `E(type_e_eeeeeeee),\n"
+     "                   `F(type_f_ffff))\n"},
+    {// two-level nested macro call
+     "`MACRO_FFFFFFFFFFF( "
+     "`A(type_a_aaaa, `B(type_b_bbbbb)), "
+     "`C(type_c_cccccc, `D(type_d_dddddddd)), "
+     "`E(type_e_eeeeeeee, `F(type_f_ffff)))\n",
+     "`MACRO_FFFFFFFFFFF(\n"
+     "    `A(type_a_aaaa, `B(type_b_bbbbb)),\n"
+     "    `C(type_c_cccccc,\n"
+     "       `D(type_d_dddddddd)),\n"
+     "    `E(type_e_eeeeeeee,\n"
+     "       `F(type_f_ffff)))\n"},
+    {// three-level nested macro call
+     "`MACRO_FFFFFFFFFFF(`A(type_a_aaaa,"
+     "`B(type_b_bbbbb,`C(type_c_cccccc))),"
+     "`D(type_d_dddddddd,`E(type_e_eeeeeeee,"
+     "`F(type_f_ffff))))\n",
+     "`MACRO_FFFFFFFFFFF(\n"
+     "    `A(type_a_aaaa,\n"
+     "        `B(type_b_bbbbb,\n"
+     "           `C(type_c_cccccc))),\n"
+     "    `D(type_d_dddddddd,\n"
+     "        `E(type_e_eeeeeeee,\n"
+     "           `F(type_f_ffff))))\n"},
+    {// macro call with MacroArg tokens as arugments and with semicolon
+     "`FOOOOOO(\nbar1...\n,\nbar2...\n,\nbar3...\n,\nbar4\n);\n",
+     "`FOOOOOO(bar1..., bar2..., bar3...,\n"
+     "         bar4);\n"},
+    {// macro declaration exceeds line length limit and contains semicolon
+     "`F_MACRO(looooooong_type if_it_fits_I_sits);\n",
+     "`F_MACRO(\n"
+     "    looooooong_type if_it_fits_I_sits);\n"},
+    {// macro call with not fitting arguments and semicolon
+     "`MACRO_FFFFFFFFFFF("
+     "type_a_aaaa,type_b_bbbbb,"
+     "type_c_cccccc,type_d_dddddddd,"
+     "type_e_eeeeeeee,type_f_ffff);\n",
+     "`MACRO_FFFFFFFFFFF(\n"
+     "    type_a_aaaa, type_b_bbbbb,\n"
+     "    type_c_cccccc, type_d_dddddddd,\n"
+     "    type_e_eeeeeeee, type_f_ffff);\n"},
+    {// nested macro call with semicolon
+     "`MACRO_FFFFFFFFFFF( "
+     "`A(type_a_aaaa), `B(type_b_bbbbb), "
+     "`C(type_c_cccccc), `D(type_d_dddddddd), "
+     "`E(type_e_eeeeeeee), `F(type_f_ffff));\n",
+     "`MACRO_FFFFFFFFFFF(`A(type_a_aaaa),\n"
+     "                   `B(type_b_bbbbb),\n"
+     "                   `C(type_c_cccccc),\n"
+     "                   `D(type_d_dddddddd),\n"
+     "                   `E(type_e_eeeeeeee),\n"
+     "                   `F(type_f_ffff));\n"},
+    {// two-level nested macro call with semicolon
+     "`MACRO_FFFFFFFFFFF( "
+     "`A(type_a_aaaa, `B(type_b_bbbbb)), "
+     "`C(type_c_cccccc, `D(type_d_dddddddd)), "
+     "`E(type_e_eeeeeeee, `F(type_f_ffff)));\n",
+     "`MACRO_FFFFFFFFFFF(\n"
+     "    `A(type_a_aaaa, `B(type_b_bbbbb)),\n"
+     "    `C(type_c_cccccc,\n"
+     "       `D(type_d_dddddddd)),\n"
+     "    `E(type_e_eeeeeeee,\n"
+     "       `F(type_f_ffff)));\n"},
+    {// three-level nested macro call with semicolon
+     "`MACRO_FFFFFFFFFFF(`A(type_a_aaaa,"
+     "`B(type_b_bbbbb,`C(type_c_cccccc))),"
+     "`D(type_d_dddddddd,`E(type_e_eeeeeeee,"
+     "`F(type_f_ffff))));\n",
+     "`MACRO_FFFFFFFFFFF(\n"
+     "    `A(type_a_aaaa,\n"
+     "        `B(type_b_bbbbb,\n"
+     "           `C(type_c_cccccc))),\n"
+     "    `D(type_d_dddddddd,\n"
+     "        `E(type_e_eeeeeeee,\n"
+     "           `F(type_f_ffff))));\n"},
+    {// macro call with no args
+     "`FOOOOOO()\n", "`FOOOOOO()\n"},
+    {// macro call with no args and semicolon
+     "`FOOOOOO();\n", "`FOOOOOO();\n"},
+    {// macro call with no args and semicolon separated by space
+     "`FOOOOOO() ;\n", "`FOOOOOO();\n"},
+    {// macro call with comments in argument list
+     "`FOO(aa, //aa\nbb , // bb\ncc)\n",
+     "`FOO(aa,  //aa\n"
+     "     bb,  // bb\n"
+     "     cc)\n"},
+    {// macro call with comment before first argument
+     "`FOO(//aa\naa, //bb\nbb , // cc\ncc)\n",
+     "`FOO(  //aa\n"
+     "    aa,  //bb\n"
+     "    bb,  // cc\n"
+     "    cc)\n"},
+    {// macro call with argument including comment
+     "`FOO(aa, bb//cc\ndd)\n",
+     "`FOO(aa, bb//cc\n"
+     "dd)\n"},  // TODO(fangism): Improve formatting arguments with comments
     {"  // leading comment\n"
      "  `define   FOO    \\\n"  // multiline macro definition
      "1\n"
@@ -2732,8 +2855,7 @@ static const std::initializer_list<FormatterTestCase> kFormatterTestCases = {
         "      if (cfg.enable) begin\n"
         "        count = 1;\n"
         "      end,\n"
-        "      utils_pkg::decrement()\n"
-        "  )\n"
+        "      utils_pkg::decrement())\n"
         "endclass\n",
     },
 

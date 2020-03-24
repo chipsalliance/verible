@@ -505,8 +505,12 @@ void TreeUnwrapper::InterChildNodeHook(const SyntaxTreeNode& node) {
     case NodeEnum::kBlockItemStatementList:
       LookAheadBeyondCurrentNode();
       break;
-    default:
+    default: {
+      if (Context().DirectParentIs(NodeEnum::kMacroArgList)) {
+        StartNewUnwrappedLine(PartitionPolicyEnum::kFitOnLineElseExpand);
+      }
       break;
+    }
   }
   VLOG(4) << "end of " << __FUNCTION__ << " node type: " << tag;
 }
@@ -759,7 +763,17 @@ void TreeUnwrapper::SetIndentationsAndCreatePartitions(
     case NodeEnum::kNonblockingAssignmentStatement:  // dest <= src;
     case NodeEnum::kAssignModifyStatement:           // id+=expr
     case NodeEnum::kIncrementDecrementExpression:    // --y
-    case NodeEnum::kProceduralTimingControlStatement:
+    case NodeEnum::kProceduralTimingControlStatement: {
+      // Single statements directly inside a flow-control construct
+      // should be properly indented one level.
+      const int indent = ShouldIndentRelativeToDirectParent(Context())
+                             ? style_.indentation_spaces
+                             : 0;
+      VisitIndentedSection(node, indent,
+                           PartitionPolicyEnum::kFitOnLineElseExpand);
+      break;
+    }
+
     case NodeEnum::kMacroCall: {
       // Single statements directly inside a controlled construct
       // should be properly indented one level.
@@ -767,7 +781,7 @@ void TreeUnwrapper::SetIndentationsAndCreatePartitions(
                              ? style_.indentation_spaces
                              : 0;
       VisitIndentedSection(node, indent,
-                           PartitionPolicyEnum::kFitOnLineElseExpand);
+                           PartitionPolicyEnum::kAppendFittingSubPartitions);
       break;
     }
 
@@ -915,6 +929,13 @@ static bool PartitionIsCloseParenSemi(const TokenPartitionTree& partition) {
   if (ftokens.size() < 2) return false;
   if (ftokens.front().TokenEnum() != ')') return false;
   return ftokens.back().TokenEnum() == ';';
+}
+
+static bool PartitionIsCloseParen(const TokenPartitionTree& partition) {
+  const auto ftokens = partition.Value().TokensRange();
+  if (ftokens.size() != 1) return false;
+  const auto token_enum = ftokens.front().TokenEnum();
+  return ((token_enum == ')') || (token_enum == MacroCallCloseToEndLine));
 }
 
 static void AttachTrailingSemicolonToPreviousPartition(
@@ -1255,6 +1276,14 @@ void TreeUnwrapper::ReshapeTokenPartitions(
         // FIXME HERE: flattening wrong place!  Should merge instead.
         partition.FlattenOnce();
         VLOG(4) << "NODE: kMacroCall (flattened):\n" << partition;
+      } else {
+        // Merge closing parenthesis into last argument partition
+        // Test for ')' and MacroCallCloseToEndLine because macros
+        // use its own token 'MacroCallCloseToEndLine'
+        auto& last = *ABSL_DIE_IF_NULL(partition.RightmostDescendant());
+        if (PartitionIsCloseParen(last) || PartitionIsCloseParenSemi(last)) {
+          verible::MergeLeafIntoPreviousLeaf(&last);
+        }
       }
       break;
     }
