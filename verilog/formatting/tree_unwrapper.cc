@@ -928,26 +928,12 @@ static void AttachTrailingSemicolonToPreviousPartition(
 
 static void ReshapeIfClause(const SyntaxTreeNode& node,
                             TokenPartitionTree* partition_ptr) {
-  const auto tag = NodeEnum(node.Tag().tag);
   auto& partition = *partition_ptr;
-  if (tag == NodeEnum::kIfClause) {
-    const auto& body = GetSubtreeAsNode(node, tag, 1, NodeEnum::kIfBody);
-    if (body.children().size() != 1) return;
-    if (!GetSubtreeAsNode(body, NodeEnum::kIfBody, 0)
-             .MatchesTag(NodeEnum::kSeqBlock)) {
-      VLOG(4) << "if-body was not a begin-end block.";
-      return;
-    }
-  } else {
-    CHECK_EQ(tag, NodeEnum::kGenerateIfClause);
-    const auto& body =
-        GetSubtreeAsNode(node, tag, 1, NodeEnum::kGenerateIfBody);
-    if (body.children().size() != 1) return;
-    if (!GetSubtreeAsNode(body, NodeEnum::kGenerateIfBody, 0)
-             .MatchesTag(NodeEnum::kGenerateBlock)) {
-      VLOG(4) << "if-body was not a begin-end block.";
-      return;
-    }
+  const SyntaxTreeNode& body =
+      *ABSL_DIE_IF_NULL(GetAnyControlStatementBody(node));
+  if (!NodeIsBeginEndBlock(body)) {
+    VLOG(4) << "if-body was not a begin-end block.";
+    return;
   }
 
   // Then fuse the 'begin' partition with the preceding 'if (...)'
@@ -963,16 +949,11 @@ static void ReshapeIfClause(const SyntaxTreeNode& node,
 
 static void ReshapeElseClause(const SyntaxTreeNode& node,
                               TokenPartitionTree* partition_ptr) {
-  const auto tag = NodeEnum(node.Tag().tag);
   auto& partition = *partition_ptr;
-  const SyntaxTreeNode* else_body_subnode;
-  if (tag == NodeEnum::kGenerateElseClause) {
-    else_body_subnode = &GetElseClauseGenerateBody(node);
-  } else {
-    CHECK_EQ(tag, NodeEnum::kElseClause);
-    else_body_subnode = &GetElseClauseStatementBody(node);
-  }
-  if (!NodeIsConditionalOrBlock(*else_body_subnode)) {
+  const SyntaxTreeNode& else_body_subnode =
+      *ABSL_DIE_IF_NULL(GetAnyControlStatementBody(node));
+  if (!NodeIsConditionalOrBlock(else_body_subnode)) {
+    VLOG(4) << "else-body was neither a begin-end block nor if-conditional.";
     return;
   }
 
@@ -1354,9 +1335,8 @@ void TreeUnwrapper::ReshapeTokenPartitions(
     case NodeEnum::kFinalStatement: {
       // In these cases, merge the 'begin' partition of the statement block
       // with the preceding keyword or header partition.
-      if (verible::SymbolCastToNode(*node.children().back())
-              .MatchesTagAnyOf(
-                  {NodeEnum::kSeqBlock, NodeEnum::kGenerateBlock})) {
+      if (NodeIsBeginEndBlock(
+              verible::SymbolCastToNode(*node.children().back()))) {
         auto& seq_block_partition = partition.Children().back();
         VLOG(4) << "block partition: " << seq_block_partition;
         auto& begin_partition = *seq_block_partition.LeftmostDescendant();
