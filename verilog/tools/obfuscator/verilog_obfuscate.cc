@@ -36,12 +36,20 @@
 
 using verible::IdentifierObfuscator;
 
-static void InternalError(std::ostream& stream, absl::string_view summary,
-                          absl::string_view detail, absl::string_view output) {
-  stream << "Internal error: " << summary << ":\n" << detail << std::endl;
-  stream << "Output would have been:\n" << output;
-  stream << "*** Please file a bug. ***" << std::endl;
-}
+ABSL_FLAG(                      //
+    std::string, load_map, "",  //
+    "If provided, pre-load an existing translation dictionary (written by "
+    "--save_map).  This is useful for applying pre-existing transforms.");
+ABSL_FLAG(                      //
+    std::string, save_map, "",  //
+    "If provided, save the translation to a dictionary for reuse in a "
+    "future obfuscation with --load_map.");
+ABSL_FLAG(                //
+    bool, decode, false,  //
+    "If true, when used with --load_map, apply the translation dictionary in "
+    "reverse to de-obfuscate the source code, and do not obfuscate any unseen "
+    "identifiers.  There is no need to --save_map with this option, because "
+    "no new substitutions are established.");
 
 int main(int argc, char** argv) {
   const auto usage = absl::StrCat("usage: ", argv[0],
@@ -55,9 +63,29 @@ Output is written to stdout.
 
   IdentifierObfuscator subst;  // initially empty identifier map
 
-  // TODO(fangism): load pre-existing dictionary, and apply it.
+  // Set mode to encode or decode.
+  const bool decode = FLAGS_decode.Get();
+  subst.set_decode_mode(decode);
 
-  // TODO(fangism): decode by loading dictionary as a reverse map
+  const auto& load_map_file = FLAGS_load_map.Get();
+  const auto& save_map_file = FLAGS_save_map.Get();
+  if (!load_map_file.empty()) {
+    std::string load_map_content;
+    if (!verible::file::GetContents(load_map_file, &load_map_content)) {
+      std::cerr << "Error reading --load_map file: " << load_map_file
+                << std::endl;
+      return 1;
+    }
+    const auto status = subst.load(load_map_content);
+    if (!status.ok()) {
+      std::cerr << "Error parsing --load_map file: " << load_map_file << '\n'
+                << status.message() << std::endl;
+      return 1;
+    }
+  } else if (decode) {
+    std::cerr << "--load_map is required with --decode." << std::endl;
+    return 1;
+  }
 
   // Read from stdin.
   std::string content;
@@ -73,11 +101,15 @@ Output is written to stdout.
     return 1;
   }
 
-  // TODO(fangism): save obfuscation mapping, so that it may be re-used, or even
-  // reverse-applied for decoding.  Verify reversibility with a reverse map.
+  if (!decode && !save_map_file.empty()) {
+    if (!verible::file::SetContents(save_map_file, subst.save())) {
+      std::cerr << "Error writing --save_map file: " << save_map_file
+                << std::endl;
+      return 1;
+    }
+  }
 
   // Print obfuscated code.
   std::cout << output.str();
-
   return 0;
 }

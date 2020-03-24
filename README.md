@@ -478,6 +478,21 @@ This is useful for preparing potentially sensitive test cases with tool vendors.
 
 ```
 verilog_obfuscate: usage: verilog_obfuscate [options] < original_file > output
+
+verilog_obfuscate mangles Verilog code by changing identifiers.
+All whitespaces and identifier lengths are preserved.
+Output is written to stdout.
+
+  Flags from verilog/tools/obfuscator/verilog_obfuscate.cc:
+    --decode (If true, when used with --load_map, apply the translation
+      dictionary in reverse to de-obfuscate the source code, and do not
+      obfuscate any unseen identifiers. There is no need to --save_map with this
+      option, because no new substitutions are established.); default: false;
+    --load_map (If provided, pre-load an existing translation dictionary
+      (written by --save_map). This is useful for applying pre-existing
+      transforms.); default: "";
+    --save_map (If provided, save the translation to a dictionary for reuse in a
+      future obfuscation with --load_map.); default: "";
 ```
 
 ### Future Intent
