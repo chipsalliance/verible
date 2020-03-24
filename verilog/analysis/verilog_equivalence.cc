@@ -64,17 +64,21 @@ std::ostream& operator<<(std::ostream& stream, DiffStatus status) {
 // Returns true if lexing succeeded, false on error.
 static bool LexText(absl::string_view text, TokenSequence* subtokens,
                     std::ostream* errstream) {
+  VLOG(1) << __FUNCTION__;
   VerilogLexer lexer(text);
   // Reservation slot to capture first error token, if any.
   auto err_tok = TokenInfo::EOFToken(text);
   // Lex token's text into subtokens.
   const auto status = MakeTokenSequence(
       &lexer, text, subtokens, [&](const TokenInfo& err) { err_tok = err; });
-  if (!status.ok() && (errstream != nullptr)) {
-    (*errstream) << "Error lexing text: " << text << std::endl
-                 << "subtoken: " << err_tok << std::endl
-                 << status.message() << std::endl;
-    // TODO(fangism): print relative offsets
+  if (!status.ok()) {
+    VLOG(1) << "lex error on: " << err_tok;
+    if (errstream != nullptr) {
+      (*errstream) << "Error lexing text: " << text << std::endl
+                   << "subtoken: " << err_tok << std::endl
+                   << status.message() << std::endl;
+      // TODO(fangism): print relative offsets
+    }
     return false;
   }
   return true;
@@ -116,6 +120,7 @@ DiffStatus LexicallyEquivalent(
         equal_comparator,
     std::function<void(const verible::TokenInfo&, std::ostream&)> token_printer,
     std::ostream* errstream) {
+  VLOG(2) << __FUNCTION__;
   // Lex texts into token sequences.
   verible::TokenSequence left_tokens, right_tokens;
   {
@@ -158,6 +163,10 @@ DiffStatus LexicallyEquivalent(
 
   // This comparator is a composition of the non-recursive equal_comparator
   // and self-recursion, depending on recursion_predicate.
+  // This comparator must return a bool for use in the <algorithm> library
+  // functions, but to surface lexical errors, we must capture the DiffStatus
+  // to a local variable.
+  DiffStatus diff_status = DiffStatus::kEquivalent;
   auto recursive_comparator = [&](const TokenSequence::const_iterator l,
                                   const TokenSequence::const_iterator r) {
     if (l->token_enum != r->token_enum) {
@@ -172,7 +181,8 @@ DiffStatus LexicallyEquivalent(
     }
     if (recursion_predicate(*l)) {
       // Recursively lex and compare.
-      const auto diff_status = LexicallyEquivalent(
+      VLOG(1) << "recursively lex-ing and comparing";
+      diff_status = LexicallyEquivalent(
           l->text, r->text, lexer, recursion_predicate, remove_predicate,
           equal_comparator, token_printer, errstream);
       return diff_status == DiffStatus::kEquivalent;
@@ -189,6 +199,15 @@ DiffStatus LexicallyEquivalent(
   auto mismatch_pair =
       std::mismatch(left_filtered.begin(), left_filtered_stop_iter,
                     right_filtered.begin(), recursive_comparator);
+
+  // Report lexical errors as higher precedence.
+  switch (diff_status) {
+    case DiffStatus::kLeftError:
+    case DiffStatus::kRightError:
+      return diff_status;
+    default:
+      break;
+  }
 
   // Report differences.
   if (mismatch_pair.first == left_filtered_stop_iter) {

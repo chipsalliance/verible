@@ -282,14 +282,61 @@ TEST(FormatEquivalentTest, LexErrorOnLeft) {
                                                          << errs.str();
 }
 
+TEST(FormatEquivalentTest, LexErrorOnLeftInMacroArg) {
+  std::ostringstream errs;
+  ExpectCompareWithErrstream(FormatEquivalent, DiffStatus::kLeftError,
+                             "`hello(234badid)\n", "`hello(good_id)", &errs);
+  EXPECT_TRUE(absl::StrContains(errs.str(), "error from left input"))
+      << "full message:\n"
+      << errs.str();
+  EXPECT_TRUE(absl::StrContains(errs.str(), "234badid")) << "full message:\n"
+                                                         << errs.str();
+}
+
+TEST(FormatEquivalentTest, LexErrorOnLeftInMacroDefinitionBody) {
+  std::ostringstream errs;
+  ExpectCompareWithErrstream(FormatEquivalent, DiffStatus::kLeftError,
+                             "`define hello 345badid\n",
+                             "`define hello good_id\n", &errs);
+  EXPECT_TRUE(absl::StrContains(errs.str(), "error from left input"))
+      << "full message:\n"
+      << errs.str();
+  EXPECT_TRUE(absl::StrContains(errs.str(), "345badid")) << "full message:\n"
+                                                         << errs.str();
+}
+
 TEST(FormatEquivalentTest, LexErrorOnRight) {
   std::ostringstream errs;
   ExpectCompareWithErrstream(FormatEquivalent, DiffStatus::kRightError,
-                             "hello good_id\n", "hello 432_bad_id", &errs);
+                             "hello good_id\n", "hello 432_bad_id\n", &errs);
   EXPECT_TRUE(absl::StrContains(errs.str(), "error from right input"))
       << "full message:\n"
       << errs.str();
   EXPECT_TRUE(absl::StrContains(errs.str(), "432_bad_id")) << "full message:\n"
+                                                           << errs.str();
+}
+
+TEST(FormatEquivalentTest, LexErrorOnRightInMacroArg) {
+  std::ostringstream errs;
+  ExpectCompareWithErrstream(FormatEquivalent, DiffStatus::kRightError,
+                             "`hello(good_id)\n", "`hello(543_bad_id)\n",
+                             &errs);
+  EXPECT_TRUE(absl::StrContains(errs.str(), "error from right input"))
+      << "full message:\n"
+      << errs.str();
+  EXPECT_TRUE(absl::StrContains(errs.str(), "543_bad_id")) << "full message:\n"
+                                                           << errs.str();
+}
+
+TEST(FormatEquivalentTest, LexErrorOnRightInMacroDefinitionBody) {
+  std::ostringstream errs;
+  ExpectCompareWithErrstream(FormatEquivalent, DiffStatus::kRightError,
+                             "`define hello good_id\n",
+                             "`define hello 654_bad_id\n", &errs);
+  EXPECT_TRUE(absl::StrContains(errs.str(), "error from right input"))
+      << "full message:\n"
+      << errs.str();
+  EXPECT_TRUE(absl::StrContains(errs.str(), "654_bad_id")) << "full message:\n"
                                                            << errs.str();
 }
 
