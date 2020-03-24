@@ -17,8 +17,11 @@ cc_library(
     deps = [
         "//common/strings:obfuscator",
         "//common/text:token_info",
+        "//common/util:logging",
+        "//verilog/analysis:verilog_equivalence",
         "//verilog/parser:verilog_lexer",
         "//verilog/parser:verilog_token_enum",
+        "@com_google_absl//absl/status",
         "@com_google_absl//absl/strings",
     ],
 )

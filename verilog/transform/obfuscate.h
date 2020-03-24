@@ -17,6 +17,7 @@
 
 #include <iosfwd>
 
+#include "absl/status/status.h"
 #include "absl/strings/string_view.h"
 #include "common/strings/obfuscator.h"
 
@@ -27,8 +28,10 @@ namespace verilog {
 // to the same strings seen.  Input code only needs to be lexically valid,
 // not necessary syntactically valid.  Transformations apply to macro
 // arguments and macro definition bodies.
-void ObfuscateVerilogCode(absl::string_view content, std::ostream* output,
-                          verible::IdentifierObfuscator* subst);
+// Returned status signals success or possible an internal error.
+absl::Status ObfuscateVerilogCode(absl::string_view content,
+                                  std::ostream* output,
+                                  verible::IdentifierObfuscator* subst);
 
 }  // namespace verilog
 

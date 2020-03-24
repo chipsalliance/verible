@@ -32,7 +32,6 @@
 #include "common/util/file_util.h"
 #include "common/util/init_command_line.h"
 #include "verilog/analysis/verilog_analyzer.h"
-#include "verilog/analysis/verilog_equivalence.h"
 #include "verilog/transform/obfuscate.h"
 
 using verible::IdentifierObfuscator;
@@ -66,29 +65,12 @@ Output is written to stdout.
     return 1;
   }
 
+  // Encode/obfuscate.  Also verifies decode-ability.
   std::ostringstream output;  // result buffer
-  verilog::ObfuscateVerilogCode(content, &output, &subst);
-
-  // Verify that obfuscated output is lexically equivalent to original.
-  std::ostringstream errstream;
-  const auto diff_status =
-      verilog::ObfuscationEquivalent(content, output.str(), &errstream);
-  int exit_code = 0;
-  switch (diff_status) {
-    case verilog::DiffStatus::kEquivalent:
-      break;
-    case verilog::DiffStatus::kDifferent:
-      InternalError(std::cerr, "output is not equivalent", errstream.str(),
-                    output.str());
-      return 1;
-    case verilog::DiffStatus::kLeftError:
-      std::cerr << "Input contains lexical errors:\n"
-                << errstream.str() << std::endl;
-      return 1;
-    case verilog::DiffStatus::kRightError:
-      InternalError(std::cerr, "output contains lexical errors",
-                    errstream.str(), output.str());
-      return 1;
+  const auto status = verilog::ObfuscateVerilogCode(content, &output, &subst);
+  if (!status.ok()) {
+    std::cerr << status.message();
+    return 1;
   }
 
   // TODO(fangism): save obfuscation mapping, so that it may be re-used, or even
@@ -97,5 +79,5 @@ Output is written to stdout.
   // Print obfuscated code.
   std::cout << output.str();
 
-  return exit_code;
+  return 0;
 }

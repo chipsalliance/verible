@@ -66,8 +66,25 @@ TEST(ObfuscateVerilogCodeTest, PreloadedSubstitutions) {
   };
   for (const auto& test : kTestCases) {
     std::ostringstream output;
-    ObfuscateVerilogCode(test.first, &output, &ob);
+    const auto status = ObfuscateVerilogCode(test.first, &output, &ob);
+    EXPECT_TRUE(status.ok()) << "Unexpected error: " << status.message();
     EXPECT_EQ(output.str(), test.second);
+  }
+}
+
+TEST(ObfuscateVerilogCodeTest, InputLexicalError) {
+  const absl::string_view kTestCases[] = {
+      "789badid",
+      "`FOO(8911badid)\n",
+      "`define FOO 911badid\n",
+  };
+  for (const auto& test : kTestCases) {
+    IdentifierObfuscator ob;
+    std::ostringstream output;
+    const auto status = ObfuscateVerilogCode(test, &output, &ob);
+    EXPECT_FALSE(status.ok());
+    EXPECT_EQ(status.code(), absl::StatusCode::kInvalidArgument)
+        << "message: " << status.message();
   }
 }
 
