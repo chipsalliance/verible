@@ -18,7 +18,9 @@
 #include <functional>
 #include <string>
 
+#include "absl/status/status.h"
 #include "absl/strings/string_view.h"
+#include "common/strings/compare.h"
 #include "common/strings/random.h"
 #include "common/util/bijective_map.h"
 
@@ -29,10 +31,20 @@ namespace verible {
 // and re-using it as more unique input words are seen.  The obfuscation is
 // intended to be reversible, so that a one-to-one mapping between original and
 // obfuscated text is maintained.
+//
+// By default, Obfuscator operates in encoding mode, described above.
+// In decoding mode (set by set_decode_mode()), the obfuscated strings are
+// used to lookup their original counterparts, and unfamiliar strings are kept
+// intact (never added to the internal map).
+//
+// The save() and load() functions can be used to re-apply previously used
+// substitutions written/read from a text file.
 class Obfuscator {
  public:
   typedef std::function<std::string(absl::string_view)> generator_type;
-  typedef BijectiveMap<std::string, std::string> translator_type;
+  typedef BijectiveMap<std::string, std::string, StringViewCompare,
+                       StringViewCompare>
+      translator_type;
 
   explicit Obfuscator(generator_type g) : generator_(g), translator_() {}
 
@@ -42,6 +54,10 @@ class Obfuscator {
   // else returns false if either key or value were already mapped.
   bool encode(absl::string_view key, absl::string_view value);
 
+  void set_decode_mode(bool decode) { decode_mode = decode; }
+
+  bool is_decoding() const { return decode_mode; }
+
   // Obfuscates input string with a replacement, and records the substitution
   // for later re-use.  Returns the replacement string.
   absl::string_view operator()(absl::string_view input);
@@ -49,12 +65,25 @@ class Obfuscator {
   // Read-only view of string translation map.
   const translator_type& GetTranslator() const { return translator_; }
 
+  // Parses a mapping dictionary, and pre-loads the translator map with it.
+  // Format: one entry per line, each line is space-separated pair of
+  // identifiers.
+  absl::Status load(absl::string_view);
+
+  // Returns a string representation of the internal identifier map.
+  // See format description for ::load().
+  std::string save() const;
+
  private:
   // Generates a random substitution string, for obfuscation.
   generator_type generator_;
 
   // Keeps track of transformations done on seen strings.
   translator_type translator_;
+
+  // If true, apply reverse translation of identifiers, and do not generate any
+  // new obfuscation mappings.
+  bool decode_mode = false;
 };
 
 class IdentifierObfuscator : public Obfuscator {

@@ -91,6 +91,67 @@ TEST(ObfuscatorTest, Encode) {
   }
 }
 
+TEST(ObfuscatorTest, DecodeMode) {
+  Obfuscator ob(RotateGenerator);
+  EXPECT_FALSE(ob.is_decoding());
+  ob.set_decode_mode(true);
+  EXPECT_TRUE(ob.is_decoding());
+  ob.set_decode_mode(false);
+  EXPECT_FALSE(ob.is_decoding());
+}
+
+TEST(ObfuscatorTest, DecodeModeDoesNotAddEntries) {
+  Obfuscator ob(RotateGenerator);
+  ob.set_decode_mode(true);
+  EXPECT_TRUE(ob.is_decoding());
+  EXPECT_TRUE(ob.GetTranslator().empty());
+  EXPECT_EQ(ob("dog"), "dog");  // unrecognized id, unchanged
+  EXPECT_TRUE(ob.GetTranslator().empty());
+
+  // can still manually add entries
+  EXPECT_TRUE(ob.encode("shark", "snake"));
+  EXPECT_EQ(ob.GetTranslator().size(), 1);
+  EXPECT_EQ(ob("snake"), "shark");  // decoded
+  EXPECT_EQ(ob.GetTranslator().size(), 1);
+  EXPECT_EQ(ob("cow"), "cow");
+  EXPECT_EQ(ob.GetTranslator().size(), 1);
+}
+
+TEST(ObfuscatorTest, SaveMap) {
+  Obfuscator ob(RotateGenerator);
+  EXPECT_EQ(ob.save(), "");
+  EXPECT_EQ(ob("cat"), "png");
+  EXPECT_EQ(ob.save(), "cat png\n");
+  EXPECT_EQ(ob("zzz"), "mmm");
+  EXPECT_EQ(ob.save(), "cat png\nzzz mmm\n");
+}
+
+TEST(ObfuscatorTest, LoadMap) {
+  {
+    Obfuscator ob(RotateGenerator);
+    const auto status = ob.load("");
+    EXPECT_TRUE(status.ok()) << status.message();
+  }
+  {
+    Obfuscator ob(RotateGenerator);
+    const auto status = ob.load("cat dog");
+    EXPECT_TRUE(status.ok()) << status.message();
+    EXPECT_EQ(ob("cat"), "dog");
+  }
+  {
+    Obfuscator ob(RotateGenerator);
+    const auto status = ob.load("cat dog\n");
+    EXPECT_TRUE(status.ok()) << status.message();
+    EXPECT_EQ(ob("cat"), "dog");
+  }
+  {
+    Obfuscator ob(RotateGenerator);
+    const auto status = ob.load("cat\n");  // malformed line
+    EXPECT_FALSE(status.ok());
+    EXPECT_EQ(status.code(), absl::StatusCode::kInvalidArgument);
+  }
+}
+
 TEST(IdentifierObfuscatorTest, Transform) {
   IdentifierObfuscator ob;
   const auto& tran = ob.GetTranslator();

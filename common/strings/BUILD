@@ -50,9 +50,11 @@ cc_library(
     srcs = ["obfuscator.cc"],
     hdrs = ["obfuscator.h"],
     deps = [
+        ":compare",
         ":random",
         "//common/util:bijective_map",
         "//common/util:logging",
+        "@com_google_absl//absl/status",
         "@com_google_absl//absl/strings",
     ],
 )
