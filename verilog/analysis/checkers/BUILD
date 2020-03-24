@@ -688,6 +688,7 @@ cc_test(
         "//common/analysis:syntax_tree_linter_test_utils",
         "//common/text:symbol",
         "//verilog/analysis:verilog_analyzer",
+        "@com_google_absl//absl/strings",
         "@com_google_googletest//:gtest_main",
     ],
 )

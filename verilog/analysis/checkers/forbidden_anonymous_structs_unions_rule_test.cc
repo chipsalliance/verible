@@ -17,6 +17,7 @@
 #include <initializer_list>
 
 #include "gtest/gtest.h"
+#include "absl/strings/match.h"
 #include "common/analysis/syntax_tree_linter_test_utils.h"
 #include "common/text/symbol.h"
 #include "verilog/analysis/verilog_analyzer.h"
@@ -26,7 +27,26 @@ namespace analysis {
 namespace {
 
 using verible::LintTestCase;
+using verible::RunConfiguredLintTestCases;
 using verible::RunLintTestCases;
+
+TEST(ForbiddenAnonymousStructsUnionsTest, Configuration) {
+  ForbiddenAnonymousStructsUnionsRule rule;
+  absl::Status s;
+  EXPECT_TRUE((s = rule.Configure("")).ok()) << s.message();
+  EXPECT_TRUE((s = rule.Configure("allow_anonymous_nested")).ok())
+      << s.message();
+  EXPECT_TRUE((s = rule.Configure("allow_anonymous_nested:true")).ok())
+      << s.message();
+  EXPECT_TRUE((s = rule.Configure("allow_anonymous_nested:false")).ok())
+      << s.message();
+
+  EXPECT_FALSE((s = rule.Configure("foo")).ok());
+  EXPECT_TRUE(absl::StrContains(s.message(), "supported parameter"));
+
+  EXPECT_FALSE((s = rule.Configure("allow_anonymous_nested:bogus")).ok());
+  EXPECT_TRUE(absl::StrContains(s.message(), "allowed value"));
+}
 
 // Tests that properly typedef'ed struct passes.
 TEST(ForbiddenAnonymousStructsUnionsTest, AcceptsTypedefedStructs) {
@@ -52,6 +72,59 @@ TEST(ForbiddenAnonymousStructsUnionsTest, RejectsAnonymousStructs) {
   };
   RunLintTestCases<VerilogAnalyzer, ForbiddenAnonymousStructsUnionsRule>(
       kTestCases);
+}
+
+TEST(ForbiddenAnonymousStructsUnionsTest,
+     AcceptInnerAnonymousStructsIfConfigured) {
+  {
+    // Without waived nested configuration we expect complains at
+    // every anonymous struct/union, inside or nested.
+    const std::initializer_list<LintTestCase> kTestCases = {
+        // outer and inner struct/union is complained about.
+        {{TK_struct, "struct"},
+         " {byte a;",
+         {TK_struct, "struct"},
+         " { byte x, y;} b;} z;"},
+        {{TK_union, "union"},
+         " {byte a;",
+         {TK_struct, "struct"},
+         " { byte x, y;} b;} z;"},
+        {"typedef struct {byte a;",
+         {TK_struct, "struct"},
+         " { byte x, y;} b;} foo_t;\nfoo_t z;"},
+        {"typedef struct {byte a;",
+         {TK_union, "union"},
+         " { byte x, y;} b;} foo_t;\nfoo_t z;"},
+        {"typedef union {byte a;",
+         {TK_union, "union"},
+         " { byte x, y;} b;} foo_t;\nfoo_t z;"},
+    };
+    for (const auto not_waived_cfg : {"", "allow_anonymous_nested:false"}) {
+      RunConfiguredLintTestCases<VerilogAnalyzer,
+                                 ForbiddenAnonymousStructsUnionsRule>(
+          kTestCases, not_waived_cfg);
+    }
+  }
+
+  {
+    // With waived nested configuration, lint will only complain about outer
+    // anonymous struct/unions.
+    const std::initializer_list<LintTestCase> kTestCases = {
+        // Just outer struct/union is complained about, but anonymous inner ok
+        {{TK_struct, "struct"}, " {byte a; struct { byte x, y;} b;} z;"},
+        {{TK_union, "union"}, " {byte a; struct { byte x, y;} b;} z;"},
+        // Here we are entirely happy: outside with typedef, inner w/o fine.
+        {"typedef struct {byte a; struct { byte x, y;} b;} foo_t;\nfoo_t z;"},
+        {"typedef struct {byte a; union { byte x, y;} b;} foo_t;\nfoo_t z;"},
+        {"typedef union {byte a; union { byte x, y;} b;} foo_t;\nfoo_t z;"},
+    };
+    for (const auto waived_cfg :
+         {"allow_anonymous_nested", "allow_anonymous_nested:true"}) {
+      RunConfiguredLintTestCases<VerilogAnalyzer,
+                                 ForbiddenAnonymousStructsUnionsRule>(
+          kTestCases, waived_cfg);
+    }
+  }
 }
 
 // Tests that properly typedef'ed union passes.

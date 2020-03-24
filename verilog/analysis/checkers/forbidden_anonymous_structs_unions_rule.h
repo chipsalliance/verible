@@ -46,6 +46,14 @@ namespace analysis {
 //      secondSignal,
 //    } my_instance;
 //
+// If 'waive_nested' configuration is provided, anonymous structs within
+// nested typedefs are allowed
+//
+// Allowed with 'allow_anonymous_nested'
+// typedef struct {
+//    struct { logic x; logic y; } foo;
+// } outer_t;
+//
 class ForbiddenAnonymousStructsUnionsRule : public verible::SyntaxTreeLintRule {
  public:
   using rule_type = verible::SyntaxTreeLintRule;
@@ -55,12 +63,17 @@ class ForbiddenAnonymousStructsUnionsRule : public verible::SyntaxTreeLintRule {
   // helper flag or markdown depending on the parameter type.
   static std::string GetDescription(DescriptionType);
 
+  absl::Status Configure(absl::string_view configuration) override;
+
   void HandleSymbol(const verible::Symbol& symbol,
                     const verible::SyntaxTreeContext& context) override;
 
   verible::LintRuleStatus Report() const override;
 
  private:
+  // Tests if the rule is met, taking waiving condition into account.
+  bool IsRuleMet(const verible::SyntaxTreeContext& context) const;
+
   // Link to style guide rule.
   static const char kTopic[];
 
@@ -70,8 +83,10 @@ class ForbiddenAnonymousStructsUnionsRule : public verible::SyntaxTreeLintRule {
 
   using Matcher = verible::matcher::Matcher;
 
-  Matcher matcher_struct_ = NodekStructType();
-  Matcher matcher_union_ = NodekUnionType();
+  const Matcher matcher_struct_ = NodekStructType();
+  const Matcher matcher_union_ = NodekUnionType();
+
+  bool allow_anonymous_nested_type_ = false;
 
   // Collection of found violations.
   std::set<verible::LintViolation> violations_;

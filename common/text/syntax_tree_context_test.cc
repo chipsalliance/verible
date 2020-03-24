@@ -69,12 +69,15 @@ TEST(SyntaxTreeContextTest, IteratorsTest) {
   }
 }
 
-// Test that IsInside correctly reports whether context matches.
+// Test that IsInside and IsInsideStartingFrom correctly reports whether
+// context matches.
 TEST(SyntaxTreeContextTest, IsInsideTest) {
   SyntaxTreeContext context;
   EXPECT_FALSE(context.IsInside(1));
   EXPECT_FALSE(context.IsInside(2));
   EXPECT_FALSE(context.IsInside(3));
+  EXPECT_FALSE(context.IsInsideStartingFrom(1, 1));
+  EXPECT_FALSE(context.IsInsideStartingFrom(1, 0));
   {
     SyntaxTreeNode node1(1);
     SyntaxTreeContext::AutoPop p1(&context, node1);
@@ -93,6 +96,14 @@ TEST(SyntaxTreeContextTest, IsInsideTest) {
         EXPECT_TRUE(context.IsInside(1));
         EXPECT_TRUE(context.IsInside(2));
         EXPECT_TRUE(context.IsInside(3));
+        // With an offset, we won't see some of these elements
+        EXPECT_TRUE(context.IsInsideStartingFrom(3, 0));
+        EXPECT_FALSE(context.IsInsideStartingFrom(3, 1));
+        EXPECT_TRUE(context.IsInsideStartingFrom(2, 1));
+        EXPECT_FALSE(context.IsInsideStartingFrom(2, 2));
+        // Check stack boundary
+        EXPECT_FALSE(context.IsInsideStartingFrom(2, 3));
+        EXPECT_FALSE(context.IsInsideStartingFrom(2, 4));
       }
     }
   }

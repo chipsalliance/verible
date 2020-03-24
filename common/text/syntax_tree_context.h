@@ -65,15 +65,25 @@ class SyntaxTreeContext {
   const_reverse_iterator rend() const { return stack_.rend(); }
 
   // IsInside returns true if there is a node of the specified
-  // tag on the TreeContext stack.  Search occurs from the bottom of the
+  // tag on the TreeContext stack.  Search traverses from the top of the
+  // stack starting with offset and returns on the first match found.
+  // Type parameter E can be a language-specific enum or plain integer type.
+  template <typename E>
+  bool IsInsideStartingFrom(E tag_enum, size_t reverse_offset) const {
+    if (size() <= reverse_offset) return false;
+    const auto iter = std::find_if(
+        rbegin() + reverse_offset, rend(),
+        [=](const SyntaxTreeNode* node) { return node->MatchesTag(tag_enum); });
+    return iter != rend();
+  }
+
+  // IsInside returns true if there is a node of the specified
+  // tag on the TreeContext stack.  Search occurs from the top of the
   // stack and returns on the first match found.
   // Type parameter E can be a language-specific enum or plain integer type.
   template <typename E>
   bool IsInside(E tag_enum) const {
-    const auto iter = std::find_if(
-        begin(), end(),
-        [=](const SyntaxTreeNode* node) { return node->MatchesTag(tag_enum); });
-    return iter != end();
+    return IsInsideStartingFrom(tag_enum, 0);
   }
 
   // Returns true if current context is directly inside one of the includes
