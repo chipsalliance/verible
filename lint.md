@@ -228,4 +228,4 @@ Enabled by default: true
 
 ## Version
 
-Generated on 2020-03-19 18:01:51 -0700 from [v0.0-297-g751d4d8](https://github.com/google/verible/commit/751d4d8e57741ab22806f91982f59c71ecf37d9d)
+Generated on 2020-03-24 13:04:46 -0700 from [v0.0-309-g6b58e8f](https://github.com/google/verible/commit/6b58e8ff4bf7472201bb77880e77b2946c60ff3d)
