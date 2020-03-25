@@ -505,6 +505,76 @@ const TreeUnwrapperTestData kUnwrapModuleTestCases[] = {
     },
 
     {
+        "module with parameters and empty ports",
+        "module foo #("
+        "parameter bar =1,"
+        "localparam baz =2"
+        ") ();"
+        "endmodule",
+        ModuleDeclaration(
+            0,
+            ModuleHeader(0, L(0, {"module", "foo", "#", "("}),
+                         ModuleParameterList(
+                             2, L(2, {"parameter", "bar", "=", "1", ","}),
+                             L(2, {"localparam", "baz", "=", "2"})),
+                         L(0, {")", "("}), L(0, {")", ";"})),
+            L(0, {"endmodule"})),
+    },
+
+    {
+        "module with parameters and EOL comment before first param",
+        "module foo #(//comment\n"
+        "parameter bar =1,"
+        "localparam baz =2"
+        ") ();"
+        "endmodule",
+        ModuleDeclaration(
+            0,
+            ModuleHeader(0, L(0, {"module", "foo", "#", "(", "//comment"}),
+                         ModuleParameterList(
+                             2, L(2, {"parameter", "bar", "=", "1", ","}),
+                             L(2, {"localparam", "baz", "=", "2"})),
+                         L(0, {")", "("}), L(0, {")", ";"})),
+            L(0, {"endmodule"})),
+    },
+
+    {
+        "module with parameters and EOL comment after first param",
+        "module foo #("
+        "parameter bar =1,//comment\n"
+        "localparam baz =2"
+        ") ();"
+        "endmodule",
+        ModuleDeclaration(
+            0,
+            ModuleHeader(
+                0, L(0, {"module", "foo", "#", "("}),
+                ModuleParameterList(
+                    2, L(2, {"parameter", "bar", "=", "1", ",", "//comment"}),
+                    L(2, {"localparam", "baz", "=", "2"})),
+                L(0, {")", "("}), L(0, {")", ";"})),
+            L(0, {"endmodule"})),
+    },
+
+    {
+        "module with parameters and EOL comment after first param",
+        "module foo #("
+        "parameter bar =1,"
+        "localparam baz =2//comment\n"
+        ") ();"
+        "endmodule",
+        ModuleDeclaration(
+            0,
+            ModuleHeader(
+                0, L(0, {"module", "foo", "#", "("}),
+                ModuleParameterList(
+                    2, L(2, {"parameter", "bar", "=", "1", ","}),
+                    L(2, {"localparam", "baz", "=", "2", "//comment"})),
+                L(0, {")", "("}), L(0, {")", ";"})),
+            L(0, {"endmodule"})),
+    },
+
+    {
         "two modules with end-labels",
         "module foo ();"
         "endmodule : foo "

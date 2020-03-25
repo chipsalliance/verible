@@ -777,7 +777,7 @@ static const std::initializer_list<FormatterTestCase> kFormatterTestCases = {
      "module foo #(\n"
      "    int x,\n"
      "    int y\n"
-     ");\n"  // each paramater on its own line
+     ");\n"  // each parameter on its own line
      "endmodule : foo\n"},
     {"module foo #(int x)(input y) ;endmodule:foo\n",
      // parameter and port
@@ -801,6 +801,39 @@ static const std::initializer_list<FormatterTestCase> kFormatterTestCases = {
      "    parameter int yyyy\n"
      ");\n"
      "endmodule : foo\n"},
+    {"module foo #(//comment\n"
+     "parameter bar =1,\n"
+     "localparam baz =2"
+     ") ();"
+     "endmodule",
+     "module foo #(  //comment\n"
+     "    parameter bar = 1,\n"
+     "    localparam baz = 2\n"
+     ") (\n"
+     ");\n"
+     "endmodule\n"},
+    {"module foo #("
+     "parameter bar =1,//comment\n"
+     "localparam baz =2"
+     ") ();"
+     "endmodule",
+     "module foo #(\n"
+     "    parameter bar = 1,  //comment\n"
+     "    localparam baz = 2\n"
+     ") (\n"
+     ");\n"
+     "endmodule\n"},
+    {"module foo #("
+     "parameter bar =1,"
+     "localparam baz =2//comment\n"
+     ") ();"
+     "endmodule",
+     "module foo #(\n"
+     "    parameter bar = 1,\n"
+     "    localparam baz = 2  //comment\n"
+     ") (\n"
+     ");\n"
+     "endmodule\n"},
     {"module    top;"
      "foo#(  \"test\"  ) foo(  );"
      "bar#(  \"test\"  ,5) bar(  );"
