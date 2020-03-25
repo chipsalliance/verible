@@ -2221,6 +2221,22 @@ static const std::initializer_list<FormatterTestCase> kFormatterTestCases = {
     {"task t (input    bit   drill   ) ;endtask",
      "task t(input bit drill);\n"
      "endtask\n"},
+    {"task t; ## 100 ;endtask",
+     "task t;\n"
+     "  ##100;\n"
+     "endtask\n"},
+    {"task t; ## (1+1) ;endtask",  // delay expression
+     "task t;\n"
+     "  ##(1 + 1);\n"
+     "endtask\n"},
+    {"task t; ## delay_value ;endtask",
+     "task t;\n"
+     "  ##delay_value;\n"
+     "endtask\n"},
+    {"task t; ## `DELAY_VALUE ;endtask",
+     "task t;\n"
+     "  ##`DELAY_VALUE;\n"
+     "endtask\n"},
     {"task\nrabbit;$kill(the,\nrabbit)\n;endtask:  rabbit\n",
      "task rabbit;\n"
      "  $kill(the, rabbit);\n"
@@ -3318,6 +3334,20 @@ static const std::initializer_list<FormatterTestCase> kFormatterTestCases = {
      "  property p1;\n"
      "    a |-> b;\n"
      "  endproperty : p1\n"  // with end label
+     "endmodule\n"},
+    {"module mp ;property p1 ; a|->## 1  b;endproperty endmodule",
+     "module mp;\n"
+     "  property p1;\n"
+     "    a |-> ##1 b;\n"  // with delay
+     "  endproperty\n"
+     "endmodule\n"},
+    {"module mp ;property p1 ; a|->## [0:1]  b;endproperty endmodule",
+     "module mp;\n"
+     "  property p1;\n"
+     "    a |-> ##[0: 1] b;\n"  // with delay range
+                                // TODO(b/152411381): fix spacing between "0:"
+                                // (context-sensitive)
+     "  endproperty\n"
      "endmodule\n"},
 
     // covergroup test cases

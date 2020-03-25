@@ -2370,6 +2370,64 @@ TEST(TokenAnnotatorTest, AnnotateFormattingWithContextTest) {
           {0, SpacingOptions::MustAppend},
       },
 
+      // Test '##' unary (delay) operator
+      {
+          DefaultStyle,
+          {verilog_tokentype::TK_POUNDPOUND, "##"},
+          {'(', "("},
+          {/* any context */},
+          {0, SpacingOptions::MustAppend},
+      },
+      {
+          DefaultStyle,
+          {verilog_tokentype::TK_POUNDPOUND, "##"},
+          {verilog_tokentype::TK_DecNumber, "10"},
+          {/* any context */},
+          {0, SpacingOptions::MustAppend},
+      },
+      {
+          DefaultStyle,
+          {verilog_tokentype::TK_POUNDPOUND, "##"},
+          {verilog_tokentype::SymbolIdentifier, "x_delay"},
+          {/* any context */},
+          {0, SpacingOptions::MustAppend},
+      },
+      {
+          DefaultStyle,
+          {verilog_tokentype::TK_POUNDPOUND, "##"},
+          {verilog_tokentype::MacroIdentifier, "`X_DELAY"},
+          {/* any context */},
+          {0, SpacingOptions::MustAppend},
+      },
+      {
+          DefaultStyle,
+          {verilog_tokentype::TK_POUNDPOUND, "##"},
+          {verilog_tokentype::TK_LP, "'{"},
+          {/* any context */},
+          {0, SpacingOptions::MustAppend},
+      },
+      {
+          DefaultStyle,
+          {verilog_tokentype::TK_POUNDPOUND, "##"},
+          {'[', "["},
+          {/* any context */},
+          {0, SpacingOptions::MustAppend},
+      },
+      {
+          DefaultStyle,
+          {verilog_tokentype::TK_POUNDPOUND, "##"},
+          {verilog_tokentype::TK_LBSTARRB, "[*]"},
+          {/* any context */},
+          {0, SpacingOptions::MustAppend},
+      },
+      {
+          DefaultStyle,
+          {verilog_tokentype::TK_POUNDPOUND, "##"},
+          {verilog_tokentype::TK_LBPLUSRB, "[+]"},
+          {/* any context */},
+          {0, SpacingOptions::MustAppend},
+      },
+
       // Two unary operators
       {
           DefaultStyle,

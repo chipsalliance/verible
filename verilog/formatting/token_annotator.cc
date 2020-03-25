@@ -49,9 +49,11 @@ static constexpr int kUnhandledSpacesRequired = -1;
 
 static bool IsUnaryPrefixExpressionOperand(const PreFormatToken& left,
                                            const SyntaxTreeContext& context) {
-  return IsUnaryOperator(verilog_tokentype(left.TokenEnum())) &&
-         context.IsInsideFirst({NodeEnum::kUnaryPrefixExpression},
-                               {NodeEnum::kExpression});
+  return (IsUnaryOperator(verilog_tokentype(left.TokenEnum())) &&
+          context.IsInsideFirst({NodeEnum::kUnaryPrefixExpression},
+                                {NodeEnum::kExpression})) ||
+         // Treat '##' like a unary prefix operator.
+         left.TokenEnum() == verilog_tokentype::TK_POUNDPOUND;
 }
 
 static bool IsInsideNumericLiteral(const PreFormatToken& left,

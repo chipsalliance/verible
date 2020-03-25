@@ -495,7 +495,7 @@ static const auto* FormatTokenTypeMap =
         {verilog_tokentype::TK_CONSTRAINT_IMPLIES, FTT::binary_operator},
         {verilog_tokentype::TK_COLON_EQ, FTT::binary_operator},
         {verilog_tokentype::TK_COLON_DIV, FTT::binary_operator},
-        {verilog_tokentype::TK_POUNDPOUND, FTT::binary_operator},
+        {verilog_tokentype::TK_POUNDPOUND, FTT::unary_operator},
         {verilog_tokentype::TK_LBSTARRB, FTT::binary_operator},
         {verilog_tokentype::TK_LBPLUSRB, FTT::binary_operator},
         {verilog_tokentype::TK_LBSTAR, FTT::binary_operator},
