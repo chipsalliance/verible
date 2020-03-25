@@ -302,8 +302,9 @@ The linter tool is available as `//verilog/tools/lint:verilog_lint`.
 verilog_lint: usage: verilog_lint [options] <file> [<file>...]
 
   Flags from verilog/analysis/verilog_linter.cc:
-    --rules (List of lint rules to enable. Prefix a rule name with '-' to
-      disable it.); default: ;
+    --rules (Comma-separated of lint rules to enable. No prefix or a '+' prefix
+      enables it, '-' disable it. Configuration values for each rules placed
+      after '=' character.); default: ;
     --rules_config (Path to lint rules configuration file.);
       default: ".rules.verible_lint";
     --ruleset ([default|all|none], the base set of rules used by linter);
@@ -328,7 +329,8 @@ Try --helpfull to get a list of all flags.
 The `--rules` flag allows to enable/disable rules as well as pass configuration
 to rules that accept them. It accepts a comma-separated list
 [rule names][lint-rule-list]. If prefixed with a `-` (minus), the rule is
-disabled. An optional configuration can be passed after an `=` assignment.
+disabled. No prefix or a '+' (plus) prefix enables the rule. An optional
+configuration can be passed after an `=` assignment.
 
 The following example enables the
 [`enum-name-style`][lint-rule-list_enum-name-style] rule, enables and configures
@@ -336,7 +338,7 @@ the [`line-length`][lint-rule-list_line-length] rule (80 characters length) and
 disables the [`no-tabs`][lint-rule-list_no-tabs] rule.
 
 ```
-verilog_lint --rules=enum-name-style,line-length=length:80,-no-tabs ...
+verilog_lint --rules=enum-name-style,+line-length=length:80,-no-tabs ...
 ```
 
 Additionally, the `--rules_config` flag can be used to read configuration stored

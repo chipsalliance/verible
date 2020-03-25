@@ -53,8 +53,9 @@
 
 // TODO(hzeller): make --rules repeatable and cumulative
 ABSL_FLAG(verilog::RuleBundle, rules, {},
-          "List of lint rules to enable.  "
-          "Prefix a rule name with '-' to disable it.");
+          "Comma-separated of lint rules to enable.  "
+          "No prefix or a '+' prefix enables it, '-' disable it. "
+          "Configuration values for each rules placed after '=' character.");
 ABSL_FLAG(std::string, rules_config, ".rules.verible_lint",
           "Path to lint rules configuration file.");
 ABSL_FLAG(verilog::RuleSet, ruleset, verilog::RuleSet::kDefault,

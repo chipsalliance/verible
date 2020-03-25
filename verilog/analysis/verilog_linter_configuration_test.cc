@@ -642,15 +642,17 @@ TEST(RuleBundleTest, ParseRuleBundleEmpty) {
 }
 
 TEST(RuleBundleTest, ParseRuleBundleAcceptSeveral) {
-  std::string text = "test-rule-1,test-rule-2";
+  // Allow for an optional '+' to enable a rule for symmetry with '-' disable
+  std::string text = "test-rule-1,test-rule-2,+test-rule-3";
   RuleBundle bundle;
   std::string error;
   bool success = bundle.ParseConfiguration(text, &error);
   ASSERT_TRUE(success);
-  ASSERT_THAT(bundle.rules, SizeIs(2));
+  ASSERT_THAT(bundle.rules, SizeIs(3));
   EXPECT_TRUE(error.empty());
   EXPECT_TRUE(bundle.rules["test-rule-1"].enabled);
   EXPECT_TRUE(bundle.rules["test-rule-2"].enabled);
+  EXPECT_TRUE(bundle.rules["test-rule-3"].enabled);
 }
 
 TEST(RuleBundleTest, ParseRuleBundleAcceptConfiguration) {

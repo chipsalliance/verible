@@ -90,14 +90,16 @@ bool RuleBundle::ParseConfiguration(absl::string_view text,
 
   for (absl::string_view part :
        absl::StrSplit(text, absl::ByAnyChar(",\n"), absl::SkipEmpty())) {
-    // If prefix is '-', the rule is disabled.
+    // If prefix is '-', the rule is disabled. For symmetry, we also allow
+    // '+' to enable rule.
     // Note that part is guaranteed to be at least one character because
     // of absl::SkipEmpty()
+    const bool has_prefix = (part[0] == '+' || part[0] == '-');
     const bool prefix_minus = (part[0] == '-');
 
     RuleSetting setting = {!prefix_minus, ""};
 
-    const auto rule_name_with_config = part.substr(prefix_minus ? 1 : 0);
+    const auto rule_name_with_config = part.substr(has_prefix ? 1 : 0);
 
     // Independent of the enabled-ness: extract a configuration string
     // if there is any assignment.
