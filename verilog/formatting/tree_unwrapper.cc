@@ -1506,10 +1506,11 @@ void TreeUnwrapper::Visit(const verible::SyntaxTreeLeaf& leaf) {
       // Pick one, even if both work.
       if (current_context_.DirectParentIsOneOf({
               // NodeEnum:xxxx                             // due to element:
-              NodeEnum::kMacroArgList,         // MacroArg
-              NodeEnum::kPortDeclarationList,  // kPort, kPortDeclaration
-              NodeEnum::kPortActualList,       // kActualNamedPort,
-                                               // kActualPositionalPort
+              NodeEnum::kMacroArgList,               // MacroArg
+              NodeEnum::kActualParameterByNameList,  // kParamByName
+              NodeEnum::kPortDeclarationList,        // kPort, kPortDeclaration
+              NodeEnum::kPortActualList,             // kActualNamedPort,
+                                                     // kActualPositionalPort
               NodeEnum::kGateInstanceRegisterVariableList,  // kGateInstance,
                                                             // kRegisterVariable
               NodeEnum::kVariableDeclarationAssignmentList  // due to element:

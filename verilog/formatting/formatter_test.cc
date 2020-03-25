@@ -2597,6 +2597,34 @@ static const std::initializer_list<FormatterTestCase> kFormatterTestCases = {
      "module foo;\n"
      "  bar #(.N(N)) bq (.bus(bus));\n"
      "endmodule\n"},
+    {"module foo; bar #(.N(N),.M(M)) bq ();endmodule\n",  // two named params
+     "module foo;\n"
+     "  bar #(\n"
+     "      .N(N),\n"
+     "      .M(M)\n"
+     "  ) bq ();\n"
+     "endmodule\n"},
+    {"module foo; bar #(//comment\n.N(N),.M(M)) bq ();endmodule\n",
+     "module foo;\n"
+     "  bar #(  //comment\n"  // EOL comment before first param
+     "      .N(N),\n"
+     "      .M(M)\n"
+     "  ) bq ();\n"
+     "endmodule\n"},
+    {"module foo; bar #(.N(N),//comment\n.M(M)) bq ();endmodule\n",
+     "module foo;\n"
+     "  bar #(\n"
+     "      .N(N),  //comment\n"  // EOL comment after first param
+     "      .M(M)\n"
+     "  ) bq ();\n"
+     "endmodule\n"},
+    {"module foo; bar #(.N(N),.M(M)//comment\n) bq ();endmodule\n",
+     "module foo;\n"
+     "  bar #(\n"
+     "      .N(N),\n"
+     "      .M(M)  //comment\n"  // EOL comment after last param
+     "  ) bq ();\n"
+     "endmodule\n"},
     {"  module foo   ; bar bq(aa,bb,cc);endmodule\n",
      "module foo;\n"
      "  bar bq (\n"

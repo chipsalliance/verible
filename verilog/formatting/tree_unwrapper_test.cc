@@ -667,9 +667,56 @@ const TreeUnwrapperTestData kUnwrapModuleTestCases[] = {
             0, L(0, {"module", "tryme", ";"}),
             // single instances fused with instantiation type
             Instantiation(1, L(1, {"foo", "#", "("}),
-                          N(3, L(3, {".", "N", "(", "1", ")", ","}),
+                          N(3,  //
+                            L(3, {".", "N", "(", "1", ")", ","}),
                             // note how comma is attached to above partition
                             L(3, {".", "M", "(", "4", ")"})),
+                          L(1, {")", "a", ";"})),
+            L(0, {"endmodule"})),
+    },
+
+    {
+        "module with parameterized instantiations with comment before first "
+        "param",
+        "module tryme;"
+        "foo #(//comment\n.N(5),.M(6)) a;"
+        "endmodule",
+        ModuleDeclaration(0, L(0, {"module", "tryme", ";"}),
+                          Instantiation(1, L(1, {"foo", "#", "(", "//comment"}),
+                                        N(3,  //
+                                          L(3, {".", "N", "(", "5", ")", ","}),
+                                          L(3, {".", "M", "(", "6", ")"})),
+                                        L(1, {")", "a", ";"})),
+                          L(0, {"endmodule"})),
+    },
+
+    {
+        "module with parameterized instantiations with parameter EOL comment",
+        "module tryme;"
+        "foo #(.N(5), //comment\n.M(6)) a;"
+        "endmodule",
+        ModuleDeclaration(
+            0, L(0, {"module", "tryme", ";"}),
+            Instantiation(1, L(1, {"foo", "#", "("}),
+                          N(3,  //
+                            L(3, {".", "N", "(", "5", ")", ",", "//comment"}),
+                            L(3, {".", "M", "(", "6", ")"})),
+                          L(1, {")", "a", ";"})),
+            L(0, {"endmodule"})),
+    },
+
+    {
+        "module with parameterized instantiations with EOL comment (last "
+        "param)",
+        "module tryme;"
+        "foo #(.N(5),.M(6)//comment\n) a;"
+        "endmodule",
+        ModuleDeclaration(
+            0, L(0, {"module", "tryme", ";"}),
+            Instantiation(1, L(1, {"foo", "#", "("}),
+                          N(3,  //
+                            L(3, {".", "N", "(", "5", ")", ","}),
+                            L(3, {".", "M", "(", "6", ")", "//comment"})),
                           L(1, {")", "a", ";"})),
             L(0, {"endmodule"})),
     },
