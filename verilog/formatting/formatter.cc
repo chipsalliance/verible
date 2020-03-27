@@ -110,10 +110,10 @@ Status VerifyFormatting(const verible::TextStructureView& text_structure,
     const auto& token_errors = reanalyzer->TokenErrorMessages();
     // Only print the first error.
     if (!token_errors.empty()) {
-      return Status(StatusCode::kDataLoss,
-                    absl::StrCat("Error lex/parsing-ing formatted output.  "
-                                 "Please file a bug.\nFirst error: ",
-                                 token_errors.front()));
+      return absl::DataLossError(
+          absl::StrCat("Error lex/parsing-ing formatted output.  "
+                       "Please file a bug.\nFirst error: ",
+                       token_errors.front()));
     }
   }
 
@@ -130,12 +130,10 @@ Status VerifyFormatting(const verible::TextStructureView& text_structure,
     // See analysis/verilog_equivalence.cc implementation.
     if (verilog::FormatEquivalent(text_structure.Contents(), formatted_output,
                                   &errstream) != DiffStatus::kEquivalent) {
-      return Status(
-          StatusCode::kDataLoss,
-          absl::StrCat(
-              "Formatted output is lexically different from the input.    "
-              "Please file a bug.  Details:\n",
-              errstream.str()));
+      return absl::DataLossError(absl::StrCat(
+          "Formatted output is lexically different from the input.    "
+          "Please file a bug.  Details:\n",
+          errstream.str()));
     }
   }
 
@@ -161,7 +159,7 @@ Status FormatVerilog(absl::string_view text, absl::string_view filename,
         errstream << message << std::endl;
       }
       // Don't bother printing original code
-      return Status(StatusCode::kInvalidArgument, errstream.str());
+      return absl::InvalidArgumentError(errstream.str());
     }
   }
 
@@ -182,7 +180,7 @@ Status FormatVerilog(absl::string_view text, absl::string_view filename,
 
   // In any diagnostic mode, proceed no further.
   if (control.AnyStop()) {
-    return Status(StatusCode::kCancelled, "Halting for diagnostic operation.");
+    return absl::CancelledError("Halting for diagnostic operation.");
   }
 
   // Render formatted text to a temporary buffer, so that it can be verified.

@@ -182,17 +182,24 @@ int main(int argc, char** argv) {
 
   const std::string& formatted_output(stream.str());
   if (!format_status.ok()) {
-    std::cerr << format_status.message();
-    if (format_status.code() != StatusCode::kCancelled) {
-      // Don't bother printing original code
-      return 1;
+    if (!inplace) {
+      // Fall back to printing original content regardless of error condition.
+      std::cout << content;
     }
-    // Do not write back to file, leave original untouched.
-    // Print original code to stdout (in case user is redirecting output
-    // to a file, possibly the original), and rejected output to stderr.
-    std::cerr << "Problematic formatter output is:\n"
-              << formatted_output << "<<EOF>>" << std::endl;
-    std::cout << content;
+    // Print the error message last so it shows up in user's console.
+    std::cerr << format_status.message();
+    switch (format_status.code()) {
+      case StatusCode::kCancelled:
+      case StatusCode::kInvalidArgument:
+        break;
+      case StatusCode::kDataLoss:
+        std::cerr << "Problematic formatter output is:\n"
+                  << formatted_output << "<<EOF>>" << std::endl;
+        break;
+      default:
+        std::cerr << "[other error status]" << std::endl;
+        break;
+    }
     return 1;
   }
 
