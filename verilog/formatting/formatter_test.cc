@@ -3349,6 +3349,18 @@ static const std::initializer_list<FormatterTestCase> kFormatterTestCases = {
                                 // (context-sensitive)
      "  endproperty\n"
      "endmodule\n"},
+    {"module mp ;property p1 ; a## 1  b;endproperty endmodule",
+     "module mp;\n"
+     "  property p1;\n"
+     "    a ##1 b;\n"
+     "  endproperty\n"
+     "endmodule\n"},
+    {"module mp ;property p1 ; (a^c)## 1  b;endproperty endmodule",
+     "module mp;\n"
+     "  property p1;\n"
+     "    (a ^ c) ##1 b;\n"
+     "  endproperty\n"
+     "endmodule\n"},
 
     // covergroup test cases
     {// Minimal case

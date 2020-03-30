@@ -2427,6 +2427,62 @@ TEST(TokenAnnotatorTest, AnnotateFormattingWithContextTest) {
           {/* any context */},
           {0, SpacingOptions::MustAppend},
       },
+      {
+          DefaultStyle,
+          {verilog_tokentype::SymbolIdentifier, "predicate"},
+          {verilog_tokentype::TK_POUNDPOUND, "##"},
+          {/* any context */},
+          {1, SpacingOptions::Undecided},
+      },
+      {
+          DefaultStyle,
+          {')', ")"},
+          {verilog_tokentype::TK_POUNDPOUND, "##"},
+          {/* any context */},
+          {1, SpacingOptions::Undecided},
+      },
+      {
+          DefaultStyle,
+          {'(', "("},
+          {verilog_tokentype::TK_POUNDPOUND, "##"},
+          {/* any context */},
+          {0, SpacingOptions::Undecided},
+      },
+      {
+          DefaultStyle,
+          {verilog_tokentype::TK_and, "and"},
+          {verilog_tokentype::TK_POUNDPOUND, "##"},
+          {/* any context */},
+          {1, SpacingOptions::Undecided},
+      },
+      {
+          DefaultStyle,
+          {verilog_tokentype::TK_or, "or"},
+          {verilog_tokentype::TK_POUNDPOUND, "##"},
+          {/* any context */},
+          {1, SpacingOptions::Undecided},
+      },
+      {
+          DefaultStyle,
+          {verilog_tokentype::TK_intersect, "intersect"},
+          {verilog_tokentype::TK_POUNDPOUND, "##"},
+          {/* any context */},
+          {1, SpacingOptions::Undecided},
+      },
+      {
+          DefaultStyle,
+          {verilog_tokentype::TK_throughout, "throughout"},
+          {verilog_tokentype::TK_POUNDPOUND, "##"},
+          {/* any context */},
+          {1, SpacingOptions::Undecided},
+      },
+      {
+          DefaultStyle,
+          {verilog_tokentype::TK_within, "within"},
+          {verilog_tokentype::TK_POUNDPOUND, "##"},
+          {/* any context */},
+          {1, SpacingOptions::Undecided},
+      },
 
       // Two unary operators
       {

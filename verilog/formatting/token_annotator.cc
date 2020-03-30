@@ -417,6 +417,8 @@ static WithReason<int> SpacesRequiredBetween(
     return {1, "Space between flow control keywords and ("};
   }
 
+  if (right.TokenEnum() == TK_POUNDPOUND)
+    return {1, "Space before ## (delay) operator"};
   if (left.format_token_enum == FormatTokenType::unary_operator)
     return {0, "++i over ++ i"};  // "++i" instead of "++ i"
   if (right.format_token_enum == FormatTokenType::unary_operator)
