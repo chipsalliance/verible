@@ -187,7 +187,7 @@ int main(int argc, char** argv) {
       std::cout << content;
     }
     // Print the error message last so it shows up in user's console.
-    std::cerr << format_status.message();
+    std::cerr << format_status.message() << std::endl;
     switch (format_status.code()) {
       case StatusCode::kCancelled:
       case StatusCode::kInvalidArgument:
