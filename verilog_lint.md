@@ -38,8 +38,9 @@ verilog_lint: usage: bazel-bin/verilog/tools/lint/verilog_lint [options] <file> 
 
 
   Flags from verilog/analysis/verilog_linter.cc:
-    --rules (List of lint rules to enable. Prefix a rule name with '-' to
-      disable it.); default: ;
+    --rules (Comma-separated of lint rules to enable. No prefix or a '+' prefix
+      enables it, '-' disable it. Configuration values for each rules placed
+      after '=' character.); default: ;
     --rules_config (Path to lint rules configuration file.);
       default: ".rules.verible_lint";
     --ruleset ([default|all|none], the base set of rules used by linter);
@@ -236,7 +237,7 @@ Enabled by default: true
 ### positive-meaning-parameter-name
 Checks that no parameter name starts with 'disable', using positive naming (starting with 'enable') is recommended. See [Style: binary-parameters].
 
-Enabled by default: false
+Enabled by default: true
 
 ### posix-eof
 Checks that the file ends with a newline. See [Style: posix-file-endings].
@@ -293,4 +294,4 @@ Enabled by default: true
 
 ## Version
 
-Generated on 2020-03-24 13:48:44 -0700 from [v0.0-310-ga9d1b64](https://github.com/google/verible/commit/a9d1b6412820264dc3c279d4636e98c1a761545c)
+Generated on 2020-03-30 14:19:22 -0700 from [v0.0-320-g2cad9a0](https://github.com/google/verible/commit/2cad9a0f22c3203f1d1dd9d35613558bf443f4a4)
