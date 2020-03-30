@@ -3238,7 +3238,7 @@ tf_port_item
     { $$ = MakeTaskFunctionPortItem($1,
                           MakeTypeIdDimensionsTuple(
                               MakeTaggedNode(N::kDataType, $2, nullptr),
-                              $3, $4),
+                              $3, MakeUnpackedDimensionsNode($4)),
                           $5); }
   ;
 tf_port_item_expr_opt

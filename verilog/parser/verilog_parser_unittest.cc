@@ -869,6 +869,26 @@ static const char* kTaskTests[] = {
     "const ref StringType intake;\n"         // const ref
     "ref StringType [7:0] outtake [3:0];\n"  // ref
     "endtask",
+    "task t(virtual foo_if vif);\n"
+    "endtask\n",
+    "task t(virtual foo_if#(12) vif);\n"
+    "endtask\n",
+    "task t(virtual foo_if#(.W(12)) vif);\n"
+    "endtask\n",
+    "task t(virtual interface foo_if vif);\n"
+    "endtask\n",
+    "task t(ref virtual foo_if vif);\n"
+    "endtask\n",
+    "task t(ref virtual foo_if vifs[]);\n"
+    "endtask\n",
+    "task t(ref virtual foo_if vifs[N]);\n"
+    "endtask\n",
+    "task t(ref virtual foo_if vifs[N:M]);\n"
+    "endtask\n",
+    "task t(ref virtual foo_if vifs[N:M][X:Y]);\n"
+    "endtask\n",
+    "task t(ref virtual interface foo_if#(P,Q,R) vifs[N:M][X:Y]);\n"
+    "endtask\n",
     // macro
     "task stringer;\n"
     "  `uvm_error(`gtn, \"frownie =(\")\n"  // string with balance character
