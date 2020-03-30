@@ -59,6 +59,7 @@ constexpr const char* kDefaultRuleSet[] = {
     "struct-union-name-style",
     "case-missing-default",
     "interface-name-style",
+    "positive-meaning-parameter-name",
     // TODO(fangism): enable in production:
     // TODO(b/117131903): "proper-parameter-declaration",
     // TODO(b/131637160): "signal-name-style",

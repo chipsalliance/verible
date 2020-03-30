@@ -49,7 +49,7 @@ absl::string_view PositiveMeaningParameterNameRule::Name() {
 const char PositiveMeaningParameterNameRule::kTopic[] = "binary-parameters";
 
 const char PositiveMeaningParameterNameRule::kMessage[] =
-    "Use positive naming for parameters, start the name with enable instead.";
+    "Use positive naming for parameters, start the name with 'enable' instead.";
 
 std::string PositiveMeaningParameterNameRule::GetDescription(
     DescriptionType description_type) {
@@ -70,7 +70,8 @@ void PositiveMeaningParameterNameRule::HandleSymbol(
       const auto param_name = id->text;
 
       if (absl::StartsWithIgnoreCase(param_name, "disable"))
-        violations_.insert(LintViolation(*id, kMessage, context));
+        violations_.insert(LintViolation(
+            *id, absl::StrCat(kMessage, "  (got: ", param_name, ")"), context));
     }
   }
 }
