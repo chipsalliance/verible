@@ -23,11 +23,13 @@
 #include <vector>
 
 #include "common/analysis/syntax_tree_search.h"
+#include "common/text/concrete_syntax_leaf.h"
 #include "common/text/concrete_syntax_tree.h"
 #include "common/text/symbol.h"
 #include "common/text/tree_utils.h"
 #include "verilog/CST/verilog_nonterminals.h"
 #include "verilog/CST/verilog_treebuilder_utils.h"
+#include "verilog/parser/verilog_token_classifications.h"
 #include "verilog/parser/verilog_token_enum.h"
 
 namespace verilog {
@@ -38,7 +40,10 @@ verible::SymbolPtr MakeDPIImport(T0&& keyword, T1&& spec, T2&& property,
                                  T3&& id, T4&& equals, T5&& proto, T6&& semi) {
   verible::CheckSymbolAsLeaf(*keyword, verilog_tokentype::TK_import);
   verible::CheckSymbolAsLeaf(*spec, verilog_tokentype::TK_StringLiteral);
-  verible::CheckOptionalSymbolAsLeaf(id, verilog_tokentype::SymbolIdentifier);
+  if (id != nullptr) {
+    CHECK(IsIdentifierLike(
+        verilog_tokentype(verible::SymbolCastToLeaf(*id).get().token_enum)));
+  }
   verible::CheckOptionalSymbolAsLeaf(equals, '=');
   CHECK(verible::SymbolCastToNode(*proto).MatchesTagAnyOf(
       {NodeEnum::kFunctionPrototype, NodeEnum::kTaskPrototype}));
@@ -48,6 +53,24 @@ verible::SymbolPtr MakeDPIImport(T0&& keyword, T1&& spec, T2&& property,
       std::forward<T1>(spec), std::forward<T2>(property), std::forward<T3>(id),
       std::forward<T4>(equals),
       verible::ExtendNode(std::forward<T5>(proto), std::forward<T6>(semi)));
+}
+
+// Partial specialization provided as a workaround to passing nullptr
+// in positions 3 and 4 (optional symbols).  Compiler is not guaranteed
+// to deduce to that some paths are not reachble/applicable.
+template <typename T0, typename T1, typename T2, typename T3, typename T4>
+verible::SymbolPtr MakeDPIImport(T0&& keyword, T1&& spec, T2&& property,
+                                 nullptr_t id, nullptr_t equals, T3&& proto,
+                                 T4&& semi) {
+  verible::CheckSymbolAsLeaf(*keyword, verilog_tokentype::TK_import);
+  verible::CheckSymbolAsLeaf(*spec, verilog_tokentype::TK_StringLiteral);
+  CHECK(verible::SymbolCastToNode(*proto).MatchesTagAnyOf(
+      {NodeEnum::kFunctionPrototype, NodeEnum::kTaskPrototype}));
+  ExpectString(semi, ";");
+  return verible::MakeTaggedNode(
+      NodeEnum::kDPIImportItem, std::forward<T0>(keyword),
+      std::forward<T1>(spec), std::forward<T2>(property), id, equals,
+      verible::ExtendNode(std::forward<T3>(proto), std::forward<T4>(semi)));
 }
 
 // Find all DPI imports.

@@ -2627,6 +2627,16 @@ static const char* kModuleTests[] = {
     "import pkg::ident;\n"
     "export \"name\" task rabbit;\n"
     "endmodule",
+    "import \"DPI\" function bar;\n",
+    "import \"DPI-C\" function bar;\n",
+    "import \"DPI-C\" foo = function bar;\n",
+    "import \"DPI-C\" foo = function void bar;\n",
+    "import \"DPI-C\" foo = function void bar();\n",
+    "import \"DPI-C\" foo = function void bar(input chandle ch);\n",
+    // using escaped identifier as alias:
+    "import \"DPI-C\" \\foo = function void bar(input chandle ch);\n",
+    "import \"DPI-C\" `foo = function void bar(input chandle ch);\n",  // macro
+    "import \"DPI-C\" foo = function longint unsigned bar(input chandle ch);\n",
     "module zoobar ();\n"
     "import \"DPI-C\" function void fizzbuzz (\n"
     "  input in val, output int nothing);\n"

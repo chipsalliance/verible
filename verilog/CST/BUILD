@@ -152,9 +152,11 @@ cc_library(
         ":verilog_nonterminals",
         ":verilog_treebuilder_utils",
         "//common/analysis:syntax_tree_search",
+        "//common/text:concrete_syntax_leaf",
         "//common/text:concrete_syntax_tree",
         "//common/text:symbol",
         "//common/text:tree_utils",
+        "//verilog/parser:verilog_token_classifications",
         "//verilog/parser:verilog_token_enum",
     ],
 )
