@@ -101,6 +101,27 @@ cc_library(
 )
 
 cc_library(
+    name = "config_utils",
+    srcs = ["config_utils.cc"],
+    hdrs = ["config_utils.h"],
+    deps = [
+        "//common/util:logging",
+        "@com_google_absl//absl/status",
+        "@com_google_absl//absl/strings",
+    ],
+)
+
+cc_test(
+    name = "config_utils_test",
+    srcs = ["config_utils_test.cc"],
+    deps = [
+        ":config_utils",
+        "@com_google_absl//absl/strings",
+        "@com_google_googletest//:gtest_main",
+    ],
+)
+
+cc_library(
     name = "visitors",
     hdrs = ["visitors.h"],
 )

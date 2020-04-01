@@ -22,6 +22,7 @@
 #include "common/analysis/citation.h"
 #include "common/analysis/lint_rule_status.h"
 #include "common/analysis/matcher/bound_symbol_manager.h"
+#include "common/text/config_utils.h"
 #include "common/text/symbol.h"
 #include "common/text/syntax_tree_context.h"
 #include "verilog/analysis/descriptions.h"
@@ -64,23 +65,10 @@ std::string ForbiddenAnonymousStructsUnionsRule::GetDescription(
 
 absl::Status ForbiddenAnonymousStructsUnionsRule::Configure(
     absl::string_view configuration) {
-  if (configuration.empty()) return absl::OkStatus();
-  // TODO(hzeller): make general parser of lint rule configuration parameters
-  // to avoid ad-hoc parsings such as the following.
-  constexpr char kParamName[] = "allow_anonymous_nested";
-  if (absl::StartsWith(configuration, kParamName)) {
-    const absl::string_view suffix = configuration.substr(strlen(kParamName));
-    allow_anonymous_nested_type_ = suffix.empty() || suffix == ":true";
-    if (!allow_anonymous_nested_type_ && suffix != ":false") {
-      return absl::InvalidArgumentError(
-          "allow_anonymous_nested allowed value: "
-          "'true' or 'false'");
-    }
-    return absl::OkStatus();
-  }
-  return absl::InvalidArgumentError(
-      absl::StrCat("Only supported parameter 'allow_anonymous_nested'; got '",
-                   configuration, "'"));
+  using verible::config::SetBool;
+  return verible::ParseNameValues(
+      configuration,
+      {{"allow_anonymous_nested", SetBool(&allow_anonymous_nested_type_)}});
 }
 
 static bool IsPreceededByTypedef(const verible::SyntaxTreeContext& context) {

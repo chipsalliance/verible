@@ -22,6 +22,7 @@
 #include "common/analysis/citation.h"
 #include "common/analysis/lint_rule_status.h"
 #include "common/analysis/matcher/bound_symbol_manager.h"
+#include "common/text/config_utils.h"
 #include "common/text/symbol.h"
 #include "common/text/syntax_tree_context.h"
 #include "common/util/logging.h"
@@ -95,20 +96,14 @@ void ExplicitParameterStorageTypeRule::HandleSymbol(
 // a common type that can't be handled well in some old tools.
 absl::Status ExplicitParameterStorageTypeRule::Configure(
     absl::string_view configuration) {
-  if (configuration.empty()) return absl::OkStatus();
-  // TODO(hzeller): unify the common 'name:value' pair parsing
-  const std::pair<absl::string_view, absl::string_view> nv_pair =
-      absl::StrSplit(configuration, ':', absl::SkipEmpty());
-  if (nv_pair.first != "exempt_type") {
-    return absl::InvalidArgumentError(absl::StrCat(
-        "Only supported parameter 'exempt_type' (got '", nv_pair.first, "')"));
-  }
-
-  if (nv_pair.second == "string") {
-    exempt_string_ = true;
-    return absl::OkStatus();
-  }
-  return absl::InvalidArgumentError("Only supported exempt type is 'string'");
+  static const std::vector<absl::string_view> allowed = {"string"};
+  using verible::config::SetStringOneOf;
+  std::string value;
+  auto s = verible::ParseNameValues(
+      configuration, {{"exempt_type", SetStringOneOf(&value, allowed)}});
+  if (!s.ok()) return s;
+  exempt_string_ = (value == "string");
+  return absl::OkStatus();
 }
 
 LintRuleStatus ExplicitParameterStorageTypeRule::Report() const {

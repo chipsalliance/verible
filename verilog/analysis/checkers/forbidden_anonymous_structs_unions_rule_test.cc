@@ -45,7 +45,7 @@ TEST(ForbiddenAnonymousStructsUnionsTest, Configuration) {
   EXPECT_TRUE(absl::StrContains(s.message(), "supported parameter"));
 
   EXPECT_FALSE((s = rule.Configure("allow_anonymous_nested:bogus")).ok());
-  EXPECT_TRUE(absl::StrContains(s.message(), "allowed value"));
+  EXPECT_TRUE(absl::StrContains(s.message(), "Boolean value should be one of"));
 }
 
 // Tests that properly typedef'ed struct passes.

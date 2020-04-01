@@ -43,8 +43,9 @@ TEST(ExplicitParameterStorageTypeRuleTest, Configuration) {
   EXPECT_TRUE(absl::StrContains(status.message(), "supported parameter"));
 
   EXPECT_FALSE((status = rule.Configure("exempt_type:int")).ok());
-  EXPECT_TRUE(
-      absl::StrContains(status.message(), "supported exempt type is 'string'"));
+  EXPECT_EQ(status.message(),
+            "exempt_type: Value can only be 'string'; "
+            "got 'int'");
 }
 
 // Tests that ExplicitParameterStorageTypeRule correctly accepts

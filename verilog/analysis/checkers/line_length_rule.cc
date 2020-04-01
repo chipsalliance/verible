@@ -28,6 +28,7 @@
 #include "common/analysis/lint_rule_status.h"
 #include "common/strings/comment_utils.h"
 #include "common/strings/utf8.h"
+#include "common/text/config_utils.h"
 #include "common/text/constants.h"
 #include "common/text/text_structure.h"
 #include "common/text/token_info.h"
@@ -182,28 +183,10 @@ void LineLengthRule::Lint(const TextStructureView& text_structure,
 }
 
 absl::Status LineLengthRule::Configure(absl::string_view configuration) {
-  if (configuration.empty()) return absl::OkStatus();
-  using absl::InvalidArgumentError;
-  const std::pair<absl::string_view, absl::string_view> nv_pair =
-      absl::StrSplit(configuration, ':', absl::SkipEmpty());
-  if (nv_pair.first != "length") {
-    return InvalidArgumentError(absl::StrCat(
-        "Only supported parameter 'length' (got '", nv_pair.first, "')"));
-  }
-  int value;
-  if (!absl::SimpleAtoi(nv_pair.second, &value)) {
-    return InvalidArgumentError(
-        absl::StrCat("Can not parse ", nv_pair.second,
-                     " as integer value for 'length:' parameter"));
-  }
-  // Plausible range ?
-  if (value < kMinimumLineLength || value > kMaximumLineLength) {
-    return InvalidArgumentError(
-        absl::StrCat("Value 'length:", value, "' out of range [",
-                     kMinimumLineLength, "...", kMaximumLineLength, "]"));
-  }
-  line_length_limit_ = value;
-  return absl::OkStatus();
+  using verible::config::SetInt;
+  return verible::ParseNameValues(
+      configuration, {{"length", SetInt(&line_length_limit_, kMinimumLineLength,
+                                        kMaximumLineLength)}});
 }
 
 LintRuleStatus LineLengthRule::Report() const {

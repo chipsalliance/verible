@@ -44,7 +44,7 @@ TEST(LineLengthRuleTest, Configuration) {
   EXPECT_TRUE(absl::StrContains(status.message(), "supported parameter"));
 
   EXPECT_FALSE((status = rule.Configure("length:hello")).ok());
-  EXPECT_TRUE(absl::StrContains(status.message(), "integer value"));
+  EXPECT_TRUE(absl::StrContains(status.message(), "Cannot parse integer"));
 
   EXPECT_FALSE((status = rule.Configure("length:-1")).ok());
   EXPECT_TRUE(absl::StrContains(status.message(), "out of range"));
