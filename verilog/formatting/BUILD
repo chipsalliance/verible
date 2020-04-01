@@ -118,6 +118,7 @@ cc_library(
         "//common/util:range",
         "//common/util:spacer",
         "//common/util:vector_tree",
+        "//verilog/CST:declaration",
         "//verilog/CST:module",
         "//verilog/analysis:verilog_analyzer",
         "//verilog/analysis:verilog_equivalence",

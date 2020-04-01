@@ -3688,6 +3688,80 @@ TEST(FormatterEndToEndTest, DisableModulePortDeclarations) {
   }
 }
 
+TEST(FormatterEndToEndTest, DisableModuleInstantiations) {
+  const std::initializer_list<FormatterTestCase> kTestCases = {
+      {"", ""},
+      {"\n", "\n"},
+      {"\n\n", "\n\n"},
+      {"module  m  ;\t\n"
+       "  endmodule\n",
+       "module m;\n"
+       "endmodule\n"},
+      {"module  m  ;\t\n"
+       "foo bar();"
+       "  endmodule\n",
+       "module m;\n"
+       "  foo bar();\n"  // indentation still takes effect
+       "endmodule\n"},
+      {"module  m  ;\t\n"
+       "logic   xyz;"
+       "wire\tabc;"
+       "  endmodule\n",
+       "module m;\n"
+       "  logic xyz;\n"  // indentation still takes effect
+       "  wire abc;\n"   // indentation still takes effect
+       "endmodule\n"},
+      {"  function f  ;\t\n"
+       " endfunction\n",
+       "function f;\n"
+       "endfunction\n"},
+      {"  function f  ;\t"
+       "foo  bar,baz; "
+       " endfunction\n",
+       "function f;\n"
+       "  foo bar, baz;\n"
+       "endfunction\n"},
+      {"  task  t  ;\t"
+       "foo  bar,baz; "
+       " endtask\n",
+       "task t;\n"
+       "  foo bar, baz;\n"
+       "endtask\n"},
+      {"module  m  ;\t\n"
+       "foo  bar(   .baz(baz)   );"
+       "  endmodule\n",
+       "module m;\n"
+       "  foo  bar(   .baz(baz)   );\n"  // indentation still takes effect
+       "endmodule\n"},
+      {"module  m  ;\t\n"
+       "foo  bar(\n"
+       "        .baz  (baz  ),\n"  // example of user-manual alignment
+       "        .blaaa(blaaa)\n"
+       ");"
+       "  endmodule\n",
+       "module m;\n"
+       "  foo  bar(\n"             // indentation still takes effect
+       "        .baz  (baz  ),\n"  // named port connections preserved
+       "        .blaaa(blaaa)\n"   // named port connections preserved
+       ");\n"                      // this indentation remains untouched
+       "endmodule\n"},
+  };
+  FormatStyle style;
+  style.column_limit = 40;
+  style.indentation_spaces = 2;
+  style.wrap_spaces = 4;
+  style.format_module_instantiations = false;
+  for (const auto& test_case : kTestCases) {
+    VLOG(1) << "code-to-format:\n" << test_case.input << "<EOF>";
+    std::ostringstream stream;
+    const auto status =
+        FormatVerilog(test_case.input, "<filename>", style, stream);
+    // Require these test cases to be valid.
+    EXPECT_OK(status) << status.message();
+    EXPECT_EQ(stream.str(), test_case.expected) << "code:\n" << test_case.input;
+  }
+}
+
 struct SelectLinesTestCase {
   absl::string_view input;
   LineNumberSet lines;  // explicit set of lines to enable formatting

@@ -36,6 +36,7 @@
 #include "common/util/range.h"
 #include "common/util/spacer.h"
 #include "common/util/vector_tree.h"
+#include "verilog/CST/declaration.h"
 #include "verilog/CST/module.h"
 #include "verilog/analysis/verilog_analyzer.h"
 #include "verilog/analysis/verilog_equivalence.h"
@@ -407,14 +408,30 @@ Status Formatter::Format(const ExecutionControl& control) {
     disabled_ranges_.Union(DisableFormattingRanges(full_text, token_stream));
 
     // Find disabled formatting ranges for specific syntax tree node types.
+    // These are typically temporary workarounds for sections that users
+    // habitually prefer to format themselves.
     if (const auto& root = text_structure_.SyntaxTree()) {
-      if (!style_.format_module_port_declarations) {
-        for (const auto& match : FindAllModuleDeclarations(*root)) {
+      // Module-related sections:
+      for (const auto& match : FindAllModuleDeclarations(*root)) {
+        if (!style_.format_module_port_declarations) {
           const auto* ports = GetModulePortDeclarationList(*match.match);
-          if (ports == nullptr) continue;
-          const auto ports_text = verible::StringSpanOfSymbol(*ports);
-          VLOG(4) << "disabled: " << ports_text;
-          disabled_ranges_.Add(ByteOffsetRange(ports_text, full_text));
+          if (ports != nullptr) {
+            const auto ports_text = verible::StringSpanOfSymbol(*ports);
+            VLOG(4) << "disabled: " << ports_text;
+            disabled_ranges_.Add(ByteOffsetRange(ports_text, full_text));
+          }
+        }
+        if (!style_.format_module_instantiations) {
+          const auto& instantiations = FindAllDataDeclarations(*match.match);
+          for (const auto& inst : instantiations) {
+            const auto& module_instances = FindAllGateInstances(*inst.match);
+            // Only suppress formatting if instances contains a module or
+            // gate-like instance with ports in parentheses.
+            if (module_instances.empty()) continue;
+            const auto inst_text = verible::StringSpanOfSymbol(*inst.match);
+            VLOG(4) << "disabled: " << inst_text;
+            disabled_ranges_.Add(ByteOffsetRange(inst_text, full_text));
+          }
         }
       }
     }

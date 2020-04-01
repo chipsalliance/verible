@@ -107,8 +107,13 @@ ABSL_FLAG(int, max_search_states, 100000,
 
 // These flags exist in the short term to disable formatting of some regions.
 ABSL_FLAG(bool, format_module_port_declarations, false,
+          // TODO(b/70310743): format module port declarations in aligned manner
           "If true, format module declarations' list of port declarations, "
-          "else leave them unformatted.");
+          "else leave them unformatted.  This is a short-term workaround.");
+ABSL_FLAG(bool, format_module_instantiations, false,
+          // TODO(b/152805837): format module instances' ports in aligned manner
+          "If true, format module instantiations (data declarations), "
+          "else leave them unformatted.  This is a short-term workaround.");
 
 int main(int argc, char** argv) {
   const auto usage = absl::StrCat("usage: ", argv[0],
@@ -173,6 +178,8 @@ int main(int argc, char** argv) {
     // formatting style flags
     format_style.format_module_port_declarations =
         FLAGS_format_module_port_declarations.Get();
+    format_style.format_module_instantiations =
+        FLAGS_format_module_instantiations.Get();
   }
 
   std::ostringstream stream;

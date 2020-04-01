@@ -36,8 +36,18 @@ struct FormatStyle : public verible::BasicFormatStyle {
   // The default value here is true so that compact formatting can continue to
   // be covered in integration tests.
   // This flag is prone to change or be removed in the future.
-  // TODO(b/70310743): implement aligned formatting for this section.
+  // TODO(b/70310743): implement aligned formatting for this section,
+  //   and promote the control for this into an enum: {off, compact, align}
   bool format_module_port_declarations = true;
+
+  // If true, format module instantiations, else leave those regions
+  // unformatted. A user may wish to disable this in favor of their own aligned
+  // formatting. The default value here is true so that compact formatting can
+  // continue to be covered in integration tests. This flag is prone to change
+  // or be removed in the future.
+  // TODO(b/152805837): implement aligned formatting for this section,
+  //   and promote the control for this into an enum: {off, compact, align}
+  bool format_module_instantiations = true;
 
   // TODO(fangism): introduce the following knobs:
   //
