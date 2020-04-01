@@ -100,7 +100,7 @@ std::vector<const verible::Symbol*> GetAllAssignedParameterSymbols(
     const verible::Symbol& root) {
   std::vector<const verible::Symbol*> symbols;
 
-  for (auto id : SearchSyntaxTree(root, NodekParameterAssign())) {
+  for (const auto& id : SearchSyntaxTree(root, NodekParameterAssign())) {
     symbols.push_back(id.match);
   }
 
