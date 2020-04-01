@@ -101,11 +101,11 @@ cc_library(
     hdrs = ["syntax_tree_search_test_utils.h"],
     deps = [
         ":syntax_tree_search",
-        "//base",
         "//common/lexer:lexer_test_util",
         "//common/text:token_info",
         "//common/text:tree_utils",
         "//common/util:algorithm",
+        "//common/util:logging",
         "@com_google_absl//absl/strings",
         "@com_google_googletest//:gtest",
     ],

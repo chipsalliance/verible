@@ -19,12 +19,12 @@
 #include <set>
 #include <vector>
 
-#include "base/logging.h"
 #include "absl/strings/string_view.h"
 #include "common/analysis/syntax_tree_search.h"
 #include "common/text/token_info.h"
 #include "common/text/tree_utils.h"
 #include "common/util/algorithm.h"
+#include "common/util/logging.h"
 
 namespace verible {
 
