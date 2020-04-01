@@ -1582,6 +1582,59 @@ static const char* kModuleTests[] = {
     "`endif\n"
     ");\n"
     "endmodule",
+    "module macro_ports;\n"
+    "  foo bar(\n"
+    "    `my_ports\n"
+    "  );\n"
+    "endmodule\n",
+    "module macro_ports;\n"
+    "  foo bar(\n"
+    "    `my_ports()\n"
+    "  );\n"
+    "endmodule\n",
+    "module macro_ports;\n"
+    "  foo bar(\n"
+    "    `my_ports  // with comment\n"
+    "  );\n"
+    "endmodule\n",
+    "module macro_ports;\n"
+    "  foo bar(\n"
+    "    `my_ports()  // with comment\n"
+    "  );\n"
+    "endmodule\n",
+    "module macro_ports;\n"
+    "  foo bar(\n"
+    "    .a(a),\n"
+    "    `my_ports\n"
+    "  );\n"
+    "endmodule\n",
+    "module macro_ports;\n"
+    "  foo bar(\n"
+    "    .a(a),\n"
+    "    `my_ports()\n"
+    "  );\n"
+    "endmodule\n",
+    "module macro_ports;\n"
+    "  foo bar(\n"
+    "    `my_ports,\n"  // with comma, macro is interpreted as an expression
+    "    .b(b)\n"
+    "  );\n"
+    "endmodule\n",
+    "module macro_ports;\n"
+    "  foo bar(\n"
+    "    `my_ports(),\n"  // with comma, macro is interpreted as an expression
+    "    .b(b)\n"
+    "  );\n"
+    "endmodule\n",
+#if 0
+    // TODO(b/36237582): accept macro item in ports, without trailing comma
+    "module macro_ports;\n"
+    "  foo bar(\n"
+    "    `my_ports()\n"
+    "    .b(b)\n"
+    "  );\n"
+    "endmodule\n",
+#endif
     "module cast_with_constant_functions;\n"
     "foo dut(\n"
     "  .bus_in({brn::Num_blocks{$bits(dbg::bus_t)'(0)}}),\n"

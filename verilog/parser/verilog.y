@@ -927,12 +927,18 @@ preprocess_include_argument
   ;
 
 MacroGenericItem
-  : MacroCallId '(' macro_args_opt MacroCallCloseToEndLine
-    { $$ = MakeTaggedNode(N::kMacroCall, $1, MakeParenGroup($2, $3, $4)); }
+  : MacroCallItem
+    { $$ = move($1); }
   | MacroIdItem
     { $$ = MakeTaggedNode(N::kMacroGenericItem, $1); }
   ;
+MacroCallItem
+  /* suitable for use as list items */
+  : MacroCallId '(' macro_args_opt MacroCallCloseToEndLine
+    { $$ = MakeTaggedNode(N::kMacroCall, $1, MakeParenGroup($2, $3, $4)); }
+  ;
 MacroCall
+  /* suitable for use in expressions */
   : MacroCallId '(' macro_args_opt ')'
     { $$ = MakeTaggedNode(N::kMacroCall, $1, MakeParenGroup($2, $3, $4)); }
   ;
@@ -6171,13 +6177,32 @@ any_port_list
     { $$ = move($1); }
   | any_port_list_trailing_comma
     { $$ = move($1); }
+/* TODO(b/36237582): accept a macro item here
+  | any_port_list_trailing_macro_item
+    { $$ = move($1); }
   ;
+*/
 any_port_list_trailing_comma
   : any_port_list ','
     { $$ = ExtendNode($1, $2); }
   | ','
     { $$ = MakeTaggedNode(N::kPortActualList, $1); }
   ;
+/* TODO(b/36237582): accept a macro item here
+   The difficulty around this lies with the reduction path from
+   MacroGenericItem -> expr_primary_no_groups -> expression.
+   Allowing MacroGenericItem here will hit R/R conflicts.
+   Ideally, what we want to express is that commas are optional following
+   MacroGenericItems.  If we made commas optional entirely, it would be
+   too permissive w.r.t. actual LRM grammar, and would push the responsibility
+   to CST validation.
+any_port_list_trailing_macro_item
+  : any_port_list MacroGenericItem
+    { $$ = ExtendNode($1, $2); }
+  | MacroGenericItem
+    { $$ = MakeTaggedNode(N::kPortActualList, $1); }
+  ;
+*/
 any_port_list_item_last
   : any_port_list_trailing_comma any_port
     { $$ = ExtendNode($1, $2); }
@@ -6196,6 +6221,7 @@ any_port
   : port_named
     { $$ = move($1); }
   | expression
+    /* Note: expr_primary_no_groups already covers MacroGenericItem */
     { $$ = MakeTaggedNode(N::kActualPositionalPort, move($1)); }
   ;
 port_named
