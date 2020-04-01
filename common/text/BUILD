@@ -206,7 +206,18 @@ cc_library(
         ":concrete_syntax_leaf",
         ":concrete_syntax_tree",
         ":symbol",
+        ":tree_utils",
         "@com_google_absl//absl/strings",
+    ],
+)
+
+cc_test(
+    name = "tree_builder_test_util_test",
+    srcs = ["tree_builder_test_util_test.cc"],
+    deps = [
+        ":tree_builder_test_util",
+        ":tree_utils",
+        "@com_google_googletest//:gtest_main",
     ],
 )
 

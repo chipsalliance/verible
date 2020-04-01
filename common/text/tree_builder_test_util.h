@@ -17,6 +17,7 @@
 #ifndef VERIBLE_COMMON_TEXT_TREE_BUILDER_TEST_UTIL_H_
 #define VERIBLE_COMMON_TEXT_TREE_BUILDER_TEST_UTIL_H_
 
+#include <initializer_list>
 #include <utility>
 
 #include "common/text/concrete_syntax_leaf.h"
@@ -40,6 +41,17 @@ SymbolPtr Leaf(Args&&... args) {
 
 // Use this for constructing leaves where you don't care about the token text.
 SymbolPtr XLeaf(int token_enum);
+
+// Descend through subtree, using path's indices, asserting that each subnode
+// along the way is a node.
+// If any intermediate element visited is not a SyntaxTreeNode, or the index
+// into its children is out-of-bounds, then this will exit fatally.
+// This assert-as-you-descend behavior is mostly useful for testing for direct
+// contents of hand-crafted trees.
+// This variant does not check node enums.
+// TODO(fangism): implement one that verifies node enums.
+const Symbol* DescendPath(const Symbol& symbol,
+                          std::initializer_list<size_t> path);
 
 }  // namespace verible
 

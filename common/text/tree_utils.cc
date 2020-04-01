@@ -46,6 +46,7 @@ const Symbol* DescendThroughSingletons(const Symbol& symbol) {
   if (children.size() == 1 && children.front() != nullptr) {
     // If only child is non-null, descend.
     return DescendThroughSingletons(*children.front());
+    // TODO(fangism): rewrite non-recursively.
   }
   return &symbol;
 }
