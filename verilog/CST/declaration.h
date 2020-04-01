@@ -73,6 +73,12 @@ verible::SymbolPtr MakeDataDeclaration(T1&& qualifiers, T2&& inst_base,
 // Find all data declarations.
 std::vector<verible::TreeSearchMatch> FindAllDataDeclarations(
     const verible::Symbol&);
+std::vector<verible::TreeSearchMatch> FindAllNetVariables(
+    const verible::Symbol&);
+std::vector<verible::TreeSearchMatch> FindAllRegisterVariables(
+    const verible::Symbol&);
+std::vector<verible::TreeSearchMatch> FindAllGateInstances(
+    const verible::Symbol&);
 
 // For a given data declaration (includes module instantiation), returns the
 // subtree containing qualifiers.  e.g. from "const foo bar, baz;",

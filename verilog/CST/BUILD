@@ -198,6 +198,8 @@ cc_test(
     srcs = ["declaration_test.cc"],
     deps = [
         ":declaration",
+        "//common/analysis:syntax_tree_search",
+        "//common/analysis:syntax_tree_search_test_utils",
         "//common/text:token_info_test_util",
         "//common/text:tree_utils",
         "//common/util:range",

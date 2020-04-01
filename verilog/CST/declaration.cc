@@ -62,6 +62,19 @@ std::vector<verible::TreeSearchMatch> FindAllDataDeclarations(
   return SearchSyntaxTree(root, NodekDataDeclaration());
 }
 
+std::vector<verible::TreeSearchMatch> FindAllNetVariables(const Symbol& root) {
+  return SearchSyntaxTree(root, NodekNetVariable());
+}
+
+std::vector<verible::TreeSearchMatch> FindAllRegisterVariables(
+    const Symbol& root) {
+  return SearchSyntaxTree(root, NodekRegisterVariable());
+}
+
+std::vector<verible::TreeSearchMatch> FindAllGateInstances(const Symbol& root) {
+  return SearchSyntaxTree(root, NodekGateInstance());
+}
+
 // Don't want to expose kInstantiationBase because it is an artificial grouping.
 static const SyntaxTreeNode& GetInstantiationBaseFromDataDeclaration(
     const Symbol& data_declaration) {

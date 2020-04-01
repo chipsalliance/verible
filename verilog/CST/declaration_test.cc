@@ -18,6 +18,8 @@
 
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
+#include "common/analysis/syntax_tree_search.h"
+#include "common/analysis/syntax_tree_search_test_utils.h"
 #include "common/text/token_info_test_util.h"
 #include "common/text/tree_utils.h"
 #include "common/util/range.h"
@@ -29,39 +31,185 @@
 namespace verilog {
 namespace {
 
+using verible::SyntaxTreeSearchTestCase;
+using verible::TreeSearchMatch;
+
 TEST(FindAllDataDeclarations, CountMatches) {
-  constexpr std::pair<absl::string_view, int> kTestCases[] = {
-      {"", 0},
-      {"module m;\nendmodule\n", 0},
-      {"class c;\nendclass\n", 0},
-      {"function f;\nendfunction\n", 0},
-      {"package p;\nendpackage\n", 0},
-      {"task t;\nendtask\n", 0},
-      {"foo bar;\n", 1},
-      {"foo bar, baz;\n", 1},
-      {"foo bar; foo baz;\n", 2},
+  constexpr int kTag = 1;  // value doesn't matter
+  const SyntaxTreeSearchTestCase kTestCases[] = {
+      {""},
+      {"module m;\nendmodule\n"},
+      {"class c;\nendclass\n"},
+      {"function f;\nendfunction\n"},
+      {"package p;\nendpackage\n"},
+      {"task t;\nendtask\n"},
+      {{kTag, "foo bar;"}, "\n"},
+      {{kTag, "foo bar, baz;"}, "\n"},
+      {{kTag, "foo bar;"}, "\n", {kTag, "foo baz;"}, "\n"},
       {"module m;\n"
-       "  foo bar, baz;\n"
-       "endmodule\n",
-       1},
-      {"module m;\n"
-       "  foo bar;\n"
-       "  foo baz;\n"
-       "endmodule\n",
-       2},
+       "  ",
+       {kTag, "foo bar, baz;"},
+       "\n"
+       "endmodule\n"},
+      {"module m;\n",
+       {kTag, "foo bar;"},
+       "\n",
+       {kTag, "foo baz;"},
+       "\n"
+       "endmodule\n"},
   };
   for (const auto& test : kTestCases) {
-    VerilogAnalyzer analyzer(test.first, "test-file");
-    ASSERT_OK(analyzer.Analyze());
+    const absl::string_view code(test.code);
+    VerilogAnalyzer analyzer(code, "test-file");
+    const auto code_copy = analyzer.Data().Contents();
+    ASSERT_OK(analyzer.Analyze()) << "failed on:\n" << code;
     const auto& root = analyzer.Data().SyntaxTree();
+
     const auto decls = FindAllDataDeclarations(*ABSL_DIE_IF_NULL(root));
-    EXPECT_EQ(decls.size(), test.second);
+
+    std::ostringstream diffs;
+    EXPECT_TRUE(test.ExactMatchFindings(decls, code_copy, &diffs))
+        << "failed on:\n"
+        << code << "\ndiffs:\n"
+        << diffs.str();
+  }
+}
+
+TEST(FindAllNetVariablesTest, Various) {
+  constexpr int kTag = 1;  // value doesn't matter
+  const SyntaxTreeSearchTestCase kTestCases[] = {
+      // bar is inside kVariableDeclarationAssignment
+      // {"foo ", {kTag, "bar"}, ";\n"},
+      {""},
+      {"module m; endmodule\n"},
+      {"module m;\nwire ", {kTag, "bar"}, ";\nendmodule\n"},
+      {"module m;\nwire ", {kTag, "w"}, ", ", {kTag, "x"}, ";\nendmodule\n"},
+      {"module m;\nwire ", {kTag, "bar[N]"}, ";\nendmodule\n"},
+      {"module m;\nwire ", {kTag, "bar[N-1:0]"}, ";\nendmodule\n"},
+      {"module m;\nwire [M]", {kTag, "bar"}, ";\nendmodule\n"},
+      {"module m;\nwire [M]", {kTag, "bar[N]"}, ";\nendmodule\n"},
+      {"module m;\nwire [M][B]", {kTag, "bar[N][C]"}, ";\nendmodule\n"},
+      {"module m;\nwire ",
+       {kTag, "w[2]"},
+       ", ",
+       {kTag, "x[4]"},
+       ";\nendmodule\n"},
+      {"module m1;\nwire ",
+       {kTag, "baz"},
+       ";\nendmodule\n"
+       "module m2;\nwire ",
+       {kTag, "bar"},
+       ";\nendmodule\n"},
+      {"module m;\nlogic bar;\nendmodule\n"},
+      {"module m;\nreg bar;\nendmodule\n"},
+  };
+  for (const auto& test : kTestCases) {
+    const absl::string_view code(test.code);
+    VerilogAnalyzer analyzer(code, "test-file");
+    const auto code_copy = analyzer.Data().Contents();
+    ASSERT_OK(analyzer.Analyze()) << "failed on:\n" << code;
+    const auto& root = analyzer.Data().SyntaxTree();
+
+    const auto vars = FindAllNetVariables(*ABSL_DIE_IF_NULL(root));
+
+    std::ostringstream diffs;
+    EXPECT_TRUE(test.ExactMatchFindings(vars, code_copy, &diffs))
+        << "failed on:\n"
+        << code << "\ndiffs:\n"
+        << diffs.str();
+  }
+}
+
+TEST(FindAllRegisterVariablesTest, Various) {
+  constexpr int kTag = 1;  // value doesn't matter
+  const SyntaxTreeSearchTestCase kTestCases[] = {
+      // bar is inside kVariableDeclarationAssignment
+      // {"foo ", {kTag, "bar"}, ";\n"},
+      {"module m;\nlogic ", {kTag, "bar"}, ";\nendmodule\n"},
+      {"module m;\nlogic ", {kTag, "bar[8]"}, ";\nendmodule\n"},
+      {"module m;\nlogic [4]", {kTag, "bar"}, ";\nendmodule\n"},
+      {"module m;\nreg ", {kTag, "bar"}, ";\nendmodule\n"},
+      {"module m;\nfoo ", {kTag, "bar"}, ";\nendmodule\n"},
+      {"module m;\nfoo ", {kTag, "bar"}, ", ", {kTag, "baz"}, ";\nendmodule\n"},
+      {"module m;\nlogic ",
+       {kTag, "bar"},
+       ";\nlogic ",
+       {kTag, "baz"},
+       ";\nendmodule\n"},
+      {"module m;\nwire bar;\nendmodule\n"},
+  };
+  for (const auto& test : kTestCases) {
+    const absl::string_view code(test.code);
+    VerilogAnalyzer analyzer(code, "test-file");
+    const auto code_copy = analyzer.Data().Contents();
+    ASSERT_OK(analyzer.Analyze()) << "failed on:\n" << code;
+    const auto& root = analyzer.Data().SyntaxTree();
+
+    const auto vars = FindAllRegisterVariables(*ABSL_DIE_IF_NULL(root));
+
+    std::ostringstream diffs;
+    EXPECT_TRUE(test.ExactMatchFindings(vars, code_copy, &diffs))
+        << "failed on:\n"
+        << code << "\ndiffs:\n"
+        << diffs.str();
+  }
+}
+
+TEST(FindAllGateInstancesTest, Various) {
+  constexpr int kTag = 1;  // value doesn't matter
+  const SyntaxTreeSearchTestCase kTestCases[] = {
+      // bar is inside kVariableDeclarationAssignment
+      // {"foo ", {kTag, "bar"}, ";\n"},
+      {"module m;\nlogic bar;\nendmodule\n"},
+      {"module m;\nreg bar;\nendmodule\n"},
+      {"module m;\nfoo bar;\nendmodule\n"},
+      {"module m;\nfoo ", {kTag, "bar()"}, ";\nendmodule\n"},
+      {"module m;\nfoo ",
+       {kTag, "bar()"},
+       ", ",
+       {kTag, "baz()"},
+       ";\nendmodule\n"},
+      {"module m;\nfoo ",
+       {kTag, "bar()"},
+       ";\ngoo ",
+       {kTag, "baz()"},
+       ";\nendmodule\n"},
+      {"module m;\nfoo ", {kTag, "bar(baz)"}, ";\nendmodule\n"},
+      {"module m;\nfoo ", {kTag, "bar(baz, blah)"}, ";\nendmodule\n"},
+      {"module m;\nfoo ", {kTag, "bar(.baz)"}, ";\nendmodule\n"},
+      {"module m;\nfoo ", {kTag, "bar(.baz(baz))"}, ";\nendmodule\n"},
+      {"module m;\nfoo ", {kTag, "bar(.baz(baz), .c(c))"}, ";\nendmodule\n"},
+      {"module m;\nfoo #() ", {kTag, "bar()"}, ";\nendmodule\n"},
+      {"module m;\nfoo #(N) ", {kTag, "bar()"}, ";\nendmodule\n"},
+      {"module m;\nfoo #(.N(N)) ", {kTag, "bar()"}, ";\nendmodule\n"},
+      {"module m;\nfoo #(M, N) ", {kTag, "bar()"}, ";\nendmodule\n"},
+      {"module m;\nfoo #(.N(N), .M(M)) ", {kTag, "bar()"}, ";\nendmodule\n"},
+      {"module m;\nfoo #(.N(N), .M(M)) ",
+       {kTag, "bar()"},
+       ",",
+       {kTag, "blah()"},
+       ";\nendmodule\n"},
+  };
+  for (const auto& test : kTestCases) {
+    const absl::string_view code(test.code);
+    VerilogAnalyzer analyzer(code, "test-file");
+    const auto code_copy = analyzer.Data().Contents();
+    ASSERT_OK(analyzer.Analyze()) << "failed on:\n" << code;
+    const auto& root = analyzer.Data().SyntaxTree();
+
+    const auto vars = FindAllGateInstances(*ABSL_DIE_IF_NULL(root));
+
+    std::ostringstream diffs;
+    EXPECT_TRUE(test.ExactMatchFindings(vars, code_copy, &diffs))
+        << "failed on:\n"
+        << code << "\ndiffs:\n"
+        << diffs.str();
   }
 }
 
 TEST(GetQualifiersOfDataDeclarationTest, NoQualifiers) {
   constexpr int kTag = 1;  // value doesn't matter
-  const verible::TokenInfoTestData kTestCases[] = {
+  const SyntaxTreeSearchTestCase kTestCases[] = {
       // each of these test cases should match exactly one data declaration
       // and have no qualifiers
       {{kTag, "foo bar;"}, "\n"},
@@ -94,38 +242,31 @@ TEST(GetQualifiersOfDataDeclarationTest, NoQualifiers) {
     const auto& root = analyzer.Data().SyntaxTree();
 
     const auto decls = FindAllDataDeclarations(*ABSL_DIE_IF_NULL(root));
-    ASSERT_EQ(decls.size(), 1);
-    const auto& decl = *decls.front().match;
-    const auto decl_span = verible::StringSpanOfSymbol(decl);
-    const auto* quals = GetQualifiersOfDataDeclaration(decl);
+
     // Verify that quals is either nullptr or empty or contains only nullptrs.
-    if (quals != nullptr) {
-      for (const auto& child : quals->children()) {
-        EXPECT_EQ(child, nullptr)
-            << "unexpected:\n"
-            << verible::RawTreePrinter(*child) << "\nfailed on:\n"
-            << code;
+    for (const auto& decl : decls) {
+      const auto* quals = GetQualifiersOfDataDeclaration(*decl.match);
+      if (quals != nullptr) {
+        for (const auto& child : quals->children()) {
+          EXPECT_EQ(child, nullptr)
+              << "unexpected qualifiers:\n"
+              << verible::RawTreePrinter(*child) << "\nfailed on:\n"
+              << code;
+        }
       }
     }
-    // TODO(b/151371397): Refactor this test code along with
-    // common/analysis/linter_test_util.h to be able to compare set-symmetric
-    // differences in 'findings'.
 
-    // Find the tokens, rebased into the other buffer.
-    const auto expected_excerpts = test.FindImportantTokens(code_copy);
-    ASSERT_EQ(expected_excerpts.size(), 1);
-    // Compare the string_views and their exact spans.
-    const auto expected_span = expected_excerpts.front().text;
-    ASSERT_TRUE(verible::IsSubRange(decl_span, code_copy));
-    ASSERT_TRUE(verible::IsSubRange(expected_span, code_copy));
-    EXPECT_EQ(decl_span, expected_span);
-    EXPECT_TRUE(verible::BoundsEqual(decl_span, expected_span));
+    std::ostringstream diffs;
+    EXPECT_TRUE(test.ExactMatchFindings(decls, code_copy, &diffs))
+        << "failed on:\n"
+        << code << "\ndiffs:\n"
+        << diffs.str();
   }
 }
 
 TEST(GetTypeOfDataDeclarationTest, ExplicitTypes) {
   constexpr int kTag = 1;  // value doesn't matter
-  const verible::TokenInfoTestData kTestCases[] = {
+  const SyntaxTreeSearchTestCase kTestCases[] = {
       // each of these test cases should match exactly one data declaration
       // and have no qualifiers
       {{kTag, "foo"}, " bar;\n"},
@@ -153,6 +294,28 @@ TEST(GetTypeOfDataDeclarationTest, ExplicitTypes) {
        " foo;\n"
        "endfunction\n"
        "endclass\n"},
+      {"class c;\n"
+       "function f;\n"
+       "const ",
+       {kTag, "int"},
+       " foo;\n",
+       {kTag, "bit"},
+       " bar;\n"
+       "endfunction\n"
+       "endclass\n"},
+      {"class c;\n"
+       "function f;\n"
+       "const ",
+       {kTag, "int"},
+       " foo;\n",
+       "endfunction\n"
+       "endclass\n"
+       "class d;\n"
+       "function g;\n",
+       {kTag, "bit"},
+       " bar;\n"
+       "endfunction\n"
+       "endclass\n"},
   };
   for (const auto& test : kTestCases) {
     const absl::string_view code(test.code);
@@ -162,31 +325,24 @@ TEST(GetTypeOfDataDeclarationTest, ExplicitTypes) {
     const auto& root = analyzer.Data().SyntaxTree();
 
     const auto decls = FindAllDataDeclarations(*ABSL_DIE_IF_NULL(root));
-    ASSERT_EQ(decls.size(), 1);
-    const auto& decl = *decls.front().match;
-    const auto& type = GetTypeOfDataDeclaration(decl);
-    const auto type_span = verible::StringSpanOfSymbol(type);
-    // Verify that type span the specified range of text.
 
-    // TODO(b/151371397): Refactor this test code along with
-    // common/analysis/linter_test_util.h to be able to compare set-symmetric
-    // differences in 'findings'.
+    std::vector<TreeSearchMatch> types;
+    for (const auto& decl : decls) {
+      const auto& type = GetTypeOfDataDeclaration(*decl.match);
+      types.push_back(TreeSearchMatch{&type, {/* ignored context */}});
+    }
 
-    // Find the tokens, rebased into the other buffer.
-    const auto expected_excerpts = test.FindImportantTokens(code_copy);
-    ASSERT_EQ(expected_excerpts.size(), 1);
-    // Compare the string_views and their exact spans.
-    const auto expected_span = expected_excerpts.front().text;
-    ASSERT_TRUE(verible::IsSubRange(type_span, code_copy));
-    ASSERT_TRUE(verible::IsSubRange(expected_span, code_copy));
-    EXPECT_EQ(type_span, expected_span);
-    EXPECT_TRUE(verible::BoundsEqual(type_span, expected_span));
+    std::ostringstream diffs;
+    EXPECT_TRUE(test.ExactMatchFindings(types, code_copy, &diffs))
+        << "failed on:\n"
+        << code << "\ndiffs:\n"
+        << diffs.str();
   }
 }
 
 TEST(GetQualifiersOfDataDeclarationTest, SomeQualifiers) {
   constexpr int kTag = 1;  // value doesn't matter
-  const verible::TokenInfoTestData kTestCases[] = {
+  const SyntaxTreeSearchTestCase kTestCases[] = {
       // each of these test cases should match exactly one data declaration
       // and have no qualifiers
       {{kTag, "const"}, " foo bar;\n"},
@@ -211,6 +367,26 @@ TEST(GetQualifiersOfDataDeclarationTest, SomeQualifiers) {
        " int foo;\n"
        "endfunction\n"
        "endclass\n"},
+      {"class c;\n"
+       "function f;\n",
+       {kTag, "const"},
+       " int foo;\n",
+       {kTag, "const"},
+       " bit bar;\n"
+       "endfunction\n"
+       "endclass\n"},
+      {"class c;\n"
+       "function f;\n",
+       {kTag, "const"},
+       " int foo;\n",
+       "endfunction\n"
+       "endclass\n"
+       "class d;\n"
+       "function g;\n",
+       {kTag, "const"},
+       " bit bar;\n"
+       "endfunction\n"
+       "endclass\n"},
   };
   for (const auto& test : kTestCases) {
     const absl::string_view code(test.code);
@@ -220,32 +396,26 @@ TEST(GetQualifiersOfDataDeclarationTest, SomeQualifiers) {
     const auto& root = analyzer.Data().SyntaxTree();
 
     const auto decls = FindAllDataDeclarations(*ABSL_DIE_IF_NULL(root));
-    ASSERT_EQ(decls.size(), 1);
-    const auto& decl = *decls.front().match;
-    const auto* type = GetQualifiersOfDataDeclaration(decl);
-    ASSERT_NE(type, nullptr) << "decl:\n" << verible::RawTreePrinter(decl);
-    const auto type_span = verible::StringSpanOfSymbol(*type);
-    // Verify that type span the specified range of text.
 
-    // TODO(b/151371397): Refactor this test code along with
-    // common/analysis/linter_test_util.h to be able to compare set-symmetric
-    // differences in 'findings'.
+    std::vector<TreeSearchMatch> quals;
+    for (const auto& decl : decls) {
+      const auto* qual = GetQualifiersOfDataDeclaration(*decl.match);
+      ASSERT_NE(qual, nullptr) << "decl:\n"
+                               << verible::RawTreePrinter(*decl.match);
+      quals.push_back(TreeSearchMatch{qual, {/* ignored context */}});
+    }
 
-    // Find the tokens, rebased into the other buffer.
-    const auto expected_excerpts = test.FindImportantTokens(code_copy);
-    ASSERT_EQ(expected_excerpts.size(), 1);
-    // Compare the string_views and their exact spans.
-    const auto expected_span = expected_excerpts.front().text;
-    ASSERT_TRUE(verible::IsSubRange(type_span, code_copy));
-    ASSERT_TRUE(verible::IsSubRange(expected_span, code_copy));
-    EXPECT_EQ(type_span, expected_span);
-    EXPECT_TRUE(verible::BoundsEqual(type_span, expected_span));
+    std::ostringstream diffs;
+    EXPECT_TRUE(test.ExactMatchFindings(quals, code_copy, &diffs))
+        << "failed on:\n"
+        << code << "\ndiffs:\n"
+        << diffs.str();
   }
 }
 
 TEST(GetInstanceListFromDataDeclarationTest, InstanceLists) {
   constexpr int kTag = 1;  // value doesn't matter
-  const verible::TokenInfoTestData kTestCases[] = {
+  const SyntaxTreeSearchTestCase kTestCases[] = {
       // each of these test cases should match exactly one data declaration
       // and have no qualifiers
       {"foo ", {kTag, "bar"}, ";\n"},
@@ -315,25 +485,18 @@ TEST(GetInstanceListFromDataDeclarationTest, InstanceLists) {
     const auto& root = analyzer.Data().SyntaxTree();
 
     const auto decls = FindAllDataDeclarations(*ABSL_DIE_IF_NULL(root));
-    ASSERT_EQ(decls.size(), 1);
-    const auto& decl = *decls.front().match;
-    const auto& insts = GetInstanceListFromDataDeclaration(decl);
-    const auto insts_span = verible::StringSpanOfSymbol(insts);
-    // Verify that insts span the specified range of text.
 
-    // TODO(b/151371397): Refactor this test code along with
-    // common/analysis/linter_test_util.h to be able to compare set-symmetric
-    // differences in 'findings'.
+    std::vector<TreeSearchMatch> inst_lists;
+    for (const auto& decl : decls) {
+      const auto& insts = GetInstanceListFromDataDeclaration(*decl.match);
+      inst_lists.push_back(TreeSearchMatch{&insts, {/* ignored context */}});
+    }
 
-    // Find the tokens, rebased into the other buffer.
-    const auto expected_excerpts = test.FindImportantTokens(code_copy);
-    ASSERT_EQ(expected_excerpts.size(), 1);
-    // Compare the string_views and their exact spans.
-    const auto expected_span = expected_excerpts.front().text;
-    ASSERT_TRUE(verible::IsSubRange(insts_span, code_copy));
-    ASSERT_TRUE(verible::IsSubRange(expected_span, code_copy));
-    EXPECT_EQ(insts_span, expected_span);
-    EXPECT_TRUE(verible::BoundsEqual(insts_span, expected_span));
+    std::ostringstream diffs;
+    EXPECT_TRUE(test.ExactMatchFindings(inst_lists, code_copy, &diffs))
+        << "failed on:\n"
+        << code << "\ndiffs:\n"
+        << diffs.str();
   }
 }
 
