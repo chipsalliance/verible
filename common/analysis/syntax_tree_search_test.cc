@@ -23,6 +23,7 @@
 #include "common/text/symbol.h"
 #include "common/text/syntax_tree_context.h"
 #include "common/text/tree_builder_test_util.h"
+#include "common/text/tree_utils.h"
 
 namespace verible {
 namespace {
@@ -42,6 +43,7 @@ TEST(SearchSyntaxTreeTest, RootOnlyNodeMatch) {
   auto matcher = matcher_builder();
   auto matches = SearchSyntaxTree(*tree, matcher);
   EXPECT_EQ(matches.size(), 1);
+  EXPECT_EQ(matches.front().match, tree.get());
 }
 
 // Tests that node and leaf do not match.
@@ -60,6 +62,7 @@ TEST(SearchSyntaxTreeTest, RootOnlyLeafMatch) {
   auto matcher = matcher_builder();
   auto matches = SearchSyntaxTree(*tree, matcher);
   EXPECT_EQ(matches.size(), 1);
+  EXPECT_EQ(matches.front().match, tree.get());
 }
 
 // Tests that node and leaf do not match.
@@ -78,6 +81,10 @@ TEST(SearchSyntaxTreeTest, DeepLeafMatch) {
   auto matcher = matcher_builder();
   auto matches = SearchSyntaxTree(*tree, matcher);
   EXPECT_EQ(matches.size(), 2);
+  EXPECT_EQ(&SymbolCastToLeaf(*matches.front().match),
+            &SymbolCastToLeaf(*DescendPath(*tree, {0, 0})));
+  EXPECT_EQ(&SymbolCastToLeaf(*matches.back().match),
+            &SymbolCastToLeaf(*DescendPath(*tree, {1, 1})));
 }
 
 // Tests that multiple matching nodes are found.
@@ -87,6 +94,10 @@ TEST(SearchSyntaxTreeTest, DeepNodeMatch) {
   auto matcher = matcher_builder();
   auto matches = SearchSyntaxTree(*tree, matcher);
   EXPECT_EQ(matches.size(), 2);
+  EXPECT_EQ(&SymbolCastToNode(*matches.front().match),
+            &SymbolCastToNode(*DescendPath(*tree, {0, 0})));
+  EXPECT_EQ(&SymbolCastToNode(*matches.back().match),
+            &SymbolCastToNode(*DescendPath(*tree, {1, 1})));
 }
 
 // Tests that multiple matching nested nodes are found.
@@ -96,6 +107,10 @@ TEST(SearchSyntaxTreeTest, NestedNodeMatch) {
   auto matcher = matcher_builder();
   auto matches = SearchSyntaxTree(*tree, matcher);
   EXPECT_EQ(matches.size(), 2);
+  EXPECT_EQ(&SymbolCastToNode(*matches.front().match),
+            &SymbolCastToNode(*DescendPath(*tree, {0})));
+  EXPECT_EQ(&SymbolCastToNode(*matches.back().match),
+            &SymbolCastToNode(*DescendPath(*tree, {0, 1})));
 }
 
 // Tests that false predicate filters out matches.
@@ -116,6 +131,7 @@ TEST(SearchSyntaxTreeTest, RootOnlyNodeMatchTruePredicate) {
   auto matches = SearchSyntaxTree(
       *tree, matcher, [](const SyntaxTreeContext&) { return true; });
   EXPECT_EQ(matches.size(), 1);
+  EXPECT_EQ(&SymbolCastToNode(*matches.front().match), tree.get());
 }
 
 }  // namespace

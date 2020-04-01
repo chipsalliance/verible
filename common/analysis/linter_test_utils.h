@@ -19,8 +19,8 @@
 #include <initializer_list>
 #include <iosfwd>
 #include <memory>
+#include <set>
 #include <string>
-#include <vector>
 
 #include "gtest/gtest.h"
 #include "absl/status/status.h"
@@ -34,6 +34,10 @@ namespace verible {
 // LintTestCase is a struct for describing a chunk of text and where
 // a linter should fail on it.  See SynthesizedLexerTestData for original
 // concept.
+// This has the same limitations as SynthesizedLexerTestData, such as
+// the inability to express nested findings, which requires a tree
+// representation of expected data.
+// TODO(fangism): upgrade to nest-able expected findings tree structure.
 struct LintTestCase : public SynthesizedLexerTestData {
   // Forwarding constructor to base class.
   LintTestCase(std::initializer_list<ExpectedTokenInfo> fragments)

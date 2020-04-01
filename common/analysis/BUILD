@@ -95,6 +95,23 @@ cc_library(
 )
 
 cc_library(
+    name = "syntax_tree_search_test_utils",
+    testonly = 1,
+    srcs = ["syntax_tree_search_test_utils.cc"],
+    hdrs = ["syntax_tree_search_test_utils.h"],
+    deps = [
+        ":syntax_tree_search",
+        "//base",
+        "//common/lexer:lexer_test_util",
+        "//common/text:token_info",
+        "//common/text:tree_utils",
+        "//common/util:algorithm",
+        "@com_google_absl//absl/strings",
+        "@com_google_googletest//:gtest",
+    ],
+)
+
+cc_library(
     name = "line_linter",
     srcs = ["line_linter.cc"],
     hdrs = ["line_linter.h"],
@@ -353,6 +370,19 @@ cc_test(
         "//common/text:symbol",
         "//common/text:syntax_tree_context",
         "//common/text:tree_builder_test_util",
+        "//common/text:tree_utils",
+        "@com_google_googletest//:gtest_main",
+    ],
+)
+
+cc_test(
+    name = "syntax_tree_search_test_utils_test",
+    srcs = ["syntax_tree_search_test_utils_test.cc"],
+    deps = [
+        ":syntax_tree_search_test_utils",
+        "//common/text:tree_builder_test_util",
+        "//common/util:range",
+        "@com_google_absl//absl/strings",
         "@com_google_googletest//:gtest_main",
     ],
 )

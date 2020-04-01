@@ -25,10 +25,18 @@
 namespace verible {
 
 // General match structure for searching a syntax tree.
+//
+// For testing purposes, matches can be hand-constructed like this:
+//   // Let 'buffer' be a string_view of analyzed text.
+//   auto leaf = Leaf(kTag, buffer.substr(...));  // tree_builder_test_util.h
+//   TreeSearchMatch match{leaf.get(), {/* empty context */}};
 struct TreeSearchMatch {
   // Note: The syntax tree to which the matching node belongs must outlive
   // this pointer.
   const Symbol* match;
+  // A copy of the stack of syntax tree nodes that are ancestors of
+  // the match node/leaf.  Note: This is needed because syntax tree nodes
+  // don't have upward links to parents.
   SyntaxTreeContext context;
 };
 
@@ -39,7 +47,7 @@ std::vector<TreeSearchMatch> SearchSyntaxTree(
     const Symbol& root, const verible::matcher::Matcher& matcher,
     std::function<bool(const SyntaxTreeContext&)> context_predicate);
 
-// This variant treats the missing context_predicate as always returning true.
+// This overload treats the missing context_predicate as always returning true.
 std::vector<TreeSearchMatch> SearchSyntaxTree(
     const Symbol& root, const verible::matcher::Matcher& matcher);
 
