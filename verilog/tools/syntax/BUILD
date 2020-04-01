@@ -24,3 +24,8 @@ cc_binary(
         "@com_google_absl//absl/types:span",
     ],
 )
+
+sh_binary(
+    name = "triage_parser",
+    srcs = ["triage_parser.sh"],
+)
