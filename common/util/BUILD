@@ -14,6 +14,11 @@ cc_library(
 )
 
 cc_library(
+    name = "forward",
+    hdrs = ["forward.h"],
+)
+
+cc_library(
     name = "range",
     hdrs = ["range.h"],
 )
@@ -66,7 +71,10 @@ cc_library(
 cc_library(
     name = "interval",
     hdrs = ["interval.h"],
-    deps = ["@com_google_absl//absl/strings"],
+    deps = [
+        ":forward",
+        "@com_google_absl//absl/strings",
+    ],
 )
 
 cc_library(
@@ -175,6 +183,7 @@ cc_library(
 cc_library(
     name = "bijective_map",
     hdrs = ["bijective_map.h"],
+    deps = [":forward"],
 )
 
 cc_library(
@@ -250,6 +259,16 @@ cc_test(
     srcs = ["interval_set_test.cc"],
     deps = [
         ":interval_set",
+        "@com_google_googletest//:gtest_main",
+    ],
+)
+
+cc_test(
+    name = "forward_test",
+    srcs = ["forward_test.cc"],
+    deps = [
+        ":forward",
+        "@com_google_absl//absl/strings",
         "@com_google_googletest//:gtest_main",
     ],
 )

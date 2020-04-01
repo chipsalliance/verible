@@ -14,7 +14,9 @@
 
 #include "common/strings/obfuscator.h"
 
+#include <sstream>
 #include <string>
+#include <vector>
 
 #include "absl/status/status.h"
 #include "absl/strings/str_cat.h"
@@ -30,8 +32,7 @@ bool Obfuscator::encode(absl::string_view key, absl::string_view value) {
 
 absl::string_view Obfuscator::operator()(absl::string_view input) {
   if (decode_mode) {
-    // TODO(b/152331548): make hetergeneous lookup work on C++11
-    const auto p = translator_.find_reverse(std::string(input));
+    const auto* p = translator_.find_reverse(input);
     return (p != nullptr) ? *p : input;
   } else {
     const std::string* str = translator_.insert_using_value_generator(

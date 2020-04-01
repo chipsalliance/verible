@@ -20,6 +20,7 @@
 
 #include "absl/strings/numbers.h"
 #include "absl/strings/string_view.h"
+#include "common/util/forward.h"
 
 namespace verible {
 
@@ -28,6 +29,7 @@ namespace verible {
 template <typename T>
 struct Interval {
   typedef T value_type;
+  typedef ForwardReferenceElseConstruct<Interval<T>> forwarder;
 
   // Allow direct access.  Use responsibly.  Check valid()-ity.
   T min = {};
@@ -72,7 +74,7 @@ struct Interval {
 // Forwarding function that avoids constructing a temporary Interval.
 template <typename T>
 const Interval<T>& AsInterval(const Interval<T>& i) {
-  return i;
+  return typename Interval<T>::forwarder()(i);
 }
 
 // Overloads for std::pair<> that returns a temporary Interval.
@@ -80,11 +82,11 @@ const Interval<T>& AsInterval(const Interval<T>& i) {
 // Relies on compiler optimization to elide temporary construction.
 template <typename T>
 Interval<T> AsInterval(const std::pair<const T, T>& p) {
-  return Interval<T>(p);
+  return typename Interval<T>::forwarder()(p);
 }
 template <typename T>
 Interval<T> AsInterval(const std::pair<T, T>& p) {
-  return Interval<T>(p);
+  return typename Interval<T>::forwarder()(p);
 }
 
 // Default formatting of Interval<>.
