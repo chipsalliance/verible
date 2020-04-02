@@ -42,8 +42,12 @@ To pipe from stdin, use '-' as <file>.
 
 
   Flags from verilog/tools/formatter/verilog_format.cc:
+    --format_module_instantiations (If true, format module instantiations (data
+      declarations), else leave them unformatted. This is a short-term
+      workaround.); default: false;
     --format_module_port_declarations (If true, format module declarations' list
-      of port declarations, else leave them unformatted.); default: false;
+      of port declarations, else leave them unformatted. This is a short-term
+      workaround.); default: false;
     --inplace (If true, overwrite the input file on successful conditions.);
       default: false;
     --lines (Specific lines to format, 1-based, comma-separated, inclusive N-M
@@ -68,4 +72,4 @@ To pipe from stdin, use '-' as <file>.
 
 ## Version
 
-Generated on 2020-03-30 14:19:22 -0700 from [v0.0-320-g2cad9a0](https://github.com/google/verible/commit/2cad9a0f22c3203f1d1dd9d35613558bf443f4a4)
+Generated on 2020-04-01 17:52:13 -0700 from [v0.0-331-g5d7fe52](https://github.com/google/verible/commit/5d7fe52a200b8549b4a2d6ee88902a09b1bbae4c)
