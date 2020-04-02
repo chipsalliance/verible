@@ -382,6 +382,37 @@ static verible::Interval<int> ByteOffsetRange(absl::string_view substring,
   return {disable_begin + 1, disable_end};
 }
 
+// Given control flags and syntax tree, selectively disable some ranges
+// of text from formatting.
+static void DisableSyntaxBasedRanges(ByteOffsetSet* disabled_ranges,
+                                     const verible::Symbol& root,
+                                     const FormatStyle& style,
+                                     absl::string_view full_text) {
+  // Module-related sections:
+  for (const auto& match : FindAllModuleDeclarations(root)) {
+    if (!style.format_module_port_declarations) {
+      const auto* ports = GetModulePortDeclarationList(*match.match);
+      if (ports != nullptr) {
+        const auto ports_text = verible::StringSpanOfSymbol(*ports);
+        VLOG(4) << "disabled: " << ports_text;
+        disabled_ranges->Add(ByteOffsetRange(ports_text, full_text));
+      }
+    }
+    if (!style.format_module_instantiations) {
+      const auto& instantiations = FindAllDataDeclarations(*match.match);
+      for (const auto& inst : instantiations) {
+        const auto& module_instances = FindAllGateInstances(*inst.match);
+        // Only suppress formatting if instances contains a module or
+        // gate-like instance with ports in parentheses.
+        if (module_instances.empty()) continue;
+        const auto inst_text = verible::StringSpanOfSymbol(*inst.match);
+        VLOG(4) << "disabled: " << inst_text;
+        disabled_ranges->Add(ByteOffsetRange(inst_text, full_text));
+      }
+    }
+  }
+}
+
 Status Formatter::Format(const ExecutionControl& control) {
   const absl::string_view full_text(text_structure_.Contents());
   const auto& token_stream(text_structure_.TokenStream());
@@ -404,36 +435,14 @@ Status Formatter::Format(const ExecutionControl& control) {
                                   unwrapper_data.preformatted_tokens.begin(),
                                   unwrapper_data.preformatted_tokens.end());
 
-    // Determine ranges of disabling the formatter.
+    // Determine ranges of disabling the formatter, based on comment controls.
     disabled_ranges_.Union(DisableFormattingRanges(full_text, token_stream));
 
     // Find disabled formatting ranges for specific syntax tree node types.
     // These are typically temporary workarounds for sections that users
     // habitually prefer to format themselves.
     if (const auto& root = text_structure_.SyntaxTree()) {
-      // Module-related sections:
-      for (const auto& match : FindAllModuleDeclarations(*root)) {
-        if (!style_.format_module_port_declarations) {
-          const auto* ports = GetModulePortDeclarationList(*match.match);
-          if (ports != nullptr) {
-            const auto ports_text = verible::StringSpanOfSymbol(*ports);
-            VLOG(4) << "disabled: " << ports_text;
-            disabled_ranges_.Add(ByteOffsetRange(ports_text, full_text));
-          }
-        }
-        if (!style_.format_module_instantiations) {
-          const auto& instantiations = FindAllDataDeclarations(*match.match);
-          for (const auto& inst : instantiations) {
-            const auto& module_instances = FindAllGateInstances(*inst.match);
-            // Only suppress formatting if instances contains a module or
-            // gate-like instance with ports in parentheses.
-            if (module_instances.empty()) continue;
-            const auto inst_text = verible::StringSpanOfSymbol(*inst.match);
-            VLOG(4) << "disabled: " << inst_text;
-            disabled_ranges_.Add(ByteOffsetRange(inst_text, full_text));
-          }
-        }
-      }
+      DisableSyntaxBasedRanges(&disabled_ranges_, *root, style_, full_text);
     }
 
     // Disable formatting ranges.
