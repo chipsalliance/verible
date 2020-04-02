@@ -230,4 +230,4 @@ Enabled by default: true
 
 ## Version
 
-Generated on 2020-04-01 17:52:13 -0700 from [v0.0-331-g5d7fe52](https://github.com/google/verible/commit/5d7fe52a200b8549b4a2d6ee88902a09b1bbae4c)
+Generated on 2020-04-02 12:13:17 -0700 from [v0.0-332-g5e1e006](https://github.com/google/verible/commit/5e1e0061fe43eb117e60594b818606d534ae64a3)
