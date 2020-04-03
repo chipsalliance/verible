@@ -47,10 +47,6 @@ absl::string_view ParameterNameStyleRule::Name() {
   return "parameter-name-style";
 }
 const char ParameterNameStyleRule::kTopic[] = "constants";
-const char ParameterNameStyleRule::kParameterMessage[] =
-    "Non-type parameter names must be styled with UpperCamelCase or ALL_CAPS.";
-const char ParameterNameStyleRule::kLocalParamMessage[] =
-    "Non-type localparam names must be styled with UpperCamelCase.";
 
 std::string ParameterNameStyleRule::GetDescription(
     DescriptionType description_type) {
@@ -70,6 +66,23 @@ std::string ParameterNameStyleRule::GetDescription(
                         " * localparam_style Default: CamelCase\n"
                         " * parameter_style Default: CamelCase|ALL_CAPS\n");
   }
+}
+
+std::string ParameterNameStyleRule::ViolationMsg(absl::string_view symbol_type,
+                                                 uint32_t allowed_bitmap) {
+  // TODO(hzeller): there are multiple places in this file referring to the
+  // same string representations of these options.
+  static constexpr std::pair<uint32, const char*> kBitNames[] = {
+      {kUpperCamelCase, "CamelCase"}, {kAllCaps, "ALL_CAPS"}};
+  std::string bit_list;
+  for (const auto& b : kBitNames) {
+    if (allowed_bitmap & b.first) {
+      if (bit_list.empty()) bit_list.append(" or ");
+      bit_list.append(b.second);
+    }
+  }
+  return absl::StrCat("Non-type ", symbol_type, " names must be styled with ",
+                      bit_list);
 }
 
 void ParameterNameStyleRule::HandleSymbol(const verible::Symbol& symbol,
@@ -92,10 +105,13 @@ void ParameterNameStyleRule::HandleSymbol(const verible::Symbol& symbol,
 
       if (param_decl_token == TK_localparam && localparam_allowed_style_ &&
           (observed_style & localparam_allowed_style_) == 0) {
-        violations_.insert(LintViolation(*id, kLocalParamMessage, context));
+        violations_.insert(LintViolation(
+            *id, ViolationMsg("localparam", localparam_allowed_style_),
+            context));
       } else if (param_decl_token == TK_parameter && parameter_allowed_style_ &&
                  (observed_style & parameter_allowed_style_) == 0) {
-        violations_.insert(LintViolation(*id, kParameterMessage, context));
+        violations_.insert(LintViolation(
+            *id, ViolationMsg("parameter", parameter_allowed_style_), context));
       }
     }
   }

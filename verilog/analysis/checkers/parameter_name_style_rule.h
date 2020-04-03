@@ -55,11 +55,9 @@ class ParameterNameStyleRule : public verible::SyntaxTreeLintRule {
   // Link to style guide rule.
   static const char kTopic[];
 
-  // Diagnostic message for parameter violations.
-  static const char kParameterMessage[];
-
-  // Diagnostic message for localparam violations.
-  static const char kLocalParamMessage[];
+  // Format diagnostic message.
+  std::string ViolationMsg(absl::string_view symbol_type,
+                           uint32_t allowed_bitmap);
 
   enum StyleChoicesBits {
     kUpperCamelCase = (1 << 0),
