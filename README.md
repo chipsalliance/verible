@@ -394,6 +394,10 @@ verilog_format: usage: verilog_format [options] <file>
 To pipe from stdin, use '-' as <file>.
 
   Flags from verilog/tools/formatter/verilog_format.cc:
+    --failsafe_success (If true, always exit with 0 status, even if there were
+      input errors or internal errors. In all error conditions, the original
+      text is always preserved. This is useful in deploying services where
+      fail-safe behaviors should be considered a success.); default: true;
     --inplace (If true, overwrite the input file on successful conditions.);
       default: false;
     --lines (Specific lines to format, 1-based, comma-separated, inclusive N-M

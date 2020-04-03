@@ -81,8 +81,9 @@ find . -type f | \
 while read f
 do
   # Silence all diagnostic messages.  They can be reproduced later.
+  # --nofailsafe_success: We want a nonzero exit status to signal error conditions.
   "$timeout" --signal=ALRM "$timelimit" \
-    "$binary" "$f" > "$f.formatted" 2> "$f.stderr"
+    "$binary" --nofailsafe_success "$f" > "$f.formatted" 2> "$f.stderr"
   status="$?"
   case "$status" in
     124) echo "timedout: $f" ;;  # 124 is SIGALRM

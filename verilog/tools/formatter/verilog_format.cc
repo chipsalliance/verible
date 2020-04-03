@@ -88,6 +88,11 @@ ABSL_FLAG(LineRanges, lines, {},
           "Specific lines to format, 1-based, comma-separated, inclusive N-M "
           "ranges, N is short for N-N.  By default, left unspecified, "
           "all lines are enabled for formatting.  (repeatable, cumulative)");
+ABSL_FLAG(bool, failsafe_success, true,
+          "If true, always exit with 0 status, even if there were input errors "
+          "or internal errors.  In all error conditions, the original text is "
+          "always preserved.  This is useful in deploying services where "
+          "fail-safe behaviors should be considered a success.");
 
 ABSL_FLAG(int, show_largest_token_partitions, 0,
           "If > 0, print token partitioning and then "
@@ -206,6 +211,10 @@ int main(int argc, char** argv) {
       default:
         std::cerr << "[other error status]" << std::endl;
         break;
+    }
+    if (FLAGS_failsafe_success.Get()) {
+      // original text was preserved, and --inplace modification is skipped.
+      return 0;
     }
     return 1;
   }
