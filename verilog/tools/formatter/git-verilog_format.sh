@@ -55,6 +55,11 @@ script options: (options with arguments can be: --flag=VALUE or --flag VALUE)
 EOF
 }
 
+# self-identify message coming from this script
+function msg()  {
+  echo "[$script_name] " "$@"
+}
+
 verbose=0
 dry_run=0
 # 'args' will be forwarded to the formatter as additional tool options
@@ -90,12 +95,12 @@ done
 
 # Check some requirements.
 [[ -x "$formatter" ]] || {
-  echo "*** Unable to find executable 'verilog_format'."
-  echo "Please specify formatter with: --formatter TOOL."
+  msg "*** Unable to find executable 'verilog_format'."
+  msg "  Please specify formatter with: --formatter TOOL."
   exit 1
 }
 [[ -r "$diff_parser" ]] || {
-  echo "*** Required helper script '$diff_parser' is missing."
+  msg "*** Required helper script '$diff_parser' is missing."
   exit 1
 }
 
@@ -105,19 +110,19 @@ args=("${args[@]}" "$@")
 function verbose_command() {
   if [[ "$dry_run" = 1 ]] || [[ "$verbose" = 1 ]]
   then
-    echo "[command]: $@"
+    msg "[command]: $@"
   fi
 
   [[ "$dry_run" = 1 ]] || "$@" || \
-    echo "Note: '$@' failed with status: $?"
+    msg "Note: '$@' failed with status: $?"
 }
 
 # Switch to git root directory, so relative paths will be correct.
 cd "$(git rev-parse --show-toplevel)"
-echo "Working from git root: $PWD"
+msg "Working from git root: $PWD"
 
 tempdir="$(mktemp -d --tmpdir "tmp.$script_name.XXXXXXX")"
-echo "Temporary files in: $tempdir"
+msg "Temporary files in: $tempdir"
 
 # Save current workspace in git index.
 git add -u
@@ -151,13 +156,13 @@ git diff -u --cached | \
 if [[ "$dry_run" = 0 ]]
 then
   cat <<EOF
-Done formatting.  You could run:
+[$script_name] Done formatting.  You could run:
   'git status' to see what files were formatted.
   'git diff' to see detailed formatting changes.
   'git add -u' to accept formatting changes for commit.
   'git diff | git apply --reverse -' to undo formatting changes.
 EOF
 else
-  echo "Stopping before formatting due to --dry-run."
+  msg "Stopping before formatting due to --dry-run."
 fi
 
