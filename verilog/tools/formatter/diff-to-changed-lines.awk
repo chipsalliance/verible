@@ -65,11 +65,20 @@ BEGIN {
   active_range = 0;
 }
 
+# seen in 'git diff'
 # diff before-file after-file
 /^diff/ {
   auto_flush_range();
   expect_filename = 1;
 }
+
+# seen in 'p4 diff'
+# ==== //depot/...#N - /local/path/to/file ====
+/^==== .* ====$/ {
+  auto_flush_range();
+  expect_filename = 1;
+}
+
 
 # + lines are after change only
 /^+/ {
