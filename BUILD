@@ -16,6 +16,7 @@ installer(
     name = "install",
     data = [
         "//verilog/tools/diff:verilog_diff",
+        "//verilog/tools/formatter:git_verilog_format",
         "//verilog/tools/formatter:verilog_format",
         "//verilog/tools/lint:verilog_lint",
         "//verilog/tools/obfuscator:verilog_obfuscate",

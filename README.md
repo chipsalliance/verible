@@ -446,6 +446,49 @@ As a good practice, include a reason why you choose to disable a section.
 
 These directives take precedence over `--lines` specifications.
 
+#### Incremental Formatting
+
+If you wish to format only changed lines (a.k.a. incremental or partial
+formatting), the following tools are provided to assist.
+
+##### Git users
+
+`git-verilog_format.sh` (installed along with `verilog_format`) can be run from
+within any subdirectory of a Git project. It automatically detects new and
+changed lines, and generates the `--lines` flag for each modified file in your
+workspace.
+
+From `--help`:
+
+```
+git-verilog_format.sh:
+Performs incremental file formatting (verilog_format) based on current diffs.
+New files explicitly git-add-ed by the user are wholly formatted.
+
+Actions:
+  1) Runs 'git add -u' to stage currently modified files to the index.
+     To format new files (wholly), 'git add' those before calling this script.
+  2) Runs 'git diff -u --cached' to generate a unified diff.
+  3) Diff is scanned to determine added or modified lines in each file.
+  4) Invokes 'verilog_format --inplace' on all touched or new Verilog files,
+     but does not 'git add' so that the changes may be examined and tested.
+     Formatting can be easily undone with:
+       'git diff | git apply --reverse -'.
+
+usage: git-verilog_format.sh [script options] [-- [verilog_format options]]
+  (no positional arguments)
+  Run from anywhere inside a git project tree.
+
+script options: (options with arguments can be: --flag=VALUE or --flag VALUE)
+  --help | -h : print help and exit
+  --verbose | -v : execute verbosely
+  --dry-run : stop before running formatter, and print formatting commands
+  --formatter TOOL : path to verilog_format binary
+       [using: /usr/local/bin/verilog_format]
+  -- : stops option processing, and forwards remaining args as flags to the
+       underlying --formatter tool.
+```
+
 ### Lexical Diff
 
 `verilog_diff` compares two input files for equivalence, where equivalence is

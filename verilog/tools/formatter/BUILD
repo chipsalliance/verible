@@ -22,6 +22,15 @@ cc_binary(
     ],
 )
 
+filegroup(
+    name = "git_verilog_format",
+    srcs = [
+        "diff-to-changed-lines.awk",
+        "git-verilog_format.sh",
+    ],
+    visibility = ["//:__pkg__"],  # for release
+)
+
 sh_binary(
     name = "diff_formatter",
     srcs = ["diff_formatter.sh"],
