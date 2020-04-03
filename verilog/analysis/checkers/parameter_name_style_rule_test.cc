@@ -28,6 +28,7 @@ namespace analysis {
 namespace {
 
 using verible::LintTestCase;
+using verible::RunConfiguredLintTestCases;
 using verible::RunLintTestCases;
 
 // Tests that ParameterNameStyleRule correctly accepts valid names.
@@ -112,7 +113,107 @@ TEST(ParameterNameStyleRuleTest, RejectTests) {
       {"parameter ", {kToken, "HelloWorld__"}, " = 1;"},
   };
   RunLintTestCases<VerilogAnalyzer, ParameterNameStyleRule>(kTestCases);
-}  // namespace
+}
+
+TEST(ParameterNameStyleRuleTest, ConfigurationStyleParameterAssignment) {
+  constexpr int kToken = SymbolIdentifier;
+
+  // Make sure configuration parameter name matches corresponding style
+
+  {  // parameter:CamelCase, localparam:ALL_CAPS
+    const std::initializer_list<LintTestCase> kTestCases = {
+        {"package a; parameter int FooBar = 1; endpackage"},
+        {"package a; parameter int ", {kToken, "FOO_BAR"}, " = 1; endpackage"},
+        {"module a; localparam int ", {kToken, "FooBar"}, " = 1; endmodule"},
+        {"module a; localparam int FOO_BAR = 1; endmodule"},
+    };
+    RunConfiguredLintTestCases<VerilogAnalyzer, ParameterNameStyleRule>(
+        kTestCases, "parameter_style:CamelCase;localparam_style:ALL_CAPS");
+  }
+  {  // parameter:ALL_CAPS, localparam:CamelCase
+    const std::initializer_list<LintTestCase> kTestCases = {
+        {"package a; parameter int ", {kToken, "FooBar"}, " = 1; endpackage"},
+        {"package a; parameter int FOO_BAR = 1; endpackage"},
+        {"module a; localparam int FooBar = 1; endmodule"},
+        {"module a; localparam int ", {kToken, "FOO_BAR"}, " = 1; endmodule"},
+    };
+    RunConfiguredLintTestCases<VerilogAnalyzer, ParameterNameStyleRule>(
+        kTestCases, "parameter_style:ALL_CAPS;localparam_style:CamelCase");
+  }
+}
+
+TEST(ParameterNameStyleRuleTest, ConfigurationFlavorCombinations) {
+  constexpr int kToken = SymbolIdentifier;
+  {  // CamelCase|ALL_CAPS configured
+    const std::initializer_list<LintTestCase> kTestCases = {
+        // Single-letter uppercase matches both styles:
+        {"package a; parameter int N = 1; endpackage"},
+        // all-lowercase matches none of the styles:
+        {"package a; parameter int ", {kToken, "no_style"}, " = 1; endpackage"},
+        // Various CamelCase and ALL_CAPS styles:
+        {"package a; parameter int Foo = 1; endpackage"},
+        {"package a; parameter int FooBar = 1; endpackage"},
+        {"package a; parameter int FOO_BAR = 1; endpackage"},
+        {"module a; localparam int N = 1; endmodule"},
+        {"module a; localparam int ", {kToken, "no_style"}, " = 1; endmodule"},
+        {"module a; localparam int Foo = 1; endmodule"},
+        {"module a; localparam int FooBar = 1; endmodule"},
+        {"module a; localparam int FOO_BAR = 1; endmodule"},
+    };
+    RunConfiguredLintTestCases<VerilogAnalyzer, ParameterNameStyleRule>(
+        kTestCases,
+        "parameter_style:CamelCase|ALL_CAPS;"
+        "localparam_style:CamelCase|ALL_CAPS");
+  }
+  {  // CamelCase configured
+    const std::initializer_list<LintTestCase> kTestCases = {
+        {"package a; parameter int N = 1; endpackage"},
+        {"package a; parameter int ", {kToken, "no_style"}, " = 1; endpackage"},
+        {"package a; parameter int Foo = 1; endpackage"},
+        {"package a; parameter int FooBar = 1; endpackage"},
+        {"package a; parameter int ", {kToken, "FOO_BAR"}, " = 1; endpackage"},
+        {"module a; localparam int N = 1; endmodule"},
+        {"module a; localparam int ", {kToken, "no_style"}, " = 1; endmodule"},
+        {"module a; localparam int Foo = 1; endmodule"},
+        {"module a; localparam int FooBar = 1; endmodule"},
+        {"module a; localparam int ", {kToken, "FOO_BAR"}, " = 1; endmodule"},
+    };
+    RunConfiguredLintTestCases<VerilogAnalyzer, ParameterNameStyleRule>(
+        kTestCases, "parameter_style:CamelCase;localparam_style:CamelCase");
+  }
+  {  // ALL_CAPS configured
+    const std::initializer_list<LintTestCase> kTestCases = {
+        {"package a; parameter int N = 1; endpackage"},
+        {"package a; parameter int ", {kToken, "no_style"}, " = 1; endpackage"},
+        {"package a; parameter int ", {kToken, "Foo"}, " = 1; endpackage"},
+        {"package a; parameter int ", {kToken, "FooBar"}, " = 1; endpackage"},
+        {"package a; parameter int FOO_BAR = 1; endpackage"},
+        {"module a; localparam int N = 1; endmodule"},
+        {"module a; localparam int ", {kToken, "no_style"}, " = 1; endmodule"},
+        {"module a; localparam int ", {kToken, "Foo"}, " = 1; endmodule"},
+        {"module a; localparam int ", {kToken, "FooBar"}, " = 1; endmodule"},
+        {"module a; localparam int FOO_BAR = 1; endmodule"},
+    };
+    RunConfiguredLintTestCases<VerilogAnalyzer, ParameterNameStyleRule>(
+        kTestCases, "parameter_style:ALL_CAPS;localparam_style:ALL_CAPS");
+  }
+  {  // No styles configured
+    const std::initializer_list<LintTestCase> kTestCases = {
+        {"package a; parameter int N = 1; endpackage"},
+        {"package a; parameter int no_style = 1; endpackage"},
+        {"package a; parameter int Foo = 1; endpackage"},
+        {"package a; parameter int FooBar = 1; endpackage"},
+        {"package a; parameter int FOO_BAR = 1; endpackage"},
+        {"module a; localparam int N = 1; endmodule"},
+        {"module a; localparam int no_style = 1; endmodule"},
+        {"module a; localparam int Foo = 1; endmodule"},
+        {"module a; localparam int FooBar = 1; endmodule"},
+        {"module a; localparam int FOO_BAR = 1; endmodule"},
+    };
+    RunConfiguredLintTestCases<VerilogAnalyzer, ParameterNameStyleRule>(
+        kTestCases, "parameter_style:;localparam_style:");
+  }
+}
 
 }  // namespace
 }  // namespace analysis

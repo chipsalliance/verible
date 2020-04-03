@@ -1336,6 +1336,7 @@ cc_library(
         "//common/analysis/matcher:bound_symbol_manager",
         "//common/analysis/matcher:matcher_builders",
         "//common/strings:naming_utils",
+        "//common/text:config_utils",
         "//common/text:symbol",
         "//common/text:syntax_tree_context",
         "//common/text:token_info",

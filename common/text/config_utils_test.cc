@@ -14,8 +14,15 @@
 
 #include "common/text/config_utils.h"
 
+#include <cstdint>
+#include <initializer_list>
+#include <string>
+#include <vector>
+
 #include "gtest/gtest.h"
+#include "absl/status/status.h"
 #include "absl/strings/match.h"
+#include "absl/strings/string_view.h"
 
 namespace verible {
 namespace config {
@@ -111,6 +118,41 @@ TEST(ConfigUtilsTest, ParseString) {
                       {{"baz", SetStringOneOf(&str, {"hello"})}});
   EXPECT_FALSE(s.ok());
   EXPECT_EQ(s.message(), "baz: Value can only be 'hello'; got 'greetings'");
+}
+
+TEST(ConfigUtilsTest, ParseNamedBitmap) {
+  const std::vector<absl::string_view> kBitNames = {"ZERO", "ONE", "TWO"};
+  const std::pair<absl::string_view, uint32_t> kTestCases[] = {
+      {"baz:ONE", 1 << 1},
+      {"baz:", 0},
+      {"baz:ZERO|TWO", (1 << 0) | (1 << 2)},
+      {"baz:ZERO||TWO", (1 << 0) | (1 << 2)},    // Allowing empty value
+      {"baz:ZERO| |TWO", (1 << 0) | (1 << 2)},   // .. even with space
+      {"baz: ZERO | TWO", (1 << 0) | (1 << 2)},  // Whitespace around ok.
+      {"baz:zErO|TwO", (1 << 0) | (1 << 2)},     // case-insensitive
+      {"baz:TWO|ZERO", (1 << 0) | (1 << 2)},     // Sequence does not matter
+      {"baz:ZERO|ONE|TWO", (1 << 0) | (1 << 1) | (1 << 2)},
+  };
+
+  absl::Status s;
+  for (const auto& testcase : kTestCases) {
+    uint32_t bitmap = 0x12345678;
+    s = ParseNameValues(testcase.first,
+                        {{"baz", SetNamedBits(&bitmap, kBitNames)}});
+    EXPECT_TRUE(s.ok()) << "case: '" << testcase.first << "' ->" << s.message();
+    EXPECT_EQ(bitmap, testcase.second);
+  }
+
+  {
+    uint32_t bitmap = 0x12345678;
+    s = ParseNameValues("baz:ONE|invalid",
+                        {{"baz", SetNamedBits(&bitmap, kBitNames)}});
+    EXPECT_FALSE(s.ok());
+    EXPECT_EQ(s.message(),
+              "baz: 'invalid' is not in the available "
+              "choices {ZERO, ONE, TWO}");
+    EXPECT_EQ(bitmap, 0x12345678);  // on parse failure, variable not modified.
+  }
 }
 
 TEST(ConfigUtilsTest, ParseMultipleParameters) {

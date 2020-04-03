@@ -15,6 +15,7 @@
 #ifndef VERIBLE_VERILOG_ANALYSIS_CHECKERS_PARAMETER_NAME_STYLE_RULE_H_
 #define VERIBLE_VERILOG_ANALYSIS_CHECKERS_PARAMETER_NAME_STYLE_RULE_H_
 
+#include <cstdint>
 #include <set>
 #include <string>
 
@@ -43,6 +44,8 @@ class ParameterNameStyleRule : public verible::SyntaxTreeLintRule {
   // helper flag or markdown depending on the parameter type.
   static std::string GetDescription(DescriptionType);
 
+  absl::Status Configure(absl::string_view configuration) override;
+
   void HandleSymbol(const verible::Symbol& symbol,
                     const verible::SyntaxTreeContext& context) override;
 
@@ -57,6 +60,14 @@ class ParameterNameStyleRule : public verible::SyntaxTreeLintRule {
 
   // Diagnostic message for localparam violations.
   static const char kLocalParamMessage[];
+
+  enum StyleChoicesBits {
+    kUpperCamelCase = (1 << 0),
+    kAllCaps = (1 << 1),
+  };
+
+  uint32_t localparam_allowed_style_ = kUpperCamelCase;
+  uint32_t parameter_allowed_style_ = kUpperCamelCase | kAllCaps;
 
   using Matcher = verible::matcher::Matcher;
 

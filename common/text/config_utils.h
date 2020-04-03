@@ -27,7 +27,7 @@ namespace config {
 using ConfigValueSetter = std::function<absl::Status(absl::string_view)>;
 
 struct NVConfigSpec {
-  const char *name;
+  const char* name;
   ConfigValueSetter set_value;
 };
 }  // namespace config
@@ -64,26 +64,35 @@ struct NVConfigSpec {
 // this function returns with an absl::OkStatus().
 absl::Status ParseNameValues(
     absl::string_view config_string,
-    const std::initializer_list<config::NVConfigSpec> &spec);
+    const std::initializer_list<config::NVConfigSpec>& spec);
 
 namespace config {
 
 // A few utility functions generating setters for ParseNameValues() allowing
 // to parse values directly into variables.
 
-ConfigValueSetter SetInt(int *value);
+ConfigValueSetter SetInt(int* value);
 
 // Set an integer value and validate that it is in [minimum...maximum] range.
-ConfigValueSetter SetInt(int *value, int minimum, int maximum);
-ConfigValueSetter SetBool(bool *value);
-ConfigValueSetter SetString(std::string *value);
+ConfigValueSetter SetInt(int* value, int minimum, int maximum);
+ConfigValueSetter SetBool(bool* value);
+ConfigValueSetter SetString(std::string* value);
 
 // Set a string, but verify that it is only one of a limited set. The
 // set is provided as vector for simplicity and to allow the caller to
 // impose a particular importance order when returning an error.
-ConfigValueSetter SetStringOneOf(std::string *value,
-                                 const std::vector<absl::string_view> &allowed);
+ConfigValueSetter SetStringOneOf(std::string* value,
+                                 const std::vector<absl::string_view>& allowed);
 
+// Set a bitmap from the given values, a '|'-separated list of named bits
+// to be set. The bit-names provided in the configuration-string can come
+// in any order and are not case sensitive.
+//
+// The sequence in the 'choices' array determines the bit to be set. So a bit
+// named in choices[5] modifies (1<<5). Given the uint32 value, this allows
+// up to 32 choices.
+ConfigValueSetter SetNamedBits(uint32_t* value,
+                               const std::vector<absl::string_view>& choices);
 }  // namespace config
 }  // namespace verible
 

@@ -23,6 +23,7 @@
 #include "common/analysis/lint_rule_status.h"
 #include "common/analysis/matcher/bound_symbol_manager.h"
 #include "common/strings/naming_utils.h"
+#include "common/text/config_utils.h"
 #include "common/text/symbol.h"
 #include "common/text/syntax_tree_context.h"
 #include "common/text/token_info.h"
@@ -53,11 +54,22 @@ const char ParameterNameStyleRule::kLocalParamMessage[] =
 
 std::string ParameterNameStyleRule::GetDescription(
     DescriptionType description_type) {
-  return absl::StrCat(
-      "Checks that non-type parameter names follow UpperCamelCase or ALL_CAPS "
-      "naming convention and that localparam names follow UpperCamelCase "
-      "naming convention. See ",
+  static std::string basic_desc = absl::StrCat(
+      "Checks that non-type parameter and localparam names follow at least one "
+      "of the naming conventions from a choice of CamelCase and ALL_CAPS, ORed "
+      "together with the pipe-symbol(|). "
+      "Empty configuration: no style enforcement. See ",
       GetStyleGuideCitation(kTopic), ".");
+  if (description_type == DescriptionType::kHelpRulesFlag) {
+    return absl::StrCat(basic_desc,
+                        "Parameters: localparam_style:CamelCase;"
+                        "parameter_style:CamelCase|ALL_CAPS");
+  } else {
+    return absl::StrCat(basic_desc,
+                        "\n##### Parameters\n"
+                        " * localparam_style Default: CamelCase\n"
+                        " * parameter_style Default: CamelCase|ALL_CAPS\n");
+  }
 }
 
 void ParameterNameStyleRule::HandleSymbol(const verible::Symbol& symbol,
@@ -72,16 +84,33 @@ void ParameterNameStyleRule::HandleSymbol(const verible::Symbol& symbol,
 
     for (auto id : identifiers) {
       const auto param_name = id->text;
-      if (param_decl_token == TK_localparam) {
-        if (!verible::IsUpperCamelCaseWithDigits(param_name))
-          violations_.insert(LintViolation(*id, kLocalParamMessage, context));
-      } else if (param_decl_token == TK_parameter) {
-        if (!verible::IsUpperCamelCaseWithDigits(param_name) &&
-            !verible::IsNameAllCapsUnderscoresDigits(param_name))
-          violations_.insert(LintViolation(*id, kParameterMessage, context));
+      uint32_t observed_style = 0;
+      if (verible::IsUpperCamelCaseWithDigits(param_name))
+        observed_style |= kUpperCamelCase;
+      if (verible::IsNameAllCapsUnderscoresDigits(param_name))
+        observed_style |= kAllCaps;
+
+      if (param_decl_token == TK_localparam && localparam_allowed_style_ &&
+          (observed_style & localparam_allowed_style_) == 0) {
+        violations_.insert(LintViolation(*id, kLocalParamMessage, context));
+      } else if (param_decl_token == TK_parameter && parameter_allowed_style_ &&
+                 (observed_style & parameter_allowed_style_) == 0) {
+        violations_.insert(LintViolation(*id, kParameterMessage, context));
       }
     }
   }
+}
+
+absl::Status ParameterNameStyleRule::Configure(
+    absl::string_view configuration) {
+  // TODO(issue #133) include bitmap choices in generated documentation.
+  static const std::vector<absl::string_view> choices = {
+      "CamelCase", "ALL_CAPS"};  // same sequence as enum StyleChoicesBits
+  using verible::config::SetNamedBits;
+  return verible::ParseNameValues(
+      configuration,
+      {{"localparam_style", SetNamedBits(&localparam_allowed_style_, choices)},
+       {"parameter_style", SetNamedBits(&parameter_allowed_style_, choices)}});
 }
 
 LintRuleStatus ParameterNameStyleRule::Report() const {

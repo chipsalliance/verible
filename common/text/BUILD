@@ -116,6 +116,7 @@ cc_test(
     srcs = ["config_utils_test.cc"],
     deps = [
         ":config_utils",
+        "@com_google_absl//absl/status",
         "@com_google_absl//absl/strings",
         "@com_google_googletest//:gtest_main",
     ],

@@ -14,6 +14,7 @@
 
 #include "common/text/config_utils.h"
 
+#include <cstdint>
 #include <initializer_list>
 #include <limits>
 #include <string>
@@ -24,6 +25,7 @@
 #include "absl/strings/str_join.h"
 #include "absl/strings/str_split.h"
 #include "absl/strings/string_view.h"
+#include "absl/strings/strip.h"
 #include "common/util/logging.h"
 
 namespace verible {
@@ -33,17 +35,15 @@ using config::NVConfigSpec;
 // TODO(hzeller): consider using flex for a more readable tokenization that
 // can also much easier deal with whitespaces, strings etc.
 absl::Status ParseNameValues(string_view config_string,
-                             const std::initializer_list<NVConfigSpec> &spec) {
+                             const std::initializer_list<NVConfigSpec>& spec) {
   if (config_string.empty()) return absl::OkStatus();
 
-  const std::vector<string_view> assignments =
-      absl::StrSplit(config_string, absl::ByAnyChar(";"));
-  for (const string_view single_config : assignments) {
+  for (const string_view single_config : absl::StrSplit(config_string, ';')) {
     const std::pair<string_view, string_view> nv_pair =
-        absl::StrSplit(single_config, absl::ByAnyChar(":"));
+        absl::StrSplit(single_config, ':');
     const auto value_config = std::find_if(
         spec.begin(), spec.end(),
-        [&nv_pair](const NVConfigSpec &s) { return nv_pair.first == s.name; });
+        [&nv_pair](const NVConfigSpec& s) { return nv_pair.first == s.name; });
     if (value_config == spec.end()) {
       std::string available;
       for (auto s : spec) {
@@ -70,7 +70,7 @@ absl::Status ParseNameValues(string_view config_string,
 }
 
 namespace config {
-ConfigValueSetter SetInt(int *value, int minimum, int maximum) {
+ConfigValueSetter SetInt(int* value, int minimum, int maximum) {
   CHECK(value) << "Must provide pointer to integer to store.";
   return [value, minimum, maximum](string_view v) {
     int parsed_value;
@@ -87,12 +87,12 @@ ConfigValueSetter SetInt(int *value, int minimum, int maximum) {
   };
 }
 
-ConfigValueSetter SetInt(int *value) {
+ConfigValueSetter SetInt(int* value) {
   return SetInt(value, std::numeric_limits<int>::min(),
                 std::numeric_limits<int>::max());
 }
 
-ConfigValueSetter SetBool(bool *value) {
+ConfigValueSetter SetBool(bool* value) {
   CHECK(value) << "Must provide pointer to boolean to store.";
   return [value](string_view v) {
     // clang-format off
@@ -121,15 +121,15 @@ ConfigValueSetter SetBool(bool *value) {
 // allow C-Escapes. But that would require that ParseNameValues() can properly
 // deal with whitespace, which it might after converted to flex.
 
-ConfigValueSetter SetString(std::string *value) {
+ConfigValueSetter SetString(std::string* value) {
   return [value](string_view v) {
            value->assign(v.data(), v.length());
            return absl::OkStatus();
          };
 }
 
-ConfigValueSetter SetStringOneOf(std::string *value,
-                                 const std::vector<string_view> &allowed) {
+ConfigValueSetter SetStringOneOf(std::string* value,
+                                 const std::vector<string_view>& allowed) {
   CHECK(value) << "Must provide pointer to string to store.";
   return [value, allowed](string_view v) {
            auto item = find(allowed.begin(), allowed.end(), v);
@@ -148,6 +148,34 @@ ConfigValueSetter SetStringOneOf(std::string *value,
              }
            }
            value->assign(v.data(), v.length());
+           return absl::OkStatus();
+         };
+}
+
+ConfigValueSetter SetNamedBits(
+    uint32_t* value,
+    const std::vector<absl::string_view>& choices) {
+  CHECK(value) << "Must provide pointer to uint32_t to store.";
+  CHECK_LE(choices.size(), 32) << "Too many choices for 32-bit bitmap";
+  return [value, choices](string_view v) {
+           uint32_t result = 0;
+           for (auto bitname : absl::StrSplit(v, '|', absl::SkipWhitespace())) {
+             bitname = absl::StripAsciiWhitespace(bitname);
+             auto item_pos = find_if(
+                 choices.begin(), choices.end(),
+                 [bitname](string_view c) {
+                   return absl::EqualsIgnoreCase(bitname, c);
+                 });
+             if (item_pos == choices.end()) {
+               return absl::InvalidArgumentError(
+                   absl::StrCat("'", bitname,
+                                "' is not in the available choices {",
+                                absl::StrJoin(choices, ", "), "}"));
+             }
+             result |= (1 << (item_pos - choices.begin()));
+           }
+           // Parsed all bits successfully.
+           *value = result;
            return absl::OkStatus();
          };
 }
