@@ -220,20 +220,16 @@ int main(int argc, char** argv) {
   }
 
   // Safe to write out result, having passed above verification.
-  int exit_code = 0;
-  std::ostream* output_stream = &std::cout;
-  std::ofstream inplace_file;
   if (inplace && !is_stdin) {
-    inplace_file.open(std::string(filename));
-    if (inplace_file.good()) {
-      output_stream = &inplace_file;
-    } else {
+    if (!verible::file::SetContents(filename, formatted_output)) {
       std::cerr << "Error writing to file: " << filename << std::endl;
       std::cerr << "Printing to stdout instead." << std::endl;
-      exit_code = 1;
+      std::cout << formatted_output;
+      return 1;
     }
+  } else {
+    std::cout << formatted_output;
   }
-  *output_stream << formatted_output;
 
-  return exit_code;
+  return 0;
 }
