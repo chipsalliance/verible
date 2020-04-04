@@ -2040,6 +2040,64 @@ TEST(TokenAnnotatorTest, AnnotateFormattingWithContextTest) {
           {1, SpacingOptions::MustWrap},
       },
 
+      // macro definitions
+      {
+          DefaultStyle,
+          {verilog_tokentype::PP_Identifier, "FOO"},
+          {verilog_tokentype::PP_define_body, ""}, /* empty */
+          {},                                      // any context
+          {0, SpacingOptions::MustAppend},
+      },
+      {
+          DefaultStyle,
+          {verilog_tokentype::PP_Identifier, "FOO"},
+          {verilog_tokentype::PP_define_body, "bar"},
+          {},  // any context
+          {1, SpacingOptions::MustAppend},
+      },
+      {
+          DefaultStyle,
+          {verilog_tokentype::PP_Identifier, "BAR"},
+          {verilog_tokentype::PP_define_body, "13"},
+          {},  // any context
+          {1, SpacingOptions::MustAppend},
+      },
+      {
+          DefaultStyle,
+          {verilog_tokentype::PP_Identifier, "BAR"},
+          {verilog_tokentype::PP_define_body, "\\\n  bar"},
+          {},  // any context
+          {1, SpacingOptions::MustAppend},
+      },
+      {
+          DefaultStyle,
+          {')', ")"},
+          {verilog_tokentype::PP_define_body, ""}, /* empty */
+          {},                                      // any context
+          {0, SpacingOptions::MustAppend},
+      },
+      {
+          DefaultStyle,
+          {')', ")"},
+          {verilog_tokentype::PP_define_body, "bar"},
+          {},  // any context
+          {1, SpacingOptions::MustAppend},
+      },
+      {
+          DefaultStyle,
+          {')', ")"},
+          {verilog_tokentype::PP_define_body, "13"},
+          {},  // any context
+          {1, SpacingOptions::MustAppend},
+      },
+      {
+          DefaultStyle,
+          {')', ")"},
+          {verilog_tokentype::PP_define_body, "\\\n  bar"},
+          {},  // any context
+          {1, SpacingOptions::MustAppend},
+      },
+
       // right token = MacroCallId or MacroIdentifier
       {
           DefaultStyle,

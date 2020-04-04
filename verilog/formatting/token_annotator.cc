@@ -825,7 +825,8 @@ void AnnotateFormatToken(const FormatStyle& style,
     const auto breaker = BreakDecisionBetween(style, prev_token, *curr_token,
                                               prev_context, curr_context);
     curr_token->before.break_decision = breaker.value;
-    VLOG(3) << "line break constraint: " << breaker.reason;
+    VLOG(3) << "line break constraint: " << breaker.value << ": "
+            << breaker.reason;
   }
 }
 
