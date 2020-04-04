@@ -77,7 +77,7 @@ std::string ParameterNameStyleRule::ViolationMsg(absl::string_view symbol_type,
   std::string bit_list;
   for (const auto& b : kBitNames) {
     if (allowed_bitmap & b.first) {
-      if (bit_list.empty()) bit_list.append(" or ");
+      if (!bit_list.empty()) bit_list.append(" or ");
       bit_list.append(b.second);
     }
   }
