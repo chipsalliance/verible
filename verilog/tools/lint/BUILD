@@ -40,6 +40,8 @@ _linter_test_configs = [
     ("package-filename", "package_filename_pkg", True),
     ("packed-dimensions-range-ordering", "packed_dimensions", True),
     ("parameter-name-style", "localparam_name_style", True),
+    ("parameter-name-style=localparam_style:ALL_CAPS", "localparam_name_style_all_caps", False),
+    ("parameter-name-style=localparam_style:CamelCase", "localparam_name_style_camel_case", True),
     ("parameter-name-style", "parameter_name_style", True),
     ("parameter-type-name-style", "parameter_type_name_style", False),
     ("parameter-type-name-style", "localparam_type_name_style", False),
@@ -79,12 +81,14 @@ _linter_test_configs = [
             flags = ["--ruleset=none"],
         ),
         # Verifies that rule is available as part of the 'all' set.
+        # This is only relevant for rules that are not testing specific
+        # configurations.
         verilog_style_lint.test(
             name = testfilebase + "-allrules-test",
             srcs = ["testdata/{}.sv".format(testfilebase)],
             flags = ["--ruleset=all"],
             expect_fail = True,
-        ),
+        ) if "=" not in rule else (),  # Only useful when not configured
         # Verifies that the rule is/is not enabled in the 'default' set.
         verilog_style_lint.test(
             name = testfilebase + "-defaultrules-test",
