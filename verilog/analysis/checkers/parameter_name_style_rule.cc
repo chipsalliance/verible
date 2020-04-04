@@ -72,7 +72,7 @@ std::string ParameterNameStyleRule::ViolationMsg(absl::string_view symbol_type,
                                                  uint32_t allowed_bitmap) {
   // TODO(hzeller): there are multiple places in this file referring to the
   // same string representations of these options.
-  static constexpr std::pair<uint32, const char*> kBitNames[] = {
+  static constexpr std::pair<uint32_t, const char*> kBitNames[] = {
       {kUpperCamelCase, "CamelCase"}, {kAllCaps, "ALL_CAPS"}};
   std::string bit_list;
   for (const auto& b : kBitNames) {
