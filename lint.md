@@ -156,7 +156,11 @@ Checks that packed dimension ranges are declare in little-endian (decreasing) or
 Enabled by default: true
 
 ### parameter-name-style
-Checks that non-type parameter names follow UpperCamelCase or ALL_CAPS naming convention and that localparam names follow UpperCamelCase naming convention. See [Style: constants].
+Checks that non-type parameter and localparam names follow at least one of the naming conventions from a choice of CamelCase and ALL_CAPS, ORed together with the pipe-symbol(|). Empty configuration: no style enforcement. See [Style: constants].
+##### Parameters
+ * localparam_style Default: CamelCase
+ * parameter_style Default: CamelCase|ALL_CAPS
+
 
 Enabled by default: true
 
@@ -230,4 +234,4 @@ Enabled by default: true
 
 ## Version
 
-Generated on 2020-04-02 12:13:17 -0700 from [v0.0-332-g5e1e006](https://github.com/google/verible/commit/5e1e0061fe43eb117e60594b818606d534ae64a3)
+Generated on 2020-04-05 14:59:41 -0700 from [v0.0-344-ga4c46f2](https://github.com/google/verible/commit/a4c46f2862319919e2ca3e46f7a168f2a18e99de)

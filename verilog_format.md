@@ -42,6 +42,10 @@ To pipe from stdin, use '-' as <file>.
 
 
   Flags from verilog/tools/formatter/verilog_format.cc:
+    --failsafe_success (If true, always exit with 0 status, even if there were
+      input errors or internal errors. In all error conditions, the original
+      text is always preserved. This is useful in deploying services where
+      fail-safe behaviors should be considered a success.); default: true;
     --format_module_instantiations (If true, format module instantiations (data
       declarations), else leave them unformatted. This is a short-term
       workaround.); default: false;
@@ -72,4 +76,4 @@ To pipe from stdin, use '-' as <file>.
 
 ## Version
 
-Generated on 2020-04-02 12:13:17 -0700 from [v0.0-332-g5e1e006](https://github.com/google/verible/commit/5e1e0061fe43eb117e60594b818606d534ae64a3)
+Generated on 2020-04-05 14:59:41 -0700 from [v0.0-344-ga4c46f2](https://github.com/google/verible/commit/a4c46f2862319919e2ca3e46f7a168f2a18e99de)
