@@ -96,8 +96,8 @@ StateNode::StateNode(const std::shared_ptr<const StateNode>& parent,
   }
 
   // Update column position and add penalty to the cumulative cost.
-  _UpdateColumnPosition();
-  _UpdateCumulativeCost(style);
+  const int column_for_penalty = _UpdateColumnPosition();
+  _UpdateCumulativeCost(style, column_for_penalty);
 
   // Adjusting for open-group is done after updating current column position,
   // and is based on the *previous* open-group token, and the
@@ -120,10 +120,35 @@ const PreFormatToken& StateNode::_GetPreviousToken() const {
   return prev_state->GetCurrentToken();
 }
 
-void StateNode::_UpdateColumnPosition() {
+// Returns the effective column position that should be used for determining
+// penalty for going over the column limit.  This could be different from
+// current_column for multi-line tokens.
+int StateNode::_UpdateColumnPosition() {
   VLOG(4) << __FUNCTION__ << " spacing decision: " << spacing_choice;
   const PreFormatToken& current_format_token(GetCurrentToken());
   const int token_length = current_format_token.Length();
+
+  {
+    // Special handling for multi-line tokens.
+    // Account for the length of text *before* the first newline that might
+    // overflow the previous line (and should be penalized accordingly).
+    const auto text = current_format_token.Text();
+    const auto last_newline_pos = text.find_last_of('\n');
+    if (last_newline_pos != absl::string_view::npos) {
+      // There was a newline, it doesn't matter what the wrapping decision was.
+      // The position is the length of the text after the last newline.
+      current_column = text.length() - last_newline_pos - 1;
+      const auto first_newline_pos = text.find_first_of('\n');
+      if (spacing_choice == SpacingDecision::Wrap) {
+        return current_column;
+      }
+      // Penalize based on the column position that resulted in appending
+      // text up to the first newline.
+      return prev_state->current_column +
+             current_format_token.before.spaces_required + first_newline_pos;
+    }
+  }
+
   switch (spacing_choice) {
     case SpacingDecision::Wrap:
       // If wrapping, new column position is based on the wrap_column_positions
@@ -162,11 +187,16 @@ void StateNode::_UpdateColumnPosition() {
       break;
     }
   }
+  return current_column;
 }
 
-void StateNode::_UpdateCumulativeCost(const BasicFormatStyle& style) {
+void StateNode::_UpdateCumulativeCost(const BasicFormatStyle& style,
+                                      int column_for_penalty) {
   // This must be called after _UpdateColumnPosition() to account for
   // the updated current_column.
+  // column_for_penalty can be different than current_column in the
+  // case of multi-line tokens.
+  // Penalize based on column for penalty.
   if (!IsRootState()) {
     CHECK_EQ(cumulative_cost, prev_state->cumulative_cost);
   }
@@ -177,11 +207,11 @@ void StateNode::_UpdateCumulativeCost(const BasicFormatStyle& style) {
     // penalty if the first token on a line happens to exceed column limit.
     cumulative_cost += current_format_token.before.break_penalty;
   } else if (spacing_choice == SpacingDecision::Append) {
-    // Check for line length violation of current_column, and penalize more
-    // for each column over the limit.
-    if (current_column > style.column_limit) {
-      cumulative_cost +=
-          style.over_column_limit_penalty + current_column - style.column_limit;
+    // Check for line length violation of column_for_penalty, and penalize
+    // more for each column over the limit.
+    if (column_for_penalty > style.column_limit) {
+      cumulative_cost += style.over_column_limit_penalty + column_for_penalty -
+                         style.column_limit;
     }
   }
   // no additional cost if Spacing::Preserve

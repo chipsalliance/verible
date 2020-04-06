@@ -658,6 +658,93 @@ TEST_F(StateNodeTestFixture, ConstructionAppendingPrevStateOverflow) {
   }
 }
 
+// Tests that newly calculated column positions account for multiline tokens.
+TEST_F(StateNodeTestFixture, MultiLineToken) {
+  const int kInitialIndent = 1;
+  const std::vector<TokenInfo> tokens = {{0, "a23456789012345678901"},
+                                         {1, "b2345\nc234567890123"}};
+  Initialize(kInitialIndent, tokens);
+  auto& ftokens = pre_format_tokens_;
+  ftokens[0].before.spaces_required = 1;
+  ftokens[1].before.spaces_required = 1;
+  ftokens[1].before.break_penalty = 8;
+
+  // First token on line:
+  auto parent_state = std::make_shared<StateNode>(*uwline, style);
+  const int initial_column = kInitialIndent * style.indentation_spaces;
+  EXPECT_EQ(ABSL_DIE_IF_NULL(parent_state)->current_column,
+            initial_column + tokens[0].text.length());
+  EXPECT_EQ(parent_state->cumulative_cost, 0);
+
+  {
+    // Second token, also appended to same line as first:
+    auto child_state = std::make_shared<StateNode>(parent_state, style,
+                                                   SpacingDecision::Append);
+    EXPECT_EQ(child_state->next(), parent_state.get());
+    EXPECT_EQ(child_state->current_column,
+              13  // length("c2345...."), no wrapping indentation
+    );
+    // no over-column-limit penalty
+    EXPECT_EQ(child_state->cumulative_cost, 0);
+  }
+  {
+    // Second token, but wrapped onto a new line:
+    auto child_state =
+        std::make_shared<StateNode>(parent_state, style, SpacingDecision::Wrap);
+    EXPECT_EQ(child_state->next(), parent_state.get());
+    EXPECT_EQ(child_state->current_column,
+              13  // length("c2345...."), no wrapping indentation
+    );
+    // no over-column-limit penalty
+    EXPECT_EQ(child_state->cumulative_cost, ftokens[1].before.break_penalty);
+  }
+}
+
+// Tests that multiline tokens are penalized based on overflow before first \n.
+TEST_F(StateNodeTestFixture, MultiLineTokenOverflow) {
+  const int kInitialIndent = 1;
+  const std::vector<TokenInfo> tokens = {{0, "a23456789012345678901"},
+                                         {1, "b234567\nc234567890"}};
+  Initialize(kInitialIndent, tokens);
+  auto& ftokens = pre_format_tokens_;
+  ftokens[0].before.spaces_required = 1;
+  ftokens[1].before.spaces_required = 1;
+  ftokens[1].before.break_penalty = 8;
+
+  // First token on line:
+  auto parent_state = std::make_shared<StateNode>(*uwline, style);
+  const int initial_column = kInitialIndent * style.indentation_spaces;
+  EXPECT_EQ(ABSL_DIE_IF_NULL(parent_state)->current_column,
+            initial_column + tokens[0].text.length());
+  EXPECT_EQ(parent_state->cumulative_cost, 0);
+
+  {
+    // Second token, also appended to same line as first:
+    auto child_state = std::make_shared<StateNode>(parent_state, style,
+                                                   SpacingDecision::Append);
+    EXPECT_EQ(child_state->next(), parent_state.get());
+    EXPECT_EQ(child_state->current_column,
+              10  // length("c2345...."), no wrapping indentation
+    );
+    // only over by 1
+    EXPECT_EQ(child_state->cumulative_cost,
+              style.over_column_limit_penalty + parent_state->current_column +
+                  ftokens[1].before.spaces_required +
+                  7 /* length("b23...7") */ - style.column_limit);
+  }
+  {
+    // Second token, but wrapped onto a new line:
+    auto child_state =
+        std::make_shared<StateNode>(parent_state, style, SpacingDecision::Wrap);
+    EXPECT_EQ(child_state->next(), parent_state.get());
+    EXPECT_EQ(child_state->current_column,
+              10  // length("c2345...."), no wrapping indentation
+    );
+    // no over-column-limit penalty
+    EXPECT_EQ(child_state->cumulative_cost, ftokens[1].before.break_penalty);
+  }
+}
+
 // Tests new state can be built on top of previous state, wrapping token to
 // new line.
 TEST_F(StateNodeTestFixture, ConstructionWrappingLinePrevState) {

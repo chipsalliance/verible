@@ -74,15 +74,13 @@ struct StateNode {
   // for position tracking purposes.
   // If the UnwrappedLine has only one token or is empty, the initial state
   // will be Done().
-  StateNode(const verible::UnwrappedLine& uwline,
-            const verible::BasicFormatStyle& style);
+  StateNode(const UnwrappedLine& uwline, const BasicFormatStyle& style);
 
   // Constructor for nodes that represent new wrap decision trees to explore.
   // 'spacing_choice' reflects the decision being explored, e.g. append, wrap,
   // preserve.
   StateNode(const std::shared_ptr<const StateNode>& parent,
-            const verible::BasicFormatStyle& style,
-            SpacingDecision spacing_choice);
+            const BasicFormatStyle& style, SpacingDecision spacing_choice);
 
   // Returns true when the undecided_path is empty.
   // The search is over when there are no more decisions to explore.
@@ -125,13 +123,13 @@ struct StateNode {
   // column limit, or breaking onto a new line if required.
   static std::shared_ptr<const StateNode> AppendIfItFits(
       const std::shared_ptr<const StateNode>& current_state,
-      const verible::BasicFormatStyle& style);
+      const BasicFormatStyle& style);
 
   // Repeatedly apply AppendIfItFits() until Done() with formatting.
   // TODO(b/134711965): We may want a variant that preserves spaces too.
   static std::shared_ptr<const StateNode> QuickFinish(
       const std::shared_ptr<const StateNode>& current_state,
-      const verible::BasicFormatStyle& style);
+      const BasicFormatStyle& style);
 
   // Comparator provides an ordering of which paths should be explored
   // when maintained in a priority queue.  For Dijsktra-style algorithms,
@@ -157,9 +155,9 @@ struct StateNode {
  private:
   const PreFormatToken& _GetPreviousToken() const;
 
-  void _UpdateColumnPosition();
-  void _UpdateCumulativeCost(const verible::BasicFormatStyle&);
-  void _OpenGroupBalance(const verible::BasicFormatStyle&);
+  int _UpdateColumnPosition();
+  void _UpdateCumulativeCost(const BasicFormatStyle&, int column_for_penalty);
+  void _OpenGroupBalance(const BasicFormatStyle&);
   void _CloseGroupBalance();
 };
 
