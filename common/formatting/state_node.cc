@@ -144,8 +144,12 @@ int StateNode::_UpdateColumnPosition() {
       }
       // Penalize based on the column position that resulted in appending
       // text up to the first newline.
-      return prev_state->current_column +
-             current_format_token.before.spaces_required + first_newline_pos;
+      if (IsRootState()) {
+        return first_newline_pos;
+      } else {
+        return prev_state->current_column +
+               current_format_token.before.spaces_required + first_newline_pos;
+      }
     }
   }
 

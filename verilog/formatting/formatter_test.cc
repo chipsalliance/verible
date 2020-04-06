@@ -136,6 +136,9 @@ static const std::initializer_list<FormatterTestCase> kFormatterTestCases = {
     {"", ""},
     {"\n", "\n"},
     {"\n\n", "\n\n"},
+    {"\t//comment\n", "//comment\n"},
+    {"\t/*comment*/\n", "/*comment*/\n"},
+    {"\t/*multi-line\ncomment*/\n", "/*multi-line\ncomment*/\n"},
     // preprocessor test cases
     {"`include    \"path/to/file.vh\"\n", "`include \"path/to/file.vh\"\n"},
     {"`include    `\"path/to/file.vh`\"\n", "`include `\"path/to/file.vh`\"\n"},

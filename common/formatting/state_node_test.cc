@@ -658,6 +658,21 @@ TEST_F(StateNodeTestFixture, ConstructionAppendingPrevStateOverflow) {
   }
 }
 
+// Tests that column positions account for multiline tokens.
+TEST_F(StateNodeTestFixture, MultiLineTokenFront) {
+  const int kInitialIndent = 1;
+  const std::vector<TokenInfo> tokens = {{0, "a23456789\nb234"}};
+  Initialize(kInitialIndent, tokens);
+  auto& ftokens = pre_format_tokens_;
+  ftokens[0].before.spaces_required = 1;
+
+  // First token on line:
+  auto parent_state = std::make_shared<StateNode>(*uwline, style);
+  EXPECT_EQ(ABSL_DIE_IF_NULL(parent_state)->current_column,
+            4 /* length("b234") */);
+  EXPECT_EQ(parent_state->cumulative_cost, 0);
+}
+
 // Tests that newly calculated column positions account for multiline tokens.
 TEST_F(StateNodeTestFixture, MultiLineToken) {
   const int kInitialIndent = 1;
