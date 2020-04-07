@@ -76,4 +76,4 @@ To pipe from stdin, use '-' as <file>.
 
 ## Version
 
-Generated on 2020-04-05 14:59:41 -0700 from [v0.0-344-ga4c46f2](https://github.com/google/verible/commit/a4c46f2862319919e2ca3e46f7a168f2a18e99de)
+Generated on 2020-04-06 17:20:27 -0700 from [v0.0-346-g22f6630](https://github.com/google/verible/commit/22f66303f5dc2dca50595a065d25b9d18ac45cfd)
