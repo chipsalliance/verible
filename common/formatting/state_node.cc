@@ -140,6 +140,10 @@ int StateNode::_UpdateColumnPosition() {
       current_column = text.length() - last_newline_pos - 1;
       const auto first_newline_pos = text.find_first_of('\n');
       if (spacing_choice == SpacingDecision::Wrap) {
+        // Record the number of spaces preceding this format token because
+        // it cannot be simply inferred based on current column and
+        // raw text length.
+        wrap_multiline_token_spaces_before = wrap_column_positions.top();
         return current_column;
       }
       // Penalize based on the column position that resulted in appending
@@ -340,15 +344,25 @@ void StateNode::ReconstructFormatDecisions(FormattedExcerpt* result) const {
   const auto format_tokens_slice =
       make_range(format_tokens.begin(), format_tokens.begin() + depth);
   for (auto& format_token : reversed_view(format_tokens_slice)) {
-    VLOG(3) << "reconstructing: " << format_token.token->text;
+    const auto text = format_token.token->text;
+    VLOG(3) << "reconstructing: " << text;
     // Apply decision at reverse_iter to (formatted) FormatToken.
     format_token.before.action = ABSL_DIE_IF_NULL(reverse_iter)->spacing_choice;
-    if (reverse_iter->spacing_choice == SpacingDecision::Wrap) {
+    if (reverse_iter->wrap_multiline_token_spaces_before >= 0) {
+      VLOG(3) << "  wrapped a multi-line token, leading spaces was: "
+              << reverse_iter->wrap_multiline_token_spaces_before;
+      // This is a special case where a multi-line token was wrapped.
+      // This number of spaces can only be inferred if the token that was
+      // wrapped did not contain multi-line text.
+      // In this case that spacing is not deducible, and had to be recorded.
+      CHECK_EQ(reverse_iter->spacing_choice, SpacingDecision::Wrap);
+      format_token.before.spaces =
+          reverse_iter->wrap_multiline_token_spaces_before;
+    } else if (reverse_iter->spacing_choice == SpacingDecision::Wrap) {
       // Mark as inserting a line break.
       // Immediately after a line break, print out the amount of spaces
       // required to honor the indentation and wrapping.
-      format_token.before.spaces =
-          reverse_iter->current_column - format_token.token->text.length();
+      format_token.before.spaces = reverse_iter->current_column - text.length();
       VLOG(3) << "  wrapped, with " << format_token.before.spaces
               << " leading spaces.";
       CHECK_GE(format_token.before.spaces, 0);

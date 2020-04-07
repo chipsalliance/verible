@@ -60,6 +60,15 @@ struct StateNode {
   // with each decision explored.
   int cumulative_cost = 0;
 
+  // Kludge: in the event of a wrapped multi-line token, the current_column
+  // position and the raw token text length are insufficient to infer what
+  // the spaces before the format token are because current_column is only
+  // based on the substring of text after the last newline.  To be able to
+  // reconstruct the pre-format-token spacing, we must record it.
+  // This is initialized with a sentinel value of -1 as a safety precaution
+  // to guard against accidental use.
+  int wrap_multiline_token_spaces_before = -1;
+
   // Keeps track of column positions of every level of wrapping, as determined
   // by balanced group delimiters such as braces, brackets, parentheses.
   // These column positions correspond to either the current indentation level

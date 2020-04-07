@@ -3627,6 +3627,21 @@ static const std::initializer_list<FormatterTestCase> kFormatterTestCases = {
         "  endtable\n"
         "endprimitive\n",
     },
+    // un-lexed multiline macro arg token
+    {
+        " task  S ; "
+        "`ppgJH3JoxhwyTmZ2dgPiuMQzpRAWiSs("
+        "{xYtxuh6.FIMcVPEWfhtoI2FSe, xYtxuh6.ZVL5XASVGLYz32} == "
+        "SqRgavM[15:2];\n"
+        "JgQLBG == 4'h0;, \"foo\" )\n"
+        "endtask\n",
+        "task S;\n"
+        "  `ppgJH3JoxhwyTmZ2dgPiuMQzpRAWiSs(\n"
+        "      {xYtxuh6.FIMcVPEWfhtoI2FSe, xYtxuh6.ZVL5XASVGLYz32} == "
+        "SqRgavM[15:2];\n"
+        "JgQLBG == 4'h0;, \"foo\")\n"
+        "endtask\n",
+    },
 };
 
 // Tests that formatter produces expected results, end-to-end.

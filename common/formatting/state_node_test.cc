@@ -671,6 +671,7 @@ TEST_F(StateNodeTestFixture, MultiLineTokenFront) {
   EXPECT_EQ(ABSL_DIE_IF_NULL(parent_state)->current_column,
             4 /* length("b234") */);
   EXPECT_EQ(parent_state->cumulative_cost, 0);
+  EXPECT_EQ(RenderFormattedText(*parent_state, *uwline), "  a23456789\nb234");
 }
 
 // Tests that newly calculated column positions account for multiline tokens.
@@ -701,6 +702,8 @@ TEST_F(StateNodeTestFixture, MultiLineToken) {
     );
     // no over-column-limit penalty
     EXPECT_EQ(child_state->cumulative_cost, 0);
+    EXPECT_EQ(RenderFormattedText(*child_state, *uwline),
+              "  a23456789012345678901 b2345\nc234567890123");
   }
   {
     // Second token, but wrapped onto a new line:
@@ -712,6 +715,9 @@ TEST_F(StateNodeTestFixture, MultiLineToken) {
     );
     // no over-column-limit penalty
     EXPECT_EQ(child_state->cumulative_cost, ftokens[1].before.break_penalty);
+    EXPECT_EQ(RenderFormattedText(*child_state, *uwline),
+              // indent level 1 + wrapping indentation
+              "  a23456789012345678901\n      b2345\nc234567890123");
   }
 }
 
@@ -746,6 +752,8 @@ TEST_F(StateNodeTestFixture, MultiLineTokenOverflow) {
               style.over_column_limit_penalty + parent_state->current_column +
                   ftokens[1].before.spaces_required +
                   7 /* length("b23...7") */ - style.column_limit);
+    EXPECT_EQ(RenderFormattedText(*child_state, *uwline),
+              "  a23456789012345678901 b234567\nc234567890");
   }
   {
     // Second token, but wrapped onto a new line:
@@ -757,6 +765,9 @@ TEST_F(StateNodeTestFixture, MultiLineTokenOverflow) {
     );
     // no over-column-limit penalty
     EXPECT_EQ(child_state->cumulative_cost, ftokens[1].before.break_penalty);
+    EXPECT_EQ(RenderFormattedText(*child_state, *uwline),
+              // indent level 1 + wrapping indentation
+              "  a23456789012345678901\n      b234567\nc234567890");
   }
 }
 
