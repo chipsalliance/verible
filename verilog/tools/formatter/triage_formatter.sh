@@ -96,7 +96,7 @@ do
         fi
         if grep -q "syntax error" "$f.stderr"
         then
-          echo "syntax error: $f"
+          echo "rejected input syntax: $f"
           continue
         fi
         if grep -q "Error lex/parsing-ing formatted output" "$f.stderr"
@@ -104,8 +104,13 @@ do
           echo "corrupted output [syntax error]: $f"
           continue
         fi
+        if grep -q "Formatted output is lexically different" "$f.stderr"
+        then
+          echo "corrupted output [lex diff]: $f"
+          continue
+        fi
         # When you see this, add more case handling here.
-        echo "other error: $f"
+        echo "OTHER error: $f"
         ;;
     esac
   done
