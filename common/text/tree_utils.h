@@ -113,7 +113,7 @@ const SyntaxTreeNode* CheckOptionalSymbolAsNode(const SPtr& symbol,
 
 // Specialization for nullptr_t.
 template <typename E>
-const SyntaxTreeNode* CheckOptionalSymbolAsNode(const nullptr_t& symbol, E) {
+const SyntaxTreeNode* CheckOptionalSymbolAsNode(const std::nullptr_t& symbol, E) {
   return nullptr;
 }
 
@@ -128,7 +128,7 @@ const SyntaxTreeLeaf* CheckOptionalSymbolAsLeaf(const SPtr& symbol,
 
 // Specialization for nullptr_t.
 template <typename E>
-const SyntaxTreeLeaf* CheckOptionalSymbolAsLeaf(const nullptr_t& symbol, E) {
+const SyntaxTreeLeaf* CheckOptionalSymbolAsLeaf(const std::nullptr_t& symbol, E) {
   return nullptr;
 }
 
