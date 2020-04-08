@@ -19,6 +19,7 @@
 
 #include <functional>
 #include <iosfwd>
+#include <cstddef>
 
 #include "absl/strings/string_view.h"
 #include "common/text/concrete_syntax_leaf.h"
