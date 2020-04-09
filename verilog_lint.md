@@ -118,7 +118,7 @@ Enabled by default: true
 ### explicit-parameter-storage-type
 Checks that every `parameter` and `localparam` is declared with an explicit storage type. See [Style: constants].
 ##### Parameters
-  * exempt_type (optional 'string'. Default: empty)
+  * `exempt_type` (optional `string`. Default: empty)
 
 Enabled by default: true
 
@@ -160,7 +160,7 @@ Enabled by default: true
 ### line-length
 Checks that all lines do not exceed the maximum allowed length. See [Style: line-length].
 ##### Parameters
-  * length Default: 100
+  * `length` Default: `100`
 
 Enabled by default: true
 
@@ -222,8 +222,8 @@ Enabled by default: true
 ### parameter-name-style
 Checks that non-type parameter and localparam names follow at least one of the naming conventions from a choice of CamelCase and ALL_CAPS, ORed together with the pipe-symbol(|). Empty configuration: no style enforcement. See [Style: constants].
 ##### Parameters
- * localparam_style Default: CamelCase
- * parameter_style Default: CamelCase|ALL_CAPS
+ * `localparam_style` Default: `CamelCase`
+ * `parameter_style` Default: `CamelCase|ALL_CAPS`
 
 
 Enabled by default: true
@@ -271,7 +271,7 @@ Enabled by default: true
 ### typedef-structs-unions
 Checks that a Verilog `struct` or `union` declaration is named using `typedef`. See [Style: typedef-structs-unions].
 ##### Parameters
-  * allow_anonymous_nested Default: false
+  * `allow_anonymous_nested` Default: `false`
 
 Enabled by default: true
 
@@ -298,4 +298,4 @@ Enabled by default: true
 
 ## Version
 
-Generated on 2020-04-06 17:20:27 -0700 from [v0.0-346-g22f6630](https://github.com/google/verible/commit/22f66303f5dc2dca50595a065d25b9d18ac45cfd)
+Generated on 2020-04-08 18:37:13 -0700 from [v0.0-350-g241da92](https://github.com/google/verible/commit/241da929600ea0e458580df6f8bfe95b288cff08)
