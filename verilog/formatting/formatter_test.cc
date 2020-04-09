@@ -2847,6 +2847,15 @@ static const std::initializer_list<FormatterTestCase> kFormatterTestCases = {
      "      .dd(dd)  //\n"  // forced to expand by //
      "  );\n"
      "endmodule\n"},
+    {// gate instantiation test
+     "module m;"
+     "and\tx0(a, \t\tb,c);"
+     "or\nx1(a,  \n b,    d);"
+     "endmodule\n",
+     "module m;\n"
+     "  and x0(a, b, c);\n"
+     "  or x1(a, b, d);\n"
+     "endmodule\n"},
     {// ifdef inside port actuals
      "module m;  foo bar   (\n"
      "`ifdef   BAZ\n"

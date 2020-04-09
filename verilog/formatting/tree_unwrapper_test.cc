@@ -6186,6 +6186,47 @@ const TreeUnwrapperTestData kUnwrapPrimitivesTestCases[] = {
                     L(1, {"endtable"})),
             L(0, {"endprimitive"})),
     },
+
+    // primitive gate instantiation tests
+    {
+        "single primitive gate instantiation",
+        "module m;\n"
+        "xor x0(a, b, c);\n"
+        "endmodule\n",
+        ModuleDeclaration(0, L(0, {"module", "m", ";"}),
+                          N(1,                         //
+                            L(1, {"xor", "x0", "("}),  //
+                            N(3,                       //
+                              L(3, {"a", ","}),        //
+                              L(3, {"b", ","}),        //
+                              L(3, {"c"})),            //
+                            L(1, {")", ";"})),
+                          L(0, {"endmodule"})),
+    },
+    {
+        "two primitive gate instantiations",
+        "module m;\n"
+        "and x0(a, b, c);\n"
+        "or x1(a, b, d);\n"
+        "endmodule\n",
+        ModuleDeclaration(0, L(0, {"module", "m", ";"}),
+                          ModuleItemList(1,
+                                         N(1,                         //
+                                           L(1, {"and", "x0", "("}),  //
+                                           N(3,                       //
+                                             L(3, {"a", ","}),        //
+                                             L(3, {"b", ","}),        //
+                                             L(3, {"c"})),            //
+                                           L(1, {")", ";"})),
+                                         N(1,                        //
+                                           L(1, {"or", "x1", "("}),  //
+                                           N(3,                      //
+                                             L(3, {"a", ","}),       //
+                                             L(3, {"b", ","}),       //
+                                             L(3, {"d"})),           //
+                                           L(1, {")", ";"}))),
+                          L(0, {"endmodule"})),
+    },
 };
 
 // Test that TreeUnwrapper produces correct UnwrappedLines from primitives

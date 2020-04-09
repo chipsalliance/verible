@@ -681,6 +681,7 @@ void TreeUnwrapper::SetIndentationsAndCreatePartitions(
     case NodeEnum::kModuleHeader:
     case NodeEnum::kBindDirective:
     case NodeEnum::kDataDeclaration:
+    case NodeEnum::kGateInstantiation:
     case NodeEnum::kLoopHeader:
     case NodeEnum::kCovergroupHeader:
     case NodeEnum::kModportDeclaration:
