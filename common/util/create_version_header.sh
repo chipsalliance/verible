@@ -19,6 +19,8 @@ BAZEL_VOLATILE=bazel-out/volatile-status.txt
 (while read NAME VALUE ; do
    case $NAME in
      # Only select the ones we're interested in.
-     GIT_* | BUILD_TIMESTAMP) echo "#define VERIBLE_${NAME} ${VALUE}"
+     GIT_* | BUILD_TIMESTAMP)
+       echo "#define VERIBLE_${NAME} ${VALUE}"
+       ;;
    esac
  done) < "$BAZEL_VOLATILE"
