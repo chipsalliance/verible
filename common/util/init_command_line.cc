@@ -20,6 +20,7 @@
 #include "absl/flags/parse.h"
 #include "absl/flags/usage.h"
 #include "absl/flags/usage_config.h"
+#include "absl/time/time.h"
 #include "common/util/verible_build_version.h"
 
 namespace verible {
@@ -27,14 +28,18 @@ namespace verible {
 static std::string GetBuildVersion() {
   std::string result;
   // Build a version string with as much as possible info.
-#ifdef VERIBLE_GIT_DESC
-  result.append(VERIBLE_GIT_DESC).append("\n");
+#ifdef VERIBLE_GIT_DESCRIBE
+  result.append(VERIBLE_GIT_DESCRIBE).append("\n");
 #endif
 #ifdef VERIBLE_GIT_DATE
   result.append("Commit\t").append(VERIBLE_GIT_DATE).append("\n");
 #endif
 #ifdef VERIBLE_BUILD_TIMESTAMP
-  result.append("Built\t").append(VERIBLE_BUILD_TIMESTAMP).append("\n");
+  result.append("Built\t").append(
+      absl::FormatTime("%Y-%m-%dT%H:%M:%SZ",
+                       absl::FromTimeT(VERIBLE_BUILD_TIMESTAMP),
+                       absl::UTCTimeZone()))
+      .append("\n");
 #endif
   return result;
 }

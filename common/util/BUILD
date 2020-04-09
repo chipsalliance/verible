@@ -64,6 +64,7 @@ cc_library(
         "@com_google_absl//absl/flags:flag",
         "@com_google_absl//absl/flags:parse",
         "@com_google_absl//absl/flags:usage",
+        "@com_google_absl//absl/time:time",
         "@com_google_absl//absl/strings",
     ],
 )
