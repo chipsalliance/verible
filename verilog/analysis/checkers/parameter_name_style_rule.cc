@@ -63,8 +63,8 @@ std::string ParameterNameStyleRule::GetDescription(
   } else {
     return absl::StrCat(basic_desc,
                         "\n##### Parameters\n"
-                        " * localparam_style Default: CamelCase\n"
-                        " * parameter_style Default: CamelCase|ALL_CAPS\n");
+                        " * `localparam_style` Default: `CamelCase`\n"
+                        " * `parameter_style` Default: `CamelCase|ALL_CAPS`\n");
   }
 }
 

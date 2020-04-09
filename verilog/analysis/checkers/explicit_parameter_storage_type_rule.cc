@@ -58,8 +58,9 @@ std::string ExplicitParameterStorageTypeRule::GetDescription(
   if (description_type == DescriptionType::kHelpRulesFlag) {
     return absl::StrCat(basic_desc, "Parameters: exempt_type: (default '')");
   } else {
-    return absl::StrCat(basic_desc, "\n##### Parameters\n",
-                        "  * exempt_type (optional 'string'. Default: empty)");
+    return absl::StrCat(
+        basic_desc, "\n##### Parameters\n",
+        "  * `exempt_type` (optional `string`. Default: empty)");
   }
 }
 

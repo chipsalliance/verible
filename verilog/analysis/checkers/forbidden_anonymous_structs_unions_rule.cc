@@ -59,7 +59,7 @@ std::string ForbiddenAnonymousStructsUnionsRule::GetDescription(
     return absl::StrCat(basic_desc, "Parameters: allow_anonymous_nested:false");
   } else {
     return absl::StrCat(basic_desc, "##### Parameters\n",
-                        "  * allow_anonymous_nested Default: false");
+                        "  * `allow_anonymous_nested` Default: `false`");
   }
 }
 

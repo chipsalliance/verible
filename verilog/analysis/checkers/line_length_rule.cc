@@ -75,7 +75,7 @@ std::string LineLengthRule::GetDescription(DescriptionType description_type) {
     return absl::StrCat(basic_desc, "Parameters: length:", kDefaultLineLength);
   } else {
     return absl::StrCat(basic_desc, "##### Parameters\n",
-                        "  * length Default: ", kDefaultLineLength);
+                        "  * `length` Default: `", kDefaultLineLength, "`");
   }
 }
 
