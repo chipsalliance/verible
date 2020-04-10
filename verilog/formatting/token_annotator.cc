@@ -276,8 +276,9 @@ static WithReason<int> SpacesRequiredBetween(
           right_context.IsInside(NodeEnum::kPort)) {
         return {0, "Named port: no space between ID and '('"};
       }
-      if (right_context.IsInside(NodeEnum::kGateInstance)) {
-        return {1, "Module instance: want space between ID and '('"};
+      if (right_context.IsInside(NodeEnum::kGateInstance) ||
+          right_context.IsInside(NodeEnum::kPrimitiveGateInstance)) {
+        return {1, "Module/primitive instance: want space between ID and '('"};
       }
       if (right_context.IsInside(NodeEnum::kModuleHeader)) {
         return {1,

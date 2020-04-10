@@ -2739,6 +2739,13 @@ TEST(TokenAnnotatorTest, AnnotateFormattingWithContextTest) {
           DefaultStyle,
           {verilog_tokentype::SymbolIdentifier, "foo"},
           {'(', "("},
+          {NodeEnum::kPrimitiveGateInstance},
+          {1, SpacingOptions::Undecided},
+      },
+      {
+          DefaultStyle,
+          {verilog_tokentype::SymbolIdentifier, "foo"},
+          {'(', "("},
           {NodeEnum::kActualNamedPort},
           {0, SpacingOptions::Undecided},
       },

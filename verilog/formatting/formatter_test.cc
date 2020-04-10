@@ -2853,8 +2853,8 @@ static const std::initializer_list<FormatterTestCase> kFormatterTestCases = {
      "or\nx1(a,  \n b,    d);"
      "endmodule\n",
      "module m;\n"
-     "  and x0(a, b, c);\n"
-     "  or x1(a, b, d);\n"
+     "  and x0 (a, b, c);\n"
+     "  or x1 (a, b, d);\n"
      "endmodule\n"},
     {// ifdef inside port actuals
      "module m;  foo bar   (\n"
