@@ -27,21 +27,21 @@
 #include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
 #include "common/analysis/lint_rule_status.h"
-#include "common/lexer/lexer_test_util.h"
+#include "common/text/token_info_test_util.h"
 
 namespace verible {
 
 // LintTestCase is a struct for describing a chunk of text and where
-// a linter should fail on it.  See SynthesizedLexerTestData for original
+// a linter should fail on it.  See TokenInfoTestData for original
 // concept.
-// This has the same limitations as SynthesizedLexerTestData, such as
+// This has the same limitations as TokenInfoTestData, such as
 // the inability to express nested findings, which requires a tree
 // representation of expected data.
 // TODO(fangism): upgrade to nest-able expected findings tree structure.
-struct LintTestCase : public SynthesizedLexerTestData {
+struct LintTestCase : public TokenInfoTestData {
   // Forwarding constructor to base class.
   LintTestCase(std::initializer_list<ExpectedTokenInfo> fragments)
-      : SynthesizedLexerTestData(fragments) {}
+      : TokenInfoTestData(fragments) {}
 
   // Compare the set of expected findings against actual findings.
   // Detailed differences are written to diffstream.

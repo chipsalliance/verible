@@ -85,8 +85,8 @@ cc_library(
     hdrs = ["linter_test_utils.h"],
     deps = [
         ":lint_rule_status",
-        "//common/lexer:lexer_test_util",
         "//common/text:token_info",
+        "//common/text:token_info_test_util",
         "//common/util:algorithm",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/strings",
