@@ -69,6 +69,15 @@ static bool NodeIsBeginEndBlock(const SyntaxTreeNode& node) {
   return node.MatchesTagAnyOf({NodeEnum::kSeqBlock, NodeEnum::kGenerateBlock});
 }
 
+static SyntaxTreeNode& GetBlockEnd(const SyntaxTreeNode& block) {
+  CHECK(NodeIsBeginEndBlock(block));
+  return verible::SymbolCastToNode(*block.children().back());
+}
+
+static const verible::Symbol* GetEndLabel(const SyntaxTreeNode& end_node) {
+  return GetSubtreeAsSymbol(end_node, NodeEnum::kEnd, 1);
+}
+
 static bool NodeIsConditionalConstruct(const SyntaxTreeNode& node) {
   return node.MatchesTagAnyOf({NodeEnum::kConditionalStatement,
                                NodeEnum::kConditionalGenerateConstruct});
@@ -1003,6 +1012,52 @@ static void PushEndIntoElsePartition(TokenPartitionTree* partition_ptr) {
   if (end_parent != nullptr) end_parent->HoistOnlyChild();
 }
 
+static void MergeEndElseWithoutLabel(const SyntaxTreeNode& conditional,
+                                     TokenPartitionTree* partition_ptr) {
+  auto& partition = *partition_ptr;
+  // Handle merging of 'else' partition with (possibly)
+  // a previous 'end' partition.
+  // Do not flatten, so that if- and else- clauses can make formatting
+  // decisions independently from each other.
+  const auto& if_body_subnode =
+      *GetAnyControlStatementBody(*GetAnyConditionalIfClause(conditional));
+  if (!NodeIsBeginEndBlock(if_body_subnode)) {
+    VLOG(4) << "if-body was not begin-end block";
+    return;
+  }
+  VLOG(4) << "if body was a begin-end block";
+  const auto* end_label = GetEndLabel(GetBlockEnd(if_body_subnode));
+  if (end_label != nullptr) {
+    VLOG(4) << "'end' came with label, no merge";
+    return;
+  }
+  VLOG(4) << "No 'end' label, merge 'end' and 'else...' partitions";
+  PushEndIntoElsePartition(&partition);
+}
+
+static void FlattenElseIfElse(const SyntaxTreeNode& else_clause,
+                              TokenPartitionTree* partition_ptr) {
+  // Keep chained else-if-else conditionals in a flat structure.
+  auto& partition = *partition_ptr;
+  const auto& else_body_subnode = *GetAnyControlStatementBody(else_clause);
+  if (NodeIsConditionalConstruct(else_body_subnode) &&
+      GetAnyConditionalElseClause(else_body_subnode) != nullptr) {
+    partition.FlattenOneChild(partition.Children().size() - 1);
+  }
+}
+
+static void ReshapeConditionalConstruct(const SyntaxTreeNode& conditional,
+                                        TokenPartitionTree* partition_ptr) {
+  const auto* else_clause = GetAnyConditionalElseClause(conditional);
+  if (else_clause == nullptr) {
+    VLOG(4) << "there was no else clause";
+    return;
+  }
+  VLOG(4) << "there was an else clause";
+  MergeEndElseWithoutLabel(conditional, partition_ptr);
+  FlattenElseIfElse(*else_clause, partition_ptr);
+}
+
 static void IndentBetweenUVMBeginEndMacros(TokenPartitionTree* partition_ptr,
                                            int indentation_spaces) {
   auto& partition = *partition_ptr;
@@ -1195,81 +1250,14 @@ void TreeUnwrapper::ReshapeTokenPartitions(
       ReshapeElseClause(node, &partition);
       break;
     }
-    case NodeEnum::kConditionalStatement: {
-      // Contains an kIfClause and possibly a kElseClause
-      const auto* else_clause = GetConditionalStatementElseClause(node);
-      if (else_clause == nullptr) {
-        VLOG(4) << "there was no else clause";
+    case NodeEnum::kConditionalStatement:
+      // Contains a kIfClause and possibly a kElseClause
+    case NodeEnum::kConditionalGenerateConstruct:
+      // Contains a kGenerateIfClause and possibly a kGenerateElseClause
+      {
+        ReshapeConditionalConstruct(node, &partition);
         break;
       }
-      VLOG(4) << "there was an else clause";
-      // Handle merging of 'else' partition with (possibly)
-      // a previous 'end' partition.
-      // Do not flatten, so that if- and else- clauses can make formatting
-      // decisions independently from each other.
-      const auto& if_body_subnode =
-          GetIfClauseStatementBody(GetConditionalStatementIfClause(node));
-      if (if_body_subnode.MatchesTag(NodeEnum::kSeqBlock)) {
-        VLOG(4) << "if body was a begin-end block";
-        const auto& seq_block = if_body_subnode;
-        const auto& end_node =
-            GetSubtreeAsNode(seq_block, NodeEnum::kSeqBlock, 2);
-        const auto* end_label = GetSubtreeAsSymbol(end_node, NodeEnum::kEnd, 1);
-        if (end_label == nullptr) {
-          VLOG(4) << "No 'end' label, merge 'end' and 'else...' partitions";
-          PushEndIntoElsePartition(&partition);
-        } else {
-          VLOG(4) << "'end' came with label, no merge";
-        }
-      } else {
-        VLOG(4) << "if-body was not begin-end block";
-      }
-      // Keep chained else-if-else conditionals in a flat structure.
-      const auto& else_body_subnode = GetElseClauseStatementBody(*else_clause);
-      if (else_body_subnode.MatchesTag(NodeEnum::kConditionalStatement) &&
-          GetConditionalStatementElseClause(else_body_subnode) != nullptr) {
-        partition.FlattenOneChild(partition.Children().size() - 1);
-      }
-      break;
-    }
-    case NodeEnum::kConditionalGenerateConstruct: {
-      // Contains an kGenerateIfClause and possibly a kGenerateElseClause
-      const auto* else_clause = GetConditionalGenerateElseClause(node);
-      if (else_clause == nullptr) {
-        VLOG(4) << "there was no else clause";
-        break;
-      }
-      VLOG(4) << "there was an else clause";
-      // Handle merging of 'else' partition with (possibly)
-      // a previous 'end' partition.
-      // Do not flatten, so that if- and else- clauses can make formatting
-      // decisions independently from each other.
-      const auto& if_body_subnode =
-          GetIfClauseGenerateBody(GetConditionalGenerateIfClause(node));
-      if (if_body_subnode.MatchesTag(NodeEnum::kGenerateBlock)) {
-        VLOG(4) << "if body was a begin-end block";
-        const auto& seq_block = if_body_subnode;
-        const auto& end_node =
-            GetSubtreeAsNode(seq_block, NodeEnum::kGenerateBlock, 2);
-        const auto* end_label = GetSubtreeAsSymbol(end_node, NodeEnum::kEnd, 1);
-        if (end_label == nullptr) {
-          VLOG(4) << "No 'end' label, merge 'end' and 'else...' partitions";
-          PushEndIntoElsePartition(&partition);
-        } else {
-          VLOG(4) << "'end' came with label, no merge";
-        }
-      } else {
-        VLOG(4) << "if-body was not begin-end block";
-      }
-      // Keep chained else-if-else conditionals in a flat structure.
-      const auto& else_body_subnode = GetElseClauseGenerateBody(*else_clause);
-      if (else_body_subnode.MatchesTag(
-              NodeEnum::kConditionalGenerateConstruct) &&
-          GetConditionalGenerateElseClause(else_body_subnode) != nullptr) {
-        partition.FlattenOneChild(partition.Children().size() - 1);
-      }
-      break;
-    }
 
     case NodeEnum::kMacroCall: {
       // If there are no call args, join the '(' and ')' together.
