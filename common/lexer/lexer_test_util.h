@@ -15,7 +15,7 @@
 // lexer_test_util.h defines some templates for testing lexers by
 // comparing individual tokens or sequences of tokens.
 // By declaring test data as one of the following structures:
-//   SimpleTestData, GenericTestData, GenericTestDataSequence
+//   SimpleTestData, GenericTestDataSequence, SynthesizedLexerTestData
 // the TestLexer function template will select the appropriate
 // implementation to run the tests (using function overloading).
 
@@ -83,21 +83,6 @@ struct SimpleTestData {
   // Check for a single token, then EOF.
   template <class Lexer>
   void testSingleToken(const int expected_token) const {
-    Lexer lexer(code);
-    const TokenInfo& next_token(lexer.DoNextToken());
-    EXPECT_EQ(expected_token, next_token.token_enum) << ShowCode{code};
-    const TokenInfo& last_token(lexer.DoNextToken());
-    EXPECT_EQ(TK_EOF, last_token.token_enum) << ShowCode{code};
-  }
-};
-
-// GenericTestData is used to verify single tokens, followed by EOF.
-struct GenericTestData {
-  const char* code;
-  const int expected_token;
-
-  template <class Lexer>
-  void test() const {
     Lexer lexer(code);
     const TokenInfo& next_token(lexer.DoNextToken());
     EXPECT_EQ(expected_token, next_token.token_enum) << ShowCode{code};
@@ -219,14 +204,6 @@ void TestLexer(std::initializer_list<SimpleTestData> test_data,
                const int expected_token) {
   for (const auto& test_case : test_data) {
     test_case.testSingleToken<Lexer>(expected_token);
-  }
-}
-
-// Test for various expected tokens.
-template <class Lexer>
-void TestLexer(std::initializer_list<GenericTestData> test_data) {
-  for (const auto& test_case : test_data) {
-    test_case.test<Lexer>();
   }
 }
 

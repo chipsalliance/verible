@@ -41,7 +41,6 @@ class FilteredVerilogLexer : public VerilogLexer {
 };
 
 // Some tests work on filtered tokens, others check unfiltered tokens.
-using verible::GenericTestData;
 // TODO(b/139743437): Upgrade GenericTestDataSequence to LexerTestData.
 using verible::GenericTestDataSequence;
 using verible::SimpleTestData;
