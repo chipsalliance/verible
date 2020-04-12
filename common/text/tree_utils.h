@@ -102,6 +102,13 @@ const SyntaxTreeLeaf& CheckSymbolAsLeaf(const Symbol& symbol, E token_enum) {
   return CheckLeafEnum(SymbolCastToLeaf(symbol), token_enum);
 }
 
+// Succeeds if symbol is a node, or nullptr (returning nullptr).
+template <typename SPtr>
+const SyntaxTreeNode* CheckOptionalSymbolAsNode(const SPtr& symbol) {
+  if (symbol == nullptr) return nullptr;
+  return &SymbolCastToNode(*symbol);
+}
+
 // Succeeds if symbol is nullptr (returning nullptr), or it is a node
 // enumerated 'node_enum' (returns casted non-nullptr).
 template <typename SPtr, typename E>
