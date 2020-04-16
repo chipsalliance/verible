@@ -1290,6 +1290,17 @@ const TreeUnwrapperTestData kUnwrapModuleTestCases[] = {
     },
 
     {
+        "module with conditional generate blocks, null statements",
+        "module conditionals;\n"
+        "if (foo) ;\n"
+        "if (bar) ;\n"
+        "endmodule",
+        ModuleDeclaration(0, L(0, {"module", "conditionals", ";"}),
+                          ModuleItemList(1, L(1, {"if", "(", "foo", ")", ";"}),
+                                         L(1, {"if", "(", "bar", ")", ";"})),
+                          L(0, {"endmodule"})),
+    },
+    {
         "module with conditional generate statement blocks",
         "module conditionals;\n"
         "if (foo) begin\n"
@@ -1485,6 +1496,26 @@ const TreeUnwrapperTestData kUnwrapModuleTestCases[] = {
         "endmodule",
     },
     */
+
+    {
+        "module with single loop generate with null statement body",
+        "module loop_generate;\n"
+        "for (genvar x=1;x<N;++x)\n"
+        "  ;\n"
+        "endmodule",
+        ModuleDeclaration(
+            0, L(0, {"module", "loop_generate", ";"}),
+            FlowControl(
+                1,
+                LoopHeader(1, L(1, {"for", "("}),
+                           ForSpec(3,                                     //
+                                   L(3, {"genvar", "x", "=", "1", ";"}),  //
+                                   L(3, {"x", "<", "N", ";"}),            //
+                                   L(3, {"++", "x"})),
+                           L(1, {")"})),
+                L(2, {";"})),
+            L(0, {"endmodule"})),
+    },
 
     {
         "module with single loop generate statement",
@@ -4466,7 +4497,7 @@ const TreeUnwrapperTestData kUnwrapTaskTestCases[] = {
     },
 
     {
-        "task with assert statements",
+        "task with assert statements, null action",
         "task t; Fire(); assert (x); assert(y); endtask",
         TaskDeclaration(0, L(0, {"task", "t", ";"}),
                         StatementList(1,  //
@@ -4475,15 +4506,235 @@ const TreeUnwrapperTestData kUnwrapTaskTestCases[] = {
                                       L(1, {"assert", "(", "y", ")", ";"})),
                         L(0, {"endtask"})),
     },
+    {
+        "task with assert statements, non-null action",
+        "task t; Fire(); assert (x) g(); assert(y) h(); endtask",
+        TaskDeclaration(0, L(0, {"task", "t", ";"}),
+                        StatementList(1,  //
+                                      L(1, {"Fire", "(", ")", ";"}),
+                                      N(1,                                //
+                                        L(1, {"assert", "(", "x", ")"}),  //
+                                        L(2, {"g", "(", ")", ";"})),
+                                      N(1,                                //
+                                        L(1, {"assert", "(", "y", ")"}),  //
+                                        L(2, {"h", "(", ")", ";"}))),
+                        L(0, {"endtask"})),
+    },
+    {
+        "task with assert-else statements, empty assert body, with else action",
+        "task t; assert (x) else g(); assert(y) else h(); endtask",
+        TaskDeclaration(0, L(0, {"task", "t", ";"}),
+                        StatementList(1,    //
+                                      N(1,  //
+                                        L(1, {"assert", "(", "x", ")"}),
+                                        N(1,               //
+                                          L(1, {"else"}),  //
+                                          L(2, {"g", "(", ")", ";"}))),
+                                      N(1,  //
+                                        L(1, {"assert", "(", "y", ")"}),
+                                        N(1,               //
+                                          L(1, {"else"}),  //
+                                          L(2, {"h", "(", ")", ";"})))),
+                        L(0, {"endtask"})),
+    },
+    {
+        "task with assert-else statements, with body/else action block",
+        "task t; assert (x) else begin g(); end "
+        "assert(y) begin jk(); end else h(); endtask",
+        TaskDeclaration(
+            0, L(0, {"task", "t", ";"}),
+            StatementList(1,    //
+                          N(1,  //
+                            L(1, {"assert", "(", "x", ")"}),
+                            N(1,                           //
+                              L(1, {"else", "begin"}),     //
+                              L(2, {"g", "(", ")", ";"}),  //
+                              L(1, {"end"}))),
+                          N(1,    //
+                            N(1,  //
+                              L(1, {"assert", "(", "y", ")", "begin"}),
+                              L(2, {"jk", "(", ")", ";"})),  //
+                            N(1,                             //
+                              L(1, {"end", "else"}),         //
+                              L(2, {"h", "(", ")", ";"})))),
+            L(0, {"endtask"})),
+    },
+    {
+        "task with assert-else statement, with action blocks in both clauses",
+        "task t; assert(y) begin jk(); end else begin h(); end endtask",
+        TaskDeclaration(0, L(0, {"task", "t", ";"}),
+                        N(1,    //
+                          N(1,  //
+                            L(1, {"assert", "(", "y", ")", "begin"}),
+                            L(2, {"jk", "(", ")", ";"})),    //
+                          N(1,                               //
+                            L(1, {"end", "else", "begin"}),  //
+                            L(2, {"h", "(", ")", ";"}),      //
+                            L(1, {"end"}))),
+                        L(0, {"endtask"})),
+    },
 
     {
-        "task with wait statements",
+        "task with assume statements, null action",
+        "task t; Fire(); assume (x); assume(y); endtask",
+        TaskDeclaration(0, L(0, {"task", "t", ";"}),
+                        StatementList(1,  //
+                                      L(1, {"Fire", "(", ")", ";"}),
+                                      L(1, {"assume", "(", "x", ")", ";"}),
+                                      L(1, {"assume", "(", "y", ")", ";"})),
+                        L(0, {"endtask"})),
+    },
+    {
+        "task with assume statements, non-null action",
+        "task t; Fire(); assume (x) g(); assume(y) h(); endtask",
+        TaskDeclaration(
+            0, L(0, {"task", "t", ";"}),
+            StatementList(
+                1,  //
+                L(1, {"Fire", "(", ")", ";"}),
+                N(1,  //
+                  L(1, {"assume", "(", "x", ")"}), L(2, {"g", "(", ")", ";"})),
+                N(1,  //
+                  L(1, {"assume", "(", "y", ")"}), L(2, {"h", "(", ")", ";"}))),
+            L(0, {"endtask"})),
+    },
+    {
+        "task with assume-else statements, empty assume body, with else action",
+        "task t; assume (x) else g(); assume(y) else h(); endtask",
+        TaskDeclaration(0, L(0, {"task", "t", ";"}),
+                        StatementList(1,    //
+                                      N(1,  //
+                                        L(1, {"assume", "(", "x", ")"}),
+                                        N(1,               //
+                                          L(1, {"else"}),  //
+                                          L(2, {"g", "(", ")", ";"}))),
+                                      N(1,  //
+                                        L(1, {"assume", "(", "y", ")"}),
+                                        N(1,               //
+                                          L(1, {"else"}),  //
+                                          L(2, {"h", "(", ")", ";"})))),
+                        L(0, {"endtask"})),
+    },
+    {
+        "task with assume-else statements, with body/else action block",
+        "task t; assume (x) else begin g(); end "
+        "assume(y) begin jk(); end else h(); endtask",
+        TaskDeclaration(
+            0, L(0, {"task", "t", ";"}),
+            StatementList(1,    //
+                          N(1,  //
+                            L(1, {"assume", "(", "x", ")"}),
+                            N(1,                           //
+                              L(1, {"else", "begin"}),     //
+                              L(2, {"g", "(", ")", ";"}),  //
+                              L(1, {"end"}))),
+                          N(1,    //
+                            N(1,  //
+                              L(1, {"assume", "(", "y", ")", "begin"}),
+                              L(2, {"jk", "(", ")", ";"})),  //
+                            N(1,                             //
+                              L(1, {"end", "else"}),         //
+                              L(2, {"h", "(", ")", ";"})))),
+            L(0, {"endtask"})),
+    },
+    {
+        "task with assume-else statement, with action blocks in both clauses",
+        "task t; assume(y) begin jk(); end else begin h(); end endtask",
+        TaskDeclaration(0, L(0, {"task", "t", ";"}),
+                        N(1,    //
+                          N(1,  //
+                            L(1, {"assume", "(", "y", ")", "begin"}),
+                            L(2, {"jk", "(", ")", ";"})),    //
+                          N(1,                               //
+                            L(1, {"end", "else", "begin"}),  //
+                            L(2, {"h", "(", ")", ";"}),      //
+                            L(1, {"end"}))),
+                        L(0, {"endtask"})),
+    },
+
+    {
+        "task with cover statements, null action",
+        "task t; Fire(); cover (x); cover(y); endtask",
+        TaskDeclaration(0, L(0, {"task", "t", ";"}),
+                        StatementList(1,  //
+                                      L(1, {"Fire", "(", ")", ";"}),
+                                      L(1, {"cover", "(", "x", ")", ";"}),
+                                      L(1, {"cover", "(", "y", ")", ";"})),
+                        L(0, {"endtask"})),
+    },
+    {
+        "task with cover statements, non-null action",
+        "task t; Fire(); cover (x) g(); cover(y) h(); endtask",
+        TaskDeclaration(0, L(0, {"task", "t", ";"}),
+                        StatementList(1,  //
+                                      L(1, {"Fire", "(", ")", ";"}),
+                                      N(1,                               //
+                                        L(1, {"cover", "(", "x", ")"}),  //
+                                        L(2, {"g", "(", ")", ";"})),
+                                      N(1,                               //
+                                        L(1, {"cover", "(", "y", ")"}),  //
+                                        L(2, {"h", "(", ")", ";"}))),
+                        L(0, {"endtask"})),
+    },
+    {
+        "task with cover statements, action block",
+        "task t; Fire(); cover (x) begin g();end "
+        "cover(y) begin h(); end endtask",
+        TaskDeclaration(
+            0, L(0, {"task", "t", ";"}),
+            StatementList(1,  //
+                          L(1, {"Fire", "(", ")", ";"}),
+                          N(1,                                        //
+                            L(1, {"cover", "(", "x", ")", "begin"}),  //
+                            L(2, {"g", "(", ")", ";"}),               //
+                            L(1, {"end"})),
+                          N(1,                                        //
+                            L(1, {"cover", "(", "y", ")", "begin"}),  //
+                            L(2, {"h", "(", ")", ";"}),               //
+                            L(1, {"end"}))),
+            L(0, {"endtask"})),
+    },
+
+    {
+        "task with wait statements, null action",
         "task t; wait (a==b); wait(c<d); endtask",
         TaskDeclaration(
             0, TaskHeader(0, {"task", "t", ";"}),
             StatementList(1,  //
                           L(1, {"wait", "(", "a", "==", "b", ")", ";"}),
                           L(1, {"wait", "(", "c", "<", "d", ")", ";"})),
+            L(0, {"endtask"})),
+    },
+
+    {
+        "task with wait statements, non-null action",
+        "task t; wait (a==b) run(); wait(c<d) walk(); endtask",
+        TaskDeclaration(
+            0, TaskHeader(0, {"task", "t", ";"}),
+            StatementList(1,    //
+                          N(1,  //
+                            L(1, {"wait", "(", "a", "==", "b", ")"}),
+                            L(2, {"run", "(", ")", ";"})),
+                          N(1,  //
+                            L(1, {"wait", "(", "c", "<", "d", ")"}),
+                            L(2, {"walk", "(", ")", ";"}))),
+            L(0, {"endtask"})),
+    },
+    {
+        "task with wait statements, action block",
+        "task t; wait (a==b) begin run(); end "
+        "wait(c<d) begin walk(); end endtask",
+        TaskDeclaration(
+            0, TaskHeader(0, {"task", "t", ";"}),
+            StatementList(1,    //
+                          N(1,  //
+                            L(1, {"wait", "(", "a", "==", "b", ")", "begin"}),
+                            L(2, {"run", "(", ")", ";"}),  //
+                            L(1, {"end"})),
+                          N(1,  //
+                            L(1, {"wait", "(", "c", "<", "d", ")", "begin"}),
+                            L(2, {"walk", "(", ")", ";"}),  //
+                            L(1, {"end"}))),
             L(0, {"endtask"})),
     },
 
@@ -4495,6 +4746,345 @@ const TreeUnwrapperTestData kUnwrapTaskTestCases[] = {
                                       L(1, {"wait", "fork", ";"}),
                                       L(1, {"wait", "fork", ";"})),
                         L(0, {"endtask"})),
+    },
+
+    {
+        "task with assert property statements, null action",
+        "task t; assert property (x); assert property(y); endtask",
+        TaskDeclaration(
+            0, L(0, {"task", "t", ";"}),
+            StatementList(1,  //
+                          L(1, {"assert", "property", "(", "x", ")", ";"}),
+                          L(1, {"assert", "property", "(", "y", ")", ";"})),
+            L(0, {"endtask"})),
+    },
+    {
+        "task with assert property statements, non-null action",
+        "task t; assert property (x) g(); assert property(y) h(); endtask",
+        TaskDeclaration(
+            0, L(0, {"task", "t", ";"}),
+            StatementList(1,                                              //
+                          N(1,                                            //
+                            L(1, {"assert", "property", "(", "x", ")"}),  //
+                            L(2, {"g", "(", ")", ";"})),
+                          N(1,                                            //
+                            L(1, {"assert", "property", "(", "y", ")"}),  //
+                            L(2, {"h", "(", ")", ";"}))),
+            L(0, {"endtask"})),
+    },
+    {
+        "task with assert-else property statements, empty assert body, with "
+        "else action",
+        "task t; assert property (x) else g(); assert property(y) else h(); "
+        "endtask",
+        TaskDeclaration(
+            0, L(0, {"task", "t", ";"}),
+            StatementList(1,    //
+                          N(1,  //
+                            L(1, {"assert", "property", "(", "x", ")"}),
+                            N(1,               //
+                              L(1, {"else"}),  //
+                              L(2, {"g", "(", ")", ";"}))),
+                          N(1,  //
+                            L(1, {"assert", "property", "(", "y", ")"}),
+                            N(1,               //
+                              L(1, {"else"}),  //
+                              L(2, {"h", "(", ")", ";"})))),
+            L(0, {"endtask"})),
+    },
+    {
+        "task with assert-else property statements, with body/else action "
+        "block",
+        "task t; assert property (x) else begin g(); end "
+        "assert property(y) begin jk(); end else h(); endtask",
+        TaskDeclaration(
+            0, L(0, {"task", "t", ";"}),
+            StatementList(
+                1,    //
+                N(1,  //
+                  L(1, {"assert", "property", "(", "x", ")"}),
+                  N(1,                           //
+                    L(1, {"else", "begin"}),     //
+                    L(2, {"g", "(", ")", ";"}),  //
+                    L(1, {"end"}))),
+                N(1,    //
+                  N(1,  //
+                    L(1, {"assert", "property", "(", "y", ")", "begin"}),
+                    L(2, {"jk", "(", ")", ";"})),  //
+                  N(1,                             //
+                    L(1, {"end", "else"}),         //
+                    L(2, {"h", "(", ")", ";"})))),
+            L(0, {"endtask"})),
+    },
+    {
+        "task with assert-else property statement, with action blocks in both "
+        "clauses",
+        "task t; assert property (y) begin jk(); end else begin h(); end "
+        "endtask",
+        TaskDeclaration(
+            0, L(0, {"task", "t", ";"}),
+            N(1,    //
+              N(1,  //
+                L(1, {"assert", "property", "(", "y", ")", "begin"}),
+                L(2, {"jk", "(", ")", ";"})),    //
+              N(1,                               //
+                L(1, {"end", "else", "begin"}),  //
+                L(2, {"h", "(", ")", ";"}),      //
+                L(1, {"end"}))),
+            L(0, {"endtask"})),
+    },
+
+    {
+        "task with assume property statements, null action",
+        "task t; assume property (x); assume property(y); endtask",
+        TaskDeclaration(
+            0, L(0, {"task", "t", ";"}),
+            StatementList(1,  //
+                          L(1, {"assume", "property", "(", "x", ")", ";"}),
+                          L(1, {"assume", "property", "(", "y", ")", ";"})),
+            L(0, {"endtask"})),
+    },
+    {
+        "task with assume property statements, non-null action",
+        "task t; assume property (x) g(); assume property(y) h(); endtask",
+        TaskDeclaration(
+            0, L(0, {"task", "t", ";"}),
+            StatementList(1,                                              //
+                          N(1,                                            //
+                            L(1, {"assume", "property", "(", "x", ")"}),  //
+                            L(2, {"g", "(", ")", ";"})),
+                          N(1,                                            //
+                            L(1, {"assume", "property", "(", "y", ")"}),  //
+                            L(2, {"h", "(", ")", ";"}))),
+            L(0, {"endtask"})),
+    },
+    {
+        "task with assume-else property statements, empty assume body, with "
+        "else action",
+        "task t; assume property (x) else g(); assume property(y) else h(); "
+        "endtask",
+        TaskDeclaration(
+            0, L(0, {"task", "t", ";"}),
+            StatementList(1,    //
+                          N(1,  //
+                            L(1, {"assume", "property", "(", "x", ")"}),
+                            N(1,               //
+                              L(1, {"else"}),  //
+                              L(2, {"g", "(", ")", ";"}))),
+                          N(1,  //
+                            L(1, {"assume", "property", "(", "y", ")"}),
+                            N(1,               //
+                              L(1, {"else"}),  //
+                              L(2, {"h", "(", ")", ";"})))),
+            L(0, {"endtask"})),
+    },
+    {
+        "task with assume-else property statements, with body/else action "
+        "block",
+        "task t; assume property (x) else begin g(); end "
+        "assume property(y) begin jk(); end else h(); endtask",
+        TaskDeclaration(
+            0, L(0, {"task", "t", ";"}),
+            StatementList(
+                1,    //
+                N(1,  //
+                  L(1, {"assume", "property", "(", "x", ")"}),
+                  N(1,                           //
+                    L(1, {"else", "begin"}),     //
+                    L(2, {"g", "(", ")", ";"}),  //
+                    L(1, {"end"}))),
+                N(1,    //
+                  N(1,  //
+                    L(1, {"assume", "property", "(", "y", ")", "begin"}),
+                    L(2, {"jk", "(", ")", ";"})),  //
+                  N(1,                             //
+                    L(1, {"end", "else"}),         //
+                    L(2, {"h", "(", ")", ";"})))),
+            L(0, {"endtask"})),
+    },
+    {
+        "task with assume-else property statement, with action blocks in both "
+        "clauses",
+        "task t; assume property (y) begin jk(); end else begin h(); end "
+        "endtask",
+        TaskDeclaration(
+            0, L(0, {"task", "t", ";"}),
+            N(1,    //
+              N(1,  //
+                L(1, {"assume", "property", "(", "y", ")", "begin"}),
+                L(2, {"jk", "(", ")", ";"})),    //
+              N(1,                               //
+                L(1, {"end", "else", "begin"}),  //
+                L(2, {"h", "(", ")", ";"}),      //
+                L(1, {"end"}))),
+            L(0, {"endtask"})),
+    },
+
+    {
+        "task with expect property statements, null action",
+        "task t; expect (x); expect (y); endtask",
+        TaskDeclaration(0, L(0, {"task", "t", ";"}),
+                        StatementList(1,  //
+                                      L(1, {"expect", "(", "x", ")", ";"}),
+                                      L(1, {"expect", "(", "y", ")", ";"})),
+                        L(0, {"endtask"})),
+    },
+    {
+        "task with expect property statements, non-null action",
+        "task t; expect (x) g(); expect (y) h(); endtask",
+        TaskDeclaration(0, L(0, {"task", "t", ";"}),
+                        StatementList(1,                                  //
+                                      N(1,                                //
+                                        L(1, {"expect", "(", "x", ")"}),  //
+                                        L(2, {"g", "(", ")", ";"})),
+                                      N(1,                                //
+                                        L(1, {"expect", "(", "y", ")"}),  //
+                                        L(2, {"h", "(", ")", ";"}))),
+                        L(0, {"endtask"})),
+    },
+    {
+        "task with expect-else property statements, empty expect body, with "
+        "else action",
+        "task t; expect (x) else g(); expect (y) else h(); "
+        "endtask",
+        TaskDeclaration(0, L(0, {"task", "t", ";"}),
+                        StatementList(1,    //
+                                      N(1,  //
+                                        L(1, {"expect", "(", "x", ")"}),
+                                        N(1,               //
+                                          L(1, {"else"}),  //
+                                          L(2, {"g", "(", ")", ";"}))),
+                                      N(1,  //
+                                        L(1, {"expect", "(", "y", ")"}),
+                                        N(1,               //
+                                          L(1, {"else"}),  //
+                                          L(2, {"h", "(", ")", ";"})))),
+                        L(0, {"endtask"})),
+    },
+    {
+        "task with expect-else property statements, with body/else action "
+        "block",
+        "task t; expect (x) else begin g(); end "
+        "expect (y) begin jk(); end else h(); endtask",
+        TaskDeclaration(
+            0, L(0, {"task", "t", ";"}),
+            StatementList(1,    //
+                          N(1,  //
+                            L(1, {"expect", "(", "x", ")"}),
+                            N(1,                           //
+                              L(1, {"else", "begin"}),     //
+                              L(2, {"g", "(", ")", ";"}),  //
+                              L(1, {"end"}))),
+                          N(1,    //
+                            N(1,  //
+                              L(1, {"expect", "(", "y", ")", "begin"}),
+                              L(2, {"jk", "(", ")", ";"})),  //
+                            N(1,                             //
+                              L(1, {"end", "else"}),         //
+                              L(2, {"h", "(", ")", ";"})))),
+            L(0, {"endtask"})),
+    },
+    {
+        "task with expect-else property statement, with action blocks in both "
+        "clauses",
+        "task t; expect (y) begin jk(); end else begin h(); end "
+        "endtask",
+        TaskDeclaration(0, L(0, {"task", "t", ";"}),
+                        N(1,    //
+                          N(1,  //
+                            L(1, {"expect", "(", "y", ")", "begin"}),
+                            L(2, {"jk", "(", ")", ";"})),    //
+                          N(1,                               //
+                            L(1, {"end", "else", "begin"}),  //
+                            L(2, {"h", "(", ")", ";"}),      //
+                            L(1, {"end"}))),
+                        L(0, {"endtask"})),
+    },
+
+    {
+        "task with cover property statements, null action",
+        "task t; cover property (x); cover property(y); endtask",
+        TaskDeclaration(
+            0, L(0, {"task", "t", ";"}),
+            StatementList(1,  //
+                          L(1, {"cover", "property", "(", "x", ")", ";"}),
+                          L(1, {"cover", "property", "(", "y", ")", ";"})),
+            L(0, {"endtask"})),
+    },
+    {
+        "task with cover property statements, non-null action",
+        "task t; cover property (x) g(); cover property(y) h(); endtask",
+        TaskDeclaration(
+            0, L(0, {"task", "t", ";"}),
+            StatementList(1,                                             //
+                          N(1,                                           //
+                            L(1, {"cover", "property", "(", "x", ")"}),  //
+                            L(2, {"g", "(", ")", ";"})),
+                          N(1,                                           //
+                            L(1, {"cover", "property", "(", "y", ")"}),  //
+                            L(2, {"h", "(", ")", ";"}))),
+            L(0, {"endtask"})),
+    },
+    {
+        "task with cover property statements, with block action "
+        "block",
+        "task t; cover property (x) begin g(); end "
+        "cover property(y) begin jk(); end endtask",
+        TaskDeclaration(
+            0, L(0, {"task", "t", ";"}),
+            StatementList(1,    //
+                          N(1,  //
+                            L(1, {"cover", "property", "(", "x", ")", "begin"}),
+                            L(2, {"g", "(", ")", ";"}),  //
+                            L(1, {"end"})),
+                          N(1,  //
+                            L(1, {"cover", "property", "(", "y", ")", "begin"}),
+                            L(2, {"jk", "(", ")", ";"}),  //
+                            L(1, {"end"}))),              //
+            L(0, {"endtask"})),
+    },
+
+    {
+        "task with cover sequence statements, null action",
+        "task t; cover sequence (x); cover sequence(y); endtask",
+        TaskDeclaration(
+            0, L(0, {"task", "t", ";"}),
+            StatementList(1,  //
+                          L(1, {"cover", "sequence", "(", "x", ")", ";"}),
+                          L(1, {"cover", "sequence", "(", "y", ")", ";"})),
+            L(0, {"endtask"})),
+    },
+    {
+        "task with cover sequence statements, non-null action",
+        "task t; cover sequence (x) g(); cover sequence(y) h(); endtask",
+        TaskDeclaration(
+            0, L(0, {"task", "t", ";"}),
+            StatementList(1,                                             //
+                          N(1,                                           //
+                            L(1, {"cover", "sequence", "(", "x", ")"}),  //
+                            L(2, {"g", "(", ")", ";"})),
+                          N(1,                                           //
+                            L(1, {"cover", "sequence", "(", "y", ")"}),  //
+                            L(2, {"h", "(", ")", ";"}))),
+            L(0, {"endtask"})),
+    },
+    {
+        "task with cover sequence statements, with block action "
+        "block",
+        "task t; cover sequence (x) begin g(); end "
+        "cover sequence(y) begin jk(); end endtask",
+        TaskDeclaration(
+            0, L(0, {"task", "t", ";"}),
+            StatementList(1,    //
+                          N(1,  //
+                            L(1, {"cover", "sequence", "(", "x", ")", "begin"}),
+                            L(2, {"g", "(", ")", ";"}),  //
+                            L(1, {"end"})),
+                          N(1,  //
+                            L(1, {"cover", "sequence", "(", "y", ")", "begin"}),
+                            L(2, {"jk", "(", ")", ";"}),  //
+                            L(1, {"end"}))),              //
+            L(0, {"endtask"})),
     },
 
     // TODO(fangism): test calls to UVM macros
@@ -4777,6 +5367,40 @@ const TreeUnwrapperTestData kUnwrapFunctionTestCases[] = {
     },
 
     {
+        "function with back-to-back if statements, null body",
+        "function foo;"
+        "if (zz);"
+        "if (yy);"
+        "return 1;"
+        "endfunction",
+        FunctionDeclaration(0, FunctionHeader(0, {"function", "foo", ";"}),
+                            StatementList(1, L(1, {"if", "(", "zz", ")", ";"}),
+                                          L(1, {"if", "(", "yy", ")", ";"}),
+                                          L(1, {"return", "1", ";"})),
+                            L(0, {"endfunction"})),
+    },
+
+    {
+        "function with back-to-back if-else statements, null bodies",
+        "function foo;"
+        "if (zz); else ;"  // yes, this is syntactically legal
+        "if (yy); else ;"
+        "return 1;"
+        "endfunction",
+        FunctionDeclaration(
+            0, FunctionHeader(0, {"function", "foo", ";"}),
+            StatementList(1,
+                          FlowControl(1,                                  //
+                                      L(1, {"if", "(", "zz", ")", ";"}),  //
+                                      L(1, {"else", ";"})),
+                          FlowControl(1,                                  //
+                                      L(1, {"if", "(", "yy", ")", ";"}),  //
+                                      L(1, {"else", ";"})),
+                          L(1, {"return", "1", ";"})),
+            L(0, {"endfunction"})),
+    },
+
+    {
         "function with if-else branches in begin/end",
         "function foo;"
         "if (zz) begin "
@@ -5004,6 +5628,176 @@ const TreeUnwrapperTestData kUnwrapFunctionTestCases[] = {
     },
 
     {
+        "function with assertion statements, null-statements",
+        "function foo;"
+        "assert (b); "
+        "assert (c); "
+        "endfunction",
+        FunctionDeclaration(0, FunctionHeader(0, {"function", "foo", ";"}),
+                            N(1,                                      //
+                              L(1, {"assert", "(", "b", ")", ";"}),   //
+                              L(1, {"assert", "(", "c", ")", ";"})),  //
+                            L(0, {"endfunction"})),
+    },
+
+    {
+        "function with deferred assertion statements, null-statements",
+        "function foo;"
+        "assert final(b); "
+        "assert #0(c); "
+        "endfunction",
+        FunctionDeclaration(
+            0, FunctionHeader(0, {"function", "foo", ";"}),
+            N(1,                                                //
+              L(1, {"assert", "final", "(", "b", ")", ";"}),    //
+              L(1, {"assert", "#", "0", "(", "c", ")", ";"})),  //
+            L(0, {"endfunction"})),
+    },
+
+    {
+        "function with assert-else branches in begin/end",
+        "function foo;"
+        "assert (zz) begin "
+        "return 0;"
+        "end else begin "
+        "return 1;"
+        "end "
+        "endfunction",
+        FunctionDeclaration(
+            0, FunctionHeader(0, {"function", "foo", ";"}),
+            FlowControl(1,                                            //
+                        N(1,                                          //
+                          L(1, {"assert", "(", "zz", ")", "begin"}),  //
+                          L(2, {"return", "0", ";"})),                //
+                        N(1,                                          //
+                          L(1, {"end", "else", "begin"}),             //
+                          L(2, {"return", "1", ";"}),                 //
+                          L(1, {"end"}))),
+            L(0, {"endfunction"})),
+    },
+
+    {
+        "function with assert-else branches, null assert-clause-body",
+        "function foo;"
+        "assert (zz) "
+        "else "
+        "foo();"
+        "endfunction",
+        FunctionDeclaration(0, FunctionHeader(0, {"function", "foo", ";"}),
+                            FlowControl(1,  //
+                                        L(1, {"assert", "(", "zz", ")"}),
+                                        N(1,               //
+                                          L(1, {"else"}),  // same level
+                                          L(2, {"foo", "(", ")", ";"}))),
+                            L(0, {"endfunction"})),
+    },
+
+    {
+        "function with assert-else branches, single-statements",
+        "function foo;"
+        "assert (zz) "
+        "return 0;"
+        "else "
+        "return 1;"
+        "endfunction",
+        FunctionDeclaration(
+            0, FunctionHeader(0, {"function", "foo", ";"}),
+            FlowControl(1,                                   //
+                        N(1,                                 //
+                          L(1, {"assert", "(", "zz", ")"}),  // same level
+                          L(2, {"return", "0", ";"})),       //
+                        N(1,                                 //
+                          L(1, {"else"}),                    // same level
+                          L(2, {"return", "1", ";"}))),
+            L(0, {"endfunction"})),
+    },
+
+    {
+        "function with assume statements, null-statements",
+        "function foo;"
+        "assume (b); "
+        "assume (c); "
+        "endfunction",
+        FunctionDeclaration(0, FunctionHeader(0, {"function", "foo", ";"}),
+                            N(1,                                      //
+                              L(1, {"assume", "(", "b", ")", ";"}),   //
+                              L(1, {"assume", "(", "c", ")", ";"})),  //
+                            L(0, {"endfunction"})),
+    },
+
+    {
+        "function with deferred assume statements, null-statements",
+        "function foo;"
+        "assume final(b); "
+        "assume #0(c); "
+        "endfunction",
+        FunctionDeclaration(
+            0, FunctionHeader(0, {"function", "foo", ";"}),
+            N(1,                                                //
+              L(1, {"assume", "final", "(", "b", ")", ";"}),    //
+              L(1, {"assume", "#", "0", "(", "c", ")", ";"})),  //
+            L(0, {"endfunction"})),
+    },
+
+    {
+        "function with assume-else branches in begin/end",
+        "function foo;"
+        "assume (zz) begin "
+        "return 0;"
+        "end else begin "
+        "return 1;"
+        "end "
+        "endfunction",
+        FunctionDeclaration(
+            0, FunctionHeader(0, {"function", "foo", ";"}),
+            FlowControl(1,                                            //
+                        N(1,                                          //
+                          L(1, {"assume", "(", "zz", ")", "begin"}),  //
+                          L(2, {"return", "0", ";"})),                //
+                        N(1,                                          //
+                          L(1, {"end", "else", "begin"}),             //
+                          L(2, {"return", "1", ";"}),                 //
+                          L(1, {"end"}))),
+            L(0, {"endfunction"})),
+    },
+
+    {
+        "function with assume-else branches, null assume-clause-body",
+        "function foo;"
+        "assume (zz) "
+        "else "
+        "foo();"
+        "endfunction",
+        FunctionDeclaration(0, FunctionHeader(0, {"function", "foo", ";"}),
+                            FlowControl(1,  //
+                                        L(1, {"assume", "(", "zz", ")"}),
+                                        N(1,               //
+                                          L(1, {"else"}),  // same level
+                                          L(2, {"foo", "(", ")", ";"}))),
+                            L(0, {"endfunction"})),
+    },
+
+    {
+        "function with assume-else branches, single-statements",
+        "function foo;"
+        "assume (zz) "
+        "return 0;"
+        "else "
+        "return 1;"
+        "endfunction",
+        FunctionDeclaration(
+            0, FunctionHeader(0, {"function", "foo", ";"}),
+            FlowControl(1,                                   //
+                        N(1,                                 //
+                          L(1, {"assume", "(", "zz", ")"}),  // same level
+                          L(2, {"return", "0", ";"})),       //
+                        N(1,                                 //
+                          L(1, {"else"}),                    // same level
+                          L(2, {"return", "1", ";"}))),
+            L(0, {"endfunction"})),
+    },
+
+    {
         "function with for loop",
         "function foo;"
         "for (x=0;x<N;++x) begin "
@@ -5020,6 +5814,21 @@ const TreeUnwrapperTestData kUnwrapFunctionTestCases[] = {
                                    L(1, {")", "begin"})),  //
                         L(2, {"return", "1", ";"}),        //
                         L(1, {"end"})),
+            L(0, {"endfunction"})),
+    },
+
+    {
+        "function with for loop, null-statements",
+        "function foo;"
+        "for (;;); "
+        "endfunction",
+        FunctionDeclaration(
+            0, FunctionHeader(0, {"function", "foo", ";"}),
+            FlowControl(1,
+                        LoopHeader(1, L(1, {"for", "("}),
+                                   ForSpec(3, L(3, {";"}), L(3, {";"})),
+                                   L(1, {")"})),  //
+                        L(2, {";"})),             //
             L(0, {"endfunction"})),
     },
 
@@ -5161,7 +5970,10 @@ const TreeUnwrapperTestData kUnwrapFunctionTestCases[] = {
         "while (y);"
         "endfunction",
         FunctionDeclaration(0, FunctionHeader(0, {"function", "foo", ";"}),
-                            L(1, {"do", ";", "while", "(", "y", ")", ";"}),
+                            FlowControl(1,             //
+                                        L(1, {"do"}),  //
+                                        L(2, {";"}),   //
+                                        L(1, {"while", "(", "y", ")", ";"})),
                             L(0, {"endfunction"})),
     },
 
@@ -5646,7 +6458,7 @@ const TreeUnwrapperTestData kUnwrapPropertyTestCases[] = {
                         L(1, {"initial", "begin"}),
                         N(2,                                            //
                           L(2, {"expect", "(", "a", "|=>", "b", ")"}),  //
-                          L(2, {"xx", ";"})),
+                          L(3, {"xx", ";"})),
                         L(1, {"end"})),
             L(0, {"endprogram"})),
     },

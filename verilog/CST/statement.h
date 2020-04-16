@@ -70,6 +70,60 @@ const verible::SyntaxTreeNode& GetConditionalStatementIfClause(
 const verible::SyntaxTreeNode* GetConditionalStatementElseClause(
     const verible::Symbol& conditional);
 
+// Immediate assertion statements
+
+// Returns the assert-clause of an assertion statement, or nullptr.
+const verible::SyntaxTreeNode& GetAssertionStatementAssertClause(
+    const verible::Symbol& assertion_statement);
+
+// Returns the else-clause of an assertion statement, or nullptr.
+const verible::SyntaxTreeNode* GetAssertionStatementElseClause(
+    const verible::Symbol& assertion_statement);
+
+// Returns the assume-clause of an assume statement, or nullptr.
+const verible::SyntaxTreeNode& GetAssumeStatementAssumeClause(
+    const verible::Symbol& assume_statement);
+
+// Returns the else-clause of an assume statement, or nullptr.
+const verible::SyntaxTreeNode* GetAssumeStatementElseClause(
+    const verible::Symbol& assume_statement);
+
+// Returns the statement body of a cover statement, or nullptr.
+const verible::SyntaxTreeNode* GetCoverStatementBody(
+    const verible::Symbol& cover_statement);
+
+// Returns the statement body of a wait statement, or nullptr.
+const verible::SyntaxTreeNode* GetWaitStatementBody(
+    const verible::Symbol& wait_statement);
+
+// Concurrent assertion statements
+
+// Returns the assert-clause of an assert property statement, or nullptr.
+const verible::SyntaxTreeNode& GetAssertPropertyStatementAssertClause(
+    const verible::Symbol& assert_property_statement);
+
+// Returns the else-clause of an assert property statement, or nullptr.
+const verible::SyntaxTreeNode* GetAssertPropertyStatementElseClause(
+    const verible::Symbol& assert_property_statement);
+
+// Returns the assume-clause of an assume property statement, or nullptr.
+const verible::SyntaxTreeNode& GetAssumePropertyStatementAssumeClause(
+    const verible::Symbol& assume_property_statement);
+
+// Returns the else-clause of an assume property statement, or nullptr.
+const verible::SyntaxTreeNode* GetAssumePropertyStatementElseClause(
+    const verible::Symbol& assume_property_statement);
+
+// Returns the expect-clause of an expect property statement, or nullptr.
+const verible::SyntaxTreeNode& GetExpectPropertyStatementExpectClause(
+    const verible::Symbol& expect_property_statement);
+
+// Returns the else-clause of an expect property statement, or nullptr.
+const verible::SyntaxTreeNode* GetExpectPropertyStatementElseClause(
+    const verible::Symbol& expect_property_statement);
+
+// Loop-like statements
+
 // For loop statement blocks, return the looped statement body.
 const verible::SyntaxTreeNode& GetLoopStatementBody(
     const verible::Symbol& loop);

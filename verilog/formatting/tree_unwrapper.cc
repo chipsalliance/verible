@@ -325,19 +325,29 @@ static bool ShouldIndentRelativeToDirectParent(
   // child of one of the exceptions: sequential/parallel/generate blocks.
   return context.DirectParentIsOneOf({
       //
-      NodeEnum::kCaseStatement,                     //
-      NodeEnum::kRandCaseStatement,                 //
-      NodeEnum::kForLoopStatement,                  //
-      NodeEnum::kForeverLoopStatement,              //
-      NodeEnum::kRepeatLoopStatement,               //
-      NodeEnum::kWhileLoopStatement,                //
-      NodeEnum::kDoWhileLoopStatement,              //
-      NodeEnum::kForeachLoopStatement,              //
-      NodeEnum::kConditionalStatement,              //
-      NodeEnum::kIfClause,                          //
-      NodeEnum::kGenerateIfClause,                  //
+      NodeEnum::kLoopGenerateConstruct,  //
+      NodeEnum::kCaseStatement,          //
+      NodeEnum::kRandCaseStatement,      //
+      NodeEnum::kForLoopStatement,       //
+      NodeEnum::kForeverLoopStatement,   //
+      NodeEnum::kRepeatLoopStatement,    //
+      NodeEnum::kWhileLoopStatement,     //
+      NodeEnum::kDoWhileLoopStatement,   //
+      NodeEnum::kForeachLoopStatement,   //
+      NodeEnum::kConditionalStatement,   //
+      NodeEnum::kIfClause,               //
+      NodeEnum::kGenerateIfClause,       //
+      // TODO(fangism): k{Assert,Assume,Expect}PropertyClause
+      NodeEnum::kAssertionClause,                   //
+      NodeEnum::kAssumeClause,                      //
       NodeEnum::kProceduralTimingControlStatement,  //
-      NodeEnum::kAssertionStatement,                //
+      NodeEnum::kCoverStatement,                    //
+      NodeEnum::kAssertPropertyClause,              //
+      NodeEnum::kAssumePropertyClause,              //
+      NodeEnum::kExpectPropertyClause,              //
+      NodeEnum::kCoverPropertyStatement,            //
+      NodeEnum::kCoverSequenceStatement,            //
+      NodeEnum::kWaitStatement,                     //
       NodeEnum::kInitialStatement,                  //
       NodeEnum::kAlwaysStatement,                   //
       NodeEnum::kFinalStatement,                    //
@@ -706,7 +716,13 @@ void TreeUnwrapper::SetIndentationsAndCreatePartitions(
     case NodeEnum::kGenerateIfClause:
     case NodeEnum::kGenerateElseClause:
     case NodeEnum::kIfClause:
-    case NodeEnum::kElseClause: {
+    case NodeEnum::kElseClause:
+      // TODO(fangism): k{Assert,Assume,Expect}PropertyClause
+    case NodeEnum::kAssertionClause:
+    case NodeEnum::kAssumeClause:
+    case NodeEnum::kAssertPropertyClause:
+    case NodeEnum::kAssumePropertyClause:
+    case NodeEnum::kExpectPropertyClause: {
       VisitIndentedSection(node, 0, PartitionPolicyEnum::kFitOnLineElseExpand);
       break;
     }
@@ -727,13 +743,25 @@ void TreeUnwrapper::SetIndentationsAndCreatePartitions(
 
     // The following set of cases are related to flow-control (loops and
     // conditionals) for statements and generate items:
+    case NodeEnum::kAssertionBody:
+    case NodeEnum::kAssumeBody:
+    case NodeEnum::kCoverBody:
+    case NodeEnum::kAssertPropertyBody:
+    case NodeEnum::kAssumePropertyBody:
+    case NodeEnum::kExpectPropertyBody:
+    case NodeEnum::kCoverPropertyBody:
+    case NodeEnum::kCoverSequenceBody:
+    case NodeEnum::kWaitBody:
     case NodeEnum::kGenerateIfBody:
     case NodeEnum::kIfBody: {
       // In the case of if-begin, let the 'begin'-'end' block indent its own
       // section.  Othewise for single statements/items, indent here.
-      const auto& subnode = GetSubtreeAsNode(node, tag, 0);
+      const auto* subnode =
+          verible::CheckOptionalSymbolAsNode(GetSubtreeAsSymbol(node, tag, 0));
       const auto next_indent =
-          NodeIsBeginEndBlock(subnode) ? 0 : style_.indentation_spaces;
+          (subnode != nullptr && NodeIsBeginEndBlock(*subnode))
+              ? 0
+              : style_.indentation_spaces;
       VisitIndentedSection(node, next_indent,
                            PartitionPolicyEnum::kFitOnLineElseExpand);
       break;
@@ -757,11 +785,22 @@ void TreeUnwrapper::SetIndentationsAndCreatePartitions(
     // starting a new line when single statements are found to extend other
     // statements, delayed assignments, single-statement if/for loops.
     // search-anchor: STATEMENT_TYPES
+    case NodeEnum::kNullItem:       // ;
+    case NodeEnum::kNullStatement:  // ;
     case NodeEnum::kStatement:
     case NodeEnum::kLabeledStatement:  // e.g. foo_label : do_something();
     case NodeEnum::kJumpStatement:
     case NodeEnum::kWaitStatement:                  // wait(expr) ...
+    case NodeEnum::kWaitForkStatement:              // wait fork;
     case NodeEnum::kAssertionStatement:             // assert(expr);
+    case NodeEnum::kAssumeStatement:                // assume(expr);
+    case NodeEnum::kCoverStatement:                 // cover(expr);
+    case NodeEnum::kAssertPropertyStatement:
+    case NodeEnum::kAssumePropertyStatement:
+    case NodeEnum::kExpectPropertyStatement:
+    case NodeEnum::kCoverPropertyStatement:
+    case NodeEnum::kCoverSequenceStatement:
+      // TODO(fangism): case NodeEnum::kRestrictPropertyStatement:
     case NodeEnum::kContinuousAssignmentStatement:  // e.g. assign x=y;
     case NodeEnum::kProceduralContinuousAssignmentStatement:  // e.g. assign
                                                               // x=y;
@@ -966,10 +1005,11 @@ static void AttachTrailingSemicolonToPreviousPartition(
 static void ReshapeIfClause(const SyntaxTreeNode& node,
                             TokenPartitionTree* partition_ptr) {
   auto& partition = *partition_ptr;
-  const SyntaxTreeNode& body =
-      *ABSL_DIE_IF_NULL(GetAnyControlStatementBody(node));
-  if (!NodeIsBeginEndBlock(body)) {
+  const SyntaxTreeNode* body = GetAnyControlStatementBody(node);
+  if (body == nullptr || !NodeIsBeginEndBlock(*body)) {
     VLOG(4) << "if-body was not a begin-end block.";
+    // If body is a null statement, attach it to the previous partition.
+    AttachTrailingSemicolonToPreviousPartition(partition_ptr);
     return;
   }
 
@@ -991,6 +1031,8 @@ static void ReshapeElseClause(const SyntaxTreeNode& node,
       *ABSL_DIE_IF_NULL(GetAnyControlStatementBody(node));
   if (!NodeIsConditionalOrBlock(else_body_subnode)) {
     VLOG(4) << "else-body was neither a begin-end block nor if-conditional.";
+    // If body is a null statement, attach it to the previous partition.
+    AttachTrailingSemicolonToPreviousPartition(partition_ptr);
     return;
   }
 
@@ -1019,14 +1061,14 @@ static void MergeEndElseWithoutLabel(const SyntaxTreeNode& conditional,
   // a previous 'end' partition.
   // Do not flatten, so that if- and else- clauses can make formatting
   // decisions independently from each other.
-  const auto& if_body_subnode =
-      *GetAnyControlStatementBody(*GetAnyConditionalIfClause(conditional));
-  if (!NodeIsBeginEndBlock(if_body_subnode)) {
+  const auto* if_body_subnode =
+      GetAnyControlStatementBody(*GetAnyConditionalIfClause(conditional));
+  if (if_body_subnode == nullptr || !NodeIsBeginEndBlock(*if_body_subnode)) {
     VLOG(4) << "if-body was not begin-end block";
     return;
   }
   VLOG(4) << "if body was a begin-end block";
-  const auto* end_label = GetEndLabel(GetBlockEnd(if_body_subnode));
+  const auto* end_label = GetEndLabel(GetBlockEnd(*if_body_subnode));
   if (end_label != nullptr) {
     VLOG(4) << "'end' came with label, no merge";
     return;
@@ -1240,6 +1282,15 @@ void TreeUnwrapper::ReshapeTokenPartitions(
     }
 
       // The following cases handle reshaping around if/else/begin/end.
+    case NodeEnum::kAssertionClause:
+    case NodeEnum::kAssumeClause:
+    case NodeEnum::kCoverStatement:
+    case NodeEnum::kWaitStatement:
+    case NodeEnum::kAssertPropertyClause:
+    case NodeEnum::kAssumePropertyClause:
+    case NodeEnum::kExpectPropertyClause:
+    case NodeEnum::kCoverPropertyStatement:
+    case NodeEnum::kCoverSequenceStatement:
     case NodeEnum::kIfClause:
     case NodeEnum::kGenerateIfClause: {
       ReshapeIfClause(node, &partition);
@@ -1250,6 +1301,17 @@ void TreeUnwrapper::ReshapeTokenPartitions(
       ReshapeElseClause(node, &partition);
       break;
     }
+
+    case NodeEnum::kAssertionStatement:
+      // Contains a kAssertionClause and possibly a kElseClause
+    case NodeEnum::kAssumeStatement:
+      // Contains a kAssumeClause and possibly a kElseClause
+    case NodeEnum::kAssertPropertyStatement:
+      // Contains a kAssertPropertyClause and possibly a kElseClause
+    case NodeEnum::kAssumePropertyStatement:
+      // Contains a kAssumePropertyClause and possibly a kElseClause
+    case NodeEnum::kExpectPropertyStatement:
+      // Contains a kExpectPropertyClause and possibly a kElseClause
     case NodeEnum::kConditionalStatement:
       // Contains a kIfClause and possibly a kElseClause
     case NodeEnum::kConditionalGenerateConstruct:
@@ -1355,6 +1417,7 @@ void TreeUnwrapper::ReshapeTokenPartitions(
     case NodeEnum::kCasePatternItem:
     case NodeEnum::kGenerateCaseItem:
     // case NodeEnum::kAlwaysStatement:  // handled differently below
+    // TODO(fangism): always,initial,final should be handled the same way
     case NodeEnum::kInitialStatement:
     case NodeEnum::kFinalStatement: {
       // In these cases, merge the 'begin' partition of the statement block

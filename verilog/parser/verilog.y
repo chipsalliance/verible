@@ -1386,12 +1386,21 @@ class_new
   | class_id TK_SCOPE_RES TK_new '(' argument_list_opt ')'
    */
   ;
+
+/* action_block is a very strange nonterminal in SystemVerilog:
+ * it consists of the statement body of the assert/assume clause,
+ * followed by an optional else-clause.
+ * To make this more consistent with conditional constructs,
+ * this node will be dismantled by the consumer and reshaped,
+ * so that an assert-clause will resemble an if-clause, etc.
+ */
 action_block
   : statement_or_null
     %prec less_than_TK_else
-    { $$ = MakeTaggedNode(N::kActionBlock, $1); }
+    { $$ = MakeTaggedNode(N::kActionBlock, $1, nullptr); }
   | statement_or_null TK_else statement_or_null
-    { $$ = MakeTaggedNode(N::kActionBlock, $1, $2, $3); }
+    { $$ = MakeTaggedNode(N::kActionBlock, $1,
+                          MakeTaggedNode(N::kElseClause, $2, MakeTaggedNode(N::kElseBody, $3))); }
 
     /* original grammar rule:
      *   statement TK_else statement_or_null
@@ -1399,7 +1408,8 @@ action_block
      * can resolve the S/R conflict.
      */
   | TK_else statement_or_null
-    { $$ = MakeTaggedNode(N::kActionBlock, $1, $2); }
+    { $$ = MakeTaggedNode(N::kActionBlock, nullptr,
+                          MakeTaggedNode(N::kElseClause, $1, MakeTaggedNode(N::kElseBody, $2))); }
   ;
 concurrent_assertion_item
   : block_identifier_opt concurrent_assertion_statement
@@ -1423,29 +1433,67 @@ concurrent_assertion_statement
   ;
 assert_property_statement
   : TK_assert TK_property '(' property_spec ')' action_block
-    { $$ = MakeTaggedNode(N::kAssertionStatement, $1, $2, MakeParenGroup($3, $4, $5), $6); }
+    { auto& node = SymbolCastToNode(*$6);
+      $$ = MakeTaggedNode(
+               N::kAssertPropertyStatement,
+               MakeTaggedNode(  /* like an if-clause */
+                   N::kAssertPropertyClause,
+                   MakeTaggedNode(  /* like an if-header */
+                       N::kAssertPropertyHeader,
+                       $1, $2, MakeParenGroup($3, $4, $5)),
+                   MakeTaggedNode(N::kAssertPropertyBody, node[0])),
+               node[1] /* else-clause */);
+    }
   ;
 assume_property_statement
   : TK_assume TK_property '(' property_spec ')' action_block
-    { $$ = MakeTaggedNode(N::kAssertionStatement, $1, $2, MakeParenGroup($3, $4, $5), $6); }
+    { auto& node = SymbolCastToNode(*$6);
+      $$ = MakeTaggedNode(
+               N::kAssumePropertyStatement,
+               MakeTaggedNode(  /* like an if-clause */
+                   N::kAssumePropertyClause,
+                   MakeTaggedNode(  /* like an if-header */
+                       N::kAssumePropertyHeader,
+                       $1, $2, MakeParenGroup($3, $4, $5)),
+                   MakeTaggedNode(N::kAssumePropertyBody, node[0])),
+               node[1] /* else-clause */);
+    }
   ;
 cover_property_statement
   : TK_cover TK_property '(' property_spec ')' statement_or_null
-    { $$ = MakeTaggedNode(N::kAssertionStatement, $1, $2, MakeParenGroup($3, $4, $5), $6); }
+    /* shaped like kIfClause */
+    { $$ = MakeTaggedNode(N::kCoverPropertyStatement,
+                          MakeTaggedNode(N::kCoverPropertyHeader,
+                                         $1, $2, MakeParenGroup($3, $4, $5)),
+                          MakeTaggedNode(N::kCoverPropertyBody, $6)); }
   ;
 expect_property_statement
   : TK_expect '(' property_spec ')' action_block
-    { $$ = MakeTaggedNode(N::kAssertionStatement, $1, MakeParenGroup($2, $3, $4), $5); }
+    { auto& node = SymbolCastToNode(*$5);
+      $$ = MakeTaggedNode(
+               N::kExpectPropertyStatement,
+               MakeTaggedNode(  /* like an if-clause */
+                   N::kExpectPropertyClause,
+                   MakeTaggedNode(  /* like an if-header */
+                       N::kExpectPropertyHeader,
+                       $1, MakeParenGroup($2, $3, $4)),
+                   MakeTaggedNode(N::kExpectPropertyBody, node[0])),
+               node[1] /* else-clause */);
+    }
   ;
 cover_sequence_statement
   : TK_cover TK_sequence '(' sequence_spec ')' statement_or_null
-    { $$ = MakeTaggedNode(N::kAssertionStatement, $1, $2, MakeParenGroup($3, $4, $5), $6); }
+    /* shaped like kIfClause */
+    { $$ = MakeTaggedNode(N::kCoverSequenceStatement,
+                          MakeTaggedNode(N::kCoverSequenceHeader,
+                                         $1, $2, MakeParenGroup($3, $4, $5)),
+                          MakeTaggedNode(N::kCoverSequenceBody, $6)); }
 
   ;
 restrict_property_statement
   : TK_restrict TK_property '(' property_spec ')' ';'
-    { $$ = MakeTaggedNode(N::kAssertionStatement, $1, $2, MakeParenGroup($3, $4, $5), $6); }
-
+    { $$ = MakeTaggedNode(N::kRestrictPropertyStatement,
+                          $1, $2, MakeParenGroup($3, $4, $5), $6); }
   ;
 
 deferred_immediate_assertion_item
@@ -1460,19 +1508,73 @@ immediate_assertion_statement
   ;
 simple_immediate_assertion_statement
   : TK_assert '(' expression ')' action_block
-    { $$ = MakeTaggedNode(N::kAssertionStatement, $1, MakeParenGroup($2, $3, $4), $5); }
+  /* shaped similarly to kConditionalStatement */
+    { auto& node = SymbolCastToNode(*$5);
+      $$ = MakeTaggedNode(
+               N::kAssertionStatement,
+               MakeTaggedNode(  /* like an if-clause */
+                   N::kAssertionClause,
+                   MakeTaggedNode(  /* like an if-header */
+                       N::kAssertionHeader,
+                       $1, nullptr, MakeParenGroup($2, $3, $4)),
+                   MakeTaggedNode(N::kAssertionBody, node[0])),
+               node[1] /* else-clause */);
+    }
   | TK_assume '(' expression ')' action_block
-    { $$ = MakeTaggedNode(N::kAssertionStatement, $1, MakeParenGroup($2, $3, $4), $5); }
+  /* shaped similarly to kConditionalStatement */
+    { auto& node = SymbolCastToNode(*$5);
+      $$ = MakeTaggedNode(
+               N::kAssumeStatement,
+               MakeTaggedNode(  /* like an if-clause */
+                   N::kAssumeClause,
+                   MakeTaggedNode(  /* like an if-header */
+                       N::kAssumeHeader,
+                       $1, nullptr, MakeParenGroup($2, $3, $4)),
+                   MakeTaggedNode(N::kAssumeBody, node[0])),
+               node[1] /* else-clause */);
+    }
   | TK_cover '(' expression ')' statement_or_null
-    { $$ = MakeTaggedNode(N::kAssertionStatement, $1, MakeParenGroup($2, $3, $4), $5); }
+  /* shaped similarly to kIfClause, doesn't have an else-clause */
+    { $$ = MakeTaggedNode(N::kCoverStatement,
+                          MakeTaggedNode(N::kCoverHeader,
+                                         $1, nullptr,
+                                         MakeParenGroup($2, $3, $4)),
+                          MakeTaggedNode(N::kCoverBody, $5)); }
   ;
 deferred_immediate_assertion_statement
   : TK_assert final_or_zero '(' expression ')' action_block
-    { $$ = MakeTaggedNode(N::kAssertionStatement, $1, $2, MakeParenGroup($3, $4, $5), $6); }
+  /* shaped similarly to kConditionalStatement */
+    { auto& node = SymbolCastToNode(*$6);
+      $$ = MakeTaggedNode(
+               N::kAssertionStatement,
+               MakeTaggedNode(  /* like an if-clause */
+                   N::kAssertionClause,
+                   MakeTaggedNode(  /* like an if-header */
+                       N::kAssertionHeader,
+                       $1, $2, MakeParenGroup($3, $4, $5)),
+                   MakeTaggedNode(N::kAssertionBody, node[0])),
+               node[1] /* else-clause */);
+    }
   | TK_assume final_or_zero '(' expression ')' action_block
-    { $$ = MakeTaggedNode(N::kAssertionStatement, $1, $2, MakeParenGroup($3, $4, $5), $6); }
+  /* shaped similarly to kConditionalStatement */
+    { auto& node = SymbolCastToNode(*$6);
+      $$ = MakeTaggedNode(
+               N::kAssumeStatement,
+               MakeTaggedNode(  /* like an if-clause */
+                   N::kAssumeClause,
+                   MakeTaggedNode(  /* like an if-header */
+                       N::kAssumeHeader,
+                       $1, $2, MakeParenGroup($3, $4, $5)),
+                   MakeTaggedNode(N::kAssumeBody, node[0])),
+               node[1] /* else-clause */);
+    }
   | TK_cover final_or_zero '(' expression ')' statement_or_null
-    { $$ = MakeTaggedNode(N::kAssertionStatement, $1, $2, MakeParenGroup($3, $4, $5), $6); }
+  /* shaped similarly to kIfClause, doesn't have an else-clause */
+    { $$ = MakeTaggedNode(N::kCoverStatement,
+                          MakeTaggedNode(N::kCoverHeader,
+                                         $1, $2,
+                                         MakeParenGroup($3, $4, $5)),
+                          MakeTaggedNode(N::kCoverBody, $6)); }
   ;
 final_or_zero
   : TK_final
@@ -5630,7 +5732,7 @@ package_or_generate_item_declaration
   | dpi_import_export
     { $$ = move($1); }
   | ';'
-    { $$ = move($1); }
+    { $$ = MakeTaggedNode(N::kNullItem, $1); }
   ;
 
 module_or_generate_item
@@ -6703,9 +6805,13 @@ seq_block
 
 wait_statement
   : TK_wait '(' expression ')' statement_or_null
-    { $$ = MakeTaggedNode(N::kWaitStatement, $1, MakeParenGroup($2, $3, $4), $5);}
+    /* shaped similarly to kIfClause */
+    { $$ = MakeTaggedNode(N::kWaitStatement,
+                          MakeTaggedNode(N::kWaitHeader,
+                                         $1, MakeParenGroup($2, $3, $4)),
+                          MakeTaggedNode(N::kWaitBody, $5));}
   | TK_wait TK_fork ';'
-    { $$ = MakeTaggedNode(N::kWaitStatement, $1, $2, $3);}
+    { $$ = MakeTaggedNode(N::kWaitForkStatement, $1, $2, $3);}
     /* TODO(b/144972702): wait_order ... */
   ;
 

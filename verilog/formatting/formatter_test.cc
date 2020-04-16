@@ -1225,6 +1225,14 @@ static const std::initializer_list<FormatterTestCase> kFormatterTestCases = {
     },
     {
         "module conditional_generate;\n"
+        "if(foo)  ; \t"  // null action
+        "endmodule\n",
+        "module conditional_generate;\n"
+        "  if (foo);\n"
+        "endmodule\n",
+    },
+    {
+        "module conditional_generate;\n"
         "if(foo)begin\n"
         "`ASSERT()\n"
         "`COVER()\n"
@@ -1263,6 +1271,16 @@ static const std::initializer_list<FormatterTestCase> kFormatterTestCases = {
         "    // comment1\n"
         "    // comment2\n"
         "  end\n"
+        "endmodule\n",
+    },
+    {
+        "module m ;"
+        "for(genvar i=0; ;)\n; "   // null generate statement
+        "for(genvar j=0 ;; )\n; "  // null generate statement
+        "endmodule",
+        "module m;\n"
+        "  for (genvar i = 0;;);\n"
+        "  for (genvar j = 0;;);\n"
         "endmodule\n",
     },
     {
@@ -2436,6 +2454,18 @@ static const std::initializer_list<FormatterTestCase> kFormatterTestCases = {
      "endfunction : warranty\n"},
 
     {
+        // This tests for if-statements with null statements
+        "function foo;"
+        "if (zz) ; "
+        "if (yy) ; "
+        "endfunction",
+        "function foo;\n"
+        "  if (zz);\n"
+        "  if (yy);\n"
+        "endfunction\n",
+    },
+
+    {
         // This tests for if-statements starting on their own line.
         "function foo;"
         "if (zz) begin "
@@ -2517,6 +2547,32 @@ static const std::initializer_list<FormatterTestCase> kFormatterTestCases = {
      "    #1ps a += $urandom();\n"
      "  return 2;\n"
      "endfunction\n"},
+
+    {
+        // This tests for-statements with null statements
+        "function foo;"
+        "for(;;)  ;\t"
+        "for(;;)  ;\t"
+        "endfunction",
+        "function foo;\n"
+        "  for (;;);\n"
+        "  for (;;);\n"
+        "endfunction\n",
+    },
+
+    {
+        // This tests for if-else-statements with null statements
+        "function foo;"
+        "if (zz) ;  else  ;"
+        "if (yy) ;   else   ;"
+        "endfunction",
+        "function foo;\n"
+        "  if (zz);\n"
+        "  else;\n"
+        "  if (yy);\n"
+        "  else;\n"
+        "endfunction\n",
+    },
 
     {
         // This tests for end-else-begin.
@@ -3243,12 +3299,77 @@ static const std::initializer_list<FormatterTestCase> kFormatterTestCases = {
         "endtask\n",
     },
     {
+        // assertion statements with body clause
+        "task  t ;Fire() ;assert ( x) fee ( );assert(y ) foo ( ) ;endtask",
+        "task t;\n"
+        "  Fire();\n"
+        "  assert (x) fee();\n"
+        "  assert (y) foo();\n"
+        "endtask\n",
+    },
+    {
+        // assertion statements with else clause
+        "task  t ;Fire() ;assert ( x) else  fee ( );"
+        "assert(y ) else  foo ( ) ;endtask",
+        "task t;\n"
+        "  Fire();\n"
+        "  assert (x)\n"
+        "  else fee();\n"
+        "  assert (y)\n"
+        "  else foo();\n"
+        "endtask\n",
+    },
+    {
+        // assertion statements with else clause
+        "task  t ;Fire() ;assert ( x) fa(); else  fee ( );"
+        "assert(y ) fi(); else  foo ( ) ;endtask",
+        "task t;\n"
+        "  Fire();\n"
+        "  assert (x) fa();\n"
+        "  else fee();\n"
+        "  assert (y) fi();\n"
+        "  else foo();\n"
+        "endtask\n",
+    },
+    {
         // assume statements
         "task  t ;Fire() ;assume ( x);assume(y );endtask",
         "task t;\n"
         "  Fire();\n"
         "  assume (x);\n"
         "  assume (y);\n"
+        "endtask\n",
+    },
+    {
+        // cover statements
+        "task  t ;Fire() ;cover ( x);cover(y );endtask",
+        "task t;\n"
+        "  Fire();\n"
+        "  cover (x);\n"
+        "  cover (y);\n"
+        "endtask\n",
+    },
+    {
+        // cover statements, with action
+        "task  t ;Fire() ;cover ( x)g( );cover(y ) h();endtask",
+        "task t;\n"
+        "  Fire();\n"
+        "  cover (x) g();\n"
+        "  cover (y) h();\n"
+        "endtask\n",
+    },
+    {
+        // cover statements, with action block
+        "task  t ;Fire() ;cover ( x) begin g( ); end "
+        "cover(y ) begin h(); end endtask",
+        "task t;\n"
+        "  Fire();\n"
+        "  cover (x) begin\n"
+        "    g();\n"
+        "  end\n"
+        "  cover (y) begin\n"
+        "    h();\n"
+        "  end\n"
         "endtask\n",
     },
     {// shuffle calls
@@ -3262,6 +3383,23 @@ static const std::initializer_list<FormatterTestCase> kFormatterTestCases = {
      "task t;\n"
      "  wait(a == b);\n"
      "  wait(c < d);\n"
+     "endtask\n"},
+    {// wait statements, single action statement
+     "task t; wait  (a==b) p();wait(c<d) q(); endtask",
+     "task t;\n"
+     "  wait(a == b) p();\n"
+     "  wait(c < d) q();\n"
+     "endtask\n"},
+    {// wait statements, block action statement
+     "task t; wait  (a==b) begin p(); end "
+     "wait(c<d) begin q(); end endtask",
+     "task t;\n"
+     "  wait(a == b) begin\n"
+     "    p();\n"
+     "  end\n"
+     "  wait(c < d) begin\n"
+     "    q();\n"
+     "  end\n"
      "endtask\n"},
     {// wait fork statements
      "task t ; wait\tfork;wait   fork ;endtask",
@@ -3317,6 +3455,312 @@ static const std::initializer_list<FormatterTestCase> kFormatterTestCases = {
         "endtask",
         "task t;\n"
         "  if (r == t) a.b(c);\n"
+        "endtask\n",
+    },
+
+    {
+        // assert property statements
+        "task  t ;assert  property( x);assert\tproperty(y );endtask",
+        "task t;\n"
+        "  assert property (x);\n"
+        "  assert property (y);\n"
+        "endtask\n",
+    },
+    {
+        // assert property statements, with action
+        "task  t ;assert  property( x) j();assert\tproperty(y )k( );endtask",
+        "task t;\n"
+        "  assert property (x) j();\n"
+        "  assert property (y) k();\n"
+        "endtask\n",
+    },
+    {
+        // assert property statements, with action block
+        "task  t ;assert  property( x) begin j();end "
+        " assert\tproperty(y )begin\tk( );  end endtask",
+        "task t;\n"
+        "  assert property (x) begin\n"
+        "    j();\n"
+        "  end\n"
+        "  assert property (y) begin\n"
+        "    k();\n"
+        "  end\n"
+        "endtask\n",
+    },
+    {
+        // assert property statements, else with null
+        "task  t ;assert  property( x) else;assert\tproperty(y )else;endtask",
+        "task t;\n"
+        "  assert property (x)\n"
+        "  else;\n"
+        "  assert property (y)\n"
+        "  else;\n"
+        "endtask\n",
+    },
+    {
+        // assert property statements, else with actions
+        "task  t ;assert  property( x) f(); else p(); "
+        "\tassert\tproperty(y ) g();else  q( );endtask",
+        "task t;\n"
+        "  assert property (x) f();\n"
+        "  else p();\n"
+        "  assert property (y) g();\n"
+        "  else q();\n"
+        "endtask\n",
+    },
+    {
+        // assert property statement, with action block, else statement
+        "task  t ;assert  property( x) begin j();end  else\tk( );  endtask",
+        "task t;\n"
+        "  assert property (x) begin\n"
+        "    j();\n"
+        "  end else k();\n"
+        "endtask\n",
+    },
+    {
+        // assert property statement, with action statement, else block
+        "task  t ;assert  property( x) j();  else  begin\tk( );end  endtask",
+        "task t;\n"
+        "  assert property (x) j();\n"
+        "  else begin\n"
+        "    k();\n"
+        "  end\n"
+        "endtask\n",
+    },
+    {
+        // assert property statement, with action block, else block
+        "task  t ;assert  property( x)begin j();end  "
+        "else  begin\tk( );end  endtask",
+        "task t;\n"
+        "  assert property (x) begin\n"
+        "    j();\n"
+        "  end else begin\n"
+        "    k();\n"
+        "  end\n"
+        "endtask\n",
+    },
+
+    {
+        // assume property statements
+        "task  t ;assume  property( x);assume\tproperty(y );endtask",
+        "task t;\n"
+        "  assume property (x);\n"
+        "  assume property (y);\n"
+        "endtask\n",
+    },
+    {
+        // assume property statements, with action
+        "task  t ;assume  property( x) j();assume\tproperty(y )k( );endtask",
+        "task t;\n"
+        "  assume property (x) j();\n"
+        "  assume property (y) k();\n"
+        "endtask\n",
+    },
+    {
+        // assume property statements, with action block
+        "task  t ;assume  property( x) begin j();end "
+        " assume\tproperty(y )begin\tk( );  end endtask",
+        "task t;\n"
+        "  assume property (x) begin\n"
+        "    j();\n"
+        "  end\n"
+        "  assume property (y) begin\n"
+        "    k();\n"
+        "  end\n"
+        "endtask\n",
+    },
+    {
+        // assume property statements, else with null
+        "task  t ;assume  property( x) else;assume\tproperty(y )else;endtask",
+        "task t;\n"
+        "  assume property (x)\n"
+        "  else;\n"
+        "  assume property (y)\n"
+        "  else;\n"
+        "endtask\n",
+    },
+    {
+        // assume property statements, else with actions
+        "task  t ;assume  property( x) f(); else p(); "
+        "\tassume\tproperty(y ) g();else  q( );endtask",
+        "task t;\n"
+        "  assume property (x) f();\n"
+        "  else p();\n"
+        "  assume property (y) g();\n"
+        "  else q();\n"
+        "endtask\n",
+    },
+    {
+        // assume property statement, with action block, else statement
+        "task  t ;assume  property( x) begin j();end  else\tk( );  endtask",
+        "task t;\n"
+        "  assume property (x) begin\n"
+        "    j();\n"
+        "  end else k();\n"
+        "endtask\n",
+    },
+    {
+        // assume property statement, with action statement, else block
+        "task  t ;assume  property( x) j();  else  begin\tk( );end  endtask",
+        "task t;\n"
+        "  assume property (x) j();\n"
+        "  else begin\n"
+        "    k();\n"
+        "  end\n"
+        "endtask\n",
+    },
+    {
+        // assume property statement, with action block, else block
+        "task  t ;assume  property( x)begin j();end  "
+        "else  begin\tk( );end  endtask",
+        "task t;\n"
+        "  assume property (x) begin\n"
+        "    j();\n"
+        "  end else begin\n"
+        "    k();\n"
+        "  end\n"
+        "endtask\n",
+    },
+
+    {
+        // expect property statements
+        "task  t ;expect  ( x);expect\t(y );endtask",
+        "task t;\n"
+        "  expect (x);\n"
+        "  expect (y);\n"
+        "endtask\n",
+    },
+    {
+        // expect property statements, with action
+        "task  t ;expect  ( x) j();expect\t(y )k( );endtask",
+        "task t;\n"
+        "  expect (x) j();\n"
+        "  expect (y) k();\n"
+        "endtask\n",
+    },
+    {
+        // expect property statements, with action block
+        "task  t ;expect  ( x) begin j();end "
+        " expect\t(y )begin\tk( );  end endtask",
+        "task t;\n"
+        "  expect (x) begin\n"
+        "    j();\n"
+        "  end\n"
+        "  expect (y) begin\n"
+        "    k();\n"
+        "  end\n"
+        "endtask\n",
+    },
+    {
+        // expect property statements, else with null
+        "task  t ;expect  ( x) else;expect\t(y )else;endtask",
+        "task t;\n"
+        "  expect (x)\n"
+        "  else;\n"
+        "  expect (y)\n"
+        "  else;\n"
+        "endtask\n",
+    },
+    {
+        // expect property statements, else with actions
+        "task  t ;expect  ( x) f(); else p(); "
+        "\texpect\t(y ) g();else  q( );endtask",
+        "task t;\n"
+        "  expect (x) f();\n"
+        "  else p();\n"
+        "  expect (y) g();\n"
+        "  else q();\n"
+        "endtask\n",
+    },
+    {
+        // expect property statement, with action block, else statement
+        "task  t ;expect  ( x) begin j();end  else\tk( );  endtask",
+        "task t;\n"
+        "  expect (x) begin\n"
+        "    j();\n"
+        "  end else k();\n"
+        "endtask\n",
+    },
+    {
+        // expect property statement, with action statement, else block
+        "task  t ;expect  ( x) j();  else  begin\tk( );end  endtask",
+        "task t;\n"
+        "  expect (x) j();\n"
+        "  else begin\n"
+        "    k();\n"
+        "  end\n"
+        "endtask\n",
+    },
+    {
+        // expect property statement, with action block, else block
+        "task  t ;expect  ( x)begin j();end  "
+        "else  begin\tk( );end  endtask",
+        "task t;\n"
+        "  expect (x) begin\n"
+        "    j();\n"
+        "  end else begin\n"
+        "    k();\n"
+        "  end\n"
+        "endtask\n",
+    },
+
+    {
+        // cover property statements
+        "task  t ;cover  property( x);cover\tproperty(y );endtask",
+        "task t;\n"
+        "  cover property (x);\n"
+        "  cover property (y);\n"
+        "endtask\n",
+    },
+    {
+        // cover property statements, with action
+        "task  t ;cover  property( x) j();cover\tproperty(y )k( );endtask",
+        "task t;\n"
+        "  cover property (x) j();\n"
+        "  cover property (y) k();\n"
+        "endtask\n",
+    },
+    {
+        // cover property statements, with action block
+        "task  t ;cover  property( x) begin j();end "
+        " cover\tproperty(y )begin\tk( );  end endtask",
+        "task t;\n"
+        "  cover property (x) begin\n"
+        "    j();\n"
+        "  end\n"
+        "  cover property (y) begin\n"
+        "    k();\n"
+        "  end\n"
+        "endtask\n",
+    },
+
+    {
+        // cover sequence statements
+        "task  t ;cover  sequence( x);cover\tsequence(y );endtask",
+        "task t;\n"
+        "  cover sequence (x);\n"
+        "  cover sequence (y);\n"
+        "endtask\n",
+    },
+    {
+        // cover sequence statements, with action
+        "task  t ;cover  sequence( x) j();cover\tsequence(y )k( );endtask",
+        "task t;\n"
+        "  cover sequence (x) j();\n"
+        "  cover sequence (y) k();\n"
+        "endtask\n",
+    },
+    {
+        // cover sequence statements, with action block
+        "task  t ;cover  sequence( x) begin j();end "
+        " cover\tsequence(y )begin\tk( );  end endtask",
+        "task t;\n"
+        "  cover sequence (x) begin\n"
+        "    j();\n"
+        "  end\n"
+        "  cover sequence (y) begin\n"
+        "    k();\n"
+        "  end\n"
         "endtask\n",
     },
 

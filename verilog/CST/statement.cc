@@ -101,6 +101,154 @@ const SyntaxTreeNode* GetConditionalStatementElseClause(
   return &CheckNodeEnum(SymbolCastToNode(*else_ptr), NodeEnum::kElseClause);
 }
 
+const SyntaxTreeNode& GetAssertionStatementAssertClause(
+    const Symbol& assertion_statement) {
+  return GetSubtreeAsNode(assertion_statement, NodeEnum::kAssertionStatement, 0,
+                          NodeEnum::kAssertionClause);
+}
+
+const SyntaxTreeNode* GetAssertionClauseStatementBody(
+    const Symbol& assertion_clause) {
+  const auto& body_node = GetGenericStatementBody(CheckNodeEnum(
+      SymbolCastToNode(assertion_clause), NodeEnum::kAssertionClause));
+  return verible::CheckOptionalSymbolAsNode(
+      GetSubtreeAsSymbol(body_node, NodeEnum::kAssertionBody, 0));
+}
+
+const SyntaxTreeNode* GetAssertionStatementElseClause(
+    const Symbol& assertion_statement) {
+  const auto& node = CheckNodeEnum(SymbolCastToNode(assertion_statement),
+                                   NodeEnum::kAssertionStatement);
+  const Symbol* else_ptr = node.children().back().get();
+  if (else_ptr == nullptr) return nullptr;
+  return &CheckNodeEnum(SymbolCastToNode(*else_ptr), NodeEnum::kElseClause);
+}
+
+const SyntaxTreeNode& GetAssumeStatementAssumeClause(
+    const Symbol& assume_statement) {
+  return GetSubtreeAsNode(assume_statement, NodeEnum::kAssumeStatement, 0,
+                          NodeEnum::kAssumeClause);
+}
+
+const SyntaxTreeNode* GetAssumeClauseStatementBody(
+    const Symbol& assume_clause) {
+  const auto& body_node = GetGenericStatementBody(
+      CheckNodeEnum(SymbolCastToNode(assume_clause), NodeEnum::kAssumeClause));
+  return verible::CheckOptionalSymbolAsNode(
+      GetSubtreeAsSymbol(body_node, NodeEnum::kAssumeBody, 0));
+}
+
+const SyntaxTreeNode* GetAssumeStatementElseClause(
+    const Symbol& assume_statement) {
+  const auto& node = CheckNodeEnum(SymbolCastToNode(assume_statement),
+                                   NodeEnum::kAssumeStatement);
+  const Symbol* else_ptr = node.children().back().get();
+  if (else_ptr == nullptr) return nullptr;
+  return &CheckNodeEnum(SymbolCastToNode(*else_ptr), NodeEnum::kElseClause);
+}
+
+const SyntaxTreeNode* GetCoverStatementBody(const Symbol& cover_statement) {
+  const auto& body_node = GetGenericStatementBody(CheckNodeEnum(
+      SymbolCastToNode(cover_statement), NodeEnum::kCoverStatement));
+  return verible::CheckOptionalSymbolAsNode(
+      GetSubtreeAsSymbol(body_node, NodeEnum::kCoverBody, 0));
+}
+
+const SyntaxTreeNode* GetWaitStatementBody(const Symbol& wait_statement) {
+  const auto& body_node = GetGenericStatementBody(CheckNodeEnum(
+      SymbolCastToNode(wait_statement), NodeEnum::kWaitStatement));
+  return verible::CheckOptionalSymbolAsNode(
+      GetSubtreeAsSymbol(body_node, NodeEnum::kWaitBody, 0));
+}
+
+const SyntaxTreeNode& GetAssertPropertyStatementAssertClause(
+    const Symbol& assert_property_statement) {
+  return GetSubtreeAsNode(assert_property_statement,
+                          NodeEnum::kAssertPropertyStatement, 0,
+                          NodeEnum::kAssertPropertyClause);
+}
+
+const SyntaxTreeNode* GetAssertPropertyStatementBody(
+    const Symbol& assert_clause) {
+  const auto& body_node = GetGenericStatementBody(CheckNodeEnum(
+      SymbolCastToNode(assert_clause), NodeEnum::kAssertPropertyClause));
+  return verible::CheckOptionalSymbolAsNode(
+      GetSubtreeAsSymbol(body_node, NodeEnum::kAssertPropertyBody, 0));
+}
+
+const SyntaxTreeNode* GetAssertPropertyStatementElseClause(
+    const Symbol& assert_property_statement) {
+  const auto& node = CheckNodeEnum(SymbolCastToNode(assert_property_statement),
+                                   NodeEnum::kAssertPropertyStatement);
+  const Symbol* else_ptr = node.children().back().get();
+  if (else_ptr == nullptr) return nullptr;
+  return &CheckNodeEnum(SymbolCastToNode(*else_ptr), NodeEnum::kElseClause);
+}
+
+const SyntaxTreeNode& GetAssumePropertyStatementAssumeClause(
+    const Symbol& assume_property_statement) {
+  return GetSubtreeAsNode(assume_property_statement,
+                          NodeEnum::kAssumePropertyStatement, 0,
+                          NodeEnum::kAssumePropertyClause);
+}
+
+const SyntaxTreeNode* GetAssumePropertyStatementBody(
+    const Symbol& assume_clause) {
+  const auto& body_node = GetGenericStatementBody(CheckNodeEnum(
+      SymbolCastToNode(assume_clause), NodeEnum::kAssumePropertyClause));
+  return verible::CheckOptionalSymbolAsNode(
+      GetSubtreeAsSymbol(body_node, NodeEnum::kAssumePropertyBody, 0));
+}
+
+const SyntaxTreeNode* GetAssumePropertyStatementElseClause(
+    const Symbol& assume_property_statement) {
+  const auto& node = CheckNodeEnum(SymbolCastToNode(assume_property_statement),
+                                   NodeEnum::kAssumePropertyStatement);
+  const Symbol* else_ptr = node.children().back().get();
+  if (else_ptr == nullptr) return nullptr;
+  return &CheckNodeEnum(SymbolCastToNode(*else_ptr), NodeEnum::kElseClause);
+}
+
+const SyntaxTreeNode& GetExpectPropertyStatementExpectClause(
+    const Symbol& expect_property_statement) {
+  return GetSubtreeAsNode(expect_property_statement,
+                          NodeEnum::kExpectPropertyStatement, 0,
+                          NodeEnum::kExpectPropertyClause);
+}
+
+const SyntaxTreeNode* GetExpectPropertyStatementBody(
+    const Symbol& expect_clause) {
+  const auto& body_node = GetGenericStatementBody(CheckNodeEnum(
+      SymbolCastToNode(expect_clause), NodeEnum::kExpectPropertyClause));
+  return verible::CheckOptionalSymbolAsNode(
+      GetSubtreeAsSymbol(body_node, NodeEnum::kExpectPropertyBody, 0));
+}
+
+const SyntaxTreeNode* GetExpectPropertyStatementElseClause(
+    const Symbol& expect_property_statement) {
+  const auto& node = CheckNodeEnum(SymbolCastToNode(expect_property_statement),
+                                   NodeEnum::kExpectPropertyStatement);
+  const Symbol* else_ptr = node.children().back().get();
+  if (else_ptr == nullptr) return nullptr;
+  return &CheckNodeEnum(SymbolCastToNode(*else_ptr), NodeEnum::kElseClause);
+}
+
+const SyntaxTreeNode* GetCoverPropertyStatementBody(
+    const Symbol& cover_property) {
+  const auto& body_node = GetGenericStatementBody(CheckNodeEnum(
+      SymbolCastToNode(cover_property), NodeEnum::kCoverPropertyStatement));
+  return verible::CheckOptionalSymbolAsNode(
+      GetSubtreeAsSymbol(body_node, NodeEnum::kCoverPropertyBody, 0));
+}
+
+const SyntaxTreeNode* GetCoverSequenceStatementBody(
+    const Symbol& cover_sequence) {
+  const auto& body_node = GetGenericStatementBody(CheckNodeEnum(
+      SymbolCastToNode(cover_sequence), NodeEnum::kCoverSequenceStatement));
+  return verible::CheckOptionalSymbolAsNode(
+      GetSubtreeAsSymbol(body_node, NodeEnum::kCoverSequenceBody, 0));
+}
+
 const SyntaxTreeNode& GetLoopStatementBody(const Symbol& loop) {
   return GetGenericStatementBody(
       CheckNodeEnum(SymbolCastToNode(loop), NodeEnum::kForLoopStatement));
@@ -147,6 +295,7 @@ const SyntaxTreeNode* GetAnyControlStatementBody(const Symbol& statement) {
       return &GetElseClauseGenerateBody(statement);
     case NodeEnum::kLoopGenerateConstruct:
       return &GetLoopGenerateBody(statement);
+
     // statements
     case NodeEnum::kIfClause:
       return &GetIfClauseStatementBody(statement);
@@ -166,19 +315,60 @@ const SyntaxTreeNode* GetAnyControlStatementBody(const Symbol& statement) {
       return &GetWhileStatementBody(statement);
     case NodeEnum::kProceduralTimingControlStatement:
       return &GetProceduralTimingControlStatementBody(statement);
+
+    // immediate assertions
+    case NodeEnum::kAssertionClause:
+      return GetAssertionClauseStatementBody(statement);
+    case NodeEnum::kAssumeClause:
+      return GetAssumeClauseStatementBody(statement);
+    case NodeEnum::kCoverStatement:
+      return GetCoverStatementBody(statement);
+
+    case NodeEnum::kWaitStatement:
+      return GetWaitStatementBody(statement);
+
+    // concurrent assertions
+    case NodeEnum::kAssertPropertyClause:
+      return GetAssertPropertyStatementBody(statement);
+    case NodeEnum::kAssumePropertyClause:
+      return GetAssumePropertyStatementBody(statement);
+    case NodeEnum::kExpectPropertyClause:
+      return GetExpectPropertyStatementBody(statement);
+    case NodeEnum::kCoverPropertyStatement:
+      return GetCoverPropertyStatementBody(statement);
+    case NodeEnum::kCoverSequenceStatement:
+      return GetCoverSequenceStatementBody(statement);
+
     default:
       return nullptr;
   }
 }
 
 const SyntaxTreeNode* GetAnyConditionalIfClause(const Symbol& conditional) {
+  // by IfClause, we main the first clause
   switch (NodeEnum(SymbolCastToNode(conditional).Tag().tag)) {
     // generate
     case NodeEnum::kConditionalGenerateConstruct:
       return &GetConditionalGenerateIfClause(conditional);
+
     // statement
     case NodeEnum::kConditionalStatement:
       return &GetConditionalStatementIfClause(conditional);
+
+      // immediate assertions
+    case NodeEnum::kAssertionStatement:
+      return &GetAssertionStatementAssertClause(conditional);
+    case NodeEnum::kAssumeStatement:
+      return &GetAssumeStatementAssumeClause(conditional);
+
+      // concurrent assertions
+    case NodeEnum::kAssertPropertyStatement:
+      return &GetAssertPropertyStatementAssertClause(conditional);
+    case NodeEnum::kAssumePropertyStatement:
+      return &GetAssumePropertyStatementAssumeClause(conditional);
+    case NodeEnum::kExpectPropertyStatement:
+      return &GetExpectPropertyStatementExpectClause(conditional);
+
     default:
       return nullptr;
   }
@@ -189,9 +379,25 @@ const SyntaxTreeNode* GetAnyConditionalElseClause(const Symbol& conditional) {
     // generate
     case NodeEnum::kConditionalGenerateConstruct:
       return GetConditionalGenerateElseClause(conditional);
+
     // statement
     case NodeEnum::kConditionalStatement:
       return GetConditionalStatementElseClause(conditional);
+
+      // immediate assertions
+    case NodeEnum::kAssertionStatement:
+      return GetAssertionStatementElseClause(conditional);
+    case NodeEnum::kAssumeStatement:
+      return GetAssumeStatementElseClause(conditional);
+
+      // concurrent assertions
+    case NodeEnum::kAssertPropertyStatement:
+      return GetAssertPropertyStatementElseClause(conditional);
+    case NodeEnum::kAssumePropertyStatement:
+      return GetAssumePropertyStatementElseClause(conditional);
+    case NodeEnum::kExpectPropertyStatement:
+      return GetExpectPropertyStatementElseClause(conditional);
+
     default:
       return nullptr;
   }
