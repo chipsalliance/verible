@@ -16,7 +16,7 @@
 # limitations under the License.
 
 script_name="$(basename $0)"
-script_dir="$(dirname $0)"
+script_dir="$(realpath $(dirname $0))"
 
 formatter="$(which verilog_format)" || \
   formatter="$script_dir"/verilog_format
