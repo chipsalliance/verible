@@ -21,6 +21,7 @@
 #include "gtest/gtest.h"
 #include "common/analysis/matcher/matcher_builders.h"
 #include "common/analysis/syntax_tree_search.h"
+#include "common/analysis/syntax_tree_search_test_utils.h"
 #include "common/text/concrete_syntax_tree.h"
 #include "common/text/symbol.h"
 #include "common/text/text_structure.h"
@@ -44,10 +45,12 @@ namespace {
 
 using verible::SymbolKind;
 using verible::SymbolTag;
+using verible::SyntaxTreeSearchTestCase;
+using verible::TreeSearchMatch;
 
 struct ControlStatementTestData {
   NodeEnum expected_construct;
-  verible::TokenInfoTestData token_data;
+  SyntaxTreeSearchTestCase token_data;
 };
 
 TEST(GetAnyControlStatementBodyTest, Various) {
@@ -501,31 +504,25 @@ TEST(GetAnyControlStatementBodyTest, Various) {
     ASSERT_OK(analyzer.Analyze()) << "failed on:\n" << code;
     const auto& root = analyzer.Data().SyntaxTree();
 
+    // Grab outer statement constructs.
     const auto statements = verible::SearchSyntaxTree(
         *ABSL_DIE_IF_NULL(root),
         verible::matcher::DynamicTagMatchBuilder(SymbolTag{
             SymbolKind::kNode, static_cast<int>(test.expected_construct)})());
-    ASSERT_EQ(statements.size(), 1);
-    const auto& statement = *statements.front().match;
-    const auto* body = GetAnyControlStatementBody(statement);
-    ASSERT_NE(body, nullptr);
-    const auto body_span = verible::StringSpanOfSymbol(*body);
-    // Verify that type span the specified range of text.
 
-    // TODO(b/151371397): Refactor this test code along with
-    // common/analysis/linter_test_util.h to be able to compare set-symmetric
-    // differences in 'findings'.
+    // Extract subtree of interest.
+    std::vector<TreeSearchMatch> bodies;
+    for (const auto& statement : statements) {
+      const auto* body = GetAnyControlStatementBody(*statement.match);
+      bodies.push_back(TreeSearchMatch{body, {/* ignored context */}});
+    }
 
-    // Find the tokens, rebased into the other buffer.
-    const auto expected_excerpts =
-        test.token_data.FindImportantTokens(code_copy);
-    ASSERT_EQ(expected_excerpts.size(), 1);
-    // Compare the string_views and their exact spans.
-    const auto expected_span = expected_excerpts.front().text;
-    ASSERT_TRUE(verible::IsSubRange(body_span, code_copy));
-    ASSERT_TRUE(verible::IsSubRange(expected_span, code_copy));
-    EXPECT_EQ(body_span, expected_span);
-    EXPECT_TRUE(verible::BoundsEqual(body_span, expected_span));
+    // Compare sets of text ranges.
+    std::ostringstream diffs;
+    EXPECT_TRUE(test.token_data.ExactMatchFindings(bodies, code_copy, &diffs))
+        << "failed on:\n"
+        << code << "\ndiffs:\n"
+        << diffs.str();
   }
 }
 
@@ -733,32 +730,25 @@ TEST(GetAnyConditionalIfClauseTest, Various) {
     ASSERT_OK(analyzer.Analyze()) << "failed on:\n" << code;
     const auto& root = analyzer.Data().SyntaxTree();
 
+    // Grab outer statement constructs.
     const auto statements = verible::SearchSyntaxTree(
         *ABSL_DIE_IF_NULL(root),
         verible::matcher::DynamicTagMatchBuilder(SymbolTag{
             SymbolKind::kNode, static_cast<int>(test.expected_construct)})());
-    ASSERT_EQ(statements.size(), 1);
-    const auto& statement = *statements.front().match;
-    const auto* clause = GetAnyConditionalIfClause(statement);
-    ASSERT_NE(clause, nullptr);
-    const auto clause_span = verible::StringSpanOfSymbol(*clause);
-    // Verify that type span the specified range of text.
 
-    // TODO(b/151371397): Refactor this test code along with
-    // common/analysis/linter_test_util.h to be able to compare set-symmetric
-    // differences in 'findings'.
+    // Extract subtree of interest.
+    std::vector<TreeSearchMatch> bodies;
+    for (const auto& statement : statements) {
+      const auto* clause = GetAnyConditionalIfClause(*statement.match);
+      bodies.push_back(TreeSearchMatch{clause, {/* ignored context */}});
+    }
 
-    // Find the tokens, rebased into the other buffer.
-    const auto expected_excerpts =
-        test.token_data.FindImportantTokens(code_copy);
-    ASSERT_EQ(expected_excerpts.size(), 1);
-    EXPECT_EQ(expected_excerpts.front().token_enum, clause->Tag().tag);
-    // Compare the string_views and their exact spans.
-    const auto expected_span = expected_excerpts.front().text;
-    ASSERT_TRUE(verible::IsSubRange(clause_span, code_copy));
-    ASSERT_TRUE(verible::IsSubRange(expected_span, code_copy));
-    EXPECT_EQ(clause_span, expected_span);
-    EXPECT_TRUE(verible::BoundsEqual(clause_span, expected_span));
+    // Compare sets of text ranges.
+    std::ostringstream diffs;
+    EXPECT_TRUE(test.token_data.ExactMatchFindings(bodies, code_copy, &diffs))
+        << "failed on:\n"
+        << code << "\ndiffs:\n"
+        << diffs.str();
   }
 }
 
@@ -1146,32 +1136,25 @@ TEST(GetAnyConditionalElseClauseTest, HaveElseClause) {
     ASSERT_OK(analyzer.Analyze()) << "failed on:\n" << code;
     const auto& root = analyzer.Data().SyntaxTree();
 
+    // Grab outer statement constructs.
     const auto statements = verible::SearchSyntaxTree(
         *ABSL_DIE_IF_NULL(root),
         verible::matcher::DynamicTagMatchBuilder(SymbolTag{
             SymbolKind::kNode, static_cast<int>(test.expected_construct)})());
-    ASSERT_EQ(statements.size(), 1);
-    const auto& statement = *statements.front().match;
-    const auto* clause = GetAnyConditionalElseClause(statement);
-    ASSERT_NE(clause, nullptr);
-    const auto clause_span = verible::StringSpanOfSymbol(*clause);
-    // Verify that type span the specified range of text.
 
-    // TODO(b/151371397): Refactor this test code along with
-    // common/analysis/linter_test_util.h to be able to compare set-symmetric
-    // differences in 'findings'.
+    // Extract subtree of interest.
+    std::vector<TreeSearchMatch> bodies;
+    for (const auto& statement : statements) {
+      const auto* clause = GetAnyConditionalElseClause(*statement.match);
+      bodies.push_back(TreeSearchMatch{clause, {/* ignored context */}});
+    }
 
-    // Find the tokens, rebased into the other buffer.
-    const auto expected_excerpts =
-        test.token_data.FindImportantTokens(code_copy);
-    ASSERT_EQ(expected_excerpts.size(), 1);
-    EXPECT_EQ(expected_excerpts.front().token_enum, clause->Tag().tag);
-    // Compare the string_views and their exact spans.
-    const auto expected_span = expected_excerpts.front().text;
-    ASSERT_TRUE(verible::IsSubRange(clause_span, code_copy));
-    ASSERT_TRUE(verible::IsSubRange(expected_span, code_copy));
-    EXPECT_EQ(clause_span, expected_span);
-    EXPECT_TRUE(verible::BoundsEqual(clause_span, expected_span));
+    // Compare sets of text ranges.
+    std::ostringstream diffs;
+    EXPECT_TRUE(test.token_data.ExactMatchFindings(bodies, code_copy, &diffs))
+        << "failed on:\n"
+        << code << "\ndiffs:\n"
+        << diffs.str();
   }
 }
 

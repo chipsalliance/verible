@@ -660,6 +660,7 @@ cc_test(
         ":verilog_matchers",
         ":verilog_nonterminals",
         "//common/analysis:syntax_tree_search",
+        "//common/analysis:syntax_tree_search_test_utils",
         "//common/analysis/matcher:matcher_builders",
         "//common/text:concrete_syntax_tree",
         "//common/text:symbol",
