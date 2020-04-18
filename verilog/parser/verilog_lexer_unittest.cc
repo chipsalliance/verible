@@ -1758,7 +1758,7 @@ static std::initializer_list<LexerTestData> kUDPTests = {
      " ",
      {'%', "(?X)"},
      " ",
-     {'*', "(??)"},
+     {'*', "(?\?)"},  // Break tri-graph
      " ",
      {'r', "(01)"},
      " ",
