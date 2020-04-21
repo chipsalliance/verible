@@ -5561,6 +5561,8 @@ static const std::initializer_list<ParserTestData> kInvalidCodeTests = {
      "@e foo:\n"
      "`baz\n",
      {verible::TK_EOF, ""}},  // missing endtask before EOF
+    {"`define F",             // missing newline
+     {verible::TK_EOF, ""}},
 };
 
 using verible::LeafTag;
