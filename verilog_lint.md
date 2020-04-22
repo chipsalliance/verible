@@ -298,4 +298,4 @@ Enabled by default: true
 
 ## Version
 
-Generated on 2020-04-10 08:30:45 -0700 from [v0.0-353-g598ba93](https://github.com/google/verible/commit/598ba9351970dc407fa8155707f3ee5183c84027)
+Generated on 2020-04-22 11:35:51 -0700 from [v0.0-363-g47f3270](https://github.com/google/verible/commit/47f32703ddf65db360b2be95bbfc3837e2da652b)
