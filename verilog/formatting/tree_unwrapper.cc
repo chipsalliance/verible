@@ -1256,6 +1256,11 @@ void TreeUnwrapper::ReshapeTokenPartitions(
       AttachTrailingSemicolonToPreviousPartition(&partition);
       break;
     }
+    case NodeEnum::kStatement: {
+      // This handles cases like macro-calls followed by a semicolon.
+      AttachTrailingSemicolonToPreviousPartition(&partition);
+      break;
+    }
     case NodeEnum::kModuleHeader: {
       // If there were any parameters or ports at all, expand.
       // TODO(fangism): This should be done by inspecting the CST node,

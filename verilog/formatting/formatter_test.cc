@@ -2258,6 +2258,30 @@ static const std::initializer_list<FormatterTestCase> kFormatterTestCases = {
      "task t;\n"
      "  ##`DELAY_VALUE;\n"
      "endtask\n"},
+    {"task t;\n"
+     "`uvm_error( foo,bar);\n"
+     "endtask\n",
+     "task t;\n"
+     "  `uvm_error(foo, bar);\n"
+     "endtask\n"},
+    {"task t;\n"
+     "`uvm_error(foo,bar)\n"
+     ";\n"  // null statement
+     "endtask\n",
+     "task t;\n"
+     "  `uvm_error(foo, bar)\n"
+     "  ;\n"
+     "endtask\n"},
+    {"task t;\n"
+     "if(expr)begin\t\n"
+     "`uvm_error(foo,bar);\n"
+     "end\n"
+     "endtask\n",
+     "task t;\n"
+     "  if (expr) begin\n"
+     "    `uvm_error(foo, bar);\n"
+     "  end\n"
+     "endtask\n"},
     {"task\nrabbit;$kill(the,\nrabbit)\n;endtask:  rabbit\n",
      "task rabbit;\n"
      "  $kill(the, rabbit);\n"

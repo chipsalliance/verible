@@ -2440,6 +2440,38 @@ const TreeUnwrapperTestData kUnwrapUvmTestCases[] = {
           N(2, L(2, {"l1b", ","}), L(2, {"UVM_DEFAULT", ")"}))),
         L(0, {"`uvm_field_utils_end"}),
     },
+
+    {
+        "uvm macro statement test, with semicolon on same line",
+        "task t;\n"
+        "`uvm_error(foo, bar);\n"
+        "endtask\n",
+        TaskDeclaration(0, TaskHeader(0, {"task", "t", ";"}),
+                        N(1,                          //
+                          L(1, {"`uvm_error", "("}),  //
+                          N(3,                        //
+                            L(3, {"foo", ","}),       //
+                            L(3, {"bar", ")", ";"}))),
+                        L(0, {"endtask"})),
+    },
+    {
+        "uvm macro statement test, detached null statement semicolon",
+        "task t;\n"
+        "`uvm_error(foo, bar)\n"
+        ";\n"
+        "endtask\n",
+        TaskDeclaration(
+            0, TaskHeader(0, {"task", "t", ";"}),
+            StatementList(1,
+                          N(1,                          //
+                            L(1, {"`uvm_error", "("}),  //
+                            N(3,                        //
+                              L(3, {"foo", ","}),       //
+                              L(3, {"bar", ")"}))),     //
+                          L(1, {";"})  // null statement stays detached
+                          ),
+            L(0, {"endtask"})),
+    },
 };
 
 // Test that TreeUnwrapper produces the correct UnwrappedLines from code with
