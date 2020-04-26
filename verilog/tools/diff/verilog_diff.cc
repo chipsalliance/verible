@@ -116,7 +116,7 @@ int main(int argc, char** argv) {
   }
 
   // Selection diff-ing function.
-  const auto diff_mode = FLAGS_mode.Get();
+  const auto diff_mode = absl::GetFlag(FLAGS_mode);
   const auto iter = diff_func_map.find(diff_mode);
   CHECK(iter != diff_func_map.end());
   const auto diff_func = iter->second;

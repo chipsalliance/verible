@@ -64,11 +64,11 @@ Output is written to stdout.
   IdentifierObfuscator subst;  // initially empty identifier map
 
   // Set mode to encode or decode.
-  const bool decode = FLAGS_decode.Get();
+  const bool decode = absl::GetFlag(FLAGS_decode);
   subst.set_decode_mode(decode);
 
-  const auto& load_map_file = FLAGS_load_map.Get();
-  const auto& save_map_file = FLAGS_save_map.Get();
+  const auto& load_map_file = absl::GetFlag(FLAGS_load_map);
+  const auto& save_map_file = absl::GetFlag(FLAGS_save_map);
   if (!load_map_file.empty()) {
     std::string load_map_content;
     if (!verible::file::GetContents(load_map_file, &load_map_content)) {

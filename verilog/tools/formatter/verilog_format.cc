@@ -132,9 +132,9 @@ int main(int argc, char** argv) {
       << "Missing required positional argument (filename).";
   const absl::string_view filename = file_args[1];
 
-  const bool inplace = FLAGS_inplace.Get();
+  const bool inplace = absl::GetFlag(FLAGS_inplace);
   const bool is_stdin = filename == "-";
-  const auto& stdin_name = FLAGS_stdin_name.Get();
+  const auto& stdin_name = absl::GetFlag(FLAGS_stdin_name);
 
   if (inplace && is_stdin) {
     std::cerr << "--inplace is incompatible with stdin.  Ignoring --inplace "
@@ -172,19 +172,21 @@ int main(int argc, char** argv) {
     // execution control flags
     formatter_control.stream = &std::cout;  // for diagnostics only
     formatter_control.show_largest_token_partitions =
-        FLAGS_show_largest_token_partitions.Get();
+        absl::GetFlag(FLAGS_show_largest_token_partitions);
     formatter_control.show_token_partition_tree =
-        FLAGS_show_token_partition_tree.Get();
-    formatter_control.show_inter_token_info = FLAGS_show_inter_token_info.Get();
+        absl::GetFlag(FLAGS_show_token_partition_tree);
+    formatter_control.show_inter_token_info =
+        absl::GetFlag(FLAGS_show_inter_token_info);
     formatter_control.show_equally_optimal_wrappings =
-        FLAGS_show_equally_optimal_wrappings.Get();
-    formatter_control.max_search_states = FLAGS_max_search_states.Get();
+        absl::GetFlag(FLAGS_show_equally_optimal_wrappings);
+    formatter_control.max_search_states =
+        absl::GetFlag(FLAGS_max_search_states);
 
     // formatting style flags
     format_style.format_module_port_declarations =
-        FLAGS_format_module_port_declarations.Get();
+        absl::GetFlag(FLAGS_format_module_port_declarations);
     format_style.format_module_instantiations =
-        FLAGS_format_module_instantiations.Get();
+        absl::GetFlag(FLAGS_format_module_instantiations);
   }
 
   std::ostringstream stream;
@@ -212,7 +214,7 @@ int main(int argc, char** argv) {
         std::cerr << "[other error status]" << std::endl;
         break;
     }
-    if (FLAGS_failsafe_success.Get()) {
+    if (absl::GetFlag(FLAGS_failsafe_success)) {
       // original text was preserved, and --inplace modification is skipped.
       return 0;
     }
