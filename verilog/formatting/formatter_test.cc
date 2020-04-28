@@ -1900,6 +1900,15 @@ static const std::initializer_list<FormatterTestCase> kFormatterTestCases = {
      "  }\n"
      "endclass\n"},
 
+    {
+        "class Foo; constraint if_c { if (z) { soft x == y; } } endclass\n",
+        "class Foo;\n"
+        "  constraint if_c {\n"
+        "    if (z) {soft x == y;}\n"  // TODO(fangism): always expand?
+        "  }\n"
+        "endclass\n",
+    },
+
     // class with empty parameter list
     {"class foo #(); endclass",
      "class foo #();\n"

@@ -2113,6 +2113,14 @@ TEST(TokenAnnotatorTest, AnnotateFormattingWithContextTest) {
           {},  // any context
           {1, SpacingOptions::MustAppend},
       },
+      {
+          // e.g. if (x) { ... } (in constraints)
+          DefaultStyle,
+          {')', ")"},
+          {'{', "{"},
+          {},  // any context
+          {1, SpacingOptions::Undecided},
+      },
 
       // right token = MacroCallId or MacroIdentifier
       {
@@ -2269,8 +2277,6 @@ TEST(TokenAnnotatorTest, AnnotateFormattingWithContextTest) {
           {'-', "-"},                               // left token
           {verilog_tokentype::TK_DecNumber, "42"},  // right token
           {},                                       // context
-          // ExpectedInterTokenInfo:
-          // spaces_required, break_decision
           {1, SpacingOptions::Undecided},
       },
       {
