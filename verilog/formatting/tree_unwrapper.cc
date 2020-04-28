@@ -522,6 +522,8 @@ void TreeUnwrapper::InterChildNodeHook(const SyntaxTreeNode& node) {
     case NodeEnum::kStatementList:
     case NodeEnum::kPackageItemList:
     case NodeEnum::kBlockItemStatementList:
+    case NodeEnum::kConstraintExpressionList:
+    case NodeEnum::kConstraintBlockItemList:
       LookAheadBeyondCurrentNode();
       break;
     default: {
@@ -987,6 +989,13 @@ static bool PartitionIsCloseParen(const TokenPartitionTree& partition) {
   return ((token_enum == ')') || (token_enum == MacroCallCloseToEndLine));
 }
 
+static bool PartitionIsCloseBrace(const TokenPartitionTree& partition) {
+  const auto ftokens = partition.Value().TokensRange();
+  if (ftokens.size() != 1) return false;
+  const auto token_enum = ftokens.front().TokenEnum();
+  return token_enum == '}';
+}
+
 static void AttachTrailingSemicolonToPreviousPartition(
     TokenPartitionTree* partition) {
   // Attach the trailing ';' partition to the previous sibling leaf.
@@ -1343,6 +1352,16 @@ void TreeUnwrapper::ReshapeTokenPartitions(
       }
       break;
     }
+    case NodeEnum::kConstraintDeclaration: {
+      // TODO(fangism): kConstraintSet should be handled similarly with {}
+      if (partition.Children().size() == 2) {
+        auto& last = *ABSL_DIE_IF_NULL(partition.RightmostDescendant());
+        if (PartitionIsCloseBrace(last)) {
+          verible::MergeLeafIntoPreviousLeaf(&last);
+        }
+      }
+      break;
+    }
 
       // This group of cases is temporary: simplify these during the
       // rewrite/refactor of this function.
@@ -1350,15 +1369,16 @@ void TreeUnwrapper::ReshapeTokenPartitions(
     case NodeEnum::kNetVariableAssignment:           // e.g. x=y
     case NodeEnum::kBlockingAssignmentStatement:     // id=expr
     case NodeEnum::kNonblockingAssignmentStatement:  // dest <= src;
-    case NodeEnum::kAssignModifyStatement: {         // id+=expr
-      std::vector<size_t> offsets;
-      partition.FlattenOnlyChildrenWithChildren(&offsets);
+    case NodeEnum::kAssignModifyStatement:           // id+=expr
+    {
       VLOG(4) << "before moving semicolon:\n" << partition;
       AttachTrailingSemicolonToPreviousPartition(&partition);
-      // Check body, for kSeqBlock, merge 'begin' with previous sibling
-      if (partition.Children().size() > 1) {
-        verible::MergeConsecutiveSiblings(&partition, 0);
-        VLOG(4) << "after merge siblings:\n" << partition;
+      // RHS may have been further partitioned, e.g. a macro call.
+      auto& children = partition.Children();
+      if (children.size() == 2 &&
+          children.front().Children().empty() /* left side */) {
+        verible::MergeLeafIntoNextLeaf(&children.front());
+        VLOG(4) << "after merge leaf (left-into-right):\n" << partition;
       }
       break;
     }
@@ -1377,6 +1397,8 @@ void TreeUnwrapper::ReshapeTokenPartitions(
     case NodeEnum::kProceduralContinuousAssignmentStatement:
     case NodeEnum::kProceduralContinuousForceStatement:
     case NodeEnum::kContinuousAssignmentStatement: {  // e.g. assign a=0, b=2;
+      // TODO(fangism): group into above similar assignment statement cases?
+      //   Cannot easily move now due to multiple-assignments.
       partition.FlattenOnlyChildrenWithChildren();
       VLOG(4) << "after flatten:\n" << partition;
       AttachTrailingSemicolonToPreviousPartition(&partition);

@@ -1614,7 +1614,8 @@ constraint_block_item_list_opt
   : constraint_block_item_list
     { $$ = move($1); }
   | /* empty */
-     { $$ = nullptr; }
+    /* create empty list */
+    { $$ = MakeTaggedNode(N::kConstraintBlockItemList); }
   ;
 preprocessor_balanced_constraint_block_item
   : preprocessor_if_header constraint_block_item_list_opt

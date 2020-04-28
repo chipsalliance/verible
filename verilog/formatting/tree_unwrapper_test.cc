@@ -1094,6 +1094,23 @@ const TreeUnwrapperTestData kUnwrapModuleTestCases[] = {
     },
 
     {
+        "module multiple assignments with macro-call rvalue",
+        "module foob;\n"
+        "initial begin\n"
+        "assign z1 = `RVALUE(l1, r1);\n"  // as statement item
+        "end\n"
+        "endmodule",
+        ModuleDeclaration(
+            0, L(0, {"module", "foob", ";"}),
+            ModuleItemList(
+                1, L(1, {"initial", "begin"}),
+                N(2, L(2, {"assign", "z1", "=", "`RVALUE", "("}),
+                  MacroArgList(4, L(4, {"l1", ","}), L(4, {"r1", ")", ";"}))),
+                L(1, {"end"})),
+            L(0, {"endmodule"})),
+    },
+
+    {
         "module with labeled statements",
         "module labeled_statements;\n"
         "initial begin\n"
@@ -1934,6 +1951,24 @@ const TreeUnwrapperTestData kUnwrapModuleTestCases[] = {
                               L(2, {"force", "x2", "=", "y2", ";"})),
                             L(1, {"end"})),
                           L(0, {"endmodule"})),
+    },
+
+    {
+        "module procedural continuous force statements, macro rvalues",
+        "module proc_cont_forcer;\n"
+        "always begin\n"
+        "force x1 = `y1();\n"
+        "force x2 = `y2(f, g);\n"
+        "end\n"
+        "endmodule\n",
+        ModuleDeclaration(
+            0, L(0, {"module", "proc_cont_forcer", ";"}),
+            N(1, L(1, {"always", "begin"}),
+              N(2, L(2, {"force", "x1", "=", "`y1", "(", ")", ";"}),
+                N(2, L(2, {"force", "x2", "=", "`y2", "("}),
+                  N(4, L(4, {"f", ","}), L(4, {"g", ")", ";"})))),
+              L(1, {"end"})),
+            L(0, {"endmodule"})),
     },
 
     {
@@ -2909,6 +2944,20 @@ const TreeUnwrapperTestData kClassTestCases[] = {
     },
 
     {
+        "class with empty constraint, only comments",
+        "class Foo; constraint empty_c { //c1\n"
+        "//c2\n"
+        "} endclass",
+        ClassDeclaration(
+            0, L(0, {"class", "Foo", ";"}),
+            ConstraintDeclaration(
+                1, L(1, {"constraint", "empty_c", "{", "//c1"}),  //
+                L(2, {"//c2"}),                                   //
+                L(1, {"}"})),
+            L(0, {"endclass"})),
+    },
+
+    {
         "class with multiple constraint declarations",
         "class Foo; constraint empty1_c { } constraint empty2_c {} endclass",
         ClassDeclaration(
@@ -2947,10 +2996,30 @@ const TreeUnwrapperTestData kClassTestCases[] = {
         "class Foo; constraint if_c { if (z) { soft x == y; } } endclass",
         ClassDeclaration(
             0, L(0, {"class", "Foo", ";"}),
+            ConstraintDeclaration(1, L(1, {"constraint", "if_c", "{"}),
+                                  N(2, L(2, {"if", "(", "z", ")", "{"}),  //
+                                    L(3, {"soft", "x", "==", "y", ";"}),  //
+                                    L(2, {"}"})),
+                                  L(1, {"}"})),
+            L(0, {"endclass"})),
+    },
+
+    {
+        "class with conditional constraint set, constraint exprs and comments",
+        "class Foo; constraint if_c { if (z) { //comment-w\n"
+        "//comment-x\n"
+        "soft x == y; //comment-y\n"
+        "//comment-z\n"
+        "} } endclass",
+        ClassDeclaration(
+            0, L(0, {"class", "Foo", ";"}),
             ConstraintDeclaration(
                 1, L(1, {"constraint", "if_c", "{"}),
-                N(2, L(2, {"if", "(", "z", ")", "{"}),
-                  L(3, {"soft", "x", "==", "y", ";"}), L(2, {"}"})),
+                N(2, L(2, {"if", "(", "z", ")", "{", "//comment-w"}),    //
+                  N(3, L(3, {"//comment-x"}),                            //
+                    L(3, {"soft", "x", "==", "y", ";", "//comment-y"}),  //
+                    L(3, {"//comment-z"})),
+                  L(2, {"}"})),
                 L(1, {"}"})),
             L(0, {"endclass"})),
     },
@@ -6337,6 +6406,54 @@ const TreeUnwrapperTestData kUnwrapFunctionTestCases[] = {
                         L(2, {"end"}))),
                 L(1, {"endfunction"})),
             L(0, {"endclass"})),
+    },
+
+    {
+        "function with randomize-with call with comments",
+        "function f;\n"
+        "s = std::randomize() with {\n"
+        "// comment1\n"
+        "a == e;\n"
+        "// comment2\n"
+        "};  \n"
+        "endfunction\n",
+        FunctionDeclaration(
+            0,  //
+            L(0, {"function", "f", ";"}),
+            N(1,  //
+              L(1, {"s", "=", "std::randomize", "(", ")", "with", "{"}),
+              N(2,                            //
+                L(2, {"// comment1"}),        //
+                L(2, {"a", "==", "e", ";"}),  //
+                L(2, {"// comment2"})),       //
+              L(1, {"}", ";"})),
+            L(0, {"endfunction"})),
+    },
+    {
+        "function with randomize-with call with leading comment",
+        "function f;\n"
+        "s = std::randomize() with {\n"
+        "// comment\n"
+        "a == e;\n"
+        "if (x) {\n"
+        "a;\n"
+        "}\n"
+        "};  \n"
+        "endfunction\n",
+        FunctionDeclaration(
+            0,  //
+            L(0, {"function", "f", ";"}),
+            N(1,  //
+              L(1, {"s", "=", "std::randomize", "(", ")", "with", "{"}),
+              N(2,                     //
+                L(2, {"// comment"}),  //
+                L(2, {"a", "==", "e", ";"}),
+                N(2,                                 //
+                  L(2, {"if", "(", "x", ")", "{"}),  //
+                  L(3, {"a", ";"}),                  //
+                  L(2, {"}"}))),
+              L(1, {"}", ";"})),
+            L(0, {"endfunction"})),
     },
 };
 

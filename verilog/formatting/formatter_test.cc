@@ -1887,6 +1887,18 @@ static const std::initializer_list<FormatterTestCase> kFormatterTestCases = {
         "  }\n"
         "endclass\n",
     },
+    {
+        "class foo; constraint c1_c{ //comment1\n"
+        "//comment2\n"
+        "//comment3\n"
+        "} endclass",
+        "class foo;\n"
+        "  constraint c1_c {  //comment1\n"
+        "    //comment2\n"
+        "    //comment3\n"
+        "  }\n"
+        "endclass\n",
+    },
 
     {"class foo;constraint c { "
      "timer_enable dist { [ 8'h0 : 8'hfe ] :/ 90 , 8'hff :/ 10 }; "
@@ -1905,6 +1917,22 @@ static const std::initializer_list<FormatterTestCase> kFormatterTestCases = {
         "class Foo;\n"
         "  constraint if_c {\n"
         "    if (z) {soft x == y;}\n"  // TODO(fangism): always expand?
+        "  }\n"
+        "endclass\n",
+    },
+    {
+        "class Foo; constraint if_c { if (z) {\n"
+        "//comment-a\n"
+        "soft x == y;\n"
+        "//comment-b\n"
+        "} } endclass\n",
+        "class Foo;\n"
+        "  constraint if_c {\n"
+        "    if (z) {\n"
+        "      //comment-a\n"  // properly indented
+        "      soft x == y;\n"
+        "      //comment-b\n"  // properly indented
+        "    }\n"
         "  }\n"
         "endclass\n",
     },
@@ -2701,6 +2729,57 @@ static const std::initializer_list<FormatterTestCase> kFormatterTestCases = {
         "  end\n"
         "  if (!obj.randomize(bar)) begin\n"
         "  end\n"
+        "endfunction\n",
+    },
+    {
+        // randomize-with call, with comments
+        "function f;"
+        "s = std::randomize() with {\n"
+        "// comment1\n"
+        "a == e;\n"
+        "// comment2\n"
+        "};"
+        "endfunction\n",
+        "function f;\n"
+        "  s = std::randomize() with {\n"
+        "    // comment1\n"
+        "    a == e;\n"
+        "    // comment2\n"
+        "  };\n"
+        "endfunction\n",
+    },
+    {
+        // randomize-with call, with comments, one joined
+        "function f;"
+        "s = std::randomize() with {\n"
+        "// comment1\n"
+        "a == e;// comment2\n"
+        "};"
+        "endfunction\n",
+        "function f;\n"
+        "  s = std::randomize() with {\n"
+        "    // comment1\n"
+        "    a == e;  // comment2\n"
+        "  };\n"
+        "endfunction\n",
+    },
+    {
+        // randomize-with call, with comment, and conditional
+        "function f;"
+        "s = std::randomize() with {\n"
+        "// comment\n"
+        "a == e;"
+        "if (x) {"
+        "a;"
+        "}"
+        "};"
+        "endfunction\n",
+        "function f;\n"
+        "  s = std::randomize() with {\n"
+        "    // comment\n"
+        "    a == e;\n"
+        "    if (x) {a;}\n"  // TODO(fangism): consider expanding
+        "  };\n"
         "endfunction\n",
     },
 
