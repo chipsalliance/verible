@@ -47,7 +47,7 @@ static void ObfuscateVerilogCodeInternal(absl::string_view content,
       case verilog_tokentype::PP_Identifier:
         *output << (*subst)(token.text);
         break;
-        // System calls fail if encrypted
+        // Preserve all $ID calls, including system task/function calls, and VPI calls
       case verilog_tokentype::SystemTFIdentifier:
         *output << token.text;
         break;
