@@ -1585,6 +1585,13 @@ static const std::initializer_list<FormatterTestCase> kFormatterTestCases = {
      "    input logic z\n"
      ");\n"
      "endinterface\n"},
+    {// interface declaration with multiple ports
+     " interface if1( input\tlogic   z, output logic a)\n;endinterface\t\t",
+     "interface if1 (\n"
+     "    input logic z,\n"  // should be one-per-line, even it it fits
+     "    output logic a\n"
+     ");\n"
+     "endinterface\n"},
     {// interface declaration with parameters and ports
      " interface if1#( parameter int W= 8 )(input logic z);endinterface\t\t",
      // doesn't fit on one line
