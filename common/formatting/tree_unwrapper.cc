@@ -222,6 +222,7 @@ void TreeUnwrapper::MergeLastTwoPartitions() {
     active_unwrapped_lines_ = parent->NewChild(UnwrappedLine(
         current_indentation_spaces_, current_token_iter
         // TODO(fangism): partitioning policy?
+        // TODO(fangism): origin?
         ));
   }
 }
@@ -303,6 +304,7 @@ TreeUnwrapper::VisitIndentedChildren(const SyntaxTreeNode& node,
       active_unwrapped_lines_->NewChild(
           UnwrappedLine(current_indentation_spaces_,
                         CurrentFormatTokenIterator(), partitioning)));
+  CurrentUnwrappedLine().SetOrigin(&node);
   VLOG(3) << __FUNCTION__ << ", new node " << NodePath(*active_unwrapped_lines_)
           << ": " << CurrentUnwrappedLine();
   TraverseChildren(node);

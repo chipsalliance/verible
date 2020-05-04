@@ -81,6 +81,7 @@ cc_library(
     ],
     deps = [
         ":format_token",
+        "//common/text:symbol",
         "//common/util:container_iterator_range",
         "//common/util:container_util",
         "//common/util:spacer",

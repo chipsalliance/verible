@@ -20,6 +20,7 @@
 #include <vector>
 
 #include "common/formatting/format_token.h"
+#include "common/text/symbol.h"
 #include "common/util/container_iterator_range.h"
 
 namespace verible {
@@ -30,6 +31,9 @@ namespace verible {
 // different set of policies, this this might eventually have to move into
 // language-specific implementation code.
 enum class PartitionPolicyEnum {
+  // This partition exists solely just for grouping purposes.
+  // Always view subpartitions of node tagged with this, rather than whole range
+  // spanned by the subpartitions.
   kAlwaysExpand,
 
   // Collapse into one line if it doesn't exceed column limit.
@@ -101,6 +105,9 @@ class UnwrappedLine {
     partition_policy_ = policy;
   }
 
+  const Symbol* Origin() const { return origin_; }
+  void SetOrigin(const Symbol* origin) { origin_ = origin; }
+
   // Returns the range of PreFormatTokens spanned by this UnwrappedLine.
   // Note that this is a *copy*, and not a reference to the underlying range.
   range_type TokensRange() const { return tokens_; }
@@ -128,6 +135,10 @@ class UnwrappedLine {
   // This determines under what conditions this UnwrappedLine should be
   // further partitioned for formatting.
   PartitionPolicyEnum partition_policy_ = PartitionPolicyEnum::kAlwaysExpand;
+
+  // Hint about the origin of this partition, e.g. a particular syntax
+  // tree node/leaf.
+  const Symbol* origin_ = nullptr;
 };
 
 std::ostream& operator<<(std::ostream&, const UnwrappedLine&);
