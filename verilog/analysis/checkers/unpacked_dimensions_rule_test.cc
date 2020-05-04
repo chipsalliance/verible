@@ -109,6 +109,13 @@ TEST(UnpackedDimensionsRuleTests, CheckRanges) {
       // inner range is packed dimensions, should not be detected as unpacked
       {"int some_array [bit [7:0]];"},
       {"int some_array [bit [0:7]];"},
+
+      // array of instances
+      {"module test (input logic [1:0] blah);",
+       "endmodule",
+       "module tb;",
+       "  test test_i[3:0] (.blah (2'b0));",
+       "endmodule"}
   };
   RunLintTestCases<VerilogAnalyzer, UnpackedDimensionsRule>(kTestCases);
 }

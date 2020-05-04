@@ -71,7 +71,8 @@ std::string UnpackedDimensionsRule::GetDescription(
 
 void UnpackedDimensionsRule::HandleSymbol(
     const verible::Symbol& symbol, const verible::SyntaxTreeContext& context) {
-  if (!ContextIsInsideUnpackedDimensions(context)) return;
+  if (!ContextIsInsideUnpackedDimensions(context) || 
+      context.IsInside(NodeEnum::kGateInstance)) return;
 
   verible::matcher::BoundSymbolManager manager;
   if (matcher_.Matches(symbol, &manager)) {
