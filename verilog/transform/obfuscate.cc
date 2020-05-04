@@ -47,9 +47,13 @@ static void ObfuscateVerilogCodeInternal(absl::string_view content,
       case verilog_tokentype::PP_Identifier:
         *output << (*subst)(token.text);
         break;
+        // Preserve all $ID calls, including system task/function calls, and VPI
+        // calls
+      case verilog_tokentype::SystemTFIdentifier:
+        *output << token.text;
+        break;
         // The following identifier types start with a special character that
         // needs to be preserved.
-      case verilog_tokentype::SystemTFIdentifier:
       case verilog_tokentype::MacroIdentifier:
       case verilog_tokentype::MacroCallId:
         // TODO(fangism): verilog_tokentype::EscapedIdentifier
