@@ -29,6 +29,7 @@ namespace verible {
 // needs to be tracked in a stack-like manner during visitation
 // because SyntaxTreeNode and Leaf do not maintain upward pointers
 // to their parent nodes.
+// e.g. use the LexicographicalLess comparator in common/util/algorithm.h.
 // TODO(fangism): consider replacing with hybrid "small" vector to
 // minimize heap allocations, because these are expected to be small.
 using SyntaxTreePath = std::vector<size_t>;

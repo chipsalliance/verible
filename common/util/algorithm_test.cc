@@ -15,6 +15,7 @@
 #include "common/util/algorithm.h"
 
 #include <iterator>  // for std::back_inserter
+#include <list>
 #include <string>
 #include <vector>
 
@@ -340,6 +341,56 @@ TEST(FindAllTest, StrSplitEveryN) {
   find_all(seq.begin(), seq.end(), std::back_inserter(bounds), EveryN(4));
   const auto b = seq.begin();
   EXPECT_THAT(bounds, ElementsAre(b + 4, b + 8, b + 12));
+}
+
+TEST(LexicographicalLessTest, Containers) {
+  LexicographicalLess comp;
+  using List = std::list<int>;
+  using Vector = std::vector<int>;
+  EXPECT_FALSE(comp(List{}, List{}));
+  EXPECT_FALSE(comp(Vector{}, Vector{}));
+  EXPECT_FALSE(comp(Vector{}, List{}));
+  EXPECT_FALSE(comp(List{}, Vector{}));
+  EXPECT_TRUE(comp(Vector{}, List{1}));
+  EXPECT_FALSE(comp(Vector{0}, List{}));
+  EXPECT_FALSE(comp(Vector{0}, List{0}));
+  EXPECT_FALSE(comp(Vector{4}, List{4}));
+  EXPECT_TRUE(comp(List{1}, Vector{2}));
+  EXPECT_TRUE(comp(List{1}, Vector{1, -1}));
+  EXPECT_TRUE(comp(List{1}, List{1, -1}));
+  EXPECT_FALSE(comp(List{1, 0}, List{1, -1}));
+  EXPECT_TRUE(comp(List{1, -2}, List{1, -1}));
+}
+
+// like substr()
+template <class T>
+iterator_range<typename T::const_iterator> make_subrange(const T& t, size_t b,
+                                                         size_t e) {
+  return make_range(t.begin() + b, t.begin() + e);
+}
+
+TEST(LexicographicalLessTest, Ranges) {
+  LexicographicalLess comp;
+  const std::vector<int> v{1, 0, 2, 1, 3};
+  EXPECT_FALSE(comp(make_subrange(v, 0, 0), make_subrange(v, 0, 0)));
+  EXPECT_FALSE(comp(make_subrange(v, 1, 1), make_subrange(v, 1, 1)));
+  EXPECT_FALSE(comp(v, v));
+  EXPECT_FALSE(comp(v, make_subrange(v, 0, 1)));
+  EXPECT_TRUE(comp(make_subrange(v, 0, 1), v));
+  EXPECT_FALSE(comp(v, make_subrange(v, 0, 5)));  // whole vector
+  EXPECT_FALSE(comp(make_subrange(v, 0, 5), v));  // whole vector
+  EXPECT_FALSE(comp(v, make_subrange(v, 1, 2)));
+  EXPECT_TRUE(comp(v, make_subrange(v, 2, 3)));
+  EXPECT_FALSE(comp(v, make_subrange(v, 3, 4)));
+  EXPECT_TRUE(comp(v, make_subrange(v, 3, 5)));
+  EXPECT_FALSE(comp(make_subrange(v, 0, 1), make_subrange(v, 0, 1)));
+  EXPECT_FALSE(comp(make_subrange(v, 0, 5), make_subrange(v, 0, 5)));  // whole
+  EXPECT_TRUE(comp(make_subrange(v, 1, 5), make_subrange(v, 0, 5)));
+  EXPECT_FALSE(comp(make_subrange(v, 0, 5), make_subrange(v, 1, 5)));
+  EXPECT_TRUE(comp(make_subrange(v, 0, 5), make_subrange(v, 2, 5)));
+  EXPECT_FALSE(comp(make_subrange(v, 2, 5), make_subrange(v, 0, 5)));
+  EXPECT_FALSE(comp(make_subrange(v, 0, 1), make_subrange(v, 3, 4)));
+  EXPECT_FALSE(comp(make_subrange(v, 3, 4), make_subrange(v, 0, 1)));
 }
 
 }  // namespace

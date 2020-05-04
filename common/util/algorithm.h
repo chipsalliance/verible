@@ -69,6 +69,20 @@ void find_all(InputIter iter, InputIter end, OutputIter output,
   }
 }
 
+// Adapts std::lexicographical_compare to work on two sequences (including
+// containers, ranges, spans, views).
+struct LexicographicalLess {
+  // Enable heterogenous lookup.
+  using is_transparent = void;
+
+  // Compare two sequences lexicographically, element-by-element.
+  template <class T1, class T2>
+  bool operator()(const T1& left, const T2& right) const {
+    return std::lexicographical_compare(left.begin(), left.end(), right.begin(),
+                                        right.end());
+  }
+};
+
 }  // namespace verible
 
 #endif  // VERIBLE_COMMON_UTIL_ALGORITHM_H_
