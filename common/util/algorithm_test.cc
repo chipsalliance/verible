@@ -217,5 +217,130 @@ TEST(SetSymmetricDifferenceSplitTest, CompleteSubset2) {
   EXPECT_TRUE(diff2.empty());
 }
 
+TEST(FindAllTest, EmptyRangeTruePredicate) {
+  const std::vector<int> seq;  // empty
+  std::vector<std::vector<int>::const_iterator> bounds;
+  find_all(seq.begin(), seq.end(), std::back_inserter(bounds),
+           [](int) { return true; });
+  EXPECT_TRUE(bounds.empty());
+}
+
+TEST(FindAllTest, EmptyRangeFalsePredicate) {
+  const std::vector<int> seq;  // empty
+  std::vector<std::vector<int>::const_iterator> bounds;
+  find_all(seq.begin(), seq.end(), std::back_inserter(bounds),
+           [](int) { return false; });
+  EXPECT_TRUE(bounds.empty());
+}
+
+TEST(FindAllTest, PartitionEveryElement) {
+  const std::vector<int> seq({6, 5, 4, 3, 2});
+  std::vector<std::vector<int>::const_iterator> bounds;
+  find_all(seq.begin(), seq.end(), std::back_inserter(bounds),
+           [](int) { return true; });
+  const auto b = seq.begin();
+  EXPECT_THAT(bounds, ElementsAre(b, b + 1, b + 2, b + 3, b + 4));
+}
+
+TEST(FindAllTest, PartitionNoElements) {
+  const std::vector<int> seq({6, 5, 4, 3, 2});
+  std::vector<std::vector<int>::const_iterator> bounds;
+  find_all(seq.begin(), seq.end(), std::back_inserter(bounds),
+           [](int) { return false; });
+  EXPECT_TRUE(bounds.empty());
+}
+
+TEST(FindAllTest, PartitionAtEveryZero) {
+  const std::vector<int> seq({0, 6, 5, 0, 4, 3, 2, 0});
+  std::vector<std::vector<int>::const_iterator> bounds;
+  find_all(seq.begin(), seq.end(), std::back_inserter(bounds),
+           [](int i) { return i == 0; });
+  const auto b = seq.begin();
+  EXPECT_THAT(bounds, ElementsAre(b, b + 3, b + 7));
+}
+
+TEST(FindAllTest, PartitionAfterEveryZero) {
+  const std::vector<int> seq({0, 6, 5, 0, 4, 3, 2, 0});
+  std::vector<std::vector<int>::const_iterator> bounds;
+  // This demonstrates using a stateful predicate.
+  int prev = -1;
+  find_all(seq.begin(), seq.end(), std::back_inserter(bounds), [&](int i) {
+    // Split *after* each zero.
+    const bool p = prev == 0;
+    prev = i;
+    return p;
+  });
+  const auto b = seq.begin();
+  EXPECT_THAT(bounds, ElementsAre(b + 1, b + 4));
+  // Last 0 is not evaluated because it is right before the end().
+  EXPECT_EQ(prev, 0);  // the last value seen
+}
+
+TEST(FindAllTest, PartitionAfterEveryZero2) {
+  const std::vector<int> seq({6, 0, 5, 0, 4, 3, 2, 0, 1});
+  std::vector<std::vector<int>::const_iterator> bounds;
+  // This demonstrates using a stateful predicate.
+  int prev = -1;
+  find_all(seq.begin(), seq.end(), std::back_inserter(bounds), [&](int i) {
+    // Split *after* each zero.
+    const bool p = prev == 0;
+    prev = i;
+    return p;
+  });
+  const auto b = seq.begin();
+  EXPECT_THAT(bounds, ElementsAre(b + 2, b + 4, b + 8));
+  EXPECT_EQ(prev, 1);  // the last value seen
+}
+
+TEST(FindAllTest, StrSplitAtEqual) {
+  const absl::string_view seq("aa=b=cc");
+  std::vector<absl::string_view::const_iterator> bounds;
+  find_all(seq.begin(), seq.end(), std::back_inserter(bounds),
+           [](char i) { return i == '='; });
+  const auto b = seq.begin();
+  EXPECT_THAT(bounds, ElementsAre(b + 2, b + 4));
+}
+
+TEST(FindAllTest, StrSplitAfterEqual) {
+  const absl::string_view seq("aa=b=cd");
+  std::vector<absl::string_view::const_iterator> bounds;
+  int prev = -1;
+  find_all(seq.begin(), seq.end(), std::back_inserter(bounds), [&](char i) {
+    // Split *after* each '='.
+    const bool p = prev == '=';
+    prev = i;
+    return p;
+  });
+  const auto b = seq.begin();
+  EXPECT_THAT(bounds, ElementsAre(b + 3, b + 5));
+  EXPECT_EQ(prev, 'd');  // the last value seen
+}
+
+// generator that returns infinite sequence: {[false]*(N-1), true}*
+class EveryN {
+ public:
+  explicit EveryN(int n, int init = 0) : i(init), n(n) {}
+
+  template <class T>
+  bool operator()(const T&) {
+    const bool ret = i == n;
+    if (ret) i = 0;
+    ++i;
+    return ret;
+  }
+
+ private:
+  int i;
+  const int n;
+};
+
+TEST(FindAllTest, StrSplitEveryN) {
+  const absl::string_view seq("xxxxyyyyaaaabbb");
+  std::vector<absl::string_view::const_iterator> bounds;
+  find_all(seq.begin(), seq.end(), std::back_inserter(bounds), EveryN(4));
+  const auto b = seq.begin();
+  EXPECT_THAT(bounds, ElementsAre(b + 4, b + 8, b + 12));
+}
+
 }  // namespace
 }  // namespace verible

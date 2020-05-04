@@ -55,6 +55,20 @@ std::pair<OutputIt1, OutputIt2> set_symmetric_difference_split(
   return std::make_pair(diff1, std::copy(first2, last2, diff2));
 }
 
+// Assigns to the output all iterators at which the predicate evaluates true,
+// like repeated calls to std::find_if().
+// Run time: O(N) because every element in [iter, end) is visited exactly once.
+// Predicate may also be stateful.
+// This can be very useful for partitioning ranges into sub-ranges,
+// by finding boundaries at which to sub-divide.
+template <class InputIter, class OutputIter, class Predicate>
+void find_all(InputIter iter, InputIter end, OutputIter output,
+              Predicate pred) {
+  for (; iter != end; ++iter) {
+    if (pred(*iter)) *output = iter;
+  }
+}
+
 }  // namespace verible
 
 #endif  // VERIBLE_COMMON_UTIL_ALGORITHM_H_
