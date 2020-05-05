@@ -19,7 +19,7 @@
 namespace verible {
 
 void TreeContextVisitor::Visit(const SyntaxTreeNode& node) {
-  const SyntaxTreeContext::AutoPop p(&current_context_, node);
+  const SyntaxTreeContext::AutoPop p(&current_context_, &node);
   for (const auto& child : node.children()) {
     if (child) child->Accept(this);
   }

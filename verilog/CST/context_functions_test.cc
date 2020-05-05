@@ -46,7 +46,7 @@ TEST(ContextIsInsideClassTest, EmptyContext) {
 TEST(ContextIsInsideClassTest, ClassContextOnly) {
   const auto class_node = TNode(NodeEnum::kClassDeclaration);
   SyntaxTreeContext context;
-  SyntaxTreeContext::AutoPop pop(&context, CastAsNode(class_node));
+  SyntaxTreeContext::AutoPop pop(&context, &CastAsNode(class_node));
   EXPECT_TRUE(ContextIsInsideClass(context));
 }
 
@@ -54,7 +54,7 @@ TEST(ContextIsInsideClassTest, ClassContextOnly) {
 TEST(ContextIsInsideClassTest, ModuleContextOnly) {
   const auto module_node = TNode(NodeEnum::kModuleDeclaration);
   SyntaxTreeContext context;
-  SyntaxTreeContext::AutoPop pop(&context, CastAsNode(module_node));
+  SyntaxTreeContext::AutoPop pop(&context, &CastAsNode(module_node));
   EXPECT_FALSE(ContextIsInsideClass(context));
 }
 
@@ -63,8 +63,8 @@ TEST(ContextIsInsideClassTest, OtherInsideClass) {
   const auto class_node = TNode(NodeEnum::kClassDeclaration);
   const auto module_node = TNode(NodeEnum::kModuleDeclaration);
   SyntaxTreeContext context;
-  SyntaxTreeContext::AutoPop pop1(&context, CastAsNode(class_node));
-  SyntaxTreeContext::AutoPop pop2(&context, CastAsNode(module_node));
+  SyntaxTreeContext::AutoPop pop1(&context, &CastAsNode(class_node));
+  SyntaxTreeContext::AutoPop pop2(&context, &CastAsNode(module_node));
   EXPECT_TRUE(ContextIsInsideClass(context));
 }
 
@@ -73,8 +73,8 @@ TEST(ContextIsInsideClassTest, ClassInsideOther) {
   const auto class_node = TNode(NodeEnum::kClassDeclaration);
   const auto module_node = TNode(NodeEnum::kModuleDeclaration);
   SyntaxTreeContext context;
-  SyntaxTreeContext::AutoPop pop1(&context, CastAsNode(module_node));
-  SyntaxTreeContext::AutoPop pop2(&context, CastAsNode(class_node));
+  SyntaxTreeContext::AutoPop pop1(&context, &CastAsNode(module_node));
+  SyntaxTreeContext::AutoPop pop2(&context, &CastAsNode(class_node));
   EXPECT_TRUE(ContextIsInsideClass(context));
 }
 
@@ -82,7 +82,7 @@ TEST(ContextIsInsideClassTest, ClassInsideOther) {
 TEST(ContextIsInsideModuleTest, ClassContextOnly) {
   const auto class_node = TNode(NodeEnum::kClassDeclaration);
   SyntaxTreeContext context;
-  SyntaxTreeContext::AutoPop pop(&context, CastAsNode(class_node));
+  SyntaxTreeContext::AutoPop pop(&context, &CastAsNode(class_node));
   EXPECT_FALSE(ContextIsInsideModule(context));
 }
 
@@ -90,7 +90,7 @@ TEST(ContextIsInsideModuleTest, ClassContextOnly) {
 TEST(ContextIsInsideModuleTest, ModuleContextOnly) {
   const auto module_node = TNode(NodeEnum::kModuleDeclaration);
   SyntaxTreeContext context;
-  SyntaxTreeContext::AutoPop pop(&context, CastAsNode(module_node));
+  SyntaxTreeContext::AutoPop pop(&context, &CastAsNode(module_node));
   EXPECT_TRUE(ContextIsInsideModule(context));
 }
 
@@ -99,8 +99,8 @@ TEST(ContextIsInsideModuleTest, OtherInsideModule) {
   const auto class_node = TNode(NodeEnum::kClassDeclaration);
   const auto module_node = TNode(NodeEnum::kModuleDeclaration);
   SyntaxTreeContext context;
-  SyntaxTreeContext::AutoPop pop1(&context, CastAsNode(class_node));
-  SyntaxTreeContext::AutoPop pop2(&context, CastAsNode(module_node));
+  SyntaxTreeContext::AutoPop pop1(&context, &CastAsNode(class_node));
+  SyntaxTreeContext::AutoPop pop2(&context, &CastAsNode(module_node));
   EXPECT_TRUE(ContextIsInsideModule(context));
 }
 
@@ -109,8 +109,8 @@ TEST(ContextIsInsideModuleTest, ModuleInsideOther) {
   const auto class_node = TNode(NodeEnum::kClassDeclaration);
   const auto module_node = TNode(NodeEnum::kModuleDeclaration);
   SyntaxTreeContext context;
-  SyntaxTreeContext::AutoPop pop1(&context, CastAsNode(module_node));
-  SyntaxTreeContext::AutoPop pop2(&context, CastAsNode(class_node));
+  SyntaxTreeContext::AutoPop pop1(&context, &CastAsNode(module_node));
+  SyntaxTreeContext::AutoPop pop2(&context, &CastAsNode(class_node));
   EXPECT_TRUE(ContextIsInsideModule(context));
 }
 
@@ -119,8 +119,8 @@ TEST(ContextIsInsidePackedDimensionsTest, PackedNotUnpacked) {
   const auto data_node = TNode(NodeEnum::kDataDeclaration);
   const auto dimensions_node = TNode(NodeEnum::kPackedDimensions);
   SyntaxTreeContext context;
-  SyntaxTreeContext::AutoPop pop1(&context, CastAsNode(data_node));
-  SyntaxTreeContext::AutoPop pop2(&context, CastAsNode(dimensions_node));
+  SyntaxTreeContext::AutoPop pop1(&context, &CastAsNode(data_node));
+  SyntaxTreeContext::AutoPop pop2(&context, &CastAsNode(dimensions_node));
   EXPECT_TRUE(ContextIsInsidePackedDimensions(context));
   EXPECT_FALSE(ContextIsInsideUnpackedDimensions(context));
 }
@@ -130,8 +130,8 @@ TEST(ContextIsInsidePackedDimensionsTest, UnpackedNotPacked) {
   const auto data_node = TNode(NodeEnum::kDataDeclaration);
   const auto dimensions_node = TNode(NodeEnum::kUnpackedDimensions);
   SyntaxTreeContext context;
-  SyntaxTreeContext::AutoPop pop1(&context, CastAsNode(data_node));
-  SyntaxTreeContext::AutoPop pop2(&context, CastAsNode(dimensions_node));
+  SyntaxTreeContext::AutoPop pop1(&context, &CastAsNode(data_node));
+  SyntaxTreeContext::AutoPop pop2(&context, &CastAsNode(dimensions_node));
   EXPECT_TRUE(ContextIsInsideUnpackedDimensions(context));
   EXPECT_FALSE(ContextIsInsidePackedDimensions(context));
 }
@@ -140,7 +140,7 @@ TEST(ContextIsInsidePackedDimensionsTest, UnpackedNotPacked) {
 TEST(ContextIsInsidePackageTest, ClassContextOnly) {
   const auto class_node = TNode(NodeEnum::kClassDeclaration);
   SyntaxTreeContext context;
-  SyntaxTreeContext::AutoPop pop(&context, CastAsNode(class_node));
+  SyntaxTreeContext::AutoPop pop(&context, &CastAsNode(class_node));
   EXPECT_FALSE(ContextIsInsidePackage(context));
 }
 
@@ -148,7 +148,7 @@ TEST(ContextIsInsidePackageTest, ClassContextOnly) {
 TEST(ContextIsInsidePackageTest, PackageContextOnly) {
   const auto package_node = TNode(NodeEnum::kPackageDeclaration);
   SyntaxTreeContext context;
-  SyntaxTreeContext::AutoPop pop(&context, CastAsNode(package_node));
+  SyntaxTreeContext::AutoPop pop(&context, &CastAsNode(package_node));
   EXPECT_TRUE(ContextIsInsidePackage(context));
 }
 
@@ -157,8 +157,8 @@ TEST(ContextIsInsidePackageTest, OtherInsidePackage) {
   const auto package_node = TNode(NodeEnum::kPackageDeclaration);
   const auto module_node = TNode(NodeEnum::kModuleDeclaration);
   SyntaxTreeContext context;
-  SyntaxTreeContext::AutoPop pop1(&context, CastAsNode(package_node));
-  SyntaxTreeContext::AutoPop pop2(&context, CastAsNode(module_node));
+  SyntaxTreeContext::AutoPop pop1(&context, &CastAsNode(package_node));
+  SyntaxTreeContext::AutoPop pop2(&context, &CastAsNode(module_node));
   EXPECT_TRUE(ContextIsInsidePackage(context));
 }
 
@@ -167,8 +167,8 @@ TEST(ContextIsInsidePackageTest, PackageInsideOther) {
   const auto package_node = TNode(NodeEnum::kPackageDeclaration);
   const auto module_node = TNode(NodeEnum::kModuleDeclaration);
   SyntaxTreeContext context;
-  SyntaxTreeContext::AutoPop pop1(&context, CastAsNode(module_node));
-  SyntaxTreeContext::AutoPop pop2(&context, CastAsNode(package_node));
+  SyntaxTreeContext::AutoPop pop1(&context, &CastAsNode(module_node));
+  SyntaxTreeContext::AutoPop pop2(&context, &CastAsNode(package_node));
   EXPECT_TRUE(ContextIsInsidePackage(context));
 }
 
@@ -177,8 +177,8 @@ TEST(ContextIsInsideFormalParameterListTest, NotAContext) {
   const auto package_node = TNode(NodeEnum::kPackageDeclaration);
   const auto parameter_node = TNode(NodeEnum::kParamDeclaration);
   SyntaxTreeContext context;
-  SyntaxTreeContext::AutoPop pop1(&context, CastAsNode(package_node));
-  SyntaxTreeContext::AutoPop pop2(&context, CastAsNode(parameter_node));
+  SyntaxTreeContext::AutoPop pop1(&context, &CastAsNode(package_node));
+  SyntaxTreeContext::AutoPop pop2(&context, &CastAsNode(parameter_node));
   EXPECT_FALSE(ContextIsInsideFormalParameterList(context));
 }
 
@@ -187,8 +187,8 @@ TEST(ContextIsInsideFormalParameterListTest, FormalContext) {
   const auto module_node = TNode(NodeEnum::kModuleDeclaration);
   const auto formal_param_node = TNode(NodeEnum::kFormalParameterList);
   SyntaxTreeContext context;
-  SyntaxTreeContext::AutoPop pop1(&context, CastAsNode(module_node));
-  SyntaxTreeContext::AutoPop pop2(&context, CastAsNode(formal_param_node));
+  SyntaxTreeContext::AutoPop pop1(&context, &CastAsNode(module_node));
+  SyntaxTreeContext::AutoPop pop2(&context, &CastAsNode(formal_param_node));
   EXPECT_TRUE(ContextIsInsideFormalParameterList(context));
 }
 
@@ -197,9 +197,9 @@ TEST(ContextIsInsideTaskFunctionPortListTest, PortListInsideFunction) {
   const auto port_list_node = TNode(NodeEnum::kPortList);
   const auto function_node = TNode(NodeEnum::kFunctionDeclaration);
   SyntaxTreeContext context;
-  SyntaxTreeContext::AutoPop pop1(&context, CastAsNode(function_node));
+  SyntaxTreeContext::AutoPop pop1(&context, &CastAsNode(function_node));
   EXPECT_FALSE(ContextIsInsideTaskFunctionPortList(context));
-  SyntaxTreeContext::AutoPop pop2(&context, CastAsNode(port_list_node));
+  SyntaxTreeContext::AutoPop pop2(&context, &CastAsNode(port_list_node));
   EXPECT_TRUE(ContextIsInsideTaskFunctionPortList(context));
 }
 
@@ -208,9 +208,9 @@ TEST(ContextIsInsideTaskFunctionPortListTest, PortListInsideTask) {
   const auto port_list_node = TNode(NodeEnum::kPortList);
   const auto task_node = TNode(NodeEnum::kTaskDeclaration);
   SyntaxTreeContext context;
-  SyntaxTreeContext::AutoPop pop1(&context, CastAsNode(task_node));
+  SyntaxTreeContext::AutoPop pop1(&context, &CastAsNode(task_node));
   EXPECT_FALSE(ContextIsInsideTaskFunctionPortList(context));
-  SyntaxTreeContext::AutoPop pop2(&context, CastAsNode(port_list_node));
+  SyntaxTreeContext::AutoPop pop2(&context, &CastAsNode(port_list_node));
   EXPECT_TRUE(ContextIsInsideTaskFunctionPortList(context));
 }
 

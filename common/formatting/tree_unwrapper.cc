@@ -276,7 +276,7 @@ void TreeUnwrapper::AdvanceNextUnfilteredToken() {
 void TreeUnwrapper::TraverseChildren(const verible::SyntaxTreeNode& node) {
   // Can't just use TreeContextVisitor::Visit(node) because we need to
   // call a visit hook between children.
-  const verible::SyntaxTreeContext::AutoPop p(&current_context_, node);
+  const verible::SyntaxTreeContext::AutoPop p(&current_context_, &node);
   InterChildNodeHook(node);
   for (const auto& child : node.children()) {
     if (child) {

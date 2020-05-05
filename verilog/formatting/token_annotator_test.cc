@@ -153,7 +153,7 @@ class InitializedSyntaxTreeContext : public verible::SyntaxTreeContext {
           verible::down_cast<verible::SyntaxTreeNode*>(root_.get())));
     }
     for (const auto* parent : verible::reversed_view(parents)) {
-      Push(*parent);
+      Push(parent);
     }
   }
 
