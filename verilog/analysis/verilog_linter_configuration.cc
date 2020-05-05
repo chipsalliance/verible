@@ -83,13 +83,26 @@ std::string ProjectPolicy::ListPathGlobs() const {
                        });
 }
 
-bool RuleBundle::ParseConfiguration(absl::string_view text,
+bool RuleBundle::ParseConfiguration(absl::string_view text, char separator,
                                     std::string* error) {
   // Clear the vector to overwrite any existing value.
   rules.clear();
 
   for (absl::string_view part :
-       absl::StrSplit(text, absl::ByAnyChar(",\n"), absl::SkipEmpty())) {
+       absl::StrSplit(text, separator, absl::SkipEmpty())) {
+    if (separator == '\n') {
+      // In configuration files, we can ignore #-comments
+      // TODO(hzeller): this will fall short if in the configuration string
+      // we expect rules that accept a #-character for some reason. In that
+      // case we need to expand this to parse out 'within # quotes' parts.
+      // ... then this will finally become a more complex lexer.
+      const auto comment_pos = part.find('#');
+      if (comment_pos != absl::string_view::npos) {
+        part = part.substr(0, comment_pos);
+      }
+    }
+    part = absl::StripAsciiWhitespace(part);
+    if (part.empty()) continue;
     // If prefix is '-', the rule is disabled. For symmetry, we also allow
     // '+' to enable rule.
     // Note that part is guaranteed to be at least one character because
@@ -310,7 +323,7 @@ std::string AbslUnparseFlag(const RuleBundle& bundle) {
 
 bool AbslParseFlag(absl::string_view text, RuleBundle* bundle,
                    std::string* error) {
-  return bundle->ParseConfiguration(text, error);
+  return bundle->ParseConfiguration(text, ',', error);
 }
 
 }  // namespace verilog

@@ -61,7 +61,10 @@ bool AbslParseFlag(absl::string_view text, RuleSet* rules, std::string* error);
 // equivalent) for the lifetime guarantee.
 struct RuleBundle {
   std::map<absl::string_view, RuleSetting> rules;
-  bool ParseConfiguration(absl::string_view text, std::string* error);
+  // Parse configuration from input. Separator between rules is 'separator',
+  // typically that would be a comma or newline.
+  bool ParseConfiguration(absl::string_view text, char separator,
+                          std::string* error);
   std::string UnparseConfiguration(const char separator) const;
 };
 

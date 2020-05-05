@@ -218,7 +218,7 @@ LinterConfiguration LinterConfigurationFromFlags() {
   if (verible::file::GetContents(absl::GetFlag(FLAGS_rules_config), &content)) {
     RuleBundle local_rules_bundle;
     std::string error;
-    if (local_rules_bundle.ParseConfiguration(content, &error)) {
+    if (local_rules_bundle.ParseConfiguration(content, '\n', &error)) {
       config.UseRuleBundle(local_rules_bundle);
     } else {
       LOG(ERROR) << "Unable to fully parse configuration: " << error
