@@ -17,7 +17,8 @@ cc_library(
     name = "auto_pop_stack",
     hdrs = ["auto_pop_stack.h"],
     deps = [
-        "//common/util:iterator_adaptors",
+        ":iterator_adaptors",
+        ":logging",
     ],
 )
 
@@ -240,6 +241,16 @@ cc_test(
         ":algorithm",
         ":iterator_range",
         "@com_google_absl//absl/strings",
+        "@com_google_googletest//:gtest_main",
+    ],
+)
+
+cc_test(
+    name = "auto_pop_stack_test",
+    srcs = ["auto_pop_stack_test.cc"],
+    deps = [
+        ":auto_pop_stack",
+        ":iterator_range",
         "@com_google_googletest//:gtest_main",
     ],
 )

@@ -21,6 +21,7 @@
 #include <vector>
 
 #include "common/util/iterator_adaptors.h"
+#include "common/util/logging.h"
 
 namespace verible {
 
