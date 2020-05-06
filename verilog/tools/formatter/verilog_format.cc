@@ -210,7 +210,7 @@ bool formatOneFile(absl::string_view filename,
         return false;
       }
     } else {
-      std::cerr << filename << ": no change." << std::endl;
+      std::cerr << filename << ": Already formatted, no change." << std::endl;
     }
   } else {
     std::cout << formatted_output;
@@ -244,15 +244,13 @@ int main(int argc, char** argv) {
   // Some sanity checks if multiple files are given.
   if (file_args.size() > 2) {
     if (!lines_to_format.empty()) {
-      std::cerr << "Providing --lines but gave multiple different files."
-                << std::endl;
+      std::cerr << "--lines only works for single files." << std::endl;
       return 1;
     }
 
     if (!absl::GetFlag(FLAGS_inplace)) {
       // Dumping all to stdout doesn't really make sense.
-      std::cerr << "Multiple files given. Use --inplace "
-          "for a meaningful handling of these." << std::endl;
+      std::cerr << "--inplace required for multiple files." << std::endl;
       return 1;
     }
   }
