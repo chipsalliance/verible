@@ -244,7 +244,7 @@ int main(int argc, char** argv) {
   // Some sanity checks if multiple files are given.
   if (file_args.size() > 2) {
     if (!lines_to_format.empty()) {
-      std::cerr << "Porviding --lines but gave multiple different files"
+      std::cerr << "Providing --lines but gave multiple different files."
                 << std::endl;
       return 1;
     }
