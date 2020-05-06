@@ -111,10 +111,16 @@ TEST(UnpackedDimensionsRuleTests, CheckRanges) {
       {"int some_array [bit [0:7]];"},
 
       // array of instances
-      {"module test (input logic [1:0] blah);",
+      {"module test (input logic blah);",
        "endmodule",
        "module tb;",
-       "  test test_i[3:0] (.blah (2'b0));",
+       "  test test_i[3:0] (.blah (1'b0));",
+       "endmodule"},
+       
+       {"module test (input logic blah);",
+       "endmodule",
+       "module tb;",
+       "  test test_i[0:3] (.blah (1'b0));",
        "endmodule"}
   };
   RunLintTestCases<VerilogAnalyzer, UnpackedDimensionsRule>(kTestCases);
