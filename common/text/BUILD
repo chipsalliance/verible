@@ -129,10 +129,10 @@ cc_library(
 
 cc_library(
     name = "syntax_tree_context",
-    srcs = ["syntax_tree_context.cc"],
     hdrs = ["syntax_tree_context.h"],
     deps = [
         ":concrete_syntax_tree",
+        "//common/util:auto_pop_stack",
         "//common/util:iterator_adaptors",
         "//common/util:logging",
     ],

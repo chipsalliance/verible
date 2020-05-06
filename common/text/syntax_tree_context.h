@@ -22,7 +22,9 @@
 #include <vector>
 
 #include "common/text/concrete_syntax_tree.h"
+#include "common/util/auto_pop_stack.h"
 #include "common/util/iterator_adaptors.h"
+#include "common/util/logging.h"
 
 namespace verible {
 
@@ -31,38 +33,24 @@ namespace verible {
 // Note: Public methods are named to follow STL convention for std::stack.
 // TODO(fangism): implement a general ForwardMatcher and ReverseMatcher
 // interface that can express AND/OR/NOT.
-class SyntaxTreeContext {
+// Despite of implementation based on pointers. This class requires
+// that managed elements are non-nullptrs.
+class SyntaxTreeContext : public AutoPopStack<const SyntaxTreeNode*> {
  public:
+  typedef AutoPopStack<const SyntaxTreeNode*> base_type;
+
   // member class to handle push and pop of stack safely
-  class AutoPop {
-   public:
-    AutoPop(SyntaxTreeContext*, const SyntaxTreeNode& node);  // pushes
-    ~AutoPop();                                               // pops
-   private:
-    SyntaxTreeContext* context_;
-  };
+  using AutoPop = base_type::AutoPop;
 
-  // All elements of stack are non-null because they refer to traversed nodes.
-  typedef std::vector<const SyntaxTreeNode*> stack_type;
-  typedef stack_type::const_iterator const_iterator;
-  typedef stack_type::const_reverse_iterator const_reverse_iterator;
+ protected:
+  // restrict access to AutoPopStack<>::top method only to this class
+  using base_type::top;
 
-  // returns depth of context stack
-  size_t size() const { return stack_.size(); }
-
-  // returns true if the stack is empty
-  bool empty() const { return stack_.empty(); }
-
+ public:
   // returns the top SyntaxTreeNode of the stack
-  const SyntaxTreeNode& top() const;
-
-  // Allow read-only random-access into stack:
-  const_iterator begin() const { return stack_.begin(); }
-  const_iterator end() const { return stack_.end(); }
-
-  // Reverse iterators be useful for searching from the top-of-stack downward.
-  const_reverse_iterator rbegin() const { return stack_.rbegin(); }
-  const_reverse_iterator rend() const { return stack_.rend(); }
+  const SyntaxTreeNode& top() const {
+    return *ABSL_DIE_IF_NULL(base_type::top());
+  }
 
   // IsInside returns true if there is a node of the specified
   // tag on the TreeContext stack.  Search traverses from the top of the
@@ -92,7 +80,7 @@ class SyntaxTreeContext {
   template <typename E>
   bool IsInsideFirst(std::initializer_list<E> includes,
                      std::initializer_list<E> excludes) const {
-    for (const auto& type : reversed_view(stack_)) {
+    for (const auto& type : reversed_view(*this)) {
       if (type->MatchesTagAnyOf(includes)) return true;
       if (type->MatchesTagAnyOf(excludes)) return false;
     }
@@ -124,26 +112,13 @@ class SyntaxTreeContext {
   // In the degenerate empty-list case, this will return true.
   template <typename E>
   bool DirectParentsAre(std::initializer_list<E> tag_enums) const {
-    if (tag_enums.size() > stack_.size()) return false;
+    if (tag_enums.size() > size()) return false;
     // top of stack is back of vector (direct parent)
-    return std::equal(tag_enums.begin(), tag_enums.end(), stack_.rbegin(),
+    return std::equal(tag_enums.begin(), tag_enums.end(), rbegin(),
                       [](E tag, const SyntaxTreeNode* node) {
                         return E(node->Tag().tag) == tag;
                       });
   }
-
- protected:
-  // Pop the top SyntaxTreeNode off of the stack
-  void Pop();
-
-  // Push a SyntaxTreeNode onto the stack (takes address)
-  void Push(const SyntaxTreeNode& node);
-
-  // Stack of ancestors of the current node that is updated as the tree
-  // is traversed. Top of the stack is closest ancestor.
-  // A vector is chosen to allow random access and searches from either end of
-  // the stack.
-  stack_type stack_;
 };
 
 }  // namespace verible
