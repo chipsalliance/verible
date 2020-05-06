@@ -182,7 +182,7 @@ bool formatOneFile(absl::string_view filename,
       std::cout << content;
     }
     // Print the error message last so it shows up in user's console.
-    std::cerr << filename << format_status.message() << " ";
+    std::cerr << filename << ": " << format_status.message() << " ";
     switch (format_status.code()) {
       case StatusCode::kCancelled:
       case StatusCode::kInvalidArgument:
