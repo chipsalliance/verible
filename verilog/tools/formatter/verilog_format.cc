@@ -227,6 +227,7 @@ int main(int argc, char** argv) {
   if (file_args.size() == 1) {
     std::cerr << absl::ProgramUsageMessage() << std::endl;
     // TODO(hzeller): how can we append the output of --help here ?
+    return 1;
   }
 
   // Parse LineRanges into a line set, to validate the --lines flag(s)
