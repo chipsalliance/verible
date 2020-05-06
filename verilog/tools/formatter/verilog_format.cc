@@ -136,7 +136,10 @@ bool formatOneFile(absl::string_view filename,
 
   // Read contents into memory first.
   std::string content;
-  if (!verible::file::GetContents(filename, &content)) return false;
+  if (!verible::file::GetContents(filename, &content)) {
+    std::cerr << filename << ": Couldn't read" << std::endl;
+    return false;
+  }
 
   // TODO(fangism): When requesting --inplace, verify that file
   // is write-able, and fail-early if it is not.
@@ -179,24 +182,22 @@ bool formatOneFile(absl::string_view filename,
       std::cout << content;
     }
     // Print the error message last so it shows up in user's console.
-    std::cerr << format_status.message() << std::endl;
+    std::cerr << filename << format_status.message() << " ";
     switch (format_status.code()) {
       case StatusCode::kCancelled:
       case StatusCode::kInvalidArgument:
         break;
       case StatusCode::kDataLoss:
-        std::cerr << "Problematic formatter output is:\n"
-                  << formatted_output << "<<EOF>>" << std::endl;
+        std::cerr << "\nProblematic formatter output is:\n"
+                  << formatted_output << "<<EOF>>";
         break;
       default:
-        std::cerr << "[other error status]" << std::endl;
+        std::cerr << "[other error status]";
         break;
     }
-    if (absl::GetFlag(FLAGS_failsafe_success)) {
-      // original text was preserved, and --inplace modification is skipped.
-      return true;
-    }
-    return false;
+    std::cerr << std::endl;
+
+    return absl::GetFlag(FLAGS_failsafe_success);
   }
 
   // Safe to write out result, having passed above verification.
@@ -205,11 +206,11 @@ bool formatOneFile(absl::string_view filename,
     // with tools that look for timestamp changes (such as make).
     if (content != formatted_output) {
       if (!verible::file::SetContents(filename, formatted_output)) {
-        std::cerr << "Error writing to file: " << filename << std::endl;
-        std::cerr << "Printing to stdout instead." << std::endl;
-        std::cout << formatted_output;
+        std::cerr << filename <<  ": error writing to file" << std::endl;
         return false;
       }
+    } else {
+      std::cerr << filename << ": no change." << std::endl;
     }
   } else {
     std::cout << formatted_output;
@@ -220,7 +221,7 @@ bool formatOneFile(absl::string_view filename,
 
 int main(int argc, char** argv) {
   const auto usage = absl::StrCat("usage: ", argv[0],
-                                  " [options] <file>\n"
+                                  " [options] <file> [<file...>]\n"
                                   "To pipe from stdin, use '-' as <file>.");
   const auto file_args = verible::InitCommandLine(usage, &argc, &argv);
 
@@ -240,8 +241,20 @@ int main(int argc, char** argv) {
     return 1;
   }
 
-  if (!lines_to_format.empty() && file_args.size() > 2) {
-    std::cerr << "Note, applying --lines rules to all files" << std::endl;
+  // Some sanity checks if multiple files are given.
+  if (file_args.size() > 2) {
+    if (!lines_to_format.empty()) {
+      std::cerr << "Porviding --lines but gave multiple different files"
+                << std::endl;
+      return 1;
+    }
+
+    if (!absl::GetFlag(FLAGS_inplace)) {
+      // Dumping all to stdout doesn't really make sense.
+      std::cerr << "Multiple files given. Use --inplace "
+          "for a meaningful handling of these." << std::endl;
+      return 1;
+    }
   }
 
   bool all_success = true;
