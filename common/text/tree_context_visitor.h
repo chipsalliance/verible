@@ -35,6 +35,36 @@ class TreeContextVisitor : public SymbolVisitor {
   SyntaxTreeContext current_context_;
 };
 
+// Type that is used to keep track of positions descended from a root
+// node to reach a particular node.
+// Path types should be lexicographically comparable.
+// This is very similar in spirit to VectorTree<>::Path(), but
+// needs to be tracked in a stack-like manner during visitation
+// because SyntaxTreeNode and Leaf do not maintain upward pointers
+// to their parent nodes.
+// e.g. use the LexicographicalLess comparator in common/util/algorithm.h.
+// TODO(fangism): consider replacing with hybrid "small" vector to
+// minimize heap allocations, because these are expected to be small.
+using SyntaxTreePath = std::vector<size_t>;
+
+// This visitor traverses a tree and maintains a stack of offsets
+// that represents the positional path taken from the root to
+// reach each node.
+// This is useful for applications where the shape and positions of nodes
+// within the tree are meaningful.
+class TreeContextPathVisitor : public TreeContextVisitor {
+ public:
+  TreeContextPathVisitor() = default;
+
+ protected:
+  void Visit(const SyntaxTreeNode& node) override;
+
+  const SyntaxTreePath& Path() const { return current_path_; }
+
+  // Keeps track of path of descent from root node.
+  SyntaxTreePath current_path_;
+};
+
 }  // namespace verible
 
 #endif  // VERIBLE_COMMON_TEXT_TREE_CONTEXT_VISITOR_H_

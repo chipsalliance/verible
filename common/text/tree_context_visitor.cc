@@ -14,6 +14,8 @@
 
 #include "common/text/tree_context_visitor.h"
 
+#include <vector>
+
 #include "common/text/syntax_tree_context.h"
 
 namespace verible {
@@ -22,6 +24,27 @@ void TreeContextVisitor::Visit(const SyntaxTreeNode& node) {
   const SyntaxTreeContext::AutoPop p(&current_context_, &node);
   for (const auto& child : node.children()) {
     if (child) child->Accept(this);
+  }
+}
+
+namespace {
+template <class V>
+class AutoPopBack {
+ public:
+  explicit AutoPopBack(V* v) : vec_(v) { vec_->push_back(0); }
+  ~AutoPopBack() { vec_->pop_back(); }
+
+ private:
+  V* vec_;
+};
+}  // namespace
+
+void TreeContextPathVisitor::Visit(const SyntaxTreeNode& node) {
+  const SyntaxTreeContext::AutoPop c(&current_context_, &node);
+  const AutoPopBack<SyntaxTreePath> p(&current_path_);
+  for (const auto& child : node.children()) {
+    if (child) child->Accept(this);
+    ++current_path_.back();
   }
 }
 
