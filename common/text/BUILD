@@ -181,26 +181,6 @@ cc_test(
 )
 
 cc_library(
-    name = "tree_path_visitor",
-    srcs = ["tree_path_visitor.cc"],
-    hdrs = ["tree_path_visitor.h"],
-    deps = [
-        ":concrete_syntax_tree",
-        ":visitors",
-    ],
-)
-
-cc_test(
-    name = "tree_path_visitor_test",
-    srcs = ["tree_path_visitor_test.cc"],
-    deps = [
-        ":tree_builder_test_util",
-        ":tree_path_visitor",
-        "@com_google_googletest//:gtest_main",
-    ],
-)
-
-cc_library(
     name = "tree_utils",
     srcs = ["tree_utils.cc"],
     hdrs = ["tree_utils.h"],
