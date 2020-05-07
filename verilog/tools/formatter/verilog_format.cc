@@ -121,7 +121,7 @@ ABSL_FLAG(bool, format_module_instantiations, false,
           "If true, format module instantiations (data declarations), "
           "else leave them unformatted.  This is a short-term workaround.");
 
-std::ostream &FileMsg(absl::string_view filename) {
+std::ostream& FileMsg(absl::string_view filename) {
   std::cerr << filename << ": ";
   return std::cerr;
 }
