@@ -121,6 +121,11 @@ ABSL_FLAG(bool, format_module_instantiations, false,
           "If true, format module instantiations (data declarations), "
           "else leave them unformatted.  This is a short-term workaround.");
 
+std::ostream &FileMsg(absl::string_view filename) {
+  std::cerr << filename << ": ";
+  return std::cerr;
+}
+
 bool formatOneFile(absl::string_view filename,
                    const verilog::formatter::LineNumberSet &lines_to_format) {
   const bool inplace = absl::GetFlag(FLAGS_inplace);
@@ -128,8 +133,9 @@ bool formatOneFile(absl::string_view filename,
   const auto& stdin_name = absl::GetFlag(FLAGS_stdin_name);
 
   if (inplace && is_stdin) {
-    std::cerr << "--inplace is incompatible with stdin.  Ignoring --inplace "
-        "and writing to stdout." << std::endl;
+    FileMsg(filename)
+        << "--inplace is incompatible with stdin.  Ignoring --inplace "
+        << "and writing to stdout." << std::endl;
   }
 
   const auto diagnostic_filename = is_stdin ? stdin_name : filename;
@@ -137,7 +143,7 @@ bool formatOneFile(absl::string_view filename,
   // Read contents into memory first.
   std::string content;
   if (!verible::file::GetContents(filename, &content)) {
-    std::cerr << filename << ": Couldn't read" << std::endl;
+    FileMsg(filename) << "Couldn't read" << std::endl;
     return false;
   }
 
@@ -181,21 +187,21 @@ bool formatOneFile(absl::string_view filename,
       // Fall back to printing original content regardless of error condition.
       std::cout << content;
     }
-    // Print the error message last so it shows up in user's console.
-    std::cerr << filename << ": " << format_status.message() << " ";
     switch (format_status.code()) {
       case StatusCode::kCancelled:
       case StatusCode::kInvalidArgument:
+        FileMsg(filename) << format_status.message() << std::endl;
         break;
       case StatusCode::kDataLoss:
-        std::cerr << "\nProblematic formatter output is:\n"
-                  << formatted_output << "<<EOF>>";
+        FileMsg(filename) << format_status.message()
+                          << "; problematic formatter output is\n"
+                          << formatted_output << "<<EOF>>" << std::endl;
         break;
       default:
-        std::cerr << "[other error status]";
+        FileMsg(filename) << format_status.message() << "[other error status]"
+                          << std::endl;
         break;
     }
-    std::cerr << std::endl;
 
     return absl::GetFlag(FLAGS_failsafe_success);
   }
@@ -206,11 +212,11 @@ bool formatOneFile(absl::string_view filename,
     // with tools that look for timestamp changes (such as make).
     if (content != formatted_output) {
       if (!verible::file::SetContents(filename, formatted_output)) {
-        std::cerr << filename <<  ": error writing to file" << std::endl;
+        FileMsg(filename) << "error writing to file" << std::endl;
         return false;
       }
     } else {
-      std::cerr << filename << ": Already formatted, no change." << std::endl;
+      FileMsg(filename) << "Already formatted, no change." << std::endl;
     }
   } else {
     std::cout << formatted_output;
