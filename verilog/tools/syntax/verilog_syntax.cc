@@ -146,7 +146,7 @@ int main(int argc, char** argv) {
   for (const auto filename :
        verible::make_range(args.begin() + 1, args.end())) {
     std::string content;
-    if (!verible::file::GetContents(filename, &content)) {
+    if (!verible::file::GetContents(filename, &content).ok()) {
       exit_status = 1;
       continue;
     }

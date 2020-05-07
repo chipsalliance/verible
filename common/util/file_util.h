@@ -19,6 +19,7 @@
 
 #include <string>
 
+#include "absl/status/status.h"
 #include "absl/strings/string_view.h"
 
 namespace verible {
@@ -35,18 +36,16 @@ absl::string_view Basename(absl::string_view filename);
 absl::string_view Stem(absl::string_view filename);
 
 // Read file "filename" and store its content in "content"
-// TODO(hzeller): consider absl::Status return?
-bool GetContents(absl::string_view filename, std::string *content);
+absl::Status GetContents(absl::string_view filename, std::string *content);
 
 // Create file "filename" and store given content in it.
-// TODO(hzeller): consider absl::Status return ?
-bool SetContents(absl::string_view filename, absl::string_view content);
+absl::Status SetContents(absl::string_view filename, absl::string_view content);
 
 // Join directory + filename
 std::string JoinPath(absl::string_view base, absl::string_view name);
 
 // Create directory with given name, return success.
-bool CreateDir(absl::string_view dir);
+absl::Status CreateDir(absl::string_view dir);
 
 namespace testing {
 // Useful for testing: a temporary file that is pre-populated with a particular
