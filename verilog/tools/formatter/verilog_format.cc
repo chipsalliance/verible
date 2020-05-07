@@ -30,6 +30,7 @@
 #include <vector>
 
 #include "absl/flags/flag.h"
+#include "absl/flags/usage.h"
 #include "absl/status/status.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/str_join.h"
@@ -120,45 +121,31 @@ ABSL_FLAG(bool, format_module_instantiations, false,
           "If true, format module instantiations (data declarations), "
           "else leave them unformatted.  This is a short-term workaround.");
 
-int main(int argc, char** argv) {
-  const auto usage = absl::StrCat("usage: ", argv[0],
-                                  " [options] <file>\n"
-                                  "To pipe from stdin, use '-' as <file>.");
-  const auto file_args = verible::InitCommandLine(usage, &argc, &argv);
+std::ostream& FileMsg(absl::string_view filename) {
+  std::cerr << filename << ": ";
+  return std::cerr;
+}
 
-  // Currently accepts only one file positional argument.
-  // TODO(fangism): Support multiple file names.
-  QCHECK_GT(file_args.size(), 1)
-      << "Missing required positional argument (filename).";
-  const absl::string_view filename = file_args[1];
-
+bool formatOneFile(absl::string_view filename,
+                   const verilog::formatter::LineNumberSet& lines_to_format) {
   const bool inplace = absl::GetFlag(FLAGS_inplace);
   const bool is_stdin = filename == "-";
   const auto& stdin_name = absl::GetFlag(FLAGS_stdin_name);
 
   if (inplace && is_stdin) {
-    std::cerr << "--inplace is incompatible with stdin.  Ignoring --inplace "
-                 "and writing to stdout."
-              << std::endl;
-  }
-  absl::string_view diagnostic_filename = filename;
-  if (is_stdin) {
-    diagnostic_filename = stdin_name;
+    FileMsg(filename)
+        << "--inplace is incompatible with stdin.  Ignoring --inplace "
+        << "and writing to stdout." << std::endl;
   }
 
-  // Parse LineRanges into a line set, to validate the --lines flag(s)
-  verilog::formatter::LineNumberSet lines_to_format;
-  if (!verible::ParseInclusiveRanges(
-          &lines_to_format, LineRanges::values.begin(),
-          LineRanges::values.end(), &std::cerr, '-')) {
-    std::cerr << "Error parsing --lines." << std::endl;
-    std::cerr << "Got: --lines=" << AbslUnparseFlag(LineRanges()) << std::endl;
-    return 1;
-  }
+  const auto diagnostic_filename = is_stdin ? stdin_name : filename;
 
   // Read contents into memory first.
   std::string content;
-  if (!verible::file::GetContents(filename, &content)) return 1;
+  if (!verible::file::GetContents(filename, &content)) {
+    FileMsg(filename) << "Couldn't read" << std::endl;
+    return false;
+  }
 
   // TODO(fangism): When requesting --inplace, verify that file
   // is write-able, and fail-early if it is not.
@@ -200,38 +187,86 @@ int main(int argc, char** argv) {
       // Fall back to printing original content regardless of error condition.
       std::cout << content;
     }
-    // Print the error message last so it shows up in user's console.
-    std::cerr << format_status.message() << std::endl;
     switch (format_status.code()) {
       case StatusCode::kCancelled:
       case StatusCode::kInvalidArgument:
+        FileMsg(filename) << format_status.message() << std::endl;
         break;
       case StatusCode::kDataLoss:
-        std::cerr << "Problematic formatter output is:\n"
-                  << formatted_output << "<<EOF>>" << std::endl;
+        FileMsg(filename) << format_status.message()
+                          << "; problematic formatter output is\n"
+                          << formatted_output << "<<EOF>>" << std::endl;
         break;
       default:
-        std::cerr << "[other error status]" << std::endl;
+        FileMsg(filename) << format_status.message() << "[other error status]"
+                          << std::endl;
         break;
     }
-    if (absl::GetFlag(FLAGS_failsafe_success)) {
-      // original text was preserved, and --inplace modification is skipped.
-      return 0;
-    }
-    return 1;
+
+    return absl::GetFlag(FLAGS_failsafe_success);
   }
 
   // Safe to write out result, having passed above verification.
   if (inplace && !is_stdin) {
-    if (!verible::file::SetContents(filename, formatted_output)) {
-      std::cerr << "Error writing to file: " << filename << std::endl;
-      std::cerr << "Printing to stdout instead." << std::endl;
-      std::cout << formatted_output;
-      return 1;
+    // Don't write if the output is exactly as the input, so that we don't mess
+    // with tools that look for timestamp changes (such as make).
+    if (content != formatted_output) {
+      if (!verible::file::SetContents(filename, formatted_output)) {
+        FileMsg(filename) << "error writing to file" << std::endl;
+        return false;
+      }
+    } else {
+      FileMsg(filename) << "Already formatted, no change." << std::endl;
     }
   } else {
     std::cout << formatted_output;
   }
 
-  return 0;
+  return true;
+}
+
+int main(int argc, char** argv) {
+  const auto usage = absl::StrCat("usage: ", argv[0],
+                                  " [options] <file> [<file...>]\n"
+                                  "To pipe from stdin, use '-' as <file>.");
+  const auto file_args = verible::InitCommandLine(usage, &argc, &argv);
+
+  if (file_args.size() == 1) {
+    std::cerr << absl::ProgramUsageMessage() << std::endl;
+    // TODO(hzeller): how can we append the output of --help here ?
+    return 1;
+  }
+
+  // Parse LineRanges into a line set, to validate the --lines flag(s)
+  verilog::formatter::LineNumberSet lines_to_format;
+  if (!verible::ParseInclusiveRanges(
+          &lines_to_format, LineRanges::values.begin(),
+          LineRanges::values.end(), &std::cerr, '-')) {
+    std::cerr << "Error parsing --lines." << std::endl;
+    std::cerr << "Got: --lines=" << AbslUnparseFlag(LineRanges()) << std::endl;
+    return 1;
+  }
+
+  // Some sanity checks if multiple files are given.
+  if (file_args.size() > 2) {
+    if (!lines_to_format.empty()) {
+      std::cerr << "--lines only works for single files." << std::endl;
+      return 1;
+    }
+
+    if (!absl::GetFlag(FLAGS_inplace)) {
+      // Dumping all to stdout doesn't really make sense.
+      std::cerr << "--inplace required for multiple files." << std::endl;
+      return 1;
+    }
+  }
+
+  bool all_success = true;
+  // All positional arguments are file names.  Exclude program name.
+  for (const absl::string_view filename :
+       verible::make_range(file_args.begin() + 1, file_args.end())) {
+    all_success &= formatOneFile(filename, lines_to_format);
+  }
+
+  return all_success ? 0 : 1;
 }
