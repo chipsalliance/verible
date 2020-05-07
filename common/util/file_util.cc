@@ -50,20 +50,28 @@ absl::string_view Stem(absl::string_view filename) {
 }
 
 // This will always return an error, even if we can't determine anything
-// from errno.
+// from errno. Returns "fallback_msg" in that case.
 static absl::Status CreateErrorStatusFromErrno(const char *fallback_msg) {
   using absl::StatusCode;
   const int system_error = errno;
   if (system_error == 0)
     return absl::Status(StatusCode::kUnknown, fallback_msg);
-  const char *system_msg = strerror(system_error);
+  const char *const system_msg = strerror(system_error);
   StatusCode translated_code = StatusCode::kUnknown;
   switch (system_error) {
-    case EPERM: translated_code = StatusCode::kPermissionDenied; break;
-    case EACCES: translated_code = StatusCode::kPermissionDenied; break;
-    case ENOENT: translated_code = StatusCode::kNotFound; break;
-    case EEXIST: translated_code = StatusCode::kAlreadyExists; break;
-    case EINVAL: translated_code = StatusCode::kInvalidArgument; break;
+    case EPERM:
+    case EACCES:
+      translated_code = StatusCode::kPermissionDenied;
+      break;
+    case ENOENT:
+      translated_code = StatusCode::kNotFound;
+      break;
+    case EEXIST:
+      translated_code = StatusCode::kAlreadyExists;
+      break;
+    case EINVAL:
+      translated_code = StatusCode::kInvalidArgument;
+      break;
   }
   return absl::Status(translated_code, system_msg);
 }

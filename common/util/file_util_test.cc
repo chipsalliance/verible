@@ -55,16 +55,21 @@ TEST(FileUtil, CreateDir) {
 }
 
 TEST(FileUtil, StatusErrorReporting) {
+  std::string content;
+  absl::Status status = file::GetContents("does-not-exist", &content);
+  EXPECT_FALSE(status.ok());
+  EXPECT_EQ(status.code(), absl::StatusCode::kNotFound) << status;
+
   const std::string test_file = file::JoinPath(testing::TempDir(), "test-err");
   unlink(test_file.c_str());  // Remove file if left from previous test.
   EXPECT_OK(file::SetContents(test_file, "foo"));
 
-  std::string read_back_content;
-  EXPECT_OK(file::GetContents(test_file, &read_back_content));
-  EXPECT_EQ(read_back_content, "foo");
+  EXPECT_OK(file::GetContents(test_file, &content));
+  EXPECT_EQ(content, "foo");
 
   chmod(test_file.c_str(), 0);  // Enforce a permission denied situation
-  absl::Status status = file::GetContents(test_file, &read_back_content);
+  status = file::GetContents(test_file, &content);
+  EXPECT_FALSE(status.ok());
   EXPECT_EQ(status.code(), absl::StatusCode::kPermissionDenied) << status;
 }
 
