@@ -8,7 +8,7 @@ suite.
 
 ## Command line arguments
 ```
-verilog_format: usage: bazel-bin/verilog/tools/formatter/verilog_format [options] <file>
+verilog_format: usage: bazel-bin/verilog/tools/formatter/verilog_format [options] <file> [<file...>]
 To pipe from stdin, use '-' as <file>.
 
   Flags from external/com_google_absl/absl/flags/parse.cc:
@@ -76,4 +76,4 @@ To pipe from stdin, use '-' as <file>.
 
 ## Version
 
-Generated on 2020-05-06 16:58:51 -0700 from [v0.0-378-g8bfe7a7](https://github.com/google/verible/commit/8bfe7a7f51a238a842d9c8300453f4d2122a963f)
+Generated on 2020-05-07 12:49:18 -0700 from [v0.0-380-g4bccae0](https://github.com/google/verible/commit/4bccae02e920fb725dec0c7f62f981dc560003d5)
