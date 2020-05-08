@@ -300,4 +300,4 @@ Enabled by default: true
 
 ## Version
 
-Generated on 2020-05-08 10:13:28 -0700 from [v0.0-382-gf605175](https://github.com/google/verible/commit/f6051751ccf57ff36dfb68e036dc8f18ae542468)
+Generated on 2020-05-08 13:21:01 -0700 from [v0.0-383-g0b0011b](https://github.com/google/verible/commit/0b0011b50b7b9774b11d6e824ada0ff2f34ef6a4)
