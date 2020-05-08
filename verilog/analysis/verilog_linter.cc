@@ -60,6 +60,9 @@ ABSL_FLAG(std::string, rules_config, ".rules.verible_lint",
           "Path to lint rules configuration file.");
 ABSL_FLAG(verilog::RuleSet, ruleset, verilog::RuleSet::kDefault,
           "[default|all|none], the base set of rules used by linter");
+ABSL_FLAG(std::string, waivers_file, "",
+          "Path to waivers file. Please refer to the README file for "
+          " information about its format.");
 
 namespace verilog {
 
@@ -120,7 +123,8 @@ VerilogLinter::VerilogLinter()
           kLinterTrigger, kLinterWaiveLineCommand, kLinterWaiveStartCommand,
           kLinterWaiveStopCommand) {}
 
-void VerilogLinter::Configure(const LinterConfiguration& configuration) {
+absl::Status VerilogLinter::Configure(
+    const LinterConfiguration& configuration) {
   if (VLOG_IS_ON(1)) {
     for (const auto& name : configuration.ActiveRuleIds()) {
       LOG(INFO) << "active rule: '" << name << '\'';
@@ -142,6 +146,21 @@ void VerilogLinter::Configure(const LinterConfiguration& configuration) {
   for (auto& rule : syntax_rules) {
     syntax_tree_linter_.AddRule(std::move(rule));
   }
+
+  if (!configuration.external_waivers.empty()) {
+    std::string content;
+    if (verible::file::GetContents(configuration.external_waivers, &content)) {
+      return lint_waiver_.ApplyExternalWaivers(configuration.ActiveRuleIds(),
+                                               configuration.external_waivers,
+                                               content);
+    } else {
+      return absl::UnavailableError(
+          absl::StrCat("Unable to read waivers configuration - ",
+                       configuration.external_waivers));
+    }
+  }
+
+  return absl::OkStatus();
 }
 
 void VerilogLinter::Lint(const TextStructureView& text_structure,
@@ -209,6 +228,8 @@ std::vector<LintRuleStatus> VerilogLinter::ReportStatus(
 LinterConfiguration LinterConfigurationFromFlags() {
   LinterConfiguration config;
 
+  // TODO move all of these calls to GetFlag outside of this function
+
   // Turn on default ruleset.
   const auto& ruleset = absl::GetFlag(FLAGS_ruleset);
   config.UseRuleSet(ruleset);
@@ -237,6 +258,9 @@ LinterConfiguration LinterConfigurationFromFlags() {
   const auto& rules = absl::GetFlag(FLAGS_rules);
   config.UseRuleBundle(rules);
 
+  // Apply external waivers
+  config.external_waivers = absl::GetFlag(FLAGS_waivers_file);
+
   return config;
 }
 
@@ -247,7 +271,11 @@ absl::Status VerilogLintTextStructure(std::ostream* stream,
                                       const TextStructureView& text_structure) {
   // Create the linter, add rules, and run it.
   VerilogLinter linter;
-  linter.Configure(config);
+  const absl::Status configuration_status = linter.Configure(config);
+  if (!configuration_status.ok()) {
+    return configuration_status;
+  }
+
   linter.Lint(text_structure, filename);
 
   const absl::string_view text_base = text_structure.Contents();
