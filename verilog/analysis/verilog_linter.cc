@@ -76,7 +76,7 @@ int LintOneFile(std::ostream* stream, absl::string_view filename,
                 const LinterConfiguration& config, bool parse_fatal,
                 bool lint_fatal) {
   std::string content;
-  if (!verible::file::GetContents(filename, &content)) return 2;
+  if (!verible::file::GetContents(filename, &content).ok()) return 2;
 
   // Lex and parse the contents of the file.
   const auto analyzer =
@@ -149,14 +149,17 @@ absl::Status VerilogLinter::Configure(
 
   if (!configuration.external_waivers.empty()) {
     std::string content;
-    if (verible::file::GetContents(configuration.external_waivers, &content)) {
+    auto status = verible::file::GetContents(configuration.external_waivers,
+					     &content);
+    if (status.ok()) {
       return lint_waiver_.ApplyExternalWaivers(configuration.ActiveRuleIds(),
                                                configuration.external_waivers,
                                                content);
     } else {
-      return absl::UnavailableError(
-          absl::StrCat("Unable to read waivers configuration - ",
-                       configuration.external_waivers));
+      return absl::Status(
+          status.code(),
+	  absl::StrCat("Unable to read waivers configuration - ",
+                       configuration.external_waivers, "; ", status.message()));
     }
   }
 
@@ -236,7 +239,9 @@ LinterConfiguration LinterConfigurationFromFlags() {
 
   // Read local configuration file
   std::string content;
-  if (verible::file::GetContents(absl::GetFlag(FLAGS_rules_config), &content)) {
+  const absl::Status config_read_status
+      = verible::file::GetContents(absl::GetFlag(FLAGS_rules_config), &content);
+  if (config_read_status.ok()) {
     RuleBundle local_rules_bundle;
     std::string error;
     if (local_rules_bundle.ParseConfiguration(content, '\n', &error)) {
@@ -247,8 +252,9 @@ LinterConfiguration LinterConfigurationFromFlags() {
     }
   } else if (FLAGS_rules_config.IsModified()) {
     // If flag is modified and  we were unable to open the file, report that
-    LOG(WARNING) << "Unable to open rules configuration file: "
-                 << absl::GetFlag(FLAGS_rules_config) << std::endl;
+    LOG(WARNING) << absl::GetFlag(FLAGS_rules_config)
+                 << ": Unable to read rules configuration file "
+                 << config_read_status << std::endl;
   }
 
   // Turn on rules found in config flags.

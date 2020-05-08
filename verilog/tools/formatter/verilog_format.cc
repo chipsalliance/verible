@@ -142,8 +142,9 @@ bool formatOneFile(absl::string_view filename,
 
   // Read contents into memory first.
   std::string content;
-  if (!verible::file::GetContents(filename, &content)) {
-    FileMsg(filename) << "Couldn't read" << std::endl;
+  absl::Status status = verible::file::GetContents(filename, &content);
+  if (!status.ok()) {
+    FileMsg(filename) << status << std::endl;
     return false;
   }
 
@@ -211,8 +212,9 @@ bool formatOneFile(absl::string_view filename,
     // Don't write if the output is exactly as the input, so that we don't mess
     // with tools that look for timestamp changes (such as make).
     if (content != formatted_output) {
-      if (!verible::file::SetContents(filename, formatted_output)) {
-        FileMsg(filename) << "error writing to file" << std::endl;
+      status = verible::file::SetContents(filename, formatted_output);
+      if (!status.ok()) {
+        FileMsg(filename) << "error writing result " << status << std::endl;
         return false;
       }
     } else {

@@ -105,13 +105,15 @@ int main(int argc, char** argv) {
 
   // Open both files.
   std::string content1;
-  if (!verible::file::GetContents(args[1], &content1)) {
-    std::cerr << "Error reading file " << args[1] << std::endl;
+  absl::Status status = verible::file::GetContents(args[1], &content1);
+  if (!status.ok()) {
+    std::cerr << args[1] << ": " << status << std::endl;
     return kUserErrorCode;
   }
   std::string content2;
-  if (!verible::file::GetContents(args[2], &content2)) {
-    std::cerr << "Error reading file " << args[2] << std::endl;
+  status = verible::file::GetContents(args[2], &content2);
+  if (!status.ok()) {
+    std::cerr << args[1] << ": " << status << std::endl;
     return kUserErrorCode;
   }
 

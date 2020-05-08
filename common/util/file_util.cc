@@ -14,7 +14,9 @@
 
 #include "common/util/file_util.h"
 
+#include <errno.h>
 #include <stdlib.h>
+#include <string.h>
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <unistd.h>
@@ -24,6 +26,7 @@
 #include <streambuf>
 #include <string>
 
+#include "absl/status/status.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
 #include "common/util/logging.h"
@@ -46,7 +49,27 @@ absl::string_view Stem(absl::string_view filename) {
              : filename.substr(0, last_dot_pos);
 }
 
-bool GetContents(absl::string_view filename, std::string *content) {
+// This will always return an error, even if we can't determine anything
+// from errno. Returns "fallback_msg" in that case.
+static absl::Status CreateErrorStatusFromErrno(const char *fallback_msg) {
+  using absl::StatusCode;
+  const char *const system_msg = errno == 0 ? fallback_msg : strerror(errno);
+  switch (errno) {
+    case EPERM:
+    case EACCES:
+      return absl::Status(StatusCode::kPermissionDenied, system_msg);
+    case ENOENT:
+      return absl::Status(StatusCode::kNotFound, system_msg);
+    case EEXIST:
+      return absl::Status(StatusCode::kAlreadyExists, system_msg);
+    case EINVAL:
+      return absl::Status(StatusCode::kInvalidArgument, system_msg);
+    default:
+      return absl::Status(StatusCode::kUnknown, system_msg);
+  }
+}
+
+absl::Status GetContents(absl::string_view filename, std::string *content) {
   std::ifstream fs;
   std::istream* stream = nullptr;
   if (filename == "-") {
@@ -56,27 +79,30 @@ bool GetContents(absl::string_view filename, std::string *content) {
     fs.open(std::string(filename).c_str());
     stream = &fs;
   }
-  if (!stream->good()) return false;
+  if (!stream->good()) return CreateErrorStatusFromErrno("can't read");
   content->assign((std::istreambuf_iterator<char>(*stream)),
                   std::istreambuf_iterator<char>());
-  return true;
+  return absl::OkStatus();
 }
 
-bool SetContents(absl::string_view filename, absl::string_view content) {
+absl::Status SetContents(absl::string_view filename,
+                         absl::string_view content) {
   std::ofstream f(std::string(filename).c_str());
-  if (!f.good()) return false;
+  if (!f.good()) return CreateErrorStatusFromErrno("can't write.");
   f << content;
-  return true;
+  return absl::OkStatus();
 }
 
 std::string JoinPath(absl::string_view base, absl::string_view name) {
   return absl::StrCat(base, "/", name);
 }
 
-bool CreateDir(absl::string_view dir) {
+absl::Status CreateDir(absl::string_view dir) {
   const std::string path(dir);
   int ret = mkdir(path.c_str(), 0755);
-  return ret == 0 || errno == EEXIST;
+  if (ret == 0 || errno == EEXIST)
+    return absl::OkStatus();
+  return CreateErrorStatusFromErrno("can't create directory");
 }
 
 namespace testing {
@@ -85,7 +111,8 @@ ScopedTestFile::ScopedTestFile(absl::string_view base_dir,
     // There is no secrecy needed for test files, just need to be unique enough.
     : filename_(JoinPath(
           base_dir, absl::StrCat("scoped-file-", getpid(), "-", random()))) {
-  CHECK(SetContents(filename_, content));
+  absl::Status status = SetContents(filename_, content);
+  CHECK(status.ok()) << status.message();
 }
 
 ScopedTestFile::~ScopedTestFile() { unlink(filename_.c_str()); }

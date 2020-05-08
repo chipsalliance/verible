@@ -19,6 +19,9 @@
 #include "gtest/gtest.h"
 #include "absl/strings/string_view.h"
 
+#undef EXPECT_OK
+#define EXPECT_OK(value) EXPECT_TRUE((value).ok())
+
 namespace verible {
 namespace util {
 namespace {
@@ -43,19 +46,38 @@ TEST(FileUtil, CreateDir) {
   const std::string test_file = file::JoinPath(test_dir, "foo");
   const absl::string_view test_content = "directory create test";
 
-  EXPECT_TRUE(file::CreateDir(test_dir));
+  EXPECT_OK(file::CreateDir(test_dir));
 
-  EXPECT_TRUE(file::SetContents(test_file, test_content));
+  EXPECT_OK(file::SetContents(test_file, test_content));
   std::string read_back_content;
-  EXPECT_TRUE(file::GetContents(test_file, &read_back_content));
+  EXPECT_OK(file::GetContents(test_file, &read_back_content));
   EXPECT_EQ(test_content, read_back_content);
+}
+
+TEST(FileUtil, StatusErrorReporting) {
+  std::string content;
+  absl::Status status = file::GetContents("does-not-exist", &content);
+  EXPECT_FALSE(status.ok());
+  EXPECT_EQ(status.code(), absl::StatusCode::kNotFound) << status;
+
+  const std::string test_file = file::JoinPath(testing::TempDir(), "test-err");
+  unlink(test_file.c_str());  // Remove file if left from previous test.
+  EXPECT_OK(file::SetContents(test_file, "foo"));
+
+  EXPECT_OK(file::GetContents(test_file, &content));
+  EXPECT_EQ(content, "foo");
+
+  chmod(test_file.c_str(), 0);  // Enforce a permission denied situation
+  status = file::GetContents(test_file, &content);
+  EXPECT_FALSE(status.ok());
+  EXPECT_EQ(status.code(), absl::StatusCode::kPermissionDenied) << status;
 }
 
 TEST(FileUtil, ScopedTestFile) {
   const absl::string_view test_content = "Hello World!";
   file::testing::ScopedTestFile test_file(testing::TempDir(), test_content);
   std::string read_back_content;
-  EXPECT_TRUE(file::GetContents(test_file.filename(), &read_back_content));
+  EXPECT_OK(file::GetContents(test_file.filename(), &read_back_content));
   EXPECT_EQ(test_content, read_back_content);
 }
 
@@ -66,7 +88,7 @@ TEST(FileUtil, ScopedTestFileStdin) {
   // closed, resulting in an empty string.
   const absl::string_view test_content = "";
   std::string read_back_content;
-  EXPECT_TRUE(file::GetContents("-", &read_back_content));
+  EXPECT_OK(file::GetContents("-", &read_back_content));
   EXPECT_EQ(test_content, read_back_content);
 }
 
