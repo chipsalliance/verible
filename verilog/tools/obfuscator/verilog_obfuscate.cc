@@ -71,12 +71,14 @@ Output is written to stdout.
   const auto& save_map_file = absl::GetFlag(FLAGS_save_map);
   if (!load_map_file.empty()) {
     std::string load_map_content;
-    if (!verible::file::GetContents(load_map_file, &load_map_content)) {
-      std::cerr << "Error reading --load_map file: " << load_map_file
-                << std::endl;
+    absl::Status status =
+        verible::file::GetContents(load_map_file, &load_map_content);
+    if (!status.ok()) {
+      std::cerr << "Error reading --load_map file " << load_map_file << ": "
+                << status << std::endl;
       return 1;
     }
-    const auto status = subst.load(load_map_content);
+    status = subst.load(load_map_content);
     if (!status.ok()) {
       std::cerr << "Error parsing --load_map file: " << load_map_file << '\n'
                 << status.message() << std::endl;
@@ -89,7 +91,7 @@ Output is written to stdout.
 
   // Read from stdin.
   std::string content;
-  if (!verible::file::GetContents("-", &content)) {
+  if (!verible::file::GetContents("-", &content).ok()) {
     return 1;
   }
 
@@ -102,7 +104,7 @@ Output is written to stdout.
   }
 
   if (!decode && !save_map_file.empty()) {
-    if (!verible::file::SetContents(save_map_file, subst.save())) {
+    if (!verible::file::SetContents(save_map_file, subst.save()).ok()) {
       std::cerr << "Error writing --save_map file: " << save_map_file
                 << std::endl;
       return 1;
