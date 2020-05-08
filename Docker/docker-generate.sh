@@ -89,8 +89,8 @@ EOF
             cat >> centos-${CENTOS_VERSION}/Dockerfile <<EOF
 # Get a newer GCC version
 RUN yum install -y --nogpgcheck centos-release-scl
-RUN yum install -y --nogpgcheck devtoolset-6
-SHELL [ "scl", "enable", "devtoolset-6" ]
+RUN yum install -y --nogpgcheck devtoolset-7
+SHELL [ "scl", "enable", "devtoolset-7" ]
 
 # Link libstdc++ statically
 ENV BAZEL_LINKOPTS "-static-libstdc++:-lm -static-libstdc++:-lrt"
@@ -122,7 +122,7 @@ EOF
         6)
             cat >> centos-${CENTOS_VERSION}/Dockerfile <<EOF
 RUN yum install -y --nogpgcheck rh-python36
-SHELL [ "scl", "enable", "rh-python36", "devtoolset-6" ]
+SHELL [ "scl", "enable", "rh-python36", "devtoolset-7" ]
 
 RUN python --version
 RUN python3 --version
@@ -134,7 +134,7 @@ RUN cd bazel-2.1.0-dist; ./compile.sh
 RUN cp bazel-2.1.0-dist/output/bazel /usr/local/bin
 RUN bazel --version
 
-SHELL [ "scl", "enable", "devtoolset-6" ]
+SHELL [ "scl", "enable", "devtoolset-7" ]
 EOF
             ;;
         7|8)
