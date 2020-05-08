@@ -1,5 +1,7 @@
 # This package contains functions and classes for analyzing text structures.
 
+load("//bazel:flex.bzl", "genlex")
+
 licenses(["notice"])
 
 package(
@@ -43,16 +45,52 @@ cc_library(
     ],
 )
 
+genlex(
+    name = "config_file_lex",
+    src = "config_file.lex",
+    out = "config_file.yy.cc",
+)
+
 cc_library(
-    name = "lint_waiver",
-    srcs = ["lint_waiver.cc"],
-    hdrs = ["lint_waiver.h"],
+    name = "config_file_lexer",
+    srcs = [
+        "config_file.yy.cc",
+        "config_file_lexer.cc",
+    ],
+    hdrs = [
+        "config_file_lexer.h",
+        "lint_waiver.h",
+    ],
+    copts = ["-Wno-implicit-fallthrough"],
     deps = [
-        "//common/strings:comment_utils",
+        "//bazel:flex",
+        "//common/lexer:flex_lexer_adapter",
+        "//common/lexer:token_stream_adapter",
         "//common/text:text_structure",
         "//common/text:token_info",
         "//common/text:token_stream_view",
         "//common/util:container_util",
+        "//common/util:interval_set",
+        "//common/util:logging",
+        "@com_google_absl//absl/strings",
+    ],
+)
+
+cc_library(
+    name = "lint_waiver",
+    srcs = ["lint_waiver.cc"],
+    hdrs = ["lint_waiver.h"],
+    copts = ["-fexceptions"],
+    features = ["-use_header_modules"],  # precompiled headers incompatible with -fexceptions.
+    deps = [
+        ":config_file_lexer",
+        "//common/strings:comment_utils",
+        "//common/text:text_structure",
+        "//common/text:token_info",
+        "//common/text:token_stream_view",
+        "//common/util:container_iterator_range",
+        "//common/util:container_util",
+        "//common/util:file_util",
         "//common/util:interval_set",
         "//common/util:iterator_range",
         "//common/util:logging",

@@ -196,6 +196,9 @@ class LinterConfiguration {
   std::vector<std::unique_ptr<verible::TextStructureLintRule>>
   CreateTextStructureRules() const;
 
+  // Path to external lint waivers configuration file
+  std::string external_waivers;
+
   // Returns true if configurations are equivalent.
   bool operator==(const LinterConfiguration&) const;
 

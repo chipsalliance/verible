@@ -17,6 +17,7 @@
 
 #include <cstddef>
 #include <map>
+#include <regex>  // NOLINT
 #include <set>
 #include <vector>
 
@@ -33,6 +34,7 @@ namespace verible {
 class LintWaiver {
   // Compact set of line numbers.
   using LineSet = IntervalSet<size_t>;
+  using RegexVector = std::vector<const std::regex*>;
 
  public:
   LintWaiver() {}
@@ -54,6 +56,13 @@ class LintWaiver {
   void WaiveLineRange(absl::string_view rule_name, size_t line_begin,
                       size_t line_end);
 
+  // Adds a regular expression which will be used to apply a waiver.
+  void WaiveWithRegex(absl::string_view rule_name, const std::string& regex);
+
+  // Converts the prepared regular expressions to line numbers and applies the
+  // waivers.
+  void RegexToLines(absl::string_view content, const LineColumnMap& line_map);
+
   // Returns true if `line_number` should be waived for a particular rule.
   bool RuleIsWaivedOnLine(absl::string_view rule_name,
                           size_t line_number) const;
@@ -73,9 +82,14 @@ class LintWaiver {
   }
 
  private:
-  // Key can be string_view because the static strings for each lint rule
-  // class exist, and will outlive all LintWaiver objects.
+  // Keys in the maps below are the names of the waived rules. They can be
+  // string_view because the static strings for each lint rule class exist,
+  // and will outlive all LintWaiver objects. This applies to both waiver_map_
+  // and waiver_re_map_.
   std::map<absl::string_view, LineSet> waiver_map_;
+  std::map<absl::string_view, RegexVector> waiver_re_map_;
+
+  std::map<std::string, std::regex> regex_cache_;
 };
 
 // LintWaiverBuilder is a language-agnostic helper class for constructing
@@ -123,6 +137,12 @@ class LintWaiverBuilder {
   // waived lines.  This can be more easily unit-tested using
   // TextStructureTokenized from text_structure_test_utils.h.
   void ProcessTokenRangesByLine(const TextStructureView&);
+
+  // Takes a set of active linter rules and the filename and the content of
+  // a waiver configuration file
+  absl::Status ApplyExternalWaivers(
+      const std::set<absl::string_view>& active_rules,
+      absl::string_view filename, absl::string_view waivers_config_content);
 
   const LintWaiver& GetLintWaiver() const { return lint_waiver_; }
 
