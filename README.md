@@ -375,6 +375,16 @@ All lines in between will be waived for rule-X
 // verilog_lint: waive-stop rule-X
 ```
 
+Another option is to use a configuration file with the `--waivers_file` flag.
+The format of this file is as follows: `waive --rule=rule-name-1 --line=10 waive
+--rule=rule-name-2 --line=5:10 waive --rule=rule-name-3 --regex="^\s*abc$"`
+
+The `--line` flag can be used to specify a single line to apply the waiver to or
+a line range (separated with the `:` character). Additionally the `--regex` flag
+can be used to dynamically match lines on which a given rule has to be waived.
+This is especially useful for projects where some of the files are
+auto-generated.
+
 The name of the rule to waive is at the end of each diagnostic message in `[]`.
 
 Syntax errors cannot be waived. A common source of syntax errors is if the file

@@ -45,6 +45,8 @@ verilog_lint: usage: bazel-bin/verilog/tools/lint/verilog_lint [options] <file> 
       default: ".rules.verible_lint";
     --ruleset ([default|all|none], the base set of rules used by linter);
       default: default;
+    --waivers_file (Path to waivers file. Please refer to the README file for
+      information about its format.); default: "";
 
 
   Flags from verilog/parser/verilog_parser.cc:
@@ -298,4 +300,4 @@ Enabled by default: true
 
 ## Version
 
-Generated on 2020-05-07 12:49:18 -0700 from [v0.0-380-g4bccae0](https://github.com/google/verible/commit/4bccae02e920fb725dec0c7f62f981dc560003d5)
+Generated on 2020-05-07 21:40:53 -0700 from [v0.0-381-g7e3b173](https://github.com/google/verible/commit/7e3b173a15bbfa60d9e803e583e587ec2ff4e1d9)
