@@ -89,8 +89,8 @@ EOF
             cat >> centos-${CENTOS_VERSION}/Dockerfile <<EOF
 # Get a newer GCC version
 RUN yum install -y --nogpgcheck centos-release-scl
-RUN yum install -y --nogpgcheck devtoolset-6
-SHELL [ "scl", "enable", "devtoolset-6" ]
+RUN yum install -y --nogpgcheck devtoolset-7
+SHELL [ "scl", "enable", "devtoolset-7" ]
 
 # Link libstdc++ statically
 ENV BAZEL_LINKOPTS "-static-libstdc++:-lm -static-libstdc++:-lrt"
