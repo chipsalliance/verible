@@ -149,14 +149,17 @@ absl::Status VerilogLinter::Configure(
 
   if (!configuration.external_waivers.empty()) {
     std::string content;
-    if (verible::file::GetContents(configuration.external_waivers, &content)) {
+    auto status = verible::file::GetContents(configuration.external_waivers,
+					     &content);
+    if (status.ok()) {
       return lint_waiver_.ApplyExternalWaivers(configuration.ActiveRuleIds(),
                                                configuration.external_waivers,
                                                content);
     } else {
-      return absl::UnavailableError(
-          absl::StrCat("Unable to read waivers configuration - ",
-                       configuration.external_waivers));
+      return absl::Status(
+          status.code(),
+	  absl::StrCat("Unable to read waivers configuration - ",
+                       configuration.external_waivers, "; ", status.message()));
     }
   }
 
