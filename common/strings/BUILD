@@ -46,6 +46,24 @@ cc_test(
 )
 
 cc_library(
+    name = "display_utils",
+    srcs = ["display_utils.cc"],
+    hdrs = ["display_utils.h"],
+    deps = [
+        "@com_google_absl//absl/strings",
+    ],
+)
+
+cc_test(
+    name = "display_utils_test",
+    srcs = ["display_utils_test.cc"],
+    deps = [
+        ":display_utils",
+        "@com_google_googletest//:gtest_main",
+    ],
+)
+
+cc_library(
     name = "obfuscator",
     srcs = ["obfuscator.cc"],
     hdrs = ["obfuscator.h"],
