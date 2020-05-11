@@ -361,7 +361,9 @@ void TreeUnwrapper::UpdateInterLeafScanner(verilog_tokentype token_type) {
   inter_leaf_scanner_->UpdateState(token_type);
   if (inter_leaf_scanner_->ShouldStartNewPartition()) {
     VLOG(4) << "new partition";
-    StartNewUnwrappedLine(PartitionPolicyEnum::kFitOnLineElseExpand);
+    // interleaf-tokens like comments do not have corresponding syntax tree
+    // nodes, so pass nullptr.
+    StartNewUnwrappedLine(PartitionPolicyEnum::kFitOnLineElseExpand, nullptr);
   }
   VLOG(4) << "end of " << __FUNCTION__;
 }
@@ -528,7 +530,7 @@ void TreeUnwrapper::InterChildNodeHook(const SyntaxTreeNode& node) {
       break;
     default: {
       if (Context().DirectParentIs(NodeEnum::kMacroArgList)) {
-        StartNewUnwrappedLine(PartitionPolicyEnum::kFitOnLineElseExpand);
+        StartNewUnwrappedLine(PartitionPolicyEnum::kFitOnLineElseExpand, &node);
       }
       break;
     }
@@ -550,7 +552,9 @@ void TreeUnwrapper::CollectTrailingFilteredTokens() {
   // A newline means there are no comments to add to this UnwrappedLine
   // TODO(fangism): fold this logic into CatchUpToCurrentLeaf()
   if (IsNewlineOrEOF(verilog_tokentype(NextUnfilteredToken()->token_enum))) {
-    StartNewUnwrappedLine(PartitionPolicyEnum::kFitOnLineElseExpand);
+    // Filtered tokens may include comments, which do not correspond to syntax
+    // tree nodes, so pass nullptr.
+    StartNewUnwrappedLine(PartitionPolicyEnum::kFitOnLineElseExpand, nullptr);
   }
 
   // "Catch up" to EOF.
@@ -920,9 +924,10 @@ void TreeUnwrapper::SetIndentationsAndCreatePartitions(
       // Do not further indent preprocessor clauses.
       const int indent = suppress_indentation ? 0 : style_.wrap_spaces;
       if (Context().IsInside(NodeEnum::kClassHeader) ||
-          Context().IsInside(NodeEnum::kInterfaceDeclaration) ||
-          Context().IsInside(NodeEnum::kModuleDeclaration)) {
-        VisitIndentedSection(node, indent, PartitionPolicyEnum::kAlwaysExpand);
+          // kModuleHeader covers interfaces and programs
+          Context().IsInside(NodeEnum::kModuleHeader)) {
+        VisitIndentedSection(node, indent,
+                             PartitionPolicyEnum::kTabularAlignment);
       } else {
         VisitIndentedSection(node, indent,
                              PartitionPolicyEnum::kFitOnLineElseExpand);
@@ -1025,9 +1030,9 @@ static void ReshapeIfClause(const SyntaxTreeNode& node,
   // Then fuse the 'begin' partition with the preceding 'if (...)'
   auto& if_body_partition = partition.Children().back();
   auto& begin_partition = if_body_partition.Children().front();
-  partition.Value().SetPartitionPolicy(
-      begin_partition.Value().PartitionPolicy());
   verible::MergeLeafIntoPreviousLeaf(&begin_partition);
+  partition.Value().SetPartitionPolicy(
+      if_body_partition.Value().PartitionPolicy());
   // if seq_block body was empty, that leaves only 'end', so hoist.
   // if if-header was flat, hoist that too.
   partition.FlattenOneChild(if_body_partition.BirthRank());
@@ -1051,6 +1056,15 @@ static void ReshapeElseClause(const SyntaxTreeNode& node,
   verible::MergeLeafIntoNextLeaf(&else_partition);
 }
 
+static void HoistOnlyChildPartition(TokenPartitionTree* partition) {
+  const auto* origin = partition->Value().Origin();
+  if (partition->HoistOnlyChild()) {
+    VLOG(4) << "reshape: hoisted, using child partition policy, parent origin";
+    // Preserve source origin
+    partition->Value().SetOrigin(origin);
+  }
+}
+
 static void PushEndIntoElsePartition(TokenPartitionTree* partition_ptr) {
   // Then combine 'end' with the following 'else' ...
   // Do not flatten, so that if- and else- clauses can make formatting
@@ -1060,7 +1074,9 @@ static void PushEndIntoElsePartition(TokenPartitionTree* partition_ptr) {
   auto* end_partition = if_clause_partition.RightmostDescendant();
   auto* end_parent = verible::MergeLeafIntoNextLeaf(end_partition);
   // if moving leaf results in any singleton partitions, hoist.
-  if (end_parent != nullptr) end_parent->HoistOnlyChild();
+  if (end_parent != nullptr) {
+    HoistOnlyChildPartition(end_parent);
+  }
 }
 
 static void MergeEndElseWithoutLabel(const SyntaxTreeNode& conditional,
@@ -1202,7 +1218,7 @@ void TreeUnwrapper::ReshapeTokenPartitions(
         verible::AdjustIndentationAbsolute(
             &instance_list_partition,
             data_declaration_partition.Value().IndentationSpaces());
-        instance_list_partition.HoistOnlyChild();
+        HoistOnlyChildPartition(&instance_list_partition);
       } else if (GetInstanceListFromDataDeclaration(node).children().size() ==
                  1) {
         VLOG(4) << "Instance list has only one child, singleton.";
@@ -1521,9 +1537,7 @@ void TreeUnwrapper::ReshapeTokenPartitions(
           NodeEnum::kGateInstanceRegisterVariableList  // parent:
                                                        // kDataDeclaration)
       })) {
-    if (partition.HoistOnlyChild()) {
-      VLOG(4) << "reshape: hoisted, using child partition policy";
-    }
+    HoistOnlyChildPartition(&partition);
   }
 
   VLOG(4) << "after reshaping " << tag << ":\n" << partition;
@@ -1550,11 +1564,11 @@ void TreeUnwrapper::Visit(const verible::SyntaxTreeLeaf& leaf) {
   // In most other cases, do nothing.
   if (IsPreprocessorControlFlow(tag)) {
     VLOG(4) << "handling preprocessor control flow token";
-    StartNewUnwrappedLine(PartitionPolicyEnum::kFitOnLineElseExpand);
+    StartNewUnwrappedLine(PartitionPolicyEnum::kFitOnLineElseExpand, &leaf);
     CurrentUnwrappedLine().SetIndentationSpaces(0);
   } else if (IsEndKeyword(tag)) {
     VLOG(4) << "handling end* keyword";
-    StartNewUnwrappedLine(PartitionPolicyEnum::kAlwaysExpand);
+    StartNewUnwrappedLine(PartitionPolicyEnum::kAlwaysExpand, &leaf);
   }
 
   auto& partition = *ABSL_DIE_IF_NULL(CurrentTokenPartition());
@@ -1615,7 +1629,7 @@ void TreeUnwrapper::Visit(const verible::SyntaxTreeLeaf& leaf) {
     case PP_else: {
       // Do not allow non-comment tokens on the same line as `else
       // (comments were handled above)
-      StartNewUnwrappedLine(PartitionPolicyEnum::kFitOnLineElseExpand);
+      StartNewUnwrappedLine(PartitionPolicyEnum::kFitOnLineElseExpand, &leaf);
       break;
     }
     default:
@@ -1628,13 +1642,13 @@ void TreeUnwrapper::Visit(const verible::SyntaxTreeLeaf& leaf) {
 // Specialized node visitors
 
 void TreeUnwrapper::VisitNewUnwrappedLine(const SyntaxTreeNode& node) {
-  StartNewUnwrappedLine(PartitionPolicyEnum::kFitOnLineElseExpand);
+  StartNewUnwrappedLine(PartitionPolicyEnum::kFitOnLineElseExpand, &node);
   TraverseChildren(node);
 }
 
 void TreeUnwrapper::VisitNewUnindentedUnwrappedLine(
     const SyntaxTreeNode& node) {
-  StartNewUnwrappedLine(PartitionPolicyEnum::kFitOnLineElseExpand);
+  StartNewUnwrappedLine(PartitionPolicyEnum::kFitOnLineElseExpand, &node);
   // Force the current line to be unindented without losing track of where
   // the current indentation level is for children.
   CurrentUnwrappedLine().SetIndentationSpaces(0);

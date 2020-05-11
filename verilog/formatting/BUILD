@@ -11,6 +11,16 @@ package(
 # libraries
 
 cc_library(
+    name = "align",
+    srcs = ["align.cc"],
+    hdrs = ["align.h"],
+    deps = [
+        "//common/formatting:format_token",
+        "//common/formatting:token_partition_tree",
+    ],
+)
+
+cc_library(
     name = "tree_unwrapper",
     srcs = ["tree_unwrapper.cc"],
     hdrs = ["tree_unwrapper.h"],
@@ -99,6 +109,7 @@ cc_library(
         "formatter.h",
     ],
     deps = [
+        ":align",
         ":comment_controls",
         ":format_style",
         ":token_annotator",

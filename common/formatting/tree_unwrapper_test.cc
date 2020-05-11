@@ -78,7 +78,7 @@ class FakeTreeUnwrapper : public TreeUnwrapperData, public TreeUnwrapper {
 
   // Node visit that always starts a new unwrapped line
   void Visit(const SyntaxTreeNode& node) override {
-    StartNewUnwrappedLine(PartitionPolicyEnum::kAlwaysExpand);
+    StartNewUnwrappedLine(PartitionPolicyEnum::kAlwaysExpand, &node);
     TraverseChildren(node);
   }
 
@@ -106,7 +106,8 @@ TEST(TreeUnwrapperTest, EmptyStartNewUnwrappedLine) {
   // Do not call .Unwrap() for this test.
 
   const auto& current = const_tree_unwrapper.CurrentUnwrappedLine();
-  tree_unwrapper.StartNewUnwrappedLine(PartitionPolicyEnum::kAlwaysExpand);
+  tree_unwrapper.StartNewUnwrappedLine(PartitionPolicyEnum::kAlwaysExpand,
+                                       &*view->SyntaxTree());
   const auto& next = const_tree_unwrapper.CurrentUnwrappedLine();
   EXPECT_EQ(&current, &next);
 }
@@ -157,8 +158,8 @@ TEST(TreeUnwrapperTest, StreamPrinting) {
   std::ostringstream stream;
   stream << tree_unwrapper;
   EXPECT_EQ(stream.str(),  //
-            "[hello ,], policy: always-expand\n"
-            "[world], policy: always-expand\n");
+            "[hello ,], policy: always-expand, (origin: \"hello, world\")\n"
+            "[world], policy: always-expand, (origin: \"world\")\n");
 }
 
 }  // namespace verible

@@ -176,14 +176,15 @@ void TreeUnwrapper::FinishUnwrappedLine() {
                                   preformatted_tokens_.begin());
 }
 
-void TreeUnwrapper::StartNewUnwrappedLine(PartitionPolicyEnum partitioning) {
+void TreeUnwrapper::StartNewUnwrappedLine(PartitionPolicyEnum partitioning,
+                                          const Symbol* origin) {
   // TODO(fangism): Take an optional indentation depth override parameter.
-
   auto& current_unwrapped_line = CurrentUnwrappedLine();
   if (current_unwrapped_line.IsEmpty()) {  // token range is empty
     // Re-use previously created unwrapped line.
     current_unwrapped_line.SetIndentationSpaces(current_indentation_spaces_);
     current_unwrapped_line.SetPartitionPolicy(partitioning);
+    current_unwrapped_line.SetOrigin(origin);
     VLOG(4) << "re-using node at " << NodePath(*active_unwrapped_lines_) << ": "
             << current_unwrapped_line;
     // There may have been subtrees created with empty ranges, e.g.
@@ -206,7 +207,8 @@ void TreeUnwrapper::StartNewUnwrappedLine(PartitionPolicyEnum partitioning) {
     active_unwrapped_lines_ = active_unwrapped_lines_->NewSibling(
         UnwrappedLine(current_indentation_spaces_, CurrentFormatTokenIterator(),
                       partitioning));
-    VLOG(4) << "new node " << NodePath(*active_unwrapped_lines_) << ": "
+    CurrentUnwrappedLine().SetOrigin(origin);
+    VLOG(4) << "new sibling node " << NodePath(*active_unwrapped_lines_) << ": "
             << CurrentUnwrappedLine();
   }
 }
@@ -296,17 +298,17 @@ TreeUnwrapper::VisitIndentedChildren(const SyntaxTreeNode& node,
       current_indentation_spaces_ + indentation_delta);
 
   // Mark a new sibling at the new indentation level, apply partition policy.
-  StartNewUnwrappedLine(partitioning);
+  StartNewUnwrappedLine(partitioning, &node);
 
   // Start first child right away.
   const ValueSaver<TokenPartitionTree*> tree_saver(
       &active_unwrapped_lines_,
-      active_unwrapped_lines_->NewChild(
-          UnwrappedLine(current_indentation_spaces_,
-                        CurrentFormatTokenIterator(), partitioning)));
-  CurrentUnwrappedLine().SetOrigin(&node);
-  VLOG(3) << __FUNCTION__ << ", new node " << NodePath(*active_unwrapped_lines_)
-          << ": " << CurrentUnwrappedLine();
+      active_unwrapped_lines_->NewChild(UnwrappedLine(
+          current_indentation_spaces_, CurrentFormatTokenIterator(),
+          PartitionPolicyEnum::kFitOnLineElseExpand /* default */)));
+  VLOG(3) << __FUNCTION__ << ", new child node "
+          << NodePath(*active_unwrapped_lines_) << ": "
+          << CurrentUnwrappedLine();
   TraverseChildren(node);
 
   return CurrentFormatTokenIterator();
@@ -332,7 +334,7 @@ void TreeUnwrapper::VisitIndentedSection(const SyntaxTreeNode& node,
   active_unwrapped_lines_->Value().SpanUpToToken(last_ftoken_iter);
 
   // Start new empty UnwrappedLine at the previous indentation level.
-  StartNewUnwrappedLine(partitioning);
+  StartNewUnwrappedLine(PartitionPolicyEnum::kUninitialized, nullptr);
 }
 
 std::ostream& operator<<(std::ostream& stream, const TreeUnwrapper& unwrapper) {

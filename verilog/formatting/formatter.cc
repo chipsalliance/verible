@@ -40,6 +40,7 @@
 #include "verilog/CST/module.h"
 #include "verilog/analysis/verilog_analyzer.h"
 #include "verilog/analysis/verilog_equivalence.h"
+#include "verilog/formatting/align.h"
 #include "verilog/formatting/comment_controls.h"
 #include "verilog/formatting/format_style.h"
 #include "verilog/formatting/token_annotator.h"
@@ -234,6 +235,12 @@ static void DeterminePartitionExpansion(partition_node_type* node,
   const auto partition_policy = uwline.PartitionPolicy();
   VLOG(3) << "partition policy: " << partition_policy;
   switch (partition_policy) {
+    case PartitionPolicyEnum::kUninitialized: {
+      LOG(FATAL) << "Got an uninitialized partition policy at: " << uwline;
+      break;
+    }
+    // Always view tabular aligned partitions in expanded form.
+    case PartitionPolicyEnum::kTabularAlignment:
     case PartitionPolicyEnum::kAlwaysExpand: {
       if (children.size() > 1) {
         node_view.Expand();
@@ -473,15 +480,25 @@ Status Formatter::Format(const ExecutionControl& control) {
     }
   }
 
-  {
-    // Reshape partition tree with kAppendFittingSubPartitions policy
-    tree_unwrapper.ApplyPreOrder([this](TokenPartitionTree& node) {
+  {  // In this pass, perform additional modifications to the partitions and
+     // spacings.
+    tree_unwrapper.ApplyPreOrder([&](TokenPartitionTree& node) {
       const auto& uwline = node.Value();
       const auto partition_policy = uwline.PartitionPolicy();
 
-      if (partition_policy ==
-          PartitionPolicyEnum::kAppendFittingSubPartitions) {
-        verible::ReshapeFittingSubpartitions(&node, style_);
+      switch (partition_policy) {
+        case PartitionPolicyEnum::kAppendFittingSubPartitions:
+          // Reshape partition tree with kAppendFittingSubPartitions policy
+          verible::ReshapeFittingSubpartitions(&node, style_);
+          break;
+        case PartitionPolicyEnum::kTabularAlignment:
+          // TODO(b/145170750): Adjust inter-token spacing to achieve alignment,
+          // but leave partitioning intact.
+          TabularAlignTokenPartitions(&node,
+                                      &unwrapper_data.preformatted_tokens);
+          break;
+        default:
+          break;
       }
     });
   }

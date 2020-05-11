@@ -200,19 +200,19 @@ TEST_F(TokenPartitionTreePrinterTest, VectorTreeShallow) {
   {
     std::ostringstream stream;
     stream << TokenPartitionTreePrinter(tree);
-    EXPECT_EQ(stream.str(), R"({ ([<auto>], policy: always-expand) @{}
-  { (>>[one], policy: always-expand) }
-  { (>>[two three four], policy: always-expand) }
-  { (>>[five six], policy: always-expand) }
+    EXPECT_EQ(stream.str(), R"({ ([<auto>], policy: uninitialized) @{}
+  { (>>[one], policy: uninitialized) }
+  { (>>[two three four], policy: uninitialized) }
+  { (>>[five six], policy: uninitialized) }
 })");
   }
   {
     std::ostringstream stream;
     stream << TokenPartitionTreePrinter(tree, true);  // verbose
-    EXPECT_EQ(stream.str(), R"({ ([<auto>], policy: always-expand) @{}
-  { (>>[<_0,0>one], policy: always-expand) }
-  { (>>[<_0,0>two <_1,0>three <+_0>four], policy: always-expand) }
-  { (>>[<_0,22>five <\n>six], policy: always-expand) }
+    EXPECT_EQ(stream.str(), R"({ ([<auto>], policy: uninitialized) @{}
+  { (>>[<_0,0>one], policy: uninitialized) }
+  { (>>[<_0,0>two <_1,0>three <+_0>four], policy: uninitialized) }
+  { (>>[<_0,22>five <\n>six], policy: uninitialized) }
 })");
   }
 }
@@ -257,15 +257,15 @@ TEST_F(TokenPartitionTreePrinterTest, VectorTreeDeep) {
 
   std::ostringstream stream;
   stream << TokenPartitionTreePrinter(tree);
-  EXPECT_EQ(stream.str(), R"({ ([<auto>], policy: always-expand) @{}
-  { (>>[one], policy: always-expand) }
-  { (>>[<auto>], policy: always-expand) @{1}
-    { (>>>>[two three], policy: always-expand) }
-    { (>>>>[four], policy: always-expand) }
+  EXPECT_EQ(stream.str(), R"({ ([<auto>], policy: uninitialized) @{}
+  { (>>[one], policy: uninitialized) }
+  { (>>[<auto>], policy: uninitialized) @{1}
+    { (>>>>[two three], policy: uninitialized) }
+    { (>>>>[four], policy: uninitialized) }
   }
-  { (>>[<auto>], policy: always-expand) @{2}
-    { (>>>>[five], policy: always-expand) }
-    { (>>>>[six], policy: always-expand) }
+  { (>>[<auto>], policy: uninitialized) @{2}
+    { (>>>>[five], policy: uninitialized) }
+    { (>>>>[six], policy: uninitialized) }
   }
 })");
 }

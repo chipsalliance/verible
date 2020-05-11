@@ -5361,7 +5361,6 @@ module_attribute_foreign_opt
     { $$ = nullptr; }
   ;
 module_port_list_opt
-
   : '(' list_of_ports_or_port_declarations_opt ')'
     { $$ = MakeParenGroup($1, $2, $3); }
   /** replaces these rules:

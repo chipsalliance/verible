@@ -38,8 +38,10 @@ using verible::container::FindOrDie;
 std::ostream& operator<<(std::ostream& stream, PartitionPolicyEnum p) {
   static const auto* enum_names =
       new std::map<PartitionPolicyEnum, const char*>{
+          {PartitionPolicyEnum::kUninitialized, "uninitialized"},
           {PartitionPolicyEnum::kAlwaysExpand, "always-expand"},
           {PartitionPolicyEnum::kFitOnLineElseExpand, "fit-else-expand"},
+          {PartitionPolicyEnum::kTabularAlignment, "tabular-alignment"},
           {PartitionPolicyEnum::kAppendFittingSubPartitions,
            "append-fitting-sub-partitions"},
       };

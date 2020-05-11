@@ -367,14 +367,15 @@ TEST_F(UnwrappedLineTest, AsCodeEmptyNoIndent) {
   UnwrappedLine uwline(0, pre_format_tokens_.begin());
   std::ostringstream stream;
   stream << uwline;
-  EXPECT_EQ(stream.str(), "[], policy: always-expand");
+  EXPECT_EQ(stream.str(), "[], policy: uninitialized");
 }
 
 // Testing AsCode() with no tokens and indentation
 TEST_F(UnwrappedLineTest, AsCodeEmptyIndent) {
   const std::vector<TokenInfo> tokens;
   CreateTokenInfos(tokens);
-  UnwrappedLine uwline(1, pre_format_tokens_.begin());
+  UnwrappedLine uwline(1, pre_format_tokens_.begin(),
+                       PartitionPolicyEnum::kAlwaysExpand);
   std::ostringstream stream;
   stream << uwline;
   EXPECT_EQ(stream.str(), ">[], policy: always-expand");
@@ -385,7 +386,8 @@ TEST_F(UnwrappedLineTest, AsCodeOneTokenNoIndent) {
   const char test[] = "endmodule";
   const std::vector<TokenInfo> tokens = {{0, test}};
   CreateTokenInfos(tokens);
-  UnwrappedLine uwline(0, pre_format_tokens_.begin());
+  UnwrappedLine uwline(0, pre_format_tokens_.begin(),
+                       PartitionPolicyEnum::kAlwaysExpand);
   AddFormatTokens(&uwline);
   std::ostringstream stream;
   stream << uwline;
@@ -396,7 +398,8 @@ TEST_F(UnwrappedLineTest, AsCodeOneTokenNoIndent) {
 TEST_F(UnwrappedLineTest, AsCodeTextNoIndent) {
   const std::vector<TokenInfo> tokens = {{0, "module"}, {1, "foo"}, {2, "#("}};
   CreateTokenInfos(tokens);
-  UnwrappedLine uwline(0, pre_format_tokens_.begin());
+  UnwrappedLine uwline(0, pre_format_tokens_.begin(),
+                       PartitionPolicyEnum::kAlwaysExpand);
   AddFormatTokens(&uwline);
   const char expected[] = "[module foo #(], policy: always-expand";
   std::ostringstream stream;
@@ -409,7 +412,8 @@ TEST_F(UnwrappedLineTest, AsCodeTextIndent) {
   const std::vector<TokenInfo> tokens = {{0, "const"}, {1, "void"}, {2, "foo"},
                                          {3, "("},     {4, ")"},    {5, ";"}};
   CreateTokenInfos(tokens);
-  UnwrappedLine uwline(5, pre_format_tokens_.begin());
+  UnwrappedLine uwline(5, pre_format_tokens_.begin(),
+                       PartitionPolicyEnum::kAlwaysExpand);
   AddFormatTokens(&uwline);
   const char expected[] = ">>>>>[const void foo ( ) ;], policy: always-expand";
   std::ostringstream stream;

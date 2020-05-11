@@ -31,6 +31,9 @@ namespace verible {
 // different set of policies, this this might eventually have to move into
 // language-specific implementation code.
 enum class PartitionPolicyEnum {
+  // Denotes that no partition policy has been set.
+  kUninitialized,
+
   // This partition exists solely just for grouping purposes.
   // Always view subpartitions of node tagged with this, rather than whole range
   // spanned by the subpartitions.
@@ -43,7 +46,11 @@ enum class PartitionPolicyEnum {
   // the first place.
 
   // This is where future formatting configuration policies could go:
-  // e.g. kColumnarAlignment, kOneItemPerLine, kCompactItems
+  // e.g. kOneItemPerLine, kCompactItems
+
+  // With this policy, coordinate the spacing of subpartitions like auto-sized
+  // columns that use space-padding to achieve vertical alignment.
+  kTabularAlignment,
 
   // Treats subpartitions as units, and appends them to the same line as
   // long as they fit, else wrap them aligned to the position of the first
@@ -60,9 +67,10 @@ std::ostream& operator<<(std::ostream&, PartitionPolicyEnum);
 // that can be easily grown without any copy-overhead.
 class UnwrappedLine {
   typedef std::vector<PreFormatToken>::const_iterator token_iterator;
-  typedef container_iterator_range<token_iterator> range_type;
 
  public:
+  typedef container_iterator_range<token_iterator> range_type;
+
   enum {
     kIndentationMarker = '>'  // for readable debug printing
   };
@@ -70,7 +78,7 @@ class UnwrappedLine {
   // Parameter d is the indentation level, and iterator b points to the first
   // PreFormatToken spanned by this range, which is initially empty.
   UnwrappedLine(int d, token_iterator b,
-                PartitionPolicyEnum p = PartitionPolicyEnum::kAlwaysExpand)
+                PartitionPolicyEnum p = PartitionPolicyEnum::kUninitialized)
       : indentation_spaces_(d), tokens_(b, b), partition_policy_(p) {}
 
   // Allow default construction for use in resize-able containers.
@@ -134,7 +142,7 @@ class UnwrappedLine {
 
   // This determines under what conditions this UnwrappedLine should be
   // further partitioned for formatting.
-  PartitionPolicyEnum partition_policy_ = PartitionPolicyEnum::kAlwaysExpand;
+  PartitionPolicyEnum partition_policy_ = PartitionPolicyEnum::kUninitialized;
 
   // Hint about the origin of this partition, e.g. a particular syntax
   // tree node/leaf.

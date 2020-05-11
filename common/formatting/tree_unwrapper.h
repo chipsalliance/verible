@@ -97,7 +97,8 @@ class TreeUnwrapper : public TreeContextVisitor {
 
  protected:
   // Begins a new UnwrappedLine to span a new sub-range of format tokens.
-  void StartNewUnwrappedLine(PartitionPolicyEnum);
+  void StartNewUnwrappedLine(PartitionPolicyEnum partitioning,
+                             const Symbol* origin);
 
   // Traverses the children of a node in postorder, recursively accepting this
   // visitor.
