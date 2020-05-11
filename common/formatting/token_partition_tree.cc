@@ -21,6 +21,8 @@
 #include "common/formatting/format_token.h"
 #include "common/formatting/line_wrap_searcher.h"
 #include "common/formatting/unwrapped_line.h"
+#include "common/strings/display_utils.h"
+#include "common/text/tree_utils.h"
 #include "common/util/container_iterator_range.h"
 #include "common/util/logging.h"
 #include "common/util/spacer.h"
@@ -118,7 +120,14 @@ std::ostream& TokenPartitionTreePrinter::PrintTree(std::ostream& stream,
                      UnwrappedLine::kIndentationMarker)
            // <auto> just means the concatenation of all subpartitions
            << "[<auto>], policy: " << value.PartitionPolicy() << ") @"
-           << NodePath(node) << '\n';
+           << NodePath(node);
+    if (value.Origin() != nullptr) {
+      static constexpr int kContextLimit = 25;
+      stream << ", (origin: \""
+             << AutoTruncate{StringSpanOfSymbol(*value.Origin()), kContextLimit}
+             << "\")";
+    }
+    stream << '\n';
     // token range spans all of children nodes
     for (const auto& child : children) {
       TokenPartitionTreePrinter(child, verbose).PrintTree(stream, indent + 2)

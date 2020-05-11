@@ -21,6 +21,7 @@
 #include "gtest/gtest.h"
 #include "common/formatting/format_token.h"
 #include "common/formatting/unwrapped_line_test_utils.h"
+#include "common/text/tree_builder_test_util.h"
 #include "common/util/container_iterator_range.h"
 
 namespace verible {
@@ -259,6 +260,32 @@ TEST_F(UnwrappedLineTest, FormattedTextPreserveSpacesNoTokens) {
     std::ostringstream stream;
     stream << output;
     EXPECT_TRUE(stream.str().empty());
+  }
+}
+
+TEST_F(UnwrappedLineTest, StreamFormatting) {
+  const absl::string_view text("  aaa  bbb   cc");
+  const std::vector<TokenInfo> tokens = {// "aaa", "bbb", "cc"
+                                         {0, text.substr(2, 3)},
+                                         {1, text.substr(7, 3)},
+                                         {2, text.substr(13, 2)}};
+  CreateTokenInfosExternalStringBuffer(tokens);  // use 'text' buffer
+  UnwrappedLine uwline(4, pre_format_tokens_.begin());
+  AddFormatTokens(&uwline);
+  auto tree = TNode(1, Leaf(tokens[0]), Leaf(tokens[1]), Leaf(tokens[2]));
+  uwline.SetPartitionPolicy(PartitionPolicyEnum::kAlwaysExpand);
+  {
+    std::ostringstream stream;
+    stream << uwline;
+    EXPECT_EQ(stream.str(), ">>>>[aaa bbb cc], policy: always-expand");
+  }
+  uwline.SetOrigin(&*tree);
+  {  // with origin
+    std::ostringstream stream;
+    stream << uwline;
+    EXPECT_EQ(
+        stream.str(),
+        ">>>>[aaa bbb cc], policy: always-expand, (origin: \"aaa  bbb   cc\")");
   }
 }
 

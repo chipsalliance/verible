@@ -25,6 +25,8 @@
 #include "absl/strings/str_cat.h"
 #include "absl/strings/str_join.h"
 #include "common/formatting/format_token.h"
+#include "common/strings/display_utils.h"
+#include "common/text/tree_utils.h"
 #include "common/util/container_iterator_range.h"
 #include "common/util/container_util.h"
 #include "common/util/spacer.h"
@@ -60,12 +62,18 @@ void UnwrappedLine::SetIndentationSpaces(int spaces) {
 }
 
 std::ostream* UnwrappedLine::AsCode(std::ostream* stream, bool verbose) const {
+  constexpr int kContextLimit = 25;  // length limit for displaying spanned text
   *stream << Spacer(indentation_spaces_, kIndentationMarker) << '['
           << absl::StrJoin(tokens_, " ",
                            [=](std::string* out, const PreFormatToken& token) {
                              TokenFormatter(out, token, verbose);
                            })
           << "], policy: " << partition_policy_;
+  if (origin_ != nullptr) {
+    *stream << ", (origin: \""
+            << AutoTruncate{StringSpanOfSymbol(*origin_), kContextLimit}
+            << "\")";
+  }
   return stream;
 }
 
