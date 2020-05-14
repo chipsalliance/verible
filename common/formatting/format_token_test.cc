@@ -141,6 +141,43 @@ TEST(PreFormatTokenTest, OriginalLeadingSpaces) {
   }
 }
 
+TEST(PreFormatTokenTest, LeadingSpacesLength) {
+  const absl::string_view text("abcdefgh");
+  const TokenInfo tok1(1, text.substr(1, 3)), tok2(2, text.substr(5, 2));
+  {
+    PreFormatToken p1(&tok1), p2(&tok2);
+    p1.before.spaces_required = 0;
+    p2.before.spaces_required = 3;
+    // original spacing not set
+    EXPECT_EQ(p1.LeadingSpacesLength(), 0);
+    EXPECT_EQ(p2.LeadingSpacesLength(), 3);
+  }
+  {
+    PreFormatToken p1(&tok1), p2(&tok2);
+    // set original spacing, but not preserve mode.
+    p1.before.preserved_space_start = text.begin();
+    p1.before.break_decision = SpacingOptions::Undecided;
+    p1.before.spaces_required = 1;
+    p2.before.preserved_space_start = tok1.text.end();
+    p2.before.break_decision = SpacingOptions::Undecided;
+    p2.before.spaces_required = 2;
+    EXPECT_EQ(p1.LeadingSpacesLength(), 1);
+    EXPECT_EQ(p2.LeadingSpacesLength(), 2);
+  }
+  {
+    PreFormatToken p1(&tok1), p2(&tok2);
+    // set original spacing and preserve mode.
+    p1.before.preserved_space_start = text.begin();
+    p1.before.break_decision = SpacingOptions::Preserve;
+    p1.before.spaces_required = 2;
+    p2.before.preserved_space_start = tok1.text.end();
+    p2.before.break_decision = SpacingOptions::Preserve;
+    p2.before.spaces_required = 4;
+    EXPECT_EQ(p1.LeadingSpacesLength(), 1);  // "a"
+    EXPECT_EQ(p2.LeadingSpacesLength(), 1);  // "d"
+  }
+}
+
 // Test that FormattedText prints correctly.
 TEST(FormattedTokenTest, FormattedText) {
   TokenInfo token(0, "roobar");

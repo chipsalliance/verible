@@ -133,6 +133,10 @@ struct PreFormatToken {
   // Reconstructs the original spacing that preceded this token.
   absl::string_view OriginalLeadingSpaces() const;
 
+  // Returns the number of leading spaces that this format token would occupy
+  // when rendered, based on the formatting decision and before.required_spaces.
+  size_t LeadingSpacesLength() const;
+
   // Returns a human-readable string representation of the FormatToken.
   // This is only intended for debugging.
   std::string ToString() const;

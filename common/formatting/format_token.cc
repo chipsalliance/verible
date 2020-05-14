@@ -172,6 +172,15 @@ absl::string_view PreFormatToken::OriginalLeadingSpaces() const {
                                     token->text.begin());
 }
 
+size_t PreFormatToken::LeadingSpacesLength() const {
+  if (before.break_decision == SpacingOptions::Preserve &&
+      before.preserved_space_start != nullptr) {
+    return OriginalLeadingSpaces().length();
+  }
+  // in other cases (append, wrap), take the spaces_required value.
+  return before.spaces_required;
+}
+
 std::string PreFormatToken::ToString() const {
   std::ostringstream output_stream;
   output_stream << *this;
