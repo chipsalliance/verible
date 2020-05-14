@@ -752,14 +752,16 @@ static const std::initializer_list<FormatterTestCase> kFormatterTestCases = {
      "       `include \"ports.svh\"\n"
      "         ) ; endmodule\n",
      "module foo (\n"
-     "    `include \"ports.svh\"\n"  // TODO(b/149503062): remove wrap indent
+     "    `include \"ports.svh\"\n"
      ");\n"
      "endmodule\n"},
     {"module foo(\n"
      "       `define FOO\n"
+     "`undef\tFOO\n"
      "         ) ; endmodule\n",
      "module foo (\n"
-     "    `define FOO\n"  // TODO(b/149503062): remove wrap indent
+     "    `define FOO\n"
+     "    `undef FOO\n"
      ");\n"
      "endmodule\n"},
     {"module foo(  input x  , output y ) ;endmodule:foo\n",
