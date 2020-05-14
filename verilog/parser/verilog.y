@@ -689,7 +689,11 @@ is not locally defined, so the grammar here uses only generic identifiers.
 %token MacroCallCloseToEndLine
 
 /* These token types exist for the lexer, but are not used in this parser. */
-%token TK_COMMENT_BLOCK "/*comment*/"
+// The &lowast; escaping is needed here because Bison 3.5.91+ puts the string
+// literal in a block comment in the generated parser, and the "*/" in the
+// literal causes the block comment to end prematurely and causes a syntax
+// error. Note that this literal does not affect the grammar in any way.
+%token TK_COMMENT_BLOCK "/&lowast;comment&lowast;/"
 %token TK_EOL_COMMENT "// end of line comment"
 %token TK_SPACE "<<space>>"  /* includes tabs */
 %token TK_NEWLINE "<<\\n>>"
@@ -8546,4 +8550,3 @@ const char* verilog_symbol_name(size_t symbol_enum) {
 }
 
 }  // namespace verilog
-
