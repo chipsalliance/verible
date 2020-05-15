@@ -3265,6 +3265,31 @@ static const char* kModuleInstanceTests[] = {
     "foo b(),\n"
     "    c();\n"
     "endmodule",
+    "module macro_as_type;\n"
+    "`foo b();\n"
+    "endmodule",
+    "module macro_as_instance;\n"
+    "foo `bar();\n"
+    "endmodule",
+    "module macro_as_instance;\n"
+    "foo `bar ();\n"
+    "endmodule",
+    "module macro_as_instance;\n"
+    "foo `bar (\n"
+    ");\n"
+    "endmodule",
+    "module macro_as_instance;\n"
+    "foo `bar [1:0] ();\n"
+    "endmodule",
+    "module macro_as_instance;\n"
+    "foo `bar(x, y, z);\n"  // positional ports as macro args
+    "endmodule",
+    "module macro_as_instance;\n"
+    "foo `bar(.x(x), .y(y), .z(z));\n"  // named ports as macro args
+    "endmodule",
+    "module macro_as_instance;\n"
+    "foo `bar1(), `bar2();\n"  // multiple macro instances
+    "endmodule",
 };
 
 static const char* kInterfaceTests[] = {

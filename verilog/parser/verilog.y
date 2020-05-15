@@ -4869,6 +4869,10 @@ gate_instance_or_register_variable
     { $$ = MakeTaggedNode(N::kGateInstance, $1,
                           MakeUnpackedDimensionsNode($2),
                           MakeParenGroup($3, $4, $5)); }
+  | MacroCall
+    /* covers MacroCallId '(' ... ')' as an instance */
+    /* TODO(fangism): restructure this like a kGateInstance */
+    { $$ = move($1); }
   /* TODO(fangism): arrays should not be declared with port connections */
   /* TODO(b/36706412): support anonymous instances */
   // | '(' any_port_list_opt ')'
