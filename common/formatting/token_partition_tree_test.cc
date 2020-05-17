@@ -1346,17 +1346,15 @@ TEST_F(ReshapeFittingSubpartitionsTest, IndentationTwoPartitions) {
 
   EXPECT_EQ(saved_tree.Children()[0].Value().IndentationSpaces(),
             tree.Children()[0].Children()[0].Value().IndentationSpaces());
-  EXPECT_EQ(saved_tree.Children()[1].Children()[0].Value().IndentationSpaces(),
-            tree.Children()[0].Children()[1].Value().IndentationSpaces());
-  EXPECT_EQ(saved_tree.Children()[1].Children()[1].Value().IndentationSpaces(),
-            tree.Children()[0].Children()[2].Value().IndentationSpaces());
+  EXPECT_EQ(tree.Children()[0].Children()[1].Value().IndentationSpaces(), 7);
+  EXPECT_EQ(tree.Children()[0].Children()[2].Value().IndentationSpaces(), 7);
 
-  EXPECT_EQ(saved_tree.Children()[1].Children()[2].Value().IndentationSpaces(),
-            tree.Children()[1].Children()[0].Value().IndentationSpaces());
-  EXPECT_EQ(saved_tree.Children()[1].Children()[3].Value().IndentationSpaces(),
-            tree.Children()[1].Children()[1].Value().IndentationSpaces());
-  EXPECT_EQ(saved_tree.Children()[1].Children()[4].Value().IndentationSpaces(),
-            tree.Children()[1].Children()[2].Value().IndentationSpaces());
+  EXPECT_EQ(tree.Children()[1].Children()[0].Value().IndentationSpaces(),
+            header.TokensRange()[0].Length() + 7); // appended
+  EXPECT_EQ(tree.Children()[1].Children()[1].Value().IndentationSpaces(),
+            header.TokensRange()[0].Length() + 7); // appended
+  EXPECT_EQ(tree.Children()[1].Children()[2].Value().IndentationSpaces(),
+            header.TokensRange()[0].Length() + 7); // appended
 }
 
 // Tests with real-world example
