@@ -1263,6 +1263,32 @@ void TreeUnwrapper::ReshapeTokenPartitions(
       }
     case NodeEnum::kBindDirective: {
       AttachTrailingSemicolonToPreviousPartition(&partition);
+
+      // Flatten instance name partition
+      auto& target_instance_partition = partition;
+      std::vector<size_t> offsets;
+      target_instance_partition.FlattenOnlyChildrenWithChildren(&offsets);
+      // This position in the flattened result will be merged.
+      const size_t fuse_position = offsets.back() - 1;
+
+      // Join the rightmost of instance_type_partition with the leftmost of
+      // instance_list_partition. Keep the type's indentation.
+      // This can yield an intermediate partition that contains:
+      // ") instance_name (".
+      MergeConsecutiveSiblings(&target_instance_partition, fuse_position);
+      auto& children = target_instance_partition.Children();
+      CHECK(!children.empty());
+      auto& instance_list_partition = children.back();
+      // Adjust the indentation of last (';') partition.
+      verible::AdjustIndentationRelative(&instance_list_partition,
+                                         -style.wrap_spaces);
+
+      // If port list partition is present, adjust its indentation as well
+      auto* instance_port_list_partition = children.back().PreviousSibling();
+      if (instance_port_list_partition != nullptr) {
+        verible::AdjustIndentationRelative(instance_port_list_partition,
+                                           -style.wrap_spaces);
+      }
       break;
     }
     case NodeEnum::kStatement: {
