@@ -636,6 +636,192 @@ const TreeUnwrapperTestData kUnwrapModuleTestCases[] = {
     },
 
     {
+        "module with always construct, single statement, conditional",
+        "module m;\n"
+        "always @(b, c)"
+        "  if (expr) s = y;"
+        "endmodule",
+        ModuleDeclaration(
+            0,  //
+            L(0, {"module", "m", ";"}),
+            N(1,  //
+              L(1, {"always", "@", "(", "b", ",", "c", ")"}),
+              L(2, {"if", "(", "expr", ")"}), L(3, {"s", "=", "y", ";"})),
+            L(0, {"endmodule"})),
+    },
+
+    {
+        "module with always construct, single statement, conditional with else",
+        "module m;\n"
+        "always @(b, c)"
+        "  if (expr) s = y; else t = v;"
+        "endmodule",
+        ModuleDeclaration(
+            0,  //
+            L(0, {"module", "m", ";"}),
+            N(1,  //
+              L(1, {"always", "@", "(", "b", ",", "c", ")"}),
+              N(2,  //
+                L(2, {"if", "(", "expr", ")"}), L(3, {"s", "=", "y", ";"})),
+              N(2,  //
+                L(2, {"else"}), L(3, {"t", "=", "v", ";"}))),
+            L(0, {"endmodule"})),
+    },
+
+    {
+        "module with always construct, single statement, if-else-if",
+        "module m;\n"
+        "always @(b, c)"
+        "  if (expr) s = y; else if (j) t = v;"
+        "endmodule",
+        ModuleDeclaration(
+            0,  //
+            L(0, {"module", "m", ";"}),
+            N(1,  //
+              L(1, {"always", "@", "(", "b", ",", "c", ")"}),
+              N(2,  //
+                L(2, {"if", "(", "expr", ")"}), L(3, {"s", "=", "y", ";"})),
+              N(2,  //
+                L(2, {"else", "if", "(", "j", ")"}),
+                L(3, {"t", "=", "v", ";"}))),
+            L(0, {"endmodule"})),
+    },
+
+    {
+        "module with always construct, single statement, if-else-if-else",
+        "module m;\n"
+        "always @(b, c)"
+        "  if (expr) s = y; else if (j) t = v; else r=0;"
+        "endmodule",
+        ModuleDeclaration(
+            0,  //
+            L(0, {"module", "m", ";"}),
+            N(1,  //
+              L(1, {"always", "@", "(", "b", ",", "c", ")"}),
+              N(2,  //
+                L(2, {"if", "(", "expr", ")"}), L(3, {"s", "=", "y", ";"})),
+              N(2,  //
+                L(2, {"else", "if", "(", "j", ")"}),
+                L(3, {"t", "=", "v", ";"})),
+              N(2,  //
+                L(2, {"else"}), L(3, {"r", "=", "0", ";"}))),
+            L(0, {"endmodule"})),
+    },
+
+    {
+        "module with always construct, single statement, loop",
+        "module m;\n"
+        "always @(b, c)"
+        "  for (;;) s = y;"
+        "endmodule",
+        ModuleDeclaration(0,  //
+                          L(0, {"module", "m", ";"}),
+                          N(1,  //
+                            L(1, {"always", "@", "(", "b", ",", "c", ")"}),
+                            N(2,  //
+                              L(2, {"for", "("}),
+                              N(4, L(4, {";"}), L(4, {";"})), L(2, {")"})),
+                            L(3, {"s", "=", "y", ";"})),
+                          L(0, {"endmodule"})),
+    },
+
+    {
+        "module with always construct, single statement, foreach",
+        "module m;\n"
+        "always @(b, c)"
+        "  foreach (a[i]) s = y;"
+        "endmodule",
+        ModuleDeclaration(0,  //
+                          L(0, {"module", "m", ";"}),
+                          N(1,  //
+                            L(1, {"always", "@", "(", "b", ",", "c", ")"}),
+                            L(2, {"foreach", "(", "a", "[", "i", "]", ")"}),
+                            L(3, {"s", "=", "y", ";"})),
+                          L(0, {"endmodule"})),
+    },
+
+    {
+        "module with always construct, single statement, repeat",
+        "module m;\n"
+        "always @(b, c)"
+        "  repeat (expr) s = y;"
+        "endmodule",
+        ModuleDeclaration(
+            0,  //
+            L(0, {"module", "m", ";"}),
+            N(1,  //
+              L(1, {"always", "@", "(", "b", ",", "c", ")"}),
+              L(2, {"repeat", "(", "expr", ")"}), L(3, {"s", "=", "y", ";"})),
+            L(0, {"endmodule"})),
+    },
+
+    {
+        "module with always construct, single statement, while",
+        "module m;\n"
+        "always @(b, c)"
+        "  while (expr) s = y;"
+        "endmodule",
+        ModuleDeclaration(
+            0,  //
+            L(0, {"module", "m", ";"}),
+            N(1,  //
+              L(1, {"always", "@", "(", "b", ",", "c", ")"}),
+              L(2, {"while", "(", "expr", ")"}), L(3, {"s", "=", "y", ";"})),
+            L(0, {"endmodule"})),
+    },
+
+    {
+        "module with always construct, single statement, do-while",
+        "module m;\n"
+        "always @(b, c)"
+        "  do s = y;  while (expr) ;"
+        "endmodule",
+        ModuleDeclaration(
+            0,  //
+            L(0, {"module", "m", ";"}),
+            N(1,                                                             //
+              L(1, {"always", "@", "(", "b", ",", "c", ")"}), L(2, {"do"}),  //
+              L(3, {"s", "=", "y", ";"}),                                    //
+              L(2, {"while", "(", "expr", ")", ";"})),
+            L(0, {"endmodule"})),
+    },
+
+    {
+        "module with always construct, single statement, forever",
+        "module m;\n"
+        "always @*"
+        "  forever love(u);"
+        "endmodule",
+        ModuleDeclaration(0,  //
+                          L(0, {"module", "m", ";"}),
+                          N(1,                           //
+                            L(1, {"always", "@", "*"}),  //
+                            L(2, {"forever"}),           //
+                            L(3, {"love", "(", "u", ")", ";"})),
+                          L(0, {"endmodule"})),
+    },
+
+    {
+        "module with always construct, single statement, case",
+        "module m;\n"
+        "always @(b, c)"
+        "  case (e) x: s = y;"
+        "  endcase "
+        "endmodule",
+        ModuleDeclaration(0,  //
+                          L(0, {"module", "m", ";"}),
+                          N(1,  //
+                            L(1, {"always", "@", "(", "b", ",", "c", ")"}),
+                            L(2, {"case", "(", "e", ")"}),
+                            N(3,                 //
+                              L(3, {"x", ":"}),  //
+                              L(3, {"s", "=", "y", ";"})),
+                            L(2, {"endcase"})),
+
+                          L(0, {"endmodule"})),
+    },
+
+    {
         "module with kModuleItemList and kDataDeclarations",
         "module tryme;"
         "foo1 a;"
@@ -4566,16 +4752,15 @@ const TreeUnwrapperTestData kUnwrapTaskTestCases[] = {
         "repeat (n) repeat (m) @(posedge clk); endtask endclass",
         ClassDeclaration(
             0, L(0, {"class", "c", ";"}),
-            TaskDeclaration(
-                1, L(1, {"task", "automatic", "clocker", ";"}),
-                FlowControl(2,  //
-                            L(2, {"repeat", "(", "n", ")"}),
-                            N(2,  // TODO(fangism): indent subtree more
-                              L(2, {"repeat", "(", "m", ")"}),
-                              L(3, {"@", "(", "posedge", "clk", ")",
-                                    ";"})  // single null-statement
-                              )),
-                L(1, {"endtask"})),
+            TaskDeclaration(1, L(1, {"task", "automatic", "clocker", ";"}),
+                            FlowControl(2,  //
+                                        L(2, {"repeat", "(", "n", ")"}),
+                                        N(3,  //
+                                          L(3, {"repeat", "(", "m", ")"}),
+                                          L(4, {"@", "(", "posedge", "clk", ")",
+                                                ";"})  // single null-statement
+                                          )),
+                            L(1, {"endtask"})),
             L(0, {"endclass"})),
     },
 
@@ -5365,11 +5550,11 @@ const TreeUnwrapperTestData kUnwrapFunctionTestCases[] = {
         "endfunction",
         FunctionDeclaration(
             0, FunctionHeader(0, {"function", "foo", ";"}),
-            FlowControl(1,                                                //
-                        L(1, {"foreach", "(", "x", "[", "i", "]", ")"}),  //
-                        N(1,  // TODO(fangism): indent subtree more
-                          L(1, {"foreach", "(", "j", "[", "k", "]", ")"}),  //
-                          L(2, {"y", "=", "x", ";"}))),
+            FlowControl(1,                                                  //
+                        L(1, {"foreach", "(", "x", "[", "i", "]", ")"}),    //
+                        N(2,                                                //
+                          L(2, {"foreach", "(", "j", "[", "k", "]", ")"}),  //
+                          L(3, {"y", "=", "x", ";"}))),
             L(0, {"endfunction"})),
     },
 
@@ -6058,9 +6243,9 @@ const TreeUnwrapperTestData kUnwrapFunctionTestCases[] = {
             0, FunctionHeader(0, {"function", "foo", ";"}),
             FlowControl(1,  //
                         L(1, {"while", "(", "e", ")"}),
-                        N(1,  // TODO(fangism): indent subtree more
-                          L(1, {"while", "(", "e", ")"}),
-                          L(2, {"coyote", "(", "sooper_genius", ")", ";"}))),
+                        N(2,  //
+                          L(2, {"while", "(", "e", ")"}),
+                          L(3, {"coyote", "(", "sooper_genius", ")", ";"}))),
             L(0, {"endfunction"})),
     },
 

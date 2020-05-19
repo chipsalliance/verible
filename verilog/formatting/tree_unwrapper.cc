@@ -325,19 +325,18 @@ static bool ShouldIndentRelativeToDirectParent(
   // child of one of the exceptions: sequential/parallel/generate blocks.
   return context.DirectParentIsOneOf({
       //
-      NodeEnum::kLoopGenerateConstruct,  //
-      NodeEnum::kCaseStatement,          //
-      NodeEnum::kRandCaseStatement,      //
-      NodeEnum::kForLoopStatement,       //
-      NodeEnum::kForeverLoopStatement,   //
-      NodeEnum::kRepeatLoopStatement,    //
-      NodeEnum::kWhileLoopStatement,     //
-      NodeEnum::kDoWhileLoopStatement,   //
-      NodeEnum::kForeachLoopStatement,   //
-      NodeEnum::kConditionalStatement,   //
-      NodeEnum::kIfClause,               //
-      NodeEnum::kGenerateIfClause,       //
-      // TODO(fangism): k{Assert,Assume,Expect}PropertyClause
+      NodeEnum::kLoopGenerateConstruct,             //
+      NodeEnum::kCaseStatement,                     //
+      NodeEnum::kRandCaseStatement,                 //
+      NodeEnum::kForLoopStatement,                  //
+      NodeEnum::kForeverLoopStatement,              //
+      NodeEnum::kRepeatLoopStatement,               //
+      NodeEnum::kWhileLoopStatement,                //
+      NodeEnum::kDoWhileLoopStatement,              //
+      NodeEnum::kForeachLoopStatement,              //
+      NodeEnum::kConditionalStatement,              //
+      NodeEnum::kIfClause,                          //
+      NodeEnum::kGenerateIfClause,                  //
       NodeEnum::kAssertionClause,                   //
       NodeEnum::kAssumeClause,                      //
       NodeEnum::kProceduralTimingControlStatement,  //
@@ -691,17 +690,6 @@ void TreeUnwrapper::SetIndentationsAndCreatePartitions(
     case NodeEnum::kGenvarDeclaration:
     case NodeEnum::kConditionalGenerateConstruct:
 
-      // various flow control constructs
-    case NodeEnum::kCaseStatement:
-    case NodeEnum::kRandCaseStatement:
-    case NodeEnum::kForLoopStatement:
-    case NodeEnum::kForeverLoopStatement:
-    case NodeEnum::kRepeatLoopStatement:
-    case NodeEnum::kWhileLoopStatement:
-    case NodeEnum::kDoWhileLoopStatement:
-    case NodeEnum::kForeachLoopStatement:
-    case NodeEnum::kConditionalStatement:
-
     case NodeEnum::kMacroGenericItem:
     case NodeEnum::kModuleHeader:
     case NodeEnum::kBindDirective:
@@ -796,11 +784,11 @@ void TreeUnwrapper::SetIndentationsAndCreatePartitions(
     case NodeEnum::kStatement:
     case NodeEnum::kLabeledStatement:  // e.g. foo_label : do_something();
     case NodeEnum::kJumpStatement:
-    case NodeEnum::kWaitStatement:                  // wait(expr) ...
-    case NodeEnum::kWaitForkStatement:              // wait fork;
-    case NodeEnum::kAssertionStatement:             // assert(expr);
-    case NodeEnum::kAssumeStatement:                // assume(expr);
-    case NodeEnum::kCoverStatement:                 // cover(expr);
+    case NodeEnum::kWaitStatement:       // wait(expr) ...
+    case NodeEnum::kWaitForkStatement:   // wait fork;
+    case NodeEnum::kAssertionStatement:  // assert(expr);
+    case NodeEnum::kAssumeStatement:     // assume(expr);
+    case NodeEnum::kCoverStatement:      // cover(expr);
     case NodeEnum::kAssertPropertyStatement:
     case NodeEnum::kAssumePropertyStatement:
     case NodeEnum::kExpectPropertyStatement:
@@ -818,7 +806,19 @@ void TreeUnwrapper::SetIndentationsAndCreatePartitions(
     case NodeEnum::kNonblockingAssignmentStatement:  // dest <= src;
     case NodeEnum::kAssignModifyStatement:           // id+=expr
     case NodeEnum::kIncrementDecrementExpression:    // --y
-    case NodeEnum::kProceduralTimingControlStatement: {
+    case NodeEnum::kProceduralTimingControlStatement:
+
+      // various flow control constructs
+    case NodeEnum::kCaseStatement:
+    case NodeEnum::kRandCaseStatement:
+    case NodeEnum::kForLoopStatement:
+    case NodeEnum::kForeverLoopStatement:
+    case NodeEnum::kRepeatLoopStatement:
+    case NodeEnum::kWhileLoopStatement:
+    case NodeEnum::kDoWhileLoopStatement:
+    case NodeEnum::kForeachLoopStatement:
+    case NodeEnum::kConditionalStatement:  //
+    {
       // Single statements directly inside a flow-control construct
       // should be properly indented one level.
       const int indent = ShouldIndentRelativeToDirectParent(Context())
