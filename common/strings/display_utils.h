@@ -17,6 +17,7 @@
 
 #include <iosfwd>
 
+#include "absl/strings/str_join.h"
 #include "absl/strings/string_view.h"
 
 namespace verible {
@@ -35,6 +36,63 @@ struct AutoTruncate {
 };
 
 std::ostream& operator<<(std::ostream&, const AutoTruncate& trunc);
+
+namespace internal {
+
+// Helper struct for bundling parameters to absl::StrJoin.
+// This is useful for contructing printer adapters for types that
+// are typedefs/aliases of standard containers, and not their own class.
+// For example, not every std::vector<int> wants to be formatted the same way.
+// Be careful not to define std::ostream& operator<< for such types, as you
+// accidentally create conflicting definitions, and violate ODR.
+template <class T>
+struct SequenceStreamFormatter {
+  const T& sequence;  // binds to object that is to be printed
+  absl::string_view separator;
+  absl::string_view prefix;
+  absl::string_view suffix;
+  // TODO(fangism): pass in custom formatter object, and be able to nest
+  // multiple levels of formatters.
+};
+
+// Redirects stream printing to abs::StrJoin wrapped in a single object.
+template <class T>
+std::ostream& operator<<(std::ostream& stream,
+                         const SequenceStreamFormatter<T>& t) {
+  return stream << t.prefix
+                << absl::StrJoin(t.sequence.begin(), t.sequence.end(),
+                                 t.separator, absl::StreamFormatter())
+                << t.suffix;
+}
+
+}  // namespace internal
+
+// SequenceFormatter helps create custom formatters (pretty-printers) for
+// standard container types, when providing a plain std::ostream& operator<<
+// overload would be ill-advised.
+// This is the next best alternative, even if it requires the caller to wrap
+// plain container objects.
+//
+// Example usage (define the following for your specific container type):
+// Suppose MySequenceType is a typedef to a container like std::list<int>.
+// Define a lambda (implicit return type, w/o auto-return type supported):
+//
+// constexpr auto MySequenceFormatter = [](const MySequenceType& t) {
+//   return verible::SequenceFormatter(t, " | ", "< ", " >");
+// };
+//
+// and call it:
+//   stream << MySequenceFormatter(sequence_obj) << ...;
+//
+// to consistently produce text like:
+//   "< 1 | 2 | 3 | ... >"
+//
+template <class T>
+internal::SequenceStreamFormatter<T> SequenceFormatter(
+    const T& t, absl::string_view sep = ", ", absl::string_view prefix = "",
+    absl::string_view suffix = "") {
+  return internal::SequenceStreamFormatter<T>{t, sep, prefix, suffix};
+}
 
 }  // namespace verible
 

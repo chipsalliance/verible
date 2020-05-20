@@ -51,5 +51,20 @@ TEST(AutoTruncateTest, Various) {
   }
 }
 
+typedef std::vector<int> IntVector;
+
+// Normally a definition like the following would appear in a header
+// to be shared.
+static constexpr auto AngleBracketFormatter = [](const IntVector& t) {
+  return SequenceFormatter(t, " | ", "< ", " >");
+};
+
+TEST(SequenceFormatterTest, AngleBracketVectorNotation) {
+  const IntVector v{5, 6, 7, 8};
+  std::ostringstream stream;
+  stream << AngleBracketFormatter(v);
+  EXPECT_EQ(stream.str(), "< 5 | 6 | 7 | 8 >");
+}
+
 }  // namespace
 }  // namespace verible
