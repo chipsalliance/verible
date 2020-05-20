@@ -18,6 +18,7 @@
 #include <vector>
 
 #include "gtest/gtest.h"
+#include "common/strings/line_column_map.h"
 #include "common/text/text_structure_test_utils.h"
 #include "common/text/token_info.h"
 #include "common/text/token_stream_view.h"

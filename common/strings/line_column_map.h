@@ -21,8 +21,8 @@
 // LineColumn error_location = lcmap(token_error_offset);
 // std::cout << "Error at line " << error_location << std::endl;
 
-#ifndef VERIBLE_COMMON_TEXT_LINE_COLUMN_MAP_H_
-#define VERIBLE_COMMON_TEXT_LINE_COLUMN_MAP_H_
+#ifndef VERIBLE_COMMON_STRINGS_LINE_COLUMN_MAP_H_
+#define VERIBLE_COMMON_STRINGS_LINE_COLUMN_MAP_H_
 
 #include <algorithm>
 #include <cstddef>
@@ -85,4 +85,4 @@ class LineColumnMap {
 
 }  // namespace verible
 
-#endif  // VERIBLE_COMMON_TEXT_LINE_COLUMN_MAP_H_
+#endif  // VERIBLE_COMMON_STRINGS_LINE_COLUMN_MAP_H_

@@ -27,7 +27,7 @@
 #include "common/analysis/syntax_tree_linter.h"
 #include "common/analysis/text_structure_linter.h"
 #include "common/analysis/token_stream_linter.h"
-#include "common/text/line_column_map.h"
+#include "common/strings/line_column_map.h"
 #include "common/text/text_structure.h"
 #include "verilog/analysis/lint_rule_registry.h"
 #include "verilog/analysis/verilog_linter_configuration.h"

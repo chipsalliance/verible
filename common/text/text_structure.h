@@ -34,8 +34,8 @@
 
 #include "absl/status/status.h"
 #include "absl/strings/string_view.h"
+#include "common/strings/line_column_map.h"
 #include "common/text/concrete_syntax_tree.h"
-#include "common/text/line_column_map.h"
 #include "common/text/symbol.h"
 #include "common/text/token_stream_view.h"
 #include "common/text/tree_utils.h"

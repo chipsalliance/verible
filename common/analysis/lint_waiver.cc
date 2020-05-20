@@ -29,6 +29,7 @@
 #include "absl/strings/string_view.h"
 #include "common/analysis/config_file_lexer.h"
 #include "common/strings/comment_utils.h"
+#include "common/strings/line_column_map.h"
 #include "common/text/text_structure.h"
 #include "common/text/token_info.h"
 #include "common/text/token_stream_view.h"

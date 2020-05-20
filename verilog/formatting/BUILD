@@ -118,8 +118,8 @@ cc_library(
         "//common/formatting:line_wrap_searcher",
         "//common/formatting:token_partition_tree",
         "//common/formatting:unwrapped_line",
+        "//common/strings:line_column_map",
         "//common/strings:range",
-        "//common/text:line_column_map",
         "//common/text:text_structure",
         "//common/text:token_info",
         "//common/text:tree_utils",
@@ -172,7 +172,7 @@ cc_library(
     hdrs = ["comment_controls.h"],
     deps = [
         "//common/strings:comment_utils",
-        "//common/text:line_column_map",
+        "//common/strings:line_column_map",
         "//common/text:token_stream_view",
         "//common/util:interval_set",
         "//common/util:logging",
@@ -190,7 +190,7 @@ cc_test(
     srcs = ["comment_controls_test.cc"],
     deps = [
         ":comment_controls",
-        "//common/text:line_column_map",
+        "//common/strings:line_column_map",
         "//common/text:token_info_test_util",
         "//verilog/analysis:verilog_analyzer",
         "@com_google_absl//absl/strings",

@@ -16,7 +16,7 @@
 #define VERIBLE_VERILOG_FORMATTING_COMMENT_CONTROLS_H_
 
 #include "absl/strings/string_view.h"
-#include "common/text/line_column_map.h"
+#include "common/strings/line_column_map.h"
 #include "common/text/token_stream_view.h"
 #include "common/util/interval_set.h"
 

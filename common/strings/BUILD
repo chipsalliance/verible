@@ -194,11 +194,34 @@ cc_library(
     ],
 )
 
+cc_library(
+    name = "line_column_map",
+    srcs = ["line_column_map.cc"],
+    hdrs = ["line_column_map.h"],
+    visibility = [
+        "//common/analysis:__pkg__",
+        "//common/text:__pkg__",
+        "//verilog/analysis:__pkg__",
+        "//verilog/formatting:__pkg__",
+    ],
+    deps = ["@com_google_absl//absl/strings"],
+)
+
 cc_test(
     name = "utf8_test",
     srcs = ["utf8_test.cc"],
     deps = [
         ":utf8",
+        "@com_google_absl//absl/strings",
+        "@com_google_googletest//:gtest_main",
+    ],
+)
+
+cc_test(
+    name = "line_column_map_test",
+    srcs = ["line_column_map_test.cc"],
+    deps = [
+        ":line_column_map",
         "@com_google_absl//absl/strings",
         "@com_google_googletest//:gtest_main",
     ],

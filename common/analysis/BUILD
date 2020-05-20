@@ -25,8 +25,8 @@ cc_library(
     srcs = ["lint_rule_status.cc"],
     hdrs = ["lint_rule_status.h"],
     deps = [
+        "//common/strings:line_column_map",
         "//common/text:concrete_syntax_leaf",
-        "//common/text:line_column_map",
         "//common/text:symbol",
         "//common/text:syntax_tree_context",
         "//common/text:token_info",
@@ -85,6 +85,7 @@ cc_library(
     deps = [
         ":config_file_lexer",
         "//common/strings:comment_utils",
+        "//common/strings:line_column_map",
         "//common/text:text_structure",
         "//common/text:token_info",
         "//common/text:token_stream_view",
@@ -106,8 +107,8 @@ cc_library(
         "//common/lexer",
         "//common/lexer:token_stream_adapter",
         "//common/parser:parse",
+        "//common/strings:line_column_map",
         "//common/text:concrete_syntax_tree",
-        "//common/text:line_column_map",
         "//common/text:text_structure",
         "//common/text:token_info",
         "//common/text:token_stream_view",
@@ -335,6 +336,7 @@ cc_test(
     srcs = ["lint_waiver_test.cc"],
     deps = [
         ":lint_waiver",
+        "//common/strings:line_column_map",
         "//common/text:text_structure_test_utils",
         "//common/text:token_info",
         "//common/text:token_stream_view",

@@ -14,7 +14,7 @@
 
 // Tests for LineColumnMap.
 
-#include "common/text/line_column_map.h"
+#include "common/strings/line_column_map.h"
 
 #include <sstream>  // IWYU pragma: keep  // for ostringstream
 #include <vector>

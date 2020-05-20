@@ -19,7 +19,7 @@
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 #include "absl/strings/str_join.h"
-#include "common/text/line_column_map.h"
+#include "common/strings/line_column_map.h"
 #include "common/text/token_info_test_util.h"
 #include "verilog/analysis/verilog_analyzer.h"
 

@@ -1,4 +1,5 @@
 # 'util' contains generic containers, adapters, algorithms
+# Any verible package may directly depend on this.
 
 licenses(["notice"])
 

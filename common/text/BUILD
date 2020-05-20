@@ -4,16 +4,16 @@
 licenses(["notice"])
 
 package(
+    # library layering: common/ packages that may NOT depend on this one:
+    #   strings/
+    #   util/
     default_visibility = [
-        "//:__subpackages__",
+        "//common/analysis:__subpackages__",
+        "//common/formatting:__subpackages__",
+        "//common/lexer:__subpackages__",
+        "//common/parser:__subpackages__",
+        "//verilog:__subpackages__",
     ],
-)
-
-cc_library(
-    name = "line_column_map",
-    srcs = ["line_column_map.cc"],
-    hdrs = ["line_column_map.h"],
-    deps = ["@com_google_absl//absl/strings"],
 )
 
 cc_library(
@@ -229,11 +229,11 @@ cc_library(
     deps = [
         ":concrete_syntax_leaf",
         ":concrete_syntax_tree",
-        ":line_column_map",
         ":symbol",
         ":token_info",
         ":token_stream_view",
         ":tree_utils",
+        "//common/strings:line_column_map",
         "//common/util:iterator_range",
         "//common/util:logging",
         "//common/util:range",
@@ -334,16 +334,6 @@ cc_test(
 )
 
 cc_test(
-    name = "line_column_map_test",
-    srcs = ["line_column_map_test.cc"],
-    deps = [
-        ":line_column_map",
-        "@com_google_absl//absl/strings",
-        "@com_google_googletest//:gtest_main",
-    ],
-)
-
-cc_test(
     name = "token_info_test",
     srcs = ["token_info_test.cc"],
     deps = [
@@ -397,7 +387,6 @@ cc_test(
     srcs = ["text_structure_test.cc"],
     deps = [
         ":concrete_syntax_tree",
-        ":line_column_map",
         ":symbol",
         ":text_structure",
         ":text_structure_test_utils",
@@ -405,6 +394,7 @@ cc_test(
         ":token_stream_view",
         ":tree_builder_test_util",
         ":tree_compare",
+        "//common/strings:line_column_map",
         "//common/util:iterator_range",
         "//common/util:logging",
         "//common/util:range",
