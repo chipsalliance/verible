@@ -766,16 +766,289 @@ static const std::initializer_list<FormatterTestCase> kFormatterTestCases = {
      "endmodule\n"},
     {"module foo(  input x  , output y ) ;endmodule:foo\n",
      "module foo (\n"
-     "    input x,\n"
+     "    input  x,\n"  // aligned
      "    output y\n"
-     ");\n"  // entire header fits on one line
+     ");\n"
      "endmodule : foo\n"},
     {"module foo(  input[2:0]x  , output y [3:0] ) ;endmodule:foo\n",
-     // TODO(fangism): reduce spaces around ':' in dimensions
      // each port item should be on its own line
      "module foo (\n"
-     "    input [2:0] x,\n"
-     "    output y[3:0]\n"
+     "    input  [2:0] x,\n"  // aligned
+     "    output       y[3:0]\n"
+     ");\n"
+     "endmodule : foo\n"},
+    {"module foo(  input wire x  , output reg yy ) ;endmodule:foo\n",
+     "module foo (\n"
+     "    input  wire x,\n"  // aligned
+     "    output reg  yy\n"
+     ");\n"
+     "endmodule : foo\n"},
+    {"module foo(  input wire x  ,//c1\n"
+     "output reg yyy //c2\n"
+     " ) ;endmodule:foo\n",
+     "module foo (\n"
+     "    input  wire x,  //c1\n"   // aligned
+     "    output reg  yyy  //c2\n"  // trailing comments not aligned
+     ");\n"
+     "endmodule : foo\n"},
+    {"module foo(  input wire x  , output yy ) ;endmodule:foo\n",
+     "module foo (\n"
+     "    input  wire x,\n"  // aligned
+     "    output      yy\n"
+     ");\n"
+     "endmodule : foo\n"},
+    {"module foo(  input   x  , output reg yy ) ;endmodule:foo\n",
+     "module foo (\n"
+     "    input      x,\n"  // aligned
+     "    output reg yy\n"
+     ");\n"
+     "endmodule : foo\n"},
+    {"module foo(  input   x  , output reg[a:b]yy ) ;endmodule:foo\n",
+     "module foo (\n"
+     "    input            x,\n"  // aligned
+     "    output reg [a:b] yy\n"
+     ");\n"
+     "endmodule : foo\n"},
+    {"module foo(  input   [a:b]x  , output reg  yy ) ;endmodule:foo\n",
+     "module foo (\n"
+     "    input      [a:b] x,\n"  // aligned
+     "    output reg       yy\n"
+     ");\n"
+     "endmodule : foo\n"},
+    {"module foo(  input   [a:c]x  , "
+     "  output logic[a-b: c]  yy ) ;endmodule:foo\n",
+     "module foo (\n"
+     "    input        [a:c]   x,\n"  // aligned
+     "    output logic [a-b:c] yy\n"  // TODO(b/70310743): align [:]'s
+     ");\n"
+     "endmodule : foo\n"},
+    {"module foo(  input   [a:c]x  , "
+     "  output logic[a - b: c]  yy ) ;endmodule:foo\n",
+     "module foo (\n"
+     "    input        [a:c]     x,\n"  // aligned
+     "    output logic [a - b:c] yy\n"  // TODO(b/70310743): align [:]'s
+     ");\n"
+     "endmodule : foo\n"},
+    {"module foo(  input   [a:b]x  , "
+     "  output reg[e: f]  yy ) ;endmodule:foo\n",
+     "module foo (\n"
+     "    input      [a:b] x,\n"  // aligned
+     "    output reg [e:f] yy\n"
+     ");\n"
+     "endmodule : foo\n"},
+    {"module foo(  input   tri[aa: bb]x  , "
+     "  output reg[e: f]  yy ) ;endmodule:foo\n",
+     "module foo (\n"               // TODO(b/70310743): align [:]'s
+     "    input  tri [aa:bb] x,\n"  // aligned
+     "    output reg [e:f]   yy\n"
+     ");\n"
+     "endmodule : foo\n"},
+    {"module foo(  input   [a:b][c:d]x  , "
+     "  output reg[e: f]  yy ) ;endmodule:foo\n",
+     "module foo (\n"
+     "    input      [a:b][c:d] x,\n"  // aligned
+     "    output reg [e:f]      yy\n"
+     ");\n"
+     "endmodule : foo\n"},
+    {"module foo(  input wire x  [j:k], output reg yy ) ;endmodule:foo\n",
+     "module foo (\n"
+     "    input  wire x [j:k],\n"  // aligned
+     "    output reg  yy\n"
+     ");\n"
+     "endmodule : foo\n"},
+    {"module foo(  input wire x  , output reg yy [j:k]) ;endmodule:foo\n",
+     "module foo (\n"
+     "    input  wire x,\n"  // aligned
+     "    output reg  yy[j:k]\n"
+     ");\n"
+     "endmodule : foo\n"},
+    {"module foo(  input wire x  [p:q], output reg yy [j:k]) ;endmodule:foo\n",
+     "module foo (\n"
+     "    input  wire x [p:q],\n"  // aligned
+     "    output reg  yy[j:k]\n"
+     ");\n"
+     "endmodule : foo\n"},
+    {"module foo(  input wire x  [p:q][r:s], output reg yy [j:k]) "
+     ";endmodule:foo\n",
+     "module foo (\n"
+     "    input  wire x [p:q][r:s],\n"  // aligned
+     "    output reg  yy[j:k]\n"
+     ");\n"
+     "endmodule : foo\n"},
+    {"module foo(  input wire x  [p:q][rr:ss], output reg yy [jj:kk][m:n]) "
+     ";endmodule:foo\n",
+     "module foo (\n"
+     "    input  wire x [p:q]  [rr:ss],\n"  // TODO(b/70310743): align [:]'s
+     "    output reg  yy[jj:kk][m:n]\n"     // aligned
+     ");\n"
+     "endmodule : foo\n"},
+    {"module foo(  input wire   [p:q]x, output reg yy [j:k]) ;endmodule:foo\n",
+     "module foo (\n"
+     "    input  wire [p:q] x,\n"  // aligned
+     "    output reg        yy[j:k]\n"
+     ");\n"
+     "endmodule : foo\n"},
+    {"module foo(  input wire  x [p:q], output reg[j:k]yy) ;endmodule:foo\n",
+     "module foo (\n"
+     "    input  wire       x [p:q],\n"  // aligned
+     "    output reg  [j:k] yy\n"
+     ");\n"
+     "endmodule : foo\n"},
+    {"module foo(  input pkg::bar_t  x , output reg  yy) ;endmodule:foo\n",
+     "module foo (\n"
+     "    input  pkg::bar_t x,\n"  // aligned
+     "    output reg        yy\n"
+     ");\n"
+     "endmodule : foo\n"},
+    {"module foo(  input wire  x , output pkg::bar_t  yy) ;endmodule:foo\n",
+     "module foo (\n"
+     "    input  wire       x,\n"  // aligned
+     "    output pkg::bar_t yy\n"
+     ");\n"
+     "endmodule : foo\n"},
+    {"module foo(  input pkg::bar_t#(1)  x , output reg  yy) ;endmodule:foo\n",
+     "module foo (\n"                   // with parameterized port type
+     "    input  pkg::bar_t #(1) x,\n"  // TODO(b/149364228): remove space
+                                        // before #
+     "    output reg             yy\n"  // aligned
+     ");\n"
+     "endmodule : foo\n"},
+    {"module foo(  input signed x , output reg  yy) ;endmodule:foo\n",
+     "module foo (\n"
+     "    input  signed x,\n"  // aligned
+     "    output reg    yy\n"
+     ");\n"
+     "endmodule : foo\n"},
+    {"module foo(  input signed x , output reg [m:n] yy) ;endmodule:foo\n",
+     "module foo (\n"
+     "    input  signed       x,\n"  // aligned
+     "    output reg    [m:n] yy\n"
+     ");\n"
+     "endmodule : foo\n"},
+    {"module foo(  input int signed x , output reg [m:n] yy) ;endmodule:foo\n",
+     "module foo (\n"
+     "    input  int signed       x,\n"  // aligned
+     "    output reg        [m:n] yy\n"
+     ");\n"
+     "endmodule : foo\n"},
+    {"module foo(  input signed x , output pkg::bar_t  yy) ;endmodule:foo\n",
+     "module foo (\n"
+     "    input  signed     x,\n"  // aligned
+     "    output pkg::bar_t yy\n"
+     ");\n"
+     "endmodule : foo\n"},
+    {"module foo(\n"
+     "//c1\n"
+     "input wire x , \n"
+     "//c2\n"
+     "output reg  yy\n"
+     "//c3\n"
+     ") ;endmodule:foo\n",
+     "module foo (\n"
+     "    //c1\n"
+     "    input  wire x,\n"  // aligned, ignoring comments
+     "    //c2\n"
+     "    output reg  yy\n"
+     "    //c3\n"
+     ");\n"
+     "endmodule : foo\n"},
+    {"module foo(\n"
+     "//c1\n"
+     "input wire x , \n"
+     "//c2a\n"  // longer comment
+     "//c2b\n"
+     "output reg  yy\n"
+     "//c3\n"
+     ") ;endmodule:foo\n",
+     "module foo (\n"
+     "    //c1\n"
+     "    input  wire x,\n"  // aligned, ignoring comments
+     "    //c2a\n"           // note: separated by 2 lines of comments
+     "    //c2b\n"
+     "    output reg  yy\n"
+     "    //c3\n"
+     ");\n"
+     "endmodule : foo\n"},
+    {"module foo(\n"
+     "`ifdef   FOO\n"
+     "input wire x , \n"
+     " `else\n"
+     "output reg  yy\n"
+     " `endif\n"
+     ") ;endmodule:foo\n",
+     "module foo (\n"
+     "`ifdef FOO\n"
+     "    input  wire x,\n"  // aligned, ignoring preprocessor conditionals
+     "`else\n"
+     "    output reg  yy\n"
+     "`endif\n"
+     ");\n"
+     "endmodule : foo\n"},
+    {"module foo(\n"
+     "input w , \n"
+     "`define   FOO BAR\n"
+     "input wire x , \n"
+     " `include  \"stuff.svh\"\n"
+     "output reg  yy\n"
+     " `undef    FOO\n"
+     "output zz\n"
+     ") ;endmodule:foo\n",
+     "module foo (\n"
+     "    input       w,\n"  // aligned, ignoring preprocessor directives
+     "    `define FOO BAR\n"
+     "    input  wire x,\n"
+     "    `include \"stuff.svh\"\n"
+     "    output reg  yy\n"
+     "    `undef FOO\n"
+     "    output      zz\n"  // aligned, ignoring preprocessor directives
+     ");\n"
+     "endmodule : foo\n"},
+    {"module foo(\n"
+     "input wire x , \n  \n"  // blank line, separating alignment groups
+     "output reg  yy\n"
+     ") ;endmodule:foo\n",
+     "module foo (\n"
+     "    input wire x,\n"  // not aligned, due to blank line separating groups
+     "\n"
+     "    output reg yy\n"
+     ");\n"
+     "endmodule : foo\n"},
+    {"module foo(\n"
+     "input wire x1 [r:s],\n"
+     "input [p:q] x2 , \n  \n"  // blank line, separating alignment groups
+     "output reg  [jj:kk]yy1,\n"
+     "output pkg::barr_t [mm:nn] yy2\n"
+     ") ;endmodule:foo\n",
+     "module foo (\n"
+     "    input wire       x1[r:s],\n"  // aligned in this group, but not across
+                                        // groups
+     "    input      [p:q] x2,\n"
+     "\n"
+     "    output reg         [jj:kk] yy1,\n"
+     "    output pkg::barr_t [mm:nn] yy2\n"
+     ");\n"
+     "endmodule : foo\n"},
+    {"module foo(\n"  // same as previous, with comments
+     " //c1\n"
+     "input wire x1 [r:s],\n"
+     "input [p:q] x2 , \n"
+     " //c2\n\n"  // blank line, separating alignment groups
+     " //c3\n"
+     "output reg  [jj:kk]yy1,\n"
+     " //c4\n"
+     "output pkg::barr_t [mm:nn] yy2\n"
+     ") ;endmodule:foo\n",
+     "module foo (\n"
+     "    //c1\n"
+     "    input wire       x1[r:s],\n"  // aligned in this group, but not across
+                                        // groups
+     "    input      [p:q] x2,\n"
+     "    //c2\n"
+     "\n"
+     "    //c3\n"
+     "    output reg         [jj:kk] yy1,\n"
+     "    //c4\n"
+     "    output pkg::barr_t [mm:nn] yy2\n"
      ");\n"
      "endmodule : foo\n"},
     {"module foo #(int x,int y) ;endmodule:foo\n",  // parameters
@@ -1717,8 +1990,8 @@ static const std::initializer_list<FormatterTestCase> kFormatterTestCases = {
     {// interface declaration with multiple ports
      " interface if1( input\tlogic   z, output logic a)\n;endinterface\t\t",
      "interface if1 (\n"
-     "    input logic z,\n"  // should be one-per-line, even it it fits
-     "    output logic a\n"
+     "    input  logic z,\n"  // should be one-per-line, even it it fits
+     "    output logic a\n"   // aligned
      ");\n"
      "endinterface\n"},
     {// interface declaration with parameters and ports

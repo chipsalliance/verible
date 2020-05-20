@@ -494,6 +494,7 @@ Status Formatter::Format(const ExecutionControl& control) {
         case PartitionPolicyEnum::kTabularAlignment:
           // TODO(b/145170750): Adjust inter-token spacing to achieve alignment,
           // but leave partitioning intact.
+          // This relies on inter-token spacing having already been annotated.
           TabularAlignTokenPartitions(&node,
                                       &unwrapper_data.preformatted_tokens);
           break;
