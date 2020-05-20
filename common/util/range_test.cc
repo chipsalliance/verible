@@ -19,6 +19,7 @@
 
 #include "gtest/gtest.h"
 #include "absl/strings/string_view.h"
+#include "common/util/iterator_range.h"
 
 namespace verible {
 namespace {
@@ -33,6 +34,24 @@ TEST(IsSubRangeTest, SameEmptyString) {
 TEST(IsSubRangeTest, SameNonEmptyString) {
   const absl::string_view substring = "nonempty";
   EXPECT_TRUE(IsSubRange(substring, substring));
+}
+
+// Test that IsSubRange works on string and string_view.
+TEST(IsSubRangeTest, MixedStringViewStdString) {
+  const std::string superstring("nonempty");
+  const absl::string_view substring =
+      absl::string_view(superstring).substr(1, 3);
+  // Note: std::string and absl::string_view iterators are not directly
+  // comparable to each other.
+  EXPECT_TRUE(IsSubRange(substring, absl::string_view(superstring)));
+}
+
+// Test that IsSubRange works on string iterators.
+TEST(IsSubRangeTest, StringAndIterator) {
+  const std::string superstring("asdasdjasd");
+  const auto substring =
+      make_range(superstring.begin() + 1, superstring.begin() + 3);
+  EXPECT_TRUE(IsSubRange(substring, superstring));
 }
 
 // Test that IsSubRange is false on completely different string_views.
@@ -146,6 +165,51 @@ TEST(BoundsEqualTest, DerivedSubStringView) {
   EXPECT_FALSE(BoundsEqual(str.substr(5, 2), str.substr(1, 2)));  // disjoint
   EXPECT_FALSE(BoundsEqual(str.substr(1, 4), str.substr(3, 4)));  // partial
   EXPECT_FALSE(BoundsEqual(str.substr(3, 4), str.substr(1, 4)));  // partial
+}
+
+typedef std::pair<int, int> IntPair;
+
+TEST(SubRangeIndicesTest, Empty) {
+  const std::vector<int> v;
+  const auto supersequence = make_range(v.begin(), v.end());
+  const auto subsequence = supersequence;
+  EXPECT_EQ(SubRangeIndices(subsequence, supersequence), IntPair(0, 0));
+}
+
+TEST(SubRangeIndicesTest, RangeInvariant) {
+  const std::vector<int> supersequence(5);
+  for (int i = 0; i < supersequence.size(); ++i) {
+    for (int j = i; j < supersequence.size(); ++j) {
+      const auto subsequence =
+          make_range(supersequence.begin() + i, supersequence.begin() + j);
+      EXPECT_EQ(SubRangeIndices(subsequence, supersequence), IntPair(i, j))
+          << i << ", " << j;
+    }
+  }
+}
+
+// Tests that swapping subsequence with supersequence fails.
+TEST(SubRangeIndicesTest, InsideOut) {
+  const std::vector<int> supersequence(5);
+  for (int i = 0; i < supersequence.size(); ++i) {
+    for (int j = i; j < supersequence.size(); ++j) {
+      const auto subsequence =
+          make_range(supersequence.begin() + i, supersequence.begin() + j);
+      EXPECT_DEATH(SubRangeIndices(supersequence, subsequence), "")
+          << i << ", " << j;
+    }
+  }
+}
+
+TEST(SubRangeIndicesTest, PartialOverlap) {
+  const std::vector<int> v(4);
+  for (int i = 0; i < v.size(); ++i) {
+    for (int j = 1; j < v.size(); ++j) {
+      const auto left = make_range(v.begin(), v.begin() + i);
+      const auto right = make_range(v.begin() + j, v.end());
+      EXPECT_DEATH(SubRangeIndices(left, right), "") << i << ", " << j;
+    }
+  }
 }
 
 }  // namespace

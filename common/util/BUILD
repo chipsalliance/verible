@@ -31,6 +31,7 @@ cc_library(
 cc_library(
     name = "range",
     hdrs = ["range.h"],
+    deps = [":logging"],
 )
 
 cc_library(
@@ -299,6 +300,7 @@ cc_test(
     name = "range_test",
     srcs = ["range_test.cc"],
     deps = [
+        ":iterator_range",
         ":range",
         "@com_google_absl//absl/strings",
         "@com_google_googletest//:gtest_main",

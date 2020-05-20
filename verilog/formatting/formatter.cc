@@ -378,16 +378,13 @@ void Formatter::SelectLines(const LineNumberSet& lines) {
       lines, text_structure_.GetLineColumnMap());
 }
 
-static verible::Interval<int> ByteOffsetRange(absl::string_view substring,
-                                              absl::string_view superstring) {
-  CHECK(verible::IsSubRange(substring, superstring));
+static verible::Interval<int> DisableByteOffsetRange(
+    absl::string_view substring, absl::string_view superstring) {
   CHECK(!substring.empty());
-  const int disable_begin =
-      std::distance(superstring.begin(), substring.begin());
-  const int disable_end = std::distance(superstring.begin(), substring.end());
+  auto range = verible::SubstringOffsets(substring, superstring);
   // +1 so that formatting can still occur on the space before the start
   // of the disabled range.
-  return {disable_begin + 1, disable_end};
+  return {range.first + 1, range.second};
 }
 
 // Given control flags and syntax tree, selectively disable some ranges
@@ -403,7 +400,7 @@ static void DisableSyntaxBasedRanges(ByteOffsetSet* disabled_ranges,
       if (ports != nullptr) {
         const auto ports_text = verible::StringSpanOfSymbol(*ports);
         VLOG(4) << "disabled: " << ports_text;
-        disabled_ranges->Add(ByteOffsetRange(ports_text, full_text));
+        disabled_ranges->Add(DisableByteOffsetRange(ports_text, full_text));
       }
     }
     if (!style.format_module_instantiations) {
@@ -415,7 +412,7 @@ static void DisableSyntaxBasedRanges(ByteOffsetSet* disabled_ranges,
         if (module_instances.empty()) continue;
         const auto inst_text = verible::StringSpanOfSymbol(*inst.match);
         VLOG(4) << "disabled: " << inst_text;
-        disabled_ranges->Add(ByteOffsetRange(inst_text, full_text));
+        disabled_ranges->Add(DisableByteOffsetRange(inst_text, full_text));
       }
     }
   }

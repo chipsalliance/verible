@@ -15,9 +15,11 @@
 #include "common/strings/range.h"
 
 #include <algorithm>
+#include <utility>
 
 #include "absl/strings/string_view.h"
 #include "common/util/logging.h"
+#include "common/util/range.h"
 
 namespace verible {
 
@@ -25,6 +27,11 @@ absl::string_view make_string_view_range(const char* begin, const char* end) {
   const int length = std::distance(begin, end);
   CHECK_GE(length, 0) << "Malformed string bounds.";
   return absl::string_view(begin, length);
+}
+
+std::pair<int, int> SubstringOffsets(absl::string_view substring,
+                                     absl::string_view superstring) {
+  return SubRangeIndices(substring, superstring);
 }
 
 }  // namespace verible

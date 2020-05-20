@@ -18,12 +18,20 @@
 #ifndef VERIBLE_COMMON_UTIL_RANGE_H_
 #define VERIBLE_COMMON_UTIL_RANGE_H_
 
+#include <algorithm>
+#include <utility>
+
+#include "common/util/logging.h"
+
 namespace verible {
 
 // Return true if sub is a substring inside super.
-// This is mostly used to check string_view ranges and their invariants.
-template <class Range>
-bool IsSubRange(const Range& sub, const Range& super) {
+// SubRange and SuperRange types just need to support begin() and end().
+// The SuperRange type could be a container or range.
+// The iterator categories need to be RandomAccessIterator for less-comparison.
+// This can be used to check string_view ranges and their invariants.
+template <class SubRange, class SuperRange>
+bool IsSubRange(const SubRange& sub, const SuperRange& super) {
   return sub.begin() >= super.begin() && sub.end() <= super.end();
 }
 
@@ -42,6 +50,20 @@ bool BoundsEqual(const LRange& l, const RRange& r) {
 }
 
 // TODO(fangism): bool RangesOverlap(l, r);
+
+// Returns offsets [x,y] where the sub-slice of superstring from
+// x to y == substring.
+// Both Range types just needs to support begin(), end(), and std::distance
+// between those iterators. SuperRange could be a container or range.
+// Precondition: substring must be a sub-range of superstring.
+template <class SubRange, class SuperRange>
+std::pair<int, int> SubRangeIndices(const SubRange& substring,
+                                    const SuperRange& superstring) {
+  CHECK(IsSubRange(substring, superstring));
+  const int begin = std::distance(superstring.begin(), substring.begin());
+  const int end = std::distance(superstring.begin(), substring.end());
+  return {begin, end};
+}
 
 }  // namespace verible
 

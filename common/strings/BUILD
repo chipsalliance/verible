@@ -150,6 +150,7 @@ cc_library(
     hdrs = ["range.h"],
     deps = [
         "//common/util:logging",
+        "//common/util:range",
         "@com_google_absl//absl/strings",
     ],
 )
