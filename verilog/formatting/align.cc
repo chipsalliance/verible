@@ -713,8 +713,32 @@ static void AlignPortDeclarationGroup(const TokenPartitionRange& group,
   VLOG(1) << "end of " << __FUNCTION__;
 }
 
+static absl::string_view StringSpanOfPartitionRange(
+    const TokenPartitionRange& range) {
+  const auto front_range = range.front().Value().TokensRange();
+  const auto back_range = range.back().Value().TokensRange();
+  CHECK(!front_range.empty());
+  CHECK(!back_range.empty());
+  return verible::make_string_view_range(front_range.front().Text().begin(),
+                                         back_range.back().Text().end());
+}
+
+static bool AnyPartitionSubRangeIsDisabled(
+    TokenPartitionRange range, absl::string_view full_text,
+    const ByteOffsetSet& disabled_byte_ranges) {
+  const auto span = StringSpanOfPartitionRange(range);
+  const auto span_offsets = verible::SubstringOffsets(span, full_text);
+  ByteOffsetSet diff(disabled_byte_ranges);  // copy
+  diff.Complement(span_offsets);             // enabled range(s)
+  ByteOffsetSet span_set;
+  span_set.Add(span_offsets);
+  return diff != span_set;
+}
+
 static void AlignPortDeclarations(TokenPartitionTree* partition_ptr,
-                                  mutable_ftoken_iterator ftoken_base) {
+                                  mutable_ftoken_iterator ftoken_base,
+                                  absl::string_view full_text,
+                                  const ByteOffsetSet& disabled_byte_ranges) {
   VLOG(1) << __FUNCTION__;
   // Each subpartition is presumed to correspond to a single port declaration,
   // preprocessor directive (`ifdef), or comment.
@@ -732,14 +756,28 @@ static void AlignPortDeclarations(TokenPartitionTree* partition_ptr,
   // similar pattern to std::adjacent_difference.
   for (auto next = std::next(prev); next != subpartitions_bounds.end();
        prev = next, ++next) {
-    AlignPortDeclarationGroup(TokenPartitionRange(*prev, *next), ftoken_base);
+    const TokenPartitionRange group_partition_range(*prev, *next);
+
+    // If any sub-interval in this range is disabled, skip it.
+    // TODO(fangism): instead of disabling the whole range, sub-partition
+    // it one more level, and operate on those ranges, essentially treating
+    // no-format ranges like alignment group boundaries.
+    // Requires IntervalSet::Intersect operation.
+    if (group_partition_range.empty() ||
+        AnyPartitionSubRangeIsDisabled(group_partition_range, full_text,
+                                       disabled_byte_ranges))
+      continue;
+
+    AlignPortDeclarationGroup(group_partition_range, ftoken_base);
     // TODO(fangism): rewrite using functional composition.
   }
   VLOG(1) << "end of " << __FUNCTION__;
 }
 
 void TabularAlignTokenPartitions(TokenPartitionTree* partition_ptr,
-                                 ftoken_array_type* ftokens) {
+                                 ftoken_array_type* ftokens,
+                                 absl::string_view full_text,
+                                 const ByteOffsetSet& disabled_byte_ranges) {
   VLOG(1) << __FUNCTION__;
   auto& partition = *partition_ptr;
   auto& uwline = partition.Value();
@@ -753,7 +791,8 @@ void TabularAlignTokenPartitions(TokenPartitionTree* partition_ptr,
   auto ftoken_base = ftokens->begin();
   switch (static_cast<NodeEnum>(node->Tag().tag)) {
     case NodeEnum::kPortDeclarationList:
-      AlignPortDeclarations(partition_ptr, ftoken_base);
+      AlignPortDeclarations(partition_ptr, ftoken_base, full_text,
+                            disabled_byte_ranges);
       break;
     default:
       break;

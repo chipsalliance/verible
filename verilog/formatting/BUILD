@@ -15,6 +15,7 @@ cc_library(
     srcs = ["align.cc"],
     hdrs = ["align.h"],
     deps = [
+        ":comment_controls",
         "//common/formatting:format_token",
         "//common/formatting:token_partition_tree",
         "//common/formatting:unwrapped_line",

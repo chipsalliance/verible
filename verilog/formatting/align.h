@@ -19,6 +19,7 @@
 
 #include "common/formatting/format_token.h"
 #include "common/formatting/token_partition_tree.h"
+#include "verilog/formatting/comment_controls.h"
 
 namespace verilog {
 namespace formatter {
@@ -29,7 +30,9 @@ namespace formatter {
 // of being able to modify inter-token spacing.
 // TODO(fangism): pass in disabled formatting ranges
 void TabularAlignTokenPartitions(verible::TokenPartitionTree* partition_ptr,
-                                 std::vector<verible::PreFormatToken>* ftokens);
+                                 std::vector<verible::PreFormatToken>* ftokens,
+                                 absl::string_view full_text,
+                                 const ByteOffsetSet& disabled_byte_ranges);
 
 }  // namespace formatter
 }  // namespace verilog

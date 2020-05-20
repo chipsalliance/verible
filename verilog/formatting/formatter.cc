@@ -493,7 +493,8 @@ Status Formatter::Format(const ExecutionControl& control) {
           // but leave partitioning intact.
           // This relies on inter-token spacing having already been annotated.
           TabularAlignTokenPartitions(&node,
-                                      &unwrapper_data.preformatted_tokens);
+                                      &unwrapper_data.preformatted_tokens,
+                                      full_text, disabled_ranges_);
           break;
         default:
           break;

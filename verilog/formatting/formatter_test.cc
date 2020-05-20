@@ -4565,6 +4565,25 @@ static const std::initializer_list<FormatterTestCase> kFormatterTestCases = {
      "module m;\n"
      "unindented instantiation;\n"
      "endmodule\n"},
+    {// disabling formatting inside a port declaration list disables alignment,
+     // but falls back to standard compaction.
+     "module align_off(\n"
+     "input w  ,\n"
+     "    // verilog_format: off\n"
+     "input wire  [y:z] wwww,\n"
+     "    // verilog_format: on\n"
+     "output  reg    xx\n"
+     ");\n"
+     "endmodule",
+     "module align_off (\n"
+     "    input w,\n"  // compacted, but not aligned
+     "    // verilog_format: off\n"
+     "input wire  [y:z] wwww,\n"  // not compacted
+     "    // verilog_format: on\n"
+     "    output reg xx\n"  // compacted, but not aligned
+     ");\n"
+     "endmodule\n"},
+
     {// multiple tokens with EOL comment
      "module please;  // don't break before the comment\n"
      "endmodule\n",
