@@ -492,9 +492,9 @@ Status Formatter::Format(const ExecutionControl& control) {
           // TODO(b/145170750): Adjust inter-token spacing to achieve alignment,
           // but leave partitioning intact.
           // This relies on inter-token spacing having already been annotated.
-          TabularAlignTokenPartitions(&node,
-                                      &unwrapper_data.preformatted_tokens,
-                                      full_text, disabled_ranges_);
+          TabularAlignTokenPartitions(
+              &node, &unwrapper_data.preformatted_tokens, full_text,
+              disabled_ranges_, style_.column_limit);
           break;
         default:
           break;

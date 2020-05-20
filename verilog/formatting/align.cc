@@ -198,7 +198,7 @@ struct ColumnPositionEntry {
 
 // TODO(fangism): support column groups (VectorTree)
 
-static int EffectiveCellWidth(const MutableTokenRange& tokens) {
+static int EffectiveCellWidth(const TokenRange& tokens) {
   if (tokens.empty()) return 0;
   VLOG(2) << __FUNCTION__;
   // Sum token text lengths plus required pre-spacings (except first token).
@@ -208,6 +208,8 @@ static int EffectiveCellWidth(const MutableTokenRange& tokens) {
                          [](int total_width, const PreFormatToken& ftoken) {
                            VLOG(2) << " +" << ftoken.before.spaces_required
                                    << " +" << ftoken.token->text.length();
+                           // TODO(fangism): account for multi-line tokens like
+                           // block comments.
                            return total_width + ftoken.LeadingSpacesLength() +
                                   ftoken.token->text.length();
                          });
@@ -227,8 +229,12 @@ struct AlignmentCell {
   // as a space-only column, usually no more than 1 space wide.
   int left_border_width = 0;
 
+  TokenRange ConstTokensRange() const {
+    return TokenRange(tokens.begin(), tokens.end());
+  }
+
   void UpdateWidths() {
-    compact_width = EffectiveCellWidth(tokens);
+    compact_width = EffectiveCellWidth(ConstTokensRange());
     left_border_width = EffectiveLeftBorderWidth(tokens);
   }
 };
@@ -248,6 +254,8 @@ struct AlignedColumnConfiguration {
   int width = 0;
   int left_border = 0;
   bool flush_left = true;  // else flush_right
+
+  int TotalWidth() const { return left_border + width; }
 
   void UpdateFromCell(const AlignmentCell& cell) {
     width = std::max(width, cell.compact_width);
@@ -603,7 +611,7 @@ static MutableTokenRange ConvertToMutableTokenRange(
 
 static void AlignPortDeclarationFilteredRows(
     const std::vector<TokenPartitionIterator>& rows,
-    mutable_ftoken_iterator ftoken_base) {
+    mutable_ftoken_iterator ftoken_base, int column_limit) {
   VLOG(1) << __FUNCTION__;
   // Alignment requires 2+ rows.
   if (rows.size() <= 1) return;
@@ -678,12 +686,48 @@ static void AlignPortDeclarationFilteredRows(
   AlignedFormattingColumnSchema column_configs(ComputeColumnWidths(matrix));
 
   // Total width does not include initial left-indentation.
+  // Assume indentation is the same for all partitions in each group.
+  const int indentation = rows.front().base()->Value().IndentationSpaces();
   const int total_column_width =
-      std::accumulate(column_configs.begin(), column_configs.end(), 0,
+      std::accumulate(column_configs.begin(), column_configs.end(), indentation,
                       [](int total_width, const AlignedColumnConfiguration& c) {
-                        return total_width + c.width;
+                        return total_width + c.TotalWidth();
                       });
   VLOG(2) << "Total (aligned) column width = " << total_column_width;
+  // if the aligned columns would exceed the column limit, then refuse to align
+  // for now.  However, this check alone does not include text that follows
+  // the last aligned column, like trailing commans and EOL comments.
+  if (total_column_width > column_limit) {
+    VLOG(1) << "Total aligned column width " << total_column_width
+            << " exceeds limit " << column_limit
+            << ", so not aligning this group.";
+    return;
+  }
+  {
+    auto partition_iter = rows.begin();
+    for (const auto& row : matrix) {
+      if (!row.empty()) {
+        // Identify the unaligned epilog text on each partition.
+        auto partition_end =
+            partition_iter->base()->Value().TokensRange().end();
+        auto row_end = row.back().tokens.end();
+        const TokenRange epilog_range(row_end, partition_end);
+        const int aligned_partition_width =
+            total_column_width + EffectiveCellWidth(epilog_range);
+        if (aligned_partition_width > column_limit) {
+          VLOG(1) << "Total aligned partition width " << aligned_partition_width
+                  << " exceeds limit " << column_limit
+                  << ", so not aligning this group.";
+          return;
+        }
+      }
+      ++partition_iter;
+    }
+  }
+
+  // TODO(fangism): check for trailing text like comments, and if aligning would
+  // exceed the column limit, then for now, refuse to align.
+  // TODO(fangism): implement overflow mitigation fallback strategies.
 
   // Adjust pre-token spacings of each row to align to the column configs.
   for (auto& row : matrix) {
@@ -693,7 +737,8 @@ static void AlignPortDeclarationFilteredRows(
 }
 
 static void AlignPortDeclarationGroup(const TokenPartitionRange& group,
-                                      mutable_ftoken_iterator ftoken_base) {
+                                      mutable_ftoken_iterator ftoken_base,
+                                      int column_limit) {
   VLOG(1) << __FUNCTION__ << ", group size: " << group.size();
   // This partition group may contain partitions that should not be
   // considered for column alignment purposes, so filter those out.
@@ -709,7 +754,8 @@ static void AlignPortDeclarationGroup(const TokenPartitionRange& group,
     }
   }
   // Align the qualified partitions (rows).
-  AlignPortDeclarationFilteredRows(qualified_partitions, ftoken_base);
+  AlignPortDeclarationFilteredRows(qualified_partitions, ftoken_base,
+                                   column_limit);
   VLOG(1) << "end of " << __FUNCTION__;
 }
 
@@ -738,7 +784,8 @@ static bool AnyPartitionSubRangeIsDisabled(
 static void AlignPortDeclarations(TokenPartitionTree* partition_ptr,
                                   mutable_ftoken_iterator ftoken_base,
                                   absl::string_view full_text,
-                                  const ByteOffsetSet& disabled_byte_ranges) {
+                                  const ByteOffsetSet& disabled_byte_ranges,
+                                  int column_limit) {
   VLOG(1) << __FUNCTION__;
   // Each subpartition is presumed to correspond to a single port declaration,
   // preprocessor directive (`ifdef), or comment.
@@ -768,7 +815,7 @@ static void AlignPortDeclarations(TokenPartitionTree* partition_ptr,
                                        disabled_byte_ranges))
       continue;
 
-    AlignPortDeclarationGroup(group_partition_range, ftoken_base);
+    AlignPortDeclarationGroup(group_partition_range, ftoken_base, column_limit);
     // TODO(fangism): rewrite using functional composition.
   }
   VLOG(1) << "end of " << __FUNCTION__;
@@ -777,7 +824,8 @@ static void AlignPortDeclarations(TokenPartitionTree* partition_ptr,
 void TabularAlignTokenPartitions(TokenPartitionTree* partition_ptr,
                                  ftoken_array_type* ftokens,
                                  absl::string_view full_text,
-                                 const ByteOffsetSet& disabled_byte_ranges) {
+                                 const ByteOffsetSet& disabled_byte_ranges,
+                                 int column_limit) {
   VLOG(1) << __FUNCTION__;
   auto& partition = *partition_ptr;
   auto& uwline = partition.Value();
@@ -792,7 +840,7 @@ void TabularAlignTokenPartitions(TokenPartitionTree* partition_ptr,
   switch (static_cast<NodeEnum>(node->Tag().tag)) {
     case NodeEnum::kPortDeclarationList:
       AlignPortDeclarations(partition_ptr, ftoken_base, full_text,
-                            disabled_byte_ranges);
+                            disabled_byte_ranges, column_limit);
       break;
     default:
       break;

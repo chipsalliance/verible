@@ -32,7 +32,8 @@ namespace formatter {
 void TabularAlignTokenPartitions(verible::TokenPartitionTree* partition_ptr,
                                  std::vector<verible::PreFormatToken>* ftokens,
                                  absl::string_view full_text,
-                                 const ByteOffsetSet& disabled_byte_ranges);
+                                 const ByteOffsetSet& disabled_byte_ranges,
+                                 int column_limit);
 
 }  // namespace formatter
 }  // namespace verilog

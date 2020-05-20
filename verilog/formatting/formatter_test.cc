@@ -1051,6 +1051,41 @@ static const std::initializer_list<FormatterTestCase> kFormatterTestCases = {
      "    output pkg::barr_t [mm:nn] yy2\n"
      ");\n"
      "endmodule : foo\n"},
+
+    {// aligning here just barely fits in the 40col limit
+     "module foo(  input int signed x [a:b],"
+     "output reg [mm:nn] yy) ;endmodule:foo\n",
+     "module foo (\n"
+     // ---------------40col---------------->
+     "    input  int signed         x [a:b],\n"  // aligned, still fits
+     "    output reg        [mm:nn] yy\n"
+     ");\n"
+     "endmodule : foo\n"},
+    {// when aligning would result in exceeding column limit, don't align for
+     // now
+     "module foo(  input int signed x [aa:bb],"
+     "output reg [mm:nn] yy) ;endmodule:foo\n",
+     "module foo (\n"
+     // ---------------40col---------------->
+     //   input  int signed         x [aa:bb],\n"  // over limit, by comma
+     //   output reg        [mm:nn] yy\n"
+     "    input int signed x[aa:bb],\n"  // aligned would be 41 columns
+     "    output reg [mm:nn] yy\n"
+     ");\n"
+     "endmodule : foo\n"},
+    {// when aligning would result in exceeding column limit, don't align for
+     // now
+     "module foo(  input int signed x [a:b],//c\n"
+     "output reg [m:n] yy) ;endmodule:foo\n",
+     "module foo (\n"
+     // ---------------40col---------------->
+     //   input  int signed       x [a:b],  //c\n"  // over limit, by comment
+     //   output reg        [m:n] yy\n"
+     "    input int signed x[a:b],  //c\n"  // aligned would be 42 columns
+     "    output reg [m:n] yy\n"
+     ");\n"
+     "endmodule : foo\n"},
+
     {"module foo #(int x,int y) ;endmodule:foo\n",  // parameters
      "module foo #(\n"
      "    int x,\n"
@@ -1622,6 +1657,133 @@ static const std::initializer_list<FormatterTestCase> kFormatterTestCases = {
         "  always @(posedge clk) z <= y;\n"
         "endmodule\n",
     },
+    {
+        "module always_if ;"
+        "always@ ( posedge   clk ) if (expr) z<=y;"
+        "endmodule\n",
+        "module always_if;\n"
+        "  always @(posedge clk)\n"  // doesn't fit
+        "    if (expr)\n"
+        "      z <= y;\n"
+        "endmodule\n",
+    },
+    {
+        "module always_if ;"
+        "always@*  if (expr) z<=y;"
+        "endmodule\n",
+        "module always_if;\n"
+        "  always @* if (expr) z <= y;\n"  // fits
+        "endmodule\n",
+    },
+    {
+        "module \talways_if_else ;"
+        "always@*  if (expr) z<=y; else g<=0;"
+        "endmodule\n",
+        "module always_if_else;\n"
+        "  always @*\n"
+        "    if (expr) z <= y;\n"  // fits
+        "    else g <= 0;\n"       // fits
+        "endmodule\n",
+    },
+    {
+        "module \talways_if_else_if ;"
+        "always@*  if (expr) z<=y; else if (w) g<=0;"
+        "endmodule\n",
+        "module always_if_else_if;\n"
+        "  always @*\n"
+        "    if (expr) z <= y;\n"    // fits
+        "    else if (w) g <= 0;\n"  // fits
+        "endmodule\n",
+    },
+    {
+        "module \talways_if_else_if_else ;"
+        "always@*  if (expr) z<=y; else if (w) g<=0;else h<=1;"
+        "endmodule\n",
+        "module always_if_else_if_else;\n"
+        "  always @*\n"
+        "    if (expr) z <= y;\n"    // fits
+        "    else if (w) g <= 0;\n"  // fits
+        "    else h <= 1;\n"
+        "endmodule\n",
+    },
+    {
+        "module m;\n"
+        "always @(b,  c)"
+        "  for (;;)\ts = y;"
+        "endmodule",
+        "module m;\n"
+        "  always @(b, c) for (;;) s = y;\n"  // fits
+        "endmodule\n",
+    },
+    {
+        "module m;\n"
+        "always @(posedge clk)"
+        "  for (i=0;i<k;++i)\ts = y;"
+        "endmodule",
+        "module m;\n"
+        "  always @(posedge clk)\n"
+        "    for (i = 0; i < k; ++i)\n"
+        "      s = y;\n"
+        "endmodule\n",
+    },
+    {
+        "module m;\n"
+        "always @(posedge clk)"
+        "  repeat (jj+kk)\ts = y;"
+        "endmodule",
+        "module m;\n"
+        "  always @(posedge clk)\n"
+        "    repeat (jj + kk)\n"
+        "      s = y;\n"
+        "endmodule\n",
+    },
+    {
+        "module m;\n"
+        "always @(posedge clk)"
+        "  foreach(jj[kk])\ts = y;"
+        "endmodule",
+        "module m;\n"
+        "  always @(posedge clk)\n"
+        "    foreach (jj[kk])\n"
+        "      s = y;\n"
+        "endmodule\n",
+    },
+    {
+        "module m;\n"
+        "always @(posedge clk)"
+        "  while(jj[kk])\ts = y;"
+        "endmodule",
+        "module m;\n"
+        "  always @(posedge clk)\n"
+        "    while (jj[kk])\n"
+        "      s = y;\n"
+        "endmodule\n",
+    },
+    {
+        "module m;\n"
+        "always @(posedge clk)"
+        "  do s=y;while(jj[kk]);\t"
+        "endmodule",
+        "module m;\n"
+        "  always @(posedge clk)\n"
+        "    do\n"
+        "      s = y;\n"
+        "    while (jj[kk]);\n"
+        "endmodule\n",
+    },
+    {
+        "module m;\n"
+        "always @(posedge clk)  \n"
+        "  case(jj)\tS:s = y;endcase\t"
+        "endmodule",
+        "module m;\n"
+        "  always @(posedge clk)\n"
+        "    case (jj)\n"
+        "      S: s = y;\n"
+        "    endcase\n"
+        "endmodule\n",
+    },
+
     {
         "module always_if ;"
         "always@ ( posedge   clk ) if (expr) z<=y;"
