@@ -305,5 +305,37 @@ TEST(TreePathVisitorTest, FullTreeWithNullptrs) {
   EXPECT_THAT(r.PathTagHistory(), ElementsAreArray(expect));
 }
 
+TEST(NextSiblingPathTest, EmptyPath) {
+  SyntaxTreePath path;
+  EXPECT_DEATH(NextSiblingPath(path), "");
+}
+
+TEST(NextSiblingPathTest, Various) {
+  const std::pair<SyntaxTreePath, SyntaxTreePath> kTestCases[] = {
+      {{0}, {1}},                          //
+      {{1}, {2}},                          //
+      {{0, 0}, {0, 1}},                    //
+      {{1, 1, 1, 1, 1}, {1, 1, 1, 1, 2}},  //
+  };
+  for (const auto& test : kTestCases) {
+    EXPECT_EQ(NextSiblingPath(test.first), test.second);
+  }
+}
+
+TEST(TreePathFormatterTest, Various) {
+  const std::pair<SyntaxTreePath, absl::string_view> kTestCases[] = {
+      {{}, "[]"},                        //
+      {{0}, "[0]"},                      //
+      {{1}, "[1]"},                      //
+      {{0, 1}, "[0,1]"},                 //
+      {{1, 1, 2, 3, 5}, "[1,1,2,3,5]"},  //
+  };
+  for (const auto& test : kTestCases) {
+    std::ostringstream stream;
+    stream << TreePathFormatter(test.first);
+    EXPECT_EQ(stream.str(), test.second);
+  }
+}
+
 }  // namespace
 }  // namespace verible

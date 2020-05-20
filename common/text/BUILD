@@ -167,6 +167,8 @@ cc_library(
     deps = [
         ":syntax_tree_context",
         ":visitors",
+        "//common/strings:display_utils",
+        "//common/util:logging",
     ],
 )
 

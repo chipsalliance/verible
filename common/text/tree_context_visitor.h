@@ -15,6 +15,7 @@
 #ifndef VERIBLE_COMMON_TEXT_TREE_CONTEXT_VISITOR_H_
 #define VERIBLE_COMMON_TEXT_TREE_CONTEXT_VISITOR_H_
 
+#include "common/strings/display_utils.h"
 #include "common/text/syntax_tree_context.h"
 #include "common/text/visitors.h"
 
@@ -63,6 +64,18 @@ class TreeContextPathVisitor : public TreeContextVisitor {
 
   // Keeps track of path of descent from root node.
   SyntaxTreePath current_path_;
+};
+
+// Computes the path of the next sibling by incrementing the last element
+// of the path.  Resulting path may not necessarily correspond to a valid
+// element.  'path' must not be empty.
+SyntaxTreePath NextSiblingPath(const SyntaxTreePath& path);
+
+// Format SyntaxTreePaths using: stream << TreePathFormatter(path);
+// It is necessary to define this way because SyntaxTreePath is a typedef to a
+// generic container type.
+constexpr auto TreePathFormatter = [](const SyntaxTreePath& path) {
+  return SequenceFormatter(path, ",", "[", "]");
 };
 
 }  // namespace verible

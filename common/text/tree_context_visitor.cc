@@ -17,6 +17,7 @@
 #include <vector>
 
 #include "common/text/syntax_tree_context.h"
+#include "common/util/logging.h"
 
 namespace verible {
 
@@ -46,6 +47,13 @@ void TreeContextPathVisitor::Visit(const SyntaxTreeNode& node) {
     if (child) child->Accept(this);
     ++current_path_.back();
   }
+}
+
+SyntaxTreePath NextSiblingPath(const SyntaxTreePath& path) {
+  CHECK(!path.empty());
+  auto next = path;
+  ++next.back();
+  return next;
 }
 
 }  // namespace verible
