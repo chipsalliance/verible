@@ -48,6 +48,8 @@ namespace formatter {
 
 using verible::ByteOffsetSet;
 using verible::down_cast;
+using verible::FormatTokenRange;
+using verible::MutableFormatTokenRange;
 using verible::PreFormatToken;
 using verible::Symbol;
 using verible::SymbolCastToNode;
@@ -57,14 +59,7 @@ using verible::SyntaxTreePath;
 using verible::TokenInfo;
 using verible::TokenPartitionTree;
 using verible::TreeContextPathVisitor;
-using verible::UnwrappedLine;
 using verible::ValueSaver;
-
-typedef UnwrappedLine::range_type TokenRange;
-typedef std::vector<PreFormatToken> ftoken_array_type;
-typedef ftoken_array_type::iterator mutable_ftoken_iterator;
-typedef verible::container_iterator_range<mutable_ftoken_iterator>
-    MutableTokenRange;
 
 template <class T>
 static bool TokensAreAllComments(const T& tokens) {
@@ -202,7 +197,7 @@ struct ColumnPositionEntry {
 
 // TODO(fangism): support column groups (VectorTree)
 
-static int EffectiveCellWidth(const TokenRange& tokens) {
+static int EffectiveCellWidth(const FormatTokenRange& tokens) {
   if (tokens.empty()) return 0;
   VLOG(2) << __FUNCTION__;
   // Sum token text lengths plus required pre-spacings (except first token).
@@ -219,22 +214,22 @@ static int EffectiveCellWidth(const TokenRange& tokens) {
                          });
 }
 
-static int EffectiveLeftBorderWidth(const MutableTokenRange& tokens) {
+static int EffectiveLeftBorderWidth(const MutableFormatTokenRange& tokens) {
   if (tokens.empty()) return 0;
   return tokens.front().before.spaces_required;
 }
 
 struct AlignmentCell {
   // Slice of format tokens in this cell (may be empty range).
-  MutableTokenRange tokens;
+  MutableFormatTokenRange tokens;
   // The width of this token excerpt that complies with minimum spacing.
   int compact_width = 0;
   // Width of the left-side spacing before this cell, which can be considered
   // as a space-only column, usually no more than 1 space wide.
   int left_border_width = 0;
 
-  TokenRange ConstTokensRange() const {
-    return TokenRange(tokens.begin(), tokens.end());
+  FormatTokenRange ConstTokensRange() const {
+    return FormatTokenRange(tokens.begin(), tokens.end());
   }
 
   void UpdateWidths() {
@@ -275,7 +270,7 @@ typedef std::vector<AlignmentRow> AlignmentMatrix;
 // consideration.
 class ColumnSchemaScanner : public TreeContextPathVisitor {
  public:
-  explicit ColumnSchemaScanner(MutableTokenRange range)
+  explicit ColumnSchemaScanner(MutableFormatTokenRange range)
       : format_token_range_(range) {}
 
   // Returns the collection of column position entries.
@@ -283,7 +278,7 @@ class ColumnSchemaScanner : public TreeContextPathVisitor {
     return sparse_columns_;
   }
 
-  const MutableTokenRange& FormatTokenRange() const {
+  const MutableFormatTokenRange& FormatTokenRange() const {
     return format_token_range_;
   }
 
@@ -318,7 +313,7 @@ class ColumnSchemaScanner : public TreeContextPathVisitor {
   }
 
  private:
-  const MutableTokenRange format_token_range_;
+  const MutableFormatTokenRange format_token_range_;
 
   // Keeps track of unique positions where new columns are desired.
   std::vector<ColumnPositionEntry> sparse_columns_;
@@ -361,11 +356,12 @@ class ColumnSchemaAggregator {
 
 class PortDeclarationColumnSchemaScanner : public ColumnSchemaScanner {
  public:
-  explicit PortDeclarationColumnSchemaScanner(MutableTokenRange range)
+  explicit PortDeclarationColumnSchemaScanner(MutableFormatTokenRange range)
       : ColumnSchemaScanner(range) {}
 
   // Factory function, fits CellScannerFactory.
-  static std::unique_ptr<ColumnSchemaScanner> Create(MutableTokenRange range) {
+  static std::unique_ptr<ColumnSchemaScanner> Create(
+      MutableFormatTokenRange range) {
     return absl::make_unique<PortDeclarationColumnSchemaScanner>(range);
   }
 
@@ -473,7 +469,7 @@ static SequenceStreamPrinter<AlignmentRow> MatrixRowPrinter(
 static void FillAlignmentRow(
     const std::vector<ColumnPositionEntry>& sparse_columns,
     const std::vector<SyntaxTreePath>& column_positions,
-    MutableTokenRange partition_token_range, AlignmentRow* row) {
+    MutableFormatTokenRange partition_token_range, AlignmentRow* row) {
   VLOG(2) << __FUNCTION__;
   // Translate token into preformat_token iterator,
   // full token range.
@@ -501,7 +497,7 @@ static void FillAlignmentRow(
     CHECK(token_iter != token_end);
 
     // Fill null-range cells between [last_column_index, column_index).
-    const MutableTokenRange empty_filler(token_iter, token_iter);
+    const MutableFormatTokenRange empty_filler(token_iter, token_iter);
     for (; last_column_index <= column_index; ++last_column_index) {
       VLOG(3) << "empty at column " << last_column_index;
       (*row)[last_column_index].tokens = empty_filler;
@@ -511,7 +507,7 @@ static void FillAlignmentRow(
   }
   // Fill any sparse cells up to the last column.
   VLOG(3) << "fill up to last column";
-  const MutableTokenRange empty_filler(token_end, token_end);
+  const MutableFormatTokenRange empty_filler(token_end, token_end);
   for (; last_column_index < column_positions.size(); ++last_column_index) {
     VLOG(3) << "empty at column " << last_column_index;
     (*row)[last_column_index].tokens = empty_filler;
@@ -614,19 +610,21 @@ typename Container::iterator ConvertToMutableIterator(
   return base + std::distance(cbase, const_iter);
 }
 
-static MutableTokenRange ConvertToMutableTokenRange(
-    const TokenRange& const_range, mutable_ftoken_iterator base) {
-  return MutableTokenRange(
-      ConvertToMutableIterator<ftoken_array_type>(const_range.begin(), base),
-      ConvertToMutableIterator<ftoken_array_type>(const_range.end(), base));
+static MutableFormatTokenRange ConvertToMutableFormatTokenRange(
+    const FormatTokenRange& const_range,
+    MutableFormatTokenRange::iterator base) {
+  using array_type = std::vector<PreFormatToken>;
+  return MutableFormatTokenRange(
+      ConvertToMutableIterator<array_type>(const_range.begin(), base),
+      ConvertToMutableIterator<array_type>(const_range.end(), base));
 }
 
-using CellScannerFactory =
-    std::function<std::unique_ptr<ColumnSchemaScanner>(MutableTokenRange)>;
+using CellScannerFactory = std::function<std::unique_ptr<ColumnSchemaScanner>(
+    MutableFormatTokenRange)>;
 
 static void AlignFilteredRows(const std::vector<TokenPartitionIterator>& rows,
                               const CellScannerFactory& cell_scanner_gen,
-                              mutable_ftoken_iterator ftoken_base,
+                              MutableFormatTokenRange::iterator ftoken_base,
                               int column_limit) {
   VLOG(1) << __FUNCTION__;
   // Alignment requires 2+ rows.
@@ -662,8 +660,9 @@ static void AlignFilteredRows(const std::vector<TokenPartitionIterator>& rows,
 
       // Scan each token-range for cell boundaries based on syntax,
       // and establish partial ordering based on syntax tree paths.
-      cell_scanners.emplace_back(cell_scanner_gen(ConvertToMutableTokenRange(
-          TokenRange(range_begin, range_end), ftoken_base)));
+      cell_scanners.emplace_back(
+          cell_scanner_gen(ConvertToMutableFormatTokenRange(
+              FormatTokenRange(range_begin, range_end), ftoken_base)));
       auto& scanner = *cell_scanners.back();
       origin->Accept(&scanner);
 
@@ -726,7 +725,7 @@ static void AlignFilteredRows(const std::vector<TokenPartitionIterator>& rows,
         auto partition_end =
             partition_iter->base()->Value().TokensRange().end();
         auto row_end = row.back().tokens.end();
-        const TokenRange epilog_range(row_end, partition_end);
+        const FormatTokenRange epilog_range(row_end, partition_end);
         const int aligned_partition_width =
             total_column_width + EffectiveCellWidth(epilog_range);
         if (aligned_partition_width > column_limit) {
@@ -753,7 +752,7 @@ static void AlignFilteredRows(const std::vector<TokenPartitionIterator>& rows,
 
 static void AlignPartitionGroup(const TokenPartitionRange& group,
                                 const CellScannerFactory& scanner_gen,
-                                mutable_ftoken_iterator ftoken_base,
+                                MutableFormatTokenRange::iterator ftoken_base,
                                 int column_limit) {
   VLOG(1) << __FUNCTION__ << ", group size: " << group.size();
   // This partition group may contain partitions that should not be
@@ -800,7 +799,7 @@ static bool AnyPartitionSubRangeIsDisabled(
 
 static void AlignTokenPartition(TokenPartitionTree* partition_ptr,
                                 const CellScannerFactory& scanner_gen,
-                                mutable_ftoken_iterator ftoken_base,
+                                MutableFormatTokenRange::iterator ftoken_base,
                                 absl::string_view full_text,
                                 const ByteOffsetSet& disabled_byte_ranges,
                                 int column_limit) {
@@ -842,7 +841,7 @@ static void AlignTokenPartition(TokenPartitionTree* partition_ptr,
 }
 
 void TabularAlignTokenPartitions(TokenPartitionTree* partition_ptr,
-                                 ftoken_array_type* ftokens,
+                                 std::vector<PreFormatToken>* ftokens,
                                  absl::string_view full_text,
                                  const ByteOffsetSet& disabled_byte_ranges,
                                  int column_limit) {

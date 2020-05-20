@@ -61,16 +61,19 @@ enum class PartitionPolicyEnum {
 
 std::ostream& operator<<(std::ostream&, PartitionPolicyEnum);
 
+using FormatTokenRange =
+    container_iterator_range<std::vector<PreFormatToken>::const_iterator>;
+using MutableFormatTokenRange =
+    container_iterator_range<std::vector<PreFormatToken>::iterator>;
+
 // An UnwrappedLine represents a partition of the input token stream that
 // is an independent unit of work for other phases of formatting, such as
 // line wrap optimization. It consists of a lightweight const_iterator range
 // that can be easily grown without any copy-overhead.
 class UnwrappedLine {
-  typedef std::vector<PreFormatToken>::const_iterator token_iterator;
+  typedef FormatTokenRange::const_iterator token_iterator;
 
  public:
-  typedef container_iterator_range<token_iterator> range_type;
-
   enum {
     kIndentationMarker = '>'  // for readable debug printing
   };
@@ -118,7 +121,7 @@ class UnwrappedLine {
 
   // Returns the range of PreFormatTokens spanned by this UnwrappedLine.
   // Note that this is a *copy*, and not a reference to the underlying range.
-  range_type TokensRange() const { return tokens_; }
+  FormatTokenRange TokensRange() const { return tokens_; }
 
   // Returns the number of tokens in this UnwrappedLine
   size_t Size() const { return tokens_.size(); }
@@ -138,7 +141,7 @@ class UnwrappedLine {
   // The range of sequential PreFormatTokens spanned by this UnwrappedLine.
   // These represent the tokens that will be formatted independently.
   // The memory for these must be owned elsewhere.
-  range_type tokens_;
+  FormatTokenRange tokens_;
 
   // This determines under what conditions this UnwrappedLine should be
   // further partitioned for formatting.

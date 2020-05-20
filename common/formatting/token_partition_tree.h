@@ -22,6 +22,7 @@
 #include "common/formatting/basic_format_style.h"
 #include "common/formatting/format_token.h"
 #include "common/formatting/unwrapped_line.h"
+#include "common/util/container_iterator_range.h"
 #include "common/util/vector_tree.h"
 
 namespace verible {
@@ -35,6 +36,8 @@ namespace verible {
 // TODO(fangism): Promote this to a class that privately inherits the base.
 // Methods on this class will preserve invariants.
 using TokenPartitionTree = VectorTree<UnwrappedLine>;
+using TokenPartitionIterator = std::vector<TokenPartitionTree>::iterator;
+using TokenPartitionRange = container_iterator_range<TokenPartitionIterator>;
 
 // Analyses (non-modifying):
 
