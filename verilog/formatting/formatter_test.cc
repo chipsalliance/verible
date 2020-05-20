@@ -3227,6 +3227,21 @@ static const std::initializer_list<FormatterTestCase> kFormatterTestCases = {
     },
 
     {
+     "bind expand_inst name# ("
+     ".W(W_CONST), .H(H_CONST), .D(D_CONST)  )"
+     "instaaance_name (.in(iiiiiiiin), .out(ooooooout), .clk(ccccccclk));",
+     "bind expand_inst name #(\n"
+     "    .W(W_CONST),\n"
+     "    .H(H_CONST),\n"
+     "    .D(D_CONST)\n"
+     ") instaaance_name (\n"
+     "    .in(iiiiiiiin),\n"
+     "    .out(ooooooout),\n"
+     "    .clk(ccccccclk)\n"
+     ");\n",
+    },
+
+    {
         // tests import declaration
         "import  foo_pkg :: bar ;",
         "import foo_pkg::bar;\n",
