@@ -109,6 +109,7 @@ cc_library(
     srcs = ["position.cc"],
     hdrs = ["position.h"],
     deps = [
+        "//common/util:interval_set",
         "@com_google_absl//absl/strings",
     ],
 )

@@ -33,6 +33,7 @@ namespace verible {
 // exempt from each rule.
 class LintWaiver {
   // Compact set of line numbers.
+  // TODO(b/156991337): combine with other definition of LineNumberSet
   using LineSet = IntervalSet<size_t>;
   using RegexVector = std::vector<const std::regex*>;
 

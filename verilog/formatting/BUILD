@@ -19,6 +19,7 @@ cc_library(
         "//common/formatting:format_token",
         "//common/formatting:token_partition_tree",
         "//common/formatting:unwrapped_line",
+        "//common/strings:position",
         "//common/strings:range",
         "//common/text:concrete_syntax_leaf",
         "//common/text:concrete_syntax_tree",
@@ -193,6 +194,7 @@ cc_library(
     deps = [
         "//common/strings:comment_utils",
         "//common/strings:line_column_map",
+        "//common/strings:position",
         "//common/text:token_stream_view",
         "//common/util:interval_set",
         "//common/util:logging",

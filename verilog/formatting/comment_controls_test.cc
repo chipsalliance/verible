@@ -28,7 +28,10 @@ namespace formatter {
 namespace {
 
 using ::testing::ElementsAre;
+using verible::ByteOffsetSet;
+using verible::ExpectedTokenInfo;
 using verible::LineColumnMap;
+using verible::TokenInfoTestData;
 
 TEST(DisableFormattingRangesTest, EmptyFile) {
   VerilogAnalyzer analyzer("", "<file>");
@@ -47,9 +50,6 @@ TEST(DisableFormattingRangesTest, NonEmptyNoDisabling) {
   EXPECT_TRUE(disable_ranges.empty());
   EXPECT_THAT(disable_ranges, ElementsAre());
 }
-
-using verible::ExpectedTokenInfo;
-using verible::TokenInfoTestData;
 
 enum {
   kOff = 99  // any non-zero value, to tag the disabled ranges

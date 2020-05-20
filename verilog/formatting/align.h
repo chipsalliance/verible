@@ -19,6 +19,7 @@
 
 #include "common/formatting/format_token.h"
 #include "common/formatting/token_partition_tree.h"
+#include "common/strings/position.h"  // for ByteOffsetSet
 #include "verilog/formatting/comment_controls.h"
 
 namespace verilog {
@@ -29,11 +30,10 @@ namespace formatter {
 // 'ftokens' is only used to provide a base mutable iterator for the purpose
 // of being able to modify inter-token spacing.
 // TODO(fangism): pass in disabled formatting ranges
-void TabularAlignTokenPartitions(verible::TokenPartitionTree* partition_ptr,
-                                 std::vector<verible::PreFormatToken>* ftokens,
-                                 absl::string_view full_text,
-                                 const ByteOffsetSet& disabled_byte_ranges,
-                                 int column_limit);
+void TabularAlignTokenPartitions(
+    verible::TokenPartitionTree* partition_ptr,
+    std::vector<verible::PreFormatToken>* ftokens, absl::string_view full_text,
+    const verible::ByteOffsetSet& disabled_byte_ranges, int column_limit);
 
 }  // namespace formatter
 }  // namespace verilog

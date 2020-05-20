@@ -52,6 +52,7 @@ namespace formatter {
 using absl::Status;
 using absl::StatusCode;
 
+using verible::ByteOffsetSet;
 using verible::ExpandableTreeView;
 using verible::PartitionPolicyEnum;
 using verible::TokenPartitionTree;

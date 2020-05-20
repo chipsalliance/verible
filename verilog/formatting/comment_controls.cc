@@ -32,6 +32,8 @@
 namespace verilog {
 namespace formatter {
 
+using verible::ByteOffsetSet;
+
 ByteOffsetSet DisableFormattingRanges(absl::string_view text,
                                       const verible::TokenSequence& tokens) {
   static constexpr absl::string_view kTrigger = "verilog_format:";

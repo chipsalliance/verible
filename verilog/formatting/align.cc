@@ -46,6 +46,7 @@
 namespace verilog {
 namespace formatter {
 
+using verible::ByteOffsetSet;
 using verible::down_cast;
 using verible::PreFormatToken;
 using verible::Symbol;

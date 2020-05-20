@@ -17,28 +17,27 @@
 
 #include "absl/strings/string_view.h"
 #include "common/strings/line_column_map.h"
+#include "common/strings/position.h"  // for ByteOffsetSet
 #include "common/text/token_stream_view.h"
 #include "common/util/interval_set.h"
 
 namespace verilog {
 namespace formatter {
 
-// Collection of ranges of byte offsets.
-using ByteOffsetSet = verible::IntervalSet<int>;
-
 // Collection of line numbers, 1-based.
+// TODO(b/156991337): combine with other definition for LineSet
 using LineNumberSet = verible::IntervalSet<int>;
 
 // Returns a representation of byte offsets where true (membership) means
 // formatting is disabled.
-ByteOffsetSet DisableFormattingRanges(absl::string_view text,
-                                      const verible::TokenSequence& tokens);
+verible::ByteOffsetSet DisableFormattingRanges(
+    absl::string_view text, const verible::TokenSequence& tokens);
 
 // TODO(fangism): Move these next functions into common/formatting.
 // Same with the above types.
 
 // Translates line numbers into a set of byte ranges to disable formatting.
-ByteOffsetSet EnabledLinesToDisabledByteRanges(
+verible::ByteOffsetSet EnabledLinesToDisabledByteRanges(
     const LineNumberSet& line_numbers,
     const verible::LineColumnMap& line_column_map);
 
@@ -51,7 +50,7 @@ ByteOffsetSet EnabledLinesToDisabledByteRanges(
 // Output is written to 'stream'.
 void FormatWhitespaceWithDisabledByteRanges(
     absl::string_view text_base, absl::string_view space_text,
-    const ByteOffsetSet& disabled_ranges, std::ostream& stream);
+    const verible::ByteOffsetSet& disabled_ranges, std::ostream& stream);
 
 }  // namespace formatter
 }  // namespace verilog

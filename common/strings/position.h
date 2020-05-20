@@ -16,6 +16,7 @@
 #define VERIBLE_COMMON_STRINGS_POSITION_H_
 
 #include "absl/strings/string_view.h"
+#include "common/util/interval_set.h"
 
 namespace verible {
 
@@ -25,6 +26,24 @@ namespace verible {
 // one space.
 int AdvancingTextNewColumnPosition(int old_column_position,
                                    absl::string_view advancing_text);
+
+// Collection of ranges of byte offsets.
+// Intentionally defining a class instead of merely typedef-ing to
+// IntervalSet<int> to avoid potential confusion with other IntervalSet<int>.
+// Type safety will enforce intent of meaning.
+class ByteOffsetSet : public verible::IntervalSet<int> {
+  typedef verible::IntervalSet<int> impl_type;
+
+ public:
+  ByteOffsetSet() = default;
+
+  explicit ByteOffsetSet(const impl_type& iset) : impl_type(iset) {}
+
+  // This constructor can initialize from a sequence of pairs, e.g.
+  //   ByteOffsetSet s{{0,1}, {4,7}, {8,10}};
+  ByteOffsetSet(std::initializer_list<verible::Interval<int>> ranges)
+      : impl_type(ranges) {}
+};
 
 }  // namespace verible
 
