@@ -1271,10 +1271,9 @@ void TreeUnwrapper::ReshapeTokenPartitions(
       // Attach ')' to the instance name
       verible::MergeLeafIntoNextLeaf(children.back().PreviousSibling());
 
-      // Flatten instance name partition
       verible::AdjustIndentationRelative(&children.back(),
                                          -style.wrap_spaces);
-      target_instance_partition.FlattenOnlyChildrenWithChildren();
+      // Instance name partition will be flattened in common handling below
       break;
     }
     case NodeEnum::kStatement: {

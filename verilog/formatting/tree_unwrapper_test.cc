@@ -3346,9 +3346,9 @@ const TreeUnwrapperTestData kDescriptionTestCases[] = {
         N(0,  // kBindDeclaration
           L(0, {"bind", "foo", "bar", "#", "("}),
           L(2, {".", "x", "(", "y", ")"}),
-          L(0, {")", "baz", "("}),                   //
-          L(2, {".", "clk", "(", "clk", ")"}),  //
-          L(0, {")", ";"})  // ';' is attached to end of bind directive
+          N(0, L(0, {")", "baz", "("}),                   //
+               L(2, {".", "clk", "(", "clk", ")"}),  //
+               L(0, {")", ";"}))  // ';' is attached to end of bind directive
           ),
     },
 
