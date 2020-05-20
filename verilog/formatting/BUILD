@@ -35,6 +35,7 @@ cc_library(
         "//verilog/CST:verilog_nonterminals",
         "//verilog/parser:verilog_token_classifications",
         "//verilog/parser:verilog_token_enum",
+        "@com_google_absl//absl/memory",
         "@com_google_absl//absl/strings",
     ],
 )

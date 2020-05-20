@@ -2039,6 +2039,133 @@ static const std::initializer_list<FormatterTestCase> kFormatterTestCases = {
     },
 
     {
+        "module always_if ;"
+        "always@ ( posedge   clk ) if (expr) z<=y;"
+        "endmodule\n",
+        "module always_if;\n"
+        "  always @(posedge clk)\n"  // doesn't fit
+        "    if (expr)\n"
+        "      z <= y;\n"
+        "endmodule\n",
+    },
+    {
+        "module always_if ;"
+        "always@*  if (expr) z<=y;"
+        "endmodule\n",
+        "module always_if;\n"
+        "  always @* if (expr) z <= y;\n"  // fits
+        "endmodule\n",
+    },
+    {
+        "module \talways_if_else ;"
+        "always@*  if (expr) z<=y; else g<=0;"
+        "endmodule\n",
+        "module always_if_else;\n"
+        "  always @*\n"
+        "    if (expr) z <= y;\n"  // fits
+        "    else g <= 0;\n"       // fits
+        "endmodule\n",
+    },
+    {
+        "module \talways_if_else_if ;"
+        "always@*  if (expr) z<=y; else if (w) g<=0;"
+        "endmodule\n",
+        "module always_if_else_if;\n"
+        "  always @*\n"
+        "    if (expr) z <= y;\n"    // fits
+        "    else if (w) g <= 0;\n"  // fits
+        "endmodule\n",
+    },
+    {
+        "module \talways_if_else_if_else ;"
+        "always@*  if (expr) z<=y; else if (w) g<=0;else h<=1;"
+        "endmodule\n",
+        "module always_if_else_if_else;\n"
+        "  always @*\n"
+        "    if (expr) z <= y;\n"    // fits
+        "    else if (w) g <= 0;\n"  // fits
+        "    else h <= 1;\n"
+        "endmodule\n",
+    },
+    {
+        "module m;\n"
+        "always @(b,  c)"
+        "  for (;;)\ts = y;"
+        "endmodule",
+        "module m;\n"
+        "  always @(b, c) for (;;) s = y;\n"  // fits
+        "endmodule\n",
+    },
+    {
+        "module m;\n"
+        "always @(posedge clk)"
+        "  for (i=0;i<k;++i)\ts = y;"
+        "endmodule",
+        "module m;\n"
+        "  always @(posedge clk)\n"
+        "    for (i = 0; i < k; ++i)\n"
+        "      s = y;\n"
+        "endmodule\n",
+    },
+    {
+        "module m;\n"
+        "always @(posedge clk)"
+        "  repeat (jj+kk)\ts = y;"
+        "endmodule",
+        "module m;\n"
+        "  always @(posedge clk)\n"
+        "    repeat (jj + kk)\n"
+        "      s = y;\n"
+        "endmodule\n",
+    },
+    {
+        "module m;\n"
+        "always @(posedge clk)"
+        "  foreach(jj[kk])\ts = y;"
+        "endmodule",
+        "module m;\n"
+        "  always @(posedge clk)\n"
+        "    foreach (jj[kk])\n"
+        "      s = y;\n"
+        "endmodule\n",
+    },
+    {
+        "module m;\n"
+        "always @(posedge clk)"
+        "  while(jj[kk])\ts = y;"
+        "endmodule",
+        "module m;\n"
+        "  always @(posedge clk)\n"
+        "    while (jj[kk])\n"
+        "      s = y;\n"
+        "endmodule\n",
+    },
+    {
+        "module m;\n"
+        "always @(posedge clk)"
+        "  do s=y;while(jj[kk]);\t"
+        "endmodule",
+        "module m;\n"
+        "  always @(posedge clk)\n"
+        "    do\n"
+        "      s = y;\n"
+        "    while (jj[kk]);\n"
+        "endmodule\n",
+    },
+    {
+        "module m;\n"
+        "always @(posedge clk)  \n"
+        "  case(jj)\tS:s = y;endcase\t"
+        "endmodule",
+        "module m;\n"
+        "  always @(posedge clk)\n"
+        "    case (jj)\n"
+        "      S: s = y;\n"
+        "    endcase\n"
+        "endmodule\n",
+    },
+
+    {
         // begin/end with labels
         "module m ;initial  begin:yyy\tend:yyy endmodule",
         "module m;\n"

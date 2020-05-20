@@ -14,12 +14,15 @@
 
 #include "verilog/formatting/align.h"
 
+#include <functional>
 #include <iostream>
 #include <iterator>
 #include <map>
+#include <memory>
 #include <numeric>
 #include <vector>
 
+#include "absl/memory/memory.h"
 #include "absl/strings/str_join.h"
 #include "common/formatting/format_token.h"
 #include "common/formatting/unwrapped_line.h"
@@ -271,14 +274,14 @@ typedef std::vector<AlignmentRow> AlignmentMatrix;
 // consideration.
 class ColumnSchemaScanner : public TreeContextPathVisitor {
  public:
+  explicit ColumnSchemaScanner(MutableTokenRange range)
+      : format_token_range_(range) {}
+
   // Returns the collection of column position entries.
   const std::vector<ColumnPositionEntry>& SparseColumns() const {
     return sparse_columns_;
   }
 
-  void SetFormatTokenRange(const MutableTokenRange& range) {
-    format_token_range_ = range;
-  }
   const MutableTokenRange& FormatTokenRange() const {
     return format_token_range_;
   }
@@ -314,7 +317,7 @@ class ColumnSchemaScanner : public TreeContextPathVisitor {
   }
 
  private:
-  MutableTokenRange format_token_range_;
+  const MutableTokenRange format_token_range_;
 
   // Keeps track of unique positions where new columns are desired.
   std::vector<ColumnPositionEntry> sparse_columns_;
@@ -357,6 +360,14 @@ class ColumnSchemaAggregator {
 
 class PortDeclarationColumnSchemaScanner : public ColumnSchemaScanner {
  public:
+  explicit PortDeclarationColumnSchemaScanner(MutableTokenRange range)
+      : ColumnSchemaScanner(range) {}
+
+  // Factory function, fits CellScannerFactory.
+  static std::unique_ptr<ColumnSchemaScanner> Create(MutableTokenRange range) {
+    return absl::make_unique<PortDeclarationColumnSchemaScanner>(range);
+  }
+
   void Visit(const SyntaxTreeNode& node) override {
     auto tag = NodeEnum(node.Tag().tag);
     VLOG(2) << __FUNCTION__ << ", node: " << tag << " at "
@@ -609,9 +620,13 @@ static MutableTokenRange ConvertToMutableTokenRange(
       ConvertToMutableIterator<ftoken_array_type>(const_range.end(), base));
 }
 
-static void AlignPortDeclarationFilteredRows(
-    const std::vector<TokenPartitionIterator>& rows,
-    mutable_ftoken_iterator ftoken_base, int column_limit) {
+using CellScannerFactory =
+    std::function<std::unique_ptr<ColumnSchemaScanner>(MutableTokenRange)>;
+
+static void AlignFilteredRows(const std::vector<TokenPartitionIterator>& rows,
+                              const CellScannerFactory& cell_scanner_gen,
+                              mutable_ftoken_iterator ftoken_base,
+                              int column_limit) {
   VLOG(1) << __FUNCTION__;
   // Alignment requires 2+ rows.
   if (rows.size() <= 1) return;
@@ -620,14 +635,14 @@ static void AlignPortDeclarationFilteredRows(
 
   VLOG(2) << "Walking syntax subtrees for each row";
   ColumnSchemaAggregator column_schema;
-  std::vector<PortDeclarationColumnSchemaScanner> cell_scanners(rows.size());
+  std::vector<std::unique_ptr<ColumnSchemaScanner>> cell_scanners;
+  cell_scanners.reserve(rows.size());
   // Simultaneously step through each node's tree, adding a column to the
   // schema if *any* row wants it.  This captures optional and repeated
   // constructs.
   {
-    auto scanner_iter = cell_scanners.begin();
     for (const auto& row : rows) {
-      // Each row should correspond to an individual NodeEnum::kPortDeclaration.
+      // Each row should correspond to an individual list element
       const auto& unwrapped_line = row->Value();
       const auto* origin = ABSL_DIE_IF_NULL(unwrapped_line.Origin());
       VLOG(2) << "row: " << verible::StringSpanOfSymbol(*origin);
@@ -646,14 +661,13 @@ static void AlignPortDeclarationFilteredRows(
 
       // Scan each token-range for cell boundaries based on syntax,
       // and establish partial ordering based on syntax tree paths.
-      scanner_iter->SetFormatTokenRange(ConvertToMutableTokenRange(
-          TokenRange(range_begin, range_end), ftoken_base));
-      origin->Accept(&*scanner_iter);
+      cell_scanners.emplace_back(cell_scanner_gen(ConvertToMutableTokenRange(
+          TokenRange(range_begin, range_end), ftoken_base)));
+      auto& scanner = *cell_scanners.back();
+      origin->Accept(&scanner);
 
       // Aggregate union of all column keys (syntax tree paths).
-      column_schema.Collect(scanner_iter->SparseColumns());
-
-      ++scanner_iter;
+      column_schema.Collect(scanner.SparseColumns());
     }
   }
 
@@ -673,8 +687,8 @@ static void AlignPortDeclarationFilteredRows(
     auto scanner_iter = cell_scanners.begin();
     for (auto& row : matrix) {
       row.resize(num_columns);
-      FillAlignmentRow(scanner_iter->SparseColumns(), column_positions,
-                       scanner_iter->FormatTokenRange(), &row);
+      FillAlignmentRow((*scanner_iter)->SparseColumns(), column_positions,
+                       (*scanner_iter)->FormatTokenRange(), &row);
       ++scanner_iter;
     }
   }
@@ -736,9 +750,10 @@ static void AlignPortDeclarationFilteredRows(
   VLOG(1) << "end of " << __FUNCTION__;
 }
 
-static void AlignPortDeclarationGroup(const TokenPartitionRange& group,
-                                      mutable_ftoken_iterator ftoken_base,
-                                      int column_limit) {
+static void AlignPartitionGroup(const TokenPartitionRange& group,
+                                const CellScannerFactory& scanner_gen,
+                                mutable_ftoken_iterator ftoken_base,
+                                int column_limit) {
   VLOG(1) << __FUNCTION__ << ", group size: " << group.size();
   // This partition group may contain partitions that should not be
   // considered for column alignment purposes, so filter those out.
@@ -746,6 +761,7 @@ static void AlignPortDeclarationGroup(const TokenPartitionRange& group,
   qualified_partitions.reserve(group.size());
   // like std::copy_if, but we want the iterators, not their pointees.
   for (auto iter = group.begin(); iter != group.end(); ++iter) {
+    // TODO(fangism): pass in filter predicate as a function
     if (!IgnorePartition(*iter)) {
       VLOG(2) << "including partition: " << *iter;
       qualified_partitions.push_back(iter);
@@ -754,8 +770,8 @@ static void AlignPortDeclarationGroup(const TokenPartitionRange& group,
     }
   }
   // Align the qualified partitions (rows).
-  AlignPortDeclarationFilteredRows(qualified_partitions, ftoken_base,
-                                   column_limit);
+  AlignFilteredRows(qualified_partitions, scanner_gen, ftoken_base,
+                    column_limit);
   VLOG(1) << "end of " << __FUNCTION__;
 }
 
@@ -781,11 +797,12 @@ static bool AnyPartitionSubRangeIsDisabled(
   return diff != span_set;
 }
 
-static void AlignPortDeclarations(TokenPartitionTree* partition_ptr,
-                                  mutable_ftoken_iterator ftoken_base,
-                                  absl::string_view full_text,
-                                  const ByteOffsetSet& disabled_byte_ranges,
-                                  int column_limit) {
+static void AlignTokenPartition(TokenPartitionTree* partition_ptr,
+                                const CellScannerFactory& scanner_gen,
+                                mutable_ftoken_iterator ftoken_base,
+                                absl::string_view full_text,
+                                const ByteOffsetSet& disabled_byte_ranges,
+                                int column_limit) {
   VLOG(1) << __FUNCTION__;
   // Each subpartition is presumed to correspond to a single port declaration,
   // preprocessor directive (`ifdef), or comment.
@@ -797,6 +814,7 @@ static void AlignPortDeclarations(TokenPartitionTree* partition_ptr,
                                                 subpartitions.end());
   if (subpartitions_range.empty()) return;
   std::vector<TokenPartitionIterator> subpartitions_bounds;
+  // TODO(fangism): pass in custom alignment group partitioning function.
   FindPartitionGroupBoundaries(subpartitions_range, &subpartitions_bounds);
   CHECK_GE(subpartitions_bounds.size(), 2);
   auto prev = subpartitions_bounds.begin();
@@ -815,7 +833,8 @@ static void AlignPortDeclarations(TokenPartitionTree* partition_ptr,
                                        disabled_byte_ranges))
       continue;
 
-    AlignPortDeclarationGroup(group_partition_range, ftoken_base, column_limit);
+    AlignPartitionGroup(group_partition_range, scanner_gen, ftoken_base,
+                        column_limit);
     // TODO(fangism): rewrite using functional composition.
   }
   VLOG(1) << "end of " << __FUNCTION__;
@@ -837,14 +856,16 @@ void TabularAlignTokenPartitions(TokenPartitionTree* partition_ptr,
   if (node == nullptr) return;
   // Dispatch aligning function based on syntax tree node type.
   auto ftoken_base = ftokens->begin();
-  switch (static_cast<NodeEnum>(node->Tag().tag)) {
-    case NodeEnum::kPortDeclarationList:
-      AlignPortDeclarations(partition_ptr, ftoken_base, full_text,
-                            disabled_byte_ranges, column_limit);
-      break;
-    default:
-      break;
-  }
+
+  static const auto* kAlignHandlers =
+      new std::map<NodeEnum, CellScannerFactory>{
+          {NodeEnum::kPortDeclarationList,
+           &PortDeclarationColumnSchemaScanner::Create},
+      };
+  const auto handler_iter = kAlignHandlers->find(NodeEnum(node->Tag().tag));
+  if (handler_iter == kAlignHandlers->end()) return;
+  AlignTokenPartition(partition_ptr, handler_iter->second, ftoken_base,
+                      full_text, disabled_byte_ranges, column_limit);
   VLOG(1) << "end of " << __FUNCTION__;
 }
 
