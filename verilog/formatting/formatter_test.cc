@@ -273,11 +273,11 @@ static const std::initializer_list<FormatterTestCase> kFormatterTestCases = {
      "`F(type_f_ffff))))\n",
      "`MACRO_FFFFFFFFFFF(\n"
      "    `A(type_a_aaaa,\n"
-     "        `B(type_b_bbbbb,\n"
-     "           `C(type_c_cccccc))),\n"
+     "       `B(type_b_bbbbb,\n"
+     "          `C(type_c_cccccc))),\n"
      "    `D(type_d_dddddddd,\n"
-     "        `E(type_e_eeeeeeee,\n"
-     "           `F(type_f_ffff))))\n"},
+     "       `E(type_e_eeeeeeee,\n"
+     "          `F(type_f_ffff))))\n"},
     {// macro call with MacroArg tokens as arugments and with semicolon
      "`FOOOOOO(\nbar1...\n,\nbar2...\n,\nbar3...\n,\nbar4\n);\n",
      "`FOOOOOO(bar1..., bar2..., bar3...,\n"
@@ -324,11 +324,11 @@ static const std::initializer_list<FormatterTestCase> kFormatterTestCases = {
      "`F(type_f_ffff))));\n",
      "`MACRO_FFFFFFFFFFF(\n"
      "    `A(type_a_aaaa,\n"
-     "        `B(type_b_bbbbb,\n"
-     "           `C(type_c_cccccc))),\n"
+     "       `B(type_b_bbbbb,\n"
+     "          `C(type_c_cccccc))),\n"
      "    `D(type_d_dddddddd,\n"
-     "        `E(type_e_eeeeeeee,\n"
-     "           `F(type_f_ffff))));\n"},
+     "       `E(type_e_eeeeeeee,\n"
+     "          `F(type_f_ffff))));\n"},
     {// macro call with no args
      "`FOOOOOO()\n", "`FOOOOOO()\n"},
     {// macro call with no args and semicolon

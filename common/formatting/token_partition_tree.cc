@@ -529,6 +529,14 @@ void ReshapeFittingSubpartitions(TokenPartitionTree* node,
     }
   }
 
+  // Update grouped childrens indentation in case of expanding grouping
+  // partitions
+  for (auto& group : temporary_tree.Children()) {
+    for (auto& subpart : group.Children()) {
+      AdjustIndentationAbsolute(&subpart, group.Value().IndentationSpaces());
+    }
+  }
+
   // Remove moved nodes
   node->Children().clear();
 
