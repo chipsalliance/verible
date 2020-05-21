@@ -37,7 +37,10 @@ struct AutoTruncate {
 
 std::ostream& operator<<(std::ostream&, const AutoTruncate& trunc);
 
-namespace internal {
+// TODO(fangism): once C++17 becomes the minimum standard for building
+// push the following block into an internal namespace, and use auto
+// return types instead of directly rnaming these types.
+// namespace internal {
 
 // Helper struct for bundling parameters to absl::StrJoin.
 // This is useful for contructing printer adapters for types that
@@ -65,7 +68,7 @@ std::ostream& operator<<(std::ostream& stream,
                 << t.suffix;
 }
 
-}  // namespace internal
+// }  // namespace internal
 
 // SequenceFormatter helps create custom formatters (pretty-printers) for
 // standard container types, when providing a plain std::ostream& operator<<
@@ -75,11 +78,18 @@ std::ostream& operator<<(std::ostream& stream,
 //
 // Example usage (define the following for your specific container type):
 // Suppose MySequenceType is a typedef to a container like std::list<int>.
-// Define a lambda (implicit return type, w/o auto-return type supported):
+// Define a forwarding function:
 //
-// constexpr auto MySequenceFormatter = [](const MySequenceType& t) {
+// [pre C++17]
+// SequenceStreamFormatter<MySequenceType> MySequenceFormatter(
+//     const MySequenceType& t) {
 //   return verible::SequenceFormatter(t, " | ", "< ", " >");
-// };
+// }
+//
+// [C++17 and higher, supporting auto return type]:
+// auto MySequenceFormatter(const MySequenceType& t) {
+//   return verible::SequenceFormatter(t, " | ", "< ", " >");
+// }
 //
 // and call it:
 //   stream << MySequenceFormatter(sequence_obj) << ...;
@@ -88,10 +98,11 @@ std::ostream& operator<<(std::ostream& stream,
 //   "< 1 | 2 | 3 | ... >"
 //
 template <class T>
-internal::SequenceStreamFormatter<T> SequenceFormatter(
-    const T& t, absl::string_view sep = ", ", absl::string_view prefix = "",
-    absl::string_view suffix = "") {
-  return internal::SequenceStreamFormatter<T>{t, sep, prefix, suffix};
+SequenceStreamFormatter<T> SequenceFormatter(const T& t,
+                                             absl::string_view sep = ", ",
+                                             absl::string_view prefix = "",
+                                             absl::string_view suffix = "") {
+  return SequenceStreamFormatter<T>{t, sep, prefix, suffix};
 }
 
 }  // namespace verible

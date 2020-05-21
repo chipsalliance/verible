@@ -26,6 +26,7 @@
 #include "absl/strings/str_join.h"
 #include "common/formatting/format_token.h"
 #include "common/formatting/unwrapped_line.h"
+#include "common/strings/display_utils.h"
 #include "common/strings/range.h"
 #include "common/text/concrete_syntax_leaf.h"
 #include "common/text/concrete_syntax_tree.h"
@@ -51,6 +52,8 @@ using verible::down_cast;
 using verible::FormatTokenRange;
 using verible::MutableFormatTokenRange;
 using verible::PreFormatToken;
+using verible::SequenceFormatter;
+using verible::SequenceStreamFormatter;
 using verible::Symbol;
 using verible::SymbolCastToNode;
 using verible::SyntaxTreeLeaf;
@@ -59,6 +62,7 @@ using verible::SyntaxTreePath;
 using verible::TokenInfo;
 using verible::TokenPartitionTree;
 using verible::TreeContextPathVisitor;
+using verible::TreePathFormatter;
 using verible::ValueSaver;
 
 template <class T>
@@ -80,36 +84,6 @@ static bool IgnorePartition(const TokenPartitionTree& partition) {
   if (IsPreprocessorKeyword(verilog_tokentype(token_range.front().TokenEnum())))
     return true;
   return false;
-}
-
-template <class T>
-struct SequenceStreamPrinter {
-  const T& sequence;
-  absl::string_view separator;
-  absl::string_view begin;
-  absl::string_view end;
-};
-
-template <class T>
-std::ostream& operator<<(std::ostream& stream,
-                         const SequenceStreamPrinter<T>& t) {
-  return stream << t.begin
-                << absl::StrJoin(t.sequence.begin(), t.sequence.end(),
-                                 t.separator, absl::StreamFormatter())
-                << t.end;
-}
-
-template <class T>
-SequenceStreamPrinter<T> SequencePrinter(const T& t,
-                                         absl::string_view sep = ", ",
-                                         absl::string_view begin = "",
-                                         absl::string_view end = "") {
-  return SequenceStreamPrinter<T>{t, sep, begin, end};
-}
-
-static SequenceStreamPrinter<SyntaxTreePath> PathPrinter(
-    const SyntaxTreePath& path) {
-  return SequencePrinter(path, ",", "[", "]");
 }
 
 using TokenPartitionIterator = std::vector<TokenPartitionTree>::iterator;
@@ -298,7 +272,7 @@ class ColumnSchemaScanner : public TreeContextPathVisitor {
       // When this occurs, take the (previous) leftmost token, and suppress
       // adding a new column.
       sparse_columns_.push_back(ColumnPositionEntry{path, leaf->get()});
-      VLOG(2) << "reserving new column at " << PathPrinter(path);
+      VLOG(2) << "reserving new column at " << TreePathFormatter(path);
     }
   }
 
@@ -368,7 +342,7 @@ class PortDeclarationColumnSchemaScanner : public ColumnSchemaScanner {
   void Visit(const SyntaxTreeNode& node) override {
     auto tag = NodeEnum(node.Tag().tag);
     VLOG(2) << __FUNCTION__ << ", node: " << tag << " at "
-            << PathPrinter(Path());
+            << TreePathFormatter(Path());
     switch (tag) {
       case NodeEnum::kPackedDimensions: {
         // Kludge: kPackedDimensions can appear in paths [2,1] and [2,0,2],
@@ -413,7 +387,7 @@ class PortDeclarationColumnSchemaScanner : public ColumnSchemaScanner {
 
   void Visit(const SyntaxTreeLeaf& leaf) override {
     VLOG(2) << __FUNCTION__ << ", leaf: " << leaf.get() << " at "
-            << PathPrinter(Path());
+            << TreePathFormatter(Path());
     // TODO(b/70310743): subdivide and align '[' and ']' by giving them their
     // own single-character (sub) column.
     switch (leaf.get().token_enum) {
@@ -460,9 +434,9 @@ class PortDeclarationColumnSchemaScanner : public ColumnSchemaScanner {
   }
 };
 
-static SequenceStreamPrinter<AlignmentRow> MatrixRowPrinter(
+static SequenceStreamFormatter<AlignmentRow> MatrixRowFormatter(
     const AlignmentRow& row) {
-  return SequencePrinter(row, " | ", "<", ">");
+  return SequenceFormatter(row, " | ", "<", ">");
 }
 
 // Translate a sparse set of columns into a fully-populated matrix row.
@@ -508,7 +482,8 @@ static void FillAlignmentRow(
   // Fill any sparse cells up to the last column.
   VLOG(3) << "fill up to last column";
   const MutableFormatTokenRange empty_filler(token_end, token_end);
-  for (; last_column_index < column_positions.size(); ++last_column_index) {
+  for (const int n = column_positions.size(); last_column_index < n;
+       ++last_column_index) {
     VLOG(3) << "empty at column " << last_column_index;
     (*row)[last_column_index].tokens = empty_filler;
   }
@@ -519,14 +494,15 @@ static void FillAlignmentRow(
     cell.tokens.set_end(upper_bound);
     upper_bound = cell.tokens.begin();
   }
-  VLOG(2) << "end of " << __FUNCTION__ << ", row: " << MatrixRowPrinter(*row);
+  VLOG(2) << "end of " << __FUNCTION__ << ", row: " << MatrixRowFormatter(*row);
 }
 
-struct MatrixCellSizePrinter {
+struct MatrixCellSizeFormatter {
   const AlignmentMatrix& matrix;
 };
 
-std::ostream& operator<<(std::ostream& stream, const MatrixCellSizePrinter& p) {
+std::ostream& operator<<(std::ostream& stream,
+                         const MatrixCellSizeFormatter& p) {
   const AlignmentMatrix& matrix = p.matrix;
   for (auto& row : matrix) {
     stream << '['
@@ -548,7 +524,7 @@ static void ComputeCellWidths(AlignmentMatrix* matrix) {
     }
   }
   VLOG(2) << "end of " << __FUNCTION__ << ", cell sizes:\n"
-          << MatrixCellSizePrinter{*matrix};
+          << MatrixCellSizeFormatter{*matrix};
 }
 
 typedef std::vector<AlignedColumnConfiguration> AlignedFormattingColumnSchema;

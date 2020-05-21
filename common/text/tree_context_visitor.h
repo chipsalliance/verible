@@ -74,9 +74,9 @@ SyntaxTreePath NextSiblingPath(const SyntaxTreePath& path);
 // Format SyntaxTreePaths using: stream << TreePathFormatter(path);
 // It is necessary to define this way because SyntaxTreePath is a typedef to a
 // generic container type.
-constexpr auto TreePathFormatter = [](const SyntaxTreePath& path) {
-  return SequenceFormatter(path, ",", "[", "]");
-};
+// TODO(fangism): Use auto return type once C++17 become the minimum standard.
+SequenceStreamFormatter<SyntaxTreePath> TreePathFormatter(
+    const SyntaxTreePath& path);
 
 }  // namespace verible
 

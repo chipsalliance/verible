@@ -19,6 +19,7 @@ cc_library(
         "//common/formatting:format_token",
         "//common/formatting:token_partition_tree",
         "//common/formatting:unwrapped_line",
+        "//common/strings:display_utils",
         "//common/strings:position",
         "//common/strings:range",
         "//common/text:concrete_syntax_leaf",

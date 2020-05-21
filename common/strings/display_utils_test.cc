@@ -55,9 +55,11 @@ typedef std::vector<int> IntVector;
 
 // Normally a definition like the following would appear in a header
 // to be shared.
-static constexpr auto AngleBracketFormatter = [](const IntVector& t) {
+// TODO(fangism): Use auto return type with C++17 as minimum standard.
+static SequenceStreamFormatter<IntVector> AngleBracketFormatter(
+    const IntVector& t) {
   return SequenceFormatter(t, " | ", "< ", " >");
-};
+}
 
 TEST(SequenceFormatterTest, AngleBracketVectorNotation) {
   const IntVector v{5, 6, 7, 8};

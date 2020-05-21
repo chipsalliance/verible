@@ -49,6 +49,11 @@ void TreeContextPathVisitor::Visit(const SyntaxTreeNode& node) {
   }
 }
 
+SequenceStreamFormatter<SyntaxTreePath> TreePathFormatter(
+    const SyntaxTreePath& path) {
+  return SequenceFormatter(path, ",", "[", "]");
+}
+
 SyntaxTreePath NextSiblingPath(const SyntaxTreePath& path) {
   CHECK(!path.empty());
   auto next = path;
