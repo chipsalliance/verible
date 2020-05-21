@@ -64,9 +64,9 @@ all_content = """filegroup(name = "all", srcs = glob(["**"]), visibility = ["//v
 http_archive(
     name = "bison",
     build_file_content = all_content,
-    sha256 = "b034a30222ea22715481b4f37abd2d160ce536eeac3dcfc44a060ccd916fa66d",
-    strip_prefix = "bison-3.5.91",
-    urls = ["https://ftp.gnu.org/gnu/bison/bison-3.5.91.tar.gz"],
+    sha256 = "e28ed3aad934de2d1df68be209ac0b454f7b6d3c3d6d01126e5cd2cbadba089a",
+    strip_prefix = "bison-3.6.2",
+    urls = ["https://ftp.gnu.org/gnu/bison/bison-3.6.2.tar.gz"],
 )
 
 http_archive(
