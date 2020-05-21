@@ -22,7 +22,7 @@ static constexpr absl::string_view kEllipses = "...";
 
 std::ostream& operator<<(std::ostream& stream, const AutoTruncate& trunc) {
   const auto text = trunc.text;
-  const auto length = text.length();
+  const int length = text.length();
   if (length <= trunc.max_chars) return stream << text;
   const auto context_length = trunc.max_chars - kEllipses.length();
   const auto tail_length = context_length / 2;
