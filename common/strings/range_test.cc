@@ -48,8 +48,8 @@ TEST(ByteOffsetRangeTest, EmptyInEmpty) {
 
 TEST(ByteOffsetRangeTest, RangeInvariant) {
   const absl::string_view superstring("xxxxxxxx");
-  for (int i = 0; i < superstring.length(); ++i) {
-    for (int j = i; j < superstring.length(); ++j) {
+  for (size_t i = 0; i < superstring.length(); ++i) {
+    for (size_t j = i; j < superstring.length(); ++j) {
       const auto substring = superstring.substr(i, j - i);
       EXPECT_EQ(SubstringOffsets(substring, superstring), IntPair(i, j))
           << i << ", " << j;
@@ -60,8 +60,8 @@ TEST(ByteOffsetRangeTest, RangeInvariant) {
 // Tests that swapping substring with superstring fails.
 TEST(ByteOffsetRangeTest, InsideOut) {
   const absl::string_view superstring("yyyyyyy");
-  for (int i = 0; i < superstring.length(); ++i) {
-    for (int j = i; j < superstring.length(); ++j) {
+  for (size_t i = 0; i < superstring.length(); ++i) {
+    for (size_t j = i; j < superstring.length(); ++j) {
       const auto substring = superstring.substr(i, j - i);
       EXPECT_DEATH(SubstringOffsets(superstring, substring), "")
           << i << ", " << j;
@@ -71,8 +71,8 @@ TEST(ByteOffsetRangeTest, InsideOut) {
 
 TEST(ByteOffsetRangeTest, PartialOverlap) {
   const absl::string_view superstring("zzzz");
-  for (int i = 0; i < superstring.length(); ++i) {
-    for (int j = 1; j < superstring.length(); ++j) {
+  for (size_t i = 0; i < superstring.length(); ++i) {
+    for (size_t j = 1; j < superstring.length(); ++j) {
       const auto left = superstring.substr(0, i);
       const auto right = superstring.substr(j);
       EXPECT_DEATH(SubstringOffsets(left, right), "") << i << ", " << j;

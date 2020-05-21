@@ -178,8 +178,8 @@ TEST(SubRangeIndicesTest, Empty) {
 
 TEST(SubRangeIndicesTest, RangeInvariant) {
   const std::vector<int> supersequence(5);
-  for (int i = 0; i < supersequence.size(); ++i) {
-    for (int j = i; j < supersequence.size(); ++j) {
+  for (size_t i = 0; i < supersequence.size(); ++i) {
+    for (size_t j = i; j < supersequence.size(); ++j) {
       const auto subsequence =
           make_range(supersequence.begin() + i, supersequence.begin() + j);
       EXPECT_EQ(SubRangeIndices(subsequence, supersequence), IntPair(i, j))
@@ -191,8 +191,8 @@ TEST(SubRangeIndicesTest, RangeInvariant) {
 // Tests that swapping subsequence with supersequence fails.
 TEST(SubRangeIndicesTest, InsideOut) {
   const std::vector<int> supersequence(5);
-  for (int i = 0; i < supersequence.size(); ++i) {
-    for (int j = i; j < supersequence.size(); ++j) {
+  for (size_t i = 0; i < supersequence.size(); ++i) {
+    for (size_t j = i; j < supersequence.size(); ++j) {
       const auto subsequence =
           make_range(supersequence.begin() + i, supersequence.begin() + j);
       EXPECT_DEATH(SubRangeIndices(supersequence, subsequence), "")
@@ -203,8 +203,8 @@ TEST(SubRangeIndicesTest, InsideOut) {
 
 TEST(SubRangeIndicesTest, PartialOverlap) {
   const std::vector<int> v(4);
-  for (int i = 0; i < v.size(); ++i) {
-    for (int j = 1; j < v.size(); ++j) {
+  for (size_t i = 0; i < v.size(); ++i) {
+    for (size_t j = 1; j < v.size(); ++j) {
       const auto left = make_range(v.begin(), v.begin() + i);
       const auto right = make_range(v.begin() + j, v.end());
       EXPECT_DEATH(SubRangeIndices(left, right), "") << i << ", " << j;
