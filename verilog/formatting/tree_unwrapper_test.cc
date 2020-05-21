@@ -3364,7 +3364,7 @@ const TreeUnwrapperTestData kDescriptionTestCases[] = {
         "bind foo bar baz1(), baz2();",
         N(0,  // kBindDeclaration
           L(0, {"bind", "foo", "bar", "baz1", "(", ")", ","}),  //
-          L(0, {"baz2", "(", ")", ";"})   //
+          L(0, {"baz2", "(", ")", ";"})   // TODO(fangism): what should be this indentation?
           ),
     },
 };

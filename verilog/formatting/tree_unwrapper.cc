@@ -1273,7 +1273,6 @@ void TreeUnwrapper::ReshapeTokenPartitions(
 
       verible::AdjustIndentationRelative(&children.back(),
                                          -style.wrap_spaces);
-      // Instance name partition will be flattened in common handling below
       break;
     }
     case NodeEnum::kStatement: {
