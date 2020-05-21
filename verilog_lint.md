@@ -41,8 +41,10 @@ verilog_lint: usage: bazel-bin/verilog/tools/lint/verilog_lint [options] <file> 
     --rules (Comma-separated of lint rules to enable. No prefix or a '+' prefix
       enables it, '-' disable it. Configuration values for each rules placed
       after '=' character.); default: ;
-    --rules_config (Path to lint rules configuration file.);
-      default: ".rules.verible_lint";
+    --rules_config (Path to lint rules configuration file. Disables
+      --rule_config_search.); default: ".rules.verible_lint";
+    --rules_config_search (Look for lint rules configuration file, searching
+      upward from the location of each analyzed file.); default: false;
     --ruleset ([default|all|none], the base set of rules used by linter);
       default: default;
     --waivers_file (Path to waivers file. Please refer to the README file for
@@ -300,4 +302,4 @@ Enabled by default: true
 
 ## Version
 
-Generated on 2020-05-08 13:21:01 -0700 from [v0.0-383-g0b0011b](https://github.com/google/verible/commit/0b0011b50b7b9774b11d6e824ada0ff2f34ef6a4)
+Generated on 2020-05-21 14:59:48 -0700 from [v0.0-407-g629d890](https://github.com/google/verible/commit/629d8908d05d895ca1586e98bd73284ad41b77f4)
