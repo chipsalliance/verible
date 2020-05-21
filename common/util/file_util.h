@@ -35,6 +35,12 @@ absl::string_view Basename(absl::string_view filename);
 // there is no "." in the basename, this is equivalent to file::Basename(path).
 absl::string_view Stem(absl::string_view filename);
 
+// Search for 'filename' file starting at 'start' (can be file or directory)
+// and going upwards the directory tree. Returns true if anything is found and
+// puts the found file in 'result'.
+absl::Status UpwardFileSearch(absl::string_view start,
+                              absl::string_view filename, std::string* result);
+
 // Read file "filename" and store its content in "content"
 absl::Status GetContents(absl::string_view filename, std::string *content);
 

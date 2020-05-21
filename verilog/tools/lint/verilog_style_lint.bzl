@@ -208,19 +208,23 @@ _verilog_style_lint_diagnostics_test = rule(
     implementation = _style_lint_test_diagnostics_impl,
 )
 
-def _verilog_style_lint_test(name, srcs, flags = None, expect_fail = None):
+def _verilog_style_lint_test(name, srcs, flags = [], expect_fail = None):
     """Macro for running Verilog style lint tests in the silo.
 
     Args:
       name: name of test.
       srcs: list of source files to scan (e.g. can use glob()).
       flags: list of flags for running the verilog_lint binary.
+             Note: --norules_config_search is used for each test.
       expect_fail: if True, expect to find errors (invert status).
     """
+    forced_flags = [
+        "--norules_config_search",
+    ]
     _verilog_style_lint_report(
         name = name + "-report",
         srcs = srcs,
-        flags = flags,
+        flags = flags + forced_flags,
     )
     _verilog_style_lint_diagnostics_test(
         name = name,

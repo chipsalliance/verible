@@ -70,15 +70,13 @@ int main(int argc, char** argv) {
     return 0;
   }
 
-  const LinterConfiguration baseline_config(
-      verilog::LinterConfigurationFromFlags());
-
   int exit_status = 0;
   // All positional arguments are file names.  Exclude program name.
   for (const auto filename :
        verible::make_range(args.begin() + 1, args.end())) {
     // Copy configuration, so that it can be locally modified per file.
-    LinterConfiguration config(baseline_config);
+    const LinterConfiguration config(
+        verilog::LinterConfigurationFromFlags(filename));
 
     const int lint_status = verilog::LintOneFile(
         &std::cout, filename, config, absl::GetFlag(FLAGS_parse_fatal),
