@@ -815,18 +815,27 @@ static const std::initializer_list<FormatterTestCase> kFormatterTestCases = {
      "    output reg       yy\n"
      ");\n"
      "endmodule : foo\n"},
+    {"module foo(  input   x  , "
+     "  output logic  yy ) ;endmodule:foo\n",
+     "module foo (\n"
+     "    input        x,\n"  // aligned
+     "    output logic yy\n"
+     ");\n"
+     "endmodule : foo\n"},
     {"module foo(  input   [a:c]x  , "
      "  output logic[a-b: c]  yy ) ;endmodule:foo\n",
      "module foo (\n"
-     "    input        [a:c]   x,\n"  // aligned
-     "    output logic [a-b:c] yy\n"  // TODO(b/70310743): align [:]'s
+     // TODO(b/70310743): flush right in []
+     "    input        [a:c  ] x,\n"  // aligned
+     "    output logic [a-b:c] yy\n"
      ");\n"
      "endmodule : foo\n"},
     {"module foo(  input   [a:c]x  , "
      "  output logic[a - b: c]  yy ) ;endmodule:foo\n",
      "module foo (\n"
-     "    input        [a:c]     x,\n"  // aligned
-     "    output logic [a - b:c] yy\n"  // TODO(b/70310743): align [:]'s
+     // TODO(b/70310743): flush right in []
+     "    input        [a:c    ] x,\n"  // aligned
+     "    output logic [a - b:c] yy\n"
      ");\n"
      "endmodule : foo\n"},
     {"module foo(  input   [a:b]x  , "
@@ -838,9 +847,11 @@ static const std::initializer_list<FormatterTestCase> kFormatterTestCases = {
      "endmodule : foo\n"},
     {"module foo(  input   tri[aa: bb]x  , "
      "  output reg[e: f]  yy ) ;endmodule:foo\n",
-     "module foo (\n"               // TODO(b/70310743): align [:]'s
+     "module foo (\n"
      "    input  tri [aa:bb] x,\n"  // aligned
-     "    output reg [e:f]   yy\n"
+                                    // TODO(b/70310743): flush right inside
+                                    // [:]'s
+     "    output reg [e:f  ] yy\n"
      ");\n"
      "endmodule : foo\n"},
     {"module foo(  input   [a:b][c:d]x  , "
@@ -878,8 +889,9 @@ static const std::initializer_list<FormatterTestCase> kFormatterTestCases = {
     {"module foo(  input wire x  [p:q][rr:ss], output reg yy [jj:kk][m:n]) "
      ";endmodule:foo\n",
      "module foo (\n"
-     "    input  wire x [p:q]  [rr:ss],\n"  // TODO(b/70310743): align [:]'s
-     "    output reg  yy[jj:kk][m:n]\n"     // aligned
+     // TODO(b/70310743): flush right inside [:]'s
+     "    input  wire x [p:q  ][rr:ss],\n"
+     "    output reg  yy[jj:kk][m:n  ]\n"  // aligned
      ");\n"
      "endmodule : foo\n"},
     {"module foo(  input wire   [p:q]x, output reg yy [j:k]) ;endmodule:foo\n",

@@ -84,6 +84,12 @@ class PortDeclarationColumnSchemaScanner : public ColumnSchemaScanner {
     auto tag = NodeEnum(node.Tag().tag);
     VLOG(2) << __FUNCTION__ << ", node: " << tag << " at "
             << TreePathFormatter(Path());
+    if (force_new_column_) {
+      ReserveNewColumn(node);
+      force_new_column_ = false;
+      TreeContextPathVisitor::Visit(node);
+      return;
+    }
     switch (tag) {
       case NodeEnum::kPackedDimensions: {
         // Kludge: kPackedDimensions can appear in paths [2,1] and [2,0,2],
@@ -129,9 +135,13 @@ class PortDeclarationColumnSchemaScanner : public ColumnSchemaScanner {
   void Visit(const SyntaxTreeLeaf& leaf) override {
     VLOG(2) << __FUNCTION__ << ", leaf: " << leaf.get() << " at "
             << TreePathFormatter(Path());
-    // TODO(b/70310743): subdivide and align '[' and ']' by giving them their
-    // own single-character (sub) column.
-    switch (leaf.get().token_enum) {
+    if (force_new_column_) {
+      ReserveNewColumn(leaf);
+      force_new_column_ = false;
+      return;
+    }
+    const int tag = leaf.get().token_enum;
+    switch (tag) {
       // port directions
       case verilog_tokentype::TK_inout:
       case verilog_tokentype::TK_input:
@@ -163,7 +173,19 @@ class PortDeclarationColumnSchemaScanner : public ColumnSchemaScanner {
         break;
       }
       // For now, treat [...] as a single column per dimension.
-      // TODO(b/70310743): subdivide and align '[' and ']'.
+      case '[':
+      case ']': {
+        if (current_context_.DirectParentIsOneOf(
+                {NodeEnum::kDimensionRange, NodeEnum::kDimensionScalar,
+                 NodeEnum::kDimensionSlice,
+                 NodeEnum::kDimensionAssociativeType})) {
+          // Alternatively, could check that grandparent is
+          // kDeclarationDimensions.
+          ReserveNewColumn(leaf);
+          if (tag == '[') force_new_column_ = true;
+        }
+        break;
+      }
       // TODO(b/70310743): Treat "[...:...]" as 5 columns.
       // Treat "[...]" (scalar) as 3 columns.
       // TODO(b/70310743): Treat the ... as a multi-column cell w.r.t.
@@ -173,6 +195,11 @@ class PortDeclarationColumnSchemaScanner : public ColumnSchemaScanner {
     }
     VLOG(2) << __FUNCTION__ << ", leaving leaf: " << leaf.get();
   }
+
+ private:
+  // Set this to force the next syntax tree node/leaf to start a new column.
+  // This is useful for aligning after punctation marks.
+  bool force_new_column_ = false;
 };
 
 void TabularAlignTokenPartitions(TokenPartitionTree* partition_ptr,
