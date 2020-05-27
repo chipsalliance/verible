@@ -55,6 +55,7 @@ cc_library(
         ":struct_union_name_style_rule",
         ":undersized_binary_literal_rule",
         ":unpacked_dimensions_rule",
+        ":uvm_macro_semicolon_rule",
         ":v2001_generate_begin_rule",
         ":void_cast_rule",
     ],
@@ -1680,3 +1681,40 @@ cc_test(
         "@com_google_googletest//:gtest_main",
     ],
 )
+
+cc_library(
+    name = "uvm_macro_semicolon_rule",
+    srcs = ["uvm_macro_semicolon_rule.cc"],
+    hdrs = ["uvm_macro_semicolon_rule.h"],
+    deps = [
+        "//common/analysis:citation",
+        "//common/analysis:lint_rule_status",
+        "//common/analysis:syntax_tree_lint_rule",
+        "//common/text:concrete_syntax_leaf",
+        "//common/text:symbol",
+        "//common/text:syntax_tree_context",
+        "//common/text:token_info",
+        "//common/util:container_util",
+        "//verilog/CST:verilog_matchers",
+        "//verilog/CST:macro",
+        "//verilog/analysis:descriptions",
+        "//verilog/analysis:lint_rule_registry",
+        "@com_google_absl//absl/strings",
+    ],
+    alwayslink = 1,
+)
+
+cc_test(
+    name = "uvm_macro_semicolon_rule_test",
+    srcs = ["uvm_macro_semicolon_rule_test.cc"],
+    deps = [
+        ":uvm_macro_semicolon_rule",
+        "//common/analysis:linter_test_utils",
+        "//common/analysis:syntax_tree_linter_test_utils",
+        "//common/text:symbol",
+        "//verilog/CST:verilog_nonterminals",
+        "//verilog/analysis:verilog_analyzer",
+        "@com_google_googletest//:gtest_main",
+    ],
+)
+

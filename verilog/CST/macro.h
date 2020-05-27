@@ -41,6 +41,9 @@ const verible::TokenInfo& GetMacroCallId(const verible::Symbol&);
 // Returns the leaf containing the macro (as generic item) name.
 const verible::TokenInfo& GetMacroGenericItemId(const verible::Symbol&);
 
+// Returns the node containing the macro call paren group
+const verible::SyntaxTreeNode& GetMacroCallParenGroup(const verible::Symbol& s);
+
 // Returns the node containing the macro call arguments (without parentheses).
 const verible::SyntaxTreeNode& GetMacroCallArgs(const verible::Symbol&);
 
