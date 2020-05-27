@@ -231,12 +231,22 @@ static SequenceStreamFormatter<AlignmentRow> MatrixRowFormatter(
   return SequenceFormatter(row, " | ", "< ", " >");
 }
 
+struct AlignmentRowData {
+  // Range of format tokens whose space is to be adjusted for alignment.
+  MutableFormatTokenRange ftoken_range;
+
+  // Set of cells found that correspond to an ordered, sparse set of columns
+  // to be aligned with other rows.
+  std::vector<ColumnPositionEntry> sparse_columns;
+};
+
 // Translate a sparse set of columns into a fully-populated matrix row.
 static void FillAlignmentRow(
-    const std::vector<ColumnPositionEntry>& sparse_columns,
-    const std::vector<SyntaxTreePath>& column_positions,
-    MutableFormatTokenRange partition_token_range, AlignmentRow* row) {
+    const AlignmentRowData& row_data,
+    const std::vector<SyntaxTreePath>& column_positions, AlignmentRow* row) {
   VLOG(2) << __FUNCTION__;
+  const auto& sparse_columns(row_data.sparse_columns);
+  MutableFormatTokenRange partition_token_range(row_data.ftoken_range);
   // Translate token into preformat_token iterator,
   // full token range.
   const auto cbegin = column_positions.begin();
@@ -425,12 +435,8 @@ static void AlignFilteredRows(const std::vector<TokenPartitionIterator>& rows,
 
   VLOG(2) << "Walking syntax subtrees for each row";
   ColumnSchemaAggregator column_schema;
-  std::vector<MutableFormatTokenRange> mutable_ftokens_ranges;
-  mutable_ftokens_ranges.reserve(rows.size());
-  // TODO(b/145170750): shorten lifetime of cell_scanners by saving only the
-  // needed results from those analyses.
-  std::vector<std::unique_ptr<ColumnSchemaScanner>> cell_scanners;
-  cell_scanners.reserve(rows.size());
+  std::vector<AlignmentRowData> alignment_row_data;
+  alignment_row_data.reserve(rows.size());
   // Simultaneously step through each node's tree, adding a column to the
   // schema if *any* row wants it.  This captures optional and repeated
   // constructs.
@@ -439,19 +445,22 @@ static void AlignFilteredRows(const std::vector<TokenPartitionIterator>& rows,
     const auto& unwrapped_line = row->Value();
     const auto* origin = ABSL_DIE_IF_NULL(unwrapped_line.Origin());
 
+    AlignmentRowData row_data;
     // Extract the range of format tokens whose spacings should be adjusted.
-    const auto mutable_ftokens =
+    row_data.ftoken_range =
         GetMutableFormatTokenRange(unwrapped_line, ftoken_base);
-    mutable_ftokens_ranges.emplace_back(mutable_ftokens);
 
-    // Scan each token-range for cell boundaries based on syntax,
-    // and establish partial ordering based on syntax tree paths.
-    cell_scanners.emplace_back(cell_scanner_gen());
-    auto& scanner = *cell_scanners.back();
-    origin->Accept(&scanner);
+    {
+      // Scan each token-range for cell boundaries based on syntax,
+      // and establish partial ordering based on syntax tree paths.
+      const auto scanner = cell_scanner_gen();
+      origin->Accept(&*scanner);
+      row_data.sparse_columns = scanner->SparseColumns();
+    }
 
+    alignment_row_data.emplace_back(row_data);
     // Aggregate union of all column keys (syntax tree paths).
-    column_schema.Collect(scanner.SparseColumns());
+    column_schema.Collect(row_data.sparse_columns);
   }
 
   // Map SyntaxTreePaths to column indices.
@@ -467,14 +476,11 @@ static void AlignFilteredRows(const std::vector<TokenPartitionIterator>& rows,
   VLOG(2) << "Filling dense matrix from sparse representation";
   AlignmentMatrix matrix(rows.size());
   {
-    auto scanner_iter = cell_scanners.begin();
-    auto ftoken_ranges_iter = mutable_ftokens_ranges.begin();
+    auto row_data_iter = alignment_row_data.cbegin();
     for (auto& row : matrix) {
       row.resize(num_columns);
-      FillAlignmentRow((*scanner_iter)->SparseColumns(), column_positions,
-                       *ftoken_ranges_iter, &row);
-      ++scanner_iter;
-      ++ftoken_ranges_iter;
+      FillAlignmentRow(*row_data_iter, column_positions, &row);
+      ++row_data_iter;
     }
   }
 
