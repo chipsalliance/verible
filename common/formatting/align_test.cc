@@ -51,9 +51,6 @@ class TokenColumnizer : public ColumnSchemaScanner {
  public:
   TokenColumnizer() = default;
 
-  static std::unique_ptr<ColumnSchemaScanner> Create() {
-    return absl::make_unique<TokenColumnizer>();
-  }
   void Visit(const SyntaxTreeNode& node) override {
     ColumnSchemaScanner::Visit(node);
   }
@@ -77,7 +74,7 @@ TEST_F(TabularAlignTokenTest, EmptyPartitionRange) {
   using tree_type = TokenPartitionTree;
   tree_type partition{all};  // no children subpartitions
   TabularAlignTokens(
-      &partition, &TokenColumnizer::Create,
+      &partition, AlignmentCellScannerGenerator<TokenColumnizer>(),
       [](const TokenPartitionTree&) { return false; },
       pre_format_tokens_.begin(), sample_, ByteOffsetSet(), 40);
   // Not crashing is success.
@@ -170,7 +167,7 @@ class Sparse3x3MatrixAlignmentTest : public AlignmentTestFixture {
 
 TEST_F(Sparse3x3MatrixAlignmentTest, ZeroInterTokenPadding) {
   TabularAlignTokens(
-      &partition_, &TokenColumnizer::Create,
+      &partition_, AlignmentCellScannerGenerator<TokenColumnizer>(),
       [](const TokenPartitionTree&) { return false; },
       pre_format_tokens_.begin(), sample_, ByteOffsetSet(), 40);
 
@@ -193,7 +190,7 @@ TEST_F(Sparse3x3MatrixAlignmentTest, OneInterTokenPadding) {
   }
 
   TabularAlignTokens(
-      &partition_, &TokenColumnizer::Create,
+      &partition_, AlignmentCellScannerGenerator<TokenColumnizer>(),
       [](const TokenPartitionTree&) { return false; },
       pre_format_tokens_.begin(), sample_, ByteOffsetSet(), 40);
 
@@ -214,7 +211,7 @@ TEST_F(Sparse3x3MatrixAlignmentTest, OneInterTokenPaddingExceptFront) {
   pre_format_tokens_[4].before.spaces_required = 0;
 
   TabularAlignTokens(
-      &partition_, &TokenColumnizer::Create,
+      &partition_, AlignmentCellScannerGenerator<TokenColumnizer>(),
       [](const TokenPartitionTree&) { return false; },
       pre_format_tokens_.begin(), sample_, ByteOffsetSet(), 40);
 
@@ -238,7 +235,7 @@ TEST_F(Sparse3x3MatrixAlignmentTest, OneInterTokenPaddingWithIndent) {
   }
 
   TabularAlignTokens(
-      &partition_, &TokenColumnizer::Create,
+      &partition_, AlignmentCellScannerGenerator<TokenColumnizer>(),
       [](const TokenPartitionTree&) { return false; },
       pre_format_tokens_.begin(), sample_, ByteOffsetSet(), 40);
 
@@ -260,8 +257,9 @@ TEST_F(Sparse3x3MatrixAlignmentTest, IgnoreCommentLine) {
     return partition.Value().TokensRange().front().Text() == "three";
   };
 
-  TabularAlignTokens(&partition_, &TokenColumnizer::Create, ignore_threes,
-                     pre_format_tokens_.begin(), sample_, ByteOffsetSet(), 40);
+  TabularAlignTokens(
+      &partition_, AlignmentCellScannerGenerator<TokenColumnizer>(),
+      ignore_threes, pre_format_tokens_.begin(), sample_, ByteOffsetSet(), 40);
 
   // Verify string rendering of result.
   EXPECT_EQ(Render(),          //
@@ -278,7 +276,7 @@ TEST_F(Sparse3x3MatrixAlignmentTest, CompletelyDisabledNoAlignment) {
   }
 
   TabularAlignTokens(
-      &partition_, &TokenColumnizer::Create,
+      &partition_, AlignmentCellScannerGenerator<TokenColumnizer>(),
       [](const TokenPartitionTree&) { return false; },
       pre_format_tokens_.begin(), sample_,
       // Alignment disabled over entire range.
@@ -299,7 +297,7 @@ TEST_F(Sparse3x3MatrixAlignmentTest, PartiallyDisabledNoAlignment) {
 
   int midpoint = sample_.length() / 2;
   TabularAlignTokens(
-      &partition_, &TokenColumnizer::Create,
+      &partition_, AlignmentCellScannerGenerator<TokenColumnizer>(),
       [](const TokenPartitionTree&) { return false; },
       pre_format_tokens_.begin(), sample_,
       // Alignment disabled over partial range.
@@ -319,7 +317,7 @@ TEST_F(Sparse3x3MatrixAlignmentTest, DisabledByColumnLimit) {
   }
 
   TabularAlignTokens(
-      &partition_, &TokenColumnizer::Create,
+      &partition_, AlignmentCellScannerGenerator<TokenColumnizer>(),
       [](const TokenPartitionTree&) { return false; },
       pre_format_tokens_.begin(), sample_, ByteOffsetSet(),
       // Column limit chosen to be smaller than sum of columns' widths (6+4+5):
@@ -428,7 +426,7 @@ TEST_F(MultiAlignmentGroupTest, BlankLineSeparatedGroups) {
   }
 
   TabularAlignTokens(
-      &partition_, &TokenColumnizer::Create,
+      &partition_, AlignmentCellScannerGenerator<TokenColumnizer>(),
       [](const TokenPartitionTree&) { return false; },
       pre_format_tokens_.begin(), sample_, ByteOffsetSet(), 40);
 

@@ -39,6 +39,7 @@
 namespace verilog {
 namespace formatter {
 
+using verible::AlignmentCellScannerGenerator;
 using verible::ByteOffsetSet;
 using verible::ColumnSchemaScanner;
 using verible::down_cast;
@@ -78,11 +79,6 @@ static bool IgnorePartition(const TokenPartitionTree& partition) {
 class PortDeclarationColumnSchemaScanner : public ColumnSchemaScanner {
  public:
   PortDeclarationColumnSchemaScanner() = default;
-
-  // Factory function, fits CellScannerFactory.
-  static std::unique_ptr<ColumnSchemaScanner> Create() {
-    return absl::make_unique<PortDeclarationColumnSchemaScanner>();
-  }
 
   void Visit(const SyntaxTreeNode& node) override {
     auto tag = NodeEnum(node.Tag().tag);
@@ -197,9 +193,9 @@ void TabularAlignTokenPartitions(TokenPartitionTree* partition_ptr,
   auto ftoken_base = ftokens->begin();
 
   static const auto* kAlignHandlers =
-      new std::map<NodeEnum, verible::CellScannerFactory>{
+      new std::map<NodeEnum, verible::AlignmentCellScannerFunction>{
           {NodeEnum::kPortDeclarationList,
-           &PortDeclarationColumnSchemaScanner::Create},
+           AlignmentCellScannerGenerator<PortDeclarationColumnSchemaScanner>()},
       };
   const auto handler_iter = kAlignHandlers->find(NodeEnum(node->Tag().tag));
   if (handler_iter == kAlignHandlers->end()) return;

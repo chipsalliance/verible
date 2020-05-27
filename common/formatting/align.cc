@@ -86,7 +86,7 @@ static void FindPartitionGroupBoundaries(
 }
 
 static int GetPartitionNodeEnum(const TokenPartitionTree& partition) {
-  const auto* origin = partition.Value().Origin();
+  const Symbol* origin = partition.Value().Origin();
   return SymbolCastToNode(*origin).Tag().tag;
 }
 
@@ -178,7 +178,7 @@ void ColumnSchemaScanner::ReserveNewColumn(const Symbol& symbol,
   // The path helps establish a total ordering among all desired alignment
   // points, given that they may come from optional or repeated language
   // constructs.
-  const auto* leaf = GetLeftmostLeaf(symbol);
+  const SyntaxTreeLeaf* leaf = GetLeftmostLeaf(symbol);
   // It is possible for a node to be empty, in which case, ignore.
   if (leaf == nullptr) return;
   if (sparse_columns_.empty() || sparse_columns_.back().path != path) {
@@ -261,7 +261,7 @@ static void FillAlignmentRow(
     // By construction, sparse_columns' paths should be a subset of those
     // in the aggregated column_positions set.
     CHECK(pos_iter != cend);
-    const auto column_index = std::distance(cbegin, pos_iter);
+    const int column_index = std::distance(cbegin, pos_iter);
     VLOG(3) << "cell at column " << column_index;
 
     // Find the format token iterator that corresponds to the column start.
@@ -362,7 +362,7 @@ static void AlignRowSpacings(
       // Align by setting the left-spacing based on sum of cell widths
       // before this one.
       const int padding = column_iter->width - cell.compact_width;
-      auto& left_spacing = cell.tokens.front().before.spaces_required;
+      int& left_spacing = cell.tokens.front().before.spaces_required;
       if (column_iter->flush_left) {
         left_spacing = accrued_spaces;
         accrued_spaces = padding;
@@ -403,13 +403,13 @@ static MutableFormatTokenRange GetMutableFormatTokenRange(
     const UnwrappedLine& unwrapped_line,
     MutableFormatTokenRange::iterator ftoken_base) {
   // Each row should correspond to an individual list element
-  const auto* origin = ABSL_DIE_IF_NULL(unwrapped_line.Origin());
+  const Symbol* origin = ABSL_DIE_IF_NULL(unwrapped_line.Origin());
   VLOG(2) << "row: " << StringSpanOfSymbol(*origin);
 
   // Partition may contain text that is outside of the span of the syntax
   // tree node that was visited, e.g. a trailing comma delimiter.
   // Exclude those tokens from alignment consideration (for now).
-  const auto& last_token = GetRightmostLeaf(*origin);
+  const SyntaxTreeLeaf* last_token = GetRightmostLeaf(*origin);
   const auto range_begin = unwrapped_line.TokensRange().begin();
   auto range_end = unwrapped_line.TokensRange().end();
   // Backwards search is expected to check at most a few tokens.
@@ -423,10 +423,10 @@ static MutableFormatTokenRange GetMutableFormatTokenRange(
       FormatTokenRange(range_begin, range_end), ftoken_base);
 }
 
-static void AlignFilteredRows(const std::vector<TokenPartitionIterator>& rows,
-                              const CellScannerFactory& cell_scanner_gen,
-                              MutableFormatTokenRange::iterator ftoken_base,
-                              int column_limit) {
+static void AlignFilteredRows(
+    const std::vector<TokenPartitionIterator>& rows,
+    const AlignmentCellScannerFunction& cell_scanner_gen,
+    MutableFormatTokenRange::iterator ftoken_base, int column_limit) {
   VLOG(1) << __FUNCTION__;
   // Alignment requires 2+ rows.
   if (rows.size() <= 1) return;
@@ -442,21 +442,14 @@ static void AlignFilteredRows(const std::vector<TokenPartitionIterator>& rows,
   // constructs.
   for (const auto& row : rows) {
     // Each row should correspond to an individual list element
-    const auto& unwrapped_line = row->Value();
-    const auto* origin = ABSL_DIE_IF_NULL(unwrapped_line.Origin());
+    const UnwrappedLine& unwrapped_line = row->Value();
 
-    AlignmentRowData row_data;
-    // Extract the range of format tokens whose spacings should be adjusted.
-    row_data.ftoken_range =
-        GetMutableFormatTokenRange(unwrapped_line, ftoken_base);
-
-    {
-      // Scan each token-range for cell boundaries based on syntax,
-      // and establish partial ordering based on syntax tree paths.
-      const auto scanner = cell_scanner_gen();
-      origin->Accept(&*scanner);
-      row_data.sparse_columns = scanner->SparseColumns();
-    }
+    const AlignmentRowData row_data{
+        // Extract the range of format tokens whose spacings should be adjusted.
+        GetMutableFormatTokenRange(unwrapped_line, ftoken_base),
+        // Scan each token-range for cell boundaries based on syntax,
+        // and establish partial ordering based on syntax tree paths.
+        cell_scanner_gen(*row)};
 
     alignment_row_data.emplace_back(row_data);
     // Aggregate union of all column keys (syntax tree paths).
@@ -542,7 +535,8 @@ static void AlignFilteredRows(const std::vector<TokenPartitionIterator>& rows,
 }
 
 static void AlignPartitionGroup(
-    const TokenPartitionRange& group, const CellScannerFactory& scanner_gen,
+    const TokenPartitionRange& group,
+    const AlignmentCellScannerFunction& alignment_scanner,
     std::function<bool(const TokenPartitionTree& node)> ignore_pred,
     MutableFormatTokenRange::iterator ftoken_base, int column_limit) {
   VLOG(1) << __FUNCTION__ << ", group size: " << group.size();
@@ -561,7 +555,7 @@ static void AlignPartitionGroup(
     }
   }
   // Align the qualified partitions (rows).
-  AlignFilteredRows(qualified_partitions, scanner_gen, ftoken_base,
+  AlignFilteredRows(qualified_partitions, alignment_scanner, ftoken_base,
                     column_limit);
   VLOG(1) << "end of " << __FUNCTION__;
 }
@@ -580,8 +574,8 @@ static absl::string_view StringSpanOfPartitionRange(
 static bool AnyPartitionSubRangeIsDisabled(
     TokenPartitionRange range, absl::string_view full_text,
     const ByteOffsetSet& disabled_byte_ranges) {
-  const auto span = StringSpanOfPartitionRange(range);
-  const auto span_offsets = SubstringOffsets(span, full_text);
+  const absl::string_view span = StringSpanOfPartitionRange(range);
+  const std::pair<int, int> span_offsets = SubstringOffsets(span, full_text);
   ByteOffsetSet diff(disabled_byte_ranges);  // copy
   diff.Complement(span_offsets);             // enabled range(s)
   ByteOffsetSet span_set;
@@ -590,7 +584,8 @@ static bool AnyPartitionSubRangeIsDisabled(
 }
 
 void TabularAlignTokens(
-    TokenPartitionTree* partition_ptr, const CellScannerFactory& scanner_gen,
+    TokenPartitionTree* partition_ptr,
+    const AlignmentCellScannerFunction& alignment_scanner,
     const std::function<bool(const TokenPartitionTree&)> ignore_pred,
     MutableFormatTokenRange::iterator ftoken_base, absl::string_view full_text,
     const ByteOffsetSet& disabled_byte_ranges, int column_limit) {
@@ -624,7 +619,7 @@ void TabularAlignTokens(
                                        disabled_byte_ranges))
       continue;
 
-    AlignPartitionGroup(group_partition_range, scanner_gen, ignore_pred,
+    AlignPartitionGroup(group_partition_range, alignment_scanner, ignore_pred,
                         ftoken_base, column_limit);
     // TODO(fangism): rewrite using functional composition.
   }

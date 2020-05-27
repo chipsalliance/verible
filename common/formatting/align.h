@@ -24,6 +24,7 @@
 #include "common/strings/position.h"  // for ByteOffsetSet
 #include "common/text/token_info.h"
 #include "common/text/tree_context_visitor.h"
+#include "common/util/logging.h"
 
 namespace verible {
 
@@ -70,11 +71,47 @@ class ColumnSchemaScanner : public TreeContextPathVisitor {
   std::vector<ColumnPositionEntry> sparse_columns_;
 };
 
-// TODO(fangism): rename starting with 'Alignment'
-// TODO(fangism): make this interface more abstract as a plain std::function<>
-// without requiring use of ColumnSchemaScanner.
-using CellScannerFactory =
-    std::function<std::unique_ptr<ColumnSchemaScanner>()>;
+// This is the interface used to extract alignment cells from ranges of tokens.
+// Note that it is not required to use a ColumnSchemaScanner.
+using AlignmentCellScannerFunction =
+    std::function<std::vector<ColumnPositionEntry>(const TokenPartitionTree&)>;
+
+// Instantiates a ScannerType (implements ColumnSchemaScanner) and extracts
+// column alignment information.
+// A 'row' corresponds to a range of format tokens over which spacing is to be
+// adjusted to achieve alignment.
+// Returns a sequence of column entries that will be uniquified and ordered
+// for alignment purposes.
+template <class ScannerType>
+std::vector<ColumnPositionEntry> ScanPartitionForAlignmentCells(
+    const TokenPartitionTree& row) {
+  const UnwrappedLine& unwrapped_line = row.Value();
+  // Walk the original syntax tree that spans a subset of the tokens spanned by
+  // this 'row', and detect the sparse set of columns found by the scanner.
+  const Symbol* origin = ABSL_DIE_IF_NULL(unwrapped_line.Origin());
+  ScannerType scanner;
+  origin->Accept(&scanner);
+  return scanner.SparseColumns();
+}
+
+// Convenience function for generating alignment cell scanners.
+// This can be useful for constructing maps of scanners based on type.
+//
+// Example:
+//   static const auto* kAlignHandlers =
+//      new std::map<NodeEnum, verible::AlignmentCellScannerFunction>{
+//         {NodeEnum::kTypeA,
+//          AlignmentCellScannerGenerator<TypeA_ColumnSchemaScanner>()},
+//         {NodeEnum::kTypeB,
+//          AlignmentCellScannerGenerator<TypeB_ColumnSchemaScanner>()},
+//         ...
+//   };
+template <class ScannerType>
+AlignmentCellScannerFunction AlignmentCellScannerGenerator() {
+  return [](const TokenPartitionTree& row) {
+    return ScanPartitionForAlignmentCells<ScannerType>(row);
+  };
+}
 
 // This aligns sections of text by modifying the spacing between tokens.
 // 'partition_ptr' is a partition that can span one or more sections of
@@ -90,7 +127,7 @@ using CellScannerFactory =
 // the max cell width in each column, and padding spaces as necessary.
 //
 // Other parameters:
-// 'scanner_gen' generator returns objects that scan lines
+// 'alignment_scanner' is a function that scans lines
 // for token positions that mark the start of a new column.
 // 'ignore_pred' returns true for lines that should be ignored
 // for alignment purposes, such as comment-only lines.
@@ -119,7 +156,8 @@ using CellScannerFactory =
 //    ccc[33] dd [444]
 //
 void TabularAlignTokens(
-    TokenPartitionTree* partition_ptr, const CellScannerFactory& scanner_gen,
+    TokenPartitionTree* partition_ptr,
+    const AlignmentCellScannerFunction& alignment_scanner,
     const std::function<bool(const TokenPartitionTree&)> ignore_pred,
     MutableFormatTokenRange::iterator ftoken_base, absl::string_view full_text,
     const ByteOffsetSet& disabled_byte_ranges, int column_limit);
