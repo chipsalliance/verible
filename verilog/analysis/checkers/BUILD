@@ -433,7 +433,6 @@ cc_library(
         "//verilog/CST:package",
         "//verilog/analysis:descriptions",
         "//verilog/analysis:lint_rule_registry",
-        "@com_google_absl//absl/status",
         "@com_google_absl//absl/strings",
     ],
     alwayslink = 1,

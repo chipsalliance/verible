@@ -63,21 +63,28 @@ genrule(
     cmd = "./$(location create_version_header.sh) > $@",
     stamp = 1,  # Tell bazel that we really are interested in the status file
     tools = ["create_version_header.sh"],
+    visibility = ["//visibility:private"],
+)
+
+cc_library(
+    name = "build_version",
+    hdrs = ["verible_build_version.h"],
+    visibility = ["//visibility:private"],
 )
 
 cc_library(
     name = "init_command_line",
-    srcs = [
-        "init_command_line.cc",
-        "verible_build_version.h",
-    ],
+    srcs = ["init_command_line.cc"],
     hdrs = ["init_command_line.h"],
     deps = [
-        "@com_google_absl//absl/flags:flag",
-        "@com_google_absl//absl/flags:parse",
-        "@com_google_absl//absl/flags:usage",
-        "@com_google_absl//absl/strings",
-        "@com_google_absl//absl/time",
+        # these deps are needed by init_command_line.cc:
+        ":build_version",  # buildcleaner: keep
+        "@com_google_absl//absl/flags:config",  # buildcleaner: keep
+        "@com_google_absl//absl/flags:flag",  # buildcleaner: keep
+        "@com_google_absl//absl/flags:parse",  # buildcleaner: keep
+        "@com_google_absl//absl/flags:usage",  # buildcleaner: keep
+        "@com_google_absl//absl/strings",  # buildcleaner: keep
+        "@com_google_absl//absl/time",  # buildcleaner: keep
     ],
 )
 

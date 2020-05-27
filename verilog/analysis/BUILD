@@ -278,7 +278,6 @@ cc_test(
         ":verilog_equivalence",
         "//common/text:token_info",
         "//common/util:logging",
-        "//verilog/parser:verilog_token_enum",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/strings",
         "@com_google_absl//absl/types:span",

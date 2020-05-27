@@ -497,8 +497,6 @@ cc_library(
         "//common/text:symbol",
         "//common/text:token_info",
         "//common/text:tree_utils",
-        "//common/util:casts",
-        "@com_google_absl//absl/status",
     ],
 )
 

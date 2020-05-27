@@ -131,7 +131,6 @@ cc_library(
         "//common/util:interval_set",
         "//common/util:logging",
         "//common/util:range",
-        "@com_google_absl//absl/random",
         "@com_google_absl//absl/strings",
     ],
 )
@@ -214,7 +213,6 @@ cc_test(
     srcs = ["utf8_test.cc"],
     deps = [
         ":utf8",
-        "@com_google_absl//absl/strings",
         "@com_google_googletest//:gtest_main",
     ],
 )

@@ -171,7 +171,6 @@ cc_library(
         "//common/text:token_info",
         "//common/text:token_stream_view",
         "//common/text:tree_context_visitor",
-        "//common/util:logging",
     ],
 )
 
