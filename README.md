@@ -372,7 +372,9 @@ All lines in between will be waived for rule-X
 // verilog_lint: waive-stop rule-X
 ```
 
-Another option is to use a configuration file with the `--waivers_file` flag.
+Another option is to use a configuration file with the `--waiver_files` flag.
+The flag accepts a single file or a list of files (comma-separated). Specifying
+multiple files is equivalent to concatenating the files in order of appearance.
 The format of this file is as follows: `waive --rule=rule-name-1 --line=10 waive
 --rule=rule-name-2 --line=5:10 waive --rule=rule-name-3 --regex="^\s*abc$"`
 

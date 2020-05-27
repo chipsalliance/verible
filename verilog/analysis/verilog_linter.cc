@@ -64,9 +64,9 @@ ABSL_FLAG(bool, rules_config_search, false,
           "searching upward from the location of each analyzed file.");
 ABSL_FLAG(verilog::RuleSet, ruleset, verilog::RuleSet::kDefault,
           "[default|all|none], the base set of rules used by linter");
-ABSL_FLAG(std::string, waivers_file, "",
-          "Path to waivers file. Please refer to the README file for "
-          " information about its format.");
+ABSL_FLAG(std::string, waiver_files, "",
+          "Path to waiver config files (comma-separated). "
+          "Please refer to the README file for information about its format.");
 
 namespace verilog {
 
@@ -151,23 +151,24 @@ absl::Status VerilogLinter::Configure(
     syntax_tree_linter_.AddRule(std::move(rule));
   }
 
-  if (!configuration.external_waivers.empty()) {
+  absl::Status rc = absl::OkStatus();
+  for (auto filename :
+       absl::StrSplit(configuration.external_waivers, ',', absl::SkipEmpty())) {
     std::string content;
-    auto status =
-        verible::file::GetContents(configuration.external_waivers, &content);
+    auto status = verible::file::GetContents(filename, &content);
+    if (content.empty()) {
+      continue;
+    }
     if (status.ok()) {
-      return lint_waiver_.ApplyExternalWaivers(configuration.ActiveRuleIds(),
-                                               configuration.external_waivers,
-                                               content);
-    } else {
-      return absl::Status(
-          status.code(),
-          absl::StrCat("Unable to read waivers configuration - ",
-                       configuration.external_waivers, "; ", status.message()));
+      status = lint_waiver_.ApplyExternalWaivers(configuration.ActiveRuleIds(),
+                                                 filename, content);
+    }
+    if (!status.ok()) {
+      rc.Update(status);
     }
   }
 
-  return absl::OkStatus();
+  return rc;
 }
 
 void VerilogLinter::Lint(const TextStructureView& text_structure,
@@ -300,7 +301,7 @@ LinterConfiguration LinterConfigurationFromFlags(
   config.UseRuleBundle(rules);
 
   // Apply external waivers
-  config.external_waivers = absl::GetFlag(FLAGS_waivers_file);
+  config.external_waivers = absl::GetFlag(FLAGS_waiver_files);
 
   return config;
 }
