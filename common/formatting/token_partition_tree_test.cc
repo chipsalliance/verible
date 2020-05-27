@@ -29,6 +29,7 @@
 #include "common/util/vector_tree.h"
 
 namespace verible {
+namespace {
 
 // Helper class that initializes an array of tokens to be partitioned
 // into TokenPartitionTree.
@@ -1634,4 +1635,5 @@ TEST_F(ReshapeFittingSubpartitionsFunctionTest,
             header.TokensRange()[0].Length());
 }
 
+}  // namespace
 }  // namespace verible

@@ -94,6 +94,10 @@ FormattedExcerpt::FormattedExcerpt(const UnwrappedLine& uwline)
   if (!tokens_.empty()) {
     // Translate indentation depth into first token's before.spaces.
     tokens_.front().before.spaces = indentation_spaces_;
+    // Beware, however, that other attempts to adjust before.spaces (e.g.
+    // tabular alignment) may get clobbered by this.
+    // The workaround in those cases is to compute this first spacing as a sum
+    // of indentation and left-padding.
   }
 }
 

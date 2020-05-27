@@ -8,6 +8,44 @@ package(
 )
 
 cc_library(
+    name = "align",
+    srcs = ["align.cc"],
+    hdrs = ["align.h"],
+    deps = [
+        ":format_token",
+        ":token_partition_tree",
+        ":unwrapped_line",
+        "//common/strings:display_utils",
+        "//common/strings:position",
+        "//common/strings:range",
+        "//common/text:concrete_syntax_leaf",
+        "//common/text:concrete_syntax_tree",
+        "//common/text:token_info",
+        "//common/text:tree_context_visitor",
+        "//common/text:tree_utils",
+        "//common/util:algorithm",
+        "//common/util:container_iterator_range",
+        "//common/util:logging",
+        "@com_google_absl//absl/memory",
+        "@com_google_absl//absl/strings",
+    ],
+)
+
+cc_test(
+    name = "align_test",
+    srcs = ["align_test.cc"],
+    deps = [
+        ":align",
+        ":format_token",
+        ":unwrapped_line_test_utils",
+        "//common/text:tree_builder_test_util",
+        "//common/util:spacer",
+        "@com_google_absl//absl/strings",
+        "@com_google_googletest//:gtest_main",
+    ],
+)
+
+cc_library(
     name = "basic_format_style",
     hdrs = ["basic_format_style.h"],
 )
