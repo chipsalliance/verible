@@ -1279,6 +1279,15 @@ void TreeUnwrapper::ReshapeTokenPartitions(
       }
     case NodeEnum::kBindDirective: {
       AttachTrailingSemicolonToPreviousPartition(&partition);
+
+      // Take advantage here that preceding data declaration partition
+      // was already shaped.
+      auto& target_instance_partition = partition;
+      auto& children = target_instance_partition.Children();
+      // Attach ')' to the instance name
+      verible::MergeLeafIntoNextLeaf(children.back().PreviousSibling());
+
+      verible::AdjustIndentationRelative(&children.back(), -style.wrap_spaces);
       break;
     }
     case NodeEnum::kStatement: {

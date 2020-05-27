@@ -3531,32 +3531,27 @@ const TreeUnwrapperTestData kDescriptionTestCases[] = {
         "bind foo bar#(.x(y)) baz(.clk(clk));",
         N(0,  // kBindDeclaration
           L(0, {"bind", "foo", "bar", "#", "("}),
-          L(2, {".", "x", "(", "y", ")"}), L(0, {")"}),
-          InstanceList(
-              2,                                    //
-              L(2, {"baz", "("}),                   //
-              L(4, {".", "clk", "(", "clk", ")"}),  //
-              L(2, {")", ";"})  // ';' is attached to end of bind directive
-              )),
+          L(2, {".", "x", "(", "y", ")"}),
+          N(0, L(0, {")", "baz", "("}),           //
+            L(2, {".", "clk", "(", "clk", ")"}),  //
+            L(0, {")", ";"}))  // ';' is attached to end of bind directive
+          ),
     },
 
     {"multiple bind declarations",
      "bind foo bar baz();"
      "bind goo car caz();",
-     N(0,  // kBindDeclaration
-       L(0, {"bind", "foo", "bar"}), L(2, {"baz", "(", ")", ";"})),
-     N(0,  // kBindDeclaration
-       L(0, {"bind", "goo", "car"}), L(2, {"caz", "(", ")", ";"}))},
+     L(0, {"bind", "foo", "bar", "baz", "(", ")", ";"}),
+     L(0, {"bind", "goo", "car", "caz", "(", ")", ";"})},
 
     {
         "multi-instance bind declaration",
         "bind foo bar baz1(), baz2();",
         N(0,  // kBindDeclaration
-          L(0, {"bind", "foo", "bar"}),
-          InstanceList(2,                              //
-                       L(2, {"baz1", "(", ")", ","}),  //
-                       L(2, {"baz2", "(", ")", ";"})   //
-                       )),
+          L(0, {"bind", "foo", "bar", "baz1", "(", ")", ","}),  //
+          L(0, {"baz2", "(", ")",
+                ";"})  // TODO(fangism): what should be this indentation?
+          ),
     },
 };
 
