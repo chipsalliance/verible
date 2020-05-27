@@ -21,7 +21,6 @@
 
 #include "absl/strings/string_view.h"
 #include "common/formatting/token_partition_tree.h"
-#include "common/formatting/unwrapped_line.h"
 #include "common/strings/position.h"  // for ByteOffsetSet
 #include "common/text/token_info.h"
 #include "common/text/tree_context_visitor.h"
@@ -49,16 +48,11 @@ struct ColumnPositionEntry {
 // and call ReserveNewColumn() in locations that want a new columns.
 class ColumnSchemaScanner : public TreeContextPathVisitor {
  public:
-  explicit ColumnSchemaScanner(MutableFormatTokenRange range)
-      : format_token_range_(range) {}
+  ColumnSchemaScanner() = default;
 
   // Returns the collection of column position entries.
   const std::vector<ColumnPositionEntry>& SparseColumns() const {
     return sparse_columns_;
-  }
-
-  const MutableFormatTokenRange& FormatTokenRange() const {
-    return format_token_range_;
   }
 
  protected:
@@ -72,9 +66,6 @@ class ColumnSchemaScanner : public TreeContextPathVisitor {
   }
 
  private:
-  // Range of format tokens whose left-spacing may be padded by alignment.
-  const MutableFormatTokenRange format_token_range_;
-
   // Keeps track of unique positions where new columns are desired.
   std::vector<ColumnPositionEntry> sparse_columns_;
 };
@@ -82,8 +73,8 @@ class ColumnSchemaScanner : public TreeContextPathVisitor {
 // TODO(fangism): rename starting with 'Alignment'
 // TODO(fangism): make this interface more abstract as a plain std::function<>
 // without requiring use of ColumnSchemaScanner.
-using CellScannerFactory = std::function<std::unique_ptr<ColumnSchemaScanner>(
-    MutableFormatTokenRange)>;
+using CellScannerFactory =
+    std::function<std::unique_ptr<ColumnSchemaScanner>()>;
 
 // This aligns sections of text by modifying the spacing between tokens.
 // 'partition_ptr' is a partition that can span one or more sections of

@@ -49,12 +49,10 @@ class AlignmentTestFixture : public ::testing::Test,
 
 class TokenColumnizer : public ColumnSchemaScanner {
  public:
-  explicit TokenColumnizer(MutableFormatTokenRange range)
-      : ColumnSchemaScanner(range) {}
+  TokenColumnizer() = default;
 
-  static std::unique_ptr<ColumnSchemaScanner> Create(
-      MutableFormatTokenRange range) {
-    return absl::make_unique<TokenColumnizer>(range);
+  static std::unique_ptr<ColumnSchemaScanner> Create() {
+    return absl::make_unique<TokenColumnizer>();
   }
   void Visit(const SyntaxTreeNode& node) override {
     ColumnSchemaScanner::Visit(node);

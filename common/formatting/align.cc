@@ -389,6 +389,30 @@ static MutableFormatTokenRange ConvertToMutableFormatTokenRange(
       ConvertToMutableIterator<array_type>(const_range.end(), base));
 }
 
+static MutableFormatTokenRange GetMutableFormatTokenRange(
+    const UnwrappedLine& unwrapped_line,
+    MutableFormatTokenRange::iterator ftoken_base) {
+  // Each row should correspond to an individual list element
+  const auto* origin = ABSL_DIE_IF_NULL(unwrapped_line.Origin());
+  VLOG(2) << "row: " << StringSpanOfSymbol(*origin);
+
+  // Partition may contain text that is outside of the span of the syntax
+  // tree node that was visited, e.g. a trailing comma delimiter.
+  // Exclude those tokens from alignment consideration (for now).
+  const auto& last_token = GetRightmostLeaf(*origin);
+  const auto range_begin = unwrapped_line.TokensRange().begin();
+  auto range_end = unwrapped_line.TokensRange().end();
+  // Backwards search is expected to check at most a few tokens.
+  while (!BoundsEqual(std::prev(range_end)->Text(), last_token->get().text))
+    --range_end;
+  CHECK(range_begin <= range_end);
+
+  // Scan each token-range for cell boundaries based on syntax,
+  // and establish partial ordering based on syntax tree paths.
+  return ConvertToMutableFormatTokenRange(
+      FormatTokenRange(range_begin, range_end), ftoken_base);
+}
+
 static void AlignFilteredRows(const std::vector<TokenPartitionIterator>& rows,
                               const CellScannerFactory& cell_scanner_gen,
                               MutableFormatTokenRange::iterator ftoken_base,
@@ -401,6 +425,10 @@ static void AlignFilteredRows(const std::vector<TokenPartitionIterator>& rows,
 
   VLOG(2) << "Walking syntax subtrees for each row";
   ColumnSchemaAggregator column_schema;
+  std::vector<MutableFormatTokenRange> mutable_ftokens_ranges;
+  mutable_ftokens_ranges.reserve(rows.size());
+  // TODO(b/145170750): shorten lifetime of cell_scanners by saving only the
+  // needed results from those analyses.
   std::vector<std::unique_ptr<ColumnSchemaScanner>> cell_scanners;
   cell_scanners.reserve(rows.size());
   // Simultaneously step through each node's tree, adding a column to the
@@ -410,24 +438,15 @@ static void AlignFilteredRows(const std::vector<TokenPartitionIterator>& rows,
     // Each row should correspond to an individual list element
     const auto& unwrapped_line = row->Value();
     const auto* origin = ABSL_DIE_IF_NULL(unwrapped_line.Origin());
-    VLOG(2) << "row: " << StringSpanOfSymbol(*origin);
 
-    // Partition may contain text that is outside of the span of the syntax
-    // tree node that was visited, e.g. a trailing comma delimiter.
-    // Exclude those tokens from alignment consideration.
-    const auto& last_token = GetRightmostLeaf(*origin);
-    auto range_begin = unwrapped_line.TokensRange().begin();
-    auto range_end = unwrapped_line.TokensRange().end();
-    // Backwards search is expected to check at most a few tokens.
-    while (!BoundsEqual(std::prev(range_end)->Text(), last_token->get().text))
-      --range_end;
-    CHECK(range_begin <= range_end);
+    // Extract the range of format tokens whose spacings should be adjusted.
+    const auto mutable_ftokens =
+        GetMutableFormatTokenRange(unwrapped_line, ftoken_base);
+    mutable_ftokens_ranges.emplace_back(mutable_ftokens);
 
     // Scan each token-range for cell boundaries based on syntax,
     // and establish partial ordering based on syntax tree paths.
-    cell_scanners.emplace_back(
-        cell_scanner_gen(ConvertToMutableFormatTokenRange(
-            FormatTokenRange(range_begin, range_end), ftoken_base)));
+    cell_scanners.emplace_back(cell_scanner_gen());
     auto& scanner = *cell_scanners.back();
     origin->Accept(&scanner);
 
@@ -449,11 +468,13 @@ static void AlignFilteredRows(const std::vector<TokenPartitionIterator>& rows,
   AlignmentMatrix matrix(rows.size());
   {
     auto scanner_iter = cell_scanners.begin();
+    auto ftoken_ranges_iter = mutable_ftokens_ranges.begin();
     for (auto& row : matrix) {
       row.resize(num_columns);
       FillAlignmentRow((*scanner_iter)->SparseColumns(), column_positions,
-                       (*scanner_iter)->FormatTokenRange(), &row);
+                       *ftoken_ranges_iter, &row);
       ++scanner_iter;
+      ++ftoken_ranges_iter;
     }
   }
 

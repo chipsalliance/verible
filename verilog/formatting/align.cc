@@ -77,13 +77,11 @@ static bool IgnorePartition(const TokenPartitionTree& partition) {
 
 class PortDeclarationColumnSchemaScanner : public ColumnSchemaScanner {
  public:
-  explicit PortDeclarationColumnSchemaScanner(MutableFormatTokenRange range)
-      : ColumnSchemaScanner(range) {}
+  PortDeclarationColumnSchemaScanner() = default;
 
   // Factory function, fits CellScannerFactory.
-  static std::unique_ptr<ColumnSchemaScanner> Create(
-      MutableFormatTokenRange range) {
-    return absl::make_unique<PortDeclarationColumnSchemaScanner>(range);
+  static std::unique_ptr<ColumnSchemaScanner> Create() {
+    return absl::make_unique<PortDeclarationColumnSchemaScanner>();
   }
 
   void Visit(const SyntaxTreeNode& node) override {
