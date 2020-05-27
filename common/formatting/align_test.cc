@@ -280,7 +280,7 @@ TEST_F(Sparse3x3MatrixAlignmentTest, CompletelyDisabledNoAlignment) {
       [](const TokenPartitionTree&) { return false; },
       pre_format_tokens_.begin(), sample_,
       // Alignment disabled over entire range.
-      ByteOffsetSet({{0, sample_.length()}}), 40);
+      ByteOffsetSet({{0, static_cast<int>(sample_.length())}}), 40);
 
   // Verify string rendering of result.
   EXPECT_EQ(Render(),  //
