@@ -53,8 +53,8 @@ using verible::TreeContextPathVisitor;
 using verible::TreePathFormatter;
 using verible::ValueSaver;
 
-static const AlignmentColumnProperties FlushLeft{true};
-static const AlignmentColumnProperties FlushRight{false};
+static const AlignmentColumnProperties FlushLeft(true);
+static const AlignmentColumnProperties FlushRight(false);
 
 template <class T>
 static bool TokensAreAllComments(const T& tokens) {

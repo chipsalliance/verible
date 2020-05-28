@@ -32,6 +32,10 @@ struct AlignmentColumnProperties {
   // If true format cell with padding to the right: |text   |
   // else format cell with padding to the left:     |   text|
   bool flush_left = true;
+
+  AlignmentColumnProperties() = default;
+  explicit AlignmentColumnProperties(bool flush_left)
+      : flush_left(flush_left) {}
 };
 
 // This object represents a bid for a new column as a row of tokens is scanned.

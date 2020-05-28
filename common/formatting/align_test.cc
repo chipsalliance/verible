@@ -47,8 +47,8 @@ class AlignmentTestFixture : public ::testing::Test,
   std::vector<TokenInfo> ftokens_;
 };
 
-static const AlignmentColumnProperties FlushLeft{true};
-static const AlignmentColumnProperties FlushRight{false};
+static const AlignmentColumnProperties FlushLeft(true);
+static const AlignmentColumnProperties FlushRight(false);
 
 class TokenColumnizer : public ColumnSchemaScanner {
  public:
