@@ -47,6 +47,9 @@ class AlignmentTestFixture : public ::testing::Test,
   std::vector<TokenInfo> ftokens_;
 };
 
+static const AlignmentColumnProperties FlushLeft{true};
+static const AlignmentColumnProperties FlushRight{false};
+
 class TokenColumnizer : public ColumnSchemaScanner {
  public:
   TokenColumnizer() = default;
@@ -56,7 +59,20 @@ class TokenColumnizer : public ColumnSchemaScanner {
   }
   void Visit(const SyntaxTreeLeaf& leaf) override {
     // Let each token occupy its own column.
-    ReserveNewColumn(leaf);
+    ReserveNewColumn(leaf, FlushLeft);
+  }
+};
+
+class TokenColumnizerRightFlushed : public ColumnSchemaScanner {
+ public:
+  TokenColumnizerRightFlushed() = default;
+
+  void Visit(const SyntaxTreeNode& node) override {
+    ColumnSchemaScanner::Visit(node);
+  }
+  void Visit(const SyntaxTreeLeaf& leaf) override {
+    // Let each token occupy its own column.
+    ReserveNewColumn(leaf, FlushRight);
   }
 };
 
@@ -220,6 +236,27 @@ TEST_F(Sparse3x3MatrixAlignmentTest, OneInterTokenPaddingExceptFront) {
             "      one two\n"
             "three     four\n"
             "five  six\n");
+}
+
+TEST_F(Sparse3x3MatrixAlignmentTest, RightFlushed) {
+  // Require 1 space between tokens, except ones at the beginning of partitions.
+  for (auto& ftoken : pre_format_tokens_) {
+    ftoken.before.spaces_required = 1;
+  }
+  pre_format_tokens_[0].before.spaces_required = 0;
+  pre_format_tokens_[2].before.spaces_required = 0;
+  pre_format_tokens_[4].before.spaces_required = 0;
+
+  TabularAlignTokens(
+      &partition_, AlignmentCellScannerGenerator<TokenColumnizerRightFlushed>(),
+      [](const TokenPartitionTree&) { return false; },
+      pre_format_tokens_.begin(), sample_, ByteOffsetSet(), 40);
+
+  // Verify string rendering of result.
+  EXPECT_EQ(Render(),  //
+            "      one  two\n"
+            "three     four\n"
+            " five six\n");
 }
 
 TEST_F(Sparse3x3MatrixAlignmentTest, OneInterTokenPaddingWithIndent) {

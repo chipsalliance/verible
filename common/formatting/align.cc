@@ -157,10 +157,10 @@ std::ostream& operator<<(std::ostream& stream, const AlignmentCell& cell) {
   return stream;
 }
 
+// These properties are calculated/aggregated from alignment cells.
 struct AlignedColumnConfiguration {
   int width = 0;
   int left_border = 0;
-  bool flush_left = true;  // else flush_right
 
   int TotalWidth() const { return left_border + width; }
 
@@ -173,8 +173,9 @@ struct AlignedColumnConfiguration {
 typedef std::vector<AlignmentCell> AlignmentRow;
 typedef std::vector<AlignmentRow> AlignmentMatrix;
 
-void ColumnSchemaScanner::ReserveNewColumn(const Symbol& symbol,
-                                           const SyntaxTreePath& path) {
+void ColumnSchemaScanner::ReserveNewColumn(
+    const Symbol& symbol, const AlignmentColumnProperties& properties,
+    const SyntaxTreePath& path) {
   // The path helps establish a total ordering among all desired alignment
   // points, given that they may come from optional or repeated language
   // constructs.
@@ -186,16 +187,35 @@ void ColumnSchemaScanner::ReserveNewColumn(const Symbol& symbol,
     // to effectively fuse it with the cell that is about to be added.
     // When this occurs, take the (previous) leftmost token, and suppress
     // adding a new column.
-    sparse_columns_.push_back(ColumnPositionEntry{path, leaf->get()});
+    sparse_columns_.push_back(
+        ColumnPositionEntry{path, leaf->get(), properties});
     VLOG(2) << "reserving new column at " << TreePathFormatter(path);
   }
 }
+
+struct AggregateColumnData {
+  // This is taken as the first seen set of properties in any given column.
+  AlignmentColumnProperties properties;
+  // These tokens's positions will be used to identify alignment cell
+  // boundaries.
+  std::vector<TokenInfo> starting_tokens;
+
+  void Import(const ColumnPositionEntry& cell) {
+    if (starting_tokens.empty()) {
+      // Take the first set of properties, and ignore the rest.
+      // They should be consistent, coming from alignment cell scanners,
+      // but this is not verified.
+      properties = cell.properties;
+    }
+    starting_tokens.push_back(cell.starting_token);
+  }
+};
 
 class ColumnSchemaAggregator {
  public:
   void Collect(const std::vector<ColumnPositionEntry>& row) {
     for (const auto& cell : row) {
-      cell_map_[cell.path].push_back(cell.starting_token);
+      cell_map_[cell.path].Import(cell);
     }
   }
 
@@ -214,12 +234,21 @@ class ColumnSchemaAggregator {
     return column_positions_;
   }
 
+  std::vector<AlignmentColumnProperties> ColumnProperties() const {
+    std::vector<AlignmentColumnProperties> properties;
+    properties.reserve(cell_map_.size());
+    for (const auto& entry : cell_map_) {
+      properties.push_back(entry.second.properties);
+    }
+    return properties;
+  }
+
  private:
   // Keeps track of unique positions where new columns are desired.
   // The keys form the set of columns wanted across all rows.
   // The values are sets of starting tokens, from which token ranges
   // will be computed per cell.
-  std::map<SyntaxTreePath, std::vector<TokenInfo>> cell_map_;
+  std::map<SyntaxTreePath, AggregateColumnData> cell_map_;
 
   // 1:1 map between SyntaxTreePath and column index.
   // Values are monotonically increasing, so this is binary_search-able.
@@ -348,10 +377,13 @@ static AlignedFormattingColumnSchema ComputeColumnWidths(
 
 // Align cells by adjusting pre-token spacing for a single row.
 static void AlignRowSpacings(
-    const AlignedFormattingColumnSchema& column_configs, AlignmentRow* row) {
+    const AlignedFormattingColumnSchema& column_configs,
+    const std::vector<AlignmentColumnProperties>& properties,
+    AlignmentRow* row) {
   VLOG(2) << __FUNCTION__;
   int accrued_spaces = 0;
   auto column_iter = column_configs.begin();
+  auto properties_iter = properties.begin();
   for (const auto& cell : *row) {
     accrued_spaces += column_iter->left_border;
     if (cell.tokens.empty()) {
@@ -363,7 +395,7 @@ static void AlignRowSpacings(
       // before this one.
       const int padding = column_iter->width - cell.compact_width;
       int& left_spacing = cell.tokens.front().before.spaces_required;
-      if (column_iter->flush_left) {
+      if (properties_iter->flush_left) {
         left_spacing = accrued_spaces;
         accrued_spaces = padding;
       } else {  // flush right
@@ -374,6 +406,7 @@ static void AlignRowSpacings(
     }
     VLOG(2) << "accrued_spaces = " << accrued_spaces;
     ++column_iter;
+    ++properties_iter;
   }
   VLOG(2) << "end of " << __FUNCTION__;
 }
@@ -483,6 +516,9 @@ static void AlignFilteredRows(
   // Compute max widths per column.
   AlignedFormattingColumnSchema column_configs(ComputeColumnWidths(matrix));
 
+  // Extract other non-computed column properties.
+  const auto column_properties = column_schema.ColumnProperties();
+
   // Total width does not include initial left-indentation.
   // Assume indentation is the same for all partitions in each group.
   const int indentation = rows.front().base()->Value().IndentationSpaces();
@@ -529,7 +565,7 @@ static void AlignFilteredRows(
 
   // Adjust pre-token spacings of each row to align to the column configs.
   for (auto& row : matrix) {
-    AlignRowSpacings(column_configs, &row);
+    AlignRowSpacings(column_configs, column_properties, &row);
   }
   VLOG(1) << "end of " << __FUNCTION__;
 }

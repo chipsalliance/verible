@@ -40,6 +40,7 @@ namespace verilog {
 namespace formatter {
 
 using verible::AlignmentCellScannerGenerator;
+using verible::AlignmentColumnProperties;
 using verible::ByteOffsetSet;
 using verible::ColumnSchemaScanner;
 using verible::down_cast;
@@ -54,6 +55,9 @@ using verible::TokenPartitionTree;
 using verible::TreeContextPathVisitor;
 using verible::TreePathFormatter;
 using verible::ValueSaver;
+
+static const AlignmentColumnProperties FlushLeft{true};
+static const AlignmentColumnProperties FlushRight{false};
 
 template <class T>
 static bool TokensAreAllComments(const T& tokens) {
@@ -84,9 +88,9 @@ class PortDeclarationColumnSchemaScanner : public ColumnSchemaScanner {
     auto tag = NodeEnum(node.Tag().tag);
     VLOG(2) << __FUNCTION__ << ", node: " << tag << " at "
             << TreePathFormatter(Path());
-    if (force_new_column_) {
-      ReserveNewColumn(node);
-      force_new_column_ = false;
+    if (new_column_after_open_bracket_) {
+      ReserveNewColumn(node, FlushRight);
+      new_column_after_open_bracket_ = false;
       TreeContextPathVisitor::Visit(node);
       return;
     }
@@ -111,11 +115,11 @@ class PortDeclarationColumnSchemaScanner : public ColumnSchemaScanner {
       case NodeEnum::kDimensionSlice:
       case NodeEnum::kDimensionAssociativeType:
         // all of these cases cover packed and unpacked
-        ReserveNewColumn(node);
+        ReserveNewColumn(node, FlushLeft);
         break;
       case NodeEnum::kUnqualifiedId:
         if (Context().DirectParentIs(NodeEnum::kPortDeclaration)) {
-          ReserveNewColumn(node);
+          ReserveNewColumn(node, FlushLeft);
         }
         break;
       case NodeEnum::kExpression:
@@ -135,9 +139,9 @@ class PortDeclarationColumnSchemaScanner : public ColumnSchemaScanner {
   void Visit(const SyntaxTreeLeaf& leaf) override {
     VLOG(2) << __FUNCTION__ << ", leaf: " << leaf.get() << " at "
             << TreePathFormatter(Path());
-    if (force_new_column_) {
-      ReserveNewColumn(leaf);
-      force_new_column_ = false;
+    if (new_column_after_open_bracket_) {
+      ReserveNewColumn(leaf, FlushRight);
+      new_column_after_open_bracket_ = false;
       return;
     }
     const int tag = leaf.get().token_enum;
@@ -147,7 +151,7 @@ class PortDeclarationColumnSchemaScanner : public ColumnSchemaScanner {
       case verilog_tokentype::TK_input:
       case verilog_tokentype::TK_output:
       case verilog_tokentype::TK_ref: {
-        ReserveNewColumn(leaf);
+        ReserveNewColumn(leaf, FlushLeft);
         break;
       }
 
@@ -169,20 +173,22 @@ class PortDeclarationColumnSchemaScanner : public ColumnSchemaScanner {
         // This works-around a quirk in the CST construction where net_types
         // like 'wire' appear positionally before kDataType variable types
         // like 'reg'.
-        ReserveNewColumn(leaf, verible::NextSiblingPath(Path()));
+        ReserveNewColumn(leaf, FlushLeft, verible::NextSiblingPath(Path()));
         break;
       }
       // For now, treat [...] as a single column per dimension.
-      case '[':
+      case '[': {
+        if (ContextAtDeclarationDimensions()) {
+          // FlushLeft vs. Right doesn't matter, this is a single character.
+          ReserveNewColumn(leaf, FlushLeft);
+          new_column_after_open_bracket_ = true;
+        }
+        break;
+      }
       case ']': {
-        if (current_context_.DirectParentIsOneOf(
-                {NodeEnum::kDimensionRange, NodeEnum::kDimensionScalar,
-                 NodeEnum::kDimensionSlice,
-                 NodeEnum::kDimensionAssociativeType})) {
-          // Alternatively, could check that grandparent is
-          // kDeclarationDimensions.
-          ReserveNewColumn(leaf);
-          if (tag == '[') force_new_column_ = true;
+        if (ContextAtDeclarationDimensions()) {
+          // FlushLeft vs. Right doesn't matter, this is a single character.
+          ReserveNewColumn(leaf, FlushLeft);
         }
         break;
       }
@@ -196,10 +202,19 @@ class PortDeclarationColumnSchemaScanner : public ColumnSchemaScanner {
     VLOG(2) << __FUNCTION__ << ", leaving leaf: " << leaf.get();
   }
 
+ protected:
+  bool ContextAtDeclarationDimensions() const {
+    // Alternatively, could check that grandparent is
+    // kDeclarationDimensions.
+    return current_context_.DirectParentIsOneOf(
+        {NodeEnum::kDimensionRange, NodeEnum::kDimensionScalar,
+         NodeEnum::kDimensionSlice, NodeEnum::kDimensionAssociativeType});
+  }
+
  private:
   // Set this to force the next syntax tree node/leaf to start a new column.
   // This is useful for aligning after punctation marks.
-  bool force_new_column_ = false;
+  bool new_column_after_open_bracket_ = false;
 };
 
 void TabularAlignTokenPartitions(TokenPartitionTree* partition_ptr,

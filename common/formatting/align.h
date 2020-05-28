@@ -28,6 +28,13 @@
 
 namespace verible {
 
+// Attributes of columns of text alignment (controlled by developer).
+struct AlignmentColumnProperties {
+  // If true format cell with padding to the right: |text   |
+  // else format cell with padding to the left:     |   text|
+  bool flush_left = true;
+};
+
 // This object represents a bid for a new column as a row of tokens is scanned.
 struct ColumnPositionEntry {
   // Establishes total ordering among columns.
@@ -36,6 +43,9 @@ struct ColumnPositionEntry {
 
   // Identifies the token that starts each sparse cell.
   TokenInfo starting_token;
+
+  // Properties of alignment columns (controlled by developer).
+  AlignmentColumnProperties properties;
 };
 
 // TODO(fangism): support column groups (VectorTree)
@@ -59,11 +69,14 @@ class ColumnSchemaScanner : public TreeContextPathVisitor {
  protected:
   // TODO(fangism): support specifying desired column characteristics, like
   // flush_left.
-  void ReserveNewColumn(const Symbol& symbol, const SyntaxTreePath& path);
+  void ReserveNewColumn(const Symbol& symbol,
+                        const AlignmentColumnProperties& properties,
+                        const SyntaxTreePath& path);
 
   // Reserve a column using the current path as the key.
-  void ReserveNewColumn(const Symbol& symbol) {
-    ReserveNewColumn(symbol, Path());
+  void ReserveNewColumn(const Symbol& symbol,
+                        const AlignmentColumnProperties& properties) {
+    ReserveNewColumn(symbol, properties, Path());
   }
 
  private:
