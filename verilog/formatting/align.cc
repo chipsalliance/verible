@@ -18,11 +18,8 @@
 #include <iostream>
 #include <iterator>
 #include <map>
-#include <memory>
 #include <vector>
 
-#include "absl/memory/memory.h"
-#include "absl/strings/str_join.h"
 #include "common/formatting/align.h"
 #include "common/formatting/format_token.h"
 #include "common/formatting/unwrapped_line.h"

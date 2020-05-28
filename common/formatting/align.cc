@@ -19,11 +19,9 @@
 #include <iostream>
 #include <iterator>
 #include <map>
-#include <memory>
 #include <numeric>
 #include <vector>
 
-#include "absl/memory/memory.h"
 #include "absl/strings/str_join.h"
 #include "common/formatting/format_token.h"
 #include "common/formatting/token_partition_tree.h"
