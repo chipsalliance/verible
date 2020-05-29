@@ -234,4 +234,4 @@ Enabled by default: true
 
 ## Version
 
-Generated on 2020-05-28 14:09:37 -0700 from [v0.0-419-g0b0a4c8](https://github.com/google/verible/commit/0b0a4c8007ac1cbdf27950251a807d1e513a2c9a)
+Generated on 2020-05-29 10:19:05 -0700 from [v0.0-420-g85f8ff8](https://github.com/google/verible/commit/85f8ff8134957d220400e29b05036318523ea22e)
