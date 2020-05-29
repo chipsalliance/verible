@@ -130,6 +130,30 @@ struct ProjectPolicy {
   std::string ListPathGlobs() const;
 };
 
+struct LinterOptions {
+  // strings, ints, bools, and unprocessed values from flags, no other derived
+  // information. Reasonable default values may be specified here for each
+  // member
+
+  // The base set of rules used by linter
+  const RuleSet ruleset;
+  // Bundle of rules to enable/disable in addition to the base set
+  const RuleBundle& rules;
+  // Path to a file with extra linter configuration, applied on top of the
+  // base 'ruleset' and extra 'rules'
+  std::string config_file;
+  // Indicates whether the 'config_file' is the default config file or a custom
+  // one
+  bool config_file_is_custom;
+  // Enables upward config file search
+  bool rules_config_search;
+  // Defines the starting point for the upward config search algorithm,
+  // usually set to the currently linted file
+  std::string linting_start_file;
+  // Path to the external waivers configuration file
+  std::string waiver_files;
+};
+
 // LinterConfiguration is used for tracking enabled lint rules
 // Individual LintRules are defined LintRuleRegistry. Their names are the
 // strings that they are registered under.
@@ -203,6 +227,12 @@ class LinterConfiguration {
   bool operator==(const LinterConfiguration&) const;
 
   bool operator!=(const LinterConfiguration& r) const { return !(*this == r); }
+
+  // Appends linter rules configuration from a file
+  absl::Status AppendFromFile(absl::string_view filename);
+
+  // Generates configuration forn LinterOptions
+  absl::Status ConfigureFromOptions(const LinterOptions& options);
 
  private:
   // map of all enabled rules
