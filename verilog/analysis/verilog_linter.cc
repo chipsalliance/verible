@@ -233,75 +233,23 @@ std::vector<LintRuleStatus> VerilogLinter::ReportStatus(
   return statuses;
 }
 
-absl::Status AppendLinterConfigurationFromFile(
-    LinterConfiguration* config, absl::string_view config_filename) {
-  // Read local configuration file
-  std::string content;
-
-  const absl::Status config_read_status =
-      verible::file::GetContents(config_filename, &content);
-  if (config_read_status.ok()) {
-    RuleBundle local_rules_bundle;
-    std::string error;
-    if (local_rules_bundle.ParseConfiguration(content, '\n', &error)) {
-      config->UseRuleBundle(local_rules_bundle);
-    } else {
-      LOG(WARNING) << "Unable to fully parse configuration: " << error;
-    }
-    return absl::OkStatus();
-  }
-
-  return config_read_status;
-}
-
 LinterConfiguration LinterConfigurationFromFlags(
     absl::string_view linting_start_file) {
   LinterConfiguration config;
 
-  // TODO move all of these calls to GetFlag outside of this function
+  const verilog::LinterOptions options = {
+      .ruleset = absl::GetFlag(FLAGS_ruleset),
+      .rules = absl::GetFlag(FLAGS_rules),
+      .config_file = absl::GetFlag(FLAGS_rules_config),
+      .config_file_is_custom = FLAGS_rules_config.IsModified(),
+      .rules_config_search = absl::GetFlag(FLAGS_rules_config_search),
+      .linting_start_file = std::string(linting_start_file),
+      .waiver_files = absl::GetFlag(FLAGS_waiver_files)};
 
-  // Turn on default ruleset.
-  const auto& ruleset = absl::GetFlag(FLAGS_ruleset);
-  config.UseRuleSet(ruleset);
-
-  if (FLAGS_rules_config.IsModified()) {
-    // Use configuration file from flag if specified
-    std::string config_file = absl::GetFlag(FLAGS_rules_config);
-
-    const absl::Status config_read_status =
-        AppendLinterConfigurationFromFile(&config, config_file);
-
-    if (!config_read_status.ok()) {
-      LOG(WARNING) << config_file
-                   << ": Unable to read rules configuration file "
-                   << config_read_status << std::endl;
-    }
-
-  } else if (absl::GetFlag(FLAGS_rules_config_search)) {
-    // Search upward if search is enabled and no configuration file is
-    // specified
-    static constexpr absl::string_view linter_config = ".rules.verible_lint";
-    std::string resolved_config_file;
-    if (verible::file::UpwardFileSearch(linting_start_file, linter_config,
-                                        &resolved_config_file)
-            .ok()) {
-      const absl::Status config_read_status =
-          AppendLinterConfigurationFromFile(&config, resolved_config_file);
-
-      if (!config_read_status.ok()) {
-        LOG(WARNING) << resolved_config_file
-                     << ": Unable to read rules configuration file "
-                     << config_read_status << std::endl;
-      }
-    }
+  absl::Status config_status = config.ConfigureFromOptions(options);
+  if (!config_status.ok()) {
+    LOG(WARNING) << "Unable to configure linter for: " << linting_start_file;
   }
-
-  // Turn on rules found in config flags.
-  const auto& rules = absl::GetFlag(FLAGS_rules);
-  config.UseRuleBundle(rules);
-
-  // Apply external waivers
-  config.external_waivers = absl::GetFlag(FLAGS_waiver_files);
 
   return config;
 }

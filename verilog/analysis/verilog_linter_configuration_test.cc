@@ -775,5 +775,73 @@ TEST(RuleBundleTest, ParseRuleBundleSkipComments) {
   }
 }
 
+// ConfigureFromOptions Tests
+TEST(ConfigureFromOptionsTest, Basic) {
+  LinterConfiguration config;
+
+  LinterOptions options = {.ruleset = RuleSet::kAll,
+                           .rules = RuleBundle(),
+                           .config_file = "-",
+                           .config_file_is_custom = false,
+                           .rules_config_search = false,
+                           .linting_start_file = "filename",
+                           .waiver_files = "filename"};
+
+  auto status = config.ConfigureFromOptions(options);
+  EXPECT_TRUE(status.ok());
+}
+
+TEST(ConfigureFromOptionsTest, RulesNumber) {
+  LinterConfiguration config;
+
+  LinterOptions options = {.ruleset = RuleSet::kAll,
+                           .rules = RuleBundle(),
+                           .config_file = "-",
+                           .config_file_is_custom = false,
+                           .rules_config_search = false,
+                           .linting_start_file = "filename",
+                           .waiver_files = "filename"};
+
+  auto status = config.ConfigureFromOptions(options);
+  EXPECT_TRUE(status.ok());
+
+  // Should enable all rules because uses kAll ruleset and an empty rulebundle
+  auto expected_size = analysis::RegisteredSyntaxTreeRulesNames().size() +
+                       analysis::RegisteredTokenStreamRulesNames().size() +
+                       analysis::RegisteredTextStructureRulesNames().size() +
+                       analysis::RegisteredLineRulesNames().size();
+  EXPECT_THAT(config.ActiveRuleIds(), SizeIs(expected_size));
+}
+
+TEST(ConfigureFromOptionsTest, RulesSelective) {
+  LinterConfiguration config;
+
+  RuleBundle bundle = {
+      {{analysis::RegisteredSyntaxTreeRulesNames()[0], {false, ""}}}};
+
+  LinterOptions options = {.ruleset = RuleSet::kAll,
+                           .rules = bundle,
+                           .config_file = "-",
+                           .config_file_is_custom = false,
+                           .rules_config_search = false,
+                           .linting_start_file = "filename",
+                           .waiver_files = "filename"};
+
+  auto status = config.ConfigureFromOptions(options);
+  EXPECT_TRUE(status.ok());
+
+  // Should enable all rules - 1 because uses kAll ruleset and a rulebundle
+  // with one rule disabled
+  auto expected_size = analysis::RegisteredSyntaxTreeRulesNames().size() +
+                       analysis::RegisteredTokenStreamRulesNames().size() +
+                       analysis::RegisteredTextStructureRulesNames().size() +
+                       analysis::RegisteredLineRulesNames().size() - 1;
+
+  EXPECT_THAT(config.ActiveRuleIds(), SizeIs(expected_size));
+}
+// TODO: LinterOptions could be refactored to store the content
+// of the configuration files. After this is made it will be possible to
+// test the configuration that is applied after reading the files.
+
 }  // namespace
 }  // namespace verilog

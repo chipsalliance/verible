@@ -34,6 +34,7 @@
 #include "common/analysis/token_stream_lint_rule.h"
 #include "common/util/container_util.h"
 #include "common/util/enum_flags.h"
+#include "common/util/file_util.h"
 #include "common/util/logging.h"
 #include "verilog/analysis/default_rules.h"
 #include "verilog/analysis/lint_rule_registry.h"
@@ -280,6 +281,68 @@ LinterConfiguration::CreateTextStructureRules() const {
 
 bool LinterConfiguration::operator==(const LinterConfiguration& config) const {
   return ActiveRuleIds() == config.ActiveRuleIds();
+}
+
+absl::Status LinterConfiguration::AppendFromFile(
+    absl::string_view config_filename) {
+  // Read local configuration file
+  std::string content;
+
+  const absl::Status config_read_status =
+      verible::file::GetContents(config_filename, &content);
+  if (config_read_status.ok()) {
+    RuleBundle local_rules_bundle;
+    std::string error;
+    if (local_rules_bundle.ParseConfiguration(content, '\n', &error)) {
+      UseRuleBundle(local_rules_bundle);
+    } else {
+      LOG(WARNING) << "Unable to fully parse configuration: " << error;
+    }
+    return absl::OkStatus();
+  }
+
+  return config_read_status;
+}
+
+absl::Status LinterConfiguration::ConfigureFromOptions(
+    const LinterOptions& options) {
+  UseRuleSet(options.ruleset);
+
+  if (options.config_file_is_custom) {
+    const absl::Status config_read_status = AppendFromFile(options.config_file);
+
+    if (!config_read_status.ok()) {
+      LOG(WARNING) << options.config_file
+                   << ": Unable to read rules configuration file "
+                   << config_read_status << std::endl;
+    }
+
+  } else if (options.rules_config_search) {
+    // Search upward if search is enabled and no configuration file is
+    // specified
+    static constexpr absl::string_view linter_config = ".rules.verible_lint";
+    std::string resolved_config_file;
+    if (verible::file::UpwardFileSearch(options.linting_start_file,
+                                        linter_config, &resolved_config_file)
+            .ok()) {
+      const absl::Status config_read_status =
+          AppendFromFile(resolved_config_file);
+
+      if (!config_read_status.ok()) {
+        LOG(WARNING) << resolved_config_file
+                     << ": Unable to read rules configuration file "
+                     << config_read_status << std::endl;
+      }
+    }
+  }
+
+  // Turn on rules found in config
+  UseRuleBundle(options.rules);
+
+  // Apply external waivers
+  external_waivers = std::string(options.waiver_files);
+
+  return absl::OkStatus();
 }
 
 std::ostream& operator<<(std::ostream& stream,

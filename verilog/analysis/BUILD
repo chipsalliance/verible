@@ -155,6 +155,7 @@ cc_library(
         "//common/analysis:token_stream_lint_rule",
         "//common/util:container_util",
         "//common/util:enum_flags",
+        "//common/util:file_util",
         "//common/util:logging",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/strings",
