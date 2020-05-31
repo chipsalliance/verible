@@ -49,10 +49,8 @@ const SyntaxTreeNode& GetMacroCallParenGroup(const Symbol& s) {
 }
 
 const SyntaxTreeNode& GetMacroCallArgs(const Symbol& s) {
-  const auto& paren_group_node =
-      GetSubtreeAsNode(s, NodeEnum::kMacroCall, 1, NodeEnum::kParenGroup);
   // See structure of (CST) MakeParenGroup().
-  return GetSubtreeAsNode(paren_group_node, NodeEnum::kParenGroup, 1,
+  return GetSubtreeAsNode(GetMacroCallParenGroup(s), NodeEnum::kParenGroup, 1,
                           NodeEnum::kMacroArgList);
 }
 

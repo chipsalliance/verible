@@ -24,10 +24,10 @@
 #include "common/text/symbol.h"
 #include "common/text/syntax_tree_context.h"
 #include "common/text/token_info.h"
-#include "common/util/container_util.h"
 #include "verilog/analysis/descriptions.h"
 #include "verilog/analysis/lint_rule_registry.h"
 #include "verilog/CST/macro.h"
+#include "verilog/CST/context_functions.h"
 
 namespace verilog {
 namespace analysis {
@@ -40,8 +40,7 @@ VERILOG_REGISTER_LINT_RULE(UvmMacroSemicolonRule);
 
 absl::string_view UvmMacroSemicolonRule::Name() { return "uvm-macro-semicolon"; }
 const char UvmMacroSemicolonRule::kTopic[] = "uvm-macro-semicolon-convention";
-
-const char UvmMacroSemicolonRule::kMessage[] = "UVM macro calls should NOT end with ';'";
+// TODO(b/155128436): verify style guide anchor name
 
 std::string UvmMacroSemicolonRule::GetDescription(
     DescriptionType description_type) {
@@ -49,46 +48,60 @@ std::string UvmMacroSemicolonRule::GetDescription(
                       GetVerificationCitation(kTopic), ".");
 }
 
-static bool IsMacroCall(const verible::Symbol& symbol) {
-  if (symbol.Kind() == verible::SymbolKind::kNode) {
-    const auto& node = SymbolCastToNode(symbol);
-    return node.MatchesTag(NodeEnum::kMacroCall);
+// Returns a diagnostic message for this lint violation.
+static std::string FormatReason(const verible::TokenInfo & macro_id) {
+  return  absl::StrCat("UVM macro call, ", macro_id.text, 
+                       " should not be followed by a semicolon \';\'.");
+}
+
+// Returns true if leaf is a macro and matches `uvm_
+static bool IsUvmMacroId(const verible::SyntaxTreeLeaf& leaf) {
+  if(leaf.Tag().tag == verilog_tokentype::MacroCallId || 
+     leaf.Tag().tag == verilog_tokentype::MacroIdItem ||
+     leaf.Tag().tag == verilog_tokentype::MacroIdentifier) {
+    return absl::StartsWithIgnoreCase(leaf.get().text, "`uvm_");
   }
   return false;
 }
 
-static bool IsMacroCallClose(const verible::SymbolPtr & symbol) {
-  if (symbol->Kind() == verible::SymbolKind::kLeaf) {
-    const auto& leaf = SymbolCastToLeaf(*symbol.get());
-    return leaf.get().token_enum == verilog_tokentype::MacroCallCloseToEndLine;
-  }
-  return false;
-}
+void UvmMacroSemicolonRule::HandleLeaf(
+  const verible::SyntaxTreeLeaf& leaf, const verible::SyntaxTreeContext& context) {
+   
+  if(ContextIsInsideStatement(context) || 
+     context.IsInside(NodeEnum::kMacroCall) ||
+     context.IsInside(NodeEnum::kDataDeclaration)) {
+    switch (state_) {
+      case State::kNormal: {
+          if(IsUvmMacroId(leaf)) {
+            macro_id_ = leaf.get();
+            state_ = State::kCheckMacro;
+          }
+        break;
+      }
 
-
-void UvmMacroSemicolonRule::HandleSymbol(
-    const verible::Symbol& symbol, const verible::SyntaxTreeContext& context) {
-  
-  if(IsMacroCall(symbol)) {
-    const auto& macro_call_id = GetMacroCallId(symbol);
-
-    if(absl::StartsWithIgnoreCase(std::string(macro_call_id.text),"`uvm_")) {
-      auto &paren_group = GetMacroCallParenGroup(symbol);      
-      auto parameters = std::count_if(paren_group.children().begin(), paren_group.children().end(), 
-                        IsMacroCallClose);
-      if(!parameters) {
-        violations_.insert( LintViolation(symbol, kMessage, context) );
+      case State::kCheckMacro: {
+        if(leaf.Tag().tag == ';') {
+          violations_.insert(LintViolation(leaf, FormatReason(macro_id_), context));
+          state_ = State::kNormal;
+        }
+        else if(leaf.Tag().tag == verilog_tokentype::MacroCallCloseToEndLine) {
+          state_ = State::kNormal;
+        }
+        break;
       }
     }
+  } 
+  else {
+    state_ = State::kNormal;
+    macro_id_= verible::TokenInfo::EOFToken();
+    return;
   }
 }
-
 
 verible::LintRuleStatus UvmMacroSemicolonRule::Report() const {
   return verible::LintRuleStatus(violations_, Name(),
                                  GetVerificationCitation(kTopic));
 }
-
 
 }  // namespace analysis
 }  // namespace verilog

@@ -46,19 +46,31 @@ class UvmMacroSemicolonRule : public verible::SyntaxTreeLintRule {
   using rule_type = verible::SyntaxTreeLintRule;
   static absl::string_view Name();
 
+  UvmMacroSemicolonRule() : state_(State::kNormal) {}
+
   // Returns the description of the rule implemented
   static std::string GetDescription(DescriptionType);
 
-  void HandleSymbol(const verible::Symbol& symbol,
-                    const verible::SyntaxTreeContext& context) override;
+  void HandleLeaf(const verible::SyntaxTreeLeaf& leaf,
+                  const verible::SyntaxTreeContext& context) override;
 
   verible::LintRuleStatus Report() const override;
 
  private: 
+   // States of the internal leaf-based analysis.
+  enum class State {
+    kNormal,
+    kCheckMacro,
+  };
+
+  // Internal analysis state
+  State state_;
+  
+  // Save the matching macro and include it in diagnostic message
+  verible::TokenInfo macro_id_ = verible::TokenInfo::EOFToken();
+  
    // Link to style-guide rule.
   static const char kTopic[];
-
-  static const char kMessage[];
   
   std::set<verible::LintViolation> violations_;
 

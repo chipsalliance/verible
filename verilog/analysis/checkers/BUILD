@@ -1697,6 +1697,7 @@ cc_library(
         "//common/util:container_util",
         "//verilog/CST:verilog_matchers",
         "//verilog/CST:macro",
+        "//verilog/CST:context_functions",
         "//verilog/analysis:descriptions",
         "//verilog/analysis:lint_rule_registry",
         "@com_google_absl//absl/strings",

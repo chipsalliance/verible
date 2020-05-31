@@ -62,6 +62,7 @@ constexpr const char* kDefaultRuleSet[] = {
     "positive-meaning-parameter-name",
     "uvm-macro-semicolon",
     // TODO(fangism): enable in production:
+    // TODO(b/155128436): "uvm-macro-semicolon"
     // TODO(b/117131903): "proper-parameter-declaration",
     // TODO(b/131637160): "signal-name-style",
     // TODO: "one-module-per-file",

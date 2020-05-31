@@ -58,6 +58,11 @@ inline bool ContextIsInsideTaskFunctionPortList(
   return context.IsInside(NodeEnum::kPortList);
 }
 
+inline bool ContextIsInsideStatement(
+    const verible::SyntaxTreeContext& context) {
+  return context.IsInside(NodeEnum::kStatement);
+}
+
 // add more as needed
 
 }  // namespace analysis
