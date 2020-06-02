@@ -60,7 +60,7 @@ void ExpectStateMachineTokenSequence(
     std::initializer_list<int> expect_token_enums) {
   int i = 0;
   for (int expect_token_enum : expect_token_enums) {
-    const int token_enum = (**token_iter)->token_enum;
+    const int token_enum = (**token_iter)->token_enum();
     const int interpreted_enum = sm.InterpretToken(token_enum);
     VLOG(1) << "token[" << i << "] enum: " << verilog_symbol_name(token_enum)
             << " -> " << verilog_symbol_name(interpreted_enum);
@@ -85,7 +85,7 @@ TEST(KeywordLabelStateMachineTest, NoKeywords) {
   EXPECT_TRUE(b.Done());
   int i = 0;
   for (auto iter : tokens_view) {
-    b.UpdateState(iter->token_enum);
+    b.UpdateState(iter->token_enum());
     EXPECT_TRUE(b.Done()) << "Error at index " << i << ", after: " << *iter;
     ++i;
   }
@@ -107,7 +107,7 @@ TEST(KeywordLabelStateMachineTest, KeywordsWithoutLabels) {
   EXPECT_TRUE(b.Done());
   auto expect_iter = expect_done.begin();
   for (auto iter : tokens_view) {
-    b.UpdateState(iter->token_enum);
+    b.UpdateState(iter->token_enum());
     EXPECT_EQ(b.Done(), *expect_iter)
         << "Error at index " << std::distance(expect_done.begin(), expect_iter)
         << ", after: " << *iter;
@@ -130,7 +130,7 @@ TEST(KeywordLabelStateMachineTest, KeywordsWithLabels) {
   EXPECT_TRUE(b.Done());
   auto expect_iter = expect_done.cbegin();
   for (auto iter : tokens_view) {
-    b.UpdateState(iter->token_enum);
+    b.UpdateState(iter->token_enum());
     EXPECT_EQ(b.Done(), *expect_iter)
         << "Error at index " << std::distance(expect_done.begin(), expect_iter)
         << ", after: " << *iter;
@@ -152,7 +152,7 @@ TEST(KeywordLabelStateMachineTest, ItemsInsideBlocks) {
   EXPECT_TRUE(b.Done());
   auto expect_iter = expect_done.cbegin();
   for (auto iter : tokens_view) {
-    b.UpdateState(iter->token_enum);
+    b.UpdateState(iter->token_enum());
     EXPECT_EQ(b.Done(), *expect_iter)
         << "Error at index " << std::distance(expect_done.begin(), expect_iter)
         << ", after: " << *iter;
@@ -212,13 +212,14 @@ TEST_F(LastSemicolonStateMachineTest, LifeCycleOneSemicolon) {
   UpdateState(&tokens[7]);  // TK_endproperty
   EXPECT_EQ(state_, kNone);
   EXPECT_TRUE(semicolons_.empty());
-  EXPECT_EQ(tokens[2].token_enum, ';');  // unmodified
-  EXPECT_EQ(tokens[5].token_enum, SemicolonEndOfAssertionVariableDeclarations);
+  EXPECT_EQ(tokens[2].token_enum(), ';');  // unmodified
+  EXPECT_EQ(tokens[5].token_enum(),
+            SemicolonEndOfAssertionVariableDeclarations);
 
   UpdateState(&tokens[8]);  // ';'
   EXPECT_EQ(state_, kNone);
   EXPECT_TRUE(semicolons_.empty());
-  EXPECT_EQ(tokens[8].token_enum, ';');  // unmodified
+  EXPECT_EQ(tokens[8].token_enum(), ';');  // unmodified
 }
 
 // Tests that only the last semicolon in the range of interest is updated.
@@ -273,14 +274,15 @@ TEST_F(LastSemicolonStateMachineTest, LifeCycleFinalSemicolon) {
   UpdateState(&tokens[9]);  // TK_endproperty
   EXPECT_EQ(state_, kNone);
   EXPECT_TRUE(semicolons_.empty());
-  EXPECT_EQ(tokens[2].token_enum, ';');  // unmodified
-  EXPECT_EQ(tokens[5].token_enum, ';');  // unmodified
-  EXPECT_EQ(tokens[7].token_enum, SemicolonEndOfAssertionVariableDeclarations);
+  EXPECT_EQ(tokens[2].token_enum(), ';');  // unmodified
+  EXPECT_EQ(tokens[5].token_enum(), ';');  // unmodified
+  EXPECT_EQ(tokens[7].token_enum(),
+            SemicolonEndOfAssertionVariableDeclarations);
 
   UpdateState(&tokens[10]);  // ';'
   EXPECT_EQ(state_, kNone);
   EXPECT_TRUE(semicolons_.empty());
-  EXPECT_EQ(tokens[10].token_enum, ';');  // unmodified
+  EXPECT_EQ(tokens[10].token_enum(), ';');  // unmodified
 }
 
 // TODO(fangism): move this into a test_util library
@@ -1150,7 +1152,7 @@ class LexicalContextTest : public ::testing::Test, public LexicalContext {
 
   static void ExpectCurrentTokenEnum(TokenStreamReferenceView::iterator iter,
                                      int expect_token_enum) {
-    const int got_token_enum = (*iter)->token_enum;
+    const int got_token_enum = (*iter)->token_enum();
     EXPECT_EQ(got_token_enum, expect_token_enum)
         << " from token " << **iter << " ("
         << verilog_symbol_name(got_token_enum) << " vs. "
@@ -1166,9 +1168,9 @@ class LexicalContextTest : public ::testing::Test, public LexicalContext {
     for (const int token_enum : token_enums) {
       ExpectCurrentTokenEnum(token_iter_, token_enum);
       AdvanceToken();
-      EXPECT_EQ(previous_token_->token_enum, token_enum)
+      EXPECT_EQ(previous_token_->token_enum(), token_enum)
           << " from token " << **token_iter_ << " ("
-          << verilog_symbol_name(previous_token_->token_enum) << " vs. "
+          << verilog_symbol_name(previous_token_->token_enum()) << " vs. "
           << verilog_symbol_name(token_enum) << ')';
     }
   }
@@ -1178,8 +1180,8 @@ class LexicalContextTest : public ::testing::Test, public LexicalContext {
   void ExpectTransformedToken(int token_enum_before, int token_enum_after) {
     ExpectCurrentTokenEnum(token_iter_, token_enum_before);
     AdvanceToken();
-    EXPECT_EQ(previous_token_->token_enum, token_enum_after)
-        << " (" << verilog_symbol_name(previous_token_->token_enum) << " vs. "
+    EXPECT_EQ(previous_token_->token_enum(), token_enum_after)
+        << " (" << verilog_symbol_name(previous_token_->token_enum()) << " vs. "
         << verilog_symbol_name(token_enum_after) << ')';
   }
 

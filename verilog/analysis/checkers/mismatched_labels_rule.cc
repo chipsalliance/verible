@@ -78,7 +78,7 @@ void MismatchedLabelsRule::HandleSymbol(
     }
 
     // Finally compare the two labels
-    if (begin_label->text != end_label->text) {
+    if (begin_label->text() != end_label->text()) {
       violations_.insert(
           verible::LintViolation(*end_label, kMessageMismatch, context));
     }

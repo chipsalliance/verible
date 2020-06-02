@@ -56,7 +56,7 @@ struct MacroParameterInfo {
   // Macro parameters may have default values.  [Verilog]
   TokenInfo default_value;
 
-  bool HasDefaultText() const { return !default_value.text.empty(); }
+  bool HasDefaultText() const { return !default_value.text().empty(); }
 };
 
 // MacroCall is a reference to a macro, such as `MACRO or `MACRO(...).
@@ -82,7 +82,7 @@ class MacroDefinition {
         parameter_info_array_(),
         parameter_positions_() {}
 
-  absl::string_view Name() const { return name_.text; }
+  absl::string_view Name() const { return name_.text(); }
 
   const TokenInfo& DefinitionText() const { return definition_text_; }
 

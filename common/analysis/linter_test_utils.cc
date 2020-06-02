@@ -32,19 +32,20 @@ namespace verible {
 // This assumption could be removed later, if needed.
 static int CompareViolation(const LintViolation& lhs, const TokenInfo& rhs) {
   {
-    const int delta = std::distance(rhs.text.begin(), lhs.token.text.begin());
+    const int delta =
+        std::distance(rhs.text().begin(), lhs.token.text().begin());
     if (delta != 0) {
       return delta;
     }
   }
   {
-    const int delta = std::distance(rhs.text.end(), lhs.token.text.end());
+    const int delta = std::distance(rhs.text().end(), lhs.token.text().end());
     if (delta != 0) {
       return delta;
     }
   }
   // Then compare enums, where we only care about equality.
-  return rhs.token_enum - lhs.token.token_enum;
+  return rhs.token_enum() - lhs.token.token_enum();
 }
 
 // TODO(b/151371397): refactor this for re-use for multi-findings style tests.

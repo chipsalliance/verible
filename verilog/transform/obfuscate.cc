@@ -42,32 +42,32 @@ static void ObfuscateVerilogCodeInternal(absl::string_view content,
   while (true) {
     const verible::TokenInfo& token(lexer.DoNextToken());
     if (token.isEOF()) break;
-    switch (token.token_enum) {
+    switch (token.token_enum()) {
       case verilog_tokentype::SymbolIdentifier:
       case verilog_tokentype::PP_Identifier:
-        *output << (*subst)(token.text);
+        *output << (*subst)(token.text());
         break;
         // Preserve all $ID calls, including system task/function calls, and VPI
         // calls
       case verilog_tokentype::SystemTFIdentifier:
-        *output << token.text;
+        *output << token.text();
         break;
         // The following identifier types start with a special character that
         // needs to be preserved.
       case verilog_tokentype::MacroIdentifier:
       case verilog_tokentype::MacroCallId:
         // TODO(fangism): verilog_tokentype::EscapedIdentifier
-        *output << token.text[0] << (*subst)(token.text.substr(1));
+        *output << token.text()[0] << (*subst)(token.text().substr(1));
         break;
       // The following tokens are un-lexed, so they need to be lexed
       // recursively.
       case verilog_tokentype::MacroArg:
       case verilog_tokentype::PP_define_body:
-        ObfuscateVerilogCodeInternal(token.text, output, subst);
+        ObfuscateVerilogCodeInternal(token.text(), output, subst);
         break;
       default:
         // This also covers lexical error tokens.
-        *output << token.text;
+        *output << token.text();
     }
   }
   VLOG(1) << "end of " << __FUNCTION__;

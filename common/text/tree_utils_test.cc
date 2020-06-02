@@ -128,7 +128,7 @@ TEST(GetLeftmostLeafTest, LeafOnly) {
   SymbolPtr leaf = Leaf(0, kTestToken[0]);
   auto leaf_opt = GetLeftmostLeaf(*leaf);
   EXPECT_TRUE(leaf_opt);
-  EXPECT_EQ(leaf_opt->get().text, kTestToken[0]);
+  EXPECT_EQ(leaf_opt->get().text(), kTestToken[0]);
 }
 
 TEST(GetLeftmostLeafTest, EmptyNode) {
@@ -141,21 +141,21 @@ TEST(GetLeftmostLeafTest, SingleChild) {
   SymbolPtr leaf = Node(Leaf(0, kTestToken[1]));
   auto leaf_opt = GetLeftmostLeaf(*leaf);
   EXPECT_TRUE(leaf_opt);
-  EXPECT_EQ(leaf_opt->get().text, kTestToken[1]);
+  EXPECT_EQ(leaf_opt->get().text(), kTestToken[1]);
 }
 
 TEST(GetLeftmostLeafTest, SingleChildWithNull) {
   SymbolPtr leaf = Node(nullptr, Leaf(0, kTestToken[1]));
   auto leaf_opt = GetLeftmostLeaf(*leaf);
   EXPECT_TRUE(leaf_opt);
-  EXPECT_EQ(leaf_opt->get().text, kTestToken[1]);
+  EXPECT_EQ(leaf_opt->get().text(), kTestToken[1]);
 }
 
 TEST(GetLeftmostLeafTest, SingleChildNullFromNode) {
   SymbolPtr leaf = Node(Node(nullptr), Node(Leaf(0, kTestToken[1])));
   auto leaf_opt = GetLeftmostLeaf(*leaf);
   EXPECT_TRUE(leaf_opt);
-  EXPECT_EQ(leaf_opt->get().text, kTestToken[1]);
+  EXPECT_EQ(leaf_opt->get().text(), kTestToken[1]);
 }
 
 TEST(GetLeftmostLeafTest, ComplexTree) {
@@ -163,14 +163,14 @@ TEST(GetLeftmostLeafTest, ComplexTree) {
                         Node(Leaf(0, kTestToken[2]), Leaf(0, kTestToken[3])));
   auto leaf_opt = GetLeftmostLeaf(*leaf);
   EXPECT_TRUE(leaf_opt);
-  EXPECT_EQ(leaf_opt->get().text, kTestToken[0]);
+  EXPECT_EQ(leaf_opt->get().text(), kTestToken[0]);
 }
 
 TEST(GetRightmostLeafTest, LeafOnly) {
   SymbolPtr leaf = Leaf(0, kTestToken[0]);
   auto leaf_opt = GetRightmostLeaf(*leaf);
   EXPECT_TRUE(leaf_opt);
-  EXPECT_EQ(leaf_opt->get().text, kTestToken[0]);
+  EXPECT_EQ(leaf_opt->get().text(), kTestToken[0]);
 }
 
 TEST(GetRightmostLeafTest, EmptyNode) {
@@ -183,21 +183,21 @@ TEST(GetRightmostLeafTest, SingleChild) {
   SymbolPtr leaf = Node(Leaf(0, kTestToken[2]));
   auto leaf_opt = GetRightmostLeaf(*leaf);
   EXPECT_TRUE(leaf_opt);
-  EXPECT_EQ(leaf_opt->get().text, kTestToken[2]);
+  EXPECT_EQ(leaf_opt->get().text(), kTestToken[2]);
 }
 
 TEST(GetRightmostLeafTest, SingleChildWithNull) {
   SymbolPtr leaf = Node(Leaf(0, kTestToken[2]), nullptr);
   auto leaf_opt = GetRightmostLeaf(*leaf);
   EXPECT_TRUE(leaf_opt);
-  EXPECT_EQ(leaf_opt->get().text, kTestToken[2]);
+  EXPECT_EQ(leaf_opt->get().text(), kTestToken[2]);
 }
 
 TEST(GetRightmostLeafTest, SingleChildNullFromNode) {
   SymbolPtr leaf = Node(Node(Leaf(0, kTestToken[2])), Node(nullptr));
   auto leaf_opt = GetRightmostLeaf(*leaf);
   EXPECT_TRUE(leaf_opt);
-  EXPECT_EQ(leaf_opt->get().text, kTestToken[2]);
+  EXPECT_EQ(leaf_opt->get().text(), kTestToken[2]);
 }
 
 TEST(GetRightmostLeafTest, ComplexTree) {
@@ -205,7 +205,7 @@ TEST(GetRightmostLeafTest, ComplexTree) {
                         Node(Leaf(0, kTestToken[2]), Leaf(0, kTestToken[3])));
   auto leaf_opt = GetRightmostLeaf(*leaf);
   EXPECT_TRUE(leaf_opt);
-  EXPECT_EQ(leaf_opt->get().text, kTestToken[3]);
+  EXPECT_EQ(leaf_opt->get().text(), kTestToken[3]);
 }
 
 TEST(StringSpanOfSymbolTest, EmptyTree) {
@@ -717,7 +717,7 @@ TEST_F(FindSubtreeStartingAtOffsetFakeTreeTest, TreeOffsetAtLastLeaf) {
 // MutateLeaves tests
 
 // Example LeafMutator
-void SetLeafEnum(TokenInfo* token) { token->token_enum = 9; }
+void SetLeafEnum(TokenInfo* token) { token->set_token_enum(9); }
 
 // Test that null unique_ptr is ignored.
 TEST(MutateLeavesTest, UniqueNullPtr) {
@@ -1332,7 +1332,7 @@ TEST(GetSubtreeAsSymbolTest, ValidAccessLeaf) {
   auto root = TNode(FakeEnum::kTwo, Leaf(6, "six"));
   const auto* child = GetSubtreeAsSymbol(*root, FakeEnum::kTwo, 0);
   const auto* child_leaf = down_cast<const SyntaxTreeLeaf*>(child);
-  EXPECT_EQ(child_leaf->get().token_enum, 6);
+  EXPECT_EQ(child_leaf->get().token_enum(), 6);
 }
 
 TEST(GetSubtreeAsSymbolTest, ValidAccessAtIndexOne) {
@@ -1368,7 +1368,7 @@ TEST(GetSubtreeAsNodeTest, ValidatedFoundNodeEnumChildMismatches) {
 TEST(GetSubtreeAsLeafTest, ValidatedFoundLeaf) {
   auto root = TNode(FakeEnum::kZero, Leaf(7, "foo"));
   const auto& leaf = GetSubtreeAsLeaf(*root, FakeEnum::kZero, 0);
-  EXPECT_EQ(leaf.get().token_enum, 7);
+  EXPECT_EQ(leaf.get().token_enum(), 7);
 }
 
 TEST(GetSubtreeAsLeafTest, GotNodeInsteadOfLeaf) {

@@ -74,7 +74,7 @@ void TextStructureView::Clear() {
 }
 
 static bool TokenLocationLess(const TokenInfo& token, const char* offset) {
-  return token.text.begin() < offset;
+  return token.text().begin() < offset;
 }
 
 // Makes an iterator-writable copy of items_view without using const_cast.
@@ -148,8 +148,8 @@ void TextStructureView::FilterTokens(const TokenFilterPredicate& keep) {
 static void TerminateTokenStream(TokenSequence* tokens) {
   if (!tokens->empty()) {
     if (!tokens->back().isEOF()) {
-      const TokenInfo new_eof(TK_EOF,
-                              absl::string_view(tokens->back().text.end(), 0));
+      const TokenInfo new_eof(
+          TK_EOF, absl::string_view(tokens->back().text().end(), 0));
       tokens->push_back(new_eof);  // might cause re-alloc.
     }
   }
@@ -277,16 +277,16 @@ absl::Status TextStructureView::FastTokenRangeConsistencyCheck() const {
   if (!tokens_.empty()) {
     // Check that extremities of first and last token lie inside contents_.
     const TokenInfo& first = tokens_.front();
-    if (!first.isEOF() && lower_bound > first.text.cbegin()) {
+    if (!first.isEOF() && lower_bound > first.text().cbegin()) {
       return absl::InternalError(absl::StrCat(
           "Token offset points before beginning of string contents.  delta=",
-          std::distance(first.text.cbegin(), lower_bound)));
+          std::distance(first.text().cbegin(), lower_bound)));
     }
     const TokenInfo* last = FindLastNonEOFToken(tokens_);
-    if (last != nullptr && last->text.cend() > upper_bound) {
+    if (last != nullptr && last->text().cend() > upper_bound) {
       return absl::InternalError(absl::StrCat(
           "Token offset points past end of string contents.  delta=",
-          std::distance(upper_bound, last->text.cend())));
+          std::distance(upper_bound, last->text().cend())));
     }
     if (!tokens_view_.empty()) {
       // Check that TokenSequence iterators point into tokens_.
@@ -347,11 +347,11 @@ absl::Status TextStructureView::SyntaxTreeConsistencyCheck() const {
     const SyntaxTreeLeaf* left = GetLeftmostLeaf(*syntax_tree_);
     if (!left) return absl::OkStatus();
     const SyntaxTreeLeaf* right = GetRightmostLeaf(*syntax_tree_);
-    if (lower_bound > left->get().text.cbegin()) {
+    if (lower_bound > left->get().text().cbegin()) {
       return absl::InternalError(
           "Left-most tree leaf points before beginning of contents.");
     }
-    if (right->get().text.cend() > upper_bound) {
+    if (right->get().text().cend() > upper_bound) {
       return absl::InternalError(
           "Right-most tree leaf points past end of contents.");
     }
@@ -400,13 +400,13 @@ void TextStructureView::ConsumeDeferredExpansion(
   *next_token_iter =
       std::lower_bound(token_iter, tokens_.cend(), offset,
                        [](const TokenInfo& token, const char* target) {
-                         return std::distance(target, token.text.begin()) < 0;
+                         return std::distance(target, token.text().begin()) < 0;
                        });
   CHECK(*next_token_iter != tokens_.cend());
   *next_token_view_iter = std::lower_bound(
       token_view_iter, tokens_view_.cend(), offset,
       [](TokenStreamView::const_reference token_ref, const char* target) {
-        return std::distance(target, token_ref->text.begin()) < 0;
+        return std::distance(target, token_ref->text().begin()) < 0;
       });
   CHECK(*next_token_view_iter != tokens_view_.cend());
 

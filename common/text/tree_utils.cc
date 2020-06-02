@@ -97,8 +97,8 @@ absl::string_view StringSpanOfSymbol(const Symbol& lsym, const Symbol& rsym) {
   const auto* left = GetLeftmostLeaf(lsym);
   const auto* right = GetRightmostLeaf(rsym);
   if (left != nullptr && right != nullptr) {
-    const auto range_begin = left->get().text.begin();
-    const auto range_end = right->get().text.end();
+    const auto range_begin = left->get().text().begin();
+    const auto range_end = right->get().text().end();
     return absl::string_view(range_begin,
                              std::distance(range_begin, range_end));
   } else {
@@ -243,7 +243,7 @@ ConcreteSyntaxTree* FindSubtreeStartingAtOffset(
   auto predicate = [=](const Symbol& s) {
     const SyntaxTreeLeaf* leftmost = GetLeftmostLeaf(s);
     if (leftmost != nullptr) {
-      if (std::distance(first_token_offset, leftmost->get().text.begin()) >=
+      if (std::distance(first_token_offset, leftmost->get().text().begin()) >=
           0) {
         return true;
       }
@@ -266,7 +266,7 @@ bool PruneTreeFromRight(ConcreteSyntaxTree* tree, const char* offset) {
   switch (kind) {
     case SymbolKind::kLeaf: {
       auto* leaf = down_cast<SyntaxTreeLeaf*>(tree->get());
-      return std::distance(offset, leaf->get().text.end()) > 0;
+      return std::distance(offset, leaf->get().text().end()) > 0;
     }
     case SymbolKind::kNode: {
       auto& node = down_cast<SyntaxTreeNode&>(*tree->get());
@@ -303,7 +303,7 @@ namespace {
 // Return the upper bound offset of the rightmost token in the tree.
 const char* RightmostOffset(const Symbol& symbol) {
   const SyntaxTreeLeaf* leaf_ptr = verible::GetRightmostLeaf(symbol);
-  return ABSL_DIE_IF_NULL(leaf_ptr)->get().text.end();
+  return ABSL_DIE_IF_NULL(leaf_ptr)->get().text().end();
 }
 
 // Return the first non-null child node/leaf of the immediate subtree.

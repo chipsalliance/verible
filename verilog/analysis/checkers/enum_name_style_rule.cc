@@ -60,7 +60,7 @@ void EnumNameStyleRule::HandleSymbol(const verible::Symbol& symbol,
     // have consistent shape for all kTypeDeclaration nodes.
     if (!FindAllEnumTypes(symbol).empty()) {
       const auto* identifier_leaf = GetIdentifierFromTypeDeclaration(symbol);
-      const auto name = ABSL_DIE_IF_NULL(identifier_leaf)->get().text;
+      const auto name = ABSL_DIE_IF_NULL(identifier_leaf)->get().text();
       if (!verible::IsLowerSnakeCaseWithDigits(name) ||
           !(absl::EndsWith(name, "_t") || absl::EndsWith(name, "_e"))) {
         violations_.insert(

@@ -77,7 +77,7 @@ TEST(MacroDefinitionTest, Constructor) {
   const TokenInfo def_header(FakeDefineEnum, "`define");
   const TokenInfo macro_name(FakeIdEnum, "FF");
   const MacroDefinition macro(def_header, macro_name);
-  EXPECT_EQ(macro.Name(), macro_name.text);
+  EXPECT_EQ(macro.Name(), macro_name.text());
   EXPECT_FALSE(macro.IsCallable());
 }
 

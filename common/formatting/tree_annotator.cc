@@ -108,7 +108,8 @@ void TreeAnnotator::CatchUpToCurrentLeaf(const TokenInfo& leaf_token) {
   // traversal occurs, to avoid any unnecessary (linear) searches.
   while (std::distance(next_filtered_token_, end_filtered_token_) > 1 &&
          // compare const char* addresses:
-         next_filtered_token_->token->text.begin() != leaf_token.text.begin()) {
+         next_filtered_token_->token->text().begin() !=
+             leaf_token.text().begin()) {
     const auto& left_token = *next_filtered_token_;
     ++next_filtered_token_;
     auto& right_token = *next_filtered_token_;

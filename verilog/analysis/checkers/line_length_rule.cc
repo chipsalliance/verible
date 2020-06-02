@@ -87,18 +87,18 @@ static bool AllowLongLineException(TokenSequence::const_iterator token_begin,
   // TODO(b/134180314): Preserve all text in lexer.
   if (token_begin == token_end) return true;  // Conservatively ignore.
   auto last_token = token_end - 1;            // Point to last token.
-  if (last_token->token_enum == verible::TK_EOF) --last_token;
+  if (last_token->token_enum() == verible::TK_EOF) --last_token;
   // Point to last non-newline.
-  if (last_token->token_enum == TK_NEWLINE) --last_token;
+  if (last_token->token_enum() == TK_NEWLINE) --last_token;
 
   // Ignore leading whitespace, to find first non-space token.
-  while (token_begin->token_enum == TK_SPACE) ++token_begin;
+  while (token_begin->token_enum() == TK_SPACE) ++token_begin;
 
   // Single token case:
   // If there is only one token on this line, forgive non-comment tokens,
   // but examine comment tokens deeper.
   if (token_begin == last_token) {
-    switch (token_begin->token_enum) {
+    switch (token_begin->token_enum()) {
       case TK_EOL_COMMENT: {
         // TODO(b/72010240): formatter: reflow comments
         // Ideally, a comment whose contents can be split on spaces
@@ -124,7 +124,7 @@ static bool AllowLongLineException(TokenSequence::const_iterator token_begin,
   }
 
   // Multi-token cases:
-  switch (token_begin->token_enum) {
+  switch (token_begin->token_enum()) {
     case PP_include:
       // TODO(fangism): Could try to be more specific and inspect this line's
       // tokens further, but it is acceptable to forgive all `include lines.
@@ -142,10 +142,10 @@ static bool AllowLongLineException(TokenSequence::const_iterator token_begin,
       break;
   }
 
-  if (IsComment(verilog_tokentype(last_token->token_enum))) {
+  if (IsComment(verilog_tokentype(last_token->token_enum()))) {
     // Check for end-of-line comment that contain lint waivers.
     const absl::string_view text =
-        verible::StripCommentAndSpacePadding(last_token->text);
+        verible::StripCommentAndSpacePadding(last_token->text());
     if (absl::StartsWith(text, "ri lint_check_waive")) {
       // TODO(fangism): Could make this pattern more space-insensitive
       return true;

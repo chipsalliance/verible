@@ -99,7 +99,7 @@ TEST_F(StateNodeTestFixture, ConstructionWithOneFormatToken) {
   StateNode s(*uwline, style);
   EXPECT_TRUE(s.Done());  // nothing to do after first and only token
   EXPECT_EQ(s.current_column, kInitialIndent * style.indentation_spaces +
-                                  tokens[0].text.length());
+                                  tokens[0].text().length());
   EXPECT_EQ(s.wrap_column_positions.size(), 1);
   EXPECT_EQ(s.wrap_column_positions.top(),
             kInitialIndent * style.indentation_spaces + style.wrap_spaces);
@@ -119,7 +119,7 @@ TEST_F(StateNodeTestFixture, ConstructionWithPreserveLeadingSpace) {
   pre_format_tokens_.front().before.break_decision = SpacingOptions::Preserve;
   StateNode s(*uwline, style);
   EXPECT_TRUE(s.Done());  // nothing to do after first and only token
-  EXPECT_EQ(s.current_column, tokens[0].text.length());
+  EXPECT_EQ(s.current_column, tokens[0].text().length());
   EXPECT_EQ(s.spacing_choice, SpacingDecision::Preserve);
   EXPECT_EQ(s.next(), nullptr);
   EXPECT_EQ(s.cumulative_cost, 0);
@@ -139,7 +139,7 @@ TEST_F(StateNodeTestFixture, ConstructionAppendingPrevState) {
   auto parent_state = std::make_shared<StateNode>(*uwline, style);
   const int initial_column = kInitialIndent * style.indentation_spaces;  // 2
   EXPECT_EQ(ABSL_DIE_IF_NULL(parent_state)->current_column,
-            initial_column + tokens[0].text.length());
+            initial_column + tokens[0].text().length());
   EXPECT_EQ(parent_state->cumulative_cost, 0);
   EXPECT_EQ(parent_state->wrap_column_positions.size(), 1);
   EXPECT_EQ(parent_state->wrap_column_positions.top(),
@@ -155,7 +155,7 @@ TEST_F(StateNodeTestFixture, ConstructionAppendingPrevState) {
     EXPECT_EQ(child2_state->current_column,
               child_state->current_column +            // 8 +
                   ftokens[1].before.spaces_required +  // 1 +
-                  tokens[1].text.length()              // 3: "TT2"
+                  tokens[1].text().length()            // 3: "TT2"
     );
     EXPECT_EQ(child2_state->cumulative_cost, 0);
     EXPECT_FALSE(child2_state->IsRootState());
@@ -167,9 +167,9 @@ TEST_F(StateNodeTestFixture, ConstructionAppendingPrevState) {
         std::make_shared<StateNode>(child_state, style, SpacingDecision::Wrap);
     EXPECT_EQ(child2_state->next(), child_state.get());
     EXPECT_EQ(child2_state->current_column,
-              initial_column +             // 2 +
-                  style.wrap_spaces +      // 4 +
-                  tokens[1].text.length()  // 3: "TT2"
+              initial_column +               // 2 +
+                  style.wrap_spaces +        // 4 +
+                  tokens[1].text().length()  // 3: "TT2"
     );
     EXPECT_EQ(child2_state->cumulative_cost, ftokens[1].before.break_penalty);
     EXPECT_FALSE(child2_state->IsRootState());
@@ -194,7 +194,7 @@ TEST_F(StateNodeTestFixture, ConstructionPreserveSpacesFromPrevStateNoGap) {
   auto parent_state = std::make_shared<StateNode>(*uwline, style);
   const int initial_column = kInitialIndent * style.indentation_spaces;  // 2
   EXPECT_EQ(ABSL_DIE_IF_NULL(parent_state)->current_column,
-            initial_column + tokens[0].text.length());  // 2 + 3
+            initial_column + tokens[0].text().length());  // 2 + 3
   EXPECT_EQ(parent_state->cumulative_cost, 0);
   EXPECT_TRUE(parent_state->IsRootState());
 
@@ -204,7 +204,7 @@ TEST_F(StateNodeTestFixture, ConstructionPreserveSpacesFromPrevStateNoGap) {
   EXPECT_EQ(child_state->next(), parent_state.get());
   EXPECT_EQ(child_state->current_column,
             parent_state->current_column +  // 5 +
-                tokens[1].text.length()     // 3
+                tokens[1].text().length()   // 3
   );
   EXPECT_EQ(child_state->cumulative_cost, parent_state->cumulative_cost);
   EXPECT_FALSE(child_state->IsRootState());
@@ -228,7 +228,7 @@ TEST_F(StateNodeTestFixture, ConstructionPreserveSpacesFromPrevStateSpaces) {
   auto parent_state = std::make_shared<StateNode>(*uwline, style);
   const int initial_column = kInitialIndent * style.indentation_spaces;  // 2
   EXPECT_EQ(ABSL_DIE_IF_NULL(parent_state)->current_column,
-            initial_column + tokens[0].text.length());  // 2 + 3
+            initial_column + tokens[0].text().length());  // 2 + 3
   EXPECT_EQ(parent_state->cumulative_cost, 0);
   EXPECT_TRUE(parent_state->IsRootState());
 
@@ -239,7 +239,7 @@ TEST_F(StateNodeTestFixture, ConstructionPreserveSpacesFromPrevStateSpaces) {
   EXPECT_EQ(child_state->current_column,
             parent_state->current_column +  // 5 +
                 4 +                         // spaces
-                tokens[1].text.length()     // 3
+                tokens[1].text().length()   // 3
   );
   EXPECT_EQ(child_state->cumulative_cost, parent_state->cumulative_cost);
   EXPECT_FALSE(child_state->IsRootState());
@@ -262,7 +262,7 @@ TEST_F(StateNodeTestFixture, ConstructionPreserveSpacesFromPrevStateNewline) {
   auto parent_state = std::make_shared<StateNode>(*uwline, style);
   const int initial_column = kInitialIndent * style.indentation_spaces;  // 2
   EXPECT_EQ(ABSL_DIE_IF_NULL(parent_state)->current_column,
-            initial_column + tokens[0].text.length());  // 2 + 3
+            initial_column + tokens[0].text().length());  // 2 + 3
   EXPECT_EQ(parent_state->cumulative_cost, 0);
   EXPECT_TRUE(parent_state->IsRootState());
 
@@ -271,8 +271,8 @@ TEST_F(StateNodeTestFixture, ConstructionPreserveSpacesFromPrevStateNewline) {
                                                  SpacingDecision::Preserve);
   EXPECT_EQ(child_state->next(), parent_state.get());
   EXPECT_EQ(child_state->current_column,
-            1 +                          // space after last newline
-                tokens[1].text.length()  // 3
+            1 +                            // space after last newline
+                tokens[1].text().length()  // 3
   );
   EXPECT_EQ(child_state->cumulative_cost, parent_state->cumulative_cost);
   EXPECT_FALSE(child_state->IsRootState());
@@ -299,7 +299,7 @@ TEST_F(StateNodeTestFixture, ConstructionAppendingPrevStateWithGroupBalancing) {
   auto parent_state = std::make_shared<StateNode>(*uwline, style);
   const int initial_column = kInitialIndent * style.indentation_spaces;
   EXPECT_EQ(ABSL_DIE_IF_NULL(parent_state)->current_column,
-            initial_column + tokens[0].text.length());
+            initial_column + tokens[0].text().length());
   EXPECT_EQ(parent_state->cumulative_cost, 0);
   EXPECT_EQ(parent_state->wrap_column_positions.size(), 1);
   EXPECT_EQ(parent_state->wrap_column_positions.top(),
@@ -317,7 +317,7 @@ TEST_F(StateNodeTestFixture, ConstructionAppendingPrevStateWithGroupBalancing) {
     EXPECT_EQ(child2_state->current_column,
               child_state->current_column +            // 17 +
                   ftokens[1].before.spaces_required +  // 1 +
-                  tokens[1].text.length()              // 1: "("
+                  tokens[1].text().length()            // 1: "("
     );
     EXPECT_EQ(child2_state->cumulative_cost, 0);
     EXPECT_EQ(child2_state->wrap_column_positions.size(), 1);
@@ -334,7 +334,7 @@ TEST_F(StateNodeTestFixture, ConstructionAppendingPrevStateWithGroupBalancing) {
       EXPECT_EQ(child3_state->current_column,
                 child2_state->current_column +           // 19 +
                     ftokens[2].before.spaces_required +  // 1 +
-                    tokens[2].text.length()              // 2: "11"
+                    tokens[2].text().length()            // 2: "11"
       );
       EXPECT_EQ(child3_state->cumulative_cost, 0);
       EXPECT_EQ(child3_state->wrap_column_positions.size(), 2);
@@ -351,7 +351,7 @@ TEST_F(StateNodeTestFixture, ConstructionAppendingPrevStateWithGroupBalancing) {
         EXPECT_EQ(child4_state->current_column,
                   child3_state->current_column +           // 22 +
                       ftokens[3].before.spaces_required +  // 1 +
-                      tokens[3].text.length()              // 1: ")"
+                      tokens[3].text().length()            // 1: ")"
         );
         EXPECT_EQ(child4_state->cumulative_cost, 0);
         EXPECT_EQ(child4_state->wrap_column_positions.size(), 1);
@@ -374,7 +374,7 @@ TEST_F(StateNodeTestFixture, ConstructionAppendingPrevStateWithGroupBalancing) {
         EXPECT_EQ(child4_state->current_column,
                   child2_state->wrap_column_positions
                           .top() +  // not a typo: child2_state
-                      tokens[3].text.length());
+                      tokens[3].text().length());
         EXPECT_EQ(child4_state->cumulative_cost,
                   ftokens[3].before.break_penalty);
         EXPECT_EQ(child4_state->wrap_column_positions.size(), 1);
@@ -394,7 +394,7 @@ TEST_F(StateNodeTestFixture, ConstructionAppendingPrevStateWithGroupBalancing) {
                                                       SpacingDecision::Wrap);
       EXPECT_EQ(child3_state->next(), child2_state.get());
       EXPECT_EQ(child3_state->current_column,
-                initial_column + style.wrap_spaces + tokens[2].text.length());
+                initial_column + style.wrap_spaces + tokens[2].text().length());
       EXPECT_EQ(child3_state->cumulative_cost, ftokens[2].before.break_penalty);
       EXPECT_EQ(child3_state->wrap_column_positions.size(), 2);
       EXPECT_EQ(child3_state->wrap_column_positions.top(),
@@ -413,7 +413,7 @@ TEST_F(StateNodeTestFixture, ConstructionAppendingPrevStateWithGroupBalancing) {
         EXPECT_EQ(child4_state->current_column,
                   child3_state->current_column +           // 8
                       ftokens[3].before.spaces_required +  // 1
-                      tokens[3].text.length()              // 1: ")"
+                      tokens[3].text().length()            // 1: ")"
         );
         EXPECT_EQ(child4_state->cumulative_cost, child3_state->cumulative_cost);
         EXPECT_EQ(child4_state->wrap_column_positions.size(), 1);
@@ -432,8 +432,9 @@ TEST_F(StateNodeTestFixture, ConstructionAppendingPrevStateWithGroupBalancing) {
         auto child4_state = std::make_shared<StateNode>(child3_state, style,
                                                         SpacingDecision::Wrap);
         EXPECT_EQ(child4_state->next(), child3_state.get());
-        EXPECT_EQ(child4_state->current_column,
-                  initial_column + style.wrap_spaces + tokens[3].text.length());
+        EXPECT_EQ(
+            child4_state->current_column,
+            initial_column + style.wrap_spaces + tokens[3].text().length());
         EXPECT_EQ(
             child4_state->cumulative_cost,
             child3_state->cumulative_cost + ftokens[3].before.break_penalty);
@@ -456,9 +457,9 @@ TEST_F(StateNodeTestFixture, ConstructionAppendingPrevStateWithGroupBalancing) {
         std::make_shared<StateNode>(child_state, style, SpacingDecision::Wrap);
     EXPECT_EQ(child2_state->next(), child_state.get());
     EXPECT_EQ(child2_state->current_column,
-              initial_column +             // 2 +
-                  style.wrap_spaces +      // 4 +
-                  tokens[1].text.length()  // 1: "("
+              initial_column +               // 2 +
+                  style.wrap_spaces +        // 4 +
+                  tokens[1].text().length()  // 1: "("
     );
     EXPECT_EQ(child2_state->cumulative_cost, ftokens[1].before.break_penalty);
     // wrap_column_positions stack is pushed *after* seeing the next token.
@@ -479,12 +480,12 @@ TEST_F(StateNodeTestFixture, ConstructionAppendingPrevStateWithGroupBalancing) {
       EXPECT_EQ(child3_state->current_column,
                 child2_state->current_column +           // 7
                     ftokens[2].before.spaces_required +  // 1
-                    tokens[2].text.length()              // 2: "11"
+                    tokens[2].text().length()            // 2: "11"
       );
       EXPECT_EQ(child3_state->cumulative_cost, child2_state->cumulative_cost);
       EXPECT_EQ(child3_state->wrap_column_positions.size(), 2);
       EXPECT_EQ(child3_state->wrap_column_positions.top(),
-                initial_column + style.wrap_spaces + tokens[1].text.length());
+                initial_column + style.wrap_spaces + tokens[1].text().length());
       EXPECT_EQ(Render(*child3_state, *uwline),
                 "  function_caller\n"
                 "      ( 11");
@@ -499,7 +500,7 @@ TEST_F(StateNodeTestFixture, ConstructionAppendingPrevStateWithGroupBalancing) {
         EXPECT_EQ(child4_state->current_column,
                   child3_state->current_column +           // 10
                       ftokens[3].before.spaces_required +  // 1
-                      tokens[3].text.length()              // 1: ")"
+                      tokens[3].text().length()            // 1: ")"
         );
         EXPECT_EQ(child4_state->cumulative_cost, child3_state->cumulative_cost);
         EXPECT_EQ(child4_state->wrap_column_positions.size(), 1);
@@ -520,7 +521,7 @@ TEST_F(StateNodeTestFixture, ConstructionAppendingPrevStateWithGroupBalancing) {
         EXPECT_EQ(child4_state->next(), child3_state.get());
         EXPECT_EQ(child4_state->current_column,
                   child2_state->wrap_column_positions.top() +
-                      tokens[3].text.length()  // 1: ")"
+                      tokens[3].text().length()  // 1: ")"
         );
         EXPECT_EQ(
             child4_state->cumulative_cost,
@@ -545,7 +546,7 @@ TEST_F(StateNodeTestFixture, ConstructionAppendingPrevStateWithGroupBalancing) {
       EXPECT_EQ(child3_state->next(), child2_state.get());
       EXPECT_EQ(child3_state->current_column,
                 initial_column + (style.wrap_spaces * 2) +  // 10
-                    tokens[2].text.length()                 // 2: "11"
+                    tokens[2].text().length()               // 2: "11"
       );
       EXPECT_EQ(
           child3_state->cumulative_cost,
@@ -569,7 +570,7 @@ TEST_F(StateNodeTestFixture, ConstructionAppendingPrevStateWithGroupBalancing) {
         EXPECT_EQ(child4_state->current_column,
                   child3_state->current_column +           // 10
                       ftokens[3].before.spaces_required +  // 1
-                      tokens[3].text.length()              // 1: ")"
+                      tokens[3].text().length()            // 1: ")"
         );
         EXPECT_EQ(child4_state->cumulative_cost, child3_state->cumulative_cost);
         EXPECT_EQ(child4_state->wrap_column_positions.size(), 1);
@@ -592,7 +593,7 @@ TEST_F(StateNodeTestFixture, ConstructionAppendingPrevStateWithGroupBalancing) {
         EXPECT_EQ(child4_state->next(), child3_state.get());
         EXPECT_EQ(child4_state->current_column,
                   child_state->wrap_column_positions.top() +
-                      tokens[3].text.length()  // 1: ")"
+                      tokens[3].text().length()  // 1: ")"
         );
         EXPECT_EQ(
             child4_state->cumulative_cost,
@@ -626,7 +627,7 @@ TEST_F(StateNodeTestFixture, ConstructionAppendingPrevStateOverflow) {
   auto parent_state = std::make_shared<StateNode>(*uwline, style);
   const int initial_column = kInitialIndent * style.indentation_spaces;
   EXPECT_EQ(ABSL_DIE_IF_NULL(parent_state)->current_column,
-            initial_column + tokens[0].text.length());
+            initial_column + tokens[0].text().length());
   EXPECT_EQ(parent_state->cumulative_cost, 0);
 
   auto child_state = parent_state;
@@ -639,7 +640,7 @@ TEST_F(StateNodeTestFixture, ConstructionAppendingPrevStateOverflow) {
     EXPECT_EQ(child2_state->current_column,
               child_state->current_column +            // 8 +
                   ftokens[1].before.spaces_required +  // 1 +
-                  tokens[1].text.length()              // 3: "TT2"
+                  tokens[1].text().length()            // 3: "TT2"
     );
     EXPECT_EQ(child2_state->cumulative_cost, style.over_column_limit_penalty +
                                                  child2_state->current_column -
@@ -653,7 +654,7 @@ TEST_F(StateNodeTestFixture, ConstructionAppendingPrevStateOverflow) {
     EXPECT_EQ(child2_state->current_column,
               initial_column +         // 2 +
                   style.wrap_spaces +  // 4 +
-                  tokens[1].text.length());
+                  tokens[1].text().length());
     EXPECT_EQ(child2_state->cumulative_cost, ftokens[1].before.break_penalty);
   }
 }
@@ -689,7 +690,7 @@ TEST_F(StateNodeTestFixture, MultiLineToken) {
   auto parent_state = std::make_shared<StateNode>(*uwline, style);
   const int initial_column = kInitialIndent * style.indentation_spaces;
   EXPECT_EQ(ABSL_DIE_IF_NULL(parent_state)->current_column,
-            initial_column + tokens[0].text.length());
+            initial_column + tokens[0].text().length());
   EXPECT_EQ(parent_state->cumulative_cost, 0);
 
   {
@@ -736,7 +737,7 @@ TEST_F(StateNodeTestFixture, MultiLineTokenOverflow) {
   auto parent_state = std::make_shared<StateNode>(*uwline, style);
   const int initial_column = kInitialIndent * style.indentation_spaces;
   EXPECT_EQ(ABSL_DIE_IF_NULL(parent_state)->current_column,
-            initial_column + tokens[0].text.length());
+            initial_column + tokens[0].text().length());
   EXPECT_EQ(parent_state->cumulative_cost, 0);
 
   {
@@ -782,7 +783,7 @@ TEST_F(StateNodeTestFixture, ConstructionWrappingLinePrevState) {
   auto parent_state = std::make_shared<StateNode>(*uwline, style);
   const int initial_column = kInitialIndent * style.indentation_spaces;
   EXPECT_EQ(ABSL_DIE_IF_NULL(parent_state)->current_column,
-            initial_column + tokens[0].text.length());
+            initial_column + tokens[0].text().length());
   EXPECT_EQ(parent_state->cumulative_cost, 0);
 
   // Wrap the next token onto a new line.
@@ -790,7 +791,7 @@ TEST_F(StateNodeTestFixture, ConstructionWrappingLinePrevState) {
       std::make_shared<StateNode>(parent_state, style, SpacingDecision::Wrap);
   EXPECT_EQ(child_state->next(), parent_state.get());
   EXPECT_EQ(child_state->current_column,
-            initial_column + style.wrap_spaces + tokens[1].text.length());
+            initial_column + style.wrap_spaces + tokens[1].text().length());
   EXPECT_EQ(child_state->cumulative_cost, ftokens[1].before.break_penalty);
   EXPECT_EQ(Render(*child_state, *uwline),
             "  token1\n"
@@ -815,7 +816,7 @@ TEST_F(StateNodeTestFixture, AppendIfItFitsTryToAppend) {
   auto parent_state = std::make_shared<StateNode>(*uwline, style);
   const int initial_column = kInitialIndent * style.indentation_spaces;  // 2
   EXPECT_EQ(ABSL_DIE_IF_NULL(parent_state)->current_column,
-            initial_column + tokens[0].text.length());
+            initial_column + tokens[0].text().length());
   EXPECT_EQ(parent_state->wrap_column_positions.size(), 1);
   EXPECT_EQ(parent_state->wrap_column_positions.top(),
             initial_column + style.wrap_spaces);
@@ -828,7 +829,7 @@ TEST_F(StateNodeTestFixture, AppendIfItFitsTryToAppend) {
   EXPECT_EQ(child_state->current_column,
             parent_state->current_column +           // 12 +
                 ftokens[1].before.spaces_required +  // 1 +
-                tokens[1].text.length()              // 10 = 23 (< 30)
+                tokens[1].text().length()            // 10 = 23 (< 30)
   );
   EXPECT_FALSE(child_state->IsRootState());
 
@@ -837,7 +838,7 @@ TEST_F(StateNodeTestFixture, AppendIfItFitsTryToAppend) {
   EXPECT_EQ(child2_state->spacing_choice, SpacingDecision::Wrap);
   EXPECT_EQ(child2_state->next(), child_state.get());
   EXPECT_EQ(child2_state->current_column,
-            initial_column + style.wrap_spaces + tokens[2].text.length());
+            initial_column + style.wrap_spaces + tokens[2].text().length());
 }
 
 // Tests that the default next-state respects forced line breaks.
@@ -856,7 +857,7 @@ TEST_F(StateNodeTestFixture, AppendIfItFitsForcedWrap) {
   auto parent_state = std::make_shared<StateNode>(*uwline, style);
   const int initial_column = kInitialIndent * style.indentation_spaces;  // 2
   EXPECT_EQ(ABSL_DIE_IF_NULL(parent_state)->current_column,
-            initial_column + tokens[0].text.length());
+            initial_column + tokens[0].text().length());
   EXPECT_EQ(parent_state->wrap_column_positions.size(), 1);
   EXPECT_EQ(parent_state->wrap_column_positions.top(),
             initial_column + style.wrap_spaces);
@@ -867,7 +868,7 @@ TEST_F(StateNodeTestFixture, AppendIfItFitsForcedWrap) {
   EXPECT_EQ(child_state->spacing_choice, SpacingDecision::Wrap);
   EXPECT_EQ(child_state->next(), parent_state.get());
   EXPECT_EQ(child_state->current_column,
-            initial_column + style.wrap_spaces + tokens[0].text.length());
+            initial_column + style.wrap_spaces + tokens[0].text().length());
   EXPECT_FALSE(child_state->IsRootState());
 }
 
@@ -888,7 +889,7 @@ TEST_F(StateNodeTestFixture, QuickFinish) {
   auto parent_state = std::make_shared<StateNode>(*uwline, style);
   const int initial_column = kInitialIndent * style.indentation_spaces;  // 2
   EXPECT_EQ(ABSL_DIE_IF_NULL(parent_state)->current_column,
-            initial_column + tokens[0].text.length());
+            initial_column + tokens[0].text().length());
   EXPECT_EQ(parent_state->wrap_column_positions.size(), 1);
   EXPECT_EQ(parent_state->wrap_column_positions.top(),
             initial_column + style.wrap_spaces);

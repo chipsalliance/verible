@@ -130,7 +130,8 @@ std::ostream& operator<<(
     std::ostream& stream,
     const AnnotateFormattingInformationTestCase& test_case) {
   stream << '[';
-  for (const auto& token : test_case.input_tokens) stream << ' ' << token.text;
+  for (const auto& token : test_case.input_tokens)
+    stream << ' ' << token.text();
   return stream << " ]";
 }
 

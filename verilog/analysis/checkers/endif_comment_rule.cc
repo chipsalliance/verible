@@ -65,7 +65,7 @@ void EndifCommentRule::HandleToken(const TokenInfo& token) {
       // Only changes state on `ifdef/`ifndef/`endif tokens;
       // all others are ignored in this analysis.
       // Notably, `else and `elsif are neither examined nor used.
-      switch (token.token_enum) {
+      switch (token.token_enum()) {
         case PP_ifdef:  // fall-through
         case PP_ifndef:
           state_ = State::kExpectPPIdentifier;
@@ -81,7 +81,7 @@ void EndifCommentRule::HandleToken(const TokenInfo& token) {
     }
     case State::kExpectPPIdentifier: {
       // Expecting the argument to `ifdef/`ifndef.
-      switch (token.token_enum) {
+      switch (token.token_enum()) {
         case PP_Identifier:
           conditional_scopes_.push(token);
           state_ = State::kNormal;
@@ -96,8 +96,8 @@ void EndifCommentRule::HandleToken(const TokenInfo& token) {
     case State::kExpectEndifComment: {
       // Checking for comment immediately following `endif.
       // Matching comment must be on the same line as the `endif
-      const absl::string_view expect = conditional_scopes_.top().text;
-      switch (token.token_enum) {
+      const absl::string_view expect = conditional_scopes_.top().text();
+      switch (token.token_enum()) {
         case TK_SPACE:  // stay in the same state
           break;
         case TK_COMMENT_BLOCK:
@@ -105,7 +105,7 @@ void EndifCommentRule::HandleToken(const TokenInfo& token) {
           // check comment text, unwrap comment, unpad whitespace.
           // allow either // COND or /* COND */
           const absl::string_view contents =
-              verible::StripCommentAndSpacePadding(token.text);
+              verible::StripCommentAndSpacePadding(token.text());
           if (contents != expect) {
             violations_.insert(LintViolation(
                 last_endif_, absl::StrCat(kMessage, " (", expect, ")")));

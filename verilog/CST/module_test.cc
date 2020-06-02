@@ -116,7 +116,7 @@ TEST(GetModuleNameTokenTest, ValidModule) {
       down_cast<const SyntaxTreeNode&>(*module_declarations.front().match);
   // Root node is a description list, not a module.
   const auto& token = GetModuleNameToken(module_node);
-  EXPECT_EQ(token.text, "foo");
+  EXPECT_EQ(token.text(), "foo");
 }
 
 TEST(GetModulePortDeclarationListTest, NoPorts) {
@@ -173,7 +173,7 @@ TEST(GetModulePortDeclarationListTest, WithPorts) {
     const auto expected_excerpts = test.FindImportantTokens(code_copy);
     ASSERT_EQ(expected_excerpts.size(), 1);
     // Compare the string_views and their exact spans.
-    const auto expected_span = expected_excerpts.front().text;
+    const auto expected_span = expected_excerpts.front().text();
     ASSERT_TRUE(verible::IsSubRange(ports_span, code_copy));
     ASSERT_TRUE(verible::IsSubRange(expected_span, code_copy));
     EXPECT_EQ(ports_span, expected_span);

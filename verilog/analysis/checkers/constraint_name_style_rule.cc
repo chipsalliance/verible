@@ -73,7 +73,7 @@ void ConstraintNameStyleRule::HandleSymbol(const verible::Symbol& symbol,
     const auto& identifier_token =
         GetSymbolIdentifierFromConstraintDeclaration(symbol);
 
-    const auto constraint_name = identifier_token.text;
+    const auto constraint_name = identifier_token.text();
 
     if (!verible::IsLowerSnakeCaseWithDigits(constraint_name) ||
         !absl::EndsWith(constraint_name, "_c"))

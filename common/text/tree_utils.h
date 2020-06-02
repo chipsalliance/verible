@@ -79,7 +79,7 @@ template <typename E>
 const SyntaxTreeLeaf& CheckLeafEnum(const SyntaxTreeLeaf& leaf,
                                     E expected_token_enum) {
   // Uses operator<<(std::ostream&, E) for diagnostics.
-  CHECK_EQ(E(leaf.get().token_enum), expected_token_enum);
+  CHECK_EQ(E(leaf.get().token_enum()), expected_token_enum);
   return leaf;
 }
 

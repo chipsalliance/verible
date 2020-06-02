@@ -61,7 +61,7 @@ static bool TokensAreAllComments(const T& tokens) {
   return std::find_if(
              tokens.begin(), tokens.end(),
              [](const typename T::value_type& token) {
-               return !IsComment(verilog_tokentype(token.token->token_enum));
+               return !IsComment(verilog_tokentype(token.token->token_enum()));
              }) == tokens.end();
 }
 
@@ -141,7 +141,7 @@ class PortDeclarationColumnSchemaScanner : public ColumnSchemaScanner {
       new_column_after_open_bracket_ = false;
       return;
     }
-    const int tag = leaf.get().token_enum;
+    const int tag = leaf.get().token_enum();
     switch (tag) {
       // port directions
       case verilog_tokentype::TK_inout:

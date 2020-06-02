@@ -62,7 +62,7 @@ void InterfaceNameStyleRule::HandleSymbol(const verible::Symbol& symbol,
   const verible::TokenInfo* identifier_token;
   if (matcher_interface_.Matches(symbol, &manager)) {
     identifier_token = &GetInterfaceNameToken(symbol);
-    name = identifier_token->text;
+    name = identifier_token->text();
 
     if (!verible::IsLowerSnakeCaseWithDigits(name) ||
         !absl::EndsWith(name, "_if")) {

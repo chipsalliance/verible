@@ -68,7 +68,7 @@ void ParameterTypeNameStyleRule::HandleSymbol(
     if (!IsParamTypeDeclaration(symbol)) return;
 
     param_name_token = &GetSymbolIdentifierFromParamDeclaration(symbol);
-    const auto param_name = param_name_token->text;
+    const auto param_name = param_name_token->text();
 
     if (!verible::IsLowerSnakeCaseWithDigits(param_name) ||
         !absl::EndsWith(param_name, "_t"))

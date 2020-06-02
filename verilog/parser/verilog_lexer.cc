@@ -38,11 +38,11 @@ void VerilogLexer::Restart(absl::string_view code) {
 bool VerilogLexer::TokenIsError(const verible::TokenInfo& token) const {
   // TODO(fangism): Distinguish different lexical errors by returning different
   // enums.
-  return token.token_enum == TK_OTHER;
+  return token.token_enum() == TK_OTHER;
 }
 
 bool VerilogLexer::KeepSyntaxTreeTokens(const verible::TokenInfo& t) {
-  switch (t.token_enum) {
+  switch (t.token_enum()) {
     case TK_COMMENT_BLOCK:  // fall-through
     case TK_EOL_COMMENT:    // fall-through
     case TK_ATTRIBUTE:      // fall-through

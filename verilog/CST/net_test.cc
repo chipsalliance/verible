@@ -159,7 +159,7 @@ TEST(GetIdentifiersFromNetDeclarationTest, OneVariable) {
   const auto net_declarations =
       GetIdentifiersFromNetDeclaration(*ABSL_DIE_IF_NULL(root));
   ASSERT_EQ(net_declarations.size(), 1);
-  EXPECT_EQ(net_declarations[0]->text, "v");
+  EXPECT_EQ(net_declarations[0]->text(), "v");
 }
 
 TEST(GetIdentifiersFromNetDeclarationTest, MultipleVariables) {
@@ -169,8 +169,8 @@ TEST(GetIdentifiersFromNetDeclarationTest, MultipleVariables) {
   const auto net_declarations =
       GetIdentifiersFromNetDeclaration(*ABSL_DIE_IF_NULL(root));
   ASSERT_EQ(net_declarations.size(), 2);
-  ASSERT_EQ(net_declarations[0]->text, "x");
-  ASSERT_EQ(net_declarations[1]->text, "y");
+  ASSERT_EQ(net_declarations[0]->text(), "x");
+  ASSERT_EQ(net_declarations[1]->text(), "y");
 }
 
 TEST(GetIdentifiersFromNetDeclarationTest, MultipleInlineVariables) {
@@ -180,9 +180,9 @@ TEST(GetIdentifiersFromNetDeclarationTest, MultipleInlineVariables) {
   const auto net_declarations =
       GetIdentifiersFromNetDeclaration(*ABSL_DIE_IF_NULL(root));
   ASSERT_EQ(net_declarations.size(), 3);
-  EXPECT_EQ(net_declarations[0]->text, "x");
-  EXPECT_EQ(net_declarations[1]->text, "y");
-  EXPECT_EQ(net_declarations[2]->text, "z");
+  EXPECT_EQ(net_declarations[0]->text(), "x");
+  EXPECT_EQ(net_declarations[1]->text(), "y");
+  EXPECT_EQ(net_declarations[2]->text(), "z");
 }
 
 TEST(GetIdentifiersFromNetDeclarationTest, MultipleMixedVariables) {
@@ -192,10 +192,10 @@ TEST(GetIdentifiersFromNetDeclarationTest, MultipleMixedVariables) {
   const auto net_declarations =
       GetIdentifiersFromNetDeclaration(*ABSL_DIE_IF_NULL(root));
   ASSERT_EQ(net_declarations.size(), 4);
-  EXPECT_EQ(net_declarations[0]->text, "x");
-  EXPECT_EQ(net_declarations[1]->text, "y");
-  EXPECT_EQ(net_declarations[2]->text, "z");
-  EXPECT_EQ(net_declarations[3]->text, "a");
+  EXPECT_EQ(net_declarations[0]->text(), "x");
+  EXPECT_EQ(net_declarations[1]->text(), "y");
+  EXPECT_EQ(net_declarations[2]->text(), "z");
+  EXPECT_EQ(net_declarations[3]->text(), "a");
 }
 
 TEST(GetIdentifiersFromNetDeclarationTest, DoNotMatchArrayDeclarations) {
@@ -205,7 +205,7 @@ TEST(GetIdentifiersFromNetDeclarationTest, DoNotMatchArrayDeclarations) {
   const auto net_declarations =
       GetIdentifiersFromNetDeclaration(*ABSL_DIE_IF_NULL(root));
   ASSERT_EQ(net_declarations.size(), 1);
-  EXPECT_EQ(net_declarations[0]->text, "v");
+  EXPECT_EQ(net_declarations[0]->text(), "v");
 }
 
 TEST(GetIdentifiersFromNetDeclarationTest, DoNotMatchNetArrayDeclarations) {
@@ -215,7 +215,7 @@ TEST(GetIdentifiersFromNetDeclarationTest, DoNotMatchNetArrayDeclarations) {
   const auto net_declarations =
       GetIdentifiersFromNetDeclaration(*ABSL_DIE_IF_NULL(root));
   ASSERT_EQ(net_declarations.size(), 1);
-  EXPECT_EQ(net_declarations[0]->text, "v");
+  EXPECT_EQ(net_declarations[0]->text(), "v");
 }
 
 TEST(GetIdentifiersFromNetDeclarationTest, DoNotMatchNetType) {
@@ -225,7 +225,7 @@ TEST(GetIdentifiersFromNetDeclarationTest, DoNotMatchNetType) {
   const auto net_declarations =
       GetIdentifiersFromNetDeclaration(*ABSL_DIE_IF_NULL(root));
   ASSERT_EQ(net_declarations.size(), 1);
-  EXPECT_EQ(net_declarations[0]->text, "v");
+  EXPECT_EQ(net_declarations[0]->text(), "v");
 }
 
 TEST(GetIdentifiersFromNetDeclarationTest, DoNotMatchAssignedVariables) {
@@ -235,7 +235,7 @@ TEST(GetIdentifiersFromNetDeclarationTest, DoNotMatchAssignedVariables) {
   const auto net_declarations =
       GetIdentifiersFromNetDeclaration(*ABSL_DIE_IF_NULL(root));
   ASSERT_EQ(net_declarations.size(), 1);
-  EXPECT_EQ(net_declarations[0]->text, "v");
+  EXPECT_EQ(net_declarations[0]->text(), "v");
 }
 
 }  // namespace

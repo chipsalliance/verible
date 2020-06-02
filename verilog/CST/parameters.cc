@@ -54,7 +54,7 @@ verilog_tokentype GetParamKeyword(const verible::Symbol& symbol) {
   if (param_keyword_symbol == nullptr) return TK_parameter;
   const auto* leaf =
       down_cast<const SyntaxTreeLeaf*>(ABSL_DIE_IF_NULL(param_keyword_symbol));
-  return static_cast<verilog_tokentype>(leaf->get().token_enum);
+  return static_cast<verilog_tokentype>(leaf->get().token_enum());
 }
 
 const verible::Symbol* GetParamTypeSymbol(const verible::Symbol& symbol) {
@@ -129,7 +129,7 @@ bool IsParamTypeDeclaration(const verible::Symbol& symbol) {
     // Check that its token_enum is TK_type.
     const auto* tk_type_leaf =
         down_cast<const SyntaxTreeLeaf*>(param_type_symbol);
-    CHECK_EQ(tk_type_leaf->get().token_enum, TK_type);
+    CHECK_EQ(tk_type_leaf->get().token_enum(), TK_type);
     return true;
   }
   return false;

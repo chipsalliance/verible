@@ -114,7 +114,7 @@ TEST(GetDPIImportPrototypeTest, Various) {
     const auto expected_excerpts = test.FindImportantTokens(code_copy);
     ASSERT_EQ(expected_excerpts.size(), 1);
     // Compare the string_views and their exact spans.
-    const auto expected_span = expected_excerpts.front().text;
+    const auto expected_span = expected_excerpts.front().text();
     // analyzer made its own copy of code
     ASSERT_TRUE(verible::IsSubRange(prototype_span, code_copy));
     ASSERT_TRUE(verible::IsSubRange(expected_span, code_copy));

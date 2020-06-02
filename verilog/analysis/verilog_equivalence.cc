@@ -85,11 +85,11 @@ static bool LexText(absl::string_view text, TokenSequence* subtokens,
 }
 
 static void VerilogTokenPrinter(const TokenInfo& token, std::ostream& stream) {
-  stream << '(' << verilog_symbol_name(token.token_enum) << ") " << token;
+  stream << '(' << verilog_symbol_name(token.token_enum()) << ") " << token;
 }
 
 static bool ShouldRecursivelyAnalyzeToken(const TokenInfo& token) {
-  return IsUnlexed(verilog_tokentype(token.token_enum));
+  return IsUnlexed(verilog_tokentype(token.token_enum()));
 }
 
 DiffStatus VerilogLexicallyEquivalent(
@@ -169,7 +169,7 @@ DiffStatus LexicallyEquivalent(
   DiffStatus diff_status = DiffStatus::kEquivalent;
   auto recursive_comparator = [&](const TokenSequence::const_iterator l,
                                   const TokenSequence::const_iterator r) {
-    if (l->token_enum != r->token_enum) {
+    if (l->token_enum() != r->token_enum()) {
       if (errstream != nullptr) {
         *errstream << "Mismatched token enums.  got: ";
         token_printer(*l, *errstream);
@@ -183,7 +183,7 @@ DiffStatus LexicallyEquivalent(
       // Recursively lex and compare.
       VLOG(1) << "recursively lex-ing and comparing";
       diff_status = LexicallyEquivalent(
-          l->text, r->text, lexer, recursion_predicate, remove_predicate,
+          l->text(), r->text(), lexer, recursion_predicate, remove_predicate,
           equal_comparator, token_printer, errstream);
       return diff_status == DiffStatus::kEquivalent;
       // Note: Any lexical errors in either stream will make this
@@ -244,7 +244,7 @@ DiffStatus FormatEquivalent(absl::string_view left, absl::string_view right,
   return VerilogLexicallyEquivalent(
       left, right,
       [](const TokenInfo& t) {
-        return IsWhitespace(verilog_tokentype(t.token_enum));
+        return IsWhitespace(verilog_tokentype(t.token_enum()));
       },
       [=](const TokenInfo& l, const TokenInfo& r) {
         return l.EquivalentWithoutLocation(r);
@@ -254,7 +254,7 @@ DiffStatus FormatEquivalent(absl::string_view left, absl::string_view right,
 
 static bool ObfuscationEquivalentTokens(const TokenInfo& l,
                                         const TokenInfo& r) {
-  const auto l_vtoken_enum = verilog_tokentype(l.token_enum);
+  const auto l_vtoken_enum = verilog_tokentype(l.token_enum());
   if (IsIdentifierLike(l_vtoken_enum)) {
     return l.EquivalentBySpace(r);
   }

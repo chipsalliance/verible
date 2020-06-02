@@ -31,14 +31,14 @@ ConfigFileLexer::ConfigFileLexer(absl::string_view config)
 
   // Pre-process all tokens where its needed
   for (auto& t : tokens_) {
-    switch (t.token_enum) {
+    switch (t.token_enum()) {
       case CFG_TK_FLAG:
         // Skip -- prefix
-        t.text = t.text.substr(2, t.text.length() - 2);
+        t.set_text(t.text().substr(2, t.text().length() - 2));
         break;
       case CFG_TK_FLAG_WITH_ARG:
         // Skip -- prefix and = suffix
-        t.text = t.text.substr(2, t.text.length() - 3);
+        t.set_text(t.text().substr(2, t.text().length() - 3));
         break;
     }
   }
@@ -58,7 +58,7 @@ std::vector<TokenRange> ConfigFileLexer::GetCommandsTokenRanges() {
     // Note that empty lines or lines with whitespace only are skipped
     // by the lexer and do not have to be handled here
     j = std::find_if(i + 1, tokens_.cend(), [](TokenInfo t) {
-      return t.token_enum == CFG_TK_NEWLINE;
+      return t.token_enum() == CFG_TK_NEWLINE;
     });
 
     if (j == tokens_.cend()) {

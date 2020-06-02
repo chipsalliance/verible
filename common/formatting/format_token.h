@@ -122,13 +122,13 @@ struct PreFormatToken {
       : PreFormatToken(&leaf.get()) {}
 
   // The length of characters in the PreFormatToken
-  int Length() const { return token->text.length(); }
+  int Length() const { return token->text().length(); }
 
   // Returns the text of the TokenInfo token held by this PreFormatToken
-  absl::string_view Text() const { return token->text; }
+  absl::string_view Text() const { return token->text(); }
 
   // Returns the enum of the TokenInfo token held by this PreFormatToken
-  int TokenEnum() const { return token->token_enum; }
+  int TokenEnum() const { return token->token_enum(); }
 
   // Reconstructs the original spacing that preceded this token.
   absl::string_view OriginalLeadingSpaces() const;

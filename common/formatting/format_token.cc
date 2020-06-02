@@ -136,7 +136,7 @@ static absl::string_view OriginalLeadingSpacesRange(const char* begin,
 
 absl::string_view FormattedToken::OriginalLeadingSpaces() const {
   return OriginalLeadingSpacesRange(before.preserved_space_start,
-                                    token->text.begin());
+                                    token->text().begin());
 }
 
 std::ostream& FormattedToken::FormattedText(std::ostream& stream) const {
@@ -160,7 +160,7 @@ std::ostream& FormattedToken::FormattedText(std::ostream& stream) const {
       stream << verible::Spacer(before.spaces);
       break;
   }
-  return stream << token->text;
+  return stream << token->text();
 }
 
 std::ostream& operator<<(std::ostream& stream, const FormattedToken& token) {
@@ -169,7 +169,7 @@ std::ostream& operator<<(std::ostream& stream, const FormattedToken& token) {
 
 absl::string_view PreFormatToken::OriginalLeadingSpaces() const {
   return OriginalLeadingSpacesRange(before.preserved_space_start,
-                                    token->text.begin());
+                                    token->text().begin());
 }
 
 size_t PreFormatToken::LeadingSpacesLength() const {

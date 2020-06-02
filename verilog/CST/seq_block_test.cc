@@ -72,7 +72,7 @@ endmodule)",
   ASSERT_EQ(begin_statements.size(), 1);
 
   const auto* beginToken = GetBeginLabelTokenInfo(*begin_statements[0].match);
-  EXPECT_EQ(ABSL_DIE_IF_NULL(beginToken)->text, "begin_label");
+  EXPECT_EQ(ABSL_DIE_IF_NULL(beginToken)->text(), "begin_label");
 }
 
 TEST(GetBeginLabelTokenInfoTest, SingleNoLabel) {
@@ -134,7 +134,7 @@ endmodule)",
   ASSERT_EQ(NodeEnum(matchingEnd->Tag().tag), NodeEnum::kEnd);
 
   const auto* endToken = GetEndLabelTokenInfo(*matchingEnd);
-  EXPECT_EQ(ABSL_DIE_IF_NULL(endToken)->text, "end_label");
+  EXPECT_EQ(ABSL_DIE_IF_NULL(endToken)->text(), "end_label");
 }
 
 TEST(GetMatchingEndTest, Complex) {
@@ -174,10 +174,10 @@ endmodule)",
   const auto& innerEndToken =
       *ABSL_DIE_IF_NULL(GetEndLabelTokenInfo(*matchingInnerEnd));
 
-  EXPECT_EQ(outerBeginToken.text, "outer_begin_label");
-  EXPECT_EQ(outerEndToken.text, "outer_end_label");
-  EXPECT_EQ(innerBeginToken.text, "inner_begin_label");
-  EXPECT_EQ(innerEndToken.text, "inner_end_label");
+  EXPECT_EQ(outerBeginToken.text(), "outer_begin_label");
+  EXPECT_EQ(outerEndToken.text(), "outer_end_label");
+  EXPECT_EQ(innerBeginToken.text(), "inner_begin_label");
+  EXPECT_EQ(innerEndToken.text(), "inner_end_label");
 }
 
 }  // namespace

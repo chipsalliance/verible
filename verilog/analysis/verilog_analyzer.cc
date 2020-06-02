@@ -71,10 +71,10 @@ absl::Status VerilogAnalyzer::Tokenize() {
 absl::string_view VerilogAnalyzer::ScanParsingModeDirective(
     const TokenSequence& raw_tokens) {
   for (const auto& token : raw_tokens) {
-    const auto vtoken_enum = verilog_tokentype(token.token_enum);
+    const auto vtoken_enum = verilog_tokentype(token.token_enum());
     if (IsComment(vtoken_enum)) {
       const absl::string_view comment_text =
-          verible::StripCommentAndSpacePadding(token.text);
+          verible::StripCommentAndSpacePadding(token.text());
       const std::vector<absl::string_view> comment_tokens =
           absl::StrSplit(comment_text, ' ', absl::SkipEmpty());
       if (comment_tokens.size() >= 2 &&
@@ -159,7 +159,7 @@ std::unique_ptr<VerilogAnalyzer> VerilogAnalyzer::AnalyzeAutomaticMode(
       const auto& first_reject = rejected_tokens.front();
       const absl::string_view retry_parse_mode =
           FailingTokenKeywordToParsingMode(
-              verilog_tokentype(first_reject.token_info.token_enum));
+              verilog_tokentype(first_reject.token_info.token_enum()));
       VLOG(1) << "Retrying parsing in mode: " << retry_parse_mode;
       if (!retry_parse_mode.empty()) {
         auto retry_analyzer =
@@ -270,19 +270,19 @@ class MacroCallArgExpander : public MutableTreeVisitorRecursive {
 
   void Visit(const SyntaxTreeLeaf& leaf, SymbolPtr* leaf_owner) override {
     const TokenInfo& token(leaf.get());
-    if (token.token_enum == MacroArg) {
+    if (token.token_enum() == MacroArg) {
       VLOG(3) << "MacroCallArgExpander: examining token: " << token;
       // Attempt to parse text as an expression.
       std::unique_ptr<VerilogAnalyzer> expr_analyzer =
-          AnalyzeVerilogExpression(token.text, "<macro-arg-expander>");
+          AnalyzeVerilogExpression(token.text(), "<macro-arg-expander>");
       if (!expr_analyzer->ParseStatus().ok()) {
         // If that failed, try to parse text as a property.
         expr_analyzer =
-            AnalyzeVerilogPropertySpec(token.text, "<macro-arg-expander>");
+            AnalyzeVerilogPropertySpec(token.text(), "<macro-arg-expander>");
         if (!expr_analyzer->ParseStatus().ok()) {
           // If that failed: try to infer parsing mode from comments
           expr_analyzer = VerilogAnalyzer::AnalyzeAutomaticMode(
-              token.text, "<macro-arg-expander>");
+              token.text(), "<macro-arg-expander>");
         }
       }
       if (ABSL_DIE_IF_NULL(expr_analyzer)->LexStatus().ok() &&
@@ -300,7 +300,7 @@ class MacroCallArgExpander : public MutableTreeVisitorRecursive {
           }
         }
         CHECK_EQ(token_sequence.back().right(expr_analyzer->Data().Contents()),
-                 token.text.length());
+                 token.text().length());
         // Defer in-place expansion until all expansions have been collected
         // (for efficiency, avoiding inserting into middle of a vector,
         // and causing excessive reallocation).

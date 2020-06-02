@@ -88,7 +88,7 @@ TEST(GetIdentifierTest, UnqualifiedIds) {
       std::vector<absl::string_view> got_ids;
       for (const auto& id : ids) {
         const verible::SyntaxTreeLeaf* base = GetIdentifier(*id.match);
-        got_ids.push_back(ABSL_DIE_IF_NULL(base)->get().text);
+        got_ids.push_back(ABSL_DIE_IF_NULL(base)->get().text());
       }
       EXPECT_EQ(got_ids, test.second);
     }
@@ -96,7 +96,7 @@ TEST(GetIdentifierTest, UnqualifiedIds) {
       std::vector<absl::string_view> got_ids;
       for (const auto& id : ids) {
         const verible::SyntaxTreeLeaf* base = AutoUnwrapIdentifier(*id.match);
-        got_ids.push_back(ABSL_DIE_IF_NULL(base)->get().text);
+        got_ids.push_back(ABSL_DIE_IF_NULL(base)->get().text());
         EXPECT_EQ(AutoUnwrapIdentifier(*base), base);  // check convergence
       }
       EXPECT_EQ(got_ids, test.second);

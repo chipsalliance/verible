@@ -204,7 +204,7 @@ TEST(GetFunctionIdTest, UnqualifiedIds) {
     std::vector<absl::string_view> got_ids;
     for (const auto& id : ids) {
       const verible::SyntaxTreeLeaf* base = GetIdentifier(*id.match);
-      got_ids.push_back(ABSL_DIE_IF_NULL(base)->get().text);
+      got_ids.push_back(ABSL_DIE_IF_NULL(base)->get().text());
     }
     EXPECT_EQ(got_ids, test.second);
     // TODO(b/151371397): verify substring range
@@ -306,7 +306,7 @@ TEST(GetFunctionReturnTypeTest, WithReturnType) {
         test.token_data.FindImportantTokens(code_copy);
     ASSERT_EQ(expected_excerpts.size(), 1);
     // Compare the string_views and their exact spans.
-    const auto expected_span = expected_excerpts.front().text;
+    const auto expected_span = expected_excerpts.front().text();
     ASSERT_TRUE(verible::IsSubRange(return_type_span, code_copy));
     ASSERT_TRUE(verible::IsSubRange(expected_span, code_copy));
     EXPECT_EQ(return_type_span, expected_span);
@@ -380,7 +380,7 @@ TEST(GetFunctionFormalPortsGroupTest, WithFormalPorts) {
         test.token_data.FindImportantTokens(code_copy);
     ASSERT_EQ(expected_excerpts.size(), 1);
     // Compare the string_views and their exact spans.
-    const auto expected_span = expected_excerpts.front().text;
+    const auto expected_span = expected_excerpts.front().text();
     ASSERT_TRUE(verible::IsSubRange(port_formals_span, code_copy));
     ASSERT_TRUE(verible::IsSubRange(expected_span, code_copy));
     EXPECT_EQ(port_formals_span, expected_span);

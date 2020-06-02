@@ -156,7 +156,7 @@ TEST(GetTaskLifetimeTest, StaticLifetimeDeclared) {
       *task_declarations.front().match);
   const auto* lifetime = GetTaskLifetime(task_node);
   const auto* leaf = down_cast<const verible::SyntaxTreeLeaf*>(lifetime);
-  EXPECT_EQ(leaf->get().token_enum, TK_static);
+  EXPECT_EQ(leaf->get().token_enum(), TK_static);
 }
 
 TEST(GetTaskLifetimeTest, AutomaticLifetimeDeclared) {
@@ -170,7 +170,7 @@ TEST(GetTaskLifetimeTest, AutomaticLifetimeDeclared) {
       *task_declarations.front().match);
   const auto* lifetime = GetTaskLifetime(task_node);
   const auto* leaf = down_cast<const verible::SyntaxTreeLeaf*>(lifetime);
-  EXPECT_EQ(leaf->get().token_enum, TK_automatic);
+  EXPECT_EQ(leaf->get().token_enum(), TK_automatic);
 }
 
 TEST(GetTaskIdTest, UnqualifiedIds) {
@@ -196,7 +196,7 @@ TEST(GetTaskIdTest, UnqualifiedIds) {
     std::vector<absl::string_view> got_ids;
     for (const auto& id : ids) {
       const verible::SyntaxTreeLeaf* base = GetIdentifier(*id.match);
-      got_ids.push_back(ABSL_DIE_IF_NULL(base)->get().text);
+      got_ids.push_back(ABSL_DIE_IF_NULL(base)->get().text());
     }
     EXPECT_EQ(got_ids, test.second);
   }

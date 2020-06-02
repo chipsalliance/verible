@@ -253,7 +253,7 @@ class LexicalContext {
 
   // Changes the enum of a token (in-place) without changing internal state.
   void _MutateToken(verible::TokenInfo* token) const {
-    token->token_enum = _InterpretToken(token->token_enum);
+    token->set_token_enum(_InterpretToken(token->token_enum()));
   }
 
   // Updates the internally tracked state without touching the token.

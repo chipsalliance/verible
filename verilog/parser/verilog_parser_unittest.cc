@@ -5864,8 +5864,8 @@ TEST(VerilogParserTest, TokenizeTerimnatesEOFRange) {
     const auto& tokens = analyzer.Data().TokenStream();
     ASSERT_FALSE(tokens.empty());
     const auto& eof_token = tokens.back();
-    EXPECT_EQ(eof_token.token_enum, verible::TK_EOF);
-    const auto eof_text = eof_token.text;
+    EXPECT_EQ(eof_token.token_enum(), verible::TK_EOF);
+    const auto eof_text = eof_token.text();
     const auto& contents = analyzer.Data().Contents();
     EXPECT_EQ(eof_text.begin(), contents.end());
     EXPECT_EQ(eof_text.end(), contents.end());

@@ -83,7 +83,7 @@ TEST(AnnotateFormatTokensUsingSyntaxContextTest, UnusedContext) {
 void LeftIsB(const PreFormatToken& left, PreFormatToken* right,
              const SyntaxTreeContext& /* left_context */,
              const SyntaxTreeContext& /* right_context */) {
-  if (left.token->text == "b") {
+  if (left.token->text() == "b") {
     right->before.spaces_required = kForcedSpaces;
   } else {
     right->before.spaces_required = kForcedSpaces + 1;

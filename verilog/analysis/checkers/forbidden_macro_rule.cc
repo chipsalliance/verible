@@ -66,7 +66,7 @@ void ForbiddenMacroRule::HandleSymbol(
   if (matcher_.Matches(symbol, &manager)) {
     if (auto leaf = manager.GetAs<verible::SyntaxTreeLeaf>("name")) {
       const auto& imm = InvalidMacrosMap();
-      if (imm.find(std::string(leaf->get().text)) != imm.end()) {
+      if (imm.find(std::string(leaf->get().text())) != imm.end()) {
         violations_.insert(
             verible::LintViolation(leaf->get(), FormatReason(*leaf), context));
       }
@@ -83,7 +83,7 @@ verible::LintRuleStatus ForbiddenMacroRule::Report() const {
 
 std::string ForbiddenMacroRule::FormatReason(
     const verible::SyntaxTreeLeaf& leaf) const {
-  const std::string function_name(leaf.get().text);
+  const std::string function_name(leaf.get().text());
   const auto url = FindWithDefault(InvalidMacrosMap(), function_name, "");
   auto message = function_name + " is a forbidden macro";
   if (!url.empty()) {

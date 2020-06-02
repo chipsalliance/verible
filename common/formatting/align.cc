@@ -44,14 +44,18 @@ class BlankLineSeparatorDetector {
  public:
   // 'bounds' range must not be empty.
   explicit BlankLineSeparatorDetector(const TokenPartitionRange& bounds)
-      : previous_end_(
-            bounds.front().Value().TokensRange().front().token->text.begin()) {}
+      : previous_end_(bounds.front()
+                          .Value()
+                          .TokensRange()
+                          .front()
+                          .token->text()
+                          .begin()) {}
 
   bool operator()(const TokenPartitionTree& node) {
     const auto range = node.Value().TokensRange();
     if (range.empty()) return false;
-    const auto begin = range.front().token->text.begin();
-    const auto end = range.back().token->text.end();
+    const auto begin = range.front().token->text().begin();
+    const auto end = range.back().token->text().end();
     const auto gap = make_string_view_range(previous_end_, begin);
     // A blank line between partitions contains 2+ newlines.
     const bool new_bound = std::count(gap.begin(), gap.end(), '\n') >= 2;
@@ -112,11 +116,11 @@ static int EffectiveCellWidth(const FormatTokenRange& tokens) {
                          -tokens.front().LeadingSpacesLength(),
                          [](int total_width, const PreFormatToken& ftoken) {
                            VLOG(2) << " +" << ftoken.before.spaces_required
-                                   << " +" << ftoken.token->text.length();
+                                   << " +" << ftoken.token->text().length();
                            // TODO(fangism): account for multi-line tokens like
                            // block comments.
                            return total_width + ftoken.LeadingSpacesLength() +
-                                  ftoken.token->text.length();
+                                  ftoken.token->text().length();
                          });
 }
 
@@ -295,7 +299,7 @@ static void FillAlignmentRow(
     // Linear time total over all outer loop iterations.
     token_iter =
         std::find_if(token_iter, token_end, [=](const PreFormatToken& ftoken) {
-          return BoundsEqual(ftoken.Text(), col.starting_token.text);
+          return BoundsEqual(ftoken.Text(), col.starting_token.text());
         });
     CHECK(token_iter != token_end);
 
@@ -444,7 +448,7 @@ static MutableFormatTokenRange GetMutableFormatTokenRange(
   const auto range_begin = unwrapped_line.TokensRange().begin();
   auto range_end = unwrapped_line.TokensRange().end();
   // Backwards search is expected to check at most a few tokens.
-  while (!BoundsEqual(std::prev(range_end)->Text(), last_token->get().text))
+  while (!BoundsEqual(std::prev(range_end)->Text(), last_token->get().text()))
     --range_end;
   CHECK(range_begin <= range_end);
 

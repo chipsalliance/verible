@@ -66,9 +66,9 @@ void UndersizedBinaryLiteralRule::HandleSymbol(
     if (auto width_leaf = manager.GetAs<SyntaxTreeLeaf>("width")) {
       if (auto base_leaf = manager.GetAs<SyntaxTreeLeaf>("base")) {
         if (auto digits_leaf = manager.GetAs<SyntaxTreeLeaf>("digits")) {
-          auto width_text = width_leaf->get().text;
-          auto base_text = base_leaf->get().text;
-          auto digits_text = digits_leaf->get().text;
+          auto width_text = width_leaf->get().text();
+          auto base_text = base_leaf->get().text();
+          auto digits_text = digits_leaf->get().text();
           size_t width;
           if (absl::SimpleAtoi(width_text, &width)) {
             const BasedNumber number(base_text, digits_text);

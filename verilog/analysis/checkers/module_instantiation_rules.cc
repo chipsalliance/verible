@@ -69,7 +69,7 @@ std::string ModulePortRule::GetDescription(DescriptionType description_type) {
 static bool IsComma(const verible::Symbol& symbol) {
   if (symbol.Kind() == verible::SymbolKind::kLeaf) {
     const auto* leaf = down_cast<const verible::SyntaxTreeLeaf*>(&symbol);
-    if (leaf) return leaf->get().token_enum == ',';
+    if (leaf) return leaf->get().token_enum() == ',';
   }
   return false;
 }

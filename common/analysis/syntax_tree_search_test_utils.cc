@@ -63,7 +63,7 @@ typedef std::set<absl::string_view, LessStringRanges> StringRangeSet;
 // This function helps find symmetric differences between two sets
 // of findings (actual vs. expected) based on locations.
 static int CompareFindingLocation(absl::string_view lhs, const TokenInfo& rhs) {
-  const int delta = CompareStringRanges(lhs, rhs.text);
+  const int delta = CompareStringRanges(lhs, rhs.text());
   // Then compare enums, where we only care about equality.
   return delta;
 }

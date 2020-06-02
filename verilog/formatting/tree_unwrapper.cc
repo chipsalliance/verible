@@ -61,8 +61,8 @@ using ::verilog::IsComment;
 
 // Used to filter the TokenStreamView by discarding space-only tokens.
 static bool KeepNonWhitespace(const TokenInfo& t) {
-  if (t.token_enum == verible::TK_EOF) return false;  // omit the EOF token
-  return !IsWhitespace(verilog_tokentype(t.token_enum));
+  if (t.token_enum() == verible::TK_EOF) return false;  // omit the EOF token
+  return !IsWhitespace(verilog_tokentype(t.token_enum()));
 }
 
 static bool NodeIsBeginEndBlock(const SyntaxTreeNode& node) {
@@ -277,7 +277,7 @@ void TreeUnwrapper::EatSpaces() {
   // NextUnfilteredToken with EatSpaces.
   const auto before = NextUnfilteredToken();
   SkipUnfilteredTokens(
-      [](const TokenInfo& token) { return token.token_enum == TK_SPACE; });
+      [](const TokenInfo& token) { return token.token_enum() == TK_SPACE; });
   const auto after = NextUnfilteredToken();
   VLOG(4) << __FUNCTION__ << " ate " << std::distance(before, after)
           << " space tokens";
@@ -298,7 +298,7 @@ TreeUnwrapper::TreeUnwrapper(const verible::TextStructureView& view,
   CHECK(!tokens.empty());
   const auto& back(tokens.back());
   CHECK(back.isEOF());
-  CHECK(back.text.empty());
+  CHECK(back.text().empty());
 }
 
 TreeUnwrapper::~TreeUnwrapper() {}
@@ -371,7 +371,8 @@ void TreeUnwrapper::AdvanceLastVisitedLeaf() {
   VLOG(4) << __FUNCTION__;
   EatSpaces();
   const auto& next_token = *NextUnfilteredToken();
-  const verilog_tokentype token_enum = verilog_tokentype(next_token.token_enum);
+  const verilog_tokentype token_enum =
+      verilog_tokentype(next_token.token_enum());
   UpdateInterLeafScanner(token_enum);
   AdvanceNextUnfilteredToken();
   VLOG(4) << "end of " << __FUNCTION__;
@@ -391,7 +392,7 @@ void TreeUnwrapper::CatchUpToCurrentLeaf(const TokenInfo& leaf_token) {
   while (!NextUnfilteredToken()->isEOF()) {
     EatSpaces();
     // compare const char* addresses:
-    if (NextUnfilteredToken()->text.begin() != leaf_token.text.begin()) {
+    if (NextUnfilteredToken()->text().begin() != leaf_token.text().begin()) {
       VLOG(4) << "token: " << VerboseToken(*NextUnfilteredToken());
       AdvanceLastVisitedLeaf();
     } else {
@@ -424,7 +425,7 @@ void TreeUnwrapper::LookAheadBeyondCurrentLeaf() {
   while (!NextUnfilteredToken()->isEOF()) {
     EatSpaces();
     VLOG(4) << "lookahead token: " << VerboseToken(*NextUnfilteredToken());
-    if (IsComment(verilog_tokentype(NextUnfilteredToken()->token_enum))) {
+    if (IsComment(verilog_tokentype(NextUnfilteredToken()->token_enum()))) {
       // TODO(fangism): or IsAttribute().  Basically, any token that is not
       // in the syntax tree and not a space.
       AdvanceLastVisitedLeaf();
@@ -453,7 +454,7 @@ static verible::TokenSequence::const_iterator StopAtLastNewlineBeforeTreeLeaf(
   bool break_while = false;
   while (!token_iter->isEOF() && !break_while) {
     VLOG(4) << "scan: " << TokenWithContext{*token_iter, context};
-    switch (token_iter->token_enum) {
+    switch (token_iter->token_enum()) {
       // TODO(b/144653479): this token-case logic is redundant with other
       // places; plumb that through to here instead of replicating it.
       case TK_NEWLINE:
@@ -495,7 +496,7 @@ void TreeUnwrapper::LookAheadBeyondCurrentNode() {
     const auto& next_token = *next_token_iter;
     VLOG(4) << "token: " << VerboseToken(next_token);
     const verilog_tokentype token_enum =
-        verilog_tokentype(next_token.token_enum);
+        verilog_tokentype(next_token.token_enum());
     UpdateInterLeafScanner(token_enum);
     if (next_token_iter != token_end) {
       AdvanceNextUnfilteredToken();
@@ -550,7 +551,7 @@ void TreeUnwrapper::CollectTrailingFilteredTokens() {
 
   // A newline means there are no comments to add to this UnwrappedLine
   // TODO(fangism): fold this logic into CatchUpToCurrentLeaf()
-  if (IsNewlineOrEOF(verilog_tokentype(NextUnfilteredToken()->token_enum))) {
+  if (IsNewlineOrEOF(verilog_tokentype(NextUnfilteredToken()->token_enum()))) {
     // Filtered tokens may include comments, which do not correspond to syntax
     // tree nodes, so pass nullptr.
     StartNewUnwrappedLine(PartitionPolicyEnum::kFitOnLineElseExpand, nullptr);
@@ -1525,8 +1526,8 @@ void TreeUnwrapper::ReshapeTokenPartitions(
 
     case NodeEnum::kMacroGenericItem: {
       const auto& token = GetMacroGenericItemId(node);
-      if (absl::StartsWith(token.text, "`uvm_") &&
-          absl::EndsWith(token.text, "_end")) {
+      if (absl::StartsWith(token.text(), "`uvm_") &&
+          absl::EndsWith(token.text(), "_end")) {
         VLOG(4) << "Found `uvm_*_end macro call";
         IndentBetweenUVMBeginEndMacros(&partition, style.indentation_spaces);
       }
@@ -1567,7 +1568,7 @@ void TreeUnwrapper::Visit(const verible::SyntaxTreeLeaf& leaf) {
   UpdateInterLeafScanner(tag);
 
   // Sanity check that NextUnfilteredToken() is aligned to the current leaf.
-  CHECK_EQ(NextUnfilteredToken()->text.begin(), leaf.get().text.begin());
+  CHECK_EQ(NextUnfilteredToken()->text().begin(), leaf.get().text().begin());
 
   // Start a new partition in the following cases.
   // In most other cases, do nothing.

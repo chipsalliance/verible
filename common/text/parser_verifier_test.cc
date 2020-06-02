@@ -32,7 +32,7 @@ static_assert(NOT_EOF != TK_EOF, "NOT_EOF cannot be TK_EOF");
 static TokenInfo Token(absl::string_view s) { return TokenInfo(NOT_EOF, s); }
 
 static bool equal_text(TokenInfo t1, TokenInfo t2) {
-  return t1.text == t2.text;
+  return t1.text() == t2.text();
 }
 
 TEST(ParserVerifierTest, EmptySuccess) {

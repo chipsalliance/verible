@@ -72,7 +72,7 @@ void StructUnionNameStyleRule::HandleSymbol(const verible::Symbol& symbol,
       return;
     }
     const auto* identifier_leaf = GetIdentifierFromTypeDeclaration(symbol);
-    const auto name = ABSL_DIE_IF_NULL(identifier_leaf)->get().text;
+    const auto name = ABSL_DIE_IF_NULL(identifier_leaf)->get().text();
     if (!verible::IsLowerSnakeCaseWithDigits(name) ||
         !absl::EndsWith(name, "_t")) {
       violations_.insert(LintViolation(identifier_leaf->get(), msg, context));

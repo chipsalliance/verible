@@ -77,7 +77,7 @@ static bool UnqualifiedIdEquals(const SyntaxTreeNode& node,
           down_cast<const SyntaxTreeLeaf*>(node.children().front().get());
       if (leaf_ptr != nullptr) {
         const TokenInfo& token = leaf_ptr->get();
-        return token.token_enum == SymbolIdentifier && token.text == name;
+        return token.token_enum() == SymbolIdentifier && token.text() == name;
       }
     }
   }
@@ -132,7 +132,7 @@ static const TokenInfo* ExtractStringLiteralToken(
       down_cast<const SyntaxTreeLeaf*>(expr_node.children().front().get());
   if (leaf_ptr != nullptr) {
     const TokenInfo& token = leaf_ptr->get();
-    if (token.token_enum == TK_StringLiteral) {
+    if (token.token_enum() == TK_StringLiteral) {
       return &token;
     }
   }
@@ -170,7 +170,7 @@ void CreateObjectNameMatchRule::HandleSymbol(const verible::Symbol& symbol,
   // Extract named bindings for matched nodes within this match.
   if (const auto* lval = manager.GetAs<SyntaxTreeLeaf>("lval")) {
     const TokenInfo& lval_token = lval->get();
-    if (lval_token.token_enum != SymbolIdentifier) return;
+    if (lval_token.token_enum() != SymbolIdentifier) return;
     const auto* call = manager.GetAs<SyntaxTreeNode>("func");
     const auto* args = manager.GetAs<SyntaxTreeNode>("args");
     if (call == nullptr && args == nullptr) return;
@@ -179,9 +179,10 @@ void CreateObjectNameMatchRule::HandleSymbol(const verible::Symbol& symbol,
     // The first argument is a string that must match the variable name, lval.
     if (const auto* expr = GetFirstExpressionFromArgs(*args)) {
       if (const TokenInfo* name_token = ExtractStringLiteralToken(*expr)) {
-        if (StripOuterQuotes(name_token->text) != lval_token.text) {
+        if (StripOuterQuotes(name_token->text()) != lval_token.text()) {
           violations_.insert(LintViolation(
-              *name_token, FormatReason(lval_token.text, name_token->text)));
+              *name_token,
+              FormatReason(lval_token.text(), name_token->text())));
         }
       }
     }

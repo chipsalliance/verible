@@ -228,7 +228,7 @@ static WithReason<int> SpacesRequiredBetween(
   // If the token on either side is an empty string, do not inject any
   // additional spaces.  This can occur with some lexical tokens like
   // verilog_tokentype::PP_define_body.
-  if (left.token->text.empty() || right.token->text.empty()) {
+  if (left.token->text().empty() || right.token->text().empty()) {
     return {0, "No additional space around empty-string tokens."};
   }
 
@@ -700,7 +700,7 @@ static WithReason<SpacingOptions> BreakDecisionBetween(
     // Caution: when testing this case, must provide valid text between
     // tokens to avoid reading uninitialized memory.
     auto preceding_whitespace = verible::make_string_view_range(
-        left.token->text.end(), right.token->text.begin());
+        left.token->text().end(), right.token->text().begin());
 
     auto pos = preceding_whitespace.find_first_of('\n', 0);
     if (pos == absl::string_view::npos) {

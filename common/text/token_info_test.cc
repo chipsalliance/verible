@@ -32,23 +32,23 @@ namespace {
 TEST(TokenInfoTest, EnumTextConstruction) {
   constexpr absl::string_view text("string of length 19");
   TokenInfo token_info(143, text);
-  EXPECT_EQ(token_info.token_enum, 143);
+  EXPECT_EQ(token_info.token_enum(), 143);
   EXPECT_EQ(token_info.left(text), 0);
   EXPECT_EQ(token_info.right(text), 19);
-  EXPECT_EQ(token_info.text, text);
+  EXPECT_EQ(token_info.text(), text);
 }
 
 // Test updating text.
 TEST(TokenInfoTest, AdvanceText) {
   constexpr absl::string_view text = "This quick brown fox...";
   TokenInfo token_info(1, text.substr(0, 0));
-  EXPECT_TRUE(BoundsEqual(token_info.text, text.substr(0, 0)));
+  EXPECT_TRUE(BoundsEqual(token_info.text(), text.substr(0, 0)));
   token_info.AdvanceText(3);
-  EXPECT_TRUE(BoundsEqual(token_info.text, text.substr(0, 3)));
-  EXPECT_EQ(token_info.text, "Thi");
+  EXPECT_TRUE(BoundsEqual(token_info.text(), text.substr(0, 3)));
+  EXPECT_EQ(token_info.text(), "Thi");
   token_info.AdvanceText(4);
-  EXPECT_TRUE(BoundsEqual(token_info.text, text.substr(3, 4)));
-  EXPECT_EQ(token_info.text, "s qu");
+  EXPECT_TRUE(BoundsEqual(token_info.text(), text.substr(3, 4)));
+  EXPECT_EQ(token_info.text(), "s qu");
 }
 
 // Test operator ==.
@@ -76,9 +76,9 @@ TEST(TokenInfoTest, EOFEquality) {
 TEST(TokenInfoTest, EOFWithBuffer) {
   constexpr absl::string_view text("string of length 21");
   TokenInfo token_info = TokenInfo::EOFToken(text);
-  EXPECT_EQ(token_info.token_enum, TK_EOF);
-  EXPECT_EQ(token_info.text.begin(), text.end());
-  EXPECT_EQ(token_info.text.end(), text.end());
+  EXPECT_EQ(token_info.token_enum(), TK_EOF);
+  EXPECT_EQ(token_info.text().begin(), text.end());
+  EXPECT_EQ(token_info.text().end(), text.end());
 }
 
 // Test operator !=.
@@ -227,7 +227,7 @@ TEST(RebaseStringViewTest, EmptyStringsZeroOffset) {
   EXPECT_EQ(token.left(text), 0);
   token.RebaseStringView(substr);
   EXPECT_EQ(token.left(substr), 0);
-  EXPECT_EQ(token.text, substr);
+  EXPECT_EQ(token.text(), substr);
 }
 
 // Test that non-empty whole-string copy rebases correctly.
@@ -239,7 +239,7 @@ TEST(RebaseStringViewTest, IdenticalCopy) {
   EXPECT_EQ(token.left(text), 0);
   token.RebaseStringView(substr);
   EXPECT_EQ(token.left(substr), 0);
-  EXPECT_EQ(token.text, substr);
+  EXPECT_EQ(token.text(), substr);
 }
 
 // Test that substring mismatch between new and old is checked.
@@ -269,7 +269,7 @@ TEST(RebaseStringViewTest, NewSubstringNotAtFront) {
   token.RebaseStringView(new_base.substr(3, 5));
   EXPECT_EQ(token.left(new_base), 3);
   EXPECT_EQ(token.right(new_base), 8);
-  EXPECT_EQ(token.text, text);
+  EXPECT_EQ(token.text(), text);
 }
 
 // Test that substring in the middle of old string is rebased correctly.
@@ -280,7 +280,7 @@ TEST(RebaseStringViewTest, UsingCharPointer) {
   token.RebaseStringView(new_base.begin() + 3);  // assume original length
   EXPECT_EQ(token.left(new_base), 3);
   EXPECT_EQ(token.right(new_base), 8);
-  EXPECT_EQ(token.text, text);
+  EXPECT_EQ(token.text(), text);
 }
 
 // Test integration with substr() function rebases correctly.
@@ -290,12 +290,12 @@ TEST(RebaseStringViewTest, RelativeToOldBase) {
   EXPECT_EQ(substr, "hello");
   TokenInfo token(1, substr);
   EXPECT_EQ(token.left(full_text), 6);
-  EXPECT_EQ(token.text, substr);
+  EXPECT_EQ(token.text(), substr);
   const absl::string_view new_base = "aahellobbb";
   token.RebaseStringView(new_base.substr(2, substr.length()));
   EXPECT_EQ(token.left(new_base), 2);
   EXPECT_EQ(token.right(new_base), 7);
-  EXPECT_EQ(token.text, substr);
+  EXPECT_EQ(token.text(), substr);
 }
 
 // Test rebasing into middle of superstring.
@@ -309,7 +309,7 @@ TEST(RebaseStringViewTest, MiddleOfSuperstring) {
   // src_text[3] lines up with dest_text[6].
   token.RebaseStringView(dest_text.substr(dest_offset, src_substr.length()));
   EXPECT_EQ(token.left(dest_text), dest_offset);
-  EXPECT_EQ(token.text, src_substr);
+  EXPECT_EQ(token.text(), src_substr);
 }
 
 // Test rebasing into prefix superstring.
@@ -323,7 +323,7 @@ TEST(RebaseStringViewTest, PrefixSuperstring) {
   // src_text[3] lines up with dest_text[3].
   token.RebaseStringView(dest_text.substr(dest_offset, src_substr.length()));
   EXPECT_EQ(token.left(dest_text), dest_offset);
-  EXPECT_EQ(token.text, src_substr);
+  EXPECT_EQ(token.text(), src_substr);
 }
 
 // Test that concatenation works on the degenerate case of no-tokens.
@@ -344,8 +344,8 @@ TEST(TokenInfoConcatenateTest, OneToken) {
   TokenInfo::Concatenate(&joined, &tokens);
   EXPECT_EQ(joined, "foo");
   ASSERT_EQ(tokens.size(), 1);
-  EXPECT_EQ(tokens[0].token_enum, 3);
-  EXPECT_EQ(tokens[0].text, "foo");
+  EXPECT_EQ(tokens[0].token_enum(), 3);
+  EXPECT_EQ(tokens[0].text(), "foo");
   EXPECT_EQ(tokens[0].left(joined), 0);
   EXPECT_EQ(tokens[0].right(joined), 3);
 }
@@ -363,18 +363,18 @@ TEST(TokenInfoConcatenateTest, MultipleTokens) {
   EXPECT_EQ(joined.size(), 8);  // 3 + 2 + 3
   ASSERT_EQ(tokens.size(), 3);
 
-  EXPECT_EQ(tokens[0].token_enum, 3);
-  EXPECT_EQ(tokens[0].text, "foo");
+  EXPECT_EQ(tokens[0].token_enum(), 3);
+  EXPECT_EQ(tokens[0].text(), "foo");
   EXPECT_EQ(tokens[0].left(joined), 0);
   EXPECT_EQ(tokens[0].right(joined), 3);
 
-  EXPECT_EQ(tokens[1].token_enum, 4);
-  EXPECT_EQ(tokens[1].text, "  ");
+  EXPECT_EQ(tokens[1].token_enum(), 4);
+  EXPECT_EQ(tokens[1].text(), "  ");
   EXPECT_EQ(tokens[1].left(joined), 3);
   EXPECT_EQ(tokens[1].right(joined), 5);
 
-  EXPECT_EQ(tokens[2].token_enum, 5);
-  EXPECT_EQ(tokens[2].text, "bar");
+  EXPECT_EQ(tokens[2].token_enum(), 5);
+  EXPECT_EQ(tokens[2].text(), "bar");
   EXPECT_EQ(tokens[2].left(joined), 5);
   EXPECT_EQ(tokens[2].right(joined), 8);
 }
@@ -392,18 +392,18 @@ TEST(TokenInfoConcatenateTest, MultipleTokensWithEmptyString) {
   EXPECT_EQ(joined.size(), 7);  // 3 + 0 + 4
   ASSERT_EQ(tokens.size(), 3);
 
-  EXPECT_EQ(tokens[0].token_enum, 3);
-  EXPECT_EQ(tokens[0].text, "foo");
+  EXPECT_EQ(tokens[0].token_enum(), 3);
+  EXPECT_EQ(tokens[0].text(), "foo");
   EXPECT_EQ(tokens[0].left(joined), 0);
   EXPECT_EQ(tokens[0].right(joined), 3);
 
-  EXPECT_EQ(tokens[1].token_enum, 6);
-  EXPECT_EQ(tokens[1].text, "");
+  EXPECT_EQ(tokens[1].token_enum(), 6);
+  EXPECT_EQ(tokens[1].text(), "");
   EXPECT_EQ(tokens[1].left(joined), 3);
   EXPECT_EQ(tokens[1].right(joined), 3);
 
-  EXPECT_EQ(tokens[2].token_enum, 5);
-  EXPECT_EQ(tokens[2].text, "barr");
+  EXPECT_EQ(tokens[2].token_enum(), 5);
+  EXPECT_EQ(tokens[2].text(), "barr");
   EXPECT_EQ(tokens[2].left(joined), 3);
   EXPECT_EQ(tokens[2].right(joined), 7);
 }

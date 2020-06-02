@@ -49,7 +49,7 @@ bool IsZero(const Symbol& expr) {
   }
   if (child->Kind() != SymbolKind::kLeaf) return false;
   const auto& term = down_cast<const SyntaxTreeLeaf&>(*child);
-  auto text = term.get().text;
+  auto text = term.get().text();
   if (text == "\'0") return true;
   // TODO(fangism): Could do more sophisticated constant expression evaluation
   // but for now it is fine for this to conservatively return false.
@@ -61,7 +61,7 @@ bool ConstantIntegerValue(const verible::Symbol& expr, int* value) {
   if (child->Kind() != SymbolKind::kLeaf) return false;
   const auto& term = down_cast<const SyntaxTreeLeaf&>(*child);
   // Don't even need to check the leaf token's enumeration type.
-  auto text = term.get().text;
+  auto text = term.get().text();
   return absl::SimpleAtoi(text, value);
 }
 

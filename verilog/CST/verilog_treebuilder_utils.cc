@@ -58,7 +58,7 @@ bool EqualNodeTag(const verible::SymbolPtr& symbol, NodeEnum e) {
 void ExpectString(const verible::SymbolPtr& symbol,
                   const std::string& expected) {
   const auto* leaf = down_cast<const verible::SyntaxTreeLeaf*>(symbol.get());
-  CHECK_EQ(std::string(ABSL_DIE_IF_NULL(leaf)->get().text), expected);
+  CHECK_EQ(std::string(ABSL_DIE_IF_NULL(leaf)->get().text()), expected);
 }
 
 }  // namespace verilog

@@ -42,7 +42,7 @@ verible::SymbolPtr MakeDPIImport(T0&& keyword, T1&& spec, T2&& property,
   verible::CheckSymbolAsLeaf(*spec, verilog_tokentype::TK_StringLiteral);
   if (id != nullptr) {
     CHECK(IsIdentifierLike(
-        verilog_tokentype(verible::SymbolCastToLeaf(*id).get().token_enum)));
+        verilog_tokentype(verible::SymbolCastToLeaf(*id).get().token_enum())));
   }
   verible::CheckOptionalSymbolAsLeaf(equals, '=');
   CHECK(verible::SymbolCastToNode(*proto).MatchesTagAnyOf(

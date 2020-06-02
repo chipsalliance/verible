@@ -53,7 +53,7 @@ NodeEnum DeclarationKeywordToNodeEnum(const Symbol& symbol) {
   };
   return FindWithDefault(
       *node_map,
-      verilog_tokentype(verible::SymbolCastToLeaf(symbol).get().token_enum),
+      verilog_tokentype(verible::SymbolCastToLeaf(symbol).get().token_enum()),
       NodeEnum(verible::kUntagged));
 }
 

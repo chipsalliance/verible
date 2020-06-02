@@ -103,7 +103,7 @@ TEST(GetSymbolIdentifierFromConstraintDeclarationTest, BasicTests) {
 
     const auto name_token = GetSymbolIdentifierFromConstraintDeclaration(
         *constraint_declarations.front().match);
-    EXPECT_EQ(name_token.text, test.second);
+    EXPECT_EQ(name_token.text(), test.second);
   }
 }
 

@@ -136,7 +136,7 @@ TEST(GetIdentifierFromModulePortDeclarationTest, OnePort) {
     const auto port_declarations = FindAllModulePortDeclarations(*root);
     const auto* identifier_leaf = GetIdentifierFromModulePortDeclaration(
         *port_declarations.front().match);
-    EXPECT_EQ(identifier_leaf->get().text, test.second);
+    EXPECT_EQ(identifier_leaf->get().text(), test.second);
   }
 }
 
@@ -158,10 +158,10 @@ TEST(GetIdentifierFromModulePortDeclarationTest, MultiplePorts) {
 
     const auto* identifier_leaf_1 =
         GetIdentifierFromModulePortDeclaration(*port_declarations[0].match);
-    EXPECT_EQ(identifier_leaf_1->get().text, "bar");
+    EXPECT_EQ(identifier_leaf_1->get().text(), "bar");
     const auto* identifier_leaf_2 =
         GetIdentifierFromModulePortDeclaration(*port_declarations[1].match);
-    EXPECT_EQ(identifier_leaf_2->get().text, "bar2");
+    EXPECT_EQ(identifier_leaf_2->get().text(), "bar2");
   }
 }
 
@@ -239,7 +239,7 @@ TEST(GetIdentifierFromTaskFunctionPortItemTest, ExpectSomeTaskFunctionPorts) {
       const auto& port_decl = port_declarations[i];
       const auto* identifier_leaf =
           GetIdentifierFromTaskFunctionPortItem(*port_decl.match);
-      EXPECT_EQ(identifier_leaf->get().text, expected_port.id)
+      EXPECT_EQ(identifier_leaf->get().text(), expected_port.id)
           << "Failed code:\n"
           << code;
       const auto* port_type = GetTypeOfTaskFunctionPortItem(*port_decl.match);

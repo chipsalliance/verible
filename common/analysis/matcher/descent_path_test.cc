@@ -49,8 +49,8 @@ TEST(DescentPathTest, GetDescendantsFromPathEmbeddedNullPass) {
 
   ASSERT_NE(leaf1, nullptr);
   ASSERT_NE(leaf2, nullptr);
-  EXPECT_EQ(leaf1->get().token_enum, 10);
-  EXPECT_EQ(leaf2->get().token_enum, 10);
+  EXPECT_EQ(leaf1->get().token_enum(), 10);
+  EXPECT_EQ(leaf2->get().token_enum(), 10);
 }
 
 TEST(DescentPathTest, GetDescendantsFromPathSingle) {
@@ -61,7 +61,7 @@ TEST(DescentPathTest, GetDescendantsFromPathSingle) {
 
   const auto* leaf = down_cast<const SyntaxTreeLeaf*>(descendants[0]);
   ASSERT_NE(leaf, nullptr);
-  EXPECT_EQ(leaf->get().token_enum, 10);
+  EXPECT_EQ(leaf->get().token_enum(), 10);
 }
 
 TEST(DescentPathTest, GetDescendantsFromPathMultiple) {
@@ -91,8 +91,8 @@ TEST(DescentPathTest, GetDescendantsFromPathMultiplePaths) {
 
   ASSERT_NE(leaf1, nullptr);
   ASSERT_NE(leaf2, nullptr);
-  EXPECT_EQ(leaf1->get().token_enum, 10);
-  EXPECT_EQ(leaf2->get().token_enum, 10);
+  EXPECT_EQ(leaf1->get().token_enum(), 10);
+  EXPECT_EQ(leaf2->get().token_enum(), 10);
 }
 
 TEST(DescentPathTest, GetDescendantsFromPathFailureGapInPath) {

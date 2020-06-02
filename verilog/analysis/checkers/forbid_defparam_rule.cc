@@ -51,7 +51,7 @@ void ForbidDefparamRule::HandleSymbol(
   if (matcher_.Matches(symbol, &manager)) {
     const auto& defparam_token =
         GetSubtreeAsLeaf(symbol, NodeEnum::kParameterOverride, 0).get();
-    CHECK_EQ(defparam_token.token_enum, TK_defparam);
+    CHECK_EQ(defparam_token.token_enum(), TK_defparam);
     violations_.insert(
         verible::LintViolation(defparam_token, kMessage, context));
   }

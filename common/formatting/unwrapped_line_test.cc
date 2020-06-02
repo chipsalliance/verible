@@ -94,8 +94,8 @@ TEST_F(UnwrappedLineTest, SpanNextToken) {
   const auto& front_token = tokens.front();
   const auto& back_token = tokens.back();
   const auto range = uwline.TokensRange();
-  EXPECT_EQ(range.front().TokenEnum(), front_token.token_enum);
-  EXPECT_EQ(range.back().TokenEnum(), back_token.token_enum);
+  EXPECT_EQ(range.front().TokenEnum(), front_token.token_enum());
+  EXPECT_EQ(range.back().TokenEnum(), back_token.token_enum());
   EXPECT_EQ(uwline.Size(), 2);
 
   uwline.SpanUpToToken(range.begin());  // clear range
@@ -141,8 +141,8 @@ TEST_F(UnwrappedLineTest, SpanPrevToken) {
   const auto& front_token = tokens.front();
   const auto& back_token = tokens.back();
   const auto range = uwline.TokensRange();
-  EXPECT_EQ(range.front().TokenEnum(), front_token.token_enum);
-  EXPECT_EQ(range.back().TokenEnum(), back_token.token_enum);
+  EXPECT_EQ(range.front().TokenEnum(), front_token.token_enum());
+  EXPECT_EQ(range.back().TokenEnum(), back_token.token_enum());
   EXPECT_EQ(uwline.Size(), 2);
 
   uwline.SpanBackToToken(range.end());  // clear range
@@ -189,8 +189,8 @@ TEST_F(UnwrappedLineTest, AddMultipleTokens) {
 
   EXPECT_EQ(uwline.Size(), 3);
   const auto range = uwline.TokensRange();
-  EXPECT_EQ(range.front().Text(), tokens.front().text);
-  EXPECT_EQ(range.back().Text(), tokens.back().text);
+  EXPECT_EQ(range.front().Text(), tokens.front().text());
+  EXPECT_EQ(range.back().Text(), tokens.back().text());
 }
 
 // Testing final formatting of FormattedText, empty contents.

@@ -37,7 +37,7 @@ class TokenStreamViewTest : public testing::Test {
   }
 
   static bool KeepEvenTokens(const TokenInfo& t) {
-    return !(t.token_enum & 0x1);
+    return !(t.token_enum() & 0x1);
   }
 
  protected:
@@ -55,8 +55,8 @@ TEST_F(TokenStreamViewTest, Filter) {
   InitTokenStreamView(tokens_, &view1);
   FilterTokenStreamView(KeepEvenTokens, view1, &view2);
   EXPECT_EQ(6, view2.size());
-  EXPECT_EQ(2, view2.front()->token_enum);
-  EXPECT_EQ(0, view2.back()->token_enum);
+  EXPECT_EQ(2, view2.front()->token_enum());
+  EXPECT_EQ(0, view2.back()->token_enum());
 }
 
 TEST_F(TokenStreamViewTest, FilterInPlace) {
@@ -64,8 +64,8 @@ TEST_F(TokenStreamViewTest, FilterInPlace) {
   InitTokenStreamView(tokens_, &view);
   FilterTokenStreamViewInPlace(KeepEvenTokens, &view);
   EXPECT_EQ(6, view.size());
-  EXPECT_EQ(2, view.front()->token_enum);
-  EXPECT_EQ(0, view.back()->token_enum);
+  EXPECT_EQ(2, view.front()->token_enum());
+  EXPECT_EQ(0, view.back()->token_enum());
 }
 
 // Helper class for testing Token range methods.

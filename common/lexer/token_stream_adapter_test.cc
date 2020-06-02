@@ -70,7 +70,7 @@ TEST(MakeTokenSequenceTest, Sequencer) {
 
 class TheNumberTwoIsErrorLexer : public FakeTokenSequenceLexer {
   bool TokenIsError(const TokenInfo& token) const override {
-    return token.token_enum == 2;
+    return token.token_enum() == 2;
   }
 };
 
@@ -93,7 +93,7 @@ TEST(MakeTokenSequenceTest, SequencerWithError) {
   ASSERT_EQ(errors.size(), 1);
   EXPECT_EQ(receiver.front(), *tokens.begin());
   EXPECT_EQ(receiver.back(), *(tokens.begin() + 1));
-  EXPECT_EQ(errors.front().token_enum, 2);
+  EXPECT_EQ(errors.front().token_enum(), 2);
   EXPECT_EQ(errors.front(), receiver.back());
 }
 

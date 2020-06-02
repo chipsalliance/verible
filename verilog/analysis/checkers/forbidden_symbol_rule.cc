@@ -84,7 +84,7 @@ void ForbiddenSystemTaskFunctionRule::HandleSymbol(
   if (matcher_.Matches(symbol, &manager)) {
     if (auto leaf = manager.GetAs<verible::SyntaxTreeLeaf>("name")) {
       const auto& ism = InvalidSymbolsMap();
-      if (ism.find(std::string(leaf->get().text)) != ism.end()) {
+      if (ism.find(std::string(leaf->get().text())) != ism.end()) {
         violations_.insert(
             verible::LintViolation(leaf->get(), FormatReason(*leaf), context));
       }
@@ -99,7 +99,7 @@ verible::LintRuleStatus ForbiddenSystemTaskFunctionRule::Report() const {
 
 std::string ForbiddenSystemTaskFunctionRule::FormatReason(
     const verible::SyntaxTreeLeaf& leaf) const {
-  const auto function_name = std::string(leaf.get().text);
+  const auto function_name = std::string(leaf.get().text());
   const auto replacement =
       FindWithDefault(InvalidSymbolsMap(), function_name, "");
   auto message = function_name + " is a forbidden system function or task";

@@ -114,7 +114,7 @@ std::vector<FormattedExcerpt> SearchLineWraps(const UnwrappedLine& uwline,
     // Push one or both branches into the worklist.
     const auto& token = next.state->GetNextToken();
     if (token.before.break_decision == SpacingOptions::Preserve) {
-      VLOG(4) << "preserving spaces before \'" << token.token->text << '\'';
+      VLOG(4) << "preserving spaces before \'" << token.token->text() << '\'';
       SearchState preserved(std::make_shared<StateNode>(
           next.state, style, SpacingDecision::Preserve));
       worklist.push(preserved);
@@ -122,7 +122,7 @@ std::vector<FormattedExcerpt> SearchLineWraps(const UnwrappedLine& uwline,
       // Remaining options are: Undecided, MustWrap, MustAppend
       // Explore one or both: SpacingDecision::Wrap/Append
       if (token.before.break_decision != SpacingOptions::MustWrap) {
-        VLOG(4) << "considering appending \'" << token.token->text << '\'';
+        VLOG(4) << "considering appending \'" << token.token->text() << '\'';
         // Consider cost of appending token to current line.
         SearchState appended(std::make_shared<StateNode>(
             next.state, style, SpacingDecision::Append));
@@ -131,7 +131,7 @@ std::vector<FormattedExcerpt> SearchLineWraps(const UnwrappedLine& uwline,
         VLOG(4) << "  column: " << appended.state->current_column;
       }
       if (token.before.break_decision != SpacingOptions::MustAppend) {
-        VLOG(4) << "considering wrapping \'" << token.token->text << '\'';
+        VLOG(4) << "considering wrapping \'" << token.token->text() << '\'';
         // Consider cost of line wrapping here.
         SearchState wrapped(std::make_shared<StateNode>(next.state, style,
                                                         SpacingDecision::Wrap));

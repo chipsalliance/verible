@@ -52,7 +52,7 @@ StateNode::StateNode(const UnwrappedLine& uwline, const BasicFormatStyle& style)
   VLOG(4) << "initial column position: " << current_column;
   wrap_column_positions.push(current_column + style.wrap_spaces);
   if (!uwline.TokensRange().empty()) {
-    VLOG(4) << "token.text: \'" << undecided_path.front().token->text << '\'';
+    VLOG(4) << "token.text: \'" << undecided_path.front().token->text() << '\'';
     // Point undecided_path past the first token.
     undecided_path.pop_front();
     // Place first token on unwrapped line.
@@ -76,7 +76,7 @@ StateNode::StateNode(const std::shared_ptr<const StateNode>& parent,
   CHECK(!prev_state->Done());
 
   const PreFormatToken& current_format_token(GetCurrentToken());
-  VLOG(4) << "token.text: \'" << current_format_token.token->text << '\'';
+  VLOG(4) << "token.text: \'" << current_format_token.token->text() << '\'';
 
   bool called_open_group_balance = false;
   bool called_close_group_balance = false;
@@ -344,7 +344,7 @@ void StateNode::ReconstructFormatDecisions(FormattedExcerpt* result) const {
   const auto format_tokens_slice =
       make_range(format_tokens.begin(), format_tokens.begin() + depth);
   for (auto& format_token : reversed_view(format_tokens_slice)) {
-    const auto text = format_token.token->text;
+    const auto text = format_token.token->text();
     VLOG(3) << "reconstructing: " << text;
     // Apply decision at reverse_iter to (formatted) FormatToken.
     format_token.before.action = ABSL_DIE_IF_NULL(reverse_iter)->spacing_choice;

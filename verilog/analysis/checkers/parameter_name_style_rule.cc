@@ -96,7 +96,7 @@ void ParameterNameStyleRule::HandleSymbol(const verible::Symbol& symbol,
     auto identifiers = GetAllParameterNameTokens(symbol);
 
     for (auto id : identifiers) {
-      const auto param_name = id->text;
+      const auto param_name = id->text();
       uint32_t observed_style = 0;
       if (verible::IsUpperCamelCaseWithDigits(param_name))
         observed_style |= kUpperCamelCase;

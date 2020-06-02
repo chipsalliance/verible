@@ -280,7 +280,7 @@ TEST(AnalyzeVerilogClassBodyTest, RejectsModuleItem) {
   EXPECT_THAT(rejects, SizeIs(1));
   const auto& first_reject = rejects.front();
   EXPECT_EQ(first_reject.phase, AnalysisPhase::kParsePhase);
-  EXPECT_EQ(first_reject.token_info.text, "initial");
+  EXPECT_EQ(first_reject.token_info.text(), "initial");
   DiagnosticMessagesContainFilename(*analyzer_ptr, "<file>");
 }
 

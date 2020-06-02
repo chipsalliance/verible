@@ -135,7 +135,7 @@ TEST(VerilogPreprocessTest, OneMacroDefinitionNoParamsNoValue) {
     EXPECT_THAT(definitions, ElementsAre(Pair("FOOOO", testing::_)));
     auto macro = FindOrNull(definitions, "FOOOO");
     ASSERT_NE(macro, nullptr);
-    EXPECT_EQ(macro->DefinitionText().text, "");
+    EXPECT_EQ(macro->DefinitionText().text(), "");
     EXPECT_FALSE(macro->IsCallable());
     EXPECT_TRUE(macro->Parameters().empty());
   }
@@ -152,7 +152,7 @@ TEST(VerilogPreprocessTest, OneMacroDefinitionNoParamsSimpleValue) {
   EXPECT_THAT(definitions, ElementsAre(Pair("FOOOO", testing::_)));
   auto macro = FindOrNull(definitions, "FOOOO");
   ASSERT_NE(macro, nullptr);
-  EXPECT_EQ(macro->DefinitionText().text, "\"bar\"");
+  EXPECT_EQ(macro->DefinitionText().text(), "\"bar\"");
   EXPECT_FALSE(macro->IsCallable());
   EXPECT_TRUE(macro->Parameters().empty());
 }
@@ -168,12 +168,12 @@ TEST(VerilogPreprocessTest, OneMacroDefinitionOneParamWithValue) {
   EXPECT_THAT(definitions, ElementsAre(Pair("FOOOO", testing::_)));
   auto macro = FindOrNull(definitions, "FOOOO");
   ASSERT_NE(macro, nullptr);
-  EXPECT_EQ(macro->DefinitionText().text, "(x+1)");
+  EXPECT_EQ(macro->DefinitionText().text(), "(x+1)");
   EXPECT_TRUE(macro->IsCallable());
   const auto& params = macro->Parameters();
   EXPECT_EQ(params.size(), 1);
   const auto& param(params[0]);
-  EXPECT_EQ(param.name.text, "x");
+  EXPECT_EQ(param.name.text(), "x");
   EXPECT_FALSE(param.HasDefaultText());
 }
 
@@ -188,14 +188,14 @@ TEST(VerilogPreprocessTest, OneMacroDefinitionOneParamDefaultWithValue) {
   EXPECT_THAT(definitions, ElementsAre(Pair("FOOOO", testing::_)));
   auto macro = FindOrNull(definitions, "FOOOO");
   ASSERT_NE(macro, nullptr);
-  EXPECT_EQ(macro->DefinitionText().text, "(x+3)");
+  EXPECT_EQ(macro->DefinitionText().text(), "(x+3)");
   EXPECT_TRUE(macro->IsCallable());
   const auto& params = macro->Parameters();
   EXPECT_EQ(params.size(), 1);
   const auto& param(params[0]);
-  EXPECT_EQ(param.name.text, "x");
+  EXPECT_EQ(param.name.text(), "x");
   EXPECT_TRUE(param.HasDefaultText());
-  EXPECT_EQ(param.default_value.text, "22");
+  EXPECT_EQ(param.default_value.text(), "22");
 }
 
 TEST(VerilogPreprocessTest, TwoMacroDefinitions) {

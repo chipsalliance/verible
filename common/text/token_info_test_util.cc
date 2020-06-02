@@ -36,9 +36,9 @@ ExpectedTokenInfo::ExpectedTokenInfo(char token_enum_and_text)
                 // address) at offset 0 or sizeof(int) -1.
                 // Note: This constructor using a self-pointer makes this struct
                 // non-default-copy/move/assign-able.
-                absl::string_view(reinterpret_cast<const char*>(&token_enum)
+                absl::string_view(reinterpret_cast<const char*>(&token_enum_)
 #ifdef IS_BIG_ENDIAN
-                                      + (sizeof(typeid(token_enum)) - 1)
+                                      + (sizeof(typeid(token_enum_)) - 1)
 #endif
                                       ,
                                   1)) {
@@ -67,7 +67,7 @@ std::vector<TokenInfo> TokenInfoTestData::FindImportantTokens() const {
   std::vector<TokenInfo> return_tokens;
   std::copy_if(expected_tokens.begin(), expected_tokens.end(),
                std::back_inserter(return_tokens), [](const TokenInfo& t) {
-                 return t.token_enum != ExpectedTokenInfo::kDontCare;
+                 return t.token_enum() != ExpectedTokenInfo::kDontCare;
                });
   return return_tokens;
 }
@@ -87,7 +87,7 @@ void TokenInfoTestData::RebaseToCodeCopy(std::vector<TokenInfo>* tokens,
   // before directly comparing against the rejected tokens.
   for (TokenInfo& token : *tokens) {
     const auto offset =
-        std::distance(absl::string_view(code).begin(), token.text.begin());
+        std::distance(absl::string_view(code).begin(), token.text().begin());
     token.RebaseStringView(base.begin() + offset);
   }
 }

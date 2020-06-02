@@ -110,7 +110,7 @@ TEST(GetPackageNameTokenTest, ValidPackage) {
       down_cast<const SyntaxTreeNode&>(*package_declarations.front().match);
   // Root node is a description list, not a package.
   const auto& token = GetPackageNameToken(package_node);
-  EXPECT_EQ(token.text, "foo");
+  EXPECT_EQ(token.text(), "foo");
 }
 
 }  // namespace

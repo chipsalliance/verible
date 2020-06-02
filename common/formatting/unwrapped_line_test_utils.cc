@@ -31,7 +31,7 @@ void UnwrappedLineMemoryHandler::CreateTokenInfosExternalStringBuffer(
   token_infos_.reserve(N);
   pre_format_tokens_.reserve(N);
   for (const auto& token : tokens) {
-    token_infos_.emplace_back(token.token_enum, token.text);
+    token_infos_.emplace_back(token.token_enum(), token.text());
     pre_format_tokens_.emplace_back(&token_infos_.back());
   }
   // joined_token_text_ remains unused

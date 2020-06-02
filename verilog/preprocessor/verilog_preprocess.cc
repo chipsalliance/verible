@@ -54,11 +54,11 @@ VerilogPreprocess::ConsumeMacroDefinition(
         **token_iter, "unexpected EOF where expecting macro definition name");
   }
   const auto macro_name = *token_iter;
-  if (macro_name->token_enum != PP_Identifier) {
+  if (macro_name->token_enum() != PP_Identifier) {
     return absl::make_unique<VerilogPreprocessError>(
         **token_iter,
         absl::StrCat("Expected identifier for macro name, but got \"",
-                     macro_name->text, "...\""));
+                     macro_name->text(), "...\""));
   }
   define_tokens->push_back(*token_iter);
 
@@ -72,7 +72,7 @@ VerilogPreprocess::ConsumeMacroDefinition(
       return nullptr;
     }
     define_tokens->push_back(*token_iter);
-  } while ((*token_iter)->token_enum != PP_define_body);
+  } while ((*token_iter)->token_enum() != PP_define_body);
   return nullptr;
 }
 
@@ -84,7 +84,7 @@ std::unique_ptr<VerilogPreprocessError> VerilogPreprocess::ParseMacroParameter(
   auto advance = [](TokenStreamView::const_iterator* scan) { return *++*scan; };
   auto token_iter = **token_scan;
   // Extract macro name.
-  if (token_iter->token_enum != PP_Identifier) {
+  if (token_iter->token_enum() != PP_Identifier) {
     return absl::make_unique<VerilogPreprocessError>(
         *token_iter,
         absl::StrCat("expected identifier for macro parameter, but got: ",
@@ -98,14 +98,14 @@ std::unique_ptr<VerilogPreprocessError> VerilogPreprocess::ParseMacroParameter(
     return absl::make_unique<VerilogPreprocessError>(
         *token_iter, "unexpected EOF while parsing macro parameter");
   }
-  if (token_iter->token_enum == '=') {
+  if (token_iter->token_enum() == '=') {
     token_iter = advance(token_scan);
     if (token_iter->isEOF()) {
       return absl::make_unique<VerilogPreprocessError>(
           *token_iter,
           "unexpected EOF where macro parameter default text is expected");
     }
-    if (token_iter->token_enum != PP_default_text) {
+    if (token_iter->token_enum() != PP_default_text) {
       return absl::make_unique<VerilogPreprocessError>(
           *token_iter,
           absl::StrCat("expected macro parameter default text, but got: ",
@@ -120,9 +120,9 @@ std::unique_ptr<VerilogPreprocessError> VerilogPreprocess::ParseMacroParameter(
         *token_iter,
         "unexpected EOF where expecting macro parameter separator");
   }
-  if (token_iter->token_enum == ',') {
+  if (token_iter->token_enum() == ',') {
     advance(token_scan);  // Advance to next parameter identifier.
-  } else if (token_iter->token_enum == ')') {
+  } else if (token_iter->token_enum() == ')') {
     // Do not advance.
   } else {
     // This case covers an unexpected EOF token.
@@ -131,7 +131,7 @@ std::unique_ptr<VerilogPreprocessError> VerilogPreprocess::ParseMacroParameter(
         absl::StrCat(
             "expecting macro parameter separator ',', or terminator ')', "
             "but got: ",
-            verilog_symbol_name(token_iter->token_enum)));
+            verilog_symbol_name(token_iter->token_enum())));
   }
   return nullptr;
 }
@@ -143,10 +143,10 @@ std::unique_ptr<VerilogPreprocessError> VerilogPreprocess::ParseMacroDefinition(
     const TokenStreamView& define_tokens, MacroDefinition* macro_definition) {
   auto token_scan = define_tokens.begin() + 2;  // skip `define and the name
   auto token_iter = *token_scan;
-  if (token_iter->token_enum == '(') {
+  if (token_iter->token_enum() == '(') {
     token_iter = *++token_scan;
     // Scan for macro parameters.
-    while (token_iter->token_enum != ')') {
+    while (token_iter->token_enum() != ')') {
       MacroParameterInfo macro_parameter;
       auto error_ptr = ParseMacroParameter(&token_scan, &macro_parameter);
       if (error_ptr) return error_ptr;
@@ -157,7 +157,7 @@ std::unique_ptr<VerilogPreprocessError> VerilogPreprocess::ParseMacroDefinition(
     token_iter = *++token_scan;
   }
   // The macro definition body follows.
-  if (token_iter->token_enum != PP_define_body) {
+  if (token_iter->token_enum() != PP_define_body) {
     return absl::make_unique<VerilogPreprocessError>(
         *token_iter,
         absl::StrCat("expected macro definition body text, but got: ",
@@ -182,7 +182,7 @@ absl::Status VerilogPreprocess::HandleTokenIterator(
     const StreamIteratorGenerator& generator) {
   // For now, pass through all macro definition tokens to next consumer
   // (parser).
-  switch ((*iter)->token_enum) {
+  switch ((*iter)->token_enum()) {
     case PP_define:
       return HandleDefine(iter, generator);
     default:

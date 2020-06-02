@@ -139,9 +139,12 @@ class LintWaiverBuilderTest : public testing::Test, public LintWaiverBuilder {
  public:
   LintWaiverBuilderTest()
       : LintWaiverBuilder(
-            [](const TokenInfo& token) { return token.token_enum == kComment; },
             [](const TokenInfo& token) {
-              return token.token_enum == kSpace || token.token_enum == kNewline;
+              return token.token_enum() == kComment;
+            },
+            [](const TokenInfo& token) {
+              return token.token_enum() == kSpace ||
+                     token.token_enum() == kNewline;
             },
             kLinterName, kWaiveLineCommand, kWaiveStartCommand,
             kWaiveStopCommand) {}

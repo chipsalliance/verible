@@ -31,7 +31,7 @@ namespace verible {
 int LexAdapter(SymbolPtr* value, ParserParam* param) {
   const auto& last_token = param->FetchToken();
   value->reset(new SyntaxTreeLeaf(last_token));
-  return last_token.token_enum;
+  return last_token.token_enum();
 }
 
 // Error-reporting function.

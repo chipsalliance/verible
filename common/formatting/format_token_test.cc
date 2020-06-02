@@ -135,7 +135,7 @@ TEST(PreFormatTokenTest, OriginalLeadingSpaces) {
     PreFormatToken p1(&tok1), p2(&tok2);
     // set original spacing
     p1.before.preserved_space_start = text.begin();
-    p2.before.preserved_space_start = tok1.text.end();
+    p2.before.preserved_space_start = tok1.text().end();
     EXPECT_TRUE(BoundsEqual(p1.OriginalLeadingSpaces(), text.substr(0, 1)));
     EXPECT_TRUE(BoundsEqual(p2.OriginalLeadingSpaces(), text.substr(4, 1)));
   }
@@ -158,7 +158,7 @@ TEST(PreFormatTokenTest, LeadingSpacesLength) {
     p1.before.preserved_space_start = text.begin();
     p1.before.break_decision = SpacingOptions::Undecided;
     p1.before.spaces_required = 1;
-    p2.before.preserved_space_start = tok1.text.end();
+    p2.before.preserved_space_start = tok1.text().end();
     p2.before.break_decision = SpacingOptions::Undecided;
     p2.before.spaces_required = 2;
     EXPECT_EQ(p1.LeadingSpacesLength(), 1);
@@ -170,7 +170,7 @@ TEST(PreFormatTokenTest, LeadingSpacesLength) {
     p1.before.preserved_space_start = text.begin();
     p1.before.break_decision = SpacingOptions::Preserve;
     p1.before.spaces_required = 2;
-    p2.before.preserved_space_start = tok1.text.end();
+    p2.before.preserved_space_start = tok1.text().end();
     p2.before.break_decision = SpacingOptions::Preserve;
     p2.before.spaces_required = 4;
     EXPECT_EQ(p1.LeadingSpacesLength(), 1);  // "a"
@@ -226,7 +226,7 @@ TEST(FormattedTokenTest, OriginalLeadingSpaces) {
     FormattedToken ft1(p1), ft2(p2);
     // set original spacing
     ft1.before.preserved_space_start = text.begin();
-    ft2.before.preserved_space_start = tok1.text.end();
+    ft2.before.preserved_space_start = tok1.text().end();
     EXPECT_TRUE(BoundsEqual(ft1.OriginalLeadingSpaces(), text.substr(0, 1)));
     EXPECT_TRUE(BoundsEqual(ft2.OriginalLeadingSpaces(), text.substr(4, 1)));
   }
@@ -252,7 +252,7 @@ TEST(FormattedTokenTest, PreservedSpaces) {
     ft2.before.action = SpacingDecision::Preserve;
     // preserved_space_start takes precedence over the other attributes
     ft1.before.preserved_space_start = text.begin();
-    ft2.before.preserved_space_start = tok1.text.end();
+    ft2.before.preserved_space_start = tok1.text().end();
     std::ostringstream stream;
     stream << ft1 << ft2;
     // For testing purposes, it doesn't matter what text was in the gap between

@@ -68,7 +68,7 @@ struct LintViolation {
   bool operator<(const LintViolation& r) const {
     // compares addresses of violations, which correspond to substring
     // locations
-    return token.text.data() < r.token.text.data();
+    return token.text().data() < r.token.text().data();
   }
 };
 

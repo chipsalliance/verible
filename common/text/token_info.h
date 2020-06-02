@@ -32,14 +32,8 @@ namespace verible {
 // Reminder: The text string_view doesn't own its memory, so the owner must
 // always out-live the token.
 //
-// TODO(fangism): This struct is becoming too functional, make it a class.
-// Fix names for readability in that update.
-struct TokenInfo {
-  int token_enum;
-
-  // The substring of a larger text that this token represents.
-  absl::string_view text;
-
+class TokenInfo {
+ public:
   // Construct an EOF token.
   // Note, however, that the bounds of the internal string_view in this case
   // do not correspond to any subrange of valid string.
@@ -55,7 +49,7 @@ struct TokenInfo {
   TokenInfo() = delete;
 
   TokenInfo(int token_enum, absl::string_view text)
-      : token_enum(token_enum), text(text) {}
+      : token_enum_(token_enum), text_(text) {}
 
   TokenInfo(const TokenInfo&) = default;
   TokenInfo(TokenInfo&&) = default;
@@ -80,14 +74,19 @@ struct TokenInfo {
     Context(const Context&) = default;
   };
 
+  int token_enum() const { return token_enum_; }
+  void set_token_enum(int t) { token_enum_ = t; }
+  absl::string_view text() const { return text_; }
+  void set_text(absl::string_view t) { text_ = t; }
+
   // Return position of this token's text start relative to a base buffer.
   int left(absl::string_view base) const {
-    return std::distance(base.begin(), text.begin());
+    return std::distance(base.begin(), text_.begin());
   }
 
   // Return position of this token's text end relative to a base buffer.
   int right(absl::string_view base) const {
-    return std::distance(base.begin(), text.end());
+    return std::distance(base.begin(), text_.end());
   }
 
   // Advances the text range along the same memory buffer to span the
@@ -95,7 +94,7 @@ struct TokenInfo {
   // a series of abutting substring ranges.  Useful for lexer operation.
   void AdvanceText(int token_length) {
     // The end of the previous token is the beginning of the next.
-    text = absl::string_view(text.end(), token_length);
+    text_ = absl::string_view(text_.end(), token_length);
   }
 
   // Writes a human-readable string representation of the token.
@@ -124,7 +123,7 @@ struct TokenInfo {
   // string_view::iterator happens to be const char*, but don't rely on that
   // fact as it can be implementation-dependent.
   void RebaseStringView(const char* new_text) {
-    RebaseStringView(absl::string_view(new_text, text.length()));
+    RebaseStringView(absl::string_view(new_text, text_.length()));
   }
 
   // Joins the text from a sequence of (text-disjoint) tokens, and also
@@ -144,19 +143,25 @@ struct TokenInfo {
 
   // Returns true if tokens are considered equivalent, ignoring location.
   bool EquivalentWithoutLocation(const TokenInfo& token) const {
-    return token_enum == token.token_enum &&
-           (token_enum == TK_EOF || text == token.text);
+    return token_enum_ == token.token_enum_ &&
+           (token_enum_ == TK_EOF || text_ == token.text_);
   }
 
   // Returns true if tokens have equal enum and equal string length (but
   // otherwise ignoring string contents).  This is useful for verifying
   // space-preserving obfuscation transformations.
   bool EquivalentBySpace(const TokenInfo& token) const {
-    return token_enum == token.token_enum &&
-           (token_enum == TK_EOF || text.length() == token.text.length());
+    return token_enum_ == token.token_enum_ &&
+           (token_enum_ == TK_EOF || text_.length() == token.text_.length());
   }
 
-  bool isEOF() const { return token_enum == TK_EOF; }
+  bool isEOF() const { return token_enum_ == TK_EOF; }
+
+ protected:  // protected, as ExpectedTokenInfo accesses it.
+  int token_enum_;
+
+  // The substring of a larger text that this token represents.
+  absl::string_view text_;
 };
 
 std::ostream& operator<<(std::ostream&, const TokenInfo&);
@@ -183,7 +188,7 @@ void ConcatenateTokenInfos(std::string* out, TokenIter begin, TokenIter end) {
   const auto token_range = make_range(begin, end);
   size_t total_length = 0;
   for (const auto& token : token_range) {
-    total_length += token.text.length();
+    total_length += token.text().length();
   }
   out->resize(total_length);
   const absl::string_view out_view(*out);
@@ -193,11 +198,11 @@ void ConcatenateTokenInfos(std::string* out, TokenIter begin, TokenIter end) {
   int offset = 0;
   for (auto& token : token_range) {
     // Expect library/compiler to optimize this to a strcpy()/memcpy().
-    code_iter = std::copy(token.text.begin(), token.text.end(), code_iter);
-    const auto new_text = out_view.substr(offset, token.text.length());
+    code_iter = std::copy(token.text().begin(), token.text().end(), code_iter);
+    const auto new_text = out_view.substr(offset, token.text().length());
     // Adjust locations relative to newly concatenated string.
     token.RebaseStringView(new_text);
-    offset += token.text.length();
+    offset += token.text().length();
   }
 }
 

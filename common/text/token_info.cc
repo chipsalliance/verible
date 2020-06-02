@@ -38,9 +38,9 @@ TokenInfo TokenInfo::EOFToken(absl::string_view buffer) {
 }
 
 bool TokenInfo::operator==(const TokenInfo& token) const {
-  return token_enum == token.token_enum &&
-         (token_enum == TK_EOF ||  // All EOF tokens considered equal.
-          BoundsEqual(text, token.text));
+  return token_enum_ == token.token_enum_ &&
+         (token_enum_ == TK_EOF ||  // All EOF tokens considered equal.
+          BoundsEqual(text_, token.text_));
 }
 
 TokenInfo::Context::Context(absl::string_view b)
@@ -51,16 +51,16 @@ TokenInfo::Context::Context(absl::string_view b)
 std::ostream& TokenInfo::ToStream(std::ostream& output_stream,
                                   const Context& context) const {
   output_stream << "(#";
-  context.token_enum_translator(output_stream, token_enum);
+  context.token_enum_translator(output_stream, token_enum_);
   output_stream << " @" << left(context.base) << '-' << right(context.base)
-                << ": \"" << text << "\")";
-  const auto dist = std::distance(context.base.end(), text.end());
-  CHECK(IsSubRange(text, context.base)) << "text.end() is off by " << dist;
+                << ": \"" << text_ << "\")";
+  const auto dist = std::distance(context.base.end(), text_.end());
+  CHECK(IsSubRange(text_, context.base)) << "text.end() is off by " << dist;
   return output_stream;
 }
 
 std::ostream& TokenInfo::ToStream(std::ostream& output_stream) const {
-  return output_stream << "(#" << token_enum << ": \"" << text << "\")";
+  return output_stream << "(#" << token_enum_ << ": \"" << text_ << "\")";
 }
 
 std::string TokenInfo::ToString(const Context& context) const {
@@ -76,7 +76,7 @@ std::string TokenInfo::ToString() const {
 }
 
 void TokenInfo::RebaseStringView(absl::string_view new_text) {
-  verible::RebaseStringView(&text, new_text);
+  verible::RebaseStringView(&text_, new_text);
 }
 
 void TokenInfo::Concatenate(std::string* out, std::vector<TokenInfo>* tokens) {

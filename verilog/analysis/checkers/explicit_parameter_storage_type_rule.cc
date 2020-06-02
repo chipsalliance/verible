@@ -71,7 +71,7 @@ static bool HasStringAssignment(const verible::Symbol& param_decl) {
   // RHS, so here we focus on the simple case in which the RHS is a
   // string literal.
   if (s->Kind() != verible::SymbolKind::kLeaf) return false;
-  return verible::SymbolCastToLeaf(*s).get().token_enum ==
+  return verible::SymbolCastToLeaf(*s).get().token_enum() ==
          verilog_tokentype::TK_StringLiteral;
 }
 
@@ -87,7 +87,7 @@ void ExplicitParameterStorageTypeRule::HandleSymbol(
       if (exempt_string_ && HasStringAssignment(symbol)) return;
       const verible::TokenInfo& param_name = GetParameterNameToken(symbol);
       violations_.insert(LintViolation(
-          param_name, absl::StrCat(kMessage, "(", param_name.text, ")."),
+          param_name, absl::StrCat(kMessage, "(", param_name.text(), ")."),
           context));
     }
   }

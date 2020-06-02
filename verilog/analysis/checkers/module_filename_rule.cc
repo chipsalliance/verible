@@ -63,7 +63,7 @@ std::string ModuleFilenameRule::GetDescription(
 static bool ModuleNameMatches(const verible::Symbol& s,
                               absl::string_view name) {
   const auto& token_info = GetModuleNameToken(s);
-  return token_info.text == name;
+  return token_info.text() == name;
 }
 
 void ModuleFilenameRule::Lint(const TextStructureView& text_structure,

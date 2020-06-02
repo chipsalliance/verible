@@ -41,7 +41,7 @@ class AllLeavesMustBeN : public SyntaxTreeLintRule {
   // is not
   void HandleLeaf(const SyntaxTreeLeaf& leaf,
                   const SyntaxTreeContext& context) override {
-    if (leaf.get().token_enum != target_) {
+    if (leaf.get().token_enum() != target_) {
       violations_.insert(LintViolation(leaf.get(), "", context));
     }
   }
@@ -125,7 +125,7 @@ class ChildrenLeavesAscending : public SyntaxTreeLintRule {
       if (child->Kind() == SymbolKind::kLeaf) {
         const SyntaxTreeLeaf* leaf_child =
             down_cast<SyntaxTreeLeaf*>(child.get());
-        const int current_tag = leaf_child->get().token_enum;
+        const int current_tag = leaf_child->get().token_enum();
         if (current_tag >= last_tag) {
           last_tag = current_tag;
         } else {
@@ -223,7 +223,7 @@ class TagMatchesContextDepth : public SyntaxTreeLintRule {
   // When handling a leaf, check leaf's tag vs the size of its context
   void HandleLeaf(const SyntaxTreeLeaf& leaf,
                   const SyntaxTreeContext& context) override {
-    if (static_cast<size_t>(leaf.get().token_enum) != context.size()) {
+    if (static_cast<size_t>(leaf.get().token_enum()) != context.size()) {
       violations_.insert(LintViolation(leaf.get(), "", context));
     }
   }

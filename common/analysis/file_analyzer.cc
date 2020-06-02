@@ -107,7 +107,7 @@ std::string FileAnalyzer::TokenErrorMessage(
     const auto left = line_column_map(error_token.left(base_text));
     auto right = line_column_map(error_token.right(base_text));
     --right.column;  // Point to last character, not one-past-the-end.
-    output_stream << "token: \"" << error_token.text << "\" at " << left;
+    output_stream << "token: \"" << error_token.text() << "\" at " << left;
     if (left.line == right.line) {
       // Only print upper bound if it differs by > 1 character.
       if (left.column + 1 < right.column) {
@@ -144,7 +144,7 @@ std::string FileAnalyzer::LinterTokenErrorMessage(
   if (!error_token.token_info.isEOF()) {
     const auto left = line_column_map(error_token.token_info.left(base_text));
     output_stream << left << ": " << error_token.phase << " error, rejected \""
-                  << error_token.token_info.text << "\" ("
+                  << error_token.token_info.text() << "\" ("
                   << GetHelpTopicUrl("syntax-error") << ").";
   } else {
     const int file_size = base_text.length();

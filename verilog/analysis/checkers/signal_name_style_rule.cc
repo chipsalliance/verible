@@ -64,21 +64,21 @@ void SignalNameStyleRule::HandleSymbol(const verible::Symbol& symbol,
   if (matcher_port_.Matches(symbol, &manager)) {
     const auto* identifier_leaf =
         GetIdentifierFromModulePortDeclaration(symbol);
-    const auto name = ABSL_DIE_IF_NULL(identifier_leaf)->get().text;
+    const auto name = ABSL_DIE_IF_NULL(identifier_leaf)->get().text();
     if (!verible::IsLowerSnakeCaseWithDigits(name))
       violations_.insert(
           LintViolation(identifier_leaf->get(), kMessage, context));
   } else if (matcher_net_.Matches(symbol, &manager)) {
     const auto identifier_leaves = GetIdentifiersFromNetDeclaration(symbol);
     for (auto& leaf : identifier_leaves) {
-      const auto name = leaf->text;
+      const auto name = leaf->text();
       if (!verible::IsLowerSnakeCaseWithDigits(name))
         violations_.insert(LintViolation(*leaf, kMessage, context));
     }
   } else if (matcher_data_.Matches(symbol, &manager)) {
     const auto identifier_leaves = GetIdentifiersFromDataDeclaration(symbol);
     for (auto& leaf : identifier_leaves) {
-      const auto name = leaf->text;
+      const auto name = leaf->text();
       if (!verible::IsLowerSnakeCaseWithDigits(name))
         violations_.insert(LintViolation(*leaf, kMessage, context));
     }

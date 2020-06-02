@@ -364,7 +364,7 @@ static void PreserveSpacesOnDisabledTokenRanges(
     // excerpt won't get redundant '\n's.
     if (begin_disable != ftokens->begin() && begin_disable != end_disable) {
       const auto prev_ftoken = std::prev(begin_disable);
-      if (prev_ftoken->token->token_enum == TK_EOL_COMMENT) {
+      if (prev_ftoken->token->token_enum() == TK_EOL_COMMENT) {
         // consume the trailing '\n' from the preceding //-comment
         ++begin_disable->before.preserved_space_start;
       }

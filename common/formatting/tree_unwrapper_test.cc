@@ -36,7 +36,7 @@
 namespace verible {
 
 static bool KeepNonWhitespace(const TokenInfo& token) {
-  const absl::string_view text(absl::StripAsciiWhitespace(token.text));
+  const absl::string_view text(absl::StripAsciiWhitespace(token.text()));
   return !text.empty();
 }
 

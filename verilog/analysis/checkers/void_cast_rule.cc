@@ -67,7 +67,7 @@ void VoidCastRule::HandleSymbol(const verible::Symbol& symbol,
   if (blacklisted_function_matcher_.Matches(symbol, &manager)) {
     if (auto function_id = manager.GetAs<verible::SyntaxTreeLeaf>("id")) {
       const auto& bfs = BlacklistedFunctionsSet();
-      if (bfs.find(std::string(function_id->get().text)) != bfs.end()) {
+      if (bfs.find(std::string(function_id->get().text())) != bfs.end()) {
         violations_.insert(LintViolation(function_id->get(),
                                          FormatReason(*function_id), context));
       }
@@ -92,7 +92,7 @@ LintRuleStatus VoidCastRule::Report() const {
 
 std::string VoidCastRule::FormatReason(
     const verible::SyntaxTreeLeaf& leaf) const {
-  return std::string(leaf.get().text) +
+  return std::string(leaf.get().text()) +
          " is an invalid call within this void cast";
 }
 

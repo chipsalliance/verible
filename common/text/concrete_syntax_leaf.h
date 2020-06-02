@@ -59,7 +59,7 @@ class SyntaxTreeLeaf : public Symbol {
 
   // Method override that returns the Kind of SyntaxTreeLeaf
   SymbolKind Kind() const override { return SymbolKind::kLeaf; }
-  SymbolTag Tag() const override { return LeafTag(get().token_enum); }
+  SymbolTag Tag() const override { return LeafTag(get().token_enum()); }
 
  private:
   TokenInfo token_;

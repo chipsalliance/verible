@@ -76,8 +76,8 @@ struct SimpleTestData {
   template <class Lexer>
   void testSingleChar() const {
     Lexer lexer(code);
-    EXPECT_EQ(code[0], lexer.DoNextToken().token_enum) << ShowCode{code};
-    EXPECT_EQ(TK_EOF, lexer.DoNextToken().token_enum) << ShowCode{code};
+    EXPECT_EQ(code[0], lexer.DoNextToken().token_enum()) << ShowCode{code};
+    EXPECT_EQ(TK_EOF, lexer.DoNextToken().token_enum()) << ShowCode{code};
   }
 
   // Check for a single token, then EOF.
@@ -85,9 +85,9 @@ struct SimpleTestData {
   void testSingleToken(const int expected_token) const {
     Lexer lexer(code);
     const TokenInfo& next_token(lexer.DoNextToken());
-    EXPECT_EQ(expected_token, next_token.token_enum) << ShowCode{code};
+    EXPECT_EQ(expected_token, next_token.token_enum()) << ShowCode{code};
     const TokenInfo& last_token(lexer.DoNextToken());
-    EXPECT_EQ(TK_EOF, last_token.token_enum) << ShowCode{code};
+    EXPECT_EQ(TK_EOF, last_token.token_enum()) << ShowCode{code};
   }
 };
 
@@ -104,13 +104,13 @@ struct GenericTestDataSequence {
     int i = 0;
     for (const auto& expected_token_enum : expected_tokens) {
       const TokenInfo& next_token(lexer.DoNextToken());
-      EXPECT_EQ(expected_token_enum, next_token.token_enum)
+      EXPECT_EQ(expected_token_enum, next_token.token_enum())
           << "    Code[" << i << "]:" << ShowCode{code}
-          << "\n    Last token text: \"" << next_token.text << "\"";
+          << "\n    Last token text: \"" << next_token.text() << "\"";
       ++i;
     }
     const TokenInfo& last_token(lexer.DoNextToken());
-    EXPECT_EQ(TK_EOF, last_token.token_enum)
+    EXPECT_EQ(TK_EOF, last_token.token_enum())
         << "    expecting " << (expected_tokens.size() - i)
         << " more tokens: " << ShowCode{code};
   }
@@ -132,7 +132,7 @@ struct SynthesizedLexerTestData : public TokenInfoTestData {
       ++i;
     }
     const TokenInfo& final_token(lexer.DoNextToken());
-    EXPECT_EQ(TK_EOF, final_token.token_enum)
+    EXPECT_EQ(TK_EOF, final_token.token_enum())
         << " expecting " << (expected_tokens.size() - i) << " more tokens"
         << ShowCode{code};
   }
@@ -147,11 +147,11 @@ struct SynthesizedLexerTestData : public TokenInfoTestData {
     // expected_text until the text is fully matched.
     while (!expected_text.empty()) {
       const TokenInfo& next_token = lexer->DoNextToken();
-      const size_t token_length = next_token.text.length();
+      const size_t token_length = next_token.text().length();
       ASSERT_LE(token_length, expected_text.length())
           << "\nlast token: " << next_token << ShowCode{code};
       // Verify that the remaining expected_text starts with token's text.
-      EXPECT_EQ(expected_text.substr(0, token_length), next_token.text)
+      EXPECT_EQ(expected_text.substr(0, token_length), next_token.text())
           << ShowCode{code};
 
       // Trim from the front the token that was just consumed.
@@ -163,9 +163,9 @@ struct SynthesizedLexerTestData : public TokenInfoTestData {
   template <class Lexer>
   void VerifyExpectedToken(Lexer* lexer,
                            const TokenInfo& expected_token) const {
-    if (expected_token.token_enum == ExpectedTokenInfo::kDontCare) {
+    if (expected_token.token_enum() == ExpectedTokenInfo::kDontCare) {
       // Only compare text, don't care about the enum.
-      DontCareMultiTokens(lexer, expected_token.text);
+      DontCareMultiTokens(lexer, expected_token.text());
     } else {
       // Compare full TokenInfo, enum, text (exact range).
       const TokenInfo& next_token = lexer->DoNextToken();

@@ -112,7 +112,7 @@ std::ostream& FormattedExcerpt::FormattedText(std::ostream& stream,
   } else {
     // We do not want the indentation before the first token, if it was
     // already handled separately.
-    stream << tokens_.front().token->text;
+    stream << tokens_.front().token->text();
     for (const auto& ftoken :
          verible::make_range(tokens_.begin() + 1, tokens_.end())) {
       stream << ftoken;

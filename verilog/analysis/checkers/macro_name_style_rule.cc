@@ -56,7 +56,7 @@ void MacroNameStyleRule::HandleToken(const TokenInfo& token) {
     case State::kNormal: {
       // Only changes state on `define tokens; all others are ignored in this
       // analysis.
-      switch (token.token_enum) {
+      switch (token.token_enum()) {
         case PP_define:
           state_ = State::kExpectPPIdentifier;
           break;
@@ -66,11 +66,11 @@ void MacroNameStyleRule::HandleToken(const TokenInfo& token) {
       break;
     }
     case State::kExpectPPIdentifier: {
-      switch (token.token_enum) {
+      switch (token.token_enum()) {
         case TK_SPACE:  // stay in the same state
           break;
         case PP_Identifier: {
-          if (!verible::IsNameAllCapsUnderscoresDigits(token.text))
+          if (!verible::IsNameAllCapsUnderscoresDigits(token.text()))
             violations_.insert(LintViolation(token, kMessage));
           state_ = State::kNormal;
           break;

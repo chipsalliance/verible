@@ -54,7 +54,7 @@ void FilterTokenStreamViewInPlace(const TokenFilterPredicate& keep,
 
 static bool TokenLocationLess(const TokenSequence::const_iterator& token_iter,
                               const char* offset) {
-  return token_iter->text.begin() < offset;
+  return token_iter->text().begin() < offset;
 }
 
 TokenViewRange TokenViewRangeSpanningOffsets(const TokenStreamView& view,

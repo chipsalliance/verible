@@ -78,7 +78,7 @@ class FlexLexerAdapter : private CodeStreamHolder, protected L, public Lexer {
 
   // Returns next token and updates its location.
   const TokenInfo& DoNextToken() override {
-    last_token_.token_enum = this->yylex();
+    last_token_.set_token_enum(this->yylex());
     // yylex has already called UpdateLocation()
     return last_token_;
   }

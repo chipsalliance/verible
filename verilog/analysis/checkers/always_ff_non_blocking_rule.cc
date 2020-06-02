@@ -73,7 +73,7 @@ void AlwaysFFNonBlockingRule::HandleSymbol(const verible::Symbol &symbol,
 
       if (leaf == nullptr) continue;
 
-      if (leaf->get().token_enum == '=')
+      if (leaf->get().token_enum() == '=')
         violations_.insert(LintViolation(*leaf, kMessage, match.context));
     }
   }

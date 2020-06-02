@@ -409,24 +409,25 @@ int _ConstraintDeclarationStateMachine::InterpretToken(int token_enum) const {
 void _LastSemicolonStateMachine::UpdateState(verible::TokenInfo* token) {
   switch (state_) {
     case kNone:
-      if (token->token_enum == trigger_token_enum_) {
+      if (token->token_enum() == trigger_token_enum_) {
         state_ = kActive;
       }  // else remain dormant
       break;
     case kActive:
-      if (token->token_enum == ';') {
+      if (token->token_enum() == ';') {
         // Bookmark this token, so that it may be re-enumerated later.
         semicolons_.push(token);
-      } else if (token->token_enum == finish_token_enum_) {
+      } else if (token->token_enum() == finish_token_enum_) {
         // Replace the desired ';' and return to dormant state.
-        if (previous_token_ != nullptr && previous_token_->token_enum == ';') {
+        if (previous_token_ != nullptr &&
+            previous_token_->token_enum() == ';') {
           // Discard the optional ';' right before the end-keyword.
           // <jedi>This is not the semicolon you are looking for.</jedi>
           semicolons_.pop();
         }
         if (!semicolons_.empty()) {
           // Re-enumerate this ';'
-          semicolons_.top()->token_enum = semicolon_replacement_;
+          semicolons_.top()->set_token_enum(semicolon_replacement_);
         }
         // Reset state machine.
         while (!semicolons_.empty()) {  // why is there no stack::clear()??
@@ -467,26 +468,27 @@ void LexicalContext::_UpdateState(const TokenInfo& token) {
   // Forward tokens to concurrent sub-state-machines.
   {
     // Handle begin/end-like keywords with optional labels.
-    keyword_label_tracker_.UpdateState(token.token_enum);
+    keyword_label_tracker_.UpdateState(token.token_enum());
 
     // Parse randomize_call.
-    randomize_call_tracker_.UpdateState(token.token_enum);
+    randomize_call_tracker_.UpdateState(token.token_enum());
 
     // Parse constraint declarations (but not extern prototypes).
     if (!in_extern_declaration_) {
-      constraint_declaration_tracker_.UpdateState(token.token_enum);
+      constraint_declaration_tracker_.UpdateState(token.token_enum());
     }
   }
 
   // Update this state machine given current token.
   previous_token_finished_header_ = false;
-  switch (token.token_enum) {
+  switch (token.token_enum()) {
     case '(':
       balance_stack_.push_back(&token);
       break;
     case MacroCallCloseToEndLine:  // fall-through: this is also a ')'
     case ')': {
-      if (!balance_stack_.empty() && balance_stack_.back()->token_enum == '(') {
+      if (!balance_stack_.empty() &&
+          balance_stack_.back()->token_enum() == '(') {
         balance_stack_.pop_back();
         // Detect ')' that exits the end of a flow-control header.
         // e.g. after "if (...)", "for (...)", "case (...)"
@@ -501,7 +503,8 @@ void LexicalContext::_UpdateState(const TokenInfo& token) {
       balance_stack_.push_back(&token);
       break;
     case '}': {
-      if (!balance_stack_.empty() && balance_stack_.back()->token_enum == '{') {
+      if (!balance_stack_.empty() &&
+          balance_stack_.back()->token_enum() == '{') {
         balance_stack_.pop_back();
       }
       break;
@@ -704,7 +707,7 @@ bool LexicalContext::ExpectingBodyItemStart() const {
     return true;  // First token should be start of a description/package item.
   }
   if (InAnyDeclaration() && previous_token_finished_header_) return true;
-  switch (previous_token_->token_enum) {
+  switch (previous_token_->token_enum()) {
     case ';':
       return true;
     default:

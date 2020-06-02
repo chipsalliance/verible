@@ -319,7 +319,7 @@ TEST(GetIdentifierFromTypeDeclarationTest, StructIdentifiers) {
     const auto type_declarations = FindAllTypeDeclarations(*root);
     const auto* identifier_leaf =
         GetIdentifierFromTypeDeclaration(*type_declarations.front().match);
-    EXPECT_EQ(identifier_leaf->get().text, test.second);
+    EXPECT_EQ(identifier_leaf->get().text(), test.second);
   }
 }
 
@@ -339,7 +339,7 @@ TEST(GetIdentifierFromTypeDeclarationTest, UnionIdentifiers) {
     const auto type_declarations = FindAllTypeDeclarations(*root);
     const auto* identifier_leaf =
         GetIdentifierFromTypeDeclaration(*type_declarations.front().match);
-    EXPECT_EQ(identifier_leaf->get().text, test.second);
+    EXPECT_EQ(identifier_leaf->get().text(), test.second);
   }
 }
 

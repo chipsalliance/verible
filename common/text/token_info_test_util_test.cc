@@ -38,24 +38,24 @@ TEST(TokenInfoTestDataTest, ConstructorStringLiteral) {
   EXPECT_EQ(test_data.code, "foobar");
 
   const auto& first(test_data.expected_tokens.front());
-  EXPECT_EQ(first.text, "foo");
-  EXPECT_EQ(first.token_enum, ExpectedTokenInfo::kDontCare);
+  EXPECT_EQ(first.text(), "foo");
+  EXPECT_EQ(first.token_enum(), ExpectedTokenInfo::kDontCare);
   EXPECT_EQ(first.left(test_data.code), 0);
   EXPECT_EQ(first.right(test_data.code), 3);
 
   const auto& second(test_data.expected_tokens.back());
-  EXPECT_EQ(second.text, "bar");
-  EXPECT_EQ(second.token_enum, ExpectedTokenInfo::kDontCare);
+  EXPECT_EQ(second.text(), "bar");
+  EXPECT_EQ(second.token_enum(), ExpectedTokenInfo::kDontCare);
   EXPECT_EQ(second.left(test_data.code), 3);
   EXPECT_EQ(second.right(test_data.code), 6);
 }
 
 TEST(ExpectedTokenInfoTest, ConstructorCharEnum) {
   ExpectedTokenInfo token(';');
-  EXPECT_EQ(token.token_enum, ';');
-  EXPECT_EQ(token.text, ";");
-  EXPECT_EQ(token.left(token.text), 0);
-  EXPECT_EQ(token.right(token.text), 1);
+  EXPECT_EQ(token.token_enum(), ';');
+  EXPECT_EQ(token.text(), ";");
+  EXPECT_EQ(token.left(token.text()), 0);
+  EXPECT_EQ(token.right(token.text()), 1);
 }
 
 TEST(TokenInfoTestDataTest, ConstructorCharEnum) {
@@ -66,22 +66,22 @@ TEST(TokenInfoTestDataTest, ConstructorCharEnum) {
   EXPECT_EQ(test_data.code, "()");
 
   const auto& first(test_data.expected_tokens.front());
-  EXPECT_EQ(first.text, "(");
-  EXPECT_EQ(first.token_enum, '(');
+  EXPECT_EQ(first.text(), "(");
+  EXPECT_EQ(first.token_enum(), '(');
   EXPECT_EQ(first.left(test_data.code), 0);
   EXPECT_EQ(first.right(test_data.code), 1);
 
   const auto& second(test_data.expected_tokens.back());
-  EXPECT_EQ(second.text, ")");
-  EXPECT_EQ(second.token_enum, ')');
+  EXPECT_EQ(second.text(), ")");
+  EXPECT_EQ(second.token_enum(), ')');
   EXPECT_EQ(second.left(test_data.code), 1);
   EXPECT_EQ(second.right(test_data.code), 2);
 }
 
 TEST(ExpectedTokenInfoTest, ConstructorEnumAndStringLiteral) {
   ExpectedTokenInfo token(11, "f00");
-  EXPECT_EQ(token.token_enum, 11);
-  EXPECT_EQ(token.text, "f00");
+  EXPECT_EQ(token.token_enum(), 11);
+  EXPECT_EQ(token.text(), "f00");
 }
 
 TEST(TokenInfoTestDataTest, ConstructorEnumAndStringLiteral) {
@@ -92,14 +92,14 @@ TEST(TokenInfoTestDataTest, ConstructorEnumAndStringLiteral) {
   EXPECT_EQ(test_data.code, "foobar");
 
   const auto& first(test_data.expected_tokens.front());
-  EXPECT_EQ(first.text, "foo");
-  EXPECT_EQ(first.token_enum, 8);
+  EXPECT_EQ(first.text(), "foo");
+  EXPECT_EQ(first.token_enum(), 8);
   EXPECT_EQ(first.left(test_data.code), 0);
   EXPECT_EQ(first.right(test_data.code), 3);
 
   const auto& second(test_data.expected_tokens.back());
-  EXPECT_EQ(second.text, "bar");
-  EXPECT_EQ(second.token_enum, 7);
+  EXPECT_EQ(second.text(), "bar");
+  EXPECT_EQ(second.token_enum(), 7);
   EXPECT_EQ(second.left(test_data.code), 3);
   EXPECT_EQ(second.right(test_data.code), 6);
 }
@@ -113,28 +113,28 @@ TEST(TokenInfoTestDataTest, ConstructorHeterogeneousInitializer) {
   const auto& expected_tokens = test_data.expected_tokens;
   ASSERT_EQ(expected_tokens.size(), 5);
 
-  EXPECT_EQ(expected_tokens[0].text, "foo");
-  EXPECT_EQ(expected_tokens[0].token_enum, 8);
+  EXPECT_EQ(expected_tokens[0].text(), "foo");
+  EXPECT_EQ(expected_tokens[0].token_enum(), 8);
   EXPECT_EQ(expected_tokens[0].left(test_data.code), 0);
   EXPECT_EQ(expected_tokens[0].right(test_data.code), 3);
 
-  EXPECT_EQ(expected_tokens[1].text, " ");
-  EXPECT_EQ(expected_tokens[1].token_enum, ExpectedTokenInfo::kDontCare);
+  EXPECT_EQ(expected_tokens[1].text(), " ");
+  EXPECT_EQ(expected_tokens[1].token_enum(), ExpectedTokenInfo::kDontCare);
   EXPECT_EQ(expected_tokens[1].left(test_data.code), 3);
   EXPECT_EQ(expected_tokens[1].right(test_data.code), 4);
 
-  EXPECT_EQ(expected_tokens[2].text, "(");
-  EXPECT_EQ(expected_tokens[2].token_enum, '(');
+  EXPECT_EQ(expected_tokens[2].text(), "(");
+  EXPECT_EQ(expected_tokens[2].token_enum(), '(');
   EXPECT_EQ(expected_tokens[2].left(test_data.code), 4);
   EXPECT_EQ(expected_tokens[2].right(test_data.code), 5);
 
-  EXPECT_EQ(expected_tokens[3].text, "bar");
-  EXPECT_EQ(expected_tokens[3].token_enum, 7);
+  EXPECT_EQ(expected_tokens[3].text(), "bar");
+  EXPECT_EQ(expected_tokens[3].token_enum(), 7);
   EXPECT_EQ(expected_tokens[3].left(test_data.code), 5);
   EXPECT_EQ(expected_tokens[3].right(test_data.code), 8);
 
-  EXPECT_EQ(expected_tokens[4].text, ")");
-  EXPECT_EQ(expected_tokens[4].token_enum, ')');
+  EXPECT_EQ(expected_tokens[4].text(), ")");
+  EXPECT_EQ(expected_tokens[4].token_enum(), ')');
   EXPECT_EQ(expected_tokens[4].left(test_data.code), 8);
   EXPECT_EQ(expected_tokens[4].right(test_data.code), 9);
 }
@@ -152,23 +152,23 @@ TEST(TokenInfoTestDataTest, FindImportantTokensTest) {
   const auto key_tokens = test_data.FindImportantTokens();
   EXPECT_EQ(key_tokens.size(), 4);
 
-  EXPECT_EQ(key_tokens[0].text, "foo");
-  EXPECT_EQ(key_tokens[0].token_enum, 8);
+  EXPECT_EQ(key_tokens[0].text(), "foo");
+  EXPECT_EQ(key_tokens[0].token_enum(), 8);
   EXPECT_EQ(key_tokens[0].left(test_data.code), 0);
   EXPECT_EQ(key_tokens[0].right(test_data.code), 3);
 
-  EXPECT_EQ(key_tokens[1].text, "(");
-  EXPECT_EQ(key_tokens[1].token_enum, '(');
+  EXPECT_EQ(key_tokens[1].text(), "(");
+  EXPECT_EQ(key_tokens[1].token_enum(), '(');
   EXPECT_EQ(key_tokens[1].left(test_data.code), 4);
   EXPECT_EQ(key_tokens[1].right(test_data.code), 5);
 
-  EXPECT_EQ(key_tokens[2].text, "bar");
-  EXPECT_EQ(key_tokens[2].token_enum, 7);
+  EXPECT_EQ(key_tokens[2].text(), "bar");
+  EXPECT_EQ(key_tokens[2].token_enum(), 7);
   EXPECT_EQ(key_tokens[2].left(test_data.code), 5);
   EXPECT_EQ(key_tokens[2].right(test_data.code), 8);
 
-  EXPECT_EQ(key_tokens[3].text, ")");
-  EXPECT_EQ(key_tokens[3].token_enum, ')');
+  EXPECT_EQ(key_tokens[3].text(), ")");
+  EXPECT_EQ(key_tokens[3].token_enum(), ')');
   EXPECT_EQ(key_tokens[3].left(test_data.code), 22);
   EXPECT_EQ(key_tokens[3].right(test_data.code), 23);
 }
@@ -200,13 +200,13 @@ TEST(TokenInfoTestDataTest, RebaseToCodeCopyMoved) {
   test_data.RebaseToCodeCopy(&tokens, other_text);
 
   // Note: expected locations are now based off of other_text.
-  EXPECT_EQ(tokens[0].text, "text");
-  EXPECT_EQ(tokens[0].token_enum, 3);
+  EXPECT_EQ(tokens[0].text(), "text");
+  EXPECT_EQ(tokens[0].token_enum(), 3);
   EXPECT_EQ(tokens[0].left(other_text), 0);
   EXPECT_EQ(tokens[0].right(other_text), 4);
 
-  EXPECT_EQ(tokens[1].text, "book");
-  EXPECT_EQ(tokens[1].token_enum, 4);
+  EXPECT_EQ(tokens[1].text(), "book");
+  EXPECT_EQ(tokens[1].token_enum(), 4);
   EXPECT_EQ(tokens[1].left(other_text), 4);
   EXPECT_EQ(tokens[1].right(other_text), 8);
 }
@@ -222,13 +222,13 @@ TEST(TokenInfoTestDataTest, FindImportantTokensRebased) {
   EXPECT_EQ(tokens.size(), 2);
 
   // Note: expected locations are now based off of other_text.
-  EXPECT_EQ(tokens[0].text, "text");
-  EXPECT_EQ(tokens[0].token_enum, 3);
+  EXPECT_EQ(tokens[0].text(), "text");
+  EXPECT_EQ(tokens[0].token_enum(), 3);
   EXPECT_EQ(tokens[0].left(other_text), 0);
   EXPECT_EQ(tokens[0].right(other_text), 4);
 
-  EXPECT_EQ(tokens[1].text, "book");
-  EXPECT_EQ(tokens[1].token_enum, 4);
+  EXPECT_EQ(tokens[1].text(), "book");
+  EXPECT_EQ(tokens[1].token_enum(), 4);
   EXPECT_EQ(tokens[1].left(other_text), 4);
   EXPECT_EQ(tokens[1].right(other_text), 8);
 }

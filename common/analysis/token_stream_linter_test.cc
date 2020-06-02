@@ -37,7 +37,7 @@ class ForbidTokenRule : public TokenStreamLintRule {
   explicit ForbidTokenRule(int n) : target_(n) {}
 
   void HandleToken(const TokenInfo& token) override {
-    if (token.token_enum == target_) {
+    if (token.token_enum() == target_) {
       violations_.insert(LintViolation(token, "some reason"));
     }
   }

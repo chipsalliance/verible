@@ -195,7 +195,7 @@ TEST(GetParameterNameTokenTest, BasicTests) {
     const auto param_declarations = FindAllParamDeclarations(*root);
     const auto name_token =
         GetParameterNameToken(*param_declarations.front().match);
-    EXPECT_EQ(name_token.text, test.second);
+    EXPECT_EQ(name_token.text(), test.second);
   }
 }
 
@@ -279,7 +279,7 @@ TEST(GetAssignedParameterNameToken, BasicTests) {
 
     const auto name_token =
         GetAssignedParameterNameToken(*assigned_parameters.front());
-    EXPECT_EQ(name_token.text, test.second);
+    EXPECT_EQ(name_token.text(), test.second);
   }
 }
 
@@ -303,7 +303,7 @@ TEST(GetSymbolIdentifierFromParamDeclarationTest, BasicTests) {
     const auto param_declarations = FindAllParamDeclarations(*root);
     const auto name_token = GetSymbolIdentifierFromParamDeclaration(
         *param_declarations.front().match);
-    EXPECT_EQ(name_token.text, test.second);
+    EXPECT_EQ(name_token.text(), test.second);
   }
 }
 
@@ -384,7 +384,7 @@ TEST(GetIdentifierLeafFromTypeAssignmentTest, BasicTests) {
         *param_declarations.front().match);
     const auto* identifier_leaf =
         GetIdentifierLeafFromTypeAssignment(*type_assignment_symbol);
-    EXPECT_EQ(identifier_leaf->get().text, test.second);
+    EXPECT_EQ(identifier_leaf->get().text(), test.second);
   }
 }
 

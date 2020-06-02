@@ -57,14 +57,14 @@ TEST(BisonParserCommonTest, LexTest) {
   const int token_enum = verible::LexAdapter(&value, &parser_param);
   const TokenInfo& t(parser_param.GetLastToken());
   EXPECT_EQ(13, token_enum);
-  EXPECT_EQ(13, t.token_enum);
-  EXPECT_EQ(t.text, "foo");
+  EXPECT_EQ(13, t.token_enum());
+  EXPECT_EQ(t.text(), "foo");
   EXPECT_EQ(value->Kind(), SymbolKind::kLeaf);
   const auto* value_ptr = down_cast<const SyntaxTreeLeaf*>(value.get());
   ASSERT_NE(value_ptr, nullptr);
   const TokenInfo& tref(value_ptr->get());
-  EXPECT_EQ(13, tref.token_enum);
-  EXPECT_EQ(tref.text, "foo");
+  EXPECT_EQ(13, tref.token_enum());
+  EXPECT_EQ(tref.text(), "foo");
 }
 
 }  // namespace

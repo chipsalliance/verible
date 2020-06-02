@@ -42,9 +42,9 @@ std::string JoinLinesOfTokensIntoString(const LinesOfTokens& lines_of_tokens) {
   for (const auto& line : lines_of_tokens) {
     token_strings.clear();
     token_strings.resize(line.size());
-    CHECK_EQ(line.back().text, "\n");
+    CHECK_EQ(line.back().text(), "\n");
     std::transform(line.begin(), line.end(), token_strings.begin(),
-                   [](const TokenInfo& t) { return t.text; });
+                   [](const TokenInfo& t) { return t.text(); });
     line_strings.push_back(absl::StrJoin(token_strings, ""));
   }
   return absl::StrJoin(line_strings, "");
@@ -62,8 +62,8 @@ TextStructureTokenized::TextStructureTokenized(
       // Maintain the invariant that all tokens in a TextStructureView
       // must belong to the string owned by the TextStructure.
       new_tokens.back().RebaseStringView(
-          joined_text.substr(offset, token.text.length()));
-      offset += token.text.length();
+          joined_text.substr(offset, token.text().length()));
+      offset += token.text().length();
     }
   }
 

@@ -45,11 +45,11 @@ bool EqualTreesByEnumString(const Symbol* lhs, const Symbol* rhs) {
 }
 
 bool EqualByEnum(const TokenInfo& lhs, const TokenInfo& rhs) {
-  return lhs.token_enum == rhs.token_enum;
+  return lhs.token_enum() == rhs.token_enum();
 }
 
 bool EqualByEnumString(const TokenInfo& lhs, const TokenInfo& rhs) {
-  return lhs.token_enum == rhs.token_enum && lhs.text == rhs.text;
+  return lhs.token_enum() == rhs.token_enum() && lhs.text() == rhs.text();
 }
 
 }  // namespace verible

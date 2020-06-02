@@ -148,9 +148,9 @@ TEST(EOFTokenTest, TokenRange) {
   for (auto test : kTestCases) {
     TextStructureView test_view(test);
     TokenInfo token(test_view.EOFToken());
-    EXPECT_EQ(token.token_enum, verible::TK_EOF);
-    EXPECT_TRUE(token.text.empty());
-    EXPECT_EQ(token.text.begin(), test.end());
+    EXPECT_EQ(token.token_enum(), verible::TK_EOF);
+    EXPECT_TRUE(token.text().empty());
+    EXPECT_EQ(token.text().begin(), test.end());
     EXPECT_EQ(token.left(test_view.Contents()), test.length());
   }
 }
@@ -171,7 +171,7 @@ TEST(RebaseTokensToSuperstringTest, NewOwner) {
   EXPECT_EQ(test_view.TokenStream().front(), expect_post);
   EXPECT_TRUE(
       EqualTrees(test_view.SyntaxTree().get(), Leaf(expect_post).get()));
-  EXPECT_TRUE(IsSubRange(test_view.TokenStream().front().text, superstring));
+  EXPECT_TRUE(IsSubRange(test_view.TokenStream().front().text(), superstring));
 }
 
 // Helper class for testing Token range methods.
@@ -266,7 +266,7 @@ TEST_F(TokenRangeTest, TokenRangeOnLine) {
     EXPECT_EQ(std::distance(data_.TokenStream().cbegin(), token_range.end()),
               test_case.right_index);
     // All lines end with newline in this example.
-    EXPECT_EQ((token_range.end() - 1)->text, "\n");
+    EXPECT_EQ((token_range.end() - 1)->text(), "\n");
   }
 }
 
@@ -332,7 +332,7 @@ TEST_F(TextStructureViewInternalsTest, TrimTokensToSubstringKeepEverything) {
   const TokenInfo& back(tokens_.back());
   EXPECT_TRUE(back.isEOF());
   EXPECT_TRUE(
-      BoundsEqual(back.text, make_range(contents_.end(), contents_.end())));
+      BoundsEqual(back.text(), make_range(contents_.end(), contents_.end())));
 }
 
 // Test that trimming tokens changes nothing when range is empty.
@@ -350,7 +350,7 @@ TEST_F(TextStructureViewInternalsTest, TrimTokensToSubstringKeepSubset) {
   const TokenInfo& back(tokens_.back());
   EXPECT_TRUE(back.isEOF());
   EXPECT_TRUE(BoundsEqual(
-      back.text, make_range(contents_.begin() + 12, contents_.begin() + 12)));
+      back.text(), make_range(contents_.begin() + 12, contents_.begin() + 12)));
 }
 
 // Test that trimming tokens can reduce to one leaf.
@@ -361,7 +361,7 @@ TEST_F(TextStructureViewInternalsTest, TrimTokensToSubstringKeepLeaf) {
   const TokenInfo& back(tokens_.back());
   EXPECT_TRUE(back.isEOF());
   EXPECT_TRUE(BoundsEqual(
-      back.text, make_range(contents_.begin() + 6, contents_.begin() + 6)));
+      back.text(), make_range(contents_.begin() + 6, contents_.begin() + 6)));
 }
 
 // Test trimming the contents to narrower range of text.
@@ -386,7 +386,7 @@ TEST_F(TextStructureViewPublicTest, FocusOnSubtreeSpanningSubstringWholeTree) {
 // Test that a substring range yields a subtree.
 TEST_F(TextStructureViewPublicTest, FocusOnSubtreeSpanningSubstringFirstLeaf) {
   const auto expect_tree = Leaf(tokens_[0]);
-  FocusOnSubtreeSpanningSubstring(0, tokens_[0].text.length());
+  FocusOnSubtreeSpanningSubstring(0, tokens_[0].text().length());
   EXPECT_THAT(tokens_, SizeIs(2));
   EXPECT_THAT(tokens_view_, SizeIs(1));
   EXPECT_TRUE(EqualTrees(syntax_tree_.get(), expect_tree.get()));
@@ -418,7 +418,7 @@ TEST_F(TextStructureViewPublicTest, ExpandSubtreesOneLeaf) {
   // Expand the "hello" token into ("hel", "lo").
   const int divide = 3;
   const int new_node_tag = 7;
-  std::string subtext(tokens_[0].text.data(), tokens_[0].text.length());
+  std::string subtext(tokens_[0].text().data(), tokens_[0].text().length());
   auto subanalysis = absl::make_unique<TextStructure>(subtext);
   FakeParseToken(&subanalysis->MutableData(), divide, new_node_tag);
   auto& replacement_node = down_cast<SyntaxTreeNode*>(syntax_tree_.get())
@@ -429,12 +429,12 @@ TEST_F(TextStructureViewPublicTest, ExpandSubtreesOneLeaf) {
   // Expect tree must be built using substrings of contents_.
   // Build the expect tree first because it references text using
   // pre-mutation indices.
-  const auto expect_tree = Node(                          // noformat
-      TNode(new_node_tag,                                 // noformat
-            Leaf(11, tokens_[0].text.substr(0, divide)),  // noformat
-            Leaf(12, tokens_[0].text.substr(divide))      // noformat
-            ),                                            // noformat
-      Leaf(tokens_[1]),                                   // noformat
+  const auto expect_tree = Node(                            // noformat
+      TNode(new_node_tag,                                   // noformat
+            Leaf(11, tokens_[0].text().substr(0, divide)),  // noformat
+            Leaf(12, tokens_[0].text().substr(divide))      // noformat
+            ),                                              // noformat
+      Leaf(tokens_[1]),                                     // noformat
       Leaf(tokens_[3]));
   TextStructureView::NodeExpansionMap expansion_map;
   expansion_map[tokens_[0].left(contents_)] = std::move(expansion);
@@ -452,7 +452,7 @@ TEST_F(TextStructureViewPublicTest, ExpandSubtreesMultipleLeaves) {
   TextStructureView::NodeExpansionMap expansion_map;
   {
     // Expand the "hello" token into ("hel", "lo").
-    std::string subtext(tokens_[0].text.data(), tokens_[0].text.length());
+    std::string subtext(tokens_[0].text().data(), tokens_[0].text().length());
     auto subanalysis = absl::make_unique<TextStructure>(subtext);
     FakeParseToken(&subanalysis->MutableData(), divide1, new_node_tag1);
     auto& replacement_node = down_cast<SyntaxTreeNode*>(syntax_tree_.get())
@@ -464,7 +464,7 @@ TEST_F(TextStructureViewPublicTest, ExpandSubtreesMultipleLeaves) {
   }
   {
     // Expand the "world" token into ("wo", "rld").
-    std::string subtext(tokens_[3].text.data(), tokens_[3].text.length());
+    std::string subtext(tokens_[3].text().data(), tokens_[3].text().length());
     auto subanalysis = absl::make_unique<TextStructure>(subtext);
     FakeParseToken(&subanalysis->MutableData(), divide2, new_node_tag2);
     auto& replacement_node = down_cast<SyntaxTreeNode*>(syntax_tree_.get())
@@ -477,16 +477,16 @@ TEST_F(TextStructureViewPublicTest, ExpandSubtreesMultipleLeaves) {
   // Expect tree must be built using substrings of contents_.
   // Build the expect tree first because it references text using
   // pre-mutation indices.
-  const auto expect_tree = Node(                           // noformat
-      TNode(new_node_tag1,                                 // noformat
-            Leaf(11, tokens_[0].text.substr(0, divide1)),  // noformat
-            Leaf(12, tokens_[0].text.substr(divide1))      // noformat
-            ),                                             // noformat
-      Leaf(tokens_[1]),                                    // noformat
-      TNode(new_node_tag2,                                 // noformat
-            Leaf(11, tokens_[3].text.substr(0, divide2)),  // noformat
-            Leaf(12, tokens_[3].text.substr(divide2))      // noformat
-            )                                              // noformat
+  const auto expect_tree = Node(                             // noformat
+      TNode(new_node_tag1,                                   // noformat
+            Leaf(11, tokens_[0].text().substr(0, divide1)),  // noformat
+            Leaf(12, tokens_[0].text().substr(divide1))      // noformat
+            ),                                               // noformat
+      Leaf(tokens_[1]),                                      // noformat
+      TNode(new_node_tag2,                                   // noformat
+            Leaf(11, tokens_[3].text().substr(0, divide2)),  // noformat
+            Leaf(12, tokens_[3].text().substr(divide2))      // noformat
+            )                                                // noformat
   );
   ExpandSubtrees(&expansion_map);
   EXPECT_TRUE(EqualTrees(syntax_tree_.get(), expect_tree.get()));

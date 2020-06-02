@@ -119,10 +119,10 @@ int LintOneFile(std::ostream* stream, absl::string_view filename,
 VerilogLinter::VerilogLinter()
     : lint_waiver_(
           [](const TokenInfo& t) {
-            return IsComment(verilog_tokentype(t.token_enum));
+            return IsComment(verilog_tokentype(t.token_enum()));
           },
           [](const TokenInfo& t) {
-            return IsWhitespace(verilog_tokentype(t.token_enum));
+            return IsWhitespace(verilog_tokentype(t.token_enum()));
           },
           kLinterTrigger, kLinterWaiveLineCommand, kLinterWaiveStartCommand,
           kLinterWaiveStopCommand) {}

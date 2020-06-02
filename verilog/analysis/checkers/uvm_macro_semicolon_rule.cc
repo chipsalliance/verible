@@ -52,7 +52,7 @@ std::string UvmMacroSemicolonRule::GetDescription(
 
 // Returns a diagnostic message for this lint violation.
 static std::string FormatReason(const verible::TokenInfo& macro_id) {
-  return absl::StrCat("UVM macro call, ", macro_id.text,
+  return absl::StrCat("UVM macro call, ", macro_id.text(),
                       " should not be followed by a semicolon \';\'.");
 }
 
@@ -61,7 +61,7 @@ static bool IsUvmMacroId(const verible::SyntaxTreeLeaf& leaf) {
   if (leaf.Tag().tag == verilog_tokentype::MacroCallId ||
       leaf.Tag().tag == verilog_tokentype::MacroIdItem ||
       leaf.Tag().tag == verilog_tokentype::MacroIdentifier) {
-    return absl::StartsWithIgnoreCase(leaf.get().text, "`uvm_");
+    return absl::StartsWithIgnoreCase(leaf.get().text(), "`uvm_");
   }
   return false;
 }

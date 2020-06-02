@@ -149,7 +149,7 @@ void LintWaiverBuilder::ProcessLine(const TokenRange& tokens,
     if (is_token_comment_(token)) {
       // Lex the comment text.
       const absl::string_view comment_text =
-          StripCommentAndSpacePadding(token.text);
+          StripCommentAndSpacePadding(token.text());
       comment_tokens = absl::StrSplit(comment_text, ' ', absl::SkipEmpty());
       // TODO(fangism): Support different waiver lexers.
       const absl::string_view waived_rule =
@@ -217,7 +217,8 @@ void LintWaiverBuilder::ProcessTokenRangesByLine(
 template <typename... T>
 static std::string WaiveCommandErrorFmt(LineColumn pos,
                                         absl::string_view filename,
-                                        absl::string_view msg, T&... args) {
+                                        absl::string_view msg,
+                                        const T&... args) {
   return absl::StrCat(filename, ":", pos.line + 1, ":", pos.column + 1,
                       ": command error: ", msg, args...);
 }
@@ -225,7 +226,7 @@ static std::string WaiveCommandErrorFmt(LineColumn pos,
 template <typename... T>
 static absl::Status WaiveCommandError(LineColumn pos,
                                       absl::string_view filename,
-                                      absl::string_view msg, T&... args) {
+                                      absl::string_view msg, const T&... args) {
   return absl::InvalidArgumentError(
       WaiveCommandErrorFmt(pos, filename, msg, args...));
 }
@@ -252,10 +253,10 @@ absl::Status WaiveCommandHandler(
   for (const auto& token : tokens) {
     token_pos = line_map(token.left(config_base));
 
-    switch (token.token_enum) {
+    switch (token.token_enum()) {
       case CFG_TK_COMMAND:
         // Verify that this command is supported by this handler
-        if (token.text != "waive") {
+        if (token.text() != "waive") {
           return absl::InvalidArgumentError("Invalid command handler called");
         }
         break;
@@ -264,13 +265,13 @@ absl::Status WaiveCommandHandler(
       case CFG_TK_PARAM:
       case CFG_TK_FLAG:
         return WaiveCommandError(token_pos, filename,
-                                 "Unsupported argument: ", token.text);
+                                 "Unsupported argument: ", token.text());
       case CFG_TK_FLAG_WITH_ARG:
-        arg = token.text;
+        arg = token.text();
         break;
       case CFG_TK_ARG:
 
-        val = token.text;
+        val = token.text();
 
         if (arg == "rule") {
           for (auto r : active_rules) {
@@ -410,18 +411,18 @@ absl::Status LintWaiverBuilder::ApplyExternalWaivers(
     command_pos = line_map(command.begin()->left(waivers_config_content));
 
     // The very first Token in 'command' should be an actual command
-    if (command.empty() || command[0].token_enum != CFG_TK_COMMAND) {
+    if (command.empty() || command[0].token_enum() != CFG_TK_COMMAND) {
       LOG(ERROR) << WaiveCommandErrorFmt(command_pos, filename,
-                                         "Not a command: ", command[0].text);
+                                         "Not a command: ", command[0].text());
       all_commands_ok = false;
       continue;
     }
 
     // Check if command is supported
-    auto handler_iter = handlers.find(command[0].text);
+    auto handler_iter = handlers.find(command[0].text());
     if (handler_iter == handlers.end()) {
       LOG(ERROR) << WaiveCommandErrorFmt(
-          command_pos, filename, "Command not supported: ", command[0].text);
+          command_pos, filename, "Command not supported: ", command[0].text());
       all_commands_ok = false;
       continue;
     }

@@ -67,7 +67,7 @@ void PositiveMeaningParameterNameRule::HandleSymbol(
 
     auto identifiers = GetAllParameterNameTokens(symbol);
     for (const auto& id : identifiers) {
-      const auto param_name = id->text;
+      const auto param_name = id->text();
 
       if (absl::StartsWithIgnoreCase(param_name, "disable"))
         violations_.insert(LintViolation(

@@ -48,10 +48,10 @@ ByteOffsetSet DisableFormattingRanges(absl::string_view text,
   ByteOffsetSet disable_set;
   for (const auto& token : tokens) {
     VLOG(2) << verible::TokenWithContext{token, context};
-    const auto vtoken_enum = verilog_tokentype(token.token_enum);
+    const auto vtoken_enum = verilog_tokentype(token.token_enum());
     if (IsComment(vtoken_enum)) {
       // Focus on the space-delimited tokens in the comment text.
-      auto commands = verible::StripCommentAndSpacePadding(token.text);
+      auto commands = verible::StripCommentAndSpacePadding(token.text());
       if (absl::ConsumePrefix(&commands, kTrigger)) {
         const std::vector<absl::string_view> comment_tokens(
             absl::StrSplit(commands, kDelimiters, absl::SkipEmpty()));
