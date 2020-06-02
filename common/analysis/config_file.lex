@@ -14,7 +14,7 @@
  */
 
 %{
-#define _WAIVER_FLEXLEXER_H_
+#define _COMMANDFILE_FLEXLEXER_H_
 #include "common/analysis/config_file_lexer.h"
 
 #define yy_set_top_state(state)  { yy_pop_state(); yy_push_state(state); }
@@ -22,7 +22,7 @@
 
 %option nodefault
 %option noyywrap
-%option prefix="verible"
+%option prefix="veribleCommandFile"
 %option c++
 %option yylineno
 %option yyclass="verible::ConfigFileLexer"

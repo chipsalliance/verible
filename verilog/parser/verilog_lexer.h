@@ -23,11 +23,14 @@
 // around its inclusion, so we have to put a bar around it here.
 #include "common/lexer/flex_lexer_adapter.h"
 #include "common/text/token_info.h"
+
+// clang-format off
 #ifndef _FLEXLEXER_H_
-#undef yyFlexLexer  // this is how FlexLexer.h says to do things
-#define yyFlexLexer verilogFlexLexer
-#include <FlexLexer.h>
+#  undef yyFlexLexer  // this is how FlexLexer.h says to do things
+#  define yyFlexLexer verilogFlexLexer
+#  include <FlexLexer.h>
 #endif
+// clang-format on
 
 #include "absl/strings/string_view.h"
 

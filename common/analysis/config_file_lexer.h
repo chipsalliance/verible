@@ -21,11 +21,14 @@
 #include "common/analysis/lint_waiver.h"
 #include "common/lexer/flex_lexer_adapter.h"
 #include "common/text/token_info.h"
-#ifndef _WAIVER_FLEXLEXER_H_
-#undef yyFlexLexer  // this is how FlexLexer.h says to do things
-#define yyFlexLexer veribleFlexLexer
-#include <FlexLexer.h>
+
+// clang-format off
+#ifndef _COMMANDFILE_FLEXLEXER_H_
+#  undef yyFlexLexer  // this is how FlexLexer.h says to do things
+#  define yyFlexLexer veribleCommandFileFlexLexer
+#  include <FlexLexer.h>
 #endif
+// clang-format on
 
 #include "absl/strings/string_view.h"
 
@@ -50,8 +53,8 @@ enum ConfigParserStateEnum {
   PARSER_COMMAND,
 };
 
-class ConfigFileLexer : public verible::FlexLexerAdapter<veribleFlexLexer> {
-  using parent_lexer_type = verible::FlexLexerAdapter<veribleFlexLexer>;
+class ConfigFileLexer : public FlexLexerAdapter<veribleCommandFileFlexLexer> {
+  using parent_lexer_type = FlexLexerAdapter<veribleCommandFileFlexLexer>;
   using parent_lexer_type::Restart;
 
  public:
