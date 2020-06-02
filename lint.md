@@ -221,6 +221,11 @@ Checks that unpacked dimension ranges are declared in big-endian order, `[0:N-1]
 
 Enabled by default: true
 
+### uvm-macro-semicolon
+Checks that no `uvm_* macro calls end with ';'. See [Verification-Style: uvm-macro-semicolon-convention].
+
+Enabled by default: false
+
 ### v2001-generate-begin
 Checks that there are no generate-begin blocks inside a generate region. See [Style: generate-constructs].
 
@@ -234,4 +239,4 @@ Enabled by default: true
 
 ## Version
 
-Generated on 2020-05-29 10:19:05 -0700 from [v0.0-420-g85f8ff8](https://github.com/google/verible/commit/85f8ff8134957d220400e29b05036318523ea22e)
+Generated on 2020-06-01 19:39:55 -0700 from [v0.0-421-g5383335](https://github.com/google/verible/commit/5383335f312c18a288a1bf8bb50de9edbadd6bea)
