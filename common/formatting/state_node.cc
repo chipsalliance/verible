@@ -33,16 +33,29 @@
 
 namespace verible {
 
+static const char kNotForAlignment[] =
+    "Aligned tokens should never use line-wrap optimization!";
+
+static SpacingDecision FrontTokenSpacing(const FormatTokenRange range) {
+  if (range.empty()) return SpacingDecision::Append;
+  const SpacingOptions opt = range.front().before.break_decision;
+  // Treat first token as appended, unless explicitly preserving spaces.
+  switch (opt) {
+    case SpacingOptions::Preserve:
+      return SpacingDecision::Preserve;
+    case SpacingOptions::AppendAligned:
+      LOG(FATAL) << kNotForAlignment;
+      break;
+    default:
+      break;
+  }
+  return SpacingDecision::Append;
+}
+
 StateNode::StateNode(const UnwrappedLine& uwline, const BasicFormatStyle& style)
     : prev_state(nullptr),
       undecided_path(uwline.TokensRange().begin(), uwline.TokensRange().end()),
-      spacing_choice(
-          // Treat first token as appended, unless explicitly preserving spaces.
-          (!uwline.TokensRange().empty() &&
-           uwline.TokensRange().front().before.break_decision ==
-               SpacingOptions::Preserve)
-              ? SpacingDecision::Preserve
-              : SpacingDecision::Append),
+      spacing_choice(FrontTokenSpacing(uwline.TokensRange())),
       // Kludge: This leaks into the resulting FormattedExcerpt, which means
       // additional logic is needed to handle preservation of (vertical) spacing
       // between formatted token partitions.
@@ -158,6 +171,9 @@ int StateNode::_UpdateColumnPosition() {
   }
 
   switch (spacing_choice) {
+    case SpacingDecision::Align:
+      LOG(FATAL) << kNotForAlignment;
+      break;
     case SpacingDecision::Wrap:
       // If wrapping, new column position is based on the wrap_column_positions
       // top-of-stack.
@@ -269,8 +285,10 @@ void StateNode::_OpenGroupBalance(const BasicFormatStyle& style) {
           wrap_column_positions.push(prev_state->wrap_column_positions.top() +
                                      style.wrap_spaces);
           break;
+        case SpacingDecision::Align:
+          LOG(FATAL) << kNotForAlignment;
         case SpacingDecision::Append:
-          VLOG(4) << "current token is appended";
+          VLOG(4) << "current token is appended or aligned";
           wrap_column_positions.push(prev_state->current_column);
           break;
         case SpacingDecision::Preserve:

@@ -26,6 +26,7 @@
 #include "common/text/concrete_syntax_leaf.h"
 #include "common/text/concrete_syntax_tree.h"
 #include "common/text/token_info.h"
+#include "common/text/tree_utils.h"
 #include "common/util/casts.h"
 #include "common/util/logging.h"
 #include "common/util/value_saver.h"
@@ -65,15 +66,23 @@ static bool TokensAreAllComments(const T& tokens) {
              }) == tokens.end();
 }
 
-static bool IgnorePartition(const TokenPartitionTree& partition) {
+static bool IgnorePortDeclarationPartition(
+    const TokenPartitionTree& partition) {
   const auto& uwline = partition.Value();
   const auto token_range = uwline.TokensRange();
   CHECK(!token_range.empty());
   // ignore lines containing only comments
   if (TokensAreAllComments(token_range)) return true;
+
   // ignore partitions belonging to preprocessing directives
   if (IsPreprocessorKeyword(verilog_tokentype(token_range.front().TokenEnum())))
     return true;
+
+  // Ignore .x or .x(x) port declarations.
+  // These can appear in a list_of_port_or_port_declarations.
+  if (verible::SymbolCastToNode(*uwline.Origin()).MatchesTag(NodeEnum::kPort)) {
+    return true;
+  }
   return false;
 }
 
@@ -239,8 +248,8 @@ void TabularAlignTokenPartitions(TokenPartitionTree* partition_ptr,
   const auto handler_iter = kAlignHandlers->find(NodeEnum(node->Tag().tag));
   if (handler_iter == kAlignHandlers->end()) return;
   verible::TabularAlignTokens(partition_ptr, handler_iter->second,
-                              &IgnorePartition, ftoken_base, full_text,
-                              disabled_byte_ranges, column_limit);
+                              &IgnorePortDeclarationPartition, ftoken_base,
+                              full_text, disabled_byte_ranges, column_limit);
   VLOG(1) << "end of " << __FUNCTION__;
 }
 

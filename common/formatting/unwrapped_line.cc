@@ -42,6 +42,7 @@ std::ostream& operator<<(std::ostream& stream, PartitionPolicyEnum p) {
           {PartitionPolicyEnum::kAlwaysExpand, "always-expand"},
           {PartitionPolicyEnum::kFitOnLineElseExpand, "fit-else-expand"},
           {PartitionPolicyEnum::kTabularAlignment, "tabular-alignment"},
+          {PartitionPolicyEnum::kSuccessfullyAligned, "aligned-success"},
           {PartitionPolicyEnum::kAppendFittingSubPartitions,
            "append-fitting-sub-partitions"},
       };
@@ -91,32 +92,32 @@ FormattedExcerpt::FormattedExcerpt(const UnwrappedLine& uwline)
   const auto range = uwline.TokensRange();
   std::transform(range.begin(), range.end(), std::back_inserter(tokens_),
                  [](const PreFormatToken& t) { return FormattedToken(t); });
-  if (!tokens_.empty()) {
-    // Translate indentation depth into first token's before.spaces.
-    tokens_.front().before.spaces = indentation_spaces_;
-    // Beware, however, that other attempts to adjust before.spaces (e.g.
-    // tabular alignment) may get clobbered by this.
-    // The workaround in those cases is to compute this first spacing as a sum
-    // of indentation and left-padding.
-  }
 }
 
 std::ostream& FormattedExcerpt::FormattedText(std::ostream& stream,
                                               bool indent) const {
+  if (tokens_.empty()) return stream;
   // Let caller print the preceding/trailing newline.
   if (indent) {
-    // Indentation is expected to be accounted for in the first token.
-    for (const auto& ftoken : tokens_) {
-      stream << ftoken;
+    if (tokens_.front().before.action != SpacingDecision::Preserve) {
+      stream << Spacer(IndentationSpaces());
     }
-  } else {
-    // We do not want the indentation before the first token, if it was
-    // already handled separately.
-    stream << tokens_.front().token->text();
-    for (const auto& ftoken :
-         verible::make_range(tokens_.begin() + 1, tokens_.end())) {
-      stream << ftoken;
-    }
+  }
+  // We do not want the indentation before the first token, if it was
+  // already handled separately.
+  const auto& front = tokens_.front();
+  VLOG(2) << "action: " << front.before.action;
+  switch (front.before.action) {
+    case SpacingDecision::Align:
+      // When aligning tokens, the first token might be further indented.
+      stream << Spacer(front.before.spaces) << front.token->text();
+      break;
+    default:
+      stream << front.token->text();
+  }
+  for (const auto& ftoken :
+       verible::make_range(tokens_.begin() + 1, tokens_.end())) {
+    stream << ftoken;
   }
   return stream;
 }

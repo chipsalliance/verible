@@ -100,19 +100,6 @@ TEST_F(TabularAlignTokenTest, EmptyPartitionRange) {
   // so they end up pointing to the same ranges anyway.
 }
 
-// Kludge: The constructor for FormattedExcerpt overwrites the before.spaces of
-// the first token using the UnwrappedLine's indentation_spaces, which discards
-// any space padding done to the left of the first token.
-// Here, we explicitly combine the original indentation with the padded spacing
-// to get the desired result.
-static FormattedExcerpt CreateFormattedExcerpt(const UnwrappedLine& uwline) {
-  UnwrappedLine copy(uwline);
-  copy.SetIndentationSpaces(
-      uwline.IndentationSpaces() +
-      uwline.TokensRange().front().before.spaces_required);
-  return FormattedExcerpt(copy);
-}
-
 class Sparse3x3MatrixAlignmentTest : public AlignmentTestFixture {
  public:
   Sparse3x3MatrixAlignmentTest()
@@ -168,7 +155,7 @@ class Sparse3x3MatrixAlignmentTest : public AlignmentTestFixture {
   std::string Render() const {
     std::ostringstream stream;
     for (const auto& child : partition_.Children()) {
-      stream << CreateFormattedExcerpt(child.Value()) << std::endl;
+      stream << FormattedExcerpt(child.Value()) << std::endl;
     }
     return stream.str();
   }
@@ -201,6 +188,7 @@ TEST_F(Sparse3x3MatrixAlignmentTest, ZeroInterTokenPadding) {
 
 TEST_F(Sparse3x3MatrixAlignmentTest, OneInterTokenPadding) {
   // Require 1 space between tokens.
+  // Will have no effect on the first token in each partition.
   for (auto& ftoken : pre_format_tokens_) {
     ftoken.before.spaces_required = 1;
   }
@@ -212,9 +200,9 @@ TEST_F(Sparse3x3MatrixAlignmentTest, OneInterTokenPadding) {
 
   // Verify string rendering of result.
   EXPECT_EQ(Render(),  //
-            "       one two\n"
-            " three     four\n"
-            " five  six\n");
+            "      one two\n"
+            "three     four\n"
+            "five  six\n");
 }
 
 TEST_F(Sparse3x3MatrixAlignmentTest, OneInterTokenPaddingExceptFront) {
@@ -239,13 +227,10 @@ TEST_F(Sparse3x3MatrixAlignmentTest, OneInterTokenPaddingExceptFront) {
 }
 
 TEST_F(Sparse3x3MatrixAlignmentTest, RightFlushed) {
-  // Require 1 space between tokens, except ones at the beginning of partitions.
+  // Require 1 space between tokens.
   for (auto& ftoken : pre_format_tokens_) {
     ftoken.before.spaces_required = 1;
   }
-  pre_format_tokens_[0].before.spaces_required = 0;
-  pre_format_tokens_[2].before.spaces_required = 0;
-  pre_format_tokens_[4].before.spaces_required = 0;
 
   TabularAlignTokens(
       &partition_, AlignmentCellScannerGenerator<TokenColumnizerRightFlushed>(),
@@ -264,9 +249,7 @@ TEST_F(Sparse3x3MatrixAlignmentTest, OneInterTokenPaddingWithIndent) {
   for (auto& ftoken : pre_format_tokens_) {
     ftoken.before.spaces_required = 1;
   }
-  pre_format_tokens_[0].before.spaces_required = 0;
-  pre_format_tokens_[2].before.spaces_required = 0;
-  pre_format_tokens_[4].before.spaces_required = 0;
+  // Indent each partition.
   for (auto& child : partition_.Children()) {
     child.Value().SetIndentationSpaces(4);
   }
@@ -288,6 +271,9 @@ TEST_F(Sparse3x3MatrixAlignmentTest, IgnoreCommentLine) {
   for (auto& ftoken : pre_format_tokens_) {
     ftoken.before.spaces_required = 1;
   }
+  // Leave the 'commented' line indented.
+  pre_format_tokens_[2].before.break_decision = SpacingOptions::MustWrap;
+  partition_.Children()[1].Value().SetIndentationSpaces(1);
 
   // Pretend lines that begin with "three" are to be ignored, like comments.
   auto ignore_threes = [](const TokenPartitionTree& partition) {
@@ -299,10 +285,10 @@ TEST_F(Sparse3x3MatrixAlignmentTest, IgnoreCommentLine) {
       ignore_threes, pre_format_tokens_.begin(), sample_, ByteOffsetSet(), 40);
 
   // Verify string rendering of result.
-  EXPECT_EQ(Render(),          //
-            "      one two\n"  // is aligned
-            " three four\n"    // this line does not participate in alignment
-            " five six\n"      // is aligned
+  EXPECT_EQ(Render(),         //
+            "     one two\n"  // is aligned
+            " three four\n"   // this line does not participate in alignment
+            "five six\n"      // is aligned
   );
 }
 
@@ -321,9 +307,35 @@ TEST_F(Sparse3x3MatrixAlignmentTest, CompletelyDisabledNoAlignment) {
 
   // Verify string rendering of result.
   EXPECT_EQ(Render(),  //
-            " one two\n"
-            " three four\n"
-            " five six\n");
+            "one two\n"
+            "three four\n"
+            "five six\n");
+}
+
+TEST_F(Sparse3x3MatrixAlignmentTest, CompletelyDisabledNoAlignmentWithIndent) {
+  // Require 1 space between tokens.
+  for (auto& ftoken : pre_format_tokens_) {
+    ftoken.before.spaces_required = 1;
+  }
+  for (auto& child : partition_.Children()) {
+    child.Value().SetIndentationSpaces(3);
+  }
+  pre_format_tokens_[0].before.break_decision = SpacingOptions::MustWrap;
+  pre_format_tokens_[2].before.break_decision = SpacingOptions::MustWrap;
+  pre_format_tokens_[4].before.break_decision = SpacingOptions::MustWrap;
+
+  TabularAlignTokens(
+      &partition_, AlignmentCellScannerGenerator<TokenColumnizer>(),
+      [](const TokenPartitionTree&) { return false; },
+      pre_format_tokens_.begin(), sample_,
+      // Alignment disabled over entire range.
+      ByteOffsetSet({{0, static_cast<int>(sample_.length())}}), 40);
+
+  // Verify string rendering of result.
+  EXPECT_EQ(Render(),  //
+            "   one two\n"
+            "   three four\n"
+            "   five six\n");
 }
 
 TEST_F(Sparse3x3MatrixAlignmentTest, PartiallyDisabledNoAlignment) {
@@ -342,9 +354,9 @@ TEST_F(Sparse3x3MatrixAlignmentTest, PartiallyDisabledNoAlignment) {
 
   // Verify string rendering of result.
   EXPECT_EQ(Render(),  //
-            " one two\n"
-            " three four\n"
-            " five six\n");
+            "one two\n"
+            "three four\n"
+            "five six\n");
 }
 
 TEST_F(Sparse3x3MatrixAlignmentTest, DisabledByColumnLimit) {
@@ -357,14 +369,39 @@ TEST_F(Sparse3x3MatrixAlignmentTest, DisabledByColumnLimit) {
       &partition_, AlignmentCellScannerGenerator<TokenColumnizer>(),
       [](const TokenPartitionTree&) { return false; },
       pre_format_tokens_.begin(), sample_, ByteOffsetSet(),
-      // Column limit chosen to be smaller than sum of columns' widths (6+4+5):
-      14);
+      // Column limit chosen to be smaller than sum of columns' widths.
+      // 5 (no left padding) +4 +5 = 14, so we choose 13
+      13);
 
   // Verify string rendering of result.
   EXPECT_EQ(Render(),  //
-            " one two\n"
-            " three four\n"
-            " five six\n");
+            "one two\n"
+            "three four\n"
+            "five six\n");
+}
+
+TEST_F(Sparse3x3MatrixAlignmentTest, DisabledByColumnLimitIndented) {
+  // Require 1 space between tokens.
+  for (auto& ftoken : pre_format_tokens_) {
+    ftoken.before.spaces_required = 1;
+  }
+  for (auto& child : partition_.Children()) {
+    child.Value().SetIndentationSpaces(3);
+  }
+
+  TabularAlignTokens(
+      &partition_, AlignmentCellScannerGenerator<TokenColumnizer>(),
+      [](const TokenPartitionTree&) { return false; },
+      pre_format_tokens_.begin(), sample_, ByteOffsetSet(),
+      // Column limit chosen to be smaller than sum of columns' widths.
+      // 3 (indent) +5 (no left padding) +4 +5 = 17, so we choose 16
+      16);
+
+  // Verify string rendering of result.
+  EXPECT_EQ(Render(),  //
+            "one two\n"
+            "three four\n"
+            "five six\n");
 }
 
 class MultiAlignmentGroupTest : public AlignmentTestFixture {
@@ -442,7 +479,7 @@ class MultiAlignmentGroupTest : public AlignmentTestFixture {
       const auto newlines =
           std::max<int>(std::count(spaces.begin(), spaces.end(), '\n') - 1, 0);
       stream << Spacer(newlines, '\n');
-      stream << CreateFormattedExcerpt(child.Value()) << std::endl;
+      stream << FormattedExcerpt(child.Value()) << std::endl;
       position = tokens_range.back().token->right(text);
     }
     return stream.str();
@@ -469,11 +506,11 @@ TEST_F(MultiAlignmentGroupTest, BlankLineSeparatedGroups) {
 
   // Verify string rendering of result.
   EXPECT_EQ(Render(),  //
-            "       one two\n"
-            " three     four\n"
+            "      one two\n"
+            "three     four\n"
             "\n"  // preserve blank line
-            " five seven\n"
-            "      six   eight\n");
+            "five seven\n"
+            "     six   eight\n");
 }
 
 // TODO(fangism): test case that demonstrates repeated constructs in a deeper

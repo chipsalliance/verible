@@ -953,6 +953,64 @@ static const std::initializer_list<FormatterTestCase> kFormatterTestCases = {
      "    output pkg::bar_t yy\n"
      ");\n"
      "endmodule : foo\n"},
+    {"module somefunction ("
+     "logic clk, int   a, int b);endmodule",
+     "module somefunction (\n"
+     "    logic clk,\n"  // direction missing
+     "    int   a,\n"    // direction missing
+     "    int   b\n"     // direction missing
+     ");\n"
+     "endmodule\n"},
+    {"module somefunction ("
+     "logic clk, input int   a, int b);endmodule",
+     "module somefunction (\n"
+     "          logic clk,\n"  // direction missing
+     "    input int   a,\n"
+     "          int   b\n"  // direction missing
+     ");\n"
+     "endmodule\n"},
+    {"module somefunction ("
+     "input logic clk, input int   a, int b);endmodule",
+     "module somefunction (\n"
+     "    input logic clk,\n"
+     "    input int   a,\n"
+     "          int   b\n"  // direction missing
+     ");\n"
+     "endmodule\n"},
+    {"module somefunction ("
+     "input clk, input int   a, int b);endmodule",
+     "module somefunction (\n"
+     "    input     clk,\n"  // type missing
+     "    input int a,\n"
+     "          int b\n"
+     ");\n"
+     "endmodule\n"},
+    {"module somefunction ("
+     "input logic clk, input a, int b);endmodule",
+     "module somefunction (\n"
+     "    input logic clk,\n"
+     "    input       a,\n"  // type missing
+     "          int   b\n"   // direction missing
+     ");\n"
+     "endmodule\n"},
+    /* TODO(b/158131099): to fix these, reinterpret 'b' as a kPortDeclaration
+    {"module somefunction ("
+     "input logic clk, input a, b);endmodule",
+     "module somefunction (\n"
+     "    input logic clk,\n"
+     "    input       a,\n"  // type missing
+     "                b\n"  // type and direction missing
+     ");\n"
+     "endmodule\n"},
+    {"module somefunction ("
+     "input logic clk, int a, b);endmodule",
+     "module somefunction (\n"
+     "    input logic clk,\n"
+     "          int   a,\n"  // direction missing
+     "                b\n"  // type and direction missing
+     ");\n"
+     "endmodule\n"},
+     */
     {"module foo(\n"
      "//c1\n"
      "input wire x , \n"
@@ -1072,7 +1130,7 @@ static const std::initializer_list<FormatterTestCase> kFormatterTestCases = {
      "module foo(  input int signed x [a:b],"
      "output reg [mm:nn] yy) ;endmodule:foo\n",
      "module foo (\n"
-     // ---------------40col---------------->
+     // ---------------40col----------------->
      "    input  int signed         x [a:b],\n"  // aligned, still fits
      "    output reg        [mm:nn] yy\n"
      ");\n"
@@ -1082,11 +1140,23 @@ static const std::initializer_list<FormatterTestCase> kFormatterTestCases = {
      "module foo(  input int signed x [aa:bb],"
      "output reg [mm:nn] yy) ;endmodule:foo\n",
      "module foo (\n"
-     // ---------------40col---------------->
-     //   input  int signed         x [aa:bb],\n"  // over limit, by comma
+     // ---------------40col----------------->
+     //   input  int signed         x [aa:bb],\n"
      //   output reg        [mm:nn] yy\n"
+     "    input  int signed         x [aa:bb],\n"  // aligned, still fits
+     "    output reg        [mm:nn] yy\n"
+     ");\n"
+     "endmodule : foo\n"},
+    {// when aligning would result in exceeding column limit, don't align for
+     // now
+     "module foo(  input int signed x [aa:bb],"
+     "output reg [mm:nn] yyy) ;endmodule:foo\n",
+     "module foo (\n"
+     // ---------------40col----------------->
+     //   input  int signed         x  [aa:bb],\n"  // over limit, by comma
+     //   output reg        [mm:nn] yyy\n"
      "    input int signed x[aa:bb],\n"  // aligned would be 41 columns
-     "    output reg [mm:nn] yy\n"
+     "    output reg [mm:nn] yyy\n"
      ");\n"
      "endmodule : foo\n"},
     {// when aligning would result in exceeding column limit, don't align for

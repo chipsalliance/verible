@@ -94,6 +94,7 @@ static int GetPartitionNodeEnum(const TokenPartitionTree& partition) {
 
 static bool VerifyRowsOriginalNodeTypes(
     const std::vector<TokenPartitionIterator>& rows) {
+  VLOG(1) << __FUNCTION__;
   const auto first_node_type = GetPartitionNodeEnum(*rows.front());
   for (const auto& row : verible::make_range(rows.begin() + 1, rows.end())) {
     const auto node_type = GetPartitionNodeEnum(*row);
@@ -112,16 +113,16 @@ static int EffectiveCellWidth(const FormatTokenRange& tokens) {
   VLOG(2) << __FUNCTION__;
   // Sum token text lengths plus required pre-spacings (except first token).
   // Note: LeadingSpacesLength() honors where original spacing when preserved.
-  return std::accumulate(tokens.begin(), tokens.end(),
-                         -tokens.front().LeadingSpacesLength(),
-                         [](int total_width, const PreFormatToken& ftoken) {
-                           VLOG(2) << " +" << ftoken.before.spaces_required
-                                   << " +" << ftoken.token->text().length();
-                           // TODO(fangism): account for multi-line tokens like
-                           // block comments.
-                           return total_width + ftoken.LeadingSpacesLength() +
-                                  ftoken.token->text().length();
-                         });
+  return std::accumulate(
+      tokens.begin(), tokens.end(), -tokens.front().LeadingSpacesLength(),
+      [](int total_width, const PreFormatToken& ftoken) {
+        const int pre_width = ftoken.LeadingSpacesLength();
+        const int text_length = ftoken.token->text().length();
+        VLOG(2) << " +" << pre_width << " +" << text_length;
+        // TODO(fangism): account for multi-line tokens like
+        // block comments.
+        return total_width + ftoken.LeadingSpacesLength() + text_length;
+      });
 }
 
 static int EffectiveLeftBorderWidth(const MutableFormatTokenRange& tokens) {
@@ -355,6 +356,10 @@ static void ComputeCellWidths(AlignmentMatrix* matrix) {
     for (auto& cell : row) {
       cell.UpdateWidths();
     }
+    // Force leftmost table border to be 0 because these cells start new lines
+    // and thus should not factor into alignment calculation.
+    // Note: this is different from how StateNode calculates column positions.
+    row.front().left_border_width = 0;
   }
   VLOG(2) << "end of " << __FUNCTION__ << ", cell sizes:\n"
           << MatrixCellSizeFormatter{*matrix};
@@ -396,7 +401,10 @@ static void AlignRowSpacings(
       // Align by setting the left-spacing based on sum of cell widths
       // before this one.
       const int padding = column_iter->width - cell.compact_width;
-      int& left_spacing = cell.tokens.front().before.spaces_required;
+      PreFormatToken& ftoken = cell.tokens.front();
+      ftoken.before.break_decision =
+          SpacingOptions::AppendAligned;  // force printing of spaces
+      int& left_spacing = ftoken.before.spaces_required;
       if (properties_iter->flush_left) {
         left_spacing = accrued_spaces;
         accrued_spaces = padding;
@@ -432,6 +440,15 @@ static MutableFormatTokenRange ConvertToMutableFormatTokenRange(
   return MutableFormatTokenRange(
       ConvertToMutableIterator<array_type>(const_range.begin(), base),
       ConvertToMutableIterator<array_type>(const_range.end(), base));
+}
+
+static FormatTokenRange EpilogRange(const TokenPartitionTree& partition,
+                                    const AlignmentRow& row) {
+  // Identify the unaligned epilog tokens of this 'partition', i.e. those not
+  // spanned by 'row'.
+  auto partition_end = partition.Value().TokensRange().end();
+  auto row_end = row.back().tokens.end();
+  return FormatTokenRange(row_end, partition_end);
 }
 
 static MutableFormatTokenRange GetMutableFormatTokenRange(
@@ -544,10 +561,7 @@ static void AlignFilteredRows(
     for (const auto& row : matrix) {
       if (!row.empty()) {
         // Identify the unaligned epilog text on each partition.
-        auto partition_end =
-            partition_iter->base()->Value().TokensRange().end();
-        auto row_end = row.back().tokens.end();
-        const FormatTokenRange epilog_range(row_end, partition_end);
+        const FormatTokenRange epilog_range(EpilogRange(**partition_iter, row));
         const int aligned_partition_width =
             total_column_width + EffectiveCellWidth(epilog_range);
         if (aligned_partition_width > column_limit) {
@@ -565,9 +579,33 @@ static void AlignFilteredRows(
   // exceed the column limit, then for now, refuse to align.
   // TODO(fangism): implement overflow mitigation fallback strategies.
 
+  // At this point, the proposed alignment/padding 'fits'.
+
   // Adjust pre-token spacings of each row to align to the column configs.
   for (auto& row : matrix) {
     AlignRowSpacings(column_configs, column_properties, &row);
+  }
+
+  // Signal that these partitions spacing/wrapping decisions have already been
+  // solved (append everything because they fit on one line).
+  {
+    auto partition_iter = rows.begin();
+    for (auto& row : matrix) {
+      if (!row.empty()) {
+        TokenPartitionTree& partition(**partition_iter);
+        const auto ftoken_range = ConvertToMutableFormatTokenRange(
+            partition.Value().TokensRange(), ftoken_base);
+        for (auto& ftoken : ftoken_range) {
+          SpacingOptions& decision = ftoken.before.break_decision;
+          if (decision == SpacingOptions::Undecided) {
+            decision = SpacingOptions::MustAppend;
+          }
+        }
+        partition.Value().SetPartitionPolicy(
+            PartitionPolicyEnum::kSuccessfullyAligned);
+      }
+      ++partition_iter;
+    }
   }
   VLOG(1) << "end of " << __FUNCTION__;
 }

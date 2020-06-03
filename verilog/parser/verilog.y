@@ -5256,8 +5256,16 @@ port_declaration_noattr
   | port_direction TK_wreal GenericIdentifier trailing_assign_opt
     { $$ = MakeTaggedNode(N::kPortDeclaration, $1, nullptr, $2, $3, nullptr, $4); }
   | data_type_primitive GenericIdentifier decl_dimensions_opt trailing_assign_opt
-    { $$ = MakeTaggedNode(N::kPortDeclaration, nullptr, nullptr, $1, $2,
-                          MakeUnpackedDimensionsNode($3), $4); }
+    { $$ = MakeTaggedNode(N::kPortDeclaration, nullptr, nullptr,
+                          // just expand without ForwardChildren:
+                          // MakeTypeIdDimensionsTuple(
+                              MakeTaggedNode(N::kDataType, $1,
+                                             nullptr /* packed dimensions */),
+                              MakeTaggedNode(N::kUnqualifiedId, $2),
+                              MakeUnpackedDimensionsNode($3)
+                          // )
+                          ,  //
+                          $4); }
   /* user-defined types: including interface_port_declaration */
   | type_identifier_followed_by_id decl_dimensions_opt trailing_assign_opt
     { $$ = MakeTaggedNode(N::kPortDeclaration, nullptr, nullptr, ForwardChildren($1),

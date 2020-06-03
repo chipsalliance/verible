@@ -48,6 +48,11 @@ TEST(BreakDecisionTest, StringRep) {
     stream << SpacingOptions::Preserve;
     EXPECT_EQ(stream.str(), "preserve");
   }
+  {
+    std::ostringstream stream;
+    stream << SpacingOptions::AppendAligned;
+    EXPECT_EQ(stream.str(), "append-aligned");
+  }
 }
 
 // Tests the string representation of the GroupBalancing enum.
@@ -301,6 +306,15 @@ TEST(InterTokenInfoTest, CompactNotationMustWrap) {
   info.break_decision = SpacingOptions::MustWrap;
   info.CompactNotation(stream);
   EXPECT_EQ(stream.str(), "<\\n>");
+}
+
+TEST(InterTokenInfoTest, CompactNotationAppendAligned) {
+  std::ostringstream stream;
+  InterTokenInfo info;
+  info.break_decision = SpacingOptions::AppendAligned;
+  info.spaces_required = 3;
+  info.CompactNotation(stream);
+  EXPECT_EQ(stream.str(), "<|_3>");
 }
 
 TEST(InterTokenInfoTest, CompactNotationPreserve) {

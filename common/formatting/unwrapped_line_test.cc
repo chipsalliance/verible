@@ -215,6 +215,7 @@ TEST_F(UnwrappedLineTest, FormattedTextNonEmpty) {
   AddFormatTokens(&uwline);
   auto& ftokens = pre_format_tokens_;
   // Pretend we've committed formatting decisions from an optimizer.
+  ftokens[0].before.break_decision = SpacingOptions::MustWrap;
   ftokens[0].before.spaces_required = 4;
   ftokens[1].before.spaces_required = 1;
   ftokens[2].before.spaces_required = 2;
@@ -237,6 +238,7 @@ TEST_F(UnwrappedLineTest, FormattedTextNonEmptySuppressIndent) {
   AddFormatTokens(&uwline);
   auto& ftokens = pre_format_tokens_;
   // Pretend we've committed formatting decisions from an optimizer.
+  ftokens[0].before.break_decision = SpacingOptions::MustWrap;
   ftokens[0].before.spaces_required = 4;
   ftokens[1].before.spaces_required = 1;
   ftokens[2].before.spaces_required = 2;
@@ -245,6 +247,28 @@ TEST_F(UnwrappedLineTest, FormattedTextNonEmptySuppressIndent) {
   std::ostringstream stream;
   output.FormattedText(stream, false);  // disable left indentation
   const char expected[] = R"(test_token1 test_token2
+  test_token3)";
+  EXPECT_EQ(expected, stream.str());
+}
+
+TEST_F(UnwrappedLineTest, FormattedTextNonEmptyWithIndent) {
+  const std::vector<TokenInfo> tokens = {
+      {0, "test_token1"}, {1, "test_token2"}, {2, "test_token3"}};
+  CreateTokenInfos(tokens);
+  UnwrappedLine uwline(4, pre_format_tokens_.begin());
+  AddFormatTokens(&uwline);
+  auto& ftokens = pre_format_tokens_;
+  // Pretend we've committed formatting decisions from an optimizer.
+  ftokens[0].before.break_decision = SpacingOptions::MustWrap;
+  ftokens[0].before.spaces_required = 4;
+  ftokens[1].before.spaces_required = 1;
+  ftokens[2].before.spaces_required = 2;
+  ftokens[2].before.break_decision = SpacingOptions::MustWrap;
+  FormattedExcerpt output(uwline);
+  std::ostringstream stream;
+  EXPECT_EQ(output.IndentationSpaces(), 4);
+  output.FormattedText(stream, true);  // enable left indentation
+  const char expected[] = R"(    test_token1 test_token2
   test_token3)";
   EXPECT_EQ(expected, stream.str());
 }
@@ -308,9 +332,11 @@ TEST_F(UnwrappedLineTest, FormattedTextPreserveSpacesWithTokens) {
   ftokens[2].before.break_decision = SpacingOptions::Preserve;
   FormattedExcerpt output(uwline);
   {
+    EXPECT_EQ(output.Tokens().front().before.action, SpacingDecision::Preserve);
+    EXPECT_EQ(output.IndentationSpaces(), 4);
     std::ostringstream stream;
     stream << output;
-    EXPECT_EQ(stream.str(), text);
+    EXPECT_EQ(stream.str(), text.substr(2));  // excludes leading spaces
   }
 }
 
@@ -333,7 +359,7 @@ TEST_F(UnwrappedLineTest, FormattedTextPreserveNewlines) {
   {
     std::ostringstream stream;
     stream << output;
-    EXPECT_EQ(stream.str(), text);
+    EXPECT_EQ(stream.str(), text.substr(2));  // excludes leading spaces
   }
 }
 
@@ -356,7 +382,7 @@ TEST_F(UnwrappedLineTest, FormattedTextPreserveNewlinesDropSpaces) {
   {
     std::ostringstream stream;
     stream << output;
-    EXPECT_EQ(stream.str(), text);
+    EXPECT_EQ(stream.str(), text.substr(7));  // excludes leading spaces
   }
 }
 

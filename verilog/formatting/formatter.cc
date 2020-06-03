@@ -248,6 +248,10 @@ static void DeterminePartitionExpansion(partition_node_type* node,
       }
       break;
     }
+    case PartitionPolicyEnum::kSuccessfullyAligned:
+      VLOG(3) << "Aligned fits, un-expanding.";
+      node_view.Unexpand();
+      break;
     // Try to fit kAppendFittingSubPartitions partition into single line.
     // If it doesn't fit expand to grouped nodes.
     case PartitionPolicyEnum::kAppendFittingSubPartitions:
@@ -515,18 +519,25 @@ Status Formatter::Format(const ExecutionControl& control) {
   for (const auto& uwline : unwrapped_lines) {
     // TODO(fangism): Use different formatting strategies depending on
     // uwline.PartitionPolicy().
-    const auto optimal_solutions =
-        verible::SearchLineWraps(uwline, style_, control.max_search_states);
-    if (control.show_equally_optimal_wrappings &&
-        optimal_solutions.size() > 1) {
-      verible::DisplayEquallyOptimalWrappings(control.Stream(), uwline,
-                                              optimal_solutions);
-    }
-    // Arbitrarily choose the first solution, if there are multiple.
-    formatted_lines_.push_back(optimal_solutions.front());
-    if (!formatted_lines_.back().CompletedFormatting()) {
-      // Copy over any lines that did not finish wrap searching.
-      partially_formatted_lines.push_back(&uwline);
+    if (uwline.PartitionPolicy() == PartitionPolicyEnum::kSuccessfullyAligned) {
+      // For partitions that were successfully aligned, do not search
+      // line-wrapping, but instead accept the adjusted padded spacing.
+      formatted_lines_.emplace_back(uwline);
+    } else {
+      // In other case, default to searching for optimal line wrapping.
+      const auto optimal_solutions =
+          verible::SearchLineWraps(uwline, style_, control.max_search_states);
+      if (control.show_equally_optimal_wrappings &&
+          optimal_solutions.size() > 1) {
+        verible::DisplayEquallyOptimalWrappings(control.Stream(), uwline,
+                                                optimal_solutions);
+      }
+      // Arbitrarily choose the first solution, if there are multiple.
+      formatted_lines_.push_back(optimal_solutions.front());
+      if (!formatted_lines_.back().CompletedFormatting()) {
+        // Copy over any lines that did not finish wrap searching.
+        partially_formatted_lines.push_back(&uwline);
+      }
     }
   }
 
@@ -551,6 +562,8 @@ void Formatter::Emit(std::ostream& stream) const {
   const absl::string_view full_text(text_structure_.Contents());
   int position = 0;  // tracks with the position in the original full_text
   for (const auto& line : formatted_lines_) {
+    // TODO(fangism): The handling of preserved spaces before tokens is messy:
+    // some of it is handled here, some of it is inside FormattedToken.
     const auto front_offset = line.Tokens().front().token->left(full_text);
     const absl::string_view leading_whitespace(
         full_text.substr(position, front_offset - position));

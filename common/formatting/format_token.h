@@ -29,10 +29,11 @@ namespace verible {
 // This controls what to explore (if not pre-determined).
 // Related enum: SpacingDecision
 enum class SpacingOptions {
-  Undecided,   // unconstrained, not yet decided, to be optimized (default)
-  MustAppend,  // cannot break here
-  MustWrap,    // must break here
-  Preserve,    // do not optimize, use original spacing
+  Undecided,      // unconstrained, not yet decided, to be optimized (default)
+  MustAppend,     // cannot break here
+  MustWrap,       // must break here
+  AppendAligned,  // when appending, allow for left-padding spaces
+  Preserve,       // do not optimize, use original spacing
 };
 
 std::ostream& operator<<(std::ostream&, SpacingOptions);
@@ -152,6 +153,8 @@ enum class SpacingDecision {
   Preserve,  // keep original inter-token spacing
   Append,    // add onto current line, with appropriate amount of spacing
   Wrap,      // wrap onto new line, with appropriate amount of indentation
+  Align,     // like Append, but force left-padding of spaces, even at the
+             // front of line.
 };
 
 std::ostream& operator<<(std::ostream& stream, SpacingDecision);

@@ -38,6 +38,9 @@ std::ostream& operator<<(std::ostream& stream, SpacingOptions b) {
     case SpacingOptions::MustWrap:
       stream << "must-wrap";
       break;
+    case SpacingOptions::AppendAligned:
+      stream << "append-aligned";
+      break;
     case SpacingOptions::Preserve:
       stream << "preserve";
       break;
@@ -84,6 +87,9 @@ std::ostream& InterTokenInfo::CompactNotation(std::ostream& stream) const {
       // spaces_required is irrelevant
       stream << "\\n";
       break;
+    case SpacingOptions::AppendAligned:
+      stream << "|_" << spaces_required;
+      break;
     case SpacingOptions::Preserve:
       stream << "pre";
       break;
@@ -99,6 +105,9 @@ std::ostream& operator<<(std::ostream& stream, SpacingDecision d) {
     case SpacingDecision::Wrap:
       stream << "wrap";
       break;
+    case SpacingDecision::Align:
+      stream << "align";
+      break;
     case SpacingDecision::Preserve:
       stream << "preserve";
       break;
@@ -112,6 +121,8 @@ static SpacingDecision ConvertSpacing(SpacingOptions opt) {
       return SpacingDecision::Wrap;
     case SpacingOptions::MustAppend:
       return SpacingDecision::Append;
+    case SpacingOptions::AppendAligned:
+      return SpacingDecision::Align;
     default:  // Undecided, Preserve
       return SpacingDecision::Preserve;
   }
@@ -148,7 +159,7 @@ std::ostream& FormattedToken::FormattedText(std::ostream& stream) const {
       } else {
         // During testing, we are less interested in Preserve mode due to lack
         // of "original spacing", so fall-back to safe behavior.
-        stream << verible::Spacer(before.spaces);
+        stream << Spacer(before.spaces);
       }
       break;
     }
@@ -156,8 +167,9 @@ std::ostream& FormattedToken::FormattedText(std::ostream& stream) const {
       // Never print spaces before a newline.
       stream << '\n';
       ABSL_FALLTHROUGH_INTENDED;
+    case SpacingDecision::Align:
     case SpacingDecision::Append:
-      stream << verible::Spacer(before.spaces);
+      stream << Spacer(before.spaces);
       break;
   }
   return stream << token->text();
