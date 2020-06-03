@@ -46,19 +46,19 @@ cc_library(
 )
 
 genlex(
-    name = "config_file_lex",
-    src = "config_file.lex",
-    out = "config_file.yy.cc",
+    name = "command_file_lex",
+    src = "command_file.lex",
+    out = "command_file.yy.cc",
 )
 
 cc_library(
-    name = "config_file_lexer",
+    name = "command_file_lexer",
     srcs = [
-        "config_file.yy.cc",
-        "config_file_lexer.cc",
+        "command_file.yy.cc",
+        "command_file_lexer.cc",
     ],
     hdrs = [
-        "config_file_lexer.h",
+        "command_file_lexer.h",
         "lint_waiver.h",
     ],
     copts = ["-Wno-implicit-fallthrough"],
@@ -83,7 +83,7 @@ cc_library(
     copts = ["-fexceptions"],
     features = ["-use_header_modules"],  # precompiled headers incompatible with -fexceptions.
     deps = [
-        ":config_file_lexer",
+        ":command_file_lexer",
         "//common/strings:comment_utils",
         "//common/strings:line_column_map",
         "//common/text:text_structure",

@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "common/analysis/config_file_lexer.h"
+#include "common/analysis/command_file_lexer.h"
 
 #include "absl/strings/string_view.h"
 #include "common/analysis/lint_waiver.h"

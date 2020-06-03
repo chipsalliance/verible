@@ -27,7 +27,7 @@
 
 #include "absl/strings/str_split.h"
 #include "absl/strings/string_view.h"
-#include "common/analysis/config_file_lexer.h"
+#include "common/analysis/command_file_lexer.h"
 #include "common/strings/comment_utils.h"
 #include "common/strings/line_column_map.h"
 #include "common/text/text_structure.h"

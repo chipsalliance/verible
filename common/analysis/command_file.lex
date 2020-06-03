@@ -15,7 +15,7 @@
 
 %{
 #define _COMMANDFILE_FLEXLEXER_H_
-#include "common/analysis/config_file_lexer.h"
+#include "common/analysis/command_file_lexer.h"
 
 #define yy_set_top_state(state)  { yy_pop_state(); yy_push_state(state); }
 %}
