@@ -22,7 +22,7 @@
 
 namespace verible {
 
-ConfigFileLexer::ConfigFileLexer(absl::string_view config)
+CommandFileLexer::CommandFileLexer(absl::string_view config)
     : parent_lexer_type(config) {
   const auto lex_status = MakeTokenSequence(
       this, config, &tokens_, [&](const TokenInfo& error_token) {
@@ -44,11 +44,11 @@ ConfigFileLexer::ConfigFileLexer(absl::string_view config)
   }
 }
 
-bool ConfigFileLexer::TokenIsError(const verible::TokenInfo& token) const {
+bool CommandFileLexer::TokenIsError(const verible::TokenInfo& token) const {
   return false;
 }
 
-std::vector<TokenRange> ConfigFileLexer::GetCommandsTokenRanges() {
+std::vector<TokenRange> CommandFileLexer::GetCommandsTokenRanges() {
   std::vector<TokenRange> commands;
 
   auto i = tokens_.cbegin();

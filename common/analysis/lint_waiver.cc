@@ -396,7 +396,7 @@ absl::Status LintWaiverBuilder::ApplyExternalWaivers(
                         "Broken waiver config handle");
   }
 
-  ConfigFileLexer lexer{waivers_config_content};
+  CommandFileLexer lexer(waivers_config_content);
   const LineColumnMap line_map(waivers_config_content);
   LineColumn command_pos;
 

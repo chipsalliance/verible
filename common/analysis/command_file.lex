@@ -25,7 +25,7 @@
 %option prefix="veribleCommandFile"
 %option c++
 %option yylineno
-%option yyclass="verible::ConfigFileLexer"
+%option yyclass="verible::CommandFileLexer"
 
 LineTerminator \r|\n|\r\n
 InputCharacter [^\r\n\0]

@@ -48,12 +48,12 @@ enum ConfigTokenEnum {
   CFG_TK_ERROR,
 };
 
-class ConfigFileLexer : public FlexLexerAdapter<veribleCommandFileFlexLexer> {
+class CommandFileLexer : public FlexLexerAdapter<veribleCommandFileFlexLexer> {
   using parent_lexer_type = FlexLexerAdapter<veribleCommandFileFlexLexer>;
   using parent_lexer_type::Restart;
 
  public:
-  explicit ConfigFileLexer(absl::string_view config);
+  explicit CommandFileLexer(absl::string_view config);
 
   // Returns true if token is invalid.
   bool TokenIsError(const verible::TokenInfo&) const final;
