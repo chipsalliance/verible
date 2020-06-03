@@ -42,19 +42,19 @@ class VerilogLexer : public verible::FlexLexerAdapter<verilogFlexLexer> {
  public:
   explicit VerilogLexer(const absl::string_view code);
 
-  // Main lexing function. Will be defined by Flex.
-  int yylex() override;
-
   // Restart lexer with new input stream.
-  void Restart(absl::string_view) override;
+  void Restart(absl::string_view) final;
 
   // Returns true if token is invalid.
-  bool TokenIsError(const verible::TokenInfo&) const override;
+  bool TokenIsError(const verible::TokenInfo&) const final;
 
   // Filter predicate that can be used for testing and parsing.
   static bool KeepSyntaxTreeTokens(const verible::TokenInfo&);
 
  private:
+  // Main lexing function. Will be defined by Flex.
+  int yylex() final;
+
   // These variables are controlled by the lexer code (verilog.lex).
 
   // for macro call argument lexing

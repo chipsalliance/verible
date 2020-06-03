@@ -48,11 +48,6 @@ enum ConfigTokenEnum {
   CFG_TK_ERROR,
 };
 
-enum ConfigParserStateEnum {
-  PARSER_INIT,
-  PARSER_COMMAND,
-};
-
 class ConfigFileLexer : public FlexLexerAdapter<veribleCommandFileFlexLexer> {
   using parent_lexer_type = FlexLexerAdapter<veribleCommandFileFlexLexer>;
   using parent_lexer_type::Restart;
@@ -60,16 +55,16 @@ class ConfigFileLexer : public FlexLexerAdapter<veribleCommandFileFlexLexer> {
  public:
   explicit ConfigFileLexer(absl::string_view config);
 
-  // Main lexing function. Will be defined by Flex.
-  int yylex() override;
-
   // Returns true if token is invalid.
-  bool TokenIsError(const verible::TokenInfo&) const override;
+  bool TokenIsError(const verible::TokenInfo&) const final;
 
   // Runs the Lexer and attached command handlers
   std::vector<TokenRange> GetCommandsTokenRanges();
 
  private:
+  // Main lexing function. Will be defined by Flex.
+  int yylex() final;
+
   TokenSequence tokens_;
 };
 
