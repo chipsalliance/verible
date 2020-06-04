@@ -378,8 +378,17 @@ All lines in between will be waived for rule-X
 Another option is to use a configuration file with the `--waiver_files` flag.
 The flag accepts a single file or a list of files (comma-separated). Specifying
 multiple files is equivalent to concatenating the files in order of appearance.
-The format of this file is as follows: `waive --rule=rule-name-1 --line=10 waive
---rule=rule-name-2 --line=5:10 waive --rule=rule-name-3 --regex="^\s*abc$"`
+By default, the rules are applied to all files, but with `--location` you can to
+choose to only apply them to filenames matching the location regexp.
+
+The format of this file is as follows:
+
+```
+waive --rule=rule-name-1 --line=10
+waive --rule=rule-name-2 --line=5:10
+waive --rule=rule-name-3 --regex="^\s*abc$"
+waive --rule=rule-name-4 --line=42 --location=".*some_file.*"
+```
 
 The `--line` flag can be used to specify a single line to apply the waiver to or
 a line range (separated with the `:` character). Additionally the `--regex` flag
