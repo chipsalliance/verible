@@ -231,13 +231,14 @@ static absl::Status WaiveCommandError(LineColumn pos,
       WaiveCommandErrorFmt(pos, filename, msg, args...));
 }
 
-absl::Status WaiveCommandHandler(
-    const TokenRange& tokens, absl::string_view filename,
-    absl::string_view config_base, const LineColumnMap& line_map,
-    LintWaiver* waiver, const std::set<absl::string_view>& active_rules) {
+static absl::Status WaiveCommandHandler(
+    const TokenRange& tokens, absl::string_view waive_file,
+    absl::string_view waive_content, absl::string_view lintee_filename,
+    const LineColumnMap& line_map, LintWaiver* waiver,
+    const std::set<absl::string_view>& active_rules) {
   absl::string_view rule;
 
-  absl::string_view arg;
+  absl::string_view option;
   absl::string_view val;
 
   int line_start = -1;
@@ -246,12 +247,13 @@ absl::Status WaiveCommandHandler(
 
   bool can_use_regex = false;
   bool can_use_lineno = false;
+  bool location_match = true;
 
   LineColumn token_pos;
   LineColumn regex_token_pos = {};
 
   for (const auto& token : tokens) {
-    token_pos = line_map(token.left(config_base));
+    token_pos = line_map(token.left(waive_content));
 
     switch (token.token_enum()) {
       case CFG_TK_COMMAND:
@@ -261,19 +263,19 @@ absl::Status WaiveCommandHandler(
         }
         break;
       case CFG_TK_ERROR:
-        return WaiveCommandError(token_pos, filename, "Configuration error");
+        return WaiveCommandError(token_pos, waive_file, "Configuration error");
       case CFG_TK_PARAM:
       case CFG_TK_FLAG:
-        return WaiveCommandError(token_pos, filename,
+        return WaiveCommandError(token_pos, waive_file,
                                  "Unsupported argument: ", token.text());
       case CFG_TK_FLAG_WITH_ARG:
-        arg = token.text();
+        option = token.text();
         break;
       case CFG_TK_ARG:
 
         val = token.text();
 
-        if (arg == "rule") {
+        if (option == "rule") {
           for (auto r : active_rules) {
             if (val == r) {
               rule = r;
@@ -282,37 +284,37 @@ absl::Status WaiveCommandHandler(
           }
 
           if (rule == nullptr) {
-            return WaiveCommandError(token_pos, filename,
+            return WaiveCommandError(token_pos, waive_file,
                                      "Invalid rule: ", val);
           }
 
           break;
         }
 
-        if (arg == "line") {
+        if (option == "line") {
           size_t range = val.find(":");
           if (range != absl::string_view::npos) {
             // line range
             if (!absl::SimpleAtoi(val.substr(0, range), &line_start) ||
                 !absl::SimpleAtoi(val.substr(range + 1, val.length() - range),
                                   &line_end)) {
-              return WaiveCommandError(token_pos, filename,
+              return WaiveCommandError(token_pos, waive_file,
                                        "Unable to parse range: ", val);
             }
           } else {
             // single line
             if (!absl::SimpleAtoi(val, &line_start)) {
-              return WaiveCommandError(token_pos, filename,
+              return WaiveCommandError(token_pos, waive_file,
                                        "Unable to parse line number: ", val);
             }
             line_end = line_start;
           }
 
           if (line_start < 1) {
-            return WaiveCommandError(token_pos, filename,
+            return WaiveCommandError(token_pos, waive_file,
                                      "Invalid line number: ", val);
           } else if (line_start > line_end) {
-            return WaiveCommandError(token_pos, filename,
+            return WaiveCommandError(token_pos, waive_file,
                                      "Invalid line range: ", val);
           }
 
@@ -320,8 +322,7 @@ absl::Status WaiveCommandHandler(
           continue;
         }
 
-        if (arg == "regex") {
-          // Pre-compile regex to see if it's valid
+        if (option == "regex") {
           regex = std::string(val);
           can_use_regex = true;
 
@@ -330,19 +331,34 @@ absl::Status WaiveCommandHandler(
           continue;
         }
 
-        return WaiveCommandError(token_pos, filename,
-                                 "Unsupported flag: ", arg);
+        if (option == "location") {
+          const std::string file_match_regex(val);
+          try {
+            const std::regex file_matcher(file_match_regex);
+            location_match =
+                std::regex_search(std::string(lintee_filename), file_matcher);
+          } catch (const std::regex_error& e) {
+            return WaiveCommandError(token_pos, waive_file,
+                                     "--location regex is invalid");
+          }
+          continue;
+        }
+
+        return WaiveCommandError(token_pos, waive_file,
+                                 "Unsupported flag: ", option);
 
       case CFG_TK_NEWLINE:
+        if (!location_match) return absl::OkStatus();
+
         // Check if everything required has been set
         if (rule == nullptr || (!can_use_regex && !can_use_lineno)) {
-          return WaiveCommandError(token_pos, filename,
+          return WaiveCommandError(token_pos, waive_file,
                                    "Insufficient waiver configuration");
         }
 
         if (can_use_regex && can_use_lineno) {
           return WaiveCommandError(
-              token_pos, filename,
+              token_pos, waive_file,
               "Regex and line flags are mutually exclusive");
         }
 
@@ -352,7 +368,7 @@ absl::Status WaiveCommandHandler(
           } catch (const std::regex_error& e) {
             auto* reason = e.what();
 
-            return WaiveCommandError(regex_token_pos, filename,
+            return WaiveCommandError(regex_token_pos, waive_file,
                                      "Invalid regex: ", reason);
           }
         }
@@ -362,34 +378,31 @@ absl::Status WaiveCommandHandler(
         }
 
         return absl::OkStatus();
+
       default:
-        return WaiveCommandError(token_pos, filename, "Expecting arguments");
+        return WaiveCommandError(token_pos, waive_file, "Expecting arguments");
     }
   }
 
   return absl::OkStatus();
 }
 
-static const std::map<absl::string_view,
-                      std::function<absl::Status(
-                          const TokenRange&, absl::string_view,
-                          absl::string_view, const LineColumnMap&, LintWaiver*,
-                          const std::set<absl::string_view>&)>>&
-GetCommandHandlers() {
+using HandlerFun = std::function<absl::Status(
+    const TokenRange&, absl::string_view waive_file,
+    absl::string_view waive_content, absl::string_view lintee_filename,
+    const LineColumnMap&, LintWaiver*, const std::set<absl::string_view>&)>;
+static const std::map<absl::string_view, HandlerFun>& GetCommandHandlers() {
   // allocated once, never freed
-  static const auto* handlers =
-      new std::map<absl::string_view,
-                   std::function<absl::Status(
-                       const TokenRange&, absl::string_view, absl::string_view,
-                       const LineColumnMap&, LintWaiver*,
-                       const std::set<absl::string_view>&)>>{
-          {"waive", WaiveCommandHandler},
-      };
+  static const auto* handlers = new std::map<absl::string_view, HandlerFun>{
+      // Right now, we only have one handler
+      {"waive", WaiveCommandHandler},
+  };
   return *handlers;
 }
 
 absl::Status LintWaiverBuilder::ApplyExternalWaivers(
-    const std::set<absl::string_view>& active_rules, absl::string_view filename,
+    const std::set<absl::string_view>& active_rules,
+    absl::string_view lintee_filename, absl::string_view waiver_filename,
     absl::string_view waivers_config_content) {
   if (waivers_config_content == nullptr) {
     return absl::Status(absl::StatusCode::kInternal,
@@ -412,7 +425,7 @@ absl::Status LintWaiverBuilder::ApplyExternalWaivers(
 
     // The very first Token in 'command' should be an actual command
     if (command.empty() || command[0].token_enum() != CFG_TK_COMMAND) {
-      LOG(ERROR) << WaiveCommandErrorFmt(command_pos, filename,
+      LOG(ERROR) << WaiveCommandErrorFmt(command_pos, waiver_filename,
                                          "Not a command: ", command[0].text());
       all_commands_ok = false;
       continue;
@@ -422,14 +435,15 @@ absl::Status LintWaiverBuilder::ApplyExternalWaivers(
     auto handler_iter = handlers.find(command[0].text());
     if (handler_iter == handlers.end()) {
       LOG(ERROR) << WaiveCommandErrorFmt(
-          command_pos, filename, "Command not supported: ", command[0].text());
+          command_pos, waiver_filename,
+          "Command not supported: ", command[0].text());
       all_commands_ok = false;
       continue;
     }
 
-    auto status =
-        handler_iter->second(command, filename, waivers_config_content,
-                             line_map, &lint_waiver_, active_rules);
+    auto status = handler_iter->second(command, waiver_filename,
+                                       waivers_config_content, lintee_filename,
+                                       line_map, &lint_waiver_, active_rules);
     if (!status.ok()) {
       // Mark the return value to be false, but continue parsing the config
       // file anyway

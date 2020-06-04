@@ -258,7 +258,7 @@ TEST(VerilogSyntaxTreeLinterConfigurationTest, AddsExpectedNumber) {
   EXPECT_THAT(config.ActiveRuleIds(), SizeIs(2));
 
   VerilogLinter linter;
-  EXPECT_TRUE(linter.Configure(config).ok());
+  EXPECT_TRUE(linter.Configure(config, filename).ok());
   FakeTextStructureView text_structure;
   linter.Lint(text_structure, filename);
 
@@ -275,7 +275,7 @@ TEST(VerilogTokenStreamLinterConfigurationTest, AddsExpectedNumber) {
   EXPECT_THAT(config.ActiveRuleIds(), SizeIs(1));
 
   VerilogLinter linter;
-  EXPECT_TRUE(linter.Configure(config).ok());
+  EXPECT_TRUE(linter.Configure(config, filename).ok());
   FakeTextStructureView text_structure;
   linter.Lint(text_structure, filename);
 
@@ -292,7 +292,7 @@ TEST(VerilogLineLinterConfigurationTest, AddsExpectedNumber) {
   EXPECT_THAT(config.ActiveRuleIds(), SizeIs(1));
 
   VerilogLinter linter;
-  EXPECT_TRUE(linter.Configure(config).ok());
+  EXPECT_TRUE(linter.Configure(config, filename).ok());
   FakeTextStructureView text_structure;
   linter.Lint(text_structure, filename);
 
@@ -309,7 +309,7 @@ TEST(VerilogTextStructureLinterConfigurationTest, AddsExpectedNumber) {
   EXPECT_THAT(config.ActiveRuleIds(), SizeIs(1));
 
   VerilogLinter linter;
-  EXPECT_TRUE(linter.Configure(config).ok());
+  EXPECT_TRUE(linter.Configure(config, filename).ok());
   FakeTextStructureView text_structure;
   linter.Lint(text_structure, filename);
 
@@ -328,7 +328,7 @@ TEST(VerilogSyntaxTreeLinterConfigurationTest, TurnOnTurnOff) {
   EXPECT_THAT(config.ActiveRuleIds(), IsEmpty());
 
   VerilogLinter linter;
-  EXPECT_TRUE(linter.Configure(config).ok());
+  EXPECT_TRUE(linter.Configure(config, filename).ok());
   FakeTextStructureView text_structure;
   linter.Lint(text_structure, filename);
 
@@ -399,7 +399,7 @@ TEST(VerilogSyntaxTreeLinterConfigurationTest, DefaultEmpty) {
   EXPECT_THAT(config.ActiveRuleIds(), IsEmpty());
 
   VerilogLinter linter;
-  EXPECT_TRUE(linter.Configure(config).ok());
+  EXPECT_TRUE(linter.Configure(config, filename).ok());
   FakeTextStructureView text_structure;
   linter.Lint(text_structure, filename);
 
@@ -418,7 +418,7 @@ TEST(VerilogSyntaxTreeLinterConfigurationTest, UseRuleSetAll) {
   EXPECT_THAT(config.ActiveRuleIds(), SizeIs(expected_size));
 
   VerilogLinter linter;
-  EXPECT_TRUE(linter.Configure(config).ok());
+  EXPECT_TRUE(linter.Configure(config, filename).ok());
   FakeTextStructureView text_structure;
   linter.Lint(text_structure, filename);
 
@@ -432,7 +432,7 @@ TEST(VerilogSyntaxTreeLinterConfigurationTest, UseRuleSetNone) {
   EXPECT_THAT(config.ActiveRuleIds(), IsEmpty());
 
   VerilogLinter linter;
-  EXPECT_TRUE(linter.Configure(config).ok());
+  EXPECT_TRUE(linter.Configure(config, filename).ok());
   FakeTextStructureView text_structure;
   linter.Lint(text_structure, filename);
 
@@ -450,7 +450,7 @@ TEST(VerilogSyntaxTreeLinterConfigurationTest, NoneResets) {
   EXPECT_THAT(config.ActiveRuleIds(), IsEmpty());
 
   VerilogLinter linter;
-  EXPECT_TRUE(linter.Configure(config).ok());
+  EXPECT_TRUE(linter.Configure(config, filename).ok());
   FakeTextStructureView text_structure;
   linter.Lint(text_structure, filename);
 
@@ -463,7 +463,7 @@ TEST(VerilogSyntaxTreeLinterConfigurationTest, UseRuleSetDefault) {
   config.UseRuleSet(RuleSet::kDefault);
 
   VerilogLinter linter;
-  EXPECT_TRUE(linter.Configure(config).ok());
+  EXPECT_TRUE(linter.Configure(config, filename).ok());
   FakeTextStructureView text_structure;
   linter.Lint(text_structure, filename);
 

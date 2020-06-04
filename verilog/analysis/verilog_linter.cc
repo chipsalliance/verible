@@ -127,8 +127,8 @@ VerilogLinter::VerilogLinter()
           kLinterTrigger, kLinterWaiveLineCommand, kLinterWaiveStartCommand,
           kLinterWaiveStopCommand) {}
 
-absl::Status VerilogLinter::Configure(
-    const LinterConfiguration& configuration) {
+absl::Status VerilogLinter::Configure(const LinterConfiguration& configuration,
+                                      absl::string_view lintee_filename) {
   if (VLOG_IS_ON(1)) {
     for (const auto& name : configuration.ActiveRuleIds()) {
       LOG(INFO) << "active rule: '" << name << '\'';
@@ -152,16 +152,16 @@ absl::Status VerilogLinter::Configure(
   }
 
   absl::Status rc = absl::OkStatus();
-  for (auto filename :
+  for (const auto& waiver_file :
        absl::StrSplit(configuration.external_waivers, ',', absl::SkipEmpty())) {
     std::string content;
-    auto status = verible::file::GetContents(filename, &content);
+    auto status = verible::file::GetContents(waiver_file, &content);
     if (content.empty()) {
       continue;
     }
     if (status.ok()) {
-      status = lint_waiver_.ApplyExternalWaivers(configuration.ActiveRuleIds(),
-                                                 filename, content);
+      status = lint_waiver_.ApplyExternalWaivers(
+          configuration.ActiveRuleIds(), lintee_filename, waiver_file, content);
     }
     if (!status.ok()) {
       rc.Update(status);
@@ -261,7 +261,7 @@ absl::Status VerilogLintTextStructure(std::ostream* stream,
                                       const TextStructureView& text_structure) {
   // Create the linter, add rules, and run it.
   VerilogLinter linter;
-  const absl::Status configuration_status = linter.Configure(config);
+  const absl::Status configuration_status = linter.Configure(config, filename);
   if (!configuration_status.ok()) {
     return configuration_status;
   }

@@ -55,7 +55,8 @@ class VerilogLinter {
   VerilogLinter();
 
   // Configures the internal linters, enabling select rules.
-  absl::Status Configure(const LinterConfiguration& configuration);
+  absl::Status Configure(const LinterConfiguration& configuration,
+                         absl::string_view lintee_filename);
 
   // Analyzes text structure.
   void Lint(const verible::TextStructureView& text_structure,

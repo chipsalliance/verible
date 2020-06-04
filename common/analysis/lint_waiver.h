@@ -139,11 +139,12 @@ class LintWaiverBuilder {
   // TextStructureTokenized from text_structure_test_utils.h.
   void ProcessTokenRangesByLine(const TextStructureView&);
 
-  // Takes a set of active linter rules and the filename and the content of
-  // a waiver configuration file
+  // Takes a set of active linter rules and the affected filename to be linted,
+  // and applies waivers from waiver_filename and its content.
   absl::Status ApplyExternalWaivers(
       const std::set<absl::string_view>& active_rules,
-      absl::string_view filename, absl::string_view waivers_config_content);
+      absl::string_view lintee_filename, absl::string_view waiver_filename,
+      absl::string_view waivers_config_content);
 
   const LintWaiver& GetLintWaiver() const { return lint_waiver_; }
 
