@@ -1295,6 +1295,24 @@ static const char* kModuleTests[] = {
     "input b, b2[1:0], b3;\n"
     "input c[2:0], c2[N:0], c3[M:N];\n"
     "endmodule",
+    "module nonansi_ports(a, b, c);\n"
+    "endmodule",
+    "module nonansi_ports(a[7:4], b[3:0]);\n"
+    "endmodule",
+    "module nonansi_ports(a[7:4][1:0], b[3:0][1:0]);\n"
+    "endmodule",
+    "module nonansi_ports(.a(), .b(), .c());\n"
+    "endmodule",
+    "module nonansi_ports(.a(a), .b(b), .c(c));\n"
+    "endmodule",
+    "module nonansi_ports({c, d}, {e, f});\n"
+    "endmodule",
+    "module nonansi_ports(.a({c, d}), .b({e, f}));\n"
+    "endmodule",
+    "module nonansi_ports({c[3:2], d}, {e, f[1:0]});\n"
+    "endmodule",
+    "module nonansi_ports(.x({c[3:2], d}), .y({e, f[1:0]}));\n"
+    "endmodule",
     // full port declarations
     "module addf (\n"
     "input a, b, ci,\n"

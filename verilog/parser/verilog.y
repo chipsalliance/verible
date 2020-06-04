@@ -6268,19 +6268,14 @@ parameter_expr
   | interface_type
     { $$ = move($1); }
   ;
+
+/* non-ANSI port declarations are covered in the LRM 23.2.2.1 */
 port
-  : port_reference trailing_assign_opt
+  : port_expression trailing_assign_opt
+    /* when using a trailing_assign, port_expression should be a port_reference */
     { $$ = MakeTaggedNode(N::kPort, $1, $2); }
-    /* trailing_assign_opt was added to emulate:
-     *   GenericIdentifier '=' expression
-     */
-  | '.' member_name '(' port_reference ')'
+  | '.' member_name '(' port_expression_opt ')'
     { $$ = MakeTaggedNode(N::kPort, $1, $2, MakeParenGroup($3, $4, $5)); }
-  | '{' port_reference_list '}'
-    { $$ = MakeBraceGroup($1, $2, $3); }
-  | '.' member_name '(' '{' port_reference_list '}' ')'
-    { $$ = MakeTaggedNode(N::kPort, $1, $2,
-                          MakeParenGroup($3, MakeBraceGroup($4, $5, $6), $7)); }
   ;
 any_port_list_opt
   : any_port_list
@@ -6358,6 +6353,20 @@ member_name
     { $$ = move($1); }
   | builtin_array_method
     { $$ = move($1); }
+  ;
+
+port_expression_opt
+  : port_expression
+    { $$ = move($1); }
+  | /* empty */
+    { $$ = nullptr; }
+  ;
+
+port_expression
+  : port_reference
+    { $$ = move($1); }
+  | '{' port_reference_list '}'
+    { $$ = MakeBraceGroup($1, $2, $3); }
   ;
 
 port_reference
