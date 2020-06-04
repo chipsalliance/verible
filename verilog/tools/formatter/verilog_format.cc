@@ -112,8 +112,7 @@ ABSL_FLAG(int, max_search_states, 100000,
           "line wrap optimization.");
 
 // These flags exist in the short term to disable formatting of some regions.
-ABSL_FLAG(bool, format_module_port_declarations, false,
-          // TODO(b/70310743): format module port declarations in aligned manner
+ABSL_FLAG(bool, format_module_port_declarations, true,
           "If true, format module declarations' list of port declarations, "
           "else leave them unformatted.  This is a short-term workaround.");
 ABSL_FLAG(bool, format_module_instantiations, false,
