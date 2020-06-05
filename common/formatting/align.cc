@@ -70,7 +70,7 @@ class BlankLineSeparatorDetector {
 };
 
 // Subdivides the 'bounds' range into sub-ranges broken up by blank lines.
-static void FindPartitionGroupBoundaries(
+static void PartitionTokenPartitionRangesAtBlankLines(
     const TokenPartitionRange& bounds,
     std::vector<TokenPartitionIterator>* subpartitions) {
   VLOG(2) << __FUNCTION__;
@@ -85,6 +85,28 @@ static void FindPartitionGroupBoundaries(
   subpartitions->push_back(bounds.end());
   VLOG(2) << "end of " << __FUNCTION__
           << ", boundaries: " << subpartitions->size();
+}
+
+// This function is one example of identifying sub-ranges for alignment.
+// This is the interface we want for generalizing this task.
+static std::vector<TokenPartitionRange> FindPartitionGroups(
+    const TokenPartitionRange& outer_partition_bounds) {
+  std::vector<TokenPartitionRange> result;
+  {
+    std::vector<TokenPartitionIterator> subpartitions_bounds;
+    PartitionTokenPartitionRangesAtBlankLines(outer_partition_bounds,
+                                              &subpartitions_bounds);
+    CHECK_GE(subpartitions_bounds.size(), 2);
+    result.reserve(subpartitions_bounds.size());
+
+    auto prev = subpartitions_bounds.begin();
+    // similar pattern to std::adjacent_difference.
+    for (auto next = std::next(prev); next != subpartitions_bounds.end();
+         prev = next, ++next) {
+      result.emplace_back(*prev, *next);
+    }
+  }
+  return result;
 }
 
 static int GetPartitionNodeEnum(const TokenPartitionTree& partition) {
@@ -675,27 +697,20 @@ void TabularAlignTokens(
   const TokenPartitionRange subpartitions_range(subpartitions.begin(),
                                                 subpartitions.end());
   if (subpartitions_range.empty()) return;
-  std::vector<TokenPartitionIterator> subpartitions_bounds;
-  // TODO(fangism): pass in custom alignment group partitioning function.
-  FindPartitionGroupBoundaries(subpartitions_range, &subpartitions_bounds);
-  CHECK_GE(subpartitions_bounds.size(), 2);
-  auto prev = subpartitions_bounds.begin();
-  // similar pattern to std::adjacent_difference.
-  for (auto next = std::next(prev); next != subpartitions_bounds.end();
-       prev = next, ++next) {
-    const TokenPartitionRange group_partition_range(*prev, *next);
-
+  const std::vector<TokenPartitionRange> partition_ranges(
+      FindPartitionGroups(subpartitions_range));
+  for (const auto& partition_range : partition_ranges) {
     // If any sub-interval in this range is disabled, skip it.
     // TODO(fangism): instead of disabling the whole range, sub-partition
     // it one more level, and operate on those ranges, essentially treating
     // no-format ranges like alignment group boundaries.
     // Requires IntervalSet::Intersect operation.
-    if (group_partition_range.empty() ||
-        AnyPartitionSubRangeIsDisabled(group_partition_range, full_text,
+    if (partition_range.empty() ||
+        AnyPartitionSubRangeIsDisabled(partition_range, full_text,
                                        disabled_byte_ranges))
       continue;
 
-    AlignPartitionGroup(group_partition_range, alignment_scanner, ignore_pred,
+    AlignPartitionGroup(partition_range, alignment_scanner, ignore_pred,
                         ftoken_base, column_limit);
     // TODO(fangism): rewrite using functional composition.
   }
