@@ -1227,7 +1227,7 @@ TEST(CheckSymbolAsLeafTest, NotLeaf) {
 }
 
 TEST(CheckOptionalSymbolAsLeafTest, Nullptr) {
-  constexpr nullptr_t n = nullptr;
+  constexpr std::nullptr_t n = nullptr;
   EXPECT_EQ(CheckOptionalSymbolAsLeaf(n, FakeEnum::kZero), nullptr);
 }
 
@@ -1262,7 +1262,7 @@ TEST(CheckOptionalSymbolAsLeafTest, NotLeaf) {
 }
 
 TEST(CheckOptionalSymbolAsNodeTest, Nullptr) {
-  constexpr nullptr_t n = nullptr;
+  constexpr std::nullptr_t n = nullptr;
   EXPECT_EQ(CheckOptionalSymbolAsNode(n, FakeEnum::kZero), nullptr);
 }
 
