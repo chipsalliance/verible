@@ -280,7 +280,7 @@ TEST_F(Sparse3x3MatrixAlignmentTest, IgnoreCommentLine) {
   partition_.Children()[1].Value().SetIndentationSpaces(1);
 
   // Pretend lines that begin with "three" are to be ignored, like comments.
-  constexpr auto ignore_threes = [](const TokenPartitionTree& partition) {
+  auto ignore_threes = [](const TokenPartitionTree& partition) {
     return partition.Value().TokensRange().front().Text() == "three";
   };
 
