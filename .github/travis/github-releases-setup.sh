@@ -32,9 +32,7 @@ mkdir -p $PREFIX_DOC
 mkdir -p $PREFIX_MAN
 
 # Binaries
-cp -a bazel-bin/verilog/tools/syntax/verilog_syntax     $PREFIX_BIN
-cp -a bazel-bin/verilog/tools/lint/verilog_lint         $PREFIX_BIN
-cp -a bazel-bin/verilog/tools/formatter/verilog_format  $PREFIX_BIN
+bazel run :install -c opt -- $PREFIX_BIN
 
 for BIN in $PREFIX_BIN/*; do
     ls -l $BIN
