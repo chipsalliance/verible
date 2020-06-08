@@ -36,6 +36,7 @@ cc_test(
     deps = [
         ":align",
         ":format_token",
+        ":token_partition_tree",
         ":unwrapped_line_test_utils",
         "//common/text:tree_builder_test_util",
         "//common/util:spacer",
@@ -88,7 +89,9 @@ cc_library(
         ":line_wrap_searcher",
         ":unwrapped_line",
         "//common/strings:display_utils",
+        "//common/strings:range",
         "//common/text:tree_utils",
+        "//common/util:algorithm",
         "//common/util:container_iterator_range",
         "//common/util:logging",
         "//common/util:spacer",

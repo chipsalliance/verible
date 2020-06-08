@@ -82,6 +82,12 @@ struct TokenPartitionTreePrinter {
 std::ostream& operator<<(std::ostream& stream,
                          const TokenPartitionTreePrinter& printer);
 
+// Return ranges of subpartitions separated by blank lines.
+// This does not modify the partition, but does return ranges of mutable
+// iterators of partitions.
+std::vector<TokenPartitionRange> GetSubpartitionsBetweenBlankLines(
+    const TokenPartitionRange&);
+
 // Transformations (modifying):
 
 // Adds or removes a constant amount of indentation from entire token

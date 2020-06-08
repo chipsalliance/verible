@@ -223,6 +223,13 @@ class PortDeclarationColumnSchemaScanner : public ColumnSchemaScanner {
   bool new_column_after_open_bracket_ = false;
 };
 
+static const verible::AlignedFormattingHandler kPortDeclarationAligner{
+    .extract_alignment_groups = &verible::GetSubpartitionsBetweenBlankLines,
+    .ignore_partition_predicate = &IgnorePortDeclarationPartition,
+    .alignment_cell_scanner =
+        AlignmentCellScannerGenerator<PortDeclarationColumnSchemaScanner>(),
+};
+
 void TabularAlignTokenPartitions(TokenPartitionTree* partition_ptr,
                                  std::vector<PreFormatToken>* ftokens,
                                  absl::string_view full_text,
@@ -241,14 +248,12 @@ void TabularAlignTokenPartitions(TokenPartitionTree* partition_ptr,
   auto ftoken_base = ftokens->begin();
 
   static const auto* kAlignHandlers =
-      new std::map<NodeEnum, verible::AlignmentCellScannerFunction>{
-          {NodeEnum::kPortDeclarationList,
-           AlignmentCellScannerGenerator<PortDeclarationColumnSchemaScanner>()},
+      new std::map<NodeEnum, verible::AlignedFormattingHandler>{
+          {NodeEnum::kPortDeclarationList, kPortDeclarationAligner},
       };
   const auto handler_iter = kAlignHandlers->find(NodeEnum(node->Tag().tag));
   if (handler_iter == kAlignHandlers->end()) return;
-  verible::TabularAlignTokens(partition_ptr, handler_iter->second,
-                              &IgnorePortDeclarationPartition, ftoken_base,
+  verible::TabularAlignTokens(partition_ptr, handler_iter->second, ftoken_base,
                               full_text, disabled_byte_ranges, column_limit);
   VLOG(1) << "end of " << __FUNCTION__;
 }

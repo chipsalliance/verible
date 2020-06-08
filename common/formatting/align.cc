@@ -38,77 +38,6 @@
 
 namespace verible {
 
-// Detects when there is a vertical separation of more than one line between
-// two token partitions.
-class BlankLineSeparatorDetector {
- public:
-  // 'bounds' range must not be empty.
-  explicit BlankLineSeparatorDetector(const TokenPartitionRange& bounds)
-      : previous_end_(bounds.front()
-                          .Value()
-                          .TokensRange()
-                          .front()
-                          .token->text()
-                          .begin()) {}
-
-  bool operator()(const TokenPartitionTree& node) {
-    const auto range = node.Value().TokensRange();
-    if (range.empty()) return false;
-    const auto begin = range.front().token->text().begin();
-    const auto end = range.back().token->text().end();
-    const auto gap = make_string_view_range(previous_end_, begin);
-    // A blank line between partitions contains 2+ newlines.
-    const bool new_bound = std::count(gap.begin(), gap.end(), '\n') >= 2;
-    previous_end_ = end;
-    return new_bound;
-  }
-
- private:
-  // Keeps track of the end of the previous partition, which is the start
-  // of each inter-partition gap (string_view).
-  absl::string_view::const_iterator previous_end_;
-};
-
-// Subdivides the 'bounds' range into sub-ranges broken up by blank lines.
-static void PartitionTokenPartitionRangesAtBlankLines(
-    const TokenPartitionRange& bounds,
-    std::vector<TokenPartitionIterator>* subpartitions) {
-  VLOG(2) << __FUNCTION__;
-  subpartitions->clear();
-  if (bounds.empty()) return;
-  subpartitions->push_back(bounds.begin());
-  // Bookkeeping for the end of the previous token range, used to evaluate
-  // the inter-token-range text, looking for blank line.
-  verible::find_all(bounds.begin(), bounds.end(),
-                    std::back_inserter(*subpartitions),
-                    BlankLineSeparatorDetector(bounds));
-  subpartitions->push_back(bounds.end());
-  VLOG(2) << "end of " << __FUNCTION__
-          << ", boundaries: " << subpartitions->size();
-}
-
-// This function is one example of identifying sub-ranges for alignment.
-// This is the interface we want for generalizing this task.
-static std::vector<TokenPartitionRange> FindPartitionGroups(
-    const TokenPartitionRange& outer_partition_bounds) {
-  std::vector<TokenPartitionRange> result;
-  {
-    std::vector<TokenPartitionIterator> subpartitions_bounds;
-    PartitionTokenPartitionRangesAtBlankLines(outer_partition_bounds,
-                                              &subpartitions_bounds);
-    CHECK_GE(subpartitions_bounds.size(), 2);
-    result.reserve(subpartitions_bounds.size());
-
-    auto prev = subpartitions_bounds.begin();
-    // similar pattern to std::adjacent_difference.
-    for (auto next = std::next(prev); next != subpartitions_bounds.end();
-         prev = next, ++next) {
-      result.emplace_back(*prev, *next);
-    }
-  }
-  return result;
-}
-
 static int GetPartitionNodeEnum(const TokenPartitionTree& partition) {
   const Symbol* origin = partition.Value().Origin();
   return SymbolCastToNode(*origin).Tag().tag;
@@ -634,8 +563,7 @@ static void AlignFilteredRows(
 
 static void AlignPartitionGroup(
     const TokenPartitionRange& group,
-    const AlignmentCellScannerFunction& alignment_scanner,
-    std::function<bool(const TokenPartitionTree& node)> ignore_pred,
+    const AlignedFormattingHandler& alignment_handler,
     MutableFormatTokenRange::iterator ftoken_base, int column_limit) {
   VLOG(1) << __FUNCTION__ << ", group size: " << group.size();
   // This partition group may contain partitions that should not be
@@ -645,7 +573,7 @@ static void AlignPartitionGroup(
   // like std::copy_if, but we want the iterators, not their pointees.
   for (auto iter = group.begin(); iter != group.end(); ++iter) {
     // TODO(fangism): pass in filter predicate as a function
-    if (!ignore_pred(*iter)) {
+    if (!alignment_handler.ignore_partition_predicate(*iter)) {
       VLOG(2) << "including partition: " << *iter;
       qualified_partitions.push_back(iter);
     } else {
@@ -653,7 +581,8 @@ static void AlignPartitionGroup(
     }
   }
   // Align the qualified partitions (rows).
-  AlignFilteredRows(qualified_partitions, alignment_scanner, ftoken_base,
+  AlignFilteredRows(qualified_partitions,
+                    alignment_handler.alignment_cell_scanner, ftoken_base,
                     column_limit);
   VLOG(1) << "end of " << __FUNCTION__;
 }
@@ -681,12 +610,12 @@ static bool AnyPartitionSubRangeIsDisabled(
   return diff != span_set;
 }
 
-void TabularAlignTokens(
-    TokenPartitionTree* partition_ptr,
-    const AlignmentCellScannerFunction& alignment_scanner,
-    const std::function<bool(const TokenPartitionTree&)> ignore_pred,
-    MutableFormatTokenRange::iterator ftoken_base, absl::string_view full_text,
-    const ByteOffsetSet& disabled_byte_ranges, int column_limit) {
+void TabularAlignTokens(TokenPartitionTree* partition_ptr,
+                        const AlignedFormattingHandler& alignment_handler,
+                        MutableFormatTokenRange::iterator ftoken_base,
+                        absl::string_view full_text,
+                        const ByteOffsetSet& disabled_byte_ranges,
+                        int column_limit) {
   VLOG(1) << __FUNCTION__;
   // Each subpartition is presumed to correspond to a list element or
   // possibly some other ignored element like comments.
@@ -698,7 +627,7 @@ void TabularAlignTokens(
                                                 subpartitions.end());
   if (subpartitions_range.empty()) return;
   const std::vector<TokenPartitionRange> partition_ranges(
-      FindPartitionGroups(subpartitions_range));
+      alignment_handler.extract_alignment_groups(subpartitions_range));
   for (const auto& partition_range : partition_ranges) {
     // If any sub-interval in this range is disabled, skip it.
     // TODO(fangism): instead of disabling the whole range, sub-partition
@@ -710,9 +639,8 @@ void TabularAlignTokens(
                                        disabled_byte_ranges))
       continue;
 
-    AlignPartitionGroup(partition_range, alignment_scanner, ignore_pred,
-                        ftoken_base, column_limit);
-    // TODO(fangism): rewrite using functional composition.
+    AlignPartitionGroup(partition_range, alignment_handler, ftoken_base,
+                        column_limit);
   }
   VLOG(1) << "end of " << __FUNCTION__;
 }

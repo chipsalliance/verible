@@ -19,6 +19,7 @@
 #include <string>
 #include <vector>
 
+#include "gmock/gmock.h"
 #include "gtest/gtest.h"
 #include "absl/strings/str_split.h"
 #include "absl/strings/string_view.h"
@@ -30,6 +31,8 @@
 
 namespace verible {
 namespace {
+
+using ::testing::ElementsAre;
 
 // Helper class that initializes an array of tokens to be partitioned
 // into TokenPartitionTree.
@@ -823,6 +826,105 @@ TEST_F(MergeConsecutiveSiblingsTest, TwoGenerations) {
   EXPECT_TRUE(diff.left == nullptr) << "First differing node at:\n"
                                     << *diff.left << "\nand:\n"
                                     << *diff.right << '\n';
+}
+
+class GetSubpartitionsBetweenBlankLinesTest
+    : public ::testing::Test,
+      public UnwrappedLineMemoryHandler {
+ public:
+  explicit GetSubpartitionsBetweenBlankLinesTest(absl::string_view text)
+      : sample_(text),
+        tokens_(
+            absl::StrSplit(sample_, absl::ByAnyChar(" \n"), absl::SkipEmpty())),
+        partition_(/* temporary */ UnwrappedLine()) {
+    CHECK_EQ(tokens_.size(), 8);
+    for (const auto token : tokens_) {
+      ftokens_.emplace_back(TokenInfo{1, token});
+    }
+    // sample_ is the memory-owning string buffer
+    CreateTokenInfosExternalStringBuffer(ftokens_);
+
+    // Establish format token ranges per partition.
+    const auto& preformat_tokens = pre_format_tokens_;
+    const auto begin = preformat_tokens.begin();
+    UnwrappedLine all(0, begin);
+    all.SpanUpToToken(preformat_tokens.end());
+    UnwrappedLine child1(0, begin);
+    child1.SpanUpToToken(begin + 2);
+    UnwrappedLine child2(0, begin + 2);
+    child2.SpanUpToToken(begin + 4);
+    UnwrappedLine child3(0, begin + 4);
+    child3.SpanUpToToken(begin + 6);
+    UnwrappedLine child4(0, begin + 6);
+    child4.SpanUpToToken(begin + 8);
+
+    // Construct 2-level token partition.
+    using tree_type = TokenPartitionTree;
+    partition_ = tree_type{
+        all,
+        tree_type{child1},
+        tree_type{child2},
+        tree_type{child3},
+        tree_type{child4},
+    };
+  }
+
+ protected:
+  const std::string sample_;
+  const std::vector<absl::string_view> tokens_;
+  std::vector<TokenInfo> ftokens_;
+  TokenPartitionTree partition_;
+};
+
+class GetSubpartitionsNoNewlinesTest
+    : public GetSubpartitionsBetweenBlankLinesTest {
+ public:
+  GetSubpartitionsNoNewlinesTest()
+      : GetSubpartitionsBetweenBlankLinesTest(
+            "one two three four five seven six eight") {}
+};
+
+TEST_F(GetSubpartitionsNoNewlinesTest, NoNewlines) {
+  const TokenPartitionRange range(partition_.Children().begin(),
+                                  partition_.Children().end());
+  const auto partition_ranges = GetSubpartitionsBetweenBlankLines(range);
+  EXPECT_THAT(partition_ranges,
+              ElementsAre(TokenPartitionRange(range.begin(), range.end())));
+}
+
+class GetSubpartitionsNoBlanksTest
+    : public GetSubpartitionsBetweenBlankLinesTest {
+ public:
+  GetSubpartitionsNoBlanksTest()
+      : GetSubpartitionsBetweenBlankLinesTest(
+            "one two three\nfour five seven\nsix eight") {}
+};
+
+TEST_F(GetSubpartitionsNoBlanksTest, NoBlanks) {
+  const TokenPartitionRange range(partition_.Children().begin(),
+                                  partition_.Children().end());
+  const auto partition_ranges = GetSubpartitionsBetweenBlankLines(range);
+  EXPECT_THAT(partition_ranges,
+              ElementsAre(TokenPartitionRange(range.begin(), range.end())));
+}
+
+class GetSubpartitionsWithBlanksTest
+    : public GetSubpartitionsBetweenBlankLinesTest {
+ public:
+  GetSubpartitionsWithBlanksTest()
+      : GetSubpartitionsBetweenBlankLinesTest(
+            "one two\n\nthree four five seven\n\nsix eight") {}
+};
+
+TEST_F(GetSubpartitionsWithBlanksTest, WithBlanks) {
+  const TokenPartitionRange range(partition_.Children().begin(),
+                                  partition_.Children().end());
+  const auto partition_ranges = GetSubpartitionsBetweenBlankLines(range);
+  EXPECT_THAT(
+      partition_ranges,
+      ElementsAre(TokenPartitionRange(range.begin(), range.begin() + 1),
+                  TokenPartitionRange(range.begin() + 1, range.begin() + 3),
+                  TokenPartitionRange(range.begin() + 3, range.begin() + 4)));
 }
 
 class ReshapeFittingSubpartitionsTest : public TokenPartitionTreeTestFixture {};

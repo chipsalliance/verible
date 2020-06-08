@@ -18,6 +18,7 @@
 #include "gtest/gtest.h"
 #include "absl/strings/str_split.h"
 #include "common/formatting/format_token.h"
+#include "common/formatting/token_partition_tree.h"
 #include "common/formatting/unwrapped_line_test_utils.h"
 #include "common/text/tree_builder_test_util.h"
 #include "common/util/spacer.h"
@@ -82,6 +83,14 @@ class TabularAlignTokenTest : public AlignmentTestFixture {
       : AlignmentTestFixture("one two three four five six") {}
 };
 
+static bool IgnoreNone(const TokenPartitionTree&) { return false; }
+
+static const AlignedFormattingHandler kDefaultAlignmentHandler{
+    .extract_alignment_groups = &verible::GetSubpartitionsBetweenBlankLines,
+    .ignore_partition_predicate = &IgnoreNone,
+    .alignment_cell_scanner = AlignmentCellScannerGenerator<TokenColumnizer>(),
+};
+
 TEST_F(TabularAlignTokenTest, EmptyPartitionRange) {
   const auto& preformat_tokens = pre_format_tokens_;
   const auto begin = preformat_tokens.begin();
@@ -89,10 +98,8 @@ TEST_F(TabularAlignTokenTest, EmptyPartitionRange) {
   all.SpanUpToToken(preformat_tokens.end());
   using tree_type = TokenPartitionTree;
   tree_type partition{all};  // no children subpartitions
-  TabularAlignTokens(
-      &partition, AlignmentCellScannerGenerator<TokenColumnizer>(),
-      [](const TokenPartitionTree&) { return false; },
-      pre_format_tokens_.begin(), sample_, ByteOffsetSet(), 40);
+  TabularAlignTokens(&partition, kDefaultAlignmentHandler,
+                     pre_format_tokens_.begin(), sample_, ByteOffsetSet(), 40);
   // Not crashing is success.
   // Ideally, we would like to verify that partition was *not* modified
   // by making a deep copy and then checking DeepEqual, however,
@@ -169,10 +176,8 @@ class Sparse3x3MatrixAlignmentTest : public AlignmentTestFixture {
 };
 
 TEST_F(Sparse3x3MatrixAlignmentTest, ZeroInterTokenPadding) {
-  TabularAlignTokens(
-      &partition_, AlignmentCellScannerGenerator<TokenColumnizer>(),
-      [](const TokenPartitionTree&) { return false; },
-      pre_format_tokens_.begin(), sample_, ByteOffsetSet(), 40);
+  TabularAlignTokens(&partition_, kDefaultAlignmentHandler,
+                     pre_format_tokens_.begin(), sample_, ByteOffsetSet(), 40);
 
   // Sanity check: "three" (length 5) is the long-pole of the first column:
   EXPECT_EQ(pre_format_tokens_[0].before.spaces_required, tokens_[2].length());
@@ -193,10 +198,8 @@ TEST_F(Sparse3x3MatrixAlignmentTest, OneInterTokenPadding) {
     ftoken.before.spaces_required = 1;
   }
 
-  TabularAlignTokens(
-      &partition_, AlignmentCellScannerGenerator<TokenColumnizer>(),
-      [](const TokenPartitionTree&) { return false; },
-      pre_format_tokens_.begin(), sample_, ByteOffsetSet(), 40);
+  TabularAlignTokens(&partition_, kDefaultAlignmentHandler,
+                     pre_format_tokens_.begin(), sample_, ByteOffsetSet(), 40);
 
   // Verify string rendering of result.
   EXPECT_EQ(Render(),  //
@@ -214,10 +217,8 @@ TEST_F(Sparse3x3MatrixAlignmentTest, OneInterTokenPaddingExceptFront) {
   pre_format_tokens_[2].before.spaces_required = 0;
   pre_format_tokens_[4].before.spaces_required = 0;
 
-  TabularAlignTokens(
-      &partition_, AlignmentCellScannerGenerator<TokenColumnizer>(),
-      [](const TokenPartitionTree&) { return false; },
-      pre_format_tokens_.begin(), sample_, ByteOffsetSet(), 40);
+  TabularAlignTokens(&partition_, kDefaultAlignmentHandler,
+                     pre_format_tokens_.begin(), sample_, ByteOffsetSet(), 40);
 
   // Verify string rendering of result.
   EXPECT_EQ(Render(),  //
@@ -226,16 +227,21 @@ TEST_F(Sparse3x3MatrixAlignmentTest, OneInterTokenPaddingExceptFront) {
             "five  six\n");
 }
 
+static const AlignedFormattingHandler kFlushRightAlignmentHandler{
+    .extract_alignment_groups = &verible::GetSubpartitionsBetweenBlankLines,
+    .ignore_partition_predicate = &IgnoreNone,
+    .alignment_cell_scanner =
+        AlignmentCellScannerGenerator<TokenColumnizerRightFlushed>(),
+};
+
 TEST_F(Sparse3x3MatrixAlignmentTest, RightFlushed) {
   // Require 1 space between tokens.
   for (auto& ftoken : pre_format_tokens_) {
     ftoken.before.spaces_required = 1;
   }
 
-  TabularAlignTokens(
-      &partition_, AlignmentCellScannerGenerator<TokenColumnizerRightFlushed>(),
-      [](const TokenPartitionTree&) { return false; },
-      pre_format_tokens_.begin(), sample_, ByteOffsetSet(), 40);
+  TabularAlignTokens(&partition_, kFlushRightAlignmentHandler,
+                     pre_format_tokens_.begin(), sample_, ByteOffsetSet(), 40);
 
   // Verify string rendering of result.
   EXPECT_EQ(Render(),  //
@@ -254,10 +260,8 @@ TEST_F(Sparse3x3MatrixAlignmentTest, OneInterTokenPaddingWithIndent) {
     child.Value().SetIndentationSpaces(4);
   }
 
-  TabularAlignTokens(
-      &partition_, AlignmentCellScannerGenerator<TokenColumnizer>(),
-      [](const TokenPartitionTree&) { return false; },
-      pre_format_tokens_.begin(), sample_, ByteOffsetSet(), 40);
+  TabularAlignTokens(&partition_, kDefaultAlignmentHandler,
+                     pre_format_tokens_.begin(), sample_, ByteOffsetSet(), 40);
 
   // Verify string rendering of result.
   EXPECT_EQ(Render(),  //
@@ -276,13 +280,18 @@ TEST_F(Sparse3x3MatrixAlignmentTest, IgnoreCommentLine) {
   partition_.Children()[1].Value().SetIndentationSpaces(1);
 
   // Pretend lines that begin with "three" are to be ignored, like comments.
-  auto ignore_threes = [](const TokenPartitionTree& partition) {
+  constexpr auto ignore_threes = [](const TokenPartitionTree& partition) {
     return partition.Value().TokensRange().front().Text() == "three";
   };
 
-  TabularAlignTokens(
-      &partition_, AlignmentCellScannerGenerator<TokenColumnizer>(),
-      ignore_threes, pre_format_tokens_.begin(), sample_, ByteOffsetSet(), 40);
+  const AlignedFormattingHandler handler{
+      .extract_alignment_groups = &verible::GetSubpartitionsBetweenBlankLines,
+      .ignore_partition_predicate = ignore_threes,
+      .alignment_cell_scanner =
+          AlignmentCellScannerGenerator<TokenColumnizer>(),
+  };
+  TabularAlignTokens(&partition_, handler, pre_format_tokens_.begin(), sample_,
+                     ByteOffsetSet(), 40);
 
   // Verify string rendering of result.
   EXPECT_EQ(Render(),         //
@@ -298,12 +307,11 @@ TEST_F(Sparse3x3MatrixAlignmentTest, CompletelyDisabledNoAlignment) {
     ftoken.before.spaces_required = 1;
   }
 
-  TabularAlignTokens(
-      &partition_, AlignmentCellScannerGenerator<TokenColumnizer>(),
-      [](const TokenPartitionTree&) { return false; },
-      pre_format_tokens_.begin(), sample_,
-      // Alignment disabled over entire range.
-      ByteOffsetSet({{0, static_cast<int>(sample_.length())}}), 40);
+  TabularAlignTokens(&partition_, kDefaultAlignmentHandler,
+                     pre_format_tokens_.begin(), sample_,
+                     // Alignment disabled over entire range.
+                     ByteOffsetSet({{0, static_cast<int>(sample_.length())}}),
+                     40);
 
   // Verify string rendering of result.
   EXPECT_EQ(Render(),  //
@@ -324,12 +332,11 @@ TEST_F(Sparse3x3MatrixAlignmentTest, CompletelyDisabledNoAlignmentWithIndent) {
   pre_format_tokens_[2].before.break_decision = SpacingOptions::MustWrap;
   pre_format_tokens_[4].before.break_decision = SpacingOptions::MustWrap;
 
-  TabularAlignTokens(
-      &partition_, AlignmentCellScannerGenerator<TokenColumnizer>(),
-      [](const TokenPartitionTree&) { return false; },
-      pre_format_tokens_.begin(), sample_,
-      // Alignment disabled over entire range.
-      ByteOffsetSet({{0, static_cast<int>(sample_.length())}}), 40);
+  TabularAlignTokens(&partition_, kDefaultAlignmentHandler,
+                     pre_format_tokens_.begin(), sample_,
+                     // Alignment disabled over entire range.
+                     ByteOffsetSet({{0, static_cast<int>(sample_.length())}}),
+                     40);
 
   // Verify string rendering of result.
   EXPECT_EQ(Render(),  //
@@ -345,12 +352,10 @@ TEST_F(Sparse3x3MatrixAlignmentTest, PartiallyDisabledNoAlignment) {
   }
 
   int midpoint = sample_.length() / 2;
-  TabularAlignTokens(
-      &partition_, AlignmentCellScannerGenerator<TokenColumnizer>(),
-      [](const TokenPartitionTree&) { return false; },
-      pre_format_tokens_.begin(), sample_,
-      // Alignment disabled over partial range.
-      ByteOffsetSet({{midpoint, midpoint + 1}}), 40);
+  TabularAlignTokens(&partition_, kDefaultAlignmentHandler,
+                     pre_format_tokens_.begin(), sample_,
+                     // Alignment disabled over partial range.
+                     ByteOffsetSet({{midpoint, midpoint + 1}}), 40);
 
   // Verify string rendering of result.
   EXPECT_EQ(Render(),  //
@@ -365,13 +370,11 @@ TEST_F(Sparse3x3MatrixAlignmentTest, DisabledByColumnLimit) {
     ftoken.before.spaces_required = 1;
   }
 
-  TabularAlignTokens(
-      &partition_, AlignmentCellScannerGenerator<TokenColumnizer>(),
-      [](const TokenPartitionTree&) { return false; },
-      pre_format_tokens_.begin(), sample_, ByteOffsetSet(),
-      // Column limit chosen to be smaller than sum of columns' widths.
-      // 5 (no left padding) +4 +5 = 14, so we choose 13
-      13);
+  TabularAlignTokens(&partition_, kDefaultAlignmentHandler,
+                     pre_format_tokens_.begin(), sample_, ByteOffsetSet(),
+                     // Column limit chosen to be smaller than sum of columns'
+                     // widths. 5 (no left padding) +4 +5 = 14, so we choose 13
+                     13);
 
   // Verify string rendering of result.
   EXPECT_EQ(Render(),  //
@@ -390,9 +393,8 @@ TEST_F(Sparse3x3MatrixAlignmentTest, DisabledByColumnLimitIndented) {
   }
 
   TabularAlignTokens(
-      &partition_, AlignmentCellScannerGenerator<TokenColumnizer>(),
-      [](const TokenPartitionTree&) { return false; },
-      pre_format_tokens_.begin(), sample_, ByteOffsetSet(),
+      &partition_, kDefaultAlignmentHandler, pre_format_tokens_.begin(),
+      sample_, ByteOffsetSet(),
       // Column limit chosen to be smaller than sum of columns' widths.
       // 3 (indent) +5 (no left padding) +4 +5 = 17, so we choose 16
       16);
@@ -499,10 +501,8 @@ TEST_F(MultiAlignmentGroupTest, BlankLineSeparatedGroups) {
     ftoken.before.spaces_required = 1;
   }
 
-  TabularAlignTokens(
-      &partition_, AlignmentCellScannerGenerator<TokenColumnizer>(),
-      [](const TokenPartitionTree&) { return false; },
-      pre_format_tokens_.begin(), sample_, ByteOffsetSet(), 40);
+  TabularAlignTokens(&partition_, kDefaultAlignmentHandler,
+                     pre_format_tokens_.begin(), sample_, ByteOffsetSet(), 40);
 
   // Verify string rendering of result.
   EXPECT_EQ(Render(),  //

@@ -22,7 +22,9 @@
 #include "common/formatting/line_wrap_searcher.h"
 #include "common/formatting/unwrapped_line.h"
 #include "common/strings/display_utils.h"
+#include "common/strings/range.h"
 #include "common/text/tree_utils.h"
+#include "common/util/algorithm.h"
 #include "common/util/container_iterator_range.h"
 #include "common/util/logging.h"
 #include "common/util/spacer.h"
@@ -141,6 +143,74 @@ std::ostream& TokenPartitionTreePrinter::PrintTree(std::ostream& stream,
 std::ostream& operator<<(std::ostream& stream,
                          const TokenPartitionTreePrinter& printer) {
   return printer.PrintTree(stream);
+}
+
+// Detects when there is a vertical separation of more than one line between
+// two token partitions.
+class BlankLineSeparatorDetector {
+ public:
+  // 'bounds' range must not be empty.
+  explicit BlankLineSeparatorDetector(const TokenPartitionRange& bounds)
+      : previous_end_(bounds.front()
+                          .Value()
+                          .TokensRange()
+                          .front()
+                          .token->text()
+                          .begin()) {}
+
+  bool operator()(const TokenPartitionTree& node) {
+    const auto range = node.Value().TokensRange();
+    if (range.empty()) return false;
+    const auto begin = range.front().token->text().begin();
+    const auto end = range.back().token->text().end();
+    const auto gap = make_string_view_range(previous_end_, begin);
+    // A blank line between partitions contains 2+ newlines.
+    const bool new_bound = std::count(gap.begin(), gap.end(), '\n') >= 2;
+    previous_end_ = end;
+    return new_bound;
+  }
+
+ private:
+  // Keeps track of the end of the previous partition, which is the start
+  // of each inter-partition gap (string_view).
+  absl::string_view::const_iterator previous_end_;
+};
+
+// Subdivides the 'bounds' range into sub-ranges broken up by blank lines.
+static std::vector<TokenPartitionIterator>
+PartitionTokenPartitionRangesAtBlankLines(const TokenPartitionRange& bounds) {
+  VLOG(2) << __FUNCTION__;
+  std::vector<TokenPartitionIterator> subpartitions;
+  if (bounds.empty()) return subpartitions;
+  subpartitions.push_back(bounds.begin());
+  // Bookkeeping for the end of the previous token range, used to evaluate
+  // the inter-token-range text, looking for blank line.
+  verible::find_all(bounds.begin(), bounds.end(),
+                    std::back_inserter(subpartitions),
+                    BlankLineSeparatorDetector(bounds));
+  subpartitions.push_back(bounds.end());
+  VLOG(2) << "end of " << __FUNCTION__
+          << ", boundaries: " << subpartitions.size();
+  return subpartitions;
+}
+
+std::vector<TokenPartitionRange> GetSubpartitionsBetweenBlankLines(
+    const TokenPartitionRange& outer_partition_bounds) {
+  std::vector<TokenPartitionRange> result;
+  {
+    const std::vector<TokenPartitionIterator> subpartitions_bounds(
+        PartitionTokenPartitionRangesAtBlankLines(outer_partition_bounds));
+    CHECK_GE(subpartitions_bounds.size(), 2);
+    result.reserve(subpartitions_bounds.size());
+
+    auto prev = subpartitions_bounds.begin();
+    // similar pattern to std::adjacent_difference.
+    for (auto next = std::next(prev); next != subpartitions_bounds.end();
+         prev = next, ++next) {
+      result.emplace_back(*prev, *next);
+    }
+  }
+  return result;
 }
 
 void AdjustIndentationRelative(TokenPartitionTree* tree, int amount) {

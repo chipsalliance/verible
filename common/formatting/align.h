@@ -92,8 +92,18 @@ class ColumnSchemaScanner : public TreeContextPathVisitor {
 using AlignmentCellScannerFunction =
     std::function<std::vector<ColumnPositionEntry>(const TokenPartitionTree&)>;
 
+// This is the interface used to sub-divide a range of token partitions into
+// a sequence of sub-ranges for the purposes of formatting aligned groups.
+using ExtractAlignmentGroupsFunction =
+    std::function<std::vector<TokenPartitionRange>(const TokenPartitionRange&)>;
+
+// This predicate function is used to select partitions to be ignored within
+// an alignment group.  For example, one may wish to ignore comment-only lines.
+using IgnoreAlignmentRowPredicate =
+    std::function<bool(const TokenPartitionTree&)>;
+
 // Instantiates a ScannerType (implements ColumnSchemaScanner) and extracts
-// column alignment information.
+// column alignment information, suitable as an AlignmentCellScannerFunction.
 // A 'row' corresponds to a range of format tokens over which spacing is to be
 // adjusted to achieve alignment.
 // Returns a sequence of column entries that will be uniquified and ordered
@@ -129,6 +139,23 @@ AlignmentCellScannerFunction AlignmentCellScannerGenerator() {
   };
 }
 
+// This struct bundles together the various functions needed for aligned
+// formatting.
+struct AlignedFormattingHandler {
+  // This function subdivides a range of token partitions (e.g. all of the
+  // children of a parent partition of interest) into groups of lines that will
+  // align with each other.
+  ExtractAlignmentGroupsFunction extract_alignment_groups;
+
+  // This returns true for lines (in each alignment group) that should be
+  // ignored for alignment purposes, such as comment-only lines.
+  IgnoreAlignmentRowPredicate ignore_partition_predicate;
+
+  // This function scans lines (token ranges)
+  // for token positions that mark the start of a new column.
+  AlignmentCellScannerFunction alignment_cell_scanner;
+};
+
 // This aligns sections of text by modifying the spacing between tokens.
 // 'partition_ptr' is a partition that can span one or more sections of
 // code to align.  The partitions themselves are not reshaped, however,
@@ -142,11 +169,10 @@ AlignmentCellScannerFunction AlignmentCellScannerGenerator() {
 // Vertical alignment is achieved by sizing each column in the table to
 // the max cell width in each column, and padding spaces as necessary.
 //
+// See description of AlignedFormattingHandler for a description of each
+// function needed for aligned formatting.
+//
 // Other parameters:
-// 'alignment_scanner' is a function that scans lines
-// for token positions that mark the start of a new column.
-// 'ignore_pred' returns true for lines that should be ignored
-// for alignment purposes, such as comment-only lines.
 // 'full_text' is the string_view buffer of whole text being formatted, not just
 // the text spanned by 'partition_ptr'.
 // 'ftoken_base' should be very first mutable iterator into the whole
@@ -171,12 +197,12 @@ AlignmentCellScannerFunction AlignmentCellScannerGenerator() {
 //    aaa     bb [11]  [22]
 //    ccc[33] dd [444]
 //
-void TabularAlignTokens(
-    TokenPartitionTree* partition_ptr,
-    const AlignmentCellScannerFunction& alignment_scanner,
-    const std::function<bool(const TokenPartitionTree&)> ignore_pred,
-    MutableFormatTokenRange::iterator ftoken_base, absl::string_view full_text,
-    const ByteOffsetSet& disabled_byte_ranges, int column_limit);
+void TabularAlignTokens(TokenPartitionTree* partition_ptr,
+                        const AlignedFormattingHandler& alignment_handler,
+                        MutableFormatTokenRange::iterator ftoken_base,
+                        absl::string_view full_text,
+                        const ByteOffsetSet& disabled_byte_ranges,
+                        int column_limit);
 
 }  // namespace verible
 
