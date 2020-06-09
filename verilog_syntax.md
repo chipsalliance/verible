@@ -1,14 +1,14 @@
 ---
 ---
 
-# `verilog_syntax`
+# `verible-verilog-syntax`
 
 Tool for looking at the syntax of Verilog and SystemVerilog code. Part of the
 verible tool suite.
 
 ## Command line arguments
 ```
-verilog_syntax: usage: bazel-bin/verilog/tools/syntax/verilog_syntax [options] <file> [<file>...]
+verible-verilog-syntax: usage: bazel-bin/verilog/tools/syntax/verible-verilog-syntax [options] <file> [<file>...]
 
   Flags from external/com_google_absl/absl/flags/parse.cc:
     --flagfile (comma-separated list of files to load flags from); default: ;
@@ -51,4 +51,4 @@ verilog_syntax: usage: bazel-bin/verilog/tools/syntax/verilog_syntax [options] <
 
 ## Version
 
-Generated on 2020-06-09 11:29:00 -0700 from [v0.0-436-g62a23a5](https://github.com/google/verible/commit/62a23a5ef4850380c6e14831f2588c11254dfd3f)
+Generated on 2020-06-09 13:03:53 -0700 from [v0.0-437-ga6d3664](https://github.com/google/verible/commit/a6d36642f30bacefef405c00ba770b582eb1b2bb)
