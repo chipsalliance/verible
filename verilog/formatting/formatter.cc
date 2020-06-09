@@ -140,8 +140,6 @@ Status VerifyFormatting(const verible::TextStructureView& text_structure,
     }
   }
 
-  // TODO(b/138868051): Verify output stability/convergence.
-  //   format(text) should == format(format(text))
   return absl::OkStatus();
 }
 
@@ -199,6 +197,27 @@ Status FormatVerilog(absl::string_view text, absl::string_view filename,
       VerifyFormatting(text_structure, formatted_text, filename);
   if (!verify_status.ok()) {
     return verify_status;
+  }
+
+  // When formatting whole-file (no --lines are specified), ensure that
+  // the formatting transformation is convergent after one iteration.
+  //   format(format(text)) == format(text)
+  if (control.verify_convergence && lines.empty()) {
+    // Disable reformat check to terminate recursion.
+    ExecutionControl convergence_control(control);
+    convergence_control.verify_convergence = false;
+    std::ostringstream reformat_stream;
+    const Status reformat_status =
+        FormatVerilog(formatted_text, filename, style, reformat_stream, lines,
+                      convergence_control);
+    if (!reformat_status.ok()) {
+      return reformat_status;
+    }
+    if (reformat_stream.str() != formatted_text) {
+      return absl::DataLossError(
+          "Re-formatted text does not match formatted text; "
+          "formatting failed to converge!  Please file a bug.");
+    }
   }
 
   return format_status;

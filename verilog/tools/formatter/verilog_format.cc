@@ -94,6 +94,10 @@ ABSL_FLAG(bool, failsafe_success, true,
           "or internal errors.  In all error conditions, the original text is "
           "always preserved.  This is useful in deploying services where "
           "fail-safe behaviors should be considered a success.");
+ABSL_FLAG(bool, verify_convergence, true,
+          "If true, and not incrementally formatting with --lines, "
+          "verify that re-formatting the formatted output yields "
+          "no further changes, i.e. formatting is convergent.");
 
 ABSL_FLAG(int, show_largest_token_partitions, 0,
           "If > 0, print token partitioning and then "
@@ -168,6 +172,8 @@ bool formatOneFile(absl::string_view filename,
         absl::GetFlag(FLAGS_show_equally_optimal_wrappings);
     formatter_control.max_search_states =
         absl::GetFlag(FLAGS_max_search_states);
+    formatter_control.verify_convergence =
+        absl::GetFlag(FLAGS_verify_convergence);
 
     // formatting style flags
     format_style.format_module_port_declarations =

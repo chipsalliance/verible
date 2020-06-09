@@ -47,6 +47,11 @@ struct ExecutionControl {
   // If this limit is exceeded, error out with a diagnostic message.
   int max_search_states = 10000;
 
+  // If true, and not running in incremental format mode with lines specified,
+  // format the formatted output one more time to compare and check for
+  // convergence: format(format(text)) == format(text).
+  bool verify_convergence = true;
+
   // Output stream for diagnostic feedback (not formatting output).
   // This is useful for seeing diagnostics without waiting for a Status
   // to be returned.
