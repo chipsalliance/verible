@@ -210,7 +210,7 @@ verilog_syntax.test(
 
 # SystemVerilog-parser based linter
 cc_binary(
-    name = "verilog_lint",
+    name = "verible-verilog-lint",
     srcs = ["verilog_lint.cc"],
     visibility = ["//visibility:public"],
     deps = [
@@ -222,4 +222,16 @@ cc_binary(
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/strings",
     ],
+)
+
+# For a limited time, we provide the old name to be compatible with the
+# old installation. At some point, this script will print a deprecation warning
+# and be removed entirely later. Use verible-verilog-lint instead.
+filegroup(
+    name = "verilog_lint-deprecated",
+    srcs = [
+        "verilog_lint",
+        ":verible-verilog-lint",
+    ],
+    visibility = ["//visibility:public"],
 )

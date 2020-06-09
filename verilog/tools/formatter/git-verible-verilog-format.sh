@@ -1,5 +1,5 @@
 #!/bin/bash
-# git-verilog_format.sh
+# git-verible-verilog-format.sh
 #
 # Copyright 2020 The Verible Authors.
 #
@@ -18,8 +18,8 @@
 script_name="$(basename $0)"
 script_dir="$(realpath $(dirname $0))"
 
-formatter="$(which verilog_format)" || \
-  formatter="$script_dir"/verilog_format
+formatter="$(which verible-verilog-format)" || \
+  formatter="$script_dir"/verible-verilog-format
 
 # Required support script.
 diff_parser="$script_dir"/diff-to-changed-lines.awk
@@ -27,7 +27,7 @@ diff_parser="$script_dir"/diff-to-changed-lines.awk
 function usage() {
   cat <<EOF
 $0:
-Performs incremental file formatting (verilog_format) based on current diffs.
+Performs incremental file formatting (verible-verilog-format) based on current diffs.
 New files explicitly git-add-ed by the user are wholly formatted.
 
 Actions:
@@ -35,12 +35,12 @@ Actions:
      To format new files (wholly), 'git add' those before calling this script.
   2) Runs 'git diff -u --cached' to generate a unified diff.
   3) Diff is scanned to determine added or modified lines in each file.
-  4) Invokes 'verilog_format --inplace' on all touched or new Verilog files,
+  4) Invokes 'verible-verilog-format --inplace' on all touched or new Verilog files,
      but does not 'git add' so the changes may be examined and tested.
      Formatting can be easily undone with:
        'git diff | git apply --reverse -'.
 
-usage: $0 [script options] [-- [verilog_format options]]
+usage: $0 [script options] [-- [verible-verilog-format options]]
   (no positional arguments)
   Run from anywhere inside a git project tree.
 
@@ -48,7 +48,7 @@ script options: (options with arguments can be: --flag=VALUE or --flag VALUE)
   --help | -h : print help and exit
   --verbose | -v : execute verbosely
   --dry-run : stop before running formatter, and print formatting commands
-  --formatter TOOL : path to verilog_format binary
+  --formatter TOOL : path to verible-verilog-format binary
        [using: $formatter]
   -- : stops option processing, and forwards remaining args as flags to the
        underlying --formatter tool.
@@ -95,7 +95,7 @@ done
 
 # Check some requirements.
 [[ -x "$formatter" ]] || {
-  msg "*** Unable to find executable 'verilog_format'."
+  msg "*** Unable to find executable 'verible-verilog-format'."
   msg "  Please specify formatter with: --formatter TOOL."
   exit 1
 }

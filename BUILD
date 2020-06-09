@@ -15,21 +15,28 @@ exports_files([
 installer(
     name = "install",
     data = [
-        "//verilog/tools/diff:verilog_diff",
-        "//verilog/tools/formatter:git_verilog_format",
-        "//verilog/tools/formatter:verilog_format",
-        "//verilog/tools/lint:verilog_lint",
-        "//verilog/tools/obfuscator:verilog_obfuscate",
-        "//verilog/tools/syntax:verilog_syntax",
+        "//verilog/tools/diff:verible-verilog-diff",
+        "//verilog/tools/formatter:git-verilog-format",
+        "//verilog/tools/formatter:verible-verilog-format",
+        "//verilog/tools/lint:verible-verilog-lint",
+        "//verilog/tools/obfuscator:verible-verilog-obfuscate",
+        "//verilog/tools/syntax:verible-verilog-syntax",
+
+        # Deprecated legacy names, available for a transition period
+        "//verilog/tools/diff:verilog_diff-deprecated",
+        "//verilog/tools/lint:verilog_lint-deprecated",
+        "//verilog/tools/syntax:verilog_syntax-deprecated",
+        "//verilog/tools/formatter:verilog_format-deprecated",
+        "//verilog/tools/obfuscator:verilog_obfuscate-deprecated",
     ],
 )
 
 genrule(
     name = "lint_doc",
     outs = ["documentation_verible_lint_rules.md"],
-    cmd = "$(location //verilog/tools/lint:verilog_lint) --generate_markdown " +
-          "> $(OUTS)",
+    cmd = "$(location //verilog/tools/lint:verible-verilog-lint) " +
+          "--generate_markdown > $(OUTS)",
     tools = [
-        "//verilog/tools/lint:verilog_lint",
+        "//verilog/tools/lint:verible-verilog-lint",
     ],
 )

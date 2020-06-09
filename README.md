@@ -30,8 +30,9 @@ bazel build -c opt //...
 ```
 
 You can access the generated artifacts under `bazel-bin/`. For instance the
-syntax checker will be at `bazel-bin/verilog/tools/syntax/verilog_syntax`
-(corresponding to the target name `//verilog/tools/syntax:verilog_syntax`).
+syntax checker will be at
+`bazel-bin/verilog/tools/syntax/verible-verilog-syntax` (corresponding to the
+target name `//verilog/tools/syntax:verible-verilog-syntax`).
 
 ### Installation
 
@@ -40,8 +41,9 @@ For simple installation, we provide regular [binary releases].
 If you prefer to install the binaries on your workstation yourself, use the
 `:install` target which you invoke with `bazel run`.
 
-The following builds and installs the `verilog_format`, `verilog_lint` and
-`verilog_syntax` binaries in the provided location:
+The following builds and installs the `verible-verilog-format`,
+`verible-verilog-lint` and `verible-verilog-syntax` binaries in the provided
+location:
 
 ```bash
 # In your home directory
@@ -91,10 +93,10 @@ preprocessing, and context-based lexical disambiguation (with arbitrary
 lookahead) where required by the language.
 
 The parser can be tested as a standalone program,
-`//verilog/tools/syntax:verilog_syntax`.
+`//verilog/tools/syntax:verible-verilog-syntax`.
 
 ```
-verilog_syntax: usage: verilog_syntax [options] <file> [<file>...]
+verible-verilog-syntax: usage: verible-verilog-syntax [options] <file> [<file>...]
 
   Flags from verilog/tools/syntax/verilog_syntax.cc:
     -printrawtokens (Prints all lexed tokens, including filtered ones.);
@@ -138,9 +140,9 @@ Available parser selection modes include:
 #### Token Stream
 
 The lexer partitions a text buffer into a sequence of tokens with annotations
-(token stream). `verilog_syntax --printtokens` shows the tokens that feeds into
-the parser, and `--printrawtokens` to shows all tokens including whitespaces,
-comments, and attributes.
+(token stream). `verible-verilog-syntax --printtokens` shows the tokens that
+feeds into the parser, and `--printrawtokens` to shows all tokens including
+whitespaces, comments, and attributes.
 
 For example, the following code:
 
@@ -197,7 +199,7 @@ lossless with respect to the original input text.
 #### Concrete Syntax Tree
 
 The parser produces a concrete syntax tree (CST), which can be diagnosed with
-`verilog_syntax --printtree`.
+`verible-verilog-syntax --printtree`.
 
 For example, the following code (same as above):
 
@@ -207,7 +209,7 @@ module foo(input a, b, output z);
 endmodule : foo
 ```
 
-produces this CST (rendered by `verilog_syntax --printtree`):
+produces this CST (rendered by `verible-verilog-syntax --printtree`):
 
 ```
 Parse Tree:
@@ -296,10 +298,10 @@ bazel build :lint_doc
 bazel-bin/documentation_verible_lint_rules.md
 ```
 
-The linter tool is available as `//verilog/tools/lint:verilog_lint`.
+The linter tool is available as `//verilog/tools/lint:verible-verilog-lint`.
 
 ```
-verilog_lint: usage: verilog_lint [options] <file> [<file>...]
+verible-verilog-lint: usage: verible-verilog-lint [options] <file> [<file>...]
 
   Flags from verilog/analysis/verilog_linter.cc:
     --rules (Comma-separated of lint rules to enable. No prefix or a '+' prefix
@@ -338,7 +340,7 @@ the [`line-length`][lint-rule-list_line-length] rule (80 characters length) and
 disables the [`no-tabs`][lint-rule-list_no-tabs] rule.
 
 ```
-verilog_lint --rules=enum-name-style,+line-length=length:80,-no-tabs ...
+verible-verilog-lint --rules=enum-name-style,+line-length=length:80,-no-tabs ...
 ```
 
 Additionally, the `--rules_config` flag can be used to read configuration stored
@@ -408,10 +410,11 @@ with a particular style. The main goal is to relieve humans of having to
 manually manage whitespace, wrapping, and indentation, and to provide a tool
 that can be integrated into any editor to enable editor-independent consistency.
 
-The formatter tool is available as `//verilog/tools/formatter:verilog_format`.
+The formatter tool is available as
+`//verilog/tools/formatter:verible-verilog-format`.
 
 ```
-verilog_format: usage: verilog_format [options] <file>
+verible-verilog-format: usage: verible-verilog-format [options] <file>
 To pipe from stdin, use '-' as <file>.
 
   Flags from verilog/tools/formatter/verilog_format.cc:
@@ -478,16 +481,16 @@ formatting), the following tools are provided to assist.
 
 ##### Git users
 
-`git-verilog_format.sh` (installed along with `verilog_format`) can be run from
-within any subdirectory of a Git project. It automatically detects new and
-changed lines, and generates the `--lines` flag for each modified file in your
-workspace.
+`git-verible-verilog-format.sh` (installed along with `verible-verilog-format`)
+can be run from within any subdirectory of a Git project. It automatically
+detects new and changed lines, and generates the `--lines` flag for each
+modified file in your workspace.
 
 From `--help`:
 
 ```
-git-verilog_format.sh:
-Performs incremental file formatting (verilog_format) based on current diffs.
+git-verible-verilog-format.sh:
+Performs incremental file formatting (verible-verilog-format) based on current diffs.
 New files explicitly git-add-ed by the user are wholly formatted.
 
 Actions:
@@ -495,12 +498,12 @@ Actions:
      To format new files (wholly), 'git add' those before calling this script.
   2) Runs 'git diff -u --cached' to generate a unified diff.
   3) Diff is scanned to determine added or modified lines in each file.
-  4) Invokes 'verilog_format --inplace' on all touched or new Verilog files,
+  4) Invokes 'verible-verilog-format --inplace' on all touched or new Verilog files,
      but does not 'git add' so that the changes may be examined and tested.
      Formatting can be easily undone with:
        'git diff | git apply --reverse -'.
 
-usage: git-verilog_format.sh [script options] [-- [verilog_format options]]
+usage: git-verible-verilog-format.sh [script options] [-- [verilog_format options]]
   (no positional arguments)
   Run from anywhere inside a git project tree.
 
@@ -509,18 +512,18 @@ script options: (options with arguments can be: --flag=VALUE or --flag VALUE)
   --verbose | -v : execute verbosely
   --dry-run : stop before running formatter, and print formatting commands
   --formatter TOOL : path to verilog_format binary
-       [using: /usr/local/bin/verilog_format]
+       [using: /usr/local/bin/verible-verilog-format]
   -- : stops option processing, and forwards remaining args as flags to the
        underlying --formatter tool.
 ```
 
 ### Lexical Diff
 
-`verilog_diff` compares two input files for equivalence, where equivalence is
-determined by the `--mode` of operation.
+`verible-verilog-diff` compares two input files for equivalence, where
+equivalence is determined by the `--mode` of operation.
 
 ```
-verilog_diff: usage: verilog_diff [options] file1 file2
+verible-verilog-diff: usage: verible-verilog-diff [options] file1 file2
 
   Flags from verilog/tools/diff/verilog_diff.cc:
     --mode (Defines difference functions.
@@ -539,17 +542,17 @@ Exit codes:
 
 ### Code Obfuscator
 
-`verilog_obfuscate` transforms Verilog code by replacing identifiers with
-obfuscated names of equal length, and preserving all other text, including
+`verible-verilog-obfuscate` transforms Verilog code by replacing identifiers
+with obfuscated names of equal length, and preserving all other text, including
 spaces. Output is written to stdout. The resulting file size is the same as the
 original.
 
 This is useful for preparing potentially sensitive test cases with tool vendors.
 
 ```
-verilog_obfuscate: usage: verilog_obfuscate [options] < original_file > output
+verible-verilog-obfuscate: usage: verible-verilog-obfuscate [options] < original_file > output
 
-verilog_obfuscate mangles Verilog code by changing identifiers.
+verible-verilog-obfuscate mangles Verilog code by changing identifiers.
 All whitespaces and identifier lengths are preserved.
 Output is written to stdout.
 

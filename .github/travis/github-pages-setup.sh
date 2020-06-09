@@ -48,9 +48,9 @@ See the [README file for further information.](README.md)
 
 ## Tools
 
- * [verilog_lint Info](verilog_lint.md)
- * [verilog_format Info](verilog_format.md)
- * [verilog_syntax Info](verilog_syntax.md)
+ * [verible-verilog-lint Info](verilog_lint.md)
+ * [verible-verilog-format Info](verilog_format.md)
+ * [verible-verilog-syntax Info](verilog_syntax.md)
 
 ## Information
 
@@ -77,7 +77,7 @@ wget https://raw.githubusercontent.com/IQAndreas/markdown-licenses/master/apache
 
 # Generate lint rules documentation
 # --------------------------------
-bazel-bin/verilog/tools/lint/verilog_lint -generate_markdown > $PAGES_DIR/lint.md
+bazel-bin/verilog/tools/lint/verible-verilog-lint -generate_markdown > $PAGES_DIR/lint.md
 cat >> $PAGES_DIR/lint.md <<EOF
 
 ## Version
@@ -85,11 +85,11 @@ cat >> $PAGES_DIR/lint.md <<EOF
 Generated on $GIT_DATE from [$GIT_VERSION](https://github.com/$REPO_SLUG/commit/$GIT_HASH)
 EOF
 
-# Generate docs for verilog_syntax
+# Generate docs for verible-verilog-syntax
 # --------------------------------
 SYNTAX_DOC=$PAGES_DIR/verilog_syntax.md
 cat > $SYNTAX_DOC <<EOF
-# \`verilog_syntax\`
+# \`verible-verilog-syntax\`
 
 Tool for looking at the syntax of Verilog and SystemVerilog code. Part of the
 verible tool suite.
@@ -97,7 +97,7 @@ verible tool suite.
 ## Command line arguments
 \`\`\`
 EOF
-bazel-bin/verilog/tools/syntax/verilog_syntax -helpfull >> $SYNTAX_DOC
+bazel-bin/verilog/tools/syntax/verible-verilog-syntax -helpfull >> $SYNTAX_DOC
 cat >> $SYNTAX_DOC <<EOF
 \`\`\`
 
@@ -107,11 +107,11 @@ Generated on $GIT_DATE from [$GIT_VERSION](https://github.com/$REPO_SLUG/commit/
 EOF
 
 
-# Generate docs for verilog_lint
+# Generate docs for verible-verilog-lint
 # --------------------------------
 LINT_DOC=$PAGES_DIR/verilog_lint.md
 cat > $LINT_DOC <<EOF
-# \`verilog_lint\`
+# \`verible-verilog-lint\`
 
 Tool for formatting Verilog and SystemVerilog code. Part of the verible tool
 suite.
@@ -120,14 +120,14 @@ suite.
 
 \`\`\`
 EOF
-bazel-bin/verilog/tools/lint/verilog_lint -helpfull >> $LINT_DOC
+bazel-bin/verilog/tools/lint/verible-verilog-lint -helpfull >> $LINT_DOC
 cat >> $LINT_DOC <<'EOF'
 ```
 
 ## Lint Rules
 
 EOF
-bazel-bin/verilog/tools/lint/verilog_lint -generate_markdown >> $LINT_DOC
+bazel-bin/verilog/tools/lint/verible-verilog-lint -generate_markdown >> $LINT_DOC
 cat >> $LINT_DOC <<EOF
 
 ## Version
@@ -135,11 +135,11 @@ cat >> $LINT_DOC <<EOF
 Generated on $GIT_DATE from [$GIT_VERSION](https://github.com/$REPO_SLUG/commit/$GIT_HASH)
 EOF
 
-# Generate docs for verilog_format
+# Generate docs for verible-verilog-format
 # --------------------------------
 FORMAT_DOC=$PAGES_DIR/verilog_format.md
 cat > $FORMAT_DOC <<EOF
-# \`verilog_format\`
+# \`verible-verilog-format\`
 
 Tool for formatting Verilog and SystemVerilog code. Part of the verible tool
 suite.
@@ -147,7 +147,7 @@ suite.
 ## Command line arguments
 \`\`\`
 EOF
-bazel-bin/verilog/tools/formatter/verilog_format -helpfull >> $FORMAT_DOC
+bazel-bin/verilog/tools/formatter/verible-verilog-format -helpfull >> $FORMAT_DOC
 cat >> $FORMAT_DOC <<EOF
 \`\`\`
 

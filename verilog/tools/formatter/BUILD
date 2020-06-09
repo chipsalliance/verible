@@ -4,7 +4,7 @@
 licenses(["notice"])
 
 cc_binary(
-    name = "verilog_format",
+    name = "verible-verilog-format",
     srcs = ["verilog_format.cc"],
     visibility = ["//visibility:public"],  # for verilog_style_lint.bzl
     deps = [
@@ -21,11 +21,23 @@ cc_binary(
     ],
 )
 
+# For a limited time, we provide the old name to be compatible with the
+# old installation. At some point, this script will print a deprecation warning
+# and be removed entirely later.
 filegroup(
-    name = "git_verilog_format",
+    name = "verilog_format-deprecated",
+    srcs = [
+        "verilog_format",
+        ":verible-verilog-format",
+    ],
+    visibility = ["//visibility:public"],
+)
+
+filegroup(
+    name = "git-verilog-format",
     srcs = [
         "diff-to-changed-lines.awk",
-        "git-verilog_format.sh",
+        "git-verible-verilog-format.sh",
     ],
     visibility = ["//:__pkg__"],  # for release
 )

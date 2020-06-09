@@ -34,9 +34,9 @@ or if you want to manually list files to scan:
 
 """
 
-_syntax_tool = "//verilog/tools/syntax:verilog_syntax"
+_syntax_tool = "//verilog/tools/syntax:verible-verilog-syntax"
 
-_linter_tool = "//verilog/tools/lint:verilog_lint"
+_linter_tool = "//verilog/tools/lint:verible-verilog-lint"
 
 _verilog_extensions = [
     ".v",
