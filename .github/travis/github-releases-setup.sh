@@ -33,7 +33,6 @@ mkdir -p $PREFIX_MAN
 
 # Binaries
 bazel run :install -c opt -- $PREFIX_BIN
-
 for BIN in $PREFIX_BIN/*; do
     ls -l $BIN
     file $BIN
@@ -43,12 +42,10 @@ done
 # Documentation
 cp -a /tmp/pages/* $PREFIX_DOC
 # Man pages
-gflags2man --help_flag="--helpfull" --dest_dir $PREFIX_MAN bazel-bin/verilog/tools/syntax/verilog_syntax
-gzip $PREFIX_MAN/verilog_syntax.1
-gflags2man --help_flag="--helpfull" --dest_dir $PREFIX_MAN bazel-bin/verilog/tools/lint/verilog_lint
-gzip $PREFIX_MAN/verilog_lint.1
-gflags2man  --help_flag="--helpfull" --dest_dir $PREFIX_MAN bazel-bin/verilog/tools/formatter/verilog_format
-gzip $PREFIX_MAN/verilog_format.1
+for m in verilog_syntax verilog_lint verilog_format ; do
+    gflags2man --help_flag="--helpfull" --dest_dir $PREFIX_MAN $PREFIX_BIN/$m
+    gzip $PREFIX_MAN/$m.1
+done
 
 DISTRO_ARCH=$(uname -m)
 DISTRO=$(lsb_release --short --id)
