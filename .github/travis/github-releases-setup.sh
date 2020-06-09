@@ -42,9 +42,13 @@ done
 # Documentation
 cp -a /tmp/pages/* $PREFIX_DOC
 # Man pages
-for m in verilog_syntax verilog_lint verilog_format ; do
-    gflags2man --help_flag="--helpfull" --dest_dir $PREFIX_MAN $PREFIX_BIN/$m
-    gzip $PREFIX_MAN/$m.1
+for app in syntax lint format diff obfuscate ; do
+    BIN_NAME="verible-verilog-${app}"
+    gflags2man --help_flag="--helpfull" --dest_dir "$PREFIX_MAN" "$PREFIX_BIN/$BIN_NAME"
+    gzip "${PREFIX_MAN}/${BIN_NAME}.1"
+
+    # Set up manpage for legacy tool-names as symbolic link to the real deal.
+    ln -s "${BIN_NAME}.1.gz" "${PREFIX_MAN}/verilog_${app}.1.gz
 done
 
 DISTRO_ARCH=$(uname -m)
