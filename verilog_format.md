@@ -72,8 +72,11 @@ To pipe from stdin, use '-' as <file>.
     --stdin_name (When using '-' to read from stdin, this gives an alternate
       name for diagnostic purposes. Otherwise this is ignored.);
       default: "<stdin>";
+    --verify_convergence (If true, and not incrementally formatting with
+      --lines, verify that re-formatting the formatted output yields no further
+      changes, i.e. formatting is convergent.); default: true;
 ```
 
 ## Version
 
-Generated on 2020-06-09 13:03:53 -0700 from [v0.0-437-ga6d3664](https://github.com/google/verible/commit/a6d36642f30bacefef405c00ba770b582eb1b2bb)
+Generated on 2020-06-09 16:14:06 -0700 from [v0.0-439-gb1dff5f](https://github.com/google/verible/commit/b1dff5fc91ef31b3d89accf17d3ccdf4b8f6178c)

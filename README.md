@@ -445,6 +445,9 @@ To pipe from stdin, use '-' as <file>.
     --stdin_name (When using '-' to read from stdin, this gives an alternate
       name for diagnostic purposes. Otherwise this is ignored.);
       default: "<stdin>";
+    --verify_convergence (If true, and not incrementally formatting with
+      --lines, verify that re-formatting the formatted output yields no further
+      changes, i.e. formatting is convergent.); default: true;
 
 Try --helpfull to get a list of all flags.
 ```
