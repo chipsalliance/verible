@@ -421,6 +421,13 @@ static WithReason<int> SpacesRequiredBetween(
     return {1, "Space between flow control keywords and ("};
   }
 
+  if (left.TokenEnum() == verilog_tokentype::TK_TimeLiteral) {
+    if (right.TokenEnum() == ';') {
+      return {0, "No space between time literal and ';'."};
+    }
+    return {1, "Space after time literals in most other cases."};
+  }
+
   if (right.TokenEnum() == TK_POUNDPOUND)
     return {1, "Space before ## (delay) operator"};
   if (left.format_token_enum == FormatTokenType::unary_operator)
@@ -780,6 +787,17 @@ static WithReason<SpacingOptions> BreakDecisionBetween(
     // The tree unwrapper should make sure these start their own partition.
     return {SpacingOptions::MustWrap,
             "Preprocessor directives should start their own line."};
+  }
+
+  if (left.TokenEnum() == '#') {
+    return {SpacingOptions::MustAppend,
+            "Never separate # from whatever follows (delay expressions)."};
+  }
+  if (left.TokenEnum() == verilog_tokentype::TK_TimeLiteral) {
+    if (right.TokenEnum() == ';') {
+      return {SpacingOptions::MustAppend,
+              "Keep delay statements together, like \"#1ps;\"."};
+    }
   }
 
   // By default, leave undecided for penalty minimization.

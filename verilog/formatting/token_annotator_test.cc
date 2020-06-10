@@ -285,7 +285,7 @@ TEST(TokenAnnotatorTest, AnnotateFormattingInfoTest) {
            {{0, SpacingOptions::Undecided},
             {1, SpacingOptions::Undecided},   // with_params
             {1, SpacingOptions::Undecided},   // #
-            {0, SpacingOptions::Undecided},   // (
+            {0, SpacingOptions::MustAppend},  // (
             {0, SpacingOptions::Undecided},   // )
             {1, SpacingOptions::Undecided},   // (
             {0, SpacingOptions::Undecided},   // )
@@ -434,7 +434,7 @@ TEST(TokenAnnotatorTest, AnnotateFormattingInfoTest) {
               DefaultStyle,
               0,
               {{0, SpacingOptions::Undecided},
-               {0, SpacingOptions::Undecided},
+               {0, SpacingOptions::MustAppend},
                {1, SpacingOptions::Undecided}},
               {{'#', "#"},
                {verilog_tokentype::TK_DecNumber, "1"},
@@ -1576,9 +1576,9 @@ TEST(TokenAnnotatorTest, AnnotateFormattingInfoTest) {
           {DefaultStyle,
            1,
            {
-               {0, SpacingOptions::Undecided},  // #
-               {0, SpacingOptions::Undecided},  // 0
-               {0, SpacingOptions::Undecided},  // ;
+               {0, SpacingOptions::Undecided},   // #
+               {0, SpacingOptions::MustAppend},  // 0
+               {0, SpacingOptions::Undecided},   // ;
            },
            {
                {'#', "#"},
@@ -1590,9 +1590,9 @@ TEST(TokenAnnotatorTest, AnnotateFormattingInfoTest) {
           {DefaultStyle,
            1,
            {
-               {0, SpacingOptions::Undecided},  // #
-               {0, SpacingOptions::Undecided},  // 0.5
-               {0, SpacingOptions::Undecided},  // ;
+               {0, SpacingOptions::Undecided},   // #
+               {0, SpacingOptions::MustAppend},  // 0.5
+               {0, SpacingOptions::Undecided},   // ;
            },
            {
                {'#', "#"},
@@ -1604,9 +1604,9 @@ TEST(TokenAnnotatorTest, AnnotateFormattingInfoTest) {
           {DefaultStyle,
            1,
            {
-               {0, SpacingOptions::Undecided},  // #
-               {0, SpacingOptions::Undecided},  // 0ns
-               {0, SpacingOptions::Undecided},  // ;
+               {0, SpacingOptions::Undecided},   // #
+               {0, SpacingOptions::MustAppend},  // 0ns
+               {0, SpacingOptions::MustAppend},  // ;
            },
            {
                {'#', "#"},
@@ -1618,9 +1618,9 @@ TEST(TokenAnnotatorTest, AnnotateFormattingInfoTest) {
           {DefaultStyle,
            1,
            {
-               {0, SpacingOptions::Undecided},  // #
-               {0, SpacingOptions::Undecided},  // 1step
-               {0, SpacingOptions::Undecided},  // ;
+               {0, SpacingOptions::Undecided},   // #
+               {0, SpacingOptions::MustAppend},  // 1step
+               {0, SpacingOptions::Undecided},   // ;
            },
            {
                {'#', "#"},
@@ -4035,6 +4035,94 @@ TEST(TokenAnnotatorTest, AnnotateFormattingWithContextTest) {
           {';', ";"},
           {NodeEnum::kUdpCombEntry},
           {0, SpacingOptions::Undecided},
+      },
+
+      // time literals
+      {
+          // #1ps
+          DefaultStyle,
+          {'#', "#"},
+          {verilog_tokentype::TK_TimeLiteral, "1ps"},
+          {/* any context */},
+          {0, SpacingOptions::MustAppend},
+      },
+      {
+          // #1ps;
+          DefaultStyle,
+          {verilog_tokentype::TK_TimeLiteral, "1ps"},
+          {';', ";"},
+          {/* any context */},
+          {0, SpacingOptions::MustAppend},
+      },
+      {
+          DefaultStyle,
+          {verilog_tokentype::TK_TimeLiteral, "1ps"},
+          {verilog_tokentype::SymbolIdentifier, "task_call"},
+          {/* any context */},
+          {1, SpacingOptions::Undecided},
+      },
+      {
+          DefaultStyle,
+          {verilog_tokentype::TK_TimeLiteral, "1ps"},
+          {verilog_tokentype::MacroIdentifier, "`MACRO"},
+          {/* any context */},
+          {1, SpacingOptions::Undecided},
+      },
+      {
+          DefaultStyle,
+          {verilog_tokentype::TK_TimeLiteral, "100ps"},
+          {verilog_tokentype::MacroCallId, "`MACRO"},
+          {/* any context */},
+          {1, SpacingOptions::Undecided},
+      },
+      {
+          DefaultStyle,
+          {verilog_tokentype::TK_TimeLiteral, "1ps"},
+          {'#', "#"},
+          {/* any context */},
+          {1, SpacingOptions::Undecided},
+      },
+      {
+          DefaultStyle,
+          {verilog_tokentype::TK_TimeLiteral, "1ps"},
+          {verilog_tokentype::TK_INCR, "++"},
+          {/* any context */},
+          {1, SpacingOptions::Undecided},
+      },
+      {
+          DefaultStyle,
+          {verilog_tokentype::TK_TimeLiteral, "1ps"},
+          {verilog_tokentype::TK_DECR, "--"},
+          {/* any context */},
+          {1, SpacingOptions::Undecided},
+      },
+      {
+          DefaultStyle,
+          {verilog_tokentype::TK_TimeLiteral, "1ps"},
+          {'@', "@"},
+          {/* any context */},
+          {1, SpacingOptions::Undecided},
+      },
+      {
+          DefaultStyle,
+          {verilog_tokentype::TK_TimeLiteral, "1ps"},
+          {verilog_tokentype::TK_begin, "begin"},
+          {/* any context */},
+          {1, SpacingOptions::Undecided},
+      },
+      {
+          DefaultStyle,
+          {verilog_tokentype::TK_TimeLiteral, "1ps"},
+          {verilog_tokentype::TK_force, "force"},
+          {/* any context */},
+          {1, SpacingOptions::Undecided},
+      },
+      {
+          DefaultStyle,
+          {verilog_tokentype::TK_TimeLiteral, "1ps"},
+          {verilog_tokentype::TK_output, "output"},
+          {/* any context */},
+          {1, SpacingOptions::Undecided},
       },
   };
   int test_index = 0;
