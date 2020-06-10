@@ -48,7 +48,7 @@ for app in syntax lint format diff obfuscate ; do
     gzip "${PREFIX_MAN}/${BIN_NAME}.1"
 
     # Set up manpage for legacy tool-names as symbolic link to the real deal.
-    ln -s "${BIN_NAME}.1.gz" "${PREFIX_MAN}/verilog_${app}.1.gz
+    ln -s "${BIN_NAME}.1.gz" "${PREFIX_MAN}/verilog_${app}.1.gz"
 done
 
 DISTRO_ARCH=$(uname -m)
