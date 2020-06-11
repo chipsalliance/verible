@@ -32,4 +32,23 @@ std::ostream& operator<<(std::ostream& stream, const AutoTruncate& trunc) {
                 << text.substr(tail_start, tail_length);
 }
 
+std::ostream& operator<<(std::ostream& stream, const VisualizeWhitespace& vis) {
+  for (const char c : vis.text) {
+    switch (c) {
+      case ' ':
+        stream << vis.space_alt;
+        break;
+      case '\t':
+        stream << vis.tab_alt;
+        break;
+      case '\n':
+        stream << vis.newline_alt;
+        break;
+      default:
+        stream << c;
+    }
+  }
+  return stream;
+}
+
 }  // namespace verible

@@ -37,6 +37,19 @@ struct AutoTruncate {
 
 std::ostream& operator<<(std::ostream&, const AutoTruncate& trunc);
 
+// To help visualize strings that consist of whitespace, this stream adapter
+// prints spaces, tabs, and newlines with alternate text, without modifying or
+// copying the original string.
+struct VisualizeWhitespace {
+  const absl::string_view text;  // original text to be printed
+
+  const char space_alt = '.';                    // spaces replacement
+  const absl::string_view newline_alt = "\\\n";  // newline replacement
+  const absl::string_view tab_alt = "#";         // tab replacement
+};
+
+std::ostream& operator<<(std::ostream&, const VisualizeWhitespace& vis);
+
 // TODO(fangism): once C++17 becomes the minimum standard for building
 // push the following block into an internal namespace, and use auto
 // return types instead of directly rnaming these types.

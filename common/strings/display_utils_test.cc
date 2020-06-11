@@ -51,6 +51,34 @@ TEST(AutoTruncateTest, Various) {
   }
 }
 
+TEST(VisualizeWhitespaceTest, Various) {
+  constexpr std::pair<absl::string_view, absl::string_view> kTestCases[] = {
+      {"", ""},          {"abc", "abc"},
+      {"ABC", "ABC"},    {"123", "123"},
+      {"   ", "..."},    {"\n\n\n", "\\\n\\\n\\\n"},
+      {"\t\t\t", "###"}, {"abc \n\t123", "abc.\\\n#123"},
+  };
+  for (const auto& test : kTestCases) {
+    std::ostringstream stream;
+    stream << VisualizeWhitespace{test.first};
+    EXPECT_EQ(stream.str(), test.second);
+  }
+}
+
+TEST(VisualizeWhitespaceTest, OtherSubstitutions) {
+  constexpr std::pair<absl::string_view, absl::string_view> kTestCases[] = {
+      {"", ""},          {"abc", "abc"},
+      {"ABC", "ABC"},    {"123", "123"},
+      {"   ", "---"},    {"\n\n\n", "NNN"},
+      {"\t\t\t", "TTT"}, {"abc \n\t123", "abc-NT123"},
+  };
+  for (const auto& test : kTestCases) {
+    std::ostringstream stream;
+    stream << VisualizeWhitespace{test.first, '-', "N", "T"};
+    EXPECT_EQ(stream.str(), test.second);
+  }
+}
+
 typedef std::vector<int> IntVector;
 
 // Normally a definition like the following would appear in a header
