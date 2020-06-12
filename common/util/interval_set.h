@@ -265,6 +265,7 @@ class IntervalSet : private _IntervalSetImpl {
   void Add(const T& value) { Add({value, value + 1}); }
 
   // Removes an interval from the set.
+  // Run-time: O(lg N), where N is the number of existing intervals.
   void Difference(const Interval<T>& interval) {
     CHECK(interval.valid());
     if (interval.empty()) return;  // removing an empty interval changes nothing
@@ -335,6 +336,8 @@ class IntervalSet : private _IntervalSetImpl {
 
   // Subtracts all intervals in the other set from this one.
   void Difference(const IntervalSet<T>& iset) {
+    // TODO(fangism): optimize by implementing with two advancing iterators,
+    // like linear-time sorted-sequence set operations.
     for (const auto& interval : iset) {
       Difference(AsInterval(interval));
     }

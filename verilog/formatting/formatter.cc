@@ -26,11 +26,13 @@
 #include "common/formatting/token_partition_tree.h"
 #include "common/formatting/unwrapped_line.h"
 #include "common/strings/line_column_map.h"
+#include "common/strings/position.h"
 #include "common/strings/range.h"
 #include "common/text/text_structure.h"
 #include "common/text/token_info.h"
 #include "common/text/tree_utils.h"
 #include "common/util/expandable_tree_view.h"
+#include "common/util/interval.h"
 #include "common/util/iterator_range.h"
 #include "common/util/logging.h"
 #include "common/util/range.h"
@@ -54,7 +56,9 @@ using absl::StatusCode;
 
 using verible::ByteOffsetSet;
 using verible::ExpandableTreeView;
+using verible::MutableFormatTokenRange;
 using verible::PartitionPolicyEnum;
+using verible::PreFormatToken;
 using verible::TokenPartitionTree;
 using verible::TreeViewNodeInfo;
 using verible::UnwrappedLine;
@@ -226,6 +230,8 @@ Status FormatVerilog(absl::string_view text, absl::string_view filename,
 // Decided at each node in UnwrappedLine partition tree whether or not
 // it should be expanded or unexpanded.
 static void DeterminePartitionExpansion(partition_node_type* node,
+                                        absl::string_view full_text,
+                                        const ByteOffsetSet& disabled_ranges,
                                         const FormatStyle& style) {
   auto& node_view = node->Value();
   const auto& children = node->Children();
@@ -251,7 +257,28 @@ static void DeterminePartitionExpansion(partition_node_type* node,
   }
 
   // Expand or not, depending on partition policy and other conditions.
-  const auto& uwline = node_view.Value();
+  const UnwrappedLine& uwline = node_view.Value();
+
+  {
+    // If any part of the range is formatting-disabled, expand this partition so
+    // that whitespace between subpartitions can be handled accordingly in
+    // Formatter::Emit().
+    const verible::FormatTokenRange range(uwline.TokensRange());
+    const verible::IntervalSet<int> partition_byte_range{
+        {range.front().token->left(full_text),
+         range.back().token->right(full_text)}};
+    // (Same as IntervalSet::Complement without temporary copy.)
+    verible::IntervalSet<int> diff(partition_byte_range);
+    diff.Difference(disabled_ranges);
+    if (partition_byte_range != diff) {
+      // Then some sub-interval was removed.
+      VLOG(3) << "Partition @bytes " << partition_byte_range
+              << " is partially format-disabled, so expand.";
+      node_view.Expand();
+      return;
+    }
+  }
+
   const auto partition_policy = uwline.PartitionPolicy();
   VLOG(3) << "partition policy: " << partition_policy;
   switch (partition_policy) {
@@ -289,6 +316,7 @@ static void DeterminePartitionExpansion(partition_node_type* node,
 // Produce a worklist of independently formattable UnwrappedLines.
 static std::vector<UnwrappedLine> MakeUnwrappedLinesWorklist(
     const TokenPartitionTree& format_tokens_partitions,
+    absl::string_view full_text, const ByteOffsetSet& disabled_ranges,
     const FormatStyle& style) {
   // Initialize a tree view that treats partitions as fully-expanded.
   ExpandableTreeView<UnwrappedLine> format_tokens_partition_view(
@@ -298,8 +326,8 @@ static std::vector<UnwrappedLine> MakeUnwrappedLinesWorklist(
   // Post-order traversal: if a child doesn't 'fit' and needs to be expanded,
   // so must all of its parents (and transitively, ancestors).
   format_tokens_partition_view.ApplyPostOrder(
-      [&style](partition_node_type& node) {
-        DeterminePartitionExpansion(&node, style);
+      [&full_text, &disabled_ranges, &style](partition_node_type& node) {
+        DeterminePartitionExpansion(&node, full_text, disabled_ranges, style);
       });
 
   // Remove trailing blank lines.
@@ -336,42 +364,42 @@ std::ostream& ExecutionControl::Stream() const {
   return (stream != nullptr) ? *stream : std::cout;
 }
 
-static verible::iterator_range<std::vector<verible::PreFormatToken>::iterator>
-FindFormatTokensInByteOffsetRange(
-    std::vector<verible::PreFormatToken>::iterator begin,
-    std::vector<verible::PreFormatToken>::iterator end,
-    std::pair<int, int> byte_offset_range, absl::string_view base_text) {
+static MutableFormatTokenRange FindFormatTokensInByteOffsetRange(
+    MutableFormatTokenRange::iterator begin,
+    MutableFormatTokenRange::iterator end,
+    const std::pair<int, int>& byte_offset_range, absl::string_view base_text) {
   const auto tokens_begin =
       std::lower_bound(begin, end, byte_offset_range.first,
-                       [=](const verible::PreFormatToken& t, int position) {
+                       [=](const PreFormatToken& t, int position) {
                          return t.token->left(base_text) < position;
                        });
   const auto tokens_end =
       std::upper_bound(tokens_begin, end, byte_offset_range.second,
-                       [=](int position, const verible::PreFormatToken& t) {
+                       [=](int position, const PreFormatToken& t) {
                          return position < t.token->right(base_text);
                        });
-  return verible::make_range(tokens_begin, tokens_end);
+  return {tokens_begin, tokens_end};
 }
 
 static void PreserveSpacesOnDisabledTokenRanges(
-    std::vector<verible::PreFormatToken>* ftokens,
-    const ByteOffsetSet& disabled_ranges, absl::string_view base_text) {
+    std::vector<PreFormatToken>* ftokens, const ByteOffsetSet& disabled_ranges,
+    absl::string_view base_text) {
   VLOG(2) << __FUNCTION__;
   // saved_iter: shrink bounds of binary search with every iteration,
   // due to monotonic, non-overlapping intervals.
   auto saved_iter = ftokens->begin();
-  for (const auto& range : disabled_ranges) {
-    // 'range' is in byte offsets.
+  for (const auto& byte_range : disabled_ranges) {
     // [begin_disable, end_disable) mark the range of format tokens to be
     // marked as preserving original spacing (i.e. not formatted).
-    VLOG(2) << "disabling: [" << range.first << ',' << range.second << ')';
+    VLOG(2) << "disabling bytes: " << verible::AsInterval(byte_range);
     const auto disable_range = FindFormatTokensInByteOffsetRange(
-        saved_iter, ftokens->end(), range, base_text);
+        saved_iter, ftokens->end(), byte_range, base_text);
     const auto begin_disable = disable_range.begin();
     const auto end_disable = disable_range.end();
-    VLOG(2) << "tokens: [" << std::distance(ftokens->begin(), begin_disable)
-            << ',' << std::distance(ftokens->begin(), end_disable) << ')';
+    const verible::Interval<int> disabled_token_indices(
+        std::distance(ftokens->begin(), begin_disable),
+        std::distance(ftokens->begin(), end_disable));
+    VLOG(2) << "disabling tokens: " << disabled_token_indices;
 
     // Mark tokens in the disabled range as preserving original spaces.
     for (auto& ft : disable_range) {
@@ -527,8 +555,8 @@ Status Formatter::Format(const ExecutionControl& control) {
   }
 
   // Produce sequence of independently operable UnwrappedLines.
-  const auto unwrapped_lines =
-      MakeUnwrappedLinesWorklist(*format_tokens_partitions, style_);
+  const auto unwrapped_lines = MakeUnwrappedLinesWorklist(
+      *format_tokens_partitions, full_text, disabled_ranges_, style_);
 
   // For each UnwrappedLine: minimize total penalty of wrap/break decisions.
   // TODO(fangism): This could be parallelized if results are written

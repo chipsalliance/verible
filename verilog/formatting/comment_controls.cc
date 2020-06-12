@@ -21,6 +21,7 @@
 #include "absl/strings/str_split.h"
 #include "absl/strings/strip.h"
 #include "common/strings/comment_utils.h"
+#include "common/strings/display_utils.h"
 #include "common/strings/line_column_map.h"
 #include "common/util/logging.h"
 #include "common/util/range.h"
@@ -33,6 +34,7 @@ namespace verilog {
 namespace formatter {
 
 using verible::ByteOffsetSet;
+using verible::VisualizeWhitespace;
 
 ByteOffsetSet DisableFormattingRanges(absl::string_view text,
                                       const verible::TokenSequence& tokens) {
@@ -111,11 +113,15 @@ static size_t NewlineCount(absl::string_view s) {
 void FormatWhitespaceWithDisabledByteRanges(
     absl::string_view text_base, absl::string_view space_text,
     const ByteOffsetSet& disabled_ranges, std::ostream& stream) {
+  VLOG(3) << __FUNCTION__;
   CHECK(verible::IsSubRange(space_text, text_base));
   const int start = std::distance(text_base.begin(), space_text.begin());
   const int end = start + space_text.length();
   ByteOffsetSet enabled_ranges{{start, end}};  // initial interval set mask
   enabled_ranges.Difference(disabled_ranges);
+  VLOG(3) << "space range: [" << start << ", " << end << ')';
+  VLOG(3) << "disabled ranges: " << disabled_ranges;
+  VLOG(3) << "enabled ranges: " << enabled_ranges;
 
   // Special case if space_text is empty.
   if (space_text.empty() && start != 0) {
@@ -133,6 +139,7 @@ void FormatWhitespaceWithDisabledByteRanges(
     {  // for disabled intervals, print the original spacing
       const absl::string_view disabled(
           text_base.substr(next_start, range.first - next_start));
+      VLOG(3) << "preserved: \"" << VisualizeWhitespace{disabled} << '"';
       stream << disabled;
       total_enabled_newlines += NewlineCount(disabled);
     }
@@ -140,6 +147,7 @@ void FormatWhitespaceWithDisabledByteRanges(
       const absl::string_view enabled(
           text_base.substr(range.first, range.second - range.first));
       const size_t newline_count = NewlineCount(enabled);
+      VLOG(3) << "formatted: " << newline_count << "*\\n";
       stream << verible::Spacer(newline_count, '\n');
       partially_enabled = true;
       total_enabled_newlines += newline_count;

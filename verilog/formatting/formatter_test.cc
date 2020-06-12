@@ -5461,6 +5461,23 @@ TEST(FormatterEndToEndTest, SelectLines) {
        "  parameter    int foo_line3 =     0 ;\n"
        "// verilog_format: on\n"
        "parameter int foo_line5 = 0;\n"},
+      {"module m;\n"
+       "  if (foo) begin:l1\n"
+       "    if (foo) begin:l2\n"
+       "      always_comb\n"  // normally this line and next would fit together
+       "        d<=#1ps   x_lat\t;\n"  // only format this line, 5
+       "    end : l2\n"
+       "  end : l1\n"
+       "endmodule\n",
+       {{5, 6}},
+       "module m;\n"
+       "  if (foo) begin:l1\n"
+       "    if (foo) begin:l2\n"
+       "      always_comb\n"  // incremental mode prevents joining next line
+       "        d <= #1ps x_lat;\n"  // only this line changed
+       "    end : l2\n"
+       "  end : l1\n"
+       "endmodule\n"},
   };
   // Use a fixed style.
   FormatStyle style;
