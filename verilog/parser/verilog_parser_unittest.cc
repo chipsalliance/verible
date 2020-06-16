@@ -3583,6 +3583,15 @@ static const char* kPackageTests[] = {
     "package semicolons_galore;\n"
     ";;;;;\n"
     "endpackage",
+    // top-level parameters
+    "localparam real foo = 789.456;\n",
+    "localparam shortreal foo = 123.456;\n",
+    "localparam realtime foo = 123.456ns;\n",
+    "package foos;\n"
+    "  localparam real foo = 789.456;\n"
+    "  localparam shortreal foo = 123.456;\n"
+    "  localparam realtime foo = 123.456ns;\n"
+    "endpackage : foos\n",
     // `macro call
     "`include \"stuff.svh\"\n"
     "`expand_stuff()\n"

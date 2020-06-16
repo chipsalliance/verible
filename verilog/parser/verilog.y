@@ -3144,12 +3144,7 @@ random_qualifier
   | TK_randc
     { $$ = move($1); }
   ;
-real_or_realtime
-  : TK_real
-  { $$ = move($1); }
-  | TK_realtime
-  { $$ = move($1); }
-  ;
+
 signing
   : TK_signed
     { $$ = move($1); }
@@ -6060,7 +6055,7 @@ param_type
   : bit_logic_opt signed_unsigned_opt decl_dimensions_opt
     // includes implicit type
   | integer_atom_type
-  | real_or_realtime
+  | non_integer_type
   ;
 **/
 
@@ -6103,7 +6098,7 @@ param_type_followed_by_id_and_dimensions_opt
                                     MakePackedDimensionsNode($3),
                                     $4,
                                     MakeUnpackedDimensionsNode($5)); }
-  | real_or_realtime decl_dimensions_opt
+  | non_integer_type decl_dimensions_opt
     GenericIdentifier decl_dimensions_opt
     { $$ = MakeParamTypeDeclaration(MakeTypeInfoNode($1, nullptr, nullptr),
                                     MakePackedDimensionsNode($2),
