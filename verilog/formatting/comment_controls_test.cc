@@ -31,6 +31,7 @@ using ::testing::ElementsAre;
 using verible::ByteOffsetSet;
 using verible::ExpectedTokenInfo;
 using verible::LineColumnMap;
+using verible::LineNumberSet;
 using verible::TokenInfoTestData;
 
 TEST(DisableFormattingRangesTest, EmptyFile) {

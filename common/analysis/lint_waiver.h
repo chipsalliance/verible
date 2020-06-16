@@ -22,6 +22,7 @@
 #include <vector>
 
 #include "absl/strings/string_view.h"
+#include "common/strings/position.h"
 #include "common/text/text_structure.h"
 #include "common/text/token_stream_view.h"
 #include "common/util/container_util.h"
@@ -32,9 +33,6 @@ namespace verible {
 // LintWaiver maintains a set of line ranges per lint rule that should be
 // exempt from each rule.
 class LintWaiver {
-  // Compact set of line numbers.
-  // TODO(b/156991337): combine with other definition of LineNumberSet
-  using LineSet = IntervalSet<size_t>;
   using RegexVector = std::vector<const std::regex*>;
 
  public:
@@ -73,12 +71,13 @@ class LintWaiver {
 
   // TODO(hzeller): The following methods break abstraction and are only
   // for performance. Reconsider if this is worth it.
-  const LineSet* LookupLineSet(absl::string_view rule_name) const {
+  const LineNumberSet* LookupLineNumberSet(absl::string_view rule_name) const {
     return verible::container::FindOrNull(waiver_map_, rule_name);
   }
 
   // Test if a particular line is included in the set.
-  static bool LineSetContains(const LineSet& line_set, size_t line) {
+  static bool LineNumberSetContains(const LineNumberSet& line_set,
+                                    size_t line) {
     return line_set.Contains(line);
   }
 
@@ -87,7 +86,7 @@ class LintWaiver {
   // string_view because the static strings for each lint rule class exist,
   // and will outlive all LintWaiver objects. This applies to both waiver_map_
   // and waiver_re_map_.
-  std::map<absl::string_view, LineSet> waiver_map_;
+  std::map<absl::string_view, LineNumberSet> waiver_map_;
   std::map<absl::string_view, RegexVector> waiver_re_map_;
 
   std::map<std::string, std::regex> regex_cache_;

@@ -88,7 +88,7 @@ ByteOffsetSet DisableFormattingRanges(absl::string_view text,
 }
 
 ByteOffsetSet EnabledLinesToDisabledByteRanges(
-    const LineNumberSet& line_numbers,
+    const verible::LineNumberSet& line_numbers,
     const verible::LineColumnMap& line_column_map) {
   // Interpret empty line numbers as enabling all lines for formatting.
   if (line_numbers.empty()) return ByteOffsetSet();

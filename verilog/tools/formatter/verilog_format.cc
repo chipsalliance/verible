@@ -36,6 +36,7 @@
 #include "absl/strings/str_join.h"
 #include "absl/strings/str_split.h"
 #include "absl/strings/string_view.h"
+#include "common/strings/position.h"
 #include "common/util/file_util.h"
 #include "common/util/init_command_line.h"
 #include "common/util/interval_set.h"
@@ -44,6 +45,7 @@
 #include "verilog/formatting/formatter.h"
 
 using absl::StatusCode;
+using verible::LineNumberSet;
 using verilog::formatter::ExecutionControl;
 using verilog::formatter::FormatStyle;
 using verilog::formatter::FormatVerilog;
@@ -130,7 +132,7 @@ std::ostream& FileMsg(absl::string_view filename) {
 }
 
 bool formatOneFile(absl::string_view filename,
-                   const verilog::formatter::LineNumberSet& lines_to_format) {
+                   const LineNumberSet& lines_to_format) {
   const bool inplace = absl::GetFlag(FLAGS_inplace);
   const bool is_stdin = filename == "-";
   const auto& stdin_name = absl::GetFlag(FLAGS_stdin_name);
@@ -245,7 +247,7 @@ int main(int argc, char** argv) {
   }
 
   // Parse LineRanges into a line set, to validate the --lines flag(s)
-  verilog::formatter::LineNumberSet lines_to_format;
+  LineNumberSet lines_to_format;
   if (!verible::ParseInclusiveRanges(
           &lines_to_format, LineRanges::values.begin(),
           LineRanges::values.end(), &std::cerr, '-')) {

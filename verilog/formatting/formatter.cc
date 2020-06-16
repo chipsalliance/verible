@@ -56,6 +56,7 @@ using absl::StatusCode;
 
 using verible::ByteOffsetSet;
 using verible::ExpandableTreeView;
+using verible::LineNumberSet;
 using verible::MutableFormatTokenRange;
 using verible::PartitionPolicyEnum;
 using verible::PreFormatToken;

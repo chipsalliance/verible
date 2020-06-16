@@ -15,6 +15,8 @@
 #ifndef VERIBLE_COMMON_STRINGS_POSITION_H_
 #define VERIBLE_COMMON_STRINGS_POSITION_H_
 
+#include <initializer_list>
+
 #include "absl/strings/string_view.h"
 #include "common/util/interval_set.h"
 
@@ -42,6 +44,24 @@ class ByteOffsetSet : public verible::IntervalSet<int> {
   // This constructor can initialize from a sequence of pairs, e.g.
   //   ByteOffsetSet s{{0,1}, {4,7}, {8,10}};
   ByteOffsetSet(std::initializer_list<verible::Interval<int>> ranges)
+      : impl_type(ranges) {}
+};
+
+// Collection of ranges of line numbers.
+// Intentionally defining this as its own class instead of a typedef to
+// avoid potential confusion with other IntervalSet<int>.
+// Mismatches will be caught as type errors.
+class LineNumberSet : public verible::IntervalSet<int> {
+  typedef verible::IntervalSet<int> impl_type;
+
+ public:
+  LineNumberSet() = default;
+
+  explicit LineNumberSet(const impl_type& iset) : impl_type(iset) {}
+
+  // This constructor can initialize from a sequence of pairs, e.g.
+  //   LineNumberSet s{{0,1}, {4,7}, {8,10}};
+  LineNumberSet(std::initializer_list<verible::Interval<int>> ranges)
       : impl_type(ranges) {}
 };
 

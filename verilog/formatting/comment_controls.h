@@ -17,16 +17,12 @@
 
 #include "absl/strings/string_view.h"
 #include "common/strings/line_column_map.h"
-#include "common/strings/position.h"  // for ByteOffsetSet
+#include "common/strings/position.h"  // for ByteOffsetSet, LineNumberSet
 #include "common/text/token_stream_view.h"
 #include "common/util/interval_set.h"
 
 namespace verilog {
 namespace formatter {
-
-// Collection of line numbers, 1-based.
-// TODO(b/156991337): combine with other definition for LineSet
-using LineNumberSet = verible::IntervalSet<int>;
 
 // Returns a representation of byte offsets where true (membership) means
 // formatting is disabled.
@@ -38,7 +34,7 @@ verible::ByteOffsetSet DisableFormattingRanges(
 
 // Translates line numbers into a set of byte ranges to disable formatting.
 verible::ByteOffsetSet EnabledLinesToDisabledByteRanges(
-    const LineNumberSet& line_numbers,
+    const verible::LineNumberSet& line_numbers,
     const verible::LineColumnMap& line_column_map);
 
 // Formats space between tokens while honoring formatting-disabled ranges.

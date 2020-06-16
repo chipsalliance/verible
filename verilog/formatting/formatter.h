@@ -19,7 +19,7 @@
 #include <vector>
 
 #include "absl/status/status.h"
-#include "verilog/formatting/comment_controls.h"
+#include "common/strings/position.h"
 #include "verilog/formatting/format_style.h"
 
 namespace verilog {
@@ -71,7 +71,7 @@ struct ExecutionControl {
 absl::Status FormatVerilog(absl::string_view text, absl::string_view filename,
                            const FormatStyle& style,
                            std::ostream& formatted_stream,
-                           const LineNumberSet& lines = {},
+                           const verible::LineNumberSet& lines = {},
                            const ExecutionControl& control = {});
 
 }  // namespace formatter

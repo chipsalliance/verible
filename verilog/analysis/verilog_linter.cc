@@ -199,7 +199,8 @@ static void AppendLintRuleStatuses(
     std::vector<LintRuleStatus>* cumulative_statuses) {
   for (const auto& status : new_statuses) {
     cumulative_statuses->push_back(status);
-    const auto* waived_lines = waivers.LookupLineSet(status.lint_rule_name);
+    const auto* waived_lines =
+        waivers.LookupLineNumberSet(status.lint_rule_name);
     if (waived_lines) {
       cumulative_statuses->back().WaiveViolations(
           [&](const verible::LintViolation& violation) {
@@ -208,7 +209,7 @@ static void AppendLintRuleStatuses(
             const size_t line = line_map(offset).line;
             // Check that line number against the set of waived lines.
             const bool waived =
-                LintWaiver::LineSetContains(*waived_lines, line);
+                LintWaiver::LineNumberSetContains(*waived_lines, line);
             VLOG(2) << "Violation of " << status.lint_rule_name
                     << " rule on line " << line + 1
                     << (waived ? " is waived." : " is not waived.");

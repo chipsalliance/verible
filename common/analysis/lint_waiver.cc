@@ -46,7 +46,7 @@ void LintWaiver::WaiveOneLine(absl::string_view rule_name, size_t line_number) {
 
 void LintWaiver::WaiveLineRange(absl::string_view rule_name, size_t line_begin,
                                 size_t line_end) {
-  LineSet& line_set = waiver_map_[rule_name];
+  LineNumberSet& line_set = waiver_map_[rule_name];
   line_set.Add({line_begin, line_end});
 }
 
@@ -78,7 +78,7 @@ void LintWaiver::RegexToLines(absl::string_view contents,
 bool LintWaiver::RuleIsWaivedOnLine(absl::string_view rule_name,
                                     size_t line_number) const {
   const auto* line_set = verible::container::FindOrNull(waiver_map_, rule_name);
-  return line_set != nullptr && LineSetContains(*line_set, line_number);
+  return line_set != nullptr && LineNumberSetContains(*line_set, line_number);
 }
 
 bool LintWaiver::Empty() const {

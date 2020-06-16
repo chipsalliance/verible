@@ -31,6 +31,7 @@
 #include "absl/status/status.h"
 #include "absl/strings/match.h"
 #include "absl/strings/string_view.h"
+#include "common/strings/position.h"
 #include "common/text/text_structure.h"
 #include "common/util/logging.h"
 #include "verilog/analysis/verilog_analyzer.h"
@@ -53,6 +54,7 @@ absl::Status VerifyFormatting(const verible::TextStructureView& text_structure,
 namespace {
 
 using absl::StatusCode;
+using verible::LineNumberSet;
 
 // Tests that clean output passes.
 TEST(VerifyFormattingTest, NoError) {

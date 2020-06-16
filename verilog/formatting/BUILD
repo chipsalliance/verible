@@ -160,6 +160,7 @@ cc_test(
     deps = [
         ":format_style",
         ":formatter",
+        "//common/strings:position",
         "//common/text:text_structure",
         "//common/util:logging",
         "//verilog/analysis:verilog_analyzer",
@@ -175,6 +176,7 @@ cc_test(
     deps = [
         ":format_style",
         ":formatter",
+        "//common/strings:position",
         "//common/util:logging",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/strings",

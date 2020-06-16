@@ -23,6 +23,7 @@
 #include "gtest/gtest.h"
 #include "absl/status/status.h"
 #include "absl/strings/string_view.h"
+#include "common/strings/position.h"
 #include "common/util/logging.h"
 #include "verilog/formatting/format_style.h"
 
@@ -41,7 +42,7 @@ struct FormatterTestCase {
   absl::string_view expected;
 };
 
-static const LineNumberSet kEnableAllLines;
+static const verible::LineNumberSet kEnableAllLines;
 
 // Tests in this file are intended to be sensitive to wrapping penalty tuning.
 // These test cases should be kept short, small enough to be directed
