@@ -40,12 +40,23 @@ std::ostream& operator<<(std::ostream&, const AutoTruncate& trunc);
 // To help visualize strings that consist of whitespace, this stream adapter
 // prints spaces, tabs, and newlines with alternate text, without modifying or
 // copying the original string.
+//
+// usage: stream << VisualizeWhitespace(text_with_lots_of_spaces);
 struct VisualizeWhitespace {
   const absl::string_view text;  // original text to be printed
 
-  const char space_alt = '.';                    // spaces replacement
-  const absl::string_view newline_alt = "\\\n";  // newline replacement
-  const absl::string_view tab_alt = "#";         // tab replacement
+  const char space_alt;                 // spaces replacement
+  const absl::string_view newline_alt;  // newline replacement
+  const absl::string_view tab_alt;      // tab replacement
+
+  // constructor needed for C++11
+  explicit VisualizeWhitespace(absl::string_view text, char space_alt = '.',
+                               absl::string_view newline_alt = "\\\n",
+                               absl::string_view tab_alt = "#")
+      : text(text),
+        space_alt(space_alt),
+        newline_alt(newline_alt),
+        tab_alt(tab_alt) {}
 };
 
 std::ostream& operator<<(std::ostream&, const VisualizeWhitespace& vis);
