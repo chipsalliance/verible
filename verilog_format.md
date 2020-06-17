@@ -79,4 +79,4 @@ To pipe from stdin, use '-' as <file>.
 
 ## Version
 
-Generated on 2020-06-17 11:01:05 -0700 from [v0.0-445-ge1b660b](https://github.com/google/verible/commit/e1b660bb70c9051c11097e8a917d65eb775b821b)
+Generated on 2020-06-17 11:01:41 -0700 from [v0.0-447-gb8504ca](https://github.com/google/verible/commit/b8504ca0596871b6791db5695dd93b39fa44c6aa)
