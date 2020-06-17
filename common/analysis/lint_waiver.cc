@@ -40,12 +40,12 @@
 
 namespace verible {
 
-void LintWaiver::WaiveOneLine(absl::string_view rule_name, size_t line_number) {
+void LintWaiver::WaiveOneLine(absl::string_view rule_name, int line_number) {
   WaiveLineRange(rule_name, line_number, line_number + 1);
 }
 
-void LintWaiver::WaiveLineRange(absl::string_view rule_name, size_t line_begin,
-                                size_t line_end) {
+void LintWaiver::WaiveLineRange(absl::string_view rule_name, int line_begin,
+                                int line_end) {
   LineNumberSet& line_set = waiver_map_[rule_name];
   line_set.Add({line_begin, line_end});
 }
@@ -76,7 +76,7 @@ void LintWaiver::RegexToLines(absl::string_view contents,
 }
 
 bool LintWaiver::RuleIsWaivedOnLine(absl::string_view rule_name,
-                                    size_t line_number) const {
+                                    int line_number) const {
   const auto* line_set = verible::container::FindOrNull(waiver_map_, rule_name);
   return line_set != nullptr && LineNumberSetContains(*line_set, line_number);
 }
@@ -113,8 +113,7 @@ absl::string_view LintWaiverBuilder::ExtractWaivedRuleFromComment(
   return "";
 }
 
-void LintWaiverBuilder::ProcessLine(const TokenRange& tokens,
-                                    size_t line_number) {
+void LintWaiverBuilder::ProcessLine(const TokenRange& tokens, int line_number) {
   // TODO(fangism): [optimization] Use a SmallVector, or function-local
   // static to avoid re-allocation in every call.  This method does not
   // need to be re-entrant.
@@ -188,9 +187,9 @@ void LintWaiverBuilder::ProcessLine(const TokenRange& tokens,
 
 void LintWaiverBuilder::ProcessTokenRangesByLine(
     const TextStructureView& text_structure) {
-  const size_t total_lines = text_structure.Lines().size();
+  const int total_lines = text_structure.Lines().size();
   const auto& tokens = text_structure.TokenStream();
-  for (size_t i = 0; i < total_lines; ++i) {
+  for (int i = 0; i < total_lines; ++i) {
     const auto token_range = text_structure.TokenRangeOnLine(i);
     const int begin_dist = std::distance(tokens.begin(), token_range.begin());
     const int end_dist = std::distance(tokens.begin(), token_range.end());

@@ -49,11 +49,11 @@ class LintWaiver {
   // Waiver comments on lines with other tokens will only waive that line.
 
   // Adds a single line to the set of waived lines for a single rule.
-  void WaiveOneLine(absl::string_view rule_name, size_t line_number);
+  void WaiveOneLine(absl::string_view rule_name, int line_number);
 
   // Adds a range [line_begin, line_end) over which a waiver applies.
-  void WaiveLineRange(absl::string_view rule_name, size_t line_begin,
-                      size_t line_end);
+  void WaiveLineRange(absl::string_view rule_name, int line_begin,
+                      int line_end);
 
   // Adds a regular expression which will be used to apply a waiver.
   void WaiveWithRegex(absl::string_view rule_name, const std::string& regex);
@@ -63,8 +63,7 @@ class LintWaiver {
   void RegexToLines(absl::string_view content, const LineColumnMap& line_map);
 
   // Returns true if `line_number` should be waived for a particular rule.
-  bool RuleIsWaivedOnLine(absl::string_view rule_name,
-                          size_t line_number) const;
+  bool RuleIsWaivedOnLine(absl::string_view rule_name, int line_number) const;
 
   // Returns true if there are no lines waived for any rules.
   bool Empty() const;
@@ -76,8 +75,7 @@ class LintWaiver {
   }
 
   // Test if a particular line is included in the set.
-  static bool LineNumberSetContains(const LineNumberSet& line_set,
-                                    size_t line) {
+  static bool LineNumberSetContains(const LineNumberSet& line_set, int line) {
     return line_set.Contains(line);
   }
 
@@ -131,7 +129,7 @@ class LintWaiverBuilder {
 
   // Takes a single line's worth of tokens and determines updates to the set of
   // waived lines.  Pass a slice of tokens using make_range.
-  void ProcessLine(const TokenRange& tokens, size_t line_number);
+  void ProcessLine(const TokenRange& tokens, int line_number);
 
   // Takes a lexically analyzed text structure and determines the entire set of
   // waived lines.  This can be more easily unit-tested using
@@ -181,7 +179,7 @@ class LintWaiverBuilder {
   // This holds the set of open ranges of lines, keyed by rule name.
   // Value is the lower-bound of each encountered waiver range.
   // string_view keys point to string memory that outlives this builder.
-  std::map<absl::string_view, size_t> waiver_open_ranges_;
+  std::map<absl::string_view, int> waiver_open_ranges_;
 
   // Set of waived lines per rule.
   LintWaiver lint_waiver_;
