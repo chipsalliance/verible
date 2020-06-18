@@ -3480,6 +3480,42 @@ TEST(TokenAnnotatorTest, AnnotateFormattingWithContextTest) {
           DefaultStyle,
           {verilog_tokentype::TK_DecNumber, "1"},
           {':', ":"},
+          {NodeEnum::kCycleDelayRange},
+          // no spaces preceding ':' in unit test context
+          {0, SpacingOptions::Undecided},
+      },
+      {
+          // [1:0]
+          DefaultStyle,
+          {':', ":"},
+          {verilog_tokentype::TK_DecNumber, "0"},
+          {NodeEnum::kCycleDelayRange},
+          // no spaces preceding ':' in unit test context
+          {0, SpacingOptions::Undecided},
+      },
+      {
+          // [a:b]
+          DefaultStyle,
+          {SymbolIdentifier, "a"},
+          {':', ":"},
+          {NodeEnum::kCycleDelayRange},
+          // no spaces preceding ':' in unit test context
+          {0, SpacingOptions::Undecided},
+      },
+      {
+          // [a:b]
+          DefaultStyle,
+          {':', ":"},
+          {SymbolIdentifier, "b"},
+          {NodeEnum::kCycleDelayRange},
+          // no spaces preceding ':' in unit test context
+          {0, SpacingOptions::Undecided},
+      },
+      {
+          // [1:0]
+          DefaultStyle,
+          {verilog_tokentype::TK_DecNumber, "1"},
+          {':', ":"},
           {NodeEnum::kValueRange},
           // no spaces preceding ':' in unit test context
           {1, SpacingOptions::Undecided},

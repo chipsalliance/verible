@@ -4861,12 +4861,16 @@ static const std::initializer_list<FormatterTestCase> kFormatterTestCases = {
      "    a |-> ##1 b;\n"  // with delay
      "  endproperty\n"
      "endmodule\n"},
-    {"module mp ;property p1 ; a|->## [0:1]  b;endproperty endmodule",
+    {"module mp ;property p1 ; a|->## [0: 1]  b;endproperty endmodule",
      "module mp;\n"
      "  property p1;\n"
-     "    a |-> ##[0: 1] b;\n"  // with delay range
-                                // TODO(b/152411381): fix spacing between "0:"
-                                // (context-sensitive)
+     "    a |-> ##[0:1] b;\n"  // prefer no spaces with delay range
+     "  endproperty\n"
+     "endmodule\n"},
+    {"module mp ;property p1 ; a|->## [0  : 1]  b;endproperty endmodule",
+     "module mp;\n"
+     "  property p1;\n"
+     "    a |-> ##[0 : 1] b;\n"  // limit to one space, symmetrize
      "  endproperty\n"
      "endmodule\n"},
     {"module mp ;property p1 ; a## 1  b;endproperty endmodule",
