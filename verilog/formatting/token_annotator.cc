@@ -289,6 +289,17 @@ static WithReason<int> SpacesRequiredBetween(
     }
   }
 
+  if (left.TokenEnum() == ':') {
+    // Spacing in ranges
+    if (InRangeLikeContext(right_context)) {
+      // Take advantage here that the left token was already annotated (above)
+      return {left.before.spaces_required,
+              "Symmetrize spaces before and after ':' in bit slice"};
+    }
+    // Most contexts want a space after ':'.
+    return {1, "Default to 1 space after ':'"};
+  }
+
   if (left.TokenEnum() == '}') {
     // e.g. typedef struct { ... } foo_t;
     return {1, "Space after '}' in most other cases."};
@@ -402,16 +413,6 @@ static WithReason<int> SpacesRequiredBetween(
     //   kProduction? (randsequence)
 
     // For now, if case is not explicitly handled, preserve existing space.
-  }
-  if (left.TokenEnum() == ':') {
-    // Spacing in ranges
-    if (InRangeLikeContext(right_context)) {
-      // Take advantage here that the left token was already annotated (above)
-      return {left.before.spaces_required,
-              "Symmetrize spaces before and after ':' in bit slice"};
-    }
-    // Most contexts want a space after ':'.
-    return {1, "Default to 1 space after ':'"};
   }
 
   // "if (...)", "for (...) instead of "if(...)", "for(...)",
