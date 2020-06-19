@@ -34,12 +34,12 @@ filegroup(
     visibility = ["//visibility:public"],
 )
 
+# This script is intended to run post-install and expect to be co-located with:
+#   //verilog/tools/formatter:verible-verilog-format
+#   //common/tools:verible-patch-tool
 filegroup(
     name = "git-verilog-format",
-    srcs = [
-        "diff-to-changed-lines.awk",
-        "git-verible-verilog-format.sh",
-    ],
+    srcs = ["git-verible-verilog-format.sh"],
     visibility = ["//:__pkg__"],  # for release
 )
 

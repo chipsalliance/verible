@@ -126,13 +126,13 @@ ABSL_FLAG(bool, format_module_instantiations, false,
           "If true, format module instantiations (data declarations), "
           "else leave them unformatted.  This is a short-term workaround.");
 
-std::ostream& FileMsg(absl::string_view filename) {
+static std::ostream& FileMsg(absl::string_view filename) {
   std::cerr << filename << ": ";
   return std::cerr;
 }
 
-bool formatOneFile(absl::string_view filename,
-                   const LineNumberSet& lines_to_format) {
+static bool formatOneFile(absl::string_view filename,
+                          const LineNumberSet& lines_to_format) {
   const bool inplace = absl::GetFlag(FLAGS_inplace);
   const bool is_stdin = filename == "-";
   const auto& stdin_name = absl::GetFlag(FLAGS_stdin_name);

@@ -21,8 +21,8 @@ script_dir="$(realpath $(dirname $0))"
 formatter="$(which verible-verilog-format)" || \
   formatter="$script_dir"/verible-verilog-format
 
-# Required support script.
-diff_parser="$script_dir"/diff-to-changed-lines.awk
+patch_tool="$(which verible-patch-tool)" || \
+  patch_tool="$script_dir"/verible-patch-tool
 
 function usage() {
   cat <<EOF
@@ -99,8 +99,8 @@ done
   msg "  Please specify formatter with: --formatter TOOL."
   exit 1
 }
-[[ -r "$diff_parser" ]] || {
-  msg "*** Required helper script '$diff_parser' is missing."
+[[ -x "$patch_tool" ]] || {
+  msg "*** Required executable '$patch_tool' is missing."
   exit 1
 }
 
@@ -131,7 +131,7 @@ git add -u
 # Format only changed lines for each file, one file at a time.
 git diff -u --cached | \
   tee "$tempdir"/git-cached.diff | \
-  awk -f "$diff_parser" | \
+  "$patch_tool" changed-lines - | \
   sed -e 's|^b/||' | \
   tee "$tempdir"/file-lines.txt | \
   while read filename lines

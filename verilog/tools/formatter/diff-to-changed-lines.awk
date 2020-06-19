@@ -13,6 +13,26 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+
+############################
+######## DEPRECATED ########
+############################
+#
+# This script has been replaced with the executable target:
+#   .../common/tools:verible-patch-tool
+# and will no longer be installed.
+#
+# usage:
+#   verible-patch-tool changed-lines patchfile
+#
+#   or pipe through:
+#
+#   verible-patch-tool changed-lines -
+#
+############################
+############################
+
+
 # Converts a unified-diff into file names and their modified line ranges.
 # This supports reading the output of 'git diff', but should handle most
 # variants of diffs.
@@ -29,8 +49,6 @@
 #   xyz.sv 232-245
 # New files (diffed vs. /dev/null) will appear without line ranges:
 #   new_file.sv
-#
-# TODO(b/158630746): use or write a proper diff/patch-reader library (C++)
 
 BEGIN {
   expect_filename = 0;

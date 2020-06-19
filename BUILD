@@ -15,6 +15,7 @@ exports_files([
 installer(
     name = "install",
     data = [
+        "//common/tools:verible-patch-tool",
         "//verilog/tools/diff:verible-verilog-diff",
         "//verilog/tools/formatter:git-verilog-format",
         "//verilog/tools/formatter:verible-verilog-format",
