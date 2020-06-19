@@ -105,6 +105,30 @@ cc_test(
 )
 
 cc_library(
+    name = "patch",
+    srcs = ["patch.cc"],
+    hdrs = ["patch.h"],
+    deps = [
+        ":split",
+        "//common/util:algorithm",
+        "//common/util:container_iterator_range",
+        "//common/util:iterator_range",
+        "@com_google_absl//absl/status",
+        "@com_google_absl//absl/strings",
+    ],
+)
+
+cc_test(
+    name = "patch_test",
+    srcs = ["patch_test.cc"],
+    deps = [
+        ":patch",
+        "@com_google_absl//absl/strings",
+        "@com_google_googletest//:gtest_main",
+    ],
+)
+
+cc_library(
     name = "position",
     srcs = ["position.cc"],
     hdrs = ["position.h"],

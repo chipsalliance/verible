@@ -30,7 +30,7 @@
 # New files (diffed vs. /dev/null) will appear without line ranges:
 #   new_file.sv
 #
-# TODO(fangism): use or write a proper diff/patch-reader library (C++)
+# TODO(b/158630746): use or write a proper diff/patch-reader library (C++)
 
 BEGIN {
   expect_filename = 0;
