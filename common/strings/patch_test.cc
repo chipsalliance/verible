@@ -25,6 +25,9 @@
 #include "absl/strings/string_view.h"
 
 namespace verible {
+
+using ::testing::ElementsAre;
+
 namespace internal {
 namespace {
 
@@ -561,6 +564,70 @@ TEST(FilePatchParseAndPrintTest, ValidInputs) {
   }
 }
 
+TEST(FilePatchIsNewFileTest, NewFile) {
+  const std::vector<absl::string_view> kInput = {
+      "--- /dev/null\t2020-03-30",
+      "+++ /path/to/file.txt\t2020-03-30",
+      "@@ -0,0 +1,2 @@",
+      "+new content 1",
+      "+new content 2",
+  };
+
+  const LineRange range(kInput.begin(), kInput.end());
+  FilePatch file_patch;
+  const auto status = file_patch.Parse(range);
+  EXPECT_TRUE(status.ok()) << status.message();
+  EXPECT_TRUE(file_patch.IsNewFile());
+}
+
+TEST(FilePatchIsNewFileTest, ExistingFile) {
+  const std::vector<absl::string_view> kInput = {
+      "--- /path/to/file.txt\t2020-03-30",
+      "+++ /path/to/file.txt\t2020-03-30",
+      "@@ -12,1 +13,1 @@",
+      " no change here",
+  };
+
+  const LineRange range(kInput.begin(), kInput.end());
+  FilePatch file_patch;
+  const auto status = file_patch.Parse(range);
+  EXPECT_TRUE(status.ok()) << status.message();
+  EXPECT_FALSE(file_patch.IsNewFile());
+}
+
+TEST(FilePatchIsDeletedFileTest, DeletedFile) {
+  const std::vector<absl::string_view> kInput = {
+      "--- /path/to/file.txt\t2020-03-30",
+      "+++ /dev/null\t2020-03-30",
+      "@@ -1,2 +0,0 @@",
+      "-deleted content 1",
+      "-deleted content 2",
+  };
+
+  const LineRange range(kInput.begin(), kInput.end());
+  FilePatch file_patch;
+  const auto status = file_patch.Parse(range);
+  EXPECT_TRUE(status.ok()) << status.message();
+  EXPECT_TRUE(file_patch.IsDeletedFile());
+}
+
+TEST(FilePatchIsDeletedFileTest, ExistingFile) {
+  const std::vector<absl::string_view> kInput = {
+      "--- /path/to/file.txt\t2020-03-30",
+      "+++ /path/to/file.txt\t2020-03-30",
+      "@@ -12,2 +13,2 @@",
+      " no change here",
+      "+you win some",
+      "-you lose some",
+  };
+
+  const LineRange range(kInput.begin(), kInput.end());
+  FilePatch file_patch;
+  const auto status = file_patch.Parse(range);
+  EXPECT_TRUE(status.ok()) << status.message();
+  EXPECT_FALSE(file_patch.IsDeletedFile());
+}
+
 TEST(FilePatchAddedLinesTest, Various) {
   const AddedLinesTestCase kTestCases[] = {
       {
@@ -683,7 +750,7 @@ TEST(PatchSetParseAndPrintTest, ValidInputs) {
       " no change here\n"
       "+add me\n"
       " no change here\n",
-      // with patchset metadat and file metadata in two files
+      // with patchset metadata and file metadata in two files
       "From: author@fryingpan.org\n"
       "To: reviewer@fire.org\n"
       "\n"
@@ -713,6 +780,41 @@ TEST(PatchSetParseAndPrintTest, ValidInputs) {
     stream << patch_set;
     EXPECT_EQ(stream.str(), patch_contents);
   }
+}
+
+TEST(PatchSetAddedLinesMapTest, NewAndExistingFile) {
+  constexpr absl::string_view patch_contents =  //
+      "diff -u /dev/null local/path/to/file1.txt\n"
+      "--- /dev/null\t2020-03-30\n"
+      "+++ /path/to/file1.txt\t2020-03-30\n"  // new file
+      "@@ -0,0 +1,2 @@\n"
+      "+add me\n"
+      "+add me too\n"
+      "--- /path/to/file2.txt\t2020-03-30\n"
+      "+++ /path/to/file2.txt\t2020-03-30\n"  // existing file
+      "@@ -52,2 +53,4 @@\n"
+      " no change here\n"
+      "+add me\n"
+      "+add me too\n"
+      " no change here\n"
+      "diff -u local/path/to/file3.txt /dev/null\n"
+      "--- /path/to/file3.txt\t2020-03-30\n"  // deleted file
+      "+++ /dev/null\t2020-03-30\n"
+      "@@ -1,2 +0,0 @@\n"
+      "-bye\n"
+      "-bye\n";
+  PatchSet patch_set;
+  const auto status = patch_set.Parse(patch_contents);
+  EXPECT_TRUE(status.ok()) << status.message();
+
+  typedef FileLineNumbersMap::value_type P;
+  EXPECT_THAT(patch_set.AddedLinesMap(false),
+              ElementsAre(P{"/path/to/file1.txt", {}},
+                          P{"/path/to/file2.txt", {{54, 56}}}));
+  EXPECT_THAT(patch_set.AddedLinesMap(true),
+              ElementsAre(P{"/path/to/file1.txt", {{1, 3}}},
+                          P{"/path/to/file2.txt", {{54, 56}}}));
+  // Neither case should include deleted files like file3.txt
 }
 
 }  // namespace

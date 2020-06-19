@@ -16,11 +16,13 @@
 #define VERIBLE_COMMON_STRINGS_PATCH_H_
 
 #include <iosfwd>
+#include <map>
 #include <string>
 #include <vector>
 
 #include "absl/status/status.h"
 #include "absl/strings/string_view.h"
+#include "common/strings/compare.h"
 #include "common/strings/position.h"
 #include "common/util/container_iterator_range.h"
 
@@ -29,6 +31,9 @@ namespace internal {
 // Forward declarations
 struct FilePatch;
 }  // namespace internal
+
+using FileLineNumbersMap =
+    std::map<std::string, LineNumberSet, StringViewCompare>;
 
 // Collection of file changes.
 // Recursively inside these structs, we chose to copy std::string (owned memory)
@@ -43,6 +48,14 @@ class PatchSet {
 
   // Prints a unified-diff formatted output.
   std::ostream& Render(std::ostream& stream) const;
+
+  // Returns a map<filename, line_numbers> that indicates which lines in each
+  // file are new (in patch files, these are hunk lines starting with '+').
+  // New and existing files will always have entries in the returned map,
+  // while deleted files will not.
+  // If `new_file_ranges` is true, provide the full range of lines for new
+  // files, otherwise leave their corresponding LineNumberSets empty.
+  FileLineNumbersMap AddedLinesMap(bool new_file_ranges) const;
 
  private:
   // Non-patch plain text that could describe the origins of the diff/patch,
@@ -141,6 +154,12 @@ struct FilePatch {
   SourceInfo old_file;
   SourceInfo new_file;
   std::vector<Hunk> hunks;
+
+  // Returns true if this file is new.
+  bool IsNewFile() const;
+
+  // Returns true if this file is deleted.
+  bool IsDeletedFile() const;
 
   // Returns a set of line numbers for lines that are changed or new.
   LineNumberSet AddedLines() const;

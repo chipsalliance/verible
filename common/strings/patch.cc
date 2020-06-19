@@ -23,6 +23,7 @@
 #include "absl/strings/numbers.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/str_split.h"
+#include "common/strings/position.h"
 #include "common/strings/split.h"
 #include "common/util/algorithm.h"
 #include "common/util/container_iterator_range.h"
@@ -262,6 +263,10 @@ static absl::Status ParseSourceInfoWithMarker(
   return info->Parse(splitter.Remainder());
 }
 
+bool FilePatch::IsNewFile() const { return old_file.path == "/dev/null"; }
+
+bool FilePatch::IsDeletedFile() const { return new_file.path == "/dev/null"; }
+
 LineNumberSet FilePatch::AddedLines() const {
   LineNumberSet line_numbers;
   for (const auto& hunk : hunks) {
@@ -403,6 +408,20 @@ std::ostream& PatchSet::Render(std::ostream& stream) const {
     stream << file_patch;
   }
   return stream;
+}
+
+FileLineNumbersMap PatchSet::AddedLinesMap(bool new_file_ranges) const {
+  FileLineNumbersMap result;
+  for (const auto& file_patch : file_patches_) {
+    if (file_patch.IsDeletedFile()) continue;
+    LineNumberSet& entry = result[file_patch.new_file.path];
+    if (file_patch.IsNewFile() && !new_file_ranges) {
+      entry.clear();
+    } else {
+      entry = file_patch.AddedLines();
+    }
+  }
+  return result;
 }
 
 std::ostream& operator<<(std::ostream& stream, const PatchSet& patch) {
