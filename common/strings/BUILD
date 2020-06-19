@@ -109,6 +109,7 @@ cc_library(
     srcs = ["patch.cc"],
     hdrs = ["patch.h"],
     deps = [
+        ":position",
         ":split",
         "//common/util:algorithm",
         "//common/util:container_iterator_range",

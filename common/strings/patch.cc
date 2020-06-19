@@ -191,6 +191,16 @@ void Hunk::UpdateHeader() {
   CountMarkedLines(lines, &header.old_range.count, &header.new_range.count);
 }
 
+LineNumberSet Hunk::AddedLines() const {
+  LineNumberSet line_numbers;
+  int line_number = header.new_range.start;
+  for (const auto& line : lines) {
+    if (line.Marker() == '+') line_numbers.Add(line_number);
+    if (line.Marker() != '-') ++line_number;
+  }
+  return line_numbers;
+}
+
 absl::Status Hunk::Parse(const LineRange& hunk_lines) {
   {
     const auto status = header.Parse(hunk_lines.front());
@@ -250,6 +260,14 @@ static absl::Status ParseSourceInfoWithMarker(
                      "\", but got: \"", marker, "\""));
   }
   return info->Parse(splitter.Remainder());
+}
+
+LineNumberSet FilePatch::AddedLines() const {
+  LineNumberSet line_numbers;
+  for (const auto& hunk : hunks) {
+    line_numbers.Union(hunk.AddedLines());
+  }
+  return line_numbers;
 }
 
 absl::Status FilePatch::Parse(const LineRange& lines) {

@@ -298,6 +298,117 @@ TEST(HunkUpdateHeaderTest, Various) {
   }
 }
 
+struct AddedLinesTestCase {
+  std::vector<absl::string_view> hunk_text;
+  LineNumberSet expected_added_lines;
+};
+
+TEST(HunkAddedLinesTest, Various) {
+  const AddedLinesTestCase kTestCases[] = {
+      {
+          {
+              "@@ -7,1 +8,1 @@",
+              " common line, not added",
+          },
+          {},
+      },
+      {
+          {
+              "@@ -7,2 +8,1 @@",
+              "-deleted line",
+              " common line, not added",
+          },
+          {},
+      },
+      {
+          {"@@ -7,2 +8,1 @@", " common line, not added", "-deleted line"},
+          {},
+      },
+      {
+          {
+              "@@ -7,4 +8,2 @@",
+              " common line, not added",
+              "-deleted line",
+              "-deleted line 2",
+              " common line, not added",
+          },
+          {},
+      },
+      {
+          {
+              "@@ -7,1 +8,2 @@",
+              " common line, not added",
+              "+added line",
+          },
+          {{9, 10}},
+      },
+      {
+          {
+              "@@ -7,1 +8,2 @@",
+              "+added line",
+              " common line, not added",
+          },
+          {{8, 9}},
+      },
+      {
+          {
+              "@@ -17,2 +28,4 @@",
+              " common line, not added",
+              "+added line",
+              "+added line 2",
+              " common line, not added",
+          },
+          {{29, 31}},
+      },
+      {
+          {
+              "@@ -7,3 +4,3 @@",
+              " common line, not added",
+              "-deleted line",
+              "+added line",
+              " common line, not added",
+          },
+          {{5, 6}},
+      },
+      {
+          {
+              "@@ -7,3 +4,3 @@",
+              " common line, not added",
+              "+added line",
+              "-deleted line",
+              " common line, not added",
+          },
+          {{5, 6}},
+      },
+      {
+          {
+              "@@ -380,8 +401,12 @@",
+              " common line, not added",
+              "+added line",
+              "+added line 2",
+              " nothing interesting",
+              " ",
+              "-delete me",
+              "+replacement",
+              " ",
+              " nothing interesting",
+              " ",
+              "+added line",
+              "+added line 2",
+              " common line, not added",
+          },
+          {{402, 404}, {406, 407}, {410, 412}},
+      },
+  };
+  for (const auto& test : kTestCases) {
+    const LineRange range(test.hunk_text.begin(), test.hunk_text.end());
+    Hunk hunk;
+    const auto status = hunk.Parse(range);
+    ASSERT_TRUE(status.ok()) << status.message();
+    EXPECT_EQ(hunk.AddedLines(), test.expected_added_lines);
+  }
+}
+
 TEST(HunkParseAndPrintTest, ValidInputs) {
   const std::vector<absl::string_view> kTestCases[] = {
       {"@@ -1,0 +2,0 @@"},  // 0 line counts, technically consistent
@@ -447,6 +558,50 @@ TEST(FilePatchParseAndPrintTest, ValidInputs) {
     std::ostringstream stream;
     stream << file_patch;
     EXPECT_EQ(stream.str(), absl::StrJoin(lines, "\n") + "\n");
+  }
+}
+
+TEST(FilePatchAddedLinesTest, Various) {
+  const AddedLinesTestCase kTestCases[] = {
+      {
+          {
+              "--- /path/to/file.txt\t2019-12-01",
+              "+++ /path/to/file.txt\t2019-12-31",
+              "@@ -12,1 +13,1 @@",
+              " no change here",
+          },
+          {},
+      },
+      {
+          {
+              "--- /path/to/file.txt\t2019-12-01",
+              "+++ /path/to/file.txt\t2019-12-31",
+              "@@ -12,1 +13,1 @@",
+              " no change here",
+              "@@ -21,3 +20,2 @@",
+              " ",
+              "-bye",
+              " ",
+              "@@ -31,2 +43,4 @@",
+              " ",
+              "+hello",  // line 45
+              "+world",  // line 46
+              " ",
+              "@@ -61,3 +80,3 @@",
+              " ",
+              "-adios",
+              "+hola",  // line 81
+              " ",
+          },
+          {{44, 46}, {81, 82}},
+      },
+  };
+  for (const auto& test : kTestCases) {
+    const LineRange range(test.hunk_text.begin(), test.hunk_text.end());
+    FilePatch file_patch;
+    const auto status = file_patch.Parse(range);
+    ASSERT_TRUE(status.ok()) << status.message();
+    EXPECT_EQ(file_patch.AddedLines(), test.expected_added_lines);
   }
 }
 

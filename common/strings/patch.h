@@ -21,6 +21,7 @@
 
 #include "absl/status/status.h"
 #include "absl/strings/string_view.h"
+#include "common/strings/position.h"
 #include "common/util/container_iterator_range.h"
 
 namespace verible {
@@ -42,9 +43,6 @@ class PatchSet {
 
   // Prints a unified-diff formatted output.
   std::ostream& Render(std::ostream& stream) const;
-
-  // TODO(b/158630746): return LineNumberSet for --lines for incremental
-  // operations, replacing diff-to-changed-lines.awk.
 
  private:
   // Non-patch plain text that could describe the origins of the diff/patch,
@@ -118,6 +116,9 @@ struct Hunk {
   // have changed, so this will update the .count values.
   void UpdateHeader();
 
+  // Returns a set of line numbers for lines that are changed or new.
+  LineNumberSet AddedLines() const;
+
   absl::Status Parse(const LineRange&);
 };
 
@@ -141,7 +142,8 @@ struct FilePatch {
   SourceInfo new_file;
   std::vector<Hunk> hunks;
 
-  // TODO: LineNumberSet AddedLines() const; // for --lines
+  // Returns a set of line numbers for lines that are changed or new.
+  LineNumberSet AddedLines() const;
 
   absl::Status Parse(const LineRange&);
 };
