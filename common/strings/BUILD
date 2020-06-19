@@ -166,6 +166,24 @@ cc_test(
 )
 
 cc_library(
+    name = "split",
+    hdrs = ["split.h"],
+    deps = [
+        "@com_google_absl//absl/strings",
+    ],
+)
+
+cc_test(
+    name = "split_test",
+    srcs = ["split_test.cc"],
+    deps = [
+        ":split",
+        "//common/util:range",
+        "@com_google_googletest//:gtest_main",
+    ],
+)
+
+cc_library(
     name = "rebase",
     srcs = ["rebase.cc"],
     hdrs = ["rebase.h"],
