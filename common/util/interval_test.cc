@@ -127,6 +127,34 @@ TEST(ParseInclusiveRangeTest, EmptyStrings) {
   }
 }
 
+TEST(FormatInclusiveRangeTest, Singleton) {
+  const interval_type ii{5, 6};
+  {
+    std::ostringstream stream;
+    ii.FormatInclusive(stream, false);
+    EXPECT_EQ(stream.str(), "5-5");
+  }
+  {
+    std::ostringstream stream;
+    ii.FormatInclusive(stream, true);
+    EXPECT_EQ(stream.str(), "5");
+  }
+}
+
+TEST(FormatInclusiveRangeTest, LargerThanOne) {
+  const interval_type ii{7, 9};
+  {
+    std::ostringstream stream;
+    ii.FormatInclusive(stream, false);
+    EXPECT_EQ(stream.str(), "7-8");
+  }
+  {
+    std::ostringstream stream;
+    ii.FormatInclusive(stream, true);
+    EXPECT_EQ(stream.str(), "7-8");
+  }
+}
+
 TEST(ParseInclusiveRangeTest, ValidRangeSingleValue) {
   interval_type interval;
   std::ostringstream errstream;

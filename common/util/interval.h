@@ -69,6 +69,19 @@ struct Interval {
   }
 
   bool operator!=(const Interval<T>& other) const { return !(*this == other); }
+
+  // Formats the interval to show an inclusive range.
+  // If 'compact' is true and (min +1 == max), only print the min.
+  // The inverse operation is ParseInclusiveRange().
+  std::ostream& FormatInclusive(std::ostream& stream, bool compact,
+                                char delim = '-') const {
+    const T upper = max - 1;
+    if ((min == upper) && compact)
+      stream << min;  // N instead of N-N
+    else
+      stream << min << delim << upper;
+    return stream;
+  }
 };
 
 // Forwarding function that avoids constructing a temporary Interval.
@@ -98,6 +111,7 @@ std::ostream& operator<<(std::ostream& stream, const Interval<T>& interval) {
 // Parses "N", "M" into an interval [N, M+1) == [N, M] (inclusive).
 // Since range is inclusive, we automatically rectify backward ranges.
 // Returns true on success, false on parse error.
+// This is the reverse of Interval::FormatInclusive().
 template <typename T>
 bool ParseInclusiveRange(Interval<T>* interval, absl::string_view first_str,
                          absl::string_view last_str, std::ostream* errstream) {

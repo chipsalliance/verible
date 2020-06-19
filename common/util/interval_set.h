@@ -419,6 +419,18 @@ class IntervalSet : private _IntervalSetImpl {
     };
   }
 
+  std::ostream& FormatInclusive(std::ostream& stream, bool compact,
+                                char delim = '-') const {
+    return stream << absl::StrJoin(
+               intervals_, ",",
+               [=](std::string* out, const value_type& interval) {
+                 std::ostringstream temp_stream;
+                 AsInterval(interval).FormatInclusive(temp_stream, compact,
+                                                      delim);
+                 out->append(temp_stream.str());
+               });
+  }
+
  protected:
   // This operation is only intended for constructing test expect values.
   // It does not guarantee any invariants among intervals_.

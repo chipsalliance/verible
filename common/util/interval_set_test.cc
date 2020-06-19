@@ -900,6 +900,20 @@ TEST(ParseInclusivesRangesTest, MixedValues) {
   EXPECT_EQ(iset, expected);
 }
 
+TEST(FormatInclusiveRangesTest, Various) {
+  const interval_set_type iset{{2, 4}, {5, 6}, {7, 9}};
+  {
+    std::ostringstream formatted;
+    iset.FormatInclusive(formatted, false);
+    EXPECT_EQ(formatted.str(), "2-3,5-5,7-8");
+  }
+  {
+    std::ostringstream formatted;
+    iset.FormatInclusive(formatted, true);
+    EXPECT_EQ(formatted.str(), "2-3,5,7-8");
+  }
+}
+
 TEST(UniformRandomGeneratorTest, EmptyInvalid) {
   interval_set_type iset;
   EXPECT_DEATH(iset.UniformRandomGenerator(),
