@@ -57,13 +57,13 @@ class VoidCastRule : public verible::SyntaxTreeLintRule {
 
   using Matcher = verible::matcher::Matcher;
 
-  static const std::set<std::string>& BlacklistedFunctionsSet();
+  static const std::set<std::string>& ForbiddenFunctionsSet();
 
   // Matches against top level function calls within void casts
   // For example:
   //   void'(foo());
   // Here, the leaf representing "foo" will be bound to id
-  const Matcher blacklisted_function_matcher_ =
+  const Matcher forbidden_function_matcher_ =
       NodekVoidcast(VoidcastHasExpression(
           ExpressionHasFunctionCall(FunctionCallHasId().Bind("id"))));
 

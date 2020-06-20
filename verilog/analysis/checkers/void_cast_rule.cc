@@ -54,19 +54,19 @@ std::string VoidCastRule::GetDescription(DescriptionType description_type) {
       GetVerificationCitation(kTopic), ".");
 }
 
-const std::set<std::string>& VoidCastRule::BlacklistedFunctionsSet() {
-  static const auto* blacklisted_functions =
+const std::set<std::string>& VoidCastRule::ForbiddenFunctionsSet() {
+  static const auto* forbidden_functions =
       new std::set<std::string>({"uvm_hdl_read"});
-  return *blacklisted_functions;
+  return *forbidden_functions;
 }
 
 void VoidCastRule::HandleSymbol(const verible::Symbol& symbol,
                                 const SyntaxTreeContext& context) {
-  // Check for blacklisted function names
+  // Check for forbidden function names
   verible::matcher::BoundSymbolManager manager;
-  if (blacklisted_function_matcher_.Matches(symbol, &manager)) {
+  if (forbidden_function_matcher_.Matches(symbol, &manager)) {
     if (auto function_id = manager.GetAs<verible::SyntaxTreeLeaf>("id")) {
-      const auto& bfs = BlacklistedFunctionsSet();
+      const auto& bfs = ForbiddenFunctionsSet();
       if (bfs.find(std::string(function_id->get().text())) != bfs.end()) {
         violations_.insert(LintViolation(function_id->get(),
                                          FormatReason(*function_id), context));
@@ -74,7 +74,7 @@ void VoidCastRule::HandleSymbol(const verible::Symbol& symbol,
     }
   }
 
-  // Check for blacklisted calls to randomize
+  // Check for forbidden calls to randomize
   manager.Clear();
   if (randomize_matcher_.Matches(symbol, &manager)) {
     if (auto randomize_node = manager.GetAs<verible::SyntaxTreeNode>("id")) {
