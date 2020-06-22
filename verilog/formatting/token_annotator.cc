@@ -110,7 +110,7 @@ static bool PairwiseNonmergeable(const PreFormatToken& ftoken) {
 static bool InRangeLikeContext(const SyntaxTreeContext& context) {
   return context.IsInsideFirst(
       {NodeEnum::kSelectVariableDimension, NodeEnum::kDimensionRange,
-       NodeEnum::kDimensionSlice},
+       NodeEnum::kDimensionSlice, NodeEnum::kCycleDelayRange},
       {});
 }
 
