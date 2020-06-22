@@ -29,6 +29,7 @@ namespace {
 
 using verible::LintTestCase;
 using verible::RunLintTestCases;
+using verible::RunConfiguredLintTestCases;
 
 constexpr int kToken = SymbolIdentifier;
 
@@ -187,6 +188,42 @@ TEST(PackageFilenameRuleTest, PackageMatchesOptionalFileSuffix) {
   };
   const std::string filename = "/path/to/q_pkg.sv";
   RunLintTestCases<VerilogAnalyzer, PackageFilenameRule>(kTestCases, filename);
+}
+
+TEST(PackageFilenameRuleTest, DashAllowedWhenConfigured) {
+  const std::initializer_list<LintTestCase> kOkCases = {
+      {"package foo_bar; endpackage"},
+  };
+  const std::initializer_list<LintTestCase> kComplaintCases = {
+      {"package ", {kToken, "foo_bar"}, "; endpackage"},
+  };
+
+  const std::string f_with_underscore = "/path/to/foo_bar.sv";
+  const std::string f_with_dash = "/path/to/foo-bar.sv";
+  const std::string f_with_dash_pkg = "/path/to/foo-bar-pkg.sv";
+
+  {
+    // With dashes not allowed, we only accept the underscore name
+    const absl::string_view config = "allow-dash-for-underscore:off";
+    RunConfiguredLintTestCases<VerilogAnalyzer, PackageFilenameRule>(
+      kOkCases, config, f_with_underscore);
+    RunConfiguredLintTestCases<VerilogAnalyzer, PackageFilenameRule>(
+      kComplaintCases, config, f_with_dash);
+    RunConfiguredLintTestCases<VerilogAnalyzer, PackageFilenameRule>(
+      kComplaintCases, config, f_with_dash_pkg);
+  }
+
+  {
+    // ... But with dashes allowed, dashes are also an ok case.
+    const absl::string_view config = "allow-dash-for-underscore:on";
+    // With dashes not allowed, we only accept the underscore name
+    RunConfiguredLintTestCases<VerilogAnalyzer, PackageFilenameRule>(
+      kOkCases, config, f_with_underscore);
+    RunConfiguredLintTestCases<VerilogAnalyzer, PackageFilenameRule>(
+      kOkCases, config, f_with_dash);
+    RunConfiguredLintTestCases<VerilogAnalyzer, PackageFilenameRule>(
+      kOkCases, config, f_with_dash_pkg);
+  }
 }
 
 }  // namespace

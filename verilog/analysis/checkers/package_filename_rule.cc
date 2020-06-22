@@ -26,6 +26,7 @@
 #include "common/analysis/citation.h"
 #include "common/analysis/lint_rule_status.h"
 #include "common/analysis/syntax_tree_search.h"
+#include "common/text/config_utils.h"
 #include "common/text/text_structure.h"
 #include "common/text/token_info.h"
 #include "common/util/file_util.h"
@@ -44,6 +45,7 @@ using verible::TextStructureView;
 VERILOG_REGISTER_LINT_RULE(PackageFilenameRule);
 
 static const char optional_suffix[] = "_pkg";
+static const char optional_dash_suffix[] = "-pkg";
 
 absl::string_view PackageFilenameRule::Name() { return "package-filename"; }
 const char PackageFilenameRule::kTopic[] = "file-names";
@@ -53,8 +55,18 @@ const char PackageFilenameRule::kMessage[] =
 
 std::string PackageFilenameRule::GetDescription(
     DescriptionType description_type) {
-  return absl::StrCat("Checks that the package name matches the filename. See ",
-                      GetStyleGuideCitation(kTopic), ".");
+  static std::string basic_desc = absl::StrCat(
+     "Checks that the package name matches the filename. Depending on "
+     "configuration, it is also allowed to replace underscore with dashes in "
+     "filenames.  See ", GetStyleGuideCitation(kTopic), ".");
+  if (description_type == DescriptionType::kHelpRulesFlag) {
+    return absl::StrCat(basic_desc,
+                        "Parameters: allow-dash-for-underscore:false");
+  } else {
+    return absl::StrCat(basic_desc,
+                        "\n##### Parameter\n"
+                        " * `allow-dash-for-underscore` Default: `false`\n");
+  }
 }
 
 void PackageFilenameRule::Lint(const TextStructureView& text_structure,
@@ -70,15 +82,23 @@ void PackageFilenameRule::Lint(const TextStructureView& text_structure,
   // Note:  package name | filename   | allowed ?
   //        -------------+------------+-----------
   //        foo          | foo.sv     | yes
+  //        foo_bar      | foo_bar.sv | yes
+  //        foo_bar      | foo-bar.sv | yes, if allow-dash-for-underscore
   //        foo          | foo_pkg.sv | yes
+  //        foo          | foo-pkg.sv | yes, iff allow-dash-for-underscore
   //        foo_pkg      | foo_pkg.sv | yes
   //        foo_pkg      | foo.sv     | NO.
   const absl::string_view basename =
       verible::file::Basename(verible::file::Stem(filename));
   std::vector<absl::string_view> basename_components =
       absl::StrSplit(basename, '.');
-  const absl::string_view unitname = basename_components[0];
+  std::string unitname = std::string(basename_components[0]);
   if (unitname.empty()) return;
+
+  if (allow_dash_for_underscore_) {
+    // If we allow for dashes, let's first convert them back to underscore.
+    std::replace(unitname.begin(), unitname.end(), '-', '_');
+  }
 
   // Report a violation on every package declaration, potentially.
   for (const auto& package_match : package_matches) {
@@ -99,5 +119,11 @@ LintRuleStatus PackageFilenameRule::Report() const {
   return LintRuleStatus(violations_, Name(), GetStyleGuideCitation(kTopic));
 }
 
+absl::Status PackageFilenameRule::Configure(absl::string_view configuration) {
+  using verible::config::SetBool;
+  return verible::ParseNameValues(
+       configuration,
+       {{"allow-dash-for-underscore", SetBool(&allow_dash_for_underscore_)}});
+}
 }  // namespace analysis
 }  // namespace verilog

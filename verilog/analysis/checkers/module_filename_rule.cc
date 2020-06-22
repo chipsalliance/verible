@@ -27,6 +27,7 @@
 #include "common/analysis/citation.h"
 #include "common/analysis/lint_rule_status.h"
 #include "common/analysis/syntax_tree_search.h"
+#include "common/text/config_utils.h"
 #include "common/text/symbol.h"
 #include "common/text/text_structure.h"
 #include "common/text/token_info.h"
@@ -54,10 +55,20 @@ const char ModuleFilenameRule::kMessage[] =
 
 std::string ModuleFilenameRule::GetDescription(
     DescriptionType description_type) {
-  return absl::StrCat(
+  static std::string basic_desc = absl::StrCat(
       "If a module is declared, checks that at least one module matches "
-      "the first dot-delimited component of the file name.  See ",
-      GetStyleGuideCitation(kTopic), ".");
+      "the first dot-delimited component of the file name. Depending on "
+      "configuration, it is also allowed to replace underscore with dashes in "
+      "filenames.  "
+      "See ", GetStyleGuideCitation(kTopic), ".");
+  if (description_type == DescriptionType::kHelpRulesFlag) {
+    return absl::StrCat(basic_desc,
+                        "Parameters: allow-dash-for-underscore:false");
+  } else {
+    return absl::StrCat(basic_desc,
+                        "\n##### Parameter\n"
+                        " * `allow-dash-for-underscore` Default: `false`\n");
+  }
 }
 
 static bool ModuleNameMatches(const verible::Symbol& s,
@@ -91,9 +102,13 @@ void ModuleFilenameRule::Lint(const TextStructureView& text_structure,
   const absl::string_view basename = verible::file::Basename(filename);
   std::vector<absl::string_view> basename_components =
       absl::StrSplit(basename, '.');
-  const absl::string_view unitname = basename_components[0];
+  std::string unitname = std::string(basename_components[0]);
   if (unitname.empty()) return;
 
+  if (allow_dash_for_underscore_) {
+    // If we allow for dashes, let's first convert them back to underscore.
+    std::replace(unitname.begin(), unitname.end(), '-', '_');
+  }
   auto matching_module_iter =
       std::find_if(module_cleaned.begin(), module_cleaned.end(),
                    [=](const verible::TreeSearchMatch& m) {
@@ -113,5 +128,11 @@ LintRuleStatus ModuleFilenameRule::Report() const {
   return LintRuleStatus(violations_, Name(), GetStyleGuideCitation(kTopic));
 }
 
+absl::Status ModuleFilenameRule::Configure(absl::string_view configuration) {
+  using verible::config::SetBool;
+  return verible::ParseNameValues(
+       configuration,
+       {{"allow-dash-for-underscore", SetBool(&allow_dash_for_underscore_)}});
+}
 }  // namespace analysis
 }  // namespace verilog

@@ -39,6 +39,7 @@ class ModuleFilenameRule : public verible::TextStructureLintRule {
 
   ModuleFilenameRule() {}
 
+  absl::Status Configure(absl::string_view configuration) override;
   void Lint(const verible::TextStructureView&, absl::string_view) override;
 
   verible::LintRuleStatus Report() const override;
@@ -49,6 +50,9 @@ class ModuleFilenameRule : public verible::TextStructureLintRule {
 
   // Diagnostic message.
   static const char kMessage[];
+
+  // Ok to replace underscores with dashes in filenames.
+  bool allow_dash_for_underscore_ = false;
 
   // Collection of found violations.
   std::set<verible::LintViolation> violations_;
