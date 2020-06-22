@@ -2829,6 +2829,22 @@ TEST(TokenAnnotatorTest, AnnotateFormattingWithContextTest) {
           {NodeEnum::kTernaryExpression},
           {1, SpacingOptions::Undecided},
       },
+      {
+          // a ? {b} : {c} (ternary expression)
+          DefaultStyle,
+          {'}', "}"},
+          {':', ":"},
+          {NodeEnum::kTernaryExpression},
+          {1, SpacingOptions::Undecided},
+      },
+      {
+          // a ? {b} : {c} (ternary expression)
+          DefaultStyle,
+          {':', ":"},
+          {'{', "{"},
+          {NodeEnum::kTernaryExpression},
+          {1, SpacingOptions::Undecided},
+      },
 
       // ':' on the left, anything else on the right
       {

@@ -667,6 +667,10 @@ static const std::initializer_list<FormatterTestCase> kFormatterTestCases = {
         "  parameter  int   ternary=(a)?(b):(c);",
         "parameter int ternary = (a) ? (b) : (c);\n",
     },
+    {
+        "  parameter  int   ternary={a}?{b}:{c};",
+        "parameter int ternary = {a} ? {b} : {c};\n",
+    },
     // streaming operators
     {
         "   parameter  int  b={ >>   { a } } ;",
@@ -3182,6 +3186,11 @@ static const std::initializer_list<FormatterTestCase> kFormatterTestCases = {
      "  foreach (m[n]) begin\n"
      "    ++m;\n"
      "  end\n"
+     "endfunction\n"},
+    {// spaces in ternary expression
+     "function f; return {a}? {b} :{ c };endfunction",
+     "function f;\n"
+     "  return {a} ? {b} : {c};\n"
      "endfunction\n"},
     {"task t;endtask",
      "task t;\n"
