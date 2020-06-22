@@ -204,7 +204,7 @@ TEST(PackageFilenameRuleTest, DashAllowedWhenConfigured) {
 
   {
     // With dashes not allowed, we only accept the underscore name
-    const absl::string_view config = "allow-dash-for-underscore:off";
+    constexpr absl::string_view config = "allow-dash-for-underscore:off";
     RunConfiguredLintTestCases<VerilogAnalyzer, PackageFilenameRule>(
       kOkCases, config, f_with_underscore);
     RunConfiguredLintTestCases<VerilogAnalyzer, PackageFilenameRule>(
@@ -215,7 +215,7 @@ TEST(PackageFilenameRuleTest, DashAllowedWhenConfigured) {
 
   {
     // ... But with dashes allowed, dashes are also an ok case.
-    const absl::string_view config = "allow-dash-for-underscore:on";
+    constexpr absl::string_view config = "allow-dash-for-underscore:on";
     // With dashes not allowed, we only accept the underscore name
     RunConfiguredLintTestCases<VerilogAnalyzer, PackageFilenameRule>(
       kOkCases, config, f_with_underscore);

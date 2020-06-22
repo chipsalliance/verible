@@ -52,7 +52,7 @@ class PackageFilenameRule : public verible::TextStructureLintRule {
   // Diagnostic message.
   static const char kMessage[];
 
-  // Ok to replace underscores with dashes in filenames.
+  // Ok to treat dashes as underscores.
   bool allow_dash_for_underscore_ = false;
 
   // Collection of found violations.

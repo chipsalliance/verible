@@ -55,7 +55,7 @@ const char ModuleFilenameRule::kMessage[] =
 
 std::string ModuleFilenameRule::GetDescription(
     DescriptionType description_type) {
-  static std::string basic_desc = absl::StrCat(
+  static const std::string basic_desc = absl::StrCat(
       "If a module is declared, checks that at least one module matches "
       "the first dot-delimited component of the file name. Depending on "
       "configuration, it is also allowed to replace underscore with dashes in "
@@ -102,7 +102,8 @@ void ModuleFilenameRule::Lint(const TextStructureView& text_structure,
   const absl::string_view basename = verible::file::Basename(filename);
   std::vector<absl::string_view> basename_components =
       absl::StrSplit(basename, '.');
-  std::string unitname = std::string(basename_components[0]);
+  std::string unitname(basename_components[0].begin(),
+                       basename_components[0].end());
   if (unitname.empty()) return;
 
   if (allow_dash_for_underscore_) {

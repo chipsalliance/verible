@@ -70,7 +70,7 @@ TEST(ModuleFilenameRuleTest, DashAllowedWhenConfigured) {
   const std::string f_with_dash = "/path/to/multi-word-module.sv";
   {
     // With dashes not allowed, we only accept the underscore name
-    const absl::string_view config = "allow-dash-for-underscore:off";
+    constexpr absl::string_view config = "allow-dash-for-underscore:off";
     RunConfiguredLintTestCases<VerilogAnalyzer, ModuleFilenameRule>(
       kOkCases, config, f_with_underscore);
     RunConfiguredLintTestCases<VerilogAnalyzer, ModuleFilenameRule>(
@@ -79,7 +79,7 @@ TEST(ModuleFilenameRuleTest, DashAllowedWhenConfigured) {
 
   {
     // ... But with dashes allowed, dashes are also an ok case.
-    const absl::string_view config = "allow-dash-for-underscore:on";
+    constexpr absl::string_view config = "allow-dash-for-underscore:on";
     // With dashes not allowed, we only accept the underscore name
     RunConfiguredLintTestCases<VerilogAnalyzer, ModuleFilenameRule>(
       kOkCases, config, f_with_underscore);

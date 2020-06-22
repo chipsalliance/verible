@@ -54,7 +54,7 @@ const char PackageFilenameRule::kMessage[] =
 
 std::string PackageFilenameRule::GetDescription(
     DescriptionType description_type) {
-  static std::string basic_desc = absl::StrCat(
+  static const std::string basic_desc = absl::StrCat(
      "Checks that the package name matches the filename. Depending on "
      "configuration, it is also allowed to replace underscore with dashes in "
      "filenames.  See ", GetStyleGuideCitation(kTopic), ".");
@@ -91,7 +91,8 @@ void PackageFilenameRule::Lint(const TextStructureView& text_structure,
       verible::file::Basename(verible::file::Stem(filename));
   std::vector<absl::string_view> basename_components =
       absl::StrSplit(basename, '.');
-  std::string unitname = std::string(basename_components[0]);
+  std::string unitname(basename_components[0].begin(),
+                       basename_components[0].end());
   if (unitname.empty()) return;
 
   if (allow_dash_for_underscore_) {
