@@ -45,7 +45,6 @@ using verible::TextStructureView;
 VERILOG_REGISTER_LINT_RULE(PackageFilenameRule);
 
 static const char optional_suffix[] = "_pkg";
-static const char optional_dash_suffix[] = "-pkg";
 
 absl::string_view PackageFilenameRule::Name() { return "package-filename"; }
 const char PackageFilenameRule::kTopic[] = "file-names";
