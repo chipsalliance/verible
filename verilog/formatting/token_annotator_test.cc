@@ -3959,6 +3959,22 @@ TEST(TokenAnnotatorTest, AnnotateFormattingWithContextTest) {
                // no spaces preceding ':' in unit test context
           {1, SpacingOptions::Undecided},
       },
+      {
+          DefaultStyle,
+          {SymbolIdentifier, "id_before_pound"},
+          {'#', "#"},
+          {NodeEnum::kUnqualifiedId},
+          {},  // default context
+          {0, SpacingOptions::Undecided},
+      },
+      {
+          DefaultStyle,
+          {SymbolIdentifier, "id_before_pound"},
+          {'#', "#"},
+          {NodeEnum::kQualifiedId},
+          {},  // default context
+          {1, SpacingOptions::Undecided},
+      },
 
       // '}' on the left
       {
