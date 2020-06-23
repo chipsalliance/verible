@@ -29,6 +29,7 @@ namespace analysis {
 namespace {
 
 using verible::LintTestCase;
+using verible::RunConfiguredLintTestCases;
 using verible::RunLintTestCases;
 
 // Expected token type of findings.
@@ -55,6 +56,36 @@ TEST(ModuleFilenameRuleTest, ModuleMatchesFilename) {
   };
   const std::string filename = "/path/to/m.sv";
   RunLintTestCases<VerilogAnalyzer, ModuleFilenameRule>(kTestCases, filename);
+}
+
+TEST(ModuleFilenameRuleTest, DashAllowedWhenConfigured) {
+  const std::initializer_list<LintTestCase> kOkCases = {
+      {"module multi_word_module; endmodule"},
+  };
+  const std::initializer_list<LintTestCase> kComplaintCases = {
+      {"module ", {kToken, "multi_word_module"}, "; endmodule"},
+  };
+
+  const std::string f_with_underscore = "/path/to/multi_word_module.sv";
+  const std::string f_with_dash = "/path/to/multi-word-module.sv";
+  {
+    // With dashes not allowed, we only accept the underscore name
+    constexpr absl::string_view config = "allow-dash-for-underscore:off";
+    RunConfiguredLintTestCases<VerilogAnalyzer, ModuleFilenameRule>(
+        kOkCases, config, f_with_underscore);
+    RunConfiguredLintTestCases<VerilogAnalyzer, ModuleFilenameRule>(
+        kComplaintCases, config, f_with_dash);
+  }
+
+  {
+    // ... But with dashes allowed, dashes are also an ok case.
+    constexpr absl::string_view config = "allow-dash-for-underscore:on";
+    // With dashes not allowed, we only accept the underscore name
+    RunConfiguredLintTestCases<VerilogAnalyzer, ModuleFilenameRule>(
+        kOkCases, config, f_with_underscore);
+    RunConfiguredLintTestCases<VerilogAnalyzer, ModuleFilenameRule>(
+        kOkCases, config, f_with_dash);
+  }
 }
 
 // Test more unusual file names with multiple dots in them.
