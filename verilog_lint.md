@@ -184,7 +184,10 @@ Checks that there are no begin-end blocks declared at the module level. See [Sty
 Enabled by default: true
 
 ### module-filename
-If a module is declared, checks that at least one module matches the first dot-delimited component of the file name.  See [Style: file-names].
+If a module is declared, checks that at least one module matches the first dot-delimited component of the file name. Depending on configuration, it is also allowed to replace underscore with dashes in filenames.  See [Style: file-names].
+##### Parameter
+ * `allow-dash-for-underscore` Default: `false`
+
 
 Enabled by default: true
 
@@ -214,7 +217,10 @@ Checks that at most one module is declared per file. See [Style: file-extensions
 Enabled by default: false
 
 ### package-filename
-Checks that the package name matches the filename. See [Style: file-names].
+Checks that the package name matches the filename. Depending on configuration, it is also allowed to replace underscore with dashes in filenames.  See [Style: file-names].
+##### Parameter
+ * `allow-dash-for-underscore` Default: `false`
+
 
 Enabled by default: true
 
@@ -307,4 +313,4 @@ Enabled by default: true
 
 ## Version
 
-Generated on 2020-06-23 09:08:46 -0700 from [v0.0-457-gd104c3c](https://github.com/google/verible/commit/d104c3c1c2e2b4e6f92c3ed6dc2f6341f4481998)
+Generated on 2020-06-23 16:29:25 -0700 from [v0.0-458-g675bd18](https://github.com/google/verible/commit/675bd18fd8d91a9892ec38cf0eedd95387259374)
