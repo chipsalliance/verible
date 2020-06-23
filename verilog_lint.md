@@ -307,4 +307,4 @@ Enabled by default: true
 
 ## Version
 
-Generated on 2020-06-19 11:13:29 -0700 from [v0.0-454-ge6b8038](https://github.com/google/verible/commit/e6b80381092049520dae421089fc73fd584f106e)
+Generated on 2020-06-23 09:08:18 -0700 from [v0.0-455-gc07a940](https://github.com/google/verible/commit/c07a94084b56e4c9a108f655709f0b5558ce65e4)
