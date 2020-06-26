@@ -906,6 +906,18 @@ void TreeUnwrapper::SetIndentationsAndCreatePartitions(
                            PartitionPolicyEnum::kFitOnLineElseExpand);
       break;
     }
+    case NodeEnum::kOpenRangeList: {
+      if (Context().DirectParentIs(NodeEnum::kBraceGroup)) {
+        // Do not further indent preprocessor clauses.
+        const int indent = suppress_indentation ? 0 : style_.indentation_spaces;
+        VisitIndentedSection(node, indent, PartitionPolicyEnum::kFitOnLineElseExpand);
+        break;
+      } else {
+        // Default handling
+        TraverseChildren(node);
+        break;
+      }
+    }
 
       // module instantiations (which look like data declarations) want to
       // expand one parameter/port per line.
@@ -961,6 +973,10 @@ void TreeUnwrapper::SetIndentationsAndCreatePartitions(
       if (Context().DirectParentIs(NodeEnum::kMacroArgList)) {
         // original un-lexed macro argument was successfully expanded
         VisitNewUnwrappedLine(node);
+      } else if (Context().DirectParentIs(NodeEnum::kOpenRangeList)
+                 && Context().IsInside(NodeEnum::kBraceGroup)) {
+        VisitIndentedSection(node, 0,
+                             PartitionPolicyEnum::kFitOnLineElseExpand);
       } else {
         TraverseChildren(node);
       }
