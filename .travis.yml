@@ -4,8 +4,6 @@
 # OCTOKIT_LOGIN - Your Github username
 # OCTOKIT_PASSWORD - Same as OCTOKIT_ACCESS_TOKEN above
 
-os: linux
-dist: xenial
 language: cpp
 
 # Don't build auto-generated tags
@@ -37,8 +35,7 @@ jobs:
       - provider: pages
         cleanup: true
         keep_history: true
-        strategy: git
-        token: $OCTOKIT_ACCESS_TOKEN
+        github_token: $OCTOKIT_ACCESS_TOKEN
         local_dir: /tmp/pages
         on:
           branch: master
@@ -57,9 +54,6 @@ jobs:
    - name: "Ubuntu Eoan (19.10 latest)"
      env:
       - MODE=bin OS=ubuntu OS_VERSION=eoan
-   - name: "Ubuntu Focal (20.04 LTS)"
-     env:
-      - MODE=bin OS=ubuntu OS_VERSION=focal
    - name: "Centos 6"
      env:
       - MODE=bin OS=centos OS_VERSION=6

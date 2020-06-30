@@ -23,7 +23,7 @@ GIT_VERSION=${GIT_VERSION:-$(git describe --match=v*)}
 GIT_HASH=${GIT_HASH:-$(git rev-parse HEAD)}
 
 # Generate the docker files for ubuntu versions
-for UBUNTU_VERSION in trusty xenial bionic eoan focal; do
+for UBUNTU_VERSION in trusty xenial bionic eoan; do
     cat > ubuntu-${UBUNTU_VERSION}/Dockerfile <<EOF
 FROM ubuntu:$UBUNTU_VERSION
 
@@ -42,6 +42,7 @@ RUN apt-get install -y \
     g++ \
     file \
     lsb-release \
+    python-gflags \
     wget \
 
 EOF
