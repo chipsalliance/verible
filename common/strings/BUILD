@@ -193,6 +193,7 @@ cc_test(
 
 cc_library(
     name = "split",
+    srcs = ["split.cc"],
     hdrs = ["split.h"],
     deps = [
         "@com_google_absl//absl/strings",
@@ -203,6 +204,7 @@ cc_test(
     name = "split_test",
     srcs = ["split_test.cc"],
     deps = [
+        ":range",
         ":split",
         "//common/util:range",
         "@com_google_googletest//:gtest_main",

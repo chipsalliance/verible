@@ -16,6 +16,7 @@
 #define VERIBLE_COMMON_STRINGS_SPLIT_H_
 
 #include <functional>
+#include <vector>
 
 #include "absl/strings/string_view.h"
 
@@ -107,6 +108,11 @@ std::function<absl::string_view()> MakeStringSpliterator(
   auto splitter = StringSpliterator(original);
   return [=]() mutable /* splitter */ { return splitter(delimiter); };
 }
+
+// Returns line-based view of original text.
+// If original text did not terminate with a \n, interpret the final partial
+// line as a whole line.
+std::vector<absl::string_view> SplitLines(absl::string_view text);
 
 }  // namespace verible
 
