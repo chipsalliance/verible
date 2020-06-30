@@ -59,7 +59,6 @@ using verible::ExpandableTreeView;
 using verible::LineNumberSet;
 using verible::MutableFormatTokenRange;
 using verible::PartitionPolicyEnum;
-using verible::PreFormatToken;
 using verible::TokenPartitionTree;
 using verible::TreeViewNodeInfo;
 using verible::UnwrappedLine;

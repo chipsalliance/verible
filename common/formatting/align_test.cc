@@ -108,8 +108,9 @@ TEST_F(TabularAlignTokenTest, EmptyPartitionRange) {
 
 class Sparse3x3MatrixAlignmentTest : public AlignmentTestFixture {
  public:
-  Sparse3x3MatrixAlignmentTest()
-      : AlignmentTestFixture("one two three four five six"),
+  Sparse3x3MatrixAlignmentTest(
+      absl::string_view text = "one two three four five six")
+      : AlignmentTestFixture(text),
         // From the sample_ text, each pair of tokens will span a subpartition.
         // Construct a 2-level partition that looks like this:
         //
@@ -339,6 +340,52 @@ TEST_F(Sparse3x3MatrixAlignmentTest, CompletelyDisabledNoAlignmentWithIndent) {
             "   one two\n"
             "   three four\n"
             "   five six\n");
+}
+
+class Sparse3x3MatrixAlignmentMoreSpacesTest
+    : public Sparse3x3MatrixAlignmentTest {
+ public:
+  Sparse3x3MatrixAlignmentMoreSpacesTest()
+      : Sparse3x3MatrixAlignmentTest("one   two\nthree   four\nfive   six") {
+    // This is needed for preservation of original spacing.
+    ConnectPreFormatTokensPreservedSpaceStarts(sample_.data(),
+                                               &pre_format_tokens_);
+  }
+};
+
+TEST_F(Sparse3x3MatrixAlignmentMoreSpacesTest,
+       PartiallyDisabledIndentButPreserveOtherSpaces) {
+  // Require 1 space between tokens.
+  for (auto& ftoken : pre_format_tokens_) {
+    ftoken.before.spaces_required = 1;
+  }
+  for (auto& child : partition_.Children()) {
+    child.Value().SetIndentationSpaces(1);
+  }
+  pre_format_tokens_[0].before.break_decision = SpacingOptions::MustWrap;
+  pre_format_tokens_[2].before.break_decision = SpacingOptions::MustWrap;
+  pre_format_tokens_[4].before.break_decision = SpacingOptions::MustWrap;
+
+  TabularAlignTokens(
+      &partition_, kDefaultAlignmentHandler, &pre_format_tokens_, sample_,
+      // Alignment disabled over line 2
+      ByteOffsetSet(
+          {{sample_.find_first_of("\n") + 1, sample_.find("four") + 4}}),
+      40);
+
+  EXPECT_EQ(pre_format_tokens_[1].before.break_decision,
+            SpacingOptions::Preserve);
+  EXPECT_EQ(pre_format_tokens_[3].before.break_decision,
+            SpacingOptions::Preserve);
+  EXPECT_EQ(pre_format_tokens_[5].before.break_decision,
+            SpacingOptions::Preserve);
+
+  // Verify string rendering of result.
+  EXPECT_EQ(Render(),
+            // all lines indented properly but internal spacing preserved
+            " one   two\n"
+            " three   four\n"
+            " five   six\n");
 }
 
 TEST_F(Sparse3x3MatrixAlignmentTest, PartiallyDisabledNoAlignment) {

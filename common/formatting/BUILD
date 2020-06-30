@@ -21,6 +21,7 @@ cc_library(
         "//common/text:concrete_syntax_leaf",
         "//common/text:concrete_syntax_tree",
         "//common/text:token_info",
+        "//common/text:token_stream_view",
         "//common/text:tree_context_visitor",
         "//common/text:tree_utils",
         "//common/util:algorithm",
