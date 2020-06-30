@@ -245,7 +245,6 @@ void TabularAlignTokenPartitions(TokenPartitionTree* partition_ptr,
   VLOG(1) << "origin is node? " << (node != nullptr);
   if (node == nullptr) return;
   // Dispatch aligning function based on syntax tree node type.
-  auto ftoken_base = ftokens->begin();
 
   static const auto* kAlignHandlers =
       new std::map<NodeEnum, verible::AlignedFormattingHandler>{
@@ -253,7 +252,7 @@ void TabularAlignTokenPartitions(TokenPartitionTree* partition_ptr,
       };
   const auto handler_iter = kAlignHandlers->find(NodeEnum(node->Tag().tag));
   if (handler_iter == kAlignHandlers->end()) return;
-  verible::TabularAlignTokens(partition_ptr, handler_iter->second, ftoken_base,
+  verible::TabularAlignTokens(partition_ptr, handler_iter->second, ftokens,
                               full_text, disabled_byte_ranges, column_limit);
   VLOG(1) << "end of " << __FUNCTION__;
 }

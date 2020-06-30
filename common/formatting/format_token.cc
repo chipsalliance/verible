@@ -20,6 +20,7 @@
 
 #include "absl/base/macros.h"
 #include "absl/strings/string_view.h"
+#include "common/strings/display_utils.h"
 #include "common/strings/range.h"
 #include "common/text/token_info.h"
 #include "common/util/logging.h"
@@ -205,6 +206,85 @@ std::ostream& operator<<(std::ostream& stream, const PreFormatToken& t) {
   return t.token->ToStream(stream << "TokenInfo: ")
          << "\nenum: " << t.format_token_enum << "\nbefore: " << t.before
          << "\nbalance: " << t.balancing << std::endl;
+}
+
+void ConnectPreFormatTokensPreservedSpaceStarts(
+    const char* buffer_start, std::vector<PreFormatToken>* format_tokens) {
+  VLOG(4) << __FUNCTION__;
+  CHECK(buffer_start != nullptr);
+  for (auto& ftoken : *format_tokens) {
+    ftoken.before.preserved_space_start = buffer_start;
+    VLOG(4) << "space: " << VisualizeWhitespace(ftoken.OriginalLeadingSpaces());
+    buffer_start = ftoken.Text().end();
+  }
+  // This does not cover the spacing between the last token and EOF.
+}
+
+// Finds the span of format tokens covered by the 'byte_offset_range'.
+// Run-time: O(lg N) due to binary search
+static MutableFormatTokenRange FindFormatTokensInByteOffsetRange(
+    std::vector<PreFormatToken>::iterator begin,
+    std::vector<PreFormatToken>::iterator end,
+    const std::pair<int, int>& byte_offset_range, absl::string_view base_text) {
+  const auto tokens_begin =
+      std::lower_bound(begin, end, byte_offset_range.first,
+                       [=](const PreFormatToken& t, int position) {
+                         return t.token->left(base_text) < position;
+                       });
+  const auto tokens_end =
+      std::upper_bound(tokens_begin, end, byte_offset_range.second,
+                       [=](int position, const PreFormatToken& t) {
+                         return position < t.token->right(base_text);
+                       });
+  return {tokens_begin, tokens_end};
+}
+
+void PreserveSpacesOnDisabledTokenRanges(
+    std::vector<PreFormatToken>* ftokens,
+    const ByteOffsetSet& disabled_byte_ranges, absl::string_view base_text) {
+  VLOG(2) << __FUNCTION__;
+  // saved_iter: shrink bounds of binary search with every iteration,
+  // due to monotonic, non-overlapping intervals.
+  auto saved_iter = ftokens->begin();
+  for (const auto& byte_range : disabled_byte_ranges) {
+    // 'disable_range' marks the range of format tokens to be
+    // marked as preserving original spacing (i.e. not formatted).
+    VLOG(2) << "disabling bytes: " << AsInterval(byte_range);
+    const auto disable_range = FindFormatTokensInByteOffsetRange(
+        saved_iter, ftokens->end(), byte_range, base_text);
+    const std::pair<int, int> disabled_token_indices(SubRangeIndices(
+        disable_range, make_range(ftokens->begin(), ftokens->end())));
+    VLOG(2) << "disabling tokens: " << AsInterval(disabled_token_indices);
+
+    // kludge: When the disabled range immediately follows a //-style
+    // comment, skip past the trailing '\n' (not included in the comment
+    // token), which will be printed by the Emit() method, and preserve the
+    // whitespaces *beyond* that point up to the start of the following
+    // token's text.  This way, rendering the start of the format-disabled
+    // excerpt won't get redundant '\n's.
+    if (!disable_range.empty()) {
+      auto& first = disable_range.front();
+      VLOG(3) << "checking whether first ftoken in range is a must-wrap.";
+      if (first.before.break_decision == SpacingOptions::MustWrap) {
+        VLOG(3) << "checking if spaces before first ftoken starts with \\n.";
+        const absl::string_view leading_space = first.OriginalLeadingSpaces();
+        // consume the first '\n' from the preceding inter-token spaces
+        if (absl::StartsWith(leading_space, "\n")) {
+          VLOG(3) << "consuming leading \\n.";
+          ++first.before.preserved_space_start;
+        }
+      }
+    }
+
+    // Mark tokens in the disabled range as preserving original spaces.
+    for (auto& ft : disable_range) {
+      VLOG(2) << "disable-format preserve spaces before: " << *ft.token;
+      ft.before.break_decision = SpacingOptions::Preserve;
+    }
+
+    // start next iteration search from previous iteration's end
+    saved_iter = disable_range.end();
+  }
 }
 
 }  // namespace verible

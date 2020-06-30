@@ -612,7 +612,7 @@ static bool AnyPartitionSubRangeIsDisabled(
 
 void TabularAlignTokens(TokenPartitionTree* partition_ptr,
                         const AlignedFormattingHandler& alignment_handler,
-                        MutableFormatTokenRange::iterator ftoken_base,
+                        std::vector<PreFormatToken>* ftokens,
                         absl::string_view full_text,
                         const ByteOffsetSet& disabled_byte_ranges,
                         int column_limit) {
@@ -634,12 +634,14 @@ void TabularAlignTokens(TokenPartitionTree* partition_ptr,
     // it one more level, and operate on those ranges, essentially treating
     // no-format ranges like alignment group boundaries.
     // Requires IntervalSet::Intersect operation.
-    if (partition_range.empty() ||
-        AnyPartitionSubRangeIsDisabled(partition_range, full_text,
-                                       disabled_byte_ranges))
+    if (partition_range.empty()) continue;
+    if (AnyPartitionSubRangeIsDisabled(partition_range, full_text,
+                                       disabled_byte_ranges)) {
+      // TODO(b/158492795): force preservation of existing spaces
       continue;
+    }
 
-    AlignPartitionGroup(partition_range, alignment_handler, ftoken_base,
+    AlignPartitionGroup(partition_range, alignment_handler, ftokens->begin(),
                         column_limit);
   }
   VLOG(1) << "end of " << __FUNCTION__;

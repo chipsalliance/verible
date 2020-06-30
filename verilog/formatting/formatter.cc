@@ -365,67 +365,6 @@ std::ostream& ExecutionControl::Stream() const {
   return (stream != nullptr) ? *stream : std::cout;
 }
 
-static MutableFormatTokenRange FindFormatTokensInByteOffsetRange(
-    MutableFormatTokenRange::iterator begin,
-    MutableFormatTokenRange::iterator end,
-    const std::pair<int, int>& byte_offset_range, absl::string_view base_text) {
-  const auto tokens_begin =
-      std::lower_bound(begin, end, byte_offset_range.first,
-                       [=](const PreFormatToken& t, int position) {
-                         return t.token->left(base_text) < position;
-                       });
-  const auto tokens_end =
-      std::upper_bound(tokens_begin, end, byte_offset_range.second,
-                       [=](int position, const PreFormatToken& t) {
-                         return position < t.token->right(base_text);
-                       });
-  return {tokens_begin, tokens_end};
-}
-
-static void PreserveSpacesOnDisabledTokenRanges(
-    std::vector<PreFormatToken>* ftokens, const ByteOffsetSet& disabled_ranges,
-    absl::string_view base_text) {
-  VLOG(2) << __FUNCTION__;
-  // saved_iter: shrink bounds of binary search with every iteration,
-  // due to monotonic, non-overlapping intervals.
-  auto saved_iter = ftokens->begin();
-  for (const auto& byte_range : disabled_ranges) {
-    // [begin_disable, end_disable) mark the range of format tokens to be
-    // marked as preserving original spacing (i.e. not formatted).
-    VLOG(2) << "disabling bytes: " << verible::AsInterval(byte_range);
-    const auto disable_range = FindFormatTokensInByteOffsetRange(
-        saved_iter, ftokens->end(), byte_range, base_text);
-    const auto begin_disable = disable_range.begin();
-    const auto end_disable = disable_range.end();
-    const verible::Interval<int> disabled_token_indices(
-        std::distance(ftokens->begin(), begin_disable),
-        std::distance(ftokens->begin(), end_disable));
-    VLOG(2) << "disabling tokens: " << disabled_token_indices;
-
-    // Mark tokens in the disabled range as preserving original spaces.
-    for (auto& ft : disable_range) {
-      VLOG(2) << "disable-format preserve spaces before: " << *ft.token;
-      ft.before.break_decision = verible::SpacingOptions::Preserve;
-    }
-
-    // kludge: When the disabled range immediately follows a //-style
-    // comment, skip past the trailing '\n' (not included in the comment
-    // token), which will be printed by the Emit() method, and preserve the
-    // whitespaces *beyond* that point up to the start of the following
-    // token's text.  This way, rendering the start of the format-disabled
-    // excerpt won't get redundant '\n's.
-    if (begin_disable != ftokens->begin() && begin_disable != end_disable) {
-      const auto prev_ftoken = std::prev(begin_disable);
-      if (prev_ftoken->token->token_enum() == TK_EOL_COMMENT) {
-        // consume the trailing '\n' from the preceding //-comment
-        ++begin_disable->before.preserved_space_start;
-      }
-    }
-    // start next iteration search from previous iteration's end
-    saved_iter = end_disable;
-  }
-}
-
 void Formatter::SelectLines(const LineNumberSet& lines) {
   disabled_ranges_ = EnabledLinesToDisabledByteRanges(
       lines, text_structure_.GetLineColumnMap());
@@ -490,8 +429,7 @@ Status Formatter::Format(const ExecutionControl& control) {
     // This must be done before any decisions about ExpandableTreeView
     // can be made because they depend on minimum-spacing, and must-break.
     AnnotateFormattingInformation(style_, text_structure_,
-                                  unwrapper_data.preformatted_tokens.begin(),
-                                  unwrapper_data.preformatted_tokens.end());
+                                  &unwrapper_data.preformatted_tokens);
 
     // Determine ranges of disabling the formatter, based on comment controls.
     disabled_ranges_.Union(DisableFormattingRanges(full_text, token_stream));
@@ -504,8 +442,8 @@ Status Formatter::Format(const ExecutionControl& control) {
     }
 
     // Disable formatting ranges.
-    PreserveSpacesOnDisabledTokenRanges(&unwrapper_data.preformatted_tokens,
-                                        disabled_ranges_, full_text);
+    verible::PreserveSpacesOnDisabledTokenRanges(
+        &unwrapper_data.preformatted_tokens, disabled_ranges_, full_text);
 
     // Partition PreFormatTokens into candidate unwrapped lines.
     format_tokens_partitions = tree_unwrapper.Unwrap();

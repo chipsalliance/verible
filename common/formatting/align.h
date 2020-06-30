@@ -19,6 +19,7 @@
 #include <vector>
 
 #include "absl/strings/string_view.h"
+#include "common/formatting/format_token.h"
 #include "common/formatting/token_partition_tree.h"
 #include "common/strings/position.h"  // for ByteOffsetSet
 #include "common/text/token_info.h"
@@ -175,8 +176,7 @@ struct AlignedFormattingHandler {
 // Other parameters:
 // 'full_text' is the string_view buffer of whole text being formatted, not just
 // the text spanned by 'partition_ptr'.
-// 'ftoken_base' should be very first mutable iterator into the whole
-// array of PreFormatTokens that spans 'full_text'.
+// 'ftokens' points to the array of PreFormatTokens that spans 'full_text'.
 // 'column_limit' is the column width beyond which the aligner should fallback
 // to a safer action, e.g. refusing to align and leaving spacing untouched.
 //
@@ -199,7 +199,7 @@ struct AlignedFormattingHandler {
 //
 void TabularAlignTokens(TokenPartitionTree* partition_ptr,
                         const AlignedFormattingHandler& alignment_handler,
-                        MutableFormatTokenRange::iterator ftoken_base,
+                        std::vector<PreFormatToken>* ftokens,
                         absl::string_view full_text,
                         const ByteOffsetSet& disabled_byte_ranges,
                         int column_limit);

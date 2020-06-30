@@ -55,9 +55,12 @@ cc_library(
     srcs = ["format_token.cc"],
     hdrs = ["format_token.h"],
     deps = [
+        "//common/strings:display_utils",
+        "//common/strings:position",
         "//common/strings:range",
         "//common/text:concrete_syntax_leaf",
         "//common/text:token_info",
+        "//common/util:container_iterator_range",
         "//common/util:logging",
         "//common/util:spacer",
         "@com_google_absl//absl/base:core_headers",
@@ -70,6 +73,8 @@ cc_test(
     srcs = ["format_token_test.cc"],
     deps = [
         ":format_token",
+        ":unwrapped_line",
+        ":unwrapped_line_test_utils",
         "//common/text:token_info",
         "//common/util:range",
         "@com_google_absl//absl/strings",

@@ -34,8 +34,7 @@ namespace formatter {
 // struct and return separate annotations.
 void AnnotateFormattingInformation(
     const FormatStyle& style, const verible::TextStructureView& text_structure,
-    std::vector<verible::PreFormatToken>::iterator tokens_begin,
-    std::vector<verible::PreFormatToken>::iterator tokens_end);
+    std::vector<verible::PreFormatToken>* format_tokens);
 
 // This interface is only provided for testing, without requiring a
 // TextStructureView.
@@ -46,8 +45,7 @@ void AnnotateFormattingInformation(
     const FormatStyle& style, const char* buffer_start,
     const verible::Symbol* syntax_tree_root,
     const verible::TokenInfo& eof_token,
-    std::vector<verible::PreFormatToken>::iterator tokens_begin,
-    std::vector<verible::PreFormatToken>::iterator tokens_end);
+    std::vector<verible::PreFormatToken>* format_tokens);
 
 }  // namespace formatter
 }  // namespace verilog

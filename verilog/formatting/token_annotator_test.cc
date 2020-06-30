@@ -1824,8 +1824,7 @@ TEST(TokenAnnotatorTest, AnnotateFormattingInfoTest) {
     // Since we're using the joined string buffer inside handler,
     // we need to pass an EOF token that points to the end of that buffer.
     AnnotateFormattingInformation(test_case.style, nullptr, nullptr,
-                                  handler.EOFToken(), ftokens_range.begin(),
-                                  ftokens_range.end());
+                                  handler.EOFToken(), &ftokens_range);
     EXPECT_TRUE(CorrectExpectedFormatTokens(test_case.expected_calculations,
                                             ftokens_range))
         << "mismatch at test case " << test_index << " of " << kTestCases.size()
