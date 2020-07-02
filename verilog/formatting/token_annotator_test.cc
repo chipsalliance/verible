@@ -177,6 +177,7 @@ struct AnnotateWithContextTestCase {
   FormatStyle style;
   verible::TokenInfo left_token;
   verible::TokenInfo right_token;
+  InitializedSyntaxTreeContext left_context;
   InitializedSyntaxTreeContext right_context;
   ExpectedInterTokenInfo expected_annotation;
 };
@@ -1842,12 +1843,14 @@ TEST(TokenAnnotatorTest, AnnotateFormattingWithContextTest) {
           {'=', "="},
           {verilog_tokentype::TK_StringLiteral, "\"hello\""},
           {},  // any context
+          {},  // any context
           {1, SpacingOptions::Undecided},
       },
       {
           DefaultStyle,
           {'=', "="},
           {verilog_tokentype::TK_EvalStringLiteral, "`\"hello`\""},
+          {},  // any context
           {},  // any context
           {1, SpacingOptions::Undecided},
       },
@@ -1857,12 +1860,14 @@ TEST(TokenAnnotatorTest, AnnotateFormattingWithContextTest) {
           {verilog_tokentype::TK_EOL_COMMENT, "//comment1"},
           {verilog_tokentype::PP_ifdef, "`ifdef"},
           {},  // any context
+          {},  // any context
           {1, SpacingOptions::MustWrap},
       },
       {
           DefaultStyle,
           {verilog_tokentype::SymbolIdentifier, "id"},
           {verilog_tokentype::PP_ifdef, "`ifdef"},
+          {},  // any context
           {},  // any context
           {1, SpacingOptions::MustWrap},
       },
@@ -1871,6 +1876,7 @@ TEST(TokenAnnotatorTest, AnnotateFormattingWithContextTest) {
           {';', ";"},
           {verilog_tokentype::PP_ifdef, "`ifdef"},
           {},  // any context
+          {},  // any context
           {1, SpacingOptions::MustWrap},
       },
       {
@@ -1878,12 +1884,14 @@ TEST(TokenAnnotatorTest, AnnotateFormattingWithContextTest) {
           {verilog_tokentype::PP_else, "`else"},
           {verilog_tokentype::PP_ifdef, "`ifdef"},
           {},  // any context
+          {},  // any context
           {1, SpacingOptions::MustWrap},
       },
       {
           DefaultStyle,
           {verilog_tokentype::PP_endif, "`endif"},
           {verilog_tokentype::PP_ifdef, "`ifdef"},
+          {},  // any context
           {},  // any context
           {1, SpacingOptions::MustWrap},
       },
@@ -1892,6 +1900,7 @@ TEST(TokenAnnotatorTest, AnnotateFormattingWithContextTest) {
           {verilog_tokentype::TK_EOL_COMMENT, "//comment1"},
           {verilog_tokentype::PP_ifndef, "`ifndef"},
           {},  // any context
+          {},  // any context
           {1, SpacingOptions::MustWrap},
       },
       {
@@ -1899,12 +1908,14 @@ TEST(TokenAnnotatorTest, AnnotateFormattingWithContextTest) {
           {verilog_tokentype::SymbolIdentifier, "id"},
           {verilog_tokentype::PP_ifndef, "`ifndef"},
           {},  // any context
+          {},  // any context
           {1, SpacingOptions::MustWrap},
       },
       {
           DefaultStyle,
           {';', ";"},
           {verilog_tokentype::PP_ifndef, "`ifndef"},
+          {},  // any context
           {},  // any context
           {1, SpacingOptions::MustWrap},
       },
@@ -1913,12 +1924,14 @@ TEST(TokenAnnotatorTest, AnnotateFormattingWithContextTest) {
           {SymbolIdentifier, "ID"},
           {verilog_tokentype::PP_else, "`else"},
           {},  // any context
+          {},  // any context
           {1, SpacingOptions::MustWrap},
       },
       {
           DefaultStyle,
           {';', ";"},
           {verilog_tokentype::PP_else, "`else"},
+          {},  // any context
           {},  // any context
           {1, SpacingOptions::MustWrap},
       },
@@ -1927,12 +1940,14 @@ TEST(TokenAnnotatorTest, AnnotateFormattingWithContextTest) {
           {verilog_tokentype::PP_endif, "`endif"},
           {verilog_tokentype::PP_else, "`else"},
           {},  // any context
+          {},  // any context
           {1, SpacingOptions::MustWrap},
       },
       {
           DefaultStyle,
           {verilog_tokentype::PP_include, "`include"},
           {TK_StringLiteral, "\"lost/file.svh\""},
+          {},                             // any context
           {},                             // any context
           {1, SpacingOptions::Undecided}, /* or MustAppend? */
       },
@@ -1941,6 +1956,7 @@ TEST(TokenAnnotatorTest, AnnotateFormattingWithContextTest) {
           {verilog_tokentype::PP_include, "`include"},
           {TK_EvalStringLiteral, "`\"lost/file.svh`\""},
           {},                             // any context
+          {},                             // any context
           {1, SpacingOptions::Undecided}, /* or MustAppend? */
       },
       {
@@ -1948,12 +1964,14 @@ TEST(TokenAnnotatorTest, AnnotateFormattingWithContextTest) {
           {TK_StringLiteral, "\"lost/file.svh\""},
           {verilog_tokentype::PP_include, "`include"},
           {},  // any context
+          {},  // any context
           {1, SpacingOptions::MustWrap},
       },
       {
           DefaultStyle,
           {verilog_tokentype::PP_else, "`else"},
           {verilog_tokentype::PP_include, "`include"},
+          {},  // any context
           {},  // any context
           {1, SpacingOptions::MustWrap},
       },
@@ -1962,12 +1980,14 @@ TEST(TokenAnnotatorTest, AnnotateFormattingWithContextTest) {
           {';', ";"},
           {verilog_tokentype::PP_include, "`include"},
           {},  // any context
+          {},  // any context
           {1, SpacingOptions::MustWrap},
       },
       {
           DefaultStyle,
           {SymbolIdentifier, "ID"},
           {verilog_tokentype::PP_include, "`include"},
+          {},  // any context
           {},  // any context
           {1, SpacingOptions::MustWrap},
       },
@@ -1976,12 +1996,14 @@ TEST(TokenAnnotatorTest, AnnotateFormattingWithContextTest) {
           {TK_StringLiteral, "\"lost/file.svh\""},
           {verilog_tokentype::PP_define, "`define"},
           {},  // any context
+          {},  // any context
           {1, SpacingOptions::MustWrap},
       },
       {
           DefaultStyle,
           {verilog_tokentype::PP_else, "`else"},
           {verilog_tokentype::PP_define, "`define"},
+          {},  // any context
           {},  // any context
           {1, SpacingOptions::MustWrap},
       },
@@ -1990,6 +2012,7 @@ TEST(TokenAnnotatorTest, AnnotateFormattingWithContextTest) {
           {';', ";"},
           {verilog_tokentype::PP_define, "`define"},
           {},  // any context
+          {},  // any context
           {1, SpacingOptions::MustWrap},
       },
       {
@@ -1997,12 +2020,14 @@ TEST(TokenAnnotatorTest, AnnotateFormattingWithContextTest) {
           {SymbolIdentifier, "ID"},
           {verilog_tokentype::PP_define, "`define"},
           {},  // any context
+          {},  // any context
           {1, SpacingOptions::MustWrap},
       },
       {
           DefaultStyle,
           {verilog_tokentype::PP_define, "`define"},
           {SymbolIdentifier, "ID"},
+          {},  // any context
           {},  // any context
           {1, SpacingOptions::MustAppend},
       },
@@ -2011,12 +2036,14 @@ TEST(TokenAnnotatorTest, AnnotateFormattingWithContextTest) {
           {TK_StringLiteral, "\"lost/file.svh\""},
           {verilog_tokentype::PP_undef, "`undef"},
           {},  // any context
+          {},  // any context
           {1, SpacingOptions::MustWrap},
       },
       {
           DefaultStyle,
           {verilog_tokentype::PP_else, "`else"},
           {verilog_tokentype::PP_undef, "`undef"},
+          {},  // any context
           {},  // any context
           {1, SpacingOptions::MustWrap},
       },
@@ -2025,12 +2052,14 @@ TEST(TokenAnnotatorTest, AnnotateFormattingWithContextTest) {
           {';', ";"},
           {verilog_tokentype::PP_undef, "`undef"},
           {},  // any context
+          {},  // any context
           {1, SpacingOptions::MustWrap},
       },
       {
           DefaultStyle,
           {SymbolIdentifier, "ID"},
           {verilog_tokentype::PP_undef, "`undef"},
+          {},  // any context
           {},  // any context
           {1, SpacingOptions::MustWrap},
       },
@@ -2039,6 +2068,7 @@ TEST(TokenAnnotatorTest, AnnotateFormattingWithContextTest) {
           {verilog_tokentype::TK_endfunction, "endfunction"},
           {verilog_tokentype::PP_undef, "`undef"},
           {},  // any context
+          {},  // any context
           {1, SpacingOptions::MustWrap},
       },
       {
@@ -2046,12 +2076,14 @@ TEST(TokenAnnotatorTest, AnnotateFormattingWithContextTest) {
           {verilog_tokentype::TK_end, "end"},
           {verilog_tokentype::PP_undef, "`undef"},
           {},  // any context
+          {},  // any context
           {1, SpacingOptions::MustWrap},
       },
       {
           DefaultStyle,
           {verilog_tokentype::MacroCallCloseToEndLine, ")"},
           {verilog_tokentype::PP_undef, "`undef"},
+          {},  // any context
           {},  // any context
           {1, SpacingOptions::MustWrap},
       },
@@ -2062,12 +2094,14 @@ TEST(TokenAnnotatorTest, AnnotateFormattingWithContextTest) {
           {verilog_tokentype::PP_Identifier, "FOO"},
           {verilog_tokentype::PP_define_body, ""}, /* empty */
           {},                                      // any context
+          {},                                      // any context
           {0, SpacingOptions::MustAppend},
       },
       {
           DefaultStyle,
           {verilog_tokentype::PP_Identifier, "FOO"},
           {verilog_tokentype::PP_define_body, "bar"},
+          {},  // any context
           {},  // any context
           {1, SpacingOptions::MustAppend},
       },
@@ -2076,12 +2110,14 @@ TEST(TokenAnnotatorTest, AnnotateFormattingWithContextTest) {
           {verilog_tokentype::PP_Identifier, "BAR"},
           {verilog_tokentype::PP_define_body, "13"},
           {},  // any context
+          {},  // any context
           {1, SpacingOptions::MustAppend},
       },
       {
           DefaultStyle,
           {verilog_tokentype::PP_Identifier, "BAR"},
           {verilog_tokentype::PP_define_body, "\\\n  bar"},
+          {},  // any context
           {},  // any context
           {1, SpacingOptions::MustAppend},
       },
@@ -2090,12 +2126,14 @@ TEST(TokenAnnotatorTest, AnnotateFormattingWithContextTest) {
           {')', ")"},
           {verilog_tokentype::PP_define_body, ""}, /* empty */
           {},                                      // any context
+          {},                                      // any context
           {0, SpacingOptions::MustAppend},
       },
       {
           DefaultStyle,
           {')', ")"},
           {verilog_tokentype::PP_define_body, "bar"},
+          {},  // any context
           {},  // any context
           {1, SpacingOptions::MustAppend},
       },
@@ -2104,12 +2142,14 @@ TEST(TokenAnnotatorTest, AnnotateFormattingWithContextTest) {
           {')', ")"},
           {verilog_tokentype::PP_define_body, "13"},
           {},  // any context
+          {},  // any context
           {1, SpacingOptions::MustAppend},
       },
       {
           DefaultStyle,
           {')', ")"},
           {verilog_tokentype::PP_define_body, "\\\n  bar"},
+          {},  // any context
           {},  // any context
           {1, SpacingOptions::MustAppend},
       },
@@ -2118,6 +2158,7 @@ TEST(TokenAnnotatorTest, AnnotateFormattingWithContextTest) {
           DefaultStyle,
           {')', ")"},
           {'{', "{"},
+          {},  // any context
           {},  // any context
           {1, SpacingOptions::Undecided},
       },
@@ -2128,6 +2169,7 @@ TEST(TokenAnnotatorTest, AnnotateFormattingWithContextTest) {
           {SymbolIdentifier, "ID"},
           {verilog_tokentype::MacroCallId, "`uvm_foo_macro"},
           {},  // any context
+          {},  // any context
           {1, SpacingOptions::Undecided},
       },
       {
@@ -2135,6 +2177,7 @@ TEST(TokenAnnotatorTest, AnnotateFormattingWithContextTest) {
           {SymbolIdentifier, "ID"},
           {verilog_tokentype::MacroIdentifier, "`uvm_foo_id"},
           {},  // any context
+          {},  // any context
           {1, SpacingOptions::Undecided},
       },
       {
@@ -2142,12 +2185,14 @@ TEST(TokenAnnotatorTest, AnnotateFormattingWithContextTest) {
           {';', ";"},
           {verilog_tokentype::MacroCallId, "`uvm_foo_macro"},
           {},  // any context
+          {},  // any context
           {1, SpacingOptions::Undecided},
       },
       {
           DefaultStyle,
           {';', ";"},
           {verilog_tokentype::MacroIdentifier, "`uvm_foo_id"},
+          {},  // any context
           {},  // any context
           {1, SpacingOptions::Undecided},
       },
@@ -2156,6 +2201,7 @@ TEST(TokenAnnotatorTest, AnnotateFormattingWithContextTest) {
           {TK_EOL_COMMENT, "//comment"},
           {verilog_tokentype::MacroCallId, "`uvm_foo_macro"},
           {},  // any context
+          {},  // any context
           {1, SpacingOptions::MustWrap},
       },
       {
@@ -2163,6 +2209,7 @@ TEST(TokenAnnotatorTest, AnnotateFormattingWithContextTest) {
           {TK_EOL_COMMENT, "//comment"},
           {verilog_tokentype::MacroIdentifier, "`uvm_foo_id"},
           {},  // any context
+          {},  // any context
           {1, SpacingOptions::MustWrap},
       },
       {
@@ -2170,12 +2217,14 @@ TEST(TokenAnnotatorTest, AnnotateFormattingWithContextTest) {
           {TK_COMMENT_BLOCK, "/*comment*/"},
           {verilog_tokentype::MacroCallId, "`uvm_foo_macro"},
           {},  // any context
+          {},  // any context
           {1, SpacingOptions::Undecided},
       },
       {
           DefaultStyle,
           {TK_COMMENT_BLOCK, "/*comment*/"},
           {verilog_tokentype::MacroIdentifier, "`uvm_foo_id"},
+          {},  // any context
           {},  // any context
           {1, SpacingOptions::Undecided},
       },
@@ -2184,6 +2233,7 @@ TEST(TokenAnnotatorTest, AnnotateFormattingWithContextTest) {
           {PP_else, "`else"},
           {verilog_tokentype::MacroCallId, "`uvm_foo_macro"},
           {},  // any context
+          {},  // any context
           {1, SpacingOptions::MustWrap},
       },
       {
@@ -2191,19 +2241,22 @@ TEST(TokenAnnotatorTest, AnnotateFormattingWithContextTest) {
           {PP_else, "`else"},
           {verilog_tokentype::MacroIdentifier, "`uvm_foo_id"},
           {},  // any context
-          {1, SpacingOptions::MustWrap},
-      },
-      {
-          DefaultStyle,
-          {PP_endif, "`endif"},
-          {verilog_tokentype::MacroCallId, "`uvm_foo_macro"},
           {},  // any context
           {1, SpacingOptions::MustWrap},
       },
       {
           DefaultStyle,
           {PP_endif, "`endif"},
+          {verilog_tokentype::MacroCallId, "`uvm_foo_macro"},
+          {},  // any context
+          {},  // any context
+          {1, SpacingOptions::MustWrap},
+      },
+      {
+          DefaultStyle,
+          {PP_endif, "`endif"},
           {verilog_tokentype::MacroIdentifier, "`uvm_foo_id"},
+          {},  // any context
           {},  // any context
           {1, SpacingOptions::MustWrap},
       },
@@ -2212,12 +2265,14 @@ TEST(TokenAnnotatorTest, AnnotateFormattingWithContextTest) {
           {verilog_tokentype::MacroCallId, "`uvm_foo_macro"},
           {verilog_tokentype::MacroCallId, "`uvm_foo_macro"},
           {},  // any context
+          {},  // any context
           {1, SpacingOptions::Undecided},
       },
       {
           DefaultStyle,
           {verilog_tokentype::MacroCallId, "`uvm_foo_macro"},
           {verilog_tokentype::MacroIdentifier, "`uvm_foo_id"},
+          {},  // any context
           {},  // any context
           {1, SpacingOptions::Undecided},
       },
@@ -2226,12 +2281,14 @@ TEST(TokenAnnotatorTest, AnnotateFormattingWithContextTest) {
           {verilog_tokentype::MacroIdentifier, "`uvm_foo_id"},
           {verilog_tokentype::MacroCallId, "`uvm_foo_macro"},
           {},  // any context
+          {},  // any context
           {1, SpacingOptions::Undecided},
       },
       {
           DefaultStyle,
           {verilog_tokentype::MacroIdentifier, "`uvm_foo_id"},
           {verilog_tokentype::MacroIdentifier, "`uvm_foo_id"},
+          {},  // any context
           {},  // any context
           {1, SpacingOptions::Undecided},
       },
@@ -2240,12 +2297,14 @@ TEST(TokenAnnotatorTest, AnnotateFormattingWithContextTest) {
           {')', ")"},
           {verilog_tokentype::MacroCallId, "`uvm_foo_macro"},
           {},  // any context
+          {},  // any context
           {1, SpacingOptions::Undecided},
       },
       {
           DefaultStyle,
           {')', ")"},
           {verilog_tokentype::MacroIdentifier, "`uvm_foo_id"},
+          {},  // any context
           {},  // any context
           {1, SpacingOptions::Undecided},
       },
@@ -2254,12 +2313,14 @@ TEST(TokenAnnotatorTest, AnnotateFormattingWithContextTest) {
           {verilog_tokentype::MacroCallCloseToEndLine, ")"},
           {verilog_tokentype::MacroCallId, "`uvm_foo_macro"},
           {},  // any context
+          {},  // any context
           {1, SpacingOptions::MustWrap},
       },
       {
           DefaultStyle,
           {verilog_tokentype::MacroCallCloseToEndLine, ")"},
           {verilog_tokentype::MacroIdentifier, "`uvm_foo_id"},
+          {},  // any context
           {},  // any context
           {1, SpacingOptions::MustWrap},
       },
@@ -2267,6 +2328,7 @@ TEST(TokenAnnotatorTest, AnnotateFormattingWithContextTest) {
           DefaultStyle,
           {verilog_tokentype::MacroCallCloseToEndLine, ")"},
           {';', ";"},
+          {},  // any context
           {},  // any context
           {0, SpacingOptions::Undecided},
       },
@@ -2277,12 +2339,14 @@ TEST(TokenAnnotatorTest, AnnotateFormattingWithContextTest) {
           {'-', "-"},                               // left token
           {verilog_tokentype::TK_DecNumber, "42"},  // right token
           {},                                       // context
+          {},                                       // context
           {1, SpacingOptions::Undecided},
       },
       {
           DefaultStyle,
           {'-', "-"},
           {verilog_tokentype::TK_DecNumber, "42"},
+          {},  // context
           {NodeEnum::kBinaryExpression},
           {1, SpacingOptions::Undecided},
       },
@@ -2292,6 +2356,7 @@ TEST(TokenAnnotatorTest, AnnotateFormattingWithContextTest) {
           DefaultStyle,
           {'-', "-"},                               // left token
           {verilog_tokentype::TK_DecNumber, "42"},  // right token
+          {},                                       // context
           {NodeEnum::kUnaryPrefixExpression},       // context
           {0, SpacingOptions::MustAppend},
       },
@@ -2299,6 +2364,7 @@ TEST(TokenAnnotatorTest, AnnotateFormattingWithContextTest) {
           DefaultStyle,
           {'-', "-"},
           {verilog_tokentype::SymbolIdentifier, "xyz"},
+          {},  // context
           {NodeEnum::kUnaryPrefixExpression},
           {0, SpacingOptions::MustAppend},
       },
@@ -2306,6 +2372,7 @@ TEST(TokenAnnotatorTest, AnnotateFormattingWithContextTest) {
           DefaultStyle,
           {'-', "-"},
           {'(', "("},
+          {},  // context
           {NodeEnum::kUnaryPrefixExpression},
           {0, SpacingOptions::MustAppend},
       },
@@ -2313,6 +2380,7 @@ TEST(TokenAnnotatorTest, AnnotateFormattingWithContextTest) {
           DefaultStyle,
           {'-', "-"},
           {verilog_tokentype::MacroIdItem, "`FOO"},
+          {},  // context
           {NodeEnum::kUnaryPrefixExpression},
           {0, SpacingOptions::MustAppend},
       },
@@ -2323,6 +2391,7 @@ TEST(TokenAnnotatorTest, AnnotateFormattingWithContextTest) {
           {'&', "&"},
           {'~', "~"},
           {},  // unspecified context
+          {},  // unspecified context
           {1, SpacingOptions::Undecided},
       },
 
@@ -2331,6 +2400,7 @@ TEST(TokenAnnotatorTest, AnnotateFormattingWithContextTest) {
           DefaultStyle,
           {'&', "&"},
           {verilog_tokentype::TK_DecNumber, "42"},
+          {/* any context */},
           {NodeEnum::kUnaryPrefixExpression},
           {0, SpacingOptions::MustAppend},
       },
@@ -2338,6 +2408,7 @@ TEST(TokenAnnotatorTest, AnnotateFormattingWithContextTest) {
           DefaultStyle,
           {'&', "&"},
           {verilog_tokentype::SymbolIdentifier, "foo"},
+          {/* any context */},
           {NodeEnum::kUnaryPrefixExpression},
           {0, SpacingOptions::MustAppend},
       },
@@ -2345,6 +2416,7 @@ TEST(TokenAnnotatorTest, AnnotateFormattingWithContextTest) {
           DefaultStyle,
           {'&', "&"},
           {'(', "("},
+          {/* any context */},
           {NodeEnum::kUnaryPrefixExpression},
           {0, SpacingOptions::MustAppend},
       },
@@ -2352,6 +2424,7 @@ TEST(TokenAnnotatorTest, AnnotateFormattingWithContextTest) {
           DefaultStyle,
           {'&', "&"},
           {'{', "{"},
+          {/* any context */},
           {NodeEnum::kUnaryPrefixExpression},
           {0, SpacingOptions::MustAppend},
       },
@@ -2361,7 +2434,8 @@ TEST(TokenAnnotatorTest, AnnotateFormattingWithContextTest) {
           DefaultStyle,
           {'|', "|"},
           {'~', "~"},
-          {},  // unspecified context
+          {/* any context */},
+          {/* any context */},
           {1, SpacingOptions::Undecided},
       },
 
@@ -2370,6 +2444,7 @@ TEST(TokenAnnotatorTest, AnnotateFormattingWithContextTest) {
           DefaultStyle,
           {'|', "|"},
           {verilog_tokentype::TK_DecNumber, "42"},
+          {/* any context */},
           {NodeEnum::kUnaryPrefixExpression},
           {0, SpacingOptions::MustAppend},
       },
@@ -2377,6 +2452,7 @@ TEST(TokenAnnotatorTest, AnnotateFormattingWithContextTest) {
           DefaultStyle,
           {'|', "|"},
           {verilog_tokentype::SymbolIdentifier, "foo"},
+          {/* any context */},
           {NodeEnum::kUnaryPrefixExpression},
           {0, SpacingOptions::MustAppend},
       },
@@ -2384,6 +2460,7 @@ TEST(TokenAnnotatorTest, AnnotateFormattingWithContextTest) {
           DefaultStyle,
           {'|', "|"},
           {'(', "("},
+          {/* any context */},
           {NodeEnum::kUnaryPrefixExpression},
           {0, SpacingOptions::MustAppend},
       },
@@ -2391,6 +2468,7 @@ TEST(TokenAnnotatorTest, AnnotateFormattingWithContextTest) {
           DefaultStyle,
           {'|', "|"},
           {'{', "{"},
+          {/* any context */},
           {NodeEnum::kUnaryPrefixExpression},
           {0, SpacingOptions::MustAppend},
       },
@@ -2400,7 +2478,8 @@ TEST(TokenAnnotatorTest, AnnotateFormattingWithContextTest) {
           DefaultStyle,
           {'^', "^"},
           {'~', "~"},
-          {},  // unspecified context
+          {/* any context */},
+          {/* any context */},
           {1, SpacingOptions::Undecided},
       },
 
@@ -2409,6 +2488,7 @@ TEST(TokenAnnotatorTest, AnnotateFormattingWithContextTest) {
           DefaultStyle,
           {'^', "^"},
           {verilog_tokentype::TK_DecNumber, "42"},
+          {/* any context */},
           {NodeEnum::kUnaryPrefixExpression},
           {0, SpacingOptions::MustAppend},
       },
@@ -2416,6 +2496,7 @@ TEST(TokenAnnotatorTest, AnnotateFormattingWithContextTest) {
           DefaultStyle,
           {'^', "^"},
           {verilog_tokentype::SymbolIdentifier, "foo"},
+          {/* any context */},
           {NodeEnum::kUnaryPrefixExpression},
           {0, SpacingOptions::MustAppend},
       },
@@ -2423,6 +2504,7 @@ TEST(TokenAnnotatorTest, AnnotateFormattingWithContextTest) {
           DefaultStyle,
           {'^', "^"},
           {'(', "("},
+          {/* any context */},
           {NodeEnum::kUnaryPrefixExpression},
           {0, SpacingOptions::MustAppend},
       },
@@ -2430,6 +2512,7 @@ TEST(TokenAnnotatorTest, AnnotateFormattingWithContextTest) {
           DefaultStyle,
           {'^', "^"},
           {'{', "{"},
+          {/* any context */},
           {NodeEnum::kUnaryPrefixExpression},
           {0, SpacingOptions::MustAppend},
       },
@@ -2439,6 +2522,7 @@ TEST(TokenAnnotatorTest, AnnotateFormattingWithContextTest) {
           DefaultStyle,
           {'~', "~"},
           {'(', "("},
+          {/* any context */},
           {NodeEnum::kUnaryPrefixExpression},
           {0, SpacingOptions::MustAppend},
       },
@@ -2446,6 +2530,7 @@ TEST(TokenAnnotatorTest, AnnotateFormattingWithContextTest) {
           DefaultStyle,
           {'~', "~"},
           {verilog_tokentype::SymbolIdentifier, "foo"},
+          {/* any context */},
           {NodeEnum::kUnaryPrefixExpression},
           {0, SpacingOptions::MustAppend},
       },
@@ -2456,12 +2541,14 @@ TEST(TokenAnnotatorTest, AnnotateFormattingWithContextTest) {
           {verilog_tokentype::TK_POUNDPOUND, "##"},
           {'(', "("},
           {/* any context */},
+          {/* any context */},
           {0, SpacingOptions::MustAppend},
       },
       {
           DefaultStyle,
           {verilog_tokentype::TK_POUNDPOUND, "##"},
           {verilog_tokentype::TK_DecNumber, "10"},
+          {/* any context */},
           {/* any context */},
           {0, SpacingOptions::MustAppend},
       },
@@ -2470,12 +2557,14 @@ TEST(TokenAnnotatorTest, AnnotateFormattingWithContextTest) {
           {verilog_tokentype::TK_POUNDPOUND, "##"},
           {verilog_tokentype::SymbolIdentifier, "x_delay"},
           {/* any context */},
+          {/* any context */},
           {0, SpacingOptions::MustAppend},
       },
       {
           DefaultStyle,
           {verilog_tokentype::TK_POUNDPOUND, "##"},
           {verilog_tokentype::MacroIdentifier, "`X_DELAY"},
+          {/* any context */},
           {/* any context */},
           {0, SpacingOptions::MustAppend},
       },
@@ -2484,12 +2573,14 @@ TEST(TokenAnnotatorTest, AnnotateFormattingWithContextTest) {
           {verilog_tokentype::TK_POUNDPOUND, "##"},
           {verilog_tokentype::TK_LP, "'{"},
           {/* any context */},
+          {/* any context */},
           {0, SpacingOptions::MustAppend},
       },
       {
           DefaultStyle,
           {verilog_tokentype::TK_POUNDPOUND, "##"},
           {'[', "["},
+          {/* any context */},
           {/* any context */},
           {0, SpacingOptions::MustAppend},
       },
@@ -2498,12 +2589,14 @@ TEST(TokenAnnotatorTest, AnnotateFormattingWithContextTest) {
           {verilog_tokentype::TK_POUNDPOUND, "##"},
           {verilog_tokentype::TK_LBSTARRB, "[*]"},
           {/* any context */},
+          {/* any context */},
           {0, SpacingOptions::MustAppend},
       },
       {
           DefaultStyle,
           {verilog_tokentype::TK_POUNDPOUND, "##"},
           {verilog_tokentype::TK_LBPLUSRB, "[+]"},
+          {/* any context */},
           {/* any context */},
           {0, SpacingOptions::MustAppend},
       },
@@ -2512,12 +2605,14 @@ TEST(TokenAnnotatorTest, AnnotateFormattingWithContextTest) {
           {verilog_tokentype::SymbolIdentifier, "predicate"},
           {verilog_tokentype::TK_POUNDPOUND, "##"},
           {/* any context */},
+          {/* any context */},
           {1, SpacingOptions::Undecided},
       },
       {
           DefaultStyle,
           {')', ")"},
           {verilog_tokentype::TK_POUNDPOUND, "##"},
+          {/* any context */},
           {/* any context */},
           {1, SpacingOptions::Undecided},
       },
@@ -2526,12 +2621,14 @@ TEST(TokenAnnotatorTest, AnnotateFormattingWithContextTest) {
           {'(', "("},
           {verilog_tokentype::TK_POUNDPOUND, "##"},
           {/* any context */},
+          {/* any context */},
           {0, SpacingOptions::Undecided},
       },
       {
           DefaultStyle,
           {verilog_tokentype::TK_and, "and"},
           {verilog_tokentype::TK_POUNDPOUND, "##"},
+          {/* any context */},
           {/* any context */},
           {1, SpacingOptions::Undecided},
       },
@@ -2540,12 +2637,14 @@ TEST(TokenAnnotatorTest, AnnotateFormattingWithContextTest) {
           {verilog_tokentype::TK_or, "or"},
           {verilog_tokentype::TK_POUNDPOUND, "##"},
           {/* any context */},
+          {/* any context */},
           {1, SpacingOptions::Undecided},
       },
       {
           DefaultStyle,
           {verilog_tokentype::TK_intersect, "intersect"},
           {verilog_tokentype::TK_POUNDPOUND, "##"},
+          {/* any context */},
           {/* any context */},
           {1, SpacingOptions::Undecided},
       },
@@ -2554,12 +2653,14 @@ TEST(TokenAnnotatorTest, AnnotateFormattingWithContextTest) {
           {verilog_tokentype::TK_throughout, "throughout"},
           {verilog_tokentype::TK_POUNDPOUND, "##"},
           {/* any context */},
+          {/* any context */},
           {1, SpacingOptions::Undecided},
       },
       {
           DefaultStyle,
           {verilog_tokentype::TK_within, "within"},
           {verilog_tokentype::TK_POUNDPOUND, "##"},
+          {/* any context */},
           {/* any context */},
           {1, SpacingOptions::Undecided},
       },
@@ -2569,6 +2670,7 @@ TEST(TokenAnnotatorTest, AnnotateFormattingWithContextTest) {
           DefaultStyle,
           {'~', "~"},
           {'~', "~"},
+          {/* any context */},
           {NodeEnum::kUnaryPrefixExpression},
           {0, SpacingOptions::MustAppend},
       },
@@ -2579,12 +2681,14 @@ TEST(TokenAnnotatorTest, AnnotateFormattingWithContextTest) {
           {TK_TRIGGER, "->"},
           {verilog_tokentype::SymbolIdentifier, "a"},
           {/* any context */},             // context
+          {/* any context */},             // context
           {0, SpacingOptions::Undecided},  // could be MustAppend though
       },
       {
           DefaultStyle,
           {TK_NONBLOCKING_TRIGGER, "->>"},
           {verilog_tokentype::SymbolIdentifier, "a"},
+          {/* any context */},             // context
           {/* any context */},             // context
           {0, SpacingOptions::Undecided},  // could be MustAppend though
       },
@@ -2595,12 +2699,14 @@ TEST(TokenAnnotatorTest, AnnotateFormattingWithContextTest) {
           {TK_LOGICAL_IMPLIES, "->"},
           {verilog_tokentype::SymbolIdentifier, "right"},
           {/* any context */},  // context
+          {/* any context */},  // context
           {1, SpacingOptions::Undecided},
       },
       {
           DefaultStyle,
           {verilog_tokentype::SymbolIdentifier, "left"},
           {TK_LOGICAL_IMPLIES, "->"},
+          {/* any context */},  // context
           {/* any context */},  // context
           {1, SpacingOptions::Undecided},
       },
@@ -2609,12 +2715,14 @@ TEST(TokenAnnotatorTest, AnnotateFormattingWithContextTest) {
           {TK_CONSTRAINT_IMPLIES, "->"},
           {verilog_tokentype::SymbolIdentifier, "right"},
           {/* any context */},  // context
+          {/* any context */},  // context
           {1, SpacingOptions::Undecided},
       },
       {
           DefaultStyle,
           {verilog_tokentype::SymbolIdentifier, "left"},
           {TK_CONSTRAINT_IMPLIES, "->"},
+          {/* any context */},  // context
           {/* any context */},  // context
           {1, SpacingOptions::Undecided},
       },
@@ -2624,20 +2732,23 @@ TEST(TokenAnnotatorTest, AnnotateFormattingWithContextTest) {
           DefaultStyle,
           {'*', "*"},
           {verilog_tokentype::SymbolIdentifier, "foo"},
-          {},
+          {/* any context */},
+          {/* any context */},
           {1, SpacingOptions::Undecided},
       },
       {
           DefaultStyle,
           {verilog_tokentype::SymbolIdentifier, "foo"},
           {'*', "*"},
-          {},
+          {/* any context */},
+          {/* any context */},
           {1, SpacingOptions::Undecided},
       },
       {
           DefaultStyle,
           {'*', "*"},
           {verilog_tokentype::SymbolIdentifier, "foo"},
+          {/* any context */},
           {NodeEnum::kDimensionRange},
           {1, SpacingOptions::Preserve},
       },
@@ -2645,6 +2756,7 @@ TEST(TokenAnnotatorTest, AnnotateFormattingWithContextTest) {
           DefaultStyle,
           {verilog_tokentype::SymbolIdentifier, "foo"},
           {'*', "*"},
+          {/* any context */},
           {NodeEnum::kDimensionRange},
           {1, SpacingOptions::Preserve},
       },
@@ -2652,6 +2764,7 @@ TEST(TokenAnnotatorTest, AnnotateFormattingWithContextTest) {
           DefaultStyle,
           {':', ":"},
           {verilog_tokentype::SymbolIdentifier, "foo"},
+          {/* any context */},
           {NodeEnum::kDimensionRange},
           {0, SpacingOptions::Undecided},
       },
@@ -2659,6 +2772,7 @@ TEST(TokenAnnotatorTest, AnnotateFormattingWithContextTest) {
           DefaultStyle,
           {verilog_tokentype::SymbolIdentifier, "foo"},
           {':', ":"},
+          {/* any context */},
           {NodeEnum::kDimensionRange},
           {0, SpacingOptions::Undecided},
       },
@@ -2669,6 +2783,7 @@ TEST(TokenAnnotatorTest, AnnotateFormattingWithContextTest) {
           {']', "]"},
           {'[', "["},
           {},  // any context
+          {},  // any context
           {0, SpacingOptions::Undecided},
       },
 
@@ -2677,13 +2792,15 @@ TEST(TokenAnnotatorTest, AnnotateFormattingWithContextTest) {
           DefaultStyle,
           {verilog_tokentype::TK_logic, "logic"},
           {'[', "["},
-          {},  // unspecified context
+          {/* any context */},
+          {/* any context */},
           {0, SpacingOptions::Undecided},
       },
       {
           DefaultStyle,
           {verilog_tokentype::SymbolIdentifier, "mytype1"},
           {'[', "["},
+          {/* any context */},
           {},  // unspecified context, this covers index expressions
           {0, SpacingOptions::Undecided},
       },
@@ -2691,6 +2808,7 @@ TEST(TokenAnnotatorTest, AnnotateFormattingWithContextTest) {
           DefaultStyle,
           {verilog_tokentype::TK_logic, "logic"},
           {'[', "["},
+          {/* any context */},
           {NodeEnum::kPackedDimensions},
           {1, SpacingOptions::Undecided},
       },
@@ -2698,6 +2816,7 @@ TEST(TokenAnnotatorTest, AnnotateFormattingWithContextTest) {
           DefaultStyle,
           {verilog_tokentype::SymbolIdentifier, "mytype2"},
           {'[', "["},
+          {/* any context */},
           {NodeEnum::kPackedDimensions},
           {1, SpacingOptions::Undecided},
       },
@@ -2705,6 +2824,7 @@ TEST(TokenAnnotatorTest, AnnotateFormattingWithContextTest) {
           DefaultStyle,
           {verilog_tokentype::SymbolIdentifier, "id1"},
           {'[', "["},
+          {/* any context */},
           {NodeEnum::kPackedDimensions, NodeEnum::kExpression},
           {0, SpacingOptions::Undecided},
       },
@@ -2714,13 +2834,15 @@ TEST(TokenAnnotatorTest, AnnotateFormattingWithContextTest) {
           DefaultStyle,
           {']', "]"},
           {verilog_tokentype::SymbolIdentifier, "id_a"},
-          {},  // unspecified context
+          {/* any context */},
+          {/* any context */},
           {1, SpacingOptions::Undecided},
       },
       {
           DefaultStyle,
           {']', "]"},
           {verilog_tokentype::SymbolIdentifier, "id_b"},
+          {/* any context */},
           {NodeEnum::kUnqualifiedId},
           {1, SpacingOptions::Undecided},
       },
@@ -2728,6 +2850,7 @@ TEST(TokenAnnotatorTest, AnnotateFormattingWithContextTest) {
           DefaultStyle,
           {']', "]"},
           {verilog_tokentype::SymbolIdentifier, "id_c"},
+          {/* any context */},
           {NodeEnum::kDataTypeImplicitBasicIdDimensions,
            NodeEnum::kUnqualifiedId},
           {1, SpacingOptions::Undecided},
@@ -2738,6 +2861,7 @@ TEST(TokenAnnotatorTest, AnnotateFormattingWithContextTest) {
           DefaultStyle,
           {verilog_tokentype::SymbolIdentifier, "foo"},
           {'(', "("},
+          {/* any context */},
           {/* unspecified context */},
           {0, SpacingOptions::Undecided},
       },
@@ -2745,6 +2869,7 @@ TEST(TokenAnnotatorTest, AnnotateFormattingWithContextTest) {
           DefaultStyle,
           {verilog_tokentype::SymbolIdentifier, "foo"},
           {'(', "("},
+          {/* any context */},
           {NodeEnum::kModuleHeader},
           {1, SpacingOptions::Undecided},
       },
@@ -2754,6 +2879,7 @@ TEST(TokenAnnotatorTest, AnnotateFormattingWithContextTest) {
           DefaultStyle,
           {verilog_tokentype::SymbolIdentifier, "foo"},
           {'(', "("},
+          {/* any context */},
           {NodeEnum::kGateInstance},
           {1, SpacingOptions::Undecided},
       },
@@ -2761,6 +2887,7 @@ TEST(TokenAnnotatorTest, AnnotateFormattingWithContextTest) {
           DefaultStyle,
           {verilog_tokentype::SymbolIdentifier, "foo"},
           {'(', "("},
+          {/* any context */},
           {NodeEnum::kPrimitiveGateInstance},
           {1, SpacingOptions::Undecided},
       },
@@ -2768,6 +2895,7 @@ TEST(TokenAnnotatorTest, AnnotateFormattingWithContextTest) {
           DefaultStyle,
           {verilog_tokentype::SymbolIdentifier, "foo"},
           {'(', "("},
+          {/* any context */},
           {NodeEnum::kActualNamedPort},
           {0, SpacingOptions::Undecided},
       },
@@ -2775,6 +2903,7 @@ TEST(TokenAnnotatorTest, AnnotateFormattingWithContextTest) {
           DefaultStyle,
           {verilog_tokentype::SymbolIdentifier, "foo"},
           {'(', "("},
+          {/* any context */},
           {NodeEnum::kGateInstance, NodeEnum::kActualNamedPort},
           {0, SpacingOptions::Undecided},
       },
@@ -2782,6 +2911,7 @@ TEST(TokenAnnotatorTest, AnnotateFormattingWithContextTest) {
           DefaultStyle,
           {verilog_tokentype::SymbolIdentifier, "foo"},
           {'(', "("},
+          {/* any context */},
           {NodeEnum::kModuleHeader, NodeEnum::kPort},
           {0, SpacingOptions::Undecided},
       },
@@ -2793,6 +2923,7 @@ TEST(TokenAnnotatorTest, AnnotateFormattingWithContextTest) {
           DefaultStyle,
           {verilog_tokentype::SymbolIdentifier, "x"},
           {':', ":"},
+          {/* any context */},
           {/* unspecified context */},
           kUnhandledSpacing,
       },
@@ -2801,6 +2932,7 @@ TEST(TokenAnnotatorTest, AnnotateFormattingWithContextTest) {
           DefaultStyle,
           {verilog_tokentype::SymbolIdentifier, "b"},
           {':', ":"},
+          {/* any context */},
           {NodeEnum::kTernaryExpression},
           {1, SpacingOptions::Undecided},
       },
@@ -2809,6 +2941,7 @@ TEST(TokenAnnotatorTest, AnnotateFormattingWithContextTest) {
           DefaultStyle,
           {verilog_tokentype::TK_DecNumber, "111"},
           {':', ":"},
+          {/* any context */},
           {NodeEnum::kTernaryExpression},
           {1, SpacingOptions::Undecided},
       },
@@ -2817,6 +2950,7 @@ TEST(TokenAnnotatorTest, AnnotateFormattingWithContextTest) {
           DefaultStyle,
           {verilog_tokentype::TK_StringLiteral, "\"1\""},
           {':', ":"},
+          {/* any context */},
           {NodeEnum::kTernaryExpression},
           {1, SpacingOptions::Undecided},
       },
@@ -2825,6 +2959,7 @@ TEST(TokenAnnotatorTest, AnnotateFormattingWithContextTest) {
           DefaultStyle,
           {')', ":"},
           {':', ":"},
+          {/* any context */},
           {NodeEnum::kTernaryExpression},
           {1, SpacingOptions::Undecided},
       },
@@ -2833,6 +2968,7 @@ TEST(TokenAnnotatorTest, AnnotateFormattingWithContextTest) {
           DefaultStyle,
           {'}', "}"},
           {':', ":"},
+          {/* any context */},
           {NodeEnum::kTernaryExpression},
           {1, SpacingOptions::Undecided},
       },
@@ -2841,6 +2977,7 @@ TEST(TokenAnnotatorTest, AnnotateFormattingWithContextTest) {
           DefaultStyle,
           {':', ":"},
           {'{', "{"},
+          {/* any context */},
           {NodeEnum::kTernaryExpression},
           {1, SpacingOptions::Undecided},
       },
@@ -2850,6 +2987,7 @@ TEST(TokenAnnotatorTest, AnnotateFormattingWithContextTest) {
           DefaultStyle,
           {':', ":"},
           {verilog_tokentype::SymbolIdentifier, "x"},
+          {/* any context */},
           {/* unspecified context */},
           {1, SpacingOptions::Undecided},
       },
@@ -2858,6 +2996,7 @@ TEST(TokenAnnotatorTest, AnnotateFormattingWithContextTest) {
           DefaultStyle,
           {':', ":"},
           {verilog_tokentype::SymbolIdentifier, "c"},
+          {/* any context */},
           {NodeEnum::kTernaryExpression},
           {1, SpacingOptions::Undecided},
       },
@@ -2866,6 +3005,7 @@ TEST(TokenAnnotatorTest, AnnotateFormattingWithContextTest) {
           DefaultStyle,
           {':', ":"},
           {verilog_tokentype::TK_DecNumber, "7"},
+          {/* any context */},
           {NodeEnum::kTernaryExpression},
           {1, SpacingOptions::Undecided},
       },
@@ -2874,6 +3014,7 @@ TEST(TokenAnnotatorTest, AnnotateFormattingWithContextTest) {
           DefaultStyle,
           {':', ":"},
           {verilog_tokentype::TK_StringLiteral, "\"7\""},
+          {/* any context */},
           {NodeEnum::kTernaryExpression},
           {1, SpacingOptions::Undecided},
       },
@@ -2882,6 +3023,7 @@ TEST(TokenAnnotatorTest, AnnotateFormattingWithContextTest) {
           DefaultStyle,
           {':', ":"},
           {'(', "("},
+          {/* any context */},
           {NodeEnum::kTernaryExpression},
           {1, SpacingOptions::Undecided},
       },
@@ -2894,6 +3036,7 @@ TEST(TokenAnnotatorTest, AnnotateFormattingWithContextTest) {
           {verilog_tokentype::TK_begin, "begin"},
           {':', ":"},
           {/* unspecified context */},
+          {/* unspecified context */},
           {1, SpacingOptions::Undecided},
       },
       {
@@ -2901,6 +3044,7 @@ TEST(TokenAnnotatorTest, AnnotateFormattingWithContextTest) {
           DefaultStyle,
           {':', ":"},
           {verilog_tokentype::TK_begin, "begin"},
+          {/* unspecified context */},
           {/* unspecified context */},
           {1, SpacingOptions::Undecided},
       },
@@ -2910,6 +3054,7 @@ TEST(TokenAnnotatorTest, AnnotateFormattingWithContextTest) {
           {verilog_tokentype::TK_fork, "fork"},
           {':', ":"},
           {/* unspecified context */},
+          {/* unspecified context */},
           {1, SpacingOptions::Undecided},
       },
       {
@@ -2917,6 +3062,7 @@ TEST(TokenAnnotatorTest, AnnotateFormattingWithContextTest) {
           DefaultStyle,
           {verilog_tokentype::TK_end, "end"},
           {':', ":"},
+          {/* unspecified context */},
           {/* unspecified context */},
           {1, SpacingOptions::Undecided},
       },
@@ -2926,6 +3072,7 @@ TEST(TokenAnnotatorTest, AnnotateFormattingWithContextTest) {
           {verilog_tokentype::TK_endclass, "endclass"},
           {':', ":"},
           {/* unspecified context */},
+          {/* unspecified context */},
           {1, SpacingOptions::Undecided},
       },
       {
@@ -2933,6 +3080,7 @@ TEST(TokenAnnotatorTest, AnnotateFormattingWithContextTest) {
           DefaultStyle,
           {verilog_tokentype::TK_endfunction, "endfunction"},
           {':', ":"},
+          {/* unspecified context */},
           {/* unspecified context */},
           {1, SpacingOptions::Undecided},
       },
@@ -2942,6 +3090,7 @@ TEST(TokenAnnotatorTest, AnnotateFormattingWithContextTest) {
           {verilog_tokentype::TK_endtask, "endtask"},
           {':', ":"},
           {/* unspecified context */},
+          {/* unspecified context */},
           {1, SpacingOptions::Undecided},
       },
       {
@@ -2949,6 +3098,7 @@ TEST(TokenAnnotatorTest, AnnotateFormattingWithContextTest) {
           DefaultStyle,
           {verilog_tokentype::TK_endmodule, "endmodule"},
           {':', ":"},
+          {/* unspecified context */},
           {/* unspecified context */},
           {1, SpacingOptions::Undecided},
       },
@@ -2958,6 +3108,7 @@ TEST(TokenAnnotatorTest, AnnotateFormattingWithContextTest) {
           {verilog_tokentype::TK_endpackage, "endpackage"},
           {':', ":"},
           {/* unspecified context */},
+          {/* unspecified context */},
           {1, SpacingOptions::Undecided},
       },
       {
@@ -2965,6 +3116,7 @@ TEST(TokenAnnotatorTest, AnnotateFormattingWithContextTest) {
           DefaultStyle,
           {verilog_tokentype::TK_endinterface, "endinterface"},
           {':', ":"},
+          {/* unspecified context */},
           {/* unspecified context */},
           {1, SpacingOptions::Undecided},
       },
@@ -2974,6 +3126,7 @@ TEST(TokenAnnotatorTest, AnnotateFormattingWithContextTest) {
           {verilog_tokentype::TK_endproperty, "endproperty"},
           {':', ":"},
           {/* unspecified context */},
+          {/* unspecified context */},
           {1, SpacingOptions::Undecided},
       },
       {
@@ -2981,6 +3134,7 @@ TEST(TokenAnnotatorTest, AnnotateFormattingWithContextTest) {
           DefaultStyle,
           {verilog_tokentype::TK_endclocking, "endclocking"},
           {':', ":"},
+          {/* unspecified context */},
           {/* unspecified context */},
           {1, SpacingOptions::Undecided},
       },
@@ -2993,6 +3147,7 @@ TEST(TokenAnnotatorTest, AnnotateFormattingWithContextTest) {
           {verilog_tokentype::SymbolIdentifier, "id"},
           {':', ":"},
           {/* unspecified context */},
+          {/* unspecified context */},
           kUnhandledSpacing,
       },
       {
@@ -3000,6 +3155,7 @@ TEST(TokenAnnotatorTest, AnnotateFormattingWithContextTest) {
           DefaultStyle,
           {verilog_tokentype::SymbolIdentifier, "id"},
           {':', ":"},
+          {/* unspecified context */},
           {NodeEnum::kBlockIdentifier},
           {1, SpacingOptions::Undecided},
       },
@@ -3008,6 +3164,7 @@ TEST(TokenAnnotatorTest, AnnotateFormattingWithContextTest) {
           DefaultStyle,
           {verilog_tokentype::SymbolIdentifier, "id"},
           {':', ":"},
+          {/* unspecified context */},
           {NodeEnum::kLabeledStatement},
           {1, SpacingOptions::Undecided},
       },
@@ -3016,6 +3173,7 @@ TEST(TokenAnnotatorTest, AnnotateFormattingWithContextTest) {
           DefaultStyle,
           {verilog_tokentype::SymbolIdentifier, "id"},
           {':', ":"},
+          {/* unspecified context */},
           {NodeEnum::kCaseItem},
           {0, SpacingOptions::Undecided},
       },
@@ -3024,6 +3182,7 @@ TEST(TokenAnnotatorTest, AnnotateFormattingWithContextTest) {
           DefaultStyle,
           {verilog_tokentype::SymbolIdentifier, "id"},
           {':', ":"},
+          {/* unspecified context */},
           {NodeEnum::kCaseInsideItem},
           {0, SpacingOptions::Undecided},
       },
@@ -3032,6 +3191,7 @@ TEST(TokenAnnotatorTest, AnnotateFormattingWithContextTest) {
           DefaultStyle,
           {verilog_tokentype::SymbolIdentifier, "id"},
           {':', ":"},
+          {/* unspecified context */},
           {NodeEnum::kCasePatternItem},
           {0, SpacingOptions::Undecided},
       },
@@ -3040,6 +3200,7 @@ TEST(TokenAnnotatorTest, AnnotateFormattingWithContextTest) {
           DefaultStyle,
           {verilog_tokentype::SymbolIdentifier, "id"},
           {':', ":"},
+          {/* unspecified context */},
           {NodeEnum::kGenerateCaseItem},
           {0, SpacingOptions::Undecided},
       },
@@ -3048,6 +3209,7 @@ TEST(TokenAnnotatorTest, AnnotateFormattingWithContextTest) {
           DefaultStyle,
           {verilog_tokentype::SymbolIdentifier, "id"},
           {':', ":"},
+          {/* unspecified context */},
           {NodeEnum::kPropertyCaseItem},
           {0, SpacingOptions::Undecided},
       },
@@ -3056,6 +3218,7 @@ TEST(TokenAnnotatorTest, AnnotateFormattingWithContextTest) {
           DefaultStyle,
           {verilog_tokentype::SymbolIdentifier, "id"},
           {':', ":"},
+          {/* unspecified context */},
           {NodeEnum::kRandSequenceCaseItem},
           {0, SpacingOptions::Undecided},
       },
@@ -3065,6 +3228,7 @@ TEST(TokenAnnotatorTest, AnnotateFormattingWithContextTest) {
           {':', ":"},
           {verilog_tokentype::SymbolIdentifier, "id"},
           {/* unspecified context */},
+          {/* unspecified context */},
           {1, SpacingOptions::Undecided},
       },
       {
@@ -3072,6 +3236,7 @@ TEST(TokenAnnotatorTest, AnnotateFormattingWithContextTest) {
           DefaultStyle,
           {':', ":"},
           {verilog_tokentype::SymbolIdentifier, "id"},
+          {/* unspecified context */},
           {NodeEnum::kLabel},
           {1, SpacingOptions::Undecided},
       },
@@ -3082,6 +3247,7 @@ TEST(TokenAnnotatorTest, AnnotateFormattingWithContextTest) {
           {verilog_tokentype::TK_DecNumber, "1"},
           {verilog_tokentype::TK_LS, "<<"},
           {/* unspecified context */},
+          {/* unspecified context */},
           {1, SpacingOptions::Undecided},
       },
       {
@@ -3089,6 +3255,7 @@ TEST(TokenAnnotatorTest, AnnotateFormattingWithContextTest) {
           DefaultStyle,
           {verilog_tokentype::TK_LS, "<<"},
           {verilog_tokentype::SymbolIdentifier, "width"},
+          {/* unspecified context */},
           {/* unspecified context */},
           {1, SpacingOptions::Undecided},
       },
@@ -3098,6 +3265,7 @@ TEST(TokenAnnotatorTest, AnnotateFormattingWithContextTest) {
           {verilog_tokentype::SymbolIdentifier, "bar"},
           {verilog_tokentype::TK_LS, "<<"},
           {/* unspecified context */},
+          {/* unspecified context */},
           {1, SpacingOptions::Undecided},
       },
       {
@@ -3105,6 +3273,7 @@ TEST(TokenAnnotatorTest, AnnotateFormattingWithContextTest) {
           DefaultStyle,
           {verilog_tokentype::TK_LS, "<<"},
           {verilog_tokentype::TK_DecNumber, "4"},
+          {/* unspecified context */},
           {/* unspecified context */},
           {1, SpacingOptions::Undecided},
       },
@@ -3114,6 +3283,7 @@ TEST(TokenAnnotatorTest, AnnotateFormattingWithContextTest) {
           {verilog_tokentype::MacroIdentifier, "`VAL"},
           {verilog_tokentype::TK_LS, "<<"},
           {/* unspecified context */},
+          {/* unspecified context */},
           {1, SpacingOptions::Undecided},
       },
       {
@@ -3122,6 +3292,7 @@ TEST(TokenAnnotatorTest, AnnotateFormattingWithContextTest) {
           {verilog_tokentype::TK_LS, "<<"},
           {verilog_tokentype::MacroIdentifier, "`SIZE"},
           {/* unspecified context */},
+          {/* unspecified context */},
           {1, SpacingOptions::Undecided},
       },
       {
@@ -3129,6 +3300,7 @@ TEST(TokenAnnotatorTest, AnnotateFormattingWithContextTest) {
           DefaultStyle,
           {verilog_tokentype::TK_DecNumber, "1"},
           {verilog_tokentype::TK_RS, ">>"},
+          {/* unspecified context */},
           {/* unspecified context */},
           {1, SpacingOptions::Undecided},
       },
@@ -3138,6 +3310,7 @@ TEST(TokenAnnotatorTest, AnnotateFormattingWithContextTest) {
           {verilog_tokentype::TK_RS, ">>"},
           {verilog_tokentype::SymbolIdentifier, "width"},
           {/* unspecified context */},
+          {/* unspecified context */},
           {1, SpacingOptions::Undecided},
       },
       {
@@ -3146,6 +3319,7 @@ TEST(TokenAnnotatorTest, AnnotateFormattingWithContextTest) {
           {verilog_tokentype::SymbolIdentifier, "bar"},
           {verilog_tokentype::TK_RS, ">>"},
           {/* unspecified context */},
+          {/* unspecified context */},
           {1, SpacingOptions::Undecided},
       },
       {
@@ -3153,6 +3327,7 @@ TEST(TokenAnnotatorTest, AnnotateFormattingWithContextTest) {
           DefaultStyle,
           {verilog_tokentype::TK_RS, ">>"},
           {verilog_tokentype::TK_DecNumber, "4"},
+          {/* unspecified context */},
           {/* unspecified context */},
           {1, SpacingOptions::Undecided},
       },
@@ -3162,6 +3337,7 @@ TEST(TokenAnnotatorTest, AnnotateFormattingWithContextTest) {
           {verilog_tokentype::MacroIdentifier, "`VAL"},
           {verilog_tokentype::TK_RS, ">>"},
           {/* unspecified context */},
+          {/* unspecified context */},
           {1, SpacingOptions::Undecided},
       },
       {
@@ -3169,6 +3345,7 @@ TEST(TokenAnnotatorTest, AnnotateFormattingWithContextTest) {
           DefaultStyle,
           {verilog_tokentype::TK_RS, ">>"},
           {verilog_tokentype::MacroIdentifier, "`SIZE"},
+          {/* unspecified context */},
           {/* unspecified context */},
           {1, SpacingOptions::Undecided},
       },
@@ -3178,6 +3355,7 @@ TEST(TokenAnnotatorTest, AnnotateFormattingWithContextTest) {
           DefaultStyle,
           {'=', "="},
           {'{', "{"},
+          {/* unspecified context */},
           {NodeEnum::kStreamingConcatenation},
           {1, SpacingOptions::Undecided},
       },
@@ -3186,6 +3364,7 @@ TEST(TokenAnnotatorTest, AnnotateFormattingWithContextTest) {
           DefaultStyle,
           {'{', "{"},
           {verilog_tokentype::TK_LS, "<<"},
+          {/* unspecified context */},
           {NodeEnum::kStreamingConcatenation},
           {0, SpacingOptions::Undecided},
       },
@@ -3194,6 +3373,7 @@ TEST(TokenAnnotatorTest, AnnotateFormattingWithContextTest) {
           DefaultStyle,
           {verilog_tokentype::TK_LS, "<<"},
           {'{', "{"},
+          {/* unspecified context */},
           {NodeEnum::kStreamingConcatenation},
           {0, SpacingOptions::Undecided},
       },
@@ -3202,6 +3382,7 @@ TEST(TokenAnnotatorTest, AnnotateFormattingWithContextTest) {
           DefaultStyle,
           {'{', "{"},
           {verilog_tokentype::SymbolIdentifier, "bar"},
+          {/* unspecified context */},
           {NodeEnum::kStreamingConcatenation},
           {0, SpacingOptions::Undecided},
       },
@@ -3210,6 +3391,7 @@ TEST(TokenAnnotatorTest, AnnotateFormattingWithContextTest) {
           DefaultStyle,
           {verilog_tokentype::SymbolIdentifier, "bar"},
           {'}', "}"},
+          {/* unspecified context */},
           {NodeEnum::kStreamingConcatenation},
           {0, SpacingOptions::Undecided},
       },
@@ -3218,6 +3400,7 @@ TEST(TokenAnnotatorTest, AnnotateFormattingWithContextTest) {
           DefaultStyle,
           {verilog_tokentype::TK_LS, "<<"},
           {verilog_tokentype::TK_DecNumber, "4"},
+          {/* unspecified context */},
           {NodeEnum::kStreamingConcatenation},
           {0, SpacingOptions::Undecided},
       },
@@ -3226,6 +3409,7 @@ TEST(TokenAnnotatorTest, AnnotateFormattingWithContextTest) {
           DefaultStyle,
           {verilog_tokentype::TK_DecNumber, "4"},
           {'{', "{"},
+          {/* unspecified context */},
           {NodeEnum::kStreamingConcatenation},
           {0, SpacingOptions::Undecided},
       },
@@ -3234,6 +3418,7 @@ TEST(TokenAnnotatorTest, AnnotateFormattingWithContextTest) {
           DefaultStyle,
           {verilog_tokentype::TK_LS, "<<"},
           {verilog_tokentype::TK_byte, "byte"},
+          {/* unspecified context */},
           {NodeEnum::kStreamingConcatenation},
           {0, SpacingOptions::Undecided},
       },
@@ -3242,6 +3427,7 @@ TEST(TokenAnnotatorTest, AnnotateFormattingWithContextTest) {
           DefaultStyle,
           {verilog_tokentype::TK_byte, "byte"},
           {'{', "{"},
+          {/* unspecified context */},
           {NodeEnum::kStreamingConcatenation},
           {0, SpacingOptions::Undecided},
       },
@@ -3250,6 +3436,7 @@ TEST(TokenAnnotatorTest, AnnotateFormattingWithContextTest) {
           DefaultStyle,
           {verilog_tokentype::TK_LS, "<<"},
           {verilog_tokentype::SymbolIdentifier, "type_t"},
+          {/* unspecified context */},
           {NodeEnum::kStreamingConcatenation},
           {0, SpacingOptions::Undecided},
       },
@@ -3258,6 +3445,7 @@ TEST(TokenAnnotatorTest, AnnotateFormattingWithContextTest) {
           DefaultStyle,
           {verilog_tokentype::SymbolIdentifier, "type_t"},
           {'{', "{"},
+          {/* unspecified context */},
           {NodeEnum::kStreamingConcatenation},
           {0, SpacingOptions::Undecided},
       },
@@ -3266,6 +3454,7 @@ TEST(TokenAnnotatorTest, AnnotateFormattingWithContextTest) {
           DefaultStyle,
           {verilog_tokentype::TK_LS, "<<"},
           {verilog_tokentype::MacroIdentifier, "`GET_TYPE"},
+          {/* unspecified context */},
           {NodeEnum::kStreamingConcatenation},
           {0, SpacingOptions::Undecided},
       },
@@ -3274,6 +3463,7 @@ TEST(TokenAnnotatorTest, AnnotateFormattingWithContextTest) {
           DefaultStyle,
           {verilog_tokentype::MacroIdentifier, "`GET_TYPE"},
           {'{', "{"},
+          {/* unspecified context */},
           {NodeEnum::kStreamingConcatenation},
           {0, SpacingOptions::Undecided},
       },
@@ -3282,6 +3472,7 @@ TEST(TokenAnnotatorTest, AnnotateFormattingWithContextTest) {
           DefaultStyle,
           {'=', "="},
           {'{', "{"},
+          {/* unspecified context */},
           {NodeEnum::kStreamingConcatenation},
           {1, SpacingOptions::Undecided},
       },
@@ -3290,6 +3481,7 @@ TEST(TokenAnnotatorTest, AnnotateFormattingWithContextTest) {
           DefaultStyle,
           {'{', "{"},
           {verilog_tokentype::TK_RS, ">>"},
+          {/* unspecified context */},
           {NodeEnum::kStreamingConcatenation},
           {0, SpacingOptions::Undecided},
       },
@@ -3298,6 +3490,7 @@ TEST(TokenAnnotatorTest, AnnotateFormattingWithContextTest) {
           DefaultStyle,
           {verilog_tokentype::TK_RS, ">>"},
           {'{', "{"},
+          {/* unspecified context */},
           {NodeEnum::kStreamingConcatenation},
           {0, SpacingOptions::Undecided},
       },
@@ -3306,6 +3499,7 @@ TEST(TokenAnnotatorTest, AnnotateFormattingWithContextTest) {
           DefaultStyle,
           {'{', "{"},
           {verilog_tokentype::SymbolIdentifier, "bar"},
+          {/* unspecified context */},
           {NodeEnum::kStreamingConcatenation},
           {0, SpacingOptions::Undecided},
       },
@@ -3314,6 +3508,7 @@ TEST(TokenAnnotatorTest, AnnotateFormattingWithContextTest) {
           DefaultStyle,
           {verilog_tokentype::SymbolIdentifier, "bar"},
           {'}', "}"},
+          {/* unspecified context */},
           {NodeEnum::kStreamingConcatenation},
           {0, SpacingOptions::Undecided},
       },
@@ -3322,6 +3517,7 @@ TEST(TokenAnnotatorTest, AnnotateFormattingWithContextTest) {
           DefaultStyle,
           {verilog_tokentype::TK_RS, ">>"},
           {verilog_tokentype::TK_DecNumber, "4"},
+          {/* unspecified context */},
           {NodeEnum::kStreamingConcatenation},
           {0, SpacingOptions::Undecided},
       },
@@ -3330,6 +3526,7 @@ TEST(TokenAnnotatorTest, AnnotateFormattingWithContextTest) {
           DefaultStyle,
           {verilog_tokentype::TK_DecNumber, "4"},
           {'{', "{"},
+          {/* unspecified context */},
           {NodeEnum::kStreamingConcatenation},
           {0, SpacingOptions::Undecided},
       },
@@ -3338,6 +3535,7 @@ TEST(TokenAnnotatorTest, AnnotateFormattingWithContextTest) {
           DefaultStyle,
           {verilog_tokentype::TK_RS, ">>"},
           {verilog_tokentype::TK_byte, "byte"},
+          {/* unspecified context */},
           {NodeEnum::kStreamingConcatenation},
           {0, SpacingOptions::Undecided},
       },
@@ -3346,6 +3544,7 @@ TEST(TokenAnnotatorTest, AnnotateFormattingWithContextTest) {
           DefaultStyle,
           {verilog_tokentype::TK_byte, "byte"},
           {'{', "{"},
+          {/* unspecified context */},
           {NodeEnum::kStreamingConcatenation},
           {0, SpacingOptions::Undecided},
       },
@@ -3354,6 +3553,7 @@ TEST(TokenAnnotatorTest, AnnotateFormattingWithContextTest) {
           DefaultStyle,
           {verilog_tokentype::TK_RS, ">>"},
           {verilog_tokentype::SymbolIdentifier, "type_t"},
+          {/* unspecified context */},
           {NodeEnum::kStreamingConcatenation},
           {0, SpacingOptions::Undecided},
       },
@@ -3362,6 +3562,7 @@ TEST(TokenAnnotatorTest, AnnotateFormattingWithContextTest) {
           DefaultStyle,
           {verilog_tokentype::SymbolIdentifier, "type_t"},
           {'{', "{"},
+          {/* unspecified context */},
           {NodeEnum::kStreamingConcatenation},
           {0, SpacingOptions::Undecided},
       },
@@ -3370,6 +3571,7 @@ TEST(TokenAnnotatorTest, AnnotateFormattingWithContextTest) {
           DefaultStyle,
           {verilog_tokentype::TK_RS, ">>"},
           {verilog_tokentype::MacroIdentifier, "`GET_TYPE"},
+          {/* unspecified context */},
           {NodeEnum::kStreamingConcatenation},
           {0, SpacingOptions::Undecided},
       },
@@ -3378,6 +3580,7 @@ TEST(TokenAnnotatorTest, AnnotateFormattingWithContextTest) {
           DefaultStyle,
           {verilog_tokentype::MacroIdentifier, "`GET_TYPE"},
           {'{', "{"},
+          {/* unspecified context */},
           {NodeEnum::kStreamingConcatenation},
           {0, SpacingOptions::Undecided},
       },
@@ -3387,6 +3590,7 @@ TEST(TokenAnnotatorTest, AnnotateFormattingWithContextTest) {
           DefaultStyle,
           {verilog_tokentype::TK_DecNumber, "1"},
           {':', ":"},
+          {/* unspecified context */},
           {NodeEnum::kSelectVariableDimension},
           // no spaces preceding ':' in unit test context
           {0, SpacingOptions::Undecided},
@@ -3396,6 +3600,7 @@ TEST(TokenAnnotatorTest, AnnotateFormattingWithContextTest) {
           DefaultStyle,
           {':', ":"},
           {verilog_tokentype::TK_DecNumber, "0"},
+          {/* unspecified context */},
           {NodeEnum::kSelectVariableDimension},
           // no spaces preceding ':' in unit test context
           {0, SpacingOptions::Undecided},
@@ -3405,6 +3610,7 @@ TEST(TokenAnnotatorTest, AnnotateFormattingWithContextTest) {
           DefaultStyle,
           {SymbolIdentifier, "a"},
           {':', ":"},
+          {/* unspecified context */},
           {NodeEnum::kSelectVariableDimension},
           // no spaces preceding ':' in unit test context
           {0, SpacingOptions::Undecided},
@@ -3414,6 +3620,7 @@ TEST(TokenAnnotatorTest, AnnotateFormattingWithContextTest) {
           DefaultStyle,
           {':', ":"},
           {SymbolIdentifier, "b"},
+          {/* unspecified context */},
           {NodeEnum::kSelectVariableDimension},
           // no spaces preceding ':' in unit test context
           {0, SpacingOptions::Undecided},
@@ -3423,6 +3630,7 @@ TEST(TokenAnnotatorTest, AnnotateFormattingWithContextTest) {
           DefaultStyle,
           {verilog_tokentype::TK_DecNumber, "1"},
           {':', ":"},
+          {/* unspecified context */},
           {NodeEnum::kDimensionRange},
           // no spaces preceding ':' in unit test context
           {0, SpacingOptions::Undecided},
@@ -3432,6 +3640,7 @@ TEST(TokenAnnotatorTest, AnnotateFormattingWithContextTest) {
           DefaultStyle,
           {':', ":"},
           {verilog_tokentype::TK_DecNumber, "0"},
+          {/* unspecified context */},
           {NodeEnum::kDimensionRange},
           // no spaces preceding ':' in unit test context
           {0, SpacingOptions::Undecided},
@@ -3441,6 +3650,7 @@ TEST(TokenAnnotatorTest, AnnotateFormattingWithContextTest) {
           DefaultStyle,
           {SymbolIdentifier, "a"},
           {':', ":"},
+          {/* unspecified context */},
           {NodeEnum::kDimensionRange},
           // no spaces preceding ':' in unit test context
           {0, SpacingOptions::Undecided},
@@ -3450,6 +3660,7 @@ TEST(TokenAnnotatorTest, AnnotateFormattingWithContextTest) {
           DefaultStyle,
           {':', ":"},
           {SymbolIdentifier, "b"},
+          {/* unspecified context */},
           {NodeEnum::kDimensionRange},
           // no spaces preceding ':' in unit test context
           {0, SpacingOptions::Undecided},
@@ -3459,6 +3670,7 @@ TEST(TokenAnnotatorTest, AnnotateFormattingWithContextTest) {
           DefaultStyle,
           {verilog_tokentype::TK_DecNumber, "1"},
           {':', ":"},
+          {/* unspecified context */},
           {NodeEnum::kDimensionSlice},
           // no spaces preceding ':' in unit test context
           {0, SpacingOptions::Undecided},
@@ -3468,6 +3680,7 @@ TEST(TokenAnnotatorTest, AnnotateFormattingWithContextTest) {
           DefaultStyle,
           {':', ":"},
           {verilog_tokentype::TK_DecNumber, "0"},
+          {/* unspecified context */},
           {NodeEnum::kDimensionSlice},
           // no spaces preceding ':' in unit test context
           {0, SpacingOptions::Undecided},
@@ -3477,6 +3690,7 @@ TEST(TokenAnnotatorTest, AnnotateFormattingWithContextTest) {
           DefaultStyle,
           {SymbolIdentifier, "a"},
           {':', ":"},
+          {/* unspecified context */},
           {NodeEnum::kDimensionSlice},
           // no spaces preceding ':' in unit test context
           {0, SpacingOptions::Undecided},
@@ -3486,6 +3700,7 @@ TEST(TokenAnnotatorTest, AnnotateFormattingWithContextTest) {
           DefaultStyle,
           {':', ":"},
           {SymbolIdentifier, "b"},
+          {/* unspecified context */},
           {NodeEnum::kDimensionSlice},
           // no spaces preceding ':' in unit test context
           {0, SpacingOptions::Undecided},
@@ -3495,6 +3710,7 @@ TEST(TokenAnnotatorTest, AnnotateFormattingWithContextTest) {
           DefaultStyle,
           {verilog_tokentype::TK_DecNumber, "1"},
           {':', ":"},
+          {/* any context */},
           {NodeEnum::kCycleDelayRange},
           // no spaces preceding ':' in unit test context
           {0, SpacingOptions::Undecided},
@@ -3504,6 +3720,7 @@ TEST(TokenAnnotatorTest, AnnotateFormattingWithContextTest) {
           DefaultStyle,
           {':', ":"},
           {verilog_tokentype::TK_DecNumber, "0"},
+          {/* any context */},
           {NodeEnum::kCycleDelayRange},
           // no spaces preceding ':' in unit test context
           {0, SpacingOptions::Undecided},
@@ -3513,6 +3730,7 @@ TEST(TokenAnnotatorTest, AnnotateFormattingWithContextTest) {
           DefaultStyle,
           {SymbolIdentifier, "a"},
           {':', ":"},
+          {/* any context */},
           {NodeEnum::kCycleDelayRange},
           // no spaces preceding ':' in unit test context
           {0, SpacingOptions::Undecided},
@@ -3522,6 +3740,7 @@ TEST(TokenAnnotatorTest, AnnotateFormattingWithContextTest) {
           DefaultStyle,
           {':', ":"},
           {SymbolIdentifier, "b"},
+          {/* any context */},
           {NodeEnum::kCycleDelayRange},
           // no spaces preceding ':' in unit test context
           {0, SpacingOptions::Undecided},
@@ -3531,6 +3750,7 @@ TEST(TokenAnnotatorTest, AnnotateFormattingWithContextTest) {
           DefaultStyle,
           {verilog_tokentype::TK_DecNumber, "1"},
           {':', ":"},
+          {/* unspecified context */},
           {NodeEnum::kValueRange},
           // no spaces preceding ':' in unit test context
           {1, SpacingOptions::Undecided},
@@ -3540,6 +3760,7 @@ TEST(TokenAnnotatorTest, AnnotateFormattingWithContextTest) {
           DefaultStyle,
           {':', ":"},
           {verilog_tokentype::TK_DecNumber, "0"},
+          {/* unspecified context */},
           {NodeEnum::kValueRange},
           // no spaces preceding ':' in unit test context
           {1, SpacingOptions::Undecided},
@@ -3549,6 +3770,7 @@ TEST(TokenAnnotatorTest, AnnotateFormattingWithContextTest) {
           DefaultStyle,
           {SymbolIdentifier, "a"},
           {':', ":"},
+          {/* unspecified context */},
           {NodeEnum::kValueRange},
           // no spaces preceding ':' in unit test context
           {1, SpacingOptions::Undecided},
@@ -3558,6 +3780,7 @@ TEST(TokenAnnotatorTest, AnnotateFormattingWithContextTest) {
           DefaultStyle,
           {':', ":"},
           {SymbolIdentifier, "b"},
+          {/* unspecified context */},
           {NodeEnum::kValueRange},
           // no spaces preceding ':' in unit test context
           {1, SpacingOptions::Undecided},
@@ -3568,6 +3791,7 @@ TEST(TokenAnnotatorTest, AnnotateFormattingWithContextTest) {
           DefaultStyle,
           {SymbolIdentifier, "foo_cp"},
           {':', ":"},
+          {/* unspecified context */},
           {NodeEnum::kCoverPoint},
           {0, SpacingOptions::Undecided},
       },
@@ -3576,6 +3800,7 @@ TEST(TokenAnnotatorTest, AnnotateFormattingWithContextTest) {
           DefaultStyle,
           {SymbolIdentifier, "cpaddr"},
           {'{', "{"},
+          {/* unspecified context */},
           {NodeEnum::kCoverPoint, NodeEnum::kBraceGroup},
           {1, SpacingOptions::Undecided},
       },
@@ -3586,12 +3811,14 @@ TEST(TokenAnnotatorTest, AnnotateFormattingWithContextTest) {
           {SymbolIdentifier, "id"},
           {'<', "<"},
           {},  // default context
+          {},  // default context
           {1, SpacingOptions::Undecided},
       },
       {
           DefaultStyle,
           {TK_DecNumber, "7"},
           {'<', "<"},
+          {},  // default context
           {},  // default context
           {1, SpacingOptions::Undecided},
       },
@@ -3600,12 +3827,14 @@ TEST(TokenAnnotatorTest, AnnotateFormattingWithContextTest) {
           {')', ")"},
           {'<', "<"},
           {},  // default context
+          {},  // default context
           {1, SpacingOptions::Undecided},
       },
       {
           DefaultStyle,
           {'<', "<"},
           {SymbolIdentifier, "id"},
+          {},  // default context
           {},  // default context
           {1, SpacingOptions::Undecided},
       },
@@ -3614,12 +3843,14 @@ TEST(TokenAnnotatorTest, AnnotateFormattingWithContextTest) {
           {'<', "<"},
           {TK_DecNumber, "7"},
           {},  // default context
+          {},  // default context
           {1, SpacingOptions::Undecided},
       },
       {
           DefaultStyle,
           {'<', "<"},
           {'(', "("},
+          {},  // default context
           {},  // default context
           {1, SpacingOptions::Undecided},
       },
@@ -3630,12 +3861,14 @@ TEST(TokenAnnotatorTest, AnnotateFormattingWithContextTest) {
           {SymbolIdentifier, "id"},
           {'>', ">"},
           {},  // default context
+          {},  // default context
           {1, SpacingOptions::Undecided},
       },
       {
           DefaultStyle,
           {TK_DecNumber, "7"},
           {'>', ">"},
+          {},  // default context
           {},  // default context
           {1, SpacingOptions::Undecided},
       },
@@ -3644,12 +3877,14 @@ TEST(TokenAnnotatorTest, AnnotateFormattingWithContextTest) {
           {')', ")"},
           {'>', ">"},
           {},  // default context
+          {},  // default context
           {1, SpacingOptions::Undecided},
       },
       {
           DefaultStyle,
           {'>', ">"},
           {SymbolIdentifier, "id"},
+          {},  // default context
           {},  // default context
           {1, SpacingOptions::Undecided},
       },
@@ -3658,12 +3893,14 @@ TEST(TokenAnnotatorTest, AnnotateFormattingWithContextTest) {
           {'>', ">"},
           {TK_DecNumber, "7"},
           {},  // default context
+          {},  // default context
           {1, SpacingOptions::Undecided},
       },
       {
           DefaultStyle,
           {'>', ">"},
           {'(', "("},
+          {},  // default context
           {},  // default context
           {1, SpacingOptions::Undecided},
       },
@@ -3674,12 +3911,14 @@ TEST(TokenAnnotatorTest, AnnotateFormattingWithContextTest) {
           {TK_always, "always"},
           {'@', "@"},
           {},  // default context
+          {},  // default context
           {1, SpacingOptions::Undecided},
       },
       {
           DefaultStyle,
           {SymbolIdentifier, "cblock"},
           {'@', "@"},
+          {},  // default context
           {},  // default context
           {1, SpacingOptions::Undecided},
       },
@@ -3689,6 +3928,7 @@ TEST(TokenAnnotatorTest, AnnotateFormattingWithContextTest) {
           {'@', "@"},
           {'(', "("},
           {},  // default context
+          {},  // default context
           {0, SpacingOptions::Undecided},
       },
       {
@@ -3696,12 +3936,14 @@ TEST(TokenAnnotatorTest, AnnotateFormattingWithContextTest) {
           {'@', "@"},
           {'*', "*"},  // not a binary operator in this case
           {},          // default context
+          {},          // default context
           {0, SpacingOptions::Undecided},
       },
       {
           DefaultStyle,
           {'@', "@"},
           {SymbolIdentifier, "clock_a"},
+          {},  // default context
           {},  // default context
           {0, SpacingOptions::Undecided},
       },
@@ -3712,7 +3954,24 @@ TEST(TokenAnnotatorTest, AnnotateFormattingWithContextTest) {
           {SymbolIdentifier, "id_before_pound"},
           {'#', "#"},
           {},  // default context
+          {},  // default context
                // no spaces preceding ':' in unit test context
+          {1, SpacingOptions::Undecided},
+      },
+      {
+          DefaultStyle,
+          {SymbolIdentifier, "id_before_pound"},
+          {'#', "#"},
+          {NodeEnum::kUnqualifiedId},
+          {},  // default context
+          {0, SpacingOptions::Undecided},
+      },
+      {
+          DefaultStyle,
+          {SymbolIdentifier, "id_before_pound"},
+          {'#', "#"},
+          {NodeEnum::kQualifiedId},
+          {},  // default context
           {1, SpacingOptions::Undecided},
       },
 
@@ -3722,12 +3981,14 @@ TEST(TokenAnnotatorTest, AnnotateFormattingWithContextTest) {
           {'}', "}"},
           {SymbolIdentifier, "id_before_open_brace"},
           {},  // default context
+          {},  // default context
           {1, SpacingOptions::Undecided},
       },
       {
           DefaultStyle,
           {'}', "}"},
           {',', ","},
+          {},  // default context
           {},  // default context
           {0, SpacingOptions::Undecided},
       },
@@ -3736,12 +3997,14 @@ TEST(TokenAnnotatorTest, AnnotateFormattingWithContextTest) {
           {'}', "}"},
           {';', ";"},
           {},  // default context
+          {},  // default context
           {0, SpacingOptions::Undecided},
       },
       {
           DefaultStyle,
           {'}', "}"},
           {'}', "}"},
+          {},  // default context
           {},  // default context
           {0, SpacingOptions::Undecided},
       },
@@ -3752,12 +4015,14 @@ TEST(TokenAnnotatorTest, AnnotateFormattingWithContextTest) {
           {SymbolIdentifier, "id_before_open_brace"},
           {'{', "{"},
           {},  // default context
+          {},  // default context
           {0, SpacingOptions::Undecided},
       },
       {
           DefaultStyle,
           {TK_unique, "unique"},
           {'{', "{"},
+          {},  // default context
           {},  // default context
           {1, SpacingOptions::Undecided},
       },
@@ -3766,6 +4031,7 @@ TEST(TokenAnnotatorTest, AnnotateFormattingWithContextTest) {
           {TK_with, "with"},
           {'{', "{"},
           {},  // default context
+          {},  // default context
           {1, SpacingOptions::Undecided},
       },
       {
@@ -3773,6 +4039,7 @@ TEST(TokenAnnotatorTest, AnnotateFormattingWithContextTest) {
           DefaultStyle,
           {SymbolIdentifier, "id_before_open_brace"},
           {'{', "{"},
+          {},  // default context
           {NodeEnum::kConstraintDeclaration, NodeEnum::kBraceGroup},
           {1, SpacingOptions::Undecided},
       },
@@ -3783,12 +4050,14 @@ TEST(TokenAnnotatorTest, AnnotateFormattingWithContextTest) {
           {';', ";"},
           {SymbolIdentifier, "id_after_semi"},
           {},  // default context
+          {},  // default context
           {1, SpacingOptions::Undecided},
       },
       {
           DefaultStyle,
           {SemicolonEndOfAssertionVariableDeclarations, ";"},
           {SymbolIdentifier, "id_after_semi"},
+          {},  // default context
           {},  // default context
           {1, SpacingOptions::Undecided},
       },
@@ -3799,12 +4068,14 @@ TEST(TokenAnnotatorTest, AnnotateFormattingWithContextTest) {
           {SymbolIdentifier, "id"},
           {';', ";"},
           {},  // default context
+          {},  // default context
           {0, SpacingOptions::Undecided},
       },
       {
           DefaultStyle,
           {SymbolIdentifier, "id"},
           {SemicolonEndOfAssertionVariableDeclarations, ";"},
+          {},  // default context
           {},  // default context
           {0, SpacingOptions::Undecided},
       },
@@ -3813,12 +4084,14 @@ TEST(TokenAnnotatorTest, AnnotateFormattingWithContextTest) {
           {')', ")"},
           {';', ";"},
           {},                              // default context
+          {},                              // default context
           {0, SpacingOptions::Undecided},  // could be MustAppend too
       },
       {
           DefaultStyle,
           {')', ")"},
           {SemicolonEndOfAssertionVariableDeclarations, ";"},
+          {},                              // default context
           {},                              // default context
           {0, SpacingOptions::Undecided},  // could be MustAppend too
       },
@@ -3829,6 +4102,7 @@ TEST(TokenAnnotatorTest, AnnotateFormattingWithContextTest) {
           {TK_DecNumber, "1"},
           {TK_begin, "begin"},
           {},  // default context
+          {},  // default context
           {1, SpacingOptions::Undecided},
       },
       {
@@ -3836,12 +4110,14 @@ TEST(TokenAnnotatorTest, AnnotateFormattingWithContextTest) {
           {TK_begin, "begin"},
           {TK_begin, "begin"},
           {},  // default context
+          {},  // default context
           {1, SpacingOptions::Undecided},
       },
       {
           DefaultStyle,
           {TK_begin, "begin"},
           {TK_end, "end"},
+          {},  // default context
           {},  // default context
           {1, SpacingOptions::MustWrap},
       },
@@ -3849,6 +4125,7 @@ TEST(TokenAnnotatorTest, AnnotateFormattingWithContextTest) {
           DefaultStyle,
           {TK_end, "end"},
           {TK_begin, "begin"},
+          {},  // default context
           {},  // default context
           {1, SpacingOptions::Undecided},
       },
@@ -3857,12 +4134,14 @@ TEST(TokenAnnotatorTest, AnnotateFormattingWithContextTest) {
           {TK_default, "default"},
           {TK_clocking, "clocking"},
           {},  // default context
+          {},  // default context
           {1, SpacingOptions::Undecided},
       },
       {
           DefaultStyle,
           {TK_default, "default"},
           {TK_disable, "disable"},
+          {},  // default context
           {},  // default context
           {1, SpacingOptions::Undecided},
       },
@@ -3871,12 +4150,14 @@ TEST(TokenAnnotatorTest, AnnotateFormattingWithContextTest) {
           {TK_disable, "disable"},
           {TK_iff, "iff"},
           {},  // default context
+          {},  // default context
           {1, SpacingOptions::Undecided},
       },
       {
           DefaultStyle,
           {TK_disable, "disable"},
           {TK_soft, "soft"},
+          {},  // default context
           {},  // default context
           {1, SpacingOptions::Undecided},
       },
@@ -3885,12 +4166,14 @@ TEST(TokenAnnotatorTest, AnnotateFormattingWithContextTest) {
           {TK_extern, "extern"},
           {TK_forkjoin, "forkjoin"},
           {},  // default context
+          {},  // default context
           {1, SpacingOptions::Undecided},
       },
       {
           DefaultStyle,
           {TK_input, "input"},
           {TK_logic, "logic"},
+          {},  // default context
           {},  // default context
           {1, SpacingOptions::Undecided},
       },
@@ -3899,12 +4182,14 @@ TEST(TokenAnnotatorTest, AnnotateFormattingWithContextTest) {
           {TK_var, "var"},
           {TK_logic, "logic"},
           {},  // default context
+          {},  // default context
           {1, SpacingOptions::Undecided},
       },
       {
           DefaultStyle,
           {TK_output, "output"},
           {TK_reg, "reg"},
+          {},  // default context
           {},  // default context
           {1, SpacingOptions::Undecided},
       },
@@ -3913,12 +4198,14 @@ TEST(TokenAnnotatorTest, AnnotateFormattingWithContextTest) {
           {TK_static, "static"},
           {TK_constraint, "constraint"},
           {},  // default context
+          {},  // default context
           {1, SpacingOptions::Undecided},
       },
       {
           DefaultStyle,
           {TK_parameter, "parameter"},
           {TK_type, "type"},
+          {},  // default context
           {},  // default context
           {1, SpacingOptions::Undecided},
       },
@@ -3927,12 +4214,14 @@ TEST(TokenAnnotatorTest, AnnotateFormattingWithContextTest) {
           {TK_virtual, "virtual"},
           {TK_interface, "interface"},
           {},  // default context
+          {},  // default context
           {1, SpacingOptions::Undecided},
       },
       {
           DefaultStyle,
           {TK_const, "const"},
           {TK_ref, "ref"},
+          {},  // default context
           {},  // default context
           {1, SpacingOptions::Undecided},
       },
@@ -3941,12 +4230,14 @@ TEST(TokenAnnotatorTest, AnnotateFormattingWithContextTest) {
           {TK_union, "union"},
           {TK_tagged, "tagged"},
           {},  // default context
+          {},  // default context
           {1, SpacingOptions::Undecided},
       },
       {
           DefaultStyle,
           {';', ";"},
           {TK_end, "end"},
+          {},  // default context
           {},  // default context
           {1, SpacingOptions::MustWrap},
       },
@@ -3955,12 +4246,14 @@ TEST(TokenAnnotatorTest, AnnotateFormattingWithContextTest) {
           {';', ";"},
           {TK_endfunction, "endfunction"},
           {},  // default context
+          {},  // default context
           {1, SpacingOptions::MustWrap},
       },
       {
           DefaultStyle,
           {';', ";"},
           {TK_endtask, "endtask"},
+          {},  // default context
           {},  // default context
           {1, SpacingOptions::MustWrap},
       },
@@ -3969,12 +4262,14 @@ TEST(TokenAnnotatorTest, AnnotateFormattingWithContextTest) {
           {';', ";"},
           {TK_endclass, "endclass"},
           {},  // default context
+          {},  // default context
           {1, SpacingOptions::MustWrap},
       },
       {
           DefaultStyle,
           {';', ";"},
           {TK_endpackage, "endpackage"},
+          {},  // default context
           {},  // default context
           {1, SpacingOptions::MustWrap},
       },
@@ -3983,12 +4278,14 @@ TEST(TokenAnnotatorTest, AnnotateFormattingWithContextTest) {
           {SymbolIdentifier, "nettype_id"},
           {TK_with, "with"},
           {},  // default context
+          {},  // default context
           {1, SpacingOptions::Undecided},
       },
       {
           DefaultStyle,
           {SymbolIdentifier, "id"},
           {TK_until, "until"},
+          {},  // default context
           {},  // default context
           {1, SpacingOptions::Undecided},
       },
@@ -3997,12 +4294,14 @@ TEST(TokenAnnotatorTest, AnnotateFormattingWithContextTest) {
           {',', ","},
           {TK_highz0, "highz0"},
           {},  // default context
+          {},  // default context
           {1, SpacingOptions::Undecided},
       },
       {
           DefaultStyle,
           {',', ","},
           {TK_highz1, "highz1"},
+          {},  // default context
           {},  // default context
           {1, SpacingOptions::Undecided},
       },
@@ -4012,6 +4311,7 @@ TEST(TokenAnnotatorTest, AnnotateFormattingWithContextTest) {
           DefaultStyle,
           {'1', "1"},
           {'0', "0"},
+          {},  // default context
           {NodeEnum::kUdpSequenceEntry},
           {1, SpacingOptions::Undecided},
       },
@@ -4020,6 +4320,7 @@ TEST(TokenAnnotatorTest, AnnotateFormattingWithContextTest) {
           DefaultStyle,
           {'0', "0"},
           {':', ":"},
+          {},  // default context
           {NodeEnum::kUdpSequenceEntry},
           {1, SpacingOptions::Undecided},
       },
@@ -4028,6 +4329,7 @@ TEST(TokenAnnotatorTest, AnnotateFormattingWithContextTest) {
           DefaultStyle,
           {':', ":"},
           {'?', "?"},
+          {},  // default context
           {NodeEnum::kUdpSequenceEntry},
           {1, SpacingOptions::Undecided},
       },
@@ -4036,6 +4338,7 @@ TEST(TokenAnnotatorTest, AnnotateFormattingWithContextTest) {
           DefaultStyle,
           {'?', "?"},
           {':', ":"},
+          {},  // default context
           {NodeEnum::kUdpSequenceEntry},
           {1, SpacingOptions::Undecided},
       },
@@ -4044,6 +4347,7 @@ TEST(TokenAnnotatorTest, AnnotateFormattingWithContextTest) {
           DefaultStyle,
           {':', ":"},
           {'-', "-"},
+          {},  // default context
           {NodeEnum::kUdpSequenceEntry},
           {1, SpacingOptions::Undecided},
       },
@@ -4052,6 +4356,7 @@ TEST(TokenAnnotatorTest, AnnotateFormattingWithContextTest) {
           DefaultStyle,
           {'-', "-"},
           {';', ";"},
+          {},  // default context
           {NodeEnum::kUdpSequenceEntry},
           {0, SpacingOptions::Undecided},
       },
@@ -4060,6 +4365,7 @@ TEST(TokenAnnotatorTest, AnnotateFormattingWithContextTest) {
           DefaultStyle,
           {'1', "1"},
           {'0', "0"},
+          {},  // default context
           {NodeEnum::kUdpCombEntry},
           {1, SpacingOptions::Undecided},
       },
@@ -4068,6 +4374,7 @@ TEST(TokenAnnotatorTest, AnnotateFormattingWithContextTest) {
           DefaultStyle,
           {'0', "0"},
           {':', ":"},
+          {},  // default context
           {NodeEnum::kUdpCombEntry},
           {1, SpacingOptions::Undecided},
       },
@@ -4076,6 +4383,7 @@ TEST(TokenAnnotatorTest, AnnotateFormattingWithContextTest) {
           DefaultStyle,
           {':', ":"},
           {'-', "-"},
+          {},  // default context
           {NodeEnum::kUdpCombEntry},
           {1, SpacingOptions::Undecided},
       },
@@ -4084,6 +4392,7 @@ TEST(TokenAnnotatorTest, AnnotateFormattingWithContextTest) {
           DefaultStyle,
           {'-', "-"},
           {';', ";"},
+          {},  // default context
           {NodeEnum::kUdpCombEntry},
           {0, SpacingOptions::Undecided},
       },
@@ -4095,6 +4404,7 @@ TEST(TokenAnnotatorTest, AnnotateFormattingWithContextTest) {
           {'#', "#"},
           {verilog_tokentype::TK_TimeLiteral, "1ps"},
           {/* any context */},
+          {/* any context */},
           {0, SpacingOptions::MustAppend},
       },
       {
@@ -4103,12 +4413,14 @@ TEST(TokenAnnotatorTest, AnnotateFormattingWithContextTest) {
           {verilog_tokentype::TK_TimeLiteral, "1ps"},
           {';', ";"},
           {/* any context */},
+          {/* any context */},
           {0, SpacingOptions::MustAppend},
       },
       {
           DefaultStyle,
           {verilog_tokentype::TK_TimeLiteral, "1ps"},
           {verilog_tokentype::SymbolIdentifier, "task_call"},
+          {/* any context */},
           {/* any context */},
           {1, SpacingOptions::Undecided},
       },
@@ -4117,12 +4429,14 @@ TEST(TokenAnnotatorTest, AnnotateFormattingWithContextTest) {
           {verilog_tokentype::TK_TimeLiteral, "1ps"},
           {verilog_tokentype::MacroIdentifier, "`MACRO"},
           {/* any context */},
+          {/* any context */},
           {1, SpacingOptions::Undecided},
       },
       {
           DefaultStyle,
           {verilog_tokentype::TK_TimeLiteral, "100ps"},
           {verilog_tokentype::MacroCallId, "`MACRO"},
+          {/* any context */},
           {/* any context */},
           {1, SpacingOptions::Undecided},
       },
@@ -4131,12 +4445,14 @@ TEST(TokenAnnotatorTest, AnnotateFormattingWithContextTest) {
           {verilog_tokentype::TK_TimeLiteral, "1ps"},
           {'#', "#"},
           {/* any context */},
+          {/* any context */},
           {1, SpacingOptions::Undecided},
       },
       {
           DefaultStyle,
           {verilog_tokentype::TK_TimeLiteral, "1ps"},
           {verilog_tokentype::TK_INCR, "++"},
+          {/* any context */},
           {/* any context */},
           {1, SpacingOptions::Undecided},
       },
@@ -4145,12 +4461,14 @@ TEST(TokenAnnotatorTest, AnnotateFormattingWithContextTest) {
           {verilog_tokentype::TK_TimeLiteral, "1ps"},
           {verilog_tokentype::TK_DECR, "--"},
           {/* any context */},
+          {/* any context */},
           {1, SpacingOptions::Undecided},
       },
       {
           DefaultStyle,
           {verilog_tokentype::TK_TimeLiteral, "1ps"},
           {'@', "@"},
+          {/* any context */},
           {/* any context */},
           {1, SpacingOptions::Undecided},
       },
@@ -4159,6 +4477,7 @@ TEST(TokenAnnotatorTest, AnnotateFormattingWithContextTest) {
           {verilog_tokentype::TK_TimeLiteral, "1ps"},
           {verilog_tokentype::TK_begin, "begin"},
           {/* any context */},
+          {/* any context */},
           {1, SpacingOptions::Undecided},
       },
       {
@@ -4166,12 +4485,14 @@ TEST(TokenAnnotatorTest, AnnotateFormattingWithContextTest) {
           {verilog_tokentype::TK_TimeLiteral, "1ps"},
           {verilog_tokentype::TK_force, "force"},
           {/* any context */},
+          {/* any context */},
           {1, SpacingOptions::Undecided},
       },
       {
           DefaultStyle,
           {verilog_tokentype::TK_TimeLiteral, "1ps"},
           {verilog_tokentype::TK_output, "output"},
+          {/* any context */},
           {/* any context */},
           {1, SpacingOptions::Undecided},
       },
@@ -4191,9 +4512,9 @@ TEST(TokenAnnotatorTest, AnnotateFormattingWithContextTest) {
         << "This test does not support cases examining intertoken text. "
            "Move the test case to AnnotateBreakAroundComments instead.";
 
+    VLOG(1) << "left context: " << test_case.left_context;
     VLOG(1) << "right context: " << test_case.right_context;
-    // TODO(fangism): support test cases that need a left-token-context
-    AnnotateFormatToken(test_case.style, left, &right, {},
+    AnnotateFormatToken(test_case.style, left, &right, test_case.left_context,
                         test_case.right_context);
     EXPECT_EQ(test_case.expected_annotation, right.before)
         << " with left=" << left.Text() << " and right=" << right.Text();

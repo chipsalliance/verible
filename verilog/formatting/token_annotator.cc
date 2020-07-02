@@ -456,7 +456,14 @@ static WithReason<int> SpacesRequiredBetween(
     // This may be controversial or context-dependent, as parameterized
     // classes often appear with method calls like:
     //   type#(params...)::method(...);
-    return {1, "Spaces before # in most other contexts."};
+    if (left_context.DirectParentIs(NodeEnum::kUnqualifiedId) &&
+        !left_context.IsInsideFirst(
+            {NodeEnum::kInstantiationType, NodeEnum::kBindTargetInstance},
+            {})) {
+      return {0, "No space before # when direct parent is kUnqualifiedId."};
+    } else {
+      return {1, "Spaces before # in most other contexts."};
+    }
   }
 
   if (right.format_token_enum == FormatTokenType::keyword) {

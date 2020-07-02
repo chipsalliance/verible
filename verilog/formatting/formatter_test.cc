@@ -929,10 +929,9 @@ static const std::initializer_list<FormatterTestCase> kFormatterTestCases = {
      ");\n"
      "endmodule : foo\n"},
     {"module foo(  input pkg::bar_t#(1)  x , output reg  yy) ;endmodule:foo\n",
-     "module foo (\n"                   // with parameterized port type
-     "    input  pkg::bar_t #(1) x,\n"  // TODO(b/149364228): remove space
-                                        // before #
-     "    output reg             yy\n"  // aligned
+     "module foo (\n"  // with parameterized port type
+     "    input  pkg::bar_t#(1) x,\n"
+     "    output reg            yy\n"  // aligned
      ");\n"
      "endmodule : foo\n"},
     {"module foo(  input signed x , output reg  yy) ;endmodule:foo\n",
