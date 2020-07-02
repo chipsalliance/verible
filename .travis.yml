@@ -54,6 +54,9 @@ jobs:
    - name: "Ubuntu Eoan (19.10 latest)"
      env:
       - MODE=bin OS=ubuntu OS_VERSION=eoan
+   - name: "Ubuntu Focal (20.04 LTS)"
+     env:
+      - MODE=bin OS=ubuntu OS_VERSION=focal
    - name: "Centos 6"
      env:
       - MODE=bin OS=centos OS_VERSION=6
