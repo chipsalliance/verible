@@ -58,6 +58,8 @@ using SubcommandMap =
 // forward declarations of subcommand functions
 static absl::Status ChangedLines(const SubcommandArgsRange&, std::istream&,
                                  std::ostream&, std::ostream&);
+static absl::Status ApplyPick(const SubcommandArgsRange&, std::istream&,
+                              std::ostream&, std::ostream&);
 static absl::Status StdinTest(const SubcommandArgsRange&, std::istream&,
                               std::ostream&, std::ostream&);
 static absl::Status CatTest(const SubcommandArgsRange&, std::istream&,
@@ -100,6 +102,20 @@ Output: (stdout)
   where line-ranges (optional) is suitable for tools that accept a set of lines
   to operate on, e.g. "1-4,8,21-42".
   line-ranges is omitted for files that are considered new in the patchfile.
+)"}},
+
+      // TODO(b/156530527): add options like -p for path pruning
+      // TODO(fangism): Support '-' as patchfile.
+      {"apply-pick",
+       {&ApplyPick,
+        R"(apply-pick patchfile
+Input:
+  'patchfile' is a unified-diff file from 'diff -u' or other version-controlled
+  equivalents like {p4,git,hg,cvs,svn} diff.
+
+Effect:
+  Modifies patched files in-place, following user selections on which patch
+  hunks to apply.
 )"}},
 
       // These are diagnostic tools and should be hidden from most users.
@@ -152,6 +168,25 @@ absl::Status ChangedLines(const SubcommandArgsRange& args, std::istream& ins,
     outs << std::endl;
   }
   return absl::OkStatus();
+}
+
+absl::Status ApplyPick(const SubcommandArgsRange& args, std::istream& ins,
+                       std::ostream& outs, std::ostream& errs) {
+  if (args.empty()) {
+    return absl::InvalidArgumentError("Missing patchfile argument.");
+  }
+  const auto patchfile = args[0];
+  std::string patch_contents;
+  {
+    const auto status = verible::file::GetContents(patchfile, &patch_contents);
+    if (!status.ok()) return status;
+  }
+  verible::PatchSet patch_set;
+  {
+    const auto status = patch_set.Parse(patch_contents);
+    if (!status.ok()) return status;
+  }
+  return patch_set.PickApplyInPlace(ins, outs);
 }
 
 absl::Status StdinTest(const SubcommandArgsRange& args, std::istream& ins,

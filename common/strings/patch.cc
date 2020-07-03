@@ -14,6 +14,8 @@
 
 #include "common/strings/patch.h"
 
+#include <unistd.h>
+
 #include <deque>
 #include <iostream>
 #include <iterator>
@@ -304,7 +306,14 @@ LineNumberSet FilePatch::AddedLines() const {
 }
 
 static char PromptHunkAction(std::istream& ins, std::ostream& outs) {
-  outs << "Apply this hunk? [y,n,q,?] ";
+  if (ins.eof()) {
+    outs << "Reached end of user input, abandoning changes to this file and "
+            "all remaining files."
+         << std::endl;
+    return 'q';
+  }
+  // Suppress prompt in noninteractive mode.
+  if (isatty(0)) outs << "Apply this hunk? [y,n,q,?] ";
   char c;
   ins >> c;  // user will need to hit <enter> after the character
   return c;
