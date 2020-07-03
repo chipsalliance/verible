@@ -42,7 +42,6 @@ RUN apt-get install -y \
     g++ \
     file \
     lsb-release \
-    python-gflags \
     wget \
 
 EOF
