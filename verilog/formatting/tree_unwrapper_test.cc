@@ -3171,9 +3171,7 @@ const TreeUnwrapperTestData kClassTestCases[] = {
         ClassDeclaration(
             0, L(0, {"class", "Foo", ";"}),
             ConstraintDeclaration(1, L(1, {"constraint", "bar_c", "{"}),
-                                  N(2, L(2, {"unique", "{"}),
-                                       L(3, {"baz"}),
-                                       L(2, {"}", ";"})),
+                                  L(2, {"unique", "{", "baz", "}", ";"}),
                                   L(1, {"}"})),
             L(0, {"endclass"})),
     },
@@ -3187,9 +3185,7 @@ const TreeUnwrapperTestData kClassTestCases[] = {
                 1, L(1, {"constraint", "bar_c", "{"}),
                 ConstraintItemList(2, 
                                    L(2, {"soft", "z", "==", "y", ";"}),
-                                        N(2, L(2, {"unique", "{"}),
-                                             L(3, {"baz"}),
-                                             L(2, {"}", ";"}))),
+                                        L(2, {"unique", "{", "baz", "}", ";"})),
                 L(1, {"}"})),
             L(0, {"endclass"})),
     },
@@ -3282,9 +3278,7 @@ const TreeUnwrapperTestData kClassTestCases[] = {
                     2,
                     N(2,  //
                       L(2, {"z", "<", "y", "->", "{"}),
-                           N(3, L(3, {"unique", "{"}),
-                                L(4, {"baz"}),
-                                L(3, {"}", ";"})),
+                      L(3, {"unique", "{", "baz", "}", ";"}),
                       L(2, {"}"})),
                     N(2,  //
                       L(2, {"a", ">", "b", "->", "{"}),

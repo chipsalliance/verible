@@ -907,7 +907,7 @@ void TreeUnwrapper::SetIndentationsAndCreatePartitions(
       break;
     }
     case NodeEnum::kOpenRangeList: {
-      if (Context().DirectParentIs(NodeEnum::kBraceGroup)) {
+      if (Context().DirectParentIs(NodeEnum::kConcatenationExpression)) {
         // Do not further indent preprocessor clauses.
         const int indent = suppress_indentation ? 0 : style_.indentation_spaces;
         VisitIndentedSection(node, indent, PartitionPolicyEnum::kFitOnLineElseExpand);
@@ -974,7 +974,7 @@ void TreeUnwrapper::SetIndentationsAndCreatePartitions(
         // original un-lexed macro argument was successfully expanded
         VisitNewUnwrappedLine(node);
       } else if (Context().DirectParentIs(NodeEnum::kOpenRangeList)
-                 && Context().IsInside(NodeEnum::kBraceGroup)) {
+                 && Context().IsInside(NodeEnum::kConcatenationExpression)) {
         VisitIndentedSection(node, 0,
                              PartitionPolicyEnum::kFitOnLineElseExpand);
       } else {
