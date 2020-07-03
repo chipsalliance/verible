@@ -170,4 +170,109 @@ status="$?"
 }
 
 ################################################################################
+# Test stdin-test noninteractively.
+
+cat > "$MY_INPUT_FILE" <<EOF
+Lovely file!
+EOF
+
+"$patch_tool" stdin-test < "$MY_INPUT_FILE" > "$MY_OUTPUT_FILE"
+
+status="$?"
+[[ $status == 0 ]] || {
+  "Expected exit code 0, but got $status"
+  exit 1
+}
+
+grep -q "Lovely file" "$MY_OUTPUT_FILE" || {
+  echo "Expected \"Lovely file\" in $MY_OUTPUT_FILE but didn't find it.  Got:"
+  cat "$MY_OUTPUT_FILE"
+  exit 1
+}
+
+################################################################################
+# Test cat-test noninteractively.
+
+cat > "$MY_INPUT_FILE".1 <<EOF
+111111
+EOF
+
+cat > "$MY_INPUT_FILE".2 <<EOF
+222222
+EOF
+
+"$patch_tool" cat-test "$MY_INPUT_FILE".1 > "$MY_OUTPUT_FILE"
+
+status="$?"
+[[ $status == 0 ]] || {
+  "Expected exit code 0, but got $status"
+  exit 1
+}
+
+grep -q "111111" "$MY_OUTPUT_FILE" || {
+  echo "Expected \"111111\" in $MY_OUTPUT_FILE but didn't find it.  Got:"
+  cat "$MY_OUTPUT_FILE"
+  exit 1
+}
+
+# Test single redirection
+"$patch_tool" cat-test - < "$MY_INPUT_FILE".1 > "$MY_OUTPUT_FILE"
+
+status="$?"
+[[ $status == 0 ]] || {
+  "Expected exit code 0, but got $status"
+  exit 1
+}
+
+grep -q "111111" "$MY_OUTPUT_FILE" || {
+  echo "Expected \"111111\" in $MY_OUTPUT_FILE but didn't find it.  Got:"
+  cat "$MY_OUTPUT_FILE"
+  exit 1
+}
+
+# Test single redirection with one other file
+"$patch_tool" cat-test - "$MY_INPUT_FILE".2 < "$MY_INPUT_FILE".1 > "$MY_OUTPUT_FILE"
+
+status="$?"
+[[ $status == 0 ]] || {
+  "Expected exit code 0, but got $status"
+  exit 1
+}
+
+grep -q "111111" "$MY_OUTPUT_FILE" || {
+  echo "Expected \"111111\" in $MY_OUTPUT_FILE but didn't find it.  Got:"
+  cat "$MY_OUTPUT_FILE"
+  exit 1
+}
+
+grep -q "222222" "$MY_OUTPUT_FILE" || {
+  echo "Expected \"222222\" in $MY_OUTPUT_FILE but didn't find it.  Got:"
+  cat "$MY_OUTPUT_FILE"
+  exit 1
+}
+
+# Test single redirection with one other file, different order
+"$patch_tool" cat-test "$MY_INPUT_FILE".2 - < "$MY_INPUT_FILE".1 > "$MY_OUTPUT_FILE"
+
+status="$?"
+[[ $status == 0 ]] || {
+  "Expected exit code 0, but got $status"
+  exit 1
+}
+
+grep -q "111111" "$MY_OUTPUT_FILE" || {
+  echo "Expected \"111111\" in $MY_OUTPUT_FILE but didn't find it.  Got:"
+  cat "$MY_OUTPUT_FILE"
+  exit 1
+}
+
+grep -q "222222" "$MY_OUTPUT_FILE" || {
+  echo "Expected \"222222\" in $MY_OUTPUT_FILE but didn't find it.  Got:"
+  cat "$MY_OUTPUT_FILE"
+  exit 1
+}
+
+rm -f "$MY_INPUT_FILE".{1,2}
+
+################################################################################
 echo "PASS"

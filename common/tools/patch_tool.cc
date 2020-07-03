@@ -12,6 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include <unistd.h>
+
 #include <functional>
 #include <iostream>
 #include <map>
@@ -28,7 +30,8 @@
 #include "common/util/file_util.h"
 #include "common/util/init_command_line.h"
 
-// TODO(fangism): refactor into common/utils/ for other subcommand-using tools
+// TODO(b/160323522): refactor into common/utils/ for other subcommand-using
+// tools
 using SubcommandArgs = std::vector<char*>;
 using SubcommandArgsIterator = SubcommandArgs::const_iterator;
 using SubcommandArgsRange =
@@ -55,6 +58,10 @@ using SubcommandMap =
 // forward declarations of subcommand functions
 static absl::Status ChangedLines(const SubcommandArgsRange&, std::istream&,
                                  std::ostream&, std::ostream&);
+static absl::Status StdinTest(const SubcommandArgsRange&, std::istream&,
+                              std::ostream&, std::ostream&);
+static absl::Status CatTest(const SubcommandArgsRange&, std::istream&,
+                            std::ostream&, std::ostream&);
 static absl::Status Help(const SubcommandArgsRange&, std::istream&,
                          std::ostream&, std::ostream&);
 
@@ -77,7 +84,9 @@ static const SubcommandMap& GetSubcommandMap() {
       {"error",
        {&Error, "same as 'help', but exits non-zero to signal a user-error\n"}},
 
-      {"changed-lines", {&ChangedLines, R"(changed-lines patchfile
+      {"changed-lines",  //
+       {&ChangedLines,   //
+        R"(changed-lines patchfile
 
 Input:
   'patchfile' is a unified-diff file from 'diff -u' or other version-controlled
@@ -93,7 +102,25 @@ Output: (stdout)
   line-ranges is omitted for files that are considered new in the patchfile.
 )"}},
 
-      // TODO(b/156530527): "apply-pick" interactive mode
+      // These are diagnostic tools and should be hidden from most users.
+      {"stdin-test",  //
+       {&StdinTest,   //
+        R"(Test for re-opening stdin.
+
+This interactivel prompts the user to enter text, separating files with an EOF
+(Ctrl-D), and echoes the input text back to stdout.
+)"}},
+      {"cat-test",  //
+       {&CatTest,   //
+        R"(Test for (UNIX) cat-like functionality.
+
+Usage: cat-test ARGS...
+
+where each ARG could point to a file on the filesystem or be '-' to read from stdin.
+Each '-' will prompt the user to enter text until EOF (Ctrl-D).
+Each 'file' echoed back to stdout will be enclosed in banner lines with
+<<<< and >>>>.
+)"}},
   };
   return *kCommands;
 }
@@ -123,6 +150,49 @@ absl::Status ChangedLines(const SubcommandArgsRange& args, std::istream& ins,
       file_lines.second.FormatInclusive(outs << ' ', true);
     }
     outs << std::endl;
+  }
+  return absl::OkStatus();
+}
+
+absl::Status StdinTest(const SubcommandArgsRange& args, std::istream& ins,
+                       std::ostream& outs, std::ostream& errs) {
+  constexpr size_t kOpenLimit = 10;
+  outs << "This is a demo of re-opening std::cin, up to " << kOpenLimit
+       << " times.\n"
+          "Enter text when prompted.\n"
+          "Ctrl-D sends an EOF to start the next file.\n"
+          "Ctrl-C terminates the loop and exits the program."
+       << std::endl;
+  size_t file_count = 0;
+  std::string line;
+  for (; file_count < kOpenLimit; ++file_count) {
+    outs << "==== file " << file_count << " ====" << std::endl;
+    while (ins) {
+      if (isatty(0)) outs << "enter text: ";
+      std::getline(ins, line);
+      outs << "echo: " << line << std::endl;
+    }
+    if (ins.eof()) {
+      outs << "EOF reached.  Re-opening for next file" << std::endl;
+      ins.clear();  // allows std::cin to read the next file
+    }
+  }
+  return absl::OkStatus();
+}
+
+absl::Status CatTest(const SubcommandArgsRange& args, std::istream& ins,
+                     std::ostream& outs, std::ostream& errs) {
+  size_t file_count = 0;
+  for (const auto& arg : args) {
+    std::string contents;
+    const auto status = verible::file::GetContents(arg, &contents);
+    if (!status.ok()) return status;
+    outs << "<<<< contents of file[" << file_count << "] (" << arg << ") <<<<"
+         << std::endl;
+    outs << contents;
+    outs << ">>>> end of file[" << file_count << "] (" << arg << ") >>>>"
+         << std::endl;
+    ++file_count;
   }
   return absl::OkStatus();
 }
