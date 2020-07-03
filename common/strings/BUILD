@@ -114,6 +114,7 @@ cc_library(
         ":split",
         "//common/util:algorithm",
         "//common/util:container_iterator_range",
+        "//common/util:file_util",
         "//common/util:iterator_range",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/strings",
@@ -125,6 +126,7 @@ cc_test(
     srcs = ["patch_test.cc"],
     deps = [
         ":patch",
+        "@com_google_absl//absl/status",
         "@com_google_absl//absl/strings",
         "@com_google_googletest//:gtest_main",
     ],

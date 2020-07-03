@@ -14,11 +14,13 @@
 
 #include "common/strings/patch.h"
 
+#include <initializer_list>
 #include <sstream>
 #include <vector>
 
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
+#include "absl/status/status.h"
 #include "absl/strings/match.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/str_join.h"
@@ -68,7 +70,8 @@ TEST(MarkedLinePrintTest, Print) {
   };
   for (const auto& test : kTestCases) {
     MarkedLine m;
-    ASSERT_TRUE(m.Parse(test).ok());
+    const auto status = m.Parse(test);
+    ASSERT_TRUE(status.ok()) << status.message();
     std::ostringstream stream;
     stream << m;
     EXPECT_EQ(stream.str(), test);
@@ -296,7 +299,7 @@ TEST(HunkUpdateHeaderTest, Various) {
     EXPECT_TRUE(status.ok()) << status.message();
 
     std::ostringstream stream;
-    stream << hunk.header;
+    stream << hunk.Header();
     EXPECT_EQ(stream.str(), test.fixed_header);
   }
 }
@@ -447,6 +450,90 @@ TEST(HunkParseAndPrintTest, ValidInputs) {
     std::ostringstream stream;
     stream << hunk;
     EXPECT_EQ(stream.str(), absl::StrJoin(lines, "\n") + "\n");
+  }
+}
+
+TEST(HunkVerifyAgainstOriginalLinesTest, LineNumberOutOfBounds) {
+  const std::vector<absl::string_view> kHunkText = {
+      {
+          "@@ -2,3 +4,3 @@",  // dont' care about position in new-file
+          " line2",           //
+          "-line3",           //
+          "+line pi",         //
+          " line4",           // this line doesn't exist in original
+      },
+  };
+  const std::vector<absl::string_view> kOriginal = {
+      "line1", "line2", "line3",
+      // no line4
+  };
+  Hunk hunk;
+  {
+    const LineRange range(kHunkText.begin(), kHunkText.end());
+    const auto status = hunk.Parse(range);
+    ASSERT_TRUE(status.ok()) << status.message();
+  }
+  {
+    const auto status = hunk.VerifyAgainstOriginalLines(kOriginal);
+    EXPECT_EQ(status.code(), absl::StatusCode::kOutOfRange);
+    EXPECT_TRUE(absl::StrContains(status.message(), "references line 4"));
+    EXPECT_TRUE(absl::StrContains(status.message(), "with only 3 lines"));
+  }
+}
+
+TEST(HunkVerifyAgainstOriginalLinesTest, InconsistentRetainedLine) {
+  const std::vector<absl::string_view> kHunkText = {
+      {
+          "@@ -2,2 +4,2 @@",
+          " line2",    //
+          "-line3",    //
+          "+line pi",  //
+      },
+  };
+  const std::vector<absl::string_view> kOriginal = {
+      "line1",
+      "line2 different",
+      "line3",
+  };
+  Hunk hunk;
+  {
+    const LineRange range(kHunkText.begin(), kHunkText.end());
+    const auto status = hunk.Parse(range);
+    ASSERT_TRUE(status.ok()) << status.message();
+  }
+  {
+    const auto status = hunk.VerifyAgainstOriginalLines(kOriginal);
+    EXPECT_EQ(status.code(), absl::StatusCode::kDataLoss);
+    EXPECT_TRUE(absl::StrContains(status.message(),
+                                  "Patch is inconsistent with original file"));
+  }
+}
+
+TEST(HunkVerifyAgainstOriginalLinesTest, InconsistentDeletedLine) {
+  const std::vector<absl::string_view> kHunkText = {
+      {
+          "@@ -2,2 +4,2 @@",
+          " line2",    //
+          "-line3",    //
+          "+line pi",  //
+      },
+  };
+  const std::vector<absl::string_view> kOriginal = {
+      "line1",
+      "line2",
+      "line3 different",
+  };
+  Hunk hunk;
+  {
+    const LineRange range(kHunkText.begin(), kHunkText.end());
+    const auto status = hunk.Parse(range);
+    ASSERT_TRUE(status.ok()) << status.message();
+  }
+  {
+    const auto status = hunk.VerifyAgainstOriginalLines(kOriginal);
+    EXPECT_EQ(status.code(), absl::StatusCode::kDataLoss);
+    EXPECT_TRUE(absl::StrContains(status.message(),
+                                  "Patch is inconsistent with original file"));
   }
 }
 
@@ -672,6 +759,691 @@ TEST(FilePatchAddedLinesTest, Various) {
   }
 }
 
+class FilePatchPickApplyTest : public FilePatch, public ::testing::Test {
+ protected:
+  absl::Status ParseLines(const std::vector<absl::string_view>& lines) {
+    const LineRange range(lines.begin(), lines.end());
+    return Parse(range);
+  }
+
+  static absl::Status NullFileReader(absl::string_view filename,
+                                     std::string* contents) {
+    contents->clear();
+    return absl::OkStatus();
+  }
+
+  static absl::Status NullFileWriter(absl::string_view filename,
+                                     absl::string_view contents) {
+    return absl::OkStatus();
+  }
+};
+
+// Takes the place of a real file on the filesystem.
+// TODO(fangism): move this to a "file_test_util" library.
+struct StringFile {
+  const absl::string_view path;
+  const absl::string_view contents;
+};
+
+class StringFileSequence {
+ public:
+  explicit StringFileSequence(const std::vector<StringFile>& files)
+      : files_(files) {}
+  StringFileSequence(std::initializer_list<StringFile> files) : files_(files) {}
+
+ protected:
+  const std::vector<StringFile> files_;
+  // stateful value needed inside std::function to emulate a sequence of calls
+  size_t index_ = 0;
+};
+
+// Functor that can mimic a sequence of calls to file::GetContents()
+// Can be passed anywhere that takes a FileReaderFunction.
+// TODO(fangism): move this to a "file_test_util" library.
+struct ReadStringFileSequence : public StringFileSequence {
+  explicit ReadStringFileSequence(const std::vector<StringFile>& files)
+      : StringFileSequence(files) {}
+  ReadStringFileSequence(std::initializer_list<StringFile> files)
+      : StringFileSequence(files) {}
+
+  // like file::GetContents()
+  absl::Status operator()(absl::string_view filename, std::string* dest) {
+    // ASSERT_LT(i, files_.size());  // can't use ASSERT_* which returns void
+    if (index_ >= files_.size()) {
+      return absl::OutOfRangeError(
+          absl::StrCat("No more files to read beyond index=", index_));
+    }
+    const auto& file = files_[index_];
+    EXPECT_EQ(filename, file.path) << " at index " << index_;
+    dest->assign(file.contents.begin(), file.contents.end());
+    ++index_;
+    return absl::OkStatus();  // "file" is successfully read
+  }
+};
+
+// Functor that can mimic a sequence of calls to file::SetContents()
+// Can be passed anywhere that takes a FileWriterFunction.
+// TODO(fangism): move this to a "file_test_util" library.
+struct ExpectStringFileSequence : public StringFileSequence {
+  explicit ExpectStringFileSequence(const std::vector<StringFile>& files)
+      : StringFileSequence(files) {}
+  ExpectStringFileSequence(std::initializer_list<StringFile> files)
+      : StringFileSequence(files) {}
+
+  // like file::SetContents()
+  absl::Status operator()(absl::string_view filename, absl::string_view src) {
+    // ASSERT_LT(i, files_.size());  // can't use ASSERT_* which returns void
+    if (index_ >= files_.size()) {
+      return absl::OutOfRangeError(
+          absl::StrCat("No more files to compare beyond index=", index_));
+    }
+    const auto& file = files_[index_];
+    EXPECT_EQ(filename, file.path) << " at index " << index_;
+    EXPECT_EQ(file.contents, src) << " at index " << index_;
+    ++index_;
+    return absl::OkStatus();  // "file" is successfully written
+  }
+};
+
+TEST_F(FilePatchPickApplyTest, ErrorReadingFile) {
+  std::istringstream ins;
+  std::ostringstream outs;
+  constexpr absl::string_view kErrorMessage = "File not found.";
+  auto error_file_reader = [=](absl::string_view filename,
+                               std::string* contents) {
+    return absl::NotFoundError(kErrorMessage);
+  };
+  const auto status = PickApply(ins, outs, error_file_reader, &NullFileWriter);
+  EXPECT_FALSE(status.ok());
+  EXPECT_EQ(status.message(), kErrorMessage);
+  EXPECT_TRUE(outs.str().empty()) << "Unexpected: " << outs.str();
+}
+
+TEST_F(FilePatchPickApplyTest, IgnoreNewFile) {
+  {
+    const std::vector<absl::string_view> kHunkText{
+        "--- /dev/null\t2012-01-01",
+        "+++ foo.txt\t2012-01-01",
+    };
+    const auto status = ParseLines(kHunkText);
+    ASSERT_TRUE(status.ok()) << status.message();
+  }
+  std::istringstream ins;
+  std::ostringstream outs;
+  const auto status = PickApply(ins, outs, &NullFileReader, &NullFileWriter);
+  EXPECT_TRUE(status.ok()) << "Got: " << status.message();
+  EXPECT_TRUE(outs.str().empty()) << "Unexpected: " << outs.str();
+}
+
+TEST_F(FilePatchPickApplyTest, IgnoreDeletedFile) {
+  {
+    const std::vector<absl::string_view> kHunkText{
+        "--- bar.txt\t2012-01-01",
+        "+++ /dev/null\t2012-01-01",
+    };
+    const auto status = ParseLines(kHunkText);
+    ASSERT_TRUE(status.ok()) << status.message();
+  }
+  std::istringstream ins;
+  std::ostringstream outs;
+  const auto status = PickApply(ins, outs, &NullFileReader, &NullFileWriter);
+  EXPECT_TRUE(status.ok()) << "Got: " << status.message();
+  EXPECT_TRUE(outs.str().empty()) << "Unexpected: " << outs.str();
+}
+
+TEST_F(FilePatchPickApplyTest, EmptyPatchNoPrompt) {
+  {
+    const std::vector<absl::string_view> kHunkText{
+        "--- foo.txt\t2012-01-01",
+        "+++ foo-formatted.txt\t2012-01-01",
+    };
+    const auto status = ParseLines(kHunkText);
+    ASSERT_TRUE(status.ok()) << status.message();
+  }
+
+  std::istringstream ins;
+  std::ostringstream outs;
+
+  constexpr absl::string_view kOriginal = "aaa\nbbb\nccc\n";
+  constexpr absl::string_view kExpected = kOriginal;  // no change
+
+  const auto status =
+      PickApply(ins, outs,  //
+                internal::ReadStringFileSequence({{"foo.txt", kOriginal}}),
+                internal::ExpectStringFileSequence({{"foo.txt", kExpected}}));
+  EXPECT_TRUE(status.ok()) << "Got: " << status.message();
+  EXPECT_TRUE(outs.str().empty()) << "Unexpected: " << outs.str();
+}
+
+TEST_F(FilePatchPickApplyTest, ErrorWritingFileInPlace) {
+  {
+    const std::vector<absl::string_view> kHunkText{
+        "--- foo.txt\t2012-01-01",
+        "+++ foo-formatted.txt\t2012-01-01",
+    };
+    const auto status = ParseLines(kHunkText);
+    ASSERT_TRUE(status.ok()) << status.message();
+  }
+
+  std::istringstream ins;
+  std::ostringstream outs;
+
+  constexpr absl::string_view kOriginal = "aaa\nbbb\nccc\n";
+  constexpr absl::string_view kErrorMessage = "Cannot write file.";
+
+  auto error_file_writer = [=](absl::string_view, absl::string_view) {
+    return absl::PermissionDeniedError(kErrorMessage);
+  };
+
+  const auto status = PickApply(
+      ins, outs,  //
+      ReadStringFileSequence({{"foo.txt", kOriginal}}), error_file_writer);
+  EXPECT_FALSE(status.ok());
+  EXPECT_EQ(status.message(), kErrorMessage);
+  EXPECT_TRUE(outs.str().empty()) << "Unexpected: " << outs.str();
+}
+
+TEST_F(FilePatchPickApplyTest, OneHunkNotApplied) {
+  {
+    const std::vector<absl::string_view> kHunkText{
+        "--- foo.txt\t2012-01-01",
+        "+++ foo-formatted.txt\t2012-01-01",
+        "@@ -2,3 +2,2 @@",
+        " bbb",
+        "-ccc",  // patch proposes to delete this line
+        " ddd",
+    };
+    const auto status = ParseLines(kHunkText);
+    ASSERT_TRUE(status.ok()) << status.message();
+  }
+
+  std::istringstream ins("n\n");  // user declines patch hunk
+  std::ostringstream outs;
+
+  constexpr absl::string_view kOriginal =
+      "aaa\n"
+      "bbb\n"
+      "ccc\n"
+      "ddd\n"
+      "eee\n";
+  constexpr absl::string_view kExpected = kOriginal;
+
+  const auto status =
+      PickApply(ins, outs,  //
+                ReadStringFileSequence({{"foo.txt", kOriginal}}),
+                ExpectStringFileSequence({{"foo.txt", kExpected}}));
+  EXPECT_TRUE(status.ok()) << "Got: " << status.message();
+  EXPECT_FALSE(outs.str().empty());
+}
+
+TEST_F(FilePatchPickApplyTest, PatchInconsistentWithOriginalText) {
+  {
+    const std::vector<absl::string_view> kHunkText{
+        "--- foo.txt\t2012-01-01",
+        "+++ foo-formatted.txt\t2012-01-01",
+        "@@ -2,3 +2,2 @@",
+        " bbb",  // inconsistent with original
+        "-ccc",  // patch proposes to delete this line
+        " ddd",
+    };
+    const auto status = ParseLines(kHunkText);
+    ASSERT_TRUE(status.ok()) << status.message();
+  }
+
+  std::istringstream ins("y\n");  // user accepts hunk
+  std::ostringstream outs;
+
+  constexpr absl::string_view kOriginal =
+      "aaa\n"
+      "bbb-different\n"  // inconsistent with patch
+      "ccc\n"            // deleted by hunk
+      "ddd\n"
+      "eee\n";
+  constexpr absl::string_view kExpected =
+      "aaa\n"
+      "bbb\n"
+      "ddd\n"
+      "eee\n";
+
+  const auto status =
+      PickApply(ins, outs,  //
+                ReadStringFileSequence({{"foo.txt", kOriginal}}),
+                ExpectStringFileSequence({{"foo.txt", kExpected}}));
+  EXPECT_EQ(status.code(), absl::StatusCode::kDataLoss);
+}
+
+TEST_F(FilePatchPickApplyTest, OneDeletionAccepted) {
+  {
+    const std::vector<absl::string_view> kHunkText{
+        "--- foo.txt\t2012-01-01",
+        "+++ foo-formatted.txt\t2012-01-01",
+        "@@ -2,3 +2,2 @@",
+        " bbb",
+        "-ccc",  // patch proposes to delete this line
+        " ddd",
+    };
+    const auto status = ParseLines(kHunkText);
+    ASSERT_TRUE(status.ok()) << status.message();
+  }
+
+  std::istringstream ins("y\n");  // user accepts hunk
+  std::ostringstream outs;
+
+  constexpr absl::string_view kOriginal =
+      "aaa\n"
+      "bbb\n"
+      "ccc\n"  // deleted by hunk
+      "ddd\n"
+      "eee\n";
+  constexpr absl::string_view kExpected =
+      "aaa\n"
+      "bbb\n"
+      "ddd\n"
+      "eee\n";
+
+  const auto status =
+      PickApply(ins, outs,  //
+                ReadStringFileSequence({{"foo.txt", kOriginal}}),
+                ExpectStringFileSequence({{"foo.txt", kExpected}}));
+  EXPECT_TRUE(status.ok()) << "Got: " << status.message();
+  EXPECT_FALSE(outs.str().empty());
+}
+
+TEST_F(FilePatchPickApplyTest, OneInsertionAccepted) {
+  {
+    const std::vector<absl::string_view> kHunkText{
+        "--- foo.txt\t2012-01-01",
+        "+++ foo-formatted.txt\t2012-01-01",
+        "@@ -2,2 +2,3 @@",
+        " bbb",
+        "+bbb.5",  // patch proposes to insert this line
+        " ccc",
+    };
+    const auto status = ParseLines(kHunkText);
+    ASSERT_TRUE(status.ok()) << status.message();
+  }
+
+  std::istringstream ins("y\n");  // user accepts hunk
+  std::ostringstream outs;
+
+  constexpr absl::string_view kOriginal =
+      "aaa\n"
+      "bbb\n"
+      "ccc\n"
+      "ddd\n"
+      "eee\n";
+  constexpr absl::string_view kExpected =
+      "aaa\n"
+      "bbb\n"
+      "bbb.5\n"  // inserted
+      "ccc\n"
+      "ddd\n"
+      "eee\n";
+
+  const auto status =
+      PickApply(ins, outs,  //
+                ReadStringFileSequence({{"foo.txt", kOriginal}}),
+                ExpectStringFileSequence({{"foo.txt", kExpected}}));
+  EXPECT_TRUE(status.ok()) << "Got: " << status.message();
+  EXPECT_FALSE(outs.str().empty());
+}
+
+TEST_F(FilePatchPickApplyTest, OneReplacementAccepted) {
+  {
+    const std::vector<absl::string_view> kHunkText{
+        "--- foo.txt\t2012-01-01",
+        "+++ foo-formatted.txt\t2012-01-01",
+        "@@ -2,3 +2,3 @@",
+        " bbb",
+        "-ccc",  // patch proposes to replace this line
+        "+C++",  // with this line
+        " ddd",
+    };
+    const auto status = ParseLines(kHunkText);
+    ASSERT_TRUE(status.ok()) << status.message();
+  }
+
+  std::istringstream ins("y\n");  // user accepts hunk
+  std::ostringstream outs;
+
+  constexpr absl::string_view kOriginal =
+      "aaa\n"
+      "bbb\n"
+      "ccc\n"  // replaced
+      "ddd\n"
+      "eee\n";
+  constexpr absl::string_view kExpected =
+      "aaa\n"
+      "bbb\n"
+      "C++\n"  // replaced
+      "ddd\n"
+      "eee\n";
+
+  const auto status =
+      PickApply(ins, outs,  //
+                ReadStringFileSequence({{"foo.txt", kOriginal}}),
+                ExpectStringFileSequence({{"foo.txt", kExpected}}));
+  EXPECT_TRUE(status.ok()) << "Got: " << status.message();
+  EXPECT_FALSE(outs.str().empty());
+}
+
+TEST_F(FilePatchPickApplyTest, HelpFirstThenAcceptHunk) {
+  {
+    const std::vector<absl::string_view> kHunkText{
+        "--- foo.txt\t2012-01-01",
+        "+++ foo-formatted.txt\t2012-01-01",
+        "@@ -2,3 +2,3 @@",
+        " bbb",
+        "-ccc",  // patch proposes to replace this line
+        "+C++",  // with this line
+        " ddd",
+    };
+    const auto status = ParseLines(kHunkText);
+    ASSERT_TRUE(status.ok()) << status.message();
+  }
+
+  std::istringstream ins("?\ny\n");  // help, accept
+  std::ostringstream outs;
+
+  constexpr absl::string_view kOriginal =
+      "aaa\n"
+      "bbb\n"
+      "ccc\n"  // replaced
+      "ddd\n"
+      "eee\n";
+  constexpr absl::string_view kExpected =
+      "aaa\n"
+      "bbb\n"
+      "C++\n"  // replaced
+      "ddd\n"
+      "eee\n";
+
+  const auto status =
+      PickApply(ins, outs,  //
+                ReadStringFileSequence({{"foo.txt", kOriginal}}),
+                ExpectStringFileSequence({{"foo.txt", kExpected}}));
+  EXPECT_TRUE(status.ok()) << "Got: " << status.message();
+  EXPECT_FALSE(outs.str().empty());
+  EXPECT_TRUE(absl::StrContains(outs.str(), "print this help"));
+}
+
+TEST_F(FilePatchPickApplyTest, HunksOutOfOrder) {
+  {
+    const std::vector<absl::string_view> kHunkText{
+        "--- foo.txt\t2012-01-01",
+        "+++ foo-formatted.txt\t2012-01-01",
+        "@@ -5,3 +5,3 @@",
+        " eee",
+        "-fff",
+        "+fangism",
+        " ggg",
+        "@@ -2,3 +2,3 @@",  // bad ordering
+        " bbb",
+        "-ccc",  // patch proposes to replace this line
+        "+C++",  // with this line
+        " ddd",
+    };
+    const auto status = ParseLines(kHunkText);
+    ASSERT_TRUE(status.ok()) << status.message();
+  }
+
+  std::istringstream ins("y\nn\n");  // accept, reject
+  std::ostringstream outs;
+
+  constexpr absl::string_view kOriginal =
+      "aaa\n"
+      "bbb\n"
+      "ccc\n"  // replaced
+      "ddd\n"
+      "eee\n"
+      "fff\n"
+      "ggg\n";
+  constexpr absl::string_view kExpected =
+      "aaa\n"
+      "bbb\n"
+      "C++\n"  // replaced
+      "ddd\n"
+      "eee\n"
+      "fff\n"
+      "ggg\n";
+
+  const auto status =
+      PickApply(ins, outs,  //
+                ReadStringFileSequence({{"foo.txt", kOriginal}}),
+                ExpectStringFileSequence({{"foo.txt", kExpected}}));
+  EXPECT_FALSE(status.ok());
+  EXPECT_TRUE(absl::StrContains(status.message(), "not properly ordered"));
+}
+
+TEST_F(FilePatchPickApplyTest, AcceptOnlyFirstOfTwoHunks) {
+  {
+    const std::vector<absl::string_view> kHunkText{
+        "--- foo.txt\t2012-01-01",
+        "+++ foo-formatted.txt\t2012-01-01",
+        "@@ -2,3 +2,3 @@",
+        " bbb",
+        "-ccc",  // patch proposes to replace this line
+        "+C++",  // with this line
+        " ddd",
+        "@@ -5,3 +5,3 @@",
+        " eee",
+        "-fff",
+        "+fangism",
+        " ggg",
+    };
+    const auto status = ParseLines(kHunkText);
+    ASSERT_TRUE(status.ok()) << status.message();
+  }
+
+  std::istringstream ins("y\nn\n");  // accept, reject
+  std::ostringstream outs;
+
+  constexpr absl::string_view kOriginal =
+      "aaa\n"
+      "bbb\n"
+      "ccc\n"  // replaced
+      "ddd\n"
+      "eee\n"
+      "fff\n"
+      "ggg\n";
+  constexpr absl::string_view kExpected =
+      "aaa\n"
+      "bbb\n"
+      "C++\n"  // replaced
+      "ddd\n"
+      "eee\n"
+      "fff\n"
+      "ggg\n";
+
+  const auto status =
+      PickApply(ins, outs,  //
+                ReadStringFileSequence({{"foo.txt", kOriginal}}),
+                ExpectStringFileSequence({{"foo.txt", kExpected}}));
+  EXPECT_TRUE(status.ok()) << "Got: " << status.message();
+  EXPECT_FALSE(outs.str().empty());
+}
+
+TEST_F(FilePatchPickApplyTest, AcceptOnlySecondOfTwoHunks) {
+  {
+    const std::vector<absl::string_view> kHunkText{
+        "--- foo.txt\t2012-01-01",
+        "+++ foo-formatted.txt\t2012-01-01",
+        "@@ -2,3 +2,3 @@",
+        " bbb",
+        "-ccc",  // patch proposes to replace this line
+        "+C++",  // with this line
+        " ddd",
+        "@@ -5,3 +5,3 @@",
+        " eee",
+        "-fff",
+        "+fangism",
+        " ggg",
+    };
+    const auto status = ParseLines(kHunkText);
+    ASSERT_TRUE(status.ok()) << status.message();
+  }
+
+  std::istringstream ins("n\ny\n");  // reject, accept
+  std::ostringstream outs;
+
+  constexpr absl::string_view kOriginal =
+      "aaa\n"
+      "bbb\n"
+      "ccc\n"  // kept
+      "ddd\n"
+      "eee\n"
+      "fff\n"  // changed
+      "ggg\n";
+  constexpr absl::string_view kExpected =
+      "aaa\n"
+      "bbb\n"
+      "ccc\n"  // kept
+      "ddd\n"
+      "eee\n"
+      "fangism\n"  // changed
+      "ggg\n";
+
+  const auto status =
+      PickApply(ins, outs,  //
+                ReadStringFileSequence({{"foo.txt", kOriginal}}),
+                ExpectStringFileSequence({{"foo.txt", kExpected}}));
+  EXPECT_TRUE(status.ok()) << "Got: " << status.message();
+  EXPECT_FALSE(outs.str().empty());
+}
+
+TEST_F(FilePatchPickApplyTest, AbortFileAfterAcceptingOneHunk) {
+  {
+    const std::vector<absl::string_view> kHunkText{
+        "--- foo.txt\t2012-01-01",
+        "+++ foo-formatted.txt\t2012-01-01",
+        "@@ -2,3 +2,3 @@",
+        " bbb",
+        "-ccc",  // patch proposes to replace this line
+        "+C++",  // with this line
+        " ddd",
+        "@@ -5,3 +5,3 @@",
+        " eee",
+        "-fff",
+        "+fangism",
+        " ggg",
+    };
+    const auto status = ParseLines(kHunkText);
+    ASSERT_TRUE(status.ok()) << status.message();
+  }
+
+  std::istringstream ins("y\nq\n");  // accept, quit (abandon)
+  std::ostringstream outs;
+
+  constexpr absl::string_view kOriginal =
+      "aaa\n"
+      "bbb\n"
+      "ccc\n"  // replaced
+      "ddd\n"
+      "eee\n"
+      "fff\n"
+      "ggg\n";
+  constexpr absl::string_view kExpected = kOriginal;
+
+  const auto status =
+      PickApply(ins, outs,  //
+                ReadStringFileSequence({{"foo.txt", kOriginal}}),
+                ExpectStringFileSequence({{"foo.txt", kExpected}}));
+  EXPECT_TRUE(status.ok()) << "Got: " << status.message();
+  EXPECT_FALSE(outs.str().empty());
+}
+
+TEST_F(FilePatchPickApplyTest, AcceptTwoDeletions) {
+  {
+    const std::vector<absl::string_view> kHunkText{
+        "--- foo.txt\t2012-01-01",
+        "+++ foo-formatted.txt\t2012-01-01",
+        "@@ -2,3 +2,2 @@",
+        " bbb",
+        "-ccc",  // delete this line
+        " ddd",
+        "@@ -6,3 +5,2 @@",
+        " fff",
+        "-ggg",  // delete this line
+        " hhh",
+    };
+    const auto status = ParseLines(kHunkText);
+    ASSERT_TRUE(status.ok()) << status.message();
+  }
+
+  std::istringstream ins("y\ny\n");  // accept, accept
+  std::ostringstream outs;
+
+  constexpr absl::string_view kOriginal =
+      "aaa\n"
+      "bbb\n"
+      "ccc\n"
+      "ddd\n"
+      "eee\n"
+      "fff\n"
+      "ggg\n"
+      "hhh\n";
+  constexpr absl::string_view kExpected =
+      "aaa\n"
+      "bbb\n"
+      "ddd\n"
+      "eee\n"
+      "fff\n"
+      "hhh\n";
+
+  const auto status =
+      PickApply(ins, outs,  //
+                ReadStringFileSequence({{"foo.txt", kOriginal}}),
+                ExpectStringFileSequence({{"foo.txt", kExpected}}));
+  EXPECT_TRUE(status.ok()) << "Got: " << status.message();
+  EXPECT_FALSE(outs.str().empty());
+}
+
+TEST_F(FilePatchPickApplyTest, AcceptTwoInsertions) {
+  {
+    const std::vector<absl::string_view> kHunkText{
+        "--- foo.txt\t2012-01-01",
+        "+++ foo-formatted.txt\t2012-01-01",
+        "@@ -2,2 +2,3 @@",
+        " bbb",
+        "+ccc",  // delete this line
+        " ddd",
+        "@@ -5,2 +6,3 @@",
+        " fff",
+        "+ggg",  // delete this line
+        " hhh",
+    };
+    const auto status = ParseLines(kHunkText);
+    ASSERT_TRUE(status.ok()) << status.message();
+  }
+
+  std::istringstream ins("y\ny\n");  // accept, accept
+  std::ostringstream outs;
+
+  constexpr absl::string_view kOriginal =
+      "aaa\n"
+      "bbb\n"
+      "ddd\n"
+      "eee\n"
+      "fff\n"
+      "hhh\n";
+  constexpr absl::string_view kExpected =
+      "aaa\n"
+      "bbb\n"
+      "ccc\n"
+      "ddd\n"
+      "eee\n"
+      "fff\n"
+      "ggg\n"
+      "hhh\n";
+
+  const auto status =
+      PickApply(ins, outs,  //
+                ReadStringFileSequence({{"foo.txt", kOriginal}}),
+                ExpectStringFileSequence({{"foo.txt", kExpected}}));
+  EXPECT_TRUE(status.ok()) << "Got: " << status.message();
+  EXPECT_FALSE(outs.str().empty());
+}
+
 }  // namespace
 }  // namespace internal
 
@@ -805,7 +1577,7 @@ TEST(PatchSetAddedLinesMapTest, NewAndExistingFile) {
       "-bye\n";
   PatchSet patch_set;
   const auto status = patch_set.Parse(patch_contents);
-  EXPECT_TRUE(status.ok()) << status.message();
+  ASSERT_TRUE(status.ok()) << status.message();
 
   typedef FileLineNumbersMap::value_type P;
   EXPECT_THAT(patch_set.AddedLinesMap(false),
@@ -815,6 +1587,134 @@ TEST(PatchSetAddedLinesMapTest, NewAndExistingFile) {
               ElementsAre(P{"/path/to/file1.txt", {{1, 3}}},
                           P{"/path/to/file2.txt", {{54, 56}}}));
   // Neither case should include deleted files like file3.txt
+}
+
+class PatchSetPickApplyTest : public PatchSet, public ::testing::Test {};
+
+TEST_F(PatchSetPickApplyTest, EmptyFilePatchHunks) {
+  {
+    constexpr absl::string_view patch_contents =  //
+        "diff -u /dev/null local/path/to/file1.txt\n"
+        "--- foo/bar.txt\t2020-03-30\n"
+        "+++ foo/bar-formatted.txt\t2020-03-30\n";
+    const auto status = Parse(patch_contents);
+    ASSERT_TRUE(status.ok()) << status.message();
+  }
+
+  std::istringstream ins;
+  std::ostringstream outs;
+  // No file I/O or prompting because patch is empty.
+  const auto status = PickApply(
+      ins, outs,  //
+      internal::ReadStringFileSequence({{"foo/bar.txt", "don't care\n"}}),
+      internal::ExpectStringFileSequence({{"foo/bar.txt", "don't care\n"}}));
+  EXPECT_TRUE(status.ok()) << "Got: " << status.message();
+  EXPECT_TRUE(outs.str().empty()) << "Unexpected: " << outs.str();
+}
+
+TEST_F(PatchSetPickApplyTest, MultipleEmptyFilePatchHunks) {
+  {
+    constexpr absl::string_view patch_contents =  //
+        "diff -u /dev/null local/path/to/file1.txt\n"
+        "--- foo/bar.txt\t2020-03-30\n"
+        "+++ foo/bar-formatted.txt\t2020-03-30\n"
+        "--- bar/foo.txt\t2020-03-30\n"
+        "+++ bar/foo-formatted.txt\t2020-03-30\n";
+    const auto status = Parse(patch_contents);
+    ASSERT_TRUE(status.ok()) << status.message();
+  }
+
+  std::istringstream ins;
+  std::ostringstream outs;
+  // No file I/O or prompting because patches are empty.
+  const auto status = PickApply(ins, outs,  //
+                                internal::ReadStringFileSequence({
+                                    {"foo/bar.txt", "don't care\n"},
+                                    {"bar/foo.txt", "don't care\n"},
+                                }),
+                                internal::ExpectStringFileSequence({
+                                    {"foo/bar.txt", "don't care\n"},
+                                    {"bar/foo.txt", "don't care\n"},
+                                }));
+  EXPECT_TRUE(status.ok()) << "Got: " << status.message();
+  EXPECT_TRUE(outs.str().empty()) << "Unexpected: " << outs.str();
+}
+
+TEST_F(PatchSetPickApplyTest, MultipleNonEmptyFilePatchHunks) {
+  {
+    constexpr absl::string_view patch_contents =  //
+        "diff -u /dev/null local/path/to/file1.txt\n"
+        "--- foo/bar.txt\t2020-03-30\n"
+        "+++ foo/bar-formatted.txt\t2020-03-30\n"
+        "@@ -1,3 +1,2 @@\n"
+        " you\n"
+        "-lose\n"
+        " some\n"
+        "--- bar/foo.txt\t2020-03-30\n"
+        "+++ bar/foo-formatted.txt\t2020-03-30\n"
+        "@@ -1,2 +1,3 @@\n"
+        " you\n"
+        "+win\n"
+        " some\n";
+    const auto status = Parse(patch_contents);
+    ASSERT_TRUE(status.ok()) << status.message();
+  }
+
+  std::istringstream ins("y\ny\n");  // accept one hunk in each file
+  std::ostringstream outs;
+  // No file I/O or prompting because patches are empty.
+  const auto status = PickApply(ins, outs,  //
+                                internal::ReadStringFileSequence({
+                                    {"foo/bar.txt", "you\nlose\nsome\n"},
+                                    {"bar/foo.txt", "you\nsome\n"},
+                                }),
+                                internal::ExpectStringFileSequence({
+                                    {"foo/bar.txt", "you\nsome\n"},
+                                    {"bar/foo.txt", "you\nwin\nsome\n"},
+                                }));
+  EXPECT_TRUE(status.ok()) << "Got: " << status.message();
+  EXPECT_FALSE(outs.str().empty());
+}
+
+TEST_F(PatchSetPickApplyTest, FirstFilePatchOutOfOrder) {
+  {
+    constexpr absl::string_view patch_contents =  //
+        "diff -u /dev/null local/path/to/file1.txt\n"
+        "--- foo/bar.txt\t2020-03-30\n"
+        "+++ foo/bar-formatted.txt\t2020-03-30\n"
+        "@@ -4,3 +3,2 @@\n"  // out-of-order
+        " out\n"
+        "-of\n"
+        " order\n"
+        "@@ -1,3 +1,2 @@\n"
+        " you\n"
+        "-lose\n"
+        " some\n"
+        "--- bar/foo.txt\t2020-03-30\n"
+        "+++ bar/foo-formatted.txt\t2020-03-30\n"
+        "@@ -1,2 +1,3 @@\n"
+        " you\n"
+        "+win\n"
+        " some\n";
+    const auto status = Parse(patch_contents);
+    ASSERT_TRUE(status.ok()) << status.message();
+  }
+
+  std::istringstream ins("y\ny\n");  // accept
+  std::ostringstream outs;
+  // No file I/O or prompting because patches are empty.
+  const auto status =
+      PickApply(ins, outs,  //
+                internal::ReadStringFileSequence({
+                    {"foo/bar.txt", "you\nlose\nsome\nout\nof\norder"},
+                    {"bar/foo.txt", "you\nsome\n"},
+                }),
+                internal::ExpectStringFileSequence({
+                    {"foo/bar.txt", "you\nsome\n"},
+                    {"bar/foo.txt", "you\nwin\nsome\n"},
+                }));
+  EXPECT_FALSE(status.ok());
+  EXPECT_TRUE(absl::StrContains(status.message(), "not properly ordered"));
 }
 
 }  // namespace
