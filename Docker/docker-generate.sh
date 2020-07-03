@@ -23,7 +23,7 @@ GIT_VERSION=${GIT_VERSION:-$(git describe --match=v*)}
 GIT_HASH=${GIT_HASH:-$(git rev-parse HEAD)}
 
 # Generate the docker files for ubuntu versions
-for UBUNTU_VERSION in trusty xenial bionic eoan; do
+for UBUNTU_VERSION in trusty xenial bionic eoan focal; do
     cat > ubuntu-${UBUNTU_VERSION}/Dockerfile <<EOF
 FROM ubuntu:$UBUNTU_VERSION
 
