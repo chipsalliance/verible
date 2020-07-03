@@ -4118,6 +4118,119 @@ const TreeUnwrapperTestData kUnwrapPreprocessorTestCases[] = {
             L(0, {"endmodule"})),
     },
 
+    {
+	"Partitioning formal argument `define",
+	"`define FOO(BAR)\n",
+	N(0, L(0, {"`define", "FOO", "("}), L(2, {"BAR", ")", ""})),
+    },
+
+    {
+	"Partitioning formal argument `define with body definition",
+	"`define FOO(BAR) body_def\n",
+	N(0, L(0, {"`define", "FOO", "("}), L(2, {"BAR", ")", "body_def"})),
+    },
+
+    {
+	"Partitioning formal arguments in `define",
+	"`define FOO(BAR1, BAR2, BAR3)\n",
+	N(0, L(0, {"`define", "FOO", "("}),
+	  N(2,
+	    L(2, {"BAR1", ","}),
+	    L(2, {"BAR2", ","}),
+	    L(2, {"BAR3", ")", ""}))),
+    },
+
+    {
+	"Partitioning formal arguments in `define with body definition",
+	"`define FOO(BAR1, BAR2, BAR3) definition_body\n",
+	N(0, L(0, {"`define", "FOO", "("}),
+	  N(2,
+	    L(2, {"BAR1", ","}),
+	    L(2, {"BAR2", ","}),
+	    L(2, {"BAR3", ")", "definition_body"}))),
+    },
+
+    {
+	"Partitioning formal arguments in consecutive `define's",
+	"`define FOO1(BAR1, BAR2, BAR3)\n"
+	"`define FOO2(BAR1, BAR2, BAR3)\n",
+	N(0, L(0, {"`define", "FOO1", "("}),
+	  N(2,
+	    L(2, {"BAR1", ","}),
+	    L(2, {"BAR2", ","}),
+	    L(2, {"BAR3", ")", ""}))),
+	N(0, L(0, {"`define", "FOO2", "("}),
+	  N(2,
+	    L(2, {"BAR1", ","}),
+	    L(2, {"BAR2", ","}),
+	    L(2, {"BAR3", ")", ""}))),
+    },
+
+    {
+	"Partitioning formal arguments in consecutive `define's with body def",
+	"`define FOO1(BAR1, BAR2, BAR3) definition_body\n"
+	"`define FOO2(BAR1, BAR2, BAR3)\n",
+	N(0, L(0, {"`define", "FOO1", "("}),
+	  N(2,
+	    L(2, {"BAR1", ","}),
+	    L(2, {"BAR2", ","}),
+	    L(2, {"BAR3", ")", "definition_body"}))),
+	N(0, L(0, {"`define", "FOO2", "("}),
+	  N(2,
+	    L(2, {"BAR1", ","}),
+	    L(2, {"BAR2", ","}),
+	    L(2, {"BAR3", ")", ""}))),
+    },
+
+    {
+	"Partitioning formal arguments in consecutive `define's with body def",
+	"`define FOO1(BAR1, BAR2, BAR3)\n"
+	"`define FOO2(BAR1, BAR2, BAR3) definition_body\n",
+	N(0, L(0, {"`define", "FOO1", "("}),
+	  N(2,
+	    L(2, {"BAR1", ","}),
+	    L(2, {"BAR2", ","}),
+	    L(2, {"BAR3", ")", ""}))),
+	N(0, L(0, {"`define", "FOO2", "("}),
+	  N(2,
+	    L(2, {"BAR1", ","}),
+	    L(2, {"BAR2", ","}),
+	    L(2, {"BAR3", ")", "definition_body"}))),
+    },
+
+    {
+	"Partitioning formal arguments in consecutive `define's with body def",
+	"`define FOO1(BAR1, BAR2, BAR3) definition_body1\n"
+	"`define FOO2(BAR1, BAR2, BAR3) definition_body2\n",
+	N(0, L(0, {"`define", "FOO1", "("}),
+	  N(2,
+	    L(2, {"BAR1", ","}),
+	    L(2, {"BAR2", ","}),
+	    L(2, {"BAR3", ")", "definition_body1"}))),
+	N(0, L(0, {"`define", "FOO2", "("}),
+	  N(2,
+	    L(2, {"BAR1", ","}),
+	    L(2, {"BAR2", ","}),
+	    L(2, {"BAR3", ")", "definition_body2"}))),
+    },
+
+    {
+	"Partitioning formal argument with default value in `define",
+	"`define FOO(BAR1=default_val)\n",
+	N(0, L(0, {"`define", "FOO", "("}),
+	  L(2, {"BAR1", "=", "default_val", ")", ""})),
+    },
+
+    {
+	"Partitioning formal arguments with default value in `define with "
+	"body definition",
+	"`define FOO(BAR1, BAR2=default_val) definition_body\n",
+	N(0, L(0, {"`define", "FOO", "("}),
+	  N(2,
+	    L(2, {"BAR1", ","}),
+	    L(2, {"BAR2", "=", "default_val", ")", "definition_body"}))),
+    },
+
     // TODO(fangism): decide/test/support indenting preprocessor directives
     // nested inside `ifdefs.  Should `define inside `ifdef be indented?
 };

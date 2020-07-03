@@ -271,6 +271,8 @@ enum class NodeEnum {
   kMacroArgList,
   kMacroCall,
   kMacroGenericItem,
+  kMacroFormalParameterList,
+  kMacroFormalArg,
   kAssignmentPattern,
   kPatternExpression,
   kMinTypMaxList,
