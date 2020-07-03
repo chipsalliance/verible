@@ -69,8 +69,6 @@ jobs:
    - name: "Centos 8"
      env:
       - MODE=bin OS=centos OS_VERSION=8
-  allow_failures:
-    - name: "Ubuntu Focal (20.04 LTS)"  # google/python-gflags#44
 
 before_install:
   - ./.github/travis/install.sh
