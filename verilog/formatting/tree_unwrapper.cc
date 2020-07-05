@@ -914,7 +914,7 @@ void TreeUnwrapper::SetIndentationsAndCreatePartitions(
     {
       const int indent = suppress_indentation ? 0 : style_.wrap_spaces;
       const auto policy = Context().IsInside(NodeEnum::kDataDeclaration)
-                              ? PartitionPolicyEnum::kAlwaysExpand
+                              ? PartitionPolicyEnum::kTabularAlignment
                               : PartitionPolicyEnum::kFitOnLineElseExpand;
       VisitIndentedSection(node, indent, policy);
       break;
