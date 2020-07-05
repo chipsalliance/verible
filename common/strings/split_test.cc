@@ -16,10 +16,13 @@
 
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
+#include "common/strings/range.h"
 #include "common/util/range.h"
 
 namespace verible {
 namespace {
+
+using ::testing::ElementsAre;
 
 static void AcceptFunctionChar(std::function<absl::string_view(char)> func) {}
 static void AcceptFunctionStringView(
@@ -113,6 +116,57 @@ TEST(StringSpliteratorTest, CommaBabyCommaOverBaby) {
   EXPECT_TRUE(BoundsEqual(gen(), csv_row.substr(5, 0)));
   EXPECT_TRUE(BoundsEqual(gen(), csv_row.substr(6, 3)));
   EXPECT_TRUE(BoundsEqual(gen(), csv_row.substr(10, 2)));
+}
+
+using IntPair = std::pair<int, int>;
+
+// For testing purposes, directly compare the substring indices,
+// which is a stronger check than string contents comparison.
+static std::vector<IntPair> SplitLinesToOffsets(absl::string_view text) {
+  std::vector<IntPair> offsets;
+  for (const auto& line : SplitLines(text)) {
+    offsets.push_back(SubstringOffsets(line, text));
+  }
+  return offsets;
+}
+
+TEST(SplitLinesTest, Empty) {
+  constexpr absl::string_view text("");
+  const auto lines = SplitLines(text);
+  EXPECT_TRUE(lines.empty());
+}
+
+TEST(SplitLinesTest, OneSpace) {
+  constexpr absl::string_view text(" ");
+  EXPECT_THAT(SplitLines(text), ElementsAre(" "));
+  EXPECT_THAT(SplitLinesToOffsets(text), ElementsAre(IntPair(0, 1)));
+}
+
+TEST(SplitLinesTest, OneBlankLine) {
+  constexpr absl::string_view text("\n");
+  EXPECT_THAT(SplitLines(text), ElementsAre(""));
+  EXPECT_THAT(SplitLinesToOffsets(text), ElementsAre(IntPair(0, 0)));
+}
+
+TEST(SplitLinesTest, BlankLines) {
+  constexpr absl::string_view text("\n\n\n");
+  EXPECT_THAT(SplitLines(text), ElementsAre("", "", ""));
+  EXPECT_THAT(SplitLinesToOffsets(text),
+              ElementsAre(IntPair(0, 0), IntPair(1, 1), IntPair(2, 2)));
+}
+
+TEST(SplitLinesTest, NonBlankLines) {
+  constexpr absl::string_view text("a\nbc\ndef\n");
+  EXPECT_THAT(SplitLines(text), ElementsAre("a", "bc", "def"));
+  EXPECT_THAT(SplitLinesToOffsets(text),
+              ElementsAre(IntPair(0, 1), IntPair(2, 4), IntPair(5, 8)));
+}
+
+TEST(SplitLinesTest, NonBlankLinesUnterminated) {
+  constexpr absl::string_view text("abc\nde\nf");  // no \n at the end
+  EXPECT_THAT(SplitLines(text), ElementsAre("abc", "de", "f"));
+  EXPECT_THAT(SplitLinesToOffsets(text),
+              ElementsAre(IntPair(0, 3), IntPair(4, 6), IntPair(7, 8)));
 }
 
 }  // namespace
