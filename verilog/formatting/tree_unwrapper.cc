@@ -1631,7 +1631,7 @@ void TreeUnwrapper::Visit(const verible::SyntaxTreeLeaf& leaf) {
               NodeEnum::kPortDeclarationList,        // kPort, kPortDeclaration
               NodeEnum::kPortActualList,             // kActualNamedPort,
                                                      // kActualPositionalPort
-              NodeEnum::kOpenRangeList,
+              NodeEnum::kOpenRangeList,              // kExpression
               NodeEnum::kGateInstanceRegisterVariableList,  // kGateInstance,
                                                             // kRegisterVariable
               NodeEnum::kVariableDeclarationAssignmentList  // due to element:
