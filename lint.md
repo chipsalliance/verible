@@ -245,4 +245,4 @@ Enabled by default: true
 
 ## Version
 
-Generated on 2020-07-04 09:12:34 -0700 from [v0.0-460-ga1f5475](https://github.com/google/verible/commit/a1f54754ba26815bbfddf0280e9cb165f2b9d579)
+Generated on 2020-07-06 19:23:52 -0700 from [v0.0-467-gae27e07](https://github.com/google/verible/commit/ae27e0704eacf9d096aae6e0f370ae4ba3d09185)
