@@ -50,6 +50,9 @@ struct SubcommandEntry {
 
   // full description of command
   const std::string usage;
+
+  // If true, display this subcommand in 'help'.
+  const bool show_in_help = true;
 };
 
 using SubcommandMap =
@@ -82,9 +85,9 @@ static const SubcommandMap& GetSubcommandMap() {
         "With no command or unknown command, this lists available "
         "commands.\n"}},
 
-      // TODO(fangism): this should be a hidden command
       {"error",
-       {&Error, "same as 'help', but exits non-zero to signal a user-error\n"}},
+       {&Error, "same as 'help', but exits non-zero to signal a user-error\n",
+        false}},
 
       {"changed-lines",  //
        {&ChangedLines,   //
@@ -118,14 +121,14 @@ Effect:
   hunks to apply.
 )"}},
 
-      // These are diagnostic tools and should be hidden from most users.
       {"stdin-test",  //
        {&StdinTest,   //
         R"(Test for re-opening stdin.
 
 This interactivel prompts the user to enter text, separating files with an EOF
 (Ctrl-D), and echoes the input text back to stdout.
-)"}},
+)",
+        false}},
       {"cat-test",  //
        {&CatTest,   //
         R"(Test for (UNIX) cat-like functionality.
@@ -136,7 +139,8 @@ where each ARG could point to a file on the filesystem or be '-' to read from st
 Each '-' will prompt the user to enter text until EOF (Ctrl-D).
 Each 'file' echoed back to stdout will be enclosed in banner lines with
 <<<< and >>>>.
-)"}},
+)",
+        false}},
   };
   return *kCommands;
 }
@@ -234,13 +238,14 @@ absl::Status CatTest(const SubcommandArgsRange& args, std::istream& ins,
 
 static std::string ListCommands() {
   static const SubcommandMap& commands(GetSubcommandMap());
-  return absl::StrCat("  ",
-                      absl::StrJoin(commands, "\n  ",
-                                    [](std::string* out,
-                                       const SubcommandMap::value_type& entry) {
-                                      *out += entry.first;  // command name
-                                    }),
-                      "\n");
+  std::vector<absl::string_view> public_commands;
+  for (const auto& command : commands) {
+    // List only public commands.
+    if (command.second.show_in_help) {
+      public_commands.emplace_back(command.first);
+    }
+  }
+  return absl::StrCat("  ", absl::StrJoin(public_commands, "\n  "), "\n");
 }
 
 static const SubcommandEntry& GetSubcommandEntry(absl::string_view command) {
