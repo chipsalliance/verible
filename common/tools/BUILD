@@ -26,3 +26,26 @@ sh_test(
     data = [":verible-patch-tool"],
     deps = [],
 )
+
+# This script is intended to run post-install and expect to be co-located with:
+#   //common/tools:verible-patch-tool
+filegroup(
+    name = "verible-transform-interactive",
+    srcs = ["verible-transform-interactive.sh"],
+    visibility = ["//:__pkg__"],  # for release
+)
+
+sh_test(
+    name = "verible-transform-interactive-test",
+    size = "small",
+    srcs = ["verible-transform-interactive-test.sh"],
+    args = [
+        "$(location :verible-transform-interactive)",
+        "$(location :verible-patch-tool)",
+    ],
+    data = [
+        ":verible-patch-tool",
+        ":verible-transform-interactive",
+    ],
+    deps = [],
+)
