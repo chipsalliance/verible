@@ -116,6 +116,7 @@ cc_library(
         "//common/util:container_iterator_range",
         "//common/util:file_util",
         "//common/util:iterator_range",
+        "@com_google_absl//absl/base:core_headers",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/strings",
     ],

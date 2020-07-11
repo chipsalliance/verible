@@ -1480,6 +1480,92 @@ TEST_F(FilePatchPickApplyTest, AcceptTwoDeletions) {
   EXPECT_FALSE(outs.str().empty());
 }
 
+TEST_F(FilePatchPickApplyTest, AcceptAllDeletions) {
+  {
+    const std::vector<absl::string_view> kHunkText{
+        "--- foo.txt\t2012-01-01",
+        "+++ foo-formatted.txt\t2012-01-01",
+        "@@ -2,3 +2,2 @@",
+        " bbb",
+        "-ccc",  // delete this line
+        " ddd",
+        "@@ -6,3 +5,2 @@",
+        " fff",
+        "-ggg",  // delete this line
+        " hhh",
+    };
+    const auto status = ParseLines(kHunkText);
+    ASSERT_TRUE(status.ok()) << status.message();
+  }
+
+  std::istringstream ins("a\n");  // accept all
+  std::ostringstream outs;
+
+  constexpr absl::string_view kOriginal =
+      "aaa\n"
+      "bbb\n"
+      "ccc\n"
+      "ddd\n"
+      "eee\n"
+      "fff\n"
+      "ggg\n"
+      "hhh\n";
+  constexpr absl::string_view kExpected =
+      "aaa\n"
+      "bbb\n"
+      "ddd\n"
+      "eee\n"
+      "fff\n"
+      "hhh\n";
+
+  const auto status =
+      PickApply(ins, outs,  //
+                ReadStringFileSequence({{"foo.txt", kOriginal}}),
+                ExpectStringFileSequence({{"foo.txt", kExpected}}));
+  EXPECT_TRUE(status.ok()) << "Got: " << status.message();
+  EXPECT_FALSE(outs.str().empty());
+}
+
+TEST_F(FilePatchPickApplyTest, RejectAllDeletions) {
+  {
+    const std::vector<absl::string_view> kHunkText{
+        "--- foo.txt\t2012-01-01",
+        "+++ foo-formatted.txt\t2012-01-01",
+        "@@ -2,3 +2,2 @@",
+        " bbb",
+        "-ccc",  // delete this line
+        " ddd",
+        "@@ -6,3 +5,2 @@",
+        " fff",
+        "-ggg",  // delete this line
+        " hhh",
+    };
+    const auto status = ParseLines(kHunkText);
+    ASSERT_TRUE(status.ok()) << status.message();
+  }
+
+  std::istringstream ins("d\n");  // accept all
+  std::ostringstream outs;
+
+  constexpr absl::string_view kOriginal =
+      "aaa\n"
+      "bbb\n"
+      "ccc\n"
+      "ddd\n"
+      "eee\n"
+      "fff\n"
+      "ggg\n"
+      "hhh\n";
+  constexpr absl::string_view kExpected = kOriginal;  // no changes
+
+  const auto status =
+      PickApply(ins, outs,  //
+                ReadStringFileSequence({{"foo.txt", kOriginal}}),
+                ExpectStringFileSequence({{"foo.txt", kExpected}}));
+  EXPECT_TRUE(status.ok()) << "Got: " << status.message();
+  EXPECT_FALSE(outs.str().empty());
+}
+
 TEST_F(FilePatchPickApplyTest, AcceptTwoInsertions) {
   {
     const std::vector<absl::string_view> kHunkText{
@@ -1517,6 +1603,90 @@ TEST_F(FilePatchPickApplyTest, AcceptTwoInsertions) {
       "fff\n"
       "ggg\n"
       "hhh\n";
+
+  const auto status =
+      PickApply(ins, outs,  //
+                ReadStringFileSequence({{"foo.txt", kOriginal}}),
+                ExpectStringFileSequence({{"foo.txt", kExpected}}));
+  EXPECT_TRUE(status.ok()) << "Got: " << status.message();
+  EXPECT_FALSE(outs.str().empty());
+}
+
+TEST_F(FilePatchPickApplyTest, AcceptAllInsertions) {
+  {
+    const std::vector<absl::string_view> kHunkText{
+        "--- foo.txt\t2012-01-01",
+        "+++ foo-formatted.txt\t2012-01-01",
+        "@@ -2,2 +2,3 @@",
+        " bbb",
+        "+ccc",  // delete this line
+        " ddd",
+        "@@ -5,2 +6,3 @@",
+        " fff",
+        "+ggg",  // delete this line
+        " hhh",
+    };
+    const auto status = ParseLines(kHunkText);
+    ASSERT_TRUE(status.ok()) << status.message();
+  }
+
+  std::istringstream ins("a\n");  // accept all
+  std::ostringstream outs;
+
+  constexpr absl::string_view kOriginal =
+      "aaa\n"
+      "bbb\n"
+      "ddd\n"
+      "eee\n"
+      "fff\n"
+      "hhh\n";
+  constexpr absl::string_view kExpected =
+      "aaa\n"
+      "bbb\n"
+      "ccc\n"
+      "ddd\n"
+      "eee\n"
+      "fff\n"
+      "ggg\n"
+      "hhh\n";
+
+  const auto status =
+      PickApply(ins, outs,  //
+                ReadStringFileSequence({{"foo.txt", kOriginal}}),
+                ExpectStringFileSequence({{"foo.txt", kExpected}}));
+  EXPECT_TRUE(status.ok()) << "Got: " << status.message();
+  EXPECT_FALSE(outs.str().empty());
+}
+
+TEST_F(FilePatchPickApplyTest, RejectAllInsertions) {
+  {
+    const std::vector<absl::string_view> kHunkText{
+        "--- foo.txt\t2012-01-01",
+        "+++ foo-formatted.txt\t2012-01-01",
+        "@@ -2,2 +2,3 @@",
+        " bbb",
+        "+ccc",  // delete this line
+        " ddd",
+        "@@ -5,2 +6,3 @@",
+        " fff",
+        "+ggg",  // delete this line
+        " hhh",
+    };
+    const auto status = ParseLines(kHunkText);
+    ASSERT_TRUE(status.ok()) << status.message();
+  }
+
+  std::istringstream ins("d\n");  // reject all
+  std::ostringstream outs;
+
+  constexpr absl::string_view kOriginal =
+      "aaa\n"
+      "bbb\n"
+      "ddd\n"
+      "eee\n"
+      "fff\n"
+      "hhh\n";
+  constexpr absl::string_view kExpected = kOriginal;
 
   const auto status =
       PickApply(ins, outs,  //

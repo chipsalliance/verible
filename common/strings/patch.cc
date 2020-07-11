@@ -20,6 +20,7 @@
 #include <iostream>
 #include <iterator>
 
+#include "absl/base/macros.h"
 #include "absl/status/status.h"
 #include "absl/strings/ascii.h"
 #include "absl/strings/match.h"
@@ -313,7 +314,7 @@ static char PromptHunkAction(std::istream& ins, std::ostream& outs) {
     return 'q';
   }
   // Suppress prompt in noninteractive mode.
-  if (isatty(0)) outs << "Apply this hunk? [y,n,q,?] ";
+  if (isatty(0)) outs << "Apply this hunk? [y,n,a,d,q,?] ";
   char c;
   ins >> c;  // user will need to hit <enter> after the character
   return c;
@@ -384,9 +385,16 @@ absl::Status FilePatch::PickApply(std::istream& ins, std::ostream& outs,
       output_lines.push_back(orig_lines[last_consumed_line]);
     }
     // Prompt user to apply or reject patch hunk.
-    outs << hunk;
-    const char action = PromptHunkAction(ins, outs);
+    std::function<char()> prompt = [&hunk, &ins, &outs]() -> char {
+      outs << hunk;
+      return PromptHunkAction(ins, outs);
+    };
+    const char action = prompt();
     switch (action) {
+      case 'a': {
+        prompt = []() -> char { return 'y'; };  // suppress prompt
+        ABSL_FALLTHROUGH_INTENDED;
+      }
       case 'y': {
         for (const auto& marked_line : hunk.MarkedLines()) {
           if (marked_line.Marker() != '-') {
@@ -395,12 +403,15 @@ absl::Status FilePatch::PickApply(std::istream& ins, std::ostream& outs,
         }
         const auto& old_range = hunk.Header().old_range;
         last_consumed_line = old_range.start + old_range.count - 1;
-        break;
+        break;  // switch
+      }
+      case 'd': {
+        prompt = []() -> char { return 'n'; };  // suppress prompt
+        ABSL_FALLTHROUGH_INTENDED;
       }
       case 'n':
         // no need to do anything, next iteration will sweep up original lines
-        break;
-      // TODO(b/156530527): 'a' to accept all, 'd' to reject all (remaining)
+        break;  // switch
       // TODO(b/156530527): 's' for hunk splitting
       // TODO(b/156530527): 'e' for hunk editing
       case 'q':
@@ -410,9 +421,11 @@ absl::Status FilePatch::PickApply(std::istream& ins, std::ostream& outs,
       default:  // including '?'
         outs << "y - accept change\n"
                 "n - reject change\n"
+                "a - accept this and remaining changes in the current file\n"
+                "d - reject this and remaining changes in the current file\n"
                 "q - abandon all changes in this file\n"
                 "? - print this help and prompt again\n";
-        continue;
+        continue;  // for-loop
     }
 
     hunks_worklist.pop_front();
