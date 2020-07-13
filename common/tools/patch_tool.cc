@@ -43,6 +43,10 @@ using SubcommandFunction =
 
 // Represents a function selected by the user.
 struct SubcommandEntry {
+  SubcommandEntry(SubcommandFunction fun, absl::string_view usage,
+                  bool show_in_help = true)
+      : main(fun), usage(usage), show_in_help(show_in_help) {}
+
   // sub-main function
   const SubcommandFunction main;
 
@@ -52,7 +56,7 @@ struct SubcommandEntry {
   const std::string usage;
 
   // If true, display this subcommand in 'help'.
-  const bool show_in_help = true;
+  const bool show_in_help;
 };
 
 using SubcommandMap =
