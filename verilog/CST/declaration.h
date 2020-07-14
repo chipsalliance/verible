@@ -42,6 +42,17 @@ verible::SymbolPtr MakeTypeIdDimensionsTuple(T1&& type, T2&& id,
                                  std::forward<T3>(unpacked_dimensions));
 }
 
+// Interface for consistently building a type-id tuple (no unpacked dimensions).
+// TODO(fangism): combine this with MakeTypeIdDimensionsTuple above?
+//   That would be one fewer auxiliary CST node type.
+template <typename T1, typename T2>
+verible::SymbolPtr MakeTypeIdTuple(T1&& type, T2&& id) {
+  verible::CheckSymbolAsNode(*type.get(), NodeEnum::kDataType);
+  verible::CheckSymbolAsNode(*id.get(), NodeEnum::kUnqualifiedId);
+  return verible::MakeTaggedNode(NodeEnum::kTypeIdentifierId,
+                                 std::forward<T1>(type), std::forward<T2>(id));
+}
+
 // Repacks output of MakeTypeIdDimensionsTuple into a type-id pair.
 verible::SymbolPtr RepackReturnTypeId(verible::SymbolPtr type_id_tuple);
 

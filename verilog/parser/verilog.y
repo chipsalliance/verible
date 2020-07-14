@@ -2020,39 +2020,42 @@ type_identifier_or_implicit_followed_by_id_and_dimensions_opt
   ;
 
 /* with optional decl_dimensions before and after */
+/* All declared GenericIdentifiers are wrapped in kUnqualifiedId to make their
+ * shape more consistent with MakeTypeIdDimensionsTuple.
+ */
 type_identifier_followed_by_id
   : unqualified_id decl_dimensions_opt GenericIdentifier
-    { $$ = MakeTaggedNode(N::kTypeIdentifierId,
+    { $$ = MakeTypeIdTuple(
                           MakeTaggedNode(N::kDataType, $1,
                                          MakePackedDimensionsNode($2)),
-                          $3); }
+                          MakeTaggedNode(N::kUnqualifiedId, $3)); }
     /* $1 is type */
   | qualified_id decl_dimensions_opt GenericIdentifier
-    { $$ = MakeTaggedNode(N::kTypeIdentifierId,
+    { $$ = MakeTypeIdTuple(
                           MakeTaggedNode(N::kDataType, $1,
                                          MakePackedDimensionsNode($2)),
-                          $3); }
+                          MakeTaggedNode(N::kUnqualifiedId, $3)); }
   /* The following are 'interface_port_header' from the LRM: */
   | unqualified_id '.' member_name decl_dimensions_opt GenericIdentifier
-    { $$ = MakeTaggedNode(N::kTypeIdentifierId,
+    { $$ = MakeTypeIdTuple(
                           MakeTaggedNode(N::kDataType,
                                          MakeTaggedNode(N::kInterfacePortHeader,
                                                         $1, $2, $3),
                                          MakePackedDimensionsNode($4)),
-                          $5); }
+                          MakeTaggedNode(N::kUnqualifiedId, $5)); }
     /* $1..$3 is interface modport */
   | TK_interface '.' member_name GenericIdentifier
-    { $$ = MakeTaggedNode(N::kTypeIdentifierId,
+    { $$ = MakeTypeIdTuple(
                           MakeTaggedNode(N::kDataType,
                                          MakeTaggedNode(N::kInterfacePortHeader,
                                                         $1, $2, $3), nullptr),
-                          $4); }
+                          MakeTaggedNode(N::kUnqualifiedId, $4)); }
   | TK_interface GenericIdentifier
-    { $$ = MakeTaggedNode(N::kTypeIdentifierId,
+    { $$ = MakeTypeIdTuple(
                           MakeTaggedNode(N::kDataType,
                                          MakeTaggedNode(N::kInterfacePortHeader,
                                                         $1), nullptr),
-                          $2); }
+                          MakeTaggedNode(N::kUnqualifiedId, $2)); }
   ;
 
 

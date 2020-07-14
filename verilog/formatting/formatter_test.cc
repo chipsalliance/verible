@@ -1176,6 +1176,22 @@ static const std::initializer_list<FormatterTestCase> kFormatterTestCases = {
      "    output reg [m:n] yy\n"
      ");\n"
      "endmodule : foo\n"},
+    {// aligning interfaces in port headers like types
+     // TODO(b/161181877): flush interface port type left (multi-column)
+     "module foo(  input clk , inter.face yy) ;endmodule:foo\n",
+     "module foo (\n"
+     "    input            clk,\n"  // aligned
+     "          inter.face yy\n"
+     ");\n"
+     "endmodule : foo\n"},
+    {// aligning interfaces in port headers like types
+     // TODO(b/161181877): flush interface port type left (multi-column)
+     "module foo(  input wire   clk , inter.face yy) ;endmodule:foo\n",
+     "module foo (\n"
+     "    input wire       clk,\n"  // aligned
+     "          inter.face yy\n"
+     ");\n"
+     "endmodule : foo\n"},
 
     {"module foo #(int x,int y) ;endmodule:foo\n",  // parameters
      "module foo #(\n"
