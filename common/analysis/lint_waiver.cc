@@ -350,7 +350,7 @@ static absl::Status WaiveCommandHandler(
         if (!location_match) return absl::OkStatus();
 
         // Check if everything required has been set
-        if (rule == nullptr || (!can_use_regex && !can_use_lineno)) {
+        if (rule == nullptr) {
           return WaiveCommandError(token_pos, waive_file,
                                    "Insufficient waiver configuration");
         }
@@ -375,6 +375,19 @@ static absl::Status WaiveCommandHandler(
         if (can_use_lineno) {
           waiver->WaiveLineRange(rule, line_start - 1, line_end);
         }
+
+	if (!can_use_regex && !can_use_lineno) {
+	  unsigned int number_of_lines = 0;
+	  std::string content;
+	  absl::Status status = verible::file::GetContents(lintee_filename,
+							   &content);
+	  if (!status.ok()) {
+	    return WaiveCommandError(token_pos, waive_file, status.ToString());
+	  }
+
+	  number_of_lines = std::count(content.begin(), content.end(), '\n');
+	  waiver->WaiveLineRange(rule, 1, number_of_lines);
+	}
 
         return absl::OkStatus();
 
