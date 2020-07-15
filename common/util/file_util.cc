@@ -117,9 +117,11 @@ absl::Status UpwardFileSearch(absl::string_view start,
 absl::Status GetContents(absl::string_view filename, std::string *content) {
   std::ifstream fs;
   std::istream* stream = nullptr;
-  if (filename == "-") {
+  const bool use_stdin = filename == "-";
+  if (use_stdin) {
     // convention: honor "-" as stdin
     stream = &std::cin;
+    if (isatty(0)) std::cerr << "Enter input (terminate with Ctrl-D):\n";
   } else {
     fs.open(std::string(filename).c_str());
     stream = &fs;
@@ -127,6 +129,8 @@ absl::Status GetContents(absl::string_view filename, std::string *content) {
   if (!stream->good()) return CreateErrorStatusFromErrno("can't read");
   content->assign((std::istreambuf_iterator<char>(*stream)),
                   std::istreambuf_iterator<char>());
+  // Allow stdin to be reopened for more input.
+  if (use_stdin && std::cin.eof()) std::cin.clear();
   return absl::OkStatus();
 }
 

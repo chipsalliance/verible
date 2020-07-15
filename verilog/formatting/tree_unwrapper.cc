@@ -644,7 +644,6 @@ void TreeUnwrapper::SetIndentationsAndCreatePartitions(
     case NodeEnum::kPackageImportDeclaration:
     // TODO(fangism): case NodeEnum::kDPIExportItem:
     case NodeEnum::kPreprocessorInclude:
-    case NodeEnum::kPreprocessorDefine:
     case NodeEnum::kPreprocessorUndef:
     case NodeEnum::kModuleDeclaration:
     case NodeEnum::kProgramDeclaration:
@@ -680,6 +679,7 @@ void TreeUnwrapper::SetIndentationsAndCreatePartitions(
     case NodeEnum::kActualPositionalPort:
     case NodeEnum::kAssertionVariableDeclaration:
     case NodeEnum::kPortItem:
+    case NodeEnum::kMacroFormalArg:
     case NodeEnum::kPropertyDeclaration:
     case NodeEnum::kSequenceDeclaration:
     case NodeEnum::kPort:
@@ -844,6 +844,7 @@ void TreeUnwrapper::SetIndentationsAndCreatePartitions(
       // The following constructs wish to use the partition policy of appending
       // trailing subpartitions greedily as long as they fit, wrapping as
       // needed.
+    case NodeEnum::kPreprocessorDefine:
     case NodeEnum::kClassConstructorPrototype:
     case NodeEnum::kTaskHeader:
     case NodeEnum::kFunctionHeader:
@@ -893,6 +894,7 @@ void TreeUnwrapper::SetIndentationsAndCreatePartitions(
     }
 
       // Add a level of grouping that is treated as wrapping.
+    case NodeEnum::kMacroFormalParameterList:
     case NodeEnum::kMacroArgList:
     case NodeEnum::kForSpec:
     case NodeEnum::kModportSimplePortsDeclaration:
@@ -990,7 +992,7 @@ static bool PartitionIsCloseParenSemi(const TokenPartitionTree& partition) {
 
 static bool PartitionIsCloseParen(const TokenPartitionTree& partition) {
   const auto ftokens = partition.Value().TokensRange();
-  if (ftokens.size() != 1) return false;
+  if (ftokens.empty()) return false;
   const auto token_enum = ftokens.front().TokenEnum();
   return ((token_enum == ')') || (token_enum == MacroCallCloseToEndLine));
 }
@@ -1360,6 +1362,15 @@ void TreeUnwrapper::ReshapeTokenPartitions(
         ReshapeConditionalConstruct(node, &partition);
         break;
       }
+
+    case NodeEnum::kPreprocessorDefine: {
+      auto& last = *ABSL_DIE_IF_NULL(partition.RightmostDescendant());
+      // TODO(fangism): why does test fail without this clause?
+      if (PartitionIsCloseParen(last)) {
+        verible::MergeLeafIntoPreviousLeaf(&last);
+      }
+      break;
+    }
 
     case NodeEnum::kMacroCall: {
       // If there are no call args, join the '(' and ')' together.

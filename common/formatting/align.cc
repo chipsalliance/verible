@@ -31,6 +31,7 @@
 #include "common/text/concrete_syntax_leaf.h"
 #include "common/text/concrete_syntax_tree.h"
 #include "common/text/token_info.h"
+#include "common/text/token_stream_view.h"
 #include "common/text/tree_utils.h"
 #include "common/util/algorithm.h"
 #include "common/util/container_iterator_range.h"
@@ -588,6 +589,13 @@ static void AlignPartitionGroup(
 }
 
 // TODO(fangism): move this to common/formatting/token_partition_tree
+static absl::string_view StringSpanOfTokenRange(const FormatTokenRange& range) {
+  CHECK(!range.empty());
+  return make_string_view_range(range.front().Text().begin(),
+                                range.back().Text().end());
+}
+
+// TODO(fangism): move this to common/formatting/token_partition_tree
 static absl::string_view StringSpanOfPartitionRange(
     const TokenPartitionRange& range) {
   const auto front_range = range.front().Value().TokensRange();
@@ -605,14 +613,32 @@ static bool AnyPartitionSubRangeIsDisabled(
   const std::pair<int, int> span_offsets = SubstringOffsets(span, full_text);
   ByteOffsetSet diff(disabled_byte_ranges);  // copy
   diff.Complement(span_offsets);             // enabled range(s)
-  ByteOffsetSet span_set;
-  span_set.Add(span_offsets);
+  const ByteOffsetSet span_set{span_offsets};
   return diff != span_set;
+}
+
+// Mark ranges of tokens (corresponding to formatting-disabled lines) to
+// have their original spacing preserved, except allow the first token
+// to follow the formatter's calculated indentation.
+static void IndentButPreserveOtherSpacing(
+    TokenPartitionRange partition_range, absl::string_view full_text,
+    std::vector<PreFormatToken>* ftokens) {
+  for (const auto& partition : partition_range) {
+    const auto token_range = partition.Value().TokensRange();
+    const absl::string_view partition_text =
+        StringSpanOfTokenRange(token_range);
+    std::pair<int, int> byte_range =
+        SubstringOffsets(partition_text, full_text);
+    // Tweak byte range to allow the first token to still obey indentation.
+    ++byte_range.first;
+    PreserveSpacesOnDisabledTokenRanges(ftokens, ByteOffsetSet{byte_range},
+                                        full_text);
+  }
 }
 
 void TabularAlignTokens(TokenPartitionTree* partition_ptr,
                         const AlignedFormattingHandler& alignment_handler,
-                        MutableFormatTokenRange::iterator ftoken_base,
+                        std::vector<PreFormatToken>* ftokens,
                         absl::string_view full_text,
                         const ByteOffsetSet& disabled_byte_ranges,
                         int column_limit) {
@@ -629,17 +655,25 @@ void TabularAlignTokens(TokenPartitionTree* partition_ptr,
   const std::vector<TokenPartitionRange> partition_ranges(
       alignment_handler.extract_alignment_groups(subpartitions_range));
   for (const auto& partition_range : partition_ranges) {
-    // If any sub-interval in this range is disabled, skip it.
-    // TODO(fangism): instead of disabling the whole range, sub-partition
-    // it one more level, and operate on those ranges, essentially treating
-    // no-format ranges like alignment group boundaries.
-    // Requires IntervalSet::Intersect operation.
-    if (partition_range.empty() ||
-        AnyPartitionSubRangeIsDisabled(partition_range, full_text,
-                                       disabled_byte_ranges))
+    if (partition_range.empty()) continue;
+    if (AnyPartitionSubRangeIsDisabled(partition_range, full_text,
+                                       disabled_byte_ranges)) {
+      // Within an aligned group, if the group is partially disabled
+      // due to incremental formatting, then leave the new lines
+      // unformatted rather than falling back to compact-left formatting.
+      // However, allow the first token to be correctly indented.
+      IndentButPreserveOtherSpacing(partition_range, full_text, ftokens);
       continue;
 
-    AlignPartitionGroup(partition_range, alignment_handler, ftoken_base,
+      // TODO(fangism): instead of disabling the whole range, sub-partition
+      // it one more level, and operate on those ranges, essentially treating
+      // no-format ranges like alignment group boundaries.
+      // Requires IntervalSet::Intersect operation.
+
+      // TODO(b/159824483): attempt to detect and re-use pre-existing alignment
+    }
+
+    AlignPartitionGroup(partition_range, alignment_handler, ftokens->begin(),
                         column_limit);
   }
   VLOG(1) << "end of " << __FUNCTION__;

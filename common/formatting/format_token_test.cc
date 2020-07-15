@@ -20,6 +20,8 @@
 
 #include "gtest/gtest.h"
 #include "absl/strings/string_view.h"
+#include "common/formatting/unwrapped_line.h"
+#include "common/formatting/unwrapped_line_test_utils.h"
 #include "common/text/token_info.h"
 #include "common/util/range.h"
 
@@ -181,6 +183,280 @@ TEST(PreFormatTokenTest, LeadingSpacesLength) {
     EXPECT_EQ(p1.LeadingSpacesLength(), 1);  // "a"
     EXPECT_EQ(p2.LeadingSpacesLength(), 1);  // "d"
   }
+}
+
+class ConnectPreFormatTokensPreservedSpaceStartsTest
+    : public ::testing::Test,
+      public UnwrappedLineMemoryHandler {};
+
+TEST_F(ConnectPreFormatTokensPreservedSpaceStartsTest, Empty) {
+  constexpr absl::string_view text("");
+  CreateTokenInfosExternalStringBuffer({});
+  ConnectPreFormatTokensPreservedSpaceStarts(text.begin(), &pre_format_tokens_);
+  EXPECT_TRUE(pre_format_tokens_.empty());
+}
+
+TEST_F(ConnectPreFormatTokensPreservedSpaceStartsTest, OneToken) {
+  constexpr absl::string_view text("xyz");
+  CreateTokenInfosExternalStringBuffer({
+      {1, text.substr(0, 3)},
+  });
+  ConnectPreFormatTokensPreservedSpaceStarts(text.begin(), &pre_format_tokens_);
+  EXPECT_TRUE(BoundsEqual(pre_format_tokens_.front().OriginalLeadingSpaces(),
+                          text.substr(0, 0)));
+}
+
+TEST_F(ConnectPreFormatTokensPreservedSpaceStartsTest, OneTokenLeadingSpace) {
+  constexpr absl::string_view text("  xyz");
+  CreateTokenInfosExternalStringBuffer({
+      {1, text.substr(2, 3)},  // "xyz"
+  });
+  ConnectPreFormatTokensPreservedSpaceStarts(text.begin(), &pre_format_tokens_);
+  EXPECT_TRUE(BoundsEqual(pre_format_tokens_.front().OriginalLeadingSpaces(),
+                          text.substr(0, 2)));  // "  "
+}
+
+TEST_F(ConnectPreFormatTokensPreservedSpaceStartsTest, MultipleTokens) {
+  constexpr absl::string_view text("  xyz\t\t\nabc");
+  CreateTokenInfosExternalStringBuffer({
+      {1, text.substr(2, 3)},  // "xyz"
+      {2, text.substr(8, 3)},  // "abc"
+  });
+  ConnectPreFormatTokensPreservedSpaceStarts(text.begin(), &pre_format_tokens_);
+  EXPECT_TRUE(BoundsEqual(pre_format_tokens_.front().OriginalLeadingSpaces(),
+                          text.substr(0, 2)));  // "  "
+  EXPECT_TRUE(BoundsEqual(pre_format_tokens_.back().OriginalLeadingSpaces(),
+                          text.substr(5, 3)));  // "\t\t\n"
+}
+
+class PreserveSpacesOnDisabledTokenRangesTest
+    : public ::testing::Test,
+      public UnwrappedLineMemoryHandler {};
+
+TEST_F(PreserveSpacesOnDisabledTokenRangesTest, DisableNone) {
+  constexpr absl::string_view text("a b c d e");
+  CreateTokenInfosExternalStringBuffer({
+      {1, text.substr(0, 1)},
+      {2, text.substr(2, 1)},
+      {1, text.substr(4, 1)},
+      {3, text.substr(6, 1)},
+      {2, text.substr(8, 1)},
+  });
+  ByteOffsetSet disabled_bytes;  // empty
+  PreserveSpacesOnDisabledTokenRanges(&pre_format_tokens_, disabled_bytes,
+                                      text);
+  for (const auto& ftoken : pre_format_tokens_) {
+    EXPECT_EQ(ftoken.before.break_decision, SpacingOptions::Undecided);
+  }
+}
+
+TEST_F(PreserveSpacesOnDisabledTokenRangesTest, DisableSpaceBeforeText) {
+  constexpr absl::string_view text("a b c d e");
+  CreateTokenInfosExternalStringBuffer({
+      {1, text.substr(0, 1)},
+      {2, text.substr(2, 1)},
+      {1, text.substr(4, 1)},
+      {3, text.substr(6, 1)},
+      {2, text.substr(8, 1)},
+  });
+  ByteOffsetSet disabled_bytes{{5, 7}};  // substring " d"
+  PreserveSpacesOnDisabledTokenRanges(&pre_format_tokens_, disabled_bytes,
+                                      text);
+  const auto& ftokens = pre_format_tokens_;
+  EXPECT_EQ(ftokens[0].before.break_decision, SpacingOptions::Undecided);
+  EXPECT_EQ(ftokens[1].before.break_decision, SpacingOptions::Undecided);
+  EXPECT_EQ(ftokens[2].before.break_decision, SpacingOptions::Undecided);
+  EXPECT_EQ(ftokens[3].before.break_decision,
+            SpacingOptions::Preserve);  // before "d"
+  EXPECT_EQ(ftokens[4].before.break_decision, SpacingOptions::Undecided);
+}
+
+TEST_F(PreserveSpacesOnDisabledTokenRangesTest, DisableSpaceAfterText) {
+  constexpr absl::string_view text("a b c d e");
+  CreateTokenInfosExternalStringBuffer({
+      {1, text.substr(0, 1)},
+      {2, text.substr(2, 1)},
+      {1, text.substr(4, 1)},
+      {3, text.substr(6, 1)},
+      {2, text.substr(8, 1)},
+  });
+  ByteOffsetSet disabled_bytes{{4, 6}};  // substring "c "
+  PreserveSpacesOnDisabledTokenRanges(&pre_format_tokens_, disabled_bytes,
+                                      text);
+  const auto& ftokens = pre_format_tokens_;
+  EXPECT_EQ(ftokens[0].before.break_decision, SpacingOptions::Undecided);
+  EXPECT_EQ(ftokens[1].before.break_decision, SpacingOptions::Undecided);
+  EXPECT_EQ(ftokens[2].before.break_decision, SpacingOptions::Preserve);  // "c"
+  EXPECT_EQ(ftokens[3].before.break_decision, SpacingOptions::Undecided);
+  EXPECT_EQ(ftokens[4].before.break_decision, SpacingOptions::Undecided);
+}
+
+TEST_F(PreserveSpacesOnDisabledTokenRangesTest, DisableSpanningTwoTokens) {
+  constexpr absl::string_view text("a b c d e");
+  CreateTokenInfosExternalStringBuffer({
+      {1, text.substr(0, 1)},
+      {2, text.substr(2, 1)},
+      {1, text.substr(4, 1)},
+      {3, text.substr(6, 1)},
+      {2, text.substr(8, 1)},
+  });
+  ByteOffsetSet disabled_bytes{{4, 7}};  // substring "c d"
+  PreserveSpacesOnDisabledTokenRanges(&pre_format_tokens_, disabled_bytes,
+                                      text);
+  const auto& ftokens = pre_format_tokens_;
+  EXPECT_EQ(ftokens[0].before.break_decision, SpacingOptions::Undecided);
+  EXPECT_EQ(ftokens[1].before.break_decision, SpacingOptions::Undecided);
+  EXPECT_EQ(ftokens[2].before.break_decision,
+            SpacingOptions::Preserve);  // before "c"
+  EXPECT_EQ(ftokens[3].before.break_decision, SpacingOptions::Preserve);
+  EXPECT_EQ(ftokens[4].before.break_decision, SpacingOptions::Undecided);
+}
+
+TEST_F(PreserveSpacesOnDisabledTokenRangesTest, DisableSpanningMustWrap) {
+  constexpr absl::string_view text("a b c d e");
+  CreateTokenInfosExternalStringBuffer({
+      {1, text.substr(0, 1)},
+      {2, text.substr(2, 1)},
+      {1, text.substr(4, 1)},
+      {3, text.substr(6, 1)},
+      {2, text.substr(8, 1)},
+  });
+  ConnectPreFormatTokensPreservedSpaceStarts(text.begin(), &pre_format_tokens_);
+  ByteOffsetSet disabled_bytes{{2, 5}};  // substring "b c"
+  pre_format_tokens_[2].before.break_decision = SpacingOptions::MustWrap;
+  PreserveSpacesOnDisabledTokenRanges(&pre_format_tokens_, disabled_bytes,
+                                      text);
+  const auto& ftokens = pre_format_tokens_;
+  EXPECT_EQ(ftokens[0].before.break_decision, SpacingOptions::Undecided);
+  EXPECT_TRUE(
+      BoundsEqual(ftokens[0].OriginalLeadingSpaces(), text.substr(0, 0)));
+  EXPECT_EQ(ftokens[1].before.break_decision, SpacingOptions::Preserve);
+  EXPECT_TRUE(
+      BoundsEqual(ftokens[1].OriginalLeadingSpaces(), text.substr(1, 1)));
+  EXPECT_EQ(ftokens[2].before.break_decision, SpacingOptions::Preserve);
+  EXPECT_TRUE(
+      BoundsEqual(ftokens[2].OriginalLeadingSpaces(), text.substr(3, 1)));
+  EXPECT_EQ(ftokens[3].before.break_decision, SpacingOptions::Undecided);
+  EXPECT_TRUE(
+      BoundsEqual(ftokens[3].OriginalLeadingSpaces(), text.substr(5, 1)));
+  EXPECT_EQ(ftokens[4].before.break_decision, SpacingOptions::Undecided);
+  EXPECT_TRUE(
+      BoundsEqual(ftokens[4].OriginalLeadingSpaces(), text.substr(7, 1)));
+}
+
+TEST_F(PreserveSpacesOnDisabledTokenRangesTest,
+       DisableSpanningMustWrapWithNewline) {
+  constexpr absl::string_view text("a\nb\nc d e");
+  CreateTokenInfosExternalStringBuffer({
+      {1, text.substr(0, 1)},
+      {2, text.substr(2, 1)},
+      {1, text.substr(4, 1)},
+      {3, text.substr(6, 1)},
+      {2, text.substr(8, 1)},
+  });
+  ConnectPreFormatTokensPreservedSpaceStarts(text.begin(), &pre_format_tokens_);
+  ByteOffsetSet disabled_bytes{{2, 5}};  // substring "b\nc"
+  pre_format_tokens_[1].before.break_decision = SpacingOptions::MustWrap;
+  PreserveSpacesOnDisabledTokenRanges(&pre_format_tokens_, disabled_bytes,
+                                      text);
+  const auto& ftokens = pre_format_tokens_;
+  auto indices = [&text](const absl::string_view& range) {
+    return SubRangeIndices(range, text);
+  };
+  EXPECT_EQ(ftokens[0].before.break_decision, SpacingOptions::Undecided);
+  EXPECT_EQ(indices(ftokens[0].OriginalLeadingSpaces()),
+            indices(text.substr(0, 0)));
+  EXPECT_EQ(ftokens[1].before.break_decision, SpacingOptions::Preserve);
+  EXPECT_EQ(  // \n was consumed
+      indices(ftokens[1].OriginalLeadingSpaces()), indices(text.substr(2, 0)));
+  EXPECT_EQ(ftokens[2].before.break_decision, SpacingOptions::Preserve);
+  EXPECT_EQ(indices(ftokens[2].OriginalLeadingSpaces()),
+            indices(text.substr(3, 1)));
+  EXPECT_EQ(ftokens[3].before.break_decision, SpacingOptions::Undecided);
+  EXPECT_EQ(indices(ftokens[3].OriginalLeadingSpaces()),
+            indices(text.substr(5, 1)));
+  EXPECT_EQ(ftokens[4].before.break_decision, SpacingOptions::Undecided);
+  EXPECT_EQ(indices(ftokens[4].OriginalLeadingSpaces()),
+            indices(text.substr(7, 1)));
+}
+
+TEST_F(PreserveSpacesOnDisabledTokenRangesTest,
+       DisableSpanningMustWrapWithNewlineKeepIndentation) {
+  constexpr absl::string_view text("a\n  b\n  c d e");
+  CreateTokenInfosExternalStringBuffer({
+      {1, text.substr(0, 1)},
+      {2, text.substr(4, 1)},
+      {1, text.substr(8, 1)},
+      {3, text.substr(10, 1)},
+      {2, text.substr(12, 1)},
+  });
+  ConnectPreFormatTokensPreservedSpaceStarts(text.begin(), &pre_format_tokens_);
+  ByteOffsetSet disabled_bytes{{4, 9}};  // substring "b\n  c"
+  pre_format_tokens_[1].before.break_decision = SpacingOptions::MustWrap;
+  PreserveSpacesOnDisabledTokenRanges(&pre_format_tokens_, disabled_bytes,
+                                      text);
+  const auto& ftokens = pre_format_tokens_;
+  auto indices = [&text](const absl::string_view& range) {
+    return SubRangeIndices(range, text);
+  };
+  EXPECT_EQ(ftokens[0].before.break_decision, SpacingOptions::Undecided);
+  EXPECT_EQ(indices(ftokens[0].OriginalLeadingSpaces()),
+            indices(text.substr(0, 0)));
+  EXPECT_EQ(ftokens[1].before.break_decision, SpacingOptions::Preserve);
+  EXPECT_EQ(  // \n was consumed, "  " remains
+      indices(ftokens[1].OriginalLeadingSpaces()), indices(text.substr(2, 2)));
+  EXPECT_EQ(ftokens[2].before.break_decision, SpacingOptions::Preserve);
+  EXPECT_EQ(indices(ftokens[2].OriginalLeadingSpaces()),
+            indices(text.substr(5, 3)));
+  EXPECT_EQ(ftokens[3].before.break_decision, SpacingOptions::Undecided);
+  EXPECT_EQ(indices(ftokens[3].OriginalLeadingSpaces()),
+            indices(text.substr(9, 1)));
+  EXPECT_EQ(ftokens[4].before.break_decision, SpacingOptions::Undecided);
+  EXPECT_EQ(indices(ftokens[4].OriginalLeadingSpaces()),
+            indices(text.substr(11, 1)));
+}
+
+TEST_F(PreserveSpacesOnDisabledTokenRangesTest, MultipleOffsetRanges) {
+  constexpr absl::string_view text("a\nb\nc d e ff gg");
+  CreateTokenInfosExternalStringBuffer({
+      {1, text.substr(0, 1)},
+      {2, text.substr(2, 1)},
+      {1, text.substr(4, 1)},
+      {3, text.substr(6, 1)},
+      {2, text.substr(8, 1)},
+      {2, text.substr(10, 2)},
+      {2, text.substr(13, 2)},
+  });
+  ConnectPreFormatTokensPreservedSpaceStarts(text.begin(), &pre_format_tokens_);
+  ByteOffsetSet disabled_bytes{{2, 5}, {8, 12}};  // substrings "b\nc", "e ff"
+  pre_format_tokens_[1].before.break_decision = SpacingOptions::MustWrap;
+  PreserveSpacesOnDisabledTokenRanges(&pre_format_tokens_, disabled_bytes,
+                                      text);
+  const auto& ftokens = pre_format_tokens_;
+  auto indices = [&text](const absl::string_view& range) {
+    return SubRangeIndices(range, text);
+  };
+  EXPECT_EQ(ftokens[0].before.break_decision, SpacingOptions::Undecided);
+  EXPECT_EQ(indices(ftokens[0].OriginalLeadingSpaces()),
+            indices(text.substr(0, 0)));
+  EXPECT_EQ(ftokens[1].before.break_decision, SpacingOptions::Preserve);
+  EXPECT_EQ(  // \n was consumed
+      indices(ftokens[1].OriginalLeadingSpaces()), indices(text.substr(2, 0)));
+  EXPECT_EQ(ftokens[2].before.break_decision, SpacingOptions::Preserve);
+  EXPECT_EQ(indices(ftokens[2].OriginalLeadingSpaces()),
+            indices(text.substr(3, 1)));
+  EXPECT_EQ(ftokens[3].before.break_decision, SpacingOptions::Undecided);
+  EXPECT_EQ(indices(ftokens[3].OriginalLeadingSpaces()),
+            indices(text.substr(5, 1)));
+  EXPECT_EQ(ftokens[4].before.break_decision, SpacingOptions::Preserve);
+  EXPECT_EQ(indices(ftokens[4].OriginalLeadingSpaces()),
+            indices(text.substr(7, 1)));
+  EXPECT_EQ(ftokens[5].before.break_decision, SpacingOptions::Preserve);
+  EXPECT_EQ(indices(ftokens[5].OriginalLeadingSpaces()),
+            indices(text.substr(9, 1)));
+  EXPECT_EQ(ftokens[6].before.break_decision, SpacingOptions::Undecided);
+  EXPECT_EQ(indices(ftokens[6].OriginalLeadingSpaces()),
+            indices(text.substr(12, 1)));
 }
 
 // Test that FormattedText prints correctly.

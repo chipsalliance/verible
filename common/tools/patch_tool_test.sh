@@ -79,7 +79,7 @@ status="$?"
 }
 
 ################################################################################
-# Test 'changed-lines' missing argument.
+# Test changed-lines: missing patchfile argument.
 
 "$patch_tool" changed-lines > /dev/null
 
@@ -90,7 +90,7 @@ status="$?"
 }
 
 ################################################################################
-# Test the 'changed-lines' command on a fake patch file.
+# Test changed-lines: using a fake patch file.
 
 cat > "$MY_INPUT_FILE" <<EOF
 --- /path/to/file1.txt	2017-01-01
@@ -142,7 +142,7 @@ diff -u "$MY_EXPECT_FILE" "$MY_OUTPUT_FILE" || {
 }
 
 ################################################################################
-# Test reading a malformed patch file.
+# Test changed-lines: reading a malformed patch file.
 
 cat > "$MY_INPUT_FILE" <<EOF
 --- /path/to/file1.txt	2017-01-01
@@ -159,7 +159,7 @@ status="$?"
 }
 
 ################################################################################
-# Test reading a nonexistent patch file.
+# Test changed-lines: reading a nonexistent patch file.
 
 "$patch_tool" changed-lines "$MY_INPUT_FILE.does.not.exist" > /dev/null
 
@@ -168,6 +168,336 @@ status="$?"
   "Expected exit code 1, but got $status"
   exit 1
 }
+
+################################################################################
+# Test stdin-test noninteractively.
+
+cat > "$MY_INPUT_FILE" <<EOF
+Lovely file!
+EOF
+
+"$patch_tool" stdin-test < "$MY_INPUT_FILE" > "$MY_OUTPUT_FILE"
+
+status="$?"
+[[ $status == 0 ]] || {
+  "Expected exit code 0, but got $status"
+  exit 1
+}
+
+grep -q "Lovely file" "$MY_OUTPUT_FILE" || {
+  echo "Expected \"Lovely file\" in $MY_OUTPUT_FILE but didn't find it.  Got:"
+  cat "$MY_OUTPUT_FILE"
+  exit 1
+}
+
+################################################################################
+# Test cat-test noninteractively.
+
+cat > "$MY_INPUT_FILE".1 <<EOF
+111111
+EOF
+
+cat > "$MY_INPUT_FILE".2 <<EOF
+222222
+EOF
+
+"$patch_tool" cat-test "$MY_INPUT_FILE".1 > "$MY_OUTPUT_FILE"
+
+status="$?"
+[[ $status == 0 ]] || {
+  "Expected exit code 0, but got $status"
+  exit 1
+}
+
+grep -q "111111" "$MY_OUTPUT_FILE" || {
+  echo "Expected \"111111\" in $MY_OUTPUT_FILE but didn't find it.  Got:"
+  cat "$MY_OUTPUT_FILE"
+  exit 1
+}
+
+# Test single redirection
+"$patch_tool" cat-test - < "$MY_INPUT_FILE".1 > "$MY_OUTPUT_FILE"
+
+status="$?"
+[[ $status == 0 ]] || {
+  "Expected exit code 0, but got $status"
+  exit 1
+}
+
+grep -q "111111" "$MY_OUTPUT_FILE" || {
+  echo "Expected \"111111\" in $MY_OUTPUT_FILE but didn't find it.  Got:"
+  cat "$MY_OUTPUT_FILE"
+  exit 1
+}
+
+# Test single redirection with one other file
+"$patch_tool" cat-test - "$MY_INPUT_FILE".2 < "$MY_INPUT_FILE".1 > "$MY_OUTPUT_FILE"
+
+status="$?"
+[[ $status == 0 ]] || {
+  "Expected exit code 0, but got $status"
+  exit 1
+}
+
+grep -q "111111" "$MY_OUTPUT_FILE" || {
+  echo "Expected \"111111\" in $MY_OUTPUT_FILE but didn't find it.  Got:"
+  cat "$MY_OUTPUT_FILE"
+  exit 1
+}
+
+grep -q "222222" "$MY_OUTPUT_FILE" || {
+  echo "Expected \"222222\" in $MY_OUTPUT_FILE but didn't find it.  Got:"
+  cat "$MY_OUTPUT_FILE"
+  exit 1
+}
+
+# Test single redirection with one other file, different order
+"$patch_tool" cat-test "$MY_INPUT_FILE".2 - < "$MY_INPUT_FILE".1 > "$MY_OUTPUT_FILE"
+
+status="$?"
+[[ $status == 0 ]] || {
+  "Expected exit code 0, but got $status"
+  exit 1
+}
+
+grep -q "111111" "$MY_OUTPUT_FILE" || {
+  echo "Expected \"111111\" in $MY_OUTPUT_FILE but didn't find it.  Got:"
+  cat "$MY_OUTPUT_FILE"
+  exit 1
+}
+
+grep -q "222222" "$MY_OUTPUT_FILE" || {
+  echo "Expected \"222222\" in $MY_OUTPUT_FILE but didn't find it.  Got:"
+  cat "$MY_OUTPUT_FILE"
+  exit 1
+}
+
+rm -f "$MY_INPUT_FILE".{1,2}
+
+################################################################################
+# Test apply-pick: missing patchfile argument
+
+"$patch_tool" apply-pick > "$MY_OUTPUT_FILE" 2>&1
+
+status="$?"
+[[ $status == 1 ]] || {
+  "Expected exit code 1, but got $status"
+  exit 1
+}
+
+grep -q "Missing patchfile argument" "$MY_OUTPUT_FILE" || {
+  echo "Expected \"Missing patchfile argument\" in $MY_OUTPUT_FILE but didn't find it.  Got:"
+  cat "$MY_OUTPUT_FILE"
+  exit 1
+}
+
+################################################################################
+# Test apply-pick: nonexistent patchfile
+
+"$patch_tool" apply-pick "$MY_INPUT_FILE.does.not.exist" > /dev/null
+
+status="$?"
+[[ $status == 1 ]] || {
+  "Expected exit code 1, but got $status"
+  exit 1
+}
+
+################################################################################
+# Test apply-pick: reading a malformed patch file.
+
+cat > "$MY_INPUT_FILE" <<EOF
+--- /path/to/file1.txt	2017-01-01
++++ /path/to/file1.txt	2017-01-01
+@@ -1,1 +1,1 @@
+EOF
+
+"$patch_tool" apply-pick "$MY_INPUT_FILE" > /dev/null
+
+status="$?"
+[[ $status == 1 ]] || {
+  "Expected exit code 1, but got $status"
+  exit 1
+}
+
+################################################################################
+# Test apply-pick: various declining/accepting of patch hunks
+
+# 1. generate patch from two files
+
+# Let the 'original' file be write-able for in-place modification.
+cat > "$MY_INPUT_FILE".orig <<EOF
+a
+b
+c
+d
+e
+f
+g
+h
+EOF
+
+cp "$MY_INPUT_FILE".orig "$MY_INPUT_FILE".bkp
+chmod -w "$MY_INPUT_FILE".bkp
+
+# Delete two lines 'b' and 'g'.
+cat > "$MY_INPUT_FILE".proposed <<EOF
+a
+c
+d
+e
+f
+h
+EOF
+chmod -w "$MY_INPUT_FILE".proposed
+
+# Use only 1 line of context to prevent hunks from merging.
+# Expect two hunks in this patch.
+diff -U 1 "$MY_INPUT_FILE".orig "$MY_INPUT_FILE".proposed > "$MY_INPUT_FILE".patch
+chmod -w "$MY_INPUT_FILE".patch
+
+# 2. Run apply-pick.
+# Pass patchfile via file.
+
+# User declines all hunks.
+cat > "$MY_INPUT_FILE".user-input <<EOF
+n
+n
+EOF
+
+"$patch_tool" apply-pick "$MY_INPUT_FILE".patch < "$MY_INPUT_FILE".user-input > /dev/null
+
+status="$?"
+[[ $status == 0 ]] || {
+  "Expected exit code 0, but got $status"
+  exit 1
+}
+
+diff -u "$MY_INPUT_FILE".bkp "$MY_INPUT_FILE".orig || {
+  echo "Expected these files to match, but got the above diff."
+  exit 1
+}
+
+# 2a.1 Pass patchfile via stdin redirection.
+# This doesn't work yet.
+if false
+then
+( "$patch_tool" apply-pick - < "$MY_INPUT_FILE".patch ) < "$MY_INPUT_FILE".user-input > /dev/null
+
+status="$?"
+[[ $status == 0 ]] || {
+  "Expected exit code 0, but got $status"
+  exit 1
+}
+
+diff -u "$MY_INPUT_FILE".bkp "$MY_INPUT_FILE".orig || {
+  echo "Expected these files to match, but got the above diff."
+  exit 1
+}
+fi
+
+# 2b. User accepts only the first hunk
+cat > "$MY_INPUT_FILE".user-input <<EOF
+y
+n
+EOF
+
+"$patch_tool" apply-pick "$MY_INPUT_FILE".patch < "$MY_INPUT_FILE".user-input > /dev/null
+
+status="$?"
+[[ $status == 0 ]] || {
+  "Expected exit code 0, but got $status"
+  exit 1
+}
+
+# Expect only 'b' to be deleted.
+cat > "$MY_EXPECT_FILE" <<EOF
+a
+c
+d
+e
+f
+g
+h
+EOF
+
+# Expect original file to have been modified in-place.
+diff -u "$MY_EXPECT_FILE" "$MY_INPUT_FILE".orig || {
+  echo "Expected these files to match, but got the above diff."
+  exit 1
+}
+
+# Restore the original file for the next test.
+cp "$MY_INPUT_FILE".bkp "$MY_INPUT_FILE".orig
+chmod u+w "$MY_INPUT_FILE".orig
+
+# 2c. User accepts only the second hunk
+cat > "$MY_INPUT_FILE".user-input <<EOF
+n
+y
+EOF
+
+"$patch_tool" apply-pick "$MY_INPUT_FILE".patch < "$MY_INPUT_FILE".user-input > /dev/null
+
+status="$?"
+[[ $status == 0 ]] || {
+  "Expected exit code 0, but got $status"
+  exit 1
+}
+
+# Expect only 'g' to be deleted.
+cat > "$MY_EXPECT_FILE" <<EOF
+a
+b
+c
+d
+e
+f
+h
+EOF
+
+# Expect original file to have been modified in-place.
+diff -u "$MY_EXPECT_FILE" "$MY_INPUT_FILE".orig || {
+  echo "Expected these files to match, but got the above diff."
+  exit 1
+}
+
+# Restore the original file for the next test.
+cp "$MY_INPUT_FILE".bkp "$MY_INPUT_FILE".orig
+chmod u+w "$MY_INPUT_FILE".orig
+
+# 2d. User accepts both hunks.
+cat > "$MY_INPUT_FILE".user-input <<EOF
+y
+y
+EOF
+
+"$patch_tool" apply-pick "$MY_INPUT_FILE".patch < "$MY_INPUT_FILE".user-input > /dev/null
+
+status="$?"
+[[ $status == 0 ]] || {
+  "Expected exit code 0, but got $status"
+  exit 1
+}
+
+# Expect 'b' and 'g' to be deleted.
+cat > "$MY_EXPECT_FILE" <<EOF
+a
+c
+d
+e
+f
+h
+EOF
+
+# Expect original file to have been modified in-place.
+diff -u "$MY_EXPECT_FILE" "$MY_INPUT_FILE".orig || {
+  echo "Expected these files to match, but got the above diff."
+  exit 1
+}
+
+# Restore the original file for the next test.
+cp "$MY_INPUT_FILE".bkp "$MY_INPUT_FILE".orig
+chmod u+w "$MY_INPUT_FILE".orig
 
 ################################################################################
 echo "PASS"

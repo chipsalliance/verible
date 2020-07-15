@@ -15,6 +15,7 @@
 #ifndef VERIBLE_COMMON_STRINGS_PATCH_H_
 #define VERIBLE_COMMON_STRINGS_PATCH_H_
 
+#include <functional>
 #include <iosfwd>
 #include <map>
 #include <string>
@@ -30,6 +31,14 @@ namespace verible {
 namespace internal {
 // Forward declarations
 struct FilePatch;
+
+// function interface like file::GetContents()
+using FileReaderFunction = std::function<absl::Status(
+    absl::string_view filename, std::string* contents)>;
+
+// function interface like file::SetContents()
+using FileWriterFunction = std::function<absl::Status(
+    absl::string_view filename, absl::string_view contents)>;
 }  // namespace internal
 
 using FileLineNumbersMap =
@@ -56,6 +65,17 @@ class PatchSet {
   // If `new_file_ranges` is true, provide the full range of lines for new
   // files, otherwise leave their corresponding LineNumberSets empty.
   FileLineNumbersMap AddedLinesMap(bool new_file_ranges) const;
+
+  // Interactively prompt user to select hunks to apply in-place.
+  // 'ins' is the stream from which user-input is read,
+  // and 'outs' is the stream that displays text and prompts to the user.
+  absl::Status PickApplyInPlace(std::istream& ins, std::ostream& outs) const;
+
+ protected:
+  // For testing, allow mocking out of file I/O.
+  absl::Status PickApply(std::istream& ins, std::ostream& outs,
+                         const internal::FileReaderFunction& file_reader,
+                         const internal::FileWriterFunction& file_writer) const;
 
  private:
   // Non-patch plain text that could describe the origins of the diff/patch,
@@ -117,13 +137,17 @@ struct HunkHeader {
 std::ostream& operator<<(std::ostream&, const HunkHeader&);
 
 // One unit of a file change.
-struct Hunk {
-  HunkHeader header;
-  std::vector<MarkedLine> lines;
+class Hunk {
+ public:
+  Hunk() = default;
 
   // Hunk is valid if its header's line counts are consistent with the set of
   // MarkedLines.
   absl::Status IsValid() const;
+
+  const HunkHeader& Header() const { return header_; }
+
+  const std::vector<MarkedLine>& MarkedLines() const { return lines_; }
 
   // If a hunk is modified for any reason, the number of added/removed lines may
   // have changed, so this will update the .count values.
@@ -133,6 +157,20 @@ struct Hunk {
   LineNumberSet AddedLines() const;
 
   absl::Status Parse(const LineRange&);
+
+  std::ostream& Print(std::ostream&) const;
+
+  // Verify consistency of lines in the patch (old-file) against the file that
+  // is read in whole.
+  absl::Status VerifyAgainstOriginalLines(
+      const std::vector<absl::string_view>& original_lines) const;
+
+ private:
+  // The header describes how many of each type of edit lines to expect.
+  HunkHeader header_;
+
+  // Sequence of edit lines (common, old, new).
+  std::vector<MarkedLine> lines_;
 };
 
 std::ostream& operator<<(std::ostream&, const Hunk&);
@@ -165,6 +203,19 @@ struct FilePatch {
   LineNumberSet AddedLines() const;
 
   absl::Status Parse(const LineRange&);
+
+  // Verify consistency of lines in the patch (old-file) against the file that
+  // is read in whole.
+  absl::Status VerifyAgainstOriginalLines(
+      const std::vector<absl::string_view>& original_lines) const;
+
+  absl::Status PickApplyInPlace(std::istream& ins, std::ostream& outs) const;
+
+  // For testing with mocked-out file I/O.
+  // Public to allow use by PatchSet::PickApply().
+  absl::Status PickApply(std::istream& ins, std::ostream& outs,
+                         const FileReaderFunction& file_reader,
+                         const FileWriterFunction& file_writer) const;
 };
 
 std::ostream& operator<<(std::ostream&, const FilePatch&);

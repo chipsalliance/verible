@@ -909,13 +909,13 @@ macro_formals_list
   : macro_formals_list ',' macro_formal_parameter
     { $$ = ExtendNode($1, $2, $3); }
   | macro_formal_parameter
-    { $$ = MakeNode($1); }
+    { $$ = MakeTaggedNode(N::kMacroFormalParameterList, $1); }
   ;
 macro_formal_parameter
   : PP_Identifier
-    { $$ = MakeNode($1); }
+    { $$ = MakeTaggedNode(N::kMacroFormalArg, $1); }
   | PP_Identifier '=' PP_default_text
-    { $$ = MakeNode($1, $2, $3); }
+    { $$ = MakeTaggedNode(N::kMacroFormalArg, $1, $2, $3); }
     /* $3 is unlexed text */
   ;
 

@@ -477,6 +477,31 @@ As a good practice, include a reason why you choose to disable a section.
 
 These directives take precedence over `--lines` specifications.
 
+#### Interactive Formatting
+
+The formatter is ever a work-in-progress and may not always behave the way a
+user would like it to behave. If you wish to review changes introduced by the
+formatter and apply them interactively, we've provided a helper script (that is
+actually formatter-agnostic) for the job.
+
+```
+verible-transform-interactive.sh -- verible-verilog-format -- files...
+```
+
+This will run the formatter on the affected files without modifying them
+initially, and pass the `diff`-generated patch into a tool
+(`verible-patch-tool`) that interactively applies patch hunks.
+
+Answer the \[y/n\] prompts.
+
+The original files will be modified in-place with the elected changes.
+
+For convenience, one could create an alias like:
+
+```
+alias verilog-format-interactive='verible-transform-interactive.sh -- verible-verilog-format --'
+```
+
 #### Incremental Formatting
 
 If you wish to format only changed lines (a.k.a. incremental or partial

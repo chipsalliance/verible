@@ -51,17 +51,40 @@ bool BoundsEqual(const LRange& l, const RRange& r) {
 
 // TODO(fangism): bool RangesOverlap(l, r);
 
-// Returns offsets [x,y] where the sub-slice of superstring from
-// x to y == substring.
+// Returns offsets [x,y] where the sub-slice of 'superrange' from
+// x to y == 'subrange'.
 // Both Range types just needs to support begin(), end(), and std::distance
 // between those iterators. SuperRange could be a container or range.
-// Precondition: substring must be a sub-range of superstring.
+// Precondition: 'subrange' must be a sub-range of 'superrange'.
+//
+// Tip: This is highly useful in tests that compare ranges because
+// the iterators of ranges themselves are often un-printable, however,
+// pairs of integer indices or distances are printable and meaningful.
+//
+// Example:
+//   instead of:
+//     EXPECT_TRUE(BoundsEqual(range1, range2));
+//
+//   write:
+//     EXPECT_EQ(SubRangeIndices(range1, common_base),
+//               SubRangeIndices(range2, common_base));
+//
+//   If you don't have a common_base in the current context, you could use
+//   range1 if both range types are the same.  Any differences reported will
+//   be relative to range1's bounds.
+//
+//   To avoid passing common_base repeatedly, you could also provide:
+//     auto indices = [&](const auto& range) {
+//       return SubRangeIndices(range, common_base);
+//     };
+//     EXPECT_EQ(indices(range1), indices(range2));
+//
 template <class SubRange, class SuperRange>
-std::pair<int, int> SubRangeIndices(const SubRange& substring,
-                                    const SuperRange& superstring) {
-  CHECK(IsSubRange(substring, superstring));
-  const int begin = std::distance(superstring.begin(), substring.begin());
-  const int end = std::distance(superstring.begin(), substring.end());
+std::pair<int, int> SubRangeIndices(const SubRange& subrange,
+                                    const SuperRange& superrange) {
+  CHECK(IsSubRange(subrange, superrange));
+  const int begin = std::distance(superrange.begin(), subrange.begin());
+  const int end = std::distance(superrange.begin(), subrange.end());
   return {begin, end};
 }
 

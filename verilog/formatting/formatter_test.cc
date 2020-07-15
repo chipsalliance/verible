@@ -929,10 +929,9 @@ static const std::initializer_list<FormatterTestCase> kFormatterTestCases = {
      ");\n"
      "endmodule : foo\n"},
     {"module foo(  input pkg::bar_t#(1)  x , output reg  yy) ;endmodule:foo\n",
-     "module foo (\n"                   // with parameterized port type
-     "    input  pkg::bar_t #(1) x,\n"  // TODO(b/149364228): remove space
-                                        // before #
-     "    output reg             yy\n"  // aligned
+     "module foo (\n"  // with parameterized port type
+     "    input  pkg::bar_t#(1) x,\n"
+     "    output reg            yy\n"  // aligned
      ");\n"
      "endmodule : foo\n"},
     {"module foo(  input signed x , output reg  yy) ;endmodule:foo\n",
@@ -5005,11 +5004,11 @@ static const std::initializer_list<FormatterTestCase> kFormatterTestCases = {
      ");\n"
      "endmodule",
      "module align_off (\n"
-     "    input w,\n"  // compacted, but not aligned
+     "    input w  ,\n"  // preserved because group is partially disabled
      "    // verilog_format: off\n"
      "input wire  [y:z] wwww,\n"  // not compacted
      "    // verilog_format: on\n"
-     "    output reg xx\n"  // compacted, but not aligned
+     "    output  reg    xx\n"  // preserved because group is partially disabled
      ");\n"
      "endmodule\n"},
 
@@ -5493,6 +5492,41 @@ TEST(FormatterEndToEndTest, SelectLines) {
        "    end : l2\n"
        "  end : l1\n"
        "endmodule\n"},
+
+      // Next three test cases: one whole-file, two incremental
+      {"module m(\n"
+       "  input wire f,\n"
+       "  input  foo::bar  ggg\n"
+       ");\n"
+       "endmodule:m\n",
+       {},  // format all lines
+       "module m (\n"
+       "    input wire     f,\n"
+       "    input foo::bar ggg\n"
+       ");\n"
+       "endmodule : m\n"},
+      {"module m(\n"
+       "  input wire f,\n"
+       "  input  foo::bar  ggg\n"  // "new line", formatted incrementally
+       ");\n"
+       "endmodule:m\n",
+       {{3, 4}},  // format incrementally
+       "module m(\n"
+       "  input wire f,\n"
+       "    input  foo::bar  ggg\n"  // "new line" remains untouched
+       ");\n"
+       "endmodule:m\n"},
+      {"module m(\n"
+       "  input  wire   f,\n"  // "new line", formatted incrementally
+       "  input  foo::bar  ggg\n"
+       ");\n"
+       "endmodule:m\n",
+       {{2, 3}},  // format incrementally
+       "module m(\n"
+       "    input  wire   f,\n"  // "new line" indented, but other spaces kept
+       "  input  foo::bar  ggg\n"
+       ");\n"
+       "endmodule:m\n"},
   };
   // Use a fixed style.
   FormatStyle style;

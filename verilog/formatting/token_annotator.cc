@@ -456,7 +456,14 @@ static WithReason<int> SpacesRequiredBetween(
     // This may be controversial or context-dependent, as parameterized
     // classes often appear with method calls like:
     //   type#(params...)::method(...);
-    return {1, "Spaces before # in most other contexts."};
+    if (left_context.DirectParentIs(NodeEnum::kUnqualifiedId) &&
+        !left_context.IsInsideFirst(
+            {NodeEnum::kInstantiationType, NodeEnum::kBindTargetInstance},
+            {})) {
+      return {0, "No space before # when direct parent is kUnqualifiedId."};
+    } else {
+      return {1, "Spaces before # in most other contexts."};
+    }
   }
 
   if (right.format_token_enum == FormatTokenType::keyword) {
@@ -806,25 +813,6 @@ static WithReason<SpacingOptions> BreakDecisionBetween(
           "Default: leave wrap decision to algorithm"};
 }
 
-// Sets pointers that establish substring ranges of (whitespace) text *between*
-// non-whitespace tokens.
-static void AnnotateOriginalSpacing(
-    const char* buffer_start,
-    std::vector<verible::PreFormatToken>::iterator tokens_begin,
-    std::vector<verible::PreFormatToken>::iterator tokens_end) {
-  VLOG(4) << __FUNCTION__;
-  CHECK(buffer_start != nullptr);
-  for (auto& ftoken : verible::make_range(tokens_begin, tokens_end)) {
-    ftoken.before.preserved_space_start = buffer_start;
-    VLOG(4) << "original spacing: \""
-            << verible::make_string_view_range(buffer_start,
-                                               ftoken.Text().begin())
-            << "\"";
-    buffer_start = ftoken.Text().end();
-  }
-  // This does not cover the spacing between the last token and EOF.
-}
-
 // Extern linkage for sake of direct testing, though not exposed in public
 // headers.
 // TODO(fangism): could move this to a -internal.h header.
@@ -855,34 +843,31 @@ void AnnotateFormatToken(const FormatStyle& style,
 
 void AnnotateFormattingInformation(
     const FormatStyle& style, const verible::TextStructureView& text_structure,
-    std::vector<verible::PreFormatToken>::iterator tokens_begin,
-    std::vector<verible::PreFormatToken>::iterator tokens_end) {
+    std::vector<verible::PreFormatToken>* format_tokens) {
   // This interface just forwards the relevant information from text_structure.
   AnnotateFormattingInformation(style, text_structure.Contents().begin(),
                                 text_structure.SyntaxTree().get(),
-                                text_structure.EOFToken(), tokens_begin,
-                                tokens_end);
+                                text_structure.EOFToken(), format_tokens);
 }
 
 void AnnotateFormattingInformation(
     const FormatStyle& style, const char* buffer_start,
     const verible::Symbol* syntax_tree_root,
     const verible::TokenInfo& eof_token,
-    std::vector<verible::PreFormatToken>::iterator tokens_begin,
-    std::vector<verible::PreFormatToken>::iterator tokens_end) {
-  if (tokens_begin == tokens_end) {  // empty range
+    std::vector<verible::PreFormatToken>* format_tokens) {
+  if (format_tokens->empty()) {
     return;
   }
 
   if (buffer_start != nullptr) {
     // For unit testing, tokens' text snippets don't necessarily originate
     // from the same contiguous string buffer, so skip this step.
-    AnnotateOriginalSpacing(buffer_start, tokens_begin, tokens_end);
+    ConnectPreFormatTokensPreservedSpaceStarts(buffer_start, format_tokens);
   }
 
   // Annotate inter-token information using the syntax tree for context.
   AnnotateFormatTokensUsingSyntaxContext(
-      syntax_tree_root, eof_token, tokens_begin, tokens_end,
+      syntax_tree_root, eof_token, format_tokens->begin(), format_tokens->end(),
       // lambda: bind the FormatStyle, forwarding all other arguments
       [&style](const PreFormatToken& prev_token, PreFormatToken* curr_token,
                const SyntaxTreeContext& prev_context,

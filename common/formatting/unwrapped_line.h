@@ -21,7 +21,6 @@
 
 #include "common/formatting/format_token.h"
 #include "common/text/symbol.h"
-#include "common/util/container_iterator_range.h"
 
 namespace verible {
 
@@ -67,11 +66,6 @@ enum class PartitionPolicyEnum {
 };
 
 std::ostream& operator<<(std::ostream&, PartitionPolicyEnum);
-
-using FormatTokenRange =
-    container_iterator_range<std::vector<PreFormatToken>::const_iterator>;
-using MutableFormatTokenRange =
-    container_iterator_range<std::vector<PreFormatToken>::iterator>;
 
 // An UnwrappedLine represents a partition of the input token stream that
 // is an independent unit of work for other phases of formatting, such as

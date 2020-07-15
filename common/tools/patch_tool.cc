@@ -12,6 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include <unistd.h>
+
 #include <functional>
 #include <iostream>
 #include <map>
@@ -28,7 +30,8 @@
 #include "common/util/file_util.h"
 #include "common/util/init_command_line.h"
 
-// TODO(fangism): refactor into common/utils/ for other subcommand-using tools
+// TODO(b/160323522): refactor into common/utils/ for other subcommand-using
+// tools
 using SubcommandArgs = std::vector<char*>;
 using SubcommandArgsIterator = SubcommandArgs::const_iterator;
 using SubcommandArgsRange =
@@ -40,6 +43,10 @@ using SubcommandFunction =
 
 // Represents a function selected by the user.
 struct SubcommandEntry {
+  SubcommandEntry(SubcommandFunction fun, absl::string_view usage,
+                  bool show_in_help = true)
+      : main(fun), usage(usage), show_in_help(show_in_help) {}
+
   // sub-main function
   const SubcommandFunction main;
 
@@ -47,6 +54,9 @@ struct SubcommandEntry {
 
   // full description of command
   const std::string usage;
+
+  // If true, display this subcommand in 'help'.
+  const bool show_in_help;
 };
 
 using SubcommandMap =
@@ -55,6 +65,12 @@ using SubcommandMap =
 // forward declarations of subcommand functions
 static absl::Status ChangedLines(const SubcommandArgsRange&, std::istream&,
                                  std::ostream&, std::ostream&);
+static absl::Status ApplyPick(const SubcommandArgsRange&, std::istream&,
+                              std::ostream&, std::ostream&);
+static absl::Status StdinTest(const SubcommandArgsRange&, std::istream&,
+                              std::ostream&, std::ostream&);
+static absl::Status CatTest(const SubcommandArgsRange&, std::istream&,
+                            std::ostream&, std::ostream&);
 static absl::Status Help(const SubcommandArgsRange&, std::istream&,
                          std::ostream&, std::ostream&);
 
@@ -73,11 +89,13 @@ static const SubcommandMap& GetSubcommandMap() {
         "With no command or unknown command, this lists available "
         "commands.\n"}},
 
-      // TODO(fangism): this should be a hidden command
       {"error",
-       {&Error, "same as 'help', but exits non-zero to signal a user-error\n"}},
+       {&Error, "same as 'help', but exits non-zero to signal a user-error\n",
+        false}},
 
-      {"changed-lines", {&ChangedLines, R"(changed-lines patchfile
+      {"changed-lines",  //
+       {&ChangedLines,   //
+        R"(changed-lines patchfile
 
 Input:
   'patchfile' is a unified-diff file from 'diff -u' or other version-controlled
@@ -93,7 +111,40 @@ Output: (stdout)
   line-ranges is omitted for files that are considered new in the patchfile.
 )"}},
 
-      // TODO(b/156530527): "apply-pick" interactive mode
+      // TODO(b/156530527): add options like -p for path pruning
+      // TODO(fangism): Support '-' as patchfile.
+      {"apply-pick",
+       {&ApplyPick,
+        R"(apply-pick patchfile
+Input:
+  'patchfile' is a unified-diff file from 'diff -u' or other version-controlled
+  equivalents like {p4,git,hg,cvs,svn} diff.
+
+Effect:
+  Modifies patched files in-place, following user selections on which patch
+  hunks to apply.
+)"}},
+
+      {"stdin-test",  //
+       {&StdinTest,   //
+        R"(Test for re-opening stdin.
+
+This interactivel prompts the user to enter text, separating files with an EOF
+(Ctrl-D), and echoes the input text back to stdout.
+)",
+        false}},
+      {"cat-test",  //
+       {&CatTest,   //
+        R"(Test for (UNIX) cat-like functionality.
+
+Usage: cat-test ARGS...
+
+where each ARG could point to a file on the filesystem or be '-' to read from stdin.
+Each '-' will prompt the user to enter text until EOF (Ctrl-D).
+Each 'file' echoed back to stdout will be enclosed in banner lines with
+<<<< and >>>>.
+)",
+        false}},
   };
   return *kCommands;
 }
@@ -127,15 +178,78 @@ absl::Status ChangedLines(const SubcommandArgsRange& args, std::istream& ins,
   return absl::OkStatus();
 }
 
+absl::Status ApplyPick(const SubcommandArgsRange& args, std::istream& ins,
+                       std::ostream& outs, std::ostream& errs) {
+  if (args.empty()) {
+    return absl::InvalidArgumentError("Missing patchfile argument.");
+  }
+  const auto patchfile = args[0];
+  std::string patch_contents;
+  {
+    const auto status = verible::file::GetContents(patchfile, &patch_contents);
+    if (!status.ok()) return status;
+  }
+  verible::PatchSet patch_set;
+  {
+    const auto status = patch_set.Parse(patch_contents);
+    if (!status.ok()) return status;
+  }
+  return patch_set.PickApplyInPlace(ins, outs);
+}
+
+absl::Status StdinTest(const SubcommandArgsRange& args, std::istream& ins,
+                       std::ostream& outs, std::ostream& errs) {
+  constexpr size_t kOpenLimit = 10;
+  outs << "This is a demo of re-opening std::cin, up to " << kOpenLimit
+       << " times.\n"
+          "Enter text when prompted.\n"
+          "Ctrl-D sends an EOF to start the next file.\n"
+          "Ctrl-C terminates the loop and exits the program."
+       << std::endl;
+  size_t file_count = 0;
+  std::string line;
+  for (; file_count < kOpenLimit; ++file_count) {
+    outs << "==== file " << file_count << " ====" << std::endl;
+    while (ins) {
+      if (isatty(0)) outs << "enter text: ";
+      std::getline(ins, line);
+      outs << "echo: " << line << std::endl;
+    }
+    if (ins.eof()) {
+      outs << "EOF reached.  Re-opening for next file" << std::endl;
+      ins.clear();  // allows std::cin to read the next file
+    }
+  }
+  return absl::OkStatus();
+}
+
+absl::Status CatTest(const SubcommandArgsRange& args, std::istream& ins,
+                     std::ostream& outs, std::ostream& errs) {
+  size_t file_count = 0;
+  for (const auto& arg : args) {
+    std::string contents;
+    const auto status = verible::file::GetContents(arg, &contents);
+    if (!status.ok()) return status;
+    outs << "<<<< contents of file[" << file_count << "] (" << arg << ") <<<<"
+         << std::endl;
+    outs << contents;
+    outs << ">>>> end of file[" << file_count << "] (" << arg << ") >>>>"
+         << std::endl;
+    ++file_count;
+  }
+  return absl::OkStatus();
+}
+
 static std::string ListCommands() {
   static const SubcommandMap& commands(GetSubcommandMap());
-  return absl::StrCat("  ",
-                      absl::StrJoin(commands, "\n  ",
-                                    [](std::string* out,
-                                       const SubcommandMap::value_type& entry) {
-                                      *out += entry.first;  // command name
-                                    }),
-                      "\n");
+  std::vector<absl::string_view> public_commands;
+  for (const auto& command : commands) {
+    // List only public commands.
+    if (command.second.show_in_help) {
+      public_commands.emplace_back(command.first);
+    }
+  }
+  return absl::StrCat("  ", absl::StrJoin(public_commands, "\n  "), "\n");
 }
 
 static const SubcommandEntry& GetSubcommandEntry(absl::string_view command) {

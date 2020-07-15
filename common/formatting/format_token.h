@@ -18,10 +18,13 @@
 #include <algorithm>
 #include <iosfwd>
 #include <string>
+#include <vector>
 
 #include "absl/strings/string_view.h"
+#include "common/strings/position.h"
 #include "common/text/concrete_syntax_leaf.h"
 #include "common/text/token_info.h"
+#include "common/util/container_iterator_range.h"
 
 namespace verible {
 
@@ -144,6 +147,28 @@ struct PreFormatToken {
 };
 
 std::ostream& operator<<(std::ostream& stream, const PreFormatToken& token);
+
+// Sets pointers that establish substring ranges of (whitespace) text *between*
+// non-whitespace tokens.  This allows for reconstruction and analysis of
+// inter-token (space) text.
+// Note that this does not cover the space between the last token and EOF.
+void ConnectPreFormatTokensPreservedSpaceStarts(
+    const char* buffer_start,
+    std::vector<verible::PreFormatToken>* format_tokens);
+
+// Marks formatting-disabled ranges of tokens so that their original spacing is
+// preserved.  'ftokens' is the array of PreFormatTokens to potentially mark.
+// 'disabled_byte_ranges' is a set of formatting-disabled intervals.
+// 'base_text' is the string_view of the whole text being formatted, and serves
+// as the base reference for 'disabled_byte_ranges' offsets.
+void PreserveSpacesOnDisabledTokenRanges(
+    std::vector<PreFormatToken>* ftokens,
+    const ByteOffsetSet& disabled_byte_ranges, absl::string_view base_text);
+
+using FormatTokenRange =
+    container_iterator_range<std::vector<PreFormatToken>::const_iterator>;
+using MutableFormatTokenRange =
+    container_iterator_range<std::vector<PreFormatToken>::iterator>;
 
 // Enumeration for the final decision about spacing between tokens.
 // Related enum: SpacingConstraint.
