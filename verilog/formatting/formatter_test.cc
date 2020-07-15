@@ -2934,6 +2934,25 @@ static const std::initializer_list<FormatterTestCase> kFormatterTestCases = {
      "  baz #(.foo) bar;\n"
      "endclass\n"},
 
+    // typedef test cases
+    {"typedef enum logic\t{ A=0, B=1 }foo_t;",
+     "typedef enum logic {\n"
+     "  A = 0,\n"
+     "  B = 1\n"
+     "} foo_t;\n"},
+    {// with scalar dimensions
+     "typedef enum logic[2]\t{ A=0, B=1 }foo_t;",
+     "typedef enum logic [2] {\n"
+     "  A = 0,\n"
+     "  B = 1\n"
+     "} foo_t;\n"},
+    {// with range dimensions
+     "typedef enum logic[1:0]\t{ A=0, B=1 }foo_t;",
+     "typedef enum logic [1:0] {\n"
+     "  A = 0,\n"
+     "  B = 1\n"
+     "} foo_t;\n"},
+
     // package test cases
     {"package fedex;localparam  int  www=3 ;endpackage   :  fedex\n",
      "package fedex;\n"
