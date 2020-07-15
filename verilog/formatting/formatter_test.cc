@@ -5190,6 +5190,121 @@ static const std::initializer_list<FormatterTestCase> kFormatterTestCases = {
         "JgQLBG == 4'h0;, \"foo\")\n"
         "endtask\n",
     },
+
+    // module instantiation named ports tabular alignment
+    {// all named ports
+        "module m;\n"
+        "foo bar(.a(a), .aa(aa), .aaa(aaa));\n"
+        "endmodule\n",
+        "module m;\n"
+        "  foo bar (\n"
+        "      .a  (a),\n"
+        "      .aa (aa),\n"
+        "      .aaa(aaa)\n"
+        "  );\n"
+        "endmodule\n"
+    },
+    {// named ports with pre-proc directives
+        "module m;\n"
+        "foo bar(.a(a), `ifdef MACRO .aa(aa), `endif .aaa(aaa));\n"
+        "endmodule\n",
+        "module m;\n"
+        "  foo bar (\n"
+        "      .a  (a),\n"
+        "`ifdef MACRO\n"
+        "      .aa (aa),\n"
+        "`endif\n"
+        "      .aaa(aaa)\n"
+        "  );\n"
+        "endmodule\n"
+    },
+    {// named ports with macros
+        "module m;\n"
+        "foo bar(.a(a), .aa(aa[`RANGE]), .aaa(aaa));\n"
+        "endmodule\n",
+        "module m;\n"
+        "  foo bar (\n"
+        "      .a  (a),\n"
+        "      .aa (aa[`RANGE]),\n"
+        "      .aaa(aaa)\n"
+        "  );\n"
+        "endmodule\n"
+    },
+    {
+        "module m;\n"
+        "foo bar(.a(a), .AA, .aaa(aaa));\n"
+        "endmodule\n",
+        "module m;\n"
+        "  foo bar (\n"
+        "      .a  (a),\n"
+        "      .AA,\n"
+        "      .aaa(aaa)\n"
+        "  );\n"
+        "endmodule\n"
+    },
+    {// name ports with comments
+        "module m;\n"
+        "foo bar(.a(a), .aa(aa)/*comment*/, .aaa(aaa));\n"
+        "endmodule\n",
+        "module m;\n"
+        "  foo bar (\n"
+        "      .a  (a),\n"
+        "      .aa (aa)  /*comment*/,\n"
+        "      .aaa(aaa)\n"
+        "  );\n"
+        "endmodule\n"
+    },
+    {
+        "module m;\n"
+        "foo bar(.a(a),\n"
+        " //.aa(aa),\n" 
+        ".aaa(aaa));\n"
+        "endmodule\n",
+        "module m;\n"
+        "  foo bar (\n"
+        "      .a  (a),\n"
+        "      //.aa(aa),\n"
+        "      .aaa(aaa)\n"
+        "  );\n"
+        "endmodule\n"
+    },
+    {// named ports corssed with implicit connections 
+        "module m;\n"
+        "foo bar(.a(a), .aa, .aaaaa(aaaaa));\n"
+        "endmodule\n",
+        "module m;\n"
+        "  foo bar (\n"
+        "      .a    (a),\n"
+        "      .aa,\n"
+        "      .aaaaa(aaaaa)\n"
+        "  );\n"
+        "endmodule\n"
+    },   
+    {// named ports corssed with wildcard connections 
+        "module m;\n"
+        "foo bar(.a(a), .aaa(aaa), .*);\n"
+        "endmodule\n",
+        "module m;\n"
+        "  foo bar (\n"
+        "      .a  (a),\n"
+        "      .aaa(aaa),\n"
+        "      .*\n"
+        "  );\n"
+        "endmodule\n"
+    },
+    //{
+    //    "module m;\n"
+    //    "foo bar(.a(a), .aa(aa), .* , .aaa(aaa));\n"
+    //    "endmodule\n",
+    //    "module m;\n"
+    //    "  foo bar (\n"
+    //    "      .a  (a),\n"
+    //    "      .aa (aa),\n"
+    //    "      .*,\n"
+    //    "      .aaa(aaa)\n"
+    //    "  );\n"
+    //    "endmodule\n"
+    //},
 };
 
 // Tests that formatter produces expected results, end-to-end.

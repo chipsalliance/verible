@@ -516,6 +516,7 @@ void TreeUnwrapper::InterChildNodeHook(const SyntaxTreeNode& node) {
   switch (tag) {
     // TODO(fangism): cover all other major lists
     case NodeEnum::kPortDeclarationList:
+    case NodeEnum::kPortActualList:
     // case NodeEnum::kPortList:  // TODO(fangism): for task/function ports
     case NodeEnum::kModuleItemList:
     case NodeEnum::kGenerateItemList:

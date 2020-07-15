@@ -66,6 +66,15 @@ static bool TokensAreAllComments(const T& tokens) {
              }) == tokens.end();
 }
 
+template <class T>
+static bool TokensHaveParenthesis(const T& tokens) {
+  return std::find_if(
+              tokens.begin(), tokens.end(),
+              [](const typename T::value_type& token) {
+                return token.TokenEnum() == '(';
+              }) == tokens.end();
+}
+
 static bool IgnorePortDeclarationPartition(
     const TokenPartitionTree& partition) {
   const auto& uwline = partition.Value();
@@ -98,11 +107,22 @@ static bool IgnoreActualNamedPortPartition(
   if (IsPreprocessorKeyword(verilog_tokentype(token_range.front().TokenEnum())))
     return true;
   
-  // ignore implicit connections .*
+  // ignore wildcard connections .*
   if (verilog_tokentype(token_range.front().TokenEnum()) == verilog_tokentype::TK_DOTSTAR) {
     return true;
   }
   
+  // ignore implicit connections .aaa
+  if (verible::SymbolCastToNode(*uwline.Origin()).MatchesTag(NodeEnum::kActualNamedPort) && 
+      TokensHaveParenthesis(token_range)) {
+    return true;
+  }
+
+  // ignore positional port connections
+  if (verible::SymbolCastToNode(*uwline.Origin()).MatchesTag(NodeEnum::kActualPositionalPort)) {
+    return true;
+  }
+
   return false;
 }
 
