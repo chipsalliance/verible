@@ -5192,6 +5192,20 @@ static const std::initializer_list<FormatterTestCase> kFormatterTestCases = {
     },
 
     // module instantiation named ports tabular alignment
+    //{// module instantiation with no port, only comments 
+    //    "module m;\n"
+    //    "foo bar(\n"
+    //    "\t//comment1\n"
+    //    "//comment2\n"
+    //    ");\n"
+    //    "endmodule\n",
+    //    "module m;\n"
+    //    "  foo bar (\n"
+    //    "      //comment1\n"
+    //    "      //comment2\n"
+    //    "  );\n"
+    //    "endmodule\n"
+    //},
     {// all named ports
         "module m;\n"
         "foo bar(.a(a), .aa(aa), .aaa(aaa));\n"
@@ -5201,6 +5215,54 @@ static const std::initializer_list<FormatterTestCase> kFormatterTestCases = {
         "      .a  (a),\n"
         "      .aa (aa),\n"
         "      .aaa(aaa)\n"
+        "  );\n"
+        "endmodule\n"
+    },
+    {// named ports left unconnected
+        "module m;\n"
+        "foo bar(.a(), .aa(), .aaa());\n"
+        "endmodule\n",
+        "module m;\n"
+        "  foo bar (\n"
+        "      .a  (),\n"
+        "      .aa (),\n"
+        "      .aaa()\n"
+        "  );\n"
+        "endmodule\n"
+    },
+    {// multiple named ports groups separated by blank line
+        "module m;\n"
+        "foo bar(.a(a), .aaa(aaa),\n\n .b(b), .bbbbbb(bbbbb));\n"
+        "endmodule\n",
+        "module m;\n"
+        "  foo bar (\n"
+        "      .a  (a),\n"
+        "      .aaa(aaa),\n"
+        "\n"
+        "      .b     (b),\n"
+        "      .bbbbbb(bbbbb)\n"
+        "  );\n"
+        "endmodule\n"
+    },
+    {// named ports with concatenation
+        "module m;\n"
+        "foo bar(.a(a), .aaa({a,b,c}));\n"
+        "endmodule\n",
+        "module m;\n"
+        "  foo bar (\n"
+        "      .a  (a),\n"
+        "      .aaa({a, b, c})\n"
+        "  );\n"
+        "endmodule\n"
+    },
+    {// name ports with slices
+        "module m;\n"
+        "foo bar(.a(a), .aaa(q[r:s]));\n"
+        "endmodule\n",
+        "module m;\n"
+        "  foo bar (\n"
+        "      .a  (a),\n"
+        "      .aaa(q[r:s])\n"
         "  );\n"
         "endmodule\n"
     },
@@ -5256,6 +5318,17 @@ static const std::initializer_list<FormatterTestCase> kFormatterTestCases = {
     },
     {
         "module m;\n"
+        "foo bar(.a(a),//comment1\n .aaa(aaa)//comment2\n);\n"
+        "endmodule\n",
+        "module m;\n"
+        "  foo bar (\n"
+        "      .a  (a),  //comment1\n"
+        "      .aaa(aaa)  //comment2\n"
+        "  );\n"
+        "endmodule\n"
+    },
+    {
+        "module m;\n"
         "foo bar(.a(a),\n"
         " //.aa(aa),\n" 
         ".aaa(aaa));\n"
@@ -5265,6 +5338,18 @@ static const std::initializer_list<FormatterTestCase> kFormatterTestCases = {
         "      .a  (a),\n"
         "      //.aa(aa),\n"
         "      .aaa(aaa)\n"
+        "  );\n"
+        "endmodule\n"
+    },
+    {// module instantiation with all implicit connections 
+        "module m;\n"
+        "foo bar(.a, .aa, .aaaaa);\n"
+        "endmodule\n",
+        "module m;\n"
+        "  foo bar (\n"
+        "      .a,\n"
+        "      .aa,\n"
+        "      .aaaaa\n"
         "  );\n"
         "endmodule\n"
     },

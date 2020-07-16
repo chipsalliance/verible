@@ -68,11 +68,11 @@ static bool TokensAreAllComments(const T& tokens) {
 
 template <class T>
 static bool TokensHaveParenthesis(const T& tokens) {
-  return std::find_if(
+  return std::any_of(
               tokens.begin(), tokens.end(),
               [](const typename T::value_type& token) {
                 return token.TokenEnum() == '(';
-              }) == tokens.end();
+              });
 }
 
 static bool IgnorePortDeclarationPartition(
@@ -114,7 +114,7 @@ static bool IgnoreActualNamedPortPartition(
   
   // ignore implicit connections .aaa
   if (verible::SymbolCastToNode(*uwline.Origin()).MatchesTag(NodeEnum::kActualNamedPort) && 
-      TokensHaveParenthesis(token_range)) {
+      !TokensHaveParenthesis(token_range)) {
     return true;
   }
 

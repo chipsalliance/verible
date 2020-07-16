@@ -1155,6 +1155,26 @@ const TreeUnwrapperTestData kUnwrapModuleTestCases[] = {
     },
 
     {
+        "module with instances with commented named ports",
+        "module named_ports;"
+        "foo bar(\n"
+        ".a(a),\n"
+        "//.aa(aa),\n"
+        ".aaa(aaa)\n"
+        ");"
+        "endmodule",
+        ModuleDeclaration(
+            0, L(0, {"module", "named_ports", ";"}),
+            Instantiation(1, L(1, {"foo", "bar", "("}),
+                          PortActualList(3,  //
+                                         L(3, {".", "a", "(", "a", ")", ","}),
+                                         L(3, {"//.aa(aa),"}),
+                                         L(3, {".", "aaa", "(", "aaa", ")"})),
+                          L(1, {")", ";"})),
+            L(0, {"endmodule"})),
+    },
+
+    {
         "module interface ports",
         "module foo ("
         "interface bar_if, interface baz_if);"
@@ -2563,6 +2583,8 @@ const TreeUnwrapperTestData kUnwrapCommentsTestCases[] = {
                 L(0, {")", ";", "// comment6"})),
             L(0, {"/* comment7 */"}), L(0, {"endmodule", "//comment8"})),
     },
+
+
 };
 
 // Test that TreeUnwrapper produces the correct UnwrappedLines from code with
