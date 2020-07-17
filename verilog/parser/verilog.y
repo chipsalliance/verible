@@ -4603,15 +4603,16 @@ expr_primary_braces
   | '{' value_range '{' expression_list_proper '}' '}'
     { $$ = MakeTaggedNode(N::kExpression, $1, $2, MakeTaggedNode(N::kConcatenationExpression, $3, $4, $5), $6); }
     /* repeat concatenation: $2 should be an expression, not a range */
-  | range_list_in_braces
-    { $$ = MakeTaggedNode(N::kExpression, $1); }
+  | '{' open_range_list '}'
+    { $$ = MakeTaggedNode(N::kExpression,
+            MakeTaggedNode(N::kConcatenationExpression, $1, $2, $3));  }
   | streaming_concatenation
     { $$ = MakeTaggedNode(N::kExpression, $1); }
 
   ;
 range_list_in_braces
   : '{' open_range_list '}'
-     { $$ = MakeTaggedNode(N::kConcatenationExpression, $1, $2, $3);  }
+     { $$ = MakeBraceGroup($1, $2, $3);  }
     /* for SystemVerilog covergroups, open_range_list serves as covergroup_range_list. */
     /* list of ranges also covers list of expressions, so to eliminate R/R conflict
      * we've removed expression_list_proper:
