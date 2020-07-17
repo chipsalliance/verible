@@ -136,15 +136,10 @@ module m;
 endmodule
 )sv",
         // make sure break happens after '?' and ':'
-        // The assign could fit in one line up until '?', but RHS here
-        // is a one large partition and this causes expansion of the partition
-        // inside braces
         R"sv(
 module m;
   if (x) begin
-    assign {
-      ooooooooooooooooooo, ssssssssss
-    } = bbbbbbbbbbbbbbbbb >= cccccccccccccccccccccccc ?
+    assign {ooooooooooooooooooo, ssssssssss} = bbbbbbbbbbbbbbbbb >= cccccccccccccccccccccccc ?
         ddddd - (qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq) :
         eeeee - (rrrrrrrrrrrrrrrrrrfffjjjjjjjjjjjjjjjjjgggkkkkkkkkkkkkkkkkkkkkkkkk);
   end

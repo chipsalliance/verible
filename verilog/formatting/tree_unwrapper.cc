@@ -1631,12 +1631,12 @@ void TreeUnwrapper::Visit(const verible::SyntaxTreeLeaf& leaf) {
               NodeEnum::kPortDeclarationList,        // kPort, kPortDeclaration
               NodeEnum::kPortActualList,             // kActualNamedPort,
                                                      // kActualPositionalPort
-              NodeEnum::kOpenRangeList,              // kExpression
               NodeEnum::kGateInstanceRegisterVariableList,  // kGateInstance,
                                                             // kRegisterVariable
               NodeEnum::kVariableDeclarationAssignmentList  // due to element:
               // kVariableDeclarationAssignment
-          })) {
+          }) || (current_context_.DirectParentIs(NodeEnum::kOpenRangeList) &&
+             current_context_.IsInside(NodeEnum::kConcatenationExpression))) {
         MergeLastTwoPartitions();
       } else if (CurrentUnwrappedLine().Size() == 1) {
         // Partition would begin with a comma,
