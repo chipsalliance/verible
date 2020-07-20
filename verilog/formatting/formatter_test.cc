@@ -998,6 +998,49 @@ static const std::initializer_list<FormatterTestCase> kFormatterTestCases = {
      "          int   b\n"   // direction missing
      ");\n"
      "endmodule\n"},
+    {"module m;foo bar(.baz({larry, moe, curly}));endmodule",
+     "module m;\n"
+     "  foo bar (.baz({larry, moe, curly}));\n"
+     "endmodule\n"},
+    {"module m;foo bar(.baz({larry,// expand this\n"
+     "moe, curly}));endmodule",
+     "module m;\n"
+     "  foo bar (\n"
+     "      .baz({\n"
+     "        larry,  // expand this\n"
+     "        moe,\n"
+     "        curly\n"
+     "      })\n"
+     "  );\n"
+     "endmodule\n"},
+    {"parameter priv_reg_t impl_csr[] = {\n"
+     "// Machine mode mode CSR\n"
+     "MVENDORID, //\n"
+     "MARCHID,   //\n"
+     "DSCRATCH0, //\n"
+     "DSCRATCH1  //\n"
+     "};",
+     "parameter priv_reg_t impl_csr[] = {\n"
+     "  // Machine mode mode CSR\n"
+     "  MVENDORID,  //\n"
+     "  MARCHID,  //\n"
+     "  DSCRATCH0,  //\n"
+     "  DSCRATCH1  //\n"
+     "};\n"},
+    {"parameter priv_reg_t impl_csr[] = {\n"
+     "// Expand elements\n"
+     "MVENDORID,\n"
+     "MARCHID,\n"
+     "DSCRATCH0,\n"
+     "DSCRATCH1\n"
+     "};",
+     "parameter priv_reg_t impl_csr[] = {\n"
+     "  // Expand elements\n"
+     "  MVENDORID,\n"
+     "  MARCHID,\n"
+     "  DSCRATCH0,\n"
+     "  DSCRATCH1\n"
+     "};\n"},
     /* TODO(b/158131099): to fix these, reinterpret 'b' as a kPortDeclaration
     {"module somefunction ("
      "input logic clk, input a, b);endmodule",
