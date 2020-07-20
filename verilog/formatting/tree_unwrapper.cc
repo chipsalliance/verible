@@ -516,6 +516,7 @@ void TreeUnwrapper::InterChildNodeHook(const SyntaxTreeNode& node) {
   switch (tag) {
     // TODO(fangism): cover all other major lists
     case NodeEnum::kPortDeclarationList:
+    case NodeEnum::kPortActualList:
     // case NodeEnum::kPortList:  // TODO(fangism): for task/function ports
     case NodeEnum::kModuleItemList:
     case NodeEnum::kGenerateItemList:
@@ -929,7 +930,7 @@ void TreeUnwrapper::SetIndentationsAndCreatePartitions(
     {
       const int indent = suppress_indentation ? 0 : style_.wrap_spaces;
       const auto policy = Context().IsInside(NodeEnum::kDataDeclaration)
-                              ? PartitionPolicyEnum::kAlwaysExpand
+                              ? PartitionPolicyEnum::kTabularAlignment
                               : PartitionPolicyEnum::kFitOnLineElseExpand;
       VisitIndentedSection(node, indent, policy);
       break;
