@@ -121,8 +121,7 @@ ABSL_FLAG(int, max_search_states, 100000,
 ABSL_FLAG(bool, format_module_port_declarations, true,
           "If true, format module declarations' list of port declarations, "
           "else leave them unformatted.  This is a short-term workaround.");
-ABSL_FLAG(bool, format_module_instantiations, false,
-          // TODO(b/152805837): format module instances' ports in aligned manner
+ABSL_FLAG(bool, format_module_instantiations, true,
           "If true, format module instantiations (data declarations), "
           "else leave them unformatted.  This is a short-term workaround.");
 
