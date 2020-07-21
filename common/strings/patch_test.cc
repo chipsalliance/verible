@@ -231,18 +231,34 @@ TEST(HunkHeaderParseAndPrintTest, ValidInputWithContext) {
 
 TEST(SourceInfoParseTest, InvalidInputs) {
   constexpr absl::string_view kTestCases[] = {
-      "",
-      "a.txt",
-      "a.txt 1985-11-05",  // date should be preceded by tab
-      "a.txt\t1985-11-05]\tunexpected_text",
+      "",  // path must be non-empty
   };
   for (const auto& test : kTestCases) {
-    HunkIndices h;
-    EXPECT_FALSE(h.Parse(test).ok()) << " input: \"" << test << '"';
+    SourceInfo info;
+    EXPECT_FALSE(info.Parse(test).ok()) << " input: \"" << test << '"';
   }
 }
 
-TEST(SourceInfoParseAndPrintTest, ValidInputs) {
+TEST(SourceInfoParseAndPrintTest, ValidInputsPathOnly) {
+  constexpr absl::string_view kPaths[] = {
+      "a.txt",
+      "p/q/a.txt",
+      "/p/q/a.txt",
+  };
+  for (const auto& path : kPaths) {
+    SourceInfo info;
+    EXPECT_TRUE(info.Parse(path).ok());
+    EXPECT_EQ(info.path, path);
+    EXPECT_TRUE(info.timestamp.empty());
+
+    // Validate reversibility.
+    std::ostringstream stream;
+    stream << info;
+    EXPECT_EQ(stream.str(), path);
+  }
+}
+
+TEST(SourceInfoParseAndPrintTest, ValidInputsWithTimestamps) {
   constexpr absl::string_view kPaths[] = {
       "a.txt",
       "p/q/a.txt",
@@ -797,10 +813,6 @@ TEST(FilePatchParseTest, InvalidInputs) {
                                                 // info
       },
       {
-          "--- /path/to/file.txt\t2020-03-30",
-          "+++ /path/to/file.txt 2020-03-30",  // "+++" line is malformed
-      },
-      {
           "--- /path/to/file.txt\t2020-03-29",
           "+++ /path/to/file.txt\t2020-03-30",
           "@@ -2,1 +3,1 @@",  // hunk line counts are inconsistent
@@ -821,7 +833,8 @@ TEST(FilePatchParseTest, InvalidInputs) {
   for (const auto& lines : kTestCases) {
     const LineRange range(lines.begin(), lines.end());
     FilePatch file_patch;
-    EXPECT_FALSE(file_patch.Parse(range).ok());
+    EXPECT_FALSE(file_patch.Parse(range).ok()) << "lines:\n"
+                                               << absl::StrJoin(lines, "\n");
   }
 }
 
@@ -2051,9 +2064,6 @@ TEST(PatchSetParseTest, InvalidInputs) {
   constexpr absl::string_view kTestCases[] = {
       // no "+++" marker for source
       "--- /path/to/file.txt\t2020-03-30\n",
-      // "+++" line is malformed
-      "--- /path/to/file.txt\t2020-03-30\n"
-      "+++ /path/to/file.txt 2020-03-30\n",
       // hunk line counts are inconsistent
       "--- /path/to/file.txt\t2020-03-29\n"
       "+++ /path/to/file.txt\t2020-03-30\n"
@@ -2071,7 +2081,8 @@ TEST(PatchSetParseTest, InvalidInputs) {
   };
   for (const auto& patch_contents : kTestCases) {
     PatchSet patch_set;
-    EXPECT_FALSE(patch_set.Parse(patch_contents).ok());
+    EXPECT_FALSE(patch_set.Parse(patch_contents).ok()) << "contents:\n"
+                                                       << patch_contents;
   }
 }
 

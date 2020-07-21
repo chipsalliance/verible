@@ -326,21 +326,23 @@ absl::Status SourceInfo::Parse(absl::string_view text) {
 
   absl::string_view token = splitter('\t');
   path.assign(token.begin(), token.end());
+  if (path.empty()) {
+    return absl::InvalidArgumentError(absl::StrCat(
+        "Expected \"path [timestamp]\" (tab-separated), but got: \"", text,
+        "\"."));
+  }
 
+  // timestamp is optional, allowed to be empty
   token = splitter('\t');  // time string (optional) is not parsed any further
   timestamp.assign(token.begin(), token.end());
 
-  if (path.empty() || timestamp.empty() ||
-      splitter /* unexpected trailing text */) {
-    return absl::InvalidArgumentError(
-        absl::StrCat("Expected \"path timestamp\" (tab-separated), but got: \"",
-                     text, "\"."));
-  }
   return absl::OkStatus();
 }
 
 std::ostream& operator<<(std::ostream& stream, const SourceInfo& info) {
-  return stream << info.path << '\t' << info.timestamp;
+  stream << info.path;
+  if (!info.timestamp.empty()) stream << '\t' << info.timestamp;
+  return stream;
 }
 
 static absl::Status ParseSourceInfoWithMarker(
