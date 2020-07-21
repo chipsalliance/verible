@@ -41,6 +41,12 @@ script options:
   --dry-run : produce patch from transform, but do not apply it.
   --patch-tool TOOL : path to verible-patch-tool
       [$patch_tool]
+  --per-file-transform-flags TEMPLATE : command used append additional flags to
+      the transform command per file.  Use {} as a placeholder for the file name.
+      The TEMPLATE value will be eval'd using the shell.
+      e.g. to pass incremental formatting line-ranges to tools that accept it:
+        --per-file-transform-flags='--lines=\$(p4 diff -d-u {} | $patch_tool changed-lines - | cut -d" " -f2)'
+        --per-file-transform-flags='--lines=\$(git diff -u --cached {} | $patch_tool changed-lines - | cut -d" " -f2)'
 
 EOF
 }
@@ -77,6 +83,7 @@ DEOF
 }
 
 # self-identify message coming from this script
+# print this messages to stdout, intended for the user to see
 function msg()  {
   echo "[$script_name] " "$@"
 }
@@ -86,6 +93,7 @@ verbose=0
 
 # script option processing
 transform_sep=0
+per_file_transform_flags=""
 for opt
 do
   # handle: --option arg
@@ -108,6 +116,8 @@ do
     --patch-tool ) prev_opt=patch_tool ;;
     --patch-tool=* ) patch_tool="$optarg" ;;
     --dry-run ) dry_run=1 ;;
+    --per-file-transform-flags ) prev_opt=per_file_transform_flags ;;
+    --per-file-transform-flags=* ) per_file_transform_flags="$optarg" ;;
     # TODO(fangism): --backup=.EXT backup files first
     # TODO(fangism): --diff-options forwarded to diff
     --* | -* ) msg "Unknown option: $opt" ; exit 1 ;;
@@ -160,17 +170,34 @@ files=("$@")
 tempdir="$(mktemp -d --tmpdir "tmp.$script_name.XXXXXXX")"
 msg "Temporary files in: $tempdir"
 
+# These messages are only intended for debugging and tracing.
+function log()  {
+  echo "[$script_name] " "$@" >> "$tempdir"/interactive.log
+}
+
 # Transform one file at a time, and aggregate into one large patch.
 for f in "${files[@]}"
 do
   mkdir -p "$tempdir/$(dirname "$f")"
-  "${transform_command[@]}" "$f" > "$tempdir/$f"
+
+  extra_flags=()
+  if [[ -n "$per_file_transform_flags" ]]
+  then
+    expanded_flags="$(echo "$per_file_transform_flags" | sed -e "s|{}|$f|g")"
+    log "expanded per-file flags to: $expanded_flags"
+    eval extra_flags_text=\"$expanded_flags\"
+    IFS=' ' read -r -a extra_flags <<< "$extra_flags_text"
+  fi
+
+  log "${transform_command[@]}" "${extra_flags[@]}" "$f" ">" "$tempdir/$f"
+  "${transform_command[@]}" "${extra_flags[@]}" "$f" > "$tempdir/$f"
   # ignore exit statuses
 
   # Capture differences to stdout (and patchfile).
   # TODO(fangism): forward --diff-options
   diff -U 1 "$f" "$tempdir/$f"
-done > "$tempdir"/interactive.patch
+done | \
+  sed -e "s|+++ $tempdir/|+++ NEW/|" > "$tempdir"/interactive.patch
 
 msg "Cumulative patch (affects ${#files[@]} files): $tempdir/interactive.patch"
 

@@ -43,6 +43,16 @@ filegroup(
     visibility = ["//:__pkg__"],  # for release
 )
 
+# This script is intended to run post-install and expect to be co-located with:
+#   //verilog/tools/formatter:verible-verilog-format
+#   //common/tools:verible-patch-tool
+#   //common/tools:verible-transform-interactive
+filegroup(
+    name = "verible-verilog-format-changed-lines-interactive",
+    srcs = ["verible-verilog-format-changed-lines-interactive.sh"],
+    visibility = ["//:__pkg__"],  # for release
+)
+
 sh_binary(
     name = "diff_formatter",
     srcs = ["diff_formatter.sh"],

@@ -545,6 +545,18 @@ script options: (options with arguments can be: --flag=VALUE or --flag VALUE)
        underlying --formatter tool.
 ```
 
+#### Incremental Interactive Formatting
+
+##### p4 Users
+
+In your locally modified client run:
+
+```shell
+verible-verilog-format-changed-lines-interactive.sh
+```
+
+and follow the prompts.
+
 ### Lexical Diff
 
 `verible-verilog-diff` compares two input files for equivalence, where
