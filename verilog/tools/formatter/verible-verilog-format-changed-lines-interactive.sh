@@ -46,7 +46,7 @@ Run this from a version-controlled directory.
 script options:
   --help, -h : print help and exit
   --rcs TOOL : revision control system
-      Supported: p4
+      Supported: p4,git
 
 EOF
 }
@@ -87,16 +87,36 @@ done
 
 # TODO(fangism): attempt to infer version control system (p4,svn,git,cvs,hg,...)
 
+function p4_touched_files() {
+  # Result is already absolute paths to local files.
+  p4 whatsout
+}
+
+function git_touched_files() {
+  # Get added/modified files that are tracked.
+  # Parse the short-form of git-status output.  See git help status.
+  # cut: extract the filename
+  # readlink: resolve absolute path to eliminate sensitivity to "$PWD"
+  git status -s | grep "^[AM]" | cut -c 4- | xargs readlink -f
+}
+
 # Set commands based on version control system
 case "$rcs" in
-  p4) touched_files=(p4 whatsout)
+  p4) touched_files=p4_touched_files
       single_file_diff=(p4 diff -d-u "{}") ;;
+  git) touched_files=git_touched_files
+      single_file_diff=(git diff -u --cached "{}") ;;
   *) { msg "Unsupported version control system: $rcs" ; exit 1;} ;;
 esac
 
 # File extensions are currently hardcoded to Verilog files.
-files=($("${touched_files[@]}" | grep -e '\.sv$' -e '\.v$' -e '\.svh$' -e '\.vh$' ))
+files=($("$touched_files" | grep -e '\.sv$' -e '\.v$' -e '\.svh$' -e '\.vh$' ))
 
+# Note about --per-file-transform-flags:
+# The file name is stripped away to yield only line numbers, which is why
+# this still works with git-diffs, which contain a/ and b/ prefixes in
+# filenames.  The file name used for applying changes is still the one from
+# "${files[@]}".
 interact_command=("$interactive_patch_script" \
   --patch-tool "$patch_tool" \
   --per-file-transform-flags='--lines=$('"${single_file_diff[*]}"' | '"$patch_tool"' changed-lines - | cut -d" " -f2)' \
