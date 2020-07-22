@@ -547,13 +547,11 @@ script options: (options with arguments can be: --flag=VALUE or --flag VALUE)
 
 #### Incremental Interactive Formatting
 
-In your locally modified client run:
+In your locally modified client (p4, git) run:
 
 ```shell
-verible-verilog-format-changed-lines-interactive.sh --rcs=TOOL
+verible-verilog-format-changed-lines-interactive.sh
 ```
-
-where `TOOL` is one of `p4,git`.
 
 and follow the prompts.
 

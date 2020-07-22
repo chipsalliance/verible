@@ -34,6 +34,10 @@ patch_tool="$script_dir"/verible-patch-tool
 formatter="$script_dir"/verible-verilog-format
 [[ -x "$formatter" ]] || formatter="$(which verible-verilog-format)"
 
+# version control system
+# auto-detect by default
+rcs=auto
+
 function usage() {
   cat <<EOF
 $0:
@@ -41,11 +45,12 @@ Interactively prompts user to accept/reject formatter tool changes,
 based only on touched lines of code in a revision-controlled workspace.
 
 Usage: $script_name [script_options]
+
 Run this from a version-controlled directory.
 
 script options:
   --help, -h : print help and exit
-  --rcs TOOL : revision control system
+  --rcs TOOL : revision control system [default:$rcs]
       Supported: p4,git
 
 EOF
@@ -54,9 +59,6 @@ EOF
 function msg()  {
   echo "[$script_name] " "$@"
 }
-
-# version control system
-rcs=p4
 
 # generic option processing
 for opt
@@ -85,7 +87,19 @@ do
   shift
 done
 
-# TODO(fangism): attempt to infer version control system (p4,svn,git,cvs,hg,...)
+# attempt to infer version control system (p4,svn,git,cvs,hg,...)
+# Note: these tests are sensitive to "$PWD"
+if [[ "$rcs" == "auto" ]]
+then
+  if git status
+  then
+    rcs=git
+  else
+    # p4 is tricky to detect due to the concept of default clients,
+    # so leave it last position, if all else fails.
+    rcs=p4
+  fi 2>&1 > /dev/null
+fi
 
 function p4_touched_files() {
   # Result is already absolute paths to local files.
