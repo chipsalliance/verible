@@ -48,7 +48,7 @@ To pipe from stdin, use '-' as <file>.
       fail-safe behaviors should be considered a success.); default: true;
     --format_module_instantiations (If true, format module instantiations (data
       declarations), else leave them unformatted. This is a short-term
-      workaround.); default: false;
+      workaround.); default: true;
     --format_module_port_declarations (If true, format module declarations' list
       of port declarations, else leave them unformatted. This is a short-term
       workaround.); default: true;
@@ -79,4 +79,4 @@ To pipe from stdin, use '-' as <file>.
 
 ## Version
 
-Generated on 2020-07-20 11:18:57 -0700 from [v0.0-479-g100c0af](https://github.com/google/verible/commit/100c0af86eeac10c56731d5df7ad1ecc35547e88)
+Generated on 2020-07-22 13:36:15 -0700 from [v0.0-486-gd811cea](https://github.com/google/verible/commit/d811cea2c593985cabbd043d338daa4a8ed08493)
