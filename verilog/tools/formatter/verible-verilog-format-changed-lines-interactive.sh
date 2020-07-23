@@ -98,7 +98,7 @@ then
     # p4 is tricky to detect due to the concept of default clients,
     # so leave it last position, if all else fails.
     rcs=p4
-  fi 2>&1 > /dev/null
+  fi > /dev/null 2>&1
 fi
 
 function p4_touched_files() {
