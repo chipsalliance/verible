@@ -117,7 +117,8 @@ function git_touched_files() {
 # Set commands based on version control system
 case "$rcs" in
   p4) touched_files=p4_touched_files
-      single_file_diff=(p4 diff -d-u "{}") ;;
+      # force use of traditional text 'diff', not some other UI-diff tool
+      single_file_diff=(P4DIFF=diff p4 diff -d-u "{}") ;;
   git) touched_files=git_touched_files
       single_file_diff=(git diff -u --cached "{}") ;;
   *) { msg "Unsupported version control system: $rcs" ; exit 1;} ;;
