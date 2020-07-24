@@ -555,6 +555,15 @@ verible-verilog-format-changed-lines-interactive.sh
 
 and follow the prompts.
 
+> NOTE: git and hg users can pass in a different base revision to diff against:
+>
+> ```shell
+> # Diff against the previous revision in hg
+> verible-verilog-format-changed-lines-interactive.sh --rev .^
+> # Diff against upstream mainline in git
+> verible-verilog-format-changed-lines-interactive.sh --rev origin/main
+> ```
+
 ### Lexical Diff
 
 `verible-verilog-diff` compares two input files for equivalence, where
