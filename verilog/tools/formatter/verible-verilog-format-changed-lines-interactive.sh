@@ -37,6 +37,7 @@ formatter="$script_dir"/verible-verilog-format
 # version control system
 # auto-detect by default
 rcs=auto
+files=()
 
 function usage() {
   cat <<EOF
@@ -44,9 +45,10 @@ $0:
 Interactively prompts user to accept/reject formatter tool changes,
 based only on touched lines of code in a revision-controlled workspace.
 
-Usage: $script_name [script_options]
+Usage: $script_name [script_options] [FILES...]
 
 Run this from a version-controlled directory.
+If FILES is empty, scan for all Verilog files under the current directory.
 
 script options:
   --help, -h : print help and exit
@@ -81,8 +83,8 @@ do
     --rcs ) prev_opt=rcs ;;
     --rcs=* ) rcs="$optarg" ;;
     --* | -* ) msg "Unknown option: $opt" ; exit 1 ;;
-    # This script expects no positional arguments.
-    *) { msg "Unexpected positional argument: $opt" ; usage ; exit 1 ;} ;;
+    # Positional arguments [optional] are files.
+    *) files+=( "$opt" ) ;;
   esac
   shift
 done
@@ -124,8 +126,12 @@ case "$rcs" in
   *) { msg "Unsupported version control system: $rcs" ; exit 1;} ;;
 esac
 
-# File extensions are currently hardcoded to Verilog files.
-files=($("$touched_files" | grep -e '\.sv$' -e '\.v$' -e '\.svh$' -e '\.vh$' ))
+# If files is unspecified, scan for all locally modified files.
+if [[ "${#files[@]}" == 0 ]]
+then
+  # File extensions are currently hardcoded to Verilog files.
+  files=($("$touched_files" | grep -e '\.sv$' -e '\.v$' -e '\.svh$' -e '\.vh$' ))
+fi
 
 # Note about --per-file-transform-flags:
 # The file name is stripped away to yield only line numbers, which is why
