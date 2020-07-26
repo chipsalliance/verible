@@ -496,6 +496,7 @@ enum class NodeEnum {
   kRandSequenceCaseItem,
   kRandSequenceDefaultItem,
   kTypeInfo,
+  kConcatenationExpression,
   // END GENERATE -- do not delete
 
   // kInvalidTag is used to mark past-the-end of the last valid enum,

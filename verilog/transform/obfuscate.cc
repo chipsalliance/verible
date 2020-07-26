@@ -81,6 +81,16 @@ static absl::Status ObfuscationError(absl::string_view message,
                                           "\n*** Please file a bug. ***\n"));
 }
 
+static absl::Status ReversibilityError(absl::string_view original,
+                                       absl::string_view encoded,
+                                       absl::string_view decoded) {
+  return absl::InternalError(
+      absl::StrCat("Internal error: decode(encode) != original\nORIGINAL:\n",
+                   original, "\nENCODED:\n", encoded, "\nDECODED:\n", decoded,
+                   "\n*** Please file a bug. ***\n"));
+  // TODO(fangism): use a diff library to highlight the differences
+}
+
 // Internal consistency check that decoding restores original text.
 static absl::Status VerifyDecoding(absl::string_view original,
                                    absl::string_view encoded,
@@ -101,8 +111,7 @@ static absl::Status VerifyDecoding(absl::string_view original,
   std::ostringstream decoded_output;
   ObfuscateVerilogCodeInternal(encoded, &decoded_output, &reverse_subst);
   if (original != decoded_output.str()) {
-    return ObfuscationError("Internal error: decode(encode) != original",
-                            original, encoded);
+    return ReversibilityError(original, encoded, decoded_output.str());
   }
   return absl::OkStatus();
 }

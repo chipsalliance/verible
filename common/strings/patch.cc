@@ -32,6 +32,7 @@
 #include "common/util/algorithm.h"
 #include "common/util/container_iterator_range.h"
 #include "common/util/file_util.h"
+#include "common/util/iterator_adaptors.h"
 #include "common/util/iterator_range.h"
 
 namespace verible {
@@ -54,11 +55,11 @@ static bool IsValidMarkedLine(absl::string_view line) {
 
 namespace internal {
 
-static std::vector<LineRange> LineIteratorsToRanges(
-    const std::vector<LineIterator>& iters) {
+template <typename RangeT, typename Iter>
+static std::vector<RangeT> IteratorsToRanges(const std::vector<Iter>& iters) {
   // TODO(fangism): This pattern appears elsewhere in the codebase, so refactor.
   CHECK_GE(iters.size(), 2);
-  std::vector<LineRange> result;
+  std::vector<RangeT> result;
   result.reserve(iters.size());
   auto prev = iters.begin();
   for (auto next = std::next(prev); next != iters.end(); prev = next, ++next) {
@@ -201,9 +202,10 @@ LineNumberSet Hunk::AddedLines() const {
   LineNumberSet line_numbers;
   int line_number = header_.new_range.start;
   for (const auto& line : lines_) {
-    if (line.Marker() == '+') line_numbers.Add(line_number);
-    if (line.Marker() != '-') ++line_number;
+    if (line.IsAdded()) line_numbers.Add(line_number);
+    if (!line.IsDeleted()) ++line_number;
   }
+
   return line_numbers;
 }
 
@@ -211,7 +213,7 @@ absl::Status Hunk::VerifyAgainstOriginalLines(
     const std::vector<absl::string_view>& original_lines) const {
   int line_number = header_.old_range.start;  // 1-indexed
   for (const auto& line : lines_) {
-    if (line.Marker() == '+') continue;  // ignore added lines
+    if (line.IsAdded()) continue;  // ignore added lines
     if (line_number > static_cast<int>(original_lines.size())) {
       return absl::OutOfRangeError(absl::StrCat(
           "Patch hunk references line ", line_number, " in a file with only ",
@@ -227,6 +229,66 @@ absl::Status Hunk::VerifyAgainstOriginalLines(
     ++line_number;
   }
   return absl::OkStatus();
+}
+
+class HunkSplitter {
+ public:
+  HunkSplitter() = default;
+
+  bool operator()(const MarkedLine& line) {
+    if (previous_line_ == nullptr) {
+      // first line
+      previous_line_ = &line;
+      return true;
+    }
+    const bool new_hunk = !previous_line_->IsCommon() && line.IsCommon();
+    previous_line_ = &line;
+    return new_hunk;
+  }
+
+ private:
+  const MarkedLine* previous_line_ = nullptr;
+};
+
+std::vector<Hunk> Hunk::Split() const {
+  std::vector<Hunk> sub_hunks;
+
+  // Split after every group of changed lines.
+  typedef std::vector<MarkedLine>::const_iterator MarkedLineIterator;
+  std::vector<MarkedLineIterator> cut_points;
+  verible::find_all(lines_.begin(), lines_.end(),
+                    std::back_inserter(cut_points), HunkSplitter());
+  CHECK(!cut_points.empty());
+
+  // Check whether or not there any line changes after the last cut point.
+  // If not, then delete that cut point, which merges the last two partitions.
+  if (cut_points.back() != lines_.begin()) {
+    const bool last_partition_has_any_changes =
+        std::any_of(cut_points.back(), lines_.end(),
+                    [](const MarkedLine& m) { return !m.IsCommon(); });
+    if (!last_partition_has_any_changes) cut_points.pop_back();
+  }
+  cut_points.push_back(lines_.end());  // always terminate partitions with end()
+  // cut_points always contains lines_.begin(), and .end()
+
+  // convert cut points to sub-ranges
+  typedef container_iterator_range<MarkedLineIterator> MarkedLineRange;
+  const std::vector<MarkedLineRange> ranges(
+      IteratorsToRanges<MarkedLineRange>(cut_points));
+
+  // create sub hunks from each sub-range
+  int old_starting_line = header_.old_range.start;
+  int new_starting_line = header_.new_range.start;
+  for (const auto& marked_line_range : ranges) {
+    sub_hunks.emplace_back(old_starting_line, new_starting_line,
+                           marked_line_range.begin(), marked_line_range.end());
+    const HunkHeader& recent_header(sub_hunks.back().Header());
+    old_starting_line += recent_header.old_range.count;
+    new_starting_line += recent_header.new_range.count;
+  }
+  // TODO(b/161416776): if the resulting sub_hunks is singleton, then attempt to
+  // further subdivide line-by-line.
+  return sub_hunks;
 }
 
 absl::Status Hunk::Parse(const LineRange& hunk_lines) {
@@ -264,21 +326,23 @@ absl::Status SourceInfo::Parse(absl::string_view text) {
 
   absl::string_view token = splitter('\t');
   path.assign(token.begin(), token.end());
+  if (path.empty()) {
+    return absl::InvalidArgumentError(absl::StrCat(
+        "Expected \"path [timestamp]\" (tab-separated), but got: \"", text,
+        "\"."));
+  }
 
+  // timestamp is optional, allowed to be empty
   token = splitter('\t');  // time string (optional) is not parsed any further
   timestamp.assign(token.begin(), token.end());
 
-  if (path.empty() || timestamp.empty() ||
-      splitter /* unexpected trailing text */) {
-    return absl::InvalidArgumentError(
-        absl::StrCat("Expected \"path timestamp\" (tab-separated), but got: \"",
-                     text, "\"."));
-  }
   return absl::OkStatus();
 }
 
 std::ostream& operator<<(std::ostream& stream, const SourceInfo& info) {
-  return stream << info.path << '\t' << info.timestamp;
+  stream << info.path;
+  if (!info.timestamp.empty()) stream << '\t' << info.timestamp;
+  return stream;
 }
 
 static absl::Status ParseSourceInfoWithMarker(
@@ -308,7 +372,7 @@ LineNumberSet FilePatch::AddedLines() const {
 
 static char PromptHunkAction(std::istream& ins, std::ostream& outs) {
   // Suppress prompt in noninteractive mode.
-  if (isatty(0)) outs << "Apply this hunk? [y,n,a,d,q,?] ";
+  if (isatty(0)) outs << "Apply this hunk? [y,n,a,d,s,q,?] ";
   char c;
   ins >> c;  // user will need to hit <enter> after the character
   if (ins.eof()) {
@@ -364,55 +428,73 @@ absl::Status FilePatch::PickApply(std::istream& ins, std::ostream& outs,
   }
 
   // Accumulate lines to write here.
-  std::vector<absl::string_view> output_lines;
+  // Needs own copy of string due to potential splitting into temporary hunks.
+  std::vector<std::string> output_lines;
 
   int last_consumed_line = 0;  // 0-indexed
-  // TODO(b/156530527): container will need to be copies of values
-  // (not pointers) to support splitting temporary hunks.
-  // 'output_lines' will need to hold std::string too.
-  std::deque<const Hunk*> hunks_worklist;
-  for (const auto& hunk : hunks) hunks_worklist.push_back(&hunk);
+  std::deque<Hunk> hunks_worklist(hunks.begin(), hunks.end());  // copy-fill
   while (!hunks_worklist.empty()) {
-    const Hunk& hunk(*hunks_worklist.front());
+    VLOG(1) << "hunks remaining: " << hunks_worklist.size();
+    const Hunk& hunk(hunks_worklist.front());
 
     // Copy over unchanged lines before this hunk.
-    if (hunk.Header().old_range.start < last_consumed_line) {
-      return absl::InvalidArgumentError("Hunks are not properly ordered.");
+    const auto& old_range = hunk.Header().old_range;
+    if (old_range.start < last_consumed_line) {
+      return absl::InvalidArgumentError(
+          absl::StrCat("Hunks are not properly ordered.  last_consumed_line=",
+                       last_consumed_line, ", but current hunk starts at line ",
+                       old_range.start));
     }
-    for (; last_consumed_line < hunk.Header().old_range.start - 1;
-         ++last_consumed_line) {
+    for (; last_consumed_line < old_range.start - 1; ++last_consumed_line) {
       CHECK_LT(last_consumed_line, orig_lines.size());
-      output_lines.push_back(orig_lines[last_consumed_line]);
+      const absl::string_view& line(orig_lines[last_consumed_line]);
+      output_lines.emplace_back(line.begin(), line.end());  // copy string
     }
+    VLOG(1) << "copied up to (!including) line[" << last_consumed_line << "].";
+
     // Prompt user to apply or reject patch hunk.
     std::function<char()> prompt = [&hunk, &ins, &outs]() -> char {
       outs << hunk;
       return PromptHunkAction(ins, outs);
     };
     const char action = prompt();
+    VLOG(1) << "user entered: " << action;
     switch (action) {
       case 'a': {
+        // accept all remaining hunks in the current file
         prompt = []() -> char { return 'y'; };  // suppress prompt
         ABSL_FALLTHROUGH_INTENDED;
       }
       case 'y': {
+        // accept this hunk, copy lines over
         for (const auto& marked_line : hunk.MarkedLines()) {
-          if (marked_line.Marker() != '-') {
-            output_lines.push_back(marked_line.Text());
+          if (!marked_line.IsDeleted()) {
+            const absl::string_view line(marked_line.Text());
+            output_lines.emplace_back(line.begin(), line.end());  // copy string
           }
         }
-        const auto& old_range = hunk.Header().old_range;
         last_consumed_line = old_range.start + old_range.count - 1;
         break;  // switch
       }
       case 'd': {
+        // reject all remaining hunks in the current file
         prompt = []() -> char { return 'n'; };  // suppress prompt
         ABSL_FALLTHROUGH_INTENDED;
       }
       case 'n':
+        // reject this hunk
         // no need to do anything, next iteration will sweep up original lines
         break;  // switch
-      // TODO(b/156530527): 's' for hunk splitting
+      case 's': {
+        // split this hunk into smaller ones and prompt again
+        const auto sub_hunks = hunk.Split();
+        hunks_worklist.pop_front();  // replace current hunk with sub-hunks
+        // maintain sequential order of sub-hunks in the queue by line number
+        for (const auto& sub_hunk : verible::reversed_view(sub_hunks)) {
+          hunks_worklist.push_front(sub_hunk);
+        }
+        continue;  // for-loop
+      }
       // TODO(b/156530527): 'e' for hunk editing
       case 'q':
         // Abort this file, discard any elected edits.
@@ -423,6 +505,7 @@ absl::Status FilePatch::PickApply(std::istream& ins, std::ostream& outs,
                 "n - reject change\n"
                 "a - accept this and remaining changes in the current file\n"
                 "d - reject this and remaining changes in the current file\n"
+                "s - split this hunk into smaller ones and prompt each one\n"
                 "q - abandon all changes in this file\n"
                 "? - print this help and prompt again\n";
         continue;  // for-loop
@@ -433,8 +516,10 @@ absl::Status FilePatch::PickApply(std::istream& ins, std::ostream& outs,
   // Copy over remaining lines after the last hunk.
   for (; last_consumed_line < static_cast<int>(orig_lines.size());
        ++last_consumed_line) {
-    output_lines.push_back(orig_lines[last_consumed_line]);
+    const absl::string_view& line(orig_lines[last_consumed_line]);
+    output_lines.emplace_back(line.begin(), line.end());  // copy string
   }
+  VLOG(1) << "copied reamining lines up to [" << last_consumed_line << "].";
 
   const std::string rewrite_contents(absl::StrJoin(output_lines, "\n") + "\n");
 
@@ -479,7 +564,8 @@ absl::Status FilePatch::Parse(const LineRange& lines) {
   }
 
   hunk_starts.push_back(lines.end());  // make it easier to construct ranges
-  const std::vector<LineRange> hunk_ranges(LineIteratorsToRanges(hunk_starts));
+  const std::vector<LineRange> hunk_ranges(
+      IteratorsToRanges<LineRange>(hunk_starts));
 
   hunks.resize(hunk_ranges.size());
   auto hunk_iter = hunks.begin();
@@ -552,7 +638,7 @@ absl::Status PatchSet::Parse(absl::string_view patch_contents) {
 
   // Parse individual file patches.
   const std::vector<internal::LineRange> file_patch_ranges(
-      internal::LineIteratorsToRanges(file_patch_begins));
+      internal::IteratorsToRanges<internal::LineRange>(file_patch_begins));
   file_patches_.resize(file_patch_ranges.size());
   auto iter = file_patches_.begin();
   for (const auto& range : file_patch_ranges) {

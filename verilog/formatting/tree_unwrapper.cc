@@ -516,6 +516,7 @@ void TreeUnwrapper::InterChildNodeHook(const SyntaxTreeNode& node) {
   switch (tag) {
     // TODO(fangism): cover all other major lists
     case NodeEnum::kPortDeclarationList:
+    case NodeEnum::kPortActualList:
     // case NodeEnum::kPortList:  // TODO(fangism): for task/function ports
     case NodeEnum::kModuleItemList:
     case NodeEnum::kGenerateItemList:
@@ -908,6 +909,19 @@ void TreeUnwrapper::SetIndentationsAndCreatePartitions(
                            PartitionPolicyEnum::kFitOnLineElseExpand);
       break;
     }
+    case NodeEnum::kOpenRangeList: {
+      if (Context().DirectParentIs(NodeEnum::kConcatenationExpression)) {
+        // Do not further indent preprocessor clauses.
+        const int indent = suppress_indentation ? 0 : style_.indentation_spaces;
+        VisitIndentedSection(node, indent,
+                             PartitionPolicyEnum::kFitOnLineElseExpand);
+        break;
+      } else {
+        // Default handling
+        TraverseChildren(node);
+        break;
+      }
+    }
 
       // module instantiations (which look like data declarations) want to
       // expand one parameter/port per line.
@@ -916,7 +930,7 @@ void TreeUnwrapper::SetIndentationsAndCreatePartitions(
     {
       const int indent = suppress_indentation ? 0 : style_.wrap_spaces;
       const auto policy = Context().IsInside(NodeEnum::kDataDeclaration)
-                              ? PartitionPolicyEnum::kAlwaysExpand
+                              ? PartitionPolicyEnum::kTabularAlignment
                               : PartitionPolicyEnum::kFitOnLineElseExpand;
       VisitIndentedSection(node, indent, policy);
       break;
@@ -963,6 +977,10 @@ void TreeUnwrapper::SetIndentationsAndCreatePartitions(
       if (Context().DirectParentIs(NodeEnum::kMacroArgList)) {
         // original un-lexed macro argument was successfully expanded
         VisitNewUnwrappedLine(node);
+      } else if (Context().DirectParentIs(NodeEnum::kOpenRangeList) &&
+                 Context().IsInside(NodeEnum::kConcatenationExpression)) {
+        VisitIndentedSection(node, 0,
+                             PartitionPolicyEnum::kFitOnLineElseExpand);
       } else {
         TraverseChildren(node);
       }
@@ -1630,7 +1648,9 @@ void TreeUnwrapper::Visit(const verible::SyntaxTreeLeaf& leaf) {
                                                             // kRegisterVariable
               NodeEnum::kVariableDeclarationAssignmentList  // due to element:
               // kVariableDeclarationAssignment
-          })) {
+          }) ||
+          (current_context_.DirectParentIs(NodeEnum::kOpenRangeList) &&
+           current_context_.IsInside(NodeEnum::kConcatenationExpression))) {
         MergeLastTwoPartitions();
       } else if (CurrentUnwrappedLine().Size() == 1) {
         // Partition would begin with a comma,

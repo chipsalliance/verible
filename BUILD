@@ -20,6 +20,7 @@ installer(
         "//verilog/tools/diff:verible-verilog-diff",
         "//verilog/tools/formatter:git-verilog-format",
         "//verilog/tools/formatter:verible-verilog-format",
+        "//verilog/tools/formatter:verible-verilog-format-changed-lines-interactive",
         "//verilog/tools/lint:verible-verilog-lint",
         "//verilog/tools/obfuscator:verible-verilog-obfuscate",
         "//verilog/tools/syntax:verible-verilog-syntax",

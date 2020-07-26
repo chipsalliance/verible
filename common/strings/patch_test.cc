@@ -29,9 +29,32 @@
 namespace verible {
 
 using ::testing::ElementsAre;
+using ::testing::ElementsAreArray;
 
 namespace internal {
 namespace {
+
+static std::vector<MarkedLine> MakeMarkedLines(
+    const std::vector<absl::string_view>& lines) {
+  std::vector<MarkedLine> result;
+  for (const auto& line : lines) {
+    result.emplace_back(line);
+  }
+  return result;
+}
+
+TEST(MarkedLineConstructionTest, BadLine) {
+  EXPECT_DEATH(MarkedLine(""), "must start with a marker");
+  EXPECT_DEATH(MarkedLine("?"), "Unexpected marker '?'");
+}
+
+TEST(MarkedLineEquality, EqualityTests) {
+  EXPECT_NE(MarkedLine(" "), MarkedLine("+"));
+  EXPECT_NE(MarkedLine(" "), MarkedLine("-"));
+  EXPECT_EQ(MarkedLine(" "), MarkedLine(" "));
+  EXPECT_NE(MarkedLine(" "), MarkedLine("  "));
+  EXPECT_NE(MarkedLine(" 1"), MarkedLine(" 2"));
+}
 
 TEST(MarkedLineParseTest, InvalidInputs) {
   constexpr absl::string_view kTestCases[] = {
@@ -78,6 +101,14 @@ TEST(MarkedLinePrintTest, Print) {
   }
 }
 
+TEST(HunkIndicesEqualityTest, Comparisons) {
+  EXPECT_EQ((HunkIndices{1, 2}), (HunkIndices{1, 2}));
+  EXPECT_NE((HunkIndices{1, 1}), (HunkIndices{1, 2}));
+  EXPECT_NE((HunkIndices{1, 2}), (HunkIndices{1, 1}));
+  EXPECT_NE((HunkIndices{1, 2}), (HunkIndices{2, 2}));
+  EXPECT_NE((HunkIndices{3, 2}), (HunkIndices{1, 2}));
+}
+
 TEST(HunkIndicesParseTest, InvalidInputs) {
   constexpr absl::string_view kTestCases[] = {
       "", ",", "4,", ",5", "2,b", "x,2", "4,5,", "1,2,3",
@@ -110,6 +141,16 @@ TEST(HunkIndicesParseAndPrintTest, ValidInputs) {
     stream << h;
     EXPECT_EQ(stream.str(), test.input);
   }
+}
+
+TEST(HunkHeaderEqualityTest, Comparisons) {
+  EXPECT_EQ((HunkHeader{{1, 2}, {3, 4}, ""}), (HunkHeader{{1, 2}, {3, 4}, ""}));
+  EXPECT_NE((HunkHeader{{1, 2}, {3, 4}, ""}), (HunkHeader{{2, 2}, {3, 4}, ""}));
+  EXPECT_NE((HunkHeader{{1, 2}, {3, 4}, ""}), (HunkHeader{{1, 1}, {3, 4}, ""}));
+  EXPECT_NE((HunkHeader{{1, 2}, {3, 4}, ""}), (HunkHeader{{1, 2}, {1, 4}, ""}));
+  EXPECT_NE((HunkHeader{{1, 2}, {3, 4}, ""}), (HunkHeader{{1, 2}, {3, 5}, ""}));
+  EXPECT_NE((HunkHeader{{1, 2}, {3, 4}, ""}),
+            (HunkHeader{{1, 2}, {3, 4}, " "}));
 }
 
 TEST(HunkHeaderParseTest, InvalidInputs) {
@@ -190,18 +231,34 @@ TEST(HunkHeaderParseAndPrintTest, ValidInputWithContext) {
 
 TEST(SourceInfoParseTest, InvalidInputs) {
   constexpr absl::string_view kTestCases[] = {
-      "",
-      "a.txt",
-      "a.txt 1985-11-05",  // date should be preceded by tab
-      "a.txt\t1985-11-05]\tunexpected_text",
+      "",  // path must be non-empty
   };
   for (const auto& test : kTestCases) {
-    HunkIndices h;
-    EXPECT_FALSE(h.Parse(test).ok()) << " input: \"" << test << '"';
+    SourceInfo info;
+    EXPECT_FALSE(info.Parse(test).ok()) << " input: \"" << test << '"';
   }
 }
 
-TEST(SourceInfoParseAndPrintTest, ValidInputs) {
+TEST(SourceInfoParseAndPrintTest, ValidInputsPathOnly) {
+  constexpr absl::string_view kPaths[] = {
+      "a.txt",
+      "p/q/a.txt",
+      "/p/q/a.txt",
+  };
+  for (const auto& path : kPaths) {
+    SourceInfo info;
+    EXPECT_TRUE(info.Parse(path).ok());
+    EXPECT_EQ(info.path, path);
+    EXPECT_TRUE(info.timestamp.empty());
+
+    // Validate reversibility.
+    std::ostringstream stream;
+    stream << info;
+    EXPECT_EQ(stream.str(), path);
+  }
+}
+
+TEST(SourceInfoParseAndPrintTest, ValidInputsWithTimestamps) {
   constexpr absl::string_view kPaths[] = {
       "a.txt",
       "p/q/a.txt",
@@ -227,6 +284,25 @@ TEST(SourceInfoParseAndPrintTest, ValidInputs) {
       EXPECT_EQ(stream.str(), text);
     }
   }
+}
+
+TEST(HunkEqualityTest, Comparisons) {
+  const std::vector<absl::string_view> lines{
+      " a",
+      "-b",
+      "+c",
+      " d",
+  };
+  EXPECT_EQ(Hunk(1, 1, lines.begin(), lines.end()),  //
+            Hunk(1, 1, lines.begin(), lines.end()));
+  EXPECT_NE(Hunk(1, 1, lines.begin(), lines.end()),  //
+            Hunk(2, 1, lines.begin(), lines.end()));
+  EXPECT_NE(Hunk(1, 1, lines.begin(), lines.end()),  //
+            Hunk(1, 3, lines.begin(), lines.end()));
+  EXPECT_NE(Hunk(2, 4, lines.begin(), lines.end()),  //
+            Hunk(2, 4, lines.begin() + 1, lines.end()));
+  EXPECT_NE(Hunk(2, 4, lines.begin(), lines.end()),  //
+            Hunk(2, 4, lines.begin(), lines.end() - 1));
 }
 
 TEST(HunkParseTest, InvalidInputs) {
@@ -415,6 +491,197 @@ TEST(HunkAddedLinesTest, Various) {
   }
 }
 
+TEST(HunkSplitTest, ExpectedSingletons) {
+  const std::vector<absl::string_view> kTestCases[] = {
+      {" no-change"},
+      {"+one addition"},
+      {"-one deletion"},
+      {" no-change",  //
+       " multi-no-change"},
+      {" same",   //
+       "+added",  //
+       " same"},
+      {" same",        //
+       "+added",       //
+       "+added more",  //
+       " same"},
+      {" same",     //
+       "-removed",  //
+       " same"},
+      {" same",          //
+       "-removed",       //
+       "-removed more",  //
+       " same"},
+      {" same",          //
+       "-replace this",  //
+       "+with this",     //
+       " same"},
+      {" same",          //
+       "-replace this",  //
+       "-and this",      //
+       "+with this",     //
+       " same"},
+      {" same",          //
+       "-replace this",  //
+       "+with this",     //
+       "+and this",      //
+       " same"},
+      {" same",               //
+       " same more context",  //
+       "-replace this",       //
+       "-and this",           //
+       "+with this",          //
+       "+and this",           //
+       " same more context",  //
+       " same"},
+  };
+  for (const auto& test : kTestCases) {
+    const std::vector<MarkedLine> lines(MakeMarkedLines(test));
+    // can pick any starting line numbers, doesn't matter
+    const Hunk hunk(10, 12, lines.begin(), lines.end());
+    const std::vector<Hunk> splits(hunk.Split());
+    // expect returned list contains exactly the original hunk
+    EXPECT_THAT(splits, ElementsAre(hunk));
+  }
+}
+
+struct ExpectedHunk {
+  int old_starting_line;
+  int new_starting_line;
+  std::pair<int, int> marked_line_offsets;
+};
+
+static std::vector<Hunk> MakeExpectedHunks(
+    const Hunk& original, const std::vector<ExpectedHunk>& hunk_infos) {
+  const auto& marked_lines = original.MarkedLines();
+  std::vector<Hunk> results;
+  for (const auto& hunk_info : hunk_infos) {
+    results.emplace_back(
+        hunk_info.old_starting_line, hunk_info.new_starting_line,
+        marked_lines.begin() + hunk_info.marked_line_offsets.first,
+        marked_lines.begin() + hunk_info.marked_line_offsets.second);
+  }
+  return results;
+}
+
+struct HunkSplitTestCase {
+  std::vector<MarkedLine> marked_lines;
+  Hunk original_hunk;
+  std::vector<Hunk> expected_sub_hunks;
+
+  HunkSplitTestCase(int old_starting_line, int new_starting_line,
+                    const std::vector<absl::string_view>& lines,
+                    const std::vector<ExpectedHunk>& sub_hunks)
+      : marked_lines(MakeMarkedLines(lines)),
+        original_hunk(old_starting_line, new_starting_line,
+                      marked_lines.begin(), marked_lines.end()),
+        expected_sub_hunks(MakeExpectedHunks(original_hunk, sub_hunks)) {}
+};
+
+TEST(HunkSplitTest, MultipleSubHunks) {
+  const HunkSplitTestCase kTestCases[] = {
+      HunkSplitTestCase(4, 6,
+                        {" no-change",  //
+                         "-remove",     //
+                         "+replace",    //
+                         " no-change"},
+                        {
+                            // one hunk (no split)
+                            {4, 6, {0, 4}},
+                        }),
+      HunkSplitTestCase(4, 5,
+                        {"+insert",  //
+                         " coins",   //
+                         "+to continue"},
+                        {
+                            // two hunks
+                            {4, 5, {0, 1}},
+                            {4, 6, {1, 3}},
+                        }),
+      HunkSplitTestCase(4, 5,
+                        {"+insert",  //
+                         " more",    //
+                         " coins",   //
+                         "+to continue"},
+                        {
+                            // two hunks
+                            {4, 5, {0, 1}},
+                            {4, 6, {1, 4}},
+                        }),
+      HunkSplitTestCase(7, 7,
+                        {"-insert",  //
+                         " coins",   //
+                         "-to continue"},
+                        {
+                            // two hunks
+                            {7, 7, {0, 1}},
+                            {8, 7, {1, 3}},
+                        }),
+      HunkSplitTestCase(7, 7,
+                        {"-move",       //
+                         "-these",      //
+                         " untouched",  //
+                         "+move", "+these"},
+                        {
+                            // two hunks
+                            {7, 7, {0, 2}},
+                            {9, 7, {2, 5}},
+                        }),
+      HunkSplitTestCase(2, 1,
+                        {" context",  //
+                         "-in",       //
+                         "+space",    //
+                         " no one",   //
+                         "-can",      //
+                         "-hear",     //
+                         "+you",      //
+                         "+scream"},
+                        {
+                            // two hunks
+                            {2, 1, {0, 3}},
+                            {4, 3, {3, 8}},
+                        }),
+      HunkSplitTestCase(3, 4,
+                        {" delete",  //
+                         "-every",   //
+                         " other",   //
+                         "-line",    //
+                         " ",        //
+                         "-delete",  //
+                         " every",   //
+                         "-other",   //
+                         " line"},
+                        {
+                            // many hunks
+                            {3, 4, {0, 2}},
+                            {5, 5, {2, 4}},
+                            {7, 6, {4, 6}},
+                            {9, 7, {6, 9}},
+                        }),
+      HunkSplitTestCase(10, 10,
+                        {" a",          //
+                         "-long long",  //
+                         "+time",       //
+                         "-ago",        //
+                         " in",         //
+                         "+a",          //
+                         "+galaxy",     //
+                         " far",        //
+                         "-far",        //
+                         " away"},
+                        {
+                            // many hunks
+                            {10, 10, {0, 4}},
+                            {13, 12, {4, 7}},
+                            {14, 15, {7, 10}},
+                        }),
+  };
+  for (const auto& test : kTestCases) {
+    EXPECT_THAT(test.original_hunk.Split(),
+                ElementsAreArray(test.expected_sub_hunks));
+  }
+}
+
 TEST(HunkParseAndPrintTest, ValidInputs) {
   const std::vector<absl::string_view> kTestCases[] = {
       {"@@ -1,0 +2,0 @@"},  // 0 line counts, technically consistent
@@ -546,10 +813,6 @@ TEST(FilePatchParseTest, InvalidInputs) {
                                                 // info
       },
       {
-          "--- /path/to/file.txt\t2020-03-30",
-          "+++ /path/to/file.txt 2020-03-30",  // "+++" line is malformed
-      },
-      {
           "--- /path/to/file.txt\t2020-03-29",
           "+++ /path/to/file.txt\t2020-03-30",
           "@@ -2,1 +3,1 @@",  // hunk line counts are inconsistent
@@ -570,7 +833,8 @@ TEST(FilePatchParseTest, InvalidInputs) {
   for (const auto& lines : kTestCases) {
     const LineRange range(lines.begin(), lines.end());
     FilePatch file_patch;
-    EXPECT_FALSE(file_patch.Parse(range).ok());
+    EXPECT_FALSE(file_patch.Parse(range).ok()) << "lines:\n"
+                                               << absl::StrJoin(lines, "\n");
   }
 }
 
@@ -1311,6 +1575,100 @@ TEST_F(FilePatchPickApplyTest, AcceptOnlySecondOfTwoHunks) {
   EXPECT_FALSE(outs.str().empty());
 }
 
+TEST_F(FilePatchPickApplyTest, SplitThenAcceptOnlyFirstOfTwoHunks) {
+  {
+    const std::vector<absl::string_view> kHunkText{
+        "--- foo.txt\t2012-01-01",
+        "+++ foo-formatted.txt\t2012-01-01",
+        "@@ -2,6 +2,6 @@",  // one large splittable hunk
+        " bbb",
+        "-ccc",  // elect to apply
+        "+C++",  // this change
+        " ddd",
+        " eee",
+        "-fff",      // but not
+        "+fangism",  // this change
+        " ggg",
+    };
+    const auto status = ParseLines(kHunkText);
+    ASSERT_TRUE(status.ok()) << status.message();
+  }
+
+  std::istringstream ins("s\ny\nn\n");  // split, accept, reject
+  std::ostringstream outs;
+
+  constexpr absl::string_view kOriginal =
+      "aaa\n"
+      "bbb\n"
+      "ccc\n"  // replaced
+      "ddd\n"
+      "eee\n"
+      "fff\n"
+      "ggg\n";
+  constexpr absl::string_view kExpected =
+      "aaa\n"
+      "bbb\n"
+      "C++\n"  // replaced
+      "ddd\n"
+      "eee\n"
+      "fff\n"
+      "ggg\n";
+
+  const auto status =
+      PickApply(ins, outs,  //
+                ReadStringFileSequence({{"foo.txt", kOriginal}}),
+                ExpectStringFileSequence({{"foo.txt", kExpected}}));
+  EXPECT_TRUE(status.ok()) << "Got: " << status.message();
+  EXPECT_FALSE(outs.str().empty());
+}
+
+TEST_F(FilePatchPickApplyTest, SplitThenAcceptOnlySecondOfTwoHunks) {
+  {
+    const std::vector<absl::string_view> kHunkText{
+        "--- foo.txt\t2012-01-01",
+        "+++ foo-formatted.txt\t2012-01-01",
+        "@@ -2,6 +2,6 @@",  // one large splittable hunk
+        " bbb",
+        "-ccc",  // elect to reject
+        "+C++",  // this change
+        " ddd",
+        " eee",
+        "-fff",      // but accept
+        "+fangism",  // this change
+        " ggg",
+    };
+    const auto status = ParseLines(kHunkText);
+    ASSERT_TRUE(status.ok()) << status.message();
+  }
+
+  std::istringstream ins("s\nn\ny\n");  // split, reject, accept
+  std::ostringstream outs;
+
+  constexpr absl::string_view kOriginal =
+      "aaa\n"
+      "bbb\n"
+      "ccc\n"  // kept
+      "ddd\n"
+      "eee\n"
+      "fff\n"  // replaced
+      "ggg\n";
+  constexpr absl::string_view kExpected =
+      "aaa\n"
+      "bbb\n"
+      "ccc\n"  // kept
+      "ddd\n"
+      "eee\n"
+      "fangism\n"  // replaced
+      "ggg\n";
+
+  const auto status =
+      PickApply(ins, outs,  //
+                ReadStringFileSequence({{"foo.txt", kOriginal}}),
+                ExpectStringFileSequence({{"foo.txt", kExpected}}));
+  EXPECT_TRUE(status.ok()) << "Got: " << status.message();
+  EXPECT_FALSE(outs.str().empty());
+}
+
 TEST_F(FilePatchPickApplyTest, AbortRightAway) {
   {
     const std::vector<absl::string_view> kHunkText{
@@ -1706,9 +2064,6 @@ TEST(PatchSetParseTest, InvalidInputs) {
   constexpr absl::string_view kTestCases[] = {
       // no "+++" marker for source
       "--- /path/to/file.txt\t2020-03-30\n",
-      // "+++" line is malformed
-      "--- /path/to/file.txt\t2020-03-30\n"
-      "+++ /path/to/file.txt 2020-03-30\n",
       // hunk line counts are inconsistent
       "--- /path/to/file.txt\t2020-03-29\n"
       "+++ /path/to/file.txt\t2020-03-30\n"
@@ -1726,7 +2081,8 @@ TEST(PatchSetParseTest, InvalidInputs) {
   };
   for (const auto& patch_contents : kTestCases) {
     PatchSet patch_set;
-    EXPECT_FALSE(patch_set.Parse(patch_contents).ok());
+    EXPECT_FALSE(patch_set.Parse(patch_contents).ok()) << "contents:\n"
+                                                       << patch_contents;
   }
 }
 

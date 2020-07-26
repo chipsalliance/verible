@@ -107,6 +107,11 @@ static bool PairwiseNonmergeable(const PreFormatToken& ftoken) {
          ftoken.format_token_enum == FormatTokenType::keyword;
 }
 
+static bool InDeclaredDimensions(const SyntaxTreeContext& context) {
+  return context.IsInsideFirst(
+      {NodeEnum::kDimensionRange, NodeEnum::kDimensionScalar}, {});
+}
+
 static bool InRangeLikeContext(const SyntaxTreeContext& context) {
   return context.IsInsideFirst(
       {NodeEnum::kSelectVariableDimension, NodeEnum::kDimensionRange,
@@ -150,8 +155,7 @@ static WithReason<int> SpacesRequiredBetween(
   }
 
   // For now, leave everything inside [dimensions] alone.
-  if (right_context.IsInsideFirst(
-          {NodeEnum::kDimensionRange, NodeEnum::kDimensionScalar}, {})) {
+  if (InDeclaredDimensions(right_context)) {
     // ... except for the spacing before '[' and around ':',
     // which are covered elsewhere.
     if (right.TokenEnum() != '[' && left.TokenEnum() != ':' &&
@@ -318,6 +322,9 @@ static WithReason<int> SpacesRequiredBetween(
     }
     if (left.TokenEnum() == ')') {
       return {1, "Space betwen ')' and '{', e.g. conditional constraint."};
+    }
+    if (left.TokenEnum() == ']' && InDeclaredDimensions(left_context)) {
+      return {1, "Space between declared array type and '{' (e.g. in typedef)"};
     }
     return {0, "No space before '{' in most other contexts."};
   }
@@ -679,8 +686,7 @@ static WithReason<SpacingOptions> BreakDecisionBetween(
     const PreFormatToken& right, const SyntaxTreeContext& left_context,
     const SyntaxTreeContext& right_context) {
   // For now, leave everything inside [dimensions] alone.
-  if (right_context.IsInsideFirst(
-          {NodeEnum::kDimensionRange, NodeEnum::kDimensionScalar}, {})) {
+  if (InDeclaredDimensions(right_context)) {
     // ... except for the spacing immediately around '[' and ']',
     // which is covered by other rules.
     if (left.TokenEnum() != '[' && left.TokenEnum() != ']' &&

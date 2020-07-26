@@ -66,6 +66,14 @@ static bool TokensAreAllComments(const T& tokens) {
              }) == tokens.end();
 }
 
+template <class T>
+static bool TokensHaveParenthesis(const T& tokens) {
+  return std::any_of(tokens.begin(), tokens.end(),
+                     [](const typename T::value_type& token) {
+                       return token.TokenEnum() == '(';
+                     });
+}
+
 static bool IgnorePortDeclarationPartition(
     const TokenPartitionTree& partition) {
   const auto& uwline = partition.Value();
@@ -85,6 +93,78 @@ static bool IgnorePortDeclarationPartition(
   }
   return false;
 }
+
+static bool IgnoreActualNamedPortPartition(
+    const TokenPartitionTree& partition) {
+  const auto& uwline = partition.Value();
+  const auto token_range = uwline.TokensRange();
+  CHECK(!token_range.empty());
+  // ignore lines containing only comments
+  if (TokensAreAllComments(token_range)) return true;
+
+  // ignore partitions belonging to preprocessing directives
+  if (IsPreprocessorKeyword(verilog_tokentype(token_range.front().TokenEnum())))
+    return true;
+
+  // ignore wildcard connections .*
+  if (verilog_tokentype(token_range.front().TokenEnum()) ==
+      verilog_tokentype::TK_DOTSTAR) {
+    return true;
+  }
+
+  // ignore implicit connections .aaa
+  if (verible::SymbolCastToNode(*uwline.Origin())
+          .MatchesTag(NodeEnum::kActualNamedPort) &&
+      !TokensHaveParenthesis(token_range)) {
+    return true;
+  }
+
+  // ignore positional port connections
+  if (verible::SymbolCastToNode(*uwline.Origin())
+          .MatchesTag(NodeEnum::kActualPositionalPort)) {
+    return true;
+  }
+
+  return false;
+}
+
+class ActualNamedPortColumnSchemaScanner : public ColumnSchemaScanner {
+ public:
+  ActualNamedPortColumnSchemaScanner() = default;
+  void Visit(const SyntaxTreeNode& node) override {
+    auto tag = NodeEnum(node.Tag().tag);
+    VLOG(2) << __FUNCTION__ << ", node: " << tag << " at "
+            << TreePathFormatter(Path());
+    switch (tag) {
+      case NodeEnum::kParenGroup:
+        if (Context().DirectParentIs(NodeEnum::kActualNamedPort)) {
+          ReserveNewColumn(node, FlushLeft);
+        }
+        break;
+      default:
+        break;
+    }
+    TreeContextPathVisitor::Visit(node);
+    VLOG(2) << __FUNCTION__ << ", leaving node: " << tag;
+  }
+
+  void Visit(const SyntaxTreeLeaf& leaf) override {
+    VLOG(2) << __FUNCTION__ << ", leaf: " << leaf.get() << " at "
+            << TreePathFormatter(Path());
+    const int tag = leaf.get().token_enum();
+    switch (tag) {
+      case verilog_tokentype::SymbolIdentifier:
+        if (Context().DirectParentIs(NodeEnum::kActualNamedPort)) {
+          ReserveNewColumn(leaf, FlushLeft);
+        }
+        break;
+      default:
+        break;
+    }
+
+    VLOG(2) << __FUNCTION__ << ", leaving leaf: " << leaf.get();
+  }
+};
 
 class PortDeclarationColumnSchemaScanner : public ColumnSchemaScanner {
  public:
@@ -230,6 +310,13 @@ static const verible::AlignedFormattingHandler kPortDeclarationAligner{
         AlignmentCellScannerGenerator<PortDeclarationColumnSchemaScanner>(),
 };
 
+static const verible::AlignedFormattingHandler kActualNamedPortAligner{
+    .extract_alignment_groups = &verible::GetSubpartitionsBetweenBlankLines,
+    .ignore_partition_predicate = &IgnoreActualNamedPortPartition,
+    .alignment_cell_scanner =
+        AlignmentCellScannerGenerator<ActualNamedPortColumnSchemaScanner>(),
+};
+
 void TabularAlignTokenPartitions(TokenPartitionTree* partition_ptr,
                                  std::vector<PreFormatToken>* ftokens,
                                  absl::string_view full_text,
@@ -249,6 +336,7 @@ void TabularAlignTokenPartitions(TokenPartitionTree* partition_ptr,
   static const auto* kAlignHandlers =
       new std::map<NodeEnum, verible::AlignedFormattingHandler>{
           {NodeEnum::kPortDeclarationList, kPortDeclarationAligner},
+          {NodeEnum::kPortActualList, kActualNamedPortAligner},
       };
   const auto handler_iter = kAlignHandlers->find(NodeEnum(node->Tag().tag));
   if (handler_iter == kAlignHandlers->end()) return;

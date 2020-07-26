@@ -1155,6 +1155,26 @@ const TreeUnwrapperTestData kUnwrapModuleTestCases[] = {
     },
 
     {
+        "module with instances with commented named ports",
+        "module named_ports;"
+        "foo bar(\n"
+        ".a(a),\n"
+        "//.aa(aa),\n"
+        ".aaa(aaa)\n"
+        ");"
+        "endmodule",
+        ModuleDeclaration(
+            0, L(0, {"module", "named_ports", ";"}),
+            Instantiation(1, L(1, {"foo", "bar", "("}),
+                          PortActualList(3,  //
+                                         L(3, {".", "a", "(", "a", ")", ","}),
+                                         L(3, {"//.aa(aa),"}),
+                                         L(3, {".", "aaa", "(", "aaa", ")"})),
+                          L(1, {")", ";"})),
+            L(0, {"endmodule"})),
+    },
+
+    {
         "module interface ports",
         "module foo ("
         "interface bar_if, interface baz_if);"
@@ -3087,26 +3107,36 @@ const TreeUnwrapperTestData kClassTestCases[] = {
                       ";"}),
                 StatementList(
                     2,
-                    FlowControl(2,
-                                L(2, {"foreach", "(", "this", ".", "foo", "[",
-                                      "i", "]", ")", "begin"}),
-                                StatementList(
-                                    3,
-                                    L(3, {"y", "=", "{", "y", ",", "this", ".",
-                                          "foo", "[", "i", "]", "}", ";"}),
-                                    L(3, {"z", "=", "{", "z", ",", "super", ".",
-                                          "bar", "[", "i", "]", "}", ";"})),
-                                L(2, {"end"})),
-                    FlowControl(2,
-                                L(2, {"foreach", "(", "this", ".", "foo", "[",
-                                      "i", "]", ")", "begin"}),
-                                StatementList(
-                                    3,
-                                    L(3, {"y", "=", "{", "y", ",", "this", ".",
-                                          "foo", "[", "i", "]", "}", ";"}),
-                                    L(3, {"z", "=", "{", "z", ",", "super", ".",
-                                          "bar", "[", "i", "]", "}", ";"})),
-                                L(2, {"end"}))),
+                    FlowControl(
+                        2,
+                        L(2, {"foreach", "(", "this", ".", "foo", "[", "i", "]",
+                              ")", "begin"}),
+                        StatementList(
+                            3,
+                            N(3, L(3, {"y", "=", "{"}),
+                              N(4, L(4, {"y", ","}),
+                                L(4, {"this", ".", "foo", "[", "i", "]"})),
+                              L(3, {"}", ";"})),
+                            N(3, L(3, {"z", "=", "{"}),
+                              N(4, L(4, {"z", ","}),
+                                L(4, {"super", ".", "bar", "[", "i", "]"})),
+                              L(3, {"}", ";"}))),
+                        L(2, {"end"})),
+                    FlowControl(
+                        2,
+                        L(2, {"foreach", "(", "this", ".", "foo", "[", "i", "]",
+                              ")", "begin"}),
+                        StatementList(
+                            3,
+                            N(3, L(3, {"y", "=", "{"}),
+                              N(4, L(4, {"y", ","}),
+                                L(4, {"this", ".", "foo", "[", "i", "]"})),
+                              L(3, {"}", ";"})),
+                            N(3, L(3, {"z", "=", "{"}),
+                              N(4, L(4, {"z", ","}),
+                                L(4, {"super", ".", "bar", "[", "i", "]"})),
+                              L(3, {"}", ";"}))),
+                        L(2, {"end"}))),
                 L(1, {"endfunction"})),
             L(0, {"endclass"})),
     },
@@ -7048,9 +7078,11 @@ const TreeUnwrapperTestData kUnwrapCovergroupTestCases[] = {
                              L(2, {"string", "s"}), L(0, {")", ";"})),
             CovergroupItemList(
                 1, L(1, {"q_cp", ":", "coverpoint", "cp", "{"}),
-                CoverpointItemList(
-                    2, L(2, {"bins", "foo", "=", "{", "bar", "}", ";"}),
-                    L(2, {"bins", "zoo", "=", "{", "pig", "}", ";"})),
+                CoverpointItemList(2,
+                                   N(2, L(2, {"bins", "foo", "=", "{"}),
+                                     L(3, {"bar"}), L(2, {"}", ";"})),
+                                   N(2, L(2, {"bins", "zoo", "=", "{"}),
+                                     L(3, {"pig"}), L(2, {"}", ";"}))),
                 L(1, {"}"})),
             L(0, {"endgroup"})),
     },
@@ -7086,10 +7118,14 @@ const TreeUnwrapperTestData kUnwrapCovergroupTestCases[] = {
             CovergroupItemList(
                 1, L(1, {"x_cross", ":", "cross", "s1", ",", "s2", "{"}),
                 CrossItemList(2,
-                              L(2, {"bins", "a", "=", "binsof", "(", "x", ")",
-                                    "intersect", "{", "d", "}", ";"}),
-                              L(2, {"bins", "b", "=", "binsof", "(", "y", ")",
-                                    "intersect", "{", "e", "}", ";"})),
+                              N(2,
+                                L(2, {"bins", "a", "=", "binsof", "(", "x", ")",
+                                      "intersect", "{"}),
+                                L(3, {"d"}), L(2, {"}", ";"})),
+                              N(2,
+                                L(2, {"bins", "b", "=", "binsof", "(", "y", ")",
+                                      "intersect", "{"}),
+                                L(3, {"e"}), L(2, {"}", ";"}))),
                 L(1, {"}"})),
             L(0, {"endgroup"})),
     },

@@ -2020,39 +2020,42 @@ type_identifier_or_implicit_followed_by_id_and_dimensions_opt
   ;
 
 /* with optional decl_dimensions before and after */
+/* All declared GenericIdentifiers are wrapped in kUnqualifiedId to make their
+ * shape more consistent with MakeTypeIdDimensionsTuple.
+ */
 type_identifier_followed_by_id
   : unqualified_id decl_dimensions_opt GenericIdentifier
-    { $$ = MakeTaggedNode(N::kTypeIdentifierId,
+    { $$ = MakeTypeIdTuple(
                           MakeTaggedNode(N::kDataType, $1,
                                          MakePackedDimensionsNode($2)),
-                          $3); }
+                          MakeTaggedNode(N::kUnqualifiedId, $3)); }
     /* $1 is type */
   | qualified_id decl_dimensions_opt GenericIdentifier
-    { $$ = MakeTaggedNode(N::kTypeIdentifierId,
+    { $$ = MakeTypeIdTuple(
                           MakeTaggedNode(N::kDataType, $1,
                                          MakePackedDimensionsNode($2)),
-                          $3); }
+                          MakeTaggedNode(N::kUnqualifiedId, $3)); }
   /* The following are 'interface_port_header' from the LRM: */
   | unqualified_id '.' member_name decl_dimensions_opt GenericIdentifier
-    { $$ = MakeTaggedNode(N::kTypeIdentifierId,
+    { $$ = MakeTypeIdTuple(
                           MakeTaggedNode(N::kDataType,
                                          MakeTaggedNode(N::kInterfacePortHeader,
                                                         $1, $2, $3),
                                          MakePackedDimensionsNode($4)),
-                          $5); }
+                          MakeTaggedNode(N::kUnqualifiedId, $5)); }
     /* $1..$3 is interface modport */
   | TK_interface '.' member_name GenericIdentifier
-    { $$ = MakeTaggedNode(N::kTypeIdentifierId,
+    { $$ = MakeTypeIdTuple(
                           MakeTaggedNode(N::kDataType,
                                          MakeTaggedNode(N::kInterfacePortHeader,
                                                         $1, $2, $3), nullptr),
-                          $4); }
+                          MakeTaggedNode(N::kUnqualifiedId, $4)); }
   | TK_interface GenericIdentifier
-    { $$ = MakeTaggedNode(N::kTypeIdentifierId,
+    { $$ = MakeTypeIdTuple(
                           MakeTaggedNode(N::kDataType,
                                          MakeTaggedNode(N::kInterfacePortHeader,
                                                         $1), nullptr),
-                          $2); }
+                          MakeTaggedNode(N::kUnqualifiedId, $2)); }
   ;
 
 
@@ -3204,7 +3207,7 @@ stream_operator
 streaming_concatenation
   : '{' stream_operator slice_size_opt '{' stream_expression_list '}' '}'
     { $$ = MakeTaggedNode(N::kStreamingConcatenation, $1, $2, $3,
-                          MakeBraceGroup($4, $5, $6), $7); }
+                          MakeTaggedNode(N::kConcatenationExpression, $4, $5, $6), $7); }
   /* accommodate macro call as operand of stream_operator */
   | '{' stream_operator slice_size MacroCall '}'
     { $$ = MakeTaggedNode(N::kStreamingConcatenation, $1, $2, $3, $4, $5); }
@@ -4598,12 +4601,19 @@ expr_primary_parens
   ;
 expr_primary_braces
   : '{' '}'
-    { $$ = MakeTaggedNode(N::kExpression, MakeBraceGroup($1, nullptr, $2)); }
+    { $$ = MakeTaggedNode(N::kExpression,
+                          MakeTaggedNode(N::kConcatenationExpression, $1, nullptr, $2)); }
   | '{' value_range '{' expression_list_proper '}' '}'
-    { $$ = MakeTaggedNode(N::kExpression, $1, $2, MakeBraceGroup($3, $4, $5), $6); }
+    { $$ = MakeTaggedNode(N::kExpression, $1, $2, MakeTaggedNode(N::kConcatenationExpression, $3, $4, $5), $6); }
     /* repeat concatenation: $2 should be an expression, not a range */
   | range_list_in_braces
-    { $$ = MakeTaggedNode(N::kExpression, $1); }
+    /* Reshape to use kConcatenationExpression instead of kBraceGroup */
+    { auto& node = SymbolCastToNode(*$1);
+      $$ = MakeTaggedNode(N::kExpression,
+                          MakeTaggedNode(N::kConcatenationExpression,
+                                         node[0],
+                                         node[1],
+                                         node[2])); }
   | streaming_concatenation
     { $$ = MakeTaggedNode(N::kExpression, $1); }
 

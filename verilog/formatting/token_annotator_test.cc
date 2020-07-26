@@ -3786,6 +3786,34 @@ TEST(TokenAnnotatorTest, AnnotateFormattingWithContextTest) {
           {1, SpacingOptions::Undecided},
       },
 
+      {
+          // "] {" in "typedef logic [N] { ..."
+          DefaultStyle,
+          {']', "]"},
+          {'{', "{"},
+          {NodeEnum::kDimensionScalar},
+          {/* unspecified context */},
+          {1, SpacingOptions::Undecided},
+      },
+      {
+          // "] {" in "typedef logic [M:N] { ..."
+          DefaultStyle,
+          {']', "]"},
+          {'{', "{"},
+          {NodeEnum::kDimensionRange},
+          {/* unspecified context */},
+          {1, SpacingOptions::Undecided},
+      },
+      {
+          // "]{" in other contexts
+          DefaultStyle,
+          {']', "]"},
+          {'{', "{"},
+          {/* unspecified context */},
+          {/* unspecified context */},
+          {0, SpacingOptions::Undecided},
+      },
+
       // name: coverpoint
       {
           DefaultStyle,

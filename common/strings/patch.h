@@ -26,6 +26,7 @@
 #include "common/strings/compare.h"
 #include "common/strings/position.h"
 #include "common/util/container_iterator_range.h"
+#include "common/util/logging.h"
 
 namespace verible {
 namespace internal {
@@ -100,15 +101,37 @@ using LineRange = container_iterator_range<LineIterator>;
 struct MarkedLine {
   std::string line;
 
+  MarkedLine() = default;
+
+  // only used in manual test case construction
+  // so ok to use CHECK here.
+  explicit MarkedLine(absl::string_view text) : line(text.begin(), text.end()) {
+    CHECK(!line.empty()) << "MarkedLine must start with a marker in [ -+].";
+    CHECK(Valid()) << "Unexpected marker '" << Marker() << "'.";
+  }
+
+  bool Valid() const {
+    const char m = Marker();
+    return m == ' ' || m == '-' || m == '+';
+  }
+
   // The first column denotes whether a line is:
   // ' ': common context
   // '-': only in the left/old file
   // '+': only in the right/new file
   char Marker() const { return line[0]; }
 
+  bool IsCommon() const { return Marker() == ' '; }
+  bool IsAdded() const { return Marker() == '+'; }
+  bool IsDeleted() const { return Marker() == '-'; }
+
   absl::string_view Text() const {
     return absl::string_view(&line[1], line.length() - 1);
   }
+
+  // default equality operator
+  bool operator==(const MarkedLine& other) const { return line == other.line; }
+  bool operator!=(const MarkedLine& other) const { return !(*this == other); }
 
   absl::Status Parse(absl::string_view);
 };
@@ -118,6 +141,12 @@ std::ostream& operator<<(std::ostream&, const MarkedLine&);
 struct HunkIndices {
   int start;  // starting line number for a hunk, 1-based
   int count;  // number of lines to expect in this hunk
+
+  // default equality operator
+  bool operator==(const HunkIndices& other) const {
+    return start == other.start && count == other.count;
+  }
+  bool operator!=(const HunkIndices& other) const { return !(*this == other); }
 
   absl::Status Parse(absl::string_view);
 };
@@ -131,6 +160,13 @@ struct HunkHeader {
   // declaration that encloses this hunk.  This is optional metadata.
   std::string context;
 
+  // default equality operator
+  bool operator==(const HunkHeader& other) const {
+    return old_range == other.old_range && new_range == other.new_range &&
+           context == other.context;
+  }
+  bool operator!=(const HunkHeader& other) const { return !(*this == other); }
+
   absl::Status Parse(absl::string_view);
 };
 
@@ -140,6 +176,15 @@ std::ostream& operator<<(std::ostream&, const HunkHeader&);
 class Hunk {
  public:
   Hunk() = default;
+  Hunk(const Hunk&) = default;
+
+  template <typename Iter>
+  Hunk(int old_starting_line, int new_starting_line, Iter begin, Iter end)
+      : header_{.old_range = {old_starting_line, 0},
+                .new_range = {new_starting_line, 0}},
+        lines_(begin, end) /* copy */ {
+    UpdateHeader();  // automatically count marked lines
+  }
 
   // Hunk is valid if its header's line counts are consistent with the set of
   // MarkedLines.
@@ -164,6 +209,17 @@ class Hunk {
   // is read in whole.
   absl::Status VerifyAgainstOriginalLines(
       const std::vector<absl::string_view>& original_lines) const;
+
+  // default structural comparison
+  bool operator==(const Hunk& other) const {
+    return header_ == other.header_ && lines_ == other.lines_;
+  }
+  bool operator!=(const Hunk& other) const { return !(*this == other); }
+
+  // Splits this Hunk into smaller ones at the points of common context.
+  // Returns array of hunks.  If this hunk can no longer be split, then it is
+  // returned as a singleton in the array.
+  std::vector<Hunk> Split() const;
 
  private:
   // The header describes how many of each type of edit lines to expect.

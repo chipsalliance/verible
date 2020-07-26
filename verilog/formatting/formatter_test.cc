@@ -998,6 +998,49 @@ static const std::initializer_list<FormatterTestCase> kFormatterTestCases = {
      "          int   b\n"   // direction missing
      ");\n"
      "endmodule\n"},
+    {"module m;foo bar(.baz({larry, moe, curly}));endmodule",
+     "module m;\n"
+     "  foo bar (.baz({larry, moe, curly}));\n"
+     "endmodule\n"},
+    {"module m;foo bar(.baz({larry,// expand this\n"
+     "moe, curly}));endmodule",
+     "module m;\n"
+     "  foo bar (\n"
+     "      .baz({\n"
+     "        larry,  // expand this\n"
+     "        moe,\n"
+     "        curly\n"
+     "      })\n"
+     "  );\n"
+     "endmodule\n"},
+    {"parameter priv_reg_t impl_csr[] = {\n"
+     "// Machine mode mode CSR\n"
+     "MVENDORID, //\n"
+     "MARCHID,   //\n"
+     "DSCRATCH0, //\n"
+     "DSCRATCH1  //\n"
+     "};",
+     "parameter priv_reg_t impl_csr[] = {\n"
+     "  // Machine mode mode CSR\n"
+     "  MVENDORID,  //\n"
+     "  MARCHID,  //\n"
+     "  DSCRATCH0,  //\n"
+     "  DSCRATCH1  //\n"
+     "};\n"},
+    {"parameter priv_reg_t impl_csr[] = {\n"
+     "// Expand elements\n"
+     "MVENDORID,\n"
+     "MARCHID,\n"
+     "DSCRATCH0,\n"
+     "DSCRATCH1\n"
+     "};",
+     "parameter priv_reg_t impl_csr[] = {\n"
+     "  // Expand elements\n"
+     "  MVENDORID,\n"
+     "  MARCHID,\n"
+     "  DSCRATCH0,\n"
+     "  DSCRATCH1\n"
+     "};\n"},
     /* TODO(b/158131099): to fix these, reinterpret 'b' as a kPortDeclaration
     {"module somefunction ("
      "input logic clk, input a, b);endmodule",
@@ -1174,6 +1217,22 @@ static const std::initializer_list<FormatterTestCase> kFormatterTestCases = {
      //   output reg        [m:n] yy\n"
      "    input int signed x[a:b],  //c\n"  // aligned would be 42 columns
      "    output reg [m:n] yy\n"
+     ");\n"
+     "endmodule : foo\n"},
+    {// aligning interfaces in port headers like types
+     // TODO(b/161181877): flush interface port type left (multi-column)
+     "module foo(  input clk , inter.face yy) ;endmodule:foo\n",
+     "module foo (\n"
+     "    input            clk,\n"  // aligned
+     "          inter.face yy\n"
+     ");\n"
+     "endmodule : foo\n"},
+    {// aligning interfaces in port headers like types
+     // TODO(b/161181877): flush interface port type left (multi-column)
+     "module foo(  input wire   clk , inter.face yy) ;endmodule:foo\n",
+     "module foo (\n"
+     "    input wire       clk,\n"  // aligned
+     "          inter.face yy\n"
      ");\n"
      "endmodule : foo\n"},
 
@@ -2917,6 +2976,25 @@ static const std::initializer_list<FormatterTestCase> kFormatterTestCases = {
      "  foo #(.bar) baz;\n"
      "  baz #(.foo) bar;\n"
      "endclass\n"},
+
+    // typedef test cases
+    {"typedef enum logic\t{ A=0, B=1 }foo_t;",
+     "typedef enum logic {\n"
+     "  A = 0,\n"
+     "  B = 1\n"
+     "} foo_t;\n"},
+    {// with scalar dimensions
+     "typedef enum logic[2]\t{ A=0, B=1 }foo_t;",
+     "typedef enum logic [2] {\n"
+     "  A = 0,\n"
+     "  B = 1\n"
+     "} foo_t;\n"},
+    {// with range dimensions
+     "typedef enum logic[1:0]\t{ A=0, B=1 }foo_t;",
+     "typedef enum logic [1:0] {\n"
+     "  A = 0,\n"
+     "  B = 1\n"
+     "} foo_t;\n"},
 
     // package test cases
     {"package fedex;localparam  int  www=3 ;endpackage   :  fedex\n",
@@ -5190,6 +5268,189 @@ static const std::initializer_list<FormatterTestCase> kFormatterTestCases = {
         "JgQLBG == 4'h0;, \"foo\")\n"
         "endtask\n",
     },
+
+    // module instantiation named ports tabular alignment
+    //{// module instantiation with no port, only comments
+    //    "module m;\n"
+    //    "foo bar(\n"
+    //    "\t//comment1\n"
+    //    "//comment2\n"
+    //    ");\n"
+    //    "endmodule\n",
+    //    "module m;\n"
+    //    "  foo bar (\n"
+    //    "      //comment1\n"
+    //    "      //comment2\n"
+    //    "  );\n"
+    //    "endmodule\n"
+    //},
+    {// all named ports
+     "module m;\n"
+     "foo bar(.a(a), .aa(aa), .aaa(aaa));\n"
+     "endmodule\n",
+     "module m;\n"
+     "  foo bar (\n"
+     "      .a  (a),\n"
+     "      .aa (aa),\n"
+     "      .aaa(aaa)\n"
+     "  );\n"
+     "endmodule\n"},
+    {// named ports left unconnected
+     "module m;\n"
+     "foo bar(.a(), .aa(), .aaa());\n"
+     "endmodule\n",
+     "module m;\n"
+     "  foo bar (\n"
+     "      .a  (),\n"
+     "      .aa (),\n"
+     "      .aaa()\n"
+     "  );\n"
+     "endmodule\n"},
+    {// multiple named ports groups separated by blank line
+     "module m;\n"
+     "foo bar(.a(a), .aaa(aaa),\n\n .b(b), .bbbbbb(bbbbb));\n"
+     "endmodule\n",
+     "module m;\n"
+     "  foo bar (\n"
+     "      .a  (a),\n"
+     "      .aaa(aaa),\n"
+     "\n"
+     "      .b     (b),\n"
+     "      .bbbbbb(bbbbb)\n"
+     "  );\n"
+     "endmodule\n"},
+    {// named ports with concatenation
+     "module m;\n"
+     "foo bar(.a(a), .aaa({a,b,c}));\n"
+     "endmodule\n",
+     "module m;\n"
+     "  foo bar (\n"
+     "      .a  (a),\n"
+     "      .aaa({a, b, c})\n"
+     "  );\n"
+     "endmodule\n"},
+    {// name ports with slices
+     "module m;\n"
+     "foo bar(.a(a), .aaa(q[r:s]));\n"
+     "endmodule\n",
+     "module m;\n"
+     "  foo bar (\n"
+     "      .a  (a),\n"
+     "      .aaa(q[r:s])\n"
+     "  );\n"
+     "endmodule\n"},
+    {// named ports with pre-proc directives
+     "module m;\n"
+     "foo bar(.a(a), `ifdef MACRO .aa(aa), `endif .aaa(aaa));\n"
+     "endmodule\n",
+     "module m;\n"
+     "  foo bar (\n"
+     "      .a  (a),\n"
+     "`ifdef MACRO\n"
+     "      .aa (aa),\n"
+     "`endif\n"
+     "      .aaa(aaa)\n"
+     "  );\n"
+     "endmodule\n"},
+    {// named ports with macros
+     "module m;\n"
+     "foo bar(.a(a), .aa(aa[`RANGE]), .aaa(aaa));\n"
+     "endmodule\n",
+     "module m;\n"
+     "  foo bar (\n"
+     "      .a  (a),\n"
+     "      .aa (aa[`RANGE]),\n"
+     "      .aaa(aaa)\n"
+     "  );\n"
+     "endmodule\n"},
+    {"module m;\n"
+     "foo bar(.a(a), .AA, .aaa(aaa));\n"
+     "endmodule\n",
+     "module m;\n"
+     "  foo bar (\n"
+     "      .a  (a),\n"
+     "      .AA,\n"
+     "      .aaa(aaa)\n"
+     "  );\n"
+     "endmodule\n"},
+    {// name ports with comments
+     "module m;\n"
+     "foo bar(.a(a), .aa(aa)/*comment*/, .aaa(aaa));\n"
+     "endmodule\n",
+     "module m;\n"
+     "  foo bar (\n"
+     "      .a  (a),\n"
+     "      .aa (aa)  /*comment*/,\n"
+     "      .aaa(aaa)\n"
+     "  );\n"
+     "endmodule\n"},
+    {"module m;\n"
+     "foo bar(.a(a),//comment1\n .aaa(aaa)//comment2\n);\n"
+     "endmodule\n",
+     "module m;\n"
+     "  foo bar (\n"
+     "      .a  (a),  //comment1\n"
+     "      .aaa(aaa)  //comment2\n"
+     "  );\n"
+     "endmodule\n"},
+    {"module m;\n"
+     "foo bar(.a(a),\n"
+     " //.aa(aa),\n"
+     ".aaa(aaa));\n"
+     "endmodule\n",
+     "module m;\n"
+     "  foo bar (\n"
+     "      .a  (a),\n"
+     "      //.aa(aa),\n"
+     "      .aaa(aaa)\n"
+     "  );\n"
+     "endmodule\n"},
+    {// module instantiation with all implicit connections
+     "module m;\n"
+     "foo bar(.a, .aa, .aaaaa);\n"
+     "endmodule\n",
+     "module m;\n"
+     "  foo bar (\n"
+     "      .a,\n"
+     "      .aa,\n"
+     "      .aaaaa\n"
+     "  );\n"
+     "endmodule\n"},
+    {// named ports corssed with implicit connections
+     "module m;\n"
+     "foo bar(.a(a), .aa, .aaaaa(aaaaa));\n"
+     "endmodule\n",
+     "module m;\n"
+     "  foo bar (\n"
+     "      .a    (a),\n"
+     "      .aa,\n"
+     "      .aaaaa(aaaaa)\n"
+     "  );\n"
+     "endmodule\n"},
+    {// named ports corssed with wildcard connections
+     "module m;\n"
+     "foo bar(.a(a), .aaa(aaa), .*);\n"
+     "endmodule\n",
+     "module m;\n"
+     "  foo bar (\n"
+     "      .a  (a),\n"
+     "      .aaa(aaa),\n"
+     "      .*\n"
+     "  );\n"
+     "endmodule\n"},
+    //{
+    //    "module m;\n"
+    //    "foo bar(.a(a), .aa(aa), .* , .aaa(aaa));\n"
+    //    "endmodule\n",
+    //    "module m;\n"
+    //    "  foo bar (\n"
+    //    "      .a  (a),\n"
+    //    "      .aa (aa),\n"
+    //    "      .*,\n"
+    //    "      .aaa(aaa)\n"
+    //    "  );\n"
+    //    "endmodule\n"
+    //},
 };
 
 // Tests that formatter produces expected results, end-to-end.
