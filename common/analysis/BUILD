@@ -77,6 +77,19 @@ cc_library(
     ],
 )
 
+cc_test(
+    name = "command_file_lexer_test",
+    size = "small",
+    srcs = ["command_file_lexer_test.cc"],
+    deps = [
+        ":command_file_lexer",
+        "//common/lexer:lexer_test_util",
+        "//common/text:token_info",
+        "@com_google_absl//absl/strings",
+        "@com_google_googletest//:gtest_main",
+    ],
+)
+
 cc_library(
     name = "lint_waiver",
     srcs = ["lint_waiver.cc"],

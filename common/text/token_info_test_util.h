@@ -34,7 +34,10 @@ namespace verible {
 struct ExpectedTokenInfo : public TokenInfo {
   // This pseudo token_enum signals to the test harness to not bother
   // checking the token enum, and check only the string contents.
-  enum { kDontCare = -1 };
+  enum {
+    kDontCare = -2,
+    kNoToken // kNoToken skips the token
+  };
 
   ExpectedTokenInfo() : TokenInfo(TokenInfo::EOFToken()) {}
 

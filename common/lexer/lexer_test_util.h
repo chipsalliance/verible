@@ -163,13 +163,16 @@ struct SynthesizedLexerTestData : public TokenInfoTestData {
   template <class Lexer>
   void VerifyExpectedToken(Lexer* lexer,
                            const TokenInfo& expected_token) const {
-    if (expected_token.token_enum() == ExpectedTokenInfo::kDontCare) {
-      // Only compare text, don't care about the enum.
-      DontCareMultiTokens(lexer, expected_token.text());
-    } else {
-      // Compare full TokenInfo, enum, text (exact range).
-      const TokenInfo& next_token = lexer->DoNextToken();
-      EXPECT_EQ(expected_token, next_token) << ShowCode{code};
+    switch (expected_token.token_enum()) {
+      case ExpectedTokenInfo::kDontCare:
+	DontCareMultiTokens(lexer, expected_token.text());
+	break;
+      case ExpectedTokenInfo::kNoToken:
+	return;
+      default:
+	// Compare full TokenInfo, enum, text (exact range).
+	const TokenInfo& next_token = lexer->DoNextToken();
+	EXPECT_EQ(expected_token, next_token) << ShowCode{code};
     }
   }
 };

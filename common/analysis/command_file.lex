@@ -51,10 +51,13 @@ FlagWithArg {ParamPrefix}{Name}=
 Arg {Value}
 Param {Value}
 
+StartComment #
+EOLComment {StartComment}({InputCharacter}*)
 
 %x COMMAND
 %x ARG
 %x QUOTED_ARG
+%x COMMENT
 
 %%
 
@@ -78,6 +81,12 @@ Param {Value}
   UpdateLocation();
   yy_push_state(ARG);
   return CFG_TK_FLAG_WITH_ARG;
+}
+
+<COMMAND>{EOLComment} {
+  UpdateLocation();
+  yy_push_state(COMMENT);
+  return CFG_TK_COMMENT;
 }
 
 <ARG>{Quote} {
@@ -115,6 +124,24 @@ Param {Value}
 
 <INITIAL>{LineTerminator} {
   UpdateLocation();
+}
+
+{EOLComment} {
+  UpdateLocation();
+  yy_push_state(COMMENT);
+  return CFG_TK_COMMENT;
+}
+
+<COMMENT>{LineTerminator} {
+  UpdateLocation();
+  yy_pop_state();
+  return CFG_TK_NEWLINE;
+}
+
+<COMMENT><<EOF>> {
+  UpdateLocation();
+  yy_pop_state();
+  return CFG_TK_NEWLINE;
 }
 
 <*>{LineTerminator} {
