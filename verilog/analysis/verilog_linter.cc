@@ -84,9 +84,11 @@ int LintOneFile(std::ostream* stream, absl::string_view filename,
                 const LinterConfiguration& config, bool parse_fatal,
                 bool lint_fatal) {
   std::string content;
-  if (auto status = verible::file::GetContents(filename, &content);
-      !status.ok()) {
-    LOG(ERROR) << "Can't read '" << filename << "': " << status.message();
+  const absl::Status content_status =
+      verible::file::GetContents(filename, &content);
+  if (!content_status.ok()) {
+    LOG(ERROR) << "Can't read '" << filename
+               << "': " << content_status.message();
     return 2;
   }
 
