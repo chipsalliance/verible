@@ -84,7 +84,5 @@ int main(int argc, char** argv) {
     exit_status = std::max(lint_status, exit_status);
   }  // for each file
 
-  // Linter service must return 0 if it ran successfully, regardless of
-  // findings.
   return exit_status;
 }
