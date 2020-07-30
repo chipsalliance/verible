@@ -15,18 +15,20 @@
 #include "common/strings/comment_utils.h"
 
 #include "gtest/gtest.h"
+#include "absl/strings/string_view.h"
+#include "common/util/range.h"
 
 namespace verible {
 namespace {
 
 struct TestData {
-  const char* input;
+  absl::string_view input;
   const char* expect;
 };
 
 // Test that non-comments are left unmodified.
 TEST(StripCommentTest, NotComment) {
-  static const char* test_cases[] = {
+  constexpr absl::string_view test_cases[] = {
       "",
       "/",  // too short to be a comment
       "foo",
@@ -40,14 +42,15 @@ TEST(StripCommentTest, NotComment) {
       "**/",  // not a comment
       "/*/",
   };
-  for (const auto data : test_cases) {
+  for (const auto& data : test_cases) {
     EXPECT_EQ(StripComment(data), data);
+    EXPECT_TRUE(IsSubRange(StripComment(data), data));
   }
 }
 
 // Test that endline-style comments are trimmed.
 TEST(StripCommentTest, EndlineComment) {
-  static const TestData test_cases[] = {
+  constexpr TestData test_cases[] = {
       {"//", ""},
       {"//\t", "\t"},
       {"//  ", "  "},
@@ -59,12 +62,13 @@ TEST(StripCommentTest, EndlineComment) {
   for (const auto& data : test_cases) {
     EXPECT_EQ(StripComment(data.input), data.expect)
         << "input: \"" << data.input << "\"";
+    EXPECT_TRUE(IsSubRange(StripComment(data.input), data.input));
   }
 }
 
 // Test that block-style comments are trimmed
 TEST(StripCommentTest, BlockComment) {
-  static const TestData test_cases[] = {
+  constexpr TestData test_cases[] = {
       {"/**/", ""},                  // smallest comment
       {"/*******/", ""},             // "My god, it's full of stars!"
       {"/*  */", "  "},              // spaces only
@@ -76,12 +80,13 @@ TEST(StripCommentTest, BlockComment) {
   for (const auto& data : test_cases) {
     EXPECT_EQ(StripComment(data.input), data.expect)
         << "input: \"" << data.input << "\"";
+    EXPECT_TRUE(IsSubRange(StripComment(data.input), data.input));
   }
 }
 
 // Test that leading/trailing spaces inside comments are removed.
 TEST(StripCommentAndSpacePaddingTest, StripsSpaces) {
-  static const TestData test_cases[] = {
+  constexpr TestData test_cases[] = {
       {"//", ""},
       {"//\t", ""},
       {"//  ", ""},
@@ -109,6 +114,7 @@ TEST(StripCommentAndSpacePaddingTest, StripsSpaces) {
   for (const auto& data : test_cases) {
     EXPECT_EQ(StripCommentAndSpacePadding(data.input), data.expect)
         << "input: \"" << data.input << "\"";
+    EXPECT_TRUE(IsSubRange(StripComment(data.input), data.input));
   }
 }
 

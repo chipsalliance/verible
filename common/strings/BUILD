@@ -41,6 +41,8 @@ cc_test(
     srcs = ["comment_utils_test.cc"],
     deps = [
         ":comment_utils",
+        "//common/util:range",
+        "@com_google_absl//absl/strings",
         "@com_google_googletest//:gtest_main",
     ],
 )
