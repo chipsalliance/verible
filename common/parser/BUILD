@@ -70,8 +70,8 @@ cc_library(
         "//common/text:symbol",
         "//common/text:token_info",
         "//common/text:token_info_test_util",
-        "//testing/base/public:gunit_for_library",
         "@com_google_absl//absl/status",
+        "@com_google_googletest//:gtest",  # for library testonly
     ],
 )
 

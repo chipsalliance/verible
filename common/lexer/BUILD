@@ -63,8 +63,8 @@ cc_library(
         "//common/text:token_info",
         "//common/text:token_info_test_util",
         "//common/util:logging",
-        "//testing/base/public:gunit_for_library",
         "@com_google_absl//absl/strings",
+        "@com_google_googletest//:gtest",  # for library testonly
     ],
 )
 
