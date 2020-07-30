@@ -194,1615 +194,1614 @@ constexpr ExpectedInterTokenInfo kUnhandledSpacing{kUnhandledSpaces,
 // was not explicitly handled and just defaulted.
 // This test covers cases that are not context-sensitive.
 TEST(TokenAnnotatorTest, AnnotateFormattingInfoTest) {
-  const std::initializer_list<AnnotateFormattingInformationTestCase>
-      kTestCases = {
-          // (empty array of tokens)
-          {DefaultStyle, 0, {}, {}},
+  const AnnotateFormattingInformationTestCase kTestCases[] = {
+      // (empty array of tokens)
+      {DefaultStyle, 0, {}, {}},
 
-          // //comment1
-          // //comment2
-          {DefaultStyle,
-           0,
-           // ExpectedInterTokenInfo:
-           // spaces_required, break_decision
-           {{0, SpacingOptions::Undecided},  //
-            {2, SpacingOptions::MustWrap}},
-           {{verilog_tokentype::TK_EOL_COMMENT, "//comment1"},
-            {verilog_tokentype::TK_EOL_COMMENT, "//comment2"}}},
+      // //comment1
+      // //comment2
+      {DefaultStyle,
+       0,
+       // ExpectedInterTokenInfo:
+       // spaces_required, break_decision
+       {{0, SpacingOptions::Undecided},  //
+        {2, SpacingOptions::MustWrap}},
+       {{verilog_tokentype::TK_EOL_COMMENT, "//comment1"},
+        {verilog_tokentype::TK_EOL_COMMENT, "//comment2"}}},
 
-          // If there is no newline before comment, it will be appended
-          // (  //comment
-          {DefaultStyle,
-           0,
-           {{0, SpacingOptions::Undecided},  //
-            {2, SpacingOptions::MustAppend}},
-           {{'(', "("}, {verilog_tokentype::TK_EOL_COMMENT, "//comment"}}},
+      // If there is no newline before comment, it will be appended
+      // (  //comment
+      {DefaultStyle,
+       0,
+       {{0, SpacingOptions::Undecided},  //
+        {2, SpacingOptions::MustAppend}},
+       {{'(', "("}, {verilog_tokentype::TK_EOL_COMMENT, "//comment"}}},
 
-          // [  //comment
-          {DefaultStyle,
-           0,
-           {{0, SpacingOptions::Undecided},  //
-            {2, SpacingOptions::MustAppend}},
-           {{'[', "["}, {verilog_tokentype::TK_EOL_COMMENT, "//comment"}}},
+      // [  //comment
+      {DefaultStyle,
+       0,
+       {{0, SpacingOptions::Undecided},  //
+        {2, SpacingOptions::MustAppend}},
+       {{'[', "["}, {verilog_tokentype::TK_EOL_COMMENT, "//comment"}}},
 
-          // {  //comment
-          {DefaultStyle,
-           0,
-           {{0, SpacingOptions::Undecided},  //
-            {2, SpacingOptions::MustAppend}},
-           {{'{', "{"}, {verilog_tokentype::TK_EOL_COMMENT, "//comment"}}},
+      // {  //comment
+      {DefaultStyle,
+       0,
+       {{0, SpacingOptions::Undecided},  //
+        {2, SpacingOptions::MustAppend}},
+       {{'{', "{"}, {verilog_tokentype::TK_EOL_COMMENT, "//comment"}}},
 
-          // ,  //comment
-          {DefaultStyle,
-           0,
-           {{0, SpacingOptions::Undecided},  //
-            {2, SpacingOptions::MustAppend}},
-           {{',', ","}, {verilog_tokentype::TK_EOL_COMMENT, "//comment"}}},
+      // ,  //comment
+      {DefaultStyle,
+       0,
+       {{0, SpacingOptions::Undecided},  //
+        {2, SpacingOptions::MustAppend}},
+       {{',', ","}, {verilog_tokentype::TK_EOL_COMMENT, "//comment"}}},
 
-          // ;  //comment
-          {DefaultStyle,
-           0,
-           {{0, SpacingOptions::Undecided},  //
-            {2, SpacingOptions::MustAppend}},
-           {{';', ";"}, {verilog_tokentype::TK_EOL_COMMENT, "//comment"}}},
+      // ;  //comment
+      {DefaultStyle,
+       0,
+       {{0, SpacingOptions::Undecided},  //
+        {2, SpacingOptions::MustAppend}},
+       {{';', ";"}, {verilog_tokentype::TK_EOL_COMMENT, "//comment"}}},
 
-          // module foo();
-          {DefaultStyle,
-           0,
-           {{0, SpacingOptions::Undecided},
-            {1, SpacingOptions::Undecided},
-            {0, SpacingOptions::Undecided},
-            {0, SpacingOptions::Undecided},
-            {0, SpacingOptions::Undecided}},
-           {{verilog_tokentype::TK_module, "module"},
-            {verilog_tokentype::SymbolIdentifier, "foo"},
-            {'(', "("},
-            {')', ")"},
-            {';', ";"}}},
+      // module foo();
+      {DefaultStyle,
+       0,
+       {{0, SpacingOptions::Undecided},
+        {1, SpacingOptions::Undecided},
+        {0, SpacingOptions::Undecided},
+        {0, SpacingOptions::Undecided},
+        {0, SpacingOptions::Undecided}},
+       {{verilog_tokentype::TK_module, "module"},
+        {verilog_tokentype::SymbolIdentifier, "foo"},
+        {'(', "("},
+        {')', ")"},
+        {';', ";"}}},
 
-          // module foo(a, b);
-          {DefaultStyle,
-           0,
-           {{0, SpacingOptions::Undecided},
-            {1, SpacingOptions::Undecided},
-            {0, SpacingOptions::Undecided},
-            {0, SpacingOptions::Undecided},  // "a"
-            {0, SpacingOptions::Undecided},  // ','
-            {1, SpacingOptions::Undecided},  // "b"
-            {0, SpacingOptions::Undecided},
-            {0, SpacingOptions::Undecided}},
-           {{verilog_tokentype::TK_module, "module"},
-            {verilog_tokentype::SymbolIdentifier, "foo"},
-            {'(', "("},
-            {verilog_tokentype::SymbolIdentifier, "a"},
-            {',', ","},
-            {verilog_tokentype::SymbolIdentifier, "b"},
-            {')', ")"},
-            {';', ";"}}},
+      // module foo(a, b);
+      {DefaultStyle,
+       0,
+       {{0, SpacingOptions::Undecided},
+        {1, SpacingOptions::Undecided},
+        {0, SpacingOptions::Undecided},
+        {0, SpacingOptions::Undecided},  // "a"
+        {0, SpacingOptions::Undecided},  // ','
+        {1, SpacingOptions::Undecided},  // "b"
+        {0, SpacingOptions::Undecided},
+        {0, SpacingOptions::Undecided}},
+       {{verilog_tokentype::TK_module, "module"},
+        {verilog_tokentype::SymbolIdentifier, "foo"},
+        {'(', "("},
+        {verilog_tokentype::SymbolIdentifier, "a"},
+        {',', ","},
+        {verilog_tokentype::SymbolIdentifier, "b"},
+        {')', ")"},
+        {';', ";"}}},
 
-          // module with_params #() ();
-          {DefaultStyle,
-           0,
-           {{0, SpacingOptions::Undecided},
-            {1, SpacingOptions::Undecided},   // with_params
-            {1, SpacingOptions::Undecided},   // #
-            {0, SpacingOptions::MustAppend},  // (
-            {0, SpacingOptions::Undecided},   // )
-            {1, SpacingOptions::Undecided},   // (
-            {0, SpacingOptions::Undecided},   // )
-            {0, SpacingOptions::Undecided}},  // ;
-           {{verilog_tokentype::TK_module, "module"},
-            {verilog_tokentype::SymbolIdentifier, "with_params"},
-            {'#', "#"},
-            {'(', "("},
-            {')', ")"},
-            {'(', "("},
-            {')', ")"},
-            {';', ";"}}},
+      // module with_params #() ();
+      {DefaultStyle,
+       0,
+       {{0, SpacingOptions::Undecided},
+        {1, SpacingOptions::Undecided},   // with_params
+        {1, SpacingOptions::Undecided},   // #
+        {0, SpacingOptions::MustAppend},  // (
+        {0, SpacingOptions::Undecided},   // )
+        {1, SpacingOptions::Undecided},   // (
+        {0, SpacingOptions::Undecided},   // )
+        {0, SpacingOptions::Undecided}},  // ;
+       {{verilog_tokentype::TK_module, "module"},
+        {verilog_tokentype::SymbolIdentifier, "with_params"},
+        {'#', "#"},
+        {'(', "("},
+        {')', ")"},
+        {'(', "("},
+        {')', ")"},
+        {';', ";"}}},
 
-          // a = b[c];
-          {DefaultStyle,
-           0,
-           {{0, SpacingOptions::Undecided},
-            {1, SpacingOptions::Undecided},
-            {1, SpacingOptions::Undecided},
-            {0, SpacingOptions::Undecided},
-            {0, SpacingOptions::Undecided},
-            {0, SpacingOptions::Undecided},
-            {0, SpacingOptions::Undecided}},
-           {{verilog_tokentype::SymbolIdentifier, "a"},
-            {'=', "="},
-            {verilog_tokentype::SymbolIdentifier, "b"},
-            {'[', "["},
-            {verilog_tokentype::SymbolIdentifier, "c"},
-            {']', "]"},
-            {';', ";"}}},
+      // a = b[c];
+      {DefaultStyle,
+       0,
+       {{0, SpacingOptions::Undecided},
+        {1, SpacingOptions::Undecided},
+        {1, SpacingOptions::Undecided},
+        {0, SpacingOptions::Undecided},
+        {0, SpacingOptions::Undecided},
+        {0, SpacingOptions::Undecided},
+        {0, SpacingOptions::Undecided}},
+       {{verilog_tokentype::SymbolIdentifier, "a"},
+        {'=', "="},
+        {verilog_tokentype::SymbolIdentifier, "b"},
+        {'[', "["},
+        {verilog_tokentype::SymbolIdentifier, "c"},
+        {']', "]"},
+        {';', ";"}}},
 
-          // b[c][d] (multi-dimensional spacing)
-          {DefaultStyle,
-           0,
-           {{0, SpacingOptions::Undecided},
-            {0, SpacingOptions::Undecided},
-            {0, SpacingOptions::Undecided},
-            {0, SpacingOptions::Undecided},
-            {0, SpacingOptions::Undecided},
-            {0, SpacingOptions::Undecided},
-            {0, SpacingOptions::Undecided}},
-           {{verilog_tokentype::SymbolIdentifier, "b"},
-            {'[', "["},
-            {verilog_tokentype::SymbolIdentifier, "c"},
-            {']', "]"},
-            {'[', "["},
-            {verilog_tokentype::SymbolIdentifier, "d"},
-            {']', "]"}}},
+      // b[c][d] (multi-dimensional spacing)
+      {DefaultStyle,
+       0,
+       {{0, SpacingOptions::Undecided},
+        {0, SpacingOptions::Undecided},
+        {0, SpacingOptions::Undecided},
+        {0, SpacingOptions::Undecided},
+        {0, SpacingOptions::Undecided},
+        {0, SpacingOptions::Undecided},
+        {0, SpacingOptions::Undecided}},
+       {{verilog_tokentype::SymbolIdentifier, "b"},
+        {'[', "["},
+        {verilog_tokentype::SymbolIdentifier, "c"},
+        {']', "]"},
+        {'[', "["},
+        {verilog_tokentype::SymbolIdentifier, "d"},
+        {']', "]"}}},
 
-          // always @(posedge clk)
-          {DefaultStyle,
-           0,
-           {{0, SpacingOptions::Undecided},   // always
-            {1, SpacingOptions::Undecided},   // @
-            {0, SpacingOptions::Undecided},   // (
-            {0, SpacingOptions::Undecided},   // posedge
-            {1, SpacingOptions::Undecided},   // clk
-            {0, SpacingOptions::Undecided}},  // )
-           {{verilog_tokentype::TK_always, "always"},
-            {'@', "@"},
-            {'(', "("},
-            {verilog_tokentype::TK_posedge, "TK_posedge"},
-            {verilog_tokentype::SymbolIdentifier, "clk"},
-            {')', ")"}}},
+      // always @(posedge clk)
+      {DefaultStyle,
+       0,
+       {{0, SpacingOptions::Undecided},   // always
+        {1, SpacingOptions::Undecided},   // @
+        {0, SpacingOptions::Undecided},   // (
+        {0, SpacingOptions::Undecided},   // posedge
+        {1, SpacingOptions::Undecided},   // clk
+        {0, SpacingOptions::Undecided}},  // )
+       {{verilog_tokentype::TK_always, "always"},
+        {'@', "@"},
+        {'(', "("},
+        {verilog_tokentype::TK_posedge, "TK_posedge"},
+        {verilog_tokentype::SymbolIdentifier, "clk"},
+        {')', ")"}}},
 
-          // `WIDTH'(s) (casting operator)
-          {DefaultStyle,
-           0,
-           {{0, SpacingOptions::Undecided},
-            {0, SpacingOptions::Undecided},
-            {0, SpacingOptions::Undecided},
-            {0, SpacingOptions::Undecided},
-            {0, SpacingOptions::Undecided}},
-           {{verilog_tokentype::MacroIdItem, "`WIDTH"},
-            {'\'', "'"},
-            {'(', "("},
-            {verilog_tokentype::SymbolIdentifier, "s"},
-            {')', ")"}}},
+      // `WIDTH'(s) (casting operator)
+      {DefaultStyle,
+       0,
+       {{0, SpacingOptions::Undecided},
+        {0, SpacingOptions::Undecided},
+        {0, SpacingOptions::Undecided},
+        {0, SpacingOptions::Undecided},
+        {0, SpacingOptions::Undecided}},
+       {{verilog_tokentype::MacroIdItem, "`WIDTH"},
+        {'\'', "'"},
+        {'(', "("},
+        {verilog_tokentype::SymbolIdentifier, "s"},
+        {')', ")"}}},
 
-          // string'(s) (casting operator)
-          {DefaultStyle,
-           0,
-           {{0, SpacingOptions::Undecided},
-            {0, SpacingOptions::Undecided},
-            {0, SpacingOptions::Undecided},
-            {0, SpacingOptions::Undecided},
-            {0, SpacingOptions::Undecided}},
-           {{verilog_tokentype::TK_string, "string"},
-            {'\'', "'"},
-            {'(', "("},
-            {verilog_tokentype::SymbolIdentifier, "s"},
-            {')', ")"}}},
+      // string'(s) (casting operator)
+      {DefaultStyle,
+       0,
+       {{0, SpacingOptions::Undecided},
+        {0, SpacingOptions::Undecided},
+        {0, SpacingOptions::Undecided},
+        {0, SpacingOptions::Undecided},
+        {0, SpacingOptions::Undecided}},
+       {{verilog_tokentype::TK_string, "string"},
+        {'\'', "'"},
+        {'(', "("},
+        {verilog_tokentype::SymbolIdentifier, "s"},
+        {')', ")"}}},
 
-          // void'(f()) (casting operator)
-          {DefaultStyle,
-           0,
-           {{0, SpacingOptions::Undecided},
-            {0, SpacingOptions::Undecided},
-            {0, SpacingOptions::Undecided},
-            {0, SpacingOptions::Undecided},
-            {0, SpacingOptions::Undecided},
-            {0, SpacingOptions::Undecided},
-            {0, SpacingOptions::Undecided}},
-           {{verilog_tokentype::TK_void, "void"},
-            {'\'', "'"},
-            {'(', "("},
-            {verilog_tokentype::SymbolIdentifier, "f"},
-            {'(', "("},
-            {')', ")"},
-            {')', ")"}}},
+      // void'(f()) (casting operator)
+      {DefaultStyle,
+       0,
+       {{0, SpacingOptions::Undecided},
+        {0, SpacingOptions::Undecided},
+        {0, SpacingOptions::Undecided},
+        {0, SpacingOptions::Undecided},
+        {0, SpacingOptions::Undecided},
+        {0, SpacingOptions::Undecided},
+        {0, SpacingOptions::Undecided}},
+       {{verilog_tokentype::TK_void, "void"},
+        {'\'', "'"},
+        {'(', "("},
+        {verilog_tokentype::SymbolIdentifier, "f"},
+        {'(', "("},
+        {')', ")"},
+        {')', ")"}}},
 
-          // 12'{34}
-          {DefaultStyle,
-           0,
-           {{0, SpacingOptions::Undecided},
-            {0, SpacingOptions::Undecided},
-            {0, SpacingOptions::Undecided},
-            {0, SpacingOptions::Undecided},
-            {0, SpacingOptions::Undecided}},
-           {{verilog_tokentype::TK_DecNumber, "12"},
-            {'\'', "'"},
-            {'{', "{"},
-            {verilog_tokentype::TK_DecNumber, "34"},
-            {'}', "}"}}},
+      // 12'{34}
+      {DefaultStyle,
+       0,
+       {{0, SpacingOptions::Undecided},
+        {0, SpacingOptions::Undecided},
+        {0, SpacingOptions::Undecided},
+        {0, SpacingOptions::Undecided},
+        {0, SpacingOptions::Undecided}},
+       {{verilog_tokentype::TK_DecNumber, "12"},
+        {'\'', "'"},
+        {'{', "{"},
+        {verilog_tokentype::TK_DecNumber, "34"},
+        {'}', "}"}}},
 
-          // k()'(s) (casting operator)
-          {DefaultStyle,
-           0,
-           {{0, SpacingOptions::Undecided},
-            {0, SpacingOptions::Undecided},
-            {0, SpacingOptions::Undecided},
-            {0, SpacingOptions::Undecided},
-            {0, SpacingOptions::Undecided},
-            {0, SpacingOptions::Undecided},
-            {0, SpacingOptions::Undecided}},
-           {{verilog_tokentype::SymbolIdentifier, "k"},
-            {'(', "("},
-            {')', ")"},
-            {'\'', "'"},
-            {'(', "("},
-            {verilog_tokentype::SymbolIdentifier, "s"},
-            {')', ")"}}},
+      // k()'(s) (casting operator)
+      {DefaultStyle,
+       0,
+       {{0, SpacingOptions::Undecided},
+        {0, SpacingOptions::Undecided},
+        {0, SpacingOptions::Undecided},
+        {0, SpacingOptions::Undecided},
+        {0, SpacingOptions::Undecided},
+        {0, SpacingOptions::Undecided},
+        {0, SpacingOptions::Undecided}},
+       {{verilog_tokentype::SymbolIdentifier, "k"},
+        {'(', "("},
+        {')', ")"},
+        {'\'', "'"},
+        {'(', "("},
+        {verilog_tokentype::SymbolIdentifier, "s"},
+        {')', ")"}}},
 
-          // #1 $display
+      // #1 $display
+      {
+          DefaultStyle,
+          0,
+          {{0, SpacingOptions::Undecided},
+           {0, SpacingOptions::MustAppend},
+           {1, SpacingOptions::Undecided}},
+          {{'#', "#"},
+           {verilog_tokentype::TK_DecNumber, "1"},
+           {verilog_tokentype::SystemTFIdentifier, "$display"}},
+      },
+
+      // 666 777
+      {
+          DefaultStyle,
+          0,
+          {{0, SpacingOptions::Undecided}, {1, SpacingOptions::Undecided}},
+          {{verilog_tokentype::TK_DecNumber, "666"},
+           {verilog_tokentype::TK_DecNumber, "777"}},
+      },
+
+      // 5678 dance
+      {
+          DefaultStyle,
+          0,
+          {{0, SpacingOptions::Undecided}, {1, SpacingOptions::Undecided}},
+          {{verilog_tokentype::TK_DecNumber, "5678"},
+           {verilog_tokentype::SymbolIdentifier, "dance"}},
+      },
+
+      // id 4321
+      {
+          DefaultStyle,
+          0,
+          {{0, SpacingOptions::Undecided}, {1, SpacingOptions::Undecided}},
+          {{verilog_tokentype::SymbolIdentifier, "id"},
+           {verilog_tokentype::TK_DecNumber, "4321"}},
+      },
+
+      // id1 id2
+      {
+          DefaultStyle,
+          0,
+          {{0, SpacingOptions::Undecided}, {1, SpacingOptions::Undecided}},
+          {{verilog_tokentype::SymbolIdentifier, "id1"},
+           {verilog_tokentype::SymbolIdentifier, "id2"}},
+      },
+
+      // class mate
+      {
+          DefaultStyle,
+          0,
+          {{0, SpacingOptions::Undecided}, {1, SpacingOptions::Undecided}},
+          {{verilog_tokentype::TK_class, "class"},
+           {verilog_tokentype::SymbolIdentifier, "mate"}},
+      },
+
+      // id module
+      {
+          DefaultStyle,
+          0,
+          {{0, SpacingOptions::Undecided}, {1, SpacingOptions::Undecided}},
+          {{verilog_tokentype::SymbolIdentifier, "lunar"},
+           {verilog_tokentype::TK_module, "module"}},
+      },
+
+      // class 1337
+      {
+          DefaultStyle,
+          0,
+          {{0, SpacingOptions::Undecided}, {1, SpacingOptions::Undecided}},
+          {{verilog_tokentype::TK_class, "class"},
+           {verilog_tokentype::TK_DecNumber, "1337"}},
+      },
+
+      // 987 module
+      {
+          DefaultStyle,
+          0,
+          {{0, SpacingOptions::Undecided}, {1, SpacingOptions::Undecided}},
+          {{verilog_tokentype::TK_DecNumber, "987"},
+           {verilog_tokentype::TK_module, "module"}},
+      },
+
+      // a = 16'hf00d;
+      {DefaultStyle,
+       0,
+       {{0, SpacingOptions::Undecided},
+        {1, SpacingOptions::Undecided},
+        {1, SpacingOptions::Undecided},
+        {0, SpacingOptions::MustAppend},
+        {0, SpacingOptions::MustAppend},
+        {0, SpacingOptions::Undecided}},
+       {{verilog_tokentype::SymbolIdentifier, "a"},
+        {'=', "="},
+        {verilog_tokentype::TK_DecNumber, "16"},
+        {verilog_tokentype::TK_HexBase, "'h"},
+        {verilog_tokentype::TK_HexDigits, "c0ffee"},
+        {';', ";"}}},
+
+      // a = 8'b1001_0110;
+      {DefaultStyle,
+       0,
+       {{0, SpacingOptions::Undecided},
+        {1, SpacingOptions::Undecided},
+        {1, SpacingOptions::Undecided},
+        {0, SpacingOptions::MustAppend},
+        {0, SpacingOptions::MustAppend},
+        {0, SpacingOptions::Undecided}},
+       {{verilog_tokentype::SymbolIdentifier, "a"},
+        {'=', "="},
+        {verilog_tokentype::TK_DecNumber, "8"},
+        {verilog_tokentype::TK_BinBase, "'b"},
+        {verilog_tokentype::TK_BinDigits, "1001_0110"},
+        {';', ";"}}},
+
+      // a = 4'd10;
+      {DefaultStyle,
+       0,
+       {{0, SpacingOptions::Undecided},
+        {1, SpacingOptions::Undecided},
+        {1, SpacingOptions::Undecided},
+        {0, SpacingOptions::MustAppend},
+        {0, SpacingOptions::MustAppend},
+        {0, SpacingOptions::Undecided}},
+       {{verilog_tokentype::SymbolIdentifier, "a"},
+        {'=', "="},
+        {verilog_tokentype::TK_DecNumber, "4"},
+        {verilog_tokentype::TK_DecBase, "'d"},
+        {verilog_tokentype::TK_DecDigits, "10"},
+        {';', ";"}}},
+
+      // a = 8'o100;
+      {DefaultStyle,
+       0,
+       {{0, SpacingOptions::Undecided},
+        {1, SpacingOptions::Undecided},
+        {1, SpacingOptions::Undecided},
+        {0, SpacingOptions::MustAppend},
+        {0, SpacingOptions::MustAppend},
+        {0, SpacingOptions::Undecided}},
+       {{verilog_tokentype::SymbolIdentifier, "a"},
+        {'=', "="},
+        {verilog_tokentype::TK_DecNumber, "8"},
+        {verilog_tokentype::TK_OctBase, "'o"},
+        {verilog_tokentype::TK_OctDigits, "100"},
+        {';', ";"}}},
+
+      // a = 'hc0ffee;
+      {DefaultStyle,
+       0,
+       {{0, SpacingOptions::Undecided},
+        {1, SpacingOptions::Undecided},
+        {1, SpacingOptions::Undecided},
+        {0, SpacingOptions::MustAppend},
+        {0, SpacingOptions::Undecided}},
+       {{verilog_tokentype::SymbolIdentifier, "a"},
+        {'=', "="},
+        {verilog_tokentype::TK_HexBase, "'h"},
+        {verilog_tokentype::TK_HexDigits, "c0ffee"},
+        {';', ";"}}},
+
+      // a = funk('b0, 'd'8);
+      {DefaultStyle,
+       0,
+       {{0, SpacingOptions::Undecided},
+        {1, SpacingOptions::Undecided},
+        {1, SpacingOptions::Undecided},
+        {0, SpacingOptions::Undecided},
+        {0, SpacingOptions::Undecided},
+        {0, SpacingOptions::MustAppend},
+        {0, SpacingOptions::Undecided},
+        {1, SpacingOptions::Undecided},
+        {0, SpacingOptions::MustAppend},
+        {0, SpacingOptions::Undecided},
+        {0, SpacingOptions::Undecided}},
+       {{verilog_tokentype::SymbolIdentifier, "a"},
+        {'=', "="},
+        {verilog_tokentype::SymbolIdentifier, "funk"},
+        {'(', "("},
+        {verilog_tokentype::TK_BinBase, "'b"},
+        {verilog_tokentype::TK_BinDigits, "0"},
+        {',', ","},
+        {verilog_tokentype::TK_DecBase, "'d"},
+        {verilog_tokentype::TK_DecDigits, "8"},
+        {')', ")"},
+        {';', ";"}}},
+
+      // a = 'b0 + 'd9;
+      {DefaultStyle,
+       0,
+       {{0, SpacingOptions::Undecided},
+        {1, SpacingOptions::Undecided},
+        {1, SpacingOptions::Undecided},
+        {0, SpacingOptions::MustAppend},
+        {1, SpacingOptions::Undecided},
+        {1, SpacingOptions::Undecided},
+        {0, SpacingOptions::MustAppend},
+        {0, SpacingOptions::Undecided}},
+       {{verilog_tokentype::SymbolIdentifier, "a"},
+        {'=', "="},
+        {verilog_tokentype::TK_BinBase, "'b"},
+        {verilog_tokentype::TK_BinDigits, "0"},
+        {'+', "+"},
+        {verilog_tokentype::TK_DecBase, "'d"},
+        {verilog_tokentype::TK_DecDigits, "9"},
+        {';', ";"}}},
+
+      // a = {3{4'd9, 1'bz}};
+      {DefaultStyle,
+       0,
+       {{0, SpacingOptions::Undecided},
+        {1, SpacingOptions::Undecided},
+        {1, SpacingOptions::Undecided},
+        {0, SpacingOptions::Undecided},  //  3
+        {0, SpacingOptions::Undecided},
+        {0, SpacingOptions::Undecided},
+        {0, SpacingOptions::MustAppend},
+        {0, SpacingOptions::MustAppend},
+        {0, SpacingOptions::Undecided},  //  ,
+        {1, SpacingOptions::Undecided},
+        {0, SpacingOptions::MustAppend},
+        {0, SpacingOptions::MustAppend},  //  z
+        {0, SpacingOptions::Undecided},
+        {0, SpacingOptions::Undecided},
+        {0, SpacingOptions::Undecided}},
+       {{verilog_tokentype::SymbolIdentifier, "a"},
+        {'=', "="},
+        {'{', "{"},
+        {verilog_tokentype::TK_DecDigits, "3"},
+        {'{', "{"},
+        {verilog_tokentype::TK_DecDigits, "4"},
+        {verilog_tokentype::TK_DecBase, "'d"},
+        {verilog_tokentype::TK_DecDigits, "9"},
+        {',', ","},
+        {verilog_tokentype::TK_DecDigits, "1"},
+        {verilog_tokentype::TK_BinBase, "'b"},
+        {verilog_tokentype::TK_XZDigits, "z"},
+        {'}', "}"},
+        {'}', "}"},
+        {';', ";"}}},
+
+      // a ? b : c
+      // (test cases around ':' are handled in context-sensitive section)
+      {
+          DefaultStyle,
+          0,
           {
-              DefaultStyle,
-              0,
-              {{0, SpacingOptions::Undecided},
-               {0, SpacingOptions::MustAppend},
-               {1, SpacingOptions::Undecided}},
-              {{'#', "#"},
-               {verilog_tokentype::TK_DecNumber, "1"},
-               {verilog_tokentype::SystemTFIdentifier, "$display"}},
+              {0, SpacingOptions::Undecided},  //  a
+              {1, SpacingOptions::Undecided},  //  ?
+              {1, SpacingOptions::Undecided},  //  b
           },
-
-          // 666 777
           {
-              DefaultStyle,
-              0,
-              {{0, SpacingOptions::Undecided}, {1, SpacingOptions::Undecided}},
-              {{verilog_tokentype::TK_DecNumber, "666"},
-               {verilog_tokentype::TK_DecNumber, "777"}},
+              {verilog_tokentype::SymbolIdentifier, "a"},
+              {'?', "?"},
+              {verilog_tokentype::SymbolIdentifier, "b"},
           },
+      },
 
-          // 5678 dance
+      // 1 ? 2 : 3
+      {
+          DefaultStyle,
+          0,
           {
-              DefaultStyle,
-              0,
-              {{0, SpacingOptions::Undecided}, {1, SpacingOptions::Undecided}},
-              {{verilog_tokentype::TK_DecNumber, "5678"},
-               {verilog_tokentype::SymbolIdentifier, "dance"}},
+              {0, SpacingOptions::Undecided},  //  1
+              {1, SpacingOptions::Undecided},  //  ?
+              {1, SpacingOptions::Undecided},  //  2
           },
-
-          // id 4321
           {
-              DefaultStyle,
-              0,
-              {{0, SpacingOptions::Undecided}, {1, SpacingOptions::Undecided}},
-              {{verilog_tokentype::SymbolIdentifier, "id"},
-               {verilog_tokentype::TK_DecNumber, "4321"}},
+              {verilog_tokentype::TK_DecNumber, "1"},
+              {'?', "?"},
+              {verilog_tokentype::TK_DecNumber, "2"},
           },
+      },
 
-          // id1 id2
+      // "1" ? "2" : "3"
+      {
+          DefaultStyle,
+          0,
           {
-              DefaultStyle,
-              0,
-              {{0, SpacingOptions::Undecided}, {1, SpacingOptions::Undecided}},
-              {{verilog_tokentype::SymbolIdentifier, "id1"},
-               {verilog_tokentype::SymbolIdentifier, "id2"}},
+              {0, SpacingOptions::Undecided},  //  "1"
+              {1, SpacingOptions::Undecided},  //  ?
+              {1, SpacingOptions::Undecided},  //  "2"
           },
-
-          // class mate
           {
-              DefaultStyle,
-              0,
-              {{0, SpacingOptions::Undecided}, {1, SpacingOptions::Undecided}},
-              {{verilog_tokentype::TK_class, "class"},
-               {verilog_tokentype::SymbolIdentifier, "mate"}},
+              {verilog_tokentype::TK_StringLiteral, "1"},
+              {'?', "?"},
+              {verilog_tokentype::TK_StringLiteral, "2"},
           },
+      },
 
-          // id module
+      // b ? 8'o100 : '0;
+      {DefaultStyle,
+       0,
+       {{0, SpacingOptions::Undecided},   //  b
+        {1, SpacingOptions::Undecided},   //  ?
+        {1, SpacingOptions::Undecided},   //  8
+        {0, SpacingOptions::MustAppend},  //  'o
+        {0, SpacingOptions::MustAppend},  //  100
+        kUnhandledSpacing,                //  :
+        {1, SpacingOptions::Undecided},   //  '0
+        {0, SpacingOptions::Undecided}},  //  ;
+       {{verilog_tokentype::SymbolIdentifier, "b"},
+        {'?', "?"},
+        {verilog_tokentype::TK_DecNumber, "8"},
+        {verilog_tokentype::TK_OctBase, "'o"},
+        {verilog_tokentype::TK_OctDigits, "100"},
+        {':', ":"},
+        {verilog_tokentype::TK_UnBasedNumber, "'0"},
+        {';', ";"}}},
+
+      // a = (b + c);
+      {DefaultStyle,
+       0,
+       {{0, SpacingOptions::Undecided},   // a
+        {1, SpacingOptions::Undecided},   // =
+        {1, SpacingOptions::Undecided},   // (
+        {0, SpacingOptions::Undecided},   // b
+        {1, SpacingOptions::Undecided},   // +
+        {1, SpacingOptions::Undecided},   // c
+        {0, SpacingOptions::Undecided},   // )
+        {0, SpacingOptions::Undecided}},  // ;
+       {{verilog_tokentype::SymbolIdentifier, "a"},
+        {'=', "="},
+        {'(', "("},
+        {verilog_tokentype::SymbolIdentifier, "b"},
+        {'+', "+"},
+        {verilog_tokentype::SymbolIdentifier, "c"},
+        {')', ")"},
+        {';', ";"}}},
+
+      // function foo(name = "foo");
+      {DefaultStyle,
+       0,
+       {{0, SpacingOptions::Undecided},   //  function
+        {1, SpacingOptions::Undecided},   //  foo
+        {0, SpacingOptions::Undecided},   //  (
+        {0, SpacingOptions::Undecided},   //  name
+        {1, SpacingOptions::Undecided},   //  =
+        {1, SpacingOptions::Undecided},   //  "foo"
+        {0, SpacingOptions::Undecided},   //  )
+        {0, SpacingOptions::Undecided}},  //  ;
+       {{verilog_tokentype::TK_function, "function"},
+        {verilog_tokentype::SymbolIdentifier, "foo"},
+        {'(', "("},
+        {verilog_tokentype::SymbolIdentifier, "name"},
+        {'=', "="},
+        {verilog_tokentype::TK_StringLiteral, "\"foo\""},
+        {')', ")"},
+        {';', ";"}}},
+
+      // `define FOO(name = "bar")
+      {DefaultStyle,
+       0,
+       {{0, SpacingOptions::Undecided},   //  `define
+        {1, SpacingOptions::MustAppend},  //  FOO
+        {0, SpacingOptions::Undecided},   //  (
+        {0, SpacingOptions::Undecided},   //  name
+        {1, SpacingOptions::Undecided},   //  =
+        {1, SpacingOptions::Undecided},   //  "bar"
+        {0, SpacingOptions::Undecided}},  //  )
+       {{verilog_tokentype::PP_define, "`define"},
+        {verilog_tokentype::SymbolIdentifier, "FOO"},
+        {'(', "("},
+        {verilog_tokentype::SymbolIdentifier, "name"},
+        {'=', "="},
+        {verilog_tokentype::TK_StringLiteral, "\"bar\""},
+        {')', ")"}}},
+
+      // endfunction : funk
+      {DefaultStyle,
+       1,
+       {{0, SpacingOptions::Undecided},
+        {1, SpacingOptions::Undecided},
+        {1, SpacingOptions::Undecided}},
+       {
+           {verilog_tokentype::TK_endfunction, "endfunction"},
+           {':', ":"},
+           {verilog_tokentype::SymbolIdentifier, "funk"},
+       }},
+
+      // case (expr):
+      {DefaultStyle,
+       1,
+       {
+           {0, SpacingOptions::Undecided},
+           {1, SpacingOptions::Undecided},
+           {0, SpacingOptions::Undecided},
+           {0, SpacingOptions::Undecided},
+           {0, SpacingOptions::Undecided},
+       },
+       {
+           {verilog_tokentype::TK_case, "case"},
+           {'(', "("},
+           {verilog_tokentype::SymbolIdentifier, "expr"},
+           {')', ")"},
+           {':', ":"},
+       }},
+
+      // return 0;
+      {DefaultStyle,
+       1,
+       {
+           {0, SpacingOptions::Undecided},
+           {1, SpacingOptions::Undecided},
+           {0, SpacingOptions::Undecided},
+       },
+       {
+           {verilog_tokentype::TK_return, "return"},
+           {verilog_tokentype::TK_UnBasedNumber, "0"},
+           {';', ";"},
+       }},
+
+      // funk();
+      {DefaultStyle,
+       1,
+       {
+           {0, SpacingOptions::Undecided},
+           {0, SpacingOptions::Undecided},
+           {0, SpacingOptions::Undecided},
+           {0, SpacingOptions::Undecided},
+       },
+       {
+           {verilog_tokentype::SymbolIdentifier, "funk"},
+           {'(', "("},
+           {')', ")"},
+           {';', ";"},
+       }},
+
+      // funk(arg);
+      {DefaultStyle,
+       1,
+       {
+           {0, SpacingOptions::Undecided},
+           {0, SpacingOptions::Undecided},
+           {0, SpacingOptions::Undecided},
+           {0, SpacingOptions::Undecided},
+           {0, SpacingOptions::Undecided},
+       },
+       {
+           {verilog_tokentype::SymbolIdentifier, "funk"},
+           {'(', "("},
+           {verilog_tokentype::SymbolIdentifier, "arg"},
+           {')', ")"},
+           {';', ";"},
+       }},
+
+      // funk("arg");
+      {DefaultStyle,
+       1,
+       {
+           {0, SpacingOptions::Undecided},
+           {0, SpacingOptions::Undecided},
+           {0, SpacingOptions::Undecided},
+           {0, SpacingOptions::Undecided},
+           {0, SpacingOptions::Undecided},
+       },
+       {
+           {verilog_tokentype::SymbolIdentifier, "funk"},
+           {'(', "("},
+           {verilog_tokentype::TK_StringLiteral, "\"arg\""},
+           {')', ")"},
+           {';', ";"},
+       }},
+
+      // funk(arg1, arg2);
+      {DefaultStyle,
+       1,
+       {
+           {0, SpacingOptions::Undecided},
+           {0, SpacingOptions::Undecided},
+           {0, SpacingOptions::Undecided},
+           {0, SpacingOptions::Undecided},
+           {1, SpacingOptions::Undecided},
+           {0, SpacingOptions::Undecided},
+           {0, SpacingOptions::Undecided},
+       },
+       {
+           {verilog_tokentype::SymbolIdentifier, "funk"},
+           {'(', "("},
+           {verilog_tokentype::SymbolIdentifier, "arg1"},
+           {',', ","},
+           {verilog_tokentype::SymbolIdentifier, "arg2"},
+           {')', ")"},
+           {';', ";"},
+       }},
+
+      // instantiation with named ports
+      // funky town(.f1(arg1), .f2(arg2));
+      {DefaultStyle,
+       1,
+       {
+           {0, SpacingOptions::Undecided},
+           {1, SpacingOptions::Undecided},
+           {0, SpacingOptions::Undecided},  // '('
+           {0, SpacingOptions::Undecided},  // '.'
+           {0, SpacingOptions::Undecided},  // "f1"
+           {0, SpacingOptions::Undecided},  // '('
+           {0, SpacingOptions::Undecided},  // "arg1"
+           {0, SpacingOptions::Undecided},  // ')'
+           {0, SpacingOptions::Undecided},  // ','
+           {1, SpacingOptions::Undecided},  // '.'
+           {0, SpacingOptions::Undecided},  // "f1"
+           {0, SpacingOptions::Undecided},  // '('
+           {0, SpacingOptions::Undecided},  // "arg1"
+           {0, SpacingOptions::Undecided},  // ')'
+           {0, SpacingOptions::Undecided},  // ')'
+           {0, SpacingOptions::Undecided},  // ';'
+       },
+       {
+           {verilog_tokentype::SymbolIdentifier, "funky"},
+           {verilog_tokentype::SymbolIdentifier, "town"},
+           {'(', "("},
+           {'.', "."},
+           {verilog_tokentype::SymbolIdentifier, "f1"},
+           {'(', "("},
+           {verilog_tokentype::SymbolIdentifier, "arg1"},
+           {')', ")"},
+           {',', ","},
+           {'.', "."},
+           {verilog_tokentype::SymbolIdentifier, "f2"},
+           {'(', "("},
+           {verilog_tokentype::SymbolIdentifier, "arg2"},
+           {')', ")"},
+           {')', ")"},
+           {';', ";"},
+       }},
+
+      // `ID.`ID
+      {DefaultStyle,
+       1,
+       {
+           {0, SpacingOptions::Undecided},
+           {0, SpacingOptions::Undecided},
+           {0, SpacingOptions::Undecided},
+       },
+       {
+           {verilog_tokentype::MacroIdentifier, "`ID"},
+           {'.', "."},
+           {verilog_tokentype::MacroIdentifier, "`ID"},
+       }},
+
+      // id.id
+      {DefaultStyle,
+       1,
+       {
+           {0, SpacingOptions::Undecided},
+           {0, SpacingOptions::Undecided},
+           {0, SpacingOptions::Undecided},
+       },
+       {
+           {verilog_tokentype::SymbolIdentifier, "id"},
+           {'.', "."},
+           {verilog_tokentype::SymbolIdentifier, "id"},
+       }},
+
+      // super.id
+      {DefaultStyle,
+       1,
+       {
+           {0, SpacingOptions::Undecided},
+           {0, SpacingOptions::Undecided},
+           {0, SpacingOptions::Undecided},
+       },
+       {
+           {verilog_tokentype::TK_super, "super"},
+           {'.', "."},
+           {verilog_tokentype::SymbolIdentifier, "id"},
+       }},
+
+      // this.id
+      {DefaultStyle,
+       1,
+       {
+           {0, SpacingOptions::Undecided},
+           {0, SpacingOptions::Undecided},
+           {0, SpacingOptions::Undecided},
+       },
+       {
+           {verilog_tokentype::TK_this, "this"},
+           {'.', "."},
+           {verilog_tokentype::SymbolIdentifier, "id"},
+       }},
+
+      // option.id
+      {DefaultStyle,
+       1,
+       {
+           {0, SpacingOptions::Undecided},
+           {0, SpacingOptions::Undecided},
+           {0, SpacingOptions::Undecided},
+       },
+       {
+           {verilog_tokentype::TK_option, "option"},
+           {'.', "."},
+           {verilog_tokentype::SymbolIdentifier, "id"},
+       }},
+
+      // `MACRO();
+      {DefaultStyle,
+       1,
+       {
+           {0, SpacingOptions::Undecided},
+           {0, SpacingOptions::Undecided},
+           {0, SpacingOptions::Undecided},
+           {0, SpacingOptions::Undecided},
+       },
+       {
+           {verilog_tokentype::MacroCallId, "`MACRO"},
+           {'(', "("},
+           {verilog_tokentype::MacroCallCloseToEndLine, ")"},
+           {';', ";"},
+       }},
+
+      // `MACRO(x);
+      {DefaultStyle,
+       1,
+       {
+           {0, SpacingOptions::Undecided},
+           {0, SpacingOptions::Undecided},
+           {0, SpacingOptions::Undecided},
+           {0, SpacingOptions::Undecided},
+           {0, SpacingOptions::Undecided},
+       },
+       {
+           {verilog_tokentype::MacroCallId, "`MACRO"},
+           {'(', "("},
+           {verilog_tokentype::SymbolIdentifier, "x"},
+           {verilog_tokentype::MacroCallCloseToEndLine, ")"},
+           {';', ";"},
+       }},
+
+      // `MACRO(y, x);
+      {DefaultStyle,
+       1,
+       {
+           {0, SpacingOptions::Undecided},
+           {0, SpacingOptions::Undecided},
+           {0, SpacingOptions::Undecided},  // "y"
+           {0, SpacingOptions::Undecided},  // ','
+           {1, SpacingOptions::Undecided},  // "x"
+           {0, SpacingOptions::Undecided},
+           {0, SpacingOptions::Undecided},
+       },
+       {
+           {verilog_tokentype::MacroCallId, "`MACRO"},
+           {'(', "("},
+           {verilog_tokentype::SymbolIdentifier, "y"},
+           {',', ","},
+           {verilog_tokentype::SymbolIdentifier, "x"},
+           {verilog_tokentype::MacroCallCloseToEndLine, ")"},
+           {';', ";"},
+       }},
+
+      // `define FOO
+      // `define BAR
+      {DefaultStyle,
+       1,
+       {
+           {0, SpacingOptions::Undecided},   // `define
+           {1, SpacingOptions::MustAppend},  // FOO
+           {0, SpacingOptions::MustAppend},  // "" (empty definition body)
+           {0, SpacingOptions::MustWrap},    // `define
+           {1, SpacingOptions::MustAppend},  // BAR
+           {0, SpacingOptions::MustAppend},  // "" (empty definition body)
+       },
+       {
+           {verilog_tokentype::PP_define, "`define"},
+           {verilog_tokentype::SymbolIdentifier, "FOO"},
+           {verilog_tokentype::PP_define_body, ""},
+           {verilog_tokentype::PP_define, "`define"},
+           {verilog_tokentype::SymbolIdentifier, "BAR"},
+           {verilog_tokentype::PP_define_body, ""},
+       }},
+
+      // `define FOO 1
+      // `define BAR 2
+      {DefaultStyle,
+       1,
+       {
+           {0, SpacingOptions::Undecided},   // `define
+           {1, SpacingOptions::MustAppend},  // FOO
+           {1, SpacingOptions::MustAppend},  // 1
+           {1, SpacingOptions::MustWrap},    // `define
+           {1, SpacingOptions::MustAppend},  // BAR
+           {1, SpacingOptions::MustAppend},  // 2
+       },
+       {
+           {verilog_tokentype::PP_define, "`define"},
+           {verilog_tokentype::PP_Identifier, "FOO"},
+           {verilog_tokentype::PP_define_body, "1"},
+           {verilog_tokentype::PP_define, "`define"},
+           {verilog_tokentype::PP_Identifier, "BAR"},
+           {verilog_tokentype::PP_define_body, "2"},
+       }},
+
+      // `define FOO()
+      // `define BAR(x)
+      // `define BAZ(y,z)
+      {DefaultStyle,
+       1,
+       {
+           {0, SpacingOptions::Undecided},   // `define
+           {1, SpacingOptions::MustAppend},  // FOO
+           {0, SpacingOptions::MustAppend},  // (
+           {0, SpacingOptions::Undecided},   // )
+           {0, SpacingOptions::MustAppend},  // "" (empty definition body)
+
+           {0, SpacingOptions::MustWrap},    // `define
+           {1, SpacingOptions::MustAppend},  // BAR
+           {0, SpacingOptions::MustAppend},  // (
+           {0, SpacingOptions::Undecided},   // x
+           {0, SpacingOptions::Undecided},   // )
+           {0, SpacingOptions::MustAppend},  // "" (empty definition body)
+
+           {0, SpacingOptions::MustWrap},    // `define
+           {1, SpacingOptions::MustAppend},  // BAZ
+           {0, SpacingOptions::MustAppend},  // (
+           {0, SpacingOptions::Undecided},   // y
+           {0, SpacingOptions::Undecided},   // ,
+           {1, SpacingOptions::Undecided},   // z
+           {0, SpacingOptions::Undecided},   // )
+           {0, SpacingOptions::MustAppend},  // "" (empty definition body)
+       },
+       {
+           {verilog_tokentype::PP_define, "`define"},
+           {verilog_tokentype::PP_Identifier, "FOO"},
+           {'(', "("},
+           {')', ")"},
+           {verilog_tokentype::PP_define_body, ""},
+
+           {verilog_tokentype::PP_define, "`define"},
+           {verilog_tokentype::PP_Identifier, "BAR"},
+           {'(', "("},
+           {verilog_tokentype::SymbolIdentifier, "x"},
+           {')', ")"},
+           {verilog_tokentype::PP_define_body, ""},
+
+           {verilog_tokentype::PP_define, "`define"},
+           {verilog_tokentype::PP_Identifier, "BAZ"},
+           {'(', "("},
+           {verilog_tokentype::SymbolIdentifier, "y"},
+           {',', ","},
+           {verilog_tokentype::SymbolIdentifier, "z"},
+           {')', ")"},
+           {verilog_tokentype::PP_define_body, ""},
+       }},
+
+      // `define ADD(y,z) y+z
+      {
+          DefaultStyle,
+          1,
           {
-              DefaultStyle,
-              0,
-              {{0, SpacingOptions::Undecided}, {1, SpacingOptions::Undecided}},
-              {{verilog_tokentype::SymbolIdentifier, "lunar"},
-               {verilog_tokentype::TK_module, "module"}},
+              {0, SpacingOptions::Undecided},   // `define
+              {1, SpacingOptions::MustAppend},  // ADD
+              {0, SpacingOptions::MustAppend},  // (
+              {0, SpacingOptions::Undecided},   // y
+              {0, SpacingOptions::Undecided},   // ,
+              {1, SpacingOptions::Undecided},   // z
+              {0, SpacingOptions::Undecided},   // )
+              {1, SpacingOptions::MustAppend},  // "y+z"
           },
-
-          // class 1337
           {
-              DefaultStyle,
-              0,
-              {{0, SpacingOptions::Undecided}, {1, SpacingOptions::Undecided}},
-              {{verilog_tokentype::TK_class, "class"},
-               {verilog_tokentype::TK_DecNumber, "1337"}},
+              {verilog_tokentype::PP_define, "`define"},
+              {verilog_tokentype::PP_Identifier, "ADD"},
+              {'(', "("},
+              {verilog_tokentype::SymbolIdentifier, "y"},
+              {',', ","},
+              {verilog_tokentype::SymbolIdentifier, "z"},
+              {')', ")"},
+              {verilog_tokentype::PP_define_body, "y+z"},
           },
-
-          // 987 module
-          {
-              DefaultStyle,
-              0,
-              {{0, SpacingOptions::Undecided}, {1, SpacingOptions::Undecided}},
-              {{verilog_tokentype::TK_DecNumber, "987"},
-               {verilog_tokentype::TK_module, "module"}},
-          },
-
-          // a = 16'hf00d;
-          {DefaultStyle,
-           0,
-           {{0, SpacingOptions::Undecided},
-            {1, SpacingOptions::Undecided},
-            {1, SpacingOptions::Undecided},
-            {0, SpacingOptions::MustAppend},
-            {0, SpacingOptions::MustAppend},
-            {0, SpacingOptions::Undecided}},
-           {{verilog_tokentype::SymbolIdentifier, "a"},
-            {'=', "="},
-            {verilog_tokentype::TK_DecNumber, "16"},
-            {verilog_tokentype::TK_HexBase, "'h"},
-            {verilog_tokentype::TK_HexDigits, "c0ffee"},
-            {';', ";"}}},
-
-          // a = 8'b1001_0110;
-          {DefaultStyle,
-           0,
-           {{0, SpacingOptions::Undecided},
-            {1, SpacingOptions::Undecided},
-            {1, SpacingOptions::Undecided},
-            {0, SpacingOptions::MustAppend},
-            {0, SpacingOptions::MustAppend},
-            {0, SpacingOptions::Undecided}},
-           {{verilog_tokentype::SymbolIdentifier, "a"},
-            {'=', "="},
-            {verilog_tokentype::TK_DecNumber, "8"},
-            {verilog_tokentype::TK_BinBase, "'b"},
-            {verilog_tokentype::TK_BinDigits, "1001_0110"},
-            {';', ";"}}},
-
-          // a = 4'd10;
-          {DefaultStyle,
-           0,
-           {{0, SpacingOptions::Undecided},
-            {1, SpacingOptions::Undecided},
-            {1, SpacingOptions::Undecided},
-            {0, SpacingOptions::MustAppend},
-            {0, SpacingOptions::MustAppend},
-            {0, SpacingOptions::Undecided}},
-           {{verilog_tokentype::SymbolIdentifier, "a"},
-            {'=', "="},
-            {verilog_tokentype::TK_DecNumber, "4"},
-            {verilog_tokentype::TK_DecBase, "'d"},
-            {verilog_tokentype::TK_DecDigits, "10"},
-            {';', ";"}}},
-
-          // a = 8'o100;
-          {DefaultStyle,
-           0,
-           {{0, SpacingOptions::Undecided},
-            {1, SpacingOptions::Undecided},
-            {1, SpacingOptions::Undecided},
-            {0, SpacingOptions::MustAppend},
-            {0, SpacingOptions::MustAppend},
-            {0, SpacingOptions::Undecided}},
-           {{verilog_tokentype::SymbolIdentifier, "a"},
-            {'=', "="},
-            {verilog_tokentype::TK_DecNumber, "8"},
-            {verilog_tokentype::TK_OctBase, "'o"},
-            {verilog_tokentype::TK_OctDigits, "100"},
-            {';', ";"}}},
-
-          // a = 'hc0ffee;
-          {DefaultStyle,
-           0,
-           {{0, SpacingOptions::Undecided},
-            {1, SpacingOptions::Undecided},
-            {1, SpacingOptions::Undecided},
-            {0, SpacingOptions::MustAppend},
-            {0, SpacingOptions::Undecided}},
-           {{verilog_tokentype::SymbolIdentifier, "a"},
-            {'=', "="},
-            {verilog_tokentype::TK_HexBase, "'h"},
-            {verilog_tokentype::TK_HexDigits, "c0ffee"},
-            {';', ";"}}},
-
-          // a = funk('b0, 'd'8);
-          {DefaultStyle,
-           0,
-           {{0, SpacingOptions::Undecided},
-            {1, SpacingOptions::Undecided},
-            {1, SpacingOptions::Undecided},
-            {0, SpacingOptions::Undecided},
-            {0, SpacingOptions::Undecided},
-            {0, SpacingOptions::MustAppend},
-            {0, SpacingOptions::Undecided},
-            {1, SpacingOptions::Undecided},
-            {0, SpacingOptions::MustAppend},
-            {0, SpacingOptions::Undecided},
-            {0, SpacingOptions::Undecided}},
-           {{verilog_tokentype::SymbolIdentifier, "a"},
-            {'=', "="},
-            {verilog_tokentype::SymbolIdentifier, "funk"},
-            {'(', "("},
-            {verilog_tokentype::TK_BinBase, "'b"},
-            {verilog_tokentype::TK_BinDigits, "0"},
-            {',', ","},
-            {verilog_tokentype::TK_DecBase, "'d"},
-            {verilog_tokentype::TK_DecDigits, "8"},
-            {')', ")"},
-            {';', ";"}}},
-
-          // a = 'b0 + 'd9;
-          {DefaultStyle,
-           0,
-           {{0, SpacingOptions::Undecided},
-            {1, SpacingOptions::Undecided},
-            {1, SpacingOptions::Undecided},
-            {0, SpacingOptions::MustAppend},
-            {1, SpacingOptions::Undecided},
-            {1, SpacingOptions::Undecided},
-            {0, SpacingOptions::MustAppend},
-            {0, SpacingOptions::Undecided}},
-           {{verilog_tokentype::SymbolIdentifier, "a"},
-            {'=', "="},
-            {verilog_tokentype::TK_BinBase, "'b"},
-            {verilog_tokentype::TK_BinDigits, "0"},
-            {'+', "+"},
-            {verilog_tokentype::TK_DecBase, "'d"},
-            {verilog_tokentype::TK_DecDigits, "9"},
-            {';', ";"}}},
-
-          // a = {3{4'd9, 1'bz}};
-          {DefaultStyle,
-           0,
-           {{0, SpacingOptions::Undecided},
-            {1, SpacingOptions::Undecided},
-            {1, SpacingOptions::Undecided},
-            {0, SpacingOptions::Undecided},  //  3
-            {0, SpacingOptions::Undecided},
-            {0, SpacingOptions::Undecided},
-            {0, SpacingOptions::MustAppend},
-            {0, SpacingOptions::MustAppend},
-            {0, SpacingOptions::Undecided},  //  ,
-            {1, SpacingOptions::Undecided},
-            {0, SpacingOptions::MustAppend},
-            {0, SpacingOptions::MustAppend},  //  z
-            {0, SpacingOptions::Undecided},
-            {0, SpacingOptions::Undecided},
-            {0, SpacingOptions::Undecided}},
-           {{verilog_tokentype::SymbolIdentifier, "a"},
-            {'=', "="},
-            {'{', "{"},
-            {verilog_tokentype::TK_DecDigits, "3"},
-            {'{', "{"},
-            {verilog_tokentype::TK_DecDigits, "4"},
-            {verilog_tokentype::TK_DecBase, "'d"},
-            {verilog_tokentype::TK_DecDigits, "9"},
-            {',', ","},
-            {verilog_tokentype::TK_DecDigits, "1"},
-            {verilog_tokentype::TK_BinBase, "'b"},
-            {verilog_tokentype::TK_XZDigits, "z"},
-            {'}', "}"},
-            {'}', "}"},
-            {';', ";"}}},
-
-          // a ? b : c
-          // (test cases around ':' are handled in context-sensitive section)
-          {
-              DefaultStyle,
-              0,
-              {
-                  {0, SpacingOptions::Undecided},  //  a
-                  {1, SpacingOptions::Undecided},  //  ?
-                  {1, SpacingOptions::Undecided},  //  b
-              },
-              {
-                  {verilog_tokentype::SymbolIdentifier, "a"},
-                  {'?', "?"},
-                  {verilog_tokentype::SymbolIdentifier, "b"},
-              },
-          },
-
-          // 1 ? 2 : 3
-          {
-              DefaultStyle,
-              0,
-              {
-                  {0, SpacingOptions::Undecided},  //  1
-                  {1, SpacingOptions::Undecided},  //  ?
-                  {1, SpacingOptions::Undecided},  //  2
-              },
-              {
-                  {verilog_tokentype::TK_DecNumber, "1"},
-                  {'?', "?"},
-                  {verilog_tokentype::TK_DecNumber, "2"},
-              },
-          },
-
-          // "1" ? "2" : "3"
-          {
-              DefaultStyle,
-              0,
-              {
-                  {0, SpacingOptions::Undecided},  //  "1"
-                  {1, SpacingOptions::Undecided},  //  ?
-                  {1, SpacingOptions::Undecided},  //  "2"
-              },
-              {
-                  {verilog_tokentype::TK_StringLiteral, "1"},
-                  {'?', "?"},
-                  {verilog_tokentype::TK_StringLiteral, "2"},
-              },
-          },
-
-          // b ? 8'o100 : '0;
-          {DefaultStyle,
-           0,
-           {{0, SpacingOptions::Undecided},   //  b
-            {1, SpacingOptions::Undecided},   //  ?
-            {1, SpacingOptions::Undecided},   //  8
-            {0, SpacingOptions::MustAppend},  //  'o
-            {0, SpacingOptions::MustAppend},  //  100
-            kUnhandledSpacing,                //  :
-            {1, SpacingOptions::Undecided},   //  '0
-            {0, SpacingOptions::Undecided}},  //  ;
-           {{verilog_tokentype::SymbolIdentifier, "b"},
-            {'?', "?"},
-            {verilog_tokentype::TK_DecNumber, "8"},
-            {verilog_tokentype::TK_OctBase, "'o"},
-            {verilog_tokentype::TK_OctDigits, "100"},
-            {':', ":"},
-            {verilog_tokentype::TK_UnBasedNumber, "'0"},
-            {';', ";"}}},
-
-          // a = (b + c);
-          {DefaultStyle,
-           0,
-           {{0, SpacingOptions::Undecided},   // a
-            {1, SpacingOptions::Undecided},   // =
-            {1, SpacingOptions::Undecided},   // (
-            {0, SpacingOptions::Undecided},   // b
-            {1, SpacingOptions::Undecided},   // +
-            {1, SpacingOptions::Undecided},   // c
-            {0, SpacingOptions::Undecided},   // )
-            {0, SpacingOptions::Undecided}},  // ;
-           {{verilog_tokentype::SymbolIdentifier, "a"},
-            {'=', "="},
-            {'(', "("},
-            {verilog_tokentype::SymbolIdentifier, "b"},
-            {'+', "+"},
-            {verilog_tokentype::SymbolIdentifier, "c"},
-            {')', ")"},
-            {';', ";"}}},
-
-          // function foo(name = "foo");
-          {DefaultStyle,
-           0,
-           {{0, SpacingOptions::Undecided},   //  function
-            {1, SpacingOptions::Undecided},   //  foo
-            {0, SpacingOptions::Undecided},   //  (
-            {0, SpacingOptions::Undecided},   //  name
-            {1, SpacingOptions::Undecided},   //  =
-            {1, SpacingOptions::Undecided},   //  "foo"
-            {0, SpacingOptions::Undecided},   //  )
-            {0, SpacingOptions::Undecided}},  //  ;
-           {{verilog_tokentype::TK_function, "function"},
-            {verilog_tokentype::SymbolIdentifier, "foo"},
-            {'(', "("},
-            {verilog_tokentype::SymbolIdentifier, "name"},
-            {'=', "="},
-            {verilog_tokentype::TK_StringLiteral, "\"foo\""},
-            {')', ")"},
-            {';', ";"}}},
-
-          // `define FOO(name = "bar")
-          {DefaultStyle,
-           0,
-           {{0, SpacingOptions::Undecided},   //  `define
-            {1, SpacingOptions::MustAppend},  //  FOO
-            {0, SpacingOptions::Undecided},   //  (
-            {0, SpacingOptions::Undecided},   //  name
-            {1, SpacingOptions::Undecided},   //  =
-            {1, SpacingOptions::Undecided},   //  "bar"
-            {0, SpacingOptions::Undecided}},  //  )
-           {{verilog_tokentype::PP_define, "`define"},
-            {verilog_tokentype::SymbolIdentifier, "FOO"},
-            {'(', "("},
-            {verilog_tokentype::SymbolIdentifier, "name"},
-            {'=', "="},
-            {verilog_tokentype::TK_StringLiteral, "\"bar\""},
-            {')', ")"}}},
-
-          // endfunction : funk
-          {DefaultStyle,
-           1,
-           {{0, SpacingOptions::Undecided},
-            {1, SpacingOptions::Undecided},
-            {1, SpacingOptions::Undecided}},
-           {
-               {verilog_tokentype::TK_endfunction, "endfunction"},
-               {':', ":"},
-               {verilog_tokentype::SymbolIdentifier, "funk"},
-           }},
-
-          // case (expr):
-          {DefaultStyle,
-           1,
-           {
-               {0, SpacingOptions::Undecided},
-               {1, SpacingOptions::Undecided},
-               {0, SpacingOptions::Undecided},
-               {0, SpacingOptions::Undecided},
-               {0, SpacingOptions::Undecided},
-           },
-           {
-               {verilog_tokentype::TK_case, "case"},
-               {'(', "("},
-               {verilog_tokentype::SymbolIdentifier, "expr"},
-               {')', ")"},
-               {':', ":"},
-           }},
-
-          // return 0;
-          {DefaultStyle,
-           1,
-           {
-               {0, SpacingOptions::Undecided},
-               {1, SpacingOptions::Undecided},
-               {0, SpacingOptions::Undecided},
-           },
-           {
-               {verilog_tokentype::TK_return, "return"},
-               {verilog_tokentype::TK_UnBasedNumber, "0"},
-               {';', ";"},
-           }},
-
-          // funk();
-          {DefaultStyle,
-           1,
-           {
-               {0, SpacingOptions::Undecided},
-               {0, SpacingOptions::Undecided},
-               {0, SpacingOptions::Undecided},
-               {0, SpacingOptions::Undecided},
-           },
-           {
-               {verilog_tokentype::SymbolIdentifier, "funk"},
-               {'(', "("},
-               {')', ")"},
-               {';', ";"},
-           }},
-
-          // funk(arg);
-          {DefaultStyle,
-           1,
-           {
-               {0, SpacingOptions::Undecided},
-               {0, SpacingOptions::Undecided},
-               {0, SpacingOptions::Undecided},
-               {0, SpacingOptions::Undecided},
-               {0, SpacingOptions::Undecided},
-           },
-           {
-               {verilog_tokentype::SymbolIdentifier, "funk"},
-               {'(', "("},
-               {verilog_tokentype::SymbolIdentifier, "arg"},
-               {')', ")"},
-               {';', ";"},
-           }},
-
-          // funk("arg");
-          {DefaultStyle,
-           1,
-           {
-               {0, SpacingOptions::Undecided},
-               {0, SpacingOptions::Undecided},
-               {0, SpacingOptions::Undecided},
-               {0, SpacingOptions::Undecided},
-               {0, SpacingOptions::Undecided},
-           },
-           {
-               {verilog_tokentype::SymbolIdentifier, "funk"},
-               {'(', "("},
-               {verilog_tokentype::TK_StringLiteral, "\"arg\""},
-               {')', ")"},
-               {';', ";"},
-           }},
-
-          // funk(arg1, arg2);
-          {DefaultStyle,
-           1,
-           {
-               {0, SpacingOptions::Undecided},
-               {0, SpacingOptions::Undecided},
-               {0, SpacingOptions::Undecided},
-               {0, SpacingOptions::Undecided},
-               {1, SpacingOptions::Undecided},
-               {0, SpacingOptions::Undecided},
-               {0, SpacingOptions::Undecided},
-           },
-           {
-               {verilog_tokentype::SymbolIdentifier, "funk"},
-               {'(', "("},
-               {verilog_tokentype::SymbolIdentifier, "arg1"},
-               {',', ","},
-               {verilog_tokentype::SymbolIdentifier, "arg2"},
-               {')', ")"},
-               {';', ";"},
-           }},
-
-          // instantiation with named ports
-          // funky town(.f1(arg1), .f2(arg2));
-          {DefaultStyle,
-           1,
-           {
-               {0, SpacingOptions::Undecided},
-               {1, SpacingOptions::Undecided},
-               {0, SpacingOptions::Undecided},  // '('
-               {0, SpacingOptions::Undecided},  // '.'
-               {0, SpacingOptions::Undecided},  // "f1"
-               {0, SpacingOptions::Undecided},  // '('
-               {0, SpacingOptions::Undecided},  // "arg1"
-               {0, SpacingOptions::Undecided},  // ')'
-               {0, SpacingOptions::Undecided},  // ','
-               {1, SpacingOptions::Undecided},  // '.'
-               {0, SpacingOptions::Undecided},  // "f1"
-               {0, SpacingOptions::Undecided},  // '('
-               {0, SpacingOptions::Undecided},  // "arg1"
-               {0, SpacingOptions::Undecided},  // ')'
-               {0, SpacingOptions::Undecided},  // ')'
-               {0, SpacingOptions::Undecided},  // ';'
-           },
-           {
-               {verilog_tokentype::SymbolIdentifier, "funky"},
-               {verilog_tokentype::SymbolIdentifier, "town"},
-               {'(', "("},
-               {'.', "."},
-               {verilog_tokentype::SymbolIdentifier, "f1"},
-               {'(', "("},
-               {verilog_tokentype::SymbolIdentifier, "arg1"},
-               {')', ")"},
-               {',', ","},
-               {'.', "."},
-               {verilog_tokentype::SymbolIdentifier, "f2"},
-               {'(', "("},
-               {verilog_tokentype::SymbolIdentifier, "arg2"},
-               {')', ")"},
-               {')', ")"},
-               {';', ";"},
-           }},
-
-          // `ID.`ID
-          {DefaultStyle,
-           1,
-           {
-               {0, SpacingOptions::Undecided},
-               {0, SpacingOptions::Undecided},
-               {0, SpacingOptions::Undecided},
-           },
-           {
-               {verilog_tokentype::MacroIdentifier, "`ID"},
-               {'.', "."},
-               {verilog_tokentype::MacroIdentifier, "`ID"},
-           }},
-
-          // id.id
-          {DefaultStyle,
-           1,
-           {
-               {0, SpacingOptions::Undecided},
-               {0, SpacingOptions::Undecided},
-               {0, SpacingOptions::Undecided},
-           },
-           {
-               {verilog_tokentype::SymbolIdentifier, "id"},
-               {'.', "."},
-               {verilog_tokentype::SymbolIdentifier, "id"},
-           }},
-
-          // super.id
-          {DefaultStyle,
-           1,
-           {
-               {0, SpacingOptions::Undecided},
-               {0, SpacingOptions::Undecided},
-               {0, SpacingOptions::Undecided},
-           },
-           {
-               {verilog_tokentype::TK_super, "super"},
-               {'.', "."},
-               {verilog_tokentype::SymbolIdentifier, "id"},
-           }},
-
-          // this.id
-          {DefaultStyle,
-           1,
-           {
-               {0, SpacingOptions::Undecided},
-               {0, SpacingOptions::Undecided},
-               {0, SpacingOptions::Undecided},
-           },
-           {
-               {verilog_tokentype::TK_this, "this"},
-               {'.', "."},
-               {verilog_tokentype::SymbolIdentifier, "id"},
-           }},
-
-          // option.id
-          {DefaultStyle,
-           1,
-           {
-               {0, SpacingOptions::Undecided},
-               {0, SpacingOptions::Undecided},
-               {0, SpacingOptions::Undecided},
-           },
-           {
-               {verilog_tokentype::TK_option, "option"},
-               {'.', "."},
-               {verilog_tokentype::SymbolIdentifier, "id"},
-           }},
-
-          // `MACRO();
-          {DefaultStyle,
-           1,
-           {
-               {0, SpacingOptions::Undecided},
-               {0, SpacingOptions::Undecided},
-               {0, SpacingOptions::Undecided},
-               {0, SpacingOptions::Undecided},
-           },
-           {
-               {verilog_tokentype::MacroCallId, "`MACRO"},
-               {'(', "("},
-               {verilog_tokentype::MacroCallCloseToEndLine, ")"},
-               {';', ";"},
-           }},
-
-          // `MACRO(x);
-          {DefaultStyle,
-           1,
-           {
-               {0, SpacingOptions::Undecided},
-               {0, SpacingOptions::Undecided},
-               {0, SpacingOptions::Undecided},
-               {0, SpacingOptions::Undecided},
-               {0, SpacingOptions::Undecided},
-           },
-           {
-               {verilog_tokentype::MacroCallId, "`MACRO"},
-               {'(', "("},
-               {verilog_tokentype::SymbolIdentifier, "x"},
-               {verilog_tokentype::MacroCallCloseToEndLine, ")"},
-               {';', ";"},
-           }},
-
-          // `MACRO(y, x);
-          {DefaultStyle,
-           1,
-           {
-               {0, SpacingOptions::Undecided},
-               {0, SpacingOptions::Undecided},
-               {0, SpacingOptions::Undecided},  // "y"
-               {0, SpacingOptions::Undecided},  // ','
-               {1, SpacingOptions::Undecided},  // "x"
-               {0, SpacingOptions::Undecided},
-               {0, SpacingOptions::Undecided},
-           },
-           {
-               {verilog_tokentype::MacroCallId, "`MACRO"},
-               {'(', "("},
-               {verilog_tokentype::SymbolIdentifier, "y"},
-               {',', ","},
-               {verilog_tokentype::SymbolIdentifier, "x"},
-               {verilog_tokentype::MacroCallCloseToEndLine, ")"},
-               {';', ";"},
-           }},
-
-          // `define FOO
-          // `define BAR
-          {DefaultStyle,
-           1,
-           {
-               {0, SpacingOptions::Undecided},   // `define
-               {1, SpacingOptions::MustAppend},  // FOO
-               {0, SpacingOptions::MustAppend},  // "" (empty definition body)
-               {0, SpacingOptions::MustWrap},    // `define
-               {1, SpacingOptions::MustAppend},  // BAR
-               {0, SpacingOptions::MustAppend},  // "" (empty definition body)
-           },
-           {
-               {verilog_tokentype::PP_define, "`define"},
-               {verilog_tokentype::SymbolIdentifier, "FOO"},
-               {verilog_tokentype::PP_define_body, ""},
-               {verilog_tokentype::PP_define, "`define"},
-               {verilog_tokentype::SymbolIdentifier, "BAR"},
-               {verilog_tokentype::PP_define_body, ""},
-           }},
-
-          // `define FOO 1
-          // `define BAR 2
-          {DefaultStyle,
-           1,
-           {
-               {0, SpacingOptions::Undecided},   // `define
-               {1, SpacingOptions::MustAppend},  // FOO
-               {1, SpacingOptions::MustAppend},  // 1
-               {1, SpacingOptions::MustWrap},    // `define
-               {1, SpacingOptions::MustAppend},  // BAR
-               {1, SpacingOptions::MustAppend},  // 2
-           },
-           {
-               {verilog_tokentype::PP_define, "`define"},
-               {verilog_tokentype::PP_Identifier, "FOO"},
-               {verilog_tokentype::PP_define_body, "1"},
-               {verilog_tokentype::PP_define, "`define"},
-               {verilog_tokentype::PP_Identifier, "BAR"},
-               {verilog_tokentype::PP_define_body, "2"},
-           }},
-
-          // `define FOO()
-          // `define BAR(x)
-          // `define BAZ(y,z)
-          {DefaultStyle,
-           1,
-           {
-               {0, SpacingOptions::Undecided},   // `define
-               {1, SpacingOptions::MustAppend},  // FOO
-               {0, SpacingOptions::MustAppend},  // (
-               {0, SpacingOptions::Undecided},   // )
-               {0, SpacingOptions::MustAppend},  // "" (empty definition body)
-
-               {0, SpacingOptions::MustWrap},    // `define
-               {1, SpacingOptions::MustAppend},  // BAR
-               {0, SpacingOptions::MustAppend},  // (
-               {0, SpacingOptions::Undecided},   // x
-               {0, SpacingOptions::Undecided},   // )
-               {0, SpacingOptions::MustAppend},  // "" (empty definition body)
-
-               {0, SpacingOptions::MustWrap},    // `define
-               {1, SpacingOptions::MustAppend},  // BAZ
-               {0, SpacingOptions::MustAppend},  // (
-               {0, SpacingOptions::Undecided},   // y
-               {0, SpacingOptions::Undecided},   // ,
-               {1, SpacingOptions::Undecided},   // z
-               {0, SpacingOptions::Undecided},   // )
-               {0, SpacingOptions::MustAppend},  // "" (empty definition body)
-           },
-           {
-               {verilog_tokentype::PP_define, "`define"},
-               {verilog_tokentype::PP_Identifier, "FOO"},
-               {'(', "("},
-               {')', ")"},
-               {verilog_tokentype::PP_define_body, ""},
-
-               {verilog_tokentype::PP_define, "`define"},
-               {verilog_tokentype::PP_Identifier, "BAR"},
-               {'(', "("},
-               {verilog_tokentype::SymbolIdentifier, "x"},
-               {')', ")"},
-               {verilog_tokentype::PP_define_body, ""},
-
-               {verilog_tokentype::PP_define, "`define"},
-               {verilog_tokentype::PP_Identifier, "BAZ"},
-               {'(', "("},
-               {verilog_tokentype::SymbolIdentifier, "y"},
-               {',', ","},
-               {verilog_tokentype::SymbolIdentifier, "z"},
-               {')', ")"},
-               {verilog_tokentype::PP_define_body, ""},
-           }},
-
-          // `define ADD(y,z) y+z
-          {
-              DefaultStyle,
-              1,
-              {
-                  {0, SpacingOptions::Undecided},   // `define
-                  {1, SpacingOptions::MustAppend},  // ADD
-                  {0, SpacingOptions::MustAppend},  // (
-                  {0, SpacingOptions::Undecided},   // y
-                  {0, SpacingOptions::Undecided},   // ,
-                  {1, SpacingOptions::Undecided},   // z
-                  {0, SpacingOptions::Undecided},   // )
-                  {1, SpacingOptions::MustAppend},  // "y+z"
-              },
-              {
-                  {verilog_tokentype::PP_define, "`define"},
-                  {verilog_tokentype::PP_Identifier, "ADD"},
-                  {'(', "("},
-                  {verilog_tokentype::SymbolIdentifier, "y"},
-                  {',', ","},
-                  {verilog_tokentype::SymbolIdentifier, "z"},
-                  {')', ")"},
-                  {verilog_tokentype::PP_define_body, "y+z"},
-              },
-          },
-
-          // function new;
-          {DefaultStyle,
-           1,
-           {
-               {0, SpacingOptions::Undecided},  // function
-               {1, SpacingOptions::Undecided},  // new
-               {0, SpacingOptions::Undecided},  // ;
-           },
-           {
-               {verilog_tokentype::TK_function, "function"},
-               {verilog_tokentype::TK_new, "new"},
-               {';', ";"},
-           }},
-
-          // function new();
-          {DefaultStyle,
-           1,
-           {
-               {0, SpacingOptions::Undecided},  // function
-               {1, SpacingOptions::Undecided},  // new
-               {0, SpacingOptions::Undecided},  // (
-               {0, SpacingOptions::Undecided},  // )
-               {0, SpacingOptions::Undecided},  // ;
-           },
-           {
-               {verilog_tokentype::TK_function, "function"},
-               {verilog_tokentype::TK_new, "new"},
-               {'(', "("},
-               {')', ")"},
-               {';', ";"},
-           }},
-
-          // end endfunction endclass (end* keywords)
-          {DefaultStyle,
-           1,
-           {
-               {0, SpacingOptions::Undecided},  // end
-               {1, SpacingOptions::MustWrap},   // end
-               {1, SpacingOptions::MustWrap},   // endfunction
-               {1, SpacingOptions::MustWrap},   // endclass
-               {1, SpacingOptions::MustWrap},   // endpackage
-           },
-           {
-               {verilog_tokentype::TK_end, "end"},
-               {verilog_tokentype::TK_end, "end"},
-               {verilog_tokentype::TK_endfunction, "endfunction"},
-               {verilog_tokentype::TK_endclass, "endclass"},
-               {verilog_tokentype::TK_endpackage, "endpackage"},
-           }},
-          {DefaultStyle,
-           1,
-           {
-               {0, SpacingOptions::Undecided},  // end
-               {1, SpacingOptions::MustWrap},   // end
-               {1, SpacingOptions::MustWrap},   // endtask
-               {1, SpacingOptions::MustWrap},   // endmodule
-           },
-           {
-               {verilog_tokentype::TK_end, "end"},
-               {verilog_tokentype::TK_end, "end"},
-               {verilog_tokentype::TK_endtask, "endtask"},
-               {verilog_tokentype::TK_endmodule, "endmodule"},
-           }},
-
-          // if (r == t) a.b(c);
-          // else d.e(f);
-          {DefaultStyle,
-           1,
-           {
-               {0, SpacingOptions::Undecided},  // if
-               {1, SpacingOptions::Undecided},  // (
-               {0, SpacingOptions::Undecided},  // r
-               {1, SpacingOptions::Undecided},  // ==
-               {1, SpacingOptions::Undecided},  // t
-               {0, SpacingOptions::Undecided},  // )
-               {1, SpacingOptions::Undecided},  // a
-               {0, SpacingOptions::Undecided},  // .
-               {0, SpacingOptions::Undecided},  // b
-               {0, SpacingOptions::Undecided},  // (
-               {0, SpacingOptions::Undecided},  // c
-               {0, SpacingOptions::Undecided},  // )
-               {0, SpacingOptions::Undecided},  // ;
-
-               {1, SpacingOptions::MustWrap},   // else
-               {1, SpacingOptions::Undecided},  // d
-               {0, SpacingOptions::Undecided},  // .
-               {0, SpacingOptions::Undecided},  // e
-               {0, SpacingOptions::Undecided},  // (
-               {0, SpacingOptions::Undecided},  // f
-               {0, SpacingOptions::Undecided},  // )
-               {0, SpacingOptions::Undecided},  // ;
-           },
-           {
-               {verilog_tokentype::TK_if, "if"},
-               {'(', "("},
-               {verilog_tokentype::SymbolIdentifier, "r"},
-               {verilog_tokentype::TK_EQ, "=="},
-               {verilog_tokentype::SymbolIdentifier, "t"},
-               {')', ")"},
-               {verilog_tokentype::SymbolIdentifier, "a"},
-               {'.', "."},
-               {verilog_tokentype::SymbolIdentifier, "b"},
-               {'(', "("},
-               {verilog_tokentype::SymbolIdentifier, "c"},
-               {')', ")"},
-               {';', ";"},
-
-               {verilog_tokentype::TK_else, "else"},
-               {verilog_tokentype::SymbolIdentifier, "d"},
-               {'.', "."},
-               {verilog_tokentype::SymbolIdentifier, "e"},
-               {'(', "("},
-               {verilog_tokentype::SymbolIdentifier, "f"},
-               {')', ")"},
-               {';', ";"},
-           }},
-
-          // if (r == t) begin
-          //   a.b(c);
-          // end else begin
-          //   d.e(f);
-          // end
-          {DefaultStyle,
-           1,
-           {
-               {0, SpacingOptions::Undecided},  // if
-               {1, SpacingOptions::Undecided},  // (
-               {0, SpacingOptions::Undecided},  // r
-               {1, SpacingOptions::Undecided},  // ==
-               {1, SpacingOptions::Undecided},  // t
-               {0, SpacingOptions::Undecided},  // )
-
-               {1, SpacingOptions::MustAppend},  // begin
-               {1, SpacingOptions::Undecided},   // a
-               {0, SpacingOptions::Undecided},   // .
-               {0, SpacingOptions::Undecided},   // b
-               {0, SpacingOptions::Undecided},   // (
-               {0, SpacingOptions::Undecided},   // c
-               {0, SpacingOptions::Undecided},   // )
-               {0, SpacingOptions::Undecided},   // ;
-               {1, SpacingOptions::MustWrap},    // end
-
-               {1, SpacingOptions::MustAppend},  // else
-
-               {1, SpacingOptions::MustAppend},  // begin
-               {1, SpacingOptions::Undecided},   // d
-               {0, SpacingOptions::Undecided},   // .
-               {0, SpacingOptions::Undecided},   // e
-               {0, SpacingOptions::Undecided},   // (
-               {0, SpacingOptions::Undecided},   // f
-               {0, SpacingOptions::Undecided},   // )
-               {0, SpacingOptions::Undecided},   // ;
-               {1, SpacingOptions::MustWrap},    // end
-           },
-           {
-               {verilog_tokentype::TK_if, "if"},
-               {'(', "("},
-               {verilog_tokentype::SymbolIdentifier, "r"},
-               {verilog_tokentype::TK_EQ, "=="},
-               {verilog_tokentype::SymbolIdentifier, "t"},
-               {')', ")"},
-
-               {verilog_tokentype::TK_begin, "begin"},
-               {verilog_tokentype::SymbolIdentifier, "a"},
-               {'.', "."},
-               {verilog_tokentype::SymbolIdentifier, "b"},
-               {'(', "("},
-               {verilog_tokentype::SymbolIdentifier, "c"},
-               {')', ")"},
-               {';', ";"},
-               {verilog_tokentype::TK_end, "end"},
-
-               {verilog_tokentype::TK_else, "else"},
-
-               {verilog_tokentype::TK_begin, "begin"},
-               {verilog_tokentype::SymbolIdentifier, "d"},
-               {'.', "."},
-               {verilog_tokentype::SymbolIdentifier, "e"},
-               {'(', "("},
-               {verilog_tokentype::SymbolIdentifier, "f"},
-               {')', ")"},
-               {';', ";"},
-               {verilog_tokentype::TK_end, "end"},
-           }},
-
-          // various built-in function calls
-          {DefaultStyle,
-           1,
-           {{0, SpacingOptions::Undecided}, {0, SpacingOptions::Undecided}},
-           {{verilog_tokentype::TK_and, "and"}, {'(', "("}}},
-          {DefaultStyle,
-           1,
-           {{0, SpacingOptions::Undecided}, {1, SpacingOptions::Undecided}},
-           {{verilog_tokentype::TK_assert, "assert"}, {'(', "("}}},
-          {DefaultStyle,
-           1,
-           {{0, SpacingOptions::Undecided}, {1, SpacingOptions::Undecided}},
-           {{verilog_tokentype::TK_assume, "assume"}, {'(', "("}}},
-          {DefaultStyle,
-           1,
-           {{0, SpacingOptions::Undecided}, {1, SpacingOptions::Undecided}},
-           {{verilog_tokentype::TK_cover, "cover"}, {'(', "("}}},
-          {DefaultStyle,
-           1,
-           {{0, SpacingOptions::Undecided}, {1, SpacingOptions::Undecided}},
-           {{verilog_tokentype::TK_expect, "expect"}, {'(', "("}}},
-          {DefaultStyle,
-           1,
-           {{0, SpacingOptions::Undecided}, {1, SpacingOptions::Undecided}},
-           {{verilog_tokentype::TK_property, "property"}, {'(', "("}}},
-          {DefaultStyle,
-           1,
-           {{0, SpacingOptions::Undecided}, {1, SpacingOptions::Undecided}},
-           {{verilog_tokentype::TK_sequence, "sequence"}, {'(', "("}}},
-          {DefaultStyle,
-           1,
-           {{0, SpacingOptions::Undecided}, {1, SpacingOptions::Undecided}},
-           {{verilog_tokentype::TK_final, "final"}, {'(', "("}}},
-          {DefaultStyle,
-           1,
-           {{0, SpacingOptions::Undecided}, {0, SpacingOptions::Undecided}},
-           {{verilog_tokentype::TK_find, "find"}, {'(', "("}}},
-          {DefaultStyle,
-           1,
-           {{0, SpacingOptions::Undecided}, {0, SpacingOptions::Undecided}},
-           {{verilog_tokentype::TK_find_index, "find_index"}, {'(', "("}}},
-          {DefaultStyle,
-           1,
-           {{0, SpacingOptions::Undecided}, {0, SpacingOptions::Undecided}},
-           {{verilog_tokentype::TK_find_first, "find_first"}, {'(', "("}}},
-          {DefaultStyle,
-           1,
-           {{0, SpacingOptions::Undecided}, {0, SpacingOptions::Undecided}},
-           {{verilog_tokentype::TK_find_first_index, "find_first_index"},
-            {'(', "("}}},
-          {DefaultStyle,
-           1,
-           {{0, SpacingOptions::Undecided}, {0, SpacingOptions::Undecided}},
-           {{verilog_tokentype::TK_find_last, "find_last"}, {'(', "("}}},
-          {DefaultStyle,
-           1,
-           {{0, SpacingOptions::Undecided}, {0, SpacingOptions::Undecided}},
-           {{verilog_tokentype::TK_find_last_index, "find_last_index"},
-            {'(', "("}}},
-          {DefaultStyle,
-           1,
-           {{0, SpacingOptions::Undecided}, {0, SpacingOptions::Undecided}},
-           {{verilog_tokentype::TK_min, "min"}, {'(', "("}}},
-          {DefaultStyle,
-           1,
-           {{0, SpacingOptions::Undecided}, {0, SpacingOptions::Undecided}},
-           {{verilog_tokentype::TK_max, "max"}, {'(', "("}}},
-          {DefaultStyle,
-           1,
-           {{0, SpacingOptions::Undecided}, {0, SpacingOptions::Undecided}},
-           {{verilog_tokentype::TK_or, "or"}, {'(', "("}}},
-          {DefaultStyle,
-           1,
-           {{0, SpacingOptions::Undecided}, {0, SpacingOptions::Undecided}},
-           {{verilog_tokentype::TK_product, "product"}, {'(', "("}}},
-          {DefaultStyle,
-           1,
-           {{0, SpacingOptions::Undecided}, {0, SpacingOptions::Undecided}},
-           {{verilog_tokentype::TK_randomize, "randomize"}, {'(', "("}}},
-          {DefaultStyle,
-           1,
-           {{0, SpacingOptions::Undecided}, {0, SpacingOptions::Undecided}},
-           {{verilog_tokentype::TK_reverse, "reverse"}, {'(', "("}}},
-          {DefaultStyle,
-           1,
-           {{0, SpacingOptions::Undecided}, {0, SpacingOptions::Undecided}},
-           {{verilog_tokentype::TK_rsort, "rsort"}, {'(', "("}}},
-          {DefaultStyle,
-           1,
-           {{0, SpacingOptions::Undecided}, {0, SpacingOptions::Undecided}},
-           {{verilog_tokentype::TK_shuffle, "shuffle"}, {'(', "("}}},
-          {DefaultStyle,
-           1,
-           {{0, SpacingOptions::Undecided}, {0, SpacingOptions::Undecided}},
-           {{verilog_tokentype::TK_sort, "sort"}, {'(', "("}}},
-          {DefaultStyle,
-           1,
-           {{0, SpacingOptions::Undecided}, {0, SpacingOptions::Undecided}},
-           {{verilog_tokentype::TK_sum, "sum"}, {'(', "("}}},
-          {DefaultStyle,
-           1,
-           {{0, SpacingOptions::Undecided}, {0, SpacingOptions::Undecided}},
-           {{verilog_tokentype::TK_unique, "unique"}, {'(', "("}}},
-          {DefaultStyle,
-           1,
-           {{0, SpacingOptions::Undecided}, {0, SpacingOptions::Undecided}},
-           {{verilog_tokentype::TK_wait, "wait"}, {'(', "("}}},
-          {DefaultStyle,
-           1,
-           {{0, SpacingOptions::Undecided}, {0, SpacingOptions::Undecided}},
-           {{verilog_tokentype::TK_xor, "xor"}, {'(', "("}}},
-
-          // escaped identifier
-          // baz.\FOO .bar
-          {DefaultStyle,
-           1,
-           {
-               {0, SpacingOptions::Undecided},  // baz
-               {0, SpacingOptions::Undecided},  // .
-               {0, SpacingOptions::Undecided},  // \FOO
-               {1, SpacingOptions::Undecided},  // .
-               {0, SpacingOptions::Undecided},  // bar
-           },
-           {
-               {verilog_tokentype::SymbolIdentifier, "baz"},
-               {'.', "."},
-               {verilog_tokentype::EscapedIdentifier, "\\FOO"},
-               {'.', "."},
-               {verilog_tokentype::SymbolIdentifier, "bar"},
-           }},
-
-          // escaped identifier inside macro call
-          // `BAR(\FOO )
-          {DefaultStyle,
-           1,
-           {
-               {0, SpacingOptions::Undecided},  // `BAR
-               {0, SpacingOptions::Undecided},  // (
-               {0, SpacingOptions::Undecided},  // \FOO
-               {1, SpacingOptions::Undecided},  // )
-           },
-           {
-               {verilog_tokentype::MacroCallId, "`BAR"},
-               {'(', "("},
-               {verilog_tokentype::EscapedIdentifier, "\\FOO"},
-               {')', ")"},
-           }},
-
-          // import foo_pkg::symbol;
-          {DefaultStyle,
-           1,
-           {
-               {0, SpacingOptions::Undecided},  // import
-               {1, SpacingOptions::Undecided},  // foo_pkg
-               {0, SpacingOptions::Undecided},  // ::
-               {0, SpacingOptions::Undecided},  // symbol
-               {0, SpacingOptions::Undecided},  // ;
-           },
-           {
-               {verilog_tokentype::TK_import, "import"},
-               {verilog_tokentype::SymbolIdentifier, "foo_pkg"},
-               {verilog_tokentype::TK_SCOPE_RES, "::"},
-               {verilog_tokentype::SymbolIdentifier, "symbol"},
-               {';', ";"},
-           }},
-
-          // import foo_pkg::*;
-          {DefaultStyle,
-           1,
-           {
-               {0, SpacingOptions::Undecided},  // import
-               {1, SpacingOptions::Undecided},  // foo_pkg
-               {0, SpacingOptions::Undecided},  // ::
-               {0, SpacingOptions::Undecided},  // *
-               {0, SpacingOptions::Undecided},  // ;
-           },
-           {
-               {verilog_tokentype::TK_import, "import"},
-               {verilog_tokentype::SymbolIdentifier, "foo_pkg"},
-               {verilog_tokentype::TK_SCOPE_RES, "::"},
-               {'*', "*"},
-               {';', ";"},
-           }},
-
-          // #0; (delay, unitless integer)
-          {DefaultStyle,
-           1,
-           {
-               {0, SpacingOptions::Undecided},   // #
-               {0, SpacingOptions::MustAppend},  // 0
-               {0, SpacingOptions::Undecided},   // ;
-           },
-           {
-               {'#', "#"},
-               {verilog_tokentype::TK_DecNumber, "0"},
-               {';', ";"},
-           }},
-
-          // #0.5; (delay, real-value)
-          {DefaultStyle,
-           1,
-           {
-               {0, SpacingOptions::Undecided},   // #
-               {0, SpacingOptions::MustAppend},  // 0.5
-               {0, SpacingOptions::Undecided},   // ;
-           },
-           {
-               {'#', "#"},
-               {verilog_tokentype::TK_RealTime, "0.5"},
-               {';', ";"},
-           }},
-
-          // #0ns; (delay, time-literal)
-          {DefaultStyle,
-           1,
-           {
-               {0, SpacingOptions::Undecided},   // #
-               {0, SpacingOptions::MustAppend},  // 0ns
-               {0, SpacingOptions::MustAppend},  // ;
-           },
-           {
-               {'#', "#"},
-               {verilog_tokentype::TK_TimeLiteral, "0ns"},
-               {';', ";"},
-           }},
-
-          // #1step; (delay, 1step)
-          {DefaultStyle,
-           1,
-           {
-               {0, SpacingOptions::Undecided},   // #
-               {0, SpacingOptions::MustAppend},  // 1step
-               {0, SpacingOptions::Undecided},   // ;
-           },
-           {
-               {'#', "#"},
-               {verilog_tokentype::TK_1step, "1step"},
-               {';', ";"},
-           }},
-
-          // default: ;
-          {DefaultStyle,
-           0,
-           {
-               {0, SpacingOptions::Undecided},
-               {0, SpacingOptions::Undecided},
-               {1, SpacingOptions::Undecided},
-           },
-           {
-               {verilog_tokentype::TK_default, "default"},
-               {':', ":"},
-               {';', ";"},
-           }},
-
-          // foo = 1 << bar;
-          {DefaultStyle,
-           0,
-           {
-               {0, SpacingOptions::Undecided},
-               {1, SpacingOptions::Undecided},
-               {1, SpacingOptions::Undecided},
-               {1, SpacingOptions::Undecided},
-               {1, SpacingOptions::Undecided},
-               {0, SpacingOptions::Undecided},
-           },
-           {
-               {verilog_tokentype::SymbolIdentifier, "foo"},
-               {'=', "="},
-               {verilog_tokentype::TK_DecNumber, "1"},
-               {verilog_tokentype::TK_LS, "<<"},
-               {verilog_tokentype::SymbolIdentifier, "bar"},
-               {';', ";"},
-           }},
-
-          // foo = bar << 1;
-          {DefaultStyle,
-           0,
-           {
-               {0, SpacingOptions::Undecided},
-               {1, SpacingOptions::Undecided},
-               {1, SpacingOptions::Undecided},
-               {1, SpacingOptions::Undecided},
-               {1, SpacingOptions::Undecided},
-               {0, SpacingOptions::Undecided},
-           },
-           {
-               {verilog_tokentype::SymbolIdentifier, "foo"},
-               {'=', "="},
-               {verilog_tokentype::SymbolIdentifier, "bar"},
-               {verilog_tokentype::TK_LS, "<<"},
-               {verilog_tokentype::TK_DecNumber, "1"},
-               {';', ";"},
-           }},
-
-          // foo = `BAR << 1;
-          {DefaultStyle,
-           0,
-           {
-               {0, SpacingOptions::Undecided},
-               {1, SpacingOptions::Undecided},
-               {1, SpacingOptions::Undecided},
-               {1, SpacingOptions::Undecided},
-               {1, SpacingOptions::Undecided},
-               {0, SpacingOptions::Undecided},
-           },
-           {
-               {verilog_tokentype::SymbolIdentifier, "foo"},
-               {'=', "="},
-               {verilog_tokentype::MacroIdentifier, "`BAR"},
-               {verilog_tokentype::TK_LS, "<<"},
-               {verilog_tokentype::TK_DecNumber, "1"},
-               {';', ";"},
-           }},
-
-          // foo = 1 << `BAR;
-          {DefaultStyle,
-           0,
-           {
-               {0, SpacingOptions::Undecided},
-               {1, SpacingOptions::Undecided},
-               {1, SpacingOptions::Undecided},
-               {1, SpacingOptions::Undecided},
-               {1, SpacingOptions::Undecided},
-               {0, SpacingOptions::Undecided},
-           },
-           {
-               {verilog_tokentype::SymbolIdentifier, "foo"},
-               {'=', "="},
-               {verilog_tokentype::TK_DecNumber, "1"},
-               {verilog_tokentype::TK_LS, "<<"},
-               {verilog_tokentype::MacroIdentifier, "`BAR"},
-               {';', ";"},
-           }},
-
-          // foo = 1 >> bar;
-          {DefaultStyle,
-           0,
-           {
-               {0, SpacingOptions::Undecided},
-               {1, SpacingOptions::Undecided},
-               {1, SpacingOptions::Undecided},
-               {1, SpacingOptions::Undecided},
-               {1, SpacingOptions::Undecided},
-               {0, SpacingOptions::Undecided},
-           },
-           {
-               {verilog_tokentype::SymbolIdentifier, "foo"},
-               {'=', "="},
-               {verilog_tokentype::TK_DecNumber, "1"},
-               {verilog_tokentype::TK_RS, ">>"},
-               {verilog_tokentype::SymbolIdentifier, "bar"},
-               {';', ";"},
-           }},
-
-          // foo = bar >> 1;
-          {DefaultStyle,
-           0,
-           {
-               {0, SpacingOptions::Undecided},
-               {1, SpacingOptions::Undecided},
-               {1, SpacingOptions::Undecided},
-               {1, SpacingOptions::Undecided},
-               {1, SpacingOptions::Undecided},
-               {0, SpacingOptions::Undecided},
-           },
-           {
-               {verilog_tokentype::SymbolIdentifier, "foo"},
-               {'=', "="},
-               {verilog_tokentype::SymbolIdentifier, "bar"},
-               {verilog_tokentype::TK_RS, ">>"},
-               {verilog_tokentype::TK_DecNumber, "1"},
-               {';', ";"},
-           }},
-
-          // foo = `BAR >> 1;
-          {DefaultStyle,
-           0,
-           {
-               {0, SpacingOptions::Undecided},
-               {1, SpacingOptions::Undecided},
-               {1, SpacingOptions::Undecided},
-               {1, SpacingOptions::Undecided},
-               {1, SpacingOptions::Undecided},
-               {0, SpacingOptions::Undecided},
-           },
-           {
-               {verilog_tokentype::SymbolIdentifier, "foo"},
-               {'=', "="},
-               {verilog_tokentype::MacroIdentifier, "`BAR"},
-               {verilog_tokentype::TK_RS, ">>"},
-               {verilog_tokentype::TK_DecNumber, "1"},
-               {';', ";"},
-           }},
-
-          // foo = 1 >> `BAR;
-          {DefaultStyle,
-           0,
-           {
-               {0, SpacingOptions::Undecided},
-               {1, SpacingOptions::Undecided},
-               {1, SpacingOptions::Undecided},
-               {1, SpacingOptions::Undecided},
-               {1, SpacingOptions::Undecided},
-               {0, SpacingOptions::Undecided},
-           },
-           {
-               {verilog_tokentype::SymbolIdentifier, "foo"},
-               {'=', "="},
-               {verilog_tokentype::TK_DecNumber, "1"},
-               {verilog_tokentype::TK_RS, ">>"},
-               {verilog_tokentype::MacroIdentifier, "`BAR"},
-               {';', ";"},
-           }},
-      };
+      },
+
+      // function new;
+      {DefaultStyle,
+       1,
+       {
+           {0, SpacingOptions::Undecided},  // function
+           {1, SpacingOptions::Undecided},  // new
+           {0, SpacingOptions::Undecided},  // ;
+       },
+       {
+           {verilog_tokentype::TK_function, "function"},
+           {verilog_tokentype::TK_new, "new"},
+           {';', ";"},
+       }},
+
+      // function new();
+      {DefaultStyle,
+       1,
+       {
+           {0, SpacingOptions::Undecided},  // function
+           {1, SpacingOptions::Undecided},  // new
+           {0, SpacingOptions::Undecided},  // (
+           {0, SpacingOptions::Undecided},  // )
+           {0, SpacingOptions::Undecided},  // ;
+       },
+       {
+           {verilog_tokentype::TK_function, "function"},
+           {verilog_tokentype::TK_new, "new"},
+           {'(', "("},
+           {')', ")"},
+           {';', ";"},
+       }},
+
+      // end endfunction endclass (end* keywords)
+      {DefaultStyle,
+       1,
+       {
+           {0, SpacingOptions::Undecided},  // end
+           {1, SpacingOptions::MustWrap},   // end
+           {1, SpacingOptions::MustWrap},   // endfunction
+           {1, SpacingOptions::MustWrap},   // endclass
+           {1, SpacingOptions::MustWrap},   // endpackage
+       },
+       {
+           {verilog_tokentype::TK_end, "end"},
+           {verilog_tokentype::TK_end, "end"},
+           {verilog_tokentype::TK_endfunction, "endfunction"},
+           {verilog_tokentype::TK_endclass, "endclass"},
+           {verilog_tokentype::TK_endpackage, "endpackage"},
+       }},
+      {DefaultStyle,
+       1,
+       {
+           {0, SpacingOptions::Undecided},  // end
+           {1, SpacingOptions::MustWrap},   // end
+           {1, SpacingOptions::MustWrap},   // endtask
+           {1, SpacingOptions::MustWrap},   // endmodule
+       },
+       {
+           {verilog_tokentype::TK_end, "end"},
+           {verilog_tokentype::TK_end, "end"},
+           {verilog_tokentype::TK_endtask, "endtask"},
+           {verilog_tokentype::TK_endmodule, "endmodule"},
+       }},
+
+      // if (r == t) a.b(c);
+      // else d.e(f);
+      {DefaultStyle,
+       1,
+       {
+           {0, SpacingOptions::Undecided},  // if
+           {1, SpacingOptions::Undecided},  // (
+           {0, SpacingOptions::Undecided},  // r
+           {1, SpacingOptions::Undecided},  // ==
+           {1, SpacingOptions::Undecided},  // t
+           {0, SpacingOptions::Undecided},  // )
+           {1, SpacingOptions::Undecided},  // a
+           {0, SpacingOptions::Undecided},  // .
+           {0, SpacingOptions::Undecided},  // b
+           {0, SpacingOptions::Undecided},  // (
+           {0, SpacingOptions::Undecided},  // c
+           {0, SpacingOptions::Undecided},  // )
+           {0, SpacingOptions::Undecided},  // ;
+
+           {1, SpacingOptions::MustWrap},   // else
+           {1, SpacingOptions::Undecided},  // d
+           {0, SpacingOptions::Undecided},  // .
+           {0, SpacingOptions::Undecided},  // e
+           {0, SpacingOptions::Undecided},  // (
+           {0, SpacingOptions::Undecided},  // f
+           {0, SpacingOptions::Undecided},  // )
+           {0, SpacingOptions::Undecided},  // ;
+       },
+       {
+           {verilog_tokentype::TK_if, "if"},
+           {'(', "("},
+           {verilog_tokentype::SymbolIdentifier, "r"},
+           {verilog_tokentype::TK_EQ, "=="},
+           {verilog_tokentype::SymbolIdentifier, "t"},
+           {')', ")"},
+           {verilog_tokentype::SymbolIdentifier, "a"},
+           {'.', "."},
+           {verilog_tokentype::SymbolIdentifier, "b"},
+           {'(', "("},
+           {verilog_tokentype::SymbolIdentifier, "c"},
+           {')', ")"},
+           {';', ";"},
+
+           {verilog_tokentype::TK_else, "else"},
+           {verilog_tokentype::SymbolIdentifier, "d"},
+           {'.', "."},
+           {verilog_tokentype::SymbolIdentifier, "e"},
+           {'(', "("},
+           {verilog_tokentype::SymbolIdentifier, "f"},
+           {')', ")"},
+           {';', ";"},
+       }},
+
+      // if (r == t) begin
+      //   a.b(c);
+      // end else begin
+      //   d.e(f);
+      // end
+      {DefaultStyle,
+       1,
+       {
+           {0, SpacingOptions::Undecided},  // if
+           {1, SpacingOptions::Undecided},  // (
+           {0, SpacingOptions::Undecided},  // r
+           {1, SpacingOptions::Undecided},  // ==
+           {1, SpacingOptions::Undecided},  // t
+           {0, SpacingOptions::Undecided},  // )
+
+           {1, SpacingOptions::MustAppend},  // begin
+           {1, SpacingOptions::Undecided},   // a
+           {0, SpacingOptions::Undecided},   // .
+           {0, SpacingOptions::Undecided},   // b
+           {0, SpacingOptions::Undecided},   // (
+           {0, SpacingOptions::Undecided},   // c
+           {0, SpacingOptions::Undecided},   // )
+           {0, SpacingOptions::Undecided},   // ;
+           {1, SpacingOptions::MustWrap},    // end
+
+           {1, SpacingOptions::MustAppend},  // else
+
+           {1, SpacingOptions::MustAppend},  // begin
+           {1, SpacingOptions::Undecided},   // d
+           {0, SpacingOptions::Undecided},   // .
+           {0, SpacingOptions::Undecided},   // e
+           {0, SpacingOptions::Undecided},   // (
+           {0, SpacingOptions::Undecided},   // f
+           {0, SpacingOptions::Undecided},   // )
+           {0, SpacingOptions::Undecided},   // ;
+           {1, SpacingOptions::MustWrap},    // end
+       },
+       {
+           {verilog_tokentype::TK_if, "if"},
+           {'(', "("},
+           {verilog_tokentype::SymbolIdentifier, "r"},
+           {verilog_tokentype::TK_EQ, "=="},
+           {verilog_tokentype::SymbolIdentifier, "t"},
+           {')', ")"},
+
+           {verilog_tokentype::TK_begin, "begin"},
+           {verilog_tokentype::SymbolIdentifier, "a"},
+           {'.', "."},
+           {verilog_tokentype::SymbolIdentifier, "b"},
+           {'(', "("},
+           {verilog_tokentype::SymbolIdentifier, "c"},
+           {')', ")"},
+           {';', ";"},
+           {verilog_tokentype::TK_end, "end"},
+
+           {verilog_tokentype::TK_else, "else"},
+
+           {verilog_tokentype::TK_begin, "begin"},
+           {verilog_tokentype::SymbolIdentifier, "d"},
+           {'.', "."},
+           {verilog_tokentype::SymbolIdentifier, "e"},
+           {'(', "("},
+           {verilog_tokentype::SymbolIdentifier, "f"},
+           {')', ")"},
+           {';', ";"},
+           {verilog_tokentype::TK_end, "end"},
+       }},
+
+      // various built-in function calls
+      {DefaultStyle,
+       1,
+       {{0, SpacingOptions::Undecided}, {0, SpacingOptions::Undecided}},
+       {{verilog_tokentype::TK_and, "and"}, {'(', "("}}},
+      {DefaultStyle,
+       1,
+       {{0, SpacingOptions::Undecided}, {1, SpacingOptions::Undecided}},
+       {{verilog_tokentype::TK_assert, "assert"}, {'(', "("}}},
+      {DefaultStyle,
+       1,
+       {{0, SpacingOptions::Undecided}, {1, SpacingOptions::Undecided}},
+       {{verilog_tokentype::TK_assume, "assume"}, {'(', "("}}},
+      {DefaultStyle,
+       1,
+       {{0, SpacingOptions::Undecided}, {1, SpacingOptions::Undecided}},
+       {{verilog_tokentype::TK_cover, "cover"}, {'(', "("}}},
+      {DefaultStyle,
+       1,
+       {{0, SpacingOptions::Undecided}, {1, SpacingOptions::Undecided}},
+       {{verilog_tokentype::TK_expect, "expect"}, {'(', "("}}},
+      {DefaultStyle,
+       1,
+       {{0, SpacingOptions::Undecided}, {1, SpacingOptions::Undecided}},
+       {{verilog_tokentype::TK_property, "property"}, {'(', "("}}},
+      {DefaultStyle,
+       1,
+       {{0, SpacingOptions::Undecided}, {1, SpacingOptions::Undecided}},
+       {{verilog_tokentype::TK_sequence, "sequence"}, {'(', "("}}},
+      {DefaultStyle,
+       1,
+       {{0, SpacingOptions::Undecided}, {1, SpacingOptions::Undecided}},
+       {{verilog_tokentype::TK_final, "final"}, {'(', "("}}},
+      {DefaultStyle,
+       1,
+       {{0, SpacingOptions::Undecided}, {0, SpacingOptions::Undecided}},
+       {{verilog_tokentype::TK_find, "find"}, {'(', "("}}},
+      {DefaultStyle,
+       1,
+       {{0, SpacingOptions::Undecided}, {0, SpacingOptions::Undecided}},
+       {{verilog_tokentype::TK_find_index, "find_index"}, {'(', "("}}},
+      {DefaultStyle,
+       1,
+       {{0, SpacingOptions::Undecided}, {0, SpacingOptions::Undecided}},
+       {{verilog_tokentype::TK_find_first, "find_first"}, {'(', "("}}},
+      {DefaultStyle,
+       1,
+       {{0, SpacingOptions::Undecided}, {0, SpacingOptions::Undecided}},
+       {{verilog_tokentype::TK_find_first_index, "find_first_index"},
+        {'(', "("}}},
+      {DefaultStyle,
+       1,
+       {{0, SpacingOptions::Undecided}, {0, SpacingOptions::Undecided}},
+       {{verilog_tokentype::TK_find_last, "find_last"}, {'(', "("}}},
+      {DefaultStyle,
+       1,
+       {{0, SpacingOptions::Undecided}, {0, SpacingOptions::Undecided}},
+       {{verilog_tokentype::TK_find_last_index, "find_last_index"},
+        {'(', "("}}},
+      {DefaultStyle,
+       1,
+       {{0, SpacingOptions::Undecided}, {0, SpacingOptions::Undecided}},
+       {{verilog_tokentype::TK_min, "min"}, {'(', "("}}},
+      {DefaultStyle,
+       1,
+       {{0, SpacingOptions::Undecided}, {0, SpacingOptions::Undecided}},
+       {{verilog_tokentype::TK_max, "max"}, {'(', "("}}},
+      {DefaultStyle,
+       1,
+       {{0, SpacingOptions::Undecided}, {0, SpacingOptions::Undecided}},
+       {{verilog_tokentype::TK_or, "or"}, {'(', "("}}},
+      {DefaultStyle,
+       1,
+       {{0, SpacingOptions::Undecided}, {0, SpacingOptions::Undecided}},
+       {{verilog_tokentype::TK_product, "product"}, {'(', "("}}},
+      {DefaultStyle,
+       1,
+       {{0, SpacingOptions::Undecided}, {0, SpacingOptions::Undecided}},
+       {{verilog_tokentype::TK_randomize, "randomize"}, {'(', "("}}},
+      {DefaultStyle,
+       1,
+       {{0, SpacingOptions::Undecided}, {0, SpacingOptions::Undecided}},
+       {{verilog_tokentype::TK_reverse, "reverse"}, {'(', "("}}},
+      {DefaultStyle,
+       1,
+       {{0, SpacingOptions::Undecided}, {0, SpacingOptions::Undecided}},
+       {{verilog_tokentype::TK_rsort, "rsort"}, {'(', "("}}},
+      {DefaultStyle,
+       1,
+       {{0, SpacingOptions::Undecided}, {0, SpacingOptions::Undecided}},
+       {{verilog_tokentype::TK_shuffle, "shuffle"}, {'(', "("}}},
+      {DefaultStyle,
+       1,
+       {{0, SpacingOptions::Undecided}, {0, SpacingOptions::Undecided}},
+       {{verilog_tokentype::TK_sort, "sort"}, {'(', "("}}},
+      {DefaultStyle,
+       1,
+       {{0, SpacingOptions::Undecided}, {0, SpacingOptions::Undecided}},
+       {{verilog_tokentype::TK_sum, "sum"}, {'(', "("}}},
+      {DefaultStyle,
+       1,
+       {{0, SpacingOptions::Undecided}, {0, SpacingOptions::Undecided}},
+       {{verilog_tokentype::TK_unique, "unique"}, {'(', "("}}},
+      {DefaultStyle,
+       1,
+       {{0, SpacingOptions::Undecided}, {0, SpacingOptions::Undecided}},
+       {{verilog_tokentype::TK_wait, "wait"}, {'(', "("}}},
+      {DefaultStyle,
+       1,
+       {{0, SpacingOptions::Undecided}, {0, SpacingOptions::Undecided}},
+       {{verilog_tokentype::TK_xor, "xor"}, {'(', "("}}},
+
+      // escaped identifier
+      // baz.\FOO .bar
+      {DefaultStyle,
+       1,
+       {
+           {0, SpacingOptions::Undecided},  // baz
+           {0, SpacingOptions::Undecided},  // .
+           {0, SpacingOptions::Undecided},  // \FOO
+           {1, SpacingOptions::Undecided},  // .
+           {0, SpacingOptions::Undecided},  // bar
+       },
+       {
+           {verilog_tokentype::SymbolIdentifier, "baz"},
+           {'.', "."},
+           {verilog_tokentype::EscapedIdentifier, "\\FOO"},
+           {'.', "."},
+           {verilog_tokentype::SymbolIdentifier, "bar"},
+       }},
+
+      // escaped identifier inside macro call
+      // `BAR(\FOO )
+      {DefaultStyle,
+       1,
+       {
+           {0, SpacingOptions::Undecided},  // `BAR
+           {0, SpacingOptions::Undecided},  // (
+           {0, SpacingOptions::Undecided},  // \FOO
+           {1, SpacingOptions::Undecided},  // )
+       },
+       {
+           {verilog_tokentype::MacroCallId, "`BAR"},
+           {'(', "("},
+           {verilog_tokentype::EscapedIdentifier, "\\FOO"},
+           {')', ")"},
+       }},
+
+      // import foo_pkg::symbol;
+      {DefaultStyle,
+       1,
+       {
+           {0, SpacingOptions::Undecided},  // import
+           {1, SpacingOptions::Undecided},  // foo_pkg
+           {0, SpacingOptions::Undecided},  // ::
+           {0, SpacingOptions::Undecided},  // symbol
+           {0, SpacingOptions::Undecided},  // ;
+       },
+       {
+           {verilog_tokentype::TK_import, "import"},
+           {verilog_tokentype::SymbolIdentifier, "foo_pkg"},
+           {verilog_tokentype::TK_SCOPE_RES, "::"},
+           {verilog_tokentype::SymbolIdentifier, "symbol"},
+           {';', ";"},
+       }},
+
+      // import foo_pkg::*;
+      {DefaultStyle,
+       1,
+       {
+           {0, SpacingOptions::Undecided},  // import
+           {1, SpacingOptions::Undecided},  // foo_pkg
+           {0, SpacingOptions::Undecided},  // ::
+           {0, SpacingOptions::Undecided},  // *
+           {0, SpacingOptions::Undecided},  // ;
+       },
+       {
+           {verilog_tokentype::TK_import, "import"},
+           {verilog_tokentype::SymbolIdentifier, "foo_pkg"},
+           {verilog_tokentype::TK_SCOPE_RES, "::"},
+           {'*', "*"},
+           {';', ";"},
+       }},
+
+      // #0; (delay, unitless integer)
+      {DefaultStyle,
+       1,
+       {
+           {0, SpacingOptions::Undecided},   // #
+           {0, SpacingOptions::MustAppend},  // 0
+           {0, SpacingOptions::Undecided},   // ;
+       },
+       {
+           {'#', "#"},
+           {verilog_tokentype::TK_DecNumber, "0"},
+           {';', ";"},
+       }},
+
+      // #0.5; (delay, real-value)
+      {DefaultStyle,
+       1,
+       {
+           {0, SpacingOptions::Undecided},   // #
+           {0, SpacingOptions::MustAppend},  // 0.5
+           {0, SpacingOptions::Undecided},   // ;
+       },
+       {
+           {'#', "#"},
+           {verilog_tokentype::TK_RealTime, "0.5"},
+           {';', ";"},
+       }},
+
+      // #0ns; (delay, time-literal)
+      {DefaultStyle,
+       1,
+       {
+           {0, SpacingOptions::Undecided},   // #
+           {0, SpacingOptions::MustAppend},  // 0ns
+           {0, SpacingOptions::MustAppend},  // ;
+       },
+       {
+           {'#', "#"},
+           {verilog_tokentype::TK_TimeLiteral, "0ns"},
+           {';', ";"},
+       }},
+
+      // #1step; (delay, 1step)
+      {DefaultStyle,
+       1,
+       {
+           {0, SpacingOptions::Undecided},   // #
+           {0, SpacingOptions::MustAppend},  // 1step
+           {0, SpacingOptions::Undecided},   // ;
+       },
+       {
+           {'#', "#"},
+           {verilog_tokentype::TK_1step, "1step"},
+           {';', ";"},
+       }},
+
+      // default: ;
+      {DefaultStyle,
+       0,
+       {
+           {0, SpacingOptions::Undecided},
+           {0, SpacingOptions::Undecided},
+           {1, SpacingOptions::Undecided},
+       },
+       {
+           {verilog_tokentype::TK_default, "default"},
+           {':', ":"},
+           {';', ";"},
+       }},
+
+      // foo = 1 << bar;
+      {DefaultStyle,
+       0,
+       {
+           {0, SpacingOptions::Undecided},
+           {1, SpacingOptions::Undecided},
+           {1, SpacingOptions::Undecided},
+           {1, SpacingOptions::Undecided},
+           {1, SpacingOptions::Undecided},
+           {0, SpacingOptions::Undecided},
+       },
+       {
+           {verilog_tokentype::SymbolIdentifier, "foo"},
+           {'=', "="},
+           {verilog_tokentype::TK_DecNumber, "1"},
+           {verilog_tokentype::TK_LS, "<<"},
+           {verilog_tokentype::SymbolIdentifier, "bar"},
+           {';', ";"},
+       }},
+
+      // foo = bar << 1;
+      {DefaultStyle,
+       0,
+       {
+           {0, SpacingOptions::Undecided},
+           {1, SpacingOptions::Undecided},
+           {1, SpacingOptions::Undecided},
+           {1, SpacingOptions::Undecided},
+           {1, SpacingOptions::Undecided},
+           {0, SpacingOptions::Undecided},
+       },
+       {
+           {verilog_tokentype::SymbolIdentifier, "foo"},
+           {'=', "="},
+           {verilog_tokentype::SymbolIdentifier, "bar"},
+           {verilog_tokentype::TK_LS, "<<"},
+           {verilog_tokentype::TK_DecNumber, "1"},
+           {';', ";"},
+       }},
+
+      // foo = `BAR << 1;
+      {DefaultStyle,
+       0,
+       {
+           {0, SpacingOptions::Undecided},
+           {1, SpacingOptions::Undecided},
+           {1, SpacingOptions::Undecided},
+           {1, SpacingOptions::Undecided},
+           {1, SpacingOptions::Undecided},
+           {0, SpacingOptions::Undecided},
+       },
+       {
+           {verilog_tokentype::SymbolIdentifier, "foo"},
+           {'=', "="},
+           {verilog_tokentype::MacroIdentifier, "`BAR"},
+           {verilog_tokentype::TK_LS, "<<"},
+           {verilog_tokentype::TK_DecNumber, "1"},
+           {';', ";"},
+       }},
+
+      // foo = 1 << `BAR;
+      {DefaultStyle,
+       0,
+       {
+           {0, SpacingOptions::Undecided},
+           {1, SpacingOptions::Undecided},
+           {1, SpacingOptions::Undecided},
+           {1, SpacingOptions::Undecided},
+           {1, SpacingOptions::Undecided},
+           {0, SpacingOptions::Undecided},
+       },
+       {
+           {verilog_tokentype::SymbolIdentifier, "foo"},
+           {'=', "="},
+           {verilog_tokentype::TK_DecNumber, "1"},
+           {verilog_tokentype::TK_LS, "<<"},
+           {verilog_tokentype::MacroIdentifier, "`BAR"},
+           {';', ";"},
+       }},
+
+      // foo = 1 >> bar;
+      {DefaultStyle,
+       0,
+       {
+           {0, SpacingOptions::Undecided},
+           {1, SpacingOptions::Undecided},
+           {1, SpacingOptions::Undecided},
+           {1, SpacingOptions::Undecided},
+           {1, SpacingOptions::Undecided},
+           {0, SpacingOptions::Undecided},
+       },
+       {
+           {verilog_tokentype::SymbolIdentifier, "foo"},
+           {'=', "="},
+           {verilog_tokentype::TK_DecNumber, "1"},
+           {verilog_tokentype::TK_RS, ">>"},
+           {verilog_tokentype::SymbolIdentifier, "bar"},
+           {';', ";"},
+       }},
+
+      // foo = bar >> 1;
+      {DefaultStyle,
+       0,
+       {
+           {0, SpacingOptions::Undecided},
+           {1, SpacingOptions::Undecided},
+           {1, SpacingOptions::Undecided},
+           {1, SpacingOptions::Undecided},
+           {1, SpacingOptions::Undecided},
+           {0, SpacingOptions::Undecided},
+       },
+       {
+           {verilog_tokentype::SymbolIdentifier, "foo"},
+           {'=', "="},
+           {verilog_tokentype::SymbolIdentifier, "bar"},
+           {verilog_tokentype::TK_RS, ">>"},
+           {verilog_tokentype::TK_DecNumber, "1"},
+           {';', ";"},
+       }},
+
+      // foo = `BAR >> 1;
+      {DefaultStyle,
+       0,
+       {
+           {0, SpacingOptions::Undecided},
+           {1, SpacingOptions::Undecided},
+           {1, SpacingOptions::Undecided},
+           {1, SpacingOptions::Undecided},
+           {1, SpacingOptions::Undecided},
+           {0, SpacingOptions::Undecided},
+       },
+       {
+           {verilog_tokentype::SymbolIdentifier, "foo"},
+           {'=', "="},
+           {verilog_tokentype::MacroIdentifier, "`BAR"},
+           {verilog_tokentype::TK_RS, ">>"},
+           {verilog_tokentype::TK_DecNumber, "1"},
+           {';', ";"},
+       }},
+
+      // foo = 1 >> `BAR;
+      {DefaultStyle,
+       0,
+       {
+           {0, SpacingOptions::Undecided},
+           {1, SpacingOptions::Undecided},
+           {1, SpacingOptions::Undecided},
+           {1, SpacingOptions::Undecided},
+           {1, SpacingOptions::Undecided},
+           {0, SpacingOptions::Undecided},
+       },
+       {
+           {verilog_tokentype::SymbolIdentifier, "foo"},
+           {'=', "="},
+           {verilog_tokentype::TK_DecNumber, "1"},
+           {verilog_tokentype::TK_RS, ">>"},
+           {verilog_tokentype::MacroIdentifier, "`BAR"},
+           {';', ";"},
+       }},
+  };
 
   int test_index = 0;
   for (const auto& test_case : kTestCases) {
@@ -1828,8 +1827,7 @@ TEST(TokenAnnotatorTest, AnnotateFormattingInfoTest) {
                                   handler.EOFToken(), &ftokens_range);
     EXPECT_TRUE(CorrectExpectedFormatTokens(test_case.expected_calculations,
                                             ftokens_range))
-        << "mismatch at test case " << test_index << " of " << kTestCases.size()
-        << ", tokens " << test_case;
+        << "mismatch at test case " << test_index << ", tokens " << test_case;
     ++test_index;
   }
 }  // NOLINT(readability/fn_size)
@@ -1837,7 +1835,7 @@ TEST(TokenAnnotatorTest, AnnotateFormattingInfoTest) {
 // These test cases support the use of syntactic context, but it is not
 // required to specify context.
 TEST(TokenAnnotatorTest, AnnotateFormattingWithContextTest) {
-  const std::initializer_list<AnnotateWithContextTestCase> kTestCases = {
+  const AnnotateWithContextTestCase kTestCases[] = {
       {
           DefaultStyle,
           {'=', "="},
@@ -4524,6 +4522,78 @@ TEST(TokenAnnotatorTest, AnnotateFormattingWithContextTest) {
           {/* any context */},
           {1, SpacingOptions::Undecided},
       },
+      {
+          DefaultStyle,
+          {verilog_tokentype::TK_EOL_COMMENT, "//comment"},
+          {verilog_tokentype::TK_LINE_CONT, "\\"},
+          {/* any context */},
+          {/* any context */},
+          {0, SpacingOptions::MustAppend},
+      },
+      {
+          DefaultStyle,
+          {verilog_tokentype::TK_COMMENT_BLOCK, "/*comment*/"},
+          {verilog_tokentype::TK_LINE_CONT, "\\"},
+          {/* any context */},
+          {/* any context */},
+          {0, SpacingOptions::MustAppend},
+      },
+      {
+          DefaultStyle,
+          {verilog_tokentype::SymbolIdentifier, "id"},
+          {verilog_tokentype::TK_LINE_CONT, "\\"},
+          {/* any context */},
+          {/* any context */},
+          {0, SpacingOptions::MustAppend},
+      },
+      {
+          DefaultStyle,
+          {verilog_tokentype::EscapedIdentifier, "\\id.id[9]"},
+          {verilog_tokentype::TK_LINE_CONT, "\\"},
+          {/* any context */},
+          {/* any context */},
+          {1, SpacingOptions::MustAppend},
+      },
+      {
+          DefaultStyle,
+          {verilog_tokentype::TK_DecNumber, "77"},
+          {verilog_tokentype::TK_LINE_CONT, "\\"},
+          {/* any context */},
+          {/* any context */},
+          {0, SpacingOptions::MustAppend},
+      },
+      {
+          DefaultStyle,
+          {')', ")"},
+          {verilog_tokentype::TK_LINE_CONT, "\\"},
+          {/* any context */},
+          {/* any context */},
+          {0, SpacingOptions::MustAppend},
+      },
+      {
+          DefaultStyle,
+          {'}', "}"},
+          {verilog_tokentype::TK_LINE_CONT, "\\"},
+          {/* any context */},
+          {/* any context */},
+          {0, SpacingOptions::MustAppend},
+      },
+      {
+          DefaultStyle,
+          {']', "]"},
+          {verilog_tokentype::TK_LINE_CONT, "\\"},
+          {/* any context */},
+          {/* any context */},
+          {0, SpacingOptions::MustAppend},
+      },
+      {
+          DefaultStyle,
+          {verilog_tokentype::TK_LINE_CONT, "\\"},
+          {verilog_tokentype::SymbolIdentifier, "id"},
+          {/* any context */},
+          {/* any context */},
+          {0, SpacingOptions::MustWrap},
+      },
   };
   int test_index = 0;
   for (const auto& test_case : kTestCases) {
@@ -4566,359 +4636,378 @@ struct AnnotateBreakAroundCommentsTestCase {
 };
 
 TEST(TokenAnnotatorTest, AnnotateBreakAroundComments) {
-  const std::initializer_list<AnnotateBreakAroundCommentsTestCase> kTestCases =
+  const AnnotateBreakAroundCommentsTestCase kTestCases[] = {
+      {// No comments
+       DefaultStyle,
+       '=',  // left token
+       "=",
+       "   ",                            // whitespace between
+       verilog_tokentype::TK_DecNumber,  // right token
+       "0",
+       {/* unspecified context */},
+       {1, SpacingOptions::Undecided}},
+      {// //comment1
+       // //comment2
+       DefaultStyle,
+       verilog_tokentype::TK_EOL_COMMENT,
+       "//comment1",
+       "\n",
+       verilog_tokentype::TK_EOL_COMMENT,
+       "//comment2",
+       {},
+       {2, SpacingOptions::MustWrap}},
+      {// 0 // comment
+       DefaultStyle,
+       verilog_tokentype::TK_DecNumber,
+       "0",
+       "   ",
+       verilog_tokentype::TK_EOL_COMMENT,
+       "// comment",
+       {/* unspecified context */},
+       {2, SpacingOptions::MustAppend}},
+      {// 0// comment
+       DefaultStyle,
+       verilog_tokentype::TK_DecNumber,
+       "0",
+       "",
+       verilog_tokentype::TK_EOL_COMMENT,
+       "// comment",
+       {/* unspecified context */},
+       {2, SpacingOptions::MustAppend}},
+      {// 0 \n  // comment
+       DefaultStyle,
+       verilog_tokentype::TK_DecNumber,
+       "0",
+       " \n  ",
+       verilog_tokentype::TK_EOL_COMMENT,
+       "// comment",
+       {/* unspecified context */},
+       {2, SpacingOptions::Undecided}},
+      {// // comment 1 \n  // comment 2
+       DefaultStyle,
+       verilog_tokentype::TK_EOL_COMMENT,
+       "// comment 1",
+       " \n  ",
+       verilog_tokentype::TK_EOL_COMMENT,
+       "// comment 2",
+       {/* unspecified context */},
+       {2, SpacingOptions::MustWrap}},
+      {// /* comment 1 */ \n  // comment 2
+       DefaultStyle,
+       verilog_tokentype::TK_COMMENT_BLOCK,
+       "/* comment 1 */",
+       " \n  ",
+       verilog_tokentype::TK_EOL_COMMENT,
+       "// comment 2",
+       {/* unspecified context */},
+       {2, SpacingOptions::Undecided}},
+      {// /* comment 1 */  // comment 2
+       DefaultStyle,
+       verilog_tokentype::TK_COMMENT_BLOCK,
+       "/* comment 1 */",
+       " ",
+       verilog_tokentype::TK_EOL_COMMENT,
+       "// comment 2",
+       {/* unspecified context */},
+       {2, SpacingOptions::MustAppend}},
+      {// ;  // comment 2
+       DefaultStyle,
+       ';',
+       ";",
+       " ",
+       verilog_tokentype::TK_EOL_COMMENT,
+       "// comment 2",
+       {/* unspecified context */},
+       {2, SpacingOptions::MustAppend}},
+      {// ; \n // comment 2
+       DefaultStyle,
+       ';',
+       ";",
+       " \n",
+       verilog_tokentype::TK_EOL_COMMENT,
+       "// comment 2",
+       {/* unspecified context */},
+       {2, SpacingOptions::Undecided}},
+      {// ,  // comment 2
+       DefaultStyle,
+       ',',
+       ",",
+       " ",
+       verilog_tokentype::TK_EOL_COMMENT,
+       "// comment 2",
+       {/* unspecified context */},
+       {2, SpacingOptions::MustAppend}},
+      {// , \n // comment 2
+       DefaultStyle,
+       ',',
+       ",",
+       "\n ",
+       verilog_tokentype::TK_EOL_COMMENT,
+       "// comment 2",
+       {/* unspecified context */},
+       {2, SpacingOptions::Undecided}},
+      {// begin  // comment 2
+       DefaultStyle,
+       verilog_tokentype::TK_begin,
+       "begin",
+       " ",
+       verilog_tokentype::TK_EOL_COMMENT,
+       "// comment 2",
+       {/* unspecified context */},
+       {2, SpacingOptions::MustAppend}},
+      {// begin \n // comment 2
+       DefaultStyle,
+       verilog_tokentype::TK_begin,
+       "begin",
+       "\n",
+       verilog_tokentype::TK_EOL_COMMENT,
+       "// comment 2",
+       {/* unspecified context */},
+       {2, SpacingOptions::Undecided}},
+      {// else  // comment 2
+       DefaultStyle,
+       verilog_tokentype::TK_else,
+       "else",
+       " ",
+       verilog_tokentype::TK_EOL_COMMENT,
+       "// comment 2",
+       {/* unspecified context */},
+       {2, SpacingOptions::MustAppend}},
+      {// else \n // comment 2
+       DefaultStyle,
+       verilog_tokentype::TK_else,
+       "else",
+       " \n  ",
+       verilog_tokentype::TK_EOL_COMMENT,
+       "// comment 2",
+       {/* unspecified context */},
+       {2, SpacingOptions::Undecided}},
+      {// end  // comment 2
+       DefaultStyle,
+       verilog_tokentype::TK_end,
+       "end",
+       " ",
+       verilog_tokentype::TK_EOL_COMMENT,
+       "// comment 2",
+       {/* unspecified context */},
+       {2, SpacingOptions::MustAppend}},
+      {// end \n // comment 2
+       DefaultStyle,
+       verilog_tokentype::TK_end,
+       "end",
+       "  \n ",
+       verilog_tokentype::TK_EOL_COMMENT,
+       "// comment 2",
+       {/* unspecified context */},
+       {2, SpacingOptions::Undecided}},
+      {// generate  // comment 2
+       DefaultStyle,
+       verilog_tokentype::TK_generate,
+       "generate",
+       " ",
+       verilog_tokentype::TK_EOL_COMMENT,
+       "// comment 2",
+       {/* unspecified context */},
+       {2, SpacingOptions::MustAppend}},
+      {// generate \n // comment 2
+       DefaultStyle,
+       verilog_tokentype::TK_generate,
+       "generate",
+       "  \n",
+       verilog_tokentype::TK_EOL_COMMENT,
+       "// comment 2",
+       {/* unspecified context */},
+       {2, SpacingOptions::Undecided}},
+      {// if  // comment 2
+       DefaultStyle,
+       verilog_tokentype::TK_if,
+       "if",
+       " ",
+       verilog_tokentype::TK_EOL_COMMENT,
+       "// comment 2",
+       {/* unspecified context */},
+       {2, SpacingOptions::MustAppend}},
+      {// if \n\n // comment 2
+       DefaultStyle,
+       verilog_tokentype::TK_if,
+       "if",
+       " \n\n ",
+       verilog_tokentype::TK_EOL_COMMENT,
+       "// comment 2",
+       {/* unspecified context */},
+       {2, SpacingOptions::Undecided}},
       {
-          {// No comments
-           DefaultStyle,
-           '=',  // left token
-           "=",
-           "   ",                            // whitespace between
-           verilog_tokentype::TK_DecNumber,  // right token
-           "0",
-           {/* unspecified context */},
-           {1, SpacingOptions::Undecided}},
-          {// //comment1
-           // //comment2
-           DefaultStyle,
-           verilog_tokentype::TK_EOL_COMMENT,
-           "//comment1",
-           "\n",
-           verilog_tokentype::TK_EOL_COMMENT,
-           "//comment2",
-           {},
-           {2, SpacingOptions::MustWrap}},
-          {// 0 // comment
-           DefaultStyle,
-           verilog_tokentype::TK_DecNumber,
-           "0",
-           "   ",
-           verilog_tokentype::TK_EOL_COMMENT,
-           "// comment",
-           {/* unspecified context */},
-           {2, SpacingOptions::MustAppend}},
-          {// 0// comment
-           DefaultStyle,
-           verilog_tokentype::TK_DecNumber,
-           "0",
-           "",
-           verilog_tokentype::TK_EOL_COMMENT,
-           "// comment",
-           {/* unspecified context */},
-           {2, SpacingOptions::MustAppend}},
-          {// 0 \n  // comment
-           DefaultStyle,
-           verilog_tokentype::TK_DecNumber,
-           "0",
-           " \n  ",
-           verilog_tokentype::TK_EOL_COMMENT,
-           "// comment",
-           {/* unspecified context */},
-           {2, SpacingOptions::Undecided}},
-          {// // comment 1 \n  // comment 2
-           DefaultStyle,
-           verilog_tokentype::TK_EOL_COMMENT,
-           "// comment 1",
-           " \n  ",
-           verilog_tokentype::TK_EOL_COMMENT,
-           "// comment 2",
-           {/* unspecified context */},
-           {2, SpacingOptions::MustWrap}},
-          {// /* comment 1 */ \n  // comment 2
-           DefaultStyle,
-           verilog_tokentype::TK_COMMENT_BLOCK,
-           "/* comment 1 */",
-           " \n  ",
-           verilog_tokentype::TK_EOL_COMMENT,
-           "// comment 2",
-           {/* unspecified context */},
-           {2, SpacingOptions::Undecided}},
-          {// /* comment 1 */  // comment 2
-           DefaultStyle,
-           verilog_tokentype::TK_COMMENT_BLOCK,
-           "/* comment 1 */",
-           " ",
-           verilog_tokentype::TK_EOL_COMMENT,
-           "// comment 2",
-           {/* unspecified context */},
-           {2, SpacingOptions::MustAppend}},
-          {// ;  // comment 2
-           DefaultStyle,
-           ';',
-           ";",
-           " ",
-           verilog_tokentype::TK_EOL_COMMENT,
-           "// comment 2",
-           {/* unspecified context */},
-           {2, SpacingOptions::MustAppend}},
-          {// ; \n // comment 2
-           DefaultStyle,
-           ';',
-           ";",
-           " \n",
-           verilog_tokentype::TK_EOL_COMMENT,
-           "// comment 2",
-           {/* unspecified context */},
-           {2, SpacingOptions::Undecided}},
-          {// ,  // comment 2
-           DefaultStyle,
-           ',',
-           ",",
-           " ",
-           verilog_tokentype::TK_EOL_COMMENT,
-           "// comment 2",
-           {/* unspecified context */},
-           {2, SpacingOptions::MustAppend}},
-          {// , \n // comment 2
-           DefaultStyle,
-           ',',
-           ",",
-           "\n ",
-           verilog_tokentype::TK_EOL_COMMENT,
-           "// comment 2",
-           {/* unspecified context */},
-           {2, SpacingOptions::Undecided}},
-          {// begin  // comment 2
-           DefaultStyle,
-           verilog_tokentype::TK_begin,
-           "begin",
-           " ",
-           verilog_tokentype::TK_EOL_COMMENT,
-           "// comment 2",
-           {/* unspecified context */},
-           {2, SpacingOptions::MustAppend}},
-          {// begin \n // comment 2
-           DefaultStyle,
-           verilog_tokentype::TK_begin,
-           "begin",
-           "\n",
-           verilog_tokentype::TK_EOL_COMMENT,
-           "// comment 2",
-           {/* unspecified context */},
-           {2, SpacingOptions::Undecided}},
-          {// else  // comment 2
-           DefaultStyle,
-           verilog_tokentype::TK_else,
-           "else",
-           " ",
-           verilog_tokentype::TK_EOL_COMMENT,
-           "// comment 2",
-           {/* unspecified context */},
-           {2, SpacingOptions::MustAppend}},
-          {// else \n // comment 2
-           DefaultStyle,
-           verilog_tokentype::TK_else,
-           "else",
-           " \n  ",
-           verilog_tokentype::TK_EOL_COMMENT,
-           "// comment 2",
-           {/* unspecified context */},
-           {2, SpacingOptions::Undecided}},
-          {// end  // comment 2
-           DefaultStyle,
-           verilog_tokentype::TK_end,
-           "end",
-           " ",
-           verilog_tokentype::TK_EOL_COMMENT,
-           "// comment 2",
-           {/* unspecified context */},
-           {2, SpacingOptions::MustAppend}},
-          {// end \n // comment 2
-           DefaultStyle,
-           verilog_tokentype::TK_end,
-           "end",
-           "  \n ",
-           verilog_tokentype::TK_EOL_COMMENT,
-           "// comment 2",
-           {/* unspecified context */},
-           {2, SpacingOptions::Undecided}},
-          {// generate  // comment 2
-           DefaultStyle,
-           verilog_tokentype::TK_generate,
-           "generate",
-           " ",
-           verilog_tokentype::TK_EOL_COMMENT,
-           "// comment 2",
-           {/* unspecified context */},
-           {2, SpacingOptions::MustAppend}},
-          {// generate \n // comment 2
-           DefaultStyle,
-           verilog_tokentype::TK_generate,
-           "generate",
-           "  \n",
-           verilog_tokentype::TK_EOL_COMMENT,
-           "// comment 2",
-           {/* unspecified context */},
-           {2, SpacingOptions::Undecided}},
-          {// if  // comment 2
-           DefaultStyle,
-           verilog_tokentype::TK_if,
-           "if",
-           " ",
-           verilog_tokentype::TK_EOL_COMMENT,
-           "// comment 2",
-           {/* unspecified context */},
-           {2, SpacingOptions::MustAppend}},
-          {// if \n\n // comment 2
-           DefaultStyle,
-           verilog_tokentype::TK_if,
-           "if",
-           " \n\n ",
-           verilog_tokentype::TK_EOL_COMMENT,
-           "// comment 2",
-           {/* unspecified context */},
-           {2, SpacingOptions::Undecided}},
-          {
-              DefaultStyle,
-              verilog_tokentype::MacroCallCloseToEndLine,
-              ")",
-              " ",
-              verilog_tokentype::TK_COMMENT_BLOCK,
-              "/*comment*/",
-              {/* unspecified context */},
-              {2, SpacingOptions::Undecided},  // could be append
-          },
-          {
-              DefaultStyle,
-              verilog_tokentype::MacroCallCloseToEndLine,
-              ")",
-              "\n",
-              verilog_tokentype::TK_COMMENT_BLOCK,
-              "/*comment*/",
-              {/* unspecified context */},
-              {2, SpacingOptions::Undecided},
-          },
-          {
-              DefaultStyle,
-              verilog_tokentype::MacroCallCloseToEndLine,
-              ")",
-              " ",
-              verilog_tokentype::TK_EOL_COMMENT,
-              "//comment",
-              {/* unspecified context */},
-              {2, SpacingOptions::MustAppend},
-          },
-          {
-              DefaultStyle,
-              verilog_tokentype::MacroCallCloseToEndLine,
-              ")",
-              "\n",
-              verilog_tokentype::TK_EOL_COMMENT,
-              "//comment",
-              {/* unspecified context */},
-              {2, SpacingOptions::Undecided},
-          },
-          // Comments in UDP entries
-          {
-              // 1  /*comment*/ 0 : -;
-              DefaultStyle,
-              '1',
-              "1",
-              "",
-              verilog_tokentype::TK_COMMENT_BLOCK,
-              "/* comment */",
-              {NodeEnum::kUdpCombEntry},
-              {2, SpacingOptions::Undecided},
-          },
-          {
-              // 1  /*comment*/ 0 : -;
-              DefaultStyle,
-              verilog_tokentype::TK_COMMENT_BLOCK,
-              "/* comment */",
-              "",
-              '0',
-              "0",
-              {NodeEnum::kUdpCombEntry},
-              {1, SpacingOptions::Undecided},
-          },
-          {
-              // 1 0  // comment\n : -;
-              DefaultStyle,
-              '0',
-              "0",
-              "",
-              verilog_tokentype::TK_EOL_COMMENT,
-              "// comment",
-              {NodeEnum::kUdpCombEntry},
-              {2, SpacingOptions::MustAppend},
-          },
-          {
-              // 1  /*comment*/ 0 : -;
-              DefaultStyle,
-              '1',
-              "1",
-              "",
-              verilog_tokentype::TK_COMMENT_BLOCK,
-              "/* comment */",
-              {NodeEnum::kUdpSequenceEntry},
-              {2, SpacingOptions::Undecided},
-          },
-          {
-              // 1  /*comment*/ 0 : -;
-              DefaultStyle,
-              verilog_tokentype::TK_COMMENT_BLOCK,
-              "/* comment */",
-              "",
-              '0',
-              "0",
-              {NodeEnum::kUdpSequenceEntry},
-              {1, SpacingOptions::Undecided},
-          },
-          {
-              // 1 0  // comment\n : -;
-              DefaultStyle,
-              '0',
-              "0",
-              "",
-              verilog_tokentype::TK_EOL_COMMENT,
-              "// comment",
-              {NodeEnum::kUdpSequenceEntry},
-              {2, SpacingOptions::MustAppend},
-          },
-          {
-              // input  /* comment */ i;
-              DefaultStyle,
-              verilog_tokentype::TK_input,
-              "input",
-              "",
-              verilog_tokentype::TK_COMMENT_BLOCK,
-              "/* comment */",
-              {NodeEnum::kUdpPortDeclaration},
-              {2, SpacingOptions::Undecided},
-          },
-          {
-              // input  /* comment */ i;
-              DefaultStyle,
-              verilog_tokentype::TK_COMMENT_BLOCK,
-              "/* comment */",
-              "",
-              verilog_tokentype::SymbolIdentifier,
-              "i",
-              {NodeEnum::kUdpPortDeclaration},
-              {1, SpacingOptions::Undecided},
-          },
-          {
-              // input i  /* comment */;
-              DefaultStyle,
-              verilog_tokentype::SymbolIdentifier,
-              "i",
-              "",
-              verilog_tokentype::TK_COMMENT_BLOCK,
-              "/* comment */",
-              {NodeEnum::kUdpPortDeclaration},
-              {2, SpacingOptions::Undecided},
-          },
-          {
-              // input i;  // comment\n
-              DefaultStyle,
-              ';',
-              ";",
-              "",
-              verilog_tokentype::TK_EOL_COMMENT,
-              "// comment",
-              {NodeEnum::kUdpPortDeclaration},
-              {2, SpacingOptions::MustAppend},
-          },
-      };
+          DefaultStyle,
+          verilog_tokentype::TK_LINE_CONT,
+          "\\",
+          "\n",
+          verilog_tokentype::TK_EOL_COMMENT,
+          "//comment",
+          {/* any context */},
+          {0, SpacingOptions::MustWrap},
+      },
+      {
+          DefaultStyle,
+          verilog_tokentype::TK_LINE_CONT,
+          "\\",
+          "\n",
+          verilog_tokentype::TK_COMMENT_BLOCK,
+          "/*comment*/",
+          {/* any context */},
+          {0, SpacingOptions::MustWrap},
+      },
+      {
+          DefaultStyle,
+          verilog_tokentype::MacroCallCloseToEndLine,
+          ")",
+          " ",
+          verilog_tokentype::TK_COMMENT_BLOCK,
+          "/*comment*/",
+          {/* unspecified context */},
+          {2, SpacingOptions::Undecided},  // could be append
+      },
+      {
+          DefaultStyle,
+          verilog_tokentype::MacroCallCloseToEndLine,
+          ")",
+          "\n",
+          verilog_tokentype::TK_COMMENT_BLOCK,
+          "/*comment*/",
+          {/* unspecified context */},
+          {2, SpacingOptions::Undecided},
+      },
+      {
+          DefaultStyle,
+          verilog_tokentype::MacroCallCloseToEndLine,
+          ")",
+          " ",
+          verilog_tokentype::TK_EOL_COMMENT,
+          "//comment",
+          {/* unspecified context */},
+          {2, SpacingOptions::MustAppend},
+      },
+      {
+          DefaultStyle,
+          verilog_tokentype::MacroCallCloseToEndLine,
+          ")",
+          "\n",
+          verilog_tokentype::TK_EOL_COMMENT,
+          "//comment",
+          {/* unspecified context */},
+          {2, SpacingOptions::Undecided},
+      },
+      // Comments in UDP entries
+      {
+          // 1  /*comment*/ 0 : -;
+          DefaultStyle,
+          '1',
+          "1",
+          "",
+          verilog_tokentype::TK_COMMENT_BLOCK,
+          "/* comment */",
+          {NodeEnum::kUdpCombEntry},
+          {2, SpacingOptions::Undecided},
+      },
+      {
+          // 1  /*comment*/ 0 : -;
+          DefaultStyle,
+          verilog_tokentype::TK_COMMENT_BLOCK,
+          "/* comment */",
+          "",
+          '0',
+          "0",
+          {NodeEnum::kUdpCombEntry},
+          {1, SpacingOptions::Undecided},
+      },
+      {
+          // 1 0  // comment\n : -;
+          DefaultStyle,
+          '0',
+          "0",
+          "",
+          verilog_tokentype::TK_EOL_COMMENT,
+          "// comment",
+          {NodeEnum::kUdpCombEntry},
+          {2, SpacingOptions::MustAppend},
+      },
+      {
+          // 1  /*comment*/ 0 : -;
+          DefaultStyle,
+          '1',
+          "1",
+          "",
+          verilog_tokentype::TK_COMMENT_BLOCK,
+          "/* comment */",
+          {NodeEnum::kUdpSequenceEntry},
+          {2, SpacingOptions::Undecided},
+      },
+      {
+          // 1  /*comment*/ 0 : -;
+          DefaultStyle,
+          verilog_tokentype::TK_COMMENT_BLOCK,
+          "/* comment */",
+          "",
+          '0',
+          "0",
+          {NodeEnum::kUdpSequenceEntry},
+          {1, SpacingOptions::Undecided},
+      },
+      {
+          // 1 0  // comment\n : -;
+          DefaultStyle,
+          '0',
+          "0",
+          "",
+          verilog_tokentype::TK_EOL_COMMENT,
+          "// comment",
+          {NodeEnum::kUdpSequenceEntry},
+          {2, SpacingOptions::MustAppend},
+      },
+      {
+          // input  /* comment */ i;
+          DefaultStyle,
+          verilog_tokentype::TK_input,
+          "input",
+          "",
+          verilog_tokentype::TK_COMMENT_BLOCK,
+          "/* comment */",
+          {NodeEnum::kUdpPortDeclaration},
+          {2, SpacingOptions::Undecided},
+      },
+      {
+          // input  /* comment */ i;
+          DefaultStyle,
+          verilog_tokentype::TK_COMMENT_BLOCK,
+          "/* comment */",
+          "",
+          verilog_tokentype::SymbolIdentifier,
+          "i",
+          {NodeEnum::kUdpPortDeclaration},
+          {1, SpacingOptions::Undecided},
+      },
+      {
+          // input i  /* comment */;
+          DefaultStyle,
+          verilog_tokentype::SymbolIdentifier,
+          "i",
+          "",
+          verilog_tokentype::TK_COMMENT_BLOCK,
+          "/* comment */",
+          {NodeEnum::kUdpPortDeclaration},
+          {2, SpacingOptions::Undecided},
+      },
+      {
+          // input i;  // comment\n
+          DefaultStyle,
+          ';',
+          ";",
+          "",
+          verilog_tokentype::TK_EOL_COMMENT,
+          "// comment",
+          {NodeEnum::kUdpPortDeclaration},
+          {2, SpacingOptions::MustAppend},
+      },
+  };
   int test_index = 0;
   for (const auto& test_case : kTestCases) {
     VLOG(1) << "test_index[" << test_index << "]:";

@@ -229,6 +229,7 @@ static const std::initializer_list<FormatterTestCase> kFormatterTestCases = {
         "`define FOO \\\n"
         " 1\n"  // TODO(b/141517267): Reflowing macro definitions
     },
+    {"    // comment with backslash\\\n", "// comment with backslash\\\n"},
     {// macro with MacroArg tokens as arguments
      "`FOOOOOO(\nbar1...\n,\nbar2...\n,\nbar3...\n,\nbar4\n)\n",
      "`FOOOOOO(bar1..., bar2..., bar3...,\n"
@@ -558,6 +559,12 @@ static const std::initializer_list<FormatterTestCase> kFormatterTestCases = {
     {
         "  parameter  int   foo=bar [ a+b ] ;",  // binary inside index expr
         "parameter int foo = bar[a + b];\n",
+    },
+    {
+        // with line continuations
+        "  parameter  \\\nint   \\\nfoo=a+ \\\nb ;",
+        "parameter\\\n    int\\\n    foo = a +\\\n    b;\n",
+        // TODO(fangism): should text following a line continuation hang-indent?
     },
     // unary prefix expressions
     {
