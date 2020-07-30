@@ -246,11 +246,10 @@ static void DeterminePartitionExpansion(partition_node_type* node,
   // If any children are expanded, then this node must be expanded,
   // regardless of the UnwrappedLine's chosen policy.
   // Thus, this function must be executed with a post-order traversal.
-  const auto iter = std::find_if(children.begin(), children.end(),
-                                 [](const partition_node_type& child) {
-                                   return child.Value().IsExpanded();
-                                 });
-  if (iter != children.end()) {
+  if (std::any_of(children.begin(), children.end(),
+                  [](const partition_node_type& child) {
+                    return child.Value().IsExpanded();
+                  })) {
     VLOG(3) << "Child forces parent to expand.";
     node_view.Expand();
     return;
