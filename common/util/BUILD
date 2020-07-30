@@ -48,6 +48,18 @@ cc_library(
 )
 
 cc_library(
+    name = "subcommand",
+    srcs = ["subcommand.cc"],
+    hdrs = ["subcommand.h"],
+    deps = [
+        ":container_iterator_range",
+        "//common/strings:compare",
+        "@com_google_absl//absl/status",
+        "@com_google_absl//absl/strings",
+    ],
+)
+
+cc_library(
     name = "file_util",
     srcs = ["file_util.cc"],
     hdrs = ["file_util.h"],
@@ -363,6 +375,16 @@ cc_test(
     srcs = ["spacer_test.cc"],
     deps = [
         ":spacer",
+        "@com_google_googletest//:gtest_main",
+    ],
+)
+
+cc_test(
+    name = "subcommand_test",
+    srcs = ["subcommand_test.cc"],
+    deps = [
+        ":subcommand",
+        "@com_google_absl//absl/strings",
         "@com_google_googletest//:gtest_main",
     ],
 )
