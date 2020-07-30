@@ -117,6 +117,7 @@ SystemTFIdentifier "$"{BasicIdentifier}
 /* white space */
 LineTerminator \r|\n|\r\n
 InputCharacter [^\r\n\0]
+InputCharacterNoBackslash [^\\\r\n\0]
 Space [ \t\f\b]
 /*
  * To better track line numbers, LineTerminator is handled separately from Space.
@@ -256,7 +257,16 @@ PragmaEndProtected {Pragma}{Space}+protect{Space}+end_protected
   yymore();
 }
 <IN_EOL_COMMENT>{
-  {InputCharacter}* {
+  {LineContinuation} {
+    yyless(yyleng-2);  /* return \\\n to input stream */
+    UpdateLocation();
+    yy_pop_state();
+    return TK_EOL_COMMENT;
+  }
+  {InputCharacterNoBackslash}* {
+    yymore();
+  }
+  "\\" {
     yymore();
   }
   {LineTerminator} {

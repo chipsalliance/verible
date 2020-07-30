@@ -98,6 +98,9 @@ static const char* kLexerFilterTests[] = {
     "parameter \tfoo =\t\t0;",
     "parameter\n\nfoo =\n 0;",
     "parameter \\\nfoo =\\\n 0;",
+    "//comment with line-continuation\\\n",
+    "//comment1 with line-continuation\\\n"
+    "//comment2 with line-continuation\\\n",
 };
 
 // Numbers are parsed as ([width], [signed]base, digits)

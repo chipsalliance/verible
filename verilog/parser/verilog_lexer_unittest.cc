@@ -1375,6 +1375,19 @@ static std::initializer_list<LexerTestData> kTrickyTests = {
      {TK_NEWLINE, "\n"},
      {SymbolIdentifier, "BAR"},
      ';'},
+    {
+        {TK_EOL_COMMENT, "//FOO"},
+        {TK_LINE_CONT, "\\"},
+        {TK_NEWLINE, "\n"},
+    },
+    {
+        {TK_EOL_COMMENT, "//FOO"},
+        {TK_LINE_CONT, "\\"},
+        {TK_NEWLINE, "\n"},
+        {TK_EOL_COMMENT, "//BAR  "},
+        {TK_LINE_CONT, "\\"},
+        {TK_NEWLINE, "\n"},
+    },
 };
 
 // make sure these are lexed as separate tokens
