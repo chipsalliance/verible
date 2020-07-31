@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "third_party/verible/external/editscript.h"
+#include "external_libs/editscript.h"
 
 #include <cstring>
 #include <iostream>
