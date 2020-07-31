@@ -2082,7 +2082,17 @@ static std::initializer_list<LexerTestData> kLexicalErrorTests = {
     {{TK_wire, "wire"}, " ", {TK_OTHER, "111wire"}, {';', ";"}},
     {{TK_OTHER, "`111macro"}, "\n"},
     {{TK_OTHER, "`111macrocall"}, {'(', "("}, {')', ")"}, "\n"},
-    {{TK_OTHER, "` "}, {SymbolIdentifier, "spacebad"}, "\n"},
+    {{TK_OTHER, "`"}},
+    {{TK_OTHER, "`"}, " "},
+    {{TK_OTHER, "`"}, "\t"},
+    {{TK_OTHER, "`"}, "\n"},
+    {{TK_OTHER, "`"}, {TK_EOL_COMMENT, "//"}, "\n"},
+    {{TK_OTHER, "`"}, {TK_COMMENT_BLOCK, "/* */"}},
+    {{TK_OTHER, "`"}, {TK_DecNumber, "11"}},
+    {{TK_OTHER, "`"}, " ", {SymbolIdentifier, "spacebad"}, "\n"},
+    // double-tick: token concatenation is only valid inside macro definitions
+    // TODO(fangism): support this in recursive lexing
+    {{TK_OTHER, "`"}, {TK_OTHER, "`"}},
     {{TK_OTHER, "\""}, "\n"},
     {{TK_OTHER, "\"unterminated string literal"}},
     {{TK_OTHER, "\"unterminated string literal"}, "\n"},

@@ -1356,8 +1356,6 @@ zi_zp { UpdateLocation(); return TK_zi_zp; }
   /* Do macro default values need {EvalStringLiteral}? */
 }  /* <PP_MACRO_DEFAULT> */
 
-`{Space} { UpdateLocation(); return TK_OTHER; /* should be an error */ }
-
 <MACRO_CALL_EXPECT_OPEN>{
   {Space}+ {
     UpdateLocation();
@@ -1566,6 +1564,8 @@ zi_zp { UpdateLocation(); return TK_zi_zp; }
 }  /* <AFTER_DOT> */
 
 {RejectChar} { UpdateLocation(); return TK_OTHER; }
+
+` { UpdateLocation(); return TK_OTHER; /* tick should never be alone */ }
 
   /* All other single-character tokens */
 . { UpdateLocation(); return yytext[0]; }

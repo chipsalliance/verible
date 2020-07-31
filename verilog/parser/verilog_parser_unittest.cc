@@ -85,12 +85,19 @@ static const char* kPreprocessorTests[] = {
     "    a, b=\"(3,2)\", c=(3,2)) \\\n"  // parameters with defaults
     "a + b /c +345\n",
     // escaped identifier macro call argument
-    "`FOO(\\BAR )\n",
-    "`FOO(\\BAR\t)\n",
-    "`FOO(\\BAR\n)\n",
-    "`FOO(\\BAR.BAZ )\n",
-    "`FOO(\\BAR , \\BAZ )\n",
-    "`WE(`MUST(`GO(\\deeper )))\n",
+    "`FOO(\\BAR )\n",                //
+    "`FOO(\\BAR\t)\n",               //
+    "`FOO(\\BAR\n)\n",               //
+    "`FOO(\\BAR.BAZ )\n",            //
+    "`FOO(\\BAR , \\BAZ )\n",        //
+    "`WE(`MUST(`GO(\\deeper )))\n",  //
+    "`MACRO()\n",                    //
+    "`MACRO(123badid)\n",  // call arg contains a lexical error, but remains
+                           // unlexed
+    "`MACRO(`)\n",   // call arg contains a lexical error, but remains unlexed
+    "`MACRO(` )\n",  // call arg contains a lexical error, but remains unlexed
+    "`MACRO(`DEEPER(`))\n",  // call arg contains a lexical error, but remains
+                             // unlexed
 };
 
 // Make sure line continuations, newlines and spaces get filtered out
