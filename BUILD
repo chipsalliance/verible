@@ -24,6 +24,7 @@ installer(
         "//verilog/tools/lint:verible-verilog-lint",
         "//verilog/tools/obfuscator:verible-verilog-obfuscate",
         "//verilog/tools/syntax:verible-verilog-syntax",
+        "//verilog/tools/extractor:verible-verilog-extractor",
 
         # Deprecated legacy names, available for a transition period
         "//verilog/tools/diff:verilog_diff-deprecated",
