@@ -46,19 +46,12 @@
 #include "verilog/parser/verilog_parser.h"
 #include "verilog/CST/verilog_nonterminals.h"
 #include "common/text/concrete_syntax_leaf.h"
+#include "verilog/tools/extractor/verilog_extractor_types.h"
 
 
 ABSL_FLAG(bool, printextraction,
 
           false, "Whether or not to print the extracted facts");
-
-enum class Type {
-    File,
-    Module,
-    Input,
-    Output,
-    VariableName,
-};
 
 class Anchor {
 public:
@@ -78,18 +71,26 @@ public:
 
 private:
     int startLocation_, endLocation_;
-    absl::string_view value_;
+    std::string value_;
 };
 
 class Block {
 public:
-    Block(Anchor *anchor, Type dataType) :
-            anchor_(anchor), dataType_(dataType) {}
+    Block(Type datatype = Type::NoType) : dataType_(datatype) {}
+
+    Block(std::vector<Anchor> anchor, Type dataType) :
+            anchors_(std::move(anchor)), dataType_(dataType) {}
 
     void print() {
-        std::cout << "{\n" << "Type: " << static_cast<int>(dataType_) << ",\n";
-        if (anchor_ != nullptr) anchor_->print();
+        std::cout << "{\n";
 
+        if (dataType_ != Type::NoType) {
+            std::cout << "Type: " << dataType_ << ",\n";
+        }
+
+        for (auto anchor : anchors_) {
+            anchor.print();
+        }
         for (auto child : children_) {
             child.print();
         }
@@ -101,67 +102,98 @@ public:
 
     void AppendChild(Block entry) { children_.push_back(std::move(entry)); };
 
+    void AppendAnchor(Anchor entry) { anchors_.push_back(std::move(entry)); };
+
 private:
-    Anchor *anchor_;
+    std::vector<Anchor> anchors_;
 
     Type dataType_;
 
     std::vector<Block> children_;
 };
 
-using TagResolver = std::function<void(const verible::SyntaxTreeNode &, absl::string_view)>;
+using TagResolver = std::function<Block(const verible::SyntaxTreeNode &, const verible::SyntaxTreeNode &,
+                                        absl::string_view)>;
 std::map<int, TagResolver> tagResolver;
 
-std::vector<Block> out;
-
-void InitializeTagResolver() {
-    tagResolver[static_cast<int>(verilog::NodeEnum::kDescriptionList)] = [=](const verible::Symbol &node,
-                                                                             absl::string_view base) {
-        std::cout << "DesList" << std::endl;
-    };
-
-    tagResolver[static_cast<int>(verilog::NodeEnum::kModuleHeader)] = [=](
-            const verible::SyntaxTreeNode &node, absl::string_view base) {
-
-        std::cout << "In" << node.children()[0].get()->Tag().tag << " " << std::endl;
-
-        for (const auto &child : node.children()) {
-            if (child) {
-                std::cout << "NOT NULL child" << std::endl;
-                std::cout << child->Tag().kind << " " << child->Tag().tag << std::endl;
-
-                if (child->Tag().tag == static_cast<int>(verilog::NodeEnum::kTimeLiteral)) {
-                    auto module = dynamic_cast<verible::SyntaxTreeLeaf *>(child.get());
-
-                    Anchor moduleAnchor = Anchor(module->get().left(base), module->get().right(base),
-                                                 module->get().text());
-
-                    Block moduleEntry = Block(&moduleAnchor, Type::Module);
-                    out.push_back(moduleEntry);
-                } else if (child->Tag().tag ==
-                           static_cast<int>(verilog::NodeEnum::kNetVariableDeclarationAssign)) {
-                    auto moduleName = dynamic_cast<verible::SyntaxTreeLeaf *>(child.get());
-
-                    Anchor nameAnchor = Anchor(moduleName->get().left(base), moduleName->get().right(base),
-                                               moduleName->get().text());
-                    Block nameEntry = Block(&nameAnchor, Type::VariableName);
-                    out.emplace_back(nameEntry);
-                }
-            } else {
-                std::cout << "NULL child" << std::endl;
-            }
+const verible::Symbol *GetChildByTag(const verible::SyntaxTreeNode &root, verilog::NodeEnum tag) {
+    for (const auto &child : root.children()) {
+        if (child && child->Tag().tag == static_cast<int>(tag)) {
+            return child.get();
         }
-
-        std::cout << "Out" << std::endl;
-    };
-
-    std::cout << "Map Content" << std::endl;
-    for (auto x : tagResolver) {
-        std::cout << x.first << std::endl;
     }
+    return nullptr;
 }
 
-void Extract(const verible::SyntaxTreeLeaf &node, absl::string_view base) {
+void InitializeTagResolver() {
+    tagResolver[static_cast<int>(verilog::NodeEnum::kModuleDeclaration)] = [=](const verible::SyntaxTreeNode &node,
+                                                                               const verible::SyntaxTreeNode &root,
+                                                                               absl::string_view base) {
+
+        Block moduleBlock = Block(Type::Module);
+
+        auto moduleHeader = GetChildByTag(node, verilog::NodeEnum::kModuleHeader);
+        moduleBlock.AppendChild(tagResolver[static_cast<int>(verilog::NodeEnum::kModuleHeader)](
+                verible::SymbolCastToNode(*moduleHeader), node,
+                base));
+
+        auto moduleItemList = GetChildByTag(node, verilog::NodeEnum::kModuleItemList);
+        moduleBlock.AppendChild(tagResolver[static_cast<int>(verilog::NodeEnum::kModuleItemList)](
+                verible::SymbolCastToNode(*moduleItemList),
+                node, base));
+
+        auto moduleEnd = GetChildByTag(node, verilog::NodeEnum::kLabel);
+        if (moduleEnd != nullptr) {
+            moduleBlock.AppendChild(
+                    tagResolver[static_cast<int>(verilog::NodeEnum::kLabel)](verible::SymbolCastToNode(*moduleEnd),
+                                                                             node, base));
+        }
+
+        return moduleBlock;
+    };
+
+
+    tagResolver[static_cast<int>(verilog::NodeEnum::kModuleHeader)] = [=](const verible::SyntaxTreeNode &node,
+                                                                          const verible::SyntaxTreeNode &root,
+                                                                          absl::string_view base) {
+        Block moduleHeader = Block(Type::ModuleHeader);
+
+        auto moduleKeyword = verible::SymbolCastToLeaf(*GetChildByTag(node, verilog::NodeEnum::kTimeLiteral));
+        Anchor moduleKeywordAnchor = Anchor(moduleKeyword.get().left(base), moduleKeyword.get().right(base),
+                                            moduleKeyword.get().text());
+        moduleHeader.AppendAnchor(moduleKeywordAnchor);
+
+        auto moduleName = verible::SymbolCastToLeaf(
+                *GetChildByTag(node, verilog::NodeEnum::kNetVariableDeclarationAssign));
+        Anchor moduleNameAnchor = Anchor(moduleName.get().left(base), moduleName.get().right(base),
+                                         moduleName.get().text());
+        moduleHeader.AppendAnchor(moduleNameAnchor);
+
+        return moduleHeader;
+    };
+
+    tagResolver[static_cast<int>(verilog::NodeEnum::kModuleItemList)] = [=](const verible::SyntaxTreeNode &node,
+                                                                            const verible::SyntaxTreeNode &root,
+                                                                            absl::string_view base) {
+        Block moduleBody = Block(Type::ModuleBody);
+        return moduleBody;
+    };
+
+    tagResolver[static_cast<int>(verilog::NodeEnum::kLabel)] = [=](const verible::SyntaxTreeNode &node,
+                                                                   const verible::SyntaxTreeNode &root,
+                                                                   absl::string_view base) {
+        Block moduleEnd = Block(Type::ModuleEnd);
+        auto moduleEndKeyword = verible::SymbolCastToLeaf(
+                *GetChildByTag(node, verilog::NodeEnum::kNetVariableDeclarationAssign));
+        Anchor moduleNameAnchor = Anchor(moduleEndKeyword.get().left(base), moduleEndKeyword.get().right(base),
+                                         moduleEndKeyword.get().text());
+        moduleEnd.AppendAnchor(moduleNameAnchor);
+
+        return moduleEnd;
+    };
+}
+
+Block Extract(const verible::SyntaxTreeLeaf &node, absl::string_view base) {
     std::cout << "Start Leaf" << std::endl;
     std::cout << verilog::NodeEnumToString(static_cast<verilog::NodeEnum>(node.Tag().tag)) << " <<>> " << node.Tag().tag
               << " " << node.get()
@@ -170,22 +202,23 @@ void Extract(const verible::SyntaxTreeLeaf &node, absl::string_view base) {
     std::cout << std::endl;
 }
 
-void Extract(const verible::SyntaxTreeNode &node, absl::string_view base) {
+Block Extract(const verible::SyntaxTreeNode &node, absl::string_view base) {
     std::cout << "Start Node" << std::endl;
     std::cout << verilog::NodeEnumToString(static_cast<verilog::NodeEnum>(node.Tag().tag)) << "  ";
     std::cout << node.children().size() << std::endl;
 
     auto resolver = tagResolver.find(node.Tag().tag);
     if (resolver != tagResolver.end()) {
-        resolver->second(node, base);
+        return resolver->second(node, node, base);
     }
 
+    std::vector<Block> blocks;
     for (const auto &child : node.children()) {
         if (child) {
             if (child->Kind() == verible::SymbolKind::kNode) {
-                Extract(verible::SymbolCastToNode(*child), base);
+                return Extract(verible::SymbolCastToNode(*child), base);
             } else {
-                Extract(verible::SymbolCastToLeaf(*child), base);
+                return Extract(verible::SymbolCastToLeaf(*child), base);
             }
         }
     }
@@ -219,13 +252,10 @@ static int ExtractOneFile(absl::string_view content,
                   << (!parse_ok ? " (incomplete due to syntax errors): " : "")
                   << std::endl;
 
-        Extract(verible::SymbolCastToNode(*syntax_tree), analyzer->Data().Contents());
-
-        std::cout << "===================================" << std::endl;
-        for (auto entry : out) {
-            entry.print();
-            std::cout << '\n';
-        }
+        Block mainBlock = Block(Type::File);
+        auto block = Extract(verible::SymbolCastToNode(*syntax_tree), analyzer->Data().Contents());
+        mainBlock.AppendChild(block);
+        mainBlock.print();
     }
 
     return exit_status;
