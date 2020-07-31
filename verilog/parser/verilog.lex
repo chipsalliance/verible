@@ -115,7 +115,7 @@ Identifier  {BasicIdentifier}
 SystemTFIdentifier "$"{BasicIdentifier}
 
 /* white space */
-LineTerminator \r|\n|\r\n
+LineTerminator \r|\n|\r\n|\0
 InputCharacter [^\r\n\0]
 InputCharacterNoBackslash [^\\\r\n\0]
 Space [ \t\f\b]
@@ -257,6 +257,11 @@ PragmaEndProtected {Pragma}{Space}+protect{Space}+end_protected
   yymore();
 }
 <IN_EOL_COMMENT>{
+  <<EOF>> {
+    UpdateLocationEOF();  /* return \0 to input stream */
+    yy_pop_state();
+    return TK_EOL_COMMENT;
+  }
   {LineContinuation} {
     yyless(yyleng-2);  /* return \\\n to input stream */
     UpdateLocation();
@@ -1225,6 +1230,15 @@ zi_zp { UpdateLocation(); return TK_zi_zp; }
     /* Return a dummy token so the Location range of the definition (@$) spans
      * the (ignored) definition body (in the parser).
      */
+    return PP_define_body;
+  }
+  {InputCharacter}* {
+    /* This case matches when a line does not end with a continuation or \n. */
+    yymore();
+  }
+  <<EOF>> {
+    UpdateLocationEOF();  /* return \0 to input stream */
+    yy_pop_state();
     return PP_define_body;
   }
 }

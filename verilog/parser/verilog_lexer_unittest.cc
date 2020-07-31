@@ -68,8 +68,8 @@ static std::initializer_list<LexerTestData> kCommentTests = {
     {{TK_EOL_COMMENT, "//"}, {TK_NEWLINE, "\r"}},
     {{TK_EOL_COMMENT, "// foo"}, {TK_NEWLINE, "\n"}},
     {{TK_EOL_COMMENT, "// bar"}, {TK_NEWLINE, "\r"}},
-    {{TK_EOL_COMMENT, "//foo"}, {TK_NEWLINE, "\n"}},
-    // {"// foo"},  // fails b/c expecting endline
+    {{TK_EOL_COMMENT, "//"}},     // missing \n, but treat as if it were there
+    {{TK_EOL_COMMENT, "//foo"}},  // missing \n, but treat as if it were there
 };
 
 // treating attributes lists as C-style comments,
@@ -757,6 +757,34 @@ static std::initializer_list<LexerTestData> kMacroDefineTests = {
      "\n\n",
      {PP_endif, "`endif"},
      "\n"},
+    {
+        {PP_define, "`define"}, " ", {PP_Identifier, "UNFINISHED"},
+        // No \n before EOF
+    },
+    {
+        {PP_define, "`define"},
+        " ",
+        {PP_Identifier, "UNFINISHED"},
+        " ",
+        {PP_define_body, "symphony"},
+        // No \n before EOF
+    },
+    {
+        {PP_define, "`define"},
+        " ",
+        {PP_Identifier, "UNFINISHED"},
+        " ",
+        {PP_define_body, "symphony \\"},  // end with line continuation
+                                          // No \n before EOF
+    },
+    {
+        {PP_define, "`define"},
+        " ",
+        {PP_Identifier, "UNFINISHED"},
+        " ",
+        {PP_define_body, "symphony \\\n  number"},
+        // No \n before EOF
+    },
 };
 
 static std::initializer_list<GenericTestDataSequence> kProtectedTests = {

@@ -78,7 +78,14 @@ class FlexLexerAdapter : private CodeStreamHolder, protected L, public Lexer {
 
   // Returns next token and updates its location.
   const TokenInfo& DoNextToken() override {
-    last_token_.set_token_enum(this->yylex());
+    if (at_eof_) {
+      // Do not call yylex(), because that will result in the fatal error:
+      // "fatal flex scanner internal error--end of buffer missed"
+      last_token_ = TokenInfo::EOFToken(code_);
+    } else {
+      // In normal operation, call yylex() to extract the next token.
+      last_token_.set_token_enum(this->yylex());
+    }
     // yylex has already called UpdateLocation()
     return last_token_;
   }
@@ -87,8 +94,22 @@ class FlexLexerAdapter : private CodeStreamHolder, protected L, public Lexer {
   // Must be called by subclasses to update location of the current token.
   void UpdateLocation() { last_token_.AdvanceText(this->YYLeng()); }
 
+  // EOF needs special handling because yyleng is set to include a terminating
+  // \0 (NUL) character.  Once EOF is encountered it is also not possible to
+  // yyless-rewind the window -- doing so messes up the internal state machine,
+  // and causes (flex) errors like:
+  // "fatal flex scanner internal error--end of buffer missed"
+  // We advance the token text without spanning the NUL character.
+  // This should only be needed in lexer states that need to explicitly
+  // handle <<EOF>>.
+  void UpdateLocationEOF() {
+    last_token_.AdvanceText(this->YYLeng() - 1);
+    at_eof_ = true;
+  }
+
   // Restart lexer by pointing to new input stream, and reset all state.
   void Restart(absl::string_view code) override {
+    at_eof_ = false;
     code_ = code;
     code_stream_.str(std::string(code_));
     last_token_ = TokenInfo(0, code_.substr(0, 0));
@@ -133,6 +154,14 @@ class FlexLexerAdapter : private CodeStreamHolder, protected L, public Lexer {
 
   // Contains the enumeration and the substring slice of the last lexed token.
   TokenInfo last_token_;
+
+  // Kludge: the generated FlexLexer (subclass) doesn't expose a way to
+  // determine whether and EOF has already been encountered:
+  //   (yy_buffer_stack[yy_buffer_stack_top]->yy_buffer_status
+  //       == YY_BUFFER_EOF_PENDING)
+  // because yy_buffer_state's implementation is private.
+  // Thus, we manually set this bit upon encountering <<EOF>>.
+  bool at_eof_ = false;
 };
 
 }  // namespace verible
