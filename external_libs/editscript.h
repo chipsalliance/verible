@@ -306,7 +306,7 @@ class Diff {
           AppendEdit(Operation::INSERT, b2, e2, edits);
           return;
         }
-      } else if (length1 > length2) {
+      } else if (length2 > length1) {
         const int64_t offset =
             std::search(tokens2_begin_ + b2, tokens2_begin_ + e2,
                         tokens1_begin_ + b1, tokens1_begin_ + e1) -

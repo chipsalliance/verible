@@ -22,6 +22,7 @@
 
 #include "gtest/gtest.h"
 #include "absl/strings/str_join.h"
+#include "absl/strings/string_view.h"
 
 namespace diff {
 namespace {
@@ -39,12 +40,16 @@ std::ostream &operator<<(std::ostream &out, Operation operation) {
   return out;
 }
 
+std::ostream &operator<<(std::ostream &out, const Edit &edit) {
+  out << "{" << edit.operation << ",[" << edit.start << "," << edit.end << ")}";
+  return out;
+}
+
 std::ostream &operator<<(std::ostream &out, const Edits &edits) {
   out << "Edits{";
   std::string outer_delim = "";
   for (auto &edit : edits) {
-    out << outer_delim << "{" << edit.operation
-        << ",[" << edit.start << "," << edit.end << ")}";
+    out << outer_delim << edit;
     outer_delim = ",";
   }
   out << "};";
@@ -158,6 +163,113 @@ TEST(DiffTest, CheckNonConstStringVectorDiffResults) {
   const std::string longest_common_subsequence = absl::StrJoin(
       &tokens1[max_elem_iter->start], &tokens1[max_elem_iter->end], " ");
   EXPECT_EQ("fox jumped", longest_common_subsequence);
+}
+
+TEST(DiffTest, CompleteDeletion) {
+  const std::vector<absl::string_view> tokens1{"the", "fox"};
+  const std::vector<absl::string_view> tokens2;
+
+  const Edits actual = GetTokenDiffs(tokens1.begin(), tokens1.end(),
+                                     tokens2.begin(), tokens2.end());
+
+  // EQUALS and DELETE offsets point into tokens1, INSERT into tokens2.
+  const Edits expect{
+      {Operation::DELETE, 0, 2},  // = tokens1[0, 2) = {"the", "fox"}
+  };
+  EXPECT_EQ(ToString(actual), ToString(expect));
+}
+
+TEST(DiffTest, CompleteInsertion) {
+  const std::vector<absl::string_view> tokens1;
+  const std::vector<absl::string_view> tokens2{"jumped", "over", "me"};
+
+  const Edits actual = GetTokenDiffs(tokens1.begin(), tokens1.end(),
+                                     tokens2.begin(), tokens2.end());
+
+  // EQUALS and DELETE offsets point into tokens1, INSERT into tokens2.
+  const Edits expect{
+      {Operation::INSERT, 0, 3},  // = tokens2[0, 3) = {"jumped", "over", "me"}
+  };
+  EXPECT_EQ(ToString(actual), ToString(expect));
+}
+
+TEST(DiffTest, ReplaceFromOneDifferentElement) {
+  const std::vector<absl::string_view> tokens1{"fox"};
+  const std::vector<absl::string_view> tokens2{"jumped", "over", "me"};
+
+  const Edits actual = GetTokenDiffs(tokens1.begin(), tokens1.end(),
+                                     tokens2.begin(), tokens2.end());
+
+  // EQUALS and DELETE offsets point into tokens1, INSERT into tokens2.
+  const Edits expect{
+      {Operation::DELETE, 0, 1},  // = tokens1[0, 1) = {"fox"}
+      {Operation::INSERT, 0, 3},  // = tokens2[0, 3) = {"jumped", "over", "me"}
+  };
+  EXPECT_EQ(ToString(actual), ToString(expect));
+}
+
+TEST(DiffTest, ReplaceToOneDifferentElement) {
+  const std::vector<absl::string_view> tokens1{"jumped", "over", "me"};
+  const std::vector<absl::string_view> tokens2{"fox"};
+
+  const Edits actual = GetTokenDiffs(tokens1.begin(), tokens1.end(),
+                                     tokens2.begin(), tokens2.end());
+
+  // EQUALS and DELETE offsets point into tokens1, INSERT into tokens2.
+  const Edits expect{
+      {Operation::DELETE, 0, 3},  // = tokens1[0, 3) = {"jumped", "over", "me"}
+      {Operation::INSERT, 0, 1},  // = tokens2[0, 1) = {"fox"}
+  };
+  EXPECT_EQ(ToString(actual), ToString(expect));
+}
+
+TEST(DiffTest, CompleteReplacement) {
+  const std::vector<absl::string_view> tokens1{"the", "fox"};
+  const std::vector<absl::string_view> tokens2{"jumped", "over", "me"};
+
+  const Edits actual = GetTokenDiffs(tokens1.begin(), tokens1.end(),
+                                     tokens2.begin(), tokens2.end());
+
+  // EQUALS and DELETE offsets point into tokens1, INSERT into tokens2.
+  const Edits expect{
+      {Operation::DELETE, 0, 2},  // = tokens1[0, 2) = {"the", "fox"}
+      {Operation::INSERT, 0, 3},  // = tokens2[0, 3) = {"jumped", "over", "me"}
+  };
+  EXPECT_EQ(ToString(actual), ToString(expect));
+}
+
+TEST(DiffTest, StrictSubsequence) {
+  const std::vector<absl::string_view> tokens1{"the", "fox", "jumped", "over",
+                                               "the", "dog", "."};
+  const std::vector<absl::string_view> tokens2{"fox", "jumped", "over"};
+
+  const Edits actual = GetTokenDiffs(tokens1.begin(), tokens1.end(),
+                                     tokens2.begin(), tokens2.end());
+
+  // EQUALS and DELETE offsets point into tokens1, INSERT into tokens2.
+  const Edits expect{
+      {Operation::DELETE, 0, 1},  // = tokens1[0, 1) = {"the"}
+      {Operation::EQUALS, 1, 4},  // = tokens1[1, 4) = {"fox", "jumped", "over"}
+      {Operation::DELETE, 4, 7},  // = tokens1[4, 7) = {"the", "dog", "."}
+  };
+  EXPECT_EQ(ToString(actual), ToString(expect));
+}
+
+TEST(DiffTest, StrictSupersequence) {
+  const std::vector<absl::string_view> tokens1{"fox", "jumped", "over"};
+  const std::vector<absl::string_view> tokens2{"the", "fox", "jumped", "over",
+                                               "the", "dog", "."};
+
+  const Edits actual = GetTokenDiffs(tokens1.begin(), tokens1.end(),
+                                     tokens2.begin(), tokens2.end());
+
+  // EQUALS and DELETE offsets point into tokens1, INSERT into tokens2.
+  const Edits expect{
+      {Operation::INSERT, 0, 1},  // = tokens2[0, 1) = {"the"}
+      {Operation::EQUALS, 0, 3},  // = tokens1[0, 3) = {"fox", "jumped", "over"}
+      {Operation::INSERT, 4, 7},  // = tokens2[4, 7) = {"the", "dog", "."}
+  };
+  EXPECT_EQ(ToString(actual), ToString(expect));
 }
 
 }  // namespace
