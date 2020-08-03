@@ -873,7 +873,7 @@ zi_zp { UpdateLocation(); return TK_zi_zp; }
   return TK_ATTRIBUTE;
 }
 <ATTRIBUTE_START>{AttributesContinue} {
-  BEGIN(ATTRIBUTE_MIDDLE);
+  yy_set_top_state(ATTRIBUTE_MIDDLE);
   yymore();
 }
 <ATTRIBUTE_MIDDLE>{AttributesContent} { yymore(); }
