@@ -19,12 +19,13 @@
 
 enum class Type {
     // BEGIN GENERATE -- do not delete
-            NoType,
+    NoType,
     File,
     Module,
     ModuleHeader,
     ModuleBody,
     ModuleEnd,
+    ModuleInstance,
     Input,
     Output,
     VariableName,
