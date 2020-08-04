@@ -49,6 +49,12 @@ TEST(MacroNameStyleRuleTest, BasicTests) {
       {"`define ", {kToken, "lower_underscore"}, " 1"},
       {"package foo;\n`define FOO 1\nendpackage"},
       {"package foo;\n`define ", {kToken, "Foo_"}, " 1\nendpackage"},
+      // special case uvm_* macros
+      {"`define uvm_foo_bar(arg) arg\n"},
+      {"`define UVM_FOO_BAR(arg) arg\n"},
+      {"`define ", {kToken, "uvm_FOO_BAR"}, "(arg) arg\n"},
+      {"`define ", {kToken, "uvm_FooBar"}, "(arg) arg\n"},
+      {"`define ", {kToken, "UVM_FooBar"}, "(arg) arg\n"},
   };
   RunLintTestCases<VerilogAnalyzer, MacroNameStyleRule>(kTestCases);
 }

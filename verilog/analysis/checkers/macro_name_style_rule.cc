@@ -17,6 +17,7 @@
 #include <set>
 #include <string>
 
+#include "absl/strings/match.h"
 #include "absl/strings/str_cat.h"
 #include "common/analysis/citation.h"
 #include "common/analysis/lint_rule_status.h"
@@ -42,12 +43,14 @@ VERILOG_REGISTER_LINT_RULE(MacroNameStyleRule);
 absl::string_view MacroNameStyleRule::Name() { return "macro-name-style"; }
 const char MacroNameStyleRule::kTopic[] = "defines";
 const char MacroNameStyleRule::kMessage[] =
-    "Macro names must contain only CAPITALS, underscores, and digits.";
+    "Macro names must contain only CAPITALS, underscores, and digits.  "
+    "Exception: UVM-like macros.";
 
 std::string MacroNameStyleRule::GetDescription(
     DescriptionType description_type) {
   return absl::StrCat(
-      "Checks that every macro name follows ALL_CAPS naming convention. See ",
+      "Checks that every macro name follows ALL_CAPS naming convention.  "
+      "Exception: UVM-like macros.  See ",
       GetStyleGuideCitation(kTopic), ".");
 }
 
@@ -70,8 +73,20 @@ void MacroNameStyleRule::HandleToken(const TokenInfo& token) {
         case TK_SPACE:  // stay in the same state
           break;
         case PP_Identifier: {
-          if (!verible::IsNameAllCapsUnderscoresDigits(token.text()))
-            violations_.insert(LintViolation(token, kMessage));
+          if (absl::StartsWith(token.text(), "uvm_")) {
+            // Special case for uvm_* macros
+            if (!verible::IsLowerSnakeCaseWithDigits(token.text()))
+              violations_.insert(LintViolation(token, kMessage));
+          } else if (absl::StartsWith(token.text(), "UVM_")) {
+            // Special case for UVM_* macros
+            if (!verible::IsNameAllCapsUnderscoresDigits(token.text()))
+              violations_.insert(LintViolation(token, kMessage));
+          } else {
+            // General case for everything else
+            // TODO(fangism): make this configurable
+            if (!verible::IsNameAllCapsUnderscoresDigits(token.text()))
+              violations_.insert(LintViolation(token, kMessage));
+          }
           state_ = State::kNormal;
           break;
         }
