@@ -1,5 +1,6 @@
 # This package only contains end-to-end tests for the style linter.
 
+load("//tools/build_defs/testing:bzl_library.bzl", "bzl_library")
 load(
     ":verilog_style_lint.bzl",
     "verilog_style_lint",
@@ -243,4 +244,11 @@ filegroup(
         ":verible-verilog-lint",
     ],
     visibility = ["//visibility:public"],
+)
+
+bzl_library(
+    name = "verilog_style_lint_bzl",
+    srcs = ["verilog_style_lint.bzl"],
+    parse_tests = False,
+    visibility = ["//visibility:private"],
 )
