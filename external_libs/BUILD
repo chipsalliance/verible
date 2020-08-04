@@ -1,5 +1,11 @@
 licenses(["notice"])
 
+package(
+    default_visibility = [
+        "//:__subpackages__",
+    ],
+)
+
 cc_library(
     name = "editscript",
     hdrs = ["editscript.h"],
