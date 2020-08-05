@@ -1579,6 +1579,15 @@ zi_zp { UpdateLocation(); return TK_zi_zp; }
 
 {RejectChar} { UpdateLocation(); return TK_OTHER; }
 
+`` {
+  /* Preprocessing token concatenation:
+   * Even though this should only be legal inside a macro definition,
+   * we must support the token concatenation operator here so that
+   * recursive lexing will work.
+   */
+  UpdateLocation(); return PP_TOKEN_CONCAT;
+}
+
 ` { UpdateLocation(); return TK_OTHER; /* tick should never be alone */ }
 
   /* All other single-character tokens */

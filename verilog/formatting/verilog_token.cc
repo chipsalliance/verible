@@ -37,6 +37,7 @@ static const auto* FormatTokenTypeMap =
         {verilog_tokentype::PP_endif, FTT::keyword},
         {verilog_tokentype::PP_undef, FTT::keyword},
         {verilog_tokentype::PP_default_text, FTT::keyword},
+        {verilog_tokentype::PP_TOKEN_CONCAT, FTT::binary_operator},
         {verilog_tokentype::DR_timescale, FTT::keyword},
         {verilog_tokentype::DR_resetall, FTT::keyword},
         {verilog_tokentype::DR_celldefine, FTT::keyword},

@@ -158,6 +158,7 @@ static SymbolPtr MakeUnpackedDimensionsNode(SymbolPtr& arg) {
 %token PP_endif "`endif"
 %token PP_undef "`undef"
 %token PP_default_text "<<default-text>>"
+%token PP_TOKEN_CONCAT "``"
 
 %token DR_timescale "`timescale"
 %token DR_resetall "`resetall"

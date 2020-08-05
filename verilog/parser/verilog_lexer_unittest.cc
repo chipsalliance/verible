@@ -1383,7 +1383,7 @@ static std::initializer_list<SimpleTestData> kEvalStringLiteralTests = {
     {"`\"`abc()`\""},     //
     {"`\"`abc(d)`\""},    //
     {"`\"`abc(d,e)`\""},  //
-    {"`\"```\""},         //
+    {"`\"```\""},         // token concatenation operator in middle
 };
 
 // tokens with special handling in lexer
@@ -2002,6 +2002,24 @@ static std::initializer_list<LexerTestData> kPreprocessorTests = {
      "\n",
      {PP_endif, "`endif"},
      "\n"},
+    // Token concatenations
+    {
+        {PP_TOKEN_CONCAT, "``"},
+    },
+    {
+        {PP_TOKEN_CONCAT, "``"},
+        "\n",
+    },
+    {
+        " ",
+        {PP_TOKEN_CONCAT, "``"},
+        " ",
+    },
+    {
+        {SymbolIdentifier, "ab"},
+        {PP_TOKEN_CONCAT, "``"},
+        {SymbolIdentifier, "cd"},
+    },
 };
 
 static std::initializer_list<LexerTestData> kUnfilteredPreprocessorTests = {
@@ -2118,9 +2136,7 @@ static std::initializer_list<LexerTestData> kLexicalErrorTests = {
     {{TK_OTHER, "`"}, {TK_COMMENT_BLOCK, "/* */"}},
     {{TK_OTHER, "`"}, {TK_DecNumber, "11"}},
     {{TK_OTHER, "`"}, " ", {SymbolIdentifier, "spacebad"}, "\n"},
-    // double-tick: token concatenation is only valid inside macro definitions
-    // TODO(fangism): support this in recursive lexing
-    {{TK_OTHER, "`"}, {TK_OTHER, "`"}},
+    {{PP_TOKEN_CONCAT, "``"}, {TK_OTHER, "`"}},  // triple-tick breakdown
     {{TK_OTHER, "\""}, "\n"},
     {{TK_OTHER, "\"unterminated string literal"}},
     {{TK_OTHER, "\"unterminated string literal"}, "\n"},
