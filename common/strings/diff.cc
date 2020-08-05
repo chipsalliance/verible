@@ -82,8 +82,9 @@ LineNumberSet DiffEditsToAddedLineNumbers(const Edits& edits) {
   LineNumberSet added_lines;
   for (const auto& edit : edits) {
     if (edit.operation == Operation::INSERT) {
-      // Add 1 to cover from 0-indexed to 1-indexed.
-      added_lines.Add({edit.start + 1, edit.end + 1});
+      // Add 1 to convert from 0-indexed to 1-indexed.
+      added_lines.Add(
+          {static_cast<int>(edit.start) + 1, static_cast<int>(edit.end) + 1});
     }
   }
   return added_lines;
