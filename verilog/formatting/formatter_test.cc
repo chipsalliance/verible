@@ -5806,7 +5806,8 @@ TEST(FormatterEndToEndTest, SelectLines) {
     std::ostringstream stream;
     const auto status = FormatVerilog(test_case.input, "<filename>", style,
                                       stream, test_case.lines);
-    EXPECT_OK(status) << status.message();
+    EXPECT_OK(status) << status.message() << '\n'
+                      << "Lines: " << test_case.lines;
     EXPECT_EQ(stream.str(), test_case.expected)
         << "code:\n"
         << test_case.input << "\nlines: " << test_case.lines;

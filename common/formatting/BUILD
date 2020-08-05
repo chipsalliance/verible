@@ -305,3 +305,25 @@ cc_test(
         "@com_google_googletest//:gtest_main",
     ],
 )
+
+cc_library(
+    name = "verification",
+    srcs = ["verification.cc"],
+    hdrs = ["verification.h"],
+    deps = [
+        "//common/strings:diff",
+        "//common/strings:position",
+        "@com_google_absl//absl/status",
+        "@com_google_absl//absl/strings",
+    ],
+)
+
+cc_test(
+    name = "verification_test",
+    srcs = ["verification_test.cc"],
+    deps = [
+        ":verification",
+        "@com_google_absl//absl/strings",
+        "@com_google_googletest//:gtest_main",
+    ],
+)

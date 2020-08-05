@@ -25,6 +25,8 @@
 #include "common/formatting/line_wrap_searcher.h"
 #include "common/formatting/token_partition_tree.h"
 #include "common/formatting/unwrapped_line.h"
+#include "common/formatting/verification.h"
+#include "common/strings/diff.h"
 #include "common/strings/line_column_map.h"
 #include "common/strings/position.h"
 #include "common/strings/range.h"
@@ -35,6 +37,7 @@
 #include "common/util/interval.h"
 #include "common/util/iterator_range.h"
 #include "common/util/logging.h"
+#include "common/util/process.h"
 #include "common/util/range.h"
 #include "common/util/spacer.h"
 #include "common/util/vector_tree.h"
@@ -147,6 +150,50 @@ Status VerifyFormatting(const verible::TextStructureView& text_structure,
   return absl::OkStatus();
 }
 
+static Status ReformatVerilogIncrementally(absl::string_view original_text,
+                                           absl::string_view formatted_text,
+                                           absl::string_view filename,
+                                           const FormatStyle& style,
+                                           std::ostream& reformat_stream,
+                                           const ExecutionControl& control) {
+  // Differences from the first formatting.
+  const verible::LineDiffs formatting_diffs(original_text, formatted_text);
+  // Added lines will be re-applied to incremental re-formatting.
+  LineNumberSet formatted_lines(
+      verible::DiffEditsToAddedLineNumbers(formatting_diffs.edits));
+  // Even if no line were changed by formatting, need to make sure that
+  // reformatting does not accidentally reformat the whole file by
+  // adding an out-of-range lines interval.  This effectively disables
+  // re-formatting on the whole file unless line ranges are specified.
+  formatted_lines.Add(formatting_diffs.after_lines.size() + 1);
+  VLOG(1) << "formatted changed lines: " << formatted_lines;
+  return FormatVerilog(formatted_text, filename, style, reformat_stream,
+                       formatted_lines, control);
+}
+
+static Status ReformatVerilog(absl::string_view original_text,
+                              absl::string_view formatted_text,
+                              absl::string_view filename,
+                              const FormatStyle& style,
+                              std::ostream& reformat_stream,
+                              const LineNumberSet& lines,
+                              const ExecutionControl& control) {
+  // Disable reformat check to terminate recursion.
+  ExecutionControl convergence_control(control);
+  convergence_control.verify_convergence = false;
+
+  if (lines.empty()) {
+    // format whole file
+    return FormatVerilog(formatted_text, filename, style, reformat_stream,
+                         lines, convergence_control);
+  } else {
+    // reformat incrementally
+    return ReformatVerilogIncrementally(original_text, formatted_text, filename,
+                                        style, reformat_stream,
+                                        convergence_control);
+  }
+}
+
 Status FormatVerilog(absl::string_view text, absl::string_view filename,
                      const FormatStyle& style, std::ostream& formatted_stream,
                      const LineNumberSet& lines,
@@ -206,24 +253,17 @@ Status FormatVerilog(absl::string_view text, absl::string_view filename,
   // When formatting whole-file (no --lines are specified), ensure that
   // the formatting transformation is convergent after one iteration.
   //   format(format(text)) == format(text)
-  if (control.verify_convergence && lines.empty()) {
-    // Disable reformat check to terminate recursion.
-    ExecutionControl convergence_control(control);
-    convergence_control.verify_convergence = false;
+  if (control.verify_convergence) {
     std::ostringstream reformat_stream;
-    const Status reformat_status =
-        FormatVerilog(formatted_text, filename, style, reformat_stream, lines,
-                      convergence_control);
+    const auto reformat_status = ReformatVerilog(
+        text, formatted_text, filename, style, reformat_stream, lines, control);
     if (!reformat_status.ok()) {
       return reformat_status;
     }
-    if (reformat_stream.str() != formatted_text) {
-      return absl::DataLossError(
-          "Re-formatted text does not match formatted text; "
-          "formatting failed to converge!  Please file a bug.");
-    }
+    const std::string& reformatted_text(reformat_stream.str());
+    return verible::ReformatMustMatch(text, lines, formatted_text,
+                                      reformatted_text);
   }
-
   return format_status;
 }
 
