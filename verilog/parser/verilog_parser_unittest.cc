@@ -5625,6 +5625,8 @@ static const std::initializer_list<ParserTestData> kInvalidCodeTests = {
      {verible::TK_EOF, ""}},  // missing endtask before EOF
     {"`define F",             // missing newline
      {verible::TK_EOF, ""}},
+    // invalid DPI import
+    {"import \"DPI-C\" foo", /* rejected */ ';'},
 };
 
 using verible::LeafTag;
