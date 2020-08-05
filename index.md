@@ -45,4 +45,4 @@ See the [README file for further information.](README.md)
 
 ## Version
 
-Generated on 2020-07-29 14:54:49 -0700 from [v0.0-493-g617b404](https://github.com/google/verible/commit/617b40419adc1c39f5ad553c0ec50843abd0fb1a)
+Generated on 2020-08-05 10:30:49 -0700 from [v0.0-499-gacd4058](https://github.com/google/verible/commit/acd40586cf52f73450b99c7beeaa3d111cbc3497)
