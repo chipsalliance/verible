@@ -17,23 +17,22 @@
 
 #include <iosfwd>
 
-enum class Type {
-    // BEGIN GENERATE -- do not delete
-    NoType,
-    File,
-    Module,
-    ModuleHeader,
-    ModuleBody,
-    ModuleEnd,
-    ModuleInstance,
-    Input,
-    Output,
-    VariableName,
-    // END GENERATE -- do not delete
+// IndexingFactType is a datatype that indicates the subclass of an
+// IndexingFactNode
+enum class IndexingFactType {
+  // BEGIN GENERATE -- do not delete
+  kFile,
+  kModule,
+  kModuleInstance,
+  kModulePortInput,
+  kModulePortOutput,
+  // END GENERATE -- do not delete
 };
 
-std::string TypeEnumToString(Type);
+// Stringify's IndexingFactType. If IndexingFactType does not have a string
+// definition, returns a string stating this.
+std::string LanguageFeatureEnumToString(IndexingFactType);
 
-std::ostream &operator<<(std::ostream &stream, const Type &e);
+std::ostream& operator<<(std::ostream& stream, const IndexingFactType& e);
 
-#endif //VERIBLE_VERILOG_TOOLS_EXTRACTOR_VERILOG_EXTRACTOR_TYPES_H
+#endif  // VERIBLE_VERILOG_TOOLS_EXTRACTOR_VERILOG_EXTRACTOR_TYPES_H

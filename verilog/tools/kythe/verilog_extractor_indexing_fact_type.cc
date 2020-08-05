@@ -12,27 +12,26 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "verilog_extractor_types.h"
+#include "verilog_extractor_indexing_fact_type.h"
 #include "absl/strings/str_cat.h"
 
-#include <ostream>
 #include <string>
 
-std::string TypeEnumToString(Type type) {
-    switch (type) {
-#define CONSIDER(val) \
-  case Type::val: \
+std::string LanguageFeatureEnumToString(IndexingFactType indexing_fact_type) {
+  switch (indexing_fact_type) {
+#define CONSIDER(val)         \
+  case IndexingFactType::val: \
     return #val;
 
-#include "verilog/tools/extractor/verilog_extractor_types_foreach.inc"  // IWYU pragma: keep
+#include "verilog/tools/kythe/verilog_extractor_indexing_fact_type_foreach.inc"  // IWYU pragma: keep
 
 #undef CONSIDER
-        default:
-            return absl::StrCat("No Associated String: ",
-                                static_cast<int>(type));
-    }
+    default:
+      return absl::StrCat("No Associated String: ",
+                          static_cast<int>(indexing_fact_type));
+  }
 }
 
-std::ostream &operator<<(std::ostream &stream, const Type &e) {
-    return stream << TypeEnumToString(e);
+std::ostream& operator<<(std::ostream& stream, const IndexingFactType& e) {
+  return stream << LanguageFeatureEnumToString(e);
 }

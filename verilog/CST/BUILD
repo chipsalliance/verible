@@ -10,7 +10,7 @@ package(
         "//verilog/analysis:__subpackages__",
         "//verilog/formatting:__subpackages__",
         "//verilog/parser:__subpackages__",
-        "//verilog/tools/extractor:__pkg__",
+        "//verilog/tools/kythe:__pkg__",
         "//verilog/tools/syntax:__pkg__",  # for printing
     ],
 )

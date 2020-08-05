@@ -19,4 +19,4 @@
        "(and undefine it after)."
 #endif  // CONSIDER
 
-#include "verilog/tools/extractor/verilog_extractor_types_foreach-gen.inc"
+#include "verilog/tools/kythe/verilog_extractor_indexing_fact_type_foreach-gen.inc"
