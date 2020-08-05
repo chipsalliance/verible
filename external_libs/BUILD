@@ -1,3 +1,8 @@
+# This package contains externally owned libraries.
+#
+# editscript - is a template-generic sequence diff algorithm based on
+#     diff-match-patch.
+
 licenses(["notice"])
 
 package(
