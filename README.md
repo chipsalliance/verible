@@ -618,6 +618,25 @@ Output is written to stdout.
       future obfuscation with --load_map.); default: "";
 ```
 
+### Preprocessor
+
+`verible-verilog-preprocessor` is a collection of preprocessor-like tools, (but
+does not include a fully-featured Verilog preprocessor yet.)
+
+#### Strip Comments
+
+Removing comments can be useful step in preparing to obfuscate code.
+
+```shell
+$ verible-verilog-preprocessor strip-comments FILE
+```
+
+This strips comments from a Verilog/SystemVerilog source file, _including_
+comments nested inside macro definition bodies and macro call arguments.
+
+Comments are actually replaced by an equal number of spaces (and newlines) to
+preserve the byte offsets and line ranges of the original text.
+
 ### Future Intent
 
 The Verible team is interested in exploring how it can help other tool

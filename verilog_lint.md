@@ -169,7 +169,7 @@ Checks that all lines do not exceed the maximum allowed length. See [Style: line
 Enabled by default: true
 
 ### macro-name-style
-Checks that every macro name follows ALL_CAPS naming convention. See [Style: defines].
+Checks that every macro name follows ALL_CAPS naming convention.  Exception: UVM-like macros.  See [Style: defines].
 
 Enabled by default: true
 
@@ -313,4 +313,4 @@ Enabled by default: true
 
 ## Version
 
-Generated on 2020-08-05 10:34:22 -0700 from [v0.0-504-g1ae4456](https://github.com/google/verible/commit/1ae4456c45de1b6cb93f7bbb1d3234d05bb5cf0e)
+Generated on 2020-08-05 10:37:08 -0700 from [v0.0-518-g2b70655](https://github.com/google/verible/commit/2b706555398f8c734bb3fc8ea5dff78ab85460c3)
