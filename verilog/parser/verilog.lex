@@ -1426,9 +1426,20 @@ zi_zp { UpdateLocation(); return TK_zi_zp; }
   {LineTerminator} { yymore(); }
 
   {Comment} { macro_arg_length_ = yyleng; yymore(); }
+  {UnterminatedComment} {
+    macro_arg_length_ = yyleng;
+    UpdateLocation();
+    return TK_OTHER;
+  }
+
   {StringLiteral} { macro_arg_length_ = yyleng; yymore(); }
   {EvalStringLiteral} { macro_arg_length_ = yyleng; yymore(); }
   /* [^(){},"]+ { yymore(); } */
+  {UnterminatedStringLiteral} {
+    macro_arg_length_ = yyleng;
+    UpdateLocation();
+    return TK_OTHER;
+  }
 
   "{" { macro_arg_length_ = yyleng; yymore(); ++balance_; }
   "}" { macro_arg_length_ = yyleng; yymore(); --balance_; }

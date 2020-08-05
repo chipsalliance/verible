@@ -2147,6 +2147,9 @@ static std::initializer_list<LexerTestData> kLexicalErrorTests = {
     {{TK_OTHER, "/*"}},
     {{TK_OTHER, "/*\n"}},
     {{TK_OTHER, "/* interminated comment"}},
+    // Unterminated string literal inside macro call args
+    {{MacroCallId, "`b"}, '(', {TK_OTHER, "\");"}},
+    {{MacroCallId, "`c"}, '(', {TK_OTHER, "/*"}},
     // Rejected ACSII characters
     {{TK_OTHER, "\x7F"}},
     {{TK_OTHER, "\x80"}},
