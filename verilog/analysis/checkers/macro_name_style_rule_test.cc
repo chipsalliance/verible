@@ -55,6 +55,21 @@ TEST(MacroNameStyleRuleTest, BasicTests) {
       {"`define ", {kToken, "uvm_FOO_BAR"}, "(arg) arg\n"},
       {"`define ", {kToken, "uvm_FooBar"}, "(arg) arg\n"},
       {"`define ", {kToken, "UVM_FooBar"}, "(arg) arg\n"},
+      {
+          // checks macro define inside macro define
+          "`define FOO \\\n"
+          "`define ",
+          {kToken, "bar"},
+          "\n",
+      },
+      {
+          // checks macro define inside macro define inside macro define
+          "`define FOO \\\n"
+          "`define GOO \\\n"
+          "`define ",
+          {kToken, "barf"},
+          "\n",
+      },
   };
   RunLintTestCases<VerilogAnalyzer, MacroNameStyleRule>(kTestCases);
 }
