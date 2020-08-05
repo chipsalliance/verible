@@ -28,25 +28,26 @@
 #include "common/strings/display_utils.h"
 #include "common/text/tree_utils.h"
 #include "common/util/container_iterator_range.h"
-#include "common/util/container_util.h"
 #include "common/util/spacer.h"
 
 namespace verible {
 
-using verible::container::FindOrDie;
-
 std::ostream& operator<<(std::ostream& stream, PartitionPolicyEnum p) {
-  static const auto* enum_names =
-      new std::map<PartitionPolicyEnum, const char*>{
-          {PartitionPolicyEnum::kUninitialized, "uninitialized"},
-          {PartitionPolicyEnum::kAlwaysExpand, "always-expand"},
-          {PartitionPolicyEnum::kFitOnLineElseExpand, "fit-else-expand"},
-          {PartitionPolicyEnum::kTabularAlignment, "tabular-alignment"},
-          {PartitionPolicyEnum::kSuccessfullyAligned, "aligned-success"},
-          {PartitionPolicyEnum::kAppendFittingSubPartitions,
-           "append-fitting-sub-partitions"},
-      };
-  return stream << FindOrDie(*enum_names, p);
+  switch (p) {
+  case PartitionPolicyEnum::kUninitialized:
+    return stream << "uninitialized";
+  case PartitionPolicyEnum::kAlwaysExpand:
+    return stream << "always-expand";
+  case PartitionPolicyEnum::kFitOnLineElseExpand:
+    return stream << "fit-else-expand";
+  case PartitionPolicyEnum::kTabularAlignment:
+    return stream << "tabular-alignment";
+  case PartitionPolicyEnum::kSuccessfullyAligned:
+    return stream << "aligned-success";
+  case PartitionPolicyEnum::kAppendFittingSubPartitions:
+    return stream << "append-fitting-sub-partitions";
+  }
+  LOG(FATAL) << "Unknown partition";
 }
 
 static void TokenFormatter(std::string* out, const PreFormatToken& token,
