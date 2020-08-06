@@ -158,6 +158,7 @@ static SymbolPtr MakeUnpackedDimensionsNode(SymbolPtr& arg) {
 %token PP_endif "`endif"
 %token PP_undef "`undef"
 %token PP_default_text "<<default-text>>"
+%token PP_TOKEN_CONCAT "``"
 
 %token DR_timescale "`timescale"
 %token DR_resetall "`resetall"
@@ -2714,12 +2715,12 @@ import_export
 dpi_import_item
   /* The following rules are expanded from:
    * TK_import dpi_spec_string dpi_import_property_opt
-   *   { GenericIdentifier '=' }_opt modport_tf_port ';'
+   *   { GenericIdentifier '=' }_opt method_prototype ';'
    */
   : TK_import dpi_spec_string dpi_import_property_opt
-    GenericIdentifier '=' modport_tf_port ';'
+    GenericIdentifier '=' method_prototype ';'
     { $$ = MakeDPIImport($1, $2, $3, $4, $5, $6, $7); }
-  | TK_import dpi_spec_string dpi_import_property_opt modport_tf_port ';'
+  | TK_import dpi_spec_string dpi_import_property_opt method_prototype ';'
     { $$ = MakeDPIImport($1, $2, $3, nullptr, nullptr, $4, $5); }
   ;
 

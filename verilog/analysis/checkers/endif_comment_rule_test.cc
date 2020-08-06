@@ -59,7 +59,7 @@ TEST(EndifCommentRuleTest, AcceptsEndifWithComment) {
       {"`ifdef FOO\n`elsif BAR\n`endif  // FOO\n"},
       {"`ifdef FOO\n`elsif BAR\n`else\n`endif  // FOO\n"},
       {"`ifdef FOO\nmodule foo;\nendmodule\n`endif  // FOO\n"},
-      {"`ifdef FOO\n``ifdef BAR\n`endif  // BAR\n`endif  // FOO\n"},
+      {"`ifdef FOO\n`ifdef BAR\n`endif  // BAR\n`endif  // FOO\n"},
   };
   RunLintTestCases<VerilogAnalyzer, EndifCommentRule>(kTestCases);
 }

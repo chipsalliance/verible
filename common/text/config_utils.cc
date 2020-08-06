@@ -41,12 +41,12 @@ absl::Status ParseNameValues(string_view config_string,
   for (const string_view single_config : absl::StrSplit(config_string, ';')) {
     const std::pair<string_view, string_view> nv_pair =
         absl::StrSplit(single_config, ':');
-    const auto value_config = std::find_if(
+    const auto value_config = std::find_if(  // linear search
         spec.begin(), spec.end(),
         [&nv_pair](const NVConfigSpec& s) { return nv_pair.first == s.name; });
     if (value_config == spec.end()) {
       std::string available;
-      for (auto s : spec) {
+      for (const auto& s : spec) {
         if (!available.empty()) available.append(", ");
         available.append("'").append(s.name).append("'");
       }
@@ -161,7 +161,7 @@ ConfigValueSetter SetNamedBits(
            uint32_t result = 0;
            for (auto bitname : absl::StrSplit(v, '|', absl::SkipWhitespace())) {
              bitname = absl::StripAsciiWhitespace(bitname);
-             auto item_pos = find_if(
+             const auto item_pos = find_if(
                  choices.begin(), choices.end(),
                  [bitname](string_view c) {
                    return absl::EqualsIgnoreCase(bitname, c);
@@ -172,7 +172,7 @@ ConfigValueSetter SetNamedBits(
                                 "' is not in the available choices {",
                                 absl::StrJoin(choices, ", "), "}"));
              }
-             result |= (1 << (item_pos - choices.begin()));
+             result |= (1 << (std::distance(choices.begin(), item_pos)));
            }
            // Parsed all bits successfully.
            *value = result;

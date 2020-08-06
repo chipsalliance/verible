@@ -41,6 +41,31 @@ cc_test(
     srcs = ["comment_utils_test.cc"],
     deps = [
         ":comment_utils",
+        "//common/util:range",
+        "@com_google_absl//absl/strings",
+        "@com_google_googletest//:gtest_main",
+    ],
+)
+
+cc_library(
+    name = "diff",
+    srcs = ["diff.cc"],
+    hdrs = ["diff.h"],
+    deps = [
+        ":position",
+        ":split",
+        "//common/util:iterator_range",
+        "//external_libs:editscript",
+        "@com_google_absl//absl/strings",
+    ],
+)
+
+cc_test(
+    name = "diff_test",
+    srcs = ["diff_test.cc"],
+    deps = [
+        ":diff",
+        "@com_google_absl//absl/strings",
         "@com_google_googletest//:gtest_main",
     ],
 )

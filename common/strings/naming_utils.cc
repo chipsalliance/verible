@@ -22,11 +22,9 @@
 namespace verible {
 
 bool IsNameAllCapsUnderscoresDigits(absl::string_view text) {
-  const auto it = std::find_if(text.begin(), text.end(), [](char c) {
-    return !(absl::ascii_isupper(c) || c == '_' || absl::ascii_isdigit(c));
+  return std::all_of(text.begin(), text.end(), [](char c) {
+    return absl::ascii_isupper(c) || c == '_' || absl::ascii_isdigit(c);
   });
-
-  return it == text.end();
 }
 
 bool AllUnderscoresFollowedByDigits(absl::string_view text) {
@@ -62,11 +60,9 @@ bool IsLowerSnakeCaseWithDigits(absl::string_view text) {
   if (!absl::ascii_islower(text[0])) return false;
 
   // Check for anything that is not a lowercase letter, underscore, or digit.
-  const auto it = std::find_if(text.begin(), text.end(), [](char c) {
-    return !(absl::ascii_islower(c) || c == '_' || absl::ascii_isdigit(c));
+  return std::all_of(text.begin(), text.end(), [](char c) {
+    return absl::ascii_islower(c) || c == '_' || absl::ascii_isdigit(c);
   });
-
-  return it == text.end();
 }
 
 }  // namespace verible
