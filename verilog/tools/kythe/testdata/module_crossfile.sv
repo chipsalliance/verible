@@ -1,3 +1,6 @@
+// Copyright 2020 Google LLC.
+// SPDX-License-Identifier: Apache-2.0
+
 //- _FileNode.node/kind file
 // Module references package defined in package.sv.
 module module_crossfile;

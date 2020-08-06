@@ -1,3 +1,6 @@
+// Copyright 2020 Google LLC.
+// SPDX-License-Identifier: Apache-2.0
+
 //- _FileNode.node/kind file
 //- @package_with_include defines/binding MyPkg
 package package_with_include;

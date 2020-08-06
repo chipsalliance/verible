@@ -1,3 +1,6 @@
+// Copyright 2020 Google LLC.
+// SPDX-License-Identifier: Apache-2.0
+
 //- @array defines/binding _
 module array (
     //- @arr1 defines/binding Arr1

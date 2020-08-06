@@ -1,3 +1,6 @@
+// Copyright 2020 Google LLC.
+// SPDX-License-Identifier: Apache-2.0
+
 //- @top_pkg defines/binding TopPkg
 package top_pkg;
   //- @f1 defines/binding F1

@@ -1,3 +1,6 @@
+// Copyright 2020 Google LLC.
+// SPDX-License-Identifier: Apache-2.0
+
 //- @MyInterface defines/binding MyInterface
 interface MyInterface();
   wire reset;

@@ -1,3 +1,6 @@
+// Copyright 2020 Google LLC.
+// SPDX-License-Identifier: Apache-2.0
+
 typedef struct {
   //- @xx defines/binding XX
   byte xx;
