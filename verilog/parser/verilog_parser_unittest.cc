@@ -619,6 +619,43 @@ static const char* kFunctionTests[] = {
     "function void unpack_id(utils_pkg::bytestream_t bytes);\n"
     "{<< byte {this.reserved, this.id}} = bytes;\n"
     "endfunction",
+    // concatenation lvalue
+    "module foo;\n"
+    "  initial begin\n"
+    "    {A, B, C} = bar;\n"
+    "  end\n"
+    "endmodule\n",
+    // nested concatenation lvalue
+    "module foo;\n"
+    "  initial begin\n"
+    "    {{A, B}, {C, D}} = bar;\n"
+    "  end\n"
+    "endmodule\n",
+    // assignment pattern lvalue
+    "module foo;\n"
+    "  initial begin\n"
+    "    '{A, B, C} = bar;\n"
+    "  end\n"
+    "endmodule\n",
+    // assignment pattern lvalue and rvalue
+    "module foo;\n"
+    "  initial begin\n"
+    "    '{A, B, C} = '{D, E, F};\n"
+    "  end\n"
+    "endmodule\n",
+    // nested assignment pattern lvalue
+    "module foo;\n"
+    "  initial begin\n"
+    "    '{'{A, B}, '{C, D}} = bar;\n"
+    "  end\n"
+    "endmodule\n",
+    // mixed nested lvalue
+    "module foo;\n"
+    "  initial begin\n"
+    "    '{{A, B}, {C, D}} = bar1;\n"
+    "    {'{E, F}, '{G, H}} = bar2;\n"
+    "  end\n"
+    "endmodule\n",
     // qualified expressions
     "function void scoper;\n"
     "  a = b::c;\n"

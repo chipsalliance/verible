@@ -5292,7 +5292,9 @@ signed_unsigned_opt
   | /* empty */
     { $$ = nullptr; }
   ;
+
 lpvalue
+  /* intended to cover 'net_lvalue' and 'variable_lvalue' in LRM */
   : reference_or_call
     { $$ = MakeTaggedNode(N::kLPValue, $1); }
     /* Unless functions can return by reference, calls should not be permitted
@@ -5304,9 +5306,16 @@ lpvalue
   /* TODO(fangism): For lpvalue, verify that $1 is of the form
    * '{' expression_list_proper '}' and that each item in the list is an lvalue.
    */
+  | assignment_pattern
+    /* for 'assignment_pattern_net_lvalue'
+     * and 'assignment_pattern_variable_lvalue'.
+     * TODO(fangism): verify that elements are lpvalue (not just any expr).
+     */
+    { $$ = MakeTaggedNode(N::kLPValue, $1); }
   | streaming_concatenation
     { $$ = MakeTaggedNode(N::kLPValue, $1); }
   ;
+
 cont_assign
   : lpvalue '=' expression
     { $$ = MakeTaggedNode(N::kNetVariableAssignment, $1, $2, $3); }
