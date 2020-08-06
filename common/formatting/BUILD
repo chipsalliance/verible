@@ -133,7 +133,6 @@ cc_library(
         "//common/text:symbol",
         "//common/text:tree_utils",
         "//common/util:container_iterator_range",
-        "//common/util:container_util",
         "//common/util:spacer",
         "@com_google_absl//absl/strings",
     ],
