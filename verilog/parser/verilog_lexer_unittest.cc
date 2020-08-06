@@ -68,8 +68,8 @@ static std::initializer_list<LexerTestData> kCommentTests = {
     {{TK_EOL_COMMENT, "//"}, {TK_NEWLINE, "\r"}},
     {{TK_EOL_COMMENT, "// foo"}, {TK_NEWLINE, "\n"}},
     {{TK_EOL_COMMENT, "// bar"}, {TK_NEWLINE, "\r"}},
-    {{TK_EOL_COMMENT, "//foo"}, {TK_NEWLINE, "\n"}},
-    // {"// foo"},  // fails b/c expecting endline
+    {{TK_EOL_COMMENT, "//"}},     // missing \n, but treat as if it were there
+    {{TK_EOL_COMMENT, "//foo"}},  // missing \n, but treat as if it were there
 };
 
 // treating attributes lists as C-style comments,
@@ -757,6 +757,34 @@ static std::initializer_list<LexerTestData> kMacroDefineTests = {
      "\n\n",
      {PP_endif, "`endif"},
      "\n"},
+    {
+        {PP_define, "`define"}, " ", {PP_Identifier, "UNFINISHED"},
+        // No \n before EOF
+    },
+    {
+        {PP_define, "`define"},
+        " ",
+        {PP_Identifier, "UNFINISHED"},
+        " ",
+        {PP_define_body, "symphony"},
+        // No \n before EOF
+    },
+    {
+        {PP_define, "`define"},
+        " ",
+        {PP_Identifier, "UNFINISHED"},
+        " ",
+        {PP_define_body, "symphony \\"},  // end with line continuation
+                                          // No \n before EOF
+    },
+    {
+        {PP_define, "`define"},
+        " ",
+        {PP_Identifier, "UNFINISHED"},
+        " ",
+        {PP_define_body, "symphony \\\n  number"},
+        // No \n before EOF
+    },
 };
 
 static std::initializer_list<GenericTestDataSequence> kProtectedTests = {
@@ -1355,7 +1383,7 @@ static std::initializer_list<SimpleTestData> kEvalStringLiteralTests = {
     {"`\"`abc()`\""},     //
     {"`\"`abc(d)`\""},    //
     {"`\"`abc(d,e)`\""},  //
-    {"`\"```\""},         //
+    {"`\"```\""},         // token concatenation operator in middle
 };
 
 // tokens with special handling in lexer
@@ -1375,6 +1403,19 @@ static std::initializer_list<LexerTestData> kTrickyTests = {
      {TK_NEWLINE, "\n"},
      {SymbolIdentifier, "BAR"},
      ';'},
+    {
+        {TK_EOL_COMMENT, "//FOO"},
+        {TK_LINE_CONT, "\\"},
+        {TK_NEWLINE, "\n"},
+    },
+    {
+        {TK_EOL_COMMENT, "//FOO"},
+        {TK_LINE_CONT, "\\"},
+        {TK_NEWLINE, "\n"},
+        {TK_EOL_COMMENT, "//BAR  "},
+        {TK_LINE_CONT, "\\"},
+        {TK_NEWLINE, "\n"},
+    },
 };
 
 // make sure these are lexed as separate tokens
@@ -1961,6 +2002,24 @@ static std::initializer_list<LexerTestData> kPreprocessorTests = {
      "\n",
      {PP_endif, "`endif"},
      "\n"},
+    // Token concatenations
+    {
+        {PP_TOKEN_CONCAT, "``"},
+    },
+    {
+        {PP_TOKEN_CONCAT, "``"},
+        "\n",
+    },
+    {
+        " ",
+        {PP_TOKEN_CONCAT, "``"},
+        " ",
+    },
+    {
+        {SymbolIdentifier, "ab"},
+        {PP_TOKEN_CONCAT, "``"},
+        {SymbolIdentifier, "cd"},
+    },
 };
 
 static std::initializer_list<LexerTestData> kUnfilteredPreprocessorTests = {
@@ -2069,7 +2128,15 @@ static std::initializer_list<LexerTestData> kLexicalErrorTests = {
     {{TK_wire, "wire"}, " ", {TK_OTHER, "111wire"}, {';', ";"}},
     {{TK_OTHER, "`111macro"}, "\n"},
     {{TK_OTHER, "`111macrocall"}, {'(', "("}, {')', ")"}, "\n"},
-    {{TK_OTHER, "` "}, {SymbolIdentifier, "spacebad"}, "\n"},
+    {{TK_OTHER, "`"}},
+    {{TK_OTHER, "`"}, " "},
+    {{TK_OTHER, "`"}, "\t"},
+    {{TK_OTHER, "`"}, "\n"},
+    {{TK_OTHER, "`"}, {TK_EOL_COMMENT, "//"}, "\n"},
+    {{TK_OTHER, "`"}, {TK_COMMENT_BLOCK, "/* */"}},
+    {{TK_OTHER, "`"}, {TK_DecNumber, "11"}},
+    {{TK_OTHER, "`"}, " ", {SymbolIdentifier, "spacebad"}, "\n"},
+    {{PP_TOKEN_CONCAT, "``"}, {TK_OTHER, "`"}},  // triple-tick breakdown
     {{TK_OTHER, "\""}, "\n"},
     {{TK_OTHER, "\"unterminated string literal"}},
     {{TK_OTHER, "\"unterminated string literal"}, "\n"},
@@ -2080,6 +2147,9 @@ static std::initializer_list<LexerTestData> kLexicalErrorTests = {
     {{TK_OTHER, "/*"}},
     {{TK_OTHER, "/*\n"}},
     {{TK_OTHER, "/* interminated comment"}},
+    // Unterminated string literal inside macro call args
+    {{MacroCallId, "`b"}, '(', {TK_OTHER, "\");"}},
+    {{MacroCallId, "`c"}, '(', {TK_OTHER, "/*"}},
     // Rejected ACSII characters
     {{TK_OTHER, "\x7F"}},
     {{TK_OTHER, "\x80"}},

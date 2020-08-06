@@ -121,8 +121,7 @@ void LintWaiverBuilder::ProcessLine(const TokenRange& tokens, int line_number) {
 
   // Determine whether line is blank, where whitespace still counts as blank.
   const bool line_is_blank =
-      std::find_if_not(tokens.begin(), tokens.end(), is_token_whitespace_) ==
-      tokens.end();
+      std::all_of(tokens.begin(), tokens.end(), is_token_whitespace_);
   if (line_is_blank) {
     unapplied_oneline_waivers_.clear();
     return;
@@ -130,9 +129,9 @@ void LintWaiverBuilder::ProcessLine(const TokenRange& tokens, int line_number) {
 
   // Determine whether line contains any non-space, non-comment tokens.
   const bool line_has_tokens =
-      std::find_if(tokens.begin(), tokens.end(), [=](const TokenInfo& t) {
+      std::any_of(tokens.begin(), tokens.end(), [=](const TokenInfo& t) {
         return !(is_token_whitespace_(t) || is_token_comment_(t));
-      }) != tokens.end();
+      });
 
   if (line_has_tokens) {
     // Apply un-applied one-line waivers, and then reset them.

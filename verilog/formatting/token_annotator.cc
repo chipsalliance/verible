@@ -142,6 +142,13 @@ static WithReason<int> SpacesRequiredBetween(
     return {1, "Escaped identifiers must end with whitespace."};
   }
 
+  if (right.TokenEnum() == verilog_tokentype::TK_LINE_CONT) {
+    return {0, "Add no spaces before \\ line continuation."};
+  }
+  if (left.TokenEnum() == verilog_tokentype::TK_LINE_CONT) {
+    return {0, "Add no spaces after \\ line continuation."};
+  }
+
   if (IsComment(FormatTokenType(right.format_token_enum))) {
     return {2, "Style: require 2+ spaces before comments"};
     // TODO(fangism): Take this from FormatStyle.
@@ -695,6 +702,16 @@ static WithReason<SpacingOptions> BreakDecisionBetween(
       return {SpacingOptions::Preserve,
               "For now, leave spaces inside [] untouched."};
     }
+  }
+
+  if (right.TokenEnum() == verilog_tokentype::TK_LINE_CONT) {
+    return {SpacingOptions::MustAppend,
+            "Keep \\ line continuation attached to its left neighbor."};
+  }
+
+  if (left.TokenEnum() == verilog_tokentype::TK_LINE_CONT) {
+    return {SpacingOptions::MustWrap,
+            "Keep \\ line continuation is always followed by \\n."};
   }
 
   if (left.TokenEnum() == PP_define) {

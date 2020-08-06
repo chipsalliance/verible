@@ -110,6 +110,7 @@ std::function<absl::string_view()> MakeStringSpliterator(
 }
 
 // Returns line-based view of original text.
+// Each line in the returned vector excludes the trailing \n.
 // If original text did not terminate with a \n, interpret the final partial
 // line as a whole line.
 std::vector<absl::string_view> SplitLines(absl::string_view text);

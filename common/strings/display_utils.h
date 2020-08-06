@@ -63,7 +63,7 @@ std::ostream& operator<<(std::ostream&, const VisualizeWhitespace& vis);
 
 // TODO(fangism): once C++17 becomes the minimum standard for building
 // push the following block into an internal namespace, and use auto
-// return types instead of directly rnaming these types.
+// return types instead of directly naming these types.
 // namespace internal {
 
 // Helper struct for bundling parameters to absl::StrJoin.
