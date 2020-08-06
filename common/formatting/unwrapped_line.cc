@@ -47,7 +47,7 @@ std::ostream& operator<<(std::ostream& stream, PartitionPolicyEnum p) {
   case PartitionPolicyEnum::kAppendFittingSubPartitions:
     return stream << "append-fitting-sub-partitions";
   }
-  LOG(FATAL) << "Unknown partition";
+  LOG(FATAL) << "Unknown partition policy " << int(p);
 }
 
 static void TokenFormatter(std::string* out, const PreFormatToken& token,
