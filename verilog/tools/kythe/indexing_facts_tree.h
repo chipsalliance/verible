@@ -72,9 +72,9 @@ class IndexingNodeData {
   std::ostream& DebugString(std::ostream* stream) const {
     *stream << indexing_fact_type_;
 
-    if (anchors_.size()) {
+    if (!anchors_.empty()) {
       *stream << " ";
-      for (auto anchor : anchors_) {
+      for (const auto& anchor : anchors_) {
         anchor.DebugString(stream);
       }
     }

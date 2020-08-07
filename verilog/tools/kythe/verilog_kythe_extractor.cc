@@ -28,9 +28,7 @@
 #include "verilog/analysis/verilog_analyzer.h"
 #include "verilog/tools/kythe/indexing_facts_tree_extractor.h"
 
-ABSL_FLAG(bool,
-          printextraction,
-          false,
+ABSL_FLAG(bool, printextraction, false,
           "Whether or not to print the extracted general indexing facts "
           "from the middle layer)");
 

@@ -13,6 +13,7 @@
 // limitations under the License.
 
 #include "indexing_facts_tree_extractor.h"
+#include "common/text/tree_context_visitor.h"
 #include "verilog/CST/declaration.h"
 #include "verilog/CST/module.h"
 #include "verilog/analysis/verilog_analyzer.h"
@@ -20,19 +21,33 @@
 namespace verilog {
 namespace kythe {
 
+namespace {
+
+template <class V, class T>
+class AutoPopBack {
+ public:
+  AutoPopBack(V* v, T* t) : vec_(v) { vec_->push_back(t); }
+  ~AutoPopBack() { vec_->pop_back(); }
+
+ private:
+  V* vec_;
+};
+
+using AutoPop = AutoPopBack<IndexingFactsTreeContext, IndexingFactNode>;
+
 void DebugSyntaxTree(const verible::SyntaxTreeLeaf& leaf) {
-  LOG(INFO) << "Start Leaf";
-  LOG(INFO) << verilog::NodeEnumToString(
-                   static_cast<verilog::NodeEnum>(leaf.Tag().tag))
-            << " <<>> " << leaf.Tag().tag << " " << leaf.get();
-  LOG(INFO) << "End Leaf";
+  VLOG(1) << "Start Leaf";
+  VLOG(1) << verilog::NodeEnumToString(
+                 static_cast<verilog::NodeEnum>(leaf.Tag().tag))
+          << " <<>> " << leaf.Tag().tag << " " << leaf.get();
+  VLOG(1) << "End Leaf";
 }
 
 void DebugSyntaxTree(const verible::SyntaxTreeNode& node) {
-  LOG(INFO) << "Start Node";
-  LOG(INFO) << verilog::NodeEnumToString(
-                   static_cast<verilog::NodeEnum>(node.Tag().tag))
-            << "  " << node.children().size();
+  VLOG(1) << "Start Node";
+  VLOG(1) << verilog::NodeEnumToString(
+                 static_cast<verilog::NodeEnum>(node.Tag().tag))
+          << "  " << node.children().size();
 
   for (const auto& child : node.children()) {
     if (child) {
@@ -44,12 +59,29 @@ void DebugSyntaxTree(const verible::SyntaxTreeNode& node) {
     }
   }
 
-  LOG(INFO) << "End Node";
+  VLOG(1) << "End Node";
+}
+}  // namespace
+
+void IndexingFactsTreeExtractor::Visit(const verible::SyntaxTreeNode& node) {
+  const auto tag = static_cast<verilog::NodeEnum>(node.Tag().tag);
+  switch (tag) {
+    case NodeEnum::kModuleDeclaration: {
+      ExtractModule(node);
+      break;
+    }
+    case NodeEnum::kDataDeclaration: {
+      ExtractModuleInstantiation(node);
+      break;
+    }
+    default: {
+      TreeContextVisitor::Visit(node);
+    }
+  }
 }
 
 IndexingFactNode ExtractOneFile(absl::string_view content,
-                                absl::string_view filename,
-                                int& exit_status,
+                                absl::string_view filename, int& exit_status,
                                 bool& parse_ok) {
   const auto analyzer =
       verilog::VerilogAnalyzer::AnalyzeAutomaticMode(content, filename);
@@ -77,93 +109,67 @@ IndexingFactNode BuildIndexingFactsTree(const verible::SyntaxTreeNode& root,
   DebugSyntaxTree(root);
 
   IndexingNodeData file_node_data(IndexingFactType::kFile);
-
   IndexingFactNode indexing_fact_root(file_node_data);
-  Extract(root, indexing_fact_root, base);
+
+  IndexingFactsTreeExtractor visitor(base, indexing_fact_root);
+  root.Accept(&visitor);
 
   return indexing_fact_root;
 };
 
-void Extract(const verible::SyntaxTreeNode& node,
-             IndexingFactNode& parent,
-             absl::string_view base) {
-  const auto tag = static_cast<verilog::NodeEnum>(node.Tag().tag);
-
-  switch (tag) {
-    case NodeEnum::kModuleDeclaration: {
-      return ExtractModule(node, parent, base);
-    }
-    case NodeEnum::kDataDeclaration: {
-      return ExtractModuleInstantiation(node, parent, base);
-    }
-    default: {
-      for (const auto& child : node.children()) {
-        if (child) {
-          Extract(verible::SymbolCastToNode(*child), parent, base);
-        }
-      }
-    }
-  }
-}
-
-void ExtractModule(const verible::SyntaxTreeNode& node,
-                   IndexingFactNode& parent,
-                   absl::string_view base) {
+void IndexingFactsTreeExtractor::ExtractModule(
+    const verible::SyntaxTreeNode& node) {
   auto module_node_data = IndexingNodeData(IndexingFactType::kModule);
   auto module_node = IndexingFactNode(module_node_data);
 
-  ExtractModuleHeader(node, module_node.Value(), base);
+  auto parent = facts_tree_context_.back();
+  const AutoPop p(&facts_tree_context_, &module_node);
+
+  ExtractModuleHeader(node);
 
   const auto& module_item_list = GetModuleItemList(node);
-  Extract(verible::SymbolCastToNode(module_item_list), module_node, base);
+  Visit(module_item_list);
 
-  ExtractModuleEnd(node, module_node.Value(), base);
+  ExtractModuleEnd(node);
 
-  parent.NewChild(module_node);
+  parent->NewChild(module_node);
 }
 
-void ExtractModuleHeader(const verible::SyntaxTreeNode& node,
-                         IndexingNodeData& parent,
-                         absl::string_view base) {
+void IndexingFactsTreeExtractor::ExtractModuleHeader(
+    const verible::SyntaxTreeNode& node) {
   const auto& module_name_token = GetModuleNameToken(node);
-  auto moduleNameAnchor = Anchor(module_name_token, base);
+  auto module_name_anchor = Anchor(module_name_token, base_);
 
-  parent.AppendAnchor(moduleNameAnchor);
+  facts_tree_context_.back()->Value().AppendAnchor(module_name_anchor);
 }
 
-void ExtractModuleEnd(const verible::SyntaxTreeNode& node,
-                      IndexingNodeData& parent,
-                      absl::string_view base) {
+void IndexingFactsTreeExtractor::ExtractModuleEnd(
+    const verible::SyntaxTreeNode& node) {
   const auto module_name = GetModuleNameTokenAfterModuleEnd(node);
 
   if (module_name != nullptr) {
-    Anchor moduleEndAnchor = Anchor(*module_name, base);
-    parent.AppendAnchor(moduleEndAnchor);
+    Anchor module_end_anchor = Anchor(*module_name, base_);
+    facts_tree_context_.back()->Value().AppendAnchor(module_end_anchor);
   }
 };
 
-void ExtractModuleInstantiation(const verible::SyntaxTreeNode& node,
-                                IndexingFactNode& parent,
-                                absl::string_view base) {
+void IndexingFactsTreeExtractor::ExtractModuleInstantiation(
+    const verible::SyntaxTreeNode& node) {
   const auto& type =
       GetTypeTokenInfoOfModuleInstantiationFromModuleDeclaration(node);
-  auto type_anchor = Anchor(type, base);
+  auto type_anchor = Anchor(type, base_);
 
   const auto& variable_name =
       GetModuleInstanceNameTokenInfoFromDataDeclaration(node);
-  Anchor variable_name_anchor = Anchor(variable_name, base);
+  Anchor variable_name_anchor = Anchor(variable_name, base_);
 
   auto indexingNodeData = IndexingNodeData(IndexingFactType::kModuleInstance);
   indexingNodeData.AppendAnchor(type_anchor);
   indexingNodeData.AppendAnchor(variable_name_anchor);
 
-  auto moduleInstance = IndexingFactNode(indexingNodeData);
-  parent.NewChild(moduleInstance);
+  auto module_instance = IndexingFactNode(indexingNodeData);
+  facts_tree_context_.back()->NewChild(module_instance);
 }
-
-void Extract(const verible::SyntaxTreeLeaf&,
-             IndexingFactNode&,
-             absl::string_view) {}
 
 }  // namespace kythe
 }  // namespace verilog

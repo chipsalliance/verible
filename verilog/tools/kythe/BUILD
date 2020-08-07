@@ -2,7 +2,7 @@
 
 licenses(["notice"])
 
-# Generate foreach list for IndexingFactType enum.
+# Generates foreach list for IndexingFactType enum.
 # Libraries that need these generated include files should list them
 # under srcs, even if they are included by headers.
 genrule(

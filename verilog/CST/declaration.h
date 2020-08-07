@@ -31,8 +31,7 @@ namespace verilog {
 
 // Interface for consistently building a type-id-dimensions tuple.
 template <typename T1, typename T2, typename T3>
-verible::SymbolPtr MakeTypeIdDimensionsTuple(T1&& type,
-                                             T2&& id,
+verible::SymbolPtr MakeTypeIdDimensionsTuple(T1&& type, T2&& id,
                                              T3&& unpacked_dimensions) {
   verible::CheckSymbolAsNode(*type.get(), NodeEnum::kDataType);
   // id can be qualified or unqualified
@@ -72,8 +71,7 @@ verible::SymbolPtr MakeInstantiationBase(T1&& type, T2&& decl_list) {
 
 // Interface for consistently building a data declaration.
 template <typename T1, typename T2, typename T3>
-verible::SymbolPtr MakeDataDeclaration(T1&& qualifiers,
-                                       T2&& inst_base,
+verible::SymbolPtr MakeDataDeclaration(T1&& qualifiers, T2&& inst_base,
                                        T3&& semicolon) {
   verible::CheckOptionalSymbolAsNode(qualifiers, NodeEnum::kQualifierList);
   verible::CheckSymbolAsNode(*inst_base.get(), NodeEnum::kInstantiationBase);
@@ -121,7 +119,7 @@ GetTypeTokenInfoOfModuleInstantiationFromModuleDeclaration(
 const verible::SyntaxTreeNode& GetInstanceListFromDataDeclaration(
     const verible::Symbol& data_declaration);
 
-// For a giben data declaration returns the TokenInfo of the module name.
+// For a given data declaration returns the TokenInfo of the module name.
 // e.g. module bar; endmodule: bar   module foo; bar b1(); endmodule: foo
 // returns TokenInfo for "b1".
 const verible::TokenInfo& GetModuleInstanceNameTokenInfoFromDataDeclaration(
