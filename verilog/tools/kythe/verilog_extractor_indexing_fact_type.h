@@ -17,6 +17,8 @@
 
 #include <iosfwd>
 
+namespace verilog {
+
 // IndexingFactType is a datatype that indicates the subclass of an
 // IndexingFactNode
 enum class IndexingFactType {
@@ -31,8 +33,10 @@ enum class IndexingFactType {
 
 // Stringify's IndexingFactType. If IndexingFactType does not have a string
 // definition, returns a string stating this.
-std::string LanguageFeatureEnumToString(IndexingFactType);
+std::string IndexingFactTypeEnumToString(IndexingFactType indexing_fact_type);
 
 std::ostream& operator<<(std::ostream& stream, const IndexingFactType& e);
+
+}  // namespace verilog
 
 #endif  // VERIBLE_VERILOG_TOOLS_EXTRACTOR_VERILOG_EXTRACTOR_TYPES_H

@@ -70,4 +70,22 @@ const SyntaxTreeNode* GetModulePortDeclarationList(
   return verible::CheckOptionalSymbolAsNode(ports, NodeEnum::kParenGroup);
 }
 
+const TokenInfo* GetModuleNameTokenAfterModuleEnd(const verible::Symbol& s) {
+  const auto& kLabel_node =
+      verible::GetSubtreeAsSymbol(s, NodeEnum::kModuleDeclaration, 3);
+  if (kLabel_node == nullptr) {
+    return nullptr;
+  }
+  const auto& module_name = verible::GetSubtreeAsLeaf(
+      verible::SymbolCastToNode(*kLabel_node), NodeEnum::kLabel, 1);
+  return &module_name.get();
+}
+
+const verible::SyntaxTreeNode& GetModuleItemList(
+    const verible::Symbol& module_declaration) {
+  return verible::GetSubtreeAsNode(module_declaration,
+                                   NodeEnum::kModuleDeclaration, 1,
+                                   NodeEnum::kModuleItemList);
+}
+
 }  // namespace verilog

@@ -30,13 +30,25 @@
 
 namespace verilog {
 
-template <typename T0, typename T1, typename T2, typename T3, typename T4,
-          typename T5, typename T6, typename T7>
-verible::SymbolPtr MakeModuleHeader(T0&& keyword, T1&& lifetime, T2&& id,
-                                    T3&& imports, T4&& parameters, T5&& ports,
-                                    T6&& attribute, T7&& semi) {
+template <typename T0,
+          typename T1,
+          typename T2,
+          typename T3,
+          typename T4,
+          typename T5,
+          typename T6,
+          typename T7>
+verible::SymbolPtr MakeModuleHeader(T0&& keyword,
+                                    T1&& lifetime,
+                                    T2&& id,
+                                    T3&& imports,
+                                    T4&& parameters,
+                                    T5&& ports,
+                                    T6&& attribute,
+                                    T7&& semi) {
   verible::SymbolCastToLeaf(*keyword);
-  if (lifetime != nullptr) verible::SymbolCastToLeaf(*lifetime);
+  if (lifetime != nullptr)
+    verible::SymbolCastToLeaf(*lifetime);
   verible::SymbolCastToLeaf(*id);  // SymbolIdentifier or other identifier
   verible::CheckOptionalSymbolAsNode(imports, NodeEnum::kPackageImportList);
   verible::CheckOptionalSymbolAsNode(parameters,
@@ -73,6 +85,15 @@ const verible::TokenInfo& GetInterfaceNameToken(const verible::Symbol&);
 // e.g. from "module foo(input x); endmodule", this returns the node that spans
 // "(input x)", including parentheses.
 const verible::SyntaxTreeNode* GetModulePortDeclarationList(
+    const verible::Symbol& module_declaration);
+
+// Returns module name token after endmodule.
+// e.g. from "module foo(); endmodule: foo" returns the second "foo".
+const verible::TokenInfo* GetModuleNameTokenAfterModuleEnd(
+    const verible::Symbol&);
+
+// Returns the node spanning module's Item list.
+const verible::SyntaxTreeNode& GetModuleItemList(
     const verible::Symbol& module_declaration);
 
 }  // namespace verilog

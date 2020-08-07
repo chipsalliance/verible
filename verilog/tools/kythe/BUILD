@@ -31,10 +31,15 @@ cc_library(
 
 cc_library(
     name = "indexing_facts_tree",
+    srcs = [
+        "indexing_facts_tree.cc",
+    ],
     hdrs = [
         "indexing_facts_tree.h",
     ],
     deps = [
+        "//common/text:token_info",
+        "//common/util:vector_tree",
         "//verilog/tools/kythe:verilog_extractor_indexing_fact_type",
     ],
 )
@@ -49,7 +54,11 @@ cc_library(
     ],
     deps = [
         "//common/text:tree_utils",
+        "//verilog/CST:declaration",
+        "//verilog/CST:identifier",
+        "//verilog/CST:module",
         "//verilog/CST:verilog_nonterminals",
+        "//verilog/analysis:verilog_analyzer",
         "//verilog/tools/kythe:indexing_facts_tree",
     ],
 )

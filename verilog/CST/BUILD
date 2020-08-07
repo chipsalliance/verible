@@ -180,6 +180,7 @@ cc_library(
     srcs = ["declaration.cc"],
     hdrs = ["declaration.h"],
     deps = [
+        ":identifier",
         ":verilog_matchers",
         ":verilog_nonterminals",
         "//common/analysis:syntax_tree_search",

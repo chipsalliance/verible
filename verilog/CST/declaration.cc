@@ -25,6 +25,7 @@
 #include "common/text/token_info.h"
 #include "common/text/tree_utils.h"
 #include "common/util/container_util.h"
+#include "verilog/CST/identifier.h"
 #include "verilog/CST/verilog_matchers.h"
 #include "verilog/CST/verilog_nonterminals.h"
 #include "verilog/parser/verilog_token_enum.h"
@@ -100,6 +101,32 @@ const SyntaxTreeNode& GetInstanceListFromDataDeclaration(
   return GetSubtreeAsNode(
       GetInstantiationBaseFromDataDeclaration(data_declaration),
       NodeEnum::kInstantiationBase, 1);
+}
+
+const verible::TokenInfo&
+GetTypeTokenInfoOfModuleInstantiationFromModuleDeclaration(
+    const verible::Symbol& data_declaration) {
+  const auto& instantiation_type = GetTypeOfDataDeclaration(data_declaration);
+  const auto& reference_call_base =
+      GetSubtreeAsNode(instantiation_type, NodeEnum::kInstantiationType, 0);
+  const auto& reference =
+      GetSubtreeAsNode(reference_call_base, NodeEnum::kReferenceCallBase, 0);
+  const auto& local_root = GetSubtreeAsNode(reference, NodeEnum::kReference, 0);
+  const auto& unqualified_id =
+      GetSubtreeAsNode(local_root, NodeEnum::kLocalRoot, 0);
+  const auto module_symbol_identifier = GetIdentifier(unqualified_id);
+  return module_symbol_identifier->get();
+}
+
+const verible::TokenInfo& GetModuleInstanceNameTokenInfoFromDataDeclaration(
+    const verible::Symbol& data_declaration) {
+  const auto& instantiation_type =
+      GetInstanceListFromDataDeclaration(data_declaration);
+  const auto& gate_instance = GetSubtreeAsNode(
+      instantiation_type, NodeEnum::kGateInstanceRegisterVariableList, 0);
+  const auto& net_variable_declaration_assign =
+      GetSubtreeAsLeaf(gate_instance, NodeEnum::kGateInstance, 0);
+  return net_variable_declaration_assign.get();
 }
 
 }  // namespace verilog

@@ -17,7 +17,9 @@
 
 #include <string>
 
-std::string LanguageFeatureEnumToString(IndexingFactType indexing_fact_type) {
+namespace verilog {
+
+std::string IndexingFactTypeEnumToString(IndexingFactType indexing_fact_type) {
   switch (indexing_fact_type) {
 #define CONSIDER(val)         \
   case IndexingFactType::val: \
@@ -33,5 +35,7 @@ std::string LanguageFeatureEnumToString(IndexingFactType indexing_fact_type) {
 }
 
 std::ostream& operator<<(std::ostream& stream, const IndexingFactType& e) {
-  return stream << LanguageFeatureEnumToString(e);
+  return stream << IndexingFactTypeEnumToString(e);
 }
+
+}  // namespace verilog
