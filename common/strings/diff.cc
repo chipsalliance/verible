@@ -90,4 +90,66 @@ LineNumberSet DiffEditsToAddedLineNumbers(const Edits& edits) {
   return added_lines;
 }
 
+std::vector<diff::Edits> DiffEditsToPatchHunks(const diff::Edits& edits,
+                                               int common_context) {
+  const int split_threshold = common_context * 2;
+  std::vector<diff::Edits> hunks(1);  // start with 1 empty destination vector
+  for (const diff::Edit& edit : edits) {
+    auto& current_hunk = hunks.back();
+    if (edit.operation == Operation::EQUALS) {
+      const int edit_size = edit.end - edit.start;
+      if (current_hunk.empty()) {
+        // For "end-pieces" (in this case, the head), threshold should be
+        // common_context, not split_threshold.
+        if (edit_size > common_context) {
+          // Add the tail end of this edit.
+          current_hunk.push_back(
+              diff::Edit{edit.operation, edit.end - common_context, edit.end});
+        } else {
+          // Add the whole edit.
+          current_hunk.push_back(edit);
+        }
+      } else {  // !current_hunk.empty()
+        // We don't know what follows this edit, so this may still be oversized.
+        // A final pass will trim excess sizing of EQUALS edits in tail
+        // position.
+        if (edit_size > split_threshold) {
+          // Close off the current hunk.
+          current_hunk.push_back(diff::Edit{edit.operation, edit.start,
+                                            edit.start + common_context});
+          // Start the next hunk.
+          hunks.push_back(diff::Edits{
+              diff::Edit{edit.operation, edit.end - common_context, edit.end}});
+        } else {
+          // Add the whole edit.
+          current_hunk.push_back(edit);
+        }
+      }
+    } else {  // operation is INSERT or DELETE
+      current_hunk.push_back(edit);
+    }
+  }
+
+  // The last hunk may have been started before knowing it was the last one.
+  // Remove if it is a no-op.
+  const auto& last_hunk = hunks.back();  // hunks is always non-empty
+  if (last_hunk.size() == 1 &&
+      last_hunk.front().operation == Operation::EQUALS) {
+    // This last hunk's only element is an Operation::EQUALS (no-change),
+    // so remove it.
+    hunks.pop_back();
+  }
+
+  // Trim excess EQUALS tail edits in each hunk.
+  for (auto& hunk : hunks) {
+    auto& tail = hunk.back();
+    if (tail.operation == Operation::EQUALS) {
+      if (tail.end - tail.start > common_context) {
+        tail.end = tail.start + common_context;
+      }
+    }
+  }
+  return hunks;
+}
+
 }  // namespace verible

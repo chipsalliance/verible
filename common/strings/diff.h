@@ -52,6 +52,32 @@ std::ostream& operator<<(std::ostream&, const LineDiffs& diffs);
 // diff::Edits are 0-indexed, but the returned line numbers will be 1-indexed.
 LineNumberSet DiffEditsToAddedLineNumbers(const diff::Edits&);
 
+// Divides a single edit-sequence (that covers two whole sequences) into
+// subsequences of of edits ("patch hunks") that skip over unchanged sections.
+// 'edits' must be a well-formed edit sequence, where the start and end
+// indices line up and form contiguous range that span two sequences
+// that were diff'd (e.g. output of diff::GetTokenDiffs()).
+// 'common_context' is the number of lines of common context to pad before and
+// after each hunk.  This is used to determine subsequence cut points.
+//
+// Example:
+//   {DELETE, 0, 1}     // delete one line
+//   {EQUALS, 1, 100}   // unchanged
+//   {INSERT, 99, 100}  // add one line
+//   with 2 elements of common context
+//
+// splits into two hunks:
+//   {DELETE, 0, 1}     // delete one line
+//   {EQUALS, 1, 3}     // unchanged
+//
+//   {EQUALS, 98, 100}  // unchanged
+//   {INSERT, 99, 100}  // add one line
+//
+// This function could be upstreamed to the editscript library because it is
+// agnostic to the type being diff-ed.
+std::vector<diff::Edits> DiffEditsToPatchHunks(const diff::Edits& edits,
+                                               int common_context);
+
 }  // namespace verible
 
 #endif  // VERIBLE_COMMON_STRINGS_DIFF_H_
