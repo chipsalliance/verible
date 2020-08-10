@@ -15,6 +15,7 @@
 #ifndef VERIBLE_VERILOG_TOOLS_KYTHE_INDEXING_FACTS_TREE_EXTRACTOR_H_
 #define VERIBLE_VERILOG_TOOLS_KYTHE_INDEXING_FACTS_TREE_EXTRACTOR_H_
 
+#include "absl/strings/string_view.h"
 #include "common/text/tree_context_visitor.h"
 #include "common/text/tree_utils.h"
 #include "verilog/CST/verilog_nonterminals.h"
@@ -31,23 +32,17 @@ using IndexingFactsTreeContext = std::vector<IndexingFactNode*>;
 // facts from CST nodes and constructs a tree of indexing facts.
 class IndexingFactsTreeExtractor : public verible::TreeContextVisitor {
  public:
-  IndexingFactsTreeExtractor(absl::string_view base, IndexingFactNode& root)
-      : root_(root), base_(base) {
+  IndexingFactsTreeExtractor(absl::string_view base,
+                             absl::string_view file_name)
+      : context_(verible::TokenInfo::Context(base)) {
     facts_tree_context_.push_back(&root_);
   }
 
   void Visit(const verible::SyntaxTreeNode& node) override;
 
+  const IndexingFactNode& GetRoot() { return root_; }
+
  private:
-  // The Root of the constructed tree
-  IndexingFactNode& root_;
-
-  // Used for getting token offsets in code text.
-  absl::string_view base_;
-
-  // Keeps track of facts tree ancestors as the visitor traverses CST.
-  IndexingFactsTreeContext facts_tree_context_;
-
   // Extracts modules and creates its corresponding fact tree.
   void ExtractModule(const verible::SyntaxTreeNode& node);
 
@@ -59,6 +54,16 @@ class IndexingFactsTreeExtractor : public verible::TreeContextVisitor {
 
   // Extracts modules headers and creates its corresponding fact tree.
   void ExtractModuleHeader(const verible::SyntaxTreeNode& node);
+
+  // The Root of the constructed tree
+  IndexingFactNode root_ =
+      IndexingFactNode(IndexingNodeData(IndexingFactType::kFile));
+
+  // Used for getting token offsets in code text.
+  verible::TokenInfo::Context context_;
+
+  // Keeps track of facts tree ancestors as the visitor traverses CST.
+  IndexingFactsTreeContext facts_tree_context_;
 };
 
 // Given a verilog file returns the extracted indexing facts tree.
@@ -68,8 +73,9 @@ IndexingFactNode ExtractOneFile(absl::string_view content,
 
 // Given a root to CST this function traverses the tree and extracts and
 // constructs the indexing facts tree.
-IndexingFactNode BuildIndexingFactsTree(const verible::SyntaxTreeNode& root,
-                                        absl::string_view base);
+IndexingFactNode BuildIndexingFactsTree(const verible::ConcreteSyntaxTree& root,
+                                        absl::string_view base,
+                                        absl::string_view file_name);
 
 }  // namespace kythe
 }  // namespace verilog

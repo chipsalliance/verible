@@ -77,7 +77,7 @@ const verible::SyntaxTreeNode* GetModulePortDeclarationList(
 
 // Returns module name token after endmodule.
 // e.g. from "module foo(); endmodule: foo" returns the second "foo".
-const verible::TokenInfo* GetModuleNameTokenAfterModuleEnd(
+const verible::TokenInfo* GetModuleEndLabel(
     const verible::Symbol&);
 
 // Returns the node spanning module's Item list.

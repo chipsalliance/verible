@@ -26,6 +26,8 @@ namespace kythe {
 // Anchor class represents the location and value of some token.
 class Anchor {
  public:
+  explicit Anchor(absl::string_view value) : value_(value) {}
+
   Anchor(const verible::TokenInfo& token, absl::string_view base)
       : start_location_(token.left(base)),
         end_location_(token.right(base)),
@@ -33,11 +35,7 @@ class Anchor {
 
   // This function is for debugging only and isn't intended to be a textual
   // representation of this class.
-  std::ostream& DebugString(std::ostream* stream) const {
-    *stream << absl::Substitute(R"( {$0 @$1-$2})", value_, start_location_,
-                                end_location_);
-    return *stream;
-  }
+  std::string DebugString() const;
 
  private:
   // Start and end locations of the current token inside the code text.
@@ -61,7 +59,7 @@ class IndexingNodeData {
                    IndexingFactType language_feature)
       : anchors_(std::move(anchor)), indexing_fact_type_(language_feature) {}
 
-  void AppendAnchor(Anchor anchor) { anchors_.push_back(anchor); };
+  void AppendAnchor(const Anchor& anchor) { anchors_.push_back(anchor); };
 
   void AppendAnchor(std::vector<Anchor> anchors) {
     anchors_.insert(anchors_.end(), anchors.begin(), anchors.end());
@@ -69,18 +67,7 @@ class IndexingNodeData {
 
   // This function is for debugging only and isn't intended to be textual
   // representation of this class.
-  std::ostream& DebugString(std::ostream* stream) const {
-    *stream << indexing_fact_type_;
-
-    if (!anchors_.empty()) {
-      *stream << " ";
-      for (const auto& anchor : anchors_) {
-        anchor.DebugString(stream);
-      }
-    }
-
-    return *stream;
-  }
+  std::ostream& DebugString(std::ostream* stream) const;
 
  private:
   // Anchors representing the different tokens of this indexing fact.

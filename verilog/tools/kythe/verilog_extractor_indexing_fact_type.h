@@ -16,6 +16,7 @@
 #define VERIBLE_VERILOG_TOOLS_EXTRACTOR_VERILOG_EXTRACTOR_TYPES_H
 
 #include <iosfwd>
+#include <string>
 
 namespace verilog {
 

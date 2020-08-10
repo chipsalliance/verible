@@ -103,8 +103,7 @@ const SyntaxTreeNode& GetInstanceListFromDataDeclaration(
       NodeEnum::kInstantiationBase, 1);
 }
 
-const verible::TokenInfo&
-GetTypeTokenInfoOfModuleInstantiationFromModuleDeclaration(
+const verible::TokenInfo& GetTypeTokenInfoFromModuleInstantiation(
     const verible::Symbol& data_declaration) {
   const auto& instantiation_type = GetTypeOfDataDeclaration(data_declaration);
   const auto& reference_call_base =

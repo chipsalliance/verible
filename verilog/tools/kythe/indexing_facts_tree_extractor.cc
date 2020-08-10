@@ -12,8 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "indexing_facts_tree_extractor.h"
+#include <iostream>
+#include <string>
+
 #include "common/text/tree_context_visitor.h"
+#include "indexing_facts_tree_extractor.h"
 #include "verilog/CST/declaration.h"
 #include "verilog/CST/module.h"
 #include "verilog/analysis/verilog_analyzer.h"
@@ -100,21 +103,23 @@ IndexingFactNode ExtractOneFile(absl::string_view content,
   const auto& text_structure = analyzer->Data();
   const auto& syntax_tree = text_structure.SyntaxTree();
 
-  return BuildIndexingFactsTree(verible::SymbolCastToNode(*syntax_tree),
-                                analyzer->Data().Contents());
+  return BuildIndexingFactsTree(syntax_tree, analyzer->Data().Contents(),
+                                filename);
 }
 
-IndexingFactNode BuildIndexingFactsTree(const verible::SyntaxTreeNode& root,
-                                        absl::string_view base) {
+IndexingFactNode BuildIndexingFactsTree(
+    const verible::ConcreteSyntaxTree& syntax_tree, absl::string_view base,
+    absl::string_view file_name) {
+  IndexingFactsTreeExtractor visitor(base, file_name);
+  if (syntax_tree == nullptr) {
+    return visitor.GetRoot();
+  }
+
+  const auto& root = verible::SymbolCastToNode(*syntax_tree);
   DebugSyntaxTree(root);
-
-  IndexingNodeData file_node_data(IndexingFactType::kFile);
-  IndexingFactNode indexing_fact_root(file_node_data);
-
-  IndexingFactsTreeExtractor visitor(base, indexing_fact_root);
   root.Accept(&visitor);
 
-  return indexing_fact_root;
+  return visitor.GetRoot();
 };
 
 void IndexingFactsTreeExtractor::ExtractModule(
@@ -122,7 +127,7 @@ void IndexingFactsTreeExtractor::ExtractModule(
   auto module_node_data = IndexingNodeData(IndexingFactType::kModule);
   auto module_node = IndexingFactNode(module_node_data);
 
-  auto parent = facts_tree_context_.back();
+  auto* parent = facts_tree_context_.back();
   const AutoPop p(&facts_tree_context_, &module_node);
 
   ExtractModuleHeader(node);
@@ -138,30 +143,29 @@ void IndexingFactsTreeExtractor::ExtractModule(
 void IndexingFactsTreeExtractor::ExtractModuleHeader(
     const verible::SyntaxTreeNode& node) {
   const auto& module_name_token = GetModuleNameToken(node);
-  auto module_name_anchor = Anchor(module_name_token, base_);
+  auto module_name_anchor = Anchor(module_name_token, context_.base);
 
   facts_tree_context_.back()->Value().AppendAnchor(module_name_anchor);
 }
 
 void IndexingFactsTreeExtractor::ExtractModuleEnd(
     const verible::SyntaxTreeNode& node) {
-  const auto module_name = GetModuleNameTokenAfterModuleEnd(node);
+  const auto module_name = GetModuleEndLabel(node);
 
   if (module_name != nullptr) {
-    Anchor module_end_anchor = Anchor(*module_name, base_);
+    Anchor module_end_anchor = Anchor(*module_name, context_.base);
     facts_tree_context_.back()->Value().AppendAnchor(module_end_anchor);
   }
 };
 
 void IndexingFactsTreeExtractor::ExtractModuleInstantiation(
     const verible::SyntaxTreeNode& node) {
-  const auto& type =
-      GetTypeTokenInfoOfModuleInstantiationFromModuleDeclaration(node);
-  auto type_anchor = Anchor(type, base_);
+  const auto& type = GetTypeTokenInfoFromModuleInstantiation(node);
+  auto type_anchor = Anchor(type, context_.base);
 
   const auto& variable_name =
       GetModuleInstanceNameTokenInfoFromDataDeclaration(node);
-  Anchor variable_name_anchor = Anchor(variable_name, base_);
+  Anchor variable_name_anchor = Anchor(variable_name, context_.base);
 
   auto indexingNodeData = IndexingNodeData(IndexingFactType::kModuleInstance);
   indexingNodeData.AppendAnchor(type_anchor);

@@ -107,10 +107,8 @@ const verible::SyntaxTreeNode& GetTypeOfDataDeclaration(
     const verible::Symbol& data_declaration);
 
 // For a given data declaration returns the TokenInfo of the module type.
-// e.g. module bar; endmodule: bar   module foo; bar b1(); endmodule: foo
-// returns the TokenInfo for "bar" in instantiation.
-const verible::TokenInfo&
-GetTypeTokenInfoOfModuleInstantiationFromModuleDeclaration(
+// e.g. bar b1() returns the TokenInfo for "bar" in instantiation.
+const verible::TokenInfo& GetTypeTokenInfoFromModuleInstantiation(
     const verible::Symbol&);
 
 // For a given data declaration (includes module instantiation), returns the

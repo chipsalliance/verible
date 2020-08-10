@@ -70,14 +70,14 @@ const SyntaxTreeNode* GetModulePortDeclarationList(
   return verible::CheckOptionalSymbolAsNode(ports, NodeEnum::kParenGroup);
 }
 
-const TokenInfo* GetModuleNameTokenAfterModuleEnd(const verible::Symbol& s) {
-  const auto& kLabel_node =
+const TokenInfo* GetModuleEndLabel(const verible::Symbol& s) {
+  const auto& label_node =
       verible::GetSubtreeAsSymbol(s, NodeEnum::kModuleDeclaration, 3);
-  if (kLabel_node == nullptr) {
+  if (label_node == nullptr) {
     return nullptr;
   }
   const auto& module_name = verible::GetSubtreeAsLeaf(
-      verible::SymbolCastToNode(*kLabel_node), NodeEnum::kLabel, 1);
+      verible::SymbolCastToNode(*label_node), NodeEnum::kLabel, 1);
   return &module_name.get();
 }
 

@@ -12,10 +12,27 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include <iostream>
+
+#include "absl/strings/str_join.h"
 #include "indexing_facts_tree.h"
 
 namespace verilog {
 namespace kythe {
+
+std::string Anchor::DebugString() const {
+  return absl::Substitute(R"( {$0 @$1-$2})", value_, start_location_,
+                          end_location_);
+}
+
+std::ostream& IndexingNodeData::DebugString(std::ostream* stream) const {
+  *stream << indexing_fact_type_;
+  *stream << absl::StrJoin(anchors_.begin(), anchors_.end(), " ",
+                           [](std::string* out, const Anchor& anchor) {
+                             absl::StrAppend(out, anchor.DebugString());
+                           });
+  return *stream;
+}
 
 std::ostream& operator<<(std::ostream& stream,
                          const IndexingNodeData& indexing_node_data) {
