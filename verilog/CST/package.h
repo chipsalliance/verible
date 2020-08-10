@@ -24,6 +24,7 @@
 #include "common/text/symbol.h"
 #include "common/text/token_info.h"
 
+
 namespace verilog {
 
 // Find all package declarations.

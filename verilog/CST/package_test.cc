@@ -36,14 +36,24 @@
 #include "common/util/logging.h"
 #include "verilog/analysis/verilog_analyzer.h"
 
+#include "common/analysis/syntax_tree_search.h"
+#include "common/analysis/syntax_tree_search_test_utils.h"
+
+
 #undef EXPECT_OK
 #define EXPECT_OK(value) EXPECT_TRUE((value).ok())
+
+#undef ASSERT_OK
+#define ASSERT_OK(value) ASSERT_TRUE((value).ok())
 
 namespace verilog {
 namespace {
 
 using verible::down_cast;
 using verible::SyntaxTreeNode;
+using verible::SyntaxTreeSearchTestCase;
+using verible::TreeSearchMatch;
+
 
 TEST(FindAllPackageDeclarationsTest, EmptySource) {
   VerilogAnalyzer analyzer("", "");
@@ -89,6 +99,35 @@ endclass
   const auto package_declarations =
       FindAllPackageDeclarations(*ABSL_DIE_IF_NULL(root));
   EXPECT_EQ(package_declarations.size(), 2);
+}
+
+TEST(FindAllPackageDeclarationsTest2, MultiPackages2) {
+  //constexpr int kTag = 1;
+  const SyntaxTreeSearchTestCase testcases[] = {
+       {"package p;\n",
+       "endpackage\n"},
+       {"package mod; endpackage"}
+
+  };
+
+    const auto & test = testcases[1];
+    const absl::string_view code(test.code);
+    VerilogAnalyzer analyzer(code, "test-file");
+    //const auto code_copy = analyzer.Data().Contents();
+    ASSERT_OK(analyzer.Analyze()) << "failed on:\n" << code;
+    const auto& root = analyzer.Data().SyntaxTree();
+
+    const auto decls = FindAllPackageDeclarations(*root);
+
+    //EXPECT_EQ(decls.size(), 1);
+    //std::vector<TreeSearchMatch> types;
+    const auto& package_node =
+    down_cast<const SyntaxTreeNode&>(*decls.front().match);
+    const auto& token = GetPackageNameToken(package_node);
+    EXPECT_EQ(token.text(), "mod");
+    //std::ostringstream diffs;
+
+
 }
 
 TEST(GetPackageNameTokenTest, RootIsNotAPackage) {
