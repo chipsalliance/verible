@@ -389,7 +389,9 @@ static absl::Status WaiveCommandHandler(
         }
 
         return absl::OkStatus();
-
+      case CFG_TK_COMMENT:
+        /* Ignore comments */
+        break;
       default:
         return WaiveCommandError(token_pos, waive_file, "Expecting arguments");
     }
@@ -433,6 +435,10 @@ absl::Status LintWaiverBuilder::ApplyExternalWaivers(
     const auto command = make_container_range(c_range.begin(), c_range.end());
 
     command_pos = line_map(command.begin()->left(waivers_config_content));
+
+    if (command[0].token_enum() == CFG_TK_COMMENT) {
+      continue;
+    }
 
     // The very first Token in 'command' should be an actual command
     if (command.empty() || command[0].token_enum() != CFG_TK_COMMAND) {
