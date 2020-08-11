@@ -117,9 +117,11 @@ const verible::TokenInfo& GetTypeTokenInfoFromModuleInstantiation(
 const verible::SyntaxTreeNode& GetInstanceListFromDataDeclaration(
     const verible::Symbol& data_declaration);
 
-// For a given data declaration returns the TokenInfo of the module name.
-// e.g. module bar; endmodule: bar   module foo; bar b1(); endmodule: foo
-// returns TokenInfo for "b1".
+// TODO(MinaToma): handle multiple module instances in the same declaration, and
+// return an array of tokens.
+// For a given data declaration returns the TokenInfo
+// of the module name. e.g. module bar; endmodule: bar   module foo; bar b1();
+// endmodule: foo returns TokenInfo for "b1".
 const verible::TokenInfo& GetModuleInstanceNameTokenInfoFromDataDeclaration(
     const verible::Symbol&);
 

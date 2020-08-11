@@ -35,6 +35,7 @@ class IndexingFactsTreeExtractor : public verible::TreeContextVisitor {
   IndexingFactsTreeExtractor(absl::string_view base,
                              absl::string_view file_name)
       : context_(verible::TokenInfo::Context(base)) {
+    root_.Value().AppendAnchor(Anchor(file_name, 0, base.size()));
     facts_tree_context_.push_back(&root_);
   }
 
@@ -56,8 +57,7 @@ class IndexingFactsTreeExtractor : public verible::TreeContextVisitor {
   void ExtractModuleHeader(const verible::SyntaxTreeNode& node);
 
   // The Root of the constructed tree
-  IndexingFactNode root_ =
-      IndexingFactNode(IndexingNodeData(IndexingFactType::kFile));
+  IndexingFactNode root_{IndexingNodeData(IndexingFactType::kFile)};
 
   // Used for getting token offsets in code text.
   verible::TokenInfo::Context context_;

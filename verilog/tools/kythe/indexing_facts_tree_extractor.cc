@@ -124,8 +124,8 @@ IndexingFactNode BuildIndexingFactsTree(
 
 void IndexingFactsTreeExtractor::ExtractModule(
     const verible::SyntaxTreeNode& node) {
-  auto module_node_data = IndexingNodeData(IndexingFactType::kModule);
-  auto module_node = IndexingFactNode(module_node_data);
+  IndexingNodeData module_node_data(IndexingFactType::kModule);
+  IndexingFactNode module_node(module_node_data);
 
   auto* parent = facts_tree_context_.back();
   const AutoPop p(&facts_tree_context_, &module_node);
@@ -143,17 +143,17 @@ void IndexingFactsTreeExtractor::ExtractModule(
 void IndexingFactsTreeExtractor::ExtractModuleHeader(
     const verible::SyntaxTreeNode& node) {
   const auto& module_name_token = GetModuleNameToken(node);
-  auto module_name_anchor = Anchor(module_name_token, context_.base);
+  const Anchor module_name_anchor(module_name_token, context_.base);
 
   facts_tree_context_.back()->Value().AppendAnchor(module_name_anchor);
 }
 
 void IndexingFactsTreeExtractor::ExtractModuleEnd(
     const verible::SyntaxTreeNode& node) {
-  const auto module_name = GetModuleEndLabel(node);
+  const auto* module_name = GetModuleEndLabel(node);
 
   if (module_name != nullptr) {
-    Anchor module_end_anchor = Anchor(*module_name, context_.base);
+    const Anchor module_end_anchor(*module_name, context_.base);
     facts_tree_context_.back()->Value().AppendAnchor(module_end_anchor);
   }
 };
@@ -161,17 +161,17 @@ void IndexingFactsTreeExtractor::ExtractModuleEnd(
 void IndexingFactsTreeExtractor::ExtractModuleInstantiation(
     const verible::SyntaxTreeNode& node) {
   const auto& type = GetTypeTokenInfoFromModuleInstantiation(node);
-  auto type_anchor = Anchor(type, context_.base);
+  const Anchor type_anchor(type, context_.base);
 
   const auto& variable_name =
       GetModuleInstanceNameTokenInfoFromDataDeclaration(node);
-  Anchor variable_name_anchor = Anchor(variable_name, context_.base);
+  const Anchor variable_name_anchor(variable_name, context_.base);
 
-  auto indexingNodeData = IndexingNodeData(IndexingFactType::kModuleInstance);
-  indexingNodeData.AppendAnchor(type_anchor);
-  indexingNodeData.AppendAnchor(variable_name_anchor);
+  IndexingNodeData indexing_node_data(IndexingFactType::kModuleInstance);
+  indexing_node_data.AppendAnchor(type_anchor);
+  indexing_node_data.AppendAnchor(variable_name_anchor);
 
-  auto module_instance = IndexingFactNode(indexingNodeData);
+  IndexingFactNode module_instance(indexing_node_data);
   facts_tree_context_.back()->NewChild(module_instance);
 }
 

@@ -15,6 +15,8 @@
 #ifndef VERIBLE_VERILOG_TOOLS_KYTHE_INDEXING_FACTS_TREE_H_
 #define VERIBLE_VERILOG_TOOLS_KYTHE_INDEXING_FACTS_TREE_H_
 
+#include <utility>
+
 #include "absl/strings/substitute.h"
 #include "common/text/token_info.h"
 #include "common/util/vector_tree.h"
@@ -23,10 +25,14 @@
 namespace verilog {
 namespace kythe {
 
+// TODO(MinaToma): Investigate this and think to replace it with TokenInfo.
 // Anchor class represents the location and value of some token.
 class Anchor {
  public:
-  explicit Anchor(absl::string_view value) : value_(value) {}
+  Anchor(absl::string_view value, int startLocation, int endLocation)
+      : start_location_(startLocation),
+        end_location_(std::max(0, endLocation)),
+        value_(value) {}
 
   Anchor(const verible::TokenInfo& token, absl::string_view base)
       : start_location_(token.left(base)),
@@ -36,6 +42,10 @@ class Anchor {
   // This function is for debugging only and isn't intended to be a textual
   // representation of this class.
   std::string DebugString() const;
+
+  int StartLocation() const { return start_location_; }
+  int EndLocation() const { return end_location_; }
+  std::string Value() const { return value_; }
 
  private:
   // Start and end locations of the current token inside the code text.
@@ -68,6 +78,9 @@ class IndexingNodeData {
   // This function is for debugging only and isn't intended to be textual
   // representation of this class.
   std::ostream& DebugString(std::ostream* stream) const;
+
+  const std::vector<Anchor>& Anchors() const { return anchors_; }
+  IndexingFactType GetIndexingFactType() const { return indexing_fact_type_; }
 
  private:
   // Anchors representing the different tokens of this indexing fact.

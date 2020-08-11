@@ -12,10 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "verilog_extractor_indexing_fact_type.h"
-#include "absl/strings/str_cat.h"
-
+#include <iosfwd>
+#include <iostream>
 #include <string>
+
+#include "absl/strings/str_cat.h"
+#include "verilog_extractor_indexing_fact_type.h"
 
 namespace verilog {
 

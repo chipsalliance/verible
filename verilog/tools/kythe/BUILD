@@ -63,6 +63,18 @@ cc_library(
     ],
 )
 
+cc_test(
+    name = "indexing_facts_tree_extractor_test",
+    srcs = ["indexing_facts_tree_extractor_test.cc"],
+    deps = [
+        ":indexing_facts_tree_extractor",
+        "//common/text:concrete_syntax_tree",
+        "//verilog/analysis:verilog_analyzer",
+        "@com_google_absl//absl/strings",
+        "@com_google_googletest//:gtest_main",
+    ],
+)
+
 cc_binary(
     name = "verible-verilog-kythe-extractor",
     srcs = [

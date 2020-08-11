@@ -15,6 +15,9 @@
 // verilog_kythe_extractor is a simple command-line utility to extract kythe
 // indexing facts from the given file.
 //
+// Expected Input: verilog file.
+// Expected output: Produces Indexing Facts for kythe.
+//
 // Example usage:
 // verilog_kythe_extractor files...
 
@@ -34,7 +37,7 @@ ABSL_FLAG(bool, printextraction, false,
 
 int ExtractOneFile(absl::string_view content, absl::string_view filename) {
   int exit_status = 0;
-  bool parse_ok = 0;
+  bool parse_ok = false;
 
   const auto& facts_tree =
       verilog::kythe::ExtractOneFile(content, filename, exit_status, parse_ok);

@@ -103,29 +103,46 @@ const SyntaxTreeNode& GetInstanceListFromDataDeclaration(
       NodeEnum::kInstantiationBase, 1);
 }
 
+const SyntaxTreeNode& GetReferenceCallBaseFromInstantiationType(
+    const Symbol& instantiation_type) {
+  return GetSubtreeAsNode(instantiation_type, NodeEnum::kInstantiationType, 0);
+}
+
+const SyntaxTreeNode& GetReferenceFromReferenceCallBase(
+    const Symbol& reference_call_base) {
+  return GetSubtreeAsNode(reference_call_base, NodeEnum::kReferenceCallBase, 0);
+}
+
+const SyntaxTreeNode& GetLocalRootFromReference(const Symbol& reference) {
+  return GetSubtreeAsNode(reference, NodeEnum::kReference, 0);
+}
+
+const SyntaxTreeNode& GetUnqualifiedIdFromLocalRoot(const Symbol& local_root) {
+  return GetSubtreeAsNode(local_root, NodeEnum::kLocalRoot, 0);
+}
+
 const verible::TokenInfo& GetTypeTokenInfoFromModuleInstantiation(
     const verible::Symbol& data_declaration) {
   const auto& instantiation_type = GetTypeOfDataDeclaration(data_declaration);
   const auto& reference_call_base =
-      GetSubtreeAsNode(instantiation_type, NodeEnum::kInstantiationType, 0);
+      GetReferenceCallBaseFromInstantiationType(instantiation_type);
   const auto& reference =
-      GetSubtreeAsNode(reference_call_base, NodeEnum::kReferenceCallBase, 0);
-  const auto& local_root = GetSubtreeAsNode(reference, NodeEnum::kReference, 0);
-  const auto& unqualified_id =
-      GetSubtreeAsNode(local_root, NodeEnum::kLocalRoot, 0);
+      GetReferenceFromReferenceCallBase(reference_call_base);
+  const auto& local_root = GetLocalRootFromReference(reference);
+  const auto& unqualified_id = GetUnqualifiedIdFromLocalRoot(local_root);
   const auto module_symbol_identifier = GetIdentifier(unqualified_id);
   return module_symbol_identifier->get();
 }
 
 const verible::TokenInfo& GetModuleInstanceNameTokenInfoFromDataDeclaration(
     const verible::Symbol& data_declaration) {
-  const auto& instantiation_type =
+  const auto& instances_list =
       GetInstanceListFromDataDeclaration(data_declaration);
-  const auto& gate_instance = GetSubtreeAsNode(
-      instantiation_type, NodeEnum::kGateInstanceRegisterVariableList, 0);
-  const auto& net_variable_declaration_assign =
-      GetSubtreeAsLeaf(gate_instance, NodeEnum::kGateInstance, 0);
-  return net_variable_declaration_assign.get();
+  const auto& first_instance = GetSubtreeAsNode(
+      instances_list, NodeEnum::kGateInstanceRegisterVariableList, 0);
+  const auto& instance_name =
+      GetSubtreeAsLeaf(first_instance, NodeEnum::kGateInstance, 0);
+  return instance_name.get();
 }
 
 }  // namespace verilog
