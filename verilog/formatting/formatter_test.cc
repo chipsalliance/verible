@@ -597,7 +597,10 @@ static const std::initializer_list<FormatterTestCase> kFormatterTestCases = {
     },
     {
         "  parameter  int   foo=$bar(-  z,- y ) ;",
-        "parameter int foo = $bar(-z, -y);\n",
+        "parameter int foo = $bar(\n"
+        "    -z,\n"
+        "    -y\n"
+        ");\n",
     },
     {"  parameter int a=b&~(c<<d);", "parameter int a = b & ~(c << d);\n"},
     {"  parameter int a=~~~~b;", "parameter int a = ~~~~b;\n"},
@@ -3512,12 +3515,8 @@ static const std::initializer_list<FormatterTestCase> kFormatterTestCases = {
      "function void warranty;\n"
      "  foo.bar = fancyfunction(\n"
      "      aaaaaaaa.bbbbbbb,\n"
-     // TODO(fangism): ccccccccc is indented too much because it thinks it is
-     // part of a run-on string of tokens starting with aaaaaaaa.
-     // We need to inform that it should be on the same level as aaaaaaaa as a
-     // sibling item within the same balance group.
-     // Right now, there is no notion of sibling items within a balance group.
-     "          ccccccccc.ddddddddd);\n"
+     "      ccccccccc.ddddddddd\n"
+     "  );\n"
      "endfunction : warranty\n"},
 
     {
