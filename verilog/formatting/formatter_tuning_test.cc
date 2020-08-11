@@ -59,8 +59,7 @@ static const std::initializer_list<FormatterTestCase> kTestCases = {
      "endmodule",
      "module m;\n"
      "  assign wwwwww[77:66] = sss(\n"
-     "      qqqq[33:22],\n"
-     "      vv[44:1]\n"
+     "      qqqq[33:22], vv[44:1]\n"
      "  );\n"
      "endmodule\n"},
     {"module m;\n"

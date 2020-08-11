@@ -597,10 +597,7 @@ static const std::initializer_list<FormatterTestCase> kFormatterTestCases = {
     },
     {
         "  parameter  int   foo=$bar(-  z,- y ) ;",
-        "parameter int foo = $bar(\n"
-        "    -z,\n"
-        "    -y\n"
-        ");\n",
+        "parameter int foo = $bar(-z, -y);\n",
     },
     {"  parameter int a=b&~(c<<d);", "parameter int a = b & ~(c << d);\n"},
     {"  parameter int a=~~~~b;", "parameter int a = ~~~~b;\n"},

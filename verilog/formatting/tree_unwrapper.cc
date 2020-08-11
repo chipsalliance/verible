@@ -643,7 +643,7 @@ void TreeUnwrapper::SetIndentationsAndCreatePartitions(
         //     function/system/method/random calls inside trailing assignments,
         //     if headers, ternary operators and so on
         VisitIndentedSection(node, style_.wrap_spaces,
-                             PartitionPolicyEnum::kAlwaysExpand);
+                             PartitionPolicyEnum::kFitOnLineElseExpand);
       } else {
         TraverseChildren(node);
       }
