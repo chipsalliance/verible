@@ -102,31 +102,52 @@ endclass
 }
 
 TEST(FindAllPackageDeclarationsTest2, MultiPackages2) {
-  //constexpr int kTag = 1;
+  constexpr int kTag = 1;
   const SyntaxTreeSearchTestCase testcases[] = {
-       {"package p;\n",
-       "endpackage\n"},
-       {"package mod; endpackage"}
+      {""},
+      {"module m;\nendmodule\n"},
+      {"class c;\nendclass\n"},
+      {"function f;\nendfunction\n"},
+      {{kTag, "package p1; \n endpackage"}, "\n"},
+      {"\n", {kTag, "package p2; endpackage"}},
+      {{kTag, "package p1; \n endpackage"},"\n",
+        "module m; \n",
+        "const foo bar; \n",
+        "endmodule \n",
+       {kTag, "package p2; \n endpackage"}},
 
+      { "function f; ",
+        "endfunction ",
+        "module m; \n",
+        "const foo bar; \n",
+        "endmodule \n",
+       {kTag, "package p2; \n endpackage"}}
   };
-
-    const auto & test = testcases[1];
+  for( const auto & test : testcases)
+  {
+    //const auto & test = testcases[0];
     const absl::string_view code(test.code);
     VerilogAnalyzer analyzer(code, "test-file");
-    //const auto code_copy = analyzer.Data().Contents();
+    const auto code_copy = analyzer.Data().Contents();
     ASSERT_OK(analyzer.Analyze()) << "failed on:\n" << code;
     const auto& root = analyzer.Data().SyntaxTree();
 
-    const auto decls = FindAllPackageDeclarations(*root);
+    const auto decls = FindAllPackageDeclarations(*ABSL_DIE_IF_NULL(root));
+
+    std::ostringstream diffs;
+    EXPECT_TRUE(test.ExactMatchFindings(decls, code_copy, &diffs))
+        << "failed on:\n"
+        << code << "\ndiffs:\n"
+        << diffs.str();
 
     //EXPECT_EQ(decls.size(), 1);
     //std::vector<TreeSearchMatch> types;
-    const auto& package_node =
-    down_cast<const SyntaxTreeNode&>(*decls.front().match);
-    const auto& token = GetPackageNameToken(package_node);
-    EXPECT_EQ(token.text(), "mod");
+    //const auto& package_node =
+    //down_cast<const SyntaxTreeNode&>(*decls.front().match);
+    //const auto& token = GetPackageNameToken(package_node);
+    //EXPECT_EQ(token.text(), "mod");
     //std::ostringstream diffs;
-
+  }
 
 }
 
