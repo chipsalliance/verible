@@ -108,8 +108,14 @@ TEST(FindAllPackageDeclarationsTest2, MultiPackages2) {
       {"module m;\nendmodule\n"},
       {"class c;\nendclass\n"},
       {"function f;\nendfunction\n"},
-      {{kTag, "package p1; \n endpackage"}, "\n"},
+      {{kTag, "package p; \n endpackage"}, "\n"},
       {"\n", {kTag, "package p2; endpackage"}},
+      {{kTag, "package p; \n endpackage"},
+      " task sleep; ",
+      " endtask\n",
+      " class myclass;\n",
+      "endclass\n",
+      {kTag, "package p; \n endpackage"}},
       {{kTag, "package p1; \n endpackage"},"\n",
         "module m; \n",
         "const foo bar; \n",
@@ -121,11 +127,90 @@ TEST(FindAllPackageDeclarationsTest2, MultiPackages2) {
         "module m; \n",
         "const foo bar; \n",
         "endmodule \n",
-       {kTag, "package p2; \n endpackage"}}
+       {kTag, "package p; \n endpackage"}},
+
+        {"`include \"stuff.svh\"\n",
+        "`expand_stuff()\n",
+        "`expand_with_semi(name);\n",
+        "`expand_more(name)\n",
+        {kTag, "package p; \n endpackage"}},
+
+        {{kTag, "package p; \n endpackage"},
+        "`undef FOOOBAR\n",
+        {kTag, "package p; \n endpackage"}},
+
+        {{kTag, "package p; \n endpackage"},
+        " let Peace = Love;\n",
+        {kTag, "package p; \n endpackage"},
+        " let Five() = Two + Two + One;\n",
+        " let Min(a,b) = (a < b) ? a : b;\n",
+        " let Max(a,b=1) = (a > b) ? a : b;\n",
+        {kTag, "package p; \n endpackage"},
+        " let Max(untyped a, bit b=1) = (a > b) ? a : b;\n"},
+
+        {"localparam real foo = 3.14;\n",
+        "localparam shortreal foo = 159.265;\n",
+        "localparam realtime foo = 358.979ns;\n",
+        {kTag, "package p; \n endpackage"},
+        "  localparam real foo = 323.846;\n"},
+
+        {{kTag, "package p; \n endpackage"},
+        " import $unit::arnold;\n",
+        " import $unit::*;\n",
+        {kTag, "package p; \n endpackage"}},
+
+        {{kTag, "package p; \n endpackage"},
+        " export bar::baz;\n",
+        " export bar::*;\n",
+        {kTag, "package p; \n endpackage"}},
+         {{kTag, "package p; \n endpackage"},
+        " parameter reg[BITS:0] MR0 = '0;\n"},
+
+        {{kTag, "package p; \n endpackage"},
+        " bind scope_x type_y z (.*);\n",
+        " bind scope_x type_y z1(.*), z2(.*);\n",
+        " bind module_scope : inst_x type_y inst_z(.*);\n",
+        {kTag, "package p; \n endpackage"}},
+
+        {{kTag, "package p; \n endpackage"},
+        "`ifndef DEBUGGER\n",
+        "`endif\n",
+        "  int num_packets;\n",
+        "`ifdef DEBUGGER\n",
+        "`endif\n",
+        "  int router_size;\n"},
+
+        {{kTag, "package p; \n endpackage"},
+        "  int num_packets;\n",
+        "`ifdef DEBUGGER\n",
+        "`elsif BORED\n",
+        "`else\n",
+        "  string source_name;\n",
+        "  string dest_name;\n",
+        "`endif\n",
+        "  int router_size;\n",
+        {kTag, "package p; \n endpackage"}},
+
+         {{kTag, "package p; \n endpackage"},
+          " virtual a_if b_if;\n",
+          "virtual a_if b_if, c_if;\n",
+          {kTag, "package p; \n endpackage"},
+          "  virtual a_if b_if;\n",
+          {kTag, "package p; \n endpackage"}},
+
+          {{kTag, "package p; \n endpackage"},
+          "`ifdef DEBUGGER\n",
+          "`endif\n",
+          {kTag, "package p; \n endpackage"},
+          "`ifdef DEBUGGER\n",
+          "`ifdef VERBOSE\n"  ,
+          "`endif\n",
+          "`endif\n",
+          {kTag, "package p; \n endpackage"}}
+
   };
   for( const auto & test : testcases)
   {
-    //const auto & test = testcases[0];
     const absl::string_view code(test.code);
     VerilogAnalyzer analyzer(code, "test-file");
     const auto code_copy = analyzer.Data().Contents();
@@ -139,16 +224,7 @@ TEST(FindAllPackageDeclarationsTest2, MultiPackages2) {
         << "failed on:\n"
         << code << "\ndiffs:\n"
         << diffs.str();
-
-    //EXPECT_EQ(decls.size(), 1);
-    //std::vector<TreeSearchMatch> types;
-    //const auto& package_node =
-    //down_cast<const SyntaxTreeNode&>(*decls.front().match);
-    //const auto& token = GetPackageNameToken(package_node);
-    //EXPECT_EQ(token.text(), "mod");
-    //std::ostringstream diffs;
   }
-
 }
 
 TEST(GetPackageNameTokenTest, RootIsNotAPackage) {
