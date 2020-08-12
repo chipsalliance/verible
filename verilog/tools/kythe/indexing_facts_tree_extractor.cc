@@ -26,18 +26,6 @@ namespace kythe {
 
 namespace {
 
-template <class V, class T>
-class AutoPopBack {
- public:
-  AutoPopBack(V* v, T* t) : vec_(v) { vec_->push_back(t); }
-  ~AutoPopBack() { vec_->pop_back(); }
-
- private:
-  V* vec_;
-};
-
-using AutoPop = AutoPopBack<IndexingFactsTreeContext, IndexingFactNode>;
-
 void DebugSyntaxTree(const verible::SyntaxTreeLeaf& leaf) {
   VLOG(1) << "Start Leaf";
   VLOG(1) << verilog::NodeEnumToString(
@@ -66,23 +54,6 @@ void DebugSyntaxTree(const verible::SyntaxTreeNode& node) {
 }
 }  // namespace
 
-void IndexingFactsTreeExtractor::Visit(const verible::SyntaxTreeNode& node) {
-  const auto tag = static_cast<verilog::NodeEnum>(node.Tag().tag);
-  switch (tag) {
-    case NodeEnum::kModuleDeclaration: {
-      ExtractModule(node);
-      break;
-    }
-    case NodeEnum::kDataDeclaration: {
-      ExtractModuleInstantiation(node);
-      break;
-    }
-    default: {
-      TreeContextVisitor::Visit(node);
-    }
-  }
-}
-
 IndexingFactNode ExtractOneFile(absl::string_view content,
                                 absl::string_view filename, int& exit_status,
                                 bool& parse_ok) {
@@ -110,7 +81,7 @@ IndexingFactNode ExtractOneFile(absl::string_view content,
 IndexingFactNode BuildIndexingFactsTree(
     const verible::ConcreteSyntaxTree& syntax_tree, absl::string_view base,
     absl::string_view file_name) {
-  IndexingFactsTreeExtractor visitor(base, file_name);
+  IndexingFactsTreeExtractor visitor(base, file_name, base);
   if (syntax_tree == nullptr) {
     return visitor.GetRoot();
   }
@@ -121,6 +92,23 @@ IndexingFactNode BuildIndexingFactsTree(
 
   return visitor.GetRoot();
 };
+
+void IndexingFactsTreeExtractor::Visit(const verible::SyntaxTreeNode& node) {
+  const auto tag = static_cast<verilog::NodeEnum>(node.Tag().tag);
+  switch (tag) {
+    case NodeEnum::kModuleDeclaration: {
+      ExtractModule(node);
+      break;
+    }
+    case NodeEnum::kDataDeclaration: {
+      ExtractModuleInstantiation(node);
+      break;
+    }
+    default: {
+      TreeContextVisitor::Visit(node);
+    }
+  }
+}
 
 void IndexingFactsTreeExtractor::ExtractModule(
     const verible::SyntaxTreeNode& node) {

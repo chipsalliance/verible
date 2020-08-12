@@ -15,6 +15,38 @@ genrule(
 )
 
 cc_library(
+    name = "kythe_schema_constants",
+    hdrs = [
+        "kythe_schema_constants.h",
+    ],
+)
+
+cc_library(
+    name = "indexing_facts_tree_context",
+    hdrs = [
+        "indexing_facts_tree_context.h",
+    ],
+    deps = [
+        ":indexing_facts_tree",
+    ],
+)
+
+cc_library(
+    name = "kythe_facts_extractor",
+    srcs = [
+        "kythe_facts_extractor.cc",
+    ],
+    hdrs = [
+        "kythe_facts_extractor.h",
+    ],
+    deps = [
+        ":indexing_facts_tree",
+        ":indexing_facts_tree_extractor",
+        "@com_google_absl//absl/strings",
+    ],
+)
+
+cc_library(
     name = "verilog_extractor_indexing_fact_type",
     srcs = [
         "verilog_extractor_indexing_fact_type.cc",
@@ -53,6 +85,7 @@ cc_library(
         "indexing_facts_tree_extractor.h",
     ],
     deps = [
+        ":indexing_facts_tree_context",
         "//common/text:tree_utils",
         "//verilog/CST:declaration",
         "//verilog/CST:identifier",

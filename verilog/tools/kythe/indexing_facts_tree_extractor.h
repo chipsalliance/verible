@@ -20,13 +20,10 @@
 #include "common/text/tree_utils.h"
 #include "verilog/CST/verilog_nonterminals.h"
 #include "verilog/tools/kythe/indexing_facts_tree.h"
+#include "verilog/tools/kythe/indexing_facts_tree_context.h"
 
 namespace verilog {
 namespace kythe {
-
-// Type that is used to keep track of the path to the root of indexing facts
-// tree.
-using IndexingFactsTreeContext = std::vector<IndexingFactNode*>;
 
 // This class is used for traversing CST and extracting different indexing
 // facts from CST nodes and constructs a tree of indexing facts.
@@ -36,6 +33,7 @@ class IndexingFactsTreeExtractor : public verible::TreeContextVisitor {
                              absl::string_view file_name)
       : context_(verible::TokenInfo::Context(base)) {
     root_.Value().AppendAnchor(Anchor(file_name, 0, base.size()));
+    root_.Value().AppendAnchor(Anchor(base, 0, base.size()));
     facts_tree_context_.push_back(&root_);
   }
 

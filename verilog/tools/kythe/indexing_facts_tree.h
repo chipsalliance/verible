@@ -17,7 +17,6 @@
 
 #include <utility>
 
-#include "absl/strings/substitute.h"
 #include "common/text/token_info.h"
 #include "common/util/vector_tree.h"
 #include "verilog/tools/kythe/verilog_extractor_indexing_fact_type.h"

@@ -15,6 +15,7 @@
 #include <iostream>
 
 #include "absl/strings/str_join.h"
+#include "absl/strings/substitute.h"
 #include "indexing_facts_tree.h"
 
 namespace verilog {
