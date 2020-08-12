@@ -81,7 +81,7 @@ IndexingFactNode ExtractOneFile(absl::string_view content,
 IndexingFactNode BuildIndexingFactsTree(
     const verible::ConcreteSyntaxTree& syntax_tree, absl::string_view base,
     absl::string_view file_name) {
-  IndexingFactsTreeExtractor visitor(base, file_name, base);
+  IndexingFactsTreeExtractor visitor(base, file_name);
   if (syntax_tree == nullptr) {
     return visitor.GetRoot();
   }

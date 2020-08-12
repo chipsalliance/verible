@@ -17,16 +17,38 @@
 
 #include <string>
 
-namespace verible {
+#include "absl/strings/string_view.h"
+
+namespace verilog {
 namespace kythe {
 
+// Const Signatures,
+inline constexpr absl::string_view kModuleBuiltin = "module#builtin";
+
+// Kythe Nodes.
+inline constexpr absl::string_view kNodeAnchor = "anchor";
+inline constexpr absl::string_view kNodeRecord = "record";
+inline constexpr absl::string_view kNodeFile = "file";
+inline constexpr absl::string_view kNodeBuiltin = "tbuiltin";
+inline constexpr absl::string_view kSubkindModule = "module";
+inline constexpr absl::string_view kCompleteDefinition = "definition";
+inline constexpr absl::string_view kNodeVariable = "variable";
+
 // Facts for kythe.
-const std::string kFactText = "/kythe/text";
-const std::string kFactNodeKind = "/kythe/node/kind";
-const std::string kFactAnchorEnd = "/kythe/loc/end";
-const std::string kFactAnchorStart = "/kythe/loc/start";
+inline constexpr absl::string_view kFactText = "/kythe/text";
+inline constexpr absl::string_view kFactNodeKind = "/kythe/node/kind";
+inline constexpr absl::string_view kFactSubkind = "/kythe/subkind";
+inline constexpr absl::string_view kFactComplete = "/kythe/complete";
+inline constexpr absl::string_view kFactAnchorEnd = "/kythe/loc/end";
+inline constexpr absl::string_view kFactAnchorStart = "/kythe/loc/start";
+
+// Edges for kythe.
+inline constexpr absl::string_view kEdgeDefinesBinding =
+    "/kythe/edge/defines/binding";
+inline constexpr absl::string_view kEdgeRef = "/kythe/edge/ref";
+inline constexpr absl::string_view kEdgeTyped = "/kythe/edge/typed";
 
 }  // namespace kythe
-}  // namespace verible
+}  // namespace verilog
 
 #endif  // VERIBLE_VERILOG_TOOLS_KYTHE_KYTHE_SCHEMA_CONSTANTS_H_

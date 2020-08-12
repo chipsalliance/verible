@@ -42,6 +42,7 @@ cc_library(
     deps = [
         ":indexing_facts_tree",
         ":indexing_facts_tree_extractor",
+        ":kythe_schema_constants",
         "@com_google_absl//absl/strings",
     ],
 )
@@ -131,6 +132,7 @@ cc_binary(
         "//verilog/analysis/checkers:verilog_lint_rules",
         "//verilog/parser:verilog_parser",
         "//verilog/tools/kythe:indexing_facts_tree_extractor",
+        "//verilog/tools/kythe:kythe_facts_extractor",
         "//verilog/tools/kythe:verilog_extractor_indexing_fact_type",
         "@com_google_absl//absl/flags:flag",
         "@com_google_absl//absl/status",
