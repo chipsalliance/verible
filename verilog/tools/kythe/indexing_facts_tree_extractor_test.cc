@@ -64,18 +64,34 @@ TEST(EqualOperatorTest, FactsTreeExtractor) {
   EXPECT_NE(result_pair4.right, nullptr) << *result_pair4.right;
 }
 
-TEST(EmptyCSTTest, FactsTreeExtractor) {
+TEST(ExtractOneFileTest, FactsTreeExtractor) {
   constexpr absl::string_view code_text = "";
-  VerilogAnalyzer analyzer(code_text, "");
-  EXPECT_OK(analyzer.Analyze());
-  const auto& root = analyzer.Data().SyntaxTree();
   constexpr absl::string_view file_name = "verilog.v";
+  int exit_status = 0;
+  bool parse_ok = false;
 
   const auto expected =
       T({{Anchor(file_name, 0, code_text.size())}, IndexingFactType ::kFile});
 
-  const auto facts_tree = BuildIndexingFactsTree(
-      ABSL_DIE_IF_NULL(root), analyzer.Data().Contents(), file_name);
+  const auto facts_tree =
+      ExtractOneFile(code_text, file_name, exit_status, parse_ok);
+
+  const auto result_pair = DeepEqual(facts_tree, expected);
+  EXPECT_EQ(result_pair.left, nullptr) << *result_pair.left;
+  EXPECT_EQ(result_pair.right, nullptr) << *result_pair.right;
+}
+
+TEST(EmptyCSTTest, FactsTreeExtractor) {
+  constexpr absl::string_view code_text = "";
+  constexpr absl::string_view file_name = "verilog.v";
+  int exit_status = 0;
+  bool parse_ok = false;
+
+  const auto expected =
+      T({{Anchor(file_name, 0, code_text.size())}, IndexingFactType ::kFile});
+
+  const auto facts_tree =
+      ExtractOneFile(code_text, file_name, exit_status, parse_ok);
 
   const auto result_pair = DeepEqual(facts_tree, expected);
   EXPECT_EQ(result_pair.left, nullptr) << *result_pair.left;
@@ -84,10 +100,9 @@ TEST(EmptyCSTTest, FactsTreeExtractor) {
 
 TEST(EmptyModuleTest, FactsTreeExtractor) {
   constexpr absl::string_view code_text = "module foo; endmodule: foo";
-  VerilogAnalyzer analyzer(code_text, "");
-  EXPECT_OK(analyzer.Analyze());
-  const auto& root = analyzer.Data().SyntaxTree();
   constexpr absl::string_view file_name = "verilog.v";
+  int exit_status = 0;
+  bool parse_ok = false;
 
   const auto expected =
       T({{Anchor(file_name, 0, code_text.size())}, IndexingFactType ::kFile},
@@ -95,8 +110,8 @@ TEST(EmptyModuleTest, FactsTreeExtractor) {
             Anchor(absl::string_view("foo"), 23, 26)},
            IndexingFactType::kModule}));
 
-  const auto facts_tree = BuildIndexingFactsTree(
-      ABSL_DIE_IF_NULL(root), analyzer.Data().Contents(), file_name);
+  const auto facts_tree =
+      ExtractOneFile(code_text, file_name, exit_status, parse_ok);
 
   const auto result_pair = DeepEqual(facts_tree, expected);
   EXPECT_EQ(result_pair.left, nullptr) << *result_pair.left;
@@ -106,10 +121,9 @@ TEST(EmptyModuleTest, FactsTreeExtractor) {
 TEST(OneModuleInstanceTest, FactsTreeExtractor) {
   constexpr absl::string_view code_text =
       "module bar; endmodule: bar module foo; bar b1(); endmodule: foo";
-  VerilogAnalyzer analyzer(code_text, "");
-  EXPECT_OK(analyzer.Analyze());
-  const auto& root = analyzer.Data().SyntaxTree();
   constexpr absl::string_view file_name = "verilog.v";
+  int exit_status = 0;
+  bool parse_ok = false;
 
   const auto expected =
       T({{Anchor(file_name, 0, code_text.size())}, IndexingFactType ::kFile},
@@ -123,8 +137,8 @@ TEST(OneModuleInstanceTest, FactsTreeExtractor) {
               Anchor(absl::string_view("b1"), 43, 45)},
              IndexingFactType ::kModuleInstance})));
 
-  const auto facts_tree = BuildIndexingFactsTree(
-      ABSL_DIE_IF_NULL(root), analyzer.Data().Contents(), file_name);
+  const auto facts_tree =
+      ExtractOneFile(code_text, file_name, exit_status, parse_ok);
 
   const auto result_pair = DeepEqual(facts_tree, expected);
   EXPECT_EQ(result_pair.left, nullptr) << *result_pair.left;
@@ -135,10 +149,9 @@ TEST(TwoModuleInstanceTest, FactsTreeExtractor) {
   constexpr absl::string_view code_text =
       "module bar; endmodule: bar module foo; bar b1(); bar b2(); endmodule: "
       "foo";
-  VerilogAnalyzer analyzer(code_text, "");
-  EXPECT_OK(analyzer.Analyze());
-  const auto& root = analyzer.Data().SyntaxTree();
   constexpr absl::string_view file_name = "verilog.v";
+  int exit_status = 0;
+  bool parse_ok = false;
 
   const auto expected =
       T({{Anchor(file_name, 0, code_text.size())}, IndexingFactType ::kFile},
@@ -155,8 +168,8 @@ TEST(TwoModuleInstanceTest, FactsTreeExtractor) {
               Anchor(absl::string_view("b2"), 53, 55)},
              IndexingFactType ::kModuleInstance})));
 
-  const auto facts_tree = BuildIndexingFactsTree(
-      ABSL_DIE_IF_NULL(root), analyzer.Data().Contents(), file_name);
+  const auto facts_tree =
+      ExtractOneFile(code_text, file_name, exit_status, parse_ok);
 
   const auto result_pair = DeepEqual(facts_tree, expected);
   EXPECT_EQ(result_pair.left, nullptr) << *result_pair.left;
