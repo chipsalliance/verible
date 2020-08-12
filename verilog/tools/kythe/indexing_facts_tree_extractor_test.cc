@@ -26,45 +26,68 @@ namespace {
 
 typedef IndexingFactNode T;
 
-bool FactsTreeEqual(const IndexingNodeData& lhs, const IndexingNodeData& rhs) {
-  auto left = lhs, right = rhs;
-  bool equal = left.GetIndexingFactType() == right.GetIndexingFactType();
-
-  const auto &lAnchors = left.Anchors(), rAnchors = right.Anchors();
-  equal &= lAnchors.size() == rAnchors.size();
-  for (size_t i = 0; i < lAnchors.size(); i++) {
-    equal &= lAnchors[i].StartLocation() == rAnchors[i].StartLocation() &&
-             lAnchors[i].EndLocation() == rAnchors[i].EndLocation() &&
-             lAnchors[i].Value() == rAnchors[i].Value();
-  }
-
-  return equal;
-}
-
-TEST(EmptyCSTTest, FactsTreeExtractor) {
-  std::string code_text = "";
-  VerilogAnalyzer analyzer(code_text, "");
-  EXPECT_OK(analyzer.Analyze());
-  const auto& root = analyzer.Data().SyntaxTree();
-  const absl::string_view file_name = "verilog.v";
+TEST(EqualOperatorTest, FactsTreeExtractor) {
+  constexpr absl::string_view code_text = "";
+  constexpr absl::string_view file_name = "verilog.v";
 
   const auto expected =
       T({{Anchor(file_name, 0, code_text.size())}, IndexingFactType ::kFile});
 
-  const auto& facts_tree = BuildIndexingFactsTree(
+  const auto tree =
+      T({{Anchor(file_name, 0, code_text.size())}, IndexingFactType ::kFile});
+
+  const auto tree2 = T({{Anchor(file_name, 0, 556)}, IndexingFactType ::kFile});
+
+  const auto tree3 = T({{Anchor(file_name, 0, 4589), Anchor(file_name, 0, 987)},
+                        IndexingFactType ::kFile});
+
+  const auto tree4 =
+      T({{Anchor(file_name, 0, code_text.size())}, IndexingFactType ::kFile},
+        T({{Anchor(absl::string_view("foo"), 7, 10),
+            Anchor(absl::string_view("foo"), 23, 26)},
+           IndexingFactType::kModule}));
+
+  const auto result_pair = DeepEqual(tree, expected);
+  EXPECT_EQ(result_pair.left, nullptr) << *result_pair.left;
+  EXPECT_EQ(result_pair.right, nullptr) << *result_pair.right;
+
+  const auto result_pair2 = DeepEqual(tree2, expected);
+  EXPECT_NE(result_pair2.left, nullptr) << *result_pair2.left;
+  EXPECT_NE(result_pair2.right, nullptr) << *result_pair2.right;
+
+  const auto result_pair3 = DeepEqual(tree3, expected);
+  EXPECT_NE(result_pair3.left, nullptr) << *result_pair3.left;
+  EXPECT_NE(result_pair3.right, nullptr) << *result_pair3.right;
+
+  const auto result_pair4 = DeepEqual(tree4, expected);
+  EXPECT_NE(result_pair4.left, nullptr) << *result_pair4.left;
+  EXPECT_NE(result_pair4.right, nullptr) << *result_pair4.right;
+}
+
+TEST(EmptyCSTTest, FactsTreeExtractor) {
+  constexpr absl::string_view code_text = "";
+  VerilogAnalyzer analyzer(code_text, "");
+  EXPECT_OK(analyzer.Analyze());
+  const auto& root = analyzer.Data().SyntaxTree();
+  constexpr absl::string_view file_name = "verilog.v";
+
+  const auto expected =
+      T({{Anchor(file_name, 0, code_text.size())}, IndexingFactType ::kFile});
+
+  const auto facts_tree = BuildIndexingFactsTree(
       ABSL_DIE_IF_NULL(root), analyzer.Data().Contents(), file_name);
 
-  const auto result_pair = DeepEqual(facts_tree, expected, FactsTreeEqual);
+  const auto result_pair = DeepEqual(facts_tree, expected);
   EXPECT_EQ(result_pair.left, nullptr) << *result_pair.left;
   EXPECT_EQ(result_pair.right, nullptr) << *result_pair.right;
 }
 
 TEST(EmptyModuleTest, FactsTreeExtractor) {
-  std::string code_text = "module foo; endmodule: foo";
+  constexpr absl::string_view code_text = "module foo; endmodule: foo";
   VerilogAnalyzer analyzer(code_text, "");
   EXPECT_OK(analyzer.Analyze());
   const auto& root = analyzer.Data().SyntaxTree();
-  const absl::string_view file_name = "verilog.v";
+  constexpr absl::string_view file_name = "verilog.v";
 
   const auto expected =
       T({{Anchor(file_name, 0, code_text.size())}, IndexingFactType ::kFile},
@@ -72,21 +95,21 @@ TEST(EmptyModuleTest, FactsTreeExtractor) {
             Anchor(absl::string_view("foo"), 23, 26)},
            IndexingFactType::kModule}));
 
-  const auto& facts_tree = BuildIndexingFactsTree(
+  const auto facts_tree = BuildIndexingFactsTree(
       ABSL_DIE_IF_NULL(root), analyzer.Data().Contents(), file_name);
 
-  const auto result_pair = DeepEqual(facts_tree, expected, FactsTreeEqual);
+  const auto result_pair = DeepEqual(facts_tree, expected);
   EXPECT_EQ(result_pair.left, nullptr) << *result_pair.left;
   EXPECT_EQ(result_pair.right, nullptr) << *result_pair.right;
 }
 
 TEST(OneModuleInstanceTest, FactsTreeExtractor) {
-  std::string code_text =
+  constexpr absl::string_view code_text =
       "module bar; endmodule: bar module foo; bar b1(); endmodule: foo";
   VerilogAnalyzer analyzer(code_text, "");
   EXPECT_OK(analyzer.Analyze());
   const auto& root = analyzer.Data().SyntaxTree();
-  const absl::string_view file_name = "verilog.v";
+  constexpr absl::string_view file_name = "verilog.v";
 
   const auto expected =
       T({{Anchor(file_name, 0, code_text.size())}, IndexingFactType ::kFile},
@@ -100,22 +123,22 @@ TEST(OneModuleInstanceTest, FactsTreeExtractor) {
               Anchor(absl::string_view("b1"), 43, 45)},
              IndexingFactType ::kModuleInstance})));
 
-  const auto& facts_tree = BuildIndexingFactsTree(
+  const auto facts_tree = BuildIndexingFactsTree(
       ABSL_DIE_IF_NULL(root), analyzer.Data().Contents(), file_name);
 
-  const auto result_pair = DeepEqual(facts_tree, expected, FactsTreeEqual);
+  const auto result_pair = DeepEqual(facts_tree, expected);
   EXPECT_EQ(result_pair.left, nullptr) << *result_pair.left;
   EXPECT_EQ(result_pair.right, nullptr) << *result_pair.right;
 }  // namespace
 
 TEST(TwoModuleInstanceTest, FactsTreeExtractor) {
-  std::string code_text =
+  constexpr absl::string_view code_text =
       "module bar; endmodule: bar module foo; bar b1(); bar b2(); endmodule: "
       "foo";
   VerilogAnalyzer analyzer(code_text, "");
   EXPECT_OK(analyzer.Analyze());
   const auto& root = analyzer.Data().SyntaxTree();
-  const absl::string_view file_name = "verilog.v";
+  constexpr absl::string_view file_name = "verilog.v";
 
   const auto expected =
       T({{Anchor(file_name, 0, code_text.size())}, IndexingFactType ::kFile},
@@ -132,10 +155,10 @@ TEST(TwoModuleInstanceTest, FactsTreeExtractor) {
               Anchor(absl::string_view("b2"), 53, 55)},
              IndexingFactType ::kModuleInstance})));
 
-  const auto& facts_tree = BuildIndexingFactsTree(
+  const auto facts_tree = BuildIndexingFactsTree(
       ABSL_DIE_IF_NULL(root), analyzer.Data().Contents(), file_name);
 
-  const auto result_pair = DeepEqual(facts_tree, expected, FactsTreeEqual);
+  const auto result_pair = DeepEqual(facts_tree, expected);
   EXPECT_EQ(result_pair.left, nullptr) << *result_pair.left;
   EXPECT_EQ(result_pair.right, nullptr) << *result_pair.right;
 }  // namespace

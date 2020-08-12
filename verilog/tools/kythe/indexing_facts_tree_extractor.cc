@@ -16,9 +16,11 @@
 #include <string>
 
 #include "common/text/tree_context_visitor.h"
+#include "common/text/tree_utils.h"
 #include "indexing_facts_tree_extractor.h"
 #include "verilog/CST/declaration.h"
 #include "verilog/CST/module.h"
+#include "verilog/CST/verilog_nonterminals.h"
 #include "verilog/analysis/verilog_analyzer.h"
 
 namespace verilog {
@@ -127,17 +129,16 @@ void IndexingFactsTreeExtractor::ExtractModule(
   IndexingNodeData module_node_data(IndexingFactType::kModule);
   IndexingFactNode module_node(module_node_data);
 
-  auto* parent = facts_tree_context_.back();
-  const AutoPop p(&facts_tree_context_, &module_node);
+  {
+    const AutoPop p(&facts_tree_context_, &module_node);
+    ExtractModuleHeader(node);
+    ExtractModuleEnd(node);
 
-  ExtractModuleHeader(node);
+    const auto& module_item_list = GetModuleItemList(node);
+    Visit(module_item_list);
+  }
 
-  const auto& module_item_list = GetModuleItemList(node);
-  Visit(module_item_list);
-
-  ExtractModuleEnd(node);
-
-  parent->NewChild(module_node);
+  facts_tree_context_.back()->NewChild(module_node);
 }
 
 void IndexingFactsTreeExtractor::ExtractModuleHeader(

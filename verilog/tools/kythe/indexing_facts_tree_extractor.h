@@ -17,8 +17,6 @@
 
 #include "absl/strings/string_view.h"
 #include "common/text/tree_context_visitor.h"
-#include "common/text/tree_utils.h"
-#include "verilog/CST/verilog_nonterminals.h"
 #include "verilog/tools/kythe/indexing_facts_tree.h"
 
 namespace verilog {
