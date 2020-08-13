@@ -26,6 +26,10 @@ namespace kythe {
 
 namespace {
 
+using AutoPop =
+    AutoPopBack<IndexingFactsTreeExtractor::IndexingFactsTreeContext,
+                IndexingFactNode>;
+
 void DebugSyntaxTree(const verible::SyntaxTreeLeaf& leaf) {
   VLOG(1) << "Start Leaf";
   VLOG(1) << verilog::NodeEnumToString(

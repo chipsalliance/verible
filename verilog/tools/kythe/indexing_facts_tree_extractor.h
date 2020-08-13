@@ -20,7 +20,7 @@
 #include "common/text/tree_utils.h"
 #include "verilog/CST/verilog_nonterminals.h"
 #include "verilog/tools/kythe/indexing_facts_tree.h"
-#include "verilog/tools/kythe/indexing_facts_tree_context.h"
+#include "verilog/tools/kythe/indexing_facts_tree_auto_pop.h"
 
 namespace verilog {
 namespace kythe {
@@ -29,6 +29,10 @@ namespace kythe {
 // facts from CST nodes and constructs a tree of indexing facts.
 class IndexingFactsTreeExtractor : public verible::TreeContextVisitor {
  public:
+  // Type that is used to keep track of the path to the root of indexing facts
+  // tree.
+  using IndexingFactsTreeContext = std::vector<IndexingFactNode*>;
+
   IndexingFactsTreeExtractor(absl::string_view base,
                              absl::string_view file_name)
       : context_(verible::TokenInfo::Context(base)) {

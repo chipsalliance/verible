@@ -23,12 +23,23 @@
 namespace verilog {
 namespace kythe {
 
-void ExtractKytheFacts(IndexingFactNode& node) {
-  KytheFactsExtractor kythe_extractor(node);
+namespace {
+
+using AutoPop = AutoPopBack<KytheFactsExtractor::IndexingFactsTreeContext,
+                            const IndexingFactNode*>;
+
+}
+
+std::string GetFilePathFromRoot(const IndexingFactNode& root) {
+  return root.Value().Anchors()[0].Value();
+}
+
+void ExtractKytheFacts(const IndexingFactNode& node) {
+  KytheFactsExtractor kythe_extractor(GetFilePathFromRoot(node));
   kythe_extractor.Visit(node);
 }
 
-void KytheFactsExtractor::Visit(IndexingFactNode& node) {
+void KytheFactsExtractor::Visit(const IndexingFactNode& node) {
   const auto tag =
       static_cast<IndexingFactType>(node.Value().GetIndexingFactType());
   switch (tag) {
@@ -51,102 +62,92 @@ void KytheFactsExtractor::Visit(IndexingFactNode& node) {
   }
 
   const AutoPop p(&facts_tree_context_, &node);
-  for (auto& child : node.Children()) {
+  for (const verible::VectorTree<IndexingNodeData>& child : node.Children()) {
     Visit(child);
   }
 }
 
-void KytheFactsExtractor::ExtractFileFact(IndexingFactNode& node) {
-  VName file_vname(file_path_, "", "");
+void KytheFactsExtractor::ExtractFileFact(const IndexingFactNode& node) {
+  const VName file_vname(file_path_, "", "", "");
 
-  PrintFact(file_vname, kFactNodeKind, kNodeFile);
-  PrintFact(file_vname, kFactText, node.Value().Anchors()[1].Value());
+  std::cout << Fact(file_vname, kFactNodeKind, kNodeFile);
+  std::cout << Fact(file_vname, kFactText, node.Value().Anchors()[1].Value());
 }
 
-void KytheFactsExtractor::ExtractModuleFact(IndexingFactNode& node) {
-  VName module_vname(file_path_,
-                     CreateModuleSignature(node.Value().Anchors()[0].Value()));
+void KytheFactsExtractor::ExtractModuleFact(const IndexingFactNode& node) {
+  const auto& anchors = node.Value().Anchors();
+  const VName module_vname(file_path_,
+                           CreateModuleSignature(anchors[0].Value()));
 
-  PrintFact(module_vname, kFactNodeKind, kNodeRecord);
-  PrintFact(module_vname, kFactSubkind, kSubkindModule);
-  PrintFact(module_vname, kFactComplete, kCompleteDefinition);
+  std::cout << Fact(module_vname, kFactNodeKind, kNodeRecord);
+  std::cout << Fact(module_vname, kFactSubkind, kSubkindModule);
+  std::cout << Fact(module_vname, kFactComplete, kCompleteDefinition);
 
-  VName module_name_anchor =
-      PrintAnchorVname(node.Value().Anchors()[0], file_path_);
+  const VName module_name_anchor = PrintAnchorVname(anchors[0], file_path_);
 
-  PrintEdge(module_name_anchor, kEdgeDefinesBinding, module_vname);
+  std::cout << Edge(module_name_anchor, kEdgeDefinesBinding, module_vname);
 
   if (node.Value().Anchors().size() > 1) {
-    VName module_end_label_anchor =
-        PrintAnchorVname(node.Value().Anchors()[1], file_path_);
-    PrintEdge(module_end_label_anchor, kEdgeRef, module_vname);
+    const VName module_end_label_anchor =
+        PrintAnchorVname(anchors[1], file_path_);
+    std::cout << Edge(module_end_label_anchor, kEdgeRef, module_vname);
   }
 }
 
-void KytheFactsExtractor::ExtractModuleInstanceFact(IndexingFactNode& node) {
-  VName module_instance_vname(
-      file_path_,
-      CreateModuleInstantiationSignature(node.Value().Anchors()[1].Value()));
-  VName module_instance_anchor =
-      PrintAnchorVname(node.Value().Anchors()[1], file_path_);
-  VName module_type_vname(
-      file_path_, CreateModuleSignature(node.Value().Anchors()[0].Value()));
-  VName module_type_anchor =
-      PrintAnchorVname(node.Value().Anchors()[0], file_path_);
+void KytheFactsExtractor::ExtractModuleInstanceFact(
+    const IndexingFactNode& node) {
+  const auto& anchors = node.Value().Anchors();
+  const VName module_instance_vname(
+      file_path_, CreateModuleInstantiationSignature(anchors[1].Value()));
+  const VName module_instance_anchor = PrintAnchorVname(anchors[1], file_path_);
+  const VName module_type_vname(file_path_,
+                                CreateModuleSignature(anchors[0].Value()));
+  const VName module_type_anchor = PrintAnchorVname(anchors[0], file_path_);
 
-  PrintFact(module_instance_vname, kFactNodeKind, kNodeVariable);
-  PrintFact(module_instance_vname, kFactComplete, kCompleteDefinition);
+  std::cout << Fact(module_instance_vname, kFactNodeKind, kNodeVariable);
+  std::cout << Fact(module_instance_vname, kFactComplete, kCompleteDefinition);
 
-  PrintEdge(module_type_anchor, kEdgeRef, module_type_vname);
-  PrintEdge(module_instance_vname, kEdgeTyped, module_type_vname);
-  PrintEdge(module_instance_anchor, kEdgeDefinesBinding, module_instance_vname);
-}
-
-std::string PrintVName(const VName& vname) {
-  return absl::Substitute(
-      R"({"signature": "$0","path": "$1","language": "$2","root": "$3","corpus": "$4"})",
-      vname.signature, vname.path, vname.language, vname.root, vname.corpus);
-}
-
-void PrintFact(const VName& node_vname, absl::string_view fact_name,
-               absl::string_view fact_val) {
-  std::cout << absl::Substitute(
-                   R"({"source": $0,"fact_name": "$1","fact_value": "$2"})",
-                   PrintVName(node_vname), fact_name,
-                   absl::Base64Escape(fact_val))
-            << '\n';
-}
-
-void PrintEdge(const VName& source, absl::string_view edge_name,
-               const VName& target) {
-  std::cout
-      << absl::Substitute(
-             R"({"source": $0,"edge_kind": "$1","target": $2,"fact_name": "/"})",
-             PrintVName(source), edge_name, PrintVName(target))
-      << '\n';
+  std::cout << Edge(module_type_anchor, kEdgeRef, module_type_vname);
+  std::cout << Edge(module_instance_vname, kEdgeTyped, module_type_vname);
+  std::cout << Edge(module_instance_anchor, kEdgeDefinesBinding,
+                    module_instance_vname);
 }
 
 VName PrintAnchorVname(const Anchor& anchor, absl::string_view file_path) {
-  VName anchor_vname(file_path,
-                     absl::Substitute(R"(@$0:$1)", anchor.StartLocation(),
-                                      anchor.EndLocation()));
+  const VName anchor_vname(file_path,
+                           absl::Substitute(R"(@$0:$1)", anchor.StartLocation(),
+                                            anchor.EndLocation()));
 
-  PrintFact(anchor_vname, kFactNodeKind, kNodeAnchor);
-  PrintFact(anchor_vname, kFactAnchorStart,
-            absl::Substitute(R"($0)", anchor.StartLocation()));
-  PrintFact(anchor_vname, kFactAnchorEnd,
-            absl::Substitute(R"($0)", anchor.EndLocation()));
+  std::cout << Fact(anchor_vname, kFactNodeKind, kNodeAnchor);
+  std::cout << Fact(anchor_vname, kFactAnchorStart,
+                    absl::Substitute(R"($0)", anchor.StartLocation()));
+  std::cout << Fact(anchor_vname, kFactAnchorEnd,
+                    absl::Substitute(R"($0)", anchor.EndLocation()));
 
   return anchor_vname;
 }
 
-std::string CreateModuleSignature(const std::string& module_name) {
-  return module_name + "#module";
+std::string CreateModuleSignature(const absl::string_view module_name) {
+  return absl::StrCat(module_name, "#module");
 }
 
 std::string CreateModuleInstantiationSignature(
-    const std::string& instance_name) {
-  return instance_name + "#variable#module";
+    const absl::string_view instance_name) {
+  return absl::StrCat(instance_name, "#variable#module");
+}
+
+std::ostream& operator<<(std::ostream& stream, const Fact& fact) {
+  stream << absl::Substitute(
+      R"({"source": $0,"fact_name": "$1","fact_value": "$2"})",
+      fact.node_vname.ToString(), fact.fact_name, fact.fact_value);
+  return stream;
+}
+
+std::ostream& operator<<(std::ostream& stream, const Edge& edge) {
+  stream << absl::Substitute(
+      R"({"source": $0,"edge_kind": "$1","target": $2,"fact_name": "/"})",
+      edge.source_node.ToString(), edge.edge_name, edge.target_node.ToString());
+  return stream;
 }
 
 }  // namespace kythe

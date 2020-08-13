@@ -22,9 +22,9 @@ cc_library(
 )
 
 cc_library(
-    name = "indexing_facts_tree_context",
+    name = "indexing_facts_tree_auto_pop",
     hdrs = [
-        "indexing_facts_tree_context.h",
+        "indexing_facts_tree_auto_pop.h",
     ],
     deps = [
         ":indexing_facts_tree",
@@ -86,7 +86,7 @@ cc_library(
         "indexing_facts_tree_extractor.h",
     ],
     deps = [
-        ":indexing_facts_tree_context",
+        ":indexing_facts_tree_auto_pop",
         "//common/text:tree_utils",
         "//verilog/CST:declaration",
         "//verilog/CST:identifier",

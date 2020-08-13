@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef VERIBLE_VERILOG_TOOLS_KYTHE_INDEXING_FACTS_TREE_CONTEXT_H_
-#define VERIBLE_VERILOG_TOOLS_KYTHE_INDEXING_FACTS_TREE_CONTEXT_H_
+#ifndef VERIBLE_VERILOG_TOOLS_KYTHE_INDEXING_FACTS_TREE_AUTO_POP_H_
+#define VERIBLE_VERILOG_TOOLS_KYTHE_INDEXING_FACTS_TREE_AUTO_POP_H_
 
 #include <vector>
 
@@ -27,7 +27,8 @@ namespace {
 template <class V, class T>
 class AutoPopBack {
  public:
-  AutoPopBack(V* v, T* t) : vec_(v) { vec_->push_back(t); }
+  AutoPopBack(V* v, T* t) : vec_(v) { vec_->push_back(std::move(t)); }
+  AutoPopBack(V* v, const T& t) : vec_(v) { vec_->push_back(t); }
   ~AutoPopBack() { vec_->pop_back(); }
 
  private:
@@ -36,13 +37,7 @@ class AutoPopBack {
 
 }  // namespace
 
-// Type that is used to keep track of the path to the root of indexing facts
-// tree.
-using IndexingFactsTreeContext = std::vector<IndexingFactNode*>;
-
-using AutoPop = AutoPopBack<IndexingFactsTreeContext, IndexingFactNode>;
-
 }  // namespace kythe
 }  // namespace verilog
 
-#endif  // VERIBLE_VERILOG_TOOLS_KYTHE_INDEXING_FACTS_TREE_CONTEXT_H_
+#endif  // VERIBLE_VERILOG_TOOLS_KYTHE_INDEXING_FACTS_TREE_AUTO_POP_H_
