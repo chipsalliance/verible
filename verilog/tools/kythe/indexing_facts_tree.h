@@ -53,8 +53,11 @@ class Anchor {
   bool operator==(const Anchor&) const;
 
  private:
-  // Start and end locations of the current token inside the code text.
-  int start_location_, end_location_;
+  // Start locations of the current token inside the code text.
+  int start_location_;
+
+  // End locations of the current token inside the code text.
+  int end_location_;
 
   // Value of the current token.
   std::string value_;

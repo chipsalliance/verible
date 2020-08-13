@@ -54,13 +54,12 @@ void DebugSyntaxTree(const verible::SyntaxTreeNode& node) {
                  static_cast<verilog::NodeEnum>(node.Tag().tag))
           << "  " << node.children().size();
 
-  for (const auto& child : node.children()) {
-    if (child) {
-      if (child->Kind() == verible::SymbolKind::kNode) {
-        DebugSyntaxTree(verible::SymbolCastToNode(*child));
-      } else {
-        DebugSyntaxTree(verible::SymbolCastToLeaf(*child));
-      }
+  for (const verible::SymbolPtr& child : node.children()) {
+    if (!child) continue;
+    if (child->Kind() == verible::SymbolKind::kNode) {
+      DebugSyntaxTree(verible::SymbolCastToNode(*child));
+    } else {
+      DebugSyntaxTree(verible::SymbolCastToLeaf(*child));
     }
   }
 
@@ -69,7 +68,7 @@ void DebugSyntaxTree(const verible::SyntaxTreeNode& node) {
 }  // namespace
 
 void IndexingFactsTreeExtractor::Visit(const verible::SyntaxTreeNode& node) {
-  const auto tag = static_cast<verilog::NodeEnum>(node.Tag().tag);
+  const verilog::NodeEnum tag = static_cast<verilog::NodeEnum>(node.Tag().tag);
   switch (tag) {
     case NodeEnum::kModuleDeclaration: {
       ExtractModule(node);
@@ -117,7 +116,7 @@ IndexingFactNode BuildIndexingFactsTree(
     return visitor.GetRoot();
   }
 
-  const auto& root = verible::SymbolCastToNode(*syntax_tree);
+  const verible::SyntaxTreeNode& root = verible::SymbolCastToNode(*syntax_tree);
   DebugSyntaxTree(root);
   root.Accept(&visitor);
 
@@ -134,7 +133,7 @@ void IndexingFactsTreeExtractor::ExtractModule(
     ExtractModuleHeader(node);
     ExtractModuleEnd(node);
 
-    const auto& module_item_list = GetModuleItemList(node);
+    const verible::SyntaxTreeNode& module_item_list = GetModuleItemList(node);
     Visit(module_item_list);
   }
 
@@ -143,7 +142,7 @@ void IndexingFactsTreeExtractor::ExtractModule(
 
 void IndexingFactsTreeExtractor::ExtractModuleHeader(
     const verible::SyntaxTreeNode& node) {
-  const auto& module_name_token = GetModuleNameToken(node);
+  const verible::TokenInfo& module_name_token = GetModuleNameToken(node);
   const Anchor module_name_anchor(module_name_token, context_.base);
 
   facts_tree_context_.back()->Value().AppendAnchor(module_name_anchor);
@@ -151,7 +150,7 @@ void IndexingFactsTreeExtractor::ExtractModuleHeader(
 
 void IndexingFactsTreeExtractor::ExtractModuleEnd(
     const verible::SyntaxTreeNode& node) {
-  const auto* module_name = GetModuleEndLabel(node);
+  const verible::TokenInfo* module_name = GetModuleEndLabel(node);
 
   if (module_name != nullptr) {
     const Anchor module_end_anchor(*module_name, context_.base);
@@ -161,10 +160,11 @@ void IndexingFactsTreeExtractor::ExtractModuleEnd(
 
 void IndexingFactsTreeExtractor::ExtractModuleInstantiation(
     const verible::SyntaxTreeNode& node) {
-  const auto& type = GetTypeTokenInfoFromModuleInstantiation(node);
+  const verible::TokenInfo& type =
+      GetTypeTokenInfoFromModuleInstantiation(node);
   const Anchor type_anchor(type, context_.base);
 
-  const auto& variable_name =
+  const verible::TokenInfo& variable_name =
       GetModuleInstanceNameTokenInfoFromDataDeclaration(node);
   const Anchor variable_name_anchor(variable_name, context_.base);
 
