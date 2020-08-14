@@ -45,6 +45,7 @@ inline constexpr absl::string_view kFactAnchorStart = "/kythe/loc/start";
 // Edges for kythe.
 inline constexpr absl::string_view kEdgeDefinesBinding =
     "/kythe/edge/defines/binding";
+inline constexpr absl::string_view kEdgeChildOf = "/kythe/edge/childof";
 inline constexpr absl::string_view kEdgeRef = "/kythe/edge/ref";
 inline constexpr absl::string_view kEdgeTyped = "/kythe/edge/typed";
 

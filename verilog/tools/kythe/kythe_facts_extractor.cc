@@ -23,13 +23,6 @@
 namespace verilog {
 namespace kythe {
 
-namespace {
-
-using AutoPop = AutoPopBack<KytheFactsExtractor::IndexingFactsTreeContext,
-                            const IndexingFactNode*>;
-
-}
-
 std::string GetFilePathFromRoot(const IndexingFactNode& root) {
   return root.Value().Anchors()[0].Value();
 }
@@ -42,39 +35,48 @@ void ExtractKytheFacts(const IndexingFactNode& node) {
 void KytheFactsExtractor::Visit(const IndexingFactNode& node) {
   const auto tag =
       static_cast<IndexingFactType>(node.Value().GetIndexingFactType());
+
+  VName vname(file_path_);
+
   switch (tag) {
     case IndexingFactType::kFile: {
-      ExtractFileFact(node);
+      vname = ExtractFileFact(node);
       break;
     }
     case IndexingFactType::kModule: {
-      ExtractModuleFact(node);
+      vname = ExtractModuleFact(node);
       break;
     }
     case IndexingFactType::kModuleInstance: {
-      ExtractModuleInstanceFact(node);
+      vname = ExtractModuleInstanceFact(node);
       break;
     }
-    case IndexingFactType::kModulePortInput:
-      break;
-    case IndexingFactType::kModulePortOutput:
+    case IndexingFactType::kModulePort:
+      vname = ExtractModulePort(node);
       break;
   }
 
-  const AutoPop p(&facts_tree_context_, &node);
+  if (tag != IndexingFactType::kFile) {
+    std::cout << Edge(vname, kEdgeChildOf, *vnames_context_.back());
+  }
+
+  const FactTreeContextAutoPop facts_tree_auto_pop(&facts_tree_context_, &node);
+  const VNameContextAutoPop vnames_auto_pop(&vnames_context_, &vname);
   for (const verible::VectorTree<IndexingNodeData>& child : node.Children()) {
     Visit(child);
   }
 }
 
-void KytheFactsExtractor::ExtractFileFact(const IndexingFactNode& node) {
+VName KytheFactsExtractor::ExtractFileFact(const IndexingFactNode& node) {
   const VName file_vname(file_path_, "", "", "");
 
   std::cout << Fact(file_vname, kFactNodeKind, kNodeFile);
   std::cout << Fact(file_vname, kFactText, node.Value().Anchors()[1].Value());
+
+  return file_vname;
 }
 
-void KytheFactsExtractor::ExtractModuleFact(const IndexingFactNode& node) {
+VName KytheFactsExtractor::ExtractModuleFact(const IndexingFactNode& node) {
   const auto& anchors = node.Value().Anchors();
   const VName module_vname(file_path_,
                            CreateModuleSignature(anchors[0].Value()));
@@ -92,13 +94,16 @@ void KytheFactsExtractor::ExtractModuleFact(const IndexingFactNode& node) {
         PrintAnchorVName(anchors[1], file_path_);
     std::cout << Edge(module_end_label_anchor, kEdgeRef, module_vname);
   }
+
+  return module_vname;
 }
 
-void KytheFactsExtractor::ExtractModuleInstanceFact(
+VName KytheFactsExtractor::ExtractModuleInstanceFact(
     const IndexingFactNode& node) {
   const auto& anchors = node.Value().Anchors();
   const VName module_instance_vname(
-      file_path_, CreateModuleInstantiationSignature(anchors[1].Value()));
+      file_path_,
+      CreateVariableSignature(anchors[1].Value(), *vnames_context_.back()));
   const VName module_instance_anchor = PrintAnchorVName(anchors[1], file_path_);
   const VName module_type_vname(file_path_,
                                 CreateModuleSignature(anchors[0].Value()));
@@ -111,6 +116,35 @@ void KytheFactsExtractor::ExtractModuleInstanceFact(
   std::cout << Edge(module_instance_vname, kEdgeTyped, module_type_vname);
   std::cout << Edge(module_instance_anchor, kEdgeDefinesBinding,
                     module_instance_vname);
+
+  for (size_t i = 1; i < anchors.size(); i++) {
+    const VName port_vname_reference(
+        file_path_,
+        CreateVariableSignature(anchors[i].Value(), *vnames_context_.back()));
+    const VName port_vname_definition(
+        file_path_,
+        CreateVariableSignature(anchors[i].Value(), *vnames_context_.back()));
+    const VName port_vname_anchor = PrintAnchorVName(anchors[i], file_path_);
+
+    std::cout << Edge(port_vname_anchor, kEdgeRef, port_vname_definition);
+  }
+
+  return module_instance_vname;
+}
+
+VName KytheFactsExtractor::ExtractModulePort(const IndexingFactNode& node) {
+  const auto& anchor = node.Value().Anchors()[0];
+  const VName port_vname(
+      file_path_,
+      CreateVariableSignature(anchor.Value(), *vnames_context_.back()));
+  const VName port_vname_anchor = PrintAnchorVName(anchor, file_path_);
+
+  std::cout << Fact(port_vname, kFactNodeKind, kNodeVariable);
+  std::cout << Fact(port_vname, kFactComplete, kCompleteDefinition);
+
+  std::cout << Edge(port_vname_anchor, kEdgeDefinesBinding, port_vname);
+
+  return port_vname;
 }
 
 VName PrintAnchorVName(const Anchor& anchor, absl::string_view file_path) {
@@ -131,9 +165,9 @@ std::string CreateModuleSignature(absl::string_view module_name) {
   return absl::StrCat(module_name, "#module");
 }
 
-std::string CreateModuleInstantiationSignature(
-    absl::string_view instance_name) {
-  return absl::StrCat(instance_name, "#variable#module");
+std::string CreateVariableSignature(absl::string_view instance_name,
+                                    const VName& parent_vname) {
+  return absl::StrCat(instance_name, "#variable", parent_vname.signature);
 }
 
 std::string VName::ToString() const {

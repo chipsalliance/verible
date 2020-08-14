@@ -54,6 +54,7 @@ int ExtractOneFile(absl::string_view content, absl::string_view filename) {
 
     std::cout << facts_tree << '\n';
   }
+  LOG(INFO) << '\n' << facts_tree;
 
   // check for printkythefacts flag, and print the facts if on
   if (absl::GetFlag(FLAGS_printkythefacts)) {

@@ -56,13 +56,13 @@ struct VName {
 
 // Facts for kythe.
 struct Fact {
-  Fact(VName vname, absl::string_view name, absl::string_view value)
-      : node_vname(std::move(vname)),
+  Fact(const VName& vname, absl::string_view name, absl::string_view value)
+      : node_vname(vname),
         fact_name(name),
         fact_value(absl::Base64Escape(value)) {}
 
   // The vname of the node this fact is about.
-  VName node_vname;
+  const VName& node_vname;
 
   // The name identifying this fact.
   std::string fact_name;
@@ -77,13 +77,13 @@ struct Edge {
       : source_node(source), edge_name(name), target_node(target) {}
 
   // The vname of the source node of this edge.
-  VName source_node;
+  const VName& source_node;
 
   // The edge name which identifies the edge kind.
   std::string edge_name;
 
   // The vname of the target node of this edge.
-  VName target_node;
+  const VName& target_node;
 };
 
 // Responsible for traversing IndexingFactsTree and processing its different
@@ -94,6 +94,14 @@ class KytheFactsExtractor {
   // tree.
   using IndexingFactsTreeContext = std::vector<const IndexingFactNode*>;
 
+  // Type that is used to keep track of the vnames of ancestors
+  using VNamesContext = std::vector<const VName*>;
+
+  using FactTreeContextAutoPop =
+      AutoPopBack<IndexingFactsTreeContext, const IndexingFactNode*>;
+
+  using VNameContextAutoPop = AutoPopBack<VNamesContext, const VName*>;
+
   explicit KytheFactsExtractor(absl::string_view file_path)
       : file_path_(file_path) {}
 
@@ -101,13 +109,16 @@ class KytheFactsExtractor {
 
  private:
   // Extracts kythe facts from file node.
-  void ExtractFileFact(const IndexingFactNode&);
+  VName ExtractFileFact(const IndexingFactNode&);
 
   // Extracts kythe facts from module instance node.
-  void ExtractModuleInstanceFact(const IndexingFactNode& tree);
+  VName ExtractModuleInstanceFact(const IndexingFactNode&);
 
   // Extracts kythe facts from module node.
-  void ExtractModuleFact(const IndexingFactNode& tree);
+  VName ExtractModuleFact(const IndexingFactNode&);
+
+  // Extracts kythe facts from module port node.
+  VName ExtractModulePort(const IndexingFactNode&);
 
   // The verilog file name which the facts are extracted from.
   std::string file_path_;
@@ -115,13 +126,17 @@ class KytheFactsExtractor {
   // Keeps track of facts tree ancestors as the visitor traverses the facts
   // tree.
   IndexingFactsTreeContext facts_tree_context_;
+
+  // Keeps track of VNames of ancestors as the visitor traverses the facts
+  // tree.
+  VNamesContext vnames_context_;
 };
 
 // Creates the signature for module names.
 std::string CreateModuleSignature(absl::string_view);
 
 // Creates the signature for module instantiations.
-std::string CreateModuleInstantiationSignature(absl::string_view);
+std::string CreateVariableSignature(absl::string_view, const VName&);
 
 // Extracts file path from indexing facts tree root.
 std::string GetFilePathFromRoot(const IndexingFactNode&);
