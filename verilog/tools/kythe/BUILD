@@ -91,6 +91,7 @@ cc_library(
         "//verilog/CST:declaration",
         "//verilog/CST:identifier",
         "//verilog/CST:module",
+        "//verilog/CST:net",
         "//verilog/CST:verilog_nonterminals",
         "//verilog/analysis:verilog_analyzer",
         "//verilog/tools/kythe:indexing_facts_tree",

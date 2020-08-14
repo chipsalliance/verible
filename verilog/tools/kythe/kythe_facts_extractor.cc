@@ -51,11 +51,11 @@ void KytheFactsExtractor::Visit(const IndexingFactNode& node) {
       vname = ExtractModuleInstanceFact(node);
       break;
     }
-    case IndexingFactType::kModulePort:
-      vname = ExtractModulePort(node);
+    case IndexingFactType::kVariableDefinition:
+      vname = ExtractVariableDefinition(node);
       break;
-    case IndexingFactType::kModulePortRef:
-      vname = ExtractModulePortRef(node);
+    case IndexingFactType::kVariableReference:
+      vname = ExtractVariableReference(node);
       break;
   }
 
@@ -135,34 +135,31 @@ VName KytheFactsExtractor::ExtractModuleInstanceFact(
   return module_instance_vname;
 }
 
-VName KytheFactsExtractor::ExtractModulePort(const IndexingFactNode& node) {
+VName KytheFactsExtractor::ExtractVariableDefinition(const IndexingFactNode& node) {
   const auto& anchor = node.Value().Anchors()[0];
-  const VName port_vname(
+  const VName variable_vname(
       file_path_,
       CreateVariableSignature(anchor.Value(), *vnames_context_.back()));
-  const VName port_vname_anchor = PrintAnchorVName(anchor, file_path_);
+  const VName variable_vname_anchor = PrintAnchorVName(anchor, file_path_);
 
-  std::cout << Fact(port_vname, kFactNodeKind, kNodeVariable);
-  std::cout << Fact(port_vname, kFactComplete, kCompleteDefinition);
+  std::cout << Fact(variable_vname, kFactNodeKind, kNodeVariable);
+  std::cout << Fact(variable_vname, kFactComplete, kCompleteDefinition);
 
-  std::cout << Edge(port_vname_anchor, kEdgeDefinesBinding, port_vname);
+  std::cout << Edge(variable_vname_anchor, kEdgeDefinesBinding, variable_vname);
 
-  return port_vname;
+  return variable_vname;
 }
 
-VName KytheFactsExtractor::ExtractModulePortRef(const IndexingFactNode& node) {
+VName KytheFactsExtractor::ExtractVariableReference(const IndexingFactNode& node) {
   const auto& anchor = node.Value().Anchors()[0];
-  const VName port_ref_vname(
+  const VName variable_vname(
       file_path_,
       CreateVariableSignature(anchor.Value(), *vnames_context_.back()));
-  const VName port_vname(
-      file_path_,
-      CreateVariableSignature(anchor.Value(), *vnames_context_.back()));
-  const VName port_vname_anchor = PrintAnchorVName(anchor, file_path_);
+  const VName variable_vname_anchor = PrintAnchorVName(anchor, file_path_);
 
-  std::cout << Edge(port_vname_anchor, kEdgeRef, port_vname);
+  std::cout << Edge(variable_vname_anchor, kEdgeRef, variable_vname);
 
-  return port_vname;
+  return variable_vname;
 }
 
 VName PrintAnchorVName(const Anchor& anchor, absl::string_view file_path) {

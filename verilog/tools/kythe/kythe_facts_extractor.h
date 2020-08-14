@@ -118,11 +118,11 @@ class KytheFactsExtractor {
   VName ExtractModuleFact(const IndexingFactNode&);
 
   // Extracts kythe facts from module port node and returns its VName.
-  VName ExtractModulePort(const IndexingFactNode&);
+  VName ExtractVariableDefinition(const IndexingFactNode& node);
 
   // Extracts kythe facts from a module port reference node and returns its
   // VName.
-  VName ExtractModulePortRef(const IndexingFactNode&);
+  VName ExtractVariableReference(const IndexingFactNode& node);
 
   // The verilog file name which the facts are extracted from.
   std::string file_path_;
