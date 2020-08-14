@@ -106,6 +106,10 @@ void IndexingFactsTreeExtractor::Visit(const verible::SyntaxTreeNode& node) {
       ExtractModuleInstantiation(node);
       break;
     }
+    case NodeEnum::kModulePortDeclaration: {
+      ExtractInputOutputDeclaration(node);
+      break;
+    }
     default: {
       TreeContextVisitor::Visit(node);
     }
@@ -136,11 +140,6 @@ void IndexingFactsTreeExtractor::ExtractModuleHeader(
 
   facts_tree_context_.back()->Value().AppendAnchor(module_name_anchor);
 
-  ExtractModulePorts(node);
-}
-
-void IndexingFactsTreeExtractor::ExtractModulePorts(
-    const verible::SyntaxTreeNode& node) {
   const verible::SyntaxTreeNode* port_list = GetModulePortDeclarationList(node);
 
   if (port_list != nullptr) {
@@ -157,6 +156,23 @@ void IndexingFactsTreeExtractor::ExtractModulePorts(
 
       facts_tree_context_.back()->NewChild(port_node);
     }
+  }
+}
+
+void IndexingFactsTreeExtractor::ExtractInputOutputDeclaration(
+    const verible::SyntaxTreeNode& node) {
+  std::vector<verible::TreeSearchMatch> port_names =
+      FindAllUnqualifiedIds(node);
+
+  for (const verible::TreeSearchMatch& port : port_names) {
+    const verible::SyntaxTreeLeaf* leaf = GetIdentifier(*port.match);
+    const Anchor port_name_anchor(leaf->get(), context_.base);
+
+    IndexingNodeData module_port(IndexingFactType::kModulePortRef);
+    IndexingFactNode port_node(module_port);
+    port_node.Value().AppendAnchor(port_name_anchor);
+
+    facts_tree_context_.back()->NewChild(port_node);
   }
 }
 

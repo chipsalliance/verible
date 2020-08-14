@@ -9,7 +9,7 @@ KYTHE_BINDIR="/opt/kythe/tools"
 rm -f -- graphstore/* tables/*
 mkdir -p graphstore tables
 bazel build //verilog/tools/kythe:all
-bazel-bin/verilog/tools/kythe/verible-verilog-kythe-extractor verilog.v  --printkythefacts > entries
+bazel-bin/verilog/tools/kythe/verible-verilog-kythe-extractor "$1"  --printkythefacts > entries
 # Read JSON entries from standard in to a graphstore.
 ${KYTHE_BINDIR}/entrystream --read_format=json < entries \
   | ${KYTHE_BINDIR}/write_entries -graphstore graphstore

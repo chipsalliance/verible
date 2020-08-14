@@ -54,6 +54,9 @@ void KytheFactsExtractor::Visit(const IndexingFactNode& node) {
     case IndexingFactType::kModulePort:
       vname = ExtractModulePort(node);
       break;
+    case IndexingFactType::kModulePortRef:
+      vname = ExtractModulePortRef(node);
+      break;
   }
 
   if (tag != IndexingFactType::kFile) {
@@ -143,6 +146,21 @@ VName KytheFactsExtractor::ExtractModulePort(const IndexingFactNode& node) {
   std::cout << Fact(port_vname, kFactComplete, kCompleteDefinition);
 
   std::cout << Edge(port_vname_anchor, kEdgeDefinesBinding, port_vname);
+
+  return port_vname;
+}
+
+VName KytheFactsExtractor::ExtractModulePortRef(const IndexingFactNode& node) {
+  const auto& anchor = node.Value().Anchors()[0];
+  const VName port_ref_vname(
+      file_path_,
+      CreateVariableSignature(anchor.Value(), *vnames_context_.back()));
+  const VName port_vname(
+      file_path_,
+      CreateVariableSignature(anchor.Value(), *vnames_context_.back()));
+  const VName port_vname_anchor = PrintAnchorVName(anchor, file_path_);
+
+  std::cout << Edge(port_vname_anchor, kEdgeRef, port_vname);
 
   return port_vname;
 }

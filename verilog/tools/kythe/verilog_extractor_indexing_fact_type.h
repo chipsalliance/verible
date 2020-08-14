@@ -28,6 +28,7 @@ enum class IndexingFactType {
   kModule,
   kModuleInstance,
   kModulePort,
+  kModulePortRef,
   // END GENERATE -- do not delete
 };
 

@@ -60,8 +60,8 @@ class IndexingFactsTreeExtractor : public verible::TreeContextVisitor {
   // Extracts modules headers and creates its corresponding fact tree.
   void ExtractModuleHeader(const verible::SyntaxTreeNode& node);
 
-  // Extracts module ports and creates its corresponding fact tree.
-  void ExtractModulePorts(const verible::SyntaxTreeNode& node);
+  // Extracts a from input a, output a and creates its corresponding fact tree.
+  void ExtractInputOutputDeclaration(const verible::SyntaxTreeNode& node);
 
   // The Root of the constructed tree
   IndexingFactNode root_{IndexingNodeData(IndexingFactType::kFile)};
