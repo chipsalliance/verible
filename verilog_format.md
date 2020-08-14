@@ -72,6 +72,9 @@ To pipe from stdin, use '-' as <file>.
     --stdin_name (When using '-' to read from stdin, this gives an alternate
       name for diagnostic purposes. Otherwise this is ignored.);
       default: "<stdin>";
+    --try_wrap_long_lines (If true, let the formatter attempt to optimize line
+      wrapping decisions where wrapping is needed, else leave them unformatted.
+      This is a short-term measure to reduce risk-of-harm.); default: false;
     --verify_convergence (If true, and not incrementally formatting with
       --lines, verify that re-formatting the formatted output yields no further
       changes, i.e. formatting is convergent.); default: true;
@@ -79,4 +82,4 @@ To pipe from stdin, use '-' as <file>.
 
 ## Version
 
-Generated on 2020-08-14 11:58:31 -0700 from [v0.0-526-g44b7770](https://github.com/google/verible/commit/44b77702fbe96f5da799e53adb1720b5d4644426)
+Generated on 2020-08-14 15:02:56 -0700 from [v0.0-528-g351efd9](https://github.com/google/verible/commit/351efd9381496755a194fac143a3a03fba9cb5c6)
