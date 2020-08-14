@@ -547,6 +547,10 @@ static const std::initializer_list<FormatterTestCase> kFormatterTestCases = {
      "  `uvm_field_int(cc, UVM_DEFAULT)\n"
      "`uvm_component_utils_end\n"},
 
+    // top-level directive test cases
+    {"`timescale  1ns/1ps\n",  //
+     "`timescale 1ns / 1ps\n"},
+
     // parameter test cases
     {
         "  parameter  int   foo=0 ;",

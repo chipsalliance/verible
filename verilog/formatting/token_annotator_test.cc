@@ -4523,6 +4523,24 @@ TEST(TokenAnnotatorTest, AnnotateFormattingWithContextTest) {
           {1, SpacingOptions::Undecided},
       },
       {
+          // ... / 1ps
+          DefaultStyle,
+          {'/', "/"},
+          {verilog_tokentype::TK_TimeLiteral, "1ps"},
+          {/* any context */},
+          {/* any context */},
+          {1, SpacingOptions::Undecided},
+      },
+      {
+          // 1ps / ...
+          DefaultStyle,
+          {verilog_tokentype::TK_TimeLiteral, "1ps"},
+          {'/', "/"},
+          {/* any context */},
+          {/* any context */},
+          {1, SpacingOptions::Undecided},
+      },
+      {
           DefaultStyle,
           {verilog_tokentype::TK_EOL_COMMENT, "//comment"},
           {verilog_tokentype::TK_LINE_CONT, "\\"},
