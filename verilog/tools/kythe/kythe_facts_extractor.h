@@ -24,32 +24,19 @@
 namespace verilog {
 namespace kythe {
 
-namespace {
-// Type that is used to keep track of the path to the root of indexing facts
-// tree.
-using IndexingFactsTreeContext2 = std::vector<const IndexingFactNode*>;
-
-using AutoPop2 =
-    AutoPopBack<IndexingFactsTreeContext2, const IndexingFactNode*>;
-
-}  // namespace
-
 // Node vector name for kythe facts.
 struct VName {
-  explicit VName(absl::string_view p, absl::string_view s = "",
-                 absl::string_view r = "", absl::string_view l = "verilog",
-                 absl::string_view c = "https://github.com/google/verible")
-      : signature(absl::Base64Escape(s)),
-        path(p),
-        language(l),
-        corpus(c),
-        root(r) {}
+  explicit VName(absl::string_view path, absl::string_view signature = "",
+                 absl::string_view root = "",
+                 absl::string_view language = "verilog",
+                 absl::string_view corpus = "https://github.com/google/verible")
+      : signature(absl::Base64Escape(signature)),
+        path(path),
+        language(language),
+        corpus(corpus),
+        root(root) {}
 
-  std::string ToString() const {
-    return absl::Substitute(
-        R"({"signature": "$0","path": "$1","language": "$2","root": "$3","corpus": "$4"})",
-        signature, path, language, root, corpus);
-  }
+  std::string ToString() const;
 
   // Unique identifier for this VName.
   std::string signature;
@@ -86,10 +73,8 @@ struct Fact {
 
 // Edges for kythe.
 struct Edge {
-  Edge(VName source, absl::string_view name, VName target)
-      : source_node(std::move(source)),
-        edge_name(name),
-        target_node(std::move(target)) {}
+  Edge(const VName& source, absl::string_view name, const VName& target)
+      : source_node(source), edge_name(name), target_node(target) {}
 
   // The vname of the source node of this edge.
   VName source_node;
@@ -145,7 +130,9 @@ std::string GetFilePathFromRoot(const IndexingFactNode&);
 void ExtractKytheFacts(const IndexingFactNode&);
 
 // Generates an anchor VName for kythe.
-VName PrintAnchorVname(const Anchor&, absl::string_view);
+VName PrintAnchorVName(const Anchor&, absl::string_view);
+
+std::ostream& operator<<(std::ostream&, const VName&);
 
 std::ostream& operator<<(std::ostream&, const Fact&);
 

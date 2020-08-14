@@ -22,6 +22,7 @@
 namespace verilog {
 namespace kythe {
 
+// TODO(fangism): move/refactor to common/util
 namespace {
 
 template <class V, class T>

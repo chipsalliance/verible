@@ -41,7 +41,7 @@ class IndexingFactsTreeExtractor : public verible::TreeContextVisitor {
 
   void Visit(const verible::SyntaxTreeNode& node) override;
 
-  const IndexingFactNode& GetRoot() { return root_; }
+  const IndexingFactNode& GetRoot() const { return root_; }
 
  private:
   // Extracts modules and creates its corresponding fact tree.

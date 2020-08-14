@@ -83,13 +83,13 @@ void KytheFactsExtractor::ExtractModuleFact(const IndexingFactNode& node) {
   std::cout << Fact(module_vname, kFactSubkind, kSubkindModule);
   std::cout << Fact(module_vname, kFactComplete, kCompleteDefinition);
 
-  const VName module_name_anchor = PrintAnchorVname(anchors[0], file_path_);
+  const VName module_name_anchor = PrintAnchorVName(anchors[0], file_path_);
 
   std::cout << Edge(module_name_anchor, kEdgeDefinesBinding, module_vname);
 
   if (node.Value().Anchors().size() > 1) {
     const VName module_end_label_anchor =
-        PrintAnchorVname(anchors[1], file_path_);
+        PrintAnchorVName(anchors[1], file_path_);
     std::cout << Edge(module_end_label_anchor, kEdgeRef, module_vname);
   }
 }
@@ -99,10 +99,10 @@ void KytheFactsExtractor::ExtractModuleInstanceFact(
   const auto& anchors = node.Value().Anchors();
   const VName module_instance_vname(
       file_path_, CreateModuleInstantiationSignature(anchors[1].Value()));
-  const VName module_instance_anchor = PrintAnchorVname(anchors[1], file_path_);
+  const VName module_instance_anchor = PrintAnchorVName(anchors[1], file_path_);
   const VName module_type_vname(file_path_,
                                 CreateModuleSignature(anchors[0].Value()));
-  const VName module_type_anchor = PrintAnchorVname(anchors[0], file_path_);
+  const VName module_type_anchor = PrintAnchorVName(anchors[0], file_path_);
 
   std::cout << Fact(module_instance_vname, kFactNodeKind, kNodeVariable);
   std::cout << Fact(module_instance_vname, kFactComplete, kCompleteDefinition);
@@ -113,7 +113,7 @@ void KytheFactsExtractor::ExtractModuleInstanceFact(
                     module_instance_vname);
 }
 
-VName PrintAnchorVname(const Anchor& anchor, absl::string_view file_path) {
+VName PrintAnchorVName(const Anchor& anchor, absl::string_view file_path) {
   const VName anchor_vname(file_path,
                            absl::Substitute(R"(@$0:$1)", anchor.StartLocation(),
                                             anchor.EndLocation()));
@@ -127,13 +127,23 @@ VName PrintAnchorVname(const Anchor& anchor, absl::string_view file_path) {
   return anchor_vname;
 }
 
-std::string CreateModuleSignature(const absl::string_view module_name) {
+std::string CreateModuleSignature(absl::string_view module_name) {
   return absl::StrCat(module_name, "#module");
 }
 
 std::string CreateModuleInstantiationSignature(
-    const absl::string_view instance_name) {
+    absl::string_view instance_name) {
   return absl::StrCat(instance_name, "#variable#module");
+}
+
+std::string VName::ToString() const {
+  return absl::Substitute(
+      R"({"signature": "$0","path": "$1","language": "$2","root": "$3","corpus": "$4"})",
+      signature, path, language, root, corpus);
+}
+
+std::ostream& operator<<(std::ostream& stream, const VName& vname) {
+  stream << vname.ToString();
 }
 
 std::ostream& operator<<(std::ostream& stream, const Fact& fact) {
