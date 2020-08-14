@@ -124,6 +124,10 @@ ABSL_FLAG(bool, format_module_port_declarations, true,
 ABSL_FLAG(bool, format_module_instantiations, true,
           "If true, format module instantiations (data declarations), "
           "else leave them unformatted.  This is a short-term workaround.");
+ABSL_FLAG(bool, try_wrap_long_lines, false,
+          "If true, let the formatter attempt to optimize line wrapping "
+          "decisions where wrapping is needed, else leave them unformatted.  "
+          "This is a short-term measure to reduce risk-of-harm.");
 
 static std::ostream& FileMsg(absl::string_view filename) {
   std::cerr << filename << ": ";
@@ -181,6 +185,7 @@ static bool formatOneFile(absl::string_view filename,
         absl::GetFlag(FLAGS_format_module_port_declarations);
     format_style.format_module_instantiations =
         absl::GetFlag(FLAGS_format_module_instantiations);
+    format_style.try_wrap_long_lines = absl::GetFlag(FLAGS_try_wrap_long_lines);
   }
 
   std::ostringstream stream;

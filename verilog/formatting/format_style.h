@@ -49,6 +49,13 @@ struct FormatStyle : public verible::BasicFormatStyle {
   //   and promote the control for this into an enum: {off, compact, align}
   bool format_module_instantiations = true;
 
+  // At this time line wrap optimization is problematic and risks ruining
+  // otherwise reasonable code.  When set to false, this switch will make the
+  // formatter give-up and leave code as-is in cases where it would otherwise
+  // attempt to do line wrap optimization.  By doing nothing in those cases, we
+  // reduce the risk of harming already decent code.
+  bool try_wrap_long_lines = true;
+
   // TODO(fangism): introduce the following knobs:
   //
   // Unless forced by previous line, starting a line with a comma is
