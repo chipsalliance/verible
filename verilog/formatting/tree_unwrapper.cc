@@ -873,7 +873,6 @@ void TreeUnwrapper::SetIndentationsAndCreatePartitions(
     case NodeEnum::kConstraintBlockItemList:
     case NodeEnum::kConstraintExpressionList:
     case NodeEnum::kDistributionItemList:
-    case NodeEnum::kBlockItemStatementList:
     case NodeEnum::kFunctionItemList:
     case NodeEnum::kAssertionVariableDeclarationList:
     // The final sequence_expr of a sequence_declaration is same indentation
@@ -891,6 +890,13 @@ void TreeUnwrapper::SetIndentationsAndCreatePartitions(
       // Do not further indent preprocessor clauses.
       const int indent = suppress_indentation ? 0 : style_.indentation_spaces;
       VisitIndentedSection(node, indent, PartitionPolicyEnum::kAlwaysExpand);
+      break;
+    }
+
+    case NodeEnum::kBlockItemStatementList: {
+      const int indent = suppress_indentation ? 0 : style_.wrap_spaces;
+      VisitIndentedSection(node, indent,
+                           PartitionPolicyEnum::kTabularAlignment);
       break;
     }
 

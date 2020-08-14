@@ -128,6 +128,21 @@ static bool IgnoreActualNamedPortPartition(
   return false;
 }
 
+static bool IgnorekBlockItemStatementPartition(
+    const TokenPartitionTree& partition) {
+  const auto& uwline = partition.Value();
+  const auto token_range = uwline.TokensRange();
+  CHECK(!token_range.empty());
+  // ignore lines containing only comments
+  if (TokensAreAllComments(token_range)) return true;
+
+  // ignore partitions belonging to preprocessing directives
+//  if (IsPreprocessorKeyword(verilog_tokentype(token_range.front().TokenEnum())))
+//    return true;
+
+  return false;
+}
+
 class ActualNamedPortColumnSchemaScanner : public ColumnSchemaScanner {
  public:
   ActualNamedPortColumnSchemaScanner() = default;
@@ -303,6 +318,48 @@ class PortDeclarationColumnSchemaScanner : public ColumnSchemaScanner {
   bool new_column_after_open_bracket_ = false;
 };
 
+class BlockItemStatementColumnSchemaScanner : public ColumnSchemaScanner {
+ public:
+  BlockItemStatementColumnSchemaScanner() = default;
+  void Visit(const SyntaxTreeNode& node) override {
+    auto tag = NodeEnum(node.Tag().tag);
+    VLOG(2) << __FUNCTION__ << ", node: " << tag << " at "
+            << TreePathFormatter(Path());
+    switch (tag) {
+      case NodeEnum::kUnqualifiedId:
+        if (Context().DirectParentIs(NodeEnum::kNonblockingAssignmentStatement)) {
+          ReserveNewColumn(node, FlushLeft);
+        }
+        break;
+
+      case NodeEnum::kLPValue:
+          ReserveNewColumn(node, FlushLeft);
+        break;
+      default:
+        break;
+    }
+    TreeContextPathVisitor::Visit(node);
+    VLOG(2) << __FUNCTION__ << ", leaving node: " << tag;
+  }
+
+  void Visit(const SyntaxTreeLeaf& leaf) override {
+    VLOG(2) << __FUNCTION__ << ", leaf: " << leaf.get() << " at "
+            << TreePathFormatter(Path());
+    const int tag = leaf.get().token_enum();
+    switch (tag) {
+      case verilog_tokentype::TK_LE: {
+          ReserveNewColumn(leaf, FlushLeft);
+        break;
+      }
+
+      default:
+        break;
+    }
+
+    VLOG(2) << __FUNCTION__ << ", leaving leaf: " << leaf.get();
+  }
+};
+
 static const verible::AlignedFormattingHandler kPortDeclarationAligner{
     .extract_alignment_groups = &verible::GetSubpartitionsBetweenBlankLines,
     .ignore_partition_predicate = &IgnorePortDeclarationPartition,
@@ -315,6 +372,13 @@ static const verible::AlignedFormattingHandler kActualNamedPortAligner{
     .ignore_partition_predicate = &IgnoreActualNamedPortPartition,
     .alignment_cell_scanner =
         AlignmentCellScannerGenerator<ActualNamedPortColumnSchemaScanner>(),
+};
+
+static const verible::AlignedFormattingHandler kBlockItemStatementListAligner{
+    .extract_alignment_groups = &verible::GetSubpartitionsBetweenBlankLines,
+    .ignore_partition_predicate = &IgnorekBlockItemStatementPartition,
+    .alignment_cell_scanner =
+        AlignmentCellScannerGenerator<BlockItemStatementColumnSchemaScanner>(),
 };
 
 void TabularAlignTokenPartitions(TokenPartitionTree* partition_ptr,
@@ -337,6 +401,7 @@ void TabularAlignTokenPartitions(TokenPartitionTree* partition_ptr,
       new std::map<NodeEnum, verible::AlignedFormattingHandler>{
           {NodeEnum::kPortDeclarationList, kPortDeclarationAligner},
           {NodeEnum::kPortActualList, kActualNamedPortAligner},
+          {NodeEnum::kBlockItemStatementList, kBlockItemStatementListAligner},
       };
   const auto handler_iter = kAlignHandlers->find(NodeEnum(node->Tag().tag));
   if (handler_iter == kAlignHandlers->end()) return;
