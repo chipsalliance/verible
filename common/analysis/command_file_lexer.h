@@ -45,6 +45,7 @@ enum ConfigTokenEnum {
   CFG_TK_ARG,
   CFG_TK_PARAM,
   CFG_TK_NEWLINE,
+  CFG_TK_COMMENT,
   CFG_TK_ERROR,
 };
 

@@ -42,6 +42,7 @@ CommandFileLexer::CommandFileLexer(absl::string_view config)
         break;
     }
   }
+  Restart(config);
 }
 
 bool CommandFileLexer::TokenIsError(const verible::TokenInfo& token) const {

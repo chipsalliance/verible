@@ -12,6 +12,7 @@ cc_binary(
         "//common/util:container_iterator_range",
         "//common/util:file_util",
         "//common/util:init_command_line",
+        "//common/util:subcommand",
         "@com_google_absl//absl/flags:usage",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/strings",

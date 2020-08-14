@@ -76,11 +76,21 @@ using verible::LintWaiver;
 using verible::TextStructureView;
 using verible::TokenInfo;
 
+// Return code useful to be used in main:
+//  0: success
+//  1: linting error (if parse_fatal == true)
+//  2..: other fatal issues such as file not found.
 int LintOneFile(std::ostream* stream, absl::string_view filename,
                 const LinterConfiguration& config, bool parse_fatal,
                 bool lint_fatal) {
   std::string content;
-  if (!verible::file::GetContents(filename, &content).ok()) return 2;
+  const absl::Status content_status =
+      verible::file::GetContents(filename, &content);
+  if (!content_status.ok()) {
+    LOG(ERROR) << "Can't read '" << filename
+               << "': " << content_status.message();
+    return 2;
+  }
 
   // Lex and parse the contents of the file.
   const auto analyzer =

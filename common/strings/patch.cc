@@ -161,7 +161,7 @@ template <class M>
 static void CountMarkedLines(const M& lines, int* before, int* after) {
   *before = 0;
   *after = 0;
-  for (const auto& line : lines) {
+  for (const MarkedLine& line : lines) {
     switch (line.Marker()) {
       case ' ':  // line is common to both, unchanged
         ++*before;
@@ -201,7 +201,7 @@ void Hunk::UpdateHeader() {
 LineNumberSet Hunk::AddedLines() const {
   LineNumberSet line_numbers;
   int line_number = header_.new_range.start;
-  for (const auto& line : lines_) {
+  for (const MarkedLine& line : lines_) {
     if (line.IsAdded()) line_numbers.Add(line_number);
     if (!line.IsDeleted()) ++line_number;
   }
@@ -212,7 +212,7 @@ LineNumberSet Hunk::AddedLines() const {
 absl::Status Hunk::VerifyAgainstOriginalLines(
     const std::vector<absl::string_view>& original_lines) const {
   int line_number = header_.old_range.start;  // 1-indexed
-  for (const auto& line : lines_) {
+  for (const MarkedLine& line : lines_) {
     if (line.IsAdded()) continue;  // ignore added lines
     if (line_number > static_cast<int>(original_lines.size())) {
       return absl::OutOfRangeError(absl::StrCat(
@@ -279,7 +279,7 @@ std::vector<Hunk> Hunk::Split() const {
   // create sub hunks from each sub-range
   int old_starting_line = header_.old_range.start;
   int new_starting_line = header_.new_range.start;
-  for (const auto& marked_line_range : ranges) {
+  for (const MarkedLineRange& marked_line_range : ranges) {
     sub_hunks.emplace_back(old_starting_line, new_starting_line,
                            marked_line_range.begin(), marked_line_range.end());
     const HunkHeader& recent_header(sub_hunks.back().Header());
@@ -311,7 +311,7 @@ absl::Status Hunk::Parse(const LineRange& hunk_lines) {
 
 std::ostream& Hunk::Print(std::ostream& stream) const {
   stream << header_ << std::endl;
-  for (const auto& line : lines_) {
+  for (const MarkedLine& line : lines_) {
     stream << line << std::endl;
   }
   return stream;
@@ -358,13 +358,13 @@ static absl::Status ParseSourceInfoWithMarker(
   return info->Parse(splitter.Remainder());
 }
 
-bool FilePatch::IsNewFile() const { return old_file.path == "/dev/null"; }
+bool FilePatch::IsNewFile() const { return old_file_.path == "/dev/null"; }
 
-bool FilePatch::IsDeletedFile() const { return new_file.path == "/dev/null"; }
+bool FilePatch::IsDeletedFile() const { return new_file_.path == "/dev/null"; }
 
 LineNumberSet FilePatch::AddedLines() const {
   LineNumberSet line_numbers;
-  for (const auto& hunk : hunks) {
+  for (const Hunk& hunk : hunks_) {
     line_numbers.Union(hunk.AddedLines());
   }
   return line_numbers;
@@ -386,7 +386,7 @@ static char PromptHunkAction(std::istream& ins, std::ostream& outs) {
 
 absl::Status FilePatch::VerifyAgainstOriginalLines(
     const std::vector<absl::string_view>& original_lines) const {
-  for (const auto& hunk : hunks) {
+  for (const Hunk& hunk : hunks_) {
     const auto status = hunk.VerifyAgainstOriginalLines(original_lines);
     if (!status.ok()) return status;
   }
@@ -411,14 +411,14 @@ absl::Status FilePatch::PickApply(std::istream& ins, std::ostream& outs,
   // Below, we VerifyAgainstOriginalLines for all hunks in this FilePatch.
   std::string original_file;
   {
-    const auto status = file_reader(old_file.path, &original_file);
+    const auto status = file_reader(old_file_.path, &original_file);
     if (!status.ok()) return status;
   }
 
-  if (!hunks.empty()) {
+  if (!hunks_.empty()) {
     // Display the file being processed, if there are any hunks.
-    outs << "--- " << old_file.path << std::endl;
-    outs << "+++ " << new_file.path << std::endl;
+    outs << "--- " << old_file_.path << std::endl;
+    outs << "+++ " << new_file_.path << std::endl;
   }
 
   const std::vector<absl::string_view> orig_lines(SplitLines(original_file));
@@ -432,7 +432,7 @@ absl::Status FilePatch::PickApply(std::istream& ins, std::ostream& outs,
   std::vector<std::string> output_lines;
 
   int last_consumed_line = 0;  // 0-indexed
-  std::deque<Hunk> hunks_worklist(hunks.begin(), hunks.end());  // copy-fill
+  std::deque<Hunk> hunks_worklist(hunks_.begin(), hunks_.end());  // copy-fill
   while (!hunks_worklist.empty()) {
     VLOG(1) << "hunks remaining: " << hunks_worklist.size();
     const Hunk& hunk(hunks_worklist.front());
@@ -467,7 +467,7 @@ absl::Status FilePatch::PickApply(std::istream& ins, std::ostream& outs,
       }
       case 'y': {
         // accept this hunk, copy lines over
-        for (const auto& marked_line : hunk.MarkedLines()) {
+        for (const MarkedLine& marked_line : hunk.MarkedLines()) {
           if (!marked_line.IsDeleted()) {
             const absl::string_view line(marked_line.Text());
             output_lines.emplace_back(line.begin(), line.end());  // copy string
@@ -498,7 +498,7 @@ absl::Status FilePatch::PickApply(std::istream& ins, std::ostream& outs,
       // TODO(b/156530527): 'e' for hunk editing
       case 'q':
         // Abort this file, discard any elected edits.
-        outs << "Leaving file " << old_file.path << " unchanged." << std::endl;
+        outs << "Leaving file " << old_file_.path << " unchanged." << std::endl;
         return absl::OkStatus();
       default:  // including '?'
         outs << "y - accept change\n"
@@ -523,7 +523,7 @@ absl::Status FilePatch::PickApply(std::istream& ins, std::ostream& outs,
 
   const std::string rewrite_contents(absl::StrJoin(output_lines, "\n") + "\n");
 
-  return file_writer(old_file.path, rewrite_contents);
+  return file_writer(old_file_.path, rewrite_contents);
 }
 
 absl::Status FilePatch::Parse(const LineRange& lines) {
@@ -535,11 +535,12 @@ absl::Status FilePatch::Parse(const LineRange& lines) {
   }
   // Lines leading up to the old file marker "---" are metadata.
   for (const auto& line : make_range(lines.begin(), line_iter)) {
-    metadata.emplace_back(line);
+    metadata_.emplace_back(line);
   }
 
   {
-    const auto status = ParseSourceInfoWithMarker(&old_file, *line_iter, "---");
+    const auto status =
+        ParseSourceInfoWithMarker(&old_file_, *line_iter, "---");
     if (!status.ok()) return status;
   }
   ++line_iter;
@@ -547,7 +548,8 @@ absl::Status FilePatch::Parse(const LineRange& lines) {
     return absl::InvalidArgumentError(
         "Expected a file marker starting with \"+++\", but did not find one.");
   } else {
-    const auto status = ParseSourceInfoWithMarker(&new_file, *line_iter, "+++");
+    const auto status =
+        ParseSourceInfoWithMarker(&new_file_, *line_iter, "+++");
     if (!status.ok()) return status;
   }
   ++line_iter;
@@ -567,8 +569,8 @@ absl::Status FilePatch::Parse(const LineRange& lines) {
   const std::vector<LineRange> hunk_ranges(
       IteratorsToRanges<LineRange>(hunk_starts));
 
-  hunks.resize(hunk_ranges.size());
-  auto hunk_iter = hunks.begin();
+  hunks_.resize(hunk_ranges.size());
+  auto hunk_iter = hunks_.begin();
   for (const auto& hunk_range : hunk_ranges) {
     const auto status = hunk_iter->Parse(hunk_range);
     if (!status.ok()) return status;
@@ -577,16 +579,20 @@ absl::Status FilePatch::Parse(const LineRange& lines) {
   return absl::OkStatus();
 }
 
-std::ostream& operator<<(std::ostream& stream, const FilePatch& patch) {
-  for (const auto& line : patch.metadata) {
+std::ostream& FilePatch::Print(std::ostream& stream) const {
+  for (const std::string& line : metadata_) {
     stream << line << std::endl;
   }
-  stream << "--- " << patch.old_file << '\n'  //
-         << "+++ " << patch.new_file << std::endl;
-  for (const auto& hunk : patch.hunks) {
+  stream << "--- " << old_file_ << '\n'  //
+         << "+++ " << new_file_ << std::endl;
+  for (const Hunk& hunk : hunks_) {
     stream << hunk;
   }
   return stream;
+}
+
+std::ostream& operator<<(std::ostream& stream, const FilePatch& patch) {
+  return patch.Print(stream);
 }
 
 }  // namespace internal
@@ -656,7 +662,7 @@ std::ostream& PatchSet::Render(std::ostream& stream) const {
   for (const auto& line : metadata_) {
     stream << line << std::endl;
   }
-  for (const auto& file_patch : file_patches_) {
+  for (const internal::FilePatch& file_patch : file_patches_) {
     stream << file_patch;
   }
   return stream;
@@ -664,9 +670,9 @@ std::ostream& PatchSet::Render(std::ostream& stream) const {
 
 FileLineNumbersMap PatchSet::AddedLinesMap(bool new_file_ranges) const {
   FileLineNumbersMap result;
-  for (const auto& file_patch : file_patches_) {
+  for (const internal::FilePatch& file_patch : file_patches_) {
     if (file_patch.IsDeletedFile()) continue;
-    LineNumberSet& entry = result[file_patch.new_file.path];
+    LineNumberSet& entry = result[file_patch.NewFileInfo().path];
     if (file_patch.IsNewFile() && !new_file_ranges) {
       entry.clear();
     } else {
@@ -685,7 +691,7 @@ absl::Status PatchSet::PickApply(
     std::istream& ins, std::ostream& outs,
     const internal::FileReaderFunction& file_reader,
     const internal::FileWriterFunction& file_writer) const {
-  for (const auto& file_patch : file_patches_) {
+  for (const internal::FilePatch& file_patch : file_patches_) {
     const auto status =
         file_patch.PickApply(ins, outs, file_reader, file_writer);
     if (!status.ok()) return status;
