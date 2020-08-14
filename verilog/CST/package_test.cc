@@ -54,54 +54,7 @@ using verible::SyntaxTreeNode;
 using verible::SyntaxTreeSearchTestCase;
 using verible::TreeSearchMatch;
 
-
-TEST(FindAllPackageDeclarationsTest, EmptySource) {
-  VerilogAnalyzer analyzer("", "");
-  EXPECT_OK(analyzer.Analyze());
-  const auto& root = analyzer.Data().SyntaxTree();
-  const auto package_declarations =
-      FindAllPackageDeclarations(*ABSL_DIE_IF_NULL(root));
-  EXPECT_TRUE(package_declarations.empty());
-}
-
-TEST(FindAllPackageDeclarationsTest, NonPackage) {
-  VerilogAnalyzer analyzer("class foo; endclass", "");
-  EXPECT_OK(analyzer.Analyze());
-  const auto& root = analyzer.Data().SyntaxTree();
-  const auto package_declarations =
-      FindAllPackageDeclarations(*ABSL_DIE_IF_NULL(root));
-  EXPECT_TRUE(package_declarations.empty());
-}
-
-TEST(FindAllPackageDeclarationsTest, OnePackage) {
-  VerilogAnalyzer analyzer("package mod; endpackage", "");
-  EXPECT_OK(analyzer.Analyze());
-  const auto& root = analyzer.Data().SyntaxTree();
-  const auto package_declarations =
-      FindAllPackageDeclarations(*ABSL_DIE_IF_NULL(root));
-  EXPECT_EQ(package_declarations.size(), 1);
-}
-
-TEST(FindAllPackageDeclarationsTest, MultiPackages) {
-  VerilogAnalyzer analyzer(R"(
-package pkg1;
-endpackage
-module mod;
-endmodule
-package pkg2;
-endpackage
-class c;
-endclass
-  )",
-                           "");
-  EXPECT_OK(analyzer.Analyze());
-  const auto& root = analyzer.Data().SyntaxTree();
-  const auto package_declarations =
-      FindAllPackageDeclarations(*ABSL_DIE_IF_NULL(root));
-  EXPECT_EQ(package_declarations.size(), 2);
-}
-
-TEST(FindAllPackageDeclarationsTest2, MultiPackages2) {
+TEST(FindAllPackageDeclarationsTest, VariousTests) {
   constexpr int kTag = 1;
   const SyntaxTreeSearchTestCase testcases[] = {
       {""},
@@ -225,6 +178,40 @@ TEST(FindAllPackageDeclarationsTest2, MultiPackages2) {
         << code << "\ndiffs:\n"
         << diffs.str();
   }
+}
+
+TEST(GetPackageNameTokenTest, Testing) {
+
+  constexpr int kTag = 1;
+  const SyntaxTreeSearchTestCase testcases[] = {
+
+      {"package ", {kTag, "foo"}, "; \n endpackage"},
+      {"package ", {kTag, "bar"}, "; \n endpackage"}
+  };
+
+  for( const auto & test : testcases)
+  {
+    const absl::string_view code(test.code);
+    VerilogAnalyzer analyzer(code, "test-file");
+    const auto code_copy = analyzer.Data().Contents();
+    ASSERT_OK(analyzer.Analyze()) << "failed on:\n" << code;
+    const auto& root = analyzer.Data().SyntaxTree();
+
+    const auto declarations = FindAllPackageDeclarations(*ABSL_DIE_IF_NULL(root));
+
+    std::vector<TreeSearchMatch> declIdentifiers;
+    for (const auto& decl : declarations) {
+      const auto* packageToken = GetPackageNameToken2(*decl.match);
+      declIdentifiers.push_back(TreeSearchMatch{packageToken, {}});
+    }
+
+    std::ostringstream diffs;
+    EXPECT_TRUE(test.ExactMatchFindings(declIdentifiers, code_copy, &diffs))
+        << "failed on:\n"
+        << code << "\ndiffs:\n"
+        << diffs.str();
+  }
+
 }
 
 TEST(GetPackageNameTokenTest, RootIsNotAPackage) {
