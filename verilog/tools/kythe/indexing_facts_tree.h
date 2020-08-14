@@ -15,8 +15,12 @@
 #ifndef VERIBLE_VERILOG_TOOLS_KYTHE_INDEXING_FACTS_TREE_H_
 #define VERIBLE_VERILOG_TOOLS_KYTHE_INDEXING_FACTS_TREE_H_
 
+#include <iosfwd>
+#include <string>
 #include <utility>
+#include <vector>
 
+#include "absl/strings/string_view.h"
 #include "common/text/token_info.h"
 #include "common/util/vector_tree.h"
 #include "verilog/tools/kythe/verilog_extractor_indexing_fact_type.h"
@@ -46,9 +50,14 @@ class Anchor {
   int EndLocation() const { return end_location_; }
   std::string Value() const { return value_; }
 
+  bool operator==(const Anchor&) const;
+
  private:
-  // Start and end locations of the current token inside the code text.
-  int start_location_, end_location_;
+  // Start locations of the current token inside the code text.
+  int start_location_;
+
+  // End locations of the current token inside the code text.
+  int end_location_;
 
   // Value of the current token.
   std::string value_;
@@ -80,6 +89,8 @@ class IndexingNodeData {
 
   const std::vector<Anchor>& Anchors() const { return anchors_; }
   IndexingFactType GetIndexingFactType() const { return indexing_fact_type_; }
+
+  bool operator==(const IndexingNodeData&) const;
 
  private:
   // Anchors representing the different tokens of this indexing fact.

@@ -121,8 +121,7 @@ void LintWaiverBuilder::ProcessLine(const TokenRange& tokens, int line_number) {
 
   // Determine whether line is blank, where whitespace still counts as blank.
   const bool line_is_blank =
-      std::find_if_not(tokens.begin(), tokens.end(), is_token_whitespace_) ==
-      tokens.end();
+      std::all_of(tokens.begin(), tokens.end(), is_token_whitespace_);
   if (line_is_blank) {
     unapplied_oneline_waivers_.clear();
     return;
@@ -130,9 +129,9 @@ void LintWaiverBuilder::ProcessLine(const TokenRange& tokens, int line_number) {
 
   // Determine whether line contains any non-space, non-comment tokens.
   const bool line_has_tokens =
-      std::find_if(tokens.begin(), tokens.end(), [=](const TokenInfo& t) {
+      std::any_of(tokens.begin(), tokens.end(), [=](const TokenInfo& t) {
         return !(is_token_whitespace_(t) || is_token_comment_(t));
-      }) != tokens.end();
+      });
 
   if (line_has_tokens) {
     // Apply un-applied one-line waivers, and then reset them.
@@ -350,7 +349,7 @@ static absl::Status WaiveCommandHandler(
         if (!location_match) return absl::OkStatus();
 
         // Check if everything required has been set
-        if (rule == nullptr || (!can_use_regex && !can_use_lineno)) {
+        if (rule == nullptr) {
           return WaiveCommandError(token_pos, waive_file,
                                    "Insufficient waiver configuration");
         }
@@ -376,8 +375,23 @@ static absl::Status WaiveCommandHandler(
           waiver->WaiveLineRange(rule, line_start - 1, line_end);
         }
 
-        return absl::OkStatus();
+        if (!can_use_regex && !can_use_lineno) {
+          std::string content;
+          absl::Status status =
+              verible::file::GetContents(lintee_filename, &content);
+          if (!status.ok()) {
+            return WaiveCommandError(token_pos, waive_file, status.ToString());
+          }
 
+          const size_t number_of_lines =
+              std::count(content.begin(), content.end(), '\n');
+          waiver->WaiveLineRange(rule, 1, number_of_lines);
+        }
+
+        return absl::OkStatus();
+      case CFG_TK_COMMENT:
+        /* Ignore comments */
+        break;
       default:
         return WaiveCommandError(token_pos, waive_file, "Expecting arguments");
     }
@@ -421,6 +435,10 @@ absl::Status LintWaiverBuilder::ApplyExternalWaivers(
     const auto command = make_container_range(c_range.begin(), c_range.end());
 
     command_pos = line_map(command.begin()->left(waivers_config_content));
+
+    if (command[0].token_enum() == CFG_TK_COMMENT) {
+      continue;
+    }
 
     // The very first Token in 'command' should be an actual command
     if (command.empty() || command[0].token_enum() != CFG_TK_COMMAND) {

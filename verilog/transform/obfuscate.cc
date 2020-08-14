@@ -84,11 +84,11 @@ static absl::Status ObfuscationError(absl::string_view message,
 static absl::Status ReversibilityError(absl::string_view original,
                                        absl::string_view encoded,
                                        absl::string_view decoded) {
-  return absl::InternalError(
-      absl::StrCat("Internal error: decode(encode) != original\nORIGINAL:\n",
-                   original, "\nENCODED:\n", encoded, "\nDECODED:\n", decoded,
-                   "\n*** Please file a bug. ***\n"));
-  // TODO(fangism): use a diff library to highlight the differences
+  return absl::InternalError(absl::StrCat(
+      "Internal error: decode(encode) != original\nORIGINAL:\n", original,
+      "\nENCODED:\n", encoded, "\nDECODED:\n", decoded,
+      // FIXME(fangism): use a diff library to highlight the differences
+      "\n*** Please file a bug. ***\n"));
 }
 
 // Internal consistency check that decoding restores original text.

@@ -241,13 +241,10 @@ struct SourceInfo {
 std::ostream& operator<<(std::ostream&, const SourceInfo&);
 
 // Set of changes for a single file.
-struct FilePatch {
-  // These are lines of informational text only, such as how the diff was
-  // generated.  They do not impact 'patch' behavior.
-  std::vector<std::string> metadata;
-  SourceInfo old_file;
-  SourceInfo new_file;
-  std::vector<Hunk> hunks;
+class FilePatch {
+ public:
+  // Initialize data struct from a range of patch lines.
+  absl::Status Parse(const LineRange&);
 
   // Returns true if this file is new.
   bool IsNewFile() const;
@@ -255,10 +252,12 @@ struct FilePatch {
   // Returns true if this file is deleted.
   bool IsDeletedFile() const;
 
+  const SourceInfo& NewFileInfo() const { return new_file_; }
+
   // Returns a set of line numbers for lines that are changed or new.
   LineNumberSet AddedLines() const;
 
-  absl::Status Parse(const LineRange&);
+  std::ostream& Print(std::ostream&) const;
 
   // Verify consistency of lines in the patch (old-file) against the file that
   // is read in whole.
@@ -272,6 +271,14 @@ struct FilePatch {
   absl::Status PickApply(std::istream& ins, std::ostream& outs,
                          const FileReaderFunction& file_reader,
                          const FileWriterFunction& file_writer) const;
+
+ private:
+  // These are lines of informational text only, such as how the diff was
+  // generated.  They do not impact 'patch' behavior.
+  std::vector<std::string> metadata_;
+  SourceInfo old_file_;
+  SourceInfo new_file_;
+  std::vector<Hunk> hunks_;
 };
 
 std::ostream& operator<<(std::ostream&, const FilePatch&);

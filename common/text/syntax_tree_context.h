@@ -59,10 +59,9 @@ class SyntaxTreeContext : public AutoPopStack<const SyntaxTreeNode*> {
   template <typename E>
   bool IsInsideStartingFrom(E tag_enum, size_t reverse_offset) const {
     if (size() <= reverse_offset) return false;
-    const auto iter = std::find_if(
+    return std::any_of(
         rbegin() + reverse_offset, rend(),
         [=](const SyntaxTreeNode* node) { return node->MatchesTag(tag_enum); });
-    return iter != rend();
   }
 
   // IsInside returns true if there is a node of the specified

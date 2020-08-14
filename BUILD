@@ -23,6 +23,7 @@ installer(
         "//verilog/tools/formatter:verible-verilog-format-changed-lines-interactive",
         "//verilog/tools/lint:verible-verilog-lint",
         "//verilog/tools/obfuscator:verible-verilog-obfuscate",
+        "//verilog/tools/preprocessor:verible-verilog-preprocessor",
         "//verilog/tools/syntax:verible-verilog-syntax",
         "//verilog/tools/kythe:verible-verilog-kythe-extractor",
 

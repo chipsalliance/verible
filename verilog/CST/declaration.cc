@@ -123,24 +123,27 @@ const SyntaxTreeNode& GetUnqualifiedIdFromLocalRoot(const Symbol& local_root) {
 
 const verible::TokenInfo& GetTypeTokenInfoFromModuleInstantiation(
     const verible::Symbol& data_declaration) {
-  const auto& instantiation_type = GetTypeOfDataDeclaration(data_declaration);
-  const auto& reference_call_base =
+  const SyntaxTreeNode& instantiation_type =
+      GetTypeOfDataDeclaration(data_declaration);
+  const SyntaxTreeNode& reference_call_base =
       GetReferenceCallBaseFromInstantiationType(instantiation_type);
-  const auto& reference =
+  const SyntaxTreeNode& reference =
       GetReferenceFromReferenceCallBase(reference_call_base);
-  const auto& local_root = GetLocalRootFromReference(reference);
-  const auto& unqualified_id = GetUnqualifiedIdFromLocalRoot(local_root);
-  const auto module_symbol_identifier = GetIdentifier(unqualified_id);
+  const SyntaxTreeNode& local_root = GetLocalRootFromReference(reference);
+  const SyntaxTreeNode& unqualified_id =
+      GetUnqualifiedIdFromLocalRoot(local_root);
+  const verible::SyntaxTreeLeaf* module_symbol_identifier =
+      GetIdentifier(unqualified_id);
   return module_symbol_identifier->get();
 }
 
 const verible::TokenInfo& GetModuleInstanceNameTokenInfoFromDataDeclaration(
     const verible::Symbol& data_declaration) {
-  const auto& instances_list =
+  const SyntaxTreeNode& instances_list =
       GetInstanceListFromDataDeclaration(data_declaration);
-  const auto& first_instance = GetSubtreeAsNode(
+  const SyntaxTreeNode& first_instance = GetSubtreeAsNode(
       instances_list, NodeEnum::kGateInstanceRegisterVariableList, 0);
-  const auto& instance_name =
+  const verible::SyntaxTreeLeaf& instance_name =
       GetSubtreeAsLeaf(first_instance, NodeEnum::kGateInstance, 0);
   return instance_name.get();
 }

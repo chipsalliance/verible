@@ -43,7 +43,7 @@ int ExtractOneFile(absl::string_view content, absl::string_view filename) {
   int exit_status = 0;
   bool parse_ok = false;
 
-  auto facts_tree =
+  const verilog::kythe::IndexingFactNode& facts_tree =
       verilog::kythe::ExtractOneFile(content, filename, exit_status, parse_ok);
 
   // check for printextraction flag, and print extraction if on

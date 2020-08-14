@@ -44,6 +44,7 @@ const GetFormatTokenTypeTestCase GetFormatTokenTypeTestCases[] = {
     {verilog_tokentype::MacroIdItem, FTT::identifier},
     {verilog_tokentype::MacroCallId, FTT::identifier},
     {verilog_tokentype::PP_include, FTT::keyword},
+    {verilog_tokentype::PP_TOKEN_CONCAT, FTT::binary_operator},
     {verilog_tokentype::TK_INCR, FTT::unary_operator},
     {verilog_tokentype::TK_PIPEARROW, FTT::binary_operator},
     {verilog_tokentype::TK_SCOPE_RES, FTT::hierarchy},

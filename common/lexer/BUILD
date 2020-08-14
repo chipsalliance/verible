@@ -64,7 +64,7 @@ cc_library(
         "//common/text:token_info_test_util",
         "//common/util:logging",
         "@com_google_absl//absl/strings",
-        "@com_google_googletest//:gtest",  # for library
+        "@com_google_googletest//:gtest",  # for library testonly
     ],
 )
 

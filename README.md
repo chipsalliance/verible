@@ -555,6 +555,15 @@ verible-verilog-format-changed-lines-interactive.sh
 
 and follow the prompts.
 
+> NOTE: git and hg users can pass in a different base revision to diff against:
+>
+> ```shell
+> # Diff against the previous revision in hg
+> verible-verilog-format-changed-lines-interactive.sh --rev .^
+> # Diff against upstream mainline in git
+> verible-verilog-format-changed-lines-interactive.sh --rev origin/main
+> ```
+
 ### Lexical Diff
 
 `verible-verilog-diff` compares two input files for equivalence, where
@@ -606,15 +615,36 @@ Output is written to stdout.
       future obfuscation with --load_map.); default: "";
 ```
 
+### Preprocessor
+
+`verible-verilog-preprocessor` is a collection of preprocessor-like tools, (but
+does not include a fully-featured Verilog preprocessor yet.)
+
+#### Strip Comments
+
+Removing comments can be useful step in preparing to obfuscate code.
+
+```shell
+$ verible-verilog-preprocessor strip-comments FILE
+```
+
+This strips comments from a Verilog/SystemVerilog source file, _including_
+comments nested inside macro definition bodies and macro call arguments.
+
+Comments are actually replaced by an equal number of spaces (and newlines) to
+preserve the byte offsets and line ranges of the original text.
+
 ## Indexing Verible C++ Code using Kythe
 
 The steps mentioned here can be generalized for indexing Bazel-based projects.
 
-More information about indexing Bazel-based projects using Kythe [here](https://github.com/kythe/kythe/tree/master/kythe/cxx/extractor#bazel-c-extractor).
+More information about indexing Bazel-based projects using Kythe
+[here](https://github.com/kythe/kythe/tree/master/kythe/cxx/extractor#bazel-c-extractor).
 
 ### Initializing Kythe
 
-Download the latest Kythe release from https://github.com/kythe/kythe/releases and then unpack it for a snapshot of Kythe’s toolset.
+Download the latest Kythe release from https://github.com/kythe/kythe/releases
+and then unpack it for a snapshot of Kythe’s toolset.
 
 ```bash
 tar xzf kythe-v*.tar.gz
@@ -622,9 +652,11 @@ rm -rf /opt/kythe
 mv kythe-v*/ /opt/kythe
 ```
 
-More information can be found [here](https://github.com/kythe/kythe#getting-started).
+More information can be found
+[here](https://github.com/kythe/kythe#getting-started).
 
-Clone Kythe from [here](https://github.com/kythe/kythe). Then from within the Kythe clone, build the web frontend and copy its files into /opt/kythe/
+Clone Kythe from [here](https://github.com/kythe/kythe). Then from within the
+Kythe clone, build the web frontend and copy its files into /opt/kythe/
 
 ```bash
 bazel build //kythe/web/ui
@@ -634,13 +666,15 @@ cp -r kythe/web/ui/resources/public/* /opt/kythe/web/ui
 chmod -R 755 /opt/kythe/web/ui
 ```
 
-More information can be found [here](https://github.com/google/haskell-indexer#building-from-source).
+More information can be found
+[here](https://github.com/google/haskell-indexer#building-from-source).
 
 ### Extracting Compilations for Verible
 
 #### VNames.json File
 
-`vnames.json` file is used for renaming certain filepaths during extraction, but renaming isn’t needed here but you can add the renaming you find suitable.
+`vnames.json` file is used for renaming certain filepaths during extraction, but
+renaming isn’t needed here but you can add the renaming you find suitable.
 
 #### Run the extractor
 
@@ -652,17 +686,22 @@ bazel test --experimental_action_listener=:extract_cxx  //...
 bazel test --experimental_action_listener=:extract_cxx //verilog/analysis:default_rules
 ```
 
-Extracted kzip files will be in bazel-out/local-fastbuild/extra_actions/extractor folder. One kzip file per target.
+Extracted kzip files will be in
+bazel-out/local-fastbuild/extra_actions/extractor folder. One kzip file per
+target.
 
 ```bash
 find -L bazel-out -name '*cxx.kzip'
 ```
 
-More information can be found [here](https://github.com/kythe/kythe/tree/master/kythe/cxx/extractor).
+More information can be found
+[here](https://github.com/kythe/kythe/tree/master/kythe/cxx/extractor).
 
 ### Indexing Extracted Kzip Files and Generating GraphStore
 
-For extracting the indexing facts from extracted `kzip` files, run the following command to apply the indexing for each `kzip` file and generate the result into `kythe graphstore`.
+For extracting the indexing facts from extracted `kzip` files, run the following
+command to apply the indexing for each `kzip` file and generate the result into
+`kythe graphstore`.
 
 ```bash
 for i in $(find -L bazel-out -name '*cxx.kzip'); do

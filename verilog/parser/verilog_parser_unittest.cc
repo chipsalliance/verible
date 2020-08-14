@@ -85,12 +85,19 @@ static const char* kPreprocessorTests[] = {
     "    a, b=\"(3,2)\", c=(3,2)) \\\n"  // parameters with defaults
     "a + b /c +345\n",
     // escaped identifier macro call argument
-    "`FOO(\\BAR )\n",
-    "`FOO(\\BAR\t)\n",
-    "`FOO(\\BAR\n)\n",
-    "`FOO(\\BAR.BAZ )\n",
-    "`FOO(\\BAR , \\BAZ )\n",
-    "`WE(`MUST(`GO(\\deeper )))\n",
+    "`FOO(\\BAR )\n",                //
+    "`FOO(\\BAR\t)\n",               //
+    "`FOO(\\BAR\n)\n",               //
+    "`FOO(\\BAR.BAZ )\n",            //
+    "`FOO(\\BAR , \\BAZ )\n",        //
+    "`WE(`MUST(`GO(\\deeper )))\n",  //
+    "`MACRO()\n",                    //
+    "`MACRO(123badid)\n",  // call arg contains a lexical error, but remains
+                           // unlexed
+    "`MACRO(`)\n",   // call arg contains a lexical error, but remains unlexed
+    "`MACRO(` )\n",  // call arg contains a lexical error, but remains unlexed
+    "`MACRO(`DEEPER(`))\n",  // call arg contains a lexical error, but remains
+                             // unlexed
 };
 
 // Make sure line continuations, newlines and spaces get filtered out
@@ -98,6 +105,9 @@ static const char* kLexerFilterTests[] = {
     "parameter \tfoo =\t\t0;",
     "parameter\n\nfoo =\n 0;",
     "parameter \\\nfoo =\\\n 0;",
+    "//comment with line-continuation\\\n",
+    "//comment1 with line-continuation\\\n"
+    "//comment2 with line-continuation\\\n",
 };
 
 // Numbers are parsed as ([width], [signed]base, digits)
@@ -609,6 +619,43 @@ static const char* kFunctionTests[] = {
     "function void unpack_id(utils_pkg::bytestream_t bytes);\n"
     "{<< byte {this.reserved, this.id}} = bytes;\n"
     "endfunction",
+    // concatenation lvalue
+    "module foo;\n"
+    "  initial begin\n"
+    "    {A, B, C} = bar;\n"
+    "  end\n"
+    "endmodule\n",
+    // nested concatenation lvalue
+    "module foo;\n"
+    "  initial begin\n"
+    "    {{A, B}, {C, D}} = bar;\n"
+    "  end\n"
+    "endmodule\n",
+    // assignment pattern lvalue
+    "module foo;\n"
+    "  initial begin\n"
+    "    '{A, B, C} = bar;\n"
+    "  end\n"
+    "endmodule\n",
+    // assignment pattern lvalue and rvalue
+    "module foo;\n"
+    "  initial begin\n"
+    "    '{A, B, C} = '{D, E, F};\n"
+    "  end\n"
+    "endmodule\n",
+    // nested assignment pattern lvalue
+    "module foo;\n"
+    "  initial begin\n"
+    "    '{'{A, B}, '{C, D}} = bar;\n"
+    "  end\n"
+    "endmodule\n",
+    // mixed nested lvalue
+    "module foo;\n"
+    "  initial begin\n"
+    "    '{{A, B}, {C, D}} = bar1;\n"
+    "    {'{E, F}, '{G, H}} = bar2;\n"
+    "  end\n"
+    "endmodule\n",
     // qualified expressions
     "function void scoper;\n"
     "  a = b::c;\n"
@@ -5615,6 +5662,8 @@ static const std::initializer_list<ParserTestData> kInvalidCodeTests = {
      {verible::TK_EOF, ""}},  // missing endtask before EOF
     {"`define F",             // missing newline
      {verible::TK_EOF, ""}},
+    // invalid DPI import
+    {"import \"DPI-C\" foo", /* rejected */ ';'},
 };
 
 using verible::LeafTag;

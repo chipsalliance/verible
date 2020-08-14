@@ -14,6 +14,7 @@
 
 #include "verilog/formatting/align.h"
 
+#include <algorithm>
 #include <functional>
 #include <iostream>
 #include <iterator>
@@ -59,11 +60,10 @@ static const AlignmentColumnProperties FlushRight(false);
 
 template <class T>
 static bool TokensAreAllComments(const T& tokens) {
-  return std::find_if(
-             tokens.begin(), tokens.end(),
-             [](const typename T::value_type& token) {
-               return !IsComment(verilog_tokentype(token.token->token_enum()));
-             }) == tokens.end();
+  return std::all_of(
+      tokens.begin(), tokens.end(), [](const typename T::value_type& token) {
+        return IsComment(verilog_tokentype(token.token->token_enum()));
+      });
 }
 
 template <class T>

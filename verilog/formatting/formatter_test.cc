@@ -229,6 +229,7 @@ static const std::initializer_list<FormatterTestCase> kFormatterTestCases = {
         "`define FOO \\\n"
         " 1\n"  // TODO(b/141517267): Reflowing macro definitions
     },
+    {"    // comment with backslash\\\n", "// comment with backslash\\\n"},
     {// macro with MacroArg tokens as arguments
      "`FOOOOOO(\nbar1...\n,\nbar2...\n,\nbar3...\n,\nbar4\n)\n",
      "`FOOOOOO(bar1..., bar2..., bar3...,\n"
@@ -558,6 +559,12 @@ static const std::initializer_list<FormatterTestCase> kFormatterTestCases = {
     {
         "  parameter  int   foo=bar [ a+b ] ;",  // binary inside index expr
         "parameter int foo = bar[a + b];\n",
+    },
+    {
+        // with line continuations
+        "  parameter  \\\nint   \\\nfoo=a+ \\\nb ;",
+        "parameter\\\n    int\\\n    foo = a +\\\n    b;\n",
+        // TODO(fangism): should text following a line continuation hang-indent?
     },
     // unary prefix expressions
     {
@@ -3505,13 +3512,110 @@ static const std::initializer_list<FormatterTestCase> kFormatterTestCases = {
      "function void warranty;\n"
      "  foo.bar = fancyfunction(\n"
      "      aaaaaaaa.bbbbbbb,\n"
-     // TODO(fangism): ccccccccc is indented too much because it thinks it is
-     // part of a run-on string of tokens starting with aaaaaaaa.
-     // We need to inform that it should be on the same level as aaaaaaaa as a
-     // sibling item within the same balance group.
-     // Right now, there is no notion of sibling items within a balance group.
-     "          ccccccccc.ddddddddd);\n"
+     "      ccccccccc.ddddddddd\n"
+     "  );\n"
      "endfunction : warranty\n"},
+
+    // Group of tests testing partitioning of arguments inside function calls
+    {// function with function call inside if statement header
+     "function foo;if(aa(bb,cc));endfunction\n",
+     "function foo;\n"
+     "  if (aa(bb, cc));\n"
+     "endfunction\n"},
+    {// function with function call inside if statement header and with
+     // begin-end block
+     "function foo;if (aa(bb,cc,dd,ee))begin end endfunction\n",
+     "function foo;\n"
+     "  if (aa(bb, cc, dd, ee)) begin\n"
+     "  end\n"
+     "endfunction\n"},
+    {// function with kMethodCallExtension inside if statement header and with
+     // begin-end block
+     "function foo;if (aa.bb(cc,dd,ee))begin end endfunction\n",
+     "function foo;\n"
+     "  if (aa.bb(cc, dd, ee)) begin\n"
+     "  end\n"
+     "endfunction\n"},
+    {// nested kMethodCallExtension calls - one level
+     "function foo;aa.bb(cc.dd(a1), ee.ff(a2));endfunction\n",
+     "function foo;\n"
+     "  aa.bb(cc.dd(a1), ee.ff(a2));\n"
+     "endfunction\n"},
+    {// nested kMethodCallExtension calls - two level
+     "function foo;aa.bb(cc.dd(a1.b1(a2), b1), ee.ff(c1, d1));endfunction\n",
+     "function foo;\n"
+     "  aa.bb(cc.dd(a1.b1(a2), b1), ee.ff(\n"
+     "        c1, d1));\n"
+     "endfunction\n"},
+
+    {// simple initial statement with function call
+     "module m;initial aa(bb,cc,dd,ee);endmodule\n",
+     "module m;\n"
+     "  initial aa(bb, cc, dd, ee);\n"
+     "endmodule\n"},
+    {// expressions and function calls inside if-statement headers
+     "module m;initial begin if(aa(bb)==cc(dd))a=b;if (xx()) b = a;end "
+     "endmodule\n",
+     "module m;\n"
+     "  initial begin\n"
+     "    if (aa(bb) == cc(dd)) a = b;\n"
+     "    if (xx()) b = a;\n"
+     "  end\n"
+     "endmodule\n"},
+    {// fuction with two arguments inside if-statement headers
+     "module\nm;initial\nbegin\nif(aa(bb,cc))x=y;end\nendmodule\n",
+     "module m;\n"
+     "  initial begin\n"
+     "    if (aa(bb, cc)) x = y;\n"
+     "  end\n"
+     "endmodule\n"},
+    {// kMethodCallExtension inside if-statement headers
+     "module m;initial begin if (aa.bb(cc)) x = y;end endmodule",
+     "module m;\n"
+     "  initial begin\n"
+     "    if (aa.bb(cc)) x = y;\n"
+     "  end\n"
+     "endmodule\n"},
+    {// initial statement with object method call
+     "module m; initial a.b(a,b,c); endmodule\n",
+     "module m;\n"
+     "  initial a.b(a, b, c);\n"
+     "endmodule\n"},
+    {// initial statement with method call on indexed object
+     "module m; initial a[i].b(a,b,c); endmodule\n",
+     "module m;\n"
+     "  initial a[i].b(a, b, c);\n"
+     "endmodule\n"},
+    {// initial statement with method call on function returned object
+     "module m; initial a(d,e,f).b(a,b,c); endmodule\n",
+     "module m;\n"
+     "  initial a(d, e, f).b(a, b, c);\n"
+     "endmodule\n"},
+    {// initial statement with indexed access to function returned object
+     "module m; initial a(a,b,c)[i]; endmodule\n",
+     "module m;\n"
+     "  initial a(a, b, c) [i];\n"
+     "endmodule\n"},
+    {// method call with no arguments on an object
+     "module m; initial foo.bar();endmodule\n",
+     "module m;\n"
+     "  initial foo.bar();\n"
+     "endmodule\n"},
+    {// method call with one argument on an object
+     "module m; initial foo.bar(aa);endmodule\n",
+     "module m;\n"
+     "  initial foo.bar(aa);\n"
+     "endmodule\n"},
+    {// method call with two arguments on an object
+     "module m; initial foo.bar(aa,bb);endmodule\n",
+     "module m;\n"
+     "  initial foo.bar(aa, bb);\n"
+     "endmodule\n"},
+    {// method call with three arguments on an object
+     "module m; initial foo.bar(aa,bb,cc);endmodule\n",
+     "module m;\n"
+     "  initial foo.bar(aa, bb, cc);\n"
+     "endmodule\n"},
 
     {
         // This tests for if-statements with null statements
@@ -5799,7 +5903,8 @@ TEST(FormatterEndToEndTest, SelectLines) {
     std::ostringstream stream;
     const auto status = FormatVerilog(test_case.input, "<filename>", style,
                                       stream, test_case.lines);
-    EXPECT_OK(status) << status.message();
+    EXPECT_OK(status) << status.message() << '\n'
+                      << "Lines: " << test_case.lines;
     EXPECT_EQ(stream.str(), test_case.expected)
         << "code:\n"
         << test_case.input << "\nlines: " << test_case.lines;

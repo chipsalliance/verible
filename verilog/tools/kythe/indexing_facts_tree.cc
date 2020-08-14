@@ -26,6 +26,11 @@ std::string Anchor::DebugString() const {
                           end_location_);
 }
 
+bool Anchor::operator==(const Anchor& rhs) const {
+  return start_location_ == rhs.StartLocation() &&
+         end_location_ == rhs.EndLocation() && value_ == rhs.Value();
+}
+
 std::ostream& IndexingNodeData::DebugString(std::ostream* stream) const {
   *stream << indexing_fact_type_;
   *stream << absl::StrJoin(anchors_.begin(), anchors_.end(), " ",
@@ -33,6 +38,11 @@ std::ostream& IndexingNodeData::DebugString(std::ostream* stream) const {
                              absl::StrAppend(out, anchor.DebugString());
                            });
   return *stream;
+}
+bool IndexingNodeData::operator==(const IndexingNodeData& rhs) const {
+  return indexing_fact_type_ == rhs.GetIndexingFactType() &&
+         anchors_.size() == rhs.Anchors().size() &&
+         std::equal(anchors_.begin(), anchors_.end(), rhs.Anchors().begin());
 }
 
 std::ostream& operator<<(std::ostream& stream,
