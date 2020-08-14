@@ -28,6 +28,7 @@ class TreeContextVisitor : public SymbolVisitor {
   TreeContextVisitor() = default;
 
  protected:
+  void Visit(const SyntaxTreeLeaf& leaf) override{};
   void Visit(const SyntaxTreeNode& node) override;
 
   const SyntaxTreeContext& Context() const { return current_context_; }
