@@ -180,13 +180,81 @@ TEST(FindAllPackageDeclarationsTest, VariousTests) {
   }
 }
 
-TEST(GetPackageNameTokenTest, Testing) {
+TEST(GetPackageNameTokenTest, VariousPackageTokenTests) {
 
   constexpr int kTag = 1;
   const SyntaxTreeSearchTestCase testcases[] = {
-
+      {""},
       {"package ", {kTag, "foo"}, "; \n endpackage"},
-      {"package ", {kTag, "bar"}, "; \n endpackage"}
+      {"package ", {kTag, "bar"}, "; \n endpackage"},
+      {"package ", {kTag, "foo"}, "; \n endpackage", "\n"},
+      {"package ", {kTag, "p1"}, "; \n endpackage",
+      " task sleep; ",
+      " endtask\n",
+      " class myclass;\n",
+      "endclass\n",
+      "package ", {kTag, "p2"}, "; \n endpackage"},
+      {"package ", {kTag, "p1"}, "; \n endpackage",
+      "`ifdef DEBUGGER\n",
+      "`endif\n",
+      "package ", {kTag, "p2"}, "; \n endpackage",
+      "`ifdef DEBUGGER\n",
+      "`ifdef VERBOSE\n"  ,
+      "`endif\n",
+      "`endif\n",
+      "package ", {kTag, "p3"}, "; \n endpackage"},
+      {"package ", {kTag, "p1"}, "; \n endpackage",
+      " virtual a_if b_if;\n",
+      "virtual a_if b_if, c_if;\n",
+      "package ", {kTag, "p2"}, "; \n endpackage",
+      "  virtual a_if b_if;\n",
+      "package ", {kTag, "p3"}, "; \n endpackage"},
+      {"package ", {kTag, "p1"}, "; \n endpackage",
+      "  int num_packets;\n",
+      "`ifdef DEBUGGER\n",
+      "`elsif BORED\n",
+      "`else\n",
+      "  string source_name;\n",
+      "  string dest_name;\n",
+      "`endif\n",
+      "  int router_size;\n",
+      "package ", {kTag, "p2"}, "; \n endpackage"},
+      {"package ", {kTag, "p1"}, "; \n endpackage",
+      " bind scope_x type_y z (.*);\n",
+      " bind scope_x type_y z1(.*), z2(.*);\n",
+      " bind module_scope : inst_x type_y inst_z(.*);\n",
+      "package ", {kTag, "p2"}, "; \n endpackage"},
+      {"package ", {kTag, "p1"}, "; \n endpackage",
+      " import $unit::arnold;\n",
+      " import $unit::*;\n",
+      "package ", {kTag, "p2"}, "; \n endpackage"},
+      {"package ", {kTag, "p1"}, "; \n endpackage",
+      " export bar::baz;\n",
+      " export bar::*;\n",
+      "package ", {kTag, "p2"}, "; \n endpackage"},
+      {"package ", {kTag, "p1"}, "; \n endpackage",
+      " parameter reg[BITS:0] MR0 = '0;\n"},
+      {"`include \"stuff.svh\"\n",
+      "`expand_stuff()\n",
+      "`expand_with_semi(name);\n",
+      "`expand_more(name)\n",
+      "package ", {kTag, "p2"}, "; \n endpackage"},
+      {"package ", {kTag, "p1"}, "; \n endpackage",
+      "`undef FOOOBAR\n",
+      "package ", {kTag, "p2"}, "; \n endpackage"},
+      {"package ", {kTag, "p1"}, "; \n endpackage",
+      " let Peace = Love;\n",
+      "package ", {kTag, "p2"}, "; \n endpackage",
+      " let Five() = Two + Two + One;\n",
+      " let Min(a,b) = (a < b) ? a : b;\n",
+      " let Max(a,b=1) = (a > b) ? a : b;\n",
+      "package ", {kTag, "p3"}, "; \n endpackage",
+      " let Max(untyped a, bit b=1) = (a > b) ? a : b;\n"},
+      {"localparam real foo = 3.14;\n",
+      "localparam shortreal foo = 159.265;\n",
+      "localparam realtime foo = 358.979ns;\n",
+      "package ", {kTag, "p1"}, "; \n endpackage",
+      "  localparam real foo = 323.846;\n"}
   };
 
   for( const auto & test : testcases)
@@ -201,8 +269,8 @@ TEST(GetPackageNameTokenTest, Testing) {
 
     std::vector<TreeSearchMatch> declIdentifiers;
     for (const auto& decl : declarations) {
-      const auto* packageToken = GetPackageNameToken2(*decl.match);
-      declIdentifiers.push_back(TreeSearchMatch{packageToken, {}});
+      const auto& packageToken = GetPackageNameLeaf(*decl.match);
+      declIdentifiers.push_back(TreeSearchMatch{&packageToken, {}});
     }
 
     std::ostringstream diffs;

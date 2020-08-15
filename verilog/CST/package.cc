@@ -34,14 +34,14 @@ std::vector<verible::TreeSearchMatch> FindAllPackageDeclarations(
 }
 
 const verible::TokenInfo& GetPackageNameToken(const verible::Symbol& s) {
-  const auto& name_node =
-      verible::GetSubtreeAsLeaf(s, NodeEnum::kPackageDeclaration, 2);
-  return name_node.get();
+    const auto& name_node =
+        GetPackageNameLeaf(s);
+    return name_node.get();
 }
 
-const verible::SyntaxTreeLeaf* GetPackageNameToken2(const verible::Symbol& s)
+const verible::SyntaxTreeLeaf& GetPackageNameLeaf(const verible::Symbol& s)
 {
-  return &verible::GetSubtreeAsLeaf(s, NodeEnum::kPackageDeclaration, 2);
+  return verible::GetSubtreeAsLeaf(s, NodeEnum::kPackageDeclaration, 2);
 }
 
 }  // namespace verilog
