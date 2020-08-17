@@ -393,6 +393,16 @@ static const std::initializer_list<FormatterTestCase> kFormatterTestCases = {
      "class foo;\n"
      "  `FOO(`BAR(baz1, baz2));\n"
      "endclass\n"},
+    {// multi-line macro arg "aaaa..." should start on its own line,
+     // even if its first line would fit under the column limit
+     "`CHECK_FATAL(rd_tr,\n"
+     "             aaaa     == zzz;\n"
+     "             ggg      == vv::w;,\n"
+     "             \"Failed to ..........\")\n",
+     "`CHECK_FATAL(rd_tr,\n"
+     "             aaaa     == zzz;\n"
+     "             ggg      == vv::w;,\n"
+     "             \"Failed to ..........\")\n"},
 
     // `uvm macros indenting
     {

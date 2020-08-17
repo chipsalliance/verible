@@ -831,6 +831,15 @@ static WithReason<SpacingOptions> BreakDecisionBetween(
     }
   }
 
+  if (left.TokenEnum() == ',' &&
+      right.TokenEnum() == verilog_tokentype::MacroArg) {
+    const absl::string_view text(right.Text());
+    if (std::find(text.begin(), text.end(), '\n') != text.end()) {
+      return {SpacingOptions::MustWrap,
+              "Multi-line unlexed macro arguments start on their own line."};
+    }
+  }
+
   // By default, leave undecided for penalty minimization.
   return {SpacingOptions::Undecided,
           "Default: leave wrap decision to algorithm"};
