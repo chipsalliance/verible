@@ -18,28 +18,34 @@
 #include "absl/strings/string_view.h"
 #include "common/text/tree_context_visitor.h"
 #include "verilog/tools/kythe/indexing_facts_tree.h"
+#include "verilog/tools/kythe/indexing_facts_tree_auto_pop.h"
 
 namespace verilog {
 namespace kythe {
-
-// Type that is used to keep track of the path to the root of indexing facts
-// tree.
-using IndexingFactsTreeContext = std::vector<IndexingFactNode*>;
 
 // This class is used for traversing CST and extracting different indexing
 // facts from CST nodes and constructs a tree of indexing facts.
 class IndexingFactsTreeExtractor : public verible::TreeContextVisitor {
  public:
+  // Type that is used to keep track of the path to the root of indexing facts
+  // tree.
+  using IndexingFactsTreeContext = std::vector<IndexingFactNode*>;
+
+  using FactTreeContextAutoPop =
+      AutoPopBack<IndexingFactsTreeExtractor::IndexingFactsTreeContext,
+                  IndexingFactNode>;
+
   IndexingFactsTreeExtractor(absl::string_view base,
                              absl::string_view file_name)
       : context_(verible::TokenInfo::Context(base)) {
     root_.Value().AppendAnchor(Anchor(file_name, 0, base.size()));
+    root_.Value().AppendAnchor(Anchor(base, 0, base.size()));
     facts_tree_context_.push_back(&root_);
   }
 
   void Visit(const verible::SyntaxTreeNode& node) override;
 
-  const IndexingFactNode& GetRoot() { return root_; }
+  const IndexingFactNode& GetRoot() const { return root_; }
 
  private:
   // Extracts modules and creates its corresponding fact tree.
@@ -53,6 +59,13 @@ class IndexingFactsTreeExtractor : public verible::TreeContextVisitor {
 
   // Extracts modules headers and creates its corresponding fact tree.
   void ExtractModuleHeader(const verible::SyntaxTreeNode& node);
+
+  // Extracts "a" from input a, output a and creates its corresponding fact
+  // tree.
+  void ExtractInputOutputDeclaration(const verible::SyntaxTreeNode& node);
+
+  // Extract "a" from wire a and creates its corresponding fact tree.
+  void ExtractNetDeclaration(const verible::SyntaxTreeNode& node);
 
   // The Root of the constructed tree
   IndexingFactNode root_{IndexingNodeData(IndexingFactType::kFile)};

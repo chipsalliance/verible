@@ -19,7 +19,9 @@
 #include "common/text/tree_utils.h"
 #include "indexing_facts_tree_extractor.h"
 #include "verilog/CST/declaration.h"
+#include "verilog/CST/identifier.h"
 #include "verilog/CST/module.h"
+#include "verilog/CST/net.h"
 #include "verilog/CST/verilog_nonterminals.h"
 #include "verilog/analysis/verilog_analyzer.h"
 
@@ -28,31 +30,19 @@ namespace kythe {
 
 namespace {
 
-template <class V, class T>
-class AutoPopBack {
- public:
-  AutoPopBack(V* v, T* t) : vec_(v) { vec_->push_back(t); }
-  ~AutoPopBack() { vec_->pop_back(); }
-
- private:
-  V* vec_;
-};
-
-using AutoPop = AutoPopBack<IndexingFactsTreeContext, IndexingFactNode>;
-
 void DebugSyntaxTree(const verible::SyntaxTreeLeaf& leaf) {
-  VLOG(1) << "Start Leaf";
-  VLOG(1) << verilog::NodeEnumToString(
-                 static_cast<verilog::NodeEnum>(leaf.Tag().tag))
-          << " <<>> " << leaf.Tag().tag << " " << leaf.get();
-  VLOG(1) << "End Leaf";
+  LOG(INFO) << "Start Leaf";
+  LOG(INFO) << verilog::NodeEnumToString(
+                   static_cast<verilog::NodeEnum>(leaf.Tag().tag))
+            << " <<>> " << leaf.Tag().tag << " " << leaf.get();
+  LOG(INFO) << "End Leaf";
 }
 
 void DebugSyntaxTree(const verible::SyntaxTreeNode& node) {
-  VLOG(1) << "Start Node";
-  VLOG(1) << verilog::NodeEnumToString(
-                 static_cast<verilog::NodeEnum>(node.Tag().tag))
-          << "  " << node.children().size();
+  LOG(INFO) << "Start Node";
+  LOG(INFO) << verilog::NodeEnumToString(
+                   static_cast<verilog::NodeEnum>(node.Tag().tag))
+            << "  " << node.children().size();
 
   for (const verible::SymbolPtr& child : node.children()) {
     if (!child) continue;
@@ -63,26 +53,9 @@ void DebugSyntaxTree(const verible::SyntaxTreeNode& node) {
     }
   }
 
-  VLOG(1) << "End Node";
+  LOG(INFO) << "End Node";
 }
 }  // namespace
-
-void IndexingFactsTreeExtractor::Visit(const verible::SyntaxTreeNode& node) {
-  const verilog::NodeEnum tag = static_cast<verilog::NodeEnum>(node.Tag().tag);
-  switch (tag) {
-    case NodeEnum::kModuleDeclaration: {
-      ExtractModule(node);
-      break;
-    }
-    case NodeEnum::kDataDeclaration: {
-      ExtractModuleInstantiation(node);
-      break;
-    }
-    default: {
-      TreeContextVisitor::Visit(node);
-    }
-  }
-}
 
 IndexingFactNode ExtractOneFile(absl::string_view content,
                                 absl::string_view filename, int& exit_status,
@@ -123,13 +96,38 @@ IndexingFactNode BuildIndexingFactsTree(
   return visitor.GetRoot();
 };
 
+void IndexingFactsTreeExtractor::Visit(const verible::SyntaxTreeNode& node) {
+  const auto tag = static_cast<verilog::NodeEnum>(node.Tag().tag);
+  switch (tag) {
+    case NodeEnum::kModuleDeclaration: {
+      ExtractModule(node);
+      break;
+    }
+    case NodeEnum::kDataDeclaration: {
+      ExtractModuleInstantiation(node);
+      break;
+    }
+    case NodeEnum::kModulePortDeclaration: {
+      ExtractInputOutputDeclaration(node);
+      break;
+    }
+    case NodeEnum ::kNetDeclaration: {
+      ExtractNetDeclaration(node);
+      break;
+    }
+    default: {
+      TreeContextVisitor::Visit(node);
+    }
+  }
+}
+
 void IndexingFactsTreeExtractor::ExtractModule(
     const verible::SyntaxTreeNode& node) {
   IndexingNodeData module_node_data(IndexingFactType::kModule);
   IndexingFactNode module_node(module_node_data);
 
   {
-    const AutoPop p(&facts_tree_context_, &module_node);
+    const FactTreeContextAutoPop p(&facts_tree_context_, &module_node);
     ExtractModuleHeader(node);
     ExtractModuleEnd(node);
 
@@ -146,6 +144,41 @@ void IndexingFactsTreeExtractor::ExtractModuleHeader(
   const Anchor module_name_anchor(module_name_token, context_.base);
 
   facts_tree_context_.back()->Value().AppendAnchor(module_name_anchor);
+
+  const verible::SyntaxTreeNode* port_list = GetModulePortDeclarationList(node);
+
+  if (port_list != nullptr) {
+    std::vector<verible::TreeSearchMatch> port_names =
+        FindAllUnqualifiedIds(*port_list);
+
+    for (const verible::TreeSearchMatch& port : port_names) {
+      const verible::SyntaxTreeLeaf* leaf = GetIdentifier(*port.match);
+      const Anchor port_name_anchor(leaf->get(), context_.base);
+
+      IndexingNodeData module_port(IndexingFactType::kVariableDefinition);
+      IndexingFactNode port_node(module_port);
+      port_node.Value().AppendAnchor(port_name_anchor);
+
+      facts_tree_context_.back()->NewChild(port_node);
+    }
+  }
+}
+
+void IndexingFactsTreeExtractor::ExtractInputOutputDeclaration(
+    const verible::SyntaxTreeNode& node) {
+  std::vector<verible::TreeSearchMatch> port_names =
+      FindAllUnqualifiedIds(node);
+
+  for (const verible::TreeSearchMatch& port : port_names) {
+    const verible::SyntaxTreeLeaf* leaf = GetIdentifier(*port.match);
+    const Anchor port_name_anchor(leaf->get(), context_.base);
+
+    IndexingNodeData module_port(IndexingFactType::kVariableReference);
+    IndexingFactNode port_node(module_port);
+    port_node.Value().AppendAnchor(port_name_anchor);
+
+    facts_tree_context_.back()->NewChild(port_node);
+  }
 }
 
 void IndexingFactsTreeExtractor::ExtractModuleEnd(
@@ -160,20 +193,49 @@ void IndexingFactsTreeExtractor::ExtractModuleEnd(
 
 void IndexingFactsTreeExtractor::ExtractModuleInstantiation(
     const verible::SyntaxTreeNode& node) {
+  std::vector<verible::TreeSearchMatch> gate_instances =
+      GetListOfGateInstanceFromDataDeclaration(node);
+
   const verible::TokenInfo& type =
       GetTypeTokenInfoFromModuleInstantiation(node);
   const Anchor type_anchor(type, context_.base);
 
-  const verible::TokenInfo& variable_name =
-      GetModuleInstanceNameTokenInfoFromDataDeclaration(node);
-  const Anchor variable_name_anchor(variable_name, context_.base);
+  for (const verible::TreeSearchMatch& instance : gate_instances) {
+    IndexingNodeData indexing_node_data(IndexingFactType::kModuleInstance);
 
-  IndexingNodeData indexing_node_data(IndexingFactType::kModuleInstance);
-  indexing_node_data.AppendAnchor(type_anchor);
-  indexing_node_data.AppendAnchor(variable_name_anchor);
+    const verible::TokenInfo& variable_name =
+        GetModuleInstanceNameTokenInfoFromGateInstance(*instance.match);
+    const Anchor variable_name_anchor(variable_name, context_.base);
+    indexing_node_data.AppendAnchor(type_anchor);
+    indexing_node_data.AppendAnchor(variable_name_anchor);
 
-  IndexingFactNode module_instance(indexing_node_data);
-  facts_tree_context_.back()->NewChild(module_instance);
+    std::vector<verible::TreeSearchMatch> port_names =
+        FindAllUnqualifiedIds(*instance.match);
+
+    for (const verible::TreeSearchMatch& port : port_names) {
+      const verible::SyntaxTreeLeaf* leaf = GetIdentifier(*port.match);
+      const Anchor port_name_anchor(leaf->get(), context_.base);
+
+      indexing_node_data.AppendAnchor(port_name_anchor);
+    }
+
+    IndexingFactNode module_instance(indexing_node_data);
+    facts_tree_context_.back()->NewChild(module_instance);
+  }
+}
+void IndexingFactsTreeExtractor::ExtractNetDeclaration(
+    const verible::SyntaxTreeNode& node) {
+  const std::vector<const verible::TokenInfo*> identifiers =
+      GetIdentifiersFromNetDeclaration(node);
+
+  for (const verible::TokenInfo* wire_token_info : identifiers) {
+    IndexingNodeData indexing_node_data(IndexingFactType::kVariableDefinition);
+    const Anchor wire_name_anchor(*wire_token_info, context_.base);
+    indexing_node_data.AppendAnchor(wire_name_anchor);
+
+    IndexingFactNode wire_name(indexing_node_data);
+    facts_tree_context_.back()->NewChild(wire_name);
+  }
 }
 
 }  // namespace kythe

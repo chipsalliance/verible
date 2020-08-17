@@ -28,12 +28,16 @@
 #include "absl/strings/substitute.h"
 #include "common/util/file_util.h"
 #include "common/util/init_command_line.h"
+#include "kythe_facts_extractor.h"
 #include "verilog/analysis/verilog_analyzer.h"
 #include "verilog/tools/kythe/indexing_facts_tree_extractor.h"
 
 ABSL_FLAG(bool, printextraction, false,
           "Whether or not to print the extracted general indexing facts "
           "from the middle layer)");
+
+ABSL_FLAG(bool, printkythefacts, false,
+          "Whether or not to print the extracted kythe facts");
 
 int ExtractOneFile(absl::string_view content, absl::string_view filename) {
   int exit_status = 0;
@@ -49,6 +53,17 @@ int ExtractOneFile(absl::string_view content, absl::string_view filename) {
               << std::endl;
 
     std::cout << facts_tree << '\n';
+  }
+  LOG(INFO) << '\n' << facts_tree;
+
+  // check for printkythefacts flag, and print the facts if on
+  if (absl::GetFlag(FLAGS_printkythefacts)) {
+    std::cout << std::endl
+              << (!parse_ok ? " (incomplete due to syntax errors): " : "")
+              << std::endl;
+
+    ExtractKytheFacts(facts_tree);
+    std::cout << '\n';
   }
 
   return exit_status;
