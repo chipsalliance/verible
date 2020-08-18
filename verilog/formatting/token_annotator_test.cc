@@ -2121,6 +2121,14 @@ TEST(TokenAnnotatorTest, AnnotateFormattingWithContextTest) {
       },
       {
           DefaultStyle,
+          {verilog_tokentype::PP_Identifier, "BAR"},
+          {verilog_tokentype::PP_define_body, "\\\n  bar \\\n  + foo\n"},
+          {},  // any context
+          {},  // any context
+          {1, SpacingOptions::Preserve},
+      },
+      {
+          DefaultStyle,
           {')', ")"},
           {verilog_tokentype::PP_define_body, ""}, /* empty */
           {},                                      // any context

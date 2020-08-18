@@ -229,6 +229,16 @@ static const std::initializer_list<FormatterTestCase> kFormatterTestCases = {
         "`define FOO \\\n"
         " 1\n"  // TODO(b/141517267): Reflowing macro definitions
     },
+    {"`define FOO    \\\n"  // multiline macro definition
+     "        b\n",
+     "`define FOO \\\n"  // no need to align '\'
+     "        b\n"},
+    {"`define FOO    \\\n"  // multiline macro definition
+     "        a +    \\\n"
+     "        b\n",
+     "`define FOO    \\\n"  // preserve spacing before '\'
+     "        a +    \\\n"  // to stay aligned with this one
+     "        b\n"},
     {"    // comment with backslash\\\n", "// comment with backslash\\\n"},
     {// macro with MacroArg tokens as arguments
      "`FOOOOOO(\nbar1...\n,\nbar2...\n,\nbar3...\n,\nbar4\n)\n",
