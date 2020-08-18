@@ -313,4 +313,4 @@ Enabled by default: true
 
 ## Version
 
-Generated on 2020-08-17 20:49:50 -0700 from [v0.0-535-gc56ee0f](https://github.com/google/verible/commit/c56ee0f215a96f8155910c348459691b81b9d960)
+Generated on 2020-08-18 08:33:57 -0700 from [v0.0-536-g6bd0218](https://github.com/google/verible/commit/6bd02180065b2d207284ec5e2cebfe06ae293365)
