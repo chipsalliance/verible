@@ -507,6 +507,8 @@ cc_test(
     srcs = ["package_test.cc"],
     deps = [
         ":package",
+        "//common/analysis:syntax_tree_search",
+        "//common/analysis:syntax_tree_search_test_utils",
         "//common/text:concrete_syntax_tree",
         "//common/text:symbol",
         "//common/text:text_structure",
