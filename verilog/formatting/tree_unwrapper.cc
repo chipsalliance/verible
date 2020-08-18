@@ -1770,6 +1770,7 @@ void TreeUnwrapper::Visit(const verible::SyntaxTreeLeaf& leaf) {
               // NodeEnum:xxxx                             // due to element:
               NodeEnum::kMacroArgList,               // MacroArg
               NodeEnum::kFormalParameterList,        // kParamDeclaration
+              NodeEnum::kEnumNameList,               // kEnumName
               NodeEnum::kActualParameterByNameList,  // kParamByName
               NodeEnum::kPortDeclarationList,        // kPort, kPortDeclaration
               NodeEnum::kPortActualList,             // kActualNamedPort,
