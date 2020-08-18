@@ -44,22 +44,6 @@ static int GetPartitionNodeEnum(const TokenPartitionTree& partition) {
   return SymbolCastToNode(*origin).Tag().tag;
 }
 
-static bool VerifyRowsOriginalNodeTypes(
-    const std::vector<TokenPartitionIterator>& rows) {
-  VLOG(1) << __FUNCTION__;
-  const auto first_node_type = GetPartitionNodeEnum(*rows.front());
-  for (const auto& row : verible::make_range(rows.begin() + 1, rows.end())) {
-    const auto node_type = GetPartitionNodeEnum(*row);
-    if (node_type != first_node_type) {
-      VLOG(2) << "Cannot format-align rows of different syntax tree node "
-                 "types.  First: "
-              << first_node_type << ", Other: " << node_type;
-      return false;
-    }
-  }
-  return true;
-}
-
 static int EffectiveCellWidth(const FormatTokenRange& tokens) {
   if (tokens.empty()) return 0;
   VLOG(2) << __FUNCTION__;
@@ -434,8 +418,10 @@ static void AlignFilteredRows(
   VLOG(1) << __FUNCTION__;
   // Alignment requires 2+ rows.
   if (rows.size() <= 1) return;
-  // Make sure all rows' nodes have the same type.
-  if (!VerifyRowsOriginalNodeTypes(rows)) return;
+
+  // Rows validation:
+  // In many (but not all) cases, all rows' nodes have the same type.
+  // TODO(fangism): plumb through an optional verification function.
 
   VLOG(2) << "Walking syntax subtrees for each row";
   ColumnSchemaAggregator column_schema;

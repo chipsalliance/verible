@@ -1267,6 +1267,159 @@ static const std::initializer_list<FormatterTestCase> kFormatterTestCases = {
      ");\n"
      "endmodule : foo\n"},
 
+    // module local variable/net declaration alignment test cases
+    {"module m;\n"
+     "logic a;\n"
+     "bit b;\n"
+     "endmodule\n",
+     "module m;\n"
+     "  logic a;\n"
+     "  bit   b;\n"
+     "endmodule\n"},
+    {"module m;\n"
+     "logic a;\n"
+     "bit b;\n"
+     "initial e=f;\n"  // separates alignment groups
+     "wire c;\n"
+     "bit d;\n"
+     "endmodule\n",
+     "module m;\n"
+     "  logic a;\n"
+     "  bit   b;\n"
+     "  initial e = f;\n"  // separates alignment groups
+     "  wire c;\n"
+     "  bit  d;\n"
+     "endmodule\n"},
+    {"module m;\n"
+     "// hello a\n"
+     "logic a;\n"
+     "// hello b\n"
+     "bit b;\n"
+     "endmodule\n",
+     "module m;\n"
+     "  // hello a\n"
+     "  logic a;\n"
+     "  // hello b\n"
+     "  bit   b;\n"  // aligned across comments
+     "endmodule\n"},
+    {"module m;\n"
+     "// hello a\n"
+     "logic a;\n"
+     "\n"  // extra blank line
+     "// hello b\n"
+     "bit b;\n"
+     "endmodule\n",
+     "module m;\n"
+     "  // hello a\n"
+     "  logic a;\n"
+     "\n"              // extra blank line
+     "  // hello b\n"  // aligned across blank lines
+     "  bit   b;\n"    // aligned across comments
+     "endmodule\n"},
+    {"module m;\n"
+     "logic [x:y]a;\n"  // packed dimensions
+     "bit b;\n"
+     "endmodule\n",
+     "module m;\n"
+     "  logic [x:y] a;\n"
+     "  bit         b;\n"
+     "endmodule\n"},
+    {"module m;\n"
+     "logic a;\n"
+     "bit [pp:qq]b;\n"  // packed dimensions
+     "endmodule\n",
+     "module m;\n"
+     "  logic         a;\n"
+     "  bit   [pp:qq] b;\n"
+     "endmodule\n"},
+    {"module m;\n"
+     "logic [x:y]a;\n"  // packed dimensions
+     "bit [pp:qq]b;\n"  // packed dimensions
+     "endmodule\n",
+     "module m;\n"
+     "  logic [  x:y] a;\n"
+     "  bit   [pp:qq] b;\n"
+     "endmodule\n"},
+    {"module m;\n"
+     "logic [x:y]a;\n"         // packed dimensions
+     "wire [pp:qq] [e:f]b;\n"  // packed dimensions, 2D
+     "endmodule\n",
+     "module m;\n"
+     "  logic [  x:y]      a;\n"
+     "  wire  [pp:qq][e:f] b;\n"
+     "endmodule\n"},
+    {"module m;\n"
+     "logic a [x:y];\n"  // unpacked dimensions
+     "bit bbb;\n"
+     "endmodule\n",
+     "module m;\n"
+     "  logic a   [x:y];\n"
+     "  bit   bbb;\n"
+     "endmodule\n"},
+    {"module m;\n"
+     "logic aaa ;\n"
+     "wire w [yy:zz];\n"  // unpacked dimensions
+     "endmodule\n",
+     "module m;\n"
+     "  logic aaa;\n"
+     "  wire  w   [yy:zz];\n"
+     "endmodule\n"},
+    {"module m;\n"
+     "logic aaa [s:t] ;\n"  // unpacked dimensions
+     "wire w [yy:zz];\n"    // unpacked dimensions
+     "endmodule\n",
+     "module m;\n"
+     "  logic aaa[  s:t];\n"
+     "  wire  w  [yy:zz];\n"
+     "endmodule\n"},
+    {"module m;\n"
+     "logic aaa [s:t] ;\n"     // unpacked dimensions
+     "wire w [yy:zz][u:v];\n"  // unpacked dimensions, 2D
+     "endmodule\n",
+     "module m;\n"
+     "  logic aaa[  s:t];\n"
+     "  wire  w  [yy:zz] [u:v];\n"
+     // TODO(b/165323560): unwanted space between unpacked dimensions of 'w'
+     "endmodule\n"},
+    {"module m;\n"
+     "qqq::rrr s;\n"     // user-defined type
+     "wire [pp:qq]w;\n"  // packed dimensions
+     "endmodule\n",
+     "module m;\n"
+     "  qqq::rrr         s;\n"
+     "  wire     [pp:qq] w;\n"
+     "endmodule\n"},
+    {"module m;\n"
+     "qqq#(rr) s;\n"     // parameterized type
+     "wire [pp:qq]w;\n"  // packed dimensions
+     "endmodule\n",
+     "module m;\n"
+     "  qqq #(rr)         s;\n"
+     "  wire      [pp:qq] w;\n"
+     "endmodule\n"},
+    {"module m;\n"
+     "logic a;\n"
+     "bit b;\n"
+     "my_module  my_inst( );\n"  // module instance separates alignment groups
+     "wire c;\n"
+     "bit d;\n"
+     "endmodule\n",
+     "module m;\n"
+     "  logic a;\n"  // these two are aligned
+     "  bit   b;\n"
+     "  my_module my_inst ();\n"  // module instance separates alignment groups
+     "  wire c;\n"                // these two are aligned
+     "  bit  d;\n"
+     "endmodule\n"},
+    {"module m;\n"
+     "logic aaa = expr1;\n"
+     "bit b = expr2;\n"
+     "endmodule\n",
+     "module m;\n"
+     "  logic aaa = expr1;\n"
+     "  bit   b = expr2;\n"  // no alignment at '=' yet
+     "endmodule\n"},
+
     {"module foo #(int x,int y) ;endmodule:foo\n",  // parameters
      "module foo #(\n"
      "    int x,\n"
@@ -1684,7 +1837,7 @@ static const std::initializer_list<FormatterTestCase> kFormatterTestCases = {
     {"  module bar;wire foo;reg bear;endmodule\n",
      "module bar;\n"
      "  wire foo;\n"
-     "  reg bear;\n"
+     "  reg  bear;\n"  // aligned
      "endmodule\n"},
     {" module bar;initial\nbegin a<=b . c ; end endmodule\n",
      "module bar;\n"
@@ -5681,7 +5834,7 @@ TEST(FormatterEndToEndTest, DisableModuleInstantiations) {
        "  endmodule\n",
        "module m;\n"
        "  logic xyz;\n"  // indentation still takes effect
-       "  wire abc;\n"   // indentation still takes effect
+       "  wire  abc;\n"  // aligned too
        "endmodule\n"},
       {"  function f  ;\t\n"
        " endfunction\n",

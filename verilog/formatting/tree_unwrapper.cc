@@ -938,7 +938,6 @@ void TreeUnwrapper::SetIndentationsAndCreatePartitions(
     // For the following constructs, always expand the view to subpartitions.
     // Add a level of indentation.
     case NodeEnum::kClassItems:
-    case NodeEnum::kModuleItemList:
     case NodeEnum::kPackageItemList:
     case NodeEnum::kInterfaceClassDeclaration:
     case NodeEnum::kGenerateItemList:
@@ -999,6 +998,13 @@ void TreeUnwrapper::SetIndentationsAndCreatePartitions(
         TraverseChildren(node);
         break;
       }
+    }
+
+    case NodeEnum::kModuleItemList: {
+      const int indent = suppress_indentation ? 0 : style_.indentation_spaces;
+      VisitIndentedSection(node, indent,
+                           PartitionPolicyEnum::kTabularAlignment);
+      break;
     }
 
       // module instantiations (which look like data declarations) want to
