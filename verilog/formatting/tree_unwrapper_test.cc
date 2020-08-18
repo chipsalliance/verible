@@ -7107,6 +7107,21 @@ const TreeUnwrapperTestData kUnwrapEnumTestCases[] = {
                        L(1, {"two", "=", "2"})),
           L(0, {"}", "foo_e", ";"})),
     },
+
+    {
+        "Comment after enum member should attach",
+        "typedef enum logic {\n"
+        "one=1,   // foo\n"
+        "two,     // bar\n"
+        "three=3  // baz\n"
+        "} foo_e;",
+        N(0, L(0, {"typedef", "enum", "logic", "{"}),
+          EnumItemList(1,
+                       L(1, {"one", "=", "1", ",",  "// foo"}),
+                       L(1, {"two",           ",",  "// bar"}),
+                       L(1, {"three", "=", "3",     "// baz"})),
+          L(0, {"}", "foo_e", ";"})),
+    },
 };
 
 // Test that TreeUnwrapper produces correct UnwrappedLines from structs
