@@ -39,11 +39,6 @@
 
 namespace verible {
 
-static int GetPartitionNodeEnum(const TokenPartitionTree& partition) {
-  const Symbol* origin = partition.Value().Origin();
-  return SymbolCastToNode(*origin).Tag().tag;
-}
-
 static int EffectiveCellWidth(const FormatTokenRange& tokens) {
   if (tokens.empty()) return 0;
   VLOG(2) << __FUNCTION__;
