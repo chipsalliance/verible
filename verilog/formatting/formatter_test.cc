@@ -2990,14 +2990,21 @@ static const std::initializer_list<FormatterTestCase> kFormatterTestCases = {
      "  A = 0,\n"
      "  B = 1\n"
      "} foo_t;\n"},
-    {"typedef enum logic\t{ A=0, // foo\n"
+    { // With comments on same line as enum value
+     "typedef enum logic\t{ A=0, // foo\n"
      "B,// bar\n"
-     "C=3    // baz\n"
+     "`ifndef DO_PANIC\n"
+     "C=42,// answer\n"
+     "`endif\n"
+     "D=3    // baz\n"
      "}foo_t;",
      "typedef enum logic {\n"
      "  A = 0,  // foo\n"
      "  B,  // bar\n"
-     "  C = 3  // baz\n"
+     "`ifndef DO_PANIC\n"
+     "  C = 42,  // answer\n"
+     "`endif\n"
+     "  D = 3  // baz\n"
      "} foo_t;\n"},
     {// with scalar dimensions
      "typedef enum logic[2]\t{ A=0, B=1 }foo_t;",
@@ -5580,7 +5587,7 @@ TEST(FormatterEndToEndTest, VerilogFormatTest) {
         FormatVerilog(test_case.input, "<filename>", style, stream);
     // Require these test cases to be valid.
     EXPECT_OK(status) << status.message();
-    EXPECT_EQ(stream.str(), test_case.expected) << "code:\n" << test_case.input;
+    EXPECT_EQ(stream.str(), std::string(test_case.expected)) << "code:\n" << test_case.input;
   }
 }
 
