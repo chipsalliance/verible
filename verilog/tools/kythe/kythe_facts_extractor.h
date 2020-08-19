@@ -27,14 +27,28 @@
 namespace verilog {
 namespace kythe {
 
+// Streamable printing class for kythe facts.
+// Usage: stream << KytheFactsPrinter(*tree_root);
+class KytheFactsPrinter {
+ public:
+  explicit KytheFactsPrinter(const IndexingFactNode& root) : root_(root) {}
+
+  std::ostream& Print(std::ostream&) const;
+
+ private:
+  // The root of the indexing facts tree to extract kythe facts from.
+  const IndexingFactNode& root_;
+};
+
 // Responsible for traversing IndexingFactsTree and processing its different
 // nodes to produce kythe indexing facts.
 class KytheFactsExtractor {
  public:
   using VNameContextAutoPop = VNameContext::AutoPop;
 
-  explicit KytheFactsExtractor(absl::string_view file_path)
-      : file_path_(file_path) {}
+  explicit KytheFactsExtractor(absl::string_view file_path,
+                               std::ostream* stream)
+      : file_path_(file_path), stream_(stream) {}
 
   void Visit(const IndexingFactNode&);
 
@@ -55,12 +69,19 @@ class KytheFactsExtractor {
   // VName.
   VName ExtractVariableReference(const IndexingFactNode& node);
 
+  // Generates an anchor VName for kythe.
+  VName PrintAnchorVName(const Anchor&, absl::string_view);
+
   // The verilog file name which the facts are extracted from.
   std::string file_path_;
 
   // Keeps track of VNames of ancestors as the visitor traverses the facts
   // tree.
   VNameContext vnames_context_;
+
+  // Output stream for capturing, redirecting, testing and verifying the
+  // output.
+  std::ostream* stream_;
 };
 
 // Creates the signature for module names.
@@ -69,14 +90,7 @@ std::string CreateModuleSignature(absl::string_view);
 // Creates the signature for module instantiations.
 std::string CreateVariableSignature(absl::string_view, const VName&);
 
-// Extracts file path from indexing facts tree root.
-std::string GetFilePathFromRoot(const IndexingFactNode&);
-
-// Extracts Kythe facts from IndexingFactTree.
-void ExtractKytheFacts(const IndexingFactNode&);
-
-// Generates an anchor VName for kythe.
-VName PrintAnchorVName(const Anchor&, absl::string_view);
+std::ostream& operator<<(std::ostream&, const KytheFactsPrinter&);
 
 }  // namespace kythe
 }  // namespace verilog

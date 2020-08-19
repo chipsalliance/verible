@@ -44,7 +44,7 @@ struct VName {
   // The language this name belongs to.
   std::string language;
 
-  // The corpus of source code this VName belongs to
+  // The corpus of source code this VName belongs to.
   std::string corpus;
 
   // A directory path or project identifier inside the Corpus.

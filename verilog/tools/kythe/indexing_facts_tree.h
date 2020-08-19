@@ -48,7 +48,7 @@ class Anchor {
 
   int StartLocation() const { return start_location_; }
   int EndLocation() const { return end_location_; }
-  std::string Value() const { return value_; }
+  const std::string& Value() const { return value_; }
 
   bool operator==(const Anchor&) const;
 

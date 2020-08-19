@@ -15,8 +15,6 @@
 #ifndef VERIBLE_VERILOG_TOOLS_KYTHE_KYTHE_SCHEMA_CONSTANTS_H_
 #define VERIBLE_VERILOG_TOOLS_KYTHE_KYTHE_SCHEMA_CONSTANTS_H_
 
-#include <string>
-
 #include "absl/strings/string_view.h"
 
 namespace verilog {

@@ -100,8 +100,7 @@ void IndexingFactsTreeExtractor::Visit(const verible::SyntaxTreeNode& node) {
   const auto tag = static_cast<verilog::NodeEnum>(node.Tag().tag);
   switch (tag) {
     case NodeEnum ::kDescriptionList: {
-      const IndexingFactsTreeExtractor::AutoPop p(&facts_tree_context_,
-                                                  &GetRoot());
+      const AutoPop p(&facts_tree_context_, &GetRoot());
       TreeContextVisitor::Visit(node);
       break;
     }
@@ -133,8 +132,7 @@ void IndexingFactsTreeExtractor::ExtractModule(
   IndexingFactNode module_node(module_node_data);
 
   {
-    const IndexingFactsTreeExtractor::AutoPop p(&facts_tree_context_,
-                                                &module_node);
+    const AutoPop p(&facts_tree_context_, &module_node);
     ExtractModuleHeader(node);
     ExtractModuleEnd(node);
 
@@ -142,7 +140,7 @@ void IndexingFactsTreeExtractor::ExtractModule(
     Visit(module_item_list);
   }
 
-   facts_tree_context_.top().NewChild(module_node);
+  facts_tree_context_.top().NewChild(module_node);
 }
 
 void IndexingFactsTreeExtractor::ExtractModuleHeader(

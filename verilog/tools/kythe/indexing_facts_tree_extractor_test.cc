@@ -71,8 +71,9 @@ TEST(ExtractOneFileTest, FactsTreeExtractor) {
   int exit_status = 0;
   bool parse_ok = false;
 
-  const auto expected =
-      T({{Anchor(file_name, 0, code_text.size())}, IndexingFactType ::kFile});
+  const auto expected = T({{Anchor(file_name, 0, code_text.size()),
+                            Anchor(code_text, 0, code_text.size())},
+                           IndexingFactType ::kFile});
 
   const auto facts_tree =
       ExtractOneFile(code_text, file_name, exit_status, parse_ok);
@@ -88,8 +89,9 @@ TEST(EmptyCSTTest, FactsTreeExtractor) {
   int exit_status = 0;
   bool parse_ok = false;
 
-  const auto expected =
-      T({{Anchor(file_name, 0, code_text.size())}, IndexingFactType ::kFile});
+  const auto expected = T({{Anchor(file_name, 0, code_text.size()),
+                            Anchor(code_text, 0, code_text.size())},
+                           IndexingFactType ::kFile});
 
   const auto facts_tree =
       ExtractOneFile(code_text, file_name, exit_status, parse_ok);
@@ -105,11 +107,12 @@ TEST(EmptyModuleTest, FactsTreeExtractor) {
   int exit_status = 0;
   bool parse_ok = false;
 
-  const auto expected =
-      T({{Anchor(file_name, 0, code_text.size())}, IndexingFactType ::kFile},
-        T({{Anchor(absl::string_view("foo"), 7, 10),
-            Anchor(absl::string_view("foo"), 23, 26)},
-           IndexingFactType::kModule}));
+  const auto expected = T({{Anchor(file_name, 0, code_text.size()),
+                            Anchor(code_text, 0, code_text.size())},
+                           IndexingFactType ::kFile},
+                          T({{Anchor(absl::string_view("foo"), 7, 10),
+                              Anchor(absl::string_view("foo"), 23, 26)},
+                             IndexingFactType::kModule}));
 
   const auto facts_tree =
       ExtractOneFile(code_text, file_name, exit_status, parse_ok);
@@ -126,17 +129,18 @@ TEST(OneModuleInstanceTest, FactsTreeExtractor) {
   int exit_status = 0;
   bool parse_ok = false;
 
-  const auto expected =
-      T({{Anchor(file_name, 0, code_text.size())}, IndexingFactType ::kFile},
-        T({{Anchor(absl::string_view("bar"), 7, 10),
-            Anchor(absl::string_view("bar"), 23, 26)},
-           IndexingFactType::kModule}),
-        T({{Anchor(absl::string_view("foo"), 34, 37),
-            Anchor(absl::string_view("foo"), 60, 63)},
-           IndexingFactType::kModule},
-          T({{Anchor(absl::string_view("bar"), 39, 42),
-              Anchor(absl::string_view("b1"), 43, 45)},
-             IndexingFactType ::kModuleInstance})));
+  const auto expected = T({{Anchor(file_name, 0, code_text.size()),
+                            Anchor(code_text, 0, code_text.size())},
+                           IndexingFactType ::kFile},
+                          T({{Anchor(absl::string_view("bar"), 7, 10),
+                              Anchor(absl::string_view("bar"), 23, 26)},
+                             IndexingFactType::kModule}),
+                          T({{Anchor(absl::string_view("foo"), 34, 37),
+                              Anchor(absl::string_view("foo"), 60, 63)},
+                             IndexingFactType::kModule},
+                            T({{Anchor(absl::string_view("bar"), 39, 42),
+                                Anchor(absl::string_view("b1"), 43, 45)},
+                               IndexingFactType ::kModuleInstance})));
 
   const auto facts_tree =
       ExtractOneFile(code_text, file_name, exit_status, parse_ok);
@@ -154,20 +158,21 @@ TEST(TwoModuleInstanceTest, FactsTreeExtractor) {
   int exit_status = 0;
   bool parse_ok = false;
 
-  const auto expected =
-      T({{Anchor(file_name, 0, code_text.size())}, IndexingFactType ::kFile},
-        T({{Anchor(absl::string_view("bar"), 7, 10),
-            Anchor(absl::string_view("bar"), 23, 26)},
-           IndexingFactType::kModule}),
-        T({{Anchor(absl::string_view("foo"), 34, 37),
-            Anchor(absl::string_view("foo"), 70, 73)},
-           IndexingFactType::kModule},
-          T({{Anchor(absl::string_view("bar"), 39, 42),
-              Anchor(absl::string_view("b1"), 43, 45)},
-             IndexingFactType ::kModuleInstance}),
-          T({{Anchor(absl::string_view("bar"), 49, 52),
-              Anchor(absl::string_view("b2"), 53, 55)},
-             IndexingFactType ::kModuleInstance})));
+  const auto expected = T({{Anchor(file_name, 0, code_text.size()),
+                            Anchor(code_text, 0, code_text.size())},
+                           IndexingFactType ::kFile},
+                          T({{Anchor(absl::string_view("bar"), 7, 10),
+                              Anchor(absl::string_view("bar"), 23, 26)},
+                             IndexingFactType::kModule}),
+                          T({{Anchor(absl::string_view("foo"), 34, 37),
+                              Anchor(absl::string_view("foo"), 70, 73)},
+                             IndexingFactType::kModule},
+                            T({{Anchor(absl::string_view("bar"), 39, 42),
+                                Anchor(absl::string_view("b1"), 43, 45)},
+                               IndexingFactType ::kModuleInstance}),
+                            T({{Anchor(absl::string_view("bar"), 49, 52),
+                                Anchor(absl::string_view("b2"), 53, 55)},
+                               IndexingFactType ::kModuleInstance})));
 
   const auto facts_tree =
       ExtractOneFile(code_text, file_name, exit_status, parse_ok);

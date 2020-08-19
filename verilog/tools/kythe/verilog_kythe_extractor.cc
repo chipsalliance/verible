@@ -12,15 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// verilog_kythe_extractor is a simple command-line utility to extract kythe
-// indexing facts from the given file.
-//
-// Expected Input: verilog file.
-// Expected output: Produces Indexing Facts for kythe.
-//
-// Example usage:
-// verilog_kythe_extractor files...
-
 #include "absl/flags/flag.h"
 #include "absl/status/status.h"
 #include "absl/strings/str_cat.h"
@@ -62,13 +53,20 @@ int ExtractOneFile(absl::string_view content, absl::string_view filename) {
               << (!parse_ok ? " (incomplete due to syntax errors): " : "")
               << std::endl;
 
-    verilog::kythe::ExtractKytheFacts(facts_tree);
-    std::cout << '\n';
+    std::cout << verilog::kythe::KytheFactsPrinter(facts_tree) << '\n';
   }
 
   return exit_status;
 }
 
+// verilog_kythe_extractor is a simple command-line utility to extract kythe
+// indexing facts from the given file.
+//
+// Expected Input: verilog file.
+// Expected output: Produces Indexing Facts for kythe.
+//
+// Example usage:
+// verilog_kythe_extractor files...
 int main(int argc, char** argv) {
   const auto usage =
       absl::StrCat("usage: ", argv[0], " [options] <file> [<file>...]");
