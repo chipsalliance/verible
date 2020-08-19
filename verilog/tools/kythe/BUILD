@@ -134,7 +134,7 @@ cc_test(
 )
 
 cc_binary(
-    name = "verilog-kythe-extractor",
+    name = "verible-verilog-kythe-extractor",
     srcs = [
         "verilog_extractor_indexing_fact_type_foreach.inc",
         "verilog_extractor_indexing_fact_type_foreach-gen.inc",
