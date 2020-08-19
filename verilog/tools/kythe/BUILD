@@ -125,6 +125,7 @@ cc_test(
     srcs = ["indexing_facts_tree_extractor_test.cc"],
     deps = [
         ":indexing_facts_tree_extractor",
+        "//common/analysis:syntax_tree_search_test_utils",
         "//common/text:concrete_syntax_tree",
         "//verilog/analysis:verilog_analyzer",
         "@com_google_absl//absl/strings",

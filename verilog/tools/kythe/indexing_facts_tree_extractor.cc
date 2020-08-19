@@ -31,18 +31,18 @@ namespace kythe {
 namespace {
 
 void DebugSyntaxTree(const verible::SyntaxTreeLeaf& leaf) {
-  LOG(INFO) << "Start Leaf";
-  LOG(INFO) << verilog::NodeEnumToString(
-                   static_cast<verilog::NodeEnum>(leaf.Tag().tag))
-            << " <<>> " << leaf.Tag().tag << " " << leaf.get();
-  LOG(INFO) << "End Leaf";
+  VLOG(1) << "Start Leaf";
+  VLOG(1) << verilog::NodeEnumToString(
+                 static_cast<verilog::NodeEnum>(leaf.Tag().tag))
+          << " <<>> " << leaf.Tag().tag << " " << leaf.get();
+  VLOG(1) << "End Leaf";
 }
 
 void DebugSyntaxTree(const verible::SyntaxTreeNode& node) {
-  LOG(INFO) << "Start Node";
-  LOG(INFO) << verilog::NodeEnumToString(
-                   static_cast<verilog::NodeEnum>(node.Tag().tag))
-            << "  " << node.children().size();
+  VLOG(1) << "Start Node";
+  VLOG(1) << verilog::NodeEnumToString(
+                 static_cast<verilog::NodeEnum>(node.Tag().tag))
+          << "  " << node.children().size();
 
   for (const verible::SymbolPtr& child : node.children()) {
     if (!child) continue;
@@ -53,7 +53,7 @@ void DebugSyntaxTree(const verible::SyntaxTreeNode& node) {
     }
   }
 
-  LOG(INFO) << "End Node";
+  VLOG(1) << "End Node";
 }
 }  // namespace
 
@@ -228,6 +228,7 @@ void IndexingFactsTreeExtractor::ExtractModuleInstantiation(
     facts_tree_context_.top().NewChild(module_instance);
   }
 }
+
 void IndexingFactsTreeExtractor::ExtractNetDeclaration(
     const verible::SyntaxTreeNode& node) {
   const std::vector<const verible::TokenInfo*> identifiers =
