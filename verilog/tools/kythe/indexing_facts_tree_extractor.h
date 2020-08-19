@@ -18,7 +18,7 @@
 #include "absl/strings/string_view.h"
 #include "common/text/tree_context_visitor.h"
 #include "verilog/tools/kythe/indexing_facts_tree.h"
-#include "verilog/tools/kythe/indexing_facts_tree_auto_pop.h"
+#include "verilog/tools/kythe/indexing_facts_tree_context.h"
 
 namespace verilog {
 namespace kythe {
@@ -27,25 +27,18 @@ namespace kythe {
 // facts from CST nodes and constructs a tree of indexing facts.
 class IndexingFactsTreeExtractor : public verible::TreeContextVisitor {
  public:
-  // Type that is used to keep track of the path to the root of indexing facts
-  // tree.
-  using IndexingFactsTreeContext = std::vector<IndexingFactNode*>;
-
-  using FactTreeContextAutoPop =
-      AutoPopBack<IndexingFactsTreeExtractor::IndexingFactsTreeContext,
-                  IndexingFactNode>;
+  using AutoPop = IndexingFactsTreeContext::AutoPop;
 
   IndexingFactsTreeExtractor(absl::string_view base,
                              absl::string_view file_name)
       : context_(verible::TokenInfo::Context(base)) {
     root_.Value().AppendAnchor(Anchor(file_name, 0, base.size()));
     root_.Value().AppendAnchor(Anchor(base, 0, base.size()));
-    facts_tree_context_.push_back(&root_);
   }
 
   void Visit(const verible::SyntaxTreeNode& node) override;
 
-  const IndexingFactNode& GetRoot() const { return root_; }
+  IndexingFactNode& GetRoot() { return root_; }
 
  private:
   // Extracts modules and creates its corresponding fact tree.
@@ -84,9 +77,9 @@ IndexingFactNode ExtractOneFile(absl::string_view content,
 
 // Given a root to CST this function traverses the tree and extracts and
 // constructs the indexing facts tree.
-IndexingFactNode BuildIndexingFactsTree(const verible::ConcreteSyntaxTree& root,
-                                        absl::string_view base,
-                                        absl::string_view file_name);
+IndexingFactNode BuildIndexingFactsTree(
+    const verible::ConcreteSyntaxTree& syntax_tree, absl::string_view base,
+    absl::string_view file_name);
 
 }  // namespace kythe
 }  // namespace verilog

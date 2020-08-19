@@ -269,10 +269,11 @@ Status FormatVerilog(absl::string_view text, absl::string_view filename,
 
 // Decided at each node in UnwrappedLine partition tree whether or not
 // it should be expanded or unexpanded.
-static void DeterminePartitionExpansion(partition_node_type* node,
-                                        absl::string_view full_text,
-                                        const ByteOffsetSet& disabled_ranges,
-                                        const FormatStyle& style) {
+static void DeterminePartitionExpansion(
+    partition_node_type* node,
+    std::vector<verible::PreFormatToken>* preformatted_tokens,
+    absl::string_view full_text, const ByteOffsetSet& disabled_ranges,
+    const FormatStyle& style) {
   auto& node_view = node->Value();
   const auto& children = node->Children();
 
@@ -345,8 +346,21 @@ static void DeterminePartitionExpansion(partition_node_type* node,
         VLOG(3) << "Fits, un-expanding.";
         node_view.Unexpand();
       } else {
-        VLOG(3) << "Does not fit, expanding.";
-        node_view.Expand();
+        if (style.try_wrap_long_lines) {
+          VLOG(3) << "Does not fit, expanding.";
+          node_view.Expand();
+        } else {
+          // give-up early and preserve original spacing
+          VLOG(3) << "Does not fit, preserving.";
+          node_view.Unexpand();
+          const auto range = node_view.Value().TokensRange();
+          const ByteOffsetSet new_disable_range{
+              {range.front().token->left(full_text) + 1,
+               // +1 allows left indentation to be adjusted
+               range.back().token->right(full_text)}};
+          verible::PreserveSpacesOnDisabledTokenRanges(
+              preformatted_tokens, new_disable_range, full_text);
+        }
       }
     }
   }
@@ -355,6 +369,7 @@ static void DeterminePartitionExpansion(partition_node_type* node,
 // Produce a worklist of independently formattable UnwrappedLines.
 static std::vector<UnwrappedLine> MakeUnwrappedLinesWorklist(
     const TokenPartitionTree& format_tokens_partitions,
+    std::vector<verible::PreFormatToken>* preformatted_tokens,
     absl::string_view full_text, const ByteOffsetSet& disabled_ranges,
     const FormatStyle& style) {
   // Initialize a tree view that treats partitions as fully-expanded.
@@ -365,8 +380,10 @@ static std::vector<UnwrappedLine> MakeUnwrappedLinesWorklist(
   // Post-order traversal: if a child doesn't 'fit' and needs to be expanded,
   // so must all of its parents (and transitively, ancestors).
   format_tokens_partition_view.ApplyPostOrder(
-      [&full_text, &disabled_ranges, &style](partition_node_type& node) {
-        DeterminePartitionExpansion(&node, full_text, disabled_ranges, style);
+      [&full_text, &disabled_ranges, &style,
+       preformatted_tokens](partition_node_type& node) {
+        DeterminePartitionExpansion(&node, preformatted_tokens, full_text,
+                                    disabled_ranges, style);
       });
 
   // Remove trailing blank lines.
@@ -533,7 +550,8 @@ Status Formatter::Format(const ExecutionControl& control) {
 
   // Produce sequence of independently operable UnwrappedLines.
   const auto unwrapped_lines = MakeUnwrappedLinesWorklist(
-      *format_tokens_partitions, full_text, disabled_ranges_, style_);
+      *format_tokens_partitions, &unwrapper_data.preformatted_tokens, full_text,
+      disabled_ranges_, style_);
 
   // For each UnwrappedLine: minimize total penalty of wrap/break decisions.
   // TODO(fangism): This could be parallelized if results are written

@@ -12,7 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-
 #ifndef CONSIDER
 #error \
     "Define the CONSIDER macro before including this file " \

@@ -28,9 +28,9 @@
 #include "absl/strings/substitute.h"
 #include "common/util/file_util.h"
 #include "common/util/init_command_line.h"
-#include "kythe_facts_extractor.h"
 #include "verilog/analysis/verilog_analyzer.h"
 #include "verilog/tools/kythe/indexing_facts_tree_extractor.h"
+#include "verilog/tools/kythe/kythe_facts_extractor.h"
 
 ABSL_FLAG(bool, printextraction, false,
           "Whether or not to print the extracted general indexing facts "
@@ -62,7 +62,7 @@ int ExtractOneFile(absl::string_view content, absl::string_view filename) {
               << (!parse_ok ? " (incomplete due to syntax errors): " : "")
               << std::endl;
 
-    ExtractKytheFacts(facts_tree);
+    verilog::kythe::ExtractKytheFacts(facts_tree);
     std::cout << '\n';
   }
 

@@ -40,7 +40,7 @@ class Anchor {
   Anchor(const verible::TokenInfo& token, absl::string_view base)
       : start_location_(token.left(base)),
         end_location_(token.right(base)),
-        value_(token.text()){};
+        value_(token.text()) {}
 
   // This function is for debugging only and isn't intended to be a textual
   // representation of this class.
@@ -77,11 +77,11 @@ class IndexingNodeData {
                    IndexingFactType language_feature)
       : anchors_(std::move(anchor)), indexing_fact_type_(language_feature) {}
 
-  void AppendAnchor(const Anchor& anchor) { anchors_.push_back(anchor); };
+  void AppendAnchor(const Anchor& anchor) { anchors_.push_back(anchor); }
 
   void AppendAnchor(std::vector<Anchor> anchors) {
     anchors_.insert(anchors_.end(), anchors.begin(), anchors.end());
-  };
+  }
 
   // This function is for debugging only and isn't intended to be textual
   // representation of this class.

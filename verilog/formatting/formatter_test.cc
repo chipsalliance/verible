@@ -547,6 +547,10 @@ static const std::initializer_list<FormatterTestCase> kFormatterTestCases = {
      "  `uvm_field_int(cc, UVM_DEFAULT)\n"
      "`uvm_component_utils_end\n"},
 
+    // top-level directive test cases
+    {"`timescale  1ns/1ps\n",  //
+     "`timescale 1ns / 1ps\n"},
+
     // parameter test cases
     {
         "  parameter  int   foo=0 ;",
@@ -5682,6 +5686,51 @@ TEST(FormatterEndToEndTest, DisableModuleInstantiations) {
   style.indentation_spaces = 2;
   style.wrap_spaces = 4;
   style.format_module_instantiations = false;
+  for (const auto& test_case : kTestCases) {
+    VLOG(1) << "code-to-format:\n" << test_case.input << "<EOF>";
+    std::ostringstream stream;
+    const auto status =
+        FormatVerilog(test_case.input, "<filename>", style, stream);
+    // Require these test cases to be valid.
+    EXPECT_OK(status) << status.message();
+    EXPECT_EQ(stream.str(), test_case.expected) << "code:\n" << test_case.input;
+  }
+}
+
+TEST(FormatterEndToEndTest, DisableTryWrapLongLines) {
+  const std::initializer_list<FormatterTestCase> kTestCases = {
+      {"", ""},
+      {"\n", "\n"},
+      {"\n\n", "\n\n"},
+      {"module  m  ;\t\n"
+       "  endmodule\n",
+       "module m;\n"
+       "endmodule\n"},
+      {"module  m(   ) ;\n"
+       "  endmodule\n",
+       "module m ();\n"
+       "endmodule\n"},
+      {"module  m(   ) ;\n"
+       "initial assign a = b;\n"
+       "  endmodule\n",
+       "module m ();\n"
+       "  initial assign a = b;\n"
+       "endmodule\n"},
+      {"module  m(   ) ;\n"
+       "initial assign a = {never +gonna +give +you +up,\n"  // over 40 columns,
+                                                             // give up
+       "never + gonna +Let +you +down};\n"
+       "  endmodule\n",
+       "module m ();\n"
+       "  initial assign a = {never +gonna +give +you +up,\n"
+       "never + gonna +Let +you +down};\n"
+       "endmodule\n"},
+  };
+  FormatStyle style;
+  style.column_limit = 40;
+  style.indentation_spaces = 2;
+  style.wrap_spaces = 4;
+  style.try_wrap_long_lines = false;
   for (const auto& test_case : kTestCases) {
     VLOG(1) << "code-to-format:\n" << test_case.input << "<EOF>";
     std::ostringstream stream;

@@ -99,6 +99,12 @@ IndexingFactNode BuildIndexingFactsTree(
 void IndexingFactsTreeExtractor::Visit(const verible::SyntaxTreeNode& node) {
   const auto tag = static_cast<verilog::NodeEnum>(node.Tag().tag);
   switch (tag) {
+    case NodeEnum ::kDescriptionList: {
+      const IndexingFactsTreeExtractor::AutoPop p(&facts_tree_context_,
+                                                  &GetRoot());
+      TreeContextVisitor::Visit(node);
+      break;
+    }
     case NodeEnum::kModuleDeclaration: {
       ExtractModule(node);
       break;
@@ -127,7 +133,8 @@ void IndexingFactsTreeExtractor::ExtractModule(
   IndexingFactNode module_node(module_node_data);
 
   {
-    const FactTreeContextAutoPop p(&facts_tree_context_, &module_node);
+    const IndexingFactsTreeExtractor::AutoPop p(&facts_tree_context_,
+                                                &module_node);
     ExtractModuleHeader(node);
     ExtractModuleEnd(node);
 
@@ -135,7 +142,7 @@ void IndexingFactsTreeExtractor::ExtractModule(
     Visit(module_item_list);
   }
 
-  facts_tree_context_.back()->NewChild(module_node);
+   facts_tree_context_.top().NewChild(module_node);
 }
 
 void IndexingFactsTreeExtractor::ExtractModuleHeader(
@@ -143,7 +150,7 @@ void IndexingFactsTreeExtractor::ExtractModuleHeader(
   const verible::TokenInfo& module_name_token = GetModuleNameToken(node);
   const Anchor module_name_anchor(module_name_token, context_.base);
 
-  facts_tree_context_.back()->Value().AppendAnchor(module_name_anchor);
+  facts_tree_context_.top().Value().AppendAnchor(module_name_anchor);
 
   const verible::SyntaxTreeNode* port_list = GetModulePortDeclarationList(node);
 
@@ -159,7 +166,7 @@ void IndexingFactsTreeExtractor::ExtractModuleHeader(
       IndexingFactNode port_node(module_port);
       port_node.Value().AppendAnchor(port_name_anchor);
 
-      facts_tree_context_.back()->NewChild(port_node);
+      facts_tree_context_.top().NewChild(port_node);
     }
   }
 }
@@ -177,7 +184,7 @@ void IndexingFactsTreeExtractor::ExtractInputOutputDeclaration(
     IndexingFactNode port_node(module_port);
     port_node.Value().AppendAnchor(port_name_anchor);
 
-    facts_tree_context_.back()->NewChild(port_node);
+    facts_tree_context_.top().NewChild(port_node);
   }
 }
 
@@ -187,7 +194,7 @@ void IndexingFactsTreeExtractor::ExtractModuleEnd(
 
   if (module_name != nullptr) {
     const Anchor module_end_anchor(*module_name, context_.base);
-    facts_tree_context_.back()->Value().AppendAnchor(module_end_anchor);
+    facts_tree_context_.top().Value().AppendAnchor(module_end_anchor);
   }
 };
 
@@ -220,7 +227,7 @@ void IndexingFactsTreeExtractor::ExtractModuleInstantiation(
     }
 
     IndexingFactNode module_instance(indexing_node_data);
-    facts_tree_context_.back()->NewChild(module_instance);
+    facts_tree_context_.top().NewChild(module_instance);
   }
 }
 void IndexingFactsTreeExtractor::ExtractNetDeclaration(
@@ -234,7 +241,7 @@ void IndexingFactsTreeExtractor::ExtractNetDeclaration(
     indexing_node_data.AppendAnchor(wire_name_anchor);
 
     IndexingFactNode wire_name(indexing_node_data);
-    facts_tree_context_.back()->NewChild(wire_name);
+    facts_tree_context_.top().NewChild(wire_name);
   }
 }
 

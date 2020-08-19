@@ -665,18 +665,11 @@ void TreeUnwrapper::SetIndentationsAndCreatePartitions(
     case NodeEnum::kGenerateRegion:
     case NodeEnum::kCaseGenerateConstruct:
     case NodeEnum::kLoopGenerateConstruct:
-    case NodeEnum::kClassDeclaration:
     case NodeEnum::kClassConstructor:
     case NodeEnum::kPackageImportDeclaration:
     // TODO(fangism): case NodeEnum::kDPIExportItem:
     case NodeEnum::kPreprocessorInclude:
     case NodeEnum::kPreprocessorUndef:
-    case NodeEnum::kModuleDeclaration:
-    case NodeEnum::kProgramDeclaration:
-    case NodeEnum::kPackageDeclaration:
-    case NodeEnum::kInterfaceDeclaration:
-    case NodeEnum::kFunctionDeclaration:
-    case NodeEnum::kTaskDeclaration:
     case NodeEnum::kTFPortDeclaration:
     case NodeEnum::kTypeDeclaration:
     case NodeEnum::kForwardDeclaration:
@@ -752,6 +745,13 @@ void TreeUnwrapper::SetIndentationsAndCreatePartitions(
 
       // The following cases will always expand into their constituent
       // partitions:
+    case NodeEnum::kModuleDeclaration:
+    case NodeEnum::kProgramDeclaration:
+    case NodeEnum::kPackageDeclaration:
+    case NodeEnum::kInterfaceDeclaration:
+    case NodeEnum::kFunctionDeclaration:
+    case NodeEnum::kTaskDeclaration:
+    case NodeEnum::kClassDeclaration:
     case NodeEnum::kClassHeader:
     case NodeEnum::kBegin:
     case NodeEnum::kEnd:

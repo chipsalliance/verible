@@ -51,19 +51,20 @@ void KytheFactsExtractor::Visit(const IndexingFactNode& node) {
       vname = ExtractModuleInstanceFact(node);
       break;
     }
-    case IndexingFactType::kVariableDefinition:
+    case IndexingFactType::kVariableDefinition: {
       vname = ExtractVariableDefinition(node);
       break;
-    case IndexingFactType::kVariableReference:
+    }
+    case IndexingFactType::kVariableReference: {
       vname = ExtractVariableReference(node);
       break;
+    }
   }
 
   if (tag != IndexingFactType::kFile) {
-    std::cout << Edge(vname, kEdgeChildOf, *vnames_context_.back());
+    std::cout << Edge(vname, kEdgeChildOf, vnames_context_.top());
   }
 
-  const FactTreeContextAutoPop facts_tree_auto_pop(&facts_tree_context_, &node);
   const VNameContextAutoPop vnames_auto_pop(&vnames_context_, &vname);
   for (const verible::VectorTree<IndexingNodeData>& child : node.Children()) {
     Visit(child);
@@ -106,7 +107,7 @@ VName KytheFactsExtractor::ExtractModuleInstanceFact(
   const auto& anchors = node.Value().Anchors();
   const VName module_instance_vname(
       file_path_,
-      CreateVariableSignature(anchors[1].Value(), *vnames_context_.back()));
+      CreateVariableSignature(anchors[1].Value(), vnames_context_.top()));
   const VName module_instance_anchor = PrintAnchorVName(anchors[1], file_path_);
   const VName module_type_vname(file_path_,
                                 CreateModuleSignature(anchors[0].Value()));
@@ -123,10 +124,10 @@ VName KytheFactsExtractor::ExtractModuleInstanceFact(
   for (size_t i = 1; i < anchors.size(); i++) {
     const VName port_vname_reference(
         file_path_,
-        CreateVariableSignature(anchors[i].Value(), *vnames_context_.back()));
+        CreateVariableSignature(anchors[i].Value(), vnames_context_.top()));
     const VName port_vname_definition(
         file_path_,
-        CreateVariableSignature(anchors[i].Value(), *vnames_context_.back()));
+        CreateVariableSignature(anchors[i].Value(), vnames_context_.top()));
     const VName port_vname_anchor = PrintAnchorVName(anchors[i], file_path_);
 
     std::cout << Edge(port_vname_anchor, kEdgeRef, port_vname_definition);
@@ -135,11 +136,12 @@ VName KytheFactsExtractor::ExtractModuleInstanceFact(
   return module_instance_vname;
 }
 
-VName KytheFactsExtractor::ExtractVariableDefinition(const IndexingFactNode& node) {
+VName KytheFactsExtractor::ExtractVariableDefinition(
+    const IndexingFactNode& node) {
   const auto& anchor = node.Value().Anchors()[0];
   const VName variable_vname(
       file_path_,
-      CreateVariableSignature(anchor.Value(), *vnames_context_.back()));
+      CreateVariableSignature(anchor.Value(), vnames_context_.top()));
   const VName variable_vname_anchor = PrintAnchorVName(anchor, file_path_);
 
   std::cout << Fact(variable_vname, kFactNodeKind, kNodeVariable);
@@ -150,11 +152,12 @@ VName KytheFactsExtractor::ExtractVariableDefinition(const IndexingFactNode& nod
   return variable_vname;
 }
 
-VName KytheFactsExtractor::ExtractVariableReference(const IndexingFactNode& node) {
+VName KytheFactsExtractor::ExtractVariableReference(
+    const IndexingFactNode& node) {
   const auto& anchor = node.Value().Anchors()[0];
   const VName variable_vname(
       file_path_,
-      CreateVariableSignature(anchor.Value(), *vnames_context_.back()));
+      CreateVariableSignature(anchor.Value(), vnames_context_.top()));
   const VName variable_vname_anchor = PrintAnchorVName(anchor, file_path_);
 
   std::cout << Edge(variable_vname_anchor, kEdgeRef, variable_vname);
@@ -183,30 +186,6 @@ std::string CreateModuleSignature(absl::string_view module_name) {
 std::string CreateVariableSignature(absl::string_view instance_name,
                                     const VName& parent_vname) {
   return absl::StrCat(instance_name, "#variable", parent_vname.signature);
-}
-
-std::string VName::ToString() const {
-  return absl::Substitute(
-      R"({"signature": "$0","path": "$1","language": "$2","root": "$3","corpus": "$4"})",
-      signature, path, language, root, corpus);
-}
-
-std::ostream& operator<<(std::ostream& stream, const VName& vname) {
-  stream << vname.ToString();
-}
-
-std::ostream& operator<<(std::ostream& stream, const Fact& fact) {
-  stream << absl::Substitute(
-      R"({"source": $0,"fact_name": "$1","fact_value": "$2"})",
-      fact.node_vname.ToString(), fact.fact_name, fact.fact_value);
-  return stream;
-}
-
-std::ostream& operator<<(std::ostream& stream, const Edge& edge) {
-  stream << absl::Substitute(
-      R"({"source": $0,"edge_kind": "$1","target": $2,"fact_name": "/"})",
-      edge.source_node.ToString(), edge.edge_name, edge.target_node.ToString());
-  return stream;
 }
 
 }  // namespace kythe

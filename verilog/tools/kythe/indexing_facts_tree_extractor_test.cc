@@ -12,7 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "indexing_facts_tree_extractor.h"
+#include "verilog/tools/kythe/indexing_facts_tree_extractor.h"
+
 #include "common/text/concrete_syntax_tree.h"
 #include "gtest/gtest.h"
 #include "verilog/analysis/verilog_analyzer.h"

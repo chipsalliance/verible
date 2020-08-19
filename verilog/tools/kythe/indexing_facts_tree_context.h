@@ -12,33 +12,31 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef VERIBLE_VERILOG_TOOLS_KYTHE_INDEXING_FACTS_TREE_AUTO_POP_H_
-#define VERIBLE_VERILOG_TOOLS_KYTHE_INDEXING_FACTS_TREE_AUTO_POP_H_
+#ifndef VERIBLE_VERILOG_TOOLS_KYTHE_INDEXING_FACTS_TREE_CONTEXT_H_
+#define VERIBLE_VERILOG_TOOLS_KYTHE_INDEXING_FACTS_TREE_CONTEXT_H_
 
-#include <vector>
-
+#include "common/util/auto_pop_stack.h"
 #include "verilog/tools/kythe/indexing_facts_tree.h"
 
 namespace verilog {
 namespace kythe {
 
-// TODO(fangism): move/refactor to common/util
-namespace {
-
-template <class V, class T>
-class AutoPopBack {
+// Container with a stack of IndexingFactNode to hold context of
+// IndexingFactNodes during traversal of an IndexingFactsTree.
+class IndexingFactsTreeContext
+    : public verible::AutoPopStack<IndexingFactNode*> {
  public:
-  AutoPopBack(V* v, T* t) : vec_(v) { vec_->push_back(std::move(t)); }
-  AutoPopBack(V* v, const T& t) : vec_(v) { vec_->push_back(t); }
-  ~AutoPopBack() { vec_->pop_back(); }
+  typedef verible::AutoPopStack<IndexingFactNode*> base_type;
 
- private:
-  V* vec_;
+  // member class to handle push and pop of stack safely
+  using AutoPop = base_type::AutoPop;
+
+ public:
+  // returns the top IndexingFactsNode of the stack
+  IndexingFactNode& top() { return *ABSL_DIE_IF_NULL(base_type::top()); }
 };
-
-}  // namespace
 
 }  // namespace kythe
 }  // namespace verilog
 
-#endif  // VERIBLE_VERILOG_TOOLS_KYTHE_INDEXING_FACTS_TREE_AUTO_POP_H_
+#endif  // VERIBLE_VERILOG_TOOLS_KYTHE_INDEXING_FACTS_TREE_CONTEXT_H_
