@@ -21,10 +21,13 @@
 #include "common/formatting/token_partition_tree.h"
 #include "common/formatting/unwrapped_line_test_utils.h"
 #include "common/text/tree_builder_test_util.h"
+#include "common/util/range.h"
 #include "common/util/spacer.h"
 
 namespace verible {
 namespace {
+
+using ::testing::ElementsAre;
 
 // Helper class that initializes an array of tokens to be partitioned
 // into TokenPartitionTree.
@@ -559,6 +562,95 @@ TEST_F(MultiAlignmentGroupTest, BlankLineSeparatedGroups) {
 // syntax tree.
 
 // TODO(fangism): test case for demonstrating flush-right
+
+class GetPartitionAlignmentSubrangesTestFixture : public AlignmentTestFixture {
+ public:
+  GetPartitionAlignmentSubrangesTestFixture()
+      : AlignmentTestFixture(
+            "ignore match nomatch match match match nomatch nomatch match "
+            "ignore match"),
+        syntax_tree_(TNode(
+            1,  // one token per partition for simplicity
+            TNode(2, Leaf(1, tokens_[0])),     //
+            TNode(2, Leaf(1, tokens_[1])),     // singleton range too short here
+            TNode(2, Leaf(1, tokens_[2])),     //
+            TNode(2, Leaf(1, tokens_[3])),     // expect match from here
+            TNode(2, Leaf(1, tokens_[4])),     // ...
+            TNode(2, Leaf(1, tokens_[5])),     // ... to here (inclusive)
+            TNode(2, Leaf(1, tokens_[6])),     //
+            TNode(2, Leaf(1, tokens_[7])),     //
+            TNode(2, Leaf(1, tokens_[8])),     // and from here to the end().
+            TNode(2, Leaf(1, tokens_[9])),     // ...
+            TNode(2, Leaf(1, tokens_[10])))),  // ...
+        partition_(/* temporary */ UnwrappedLine()) {
+    // Establish format token ranges per partition.
+    const auto begin = pre_format_tokens_.begin();
+    UnwrappedLine all(0, begin);
+    all.SpanUpToToken(pre_format_tokens_.end());
+    all.SetOrigin(&*syntax_tree_);
+
+    std::vector<UnwrappedLine> uwlines;
+    for (int i = 0; i < pre_format_tokens_.size(); ++i) {
+      uwlines.emplace_back(0, begin + i);
+      uwlines.back().SpanUpToToken(begin + i + 1);
+      uwlines.back().SetOrigin(
+          DescendPath(*syntax_tree_, {static_cast<size_t>(i)}));
+    }
+
+    // Construct 2-level token partition.
+    using tree_type = TokenPartitionTree;
+    partition_ = tree_type{
+        all,
+        tree_type{uwlines[0]},
+        tree_type{uwlines[1]},  // one match not enough
+        tree_type{uwlines[2]},
+        tree_type{uwlines[3]},  // start of match
+        tree_type{uwlines[4]},  // ...
+        tree_type{uwlines[5]},  // ...
+        tree_type{uwlines[6]},  // end of match
+        tree_type{uwlines[7]},
+        tree_type{uwlines[8]},   // start of match
+        tree_type{uwlines[9]},   // ...
+        tree_type{uwlines[10]},  // ...
+    };
+  }
+
+ protected:
+  static AlignmentGroupAction PartitionSelector(
+      const TokenPartitionTree& partition) {
+    const absl::string_view text =
+        partition.Value().TokensRange().front().Text();
+    if (text == "match") {
+      return AlignmentGroupAction::kMatch;
+    } else if (text == "nomatch") {
+      return AlignmentGroupAction::kNoMatch;
+    } else {
+      return AlignmentGroupAction::kIgnore;
+    }
+  }
+
+ protected:
+  // Syntax tree from which token partition originates.
+  SymbolPtr syntax_tree_;
+
+  // Format token partitioning (what would be the result of TreeUnwrapper).
+  TokenPartitionTree partition_;
+};
+
+TEST_F(GetPartitionAlignmentSubrangesTestFixture, VariousRanges) {
+  const TokenPartitionRange children(partition_.Children().begin(),
+                                     partition_.Children().end());
+
+  const std::vector<TokenPartitionRange> ranges(
+      GetPartitionAlignmentSubranges(children, &PartitionSelector));
+
+  using P = std::pair<int, int>;
+  std::vector<P> range_indices;
+  for (const auto& range : ranges) {
+    range_indices.push_back(SubRangeIndices(range, children));
+  }
+  EXPECT_THAT(range_indices, ElementsAre(P(3, 6), P(8, 11)));
+}
 
 }  // namespace
 }  // namespace verible

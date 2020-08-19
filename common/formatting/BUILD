@@ -40,6 +40,7 @@ cc_test(
         ":token_partition_tree",
         ":unwrapped_line_test_utils",
         "//common/text:tree_builder_test_util",
+        "//common/util:range",
         "//common/util:spacer",
         "@com_google_absl//absl/strings",
         "@com_google_googletest//:gtest_main",

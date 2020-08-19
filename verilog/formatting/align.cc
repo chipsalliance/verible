@@ -42,6 +42,7 @@ namespace formatter {
 
 using verible::AlignmentCellScannerGenerator;
 using verible::AlignmentColumnProperties;
+using verible::AlignmentGroupAction;
 using verible::ByteOffsetSet;
 using verible::ColumnSchemaScanner;
 using verible::down_cast;
@@ -342,40 +343,20 @@ static bool IsAlignableDeclaration(const SyntaxTreeNode& node) {
 }
 
 static std::vector<TokenPartitionRange> GetConsecutiveDataDeclarationGroups(
-    const TokenPartitionRange& outer_partition_bounds) {
+    const TokenPartitionRange& partitions) {
   VLOG(2) << __FUNCTION__;
-  std::vector<TokenPartitionRange> result;
-
-  // Grab ranges of consecutive data declarations with >= 2 elements.
-  int consecutive_count = 0;
-  auto last_range_start = outer_partition_bounds.begin();
-  for (auto iter = last_range_start; iter != outer_partition_bounds.end();
-       ++iter) {
-    const Symbol* origin = iter->Value().Origin();
-    if (origin == nullptr) continue;
-    const verible::SymbolTag symbol_tag = origin->Tag();
-    if (symbol_tag.kind != verible::SymbolKind::kNode) continue;
-    const SyntaxTreeNode& node = verible::SymbolCastToNode(*origin);
-    if (IsAlignableDeclaration(node)) {
-      if (consecutive_count == 0) {
-        // This is the start of a new range of interest.
-        last_range_start = iter;
-      }
-      ++consecutive_count;
-    } else {
-      if (consecutive_count >= 2) {
-        result.emplace_back(last_range_start, iter);
-      }
-      consecutive_count = 0;  // reset
-    }
-  }
-  // Flush out the last range.
-  if (consecutive_count >= 2) {
-    result.emplace_back(last_range_start, outer_partition_bounds.end());
-  }
-
-  VLOG(2) << "end of " << __FUNCTION__;
-  return result;
+  return GetPartitionAlignmentSubranges(
+      partitions,  //
+      [](const TokenPartitionTree& partition) -> AlignmentGroupAction {
+        const Symbol* origin = partition.Value().Origin();
+        if (origin == nullptr) return AlignmentGroupAction::kIgnore;
+        const verible::SymbolTag symbol_tag = origin->Tag();
+        if (symbol_tag.kind != verible::SymbolKind::kNode)
+          return AlignmentGroupAction::kIgnore;
+        const SyntaxTreeNode& node = verible::SymbolCastToNode(*origin);
+        return IsAlignableDeclaration(node) ? AlignmentGroupAction::kMatch
+                                            : AlignmentGroupAction::kNoMatch;
+      });
 }
 
 // Much of the implementation of this scanner was based on

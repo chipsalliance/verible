@@ -660,4 +660,42 @@ void TabularAlignTokens(TokenPartitionTree* partition_ptr,
   VLOG(1) << "end of " << __FUNCTION__;
 }
 
+std::vector<TokenPartitionRange> GetPartitionAlignmentSubranges(
+    const TokenPartitionRange& partitions,
+    const std::function<AlignmentGroupAction(const TokenPartitionTree&)>&
+        partition_selector,
+    int min_match_count) {
+  std::vector<TokenPartitionRange> result;
+
+  // Grab ranges of consecutive data declarations with >= 2 elements.
+  int match_count = 0;
+  auto last_range_start = partitions.begin();
+  for (auto iter = last_range_start; iter != partitions.end(); ++iter) {
+    switch (partition_selector(*iter)) {
+      case AlignmentGroupAction::kIgnore:
+        continue;
+      case AlignmentGroupAction::kMatch: {
+        if (match_count == 0) {
+          // This is the start of a new range of interest.
+          last_range_start = iter;
+        }
+        ++match_count;
+        break;
+      }
+      case AlignmentGroupAction::kNoMatch: {
+        if (match_count >= min_match_count) {
+          result.emplace_back(last_range_start, iter);
+        }
+        match_count = 0;  // reset
+        break;
+      }
+    }  // switch
+  }    // for
+  // Flush out the last range.
+  if (match_count >= min_match_count) {
+    result.emplace_back(last_range_start, partitions.end());
+  }
+  return result;
+}
+
 }  // namespace verible
