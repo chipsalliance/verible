@@ -4904,6 +4904,39 @@ static const std::initializer_list<FormatterTestCase> kFormatterTestCases = {
         "  if (r == t) a.b(c);\n"
         "endtask\n",
     },
+    {
+        // task with system call inside if header
+        "task t;"
+        "if (!$cast(ssssssssssssssss,vvvvvvvvvv,gggggggg))begin end endtask:t",
+        "task t;\n"
+        "  if (!$cast(\n"
+        "          ssssssssssssssss,\n"
+        "          vvvvvvvvvv,\n"
+        "          gggggggg\n"
+        "      )) begin\n"
+        "  end\n"
+        "endtask : t\n",
+    },
+    {
+        // task with nested subtask call and arguments passed by name
+        "task t;"
+        "if (!$cast(ssssssssssssssss, vvvvvvvvvv.gggggggg("
+        ".ppppppp(ppppppp),"
+        ".yyyyy(\"xxxxxxxxxxxxx\")"
+        "))) begin "
+        "end "
+        "endtask : t",
+        "task t;\n"
+        "  if (!$cast(\n"
+        "          ssssssssssssssss,\n"
+        "          vvvvvvvvvv.gggggggg(\n"
+        "              .ppppppp(ppppppp),\n"
+        "              .yyyyy(\"xxxxxxxxxxxxx\")\n"
+        "          )\n"
+        "      )) begin\n"
+        "  end\n"
+        "endtask : t\n",
+    },
 
     {
         // assert property statements
