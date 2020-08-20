@@ -35,16 +35,6 @@ cc_library(
 )
 
 cc_library(
-    name = "vname_context",
-    hdrs = [
-        "vname_context.h",
-    ],
-    deps = [
-        ":kythe_facts",
-    ],
-)
-
-cc_library(
     name = "kythe_schema_constants",
     hdrs = [
         "kythe_schema_constants.h",
@@ -64,7 +54,6 @@ cc_library(
         ":indexing_facts_tree_extractor",
         ":kythe_facts",
         ":kythe_schema_constants",
-        ":vname_context",
         "@com_google_absl//absl/strings",
     ],
 )

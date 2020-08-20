@@ -22,7 +22,6 @@
 #include "verilog/tools/kythe/indexing_facts_tree_context.h"
 #include "verilog/tools/kythe/indexing_facts_tree_extractor.h"
 #include "verilog/tools/kythe/kythe_facts.h"
-#include "verilog/tools/kythe/vname_context.h"
 
 namespace verilog {
 namespace kythe {
@@ -44,8 +43,6 @@ class KytheFactsPrinter {
 // nodes to produce kythe indexing facts.
 class KytheFactsExtractor {
  public:
-  using VNameContextAutoPop = VNameContext::AutoPop;
-
   explicit KytheFactsExtractor(absl::string_view file_path,
                                std::ostream* stream)
       : file_path_(file_path), stream_(stream) {}
@@ -53,6 +50,20 @@ class KytheFactsExtractor {
   void Visit(const IndexingFactNode&);
 
  private:
+  // Container with a stack of VNames to hold context of VNames during traversal
+  // of an IndexingFactsTree.
+  class VNameContext : public verible::AutoPopStack<const VName*> {
+   public:
+    typedef verible::AutoPopStack<const VName*> base_type;
+
+    // member class to handle push and pop of stack safely
+    using AutoPop = base_type::AutoPop;
+
+   public:
+    // returns the top VName of the stack
+    const VName& top() const { return *ABSL_DIE_IF_NULL(base_type::top()); }
+  };
+
   // Extracts kythe facts from file node and returns it VName.
   VName ExtractFileFact(const IndexingFactNode&);
 

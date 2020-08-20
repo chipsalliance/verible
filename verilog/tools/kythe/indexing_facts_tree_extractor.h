@@ -27,8 +27,6 @@ namespace kythe {
 // facts from CST nodes and constructs a tree of indexing facts.
 class IndexingFactsTreeExtractor : public verible::TreeContextVisitor {
  public:
-  using AutoPop = IndexingFactsTreeContext::AutoPop;
-
   IndexingFactsTreeExtractor(absl::string_view base,
                              absl::string_view file_name)
       : context_(verible::TokenInfo::Context(base)) {
@@ -42,23 +40,23 @@ class IndexingFactsTreeExtractor : public verible::TreeContextVisitor {
 
  private:
   // Extracts modules and creates its corresponding fact tree.
-  void ExtractModule(const verible::SyntaxTreeNode& node);
+  void ExtractModule(const verible::SyntaxTreeNode& module_declaration_node);
 
   // Extracts modules instantiations and creates its corresponding fact tree.
-  void ExtractModuleInstantiation(const verible::SyntaxTreeNode& node);
+  void ExtractModuleInstantiation(const verible::SyntaxTreeNode& data_declaration_node);
 
   // Extracts endmodule and creates its corresponding fact tree.
-  void ExtractModuleEnd(const verible::SyntaxTreeNode& node);
+  void ExtractModuleEnd(const verible::SyntaxTreeNode& module_declaration_node);
 
   // Extracts modules headers and creates its corresponding fact tree.
-  void ExtractModuleHeader(const verible::SyntaxTreeNode& node);
+  void ExtractModuleHeader(const verible::SyntaxTreeNode& module_header_node);
 
   // Extracts "a" from input a, output a and creates its corresponding fact
   // tree.
-  void ExtractInputOutputDeclaration(const verible::SyntaxTreeNode& node);
+  void ExtractInputOutputDeclaration(const verible::SyntaxTreeNode& module_port_declaration_node);
 
   // Extract "a" from wire a and creates its corresponding fact tree.
-  void ExtractNetDeclaration(const verible::SyntaxTreeNode& node);
+  void ExtractNetDeclaration(const verible::SyntaxTreeNode& net_declaration_node);
 
   // The Root of the constructed tree
   IndexingFactNode root_{IndexingNodeData(IndexingFactType::kFile)};

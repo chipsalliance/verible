@@ -65,9 +65,14 @@ const TokenInfo& GetInterfaceNameToken(const Symbol& s) {
 const SyntaxTreeNode* GetModulePortDeclarationList(
     const Symbol& module_declaration) {
   const auto& header_node = GetModuleHeader(module_declaration);
-  const auto* ports =
+  const auto* paren_group =
       verible::GetSubtreeAsSymbol(header_node, NodeEnum::kModuleHeader, 5);
-  return verible::CheckOptionalSymbolAsNode(ports, NodeEnum::kParenGroup);
+  if (verible::CheckOptionalSymbolAsNode(paren_group, NodeEnum::kParenGroup) ==
+      nullptr) {
+    return nullptr;
+  }
+  return &verible::GetSubtreeAsNode(*paren_group, NodeEnum::kParenGroup, 1,
+                                    NodeEnum::kPortDeclarationList);
 }
 
 const TokenInfo* GetModuleEndLabel(const verible::Symbol& s) {

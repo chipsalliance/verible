@@ -56,7 +56,7 @@ void KytheFactsExtractor::Visit(const IndexingFactNode& node) {
     *stream_ << Edge(vname, kEdgeChildOf, vnames_context_.top());
   }
 
-  const VNameContextAutoPop vnames_auto_pop(&vnames_context_, &vname);
+  const VNameContext::AutoPop vnames_auto_pop(&vnames_context_, &vname);
   for (const verible::VectorTree<IndexingNodeData>& child : node.Children()) {
     Visit(child);
   }
@@ -96,8 +96,8 @@ VName KytheFactsExtractor::ExtractModuleFact(const IndexingFactNode& node) {
 VName KytheFactsExtractor::ExtractModuleInstanceFact(
     const IndexingFactNode& node) {
   const auto& anchors = node.Value().Anchors();
-  const auto& module_type = node.Value().Anchors()[0];
-  const auto& instance_name = node.Value().Anchors()[1];
+  const auto& module_type = anchors[0];
+  const auto& instance_name = anchors[1];
 
   const VName module_instance_vname(
       file_path_,

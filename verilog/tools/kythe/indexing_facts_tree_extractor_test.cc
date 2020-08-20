@@ -28,26 +28,53 @@ namespace {
 
 typedef IndexingFactNode T;
 
-TEST(EqualOperatorTest, FactsTreeExtractor) {
+TEST(FactsTreeExtractor, EqualOperatorTest) {
   constexpr absl::string_view code_text = "";
   constexpr absl::string_view file_name = "verilog.v";
 
-  const auto expected =
-      T({{Anchor(file_name, 0, code_text.size())}, IndexingFactType ::kFile});
+  const IndexingFactNode expected({
+      {
+          Anchor(file_name, 0, code_text.size()),
+      },
+      IndexingFactType ::kFile,
+  });
 
-  const auto tree =
-      T({{Anchor(file_name, 0, code_text.size())}, IndexingFactType ::kFile});
+  const IndexingFactNode tree({
+      {
+          Anchor(file_name, 0, code_text.size()),
+      },
+      IndexingFactType ::kFile,
+  });
 
-  const auto tree2 = T({{Anchor(file_name, 0, 556)}, IndexingFactType ::kFile});
+  const IndexingFactNode tree2({
+      {
+          Anchor(file_name, 0, 556),
+      },
+      IndexingFactType ::kFile,
+  });
 
-  const auto tree3 = T({{Anchor(file_name, 0, 4589), Anchor(file_name, 0, 987)},
-                        IndexingFactType ::kFile});
+  const IndexingFactNode tree3({
+      {
+          Anchor(file_name, 0, 4589),
+          Anchor(file_name, 0, 987),
+      },
+      IndexingFactType ::kFile,
+  });
 
-  const auto tree4 =
-      T({{Anchor(file_name, 0, code_text.size())}, IndexingFactType ::kFile},
-        T({{Anchor(absl::string_view("foo"), 7, 10),
-            Anchor(absl::string_view("foo"), 23, 26)},
-           IndexingFactType::kModule}));
+  const IndexingFactNode tree4(
+      {
+          {
+              Anchor(file_name, 0, code_text.size()),
+          },
+          IndexingFactType ::kFile,
+      },
+      T({
+          {
+              Anchor(absl::string_view("foo"), 7, 10),
+              Anchor(absl::string_view("foo"), 23, 26),
+          },
+          IndexingFactType::kModule,
+      }));
 
   const auto result_pair = DeepEqual(tree, expected);
   EXPECT_EQ(result_pair.left, nullptr) << *result_pair.left;
@@ -66,13 +93,13 @@ TEST(EqualOperatorTest, FactsTreeExtractor) {
   EXPECT_NE(result_pair4.right, nullptr) << *result_pair4.right;
 }
 
-TEST(EmptyCSTTest, FactsTreeExtractor) {
+TEST(FactsTreeExtractor, EmptyCSTTest) {
   constexpr absl::string_view code_text = "";
   constexpr absl::string_view file_name = "verilog.v";
   int exit_status = 0;
   bool parse_ok = false;
 
-  const auto expected = T({
+  const IndexingFactNode expected({
       {
           Anchor(file_name, 0, code_text.size()),
           Anchor(code_text, 0, code_text.size()),
@@ -88,16 +115,16 @@ TEST(EmptyCSTTest, FactsTreeExtractor) {
   EXPECT_EQ(result_pair.right, nullptr) << *result_pair.right;
 }
 
-TEST(EmptyModuleTest, FactsTreeExtractor) {
+TEST(FactsTreeExtractor, EmptyModuleTest) {
   constexpr int kTag = 1;  // value doesn't matter
   const verible::SyntaxTreeSearchTestCase kTestCase = {
-      {"module ", {kTag, "foo"}, "; endmodule: ", {kTag, "foo"}}};
+      {"module ", {kTag, "foo"}, ";\n endmodule: ", {kTag, "foo"}}};
 
   constexpr absl::string_view file_name = "verilog.v";
   int exit_status = 0;
   bool parse_ok = false;
 
-  const auto expected = T(
+  const IndexingFactNode expected(
       {
           {
               Anchor(file_name, 0, kTestCase.code.size()),
@@ -105,6 +132,7 @@ TEST(EmptyModuleTest, FactsTreeExtractor) {
           },
           IndexingFactType ::kFile,
       },
+      // refers to module foo.
       T({
           {
               Anchor(kTestCase.expected_tokens[1], kTestCase.code),
@@ -121,26 +149,26 @@ TEST(EmptyModuleTest, FactsTreeExtractor) {
   EXPECT_EQ(result_pair.right, nullptr) << *result_pair.right;
 }
 
-TEST(OneModuleInstanceTest, FactsTreeExtractor) {
+TEST(FactsTreeExtractor, OneModuleInstanceTest) {
   constexpr int kTag = 1;  // value doesn't matter
   const verible::SyntaxTreeSearchTestCase kTestCase = {{"module ",
                                                         {kTag, "bar"},
-                                                        "; endmodule: ",
+                                                        ";\n endmodule: ",
                                                         {kTag, "bar"},
-                                                        " module ",
+                                                        "\nmodule ",
                                                         {kTag, "foo"},
-                                                        "; ",
+                                                        ";\n ",
                                                         {kTag, "bar"},
                                                         " ",
                                                         {kTag, "b1"},
-                                                        "(); endmodule: ",
+                                                        "();\n endmodule: ",
                                                         {kTag, "foo"}}};
 
   constexpr absl::string_view file_name = "verilog.v";
   int exit_status = 0;
   bool parse_ok = false;
 
-  const auto expected = T(
+  const IndexingFactNode expected(
       {
           {
               Anchor(file_name, 0, kTestCase.code.size()),
@@ -148,6 +176,7 @@ TEST(OneModuleInstanceTest, FactsTreeExtractor) {
           },
           IndexingFactType ::kFile,
       },
+      // refers to module bar.
       T({
           {
               Anchor(kTestCase.expected_tokens[1], kTestCase.code),
@@ -155,6 +184,7 @@ TEST(OneModuleInstanceTest, FactsTreeExtractor) {
           },
           IndexingFactType::kModule,
       }),
+      // refers to module foo.
       T(
           {
               {
@@ -163,6 +193,7 @@ TEST(OneModuleInstanceTest, FactsTreeExtractor) {
               },
               IndexingFactType::kModule,
           },
+          // refers to bar b1().
           T({
               {
                   Anchor(kTestCase.expected_tokens[7], kTestCase.code),
@@ -179,30 +210,30 @@ TEST(OneModuleInstanceTest, FactsTreeExtractor) {
   EXPECT_EQ(result_pair.right, nullptr) << *result_pair.right;
 }  // namespace
 
-TEST(TwoModuleInstanceTest, FactsTreeExtractor) {
+TEST(FactsTreeExtractor, TwoModuleInstanceTest) {
   constexpr int kTag = 1;  // value doesn't matter
   const verible::SyntaxTreeSearchTestCase kTestCase = {{"module ",
                                                         {kTag, "bar"},
-                                                        "; endmodule: ",
+                                                        ";\n endmodule: ",
                                                         {kTag, "bar"},
-                                                        " module ",
+                                                        "\nmodule ",
                                                         {kTag, "foo"},
                                                         "; ",
                                                         {kTag, "bar"},
                                                         " ",
                                                         {kTag, "b1"},
-                                                        "(); ",
+                                                        "();\n",
                                                         {kTag, "bar"},
                                                         " ",
                                                         {kTag, "b2"},
-                                                        "(); endmodule: ",
+                                                        "();\nendmodule: ",
                                                         {kTag, "foo"}}};
 
   constexpr absl::string_view file_name = "verilog.v";
   int exit_status = 0;
   bool parse_ok = false;
 
-  const auto expected = T(
+  const IndexingFactNode expected(
       {
           {
               Anchor(file_name, 0, kTestCase.code.size()),
@@ -210,6 +241,7 @@ TEST(TwoModuleInstanceTest, FactsTreeExtractor) {
           },
           IndexingFactType ::kFile,
       },
+      // refers to module bar.
       T({
           {
               Anchor(kTestCase.expected_tokens[1], kTestCase.code),
@@ -217,6 +249,7 @@ TEST(TwoModuleInstanceTest, FactsTreeExtractor) {
           },
           IndexingFactType::kModule,
       }),
+      // refers to module foo.
       T(
           {
               {
@@ -225,6 +258,7 @@ TEST(TwoModuleInstanceTest, FactsTreeExtractor) {
               },
               IndexingFactType::kModule,
           },
+          // refers to bar b1().
           T({
               {
                   Anchor(kTestCase.expected_tokens[7], kTestCase.code),
@@ -232,6 +266,7 @@ TEST(TwoModuleInstanceTest, FactsTreeExtractor) {
               },
               IndexingFactType ::kModuleInstance,
           }),
+          // refers to bar b2().
           T({
               {
                   Anchor(kTestCase.expected_tokens[11], kTestCase.code),
@@ -248,28 +283,28 @@ TEST(TwoModuleInstanceTest, FactsTreeExtractor) {
   EXPECT_EQ(result_pair.right, nullptr) << *result_pair.right;
 }  // namespace
 
-TEST(MultipleModuleInstancesInTheSameDeclarationTest, FactsTreeExtractor) {
+TEST(FactsTreeExtractor, MultipleModuleInstancesInTheSameDeclarationTest) {
   constexpr int kTag = 1;  // value doesn't matter
   const verible::SyntaxTreeSearchTestCase kTestCase = {{"module ",
                                                         {kTag, "bar"},
-                                                        "; endmodule: ",
+                                                        ";\nendmodule: ",
                                                         {kTag, "bar"},
-                                                        " module ",
+                                                        "\nmodule ",
                                                         {kTag, "foo"},
-                                                        "; ",
+                                                        ";\n",
                                                         {kTag, "bar"},
                                                         " ",
                                                         {kTag, "b1"},
                                                         "(), ",
                                                         {kTag, "b2"},
-                                                        "(); endmodule: ",
+                                                        "();\nendmodule: ",
                                                         {kTag, "foo"}}};
 
   constexpr absl::string_view file_name = "verilog.v";
   int exit_status = 0;
   bool parse_ok = false;
 
-  const auto expected = T(
+  const IndexingFactNode expected(
       {
           {
               Anchor(file_name, 0, kTestCase.code.size()),
@@ -277,6 +312,7 @@ TEST(MultipleModuleInstancesInTheSameDeclarationTest, FactsTreeExtractor) {
           },
           IndexingFactType ::kFile,
       },
+      // refers to module bar.
       T({
           {
               Anchor(kTestCase.expected_tokens[1], kTestCase.code),
@@ -284,6 +320,7 @@ TEST(MultipleModuleInstancesInTheSameDeclarationTest, FactsTreeExtractor) {
           },
           IndexingFactType::kModule,
       }),
+      // refers to module foo.
       T(
           {
               {
@@ -292,6 +329,8 @@ TEST(MultipleModuleInstancesInTheSameDeclarationTest, FactsTreeExtractor) {
               },
               IndexingFactType::kModule,
           },
+          // refers to bar b1(), b2().
+          // bar b1().
           T({
               {
                   Anchor(kTestCase.expected_tokens[7], kTestCase.code),
@@ -299,6 +338,7 @@ TEST(MultipleModuleInstancesInTheSameDeclarationTest, FactsTreeExtractor) {
               },
               IndexingFactType ::kModuleInstance,
           }),
+          // bar b2().
           T({
               {
                   Anchor(kTestCase.expected_tokens[7], kTestCase.code),
@@ -315,7 +355,7 @@ TEST(MultipleModuleInstancesInTheSameDeclarationTest, FactsTreeExtractor) {
   EXPECT_EQ(result_pair.right, nullptr) << *result_pair.right;
 }  // namespace
 
-TEST(ModuleWithPortsTest, FactsTreeExtractor) {
+TEST(FactsTreeExtractor, ModuleWithPortsTest) {
   constexpr int kTag = 1;  // value doesn't matter
   const verible::SyntaxTreeSearchTestCase kTestCase = {{"module ",
                                                         {kTag, "foo"},
@@ -323,14 +363,14 @@ TEST(ModuleWithPortsTest, FactsTreeExtractor) {
                                                         {kTag, "a"},
                                                         ", output ",
                                                         {kTag, "b"},
-                                                        "); endmodule: ",
+                                                        ");\nendmodule: ",
                                                         {kTag, "foo"}}};
 
   constexpr absl::string_view file_name = "verilog.v";
   int exit_status = 0;
   bool parse_ok = false;
 
-  const auto expected = T(
+  const IndexingFactNode expected(
       {
           {
               Anchor(file_name, 0, kTestCase.code.size()),
@@ -338,6 +378,7 @@ TEST(ModuleWithPortsTest, FactsTreeExtractor) {
           },
           IndexingFactType ::kFile,
       },
+      // refers to module foo.
       T(
           {
               {
@@ -346,12 +387,14 @@ TEST(ModuleWithPortsTest, FactsTreeExtractor) {
               },
               IndexingFactType::kModule,
           },
+          // refers to input a.
           T({
               {
                   Anchor(kTestCase.expected_tokens[3], kTestCase.code),
               },
               IndexingFactType::kVariableDefinition,
           }),
+          // refers to output b.
           T({
               {
                   Anchor(kTestCase.expected_tokens[5], kTestCase.code),
@@ -367,7 +410,7 @@ TEST(ModuleWithPortsTest, FactsTreeExtractor) {
   EXPECT_EQ(result_pair.right, nullptr) << *result_pair.right;
 }
 
-TEST(ModuleInstanceWithPortsTest, FactsTreeExtractor) {
+TEST(FactsTreeExtractor, ModuleInstanceWithPortsTest) {
   constexpr int kTag = 1;  // value doesn't matter
   const verible::SyntaxTreeSearchTestCase kTestCase = {{"module ",
                                                         {kTag, "bar"},
@@ -375,15 +418,15 @@ TEST(ModuleInstanceWithPortsTest, FactsTreeExtractor) {
                                                         {kTag, "x"},
                                                         ", output ",
                                                         {kTag, "y"},
-                                                        "); endmodule: ",
+                                                        ");\nendmodule: ",
                                                         {kTag, "bar"},
-                                                        " module ",
+                                                        "\nmodule ",
                                                         {kTag, "foo"},
                                                         "(input ",
                                                         {kTag, "x"},
                                                         ", output ",
                                                         {kTag, "y"},
-                                                        "); ",
+                                                        ");\n ",
                                                         {kTag, "bar"},
                                                         " ",
                                                         {kTag, "b1"},
@@ -391,14 +434,14 @@ TEST(ModuleInstanceWithPortsTest, FactsTreeExtractor) {
                                                         {kTag, "x"},
                                                         ", ",
                                                         {kTag, "y"},
-                                                        "); endmodule: ",
+                                                        ");\nendmodule: ",
                                                         {kTag, "foo"}}};
 
   constexpr absl::string_view file_name = "verilog.v";
   int exit_status = 0;
   bool parse_ok = false;
 
-  const auto expected = T(
+  const IndexingFactNode expected(
       {
           {
               Anchor(file_name, 0, kTestCase.code.size()),
@@ -406,6 +449,7 @@ TEST(ModuleInstanceWithPortsTest, FactsTreeExtractor) {
           },
           IndexingFactType ::kFile,
       },
+      // refers to module bar.
       T(
           {
               {
@@ -414,18 +458,21 @@ TEST(ModuleInstanceWithPortsTest, FactsTreeExtractor) {
               },
               IndexingFactType::kModule,
           },
+          // refers to input x.
           T({
               {
                   Anchor(kTestCase.expected_tokens[3], kTestCase.code),
               },
               IndexingFactType ::kVariableDefinition,
           }),
+          // refers to output y.
           T({
               {
                   Anchor(kTestCase.expected_tokens[5], kTestCase.code),
               },
               IndexingFactType ::kVariableDefinition,
           })),
+      // refers to module foo.
       T(
           {
               {
@@ -434,18 +481,21 @@ TEST(ModuleInstanceWithPortsTest, FactsTreeExtractor) {
               },
               IndexingFactType::kModule,
           },
+          // refers to input x.
           T({
               {
                   Anchor(kTestCase.expected_tokens[11], kTestCase.code),
               },
               IndexingFactType ::kVariableDefinition,
           }),
+          // refers to output y.
           T({
               {
                   Anchor(kTestCase.expected_tokens[13], kTestCase.code),
               },
               IndexingFactType ::kVariableDefinition,
           }),
+          // referes to bar b1(x, y).
           T({
               {
                   Anchor(kTestCase.expected_tokens[15], kTestCase.code),
@@ -464,20 +514,20 @@ TEST(ModuleInstanceWithPortsTest, FactsTreeExtractor) {
   EXPECT_EQ(result_pair.right, nullptr) << *result_pair.right;
 }  // namespace
 
-TEST(WireTest, FactsTreeExtractor) {
+TEST(FactsTreeExtractor, WireTest) {
   constexpr int kTag = 1;  // value doesn't matter
   const verible::SyntaxTreeSearchTestCase kTestCase = {{"module ",
                                                         {kTag, "foo"},
-                                                        "(); wire ",
+                                                        "();\nwire ",
                                                         {kTag, "a"},
-                                                        "; endmodule: ",
+                                                        ";\nendmodule: ",
                                                         {kTag, "foo"}}};
 
   constexpr absl::string_view file_name = "verilog.v";
   int exit_status = 0;
   bool parse_ok = false;
 
-  const auto expected = T(
+  const IndexingFactNode expected(
       {
           {
               Anchor(file_name, 0, kTestCase.code.size()),
@@ -485,6 +535,7 @@ TEST(WireTest, FactsTreeExtractor) {
           },
           IndexingFactType ::kFile,
       },
+      // refers to module foo
       T(
           {
               {
@@ -493,8 +544,11 @@ TEST(WireTest, FactsTreeExtractor) {
               },
               IndexingFactType::kModule,
           },
+          // refers to "wire a"
           T({
-              {Anchor(kTestCase.expected_tokens[3], kTestCase.code)},
+              {
+                  Anchor(kTestCase.expected_tokens[3], kTestCase.code),
+              },
               IndexingFactType ::kVariableDefinition,
           })));
 

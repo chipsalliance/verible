@@ -12,8 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "kythe_facts.h"
+#include <iostream>
+#include <string>
+
 #include "absl/strings/substitute.h"
+#include "kythe_facts.h"
 
 namespace verilog {
 namespace kythe {

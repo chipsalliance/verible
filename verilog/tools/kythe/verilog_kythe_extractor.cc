@@ -12,6 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include <iostream>
+
 #include "absl/flags/flag.h"
 #include "absl/status/status.h"
 #include "absl/strings/str_cat.h"
@@ -69,7 +71,16 @@ int ExtractOneFile(absl::string_view content, absl::string_view filename) {
 // verilog_kythe_extractor files...
 int main(int argc, char** argv) {
   const auto usage =
-      absl::StrCat("usage: ", argv[0], " [options] <file> [<file>...]");
+      absl::StrCat("usage: ", argv[0], " [options] <file> [<file>...]\n",
+                   " verilog_kythe_extractor is a simple command-line utility "
+                   "to extract kythe indexing facts from the given file.\n"
+                   "\n"
+                   " Expected Input: verilog file.\n"
+                   " Expected output: Produces Indexing Facts for kythe.\n"
+                   "\n"
+                   " Example usage:\n"
+                   " verible-verilog_kythe_extractor files...");
+
   const auto args = verible::InitCommandLine(usage, &argc, &argv);
 
   int exit_status = 0;

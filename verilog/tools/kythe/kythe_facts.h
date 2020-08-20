@@ -15,6 +15,9 @@
 #ifndef VERIBLE_VERILOG_TOOLS_KYTHE_KYTHE_FACTS_H_
 #define VERIBLE_VERILOG_TOOLS_KYTHE_KYTHE_FACTS_H_
 
+#include <iosfwd>
+#include <string>
+
 #include "absl/strings/escaping.h"
 #include "absl/strings/string_view.h"
 
@@ -51,6 +54,8 @@ struct VName {
   std::string root;
 };
 
+std::ostream& operator<<(std::ostream&, const VName&);
+
 // Facts for kythe.
 struct Fact {
   Fact(const VName& vname, absl::string_view name, absl::string_view value)
@@ -68,6 +73,8 @@ struct Fact {
   std::string fact_value;
 };
 
+std::ostream& operator<<(std::ostream&, const Fact&);
+
 // Edges for kythe.
 struct Edge {
   Edge(const VName& source, absl::string_view name, const VName& target)
@@ -82,10 +89,6 @@ struct Edge {
   // The vname of the target node of this edge.
   const VName& target_node;
 };
-
-std::ostream& operator<<(std::ostream&, const VName&);
-
-std::ostream& operator<<(std::ostream&, const Fact&);
 
 std::ostream& operator<<(std::ostream&, const Edge&);
 
