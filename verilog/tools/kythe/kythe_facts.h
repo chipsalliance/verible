@@ -30,7 +30,8 @@ struct VName {
                  absl::string_view root = "",
                  absl::string_view language = "verilog",
                  absl::string_view corpus = "https://github.com/google/verible")
-      : signature(absl::Base64Escape(signature)),
+      : signature(signature),
+        signature_base_64(absl::Base64Escape(signature)),
         path(path),
         language(language),
         corpus(corpus),
@@ -40,6 +41,9 @@ struct VName {
 
   // Unique identifier for this VName.
   std::string signature;
+
+  // Unique identifier for this VName in base 64.
+  std::string signature_base_64;
 
   // Path for the file the name is extracted from.
   std::string path;

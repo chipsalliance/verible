@@ -79,7 +79,7 @@ int main(int argc, char** argv) {
                    " Expected output: Produces Indexing Facts for kythe.\n"
                    "\n"
                    " Example usage:\n"
-                   " verible-verilog_kythe_extractor files...");
+                   " verible-verilog-kythe-extractor files...");
 
   const auto args = verible::InitCommandLine(usage, &argc, &argv);
 

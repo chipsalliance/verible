@@ -17,7 +17,6 @@
 
 #include "common/text/tree_context_visitor.h"
 #include "common/text/tree_utils.h"
-#include "indexing_facts_tree_extractor.h"
 #include "verilog/CST/declaration.h"
 #include "verilog/CST/identifier.h"
 #include "verilog/CST/module.h"
@@ -25,6 +24,7 @@
 #include "verilog/CST/port.h"
 #include "verilog/CST/verilog_nonterminals.h"
 #include "verilog/analysis/verilog_analyzer.h"
+#include "verilog/tools/kythe/indexing_facts_tree_extractor.h"
 
 namespace verilog {
 namespace kythe {
@@ -95,7 +95,7 @@ IndexingFactNode BuildIndexingFactsTree(
   root.Accept(&visitor);
 
   return visitor.GetRoot();
-};
+}
 
 void IndexingFactsTreeExtractor::Visit(const verible::SyntaxTreeNode& node) {
   const auto tag = static_cast<verilog::NodeEnum>(node.Tag().tag);
@@ -167,13 +167,10 @@ void IndexingFactsTreeExtractor::ExtractModuleHeader(
     for (const verible::TreeSearchMatch& port : port_names) {
       const verible::SyntaxTreeLeaf* leaf =
           GetIdentifierFromModulePortDeclaration(*port.match);
-      const Anchor port_name_anchor(leaf->get(), context_.base);
 
-      IndexingNodeData module_port(IndexingFactType::kVariableDefinition);
-      IndexingFactNode port_node(module_port);
-      port_node.Value().AppendAnchor(port_name_anchor);
-
-      facts_tree_context_.top().NewChild(port_node);
+      facts_tree_context_.top().NewChild(
+          IndexingNodeData({Anchor(leaf->get(), context_.base)},
+                           IndexingFactType::kVariableDefinition));
     }
   }
 }
@@ -187,13 +184,10 @@ void IndexingFactsTreeExtractor::ExtractInputOutputDeclaration(
   // Loop through each port name and create its own node in facts tree.
   for (const verible::TreeSearchMatch& port : port_names) {
     const verible::SyntaxTreeLeaf* leaf = GetIdentifier(*port.match);
-    const Anchor port_name_anchor(leaf->get(), context_.base);
 
-    IndexingNodeData module_port(IndexingFactType::kVariableReference);
-    IndexingFactNode port_node(module_port);
-    port_node.Value().AppendAnchor(port_name_anchor);
-
-    facts_tree_context_.top().NewChild(port_node);
+    facts_tree_context_.top().NewChild(
+        IndexingNodeData({Anchor(leaf->get(), context_.base)},
+                         IndexingFactType::kVariableReference));
   }
 }
 
@@ -206,7 +200,7 @@ void IndexingFactsTreeExtractor::ExtractModuleEnd(
     const Anchor module_end_anchor(*module_name, context_.base);
     facts_tree_context_.top().Value().AppendAnchor(module_end_anchor);
   }
-};
+}
 
 void IndexingFactsTreeExtractor::ExtractModuleInstantiation(
     const verible::SyntaxTreeNode& data_declaration_node) {
@@ -241,8 +235,7 @@ void IndexingFactsTreeExtractor::ExtractModuleInstantiation(
       indexing_node_data.AppendAnchor(port_name_anchor);
     }
 
-    IndexingFactNode module_instance(indexing_node_data);
-    facts_tree_context_.top().NewChild(module_instance);
+    facts_tree_context_.top().NewChild(indexing_node_data);
   }
 }
 
@@ -257,12 +250,9 @@ void IndexingFactsTreeExtractor::ExtractNetDeclaration(
   // Loop through each instance and associate each declared id with the same
   // type.
   for (const verible::TokenInfo* wire_token_info : identifiers) {
-    IndexingNodeData indexing_node_data(IndexingFactType::kVariableDefinition);
-    const Anchor wire_name_anchor(*wire_token_info, context_.base);
-    indexing_node_data.AppendAnchor(wire_name_anchor);
-
-    IndexingFactNode wire_name(indexing_node_data);
-    facts_tree_context_.top().NewChild(wire_name);
+    facts_tree_context_.top().NewChild(
+        IndexingNodeData({Anchor(*wire_token_info, context_.base)},
+                         IndexingFactType::kVariableDefinition));
   }
 }
 

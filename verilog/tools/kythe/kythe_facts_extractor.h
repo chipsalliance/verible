@@ -59,9 +59,48 @@ class KytheFactsExtractor {
     // member class to handle push and pop of stack safely
     using AutoPop = base_type::AutoPop;
 
-   public:
     // returns the top VName of the stack
     const VName& top() const { return *ABSL_DIE_IF_NULL(base_type::top()); }
+  };
+
+  // Container with a stack of Scopes to hold the accessible scopes during
+  // traversing an Indexing Facts Tree.
+  // This is used to get the definitions of some reference.
+  class ScopeContext : public verible::AutoPopStack<std::vector<VName>*> {
+   public:
+    typedef verible::AutoPopStack<std::vector<VName>*> base_type;
+
+    // member class to handle push and pop of stack safely
+    using AutoPop = base_type::AutoPop;
+
+    // returns the top VName of the stack
+    std::vector<VName>& top() { return *ABSL_DIE_IF_NULL(base_type::top()); }
+
+    // Search function to get the VName of a definitions of some reference.
+    // It loops over the scopes in reverse order and loops over every scope in
+    // reverse order to find a definition for the variable with given prefix
+    // signature.
+    // e.g
+    // {
+    //    bar#module,
+    //    foo#module,
+    // }
+    // {
+    //    other scope,
+    // }
+    // Given bar#module it return the whole VName of that definition.
+    // And if more than one match is found the first would be returned.
+    const VName* SearchForDefinition(std::string prefix) {
+      for (const auto& scope : verible::make_range(rbegin(), rend())) {
+        for (const VName& vname :
+             verible::make_range(scope->rbegin(), scope->rend())) {
+          if (vname.signature.find(prefix) != std::string::npos) {
+            return &vname;
+          }
+        }
+      }
+      return nullptr;
+    }
   };
 
   // Extracts kythe facts from file node and returns it VName.
@@ -83,12 +122,20 @@ class KytheFactsExtractor {
   // Generates an anchor VName for kythe.
   VName PrintAnchorVName(const Anchor&, absl::string_view);
 
+  // Appends the signatures of previous containing scope vnames to make
+  // signatures unique relative to scopes.
+  std::string CreateScopeRelativeSignature(absl::string_view);
+
   // The verilog file name which the facts are extracted from.
   std::string file_path_;
 
   // Keeps track of VNames of ancestors as the visitor traverses the facts
   // tree.
   VNameContext vnames_context_;
+
+  // Keeps track of scopes and definitions inside the scopes of ancestors as the
+  // visitor traverses the facts tree.
+  ScopeContext scope_context_;
 
   // Output stream for capturing, redirecting, testing and verifying the
   // output.
@@ -99,7 +146,7 @@ class KytheFactsExtractor {
 std::string CreateModuleSignature(absl::string_view);
 
 // Creates the signature for module instantiations.
-std::string CreateVariableSignature(absl::string_view, const VName&);
+std::string CreateVariableSignature(absl::string_view);
 
 std::ostream& operator<<(std::ostream&, const KytheFactsPrinter&);
 

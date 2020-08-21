@@ -36,14 +36,17 @@ void KytheFactsExtractor::Visit(const IndexingFactNode& node) {
     }
     case IndexingFactType::kModule: {
       vname = ExtractModuleFact(node);
+      scope_context_.top().push_back(vname);
       break;
     }
     case IndexingFactType::kModuleInstance: {
       vname = ExtractModuleInstanceFact(node);
+      scope_context_.top().push_back(vname);
       break;
     }
     case IndexingFactType::kVariableDefinition: {
       vname = ExtractVariableDefinition(node);
+      scope_context_.top().push_back(vname);
       break;
     }
     case IndexingFactType::kVariableReference: {
@@ -56,6 +59,8 @@ void KytheFactsExtractor::Visit(const IndexingFactNode& node) {
     *stream_ << Edge(vname, kEdgeChildOf, vnames_context_.top());
   }
 
+  std::vector<VName> current_scope;
+  const ScopeContext::AutoPop scope_auto_pop(&scope_context_, &current_scope);
   const VNameContext::AutoPop vnames_auto_pop(&vnames_context_, &vname);
   for (const verible::VectorTree<IndexingNodeData>& child : node.Children()) {
     Visit(child);
@@ -64,29 +69,33 @@ void KytheFactsExtractor::Visit(const IndexingFactNode& node) {
 
 VName KytheFactsExtractor::ExtractFileFact(const IndexingFactNode& node) {
   const VName file_vname(file_path_, "", "", "");
+  const std::string& code_text = node.Value().Anchors()[1].Value();
 
   *stream_ << Fact(file_vname, kFactNodeKind, kNodeFile);
-  *stream_ << Fact(file_vname, kFactText, node.Value().Anchors()[1].Value());
+  *stream_ << Fact(file_vname, kFactText, code_text);
 
   return file_vname;
 }
 
-VName KytheFactsExtractor::ExtractModuleFact(const IndexingFactNode& node) {
-  const auto& anchors = node.Value().Anchors();
-  const VName module_vname(file_path_,
-                           CreateModuleSignature(anchors[0].Value()));
+VName KytheFactsExtractor::ExtractModuleFact(
+    const IndexingFactNode& module_fact_node) {
+  const auto& anchors = module_fact_node.Value().Anchors();
+  const Anchor& module_name = anchors[0];
+  const Anchor& module_end_label = anchors[1];
+
+  const VName module_vname(
+      file_path_,
+      CreateScopeRelativeSignature(CreateModuleSignature(module_name.Value())));
+  const VName module_name_anchor = PrintAnchorVName(module_name, file_path_);
 
   *stream_ << Fact(module_vname, kFactNodeKind, kNodeRecord);
   *stream_ << Fact(module_vname, kFactSubkind, kSubkindModule);
   *stream_ << Fact(module_vname, kFactComplete, kCompleteDefinition);
-
-  const VName module_name_anchor = PrintAnchorVName(anchors[0], file_path_);
-
   *stream_ << Edge(module_name_anchor, kEdgeDefinesBinding, module_vname);
 
-  if (node.Value().Anchors().size() > 1) {
+  if (anchors.size() > 1) {
     const VName module_end_label_anchor =
-        PrintAnchorVName(anchors[1], file_path_);
+        PrintAnchorVName(module_end_label, file_path_);
     *stream_ << Edge(module_end_label_anchor, kEdgeRef, module_vname);
   }
 
@@ -96,16 +105,19 @@ VName KytheFactsExtractor::ExtractModuleFact(const IndexingFactNode& node) {
 VName KytheFactsExtractor::ExtractModuleInstanceFact(
     const IndexingFactNode& node) {
   const auto& anchors = node.Value().Anchors();
-  const auto& module_type = anchors[0];
-  const auto& instance_name = anchors[1];
+  const Anchor& module_type = anchors[0];
+  const Anchor& instance_name = anchors[1];
 
   const VName module_instance_vname(
-      file_path_,
-      CreateVariableSignature(instance_name.Value(), vnames_context_.top()));
+      file_path_, CreateScopeRelativeSignature(
+                      CreateVariableSignature(instance_name.Value())));
   const VName module_instance_anchor =
       PrintAnchorVName(instance_name, file_path_);
-  const VName module_type_vname(file_path_,
-                                CreateModuleSignature(module_type.Value()));
+
+  const VName module_type_vname =
+      *ABSL_DIE_IF_NULL(scope_context_.SearchForDefinition(
+          CreateModuleSignature(module_type.Value())));
+
   const VName module_type_anchor = PrintAnchorVName(module_type, file_path_);
 
   *stream_ << Fact(module_instance_vname, kFactNodeKind, kNodeVariable);
@@ -120,10 +132,10 @@ VName KytheFactsExtractor::ExtractModuleInstanceFact(
        verible::make_range(anchors.begin() + 2, anchors.end())) {
     const VName port_vname_reference(
         file_path_,
-        CreateVariableSignature(anchor.Value(), vnames_context_.top()));
+        CreateScopeRelativeSignature(CreateVariableSignature(anchor.Value())));
     const VName port_vname_definition(
         file_path_,
-        CreateVariableSignature(anchor.Value(), vnames_context_.top()));
+        CreateScopeRelativeSignature(CreateVariableSignature(anchor.Value())));
     const VName port_vname_anchor = PrintAnchorVName(anchor, file_path_);
 
     *stream_ << Edge(port_vname_anchor, kEdgeRef, port_vname_definition);
@@ -137,7 +149,7 @@ VName KytheFactsExtractor::ExtractVariableDefinition(
   const auto& anchor = node.Value().Anchors()[0];
   const VName variable_vname(
       file_path_,
-      CreateVariableSignature(anchor.Value(), vnames_context_.top()));
+      CreateScopeRelativeSignature(CreateVariableSignature(anchor.Value())));
   const VName variable_vname_anchor = PrintAnchorVName(anchor, file_path_);
 
   *stream_ << Fact(variable_vname, kFactNodeKind, kNodeVariable);
@@ -151,14 +163,23 @@ VName KytheFactsExtractor::ExtractVariableDefinition(
 VName KytheFactsExtractor::ExtractVariableReference(
     const IndexingFactNode& node) {
   const auto& anchor = node.Value().Anchors()[0];
-  const VName variable_vname(
-      file_path_,
-      CreateVariableSignature(anchor.Value(), vnames_context_.top()));
   const VName variable_vname_anchor = PrintAnchorVName(anchor, file_path_);
 
-  *stream_ << Edge(variable_vname_anchor, kEdgeRef, variable_vname);
+  const VName* variable_definition_vname =
+      scope_context_.SearchForDefinition(CreateModuleSignature(anchor.Value()));
+  if (variable_definition_vname != nullptr) {
+    *stream_ << Edge(variable_vname_anchor, kEdgeRef,
+                     *variable_definition_vname);
 
-  return variable_vname;
+    return *variable_definition_vname;
+  } else {
+    const VName variable_vname(
+        file_path_,
+        CreateScopeRelativeSignature(CreateModuleSignature(anchor.Value())));
+    *stream_ << Edge(variable_vname_anchor, kEdgeRef, variable_vname);
+
+    return variable_vname;
+  }
 }
 
 VName KytheFactsExtractor::PrintAnchorVName(const Anchor& anchor,
@@ -176,13 +197,17 @@ VName KytheFactsExtractor::PrintAnchorVName(const Anchor& anchor,
   return anchor_vname;
 }
 
+std::string KytheFactsExtractor::CreateScopeRelativeSignature(
+    absl::string_view signature) {
+  return absl::StrCat(signature, "#", vnames_context_.top().signature);
+}
+
 std::string CreateModuleSignature(absl::string_view module_name) {
   return absl::StrCat(module_name, "#module");
 }
 
-std::string CreateVariableSignature(absl::string_view instance_name,
-                                    const VName& parent_vname) {
-  return absl::StrCat(instance_name, "#variable", parent_vname.signature);
+std::string CreateVariableSignature(absl::string_view variable_name) {
+  return absl::StrCat(variable_name, "#variable");
 }
 
 std::string GetFilePathFromRoot(const IndexingFactNode& root) {

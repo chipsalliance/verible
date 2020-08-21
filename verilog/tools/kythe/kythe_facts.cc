@@ -16,7 +16,7 @@
 #include <string>
 
 #include "absl/strings/substitute.h"
-#include "kythe_facts.h"
+#include "verilog/tools/kythe/kythe_facts.h"
 
 namespace verilog {
 namespace kythe {
@@ -24,11 +24,12 @@ namespace kythe {
 std::string VName::ToString() const {
   return absl::Substitute(
       R"({"signature": "$0","path": "$1","language": "$2","root": "$3","corpus": "$4"})",
-      signature, path, language, root, corpus);
+      signature_base_64, path, language, root, corpus);
 }
 
 std::ostream& operator<<(std::ostream& stream, const VName& vname) {
   stream << vname.ToString();
+  return stream;
 }
 
 std::ostream& operator<<(std::ostream& stream, const Fact& fact) {
