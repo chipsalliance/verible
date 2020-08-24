@@ -62,6 +62,13 @@ const TokenInfo& GetInterfaceNameToken(const Symbol& s) {
   return name_leaf.get();
 }
 
+const SyntaxTreeNode* GetModulePortParenGroup(const Symbol& module_declaration) {
+  const auto& header_node = GetModuleHeader(module_declaration);
+  const auto* ports =
+      verible::GetSubtreeAsSymbol(header_node, NodeEnum::kModuleHeader, 5);
+  return verible::CheckOptionalSymbolAsNode(ports, NodeEnum::kParenGroup);
+}
+
 const SyntaxTreeNode* GetModulePortDeclarationList(
     const Symbol& module_declaration) {
   const auto& header_node = GetModuleHeader(module_declaration);

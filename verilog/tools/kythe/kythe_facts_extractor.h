@@ -52,6 +52,15 @@ class KytheFactsExtractor {
  private:
   // Container with a stack of VNames to hold context of VNames during traversal
   // of an IndexingFactsTree.
+  // This is used to generate to VNames inside the current scope.
+  // e.g.
+  // module foo();
+  //  wire x; ==> x#variable#foo#module
+  // endmodule: foo
+  //
+  // module bar();
+  //  wire x; ==> x#variable#bar#module
+  // endmodule: bar
   class VNameContext : public verible::AutoPopStack<const VName*> {
    public:
     typedef verible::AutoPopStack<const VName*> base_type;
@@ -66,6 +75,10 @@ class KytheFactsExtractor {
   // Container with a stack of Scopes to hold the accessible scopes during
   // traversing an Indexing Facts Tree.
   // This is used to get the definitions of some reference.
+  //
+  // This is modified during tree traversal because in case of entering new
+  // scope the new scope is resolved first and after that it's added to the
+  // containing scope and the next scope is being analyzed.
   class ScopeContext : public verible::AutoPopStack<std::vector<VName>*> {
    public:
     typedef verible::AutoPopStack<std::vector<VName>*> base_type;

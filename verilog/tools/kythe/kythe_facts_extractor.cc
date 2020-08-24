@@ -12,20 +12,20 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include "verilog/tools/kythe/kythe_facts_extractor.h"
+
 #include <iostream>
 #include <string>
 
 #include "absl/strings/escaping.h"
 #include "absl/strings/substitute.h"
-#include "verilog/tools/kythe/kythe_facts_extractor.h"
 #include "verilog/tools/kythe/kythe_schema_constants.h"
 
 namespace verilog {
 namespace kythe {
 
 void KytheFactsExtractor::Visit(const IndexingFactNode& node) {
-  const auto tag =
-      static_cast<IndexingFactType>(node.Value().GetIndexingFactType());
+  const auto tag = node.Value().GetIndexingFactType();
 
   VName vname(file_path_);
 

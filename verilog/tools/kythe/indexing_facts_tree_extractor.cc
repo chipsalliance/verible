@@ -12,6 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include "verilog/tools/kythe/indexing_facts_tree_extractor.h"
+
 #include <iostream>
 #include <string>
 
@@ -24,7 +26,6 @@
 #include "verilog/CST/port.h"
 #include "verilog/CST/verilog_nonterminals.h"
 #include "verilog/analysis/verilog_analyzer.h"
-#include "verilog/tools/kythe/indexing_facts_tree_extractor.h"
 
 namespace verilog {
 namespace kythe {
@@ -160,18 +161,20 @@ void IndexingFactsTreeExtractor::ExtractModuleHeader(
   const verible::SyntaxTreeNode* port_list =
       GetModulePortDeclarationList(module_header_node);
 
-  if (port_list != nullptr) {
-    const std::vector<verible::TreeSearchMatch> port_names =
-        FindAllModulePortDeclarations(*port_list);
+  if (port_list == nullptr) {
+    return;
+  }
 
-    for (const verible::TreeSearchMatch& port : port_names) {
-      const verible::SyntaxTreeLeaf* leaf =
-          GetIdentifierFromModulePortDeclaration(*port.match);
+  const std::vector<verible::TreeSearchMatch> port_names =
+      FindAllModulePortDeclarations(*port_list);
 
-      facts_tree_context_.top().NewChild(
-          IndexingNodeData({Anchor(leaf->get(), context_.base)},
-                           IndexingFactType::kVariableDefinition));
-    }
+  for (const verible::TreeSearchMatch& port : port_names) {
+    const verible::SyntaxTreeLeaf* leaf =
+        GetIdentifierFromModulePortDeclaration(*port.match);
+
+    facts_tree_context_.top().NewChild(
+        IndexingNodeData({Anchor(leaf->get(), context_.base)},
+                         IndexingFactType::kVariableDefinition));
   }
 }
 
@@ -202,6 +205,9 @@ void IndexingFactsTreeExtractor::ExtractModuleEnd(
   }
 }
 
+// TODO(minatoma): consider this case:
+//  foo_module foo_instance(id1[id2],id3[id4]);  // where instance is
+//  "foo_instance(...)"
 void IndexingFactsTreeExtractor::ExtractModuleInstantiation(
     const verible::SyntaxTreeNode& data_declaration_node) {
   const verible::TokenInfo& type =

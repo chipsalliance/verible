@@ -61,25 +61,18 @@ int ExtractOneFile(absl::string_view content, absl::string_view filename) {
   return exit_status;
 }
 
-// verilog_kythe_extractor is a simple command-line utility to extract kythe
-// indexing facts from the given file.
-//
-// Expected Input: verilog file.
-// Expected output: Produces Indexing Facts for kythe.
-//
-// Example usage:
-// verilog_kythe_extractor files...
 int main(int argc, char** argv) {
-  const auto usage =
-      absl::StrCat("usage: ", argv[0], " [options] <file> [<file>...]\n",
-                   " verilog_kythe_extractor is a simple command-line utility "
-                   "to extract kythe indexing facts from the given file.\n"
-                   "\n"
-                   " Expected Input: verilog file.\n"
-                   " Expected output: Produces Indexing Facts for kythe.\n"
-                   "\n"
-                   " Example usage:\n"
-                   " verible-verilog-kythe-extractor files...");
+  const auto usage = absl::StrCat(
+      "usage: ", argv[0], " [options] <file> [<file>...]\n",
+      R"(
+verilog_kythe_extractor is a simple command-line utility
+to extract kythe indexing facts from the given file.
+
+Expected Input: verilog file.
+Expected output: Produces Indexing Facts for kythe.
+
+Example usage:
+verible-verilog-kythe-extractor files...)");
 
   const auto args = verible::InitCommandLine(usage, &argc, &argv);
 
