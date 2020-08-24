@@ -1270,29 +1270,29 @@ static const std::initializer_list<FormatterTestCase> kFormatterTestCases = {
      ") ();"
      "endmodule",
      "module foo #(  //comment\n"
-     "    parameter bar = 1,\n"
+     "    parameter  bar = 1,\n"
      "    localparam baz = 2\n"
      ") (\n"
      ");\n"
      "endmodule\n"},
     {"module foo #("
-     "parameter bar =1,//comment\n"
+     "parameter  bar =1,//comment\n"
      "localparam baz =2"
      ") ();"
      "endmodule",
      "module foo #(\n"
-     "    parameter bar = 1,  //comment\n"
+     "    parameter  bar = 1,  //comment\n"
      "    localparam baz = 2\n"
      ") (\n"
      ");\n"
      "endmodule\n"},
     {"module foo #("
-     "parameter bar =1,"
+     "parameter  bar =1,"
      "localparam baz =2//comment\n"
      ") ();"
      "endmodule",
      "module foo #(\n"
-     "    parameter bar = 1,\n"
+     "    parameter  bar = 1,\n"
      "    localparam baz = 2  //comment\n"
      ") (\n"
      ");\n"
@@ -5450,6 +5450,795 @@ static const std::initializer_list<FormatterTestCase> kFormatterTestCases = {
     //    "      .aaa(aaa)\n"
     //    "  );\n"
     //    "endmodule\n"
+    //},
+
+    // Parameterized data types, declarations inside #() tabular alignment
+    {   // parameterized module with 'list_of_param_assignments'
+        "module foo #(A = 2, AA = 22, AAA = 222);\n"
+        "endmodule\n",
+        "module foo #(\n"
+        "    A   = 2,\n"
+        "    AA  = 22,\n"
+        "    AAA = 222\n"
+        ");\n"
+        "endmodule\n"
+    },
+    {   // parameterized module with 'parameter_declaration'
+        "module foo #(parameter int a = 2, parameter int aa = 22);\n"
+        "endmodule\n",
+        "module foo #(\n"
+        "    parameter int a  = 2,\n"
+        "    parameter int aa = 22\n"
+        ");\n"
+        "endmodule\n"
+    },
+    {   // parameterized module with 'parameter_declaration' and comments
+        "module foo #(//comment\nparameter int a = 2, parameter int aa = 22);\n"
+        "endmodule\n",
+        "module foo #(  //comment\n"
+        "    parameter int a  = 2,\n"
+        "    parameter int aa = 22\n"
+        ");\n"
+        "endmodule\n"
+    },
+    {   // parameterized module with 'parameter_declaration' and trailing comments
+        "module foo #(parameter int a = 2,//comment\n parameter int aa = 22);\n"
+        "endmodule\n",
+        "module foo #(\n"
+        "    parameter int a  = 2,  //comment\n"
+        "    parameter int aa = 22\n"
+        ");\n"
+        "endmodule\n"
+    },
+    {   // parameterized module with 'parameter_declaration' and pre-proc
+        "module foo #(parameter int a = 2,\n"
+        "`ifdef MACRO parameter int aa = 22, `endif\n"
+        "parameter int aaa = 222);\n"
+        "endmodule\n",
+        "module foo #(\n"
+        "    parameter int a   = 2,\n"
+        "`ifdef MACRO\n"
+        "    parameter int aa  = 22,\n"
+        "`endif\n"
+        "    parameter int aaa = 222\n"
+        ");\n"
+        "endmodule\n"
+    },
+    {   // parameterized module with 'parameter_declaration' and packed dimensions
+        "module foo #(parameter logic [3:0] a = 2, parameter logic [30:0] aa = 22);\n"
+        "endmodule\n",
+        "module foo #(\n"
+        "    parameter logic [ 3:0] a  = 2,\n"
+        "    parameter logic [30:0] aa = 22\n"
+        ");\n"
+        "endmodule\n"
+    },
+    {   // parameterized module with 'parameter_declaration' and unpacked dimensions
+        "module foo #(parameter logic a[3:0] = 2, parameter logic  aa [30:0] = 22);\n"
+        "endmodule\n",
+        "module foo #(\n"
+        "    parameter logic a [ 3:0] = 2,\n"
+        "    parameter logic aa[30:0] = 22\n"
+        ");\n"
+        "endmodule\n"
+    },
+
+    {   // parameterized module with 'local_parameter_declaration'
+        "module foo #(localparam int a = 2, localparam int aa = 22);\n"
+        "endmodule\n",
+        "module foo #(\n"
+        "    localparam int a  = 2,\n"
+        "    localparam int aa = 22\n"
+        ");\n"
+        "endmodule\n"
+    },
+    {   // parameterized module with 'local_parameter_declaration' and comments
+        "module foo #(//comment\nlocalparam int a = 2, localparam int aa = 22);\n"
+        "endmodule\n",
+        "module foo #(  //comment\n"
+        "    localparam int a  = 2,\n"
+        "    localparam int aa = 22\n"
+        ");\n"
+        "endmodule\n"
+    },
+    {   // parameterized module with 'local_parameter_declaration' and trailing comments
+        "module foo #(localparam int a = 2,//comment\n localparam int aa = 22);\n"
+        "endmodule\n",
+        "module foo #(\n"
+        "    localparam int a  = 2,  //comment\n"
+        "    localparam int aa = 22\n"
+        ");\n"
+        "endmodule\n"
+    },
+    {   // parameterized module with 'local_parameter_declaration' and pre-proc
+        "module foo #(localparam int a = 2,\n"
+        "`ifdef MACRO localparam int aa = 22, `endif\n"
+        "localparam int aaa = 222);\n"
+        "endmodule\n",
+        "module foo #(\n"
+        "    localparam int a   = 2,\n"
+        "`ifdef MACRO\n"
+        "    localparam int aa  = 22,\n"
+        "`endif\n"
+        "    localparam int aaa = 222\n"
+        ");\n"
+        "endmodule\n"
+    },
+    {   // parameterized module with 'local_parameter_declaration' and packed dimensions
+        "module foo #(localparam logic [3:0] a = 2, localparam logic [30:0] aa = 22);\n"
+        "endmodule\n",
+        "module foo #(\n"
+        "    localparam logic [ 3:0] a  = 2,\n"
+        "    localparam logic [30:0] aa = 22\n"
+        ");\n"
+        "endmodule\n"
+    },
+    {   // parameterized module with 'local_parameter_declaration' and unpacked dimensions
+        "module foo #(localparam logic a[3:0] = 2, localparam logic  aa [30:0] = 22);\n"
+        "endmodule\n",
+        "module foo #(\n"
+        "    localparam logic a [ 3:0] = 2,\n"
+        "    localparam logic aa[30:0] = 22\n"
+        ");\n"
+        "endmodule\n"
+    },
+
+
+    {   // parameterized module with 'data_type list_of_param_assignments'
+        "module foo #( int a = 2,  real aa = 22, longint aaa = 222);\n"
+        "endmodule\n",
+        "module foo #(\n"
+        "    int     a   = 2,\n"
+        "    real    aa  = 22,\n"
+        "    longint aaa = 222\n"
+        ");\n"
+        "endmodule\n"
+    },
+    {   // parameterized module with 'data_type list_of_param_assignments' and comments
+        "module foo #(//comment\nint a = 2,  shortreal aa = 22, longint aaa = 222);\n"
+        "endmodule\n",
+        "module foo #(  //comment\n"
+        "    int       a   = 2,\n"
+        "    shortreal aa  = 22,\n"
+        "    longint   aaa = 222\n"
+        ");\n"
+        "endmodule\n"
+    },
+    {   // parameterized module with 'data_type list_of_param_assignments' and trailing comments
+        "module foo #(int a = 2,  shortreal aa = 22,//comment\n longint aaa = 222);\n"
+        "endmodule\n",
+        "module foo #(\n"
+        "    int       a   = 2,\n"
+        "    shortreal aa  = 22,  //comment\n"
+        "    longint   aaa = 222\n"
+        ");\n"
+        "endmodule\n"
+    },
+    {   // parameterized module with 'data_type list_of_param_assignments' and pre-proc
+        "module foo #(int a = 2,\n"
+        "`ifdef MACRO shortreal aa = 22, `endif\n"
+        " longint aaa = 222);\n"
+        "endmodule\n",
+        "module foo #(\n"
+        "    int       a   = 2,\n"
+        "`ifdef MACRO\n"
+        "    shortreal aa  = 22,\n"
+        "`endif\n"
+        "    longint   aaa = 222\n"
+        ");\n"
+        "endmodule\n"
+    },
+    {   // parameterized module with 'data_type list_of_param_assignments' and packed dimensions
+        "module foo #(bit [1:0] a = 2,  reg [12:0] aa = 22, logic [123:0] aaa = 222);\n"
+        "endmodule\n",
+        "module foo #(\n"
+        "    bit   [  1:0] a   = 2,\n"
+        "    reg   [ 12:0] aa  = 22,\n"
+        "    logic [123:0] aaa = 222\n"
+        ");\n"
+        "endmodule\n"
+    },
+    {   // parameterized module with 'data_type list_of_param_assignments' and unpacked dimensions
+        "module foo #(bit  a[1:0] = 2,  reg  aa[12:0] = 22, logic aaa [123:0]  = 222);\n"
+        "endmodule\n",
+        "module foo #(\n"
+        "    bit   a  [  1:0] = 2,\n"
+        "    reg   aa [ 12:0] = 22,\n"
+        "    logic aaa[123:0] = 222\n"
+        ");\n"
+        "endmodule\n"
+    },
+    {   // parameterized module with 'type list_of_type_assignments'
+        "module foo #(type T = int, type TT = bit, type TTT= C#(logic) );\n"
+        "endmodule\n",
+        "module foo #(\n"
+        "    type T   = int,\n"
+        "    type TT  = bit,\n"
+        "    type TTT = C#(logic)\n"
+        ");\n"
+        "endmodule\n"
+    },
+    {   // parameterized module with 'type list_of_type_assignments' and comments
+        "module foo #(//comment\ntype T = int, type TT = bit, type TTT= C#(logic) );\n"
+        "endmodule\n",
+        "module foo #(  //comment\n"
+        "    type T   = int,\n"
+        "    type TT  = bit,\n"
+        "    type TTT = C#(logic)\n"
+        ");\n"
+        "endmodule\n"
+    },
+    {   // parameterized module with 'data_type list_of_param_assignments' and trailing comments
+        "module foo #(type T = int, type TT = bit, //comment\n type TTT= C#(logic) );\n"
+        "endmodule\n",
+        "module foo #(\n"
+        "    type T   = int,\n"
+        "    type TT  = bit,  //comment\n"
+        "    type TTT = C#(logic)\n"
+        ");\n"
+        "endmodule\n"
+    },
+    {   // parameterized module with 'data_type list_of_param_assignments' and pre-proc
+        "module foo #(type T = int,\n"
+        "`ifdef MACRO type TT = bit, `endif\n"
+        " type TTT= C#(logic));\n"
+        "endmodule\n",
+        "module foo #(\n"
+        "    type T   = int,\n"
+        "`ifdef MACRO\n"
+        "    type TT  = bit,\n"
+        "`endif\n"
+        "    type TTT = C#(logic)\n"
+        ");\n"
+        "endmodule\n"
+    },
+    {   // parameterized module with 'data_type list_of_param_assignments' and packed dimensions
+        "module foo #(type T = int [3:0], type TT = bit [250:0]);\n"
+        "endmodule\n",
+        "module foo #(\n"
+        "    type T  = int [  3:0],\n"
+        "    type TT = bit [250:0]\n"
+        ");\n"
+        "endmodule\n"
+    },
+    {   
+        "module foo #(type T = int, "
+        "A = 2, int AA = 22, parameter AAA = 222, parameter longint AAAA = 2222, " 
+        "localparam AAAAA = 22222, localparam real AAAAAA = 222222"
+        ");\n"
+        "endmodule\n",
+        "module foo #(\n"
+        "               type    T      = int,\n"
+        "                       A      = 2,\n"
+        "               int     AA     = 22,\n"
+        "    parameter          AAA    = 222,\n"
+        "    parameter  longint AAAA   = 2222,\n"
+        "    localparam         AAAAA  = 22222,\n"
+        "    localparam real    AAAAAA = 222222\n"
+        ");\n"
+        "endmodule\n"
+    },
+    {   // parameterized module with built-in data type
+        "module foo #(int a = 2, real abc = 2234);\n"
+        "endmodule\n",
+        "module foo #(\n"
+        "    int  a   = 2,\n"
+        "    real abc = 2234\n"
+        ");\n"
+        "endmodule\n"
+    },
+    {   // parameterized module with type
+        "module foo #(type TYPE1 = int, type TYPE2 = boo);\n"
+        "endmodule\n",
+        "module foo #(\n"
+        "    type TYPE1 = int,\n"
+        "    type TYPE2 = boo\n"
+        ");\n"
+        "endmodule\n"
+    },
+
+    {   // parameterized class with 'list_of_param_assignments'
+        "class foo #(A = 2, AA = 22, AAA = 222);\n"
+        "endclass\n",
+        "class foo #(\n"
+        "    A   = 2,\n"
+        "    AA  = 22,\n"
+        "    AAA = 222\n"
+        ");\n"
+        "endclass\n"
+    },
+    {   // parameterized class with 'parameter_declaration'
+        "class foo #(parameter int a = 2, parameter int aa = 22);\n"
+        "endclass\n",
+        "class foo #(\n"
+        "    parameter int a  = 2,\n"
+        "    parameter int aa = 22\n"
+        ");\n"
+        "endclass\n"
+    },
+    {   // parameterized class with 'parameter_declaration' and comments
+        "class foo #(//comment\nparameter int a = 2, parameter int aa = 22);\n"
+        "endclass\n",
+        "class foo #(  //comment\n"
+        "    parameter int a  = 2,\n"
+        "    parameter int aa = 22\n"
+        ");\n"
+        "endclass\n"
+    },
+    {   // parameterized class with 'parameter_declaration' and trailing comments
+        "class foo #(parameter int a = 2,//comment\n parameter int aa = 22);\n"
+        "endclass\n",
+        "class foo #(\n"
+        "    parameter int a  = 2,  //comment\n"
+        "    parameter int aa = 22\n"
+        ");\n"
+        "endclass\n"
+    },
+    {   // parameterized class with 'parameter_declaration' and pre-proc
+        "class foo #(parameter int a = 2,\n"
+        "`ifdef MACRO parameter int aa = 22, `endif\n"
+        "parameter int aaa = 222);\n"
+        "endclass\n",
+        "class foo #(\n"
+        "    parameter int a   = 2,\n"
+        "`ifdef MACRO\n"
+        "    parameter int aa  = 22,\n"
+        "`endif\n"
+        "    parameter int aaa = 222\n"
+        ");\n"
+        "endclass\n"
+    },
+    {   // parameterized class with 'parameter_declaration' and packed dimensions
+        "class foo #(parameter logic [3:0] a = 2, parameter logic [30:0] aa = 22);\n"
+        "endclass\n",
+        "class foo #(\n"
+        "    parameter logic [ 3:0] a  = 2,\n"
+        "    parameter logic [30:0] aa = 22\n"
+        ");\n"
+        "endclass\n"
+    },
+    {   // parameterized class with 'parameter_declaration' and unpacked dimensions
+        "class foo #(parameter logic a[3:0] = 2, parameter logic  aa [30:0] = 22);\n"
+        "endclass\n",
+        "class foo #(\n"
+        "    parameter logic a [ 3:0] = 2,\n"
+        "    parameter logic aa[30:0] = 22\n"
+        ");\n"
+        "endclass\n"
+    },
+
+    {   // parameterized class with 'local_parameter_declaration'
+        "class foo #(localparam int a = 2, localparam int aa = 22);\n"
+        "endclass\n",
+        "class foo #(\n"
+        "    localparam int a  = 2,\n"
+        "    localparam int aa = 22\n"
+        ");\n"
+        "endclass\n"
+    },
+    {   // parameterized class with 'local_parameter_declaration' and comments
+        "class foo #(//comment\nlocalparam int a = 2, localparam int aa = 22);\n"
+        "endclass\n",
+        "class foo #(  //comment\n"
+        "    localparam int a  = 2,\n"
+        "    localparam int aa = 22\n"
+        ");\n"
+        "endclass\n"
+    },
+    {   // parameterized class with 'local_parameter_declaration' and trailing comments
+        "class foo #(localparam int a = 2,//comment\n localparam int aa = 22);\n"
+        "endclass\n",
+        "class foo #(\n"
+        "    localparam int a  = 2,  //comment\n"
+        "    localparam int aa = 22\n"
+        ");\n"
+        "endclass\n"
+    },
+    {   // parameterized class with 'local_parameter_declaration' and pre-proc
+        "class foo #(localparam int a = 2,\n"
+        "`ifdef MACRO localparam int aa = 22, `endif\n"
+        "localparam int aaa = 222);\n"
+        "endclass\n",
+        "class foo #(\n"
+        "    localparam int a   = 2,\n"
+        "`ifdef MACRO\n"
+        "    localparam int aa  = 22,\n"
+        "`endif\n"
+        "    localparam int aaa = 222\n"
+        ");\n"
+        "endclass\n"
+    },
+    {   // parameterized class with 'local_parameter_declaration' and packed dimensions
+        "class foo #(localparam logic [3:0] a = 2, localparam logic [30:0] aa = 22);\n"
+        "endclass\n",
+        "class foo #(\n"
+        "    localparam logic [ 3:0] a  = 2,\n"
+        "    localparam logic [30:0] aa = 22\n"
+        ");\n"
+        "endclass\n"
+    },
+    {   // parameterized class with 'local_parameter_declaration' and unpacked dimensions
+        "class foo #(localparam logic a[3:0] = 2, localparam logic  aa [30:0] = 22);\n"
+        "endclass\n",
+        "class foo #(\n"
+        "    localparam logic a [ 3:0] = 2,\n"
+        "    localparam logic aa[30:0] = 22\n"
+        ");\n"
+        "endclass\n"
+    },
+    {   // parameterized class with 'data_type list_of_param_assignments'
+        "class foo #( int a = 2,  real aa = 22, longint aaa = 222);\n"
+        "endclass\n",
+        "class foo #(\n"
+        "    int     a   = 2,\n"
+        "    real    aa  = 22,\n"
+        "    longint aaa = 222\n"
+        ");\n"
+        "endclass\n"
+    },
+    {   // parameterized class with 'data_type list_of_param_assignments' and comments
+        "class foo #(//comment\nint a = 2,  shortreal aa = 22, longint aaa = 222);\n"
+        "endclass\n",
+        "class foo #(  //comment\n"
+        "    int       a   = 2,\n"
+        "    shortreal aa  = 22,\n"
+        "    longint   aaa = 222\n"
+        ");\n"
+        "endclass\n"
+    },
+    {   // parameterized class with 'data_type list_of_param_assignments' and trailing comments
+        "class foo #(int a = 2,  shortreal aa = 22,//comment\n longint aaa = 222);\n"
+        "endclass\n",
+        "class foo #(\n"
+        "    int       a   = 2,\n"
+        "    shortreal aa  = 22,  //comment\n"
+        "    longint   aaa = 222\n"
+        ");\n"
+        "endclass\n"
+    },
+    {   // parameterized class with 'data_type list_of_param_assignments' and pre-proc
+        "class foo #(int a = 2,\n"
+        "`ifdef MACRO shortreal aa = 22, `endif\n"
+        " longint aaa = 222);\n"
+        "endclass\n",
+        "class foo #(\n"
+        "    int       a   = 2,\n"
+        "`ifdef MACRO\n"
+        "    shortreal aa  = 22,\n"
+        "`endif\n"
+        "    longint   aaa = 222\n"
+        ");\n"
+        "endclass\n"
+    },
+    {   // parameterized class with 'data_type list_of_param_assignments' and packed dimensions
+        "class foo #(bit [1:0] a = 2,  reg [12:0] aa = 22, logic [123:0] aaa = 222);\n"
+        "endclass\n",
+        "class foo #(\n"
+        "    bit   [  1:0] a   = 2,\n"
+        "    reg   [ 12:0] aa  = 22,\n"
+        "    logic [123:0] aaa = 222\n"
+        ");\n"
+        "endclass\n"
+    },
+    {   // parameterized class with 'data_type list_of_param_assignments' and unpacked dimensions
+        "class foo #(bit  a[1:0] = 2,  reg  aa[12:0] = 22, logic aaa [123:0]  = 222);\n"
+        "endclass\n",
+        "class foo #(\n"
+        "    bit   a  [  1:0] = 2,\n"
+        "    reg   aa [ 12:0] = 22,\n"
+        "    logic aaa[123:0] = 222\n"
+        ");\n"
+        "endclass\n"
+    },
+    {   // parameterized class with 'type list_of_type_assignments'
+        "class foo #(type T = int, type TT = bit, type TTT= C#(logic) );\n"
+        "endclass\n",
+        "class foo #(\n"
+        "    type T   = int,\n"
+        "    type TT  = bit,\n"
+        "    type TTT = C#(logic)\n"
+        ");\n"
+        "endclass\n"
+    },
+    {   // parameterized class with 'type list_of_type_assignments' and comments
+        "class foo #(//comment\ntype T = int, type TT = bit, type TTT= C#(logic) );\n"
+        "endclass\n",
+        "class foo #(  //comment\n"
+        "    type T   = int,\n"
+        "    type TT  = bit,\n"
+        "    type TTT = C#(logic)\n"
+        ");\n"
+        "endclass\n"
+    },
+    {   // parameterized class with 'data_type list_of_param_assignments' and trailing comments
+        "class foo #(type T = int, type TT = bit, //comment\n type TTT= C#(logic) );\n"
+        "endclass\n",
+        "class foo #(\n"
+        "    type T   = int,\n"
+        "    type TT  = bit,  //comment\n"
+        "    type TTT = C#(logic)\n"
+        ");\n"
+        "endclass\n"
+    },
+    {   // parameterized class with 'data_type list_of_param_assignments' and pre-proc
+        "class foo #(type T = int,\n"
+        "`ifdef MACRO type TT = bit, `endif\n"
+        " type TTT= C#(logic));\n"
+        "endclass\n",
+        "class foo #(\n"
+        "    type T   = int,\n"
+        "`ifdef MACRO\n"
+        "    type TT  = bit,\n"
+        "`endif\n"
+        "    type TTT = C#(logic)\n"
+        ");\n"
+        "endclass\n"
+    },
+    {   // parameterized class with 'data_type list_of_param_assignments' and packed dimensions
+        "class foo #(type T = int [3:0], type TT = bit [250:0]);\n"
+        "endclass\n",
+        "class foo #(\n"
+        "    type T  = int [  3:0],\n"
+        "    type TT = bit [250:0]\n"
+        ");\n"
+        "endclass\n"
+    },
+    {   
+        "class foo #(type T = int, "
+        "A = 2, int AA = 22, parameter AAA = 222, parameter longint AAAA = 2222, " 
+        "localparam AAAAA = 22222, localparam real AAAAAA = 222222"
+        ");\n"
+        "endclass\n",
+        "class foo #(\n"
+        "               type    T      = int,\n"
+        "                       A      = 2,\n"
+        "               int     AA     = 22,\n"
+        "    parameter          AAA    = 222,\n"
+        "    parameter  longint AAAA   = 2222,\n"
+        "    localparam         AAAAA  = 22222,\n"
+        "    localparam real    AAAAAA = 222222\n"
+        ");\n"
+        "endclass\n"
+    },
+    {   // parameterized class with built-in data type
+        "class foo #(int a = 2, real abc = 2234);\n"
+        "endclass\n",
+        "class foo #(\n"
+        "    int  a   = 2,\n"
+        "    real abc = 2234\n"
+        ");\n"
+        "endclass\n"
+    },
+    {   // parameterized class with type
+        "class foo #(type TYPE1 = int, type TYPE2 = boo);\n"
+        "endclass\n",
+        "class foo #(\n"
+        "    type TYPE1 = int,\n"
+        "    type TYPE2 = boo\n"
+        ");\n"
+        "endclass\n"
+    },
+
+        {   // parameterized interface with 'local_parameter_declaration'
+        "interface foo #(localparam int a = 2, localparam int aa = 22);\n"
+        "endinterface\n",
+        "interface foo #(\n"
+        "    localparam int a  = 2,\n"
+        "    localparam int aa = 22\n"
+        ");\n"
+        "endinterface\n"
+    },
+    {   // parameterized interface with 'local_parameter_declaration' and comments
+        "interface foo #(//comment\nlocalparam int a = 2, localparam int aa = 22);\n"
+        "endinterface\n",
+        "interface foo #(  //comment\n"
+        "    localparam int a  = 2,\n"
+        "    localparam int aa = 22\n"
+        ");\n"
+        "endinterface\n"
+    },
+    {   // parameterized interface with 'local_parameter_declaration' and trailing comments
+        "interface foo #(localparam int a = 2,//comment\n localparam int aa = 22);\n"
+        "endinterface\n",
+        "interface foo #(\n"
+        "    localparam int a  = 2,  //comment\n"
+        "    localparam int aa = 22\n"
+        ");\n"
+        "endinterface\n"
+    },
+    {   // parameterized interface with 'local_parameter_declaration' and pre-proc
+        "interface foo #(localparam int a = 2,\n"
+        "`ifdef MACRO localparam int aa = 22, `endif\n"
+        "localparam int aaa = 222);\n"
+        "endinterface\n",
+        "interface foo #(\n"
+        "    localparam int a   = 2,\n"
+        "`ifdef MACRO\n"
+        "    localparam int aa  = 22,\n"
+        "`endif\n"
+        "    localparam int aaa = 222\n"
+        ");\n"
+        "endinterface\n"
+    },
+    {   // parameterized interface with 'local_parameter_declaration' and packed dimensions
+        "interface foo #(localparam logic [3:0] a = 2, localparam logic [30:0] aa = 22);\n"
+        "endinterface\n",
+        "interface foo #(\n"
+        "    localparam logic [ 3:0] a  = 2,\n"
+        "    localparam logic [30:0] aa = 22\n"
+        ");\n"
+        "endinterface\n"
+    },
+    {   // parameterized interface with 'local_parameter_declaration' and unpacked dimensions
+        "interface foo #(localparam logic a[3:0] = 2, localparam logic  aa [30:0] = 22);\n"
+        "endinterface\n",
+        "interface foo #(\n"
+        "    localparam logic a [ 3:0] = 2,\n"
+        "    localparam logic aa[30:0] = 22\n"
+        ");\n"
+        "endinterface\n"
+    },
+    {   // parameterized interface with 'data_type list_of_param_assignments'
+        "interface foo #( int a = 2,  real aa = 22, longint aaa = 222);\n"
+        "endinterface\n",
+        "interface foo #(\n"
+        "    int     a   = 2,\n"
+        "    real    aa  = 22,\n"
+        "    longint aaa = 222\n"
+        ");\n"
+        "endinterface\n"
+    },
+    {   // parameterized interface with 'data_type list_of_param_assignments' and comments
+        "interface foo #(//comment\nint a = 2,  shortreal aa = 22, longint aaa = 222);\n"
+        "endinterface\n",
+        "interface foo #(  //comment\n"
+        "    int       a   = 2,\n"
+        "    shortreal aa  = 22,\n"
+        "    longint   aaa = 222\n"
+        ");\n"
+        "endinterface\n"
+    },
+    {   // parameterized interface with 'data_type list_of_param_assignments' and trailing comments
+        "interface foo #(int a = 2,  shortreal aa = 22,//comment\n longint aaa = 222);\n"
+        "endinterface\n",
+        "interface foo #(\n"
+        "    int       a   = 2,\n"
+        "    shortreal aa  = 22,  //comment\n"
+        "    longint   aaa = 222\n"
+        ");\n"
+        "endinterface\n"
+    },
+    {   // parameterized interface with 'data_type list_of_param_assignments' and pre-proc
+        "interface foo #(int a = 2,\n"
+        "`ifdef MACRO shortreal aa = 22, `endif\n"
+        " longint aaa = 222);\n"
+        "endinterface\n",
+        "interface foo #(\n"
+        "    int       a   = 2,\n"
+        "`ifdef MACRO\n"
+        "    shortreal aa  = 22,\n"
+        "`endif\n"
+        "    longint   aaa = 222\n"
+        ");\n"
+        "endinterface\n"
+    },
+    {   // parameterized interface with 'data_type list_of_param_assignments' and packed dimensions
+        "interface foo #(bit [1:0] a = 2,  reg [12:0] aa = 22, logic [123:0] aaa = 222);\n"
+        "endinterface\n",
+        "interface foo #(\n"
+        "    bit   [  1:0] a   = 2,\n"
+        "    reg   [ 12:0] aa  = 22,\n"
+        "    logic [123:0] aaa = 222\n"
+        ");\n"
+        "endinterface\n"
+    },
+    {   // parameterized interface with 'data_type list_of_param_assignments' and unpacked dimensions
+        "interface foo #(bit  a[1:0] = 2,  reg  aa[12:0] = 22, logic aaa [123:0]  = 222);\n"
+        "endinterface\n",
+        "interface foo #(\n"
+        "    bit   a  [  1:0] = 2,\n"
+        "    reg   aa [ 12:0] = 22,\n"
+        "    logic aaa[123:0] = 222\n"
+        ");\n"
+        "endinterface\n"
+    },
+    {   // parameterized interface with 'type list_of_type_assignments'
+        "interface foo #(type T = int, type TT = bit, type TTT= C#(logic) );\n"
+        "endinterface\n",
+        "interface foo #(\n"
+        "    type T   = int,\n"
+        "    type TT  = bit,\n"
+        "    type TTT = C#(logic)\n"
+        ");\n"
+        "endinterface\n"
+    },
+    {   // parameterized interface with 'type list_of_type_assignments' and comments
+        "interface foo #(//comment\ntype T = int, type TT = bit, type TTT= C#(logic) );\n"
+        "endinterface\n",
+        "interface foo #(  //comment\n"
+        "    type T   = int,\n"
+        "    type TT  = bit,\n"
+        "    type TTT = C#(logic)\n"
+        ");\n"
+        "endinterface\n"
+    },
+    {   // parameterized interface with 'data_type list_of_param_assignments' and trailing comments
+        "interface foo #(type T = int, type TT = bit, //comment\n type TTT= C#(logic) );\n"
+        "endinterface\n",
+        "interface foo #(\n"
+        "    type T   = int,\n"
+        "    type TT  = bit,  //comment\n"
+        "    type TTT = C#(logic)\n"
+        ");\n"
+        "endinterface\n"
+    },
+    {   // parameterized interface with 'data_type list_of_param_assignments' and pre-proc
+        "interface foo #(type T = int,\n"
+        "`ifdef MACRO type TT = bit, `endif\n"
+        " type TTT= C#(logic));\n"
+        "endinterface\n",
+        "interface foo #(\n"
+        "    type T   = int,\n"
+        "`ifdef MACRO\n"
+        "    type TT  = bit,\n"
+        "`endif\n"
+        "    type TTT = C#(logic)\n"
+        ");\n"
+        "endinterface\n"
+    },
+    {   // parameterized interface with 'data_type list_of_param_assignments' and packed dimensions
+        "interface foo #(type T = int [3:0], type TT = bit [250:0]);\n"
+        "endinterface\n",
+        "interface foo #(\n"
+        "    type T  = int [  3:0],\n"
+        "    type TT = bit [250:0]\n"
+        ");\n"
+        "endinterface\n"
+    },
+    {   
+        "interface foo #(type T = int, "
+        "A = 2, int AA = 22, parameter AAA = 222, parameter longint AAAA = 2222, " 
+        "localparam AAAAA = 22222, localparam real AAAAAA = 222222"
+        ");\n"
+        "endinterface\n",
+        "interface foo #(\n"
+        "               type    T      = int,\n"
+        "                       A      = 2,\n"
+        "               int     AA     = 22,\n"
+        "    parameter          AAA    = 222,\n"
+        "    parameter  longint AAAA   = 2222,\n"
+        "    localparam         AAAAA  = 22222,\n"
+        "    localparam real    AAAAAA = 222222\n"
+        ");\n"
+        "endinterface\n"
+    },
+    {   // parameterized interface with built-in data type
+        "interface foo #(int a = 2, real abc = 2234);\n"
+        "endinterface\n",
+        "interface foo #(\n"
+        "    int  a   = 2,\n"
+        "    real abc = 2234\n"
+        ");\n"
+        "endinterface\n"
+    },
+    {   // parameterized interface with type
+        "interface foo #(type TYPE1 = int, type TYPE2 = boo);\n"
+        "endinterface\n",
+        "interface foo #(\n"
+        "    type TYPE1 = int,\n"
+        "    type TYPE2 = boo\n"
+        ");\n"
+        "endinterface\n"
+    },
+    //{   // parameterized class with 'parameter_declaration' and MACRO
+    //    "class foo #(parameter int a = 2,\n"
+    //    "parameter int aaa = `MACRO);\n"
+    //    "endclass\n",
+    //    "class foo #(\n"
+    //    "    parameter int a   = 2,\n"
+    //    "    parameter int aaa = `MACRO\n"
+    //    ");\n"
+    //    "endclass\n"
     //},
 };
 

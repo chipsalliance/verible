@@ -28,6 +28,7 @@ cc_library(
         "//common/util:logging",
         "//common/util:value_saver",
         "//verilog/CST:verilog_nonterminals",
+        "//verilog/CST:context_functions",
         "//verilog/parser:verilog_token_classifications",
         "//verilog/parser:verilog_token_enum",
         "@com_google_absl//absl/strings",
