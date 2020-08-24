@@ -12,11 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include "verilog/tools/kythe/indexing_facts_tree.h"
+
 #include <iostream>
 
 #include "absl/strings/str_join.h"
 #include "absl/strings/substitute.h"
-#include "verilog/tools/kythe/indexing_facts_tree.h"
 
 namespace verilog {
 namespace kythe {

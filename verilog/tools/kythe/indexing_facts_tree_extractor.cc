@@ -156,6 +156,7 @@ void IndexingFactsTreeExtractor::ExtractModuleHeader(
 
   facts_tree_context_.top().Value().AppendAnchor(module_name_anchor);
 
+  // TODO(minatoma): consider this case: module m(a, b);
   // Extracting module ports e.g. (input a, input b).
   // Ports are treated as children of the module.
   const verible::SyntaxTreeNode* port_list =
