@@ -213,56 +213,62 @@ produces this CST (rendered by `verible-verilog-syntax --printtree`):
 
 ```
 Parse Tree:
-Node (tag: kDescriptionList) {
-  Node (tag: kModuleDeclaration) {
-    Node (tag: kModuleHeader) {
-      (#"module" @23-29: "module")
-      (#SymbolIdentifier @30-33: "foo")
-      Node (tag: kParenGroup) {
-        (#'(' @33-34: "(")
-        Node (tag: kPortDeclarationList) {
-          Node (tag: kPortDeclaration) {
-            (#"input" @34-39: "input")
-            Node (tag: kDataType) {
+Node @0 (tag: kDescriptionList) {
+  Node @0 (tag: kModuleDeclaration) {
+    Node @0 (tag: kModuleHeader) {
+      Leaf @0 (#"module" @23-29: "module")
+      Leaf @2 (#SymbolIdentifier @30-33: "foo")
+      Node @5 (tag: kParenGroup) {
+        Leaf @0 (#'(' @33-34: "(")
+        Node @1 (tag: kPortDeclarationList) {
+          Node @0 (tag: kPortDeclaration) {
+            Leaf @0 (#"input" @34-39: "input")
+            Node @2 (tag: kDataType) {
             }
-            Node (tag: kUnqualifiedId) {
-              (#SymbolIdentifier @40-41: "a")
+            Node @3 (tag: kUnqualifiedId) {
+              Leaf @0 (#SymbolIdentifier @40-41: "a")
             }
-            Node (tag: kUnpackedDimensions) {
+            Node @4 (tag: kUnpackedDimensions) {
             }
           }
-          (#',' @41-42: ",")
-          Node (tag: kPort) {
-            Node (tag: kPortReference) {
-              Node (tag: kUnqualifiedId) {
-                (#SymbolIdentifier @43-44: "b")
+          Leaf @1 (#',' @41-42: ",")
+          Node @2 (tag: kPort) {
+            Node @0 (tag: kPortReference) {
+              Node @0 (tag: kUnqualifiedId) {
+                Leaf @0 (#SymbolIdentifier @43-44: "b")
               }
             }
           }
-          (#',' @44-45: ",")
-          Node (tag: kPortDeclaration) {
-            (#"output" @46-52: "output")
-            Node (tag: kDataType) {
+          Leaf @3 (#',' @44-45: ",")
+          Node @4 (tag: kPortDeclaration) {
+            Leaf @0 (#"output" @46-52: "output")
+            Node @2 (tag: kDataType) {
             }
-            Node (tag: kUnqualifiedId) {
-              (#SymbolIdentifier @53-54: "z")
+            Node @3 (tag: kUnqualifiedId) {
+              Leaf @0 (#SymbolIdentifier @53-54: "z")
             }
-            Node (tag: kUnpackedDimensions) {
+            Node @4 (tag: kUnpackedDimensions) {
             }
           }
         }
-        (#')' @54-55: ")")
+        Leaf @2 (#')' @54-55: ")")
       }
-      (#';' @55-56: ";")
+      Leaf @7 (#';' @55-56: ";")
     }
-    (#"endmodule" @57-66: "endmodule")
-    Node (tag: kLabel) {
-      (#':' @67-68: ":")
-      (#SymbolIdentifier @69-72: "foo")
+    Node @1 (tag: kModuleItemList) {
+    }
+    Leaf @2 (#"endmodule" @57-66: "endmodule")
+    Node @3 (tag: kLabel) {
+      Leaf @0 (#':' @67-68: ":")
+      Leaf @1 (#SymbolIdentifier @69-72: "foo")
     }
   }
 }
 ```
+
+The `N` in `Node @N` or `Leaf @N` refers to the child rank of that node/leaf
+with respect to its immediate parent node, starting at 0. `nullptr` nodes are
+skipped and will look like gaps in the rank sequence.
 
 Nodes of the CST may link to other nodes or leaves (which contain tokens). The
 nodes are tagged with language-specific enumerations. Each leaf encapsulates a
@@ -555,6 +561,15 @@ verible-verilog-format-changed-lines-interactive.sh
 
 and follow the prompts.
 
+> NOTE: git and hg users can pass in a different base revision to diff against:
+>
+> ```shell
+> # Diff against the previous revision in hg
+> verible-verilog-format-changed-lines-interactive.sh --rev .^
+> # Diff against upstream mainline in git
+> verible-verilog-format-changed-lines-interactive.sh --rev origin/main
+> ```
+
 ### Lexical Diff
 
 `verible-verilog-diff` compares two input files for equivalence, where
@@ -604,6 +619,124 @@ Output is written to stdout.
       transforms.); default: "";
     --save_map (If provided, save the translation to a dictionary for reuse in a
       future obfuscation with --load_map.); default: "";
+```
+
+### Preprocessor
+
+`verible-verilog-preprocessor` is a collection of preprocessor-like tools, (but
+does not include a fully-featured Verilog preprocessor yet.)
+
+#### Strip Comments
+
+Removing comments can be useful step in preparing to obfuscate code.
+
+```shell
+$ verible-verilog-preprocessor strip-comments FILE
+```
+
+This strips comments from a Verilog/SystemVerilog source file, _including_
+comments nested inside macro definition bodies and macro call arguments.
+
+Comments are actually replaced by an equal number of spaces (and newlines) to
+preserve the byte offsets and line ranges of the original text.
+
+## Indexing Verible C++ Code using Kythe
+
+The steps mentioned here can be generalized for indexing Bazel-based projects.
+
+More information about indexing Bazel-based projects using Kythe
+[here](https://github.com/kythe/kythe/tree/master/kythe/cxx/extractor#bazel-c-extractor).
+
+### Initializing Kythe
+
+Download the latest Kythe release from https://github.com/kythe/kythe/releases
+and then unpack it for a snapshot of Kythe’s toolset.
+
+```bash
+tar xzf kythe-v*.tar.gz
+rm -rf /opt/kythe
+mv kythe-v*/ /opt/kythe
+```
+
+More information can be found
+[here](https://github.com/kythe/kythe#getting-started).
+
+Clone Kythe from [here](https://github.com/kythe/kythe). Then from within the
+Kythe clone, build the web frontend and copy its files into /opt/kythe/
+
+```bash
+bazel build //kythe/web/ui
+mkdir -p /opt/kythe/web/ui
+cp -r bazel-bin/kythe/web/ui/resources/public/* /opt/kythe/web/ui
+cp -r kythe/web/ui/resources/public/* /opt/kythe/web/ui
+chmod -R 755 /opt/kythe/web/ui
+```
+
+More information can be found
+[here](https://github.com/google/haskell-indexer#building-from-source).
+
+### Extracting Compilations for Verible
+
+#### VNames.json File
+
+`vnames.json` file is used for renaming certain filepaths during extraction, but
+renaming isn’t needed here but you can add the renaming you find suitable.
+
+#### Run the extractor
+
+```bash
+# run on all targets
+bazel test --experimental_action_listener=:extract_cxx  //...
+
+# run on specific target (e.g. some cc_binary or cc_library)
+bazel test --experimental_action_listener=:extract_cxx //verilog/analysis:default_rules
+```
+
+Extracted kzip files will be in
+bazel-out/local-fastbuild/extra_actions/extractor folder. One kzip file per
+target.
+
+```bash
+find -L bazel-out -name '*cxx.kzip'
+```
+
+More information can be found
+[here](https://github.com/kythe/kythe/tree/master/kythe/cxx/extractor).
+
+### Indexing Extracted Kzip Files and Generating GraphStore
+
+For extracting the indexing facts from extracted `kzip` files, run the following
+command to apply the indexing for each `kzip` file and generate the result into
+`kythe graphstore`.
+
+```bash
+for i in $(find -L bazel-out -name '*cxx.kzip'); do
+    # Indexing C++ compilations
+    /opt/kythe/indexers/cxx_indexer --ignore_unimplemented "$i" > entries
+
+    # Write entry stream into a GraphStore
+    /opt/kythe/tools/write_entries --graphstore leveldb:.kythe_graphstore < entries
+done
+```
+
+### Generating Serving Tables
+
+```bash
+# Generate corresponding serving tables
+/opt/kythe/tools/write_tables --graphstore .kythe_graphstore --out .kythe_serving
+```
+
+### Visualizing Cross-References
+
+Run Kythe's `UI` to visualize cross-reference and code navigation.
+
+```bash
+# --listen localhost:8080 allows access from only this machine; change to
+# --listen 0.0.0.0:8080 to allow access from any machine
+/opt/kythe/tools/http_server \
+  --public_resources /opt/kythe/web/ui \
+  --listen localhost:8080 \
+  --serving_table .kythe_serving
 ```
 
 ### Future Intent

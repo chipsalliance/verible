@@ -444,6 +444,22 @@ TEST(ObfuscationEquivalentTest, Various) {
        DiffStatus::kEquivalent},  // escaped identifier
       {"\\FOO;!@#$% ", "\\BARR;%$#@! ",
        DiffStatus::kDifferent},  // escaped identifier (!= length)
+      // token concatenation
+      {"abc``xyz", "qrs``tuv", DiffStatus::kEquivalent},
+      {"abc``xyz", "qrs``123", DiffStatus::kDifferent},
+      {"abc``xyz", "789``tuv", DiffStatus::kDifferent},
+      {"`define CAT(ab, xy) ab``xy\n", "`define DOG(qr, tu) qr``tu\n",
+       DiffStatus::kEquivalent},
+      {"`define CAT(ab, xy) ab``xy\n", "`define DOG(qr, tuv) qr``tuv\n",
+       DiffStatus::kDifferent},
+      {"`define CAT(ab, xy) ab``xy\n", "`define DOG(qrs, tu) qrs``tu\n",
+       DiffStatus::kDifferent},
+      {"`CAT(aa``bb, cc``dd)\n", "`DOG(jj``kk, ll``mm)\n",
+       DiffStatus::kEquivalent},
+      {"`CAT(aa``bb, cc``dd)\n", "`DOG(jj``kk, llr``mm)\n",
+       DiffStatus::kDifferent},
+      {"`CAT(aa``bb, cc``dd)\n", "`DOG(jj``kk, ll``mms)\n",
+       DiffStatus::kDifferent},
   };
   for (const auto& test : kTestCases) {
     ExpectCompareWithErrstream(ObfuscationEquivalent, test.expect_match,

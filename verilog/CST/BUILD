@@ -10,6 +10,7 @@ package(
         "//verilog/analysis:__subpackages__",
         "//verilog/formatting:__subpackages__",
         "//verilog/parser:__subpackages__",
+        "//verilog/tools/kythe:__pkg__",
         "//verilog/tools/syntax:__pkg__",  # for printing
     ],
 )
@@ -179,6 +180,7 @@ cc_library(
     srcs = ["declaration.cc"],
     hdrs = ["declaration.h"],
     deps = [
+        ":identifier",
         ":verilog_matchers",
         ":verilog_nonterminals",
         "//common/analysis:syntax_tree_search",
@@ -505,6 +507,8 @@ cc_test(
     srcs = ["package_test.cc"],
     deps = [
         ":package",
+        "//common/analysis:syntax_tree_search",
+        "//common/analysis:syntax_tree_search_test_utils",
         "//common/text:concrete_syntax_tree",
         "//common/text:symbol",
         "//common/text:text_structure",
@@ -809,7 +813,6 @@ cc_test(
         "//common/text:symbol",
         "//verilog/analysis:verilog_analyzer",
         "@com_google_absl//absl/memory",
-        "@com_google_absl//absl/status",
         "@com_google_googletest//:gtest_main",
     ],
 )

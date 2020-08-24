@@ -224,6 +224,15 @@ cc_binary(
     ],
 )
 
+sh_test(
+    name = "tool_test",
+    size = "small",
+    srcs = ["lint_tool_test.sh"],
+    args = ["$(location :verible-verilog-lint)"],
+    data = [":verible-verilog-lint"],
+    deps = [],
+)
+
 # For a limited time, we provide the old name to be compatible with the
 # old installation. At some point, this script will print a deprecation warning
 # and be removed entirely later. Use verible-verilog-lint instead.

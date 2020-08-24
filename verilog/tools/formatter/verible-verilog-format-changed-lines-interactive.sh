@@ -37,6 +37,8 @@ formatter="$script_dir"/verible-verilog-format
 # version control system
 # auto-detect by default
 rcs=auto
+baserev=
+files=()
 
 function usage() {
   cat <<EOF
@@ -44,15 +46,19 @@ $0:
 Interactively prompts user to accept/reject formatter tool changes,
 based only on touched lines of code in a revision-controlled workspace.
 
-Usage: $script_name [script_options]
+Usage: $script_name [script_options] [FILES...]
 
 Run this from a version-controlled directory.
+If FILES is empty, scan for all Verilog files under the current directory.
 
 script options:
   --help, -h : print help and exit
   --rcs TOOL : revision control system [default:$rcs]
-      Supported: p4,git
-
+      Supported: p4,git,hg
+  --base REV : Revision to diff against [default: git:HEAD hg:.]
+      See tool-specific help for version specifiers:
+          git help revisions
+          hg help revisions
 EOF
 }
 
@@ -80,9 +86,11 @@ do
     --help | -h ) { usage ; exit ;} ;;
     --rcs ) prev_opt=rcs ;;
     --rcs=* ) rcs="$optarg" ;;
+    --base ) prev_opt=baserev ;;
+    --base=* ) baserev="$optarg" ;;
     --* | -* ) msg "Unknown option: $opt" ; exit 1 ;;
-    # This script expects no positional arguments.
-    *) { msg "Unexpected positional argument: $opt" ; usage ; exit 1 ;} ;;
+    # Positional arguments [optional] are files.
+    *) files+=( "$opt" ) ;;
   esac
   shift
 done
@@ -94,12 +102,22 @@ then
   if git status
   then
     rcs=git
+  elif hg root
+  then
+    rcs=hg
   else
     # p4 is tricky to detect due to the concept of default clients,
     # so leave it last position, if all else fails.
     rcs=p4
-  fi 2>&1 > /dev/null
+  fi > /dev/null 2>&1
 fi
+
+# Set default rev to 'dot' (parent) or HEAD. User can override
+# to a different revision if they want (eg p4head)
+case "$rcs" in
+  git) baserev=${baserev:-HEAD} ;;
+  hg) baserev=${baserev:-.} ;;
+esac
 
 function p4_touched_files() {
   # Result is already absolute paths to local files.
@@ -108,23 +126,39 @@ function p4_touched_files() {
 
 function git_touched_files() {
   # Get added/modified files that are tracked.
-  # Parse the short-form of git-status output.  See git help status.
-  # cut: extract the filename
+  # See git help diff.
   # readlink: resolve absolute path to eliminate sensitivity to "$PWD"
-  git status -s | grep "^[AM]" | cut -c 4- | xargs readlink -f
+  # Since 'git status' doesn't allow passing in a revision, use git diff instead
+  # of status. But that gives a root-relative path, so cd to the root first
+  (cd $(git rev-parse --show-toplevel) ;
+    git diff --name-only --diff-filter=AM "$baserev" | xargs readlink -f
+  )
+}
+
+function hg_touched_files() {
+  # Get added/modified files that are tracked.
+  # See hg help status
+  hg status --no-status -am --rev "$baserev" | xargs readlink -f
 }
 
 # Set commands based on version control system
 case "$rcs" in
   p4) touched_files=p4_touched_files
-      single_file_diff=(p4 diff -d-u "{}") ;;
+      # force use of traditional text 'diff', not some other UI-diff tool
+      single_file_diff=(P4DIFF=diff p4 diff -d-u "{}") ;;
   git) touched_files=git_touched_files
-      single_file_diff=(git diff -u --cached "{}") ;;
+      single_file_diff=(git diff -u --cached "$baserev" "{}") ;;
+  hg) touched_files=hg_touched_files
+      single_file_diff=(hg diff -g --rev "$baserev" "{}") ;;
   *) { msg "Unsupported version control system: $rcs" ; exit 1;} ;;
 esac
 
-# File extensions are currently hardcoded to Verilog files.
-files=($("$touched_files" | grep -e '\.sv$' -e '\.v$' -e '\.svh$' -e '\.vh$' ))
+# If files is unspecified, scan for all locally modified files.
+if [[ "${#files[@]}" == 0 ]]
+then
+  # File extensions are currently hardcoded to Verilog files.
+  files=($("$touched_files" | grep -e '\.sv$' -e '\.v$' -e '\.svh$' -e '\.vh$' ))
+fi
 
 # Note about --per-file-transform-flags:
 # The file name is stripped away to yield only line numbers, which is why

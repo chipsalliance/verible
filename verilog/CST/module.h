@@ -75,6 +75,14 @@ const verible::TokenInfo& GetInterfaceNameToken(const verible::Symbol&);
 const verible::SyntaxTreeNode* GetModulePortDeclarationList(
     const verible::Symbol& module_declaration);
 
+// Returns module name token after endmodule.
+// e.g. from "module foo(); endmodule: foo" returns the second "foo".
+const verible::TokenInfo* GetModuleEndLabel(const verible::Symbol&);
+
+// Returns the node spanning module's Item list.
+const verible::SyntaxTreeNode& GetModuleItemList(
+    const verible::Symbol& module_declaration);
+
 }  // namespace verilog
 
 #endif  // VERIBLE_VERILOG_CST_MODULE_H_

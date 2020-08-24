@@ -797,7 +797,8 @@ const TreeUnwrapperTestData kUnwrapModuleTestCases[] = {
                           N(1,                           //
                             L(1, {"always", "@", "*"}),  //
                             L(2, {"forever"}),           //
-                            L(3, {"love", "(", "u", ")", ";"})),
+                            N(3,                         //
+                              L(3, {"love", "("}), L(5, {"u", ")", ";"}))),
                           L(0, {"endmodule"})),
     },
 
@@ -1203,14 +1204,16 @@ const TreeUnwrapperTestData kUnwrapModuleTestCases[] = {
                 L(1, {"foo", "dut", "("}),
                 PortActualList(
                     3,  //
-                    L(3, {".",          "bus_in", "(",     "{", "brn", "::",
-                          "Num_blocks", "{",      "$bits", "(", "dbg", "::",
-                          "bus_t",      ")",      "'",     "(", "0",   ")",
-                          "}",          "}",      ")",     ","}),
-                    L(3, {".",        "bus_mid", "(",      "{", "brn", "::",
-                          "Num_bits", "{",       "$clog2", "(", "dbg", "::",
-                          "bus_t",    ")",       "'",      "(", "1",   ")",
-                          "}",        "}",       ")",      ","}),
+                    N(3,
+                      L(3, {".", "bus_in", "(", "{", "brn", "::", "Num_blocks",
+                            "{", "$bits", "("}),
+                      L(5, {"dbg", "::", "bus_t"}),
+                      L(3, {")", "'", "(", "0", ")", "}", "}", ")", ","})),
+                    N(3,
+                      L(3, {".", "bus_mid", "(", "{", "brn", "::", "Num_bits",
+                            "{", "$clog2", "("}),
+                      L(5, {"dbg", "::", "bus_t"}),
+                      L(3, {")", "'", "(", "1", ")", "}", "}", ")", ","})),
                     L(3, {".", "bus_out", "(", "out", ")"})),
                 L(1, {")", ";"})),
             L(0, {"endmodule"})),
@@ -2322,6 +2325,154 @@ const TreeUnwrapperTestData kUnwrapModuleTestCases[] = {
                             L(1, {"end"})),
                           L(0, {"endmodule"})),
     },
+
+    {
+        "module: simple initial statement with function call",
+        "module m;initial aa(bb,cc,dd,ee);endmodule",
+        ModuleDeclaration(0, L(0, {"module", "m", ";"}),
+                          N(1, L(1, {"initial"}),
+                            N(2, L(2, {"aa", "("}),
+                              N(4, L(4, {"bb", ","}), L(4, {"cc", ","}),
+                                L(4, {"dd", ","}), L(4, {"ee", ")", ";"})))),
+                          L(0, {"endmodule"})),
+    },
+    {
+        "module: expressions and function calls inside if-statement headers",
+        "module m;"
+        "initial begin "
+        "if (aa(bb) == cc(dd)) a = b;"
+        "if (xx()) b = a;"
+        "end "
+        "endmodule",
+        ModuleDeclaration(0, L(0, {"module", "m", ";"}),
+                          N(1, L(1, {"initial", "begin"}),
+                            N(2,
+                              N(2,
+                                N(2, L(2, {"if", "(", "aa", "("}), L(6, {"bb"}),
+                                  L(4, {")", "==", "cc", "("}), L(6, {"dd"}),
+                                  L(4, {")", ")"})),
+                                L(3, {"a", "=", "b", ";"})),
+                              N(2, L(2, {"if", "(", "xx", "(", ")", ")"}),
+                                L(3, {"b", "=", "a", ";"}))),
+                            L(1, {"end"})),
+                          L(0, {"endmodule"})),
+    },
+    {
+        "module: fuction with two arguments inside if-statement headers",
+        "module m;"
+        "initial begin "
+        "if (aa(bb, cc)) x = y;"
+        "end "
+        "endmodule",
+        ModuleDeclaration(
+            0, L(0, {"module", "m", ";"}),
+            N(1, L(1, {"initial", "begin"}),
+              N(2,
+                N(2, L(2, {"if", "(", "aa", "("}),
+                  N(6, L(6, {"bb", ","}), L(6, {"cc"})), L(4, {")", ")"})),
+                L(3, {"x", "=", "y", ";"})),
+              L(1, {"end"})),
+            L(0, {"endmodule"})),
+    },
+    {
+        "module: kMethodCallExtension inside if-statement headers",
+        "module m;"
+        "initial begin "
+        "if (aa.bb(cc)) x = y;"
+        "end "
+        "endmodule",
+        ModuleDeclaration(0, L(0, {"module", "m", ";"}),
+                          N(1, L(1, {"initial", "begin"}),
+                            N(2,
+                              N(2, L(2, {"if", "(", "aa", ".", "bb", "("}),
+                                L(6, {"cc"}), L(4, {")", ")"})),
+                              L(3, {"x", "=", "y", ";"})),
+                            L(1, {"end"})),
+                          L(0, {"endmodule"})),
+    },
+    {
+        "module: initial statement with object method call",
+        "module m; initial a.b(a,b,c); endmodule",
+        ModuleDeclaration(0, L(0, {"module", "m", ";"}),
+                          N(1, L(1, {"initial"}),
+                            N(2, L(2, {"a", ".", "b", "("}),
+                              N(4, L(4, {"a", ","}), L(4, {"b", ","}),
+                                L(4, {"c", ")", ";"})))),
+                          L(0, {"endmodule"})),
+    },
+    {
+        "module: initial statement with method call on indexed object",
+        "module m; initial a[i].b(a,b,c); endmodule",
+        ModuleDeclaration(0, L(0, {"module", "m", ";"}),
+                          N(1, L(1, {"initial"}),
+                            N(2, L(2, {"a", "[", "i", "]", ".", "b", "("}),
+                              N(4, L(4, {"a", ","}), L(4, {"b", ","}),
+                                L(4, {"c", ")", ";"})))),
+                          L(0, {"endmodule"})),
+    },
+    {
+        "module: initial statement with method call on function returned "
+        "object",
+        "module m; initial a(d,e,f).b(a,b,c); endmodule",
+        ModuleDeclaration(
+            0, L(0, {"module", "m", ";"}),
+            N(1, L(1, {"initial"}),
+              N(2, L(2, {"a", "("}),
+                N(4, L(4, {"d", ","}), L(4, {"e", ","}), L(4, {"f"})),
+                L(2, {")", ".", "b", "("}),
+                N(4, L(4, {"a", ","}), L(4, {"b", ","}),
+                  L(4, {"c", ")", ";"})))),
+            L(0, {"endmodule"})),
+    },
+    {
+        "module: initial statement with indexed access to function returned "
+        "object",
+        "module m; initial a(a,b,c)[i]; endmodule",
+        ModuleDeclaration(
+            0, L(0, {"module", "m", ";"}),
+            N(1, L(1, {"initial"}),
+              N(2, L(2, {"a", "("}),
+                N(4, L(4, {"a", ","}), L(4, {"b", ","}), L(4, {"c"})),
+                L(2, {")", "[", "i", "]", ";"}))),
+            L(0, {"endmodule"})),
+    },
+
+    {
+        "module: method call with no arguments on an object",
+        "module m; initial foo.bar();endmodule",
+        ModuleDeclaration(
+            0, L(0, {"module", "m", ";"}),
+            N(1, L(1, {"initial"}), L(2, {"foo", ".", "bar", "(", ")", ";"})),
+            L(0, {"endmodule"})),
+    },
+    {
+        "module: method call with one argument on an object",
+        "module m; initial foo.bar(aa);endmodule",
+        ModuleDeclaration(
+            0, L(0, {"module", "m", ";"}),
+            N(1, L(1, {"initial"}),
+              N(2, L(2, {"foo", ".", "bar", "("}), L(4, {"aa", ")", ";"}))),
+            L(0, {"endmodule"})),
+    },
+    {
+        "module: method call with two arguments on an object",
+        "module m; initial foo.bar(aa,bb);endmodule",
+        ModuleDeclaration(0, L(0, {"module", "m", ";"}),
+                          N(1, L(1, {"initial"}),
+                            N(2, L(2, {"foo", ".", "bar", "("}),
+                              N(4, L(4, {"aa", ","}), L(4, {"bb", ")", ";"})))),
+                          L(0, {"endmodule"})),
+    },
+    {
+        "module: method call with three arguments on an object",
+        "module m; initial foo.bar(aa,bb,cc);endmodule",
+        ModuleDeclaration(0, L(0, {"module", "m", ";"}),
+                          N(1, L(1, {"initial"}),
+                            N(2, L(2, {"foo", ".", "bar", "("}),
+                              N(4, L(4, {"aa", ","}), L(4, {"bb", ","}),
+                                L(4, {"cc", ")", ";"})))),
+                          L(0, {"endmodule"})),
+    },
 };
 
 // Test that TreeUnwrapper produces the correct UnwrappedLines from module tests
@@ -2783,10 +2934,10 @@ const TreeUnwrapperTestData kClassTestCases[] = {
                     L(1, {"endfunction"})),
                 TaskDeclaration(
                     1, TaskHeader(1, {"task", "print", "(", ")", ";"}),
-                    StatementList(
-                        2, L(2, {"begin"}),
-                        L(3, {"$write", "(", "\"Hello, world!\"", ")", ";"}),
-                        L(2, {"end"})),
+                    StatementList(2, L(2, {"begin"}),
+                                  N(3, L(3, {"$write", "("}),
+                                    L(5, {"\"Hello, world!\"", ")", ";"})),
+                                  L(2, {"end"})),
                     L(1, {"endtask"}))),
             L(0, {"endclass"})),
     },
@@ -2895,13 +3046,18 @@ const TreeUnwrapperTestData kClassTestCases[] = {
         "  parameter N = 2;\n"
         "  parameter reg P = '1;\n"
         "  localparam M = f(glb::arr[N]) + 1;\n"
+        "  localparam M = $f(glb::arr[N]) + 1;\n"
         "endclass",
         ClassDeclaration(
             0, L(0, {"class", "params_as_class_item", ";"}),
             ClassItemList(1, L(1, {"parameter", "N", "=", "2", ";"}),
                           L(1, {"parameter", "reg", "P", "=", "'1", ";"}),
-                          L(1, {"localparam", "M", "=", "f", "(", "glb", "::",
-                                "arr", "[", "N", "]", ")", "+", "1", ";"})),
+                          N(1, L(1, {"localparam", "M", "=", "f", "("}),
+                            L(3, {"glb", "::", "arr", "[", "N", "]"}),
+                            L(1, {")", "+", "1", ";"})),
+                          N(1, L(1, {"localparam", "M", "=", "$f", "("}),
+                            L(3, {"glb", "::", "arr", "[", "N", "]"}),
+                            L(1, {")", "+", "1", ";"}))),
             L(0, {"endclass"})),
     },
 
@@ -3837,6 +3993,16 @@ const TreeUnwrapperTestData kUnwrapPreprocessorTestCases[] = {
     },
 
     {
+        "macro call with argument including trailing EOL comment",
+        "`FOO(aa, bb, // cc\ndd)\n",
+        N(0, L(0, {"`FOO", "("}),
+          N(2,                             //
+            L(2, {"aa", ","}),             //
+            L(2, {"bb", ",", {"// cc"}}),  //
+            L(2, {"dd", ")"}))),
+    },
+
+    {
         "lone macro item",
         "`FOO\n",
         L(0, {"`FOO"}),
@@ -4507,7 +4673,7 @@ const TreeUnwrapperTestData kUnwrapTaskTestCases[] = {
         "$makeitso(x);"
         "endtask",
         TaskDeclaration(0, TaskHeader(0, {"task", "foo", ";"}),
-                        L(1, {"$makeitso", "(", "x", ")", ";"}),
+                        N(1, L(1, {"$makeitso", "("}), L(3, {"x", ")", ";"})),
                         L(0, {"endtask"})),
     },
 
@@ -4517,8 +4683,48 @@ const TreeUnwrapperTestData kUnwrapTaskTestCases[] = {
         "y = makeitso(x);"
         "endtask",
         TaskDeclaration(0, TaskHeader(0, {"task", "foo", ";"}),
-                        L(1, {"y", "=", "makeitso", "(", "x", ")", ";"}),
+                        N(1, L(1, {"y", "=", "makeitso", "("}), L(3, {"x"}),
+                          L(1, {")", ";"})),
                         L(0, {"endtask"})),
+    },
+
+    {
+        "task with system call inside if header",
+        "task t;"
+        "if (!$cast(ssssssssssssssss, vvvvvvvvvv, gggggggg)) begin "
+        "end "
+        "endtask : t",
+        TaskDeclaration(0, TaskHeader(0, {"task", "t", ";"}),
+                        N(1,
+                          N(1, L(1, {"if", "(", "!", "$cast", "("}),
+                            N(5, L(5, {"ssssssssssssssss", ","}),
+                              L(5, {"vvvvvvvvvv", ","}), L(5, {"gggggggg"})),
+                            L(3, {")", ")", "begin"})),
+                          L(1, {"end"})),
+                        L(0, {"endtask", ":", "t"})),
+    },
+
+    {
+        "task with nested subtask call and arguments passed by name",
+        "task t;"
+        "if (!$cast(ssssssssssssssss, vvvvvvvvvv.gggggggg("
+        ".ppppppp(ppppppp),"
+        ".yyyyy(\"xxxxxxxxxxxxx\")"
+        "))) begin "
+        "end "
+        "endtask : t",
+        TaskDeclaration(
+            0, TaskHeader(0, {"task", "t", ";"}),
+            N(1,
+              N(1, L(1, {"if", "(", "!", "$cast", "("}),
+                N(5, L(5, {"ssssssssssssssss", ","}),
+                  L(5, {"vvvvvvvvvv", ".", "gggggggg", "("}),
+                  N(7, L(7, {".", "ppppppp", "(", "ppppppp", ")", ","}),
+                    L(7, {".", "yyyyy", "(", "\"xxxxxxxxxxxxx\"", ")"})),
+                  L(5, {")"})),
+                L(3, {")", ")", "begin"})),
+              L(1, {"end"})),
+            L(0, {"endtask", ":", "t"})),
     },
 
     {
@@ -4721,11 +4927,12 @@ const TreeUnwrapperTestData kUnwrapTaskTestCases[] = {
         "$makeitso(x);"
         "end "
         "endtask",
-        TaskDeclaration(0, TaskHeader(0, {"task", "foo", ";"}),
-                        FlowControl(1, L(1, {"while", "(", "1", ")", "begin"}),
-                                    L(2, {"$makeitso", "(", "x", ")", ";"}),  //
-                                    L(1, {"end"})),
-                        L(0, {"endtask"})),
+        TaskDeclaration(
+            0, TaskHeader(0, {"task", "foo", ";"}),
+            FlowControl(1, L(1, {"while", "(", "1", ")", "begin"}),
+                        N(2, L(2, {"$makeitso", "("}), L(4, {"x", ")", ";"})),
+                        L(1, {"end"})),
+            L(0, {"endtask"})),
     },
 
     {
@@ -5607,7 +5814,8 @@ const TreeUnwrapperTestData kUnwrapFunctionTestCases[] = {
         "endfunction",
         FunctionDeclaration(
             0, FunctionHeader(0, {"function", "foo", ";"}),
-            L(1, {"y", "=", "twister", "(", "x", ",", "1", ")", ";"}),
+            N(1, L(1, {"y", "=", "twister", "("}),
+              N(3, L(3, {"x", ","}), L(3, {"1"})), L(1, {")", ";"})),
             L(0, {"endfunction"})),
     },
 
@@ -5620,8 +5828,11 @@ const TreeUnwrapperTestData kUnwrapFunctionTestCases[] = {
         FunctionDeclaration(
             0, FunctionHeader(0, {"function", "foo", ";"}),
             StatementList(
-                1, L(1, {"y", "=", "twister", "(", "x", ",", "1", ")", ";"}),
-                L(1, {"z", "=", "twister", "(", "x", ",", "2", ")", ";"})),
+                1,
+                N(1, L(1, {"y", "=", "twister", "("}),
+                  N(3, L(3, {"x", ","}), L(3, {"1"})), L(1, {")", ";"})),
+                N(1, L(1, {"z", "=", "twister", "("}),
+                  N(3, L(3, {"x", ","}), L(3, {"2"})), L(1, {")", ";"}))),
             L(0, {"endfunction"})),
     },
 
@@ -5637,11 +5848,14 @@ const TreeUnwrapperTestData kUnwrapFunctionTestCases[] = {
             0, FunctionHeader(0, {"function", "foo", ";"}),
             FlowControl(
                 1, L(1, {"foreach", "(", "x", "[", "i", "]", ")", "begin"}),
-                StatementList(2,
-                              L(2, {"y", "=", "twister", "(", "x", "[", "i",
-                                    "]", ",", "1", ")", ";"}),
-                              L(2, {"z", "=", "twister", "(", "x", "[", "i",
-                                    "]", ",", "2", ")", ";"})),
+                StatementList(
+                    2,
+                    N(2, L(2, {"y", "=", "twister", "("}),
+                      N(4, L(4, {"x", "[", "i", "]", ","}), L(4, {"1"})),
+                      L(2, {")", ";"})),
+                    N(2, L(2, {"z", "=", "twister", "("}),
+                      N(4, L(4, {"x", "[", "i", "]", ","}), L(4, {"2"})),
+                      L(2, {")", ";"}))),
                 L(1, {"end"})),
             L(0, {"endfunction"})),
     },
@@ -5655,8 +5869,9 @@ const TreeUnwrapperTestData kUnwrapFunctionTestCases[] = {
             0, FunctionHeader(0, {"function", "foo", ";"}),
             FlowControl(1,  //
                         L(1, {"foreach", "(", "x", "[", "i", "]", ")"}),
-                        L(2, {"y", "=", "twister", "(", "x", "[", "i", "]", ",",
-                              "1", ")", ";"})),
+                        N(2, L(2, {"y", "=", "twister", "("}),
+                          N(4, L(4, {"x", "[", "i", "]", ","}), L(4, {"1"})),
+                          L(2, {")", ";"}))),
             L(0, {"endfunction"})),
     },
 
@@ -6344,11 +6559,11 @@ const TreeUnwrapperTestData kUnwrapFunctionTestCases[] = {
         "function foo;"
         "while (e) coyote(sooper_genius); "
         "endfunction",
-        FunctionDeclaration(
-            0, FunctionHeader(0, {"function", "foo", ";"}),
-            FlowControl(1, L(1, {"while", "(", "e", ")"}),
-                        L(2, {"coyote", "(", "sooper_genius", ")", ";"})),
-            L(0, {"endfunction"})),
+        FunctionDeclaration(0, FunctionHeader(0, {"function", "foo", ";"}),
+                            FlowControl(1, L(1, {"while", "(", "e", ")"}),
+                                        N(2, L(2, {"coyote", "("}),
+                                          L(4, {"sooper_genius", ")", ";"}))),
+                            L(0, {"endfunction"})),
     },
 
     {
@@ -6362,7 +6577,8 @@ const TreeUnwrapperTestData kUnwrapFunctionTestCases[] = {
                         L(1, {"while", "(", "e", ")"}),
                         N(2,  //
                           L(2, {"while", "(", "e", ")"}),
-                          L(3, {"coyote", "(", "sooper_genius", ")", ";"}))),
+                          N(3, L(3, {"coyote", "("}),
+                            L(5, {"sooper_genius", ")", ";"})))),
             L(0, {"endfunction"})),
     },
 
@@ -6695,7 +6911,9 @@ const TreeUnwrapperTestData kUnwrapFunctionTestCases[] = {
                   L(1, {"function", "new", "("}),  //
                   L(3, {"string", "name", ")", ";"})),
                 StatementList(
-                    2, L(2, {"super", ".", "new", "(", "name", ")", ";"}),
+                    2,
+                    N(2, L(2, {"super", ".", "new", "("}),
+                      L(4, {"name", ")", ";"})),
                     FlowControl(
                         2,
                         L(2,
@@ -6755,6 +6973,81 @@ const TreeUnwrapperTestData kUnwrapFunctionTestCases[] = {
                   L(3, {"a", ";"}),                  //
                   L(2, {"}"}))),
               L(1, {"}", ";"})),
+            L(0, {"endfunction"})),
+    },
+
+    {
+        "function with function call inside if statement header",
+        "function foo;"
+        "if(aa(bb,cc));"
+        "endfunction",
+        FunctionDeclaration(
+            0, L(0, {"function", "foo", ";"}),
+            N(1, L(1, {"if", "(", "aa", "("}),
+              N(5, L(5, {"bb", ","}), L(5, {"cc"})), L(3, {")", ")", ";"})),
+            L(0, {"endfunction"})),
+    },
+
+    {
+        "function with function call inside if statement header and with "
+        "begin-end block",
+        "function foo;"
+        "if (aa(bb,cc,dd,ee))"
+        "begin end "
+        "endfunction",
+        FunctionDeclaration(0, L(0, {"function", "foo", ";"}),
+                            N(1,
+                              N(1, L(1, {"if", "(", "aa", "("}),
+                                N(5, L(5, {"bb", ","}), L(5, {"cc", ","}),
+                                  L(5, {"dd", ","}), L(5, {"ee"})),
+                                L(3, {")", ")", "begin"})),
+                              L(1, {"end"})),
+                            L(0, {"endfunction"})),
+    },
+
+    {
+        "function with kMethodCallExtension inside if statement header and "
+        "with begin-end block",
+        "function foo;"
+        "if (aa.bb(cc,dd,ee))"
+        "begin end "
+        "endfunction",
+        FunctionDeclaration(
+            0, L(0, {"function", "foo", ";"}),
+            N(1,
+              N(1, L(1, {"if", "(", "aa", ".", "bb", "("}),
+                N(5, L(5, {"cc", ","}), L(5, {"dd", ","}), L(5, {"ee"})),
+                L(3, {")", ")", "begin"})),
+              L(1, {"end"})),
+            L(0, {"endfunction"})),
+    },
+
+    {
+        "nested kMethodCallExtension calls - one level",
+        "function foo;"
+        "aa.bb(cc.dd(a1), ee.ff(a2));"
+        "endfunction",
+        FunctionDeclaration(0, L(0, {"function", "foo", ";"}),
+                            N(1, L(1, {"aa", ".", "bb", "("}),
+                              N(3, L(3, {"cc", ".", "dd", "("}), L(5, {"a1"}),
+                                L(3, {")", ","}), L(3, {"ee", ".", "ff", "("}),
+                                L(5, {"a2"}), L(3, {")", ")", ";"}))),
+                            L(0, {"endfunction"})),
+    },
+
+    {
+        "nested kMethodCallExtension calls - two level",
+        "function foo;"
+        "aa.bb(cc.dd(a1.b1(a2), b1), ee.ff(c1, d1));"
+        "endfunction",
+        FunctionDeclaration(
+            0, L(0, {"function", "foo", ";"}),
+            N(1, L(1, {"aa", ".", "bb", "("}),
+              N(3, L(3, {"cc", ".", "dd", "("}),
+                N(5, L(5, {"a1", ".", "b1", "("}), L(7, {"a2"}),
+                  L(5, {")", ","}), L(5, {"b1"})),
+                L(3, {")", ","}), L(3, {"ee", ".", "ff", "("}),
+                N(5, L(5, {"c1", ","}), L(5, {"d1"})), L(3, {")", ")", ";"}))),
             L(0, {"endfunction"})),
     },
 };
@@ -6851,6 +7144,20 @@ const TreeUnwrapperTestData kUnwrapEnumTestCases[] = {
         N(0, L(0, {"typedef", "enum", "logic", "{"}),
           EnumItemList(1, L(1, {"one", "=", "1", ","}),
                        L(1, {"two", "=", "2"})),
+          L(0, {"}", "foo_e", ";"})),
+    },
+
+    {
+        "Comment after enum member should attach",
+        "typedef enum logic {\n"
+        "one=1,   // foo\n"
+        "two,     // bar\n"
+        "three=3  // baz\n"
+        "} foo_e;",
+        N(0, L(0, {"typedef", "enum", "logic", "{"}),
+          EnumItemList(1, L(1, {"one", "=", "1", ",", "// foo"}),
+                       L(1, {"two", ",", "// bar"}),
+                       L(1, {"three", "=", "3", "// baz"})),
           L(0, {"}", "foo_e", ";"})),
     },
 };

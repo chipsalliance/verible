@@ -146,13 +146,10 @@ void TextStructureView::FilterTokens(const TokenFilterPredicate& keep) {
 }
 
 static void TerminateTokenStream(TokenSequence* tokens) {
-  if (!tokens->empty()) {
-    if (!tokens->back().isEOF()) {
-      const TokenInfo new_eof(
-          TK_EOF, absl::string_view(tokens->back().text().end(), 0));
-      tokens->push_back(new_eof);  // might cause re-alloc.
-    }
-  }
+  if (tokens->empty()) return;
+  if (tokens->back().isEOF()) return;
+  // push_back might cause re-alloc.
+  tokens->push_back(TokenInfo::EOFToken(tokens->back().text()));
 }
 
 void TextStructureView::FocusOnSubtreeSpanningSubstring(int left_offset,
@@ -187,7 +184,7 @@ void TextStructureView::TrimSyntaxTree(int first_token_offset,
 // reflects the right_offset.
 void TextStructureView::TrimTokensToSubstring(int left_offset,
                                               int right_offset) {
-  VLOG(2) << __FUNCTION__;
+  VLOG(2) << __FUNCTION__ << " [" << left_offset << ',' << right_offset << ')';
   // Find first token that starts at or after the offset.  (binary_search)
   // Find first token that starts beyond the syntax tree.  (binary_search)
   const auto view_trim_range =
@@ -202,10 +199,26 @@ void TextStructureView::TrimTokensToSubstring(int left_offset,
   const auto iter_trim_end = std::lower_bound(
       iter_trim_begin, tokens_view_.end(), view_trim_range.end());
 
-  // Delete the tokens that lie outside of the range:
-
   // Copy subset of tokens to new token sequence.
   TokenSequence trimmed_stream(view_trim_range.begin(), view_trim_range.end());
+
+  // If the last token straddles the end-of-range, (possibly due to lexical
+  // error), then trim its tail, bounded by right_offset.
+  if (!trimmed_stream.empty()) {
+    const absl::string_view substr(
+        contents_.substr(left_offset, right_offset - left_offset));
+    TokenInfo& last(trimmed_stream.back());
+    const int overhang = std::distance(substr.end(), last.text().end());
+    if (!IsSubRange(last.text(), substr)) {
+      VLOG(2) << "last token overhangs end by " << overhang << ": " << last;
+      absl::string_view trimmed_tail_token(last.text());
+      trimmed_tail_token.remove_suffix(overhang);
+      last.set_text(trimmed_tail_token);
+      // TODO(fangism): Should the token enum be set to some error value,
+      // if it is not already an error value?
+    }
+  }
+
   TerminateTokenStream(&trimmed_stream);  // Append EOF token.
 
   // Recalculate iterators for new token stream view, pointing into new

@@ -39,27 +39,6 @@
 
 namespace verible {
 
-static int GetPartitionNodeEnum(const TokenPartitionTree& partition) {
-  const Symbol* origin = partition.Value().Origin();
-  return SymbolCastToNode(*origin).Tag().tag;
-}
-
-static bool VerifyRowsOriginalNodeTypes(
-    const std::vector<TokenPartitionIterator>& rows) {
-  VLOG(1) << __FUNCTION__;
-  const auto first_node_type = GetPartitionNodeEnum(*rows.front());
-  for (const auto& row : verible::make_range(rows.begin() + 1, rows.end())) {
-    const auto node_type = GetPartitionNodeEnum(*row);
-    if (node_type != first_node_type) {
-      VLOG(2) << "Cannot format-align rows of different syntax tree node "
-                 "types.  First: "
-              << first_node_type << ", Other: " << node_type;
-      return false;
-    }
-  }
-  return true;
-}
-
 static int EffectiveCellWidth(const FormatTokenRange& tokens) {
   if (tokens.empty()) return 0;
   VLOG(2) << __FUNCTION__;
@@ -434,8 +413,10 @@ static void AlignFilteredRows(
   VLOG(1) << __FUNCTION__;
   // Alignment requires 2+ rows.
   if (rows.size() <= 1) return;
-  // Make sure all rows' nodes have the same type.
-  if (!VerifyRowsOriginalNodeTypes(rows)) return;
+
+  // Rows validation:
+  // In many (but not all) cases, all rows' nodes have the same type.
+  // TODO(fangism): plumb through an optional verification function.
 
   VLOG(2) << "Walking syntax subtrees for each row";
   ColumnSchemaAggregator column_schema;
@@ -677,6 +658,44 @@ void TabularAlignTokens(TokenPartitionTree* partition_ptr,
                         column_limit);
   }
   VLOG(1) << "end of " << __FUNCTION__;
+}
+
+std::vector<TokenPartitionRange> GetPartitionAlignmentSubranges(
+    const TokenPartitionRange& partitions,
+    const std::function<AlignmentGroupAction(const TokenPartitionTree&)>&
+        partition_selector,
+    int min_match_count) {
+  std::vector<TokenPartitionRange> result;
+
+  // Grab ranges of consecutive data declarations with >= 2 elements.
+  int match_count = 0;
+  auto last_range_start = partitions.begin();
+  for (auto iter = last_range_start; iter != partitions.end(); ++iter) {
+    switch (partition_selector(*iter)) {
+      case AlignmentGroupAction::kIgnore:
+        continue;
+      case AlignmentGroupAction::kMatch: {
+        if (match_count == 0) {
+          // This is the start of a new range of interest.
+          last_range_start = iter;
+        }
+        ++match_count;
+        break;
+      }
+      case AlignmentGroupAction::kNoMatch: {
+        if (match_count >= min_match_count) {
+          result.emplace_back(last_range_start, iter);
+        }
+        match_count = 0;  // reset
+        break;
+      }
+    }  // switch
+  }    // for
+  // Flush out the last range.
+  if (match_count >= min_match_count) {
+    result.emplace_back(last_range_start, partitions.end());
+  }
+  return result;
 }
 
 }  // namespace verible

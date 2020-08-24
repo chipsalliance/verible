@@ -111,14 +111,14 @@ void ModuleFilenameRule::Lint(const TextStructureView& text_structure,
     // If we allow for dashes, let's first convert them back to underscore.
     std::replace(unitname.begin(), unitname.end(), '-', '_');
   }
-  auto matching_module_iter =
-      std::find_if(module_cleaned.begin(), module_cleaned.end(),
-                   [=](const verible::TreeSearchMatch& m) {
-                     return ModuleNameMatches(*m.match, unitname);
-                   });
 
   // If there is at least one module with a matching name, suppress finding.
-  if (matching_module_iter != module_cleaned.end()) return;
+  if (std::any_of(module_cleaned.begin(), module_cleaned.end(),
+                  [=](const verible::TreeSearchMatch& m) {
+                    return ModuleNameMatches(*m.match, unitname);
+                  })) {
+    return;
+  }
 
   // Only report a violation on the last module declaration.
   const auto& last_module_id = GetModuleNameToken(*module_cleaned.back().match);

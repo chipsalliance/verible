@@ -387,11 +387,13 @@ std::ostream& RawSymbolPrinter::auto_indent() {
 }
 
 void RawSymbolPrinter::Visit(const SyntaxTreeLeaf& leaf) {
-  leaf.get().ToStream(auto_indent()) << std::endl;
+  leaf.get().ToStream(auto_indent() << "Leaf @" << child_rank_ << ' ')
+      << std::endl;
 }
 
 void PrettyPrinter::Visit(const SyntaxTreeLeaf& leaf) {
-  leaf.get().ToStream(auto_indent(), context_) << std::endl;
+  leaf.get().ToStream(auto_indent() << "Leaf @" << child_rank_ << ' ', context_)
+      << std::endl;
 }
 
 void RawSymbolPrinter::Visit(const SyntaxTreeNode& node) {
@@ -399,12 +401,17 @@ void RawSymbolPrinter::Visit(const SyntaxTreeNode& node) {
   const int tag = node.Tag().tag;
   if (tag != 0) tag_info = absl::StrCat("(tag: ", tag, ") ");
 
-  auto_indent() << "Node " << tag_info << "{" << std::endl;
+  auto_indent() << "Node @" << child_rank_ << ' ' << tag_info << "{"
+                << std::endl;
 
   {
-    ValueSaver<int> value_saver(&indent_, indent_ + 2);
+    const ValueSaver<int> value_saver(&indent_, indent_ + 2);
+    const ValueSaver<int> rank_saver(&child_rank_, 0);
     for (const auto& child : node.children()) {
       if (child) child->Accept(this);
+      // Note that nullptrs will appear as gaps in the child rank sequence.
+      // nullptr nodes in tail position are not shown.
+      ++child_rank_;
     }
   }
   auto_indent() << "}" << std::endl;

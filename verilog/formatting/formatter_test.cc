@@ -229,6 +229,17 @@ static const std::initializer_list<FormatterTestCase> kFormatterTestCases = {
         "`define FOO \\\n"
         " 1\n"  // TODO(b/141517267): Reflowing macro definitions
     },
+    {"`define FOO    \\\n"  // multiline macro definition
+     "        b\n",
+     "`define FOO \\\n"  // no need to align '\'
+     "        b\n"},
+    {"`define FOO    \\\n"  // multiline macro definition
+     "        a +    \\\n"
+     "        b\n",
+     "`define FOO    \\\n"  // preserve spacing before '\'
+     "        a +    \\\n"  // to stay aligned with this one
+     "        b\n"},
+    {"    // comment with backslash\\\n", "// comment with backslash\\\n"},
     {// macro with MacroArg tokens as arguments
      "`FOOOOOO(\nbar1...\n,\nbar2...\n,\nbar3...\n,\nbar4\n)\n",
      "`FOOOOOO(bar1..., bar2..., bar3...,\n"
@@ -392,6 +403,16 @@ static const std::initializer_list<FormatterTestCase> kFormatterTestCases = {
      "class foo;\n"
      "  `FOO(`BAR(baz1, baz2));\n"
      "endclass\n"},
+    {// multi-line macro arg "aaaa..." should start on its own line,
+     // even if its first line would fit under the column limit
+     "`CHECK_FATAL(rd_tr,\n"
+     "             aaaa     == zzz;\n"
+     "             ggg      == vv::w;,\n"
+     "             \"Failed to ..........\")\n",
+     "`CHECK_FATAL(rd_tr,\n"
+     "             aaaa     == zzz;\n"
+     "             ggg      == vv::w;,\n"
+     "             \"Failed to ..........\")\n"},
 
     // `uvm macros indenting
     {
@@ -546,6 +567,10 @@ static const std::initializer_list<FormatterTestCase> kFormatterTestCases = {
      "  `uvm_field_int(cc, UVM_DEFAULT)\n"
      "`uvm_component_utils_end\n"},
 
+    // top-level directive test cases
+    {"`timescale  1ns/1ps\n",  //
+     "`timescale 1ns / 1ps\n"},
+
     // parameter test cases
     {
         "  parameter  int   foo=0 ;",
@@ -558,6 +583,12 @@ static const std::initializer_list<FormatterTestCase> kFormatterTestCases = {
     {
         "  parameter  int   foo=bar [ a+b ] ;",  // binary inside index expr
         "parameter int foo = bar[a + b];\n",
+    },
+    {
+        // with line continuations
+        "  parameter  \\\nint   \\\nfoo=a+ \\\nb ;",
+        "parameter\\\n    int\\\n    foo = a +\\\n    b;\n",
+        // TODO(fangism): should text following a line continuation hang-indent?
     },
     // unary prefix expressions
     {
@@ -1236,6 +1267,159 @@ static const std::initializer_list<FormatterTestCase> kFormatterTestCases = {
      ");\n"
      "endmodule : foo\n"},
 
+    // module local variable/net declaration alignment test cases
+    {"module m;\n"
+     "logic a;\n"
+     "bit b;\n"
+     "endmodule\n",
+     "module m;\n"
+     "  logic a;\n"
+     "  bit   b;\n"
+     "endmodule\n"},
+    {"module m;\n"
+     "logic a;\n"
+     "bit b;\n"
+     "initial e=f;\n"  // separates alignment groups
+     "wire c;\n"
+     "bit d;\n"
+     "endmodule\n",
+     "module m;\n"
+     "  logic a;\n"
+     "  bit   b;\n"
+     "  initial e = f;\n"  // separates alignment groups
+     "  wire c;\n"
+     "  bit  d;\n"
+     "endmodule\n"},
+    {"module m;\n"
+     "// hello a\n"
+     "logic a;\n"
+     "// hello b\n"
+     "bit b;\n"
+     "endmodule\n",
+     "module m;\n"
+     "  // hello a\n"
+     "  logic a;\n"
+     "  // hello b\n"
+     "  bit   b;\n"  // aligned across comments
+     "endmodule\n"},
+    {"module m;\n"
+     "// hello a\n"
+     "logic a;\n"
+     "\n"  // extra blank line
+     "// hello b\n"
+     "bit b;\n"
+     "endmodule\n",
+     "module m;\n"
+     "  // hello a\n"
+     "  logic a;\n"
+     "\n"              // extra blank line
+     "  // hello b\n"  // aligned across blank lines
+     "  bit   b;\n"    // aligned across comments
+     "endmodule\n"},
+    {"module m;\n"
+     "logic [x:y]a;\n"  // packed dimensions
+     "bit b;\n"
+     "endmodule\n",
+     "module m;\n"
+     "  logic [x:y] a;\n"
+     "  bit         b;\n"
+     "endmodule\n"},
+    {"module m;\n"
+     "logic a;\n"
+     "bit [pp:qq]b;\n"  // packed dimensions
+     "endmodule\n",
+     "module m;\n"
+     "  logic         a;\n"
+     "  bit   [pp:qq] b;\n"
+     "endmodule\n"},
+    {"module m;\n"
+     "logic [x:y]a;\n"  // packed dimensions
+     "bit [pp:qq]b;\n"  // packed dimensions
+     "endmodule\n",
+     "module m;\n"
+     "  logic [  x:y] a;\n"
+     "  bit   [pp:qq] b;\n"
+     "endmodule\n"},
+    {"module m;\n"
+     "logic [x:y]a;\n"         // packed dimensions
+     "wire [pp:qq] [e:f]b;\n"  // packed dimensions, 2D
+     "endmodule\n",
+     "module m;\n"
+     "  logic [  x:y]      a;\n"
+     "  wire  [pp:qq][e:f] b;\n"
+     "endmodule\n"},
+    {"module m;\n"
+     "logic a [x:y];\n"  // unpacked dimensions
+     "bit bbb;\n"
+     "endmodule\n",
+     "module m;\n"
+     "  logic a   [x:y];\n"
+     "  bit   bbb;\n"
+     "endmodule\n"},
+    {"module m;\n"
+     "logic aaa ;\n"
+     "wire w [yy:zz];\n"  // unpacked dimensions
+     "endmodule\n",
+     "module m;\n"
+     "  logic aaa;\n"
+     "  wire  w   [yy:zz];\n"
+     "endmodule\n"},
+    {"module m;\n"
+     "logic aaa [s:t] ;\n"  // unpacked dimensions
+     "wire w [yy:zz];\n"    // unpacked dimensions
+     "endmodule\n",
+     "module m;\n"
+     "  logic aaa[  s:t];\n"
+     "  wire  w  [yy:zz];\n"
+     "endmodule\n"},
+    {"module m;\n"
+     "logic aaa [s:t] ;\n"     // unpacked dimensions
+     "wire w [yy:zz][u:v];\n"  // unpacked dimensions, 2D
+     "endmodule\n",
+     "module m;\n"
+     "  logic aaa[  s:t];\n"
+     "  wire  w  [yy:zz] [u:v];\n"
+     // TODO(b/165323560): unwanted space between unpacked dimensions of 'w'
+     "endmodule\n"},
+    {"module m;\n"
+     "qqq::rrr s;\n"     // user-defined type
+     "wire [pp:qq]w;\n"  // packed dimensions
+     "endmodule\n",
+     "module m;\n"
+     "  qqq::rrr         s;\n"
+     "  wire     [pp:qq] w;\n"
+     "endmodule\n"},
+    {"module m;\n"
+     "qqq#(rr) s;\n"     // parameterized type
+     "wire [pp:qq]w;\n"  // packed dimensions
+     "endmodule\n",
+     "module m;\n"
+     "  qqq #(rr)         s;\n"
+     "  wire      [pp:qq] w;\n"
+     "endmodule\n"},
+    {"module m;\n"
+     "logic a;\n"
+     "bit b;\n"
+     "my_module  my_inst( );\n"  // module instance separates alignment groups
+     "wire c;\n"
+     "bit d;\n"
+     "endmodule\n",
+     "module m;\n"
+     "  logic a;\n"  // these two are aligned
+     "  bit   b;\n"
+     "  my_module my_inst ();\n"  // module instance separates alignment groups
+     "  wire c;\n"                // these two are aligned
+     "  bit  d;\n"
+     "endmodule\n"},
+    {"module m;\n"
+     "logic aaa = expr1;\n"
+     "bit b = expr2;\n"
+     "endmodule\n",
+     "module m;\n"
+     "  logic aaa = expr1;\n"
+     "  bit   b = expr2;\n"  // no alignment at '=' yet
+     "endmodule\n"},
+
     {"module foo #(int x,int y) ;endmodule:foo\n",  // parameters
      "module foo #(\n"
      "    int x,\n"
@@ -1653,7 +1837,7 @@ static const std::initializer_list<FormatterTestCase> kFormatterTestCases = {
     {"  module bar;wire foo;reg bear;endmodule\n",
      "module bar;\n"
      "  wire foo;\n"
-     "  reg bear;\n"
+     "  reg  bear;\n"  // aligned
      "endmodule\n"},
     {" module bar;initial\nbegin a<=b . c ; end endmodule\n",
      "module bar;\n"
@@ -2983,6 +3167,22 @@ static const std::initializer_list<FormatterTestCase> kFormatterTestCases = {
      "  A = 0,\n"
      "  B = 1\n"
      "} foo_t;\n"},
+    {// With comments on same line as enum value
+     "typedef enum logic\t{ A=0, // foo\n"
+     "B,// bar\n"
+     "`ifndef DO_PANIC\n"
+     "C=42,// answer\n"
+     "`endif\n"
+     "D=3    // baz\n"
+     "}foo_t;",
+     "typedef enum logic {\n"
+     "  A = 0,  // foo\n"
+     "  B,  // bar\n"
+     "`ifndef DO_PANIC\n"
+     "  C = 42,  // answer\n"
+     "`endif\n"
+     "  D = 3  // baz\n"
+     "} foo_t;\n"},
     {// with scalar dimensions
      "typedef enum logic[2]\t{ A=0, B=1 }foo_t;",
      "typedef enum logic [2] {\n"
@@ -3505,13 +3705,110 @@ static const std::initializer_list<FormatterTestCase> kFormatterTestCases = {
      "function void warranty;\n"
      "  foo.bar = fancyfunction(\n"
      "      aaaaaaaa.bbbbbbb,\n"
-     // TODO(fangism): ccccccccc is indented too much because it thinks it is
-     // part of a run-on string of tokens starting with aaaaaaaa.
-     // We need to inform that it should be on the same level as aaaaaaaa as a
-     // sibling item within the same balance group.
-     // Right now, there is no notion of sibling items within a balance group.
-     "          ccccccccc.ddddddddd);\n"
+     "      ccccccccc.ddddddddd\n"
+     "  );\n"
      "endfunction : warranty\n"},
+
+    // Group of tests testing partitioning of arguments inside function calls
+    {// function with function call inside if statement header
+     "function foo;if(aa(bb,cc));endfunction\n",
+     "function foo;\n"
+     "  if (aa(bb, cc));\n"
+     "endfunction\n"},
+    {// function with function call inside if statement header and with
+     // begin-end block
+     "function foo;if (aa(bb,cc,dd,ee))begin end endfunction\n",
+     "function foo;\n"
+     "  if (aa(bb, cc, dd, ee)) begin\n"
+     "  end\n"
+     "endfunction\n"},
+    {// function with kMethodCallExtension inside if statement header and with
+     // begin-end block
+     "function foo;if (aa.bb(cc,dd,ee))begin end endfunction\n",
+     "function foo;\n"
+     "  if (aa.bb(cc, dd, ee)) begin\n"
+     "  end\n"
+     "endfunction\n"},
+    {// nested kMethodCallExtension calls - one level
+     "function foo;aa.bb(cc.dd(a1), ee.ff(a2));endfunction\n",
+     "function foo;\n"
+     "  aa.bb(cc.dd(a1), ee.ff(a2));\n"
+     "endfunction\n"},
+    {// nested kMethodCallExtension calls - two level
+     "function foo;aa.bb(cc.dd(a1.b1(a2), b1), ee.ff(c1, d1));endfunction\n",
+     "function foo;\n"
+     "  aa.bb(cc.dd(a1.b1(a2), b1), ee.ff(\n"
+     "        c1, d1));\n"
+     "endfunction\n"},
+
+    {// simple initial statement with function call
+     "module m;initial aa(bb,cc,dd,ee);endmodule\n",
+     "module m;\n"
+     "  initial aa(bb, cc, dd, ee);\n"
+     "endmodule\n"},
+    {// expressions and function calls inside if-statement headers
+     "module m;initial begin if(aa(bb)==cc(dd))a=b;if (xx()) b = a;end "
+     "endmodule\n",
+     "module m;\n"
+     "  initial begin\n"
+     "    if (aa(bb) == cc(dd)) a = b;\n"
+     "    if (xx()) b = a;\n"
+     "  end\n"
+     "endmodule\n"},
+    {// fuction with two arguments inside if-statement headers
+     "module\nm;initial\nbegin\nif(aa(bb,cc))x=y;end\nendmodule\n",
+     "module m;\n"
+     "  initial begin\n"
+     "    if (aa(bb, cc)) x = y;\n"
+     "  end\n"
+     "endmodule\n"},
+    {// kMethodCallExtension inside if-statement headers
+     "module m;initial begin if (aa.bb(cc)) x = y;end endmodule",
+     "module m;\n"
+     "  initial begin\n"
+     "    if (aa.bb(cc)) x = y;\n"
+     "  end\n"
+     "endmodule\n"},
+    {// initial statement with object method call
+     "module m; initial a.b(a,b,c); endmodule\n",
+     "module m;\n"
+     "  initial a.b(a, b, c);\n"
+     "endmodule\n"},
+    {// initial statement with method call on indexed object
+     "module m; initial a[i].b(a,b,c); endmodule\n",
+     "module m;\n"
+     "  initial a[i].b(a, b, c);\n"
+     "endmodule\n"},
+    {// initial statement with method call on function returned object
+     "module m; initial a(d,e,f).b(a,b,c); endmodule\n",
+     "module m;\n"
+     "  initial a(d, e, f).b(a, b, c);\n"
+     "endmodule\n"},
+    {// initial statement with indexed access to function returned object
+     "module m; initial a(a,b,c)[i]; endmodule\n",
+     "module m;\n"
+     "  initial a(a, b, c) [i];\n"
+     "endmodule\n"},
+    {// method call with no arguments on an object
+     "module m; initial foo.bar();endmodule\n",
+     "module m;\n"
+     "  initial foo.bar();\n"
+     "endmodule\n"},
+    {// method call with one argument on an object
+     "module m; initial foo.bar(aa);endmodule\n",
+     "module m;\n"
+     "  initial foo.bar(aa);\n"
+     "endmodule\n"},
+    {// method call with two arguments on an object
+     "module m; initial foo.bar(aa,bb);endmodule\n",
+     "module m;\n"
+     "  initial foo.bar(aa, bb);\n"
+     "endmodule\n"},
+    {// method call with three arguments on an object
+     "module m; initial foo.bar(aa,bb,cc);endmodule\n",
+     "module m;\n"
+     "  initial foo.bar(aa, bb, cc);\n"
+     "endmodule\n"},
 
     {
         // This tests for if-statements with null statements
@@ -4606,6 +4903,39 @@ static const std::initializer_list<FormatterTestCase> kFormatterTestCases = {
         "task t;\n"
         "  if (r == t) a.b(c);\n"
         "endtask\n",
+    },
+    {
+        // task with system call inside if header
+        "task t;"
+        "if (!$cast(ssssssssssssssss,vvvvvvvvvv,gggggggg))begin end endtask:t",
+        "task t;\n"
+        "  if (!$cast(\n"
+        "          ssssssssssssssss,\n"
+        "          vvvvvvvvvv,\n"
+        "          gggggggg\n"
+        "      )) begin\n"
+        "  end\n"
+        "endtask : t\n",
+    },
+    {
+        // task with nested subtask call and arguments passed by name
+        "task t;"
+        "if (!$cast(ssssssssssssssss, vvvvvvvvvv.gggggggg("
+        ".ppppppp(ppppppp),"
+        ".yyyyy(\"xxxxxxxxxxxxx\")"
+        "))) begin "
+        "end "
+        "endtask : t",
+        "task t;\n"
+        "  if (!$cast(\n"
+        "          ssssssssssssssss,\n"
+        "          vvvvvvvvvv.gggggggg(\n"
+        "              .ppppppp(ppppppp),\n"
+        "              .yyyyy(\"xxxxxxxxxxxxx\")\n"
+        "          )\n"
+        "      )) begin\n"
+        "  end\n"
+        "endtask : t\n",
     },
 
     {
@@ -6256,7 +6586,8 @@ TEST(FormatterEndToEndTest, VerilogFormatTest) {
         FormatVerilog(test_case.input, "<filename>", style, stream);
     // Require these test cases to be valid.
     EXPECT_OK(status) << status.message();
-    EXPECT_EQ(stream.str(), test_case.expected) << "code:\n" << test_case.input;
+    EXPECT_EQ(stream.str(), std::string(test_case.expected)) << "code:\n"
+                                                             << test_case.input;
   }
 }
 
@@ -6325,7 +6656,7 @@ TEST(FormatterEndToEndTest, DisableModuleInstantiations) {
        "  endmodule\n",
        "module m;\n"
        "  logic xyz;\n"  // indentation still takes effect
-       "  wire abc;\n"   // indentation still takes effect
+       "  wire  abc;\n"  // aligned too
        "endmodule\n"},
       {"  function f  ;\t\n"
        " endfunction\n",
@@ -6367,6 +6698,51 @@ TEST(FormatterEndToEndTest, DisableModuleInstantiations) {
   style.indentation_spaces = 2;
   style.wrap_spaces = 4;
   style.format_module_instantiations = false;
+  for (const auto& test_case : kTestCases) {
+    VLOG(1) << "code-to-format:\n" << test_case.input << "<EOF>";
+    std::ostringstream stream;
+    const auto status =
+        FormatVerilog(test_case.input, "<filename>", style, stream);
+    // Require these test cases to be valid.
+    EXPECT_OK(status) << status.message();
+    EXPECT_EQ(stream.str(), test_case.expected) << "code:\n" << test_case.input;
+  }
+}
+
+TEST(FormatterEndToEndTest, DisableTryWrapLongLines) {
+  const std::initializer_list<FormatterTestCase> kTestCases = {
+      {"", ""},
+      {"\n", "\n"},
+      {"\n\n", "\n\n"},
+      {"module  m  ;\t\n"
+       "  endmodule\n",
+       "module m;\n"
+       "endmodule\n"},
+      {"module  m(   ) ;\n"
+       "  endmodule\n",
+       "module m ();\n"
+       "endmodule\n"},
+      {"module  m(   ) ;\n"
+       "initial assign a = b;\n"
+       "  endmodule\n",
+       "module m ();\n"
+       "  initial assign a = b;\n"
+       "endmodule\n"},
+      {"module  m(   ) ;\n"
+       "initial assign a = {never +gonna +give +you +up,\n"  // over 40 columns,
+                                                             // give up
+       "never + gonna +Let +you +down};\n"
+       "  endmodule\n",
+       "module m ();\n"
+       "  initial assign a = {never +gonna +give +you +up,\n"
+       "never + gonna +Let +you +down};\n"
+       "endmodule\n"},
+  };
+  FormatStyle style;
+  style.column_limit = 40;
+  style.indentation_spaces = 2;
+  style.wrap_spaces = 4;
+  style.try_wrap_long_lines = false;
   for (const auto& test_case : kTestCases) {
     VLOG(1) << "code-to-format:\n" << test_case.input << "<EOF>";
     std::ostringstream stream;
@@ -6588,7 +6964,8 @@ TEST(FormatterEndToEndTest, SelectLines) {
     std::ostringstream stream;
     const auto status = FormatVerilog(test_case.input, "<filename>", style,
                                       stream, test_case.lines);
-    EXPECT_OK(status) << status.message();
+    EXPECT_OK(status) << status.message() << '\n'
+                      << "Lines: " << test_case.lines;
     EXPECT_EQ(stream.str(), test_case.expected)
         << "code:\n"
         << test_case.input << "\nlines: " << test_case.lines;

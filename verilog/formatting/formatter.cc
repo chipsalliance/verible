@@ -25,6 +25,8 @@
 #include "common/formatting/line_wrap_searcher.h"
 #include "common/formatting/token_partition_tree.h"
 #include "common/formatting/unwrapped_line.h"
+#include "common/formatting/verification.h"
+#include "common/strings/diff.h"
 #include "common/strings/line_column_map.h"
 #include "common/strings/position.h"
 #include "common/strings/range.h"
@@ -35,6 +37,7 @@
 #include "common/util/interval.h"
 #include "common/util/iterator_range.h"
 #include "common/util/logging.h"
+#include "common/util/process.h"
 #include "common/util/range.h"
 #include "common/util/spacer.h"
 #include "common/util/vector_tree.h"
@@ -147,6 +150,50 @@ Status VerifyFormatting(const verible::TextStructureView& text_structure,
   return absl::OkStatus();
 }
 
+static Status ReformatVerilogIncrementally(absl::string_view original_text,
+                                           absl::string_view formatted_text,
+                                           absl::string_view filename,
+                                           const FormatStyle& style,
+                                           std::ostream& reformat_stream,
+                                           const ExecutionControl& control) {
+  // Differences from the first formatting.
+  const verible::LineDiffs formatting_diffs(original_text, formatted_text);
+  // Added lines will be re-applied to incremental re-formatting.
+  LineNumberSet formatted_lines(
+      verible::DiffEditsToAddedLineNumbers(formatting_diffs.edits));
+  // Even if no line were changed by formatting, need to make sure that
+  // reformatting does not accidentally reformat the whole file by
+  // adding an out-of-range lines interval.  This effectively disables
+  // re-formatting on the whole file unless line ranges are specified.
+  formatted_lines.Add(formatting_diffs.after_lines.size() + 1);
+  VLOG(1) << "formatted changed lines: " << formatted_lines;
+  return FormatVerilog(formatted_text, filename, style, reformat_stream,
+                       formatted_lines, control);
+}
+
+static Status ReformatVerilog(absl::string_view original_text,
+                              absl::string_view formatted_text,
+                              absl::string_view filename,
+                              const FormatStyle& style,
+                              std::ostream& reformat_stream,
+                              const LineNumberSet& lines,
+                              const ExecutionControl& control) {
+  // Disable reformat check to terminate recursion.
+  ExecutionControl convergence_control(control);
+  convergence_control.verify_convergence = false;
+
+  if (lines.empty()) {
+    // format whole file
+    return FormatVerilog(formatted_text, filename, style, reformat_stream,
+                         lines, convergence_control);
+  } else {
+    // reformat incrementally
+    return ReformatVerilogIncrementally(original_text, formatted_text, filename,
+                                        style, reformat_stream,
+                                        convergence_control);
+  }
+}
+
 Status FormatVerilog(absl::string_view text, absl::string_view filename,
                      const FormatStyle& style, std::ostream& formatted_stream,
                      const LineNumberSet& lines,
@@ -206,33 +253,27 @@ Status FormatVerilog(absl::string_view text, absl::string_view filename,
   // When formatting whole-file (no --lines are specified), ensure that
   // the formatting transformation is convergent after one iteration.
   //   format(format(text)) == format(text)
-  if (control.verify_convergence && lines.empty()) {
-    // Disable reformat check to terminate recursion.
-    ExecutionControl convergence_control(control);
-    convergence_control.verify_convergence = false;
+  if (control.verify_convergence) {
     std::ostringstream reformat_stream;
-    const Status reformat_status =
-        FormatVerilog(formatted_text, filename, style, reformat_stream, lines,
-                      convergence_control);
+    const auto reformat_status = ReformatVerilog(
+        text, formatted_text, filename, style, reformat_stream, lines, control);
     if (!reformat_status.ok()) {
       return reformat_status;
     }
-    if (reformat_stream.str() != formatted_text) {
-      return absl::DataLossError(
-          "Re-formatted text does not match formatted text; "
-          "formatting failed to converge!  Please file a bug.");
-    }
+    const std::string& reformatted_text(reformat_stream.str());
+    return verible::ReformatMustMatch(text, lines, formatted_text,
+                                      reformatted_text);
   }
-
   return format_status;
 }
 
 // Decided at each node in UnwrappedLine partition tree whether or not
 // it should be expanded or unexpanded.
-static void DeterminePartitionExpansion(partition_node_type* node,
-                                        absl::string_view full_text,
-                                        const ByteOffsetSet& disabled_ranges,
-                                        const FormatStyle& style) {
+static void DeterminePartitionExpansion(
+    partition_node_type* node,
+    std::vector<verible::PreFormatToken>* preformatted_tokens,
+    absl::string_view full_text, const ByteOffsetSet& disabled_ranges,
+    const FormatStyle& style) {
   auto& node_view = node->Value();
   const auto& children = node->Children();
 
@@ -246,11 +287,10 @@ static void DeterminePartitionExpansion(partition_node_type* node,
   // If any children are expanded, then this node must be expanded,
   // regardless of the UnwrappedLine's chosen policy.
   // Thus, this function must be executed with a post-order traversal.
-  const auto iter = std::find_if(children.begin(), children.end(),
-                                 [](const partition_node_type& child) {
-                                   return child.Value().IsExpanded();
-                                 });
-  if (iter != children.end()) {
+  if (std::any_of(children.begin(), children.end(),
+                  [](const partition_node_type& child) {
+                    return child.Value().IsExpanded();
+                  })) {
     VLOG(3) << "Child forces parent to expand.";
     node_view.Expand();
     return;
@@ -306,8 +346,21 @@ static void DeterminePartitionExpansion(partition_node_type* node,
         VLOG(3) << "Fits, un-expanding.";
         node_view.Unexpand();
       } else {
-        VLOG(3) << "Does not fit, expanding.";
-        node_view.Expand();
+        if (style.try_wrap_long_lines) {
+          VLOG(3) << "Does not fit, expanding.";
+          node_view.Expand();
+        } else {
+          // give-up early and preserve original spacing
+          VLOG(3) << "Does not fit, preserving.";
+          node_view.Unexpand();
+          const auto range = node_view.Value().TokensRange();
+          const ByteOffsetSet new_disable_range{
+              {range.front().token->left(full_text) + 1,
+               // +1 allows left indentation to be adjusted
+               range.back().token->right(full_text)}};
+          verible::PreserveSpacesOnDisabledTokenRanges(
+              preformatted_tokens, new_disable_range, full_text);
+        }
       }
     }
   }
@@ -316,6 +369,7 @@ static void DeterminePartitionExpansion(partition_node_type* node,
 // Produce a worklist of independently formattable UnwrappedLines.
 static std::vector<UnwrappedLine> MakeUnwrappedLinesWorklist(
     const TokenPartitionTree& format_tokens_partitions,
+    std::vector<verible::PreFormatToken>* preformatted_tokens,
     absl::string_view full_text, const ByteOffsetSet& disabled_ranges,
     const FormatStyle& style) {
   // Initialize a tree view that treats partitions as fully-expanded.
@@ -326,8 +380,10 @@ static std::vector<UnwrappedLine> MakeUnwrappedLinesWorklist(
   // Post-order traversal: if a child doesn't 'fit' and needs to be expanded,
   // so must all of its parents (and transitively, ancestors).
   format_tokens_partition_view.ApplyPostOrder(
-      [&full_text, &disabled_ranges, &style](partition_node_type& node) {
-        DeterminePartitionExpansion(&node, full_text, disabled_ranges, style);
+      [&full_text, &disabled_ranges, &style,
+       preformatted_tokens](partition_node_type& node) {
+        DeterminePartitionExpansion(&node, preformatted_tokens, full_text,
+                                    disabled_ranges, style);
       });
 
   // Remove trailing blank lines.
@@ -494,7 +550,8 @@ Status Formatter::Format(const ExecutionControl& control) {
 
   // Produce sequence of independently operable UnwrappedLines.
   const auto unwrapped_lines = MakeUnwrappedLinesWorklist(
-      *format_tokens_partitions, full_text, disabled_ranges_, style_);
+      *format_tokens_partitions, &unwrapper_data.preformatted_tokens, full_text,
+      disabled_ranges_, style_);
 
   // For each UnwrappedLine: minimize total penalty of wrap/break decisions.
   // TODO(fangism): This could be parallelized if results are written

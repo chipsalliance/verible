@@ -115,8 +115,9 @@ Identifier  {BasicIdentifier}
 SystemTFIdentifier "$"{BasicIdentifier}
 
 /* white space */
-LineTerminator \r|\n|\r\n
+LineTerminator \r|\n|\r\n|\0
 InputCharacter [^\r\n\0]
+InputCharacterNoBackslash [^\\\r\n\0]
 Space [ \t\f\b]
 /*
  * To better track line numbers, LineTerminator is handled separately from Space.
@@ -256,7 +257,21 @@ PragmaEndProtected {Pragma}{Space}+protect{Space}+end_protected
   yymore();
 }
 <IN_EOL_COMMENT>{
-  {InputCharacter}* {
+  <<EOF>> {
+    UpdateLocationEOF();  /* return \0 to input stream */
+    yy_pop_state();
+    return TK_EOL_COMMENT;
+  }
+  {LineContinuation} {
+    yyless(yyleng-2);  /* return \\\n to input stream */
+    UpdateLocation();
+    yy_pop_state();
+    return TK_EOL_COMMENT;
+  }
+  {InputCharacterNoBackslash}* {
+    yymore();
+  }
+  "\\" {
     yymore();
   }
   {LineTerminator} {
@@ -858,7 +873,7 @@ zi_zp { UpdateLocation(); return TK_zi_zp; }
   return TK_ATTRIBUTE;
 }
 <ATTRIBUTE_START>{AttributesContinue} {
-  BEGIN(ATTRIBUTE_MIDDLE);
+  yy_set_top_state(ATTRIBUTE_MIDDLE);
   yymore();
 }
 <ATTRIBUTE_MIDDLE>{AttributesContent} { yymore(); }
@@ -1217,6 +1232,15 @@ zi_zp { UpdateLocation(); return TK_zi_zp; }
      */
     return PP_define_body;
   }
+  {InputCharacter}* {
+    /* This case matches when a line does not end with a continuation or \n. */
+    yymore();
+  }
+  <<EOF>> {
+    UpdateLocationEOF();  /* return \0 to input stream */
+    yy_pop_state();
+    return PP_define_body;
+  }
 }
 
 `else { UpdateLocation(); return PP_else; }
@@ -1346,8 +1370,6 @@ zi_zp { UpdateLocation(); return TK_zi_zp; }
   /* Do macro default values need {EvalStringLiteral}? */
 }  /* <PP_MACRO_DEFAULT> */
 
-`{Space} { UpdateLocation(); return TK_OTHER; /* should be an error */ }
-
 <MACRO_CALL_EXPECT_OPEN>{
   {Space}+ {
     UpdateLocation();
@@ -1404,9 +1426,20 @@ zi_zp { UpdateLocation(); return TK_zi_zp; }
   {LineTerminator} { yymore(); }
 
   {Comment} { macro_arg_length_ = yyleng; yymore(); }
+  {UnterminatedComment} {
+    macro_arg_length_ = yyleng;
+    UpdateLocation();
+    return TK_OTHER;
+  }
+
   {StringLiteral} { macro_arg_length_ = yyleng; yymore(); }
   {EvalStringLiteral} { macro_arg_length_ = yyleng; yymore(); }
   /* [^(){},"]+ { yymore(); } */
+  {UnterminatedStringLiteral} {
+    macro_arg_length_ = yyleng;
+    UpdateLocation();
+    return TK_OTHER;
+  }
 
   "{" { macro_arg_length_ = yyleng; yymore(); ++balance_; }
   "}" { macro_arg_length_ = yyleng; yymore(); --balance_; }
@@ -1556,6 +1589,17 @@ zi_zp { UpdateLocation(); return TK_zi_zp; }
 }  /* <AFTER_DOT> */
 
 {RejectChar} { UpdateLocation(); return TK_OTHER; }
+
+`` {
+  /* Preprocessing token concatenation:
+   * Even though this should only be legal inside a macro definition,
+   * we must support the token concatenation operator here so that
+   * recursive lexing will work.
+   */
+  UpdateLocation(); return PP_TOKEN_CONCAT;
+}
+
+` { UpdateLocation(); return TK_OTHER; /* tick should never be alone */ }
 
   /* All other single-character tokens */
 . { UpdateLocation(); return yytext[0]; }
