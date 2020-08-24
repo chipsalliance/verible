@@ -637,7 +637,7 @@ static const verible::AlignedFormattingHandler kDataDeclarationAligner{
 
 static const verible::AlignedFormattingHandler kParameterDeclarationAligner{
     .extract_alignment_groups = &verible::GetSubpartitionsBetweenBlankLines,
-    .ignore_partition_predicate = &IgnorePortDeclarationPartition,
+    .ignore_partition_predicate = &IgnoreWithinPortDeclarationPartitionGroup,
     .alignment_cell_scanner =
         AlignmentCellScannerGenerator<ParameterDeclarationColumnSchemaScanner>(),
 };
