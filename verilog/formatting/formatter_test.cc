@@ -5797,8 +5797,7 @@ TEST(FormatterEndToEndTest, VerilogFormatTest) {
         FormatVerilog(test_case.input, "<filename>", style, stream);
     // Require these test cases to be valid.
     EXPECT_OK(status) << status.message();
-    EXPECT_EQ(stream.str(), std::string(test_case.expected)) << "code:\n"
-                                                             << test_case.input;
+    EXPECT_EQ(stream.str(), test_case.expected) << "code:\n" << test_case.input;
   }
 }
 
