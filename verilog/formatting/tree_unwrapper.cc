@@ -284,7 +284,7 @@ void TreeUnwrapper::EatSpaces() {
 }
 
 TreeUnwrapper::TreeUnwrapper(const verible::TextStructureView& view,
-                             const verible::BasicFormatStyle& style,
+                             const FormatStyle& style,
                              const preformatted_tokens_type& ftokens)
     : verible::TreeUnwrapper(view, ftokens),
       style_(style),

@@ -39,6 +39,20 @@
 
 namespace verible {
 
+// TODO(fangism): expose bidirectional map as an enum_flag.
+std::ostream& operator<<(std::ostream& stream, AlignmentPolicy policy) {
+  switch (policy) {
+    case AlignmentPolicy::kAlign:
+      return stream << "align";
+    case AlignmentPolicy::kFlushLeft:
+      return stream << "flush-left";
+    case AlignmentPolicy::kPreserve:
+      return stream << "preserve";
+    case AlignmentPolicy::kInferUserIntent:
+      return stream << "infer";
+  }
+}
+
 static int EffectiveCellWidth(const FormatTokenRange& tokens) {
   if (tokens.empty()) return 0;
   VLOG(2) << __FUNCTION__;
@@ -622,7 +636,7 @@ void TabularAlignTokens(TokenPartitionTree* partition_ptr,
                         std::vector<PreFormatToken>* ftokens,
                         absl::string_view full_text,
                         const ByteOffsetSet& disabled_byte_ranges,
-                        int column_limit) {
+                        AlignmentPolicy policy, int column_limit) {
   VLOG(1) << __FUNCTION__;
   // Each subpartition is presumed to correspond to a list element or
   // possibly some other ignored element like comments.
@@ -654,8 +668,25 @@ void TabularAlignTokens(TokenPartitionTree* partition_ptr,
       // TODO(b/159824483): attempt to detect and re-use pre-existing alignment
     }
 
-    AlignPartitionGroup(partition_range, alignment_handler, ftokens->begin(),
-                        column_limit);
+    // Align or not, depending on user-elected policy.
+    VLOG(2) << "AlignmentPolicy: " << policy;
+    switch (policy) {
+      case AlignmentPolicy::kAlign:
+        AlignPartitionGroup(partition_range, alignment_handler,
+                            ftokens->begin(), column_limit);
+        break;
+      case AlignmentPolicy::kFlushLeft:
+        // This is already the default behavior elsewhere.  Nothing else to do.
+        break;
+      case AlignmentPolicy::kPreserve:
+        IndentButPreserveOtherSpacing(partition_range, full_text, ftokens);
+        break;
+      case AlignmentPolicy::kInferUserIntent:
+        // TODO(b/166154726): infer user-intent from original spacing.
+        // For now, preserving is a safe option.
+        IndentButPreserveOtherSpacing(partition_range, full_text, ftokens);
+        break;
+    }
   }
   VLOG(1) << "end of " << __FUNCTION__;
 }

@@ -30,6 +30,7 @@ cc_library(
         "//common/util:value_saver",
         "//verilog/CST:declaration",
         "//verilog/CST:verilog_nonterminals",
+        "//verilog/formatting:format_style",
         "//verilog/parser:verilog_token_classifications",
         "//verilog/parser:verilog_token_enum",
         "@com_google_absl//absl/strings",
@@ -41,6 +42,7 @@ cc_library(
     srcs = ["tree_unwrapper.cc"],
     hdrs = ["tree_unwrapper.h"],
     deps = [
+        ":format_style",
         ":verilog_token",
         "//common/formatting:basic_format_style",
         "//common/formatting:format_token",
@@ -228,6 +230,7 @@ cc_library(
     srcs = ["format_style.cc"],
     hdrs = ["format_style.h"],
     deps = [
+        "//common/formatting:align",
         "//common/formatting:basic_format_style",
         "//common/util:enum_flags",
         "@com_google_absl//absl/strings",

@@ -43,6 +43,7 @@ namespace formatter {
 using verible::AlignmentCellScannerGenerator;
 using verible::AlignmentColumnProperties;
 using verible::AlignmentGroupAction;
+using verible::AlignmentPolicy;
 using verible::ByteOffsetSet;
 using verible::ColumnSchemaScanner;
 using verible::down_cast;
@@ -436,6 +437,7 @@ class DataDeclarationColumnSchemaScanner : public ColumnSchemaScanner {
         break;
     }
     TreeContextPathVisitor::Visit(node);
+    VLOG(2) << "end of " << __FUNCTION__ << ", node: " << tag;
   }
 
   void Visit(const SyntaxTreeLeaf& leaf) override {
@@ -510,11 +512,20 @@ static const verible::AlignedFormattingHandler kDataDeclarationAligner{
         AlignmentCellScannerGenerator<DataDeclarationColumnSchemaScanner>(),
 };
 
+struct AlignedFormattingConfiguration {
+  // Set of functions for driving specific code aligners.
+  verible::AlignedFormattingHandler handler;
+
+  // This function extracts a specific alignment policy from the
+  // Verilog-specific style structure.
+  std::function<AlignmentPolicy(const FormatStyle&)> policy;
+};
+
 void TabularAlignTokenPartitions(TokenPartitionTree* partition_ptr,
                                  std::vector<PreFormatToken>* ftokens,
                                  absl::string_view full_text,
                                  const ByteOffsetSet& disabled_byte_ranges,
-                                 int column_limit) {
+                                 const FormatStyle& style) {
   VLOG(1) << __FUNCTION__;
   auto& partition = *partition_ptr;
   auto& uwline = partition.Value();
@@ -526,16 +537,32 @@ void TabularAlignTokenPartitions(TokenPartitionTree* partition_ptr,
   if (node == nullptr) return;
   // Dispatch aligning function based on syntax tree node type.
 
-  static const auto* kAlignHandlers =
-      new std::map<NodeEnum, verible::AlignedFormattingHandler>{
-          {NodeEnum::kPortDeclarationList, kPortDeclarationAligner},
-          {NodeEnum::kPortActualList, kActualNamedPortAligner},
-          {NodeEnum::kModuleItemList, kDataDeclarationAligner},
+  static const auto* const kAlignHandlers =
+      new std::map<NodeEnum, AlignedFormattingConfiguration>{
+          {NodeEnum::kPortDeclarationList,
+           {kPortDeclarationAligner,
+            [](const FormatStyle& vstyle) {
+              return vstyle.format_module_instantiations
+                         ? AlignmentPolicy::kAlign
+                         : AlignmentPolicy::kPreserve;
+            }}},
+          {NodeEnum::kPortActualList,
+           {kActualNamedPortAligner,
+            [](const FormatStyle& vstyle) {
+              return vstyle.named_port_alignment;
+            }}},
+          {NodeEnum::kModuleItemList,
+           {kDataDeclarationAligner,
+            [](const FormatStyle& vstyle) {
+              return vstyle.module_net_variable_alignment;
+            }}},
       };
   const auto handler_iter = kAlignHandlers->find(NodeEnum(node->Tag().tag));
   if (handler_iter == kAlignHandlers->end()) return;
-  verible::TabularAlignTokens(partition_ptr, handler_iter->second, ftokens,
-                              full_text, disabled_byte_ranges, column_limit);
+  verible::TabularAlignTokens(partition_ptr, handler_iter->second.handler,
+                              ftokens, full_text, disabled_byte_ranges,
+                              handler_iter->second.policy(style),
+                              style.column_limit);
   VLOG(1) << "end of " << __FUNCTION__;
 }
 

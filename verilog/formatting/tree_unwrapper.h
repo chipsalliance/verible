@@ -28,6 +28,7 @@
 #include "common/text/text_structure.h"
 #include "common/text/token_info.h"
 #include "common/text/token_stream_view.h"
+#include "verilog/formatting/format_style.h"
 #include "verilog/parser/verilog_token_enum.h"
 
 namespace verilog {
@@ -52,7 +53,7 @@ struct UnwrapperData {
 class TreeUnwrapper : public verible::TreeUnwrapper {
  public:
   explicit TreeUnwrapper(const verible::TextStructureView& view,
-                         const verible::BasicFormatStyle& style,
+                         const FormatStyle& style,
                          const preformatted_tokens_type&);
 
   ~TreeUnwrapper();
@@ -126,7 +127,9 @@ class TreeUnwrapper : public verible::TreeUnwrapper {
   verible::TokenWithContext VerboseToken(const verible::TokenInfo&) const;
 
   // Data members:
-  const verible::BasicFormatStyle& style_;
+
+  // Formatting style configuration.
+  const FormatStyle& style_;
 
   // State machine for visiting non-syntax-tree tokens between leaves.
   // This determines placement of comments on unwrapped lines.
