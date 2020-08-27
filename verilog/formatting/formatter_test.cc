@@ -6066,6 +6066,43 @@ static const std::initializer_list<FormatterTestCase> kFormatterTestCases = {
         ");\n"
         "endmodule\n"
     },
+    {   
+        "module foo#(localparam type TYPE1 = int, type TYPE22 = bool, parameter    type TYPE333 = real);\n"
+        "endmodule\n",
+        "module foo #(\n"
+        "    localparam type TYPE1   = int,\n"
+        "               type TYPE22  = bool,\n"
+        "    parameter  type TYPE333 = real\n"
+        ");\n"
+        "endmodule\n"
+    },
+    {   // parameterized module with 'data_type list_of_param_assignments' and 1D packed dimensions
+        "module foo #(parameter type T = int [3:0], type TT = bit [123:0]);\n"
+        "endmodule\n",
+        "module foo #(\n"
+        "    parameter type T  = int [  3:0],\n"
+        "              type TT = bit [123:0]\n"
+        ");\n"
+        "endmodule\n"
+    },
+    {   // parameterized module with 'data_type list_of_param_assignments' and 2D packed dimensions
+        "module foo #(type T = int [3:0][123:0], type TT = bit [123:0][1:0]);\n"
+        "endmodule\n",
+        "module foo #(\n"
+        "    type T  = int [  3:0][123:0],\n"
+        "    type TT = bit [123:0][  1:0]\n"
+        ");\n"
+        "endmodule\n"
+    },
+    {   // parametrized module with user defined data types
+        "module foo #(type T = my_type1_t, type TT = my_pkg::my_type2_t);\n"
+        "endmodule\n",
+        "module foo #(\n"
+        "    type T  = my_type1_t,\n"
+        "    type TT = my_pkg::my_type2_t\n"
+        ");\n"
+        "endmodule\n"
+    },
 
     {   // parameterized class with 'list_of_param_assignments'
         "class foo #(A = 2, AA = 22, AAA = 222);\n"
@@ -6348,8 +6385,45 @@ static const std::initializer_list<FormatterTestCase> kFormatterTestCases = {
         ");\n"
         "endclass\n"
     },
+    {   
+        "class foo#(localparam type TYPE1 = int, type TYPE22 = bool, parameter    type TYPE333 = real);\n"
+        "endclass\n",
+        "class foo #(\n"
+        "    localparam type TYPE1   = int,\n"
+        "               type TYPE22  = bool,\n"
+        "    parameter  type TYPE333 = real\n"
+        ");\n"
+        "endclass\n"
+    },
+    {   // parameterized class with 'data_type list_of_param_assignments' and 1D packed dimensions
+        "class foo #(parameter type T = int [3:0], type TT = bit [123:0]);\n"
+        "endclass\n",
+        "class foo #(\n"
+        "    parameter type T  = int [  3:0],\n"
+        "              type TT = bit [123:0]\n"
+        ");\n"
+        "endclass\n"
+    },
+    {   // parameterized class with 'data_type list_of_param_assignments' and 2D packed dimensions
+        "class foo #(type T = int [3:0][123:0], type TT = bit [123:0][1:0]);\n"
+        "endclass\n",
+        "class foo #(\n"
+        "    type T  = int [  3:0][123:0],\n"
+        "    type TT = bit [123:0][  1:0]\n"
+        ");\n"
+        "endclass\n"
+    },
+    {   // parametrized class with user defined data types
+        "class foo #(type T = my_type1_t, type TT = my_pkg::my_type2_t);\n"
+        "endclass\n",
+        "class foo #(\n"
+        "    type T  = my_type1_t,\n"
+        "    type TT = my_pkg::my_type2_t\n"
+        ");\n"
+        "endclass\n"
+    },
 
-        {   // parameterized interface with 'local_parameter_declaration'
+    {   // parameterized interface with 'local_parameter_declaration'
         "interface foo #(localparam int a = 2, localparam int aa = 22);\n"
         "endinterface\n",
         "interface foo #(\n"
@@ -6557,6 +6631,43 @@ static const std::initializer_list<FormatterTestCase> kFormatterTestCases = {
         "interface foo #(\n"
         "    type TYPE1 = int,\n"
         "    type TYPE2 = boo\n"
+        ");\n"
+        "endinterface\n"
+    },
+    {   
+        "interface foo#(localparam type TYPE1 = int, type TYPE22 = bool, parameter    type TYPE333 = real);\n"
+        "endinterface\n",
+        "interface foo #(\n"
+        "    localparam type TYPE1   = int,\n"
+        "               type TYPE22  = bool,\n"
+        "    parameter  type TYPE333 = real\n"
+        ");\n"
+        "endinterface\n"
+    },
+    {   // parameterized interface with 'data_type list_of_param_assignments' and 1D packed dimensions
+        "interface foo #(parameter type T = int [3:0], type TT = bit [123:0]);\n"
+        "endinterface\n",
+        "interface foo #(\n"
+        "    parameter type T  = int [  3:0],\n"
+        "              type TT = bit [123:0]\n"
+        ");\n"
+        "endinterface\n"
+    },
+    {   // parameterized interface with 'data_type list_of_param_assignments' and 2D packed dimensions
+        "interface foo #(type T = int [3:0][123:0], type TT = bit [123:0][1:0]);\n"
+        "endinterface\n",
+        "interface foo #(\n"
+        "    type T  = int [  3:0][123:0],\n"
+        "    type TT = bit [123:0][  1:0]\n"
+        ");\n"
+        "endinterface\n"
+    },
+    {   // parametrized interface with user defined data types
+        "interface foo #(type T = my_type1_t, type TT = my_pkg::my_type2_t);\n"
+        "endinterface\n",
+        "interface foo #(\n"
+        "    type T  = my_type1_t,\n"
+        "    type TT = my_pkg::my_type2_t\n"
         ");\n"
         "endinterface\n"
     },

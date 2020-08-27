@@ -284,7 +284,7 @@ class PortDeclarationColumnSchemaScanner : public ColumnSchemaScanner {
       }
       // For now, treat [...] as a single column per dimension.
       case '[': {
-        if (verilog::analysis::ContextIsInsideDeclarationDimenssions(Context())) {
+        if (verilog::analysis::ContextIsInsideDeclarationDimensions(Context())) {
           // FlushLeft vs. Right doesn't matter, this is a single character.
           ReserveNewColumn(leaf, FlushLeft);
           new_column_after_open_bracket_ = true;
@@ -292,7 +292,7 @@ class PortDeclarationColumnSchemaScanner : public ColumnSchemaScanner {
         break;
       }
       case ']': {
-        if (verilog::analysis::ContextIsInsideDeclarationDimenssions(Context())) {
+        if (verilog::analysis::ContextIsInsideDeclarationDimensions(Context())) {
           // FlushLeft vs. Right doesn't matter, this is a single character.
           ReserveNewColumn(leaf, FlushLeft);
         }
@@ -587,7 +587,7 @@ class ParameterDeclarationColumnSchemaScanner : public ColumnSchemaScanner {
 
       // Align packed and unpacked dimenssions
       case '[': {
-        if (verilog::analysis::ContextIsInsideDeclarationDimenssions(Context()) && 
+        if (verilog::analysis::ContextIsInsideDeclarationDimensions(Context()) && 
             !Context().IsInside(NodeEnum::kActualParameterList)) {
           // FlushLeft vs. Right doesn't matter, this is a single character.
           ReserveNewColumn(leaf, FlushLeft);
@@ -596,7 +596,7 @@ class ParameterDeclarationColumnSchemaScanner : public ColumnSchemaScanner {
         break;
       }
       case ']': {
-        if (verilog::analysis::ContextIsInsideDeclarationDimenssions(Context()) && 
+        if (verilog::analysis::ContextIsInsideDeclarationDimensions(Context()) && 
             !Context().IsInside(NodeEnum::kActualParameterList)) {
           // FlushLeft vs. Right doesn't matter, this is a single character.
           ReserveNewColumn(leaf, FlushLeft);

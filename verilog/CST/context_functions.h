@@ -63,7 +63,7 @@ inline bool ContextIsInsideStatement(
   return context.IsInside(NodeEnum::kStatement);
 }
 
-inline bool ContextIsInsideDeclarationDimenssions(
+inline bool ContextIsInsideDeclarationDimensions(
   const verible::SyntaxTreeContext& context) {
     return context.DirectParentIsOneOf(
         {NodeEnum::kDimensionRange, NodeEnum::kDimensionScalar,
