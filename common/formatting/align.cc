@@ -327,16 +327,34 @@ static AlignedFormattingColumnSchema ComputeColumnWidths(
   return column_configs;
 }
 
+// Saved spacing mutation so that it can be examined before applying.
+struct DeferredTokenAlignment {
+  // Points to the token to be modified.
+  PreFormatToken* ftoken;
+  // This is the spacing that would produce aligned formatting.
+  int new_before_spacing;
+
+  DeferredTokenAlignment(PreFormatToken* t, int spaces)
+      : ftoken(t), new_before_spacing(spaces) {}
+
+  void Apply() const {
+    // force printing of spaces
+    ftoken->before.break_decision = SpacingOptions::AppendAligned;
+    ftoken->before.spaces_required = new_before_spacing;
+  }
+};
+
 // Align cells by adjusting pre-token spacing for a single row.
-static void AlignRowSpacings(
+static std::vector<DeferredTokenAlignment> ComputeAignedRowSpacings(
     const AlignedFormattingColumnSchema& column_configs,
     const std::vector<AlignmentColumnProperties>& properties,
-    AlignmentRow* row) {
+    const AlignmentRow& row) {
   VLOG(2) << __FUNCTION__;
+  std::vector<DeferredTokenAlignment> align_actions;
   int accrued_spaces = 0;
   auto column_iter = column_configs.begin();
   auto properties_iter = properties.begin();
-  for (const auto& cell : *row) {
+  for (const auto& cell : row) {
     accrued_spaces += column_iter->left_border;
     if (cell.tokens.empty()) {
       // Accumulate spacing for the next sparse cell in this row.
@@ -347,9 +365,7 @@ static void AlignRowSpacings(
       // before this one.
       const int padding = column_iter->width - cell.compact_width;
       PreFormatToken& ftoken = cell.tokens.front();
-      ftoken.before.break_decision =
-          SpacingOptions::AppendAligned;  // force printing of spaces
-      int& left_spacing = ftoken.before.spaces_required;
+      int left_spacing;
       if (properties_iter->flush_left) {
         left_spacing = accrued_spaces;
         accrued_spaces = padding;
@@ -357,6 +373,7 @@ static void AlignRowSpacings(
         left_spacing = accrued_spaces + padding;
         accrued_spaces = 0;
       }
+      align_actions.emplace_back(&ftoken, left_spacing);
       VLOG(2) << "left_spacing = " << left_spacing;
     }
     VLOG(2) << "accrued_spaces = " << accrued_spaces;
@@ -364,6 +381,7 @@ static void AlignRowSpacings(
     ++properties_iter;
   }
   VLOG(2) << "end of " << __FUNCTION__;
+  return align_actions;
 }
 
 // Given a const_iterator and the original mutable container, return
@@ -396,6 +414,24 @@ static FormatTokenRange EpilogRange(const TokenPartitionTree& partition,
   return FormatTokenRange(row_end, partition_end);
 }
 
+// Mark format tokens as must-append to remove future decision-making.
+static void CommitAlignmentDecisionToRow(
+    TokenPartitionTree& partition, const AlignmentRow& row,
+    MutableFormatTokenRange::iterator ftoken_base) {
+  if (!row.empty()) {
+    const auto ftoken_range = ConvertToMutableFormatTokenRange(
+        partition.Value().TokensRange(), ftoken_base);
+    for (auto& ftoken : ftoken_range) {
+      SpacingOptions& decision = ftoken.before.break_decision;
+      if (decision == SpacingOptions::Undecided) {
+        decision = SpacingOptions::MustAppend;
+      }
+    }
+    partition.Value().SetPartitionPolicy(
+        PartitionPolicyEnum::kSuccessfullyAligned);
+  }
+}
+
 static MutableFormatTokenRange GetMutableFormatTokenRange(
     const UnwrappedLine& unwrapped_line,
     MutableFormatTokenRange::iterator ftoken_base) {
@@ -418,6 +454,30 @@ static MutableFormatTokenRange GetMutableFormatTokenRange(
   // and establish partial ordering based on syntax tree paths.
   return ConvertToMutableFormatTokenRange(
       FormatTokenRange(range_begin, range_end), ftoken_base);
+}
+
+// This width calculation accounts for the unaligned tokens in the tail position
+// of each aligned row (e.g. unaligned trailing comments).
+static bool AlignedRowsFitUnderColumnLimit(
+    const std::vector<TokenPartitionIterator>& rows,
+    const AlignmentMatrix& matrix, int total_column_width, int column_limit) {
+  auto partition_iter = rows.begin();
+  for (const auto& row : matrix) {
+    if (!row.empty()) {
+      // Identify the unaligned epilog text on each partition.
+      const FormatTokenRange epilog_range(EpilogRange(**partition_iter, row));
+      const int aligned_partition_width =
+          total_column_width + EffectiveCellWidth(epilog_range);
+      if (aligned_partition_width > column_limit) {
+        VLOG(1) << "Total aligned partition width " << aligned_partition_width
+                << " exceeds limit " << column_limit
+                << ", so not aligning this group.";
+        return false;
+      }
+    }
+    ++partition_iter;
+  }
+  return true;
 }
 
 static void AlignFilteredRows(
@@ -485,52 +545,41 @@ static void AlignFilteredRows(
   // Extract other non-computed column properties.
   const auto column_properties = column_schema.ColumnProperties();
 
-  // Total width does not include initial left-indentation.
-  // Assume indentation is the same for all partitions in each group.
-  const int indentation = rows.front().base()->Value().IndentationSpaces();
-  const int total_column_width =
-      std::accumulate(column_configs.begin(), column_configs.end(), indentation,
-                      [](int total_width, const AlignedColumnConfiguration& c) {
-                        return total_width + c.TotalWidth();
-                      });
-  VLOG(2) << "Total (aligned) column width = " << total_column_width;
-  // if the aligned columns would exceed the column limit, then refuse to align
-  // for now.  However, this check alone does not include text that follows
-  // the last aligned column, like trailing commans and EOL comments.
-  if (total_column_width > column_limit) {
-    VLOG(1) << "Total aligned column width " << total_column_width
-            << " exceeds limit " << column_limit
-            << ", so not aligning this group.";
-    return;
-  }
   {
-    auto partition_iter = rows.begin();
-    for (const auto& row : matrix) {
-      if (!row.empty()) {
-        // Identify the unaligned epilog text on each partition.
-        const FormatTokenRange epilog_range(EpilogRange(**partition_iter, row));
-        const int aligned_partition_width =
-            total_column_width + EffectiveCellWidth(epilog_range);
-        if (aligned_partition_width > column_limit) {
-          VLOG(1) << "Total aligned partition width " << aligned_partition_width
-                  << " exceeds limit " << column_limit
-                  << ", so not aligning this group.";
-          return;
-        }
-      }
-      ++partition_iter;
+    // Total width does not include initial left-indentation.
+    // Assume indentation is the same for all partitions in each group.
+    const int indentation = rows.front().base()->Value().IndentationSpaces();
+    const int total_column_width = std::accumulate(
+        column_configs.begin(), column_configs.end(), indentation,
+        [](int total_width, const AlignedColumnConfiguration& c) {
+          return total_width + c.TotalWidth();
+        });
+    VLOG(2) << "Total (aligned) column width = " << total_column_width;
+    // if the aligned columns would exceed the column limit, then refuse to
+    // align for now.  However, this check alone does not include text that
+    // follows the last aligned column, like trailing comments and EOL comments.
+    if (total_column_width > column_limit) {
+      VLOG(1) << "Total aligned column width " << total_column_width
+              << " exceeds limit " << column_limit
+              << ", so not aligning this group.";
+      return;
     }
+    // Also check for length of unaligned trailing tokens.
+    if (!AlignedRowsFitUnderColumnLimit(rows, matrix, total_column_width,
+                                        column_limit))
+      return;
   }
 
-  // TODO(fangism): check for trailing text like comments, and if aligning would
-  // exceed the column limit, then for now, refuse to align.
   // TODO(fangism): implement overflow mitigation fallback strategies.
 
   // At this point, the proposed alignment/padding 'fits'.
 
   // Adjust pre-token spacings of each row to align to the column configs.
   for (auto& row : matrix) {
-    AlignRowSpacings(column_configs, column_properties, &row);
+    const std::vector<DeferredTokenAlignment> align_actions(
+        ComputeAignedRowSpacings(column_configs, column_properties, row));
+    // TODO(b/166154726): analyze these spacing in deciding apply alignment.
+    for (const auto& action : align_actions) action.Apply();
   }
 
   // Signal that these partitions spacing/wrapping decisions have already been
@@ -538,19 +587,7 @@ static void AlignFilteredRows(
   {
     auto partition_iter = rows.begin();
     for (auto& row : matrix) {
-      if (!row.empty()) {
-        TokenPartitionTree& partition(**partition_iter);
-        const auto ftoken_range = ConvertToMutableFormatTokenRange(
-            partition.Value().TokensRange(), ftoken_base);
-        for (auto& ftoken : ftoken_range) {
-          SpacingOptions& decision = ftoken.before.break_decision;
-          if (decision == SpacingOptions::Undecided) {
-            decision = SpacingOptions::MustAppend;
-          }
-        }
-        partition.Value().SetPartitionPolicy(
-            PartitionPolicyEnum::kSuccessfullyAligned);
-      }
+      CommitAlignmentDecisionToRow(**partition_iter, row, ftoken_base);
       ++partition_iter;
     }
   }
