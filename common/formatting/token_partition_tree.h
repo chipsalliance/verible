@@ -61,6 +61,12 @@ void VerifyFullTreeFormatTokenRanges(
 std::vector<const UnwrappedLine*> FindLargestPartitions(
     const TokenPartitionTree& token_partitions, size_t num_partitions);
 
+// Compute (original_spacing - spaces_required) for every format token,
+// except the first token in each partition.
+// A perfectly formatted (flushed-left) original spacing will return all zeros.
+std::vector<std::vector<int>> FlushLeftSpacingDifferences(
+    const TokenPartitionRange& partitions);
+
 // Custom printer, alternative to the default stream operator<<.
 // Modeled after VectorTree<>::PrintTree, but suppresses printing of the
 // tokens for non-leaf nodes because a node's token range always spans
