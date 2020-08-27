@@ -117,14 +117,17 @@ const verible::TokenInfo& GetTypeTokenInfoFromModuleInstantiation(
 const verible::SyntaxTreeNode& GetInstanceListFromDataDeclaration(
     const verible::Symbol& data_declaration);
 
-// TODO(MinaToma): handle multiple module instances in the same declaration, and
-// return an array of tokens.
-// For a given data declaration returns the TokenInfo
-// of the module name. e.g. module bar; endmodule: bar   module foo; bar b1();
-// endmodule: foo returns TokenInfo for "b1".
-const verible::TokenInfo& GetModuleInstanceNameTokenInfoFromDataDeclaration(
-    const verible::Symbol&);
+// For a given data declaration returns the subtree containing instances.  e.g.
+// from "foo bar..., baz...;", this returns vector of subtrees spanning "bar...,
+// baz..."
+std::vector<verible::TreeSearchMatch> GetListOfGateInstanceFromDataDeclaration(
+    const verible::Symbol& data_declaration);
 
+// return an array of tokens.
+// For a given gate instance subtree returns the TokenInfo of the module name.
+// e.g. bar b1(); returns TokenInfo for "b1".
+const verible::TokenInfo& GetModuleInstanceNameTokenInfoFromGateInstance(
+    const verible::Symbol&);
 }  // namespace verilog
 
 #endif  // VERIBLE_VERILOG_CST_DECLARATION_H_

@@ -62,12 +62,23 @@ const TokenInfo& GetInterfaceNameToken(const Symbol& s) {
   return name_leaf.get();
 }
 
-const SyntaxTreeNode* GetModulePortDeclarationList(
+const SyntaxTreeNode* GetModulePortParenGroup(
     const Symbol& module_declaration) {
   const auto& header_node = GetModuleHeader(module_declaration);
   const auto* ports =
       verible::GetSubtreeAsSymbol(header_node, NodeEnum::kModuleHeader, 5);
   return verible::CheckOptionalSymbolAsNode(ports, NodeEnum::kParenGroup);
+}
+
+const SyntaxTreeNode* GetModulePortDeclarationList(
+    const Symbol& module_declaration) {
+  const auto* paren_group = GetModulePortParenGroup(module_declaration);
+  if (verible::CheckOptionalSymbolAsNode(paren_group, NodeEnum::kParenGroup) ==
+      nullptr) {
+    return nullptr;
+  }
+  return &verible::GetSubtreeAsNode(*paren_group, NodeEnum::kParenGroup, 1,
+                                    NodeEnum::kPortDeclarationList);
 }
 
 const TokenInfo* GetModuleEndLabel(const verible::Symbol& s) {

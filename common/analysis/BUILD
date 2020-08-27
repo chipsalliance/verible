@@ -8,6 +8,7 @@ package(
     default_visibility = [
         "//verilog/CST:__subpackages__",
         "//verilog/analysis:__subpackages__",
+        "//verilog/tools/kythe:__pkg__",
     ],
 )
 

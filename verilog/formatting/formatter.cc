@@ -443,7 +443,7 @@ static void DisableSyntaxBasedRanges(ByteOffsetSet* disabled_ranges,
   // Module-related sections:
   for (const auto& match : FindAllModuleDeclarations(root)) {
     if (!style.format_module_port_declarations) {
-      const auto* ports = GetModulePortDeclarationList(*match.match);
+      const auto* ports = GetModulePortParenGroup(*match.match);
       if (ports != nullptr) {
         const auto ports_text = verible::StringSpanOfSymbol(*ports);
         VLOG(4) << "disabled: " << ports_text;

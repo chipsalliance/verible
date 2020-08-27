@@ -135,7 +135,7 @@ TEST(GetModulePortDeclarationListTest, NoPorts) {
     const auto modules = FindAllModuleDeclarations(*root);
     ASSERT_EQ(modules.size(), 1);
     const auto& module = *modules.front().match;
-    const auto* return_type = GetModulePortDeclarationList(module);
+    const auto* return_type = GetModulePortParenGroup(module);
     EXPECT_EQ(return_type, nullptr);
   }
 }
@@ -160,7 +160,7 @@ TEST(GetModulePortDeclarationListTest, WithPorts) {
     const auto modules = FindAllModuleDeclarations(*root);
     ASSERT_EQ(modules.size(), 1);
     const auto& module = *modules.front().match;
-    const auto* ports = GetModulePortDeclarationList(module);
+    const auto* ports = GetModulePortParenGroup(module);
     ASSERT_NE(ports, nullptr);
     const auto ports_span = verible::StringSpanOfSymbol(*ports);
     EXPECT_FALSE(ports_span.empty());

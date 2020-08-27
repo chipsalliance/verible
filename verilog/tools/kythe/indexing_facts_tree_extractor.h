@@ -18,13 +18,10 @@
 #include "absl/strings/string_view.h"
 #include "common/text/tree_context_visitor.h"
 #include "verilog/tools/kythe/indexing_facts_tree.h"
+#include "verilog/tools/kythe/indexing_facts_tree_context.h"
 
 namespace verilog {
 namespace kythe {
-
-// Type that is used to keep track of the path to the root of indexing facts
-// tree.
-using IndexingFactsTreeContext = std::vector<IndexingFactNode*>;
 
 // This class is used for traversing CST and extracting different indexing
 // facts from CST nodes and constructs a tree of indexing facts.
@@ -34,25 +31,35 @@ class IndexingFactsTreeExtractor : public verible::TreeContextVisitor {
                              absl::string_view file_name)
       : context_(verible::TokenInfo::Context(base)) {
     root_.Value().AppendAnchor(Anchor(file_name, 0, base.size()));
-    facts_tree_context_.push_back(&root_);
+    root_.Value().AppendAnchor(Anchor(base, 0, base.size()));
   }
 
   void Visit(const verible::SyntaxTreeNode& node) override;
 
-  const IndexingFactNode& GetRoot() { return root_; }
+  IndexingFactNode& GetRoot() { return root_; }
 
  private:
   // Extracts modules and creates its corresponding fact tree.
-  void ExtractModule(const verible::SyntaxTreeNode& node);
+  void ExtractModule(const verible::SyntaxTreeNode& module_declaration_node);
 
   // Extracts modules instantiations and creates its corresponding fact tree.
-  void ExtractModuleInstantiation(const verible::SyntaxTreeNode& node);
+  void ExtractModuleInstantiation(
+      const verible::SyntaxTreeNode& data_declaration_node);
 
   // Extracts endmodule and creates its corresponding fact tree.
-  void ExtractModuleEnd(const verible::SyntaxTreeNode& node);
+  void ExtractModuleEnd(const verible::SyntaxTreeNode& module_declaration_node);
 
   // Extracts modules headers and creates its corresponding fact tree.
-  void ExtractModuleHeader(const verible::SyntaxTreeNode& node);
+  void ExtractModuleHeader(const verible::SyntaxTreeNode& module_header_node);
+
+  // Extracts "a" from input a, output a and creates its corresponding fact
+  // tree.
+  void ExtractInputOutputDeclaration(
+      const verible::SyntaxTreeNode& module_port_declaration_node);
+
+  // Extract "a" from wire a and creates its corresponding fact tree.
+  void ExtractNetDeclaration(
+      const verible::SyntaxTreeNode& net_declaration_node);
 
   // The Root of the constructed tree
   IndexingFactNode root_{IndexingNodeData(IndexingFactType::kFile)};

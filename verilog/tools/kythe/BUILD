@@ -15,6 +15,56 @@ genrule(
 )
 
 cc_library(
+    name = "kythe_facts",
+    srcs = [
+        "kythe_facts.cc",
+    ],
+    hdrs = [
+        "kythe_facts.h",
+    ],
+    deps = [
+        "@com_google_absl//absl/strings",
+    ],
+)
+
+cc_library(
+    name = "indexing_facts_tree_context",
+    hdrs = [
+        "indexing_facts_tree_context.h",
+    ],
+    deps = [
+        ":indexing_facts_tree",
+        "//common/util:auto_pop_stack",
+    ],
+)
+
+cc_library(
+    name = "kythe_schema_constants",
+    hdrs = [
+        "kythe_schema_constants.h",
+    ],
+    deps = ["@com_google_absl//absl/strings"],
+)
+
+cc_library(
+    name = "kythe_facts_extractor",
+    srcs = [
+        "kythe_facts_extractor.cc",
+    ],
+    hdrs = [
+        "kythe_facts_extractor.h",
+    ],
+    deps = [
+        ":indexing_facts_tree",
+        ":indexing_facts_tree_context",
+        ":indexing_facts_tree_extractor",
+        ":kythe_facts",
+        ":kythe_schema_constants",
+        "@com_google_absl//absl/strings",
+    ],
+)
+
+cc_library(
     name = "verilog_extractor_indexing_fact_type",
     srcs = [
         "verilog_extractor_indexing_fact_type.cc",
@@ -55,10 +105,14 @@ cc_library(
     ],
     deps = [
         ":indexing_facts_tree",
+        ":indexing_facts_tree_context",
         "//common/text:tree_context_visitor",
         "//common/text:tree_utils",
         "//verilog/CST:declaration",
+        "//verilog/CST:identifier",
         "//verilog/CST:module",
+        "//verilog/CST:net",
+        "//verilog/CST:port",
         "//verilog/CST:verilog_nonterminals",
         "//verilog/analysis:verilog_analyzer",
         "@com_google_absl//absl/strings",
@@ -70,6 +124,7 @@ cc_test(
     srcs = ["indexing_facts_tree_extractor_test.cc"],
     deps = [
         ":indexing_facts_tree_extractor",
+        "//common/analysis:syntax_tree_search_test_utils",
         "//common/text:concrete_syntax_tree",
         "//verilog/analysis:verilog_analyzer",
         "@com_google_googletest//:gtest_main",
@@ -86,6 +141,7 @@ cc_binary(
     visibility = ["//visibility:public"],
     deps = [
         ":indexing_facts_tree_extractor",
+        ":kythe_facts_extractor",
         ":verilog_extractor_indexing_fact_type",
         "//common/text:concrete_syntax_tree",
         "//common/text:parser_verifier",

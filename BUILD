@@ -25,6 +25,7 @@ installer(
         "//verilog/tools/obfuscator:verible-verilog-obfuscate",
         "//verilog/tools/preprocessor:verible-verilog-preprocessor",
         "//verilog/tools/syntax:verible-verilog-syntax",
+        "//verilog/tools/kythe:verible-verilog-kythe-extractor",
 
         # Deprecated legacy names, available for a transition period
         "//verilog/tools/diff:verilog_diff-deprecated",

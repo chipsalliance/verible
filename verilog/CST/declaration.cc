@@ -137,15 +137,17 @@ const verible::TokenInfo& GetTypeTokenInfoFromModuleInstantiation(
   return module_symbol_identifier->get();
 }
 
-const verible::TokenInfo& GetModuleInstanceNameTokenInfoFromDataDeclaration(
+std::vector<verible::TreeSearchMatch> GetListOfGateInstanceFromDataDeclaration(
     const verible::Symbol& data_declaration) {
   const SyntaxTreeNode& instances_list =
       GetInstanceListFromDataDeclaration(data_declaration);
-  const SyntaxTreeNode& first_instance = GetSubtreeAsNode(
-      instances_list, NodeEnum::kGateInstanceRegisterVariableList, 0);
-  const verible::SyntaxTreeLeaf& instance_name =
-      GetSubtreeAsLeaf(first_instance, NodeEnum::kGateInstance, 0);
-  return instance_name.get();
+  return verible::SearchSyntaxTree(instances_list, NodekGateInstance());
 }
 
+const verible::TokenInfo& GetModuleInstanceNameTokenInfoFromGateInstance(
+    const verible::Symbol& gate_instance) {
+  const verible::SyntaxTreeLeaf& instance_name =
+      GetSubtreeAsLeaf(gate_instance, NodeEnum::kGateInstance, 0);
+  return instance_name.get();
+}
 }  // namespace verilog
