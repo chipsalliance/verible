@@ -20,7 +20,6 @@
 
 #include "verilog/formatting/formatter.h"
 
-#include <initializer_list>
 #include <memory>
 #include <sstream>
 #include <string>
@@ -112,7 +111,7 @@ static const LineNumberSet kEnableAllLines;
 // Test that the expected output is produced with the formatter using a custom
 // FormatStyle.
 TEST(FormatterTest, FormatCustomStyleTest) {
-  const std::initializer_list<FormatterTestCase> kTestCases = {
+  static constexpr FormatterTestCase kTestCases[] = {
       {"", ""},
       {"module m;wire w;endmodule\n",
        "module m;\n"
@@ -134,7 +133,7 @@ TEST(FormatterTest, FormatCustomStyleTest) {
   }
 }
 
-static const std::initializer_list<FormatterTestCase> kFormatterTestCases = {
+static constexpr FormatterTestCase kFormatterTestCases[] = {
     {"", ""},
     {"\n", "\n"},
     {"\n\n", "\n\n"},
@@ -5951,7 +5950,7 @@ TEST(FormatterEndToEndTest, VerilogFormatTest) {
 }
 
 TEST(FormatterEndToEndTest, DisableModulePortDeclarations) {
-  const std::initializer_list<FormatterTestCase> kTestCases = {
+  static constexpr FormatterTestCase kTestCases[] = {
       {"", ""},
       {"\n", "\n"},
       {"\n\n", "\n\n"},
@@ -5995,7 +5994,7 @@ TEST(FormatterEndToEndTest, DisableModulePortDeclarations) {
 }
 
 TEST(FormatterEndToEndTest, DisableModuleInstantiations) {
-  const std::initializer_list<FormatterTestCase> kTestCases = {
+  static constexpr FormatterTestCase kTestCases[] = {
       {"", ""},
       {"\n", "\n"},
       {"\n\n", "\n\n"},
@@ -6069,7 +6068,7 @@ TEST(FormatterEndToEndTest, DisableModuleInstantiations) {
 }
 
 TEST(FormatterEndToEndTest, DisableTryWrapLongLines) {
-  const std::initializer_list<FormatterTestCase> kTestCases = {
+  static constexpr FormatterTestCase kTestCases[] = {
       {"", ""},
       {"\n", "\n"},
       {"\n\n", "\n\n"},
@@ -6334,7 +6333,7 @@ TEST(FormatterEndToEndTest, SelectLines) {
 // These tests verify the mode where horizontal spacing is discarded while
 // vertical spacing is preserved.
 TEST(FormatterEndToEndTest, PreserveVSpacesOnly) {
-  const std::initializer_list<FormatterTestCase> kTestCases = {
+  static constexpr FormatterTestCase kTestCases[] = {
       // {input, expected},
       // No tokens cases: still preserve vertical spacing, but not horizontal
       {"", ""},
@@ -6456,135 +6455,134 @@ TEST(FormatterEndToEndTest, PreserveVSpacesOnly) {
   }
 }
 
-static const std::initializer_list<FormatterTestCase>
-    kFormatterTestCasesElseStatements = {
-        {"module m;"
-         "task static t; if (r == t) a.b(c); else d.e(f); endtask;"
-         "endmodule",
-         "module m;\n"
-         "  task static t;\n"
-         "    if (r == t) a.b(c);\n"
-         "    else d.e(f);\n"
-         "  endtask\n"
-         "  ;\n"  // possibly unintended stray ';'
-         "endmodule\n"},
-        {"module m;"
-         "task static t; if (r == t) begin a.b(c); end else begin d.e(f); end "
-         "endtask;"
-         "endmodule",
-         "module m;\n"
-         "  task static t;\n"
-         "    if (r == t) begin\n"
-         "      a.b(c);\n"
-         "    end else begin\n"
-         "      d.e(f);\n"
-         "    end\n"
-         "  endtask\n"
-         "  ;\n"  // stray ';'
-         "endmodule\n"},
-        {"module m;initial begin if(a==b)"
-         "c.d(e);else\n"
-         "f.g(h);end endmodule",
-         "module m;\n"
-         "  initial begin\n"
-         "    if (a == b) c.d(e);\n"
-         "    else f.g(h);\n"
-         "  end\n"
-         "endmodule\n"},
-        {"   module m;  always_comb    begin     \n"
-         "        if      ( a   ) b =  16'hdead    ; \n"
-         "  else if (   c     )  d= 16 'hbeef  ;   \n"
-         "     else        if (e) f=16'hca_fe ;     \n"
-         "end   \n endmodule\n",
-         "module m;\n"
-         "  always_comb begin\n"
-         "    if (a) b = 16'hdead;\n"
-         "    else if (c) d = 16'hbeef;\n"
-         "    else if (e) f = 16'hca_fe;\n"
-         "  end\n"
-         "endmodule\n"},
-        {"module m; initial begin\n"
-         "        if     (a||b)        c         = 1'b1;\n"
-         "d =        1'b1; if         (e)\n"
-         "begin f = 1'b0; end else begin\n"
-         "    g = h;\n"
-         "        end \n"
-         " i = 1'b1; "
-         "end endmodule\n",
-         "module m;\n"
-         "  initial begin\n"
-         "    if (a || b) c = 1'b1;\n"
-         "    d = 1'b1;\n"
-         "    if (e) begin\n"
-         "      f = 1'b0;\n"
-         "    end else begin\n"
-         "      g = h;\n"
-         "    end\n"
-         "    i = 1'b1;\n"
-         "  end\n"
-         "endmodule\n"},
-        {"module m; initial begin\n"
-         "if (a&&b&&c) begin\n"
-         "         d         = 1'b1;\n"
-         "     if (e) begin\n"
-         "   f = ff;\n"
-         "       end  else   if  (    g  )   begin\n"
-         "     h = hh;\n"
-         "end else if (i) begin\n"
-         "    j   =   (kk == ll) ? mm :\n"
-         "      gg;\n"
-         "   end     else   if    (  qq )  begin\n"
-         "    if      (  xx   ||yy        ) begin    d0 = 1'b0;   d1   =       "
-         "1'b1;\n"
-         "  end else if (oo) begin aa =    bb; cc      = dd;"
-         "         if (zz) zx = xz; else ba = ab;"
-         "    end   else  \n begin      vv   =  tt  ;  \n"
-         "   end   end "
-         "end \n  else if   (uu)\nbegin\n\na=b;if (aa)   b =    c;\n"
-         "\nelse    if    \n (bb) \n\nc        =d    ;\n\n\n\n\n    "
-         "      else         e\n\n   =   h;\n\n"
-         "end \n  else    \n  begin if(x)y=a;else\nbegin\n"
-         "\n\n\na=y; if (a)       b     = c;\n\n\n\nelse\n\n\nd=e;end \n"
-         "end\n"
-         "end endmodule\n",
-         "module m;\n"
-         "  initial begin\n"
-         "    if (a && b && c) begin\n"
-         "      d = 1'b1;\n"
-         "      if (e) begin\n"
-         "        f = ff;\n"
-         "      end else if (g) begin\n"
-         "        h = hh;\n"
-         "      end else if (i) begin\n"
-         "        j = (kk == ll) ? mm : gg;\n"
-         "      end else if (qq) begin\n"
-         "        if (xx || yy) begin\n"
-         "          d0 = 1'b0;\n"
-         "          d1 = 1'b1;\n"
-         "        end else if (oo) begin\n"
-         "          aa = bb;\n"
-         "          cc = dd;\n"
-         "          if (zz) zx = xz;\n"
-         "          else ba = ab;\n"
-         "        end else begin\n"
-         "          vv = tt;\n"
-         "        end\n"
-         "      end\n"
-         "    end else if (uu) begin\n\n"
-         "      a = b;\n"
-         "      if (aa) b = c;\n\n"
-         "      else if (bb) c = d;\n\n\n\n\n"
-         "      else e = h;\n\n"
-         "    end else begin\n"
-         "      if (x) y = a;\n"
-         "      else begin\n\n\n\n"
-         "        a = y;\n"
-         "        if (a) b = c;\n\n\n\n"
-         "        else d = e;\n"
-         "      end\n"
-         "    end\n"
-         "  end\n"
-         "endmodule\n"}};
+static constexpr FormatterTestCase kFormatterTestCasesElseStatements[] = {
+    {"module m;"
+     "task static t; if (r == t) a.b(c); else d.e(f); endtask;"
+     "endmodule",
+     "module m;\n"
+     "  task static t;\n"
+     "    if (r == t) a.b(c);\n"
+     "    else d.e(f);\n"
+     "  endtask\n"
+     "  ;\n"  // possibly unintended stray ';'
+     "endmodule\n"},
+    {"module m;"
+     "task static t; if (r == t) begin a.b(c); end else begin d.e(f); end "
+     "endtask;"
+     "endmodule",
+     "module m;\n"
+     "  task static t;\n"
+     "    if (r == t) begin\n"
+     "      a.b(c);\n"
+     "    end else begin\n"
+     "      d.e(f);\n"
+     "    end\n"
+     "  endtask\n"
+     "  ;\n"  // stray ';'
+     "endmodule\n"},
+    {"module m;initial begin if(a==b)"
+     "c.d(e);else\n"
+     "f.g(h);end endmodule",
+     "module m;\n"
+     "  initial begin\n"
+     "    if (a == b) c.d(e);\n"
+     "    else f.g(h);\n"
+     "  end\n"
+     "endmodule\n"},
+    {"   module m;  always_comb    begin     \n"
+     "        if      ( a   ) b =  16'hdead    ; \n"
+     "  else if (   c     )  d= 16 'hbeef  ;   \n"
+     "     else        if (e) f=16'hca_fe ;     \n"
+     "end   \n endmodule\n",
+     "module m;\n"
+     "  always_comb begin\n"
+     "    if (a) b = 16'hdead;\n"
+     "    else if (c) d = 16'hbeef;\n"
+     "    else if (e) f = 16'hca_fe;\n"
+     "  end\n"
+     "endmodule\n"},
+    {"module m; initial begin\n"
+     "        if     (a||b)        c         = 1'b1;\n"
+     "d =        1'b1; if         (e)\n"
+     "begin f = 1'b0; end else begin\n"
+     "    g = h;\n"
+     "        end \n"
+     " i = 1'b1; "
+     "end endmodule\n",
+     "module m;\n"
+     "  initial begin\n"
+     "    if (a || b) c = 1'b1;\n"
+     "    d = 1'b1;\n"
+     "    if (e) begin\n"
+     "      f = 1'b0;\n"
+     "    end else begin\n"
+     "      g = h;\n"
+     "    end\n"
+     "    i = 1'b1;\n"
+     "  end\n"
+     "endmodule\n"},
+    {"module m; initial begin\n"
+     "if (a&&b&&c) begin\n"
+     "         d         = 1'b1;\n"
+     "     if (e) begin\n"
+     "   f = ff;\n"
+     "       end  else   if  (    g  )   begin\n"
+     "     h = hh;\n"
+     "end else if (i) begin\n"
+     "    j   =   (kk == ll) ? mm :\n"
+     "      gg;\n"
+     "   end     else   if    (  qq )  begin\n"
+     "    if      (  xx   ||yy        ) begin    d0 = 1'b0;   d1   =       "
+     "1'b1;\n"
+     "  end else if (oo) begin aa =    bb; cc      = dd;"
+     "         if (zz) zx = xz; else ba = ab;"
+     "    end   else  \n begin      vv   =  tt  ;  \n"
+     "   end   end "
+     "end \n  else if   (uu)\nbegin\n\na=b;if (aa)   b =    c;\n"
+     "\nelse    if    \n (bb) \n\nc        =d    ;\n\n\n\n\n    "
+     "      else         e\n\n   =   h;\n\n"
+     "end \n  else    \n  begin if(x)y=a;else\nbegin\n"
+     "\n\n\na=y; if (a)       b     = c;\n\n\n\nelse\n\n\nd=e;end \n"
+     "end\n"
+     "end endmodule\n",
+     "module m;\n"
+     "  initial begin\n"
+     "    if (a && b && c) begin\n"
+     "      d = 1'b1;\n"
+     "      if (e) begin\n"
+     "        f = ff;\n"
+     "      end else if (g) begin\n"
+     "        h = hh;\n"
+     "      end else if (i) begin\n"
+     "        j = (kk == ll) ? mm : gg;\n"
+     "      end else if (qq) begin\n"
+     "        if (xx || yy) begin\n"
+     "          d0 = 1'b0;\n"
+     "          d1 = 1'b1;\n"
+     "        end else if (oo) begin\n"
+     "          aa = bb;\n"
+     "          cc = dd;\n"
+     "          if (zz) zx = xz;\n"
+     "          else ba = ab;\n"
+     "        end else begin\n"
+     "          vv = tt;\n"
+     "        end\n"
+     "      end\n"
+     "    end else if (uu) begin\n\n"
+     "      a = b;\n"
+     "      if (aa) b = c;\n\n"
+     "      else if (bb) c = d;\n\n\n\n\n"
+     "      else e = h;\n\n"
+     "    end else begin\n"
+     "      if (x) y = a;\n"
+     "      else begin\n\n\n\n"
+     "        a = y;\n"
+     "        if (a) b = c;\n\n\n\n"
+     "        else d = e;\n"
+     "      end\n"
+     "    end\n"
+     "  end\n"
+     "endmodule\n"}};
 
 TEST(FormatterEndToEndTest, FormatElseStatements) {
   // Use a fixed style.

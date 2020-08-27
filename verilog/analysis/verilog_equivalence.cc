@@ -44,7 +44,7 @@ using verible::TokenSequence;
 // TODO(fangism): majority of this code is not Verilog-specific and could
 // be factored into a common/analysis library.
 
-static const std::initializer_list<
+static constexpr std::initializer_list<
     std::pair<const absl::string_view, DiffStatus>>
     kDiffStatusStringMap = {
         {"equivalent", DiffStatus::kEquivalent},

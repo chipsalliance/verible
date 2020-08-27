@@ -14,6 +14,7 @@
 
 #include "common/strings/diff.h"
 
+#include <initializer_list>
 #include <sstream>
 
 #include "gmock/gmock.h"

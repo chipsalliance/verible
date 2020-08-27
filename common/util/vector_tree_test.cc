@@ -15,7 +15,6 @@
 #include "common/util/vector_tree.h"
 
 #include <cstddef>
-#include <initializer_list>
 #include <iterator>
 #include <sstream>
 #include <string>
