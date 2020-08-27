@@ -635,11 +635,10 @@ class GetPartitionAlignmentSubrangesTestFixture : public AlignmentTestFixture {
     all.SetOrigin(&*syntax_tree_);
 
     std::vector<UnwrappedLine> uwlines;
-    for (int i = 0; i < pre_format_tokens_.size(); ++i) {
+    for (size_t i = 0; i < pre_format_tokens_.size(); ++i) {
       uwlines.emplace_back(0, begin + i);
       uwlines.back().SpanUpToToken(begin + i + 1);
-      uwlines.back().SetOrigin(
-          DescendPath(*syntax_tree_, {static_cast<size_t>(i)}));
+      uwlines.back().SetOrigin(DescendPath(*syntax_tree_, {i}));
     }
 
     // Construct 2-level token partition.

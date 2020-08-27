@@ -51,6 +51,7 @@ std::ostream& operator<<(std::ostream& stream, AlignmentPolicy policy) {
     case AlignmentPolicy::kInferUserIntent:
       return stream << "infer";
   }
+  return stream << "<AlignmentPolicy>??";
 }
 
 static int EffectiveCellWidth(const FormatTokenRange& tokens) {
