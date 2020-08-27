@@ -89,6 +89,8 @@ class KytheFactsExtractor {
     // returns the top VName of the stack
     std::vector<VName>& top() { return *ABSL_DIE_IF_NULL(base_type::top()); }
 
+    // TODO(minatoma): improve performance and memory for this function.
+    // TODO(minatoma): conside using vector<pair<name, type>> for signature.
     // Search function to get the VName of a definitions of some reference.
     // It loops over the scopes in reverse order and loops over every scope in
     // reverse order to find a definition for the variable with given prefix
