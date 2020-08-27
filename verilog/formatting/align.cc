@@ -491,6 +491,44 @@ class DataDeclarationColumnSchemaScanner : public ColumnSchemaScanner {
   bool new_column_after_open_bracket_ = false;
 };
 
+// For now, re-use the same column scanner as data/variable/net declarations.
+class ClassPropertyColumnSchemaScanner : public ColumnSchemaScanner {
+ public:
+  ClassPropertyColumnSchemaScanner() = default;
+
+  void Visit(const SyntaxTreeNode& node) override {
+    auto tag = NodeEnum(node.Tag().tag);
+    VLOG(2) << __FUNCTION__ << ", node: " << tag << " at "
+            << TreePathFormatter(Path());
+    switch (tag) {
+      case NodeEnum::kDataDeclaration:
+      case NodeEnum::kVariableDeclarationAssignment: {
+        // Don't wait for the type node, just start the first column right away.
+        ReserveNewColumn(node, FlushLeft);
+        break;
+      }
+      default:
+        break;
+    }
+    TreeContextPathVisitor::Visit(node);
+    VLOG(2) << "end of " << __FUNCTION__ << ", node: " << tag;
+  }
+
+  void Visit(const SyntaxTreeLeaf& leaf) override {
+    VLOG(2) << __FUNCTION__ << ", leaf: " << leaf.get() << " at "
+            << TreePathFormatter(Path());
+    const int tag = leaf.get().token_enum();
+    switch (tag) {
+      case '=':
+        ReserveNewColumn(leaf, FlushLeft);
+        break;
+      default:
+        break;
+    }
+    VLOG(2) << __FUNCTION__ << ", leaving leaf: " << leaf.get();
+  }
+};
+
 static const verible::AlignedFormattingHandler kPortDeclarationAligner{
     .extract_alignment_groups = &verible::GetSubpartitionsBetweenBlankLines,
     .ignore_partition_predicate = &IgnoreWithinPortDeclarationPartitionGroup,
@@ -510,6 +548,13 @@ static const verible::AlignedFormattingHandler kDataDeclarationAligner{
     .ignore_partition_predicate = &IgnoreWithinDataDeclarationPartitionGroup,
     .alignment_cell_scanner =
         AlignmentCellScannerGenerator<DataDeclarationColumnSchemaScanner>(),
+};
+
+static const verible::AlignedFormattingHandler kClassPropertyAligner{
+    .extract_alignment_groups = &GetConsecutiveDataDeclarationGroups,
+    .ignore_partition_predicate = &IgnoreWithinDataDeclarationPartitionGroup,
+    .alignment_cell_scanner =
+        AlignmentCellScannerGenerator<ClassPropertyColumnSchemaScanner>(),
 };
 
 struct AlignedFormattingConfiguration {
@@ -555,6 +600,11 @@ void TabularAlignTokenPartitions(TokenPartitionTree* partition_ptr,
            {kDataDeclarationAligner,
             [](const FormatStyle& vstyle) {
               return vstyle.module_net_variable_alignment;
+            }}},
+          {NodeEnum::kClassItems,
+           {kClassPropertyAligner,
+            [](const FormatStyle& vstyle) {
+              return vstyle.class_member_variable_alignment;
             }}},
       };
   const auto handler_iter = kAlignHandlers->find(NodeEnum(node->Tag().tag));

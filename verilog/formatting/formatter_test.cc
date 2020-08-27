@@ -3022,6 +3022,155 @@ static const std::initializer_list<FormatterTestCase> kFormatterTestCases = {
      "  endtask\n"
      "  // class is about to end\n"
      "endclass\n"},
+    // class property alignment test cases
+    {"class c;\n"
+     "int foo  ;\n"
+     "byte bar;\n"
+     "endclass : c\n",
+     "class c;\n"
+     "  int  foo;\n"
+     "  byte bar;\n"
+     "endclass : c\n"},
+    {"class c;\n"
+     "int foo;\n"
+     "const bit b;\n"
+     "endclass : c\n",
+     "class c;\n"
+     "  int       foo;\n"
+     "  const bit b;\n"
+     "endclass : c\n"},
+    {"class c;\n"
+     "rand logic l;\n"
+     "int foo;\n"
+     "endclass : c\n",
+     "class c;\n"
+     "  rand logic l;\n"
+     "  int        foo;\n"
+     "endclass : c\n"},
+    {"class c;\n"
+     "rand logic l;\n"
+     "const static int foo;\n"  // more qualifiers
+     "endclass : c\n",
+     "class c;\n"
+     "  rand logic       l;\n"
+     "  const static int foo;\n"
+     "endclass : c\n"},
+    {"class c;\n"
+     "static local int foo;\n"
+     "const bit b;\n"
+     "endclass : c\n",
+     "class c;\n"
+     "  static local int foo;\n"
+     "  const bit        b;\n"
+     "endclass : c\n"},
+    {// example with queue
+     "class c;\n"
+     "int foo [$] ;\n"
+     "int foo_bar ;\n"
+     "endclass : c\n",
+     "class c;\n"
+     "  int foo[$];\n"
+     "  int foo_bar;\n"
+     "endclass : c\n"},
+    {// aligns over comments (ignored)
+     "class c;\n"
+     "// foo is...\n"
+     "int foo;\n"
+     "// b is...\n"
+     "const bit b;\n"
+     " // llama is...\n"
+     "logic llama;\n"
+     "endclass : c\n",
+     "class c;\n"
+     "  // foo is...\n"
+     "  int       foo;\n"
+     "  // b is...\n"
+     "  const bit b;\n"
+     "  // llama is...\n"
+     "  logic     llama;\n"
+     "endclass : c\n"},
+    {// aligns over comments (ignored), even with blank lines
+     "class c;\n"
+     "// foo is...\n"
+     "int foo;\n"
+     "\n"
+     "// b is...\n"
+     "const bit b;\n"
+     "\n"
+     " // llama is...\n"
+     "logic llama;\n"
+     "endclass : c\n",
+     "class c;\n"
+     "  // foo is...\n"
+     "  int       foo;\n"
+     "\n"
+     "  // b is...\n"
+     "  const bit b;\n"
+     "\n"
+     "  // llama is...\n"
+     "  logic     llama;\n"
+     "endclass : c\n"},
+    {// array dimensions do not have their own columns
+     "class c;\n"
+     "rand logic l;\n"
+     "int [1:0] foo;\n"
+     "endclass : c\n",
+     "class c;\n"
+     "  rand logic l;\n"
+     "  int [1:0]  foo;\n"
+     "endclass : c\n"},
+    {// non-data-declarations break up groups
+     "class c;\n"
+     "rand logic l;\n"
+     "int foo;\n"
+     "`uvm_bar_foo()\n"
+     "logic k;\n"
+     "rand int bar;\n"
+     "endclass : c\n",
+     "class c;\n"
+     "  rand logic l;\n"
+     "  int        foo;\n"
+     "  `uvm_bar_foo()\n"  // separates alignment groups above/below
+     "  logic    k;\n"
+     "  rand int bar;\n"
+     "endclass : c\n"},
+    {// non-data-declarations break up groups
+     "class c;\n"
+     "logic k;\n"
+     "rand int bar;\n"
+     "function void f();\n"
+     "endfunction\n"
+     "rand logic l;\n"
+     "int foo;\n"
+     "endclass : c\n",
+     "class c;\n"
+     "  logic    k;\n"
+     "  rand int bar;\n"
+     "  function void f();\n"  // function declaration breaks groups
+     "  endfunction\n"
+     "  rand logic l;\n"
+     "  int        foo;\n"
+     "endclass : c\n"},
+    {// align single-value initializers at the '='
+     "class c;\n"
+     "const logic foo=0;\n"
+     "const bit b=1;\n"
+     "endclass : c\n",
+     "class c;\n"
+     "  const logic foo = 0;\n"
+     "  const bit   b   = 1;\n"
+     "endclass : c\n"},
+    {// align single-value initializers at the '=', over non-initialized
+     "class c;\n"
+     "const logic foo=0;\n"
+     "rand int iidrv;\n"
+     "const bit b=1;\n"
+     "endclass : c\n",
+     "class c;\n"
+     "  const logic foo    = 0;\n"
+     "  rand int    iidrv;\n"  // no initializer, but align across this
+     "  const bit   b      = 1;\n"
+     "endclass : c\n"},
 
     // constraint test cases
     {
