@@ -88,6 +88,44 @@ class ColumnSchemaScanner : public TreeContextPathVisitor {
   std::vector<ColumnPositionEntry> sparse_columns_;
 };
 
+// This enum drives partition sub-range selection in the
+// GetPartitionAlignmentSubranges() function.
+enum class AlignmentGroupAction {
+  kIgnore,   // This does not influence the current matching range.
+  kMatch,    // Include this partition in the current matching range.
+  kNoMatch,  // Close the current matching range (if any).
+};
+
+// From a range of token 'partitions', this selects sub-ranges to align.
+// 'partition_selector' decides which partitions qualify for alignment.
+// 'min_match_count' sets the minimum sub-range size to return.
+//
+// Visualization from 'partition_selector's perspective:
+//
+// case 1:
+//   nomatch
+//   match    // not enough matches to yield a group for min_match_count=2
+//   nomatch
+//
+// case 2:
+//   nomatch
+//   match    // an alignment group starts here
+//   match    // ends here, inclusively
+//   nomatch
+//
+// case 3:
+//   nomatch
+//   match    // an alignment group starts here
+//   ignore   // ... continues ...
+//   match    // ends here, inclusively
+//   nomatch
+//
+std::vector<TokenPartitionRange> GetPartitionAlignmentSubranges(
+    const TokenPartitionRange& partitions,
+    const std::function<AlignmentGroupAction(const TokenPartitionTree&)>&
+        partition_selector,
+    int min_match_count = 2);
+
 // This is the interface used to extract alignment cells from ranges of tokens.
 // Note that it is not required to use a ColumnSchemaScanner.
 using AlignmentCellScannerFunction =

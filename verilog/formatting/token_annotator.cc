@@ -721,9 +721,15 @@ static WithReason<SpacingOptions> BreakDecisionBetween(
   if (right.TokenEnum() == PP_define_body) {
     // TODO(b/141517267): reflow macro definition text with flexible
     // line-continuations.
-    return {SpacingOptions::MustAppend,
-            "Macro definition body must start on same line (but may be "
-            "line-continued)."};
+    const absl::string_view text = right.Text();
+    if (std::count(text.begin(), text.end(), '\n') >= 2) {
+      return {SpacingOptions::Preserve,
+              "Preserve spacing before a multi-line macro definition body."};
+    } else {
+      return {SpacingOptions::MustAppend,
+              "Macro definition body must start on same line (but may be "
+              "line-continued)."};
+    }
   }
 
   // Check for mandatory line breaks.
@@ -828,6 +834,15 @@ static WithReason<SpacingOptions> BreakDecisionBetween(
     if (right.TokenEnum() == ';') {
       return {SpacingOptions::MustAppend,
               "Keep delay statements together, like \"#1ps;\"."};
+    }
+  }
+
+  if (left.TokenEnum() == ',' &&
+      right.TokenEnum() == verilog_tokentype::MacroArg) {
+    const absl::string_view text(right.Text());
+    if (std::find(text.begin(), text.end(), '\n') != text.end()) {
+      return {SpacingOptions::MustWrap,
+              "Multi-line unlexed macro arguments start on their own line."};
     }
   }
 

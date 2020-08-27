@@ -1,16 +1,14 @@
----
-name: style-linter bug
-about: style-linter bugs
-title: ''
-labels: style-linter
+--------------------------------------------------------------------------------
+
+name: style-linter bug about: style-linter bugs title: '' labels: style-linter
 assignees: ''
 
----
+--------------------------------------------------------------------------------
 
 **Describe the bug**
 
-A clear and concise description of what the bug is.
-Include the `[style-lint-rule-name]` seen in diagnostics and configuration.
+A clear and concise description of what the bug is. Include the
+`[style-lint-rule-name]` seen in diagnostics and configuration.
 
 **Test case (preferably reduced)**
 
@@ -22,7 +20,8 @@ Include the filename if it was relevant to the diagnostic.
 
 **Actual vs. expected behavior**
 
-If the diagnostic is a lexer/syntax error, use the **lexer/parser bug template** instead.
+If the diagnostic is a lexer/syntax error, use the **lexer/parser bug template**
+instead.
 
 False-positive? False-negative? Crash? Wrong diagnostic location?
 

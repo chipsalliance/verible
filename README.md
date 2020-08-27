@@ -213,56 +213,62 @@ produces this CST (rendered by `verible-verilog-syntax --printtree`):
 
 ```
 Parse Tree:
-Node (tag: kDescriptionList) {
-  Node (tag: kModuleDeclaration) {
-    Node (tag: kModuleHeader) {
-      (#"module" @23-29: "module")
-      (#SymbolIdentifier @30-33: "foo")
-      Node (tag: kParenGroup) {
-        (#'(' @33-34: "(")
-        Node (tag: kPortDeclarationList) {
-          Node (tag: kPortDeclaration) {
-            (#"input" @34-39: "input")
-            Node (tag: kDataType) {
+Node @0 (tag: kDescriptionList) {
+  Node @0 (tag: kModuleDeclaration) {
+    Node @0 (tag: kModuleHeader) {
+      Leaf @0 (#"module" @23-29: "module")
+      Leaf @2 (#SymbolIdentifier @30-33: "foo")
+      Node @5 (tag: kParenGroup) {
+        Leaf @0 (#'(' @33-34: "(")
+        Node @1 (tag: kPortDeclarationList) {
+          Node @0 (tag: kPortDeclaration) {
+            Leaf @0 (#"input" @34-39: "input")
+            Node @2 (tag: kDataType) {
             }
-            Node (tag: kUnqualifiedId) {
-              (#SymbolIdentifier @40-41: "a")
+            Node @3 (tag: kUnqualifiedId) {
+              Leaf @0 (#SymbolIdentifier @40-41: "a")
             }
-            Node (tag: kUnpackedDimensions) {
+            Node @4 (tag: kUnpackedDimensions) {
             }
           }
-          (#',' @41-42: ",")
-          Node (tag: kPort) {
-            Node (tag: kPortReference) {
-              Node (tag: kUnqualifiedId) {
-                (#SymbolIdentifier @43-44: "b")
+          Leaf @1 (#',' @41-42: ",")
+          Node @2 (tag: kPort) {
+            Node @0 (tag: kPortReference) {
+              Node @0 (tag: kUnqualifiedId) {
+                Leaf @0 (#SymbolIdentifier @43-44: "b")
               }
             }
           }
-          (#',' @44-45: ",")
-          Node (tag: kPortDeclaration) {
-            (#"output" @46-52: "output")
-            Node (tag: kDataType) {
+          Leaf @3 (#',' @44-45: ",")
+          Node @4 (tag: kPortDeclaration) {
+            Leaf @0 (#"output" @46-52: "output")
+            Node @2 (tag: kDataType) {
             }
-            Node (tag: kUnqualifiedId) {
-              (#SymbolIdentifier @53-54: "z")
+            Node @3 (tag: kUnqualifiedId) {
+              Leaf @0 (#SymbolIdentifier @53-54: "z")
             }
-            Node (tag: kUnpackedDimensions) {
+            Node @4 (tag: kUnpackedDimensions) {
             }
           }
         }
-        (#')' @54-55: ")")
+        Leaf @2 (#')' @54-55: ")")
       }
-      (#';' @55-56: ";")
+      Leaf @7 (#';' @55-56: ";")
     }
-    (#"endmodule" @57-66: "endmodule")
-    Node (tag: kLabel) {
-      (#':' @67-68: ":")
-      (#SymbolIdentifier @69-72: "foo")
+    Node @1 (tag: kModuleItemList) {
+    }
+    Leaf @2 (#"endmodule" @57-66: "endmodule")
+    Node @3 (tag: kLabel) {
+      Leaf @0 (#':' @67-68: ":")
+      Leaf @1 (#SymbolIdentifier @69-72: "foo")
     }
   }
 }
 ```
+
+The `N` in `Node @N` or `Leaf @N` refers to the child rank of that node/leaf
+with respect to its immediate parent node, starting at 0. `nullptr` nodes are
+skipped and will look like gaps in the rank sequence.
 
 Nodes of the CST may link to other nodes or leaves (which contain tokens). The
 nodes are tagged with language-specific enumerations. Each leaf encapsulates a

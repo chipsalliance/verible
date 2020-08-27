@@ -4689,6 +4689,45 @@ const TreeUnwrapperTestData kUnwrapTaskTestCases[] = {
     },
 
     {
+        "task with system call inside if header",
+        "task t;"
+        "if (!$cast(ssssssssssssssss, vvvvvvvvvv, gggggggg)) begin "
+        "end "
+        "endtask : t",
+        TaskDeclaration(0, TaskHeader(0, {"task", "t", ";"}),
+                        N(1,
+                          N(1, L(1, {"if", "(", "!", "$cast", "("}),
+                            N(5, L(5, {"ssssssssssssssss", ","}),
+                              L(5, {"vvvvvvvvvv", ","}), L(5, {"gggggggg"})),
+                            L(3, {")", ")", "begin"})),
+                          L(1, {"end"})),
+                        L(0, {"endtask", ":", "t"})),
+    },
+
+    {
+        "task with nested subtask call and arguments passed by name",
+        "task t;"
+        "if (!$cast(ssssssssssssssss, vvvvvvvvvv.gggggggg("
+        ".ppppppp(ppppppp),"
+        ".yyyyy(\"xxxxxxxxxxxxx\")"
+        "))) begin "
+        "end "
+        "endtask : t",
+        TaskDeclaration(
+            0, TaskHeader(0, {"task", "t", ";"}),
+            N(1,
+              N(1, L(1, {"if", "(", "!", "$cast", "("}),
+                N(5, L(5, {"ssssssssssssssss", ","}),
+                  L(5, {"vvvvvvvvvv", ".", "gggggggg", "("}),
+                  N(7, L(7, {".", "ppppppp", "(", "ppppppp", ")", ","}),
+                    L(7, {".", "yyyyy", "(", "\"xxxxxxxxxxxxx\"", ")"})),
+                  L(5, {")"})),
+                L(3, {")", ")", "begin"})),
+              L(1, {"end"})),
+            L(0, {"endtask", ":", "t"})),
+    },
+
+    {
         "task with delayed assignment",
         "task foo;"
         "#100 "
@@ -7105,6 +7144,20 @@ const TreeUnwrapperTestData kUnwrapEnumTestCases[] = {
         N(0, L(0, {"typedef", "enum", "logic", "{"}),
           EnumItemList(1, L(1, {"one", "=", "1", ","}),
                        L(1, {"two", "=", "2"})),
+          L(0, {"}", "foo_e", ";"})),
+    },
+
+    {
+        "Comment after enum member should attach",
+        "typedef enum logic {\n"
+        "one=1,   // foo\n"
+        "two,     // bar\n"
+        "three=3  // baz\n"
+        "} foo_e;",
+        N(0, L(0, {"typedef", "enum", "logic", "{"}),
+          EnumItemList(1, L(1, {"one", "=", "1", ",", "// foo"}),
+                       L(1, {"two", ",", "// bar"}),
+                       L(1, {"three", "=", "3", "// baz"})),
           L(0, {"}", "foo_e", ";"})),
     },
 };

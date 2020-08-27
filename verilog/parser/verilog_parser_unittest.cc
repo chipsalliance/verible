@@ -5664,6 +5664,12 @@ static const std::initializer_list<ParserTestData> kInvalidCodeTests = {
      {verible::TK_EOF, ""}},
     // invalid DPI import
     {"import \"DPI-C\" foo", /* rejected */ ';'},
+    {"task t;\n"
+     "for (uint32_t fn",
+     /* = initializer expression required here */ ';',
+     " fn < a; fn++) begin\n"
+     "end\n"
+     "endtask\n"},
 };
 
 using verible::LeafTag;

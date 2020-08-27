@@ -2121,6 +2121,14 @@ TEST(TokenAnnotatorTest, AnnotateFormattingWithContextTest) {
       },
       {
           DefaultStyle,
+          {verilog_tokentype::PP_Identifier, "BAR"},
+          {verilog_tokentype::PP_define_body, "\\\n  bar \\\n  + foo\n"},
+          {},  // any context
+          {},  // any context
+          {1, SpacingOptions::Preserve},
+      },
+      {
+          DefaultStyle,
           {')', ")"},
           {verilog_tokentype::PP_define_body, ""}, /* empty */
           {},                                      // any context
@@ -2329,6 +2337,25 @@ TEST(TokenAnnotatorTest, AnnotateFormattingWithContextTest) {
           {},  // any context
           {},  // any context
           {0, SpacingOptions::Undecided},
+      },
+
+      {
+          // single-line macro arguments are allowed to move around
+          DefaultStyle,
+          {',', ","},
+          {verilog_tokentype::MacroArg, "abcde"},
+          {},  // any context
+          {},  // any context
+          {1, SpacingOptions::Undecided},
+      },
+      {
+          // multi-line macro arguments (unlexed) should start own line
+          DefaultStyle,
+          {',', ","},
+          {verilog_tokentype::MacroArg, "a;\nb;"},  // multi-line
+          {},                                       // any context
+          {},                                       // any context
+          {1, SpacingOptions::MustWrap},
       },
 
       // Without context, default is to treat '-' as binary.

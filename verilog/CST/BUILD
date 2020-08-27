@@ -507,6 +507,8 @@ cc_test(
     srcs = ["package_test.cc"],
     deps = [
         ":package",
+        "//common/analysis:syntax_tree_search",
+        "//common/analysis:syntax_tree_search_test_utils",
         "//common/text:concrete_syntax_tree",
         "//common/text:symbol",
         "//common/text:text_structure",
@@ -811,7 +813,6 @@ cc_test(
         "//common/text:symbol",
         "//verilog/analysis:verilog_analyzer",
         "@com_google_absl//absl/memory",
-        "@com_google_absl//absl/status",
         "@com_google_googletest//:gtest_main",
     ],
 )

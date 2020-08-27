@@ -229,6 +229,16 @@ static const std::initializer_list<FormatterTestCase> kFormatterTestCases = {
         "`define FOO \\\n"
         " 1\n"  // TODO(b/141517267): Reflowing macro definitions
     },
+    {"`define FOO    \\\n"  // multiline macro definition
+     "        b\n",
+     "`define FOO \\\n"  // no need to align '\'
+     "        b\n"},
+    {"`define FOO    \\\n"  // multiline macro definition
+     "        a +    \\\n"
+     "        b\n",
+     "`define FOO    \\\n"  // preserve spacing before '\'
+     "        a +    \\\n"  // to stay aligned with this one
+     "        b\n"},
     {"    // comment with backslash\\\n", "// comment with backslash\\\n"},
     {// macro with MacroArg tokens as arguments
      "`FOOOOOO(\nbar1...\n,\nbar2...\n,\nbar3...\n,\nbar4\n)\n",
@@ -393,6 +403,16 @@ static const std::initializer_list<FormatterTestCase> kFormatterTestCases = {
      "class foo;\n"
      "  `FOO(`BAR(baz1, baz2));\n"
      "endclass\n"},
+    {// multi-line macro arg "aaaa..." should start on its own line,
+     // even if its first line would fit under the column limit
+     "`CHECK_FATAL(rd_tr,\n"
+     "             aaaa     == zzz;\n"
+     "             ggg      == vv::w;,\n"
+     "             \"Failed to ..........\")\n",
+     "`CHECK_FATAL(rd_tr,\n"
+     "             aaaa     == zzz;\n"
+     "             ggg      == vv::w;,\n"
+     "             \"Failed to ..........\")\n"},
 
     // `uvm macros indenting
     {
@@ -1247,6 +1267,159 @@ static const std::initializer_list<FormatterTestCase> kFormatterTestCases = {
      ");\n"
      "endmodule : foo\n"},
 
+    // module local variable/net declaration alignment test cases
+    {"module m;\n"
+     "logic a;\n"
+     "bit b;\n"
+     "endmodule\n",
+     "module m;\n"
+     "  logic a;\n"
+     "  bit   b;\n"
+     "endmodule\n"},
+    {"module m;\n"
+     "logic a;\n"
+     "bit b;\n"
+     "initial e=f;\n"  // separates alignment groups
+     "wire c;\n"
+     "bit d;\n"
+     "endmodule\n",
+     "module m;\n"
+     "  logic a;\n"
+     "  bit   b;\n"
+     "  initial e = f;\n"  // separates alignment groups
+     "  wire c;\n"
+     "  bit  d;\n"
+     "endmodule\n"},
+    {"module m;\n"
+     "// hello a\n"
+     "logic a;\n"
+     "// hello b\n"
+     "bit b;\n"
+     "endmodule\n",
+     "module m;\n"
+     "  // hello a\n"
+     "  logic a;\n"
+     "  // hello b\n"
+     "  bit   b;\n"  // aligned across comments
+     "endmodule\n"},
+    {"module m;\n"
+     "// hello a\n"
+     "logic a;\n"
+     "\n"  // extra blank line
+     "// hello b\n"
+     "bit b;\n"
+     "endmodule\n",
+     "module m;\n"
+     "  // hello a\n"
+     "  logic a;\n"
+     "\n"              // extra blank line
+     "  // hello b\n"  // aligned across blank lines
+     "  bit   b;\n"    // aligned across comments
+     "endmodule\n"},
+    {"module m;\n"
+     "logic [x:y]a;\n"  // packed dimensions
+     "bit b;\n"
+     "endmodule\n",
+     "module m;\n"
+     "  logic [x:y] a;\n"
+     "  bit         b;\n"
+     "endmodule\n"},
+    {"module m;\n"
+     "logic a;\n"
+     "bit [pp:qq]b;\n"  // packed dimensions
+     "endmodule\n",
+     "module m;\n"
+     "  logic         a;\n"
+     "  bit   [pp:qq] b;\n"
+     "endmodule\n"},
+    {"module m;\n"
+     "logic [x:y]a;\n"  // packed dimensions
+     "bit [pp:qq]b;\n"  // packed dimensions
+     "endmodule\n",
+     "module m;\n"
+     "  logic [  x:y] a;\n"
+     "  bit   [pp:qq] b;\n"
+     "endmodule\n"},
+    {"module m;\n"
+     "logic [x:y]a;\n"         // packed dimensions
+     "wire [pp:qq] [e:f]b;\n"  // packed dimensions, 2D
+     "endmodule\n",
+     "module m;\n"
+     "  logic [  x:y]      a;\n"
+     "  wire  [pp:qq][e:f] b;\n"
+     "endmodule\n"},
+    {"module m;\n"
+     "logic a [x:y];\n"  // unpacked dimensions
+     "bit bbb;\n"
+     "endmodule\n",
+     "module m;\n"
+     "  logic a   [x:y];\n"
+     "  bit   bbb;\n"
+     "endmodule\n"},
+    {"module m;\n"
+     "logic aaa ;\n"
+     "wire w [yy:zz];\n"  // unpacked dimensions
+     "endmodule\n",
+     "module m;\n"
+     "  logic aaa;\n"
+     "  wire  w   [yy:zz];\n"
+     "endmodule\n"},
+    {"module m;\n"
+     "logic aaa [s:t] ;\n"  // unpacked dimensions
+     "wire w [yy:zz];\n"    // unpacked dimensions
+     "endmodule\n",
+     "module m;\n"
+     "  logic aaa[  s:t];\n"
+     "  wire  w  [yy:zz];\n"
+     "endmodule\n"},
+    {"module m;\n"
+     "logic aaa [s:t] ;\n"     // unpacked dimensions
+     "wire w [yy:zz][u:v];\n"  // unpacked dimensions, 2D
+     "endmodule\n",
+     "module m;\n"
+     "  logic aaa[  s:t];\n"
+     "  wire  w  [yy:zz] [u:v];\n"
+     // TODO(b/165323560): unwanted space between unpacked dimensions of 'w'
+     "endmodule\n"},
+    {"module m;\n"
+     "qqq::rrr s;\n"     // user-defined type
+     "wire [pp:qq]w;\n"  // packed dimensions
+     "endmodule\n",
+     "module m;\n"
+     "  qqq::rrr         s;\n"
+     "  wire     [pp:qq] w;\n"
+     "endmodule\n"},
+    {"module m;\n"
+     "qqq#(rr) s;\n"     // parameterized type
+     "wire [pp:qq]w;\n"  // packed dimensions
+     "endmodule\n",
+     "module m;\n"
+     "  qqq #(rr)         s;\n"
+     "  wire      [pp:qq] w;\n"
+     "endmodule\n"},
+    {"module m;\n"
+     "logic a;\n"
+     "bit b;\n"
+     "my_module  my_inst( );\n"  // module instance separates alignment groups
+     "wire c;\n"
+     "bit d;\n"
+     "endmodule\n",
+     "module m;\n"
+     "  logic a;\n"  // these two are aligned
+     "  bit   b;\n"
+     "  my_module my_inst ();\n"  // module instance separates alignment groups
+     "  wire c;\n"                // these two are aligned
+     "  bit  d;\n"
+     "endmodule\n"},
+    {"module m;\n"
+     "logic aaa = expr1;\n"
+     "bit b = expr2;\n"
+     "endmodule\n",
+     "module m;\n"
+     "  logic aaa = expr1;\n"
+     "  bit   b = expr2;\n"  // no alignment at '=' yet
+     "endmodule\n"},
+
     {"module foo #(int x,int y) ;endmodule:foo\n",  // parameters
      "module foo #(\n"
      "    int x,\n"
@@ -1664,7 +1837,7 @@ static const std::initializer_list<FormatterTestCase> kFormatterTestCases = {
     {"  module bar;wire foo;reg bear;endmodule\n",
      "module bar;\n"
      "  wire foo;\n"
-     "  reg bear;\n"
+     "  reg  bear;\n"  // aligned
      "endmodule\n"},
     {" module bar;initial\nbegin a<=b . c ; end endmodule\n",
      "module bar;\n"
@@ -2993,6 +3166,22 @@ static const std::initializer_list<FormatterTestCase> kFormatterTestCases = {
      "typedef enum logic {\n"
      "  A = 0,\n"
      "  B = 1\n"
+     "} foo_t;\n"},
+    {// With comments on same line as enum value
+     "typedef enum logic\t{ A=0, // foo\n"
+     "B,// bar\n"
+     "`ifndef DO_PANIC\n"
+     "C=42,// answer\n"
+     "`endif\n"
+     "D=3    // baz\n"
+     "}foo_t;",
+     "typedef enum logic {\n"
+     "  A = 0,  // foo\n"
+     "  B,  // bar\n"
+     "`ifndef DO_PANIC\n"
+     "  C = 42,  // answer\n"
+     "`endif\n"
+     "  D = 3  // baz\n"
      "} foo_t;\n"},
     {// with scalar dimensions
      "typedef enum logic[2]\t{ A=0, B=1 }foo_t;",
@@ -4715,6 +4904,39 @@ static const std::initializer_list<FormatterTestCase> kFormatterTestCases = {
         "  if (r == t) a.b(c);\n"
         "endtask\n",
     },
+    {
+        // task with system call inside if header
+        "task t;"
+        "if (!$cast(ssssssssssssssss,vvvvvvvvvv,gggggggg))begin end endtask:t",
+        "task t;\n"
+        "  if (!$cast(\n"
+        "          ssssssssssssssss,\n"
+        "          vvvvvvvvvv,\n"
+        "          gggggggg\n"
+        "      )) begin\n"
+        "  end\n"
+        "endtask : t\n",
+    },
+    {
+        // task with nested subtask call and arguments passed by name
+        "task t;"
+        "if (!$cast(ssssssssssssssss, vvvvvvvvvv.gggggggg("
+        ".ppppppp(ppppppp),"
+        ".yyyyy(\"xxxxxxxxxxxxx\")"
+        "))) begin "
+        "end "
+        "endtask : t",
+        "task t;\n"
+        "  if (!$cast(\n"
+        "          ssssssssssssssss,\n"
+        "          vvvvvvvvvv.gggggggg(\n"
+        "              .ppppppp(ppppppp),\n"
+        "              .yyyyy(\"xxxxxxxxxxxxx\")\n"
+        "          )\n"
+        "      )) begin\n"
+        "  end\n"
+        "endtask : t\n",
+    },
 
     {
         // assert property statements
@@ -5644,7 +5866,7 @@ TEST(FormatterEndToEndTest, DisableModuleInstantiations) {
        "  endmodule\n",
        "module m;\n"
        "  logic xyz;\n"  // indentation still takes effect
-       "  wire abc;\n"   // indentation still takes effect
+       "  wire  abc;\n"  // aligned too
        "endmodule\n"},
       {"  function f  ;\t\n"
        " endfunction\n",
