@@ -15,6 +15,7 @@ cc_library(
     srcs = ["align.cc"],
     hdrs = ["align.h"],
     deps = [
+        ":format_style",
         "//common/formatting:align",
         "//common/formatting:format_token",
         "//common/formatting:token_partition_tree",
@@ -28,9 +29,9 @@ cc_library(
         "//common/util:casts",
         "//common/util:logging",
         "//common/util:value_saver",
+        "//verilog/CST:context_functions",
         "//verilog/CST:declaration",
         "//verilog/CST:verilog_nonterminals",
-        "//verilog/formatting:format_style",
         "//verilog/parser:verilog_token_classifications",
         "//verilog/parser:verilog_token_enum",
         "@com_google_absl//absl/strings",
