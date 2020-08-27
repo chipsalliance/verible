@@ -194,6 +194,16 @@ size_t PreFormatToken::LeadingSpacesLength() const {
   return before.spaces_required;
 }
 
+int PreFormatToken::ExcessSpaces() const {
+  if (before.preserved_space_start == nullptr) return 0;
+  const absl::string_view leading_spaces = OriginalLeadingSpaces();
+  int delta = 0;
+  if (!absl::StrContains(leading_spaces, "\n")) {
+    delta = static_cast<int>(leading_spaces.length()) - before.spaces_required;
+  }
+  return delta;
+}
+
 std::string PreFormatToken::ToString() const {
   std::ostringstream output_stream;
   output_stream << *this;
