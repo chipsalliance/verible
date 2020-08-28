@@ -62,9 +62,9 @@ int ExtractOneFile(absl::string_view content, absl::string_view filename) {
 }
 
 int main(int argc, char** argv) {
-  const auto usage = absl::StrCat(
-      "usage: ", argv[0], " [options] <file> [<file>...]\n",
-      R"(
+  const auto usage =
+      absl::StrCat("usage: ", argv[0], " [options] <file> [<file>...]\n",
+                   R"(
 verilog_kythe_extractor is a simple command-line utility
 to extract kythe indexing facts from the given file.
 

@@ -4,6 +4,7 @@ licenses(["notice"])
 package(
     default_visibility = [
         "//verilog/formatting:__subpackages__",
+        "//verilog/tools/formatter:__pkg__",
     ],
 )
 

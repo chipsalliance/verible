@@ -36,6 +36,7 @@
 #include "absl/strings/str_join.h"
 #include "absl/strings/str_split.h"
 #include "absl/strings/string_view.h"
+#include "common/formatting/align.h"
 #include "common/strings/position.h"
 #include "common/util/file_util.h"
 #include "common/util/init_command_line.h"
@@ -186,6 +187,9 @@ static bool formatOneFile(absl::string_view filename,
     format_style.format_module_instantiations =
         absl::GetFlag(FLAGS_format_module_instantiations);
     format_style.try_wrap_long_lines = absl::GetFlag(FLAGS_try_wrap_long_lines);
+    // TODO(fangism): expose this as a user-flag or configuration
+    format_style.class_member_variable_alignment =
+        verible::AlignmentPolicy::kPreserve;
   }
 
   std::ostringstream stream;

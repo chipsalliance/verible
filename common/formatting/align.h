@@ -178,8 +178,30 @@ AlignmentCellScannerFunction AlignmentCellScannerGenerator() {
   };
 }
 
+// For sections of code that are deemed alignable, this enum controls
+// the formatter behavior.
+enum class AlignmentPolicy {
+  // Preserve text as-is.
+  kPreserve,
+
+  // No-align: flush text to left while obeying spacing constraints
+  kFlushLeft,
+
+  // Attempt tabular alignment.
+  kAlign,
+
+  // Infer whether user wanted flush-left or alignment, based on original
+  // spacing.
+  kInferUserIntent,
+};
+
+std::ostream& operator<<(std::ostream&, AlignmentPolicy);
+
 // This struct bundles together the various functions needed for aligned
 // formatting.
+// TODO(fangism): Support heterogeneous sub-range alignment.
+// The current structure limits each node-type's handler to have only
+// one aligner for all of its sub-ranges.
 struct AlignedFormattingHandler {
   // This function subdivides a range of token partitions (e.g. all of the
   // children of a parent partition of interest) into groups of lines that will
@@ -215,6 +237,7 @@ struct AlignedFormattingHandler {
 // 'full_text' is the string_view buffer of whole text being formatted, not just
 // the text spanned by 'partition_ptr'.
 // 'ftokens' points to the array of PreFormatTokens that spans 'full_text'.
+// 'policy' allows selective enabling/disabling of alignment.
 // 'column_limit' is the column width beyond which the aligner should fallback
 // to a safer action, e.g. refusing to align and leaving spacing untouched.
 //
@@ -240,7 +263,7 @@ void TabularAlignTokens(TokenPartitionTree* partition_ptr,
                         std::vector<PreFormatToken>* ftokens,
                         absl::string_view full_text,
                         const ByteOffsetSet& disabled_byte_ranges,
-                        int column_limit);
+                        AlignmentPolicy policy, int column_limit);
 
 }  // namespace verible
 

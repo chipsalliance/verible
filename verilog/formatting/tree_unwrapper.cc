@@ -284,7 +284,7 @@ void TreeUnwrapper::EatSpaces() {
 }
 
 TreeUnwrapper::TreeUnwrapper(const verible::TextStructureView& view,
-                             const verible::BasicFormatStyle& style,
+                             const FormatStyle& style,
                              const preformatted_tokens_type& ftokens)
     : verible::TreeUnwrapper(view, ftokens),
       style_(style),
@@ -937,7 +937,6 @@ void TreeUnwrapper::SetIndentationsAndCreatePartitions(
 
     // For the following constructs, always expand the view to subpartitions.
     // Add a level of indentation.
-    case NodeEnum::kClassItems:
     case NodeEnum::kPackageItemList:
     case NodeEnum::kInterfaceClassDeclaration:
     case NodeEnum::kGenerateItemList:
@@ -1000,6 +999,7 @@ void TreeUnwrapper::SetIndentationsAndCreatePartitions(
       }
     }
 
+    case NodeEnum::kClassItems:
     case NodeEnum::kModuleItemList: {
       const int indent = suppress_indentation ? 0 : style_.indentation_spaces;
       VisitIndentedSection(node, indent,

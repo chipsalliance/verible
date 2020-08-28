@@ -14,7 +14,6 @@
 
 #include "verilog/formatting/format_style.h"
 
-#include <initializer_list>
 #include <utility>
 
 #include "gtest/gtest.h"

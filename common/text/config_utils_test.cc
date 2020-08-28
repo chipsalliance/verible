@@ -15,7 +15,6 @@
 #include "common/text/config_utils.h"
 
 #include <cstdint>
-#include <initializer_list>
 #include <string>
 #include <vector>
 

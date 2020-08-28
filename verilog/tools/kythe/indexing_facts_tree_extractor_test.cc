@@ -14,9 +14,9 @@
 
 #include "verilog/tools/kythe/indexing_facts_tree_extractor.h"
 
+#include "gtest/gtest.h"
 #include "common/analysis/syntax_tree_search_test_utils.h"
 #include "common/text/concrete_syntax_tree.h"
-#include "gtest/gtest.h"
 #include "verilog/analysis/verilog_analyzer.h"
 
 #undef EXPECT_OK

@@ -19,6 +19,7 @@
 #include <string>
 
 #include "absl/strings/string_view.h"
+#include "common/formatting/align.h"
 #include "common/formatting/basic_format_style.h"
 
 namespace verilog {
@@ -26,6 +27,8 @@ namespace formatter {
 
 // Style parameters that are specific to Verilog formatter
 struct FormatStyle : public verible::BasicFormatStyle {
+  using AlignmentPolicy = verible::AlignmentPolicy;
+
   FormatStyle() : verible::BasicFormatStyle() {
     over_column_limit_penalty = 10000;
   }
@@ -37,7 +40,7 @@ struct FormatStyle : public verible::BasicFormatStyle {
   // be covered in integration tests.
   // This flag is prone to change or be removed in the future.
   // TODO(b/70310743): implement aligned formatting for this section,
-  //   and promote the control for this into an enum: {off, compact, align}
+  //   and promote the control for this into AlignmentPolicy.
   bool format_module_port_declarations = true;
 
   // If true, format module instantiations, else leave those regions
@@ -46,8 +49,20 @@ struct FormatStyle : public verible::BasicFormatStyle {
   // continue to be covered in integration tests. This flag is prone to change
   // or be removed in the future.
   // TODO(b/152805837): implement aligned formatting for this section,
-  //   and promote the control for this into an enum: {off, compact, align}
+  //   and promote the control for this into AlignmentPolicy.
   bool format_module_instantiations = true;
+
+  // Control how named ports (e.g. in module instances) are formatted.
+  // For internal testing purposes, this is default to kAlign.
+  AlignmentPolicy named_port_alignment = AlignmentPolicy::kAlign;
+
+  // Control how module-local net/variable declarations are formatted.
+  // For internal testing purposes, this is default to kAlign.
+  AlignmentPolicy module_net_variable_alignment = AlignmentPolicy::kAlign;
+
+  // Control how class member variables are formatted.
+  // For internal testing purposes, this is default to kAlign.
+  AlignmentPolicy class_member_variable_alignment = AlignmentPolicy::kAlign;
 
   // At this time line wrap optimization is problematic and risks ruining
   // otherwise reasonable code.  When set to false, this switch will make the

@@ -1,5 +1,7 @@
 # 'verible-verilog-kythe-extractor' is a program for extracting Verilog/SystemVerilog to kythe facts.
 
+load("@rules_cc//cc:defs.bzl", "cc_binary", "cc_library", "cc_test")
+
 licenses(["notice"])
 
 # Generates foreach list for IndexingFactType enum.
@@ -32,6 +34,10 @@ cc_library(
     hdrs = [
         "indexing_facts_tree_context.h",
     ],
+    deps = [
+        ":indexing_facts_tree",
+        "//common/util:auto_pop_stack",
+    ],
 )
 
 cc_library(
@@ -39,6 +45,7 @@ cc_library(
     hdrs = [
         "kythe_schema_constants.h",
     ],
+    deps = ["@com_google_absl//absl/strings"],
 )
 
 cc_library(
@@ -51,6 +58,7 @@ cc_library(
     ],
     deps = [
         ":indexing_facts_tree",
+        ":indexing_facts_tree_context",
         ":indexing_facts_tree_extractor",
         ":kythe_facts",
         ":kythe_schema_constants",
@@ -97,15 +105,17 @@ cc_library(
         "indexing_facts_tree_extractor.h",
     ],
     deps = [
-        "indexing_facts_tree_context",
+        ":indexing_facts_tree",
+        ":indexing_facts_tree_context",
+        "//common/text:tree_context_visitor",
         "//common/text:tree_utils",
         "//verilog/CST:declaration",
         "//verilog/CST:identifier",
         "//verilog/CST:module",
         "//verilog/CST:net",
+        "//verilog/CST:port",
         "//verilog/CST:verilog_nonterminals",
         "//verilog/analysis:verilog_analyzer",
-        "//verilog/tools/kythe:indexing_facts_tree",
     ],
 )
 
@@ -131,6 +141,9 @@ cc_binary(
     ],
     visibility = ["//visibility:public"],
     deps = [
+        ":indexing_facts_tree_extractor",
+        ":kythe_facts_extractor",
+        ":verilog_extractor_indexing_fact_type",
         "//common/text:concrete_syntax_tree",
         "//common/text:parser_verifier",
         "//common/text:symbol",
@@ -144,9 +157,6 @@ cc_binary(
         "//verilog/analysis:verilog_analyzer",
         "//verilog/analysis/checkers:verilog_lint_rules",
         "//verilog/parser:verilog_parser",
-        "//verilog/tools/kythe:indexing_facts_tree_extractor",
-        "//verilog/tools/kythe:kythe_facts_extractor",
-        "//verilog/tools/kythe:verilog_extractor_indexing_fact_type",
         "@com_google_absl//absl/flags:flag",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/strings",

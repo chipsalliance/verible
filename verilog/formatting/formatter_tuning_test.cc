@@ -16,7 +16,6 @@
 
 // prevent header re-ordering
 
-#include <initializer_list>
 #include <sstream>
 
 #include "gmock/gmock.h"
@@ -49,7 +48,7 @@ static const verible::LineNumberSet kEnableAllLines;
 // at particular desirable characteristics.
 // TODO(b/145558510): these tests must maintain unique-best solutions
 
-static const std::initializer_list<FormatterTestCase> kTestCases = {
+static constexpr FormatterTestCase kTestCases[] = {
     //----------- 40 column marker --------->|
     {// TODO(b/148972363): might want to attract "= sss(" more
      "module m;"
@@ -94,7 +93,7 @@ TEST(FormatterEndToEndTest, PenaltySensitiveLineWrapping) {
 
 // Sometimes it's hard to reduce a real test case to a 40 column version,
 // so this set of tests uses 100-column.  Use raw string literals here.
-static const std::initializer_list<FormatterTestCase> k100ColTestCases = {
+static constexpr FormatterTestCase k100ColTestCases[] = {
     {
         R"sv(
 module m;

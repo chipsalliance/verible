@@ -62,7 +62,7 @@ static void TestFilteredLexer(Args&&... args) {
   verible::TestLexer<FilteredCommandFileLexer>(std::forward<Args>(args)...);
 }
 
-static std::initializer_list<LexerTestData> kTokenTests = {
+static const std::initializer_list<LexerTestData> kTokenTests = {
     {{CFG_TK_COMMENT, "#comment"}, {TK_EOF, "\0"}},
     {{CFG_TK_COMMAND, "waive"}, {TK_EOF, "\0"}},
     {{CFG_TK_COMMAND, "waive"},

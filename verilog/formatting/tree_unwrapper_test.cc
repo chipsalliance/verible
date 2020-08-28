@@ -266,7 +266,7 @@ class TreeUnwrapperTest : public ::testing::Test {
   std::unique_ptr<UnwrapperData> unwrapper_data_;
 
   // Style configuration.
-  verible::BasicFormatStyle style_;
+  FormatStyle style_;
 };
 
 // Test that TreeUnwrapper produces the correct UnwrappedLines from an empty

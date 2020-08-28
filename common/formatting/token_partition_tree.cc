@@ -106,6 +106,26 @@ std::vector<const UnwrappedLine*> FindLargestPartitions(
   return partitions.Take();
 }
 
+std::vector<std::vector<int>> FlushLeftSpacingDifferences(
+    const TokenPartitionRange& partitions) {
+  // Compute per-token differences between original spacings and reference-value
+  // spacings.
+  std::vector<std::vector<int>> flush_left_spacing_deltas;
+  flush_left_spacing_deltas.reserve(partitions.size());
+  for (const auto& partition : partitions) {
+    flush_left_spacing_deltas.emplace_back();
+    std::vector<int>& row(flush_left_spacing_deltas.back());
+    FormatTokenRange ftokens(partition.Value().TokensRange());
+    if (ftokens.empty()) continue;
+    // Skip the first token, because that represents indentation.
+    ftokens.pop_front();
+    for (const auto& ftoken : ftokens) {
+      row.push_back(ftoken.ExcessSpaces());
+    }
+  }
+  return flush_left_spacing_deltas;
+}
+
 std::ostream& TokenPartitionTreePrinter::PrintTree(std::ostream& stream,
                                                    int indent) const {
   const auto& value = node.Value();

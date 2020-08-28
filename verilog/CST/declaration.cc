@@ -150,5 +150,4 @@ const verible::TokenInfo& GetModuleInstanceNameTokenInfoFromGateInstance(
       GetSubtreeAsLeaf(gate_instance, NodeEnum::kGateInstance, 0);
   return instance_name.get();
 }
-
 }  // namespace verilog

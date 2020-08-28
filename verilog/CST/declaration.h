@@ -124,11 +124,10 @@ std::vector<verible::TreeSearchMatch> GetListOfGateInstanceFromDataDeclaration(
     const verible::Symbol& data_declaration);
 
 // return an array of tokens.
-// For a given Gatetance subtree returns the TokenInfo of the module name. e.g.
-// bar b1(); returns TokenInfo for "b1".
+// For a given gate instance subtree returns the TokenInfo of the module name.
+// e.g. bar b1(); returns TokenInfo for "b1".
 const verible::TokenInfo& GetModuleInstanceNameTokenInfoFromGateInstance(
     const verible::Symbol&);
-
 }  // namespace verilog
 
 #endif  // VERIBLE_VERILOG_CST_DECLARATION_H_

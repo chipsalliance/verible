@@ -137,6 +137,11 @@ struct PreFormatToken {
   // Reconstructs the original spacing that preceded this token.
   absl::string_view OriginalLeadingSpaces() const;
 
+  // Returns OriginalLeadingSpaces().length() - before.spaces_required.
+  // If there is no leading spaces text, return 0.
+  // If the original leading text contains any newlines, return 0.
+  int ExcessSpaces() const;
+
   // Returns the number of leading spaces that this format token would occupy
   // when rendered, based on the formatting decision and before.required_spaces.
   size_t LeadingSpacesLength() const;

@@ -43,7 +43,8 @@ class IndexingFactsTreeExtractor : public verible::TreeContextVisitor {
   void ExtractModule(const verible::SyntaxTreeNode& module_declaration_node);
 
   // Extracts modules instantiations and creates its corresponding fact tree.
-  void ExtractModuleInstantiation(const verible::SyntaxTreeNode& data_declaration_node);
+  void ExtractModuleInstantiation(
+      const verible::SyntaxTreeNode& data_declaration_node);
 
   // Extracts endmodule and creates its corresponding fact tree.
   void ExtractModuleEnd(const verible::SyntaxTreeNode& module_declaration_node);
@@ -53,10 +54,12 @@ class IndexingFactsTreeExtractor : public verible::TreeContextVisitor {
 
   // Extracts "a" from input a, output a and creates its corresponding fact
   // tree.
-  void ExtractInputOutputDeclaration(const verible::SyntaxTreeNode& module_port_declaration_node);
+  void ExtractInputOutputDeclaration(
+      const verible::SyntaxTreeNode& module_port_declaration_node);
 
   // Extract "a" from wire a and creates its corresponding fact tree.
-  void ExtractNetDeclaration(const verible::SyntaxTreeNode& net_declaration_node);
+  void ExtractNetDeclaration(
+      const verible::SyntaxTreeNode& net_declaration_node);
 
   // The Root of the constructed tree
   IndexingFactNode root_{IndexingNodeData(IndexingFactType::kFile)};
