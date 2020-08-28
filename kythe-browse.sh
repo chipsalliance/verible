@@ -32,14 +32,18 @@ KYTHE_OUT="./kythe-out"
 rm -f -- ${KYTHE_OUT}/graphstore/* ${KYTHE_OUT}/tables/*
 mkdir -p ${KYTHE_OUT}/graphstore ${KYTHE_OUT}/tables
 bazel build //verilog/tools/kythe:all
-bazel-bin/verilog/tools/kythe/verible-verilog-kythe-extractor "$1"  --printkythefacts > ${KYTHE_OUT}/entries
-# Read JSON entries from standard in to a graphstore.
-${KYTHE_BINDIR}/entrystream --read_format=json < ${KYTHE_OUT}/entries \
+
+for i in "$@"; do
+  # Read JSON entries from standard in to a graphstore.
+  bazel-bin/verilog/tools/kythe/verible-verilog-kythe-extractor "$i"  --printkythefacts > ${KYTHE_OUT}/entries
+  # Write entry stream into a GraphStore
+  ${KYTHE_BINDIR}/entrystream --read_format=json < ${KYTHE_OUT}/entries \
   | ${KYTHE_BINDIR}/write_entries -graphstore ${KYTHE_OUT}/graphstore
+done
+
 # Convert the graphstore to serving tables.
 ${KYTHE_BINDIR}/write_tables -graphstore ${KYTHE_OUT}/graphstore -out=${KYTHE_OUT}/tables
 # Host the browser UI.
 ${KYTHE_BINDIR}/http_server -serving_table ${KYTHE_OUT}/tables \
   -public_resources="/opt/kythe/web/ui" \
   -listen="localhost:${BROWSE_PORT}"  # ":${BROWSE_PORT}" allows access from other machines
-
