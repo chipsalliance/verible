@@ -107,6 +107,7 @@ cc_library(
     deps = [
         ":indexing_facts_tree",
         ":indexing_facts_tree_context",
+        "//common/analysis:syntax_tree_search",
         "//common/text:tree_context_visitor",
         "//common/text:tree_utils",
         "//verilog/CST:declaration",
@@ -114,6 +115,7 @@ cc_library(
         "//verilog/CST:module",
         "//verilog/CST:net",
         "//verilog/CST:port",
+        "//verilog/CST:verilog_matchers",
         "//verilog/CST:verilog_nonterminals",
         "//verilog/analysis:verilog_analyzer",
     ],

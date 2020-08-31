@@ -63,11 +63,17 @@ const verible::SyntaxTreeNode& GetModuleHeader(const verible::Symbol&);
 // Returns the full header of an interface (params, ports, etc...).
 const verible::SyntaxTreeNode& GetInterfaceHeader(const verible::Symbol&);
 
+// Returns the full header of ca class.
+const verible::SyntaxTreeNode& GetClassHeader(const verible::Symbol&);
+
 // Extract the subnode of a module declaration that is the module name.
 const verible::TokenInfo& GetModuleNameToken(const verible::Symbol&);
 
 // Extract the subnode of an interface declaration that is the module name.
 const verible::TokenInfo& GetInterfaceNameToken(const verible::Symbol&);
+
+// Extract the subnode of an class declaration that is the class name.
+const verible::TokenInfo& GetClassNameToken(const verible::Symbol&);
 
 // Returns the node spanning the module's port paren group, or nullptr.
 // e.g. from "module foo(input x); endmodule", this returns the node that spans
@@ -88,6 +94,13 @@ const verible::TokenInfo* GetModuleEndLabel(const verible::Symbol&);
 // Returns the node spanning module's Item list.
 const verible::SyntaxTreeNode& GetModuleItemList(
     const verible::Symbol& module_declaration);
+
+// Returns class name token after endclass.
+// e.g. from "class foo; endclass: foo" returns the second "foo".
+const verible::TokenInfo* GetClassEndLabel(const verible::Symbol&);
+
+// Returns the node spanning class's Item list.
+const verible::SyntaxTreeNode& GetClassItemList(const verible::Symbol&);
 
 }  // namespace verilog
 

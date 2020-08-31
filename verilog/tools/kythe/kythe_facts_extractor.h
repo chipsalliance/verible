@@ -109,7 +109,7 @@ class KytheFactsExtractor {
       for (const auto& scope : verible::make_range(rbegin(), rend())) {
         for (const VName& vname :
              verible::make_range(scope->rbegin(), scope->rend())) {
-          if (vname.signature.find(prefix) != std::string::npos) {
+          if (vname.signature.find(prefix) == 0) {
             return &vname;
           }
         }
@@ -127,12 +127,18 @@ class KytheFactsExtractor {
   // Extracts kythe facts from module node and returns it VName.
   VName ExtractModuleFact(const IndexingFactNode&);
 
+  // Extracts kythe facts from class node and returns it VName.
+  VName ExtractClassFact(const IndexingFactNode&);
+
   // Extracts kythe facts from module port node and returns its VName.
-  VName ExtractVariableDefinition(const IndexingFactNode& node);
+  VName ExtractVariableDefinitionFact(const IndexingFactNode& node);
 
   // Extracts kythe facts from a module port reference node and returns its
   // VName.
-  VName ExtractVariableReference(const IndexingFactNode& node);
+  VName ExtractVariableReferenceFact(const IndexingFactNode& node);
+
+  // Extracts Kythe facts from class instnace node and return its VName.
+  VName ExtractClassInstances(const IndexingFactNode& class_instance_fact_node);
 
   // Generates an anchor VName for kythe.
   VName PrintAnchorVName(const Anchor&, absl::string_view);
@@ -148,8 +154,8 @@ class KytheFactsExtractor {
   // tree.
   VNameContext vnames_context_;
 
-  // Keeps track of scopes and definitions inside the scopes of ancestors as the
-  // visitor traverses the facts tree.
+  // Keeps track of scopes and definitions inside the scopes of ancestors as
+  // the visitor traverses the facts tree.
   ScopeContext scope_context_;
 
   // Output stream for capturing, redirecting, testing and verifying the
@@ -160,8 +166,19 @@ class KytheFactsExtractor {
 // Creates the signature for module names.
 std::string CreateModuleSignature(absl::string_view);
 
+// Creates the signature for Class names.
+std::string CreateClassSignature(absl::string_view);
+
 // Creates the signature for module instantiations.
 std::string CreateVariableSignature(absl::string_view);
+
+// Generates fact strings for Kythe facts.
+std::string GenerateFactString(const VName& vname, absl::string_view name,
+                               absl::string_view value);
+
+// Generates edge strings for Kythe edges.
+std::string GenerateEdgeString(const VName& source, absl::string_view name,
+                               const VName& target);
 
 std::ostream& operator<<(std::ostream&, const KytheFactsPrinter&);
 
