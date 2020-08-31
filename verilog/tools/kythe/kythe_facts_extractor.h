@@ -147,6 +147,14 @@ class KytheFactsExtractor {
   // signatures unique relative to scopes.
   std::string CreateScopeRelativeSignature(absl::string_view);
 
+  // Generates fact strings for Kythe facts.
+  void GenerateFactString(const VName& vname, absl::string_view name,
+                          absl::string_view value);
+
+  // Generates edge strings for Kythe edges.
+  void GenerateEdgeString(const VName& source, absl::string_view name,
+                          const VName& target);
+
   // The verilog file name which the facts are extracted from.
   std::string file_path_;
 
@@ -171,14 +179,6 @@ std::string CreateClassSignature(absl::string_view);
 
 // Creates the signature for module instantiations.
 std::string CreateVariableSignature(absl::string_view);
-
-// Generates fact strings for Kythe facts.
-std::string GenerateFactString(const VName& vname, absl::string_view name,
-                               absl::string_view value);
-
-// Generates edge strings for Kythe edges.
-std::string GenerateEdgeString(const VName& source, absl::string_view name,
-                               const VName& target);
 
 std::ostream& operator<<(std::ostream&, const KytheFactsPrinter&);
 

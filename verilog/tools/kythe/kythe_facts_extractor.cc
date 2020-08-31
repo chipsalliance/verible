@@ -65,7 +65,7 @@ void KytheFactsExtractor::Visit(const IndexingFactNode& node) {
   }
 
   if (tag != IndexingFactType::kFile) {
-    *stream_ << GenerateEdgeString(vname, kEdgeChildOf, vnames_context_.top());
+    GenerateEdgeString(vname, kEdgeChildOf, vnames_context_.top());
   }
 
   std::vector<VName> current_scope;
@@ -81,8 +81,8 @@ VName KytheFactsExtractor::ExtractFileFact(
   const VName file_vname(file_path_, "", "", "");
   const std::string& code_text = file_fact_node.Value().Anchors()[1].Value();
 
-  *stream_ << GenerateFactString(file_vname, kFactNodeKind, kNodeFile);
-  *stream_ << GenerateFactString(file_vname, kFactText, code_text);
+  GenerateFactString(file_vname, kFactNodeKind, kNodeFile);
+  GenerateFactString(file_vname, kFactText, code_text);
 
   return file_vname;
 }
@@ -98,18 +98,15 @@ VName KytheFactsExtractor::ExtractModuleFact(
       CreateScopeRelativeSignature(CreateModuleSignature(module_name.Value())));
   const VName module_name_anchor = PrintAnchorVName(module_name, file_path_);
 
-  *stream_ << GenerateFactString(module_vname, kFactNodeKind, kNodeRecord);
-  *stream_ << GenerateFactString(module_vname, kFactSubkind, kSubkindModule);
-  *stream_ << GenerateFactString(module_vname, kFactComplete,
-                                 kCompleteDefinition);
-  *stream_ << GenerateEdgeString(module_name_anchor, kEdgeDefinesBinding,
-                                 module_vname);
+  GenerateFactString(module_vname, kFactNodeKind, kNodeRecord);
+  GenerateFactString(module_vname, kFactSubkind, kSubkindModule);
+  GenerateFactString(module_vname, kFactComplete, kCompleteDefinition);
+  GenerateEdgeString(module_name_anchor, kEdgeDefinesBinding, module_vname);
 
   if (anchors.size() > 1) {
     const VName module_end_label_anchor =
         PrintAnchorVName(module_end_label, file_path_);
-    *stream_ << GenerateEdgeString(module_end_label_anchor, kEdgeRef,
-                                   module_vname);
+    GenerateEdgeString(module_end_label_anchor, kEdgeRef, module_vname);
   }
 
   return module_vname;
@@ -133,17 +130,13 @@ VName KytheFactsExtractor::ExtractModuleInstanceFact(
 
   const VName module_type_anchor = PrintAnchorVName(module_type, file_path_);
 
-  *stream_ << GenerateFactString(module_instance_vname, kFactNodeKind,
-                                 kNodeVariable);
-  *stream_ << GenerateFactString(module_instance_vname, kFactComplete,
-                                 kCompleteDefinition);
+  GenerateFactString(module_instance_vname, kFactNodeKind, kNodeVariable);
+  GenerateFactString(module_instance_vname, kFactComplete, kCompleteDefinition);
 
-  *stream_ << GenerateEdgeString(module_type_anchor, kEdgeRef,
-                                 module_type_vname);
-  *stream_ << GenerateEdgeString(module_instance_vname, kEdgeTyped,
-                                 module_type_vname);
-  *stream_ << GenerateEdgeString(module_instance_anchor, kEdgeDefinesBinding,
-                                 module_instance_vname);
+  GenerateEdgeString(module_type_anchor, kEdgeRef, module_type_vname);
+  GenerateEdgeString(module_instance_vname, kEdgeTyped, module_type_vname);
+  GenerateEdgeString(module_instance_anchor, kEdgeDefinesBinding,
+                     module_instance_vname);
 
   for (const auto& anchor :
        verible::make_range(anchors.begin() + 2, anchors.end())) {
@@ -156,8 +149,7 @@ VName KytheFactsExtractor::ExtractModuleInstanceFact(
 
     const VName port_vname_anchor = PrintAnchorVName(anchor, file_path_);
 
-    *stream_ << GenerateEdgeString(port_vname_anchor, kEdgeRef,
-                                   port_vname_definition);
+    GenerateEdgeString(port_vname_anchor, kEdgeRef, port_vname_definition);
   }
 
   return module_instance_vname;
@@ -171,12 +163,11 @@ VName KytheFactsExtractor::ExtractVariableDefinitionFact(
       CreateScopeRelativeSignature(CreateVariableSignature(anchor.Value())));
   const VName variable_vname_anchor = PrintAnchorVName(anchor, file_path_);
 
-  *stream_ << GenerateFactString(variable_vname, kFactNodeKind, kNodeVariable);
-  *stream_ << GenerateFactString(variable_vname, kFactComplete,
-                                 kCompleteDefinition);
+  GenerateFactString(variable_vname, kFactNodeKind, kNodeVariable);
+  GenerateFactString(variable_vname, kFactComplete, kCompleteDefinition);
 
-  *stream_ << GenerateEdgeString(variable_vname_anchor, kEdgeDefinesBinding,
-                                 variable_vname);
+  GenerateEdgeString(variable_vname_anchor, kEdgeDefinesBinding,
+                     variable_vname);
 
   return variable_vname;
 }
@@ -189,16 +180,15 @@ VName KytheFactsExtractor::ExtractVariableReferenceFact(
   const VName* variable_definition_vname = scope_context_.SearchForDefinition(
       CreateVariableSignature(anchor.Value()));
   if (variable_definition_vname != nullptr) {
-    *stream_ << GenerateEdgeString(variable_vname_anchor, kEdgeRef,
-                                   *variable_definition_vname);
+    GenerateEdgeString(variable_vname_anchor, kEdgeRef,
+                       *variable_definition_vname);
 
     return *variable_definition_vname;
   } else {
     const VName variable_vname(
         file_path_,
         CreateScopeRelativeSignature(CreateVariableSignature(anchor.Value())));
-    *stream_ << GenerateEdgeString(variable_vname_anchor, kEdgeRef,
-                                   variable_vname);
+    GenerateEdgeString(variable_vname_anchor, kEdgeRef, variable_vname);
 
     return variable_vname;
   }
@@ -215,17 +205,14 @@ VName KytheFactsExtractor::ExtractClassFact(
       CreateScopeRelativeSignature(CreateClassSignature(class_name.Value())));
   const VName class_name_anchor = PrintAnchorVName(class_name, file_path_);
 
-  *stream_ << GenerateFactString(class_vname, kFactNodeKind, kNodeRecord);
-  *stream_ << GenerateFactString(class_vname, kFactComplete,
-                                 kCompleteDefinition);
-  *stream_ << GenerateEdgeString(class_name_anchor, kEdgeDefinesBinding,
-                                 class_vname);
+  GenerateFactString(class_vname, kFactNodeKind, kNodeRecord);
+  GenerateFactString(class_vname, kFactComplete, kCompleteDefinition);
+  GenerateEdgeString(class_name_anchor, kEdgeDefinesBinding, class_vname);
 
   if (anchors.size() > 1) {
     const VName class_end_label_anchor =
         PrintAnchorVName(class_end_label, file_path_);
-    *stream_ << GenerateEdgeString(class_end_label_anchor, kEdgeRef,
-                                   class_vname);
+    GenerateEdgeString(class_end_label_anchor, kEdgeRef, class_vname);
   }
 
   return class_vname;
@@ -249,16 +236,13 @@ VName KytheFactsExtractor::ExtractClassInstances(
 
   const VName class_type_anchor = PrintAnchorVName(class_type, file_path_);
 
-  *stream_ << GenerateFactString(class_instance_vname, kFactNodeKind,
-                                 kNodeVariable);
-  *stream_ << GenerateFactString(class_instance_vname, kFactComplete,
-                                 kCompleteDefinition);
+  GenerateFactString(class_instance_vname, kFactNodeKind, kNodeVariable);
+  GenerateFactString(class_instance_vname, kFactComplete, kCompleteDefinition);
 
-  *stream_ << GenerateEdgeString(class_type_anchor, kEdgeRef, class_type_vname);
-  *stream_ << GenerateEdgeString(class_instance_vname, kEdgeTyped,
-                                 class_type_vname);
-  *stream_ << GenerateEdgeString(class_instance_anchor, kEdgeDefinesBinding,
-                                 class_instance_vname);
+  GenerateEdgeString(class_type_anchor, kEdgeRef, class_type_vname);
+  GenerateEdgeString(class_instance_vname, kEdgeTyped, class_type_vname);
+  GenerateEdgeString(class_instance_anchor, kEdgeDefinesBinding,
+                     class_instance_vname);
 
   return class_instance_vname;
 }
@@ -269,13 +253,11 @@ VName KytheFactsExtractor::PrintAnchorVName(const Anchor& anchor,
                            absl::Substitute(R"(@$0:$1)", anchor.StartLocation(),
                                             anchor.EndLocation()));
 
-  *stream_ << GenerateFactString(anchor_vname, kFactNodeKind, kNodeAnchor);
-  *stream_ << GenerateFactString(
-      anchor_vname, kFactAnchorStart,
-      absl::Substitute(R"($0)", anchor.StartLocation()));
-  *stream_ << GenerateFactString(
-      anchor_vname, kFactAnchorEnd,
-      absl::Substitute(R"($0)", anchor.EndLocation()));
+  GenerateFactString(anchor_vname, kFactNodeKind, kNodeAnchor);
+  GenerateFactString(anchor_vname, kFactAnchorStart,
+                     absl::Substitute(R"($0)", anchor.StartLocation()));
+  GenerateFactString(anchor_vname, kFactAnchorEnd,
+                     absl::Substitute(R"($0)", anchor.EndLocation()));
 
   return anchor_vname;
 }
@@ -283,6 +265,22 @@ VName KytheFactsExtractor::PrintAnchorVName(const Anchor& anchor,
 std::string KytheFactsExtractor::CreateScopeRelativeSignature(
     absl::string_view signature) {
   return absl::StrCat(signature, "#", vnames_context_.top().signature);
+}
+
+void KytheFactsExtractor::GenerateFactString(const VName& vname,
+                                             absl::string_view fact_name,
+                                             absl::string_view fact_value) {
+  *stream_ << absl::Substitute(
+      R"({"source": $0,"fact_name": "$1","fact_value": "$2"})",
+      vname.ToString(), fact_name, absl::Base64Escape(fact_value));
+}
+
+void KytheFactsExtractor::GenerateEdgeString(const VName& source_node,
+                                             absl::string_view edge_name,
+                                             const VName& target_node) {
+  *stream_ << absl::Substitute(
+      R"({"source": $0,"edge_kind": "$1","target": $2,"fact_name": "/"})",
+      source_node.ToString(), edge_name, target_node.ToString());
 }
 
 std::string CreateModuleSignature(absl::string_view module_name) {
@@ -295,21 +293,6 @@ std::string CreateClassSignature(absl::string_view class_name) {
 
 std::string CreateVariableSignature(absl::string_view variable_name) {
   return absl::StrCat(variable_name, "#variable");
-}
-
-std::string GenerateFactString(const VName& vname, absl::string_view fact_name,
-                               absl::string_view fact_value) {
-  return absl::Substitute(
-      R"({"source": $0,"fact_name": "$1","fact_value": "$2"})",
-      vname.ToString(), fact_name, absl::Base64Escape(fact_value));
-}
-
-std::string GenerateEdgeString(const VName& source_node,
-                               absl::string_view edge_name,
-                               const VName& target_node) {
-  return absl::Substitute(
-      R"({"source": $0,"edge_kind": "$1","target": $2,"fact_name": "/"})",
-      source_node.ToString(), edge_name, target_node.ToString());
 }
 
 std::string GetFilePathFromRoot(const IndexingFactNode& root) {
