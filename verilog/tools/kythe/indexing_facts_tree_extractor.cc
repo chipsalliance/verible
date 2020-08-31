@@ -31,35 +31,6 @@
 namespace verilog {
 namespace kythe {
 
-namespace {
-
-void DebugSyntaxTree(const verible::SyntaxTreeLeaf& leaf) {
-  VLOG(1) << "Start Leaf";
-  VLOG(1) << verilog::NodeEnumToString(
-                 static_cast<verilog::NodeEnum>(leaf.Tag().tag))
-          << " <<>> " << leaf.Tag().tag << " " << leaf.get();
-  VLOG(1) << "End Leaf";
-}
-
-void DebugSyntaxTree(const verible::SyntaxTreeNode& node) {
-  VLOG(1) << "Start Node";
-  VLOG(1) << verilog::NodeEnumToString(
-                 static_cast<verilog::NodeEnum>(node.Tag().tag))
-          << "  " << node.children().size();
-
-  for (const verible::SymbolPtr& child : node.children()) {
-    if (!child) continue;
-    if (child->Kind() == verible::SymbolKind::kNode) {
-      DebugSyntaxTree(verible::SymbolCastToNode(*child));
-    } else {
-      DebugSyntaxTree(verible::SymbolCastToLeaf(*child));
-    }
-  }
-
-  VLOG(1) << "End Node";
-}
-}  // namespace
-
 IndexingFactNode ExtractOneFile(absl::string_view content,
                                 absl::string_view filename, int& exit_status,
                                 bool& parse_ok) {
@@ -93,7 +64,6 @@ IndexingFactNode BuildIndexingFactsTree(
   }
 
   const verible::SyntaxTreeNode& root = verible::SymbolCastToNode(*syntax_tree);
-  DebugSyntaxTree(root);
   root.Accept(&visitor);
 
   return visitor.GetRoot();

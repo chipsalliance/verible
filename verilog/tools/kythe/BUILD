@@ -1,7 +1,5 @@
 # 'verible-verilog-kythe-extractor' is a program for extracting Verilog/SystemVerilog to kythe facts.
 
-load("@rules_cc//cc:defs.bzl", "cc_binary", "cc_library", "cc_test")
-
 licenses(["notice"])
 
 # Generates foreach list for IndexingFactType enum.
@@ -129,7 +127,6 @@ cc_test(
         "//common/analysis:syntax_tree_search_test_utils",
         "//common/text:concrete_syntax_tree",
         "//verilog/analysis:verilog_analyzer",
-        "@com_google_absl//absl/strings",
         "@com_google_googletest//:gtest_main",
     ],
 )
