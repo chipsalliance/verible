@@ -284,7 +284,7 @@ struct MatrixCellSizeFormatter {
 std::ostream& operator<<(std::ostream& stream,
                          const MatrixCellSizeFormatter& p) {
   const AlignmentMatrix& matrix = p.matrix;
-  for (auto& row : matrix) {
+  for (const auto& row : matrix) {
     stream << '['
            << absl::StrJoin(row, ", ",
                             [](std::string* out, const AlignmentCell& cell) {
@@ -317,9 +317,9 @@ static AlignedFormattingColumnSchema ComputeColumnWidths(
     const AlignmentMatrix& matrix) {
   VLOG(2) << __FUNCTION__;
   AlignedFormattingColumnSchema column_configs(matrix.front().size());
-  for (auto& row : matrix) {
+  for (const auto& row : matrix) {
     auto column_iter = column_configs.begin();
-    for (auto& cell : row) {
+    for (const auto& cell : row) {
       column_iter->UpdateFromCell(cell);
       ++column_iter;
     }
@@ -481,13 +481,23 @@ static bool AlignedRowsFitUnderColumnLimit(
   return true;
 }
 
-static void AlignFilteredRows(
+// Holds alignment calculations for an alignable group of token partitions.
+struct GroupAlignmentData {
+  // Contains alignment calculations.
+  AlignmentMatrix matrix;
+
+  // If this is empty, don't do any alignment.
+  std::vector<std::vector<DeferredTokenAlignment>> align_actions_2D;
+};
+
+static GroupAlignmentData AlignFilteredRows(
     const std::vector<TokenPartitionIterator>& rows,
     const AlignmentCellScannerFunction& cell_scanner_gen,
     MutableFormatTokenRange::iterator ftoken_base, int column_limit) {
   VLOG(1) << __FUNCTION__;
+  GroupAlignmentData result;
   // Alignment requires 2+ rows.
-  if (rows.size() <= 1) return;
+  if (rows.size() <= 1) return result;
 
   // Rows validation:
   // In many (but not all) cases, all rows' nodes have the same type.
@@ -527,10 +537,10 @@ static void AlignFilteredRows(
   // Null cells (due to optional constructs) are represented by empty ranges,
   // effectively width 0.
   VLOG(2) << "Filling dense matrix from sparse representation";
-  AlignmentMatrix matrix(rows.size());
+  result.matrix.resize(rows.size());
   {
     auto row_data_iter = alignment_row_data.cbegin();
-    for (auto& row : matrix) {
+    for (auto& row : result.matrix) {
       row.resize(num_columns);
       FillAlignmentRow(*row_data_iter, column_positions, &row);
       ++row_data_iter;
@@ -538,10 +548,11 @@ static void AlignFilteredRows(
   }
 
   // Compute compact sizes per cell.
-  ComputeCellWidths(&matrix);
+  ComputeCellWidths(&result.matrix);
 
   // Compute max widths per column.
-  AlignedFormattingColumnSchema column_configs(ComputeColumnWidths(matrix));
+  AlignedFormattingColumnSchema column_configs(
+      ComputeColumnWidths(result.matrix));
 
   // Extract other non-computed column properties.
   const auto column_properties = column_schema.ColumnProperties();
@@ -563,23 +574,36 @@ static void AlignFilteredRows(
       VLOG(1) << "Total aligned column width " << total_column_width
               << " exceeds limit " << column_limit
               << ", so not aligning this group.";
-      return;
+      return result;
     }
     // Also check for length of unaligned trailing tokens.
-    if (!AlignedRowsFitUnderColumnLimit(rows, matrix, total_column_width,
+    if (!AlignedRowsFitUnderColumnLimit(rows, result.matrix, total_column_width,
                                         column_limit))
-      return;
+      return result;
   }
 
   // TODO(fangism): implement overflow mitigation fallback strategies.
 
   // At this point, the proposed alignment/padding 'fits'.
 
-  // Adjust pre-token spacings of each row to align to the column configs.
-  for (auto& row : matrix) {
-    const std::vector<DeferredTokenAlignment> align_actions(
+  // Compute pre-token spacings of each row to align to the column configs.
+  // Store the mutation set in a 2D structure that reflects the original token
+  // partitions and alignment matrix representation.
+  result.align_actions_2D.reserve(result.matrix.size());
+  for (const auto& row : result.matrix) {
+    result.align_actions_2D.push_back(
         ComputeAignedRowSpacings(column_configs, column_properties, row));
-    // TODO(b/166154726): analyze these spacing in deciding apply alignment.
+  }
+  return result;
+}
+
+// This applies pre-calculated alignment spacings to aligned groups of format
+// tokens.
+static void ApplyGroupAlignment(const GroupAlignmentData& align_data,
+                                const std::vector<TokenPartitionIterator>& rows,
+                                MutableFormatTokenRange::iterator ftoken_base) {
+  // Apply spacing adjustments (mutates format tokens)
+  for (const auto& align_actions : align_data.align_actions_2D) {
     for (const auto& action : align_actions) action.Apply();
   }
 
@@ -587,7 +611,8 @@ static void AlignFilteredRows(
   // solved (append everything because they fit on one line).
   {
     auto partition_iter = rows.begin();
-    for (auto& row : matrix) {
+    for (auto& row : align_data.matrix) {
+      // Commits to appending all tokens in this row (mutates format tokens)
       CommitAlignmentDecisionToRow(**partition_iter, row, ftoken_base);
       ++partition_iter;
     }
@@ -595,11 +620,9 @@ static void AlignFilteredRows(
   VLOG(1) << "end of " << __FUNCTION__;
 }
 
-static void AlignPartitionGroup(
+static std::vector<TokenPartitionIterator> FilterAlignablePartitions(
     const TokenPartitionRange& group,
-    const AlignedFormattingHandler& alignment_handler,
-    MutableFormatTokenRange::iterator ftoken_base, int column_limit) {
-  VLOG(1) << __FUNCTION__ << ", group size: " << group.size();
+    const IgnoreAlignmentRowPredicate& ignore_partition_predicate) {
   // This partition group may contain partitions that should not be
   // considered for column alignment purposes, so filter those out.
   std::vector<TokenPartitionIterator> qualified_partitions;
@@ -607,18 +630,14 @@ static void AlignPartitionGroup(
   // like std::copy_if, but we want the iterators, not their pointees.
   for (auto iter = group.begin(); iter != group.end(); ++iter) {
     // TODO(fangism): pass in filter predicate as a function
-    if (!alignment_handler.ignore_partition_predicate(*iter)) {
+    if (!ignore_partition_predicate(*iter)) {
       VLOG(2) << "including partition: " << *iter;
       qualified_partitions.push_back(iter);
     } else {
       VLOG(2) << "excluding partition: " << *iter;
     }
   }
-  // Align the qualified partitions (rows).
-  AlignFilteredRows(qualified_partitions,
-                    alignment_handler.alignment_cell_scanner, ftoken_base,
-                    column_limit);
-  VLOG(1) << "end of " << __FUNCTION__;
+  return qualified_partitions;
 }
 
 // TODO(fangism): move this to common/formatting/token_partition_tree
@@ -669,6 +688,16 @@ static void IndentButPreserveOtherSpacing(
   }
 }
 
+// Educated guess whether user wants alignment.
+static AlignmentPolicy InferUserIntendedAlignmentPolicy(
+    const TokenPartitionRange& partitions,
+    const GroupAlignmentData& align_data) {
+  // TODO(b/166154726): replace this placeholder logic
+
+  // When in doubt, preserve.
+  return AlignmentPolicy::kPreserve;
+}
+
 void TabularAlignTokens(TokenPartitionTree* partition_ptr,
                         const AlignedFormattingHandler& alignment_handler,
                         std::vector<PreFormatToken>* ftokens,
@@ -706,22 +735,45 @@ void TabularAlignTokens(TokenPartitionTree* partition_ptr,
       // TODO(b/159824483): attempt to detect and re-use pre-existing alignment
     }
 
-    // Align or not, depending on user-elected policy.
+    // Determine the subset of partitions that are eligible for alignment.
+    const std::vector<TokenPartitionIterator> qualified_partitions(
+        FilterAlignablePartitions(
+            partition_range, alignment_handler.ignore_partition_predicate));
+
+    // Compute dry-run of alignment spacings if it is needed.
     VLOG(2) << "AlignmentPolicy: " << policy;
+    GroupAlignmentData align_data;
     switch (policy) {
       case AlignmentPolicy::kAlign:
-        AlignPartitionGroup(partition_range, alignment_handler,
-                            ftokens->begin(), column_limit);
+      case AlignmentPolicy::kInferUserIntent:
+        align_data = AlignFilteredRows(qualified_partitions,
+                                       alignment_handler.alignment_cell_scanner,
+                                       ftokens->begin(), column_limit);
         break;
+      default:
+        break;
+    }
+
+    // If enabled, try to decide automatically based on heurstics.
+    if (policy == AlignmentPolicy::kInferUserIntent) {
+      policy = InferUserIntendedAlignmentPolicy(partition_range, align_data);
+      VLOG(2) << "AlignmentPolicy (automatic): " << policy;
+    }
+
+    // Align or not, depending on user-elected or inferred policy.
+    switch (policy) {
+      case AlignmentPolicy::kAlign: {
+        if (!align_data.align_actions_2D.empty()) {
+          // This modifies format tokens' spacing values.
+          ApplyGroupAlignment(align_data, qualified_partitions,
+                              ftokens->begin());
+        }
+        break;
+      }
       case AlignmentPolicy::kFlushLeft:
         // This is already the default behavior elsewhere.  Nothing else to do.
         break;
-      case AlignmentPolicy::kPreserve:
-        IndentButPreserveOtherSpacing(partition_range, full_text, ftokens);
-        break;
-      case AlignmentPolicy::kInferUserIntent:
-        // TODO(b/166154726): infer user-intent from original spacing.
-        // For now, preserving is a safe option.
+      default:
         IndentButPreserveOtherSpacing(partition_range, full_text, ftokens);
         break;
     }
