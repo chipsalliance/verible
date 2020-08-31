@@ -88,10 +88,9 @@ cc_library(
         "indexing_facts_tree.h",
     ],
     deps = [
-        ":verilog_extractor_indexing_fact_type",
         "//common/text:token_info",
         "//common/util:vector_tree",
-        "@com_google_absl//absl/strings",
+        "//verilog/tools/kythe:verilog_extractor_indexing_fact_type",
     ],
 )
 
@@ -106,6 +105,7 @@ cc_library(
     deps = [
         ":indexing_facts_tree",
         ":indexing_facts_tree_context",
+        "//common/analysis:syntax_tree_search",
         "//common/text:tree_context_visitor",
         "//common/text:tree_utils",
         "//verilog/CST:declaration",
@@ -113,9 +113,9 @@ cc_library(
         "//verilog/CST:module",
         "//verilog/CST:net",
         "//verilog/CST:port",
+        "//verilog/CST:verilog_matchers",
         "//verilog/CST:verilog_nonterminals",
         "//verilog/analysis:verilog_analyzer",
-        "@com_google_absl//absl/strings",
     ],
 )
 
