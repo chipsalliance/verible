@@ -329,6 +329,8 @@ static AlignedFormattingColumnSchema ComputeColumnWidths(
 }
 
 // Saved spacing mutation so that it can be examined before applying.
+// There is one of these for every format token that immediately follows an
+// alignment column boundary.
 struct DeferredTokenAlignment {
   // Points to the token to be modified.
   PreFormatToken* ftoken;
@@ -337,6 +339,12 @@ struct DeferredTokenAlignment {
 
   DeferredTokenAlignment(PreFormatToken* t, int spaces)
       : ftoken(t), new_before_spacing(spaces) {}
+
+  // This value reflects an edit-distance (number of spaces) between aligned and
+  // flushed-left formatting.
+  int AlignVsFlushLeftSpacingDifference() const {
+    return new_before_spacing - ftoken->before.spaces_required;
+  }
 
   void Apply() const {
     // force printing of spaces
@@ -488,6 +496,17 @@ struct GroupAlignmentData {
 
   // If this is empty, don't do any alignment.
   std::vector<std::vector<DeferredTokenAlignment>> align_actions_2D;
+
+  int MaxAbsoluteAlignVsFlushLeftSpacingDifference() const {
+    int result = std::numeric_limits<int>::min();
+    for (const auto& align_actions : align_actions_2D) {
+      for (const auto& action : align_actions) {
+        int abs_diff = std::abs(action.AlignVsFlushLeftSpacingDifference());
+        result = std::max(abs_diff, result);
+      }
+    }
+    return result;
+  }
 };
 
 static GroupAlignmentData AlignFilteredRows(
@@ -688,11 +707,68 @@ static void IndentButPreserveOtherSpacing(
   }
 }
 
+static int MaxOfPositives2D(const std::vector<std::vector<int>>& values) {
+  int result = 0;
+  for (const auto& row : values) {
+    for (const int delta : row) {
+      // Only accumulate positive values.
+      if (delta > result) result = delta;
+    }
+  }
+  return result;
+}
+
 // Educated guess whether user wants alignment.
 static AlignmentPolicy InferUserIntendedAlignmentPolicy(
     const TokenPartitionRange& partitions,
     const GroupAlignmentData& align_data) {
-  // TODO(b/166154726): replace this placeholder logic
+  // Heuristics are implemented as a sequence of priority-ordered rules.
+
+  {
+    // If the visual distance between aligned and flushed left is sufficiently
+    // small (and thus less likely to compromise readability), just align the
+    // code region.  The lower this threshold value, the more conservative the
+    // aligner will be about forcing alignment over blocks of code.
+    constexpr int kForceAlignMaxThreshold = 2;  // TODO(fangism): configurable
+    const int align_flush_diff =
+        align_data.MaxAbsoluteAlignVsFlushLeftSpacingDifference();
+    VLOG(2) << "align vs. flush diff = " << align_flush_diff;
+    VLOG(2) << "  vs. " << kForceAlignMaxThreshold << " (max threshold)";
+    if (align_flush_diff <= kForceAlignMaxThreshold) {
+      VLOG(2) << "  <= threshold, so force-align.";
+      return AlignmentPolicy::kAlign;
+    }
+  }
+
+  // Compute spacing distances between the original and flush-left spacing.
+  // This can be interpreted as "errors relative to flush-left spacing".
+  const std::vector<std::vector<int>> flush_left_spacing_deltas(
+      FlushLeftSpacingDifferences(partitions));
+  const int max_excess_spaces = MaxOfPositives2D(flush_left_spacing_deltas);
+  VLOG(2) << "max excess spaces = " << max_excess_spaces;
+
+  {
+    // If the worst spacing error relative to the original code is <= than
+    // this threshold, then infer that the user intended code to be flush-left.
+    constexpr int kFlushLeftMaxThreshold = 2;  // TODO(fangism): configurable
+    VLOG(2) << "  vs. " << kFlushLeftMaxThreshold << " (max threshold)";
+    if (max_excess_spaces <= kFlushLeftMaxThreshold) {
+      VLOG(2) << "  <= threshold, so flush-left.";
+      return AlignmentPolicy::kFlushLeft;
+    }
+  }
+
+  {
+    // If the user injects more than this number of spaces in excess anywhere in
+    // this block of code, then trigger alignment.
+    constexpr int kForceAlignMinThreshold = 4;  // TODO(fangism): configurable
+    // This must be greater than kFlushLeftMaxThreshold.
+    VLOG(2) << "  vs. " << kForceAlignMinThreshold << " (min threshold)";
+    if (max_excess_spaces >= kForceAlignMinThreshold) {
+      VLOG(2) << "  >= threshold, so align.";
+      return AlignmentPolicy::kAlign;
+    }
+  }
 
   // When in doubt, preserve.
   return AlignmentPolicy::kPreserve;

@@ -127,33 +127,55 @@ TEST_F(TabularAlignTokenTest, EmptyPartitionRange) {
   // so they end up pointing to the same ranges anyway.
 }
 
-class Sparse3x3MatrixAlignmentTest : public AlignmentTestFixture {
+class MatrixTreeAlignmentTestFixture : public AlignmentTestFixture {
+ public:
+  MatrixTreeAlignmentTestFixture(absl::string_view text)
+      : AlignmentTestFixture(text),
+        syntax_tree_(nullptr),  // for subclasses to initialize
+        partition_(/* temporary */ UnwrappedLine()) {}
+
+  std::string Render() const {
+    std::ostringstream stream;
+    for (const auto& child : partition_.Children()) {
+      stream << FormattedExcerpt(child.Value()) << std::endl;
+    }
+    return stream.str();
+  }
+
+ protected:
+  // Syntax tree from which token partition originates.
+  SymbolPtr syntax_tree_;
+
+  // Format token partitioning (what would be the result of TreeUnwrapper).
+  TokenPartitionTree partition_;
+};
+
+class Sparse3x3MatrixAlignmentTest : public MatrixTreeAlignmentTestFixture {
  public:
   Sparse3x3MatrixAlignmentTest(
       absl::string_view text = "one two three four five six")
-      : AlignmentTestFixture(text),
-        // From the sample_ text, each pair of tokens will span a subpartition.
-        // Construct a 2-level partition that looks like this:
-        //
-        //   |       | one | two  |
-        //   | three |     | four |
-        //   | five  | six |      |
-        //
-        // where blank cells represent positional nullptrs in the syntax tree.
-        syntax_tree_(TNode(1,
-                           TNode(2,                    //
-                                 nullptr,              //
-                                 Leaf(1, tokens_[0]),  //
-                                 Leaf(1, tokens_[1])),
-                           TNode(2,                    //
-                                 Leaf(1, tokens_[2]),  //
-                                 nullptr,              //
-                                 Leaf(1, tokens_[3])),
-                           TNode(2,                    //
-                                 Leaf(1, tokens_[4]),  //
-                                 Leaf(1, tokens_[5]),  //
-                                 nullptr))),
-        partition_(/* temporary */ UnwrappedLine()) {
+      : MatrixTreeAlignmentTestFixture(text) {
+    // From the sample_ text, each pair of tokens will span a subpartition.
+    // Construct a 2-level partition that looks like this:
+    //
+    //   |       | one | two  |
+    //   | three |     | four |
+    //   | five  | six |      |
+    //
+    // where blank cells represent positional nullptrs in the syntax tree.
+    syntax_tree_ = TNode(1,
+                         TNode(2,                    //
+                               nullptr,              //
+                               Leaf(1, tokens_[0]),  //
+                               Leaf(1, tokens_[1])),
+                         TNode(2,                    //
+                               Leaf(1, tokens_[2]),  //
+                               nullptr,              //
+                               Leaf(1, tokens_[3])),
+                         TNode(2,                    //
+                               Leaf(1, tokens_[4]),  //
+                               Leaf(1, tokens_[5]),  //
+                               nullptr));
     // Establish format token ranges per partition.
     const auto begin = pre_format_tokens_.begin();
     UnwrappedLine all(0, begin);
@@ -178,21 +200,6 @@ class Sparse3x3MatrixAlignmentTest : public AlignmentTestFixture {
         tree_type{child3},
     };
   }
-
-  std::string Render() const {
-    std::ostringstream stream;
-    for (const auto& child : partition_.Children()) {
-      stream << FormattedExcerpt(child.Value()) << std::endl;
-    }
-    return stream.str();
-  }
-
- protected:
-  // Syntax tree from which token partition originates.
-  SymbolPtr syntax_tree_;
-
-  // Format token partitioning (what would be the result of TreeUnwrapper).
-  TokenPartitionTree partition_;
 };
 
 TEST_F(Sparse3x3MatrixAlignmentTest, ZeroInterTokenPadding) {
@@ -694,6 +701,154 @@ TEST_F(GetPartitionAlignmentSubrangesTestFixture, VariousRanges) {
     range_indices.push_back(SubRangeIndices(range, children));
   }
   EXPECT_THAT(range_indices, ElementsAre(P(3, 6), P(8, 11)));
+}
+
+class Dense2x2MatrixAlignmentTest : public MatrixTreeAlignmentTestFixture {
+ public:
+  Dense2x2MatrixAlignmentTest(absl::string_view text = "one two three four")
+      : MatrixTreeAlignmentTestFixture(text) {
+    CHECK_EQ(tokens_.size(), 4);
+
+    // Need to know original spacing to be able to infer user-intent.
+    ConnectPreFormatTokensPreservedSpaceStarts(sample_.data(),
+                                               &pre_format_tokens_);
+
+    // Require 1 space between tokens.
+    for (auto& ftoken : pre_format_tokens_) {
+      ftoken.before.spaces_required = 1;
+      // Default to append, so we can see the effect of falling-back to
+      // preserve-spacing behavior.
+      ftoken.before.break_decision = SpacingOptions::MustAppend;
+    }
+
+    // From the sample_ text, each pair of tokens will span a subpartition.
+    // Construct a 2-level partition that looks like this:
+    //
+    //   | one   | two  |
+    //   | three | four |
+    //
+    syntax_tree_ = TNode(1,
+                         TNode(2,                    //
+                               Leaf(1, tokens_[0]),  //
+                               Leaf(1, tokens_[1])),
+                         TNode(2,                    //
+                               Leaf(1, tokens_[2]),  //
+                               Leaf(1, tokens_[3])));
+
+    // Establish format token ranges per partition.
+    const auto begin = pre_format_tokens_.begin();
+    UnwrappedLine all(0, begin);
+    all.SpanUpToToken(pre_format_tokens_.end());
+    all.SetOrigin(&*syntax_tree_);
+    UnwrappedLine child1(0, begin);
+    child1.SpanUpToToken(begin + 2);
+    child1.SetOrigin(DescendPath(*syntax_tree_, {0}));
+    UnwrappedLine child2(0, begin + 2);
+    child2.SpanUpToToken(begin + 4);
+    child2.SetOrigin(DescendPath(*syntax_tree_, {1}));
+
+    // Construct 2-level token partition.
+    using tree_type = TokenPartitionTree;
+    partition_ = tree_type{
+        all,
+        tree_type{child1},
+        tree_type{child2},
+    };
+  }
+};
+
+class InferSmallAlignDifferenceTest : public Dense2x2MatrixAlignmentTest {
+ public:
+  InferSmallAlignDifferenceTest()
+      : Dense2x2MatrixAlignmentTest("one two three four") {}
+};
+
+TEST_F(InferSmallAlignDifferenceTest, DifferenceSufficientlySmall) {
+  // aligned matrix:
+  //   | one   | two  |
+  //   | three | four |
+  //
+  // flushed-left looks only different by a maximum of 2 spaces ("one" vs.
+  // "three", so just align it.
+
+  TabularAlignTokens(&partition_, kDefaultAlignmentHandler, &pre_format_tokens_,
+                     sample_, ByteOffsetSet(),
+                     AlignmentPolicy::kInferUserIntent, 40);
+
+  EXPECT_EQ(Render(),      //
+            "one   two\n"  //
+            "three four\n");
+}
+
+class InferFlushLeftTest : public Dense2x2MatrixAlignmentTest {
+ public:
+  InferFlushLeftTest()
+      : Dense2x2MatrixAlignmentTest("one  two threeeee  four") {}
+};
+
+TEST_F(InferFlushLeftTest, DifferenceSufficientlySmall) {
+  // aligned matrix:
+  //   | one      | two  |
+  //   | threeeee | four |
+  //
+  // Aligned vs. flushed contains a spacing difference of 4,
+  // So this avoids triggering alignment due to small differences.
+  // The original text contains no error greater than 2 spaces relative to
+  // flush-left, therefore flush-left.
+
+  TabularAlignTokens(&partition_, kDefaultAlignmentHandler, &pre_format_tokens_,
+                     sample_, ByteOffsetSet(),
+                     AlignmentPolicy::kInferUserIntent, 40);
+
+  EXPECT_EQ(Render(),    //
+            "one two\n"  //
+            "threeeee four\n");
+}
+
+class InferForceAlignTest : public Dense2x2MatrixAlignmentTest {
+ public:
+  InferForceAlignTest()
+      : Dense2x2MatrixAlignmentTest("one two threeeee     four") {}
+};
+
+TEST_F(InferForceAlignTest, DifferenceSufficientlySmall) {
+  // aligned matrix:
+  //   | one      | two  |
+  //   | threeeee | four |
+  //
+  // The original text contains 4 excess spaces before "four" which should
+  // trigger alignment.
+
+  TabularAlignTokens(&partition_, kDefaultAlignmentHandler, &pre_format_tokens_,
+                     sample_, ByteOffsetSet(),
+                     AlignmentPolicy::kInferUserIntent, 40);
+
+  EXPECT_EQ(Render(),         //
+            "one      two\n"  //
+            "threeeee four\n");
+}
+
+class InferAmbiguousAlignIntentTest : public Dense2x2MatrixAlignmentTest {
+ public:
+  InferAmbiguousAlignIntentTest()
+      : Dense2x2MatrixAlignmentTest("one two threeeee    four") {}
+};
+
+TEST_F(InferAmbiguousAlignIntentTest, DifferenceSufficientlySmall) {
+  // aligned matrix:
+  //   | one      | two  |
+  //   | threeeee | four |
+  //
+  // The original text contains only 3 excess spaces before "four" which should
+  // not trigger alignment, but fall back to preserving original spacing.
+
+  TabularAlignTokens(&partition_, kDefaultAlignmentHandler, &pre_format_tokens_,
+                     sample_, ByteOffsetSet(),
+                     AlignmentPolicy::kInferUserIntent, 40);
+
+  EXPECT_EQ(Render(),    //
+            "one two\n"  //
+            "threeeee    four\n");
 }
 
 }  // namespace
