@@ -168,6 +168,7 @@ cc_test(
     deps = [
         ":format_style",
         ":formatter",
+        "//common/formatting:align",
         "//common/strings:position",
         "//common/text:text_structure",
         "//common/util:logging",

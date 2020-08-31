@@ -46,6 +46,7 @@
 #include "verilog/formatting/formatter.h"
 
 using absl::StatusCode;
+using verible::AlignmentPolicy;
 using verible::LineNumberSet;
 using verilog::formatter::ExecutionControl;
 using verilog::formatter::FormatStyle;
@@ -189,7 +190,7 @@ static bool formatOneFile(absl::string_view filename,
     format_style.try_wrap_long_lines = absl::GetFlag(FLAGS_try_wrap_long_lines);
     // TODO(fangism): expose this as a user-flag or configuration
     format_style.class_member_variable_alignment =
-        verible::AlignmentPolicy::kPreserve;
+        AlignmentPolicy::kInferUserIntent;
   }
 
   std::ostringstream stream;

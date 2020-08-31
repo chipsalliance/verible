@@ -30,6 +30,7 @@
 #include "absl/status/status.h"
 #include "absl/strings/match.h"
 #include "absl/strings/string_view.h"
+#include "common/formatting/align.h"
 #include "common/strings/position.h"
 #include "common/text/text_structure.h"
 #include "common/util/logging.h"
@@ -6820,6 +6821,69 @@ TEST(FormatterEndToEndTest, VerilogFormatTest) {
   style.indentation_spaces = 2;
   style.wrap_spaces = 4;
   for (const auto& test_case : kFormatterTestCases) {
+    VLOG(1) << "code-to-format:\n" << test_case.input << "<EOF>";
+    std::ostringstream stream;
+    const auto status =
+        FormatVerilog(test_case.input, "<filename>", style, stream);
+    // Require these test cases to be valid.
+    EXPECT_OK(status) << status.message();
+    EXPECT_EQ(stream.str(), test_case.expected) << "code:\n" << test_case.input;
+  }
+}
+
+TEST(FormatterEndToEndTest, AutoInferAlignment) {
+  static constexpr FormatterTestCase kTestCases[] = {
+      {"", ""},
+      {"\n", "\n"},
+      {"class  cc ;\n"
+       "endclass:cc\n",
+       "class cc;\n"
+       "endclass : cc\n"},
+
+      // class member variables
+      {"class  cc ;\n"
+       "int my_int;\n"
+       "bar_t my_bar;\n"
+       "endclass:cc\n",
+       "class cc;\n"
+       "  int   my_int;\n"  // align doesn't add too many spaces, so align
+       "  bar_t my_bar;\n"
+       "endclass : cc\n"},
+      {"class  cc ;\n"
+       "int   my_int;\n"
+       "foo_pkg::bar_t my_bar;\n"
+       "endclass:cc\n",
+       "class cc;\n"
+       "  int my_int;\n"  // align would add too many spaces, so flush-left
+       "  foo_pkg::bar_t my_bar;\n"
+       "endclass : cc\n"},
+      {"class  cc ;\n"
+       "int     my_int;\n"  // intentional excessive spaces, trigger alignment
+       "foo_pkg::bar_t my_bar;\n"
+       "endclass:cc\n",
+       "class cc;\n"
+       "  int            my_int;\n"
+       "  foo_pkg::bar_t my_bar;\n"
+       "endclass : cc\n"},
+      {"class  cc ;\n"
+       "int    my_int;\n"  // unable to infer user's intent, so preserve
+       "foo_pkg::bar_t  my_bar;\n"
+       "endclass:cc\n",
+       "class cc;\n"
+       "  int    my_int;\n"  // ... but still indent
+       "  foo_pkg::bar_t  my_bar;\n"
+       "endclass : cc\n"},
+  };
+  // Use a fixed style.
+  FormatStyle style;
+  style.column_limit = 40;
+  style.indentation_spaces = 2;
+  style.wrap_spaces = 4;
+  // Override some settings to test auto-inferred alignment.
+  style.class_member_variable_alignment =
+      verible::AlignmentPolicy::kInferUserIntent;
+
+  for (const auto& test_case : kTestCases) {
     VLOG(1) << "code-to-format:\n" << test_case.input << "<EOF>";
     std::ostringstream stream;
     const auto status =
