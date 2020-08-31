@@ -524,6 +524,7 @@ void TreeUnwrapper::InterChildNodeHook(const SyntaxTreeNode& node) {
     case NodeEnum::kDescriptionList:  // top-level item comments
     case NodeEnum::kStatementList:
     case NodeEnum::kPackageItemList:
+    case NodeEnum::kSpecifyItemList:
     case NodeEnum::kBlockItemStatementList:
     case NodeEnum::kConstraintExpressionList:
     case NodeEnum::kConstraintBlockItemList:
@@ -690,6 +691,7 @@ void TreeUnwrapper::SetIndentationsAndCreatePartitions(
     case NodeEnum::kInitialStatement:
     case NodeEnum::kFinalStatement:
     case NodeEnum::kDisableStatement:
+    case NodeEnum::kSpecifyItem:
     case NodeEnum::kForInitialization:
     case NodeEnum::kForCondition:
     case NodeEnum::kForStepList:
@@ -963,6 +965,7 @@ void TreeUnwrapper::SetIndentationsAndCreatePartitions(
     case NodeEnum::kUdpSequenceEntry:
     case NodeEnum::kUdpCombEntry:
     case NodeEnum::kStatementList:
+    case NodeEnum::kSpecifyItemList:
     case NodeEnum::kClockingItemList: {
       // Do not further indent preprocessor clauses.
       const int indent = suppress_indentation ? 0 : style_.indentation_spaces;

@@ -2473,6 +2473,116 @@ const TreeUnwrapperTestData kUnwrapModuleTestCases[] = {
                                 L(4, {"cc", ")", ";"})))),
                           L(0, {"endmodule"})),
     },
+
+    // specify block tests
+    {
+        "module with empty specify block",
+        "module specify_m;\n"
+        "  specify\n"
+        "  endspecify\n"
+        "endmodule\n",
+        ModuleDeclaration(0,                                   //
+                          L(0, {"module", "specify_m", ";"}),  //
+                          N(1,                                 //
+                            L(1, {"specify"}),                 //
+                            L(1, {"endspecify"})),
+                          L(0, {"endmodule"})),
+    },
+    {
+        "module with empty specify block with comment",
+        "module specify_m;\n"
+        "  specify\n"
+        "//comment\n"
+        "  endspecify\n"
+        "endmodule\n",
+        ModuleDeclaration(0,                                   //
+                          L(0, {"module", "specify_m", ";"}),  //
+                          N(1,                                 //
+                            L(1, {"specify"}),                 //
+                            L(2, {"//comment"}),               //
+                            L(1, {"endspecify"})),
+                          L(0, {"endmodule"})),
+    },
+    {
+        "module with empty specify block with comments",
+        "module specify_m;\n"
+        "  specify\n"
+        "//comment 1\n"
+        "//comment 2\n"
+        "  endspecify\n"
+        "endmodule\n",
+        ModuleDeclaration(0,                                   //
+                          L(0, {"module", "specify_m", ";"}),  //
+                          N(1,                                 //
+                            L(1, {"specify"}),                 //
+                            N(2,                               //
+                              L(2, {"//comment 1"}),           //
+                              L(2, {"//comment 2"})),          //
+                            L(1, {"endspecify"})),
+                          L(0, {"endmodule"})),
+    },
+    {
+        "module with empty specify block with one timing spec",
+        "module specify_m;\n"
+        "  specify\n"
+        "$setup(posedge x, posedge y, tt);\n"
+        "  endspecify\n"
+        "endmodule\n",
+        ModuleDeclaration(0,                                   //
+                          L(0, {"module", "specify_m", ";"}),  //
+                          N(1,                                 //
+                            L(1, {"specify"}),                 //
+                            L(2, {"$setup", "(", "posedge", "x", ",", "posedge",
+                                  "y", ",", "tt", ")", ";"}),
+                            L(1, {"endspecify"})),
+                          L(0, {"endmodule"})),
+    },
+    {
+        "module with empty specify block with two timing specs",
+        "module specify_m;\n"
+        "  specify\n"
+        "$setup(posedge x, posedge y, tt);\n"
+        "$hold(posedge y, posedge x, tw);\n"
+        "  endspecify\n"
+        "endmodule\n",
+        ModuleDeclaration(0,                                   //
+                          L(0, {"module", "specify_m", ";"}),  //
+                          N(1,                                 //
+                            L(1, {"specify"}),                 //
+                            N(2,                               //
+                              L(2, {"$setup", "(", "posedge", "x", ",",
+                                    "posedge", "y", ",", "tt", ")", ";"}),
+                              L(2, {"$hold", "(", "posedge", "y", ",",
+                                    "posedge", "x", ",", "tw", ")", ";"})),
+                            L(1, {"endspecify"})),
+                          L(0, {"endmodule"})),
+    },
+    {
+        "module with empty specify block with conditional timing specs",
+        "module specify_m;\n"
+        "  specify\n"
+        "`ifdef FOO\n"
+        "$setup(posedge x, posedge y, tt);\n"
+        "`else\n"
+        "$hold(posedge y, posedge x, tw);\n"
+        "`endif\n"
+        "  endspecify\n"
+        "endmodule\n",
+        ModuleDeclaration(0,                                   //
+                          L(0, {"module", "specify_m", ";"}),  //
+                          N(1,                                 //
+                            L(1, {"specify"}),                 //
+                            N(2,                               //
+                              L(0, {"`ifdef", "FOO"}),         //
+                              L(2, {"$setup", "(", "posedge", "x", ",",
+                                    "posedge", "y", ",", "tt", ")", ";"}),
+                              L(0, {"`else"}),  //
+                              L(2, {"$hold", "(", "posedge", "y", ",",
+                                    "posedge", "x", ",", "tw", ")", ";"}),
+                              L(0, {"`endif"})),  //
+                            L(1, {"endspecify"})),
+                          L(0, {"endmodule"})),
+    },
 };
 
 // Test that TreeUnwrapper produces the correct UnwrappedLines from module tests

@@ -6545,13 +6545,13 @@ specify_item
   ;
 specify_item_list
   : specify_item
-    { $$ = MakeTaggedNode(N::kSpecifyItem, $1); }
+    { $$ = MakeTaggedNode(N::kSpecifyItemList, $1); }
   | specify_item_list specify_item
     { $$ = ExtendNode($1, $2); }
   ;
 specify_item_list_opt
   : /* empty */
-    { $$ = nullptr; }
+    { $$ = MakeTaggedNode(N::kSpecifyItemList); }
   | specify_item_list
     { $$ = move($1); }
   ;

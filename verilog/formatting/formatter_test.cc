@@ -6894,6 +6894,108 @@ TEST(FormatterEndToEndTest, AutoInferAlignment) {
   }
 }
 
+static constexpr FormatterTestCase kFormatterWideTestCases[] = {
+    // specify blocks
+    {"module  specify_tests ;\n"
+     "specify\n"  // empty list
+     "endspecify\n"
+     "endmodule",
+     "module specify_tests;\n"
+     "  specify\n"
+     "  endspecify\n"
+     "endmodule\n"},
+    {"module  specify_tests ;\n"
+     "specify\n"
+     "$recrem (posedge R, posedge C,\n"
+     "t1, t2);\n"
+     "endspecify\n"
+     "endmodule",
+     "module specify_tests;\n"
+     "  specify\n"
+     "    $recrem(posedge R, posedge C, t1, t2);\n"
+     "  endspecify\n"
+     "endmodule\n"},
+    {"module  specify_tests ;\n"
+     "specify\n"
+     "// TODO: add this\n"
+     "endspecify \n"
+     "endmodule",
+     "module specify_tests;\n"
+     "  specify\n"
+     "    // TODO: add this\n"
+     "  endspecify\n"
+     "endmodule\n"},
+    {"module  specify_tests ;\n"
+     "specify  \n"
+     "  //c1\n"
+     "$setup (  posedge A, posedge B,\n"
+     "t1);//c2\n"
+     " //c3\n"
+     "$hold (  posedge B , posedge A,t2);    //c4\n"
+     "\t//c5\n"
+     "endspecify\n"
+     "endmodule",
+     "module specify_tests;\n"
+     "  specify\n"
+     "    //c1\n"
+     "    $setup(posedge A, posedge B, t1);  //c2\n"
+     "    //c3\n"
+     "    $hold(posedge B, posedge A, t2);  //c4\n"
+     "    //c5\n"
+     "  endspecify\n"
+     "endmodule\n"},
+    {"module  specify_tests ;\n"
+     "specify  \n"
+     "$setup (  posedge A, posedge B,\n"
+     "t1);\n"
+     "$hold (  posedge B , posedge A,t2);\n"
+     "endspecify\n"
+     "endmodule",
+     "module specify_tests;\n"
+     "  specify\n"
+     "    $setup(posedge A, posedge B, t1);\n"
+     "    $hold(posedge B, posedge A, t2);\n"
+     "  endspecify\n"
+     "endmodule\n"},
+    {"module  specify_tests ;\n"
+     "specify  \n"
+     "  `ifdef CCC\n"
+     "$setup (  posedge A, posedge B,\n"
+     "t1);\n"
+     " `else\n"
+     "$hold (  posedge B , posedge A,t2);   \n"
+     "\t`endif\n"
+     "endspecify\n"
+     "endmodule",
+     "module specify_tests;\n"
+     "  specify\n"
+     "`ifdef CCC\n"
+     "    $setup(posedge A, posedge B, t1);\n"
+     "`else\n"
+     "    $hold(posedge B, posedge A, t2);\n"
+     "`endif\n"
+     "  endspecify\n"
+     "endmodule\n"},
+};
+
+// These tests just need a larger column limit to fit on one line.
+TEST(FormatterEndToEndTest, VerilogFormatWideTest) {
+  // Use a fixed style.
+  FormatStyle style;
+  style.column_limit = 60;
+  style.indentation_spaces = 2;
+  style.wrap_spaces = 4;
+  for (const auto& test_case : kFormatterWideTestCases) {
+    VLOG(1) << "code-to-format:\n" << test_case.input << "<EOF>";
+    std::ostringstream stream;
+    const auto status =
+        FormatVerilog(test_case.input, "<filename>", style, stream);
+    // Require these test cases to be valid.
+    EXPECT_OK(status) << status.message();
+    EXPECT_EQ(stream.str(), test_case.expected) << "code:\n" << test_case.input;
+  }
+}
+
 TEST(FormatterEndToEndTest, DisableModulePortDeclarations) {
   static constexpr FormatterTestCase kTestCases[] = {
       {"", ""},
