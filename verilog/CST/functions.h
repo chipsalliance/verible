@@ -120,6 +120,10 @@ const verible::TokenInfo& GetFunctionNameTokenInfo(const verible::Symbol&);
 const verible::TokenInfo& GetFunctionNameTokenInfoInFunctionCall(
     const verible::Symbol&);
 
+// Returns the function declaration body.
+const verible::SyntaxTreeNode& GetFunctionBlockStatmentList(
+    const verible::Symbol&);
+
 }  // namespace verilog
 
 #endif  // VERIBLE_VERILOG_CST_FUNCTIONS_H_

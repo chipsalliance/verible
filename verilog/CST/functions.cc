@@ -95,4 +95,11 @@ const verible::TokenInfo& GetFunctionNameTokenInfoInFunctionCall(
   return GetIdentifier(unqualified_id)->get();
 }
 
+const verible::SyntaxTreeNode& GetFunctionBlockStatmentList(
+    const verible::Symbol& function_decl) {
+  return verible::GetSubtreeAsNode(function_decl,
+                                   NodeEnum::kFunctionDeclaration, 2,
+                                   NodeEnum::kBlockItemStatementList);
+}
+
 }  // namespace verilog

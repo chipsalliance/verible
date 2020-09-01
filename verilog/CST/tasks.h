@@ -39,6 +39,9 @@ const verible::Symbol* GetTaskId(const verible::Symbol&);
 // e.g. task my_task(); return token info for "my_task".
 const verible::TokenInfo& GetTaskNameTokenInfo(const verible::Symbol&);
 
+// Returns the task declaration body.
+const verible::SyntaxTreeNode& GetTaskStatmentList(const verible::Symbol&);
+
 }  // namespace verilog
 
 #endif  // VERIBLE_VERILOG_CST_TASKS_H_

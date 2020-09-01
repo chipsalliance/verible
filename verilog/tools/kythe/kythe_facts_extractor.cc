@@ -29,6 +29,8 @@ void KytheFactsExtractor::Visit(const IndexingFactNode& node) {
 
   VName vname("");
 
+  // Directs flow to the appropriate function suitable to extract kythe facts
+  // for this node.
   switch (tag) {
     case IndexingFactType::kFile: {
       vname = ExtractFileFact(node);
@@ -70,9 +72,28 @@ void KytheFactsExtractor::Visit(const IndexingFactNode& node) {
 
   std::vector<VName> current_scope;
   const ScopeContext::AutoPop scope_auto_pop(&scope_context_, &current_scope);
-  const VNameContext::AutoPop vnames_auto_pop(&vnames_context_, &vname);
-  for (const verible::VectorTree<IndexingNodeData>& child : node.Children()) {
-    Visit(child);
+
+  // Determines whether or not to add the current node as a scope in vnames
+  // context.
+  switch (tag) {
+    case IndexingFactType::kFile:
+    case IndexingFactType::kModule:
+    case IndexingFactType::kModuleInstance:
+    case IndexingFactType::kVariableDefinition:
+    case IndexingFactType::kFunctionOrTask: {
+      const VNameContext::AutoPop vnames_auto_pop(&vnames_context_, &vname);
+      for (const verible::VectorTree<IndexingNodeData>& child :
+           node.Children()) {
+        Visit(child);
+      }
+      break;
+    }
+    default: {
+      for (const verible::VectorTree<IndexingNodeData>& child :
+           node.Children()) {
+        Visit(child);
+      }
+    }
   }
 }
 

@@ -282,16 +282,22 @@ void IndexingFactsTreeExtractor::ExtractFunction(
   IndexingNodeData function_node_data(IndexingFactType::kFunctionOrTask);
   IndexingFactNode function_node(function_node_data);
 
+  // Extract function name.
   const auto& function_name_token =
       GetFunctionNameTokenInfo(function_declaration_node);
-
   const Anchor function_name_anchor(function_name_token, context_.base);
   function_node.Value().AppendAnchor(function_name_anchor);
 
   {
     const IndexingFactsTreeContext::AutoPop p(&facts_tree_context_,
                                               &function_node);
-    TreeContextVisitor::Visit(function_declaration_node);
+    // Extract function ports.
+    ExtractFunctionTaskPort(function_declaration_node);
+
+    // Extract function body.
+    const verible::SyntaxTreeNode& function_body =
+        GetFunctionBlockStatmentList(function_declaration_node);
+    Visit(function_body);
   }
 
   facts_tree_context_.top().NewChild(function_node);
@@ -302,17 +308,39 @@ void IndexingFactsTreeExtractor::ExtractTask(
   IndexingNodeData task_node_data(IndexingFactType::kFunctionOrTask);
   IndexingFactNode task_node(task_node_data);
 
+  // Extract task name.
   const auto& task_name_token = GetTaskNameTokenInfo(task_declaration_node);
-
   const Anchor task_name_anchor(task_name_token, context_.base);
   task_node.Value().AppendAnchor(task_name_anchor);
 
   {
     const IndexingFactsTreeContext::AutoPop p(&facts_tree_context_, &task_node);
-    TreeContextVisitor::Visit(task_declaration_node);
+
+    // Extract task ports.
+    ExtractFunctionTaskPort(task_declaration_node);
+
+    // Extract task body.
+    const verible::SyntaxTreeNode& task_body =
+        GetTaskStatmentList(task_declaration_node);
+    Visit(task_body);
   }
 
   facts_tree_context_.top().NewChild(task_node);
+}
+
+void IndexingFactsTreeExtractor::ExtractFunctionTaskPort(
+    const verible::SyntaxTreeNode& function_declaration_node) {
+  const std::vector<verible::TreeSearchMatch> ports =
+      FindAllTaskFunctionPortDeclarations(function_declaration_node);
+
+  for (const verible::TreeSearchMatch port : ports) {
+    const verible::SyntaxTreeLeaf* leaf =
+        GetIdentifierFromTaskFunctionPortItem(*port.match);
+
+    facts_tree_context_.top().NewChild(
+        IndexingNodeData({Anchor(leaf->get(), context_.base)},
+                         IndexingFactType::kVariableDefinition));
+  }
 }
 
 void IndexingFactsTreeExtractor::ExtractFunctionOrTaskCall(
@@ -320,15 +348,17 @@ void IndexingFactsTreeExtractor::ExtractFunctionOrTaskCall(
   IndexingNodeData function_node_data(IndexingFactType::kFunctionCall);
   IndexingFactNode function_node(function_node_data);
 
+  // Extract function or task name.
   const auto& function_name_token =
       GetFunctionNameTokenInfoInFunctionCall(function_call_node);
-
   const Anchor task_name_anchor(function_name_token, context_.base);
   function_node.Value().AppendAnchor(task_name_anchor);
 
   {
     const IndexingFactsTreeContext::AutoPop p(&facts_tree_context_,
                                               &function_node);
+
+    // Extract functoin or task parameters.
     TreeContextVisitor::Visit(function_call_node);
   }
 
