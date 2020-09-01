@@ -240,7 +240,7 @@ VName KytheFactsExtractor::ExtractFucntionOrTaskCall(
   *stream_ << Edge(function_vname_anchor, kEdgeRef, function_vname);
   *stream_ << Edge(function_vname_anchor, kEdgeRefCall, function_vname);
 
-  return function_vname;
+  return function_vname_anchor;
 }
 
 VName KytheFactsExtractor::PrintAnchorVName(const Anchor& anchor) {
