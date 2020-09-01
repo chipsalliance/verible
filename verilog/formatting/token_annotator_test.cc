@@ -4665,23 +4665,29 @@ TEST(TokenAnnotatorTest, AnnotateFormattingWithContextTest) {
   }
 }  // NOLINT(readability/fn_size)
 
-struct AnnotateBreakAroundCommentsTestCase {
+struct OriginalSpacingSensitiveTestCase {
   FormatStyle style;
 
+  // TODO(fangism): group this into a TokenInfo.
   int left_token_enum;
   absl::string_view left_token_string;
 
+  // This spacing may influence token-annotation behavior.
   absl::string_view whitespace_between;
 
+  // TODO(fangism): group this into a TokenInfo.
   int right_token_enum;
   absl::string_view right_token_string;
 
+  InitializedSyntaxTreeContext left_context;
   InitializedSyntaxTreeContext right_context;
+
   ExpectedInterTokenInfo expected_annotation;
 };
 
-TEST(TokenAnnotatorTest, AnnotateBreakAroundComments) {
-  const AnnotateBreakAroundCommentsTestCase kTestCases[] = {
+// These tests are allowed to be sensitive to original inter-token spacing.
+TEST(TokenAnnotatorTest, OriginalSpacingSensitiveTests) {
+  const OriginalSpacingSensitiveTestCase kTestCases[] = {
       {// No comments
        DefaultStyle,
        '=',  // left token
@@ -4689,6 +4695,7 @@ TEST(TokenAnnotatorTest, AnnotateBreakAroundComments) {
        "   ",                            // whitespace between
        verilog_tokentype::TK_DecNumber,  // right token
        "0",
+       {/* unspecified context */},
        {/* unspecified context */},
        {1, SpacingOptions::Undecided}},
       {// //comment1
@@ -4700,6 +4707,7 @@ TEST(TokenAnnotatorTest, AnnotateBreakAroundComments) {
        verilog_tokentype::TK_EOL_COMMENT,
        "//comment2",
        {},
+       {},
        {2, SpacingOptions::MustWrap}},
       {// 0 // comment
        DefaultStyle,
@@ -4708,6 +4716,7 @@ TEST(TokenAnnotatorTest, AnnotateBreakAroundComments) {
        "   ",
        verilog_tokentype::TK_EOL_COMMENT,
        "// comment",
+       {/* unspecified context */},
        {/* unspecified context */},
        {2, SpacingOptions::MustAppend}},
       {// 0// comment
@@ -4718,6 +4727,7 @@ TEST(TokenAnnotatorTest, AnnotateBreakAroundComments) {
        verilog_tokentype::TK_EOL_COMMENT,
        "// comment",
        {/* unspecified context */},
+       {/* unspecified context */},
        {2, SpacingOptions::MustAppend}},
       {// 0 \n  // comment
        DefaultStyle,
@@ -4726,6 +4736,7 @@ TEST(TokenAnnotatorTest, AnnotateBreakAroundComments) {
        " \n  ",
        verilog_tokentype::TK_EOL_COMMENT,
        "// comment",
+       {/* unspecified context */},
        {/* unspecified context */},
        {2, SpacingOptions::Undecided}},
       {// // comment 1 \n  // comment 2
@@ -4736,6 +4747,7 @@ TEST(TokenAnnotatorTest, AnnotateBreakAroundComments) {
        verilog_tokentype::TK_EOL_COMMENT,
        "// comment 2",
        {/* unspecified context */},
+       {/* unspecified context */},
        {2, SpacingOptions::MustWrap}},
       {// /* comment 1 */ \n  // comment 2
        DefaultStyle,
@@ -4744,6 +4756,7 @@ TEST(TokenAnnotatorTest, AnnotateBreakAroundComments) {
        " \n  ",
        verilog_tokentype::TK_EOL_COMMENT,
        "// comment 2",
+       {/* unspecified context */},
        {/* unspecified context */},
        {2, SpacingOptions::Undecided}},
       {// /* comment 1 */  // comment 2
@@ -4754,6 +4767,7 @@ TEST(TokenAnnotatorTest, AnnotateBreakAroundComments) {
        verilog_tokentype::TK_EOL_COMMENT,
        "// comment 2",
        {/* unspecified context */},
+       {/* unspecified context */},
        {2, SpacingOptions::MustAppend}},
       {// ;  // comment 2
        DefaultStyle,
@@ -4762,6 +4776,7 @@ TEST(TokenAnnotatorTest, AnnotateBreakAroundComments) {
        " ",
        verilog_tokentype::TK_EOL_COMMENT,
        "// comment 2",
+       {/* unspecified context */},
        {/* unspecified context */},
        {2, SpacingOptions::MustAppend}},
       {// ; \n // comment 2
@@ -4772,6 +4787,7 @@ TEST(TokenAnnotatorTest, AnnotateBreakAroundComments) {
        verilog_tokentype::TK_EOL_COMMENT,
        "// comment 2",
        {/* unspecified context */},
+       {/* unspecified context */},
        {2, SpacingOptions::Undecided}},
       {// ,  // comment 2
        DefaultStyle,
@@ -4780,6 +4796,7 @@ TEST(TokenAnnotatorTest, AnnotateBreakAroundComments) {
        " ",
        verilog_tokentype::TK_EOL_COMMENT,
        "// comment 2",
+       {/* unspecified context */},
        {/* unspecified context */},
        {2, SpacingOptions::MustAppend}},
       {// , \n // comment 2
@@ -4790,6 +4807,7 @@ TEST(TokenAnnotatorTest, AnnotateBreakAroundComments) {
        verilog_tokentype::TK_EOL_COMMENT,
        "// comment 2",
        {/* unspecified context */},
+       {/* unspecified context */},
        {2, SpacingOptions::Undecided}},
       {// begin  // comment 2
        DefaultStyle,
@@ -4798,6 +4816,7 @@ TEST(TokenAnnotatorTest, AnnotateBreakAroundComments) {
        " ",
        verilog_tokentype::TK_EOL_COMMENT,
        "// comment 2",
+       {/* unspecified context */},
        {/* unspecified context */},
        {2, SpacingOptions::MustAppend}},
       {// begin \n // comment 2
@@ -4808,6 +4827,7 @@ TEST(TokenAnnotatorTest, AnnotateBreakAroundComments) {
        verilog_tokentype::TK_EOL_COMMENT,
        "// comment 2",
        {/* unspecified context */},
+       {/* unspecified context */},
        {2, SpacingOptions::Undecided}},
       {// else  // comment 2
        DefaultStyle,
@@ -4816,6 +4836,7 @@ TEST(TokenAnnotatorTest, AnnotateBreakAroundComments) {
        " ",
        verilog_tokentype::TK_EOL_COMMENT,
        "// comment 2",
+       {/* unspecified context */},
        {/* unspecified context */},
        {2, SpacingOptions::MustAppend}},
       {// else \n // comment 2
@@ -4826,6 +4847,7 @@ TEST(TokenAnnotatorTest, AnnotateBreakAroundComments) {
        verilog_tokentype::TK_EOL_COMMENT,
        "// comment 2",
        {/* unspecified context */},
+       {/* unspecified context */},
        {2, SpacingOptions::Undecided}},
       {// end  // comment 2
        DefaultStyle,
@@ -4834,6 +4856,7 @@ TEST(TokenAnnotatorTest, AnnotateBreakAroundComments) {
        " ",
        verilog_tokentype::TK_EOL_COMMENT,
        "// comment 2",
+       {/* unspecified context */},
        {/* unspecified context */},
        {2, SpacingOptions::MustAppend}},
       {// end \n // comment 2
@@ -4844,6 +4867,7 @@ TEST(TokenAnnotatorTest, AnnotateBreakAroundComments) {
        verilog_tokentype::TK_EOL_COMMENT,
        "// comment 2",
        {/* unspecified context */},
+       {/* unspecified context */},
        {2, SpacingOptions::Undecided}},
       {// generate  // comment 2
        DefaultStyle,
@@ -4852,6 +4876,7 @@ TEST(TokenAnnotatorTest, AnnotateBreakAroundComments) {
        " ",
        verilog_tokentype::TK_EOL_COMMENT,
        "// comment 2",
+       {/* unspecified context */},
        {/* unspecified context */},
        {2, SpacingOptions::MustAppend}},
       {// generate \n // comment 2
@@ -4862,6 +4887,7 @@ TEST(TokenAnnotatorTest, AnnotateBreakAroundComments) {
        verilog_tokentype::TK_EOL_COMMENT,
        "// comment 2",
        {/* unspecified context */},
+       {/* unspecified context */},
        {2, SpacingOptions::Undecided}},
       {// if  // comment 2
        DefaultStyle,
@@ -4870,6 +4896,7 @@ TEST(TokenAnnotatorTest, AnnotateBreakAroundComments) {
        " ",
        verilog_tokentype::TK_EOL_COMMENT,
        "// comment 2",
+       {/* unspecified context */},
        {/* unspecified context */},
        {2, SpacingOptions::MustAppend}},
       {// if \n\n // comment 2
@@ -4880,6 +4907,7 @@ TEST(TokenAnnotatorTest, AnnotateBreakAroundComments) {
        verilog_tokentype::TK_EOL_COMMENT,
        "// comment 2",
        {/* unspecified context */},
+       {/* unspecified context */},
        {2, SpacingOptions::Undecided}},
       {
           DefaultStyle,
@@ -4888,6 +4916,7 @@ TEST(TokenAnnotatorTest, AnnotateBreakAroundComments) {
           "\n",
           verilog_tokentype::TK_EOL_COMMENT,
           "//comment",
+          {/* any context */},
           {/* any context */},
           {0, SpacingOptions::MustWrap},
       },
@@ -4898,6 +4927,7 @@ TEST(TokenAnnotatorTest, AnnotateBreakAroundComments) {
           "\n",
           verilog_tokentype::TK_COMMENT_BLOCK,
           "/*comment*/",
+          {/* any context */},
           {/* any context */},
           {0, SpacingOptions::MustWrap},
       },
@@ -4908,6 +4938,7 @@ TEST(TokenAnnotatorTest, AnnotateBreakAroundComments) {
           " ",
           verilog_tokentype::TK_COMMENT_BLOCK,
           "/*comment*/",
+          {/* unspecified context */},
           {/* unspecified context */},
           {2, SpacingOptions::Undecided},  // could be append
       },
@@ -4919,6 +4950,7 @@ TEST(TokenAnnotatorTest, AnnotateBreakAroundComments) {
           verilog_tokentype::TK_COMMENT_BLOCK,
           "/*comment*/",
           {/* unspecified context */},
+          {/* unspecified context */},
           {2, SpacingOptions::Undecided},
       },
       {
@@ -4929,6 +4961,7 @@ TEST(TokenAnnotatorTest, AnnotateBreakAroundComments) {
           verilog_tokentype::TK_EOL_COMMENT,
           "//comment",
           {/* unspecified context */},
+          {/* unspecified context */},
           {2, SpacingOptions::MustAppend},
       },
       {
@@ -4938,6 +4971,7 @@ TEST(TokenAnnotatorTest, AnnotateBreakAroundComments) {
           "\n",
           verilog_tokentype::TK_EOL_COMMENT,
           "//comment",
+          {/* unspecified context */},
           {/* unspecified context */},
           {2, SpacingOptions::Undecided},
       },
@@ -4951,6 +4985,7 @@ TEST(TokenAnnotatorTest, AnnotateBreakAroundComments) {
           verilog_tokentype::TK_COMMENT_BLOCK,
           "/* comment */",
           {NodeEnum::kUdpCombEntry},
+          {NodeEnum::kUdpCombEntry},
           {2, SpacingOptions::Undecided},
       },
       {
@@ -4962,6 +4997,7 @@ TEST(TokenAnnotatorTest, AnnotateBreakAroundComments) {
           '0',
           "0",
           {NodeEnum::kUdpCombEntry},
+          {NodeEnum::kUdpCombEntry},
           {1, SpacingOptions::Undecided},
       },
       {
@@ -4972,6 +5008,7 @@ TEST(TokenAnnotatorTest, AnnotateBreakAroundComments) {
           "",
           verilog_tokentype::TK_EOL_COMMENT,
           "// comment",
+          {NodeEnum::kUdpCombEntry},
           {NodeEnum::kUdpCombEntry},
           {2, SpacingOptions::MustAppend},
       },
@@ -4984,6 +5021,7 @@ TEST(TokenAnnotatorTest, AnnotateBreakAroundComments) {
           verilog_tokentype::TK_COMMENT_BLOCK,
           "/* comment */",
           {NodeEnum::kUdpSequenceEntry},
+          {NodeEnum::kUdpSequenceEntry},
           {2, SpacingOptions::Undecided},
       },
       {
@@ -4994,6 +5032,7 @@ TEST(TokenAnnotatorTest, AnnotateBreakAroundComments) {
           "",
           '0',
           "0",
+          {NodeEnum::kUdpSequenceEntry},
           {NodeEnum::kUdpSequenceEntry},
           {1, SpacingOptions::Undecided},
       },
@@ -5006,6 +5045,7 @@ TEST(TokenAnnotatorTest, AnnotateBreakAroundComments) {
           verilog_tokentype::TK_EOL_COMMENT,
           "// comment",
           {NodeEnum::kUdpSequenceEntry},
+          {NodeEnum::kUdpSequenceEntry},
           {2, SpacingOptions::MustAppend},
       },
       {
@@ -5017,6 +5057,7 @@ TEST(TokenAnnotatorTest, AnnotateBreakAroundComments) {
           verilog_tokentype::TK_COMMENT_BLOCK,
           "/* comment */",
           {NodeEnum::kUdpPortDeclaration},
+          {NodeEnum::kUdpPortDeclaration},
           {2, SpacingOptions::Undecided},
       },
       {
@@ -5027,6 +5068,7 @@ TEST(TokenAnnotatorTest, AnnotateBreakAroundComments) {
           "",
           verilog_tokentype::SymbolIdentifier,
           "i",
+          {NodeEnum::kUdpPortDeclaration},
           {NodeEnum::kUdpPortDeclaration},
           {1, SpacingOptions::Undecided},
       },
@@ -5039,6 +5081,7 @@ TEST(TokenAnnotatorTest, AnnotateBreakAroundComments) {
           verilog_tokentype::TK_COMMENT_BLOCK,
           "/* comment */",
           {NodeEnum::kUdpPortDeclaration},
+          {NodeEnum::kUdpPortDeclaration},
           {2, SpacingOptions::Undecided},
       },
       {
@@ -5050,14 +5093,52 @@ TEST(TokenAnnotatorTest, AnnotateBreakAroundComments) {
           verilog_tokentype::TK_EOL_COMMENT,
           "// comment",
           {NodeEnum::kUdpPortDeclaration},
+          {NodeEnum::kUdpPortDeclaration},
           {2, SpacingOptions::MustAppend},
+      },
+
+      {
+          // [a+b]
+          DefaultStyle,
+          verilog_tokentype::SymbolIdentifier,
+          "a",
+          "",  // no spaces originally
+          '+',
+          "+",
+          {NodeEnum::kSelectVariableDimension},
+          {NodeEnum::kSelectVariableDimension},
+          {0, SpacingOptions::Undecided},
+      },
+      {
+          // [a +b]
+          DefaultStyle,
+          verilog_tokentype::SymbolIdentifier,
+          "a",
+          " ",  // 1 space originally
+          '+',
+          "+",
+          {NodeEnum::kSelectVariableDimension},
+          {NodeEnum::kSelectVariableDimension},
+          {1, SpacingOptions::Undecided},
+      },
+      {
+          // [a  +b]
+          DefaultStyle,
+          verilog_tokentype::SymbolIdentifier,
+          "a",
+          " ",  // 2 spaces originally
+          '+',
+          "+",
+          {NodeEnum::kSelectVariableDimension},
+          {NodeEnum::kSelectVariableDimension},
+          {1, SpacingOptions::Undecided},  // limit to 1
       },
   };
   int test_index = 0;
   for (const auto& test_case : kTestCases) {
     VLOG(1) << "test_index[" << test_index << "]:";
 
-    verible::TokenInfoTestData test_data = {
+    const verible::TokenInfoTestData test_data = {
         {test_case.left_token_enum, test_case.left_token_string},
         test_case.whitespace_between,
         {test_case.right_token_enum, test_case.right_token_string}};
@@ -5067,6 +5148,8 @@ TEST(TokenAnnotatorTest, AnnotateBreakAroundComments) {
 
     PreFormatToken left(&token_vector[0]);
     PreFormatToken right(&token_vector[1]);
+    // like verible::ConnectPreFormatTokensPreservedSpaceStarts();
+    right.before.preserved_space_start = left.Text().end();
 
     left.format_token_enum =
         GetFormatTokenType(verilog_tokentype(left.TokenEnum()));

@@ -582,7 +582,23 @@ static constexpr FormatterTestCase kFormatterTestCases[] = {
     },
     {
         "  parameter  int   foo=bar [ a+b ] ;",  // binary inside index expr
-        "parameter int foo = bar[a + b];\n",
+        "parameter int foo = bar[a+b];\n",       // allowed to be 0 spaces
+                                                 // (preserved)
+    },
+    {
+        "  parameter  int   foo=bar [ a+ b ] ;",  // binary inside index expr
+        "parameter int foo = bar[a+b];\n",        // allowed to be 0 spaces
+                                                  // (symmetrized)
+    },
+    {
+        "  parameter  int   foo=bar [ a +b ] ;",  // binary inside index expr
+        "parameter int foo = bar[a + b];\n",      // allowed to be 1 space
+                                                  // (symmetrized)
+    },
+    {
+        "  parameter  int   foo=bar [ a  +b ] ;",  // binary inside index expr
+        "parameter int foo = bar[a + b];\n",       // limited to 1 space (and
+                                                   // symmetrized)
     },
     {
         // with line continuations
@@ -657,7 +673,7 @@ static constexpr FormatterTestCase kFormatterTestCases[] = {
     {"  parameter int a={b^{c^{d^e}}};",
      "parameter int a = {b ^ {c ^ {d ^ e}}};\n"},
     {"  parameter int a={b^{c[d^e]}};",
-     "parameter int a = {b ^ {c[d ^ e]}};\n"},
+     "parameter int a = {b ^ {c[d^e]}};\n"},  // allow 0 spaces inside "[d^e]"
     {"  parameter int a={(b^c),(d^^e)};",
      "parameter int a = {(b ^ c), (d ^ ^e)};\n"},
 
@@ -1873,6 +1889,14 @@ static constexpr FormatterTestCase kFormatterTestCases[] = {
         "endmodule\n",
         "module conditional_generate;\n"
         "  if (foo);\n"
+        "endmodule\n",
+    },
+    {
+        "module conditional_generate;\n"
+        "if(foo[a*b+c])  ; \t"  // null action
+        "endmodule\n",
+        "module conditional_generate;\n"
+        "  if (foo[a*b+c]);\n"  // allow compact expressions inside []
         "endmodule\n",
     },
     {

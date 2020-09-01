@@ -233,6 +233,21 @@ static WithReason<int> SpacesRequiredBetween(
   // Consider assignment operators in the same class as binary operators.
   if (left.format_token_enum == FormatTokenType::binary_operator ||
       right.format_token_enum == FormatTokenType::binary_operator) {
+    // Inside [], allows 0 or 1 spaces, and symmetrize.
+    // TODO(fangism): make this behavior configurable
+    if (right.format_token_enum == FormatTokenType::binary_operator &&
+        InRangeLikeContext(right_context)) {
+      int spaces = right.OriginalLeadingSpaces().length();
+      if (spaces > 1) {
+        spaces = 1;
+      }
+      return {spaces, "Limit <= 1 space before binary operator inside []."};
+    }
+    if (left.format_token_enum == FormatTokenType::binary_operator &&
+        InRangeLikeContext(left_context)) {
+      return {left.before.spaces_required,
+              "Symmetrize spaces before and after binary operator inside []."};
+    }
     return {1, "Space around binary and assignment operators"};
   }
 
