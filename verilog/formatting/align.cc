@@ -734,8 +734,7 @@ void TabularAlignTokenPartitions(TokenPartitionTree* partition_ptr,
           {NodeEnum::kFormalParameterList,
            {kParameterDeclarationAligner,
             [](const FormatStyle& vstyle) {
-              // TODO(fangism): Add a control in FormatStyle.
-              return AlignmentPolicy::kAlign;
+              return vstyle.formal_parameters_alignment;
             }}},
           {NodeEnum::kClassItems,
            {kClassPropertyAligner,

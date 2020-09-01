@@ -6864,6 +6864,105 @@ TEST(FormatterEndToEndTest, AutoInferAlignment) {
        "class cc;\n"
        "endclass : cc\n"},
 
+      // named port connections
+      {"module  mm ;\n"
+       "foo bar(\n"
+       ".a(a),\n"
+       ".bb(bb)\n"
+       ");\n"
+       "endmodule:mm\n",
+       "module mm;\n"
+       "  foo bar (\n"
+       "      .a (a),\n"  // align doesn't add too many spaces, so align
+       "      .bb(bb)\n"
+       "  );\n"
+       "endmodule : mm\n"},
+      {"module  mm ;\n"
+       "foo bar(\n"
+       ".a(a),\n"
+       ".bbbbbb(bb)\n"
+       ");\n"
+       "endmodule:mm\n",
+       "module mm;\n"
+       "  foo bar (\n"
+       "      .a(a),\n"  // align would add too many spaces, so flush-left
+       "      .bbbbbb(bb)\n"
+       "  );\n"
+       "endmodule : mm\n"},
+      {"module  mm ;\n"
+       "foo bar(\n"
+       ".a    (a),\n"  // user manually triggers alignment with excess spaces
+       ".bbbbbb(bb)\n"
+       ");\n"
+       "endmodule:mm\n",
+       "module mm;\n"
+       "  foo bar (\n"
+       "      .a     (a),\n"  // alignment fixed
+       "      .bbbbbb(bb)\n"
+       "  );\n"
+       "endmodule : mm\n"},
+
+      // net variable declarations
+      {"module nn;\n"
+       "wire wwwww;\n"
+       "logic lll;\n"
+       "endmodule : nn\n",
+       "module nn;\n"
+       "  wire  wwwww;\n"  // alignment adds few spaces, so align
+       "  logic lll;\n"
+       "endmodule : nn\n"},
+      {"module nn;\n"
+       "wire wwwww;\n"
+       "foo_pkg::baz_t lll;\n"
+       "endmodule : nn\n",
+       "module nn;\n"
+       "  wire wwwww;\n"  // alignment adds too many spaces, so flush-left
+       "  foo_pkg::baz_t lll;\n"
+       "endmodule : nn\n"},
+      {"module nn;\n"
+       "wire     wwwww;\n"  // user injects spaces to trigger alignment
+       "foo_pkg::baz_t lll;\n"
+       "endmodule : nn\n",
+       "module nn;\n"
+       "  wire           wwwww;\n"  // ... and gets alignment
+       "  foo_pkg::baz_t lll;\n"
+       "endmodule : nn\n"},
+
+      // formal parameters
+      {"module pp #(\n"
+       "int W,\n"
+       "type T\n"
+       ") ();\n"
+       "endmodule : pp\n",
+       "module pp #(\n"
+       "    int  W,\n"  // alignment adds few spaces, so do it
+       "    type T\n"
+       ") (\n"
+       ");\n"
+       "endmodule : pp\n"},
+      {"module pp #(\n"
+       "int W,\n"
+       "int[xx:yy] T\n"
+       ") ();\n"
+       "endmodule : pp\n",
+       "module pp #(\n"
+       "    int W,\n"  // alignment adds many spaces, so flush-left
+       "    int [xx:yy] T\n"
+       ") (\n"
+       ");\n"
+       "endmodule : pp\n"},
+      {"module pp #(\n"
+       "int W,\n"
+       "int[xx:yy]     T\n"  // user injected spaces intentionally
+       ") ();\n"
+       "endmodule : pp\n",
+       "module pp #(\n"
+       "    int         W,\n"  // ... trigger alignment
+       "    int [xx:yy] T\n"
+       ") (\n"
+       ");\n"
+       "endmodule : pp\n"},
+
       // class member variables
       {"class  cc ;\n"
        "int my_int;\n"
@@ -6904,6 +7003,11 @@ TEST(FormatterEndToEndTest, AutoInferAlignment) {
   style.indentation_spaces = 2;
   style.wrap_spaces = 4;
   // Override some settings to test auto-inferred alignment.
+  style.named_port_alignment = verible::AlignmentPolicy::kInferUserIntent;
+  style.module_net_variable_alignment =
+      verible::AlignmentPolicy::kInferUserIntent;
+  style.formal_parameters_alignment =
+      verible::AlignmentPolicy::kInferUserIntent;
   style.class_member_variable_alignment =
       verible::AlignmentPolicy::kInferUserIntent;
 

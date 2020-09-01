@@ -60,6 +60,10 @@ struct FormatStyle : public verible::BasicFormatStyle {
   // For internal testing purposes, this is default to kAlign.
   AlignmentPolicy module_net_variable_alignment = AlignmentPolicy::kAlign;
 
+  // Control how formal parameters in modules/interfaces/classes are formatted.
+  // For internal testing purposes, this is default to kAlign.
+  AlignmentPolicy formal_parameters_alignment = AlignmentPolicy::kAlign;
+
   // Control how class member variables are formatted.
   // For internal testing purposes, this is default to kAlign.
   AlignmentPolicy class_member_variable_alignment = AlignmentPolicy::kAlign;

@@ -188,7 +188,16 @@ static bool formatOneFile(absl::string_view filename,
     format_style.format_module_instantiations =
         absl::GetFlag(FLAGS_format_module_instantiations);
     format_style.try_wrap_long_lines = absl::GetFlag(FLAGS_try_wrap_long_lines);
-    // TODO(fangism): expose this as a user-flag or configuration
+
+    // For most of the following, kInferUserIntent is a reasonable default
+    // behavior because it allows for user-control with minimal invasiveness and
+    // burden on the user.
+    // TODO(fangism): expose these controls as user-flags or configuration
+    format_style.named_port_alignment = AlignmentPolicy::kInferUserIntent;
+    format_style.module_net_variable_alignment =
+        AlignmentPolicy::kInferUserIntent;
+    format_style.formal_parameters_alignment =
+        AlignmentPolicy::kInferUserIntent;
     format_style.class_member_variable_alignment =
         AlignmentPolicy::kInferUserIntent;
   }
