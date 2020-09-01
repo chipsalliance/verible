@@ -631,7 +631,8 @@ does not include a fully-featured Verilog preprocessor yet.)
 
 #### Strip Comments
 
-Removing comments can be useful step in preparing to obfuscate code.
+Removing comments can be useful for preparing to obfuscate code for sharing with
+EDA tool vendors.
 
 ```shell
 $ verible-verilog-preprocessor strip-comments FILE
@@ -641,7 +642,8 @@ This strips comments from a Verilog/SystemVerilog source file, _including_
 comments nested inside macro definition bodies and macro call arguments.
 
 Comments are actually replaced by an equal number of spaces (and newlines) to
-preserve the byte offsets and line ranges of the original text.
+preserve the byte offsets and line ranges of the original text. This makes it
+easier to trace back diagnostics on obfuscated code back to the original code.
 
 ## Indexing Verible C++ Code using Kythe
 
