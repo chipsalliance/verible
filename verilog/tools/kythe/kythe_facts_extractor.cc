@@ -248,7 +248,7 @@ VName KytheFactsExtractor::ExtractClassInstances(
 }
 
 VName KytheFactsExtractor::PrintAnchorVName(const Anchor& anchor,
-                                            absl::string_view file_path) {
+                                            absl::string_view file_path) const {
   const VName anchor_vname(file_path,
                            absl::Substitute(R"(@$0:$1)", anchor.StartLocation(),
                                             anchor.EndLocation()));
@@ -263,13 +263,13 @@ VName KytheFactsExtractor::PrintAnchorVName(const Anchor& anchor,
 }
 
 std::string KytheFactsExtractor::CreateScopeRelativeSignature(
-    absl::string_view signature) {
+    absl::string_view signature) const {
   return absl::StrCat(signature, "#", vnames_context_.top().signature);
 }
 
-void KytheFactsExtractor::GenerateFactString(const VName& vname,
-                                             absl::string_view fact_name,
-                                             absl::string_view fact_value) {
+void KytheFactsExtractor::GenerateFactString(
+    const VName& vname, absl::string_view fact_name,
+    absl::string_view fact_value) const {
   *stream_ << absl::Substitute(
       R"({"source": $0,"fact_name": "$1","fact_value": "$2"})",
       vname.ToString(), fact_name, absl::Base64Escape(fact_value));
@@ -277,7 +277,7 @@ void KytheFactsExtractor::GenerateFactString(const VName& vname,
 
 void KytheFactsExtractor::GenerateEdgeString(const VName& source_node,
                                              absl::string_view edge_name,
-                                             const VName& target_node) {
+                                             const VName& target_node) const {
   *stream_ << absl::Substitute(
       R"({"source": $0,"edge_kind": "$1","target": $2,"fact_name": "/"})",
       source_node.ToString(), edge_name, target_node.ToString());

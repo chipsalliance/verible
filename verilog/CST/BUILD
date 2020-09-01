@@ -383,6 +383,43 @@ cc_test(
 )
 
 cc_library(
+    name = "class",
+    srcs = ["class.cc"],
+    hdrs = ["class.h"],
+    deps = [
+        ":verilog_matchers",  # fixdeps: keep
+        ":verilog_nonterminals",
+        "//common/analysis:syntax_tree_search",
+        "//common/analysis/matcher",
+        "//common/analysis/matcher:matcher_builders",
+        "//common/text:concrete_syntax_leaf",
+        "//common/text:concrete_syntax_tree",
+        "//common/text:symbol",
+        "//common/text:token_info",
+        "//common/text:tree_utils",
+        "//verilog/parser:verilog_token_enum",
+    ],
+)
+
+cc_test(
+    name = "class_test",
+    srcs = ["class_test.cc"],
+    deps = [
+        ":class",
+        "//common/text:concrete_syntax_tree",
+        "//common/text:symbol",
+        "//common/text:text_structure",
+        "//common/text:token_info",
+        "//common/text:token_info_test_util",
+        "//common/util:casts",
+        "//common/util:logging",
+        "//common/util:range",
+        "//verilog/analysis:verilog_analyzer",
+        "@com_google_googletest//:gtest_main",
+    ],
+)
+
+cc_library(
     name = "module",
     srcs = ["module.cc"],
     hdrs = ["module.h"],

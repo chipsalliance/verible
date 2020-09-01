@@ -18,6 +18,7 @@
 #include <string>
 #include <utility>
 
+#include "absl/strings/match.h"
 #include "verilog/tools/kythe/indexing_facts_tree.h"
 #include "verilog/tools/kythe/indexing_facts_tree_context.h"
 #include "verilog/tools/kythe/indexing_facts_tree_extractor.h"
@@ -90,7 +91,16 @@ class KytheFactsExtractor {
     std::vector<VName>& top() { return *ABSL_DIE_IF_NULL(base_type::top()); }
 
     // TODO(minatoma): improve performance and memory for this function.
-    // TODO(minatoma): conside using vector<pair<name, type>> for signature.
+    //
+    // This function uses string matching to find the definition of some
+    // variable in reverse order of the current scopes.
+    //
+    // Improvement can be replacing the string matching to comparison based on
+    // integers or enums and reshaping the scope to be one vector instead of
+    // vector of vectores.
+    //
+    // TODO(minatoma): consider using vector<pair<name, type>> for signature.
+    //
     // Search function to get the VName of a definitions of some reference.
     // It loops over the scopes in reverse order and loops over every scope in
     // reverse order to find a definition for the variable with given prefix
@@ -109,7 +119,7 @@ class KytheFactsExtractor {
       for (const auto& scope : verible::make_range(rbegin(), rend())) {
         for (const VName& vname :
              verible::make_range(scope->rbegin(), scope->rend())) {
-          if (vname.signature.find(prefix) == 0) {
+          if (absl::StartsWith(vname.signature, prefix)) {
             return &vname;
           }
         }
@@ -141,19 +151,23 @@ class KytheFactsExtractor {
   VName ExtractClassInstances(const IndexingFactNode& class_instance_fact_node);
 
   // Generates an anchor VName for kythe.
-  VName PrintAnchorVName(const Anchor&, absl::string_view);
+  VName PrintAnchorVName(const Anchor&, absl::string_view) const;
 
   // Appends the signatures of previous containing scope vnames to make
   // signatures unique relative to scopes.
-  std::string CreateScopeRelativeSignature(absl::string_view);
+  std::string CreateScopeRelativeSignature(absl::string_view) const;
 
   // Generates fact strings for Kythe facts.
+  // Schema for this fact can be found here:
+  // https://kythe.io/docs/schema/writing-an-indexer.html
   void GenerateFactString(const VName& vname, absl::string_view name,
-                          absl::string_view value);
+                          absl::string_view value) const;
 
   // Generates edge strings for Kythe edges.
+  // Schema for this edge can be found here:
+  // https://kythe.io/docs/schema/writing-an-indexer.html
   void GenerateEdgeString(const VName& source, absl::string_view name,
-                          const VName& target);
+                          const VName& target) const;
 
   // The verilog file name which the facts are extracted from.
   std::string file_path_;

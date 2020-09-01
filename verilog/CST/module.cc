@@ -99,36 +99,4 @@ const verible::SyntaxTreeNode& GetModuleItemList(
                                    NodeEnum::kModuleItemList);
 }
 
-const verible::SyntaxTreeNode& GetClassHeader(
-    const verible::Symbol& class_symbol) {
-  return verible::GetSubtreeAsNode(class_symbol, NodeEnum::kClassDeclaration, 0,
-                                   NodeEnum::kClassHeader);
-}
-
-const verible::TokenInfo& GetClassNameToken(
-    const verible::Symbol& class_declaration) {
-  const auto& header_node = GetClassHeader(class_declaration);
-  const auto& name_leaf =
-      verible::GetSubtreeAsLeaf(header_node, NodeEnum::kClassHeader, 3);
-  return name_leaf.get();
-}
-
-const verible::TokenInfo* GetClassEndLabel(
-    const verible::Symbol& class_declaration) {
-  const auto& label_node = verible::GetSubtreeAsSymbol(
-      class_declaration, NodeEnum::kClassDeclaration, 3);
-  if (label_node == nullptr) {
-    return nullptr;
-  }
-  const auto& class_name = verible::GetSubtreeAsLeaf(
-      verible::SymbolCastToNode(*label_node), NodeEnum::kLabel, 1);
-  return &class_name.get();
-}
-
-const verible::SyntaxTreeNode& GetClassItemList(
-    const verible::Symbol& class_declaration) {
-  return verible::GetSubtreeAsNode(
-      class_declaration, NodeEnum::kClassDeclaration, 1, NodeEnum::kClassItems);
-}
-
 }  // namespace verilog
