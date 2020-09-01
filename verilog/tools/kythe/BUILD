@@ -110,6 +110,7 @@ cc_library(
         "//common/text:tree_utils",
         "//verilog/CST:declaration",
         "//verilog/CST:identifier",
+        "//verilog/CST:tasks",
         "//verilog/CST:module",
         "//verilog/CST:net",
         "//verilog/CST:port",

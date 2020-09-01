@@ -111,6 +111,15 @@ const verible::Symbol* GetFunctionReturnType(
 // Returns the id of the function declaration.
 const verible::Symbol* GetFunctionId(const verible::Symbol& function_decl);
 
+// Returns token info for function name.
+// e.g. function my_fun(); return token info for "my_fun".
+const verible::TokenInfo& GetFunctionNameTokenInfo(const verible::Symbol&);
+
+// Returns toaken info for function name in function call.
+// e.g my_function(); return token info for "my_function".
+const verible::TokenInfo& GetFunctionNameTokenInfoInFunctionCall(
+    const verible::Symbol&);
+
 }  // namespace verilog
 
 #endif  // VERIBLE_VERILOG_CST_FUNCTIONS_H_

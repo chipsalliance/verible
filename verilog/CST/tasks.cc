@@ -22,6 +22,7 @@
 #include "common/text/concrete_syntax_tree.h"
 #include "common/text/symbol.h"
 #include "common/text/tree_utils.h"
+#include "verilog/CST/identifier.h"
 #include "verilog/CST/verilog_matchers.h"  // pragma IWYU: keep
 
 namespace verilog {
@@ -44,6 +45,12 @@ const verible::Symbol* GetTaskLifetime(const verible::Symbol& symbol) {
 const verible::Symbol* GetTaskId(const verible::Symbol& symbol) {
   const auto& header = GetTaskHeader(symbol);
   return verible::GetSubtreeAsSymbol(header, NodeEnum::kTaskHeader, 3);
+}
+
+const verible::TokenInfo& GetTaskNameTokenInfo(
+    const verible::Symbol& task_decl) {
+  const auto& function_id = GetTaskId(task_decl);
+  return GetIdentifier(*function_id)->get();
 }
 
 }  // namespace verilog

@@ -35,6 +35,10 @@ const verible::Symbol* GetTaskLifetime(const verible::Symbol&);
 // Returns the id of the task declaration.
 const verible::Symbol* GetTaskId(const verible::Symbol&);
 
+// Returns token info for task name.
+// e.g. task my_task(); return token info for "my_task".
+const verible::TokenInfo& GetTaskNameTokenInfo(const verible::Symbol&);
+
 }  // namespace verilog
 
 #endif  // VERIBLE_VERILOG_CST_TASKS_H_

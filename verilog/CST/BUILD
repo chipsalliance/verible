@@ -284,6 +284,7 @@ cc_library(
         ":verilog_matchers",  # fixdeps: keep
         ":verilog_nonterminals",
         ":verilog_treebuilder_utils",
+        ":identifier",
         "//common/analysis:syntax_tree_search",
         "//common/analysis/matcher",
         "//common/analysis/matcher:matcher_builders",
@@ -683,6 +684,7 @@ cc_library(
     hdrs = ["tasks.h"],
     deps = [
         ":verilog_matchers",  # fixdeps: keep
+        ":identifier",
         "//common/analysis:syntax_tree_search",
         "//common/analysis/matcher",
         "//common/analysis/matcher:matcher_builders",

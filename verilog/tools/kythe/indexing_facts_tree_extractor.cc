@@ -20,10 +20,12 @@
 #include "common/text/tree_context_visitor.h"
 #include "common/text/tree_utils.h"
 #include "verilog/CST/declaration.h"
+#include "verilog/CST/functions.h"
 #include "verilog/CST/identifier.h"
 #include "verilog/CST/module.h"
 #include "verilog/CST/net.h"
 #include "verilog/CST/port.h"
+#include "verilog/CST/tasks.h"
 #include "verilog/CST/verilog_nonterminals.h"
 #include "verilog/analysis/verilog_analyzer.h"
 
@@ -121,6 +123,18 @@ void IndexingFactsTreeExtractor::Visit(const verible::SyntaxTreeNode& node) {
     }
     case NodeEnum ::kNetDeclaration: {
       ExtractNetDeclaration(node);
+      break;
+    }
+    case NodeEnum::kFunctionDeclaration: {
+      ExtractFunction(node);
+      break;
+    }
+    case NodeEnum::kTaskDeclaration: {
+      ExtractTask(node);
+      break;
+    }
+    case NodeEnum::kFunctionCall: {
+      ExtractFunctionOrTaskCall(node);
       break;
     }
     default: {
@@ -261,6 +275,64 @@ void IndexingFactsTreeExtractor::ExtractNetDeclaration(
         IndexingNodeData({Anchor(*wire_token_info, context_.base)},
                          IndexingFactType::kVariableDefinition));
   }
+}
+
+void IndexingFactsTreeExtractor::ExtractFunction(
+    const verible::SyntaxTreeNode& function_declaration_node) {
+  IndexingNodeData function_node_data(IndexingFactType::kFunctionOrTask);
+  IndexingFactNode function_node(function_node_data);
+
+  const auto& function_name_token =
+      GetFunctionNameTokenInfo(function_declaration_node);
+
+  const Anchor function_name_anchor(function_name_token, context_.base);
+  function_node.Value().AppendAnchor(function_name_anchor);
+
+  {
+    const IndexingFactsTreeContext::AutoPop p(&facts_tree_context_,
+                                              &function_node);
+    TreeContextVisitor::Visit(function_declaration_node);
+  }
+
+  facts_tree_context_.top().NewChild(function_node);
+}
+
+void IndexingFactsTreeExtractor::ExtractTask(
+    const verible::SyntaxTreeNode& task_declaration_node) {
+  IndexingNodeData task_node_data(IndexingFactType::kFunctionOrTask);
+  IndexingFactNode task_node(task_node_data);
+
+  const auto& task_name_token = GetTaskNameTokenInfo(task_declaration_node);
+
+  const Anchor task_name_anchor(task_name_token, context_.base);
+  task_node.Value().AppendAnchor(task_name_anchor);
+
+  {
+    const IndexingFactsTreeContext::AutoPop p(&facts_tree_context_, &task_node);
+    TreeContextVisitor::Visit(task_declaration_node);
+  }
+
+  facts_tree_context_.top().NewChild(task_node);
+}
+
+void IndexingFactsTreeExtractor::ExtractFunctionOrTaskCall(
+    const verible::SyntaxTreeNode& function_call_node) {
+  IndexingNodeData function_node_data(IndexingFactType::kFunctionCall);
+  IndexingFactNode function_node(function_node_data);
+
+  const auto& function_name_token =
+      GetFunctionNameTokenInfoInFunctionCall(function_call_node);
+
+  const Anchor task_name_anchor(function_name_token, context_.base);
+  function_node.Value().AppendAnchor(task_name_anchor);
+
+  {
+    const IndexingFactsTreeContext::AutoPop p(&facts_tree_context_,
+                                              &function_node);
+    TreeContextVisitor::Visit(function_call_node);
+  }
+
+  facts_tree_context_.top().NewChild(function_node);
 }
 
 }  // namespace kythe
