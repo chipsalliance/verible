@@ -117,6 +117,11 @@ void IndexingFactsTreeExtractor::Visit(const verible::SyntaxTreeNode& node) {
       ExtractModuleInstantiation(node);
       break;
     }
+    case NodeEnum::kPortDeclaration:
+    case NodeEnum::kPortReference: {
+      ExtractModulePort(node);
+      break;
+    }
     case NodeEnum::kModulePortDeclaration: {
       ExtractInputOutputDeclaration(node);
       break;
@@ -170,7 +175,6 @@ void IndexingFactsTreeExtractor::ExtractModuleHeader(
 
   facts_tree_context_.top().Value().AppendAnchor(module_name_anchor);
 
-  // TODO(minatoma): consider this case: module m(a, b);
   // Extracting module ports e.g. (input a, input b).
   // Ports are treated as children of the module.
   const verible::SyntaxTreeNode* port_list =
@@ -180,16 +184,27 @@ void IndexingFactsTreeExtractor::ExtractModuleHeader(
     return;
   }
 
-  const std::vector<verible::TreeSearchMatch> port_names =
-      FindAllModulePortDeclarations(*port_list);
+  Visit(*port_list);
+}
 
-  for (const verible::TreeSearchMatch& port : port_names) {
+void IndexingFactsTreeExtractor::ExtractModulePort(
+    const verible::SyntaxTreeNode& module_port_node) {
+  const auto tag = static_cast<verilog::NodeEnum>(module_port_node.Tag().tag);
+
+  if (tag == NodeEnum::kPortDeclaration) {
     const verible::SyntaxTreeLeaf* leaf =
-        GetIdentifierFromModulePortDeclaration(*port.match);
+        GetIdentifierFromModulePortDeclaration(module_port_node);
 
     facts_tree_context_.top().NewChild(
         IndexingNodeData({Anchor(leaf->get(), context_.base)},
                          IndexingFactType::kVariableDefinition));
+  } else {
+    const verible::SyntaxTreeLeaf* leaf =
+        GetIdentifierFromPortReference(module_port_node);
+
+    facts_tree_context_.top().NewChild(
+        IndexingNodeData({Anchor(leaf->get(), context_.base)},
+                         IndexingFactType::kVariableReference));
   }
 }
 
@@ -283,8 +298,7 @@ void IndexingFactsTreeExtractor::ExtractFunctionDeclaration(
   IndexingFactNode function_node(function_node_data);
 
   // Extract function name.
-  const auto* function_name_leaf =
-      GetFunctionName(function_declaration_node);
+  const auto* function_name_leaf = GetFunctionName(function_declaration_node);
   const Anchor function_name_anchor(function_name_leaf->get(), context_.base);
   function_node.Value().AppendAnchor(function_name_anchor);
 
@@ -349,8 +363,7 @@ void IndexingFactsTreeExtractor::ExtractFunctionOrTaskCall(
   IndexingFactNode function_node(function_node_data);
 
   // Extract function or task name.
-  const auto* function_name_leaf =
-      GetFunctionCallName(function_call_node);
+  const auto* function_name_leaf = GetFunctionCallName(function_call_node);
   const Anchor task_name_anchor(function_name_leaf->get(), context_.base);
   function_node.Value().AppendAnchor(task_name_anchor);
 

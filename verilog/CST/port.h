@@ -37,6 +37,11 @@ std::vector<verible::TreeSearchMatch> FindAllModulePortDeclarations(
 const verible::SyntaxTreeLeaf* GetIdentifierFromModulePortDeclaration(
     const verible::Symbol&);
 
+// Extract the name of the module port identifier from a port reference.
+// For Non-ANSI style ports e.g module m(a, b);
+const verible::SyntaxTreeLeaf* GetIdentifierFromPortReference(
+    const verible::Symbol&);
+
 // Find all task/function port declarations.
 std::vector<verible::TreeSearchMatch> FindAllTaskFunctionPortDeclarations(
     const verible::Symbol&);

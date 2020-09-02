@@ -49,6 +49,13 @@ const SyntaxTreeLeaf* GetIdentifierFromModulePortDeclaration(
   return AutoUnwrapIdentifier(*ABSL_DIE_IF_NULL(identifier_symbol));
 }
 
+const verible::SyntaxTreeLeaf* GetIdentifierFromPortReference(
+    const verible::Symbol& port_reference) {
+  const auto* identifier_symbol =
+      verible::GetSubtreeAsSymbol(port_reference, NodeEnum::kPortReference, 0);
+  return AutoUnwrapIdentifier(*ABSL_DIE_IF_NULL(identifier_symbol));
+}
+
 static const verible::SyntaxTreeNode&
 GetTypeIdDimensionsFromTaskFunctionPortItem(const Symbol& symbol) {
   return verible::GetSubtreeAsNode(

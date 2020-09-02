@@ -52,6 +52,9 @@ class IndexingFactsTreeExtractor : public verible::TreeContextVisitor {
   // Extracts modules headers and creates its corresponding fact tree.
   void ExtractModuleHeader(const verible::SyntaxTreeNode& module_header_node);
 
+  // Extracts modules ports and creates its corresponding fact tree.
+  void ExtractModulePort(const verible::SyntaxTreeNode& module_port_node);
+
   // Extracts "a" from input a, output a and creates its corresponding fact
   // tree.
   void ExtractInputOutputDeclaration(
@@ -66,7 +69,8 @@ class IndexingFactsTreeExtractor : public verible::TreeContextVisitor {
       const verible::SyntaxTreeNode& function_declaration_node);
 
   // Extracts task and creates its corresponding fact tree.
-  void ExtractTaskDeclaration(const verible::SyntaxTreeNode& function_declaration_node);
+  void ExtractTaskDeclaration(
+      const verible::SyntaxTreeNode& function_declaration_node);
 
   // Extracts function or task call and creates its corresponding fact tree.
   void ExtractFunctionOrTaskCall(
