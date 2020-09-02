@@ -283,9 +283,9 @@ void IndexingFactsTreeExtractor::ExtractFunctionDeclaration(
   IndexingFactNode function_node(function_node_data);
 
   // Extract function name.
-  const auto* function_name_token =
+  const auto* function_name_leaf =
       GetFunctionName(function_declaration_node);
-  const Anchor function_name_anchor(function_name_token->get(), context_.base);
+  const Anchor function_name_anchor(function_name_leaf->get(), context_.base);
   function_node.Value().AppendAnchor(function_name_anchor);
 
   {
@@ -309,8 +309,8 @@ void IndexingFactsTreeExtractor::ExtractTaskDeclaration(
   IndexingFactNode task_node(task_node_data);
 
   // Extract task name.
-  const auto* task_name_token = GetTaskName(task_declaration_node);
-  const Anchor task_name_anchor(task_name_token->get(), context_.base);
+  const auto* task_name_leaf = GetTaskName(task_declaration_node);
+  const Anchor task_name_anchor(task_name_leaf->get(), context_.base);
   task_node.Value().AppendAnchor(task_name_anchor);
 
   {
@@ -349,9 +349,9 @@ void IndexingFactsTreeExtractor::ExtractFunctionOrTaskCall(
   IndexingFactNode function_node(function_node_data);
 
   // Extract function or task name.
-  const auto* function_name_token =
+  const auto* function_name_leaf =
       GetFunctionCallName(function_call_node);
-  const Anchor task_name_anchor(function_name_token->get(), context_.base);
+  const Anchor task_name_anchor(function_name_leaf->get(), context_.base);
   function_node.Value().AppendAnchor(task_name_anchor);
 
   {
