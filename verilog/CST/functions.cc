@@ -78,13 +78,13 @@ const Symbol* GetFunctionFormalPortsGroup(const Symbol& function_decl) {
   return GetFunctionHeaderFormalPortsGroup(header);
 }
 
-const verible::TokenInfo& GetFunctionNameTokenInfo(
+const verible::SyntaxTreeLeaf* GetFunctionName(
     const verible::Symbol& function_decl) {
-  const auto& function_id = GetFunctionId(function_decl);
-  return GetIdentifier(*function_id)->get();
+  const auto* function_id = GetFunctionId(function_decl);
+  return ABSL_DIE_IF_NULL(GetIdentifier(*function_id));
 }
 
-const verible::TokenInfo& GetFunctionCallNameTokenInfo(
+const verible::SyntaxTreeLeaf* GetFunctionCallName(
     const verible::Symbol& function_call) {
   const auto& local_root = GetSubtreeAsNode(
       function_call, NodeEnum::kFunctionCall, 0, NodeEnum::kLocalRoot);
@@ -92,7 +92,7 @@ const verible::TokenInfo& GetFunctionCallNameTokenInfo(
   const auto& unqualified_id = GetSubtreeAsNode(
       local_root, NodeEnum::kLocalRoot, 0, NodeEnum::kUnqualifiedId);
 
-  return GetIdentifier(unqualified_id)->get();
+  return ABSL_DIE_IF_NULL(GetIdentifier(unqualified_id));
 }
 
 const verible::SyntaxTreeNode& GetFunctionBlockStatementList(

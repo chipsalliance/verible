@@ -111,13 +111,13 @@ const verible::Symbol* GetFunctionReturnType(
 // Returns the id of the function declaration.
 const verible::Symbol* GetFunctionId(const verible::Symbol& function_decl);
 
-// Returns token info for function name.
-// e.g. function my_fun(); return token info for "my_fun".
-const verible::TokenInfo& GetFunctionNameTokenInfo(const verible::Symbol&);
+// Returns leaf node for function name.
+// e.g. function my_fun(); return leaf node for "my_fun".
+const verible::SyntaxTreeLeaf* GetFunctionName(const verible::Symbol&);
 
-// Returns token info for function name in function call.
-// e.g my_function(); return token info for "my_function".
-const verible::TokenInfo& GetFunctionCallNameTokenInfo(
+// Returns leaf node for function name in function call.
+// e.g my_function(); return leaf node for "my_function".
+const verible::SyntaxTreeLeaf* GetFunctionCallName(
     const verible::Symbol&);
 
 // Returns the function declaration body.
