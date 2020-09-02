@@ -115,7 +115,7 @@ void IndexingFactsTreeExtractor::Visit(const verible::SyntaxTreeNode& node) {
       ExtractModuleInstantiation(node);
       break;
     }
-    case NodeEnum::kModulePortDeclaration: {
+    case NodeEnum::kIdentifierUnpackedDimensions: {
       ExtractInputOutputDeclaration(node);
       break;
     }
@@ -180,19 +180,14 @@ void IndexingFactsTreeExtractor::ExtractModuleHeader(
 }
 
 void IndexingFactsTreeExtractor::ExtractInputOutputDeclaration(
-    const verible::SyntaxTreeNode& module_port_declaration_node) {
-  const std::vector<verible::TreeSearchMatch> port_names =
-      FindAllUnqualifiedIds(module_port_declaration_node);
+    const verible::SyntaxTreeNode& identifier_unpacked_dimension) {
+  const verible::SyntaxTreeLeaf* port_name_leaf =
+      GetSymbolIdentifierFromIdentifierUnpackedDimensions(
+          identifier_unpacked_dimension);
 
-  // In case we have input a, b.
-  // Loop through each port name and create its own node in facts tree.
-  for (const verible::TreeSearchMatch& port : port_names) {
-    const verible::SyntaxTreeLeaf* leaf = GetIdentifier(*port.match);
-
-    facts_tree_context_.top().NewChild(
-        IndexingNodeData({Anchor(leaf->get(), context_.base)},
-                         IndexingFactType::kVariableReference));
-  }
+  facts_tree_context_.top().NewChild(
+      IndexingNodeData({Anchor(port_name_leaf->get(), context_.base)},
+                       IndexingFactType::kVariableDefinition));
 }
 
 void IndexingFactsTreeExtractor::ExtractModuleEnd(

@@ -71,4 +71,13 @@ const verible::SyntaxTreeLeaf* AutoUnwrapIdentifier(
   return GetIdentifier(symbol);
 }
 
+const verible::SyntaxTreeLeaf*
+GetSymbolIdentifierFromIdentifierUnpackedDimensions(
+    const verible::Symbol& identifier_unpacked_dimension) {
+  const verible::Symbol* child_node =
+      GetSubtreeAsSymbol(identifier_unpacked_dimension,
+                         NodeEnum::kIdentifierUnpackedDimensions, 0);
+  return AutoUnwrapIdentifier(*child_node);
+}
+
 }  // namespace verilog

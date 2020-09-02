@@ -41,6 +41,10 @@ const verible::SyntaxTreeLeaf* GetIdentifier(const verible::Symbol&);
 // as-is.  This automatically peels away the kUnqualifiedId node layer.
 const verible::SyntaxTreeLeaf* AutoUnwrapIdentifier(const verible::Symbol&);
 
+// Extracts SymbolIdentifier leaf from a kIdentifierUnpackedDimensions node;
+const verible::SyntaxTreeLeaf*
+GetSymbolIdentifierFromIdentifierUnpackedDimensions(const verible::Symbol&);
+
 }  // namespace verilog
 
 #endif  // VERIBLE_VERILOG_CST_IDENTIFIER_H_
