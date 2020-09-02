@@ -793,6 +793,28 @@ static constexpr FormatterTestCase kFormatterTestCases[] = {
     {"module foo;/* foo */endmodule:foo\n",
      "module foo;  /* foo */\n"
      "endmodule : foo\n"},
+    {"module pm #(\n"
+     "//comment\n"
+     ") (wire ww);\n"
+     "endmodule\n",
+     "module pm #(\n"
+     "    //comment\n"  // comment indented
+     ") (\n"
+     "    wire ww\n"
+     ");\n"
+     "endmodule\n"},
+    {"module pm ( ) ;\n"  // empty ports list
+     "endmodule\n",
+     "module pm ();\n"
+     "endmodule\n"},
+    {"module pm #(\n"
+     "//comment\n"
+     ") ( );\n"
+     "endmodule\n",
+     "module pm #(\n"
+     "    //comment\n"  // comment indented
+     ") ();\n"          // (); grouped together
+     "endmodule\n"},
     {"`ifdef FOO\n"
      "    `ifndef BAR\n"
      "    `endif\n"
@@ -1472,8 +1494,7 @@ static constexpr FormatterTestCase kFormatterTestCases[] = {
      "module foo #(  //comment\n"
      "    parameter  bar = 1,\n"
      "    localparam baz = 2\n"
-     ") (\n"
-     ");\n"
+     ") ();\n"
      "endmodule\n"},
     {"module foo #("
      "parameter  bar =1,//comment\n"
@@ -1483,8 +1504,7 @@ static constexpr FormatterTestCase kFormatterTestCases[] = {
      "module foo #(\n"
      "    parameter  bar = 1,  //comment\n"
      "    localparam baz = 2\n"
-     ") (\n"
-     ");\n"
+     ") ();\n"
      "endmodule\n"},
     {"module foo #("
      "parameter  bar =1,"
@@ -1494,8 +1514,7 @@ static constexpr FormatterTestCase kFormatterTestCases[] = {
      "module foo #(\n"
      "    parameter  bar = 1,\n"
      "    localparam baz = 2  //comment\n"
-     ") (\n"
-     ");\n"
+     ") ();\n"
      "endmodule\n"},
     {"module    top;"
      "foo#(  \"test\"  ) foo(  );"
@@ -2755,6 +2774,20 @@ static constexpr FormatterTestCase kFormatterTestCases[] = {
      " interface if1()\n;endinterface\t\t",
      "interface if1 ();\n"
      "endinterface\n"},
+    {// interface declaration with parameter comment only, empty ports
+     " interface if1#( \n"
+     "//param\n"
+     ")();endinterface\t\t",
+     "interface if1 #(\n"
+     "    //param\n"
+     ") ();\n"
+     "endinterface\n"},
+    {// interface declaration with parameter, empty ports
+     " interface if1#( parameter int W= 8 )();endinterface\t\t",
+     "interface if1 #(\n"
+     "    parameter int W = 8\n"
+     ") ();\n"
+     "endinterface\n"},
     {// interface declaration with ports
      " interface if1( input\tlogic   z)\n;endinterface\t\t",
      "interface if1 (\n"
@@ -3272,6 +3305,18 @@ static constexpr FormatterTestCase kFormatterTestCases[] = {
     // class with empty parameter list
     {"class foo #(); endclass",
      "class foo #();\n"
+     "endclass\n"},
+    // class with empty parameter list, with comment
+    {"class foo #(  \n"
+     "// comment\n"
+     "); endclass",
+     "class foo #(\n"
+     "    // comment\n"
+     ");\n"
+     "endclass\n"},
+    // class with empty parameter list, extends
+    {"class foo #()extends bar ; endclass",
+     "class foo #() extends bar;\n"
      "endclass\n"},
 
     // class with one parameter list
@@ -6937,8 +6982,7 @@ TEST(FormatterEndToEndTest, AutoInferAlignment) {
        "module pp #(\n"
        "    int  W,\n"  // alignment adds few spaces, so do it
        "    type T\n"
-       ") (\n"
-       ");\n"
+       ") ();\n"
        "endmodule : pp\n"},
       {"module pp #(\n"
        "int W,\n"
@@ -6948,8 +6992,7 @@ TEST(FormatterEndToEndTest, AutoInferAlignment) {
        "module pp #(\n"
        "    int W,\n"  // alignment adds many spaces, so flush-left
        "    int [xx:yy] T\n"
-       ") (\n"
-       ");\n"
+       ") ();\n"
        "endmodule : pp\n"},
       {"module pp #(\n"
        "int W,\n"
@@ -6959,8 +7002,7 @@ TEST(FormatterEndToEndTest, AutoInferAlignment) {
        "module pp #(\n"
        "    int         W,\n"  // ... trigger alignment
        "    int [xx:yy] T\n"
-       ") (\n"
-       ");\n"
+       ") ();\n"
        "endmodule : pp\n"},
 
       // class member variables

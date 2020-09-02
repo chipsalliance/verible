@@ -515,6 +515,7 @@ void TreeUnwrapper::InterChildNodeHook(const SyntaxTreeNode& node) {
   VLOG(4) << __FUNCTION__ << " node type: " << tag;
   switch (tag) {
     // TODO(fangism): cover all other major lists
+    case NodeEnum::kFormalParameterList:
     case NodeEnum::kPortDeclarationList:
     case NodeEnum::kPortActualList:
     // case NodeEnum::kPortList:  // TODO(fangism): for task/function ports
@@ -1100,11 +1101,18 @@ static bool PartitionIsCloseParenSemi(const TokenPartitionTree& partition) {
   return ftokens.back().TokenEnum() == ';';
 }
 
-static bool PartitionIsCloseParen(const TokenPartitionTree& partition) {
+static bool PartitionStartsWithCloseParen(const TokenPartitionTree& partition) {
   const auto ftokens = partition.Value().TokensRange();
   if (ftokens.empty()) return false;
   const auto token_enum = ftokens.front().TokenEnum();
   return ((token_enum == ')') || (token_enum == MacroCallCloseToEndLine));
+}
+
+static bool PartitionEndsWithOpenParen(const TokenPartitionTree& partition) {
+  const auto ftokens = partition.Value().TokensRange();
+  if (ftokens.empty()) return false;
+  const auto token_enum = ftokens.back().TokenEnum();
+  return token_enum == '(';
 }
 
 static bool PartitionIsCloseBrace(const TokenPartitionTree& partition) {
@@ -1409,12 +1417,34 @@ void TreeUnwrapper::ReshapeTokenPartitions(
       break;
     }
     case NodeEnum::kModuleHeader: {
+      // Allow empty ports to appear as "();"
+      if (partition.Children().size() >= 2) {
+        auto& last = partition.Children().back();
+        auto& last_prev = *ABSL_DIE_IF_NULL(last.PreviousSibling());
+        if (PartitionStartsWithCloseParen(last) &&
+            PartitionEndsWithOpenParen(last_prev)) {
+          verible::MergeLeafIntoPreviousLeaf(&last);
+        }
+      }
       // If there were any parameters or ports at all, expand.
       // TODO(fangism): This should be done by inspecting the CST node,
       // instead of the partition structure.
       if (partition.Children().size() > 2) {
         partition.Value().SetPartitionPolicy(
             PartitionPolicyEnum::kAlwaysExpand);
+      }
+      break;
+    }
+
+    case NodeEnum::kClassHeader: {
+      // Allow empty parameters to appear as "#();"
+      if (partition.Children().size() >= 2) {
+        auto& last = partition.Children().back();
+        auto& last_prev = *ABSL_DIE_IF_NULL(last.PreviousSibling());
+        if (PartitionStartsWithCloseParen(last) &&
+            PartitionEndsWithOpenParen(last_prev)) {
+          verible::MergeLeafIntoPreviousLeaf(&last);
+        }
       }
       break;
     }
@@ -1440,7 +1470,7 @@ void TreeUnwrapper::ReshapeTokenPartitions(
         if (partition.Value().PartitionPolicy() ==
             PartitionPolicyEnum::kAppendFittingSubPartitions) {
           auto& last = *ABSL_DIE_IF_NULL(partition.RightmostDescendant());
-          if (PartitionIsCloseParen(last) ||
+          if (PartitionStartsWithCloseParen(last) ||
               PartitionStartsWithSemicolon(last)) {
             verible::MergeLeafIntoPreviousLeaf(&last);
           }
@@ -1454,7 +1484,8 @@ void TreeUnwrapper::ReshapeTokenPartitions(
       if (partition.Value().PartitionPolicy() ==
           PartitionPolicyEnum::kAppendFittingSubPartitions) {
         auto& last = *ABSL_DIE_IF_NULL(partition.RightmostDescendant());
-        if (PartitionIsCloseParen(last) || PartitionStartsWithSemicolon(last)) {
+        if (PartitionStartsWithCloseParen(last) ||
+            PartitionStartsWithSemicolon(last)) {
           verible::MergeLeafIntoPreviousLeaf(&last);
         }
       }
@@ -1523,7 +1554,7 @@ void TreeUnwrapper::ReshapeTokenPartitions(
     case NodeEnum::kPreprocessorDefine: {
       auto& last = *ABSL_DIE_IF_NULL(partition.RightmostDescendant());
       // TODO(fangism): why does test fail without this clause?
-      if (PartitionIsCloseParen(last)) {
+      if (PartitionStartsWithCloseParen(last)) {
         verible::MergeLeafIntoPreviousLeaf(&last);
       }
       break;
@@ -1540,7 +1571,8 @@ void TreeUnwrapper::ReshapeTokenPartitions(
         // Test for ')' and MacroCallCloseToEndLine because macros
         // use its own token 'MacroCallCloseToEndLine'
         auto& last = *ABSL_DIE_IF_NULL(partition.RightmostDescendant());
-        if (PartitionIsCloseParen(last) || PartitionIsCloseParenSemi(last)) {
+        if (PartitionStartsWithCloseParen(last) ||
+            PartitionIsCloseParenSemi(last)) {
           verible::MergeLeafIntoPreviousLeaf(&last);
         }
       }
