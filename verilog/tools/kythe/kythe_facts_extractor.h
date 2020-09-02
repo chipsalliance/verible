@@ -138,7 +138,7 @@ class KytheFactsExtractor {
 
   // Extracts kythe facts from a function or task call node and returns its
   // VName.
-  VName ExtractFucntionOrTaskCall(
+  VName ExtractFunctionOrTaskCall(
       const IndexingFactNode& function_call_fact_node);
 
   // Generates an anchor VName for kythe.

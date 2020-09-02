@@ -115,13 +115,13 @@ const verible::Symbol* GetFunctionId(const verible::Symbol& function_decl);
 // e.g. function my_fun(); return token info for "my_fun".
 const verible::TokenInfo& GetFunctionNameTokenInfo(const verible::Symbol&);
 
-// Returns toaken info for function name in function call.
+// Returns token info for function name in function call.
 // e.g my_function(); return token info for "my_function".
-const verible::TokenInfo& GetFunctionNameTokenInfoInFunctionCall(
+const verible::TokenInfo& GetFunctionCallNameTokenInfo(
     const verible::Symbol&);
 
 // Returns the function declaration body.
-const verible::SyntaxTreeNode& GetFunctionBlockStatmentList(
+const verible::SyntaxTreeNode& GetFunctionBlockStatementList(
     const verible::Symbol&);
 
 }  // namespace verilog

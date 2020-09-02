@@ -84,7 +84,7 @@ const verible::TokenInfo& GetFunctionNameTokenInfo(
   return GetIdentifier(*function_id)->get();
 }
 
-const verible::TokenInfo& GetFunctionNameTokenInfoInFunctionCall(
+const verible::TokenInfo& GetFunctionCallNameTokenInfo(
     const verible::Symbol& function_call) {
   const auto& local_root = GetSubtreeAsNode(
       function_call, NodeEnum::kFunctionCall, 0, NodeEnum::kLocalRoot);
@@ -95,7 +95,7 @@ const verible::TokenInfo& GetFunctionNameTokenInfoInFunctionCall(
   return GetIdentifier(unqualified_id)->get();
 }
 
-const verible::SyntaxTreeNode& GetFunctionBlockStatmentList(
+const verible::SyntaxTreeNode& GetFunctionBlockStatementList(
     const verible::Symbol& function_decl) {
   return verible::GetSubtreeAsNode(function_decl,
                                    NodeEnum::kFunctionDeclaration, 2,

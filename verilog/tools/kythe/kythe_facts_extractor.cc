@@ -61,7 +61,7 @@ void KytheFactsExtractor::Visit(const IndexingFactNode& node) {
       break;
     }
     case IndexingFactType::kFunctionCall: {
-      vname = ExtractFucntionOrTaskCall(node);
+      vname = ExtractFunctionOrTaskCall(node);
       break;
     }
   }
@@ -227,7 +227,7 @@ VName KytheFactsExtractor::ExtractFunctionOrTask(
   return function_vname;
 }
 
-VName KytheFactsExtractor::ExtractFucntionOrTaskCall(
+VName KytheFactsExtractor::ExtractFunctionOrTaskCall(
     const IndexingFactNode& function_call_fact_node) {
   const auto& function_name = function_call_fact_node.Value().Anchors()[0];
 

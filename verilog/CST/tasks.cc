@@ -53,7 +53,7 @@ const verible::TokenInfo& GetTaskNameTokenInfo(
   return GetIdentifier(*function_id)->get();
 }
 
-const verible::SyntaxTreeNode& GetTaskStatmentList(
+const verible::SyntaxTreeNode& GetTaskStatementList(
     const verible::Symbol& task_decl) {
   return verible::GetSubtreeAsNode(task_decl, NodeEnum::kTaskDeclaration, 1,
                                    NodeEnum::kStatementList);

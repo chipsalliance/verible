@@ -126,11 +126,11 @@ void IndexingFactsTreeExtractor::Visit(const verible::SyntaxTreeNode& node) {
       break;
     }
     case NodeEnum::kFunctionDeclaration: {
-      ExtractFunction(node);
+      ExtractFunctionDeclaration(node);
       break;
     }
     case NodeEnum::kTaskDeclaration: {
-      ExtractTask(node);
+      ExtractTaskDeclaration(node);
       break;
     }
     case NodeEnum::kFunctionCall: {
@@ -277,7 +277,7 @@ void IndexingFactsTreeExtractor::ExtractNetDeclaration(
   }
 }
 
-void IndexingFactsTreeExtractor::ExtractFunction(
+void IndexingFactsTreeExtractor::ExtractFunctionDeclaration(
     const verible::SyntaxTreeNode& function_declaration_node) {
   IndexingNodeData function_node_data(IndexingFactType::kFunctionOrTask);
   IndexingFactNode function_node(function_node_data);
@@ -296,14 +296,14 @@ void IndexingFactsTreeExtractor::ExtractFunction(
 
     // Extract function body.
     const verible::SyntaxTreeNode& function_body =
-        GetFunctionBlockStatmentList(function_declaration_node);
+        GetFunctionBlockStatementList(function_declaration_node);
     Visit(function_body);
   }
 
   facts_tree_context_.top().NewChild(function_node);
 }
 
-void IndexingFactsTreeExtractor::ExtractTask(
+void IndexingFactsTreeExtractor::ExtractTaskDeclaration(
     const verible::SyntaxTreeNode& task_declaration_node) {
   IndexingNodeData task_node_data(IndexingFactType::kFunctionOrTask);
   IndexingFactNode task_node(task_node_data);
@@ -321,7 +321,7 @@ void IndexingFactsTreeExtractor::ExtractTask(
 
     // Extract task body.
     const verible::SyntaxTreeNode& task_body =
-        GetTaskStatmentList(task_declaration_node);
+        GetTaskStatementList(task_declaration_node);
     Visit(task_body);
   }
 
@@ -333,7 +333,7 @@ void IndexingFactsTreeExtractor::ExtractFunctionTaskPort(
   const std::vector<verible::TreeSearchMatch> ports =
       FindAllTaskFunctionPortDeclarations(function_declaration_node);
 
-  for (const verible::TreeSearchMatch port : ports) {
+  for (const verible::TreeSearchMatch& port : ports) {
     const verible::SyntaxTreeLeaf* leaf =
         GetIdentifierFromTaskFunctionPortItem(*port.match);
 
@@ -350,7 +350,7 @@ void IndexingFactsTreeExtractor::ExtractFunctionOrTaskCall(
 
   // Extract function or task name.
   const auto& function_name_token =
-      GetFunctionNameTokenInfoInFunctionCall(function_call_node);
+      GetFunctionCallNameTokenInfo(function_call_node);
   const Anchor task_name_anchor(function_name_token, context_.base);
   function_node.Value().AppendAnchor(task_name_anchor);
 
@@ -358,7 +358,7 @@ void IndexingFactsTreeExtractor::ExtractFunctionOrTaskCall(
     const IndexingFactsTreeContext::AutoPop p(&facts_tree_context_,
                                               &function_node);
 
-    // Extract functoin or task parameters.
+    // Extract function or task parameters.
     TreeContextVisitor::Visit(function_call_node);
   }
 

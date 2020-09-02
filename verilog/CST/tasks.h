@@ -40,7 +40,7 @@ const verible::Symbol* GetTaskId(const verible::Symbol&);
 const verible::TokenInfo& GetTaskNameTokenInfo(const verible::Symbol&);
 
 // Returns the task declaration body.
-const verible::SyntaxTreeNode& GetTaskStatmentList(const verible::Symbol&);
+const verible::SyntaxTreeNode& GetTaskStatementList(const verible::Symbol&);
 
 }  // namespace verilog
 
