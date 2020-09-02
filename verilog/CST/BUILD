@@ -411,6 +411,7 @@ cc_test(
         "//common/text:text_structure",
         "//common/text:token_info",
         "//common/text:token_info_test_util",
+        "//common/analysis:syntax_tree_search_test_utils",
         "//common/util:casts",
         "//common/util:logging",
         "//common/util:range",

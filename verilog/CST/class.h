@@ -30,12 +30,12 @@ std::vector<verible::TreeSearchMatch> FindAllClassDeclarations(
 // Returns the full header of a class.
 const verible::SyntaxTreeNode& GetClassHeader(const verible::Symbol&);
 
-// Extract the subnode of an class declaration that is the class name.
-const verible::TokenInfo& GetClassNameToken(const verible::Symbol&);
+// Returns the leaf node for class name.
+const verible::SyntaxTreeLeaf& GetClassName(const verible::Symbol&);
 
 // Returns class name token after endclass.
 // e.g. from "class foo; endclass: foo" returns the second "foo".
-const verible::TokenInfo* GetClassEndLabel(const verible::Symbol&);
+const verible::SyntaxTreeLeaf* GetClassEndLabel(const verible::Symbol&);
 
 // Returns the node spanning class's Item list.
 const verible::SyntaxTreeNode& GetClassItemList(const verible::Symbol&);

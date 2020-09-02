@@ -32,8 +32,12 @@
 namespace verilog {
 namespace kythe {
 
+namespace {
+
 using verible::SyntaxTreeNode;
 using verible::TreeSearchMatch;
+
+}  // namespace
 
 IndexingFactNode ExtractOneFile(absl::string_view content,
                                 absl::string_view filename, int& exit_status,
@@ -210,7 +214,7 @@ void IndexingFactsTreeExtractor::ExtractModuleEnd(
 //  "foo_instance(...)"
 void IndexingFactsTreeExtractor::ExtractModuleInstantiation(
     const SyntaxTreeNode& data_declaration_node,
-    const std::vector<TreeSearchMatch> gate_instances) {
+    const std::vector<TreeSearchMatch>& gate_instances) {
   const verible::TokenInfo& type =
       GetTypeTokenInfoFromDataDeclaration(data_declaration_node);
   const Anchor type_anchor(type, context_.base);
@@ -270,17 +274,17 @@ void IndexingFactsTreeExtractor::ExtractClassDeclaration(
     const IndexingFactsTreeContext::AutoPop p(&facts_tree_context_,
                                               &class_node);
     // Extract class name.
-    const verible::TokenInfo& class_name_token =
-        GetClassNameToken(class_declaration);
-    const Anchor class_name_anchor(class_name_token, context_.base);
+    const verible::SyntaxTreeLeaf& class_name_leaf =
+        GetClassName(class_declaration);
+    const Anchor class_name_anchor(class_name_leaf.get(), context_.base);
     facts_tree_context_.top().Value().AppendAnchor(class_name_anchor);
 
     // Extract class name after endclass.
-    const verible::TokenInfo* class_end_name =
+    const verible::SyntaxTreeLeaf* class_end_name =
         GetClassEndLabel(class_declaration);
 
     if (class_end_name != nullptr) {
-      const Anchor class_end_anchor(*class_end_name, context_.base);
+      const Anchor class_end_anchor(class_end_name->get(), context_.base);
       facts_tree_context_.top().Value().AppendAnchor(class_end_anchor);
     }
 
@@ -294,7 +298,7 @@ void IndexingFactsTreeExtractor::ExtractClassDeclaration(
 
 void IndexingFactsTreeExtractor::ExtractClassInstances(
     const SyntaxTreeNode& data_declaration_node,
-    const std::vector<TreeSearchMatch> register_variables) {
+    const std::vector<TreeSearchMatch>& register_variables) {
   const verible::TokenInfo& type =
       GetTypeTokenInfoFromDataDeclaration(data_declaration_node);
   const Anchor type_anchor(type, context_.base);

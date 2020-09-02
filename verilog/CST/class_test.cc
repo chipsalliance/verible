@@ -25,6 +25,7 @@
 #include <memory>
 #include <vector>
 
+#include "common/analysis/syntax_tree_search_test_utils.h"
 #include "common/text/concrete_syntax_tree.h"
 #include "common/text/symbol.h"
 #include "common/text/text_structure.h"
@@ -37,9 +38,6 @@
 #include "gtest/gtest.h"
 #include "verilog/analysis/verilog_analyzer.h"
 
-#undef EXPECT_OK
-#define EXPECT_OK(value) EXPECT_TRUE((value).ok())
-
 #undef ASSERT_OK
 #define ASSERT_OK(value) ASSERT_TRUE((value).ok())
 
@@ -48,60 +46,123 @@ namespace {
 
 using verible::down_cast;
 using verible::SyntaxTreeNode;
+using verible::SyntaxTreeSearchTestCase;
 using verible::TokenInfoTestData;
+using verible::TreeSearchMatch;
 
-TEST(GetClassNameTokenTest, ClassName) {
-  VerilogAnalyzer analyzer("class foo; endclass", "");
-  EXPECT_OK(analyzer.Analyze());
-  const auto& root = analyzer.Data().SyntaxTree();
-  const auto class_declarations = FindAllClassDeclarations(*root);
-  EXPECT_EQ(class_declarations.size(), 1);
-  const auto& class_node =
-      down_cast<const SyntaxTreeNode&>(*class_declarations.front().match);
-  // Root node is a description list, not a module.
-  const auto& token = GetClassNameToken(class_node);
-  EXPECT_EQ(token.text(), "foo");
+TEST(GetClassNameTest, ClassName) {
+  constexpr int kTag = 1;  // value doesn't matter
+  const SyntaxTreeSearchTestCase kTestCases[] = {
+      {"class ", {kTag, "foo"}, ";\nendclass"},
+  };
+  for (const auto& test : kTestCases) {
+    const absl::string_view code(test.code);
+    VerilogAnalyzer analyzer(code, "test-file");
+    const auto code_copy = analyzer.Data().Contents();
+    ASSERT_OK(analyzer.Analyze()) << "failed on:\n" << code;
+    const auto& root = analyzer.Data().SyntaxTree();
+
+    const auto decls = FindAllClassDeclarations(*ABSL_DIE_IF_NULL(root));
+
+    std::vector<TreeSearchMatch> types;
+    for (const auto& decl : decls) {
+      const auto& type = GetClassName(*decl.match);
+      types.push_back(TreeSearchMatch{&type, {/* ignored context */}});
+    }
+
+    std::ostringstream diffs;
+    EXPECT_TRUE(test.ExactMatchFindings(types, code_copy, &diffs))
+        << "failed on:\n"
+        << code << "\ndiffs:\n"
+        << diffs.str();
+  }
 }
 
-TEST(GetClassNameTokenTest, InnerClassName) {
-  VerilogAnalyzer analyzer("module m();\n class foo;\n endclass\n endmodule: m",
-                           "");
-  EXPECT_OK(analyzer.Analyze());
-  const auto& root = analyzer.Data().SyntaxTree();
-  const auto class_declarations = FindAllClassDeclarations(*root);
-  EXPECT_EQ(class_declarations.size(), 1);
-  const auto& class_node =
-      down_cast<const SyntaxTreeNode&>(*class_declarations.front().match);
-  // Root node is a description list, not a module.
-  const auto& token = GetClassNameToken(class_node);
-  EXPECT_EQ(token.text(), "foo");
+TEST(GetClassNameTest, InnerClassName) {
+  constexpr int kTag = 1;  // value doesn't matter
+  const SyntaxTreeSearchTestCase kTestCases[] = {
+      {"module m();\n class ", {kTag, "foo"}, ";\n endclass\n endmodule: m\n"},
+  };
+  for (const auto& test : kTestCases) {
+    const absl::string_view code(test.code);
+    VerilogAnalyzer analyzer(code, "test-file");
+    const auto code_copy = analyzer.Data().Contents();
+    ASSERT_OK(analyzer.Analyze()) << "failed on:\n" << code;
+    const auto& root = analyzer.Data().SyntaxTree();
+
+    const auto decls = FindAllClassDeclarations(*ABSL_DIE_IF_NULL(root));
+
+    std::vector<TreeSearchMatch> types;
+    for (const auto& decl : decls) {
+      const auto& type = GetClassName(*decl.match);
+      types.push_back(TreeSearchMatch{&type, {/* ignored context */}});
+    }
+
+    std::ostringstream diffs;
+    EXPECT_TRUE(test.ExactMatchFindings(types, code_copy, &diffs))
+        << "failed on:\n"
+        << code << "\ndiffs:\n"
+        << diffs.str();
+  }
 }
 
-TEST(GetClassNameTokenTest, ClassEndLabel) {
-  VerilogAnalyzer analyzer("class foo; endclass: foo", "");
-  EXPECT_OK(analyzer.Analyze());
-  const auto& root = analyzer.Data().SyntaxTree();
-  const auto class_declarations = FindAllClassDeclarations(*root);
-  EXPECT_EQ(class_declarations.size(), 1);
-  const auto& class_node =
-      down_cast<const SyntaxTreeNode&>(*class_declarations.front().match);
-  // Root node is a description list, not a module.
-  const auto& token = *GetClassEndLabel(class_node);
-  EXPECT_EQ(token.text(), "foo");
+TEST(GetClassNameTest, ClassEndLabel) {
+  constexpr int kTag = 1;  // value doesn't matter
+  const SyntaxTreeSearchTestCase kTestCases[] = {{
+      "class foo;\n endclass: ",
+      {kTag, "foo"},
+  }};
+  for (const auto& test : kTestCases) {
+    const absl::string_view code(test.code);
+    VerilogAnalyzer analyzer(code, "test-file");
+    const auto code_copy = analyzer.Data().Contents();
+    ASSERT_OK(analyzer.Analyze()) << "failed on:\n" << code;
+    const auto& root = analyzer.Data().SyntaxTree();
+
+    const auto decls = FindAllClassDeclarations(*ABSL_DIE_IF_NULL(root));
+
+    std::vector<TreeSearchMatch> types;
+    for (const auto& decl : decls) {
+      const auto* type = GetClassEndLabel(*decl.match);
+      types.push_back(TreeSearchMatch{type, {/* ignored context */}});
+    }
+
+    std::ostringstream diffs;
+    EXPECT_TRUE(test.ExactMatchFindings(types, code_copy, &diffs))
+        << "failed on:\n"
+        << code << "\ndiffs:\n"
+        << diffs.str();
+  }
 }
 
-TEST(GetClassNameTokenTest, InnerClassEndLabel) {
-  VerilogAnalyzer analyzer("module m();\n class foo;\n endclass: foo\n endmodule: m",
-                           "");
-  EXPECT_OK(analyzer.Analyze());
-  const auto& root = analyzer.Data().SyntaxTree();
-  const auto class_declarations = FindAllClassDeclarations(*root);
-  EXPECT_EQ(class_declarations.size(), 1);
-  const auto& class_node =
-      down_cast<const SyntaxTreeNode&>(*class_declarations.front().match);
-  // Root node is a description list, not a module.
-  const auto& token = *GetClassEndLabel(class_node);
-  EXPECT_EQ(token.text(), "foo");
+TEST(GetClassNameTest, InnerClassEndLabel) {
+  constexpr int kTag = 1;  // value doesn't matter
+  const SyntaxTreeSearchTestCase kTestCases[] = {
+      {"module m();\n class foo;\n endclass: ",
+       {kTag, "foo"},
+       "\n endmodule: m\n"},
+  };
+  for (const auto& test : kTestCases) {
+    const absl::string_view code(test.code);
+    VerilogAnalyzer analyzer(code, "test-file");
+    const auto code_copy = analyzer.Data().Contents();
+    ASSERT_OK(analyzer.Analyze()) << "failed on:\n" << code;
+    const auto& root = analyzer.Data().SyntaxTree();
+
+    const auto decls = FindAllClassDeclarations(*ABSL_DIE_IF_NULL(root));
+
+    std::vector<TreeSearchMatch> types;
+    for (const auto& decl : decls) {
+      const auto* type = GetClassEndLabel(*decl.match);
+      types.push_back(TreeSearchMatch{type, {/* ignored context */}});
+    }
+
+    std::ostringstream diffs;
+    EXPECT_TRUE(test.ExactMatchFindings(types, code_copy, &diffs))
+        << "failed on:\n"
+        << code << "\ndiffs:\n"
+        << diffs.str();
+  }
 }
 
 }  // namespace

@@ -43,24 +43,24 @@ const verible::SyntaxTreeNode& GetClassHeader(
                                    NodeEnum::kClassHeader);
 }
 
-const verible::TokenInfo& GetClassNameToken(
+const verible::SyntaxTreeLeaf& GetClassName(
     const verible::Symbol& class_declaration) {
   const auto& header_node = GetClassHeader(class_declaration);
   const auto& name_leaf =
       verible::GetSubtreeAsLeaf(header_node, NodeEnum::kClassHeader, 3);
-  return name_leaf.get();
+  return name_leaf;
 }
 
-const verible::TokenInfo* GetClassEndLabel(
+const verible::SyntaxTreeLeaf* GetClassEndLabel(
     const verible::Symbol& class_declaration) {
-  const auto& label_node = verible::GetSubtreeAsSymbol(
+  const auto* label_node = verible::GetSubtreeAsSymbol(
       class_declaration, NodeEnum::kClassDeclaration, 3);
   if (label_node == nullptr) {
     return nullptr;
   }
   const auto& class_name = verible::GetSubtreeAsLeaf(
       verible::SymbolCastToNode(*label_node), NodeEnum::kLabel, 1);
-  return &class_name.get();
+  return &class_name;
 }
 
 const verible::SyntaxTreeNode& GetClassItemList(

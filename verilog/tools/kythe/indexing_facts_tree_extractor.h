@@ -48,7 +48,7 @@ class IndexingFactsTreeExtractor : public verible::TreeContextVisitor {
   // Extracts modules instantiations and creates its corresponding fact tree.
   void ExtractModuleInstantiation(
       const verible::SyntaxTreeNode& data_declaration_node,
-      const std::vector<verible::TreeSearchMatch> gate_instances);
+      const std::vector<verible::TreeSearchMatch>& gate_instances);
 
   // Extracts endmodule and creates its corresponding fact tree.
   void ExtractModuleEnd(const verible::SyntaxTreeNode& module_declaration_node);
@@ -71,7 +71,7 @@ class IndexingFactsTreeExtractor : public verible::TreeContextVisitor {
 
   void ExtractClassInstances(
       const verible::SyntaxTreeNode& data_declaration,
-      const std::vector<verible::TreeSearchMatch> register_variables);
+      const std::vector<verible::TreeSearchMatch>& register_variables);
 
   // The Root of the constructed tree
   IndexingFactNode root_{IndexingNodeData(IndexingFactType::kFile)};
