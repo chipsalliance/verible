@@ -97,7 +97,7 @@ class KytheFactsExtractor {
     //
     // Improvement can be replacing the string matching to comparison based on
     // integers or enums and reshaping the scope to be one vector instead of
-    // vector of vectores.
+    // vector of vectors.
     //
     // TODO(minatoma): consider using vector<pair<name, type>> for signature.
     //
@@ -147,7 +147,7 @@ class KytheFactsExtractor {
   // VName.
   VName ExtractVariableReferenceFact(const IndexingFactNode& node);
 
-  // Extracts Kythe facts from class instnace node and return its VName.
+  // Extracts Kythe facts from class instance node and return its VName.
   VName ExtractClassInstances(const IndexingFactNode& class_instance_fact_node);
 
   // Generates an anchor VName for kythe.

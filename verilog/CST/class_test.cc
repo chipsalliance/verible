@@ -20,6 +20,8 @@
 // created by the parser, so test *should* use the parser-generated
 // syntax trees, as opposed to hand-crafted/mocked syntax trees.
 
+#include "verilog/CST/class.h"
+
 #include <memory>
 #include <vector>
 
@@ -33,7 +35,6 @@
 #include "common/util/range.h"
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
-#include "verilog/CST/class.h"
 #include "verilog/analysis/verilog_analyzer.h"
 
 #undef EXPECT_OK
@@ -62,8 +63,36 @@ TEST(GetClassNameTokenTest, ClassName) {
   EXPECT_EQ(token.text(), "foo");
 }
 
+TEST(GetClassNameTokenTest, InnerClassName) {
+  VerilogAnalyzer analyzer("module m();\n class foo;\n endclass\n endmodule: m",
+                           "");
+  EXPECT_OK(analyzer.Analyze());
+  const auto& root = analyzer.Data().SyntaxTree();
+  const auto class_declarations = FindAllClassDeclarations(*root);
+  EXPECT_EQ(class_declarations.size(), 1);
+  const auto& class_node =
+      down_cast<const SyntaxTreeNode&>(*class_declarations.front().match);
+  // Root node is a description list, not a module.
+  const auto& token = GetClassNameToken(class_node);
+  EXPECT_EQ(token.text(), "foo");
+}
+
 TEST(GetClassNameTokenTest, ClassEndLabel) {
   VerilogAnalyzer analyzer("class foo; endclass: foo", "");
+  EXPECT_OK(analyzer.Analyze());
+  const auto& root = analyzer.Data().SyntaxTree();
+  const auto class_declarations = FindAllClassDeclarations(*root);
+  EXPECT_EQ(class_declarations.size(), 1);
+  const auto& class_node =
+      down_cast<const SyntaxTreeNode&>(*class_declarations.front().match);
+  // Root node is a description list, not a module.
+  const auto& token = *GetClassEndLabel(class_node);
+  EXPECT_EQ(token.text(), "foo");
+}
+
+TEST(GetClassNameTokenTest, InnerClassEndLabel) {
+  VerilogAnalyzer analyzer("module m();\n class foo;\n endclass\n endmodule: m",
+                           "");
   EXPECT_OK(analyzer.Analyze());
   const auto& root = analyzer.Data().SyntaxTree();
   const auto class_declarations = FindAllClassDeclarations(*root);

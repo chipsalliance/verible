@@ -1,5 +1,3 @@
-
-
 // Copyright 2017-2020 The Verible Authors.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -29,7 +27,7 @@ namespace verilog {
 std::vector<verible::TreeSearchMatch> FindAllClassDeclarations(
     const verible::Symbol&);
 
-// Returns the full header of ca class.
+// Returns the full header of a class.
 const verible::SyntaxTreeNode& GetClassHeader(const verible::Symbol&);
 
 // Extract the subnode of an class declaration that is the class name.

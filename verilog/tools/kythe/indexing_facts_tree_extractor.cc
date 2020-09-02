@@ -299,8 +299,9 @@ void IndexingFactsTreeExtractor::ExtractClassInstances(
       GetTypeTokenInfoFromDataDeclaration(data_declaration_node);
   const Anchor type_anchor(type, context_.base);
 
-  // Class instances may may appear as multible instances sharing the same type
+  // Class instances may may appear as multiple instances sharing the same type
   // in a single statement e.g. myClass b1 = new, b2 = new.
+  // LRM 8.8 Typed constructor calls
   //
   // Loop through each instance and associate each declared id with the same
   // type and create its corresponding facts tree node.
