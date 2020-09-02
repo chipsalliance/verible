@@ -91,7 +91,7 @@ TEST(GetClassNameTokenTest, ClassEndLabel) {
 }
 
 TEST(GetClassNameTokenTest, InnerClassEndLabel) {
-  VerilogAnalyzer analyzer("module m();\n class foo;\n endclass\n endmodule: m",
+  VerilogAnalyzer analyzer("module m();\n class foo;\n endclass: foo\n endmodule: m",
                            "");
   EXPECT_OK(analyzer.Analyze());
   const auto& root = analyzer.Data().SyntaxTree();
