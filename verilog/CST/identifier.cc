@@ -33,6 +33,11 @@ namespace verilog {
 using verible::down_cast;
 using verible::SymbolKind;
 
+std::vector<verible::TreeSearchMatch> FindAllIdentifierUnpackedDimensions(
+    const verible::Symbol& root) {
+  return verible::SearchSyntaxTree(root, NodekIdentifierUnpackedDimensions());
+}
+
 std::vector<verible::TreeSearchMatch> FindAllUnqualifiedIds(
     const verible::Symbol& root) {
   return verible::SearchSyntaxTree(root, NodekUnqualifiedId());
