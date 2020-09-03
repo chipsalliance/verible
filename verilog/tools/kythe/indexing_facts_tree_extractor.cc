@@ -132,12 +132,13 @@ void IndexingFactsTreeExtractor::Visit(const verible::SyntaxTreeNode& node) {
       ExtractMacroCall(node);
       break;
     }
-    // Special case toa handle tags in leaves.
+    // Special case to handle tags in leaves.
     // e.g leaves tagged with MacroIdentifier.
     case NodeEnum::kUnqualifiedId: {
       const verible::SyntaxTreeLeaf* leaf =
           ABSL_DIE_IF_NULL(AutoUnwrapIdentifier(node));
 
+      // Leaves tagged with MacroIdentifier.
       if (leaf->get().token_enum() == verilog_tokentype::MacroIdentifier) {
         ExtractMacroReference(*leaf);
         break;
