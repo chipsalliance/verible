@@ -16,13 +16,14 @@
 //
 // Testing strategy:
 // The point of these tests is to validate the structure that is assumed
-// about module declaration nodes and the structure that is actually
+// about class declaration nodes and the structure that is actually
 // created by the parser, so test *should* use the parser-generated
 // syntax trees, as opposed to hand-crafted/mocked syntax trees.
 
 #include "verilog/CST/class.h"
 
 #include <memory>
+#include <sstream>
 #include <vector>
 
 #include "common/analysis/syntax_tree_search_test_utils.h"
@@ -118,17 +119,34 @@ TEST(GetClassNameTest, ClassEndLabel) {
 
     const auto decls = FindAllClassDeclarations(*ABSL_DIE_IF_NULL(root));
 
-    std::vector<TreeSearchMatch> types;
+    std::vector<TreeSearchMatch> names;
     for (const auto& decl : decls) {
-      const auto* type = GetClassEndLabel(*decl.match);
-      types.push_back(TreeSearchMatch{type, {/* ignored context */}});
+      const auto* name = GetClassEndLabel(*decl.match);
+      names.push_back(TreeSearchMatch{name, {/* ignored context */}});
     }
 
     std::ostringstream diffs;
-    EXPECT_TRUE(test.ExactMatchFindings(types, code_copy, &diffs))
+    EXPECT_TRUE(test.ExactMatchFindings(names, code_copy, &diffs))
         << "failed on:\n"
         << code << "\ndiffs:\n"
         << diffs.str();
+  }
+}
+
+TEST(GetClassNameTest, NoClassEndLabelTest) {
+  constexpr absl::string_view kTestCases[] = {
+      {"class foo; endclass"},
+  };
+  for (const auto& test : kTestCases) {
+    VerilogAnalyzer analyzer(test, "test-file");
+    ASSERT_OK(analyzer.Analyze());
+    const auto& root = analyzer.Data().SyntaxTree();
+
+    const auto decls = FindAllClassDeclarations(*ABSL_DIE_IF_NULL(root));
+    for (const auto& decl : decls) {
+      const auto* type = GetClassEndLabel(*decl.match);
+      EXPECT_EQ(type, nullptr);
+    }
   }
 }
 
