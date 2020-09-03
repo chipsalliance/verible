@@ -61,10 +61,18 @@ class IndexingFactsTreeExtractor : public verible::TreeContextVisitor {
   void ExtractNetDeclaration(
       const verible::SyntaxTreeNode& net_declaration_node);
 
-  // Extract macro definitions and explores its arguments (if exists) and
-  // creates its corresponding facts tree.
+  // Extract macro definitions and explores its arguments and creates its
+  // corresponding facts tree.
   void ExtractMacroDefinition(
       const verible::SyntaxTreeNode& preprocessor_definition);
+
+  // Extract macro calls and explores its arguments and creates its
+  // corresponding facts tree.
+  void ExtractMacroCall(const verible::SyntaxTreeNode& macro_call);
+
+  // Extract macro names from kMacroIdentifiers which are considered references
+  // to macros and creates its corresponding facts tree.
+  void ExtractMacroReference(const verible::SyntaxTreeLeaf& macro_identifier);
 
   // The Root of the constructed tree
   IndexingFactNode root_{IndexingNodeData(IndexingFactType::kFile)};

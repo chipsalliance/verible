@@ -135,6 +135,9 @@ class KytheFactsExtractor {
   // Extracts kythe facts from a macro definition node and returns its VName.
   VName ExtractMacroDefinition(const IndexingFactNode& macro_definition_node);
 
+  // Extracts kythe facts from a macro call node and returns its VName.
+  VName ExtractMacroCall(const IndexingFactNode& macro_call_node);
+
   // Generates an anchor VName for kythe.
   VName PrintAnchorVName(const Anchor&, absl::string_view);
 

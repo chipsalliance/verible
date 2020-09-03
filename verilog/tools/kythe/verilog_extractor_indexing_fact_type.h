@@ -27,6 +27,7 @@ enum class IndexingFactType {
   kFile,
   kMacro,
   kModule,
+  kMacroCall,
   kModuleInstance,
   kVariableDefinition,
   kVariableReference,

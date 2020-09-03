@@ -128,6 +128,23 @@ void IndexingFactsTreeExtractor::Visit(const verible::SyntaxTreeNode& node) {
       ExtractMacroDefinition(node);
       break;
     }
+    case NodeEnum::kMacroCall: {
+      ExtractMacroCall(node);
+      break;
+    }
+    // Special case toa handle tags in leaves.
+    // e.g leaves tagged with MacroIdentifier.
+    case NodeEnum::kUnqualifiedId: {
+      const verible::SyntaxTreeLeaf* leaf =
+          ABSL_DIE_IF_NULL(AutoUnwrapIdentifier(node));
+
+      if (leaf->get().token_enum() == verilog_tokentype::MacroIdentifier) {
+        ExtractMacroReference(*leaf);
+        break;
+      }
+
+      break;
+    }
     default: {
       TreeContextVisitor::Visit(node);
     }
@@ -270,9 +287,37 @@ void IndexingFactsTreeExtractor::ExtractNetDeclaration(
 
 void IndexingFactsTreeExtractor::ExtractMacroDefinition(
     const verible::SyntaxTreeNode& preprocessor_definition) {
-  const verible::SyntaxTreeLeaf& macro_name = GetMacroName(preprocessor_definition);
+  const verible::SyntaxTreeLeaf& macro_name =
+      GetMacroName(preprocessor_definition);
   facts_tree_context_.top().NewChild(IndexingNodeData(
       {Anchor(macro_name.get(), context_.base)}, IndexingFactType::kMacro));
+}
+
+void IndexingFactsTreeExtractor::ExtractMacroCall(
+    const verible::SyntaxTreeNode& macro_call) {
+  const verible::TokenInfo& macro_call_name_token = GetMacroCallId(macro_call);
+
+  IndexingFactNode macro_node(
+      IndexingNodeData({Anchor(macro_call_name_token, context_.base)},
+                       IndexingFactType::kMacroCall));
+
+  {
+    const IndexingFactsTreeContext::AutoPop p(&facts_tree_context_,
+                                              &macro_node);
+
+    const verible::SyntaxTreeNode& macro_call_args =
+        GetMacroCallArgs(macro_call);
+    Visit(macro_call_args);
+  }
+
+  facts_tree_context_.top().NewChild(macro_node);
+}
+
+void IndexingFactsTreeExtractor::ExtractMacroReference(
+    const verible::SyntaxTreeLeaf& macro_identifier) {
+  facts_tree_context_.top().NewChild(
+      IndexingNodeData({Anchor(macro_identifier.get(), context_.base)},
+                       IndexingFactType::kMacroCall));
 }
 
 }  // namespace kythe
