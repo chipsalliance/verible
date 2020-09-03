@@ -377,6 +377,8 @@ cc_test(
         "//common/text:text_structure",
         "//common/text:token_info_test_util",
         "//common/util:range",
+        "//common/analysis:syntax_tree_search",
+        "//common/analysis:syntax_tree_search_test_utils",
         "//verilog/analysis:verilog_analyzer",
         "@com_google_googletest//:gtest_main",
     ],

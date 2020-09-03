@@ -49,6 +49,10 @@ void KytheFactsExtractor::Visit(const IndexingFactNode& node) {
       scope_context_.top().push_back(vname);
       break;
     }
+    case IndexingFactType::kMacro: {
+      vname = ExtractMacroDefinition(node);
+      break;
+    }
     case IndexingFactType::kVariableReference: {
       vname = ExtractVariableReference(node);
       break;
@@ -182,6 +186,21 @@ VName KytheFactsExtractor::ExtractVariableReference(
   }
 }
 
+VName KytheFactsExtractor::ExtractMacroDefinition(
+    const IndexingFactNode& macro_definition_node) {
+  const Anchor& macro_name = macro_definition_node.Value().Anchors()[0];
+
+  const VName macro_vname(
+      file_path_,
+      CreateScopeRelativeSignature(CreateModuleSignature(macro_name.Value())));
+  const VName module_name_anchor = PrintAnchorVName(macro_name, file_path_);
+
+  *stream_ << Fact(macro_vname, kFactNodeKind, kNodeMacro);
+  *stream_ << Edge(module_name_anchor, kEdgeDefinesBinding, macro_vname);
+
+  return macro_vname;
+}
+
 VName KytheFactsExtractor::PrintAnchorVName(const Anchor& anchor,
                                             absl::string_view file_path) {
   const VName anchor_vname(file_path,
@@ -200,6 +219,10 @@ VName KytheFactsExtractor::PrintAnchorVName(const Anchor& anchor,
 std::string KytheFactsExtractor::CreateScopeRelativeSignature(
     absl::string_view signature) {
   return absl::StrCat(signature, "#", vnames_context_.top().signature);
+}
+
+std::string CreateMacroSignature(absl::string_view macro_name) {
+  return absl::StrCat(macro_name, "#macro");
 }
 
 std::string CreateModuleSignature(absl::string_view module_name) {

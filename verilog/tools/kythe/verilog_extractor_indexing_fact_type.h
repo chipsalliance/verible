@@ -25,6 +25,7 @@ namespace verilog {
 enum class IndexingFactType {
   // BEGIN GENERATE -- do not delete
   kFile,
+  kMacro,
   kModule,
   kModuleInstance,
   kVariableDefinition,

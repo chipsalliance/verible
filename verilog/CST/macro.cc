@@ -27,6 +27,11 @@ using verible::Symbol;
 using verible::SyntaxTreeNode;
 using verible::TokenInfo;
 
+std::vector<verible::TreeSearchMatch> FindAllMacroDefinitions(
+    const verible::Symbol& root) {
+  return SearchSyntaxTree(root, NodekPreprocessorDefine());
+}
+
 std::vector<verible::TreeSearchMatch> FindAllMacroCalls(const Symbol& root) {
   return SearchSyntaxTree(root, NodekMacroCall());
 }
@@ -60,6 +65,12 @@ bool MacroCallArgsIsEmpty(const SyntaxTreeNode& args) {
   // the semantic actions in verilog.y.
   if (sub.size() != 1) return false;
   return sub.front() == nullptr;
+}
+
+const verible::SyntaxTreeLeaf& GetMacroName(
+    const verible::Symbol& preprocessor_define) {
+  return GetSubtreeAsLeaf(preprocessor_define, NodeEnum::kPreprocessorDefine,
+                          1);
 }
 
 }  // namespace verilog

@@ -21,6 +21,7 @@
 #include "common/text/tree_utils.h"
 #include "verilog/CST/declaration.h"
 #include "verilog/CST/identifier.h"
+#include "verilog/CST/macro.h"
 #include "verilog/CST/module.h"
 #include "verilog/CST/net.h"
 #include "verilog/CST/port.h"
@@ -121,6 +122,10 @@ void IndexingFactsTreeExtractor::Visit(const verible::SyntaxTreeNode& node) {
     }
     case NodeEnum ::kNetDeclaration: {
       ExtractNetDeclaration(node);
+      break;
+    }
+    case NodeEnum::kPreprocessorDefine: {
+      ExtractMacroDefinition(node);
       break;
     }
     default: {
@@ -261,6 +266,13 @@ void IndexingFactsTreeExtractor::ExtractNetDeclaration(
         IndexingNodeData({Anchor(*wire_token_info, context_.base)},
                          IndexingFactType::kVariableDefinition));
   }
+}
+
+void IndexingFactsTreeExtractor::ExtractMacroDefinition(
+    const verible::SyntaxTreeNode& preprocessor_definition) {
+  const verible::SyntaxTreeLeaf& macro_name = GetMacroName(preprocessor_definition);
+  facts_tree_context_.top().NewChild(IndexingNodeData(
+      {Anchor(macro_name.get(), context_.base)}, IndexingFactType::kMacro));
 }
 
 }  // namespace kythe

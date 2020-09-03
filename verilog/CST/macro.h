@@ -27,6 +27,10 @@
 
 namespace verilog {
 
+// Find all nodes tagged with kPreprocessorDefine.
+std::vector<verible::TreeSearchMatch> FindAllMacroDefinitions(
+    const verible::Symbol&);
+
 // Find all macro calls.
 std::vector<verible::TreeSearchMatch> FindAllMacroCalls(const verible::Symbol&);
 
@@ -49,6 +53,10 @@ const verible::SyntaxTreeNode& GetMacroCallArgs(const verible::Symbol&);
 
 // Returns true if there are no macro call args, e.g. `foo().
 bool MacroCallArgsIsEmpty(const verible::SyntaxTreeNode&);
+
+// Returns the leaf node containing the macro name from node tagged with
+// kPreprocessorDefine.
+const verible::SyntaxTreeLeaf& GetMacroName(const verible::Symbol&);
 
 }  // namespace verilog
 

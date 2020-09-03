@@ -14,9 +14,9 @@
 
 #include "verilog/tools/kythe/indexing_facts_tree_extractor.h"
 
-#include "gtest/gtest.h"
 #include "common/analysis/syntax_tree_search_test_utils.h"
 #include "common/text/concrete_syntax_tree.h"
+#include "gtest/gtest.h"
 #include "verilog/analysis/verilog_analyzer.h"
 
 #undef EXPECT_OK
@@ -551,6 +551,67 @@ TEST(FactsTreeExtractor, WireTest) {
               },
               IndexingFactType ::kVariableDefinition,
           })));
+
+  const auto facts_tree =
+      ExtractOneFile(kTestCase.code, file_name, exit_status, parse_ok);
+
+  const auto result_pair = DeepEqual(facts_tree, expected);
+  EXPECT_EQ(result_pair.left, nullptr) << *result_pair.left;
+  EXPECT_EQ(result_pair.right, nullptr) << *result_pair.right;
+}
+
+TEST(FactsTreeExtractor, MacroDefinitionTest) {
+  constexpr int kTag = 1;  // value doesn't matter
+  const verible::SyntaxTreeSearchTestCase kTestCase = {
+      {
+          "`define ",
+          {kTag, "PRINT_STRING"},
+          "(str1) $display(\"%s\\n\", str1)\n",
+          "`define ",
+          {kTag, "PRINT_3_STRING"},
+          "(str1, str2, str3) \\ \n",
+          "`PRINT_STRING(str1); \\ \n",
+          "`PRINT_STRING(str2); \\ \n",
+          "`PRINT_STRING(str3);\n",
+          "`define ",
+          {kTag, "TEN"},
+          " 10",
+      },
+  };
+
+  constexpr absl::string_view file_name = "verilog.v";
+  int exit_status = 0;
+  bool parse_ok = false;
+
+  const IndexingFactNode expected(
+      {
+          {
+              Anchor(file_name, 0, kTestCase.code.size()),
+              Anchor(kTestCase.code, 0, kTestCase.code.size()),
+          },
+          IndexingFactType ::kFile,
+      },
+      // refers to macro PRINT_STRING.
+      T({
+          {
+              Anchor(kTestCase.expected_tokens[1], kTestCase.code),
+          },
+          IndexingFactType::kMacro,
+      }),
+      // refers to macro PRINT_3_STRING.
+      T({
+          {
+              Anchor(kTestCase.expected_tokens[4], kTestCase.code),
+          },
+          IndexingFactType::kMacro,
+      }),
+      // refers to macro TEN.
+      T({
+          {
+              Anchor(kTestCase.expected_tokens[10], kTestCase.code),
+          },
+          IndexingFactType::kMacro,
+      }));
 
   const auto facts_tree =
       ExtractOneFile(kTestCase.code, file_name, exit_status, parse_ok);

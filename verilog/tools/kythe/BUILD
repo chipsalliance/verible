@@ -109,6 +109,7 @@ cc_library(
         "//common/text:tree_context_visitor",
         "//common/text:tree_utils",
         "//verilog/CST:declaration",
+        "//verilog/CST:macro",
         "//verilog/CST:identifier",
         "//verilog/CST:module",
         "//verilog/CST:net",

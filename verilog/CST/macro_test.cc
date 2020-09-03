@@ -14,11 +14,13 @@
 
 #include "verilog/CST/macro.h"
 
-#include "gmock/gmock.h"
-#include "gtest/gtest.h"
+#include "common/analysis/syntax_tree_search.h"
+#include "common/analysis/syntax_tree_search_test_utils.h"
 #include "common/text/text_structure.h"
 #include "common/text/token_info_test_util.h"
 #include "common/util/range.h"
+#include "gmock/gmock.h"
+#include "gtest/gtest.h"
 #include "verilog/CST/verilog_nonterminals.h"
 #include "verilog/analysis/verilog_analyzer.h"
 
@@ -32,6 +34,8 @@ namespace verilog {
 namespace {
 
 using ::testing::ElementsAreArray;
+using verible::SyntaxTreeSearchTestCase;
+using verible::TreeSearchMatch;
 
 struct FindAllTestCase {
   absl::string_view code;
@@ -171,6 +175,48 @@ TEST(GetFunctionFormalPortsGroupTest, WithFormalPorts) {
     ASSERT_TRUE(verible::IsSubRange(expected_span, code_copy));
     EXPECT_EQ(id_text, expected_span);
     EXPECT_TRUE(verible::BoundsEqual(id_text, expected_span));
+  }
+}
+
+TEST(FindAllMacroDefinitions, MacroName) {
+  constexpr int kTag = 1;  // value doesn't matter
+  const SyntaxTreeSearchTestCase kTestCases[] = {
+      {""},
+      {"`define ", {kTag, "PRINT_STRING"}, "(str1) $display(\"%s\\n\", str1)"},
+      {
+          "`define ",
+          {kTag, "PRINT_STRING"},
+          "(str1) $display(\"%s\\n\", str1)\n",
+          "`define ",
+          {kTag, "PRINT_3_STRING"},
+          R"((str1, str2, str3) \
+    `PRINT_STRING(str1); \
+    `PRINT_STRING(str2); \
+    `PRINT_STRING(str3);)",
+          "\n`define ",
+          {kTag, "TEN"},
+          " 10",
+      },
+  };
+  for (const auto& test : kTestCases) {
+    const absl::string_view code(test.code);
+    VerilogAnalyzer analyzer(code, "test-file");
+    const auto code_copy = analyzer.Data().Contents();
+    ASSERT_OK(analyzer.Analyze()) << "failed on:\n" << code;
+    const auto& root = analyzer.Data().SyntaxTree();
+
+    const auto decls = FindAllMacroDefinitions(*ABSL_DIE_IF_NULL(root));
+    std::vector<TreeSearchMatch> names;
+    for (const auto& decl : decls) {
+      const auto& type = GetMacroName(*decl.match);
+      names.push_back(TreeSearchMatch{&type, {/* ignored context */}});
+    }
+
+    std::ostringstream diffs;
+    EXPECT_TRUE(test.ExactMatchFindings(names, code_copy, &diffs))
+        << "failed on:\n"
+        << code << "\ndiffs:\n"
+        << diffs.str();
   }
 }
 

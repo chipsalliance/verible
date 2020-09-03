@@ -132,6 +132,9 @@ class KytheFactsExtractor {
   // VName.
   VName ExtractVariableReference(const IndexingFactNode& node);
 
+  // Extracts kythe facts from a macro definition node and returns its VName.
+  VName ExtractMacroDefinition(const IndexingFactNode& macro_definition_node);
+
   // Generates an anchor VName for kythe.
   VName PrintAnchorVName(const Anchor&, absl::string_view);
 
@@ -160,6 +163,9 @@ std::string CreateModuleSignature(absl::string_view);
 
 // Creates the signature for module instantiations.
 std::string CreateVariableSignature(absl::string_view);
+
+// Creates the signature for macro.
+std::string CreateMacroSignature(absl::string_view);
 
 std::ostream& operator<<(std::ostream&, const KytheFactsPrinter&);
 
