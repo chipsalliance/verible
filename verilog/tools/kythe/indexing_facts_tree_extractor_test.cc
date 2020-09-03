@@ -412,6 +412,10 @@ TEST(FactsTreeExtractor, ModuleWithPortsTest) {
 
 TEST(FactsTreeExtractor, ModuleWithPortsNonANSIStyleTest) {
   constexpr int kTag = 1;  // value doesn't matter
+  
+  // Normally, tools will reject non-ANSI port declarations that are missing
+  // their full definitions inside the body like "input a", but here we don't
+  // care and are just checking for references, even if they are dangling.
   const verible::SyntaxTreeSearchTestCase kTestCase = {{"module ",
                                                         {kTag, "foo"},
                                                         "(",

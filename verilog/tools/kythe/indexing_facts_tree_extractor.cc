@@ -191,6 +191,12 @@ void IndexingFactsTreeExtractor::ExtractModulePort(
     const verible::SyntaxTreeNode& module_port_node) {
   const auto tag = static_cast<verilog::NodeEnum>(module_port_node.Tag().tag);
 
+  // TODO(minatoma): Fix case like:
+  // module m(input a, b); --> b is treated as a reference but should be a
+  // definition.
+
+  // For extracting cases like:
+  // module m(input a, input b);
   if (tag == NodeEnum::kPortDeclaration) {
     const verible::SyntaxTreeLeaf* leaf =
         GetIdentifierFromModulePortDeclaration(module_port_node);
@@ -198,7 +204,10 @@ void IndexingFactsTreeExtractor::ExtractModulePort(
     facts_tree_context_.top().NewChild(
         IndexingNodeData({Anchor(leaf->get(), context_.base)},
                          IndexingFactType::kVariableDefinition));
-  } else {
+  }
+  // For extracting Non-ANSI style ports:
+  // module m(a, b);
+  else {
     const verible::SyntaxTreeLeaf* leaf =
         GetIdentifierFromPortReference(module_port_node);
 
@@ -351,6 +360,8 @@ void IndexingFactsTreeExtractor::ExtractFunctionTaskPort(
     const verible::SyntaxTreeLeaf* leaf =
         GetIdentifierFromTaskFunctionPortItem(*port.match);
 
+    // TODO(minatoma): Consider using kPorts or kParam for ports and params
+    // instead of variables (same goes for modules).
     facts_tree_context_.top().NewChild(
         IndexingNodeData({Anchor(leaf->get(), context_.base)},
                          IndexingFactType::kVariableDefinition));

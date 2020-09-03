@@ -596,6 +596,7 @@ cc_test(
         "//common/text:concrete_syntax_leaf",
         "//common/text:syntax_tree_context",
         "//common/text:text_structure",
+        "//common/analysis:syntax_tree_search_test_utils",
         "//common/text:token_info",
         "//common/util:logging",
         "//verilog/analysis:verilog_analyzer",

@@ -33,6 +33,10 @@ namespace verilog {
 std::vector<verible::TreeSearchMatch> FindAllModulePortDeclarations(
     const verible::Symbol&);
 
+// Find all individual port references.
+std::vector<verible::TreeSearchMatch> FindAllPortReferences(
+    const verible::Symbol&);
+
 // Extract the name of the module port identifier from a port declaration.
 const verible::SyntaxTreeLeaf* GetIdentifierFromModulePortDeclaration(
     const verible::Symbol&);

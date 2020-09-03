@@ -228,11 +228,23 @@ TEST(GetTaskIdTest, QualifiedIds) {
 TEST(GetTaskHeaderTest, GetTaskName) {
   constexpr int kTag = 1;  // value doesn't matter
   const SyntaxTreeSearchTestCase kTestCases[] = {
+      {""},
+      {"module m(); endmodule: m"},
+      {"task ", {kTag, "foo"}, "(int a, bit b);\nendtask"},
       {"task ",
        {kTag, "foo"},
        "();\n endtask\n task ",
        {kTag, "bar"},
        "()\n; endtask"},
+      {"module my_module;\ntask ",
+       {kTag, "inner_task"},
+       "(int my_args);\n$display(my_arg2);\nendtask\nendmodule"},
+      {"class task_class;\ntask ",
+       {kTag, "my_task"},
+       "(input int a, b, output int c);\nc = a + b;\nendtask\nendclass"},
+      {"package my_pkg;\ntask automatic ",
+       {kTag, "my_task"},
+       "(input int a, b, output int c);\nc = a + b;\nendtask\nendpackage"},
   };
   for (const auto& test : kTestCases) {
     const absl::string_view code(test.code);
@@ -255,7 +267,7 @@ TEST(GetTaskHeaderTest, GetTaskName) {
         << code << "\ndiffs:\n"
         << diffs.str();
   }
-}
+}  // namespace
 
 }  // namespace
 }  // namespace verilog

@@ -394,11 +394,33 @@ TEST(GetFunctionFormalPortsGroupTest, WithFormalPorts) {
 TEST(GetFunctionHeaderTest, GetFunctionName) {
   constexpr int kTag = 1;  // value doesn't matter
   const SyntaxTreeSearchTestCase kTestCases[] = {
+      {""},
+      {"module m(); endmodule: m"},
       {"function ",
        {kTag, "foo"},
        "();\n endfunction\n function ",
        {kTag, "bar"},
        "()\n; endfunction"},
+      {"function int ",
+       {kTag, "foo"},
+       "();\n endfunction\n function ",
+       {kTag, "bar"},
+       "()\n; endfunction"},
+      {"function int ",
+       {kTag, "foo"},
+       "(int a, bit x);\nreturn a;\n endfunction\n function ",
+       {kTag, "bar"},
+       "()\n; endfunction"},
+
+      {"module my_module;\nfunction int ",
+       {kTag, "inner_function"},
+       "(int my_args);\nreturn my_args;\nendfunction\nendmodule"},
+      {"class function_class;\nfunction int ",
+       {kTag, "my_function"},
+       "(input int a, b, output int c);\nc = a + b;\nreturn c;\nendfunction\nendclass"},
+      {"package my_pkg;\nfunction automatic int ",
+       {kTag, "my_function"},
+       "(input int a, b, output int c);\nc = a + b;\nreturn c;\nendfunction\nendpackage"},
   };
   for (const auto& test : kTestCases) {
     const absl::string_view code(test.code);

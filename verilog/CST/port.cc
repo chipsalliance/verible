@@ -37,6 +37,11 @@ std::vector<verible::TreeSearchMatch> FindAllModulePortDeclarations(
   return SearchSyntaxTree(root, NodekPortDeclaration());
 }
 
+std::vector<verible::TreeSearchMatch> FindAllPortReferences(
+    const verible::Symbol& root) {
+  return SearchSyntaxTree(root, NodekPortReference());
+}
+
 std::vector<verible::TreeSearchMatch> FindAllTaskFunctionPortDeclarations(
     const Symbol& root) {
   return SearchSyntaxTree(root, NodekPortItem());
