@@ -119,6 +119,22 @@ TEST(GetIdentifierTest, IdentifierUnpackedDimensions) {
        " ,",
        {kTag, "c"},
        ";\nendmodule"},
+      {"module m();\n",
+       "input wire ",
+       {kTag, "a"},
+       " ,",
+       {kTag, "b"},
+       "[0:4] ,",
+       {kTag, "c"},
+       ";\nendmodule"},
+      {"module m();\n",
+       "input ",
+       {kTag, "a"},
+       " ,",
+       {kTag, "b"},
+       "[0:4] ,",
+       {kTag, "c"},
+       ";\nendmodule"},
   };
   for (const auto& test : kTestCases) {
     const absl::string_view code(test.code);
@@ -130,15 +146,16 @@ TEST(GetIdentifierTest, IdentifierUnpackedDimensions) {
     const auto decls =
         FindAllIdentifierUnpackedDimensions(*ABSL_DIE_IF_NULL(root));
 
-    std::vector<TreeSearchMatch> types;
+    std::vector<TreeSearchMatch> identifiers;
     for (const auto& decl : decls) {
-      const auto* type =
+      const auto* identifier =
           GetSymbolIdentifierFromIdentifierUnpackedDimensions(*decl.match);
-      types.push_back(TreeSearchMatch{type, {/* ignored context */}});
+      identifiers.push_back(
+          TreeSearchMatch{identifier, {/* ignored context */}});
     }
 
     std::ostringstream diffs;
-    EXPECT_TRUE(test.ExactMatchFindings(types, code_copy, &diffs))
+    EXPECT_TRUE(test.ExactMatchFindings(identifiers, code_copy, &diffs))
         << "failed on:\n"
         << code << "\ndiffs:\n"
         << diffs.str();

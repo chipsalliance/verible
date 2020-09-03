@@ -415,9 +415,8 @@ TEST(FactsTreeExtractor, MultiSignalDeclaration) {
   const verible::SyntaxTreeSearchTestCase kTestCase = {{"module ",
                                                         {kTag, "foo"},
                                                         "(",
-                                                        {kTag, "a"},
-                                                        ", ",
-                                                        {kTag, "b"},
+                                                        "input ",
+                                                        {kTag, "in"},
                                                         ");\n",
                                                         "input ",
                                                         {kTag, "x"},
@@ -445,28 +444,35 @@ TEST(FactsTreeExtractor, MultiSignalDeclaration) {
           {
               {
                   Anchor(kTestCase.expected_tokens[1], kTestCase.code),
-                  Anchor(kTestCase.expected_tokens[14], kTestCase.code),
+                  Anchor(kTestCase.expected_tokens[13], kTestCase.code),
               },
               IndexingFactType::kModule,
           },
-          // refers to input x.
+          // refers to input in.
           T({
               {
-                  Anchor(kTestCase.expected_tokens[8], kTestCase.code),
+                  Anchor(kTestCase.expected_tokens[4], kTestCase.code),
               },
               IndexingFactType::kVariableDefinition,
           }),
-          // refers to output y.
+          // refers to output x.
           T({
               {
-                  Anchor(kTestCase.expected_tokens[10], kTestCase.code),
+                  Anchor(kTestCase.expected_tokens[7], kTestCase.code),
               },
               IndexingFactType::kVariableDefinition,
           }),
-          // refers to output y.
+          // refers to output y
           T({
               {
-                  Anchor(kTestCase.expected_tokens[12], kTestCase.code),
+                  Anchor(kTestCase.expected_tokens[9], kTestCase.code),
+              },
+              IndexingFactType::kVariableDefinition,
+          }),
+          // refers to output z.
+          T({
+              {
+                  Anchor(kTestCase.expected_tokens[11], kTestCase.code),
               },
               IndexingFactType::kVariableDefinition,
           })));
