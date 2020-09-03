@@ -53,35 +53,20 @@ using verible::TreeSearchMatch;
 TEST(GetClassNameTest, ClassName) {
   constexpr int kTag = 1;  // value doesn't matter
   const SyntaxTreeSearchTestCase kTestCases[] = {
+      {""},
+      {"module m(); endmodule: m"},
       {"class ", {kTag, "foo"}, ";\nendclass"},
-  };
-  for (const auto& test : kTestCases) {
-    const absl::string_view code(test.code);
-    VerilogAnalyzer analyzer(code, "test-file");
-    const auto code_copy = analyzer.Data().Contents();
-    ASSERT_OK(analyzer.Analyze()) << "failed on:\n" << code;
-    const auto& root = analyzer.Data().SyntaxTree();
-
-    const auto decls = FindAllClassDeclarations(*ABSL_DIE_IF_NULL(root));
-
-    std::vector<TreeSearchMatch> types;
-    for (const auto& decl : decls) {
-      const auto& type = GetClassName(*decl.match);
-      types.push_back(TreeSearchMatch{&type, {/* ignored context */}});
-    }
-
-    std::ostringstream diffs;
-    EXPECT_TRUE(test.ExactMatchFindings(types, code_copy, &diffs))
-        << "failed on:\n"
-        << code << "\ndiffs:\n"
-        << diffs.str();
-  }
-}
-
-TEST(GetClassNameTest, InnerClassName) {
-  constexpr int kTag = 1;  // value doesn't matter
-  const SyntaxTreeSearchTestCase kTestCases[] = {
+      {"class ",
+       {kTag, "foo"},
+       ";\nendclass\n class ",
+       {kTag, "bar"},
+       ";\n endclass"},
       {"module m();\n class ", {kTag, "foo"}, ";\n endclass\n endmodule: m\n"},
+      {"class ",
+       {kTag, "foo"},
+       ";\nclass ",
+       {kTag, "bar"},
+       "; endclass\nendclass"},
   };
   for (const auto& test : kTestCases) {
     const absl::string_view code(test.code);
@@ -92,14 +77,14 @@ TEST(GetClassNameTest, InnerClassName) {
 
     const auto decls = FindAllClassDeclarations(*ABSL_DIE_IF_NULL(root));
 
-    std::vector<TreeSearchMatch> types;
+    std::vector<TreeSearchMatch> names;
     for (const auto& decl : decls) {
       const auto& type = GetClassName(*decl.match);
-      types.push_back(TreeSearchMatch{&type, {/* ignored context */}});
+      names.push_back(TreeSearchMatch{&type, {/* ignored context */}});
     }
 
     std::ostringstream diffs;
-    EXPECT_TRUE(test.ExactMatchFindings(types, code_copy, &diffs))
+    EXPECT_TRUE(test.ExactMatchFindings(names, code_copy, &diffs))
         << "failed on:\n"
         << code << "\ndiffs:\n"
         << diffs.str();
@@ -108,39 +93,21 @@ TEST(GetClassNameTest, InnerClassName) {
 
 TEST(GetClassNameTest, ClassEndLabel) {
   constexpr int kTag = 1;  // value doesn't matter
-  const SyntaxTreeSearchTestCase kTestCases[] = {{
-      "class foo;\n endclass: ",
-      {kTag, "foo"},
-  }};
-  for (const auto& test : kTestCases) {
-    const absl::string_view code(test.code);
-    VerilogAnalyzer analyzer(code, "test-file");
-    const auto code_copy = analyzer.Data().Contents();
-    ASSERT_OK(analyzer.Analyze()) << "failed on:\n" << code;
-    const auto& root = analyzer.Data().SyntaxTree();
-
-    const auto decls = FindAllClassDeclarations(*ABSL_DIE_IF_NULL(root));
-
-    std::vector<TreeSearchMatch> types;
-    for (const auto& decl : decls) {
-      const auto* type = GetClassEndLabel(*decl.match);
-      types.push_back(TreeSearchMatch{type, {/* ignored context */}});
-    }
-
-    std::ostringstream diffs;
-    EXPECT_TRUE(test.ExactMatchFindings(types, code_copy, &diffs))
-        << "failed on:\n"
-        << code << "\ndiffs:\n"
-        << diffs.str();
-  }
-}
-
-TEST(GetClassNameTest, InnerClassEndLabel) {
-  constexpr int kTag = 1;  // value doesn't matter
   const SyntaxTreeSearchTestCase kTestCases[] = {
+      {""},
+      {"module m(); endmodule: m"},
+      {"class foo;\nendclass: ", {kTag, "foo"}},
+      {"class foo;\nendclass: ",
+       {kTag, "foo"},
+       "\n class bar;\n endclass: ",
+       {kTag, "bar"}},
       {"module m();\n class foo;\n endclass: ",
        {kTag, "foo"},
        "\n endmodule: m\n"},
+      {"class foo;\nclass bar;\n endclass: ",
+       {kTag, "bar"},
+       "\nendclass: ",
+       {kTag, "foo"}},
   };
   for (const auto& test : kTestCases) {
     const absl::string_view code(test.code);
