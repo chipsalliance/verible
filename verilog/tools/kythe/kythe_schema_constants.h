@@ -45,6 +45,7 @@ constexpr absl::string_view kFactAnchorStart = "/kythe/loc/start";
 constexpr absl::string_view kEdgeDefinesBinding = "/kythe/edge/defines/binding";
 constexpr absl::string_view kEdgeChildOf = "/kythe/edge/childof";
 constexpr absl::string_view kEdgeRef = "/kythe/edge/ref";
+constexpr absl::string_view kEdgeRefExpands = "/kythe/edge/ref/expands";
 constexpr absl::string_view kEdgeTyped = "/kythe/edge/typed";
 
 }  // namespace kythe

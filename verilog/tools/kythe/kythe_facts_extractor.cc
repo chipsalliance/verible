@@ -52,7 +52,6 @@ void KytheFactsExtractor::Visit(const IndexingFactNode& node) {
     case IndexingFactType::kMacro: {
       vname = ExtractMacroDefinition(node);
       scope_context_.top().push_back(vname);
-
       break;
     }
     case IndexingFactType::kVariableReference: {
@@ -217,7 +216,7 @@ VName KytheFactsExtractor::ExtractMacroCall(
   const VName variable_definition_vname(
       file_path_, CreateMacroSignature(macro_name.Value().substr(1)));
 
-  *stream_ << Edge(macro_vname_anchor, kEdgeRef, variable_definition_vname);
+  *stream_ << Edge(macro_vname_anchor, kEdgeRefExpands, variable_definition_vname);
 
   return variable_definition_vname;
 }
