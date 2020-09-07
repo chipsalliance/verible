@@ -196,9 +196,7 @@ VName KytheFactsExtractor::ExtractMacroDefinition(
     const IndexingFactNode& macro_definition_node) {
   const Anchor& macro_name = macro_definition_node.Value().Anchors()[0];
 
-  const VName macro_vname(
-      file_path_,
-      CreateScopeRelativeSignature(CreateMacroSignature(macro_name.Value())));
+  const VName macro_vname(file_path_, CreateMacroSignature(macro_name.Value()));
   const VName module_name_anchor = PrintAnchorVName(macro_name, file_path_);
 
   *stream_ << Fact(macro_vname, kFactNodeKind, kNodeMacro);
@@ -212,17 +210,16 @@ VName KytheFactsExtractor::ExtractMacroCall(
   const Anchor& macro_name = macro_call_node.Value().Anchors()[0];
   const VName macro_vname_anchor = PrintAnchorVName(macro_name, file_path_);
 
-  // We pass substring to ignore the ` before macro name.
-  // e.g. 
-  // `define TEN `0
-  // `TEN --> removes the ` 
-  const VName* variable_definition_vname =
-      ABSL_DIE_IF_NULL(scope_context_.SearchForDefinition(
-          CreateMacroSignature(macro_name.Value().substr(1))));
+  // We pass a substring to ignore the ` before macro name.
+  // e.g.
+  // `define TEN 0
+  // `TEN --> removes the `
+  const VName variable_definition_vname(
+      file_path_, CreateMacroSignature(macro_name.Value().substr(1)));
 
-  *stream_ << Edge(macro_vname_anchor, kEdgeRef, *variable_definition_vname);
+  *stream_ << Edge(macro_vname_anchor, kEdgeRef, variable_definition_vname);
 
-  return *variable_definition_vname;
+  return variable_definition_vname;
 }
 
 VName KytheFactsExtractor::PrintAnchorVName(const Anchor& anchor,
