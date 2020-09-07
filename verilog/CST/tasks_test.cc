@@ -245,6 +245,12 @@ TEST(GetTaskHeaderTest, GetTaskName) {
       {"package my_pkg;\ntask automatic ",
        {kTag, "my_task"},
        "(input int a, b, output int c);\nc = a + b;\nendtask\nendpackage"},
+       {"class m;\n virtual task ",
+       {kTag, "my_task"},
+       "();\n endtask\n  endclass"},
+      {"class m;\n static task ",
+       {kTag, "my_task"},
+       "();\n endtask\n  endclass"},
   };
   for (const auto& test : kTestCases) {
     const absl::string_view code(test.code);

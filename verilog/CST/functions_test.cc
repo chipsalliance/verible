@@ -417,10 +417,18 @@ TEST(GetFunctionHeaderTest, GetFunctionName) {
        "(int my_args);\nreturn my_args;\nendfunction\nendmodule"},
       {"class function_class;\nfunction int ",
        {kTag, "my_function"},
-       "(input int a, b, output int c);\nc = a + b;\nreturn c;\nendfunction\nendclass"},
+       "(input int a, b, output int c);\nc = a + b;\nreturn "
+       "c;\nendfunction\nendclass"},
       {"package my_pkg;\nfunction automatic int ",
        {kTag, "my_function"},
-       "(input int a, b, output int c);\nc = a + b;\nreturn c;\nendfunction\nendpackage"},
+       "(input int a, b, output int c);\nc = a + b;\nreturn "
+       "c;\nendfunction\nendpackage"},
+      {"class m;\n virtual function int ",
+       {kTag, "my_fun"},
+       "();\n return 10;\n endfunction\n  endclass"},
+      {"class m;\n static function int ",
+       {kTag, "my_fun"},
+       "();\n return 10;\n endfunction\n  endclass"},
   };
   for (const auto& test : kTestCases) {
     const absl::string_view code(test.code);
