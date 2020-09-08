@@ -25,8 +25,6 @@
 #include <memory>
 #include <vector>
 
-#include "gmock/gmock.h"
-#include "gtest/gtest.h"
 #include "absl/status/status.h"
 #include "common/analysis/syntax_tree_search.h"
 #include "common/analysis/syntax_tree_search_test_utils.h"
@@ -36,6 +34,8 @@
 #include "common/text/token_info.h"
 #include "common/util/casts.h"
 #include "common/util/logging.h"
+#include "gmock/gmock.h"
+#include "gtest/gtest.h"
 #include "verilog/analysis/verilog_analyzer.h"
 
 #undef EXPECT_OK
@@ -343,6 +343,43 @@ TEST(GetPackageNameTokenTest, ValidPackage) {
   // Root node is a description list, not a package.
   const auto& token = GetPackageNameToken(package_node);
   EXPECT_EQ(token.text(), "foo");
+}
+
+TEST(GetPackageNameTest, GetPackageEndLabelName) {
+  constexpr int kTag = 1;
+  const SyntaxTreeSearchTestCase testcases[] = {
+      {""},
+      {"package foo;\n endpackage"},
+      {"package foo;\n endpackage: ", {kTag, "foo"}},
+      {"package foo;\n function int f();\n return 10;\n endfunction: f\n class "
+       "c; endclass: c\n "
+       "endpackage: ",
+       {kTag, "foo"}},
+  };
+
+  for (const auto& test : testcases) {
+    const absl::string_view code(test.code);
+    VerilogAnalyzer analyzer(code, "test-file");
+    const auto code_copy = analyzer.Data().Contents();
+    ASSERT_OK(analyzer.Analyze()) << "failed on:\n" << code;
+    const auto& root = analyzer.Data().SyntaxTree();
+
+    const auto declarations =
+        FindAllPackageDeclarations(*ABSL_DIE_IF_NULL(root));
+
+    std::vector<TreeSearchMatch> names;
+    for (const auto& decl : declarations) {
+      const auto* package_name = GetPackageNameEndLabel(*decl.match);
+      if (package_name == nullptr) continue;
+      names.push_back(TreeSearchMatch{package_name, {}});
+    }
+
+    std::ostringstream diffs;
+    EXPECT_TRUE(test.ExactMatchFindings(names, code_copy, &diffs))
+        << "failed on:\n"
+        << code << "\ndiffs:\n"
+        << diffs.str();
+  }
 }
 
 }  // namespace

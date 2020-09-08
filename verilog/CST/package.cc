@@ -42,4 +42,22 @@ const verible::SyntaxTreeLeaf& GetPackageNameLeaf(const verible::Symbol& s) {
   return verible::GetSubtreeAsLeaf(s, NodeEnum::kPackageDeclaration, 2);
 }
 
+const verible::SyntaxTreeLeaf* GetPackageNameEndLabel(
+    const verible::Symbol& package_declaration) {
+  const auto* label_node = verible::GetSubtreeAsSymbol(
+      package_declaration, NodeEnum::kPackageDeclaration, 6);
+  if (label_node == nullptr) {
+    return nullptr;
+  }
+  const auto& package_name = verible::GetSubtreeAsLeaf(
+      verible::SymbolCastToNode(*label_node), NodeEnum::kLabel, 1);
+  return &package_name;
+}
+
+const verible::Symbol* GetPackageItemList(
+    const verible::Symbol& package_declaration) {
+  return verible::GetSubtreeAsSymbol(package_declaration,
+                                     NodeEnum::kPackageDeclaration, 4);
+}
+
 }  // namespace verilog

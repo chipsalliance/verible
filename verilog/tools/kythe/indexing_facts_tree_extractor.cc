@@ -23,6 +23,7 @@
 #include "verilog/CST/identifier.h"
 #include "verilog/CST/module.h"
 #include "verilog/CST/net.h"
+#include "verilog/CST/package.h"
 #include "verilog/CST/port.h"
 #include "verilog/CST/verilog_nonterminals.h"
 #include "verilog/analysis/verilog_analyzer.h"
@@ -121,6 +122,10 @@ void IndexingFactsTreeExtractor::Visit(const verible::SyntaxTreeNode& node) {
     }
     case NodeEnum ::kNetDeclaration: {
       ExtractNetDeclaration(node);
+      break;
+    }
+    case NodeEnum::kPackageDeclaration: {
+      ExtractPackageDeclaration(node);
       break;
     }
     default: {
@@ -261,6 +266,40 @@ void IndexingFactsTreeExtractor::ExtractNetDeclaration(
         IndexingNodeData({Anchor(*wire_token_info, context_.base)},
                          IndexingFactType::kVariableDefinition));
   }
+}
+
+void IndexingFactsTreeExtractor::ExtractPackageDeclaration(
+    const verible::SyntaxTreeNode& package_declaration_node) {
+  IndexingNodeData package_node_data(IndexingFactType::kPackage);
+  IndexingFactNode package_node(package_node_data);
+
+  {
+    const IndexingFactsTreeContext::AutoPop p(&facts_tree_context_,
+                                              &package_node);
+    // Extract package name.
+    const verible::SyntaxTreeLeaf& package_name_leaf =
+        GetPackageNameLeaf(package_declaration_node);
+    const Anchor class_name_anchor(package_name_leaf.get(), context_.base);
+    facts_tree_context_.top().Value().AppendAnchor(class_name_anchor);
+
+    // Extract package name after endpackage if exists.
+    const verible::SyntaxTreeLeaf* package_end_name =
+        GetPackageNameEndLabel(package_declaration_node);
+
+    if (package_end_name != nullptr) {
+      const Anchor package_end_anchor(package_end_name->get(), context_.base);
+      facts_tree_context_.top().Value().AppendAnchor(package_end_anchor);
+    }
+
+    // Visit package body it exists.
+    const verible::Symbol* package_item_list =
+        GetPackageItemList(package_declaration_node);
+    if (package_item_list != nullptr) {
+      Visit(verible::SymbolCastToNode(*package_item_list));
+    }
+  }
+
+  facts_tree_context_.top().NewChild(package_node);
 }
 
 }  // namespace kythe

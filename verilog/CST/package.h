@@ -34,6 +34,16 @@ std::vector<verible::TreeSearchMatch> FindAllPackageDeclarations(
 const verible::TokenInfo& GetPackageNameToken(const verible::Symbol&);
 
 const verible::SyntaxTreeLeaf& GetPackageNameLeaf(const verible::Symbol& s);
+
+// Extracts the node that spans the name of the package after endpackage if
+// exists.
+const verible::SyntaxTreeLeaf* GetPackageNameEndLabel(
+    const verible::Symbol& package_declaration);
+
+// Extracts the node that spans the body of the package.
+const verible::Symbol* GetPackageItemList(
+    const verible::Symbol& package_declaration);
+
 }  // namespace verilog
 
 #endif  // VERIBLE_VERILOG_CST_PACKAGE_H_

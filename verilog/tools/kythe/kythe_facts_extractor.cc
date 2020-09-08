@@ -53,6 +53,11 @@ void KytheFactsExtractor::Visit(const IndexingFactNode& node) {
       vname = ExtractVariableReference(node);
       break;
     }
+    case IndexingFactType::kPackage: {
+      vname = ExtractPackageDeclaration(node);
+      scope_context_.top().push_back(vname);
+      break;
+    }
   }
 
   if (tag != IndexingFactType::kFile) {
@@ -182,6 +187,29 @@ VName KytheFactsExtractor::ExtractVariableReference(
   }
 }
 
+VName KytheFactsExtractor::ExtractPackageDeclaration(
+    const IndexingFactNode& package_declaration_node) {
+  const auto& anchors = package_declaration_node.Value().Anchors();
+  const Anchor& package_name = anchors[0];
+  const Anchor& package_end_label = anchors[1];
+
+  const VName package_vname(file_path_,
+                            CreateScopeRelativeSignature(
+                                CreatePackageSignature(package_name.Value())));
+  const VName package_name_anchor = PrintAnchorVName(package_name, file_path_);
+
+  *stream_ << Fact(package_vname, kFactNodeKind, kNodePackage);
+  *stream_ << Edge(package_name_anchor, kEdgeDefinesBinding, package_vname);
+
+  if (anchors.size() > 1) {
+    const VName package_end_label_anchor =
+        PrintAnchorVName(package_end_label, file_path_);
+    *stream_ << Edge(package_end_label_anchor, kEdgeRef, package_vname);
+  }
+
+  return package_vname;
+}
+
 VName KytheFactsExtractor::PrintAnchorVName(const Anchor& anchor,
                                             absl::string_view file_path) {
   const VName anchor_vname(file_path,
@@ -200,6 +228,10 @@ VName KytheFactsExtractor::PrintAnchorVName(const Anchor& anchor,
 std::string KytheFactsExtractor::CreateScopeRelativeSignature(
     absl::string_view signature) {
   return absl::StrCat(signature, "#", vnames_context_.top().signature);
+}
+
+std::string CreatePackageSignature(absl::string_view package_name) {
+  return absl::StrCat(package_name, "#package");
 }
 
 std::string CreateModuleSignature(absl::string_view module_name) {

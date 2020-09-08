@@ -132,6 +132,9 @@ class KytheFactsExtractor {
   // VName.
   VName ExtractVariableReference(const IndexingFactNode& node);
 
+  // Extracts kythe facts from a package declaration node and returns its VName.
+  VName ExtractPackageDeclaration(const IndexingFactNode& node);
+
   // Generates an anchor VName for kythe.
   VName PrintAnchorVName(const Anchor&, absl::string_view);
 
@@ -158,8 +161,11 @@ class KytheFactsExtractor {
 // Creates the signature for module names.
 std::string CreateModuleSignature(absl::string_view);
 
-// Creates the signature for module instantiations.
+// Creates the signature for variables.
 std::string CreateVariableSignature(absl::string_view);
+
+// Creates the signature for package names.
+std::string CreatePackageSignature(absl::string_view);
 
 std::ostream& operator<<(std::ostream&, const KytheFactsPrinter&);
 

@@ -108,6 +108,7 @@ cc_library(
         ":indexing_facts_tree_context",
         "//common/text:tree_context_visitor",
         "//common/text:tree_utils",
+        "//verilog/CST:package",
         "//verilog/CST:declaration",
         "//verilog/CST:identifier",
         "//verilog/CST:module",

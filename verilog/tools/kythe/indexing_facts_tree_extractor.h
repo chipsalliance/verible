@@ -61,6 +61,10 @@ class IndexingFactsTreeExtractor : public verible::TreeContextVisitor {
   void ExtractNetDeclaration(
       const verible::SyntaxTreeNode& net_declaration_node);
 
+  // Extract package declarations and creates its corresponding facts tree.
+  void ExtractPackageDeclaration(
+      const verible::SyntaxTreeNode& package_declaration_node);
+
   // The Root of the constructed tree
   IndexingFactNode root_{IndexingNodeData(IndexingFactType::kFile)};
 
