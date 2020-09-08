@@ -988,6 +988,24 @@ const TreeUnwrapperTestData kUnwrapModuleTestCases[] = {
     },
 
     {
+        "module instance with named parameter interleaved among EOL comments",
+        "module tryme;"
+        "foo #(//c1\n//c2\n.N(5), //c3\n//c4\n.M(6)//c5\n//c6\n) a;"
+        "endmodule",
+        ModuleDeclaration(
+            0, L(0, {"module", "tryme", ";"}),
+            Instantiation(1, L(1, {"foo", "#", "(", "//c1"}),
+                          N(3,                                             //
+                            L(3, {"//c2"}),                                //
+                            L(3, {".", "N", "(", "5", ")", ",", "//c3"}),  //
+                            L(3, {"//c4"}),                                //
+                            L(3, {".", "M", "(", "6", ")", "//c5"}),       //
+                            L(3, {"//c6"})),                               //
+                          L(1, {")", "a", ";"})),
+            L(0, {"endmodule"})),
+    },
+
+    {
         "module with single instance and positional port actuals",
         "module got_ports;"
         "foo c(y, z);"

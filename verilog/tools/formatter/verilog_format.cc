@@ -129,6 +129,9 @@ ABSL_FLAG(int, max_search_states, 100000,
 ABSL_FLAG(AlignmentPolicy, port_declarations_alignment,
           AlignmentPolicy::kInferUserIntent,
           "Format port declarations: {align,flush-left,preserve,infer}");
+ABSL_FLAG(AlignmentPolicy, named_parameter_alignment,
+          AlignmentPolicy::kInferUserIntent,
+          "Format named actual parameters: {align,flush-left,preserve,infer}");
 ABSL_FLAG(AlignmentPolicy, named_port_alignment,
           AlignmentPolicy::kInferUserIntent,
           "Format named port connections: {align,flush-left,preserve,infer}");
@@ -143,9 +146,6 @@ ABSL_FLAG(AlignmentPolicy, class_member_variables_alignment,
           AlignmentPolicy::kInferUserIntent,
           "Format class member variables: {align,flush-left,preserve,infer}");
 
-ABSL_FLAG(bool, format_module_instantiations, true,
-          "If true, format module instantiations (data declarations), "
-          "else leave them unformatted.  This is a short-term workaround.");
 ABSL_FLAG(bool, try_wrap_long_lines, false,
           "If true, let the formatter attempt to optimize line wrapping "
           "decisions where wrapping is needed, else leave them unformatted.  "
@@ -203,12 +203,13 @@ static bool formatOneFile(absl::string_view filename,
         absl::GetFlag(FLAGS_verify_convergence);
 
     // formatting style flags
-    format_style.format_module_instantiations =
-        absl::GetFlag(FLAGS_format_module_instantiations);
     format_style.try_wrap_long_lines = absl::GetFlag(FLAGS_try_wrap_long_lines);
 
+    // various alignment control
     format_style.port_declarations_alignment =
         absl::GetFlag(FLAGS_port_declarations_alignment);
+    format_style.named_parameter_alignment =
+        absl::GetFlag(FLAGS_named_parameter_alignment);
     format_style.named_port_alignment =
         absl::GetFlag(FLAGS_named_port_alignment);
     format_style.module_net_variable_alignment =

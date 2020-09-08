@@ -6942,6 +6942,74 @@ TEST(FormatterEndToEndTest, AutoInferAlignment) {
        ");\n"
        "endmodule : pd\n"},
 
+      // named parameter arguments
+      {"module  mm ;\n"
+       "foo #(\n"
+       ".a(a),\n"
+       ".bb(bb)\n"
+       ")bar( );\n"
+       "endmodule:mm\n",
+       "module mm;\n"
+       "  foo #(\n"
+       "      .a (a),\n"  // align doesn't add too many spaces, so align
+       "      .bb(bb)\n"
+       "  ) bar ();\n"
+       "endmodule : mm\n"},
+      {"module  mm ;\n"
+       "foo #(\n"
+       ".a(a),\n"
+       ".bbcccc(bb)\n"
+       ")bar( );\n"
+       "endmodule:mm\n",
+       "module mm;\n"
+       "  foo #(\n"
+       "      .a(a),\n"  // align would add too many spaces, so flush-left
+       "      .bbcccc(bb)\n"
+       "  ) bar ();\n"
+       "endmodule : mm\n"},
+      {"module  mm ;\n"
+       "foo #(\n"
+       ".a(a    ),\n"  // user manually triggers alignment with excess spaces
+       ".bbcccc(bb)\n"
+       ")bar( );\n"
+       "endmodule:mm\n",
+       "module mm;\n"
+       "  foo #(\n"
+       "      .a     (a),\n"  // induced alignment
+       "      .bbcccc(bb)\n"
+       "  ) bar ();\n"
+       "endmodule : mm\n"},
+      {"module  mm ;\n"
+       "foo #(\n"
+       "//c1\n"        // with comments (indented but not aligned)
+       ".a(a    ),\n"  // user manually triggers alignment with excess spaces
+       "//c2\n"
+       ".bbcccc(bb)\n"
+       "//c3\n"
+       ")bar( );\n"
+       "endmodule:mm\n",
+       "module mm;\n"
+       "  foo #(\n"
+       "      //c1\n"
+       "      .a     (a),\n"  // induced alignment
+       "      //c2\n"
+       "      .bbcccc(bb)\n"
+       "      //c3\n"
+       "  ) bar ();\n"
+       "endmodule : mm\n"},
+      {"module  mm ;\n"
+       "foo #(\n"
+       ".a( (1     +2)),\n"  // excess spaces, testing extra parentheses
+       ".bbcccc((c*d)+(e*f))\n"
+       ")bar( );\n"
+       "endmodule:mm\n",
+       "module mm;\n"
+       "  foo #(\n"
+       "      .a     ((1 + 2)),\n"  // induced alignment
+       "      .bbcccc((c * d) + (e * f))\n"
+       "  ) bar ();\n"
+       "endmodule : mm\n"},
+
       // named port connections
       {"module  mm ;\n"
        "foo bar(\n"
@@ -7256,7 +7324,7 @@ TEST(FormatterEndToEndTest, DisableModuleInstantiations) {
        "foo bar();"
        "  endmodule\n",
        "module m;\n"
-       "  foo bar();\n"  // indentation still takes effect
+       "  foo bar ();\n"  // indentation still takes effect
        "endmodule\n"},
       {"module  m  ;\t\n"
        "logic   xyz;"
@@ -7286,7 +7354,7 @@ TEST(FormatterEndToEndTest, DisableModuleInstantiations) {
        "foo  bar(   .baz(baz)   );"
        "  endmodule\n",
        "module m;\n"
-       "  foo  bar(   .baz(baz)   );\n"  // indentation still takes effect
+       "  foo bar (.baz(baz));\n"  // indentation still takes effect
        "endmodule\n"},
       {"module  m  ;\t\n"
        "foo  bar(\n"
@@ -7295,17 +7363,37 @@ TEST(FormatterEndToEndTest, DisableModuleInstantiations) {
        ");"
        "  endmodule\n",
        "module m;\n"
-       "  foo  bar(\n"             // indentation still takes effect
-       "        .baz  (baz  ),\n"  // named port connections preserved
-       "        .blaaa(blaaa)\n"   // named port connections preserved
-       ");\n"                      // this indentation remains untouched
+       "  foo bar (\n"           // indentation still takes effect
+       "      .baz  (baz  ),\n"  // named port connections preserved
+       "      .blaaa(blaaa)\n"   // named port connections preserved
+       "  );\n"                  // this indentation is fixed
+       "endmodule\n"},
+      {"module  m  ;\t\n"
+       "foo  #(   .baz(baz)   ) bar();"  // named parameters
+       "  endmodule\n",
+       "module m;\n"
+       "  foo #(.baz(baz)) bar ();\n"  // indentation still takes effect
+       "endmodule\n"},
+      {"module  m  ;\t\n"
+       "foo  #(\n"
+       "        .baz  (baz  ),\n"  // example of user-manual alignment
+       "        .blaaa(blaaa)\n"
+       ")  bar( );"
+       "  endmodule\n",
+       "module m;\n"
+       "  foo #(\n"              // indentation still takes effect
+       "      .baz  (baz  ),\n"  // named parameter arguments preserved
+       "      .blaaa(blaaa)\n"   // named parameter arguments preserved
+       "  ) bar ();\n"           // this indentation is fixed
        "endmodule\n"},
   };
   FormatStyle style;
   style.column_limit = 40;
   style.indentation_spaces = 2;
   style.wrap_spaces = 4;
-  style.format_module_instantiations = false;
+  // Testing preservation of spaces
+  style.named_parameter_alignment = AlignmentPolicy::kPreserve;
+  style.named_port_alignment = AlignmentPolicy::kPreserve;
   for (const auto& test_case : kTestCases) {
     VLOG(1) << "code-to-format:\n" << test_case.input << "<EOF>";
     std::ostringstream stream;

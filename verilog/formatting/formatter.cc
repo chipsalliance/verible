@@ -448,26 +448,25 @@ static verible::Interval<int> DisableByteOffsetRange(
 }
 
 // Given control flags and syntax tree, selectively disable some ranges
-// of text from formatting.
+// of text from formatting.  This provides an easy way to preserve spacing on
+// selected syntax subtrees to reduce formatter harm while allowing
+// development to progress.
 static void DisableSyntaxBasedRanges(ByteOffsetSet* disabled_ranges,
                                      const verible::Symbol& root,
                                      const FormatStyle& style,
                                      absl::string_view full_text) {
-  // Module-related sections:
-  for (const auto& match : FindAllModuleDeclarations(root)) {
-    if (!style.format_module_instantiations) {
-      const auto& instantiations = FindAllDataDeclarations(*match.match);
-      for (const auto& inst : instantiations) {
-        const auto& module_instances = FindAllGateInstances(*inst.match);
-        // Only suppress formatting if instances contains a module or
-        // gate-like instance with ports in parentheses.
-        if (module_instances.empty()) continue;
-        const auto inst_text = verible::StringSpanOfSymbol(*inst.match);
-        VLOG(4) << "disabled: " << inst_text;
-        disabled_ranges->Add(DisableByteOffsetRange(inst_text, full_text));
-      }
+  /**
+  // Basic template:
+  if (!style.controlling_flag) {
+    for (const auto& match : FindAllSyntaxTreeNodeTypes(root)) {
+      // Refine search into specific subtrees, if applicable.
+      // Convert the spanning string_views into byte offset ranges to disable.
+      const auto inst_text = verible::StringSpanOfSymbol(*match.match);
+      VLOG(4) << "disabled: " << inst_text;
+      disabled_ranges->Add(DisableByteOffsetRange(inst_text, full_text));
     }
   }
+  **/
 }
 
 Status Formatter::Format(const ExecutionControl& control) {

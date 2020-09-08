@@ -42,6 +42,10 @@ struct FormatStyle : public verible::BasicFormatStyle {
   //   and promote the control for this into AlignmentPolicy.
   bool format_module_instantiations = true;
 
+  // Control how named parameters (e.g. in module instances) are formatted.
+  // For internal testing purposes, this is default to kAlign.
+  AlignmentPolicy named_parameter_alignment = AlignmentPolicy::kAlign;
+
   // Control how named ports (e.g. in module instances) are formatted.
   // Internal tests assume these are forced to kAlign.
   AlignmentPolicy named_port_alignment = AlignmentPolicy::kAlign;
@@ -76,6 +80,7 @@ struct FormatStyle : public verible::BasicFormatStyle {
 
   void ApplyToAllAlignmentPolicies(AlignmentPolicy policy) {
     port_declarations_alignment = policy;
+    named_parameter_alignment = policy;
     named_port_alignment = policy;
     module_net_variable_alignment = policy;
     formal_parameters_alignment = policy;
