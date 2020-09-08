@@ -216,6 +216,7 @@ PartitionTokenPartitionRangesAtBlankLines(const TokenPartitionRange& bounds) {
 
 std::vector<TokenPartitionRange> GetSubpartitionsBetweenBlankLines(
     const TokenPartitionRange& outer_partition_bounds) {
+  VLOG(2) << __FUNCTION__;
   std::vector<TokenPartitionRange> result;
   {
     const std::vector<TokenPartitionIterator> subpartitions_bounds(
@@ -230,6 +231,7 @@ std::vector<TokenPartitionRange> GetSubpartitionsBetweenBlankLines(
       result.emplace_back(*prev, *next);
     }
   }
+  VLOG(2) << "end of " << __FUNCTION__;
   return result;
 }
 

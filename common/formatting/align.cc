@@ -485,9 +485,10 @@ static MutableFormatTokenRange GetMutableFormatTokenRange(
 
 // This width calculation accounts for the unaligned tokens in the tail position
 // of each aligned row (e.g. unaligned trailing comments).
-static bool AlignedRowsFitUnderColumnLimit(
-    const std::vector<TokenPartitionIterator>& rows,
-    const AlignmentMatrix& matrix, int total_column_width, int column_limit) {
+static bool AlignedRowsFitUnderColumnLimit(const AlignablePartitionGroup& rows,
+                                           const AlignmentMatrix& matrix,
+                                           int total_column_width,
+                                           int column_limit) {
   auto partition_iter = rows.begin();
   for (const auto& row : matrix) {
     if (!row.empty()) {
@@ -528,7 +529,7 @@ struct GroupAlignmentData {
 };
 
 static GroupAlignmentData AlignFilteredRows(
-    const std::vector<TokenPartitionIterator>& rows,
+    const AlignablePartitionGroup& rows,
     const AlignmentCellScannerFunction& cell_scanner_gen,
     MutableFormatTokenRange::iterator ftoken_base, int column_limit) {
   VLOG(1) << __FUNCTION__;
@@ -637,7 +638,7 @@ static GroupAlignmentData AlignFilteredRows(
 // This applies pre-calculated alignment spacings to aligned groups of format
 // tokens.
 static void ApplyGroupAlignment(const GroupAlignmentData& align_data,
-                                const std::vector<TokenPartitionIterator>& rows,
+                                const AlignablePartitionGroup& rows,
                                 MutableFormatTokenRange::iterator ftoken_base) {
   // Apply spacing adjustments (mutates format tokens)
   for (const auto& align_actions : align_data.align_actions_2D) {
@@ -657,7 +658,7 @@ static void ApplyGroupAlignment(const GroupAlignmentData& align_data,
   VLOG(1) << "end of " << __FUNCTION__;
 }
 
-static std::vector<TokenPartitionIterator> FilterAlignablePartitions(
+static AlignablePartitionGroup FilterAlignablePartitions(
     const TokenPartitionRange& group,
     const IgnoreAlignmentRowPredicate& ignore_partition_predicate) {
   // This partition group may contain partitions that should not be
@@ -666,7 +667,6 @@ static std::vector<TokenPartitionIterator> FilterAlignablePartitions(
   qualified_partitions.reserve(group.size());
   // like std::copy_if, but we want the iterators, not their pointees.
   for (auto iter = group.begin(); iter != group.end(); ++iter) {
-    // TODO(fangism): pass in filter predicate as a function
     if (!ignore_partition_predicate(*iter)) {
       VLOG(2) << "including partition: " << *iter;
       qualified_partitions.push_back(iter);
@@ -675,6 +675,25 @@ static std::vector<TokenPartitionIterator> FilterAlignablePartitions(
     }
   }
   return qualified_partitions;
+}
+
+ExtractAlignmentGroupsFunction ExtractAlignmentGroupsAdapter(
+    const std::function<std::vector<TokenPartitionRange>(
+        const TokenPartitionRange&)>& legacy_extractor,
+    const IgnoreAlignmentRowPredicate& legacy_ignore_predicate) {
+  return [legacy_extractor,
+          legacy_ignore_predicate](const TokenPartitionRange& full_range) {
+    // must copy the closures, not just reference, to ensure valid lifetime
+    const std::vector<TokenPartitionRange> ranges(legacy_extractor(full_range));
+    std::vector<AlignablePartitionGroup> groups;
+    groups.reserve(ranges.size());
+    for (const auto& range : ranges) {
+      groups.push_back(
+          FilterAlignablePartitions(range, legacy_ignore_predicate));
+      if (groups.back().empty()) groups.pop_back();
+    }
+    return groups;
+  };
 }
 
 // TODO(fangism): move this to common/formatting/token_partition_tree
@@ -808,9 +827,12 @@ void TabularAlignTokens(TokenPartitionTree* partition_ptr,
   const TokenPartitionRange subpartitions_range(subpartitions.begin(),
                                                 subpartitions.end());
   if (subpartitions_range.empty()) return;
-  const std::vector<TokenPartitionRange> partition_ranges(
+  VLOG(1) << "extracting alignment partition groups...";
+  const std::vector<AlignablePartitionGroup> alignment_groups(
       alignment_handler.extract_alignment_groups(subpartitions_range));
-  for (const auto& partition_range : partition_ranges) {
+  for (const auto& alignment_group : alignment_groups) {
+    const TokenPartitionRange partition_range(alignment_group.front(),
+                                              alignment_group.back() + 1);
     if (partition_range.empty()) continue;
     if (AnyPartitionSubRangeIsDisabled(partition_range, full_text,
                                        disabled_byte_ranges)) {
@@ -829,18 +851,13 @@ void TabularAlignTokens(TokenPartitionTree* partition_ptr,
       // TODO(b/159824483): attempt to detect and re-use pre-existing alignment
     }
 
-    // Determine the subset of partitions that are eligible for alignment.
-    const std::vector<TokenPartitionIterator> qualified_partitions(
-        FilterAlignablePartitions(
-            partition_range, alignment_handler.ignore_partition_predicate));
-
     // Compute dry-run of alignment spacings if it is needed.
     VLOG(2) << "AlignmentPolicy: " << policy;
     GroupAlignmentData align_data;
     switch (policy) {
       case AlignmentPolicy::kAlign:
       case AlignmentPolicy::kInferUserIntent:
-        align_data = AlignFilteredRows(qualified_partitions,
+        align_data = AlignFilteredRows(alignment_group,
                                        alignment_handler.alignment_cell_scanner,
                                        ftokens->begin(), column_limit);
         break;
@@ -859,8 +876,7 @@ void TabularAlignTokens(TokenPartitionTree* partition_ptr,
       case AlignmentPolicy::kAlign: {
         if (!align_data.align_actions_2D.empty()) {
           // This modifies format tokens' spacing values.
-          ApplyGroupAlignment(align_data, qualified_partitions,
-                              ftokens->begin());
+          ApplyGroupAlignment(align_data, alignment_group, ftokens->begin());
         }
         break;
       }

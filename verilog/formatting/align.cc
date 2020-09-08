@@ -41,6 +41,7 @@
 namespace verilog {
 namespace formatter {
 
+using verible::AlignablePartitionGroup;
 using verible::AlignmentCellScannerGenerator;
 using verible::AlignmentColumnProperties;
 using verible::AlignmentGroupAction;
@@ -701,37 +702,41 @@ class ParameterDeclarationColumnSchemaScanner : public ColumnSchemaScanner {
 };
 
 static const verible::AlignedFormattingHandler kPortDeclarationAligner{
-    .extract_alignment_groups = &verible::GetSubpartitionsBetweenBlankLines,
-    .ignore_partition_predicate = &IgnoreWithinPortDeclarationPartitionGroup,
+    .extract_alignment_groups = verible::ExtractAlignmentGroupsAdapter(
+        &verible::GetSubpartitionsBetweenBlankLines,
+        &IgnoreWithinPortDeclarationPartitionGroup),
     .alignment_cell_scanner =
         AlignmentCellScannerGenerator<PortDeclarationColumnSchemaScanner>(),
 };
 
 static const verible::AlignedFormattingHandler kActualNamedParameterAligner{
-    .extract_alignment_groups = &verible::GetSubpartitionsBetweenBlankLines,
-    .ignore_partition_predicate =
-        &IgnoreWithinActualNamedParameterPartitionGroup,
+    .extract_alignment_groups = verible::ExtractAlignmentGroupsAdapter(
+        &verible::GetSubpartitionsBetweenBlankLines,
+        &IgnoreWithinActualNamedParameterPartitionGroup),
     .alignment_cell_scanner = AlignmentCellScannerGenerator<
         ActualNamedParameterColumnSchemaScanner>(),
 };
 
 static const verible::AlignedFormattingHandler kActualNamedPortAligner{
-    .extract_alignment_groups = &verible::GetSubpartitionsBetweenBlankLines,
-    .ignore_partition_predicate = &IgnoreWithinActualNamedPortPartitionGroup,
+    .extract_alignment_groups = verible::ExtractAlignmentGroupsAdapter(
+        &verible::GetSubpartitionsBetweenBlankLines,
+        &IgnoreWithinActualNamedPortPartitionGroup),
     .alignment_cell_scanner =
         AlignmentCellScannerGenerator<ActualNamedPortColumnSchemaScanner>(),
 };
 
 static const verible::AlignedFormattingHandler kDataDeclarationAligner{
-    .extract_alignment_groups = &GetConsecutiveDataDeclarationGroups,
-    .ignore_partition_predicate = &IgnoreWithinDataDeclarationPartitionGroup,
+    .extract_alignment_groups = verible::ExtractAlignmentGroupsAdapter(
+        &GetConsecutiveDataDeclarationGroups,
+        &IgnoreWithinDataDeclarationPartitionGroup),
     .alignment_cell_scanner =
         AlignmentCellScannerGenerator<DataDeclarationColumnSchemaScanner>(),
 };
 
 static const verible::AlignedFormattingHandler kClassPropertyAligner{
-    .extract_alignment_groups = &GetConsecutiveDataDeclarationGroups,
-    .ignore_partition_predicate = &IgnoreWithinDataDeclarationPartitionGroup,
+    .extract_alignment_groups = verible::ExtractAlignmentGroupsAdapter(
+        &GetConsecutiveDataDeclarationGroups,
+        &IgnoreWithinDataDeclarationPartitionGroup),
     .alignment_cell_scanner =
         AlignmentCellScannerGenerator<ClassPropertyColumnSchemaScanner>(),
 };
@@ -746,8 +751,9 @@ struct AlignedFormattingConfiguration {
 };
 
 static const verible::AlignedFormattingHandler kParameterDeclarationAligner{
-    .extract_alignment_groups = &verible::GetSubpartitionsBetweenBlankLines,
-    .ignore_partition_predicate = &IgnoreWithinPortDeclarationPartitionGroup,
+    .extract_alignment_groups = verible::ExtractAlignmentGroupsAdapter(
+        &verible::GetSubpartitionsBetweenBlankLines,
+        &IgnoreWithinPortDeclarationPartitionGroup),
     .alignment_cell_scanner = AlignmentCellScannerGenerator<
         ParameterDeclarationColumnSchemaScanner>(),
 };
