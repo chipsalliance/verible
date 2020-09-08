@@ -455,14 +455,6 @@ static void DisableSyntaxBasedRanges(ByteOffsetSet* disabled_ranges,
                                      absl::string_view full_text) {
   // Module-related sections:
   for (const auto& match : FindAllModuleDeclarations(root)) {
-    if (!style.format_module_port_declarations) {
-      const auto* ports = GetModulePortParenGroup(*match.match);
-      if (ports != nullptr) {
-        const auto ports_text = verible::StringSpanOfSymbol(*ports);
-        VLOG(4) << "disabled: " << ports_text;
-        disabled_ranges->Add(DisableByteOffsetRange(ports_text, full_text));
-      }
-    }
     if (!style.format_module_instantiations) {
       const auto& instantiations = FindAllDataDeclarations(*match.match);
       for (const auto& inst : instantiations) {

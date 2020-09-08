@@ -717,9 +717,7 @@ void TabularAlignTokenPartitions(TokenPartitionTree* partition_ptr,
           {NodeEnum::kPortDeclarationList,
            {kPortDeclarationAligner,
             [](const FormatStyle& vstyle) {
-              return vstyle.format_module_instantiations
-                         ? AlignmentPolicy::kAlign
-                         : AlignmentPolicy::kPreserve;
+              return vstyle.port_declarations_alignment;
             }}},
           {NodeEnum::kPortActualList,
            {kActualNamedPortAligner,

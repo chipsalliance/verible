@@ -54,6 +54,7 @@ absl::Status VerifyFormatting(const verible::TextStructureView& text_structure,
 namespace {
 
 using absl::StatusCode;
+using verible::AlignmentPolicy;
 using verible::LineNumberSet;
 
 // Tests that clean output passes.
@@ -6909,6 +6910,38 @@ TEST(FormatterEndToEndTest, AutoInferAlignment) {
        "class cc;\n"
        "endclass : cc\n"},
 
+      // module port declarations
+      {"module pd(\n"
+       "input wire foo,\n"
+       "output reg bar\n"
+       ");\n"
+       "endmodule:pd\n",
+       "module pd (\n"
+       "    input  wire foo,\n"  // flush-left vs. align are similar enough,
+       "    output reg  bar\n"   // so automatic policy will align.
+       ");\n"
+       "endmodule : pd\n"},
+      {"module pd(\n"
+       "input  foo_pkg::baz_t foo,\n"
+       "output reg  bar\n"
+       ");\n"
+       "endmodule:pd\n",
+       "module pd (\n"
+       "    input foo_pkg::baz_t foo,\n"  // alignment would add too many spaces
+       "    output reg bar\n"             // so infer intent to flush-left.
+       ");\n"
+       "endmodule : pd\n"},
+      {"module pd(\n"
+       "input  foo_pkg::baz_t foo,\n"
+       "output     reg  bar\n"  // user injects 4 excess spaces here ...
+       ");\n"
+       "endmodule:pd\n",
+       "module pd (\n"
+       "    input  foo_pkg::baz_t foo,\n"
+       "    output reg            bar\n"  // ... and triggers alignment.
+       ");\n"
+       "endmodule : pd\n"},
+
       // named port connections
       {"module  mm ;\n"
        "foo bar(\n"
@@ -7045,13 +7078,7 @@ TEST(FormatterEndToEndTest, AutoInferAlignment) {
   style.indentation_spaces = 2;
   style.wrap_spaces = 4;
   // Override some settings to test auto-inferred alignment.
-  style.named_port_alignment = verible::AlignmentPolicy::kInferUserIntent;
-  style.module_net_variable_alignment =
-      verible::AlignmentPolicy::kInferUserIntent;
-  style.formal_parameters_alignment =
-      verible::AlignmentPolicy::kInferUserIntent;
-  style.class_member_variable_alignment =
-      verible::AlignmentPolicy::kInferUserIntent;
+  style.ApplyToAllAlignmentPolicies(AlignmentPolicy::kInferUserIntent);
 
   for (const auto& test_case : kTestCases) {
     VLOG(1) << "code-to-format:\n" << test_case.input << "<EOF>";
@@ -7177,20 +7204,26 @@ TEST(FormatterEndToEndTest, DisableModulePortDeclarations) {
        "endmodule\n"},
       {"module  m(   ) ;\n"
        "  endmodule\n",
-       "module m (   );\n"  // space between () preserved
+       "module m ();\n"  // empty ports formatted compactly
        "endmodule\n"},
-      {"module  m   ( input     clk  )\t;\n"
+      {// for a single port, the alignment handler doesn't even consider it a
+       // group so it falls back to standard flush-left behavior.
+       "module  m   ( input     clk  )\t;\n"
        "  endmodule\n",
-       "module m ( input     clk  );\n"
+       "module m (\n"
+       "    input clk\n"
+       ");\n"
        "endmodule\n"},
-      {"module  m   (\n"
+      {// example with two ports
+       "module  m   (\n"
        "input  clk,\n"
        "output bar\n"
        ")\t;\n"
        "  endmodule\n",
        "module m (\n"
-       "input  clk,\n"  // disabled, pre-existing alignment maintained
-       "output bar\n"   // disabled, pre-existing alignment maintained
+       "    input  clk,\n"  // indented, but internal pre-existing spacing
+                            // preserved
+       "    output bar\n"
        ");\n"
        "endmodule\n"},
   };
@@ -7198,7 +7231,7 @@ TEST(FormatterEndToEndTest, DisableModulePortDeclarations) {
   style.column_limit = 40;
   style.indentation_spaces = 2;
   style.wrap_spaces = 4;
-  style.format_module_port_declarations = false;
+  style.port_declarations_alignment = verible::AlignmentPolicy::kPreserve;
   for (const auto& test_case : kTestCases) {
     VLOG(1) << "code-to-format:\n" << test_case.input << "<EOF>";
     std::ostringstream stream;

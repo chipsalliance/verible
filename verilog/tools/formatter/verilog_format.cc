@@ -120,9 +120,6 @@ ABSL_FLAG(int, max_search_states, 100000,
           "line wrap optimization.");
 
 // These flags exist in the short term to disable formatting of some regions.
-ABSL_FLAG(bool, format_module_port_declarations, true,
-          "If true, format module declarations' list of port declarations, "
-          "else leave them unformatted.  This is a short-term workaround.");
 ABSL_FLAG(bool, format_module_instantiations, true,
           "If true, format module instantiations (data declarations), "
           "else leave them unformatted.  This is a short-term workaround.");
@@ -183,8 +180,6 @@ static bool formatOneFile(absl::string_view filename,
         absl::GetFlag(FLAGS_verify_convergence);
 
     // formatting style flags
-    format_style.format_module_port_declarations =
-        absl::GetFlag(FLAGS_format_module_port_declarations);
     format_style.format_module_instantiations =
         absl::GetFlag(FLAGS_format_module_instantiations);
     format_style.try_wrap_long_lines = absl::GetFlag(FLAGS_try_wrap_long_lines);
@@ -192,14 +187,8 @@ static bool formatOneFile(absl::string_view filename,
     // For most of the following, kInferUserIntent is a reasonable default
     // behavior because it allows for user-control with minimal invasiveness and
     // burden on the user.
+    format_style.ApplyToAllAlignmentPolicies(AlignmentPolicy::kInferUserIntent);
     // TODO(fangism): expose these controls as user-flags or configuration
-    format_style.named_port_alignment = AlignmentPolicy::kInferUserIntent;
-    format_style.module_net_variable_alignment =
-        AlignmentPolicy::kInferUserIntent;
-    format_style.formal_parameters_alignment =
-        AlignmentPolicy::kInferUserIntent;
-    format_style.class_member_variable_alignment =
-        AlignmentPolicy::kInferUserIntent;
   }
 
   std::ostringstream stream;
