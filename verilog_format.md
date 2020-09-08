@@ -42,16 +42,14 @@ To pipe from stdin, use '-' as <file>.
 
 
   Flags from verilog/tools/formatter/verilog_format.cc:
+    --class_member_variables_alignment (Format class member variables:
+      {align,flush-left,preserve,infer}); default: infer;
     --failsafe_success (If true, always exit with 0 status, even if there were
       input errors or internal errors. In all error conditions, the original
       text is always preserved. This is useful in deploying services where
       fail-safe behaviors should be considered a success.); default: true;
-    --format_module_instantiations (If true, format module instantiations (data
-      declarations), else leave them unformatted. This is a short-term
-      workaround.); default: true;
-    --format_module_port_declarations (If true, format module declarations' list
-      of port declarations, else leave them unformatted. This is a short-term
-      workaround.); default: true;
+    --formal_parameters_alignment (Format formal parameters:
+      {align,flush-left,preserve,infer}); default: infer;
     --inplace (If true, overwrite the input file on successful conditions.);
       default: false;
     --lines (Specific lines to format, 1-based, comma-separated, inclusive N-M
@@ -59,6 +57,14 @@ To pipe from stdin, use '-' as <file>.
       enabled for formatting. (repeatable, cumulative)); default: ;
     --max_search_states (Limits the number of search states explored during line
       wrap optimization.); default: 100000;
+    --named_parameter_alignment (Format named actual parameters:
+      {align,flush-left,preserve,infer}); default: infer;
+    --named_port_alignment (Format named port connections:
+      {align,flush-left,preserve,infer}); default: infer;
+    --net_variable_alignment (Format net/variable declarations:
+      {align,flush-left,preserve,infer}); default: infer;
+    --port_declarations_alignment (Format port declarations:
+      {align,flush-left,preserve,infer}); default: infer;
     --show_equally_optimal_wrappings (If true, print when multiple optimal
       solutions are found (stderr), but continue to operate normally.);
       default: false;
@@ -82,4 +88,4 @@ To pipe from stdin, use '-' as <file>.
 
 ## Version
 
-Generated on 2020-09-08 11:13:37 -0700 from [v0.0-562-g840f677](https://github.com/google/verible/commit/840f6772043dddea48c0e03bd925ef1b65adc701)
+Generated on 2020-09-08 13:52:04 -0700 from [v0.0-569-gc836a56](https://github.com/google/verible/commit/c836a56396e913f8784cddb9bcb4a8772fde557a)

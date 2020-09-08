@@ -24,7 +24,7 @@ Enabled by default: true
 ### constraint-name-style
 Check that constraint names follow the lower_snake_case convention and end with _c. See [Style: constraints].
 
-Enabled by default: false
+Enabled by default: true
 
 ### create-object-name-match
 Checks that the 'name' argument of `type_id::create()` matches the name of the variable to which it is assigned. See [Verification-Style: naming].
@@ -245,4 +245,4 @@ Enabled by default: true
 
 ## Version
 
-Generated on 2020-09-08 11:13:37 -0700 from [v0.0-562-g840f677](https://github.com/google/verible/commit/840f6772043dddea48c0e03bd925ef1b65adc701)
+Generated on 2020-09-08 13:52:04 -0700 from [v0.0-569-gc836a56](https://github.com/google/verible/commit/c836a56396e913f8784cddb9bcb4a8772fde557a)
