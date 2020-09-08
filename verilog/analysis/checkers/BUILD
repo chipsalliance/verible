@@ -20,6 +20,7 @@ cc_library(
         ":case_missing_default_rule",
         ":constraint_name_style_rule",
         ":create_object_name_match_rule",
+        ":declared_identifier_style_rule",
         ":endif_comment_rule",
         ":enum_name_style_rule",
         ":explicit_function_lifetime_rule",
@@ -58,6 +59,45 @@ cc_library(
         ":uvm_macro_semicolon_rule",
         ":v2001_generate_begin_rule",
         ":void_cast_rule",
+    ],
+)
+
+
+cc_library(
+    name = "declared_identifier_style_rule",
+    srcs = ["declared_identifier_style_rule.cc"],
+    hdrs = ["declared_identifier_style_rule.h"],
+    deps = [
+        "//common/analysis:citation",
+        "//common/analysis:lint_rule_status",
+        "//common/analysis:token_stream_lint_rule",
+        "//common/strings:comment_utils",
+        "//common/strings:naming_utils",
+        "//common/analysis/matcher:bound_symbol_manager",
+        "//common/text:symbol",
+        "//common/text:syntax_tree_context",
+        "//common/text:token_info",
+        "//verilog/analysis:descriptions",
+        "//verilog/analysis:lint_rule_registry",
+        "//verilog/parser:verilog_token_enum",
+        "//verilog/CST:module",
+        "//verilog/CST:functions",
+        "@com_google_absl//absl/strings",
+    ],
+    alwayslink = 1,
+)
+
+cc_test(
+    name = "declared_identifier_style_rule_test",
+    srcs = ["declared_identifier_style_rule_test.cc"],
+    deps = [
+        ":declared_identifier_style_rule",
+        "//common/analysis:linter_test_utils",
+        "//common/text:symbol",
+        "//common/analysis:syntax_tree_linter_test_utils",
+        "//verilog/analysis:verilog_analyzer",
+        "//verilog/CST:verilog_nonterminals",
+        "@com_google_googletest//:gtest_main",
     ],
 )
 
