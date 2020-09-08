@@ -353,7 +353,8 @@ std::ostream& operator<<(std::ostream& stream,
                 << " }";
 }
 
-static const std::initializer_list<std::pair<const absl::string_view, RuleSet>>
+static constexpr std::initializer_list<
+    std::pair<const absl::string_view, RuleSet>>
     kRuleSetEnumStringMap = {
         {"all", RuleSet::kAll},
         {"none", RuleSet::kNone},
