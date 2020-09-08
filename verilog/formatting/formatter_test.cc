@@ -7312,6 +7312,21 @@ TEST(FormatterEndToEndTest, DisableTryWrapLongLines) {
        "  initial assign a = {never +gonna +give +you +up,\n"
        "never + gonna +Let +you +down};\n"
        "endmodule\n"},
+      {// The if-header is a single leaf partition, and does not fit,
+       // so its original spacing should be preserved.
+       // We deliberately insert weird spacing to show that it is preserved.
+       "function f;\n"
+       "if ((xxx.aaaa >= bbbbbbbbbbbbbbb) &&\n"
+       "      ((ccc.ddd  +  eee.ffffff * g) <=\n"
+       "       (hhhhhhhhhhhhhhh+iiiiiiiiiiiiiiiiiiii))) begin\n"
+       "end\n"
+       "endfunction\n",
+       "function f;\n"
+       "  if ((xxx.aaaa >= bbbbbbbbbbbbbbb) &&\n"  // indentation fixed
+       "      ((ccc.ddd  +  eee.ffffff * g) <=\n"
+       "       (hhhhhhhhhhhhhhh+iiiiiiiiiiiiiiiiiiii))) begin\n"
+       "  end\n"  // indentation fixed
+       "endfunction\n"},
   };
   FormatStyle style;
   style.column_limit = 40;

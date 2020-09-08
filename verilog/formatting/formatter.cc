@@ -276,11 +276,34 @@ static void DeterminePartitionExpansion(
     const FormatStyle& style) {
   auto& node_view = node->Value();
   const auto& children = node->Children();
+  const UnwrappedLine& uwline = node_view.Value();
+  VLOG(3) << "unwrapped line: " << uwline;
+  const verible::FormatTokenRange ftoken_range(uwline.TokensRange());
+  const auto partition_policy = uwline.PartitionPolicy();
+
+  const auto PreserveSpaces = [&ftoken_range, &full_text,
+                               preformatted_tokens]() {
+    const ByteOffsetSet new_disable_range{
+        {ftoken_range.front().token->left(full_text) + 1,
+         // +1 allows left indentation to be adjusted
+         ftoken_range.back().token->right(full_text)}};
+    verible::PreserveSpacesOnDisabledTokenRanges(preformatted_tokens,
+                                                 new_disable_range, full_text);
+  };
+
+  // Expand or not, depending on partition policy and other conditions.
 
   // If this is a leaf partition, there is nothing to expand.
   if (children.empty()) {
     VLOG(3) << "No children to expand.";
     node_view.Unexpand();
+    if (partition_policy == PartitionPolicyEnum::kFitOnLineElseExpand &&
+        !style.try_wrap_long_lines &&
+        !verible::FitsOnLine(uwline, style).fits) {
+      // give-up early and preserve original spacing
+      VLOG(3) << "Does not fit, preserving.";
+      PreserveSpaces();
+    }
     return;
   }
 
@@ -295,9 +318,6 @@ static void DeterminePartitionExpansion(
     node_view.Expand();
     return;
   }
-
-  // Expand or not, depending on partition policy and other conditions.
-  const UnwrappedLine& uwline = node_view.Value();
 
   {
     // If any part of the range is formatting-disabled, expand this partition so
@@ -319,7 +339,6 @@ static void DeterminePartitionExpansion(
     }
   }
 
-  const auto partition_policy = uwline.PartitionPolicy();
   VLOG(3) << "partition policy: " << partition_policy;
   switch (partition_policy) {
     case PartitionPolicyEnum::kUninitialized: {
@@ -353,13 +372,7 @@ static void DeterminePartitionExpansion(
           // give-up early and preserve original spacing
           VLOG(3) << "Does not fit, preserving.";
           node_view.Unexpand();
-          const auto range = node_view.Value().TokensRange();
-          const ByteOffsetSet new_disable_range{
-              {range.front().token->left(full_text) + 1,
-               // +1 allows left indentation to be adjusted
-               range.back().token->right(full_text)}};
-          verible::PreserveSpacesOnDisabledTokenRanges(
-              preformatted_tokens, new_disable_range, full_text);
+          PreserveSpaces();
         }
       }
     }
