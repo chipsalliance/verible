@@ -71,8 +71,11 @@ class ColumnSchemaScanner : public TreeContextPathVisitor {
   }
 
  protected:
-  // TODO(fangism): support specifying desired column characteristics, like
-  // flush_left.
+  // Mark the start of a new column for alignment.
+  // 'symbol' is a reference to the original source syntax subtree.
+  // 'properties' contains alignment configuration for the column.
+  // 'path' represents relative position within the enclosing syntax subtree,
+  // and is used as a key for ordering and matching columns.
   void ReserveNewColumn(const Symbol& symbol,
                         const AlignmentColumnProperties& properties,
                         const SyntaxTreePath& path);
@@ -195,7 +198,18 @@ enum class AlignmentPolicy {
   kInferUserIntent,
 };
 
+namespace internal {
+extern const std::initializer_list<
+    std::pair<const absl::string_view, AlignmentPolicy>>
+    kAlignmentPolicyNameMap;
+}  // namespace internal
+
 std::ostream& operator<<(std::ostream&, AlignmentPolicy);
+
+bool AbslParseFlag(absl::string_view text, AlignmentPolicy* policy,
+                   std::string* error);
+
+std::string AbslUnparseFlag(const AlignmentPolicy& policy);
 
 // This struct bundles together the various functions needed for aligned
 // formatting.

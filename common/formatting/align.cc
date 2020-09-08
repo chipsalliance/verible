@@ -35,23 +35,41 @@
 #include "common/text/tree_utils.h"
 #include "common/util/algorithm.h"
 #include "common/util/container_iterator_range.h"
+#include "common/util/enum_flags.h"
 #include "common/util/logging.h"
 
 namespace verible {
 
-// TODO(fangism): expose bidirectional map as an enum_flag.
+namespace internal {
+
+const std::initializer_list<std::pair<const absl::string_view, AlignmentPolicy>>
+    kAlignmentPolicyNameMap = {
+        {"align", AlignmentPolicy::kAlign},
+        {"flush-left", AlignmentPolicy::kFlushLeft},
+        {"preserve", AlignmentPolicy::kPreserve},
+        {"infer", AlignmentPolicy::kInferUserIntent},
+        // etc.
+};
+
+}  // namespace internal
+
 std::ostream& operator<<(std::ostream& stream, AlignmentPolicy policy) {
-  switch (policy) {
-    case AlignmentPolicy::kAlign:
-      return stream << "align";
-    case AlignmentPolicy::kFlushLeft:
-      return stream << "flush-left";
-    case AlignmentPolicy::kPreserve:
-      return stream << "preserve";
-    case AlignmentPolicy::kInferUserIntent:
-      return stream << "infer";
-  }
-  return stream << "<AlignmentPolicy>??";
+  static const auto* flag_map =
+      MakeEnumToStringMap(internal::kAlignmentPolicyNameMap);
+  return stream << flag_map->find(policy)->second;
+}
+
+bool AbslParseFlag(absl::string_view text, AlignmentPolicy* policy,
+                   std::string* error) {
+  static const auto* flag_map =
+      MakeStringToEnumMap(internal::kAlignmentPolicyNameMap);
+  return EnumMapParseFlag(*flag_map, text, policy, error);
+}
+
+std::string AbslUnparseFlag(const AlignmentPolicy& policy) {
+  std::ostringstream stream;
+  stream << policy;
+  return stream.str();
 }
 
 static int EffectiveCellWidth(const FormatTokenRange& tokens) {

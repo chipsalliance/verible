@@ -35,16 +35,18 @@ namespace {
 using ::testing::ElementsAre;
 
 TEST(AlignmentPolicyTest, StringRepresentation) {
-  const std::pair<AlignmentPolicy, absl::string_view> kPolicyNames[] = {
-      {AlignmentPolicy::kAlign, "align"},
-      {AlignmentPolicy::kFlushLeft, "flush-left"},
-      {AlignmentPolicy::kPreserve, "preserve"},
-      {AlignmentPolicy::kInferUserIntent, "infer"}};
-  for (const auto& p : kPolicyNames) {
+  for (const auto& p : internal::kAlignmentPolicyNameMap) {
     std::ostringstream stream;
-    stream << p.first;
-    EXPECT_EQ(stream.str(), p.second);
+    stream << p.second;
+    EXPECT_EQ(stream.str(), p.first);
+    EXPECT_EQ(AbslUnparseFlag(p.second), p.first);
   }
+}
+
+TEST(AlignmentPolicyTest, InvalidEnum) {
+  AlignmentPolicy policy;
+  std::string error;
+  EXPECT_FALSE(AbslParseFlag("invalid", &policy, &error));
 }
 
 // Helper class that initializes an array of tokens to be partitioned
