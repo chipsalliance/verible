@@ -33,19 +33,5 @@ std::ostream& operator<<(std::ostream& stream, const VName& vname) {
   return stream;
 }
 
-std::ostream& operator<<(std::ostream& stream, const Fact& fact) {
-  stream << absl::Substitute(
-      R"({"source": $0,"fact_name": "$1","fact_value": "$2"})",
-      fact.node_vname.ToString(), fact.fact_name, fact.fact_value);
-  return stream;
-}
-
-std::ostream& operator<<(std::ostream& stream, const Edge& edge) {
-  stream << absl::Substitute(
-      R"({"source": $0,"edge_kind": "$1","target": $2,"fact_name": "/"})",
-      edge.source_node.ToString(), edge.edge_name, edge.target_node.ToString());
-  return stream;
-}
-
 }  // namespace kythe
 }  // namespace verilog

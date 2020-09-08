@@ -19,11 +19,13 @@
 
 #include "common/text/tree_context_visitor.h"
 #include "common/text/tree_utils.h"
+#include "verilog/CST/class.h"
 #include "verilog/CST/declaration.h"
 #include "verilog/CST/identifier.h"
 #include "verilog/CST/module.h"
 #include "verilog/CST/net.h"
 #include "verilog/CST/port.h"
+#include "verilog/CST/verilog_matchers.h"
 #include "verilog/CST/verilog_nonterminals.h"
 #include "verilog/analysis/verilog_analyzer.h"
 
@@ -32,31 +34,9 @@ namespace kythe {
 
 namespace {
 
-void DebugSyntaxTree(const verible::SyntaxTreeLeaf& leaf) {
-  LOG(INFO) << "Start Leaf";
-  LOG(INFO) << verilog::NodeEnumToString(
-                   static_cast<verilog::NodeEnum>(leaf.Tag().tag))
-            << " <<>> " << leaf.Tag().tag << " " << leaf.get();
-  LOG(INFO) << "End Leaf";
-}
+using verible::SyntaxTreeNode;
+using verible::TreeSearchMatch;
 
-void DebugSyntaxTree(const verible::SyntaxTreeNode& node) {
-  LOG(INFO) << "Start Node";
-  LOG(INFO) << verilog::NodeEnumToString(
-                   static_cast<verilog::NodeEnum>(node.Tag().tag))
-            << "  " << node.children().size();
-
-  for (const verible::SymbolPtr& child : node.children()) {
-    if (!child) continue;
-    if (child->Kind() == verible::SymbolKind::kNode) {
-      DebugSyntaxTree(verible::SymbolCastToNode(*child));
-    } else {
-      DebugSyntaxTree(verible::SymbolCastToLeaf(*child));
-    }
-  }
-
-  LOG(INFO) << "End Node";
-}
 }  // namespace
 
 IndexingFactNode ExtractOneFile(absl::string_view content,
@@ -91,14 +71,13 @@ IndexingFactNode BuildIndexingFactsTree(
     return visitor.GetRoot();
   }
 
-  const verible::SyntaxTreeNode& root = verible::SymbolCastToNode(*syntax_tree);
-  DebugSyntaxTree(root);
+  const SyntaxTreeNode& root = verible::SymbolCastToNode(*syntax_tree);
   root.Accept(&visitor);
 
   return visitor.GetRoot();
 }
 
-void IndexingFactsTreeExtractor::Visit(const verible::SyntaxTreeNode& node) {
+void IndexingFactsTreeExtractor::Visit(const SyntaxTreeNode& node) {
   const auto tag = static_cast<verilog::NodeEnum>(node.Tag().tag);
   switch (tag) {
     case NodeEnum ::kDescriptionList: {
@@ -112,7 +91,27 @@ void IndexingFactsTreeExtractor::Visit(const verible::SyntaxTreeNode& node) {
       break;
     }
     case NodeEnum::kDataDeclaration: {
-      ExtractModuleInstantiation(node);
+      // For module instantiations
+      const std::vector<TreeSearchMatch> gate_instances =
+          FindAllGateInstances(node);
+      if (!gate_instances.empty()) {
+        ExtractModuleInstantiation(node, gate_instances);
+        break;
+      }
+
+      // For bit, int and classes
+      const std::vector<TreeSearchMatch> register_variables =
+          FindAllRegisterVariables(node);
+      if (!register_variables.empty()) {
+        // for classes.
+        const std::vector<TreeSearchMatch> class_instances =
+            verible::SearchSyntaxTree(node, NodekClassNew());
+        if (!class_instances.empty()) {
+          ExtractClassInstances(node, register_variables);
+          break;
+        }
+      }
+
       break;
     }
     case NodeEnum::kModulePortDeclaration: {
@@ -123,6 +122,10 @@ void IndexingFactsTreeExtractor::Visit(const verible::SyntaxTreeNode& node) {
       ExtractNetDeclaration(node);
       break;
     }
+    case NodeEnum::kClassDeclaration: {
+      ExtractClassDeclaration(node);
+      break;
+    }
     default: {
       TreeContextVisitor::Visit(node);
     }
@@ -130,7 +133,7 @@ void IndexingFactsTreeExtractor::Visit(const verible::SyntaxTreeNode& node) {
 }
 
 void IndexingFactsTreeExtractor::ExtractModule(
-    const verible::SyntaxTreeNode& module_declaration_node) {
+    const SyntaxTreeNode& module_declaration_node) {
   IndexingNodeData module_node_data(IndexingFactType::kModule);
   IndexingFactNode module_node(module_node_data);
 
@@ -140,7 +143,7 @@ void IndexingFactsTreeExtractor::ExtractModule(
     ExtractModuleHeader(module_declaration_node);
     ExtractModuleEnd(module_declaration_node);
 
-    const verible::SyntaxTreeNode& module_item_list =
+    const SyntaxTreeNode& module_item_list =
         GetModuleItemList(module_declaration_node);
     Visit(module_item_list);
   }
@@ -149,7 +152,7 @@ void IndexingFactsTreeExtractor::ExtractModule(
 }
 
 void IndexingFactsTreeExtractor::ExtractModuleHeader(
-    const verible::SyntaxTreeNode& module_header_node) {
+    const SyntaxTreeNode& module_header_node) {
   const verible::TokenInfo& module_name_token =
       GetModuleNameToken(module_header_node);
   const Anchor module_name_anchor(module_name_token, context_.base);
@@ -159,17 +162,17 @@ void IndexingFactsTreeExtractor::ExtractModuleHeader(
   // TODO(minatoma): consider this case: module m(a, b);
   // Extracting module ports e.g. (input a, input b).
   // Ports are treated as children of the module.
-  const verible::SyntaxTreeNode* port_list =
+  const SyntaxTreeNode* port_list =
       GetModulePortDeclarationList(module_header_node);
 
   if (port_list == nullptr) {
     return;
   }
 
-  const std::vector<verible::TreeSearchMatch> port_names =
+  const std::vector<TreeSearchMatch> port_names =
       FindAllModulePortDeclarations(*port_list);
 
-  for (const verible::TreeSearchMatch& port : port_names) {
+  for (const TreeSearchMatch& port : port_names) {
     const verible::SyntaxTreeLeaf* leaf =
         GetIdentifierFromModulePortDeclaration(*port.match);
 
@@ -180,13 +183,13 @@ void IndexingFactsTreeExtractor::ExtractModuleHeader(
 }
 
 void IndexingFactsTreeExtractor::ExtractInputOutputDeclaration(
-    const verible::SyntaxTreeNode& module_port_declaration_node) {
-  const std::vector<verible::TreeSearchMatch> port_names =
+    const SyntaxTreeNode& module_port_declaration_node) {
+  const std::vector<TreeSearchMatch> port_names =
       FindAllUnqualifiedIds(module_port_declaration_node);
 
   // In case we have input a, b.
   // Loop through each port name and create its own node in facts tree.
-  for (const verible::TreeSearchMatch& port : port_names) {
+  for (const TreeSearchMatch& port : port_names) {
     const verible::SyntaxTreeLeaf* leaf = GetIdentifier(*port.match);
 
     facts_tree_context_.top().NewChild(
@@ -196,7 +199,7 @@ void IndexingFactsTreeExtractor::ExtractInputOutputDeclaration(
 }
 
 void IndexingFactsTreeExtractor::ExtractModuleEnd(
-    const verible::SyntaxTreeNode& module_declaration_node) {
+    const SyntaxTreeNode& module_declaration_node) {
   const verible::TokenInfo* module_name =
       GetModuleEndLabel(module_declaration_node);
 
@@ -210,19 +213,18 @@ void IndexingFactsTreeExtractor::ExtractModuleEnd(
 //  foo_module foo_instance(id1[id2],id3[id4]);  // where instance is
 //  "foo_instance(...)"
 void IndexingFactsTreeExtractor::ExtractModuleInstantiation(
-    const verible::SyntaxTreeNode& data_declaration_node) {
+    const SyntaxTreeNode& data_declaration_node,
+    const std::vector<TreeSearchMatch>& gate_instances) {
   const verible::TokenInfo& type =
-      GetTypeTokenInfoFromModuleInstantiation(data_declaration_node);
+      GetTypeTokenInfoFromDataDeclaration(data_declaration_node);
   const Anchor type_anchor(type, context_.base);
 
   // Module instantiations (data declarations) may declare multiple instances
   // sharing the same type in a single statement e.g. bar b1(), b2().
-  const std::vector<verible::TreeSearchMatch> gate_instances =
-      GetListOfGateInstanceFromDataDeclaration(data_declaration_node);
-
+  //
   // Loop through each instance and associate each declared id with the same
   // type and create its corresponding facts tree node.
-  for (const verible::TreeSearchMatch& instance : gate_instances) {
+  for (const TreeSearchMatch& instance : gate_instances) {
     IndexingNodeData indexing_node_data(IndexingFactType::kModuleInstance);
 
     const verible::TokenInfo& variable_name =
@@ -231,11 +233,11 @@ void IndexingFactsTreeExtractor::ExtractModuleInstantiation(
     indexing_node_data.AppendAnchor(type_anchor);
     indexing_node_data.AppendAnchor(variable_name_anchor);
 
-    std::vector<verible::TreeSearchMatch> port_names =
+    std::vector<TreeSearchMatch> port_names =
         FindAllUnqualifiedIds(*instance.match);
 
     // Module ports are treated as anchors in instantiations.
-    for (const verible::TreeSearchMatch& port : port_names) {
+    for (const TreeSearchMatch& port : port_names) {
       const verible::SyntaxTreeLeaf* leaf = GetIdentifier(*port.match);
       const Anchor port_name_anchor(leaf->get(), context_.base);
 
@@ -247,7 +249,7 @@ void IndexingFactsTreeExtractor::ExtractModuleInstantiation(
 }
 
 void IndexingFactsTreeExtractor::ExtractNetDeclaration(
-    const verible::SyntaxTreeNode& net_declaration_node) {
+    const SyntaxTreeNode& net_declaration_node) {
   // Nets are treated as children of the enclosing parent.
   // Net declarations may declare multiple instances sharing the same type in a
   // single statement.
@@ -260,6 +262,64 @@ void IndexingFactsTreeExtractor::ExtractNetDeclaration(
     facts_tree_context_.top().NewChild(
         IndexingNodeData({Anchor(*wire_token_info, context_.base)},
                          IndexingFactType::kVariableDefinition));
+  }
+}
+
+void IndexingFactsTreeExtractor::ExtractClassDeclaration(
+    const SyntaxTreeNode& class_declaration) {
+  IndexingNodeData class_node_data(IndexingFactType::kClass);
+  IndexingFactNode class_node(class_node_data);
+
+  {
+    const IndexingFactsTreeContext::AutoPop p(&facts_tree_context_,
+                                              &class_node);
+    // Extract class name.
+    const verible::SyntaxTreeLeaf& class_name_leaf =
+        GetClassName(class_declaration);
+    const Anchor class_name_anchor(class_name_leaf.get(), context_.base);
+    facts_tree_context_.top().Value().AppendAnchor(class_name_anchor);
+
+    // Extract class name after endclass.
+    const verible::SyntaxTreeLeaf* class_end_name =
+        GetClassEndLabel(class_declaration);
+
+    if (class_end_name != nullptr) {
+      const Anchor class_end_anchor(class_end_name->get(), context_.base);
+      facts_tree_context_.top().Value().AppendAnchor(class_end_anchor);
+    }
+
+    // Visit class body.
+    const SyntaxTreeNode& class_item_list = GetClassItemList(class_declaration);
+    Visit(class_item_list);
+  }
+
+  facts_tree_context_.top().NewChild(class_node);
+}
+
+void IndexingFactsTreeExtractor::ExtractClassInstances(
+    const SyntaxTreeNode& data_declaration_node,
+    const std::vector<TreeSearchMatch>& register_variables) {
+  const verible::TokenInfo& type =
+      GetTypeTokenInfoFromDataDeclaration(data_declaration_node);
+  const Anchor type_anchor(type, context_.base);
+
+  // Class instances may may appear as multiple instances sharing the same type
+  // in a single statement e.g. myClass b1 = new, b2 = new.
+  // LRM 8.8 Typed constructor calls
+  //
+  // Loop through each instance and associate each declared id with the same
+  // type and create its corresponding facts tree node.
+  for (const TreeSearchMatch& instance : register_variables) {
+    IndexingNodeData indexing_node_data(IndexingFactType::kClassInstance);
+
+    const verible::TokenInfo& variable_name =
+        GetInstanceNameTokenInfoFromRegisterVariable(*instance.match);
+
+    const Anchor variable_name_anchor(variable_name, context_.base);
+    indexing_node_data.AppendAnchor(type_anchor);
+    indexing_node_data.AppendAnchor(variable_name_anchor);
+
+    facts_tree_context_.top().NewChild(indexing_node_data);
   }
 }
 
