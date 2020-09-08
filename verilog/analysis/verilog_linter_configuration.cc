@@ -24,6 +24,7 @@
 #include <vector>
 
 #include "absl/status/status.h"
+#include "absl/strings/match.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/str_join.h"
 #include "absl/strings/str_split.h"
@@ -51,7 +52,7 @@ template <typename List>
 static const char* MatchesAnyItem(absl::string_view filename,
                                   const List& items) {
   for (const auto item : items) {
-    if (filename.find(item) != absl::string_view::npos) {
+    if (absl::StrContains(filename, item)) {
       return item;
     }
   }
