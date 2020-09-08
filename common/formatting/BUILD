@@ -27,6 +27,7 @@ cc_library(
         "//common/text:tree_utils",
         "//common/util:algorithm",
         "//common/util:container_iterator_range",
+        "//common/util:enum_flags",
         "//common/util:logging",
         "@com_google_absl//absl/strings",
     ],
