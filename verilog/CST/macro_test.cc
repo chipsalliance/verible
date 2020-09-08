@@ -205,6 +205,9 @@ TEST(FindAllMacroDefinitions, MacroName) {
        " 10\n return 1;\n endfunction"},
       {"task m();\n `define ", {kTag, "my_macro"}, " 10\n endtask"},
       {"package m;\n `define ", {kTag, "my_macro"}, " 10\n endpackage"},
+      {"class m;\n `define ",
+       {kTag, "my_macro"},
+       " 10\n endclass\n module m(); int x = `TEN;\n endmodule"},
   };
   for (const auto& test : kTestCases) {
     const absl::string_view code(test.code);
