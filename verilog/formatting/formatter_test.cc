@@ -3319,6 +3319,13 @@ static constexpr FormatterTestCase kFormatterTestCases[] = {
     {"class foo #()extends bar ; endclass",
      "class foo #() extends bar;\n"
      "endclass\n"},
+    // class extends from type with named parameters
+    {"class foo extends bar #(.N(N), .M(M)); endclass",
+     "class foo extends bar#(\n"
+     "    .N(N),\n"
+     "    .M(M)\n"
+     ");\n"
+     "endclass\n"},
 
     // class with one parameter list
     {"class foo #(type a = b); endclass",
@@ -3414,6 +3421,11 @@ static constexpr FormatterTestCase kFormatterTestCases[] = {
      "  A = 0,\n"
      "  B = 1\n"
      "} foo_t;\n"},
+    {"typedef foo_pkg::baz_t#(.L(L), .W(W)) bar_t;\n",
+     "typedef foo_pkg::baz_t#(\n"
+     "    .L(L),\n"
+     "    .W(W)\n"
+     ") bar_t;\n"},
 
     // package test cases
     {"package fedex;localparam  int  www=3 ;endpackage   :  fedex\n",

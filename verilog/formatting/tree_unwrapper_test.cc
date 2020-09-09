@@ -3038,6 +3038,19 @@ const TreeUnwrapperTestData kClassTestCases[] = {
                                ",", "y", ",", "z", ")", ";"}),
                          L(0, {"endclass"})),
     },
+    {
+        "extends class with type parameters",
+        "class Foo extends Bar #(.x(x),.y(y)); endclass",
+        ClassDeclaration(
+            0,
+            ClassHeader(0,  //
+                        L(0, {"class", "Foo", "extends", "Bar", "#", "("}),
+                        N(2,  //
+                          L(2, {".", "x", "(", "x", ")", ","}),
+                          L(2, {".", "y", "(", "y", ")"})),
+                        L(0, {")", ";"})),
+            L(0, {"endclass"})),
+    },
 
     {
         "class with function and task",
@@ -3740,6 +3753,22 @@ const TreeUnwrapperTestData kUnwrapPackageTestCases[] = {
                               EnumItemList(2, L(2, {"A", "=", "0", ","}),
                                            L(2, {"B", "=", "1"})),
                               L(1, {"}", "foo_t", ";"}))),
+            L(0, {"endpackage"})),
+    },
+    {
+        "package with typedef declaration on type with named parameters",
+        "package foo_pkg;"
+        "typedef goo_pkg::baz_t #(.X(X),.Y(Y)) bar_t;"
+        "endpackage",
+        PackageDeclaration(
+            0,  //
+            L(0, {"package", "foo_pkg", ";"}),
+            N(1,  //
+              L(1, {"typedef", "goo_pkg", "::", "baz_t", "#", "("}),
+              N(3,                                     //
+                L(3, {".", "X", "(", "X", ")", ","}),  //
+                L(3, {".", "Y", "(", "Y", ")"})),
+              L(1, {")", "bar_t", ";"})),  //
             L(0, {"endpackage"})),
     },
 
