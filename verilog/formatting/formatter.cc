@@ -267,6 +267,15 @@ Status FormatVerilog(absl::string_view text, absl::string_view filename,
   return format_status;
 }
 
+static verible::Interval<int> DisableByteOffsetRange(
+    absl::string_view substring, absl::string_view superstring) {
+  CHECK(!substring.empty());
+  auto range = verible::SubstringOffsets(substring, superstring);
+  // +1 so that formatting can still occur on the space before the start
+  // of the disabled range, for example allowing for indentation adjustments.
+  return {range.first + 1, range.second};
+}
+
 // Decided at each node in UnwrappedLine partition tree whether or not
 // it should be expanded or unexpanded.
 static void DeterminePartitionExpansion(
@@ -283,10 +292,10 @@ static void DeterminePartitionExpansion(
 
   const auto PreserveSpaces = [&ftoken_range, &full_text,
                                preformatted_tokens]() {
-    const ByteOffsetSet new_disable_range{
-        {ftoken_range.front().token->left(full_text) + 1,
-         // +1 allows left indentation to be adjusted
-         ftoken_range.back().token->right(full_text)}};
+    const ByteOffsetSet new_disable_range{{DisableByteOffsetRange(
+        verible::make_string_view_range(ftoken_range.front().Text().begin(),
+                                        ftoken_range.back().Text().end()),
+        full_text)}};
     verible::PreserveSpacesOnDisabledTokenRanges(preformatted_tokens,
                                                  new_disable_range, full_text);
   };
@@ -436,15 +445,6 @@ std::ostream& ExecutionControl::Stream() const {
 void Formatter::SelectLines(const LineNumberSet& lines) {
   disabled_ranges_ = EnabledLinesToDisabledByteRanges(
       lines, text_structure_.GetLineColumnMap());
-}
-
-static verible::Interval<int> DisableByteOffsetRange(
-    absl::string_view substring, absl::string_view superstring) {
-  CHECK(!substring.empty());
-  auto range = verible::SubstringOffsets(substring, superstring);
-  // +1 so that formatting can still occur on the space before the start
-  // of the disabled range.
-  return {range.first + 1, range.second};
 }
 
 // Given control flags and syntax tree, selectively disable some ranges
