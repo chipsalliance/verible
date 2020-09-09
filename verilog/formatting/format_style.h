@@ -15,10 +15,6 @@
 #ifndef VERIBLE_VERILOG_FORMATTING_FORMAT_STYLE_H_
 #define VERIBLE_VERILOG_FORMATTING_FORMAT_STYLE_H_
 
-#include <iosfwd>
-#include <string>
-
-#include "absl/strings/string_view.h"
 #include "common/formatting/align.h"
 #include "common/formatting/basic_format_style.h"
 
@@ -33,35 +29,37 @@ struct FormatStyle : public verible::BasicFormatStyle {
     over_column_limit_penalty = 10000;
   }
 
-  // If true, format module declarations' port declarations, else leave those
-  // regions unformatted.
-  // A user may wish to disable this in favor of their own aligned formatting.
-  // The default value here is true so that compact formatting can continue to
-  // be covered in integration tests.
-  // This flag is prone to change or be removed in the future.
-  // TODO(b/70310743): implement aligned formatting for this section,
-  //   and promote the control for this into AlignmentPolicy.
-  bool format_module_port_declarations = true;
+  // Control how named port_declaration (e.g. in modules, interfaces) are
+  // formatted.  Internal tests assume these are forced to kAlign.
+  AlignmentPolicy port_declarations_alignment = AlignmentPolicy::kAlign;
 
   // If true, format module instantiations, else leave those regions
   // unformatted. A user may wish to disable this in favor of their own aligned
   // formatting. The default value here is true so that compact formatting can
   // continue to be covered in integration tests. This flag is prone to change
   // or be removed in the future.
-  // TODO(b/152805837): implement aligned formatting for this section,
+  // TODO(b/164286027): align module instance named parameters
   //   and promote the control for this into AlignmentPolicy.
   bool format_module_instantiations = true;
 
-  // Control how named ports (e.g. in module instances) are formatted.
+  // Control how named parameters (e.g. in module instances) are formatted.
   // For internal testing purposes, this is default to kAlign.
+  AlignmentPolicy named_parameter_alignment = AlignmentPolicy::kAlign;
+
+  // Control how named ports (e.g. in module instances) are formatted.
+  // Internal tests assume these are forced to kAlign.
   AlignmentPolicy named_port_alignment = AlignmentPolicy::kAlign;
 
   // Control how module-local net/variable declarations are formatted.
-  // For internal testing purposes, this is default to kAlign.
+  // Internal tests assume these are forced to kAlign.
   AlignmentPolicy module_net_variable_alignment = AlignmentPolicy::kAlign;
 
+  // Control how formal parameters in modules/interfaces/classes are formatted.
+  // Internal tests assume these are forced to kAlign.
+  AlignmentPolicy formal_parameters_alignment = AlignmentPolicy::kAlign;
+
   // Control how class member variables are formatted.
-  // For internal testing purposes, this is default to kAlign.
+  // Internal tests assume these are forced to kAlign.
   AlignmentPolicy class_member_variable_alignment = AlignmentPolicy::kAlign;
 
   // At this time line wrap optimization is problematic and risks ruining
@@ -79,6 +77,15 @@ struct FormatStyle : public verible::BasicFormatStyle {
 
   // TODO(fangism): parameter to limit number of consecutive blank lines to
   // preserve between partitions.
+
+  void ApplyToAllAlignmentPolicies(AlignmentPolicy policy) {
+    port_declarations_alignment = policy;
+    named_parameter_alignment = policy;
+    named_port_alignment = policy;
+    module_net_variable_alignment = policy;
+    formal_parameters_alignment = policy;
+    class_member_variable_alignment = policy;
+  }
 };
 
 }  // namespace formatter

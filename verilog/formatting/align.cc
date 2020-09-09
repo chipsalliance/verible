@@ -41,6 +41,7 @@
 namespace verilog {
 namespace formatter {
 
+using verible::AlignablePartitionGroup;
 using verible::AlignmentCellScannerGenerator;
 using verible::AlignmentColumnProperties;
 using verible::AlignmentGroupAction;
@@ -100,6 +101,23 @@ static bool IgnoreWithinPortDeclarationPartitionGroup(
   return false;
 }
 
+static bool IgnoreWithinActualNamedParameterPartitionGroup(
+    const TokenPartitionTree& partition) {
+  const auto& uwline = partition.Value();
+  const auto token_range = uwline.TokensRange();
+  CHECK(!token_range.empty());
+  // ignore lines containing only comments
+  if (TokensAreAllComments(token_range)) return true;
+
+  // ignore partitions belonging to preprocessing directives
+  if (IsPreprocessorKeyword(verilog_tokentype(token_range.front().TokenEnum())))
+    return true;
+
+  // ignore everything that isn't passing a parameter by name
+  return !verible::SymbolCastToNode(*uwline.Origin())
+              .MatchesTag(NodeEnum::kParamByName);
+}
+
 static bool IgnoreWithinActualNamedPortPartitionGroup(
     const TokenPartitionTree& partition) {
   const auto& uwline = partition.Value();
@@ -149,15 +167,54 @@ static bool IgnoreWithinDataDeclarationPartitionGroup(
   return false;
 }
 
-class ActualNamedPortColumnSchemaScanner : public ColumnSchemaScanner {
+// This class marks up token-subranges in named parameter assignments for
+// alignment. e.g. ".parameter_name(value_expression)"
+class ActualNamedParameterColumnSchemaScanner : public ColumnSchemaScanner {
  public:
-  ActualNamedPortColumnSchemaScanner() = default;
+  ActualNamedParameterColumnSchemaScanner() = default;
+
   void Visit(const SyntaxTreeNode& node) override {
     auto tag = NodeEnum(node.Tag().tag);
     VLOG(2) << __FUNCTION__ << ", node: " << tag << " at "
             << TreePathFormatter(Path());
     switch (tag) {
+      case NodeEnum::kParamByName: {
+        // Always start first column right away
+        ReserveNewColumn(node, FlushLeft);
+        break;
+      }
       case NodeEnum::kParenGroup:
+        // Second column starts at the open parenthesis.
+        if (Context().DirectParentIs(NodeEnum::kParamByName)) {
+          ReserveNewColumn(node, FlushLeft);
+        }
+        break;
+      default:
+        break;
+    }
+    TreeContextPathVisitor::Visit(node);
+    VLOG(2) << __FUNCTION__ << ", leaving node: " << tag;
+  }
+};
+
+// This class marks up token-subranges in named port connections for alignment.
+// e.g. ".port_name(net_name)"
+class ActualNamedPortColumnSchemaScanner : public ColumnSchemaScanner {
+ public:
+  ActualNamedPortColumnSchemaScanner() = default;
+
+  void Visit(const SyntaxTreeNode& node) override {
+    auto tag = NodeEnum(node.Tag().tag);
+    VLOG(2) << __FUNCTION__ << ", node: " << tag << " at "
+            << TreePathFormatter(Path());
+    switch (tag) {
+      case NodeEnum::kActualNamedPort: {
+        // Always start first column right away
+        ReserveNewColumn(node, FlushLeft);
+        break;
+      }
+      case NodeEnum::kParenGroup:
+        // Second column starts at the open parenthesis.
         if (Context().DirectParentIs(NodeEnum::kActualNamedPort)) {
           ReserveNewColumn(node, FlushLeft);
         }
@@ -168,25 +225,10 @@ class ActualNamedPortColumnSchemaScanner : public ColumnSchemaScanner {
     TreeContextPathVisitor::Visit(node);
     VLOG(2) << __FUNCTION__ << ", leaving node: " << tag;
   }
-
-  void Visit(const SyntaxTreeLeaf& leaf) override {
-    VLOG(2) << __FUNCTION__ << ", leaf: " << leaf.get() << " at "
-            << TreePathFormatter(Path());
-    const int tag = leaf.get().token_enum();
-    switch (tag) {
-      case verilog_tokentype::SymbolIdentifier:
-        if (Context().DirectParentIs(NodeEnum::kActualNamedPort)) {
-          ReserveNewColumn(leaf, FlushLeft);
-        }
-        break;
-      default:
-        break;
-    }
-
-    VLOG(2) << __FUNCTION__ << ", leaving leaf: " << leaf.get();
-  }
 };
 
+// This class marks up token-subranges in port declarations for alignment.
+// e.g. "input wire clk,"
 class PortDeclarationColumnSchemaScanner : public ColumnSchemaScanner {
  public:
   PortDeclarationColumnSchemaScanner() = default;
@@ -354,6 +396,8 @@ static std::vector<TokenPartitionRange> GetConsecutiveDataDeclarationGroups(
       });
 }
 
+// This class marks up token-subranges in data declarations for alignment.
+// e.g. "foo_pkg::bar_t [3:0] some_values;"
 // Much of the implementation of this scanner was based on
 // PortDeclarationColumnSchemaScanner.
 // Differences:
@@ -485,7 +529,9 @@ class DataDeclarationColumnSchemaScanner : public ColumnSchemaScanner {
   bool new_column_after_open_bracket_ = false;
 };
 
-// For now, re-use the same column scanner as data/variable/net declarations.
+// This class marks up token-subranges in class member variable (data
+// declarations) for alignment. e.g. "const int [3:0] member_name;" For now,
+// re-use the same column scanner as data/variable/net declarations.
 class ClassPropertyColumnSchemaScanner : public ColumnSchemaScanner {
  public:
   ClassPropertyColumnSchemaScanner() = default;
@@ -523,6 +569,9 @@ class ClassPropertyColumnSchemaScanner : public ColumnSchemaScanner {
   }
 };
 
+// This class marks up token-subranges in formal parameter declarations for
+// alignment.
+// e.g. "localparam int Width = 5;"
 class ParameterDeclarationColumnSchemaScanner : public ColumnSchemaScanner {
  public:
   ParameterDeclarationColumnSchemaScanner() = default;
@@ -653,29 +702,41 @@ class ParameterDeclarationColumnSchemaScanner : public ColumnSchemaScanner {
 };
 
 static const verible::AlignedFormattingHandler kPortDeclarationAligner{
-    .extract_alignment_groups = &verible::GetSubpartitionsBetweenBlankLines,
-    .ignore_partition_predicate = &IgnoreWithinPortDeclarationPartitionGroup,
+    .extract_alignment_groups = verible::ExtractAlignmentGroupsAdapter(
+        &verible::GetSubpartitionsBetweenBlankLines,
+        &IgnoreWithinPortDeclarationPartitionGroup),
     .alignment_cell_scanner =
         AlignmentCellScannerGenerator<PortDeclarationColumnSchemaScanner>(),
 };
 
+static const verible::AlignedFormattingHandler kActualNamedParameterAligner{
+    .extract_alignment_groups = verible::ExtractAlignmentGroupsAdapter(
+        &verible::GetSubpartitionsBetweenBlankLines,
+        &IgnoreWithinActualNamedParameterPartitionGroup),
+    .alignment_cell_scanner = AlignmentCellScannerGenerator<
+        ActualNamedParameterColumnSchemaScanner>(),
+};
+
 static const verible::AlignedFormattingHandler kActualNamedPortAligner{
-    .extract_alignment_groups = &verible::GetSubpartitionsBetweenBlankLines,
-    .ignore_partition_predicate = &IgnoreWithinActualNamedPortPartitionGroup,
+    .extract_alignment_groups = verible::ExtractAlignmentGroupsAdapter(
+        &verible::GetSubpartitionsBetweenBlankLines,
+        &IgnoreWithinActualNamedPortPartitionGroup),
     .alignment_cell_scanner =
         AlignmentCellScannerGenerator<ActualNamedPortColumnSchemaScanner>(),
 };
 
 static const verible::AlignedFormattingHandler kDataDeclarationAligner{
-    .extract_alignment_groups = &GetConsecutiveDataDeclarationGroups,
-    .ignore_partition_predicate = &IgnoreWithinDataDeclarationPartitionGroup,
+    .extract_alignment_groups = verible::ExtractAlignmentGroupsAdapter(
+        &GetConsecutiveDataDeclarationGroups,
+        &IgnoreWithinDataDeclarationPartitionGroup),
     .alignment_cell_scanner =
         AlignmentCellScannerGenerator<DataDeclarationColumnSchemaScanner>(),
 };
 
 static const verible::AlignedFormattingHandler kClassPropertyAligner{
-    .extract_alignment_groups = &GetConsecutiveDataDeclarationGroups,
-    .ignore_partition_predicate = &IgnoreWithinDataDeclarationPartitionGroup,
+    .extract_alignment_groups = verible::ExtractAlignmentGroupsAdapter(
+        &GetConsecutiveDataDeclarationGroups,
+        &IgnoreWithinDataDeclarationPartitionGroup),
     .alignment_cell_scanner =
         AlignmentCellScannerGenerator<ClassPropertyColumnSchemaScanner>(),
 };
@@ -690,8 +751,9 @@ struct AlignedFormattingConfiguration {
 };
 
 static const verible::AlignedFormattingHandler kParameterDeclarationAligner{
-    .extract_alignment_groups = &verible::GetSubpartitionsBetweenBlankLines,
-    .ignore_partition_predicate = &IgnoreWithinPortDeclarationPartitionGroup,
+    .extract_alignment_groups = verible::ExtractAlignmentGroupsAdapter(
+        &verible::GetSubpartitionsBetweenBlankLines,
+        &IgnoreWithinPortDeclarationPartitionGroup),
     .alignment_cell_scanner = AlignmentCellScannerGenerator<
         ParameterDeclarationColumnSchemaScanner>(),
 };
@@ -717,9 +779,12 @@ void TabularAlignTokenPartitions(TokenPartitionTree* partition_ptr,
           {NodeEnum::kPortDeclarationList,
            {kPortDeclarationAligner,
             [](const FormatStyle& vstyle) {
-              return vstyle.format_module_instantiations
-                         ? AlignmentPolicy::kAlign
-                         : AlignmentPolicy::kPreserve;
+              return vstyle.port_declarations_alignment;
+            }}},
+          {NodeEnum::kActualParameterByNameList,
+           {kActualNamedParameterAligner,
+            [](const FormatStyle& vstyle) {
+              return vstyle.named_parameter_alignment;
             }}},
           {NodeEnum::kPortActualList,
            {kActualNamedPortAligner,
@@ -734,8 +799,7 @@ void TabularAlignTokenPartitions(TokenPartitionTree* partition_ptr,
           {NodeEnum::kFormalParameterList,
            {kParameterDeclarationAligner,
             [](const FormatStyle& vstyle) {
-              // TODO(fangism): Add a control in FormatStyle.
-              return AlignmentPolicy::kAlign;
+              return vstyle.formal_parameters_alignment;
             }}},
           {NodeEnum::kClassItems,
            {kClassPropertyAligner,

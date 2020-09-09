@@ -5405,7 +5405,9 @@ module_parameter_port_list_opt
   : '#' '(' module_parameter_port_list ')'
   { $$ = MakeTaggedNode(N::kFormalParameterListDeclaration, $1, MakeParenGroup($2, $3, $4)); }
   | '#' '(' ')'
-  { $$ = MakeTaggedNode(N::kFormalParameterListDeclaration, $1, MakeParenGroup($2, nullptr, $3)); }
+  { $$ = MakeTaggedNode(N::kFormalParameterListDeclaration, $1,
+                        MakeParenGroup($2, MakeTaggedNode(N::kFormalParameterList), $3));
+  }
   | /* empty */
   { $$ = nullptr; }
   ;

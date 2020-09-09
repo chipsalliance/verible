@@ -635,6 +635,202 @@ TEST(FactsTreeExtractor, WireTest) {
   EXPECT_EQ(result_pair.right, nullptr) << *result_pair.right;
 }
 
+TEST(FactsTreeExtractor, ClassTest) {
+  constexpr int kTag = 1;  // value doesn't matter
+  const verible::SyntaxTreeSearchTestCase kTestCase = {
+      {"class ", {kTag, "foo"}, ";\nendclass: ", {kTag, "foo"}}};
+
+  constexpr absl::string_view file_name = "verilog.v";
+  int exit_status = 0;
+  bool parse_ok = false;
+
+  const IndexingFactNode expected(
+      {
+          {
+              Anchor(file_name, 0, kTestCase.code.size()),
+              Anchor(kTestCase.code, 0, kTestCase.code.size()),
+          },
+          IndexingFactType ::kFile,
+      },
+      // refers to class foo
+      T({
+          {
+              Anchor(kTestCase.expected_tokens[1], kTestCase.code),
+              Anchor(kTestCase.expected_tokens[3], kTestCase.code),
+          },
+          IndexingFactType::kClass,
+      }));
+
+  const auto facts_tree =
+      ExtractOneFile(kTestCase.code, file_name, exit_status, parse_ok);
+
+  const auto result_pair = DeepEqual(facts_tree, expected);
+  EXPECT_EQ(result_pair.left, nullptr) << *result_pair.left;
+  EXPECT_EQ(result_pair.right, nullptr) << *result_pair.right;
+}
+
+TEST(FactsTreeExtractor, CLassWithinModuleTest) {
+  constexpr int kTag = 1;  // value doesn't matter
+  const verible::SyntaxTreeSearchTestCase kTestCase = {{"module ",
+                                                        {kTag, "m"},
+                                                        "();\nclass ",
+                                                        {kTag, "foo"},
+                                                        ";\nendclass:",
+                                                        {kTag, "foo"},
+                                                        ";\nendmodule: ",
+                                                        {kTag, "m"}}};
+
+  constexpr absl::string_view file_name = "verilog.v";
+  int exit_status = 0;
+  bool parse_ok = false;
+
+  const IndexingFactNode expected(
+      {
+          {
+              Anchor(file_name, 0, kTestCase.code.size()),
+              Anchor(kTestCase.code, 0, kTestCase.code.size()),
+          },
+          IndexingFactType ::kFile,
+      },
+      // refers to module foo
+      T(
+          {
+              {
+                  Anchor(kTestCase.expected_tokens[1], kTestCase.code),
+                  Anchor(kTestCase.expected_tokens[7], kTestCase.code),
+              },
+              IndexingFactType::kModule,
+          },
+          // refers to "class foo"
+          T({
+              {
+                  Anchor(kTestCase.expected_tokens[3], kTestCase.code),
+                  Anchor(kTestCase.expected_tokens[5], kTestCase.code),
+              },
+              IndexingFactType ::kClass,
+          })));
+
+  const auto facts_tree =
+      ExtractOneFile(kTestCase.code, file_name, exit_status, parse_ok);
+
+  const auto result_pair = DeepEqual(facts_tree, expected);
+  EXPECT_EQ(result_pair.left, nullptr) << *result_pair.left;
+  EXPECT_EQ(result_pair.right, nullptr) << *result_pair.right;
+}
+
+TEST(FactsTreeExtractor, NestedClassTest) {
+  constexpr int kTag = 1;  // value doesn't matter
+  const verible::SyntaxTreeSearchTestCase kTestCase = {{
+      "class ",
+      {kTag, "foo"},
+      ";\nclass ",
+      {kTag, "bar"},
+      ";\nendclass: ",
+      {kTag, "bar"},
+      "\nendclass: ",
+      {kTag, "foo"},
+  }};
+
+  constexpr absl::string_view file_name = "verilog.v";
+  int exit_status = 0;
+  bool parse_ok = false;
+
+  const IndexingFactNode expected(
+      {
+          {
+              Anchor(file_name, 0, kTestCase.code.size()),
+              Anchor(kTestCase.code, 0, kTestCase.code.size()),
+          },
+          IndexingFactType ::kFile,
+      },
+      // refers to class foo
+      T(
+          {
+              {
+                  Anchor(kTestCase.expected_tokens[1], kTestCase.code),
+                  Anchor(kTestCase.expected_tokens[7], kTestCase.code),
+              },
+              IndexingFactType::kClass,
+          },
+          // refers to class bar
+          T({
+              {
+                  Anchor(kTestCase.expected_tokens[3], kTestCase.code),
+                  Anchor(kTestCase.expected_tokens[5], kTestCase.code),
+              },
+              IndexingFactType ::kClass,
+          })));
+
+  const auto facts_tree =
+      ExtractOneFile(kTestCase.code, file_name, exit_status, parse_ok);
+
+  const auto result_pair = DeepEqual(facts_tree, expected);
+  EXPECT_EQ(result_pair.left, nullptr) << *result_pair.left;
+  EXPECT_EQ(result_pair.right, nullptr) << *result_pair.right;
+}
+
+TEST(FactsTreeExtractor, OneClassInstanceTest) {
+  constexpr int kTag = 1;  // value doesn't matter
+  const verible::SyntaxTreeSearchTestCase kTestCase = {
+      {"class ",
+       {kTag, "bar"},
+       ";\n endclass: ",
+       {kTag, "bar"},
+       "\nmodule ",
+       {kTag, "foo"},
+       "();\n ",
+       {kTag, "bar"},
+       " ",
+       {kTag, "b1"},
+       "= new();\n endmodule: ",
+       {kTag, "foo"}}};
+
+  constexpr absl::string_view file_name = "verilog.v";
+  int exit_status = 0;
+  bool parse_ok = false;
+
+  const IndexingFactNode expected(
+      {
+          {
+              Anchor(file_name, 0, kTestCase.code.size()),
+              Anchor(kTestCase.code, 0, kTestCase.code.size()),
+          },
+          IndexingFactType ::kFile,
+      },
+      // refers to class bar.
+      T({
+          {
+              Anchor(kTestCase.expected_tokens[1], kTestCase.code),
+              Anchor(kTestCase.expected_tokens[3], kTestCase.code),
+          },
+          IndexingFactType::kClass,
+      }),
+      // refers to module foo.
+      T(
+          {
+              {
+                  Anchor(kTestCase.expected_tokens[5], kTestCase.code),
+                  Anchor(kTestCase.expected_tokens[11], kTestCase.code),
+              },
+              IndexingFactType::kModule,
+          },
+          // refers to bar b1().
+          T({
+              {
+                  Anchor(kTestCase.expected_tokens[7], kTestCase.code),
+                  Anchor(kTestCase.expected_tokens[9], kTestCase.code),
+              },
+              IndexingFactType ::kClassInstance,
+          })));
+
+  const auto facts_tree =
+      ExtractOneFile(kTestCase.code, file_name, exit_status, parse_ok);
+
+  const auto result_pair = DeepEqual(facts_tree, expected);
+  EXPECT_EQ(result_pair.left, nullptr) << *result_pair.left;
+  EXPECT_EQ(result_pair.right, nullptr) << *result_pair.right;
+}
+
 }  // namespace
 }  // namespace kythe
 }  // namespace verilog

@@ -71,8 +71,11 @@ class ColumnSchemaScanner : public TreeContextPathVisitor {
   }
 
  protected:
-  // TODO(fangism): support specifying desired column characteristics, like
-  // flush_left.
+  // Mark the start of a new column for alignment.
+  // 'symbol' is a reference to the original source syntax subtree.
+  // 'properties' contains alignment configuration for the column.
+  // 'path' represents relative position within the enclosing syntax subtree,
+  // and is used as a key for ordering and matching columns.
   void ReserveNewColumn(const Symbol& symbol,
                         const AlignmentColumnProperties& properties,
                         const SyntaxTreePath& path);
@@ -126,6 +129,12 @@ std::vector<TokenPartitionRange> GetPartitionAlignmentSubranges(
         partition_selector,
     int min_match_count = 2);
 
+// This represents one unit of alignable work, which is usually a filtered
+// subset of partitions within a contiguous range of partitions.
+// TODO(fangism): pair this with an AlignmentCellScannerFunction to be able to
+// support heterogeneous subgroup alignment.
+using AlignablePartitionGroup = std::vector<TokenPartitionIterator>;
+
 // This is the interface used to extract alignment cells from ranges of tokens.
 // Note that it is not required to use a ColumnSchemaScanner.
 using AlignmentCellScannerFunction =
@@ -134,12 +143,21 @@ using AlignmentCellScannerFunction =
 // This is the interface used to sub-divide a range of token partitions into
 // a sequence of sub-ranges for the purposes of formatting aligned groups.
 using ExtractAlignmentGroupsFunction =
-    std::function<std::vector<TokenPartitionRange>(const TokenPartitionRange&)>;
+    std::function<std::vector<AlignablePartitionGroup>(
+        const TokenPartitionRange&)>;
 
 // This predicate function is used to select partitions to be ignored within
 // an alignment group.  For example, one may wish to ignore comment-only lines.
 using IgnoreAlignmentRowPredicate =
     std::function<bool(const TokenPartitionTree&)>;
+
+// This adapter composes two functions for alignment (legacy interface) into one
+// used in the current interface.  This exists to help migrate existing code
+// to the new interface.
+ExtractAlignmentGroupsFunction ExtractAlignmentGroupsAdapter(
+    const std::function<std::vector<TokenPartitionRange>(
+        const TokenPartitionRange&)>& legacy_extractor,
+    const IgnoreAlignmentRowPredicate& legacy_ignore_predicate);
 
 // Instantiates a ScannerType (implements ColumnSchemaScanner) and extracts
 // column alignment information, suitable as an AlignmentCellScannerFunction.
@@ -195,7 +213,18 @@ enum class AlignmentPolicy {
   kInferUserIntent,
 };
 
+namespace internal {
+extern const std::initializer_list<
+    std::pair<const absl::string_view, AlignmentPolicy>>
+    kAlignmentPolicyNameMap;
+}  // namespace internal
+
 std::ostream& operator<<(std::ostream&, AlignmentPolicy);
+
+bool AbslParseFlag(absl::string_view text, AlignmentPolicy* policy,
+                   std::string* error);
+
+std::string AbslUnparseFlag(const AlignmentPolicy& policy);
 
 // This struct bundles together the various functions needed for aligned
 // formatting.
@@ -207,10 +236,6 @@ struct AlignedFormattingHandler {
   // children of a parent partition of interest) into groups of lines that will
   // align with each other.
   ExtractAlignmentGroupsFunction extract_alignment_groups;
-
-  // This returns true for lines (in each alignment group) that should be
-  // ignored for alignment purposes, such as comment-only lines.
-  IgnoreAlignmentRowPredicate ignore_partition_predicate;
 
   // This function scans lines (token ranges)
   // for token positions that mark the start of a new column.
