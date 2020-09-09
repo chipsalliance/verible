@@ -23,6 +23,7 @@
 #include "gtest/gtest.h"
 #include "absl/strings/string_view.h"
 #include "common/analysis/syntax_tree_search.h"
+#include "common/analysis/syntax_tree_search_test_utils.h"
 #include "common/text/concrete_syntax_leaf.h"
 #include "common/text/text_structure.h"
 #include "common/text/token_info.h"
@@ -34,6 +35,9 @@
 
 namespace verilog {
 namespace {
+
+using verible::SyntaxTreeSearchTestCase;
+using verible::TreeSearchMatch;
 
 // Finds all qualified ids are found.
 TEST(IdIsQualifiedTest, VariousIds) {
@@ -101,6 +105,60 @@ TEST(GetIdentifierTest, UnqualifiedIds) {
       }
       EXPECT_EQ(got_ids, test.second);
     }
+  }
+}
+
+TEST(GetIdentifierTest, IdentifierUnpackedDimensions) {
+  constexpr int kTag = 1;  // value doesn't matter
+  const SyntaxTreeSearchTestCase kTestCases[] = {
+      {"module m();\n",
+       "input ",
+       {kTag, "a"},
+       " ,",
+       {kTag, "b"},
+       " ,",
+       {kTag, "c"},
+       ";\nendmodule"},
+      {"module m();\n",
+       "input wire ",
+       {kTag, "a"},
+       " ,",
+       {kTag, "b"},
+       "[0:4] ,",
+       {kTag, "c"},
+       ";\nendmodule"},
+      {"module m();\n",
+       "input ",
+       {kTag, "a"},
+       " ,",
+       {kTag, "b"},
+       "[0:4] ,",
+       {kTag, "c"},
+       ";\nendmodule"},
+  };
+  for (const auto& test : kTestCases) {
+    const absl::string_view code(test.code);
+    VerilogAnalyzer analyzer(code, "test-file");
+    const auto code_copy = analyzer.Data().Contents();
+    ASSERT_OK(analyzer.Analyze()) << "failed on:\n" << code;
+    const auto& root = analyzer.Data().SyntaxTree();
+
+    const auto decls =
+        FindAllIdentifierUnpackedDimensions(*ABSL_DIE_IF_NULL(root));
+
+    std::vector<TreeSearchMatch> identifiers;
+    for (const auto& decl : decls) {
+      const auto* identifier =
+          GetSymbolIdentifierFromIdentifierUnpackedDimensions(*decl.match);
+      identifiers.push_back(
+          TreeSearchMatch{identifier, {/* ignored context */}});
+    }
+
+    std::ostringstream diffs;
+    EXPECT_TRUE(test.ExactMatchFindings(identifiers, code_copy, &diffs))
+        << "failed on:\n"
+        << code << "\ndiffs:\n"
+        << diffs.str();
   }
 }
 

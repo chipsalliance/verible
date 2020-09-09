@@ -410,6 +410,81 @@ TEST(FactsTreeExtractor, ModuleWithPortsTest) {
   EXPECT_EQ(result_pair.right, nullptr) << *result_pair.right;
 }
 
+TEST(FactsTreeExtractor, MultiSignalDeclaration) {
+  constexpr int kTag = 1;  // value doesn't matter
+  const verible::SyntaxTreeSearchTestCase kTestCase = {{"module ",
+                                                        {kTag, "foo"},
+                                                        "(",
+                                                        "input ",
+                                                        {kTag, "in"},
+                                                        ");\n",
+                                                        "input ",
+                                                        {kTag, "x"},
+                                                        ", ",
+                                                        {kTag, "y"},
+                                                        ";\noutput ",
+                                                        {kTag, "z"},
+                                                        ";\nendmodule: ",
+                                                        {kTag, "foo"}}};
+
+  constexpr absl::string_view file_name = "verilog.v";
+  int exit_status = 0;
+  bool parse_ok = false;
+
+  const IndexingFactNode expected(
+      {
+          {
+              Anchor(file_name, 0, kTestCase.code.size()),
+              Anchor(kTestCase.code, 0, kTestCase.code.size()),
+          },
+          IndexingFactType ::kFile,
+      },
+      // refers to module foo.
+      T(
+          {
+              {
+                  Anchor(kTestCase.expected_tokens[1], kTestCase.code),
+                  Anchor(kTestCase.expected_tokens[13], kTestCase.code),
+              },
+              IndexingFactType::kModule,
+          },
+          // refers to input in.
+          T({
+              {
+                  Anchor(kTestCase.expected_tokens[4], kTestCase.code),
+              },
+              IndexingFactType::kVariableDefinition,
+          }),
+          // refers to output x.
+          T({
+              {
+                  Anchor(kTestCase.expected_tokens[7], kTestCase.code),
+              },
+              IndexingFactType::kVariableDefinition,
+          }),
+          // refers to output y
+          T({
+              {
+                  Anchor(kTestCase.expected_tokens[9], kTestCase.code),
+              },
+              IndexingFactType::kVariableDefinition,
+          }),
+          // refers to output z.
+          T({
+              {
+                  Anchor(kTestCase.expected_tokens[11], kTestCase.code),
+              },
+              IndexingFactType::kVariableDefinition,
+          })));
+
+  const auto facts_tree =
+      ExtractOneFile(kTestCase.code, file_name, exit_status, parse_ok);
+
+  const auto result_pair = DeepEqual(facts_tree, expected);
+  EXPECT_EQ(result_pair.left, nullptr) << *result_pair.left;
+  EXPECT_EQ(result_pair.right, nullptr) << *result_pair.right;
+}
+
 TEST(FactsTreeExtractor, ModuleInstanceWithPortsTest) {
   constexpr int kTag = 1;  // value doesn't matter
   const verible::SyntaxTreeSearchTestCase kTestCase = {{"module ",
@@ -495,7 +570,7 @@ TEST(FactsTreeExtractor, ModuleInstanceWithPortsTest) {
               },
               IndexingFactType ::kVariableDefinition,
           }),
-          // referes to bar b1(x, y).
+          // refers to bar b1(x, y).
           T({
               {
                   Anchor(kTestCase.expected_tokens[15], kTestCase.code),
