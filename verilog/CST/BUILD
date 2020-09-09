@@ -346,6 +346,7 @@ cc_test(
         ":identifier",
         
         "//common/analysis:syntax_tree_search",
+        "//common/analysis:syntax_tree_search_test_utils",
         "//common/text:concrete_syntax_leaf",
         "//common/text:text_structure",
         "//common/text:token_info",
