@@ -566,10 +566,19 @@ TEST(FactsTreeExtractor, MacroDefinitionTest) {
       {
           "`define ",
           {kTag, "PRINT_STRING"},
-          "(str1) $display(\"%s\\n\", str1)\n",
+          "(",
+          {kTag, "str1"},
+          ") $display(\"%s\\n\", str1)\n",
           "`define ",
           {kTag, "PRINT_3_STRING"},
-          R"((str1, str2, str3) \
+          "(",
+          {kTag, "str1"},
+          ", ",
+          {kTag, "str2"},
+          ", ",
+          {kTag, "str3"},
+          ")",
+          R"( \
     `PRINT_STRING(str1); \
     `PRINT_STRING(str2); \
     `PRINT_STRING(str3);)",
@@ -592,23 +601,53 @@ TEST(FactsTreeExtractor, MacroDefinitionTest) {
           IndexingFactType ::kFile,
       },
       // refers to macro PRINT_STRING.
-      T({
+      T(
           {
-              Anchor(kTestCase.expected_tokens[1], kTestCase.code),
+              {
+                  Anchor(kTestCase.expected_tokens[1], kTestCase.code),
+              },
+              IndexingFactType::kMacro,
           },
-          IndexingFactType::kMacro,
-      }),
+          // refers to str1 arg in PRINT_STRING.
+          T({
+              {
+                  Anchor(kTestCase.expected_tokens[3], kTestCase.code),
+              },
+              IndexingFactType ::kVariableDefinition,
+          })),
       // refers to macro PRINT_3_STRING.
-      T({
+      T(
           {
-              Anchor(kTestCase.expected_tokens[4], kTestCase.code),
+              {
+                  Anchor(kTestCase.expected_tokens[6], kTestCase.code),
+              },
+              IndexingFactType::kMacro,
           },
-          IndexingFactType::kMacro,
-      }),
+          // refers to str1 arg in PRINT_3_STRING.
+          T({
+              {
+                  Anchor(kTestCase.expected_tokens[8], kTestCase.code),
+              },
+              IndexingFactType ::kVariableDefinition,
+          }),
+          // refers to str2 arg in PRINT_3_STRING.
+          T({
+              {
+                  Anchor(kTestCase.expected_tokens[10], kTestCase.code),
+              },
+              IndexingFactType ::kVariableDefinition,
+          }),
+          // refers to str3 arg in PRINT_3_STRING.
+          T({
+              {
+                  Anchor(kTestCase.expected_tokens[12], kTestCase.code),
+              },
+              IndexingFactType ::kVariableDefinition,
+          })),
       // refers to macro TEN.
       T({
           {
-              Anchor(kTestCase.expected_tokens[7], kTestCase.code),
+              Anchor(kTestCase.expected_tokens[16], kTestCase.code),
           },
           IndexingFactType::kMacro,
       }));
@@ -627,10 +666,19 @@ TEST(FactsTreeExtractor, MacroCallTest) {
 
       "`define ",
       {kTag, "PRINT_STRING"},
-      "(str1) $display(\"%s\\n\", str1)\n",
+      "(",
+      {kTag, "str1"},
+      ") $display(\"%s\\n\", str1)\n",
       "`define ",
       {kTag, "PRINT_3_STRING"},
-      R"((str1, str2, str3) \
+      "(",
+      {kTag, "str1"},
+      ", ",
+      {kTag, "str2"},
+      ", ",
+      {kTag, "str3"},
+      ")",
+      R"( \
     `PRINT_STRING(str1); \
     `PRINT_STRING(str2); \
     `PRINT_STRING(str3);)",
@@ -639,7 +687,9 @@ TEST(FactsTreeExtractor, MacroCallTest) {
       " 10\n",
       "\n`define ",
       {kTag, "NUM"},
-      " (i) i\n",
+      "(",
+      {kTag, "i"},
+      ") i\n",
       "module ",
       {kTag, "macro"},
       ";\ninitial begin\n",
@@ -650,7 +700,7 @@ TEST(FactsTreeExtractor, MacroCallTest) {
       ");\n",
       "$display(\"%d\\n\", ",
       {kTag, "`NUM"},
-      ");\n",
+      "(1));\n",
       "end\nendmodule"};
 
   constexpr absl::string_view file_name = "verilog.v";
@@ -666,59 +716,97 @@ TEST(FactsTreeExtractor, MacroCallTest) {
           IndexingFactType ::kFile,
       },
       // refers to macro PRINT_STRING.
-      T({
+      T(
           {
-              Anchor(kTestCase.expected_tokens[1], kTestCase.code),
+              {
+                  Anchor(kTestCase.expected_tokens[1], kTestCase.code),
+              },
+              IndexingFactType::kMacro,
           },
-          IndexingFactType::kMacro,
-      }),
+          // refers to str1 in PRINT_STRING.
+          T({
+              {
+                  Anchor(kTestCase.expected_tokens[3], kTestCase.code),
+              },
+              IndexingFactType ::kVariableDefinition,
+          })),
       // refers to macro PRINT_3_STRING.
-      T({
+      T(
           {
-              Anchor(kTestCase.expected_tokens[4], kTestCase.code),
+              {
+                  Anchor(kTestCase.expected_tokens[6], kTestCase.code),
+              },
+              IndexingFactType::kMacro,
           },
-          IndexingFactType::kMacro,
-      }),
+          // refers to str1 in PRINT_3_STRING.
+          T({
+              {
+                  Anchor(kTestCase.expected_tokens[8], kTestCase.code),
+              },
+              IndexingFactType ::kVariableDefinition,
+          }),
+          // refers to str2 in PRINT_3_STRING.
+          T({
+              {
+                  Anchor(kTestCase.expected_tokens[10], kTestCase.code),
+              },
+              IndexingFactType ::kVariableDefinition,
+          }),
+          // refers to str3 in PRINT_3_STRING.
+          T({
+              {
+                  Anchor(kTestCase.expected_tokens[12], kTestCase.code),
+              },
+              IndexingFactType ::kVariableDefinition,
+          })),
       // refers to macro TEN.
       T({
           {
-              Anchor(kTestCase.expected_tokens[7], kTestCase.code),
+              Anchor(kTestCase.expected_tokens[16], kTestCase.code),
           },
           IndexingFactType::kMacro,
       }),
       // refers to macro NUM.
-      T({
+      T(
           {
-              Anchor(kTestCase.expected_tokens[10], kTestCase.code),
+              {
+                  Anchor(kTestCase.expected_tokens[19], kTestCase.code),
+              },
+              IndexingFactType::kMacro,
           },
-          IndexingFactType::kMacro,
-      }),
+          // refers to i in macro NUM.
+          T({
+              {
+                  Anchor(kTestCase.expected_tokens[21], kTestCase.code),
+              },
+              IndexingFactType ::kVariableDefinition,
+          })),
       // refers to module macro.
       T(
           {
               {
-                  Anchor(kTestCase.expected_tokens[13], kTestCase.code),
+                  Anchor(kTestCase.expected_tokens[24], kTestCase.code),
               },
               IndexingFactType::kModule,
           },
           // refers to macro call PRINT_3_STRINGS.
           T({
               {
-                  Anchor(kTestCase.expected_tokens[15], kTestCase.code),
+                  Anchor(kTestCase.expected_tokens[26], kTestCase.code),
               },
               IndexingFactType::kMacroCall,
           }),
           // refers to macro call TEN.
           T({
               {
-                  Anchor(kTestCase.expected_tokens[18], kTestCase.code),
+                  Anchor(kTestCase.expected_tokens[29], kTestCase.code),
               },
               IndexingFactType::kMacroCall,
           }),
           // refers to macro call NUM.
           T({
               {
-                  Anchor(kTestCase.expected_tokens[21], kTestCase.code),
+                  Anchor(kTestCase.expected_tokens[32], kTestCase.code),
               },
               IndexingFactType::kMacroCall,
           })));

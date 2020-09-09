@@ -132,23 +132,20 @@ void IndexingFactsTreeExtractor::Visit(const verible::SyntaxTreeNode& node) {
       ExtractMacroCall(node);
       break;
     }
-    // Special case to handle tags in leaves.
-    // e.g leaves tagged with MacroIdentifier.
-    case NodeEnum::kUnqualifiedId: {
-      const verible::SyntaxTreeLeaf* leaf =
-          ABSL_DIE_IF_NULL(AutoUnwrapIdentifier(node));
-
-      // Leaves tagged with MacroIdentifier.
-      if (leaf->get().token_enum() == verilog_tokentype::MacroIdentifier) {
-        ExtractMacroReference(*leaf);
-        break;
-      }
-
-      break;
-    }
     default: {
       TreeContextVisitor::Visit(node);
     }
+  }
+}
+
+void IndexingFactsTreeExtractor::Visit(const verible::SyntaxTreeLeaf& leaf) {
+  switch (leaf.get().token_enum()) {
+    case verilog_tokentype::MacroIdentifier: {
+      ExtractMacroReference(leaf);
+      break;
+    }
+    default:
+      break;
   }
 }
 
@@ -290,8 +287,22 @@ void IndexingFactsTreeExtractor::ExtractMacroDefinition(
     const verible::SyntaxTreeNode& preprocessor_definition) {
   const verible::SyntaxTreeLeaf& macro_name =
       GetMacroName(preprocessor_definition);
-  facts_tree_context_.top().NewChild(IndexingNodeData(
+
+  IndexingFactNode macro_node(IndexingNodeData(
       {Anchor(macro_name.get(), context_.base)}, IndexingFactType::kMacro));
+
+  const std::vector<verible::TreeSearchMatch> args =
+      FindAllMacroDefinitionsArgs(preprocessor_definition);
+
+  for (const verible::TreeSearchMatch& arg : args) {
+    const verible::SyntaxTreeLeaf& leaf = GetMacroArgName(*arg.match);
+
+    macro_node.NewChild(
+        IndexingNodeData({Anchor(leaf.get(), context_.base)},
+                         IndexingFactType::kVariableDefinition));
+  }
+
+  facts_tree_context_.top().NewChild(macro_node);
 }
 
 void IndexingFactsTreeExtractor::ExtractMacroCall(

@@ -34,6 +34,7 @@ class IndexingFactsTreeExtractor : public verible::TreeContextVisitor {
     root_.Value().AppendAnchor(Anchor(base, 0, base.size()));
   }
 
+  void Visit(const verible::SyntaxTreeLeaf& leaf) override;
   void Visit(const verible::SyntaxTreeNode& node) override;
 
   IndexingFactNode& GetRoot() { return root_; }
