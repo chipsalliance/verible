@@ -284,6 +284,7 @@ cc_library(
         ":verilog_matchers",  # fixdeps: keep
         ":verilog_nonterminals",
         ":verilog_treebuilder_utils",
+        ":identifier",
         "//common/analysis:syntax_tree_search",
         "//common/analysis/matcher",
         "//common/analysis/matcher:matcher_builders",
@@ -305,6 +306,7 @@ cc_test(
         "//common/text:concrete_syntax_tree",
         "//common/text:symbol",
         "//common/text:text_structure",
+        "//common/analysis:syntax_tree_search_test_utils",
         "//common/text:token_info",
         "//common/text:token_info_test_util",
         "//common/text:tree_utils",
@@ -342,6 +344,7 @@ cc_test(
     srcs = ["identifier_test.cc"],
     deps = [
         ":identifier",
+        
         "//common/analysis:syntax_tree_search",
         "//common/analysis:syntax_tree_search_test_utils",
         "//common/text:concrete_syntax_leaf",
@@ -631,6 +634,7 @@ cc_test(
         "//common/text:concrete_syntax_leaf",
         "//common/text:syntax_tree_context",
         "//common/text:text_structure",
+        "//common/analysis:syntax_tree_search_test_utils",
         "//common/text:token_info",
         "//common/util:logging",
         "//verilog/analysis:verilog_analyzer",
@@ -720,6 +724,7 @@ cc_library(
     hdrs = ["tasks.h"],
     deps = [
         ":verilog_matchers",  # fixdeps: keep
+        ":identifier",
         "//common/analysis:syntax_tree_search",
         "//common/analysis/matcher",
         "//common/analysis/matcher:matcher_builders",
@@ -739,6 +744,7 @@ cc_test(
         "//common/text:concrete_syntax_leaf",
         "//common/text:concrete_syntax_tree",
         "//common/text:symbol",
+        "//common/analysis:syntax_tree_search_test_utils",
         "//common/text:text_structure",
         "//common/text:token_info",
         "//common/util:casts",

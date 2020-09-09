@@ -48,6 +48,7 @@ class KytheFactsExtractor {
                                std::ostream* stream)
       : file_path_(file_path), stream_(stream) {}
 
+  // Traverses the current tree and explore its children.
   void Visit(const IndexingFactNode&);
 
  private:
@@ -150,8 +151,16 @@ class KytheFactsExtractor {
   // Extracts Kythe facts from class instance node and return its VName.
   VName ExtractClassInstances(const IndexingFactNode& class_instance_fact_node);
 
+  // Extracts kythe facts from a function or task node and returns its VName.
+  VName ExtractFunctionOrTask(const IndexingFactNode& function_fact_node);
+
+  // Extracts kythe facts from a function or task call node and returns its
+  // VName.
+  VName ExtractFunctionOrTaskCall(
+      const IndexingFactNode& function_call_fact_node);
+
   // Generates an anchor VName for kythe.
-  VName PrintAnchorVName(const Anchor&, absl::string_view) const;
+  VName PrintAnchorVName(const Anchor&);
 
   // Appends the signatures of previous containing scope vnames to make
   // signatures unique relative to scopes.
@@ -193,6 +202,9 @@ std::string CreateClassSignature(absl::string_view);
 
 // Creates the signature for module instantiations.
 std::string CreateVariableSignature(absl::string_view);
+
+// Creates the signature for funcitons or tasks.
+std::string CreateFunctionOrTaskSignature(absl::string_view);
 
 std::ostream& operator<<(std::ostream&, const KytheFactsPrinter&);
 
