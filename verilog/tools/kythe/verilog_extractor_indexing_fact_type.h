@@ -26,6 +26,8 @@ enum class IndexingFactType {
   // BEGIN GENERATE -- do not delete
   kFile,
   kModule,
+  kClass,
+  kClassInstance,
   kModuleInstance,
   kVariableDefinition,
   kVariableReference,

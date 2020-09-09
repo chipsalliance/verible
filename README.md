@@ -570,6 +570,102 @@ and follow the prompts.
 > verible-verilog-format-changed-lines-interactive.sh --rev origin/main
 > ```
 
+#### Aligned Formatting
+
+There are several sections of code that are eligible for aligned formatting. In
+each of these contexts, the user has some control over the alignment behavior.
+Without alignment, the default behavior is to flush-left, which respects
+indentation and minimum inter-token spacing constraints.
+
+Yet, alignment is not always desired. So how does the formatter know whether or
+not the user intended for alignment? It can only examine the original code and
+make some judgment.
+
+Consider the following example (module formal parameters):
+
+```
+module m #(
+  int W,
+  type T
+);
+  ...
+endmodule
+```
+
+With alignment, this formats to:
+
+```
+module m #(
+  int  W,
+  type T
+);
+  ...
+endmodule
+```
+
+When the spacing difference between between aligned and flushed-left formatting
+is "sufficiently small", the formatter will align because the small difference
+has low risk of compromising readability.
+
+In contrast, aligning the following example _could_ be considered less readable.
+
+original:
+
+```
+module m #(
+  int  W,
+  some_long_name T
+);
+  ...
+endmodule
+```
+
+aligned:
+
+```
+module m #(
+  int            W,
+  some_long_name T
+);
+  ...
+endmodule
+```
+
+To detect the above condition, the formatter examines the number of _excess_
+spaces (spacing errors) within an alignment group (original vs. flushed-left).
+If that value is lower than a threshold, the formatter infers that the author
+intended flush-left formatting.
+
+To induce alignment, the author needs to _inject_ four excess spaces _between_
+any two tokens in any row in the aligned section, not before first tokens (which
+fall under indentation, not alignment). In this example, spaces are deliberately
+injected before `W` (but after `W` would work too):
+
+```
+module m #(
+  int      W,
+  some_long_name T
+);
+  ...
+endmodule
+```
+
+formatted with alignment:
+
+```
+module m #(
+  int            W,
+  some_long_name T
+);
+  ...
+endmodule
+```
+
+This also implies that previously aligned code will most likely remain aligned.
+
+Finally, if none of the above conditions hold, the formatter will leave the
+original code as-is, preserving all pre-existing spaces.
+
 ### Lexical Diff
 
 `verible-verilog-diff` compares two input files for equivalence, where
