@@ -700,7 +700,12 @@ TEST(FactsTreeExtractor, MacroCallTest) {
       ");\n",
       "$display(\"%d\\n\", ",
       {kTag, "`NUM"},
-      "(1));\n",
+      "(",
+      {kTag, "`TEN"},
+      "));\n",
+      "parameter int x = ",
+      {kTag, "`TEN"},
+      ";\n"
       "end\nendmodule"};
 
   constexpr absl::string_view file_name = "verilog.v";
@@ -804,9 +809,23 @@ TEST(FactsTreeExtractor, MacroCallTest) {
               IndexingFactType::kMacroCall,
           }),
           // refers to macro call NUM.
+          T(
+              {
+                  {
+                      Anchor(kTestCase.expected_tokens[32], kTestCase.code),
+                  },
+                  IndexingFactType::kMacroCall,
+              },  // refers to macro call TEN.
+              T({
+                  {
+                      Anchor(kTestCase.expected_tokens[34], kTestCase.code),
+                  },
+                  IndexingFactType::kMacroCall,
+              })),
+          // refers to macro call TEN.
           T({
               {
-                  Anchor(kTestCase.expected_tokens[32], kTestCase.code),
+                  Anchor(kTestCase.expected_tokens[37], kTestCase.code),
               },
               IndexingFactType::kMacroCall,
           })));
