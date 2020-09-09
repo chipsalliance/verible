@@ -382,5 +382,44 @@ TEST(GetPackageNameTest, GetPackageEndLabelName) {
   }
 }
 
+TEST(GetPackageBodyTest, GetPackageItemList) {
+  constexpr int kTag = 1;
+  const SyntaxTreeSearchTestCase testcases[] = {
+      {""},
+      {"package foo;\n endpackage"},
+      {"package foo;\n endpackage: foo"},
+      {"package foo;\n",
+       {kTag,
+        "function int f();\n return 10;\n endfunction: f\n class "
+        "c; endclass: c"},
+       "\n ",
+       "endpackage: foo"},
+  };
+
+  for (const auto& test : testcases) {
+    const absl::string_view code(test.code);
+    VerilogAnalyzer analyzer(code, "test-file");
+    const auto code_copy = analyzer.Data().Contents();
+    ASSERT_OK(analyzer.Analyze()) << "failed on:\n" << code;
+    const auto& root = analyzer.Data().SyntaxTree();
+
+    const auto declarations =
+        FindAllPackageDeclarations(*ABSL_DIE_IF_NULL(root));
+
+    std::vector<TreeSearchMatch> lists;
+    for (const auto& decl : declarations) {
+      const auto* package_item_list = GetPackageItemList(*decl.match);
+      if (package_item_list == nullptr) continue;
+      lists.push_back(TreeSearchMatch{package_item_list, {}});
+    }
+
+    std::ostringstream diffs;
+    EXPECT_TRUE(test.ExactMatchFindings(lists, code_copy, &diffs))
+        << "failed on:\n"
+        << code << "\ndiffs:\n"
+        << diffs.str();
+  }
+}
+
 }  // namespace
 }  // namespace verilog
