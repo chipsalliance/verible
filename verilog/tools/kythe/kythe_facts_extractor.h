@@ -15,6 +15,7 @@
 #ifndef VERIBLE_VERILOG_TOOLS_KYTHE_KYTHE_FACTS_EXTRACTOR_H_
 #define VERIBLE_VERILOG_TOOLS_KYTHE_KYTHE_FACTS_EXTRACTOR_H_
 
+#include <map>
 #include <string>
 #include <utility>
 
@@ -47,7 +48,8 @@ class KytheFactsExtractor {
                                std::ostream* stream)
       : file_path_(file_path), stream_(stream) {}
 
-  void Visit(const IndexingFactNode&);
+  // Extracts kythe facts from the given IndexingFactsTree root.
+  void ExtractKytheFacts(const IndexingFactNode&);
 
  private:
   // Container with a stack of VNames to hold context of VNames during traversal
@@ -116,6 +118,14 @@ class KytheFactsExtractor {
     }
   };
 
+  // Directs the flow to the appropriate tag resolver function to extract the
+  // facts from the given IndexingFactsNode.
+  void Visit(const IndexingFactNode&);
+
+  // Extracts Packages and saves its scope to package_scope_context to be used
+  // for defintion searching.
+  void CreatePackageScopes(const IndexingFactNode&);
+
   // Extracts kythe facts from file node and returns it VName.
   VName ExtractFileFact(const IndexingFactNode&);
 
@@ -152,6 +162,27 @@ class KytheFactsExtractor {
   // Keeps track of scopes and definitions inside the scopes of ancestors as the
   // visitor traverses the facts tree.
   ScopeContext scope_context_;
+
+  // Saved packages signatures alongside with their inner members.
+  // This is used for resolving references to some variables after using import
+  // pkg::*.
+  // e.g
+  // package pkg1;
+  //   function my_fun(); endfunction
+  //   class my_class; endclass
+  // endpackage
+  //
+  // package pkg2;
+  //   function my_fun(); endfunction
+  //   class my_class; endclass
+  // endpackage
+  //
+  // Creates the following:
+  // {
+  //   "pkg1": ["my_fun", "my_class"],
+  //   "pkg2": ["my_fun", "my_class"]
+  // }
+  std::map<std::string, std::vector<VName>> package_scope_context;
 
   // Output stream for capturing, redirecting, testing and verifying the
   // output.

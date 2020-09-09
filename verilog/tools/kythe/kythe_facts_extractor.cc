@@ -24,6 +24,41 @@
 namespace verilog {
 namespace kythe {
 
+void KytheFactsExtractor::ExtractKytheFacts(const IndexingFactNode& root) {
+  CreatePackageScopes(root);
+  Visit(root);
+}
+
+void KytheFactsExtractor::CreatePackageScopes(const IndexingFactNode& root) {
+  for (const verible::VectorTree<IndexingNodeData>& child : root.Children()) {
+    if (child.Value().GetIndexingFactType() != IndexingFactType::kPackage) {
+      continue;
+    }
+
+    VName package_vname = ExtractPackageDeclaration(child);
+
+    std::vector<VName> current_scope;
+    const ScopeContext::AutoPop scope_auto_pop(&scope_context_, &current_scope);
+    const VNameContext::AutoPop vnames_auto_pop(&vnames_context_,
+                                                &package_vname);
+
+    for (const verible::VectorTree<IndexingNodeData>& grand_child :
+         child.Children()) {
+      Visit(grand_child);
+    }
+
+    package_scope_context[package_vname.signature] = current_scope;
+  }
+
+  for (auto x : package_scope_context) {
+    LOG(INFO) << x.first;
+    for (auto y : x.second) {
+      LOG(INFO) << y.signature;
+    }
+    LOG(INFO) << "";
+  }
+}
+
 void KytheFactsExtractor::Visit(const IndexingFactNode& node) {
   const auto tag = node.Value().GetIndexingFactType();
 
@@ -53,15 +88,13 @@ void KytheFactsExtractor::Visit(const IndexingFactNode& node) {
       vname = ExtractVariableReference(node);
       break;
     }
-    case IndexingFactType::kPackage: {
-      vname = ExtractPackageDeclaration(node);
-      scope_context_.top().push_back(vname);
+    default: {
       break;
     }
   }
 
   if (tag != IndexingFactType::kFile) {
-    *stream_ << Edge(vname, kEdgeChildOf, vnames_context_.top());
+    //*stream_ << Edge(vname, kEdgeChildOf, vnames_context_.top());
   }
 
   std::vector<VName> current_scope;
@@ -227,7 +260,9 @@ VName KytheFactsExtractor::PrintAnchorVName(const Anchor& anchor,
 
 std::string KytheFactsExtractor::CreateScopeRelativeSignature(
     absl::string_view signature) {
-  return absl::StrCat(signature, "#", vnames_context_.top().signature);
+  return vnames_context_.empty()
+             ? std::string(signature)
+             : absl::StrCat(signature, "#", vnames_context_.top().signature);
 }
 
 std::string CreatePackageSignature(absl::string_view package_name) {
@@ -248,7 +283,7 @@ std::string GetFilePathFromRoot(const IndexingFactNode& root) {
 
 std::ostream& KytheFactsPrinter::Print(std::ostream& stream) const {
   KytheFactsExtractor kythe_extractor(GetFilePathFromRoot(root_), &stream);
-  kythe_extractor.Visit(root_);
+  kythe_extractor.ExtractKytheFacts(root_);
   return stream;
 }
 
