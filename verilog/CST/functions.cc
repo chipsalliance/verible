@@ -22,6 +22,7 @@
 #include "common/text/concrete_syntax_tree.h"
 #include "common/text/symbol.h"
 #include "common/text/tree_utils.h"
+#include "verilog/CST/identifier.h"
 #include "verilog/CST/verilog_matchers.h"  // pragma IWYU: keep
 
 namespace verilog {
@@ -75,6 +76,30 @@ const Symbol* GetFunctionId(const Symbol& function_decl) {
 const Symbol* GetFunctionFormalPortsGroup(const Symbol& function_decl) {
   const auto& header = GetFunctionHeader(function_decl);
   return GetFunctionHeaderFormalPortsGroup(header);
+}
+
+const verible::SyntaxTreeLeaf* GetFunctionName(
+    const verible::Symbol& function_decl) {
+  const auto* function_id = GetFunctionId(function_decl);
+  return ABSL_DIE_IF_NULL(GetIdentifier(*function_id));
+}
+
+const verible::SyntaxTreeLeaf* GetFunctionCallName(
+    const verible::Symbol& function_call) {
+  const auto& local_root = GetSubtreeAsNode(
+      function_call, NodeEnum::kFunctionCall, 0, NodeEnum::kLocalRoot);
+
+  const auto& unqualified_id = GetSubtreeAsNode(
+      local_root, NodeEnum::kLocalRoot, 0, NodeEnum::kUnqualifiedId);
+
+  return ABSL_DIE_IF_NULL(GetIdentifier(unqualified_id));
+}
+
+const verible::SyntaxTreeNode& GetFunctionBlockStatementList(
+    const verible::Symbol& function_decl) {
+  return verible::GetSubtreeAsNode(function_decl,
+                                   NodeEnum::kFunctionDeclaration, 2,
+                                   NodeEnum::kBlockItemStatementList);
 }
 
 }  // namespace verilog

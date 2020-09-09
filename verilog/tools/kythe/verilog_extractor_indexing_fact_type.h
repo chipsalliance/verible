@@ -28,9 +28,13 @@ enum class IndexingFactType {
   kMacro,
   kModule,
   kMacroCall,
+  kClass,
+  kClassInstance,
   kModuleInstance,
   kVariableDefinition,
   kVariableReference,
+  kFunctionOrTask,
+  kFunctionCall,
   // END GENERATE -- do not delete
 };
 

@@ -121,7 +121,7 @@ const SyntaxTreeNode& GetUnqualifiedIdFromLocalRoot(const Symbol& local_root) {
   return GetSubtreeAsNode(local_root, NodeEnum::kLocalRoot, 0);
 }
 
-const verible::TokenInfo& GetTypeTokenInfoFromModuleInstantiation(
+const verible::TokenInfo& GetTypeTokenInfoFromDataDeclaration(
     const verible::Symbol& data_declaration) {
   const SyntaxTreeNode& instantiation_type =
       GetTypeOfDataDeclaration(data_declaration);
@@ -132,16 +132,9 @@ const verible::TokenInfo& GetTypeTokenInfoFromModuleInstantiation(
   const SyntaxTreeNode& local_root = GetLocalRootFromReference(reference);
   const SyntaxTreeNode& unqualified_id =
       GetUnqualifiedIdFromLocalRoot(local_root);
-  const verible::SyntaxTreeLeaf* module_symbol_identifier =
+  const verible::SyntaxTreeLeaf* instance_symbol_identifier =
       GetIdentifier(unqualified_id);
-  return module_symbol_identifier->get();
-}
-
-std::vector<verible::TreeSearchMatch> GetListOfGateInstanceFromDataDeclaration(
-    const verible::Symbol& data_declaration) {
-  const SyntaxTreeNode& instances_list =
-      GetInstanceListFromDataDeclaration(data_declaration);
-  return verible::SearchSyntaxTree(instances_list, NodekGateInstance());
+  return instance_symbol_identifier->get();
 }
 
 const verible::TokenInfo& GetModuleInstanceNameTokenInfoFromGateInstance(
@@ -150,4 +143,12 @@ const verible::TokenInfo& GetModuleInstanceNameTokenInfoFromGateInstance(
       GetSubtreeAsLeaf(gate_instance, NodeEnum::kGateInstance, 0);
   return instance_name.get();
 }
+
+const verible::TokenInfo& GetInstanceNameTokenInfoFromRegisterVariable(
+    const verible::Symbol& regiseter_variable) {
+  const verible::SyntaxTreeLeaf& instance_name =
+      GetSubtreeAsLeaf(regiseter_variable, NodeEnum::kRegisterVariable, 0);
+  return instance_name.get();
+}
+
 }  // namespace verilog

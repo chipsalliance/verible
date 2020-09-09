@@ -19,11 +19,10 @@
 #include <utility>
 #include <vector>
 
-#include "gmock/gmock.h"
-#include "gtest/gtest.h"
 #include "absl/strings/string_view.h"
 #include "common/analysis/matcher/matcher_builders.h"
 #include "common/analysis/syntax_tree_search.h"
+#include "common/analysis/syntax_tree_search_test_utils.h"
 #include "common/text/concrete_syntax_leaf.h"
 #include "common/text/concrete_syntax_tree.h"
 #include "common/text/symbol.h"
@@ -34,6 +33,8 @@
 #include "common/util/casts.h"
 #include "common/util/logging.h"
 #include "common/util/range.h"
+#include "gmock/gmock.h"
+#include "gtest/gtest.h"
 #include "verilog/CST/identifier.h"
 #include "verilog/analysis/verilog_analyzer.h"
 #include "verilog/parser/verilog_token_enum.h"
@@ -46,6 +47,8 @@ namespace {
 
 using verible::CheckSymbolAsLeaf;
 using verible::SymbolCastToNode;
+using verible::SyntaxTreeSearchTestCase;
+using verible::TreeSearchMatch;
 
 TEST(FindAllFunctionDeclarationsTest, EmptySource) {
   VerilogAnalyzer analyzer("", "");
@@ -385,6 +388,68 @@ TEST(GetFunctionFormalPortsGroupTest, WithFormalPorts) {
     ASSERT_TRUE(verible::IsSubRange(expected_span, code_copy));
     EXPECT_EQ(port_formals_span, expected_span);
     EXPECT_TRUE(verible::BoundsEqual(port_formals_span, expected_span));
+  }
+}
+
+TEST(GetFunctionHeaderTest, GetFunctionName) {
+  constexpr int kTag = 1;  // value doesn't matter
+  const SyntaxTreeSearchTestCase kTestCases[] = {
+      {""},
+      {"module m(); endmodule: m"},
+      {"function ",
+       {kTag, "foo"},
+       "();\n endfunction\n function ",
+       {kTag, "bar"},
+       "()\n; endfunction"},
+      {"function int ",
+       {kTag, "foo"},
+       "();\n endfunction\n function ",
+       {kTag, "bar"},
+       "()\n; endfunction"},
+      {"function int ",
+       {kTag, "foo"},
+       "(int a, bit x);\nreturn a;\n endfunction\n function ",
+       {kTag, "bar"},
+       "()\n; endfunction"},
+
+      {"module my_module;\nfunction int ",
+       {kTag, "inner_function"},
+       "(int my_args);\nreturn my_args;\nendfunction\nendmodule"},
+      {"class function_class;\nfunction int ",
+       {kTag, "my_function"},
+       "(input int a, b, output int c);\nc = a + b;\nreturn "
+       "c;\nendfunction\nendclass"},
+      {"package my_pkg;\nfunction automatic int ",
+       {kTag, "my_function"},
+       "(input int a, b, output int c);\nc = a + b;\nreturn "
+       "c;\nendfunction\nendpackage"},
+      {"class m;\n virtual function int ",
+       {kTag, "my_fun"},
+       "();\n return 10;\n endfunction\n  endclass"},
+      {"class m;\n static function int ",
+       {kTag, "my_fun"},
+       "();\n return 10;\n endfunction\n  endclass"},
+  };
+  for (const auto& test : kTestCases) {
+    const absl::string_view code(test.code);
+    VerilogAnalyzer analyzer(code, "test-file");
+    const auto code_copy = analyzer.Data().Contents();
+    ASSERT_OK(analyzer.Analyze()) << "failed on:\n" << code;
+    const auto& root = analyzer.Data().SyntaxTree();
+
+    const auto decls = FindAllFunctionDeclarations(*ABSL_DIE_IF_NULL(root));
+
+    std::vector<TreeSearchMatch> types;
+    for (const auto& decl : decls) {
+      const auto* type = GetFunctionName(*decl.match);
+      types.push_back(TreeSearchMatch{type, {/* ignored context */}});
+    }
+
+    std::ostringstream diffs;
+    EXPECT_TRUE(test.ExactMatchFindings(types, code_copy, &diffs))
+        << "failed on:\n"
+        << code << "\ndiffs:\n"
+        << diffs.str();
   }
 }
 
