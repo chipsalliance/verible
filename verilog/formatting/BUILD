@@ -229,23 +229,11 @@ cc_test(
 
 cc_library(
     name = "format_style",
-    srcs = ["format_style.cc"],
     hdrs = ["format_style.h"],
     deps = [
         "//common/formatting:align",
         "//common/formatting:basic_format_style",
-        "//common/util:enum_flags",
         "@com_google_absl//absl/strings",
-    ],
-)
-
-cc_test(
-    name = "format_style_test",
-    srcs = ["format_style_test.cc"],
-    deps = [
-        ":format_style",
-        "//common/util:enum_flags_test_util",
-        "@com_google_googletest//:gtest_main",
     ],
 )
 

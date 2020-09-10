@@ -1030,7 +1030,21 @@ void TreeUnwrapper::SetIndentationsAndCreatePartitions(
       break;
     }
 
-    case NodeEnum::kPortDeclarationList:
+    case NodeEnum::kPortDeclarationList: {
+      // Do not further indent preprocessor clauses.
+      const int indent =
+          suppress_indentation ? 0 : style_.PortDeclarationsIndentation();
+      if (Context().IsInside(NodeEnum::kClassHeader) ||
+          // kModuleHeader covers interfaces and programs
+          Context().IsInside(NodeEnum::kModuleHeader)) {
+        VisitIndentedSection(node, indent,
+                             PartitionPolicyEnum::kTabularAlignment);
+      } else {
+        VisitIndentedSection(node, indent,
+                             PartitionPolicyEnum::kFitOnLineElseExpand);
+      }
+      break;
+    }
     case NodeEnum::kFormalParameterList: {
       // Do not further indent preprocessor clauses.
       const int indent = suppress_indentation ? 0 : style_.wrap_spaces;

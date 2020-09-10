@@ -15,6 +15,10 @@
 #ifndef VERIBLE_VERILOG_FORMATTING_FORMAT_STYLE_H_
 #define VERIBLE_VERILOG_FORMATTING_FORMAT_STYLE_H_
 
+#include <iosfwd>
+#include <string>
+
+#include "absl/strings/string_view.h"
 #include "common/formatting/align.h"
 #include "common/formatting/basic_format_style.h"
 
@@ -24,10 +28,14 @@ namespace formatter {
 // Style parameters that are specific to Verilog formatter
 struct FormatStyle : public verible::BasicFormatStyle {
   using AlignmentPolicy = verible::AlignmentPolicy;
+  using IndentationStyle = verible::IndentationStyle;
 
   FormatStyle() : verible::BasicFormatStyle() {
     over_column_limit_penalty = 10000;
   }
+
+  // Control indentation amount for port declarations.
+  IndentationStyle port_declarations_indentation = IndentationStyle::kWrap;
 
   // Control how named port_declaration (e.g. in modules, interfaces) are
   // formatted.  Internal tests assume these are forced to kAlign.
@@ -77,6 +85,12 @@ struct FormatStyle : public verible::BasicFormatStyle {
 
   // TODO(fangism): parameter to limit number of consecutive blank lines to
   // preserve between partitions.
+
+  int PortDeclarationsIndentation() const {
+    return port_declarations_indentation == IndentationStyle::kWrap
+               ? wrap_spaces
+               : indentation_spaces;
+  }
 
   void ApplyToAllAlignmentPolicies(AlignmentPolicy policy) {
     port_declarations_alignment = policy;

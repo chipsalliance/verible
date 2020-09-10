@@ -7477,6 +7477,65 @@ TEST(FormatterEndToEndTest, DisableTryWrapLongLines) {
   }
 }
 
+TEST(FormatterEndToEndTest, ModulePortDeclarationsIndentNotWrap) {
+  static constexpr FormatterTestCase kTestCases[] = {
+      {"", ""},
+      {"\n", "\n"},
+      {"\n\n", "\n\n"},
+      {"module  m  ;\t\n"
+       "  endmodule\n",
+       "module m;\n"
+       "endmodule\n"},
+      {"module  m(   ) ;\n"
+       "  endmodule\n",
+       "module m ();\n"  // empty ports formatted compactly
+       "endmodule\n"},
+      {// single port example
+       "module  m   ( input     clk  )\t;\n"
+       "  endmodule\n",
+       "module m (\n"
+       "  input clk\n"  // 2 spaces
+       ");\n"
+       "endmodule\n"},
+      {// example with two ports
+       "module  m   (\n"
+       "input  clk,\n"
+       "output bar\n"
+       ")\t;\n"
+       "  endmodule\n",
+       "module m (\n"
+       "  input  clk,\n"  // indented 2 spaces, and aligned
+       "  output bar\n"
+       ");\n"
+       "endmodule\n"},
+      {// interface example
+       "interface  handshake   (\n"
+       "wire req,\n"
+       "wire ack\n"
+       ")\t;\n"
+       "  endinterface\n",
+       "interface handshake (\n"
+       "  wire req,\n"  // indented 2 spaces
+       "  wire ack\n"
+       ");\n"
+       "endinterface\n"},
+  };
+  FormatStyle style;
+  style.column_limit = 40;
+  style.indentation_spaces = 2;
+  style.wrap_spaces = 4;
+  // Indent 2 spaces instead of wrapping 4 spaces.
+  style.port_declarations_indentation = verible::IndentationStyle::kIndent;
+  for (const auto& test_case : kTestCases) {
+    VLOG(1) << "code-to-format:\n" << test_case.input << "<EOF>";
+    std::ostringstream stream;
+    const auto status =
+        FormatVerilog(test_case.input, "<filename>", style, stream);
+    // Require these test cases to be valid.
+    EXPECT_OK(status) << status.message();
+    EXPECT_EQ(stream.str(), test_case.expected) << "code:\n" << test_case.input;
+  }
+}
 struct SelectLinesTestCase {
   absl::string_view input;
   LineNumberSet lines;  // explicit set of lines to enable formatting

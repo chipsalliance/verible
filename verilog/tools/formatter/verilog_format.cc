@@ -47,6 +47,7 @@
 
 using absl::StatusCode;
 using verible::AlignmentPolicy;
+using verible::IndentationStyle;
 using verible::LineNumberSet;
 using verilog::formatter::ExecutionControl;
 using verilog::formatter::FormatStyle;
@@ -122,6 +123,8 @@ ABSL_FLAG(int, max_search_states, 100000,
 // These flags exist in the short term to disable formatting of some regions.
 // Do not expect to be able to use these in the long term, once they find
 // a better home in a configuration struct.
+ABSL_FLAG(IndentationStyle, port_declarations_indentation,
+          IndentationStyle::kWrap, "Indent port declarations: {indent,wrap}");
 
 // For most of the following in this group, kInferUserIntent is a reasonable
 // default behavior because it allows for user-control with minimal invasiveness
@@ -204,6 +207,10 @@ static bool formatOneFile(absl::string_view filename,
 
     // formatting style flags
     format_style.try_wrap_long_lines = absl::GetFlag(FLAGS_try_wrap_long_lines);
+
+    // various indentation control
+    format_style.port_declarations_indentation =
+        absl::GetFlag(FLAGS_port_declarations_indentation);
 
     // various alignment control
     format_style.port_declarations_alignment =
