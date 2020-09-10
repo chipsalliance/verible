@@ -19,8 +19,6 @@
 #include <utility>
 #include <vector>
 
-#include "gmock/gmock.h"
-#include "gtest/gtest.h"
 #include "absl/strings/string_view.h"
 #include "common/analysis/syntax_tree_search.h"
 #include "common/analysis/syntax_tree_search_test_utils.h"
@@ -31,6 +29,8 @@
 #include "common/text/token_info.h"
 #include "common/util/casts.h"
 #include "common/util/logging.h"
+#include "gmock/gmock.h"
+#include "gtest/gtest.h"
 #include "verilog/CST/identifier.h"
 #include "verilog/analysis/verilog_analyzer.h"
 #include "verilog/parser/verilog_token_enum.h"
@@ -245,7 +245,7 @@ TEST(GetTaskHeaderTest, GetTaskName) {
       {"package my_pkg;\ntask automatic ",
        {kTag, "my_task"},
        "(input int a, b, output int c);\nc = a + b;\nendtask\nendpackage"},
-      {"class m;\n virtual task ",
+       {"class m;\n virtual task ",
        {kTag, "my_task"},
        "();\n endtask\n  endclass"},
       {"class m;\n static task ",

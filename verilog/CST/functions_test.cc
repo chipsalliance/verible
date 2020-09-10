@@ -19,8 +19,6 @@
 #include <utility>
 #include <vector>
 
-#include "gmock/gmock.h"
-#include "gtest/gtest.h"
 #include "absl/strings/string_view.h"
 #include "common/analysis/matcher/matcher_builders.h"
 #include "common/analysis/syntax_tree_search.h"
@@ -35,6 +33,8 @@
 #include "common/util/casts.h"
 #include "common/util/logging.h"
 #include "common/util/range.h"
+#include "gmock/gmock.h"
+#include "gtest/gtest.h"
 #include "verilog/CST/identifier.h"
 #include "verilog/analysis/verilog_analyzer.h"
 #include "verilog/parser/verilog_token_enum.h"

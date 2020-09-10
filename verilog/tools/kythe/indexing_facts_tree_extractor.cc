@@ -23,6 +23,7 @@
 #include "verilog/CST/declaration.h"
 #include "verilog/CST/functions.h"
 #include "verilog/CST/identifier.h"
+#include "verilog/CST/macro.h"
 #include "verilog/CST/module.h"
 #include "verilog/CST/net.h"
 #include "verilog/CST/port.h"
@@ -129,6 +130,14 @@ void IndexingFactsTreeExtractor::Visit(const SyntaxTreeNode& node) {
       ExtractNetDeclaration(node);
       break;
     }
+    case NodeEnum::kPreprocessorDefine: {
+      ExtractMacroDefinition(node);
+      break;
+    }
+    case NodeEnum::kMacroCall: {
+      ExtractMacroCall(node);
+      break;
+    }
     case NodeEnum::kFunctionDeclaration: {
       ExtractFunctionDeclaration(node);
       break;
@@ -148,6 +157,17 @@ void IndexingFactsTreeExtractor::Visit(const SyntaxTreeNode& node) {
     default: {
       TreeContextVisitor::Visit(node);
     }
+  }
+}
+
+void IndexingFactsTreeExtractor::Visit(const verible::SyntaxTreeLeaf& leaf) {
+  switch (leaf.get().token_enum()) {
+    case verilog_tokentype::MacroIdentifier: {
+      ExtractMacroReference(leaf);
+      break;
+    }
+    default:
+      break;
   }
 }
 
@@ -207,9 +227,10 @@ void IndexingFactsTreeExtractor::ExtractModulePort(
     facts_tree_context_.top().NewChild(
         IndexingNodeData({Anchor(leaf->get(), context_.base)},
                          IndexingFactType::kVariableDefinition));
-  } else {
-    // For extracting Non-ANSI style ports:
-    // module m(a, b);
+  }
+  // For extracting Non-ANSI style ports:
+  // module m(a, b);
+  else {
     const verible::SyntaxTreeLeaf* leaf =
         GetIdentifierFromPortReference(module_port_node);
 
@@ -295,6 +316,55 @@ void IndexingFactsTreeExtractor::ExtractNetDeclaration(
         IndexingNodeData({Anchor(*wire_token_info, context_.base)},
                          IndexingFactType::kVariableDefinition));
   }
+}
+
+void IndexingFactsTreeExtractor::ExtractMacroDefinition(
+    const verible::SyntaxTreeNode& preprocessor_definition) {
+  const verible::SyntaxTreeLeaf& macro_name =
+      GetMacroName(preprocessor_definition);
+
+  IndexingFactNode macro_node(IndexingNodeData(
+      {Anchor(macro_name.get(), context_.base)}, IndexingFactType::kMacro));
+
+  const std::vector<verible::TreeSearchMatch> args =
+      FindAllMacroDefinitionsArgs(preprocessor_definition);
+
+  for (const verible::TreeSearchMatch& arg : args) {
+    const verible::SyntaxTreeLeaf& leaf = GetMacroArgName(*arg.match);
+
+    macro_node.NewChild(
+        IndexingNodeData({Anchor(leaf.get(), context_.base)},
+                         IndexingFactType::kVariableDefinition));
+  }
+
+  facts_tree_context_.top().NewChild(macro_node);
+}
+
+void IndexingFactsTreeExtractor::ExtractMacroCall(
+    const verible::SyntaxTreeNode& macro_call) {
+  const verible::TokenInfo& macro_call_name_token = GetMacroCallId(macro_call);
+
+  IndexingFactNode macro_node(
+      IndexingNodeData({Anchor(macro_call_name_token, context_.base)},
+                       IndexingFactType::kMacroCall));
+
+  {
+    const IndexingFactsTreeContext::AutoPop p(&facts_tree_context_,
+                                              &macro_node);
+
+    const verible::SyntaxTreeNode& macro_call_args =
+        GetMacroCallArgs(macro_call);
+    Visit(macro_call_args);
+  }
+
+  facts_tree_context_.top().NewChild(macro_node);
+}
+
+void IndexingFactsTreeExtractor::ExtractMacroReference(
+    const verible::SyntaxTreeLeaf& macro_identifier) {
+  facts_tree_context_.top().NewChild(
+      IndexingNodeData({Anchor(macro_identifier.get(), context_.base)},
+                       IndexingFactType::kMacroCall));
 }
 
 void IndexingFactsTreeExtractor::ExtractFunctionDeclaration(
