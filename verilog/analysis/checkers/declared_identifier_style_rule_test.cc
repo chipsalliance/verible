@@ -34,7 +34,19 @@ using verible::RunLintTestCases;
 TEST(DeclaredIdentifierStyleRuleTest, AcceptTests) {
   const std::initializer_list<LintTestCase> kTestCases = {
       {""},
-      {"module foo; logic a; endmodule"},
+      {"module foo; endmodule"},
+      {"package p; endpackage"},
+
+  };
+  RunLintTestCases<VerilogAnalyzer, DeclaredIdentifierStyleRule>(kTestCases);
+}
+
+// Tests that DeclaredIdentifierStyleRule correctly rejects invalid patterns.
+TEST(DeclaredIdentifierStyleRuleTest, RejectTests) {
+  constexpr int kToken = 1;
+  const std::initializer_list<LintTestCase> kTestCases = {
+      {"module ", {kToken, "ILLEGALNAME"}, "; endmodule"},
+      {"package ", {kToken, "ILLEGALNAME"}, "; endpackage"},
 
   };
   RunLintTestCases<VerilogAnalyzer, DeclaredIdentifierStyleRule>(kTestCases);

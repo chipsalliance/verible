@@ -82,6 +82,7 @@ cc_library(
         "//verilog/parser:verilog_token_enum",
         "//verilog/CST:module",
         "//verilog/CST:functions",
+        "//verilog/CST:package",
         "@com_google_absl//absl/strings",
     ],
     alwayslink = 1,

@@ -28,6 +28,7 @@
 #include "verilog/analysis/lint_rule_registry.h"
 #include "verilog/CST/module.h"
 #include "verilog/CST/functions.h"
+#include "verilog/CST/package.h"
 
 namespace verilog {
 namespace analysis {
@@ -58,12 +59,21 @@ void DeclaredIdentifierStyleRule::Visit(const verible::SyntaxTreeNode& node) {
     switch(tag) {
 
         case NodeEnum::kModuleDeclaration: {
-            //auto module_match = GetModuleNameToken(node);
-            //absl::string_view module_id = module_match.text();
+            const auto &module_match = GetModuleNameToken(node);
+            absl::string_view module_id = module_match.text();
+
+            if (absl::EqualsIgnoreCase(module_id,"ILLEGALNAME")){
+            violations_.insert(LintViolation(module_match, kMessage));
+            }
             break;
         }
-        case NodeEnum::kFunctionDeclaration: {
-            //auto func_match = GetFunctionId(node);
+        case NodeEnum::kPackageDeclaration: {
+            const auto &pack_match = GetPackageNameToken(node);
+            absl::string_view pack_id = pack_match.text();
+
+            if (absl::EqualsIgnoreCase(pack_id,"ILLEGALNAME")) {
+            violations_.insert(LintViolation(pack_match, kMessage));
+            }
             break;
         }
         default:
