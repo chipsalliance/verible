@@ -123,8 +123,11 @@ ABSL_FLAG(int, max_search_states, 100000,
 // These flags exist in the short term to disable formatting of some regions.
 // Do not expect to be able to use these in the long term, once they find
 // a better home in a configuration struct.
+
 ABSL_FLAG(IndentationStyle, port_declarations_indentation,
           IndentationStyle::kWrap, "Indent port declarations: {indent,wrap}");
+ABSL_FLAG(IndentationStyle, formal_parameters_indentation,
+          IndentationStyle::kWrap, "Indent formal parameters: {indent,wrap}");
 
 // For most of the following in this group, kInferUserIntent is a reasonable
 // default behavior because it allows for user-control with minimal invasiveness
@@ -211,6 +214,8 @@ static bool formatOneFile(absl::string_view filename,
     // various indentation control
     format_style.port_declarations_indentation =
         absl::GetFlag(FLAGS_port_declarations_indentation);
+    format_style.formal_parameters_indentation =
+        absl::GetFlag(FLAGS_formal_parameters_indentation);
 
     // various alignment control
     format_style.port_declarations_alignment =

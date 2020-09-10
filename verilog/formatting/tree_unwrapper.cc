@@ -1047,7 +1047,8 @@ void TreeUnwrapper::SetIndentationsAndCreatePartitions(
     }
     case NodeEnum::kFormalParameterList: {
       // Do not further indent preprocessor clauses.
-      const int indent = suppress_indentation ? 0 : style_.wrap_spaces;
+      const int indent =
+          suppress_indentation ? 0 : style_.FormalParametersIndentation();
       if (Context().IsInside(NodeEnum::kClassHeader) ||
           // kModuleHeader covers interfaces and programs
           Context().IsInside(NodeEnum::kModuleHeader)) {

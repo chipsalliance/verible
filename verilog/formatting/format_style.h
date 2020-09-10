@@ -62,6 +62,9 @@ struct FormatStyle : public verible::BasicFormatStyle {
   // Internal tests assume these are forced to kAlign.
   AlignmentPolicy module_net_variable_alignment = AlignmentPolicy::kAlign;
 
+  // Control indentation amount for formal parameter declarations.
+  IndentationStyle formal_parameters_indentation = IndentationStyle::kWrap;
+
   // Control how formal parameters in modules/interfaces/classes are formatted.
   // Internal tests assume these are forced to kAlign.
   AlignmentPolicy formal_parameters_alignment = AlignmentPolicy::kAlign;
@@ -88,6 +91,12 @@ struct FormatStyle : public verible::BasicFormatStyle {
 
   int PortDeclarationsIndentation() const {
     return port_declarations_indentation == IndentationStyle::kWrap
+               ? wrap_spaces
+               : indentation_spaces;
+  }
+
+  int FormalParametersIndentation() const {
+    return formal_parameters_indentation == IndentationStyle::kWrap
                ? wrap_spaces
                : indentation_spaces;
   }

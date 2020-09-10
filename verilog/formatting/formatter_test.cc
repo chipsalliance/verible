@@ -55,6 +55,7 @@ namespace {
 
 using absl::StatusCode;
 using verible::AlignmentPolicy;
+using verible::IndentationStyle;
 using verible::LineNumberSet;
 
 // Tests that clean output passes.
@@ -7525,7 +7526,7 @@ TEST(FormatterEndToEndTest, ModulePortDeclarationsIndentNotWrap) {
   style.indentation_spaces = 2;
   style.wrap_spaces = 4;
   // Indent 2 spaces instead of wrapping 4 spaces.
-  style.port_declarations_indentation = verible::IndentationStyle::kIndent;
+  style.port_declarations_indentation = IndentationStyle::kIndent;
   for (const auto& test_case : kTestCases) {
     VLOG(1) << "code-to-format:\n" << test_case.input << "<EOF>";
     std::ostringstream stream;
@@ -7536,6 +7537,78 @@ TEST(FormatterEndToEndTest, ModulePortDeclarationsIndentNotWrap) {
     EXPECT_EQ(stream.str(), test_case.expected) << "code:\n" << test_case.input;
   }
 }
+
+TEST(FormatterEndToEndTest, FormalParametersIndentNotWrap) {
+  static constexpr FormatterTestCase kTestCases[] = {
+      {"", ""},
+      {"\n", "\n"},
+      {"\n\n", "\n\n"},
+      {"module  m  ;\t\n"
+       "  endmodule\n",
+       "module m;\n"
+       "endmodule\n"},
+      {"module  m #(   ) ;\n"  // empty parameters
+       "  endmodule\n",
+       "module m #();\n"
+       "endmodule\n"},
+      {// single parameter example
+       "module  m   #( int W = 2)\t;\n"
+       "  endmodule\n",
+       "module m #(\n"
+       "  int W = 2\n"  // indented 2 spaces
+       ");\n"
+       "endmodule\n"},
+      {// module with two parameters
+       "module  m   #(\n"
+       "int W = 2,\n"
+       "int L = 4\n"
+       ")\t;\n"
+       "  endmodule\n",
+       "module m #(\n"
+       "  int W = 2,\n"  // indented 2 spaces
+       "  int L = 4\n"
+       ");\n"
+       "endmodule\n"},
+      {// interface with two parameters
+       "interface  m   #(\n"
+       "int W = 2,\n"
+       "int L = 4\n"
+       ")\t;\n"
+       "  endinterface\n",
+       "interface m #(\n"
+       "  int W = 2,\n"  // indented 2 spaces
+       "  int L = 4\n"
+       ");\n"
+       "endinterface\n"},
+      {// class with two parameters
+       "class  c   #(\n"
+       "int W = 2,\n"
+       "int L = 4\n"
+       ")\t;\n"
+       "  endclass\n",
+       "class c #(\n"
+       "  int W = 2,\n"  // indented 2 spaces
+       "  int L = 4\n"
+       ");\n"
+       "endclass\n"},
+  };
+  FormatStyle style;
+  style.column_limit = 40;
+  style.indentation_spaces = 2;
+  style.wrap_spaces = 4;
+  // Indent 2 spaces instead of wrapping 4 spaces.
+  style.formal_parameters_indentation = IndentationStyle::kIndent;
+  for (const auto& test_case : kTestCases) {
+    VLOG(1) << "code-to-format:\n" << test_case.input << "<EOF>";
+    std::ostringstream stream;
+    const auto status =
+        FormatVerilog(test_case.input, "<filename>", style, stream);
+    // Require these test cases to be valid.
+    EXPECT_OK(status) << status.message();
+    EXPECT_EQ(stream.str(), test_case.expected) << "code:\n" << test_case.input;
+  }
+}
+
 struct SelectLinesTestCase {
   absl::string_view input;
   LineNumberSet lines;  // explicit set of lines to enable formatting
