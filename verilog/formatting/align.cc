@@ -101,7 +101,7 @@ static bool IgnoreWithinPortDeclarationPartitionGroup(
   return false;
 }
 
-static bool IgnoreWithinActualNamedParameterPartitionGroup(
+static bool IgnoreCommentsAndPreprocessingDirectives(
     const TokenPartitionTree& partition) {
   const auto& uwline = partition.Value();
   const auto token_range = uwline.TokensRange();
@@ -113,22 +113,25 @@ static bool IgnoreWithinActualNamedParameterPartitionGroup(
   if (IsPreprocessorKeyword(verilog_tokentype(token_range.front().TokenEnum())))
     return true;
 
+  return false;
+}
+
+static bool IgnoreWithinActualNamedParameterPartitionGroup(
+    const TokenPartitionTree& partition) {
+  if (IgnoreCommentsAndPreprocessingDirectives(partition)) return true;
+
   // ignore everything that isn't passing a parameter by name
+  const auto& uwline = partition.Value();
   return !verible::SymbolCastToNode(*uwline.Origin())
               .MatchesTag(NodeEnum::kParamByName);
 }
 
 static bool IgnoreWithinActualNamedPortPartitionGroup(
     const TokenPartitionTree& partition) {
+  if (IgnoreCommentsAndPreprocessingDirectives(partition)) return true;
+
   const auto& uwline = partition.Value();
   const auto token_range = uwline.TokensRange();
-  CHECK(!token_range.empty());
-  // ignore lines containing only comments
-  if (TokensAreAllComments(token_range)) return true;
-
-  // ignore partitions belonging to preprocessing directives
-  if (IsPreprocessorKeyword(verilog_tokentype(token_range.front().TokenEnum())))
-    return true;
 
   // ignore wildcard connections .*
   if (verilog_tokentype(token_range.front().TokenEnum()) ==
@@ -148,21 +151,6 @@ static bool IgnoreWithinActualNamedPortPartitionGroup(
           .MatchesTag(NodeEnum::kActualPositionalPort)) {
     return true;
   }
-
-  return false;
-}
-
-static bool IgnoreWithinDataDeclarationPartitionGroup(
-    const TokenPartitionTree& partition) {
-  const auto& uwline = partition.Value();
-  const auto token_range = uwline.TokensRange();
-  CHECK(!token_range.empty());
-  // ignore lines containing only comments
-  if (TokensAreAllComments(token_range)) return true;
-
-  // ignore partitions belonging to preprocessing directives
-  if (IsPreprocessorKeyword(verilog_tokentype(token_range.front().TokenEnum())))
-    return true;
 
   return false;
 }
@@ -728,7 +716,7 @@ static const verible::AlignedFormattingHandler kActualNamedPortAligner{
 static const verible::AlignedFormattingHandler kDataDeclarationAligner{
     .extract_alignment_groups = verible::ExtractAlignmentGroupsAdapter(
         &GetConsecutiveDataDeclarationGroups,
-        &IgnoreWithinDataDeclarationPartitionGroup),
+        &IgnoreCommentsAndPreprocessingDirectives),
     .alignment_cell_scanner =
         AlignmentCellScannerGenerator<DataDeclarationColumnSchemaScanner>(),
 };
@@ -736,7 +724,7 @@ static const verible::AlignedFormattingHandler kDataDeclarationAligner{
 static const verible::AlignedFormattingHandler kClassPropertyAligner{
     .extract_alignment_groups = verible::ExtractAlignmentGroupsAdapter(
         &GetConsecutiveDataDeclarationGroups,
-        &IgnoreWithinDataDeclarationPartitionGroup),
+        &IgnoreCommentsAndPreprocessingDirectives),
     .alignment_cell_scanner =
         AlignmentCellScannerGenerator<ClassPropertyColumnSchemaScanner>(),
 };
