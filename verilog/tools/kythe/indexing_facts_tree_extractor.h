@@ -37,6 +37,7 @@ class IndexingFactsTreeExtractor : public verible::TreeContextVisitor {
     root_.Value().AppendAnchor(Anchor(base, 0, base.size()));
   }
 
+  void Visit(const verible::SyntaxTreeLeaf& leaf) override;
   void Visit(const verible::SyntaxTreeNode& node) override;
 
   IndexingFactNode& GetRoot() { return root_; }
@@ -68,6 +69,19 @@ class IndexingFactsTreeExtractor : public verible::TreeContextVisitor {
   void ExtractNetDeclaration(
       const verible::SyntaxTreeNode& net_declaration_node);
 
+  // Extract macro definitions and explores its arguments and creates its
+  // corresponding facts tree.
+  void ExtractMacroDefinition(
+      const verible::SyntaxTreeNode& preprocessor_definition);
+
+  // Extract macro calls and explores its arguments and creates its
+  // corresponding facts tree.
+  void ExtractMacroCall(const verible::SyntaxTreeNode& macro_call);
+
+  // Extract macro names from kMacroIdentifiers which are considered references
+  // to macros and creates its corresponding facts tree.
+  void ExtractMacroReference(const verible::SyntaxTreeLeaf& macro_identifier);
+
   // Extracts function and creates its corresponding fact tree.
   void ExtractFunctionDeclaration(
       const verible::SyntaxTreeNode& function_declaration_node);
@@ -83,10 +97,12 @@ class IndexingFactsTreeExtractor : public verible::TreeContextVisitor {
   // Extracts function or task ports and parameters.
   void ExtractFunctionTaskPort(
       const verible::SyntaxTreeNode& function_declaration_node);
+
   // Extracts classes and creates its corresponding fact tree.
   void ExtractClassDeclaration(
       const verible::SyntaxTreeNode& class_declaration);
 
+  // Extracts class instances and creates its corresponding fact tree.
   void ExtractClassInstances(
       const verible::SyntaxTreeNode& data_declaration,
       const std::vector<verible::TreeSearchMatch>& register_variables);

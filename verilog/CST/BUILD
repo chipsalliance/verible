@@ -391,6 +391,8 @@ cc_test(
     deps = [
         ":macro",
         ":verilog_nonterminals",
+        "//common/analysis:syntax_tree_search",
+        "//common/analysis:syntax_tree_search_test_utils",
         "//common/text:text_structure",
         "//common/text:token_info_test_util",
         "//common/util:range",

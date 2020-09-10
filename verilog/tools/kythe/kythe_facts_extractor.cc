@@ -51,6 +51,11 @@ void KytheFactsExtractor::Visit(const IndexingFactNode& node) {
       scope_context_.top().push_back(vname);
       break;
     }
+    case IndexingFactType::kMacro: {
+      vname = ExtractMacroDefinition(node);
+      scope_context_.top().push_back(vname);
+      break;
+    }
     case IndexingFactType::kVariableReference: {
       vname = ExtractVariableReferenceFact(node);
       break;
@@ -71,6 +76,10 @@ void KytheFactsExtractor::Visit(const IndexingFactNode& node) {
     }
     case IndexingFactType::kFunctionCall: {
       vname = ExtractFunctionOrTaskCall(node);
+      break;
+    }
+    case IndexingFactType::kMacroCall: {
+      vname = ExtractMacroCall(node);
       break;
     }
   }
@@ -222,6 +231,37 @@ VName KytheFactsExtractor::ExtractVariableReferenceFact(
   }
 }
 
+VName KytheFactsExtractor::ExtractMacroDefinition(
+    const IndexingFactNode& macro_definition_node) {
+  const Anchor& macro_name = macro_definition_node.Value().Anchors()[0];
+
+  const VName macro_vname(file_path_, CreateMacroSignature(macro_name.Value()));
+  const VName module_name_anchor = PrintAnchorVName(macro_name);
+
+  GenerateFactString(macro_vname, kFactNodeKind, kNodeMacro);
+  GenerateEdgeString(module_name_anchor, kEdgeDefinesBinding, macro_vname);
+
+  return macro_vname;
+}
+
+VName KytheFactsExtractor::ExtractMacroCall(
+    const IndexingFactNode& macro_call_node) {
+  const Anchor& macro_name = macro_call_node.Value().Anchors()[0];
+  const VName macro_vname_anchor = PrintAnchorVName(macro_name);
+
+  // We pass a substring to ignore the ` before macro name.
+  // e.g.
+  // `define TEN 0
+  // `TEN --> removes the `
+  const VName variable_definition_vname(
+      file_path_, CreateMacroSignature(macro_name.Value().substr(1)));
+
+  GenerateEdgeString(macro_vname_anchor, kEdgeRefExpands,
+                     variable_definition_vname);
+
+  return variable_definition_vname;
+}
+
 VName KytheFactsExtractor::ExtractFunctionOrTask(
     const IndexingFactNode& function_fact_node) {
   const auto& function_name = function_fact_node.Value().Anchors()[0];
@@ -352,6 +392,10 @@ std::string CreateClassSignature(absl::string_view class_name) {
 
 std::string CreateVariableSignature(absl::string_view variable_name) {
   return absl::StrCat(variable_name, "#variable");
+}
+
+std::string CreateMacroSignature(absl::string_view macro_name) {
+  return absl::StrCat(macro_name, "#macro");
 }
 
 std::string CreateFunctionOrTaskSignature(absl::string_view function_name) {

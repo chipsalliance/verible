@@ -26,6 +26,7 @@ constexpr absl::string_view kModuleBuiltin = "module#builtin";
 // Kythe Nodes.
 constexpr absl::string_view kNodeAnchor = "anchor";
 constexpr absl::string_view kNodeRecord = "record";
+constexpr absl::string_view kNodeMacro = "macro";
 constexpr absl::string_view kNodeFile = "file";
 constexpr absl::string_view kNodeBuiltin = "tbuiltin";
 constexpr absl::string_view kSubkindModule = "module";
@@ -45,6 +46,7 @@ constexpr absl::string_view kFactAnchorStart = "/kythe/loc/start";
 constexpr absl::string_view kEdgeDefinesBinding = "/kythe/edge/defines/binding";
 constexpr absl::string_view kEdgeChildOf = "/kythe/edge/childof";
 constexpr absl::string_view kEdgeRef = "/kythe/edge/ref";
+constexpr absl::string_view kEdgeRefExpands = "/kythe/edge/ref/expands";
 constexpr absl::string_view kEdgeRefCall = "/kythe/edge/ref/call";
 constexpr absl::string_view kEdgeTyped = "/kythe/edge/typed";
 
