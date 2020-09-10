@@ -36,6 +36,7 @@
 #include "common/util/logging.h"
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
+#include "verilog/CST/match_test_utils.h"
 #include "verilog/analysis/verilog_analyzer.h"
 
 #undef EXPECT_OK
@@ -50,6 +51,7 @@ namespace {
 using verible::down_cast;
 using verible::SyntaxTreeNode;
 using verible::SyntaxTreeSearchTestCase;
+using verible::TextStructureView;
 using verible::TreeSearchMatch;
 
 TEST(FindAllPackageDeclarationsTest, VariousTests) {
@@ -418,6 +420,73 @@ TEST(GetPackageBodyTest, GetPackageItemList) {
         << "failed on:\n"
         << code << "\ndiffs:\n"
         << diffs.str();
+  }
+}
+
+TEST(PackageImportTest, GetImportedPackageName) {
+  constexpr int kTag = 1;  // value doesn't matter
+  const SyntaxTreeSearchTestCase kTestCases[] = {
+      {""},
+      {"module m; endmodule\n"},
+      {"package pkg; endpackage\nmodule m();\n import ",
+       {kTag, "pkg"},
+       "::*;\nendmodule"},
+      {"package pkg;\n int my_int;\nendpackage\nmodule m();\n import ",
+       {kTag, "pkg"},
+       "::*;\nimport ",
+       {kTag, "pkg"},
+       "::my_int;\nendmodule"},
+  };
+  for (const auto& test : kTestCases) {
+    TestVerilogSyntaxRangeMatches(
+        __FUNCTION__, test, [](const TextStructureView& text_structure) {
+          const auto& root = text_structure.SyntaxTree();
+          const auto decls = FindAllPackageImportItems(*ABSL_DIE_IF_NULL(root));
+
+          std::vector<TreeSearchMatch> names;
+          for (const auto& decl : decls) {
+            const auto& name = GetImportedPackageName(*decl.match);
+            names.emplace_back(TreeSearchMatch{&name, {/* ignored context */}});
+          }
+          return names;
+        });
+  }
+}
+
+TEST(PackageImportTest, GetImportedItemName) {
+  constexpr int kTag = 1;  // value doesn't matter
+  const SyntaxTreeSearchTestCase kTestCases[] = {
+      {""},
+      {"module m; endmodule\n"},
+      {"package pkg; endpackage\nmodule m();\n import pkg::*;\nendmodule"},
+      {"package pkg;\n int my_int;\nendpackage\nmodule m();\n import "
+       "pkg::*;\nimport pkg::",
+       {kTag, "my_int"},
+       ";\nendmodule"},
+      {"package pkg;\n int my_int;\nclass "
+       "my_class;\nendclass\nendpackage\nmodule m();\n import "
+       "pkg::*;\nimport pkg::",
+       {kTag, "my_int"},
+       ";\nimport pkg::",
+       {kTag, "my_class"},
+       ";\nendmodule"},
+  };
+  for (const auto& test : kTestCases) {
+    TestVerilogSyntaxRangeMatches(
+        __FUNCTION__, test, [](const TextStructureView& text_structure) {
+          const auto& root = text_structure.SyntaxTree();
+          const auto decls = FindAllPackageImportItems(*ABSL_DIE_IF_NULL(root));
+
+          std::vector<TreeSearchMatch> names;
+          for (const auto& decl : decls) {
+            const auto* name =
+                GeImportedItemNameFromPackageImportItem(*decl.match);
+            if (name == nullptr) continue;
+            names.emplace_back(TreeSearchMatch{name, {/* ignored context
+            */}});
+          }
+          return names;
+        });
   }
 }
 

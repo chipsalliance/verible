@@ -566,6 +566,7 @@ cc_test(
         "//common/text:symbol",
         "//common/text:text_structure",
         "//common/text:token_info",
+        ":match_test_utils",
         "//common/util:casts",
         "//common/util:logging",
         "//verilog/analysis:verilog_analyzer",

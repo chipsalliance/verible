@@ -130,9 +130,24 @@ class KytheFactsExtractor {
     }
   };
 
-  // Directs the flow to the appropriate tag resolver function to extract the
-  // facts from the given IndexingFactsNode.
-  void Visit(const IndexingFactNode&);
+  // Searches for a defintion suitable for the given reference within package
+  // scope context of the given package name.
+  const VName* SearchForDefinitionVNameInPackage(std::string package_name,
+                                                 std::string reference_name);
+
+  // Resolves the tag of the given node and directs the flow to the appropriate
+  // function to extract kythe facts for that node.
+  void IndexingFactNodeTagResolver(const IndexingFactNode&);
+
+  // Add the given VName to vnames_context (to be used in scope relative
+  // signatures) and visits the children of the given node.
+  void Visit(const IndexingFactNode& node,
+                                 const VName& vname,
+                                 std::vector<VName>& current_scope);
+
+  // Directs the flow to the children of the given node creating new scope for
+  // that node.
+  void Visit(const IndexingFactNode& node, std::vector<VName>& current_scope);
 
   // Extracts Packages and saves its scope to package_scope_context to be used
   // for defintion searching.
@@ -170,6 +185,9 @@ class KytheFactsExtractor {
 
   // Extracts kythe facts from a package declaration node and returns its VName.
   VName ExtractPackageDeclaration(const IndexingFactNode& node);
+
+  // Extracts kythe facts from package import node and returns its VName.
+  VName ExtractPackageImport(const IndexingFactNode& node);
 
   // Generates an anchor VName for kythe.
   VName PrintAnchorVName(const Anchor&);
@@ -220,7 +238,7 @@ class KytheFactsExtractor {
   //   "pkg1": ["my_fun", "my_class"],
   //   "pkg2": ["my_fun", "my_class"]
   // }
-  std::map<std::string, std::vector<VName>> package_scope_context;
+  std::map<std::string, std::vector<VName>> package_scope_context_;
 
   // Output stream for capturing, redirecting, testing and verifying the
   // output.

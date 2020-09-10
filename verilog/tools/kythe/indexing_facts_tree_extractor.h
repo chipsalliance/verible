@@ -87,13 +87,18 @@ class IndexingFactsTreeExtractor : public verible::TreeContextVisitor {
   // Extracts function or task ports and parameters.
   void ExtractFunctionTaskPort(
       const verible::SyntaxTreeNode& function_declaration_node);
+
   // Extracts classes and creates its corresponding fact tree.
   void ExtractClassDeclaration(
       const verible::SyntaxTreeNode& class_declaration);
 
+  // Extracts class instances and creates its corresponding fact tree.
   void ExtractClassInstances(
       const verible::SyntaxTreeNode& data_declaration,
       const std::vector<verible::TreeSearchMatch>& register_variables);
+
+  // Extracts package imports and creates its corresponding fact tree.
+  void ExtractPackageImport(const verible::SyntaxTreeNode& package_import_item);
 
   // The Root of the constructed tree
   IndexingFactNode root_{IndexingNodeData(IndexingFactType::kFile)};

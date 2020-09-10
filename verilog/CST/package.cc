@@ -33,6 +33,11 @@ std::vector<verible::TreeSearchMatch> FindAllPackageDeclarations(
   return SearchSyntaxTree(root, NodekPackageDeclaration());
 }
 
+std::vector<verible::TreeSearchMatch> FindAllPackageImportItems(
+    const verible::Symbol& root) {
+  return SearchSyntaxTree(root, NodekPackageImportItem());
+}
+
 const verible::TokenInfo& GetPackageNameToken(const verible::Symbol& s) {
   const auto& name_node = GetPackageNameLeaf(s);
   return name_node.get();
@@ -58,6 +63,32 @@ const verible::Symbol* GetPackageItemList(
     const verible::Symbol& package_declaration) {
   return verible::GetSubtreeAsSymbol(package_declaration,
                                      NodeEnum::kPackageDeclaration, 4);
+}
+
+const verible::SyntaxTreeNode& GetScopePrefixFromPackageImportItem(
+    const verible::Symbol& package_import_item) {
+  return verible::GetSubtreeAsNode(package_import_item,
+                                   NodeEnum::kPackageImportItem, 0,
+                                   NodeEnum::kScopePrefix);
+}
+
+const verible::SyntaxTreeLeaf& GetImportedPackageName(
+    const verible::Symbol& package_import_item) {
+  return verible::GetSubtreeAsLeaf(
+      GetScopePrefixFromPackageImportItem(package_import_item),
+      NodeEnum::kScopePrefix, 0);
+}
+
+const verible::SyntaxTreeLeaf* GeImportedItemNameFromPackageImportItem(
+    const verible::Symbol& package_import_item) {
+  const auto& imported_item = verible::GetSubtreeAsLeaf(
+      package_import_item, NodeEnum::kPackageImportItem, 1);
+
+  if (imported_item.get().token_enum() != verilog_tokentype::SymbolIdentifier) {
+    return nullptr;
+  }
+
+  return &imported_item;
 }
 
 }  // namespace verilog

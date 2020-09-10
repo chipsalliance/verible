@@ -30,9 +30,14 @@ namespace verilog {
 std::vector<verible::TreeSearchMatch> FindAllPackageDeclarations(
     const verible::Symbol&);
 
+// Find all package imports items.
+std::vector<verible::TreeSearchMatch> FindAllPackageImportItems(
+    const verible::Symbol& root);
+
 // Extract the subnode of a package declaration that is the package name.
 const verible::TokenInfo& GetPackageNameToken(const verible::Symbol&);
 
+// Return the node spanning the name of the package.
 const verible::SyntaxTreeLeaf& GetPackageNameLeaf(const verible::Symbol& s);
 
 // Extracts the node that spans the name of the package after endpackage if
@@ -43,6 +48,22 @@ const verible::SyntaxTreeLeaf* GetPackageNameEndLabel(
 // Extracts the node that spans the body of the package.
 const verible::Symbol* GetPackageItemList(
     const verible::Symbol& package_declaration);
+
+// Extracts the node spanning the ScopePrefix node within PackageImportItem
+// node.
+const verible::SyntaxTreeNode& GetScopePrefixFromPackageImportItem(
+    const verible::Symbol& package_import_item);
+
+// Extracts package name for package import (node tagged with
+// kPackageImportItem).
+// e.g import pkg::my_integer return the node spanning "pkg".
+const verible::SyntaxTreeLeaf& GetImportedPackageName(
+    const verible::Symbol& package_import_item);
+
+// Extracts the symbol identifier from PackageImportItem if exits.
+// e.g import pkg::my_integer return the node spanning "my_integer".
+const verible::SyntaxTreeLeaf* GeImportedItemNameFromPackageImportItem(
+    const verible::Symbol& package_import_item);
 
 }  // namespace verilog
 
