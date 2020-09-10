@@ -1015,14 +1015,16 @@ void TreeUnwrapper::SetIndentationsAndCreatePartitions(
       // module instantiations (which look like data declarations) want to
       // expand one parameter/port per line.
     case NodeEnum::kActualParameterByNameList: {
-      const int indent = suppress_indentation ? 0 : style_.wrap_spaces;
+      const int indent =
+          suppress_indentation ? 0 : style_.NamedParameterIndentation();
       VisitIndentedSection(node, indent,
                            PartitionPolicyEnum::kTabularAlignment);
       break;
     }
     case NodeEnum::kPortActualList:  // covers named and positional ports
     {
-      const int indent = suppress_indentation ? 0 : style_.wrap_spaces;
+      const int indent =
+          suppress_indentation ? 0 : style_.NamedPortIndentation();
       const auto policy = Context().IsInside(NodeEnum::kDataDeclaration)
                               ? PartitionPolicyEnum::kTabularAlignment
                               : PartitionPolicyEnum::kFitOnLineElseExpand;

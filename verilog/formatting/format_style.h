@@ -41,18 +41,15 @@ struct FormatStyle : public verible::BasicFormatStyle {
   // formatted.  Internal tests assume these are forced to kAlign.
   AlignmentPolicy port_declarations_alignment = AlignmentPolicy::kAlign;
 
-  // If true, format module instantiations, else leave those regions
-  // unformatted. A user may wish to disable this in favor of their own aligned
-  // formatting. The default value here is true so that compact formatting can
-  // continue to be covered in integration tests. This flag is prone to change
-  // or be removed in the future.
-  // TODO(b/164286027): align module instance named parameters
-  //   and promote the control for this into AlignmentPolicy.
-  bool format_module_instantiations = true;
+  // Control indentation amount for named parameter assignments.
+  IndentationStyle named_parameter_indentation = IndentationStyle::kWrap;
 
   // Control how named parameters (e.g. in module instances) are formatted.
   // For internal testing purposes, this is default to kAlign.
   AlignmentPolicy named_parameter_alignment = AlignmentPolicy::kAlign;
+
+  // Control indentation amount for named port connections.
+  IndentationStyle named_port_indentation = IndentationStyle::kWrap;
 
   // Control how named ports (e.g. in module instances) are formatted.
   // Internal tests assume these are forced to kAlign.
@@ -97,6 +94,18 @@ struct FormatStyle : public verible::BasicFormatStyle {
 
   int FormalParametersIndentation() const {
     return formal_parameters_indentation == IndentationStyle::kWrap
+               ? wrap_spaces
+               : indentation_spaces;
+  }
+
+  int NamedParameterIndentation() const {
+    return named_parameter_indentation == IndentationStyle::kWrap
+               ? wrap_spaces
+               : indentation_spaces;
+  }
+
+  int NamedPortIndentation() const {
+    return named_port_indentation == IndentationStyle::kWrap
                ? wrap_spaces
                : indentation_spaces;
   }
