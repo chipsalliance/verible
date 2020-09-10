@@ -117,8 +117,7 @@ const verible::SyntaxTreeLeaf* GetFunctionName(const verible::Symbol&);
 
 // Returns leaf node for function name in function call.
 // e.g my_function(); return leaf node for "my_function".
-const verible::SyntaxTreeLeaf* GetFunctionCallName(
-    const verible::Symbol&);
+const verible::SyntaxTreeLeaf* GetFunctionCallName(const verible::Symbol&);
 
 // Returns the function declaration body.
 const verible::SyntaxTreeNode& GetFunctionBlockStatementList(

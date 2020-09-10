@@ -112,6 +112,7 @@ cc_library(
         "//verilog/CST:class",
         "//verilog/CST:declaration",
         "//verilog/CST:macro",
+        "//verilog/CST:functions",
         "//verilog/CST:identifier",
         "//verilog/CST:tasks",
         "//verilog/CST:module",

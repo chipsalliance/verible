@@ -453,5 +453,54 @@ TEST(GetFunctionHeaderTest, GetFunctionName) {
   }
 }
 
+TEST(GetFunctionBlockStatement, GetFunctionBody) {
+  constexpr int kTag = 1;  // value doesn't matter
+  const SyntaxTreeSearchTestCase kTestCases[] = {
+      {""},
+      {"module m(); endmodule: m"},
+      {"function int foo(int a, bit x);\n",
+       {kTag, "return a;"},
+       " endfunction\n"},
+      {"module my_module;\nfunction int inner_function(int my_args);\n",
+       {kTag, "return my_args;"},
+       "\nendfunction\nendmodule"},
+      {"class function_class;\nfunction int my_function(input int a, b, output "
+       "int c);\n",
+       {kTag, "c = a + b;\nreturn c;"},
+       "\nendfunction\nendclass"},
+      {"package my_pkg;\nfunction automatic int my_function(input int a, b, "
+       "output int c);\n",
+       {kTag, "c = a + b;\nreturn c;"},
+       "\nendfunction\nendpackage"},
+      {"class m;\n virtual function int my_fun();\n ",
+       {kTag, "return 10;"},
+       "\n endfunction\n  endclass"},
+      {"class m;\n static function int my_fun();\n ",
+       {kTag, "return 10;"},
+       "\n endfunction\n  endclass"},
+  };
+  for (const auto& test : kTestCases) {
+    const absl::string_view code(test.code);
+    VerilogAnalyzer analyzer(code, "test-file");
+    const auto code_copy = analyzer.Data().Contents();
+    ASSERT_OK(analyzer.Analyze()) << "failed on:\n" << code;
+    const auto& root = analyzer.Data().SyntaxTree();
+
+    const auto decls = FindAllFunctionDeclarations(*ABSL_DIE_IF_NULL(root));
+
+    std::vector<TreeSearchMatch> functions_body;
+    for (const auto& decl : decls) {
+      const auto& body = GetFunctionBlockStatementList(*decl.match);
+      functions_body.push_back(TreeSearchMatch{&body, {/* ignored context */}});
+    }
+
+    std::ostringstream diffs;
+    EXPECT_TRUE(test.ExactMatchFindings(functions_body, code_copy, &diffs))
+        << "failed on:\n"
+        << code << "\ndiffs:\n"
+        << diffs.str();
+  }
+}
+
 }  // namespace
 }  // namespace verilog

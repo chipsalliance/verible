@@ -47,8 +47,7 @@ const verible::Symbol* GetTaskId(const verible::Symbol& symbol) {
   return verible::GetSubtreeAsSymbol(header, NodeEnum::kTaskHeader, 3);
 }
 
-const verible::SyntaxTreeLeaf* GetTaskName(
-    const verible::Symbol& task_decl) {
+const verible::SyntaxTreeLeaf* GetTaskName(const verible::Symbol& task_decl) {
   const auto* function_id = GetTaskId(task_decl);
   return GetIdentifier(*function_id);
 }
