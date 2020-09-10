@@ -50,6 +50,8 @@ To pipe from stdin, use '-' as <file>.
       fail-safe behaviors should be considered a success.); default: true;
     --formal_parameters_alignment (Format formal parameters:
       {align,flush-left,preserve,infer}); default: infer;
+    --formal_parameters_indentation (Indent formal parameters: {indent,wrap});
+      default: wrap;
     --inplace (If true, overwrite the input file on successful conditions.);
       default: false;
     --lines (Specific lines to format, 1-based, comma-separated, inclusive N-M
@@ -59,12 +61,18 @@ To pipe from stdin, use '-' as <file>.
       wrap optimization.); default: 100000;
     --named_parameter_alignment (Format named actual parameters:
       {align,flush-left,preserve,infer}); default: infer;
+    --named_parameter_indentation (Indent named parameter assignments:
+      {indent,wrap}); default: wrap;
     --named_port_alignment (Format named port connections:
       {align,flush-left,preserve,infer}); default: infer;
+    --named_port_indentation (Indent named port connections: {indent,wrap});
+      default: wrap;
     --net_variable_alignment (Format net/variable declarations:
       {align,flush-left,preserve,infer}); default: infer;
     --port_declarations_alignment (Format port declarations:
       {align,flush-left,preserve,infer}); default: infer;
+    --port_declarations_indentation (Indent port declarations: {indent,wrap});
+      default: wrap;
     --show_equally_optimal_wrappings (If true, print when multiple optimal
       solutions are found (stderr), but continue to operate normally.);
       default: false;
@@ -88,4 +96,4 @@ To pipe from stdin, use '-' as <file>.
 
 ## Version
 
-Generated on 2020-09-10 09:24:53 -0700 from [v0.0-576-g5716136](https://github.com/google/verible/commit/571613651397d6728a9eb3e57c8c25071b0d0e81)
+Generated on 2020-09-10 12:16:27 -0700 from [v0.0-579-gd6f06e4](https://github.com/google/verible/commit/d6f06e4e4eeb838cb48e07546a30fa39c8399e08)
