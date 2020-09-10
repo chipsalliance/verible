@@ -14,16 +14,15 @@
 
 #include "verilog/CST/declaration.h"
 
-#include <utility>
+#include <vector>
 
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 #include "common/analysis/syntax_tree_search.h"
 #include "common/analysis/syntax_tree_search_test_utils.h"
-#include "common/text/token_info_test_util.h"
+#include "common/text/text_structure.h"
 #include "common/text/tree_utils.h"
-#include "common/util/range.h"
-#include "verilog/analysis/verilog_analyzer.h"
+#include "verilog/CST/match_test_utils.h"
 
 #undef ASSERT_OK
 #define ASSERT_OK(value) ASSERT_TRUE((value).ok())
@@ -32,6 +31,7 @@ namespace verilog {
 namespace {
 
 using verible::SyntaxTreeSearchTestCase;
+using verible::TextStructureView;
 using verible::TreeSearchMatch;
 
 TEST(FindAllDataDeclarations, CountMatches) {
@@ -59,19 +59,11 @@ TEST(FindAllDataDeclarations, CountMatches) {
        "endmodule\n"},
   };
   for (const auto& test : kTestCases) {
-    const absl::string_view code(test.code);
-    VerilogAnalyzer analyzer(code, "test-file");
-    const auto code_copy = analyzer.Data().Contents();
-    ASSERT_OK(analyzer.Analyze()) << "failed on:\n" << code;
-    const auto& root = analyzer.Data().SyntaxTree();
-
-    const auto decls = FindAllDataDeclarations(*ABSL_DIE_IF_NULL(root));
-
-    std::ostringstream diffs;
-    EXPECT_TRUE(test.ExactMatchFindings(decls, code_copy, &diffs))
-        << "failed on:\n"
-        << code << "\ndiffs:\n"
-        << diffs.str();
+    TestVerilogSyntaxRangeMatches(
+        __FUNCTION__, test, [](const TextStructureView& text_structure) {
+          const auto& root = text_structure.SyntaxTree();
+          return FindAllDataDeclarations(*ABSL_DIE_IF_NULL(root));
+        });
   }
 }
 
@@ -104,19 +96,11 @@ TEST(FindAllNetVariablesTest, Various) {
       {"module m;\nreg bar;\nendmodule\n"},
   };
   for (const auto& test : kTestCases) {
-    const absl::string_view code(test.code);
-    VerilogAnalyzer analyzer(code, "test-file");
-    const auto code_copy = analyzer.Data().Contents();
-    ASSERT_OK(analyzer.Analyze()) << "failed on:\n" << code;
-    const auto& root = analyzer.Data().SyntaxTree();
-
-    const auto vars = FindAllNetVariables(*ABSL_DIE_IF_NULL(root));
-
-    std::ostringstream diffs;
-    EXPECT_TRUE(test.ExactMatchFindings(vars, code_copy, &diffs))
-        << "failed on:\n"
-        << code << "\ndiffs:\n"
-        << diffs.str();
+    TestVerilogSyntaxRangeMatches(
+        __FUNCTION__, test, [](const TextStructureView& text_structure) {
+          const auto& root = text_structure.SyntaxTree();
+          return FindAllNetVariables(*ABSL_DIE_IF_NULL(root));
+        });
   }
 }
 
@@ -139,19 +123,11 @@ TEST(FindAllRegisterVariablesTest, Various) {
       {"module m;\nwire bar;\nendmodule\n"},
   };
   for (const auto& test : kTestCases) {
-    const absl::string_view code(test.code);
-    VerilogAnalyzer analyzer(code, "test-file");
-    const auto code_copy = analyzer.Data().Contents();
-    ASSERT_OK(analyzer.Analyze()) << "failed on:\n" << code;
-    const auto& root = analyzer.Data().SyntaxTree();
-
-    const auto vars = FindAllRegisterVariables(*ABSL_DIE_IF_NULL(root));
-
-    std::ostringstream diffs;
-    EXPECT_TRUE(test.ExactMatchFindings(vars, code_copy, &diffs))
-        << "failed on:\n"
-        << code << "\ndiffs:\n"
-        << diffs.str();
+    TestVerilogSyntaxRangeMatches(
+        __FUNCTION__, test, [](const TextStructureView& text_structure) {
+          const auto& root = text_structure.SyntaxTree();
+          return FindAllRegisterVariables(*ABSL_DIE_IF_NULL(root));
+        });
   }
 }
 
@@ -191,19 +167,11 @@ TEST(FindAllGateInstancesTest, Various) {
        ";\nendmodule\n"},
   };
   for (const auto& test : kTestCases) {
-    const absl::string_view code(test.code);
-    VerilogAnalyzer analyzer(code, "test-file");
-    const auto code_copy = analyzer.Data().Contents();
-    ASSERT_OK(analyzer.Analyze()) << "failed on:\n" << code;
-    const auto& root = analyzer.Data().SyntaxTree();
-
-    const auto vars = FindAllGateInstances(*ABSL_DIE_IF_NULL(root));
-
-    std::ostringstream diffs;
-    EXPECT_TRUE(test.ExactMatchFindings(vars, code_copy, &diffs))
-        << "failed on:\n"
-        << code << "\ndiffs:\n"
-        << diffs.str();
+    TestVerilogSyntaxRangeMatches(
+        __FUNCTION__, test, [](const TextStructureView& text_structure) {
+          const auto& root = text_structure.SyntaxTree();
+          return FindAllGateInstances(*ABSL_DIE_IF_NULL(root));
+        });
   }
 }
 
@@ -235,32 +203,26 @@ TEST(GetQualifiersOfDataDeclarationTest, NoQualifiers) {
        "endtask\n"},
   };
   for (const auto& test : kTestCases) {
-    const absl::string_view code(test.code);
-    VerilogAnalyzer analyzer(code, "test-file");
-    const auto code_copy = analyzer.Data().Contents();
-    ASSERT_OK(analyzer.Analyze()) << "failed on:\n" << code;
-    const auto& root = analyzer.Data().SyntaxTree();
+    TestVerilogSyntaxRangeMatches(
+        __FUNCTION__, test, [](const TextStructureView& text_structure) {
+          const auto& root = text_structure.SyntaxTree();
+          const auto decls = FindAllDataDeclarations(*ABSL_DIE_IF_NULL(root));
 
-    const auto decls = FindAllDataDeclarations(*ABSL_DIE_IF_NULL(root));
-
-    // Verify that quals is either nullptr or empty or contains only nullptrs.
-    for (const auto& decl : decls) {
-      const auto* quals = GetQualifiersOfDataDeclaration(*decl.match);
-      if (quals != nullptr) {
-        for (const auto& child : quals->children()) {
-          EXPECT_EQ(child, nullptr)
-              << "unexpected qualifiers:\n"
-              << verible::RawTreePrinter(*child) << "\nfailed on:\n"
-              << code;
-        }
-      }
-    }
-
-    std::ostringstream diffs;
-    EXPECT_TRUE(test.ExactMatchFindings(decls, code_copy, &diffs))
-        << "failed on:\n"
-        << code << "\ndiffs:\n"
-        << diffs.str();
+          // Verify that quals is either nullptr or empty or contains only
+          // nullptrs.
+          for (const auto& decl : decls) {
+            const auto* quals = GetQualifiersOfDataDeclaration(*decl.match);
+            if (quals != nullptr) {
+              for (const auto& child : quals->children()) {
+                EXPECT_EQ(child, nullptr)
+                    << "unexpected qualifiers:\n"
+                    << verible::RawTreePrinter(*child) << "\nfailed on:\n"
+                    << text_structure.Contents();
+              }
+            }
+          }
+          return decls;
+        });
   }
 }
 
@@ -318,25 +280,18 @@ TEST(GetTypeOfDataDeclarationTest, ExplicitTypes) {
        "endclass\n"},
   };
   for (const auto& test : kTestCases) {
-    const absl::string_view code(test.code);
-    VerilogAnalyzer analyzer(code, "test-file");
-    const auto code_copy = analyzer.Data().Contents();
-    ASSERT_OK(analyzer.Analyze()) << "failed on:\n" << code;
-    const auto& root = analyzer.Data().SyntaxTree();
+    TestVerilogSyntaxRangeMatches(
+        __FUNCTION__, test, [](const TextStructureView& text_structure) {
+          const auto& root = text_structure.SyntaxTree();
+          const auto decls = FindAllDataDeclarations(*ABSL_DIE_IF_NULL(root));
 
-    const auto decls = FindAllDataDeclarations(*ABSL_DIE_IF_NULL(root));
-
-    std::vector<TreeSearchMatch> types;
-    for (const auto& decl : decls) {
-      const auto& type = GetTypeOfDataDeclaration(*decl.match);
-      types.push_back(TreeSearchMatch{&type, {/* ignored context */}});
-    }
-
-    std::ostringstream diffs;
-    EXPECT_TRUE(test.ExactMatchFindings(types, code_copy, &diffs))
-        << "failed on:\n"
-        << code << "\ndiffs:\n"
-        << diffs.str();
+          std::vector<TreeSearchMatch> types;
+          for (const auto& decl : decls) {
+            const auto& type = GetTypeOfDataDeclaration(*decl.match);
+            types.emplace_back(TreeSearchMatch{&type, {/* ignored context */}});
+          }
+          return types;
+        });
   }
 }
 
@@ -389,27 +344,23 @@ TEST(GetQualifiersOfDataDeclarationTest, SomeQualifiers) {
        "endclass\n"},
   };
   for (const auto& test : kTestCases) {
-    const absl::string_view code(test.code);
-    VerilogAnalyzer analyzer(code, "test-file");
-    const auto code_copy = analyzer.Data().Contents();
-    ASSERT_OK(analyzer.Analyze()) << "failed on:\n" << code;
-    const auto& root = analyzer.Data().SyntaxTree();
+    TestVerilogSyntaxRangeMatches(
+        __FUNCTION__, test, [](const TextStructureView& text_structure) {
+          const auto& root = text_structure.SyntaxTree();
+          const auto decls = FindAllDataDeclarations(*ABSL_DIE_IF_NULL(root));
 
-    const auto decls = FindAllDataDeclarations(*ABSL_DIE_IF_NULL(root));
-
-    std::vector<TreeSearchMatch> quals;
-    for (const auto& decl : decls) {
-      const auto* qual = GetQualifiersOfDataDeclaration(*decl.match);
-      ASSERT_NE(qual, nullptr) << "decl:\n"
-                               << verible::RawTreePrinter(*decl.match);
-      quals.push_back(TreeSearchMatch{qual, {/* ignored context */}});
-    }
-
-    std::ostringstream diffs;
-    EXPECT_TRUE(test.ExactMatchFindings(quals, code_copy, &diffs))
-        << "failed on:\n"
-        << code << "\ndiffs:\n"
-        << diffs.str();
+          std::vector<TreeSearchMatch> quals;
+          for (const auto& decl : decls) {
+            const auto* qual = GetQualifiersOfDataDeclaration(*decl.match);
+            if (qual != nullptr) {
+              quals.push_back(TreeSearchMatch{qual, {/* ignored context */}});
+            } else {
+              EXPECT_NE(qual, nullptr) << "decl:\n"
+                                       << verible::RawTreePrinter(*decl.match);
+            }
+          }
+          return quals;
+        });
   }
 }
 
@@ -478,25 +429,20 @@ TEST(GetInstanceListFromDataDeclarationTest, InstanceLists) {
        "endpackage\n"},
   };
   for (const auto& test : kTestCases) {
-    const absl::string_view code(test.code);
-    VerilogAnalyzer analyzer(code, "test-file");
-    const auto code_copy = analyzer.Data().Contents();
-    ASSERT_OK(analyzer.Analyze()) << "failed on:\n" << code;
-    const auto& root = analyzer.Data().SyntaxTree();
+    TestVerilogSyntaxRangeMatches(
+        __FUNCTION__, test, [](const TextStructureView& text_structure) {
+          const auto& root = text_structure.SyntaxTree();
+          const auto decls = FindAllDataDeclarations(*ABSL_DIE_IF_NULL(root));
 
-    const auto decls = FindAllDataDeclarations(*ABSL_DIE_IF_NULL(root));
+          std::vector<TreeSearchMatch> inst_lists;
+          for (const auto& decl : decls) {
+            const auto& insts = GetInstanceListFromDataDeclaration(*decl.match);
+            inst_lists.push_back(
+                TreeSearchMatch{&insts, {/* ignored context */}});
+          }
 
-    std::vector<TreeSearchMatch> inst_lists;
-    for (const auto& decl : decls) {
-      const auto& insts = GetInstanceListFromDataDeclaration(*decl.match);
-      inst_lists.push_back(TreeSearchMatch{&insts, {/* ignored context */}});
-    }
-
-    std::ostringstream diffs;
-    EXPECT_TRUE(test.ExactMatchFindings(inst_lists, code_copy, &diffs))
-        << "failed on:\n"
-        << code << "\ndiffs:\n"
-        << diffs.str();
+          return inst_lists;
+        });
   }
 }
 

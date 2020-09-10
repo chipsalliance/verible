@@ -16,7 +16,10 @@
 #define VERIBLE_VERILOG_TOOLS_KYTHE_INDEXING_FACTS_TREE_EXTRACTOR_H_
 
 #include "absl/strings/string_view.h"
+#include "common/analysis/syntax_tree_search.h"
 #include "common/text/tree_context_visitor.h"
+#include "verilog/CST/verilog_matchers.h"
+#include "verilog/CST/verilog_nonterminals.h"
 #include "verilog/tools/kythe/indexing_facts_tree.h"
 #include "verilog/tools/kythe/indexing_facts_tree_context.h"
 
@@ -44,7 +47,8 @@ class IndexingFactsTreeExtractor : public verible::TreeContextVisitor {
 
   // Extracts modules instantiations and creates its corresponding fact tree.
   void ExtractModuleInstantiation(
-      const verible::SyntaxTreeNode& data_declaration_node);
+      const verible::SyntaxTreeNode& data_declaration_node,
+      const std::vector<verible::TreeSearchMatch>& gate_instances);
 
   // Extracts endmodule and creates its corresponding fact tree.
   void ExtractModuleEnd(const verible::SyntaxTreeNode& module_declaration_node);
@@ -52,18 +56,44 @@ class IndexingFactsTreeExtractor : public verible::TreeContextVisitor {
   // Extracts modules headers and creates its corresponding fact tree.
   void ExtractModuleHeader(const verible::SyntaxTreeNode& module_header_node);
 
+  // Extracts modules ports and creates its corresponding fact tree.
+  void ExtractModulePort(const verible::SyntaxTreeNode& module_port_node);
+
   // Extracts "a" from input a, output a and creates its corresponding fact
   // tree.
   void ExtractInputOutputDeclaration(
       const verible::SyntaxTreeNode& module_port_declaration_node);
 
-  // Extract "a" from wire a and creates its corresponding fact tree.
+  // Extracts "a" from wire a and creates its corresponding fact tree.
   void ExtractNetDeclaration(
       const verible::SyntaxTreeNode& net_declaration_node);
 
   // Extract package declarations and creates its corresponding facts tree.
   void ExtractPackageDeclaration(
       const verible::SyntaxTreeNode& package_declaration_node);
+
+  // Extracts function and creates its corresponding fact tree.
+  void ExtractFunctionDeclaration(
+      const verible::SyntaxTreeNode& function_declaration_node);
+
+  // Extracts task and creates its corresponding fact tree.
+  void ExtractTaskDeclaration(
+      const verible::SyntaxTreeNode& task_declaration_node);
+
+  // Extracts function or task call and creates its corresponding fact tree.
+  void ExtractFunctionOrTaskCall(
+      const verible::SyntaxTreeNode& function_call_node);
+
+  // Extracts function or task ports and parameters.
+  void ExtractFunctionTaskPort(
+      const verible::SyntaxTreeNode& function_declaration_node);
+  // Extracts classes and creates its corresponding fact tree.
+  void ExtractClassDeclaration(
+      const verible::SyntaxTreeNode& class_declaration);
+
+  void ExtractClassInstances(
+      const verible::SyntaxTreeNode& data_declaration,
+      const std::vector<verible::TreeSearchMatch>& register_variables);
 
   // The Root of the constructed tree
   IndexingFactNode root_{IndexingNodeData(IndexingFactType::kFile)};

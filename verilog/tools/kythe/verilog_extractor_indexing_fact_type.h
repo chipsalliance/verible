@@ -27,9 +27,13 @@ enum class IndexingFactType {
   kFile,
   kModule,
   kPackage,
+  kClass,
+  kClassInstance,
   kModuleInstance,
   kVariableDefinition,
   kVariableReference,
+  kFunctionOrTask,
+  kFunctionCall,
   // END GENERATE -- do not delete
 };
 

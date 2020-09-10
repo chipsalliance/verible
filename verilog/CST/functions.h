@@ -111,6 +111,18 @@ const verible::Symbol* GetFunctionReturnType(
 // Returns the id of the function declaration.
 const verible::Symbol* GetFunctionId(const verible::Symbol& function_decl);
 
+// Returns leaf node for function name.
+// e.g. function my_fun(); return leaf node for "my_fun".
+const verible::SyntaxTreeLeaf* GetFunctionName(const verible::Symbol&);
+
+// Returns leaf node for function name in function call.
+// e.g my_function(); return leaf node for "my_function".
+const verible::SyntaxTreeLeaf* GetFunctionCallName(const verible::Symbol&);
+
+// Returns the function declaration body.
+const verible::SyntaxTreeNode& GetFunctionBlockStatementList(
+    const verible::Symbol&);
+
 }  // namespace verilog
 
 #endif  // VERIBLE_VERILOG_CST_FUNCTIONS_H_

@@ -54,6 +54,7 @@ absl::Status VerifyFormatting(const verible::TextStructureView& text_structure,
 namespace {
 
 using absl::StatusCode;
+using verible::AlignmentPolicy;
 using verible::LineNumberSet;
 
 // Tests that clean output passes.
@@ -793,6 +794,28 @@ static constexpr FormatterTestCase kFormatterTestCases[] = {
     {"module foo;/* foo */endmodule:foo\n",
      "module foo;  /* foo */\n"
      "endmodule : foo\n"},
+    {"module pm #(\n"
+     "//comment\n"
+     ") (wire ww);\n"
+     "endmodule\n",
+     "module pm #(\n"
+     "    //comment\n"  // comment indented
+     ") (\n"
+     "    wire ww\n"
+     ");\n"
+     "endmodule\n"},
+    {"module pm ( ) ;\n"  // empty ports list
+     "endmodule\n",
+     "module pm ();\n"
+     "endmodule\n"},
+    {"module pm #(\n"
+     "//comment\n"
+     ") ( );\n"
+     "endmodule\n",
+     "module pm #(\n"
+     "    //comment\n"  // comment indented
+     ") ();\n"          // (); grouped together
+     "endmodule\n"},
     {"`ifdef FOO\n"
      "    `ifndef BAR\n"
      "    `endif\n"
@@ -1472,8 +1495,7 @@ static constexpr FormatterTestCase kFormatterTestCases[] = {
      "module foo #(  //comment\n"
      "    parameter  bar = 1,\n"
      "    localparam baz = 2\n"
-     ") (\n"
-     ");\n"
+     ") ();\n"
      "endmodule\n"},
     {"module foo #("
      "parameter  bar =1,//comment\n"
@@ -1483,8 +1505,7 @@ static constexpr FormatterTestCase kFormatterTestCases[] = {
      "module foo #(\n"
      "    parameter  bar = 1,  //comment\n"
      "    localparam baz = 2\n"
-     ") (\n"
-     ");\n"
+     ") ();\n"
      "endmodule\n"},
     {"module foo #("
      "parameter  bar =1,"
@@ -1494,8 +1515,7 @@ static constexpr FormatterTestCase kFormatterTestCases[] = {
      "module foo #(\n"
      "    parameter  bar = 1,\n"
      "    localparam baz = 2  //comment\n"
-     ") (\n"
-     ");\n"
+     ") ();\n"
      "endmodule\n"},
     {"module    top;"
      "foo#(  \"test\"  ) foo(  );"
@@ -2755,6 +2775,20 @@ static constexpr FormatterTestCase kFormatterTestCases[] = {
      " interface if1()\n;endinterface\t\t",
      "interface if1 ();\n"
      "endinterface\n"},
+    {// interface declaration with parameter comment only, empty ports
+     " interface if1#( \n"
+     "//param\n"
+     ")();endinterface\t\t",
+     "interface if1 #(\n"
+     "    //param\n"
+     ") ();\n"
+     "endinterface\n"},
+    {// interface declaration with parameter, empty ports
+     " interface if1#( parameter int W= 8 )();endinterface\t\t",
+     "interface if1 #(\n"
+     "    parameter int W = 8\n"
+     ") ();\n"
+     "endinterface\n"},
     {// interface declaration with ports
      " interface if1( input\tlogic   z)\n;endinterface\t\t",
      "interface if1 (\n"
@@ -3273,6 +3307,25 @@ static constexpr FormatterTestCase kFormatterTestCases[] = {
     {"class foo #(); endclass",
      "class foo #();\n"
      "endclass\n"},
+    // class with empty parameter list, with comment
+    {"class foo #(  \n"
+     "// comment\n"
+     "); endclass",
+     "class foo #(\n"
+     "    // comment\n"
+     ");\n"
+     "endclass\n"},
+    // class with empty parameter list, extends
+    {"class foo #()extends bar ; endclass",
+     "class foo #() extends bar;\n"
+     "endclass\n"},
+    // class extends from type with named parameters
+    {"class foo extends bar #(.N(N), .M(M)); endclass",
+     "class foo extends bar#(\n"
+     "    .N(N),\n"
+     "    .M(M)\n"
+     ");\n"
+     "endclass\n"},
 
     // class with one parameter list
     {"class foo #(type a = b); endclass",
@@ -3368,6 +3421,11 @@ static constexpr FormatterTestCase kFormatterTestCases[] = {
      "  A = 0,\n"
      "  B = 1\n"
      "} foo_t;\n"},
+    {"typedef foo_pkg::baz_t#(.L(L), .W(W)) bar_t;\n",
+     "typedef foo_pkg::baz_t#(\n"
+     "    .L(L),\n"
+     "    .W(W)\n"
+     ") bar_t;\n"},
 
     // package test cases
     {"package fedex;localparam  int  www=3 ;endpackage   :  fedex\n",
@@ -6864,6 +6922,202 @@ TEST(FormatterEndToEndTest, AutoInferAlignment) {
        "class cc;\n"
        "endclass : cc\n"},
 
+      // module port declarations
+      {"module pd(\n"
+       "input wire foo,\n"
+       "output reg bar\n"
+       ");\n"
+       "endmodule:pd\n",
+       "module pd (\n"
+       "    input  wire foo,\n"  // flush-left vs. align are similar enough,
+       "    output reg  bar\n"   // so automatic policy will align.
+       ");\n"
+       "endmodule : pd\n"},
+      {"module pd(\n"
+       "input  foo_pkg::baz_t foo,\n"
+       "output reg  bar\n"
+       ");\n"
+       "endmodule:pd\n",
+       "module pd (\n"
+       "    input foo_pkg::baz_t foo,\n"  // alignment would add too many spaces
+       "    output reg bar\n"             // so infer intent to flush-left.
+       ");\n"
+       "endmodule : pd\n"},
+      {"module pd(\n"
+       "input  foo_pkg::baz_t foo,\n"
+       "output     reg  bar\n"  // user injects 4 excess spaces here ...
+       ");\n"
+       "endmodule:pd\n",
+       "module pd (\n"
+       "    input  foo_pkg::baz_t foo,\n"
+       "    output reg            bar\n"  // ... and triggers alignment.
+       ");\n"
+       "endmodule : pd\n"},
+
+      // named parameter arguments
+      {"module  mm ;\n"
+       "foo #(\n"
+       ".a(a),\n"
+       ".bb(bb)\n"
+       ")bar( );\n"
+       "endmodule:mm\n",
+       "module mm;\n"
+       "  foo #(\n"
+       "      .a (a),\n"  // align doesn't add too many spaces, so align
+       "      .bb(bb)\n"
+       "  ) bar ();\n"
+       "endmodule : mm\n"},
+      {"module  mm ;\n"
+       "foo #(\n"
+       ".a(a),\n"
+       ".bbcccc(bb)\n"
+       ")bar( );\n"
+       "endmodule:mm\n",
+       "module mm;\n"
+       "  foo #(\n"
+       "      .a(a),\n"  // align would add too many spaces, so flush-left
+       "      .bbcccc(bb)\n"
+       "  ) bar ();\n"
+       "endmodule : mm\n"},
+      {"module  mm ;\n"
+       "foo #(\n"
+       ".a(a    ),\n"  // user manually triggers alignment with excess spaces
+       ".bbcccc(bb)\n"
+       ")bar( );\n"
+       "endmodule:mm\n",
+       "module mm;\n"
+       "  foo #(\n"
+       "      .a     (a),\n"  // induced alignment
+       "      .bbcccc(bb)\n"
+       "  ) bar ();\n"
+       "endmodule : mm\n"},
+      {"module  mm ;\n"
+       "foo #(\n"
+       "//c1\n"        // with comments (indented but not aligned)
+       ".a(a    ),\n"  // user manually triggers alignment with excess spaces
+       "//c2\n"
+       ".bbcccc(bb)\n"
+       "//c3\n"
+       ")bar( );\n"
+       "endmodule:mm\n",
+       "module mm;\n"
+       "  foo #(\n"
+       "      //c1\n"
+       "      .a     (a),\n"  // induced alignment
+       "      //c2\n"
+       "      .bbcccc(bb)\n"
+       "      //c3\n"
+       "  ) bar ();\n"
+       "endmodule : mm\n"},
+      {"module  mm ;\n"
+       "foo #(\n"
+       ".a( (1     +2)),\n"  // excess spaces, testing extra parentheses
+       ".bbcccc((c*d)+(e*f))\n"
+       ")bar( );\n"
+       "endmodule:mm\n",
+       "module mm;\n"
+       "  foo #(\n"
+       "      .a     ((1 + 2)),\n"  // induced alignment
+       "      .bbcccc((c * d) + (e * f))\n"
+       "  ) bar ();\n"
+       "endmodule : mm\n"},
+
+      // named port connections
+      {"module  mm ;\n"
+       "foo bar(\n"
+       ".a(a),\n"
+       ".bb(bb)\n"
+       ");\n"
+       "endmodule:mm\n",
+       "module mm;\n"
+       "  foo bar (\n"
+       "      .a (a),\n"  // align doesn't add too many spaces, so align
+       "      .bb(bb)\n"
+       "  );\n"
+       "endmodule : mm\n"},
+      {"module  mm ;\n"
+       "foo bar(\n"
+       ".a(a),\n"
+       ".bbbbbb(bb)\n"
+       ");\n"
+       "endmodule:mm\n",
+       "module mm;\n"
+       "  foo bar (\n"
+       "      .a(a),\n"  // align would add too many spaces, so flush-left
+       "      .bbbbbb(bb)\n"
+       "  );\n"
+       "endmodule : mm\n"},
+      {"module  mm ;\n"
+       "foo bar(\n"
+       ".a    (a),\n"  // user manually triggers alignment with excess spaces
+       ".bbbbbb(bb)\n"
+       ");\n"
+       "endmodule:mm\n",
+       "module mm;\n"
+       "  foo bar (\n"
+       "      .a     (a),\n"  // alignment fixed
+       "      .bbbbbb(bb)\n"
+       "  );\n"
+       "endmodule : mm\n"},
+
+      // net variable declarations
+      {"module nn;\n"
+       "wire wwwww;\n"
+       "logic lll;\n"
+       "endmodule : nn\n",
+       "module nn;\n"
+       "  wire  wwwww;\n"  // alignment adds few spaces, so align
+       "  logic lll;\n"
+       "endmodule : nn\n"},
+      {"module nn;\n"
+       "wire wwwww;\n"
+       "foo_pkg::baz_t lll;\n"
+       "endmodule : nn\n",
+       "module nn;\n"
+       "  wire wwwww;\n"  // alignment adds too many spaces, so flush-left
+       "  foo_pkg::baz_t lll;\n"
+       "endmodule : nn\n"},
+      {"module nn;\n"
+       "wire     wwwww;\n"  // user injects spaces to trigger alignment
+       "foo_pkg::baz_t lll;\n"
+       "endmodule : nn\n",
+       "module nn;\n"
+       "  wire           wwwww;\n"  // ... and gets alignment
+       "  foo_pkg::baz_t lll;\n"
+       "endmodule : nn\n"},
+
+      // formal parameters
+      {"module pp #(\n"
+       "int W,\n"
+       "type T\n"
+       ") ();\n"
+       "endmodule : pp\n",
+       "module pp #(\n"
+       "    int  W,\n"  // alignment adds few spaces, so do it
+       "    type T\n"
+       ") ();\n"
+       "endmodule : pp\n"},
+      {"module pp #(\n"
+       "int W,\n"
+       "int[xx:yy] T\n"
+       ") ();\n"
+       "endmodule : pp\n",
+       "module pp #(\n"
+       "    int W,\n"  // alignment adds many spaces, so flush-left
+       "    int [xx:yy] T\n"
+       ") ();\n"
+       "endmodule : pp\n"},
+      {"module pp #(\n"
+       "int W,\n"
+       "int[xx:yy]     T\n"  // user injected spaces intentionally
+       ") ();\n"
+       "endmodule : pp\n",
+       "module pp #(\n"
+       "    int         W,\n"  // ... trigger alignment
+       "    int [xx:yy] T\n"
+       ") ();\n"
+       "endmodule : pp\n"},
+
       // class member variables
       {"class  cc ;\n"
        "int my_int;\n"
@@ -6904,8 +7158,7 @@ TEST(FormatterEndToEndTest, AutoInferAlignment) {
   style.indentation_spaces = 2;
   style.wrap_spaces = 4;
   // Override some settings to test auto-inferred alignment.
-  style.class_member_variable_alignment =
-      verible::AlignmentPolicy::kInferUserIntent;
+  style.ApplyToAllAlignmentPolicies(AlignmentPolicy::kInferUserIntent);
 
   for (const auto& test_case : kTestCases) {
     VLOG(1) << "code-to-format:\n" << test_case.input << "<EOF>";
@@ -7031,20 +7284,26 @@ TEST(FormatterEndToEndTest, DisableModulePortDeclarations) {
        "endmodule\n"},
       {"module  m(   ) ;\n"
        "  endmodule\n",
-       "module m (   );\n"  // space between () preserved
+       "module m ();\n"  // empty ports formatted compactly
        "endmodule\n"},
-      {"module  m   ( input     clk  )\t;\n"
+      {// for a single port, the alignment handler doesn't even consider it a
+       // group so it falls back to standard flush-left behavior.
+       "module  m   ( input     clk  )\t;\n"
        "  endmodule\n",
-       "module m ( input     clk  );\n"
+       "module m (\n"
+       "    input clk\n"
+       ");\n"
        "endmodule\n"},
-      {"module  m   (\n"
+      {// example with two ports
+       "module  m   (\n"
        "input  clk,\n"
        "output bar\n"
        ")\t;\n"
        "  endmodule\n",
        "module m (\n"
-       "input  clk,\n"  // disabled, pre-existing alignment maintained
-       "output bar\n"   // disabled, pre-existing alignment maintained
+       "    input  clk,\n"  // indented, but internal pre-existing spacing
+                            // preserved
+       "    output bar\n"
        ");\n"
        "endmodule\n"},
   };
@@ -7052,7 +7311,7 @@ TEST(FormatterEndToEndTest, DisableModulePortDeclarations) {
   style.column_limit = 40;
   style.indentation_spaces = 2;
   style.wrap_spaces = 4;
-  style.format_module_port_declarations = false;
+  style.port_declarations_alignment = verible::AlignmentPolicy::kPreserve;
   for (const auto& test_case : kTestCases) {
     VLOG(1) << "code-to-format:\n" << test_case.input << "<EOF>";
     std::ostringstream stream;
@@ -7077,7 +7336,7 @@ TEST(FormatterEndToEndTest, DisableModuleInstantiations) {
        "foo bar();"
        "  endmodule\n",
        "module m;\n"
-       "  foo bar();\n"  // indentation still takes effect
+       "  foo bar ();\n"  // indentation still takes effect
        "endmodule\n"},
       {"module  m  ;\t\n"
        "logic   xyz;"
@@ -7107,7 +7366,7 @@ TEST(FormatterEndToEndTest, DisableModuleInstantiations) {
        "foo  bar(   .baz(baz)   );"
        "  endmodule\n",
        "module m;\n"
-       "  foo  bar(   .baz(baz)   );\n"  // indentation still takes effect
+       "  foo bar (.baz(baz));\n"  // indentation still takes effect
        "endmodule\n"},
       {"module  m  ;\t\n"
        "foo  bar(\n"
@@ -7116,17 +7375,37 @@ TEST(FormatterEndToEndTest, DisableModuleInstantiations) {
        ");"
        "  endmodule\n",
        "module m;\n"
-       "  foo  bar(\n"             // indentation still takes effect
-       "        .baz  (baz  ),\n"  // named port connections preserved
-       "        .blaaa(blaaa)\n"   // named port connections preserved
-       ");\n"                      // this indentation remains untouched
+       "  foo bar (\n"           // indentation still takes effect
+       "      .baz  (baz  ),\n"  // named port connections preserved
+       "      .blaaa(blaaa)\n"   // named port connections preserved
+       "  );\n"                  // this indentation is fixed
+       "endmodule\n"},
+      {"module  m  ;\t\n"
+       "foo  #(   .baz(baz)   ) bar();"  // named parameters
+       "  endmodule\n",
+       "module m;\n"
+       "  foo #(.baz(baz)) bar ();\n"  // indentation still takes effect
+       "endmodule\n"},
+      {"module  m  ;\t\n"
+       "foo  #(\n"
+       "        .baz  (baz  ),\n"  // example of user-manual alignment
+       "        .blaaa(blaaa)\n"
+       ")  bar( );"
+       "  endmodule\n",
+       "module m;\n"
+       "  foo #(\n"              // indentation still takes effect
+       "      .baz  (baz  ),\n"  // named parameter arguments preserved
+       "      .blaaa(blaaa)\n"   // named parameter arguments preserved
+       "  ) bar ();\n"           // this indentation is fixed
        "endmodule\n"},
   };
   FormatStyle style;
   style.column_limit = 40;
   style.indentation_spaces = 2;
   style.wrap_spaces = 4;
-  style.format_module_instantiations = false;
+  // Testing preservation of spaces
+  style.named_parameter_alignment = AlignmentPolicy::kPreserve;
+  style.named_port_alignment = AlignmentPolicy::kPreserve;
   for (const auto& test_case : kTestCases) {
     VLOG(1) << "code-to-format:\n" << test_case.input << "<EOF>";
     std::ostringstream stream;
@@ -7166,6 +7445,21 @@ TEST(FormatterEndToEndTest, DisableTryWrapLongLines) {
        "  initial assign a = {never +gonna +give +you +up,\n"
        "never + gonna +Let +you +down};\n"
        "endmodule\n"},
+      {// The if-header is a single leaf partition, and does not fit,
+       // so its original spacing should be preserved.
+       // We deliberately insert weird spacing to show that it is preserved.
+       "function f;\n"
+       "if ((xxx.aaaa >= bbbbbbbbbbbbbbb) &&\n"
+       "      ((ccc.ddd  +  eee.ffffff * g) <=\n"
+       "       (hhhhhhhhhhhhhhh+iiiiiiiiiiiiiiiiiiii))) begin\n"
+       "end\n"
+       "endfunction\n",
+       "function f;\n"
+       "  if ((xxx.aaaa >= bbbbbbbbbbbbbbb) &&\n"  // indentation fixed
+       "      ((ccc.ddd  +  eee.ffffff * g) <=\n"
+       "       (hhhhhhhhhhhhhhh+iiiiiiiiiiiiiiiiiiii))) begin\n"
+       "  end\n"  // indentation fixed
+       "endfunction\n"},
   };
   FormatStyle style;
   style.column_limit = 40;

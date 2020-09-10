@@ -33,6 +33,11 @@ namespace verilog {
 using verible::down_cast;
 using verible::SymbolKind;
 
+std::vector<verible::TreeSearchMatch> FindAllIdentifierUnpackedDimensions(
+    const verible::Symbol& root) {
+  return verible::SearchSyntaxTree(root, NodekIdentifierUnpackedDimensions());
+}
+
 std::vector<verible::TreeSearchMatch> FindAllUnqualifiedIds(
     const verible::Symbol& root) {
   return verible::SearchSyntaxTree(root, NodekUnqualifiedId());
@@ -69,6 +74,15 @@ const verible::SyntaxTreeLeaf* AutoUnwrapIdentifier(
   }
   CHECK_EQ(NodeEnum(t.tag), NodeEnum::kUnqualifiedId);
   return GetIdentifier(symbol);
+}
+
+const verible::SyntaxTreeLeaf*
+GetSymbolIdentifierFromIdentifierUnpackedDimensions(
+    const verible::Symbol& identifier_unpacked_dimension) {
+  const verible::Symbol* child_node =
+      GetSubtreeAsSymbol(identifier_unpacked_dimension,
+                         NodeEnum::kIdentifierUnpackedDimensions, 0);
+  return AutoUnwrapIdentifier(*child_node);
 }
 
 }  // namespace verilog

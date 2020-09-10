@@ -267,6 +267,15 @@ Status FormatVerilog(absl::string_view text, absl::string_view filename,
   return format_status;
 }
 
+static verible::Interval<int> DisableByteOffsetRange(
+    absl::string_view substring, absl::string_view superstring) {
+  CHECK(!substring.empty());
+  auto range = verible::SubstringOffsets(substring, superstring);
+  // +1 so that formatting can still occur on the space before the start
+  // of the disabled range, for example allowing for indentation adjustments.
+  return {range.first + 1, range.second};
+}
+
 // Decided at each node in UnwrappedLine partition tree whether or not
 // it should be expanded or unexpanded.
 static void DeterminePartitionExpansion(
@@ -276,11 +285,34 @@ static void DeterminePartitionExpansion(
     const FormatStyle& style) {
   auto& node_view = node->Value();
   const auto& children = node->Children();
+  const UnwrappedLine& uwline = node_view.Value();
+  VLOG(3) << "unwrapped line: " << uwline;
+  const verible::FormatTokenRange ftoken_range(uwline.TokensRange());
+  const auto partition_policy = uwline.PartitionPolicy();
+
+  const auto PreserveSpaces = [&ftoken_range, &full_text,
+                               preformatted_tokens]() {
+    const ByteOffsetSet new_disable_range{{DisableByteOffsetRange(
+        verible::make_string_view_range(ftoken_range.front().Text().begin(),
+                                        ftoken_range.back().Text().end()),
+        full_text)}};
+    verible::PreserveSpacesOnDisabledTokenRanges(preformatted_tokens,
+                                                 new_disable_range, full_text);
+  };
+
+  // Expand or not, depending on partition policy and other conditions.
 
   // If this is a leaf partition, there is nothing to expand.
   if (children.empty()) {
     VLOG(3) << "No children to expand.";
     node_view.Unexpand();
+    if (partition_policy == PartitionPolicyEnum::kFitOnLineElseExpand &&
+        !style.try_wrap_long_lines &&
+        !verible::FitsOnLine(uwline, style).fits) {
+      // give-up early and preserve original spacing
+      VLOG(3) << "Does not fit, preserving.";
+      PreserveSpaces();
+    }
     return;
   }
 
@@ -295,9 +327,6 @@ static void DeterminePartitionExpansion(
     node_view.Expand();
     return;
   }
-
-  // Expand or not, depending on partition policy and other conditions.
-  const UnwrappedLine& uwline = node_view.Value();
 
   {
     // If any part of the range is formatting-disabled, expand this partition so
@@ -319,7 +348,6 @@ static void DeterminePartitionExpansion(
     }
   }
 
-  const auto partition_policy = uwline.PartitionPolicy();
   VLOG(3) << "partition policy: " << partition_policy;
   switch (partition_policy) {
     case PartitionPolicyEnum::kUninitialized: {
@@ -353,13 +381,7 @@ static void DeterminePartitionExpansion(
           // give-up early and preserve original spacing
           VLOG(3) << "Does not fit, preserving.";
           node_view.Unexpand();
-          const auto range = node_view.Value().TokensRange();
-          const ByteOffsetSet new_disable_range{
-              {range.front().token->left(full_text) + 1,
-               // +1 allows left indentation to be adjusted
-               range.back().token->right(full_text)}};
-          verible::PreserveSpacesOnDisabledTokenRanges(
-              preformatted_tokens, new_disable_range, full_text);
+          PreserveSpaces();
         }
       }
     }
@@ -425,44 +447,26 @@ void Formatter::SelectLines(const LineNumberSet& lines) {
       lines, text_structure_.GetLineColumnMap());
 }
 
-static verible::Interval<int> DisableByteOffsetRange(
-    absl::string_view substring, absl::string_view superstring) {
-  CHECK(!substring.empty());
-  auto range = verible::SubstringOffsets(substring, superstring);
-  // +1 so that formatting can still occur on the space before the start
-  // of the disabled range.
-  return {range.first + 1, range.second};
-}
-
 // Given control flags and syntax tree, selectively disable some ranges
-// of text from formatting.
+// of text from formatting.  This provides an easy way to preserve spacing on
+// selected syntax subtrees to reduce formatter harm while allowing
+// development to progress.
 static void DisableSyntaxBasedRanges(ByteOffsetSet* disabled_ranges,
                                      const verible::Symbol& root,
                                      const FormatStyle& style,
                                      absl::string_view full_text) {
-  // Module-related sections:
-  for (const auto& match : FindAllModuleDeclarations(root)) {
-    if (!style.format_module_port_declarations) {
-      const auto* ports = GetModulePortParenGroup(*match.match);
-      if (ports != nullptr) {
-        const auto ports_text = verible::StringSpanOfSymbol(*ports);
-        VLOG(4) << "disabled: " << ports_text;
-        disabled_ranges->Add(DisableByteOffsetRange(ports_text, full_text));
-      }
-    }
-    if (!style.format_module_instantiations) {
-      const auto& instantiations = FindAllDataDeclarations(*match.match);
-      for (const auto& inst : instantiations) {
-        const auto& module_instances = FindAllGateInstances(*inst.match);
-        // Only suppress formatting if instances contains a module or
-        // gate-like instance with ports in parentheses.
-        if (module_instances.empty()) continue;
-        const auto inst_text = verible::StringSpanOfSymbol(*inst.match);
-        VLOG(4) << "disabled: " << inst_text;
-        disabled_ranges->Add(DisableByteOffsetRange(inst_text, full_text));
-      }
+  /**
+  // Basic template:
+  if (!style.controlling_flag) {
+    for (const auto& match : FindAllSyntaxTreeNodeTypes(root)) {
+      // Refine search into specific subtrees, if applicable.
+      // Convert the spanning string_views into byte offset ranges to disable.
+      const auto inst_text = verible::StringSpanOfSymbol(*match.match);
+      VLOG(4) << "disabled: " << inst_text;
+      disabled_ranges->Add(DisableByteOffsetRange(inst_text, full_text));
     }
   }
+  **/
 }
 
 Status Formatter::Format(const ExecutionControl& control) {

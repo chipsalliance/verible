@@ -369,27 +369,37 @@ const TreeUnwrapperTestData kUnwrapModuleTestCases[] = {
         "empty module",
         "module foo ();"
         "endmodule",
-        ModuleDeclaration(
-            0, ModuleHeader(0, L(0, {"module", "foo", "("}), L(0, {")", ";"})),
-            L(0, {"endmodule"})),
+        ModuleDeclaration(0, L(0, {"module", "foo", "(", ")", ";"}),
+                          L(0, {"endmodule"})),
+    },
+    {
+        "empty module with one port comment",
+        "module foo (\n"
+        "//comment\n"
+        ");"
+        "endmodule",
+        ModuleDeclaration(0,
+                          ModuleHeader(0,                             //
+                                       L(0, {"module", "foo", "("}),  //
+                                       L(2, {"//comment"}),           //
+                                       L(0, {")", ";"})),
+                          L(0, {"endmodule"})),
     },
 
     {
         "empty module extra spaces",  // verifying space-insensitivity
         "  module\tfoo   (\t) ;    "
         "endmodule   ",
-        ModuleDeclaration(
-            0, ModuleHeader(0, L(0, {"module", "foo", "("}), L(0, {")", ";"})),
-            L(0, {"endmodule"})),
+        ModuleDeclaration(0, L(0, {"module", "foo", "(", ")", ";"}),
+                          L(0, {"endmodule"})),
     },
 
     {
         "empty module extra newlines",  // verifying space-insensitivity
         "module foo (\n\n);\n"
         "endmodule\n",
-        ModuleDeclaration(
-            0, ModuleHeader(0, L(0, {"module", "foo", "("}), L(0, {")", ";"})),
-            L(0, {"endmodule"})),
+        ModuleDeclaration(0, L(0, {"module", "foo", "(", ")", ";"}),
+                          L(0, {"endmodule"})),
     },
 
     {
@@ -517,7 +527,7 @@ const TreeUnwrapperTestData kUnwrapModuleTestCases[] = {
                          ModuleParameterList(
                              2, L(2, {"parameter", "bar", "=", "1", ","}),
                              L(2, {"localparam", "baz", "=", "2"})),
-                         L(0, {")", "("}), L(0, {")", ";"})),
+                         L(0, {")", "(", ")", ";"})),
             L(0, {"endmodule"})),
     },
 
@@ -534,7 +544,7 @@ const TreeUnwrapperTestData kUnwrapModuleTestCases[] = {
                          ModuleParameterList(
                              2, L(2, {"parameter", "bar", "=", "1", ","}),
                              L(2, {"localparam", "baz", "=", "2"})),
-                         L(0, {")", "("}), L(0, {")", ";"})),
+                         L(0, {")", "(", ")", ";"})),
             L(0, {"endmodule"})),
     },
 
@@ -552,7 +562,7 @@ const TreeUnwrapperTestData kUnwrapModuleTestCases[] = {
                 ModuleParameterList(
                     2, L(2, {"parameter", "bar", "=", "1", ",", "//comment"}),
                     L(2, {"localparam", "baz", "=", "2"})),
-                L(0, {")", "("}), L(0, {")", ";"})),
+                L(0, {")", "(", ")", ";"})),
             L(0, {"endmodule"})),
     },
 
@@ -570,7 +580,7 @@ const TreeUnwrapperTestData kUnwrapModuleTestCases[] = {
                 ModuleParameterList(
                     2, L(2, {"parameter", "bar", "=", "1", ","}),
                     L(2, {"localparam", "baz", "=", "2", "//comment"})),
-                L(0, {")", "("}), L(0, {")", ";"})),
+                L(0, {")", "(", ")", ";"})),
             L(0, {"endmodule"})),
     },
 
@@ -580,9 +590,8 @@ const TreeUnwrapperTestData kUnwrapModuleTestCases[] = {
         "endmodule : foo "
         "module zoo;"
         "endmodule : zoo",
-        ModuleDeclaration(
-            0, ModuleHeader(0, L(0, {"module", "foo", "("}), L(0, {")", ";"})),
-            L(0, {"endmodule", ":", "foo"})),
+        ModuleDeclaration(0, L(0, {"module", "foo", "(", ")", ";"}),
+                          L(0, {"endmodule", ":", "foo"})),
         ModuleDeclaration(0, L(0, {"module", "zoo", ";"}),
                           L(0, {"endmodule", ":", "zoo"})),
     },
@@ -974,6 +983,24 @@ const TreeUnwrapperTestData kUnwrapModuleTestCases[] = {
                           N(3,  //
                             L(3, {".", "N", "(", "5", ")", ","}),
                             L(3, {".", "M", "(", "6", ")", "//comment"})),
+                          L(1, {")", "a", ";"})),
+            L(0, {"endmodule"})),
+    },
+
+    {
+        "module instance with named parameter interleaved among EOL comments",
+        "module tryme;"
+        "foo #(//c1\n//c2\n.N(5), //c3\n//c4\n.M(6)//c5\n//c6\n) a;"
+        "endmodule",
+        ModuleDeclaration(
+            0, L(0, {"module", "tryme", ";"}),
+            Instantiation(1, L(1, {"foo", "#", "(", "//c1"}),
+                          N(3,                                             //
+                            L(3, {"//c2"}),                                //
+                            L(3, {".", "N", "(", "5", ")", ",", "//c3"}),  //
+                            L(3, {"//c4"}),                                //
+                            L(3, {".", "M", "(", "6", ")", "//c5"}),       //
+                            L(3, {"//c6"})),                               //
                           L(1, {")", "a", ";"})),
             L(0, {"endmodule"})),
     },
@@ -2648,12 +2675,10 @@ const TreeUnwrapperTestData kUnwrapCommentsTestCases[] = {
         "module foo (); endmodule\n"
         "// end comment\n",
         L(0, {"// start comment"}),
-        ModuleDeclaration(
-            0,
-            ModuleHeader(0,  // TODO(fangism): join when port list is empty
-                         L(0, {"module", "foo", "("}), L(0, {")", ";"})),
-            L(0, {"endmodule"})),  //
-        L(0, {"// end comment"}),  // comment on own line
+        ModuleDeclaration(0,  //
+                          L(0, {"module", "foo", "(", ")", ";"}),
+                          L(0, {"endmodule"})),  //
+        L(0, {"// end comment"}),                // comment on own line
     },
 
     {
@@ -2665,15 +2690,15 @@ const TreeUnwrapperTestData kUnwrapCommentsTestCases[] = {
         "module bar (); endmodule\n"
         "// comment4\n",
         L(0, {"// comment1"}),
-        ModuleDeclaration(
-            0, ModuleHeader(0, L(0, {"module", "foo", "("}), L(0, {")", ";"})),
-            L(0, {"endmodule"})),  //
-        L(0, {"// comment2"}),     // comment on own line
-        L(0, {"// comment3"}),     //
-        ModuleDeclaration(
-            0, ModuleHeader(0, L(0, {"module", "bar", "("}), L(0, {")", ";"})),
-            L(0, {"endmodule"})),  //
-        L(0, {"// comment4"}),     // comment on own line
+        ModuleDeclaration(0,  //
+                          L(0, {"module", "foo", "(", ")", ";"}),
+                          L(0, {"endmodule"})),  //
+        L(0, {"// comment2"}),                   // comment on own line
+        L(0, {"// comment3"}),                   //
+        ModuleDeclaration(0,                     //
+                          L(0, {"module", "bar", "(", ")", ";"}),
+                          L(0, {"endmodule"})),  //
+        L(0, {"// comment4"}),                   // comment on own line
     },
 
     {
@@ -2682,12 +2707,12 @@ const TreeUnwrapperTestData kUnwrapCommentsTestCases[] = {
         "// item comment 1\n"
         "// item comment 2\n"
         "endmodule\n",
-        ModuleDeclaration(
-            0, ModuleHeader(0, L(0, {"module", "foo", "("}), L(0, {")", ";"})),
-            ModuleItemList(1, L(1, {"// item comment 1"}),  //
-                           L(1, {"// item comment 2"})      //
-                           ),
-            L(0, {"endmodule"})),
+        ModuleDeclaration(0,  //
+                          L(0, {"module", "foo", "(", ")", ";"}),
+                          ModuleItemList(1, L(1, {"// item comment 1"}),  //
+                                         L(1, {"// item comment 2"})      //
+                                         ),
+                          L(0, {"endmodule"})),
     },
 
     {
@@ -2724,9 +2749,9 @@ const TreeUnwrapperTestData kUnwrapCommentsTestCases[] = {
         "// end comment\n",
         L(0, {"// start comment"}),
         ModuleDeclaration(
-            0,
-            ModuleHeader(0, L(0, {"module", "foo", "("}),
-                         L(0, {")", ";", "// comment at end of module"})),
+            0,  //
+            L(0,
+              {"module", "foo", "(", ")", ";", "// comment at end of module"}),
             L(0, {"endmodule"})),  // comment separated to next line
         L(0, {"// end comment"}),
     },
@@ -2740,9 +2765,8 @@ const TreeUnwrapperTestData kUnwrapCommentsTestCases[] = {
         "endmodule",
         L(0, {"// comment 1"}),  //
         L(0, {"// comment 2"}),
-        ModuleDeclaration(
-            0, ModuleHeader(0, L(0, {"module", "foo", "("}), L(0, {")", ";"})),
-            L(0, {"endmodule"})),
+        ModuleDeclaration(0, L(0, {"module", "foo", "(", ")", ";"}),
+                          L(0, {"endmodule"})),
     },
 
     {
@@ -3013,6 +3037,19 @@ const TreeUnwrapperTestData kClassTestCases[] = {
                          L(0, {"class", "Foo", "extends", "Bar", "#", "(", "x",
                                ",", "y", ",", "z", ")", ";"}),
                          L(0, {"endclass"})),
+    },
+    {
+        "extends class with type parameters",
+        "class Foo extends Bar #(.x(x),.y(y)); endclass",
+        ClassDeclaration(
+            0,
+            ClassHeader(0,  //
+                        L(0, {"class", "Foo", "extends", "Bar", "#", "("}),
+                        N(2,  //
+                          L(2, {".", "x", "(", "x", ")", ","}),
+                          L(2, {".", "y", "(", "y", ")"})),
+                        L(0, {")", ";"})),
+            L(0, {"endclass"})),
     },
 
     {
@@ -3716,6 +3753,22 @@ const TreeUnwrapperTestData kUnwrapPackageTestCases[] = {
                               EnumItemList(2, L(2, {"A", "=", "0", ","}),
                                            L(2, {"B", "=", "1"})),
                               L(1, {"}", "foo_t", ";"}))),
+            L(0, {"endpackage"})),
+    },
+    {
+        "package with typedef declaration on type with named parameters",
+        "package foo_pkg;"
+        "typedef goo_pkg::baz_t #(.X(X),.Y(Y)) bar_t;"
+        "endpackage",
+        PackageDeclaration(
+            0,  //
+            L(0, {"package", "foo_pkg", ";"}),
+            N(1,  //
+              L(1, {"typedef", "goo_pkg", "::", "baz_t", "#", "("}),
+              N(3,                                     //
+                L(3, {".", "X", "(", "X", ")", ","}),  //
+                L(3, {".", "Y", "(", "Y", ")"})),
+              L(1, {")", "bar_t", ";"})),  //
             L(0, {"endpackage"})),
     },
 
@@ -4537,6 +4590,63 @@ const TreeUnwrapperTestData kUnwrapInterfaceTestCases[] = {
         "interface foo_if;"
         "endinterface",
         InterfaceDeclaration(0, L(0, {"interface", "foo_if", ";"}),
+                             L(0, {"endinterface"})),
+    },
+
+    {
+        "empty interface, empty params",
+        "interface foo_if#( );"
+        "endinterface",
+        InterfaceDeclaration(0,
+                             L(0, {"interface", "foo_if", "#", "(", ")", ";"}),
+                             L(0, {"endinterface"})),
+    },
+
+    {
+        "empty interface, empty params, with comment",
+        "interface foo_if#(\n"
+        "//comment\n"
+        ");"
+        "endinterface",
+        InterfaceDeclaration(0,                                          //
+                             N(0,                                        //
+                               L(0, {"interface", "foo_if", "#", "("}),  //
+                               L(2, {"//comment"}), L(0, {")", ";"})),
+                             L(0, {"endinterface"})),
+    },
+
+    {
+        "empty interface, empty ports",
+        "interface foo_if( );"
+        "endinterface",
+        InterfaceDeclaration(0, L(0, {"interface", "foo_if", "(", ")", ";"}),
+                             L(0, {"endinterface"})),
+    },
+
+    {
+        "empty interface, empty params with comment, empty ports",
+        "interface foo_if#(\n"
+        "//comment\n"
+        ")( );"
+        "endinterface",
+        InterfaceDeclaration(0,                                          //
+                             N(0,                                        //
+                               L(0, {"interface", "foo_if", "#", "("}),  //
+                               L(2, {"//comment"}), L(0, {")", "(", ")", ";"})),
+                             L(0, {"endinterface"})),
+    },
+
+    {
+        "empty interface, one param type, empty ports",
+        "interface foo_if#(\n"
+        "parameter type T = bit\n"
+        ")( );"
+        "endinterface",
+        InterfaceDeclaration(0,                                          //
+                             N(0,                                        //
+                               L(0, {"interface", "foo_if", "#", "("}),  //
+                               L(2, {"parameter", "type", "T", "=", "bit"}),
+                               L(0, {")", "(", ")", ";"})),
                              L(0, {"endinterface"})),
     },
 
