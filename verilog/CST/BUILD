@@ -295,6 +295,7 @@ cc_library(
     srcs = ["functions.cc"],
     hdrs = ["functions.h"],
     deps = [
+        ":identifier",
         ":verilog_matchers",  # fixdeps: keep
         ":verilog_nonterminals",
         ":verilog_treebuilder_utils",
@@ -314,6 +315,7 @@ cc_test(
         ":functions",
         ":identifier",
         "//common/analysis:syntax_tree_search",
+        "//common/analysis:syntax_tree_search_test_utils",
         "//common/analysis/matcher:matcher_builders",
         "//common/text:concrete_syntax_leaf",
         "//common/text:concrete_syntax_tree",
@@ -642,6 +644,7 @@ cc_test(
         ":type",
         ":verilog_nonterminals",
         "//common/analysis:syntax_tree_search",
+        "//common/analysis:syntax_tree_search_test_utils",
         "//common/text:concrete_syntax_leaf",
         "//common/text:syntax_tree_context",
         "//common/text:text_structure",
@@ -733,6 +736,7 @@ cc_library(
     srcs = ["tasks.cc"],
     hdrs = ["tasks.h"],
     deps = [
+        ":identifier",
         ":verilog_matchers",  # fixdeps: keep
         "//common/analysis:syntax_tree_search",
         "//common/analysis/matcher",
@@ -750,6 +754,7 @@ cc_test(
         ":identifier",
         ":tasks",
         "//common/analysis:syntax_tree_search",
+        "//common/analysis:syntax_tree_search_test_utils",
         "//common/text:concrete_syntax_leaf",
         "//common/text:concrete_syntax_tree",
         "//common/text:symbol",

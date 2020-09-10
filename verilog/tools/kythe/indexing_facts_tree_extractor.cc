@@ -21,10 +21,12 @@
 #include "common/text/tree_utils.h"
 #include "verilog/CST/class.h"
 #include "verilog/CST/declaration.h"
+#include "verilog/CST/functions.h"
 #include "verilog/CST/identifier.h"
 #include "verilog/CST/module.h"
 #include "verilog/CST/net.h"
 #include "verilog/CST/port.h"
+#include "verilog/CST/tasks.h"
 #include "verilog/CST/verilog_matchers.h"
 #include "verilog/CST/verilog_nonterminals.h"
 #include "verilog/analysis/verilog_analyzer.h"
@@ -114,12 +116,29 @@ void IndexingFactsTreeExtractor::Visit(const SyntaxTreeNode& node) {
 
       break;
     }
+    case NodeEnum::kPortDeclaration:
+    case NodeEnum::kPortReference: {
+      ExtractModulePort(node);
+      break;
+    }
     case NodeEnum::kIdentifierUnpackedDimensions: {
       ExtractInputOutputDeclaration(node);
       break;
     }
     case NodeEnum ::kNetDeclaration: {
       ExtractNetDeclaration(node);
+      break;
+    }
+    case NodeEnum::kFunctionDeclaration: {
+      ExtractFunctionDeclaration(node);
+      break;
+    }
+    case NodeEnum::kTaskDeclaration: {
+      ExtractTaskDeclaration(node);
+      break;
+    }
+    case NodeEnum::kFunctionCall: {
+      ExtractFunctionOrTaskCall(node);
       break;
     }
     case NodeEnum::kClassDeclaration: {
@@ -159,7 +178,6 @@ void IndexingFactsTreeExtractor::ExtractModuleHeader(
 
   facts_tree_context_.top().Value().AppendAnchor(module_name_anchor);
 
-  // TODO(minatoma): consider this case: module m(a, b);
   // Extracting module ports e.g. (input a, input b).
   // Ports are treated as children of the module.
   const SyntaxTreeNode* port_list =
@@ -169,16 +187,35 @@ void IndexingFactsTreeExtractor::ExtractModuleHeader(
     return;
   }
 
-  const std::vector<TreeSearchMatch> port_names =
-      FindAllModulePortDeclarations(*port_list);
+  Visit(*port_list);
+}
 
-  for (const TreeSearchMatch& port : port_names) {
+void IndexingFactsTreeExtractor::ExtractModulePort(
+    const verible::SyntaxTreeNode& module_port_node) {
+  const auto tag = static_cast<verilog::NodeEnum>(module_port_node.Tag().tag);
+
+  // TODO(minatoma): Fix case like:
+  // module m(input a, b); --> b is treated as a reference but should be a
+  // definition.
+
+  // For extracting cases like:
+  // module m(input a, input b);
+  if (tag == NodeEnum::kPortDeclaration) {
     const verible::SyntaxTreeLeaf* leaf =
-        GetIdentifierFromModulePortDeclaration(*port.match);
+        GetIdentifierFromModulePortDeclaration(module_port_node);
 
     facts_tree_context_.top().NewChild(
         IndexingNodeData({Anchor(leaf->get(), context_.base)},
                          IndexingFactType::kVariableDefinition));
+  } else {
+    // For extracting Non-ANSI style ports:
+    // module m(a, b);
+    const verible::SyntaxTreeLeaf* leaf =
+        GetIdentifierFromPortReference(module_port_node);
+
+    facts_tree_context_.top().NewChild(
+        IndexingNodeData({Anchor(leaf->get(), context_.base)},
+                         IndexingFactType::kVariableReference));
   }
 }
 
@@ -258,6 +295,94 @@ void IndexingFactsTreeExtractor::ExtractNetDeclaration(
         IndexingNodeData({Anchor(*wire_token_info, context_.base)},
                          IndexingFactType::kVariableDefinition));
   }
+}
+
+void IndexingFactsTreeExtractor::ExtractFunctionDeclaration(
+    const verible::SyntaxTreeNode& function_declaration_node) {
+  IndexingNodeData function_node_data(IndexingFactType::kFunctionOrTask);
+  IndexingFactNode function_node(function_node_data);
+
+  // Extract function name.
+  const auto* function_name_leaf = GetFunctionName(function_declaration_node);
+  const Anchor function_name_anchor(function_name_leaf->get(), context_.base);
+  function_node.Value().AppendAnchor(function_name_anchor);
+
+  {
+    const IndexingFactsTreeContext::AutoPop p(&facts_tree_context_,
+                                              &function_node);
+    // Extract function ports.
+    ExtractFunctionTaskPort(function_declaration_node);
+
+    // Extract function body.
+    const verible::SyntaxTreeNode& function_body =
+        GetFunctionBlockStatementList(function_declaration_node);
+    Visit(function_body);
+  }
+
+  facts_tree_context_.top().NewChild(function_node);
+}
+
+void IndexingFactsTreeExtractor::ExtractTaskDeclaration(
+    const verible::SyntaxTreeNode& task_declaration_node) {
+  IndexingNodeData task_node_data(IndexingFactType::kFunctionOrTask);
+  IndexingFactNode task_node(task_node_data);
+
+  // Extract task name.
+  const auto* task_name_leaf = GetTaskName(task_declaration_node);
+  const Anchor task_name_anchor(task_name_leaf->get(), context_.base);
+  task_node.Value().AppendAnchor(task_name_anchor);
+
+  {
+    const IndexingFactsTreeContext::AutoPop p(&facts_tree_context_, &task_node);
+
+    // Extract task ports.
+    ExtractFunctionTaskPort(task_declaration_node);
+
+    // Extract task body.
+    const verible::SyntaxTreeNode& task_body =
+        GetTaskStatementList(task_declaration_node);
+    Visit(task_body);
+  }
+
+  facts_tree_context_.top().NewChild(task_node);
+}
+
+void IndexingFactsTreeExtractor::ExtractFunctionTaskPort(
+    const verible::SyntaxTreeNode& function_declaration_node) {
+  const std::vector<verible::TreeSearchMatch> ports =
+      FindAllTaskFunctionPortDeclarations(function_declaration_node);
+
+  for (const verible::TreeSearchMatch& port : ports) {
+    const verible::SyntaxTreeLeaf* leaf =
+        GetIdentifierFromTaskFunctionPortItem(*port.match);
+
+    // TODO(minatoma): Consider using kPorts or kParam for ports and params
+    // instead of variables (same goes for modules).
+    facts_tree_context_.top().NewChild(
+        IndexingNodeData({Anchor(leaf->get(), context_.base)},
+                         IndexingFactType::kVariableDefinition));
+  }
+}
+
+void IndexingFactsTreeExtractor::ExtractFunctionOrTaskCall(
+    const verible::SyntaxTreeNode& function_call_node) {
+  IndexingNodeData function_node_data(IndexingFactType::kFunctionCall);
+  IndexingFactNode function_node(function_node_data);
+
+  // Extract function or task name.
+  const auto* function_name_leaf = GetFunctionCallName(function_call_node);
+  const Anchor task_name_anchor(function_name_leaf->get(), context_.base);
+  function_node.Value().AppendAnchor(task_name_anchor);
+
+  {
+    const IndexingFactsTreeContext::AutoPop p(&facts_tree_context_,
+                                              &function_node);
+
+    // Extract function or task parameters.
+    TreeContextVisitor::Visit(function_call_node);
+  }
+
+  facts_tree_context_.top().NewChild(function_node);
 }
 
 void IndexingFactsTreeExtractor::ExtractClassDeclaration(

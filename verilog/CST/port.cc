@@ -37,6 +37,11 @@ std::vector<verible::TreeSearchMatch> FindAllModulePortDeclarations(
   return SearchSyntaxTree(root, NodekPortDeclaration());
 }
 
+std::vector<verible::TreeSearchMatch> FindAllPortReferences(
+    const verible::Symbol& root) {
+  return SearchSyntaxTree(root, NodekPortReference());
+}
+
 std::vector<verible::TreeSearchMatch> FindAllTaskFunctionPortDeclarations(
     const Symbol& root) {
   return SearchSyntaxTree(root, NodekPortItem());
@@ -46,6 +51,13 @@ const SyntaxTreeLeaf* GetIdentifierFromModulePortDeclaration(
     const Symbol& symbol) {
   const auto* identifier_symbol =
       verible::GetSubtreeAsSymbol(symbol, NodeEnum::kPortDeclaration, 3);
+  return AutoUnwrapIdentifier(*ABSL_DIE_IF_NULL(identifier_symbol));
+}
+
+const verible::SyntaxTreeLeaf* GetIdentifierFromPortReference(
+    const verible::Symbol& port_reference) {
+  const auto* identifier_symbol =
+      verible::GetSubtreeAsSymbol(port_reference, NodeEnum::kPortReference, 0);
   return AutoUnwrapIdentifier(*ABSL_DIE_IF_NULL(identifier_symbol));
 }
 

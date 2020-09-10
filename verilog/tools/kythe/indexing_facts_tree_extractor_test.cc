@@ -410,6 +410,65 @@ TEST(FactsTreeExtractor, ModuleWithPortsTest) {
   EXPECT_EQ(result_pair.right, nullptr) << *result_pair.right;
 }
 
+TEST(FactsTreeExtractor, ModuleWithPortsNonANSIStyleTest) {
+  constexpr int kTag = 1;  // value doesn't matter
+
+  // Normally, tools will reject non-ANSI port declarations that are missing
+  // their full definitions inside the body like "input a", but here we don't
+  // care and are just checking for references, even if they are dangling.
+  const verible::SyntaxTreeSearchTestCase kTestCase = {{"module ",
+                                                        {kTag, "foo"},
+                                                        "(",
+                                                        {kTag, "a"},
+                                                        ", ",
+                                                        {kTag, "b"},
+                                                        ");\nendmodule: ",
+                                                        {kTag, "foo"}}};
+
+  constexpr absl::string_view file_name = "verilog.v";
+  int exit_status = 0;
+  bool parse_ok = false;
+
+  const IndexingFactNode expected(
+      {
+          {
+              Anchor(file_name, 0, kTestCase.code.size()),
+              Anchor(kTestCase.code, 0, kTestCase.code.size()),
+          },
+          IndexingFactType ::kFile,
+      },
+      // refers to module foo.
+      T(
+          {
+              {
+                  Anchor(kTestCase.expected_tokens[1], kTestCase.code),
+                  Anchor(kTestCase.expected_tokens[7], kTestCase.code),
+              },
+              IndexingFactType::kModule,
+          },
+          // refers to input a.
+          T({
+              {
+                  Anchor(kTestCase.expected_tokens[3], kTestCase.code),
+              },
+              IndexingFactType::kVariableReference,
+          }),
+          // refers to output b.
+          T({
+              {
+                  Anchor(kTestCase.expected_tokens[5], kTestCase.code),
+              },
+              IndexingFactType::kVariableReference,
+          })));
+
+  const auto facts_tree =
+      ExtractOneFile(kTestCase.code, file_name, exit_status, parse_ok);
+
+  const auto result_pair = DeepEqual(facts_tree, expected);
+  EXPECT_EQ(result_pair.left, nullptr) << *result_pair.left;
+  EXPECT_EQ(result_pair.right, nullptr) << *result_pair.right;
+}
+
 TEST(FactsTreeExtractor, MultiSignalDeclaration) {
   constexpr int kTag = 1;  // value doesn't matter
   const verible::SyntaxTreeSearchTestCase kTestCase = {{"module ",
@@ -821,6 +880,226 @@ TEST(FactsTreeExtractor, OneClassInstanceTest) {
                   Anchor(kTestCase.expected_tokens[9], kTestCase.code),
               },
               IndexingFactType ::kClassInstance,
+          })));
+
+  const auto facts_tree =
+      ExtractOneFile(kTestCase.code, file_name, exit_status, parse_ok);
+
+  const auto result_pair = DeepEqual(facts_tree, expected);
+  EXPECT_EQ(result_pair.left, nullptr) << *result_pair.left;
+  EXPECT_EQ(result_pair.right, nullptr) << *result_pair.right;
+}
+
+TEST(FactsTreeExtractor, FunctionAndTaskDeclarationNoArgs) {
+  constexpr int kTag = 1;  // value doesn't matter
+  const verible::SyntaxTreeSearchTestCase kTestCase = {{
+      "function int ",
+      {kTag, "foo"},
+      "();",
+      ";\nendfunction ",
+      "task ",
+      {kTag, "bar"},
+      "();",
+      ";\nendtask ",
+  }};
+
+  constexpr absl::string_view file_name = "verilog.v";
+  int exit_status = 0;
+  bool parse_ok = false;
+
+  const IndexingFactNode expected(
+      {
+          {
+              Anchor(file_name, 0, kTestCase.code.size()),
+              Anchor(kTestCase.code, 0, kTestCase.code.size()),
+          },
+          IndexingFactType ::kFile,
+      },
+      // refers to function foo
+      T({
+          {
+              Anchor(kTestCase.expected_tokens[1], kTestCase.code),
+          },
+          IndexingFactType::kFunctionOrTask,
+      }),
+      // refers to task bar
+      T({
+          {
+              Anchor(kTestCase.expected_tokens[5], kTestCase.code),
+          },
+          IndexingFactType ::kFunctionOrTask,
+      }));
+
+  const auto facts_tree =
+      ExtractOneFile(kTestCase.code, file_name, exit_status, parse_ok);
+
+  const auto result_pair = DeepEqual(facts_tree, expected);
+  EXPECT_EQ(result_pair.left, nullptr) << *result_pair.left;
+  EXPECT_EQ(result_pair.right, nullptr) << *result_pair.right;
+}
+
+TEST(FactsTreeExtractor, FunctionAndTaskDeclarationWithArgs) {
+  constexpr int kTag = 1;  // value doesn't matter
+  const verible::SyntaxTreeSearchTestCase kTestCase = {{
+      "function int ", {kTag, "foo"},  "(int ", {kTag, "arg1"},
+      ", input ",      {kTag, "arg2"}, ", ",    {kTag, "arg3"},
+      ", bit ",        {kTag, "arg4"}, ");",    ";\nendfunction ",
+      "task ",         {kTag, "bar"},  "(int ", {kTag, "arg1"},
+      ", input ",      {kTag, "arg2"}, ", ",    {kTag, "arg3"},
+      ", bit ",        {kTag, "arg4"}, ");",    ";\nendtask ",
+  }};
+
+  constexpr absl::string_view file_name = "verilog.v";
+  int exit_status = 0;
+  bool parse_ok = false;
+
+  const IndexingFactNode expected(
+      {
+          {
+              Anchor(file_name, 0, kTestCase.code.size()),
+              Anchor(kTestCase.code, 0, kTestCase.code.size()),
+          },
+          IndexingFactType ::kFile,
+      },
+      // refers to function foo
+      T(
+          {
+              {
+                  Anchor(kTestCase.expected_tokens[1], kTestCase.code),
+              },
+              IndexingFactType::kFunctionOrTask,
+          },
+          T({
+              {
+                  Anchor(kTestCase.expected_tokens[3], kTestCase.code),
+              },
+              IndexingFactType ::kVariableDefinition,
+          }),
+          T({
+              {
+                  Anchor(kTestCase.expected_tokens[5], kTestCase.code),
+              },
+              IndexingFactType ::kVariableDefinition,
+          }),
+          T({
+              {
+                  Anchor(kTestCase.expected_tokens[7], kTestCase.code),
+              },
+              IndexingFactType ::kVariableDefinition,
+          }),
+          T({
+              {
+                  Anchor(kTestCase.expected_tokens[9], kTestCase.code),
+              },
+              IndexingFactType ::kVariableDefinition,
+          })),
+      // refers to task bar
+      T(
+          {
+              {
+                  Anchor(kTestCase.expected_tokens[13], kTestCase.code),
+              },
+              IndexingFactType ::kFunctionOrTask,
+          },
+          T({
+              {
+                  Anchor(kTestCase.expected_tokens[15], kTestCase.code),
+              },
+              IndexingFactType ::kVariableDefinition,
+          }),
+          T({
+              {
+                  Anchor(kTestCase.expected_tokens[17], kTestCase.code),
+              },
+              IndexingFactType ::kVariableDefinition,
+          }),
+          T({
+              {
+                  Anchor(kTestCase.expected_tokens[19], kTestCase.code),
+              },
+              IndexingFactType ::kVariableDefinition,
+          }),
+          T({
+              {
+                  Anchor(kTestCase.expected_tokens[21], kTestCase.code),
+              },
+              IndexingFactType ::kVariableDefinition,
+          })));
+
+  const auto facts_tree =
+      ExtractOneFile(kTestCase.code, file_name, exit_status, parse_ok);
+
+  const auto result_pair = DeepEqual(facts_tree, expected);
+  EXPECT_EQ(result_pair.left, nullptr) << *result_pair.left;
+  EXPECT_EQ(result_pair.right, nullptr) << *result_pair.right;
+}
+
+TEST(FactsTreeExtractor, FunctionAndTaskCallNoArgs) {
+  constexpr int kTag = 1;  // value doesn't matter
+  const verible::SyntaxTreeSearchTestCase kTestCase = {{
+      "function int ",
+      {kTag, "foo"},
+      "();",
+      ";\nendfunction\n ",
+      "task ",
+      {kTag, "bar"},
+      "();",
+      ";\nendtask ",
+      "\nmodule ",
+      {kTag, "m"},
+      "();\ninitial begin\n",
+      {kTag, "foo"},
+      "();\n",
+      {kTag, "bar"},
+      "();\nend\nendmodule: ",
+      {kTag, "m"},
+  }};
+
+  constexpr absl::string_view file_name = "verilog.v";
+  int exit_status = 0;
+  bool parse_ok = false;
+
+  const IndexingFactNode expected(
+      {
+          {
+              Anchor(file_name, 0, kTestCase.code.size()),
+              Anchor(kTestCase.code, 0, kTestCase.code.size()),
+          },
+          IndexingFactType ::kFile,
+      },
+      // refers to function foo
+      T({
+          {
+              Anchor(kTestCase.expected_tokens[1], kTestCase.code),
+          },
+          IndexingFactType::kFunctionOrTask,
+      }),
+      // refers to task bar
+      T({
+          {
+              Anchor(kTestCase.expected_tokens[5], kTestCase.code),
+          },
+          IndexingFactType ::kFunctionOrTask,
+      }),
+      T(
+          {
+              {
+                  Anchor(kTestCase.expected_tokens[9], kTestCase.code),
+                  Anchor(kTestCase.expected_tokens[15], kTestCase.code),
+              },
+              IndexingFactType ::kModule,
+          },
+          T({
+              {
+                  Anchor(kTestCase.expected_tokens[11], kTestCase.code),
+              },
+              IndexingFactType ::kFunctionCall,
+          }),
+          T({
+              {
+                  Anchor(kTestCase.expected_tokens[13], kTestCase.code),
+              },
+              IndexingFactType ::kFunctionCall,
           })));
 
   const auto facts_tree =
