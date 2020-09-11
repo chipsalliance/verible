@@ -431,11 +431,11 @@ TEST(PackageImportTest, GetImportedPackageName) {
       {"package pkg; endpackage\nmodule m();\n import ",
        {kTag, "pkg"},
        "::*;\nendmodule"},
-      {"package pkg;\n int my_int;\nendpackage\nmodule m();\n import ",
+      {"package pkg;\n int my_int;\nendpackage\nmodule m\nimport ",
        {kTag, "pkg"},
        "::*;\nimport ",
        {kTag, "pkg"},
-       "::my_int;\nendmodule"},
+       "::my_int;\n();\nendmodule"},
   };
   for (const auto& test : kTestCases) {
     TestVerilogSyntaxRangeMatches(
@@ -470,6 +470,13 @@ TEST(PackageImportTest, GetImportedItemName) {
        ";\nimport pkg::",
        {kTag, "my_class"},
        ";\nendmodule"},
+      {"package pkg;\n int my_int;\nclass "
+       "my_class;\nendclass\nendpackage\nmodule m\n import "
+       "pkg::*;\nimport pkg::",
+       {kTag, "my_int"},
+       ";\nimport pkg::",
+       {kTag, "my_class"},
+       ";\n();\n\nendmodule"},
   };
   for (const auto& test : kTestCases) {
     TestVerilogSyntaxRangeMatches(

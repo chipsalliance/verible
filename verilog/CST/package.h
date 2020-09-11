@@ -62,6 +62,7 @@ const verible::SyntaxTreeLeaf& GetImportedPackageName(
 
 // Extracts the symbol identifier from PackageImportItem if exits.
 // e.g import pkg::my_integer return the node spanning "my_integer".
+// return nullptr in case of import pkg::*.
 const verible::SyntaxTreeLeaf* GeImportedItemNameFromPackageImportItem(
     const verible::Symbol& package_import_item);
 

@@ -132,8 +132,8 @@ class KytheFactsExtractor {
 
   // Searches for a defintion suitable for the given reference within package
   // scope context of the given package name.
-  const VName* SearchForDefinitionVNameInPackage(std::string package_name,
-                                                 std::string reference_name);
+  const VName* SearchForDefinitionVNameInPackage(
+      absl::string_view package_name, absl::string_view reference_name) const;
 
   // Resolves the tag of the given node and directs the flow to the appropriate
   // function to extract kythe facts for that node.
@@ -141,9 +141,8 @@ class KytheFactsExtractor {
 
   // Add the given VName to vnames_context (to be used in scope relative
   // signatures) and visits the children of the given node.
-  void Visit(const IndexingFactNode& node,
-                                 const VName& vname,
-                                 std::vector<VName>& current_scope);
+  void Visit(const IndexingFactNode& node, const VName& vname,
+             std::vector<VName>& current_scope);
 
   // Directs the flow to the children of the given node creating new scope for
   // that node.
@@ -244,21 +243,6 @@ class KytheFactsExtractor {
   // output.
   std::ostream* stream_;
 };
-
-// Creates the signature for module names.
-std::string CreateModuleSignature(absl::string_view);
-
-// Creates the signature for package names.
-std::string CreatePackageSignature(absl::string_view);
-
-// Creates the signature for Class names.
-std::string CreateClassSignature(absl::string_view);
-
-// Creates the signature for module instantiations.
-std::string CreateVariableSignature(absl::string_view);
-
-// Creates the signature for functions or tasks.
-std::string CreateFunctionOrTaskSignature(absl::string_view);
 
 std::ostream& operator<<(std::ostream&, const KytheFactsPrinter&);
 
