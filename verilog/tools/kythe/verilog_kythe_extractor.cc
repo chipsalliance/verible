@@ -13,6 +13,7 @@
 // limitations under the License.
 
 #include <iostream>
+#include <string>
 
 #include "absl/flags/flag.h"
 #include "absl/status/status.h"
@@ -32,12 +33,13 @@ ABSL_FLAG(bool, printextraction, false,
 ABSL_FLAG(bool, printkythefacts, false,
           "Whether or not to print the extracted kythe facts");
 
-int ExtractOneFile(absl::string_view content, absl::string_view filename) {
+static int ExtractOneFile(absl::string_view content,
+                          absl::string_view filename) {
   int exit_status = 0;
   bool parse_ok = false;
 
-  const verilog::kythe::IndexingFactNode& facts_tree =
-      verilog::kythe::ExtractOneFile(content, filename, exit_status, parse_ok);
+  const verilog::kythe::IndexingFactNode facts_tree(
+      verilog::kythe::ExtractOneFile(content, filename, exit_status, parse_ok));
 
   // check for printextraction flag, and print extraction if on
   if (absl::GetFlag(FLAGS_printextraction)) {
@@ -45,7 +47,7 @@ int ExtractOneFile(absl::string_view content, absl::string_view filename) {
               << (!parse_ok ? " (incomplete due to syntax errors): " : "")
               << std::endl;
 
-    std::cout << facts_tree << '\n';
+    std::cout << facts_tree << std::endl;
   }
   LOG(INFO) << '\n' << facts_tree;
 
@@ -55,7 +57,7 @@ int ExtractOneFile(absl::string_view content, absl::string_view filename) {
               << (!parse_ok ? " (incomplete due to syntax errors): " : "")
               << std::endl;
 
-    std::cout << verilog::kythe::KytheFactsPrinter(facts_tree) << '\n';
+    std::cout << verilog::kythe::KytheFactsPrinter(facts_tree) << std::endl;
   }
 
   return exit_status;

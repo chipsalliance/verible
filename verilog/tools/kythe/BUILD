@@ -2,6 +2,12 @@
 
 licenses(["notice"])
 
+package(
+    default_visibility = [
+        "//verilog/tools/kythe:__subpackages__",
+    ],
+)
+
 # Generates foreach list for IndexingFactType enum.
 # Libraries that need these generated include files should list them
 # under srcs, even if they are included by headers.
