@@ -51,7 +51,21 @@ cc_test(
 
 cc_library(
     name = "basic_format_style",
+    srcs = ["basic_format_style.cc"],
     hdrs = ["basic_format_style.h"],
+    deps = [
+        "//common/util:enum_flags",
+        "@com_google_absl//absl/strings",
+    ],
+)
+
+cc_test(
+    name = "basic_format_style_test",
+    srcs = ["basic_format_style_test.cc"],
+    deps = [
+        ":basic_format_style",
+        "@com_google_googletest//:gtest_main",
+    ],
 )
 
 cc_library(

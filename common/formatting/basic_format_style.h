@@ -15,6 +15,11 @@
 #ifndef VERIBLE_COMMON_FORMATTING_BASIC_FORMAT_STYLE_H_
 #define VERIBLE_COMMON_FORMATTING_BASIC_FORMAT_STYLE_H_
 
+#include <iosfwd>
+#include <string>
+
+#include "absl/strings/string_view.h"
+
 namespace verible {
 
 // Style configuration common to all languages.
@@ -35,6 +40,24 @@ struct BasicFormatStyle {
   // character over the limit.
   int over_column_limit_penalty = 100;
 };
+
+// Control how a section of code is indented.
+enum class IndentationStyle {
+  // One unit of indentation.
+  // This applies verible::BasicFormatStyle::indentation_spaces amount of
+  // spaces.
+  kIndent,
+  // Indentation that is applied to long, continued lines.
+  // This is also known as hang-indent.
+  // This applies verible::BasicFormatStyle::wrap_spaces amount of spaces.
+  kWrap,
+};
+
+std::ostream& operator<<(std::ostream&, IndentationStyle);
+
+bool AbslParseFlag(absl::string_view, IndentationStyle*, std::string*);
+
+std::string AbslUnparseFlag(const IndentationStyle&);
 
 }  // namespace verible
 

@@ -49,6 +49,10 @@ std::string CreateFunctionOrTaskSignature(absl::string_view function_name) {
   return absl::StrCat(function_name, "#function");
 }
 
+std::string CreateMacroSignature(absl::string_view macro_name) {
+  return absl::StrCat(macro_name, "#macro");
+}
+
 void KytheFactsExtractor::ExtractKytheFacts(const IndexingFactNode& root) {
   CreatePackageScopes(root);
   IndexingFactNodeTagResolver(root);
@@ -99,6 +103,11 @@ void KytheFactsExtractor::IndexingFactNodeTagResolver(
       scope_context_.top().push_back(vname);
       break;
     }
+    case IndexingFactType::kMacro: {
+      vname = ExtractMacroDefinition(node);
+      scope_context_.top().push_back(vname);
+      break;
+    }
     case IndexingFactType::kVariableReference: {
       vname = ExtractVariableReferenceFact(node);
       break;
@@ -123,6 +132,10 @@ void KytheFactsExtractor::IndexingFactNodeTagResolver(
     }
     case IndexingFactType::kPackageImport: {
       vname = ExtractPackageImport(node);
+      break;
+    }
+    case IndexingFactType::kMacroCall: {
+      vname = ExtractMacroCall(node);
       break;
     }
     case IndexingFactType::kPackage: {
@@ -317,6 +330,37 @@ VName KytheFactsExtractor::ExtractPackageDeclaration(
   }
 
   return package_vname;
+}
+
+VName KytheFactsExtractor::ExtractMacroDefinition(
+    const IndexingFactNode& macro_definition_node) {
+  const Anchor& macro_name = macro_definition_node.Value().Anchors()[0];
+
+  const VName macro_vname(file_path_, CreateMacroSignature(macro_name.Value()));
+  const VName module_name_anchor = PrintAnchorVName(macro_name);
+
+  GenerateFactString(macro_vname, kFactNodeKind, kNodeMacro);
+  GenerateEdgeString(module_name_anchor, kEdgeDefinesBinding, macro_vname);
+
+  return macro_vname;
+}
+
+VName KytheFactsExtractor::ExtractMacroCall(
+    const IndexingFactNode& macro_call_node) {
+  const Anchor& macro_name = macro_call_node.Value().Anchors()[0];
+  const VName macro_vname_anchor = PrintAnchorVName(macro_name);
+
+  // We pass a substring to ignore the ` before macro name.
+  // e.g.
+  // `define TEN 0
+  // `TEN --> removes the `
+  const VName variable_definition_vname(
+      file_path_, CreateMacroSignature(macro_name.Value().substr(1)));
+
+  GenerateEdgeString(macro_vname_anchor, kEdgeRefExpands,
+                     variable_definition_vname);
+
+  return variable_definition_vname;
 }
 
 VName KytheFactsExtractor::ExtractFunctionOrTask(

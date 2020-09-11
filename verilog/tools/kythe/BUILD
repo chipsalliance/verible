@@ -114,6 +114,7 @@ cc_library(
         "//verilog/CST:declaration",
         "//verilog/CST:functions",
         "//verilog/CST:identifier",
+        "//verilog/CST:macro",
         "//verilog/CST:module",
         "//verilog/CST:net",
         "//verilog/CST:port",

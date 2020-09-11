@@ -1110,6 +1110,283 @@ TEST(FactsTreeExtractor, FunctionAndTaskCallNoArgs) {
   EXPECT_EQ(result_pair.right, nullptr) << *result_pair.right;
 }
 
+TEST(FactsTreeExtractor, MacroDefinitionTest) {
+  constexpr int kTag = 1;  // value doesn't matter
+  const verible::SyntaxTreeSearchTestCase kTestCase = {
+      {
+          "`define ",
+          {kTag, "PRINT_STRING"},
+          "(",
+          {kTag, "str1"},
+          ") $display(\"%s\\n\", str1)\n",
+          "`define ",
+          {kTag, "PRINT_3_STRING"},
+          "(",
+          {kTag, "str1"},
+          ", ",
+          {kTag, "str2"},
+          ", ",
+          {kTag, "str3"},
+          ")",
+          R"( \
+    `PRINT_STRING(str1); \
+    `PRINT_STRING(str2); \
+    `PRINT_STRING(str3);)",
+          "\n`define ",
+          {kTag, "TEN"},
+          " 10",
+      },
+  };
+
+  constexpr absl::string_view file_name = "verilog.v";
+  int exit_status = 0;
+  bool parse_ok = false;
+
+  const IndexingFactNode expected(
+      {
+          {
+              Anchor(file_name, 0, kTestCase.code.size()),
+              Anchor(kTestCase.code, 0, kTestCase.code.size()),
+          },
+          IndexingFactType ::kFile,
+      },
+      // refers to macro PRINT_STRING.
+      T(
+          {
+              {
+                  Anchor(kTestCase.expected_tokens[1], kTestCase.code),
+              },
+              IndexingFactType::kMacro,
+          },
+          // refers to str1 arg in PRINT_STRING.
+          T({
+              {
+                  Anchor(kTestCase.expected_tokens[3], kTestCase.code),
+              },
+              IndexingFactType ::kVariableDefinition,
+          })),
+      // refers to macro PRINT_3_STRING.
+      T(
+          {
+              {
+                  Anchor(kTestCase.expected_tokens[6], kTestCase.code),
+              },
+              IndexingFactType::kMacro,
+          },
+          // refers to str1 arg in PRINT_3_STRING.
+          T({
+              {
+                  Anchor(kTestCase.expected_tokens[8], kTestCase.code),
+              },
+              IndexingFactType ::kVariableDefinition,
+          }),
+          // refers to str2 arg in PRINT_3_STRING.
+          T({
+              {
+                  Anchor(kTestCase.expected_tokens[10], kTestCase.code),
+              },
+              IndexingFactType ::kVariableDefinition,
+          }),
+          // refers to str3 arg in PRINT_3_STRING.
+          T({
+              {
+                  Anchor(kTestCase.expected_tokens[12], kTestCase.code),
+              },
+              IndexingFactType ::kVariableDefinition,
+          })),
+      // refers to macro TEN.
+      T({
+          {
+              Anchor(kTestCase.expected_tokens[16], kTestCase.code),
+          },
+          IndexingFactType::kMacro,
+      }));
+
+  const auto facts_tree =
+      ExtractOneFile(kTestCase.code, file_name, exit_status, parse_ok);
+
+  const auto result_pair = DeepEqual(facts_tree, expected);
+  EXPECT_EQ(result_pair.left, nullptr) << *result_pair.left;
+  EXPECT_EQ(result_pair.right, nullptr) << *result_pair.right;
+}
+
+TEST(FactsTreeExtractor, MacroCallTest) {
+  constexpr int kTag = 1;  // value doesn't matter
+  const verible::SyntaxTreeSearchTestCase kTestCase = {
+      "`define ",
+      {kTag, "PRINT_STRING"},
+      "(",
+      {kTag, "str1"},
+      ") $display(\"%s\\n\", str1)\n",
+      "`define ",
+      {kTag, "PRINT_3_STRING"},
+      "(",
+      {kTag, "str1"},
+      ", ",
+      {kTag, "str2"},
+      ", ",
+      {kTag, "str3"},
+      ")",
+      R"( \
+    `PRINT_STRING(str1); \
+    `PRINT_STRING(str2); \
+    `PRINT_STRING(str3);)",
+      "\n`define ",
+      {kTag, "TEN"},
+      " 10\n",
+      "\n`define ",
+      {kTag, "NUM"},
+      "(",
+      {kTag, "i"},
+      ") i\n",
+      "module ",
+      {kTag, "macro"},
+      ";\ninitial begin\n",
+      {kTag, "`PRINT_3_STRINGS"},
+      "(\"Grand\", \"Tour\", \"S4\");\n",
+      "$display(\"%d\\n\", ",
+      {kTag, "`TEN"},
+      ");\n",
+      "$display(\"%d\\n\", ",
+      {kTag, "`NUM"},
+      "(",
+      {kTag, "`TEN"},
+      "));\n",
+      "parameter int x = ",
+      {kTag, "`TEN"},
+      ";\n"
+      "end\nendmodule"};
+
+  constexpr absl::string_view file_name = "verilog.v";
+  int exit_status = 0;
+  bool parse_ok = false;
+
+  const IndexingFactNode expected(
+      {
+          {
+              Anchor(file_name, 0, kTestCase.code.size()),
+              Anchor(kTestCase.code, 0, kTestCase.code.size()),
+          },
+          IndexingFactType ::kFile,
+      },
+      // refers to macro PRINT_STRING.
+      T(
+          {
+              {
+                  Anchor(kTestCase.expected_tokens[1], kTestCase.code),
+              },
+              IndexingFactType::kMacro,
+          },
+          // refers to str1 in PRINT_STRING.
+          T({
+              {
+                  Anchor(kTestCase.expected_tokens[3], kTestCase.code),
+              },
+              IndexingFactType ::kVariableDefinition,
+          })),
+      // refers to macro PRINT_3_STRING.
+      T(
+          {
+              {
+                  Anchor(kTestCase.expected_tokens[6], kTestCase.code),
+              },
+              IndexingFactType::kMacro,
+          },
+          // refers to str1 in PRINT_3_STRING.
+          T({
+              {
+                  Anchor(kTestCase.expected_tokens[8], kTestCase.code),
+              },
+              IndexingFactType ::kVariableDefinition,
+          }),
+          // refers to str2 in PRINT_3_STRING.
+          T({
+              {
+                  Anchor(kTestCase.expected_tokens[10], kTestCase.code),
+              },
+              IndexingFactType ::kVariableDefinition,
+          }),
+          // refers to str3 in PRINT_3_STRING.
+          T({
+              {
+                  Anchor(kTestCase.expected_tokens[12], kTestCase.code),
+              },
+              IndexingFactType ::kVariableDefinition,
+          })),
+      // refers to macro TEN.
+      T({
+          {
+              Anchor(kTestCase.expected_tokens[16], kTestCase.code),
+          },
+          IndexingFactType::kMacro,
+      }),
+      // refers to macro NUM.
+      T(
+          {
+              {
+                  Anchor(kTestCase.expected_tokens[19], kTestCase.code),
+              },
+              IndexingFactType::kMacro,
+          },
+          // refers to i in macro NUM.
+          T({
+              {
+                  Anchor(kTestCase.expected_tokens[21], kTestCase.code),
+              },
+              IndexingFactType ::kVariableDefinition,
+          })),
+      // refers to module macro.
+      T(
+          {
+              {
+                  Anchor(kTestCase.expected_tokens[24], kTestCase.code),
+              },
+              IndexingFactType::kModule,
+          },
+          // refers to macro call PRINT_3_STRINGS.
+          T({
+              {
+                  Anchor(kTestCase.expected_tokens[26], kTestCase.code),
+              },
+              IndexingFactType::kMacroCall,
+          }),
+          // refers to macro call TEN.
+          T({
+              {
+                  Anchor(kTestCase.expected_tokens[29], kTestCase.code),
+              },
+              IndexingFactType::kMacroCall,
+          }),
+          // refers to macro call NUM.
+          T(
+              {
+                  {
+                      Anchor(kTestCase.expected_tokens[32], kTestCase.code),
+                  },
+                  IndexingFactType::kMacroCall,
+              },  // refers to macro call TEN.
+              T({
+                  {
+                      Anchor(kTestCase.expected_tokens[34], kTestCase.code),
+                  },
+                  IndexingFactType::kMacroCall,
+              })),
+          // refers to macro call TEN.
+          T({
+              {
+                  Anchor(kTestCase.expected_tokens[37], kTestCase.code),
+              },
+              IndexingFactType::kMacroCall,
+          })));
+
+  const auto facts_tree =
+      ExtractOneFile(kTestCase.code, file_name, exit_status, parse_ok);
+
+  const auto result_pair = DeepEqual(facts_tree, expected);
+  EXPECT_EQ(result_pair.left, nullptr) << *result_pair.left;
+  EXPECT_EQ(result_pair.right, nullptr) << *result_pair.right;
+}
+
 TEST(PackageImportTest, PackageAndImportedItemName) {
   constexpr int kTag = 1;  // value doesn't matter
   const verible::SyntaxTreeSearchTestCase kTestCase = {

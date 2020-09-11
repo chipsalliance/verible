@@ -1015,14 +1015,16 @@ void TreeUnwrapper::SetIndentationsAndCreatePartitions(
       // module instantiations (which look like data declarations) want to
       // expand one parameter/port per line.
     case NodeEnum::kActualParameterByNameList: {
-      const int indent = suppress_indentation ? 0 : style_.wrap_spaces;
+      const int indent =
+          suppress_indentation ? 0 : style_.NamedParameterIndentation();
       VisitIndentedSection(node, indent,
                            PartitionPolicyEnum::kTabularAlignment);
       break;
     }
     case NodeEnum::kPortActualList:  // covers named and positional ports
     {
-      const int indent = suppress_indentation ? 0 : style_.wrap_spaces;
+      const int indent =
+          suppress_indentation ? 0 : style_.NamedPortIndentation();
       const auto policy = Context().IsInside(NodeEnum::kDataDeclaration)
                               ? PartitionPolicyEnum::kTabularAlignment
                               : PartitionPolicyEnum::kFitOnLineElseExpand;
@@ -1030,10 +1032,25 @@ void TreeUnwrapper::SetIndentationsAndCreatePartitions(
       break;
     }
 
-    case NodeEnum::kPortDeclarationList:
+    case NodeEnum::kPortDeclarationList: {
+      // Do not further indent preprocessor clauses.
+      const int indent =
+          suppress_indentation ? 0 : style_.PortDeclarationsIndentation();
+      if (Context().IsInside(NodeEnum::kClassHeader) ||
+          // kModuleHeader covers interfaces and programs
+          Context().IsInside(NodeEnum::kModuleHeader)) {
+        VisitIndentedSection(node, indent,
+                             PartitionPolicyEnum::kTabularAlignment);
+      } else {
+        VisitIndentedSection(node, indent,
+                             PartitionPolicyEnum::kFitOnLineElseExpand);
+      }
+      break;
+    }
     case NodeEnum::kFormalParameterList: {
       // Do not further indent preprocessor clauses.
-      const int indent = suppress_indentation ? 0 : style_.wrap_spaces;
+      const int indent =
+          suppress_indentation ? 0 : style_.FormalParametersIndentation();
       if (Context().IsInside(NodeEnum::kClassHeader) ||
           // kModuleHeader covers interfaces and programs
           Context().IsInside(NodeEnum::kModuleHeader)) {

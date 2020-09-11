@@ -37,6 +37,7 @@ class IndexingFactsTreeExtractor : public verible::TreeContextVisitor {
     root_.Value().AppendAnchor(Anchor(base, 0, base.size()));
   }
 
+  void Visit(const verible::SyntaxTreeLeaf& leaf) override;
   void Visit(const verible::SyntaxTreeNode& node) override;
 
   IndexingFactNode& GetRoot() { return root_; }
@@ -71,6 +72,19 @@ class IndexingFactsTreeExtractor : public verible::TreeContextVisitor {
   // Extract package declarations and creates its corresponding facts tree.
   void ExtractPackageDeclaration(
       const verible::SyntaxTreeNode& package_declaration_node);
+
+  // Extract macro definitions and explores its arguments and creates its
+  // corresponding facts tree.
+  void ExtractMacroDefinition(
+      const verible::SyntaxTreeNode& preprocessor_definition);
+
+  // Extract macro calls and explores its arguments and creates its
+  // corresponding facts tree.
+  void ExtractMacroCall(const verible::SyntaxTreeNode& macro_call);
+
+  // Extract macro names from kMacroIdentifiers which are considered references
+  // to macros and creates its corresponding facts tree.
+  void ExtractMacroReference(const verible::SyntaxTreeLeaf& macro_identifier);
 
   // Extracts function and creates its corresponding fact tree.
   void ExtractFunctionDeclaration(

@@ -27,6 +27,11 @@ using verible::Symbol;
 using verible::SyntaxTreeNode;
 using verible::TokenInfo;
 
+std::vector<verible::TreeSearchMatch> FindAllMacroDefinitions(
+    const verible::Symbol& root) {
+  return SearchSyntaxTree(root, NodekPreprocessorDefine());
+}
+
 std::vector<verible::TreeSearchMatch> FindAllMacroCalls(const Symbol& root) {
   return SearchSyntaxTree(root, NodekMacroCall());
 }
@@ -34,6 +39,11 @@ std::vector<verible::TreeSearchMatch> FindAllMacroCalls(const Symbol& root) {
 std::vector<verible::TreeSearchMatch> FindAllMacroGenericItems(
     const Symbol& root) {
   return SearchSyntaxTree(root, NodekMacroGenericItem());
+}
+
+std::vector<verible::TreeSearchMatch> FindAllMacroDefinitionsArgs(
+    const verible::Symbol& macro_definition) {
+  return SearchSyntaxTree(macro_definition, NodekMacroFormalArg());
 }
 
 const TokenInfo& GetMacroCallId(const Symbol& s) {
@@ -60,6 +70,17 @@ bool MacroCallArgsIsEmpty(const SyntaxTreeNode& args) {
   // the semantic actions in verilog.y.
   if (sub.size() != 1) return false;
   return sub.front() == nullptr;
+}
+
+const verible::SyntaxTreeLeaf& GetMacroName(
+    const verible::Symbol& preprocessor_define) {
+  return GetSubtreeAsLeaf(preprocessor_define, NodeEnum::kPreprocessorDefine,
+                          1);
+}
+
+const verible::SyntaxTreeLeaf& GetMacroArgName(
+    const verible::Symbol& macro_formal_arg) {
+  return GetSubtreeAsLeaf(macro_formal_arg, NodeEnum::kMacroFormalArg, 0);
 }
 
 }  // namespace verilog

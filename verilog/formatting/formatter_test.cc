@@ -55,6 +55,7 @@ namespace {
 
 using absl::StatusCode;
 using verible::AlignmentPolicy;
+using verible::IndentationStyle;
 using verible::LineNumberSet;
 
 // Tests that clean output passes.
@@ -7466,6 +7467,260 @@ TEST(FormatterEndToEndTest, DisableTryWrapLongLines) {
   style.indentation_spaces = 2;
   style.wrap_spaces = 4;
   style.try_wrap_long_lines = false;
+  for (const auto& test_case : kTestCases) {
+    VLOG(1) << "code-to-format:\n" << test_case.input << "<EOF>";
+    std::ostringstream stream;
+    const auto status =
+        FormatVerilog(test_case.input, "<filename>", style, stream);
+    // Require these test cases to be valid.
+    EXPECT_OK(status) << status.message();
+    EXPECT_EQ(stream.str(), test_case.expected) << "code:\n" << test_case.input;
+  }
+}
+
+TEST(FormatterEndToEndTest, ModulePortDeclarationsIndentNotWrap) {
+  static constexpr FormatterTestCase kTestCases[] = {
+      {"", ""},
+      {"\n", "\n"},
+      {"\n\n", "\n\n"},
+      {"module  m  ;\t\n"
+       "  endmodule\n",
+       "module m;\n"
+       "endmodule\n"},
+      {"module  m(   ) ;\n"
+       "  endmodule\n",
+       "module m ();\n"  // empty ports formatted compactly
+       "endmodule\n"},
+      {// single port example
+       "module  m   ( input     clk  )\t;\n"
+       "  endmodule\n",
+       "module m (\n"
+       "  input clk\n"  // 2 spaces
+       ");\n"
+       "endmodule\n"},
+      {// example with two ports
+       "module  m   (\n"
+       "input  clk,\n"
+       "output bar\n"
+       ")\t;\n"
+       "  endmodule\n",
+       "module m (\n"
+       "  input  clk,\n"  // indented 2 spaces, and aligned
+       "  output bar\n"
+       ");\n"
+       "endmodule\n"},
+      {// interface example
+       "interface  handshake   (\n"
+       "wire req,\n"
+       "wire ack\n"
+       ")\t;\n"
+       "  endinterface\n",
+       "interface handshake (\n"
+       "  wire req,\n"  // indented 2 spaces
+       "  wire ack\n"
+       ");\n"
+       "endinterface\n"},
+  };
+  FormatStyle style;
+  style.column_limit = 40;
+  style.indentation_spaces = 2;
+  style.wrap_spaces = 4;
+  // Indent 2 spaces instead of wrapping 4 spaces.
+  style.port_declarations_indentation = IndentationStyle::kIndent;
+  for (const auto& test_case : kTestCases) {
+    VLOG(1) << "code-to-format:\n" << test_case.input << "<EOF>";
+    std::ostringstream stream;
+    const auto status =
+        FormatVerilog(test_case.input, "<filename>", style, stream);
+    // Require these test cases to be valid.
+    EXPECT_OK(status) << status.message();
+    EXPECT_EQ(stream.str(), test_case.expected) << "code:\n" << test_case.input;
+  }
+}
+
+TEST(FormatterEndToEndTest, NamedPortConnectionsIndentNotWrap) {
+  static constexpr FormatterTestCase kTestCases[] = {
+      {"", ""},
+      {"\n", "\n"},
+      {"\n\n", "\n\n"},
+      {"module  m  ;\t\n"
+       "  endmodule\n",
+       "module m;\n"
+       "endmodule\n"},
+      {"module  m(   ) ;\n"
+       "  endmodule\n",
+       "module m ();\n"  // empty ports formatted compactly
+       "endmodule\n"},
+      {// single port example
+       "module  m ;\n"
+       "foo bar( .clk( clk ) )\t;\n"
+       "  endmodule\n",
+       "module m;\n"
+       "  foo bar (.clk(clk));\n"
+       "endmodule\n"},
+      {// two port example
+       "module  m ;\n"
+       "foo bar( .clk2( clk ),.data (data) )\t;\n"
+       "  endmodule\n",
+       "module m;\n"
+       "  foo bar (\n"
+       "    .clk2(clk),\n"  // indent only +2 spaces
+       "    .data(data)\n"
+       "  );\n"
+       "endmodule\n"},
+  };
+  FormatStyle style;
+  style.column_limit = 40;
+  style.indentation_spaces = 2;
+  style.wrap_spaces = 4;
+  // Indent 2 spaces instead of wrapping 4 spaces.
+  style.named_port_indentation = IndentationStyle::kIndent;
+  for (const auto& test_case : kTestCases) {
+    VLOG(1) << "code-to-format:\n" << test_case.input << "<EOF>";
+    std::ostringstream stream;
+    const auto status =
+        FormatVerilog(test_case.input, "<filename>", style, stream);
+    // Require these test cases to be valid.
+    EXPECT_OK(status) << status.message();
+    EXPECT_EQ(stream.str(), test_case.expected) << "code:\n" << test_case.input;
+  }
+}
+
+TEST(FormatterEndToEndTest, FormalParametersIndentNotWrap) {
+  static constexpr FormatterTestCase kTestCases[] = {
+      {"", ""},
+      {"\n", "\n"},
+      {"\n\n", "\n\n"},
+      {"module  m  ;\t\n"
+       "  endmodule\n",
+       "module m;\n"
+       "endmodule\n"},
+      {"module  m #(   ) ;\n"  // empty parameters
+       "  endmodule\n",
+       "module m #();\n"
+       "endmodule\n"},
+      {// single parameter example
+       "module  m   #( int W = 2)\t;\n"
+       "  endmodule\n",
+       "module m #(\n"
+       "  int W = 2\n"  // indented 2 spaces
+       ");\n"
+       "endmodule\n"},
+      {// module with two parameters
+       "module  m   #(\n"
+       "int W = 2,\n"
+       "int L = 4\n"
+       ")\t;\n"
+       "  endmodule\n",
+       "module m #(\n"
+       "  int W = 2,\n"  // indented 2 spaces
+       "  int L = 4\n"
+       ");\n"
+       "endmodule\n"},
+      {// interface with two parameters
+       "interface  m   #(\n"
+       "int W = 2,\n"
+       "int L = 4\n"
+       ")\t;\n"
+       "  endinterface\n",
+       "interface m #(\n"
+       "  int W = 2,\n"  // indented 2 spaces
+       "  int L = 4\n"
+       ");\n"
+       "endinterface\n"},
+      {// class with two parameters
+       "class  c   #(\n"
+       "int W = 2,\n"
+       "int L = 4\n"
+       ")\t;\n"
+       "  endclass\n",
+       "class c #(\n"
+       "  int W = 2,\n"  // indented 2 spaces
+       "  int L = 4\n"
+       ");\n"
+       "endclass\n"},
+  };
+  FormatStyle style;
+  style.column_limit = 40;
+  style.indentation_spaces = 2;
+  style.wrap_spaces = 4;
+  // Indent 2 spaces instead of wrapping 4 spaces.
+  style.formal_parameters_indentation = IndentationStyle::kIndent;
+  for (const auto& test_case : kTestCases) {
+    VLOG(1) << "code-to-format:\n" << test_case.input << "<EOF>";
+    std::ostringstream stream;
+    const auto status =
+        FormatVerilog(test_case.input, "<filename>", style, stream);
+    // Require these test cases to be valid.
+    EXPECT_OK(status) << status.message();
+    EXPECT_EQ(stream.str(), test_case.expected) << "code:\n" << test_case.input;
+  }
+}
+
+TEST(FormatterEndToEndTest, NamedParametersIndentNotWrap) {
+  static constexpr FormatterTestCase kTestCases[] = {
+      {"", ""},
+      {"\n", "\n"},
+      {"\n\n", "\n\n"},
+      {"module  m  ;\t\n"
+       "  endmodule\n",
+       "module m;\n"
+       "endmodule\n"},
+      {"module  m #(   ) ;\n"  // empty parameters
+       "  endmodule\n",
+       "module m #();\n"
+       "endmodule\n"},
+      {"module  m  ;\t\n"
+       " foo #()bar();\n"
+       "  endmodule\n",
+       "module m;\n"
+       "  foo #() bar ();\n"
+       "endmodule\n"},
+      {// one named parameter
+       "module  m ;\n"
+       "foo #(.W(1)) bar();\n"
+       "  endmodule\n",
+       "module m;\n"
+       "  foo #(.W(1)) bar ();\n"
+       "endmodule\n"},
+      {// two named parameters
+       "module  m ;\n"
+       "foo #(.W(1), .L(2)) bar();\n"
+       "  endmodule\n",
+       "module m;\n"
+       "  foo #(\n"
+       "    .W(1),\n"  // indent +2 spaces only
+       "    .L(2)\n"
+       "  ) bar ();\n"
+       "endmodule\n"},
+      {// class data member with two parameters
+       "class  c  ;\n"
+       " foo_pkg::bar_t#(\n"
+       ".W(2),.L(4)"
+       ") baz;\n"
+       "  endclass\n",
+       "class c;\n"
+       "  foo_pkg::bar_t #(\n"
+       "    .W(2),\n"  // indent +2 spaces only
+       "    .L(4)\n"
+       "  ) baz;\n"
+       "endclass\n"},
+      {// typedef with two parameters
+       "typedef \n"
+       " foo_pkg::bar_t  #("
+       ".W(2),.L(4)"
+       ") baz;\n",
+       "typedef foo_pkg::bar_t#(\n"
+       "  .W(2),\n"  // indent +2 spaces only
+       "  .L(4)\n"
+       ") baz;\n"},
+  };
+  FormatStyle style;
+  style.column_limit = 40;
+  style.indentation_spaces = 2;
+  style.wrap_spaces = 4;
+  // Indent 2 spaces instead of wrapping 4 spaces.
+  style.named_parameter_indentation = IndentationStyle::kIndent;
   for (const auto& test_case : kTestCases) {
     VLOG(1) << "code-to-format:\n" << test_case.input << "<EOF>";
     std::ostringstream stream;
