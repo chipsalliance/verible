@@ -42,7 +42,7 @@ absl::string_view ForbidConsecutiveNullStatementsRule::Name() {
   return "forbid-consecutive-null-statements";
 }
 const char ForbidConsecutiveNullStatementsRule::kTopic[] =
-    "consecutive-null-statements";
+    "redundant-semicolons";
 const char ForbidConsecutiveNullStatementsRule::kMessage[] =
     "Do not use consecutive null statements like \';;\'.";
 
@@ -56,6 +56,7 @@ std::string ForbidConsecutiveNullStatementsRule::GetDescription(
 void ForbidConsecutiveNullStatementsRule::HandleLeaf(
     const verible::SyntaxTreeLeaf& leaf, const SyntaxTreeContext& context) {
   if (context.IsInside(NodeEnum::kForSpec)) {
+    // for loops are allowed to be: for (;;)
     state_ = State::kNormal;
   } else {
     switch (state_) {
