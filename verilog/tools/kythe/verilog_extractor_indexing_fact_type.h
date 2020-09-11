@@ -27,6 +27,7 @@ enum class IndexingFactType {
   kFile,
   kMacro,
   kModule,
+  kPackage,
   kMacroCall,
   kClass,
   kClassInstance,
@@ -35,6 +36,7 @@ enum class IndexingFactType {
   kVariableReference,
   kFunctionOrTask,
   kFunctionCall,
+  kPackageImport,
   // END GENERATE -- do not delete
 };
 

@@ -109,6 +109,7 @@ cc_library(
         "//common/analysis:syntax_tree_search",
         "//common/text:tree_context_visitor",
         "//common/text:tree_utils",
+        "//verilog/CST:package",
         "//verilog/CST:class",
         "//verilog/CST:declaration",
         "//verilog/CST:functions",

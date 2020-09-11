@@ -14,9 +14,9 @@
 
 #include "verilog/tools/kythe/indexing_facts_tree_extractor.h"
 
-#include "gtest/gtest.h"
 #include "common/analysis/syntax_tree_search_test_utils.h"
 #include "common/text/concrete_syntax_tree.h"
+#include "gtest/gtest.h"
 #include "verilog/analysis/verilog_analyzer.h"
 
 #undef EXPECT_OK
@@ -1377,6 +1377,113 @@ TEST(FactsTreeExtractor, MacroCallTest) {
                   Anchor(kTestCase.expected_tokens[37], kTestCase.code),
               },
               IndexingFactType::kMacroCall,
+          })));
+
+  const auto facts_tree =
+      ExtractOneFile(kTestCase.code, file_name, exit_status, parse_ok);
+
+  const auto result_pair = DeepEqual(facts_tree, expected);
+  EXPECT_EQ(result_pair.left, nullptr) << *result_pair.left;
+  EXPECT_EQ(result_pair.right, nullptr) << *result_pair.right;
+}
+
+TEST(PackageImportTest, PackageAndImportedItemName) {
+  constexpr int kTag = 1;  // value doesn't matter
+  const verible::SyntaxTreeSearchTestCase kTestCase = {
+      {"package ",
+       {kTag, "pkg1"},
+       ";\nendpackage\npackage ",
+       {kTag, "pkg"},
+       ";\nclass ",
+       {kTag, "my_class"},
+       ";\nendclass\nfunction ",
+       {kTag, "my_function"},
+       "();\nendfunction\nendpackage\nmodule ",
+       {kTag, "m"},
+       "();\nimport ",
+       {kTag, "pkg1"},
+       "::*;\nimport ",
+       {kTag, "pkg"},
+       "::",
+       {kTag, "my_function"},
+       ";\nimport ",
+       {kTag, "pkg"},
+       "::",
+       {kTag, "my_class"},
+       ";\nendmodule"},
+  };
+
+  constexpr absl::string_view file_name = "verilog.v";
+  int exit_status = 0;
+  bool parse_ok = false;
+
+  const IndexingFactNode expected(
+      {
+          {
+              Anchor(file_name, 0, kTestCase.code.size()),
+              Anchor(kTestCase.code, 0, kTestCase.code.size()),
+          },
+          IndexingFactType ::kFile,
+      },
+      // refers to package pkg1.
+      T({
+          {
+              Anchor(kTestCase.expected_tokens[1], kTestCase.code),
+          },
+          IndexingFactType::kPackage,
+      }),
+      // refers to package pkg.
+      T(
+          {
+              {
+                  Anchor(kTestCase.expected_tokens[3], kTestCase.code),
+              },
+              IndexingFactType ::kPackage,
+          },
+          // refers to class my_class.
+          T({
+              {
+                  Anchor(kTestCase.expected_tokens[5], kTestCase.code),
+              },
+              IndexingFactType ::kClass,
+          }),
+          // refers to function my_function.
+          T({
+              {
+                  Anchor(kTestCase.expected_tokens[7], kTestCase.code),
+              },
+              IndexingFactType ::kFunctionOrTask,
+          })),
+      // refers to module m..
+      T(
+          {
+              {
+                  Anchor(kTestCase.expected_tokens[9], kTestCase.code),
+              },
+              IndexingFactType ::kModule,
+          },
+          // refers to import pkg1::*.
+          T({
+              {
+                  Anchor(kTestCase.expected_tokens[11], kTestCase.code),
+              },
+              IndexingFactType ::kPackageImport,
+          }),
+          // refers to import pkg::my_function.
+          T({
+              {
+                  Anchor(kTestCase.expected_tokens[13], kTestCase.code),
+                  Anchor(kTestCase.expected_tokens[15], kTestCase.code),
+              },
+              IndexingFactType ::kPackageImport,
+          }),
+          // refers to import pkg::my_class.
+          T({
+              {
+                  Anchor(kTestCase.expected_tokens[17], kTestCase.code),
+                  Anchor(kTestCase.expected_tokens[19], kTestCase.code),
+              },
+              IndexingFactType ::kPackageImport,
           })));
 
   const auto facts_tree =
