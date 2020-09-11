@@ -130,7 +130,7 @@ class KytheFactsExtractor {
     }
   };
 
-  // Searches for a defintion suitable for the given reference within package
+  // Searches for a definition suitable for the given reference within package
   // scope context of the given package name.
   const VName* SearchForDefinitionVNameInPackage(
       absl::string_view package_name, absl::string_view reference_name) const;
@@ -149,7 +149,7 @@ class KytheFactsExtractor {
   void Visit(const IndexingFactNode& node, std::vector<VName>& current_scope);
 
   // Extracts Packages and saves its scope to package_scope_context to be used
-  // for defintion searching.
+  // for definition searching.
   void CreatePackageScopes(const IndexingFactNode&);
 
   // Extracts kythe facts from file node and returns it VName.
