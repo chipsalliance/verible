@@ -116,6 +116,7 @@ cc_library(
         "//verilog/CST:macro",
         "//verilog/CST:module",
         "//verilog/CST:net",
+        "//verilog/CST:package",
         "//verilog/CST:port",
         "//verilog/CST:tasks",
         "//verilog/CST:verilog_matchers",

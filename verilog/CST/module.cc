@@ -82,7 +82,7 @@ const SyntaxTreeNode* GetModulePortDeclarationList(
 }
 
 const TokenInfo* GetModuleEndLabel(const verible::Symbol& s) {
-  const auto& label_node =
+  const auto* label_node =
       verible::GetSubtreeAsSymbol(s, NodeEnum::kModuleDeclaration, 3);
   if (label_node == nullptr) {
     return nullptr;

@@ -561,6 +561,7 @@ cc_test(
     name = "package_test",
     srcs = ["package_test.cc"],
     deps = [
+        ":match_test_utils",
         ":package",
         "//common/analysis:syntax_tree_search",
         "//common/analysis:syntax_tree_search_test_utils",

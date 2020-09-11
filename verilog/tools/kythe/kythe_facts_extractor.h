@@ -15,6 +15,7 @@
 #ifndef VERIBLE_VERILOG_TOOLS_KYTHE_KYTHE_FACTS_EXTRACTOR_H_
 #define VERIBLE_VERILOG_TOOLS_KYTHE_KYTHE_FACTS_EXTRACTOR_H_
 
+#include <map>
 #include <string>
 #include <utility>
 
@@ -48,8 +49,8 @@ class KytheFactsExtractor {
                                std::ostream* stream)
       : file_path_(file_path), stream_(stream) {}
 
-  // Traverses the current tree and explore its children.
-  void Visit(const IndexingFactNode&);
+  // Extracts kythe facts from the given IndexingFactsTree root.
+  void ExtractKytheFacts(const IndexingFactNode&);
 
  private:
   // Container with a stack of VNames to hold context of VNames during traversal
@@ -129,6 +130,28 @@ class KytheFactsExtractor {
     }
   };
 
+  // Searches for a definition suitable for the given reference within package
+  // scope context of the given package name.
+  const VName* SearchForDefinitionVNameInPackage(
+      absl::string_view package_name, absl::string_view reference_name) const;
+
+  // Resolves the tag of the given node and directs the flow to the appropriate
+  // function to extract kythe facts for that node.
+  void IndexingFactNodeTagResolver(const IndexingFactNode&);
+
+  // Add the given VName to vnames_context (to be used in scope relative
+  // signatures) and visits the children of the given node.
+  void Visit(const IndexingFactNode& node, const VName& vname,
+             std::vector<VName>& current_scope);
+
+  // Directs the flow to the children of the given node creating new scope for
+  // that node.
+  void Visit(const IndexingFactNode& node, std::vector<VName>& current_scope);
+
+  // Extracts Packages and saves its scope to package_scope_context to be used
+  // for definition searching.
+  void CreatePackageScopes(const IndexingFactNode&);
+
   // Extracts kythe facts from file node and returns it VName.
   VName ExtractFileFact(const IndexingFactNode&);
 
@@ -158,6 +181,12 @@ class KytheFactsExtractor {
   // VName.
   VName ExtractFunctionOrTaskCall(
       const IndexingFactNode& function_call_fact_node);
+
+  // Extracts kythe facts from a package declaration node and returns its VName.
+  VName ExtractPackageDeclaration(const IndexingFactNode& node);
+
+  // Extracts kythe facts from package import node and returns its VName.
+  VName ExtractPackageImport(const IndexingFactNode& node);
 
   // Extracts kythe facts from a macro definition node and returns its VName.
   VName ExtractMacroDefinition(const IndexingFactNode& macro_definition_node);
@@ -195,25 +224,31 @@ class KytheFactsExtractor {
   // the visitor traverses the facts tree.
   ScopeContext scope_context_;
 
+  // Saved packages signatures alongside with their inner members.
+  // This is used for resolving references to some variables after using import
+  // pkg::*.
+  // e.g
+  // package pkg1;
+  //   function my_fun(); endfunction
+  //   class my_class; endclass
+  // endpackage
+  //
+  // package pkg2;
+  //   function my_fun(); endfunction
+  //   class my_class; endclass
+  // endpackage
+  //
+  // Creates the following:
+  // {
+  //   "pkg1": ["my_fun", "my_class"],
+  //   "pkg2": ["my_fun", "my_class"]
+  // }
+  std::map<std::string, std::vector<VName>> package_scope_context_;
+
   // Output stream for capturing, redirecting, testing and verifying the
   // output.
   std::ostream* stream_;
 };
-
-// Creates the signature for module names.
-std::string CreateModuleSignature(absl::string_view);
-
-// Creates the signature for Class names.
-std::string CreateClassSignature(absl::string_view);
-
-// Creates the signature for module instantiations.
-std::string CreateVariableSignature(absl::string_view);
-
-// Creates the signature for macro.
-std::string CreateMacroSignature(absl::string_view);
-
-// Creates the signature for functions or tasks.
-std::string CreateFunctionOrTaskSignature(absl::string_view);
 
 std::ostream& operator<<(std::ostream&, const KytheFactsPrinter&);
 

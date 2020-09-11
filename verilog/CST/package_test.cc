@@ -36,6 +36,7 @@
 #include "common/text/token_info.h"
 #include "common/util/casts.h"
 #include "common/util/logging.h"
+#include "verilog/CST/match_test_utils.h"
 #include "verilog/analysis/verilog_analyzer.h"
 
 #undef EXPECT_OK
@@ -50,6 +51,7 @@ namespace {
 using verible::down_cast;
 using verible::SyntaxTreeNode;
 using verible::SyntaxTreeSearchTestCase;
+using verible::TextStructureView;
 using verible::TreeSearchMatch;
 
 TEST(FindAllPackageDeclarationsTest, VariousTests) {
@@ -343,6 +345,155 @@ TEST(GetPackageNameTokenTest, ValidPackage) {
   // Root node is a description list, not a package.
   const auto& token = GetPackageNameToken(package_node);
   EXPECT_EQ(token.text(), "foo");
+}
+
+TEST(GetPackageNameTest, GetPackageEndLabelName) {
+  constexpr int kTag = 1;
+  const SyntaxTreeSearchTestCase testcases[] = {
+      {""},
+      {"package foo;\n endpackage"},
+      {"package foo;\n endpackage: ", {kTag, "foo"}},
+      {"package foo;\n function int f();\n return 10;\n endfunction: f\n class "
+       "c; endclass: c\n "
+       "endpackage: ",
+       {kTag, "foo"}},
+  };
+
+  for (const auto& test : testcases) {
+    const absl::string_view code(test.code);
+    VerilogAnalyzer analyzer(code, "test-file");
+    const auto code_copy = analyzer.Data().Contents();
+    ASSERT_OK(analyzer.Analyze()) << "failed on:\n" << code;
+    const auto& root = analyzer.Data().SyntaxTree();
+
+    const auto declarations =
+        FindAllPackageDeclarations(*ABSL_DIE_IF_NULL(root));
+
+    std::vector<TreeSearchMatch> names;
+    for (const auto& decl : declarations) {
+      const auto* package_name = GetPackageNameEndLabel(*decl.match);
+      if (package_name == nullptr) continue;
+      names.push_back(TreeSearchMatch{package_name, {}});
+    }
+
+    std::ostringstream diffs;
+    EXPECT_TRUE(test.ExactMatchFindings(names, code_copy, &diffs))
+        << "failed on:\n"
+        << code << "\ndiffs:\n"
+        << diffs.str();
+  }
+}
+
+TEST(GetPackageBodyTest, GetPackageItemList) {
+  constexpr int kTag = 1;
+  const SyntaxTreeSearchTestCase testcases[] = {
+      {""},
+      {"package foo;\n endpackage"},
+      {"package foo;\n endpackage: foo"},
+      {"package foo;\n",
+       {kTag,
+        "function int f();\n return 10;\n endfunction: f\n class "
+        "c; endclass: c"},
+       "\n ",
+       "endpackage: foo"},
+  };
+
+  for (const auto& test : testcases) {
+    const absl::string_view code(test.code);
+    VerilogAnalyzer analyzer(code, "test-file");
+    const auto code_copy = analyzer.Data().Contents();
+    ASSERT_OK(analyzer.Analyze()) << "failed on:\n" << code;
+    const auto& root = analyzer.Data().SyntaxTree();
+
+    const auto declarations =
+        FindAllPackageDeclarations(*ABSL_DIE_IF_NULL(root));
+
+    std::vector<TreeSearchMatch> lists;
+    for (const auto& decl : declarations) {
+      const auto* package_item_list = GetPackageItemList(*decl.match);
+      if (package_item_list == nullptr) continue;
+      lists.push_back(TreeSearchMatch{package_item_list, {}});
+    }
+
+    std::ostringstream diffs;
+    EXPECT_TRUE(test.ExactMatchFindings(lists, code_copy, &diffs))
+        << "failed on:\n"
+        << code << "\ndiffs:\n"
+        << diffs.str();
+  }
+}
+
+TEST(PackageImportTest, GetImportedPackageName) {
+  constexpr int kTag = 1;  // value doesn't matter
+  const SyntaxTreeSearchTestCase kTestCases[] = {
+      {""},
+      {"module m; endmodule\n"},
+      {"package pkg; endpackage\nmodule m();\n import ",
+       {kTag, "pkg"},
+       "::*;\nendmodule"},
+      {"package pkg;\n int my_int;\nendpackage\nmodule m\nimport ",
+       {kTag, "pkg"},
+       "::*;\nimport ",
+       {kTag, "pkg"},
+       "::my_int;\n();\nendmodule"},
+  };
+  for (const auto& test : kTestCases) {
+    TestVerilogSyntaxRangeMatches(
+        __FUNCTION__, test, [](const TextStructureView& text_structure) {
+          const auto& root = text_structure.SyntaxTree();
+          const auto decls = FindAllPackageImportItems(*ABSL_DIE_IF_NULL(root));
+
+          std::vector<TreeSearchMatch> names;
+          for (const auto& decl : decls) {
+            const auto& name = GetImportedPackageName(*decl.match);
+            names.emplace_back(TreeSearchMatch{&name, {/* ignored context */}});
+          }
+          return names;
+        });
+  }
+}
+
+TEST(PackageImportTest, GetImportedItemName) {
+  constexpr int kTag = 1;  // value doesn't matter
+  const SyntaxTreeSearchTestCase kTestCases[] = {
+      {""},
+      {"module m; endmodule\n"},
+      {"package pkg; endpackage\nmodule m();\n import pkg::*;\nendmodule"},
+      {"package pkg;\n int my_int;\nendpackage\nmodule m();\n import "
+       "pkg::*;\nimport pkg::",
+       {kTag, "my_int"},
+       ";\nendmodule"},
+      {"package pkg;\n int my_int;\nclass "
+       "my_class;\nendclass\nendpackage\nmodule m();\n import "
+       "pkg::*;\nimport pkg::",
+       {kTag, "my_int"},
+       ";\nimport pkg::",
+       {kTag, "my_class"},
+       ";\nendmodule"},
+      {"package pkg;\n int my_int;\nclass "
+       "my_class;\nendclass\nendpackage\nmodule m\n import "
+       "pkg::*;\nimport pkg::",
+       {kTag, "my_int"},
+       ";\nimport pkg::",
+       {kTag, "my_class"},
+       ";\n();\n\nendmodule"},
+  };
+  for (const auto& test : kTestCases) {
+    TestVerilogSyntaxRangeMatches(
+        __FUNCTION__, test, [](const TextStructureView& text_structure) {
+          const auto& root = text_structure.SyntaxTree();
+          const auto decls = FindAllPackageImportItems(*ABSL_DIE_IF_NULL(root));
+
+          std::vector<TreeSearchMatch> names;
+          for (const auto& decl : decls) {
+            const auto* name =
+                GeImportedItemNameFromPackageImportItem(*decl.match);
+            if (name == nullptr) continue;
+            names.emplace_back(TreeSearchMatch{name, {/* ignored context*/}});
+          }
+          return names;
+        });
+  }
 }
 
 }  // namespace

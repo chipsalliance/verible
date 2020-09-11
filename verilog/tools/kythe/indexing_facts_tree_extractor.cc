@@ -26,6 +26,7 @@
 #include "verilog/CST/macro.h"
 #include "verilog/CST/module.h"
 #include "verilog/CST/net.h"
+#include "verilog/CST/package.h"
 #include "verilog/CST/port.h"
 #include "verilog/CST/tasks.h"
 #include "verilog/CST/verilog_matchers.h"
@@ -37,6 +38,7 @@ namespace kythe {
 
 namespace {
 
+using verible::SyntaxTreeLeaf;
 using verible::SyntaxTreeNode;
 using verible::TreeSearchMatch;
 
@@ -130,6 +132,10 @@ void IndexingFactsTreeExtractor::Visit(const SyntaxTreeNode& node) {
       ExtractNetDeclaration(node);
       break;
     }
+    case NodeEnum::kPackageDeclaration: {
+      ExtractPackageDeclaration(node);
+      break;
+    }
     case NodeEnum::kPreprocessorDefine: {
       ExtractMacroDefinition(node);
       break;
@@ -152,6 +158,10 @@ void IndexingFactsTreeExtractor::Visit(const SyntaxTreeNode& node) {
     }
     case NodeEnum::kClassDeclaration: {
       ExtractClassDeclaration(node);
+      break;
+    }
+    case NodeEnum::kPackageImportItem: {
+      ExtractPackageImport(node);
       break;
     }
     default: {
@@ -211,7 +221,7 @@ void IndexingFactsTreeExtractor::ExtractModuleHeader(
 }
 
 void IndexingFactsTreeExtractor::ExtractModulePort(
-    const verible::SyntaxTreeNode& module_port_node) {
+    const SyntaxTreeNode& module_port_node) {
   const auto tag = static_cast<verilog::NodeEnum>(module_port_node.Tag().tag);
 
   // TODO(minatoma): Fix case like:
@@ -221,7 +231,7 @@ void IndexingFactsTreeExtractor::ExtractModulePort(
   // For extracting cases like:
   // module m(input a, input b);
   if (tag == NodeEnum::kPortDeclaration) {
-    const verible::SyntaxTreeLeaf* leaf =
+    const SyntaxTreeLeaf* leaf =
         GetIdentifierFromModulePortDeclaration(module_port_node);
 
     facts_tree_context_.top().NewChild(
@@ -230,7 +240,7 @@ void IndexingFactsTreeExtractor::ExtractModulePort(
   } else {
     // For extracting Non-ANSI style ports:
     // module m(a, b);
-    const verible::SyntaxTreeLeaf* leaf =
+    const SyntaxTreeLeaf* leaf =
         GetIdentifierFromPortReference(module_port_node);
 
     facts_tree_context_.top().NewChild(
@@ -240,8 +250,8 @@ void IndexingFactsTreeExtractor::ExtractModulePort(
 }
 
 void IndexingFactsTreeExtractor::ExtractInputOutputDeclaration(
-    const verible::SyntaxTreeNode& identifier_unpacked_dimension) {
-  const verible::SyntaxTreeLeaf* port_name_leaf =
+    const SyntaxTreeNode& identifier_unpacked_dimension) {
+  const SyntaxTreeLeaf* port_name_leaf =
       GetSymbolIdentifierFromIdentifierUnpackedDimensions(
           identifier_unpacked_dimension);
 
@@ -290,7 +300,7 @@ void IndexingFactsTreeExtractor::ExtractModuleInstantiation(
 
     // Module ports are treated as anchors in instantiations.
     for (const TreeSearchMatch& port : port_names) {
-      const verible::SyntaxTreeLeaf* leaf = GetIdentifier(*port.match);
+      const SyntaxTreeLeaf* leaf = GetIdentifier(*port.match);
       const Anchor port_name_anchor(leaf->get(), context_.base);
 
       indexing_node_data.AppendAnchor(port_name_anchor);
@@ -315,6 +325,40 @@ void IndexingFactsTreeExtractor::ExtractNetDeclaration(
         IndexingNodeData({Anchor(*wire_token_info, context_.base)},
                          IndexingFactType::kVariableDefinition));
   }
+}
+
+void IndexingFactsTreeExtractor::ExtractPackageDeclaration(
+    const SyntaxTreeNode& package_declaration_node) {
+  IndexingNodeData package_node_data(IndexingFactType::kPackage);
+  IndexingFactNode package_node(package_node_data);
+
+  {
+    const IndexingFactsTreeContext::AutoPop p(&facts_tree_context_,
+                                              &package_node);
+    // Extract package name.
+    const SyntaxTreeLeaf& package_name_leaf =
+        GetPackageNameLeaf(package_declaration_node);
+    const Anchor class_name_anchor(package_name_leaf.get(), context_.base);
+    facts_tree_context_.top().Value().AppendAnchor(class_name_anchor);
+
+    // Extract package name after endpackage if exists.
+    const SyntaxTreeLeaf* package_end_name =
+        GetPackageNameEndLabel(package_declaration_node);
+
+    if (package_end_name != nullptr) {
+      const Anchor package_end_anchor(package_end_name->get(), context_.base);
+      facts_tree_context_.top().Value().AppendAnchor(package_end_anchor);
+    }
+
+    // Visit package body it exists.
+    const verible::Symbol* package_item_list =
+        GetPackageItemList(package_declaration_node);
+    if (package_item_list != nullptr) {
+      Visit(verible::SymbolCastToNode(*package_item_list));
+    }
+  }
+
+  facts_tree_context_.top().NewChild(package_node);
 }
 
 void IndexingFactsTreeExtractor::ExtractMacroDefinition(
@@ -367,7 +411,7 @@ void IndexingFactsTreeExtractor::ExtractMacroReference(
 }
 
 void IndexingFactsTreeExtractor::ExtractFunctionDeclaration(
-    const verible::SyntaxTreeNode& function_declaration_node) {
+    const SyntaxTreeNode& function_declaration_node) {
   IndexingNodeData function_node_data(IndexingFactType::kFunctionOrTask);
   IndexingFactNode function_node(function_node_data);
 
@@ -383,7 +427,7 @@ void IndexingFactsTreeExtractor::ExtractFunctionDeclaration(
     ExtractFunctionTaskPort(function_declaration_node);
 
     // Extract function body.
-    const verible::SyntaxTreeNode& function_body =
+    const SyntaxTreeNode& function_body =
         GetFunctionBlockStatementList(function_declaration_node);
     Visit(function_body);
   }
@@ -392,7 +436,7 @@ void IndexingFactsTreeExtractor::ExtractFunctionDeclaration(
 }
 
 void IndexingFactsTreeExtractor::ExtractTaskDeclaration(
-    const verible::SyntaxTreeNode& task_declaration_node) {
+    const SyntaxTreeNode& task_declaration_node) {
   IndexingNodeData task_node_data(IndexingFactType::kFunctionOrTask);
   IndexingFactNode task_node(task_node_data);
 
@@ -408,7 +452,7 @@ void IndexingFactsTreeExtractor::ExtractTaskDeclaration(
     ExtractFunctionTaskPort(task_declaration_node);
 
     // Extract task body.
-    const verible::SyntaxTreeNode& task_body =
+    const SyntaxTreeNode& task_body =
         GetTaskStatementList(task_declaration_node);
     Visit(task_body);
   }
@@ -417,12 +461,12 @@ void IndexingFactsTreeExtractor::ExtractTaskDeclaration(
 }
 
 void IndexingFactsTreeExtractor::ExtractFunctionTaskPort(
-    const verible::SyntaxTreeNode& function_declaration_node) {
-  const std::vector<verible::TreeSearchMatch> ports =
+    const SyntaxTreeNode& function_declaration_node) {
+  const std::vector<TreeSearchMatch> ports =
       FindAllTaskFunctionPortDeclarations(function_declaration_node);
 
-  for (const verible::TreeSearchMatch& port : ports) {
-    const verible::SyntaxTreeLeaf* leaf =
+  for (const TreeSearchMatch& port : ports) {
+    const SyntaxTreeLeaf* leaf =
         GetIdentifierFromTaskFunctionPortItem(*port.match);
 
     // TODO(minatoma): Consider using kPorts or kParam for ports and params
@@ -434,7 +478,7 @@ void IndexingFactsTreeExtractor::ExtractFunctionTaskPort(
 }
 
 void IndexingFactsTreeExtractor::ExtractFunctionOrTaskCall(
-    const verible::SyntaxTreeNode& function_call_node) {
+    const SyntaxTreeNode& function_call_node) {
   IndexingNodeData function_node_data(IndexingFactType::kFunctionCall);
   IndexingFactNode function_node(function_node_data);
 
@@ -463,14 +507,12 @@ void IndexingFactsTreeExtractor::ExtractClassDeclaration(
     const IndexingFactsTreeContext::AutoPop p(&facts_tree_context_,
                                               &class_node);
     // Extract class name.
-    const verible::SyntaxTreeLeaf& class_name_leaf =
-        GetClassName(class_declaration);
+    const SyntaxTreeLeaf& class_name_leaf = GetClassName(class_declaration);
     const Anchor class_name_anchor(class_name_leaf.get(), context_.base);
     facts_tree_context_.top().Value().AppendAnchor(class_name_anchor);
 
     // Extract class name after endclass.
-    const verible::SyntaxTreeLeaf* class_end_name =
-        GetClassEndLabel(class_declaration);
+    const SyntaxTreeLeaf* class_end_name = GetClassEndLabel(class_declaration);
 
     if (class_end_name != nullptr) {
       const Anchor class_end_anchor(class_end_name->get(), context_.base);
@@ -510,6 +552,25 @@ void IndexingFactsTreeExtractor::ExtractClassInstances(
 
     facts_tree_context_.top().NewChild(indexing_node_data);
   }
+}
+
+void IndexingFactsTreeExtractor::ExtractPackageImport(
+    const SyntaxTreeNode& package_import_item) {
+  IndexingNodeData package_import_data(IndexingFactType::kPackageImport);
+
+  const SyntaxTreeLeaf& package_name =
+      GetImportedPackageName(package_import_item);
+
+  package_import_data.AppendAnchor(Anchor(package_name.get(), context_.base));
+
+  const SyntaxTreeLeaf* imported_item =
+      GeImportedItemNameFromPackageImportItem(package_import_item);
+  if (imported_item != nullptr) {
+    package_import_data.AppendAnchor(
+        Anchor(imported_item->get(), context_.base));
+  }
+
+  facts_tree_context_.top().NewChild(package_import_data);
 }
 
 }  // namespace kythe
