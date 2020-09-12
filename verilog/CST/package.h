@@ -36,7 +36,7 @@ std::vector<verible::TreeSearchMatch> FindAllPackageImportItems(
     const verible::Symbol& root);
 
 // Extract the subnode of a package declaration that is the package name.
-const verible::TokenInfo&  GetPackageNameToken(const verible::Symbol&);
+const verible::TokenInfo& GetPackageNameToken(const verible::Symbol&);
 
 // Return the node spanning the name of the package.
 const verible::SyntaxTreeLeaf& GetPackageNameLeaf(const verible::Symbol& s);

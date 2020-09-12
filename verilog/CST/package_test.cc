@@ -39,10 +39,6 @@
 #include "verilog/CST/match_test_utils.h"
 #include "verilog/analysis/verilog_analyzer.h"
 
-#include "common/analysis/syntax_tree_search.h"
-#include "common/analysis/syntax_tree_search_test_utils.h"
-
-
 #undef EXPECT_OK
 #define EXPECT_OK(value) EXPECT_TRUE((value).ok())
 

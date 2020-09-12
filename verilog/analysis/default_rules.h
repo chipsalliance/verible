@@ -66,7 +66,6 @@ constexpr const char* kDefaultRuleSet[] = {
     // TODO(b/117131903): "proper-parameter-declaration",
     // TODO(b/131637160): "signal-name-style",
     // TODO: "one-module-per-file",
-    // TODO(b/148911813): "constraint-name-style",
     // TODO: "banned-declared-name-patterns",
     // "endif-comment",
 };
