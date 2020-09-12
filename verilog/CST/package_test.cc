@@ -305,10 +305,11 @@ TEST(GetPackageNameTokenTest, VariousPackageTokenTests) {
        "  localparam real foo = 323.846;\n"}};
 
   for (const auto& test : testcases) {
->>>>>>> fc96e167613544e6546004a0b73a39f5770b1b4c
+
     const absl::string_view code(test.code);
     VerilogAnalyzer analyzer(code, "test-file");
     const auto code_copy = analyzer.Data().Contents();
+    ASSERT_OK(analyzer.Analyze()) << "failed on:\n" << code;
     const auto& root = analyzer.Data().SyntaxTree();
 
     const auto declarations =
