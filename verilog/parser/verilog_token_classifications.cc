@@ -150,6 +150,17 @@ bool IsIdentifierLike(verilog_tokentype token_type) {
     case verilog_tokentype::MacroCallId:
     case verilog_tokentype::SystemTFIdentifier:
     case verilog_tokentype::EscapedIdentifier:
+      // specify block built-in functions
+    case verilog_tokentype::TK_Srecrem:
+    case verilog_tokentype::TK_Ssetuphold:
+    case verilog_tokentype::TK_Speriod:
+    case verilog_tokentype::TK_Shold:
+    case verilog_tokentype::TK_Srecovery:
+    case verilog_tokentype::TK_Sremoval:
+    case verilog_tokentype::TK_Ssetup:
+    case verilog_tokentype::TK_Sskew:
+    case verilog_tokentype::TK_Stimeskew:
+    case verilog_tokentype::TK_Swidth:
       return true;
     default:
       break;

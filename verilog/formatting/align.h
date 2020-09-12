@@ -21,6 +21,7 @@
 #include "common/formatting/format_token.h"
 #include "common/formatting/token_partition_tree.h"
 #include "common/strings/position.h"  // for ByteOffsetSet
+#include "verilog/formatting/format_style.h"
 
 namespace verilog {
 namespace formatter {
@@ -33,7 +34,8 @@ namespace formatter {
 void TabularAlignTokenPartitions(
     verible::TokenPartitionTree* partition_ptr,
     std::vector<verible::PreFormatToken>* ftokens, absl::string_view full_text,
-    const verible::ByteOffsetSet& disabled_byte_ranges, int column_limit);
+    const verible::ByteOffsetSet& disabled_byte_ranges,
+    const FormatStyle& style);
 
 }  // namespace formatter
 }  // namespace verilog

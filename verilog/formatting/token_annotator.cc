@@ -142,6 +142,13 @@ static WithReason<int> SpacesRequiredBetween(
     return {1, "Escaped identifiers must end with whitespace."};
   }
 
+  if (right.TokenEnum() == verilog_tokentype::TK_LINE_CONT) {
+    return {0, "Add no spaces before \\ line continuation."};
+  }
+  if (left.TokenEnum() == verilog_tokentype::TK_LINE_CONT) {
+    return {0, "Add no spaces after \\ line continuation."};
+  }
+
   if (IsComment(FormatTokenType(right.format_token_enum))) {
     return {2, "Style: require 2+ spaces before comments"};
     // TODO(fangism): Take this from FormatStyle.
@@ -226,6 +233,21 @@ static WithReason<int> SpacesRequiredBetween(
   // Consider assignment operators in the same class as binary operators.
   if (left.format_token_enum == FormatTokenType::binary_operator ||
       right.format_token_enum == FormatTokenType::binary_operator) {
+    // Inside [], allows 0 or 1 spaces, and symmetrize.
+    // TODO(fangism): make this behavior configurable
+    if (right.format_token_enum == FormatTokenType::binary_operator &&
+        InRangeLikeContext(right_context)) {
+      int spaces = right.OriginalLeadingSpaces().length();
+      if (spaces > 1) {
+        spaces = 1;
+      }
+      return {spaces, "Limit <= 1 space before binary operator inside []."};
+    }
+    if (left.format_token_enum == FormatTokenType::binary_operator &&
+        InRangeLikeContext(left_context)) {
+      return {left.before.spaces_required,
+              "Symmetrize spaces before and after binary operator inside []."};
+    }
     return {1, "Space around binary and assignment operators"};
   }
 
@@ -697,6 +719,16 @@ static WithReason<SpacingOptions> BreakDecisionBetween(
     }
   }
 
+  if (right.TokenEnum() == verilog_tokentype::TK_LINE_CONT) {
+    return {SpacingOptions::MustAppend,
+            "Keep \\ line continuation attached to its left neighbor."};
+  }
+
+  if (left.TokenEnum() == verilog_tokentype::TK_LINE_CONT) {
+    return {SpacingOptions::MustWrap,
+            "Keep \\ line continuation is always followed by \\n."};
+  }
+
   if (left.TokenEnum() == PP_define) {
     return {SpacingOptions::MustAppend,
             "Keep `define and macro name together."};
@@ -704,9 +736,15 @@ static WithReason<SpacingOptions> BreakDecisionBetween(
   if (right.TokenEnum() == PP_define_body) {
     // TODO(b/141517267): reflow macro definition text with flexible
     // line-continuations.
-    return {SpacingOptions::MustAppend,
-            "Macro definition body must start on same line (but may be "
-            "line-continued)."};
+    const absl::string_view text = right.Text();
+    if (std::count(text.begin(), text.end(), '\n') >= 2) {
+      return {SpacingOptions::Preserve,
+              "Preserve spacing before a multi-line macro definition body."};
+    } else {
+      return {SpacingOptions::MustAppend,
+              "Macro definition body must start on same line (but may be "
+              "line-continued)."};
+    }
   }
 
   // Check for mandatory line breaks.
@@ -811,6 +849,15 @@ static WithReason<SpacingOptions> BreakDecisionBetween(
     if (right.TokenEnum() == ';') {
       return {SpacingOptions::MustAppend,
               "Keep delay statements together, like \"#1ps;\"."};
+    }
+  }
+
+  if (left.TokenEnum() == ',' &&
+      right.TokenEnum() == verilog_tokentype::MacroArg) {
+    const absl::string_view text(right.Text());
+    if (std::find(text.begin(), text.end(), '\n') != text.end()) {
+      return {SpacingOptions::MustWrap,
+              "Multi-line unlexed macro arguments start on their own line."};
     }
   }
 

@@ -20,7 +20,6 @@
 
 #include "verilog/formatting/formatter.h"
 
-#include <initializer_list>
 #include <memory>
 #include <sstream>
 #include <string>
@@ -31,6 +30,7 @@
 #include "absl/status/status.h"
 #include "absl/strings/match.h"
 #include "absl/strings/string_view.h"
+#include "common/formatting/align.h"
 #include "common/strings/position.h"
 #include "common/text/text_structure.h"
 #include "common/util/logging.h"
@@ -54,6 +54,8 @@ absl::Status VerifyFormatting(const verible::TextStructureView& text_structure,
 namespace {
 
 using absl::StatusCode;
+using verible::AlignmentPolicy;
+using verible::IndentationStyle;
 using verible::LineNumberSet;
 
 // Tests that clean output passes.
@@ -112,7 +114,7 @@ static const LineNumberSet kEnableAllLines;
 // Test that the expected output is produced with the formatter using a custom
 // FormatStyle.
 TEST(FormatterTest, FormatCustomStyleTest) {
-  const std::initializer_list<FormatterTestCase> kTestCases = {
+  static constexpr FormatterTestCase kTestCases[] = {
       {"", ""},
       {"module m;wire w;endmodule\n",
        "module m;\n"
@@ -134,7 +136,7 @@ TEST(FormatterTest, FormatCustomStyleTest) {
   }
 }
 
-static const std::initializer_list<FormatterTestCase> kFormatterTestCases = {
+static constexpr FormatterTestCase kFormatterTestCases[] = {
     {"", ""},
     {"\n", "\n"},
     {"\n\n", "\n\n"},
@@ -229,6 +231,17 @@ static const std::initializer_list<FormatterTestCase> kFormatterTestCases = {
         "`define FOO \\\n"
         " 1\n"  // TODO(b/141517267): Reflowing macro definitions
     },
+    {"`define FOO    \\\n"  // multiline macro definition
+     "        b\n",
+     "`define FOO \\\n"  // no need to align '\'
+     "        b\n"},
+    {"`define FOO    \\\n"  // multiline macro definition
+     "        a +    \\\n"
+     "        b\n",
+     "`define FOO    \\\n"  // preserve spacing before '\'
+     "        a +    \\\n"  // to stay aligned with this one
+     "        b\n"},
+    {"    // comment with backslash\\\n", "// comment with backslash\\\n"},
     {// macro with MacroArg tokens as arguments
      "`FOOOOOO(\nbar1...\n,\nbar2...\n,\nbar3...\n,\nbar4\n)\n",
      "`FOOOOOO(bar1..., bar2..., bar3...,\n"
@@ -392,6 +405,16 @@ static const std::initializer_list<FormatterTestCase> kFormatterTestCases = {
      "class foo;\n"
      "  `FOO(`BAR(baz1, baz2));\n"
      "endclass\n"},
+    {// multi-line macro arg "aaaa..." should start on its own line,
+     // even if its first line would fit under the column limit
+     "`CHECK_FATAL(rd_tr,\n"
+     "             aaaa     == zzz;\n"
+     "             ggg      == vv::w;,\n"
+     "             \"Failed to ..........\")\n",
+     "`CHECK_FATAL(rd_tr,\n"
+     "             aaaa     == zzz;\n"
+     "             ggg      == vv::w;,\n"
+     "             \"Failed to ..........\")\n"},
 
     // `uvm macros indenting
     {
@@ -546,6 +569,10 @@ static const std::initializer_list<FormatterTestCase> kFormatterTestCases = {
      "  `uvm_field_int(cc, UVM_DEFAULT)\n"
      "`uvm_component_utils_end\n"},
 
+    // top-level directive test cases
+    {"`timescale  1ns/1ps\n",  //
+     "`timescale 1ns / 1ps\n"},
+
     // parameter test cases
     {
         "  parameter  int   foo=0 ;",
@@ -557,7 +584,29 @@ static const std::initializer_list<FormatterTestCase> kFormatterTestCases = {
     },
     {
         "  parameter  int   foo=bar [ a+b ] ;",  // binary inside index expr
-        "parameter int foo = bar[a + b];\n",
+        "parameter int foo = bar[a+b];\n",       // allowed to be 0 spaces
+                                                 // (preserved)
+    },
+    {
+        "  parameter  int   foo=bar [ a+ b ] ;",  // binary inside index expr
+        "parameter int foo = bar[a+b];\n",        // allowed to be 0 spaces
+                                                  // (symmetrized)
+    },
+    {
+        "  parameter  int   foo=bar [ a +b ] ;",  // binary inside index expr
+        "parameter int foo = bar[a + b];\n",      // allowed to be 1 space
+                                                  // (symmetrized)
+    },
+    {
+        "  parameter  int   foo=bar [ a  +b ] ;",  // binary inside index expr
+        "parameter int foo = bar[a + b];\n",       // limited to 1 space (and
+                                                   // symmetrized)
+    },
+    {
+        // with line continuations
+        "  parameter  \\\nint   \\\nfoo=a+ \\\nb ;",
+        "parameter\\\n    int\\\n    foo = a +\\\n    b;\n",
+        // TODO(fangism): should text following a line continuation hang-indent?
     },
     // unary prefix expressions
     {
@@ -626,7 +675,7 @@ static const std::initializer_list<FormatterTestCase> kFormatterTestCases = {
     {"  parameter int a={b^{c^{d^e}}};",
      "parameter int a = {b ^ {c ^ {d ^ e}}};\n"},
     {"  parameter int a={b^{c[d^e]}};",
-     "parameter int a = {b ^ {c[d ^ e]}};\n"},
+     "parameter int a = {b ^ {c[d^e]}};\n"},  // allow 0 spaces inside "[d^e]"
     {"  parameter int a={(b^c),(d^^e)};",
      "parameter int a = {(b ^ c), (d ^ ^e)};\n"},
 
@@ -746,6 +795,28 @@ static const std::initializer_list<FormatterTestCase> kFormatterTestCases = {
     {"module foo;/* foo */endmodule:foo\n",
      "module foo;  /* foo */\n"
      "endmodule : foo\n"},
+    {"module pm #(\n"
+     "//comment\n"
+     ") (wire ww);\n"
+     "endmodule\n",
+     "module pm #(\n"
+     "    //comment\n"  // comment indented
+     ") (\n"
+     "    wire ww\n"
+     ");\n"
+     "endmodule\n"},
+    {"module pm ( ) ;\n"  // empty ports list
+     "endmodule\n",
+     "module pm ();\n"
+     "endmodule\n"},
+    {"module pm #(\n"
+     "//comment\n"
+     ") ( );\n"
+     "endmodule\n",
+     "module pm #(\n"
+     "    //comment\n"  // comment indented
+     ") ();\n"          // (); grouped together
+     "endmodule\n"},
     {"`ifdef FOO\n"
      "    `ifndef BAR\n"
      "    `endif\n"
@@ -1236,6 +1307,159 @@ static const std::initializer_list<FormatterTestCase> kFormatterTestCases = {
      ");\n"
      "endmodule : foo\n"},
 
+    // module local variable/net declaration alignment test cases
+    {"module m;\n"
+     "logic a;\n"
+     "bit b;\n"
+     "endmodule\n",
+     "module m;\n"
+     "  logic a;\n"
+     "  bit   b;\n"
+     "endmodule\n"},
+    {"module m;\n"
+     "logic a;\n"
+     "bit b;\n"
+     "initial e=f;\n"  // separates alignment groups
+     "wire c;\n"
+     "bit d;\n"
+     "endmodule\n",
+     "module m;\n"
+     "  logic a;\n"
+     "  bit   b;\n"
+     "  initial e = f;\n"  // separates alignment groups
+     "  wire c;\n"
+     "  bit  d;\n"
+     "endmodule\n"},
+    {"module m;\n"
+     "// hello a\n"
+     "logic a;\n"
+     "// hello b\n"
+     "bit b;\n"
+     "endmodule\n",
+     "module m;\n"
+     "  // hello a\n"
+     "  logic a;\n"
+     "  // hello b\n"
+     "  bit   b;\n"  // aligned across comments
+     "endmodule\n"},
+    {"module m;\n"
+     "// hello a\n"
+     "logic a;\n"
+     "\n"  // extra blank line
+     "// hello b\n"
+     "bit b;\n"
+     "endmodule\n",
+     "module m;\n"
+     "  // hello a\n"
+     "  logic a;\n"
+     "\n"              // extra blank line
+     "  // hello b\n"  // aligned across blank lines
+     "  bit   b;\n"    // aligned across comments
+     "endmodule\n"},
+    {"module m;\n"
+     "logic [x:y]a;\n"  // packed dimensions
+     "bit b;\n"
+     "endmodule\n",
+     "module m;\n"
+     "  logic [x:y] a;\n"
+     "  bit         b;\n"
+     "endmodule\n"},
+    {"module m;\n"
+     "logic a;\n"
+     "bit [pp:qq]b;\n"  // packed dimensions
+     "endmodule\n",
+     "module m;\n"
+     "  logic         a;\n"
+     "  bit   [pp:qq] b;\n"
+     "endmodule\n"},
+    {"module m;\n"
+     "logic [x:y]a;\n"  // packed dimensions
+     "bit [pp:qq]b;\n"  // packed dimensions
+     "endmodule\n",
+     "module m;\n"
+     "  logic [  x:y] a;\n"
+     "  bit   [pp:qq] b;\n"
+     "endmodule\n"},
+    {"module m;\n"
+     "logic [x:y]a;\n"         // packed dimensions
+     "wire [pp:qq] [e:f]b;\n"  // packed dimensions, 2D
+     "endmodule\n",
+     "module m;\n"
+     "  logic [  x:y]      a;\n"
+     "  wire  [pp:qq][e:f] b;\n"
+     "endmodule\n"},
+    {"module m;\n"
+     "logic a [x:y];\n"  // unpacked dimensions
+     "bit bbb;\n"
+     "endmodule\n",
+     "module m;\n"
+     "  logic a   [x:y];\n"
+     "  bit   bbb;\n"
+     "endmodule\n"},
+    {"module m;\n"
+     "logic aaa ;\n"
+     "wire w [yy:zz];\n"  // unpacked dimensions
+     "endmodule\n",
+     "module m;\n"
+     "  logic aaa;\n"
+     "  wire  w   [yy:zz];\n"
+     "endmodule\n"},
+    {"module m;\n"
+     "logic aaa [s:t] ;\n"  // unpacked dimensions
+     "wire w [yy:zz];\n"    // unpacked dimensions
+     "endmodule\n",
+     "module m;\n"
+     "  logic aaa[  s:t];\n"
+     "  wire  w  [yy:zz];\n"
+     "endmodule\n"},
+    {"module m;\n"
+     "logic aaa [s:t] ;\n"     // unpacked dimensions
+     "wire w [yy:zz][u:v];\n"  // unpacked dimensions, 2D
+     "endmodule\n",
+     "module m;\n"
+     "  logic aaa[  s:t];\n"
+     "  wire  w  [yy:zz] [u:v];\n"
+     // TODO(b/165323560): unwanted space between unpacked dimensions of 'w'
+     "endmodule\n"},
+    {"module m;\n"
+     "qqq::rrr s;\n"     // user-defined type
+     "wire [pp:qq]w;\n"  // packed dimensions
+     "endmodule\n",
+     "module m;\n"
+     "  qqq::rrr         s;\n"
+     "  wire     [pp:qq] w;\n"
+     "endmodule\n"},
+    {"module m;\n"
+     "qqq#(rr) s;\n"     // parameterized type
+     "wire [pp:qq]w;\n"  // packed dimensions
+     "endmodule\n",
+     "module m;\n"
+     "  qqq #(rr)         s;\n"
+     "  wire      [pp:qq] w;\n"
+     "endmodule\n"},
+    {"module m;\n"
+     "logic a;\n"
+     "bit b;\n"
+     "my_module  my_inst( );\n"  // module instance separates alignment groups
+     "wire c;\n"
+     "bit d;\n"
+     "endmodule\n",
+     "module m;\n"
+     "  logic a;\n"  // these two are aligned
+     "  bit   b;\n"
+     "  my_module my_inst ();\n"  // module instance separates alignment groups
+     "  wire c;\n"                // these two are aligned
+     "  bit  d;\n"
+     "endmodule\n"},
+    {"module m;\n"
+     "logic aaa = expr1;\n"
+     "bit b = expr2;\n"
+     "endmodule\n",
+     "module m;\n"
+     "  logic aaa = expr1;\n"
+     "  bit   b = expr2;\n"  // no alignment at '=' yet
+     "endmodule\n"},
+
     {"module foo #(int x,int y) ;endmodule:foo\n",  // parameters
      "module foo #(\n"
      "    int x,\n"
@@ -1270,32 +1494,29 @@ static const std::initializer_list<FormatterTestCase> kFormatterTestCases = {
      ") ();"
      "endmodule",
      "module foo #(  //comment\n"
-     "    parameter bar = 1,\n"
+     "    parameter  bar = 1,\n"
      "    localparam baz = 2\n"
-     ") (\n"
-     ");\n"
+     ") ();\n"
      "endmodule\n"},
     {"module foo #("
-     "parameter bar =1,//comment\n"
+     "parameter  bar =1,//comment\n"
      "localparam baz =2"
      ") ();"
      "endmodule",
      "module foo #(\n"
-     "    parameter bar = 1,  //comment\n"
+     "    parameter  bar = 1,  //comment\n"
      "    localparam baz = 2\n"
-     ") (\n"
-     ");\n"
+     ") ();\n"
      "endmodule\n"},
     {"module foo #("
-     "parameter bar =1,"
+     "parameter  bar =1,"
      "localparam baz =2//comment\n"
      ") ();"
      "endmodule",
      "module foo #(\n"
-     "    parameter bar = 1,\n"
+     "    parameter  bar = 1,\n"
      "    localparam baz = 2  //comment\n"
-     ") (\n"
-     ");\n"
+     ") ();\n"
      "endmodule\n"},
     {"module    top;"
      "foo#(  \"test\"  ) foo(  );"
@@ -1653,7 +1874,7 @@ static const std::initializer_list<FormatterTestCase> kFormatterTestCases = {
     {"  module bar;wire foo;reg bear;endmodule\n",
      "module bar;\n"
      "  wire foo;\n"
-     "  reg bear;\n"
+     "  reg  bear;\n"  // aligned
      "endmodule\n"},
     {" module bar;initial\nbegin a<=b . c ; end endmodule\n",
      "module bar;\n"
@@ -1689,6 +1910,14 @@ static const std::initializer_list<FormatterTestCase> kFormatterTestCases = {
         "endmodule\n",
         "module conditional_generate;\n"
         "  if (foo);\n"
+        "endmodule\n",
+    },
+    {
+        "module conditional_generate;\n"
+        "if(foo[a*b+c])  ; \t"  // null action
+        "endmodule\n",
+        "module conditional_generate;\n"
+        "  if (foo[a*b+c]);\n"  // allow compact expressions inside []
         "endmodule\n",
     },
     {
@@ -2547,6 +2776,20 @@ static const std::initializer_list<FormatterTestCase> kFormatterTestCases = {
      " interface if1()\n;endinterface\t\t",
      "interface if1 ();\n"
      "endinterface\n"},
+    {// interface declaration with parameter comment only, empty ports
+     " interface if1#( \n"
+     "//param\n"
+     ")();endinterface\t\t",
+     "interface if1 #(\n"
+     "    //param\n"
+     ") ();\n"
+     "endinterface\n"},
+    {// interface declaration with parameter, empty ports
+     " interface if1#( parameter int W= 8 )();endinterface\t\t",
+     "interface if1 #(\n"
+     "    parameter int W = 8\n"
+     ") ();\n"
+     "endinterface\n"},
     {// interface declaration with ports
      " interface if1( input\tlogic   z)\n;endinterface\t\t",
      "interface if1 (\n"
@@ -2838,6 +3081,155 @@ static const std::initializer_list<FormatterTestCase> kFormatterTestCases = {
      "  endtask\n"
      "  // class is about to end\n"
      "endclass\n"},
+    // class property alignment test cases
+    {"class c;\n"
+     "int foo  ;\n"
+     "byte bar;\n"
+     "endclass : c\n",
+     "class c;\n"
+     "  int  foo;\n"
+     "  byte bar;\n"
+     "endclass : c\n"},
+    {"class c;\n"
+     "int foo;\n"
+     "const bit b;\n"
+     "endclass : c\n",
+     "class c;\n"
+     "  int       foo;\n"
+     "  const bit b;\n"
+     "endclass : c\n"},
+    {"class c;\n"
+     "rand logic l;\n"
+     "int foo;\n"
+     "endclass : c\n",
+     "class c;\n"
+     "  rand logic l;\n"
+     "  int        foo;\n"
+     "endclass : c\n"},
+    {"class c;\n"
+     "rand logic l;\n"
+     "const static int foo;\n"  // more qualifiers
+     "endclass : c\n",
+     "class c;\n"
+     "  rand logic       l;\n"
+     "  const static int foo;\n"
+     "endclass : c\n"},
+    {"class c;\n"
+     "static local int foo;\n"
+     "const bit b;\n"
+     "endclass : c\n",
+     "class c;\n"
+     "  static local int foo;\n"
+     "  const bit        b;\n"
+     "endclass : c\n"},
+    {// example with queue
+     "class c;\n"
+     "int foo [$] ;\n"
+     "int foo_bar ;\n"
+     "endclass : c\n",
+     "class c;\n"
+     "  int foo[$];\n"
+     "  int foo_bar;\n"
+     "endclass : c\n"},
+    {// aligns over comments (ignored)
+     "class c;\n"
+     "// foo is...\n"
+     "int foo;\n"
+     "// b is...\n"
+     "const bit b;\n"
+     " // llama is...\n"
+     "logic llama;\n"
+     "endclass : c\n",
+     "class c;\n"
+     "  // foo is...\n"
+     "  int       foo;\n"
+     "  // b is...\n"
+     "  const bit b;\n"
+     "  // llama is...\n"
+     "  logic     llama;\n"
+     "endclass : c\n"},
+    {// aligns over comments (ignored), even with blank lines
+     "class c;\n"
+     "// foo is...\n"
+     "int foo;\n"
+     "\n"
+     "// b is...\n"
+     "const bit b;\n"
+     "\n"
+     " // llama is...\n"
+     "logic llama;\n"
+     "endclass : c\n",
+     "class c;\n"
+     "  // foo is...\n"
+     "  int       foo;\n"
+     "\n"
+     "  // b is...\n"
+     "  const bit b;\n"
+     "\n"
+     "  // llama is...\n"
+     "  logic     llama;\n"
+     "endclass : c\n"},
+    {// array dimensions do not have their own columns
+     "class c;\n"
+     "rand logic l;\n"
+     "int [1:0] foo;\n"
+     "endclass : c\n",
+     "class c;\n"
+     "  rand logic l;\n"
+     "  int [1:0]  foo;\n"
+     "endclass : c\n"},
+    {// non-data-declarations break up groups
+     "class c;\n"
+     "rand logic l;\n"
+     "int foo;\n"
+     "`uvm_bar_foo()\n"
+     "logic k;\n"
+     "rand int bar;\n"
+     "endclass : c\n",
+     "class c;\n"
+     "  rand logic l;\n"
+     "  int        foo;\n"
+     "  `uvm_bar_foo()\n"  // separates alignment groups above/below
+     "  logic    k;\n"
+     "  rand int bar;\n"
+     "endclass : c\n"},
+    {// non-data-declarations break up groups
+     "class c;\n"
+     "logic k;\n"
+     "rand int bar;\n"
+     "function void f();\n"
+     "endfunction\n"
+     "rand logic l;\n"
+     "int foo;\n"
+     "endclass : c\n",
+     "class c;\n"
+     "  logic    k;\n"
+     "  rand int bar;\n"
+     "  function void f();\n"  // function declaration breaks groups
+     "  endfunction\n"
+     "  rand logic l;\n"
+     "  int        foo;\n"
+     "endclass : c\n"},
+    {// align single-value initializers at the '='
+     "class c;\n"
+     "const logic foo=0;\n"
+     "const bit b=1;\n"
+     "endclass : c\n",
+     "class c;\n"
+     "  const logic foo = 0;\n"
+     "  const bit   b   = 1;\n"
+     "endclass : c\n"},
+    {// align single-value initializers at the '=', over non-initialized
+     "class c;\n"
+     "const logic foo=0;\n"
+     "rand int iidrv;\n"
+     "const bit b=1;\n"
+     "endclass : c\n",
+     "class c;\n"
+     "  const logic foo    = 0;\n"
+     "  rand int    iidrv;\n"  // no initializer, but align across this
+     "  const bit   b      = 1;\n"
+     "endclass : c\n"},
 
     // constraint test cases
     {
@@ -2916,6 +3308,25 @@ static const std::initializer_list<FormatterTestCase> kFormatterTestCases = {
     {"class foo #(); endclass",
      "class foo #();\n"
      "endclass\n"},
+    // class with empty parameter list, with comment
+    {"class foo #(  \n"
+     "// comment\n"
+     "); endclass",
+     "class foo #(\n"
+     "    // comment\n"
+     ");\n"
+     "endclass\n"},
+    // class with empty parameter list, extends
+    {"class foo #()extends bar ; endclass",
+     "class foo #() extends bar;\n"
+     "endclass\n"},
+    // class extends from type with named parameters
+    {"class foo extends bar #(.N(N), .M(M)); endclass",
+     "class foo extends bar#(\n"
+     "    .N(N),\n"
+     "    .M(M)\n"
+     ");\n"
+     "endclass\n"},
 
     // class with one parameter list
     {"class foo #(type a = b); endclass",
@@ -2983,6 +3394,22 @@ static const std::initializer_list<FormatterTestCase> kFormatterTestCases = {
      "  A = 0,\n"
      "  B = 1\n"
      "} foo_t;\n"},
+    {// With comments on same line as enum value
+     "typedef enum logic\t{ A=0, // foo\n"
+     "B,// bar\n"
+     "`ifndef DO_PANIC\n"
+     "C=42,// answer\n"
+     "`endif\n"
+     "D=3    // baz\n"
+     "}foo_t;",
+     "typedef enum logic {\n"
+     "  A = 0,  // foo\n"
+     "  B,  // bar\n"
+     "`ifndef DO_PANIC\n"
+     "  C = 42,  // answer\n"
+     "`endif\n"
+     "  D = 3  // baz\n"
+     "} foo_t;\n"},
     {// with scalar dimensions
      "typedef enum logic[2]\t{ A=0, B=1 }foo_t;",
      "typedef enum logic [2] {\n"
@@ -2995,6 +3422,11 @@ static const std::initializer_list<FormatterTestCase> kFormatterTestCases = {
      "  A = 0,\n"
      "  B = 1\n"
      "} foo_t;\n"},
+    {"typedef foo_pkg::baz_t#(.L(L), .W(W)) bar_t;\n",
+     "typedef foo_pkg::baz_t#(\n"
+     "    .L(L),\n"
+     "    .W(W)\n"
+     ") bar_t;\n"},
 
     // package test cases
     {"package fedex;localparam  int  www=3 ;endpackage   :  fedex\n",
@@ -3505,13 +3937,110 @@ static const std::initializer_list<FormatterTestCase> kFormatterTestCases = {
      "function void warranty;\n"
      "  foo.bar = fancyfunction(\n"
      "      aaaaaaaa.bbbbbbb,\n"
-     // TODO(fangism): ccccccccc is indented too much because it thinks it is
-     // part of a run-on string of tokens starting with aaaaaaaa.
-     // We need to inform that it should be on the same level as aaaaaaaa as a
-     // sibling item within the same balance group.
-     // Right now, there is no notion of sibling items within a balance group.
-     "          ccccccccc.ddddddddd);\n"
+     "      ccccccccc.ddddddddd\n"
+     "  );\n"
      "endfunction : warranty\n"},
+
+    // Group of tests testing partitioning of arguments inside function calls
+    {// function with function call inside if statement header
+     "function foo;if(aa(bb,cc));endfunction\n",
+     "function foo;\n"
+     "  if (aa(bb, cc));\n"
+     "endfunction\n"},
+    {// function with function call inside if statement header and with
+     // begin-end block
+     "function foo;if (aa(bb,cc,dd,ee))begin end endfunction\n",
+     "function foo;\n"
+     "  if (aa(bb, cc, dd, ee)) begin\n"
+     "  end\n"
+     "endfunction\n"},
+    {// function with kMethodCallExtension inside if statement header and with
+     // begin-end block
+     "function foo;if (aa.bb(cc,dd,ee))begin end endfunction\n",
+     "function foo;\n"
+     "  if (aa.bb(cc, dd, ee)) begin\n"
+     "  end\n"
+     "endfunction\n"},
+    {// nested kMethodCallExtension calls - one level
+     "function foo;aa.bb(cc.dd(a1), ee.ff(a2));endfunction\n",
+     "function foo;\n"
+     "  aa.bb(cc.dd(a1), ee.ff(a2));\n"
+     "endfunction\n"},
+    {// nested kMethodCallExtension calls - two level
+     "function foo;aa.bb(cc.dd(a1.b1(a2), b1), ee.ff(c1, d1));endfunction\n",
+     "function foo;\n"
+     "  aa.bb(cc.dd(a1.b1(a2), b1), ee.ff(\n"
+     "        c1, d1));\n"
+     "endfunction\n"},
+
+    {// simple initial statement with function call
+     "module m;initial aa(bb,cc,dd,ee);endmodule\n",
+     "module m;\n"
+     "  initial aa(bb, cc, dd, ee);\n"
+     "endmodule\n"},
+    {// expressions and function calls inside if-statement headers
+     "module m;initial begin if(aa(bb)==cc(dd))a=b;if (xx()) b = a;end "
+     "endmodule\n",
+     "module m;\n"
+     "  initial begin\n"
+     "    if (aa(bb) == cc(dd)) a = b;\n"
+     "    if (xx()) b = a;\n"
+     "  end\n"
+     "endmodule\n"},
+    {// fuction with two arguments inside if-statement headers
+     "module\nm;initial\nbegin\nif(aa(bb,cc))x=y;end\nendmodule\n",
+     "module m;\n"
+     "  initial begin\n"
+     "    if (aa(bb, cc)) x = y;\n"
+     "  end\n"
+     "endmodule\n"},
+    {// kMethodCallExtension inside if-statement headers
+     "module m;initial begin if (aa.bb(cc)) x = y;end endmodule",
+     "module m;\n"
+     "  initial begin\n"
+     "    if (aa.bb(cc)) x = y;\n"
+     "  end\n"
+     "endmodule\n"},
+    {// initial statement with object method call
+     "module m; initial a.b(a,b,c); endmodule\n",
+     "module m;\n"
+     "  initial a.b(a, b, c);\n"
+     "endmodule\n"},
+    {// initial statement with method call on indexed object
+     "module m; initial a[i].b(a,b,c); endmodule\n",
+     "module m;\n"
+     "  initial a[i].b(a, b, c);\n"
+     "endmodule\n"},
+    {// initial statement with method call on function returned object
+     "module m; initial a(d,e,f).b(a,b,c); endmodule\n",
+     "module m;\n"
+     "  initial a(d, e, f).b(a, b, c);\n"
+     "endmodule\n"},
+    {// initial statement with indexed access to function returned object
+     "module m; initial a(a,b,c)[i]; endmodule\n",
+     "module m;\n"
+     "  initial a(a, b, c) [i];\n"
+     "endmodule\n"},
+    {// method call with no arguments on an object
+     "module m; initial foo.bar();endmodule\n",
+     "module m;\n"
+     "  initial foo.bar();\n"
+     "endmodule\n"},
+    {// method call with one argument on an object
+     "module m; initial foo.bar(aa);endmodule\n",
+     "module m;\n"
+     "  initial foo.bar(aa);\n"
+     "endmodule\n"},
+    {// method call with two arguments on an object
+     "module m; initial foo.bar(aa,bb);endmodule\n",
+     "module m;\n"
+     "  initial foo.bar(aa, bb);\n"
+     "endmodule\n"},
+    {// method call with three arguments on an object
+     "module m; initial foo.bar(aa,bb,cc);endmodule\n",
+     "module m;\n"
+     "  initial foo.bar(aa, bb, cc);\n"
+     "endmodule\n"},
 
     {
         // This tests for if-statements with null statements
@@ -4607,6 +5136,39 @@ static const std::initializer_list<FormatterTestCase> kFormatterTestCases = {
         "  if (r == t) a.b(c);\n"
         "endtask\n",
     },
+    {
+        // task with system call inside if header
+        "task t;"
+        "if (!$cast(ssssssssssssssss,vvvvvvvvvv,gggggggg))begin end endtask:t",
+        "task t;\n"
+        "  if (!$cast(\n"
+        "          ssssssssssssssss,\n"
+        "          vvvvvvvvvv,\n"
+        "          gggggggg\n"
+        "      )) begin\n"
+        "  end\n"
+        "endtask : t\n",
+    },
+    {
+        // task with nested subtask call and arguments passed by name
+        "task t;"
+        "if (!$cast(ssssssssssssssss, vvvvvvvvvv.gggggggg("
+        ".ppppppp(ppppppp),"
+        ".yyyyy(\"xxxxxxxxxxxxx\")"
+        "))) begin "
+        "end "
+        "endtask : t",
+        "task t;\n"
+        "  if (!$cast(\n"
+        "          ssssssssssssssss,\n"
+        "          vvvvvvvvvv.gggggggg(\n"
+        "              .ppppppp(ppppppp),\n"
+        "              .yyyyy(\"xxxxxxxxxxxxx\")\n"
+        "          )\n"
+        "      )) begin\n"
+        "  end\n"
+        "endtask : t\n",
+    },
 
     {
         // assert property statements
@@ -5451,6 +6013,887 @@ static const std::initializer_list<FormatterTestCase> kFormatterTestCases = {
     //    "  );\n"
     //    "endmodule\n"
     //},
+
+    // Parameterized data types, declarations inside #() tabular alignment
+    {// parameterized module with 'list_of_param_assignments'
+     "module foo #(A = 2, AA = 22, AAA = 222);\n"
+     "endmodule\n",
+     "module foo #(\n"
+     "    A   = 2,\n"
+     "    AA  = 22,\n"
+     "    AAA = 222\n"
+     ");\n"
+     "endmodule\n"},
+    {// parameterized module with 'parameter_declaration'
+     "module foo #(parameter int a = 2, parameter int aa = 22);\n"
+     "endmodule\n",
+     "module foo #(\n"
+     "    parameter int a  = 2,\n"
+     "    parameter int aa = 22\n"
+     ");\n"
+     "endmodule\n"},
+    {// parameterized module with 'parameter_declaration' and comments
+     "module foo #(//comment\nparameter int a = 2, parameter int aa = 22);\n"
+     "endmodule\n",
+     "module foo #(  //comment\n"
+     "    parameter int a  = 2,\n"
+     "    parameter int aa = 22\n"
+     ");\n"
+     "endmodule\n"},
+    {// parameterized module with 'parameter_declaration' and trailing comments
+     "module foo #(parameter int a = 2,//comment\n parameter int aa = 22);\n"
+     "endmodule\n",
+     "module foo #(\n"
+     "    parameter int a  = 2,  //comment\n"
+     "    parameter int aa = 22\n"
+     ");\n"
+     "endmodule\n"},
+    {// parameterized module with 'parameter_declaration' and pre-proc
+     "module foo #(parameter int a = 2,\n"
+     "`ifdef MACRO parameter int aa = 22, `endif\n"
+     "parameter int aaa = 222);\n"
+     "endmodule\n",
+     "module foo #(\n"
+     "    parameter int a   = 2,\n"
+     "`ifdef MACRO\n"
+     "    parameter int aa  = 22,\n"
+     "`endif\n"
+     "    parameter int aaa = 222\n"
+     ");\n"
+     "endmodule\n"},
+    {// parameterized module with 'parameter_declaration' and packed dimensions
+     "module foo #(parameter logic [3:0] a = 2, parameter logic [30:0] aa = "
+     "22);\n"
+     "endmodule\n",
+     "module foo #(\n"
+     "    parameter logic [ 3:0] a  = 2,\n"
+     "    parameter logic [30:0] aa = 22\n"
+     ");\n"
+     "endmodule\n"},
+    {// parameterized module with 'parameter_declaration' and unpacked
+     // dimensions
+     "module foo #(parameter logic a[3:0] = 2, parameter logic  aa [30:0] = "
+     "22);\n"
+     "endmodule\n",
+     "module foo #(\n"
+     "    parameter logic a [ 3:0] = 2,\n"
+     "    parameter logic aa[30:0] = 22\n"
+     ");\n"
+     "endmodule\n"},
+
+    {// parameterized module with 'local_parameter_declaration'
+     "module foo #(localparam int a = 2, localparam int aa = 22);\n"
+     "endmodule\n",
+     "module foo #(\n"
+     "    localparam int a  = 2,\n"
+     "    localparam int aa = 22\n"
+     ");\n"
+     "endmodule\n"},
+    {// parameterized module with 'local_parameter_declaration' and comments
+     "module foo #(//comment\nlocalparam int a = 2, localparam int aa = 22);\n"
+     "endmodule\n",
+     "module foo #(  //comment\n"
+     "    localparam int a  = 2,\n"
+     "    localparam int aa = 22\n"
+     ");\n"
+     "endmodule\n"},
+    {// parameterized module with 'local_parameter_declaration' and trailing
+     // comments
+     "module foo #(localparam int a = 2,//comment\n localparam int aa = 22);\n"
+     "endmodule\n",
+     "module foo #(\n"
+     "    localparam int a  = 2,  //comment\n"
+     "    localparam int aa = 22\n"
+     ");\n"
+     "endmodule\n"},
+    {// parameterized module with 'local_parameter_declaration' and pre-proc
+     "module foo #(localparam int a = 2,\n"
+     "`ifdef MACRO localparam int aa = 22, `endif\n"
+     "localparam int aaa = 222);\n"
+     "endmodule\n",
+     "module foo #(\n"
+     "    localparam int a   = 2,\n"
+     "`ifdef MACRO\n"
+     "    localparam int aa  = 22,\n"
+     "`endif\n"
+     "    localparam int aaa = 222\n"
+     ");\n"
+     "endmodule\n"},
+    {// parameterized module with 'local_parameter_declaration' and packed
+     // dimensions
+     "module foo #(localparam logic [3:0] a = 2, localparam logic [30:0] aa = "
+     "22);\n"
+     "endmodule\n",
+     "module foo #(\n"
+     "    localparam logic [ 3:0] a  = 2,\n"
+     "    localparam logic [30:0] aa = 22\n"
+     ");\n"
+     "endmodule\n"},
+    {// parameterized module with 'local_parameter_declaration' and unpacked
+     // dimensions
+     "module foo #(localparam logic a[3:0] = 2, localparam logic  aa [30:0] = "
+     "22);\n"
+     "endmodule\n",
+     "module foo #(\n"
+     "    localparam logic a [ 3:0] = 2,\n"
+     "    localparam logic aa[30:0] = 22\n"
+     ");\n"
+     "endmodule\n"},
+
+    {// parameterized module with 'data_type list_of_param_assignments'
+     "module foo #( int a = 2,  real aa = 22, longint aaa = 222);\n"
+     "endmodule\n",
+     "module foo #(\n"
+     "    int     a   = 2,\n"
+     "    real    aa  = 22,\n"
+     "    longint aaa = 222\n"
+     ");\n"
+     "endmodule\n"},
+    {// parameterized module with 'data_type list_of_param_assignments' and
+     // comments
+     "module foo #(//comment\nint a = 2,  shortreal aa = 22, longint aaa = "
+     "222);\n"
+     "endmodule\n",
+     "module foo #(  //comment\n"
+     "    int       a   = 2,\n"
+     "    shortreal aa  = 22,\n"
+     "    longint   aaa = 222\n"
+     ");\n"
+     "endmodule\n"},
+    {// parameterized module with 'data_type list_of_param_assignments' and
+     // trailing comments
+     "module foo #(int a = 2,  shortreal aa = 22,//comment\n longint aaa = "
+     "222);\n"
+     "endmodule\n",
+     "module foo #(\n"
+     "    int       a   = 2,\n"
+     "    shortreal aa  = 22,  //comment\n"
+     "    longint   aaa = 222\n"
+     ");\n"
+     "endmodule\n"},
+    {// parameterized module with 'data_type list_of_param_assignments' and
+     // pre-proc
+     "module foo #(int a = 2,\n"
+     "`ifdef MACRO shortreal aa = 22, `endif\n"
+     " longint aaa = 222);\n"
+     "endmodule\n",
+     "module foo #(\n"
+     "    int       a   = 2,\n"
+     "`ifdef MACRO\n"
+     "    shortreal aa  = 22,\n"
+     "`endif\n"
+     "    longint   aaa = 222\n"
+     ");\n"
+     "endmodule\n"},
+    {// parameterized module with 'data_type list_of_param_assignments' and
+     // packed dimensions
+     "module foo #(bit [1:0] a = 2,  reg [12:0] aa = 22, logic [123:0] aaa = "
+     "222);\n"
+     "endmodule\n",
+     "module foo #(\n"
+     "    bit   [  1:0] a   = 2,\n"
+     "    reg   [ 12:0] aa  = 22,\n"
+     "    logic [123:0] aaa = 222\n"
+     ");\n"
+     "endmodule\n"},
+    {// parameterized module with 'data_type list_of_param_assignments' and
+     // unpacked dimensions
+     "module foo #(bit  a[1:0] = 2,  reg  aa[12:0] = 22, logic aaa [123:0]  = "
+     "222);\n"
+     "endmodule\n",
+     "module foo #(\n"
+     "    bit   a  [  1:0] = 2,\n"
+     "    reg   aa [ 12:0] = 22,\n"
+     "    logic aaa[123:0] = 222\n"
+     ");\n"
+     "endmodule\n"},
+    {// parameterized module with 'type list_of_type_assignments'
+     "module foo #(type T = int, type TT = bit, type TTT= C#(logic) );\n"
+     "endmodule\n",
+     "module foo #(\n"
+     "    type T   = int,\n"
+     "    type TT  = bit,\n"
+     "    type TTT = C#(logic)\n"
+     ");\n"
+     "endmodule\n"},
+    {// parameterized module with 'type list_of_type_assignments' and comments
+     "module foo #(//comment\ntype T = int, type TT = bit, type TTT= C#(logic) "
+     ");\n"
+     "endmodule\n",
+     "module foo #(  //comment\n"
+     "    type T   = int,\n"
+     "    type TT  = bit,\n"
+     "    type TTT = C#(logic)\n"
+     ");\n"
+     "endmodule\n"},
+    {// parameterized module with 'data_type list_of_param_assignments' and
+     // trailing comments
+     "module foo #(type T = int, type TT = bit, //comment\n type TTT= "
+     "C#(logic) );\n"
+     "endmodule\n",
+     "module foo #(\n"
+     "    type T   = int,\n"
+     "    type TT  = bit,  //comment\n"
+     "    type TTT = C#(logic)\n"
+     ");\n"
+     "endmodule\n"},
+    {// parameterized module with 'data_type list_of_param_assignments' and
+     // pre-proc
+     "module foo #(type T = int,\n"
+     "`ifdef MACRO type TT = bit, `endif\n"
+     " type TTT= C#(logic));\n"
+     "endmodule\n",
+     "module foo #(\n"
+     "    type T   = int,\n"
+     "`ifdef MACRO\n"
+     "    type TT  = bit,\n"
+     "`endif\n"
+     "    type TTT = C#(logic)\n"
+     ");\n"
+     "endmodule\n"},
+    {// parameterized module with 'data_type list_of_param_assignments' and
+     // packed dimensions
+     "module foo #(type T = int [3:0], type TT = bit [250:0]);\n"
+     "endmodule\n",
+     "module foo #(\n"
+     "    type T  = int [  3:0],\n"
+     "    type TT = bit [250:0]\n"
+     ");\n"
+     "endmodule\n"},
+    {"module foo #(type T = int, "
+     "A = 2, int AA = 22, parameter AAA = 222, parameter longint AAAA = 2222, "
+     "localparam AAAAA = 22222, localparam real AAAAAA = 222222"
+     ");\n"
+     "endmodule\n",
+     "module foo #(\n"
+     "               type    T      = int,\n"
+     "                       A      = 2,\n"
+     "               int     AA     = 22,\n"
+     "    parameter          AAA    = 222,\n"
+     "    parameter  longint AAAA   = 2222,\n"
+     "    localparam         AAAAA  = 22222,\n"
+     "    localparam real    AAAAAA = 222222\n"
+     ");\n"
+     "endmodule\n"},
+    {// parameterized module with built-in data type
+     "module foo #(int a = 2, real abc = 2234);\n"
+     "endmodule\n",
+     "module foo #(\n"
+     "    int  a   = 2,\n"
+     "    real abc = 2234\n"
+     ");\n"
+     "endmodule\n"},
+    {// parameterized module with type
+     "module foo #(type TYPE1 = int, type TYPE2 = boo);\n"
+     "endmodule\n",
+     "module foo #(\n"
+     "    type TYPE1 = int,\n"
+     "    type TYPE2 = boo\n"
+     ");\n"
+     "endmodule\n"},
+    {"module foo#(localparam type TYPE1 = int, type TYPE22 = bool, parameter   "
+     " type TYPE333 = real);\n"
+     "endmodule\n",
+     "module foo #(\n"
+     "    localparam type TYPE1   = int,\n"
+     "               type TYPE22  = bool,\n"
+     "    parameter  type TYPE333 = real\n"
+     ");\n"
+     "endmodule\n"},
+    {// parameterized module with 'data_type list_of_param_assignments' and 1D
+     // packed dimensions
+     "module foo #(parameter type T = int [3:0], type TT = bit [123:0]);\n"
+     "endmodule\n",
+     "module foo #(\n"
+     "    parameter type T  = int [  3:0],\n"
+     "              type TT = bit [123:0]\n"
+     ");\n"
+     "endmodule\n"},
+    {// parameterized module with 'data_type list_of_param_assignments' and 2D
+     // packed dimensions
+     "module foo #(type T = int [3:0][123:0], type TT = bit [123:0][1:0]);\n"
+     "endmodule\n",
+     "module foo #(\n"
+     "    type T  = int [  3:0][123:0],\n"
+     "    type TT = bit [123:0][  1:0]\n"
+     ");\n"
+     "endmodule\n"},
+    {// parametrized module with user defined data types
+     "module foo #(type T = my_type1_t, type TT = my_pkg::my_type2_t);\n"
+     "endmodule\n",
+     "module foo #(\n"
+     "    type T  = my_type1_t,\n"
+     "    type TT = my_pkg::my_type2_t\n"
+     ");\n"
+     "endmodule\n"},
+
+    {// parameterized class with 'list_of_param_assignments'
+     "class foo #(A = 2, AA = 22, AAA = 222);\n"
+     "endclass\n",
+     "class foo #(\n"
+     "    A   = 2,\n"
+     "    AA  = 22,\n"
+     "    AAA = 222\n"
+     ");\n"
+     "endclass\n"},
+    {// parameterized class with 'parameter_declaration'
+     "class foo #(parameter int a = 2, parameter int aa = 22);\n"
+     "endclass\n",
+     "class foo #(\n"
+     "    parameter int a  = 2,\n"
+     "    parameter int aa = 22\n"
+     ");\n"
+     "endclass\n"},
+    {// parameterized class with 'parameter_declaration' and comments
+     "class foo #(//comment\nparameter int a = 2, parameter int aa = 22);\n"
+     "endclass\n",
+     "class foo #(  //comment\n"
+     "    parameter int a  = 2,\n"
+     "    parameter int aa = 22\n"
+     ");\n"
+     "endclass\n"},
+    {// parameterized class with 'parameter_declaration' and trailing comments
+     "class foo #(parameter int a = 2,//comment\n parameter int aa = 22);\n"
+     "endclass\n",
+     "class foo #(\n"
+     "    parameter int a  = 2,  //comment\n"
+     "    parameter int aa = 22\n"
+     ");\n"
+     "endclass\n"},
+    {// parameterized class with 'parameter_declaration' and pre-proc
+     "class foo #(parameter int a = 2,\n"
+     "`ifdef MACRO parameter int aa = 22, `endif\n"
+     "parameter int aaa = 222);\n"
+     "endclass\n",
+     "class foo #(\n"
+     "    parameter int a   = 2,\n"
+     "`ifdef MACRO\n"
+     "    parameter int aa  = 22,\n"
+     "`endif\n"
+     "    parameter int aaa = 222\n"
+     ");\n"
+     "endclass\n"},
+    {// parameterized class with 'parameter_declaration' and packed dimensions
+     "class foo #(parameter logic [3:0] a = 2, parameter logic [30:0] aa = "
+     "22);\n"
+     "endclass\n",
+     "class foo #(\n"
+     "    parameter logic [ 3:0] a  = 2,\n"
+     "    parameter logic [30:0] aa = 22\n"
+     ");\n"
+     "endclass\n"},
+    {// parameterized class with 'parameter_declaration' and unpacked dimensions
+     "class foo #(parameter logic a[3:0] = 2, parameter logic  aa [30:0] = "
+     "22);\n"
+     "endclass\n",
+     "class foo #(\n"
+     "    parameter logic a [ 3:0] = 2,\n"
+     "    parameter logic aa[30:0] = 22\n"
+     ");\n"
+     "endclass\n"},
+
+    {// parameterized class with 'local_parameter_declaration'
+     "class foo #(localparam int a = 2, localparam int aa = 22);\n"
+     "endclass\n",
+     "class foo #(\n"
+     "    localparam int a  = 2,\n"
+     "    localparam int aa = 22\n"
+     ");\n"
+     "endclass\n"},
+    {// parameterized class with 'local_parameter_declaration' and comments
+     "class foo #(//comment\nlocalparam int a = 2, localparam int aa = 22);\n"
+     "endclass\n",
+     "class foo #(  //comment\n"
+     "    localparam int a  = 2,\n"
+     "    localparam int aa = 22\n"
+     ");\n"
+     "endclass\n"},
+    {// parameterized class with 'local_parameter_declaration' and trailing
+     // comments
+     "class foo #(localparam int a = 2,//comment\n localparam int aa = 22);\n"
+     "endclass\n",
+     "class foo #(\n"
+     "    localparam int a  = 2,  //comment\n"
+     "    localparam int aa = 22\n"
+     ");\n"
+     "endclass\n"},
+    {// parameterized class with 'local_parameter_declaration' and pre-proc
+     "class foo #(localparam int a = 2,\n"
+     "`ifdef MACRO localparam int aa = 22, `endif\n"
+     "localparam int aaa = 222);\n"
+     "endclass\n",
+     "class foo #(\n"
+     "    localparam int a   = 2,\n"
+     "`ifdef MACRO\n"
+     "    localparam int aa  = 22,\n"
+     "`endif\n"
+     "    localparam int aaa = 222\n"
+     ");\n"
+     "endclass\n"},
+    {// parameterized class with 'local_parameter_declaration' and packed
+     // dimensions
+     "class foo #(localparam logic [3:0] a = 2, localparam logic [30:0] aa = "
+     "22);\n"
+     "endclass\n",
+     "class foo #(\n"
+     "    localparam logic [ 3:0] a  = 2,\n"
+     "    localparam logic [30:0] aa = 22\n"
+     ");\n"
+     "endclass\n"},
+    {// parameterized class with 'local_parameter_declaration' and unpacked
+     // dimensions
+     "class foo #(localparam logic a[3:0] = 2, localparam logic  aa [30:0] = "
+     "22);\n"
+     "endclass\n",
+     "class foo #(\n"
+     "    localparam logic a [ 3:0] = 2,\n"
+     "    localparam logic aa[30:0] = 22\n"
+     ");\n"
+     "endclass\n"},
+    {// parameterized class with 'data_type list_of_param_assignments'
+     "class foo #( int a = 2,  real aa = 22, longint aaa = 222);\n"
+     "endclass\n",
+     "class foo #(\n"
+     "    int     a   = 2,\n"
+     "    real    aa  = 22,\n"
+     "    longint aaa = 222\n"
+     ");\n"
+     "endclass\n"},
+    {// parameterized class with 'data_type list_of_param_assignments' and
+     // comments
+     "class foo #(//comment\nint a = 2,  shortreal aa = 22, longint aaa = "
+     "222);\n"
+     "endclass\n",
+     "class foo #(  //comment\n"
+     "    int       a   = 2,\n"
+     "    shortreal aa  = 22,\n"
+     "    longint   aaa = 222\n"
+     ");\n"
+     "endclass\n"},
+    {// parameterized class with 'data_type list_of_param_assignments' and
+     // trailing comments
+     "class foo #(int a = 2,  shortreal aa = 22,//comment\n longint aaa = "
+     "222);\n"
+     "endclass\n",
+     "class foo #(\n"
+     "    int       a   = 2,\n"
+     "    shortreal aa  = 22,  //comment\n"
+     "    longint   aaa = 222\n"
+     ");\n"
+     "endclass\n"},
+    {// parameterized class with 'data_type list_of_param_assignments' and
+     // pre-proc
+     "class foo #(int a = 2,\n"
+     "`ifdef MACRO shortreal aa = 22, `endif\n"
+     " longint aaa = 222);\n"
+     "endclass\n",
+     "class foo #(\n"
+     "    int       a   = 2,\n"
+     "`ifdef MACRO\n"
+     "    shortreal aa  = 22,\n"
+     "`endif\n"
+     "    longint   aaa = 222\n"
+     ");\n"
+     "endclass\n"},
+    {// parameterized class with 'data_type list_of_param_assignments' and
+     // packed dimensions
+     "class foo #(bit [1:0] a = 2,  reg [12:0] aa = 22, logic [123:0] aaa = "
+     "222);\n"
+     "endclass\n",
+     "class foo #(\n"
+     "    bit   [  1:0] a   = 2,\n"
+     "    reg   [ 12:0] aa  = 22,\n"
+     "    logic [123:0] aaa = 222\n"
+     ");\n"
+     "endclass\n"},
+    {// parameterized class with 'data_type list_of_param_assignments' and
+     // unpacked dimensions
+     "class foo #(bit  a[1:0] = 2,  reg  aa[12:0] = 22, logic aaa [123:0]  = "
+     "222);\n"
+     "endclass\n",
+     "class foo #(\n"
+     "    bit   a  [  1:0] = 2,\n"
+     "    reg   aa [ 12:0] = 22,\n"
+     "    logic aaa[123:0] = 222\n"
+     ");\n"
+     "endclass\n"},
+    {// parameterized class with 'type list_of_type_assignments'
+     "class foo #(type T = int, type TT = bit, type TTT= C#(logic) );\n"
+     "endclass\n",
+     "class foo #(\n"
+     "    type T   = int,\n"
+     "    type TT  = bit,\n"
+     "    type TTT = C#(logic)\n"
+     ");\n"
+     "endclass\n"},
+    {// parameterized class with 'type list_of_type_assignments' and comments
+     "class foo #(//comment\ntype T = int, type TT = bit, type TTT= C#(logic) "
+     ");\n"
+     "endclass\n",
+     "class foo #(  //comment\n"
+     "    type T   = int,\n"
+     "    type TT  = bit,\n"
+     "    type TTT = C#(logic)\n"
+     ");\n"
+     "endclass\n"},
+    {// parameterized class with 'data_type list_of_param_assignments' and
+     // trailing comments
+     "class foo #(type T = int, type TT = bit, //comment\n type TTT= C#(logic) "
+     ");\n"
+     "endclass\n",
+     "class foo #(\n"
+     "    type T   = int,\n"
+     "    type TT  = bit,  //comment\n"
+     "    type TTT = C#(logic)\n"
+     ");\n"
+     "endclass\n"},
+    {// parameterized class with 'data_type list_of_param_assignments' and
+     // pre-proc
+     "class foo #(type T = int,\n"
+     "`ifdef MACRO type TT = bit, `endif\n"
+     " type TTT= C#(logic));\n"
+     "endclass\n",
+     "class foo #(\n"
+     "    type T   = int,\n"
+     "`ifdef MACRO\n"
+     "    type TT  = bit,\n"
+     "`endif\n"
+     "    type TTT = C#(logic)\n"
+     ");\n"
+     "endclass\n"},
+    {// parameterized class with 'data_type list_of_param_assignments' and
+     // packed dimensions
+     "class foo #(type T = int [3:0], type TT = bit [250:0]);\n"
+     "endclass\n",
+     "class foo #(\n"
+     "    type T  = int [  3:0],\n"
+     "    type TT = bit [250:0]\n"
+     ");\n"
+     "endclass\n"},
+    {"class foo #(type T = int, "
+     "A = 2, int AA = 22, parameter AAA = 222, parameter longint AAAA = 2222, "
+     "localparam AAAAA = 22222, localparam real AAAAAA = 222222"
+     ");\n"
+     "endclass\n",
+     "class foo #(\n"
+     "               type    T      = int,\n"
+     "                       A      = 2,\n"
+     "               int     AA     = 22,\n"
+     "    parameter          AAA    = 222,\n"
+     "    parameter  longint AAAA   = 2222,\n"
+     "    localparam         AAAAA  = 22222,\n"
+     "    localparam real    AAAAAA = 222222\n"
+     ");\n"
+     "endclass\n"},
+    {// parameterized class with built-in data type
+     "class foo #(int a = 2, real abc = 2234);\n"
+     "endclass\n",
+     "class foo #(\n"
+     "    int  a   = 2,\n"
+     "    real abc = 2234\n"
+     ");\n"
+     "endclass\n"},
+    {// parameterized class with type
+     "class foo #(type TYPE1 = int, type TYPE2 = boo);\n"
+     "endclass\n",
+     "class foo #(\n"
+     "    type TYPE1 = int,\n"
+     "    type TYPE2 = boo\n"
+     ");\n"
+     "endclass\n"},
+    {"class foo#(localparam type TYPE1 = int, type TYPE22 = bool, parameter    "
+     "type TYPE333 = real);\n"
+     "endclass\n",
+     "class foo #(\n"
+     "    localparam type TYPE1   = int,\n"
+     "               type TYPE22  = bool,\n"
+     "    parameter  type TYPE333 = real\n"
+     ");\n"
+     "endclass\n"},
+    {// parameterized class with 'data_type list_of_param_assignments' and 1D
+     // packed dimensions
+     "class foo #(parameter type T = int [3:0], type TT = bit [123:0]);\n"
+     "endclass\n",
+     "class foo #(\n"
+     "    parameter type T  = int [  3:0],\n"
+     "              type TT = bit [123:0]\n"
+     ");\n"
+     "endclass\n"},
+    {// parameterized class with 'data_type list_of_param_assignments' and 2D
+     // packed dimensions
+     "class foo #(type T = int [3:0][123:0], type TT = bit [123:0][1:0]);\n"
+     "endclass\n",
+     "class foo #(\n"
+     "    type T  = int [  3:0][123:0],\n"
+     "    type TT = bit [123:0][  1:0]\n"
+     ");\n"
+     "endclass\n"},
+    {// parametrized class with user defined data types
+     "class foo #(type T = my_type1_t, type TT = my_pkg::my_type2_t);\n"
+     "endclass\n",
+     "class foo #(\n"
+     "    type T  = my_type1_t,\n"
+     "    type TT = my_pkg::my_type2_t\n"
+     ");\n"
+     "endclass\n"},
+
+    {// parameterized interface with 'local_parameter_declaration'
+     "interface foo #(localparam int a = 2, localparam int aa = 22);\n"
+     "endinterface\n",
+     "interface foo #(\n"
+     "    localparam int a  = 2,\n"
+     "    localparam int aa = 22\n"
+     ");\n"
+     "endinterface\n"},
+    {// parameterized interface with 'local_parameter_declaration' and comments
+     "interface foo #(//comment\nlocalparam int a = 2, localparam int aa = "
+     "22);\n"
+     "endinterface\n",
+     "interface foo #(  //comment\n"
+     "    localparam int a  = 2,\n"
+     "    localparam int aa = 22\n"
+     ");\n"
+     "endinterface\n"},
+    {// parameterized interface with 'local_parameter_declaration' and trailing
+     // comments
+     "interface foo #(localparam int a = 2,//comment\n localparam int aa = "
+     "22);\n"
+     "endinterface\n",
+     "interface foo #(\n"
+     "    localparam int a  = 2,  //comment\n"
+     "    localparam int aa = 22\n"
+     ");\n"
+     "endinterface\n"},
+    {// parameterized interface with 'local_parameter_declaration' and pre-proc
+     "interface foo #(localparam int a = 2,\n"
+     "`ifdef MACRO localparam int aa = 22, `endif\n"
+     "localparam int aaa = 222);\n"
+     "endinterface\n",
+     "interface foo #(\n"
+     "    localparam int a   = 2,\n"
+     "`ifdef MACRO\n"
+     "    localparam int aa  = 22,\n"
+     "`endif\n"
+     "    localparam int aaa = 222\n"
+     ");\n"
+     "endinterface\n"},
+    {// parameterized interface with 'local_parameter_declaration' and packed
+     // dimensions
+     "interface foo #(localparam logic [3:0] a = 2, localparam logic [30:0] aa "
+     "= 22);\n"
+     "endinterface\n",
+     "interface foo #(\n"
+     "    localparam logic [ 3:0] a  = 2,\n"
+     "    localparam logic [30:0] aa = 22\n"
+     ");\n"
+     "endinterface\n"},
+    {// parameterized interface with 'local_parameter_declaration' and unpacked
+     // dimensions
+     "interface foo #(localparam logic a[3:0] = 2, localparam logic  aa [30:0] "
+     "= 22);\n"
+     "endinterface\n",
+     "interface foo #(\n"
+     "    localparam logic a [ 3:0] = 2,\n"
+     "    localparam logic aa[30:0] = 22\n"
+     ");\n"
+     "endinterface\n"},
+    {// parameterized interface with 'data_type list_of_param_assignments'
+     "interface foo #( int a = 2,  real aa = 22, longint aaa = 222);\n"
+     "endinterface\n",
+     "interface foo #(\n"
+     "    int     a   = 2,\n"
+     "    real    aa  = 22,\n"
+     "    longint aaa = 222\n"
+     ");\n"
+     "endinterface\n"},
+    {// parameterized interface with 'data_type list_of_param_assignments' and
+     // comments
+     "interface foo #(//comment\nint a = 2,  shortreal aa = 22, longint aaa = "
+     "222);\n"
+     "endinterface\n",
+     "interface foo #(  //comment\n"
+     "    int       a   = 2,\n"
+     "    shortreal aa  = 22,\n"
+     "    longint   aaa = 222\n"
+     ");\n"
+     "endinterface\n"},
+    {// parameterized interface with 'data_type list_of_param_assignments' and
+     // trailing comments
+     "interface foo #(int a = 2,  shortreal aa = 22,//comment\n longint aaa = "
+     "222);\n"
+     "endinterface\n",
+     "interface foo #(\n"
+     "    int       a   = 2,\n"
+     "    shortreal aa  = 22,  //comment\n"
+     "    longint   aaa = 222\n"
+     ");\n"
+     "endinterface\n"},
+    {// parameterized interface with 'data_type list_of_param_assignments' and
+     // pre-proc
+     "interface foo #(int a = 2,\n"
+     "`ifdef MACRO shortreal aa = 22, `endif\n"
+     " longint aaa = 222);\n"
+     "endinterface\n",
+     "interface foo #(\n"
+     "    int       a   = 2,\n"
+     "`ifdef MACRO\n"
+     "    shortreal aa  = 22,\n"
+     "`endif\n"
+     "    longint   aaa = 222\n"
+     ");\n"
+     "endinterface\n"},
+    {// parameterized interface with 'data_type list_of_param_assignments' and
+     // packed dimensions
+     "interface foo #(bit [1:0] a = 2,  reg [12:0] aa = 22, logic [123:0] aaa "
+     "= 222);\n"
+     "endinterface\n",
+     "interface foo #(\n"
+     "    bit   [  1:0] a   = 2,\n"
+     "    reg   [ 12:0] aa  = 22,\n"
+     "    logic [123:0] aaa = 222\n"
+     ");\n"
+     "endinterface\n"},
+    {// parameterized interface with 'data_type list_of_param_assignments' and
+     // unpacked dimensions
+     "interface foo #(bit  a[1:0] = 2,  reg  aa[12:0] = 22, logic aaa [123:0]  "
+     "= 222);\n"
+     "endinterface\n",
+     "interface foo #(\n"
+     "    bit   a  [  1:0] = 2,\n"
+     "    reg   aa [ 12:0] = 22,\n"
+     "    logic aaa[123:0] = 222\n"
+     ");\n"
+     "endinterface\n"},
+    {// parameterized interface with 'type list_of_type_assignments'
+     "interface foo #(type T = int, type TT = bit, type TTT= C#(logic) );\n"
+     "endinterface\n",
+     "interface foo #(\n"
+     "    type T   = int,\n"
+     "    type TT  = bit,\n"
+     "    type TTT = C#(logic)\n"
+     ");\n"
+     "endinterface\n"},
+    {// parameterized interface with 'type list_of_type_assignments' and
+     // comments
+     "interface foo #(//comment\ntype T = int, type TT = bit, type TTT= "
+     "C#(logic) );\n"
+     "endinterface\n",
+     "interface foo #(  //comment\n"
+     "    type T   = int,\n"
+     "    type TT  = bit,\n"
+     "    type TTT = C#(logic)\n"
+     ");\n"
+     "endinterface\n"},
+    {// parameterized interface with 'data_type list_of_param_assignments' and
+     // trailing comments
+     "interface foo #(type T = int, type TT = bit, //comment\n type TTT= "
+     "C#(logic) );\n"
+     "endinterface\n",
+     "interface foo #(\n"
+     "    type T   = int,\n"
+     "    type TT  = bit,  //comment\n"
+     "    type TTT = C#(logic)\n"
+     ");\n"
+     "endinterface\n"},
+    {// parameterized interface with 'data_type list_of_param_assignments' and
+     // pre-proc
+     "interface foo #(type T = int,\n"
+     "`ifdef MACRO type TT = bit, `endif\n"
+     " type TTT= C#(logic));\n"
+     "endinterface\n",
+     "interface foo #(\n"
+     "    type T   = int,\n"
+     "`ifdef MACRO\n"
+     "    type TT  = bit,\n"
+     "`endif\n"
+     "    type TTT = C#(logic)\n"
+     ");\n"
+     "endinterface\n"},
+    {// parameterized interface with 'data_type list_of_param_assignments' and
+     // packed dimensions
+     "interface foo #(type T = int [3:0], type TT = bit [250:0]);\n"
+     "endinterface\n",
+     "interface foo #(\n"
+     "    type T  = int [  3:0],\n"
+     "    type TT = bit [250:0]\n"
+     ");\n"
+     "endinterface\n"},
+    {"interface foo #(type T = int, "
+     "A = 2, int AA = 22, parameter AAA = 222, parameter longint AAAA = 2222, "
+     "localparam AAAAA = 22222, localparam real AAAAAA = 222222"
+     ");\n"
+     "endinterface\n",
+     "interface foo #(\n"
+     "               type    T      = int,\n"
+     "                       A      = 2,\n"
+     "               int     AA     = 22,\n"
+     "    parameter          AAA    = 222,\n"
+     "    parameter  longint AAAA   = 2222,\n"
+     "    localparam         AAAAA  = 22222,\n"
+     "    localparam real    AAAAAA = 222222\n"
+     ");\n"
+     "endinterface\n"},
+    {// parameterized interface with built-in data type
+     "interface foo #(int a = 2, real abc = 2234);\n"
+     "endinterface\n",
+     "interface foo #(\n"
+     "    int  a   = 2,\n"
+     "    real abc = 2234\n"
+     ");\n"
+     "endinterface\n"},
+    {// parameterized interface with type
+     "interface foo #(type TYPE1 = int, type TYPE2 = boo);\n"
+     "endinterface\n",
+     "interface foo #(\n"
+     "    type TYPE1 = int,\n"
+     "    type TYPE2 = boo\n"
+     ");\n"
+     "endinterface\n"},
+    {"interface foo#(localparam type TYPE1 = int, type TYPE22 = bool, "
+     "parameter    type TYPE333 = real);\n"
+     "endinterface\n",
+     "interface foo #(\n"
+     "    localparam type TYPE1   = int,\n"
+     "               type TYPE22  = bool,\n"
+     "    parameter  type TYPE333 = real\n"
+     ");\n"
+     "endinterface\n"},
+    {// parameterized interface with 'data_type list_of_param_assignments' and
+     // 1D packed dimensions
+     "interface foo #(parameter type T = int [3:0], type TT = bit [123:0]);\n"
+     "endinterface\n",
+     "interface foo #(\n"
+     "    parameter type T  = int [  3:0],\n"
+     "              type TT = bit [123:0]\n"
+     ");\n"
+     "endinterface\n"},
+    {// parameterized interface with 'data_type list_of_param_assignments' and
+     // 2D packed dimensions
+     "interface foo #(type T = int [3:0][123:0], type TT = bit [123:0][1:0]);\n"
+     "endinterface\n",
+     "interface foo #(\n"
+     "    type T  = int [  3:0][123:0],\n"
+     "    type TT = bit [123:0][  1:0]\n"
+     ");\n"
+     "endinterface\n"},
+    {// parametrized interface with user defined data types
+     "interface foo #(type T = my_type1_t, type TT = my_pkg::my_type2_t);\n"
+     "endinterface\n",
+     "interface foo #(\n"
+     "    type T  = my_type1_t,\n"
+     "    type TT = my_pkg::my_type2_t\n"
+     ");\n"
+     "endinterface\n"},
+    //{   // parameterized class with 'parameter_declaration' and MACRO
+    //    "class foo #(parameter int a = 2,\n"
+    //    "parameter int aaa = `MACRO);\n"
+    //    "endclass\n",
+    //    "class foo #(\n"
+    //    "    parameter int a   = 2,\n"
+    //    "    parameter int aaa = `MACRO\n"
+    //    ");\n"
+    //    "endclass\n"
+    //},
 };
 
 // Tests that formatter produces expected results, end-to-end.
@@ -5471,8 +6914,368 @@ TEST(FormatterEndToEndTest, VerilogFormatTest) {
   }
 }
 
+TEST(FormatterEndToEndTest, AutoInferAlignment) {
+  static constexpr FormatterTestCase kTestCases[] = {
+      {"", ""},
+      {"\n", "\n"},
+      {"class  cc ;\n"
+       "endclass:cc\n",
+       "class cc;\n"
+       "endclass : cc\n"},
+
+      // module port declarations
+      {"module pd(\n"
+       "input wire foo,\n"
+       "output reg bar\n"
+       ");\n"
+       "endmodule:pd\n",
+       "module pd (\n"
+       "    input  wire foo,\n"  // flush-left vs. align are similar enough,
+       "    output reg  bar\n"   // so automatic policy will align.
+       ");\n"
+       "endmodule : pd\n"},
+      {"module pd(\n"
+       "input  foo_pkg::baz_t foo,\n"
+       "output reg  bar\n"
+       ");\n"
+       "endmodule:pd\n",
+       "module pd (\n"
+       "    input foo_pkg::baz_t foo,\n"  // alignment would add too many spaces
+       "    output reg bar\n"             // so infer intent to flush-left.
+       ");\n"
+       "endmodule : pd\n"},
+      {"module pd(\n"
+       "input  foo_pkg::baz_t foo,\n"
+       "output     reg  bar\n"  // user injects 4 excess spaces here ...
+       ");\n"
+       "endmodule:pd\n",
+       "module pd (\n"
+       "    input  foo_pkg::baz_t foo,\n"
+       "    output reg            bar\n"  // ... and triggers alignment.
+       ");\n"
+       "endmodule : pd\n"},
+
+      // named parameter arguments
+      {"module  mm ;\n"
+       "foo #(\n"
+       ".a(a),\n"
+       ".bb(bb)\n"
+       ")bar( );\n"
+       "endmodule:mm\n",
+       "module mm;\n"
+       "  foo #(\n"
+       "      .a (a),\n"  // align doesn't add too many spaces, so align
+       "      .bb(bb)\n"
+       "  ) bar ();\n"
+       "endmodule : mm\n"},
+      {"module  mm ;\n"
+       "foo #(\n"
+       ".a(a),\n"
+       ".bbcccc(bb)\n"
+       ")bar( );\n"
+       "endmodule:mm\n",
+       "module mm;\n"
+       "  foo #(\n"
+       "      .a(a),\n"  // align would add too many spaces, so flush-left
+       "      .bbcccc(bb)\n"
+       "  ) bar ();\n"
+       "endmodule : mm\n"},
+      {"module  mm ;\n"
+       "foo #(\n"
+       ".a(a    ),\n"  // user manually triggers alignment with excess spaces
+       ".bbcccc(bb)\n"
+       ")bar( );\n"
+       "endmodule:mm\n",
+       "module mm;\n"
+       "  foo #(\n"
+       "      .a     (a),\n"  // induced alignment
+       "      .bbcccc(bb)\n"
+       "  ) bar ();\n"
+       "endmodule : mm\n"},
+      {"module  mm ;\n"
+       "foo #(\n"
+       "//c1\n"        // with comments (indented but not aligned)
+       ".a(a    ),\n"  // user manually triggers alignment with excess spaces
+       "//c2\n"
+       ".bbcccc(bb)\n"
+       "//c3\n"
+       ")bar( );\n"
+       "endmodule:mm\n",
+       "module mm;\n"
+       "  foo #(\n"
+       "      //c1\n"
+       "      .a     (a),\n"  // induced alignment
+       "      //c2\n"
+       "      .bbcccc(bb)\n"
+       "      //c3\n"
+       "  ) bar ();\n"
+       "endmodule : mm\n"},
+      {"module  mm ;\n"
+       "foo #(\n"
+       ".a( (1     +2)),\n"  // excess spaces, testing extra parentheses
+       ".bbcccc((c*d)+(e*f))\n"
+       ")bar( );\n"
+       "endmodule:mm\n",
+       "module mm;\n"
+       "  foo #(\n"
+       "      .a     ((1 + 2)),\n"  // induced alignment
+       "      .bbcccc((c * d) + (e * f))\n"
+       "  ) bar ();\n"
+       "endmodule : mm\n"},
+
+      // named port connections
+      {"module  mm ;\n"
+       "foo bar(\n"
+       ".a(a),\n"
+       ".bb(bb)\n"
+       ");\n"
+       "endmodule:mm\n",
+       "module mm;\n"
+       "  foo bar (\n"
+       "      .a (a),\n"  // align doesn't add too many spaces, so align
+       "      .bb(bb)\n"
+       "  );\n"
+       "endmodule : mm\n"},
+      {"module  mm ;\n"
+       "foo bar(\n"
+       ".a(a),\n"
+       ".bbbbbb(bb)\n"
+       ");\n"
+       "endmodule:mm\n",
+       "module mm;\n"
+       "  foo bar (\n"
+       "      .a(a),\n"  // align would add too many spaces, so flush-left
+       "      .bbbbbb(bb)\n"
+       "  );\n"
+       "endmodule : mm\n"},
+      {"module  mm ;\n"
+       "foo bar(\n"
+       ".a    (a),\n"  // user manually triggers alignment with excess spaces
+       ".bbbbbb(bb)\n"
+       ");\n"
+       "endmodule:mm\n",
+       "module mm;\n"
+       "  foo bar (\n"
+       "      .a     (a),\n"  // alignment fixed
+       "      .bbbbbb(bb)\n"
+       "  );\n"
+       "endmodule : mm\n"},
+
+      // net variable declarations
+      {"module nn;\n"
+       "wire wwwww;\n"
+       "logic lll;\n"
+       "endmodule : nn\n",
+       "module nn;\n"
+       "  wire  wwwww;\n"  // alignment adds few spaces, so align
+       "  logic lll;\n"
+       "endmodule : nn\n"},
+      {"module nn;\n"
+       "wire wwwww;\n"
+       "foo_pkg::baz_t lll;\n"
+       "endmodule : nn\n",
+       "module nn;\n"
+       "  wire wwwww;\n"  // alignment adds too many spaces, so flush-left
+       "  foo_pkg::baz_t lll;\n"
+       "endmodule : nn\n"},
+      {"module nn;\n"
+       "wire     wwwww;\n"  // user injects spaces to trigger alignment
+       "foo_pkg::baz_t lll;\n"
+       "endmodule : nn\n",
+       "module nn;\n"
+       "  wire           wwwww;\n"  // ... and gets alignment
+       "  foo_pkg::baz_t lll;\n"
+       "endmodule : nn\n"},
+
+      // formal parameters
+      {"module pp #(\n"
+       "int W,\n"
+       "type T\n"
+       ") ();\n"
+       "endmodule : pp\n",
+       "module pp #(\n"
+       "    int  W,\n"  // alignment adds few spaces, so do it
+       "    type T\n"
+       ") ();\n"
+       "endmodule : pp\n"},
+      {"module pp #(\n"
+       "int W,\n"
+       "int[xx:yy] T\n"
+       ") ();\n"
+       "endmodule : pp\n",
+       "module pp #(\n"
+       "    int W,\n"  // alignment adds many spaces, so flush-left
+       "    int [xx:yy] T\n"
+       ") ();\n"
+       "endmodule : pp\n"},
+      {"module pp #(\n"
+       "int W,\n"
+       "int[xx:yy]     T\n"  // user injected spaces intentionally
+       ") ();\n"
+       "endmodule : pp\n",
+       "module pp #(\n"
+       "    int         W,\n"  // ... trigger alignment
+       "    int [xx:yy] T\n"
+       ") ();\n"
+       "endmodule : pp\n"},
+
+      // class member variables
+      {"class  cc ;\n"
+       "int my_int;\n"
+       "bar_t my_bar;\n"
+       "endclass:cc\n",
+       "class cc;\n"
+       "  int   my_int;\n"  // align doesn't add too many spaces, so align
+       "  bar_t my_bar;\n"
+       "endclass : cc\n"},
+      {"class  cc ;\n"
+       "int   my_int;\n"
+       "foo_pkg::bar_t my_bar;\n"
+       "endclass:cc\n",
+       "class cc;\n"
+       "  int my_int;\n"  // align would add too many spaces, so flush-left
+       "  foo_pkg::bar_t my_bar;\n"
+       "endclass : cc\n"},
+      {"class  cc ;\n"
+       "int     my_int;\n"  // intentional excessive spaces, trigger alignment
+       "foo_pkg::bar_t my_bar;\n"
+       "endclass:cc\n",
+       "class cc;\n"
+       "  int            my_int;\n"
+       "  foo_pkg::bar_t my_bar;\n"
+       "endclass : cc\n"},
+      {"class  cc ;\n"
+       "int    my_int;\n"  // unable to infer user's intent, so preserve
+       "foo_pkg::bar_t  my_bar;\n"
+       "endclass:cc\n",
+       "class cc;\n"
+       "  int    my_int;\n"  // ... but still indent
+       "  foo_pkg::bar_t  my_bar;\n"
+       "endclass : cc\n"},
+  };
+  // Use a fixed style.
+  FormatStyle style;
+  style.column_limit = 40;
+  style.indentation_spaces = 2;
+  style.wrap_spaces = 4;
+  // Override some settings to test auto-inferred alignment.
+  style.ApplyToAllAlignmentPolicies(AlignmentPolicy::kInferUserIntent);
+
+  for (const auto& test_case : kTestCases) {
+    VLOG(1) << "code-to-format:\n" << test_case.input << "<EOF>";
+    std::ostringstream stream;
+    const auto status =
+        FormatVerilog(test_case.input, "<filename>", style, stream);
+    // Require these test cases to be valid.
+    EXPECT_OK(status) << status.message();
+    EXPECT_EQ(stream.str(), test_case.expected) << "code:\n" << test_case.input;
+  }
+}
+
+static constexpr FormatterTestCase kFormatterWideTestCases[] = {
+    // specify blocks
+    {"module  specify_tests ;\n"
+     "specify\n"  // empty list
+     "endspecify\n"
+     "endmodule",
+     "module specify_tests;\n"
+     "  specify\n"
+     "  endspecify\n"
+     "endmodule\n"},
+    {"module  specify_tests ;\n"
+     "specify\n"
+     "$recrem (posedge R, posedge C,\n"
+     "t1, t2);\n"
+     "endspecify\n"
+     "endmodule",
+     "module specify_tests;\n"
+     "  specify\n"
+     "    $recrem(posedge R, posedge C, t1, t2);\n"
+     "  endspecify\n"
+     "endmodule\n"},
+    {"module  specify_tests ;\n"
+     "specify\n"
+     "// TODO: add this\n"
+     "endspecify \n"
+     "endmodule",
+     "module specify_tests;\n"
+     "  specify\n"
+     "    // TODO: add this\n"
+     "  endspecify\n"
+     "endmodule\n"},
+    {"module  specify_tests ;\n"
+     "specify  \n"
+     "  //c1\n"
+     "$setup (  posedge A, posedge B,\n"
+     "t1);//c2\n"
+     " //c3\n"
+     "$hold (  posedge B , posedge A,t2);    //c4\n"
+     "\t//c5\n"
+     "endspecify\n"
+     "endmodule",
+     "module specify_tests;\n"
+     "  specify\n"
+     "    //c1\n"
+     "    $setup(posedge A, posedge B, t1);  //c2\n"
+     "    //c3\n"
+     "    $hold(posedge B, posedge A, t2);  //c4\n"
+     "    //c5\n"
+     "  endspecify\n"
+     "endmodule\n"},
+    {"module  specify_tests ;\n"
+     "specify  \n"
+     "$setup (  posedge A, posedge B,\n"
+     "t1);\n"
+     "$hold (  posedge B , posedge A,t2);\n"
+     "endspecify\n"
+     "endmodule",
+     "module specify_tests;\n"
+     "  specify\n"
+     "    $setup(posedge A, posedge B, t1);\n"
+     "    $hold(posedge B, posedge A, t2);\n"
+     "  endspecify\n"
+     "endmodule\n"},
+    {"module  specify_tests ;\n"
+     "specify  \n"
+     "  `ifdef CCC\n"
+     "$setup (  posedge A, posedge B,\n"
+     "t1);\n"
+     " `else\n"
+     "$hold (  posedge B , posedge A,t2);   \n"
+     "\t`endif\n"
+     "endspecify\n"
+     "endmodule",
+     "module specify_tests;\n"
+     "  specify\n"
+     "`ifdef CCC\n"
+     "    $setup(posedge A, posedge B, t1);\n"
+     "`else\n"
+     "    $hold(posedge B, posedge A, t2);\n"
+     "`endif\n"
+     "  endspecify\n"
+     "endmodule\n"},
+};
+
+// These tests just need a larger column limit to fit on one line.
+TEST(FormatterEndToEndTest, VerilogFormatWideTest) {
+  // Use a fixed style.
+  FormatStyle style;
+  style.column_limit = 60;
+  style.indentation_spaces = 2;
+  style.wrap_spaces = 4;
+  for (const auto& test_case : kFormatterWideTestCases) {
+    VLOG(1) << "code-to-format:\n" << test_case.input << "<EOF>";
+    std::ostringstream stream;
+    const auto status =
+        FormatVerilog(test_case.input, "<filename>", style, stream);
+    // Require these test cases to be valid.
+    EXPECT_OK(status) << status.message();
+    EXPECT_EQ(stream.str(), test_case.expected) << "code:\n" << test_case.input;
+  }
+}
+
 TEST(FormatterEndToEndTest, DisableModulePortDeclarations) {
-  const std::initializer_list<FormatterTestCase> kTestCases = {
+  static constexpr FormatterTestCase kTestCases[] = {
       {"", ""},
       {"\n", "\n"},
       {"\n\n", "\n\n"},
@@ -5482,20 +7285,26 @@ TEST(FormatterEndToEndTest, DisableModulePortDeclarations) {
        "endmodule\n"},
       {"module  m(   ) ;\n"
        "  endmodule\n",
-       "module m (   );\n"  // space between () preserved
+       "module m ();\n"  // empty ports formatted compactly
        "endmodule\n"},
-      {"module  m   ( input     clk  )\t;\n"
+      {// for a single port, the alignment handler doesn't even consider it a
+       // group so it falls back to standard flush-left behavior.
+       "module  m   ( input     clk  )\t;\n"
        "  endmodule\n",
-       "module m ( input     clk  );\n"
+       "module m (\n"
+       "    input clk\n"
+       ");\n"
        "endmodule\n"},
-      {"module  m   (\n"
+      {// example with two ports
+       "module  m   (\n"
        "input  clk,\n"
        "output bar\n"
        ")\t;\n"
        "  endmodule\n",
        "module m (\n"
-       "input  clk,\n"  // disabled, pre-existing alignment maintained
-       "output bar\n"   // disabled, pre-existing alignment maintained
+       "    input  clk,\n"  // indented, but internal pre-existing spacing
+                            // preserved
+       "    output bar\n"
        ");\n"
        "endmodule\n"},
   };
@@ -5503,7 +7312,7 @@ TEST(FormatterEndToEndTest, DisableModulePortDeclarations) {
   style.column_limit = 40;
   style.indentation_spaces = 2;
   style.wrap_spaces = 4;
-  style.format_module_port_declarations = false;
+  style.port_declarations_alignment = verible::AlignmentPolicy::kPreserve;
   for (const auto& test_case : kTestCases) {
     VLOG(1) << "code-to-format:\n" << test_case.input << "<EOF>";
     std::ostringstream stream;
@@ -5516,7 +7325,7 @@ TEST(FormatterEndToEndTest, DisableModulePortDeclarations) {
 }
 
 TEST(FormatterEndToEndTest, DisableModuleInstantiations) {
-  const std::initializer_list<FormatterTestCase> kTestCases = {
+  static constexpr FormatterTestCase kTestCases[] = {
       {"", ""},
       {"\n", "\n"},
       {"\n\n", "\n\n"},
@@ -5528,7 +7337,7 @@ TEST(FormatterEndToEndTest, DisableModuleInstantiations) {
        "foo bar();"
        "  endmodule\n",
        "module m;\n"
-       "  foo bar();\n"  // indentation still takes effect
+       "  foo bar ();\n"  // indentation still takes effect
        "endmodule\n"},
       {"module  m  ;\t\n"
        "logic   xyz;"
@@ -5536,7 +7345,7 @@ TEST(FormatterEndToEndTest, DisableModuleInstantiations) {
        "  endmodule\n",
        "module m;\n"
        "  logic xyz;\n"  // indentation still takes effect
-       "  wire abc;\n"   // indentation still takes effect
+       "  wire  abc;\n"  // aligned too
        "endmodule\n"},
       {"  function f  ;\t\n"
        " endfunction\n",
@@ -5558,7 +7367,7 @@ TEST(FormatterEndToEndTest, DisableModuleInstantiations) {
        "foo  bar(   .baz(baz)   );"
        "  endmodule\n",
        "module m;\n"
-       "  foo  bar(   .baz(baz)   );\n"  // indentation still takes effect
+       "  foo bar (.baz(baz));\n"  // indentation still takes effect
        "endmodule\n"},
       {"module  m  ;\t\n"
        "foo  bar(\n"
@@ -5567,17 +7376,351 @@ TEST(FormatterEndToEndTest, DisableModuleInstantiations) {
        ");"
        "  endmodule\n",
        "module m;\n"
-       "  foo  bar(\n"             // indentation still takes effect
-       "        .baz  (baz  ),\n"  // named port connections preserved
-       "        .blaaa(blaaa)\n"   // named port connections preserved
-       ");\n"                      // this indentation remains untouched
+       "  foo bar (\n"           // indentation still takes effect
+       "      .baz  (baz  ),\n"  // named port connections preserved
+       "      .blaaa(blaaa)\n"   // named port connections preserved
+       "  );\n"                  // this indentation is fixed
+       "endmodule\n"},
+      {"module  m  ;\t\n"
+       "foo  #(   .baz(baz)   ) bar();"  // named parameters
+       "  endmodule\n",
+       "module m;\n"
+       "  foo #(.baz(baz)) bar ();\n"  // indentation still takes effect
+       "endmodule\n"},
+      {"module  m  ;\t\n"
+       "foo  #(\n"
+       "        .baz  (baz  ),\n"  // example of user-manual alignment
+       "        .blaaa(blaaa)\n"
+       ")  bar( );"
+       "  endmodule\n",
+       "module m;\n"
+       "  foo #(\n"              // indentation still takes effect
+       "      .baz  (baz  ),\n"  // named parameter arguments preserved
+       "      .blaaa(blaaa)\n"   // named parameter arguments preserved
+       "  ) bar ();\n"           // this indentation is fixed
        "endmodule\n"},
   };
   FormatStyle style;
   style.column_limit = 40;
   style.indentation_spaces = 2;
   style.wrap_spaces = 4;
-  style.format_module_instantiations = false;
+  // Testing preservation of spaces
+  style.named_parameter_alignment = AlignmentPolicy::kPreserve;
+  style.named_port_alignment = AlignmentPolicy::kPreserve;
+  for (const auto& test_case : kTestCases) {
+    VLOG(1) << "code-to-format:\n" << test_case.input << "<EOF>";
+    std::ostringstream stream;
+    const auto status =
+        FormatVerilog(test_case.input, "<filename>", style, stream);
+    // Require these test cases to be valid.
+    EXPECT_OK(status) << status.message();
+    EXPECT_EQ(stream.str(), test_case.expected) << "code:\n" << test_case.input;
+  }
+}
+
+TEST(FormatterEndToEndTest, DisableTryWrapLongLines) {
+  static constexpr FormatterTestCase kTestCases[] = {
+      {"", ""},
+      {"\n", "\n"},
+      {"\n\n", "\n\n"},
+      {"module  m  ;\t\n"
+       "  endmodule\n",
+       "module m;\n"
+       "endmodule\n"},
+      {"module  m(   ) ;\n"
+       "  endmodule\n",
+       "module m ();\n"
+       "endmodule\n"},
+      {"module  m(   ) ;\n"
+       "initial assign a = b;\n"
+       "  endmodule\n",
+       "module m ();\n"
+       "  initial assign a = b;\n"
+       "endmodule\n"},
+      {"module  m(   ) ;\n"
+       "initial assign a = {never +gonna +give +you +up,\n"  // over 40 columns,
+                                                             // give up
+       "never + gonna +Let +you +down};\n"
+       "  endmodule\n",
+       "module m ();\n"
+       "  initial assign a = {never +gonna +give +you +up,\n"
+       "never + gonna +Let +you +down};\n"
+       "endmodule\n"},
+      {// The if-header is a single leaf partition, and does not fit,
+       // so its original spacing should be preserved.
+       // We deliberately insert weird spacing to show that it is preserved.
+       "function f;\n"
+       "if ((xxx.aaaa >= bbbbbbbbbbbbbbb) &&\n"
+       "      ((ccc.ddd  +  eee.ffffff * g) <=\n"
+       "       (hhhhhhhhhhhhhhh+iiiiiiiiiiiiiiiiiiii))) begin\n"
+       "end\n"
+       "endfunction\n",
+       "function f;\n"
+       "  if ((xxx.aaaa >= bbbbbbbbbbbbbbb) &&\n"  // indentation fixed
+       "      ((ccc.ddd  +  eee.ffffff * g) <=\n"
+       "       (hhhhhhhhhhhhhhh+iiiiiiiiiiiiiiiiiiii))) begin\n"
+       "  end\n"  // indentation fixed
+       "endfunction\n"},
+  };
+  FormatStyle style;
+  style.column_limit = 40;
+  style.indentation_spaces = 2;
+  style.wrap_spaces = 4;
+  style.try_wrap_long_lines = false;
+  for (const auto& test_case : kTestCases) {
+    VLOG(1) << "code-to-format:\n" << test_case.input << "<EOF>";
+    std::ostringstream stream;
+    const auto status =
+        FormatVerilog(test_case.input, "<filename>", style, stream);
+    // Require these test cases to be valid.
+    EXPECT_OK(status) << status.message();
+    EXPECT_EQ(stream.str(), test_case.expected) << "code:\n" << test_case.input;
+  }
+}
+
+TEST(FormatterEndToEndTest, ModulePortDeclarationsIndentNotWrap) {
+  static constexpr FormatterTestCase kTestCases[] = {
+      {"", ""},
+      {"\n", "\n"},
+      {"\n\n", "\n\n"},
+      {"module  m  ;\t\n"
+       "  endmodule\n",
+       "module m;\n"
+       "endmodule\n"},
+      {"module  m(   ) ;\n"
+       "  endmodule\n",
+       "module m ();\n"  // empty ports formatted compactly
+       "endmodule\n"},
+      {// single port example
+       "module  m   ( input     clk  )\t;\n"
+       "  endmodule\n",
+       "module m (\n"
+       "  input clk\n"  // 2 spaces
+       ");\n"
+       "endmodule\n"},
+      {// example with two ports
+       "module  m   (\n"
+       "input  clk,\n"
+       "output bar\n"
+       ")\t;\n"
+       "  endmodule\n",
+       "module m (\n"
+       "  input  clk,\n"  // indented 2 spaces, and aligned
+       "  output bar\n"
+       ");\n"
+       "endmodule\n"},
+      {// interface example
+       "interface  handshake   (\n"
+       "wire req,\n"
+       "wire ack\n"
+       ")\t;\n"
+       "  endinterface\n",
+       "interface handshake (\n"
+       "  wire req,\n"  // indented 2 spaces
+       "  wire ack\n"
+       ");\n"
+       "endinterface\n"},
+  };
+  FormatStyle style;
+  style.column_limit = 40;
+  style.indentation_spaces = 2;
+  style.wrap_spaces = 4;
+  // Indent 2 spaces instead of wrapping 4 spaces.
+  style.port_declarations_indentation = IndentationStyle::kIndent;
+  for (const auto& test_case : kTestCases) {
+    VLOG(1) << "code-to-format:\n" << test_case.input << "<EOF>";
+    std::ostringstream stream;
+    const auto status =
+        FormatVerilog(test_case.input, "<filename>", style, stream);
+    // Require these test cases to be valid.
+    EXPECT_OK(status) << status.message();
+    EXPECT_EQ(stream.str(), test_case.expected) << "code:\n" << test_case.input;
+  }
+}
+
+TEST(FormatterEndToEndTest, NamedPortConnectionsIndentNotWrap) {
+  static constexpr FormatterTestCase kTestCases[] = {
+      {"", ""},
+      {"\n", "\n"},
+      {"\n\n", "\n\n"},
+      {"module  m  ;\t\n"
+       "  endmodule\n",
+       "module m;\n"
+       "endmodule\n"},
+      {"module  m(   ) ;\n"
+       "  endmodule\n",
+       "module m ();\n"  // empty ports formatted compactly
+       "endmodule\n"},
+      {// single port example
+       "module  m ;\n"
+       "foo bar( .clk( clk ) )\t;\n"
+       "  endmodule\n",
+       "module m;\n"
+       "  foo bar (.clk(clk));\n"
+       "endmodule\n"},
+      {// two port example
+       "module  m ;\n"
+       "foo bar( .clk2( clk ),.data (data) )\t;\n"
+       "  endmodule\n",
+       "module m;\n"
+       "  foo bar (\n"
+       "    .clk2(clk),\n"  // indent only +2 spaces
+       "    .data(data)\n"
+       "  );\n"
+       "endmodule\n"},
+  };
+  FormatStyle style;
+  style.column_limit = 40;
+  style.indentation_spaces = 2;
+  style.wrap_spaces = 4;
+  // Indent 2 spaces instead of wrapping 4 spaces.
+  style.named_port_indentation = IndentationStyle::kIndent;
+  for (const auto& test_case : kTestCases) {
+    VLOG(1) << "code-to-format:\n" << test_case.input << "<EOF>";
+    std::ostringstream stream;
+    const auto status =
+        FormatVerilog(test_case.input, "<filename>", style, stream);
+    // Require these test cases to be valid.
+    EXPECT_OK(status) << status.message();
+    EXPECT_EQ(stream.str(), test_case.expected) << "code:\n" << test_case.input;
+  }
+}
+
+TEST(FormatterEndToEndTest, FormalParametersIndentNotWrap) {
+  static constexpr FormatterTestCase kTestCases[] = {
+      {"", ""},
+      {"\n", "\n"},
+      {"\n\n", "\n\n"},
+      {"module  m  ;\t\n"
+       "  endmodule\n",
+       "module m;\n"
+       "endmodule\n"},
+      {"module  m #(   ) ;\n"  // empty parameters
+       "  endmodule\n",
+       "module m #();\n"
+       "endmodule\n"},
+      {// single parameter example
+       "module  m   #( int W = 2)\t;\n"
+       "  endmodule\n",
+       "module m #(\n"
+       "  int W = 2\n"  // indented 2 spaces
+       ");\n"
+       "endmodule\n"},
+      {// module with two parameters
+       "module  m   #(\n"
+       "int W = 2,\n"
+       "int L = 4\n"
+       ")\t;\n"
+       "  endmodule\n",
+       "module m #(\n"
+       "  int W = 2,\n"  // indented 2 spaces
+       "  int L = 4\n"
+       ");\n"
+       "endmodule\n"},
+      {// interface with two parameters
+       "interface  m   #(\n"
+       "int W = 2,\n"
+       "int L = 4\n"
+       ")\t;\n"
+       "  endinterface\n",
+       "interface m #(\n"
+       "  int W = 2,\n"  // indented 2 spaces
+       "  int L = 4\n"
+       ");\n"
+       "endinterface\n"},
+      {// class with two parameters
+       "class  c   #(\n"
+       "int W = 2,\n"
+       "int L = 4\n"
+       ")\t;\n"
+       "  endclass\n",
+       "class c #(\n"
+       "  int W = 2,\n"  // indented 2 spaces
+       "  int L = 4\n"
+       ");\n"
+       "endclass\n"},
+  };
+  FormatStyle style;
+  style.column_limit = 40;
+  style.indentation_spaces = 2;
+  style.wrap_spaces = 4;
+  // Indent 2 spaces instead of wrapping 4 spaces.
+  style.formal_parameters_indentation = IndentationStyle::kIndent;
+  for (const auto& test_case : kTestCases) {
+    VLOG(1) << "code-to-format:\n" << test_case.input << "<EOF>";
+    std::ostringstream stream;
+    const auto status =
+        FormatVerilog(test_case.input, "<filename>", style, stream);
+    // Require these test cases to be valid.
+    EXPECT_OK(status) << status.message();
+    EXPECT_EQ(stream.str(), test_case.expected) << "code:\n" << test_case.input;
+  }
+}
+
+TEST(FormatterEndToEndTest, NamedParametersIndentNotWrap) {
+  static constexpr FormatterTestCase kTestCases[] = {
+      {"", ""},
+      {"\n", "\n"},
+      {"\n\n", "\n\n"},
+      {"module  m  ;\t\n"
+       "  endmodule\n",
+       "module m;\n"
+       "endmodule\n"},
+      {"module  m #(   ) ;\n"  // empty parameters
+       "  endmodule\n",
+       "module m #();\n"
+       "endmodule\n"},
+      {"module  m  ;\t\n"
+       " foo #()bar();\n"
+       "  endmodule\n",
+       "module m;\n"
+       "  foo #() bar ();\n"
+       "endmodule\n"},
+      {// one named parameter
+       "module  m ;\n"
+       "foo #(.W(1)) bar();\n"
+       "  endmodule\n",
+       "module m;\n"
+       "  foo #(.W(1)) bar ();\n"
+       "endmodule\n"},
+      {// two named parameters
+       "module  m ;\n"
+       "foo #(.W(1), .L(2)) bar();\n"
+       "  endmodule\n",
+       "module m;\n"
+       "  foo #(\n"
+       "    .W(1),\n"  // indent +2 spaces only
+       "    .L(2)\n"
+       "  ) bar ();\n"
+       "endmodule\n"},
+      {// class data member with two parameters
+       "class  c  ;\n"
+       " foo_pkg::bar_t#(\n"
+       ".W(2),.L(4)"
+       ") baz;\n"
+       "  endclass\n",
+       "class c;\n"
+       "  foo_pkg::bar_t #(\n"
+       "    .W(2),\n"  // indent +2 spaces only
+       "    .L(4)\n"
+       "  ) baz;\n"
+       "endclass\n"},
+      {// typedef with two parameters
+       "typedef \n"
+       " foo_pkg::bar_t  #("
+       ".W(2),.L(4)"
+       ") baz;\n",
+       "typedef foo_pkg::bar_t#(\n"
+       "  .W(2),\n"  // indent +2 spaces only
+       "  .L(4)\n"
+       ") baz;\n"},
+  };
+  FormatStyle style;
+  style.column_limit = 40;
+  style.indentation_spaces = 2;
+  style.wrap_spaces = 4;
+  // Indent 2 spaces instead of wrapping 4 spaces.
+  style.named_parameter_indentation = IndentationStyle::kIndent;
   for (const auto& test_case : kTestCases) {
     VLOG(1) << "code-to-format:\n" << test_case.input << "<EOF>";
     std::ostringstream stream;
@@ -5799,7 +7942,8 @@ TEST(FormatterEndToEndTest, SelectLines) {
     std::ostringstream stream;
     const auto status = FormatVerilog(test_case.input, "<filename>", style,
                                       stream, test_case.lines);
-    EXPECT_OK(status) << status.message();
+    EXPECT_OK(status) << status.message() << '\n'
+                      << "Lines: " << test_case.lines;
     EXPECT_EQ(stream.str(), test_case.expected)
         << "code:\n"
         << test_case.input << "\nlines: " << test_case.lines;
@@ -5809,7 +7953,7 @@ TEST(FormatterEndToEndTest, SelectLines) {
 // These tests verify the mode where horizontal spacing is discarded while
 // vertical spacing is preserved.
 TEST(FormatterEndToEndTest, PreserveVSpacesOnly) {
-  const std::initializer_list<FormatterTestCase> kTestCases = {
+  static constexpr FormatterTestCase kTestCases[] = {
       // {input, expected},
       // No tokens cases: still preserve vertical spacing, but not horizontal
       {"", ""},
@@ -5931,135 +8075,134 @@ TEST(FormatterEndToEndTest, PreserveVSpacesOnly) {
   }
 }
 
-static const std::initializer_list<FormatterTestCase>
-    kFormatterTestCasesElseStatements = {
-        {"module m;"
-         "task static t; if (r == t) a.b(c); else d.e(f); endtask;"
-         "endmodule",
-         "module m;\n"
-         "  task static t;\n"
-         "    if (r == t) a.b(c);\n"
-         "    else d.e(f);\n"
-         "  endtask\n"
-         "  ;\n"  // possibly unintended stray ';'
-         "endmodule\n"},
-        {"module m;"
-         "task static t; if (r == t) begin a.b(c); end else begin d.e(f); end "
-         "endtask;"
-         "endmodule",
-         "module m;\n"
-         "  task static t;\n"
-         "    if (r == t) begin\n"
-         "      a.b(c);\n"
-         "    end else begin\n"
-         "      d.e(f);\n"
-         "    end\n"
-         "  endtask\n"
-         "  ;\n"  // stray ';'
-         "endmodule\n"},
-        {"module m;initial begin if(a==b)"
-         "c.d(e);else\n"
-         "f.g(h);end endmodule",
-         "module m;\n"
-         "  initial begin\n"
-         "    if (a == b) c.d(e);\n"
-         "    else f.g(h);\n"
-         "  end\n"
-         "endmodule\n"},
-        {"   module m;  always_comb    begin     \n"
-         "        if      ( a   ) b =  16'hdead    ; \n"
-         "  else if (   c     )  d= 16 'hbeef  ;   \n"
-         "     else        if (e) f=16'hca_fe ;     \n"
-         "end   \n endmodule\n",
-         "module m;\n"
-         "  always_comb begin\n"
-         "    if (a) b = 16'hdead;\n"
-         "    else if (c) d = 16'hbeef;\n"
-         "    else if (e) f = 16'hca_fe;\n"
-         "  end\n"
-         "endmodule\n"},
-        {"module m; initial begin\n"
-         "        if     (a||b)        c         = 1'b1;\n"
-         "d =        1'b1; if         (e)\n"
-         "begin f = 1'b0; end else begin\n"
-         "    g = h;\n"
-         "        end \n"
-         " i = 1'b1; "
-         "end endmodule\n",
-         "module m;\n"
-         "  initial begin\n"
-         "    if (a || b) c = 1'b1;\n"
-         "    d = 1'b1;\n"
-         "    if (e) begin\n"
-         "      f = 1'b0;\n"
-         "    end else begin\n"
-         "      g = h;\n"
-         "    end\n"
-         "    i = 1'b1;\n"
-         "  end\n"
-         "endmodule\n"},
-        {"module m; initial begin\n"
-         "if (a&&b&&c) begin\n"
-         "         d         = 1'b1;\n"
-         "     if (e) begin\n"
-         "   f = ff;\n"
-         "       end  else   if  (    g  )   begin\n"
-         "     h = hh;\n"
-         "end else if (i) begin\n"
-         "    j   =   (kk == ll) ? mm :\n"
-         "      gg;\n"
-         "   end     else   if    (  qq )  begin\n"
-         "    if      (  xx   ||yy        ) begin    d0 = 1'b0;   d1   =       "
-         "1'b1;\n"
-         "  end else if (oo) begin aa =    bb; cc      = dd;"
-         "         if (zz) zx = xz; else ba = ab;"
-         "    end   else  \n begin      vv   =  tt  ;  \n"
-         "   end   end "
-         "end \n  else if   (uu)\nbegin\n\na=b;if (aa)   b =    c;\n"
-         "\nelse    if    \n (bb) \n\nc        =d    ;\n\n\n\n\n    "
-         "      else         e\n\n   =   h;\n\n"
-         "end \n  else    \n  begin if(x)y=a;else\nbegin\n"
-         "\n\n\na=y; if (a)       b     = c;\n\n\n\nelse\n\n\nd=e;end \n"
-         "end\n"
-         "end endmodule\n",
-         "module m;\n"
-         "  initial begin\n"
-         "    if (a && b && c) begin\n"
-         "      d = 1'b1;\n"
-         "      if (e) begin\n"
-         "        f = ff;\n"
-         "      end else if (g) begin\n"
-         "        h = hh;\n"
-         "      end else if (i) begin\n"
-         "        j = (kk == ll) ? mm : gg;\n"
-         "      end else if (qq) begin\n"
-         "        if (xx || yy) begin\n"
-         "          d0 = 1'b0;\n"
-         "          d1 = 1'b1;\n"
-         "        end else if (oo) begin\n"
-         "          aa = bb;\n"
-         "          cc = dd;\n"
-         "          if (zz) zx = xz;\n"
-         "          else ba = ab;\n"
-         "        end else begin\n"
-         "          vv = tt;\n"
-         "        end\n"
-         "      end\n"
-         "    end else if (uu) begin\n\n"
-         "      a = b;\n"
-         "      if (aa) b = c;\n\n"
-         "      else if (bb) c = d;\n\n\n\n\n"
-         "      else e = h;\n\n"
-         "    end else begin\n"
-         "      if (x) y = a;\n"
-         "      else begin\n\n\n\n"
-         "        a = y;\n"
-         "        if (a) b = c;\n\n\n\n"
-         "        else d = e;\n"
-         "      end\n"
-         "    end\n"
-         "  end\n"
-         "endmodule\n"}};
+static constexpr FormatterTestCase kFormatterTestCasesElseStatements[] = {
+    {"module m;"
+     "task static t; if (r == t) a.b(c); else d.e(f); endtask;"
+     "endmodule",
+     "module m;\n"
+     "  task static t;\n"
+     "    if (r == t) a.b(c);\n"
+     "    else d.e(f);\n"
+     "  endtask\n"
+     "  ;\n"  // possibly unintended stray ';'
+     "endmodule\n"},
+    {"module m;"
+     "task static t; if (r == t) begin a.b(c); end else begin d.e(f); end "
+     "endtask;"
+     "endmodule",
+     "module m;\n"
+     "  task static t;\n"
+     "    if (r == t) begin\n"
+     "      a.b(c);\n"
+     "    end else begin\n"
+     "      d.e(f);\n"
+     "    end\n"
+     "  endtask\n"
+     "  ;\n"  // stray ';'
+     "endmodule\n"},
+    {"module m;initial begin if(a==b)"
+     "c.d(e);else\n"
+     "f.g(h);end endmodule",
+     "module m;\n"
+     "  initial begin\n"
+     "    if (a == b) c.d(e);\n"
+     "    else f.g(h);\n"
+     "  end\n"
+     "endmodule\n"},
+    {"   module m;  always_comb    begin     \n"
+     "        if      ( a   ) b =  16'hdead    ; \n"
+     "  else if (   c     )  d= 16 'hbeef  ;   \n"
+     "     else        if (e) f=16'hca_fe ;     \n"
+     "end   \n endmodule\n",
+     "module m;\n"
+     "  always_comb begin\n"
+     "    if (a) b = 16'hdead;\n"
+     "    else if (c) d = 16'hbeef;\n"
+     "    else if (e) f = 16'hca_fe;\n"
+     "  end\n"
+     "endmodule\n"},
+    {"module m; initial begin\n"
+     "        if     (a||b)        c         = 1'b1;\n"
+     "d =        1'b1; if         (e)\n"
+     "begin f = 1'b0; end else begin\n"
+     "    g = h;\n"
+     "        end \n"
+     " i = 1'b1; "
+     "end endmodule\n",
+     "module m;\n"
+     "  initial begin\n"
+     "    if (a || b) c = 1'b1;\n"
+     "    d = 1'b1;\n"
+     "    if (e) begin\n"
+     "      f = 1'b0;\n"
+     "    end else begin\n"
+     "      g = h;\n"
+     "    end\n"
+     "    i = 1'b1;\n"
+     "  end\n"
+     "endmodule\n"},
+    {"module m; initial begin\n"
+     "if (a&&b&&c) begin\n"
+     "         d         = 1'b1;\n"
+     "     if (e) begin\n"
+     "   f = ff;\n"
+     "       end  else   if  (    g  )   begin\n"
+     "     h = hh;\n"
+     "end else if (i) begin\n"
+     "    j   =   (kk == ll) ? mm :\n"
+     "      gg;\n"
+     "   end     else   if    (  qq )  begin\n"
+     "    if      (  xx   ||yy        ) begin    d0 = 1'b0;   d1   =       "
+     "1'b1;\n"
+     "  end else if (oo) begin aa =    bb; cc      = dd;"
+     "         if (zz) zx = xz; else ba = ab;"
+     "    end   else  \n begin      vv   =  tt  ;  \n"
+     "   end   end "
+     "end \n  else if   (uu)\nbegin\n\na=b;if (aa)   b =    c;\n"
+     "\nelse    if    \n (bb) \n\nc        =d    ;\n\n\n\n\n    "
+     "      else         e\n\n   =   h;\n\n"
+     "end \n  else    \n  begin if(x)y=a;else\nbegin\n"
+     "\n\n\na=y; if (a)       b     = c;\n\n\n\nelse\n\n\nd=e;end \n"
+     "end\n"
+     "end endmodule\n",
+     "module m;\n"
+     "  initial begin\n"
+     "    if (a && b && c) begin\n"
+     "      d = 1'b1;\n"
+     "      if (e) begin\n"
+     "        f = ff;\n"
+     "      end else if (g) begin\n"
+     "        h = hh;\n"
+     "      end else if (i) begin\n"
+     "        j = (kk == ll) ? mm : gg;\n"
+     "      end else if (qq) begin\n"
+     "        if (xx || yy) begin\n"
+     "          d0 = 1'b0;\n"
+     "          d1 = 1'b1;\n"
+     "        end else if (oo) begin\n"
+     "          aa = bb;\n"
+     "          cc = dd;\n"
+     "          if (zz) zx = xz;\n"
+     "          else ba = ab;\n"
+     "        end else begin\n"
+     "          vv = tt;\n"
+     "        end\n"
+     "      end\n"
+     "    end else if (uu) begin\n\n"
+     "      a = b;\n"
+     "      if (aa) b = c;\n\n"
+     "      else if (bb) c = d;\n\n\n\n\n"
+     "      else e = h;\n\n"
+     "    end else begin\n"
+     "      if (x) y = a;\n"
+     "      else begin\n\n\n\n"
+     "        a = y;\n"
+     "        if (a) b = c;\n\n\n\n"
+     "        else d = e;\n"
+     "      end\n"
+     "    end\n"
+     "  end\n"
+     "endmodule\n"}};
 
 TEST(FormatterEndToEndTest, FormatElseStatements) {
   // Use a fixed style.

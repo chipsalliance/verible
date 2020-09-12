@@ -12,18 +12,26 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "verilog/formatting/format_style.h"
+#include "verilog/tools/kythe/kythe_facts.h"
 
-#include <initializer_list>
-#include <map>
-#include <sstream>
+#include <iostream>
 #include <string>
 
-#include "absl/strings/string_view.h"
-#include "common/util/enum_flags.h"
+#include "absl/strings/substitute.h"
 
 namespace verilog {
-namespace formatter {
+namespace kythe {
 
-}  // namespace formatter
+std::string VName::ToString() const {
+  return absl::Substitute(
+      R"({"signature": "$0","path": "$1","language": "$2","root": "$3","corpus": "$4"})",
+      signature_base_64, path, language, root, corpus);
+}
+
+std::ostream& operator<<(std::ostream& stream, const VName& vname) {
+  stream << vname.ToString();
+  return stream;
+}
+
+}  // namespace kythe
 }  // namespace verilog

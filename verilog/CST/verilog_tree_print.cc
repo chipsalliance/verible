@@ -41,20 +41,24 @@ VerilogPrettyPrinter::VerilogPrettyPrinter(std::ostream* output_stream,
           })) {}
 
 void VerilogPrettyPrinter::Visit(const verible::SyntaxTreeLeaf& leaf) {
-  auto_indent() << verible::TokenWithContext{leaf.get(), context_} << std::endl;
+  auto_indent() << "Leaf @" << child_rank_ << ' '
+                << verible::TokenWithContext{leaf.get(), context_} << std::endl;
 }
 
 void VerilogPrettyPrinter::Visit(const verible::SyntaxTreeNode& node) {
   std::string tag_info = absl::StrCat(
       "(tag: ", NodeEnumToString(static_cast<NodeEnum>(node.Tag().tag)), ") ");
 
-  auto_indent() << "Node " << tag_info << "{" << std::endl;
+  auto_indent() << "Node @" << child_rank_ << ' ' << tag_info << "{"
+                << std::endl;
 
   {
     const verible::ValueSaver<int> value_saver(&indent_, indent_ + 2);
+    const verible::ValueSaver<int> rank_saver(&child_rank_, 0);
     for (const auto& child : node.children()) {
       // TODO(fangism): display nullptrs or child indices to show position.
       if (child) child->Accept(this);
+      ++child_rank_;
     }
   }
   auto_indent() << "}" << std::endl;

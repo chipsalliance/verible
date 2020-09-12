@@ -19,6 +19,7 @@
 #include <string>
 
 #include "absl/strings/string_view.h"
+#include "common/formatting/align.h"
 #include "common/formatting/basic_format_style.h"
 
 namespace verilog {
@@ -26,28 +27,55 @@ namespace formatter {
 
 // Style parameters that are specific to Verilog formatter
 struct FormatStyle : public verible::BasicFormatStyle {
+  using AlignmentPolicy = verible::AlignmentPolicy;
+  using IndentationStyle = verible::IndentationStyle;
+
   FormatStyle() : verible::BasicFormatStyle() {
     over_column_limit_penalty = 10000;
   }
 
-  // If true, format module declarations' port declarations, else leave those
-  // regions unformatted.
-  // A user may wish to disable this in favor of their own aligned formatting.
-  // The default value here is true so that compact formatting can continue to
-  // be covered in integration tests.
-  // This flag is prone to change or be removed in the future.
-  // TODO(b/70310743): implement aligned formatting for this section,
-  //   and promote the control for this into an enum: {off, compact, align}
-  bool format_module_port_declarations = true;
+  // Control indentation amount for port declarations.
+  IndentationStyle port_declarations_indentation = IndentationStyle::kWrap;
 
-  // If true, format module instantiations, else leave those regions
-  // unformatted. A user may wish to disable this in favor of their own aligned
-  // formatting. The default value here is true so that compact formatting can
-  // continue to be covered in integration tests. This flag is prone to change
-  // or be removed in the future.
-  // TODO(b/152805837): implement aligned formatting for this section,
-  //   and promote the control for this into an enum: {off, compact, align}
-  bool format_module_instantiations = true;
+  // Control how named port_declaration (e.g. in modules, interfaces) are
+  // formatted.  Internal tests assume these are forced to kAlign.
+  AlignmentPolicy port_declarations_alignment = AlignmentPolicy::kAlign;
+
+  // Control indentation amount for named parameter assignments.
+  IndentationStyle named_parameter_indentation = IndentationStyle::kWrap;
+
+  // Control how named parameters (e.g. in module instances) are formatted.
+  // For internal testing purposes, this is default to kAlign.
+  AlignmentPolicy named_parameter_alignment = AlignmentPolicy::kAlign;
+
+  // Control indentation amount for named port connections.
+  IndentationStyle named_port_indentation = IndentationStyle::kWrap;
+
+  // Control how named ports (e.g. in module instances) are formatted.
+  // Internal tests assume these are forced to kAlign.
+  AlignmentPolicy named_port_alignment = AlignmentPolicy::kAlign;
+
+  // Control how module-local net/variable declarations are formatted.
+  // Internal tests assume these are forced to kAlign.
+  AlignmentPolicy module_net_variable_alignment = AlignmentPolicy::kAlign;
+
+  // Control indentation amount for formal parameter declarations.
+  IndentationStyle formal_parameters_indentation = IndentationStyle::kWrap;
+
+  // Control how formal parameters in modules/interfaces/classes are formatted.
+  // Internal tests assume these are forced to kAlign.
+  AlignmentPolicy formal_parameters_alignment = AlignmentPolicy::kAlign;
+
+  // Control how class member variables are formatted.
+  // Internal tests assume these are forced to kAlign.
+  AlignmentPolicy class_member_variable_alignment = AlignmentPolicy::kAlign;
+
+  // At this time line wrap optimization is problematic and risks ruining
+  // otherwise reasonable code.  When set to false, this switch will make the
+  // formatter give-up and leave code as-is in cases where it would otherwise
+  // attempt to do line wrap optimization.  By doing nothing in those cases, we
+  // reduce the risk of harming already decent code.
+  bool try_wrap_long_lines = true;
 
   // TODO(fangism): introduce the following knobs:
   //
@@ -57,6 +85,39 @@ struct FormatStyle : public verible::BasicFormatStyle {
 
   // TODO(fangism): parameter to limit number of consecutive blank lines to
   // preserve between partitions.
+
+  int PortDeclarationsIndentation() const {
+    return port_declarations_indentation == IndentationStyle::kWrap
+               ? wrap_spaces
+               : indentation_spaces;
+  }
+
+  int FormalParametersIndentation() const {
+    return formal_parameters_indentation == IndentationStyle::kWrap
+               ? wrap_spaces
+               : indentation_spaces;
+  }
+
+  int NamedParameterIndentation() const {
+    return named_parameter_indentation == IndentationStyle::kWrap
+               ? wrap_spaces
+               : indentation_spaces;
+  }
+
+  int NamedPortIndentation() const {
+    return named_port_indentation == IndentationStyle::kWrap
+               ? wrap_spaces
+               : indentation_spaces;
+  }
+
+  void ApplyToAllAlignmentPolicies(AlignmentPolicy policy) {
+    port_declarations_alignment = policy;
+    named_parameter_alignment = policy;
+    named_port_alignment = policy;
+    module_net_variable_alignment = policy;
+    formal_parameters_alignment = policy;
+    class_member_variable_alignment = policy;
+  }
 };
 
 }  // namespace formatter

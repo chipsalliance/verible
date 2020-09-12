@@ -12,18 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "verilog/formatting/format_style.h"
+#ifndef CONSIDER
+#error \
+    "Define the CONSIDER macro before including this file " \
+       "(and undefine it after)."
+#endif  // CONSIDER
 
-#include <initializer_list>
-#include <utility>
-
-#include "gtest/gtest.h"
-#include "common/util/enum_flags_test_util.h"
-
-namespace verilog {
-namespace formatter {
-namespace {
-
-}  // namespace
-}  // namespace formatter
-}  // namespace verilog
+#include "verilog/tools/kythe/verilog_extractor_indexing_fact_type_foreach-gen.inc"

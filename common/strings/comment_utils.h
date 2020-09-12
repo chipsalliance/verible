@@ -23,6 +23,7 @@ namespace verible {
 // Removes excess wrapping characters such as /**** and ****/ and /////.
 // If text is not a comment, it is returned unmodified, but in general, do not
 // rely on any specific behavior for non-comments.
+// Result is always a substring of the original (bounds may be equal).
 absl::string_view StripComment(absl::string_view);
 
 // Same as StripComment, but also removes leading and trailing whitespace.

@@ -284,7 +284,7 @@ void TreeUnwrapper::EatSpaces() {
 }
 
 TreeUnwrapper::TreeUnwrapper(const verible::TextStructureView& view,
-                             const verible::BasicFormatStyle& style,
+                             const FormatStyle& style,
                              const preformatted_tokens_type& ftokens)
     : verible::TreeUnwrapper(view, ftokens),
       style_(style),
@@ -515,7 +515,9 @@ void TreeUnwrapper::InterChildNodeHook(const SyntaxTreeNode& node) {
   VLOG(4) << __FUNCTION__ << " node type: " << tag;
   switch (tag) {
     // TODO(fangism): cover all other major lists
+    case NodeEnum::kFormalParameterList:
     case NodeEnum::kPortDeclarationList:
+    case NodeEnum::kActualParameterByNameList:
     case NodeEnum::kPortActualList:
     // case NodeEnum::kPortList:  // TODO(fangism): for task/function ports
     case NodeEnum::kModuleItemList:
@@ -524,6 +526,7 @@ void TreeUnwrapper::InterChildNodeHook(const SyntaxTreeNode& node) {
     case NodeEnum::kDescriptionList:  // top-level item comments
     case NodeEnum::kStatementList:
     case NodeEnum::kPackageItemList:
+    case NodeEnum::kSpecifyItemList:
     case NodeEnum::kBlockItemStatementList:
     case NodeEnum::kConstraintExpressionList:
     case NodeEnum::kConstraintBlockItemList:
@@ -626,6 +629,31 @@ void TreeUnwrapper::SetIndentationsAndCreatePartitions(
       break;
     }
 
+    // Indent only when applying kAppendFittingSubPartitions in parents
+    case NodeEnum::kArgumentList:
+    case NodeEnum::kIdentifierList: {
+      if (Context().DirectParentsAre(
+              {NodeEnum::kParenGroup, NodeEnum::kRandomizeFunctionCall}) ||
+          Context().DirectParentsAre(
+              {NodeEnum::kParenGroup, NodeEnum::kFunctionCall}) ||
+          Context().DirectParentsAre(
+              {NodeEnum::kParenGroup,
+               NodeEnum::kRandomizeMethodCallExtension}) ||
+          Context().DirectParentsAre(
+              {NodeEnum::kParenGroup, NodeEnum::kSystemTFCall}) ||
+          Context().DirectParentsAre(
+              {NodeEnum::kParenGroup, NodeEnum::kMethodCallExtension})) {
+        // TODO(fangism): Using wrap_spaces because of poor support of
+        //     function/system/method/random calls inside trailing assignments,
+        //     if headers, ternary operators and so on
+        VisitIndentedSection(node, style_.wrap_spaces,
+                             PartitionPolicyEnum::kFitOnLineElseExpand);
+      } else {
+        TraverseChildren(node);
+      }
+      break;
+    }
+
     // The following constructs are flushed-left, not indented:
     case NodeEnum::kPreprocessorIfdefClause:
     case NodeEnum::kPreprocessorIfndefClause:
@@ -640,18 +668,11 @@ void TreeUnwrapper::SetIndentationsAndCreatePartitions(
     case NodeEnum::kGenerateRegion:
     case NodeEnum::kCaseGenerateConstruct:
     case NodeEnum::kLoopGenerateConstruct:
-    case NodeEnum::kClassDeclaration:
     case NodeEnum::kClassConstructor:
     case NodeEnum::kPackageImportDeclaration:
     // TODO(fangism): case NodeEnum::kDPIExportItem:
     case NodeEnum::kPreprocessorInclude:
     case NodeEnum::kPreprocessorUndef:
-    case NodeEnum::kModuleDeclaration:
-    case NodeEnum::kProgramDeclaration:
-    case NodeEnum::kPackageDeclaration:
-    case NodeEnum::kInterfaceDeclaration:
-    case NodeEnum::kFunctionDeclaration:
-    case NodeEnum::kTaskDeclaration:
     case NodeEnum::kTFPortDeclaration:
     case NodeEnum::kTypeDeclaration:
     case NodeEnum::kForwardDeclaration:
@@ -672,6 +693,7 @@ void TreeUnwrapper::SetIndentationsAndCreatePartitions(
     case NodeEnum::kInitialStatement:
     case NodeEnum::kFinalStatement:
     case NodeEnum::kDisableStatement:
+    case NodeEnum::kSpecifyItem:
     case NodeEnum::kForInitialization:
     case NodeEnum::kForCondition:
     case NodeEnum::kForStepList:
@@ -711,8 +733,10 @@ void TreeUnwrapper::SetIndentationsAndCreatePartitions(
     case NodeEnum::kGateInstance:
     case NodeEnum::kGenerateIfClause:
     case NodeEnum::kGenerateElseClause:
+    case NodeEnum::kGenerateIfHeader:
     case NodeEnum::kIfClause:
     case NodeEnum::kElseClause:
+    case NodeEnum::kIfHeader:
       // TODO(fangism): k{Assert,Assume,Expect}PropertyClause
     case NodeEnum::kAssertionClause:
     case NodeEnum::kAssumeClause:
@@ -725,6 +749,13 @@ void TreeUnwrapper::SetIndentationsAndCreatePartitions(
 
       // The following cases will always expand into their constituent
       // partitions:
+    case NodeEnum::kModuleDeclaration:
+    case NodeEnum::kProgramDeclaration:
+    case NodeEnum::kPackageDeclaration:
+    case NodeEnum::kInterfaceDeclaration:
+    case NodeEnum::kFunctionDeclaration:
+    case NodeEnum::kTaskDeclaration:
+    case NodeEnum::kClassDeclaration:
     case NodeEnum::kClassHeader:
     case NodeEnum::kBegin:
     case NodeEnum::kEnd:
@@ -831,6 +862,57 @@ void TreeUnwrapper::SetIndentationsAndCreatePartitions(
       break;
     }
 
+    case NodeEnum::kReferenceCallBase: {
+      // TODO(fangism): Create own section only for standalone calls
+      if (Context().DirectParentIs(NodeEnum::kStatement)) {
+        const auto& subnode = verible::SymbolCastToNode(
+            *ABSL_DIE_IF_NULL(node.children().back()));
+        if (subnode.MatchesTag(NodeEnum::kRandomizeMethodCallExtension) &&
+            subnode.children().back() != nullptr) {
+          // TODO(fangism): Handle constriants
+          VisitIndentedSection(node, 0, PartitionPolicyEnum::kAlwaysExpand);
+        } else if (subnode.MatchesTagAnyOf(
+                       {NodeEnum::kMethodCallExtension,
+                        NodeEnum::kRandomizeMethodCallExtension,
+                        NodeEnum::kFunctionCall})) {
+          VisitIndentedSection(
+              node, 0, PartitionPolicyEnum::kAppendFittingSubPartitions);
+        } else {
+          TraverseChildren(node);
+        }
+      } else {
+        TraverseChildren(node);
+      }
+      break;
+    }
+
+    case NodeEnum::kRandomizeFunctionCall: {
+      // TODO(fangism): Create own section only for standalone calls
+      if (Context().DirectParentIs(NodeEnum::kStatement)) {
+        if (node.children().back() != nullptr) {
+          // TODO(fangism): Handle constriants
+          VisitIndentedSection(node, 0, PartitionPolicyEnum::kAlwaysExpand);
+        } else {
+          VisitIndentedSection(
+              node, 0, PartitionPolicyEnum::kAppendFittingSubPartitions);
+        }
+      } else {
+        TraverseChildren(node);
+      }
+      break;
+    }
+
+    case NodeEnum::kSystemTFCall: {
+      // TODO(fangism): Create own section only for standalone calls
+      if (Context().DirectParentIs(NodeEnum::kStatement)) {
+        VisitIndentedSection(node, 0,
+                             PartitionPolicyEnum::kAppendFittingSubPartitions);
+      } else {
+        TraverseChildren(node);
+      }
+      break;
+    };
+
     case NodeEnum::kMacroCall: {
       // Single statements directly inside a controlled construct
       // should be properly indented one level.
@@ -859,8 +941,6 @@ void TreeUnwrapper::SetIndentationsAndCreatePartitions(
 
     // For the following constructs, always expand the view to subpartitions.
     // Add a level of indentation.
-    case NodeEnum::kClassItems:
-    case NodeEnum::kModuleItemList:
     case NodeEnum::kPackageItemList:
     case NodeEnum::kInterfaceClassDeclaration:
     case NodeEnum::kGenerateItemList:
@@ -887,6 +967,7 @@ void TreeUnwrapper::SetIndentationsAndCreatePartitions(
     case NodeEnum::kUdpSequenceEntry:
     case NodeEnum::kUdpCombEntry:
     case NodeEnum::kStatementList:
+    case NodeEnum::kSpecifyItemList:
     case NodeEnum::kClockingItemList: {
       // Do not further indent preprocessor clauses.
       const int indent = suppress_indentation ? 0 : style_.indentation_spaces;
@@ -923,12 +1004,27 @@ void TreeUnwrapper::SetIndentationsAndCreatePartitions(
       }
     }
 
+    case NodeEnum::kClassItems:
+    case NodeEnum::kModuleItemList: {
+      const int indent = suppress_indentation ? 0 : style_.indentation_spaces;
+      VisitIndentedSection(node, indent,
+                           PartitionPolicyEnum::kTabularAlignment);
+      break;
+    }
+
       // module instantiations (which look like data declarations) want to
       // expand one parameter/port per line.
-    case NodeEnum::kActualParameterByNameList:
+    case NodeEnum::kActualParameterByNameList: {
+      const int indent =
+          suppress_indentation ? 0 : style_.NamedParameterIndentation();
+      VisitIndentedSection(node, indent,
+                           PartitionPolicyEnum::kTabularAlignment);
+      break;
+    }
     case NodeEnum::kPortActualList:  // covers named and positional ports
     {
-      const int indent = suppress_indentation ? 0 : style_.wrap_spaces;
+      const int indent =
+          suppress_indentation ? 0 : style_.NamedPortIndentation();
       const auto policy = Context().IsInside(NodeEnum::kDataDeclaration)
                               ? PartitionPolicyEnum::kTabularAlignment
                               : PartitionPolicyEnum::kFitOnLineElseExpand;
@@ -936,10 +1032,25 @@ void TreeUnwrapper::SetIndentationsAndCreatePartitions(
       break;
     }
 
-    case NodeEnum::kPortDeclarationList:
+    case NodeEnum::kPortDeclarationList: {
+      // Do not further indent preprocessor clauses.
+      const int indent =
+          suppress_indentation ? 0 : style_.PortDeclarationsIndentation();
+      if (Context().IsInside(NodeEnum::kClassHeader) ||
+          // kModuleHeader covers interfaces and programs
+          Context().IsInside(NodeEnum::kModuleHeader)) {
+        VisitIndentedSection(node, indent,
+                             PartitionPolicyEnum::kTabularAlignment);
+      } else {
+        VisitIndentedSection(node, indent,
+                             PartitionPolicyEnum::kFitOnLineElseExpand);
+      }
+      break;
+    }
     case NodeEnum::kFormalParameterList: {
       // Do not further indent preprocessor clauses.
-      const int indent = suppress_indentation ? 0 : style_.wrap_spaces;
+      const int indent =
+          suppress_indentation ? 0 : style_.FormalParametersIndentation();
       if (Context().IsInside(NodeEnum::kClassHeader) ||
           // kModuleHeader covers interfaces and programs
           Context().IsInside(NodeEnum::kModuleHeader)) {
@@ -973,8 +1084,13 @@ void TreeUnwrapper::SetIndentationsAndCreatePartitions(
       break;
     }
 
+    // kReference can be found in kIdentifierList
+    // and kExpression can be found in kArgumentList & kMacroArgList
+    case NodeEnum::kReference:
     case NodeEnum::kExpression: {
-      if (Context().DirectParentIs(NodeEnum::kMacroArgList)) {
+      if (Context().DirectParentIsOneOf({NodeEnum::kMacroArgList,
+                                         NodeEnum::kArgumentList,
+                                         NodeEnum::kIdentifierList})) {
         // original un-lexed macro argument was successfully expanded
         VisitNewUnwrappedLine(node);
       } else if (Context().DirectParentIs(NodeEnum::kOpenRangeList) &&
@@ -1008,11 +1124,18 @@ static bool PartitionIsCloseParenSemi(const TokenPartitionTree& partition) {
   return ftokens.back().TokenEnum() == ';';
 }
 
-static bool PartitionIsCloseParen(const TokenPartitionTree& partition) {
+static bool PartitionStartsWithCloseParen(const TokenPartitionTree& partition) {
   const auto ftokens = partition.Value().TokensRange();
   if (ftokens.empty()) return false;
   const auto token_enum = ftokens.front().TokenEnum();
   return ((token_enum == ')') || (token_enum == MacroCallCloseToEndLine));
+}
+
+static bool PartitionEndsWithOpenParen(const TokenPartitionTree& partition) {
+  const auto ftokens = partition.Value().TokensRange();
+  if (ftokens.empty()) return false;
+  const auto token_enum = ftokens.back().TokenEnum();
+  return token_enum == '(';
 }
 
 static bool PartitionIsCloseBrace(const TokenPartitionTree& partition) {
@@ -1317,12 +1440,34 @@ void TreeUnwrapper::ReshapeTokenPartitions(
       break;
     }
     case NodeEnum::kModuleHeader: {
+      // Allow empty ports to appear as "();"
+      if (partition.Children().size() >= 2) {
+        auto& last = partition.Children().back();
+        auto& last_prev = *ABSL_DIE_IF_NULL(last.PreviousSibling());
+        if (PartitionStartsWithCloseParen(last) &&
+            PartitionEndsWithOpenParen(last_prev)) {
+          verible::MergeLeafIntoPreviousLeaf(&last);
+        }
+      }
       // If there were any parameters or ports at all, expand.
       // TODO(fangism): This should be done by inspecting the CST node,
       // instead of the partition structure.
       if (partition.Children().size() > 2) {
         partition.Value().SetPartitionPolicy(
             PartitionPolicyEnum::kAlwaysExpand);
+      }
+      break;
+    }
+
+    case NodeEnum::kClassHeader: {
+      // Allow empty parameters to appear as "#();"
+      if (partition.Children().size() >= 2) {
+        auto& last = partition.Children().back();
+        auto& last_prev = *ABSL_DIE_IF_NULL(last.PreviousSibling());
+        if (PartitionStartsWithCloseParen(last) &&
+            PartitionEndsWithOpenParen(last_prev)) {
+          verible::MergeLeafIntoPreviousLeaf(&last);
+        }
       }
       break;
     }
@@ -1337,6 +1482,54 @@ void TreeUnwrapper::ReshapeTokenPartitions(
       auto& last = *ABSL_DIE_IF_NULL(partition.RightmostDescendant());
       if (PartitionIsCloseParenSemi(last)) {
         verible::MergeLeafIntoPreviousLeaf(&last);
+      }
+      break;
+    }
+    case NodeEnum::kReferenceCallBase: {
+      const auto& subnode = verible::SymbolCastToNode(*node.children().back());
+      if (subnode.MatchesTagAnyOf({NodeEnum::kMethodCallExtension,
+                                   NodeEnum::kFunctionCall,
+                                   NodeEnum::kRandomizeMethodCallExtension})) {
+        if (partition.Value().PartitionPolicy() ==
+            PartitionPolicyEnum::kAppendFittingSubPartitions) {
+          auto& last = *ABSL_DIE_IF_NULL(partition.RightmostDescendant());
+          if (PartitionStartsWithCloseParen(last) ||
+              PartitionStartsWithSemicolon(last)) {
+            verible::MergeLeafIntoPreviousLeaf(&last);
+          }
+        }
+      }
+      break;
+    }
+
+    case NodeEnum::kRandomizeFunctionCall:
+    case NodeEnum::kSystemTFCall: {
+      if (partition.Value().PartitionPolicy() ==
+          PartitionPolicyEnum::kAppendFittingSubPartitions) {
+        auto& last = *ABSL_DIE_IF_NULL(partition.RightmostDescendant());
+        if (PartitionStartsWithCloseParen(last) ||
+            PartitionStartsWithSemicolon(last)) {
+          verible::MergeLeafIntoPreviousLeaf(&last);
+        }
+      }
+      break;
+    }
+
+    case NodeEnum::kGenerateIfHeader:
+    case NodeEnum::kIfHeader: {
+      // Fix indentation in case of e.g. function calls inside if headers
+      // TODO(fangism): This should be done smarter (using CST) or removed
+      //     after better handling of function calls inside expressions
+      //     e.g. kBinaryExpression, kUnaryPrefixExpression...
+      if (partition.Children().size() > 1) {
+        auto& if_header_partition = partition.Children()[0];
+        const auto original_indentation =
+            if_header_partition.Value().IndentationSpaces();
+        // Adjust indentation recursively
+        verible::AdjustIndentationRelative(&partition, style.wrap_spaces);
+        // Restore original indentation in first partition
+        partition.Value().SetIndentationSpaces(original_indentation);
+        if_header_partition.Value().SetIndentationSpaces(original_indentation);
       }
       break;
     }
@@ -1384,7 +1577,7 @@ void TreeUnwrapper::ReshapeTokenPartitions(
     case NodeEnum::kPreprocessorDefine: {
       auto& last = *ABSL_DIE_IF_NULL(partition.RightmostDescendant());
       // TODO(fangism): why does test fail without this clause?
-      if (PartitionIsCloseParen(last)) {
+      if (PartitionStartsWithCloseParen(last)) {
         verible::MergeLeafIntoPreviousLeaf(&last);
       }
       break;
@@ -1401,7 +1594,8 @@ void TreeUnwrapper::ReshapeTokenPartitions(
         // Test for ')' and MacroCallCloseToEndLine because macros
         // use its own token 'MacroCallCloseToEndLine'
         auto& last = *ABSL_DIE_IF_NULL(partition.RightmostDescendant());
-        if (PartitionIsCloseParen(last) || PartitionIsCloseParenSemi(last)) {
+        if (PartitionStartsWithCloseParen(last) ||
+            PartitionIsCloseParenSemi(last)) {
           verible::MergeLeafIntoPreviousLeaf(&last);
         }
       }
@@ -1640,6 +1834,7 @@ void TreeUnwrapper::Visit(const verible::SyntaxTreeLeaf& leaf) {
               // NodeEnum:xxxx                             // due to element:
               NodeEnum::kMacroArgList,               // MacroArg
               NodeEnum::kFormalParameterList,        // kParamDeclaration
+              NodeEnum::kEnumNameList,               // kEnumName
               NodeEnum::kActualParameterByNameList,  // kParamByName
               NodeEnum::kPortDeclarationList,        // kPort, kPortDeclaration
               NodeEnum::kPortActualList,             // kActualNamedPort,

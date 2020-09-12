@@ -63,6 +63,32 @@ TEST(ObfuscateVerilogCodeTest, PreloadedSubstitutions) {
        "function AAA()\nreturn BBB(CCC);\nendfunction\n"},
       {"function aaa()\nreturn {bbb,ccc};\nendfunction\n",
        "function AAA()\nreturn {BBB,CCC};\nendfunction\n"},
+      // token concatenation
+      {"aaa``bbb;\n", "AAA``BBB;\n"},
+      {"`define ccc(aaa, bbb) aaa``bbb;\n",
+       "`define CCC(AAA, BBB) AAA``BBB;\n"},
+      {"`ccc(aaa``bbb, bbb``aaa);\n", "`CCC(AAA``BBB, BBB``AAA);\n"},
+      // comments inside defines
+      {
+          "`define ccc \\\n"
+          "  // comment1 \\\n"
+          "  // comment2\n",
+          "`define CCC \\\n"
+          "  // comment1 \\\n"
+          "  // comment2\n",
+      },
+      {
+          "`define ccc \\\n"
+          "  aaa(); \\\n"
+          "  // comment1 \\\n"
+          "  bbb(); \\\n"
+          "  // comment2\n",
+          "`define CCC \\\n"
+          "  AAA(); \\\n"
+          "  // comment1 \\\n"
+          "  BBB(); \\\n"
+          "  // comment2\n",
+      },
   };
   for (const auto& test : kTestCases) {
     std::ostringstream output;
@@ -77,6 +103,7 @@ TEST(ObfuscateVerilogCodeTest, InputLexicalError) {
       "789badid",
       "`FOO(8911badid)\n",
       "`define FOO 911badid\n",
+      "`FOO(`)\n",
   };
   for (const auto& test : kTestCases) {
     IdentifierObfuscator ob;

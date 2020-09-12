@@ -264,6 +264,10 @@ class RawSymbolPrinter : public SymbolVisitor {
   // Indentation tracks current depth in tree.
   int indent_ = 0;
 
+  // Each set of siblings is enumerated starting at 0.
+  // This is set by parent nodes during traversal.
+  int child_rank_ = 0;
+
   // Prints start of line with correct indentation.
   std::ostream& auto_indent();
 };

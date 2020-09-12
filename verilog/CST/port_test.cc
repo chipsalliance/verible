@@ -33,6 +33,7 @@
 #include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
 #include "common/analysis/syntax_tree_search.h"
+#include "common/analysis/syntax_tree_search_test_utils.h"
 #include "common/text/concrete_syntax_leaf.h"
 #include "common/text/syntax_tree_context.h"
 #include "common/text/text_structure.h"
@@ -47,6 +48,9 @@
 
 namespace verilog {
 namespace {
+
+using verible::SyntaxTreeSearchTestCase;
+using verible::TreeSearchMatch;
 
 // Tests that no ports are found from an empty source.
 TEST(FindAllModulePortDeclarationsTest, EmptySource) {
@@ -249,6 +253,44 @@ TEST(GetIdentifierFromTaskFunctionPortItemTest, ExpectSomeTaskFunctionPorts) {
           << code;
       ++i;
     }
+  }
+}
+
+TEST(GetAllPortReferences, GetPortReferenceIdentifier) {
+  constexpr int kTag = 1;  // value doesn't matter
+  const SyntaxTreeSearchTestCase kTestCases[] = {
+      {""},
+      {"module m(); endmodule: m"},
+      {"module m(",
+       {kTag, "a"},
+       ", ",
+       {kTag, "b"},
+       ");\n input a, b; endmodule: m"},
+      {"module m(input a,", {kTag, "b"}, "); endmodule: m"},
+      {"module m(input a,", {kTag, "b"}, "[0:1]); endmodule: m"},
+      {"module m(input wire a,", {kTag, "b"}, "[0:1]); endmodule: m"},
+      {"module m(wire a,", {kTag, "b"}, "[0:1]); endmodule: m"},
+  };
+  for (const auto& test : kTestCases) {
+    const absl::string_view code(test.code);
+    VerilogAnalyzer analyzer(code, "test-file");
+    const auto code_copy = analyzer.Data().Contents();
+    ASSERT_OK(analyzer.Analyze()) << "failed on:\n" << code;
+    const auto& root = analyzer.Data().SyntaxTree();
+
+    const auto decls = FindAllPortReferences(*ABSL_DIE_IF_NULL(root));
+
+    std::vector<TreeSearchMatch> types;
+    for (const auto& decl : decls) {
+      const auto* type = GetIdentifierFromPortReference(*decl.match);
+      types.push_back(TreeSearchMatch{type, {/* ignored context */}});
+    }
+
+    std::ostringstream diffs;
+    EXPECT_TRUE(test.ExactMatchFindings(types, code_copy, &diffs))
+        << "failed on:\n"
+        << code << "\ndiffs:\n"
+        << diffs.str();
   }
 }
 

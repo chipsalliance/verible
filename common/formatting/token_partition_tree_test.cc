@@ -171,6 +171,88 @@ TEST_F(FindLargestPartitionsTest, VectorTree) {
   EXPECT_EQ(top_two[1]->TokensRange().front().Text(), "five");
 }
 
+class FlushLeftSpacingDifferencesTest : public TokenPartitionTreeTestFixture {};
+
+TEST_F(FlushLeftSpacingDifferencesTest, EmptyPartitions) {
+  const auto& preformat_tokens = pre_format_tokens_;
+  const auto begin = preformat_tokens.begin();
+  UnwrappedLine all(0, begin);
+  TokenPartitionTree tree{all};  // no children
+  const TokenPartitionRange range(tree.Children().begin(),
+                                  tree.Children().end());
+  using V = std::vector<int>;
+  const std::vector<V> diffs(FlushLeftSpacingDifferences(range));
+  EXPECT_THAT(diffs, ElementsAre());
+}
+
+TEST_F(FlushLeftSpacingDifferencesTest, OnePartitionsOneToken) {
+  const auto& preformat_tokens = pre_format_tokens_;
+  const auto begin = preformat_tokens.begin();
+  UnwrappedLine all(0, begin);
+  all.SpanUpToToken(begin + 1);
+  UnwrappedLine partition0(0, begin);
+  partition0.SpanUpToToken(begin + 1);
+  using T = TokenPartitionTree;
+  T tree{partition0, T{partition0}};  // one partition, one token
+  const TokenPartitionRange range(tree.Children().begin(),
+                                  tree.Children().end());
+  using V = std::vector<int>;
+  const std::vector<V> diffs(FlushLeftSpacingDifferences(range));
+  EXPECT_THAT(diffs, ElementsAre(V()));
+}
+
+TEST_F(FlushLeftSpacingDifferencesTest, OnePartitionsTwoTokens) {
+  const auto& preformat_tokens = pre_format_tokens_;
+  const auto begin = preformat_tokens.begin();
+  UnwrappedLine all(0, begin);
+  all.SpanUpToToken(begin + 2);
+  UnwrappedLine partition0(0, begin);
+  partition0.SpanUpToToken(begin + 2);
+  using T = TokenPartitionTree;
+  T tree{partition0, T{partition0}};  // one partition, two tokens
+  const TokenPartitionRange range(tree.Children().begin(),
+                                  tree.Children().end());
+  using V = std::vector<int>;
+  const std::vector<V> diffs(FlushLeftSpacingDifferences(range));
+  EXPECT_THAT(diffs, ElementsAre(V({0})));
+}
+
+TEST_F(FlushLeftSpacingDifferencesTest, TwoPartitionsOneTokenEach) {
+  const auto& preformat_tokens = pre_format_tokens_;
+  const auto begin = preformat_tokens.begin();
+  UnwrappedLine all(0, begin);
+  all.SpanUpToToken(begin + 2);
+  UnwrappedLine partition0(0, begin);
+  partition0.SpanUpToToken(begin + 1);
+  UnwrappedLine partition1(0, begin + 1);
+  partition1.SpanUpToToken(begin + 2);
+  using T = TokenPartitionTree;
+  T tree{partition0, T{partition0}, T{partition1}};  // two partitions
+  const TokenPartitionRange range(tree.Children().begin(),
+                                  tree.Children().end());
+  using V = std::vector<int>;
+  const std::vector<V> diffs(FlushLeftSpacingDifferences(range));
+  EXPECT_THAT(diffs, ElementsAre(V(), V()));
+}
+
+TEST_F(FlushLeftSpacingDifferencesTest, TwoPartitionsTwoTokensEach) {
+  const auto& preformat_tokens = pre_format_tokens_;
+  const auto begin = preformat_tokens.begin();
+  UnwrappedLine all(0, begin);
+  all.SpanUpToToken(begin + 4);
+  UnwrappedLine partition0(0, begin);
+  partition0.SpanUpToToken(begin + 2);
+  UnwrappedLine partition1(0, begin + 2);
+  partition1.SpanUpToToken(begin + 4);
+  using T = TokenPartitionTree;
+  T tree{partition0, T{partition0}, T{partition1}};  // two partitions
+  const TokenPartitionRange range(tree.Children().begin(),
+                                  tree.Children().end());
+  using V = std::vector<int>;
+  const std::vector<V> diffs(FlushLeftSpacingDifferences(range));
+  EXPECT_THAT(diffs, ElementsAre(V({0}), V({0})));
+}
+
 class TokenPartitionTreePrinterTest : public TokenPartitionTreeTestFixture {};
 
 // Verify specialized tree printing of UnwrappedLines.

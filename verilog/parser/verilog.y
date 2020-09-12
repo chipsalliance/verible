@@ -158,6 +158,7 @@ static SymbolPtr MakeUnpackedDimensionsNode(SymbolPtr& arg) {
 %token PP_endif "`endif"
 %token PP_undef "`undef"
 %token PP_default_text "<<default-text>>"
+%token PP_TOKEN_CONCAT "``"
 
 %token DR_timescale "`timescale"
 %token DR_resetall "`resetall"
@@ -2714,12 +2715,12 @@ import_export
 dpi_import_item
   /* The following rules are expanded from:
    * TK_import dpi_spec_string dpi_import_property_opt
-   *   { GenericIdentifier '=' }_opt modport_tf_port ';'
+   *   { GenericIdentifier '=' }_opt method_prototype ';'
    */
   : TK_import dpi_spec_string dpi_import_property_opt
-    GenericIdentifier '=' modport_tf_port ';'
+    GenericIdentifier '=' method_prototype ';'
     { $$ = MakeDPIImport($1, $2, $3, $4, $5, $6, $7); }
-  | TK_import dpi_spec_string dpi_import_property_opt modport_tf_port ';'
+  | TK_import dpi_spec_string dpi_import_property_opt method_prototype ';'
     { $$ = MakeDPIImport($1, $2, $3, nullptr, nullptr, $4, $5); }
   ;
 
@@ -5291,7 +5292,9 @@ signed_unsigned_opt
   | /* empty */
     { $$ = nullptr; }
   ;
+
 lpvalue
+  /* intended to cover 'net_lvalue' and 'variable_lvalue' in LRM */
   : reference_or_call
     { $$ = MakeTaggedNode(N::kLPValue, $1); }
     /* Unless functions can return by reference, calls should not be permitted
@@ -5303,9 +5306,16 @@ lpvalue
   /* TODO(fangism): For lpvalue, verify that $1 is of the form
    * '{' expression_list_proper '}' and that each item in the list is an lvalue.
    */
+  | assignment_pattern
+    /* for 'assignment_pattern_net_lvalue'
+     * and 'assignment_pattern_variable_lvalue'.
+     * TODO(fangism): verify that elements are lpvalue (not just any expr).
+     */
+    { $$ = MakeTaggedNode(N::kLPValue, $1); }
   | streaming_concatenation
     { $$ = MakeTaggedNode(N::kLPValue, $1); }
   ;
+
 cont_assign
   : lpvalue '=' expression
     { $$ = MakeTaggedNode(N::kNetVariableAssignment, $1, $2, $3); }
@@ -5395,7 +5405,9 @@ module_parameter_port_list_opt
   : '#' '(' module_parameter_port_list ')'
   { $$ = MakeTaggedNode(N::kFormalParameterListDeclaration, $1, MakeParenGroup($2, $3, $4)); }
   | '#' '(' ')'
-  { $$ = MakeTaggedNode(N::kFormalParameterListDeclaration, $1, MakeParenGroup($2, nullptr, $3)); }
+  { $$ = MakeTaggedNode(N::kFormalParameterListDeclaration, $1,
+                        MakeParenGroup($2, MakeTaggedNode(N::kFormalParameterList), $3));
+  }
   | /* empty */
   { $$ = nullptr; }
   ;
@@ -6535,13 +6547,13 @@ specify_item
   ;
 specify_item_list
   : specify_item
-    { $$ = MakeTaggedNode(N::kSpecifyItem, $1); }
+    { $$ = MakeTaggedNode(N::kSpecifyItemList, $1); }
   | specify_item_list specify_item
     { $$ = ExtendNode($1, $2); }
   ;
 specify_item_list_opt
   : /* empty */
-    { $$ = nullptr; }
+    { $$ = MakeTaggedNode(N::kSpecifyItemList); }
   | specify_item_list
     { $$ = move($1); }
   ;

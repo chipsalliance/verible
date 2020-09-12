@@ -20,7 +20,7 @@ _linter_test_configs = [
     ("always-comb-blocking", "always_comb_blocking", True),
     ("always-ff-non-blocking", "always_ff_non_blocking", True),
     ("case-missing-default", "case_missing_default", True),
-    ("constraint-name-style", "constraint_name_style", False),
+    ("constraint-name-style", "constraint_name_style", True),
     ("endif-comment", "endif_comment", False),
     ("enum-name-style", "enum_name_style", True),
     ("explicit-function-lifetime", "explicit_function_lifetime", True),
@@ -223,6 +223,15 @@ cc_binary(
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/strings",
     ],
+)
+
+sh_test(
+    name = "tool_test",
+    size = "small",
+    srcs = ["lint_tool_test.sh"],
+    args = ["$(location :verible-verilog-lint)"],
+    data = [":verible-verilog-lint"],
+    deps = [],
 )
 
 # For a limited time, we provide the old name to be compatible with the

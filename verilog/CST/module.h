@@ -69,10 +69,24 @@ const verible::TokenInfo& GetModuleNameToken(const verible::Symbol&);
 // Extract the subnode of an interface declaration that is the module name.
 const verible::TokenInfo& GetInterfaceNameToken(const verible::Symbol&);
 
-// Returns the node spanning the module's port declarations list, or nullptr.
+// Returns the node spanning the module's port paren group, or nullptr.
 // e.g. from "module foo(input x); endmodule", this returns the node that spans
 // "(input x)", including parentheses.
+const verible::SyntaxTreeNode* GetModulePortParenGroup(
+    const verible::Symbol& module_declaration);
+
+// Returns the node spanning module's port declarations list, or nullptr.
+// e.g. from "module foo(input x); endmodule", this returns the node that spans
+// PortDescriptionList
 const verible::SyntaxTreeNode* GetModulePortDeclarationList(
+    const verible::Symbol& module_declaration);
+
+// Returns module name token after endmodule.
+// e.g. from "module foo(); endmodule: foo" returns the second "foo".
+const verible::TokenInfo* GetModuleEndLabel(const verible::Symbol&);
+
+// Returns the node spanning module's Item list.
+const verible::SyntaxTreeNode& GetModuleItemList(
     const verible::Symbol& module_declaration);
 
 }  // namespace verilog

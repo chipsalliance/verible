@@ -1347,6 +1347,8 @@ cc_library(
         "//common/text:token_info",
         "//verilog/analysis:descriptions",
         "//verilog/analysis:lint_rule_registry",
+        "//verilog/parser:verilog_lexer",
+        "//verilog/parser:verilog_token_classifications",
         "//verilog/parser:verilog_token_enum",
         "@com_google_absl//absl/strings",
     ],

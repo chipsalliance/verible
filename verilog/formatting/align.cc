@@ -14,6 +14,7 @@
 
 #include "verilog/formatting/align.h"
 
+#include <algorithm>
 #include <functional>
 #include <iostream>
 #include <iterator>
@@ -25,11 +26,14 @@
 #include "common/formatting/unwrapped_line.h"
 #include "common/text/concrete_syntax_leaf.h"
 #include "common/text/concrete_syntax_tree.h"
+#include "common/text/symbol.h"
 #include "common/text/token_info.h"
 #include "common/text/tree_utils.h"
 #include "common/util/casts.h"
 #include "common/util/logging.h"
 #include "common/util/value_saver.h"
+#include "verilog/CST/context_functions.h"
+#include "verilog/CST/declaration.h"
 #include "verilog/CST/verilog_nonterminals.h"
 #include "verilog/parser/verilog_token_classifications.h"
 #include "verilog/parser/verilog_token_enum.h"
@@ -37,8 +41,11 @@
 namespace verilog {
 namespace formatter {
 
+using verible::AlignablePartitionGroup;
 using verible::AlignmentCellScannerGenerator;
 using verible::AlignmentColumnProperties;
+using verible::AlignmentGroupAction;
+using verible::AlignmentPolicy;
 using verible::ByteOffsetSet;
 using verible::ColumnSchemaScanner;
 using verible::down_cast;
@@ -49,6 +56,7 @@ using verible::Symbol;
 using verible::SyntaxTreeLeaf;
 using verible::SyntaxTreeNode;
 using verible::SyntaxTreePath;
+using verible::TokenPartitionRange;
 using verible::TokenPartitionTree;
 using verible::TreeContextPathVisitor;
 using verible::TreePathFormatter;
@@ -59,11 +67,10 @@ static const AlignmentColumnProperties FlushRight(false);
 
 template <class T>
 static bool TokensAreAllComments(const T& tokens) {
-  return std::find_if(
-             tokens.begin(), tokens.end(),
-             [](const typename T::value_type& token) {
-               return !IsComment(verilog_tokentype(token.token->token_enum()));
-             }) == tokens.end();
+  return std::all_of(
+      tokens.begin(), tokens.end(), [](const typename T::value_type& token) {
+        return IsComment(verilog_tokentype(token.token->token_enum()));
+      });
 }
 
 template <class T>
@@ -74,7 +81,7 @@ static bool TokensHaveParenthesis(const T& tokens) {
                      });
 }
 
-static bool IgnorePortDeclarationPartition(
+static bool IgnoreWithinPortDeclarationPartitionGroup(
     const TokenPartitionTree& partition) {
   const auto& uwline = partition.Value();
   const auto token_range = uwline.TokensRange();
@@ -94,7 +101,7 @@ static bool IgnorePortDeclarationPartition(
   return false;
 }
 
-static bool IgnoreActualNamedPortPartition(
+static bool IgnoreCommentsAndPreprocessingDirectives(
     const TokenPartitionTree& partition) {
   const auto& uwline = partition.Value();
   const auto token_range = uwline.TokensRange();
@@ -105,6 +112,26 @@ static bool IgnoreActualNamedPortPartition(
   // ignore partitions belonging to preprocessing directives
   if (IsPreprocessorKeyword(verilog_tokentype(token_range.front().TokenEnum())))
     return true;
+
+  return false;
+}
+
+static bool IgnoreWithinActualNamedParameterPartitionGroup(
+    const TokenPartitionTree& partition) {
+  if (IgnoreCommentsAndPreprocessingDirectives(partition)) return true;
+
+  // ignore everything that isn't passing a parameter by name
+  const auto& uwline = partition.Value();
+  return !verible::SymbolCastToNode(*uwline.Origin())
+              .MatchesTag(NodeEnum::kParamByName);
+}
+
+static bool IgnoreWithinActualNamedPortPartitionGroup(
+    const TokenPartitionTree& partition) {
+  if (IgnoreCommentsAndPreprocessingDirectives(partition)) return true;
+
+  const auto& uwline = partition.Value();
+  const auto token_range = uwline.TokensRange();
 
   // ignore wildcard connections .*
   if (verilog_tokentype(token_range.front().TokenEnum()) ==
@@ -128,15 +155,54 @@ static bool IgnoreActualNamedPortPartition(
   return false;
 }
 
-class ActualNamedPortColumnSchemaScanner : public ColumnSchemaScanner {
+// This class marks up token-subranges in named parameter assignments for
+// alignment. e.g. ".parameter_name(value_expression)"
+class ActualNamedParameterColumnSchemaScanner : public ColumnSchemaScanner {
  public:
-  ActualNamedPortColumnSchemaScanner() = default;
+  ActualNamedParameterColumnSchemaScanner() = default;
+
   void Visit(const SyntaxTreeNode& node) override {
     auto tag = NodeEnum(node.Tag().tag);
     VLOG(2) << __FUNCTION__ << ", node: " << tag << " at "
             << TreePathFormatter(Path());
     switch (tag) {
+      case NodeEnum::kParamByName: {
+        // Always start first column right away
+        ReserveNewColumn(node, FlushLeft);
+        break;
+      }
       case NodeEnum::kParenGroup:
+        // Second column starts at the open parenthesis.
+        if (Context().DirectParentIs(NodeEnum::kParamByName)) {
+          ReserveNewColumn(node, FlushLeft);
+        }
+        break;
+      default:
+        break;
+    }
+    TreeContextPathVisitor::Visit(node);
+    VLOG(2) << __FUNCTION__ << ", leaving node: " << tag;
+  }
+};
+
+// This class marks up token-subranges in named port connections for alignment.
+// e.g. ".port_name(net_name)"
+class ActualNamedPortColumnSchemaScanner : public ColumnSchemaScanner {
+ public:
+  ActualNamedPortColumnSchemaScanner() = default;
+
+  void Visit(const SyntaxTreeNode& node) override {
+    auto tag = NodeEnum(node.Tag().tag);
+    VLOG(2) << __FUNCTION__ << ", node: " << tag << " at "
+            << TreePathFormatter(Path());
+    switch (tag) {
+      case NodeEnum::kActualNamedPort: {
+        // Always start first column right away
+        ReserveNewColumn(node, FlushLeft);
+        break;
+      }
+      case NodeEnum::kParenGroup:
+        // Second column starts at the open parenthesis.
         if (Context().DirectParentIs(NodeEnum::kActualNamedPort)) {
           ReserveNewColumn(node, FlushLeft);
         }
@@ -147,25 +213,10 @@ class ActualNamedPortColumnSchemaScanner : public ColumnSchemaScanner {
     TreeContextPathVisitor::Visit(node);
     VLOG(2) << __FUNCTION__ << ", leaving node: " << tag;
   }
-
-  void Visit(const SyntaxTreeLeaf& leaf) override {
-    VLOG(2) << __FUNCTION__ << ", leaf: " << leaf.get() << " at "
-            << TreePathFormatter(Path());
-    const int tag = leaf.get().token_enum();
-    switch (tag) {
-      case verilog_tokentype::SymbolIdentifier:
-        if (Context().DirectParentIs(NodeEnum::kActualNamedPort)) {
-          ReserveNewColumn(leaf, FlushLeft);
-        }
-        break;
-      default:
-        break;
-    }
-
-    VLOG(2) << __FUNCTION__ << ", leaving leaf: " << leaf.get();
-  }
 };
 
+// This class marks up token-subranges in port declarations for alignment.
+// e.g. "input wire clk,"
 class PortDeclarationColumnSchemaScanner : public ColumnSchemaScanner {
  public:
   PortDeclarationColumnSchemaScanner() = default;
@@ -264,6 +315,169 @@ class PortDeclarationColumnSchemaScanner : public ColumnSchemaScanner {
       }
       // For now, treat [...] as a single column per dimension.
       case '[': {
+        if (verilog::analysis::ContextIsInsideDeclarationDimensions(
+                Context())) {
+          // FlushLeft vs. Right doesn't matter, this is a single character.
+          ReserveNewColumn(leaf, FlushLeft);
+          new_column_after_open_bracket_ = true;
+        }
+        break;
+      }
+      case ']': {
+        if (verilog::analysis::ContextIsInsideDeclarationDimensions(
+                Context())) {
+          // FlushLeft vs. Right doesn't matter, this is a single character.
+          ReserveNewColumn(leaf, FlushLeft);
+        }
+        break;
+      }
+      // TODO(b/70310743): Treat "[...:...]" as 5 columns.
+      // Treat "[...]" (scalar) as 3 columns.
+      // TODO(b/70310743): Treat the ... as a multi-column cell w.r.t.
+      // the 5-column range format.
+      default:
+        break;
+    }
+    VLOG(2) << __FUNCTION__ << ", leaving leaf: " << leaf.get();
+  }
+
+ private:
+  // Set this to force the next syntax tree node/leaf to start a new column.
+  // This is useful for aligning after punctation marks.
+  bool new_column_after_open_bracket_ = false;
+};
+
+static bool IsAlignableDeclaration(const SyntaxTreeNode& node) {
+  // A data/net/variable declaration is alignable if:
+  // * it is not a module instance
+  // * it declares exactly one identifier
+  switch (static_cast<NodeEnum>(node.Tag().tag)) {
+    case NodeEnum::kDataDeclaration: {
+      const SyntaxTreeNode& instances(GetInstanceListFromDataDeclaration(node));
+      if (FindAllRegisterVariables(instances).size() > 1) return false;
+      if (!FindAllGateInstances(instances).empty()) return false;
+      return true;
+    }
+    case NodeEnum::kNetDeclaration: {
+      if (FindAllNetVariables(node).size() > 1) return false;
+      return true;
+    }
+    default:
+      return false;
+  }
+}
+
+static std::vector<TokenPartitionRange> GetConsecutiveDataDeclarationGroups(
+    const TokenPartitionRange& partitions) {
+  VLOG(2) << __FUNCTION__;
+  return GetPartitionAlignmentSubranges(
+      partitions,  //
+      [](const TokenPartitionTree& partition) -> AlignmentGroupAction {
+        const Symbol* origin = partition.Value().Origin();
+        if (origin == nullptr) return AlignmentGroupAction::kIgnore;
+        const verible::SymbolTag symbol_tag = origin->Tag();
+        if (symbol_tag.kind != verible::SymbolKind::kNode)
+          return AlignmentGroupAction::kIgnore;
+        const SyntaxTreeNode& node = verible::SymbolCastToNode(*origin);
+        return IsAlignableDeclaration(node) ? AlignmentGroupAction::kMatch
+                                            : AlignmentGroupAction::kNoMatch;
+      });
+}
+
+// This class marks up token-subranges in data declarations for alignment.
+// e.g. "foo_pkg::bar_t [3:0] some_values;"
+// Much of the implementation of this scanner was based on
+// PortDeclarationColumnSchemaScanner.
+// Differences:
+//   * here, there are no port directions to worry about.
+//   * need to handle both kDataDeclaration and kNetDeclaration.
+// TODO(fangism): refactor out common logic
+class DataDeclarationColumnSchemaScanner : public ColumnSchemaScanner {
+ public:
+  DataDeclarationColumnSchemaScanner() = default;
+
+  void Visit(const SyntaxTreeNode& node) override {
+    auto tag = NodeEnum(node.Tag().tag);
+    VLOG(2) << __FUNCTION__ << ", node: " << tag << " at "
+            << TreePathFormatter(Path());
+    if (new_column_after_open_bracket_) {
+      ReserveNewColumn(node, FlushRight);
+      new_column_after_open_bracket_ = false;
+      TreeContextPathVisitor::Visit(node);
+      return;
+    }
+    switch (tag) {
+      case NodeEnum::kDataDeclaration:
+      case NodeEnum::kNetDeclaration: {
+        // Don't wait for the type node, just start the first column right away.
+        ReserveNewColumn(node, FlushLeft);
+        break;
+      }
+      case NodeEnum::kPackedDimensions: {
+        // Kludge: kPackedDimensions can appear in paths:
+        //   [1,0,0,2] in kDataDeclaration
+        //   [1,0,1] in kNetDeclaration
+        // but we want them to line up in the same column.  Make it so.
+        if (current_path_ == SyntaxTreePath{1, 0, 0, 2}) {
+          SyntaxTreePath new_path{1, 0, 1};
+          const ValueSaver<SyntaxTreePath> path_saver(&current_path_, new_path);
+          TreeContextPathVisitor::Visit(node);
+          return;
+        }
+        break;
+      }
+      case NodeEnum::kDimensionRange:
+      case NodeEnum::kDimensionScalar:
+      case NodeEnum::kDimensionSlice:
+      case NodeEnum::kDimensionAssociativeType: {
+        // all of these cases cover packed and unpacked dimensions
+        ReserveNewColumn(node, FlushLeft);
+        break;
+      }
+      case NodeEnum::kRegisterVariable: {
+        // at path [1,1,0] in kDataDeclaration
+        // contains the declared id
+        ReserveNewColumn(node, FlushLeft);
+        break;
+      }
+      case NodeEnum::kNetVariable: {
+        // at path [2,0] in kNetDeclaration
+        // contains the declared id
+        // make this fit with kRegisterVariable
+        if (current_path_ == SyntaxTreePath{2, 0}) {
+          SyntaxTreePath new_path{1, 1, 0};
+          const ValueSaver<SyntaxTreePath> path_saver(&current_path_, new_path);
+          ReserveNewColumn(node, FlushLeft);
+          TreeContextPathVisitor::Visit(node);
+          return;
+        }
+        break;
+      }
+      case NodeEnum::kExpression:
+        // optional: Early termination of tree traversal.
+        // This also helps reduce noise during debugging of this visitor.
+        return;
+      // case NodeEnum::kConstRef: possible in CST, but should be
+      // syntactically illegal in module ports context.
+      default:
+        break;
+    }
+    TreeContextPathVisitor::Visit(node);
+    VLOG(2) << "end of " << __FUNCTION__ << ", node: " << tag;
+  }
+
+  void Visit(const SyntaxTreeLeaf& leaf) override {
+    VLOG(2) << __FUNCTION__ << ", leaf: " << leaf.get() << " at "
+            << TreePathFormatter(Path());
+    if (new_column_after_open_bracket_) {
+      ReserveNewColumn(leaf, FlushRight);
+      new_column_after_open_bracket_ = false;
+      return;
+    }
+    const int tag = leaf.get().token_enum();
+    switch (tag) {
+      // For now, treat [...] as a single column per dimension.
+      case '[': {
         if (ContextAtDeclarationDimensions()) {
           // FlushLeft vs. Right doesn't matter, this is a single character.
           ReserveNewColumn(leaf, FlushLeft);
@@ -303,25 +517,240 @@ class PortDeclarationColumnSchemaScanner : public ColumnSchemaScanner {
   bool new_column_after_open_bracket_ = false;
 };
 
+// This class marks up token-subranges in class member variable (data
+// declarations) for alignment. e.g. "const int [3:0] member_name;" For now,
+// re-use the same column scanner as data/variable/net declarations.
+class ClassPropertyColumnSchemaScanner : public ColumnSchemaScanner {
+ public:
+  ClassPropertyColumnSchemaScanner() = default;
+
+  void Visit(const SyntaxTreeNode& node) override {
+    auto tag = NodeEnum(node.Tag().tag);
+    VLOG(2) << __FUNCTION__ << ", node: " << tag << " at "
+            << TreePathFormatter(Path());
+    switch (tag) {
+      case NodeEnum::kDataDeclaration:
+      case NodeEnum::kVariableDeclarationAssignment: {
+        // Don't wait for the type node, just start the first column right away.
+        ReserveNewColumn(node, FlushLeft);
+        break;
+      }
+      default:
+        break;
+    }
+    TreeContextPathVisitor::Visit(node);
+    VLOG(2) << "end of " << __FUNCTION__ << ", node: " << tag;
+  }
+
+  void Visit(const SyntaxTreeLeaf& leaf) override {
+    VLOG(2) << __FUNCTION__ << ", leaf: " << leaf.get() << " at "
+            << TreePathFormatter(Path());
+    const int tag = leaf.get().token_enum();
+    switch (tag) {
+      case '=':
+        ReserveNewColumn(leaf, FlushLeft);
+        break;
+      default:
+        break;
+    }
+    VLOG(2) << __FUNCTION__ << ", leaving leaf: " << leaf.get();
+  }
+};
+
+// This class marks up token-subranges in formal parameter declarations for
+// alignment.
+// e.g. "localparam int Width = 5;"
+class ParameterDeclarationColumnSchemaScanner : public ColumnSchemaScanner {
+ public:
+  ParameterDeclarationColumnSchemaScanner() = default;
+
+  void Visit(const SyntaxTreeNode& node) override {
+    auto tag = NodeEnum(node.Tag().tag);
+    VLOG(2) << __FUNCTION__ << ", node: " << tag << " at "
+            << TreePathFormatter(Path());
+    if (new_column_after_open_bracket_) {
+      ReserveNewColumn(node, FlushRight);
+      new_column_after_open_bracket_ = false;
+      TreeContextPathVisitor::Visit(node);
+      return;
+    }
+
+    switch (tag) {
+      case NodeEnum::kTypeInfo: {
+        SyntaxTreePath new_path{1};
+        const ValueSaver<SyntaxTreePath> path_saver(&current_path_, new_path);
+        ReserveNewColumn(node, FlushLeft);
+        break;
+      }
+
+      case NodeEnum::kTrailingAssign: {
+        ReserveNewColumn(node, FlushLeft);
+        break;
+      }
+
+      case NodeEnum::kUnqualifiedId: {
+        if (Context().DirectParentIs(NodeEnum::kParamType)) {
+          ReserveNewColumn(node, FlushLeft);
+        }
+        break;
+      }
+      default:
+        break;
+    }
+
+    // recursive visitation
+    TreeContextPathVisitor::Visit(node);
+    VLOG(2) << __FUNCTION__ << ", leaving node: " << tag;
+  }
+
+  void Visit(const SyntaxTreeLeaf& leaf) override {
+    VLOG(2) << __FUNCTION__ << ", leaf: " << leaf.get() << " at "
+            << TreePathFormatter(Path());
+
+    if (new_column_after_open_bracket_) {
+      ReserveNewColumn(leaf, FlushRight);
+      new_column_after_open_bracket_ = false;
+      return;
+    }
+
+    const int tag = leaf.get().token_enum();
+    switch (tag) {
+      // Align keywords 'parameter', 'localparam' and 'type' under the same
+      // column.
+      case verilog_tokentype::TK_parameter:
+      case verilog_tokentype::TK_localparam: {
+        ReserveNewColumn(leaf, FlushLeft);
+        break;
+      }
+
+      case verilog_tokentype::TK_type: {
+        if (Context().DirectParentIs(NodeEnum::kParamDeclaration)) {
+          ReserveNewColumn(leaf, FlushLeft);
+        }
+        break;
+      }
+
+      // Sometimes the parameter indentifier which is of token SymbolIdentifier
+      // can appear at different paths depending on the parameter type. Make
+      // them aligned so they fall under the same column.
+      case verilog_tokentype::SymbolIdentifier: {
+        if (current_path_ == SyntaxTreePath{2, 0}) {
+          SyntaxTreePath new_path{1, 2};
+          const ValueSaver<SyntaxTreePath> path_saver(&current_path_, new_path);
+          ReserveNewColumn(leaf, FlushLeft);
+          return;
+        }
+
+        if (Context().DirectParentIs(NodeEnum::kParamType))
+          ReserveNewColumn(leaf, FlushLeft);
+        break;
+      }
+
+      // '=' is another column where things should be aligned. But type
+      // declarations and localparam cause '=' to appear under two different
+      // paths in CST. Align them.
+      case '=': {
+        if (current_path_ == SyntaxTreePath{2, 1}) {
+          SyntaxTreePath new_path{2};
+          const ValueSaver<SyntaxTreePath> path_saver(&current_path_, new_path);
+          ReserveNewColumn(leaf, FlushLeft);
+        }
+        break;
+      }
+
+      // Align packed and unpacked dimenssions
+      case '[': {
+        if (verilog::analysis::ContextIsInsideDeclarationDimensions(
+                Context()) &&
+            !Context().IsInside(NodeEnum::kActualParameterList)) {
+          // FlushLeft vs. Right doesn't matter, this is a single character.
+          ReserveNewColumn(leaf, FlushLeft);
+          new_column_after_open_bracket_ = true;
+        }
+        break;
+      }
+      case ']': {
+        if (verilog::analysis::ContextIsInsideDeclarationDimensions(
+                Context()) &&
+            !Context().IsInside(NodeEnum::kActualParameterList)) {
+          // FlushLeft vs. Right doesn't matter, this is a single character.
+          ReserveNewColumn(leaf, FlushLeft);
+        }
+        break;
+      }
+
+      default:
+        break;
+    }
+    VLOG(2) << __FUNCTION__ << ", leaving leaf: " << leaf.get();
+  }
+
+ private:
+  bool new_column_after_open_bracket_ = false;
+};
+
 static const verible::AlignedFormattingHandler kPortDeclarationAligner{
-    .extract_alignment_groups = &verible::GetSubpartitionsBetweenBlankLines,
-    .ignore_partition_predicate = &IgnorePortDeclarationPartition,
+    .extract_alignment_groups = verible::ExtractAlignmentGroupsAdapter(
+        &verible::GetSubpartitionsBetweenBlankLines,
+        &IgnoreWithinPortDeclarationPartitionGroup),
     .alignment_cell_scanner =
         AlignmentCellScannerGenerator<PortDeclarationColumnSchemaScanner>(),
 };
 
+static const verible::AlignedFormattingHandler kActualNamedParameterAligner{
+    .extract_alignment_groups = verible::ExtractAlignmentGroupsAdapter(
+        &verible::GetSubpartitionsBetweenBlankLines,
+        &IgnoreWithinActualNamedParameterPartitionGroup),
+    .alignment_cell_scanner = AlignmentCellScannerGenerator<
+        ActualNamedParameterColumnSchemaScanner>(),
+};
+
 static const verible::AlignedFormattingHandler kActualNamedPortAligner{
-    .extract_alignment_groups = &verible::GetSubpartitionsBetweenBlankLines,
-    .ignore_partition_predicate = &IgnoreActualNamedPortPartition,
+    .extract_alignment_groups = verible::ExtractAlignmentGroupsAdapter(
+        &verible::GetSubpartitionsBetweenBlankLines,
+        &IgnoreWithinActualNamedPortPartitionGroup),
     .alignment_cell_scanner =
         AlignmentCellScannerGenerator<ActualNamedPortColumnSchemaScanner>(),
+};
+
+static const verible::AlignedFormattingHandler kDataDeclarationAligner{
+    .extract_alignment_groups = verible::ExtractAlignmentGroupsAdapter(
+        &GetConsecutiveDataDeclarationGroups,
+        &IgnoreCommentsAndPreprocessingDirectives),
+    .alignment_cell_scanner =
+        AlignmentCellScannerGenerator<DataDeclarationColumnSchemaScanner>(),
+};
+
+static const verible::AlignedFormattingHandler kClassPropertyAligner{
+    .extract_alignment_groups = verible::ExtractAlignmentGroupsAdapter(
+        &GetConsecutiveDataDeclarationGroups,
+        &IgnoreCommentsAndPreprocessingDirectives),
+    .alignment_cell_scanner =
+        AlignmentCellScannerGenerator<ClassPropertyColumnSchemaScanner>(),
+};
+
+struct AlignedFormattingConfiguration {
+  // Set of functions for driving specific code aligners.
+  verible::AlignedFormattingHandler handler;
+
+  // This function extracts a specific alignment policy from the
+  // Verilog-specific style structure.
+  std::function<AlignmentPolicy(const FormatStyle&)> policy;
+};
+
+static const verible::AlignedFormattingHandler kParameterDeclarationAligner{
+    .extract_alignment_groups = verible::ExtractAlignmentGroupsAdapter(
+        &verible::GetSubpartitionsBetweenBlankLines,
+        &IgnoreWithinPortDeclarationPartitionGroup),
+    .alignment_cell_scanner = AlignmentCellScannerGenerator<
+        ParameterDeclarationColumnSchemaScanner>(),
 };
 
 void TabularAlignTokenPartitions(TokenPartitionTree* partition_ptr,
                                  std::vector<PreFormatToken>* ftokens,
                                  absl::string_view full_text,
                                  const ByteOffsetSet& disabled_byte_ranges,
-                                 int column_limit) {
+                                 const FormatStyle& style) {
   VLOG(1) << __FUNCTION__;
   auto& partition = *partition_ptr;
   auto& uwline = partition.Value();
@@ -333,15 +762,45 @@ void TabularAlignTokenPartitions(TokenPartitionTree* partition_ptr,
   if (node == nullptr) return;
   // Dispatch aligning function based on syntax tree node type.
 
-  static const auto* kAlignHandlers =
-      new std::map<NodeEnum, verible::AlignedFormattingHandler>{
-          {NodeEnum::kPortDeclarationList, kPortDeclarationAligner},
-          {NodeEnum::kPortActualList, kActualNamedPortAligner},
+  static const auto* const kAlignHandlers =
+      new std::map<NodeEnum, AlignedFormattingConfiguration>{
+          {NodeEnum::kPortDeclarationList,
+           {kPortDeclarationAligner,
+            [](const FormatStyle& vstyle) {
+              return vstyle.port_declarations_alignment;
+            }}},
+          {NodeEnum::kActualParameterByNameList,
+           {kActualNamedParameterAligner,
+            [](const FormatStyle& vstyle) {
+              return vstyle.named_parameter_alignment;
+            }}},
+          {NodeEnum::kPortActualList,
+           {kActualNamedPortAligner,
+            [](const FormatStyle& vstyle) {
+              return vstyle.named_port_alignment;
+            }}},
+          {NodeEnum::kModuleItemList,
+           {kDataDeclarationAligner,
+            [](const FormatStyle& vstyle) {
+              return vstyle.module_net_variable_alignment;
+            }}},
+          {NodeEnum::kFormalParameterList,
+           {kParameterDeclarationAligner,
+            [](const FormatStyle& vstyle) {
+              return vstyle.formal_parameters_alignment;
+            }}},
+          {NodeEnum::kClassItems,
+           {kClassPropertyAligner,
+            [](const FormatStyle& vstyle) {
+              return vstyle.class_member_variable_alignment;
+            }}},
       };
   const auto handler_iter = kAlignHandlers->find(NodeEnum(node->Tag().tag));
   if (handler_iter == kAlignHandlers->end()) return;
-  verible::TabularAlignTokens(partition_ptr, handler_iter->second, ftokens,
-                              full_text, disabled_byte_ranges, column_limit);
+  verible::TabularAlignTokens(partition_ptr, handler_iter->second.handler,
+                              ftokens, full_text, disabled_byte_ranges,
+                              handler_iter->second.policy(style),
+                              style.column_limit);
   VLOG(1) << "end of " << __FUNCTION__;
 }
 

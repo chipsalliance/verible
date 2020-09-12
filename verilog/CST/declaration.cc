@@ -25,6 +25,7 @@
 #include "common/text/token_info.h"
 #include "common/text/tree_utils.h"
 #include "common/util/container_util.h"
+#include "verilog/CST/identifier.h"
 #include "verilog/CST/verilog_matchers.h"
 #include "verilog/CST/verilog_nonterminals.h"
 #include "verilog/parser/verilog_token_enum.h"
@@ -100,6 +101,54 @@ const SyntaxTreeNode& GetInstanceListFromDataDeclaration(
   return GetSubtreeAsNode(
       GetInstantiationBaseFromDataDeclaration(data_declaration),
       NodeEnum::kInstantiationBase, 1);
+}
+
+const SyntaxTreeNode& GetReferenceCallBaseFromInstantiationType(
+    const Symbol& instantiation_type) {
+  return GetSubtreeAsNode(instantiation_type, NodeEnum::kInstantiationType, 0);
+}
+
+const SyntaxTreeNode& GetReferenceFromReferenceCallBase(
+    const Symbol& reference_call_base) {
+  return GetSubtreeAsNode(reference_call_base, NodeEnum::kReferenceCallBase, 0);
+}
+
+const SyntaxTreeNode& GetLocalRootFromReference(const Symbol& reference) {
+  return GetSubtreeAsNode(reference, NodeEnum::kReference, 0);
+}
+
+const SyntaxTreeNode& GetUnqualifiedIdFromLocalRoot(const Symbol& local_root) {
+  return GetSubtreeAsNode(local_root, NodeEnum::kLocalRoot, 0);
+}
+
+const verible::TokenInfo& GetTypeTokenInfoFromDataDeclaration(
+    const verible::Symbol& data_declaration) {
+  const SyntaxTreeNode& instantiation_type =
+      GetTypeOfDataDeclaration(data_declaration);
+  const SyntaxTreeNode& reference_call_base =
+      GetReferenceCallBaseFromInstantiationType(instantiation_type);
+  const SyntaxTreeNode& reference =
+      GetReferenceFromReferenceCallBase(reference_call_base);
+  const SyntaxTreeNode& local_root = GetLocalRootFromReference(reference);
+  const SyntaxTreeNode& unqualified_id =
+      GetUnqualifiedIdFromLocalRoot(local_root);
+  const verible::SyntaxTreeLeaf* instance_symbol_identifier =
+      GetIdentifier(unqualified_id);
+  return instance_symbol_identifier->get();
+}
+
+const verible::TokenInfo& GetModuleInstanceNameTokenInfoFromGateInstance(
+    const verible::Symbol& gate_instance) {
+  const verible::SyntaxTreeLeaf& instance_name =
+      GetSubtreeAsLeaf(gate_instance, NodeEnum::kGateInstance, 0);
+  return instance_name.get();
+}
+
+const verible::TokenInfo& GetInstanceNameTokenInfoFromRegisterVariable(
+    const verible::Symbol& regiseter_variable) {
+  const verible::SyntaxTreeLeaf& instance_name =
+      GetSubtreeAsLeaf(regiseter_variable, NodeEnum::kRegisterVariable, 0);
+  return instance_name.get();
 }
 
 }  // namespace verilog

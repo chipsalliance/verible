@@ -8,6 +8,7 @@ package(
     default_visibility = [
         "//verilog/CST:__subpackages__",
         "//verilog/analysis:__subpackages__",
+        "//verilog/tools/kythe:__pkg__",
     ],
 )
 
@@ -74,6 +75,19 @@ cc_library(
         "//common/util:interval_set",
         "//common/util:logging",
         "@com_google_absl//absl/strings",
+    ],
+)
+
+cc_test(
+    name = "command_file_lexer_test",
+    size = "small",
+    srcs = ["command_file_lexer_test.cc"],
+    deps = [
+        ":command_file_lexer",
+        "//common/lexer:lexer_test_util",
+        "//common/text:token_info",
+        "@com_google_absl//absl/strings",
+        "@com_google_googletest//:gtest_main",
     ],
 )
 

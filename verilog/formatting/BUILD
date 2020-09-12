@@ -15,6 +15,7 @@ cc_library(
     srcs = ["align.cc"],
     hdrs = ["align.h"],
     deps = [
+        ":format_style",
         "//common/formatting:align",
         "//common/formatting:format_token",
         "//common/formatting:token_partition_tree",
@@ -22,11 +23,14 @@ cc_library(
         "//common/strings:position",
         "//common/text:concrete_syntax_leaf",
         "//common/text:concrete_syntax_tree",
+        "//common/text:symbol",
         "//common/text:token_info",
         "//common/text:tree_utils",
         "//common/util:casts",
         "//common/util:logging",
         "//common/util:value_saver",
+        "//verilog/CST:context_functions",
+        "//verilog/CST:declaration",
         "//verilog/CST:verilog_nonterminals",
         "//verilog/parser:verilog_token_classifications",
         "//verilog/parser:verilog_token_enum",
@@ -39,6 +43,7 @@ cc_library(
     srcs = ["tree_unwrapper.cc"],
     hdrs = ["tree_unwrapper.h"],
     deps = [
+        ":format_style",
         ":verilog_token",
         "//common/formatting:basic_format_style",
         "//common/formatting:format_token",
@@ -132,6 +137,8 @@ cc_library(
         "//common/formatting:line_wrap_searcher",
         "//common/formatting:token_partition_tree",
         "//common/formatting:unwrapped_line",
+        "//common/formatting:verification",
+        "//common/strings:diff",
         "//common/strings:line_column_map",
         "//common/strings:position",
         "//common/strings:range",
@@ -142,6 +149,7 @@ cc_library(
         "//common/util:interval",
         "//common/util:iterator_range",
         "//common/util:logging",
+        "//common/util:process",
         "//common/util:range",
         "//common/util:spacer",
         "//common/util:vector_tree",
@@ -160,6 +168,7 @@ cc_test(
     deps = [
         ":format_style",
         ":formatter",
+        "//common/formatting:align",
         "//common/strings:position",
         "//common/text:text_structure",
         "//common/util:logging",
@@ -220,22 +229,11 @@ cc_test(
 
 cc_library(
     name = "format_style",
-    srcs = ["format_style.cc"],
     hdrs = ["format_style.h"],
     deps = [
+        "//common/formatting:align",
         "//common/formatting:basic_format_style",
-        "//common/util:enum_flags",
         "@com_google_absl//absl/strings",
-    ],
-)
-
-cc_test(
-    name = "format_style_test",
-    srcs = ["format_style_test.cc"],
-    deps = [
-        ":format_style",
-        "//common/util:enum_flags_test_util",
-        "@com_google_googletest//:gtest_main",
     ],
 )
 

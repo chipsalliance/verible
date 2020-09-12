@@ -10,6 +10,7 @@ package(
         "//verilog/analysis:__subpackages__",
         "//verilog/formatting:__subpackages__",
         "//verilog/parser:__subpackages__",
+        "//verilog/tools/kythe:__pkg__",
         "//verilog/tools/syntax:__pkg__",  # for printing
     ],
 )
@@ -101,6 +102,21 @@ cc_library(
 )
 
 cc_library(
+    name = "match_test_utils",
+    testonly = 1,
+    srcs = ["match_test_utils.cc"],
+    hdrs = ["match_test_utils.h"],
+    deps = [
+        "//common/analysis:syntax_tree_search",
+        "//common/analysis:syntax_tree_search_test_utils",
+        "//common/text:text_structure",
+        "//verilog/analysis:verilog_analyzer",
+        "@com_google_absl//absl/strings",
+        "@com_google_googletest//:gtest",
+    ],
+)
+
+cc_library(
     name = "constraints",
     srcs = ["constraints.cc"],
     hdrs = ["constraints.h"],
@@ -179,6 +195,7 @@ cc_library(
     srcs = ["declaration.cc"],
     hdrs = ["declaration.h"],
     deps = [
+        ":identifier",
         ":verilog_matchers",
         ":verilog_nonterminals",
         "//common/analysis:syntax_tree_search",
@@ -198,12 +215,11 @@ cc_test(
     srcs = ["declaration_test.cc"],
     deps = [
         ":declaration",
+        ":match_test_utils",
         "//common/analysis:syntax_tree_search",
         "//common/analysis:syntax_tree_search_test_utils",
-        "//common/text:token_info_test_util",
+        "//common/text:text_structure",
         "//common/text:tree_utils",
-        "//common/util:range",
-        "//verilog/analysis:verilog_analyzer",
         "@com_google_googletest//:gtest_main",
     ],
 )
@@ -279,6 +295,7 @@ cc_library(
     srcs = ["functions.cc"],
     hdrs = ["functions.h"],
     deps = [
+        ":identifier",
         ":verilog_matchers",  # fixdeps: keep
         ":verilog_nonterminals",
         ":verilog_treebuilder_utils",
@@ -298,6 +315,7 @@ cc_test(
         ":functions",
         ":identifier",
         "//common/analysis:syntax_tree_search",
+        "//common/analysis:syntax_tree_search_test_utils",
         "//common/analysis/matcher:matcher_builders",
         "//common/text:concrete_syntax_leaf",
         "//common/text:concrete_syntax_tree",
@@ -341,6 +359,7 @@ cc_test(
     deps = [
         ":identifier",
         "//common/analysis:syntax_tree_search",
+        "//common/analysis:syntax_tree_search_test_utils",
         "//common/text:concrete_syntax_leaf",
         "//common/text:text_structure",
         "//common/text:token_info",
@@ -372,8 +391,46 @@ cc_test(
     deps = [
         ":macro",
         ":verilog_nonterminals",
+        "//common/analysis:syntax_tree_search",
+        "//common/analysis:syntax_tree_search_test_utils",
         "//common/text:text_structure",
         "//common/text:token_info_test_util",
+        "//common/util:range",
+        "//verilog/analysis:verilog_analyzer",
+        "@com_google_googletest//:gtest_main",
+    ],
+)
+
+cc_library(
+    name = "class",
+    srcs = ["class.cc"],
+    hdrs = ["class.h"],
+    deps = [
+        ":verilog_matchers",  # fixdeps: keep
+        "//common/analysis:syntax_tree_search",
+        "//common/analysis/matcher",
+        "//common/analysis/matcher:matcher_builders",
+        "//common/text:concrete_syntax_leaf",
+        "//common/text:concrete_syntax_tree",
+        "//common/text:symbol",
+        "//common/text:token_info",
+        "//common/text:tree_utils",
+    ],
+)
+
+cc_test(
+    name = "class_test",
+    srcs = ["class_test.cc"],
+    deps = [
+        ":class",
+        "//common/analysis:syntax_tree_search_test_utils",
+        "//common/text:concrete_syntax_tree",
+        "//common/text:symbol",
+        "//common/text:text_structure",
+        "//common/text:token_info",
+        "//common/text:token_info_test_util",
+        "//common/util:casts",
+        "//common/util:logging",
         "//common/util:range",
         "//verilog/analysis:verilog_analyzer",
         "@com_google_googletest//:gtest_main",
@@ -504,7 +561,10 @@ cc_test(
     name = "package_test",
     srcs = ["package_test.cc"],
     deps = [
+        ":match_test_utils",
         ":package",
+        "//common/analysis:syntax_tree_search",
+        "//common/analysis:syntax_tree_search_test_utils",
         "//common/text:concrete_syntax_tree",
         "//common/text:symbol",
         "//common/text:text_structure",
@@ -589,6 +649,7 @@ cc_test(
         ":type",
         ":verilog_nonterminals",
         "//common/analysis:syntax_tree_search",
+        "//common/analysis:syntax_tree_search_test_utils",
         "//common/text:concrete_syntax_leaf",
         "//common/text:syntax_tree_context",
         "//common/text:text_structure",
@@ -680,6 +741,7 @@ cc_library(
     srcs = ["tasks.cc"],
     hdrs = ["tasks.h"],
     deps = [
+        ":identifier",
         ":verilog_matchers",  # fixdeps: keep
         "//common/analysis:syntax_tree_search",
         "//common/analysis/matcher",
@@ -697,6 +759,7 @@ cc_test(
         ":identifier",
         ":tasks",
         "//common/analysis:syntax_tree_search",
+        "//common/analysis:syntax_tree_search_test_utils",
         "//common/text:concrete_syntax_leaf",
         "//common/text:concrete_syntax_tree",
         "//common/text:symbol",
@@ -811,7 +874,6 @@ cc_test(
         "//common/text:symbol",
         "//verilog/analysis:verilog_analyzer",
         "@com_google_absl//absl/memory",
-        "@com_google_absl//absl/status",
         "@com_google_googletest//:gtest_main",
     ],
 )

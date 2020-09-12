@@ -28,12 +28,15 @@
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 #include "absl/status/status.h"
+#include "common/analysis/syntax_tree_search.h"
+#include "common/analysis/syntax_tree_search_test_utils.h"
 #include "common/text/concrete_syntax_tree.h"
 #include "common/text/symbol.h"
 #include "common/text/text_structure.h"
 #include "common/text/token_info.h"
 #include "common/util/casts.h"
 #include "common/util/logging.h"
+#include "verilog/CST/match_test_utils.h"
 #include "verilog/analysis/verilog_analyzer.h"
 
 #include "common/analysis/syntax_tree_search.h"
@@ -52,6 +55,7 @@ namespace {
 using verible::down_cast;
 using verible::SyntaxTreeNode;
 using verible::SyntaxTreeSearchTestCase;
+using verible::TextStructureView;
 using verible::TreeSearchMatch;
 
 TEST(FindAllPackageDeclarationsTest, VariousTests) {
@@ -64,106 +68,104 @@ TEST(FindAllPackageDeclarationsTest, VariousTests) {
       {{kTag, "package p; \n endpackage"}, "\n"},
       {"\n", {kTag, "package p2; endpackage"}},
       {{kTag, "package p; \n endpackage"},
-      " task sleep; ",
-      " endtask\n",
-      " class myclass;\n",
-      "endclass\n",
-      {kTag, "package p; \n endpackage"}},
-      {{kTag, "package p1; \n endpackage"},"\n",
-        "module m; \n",
-        "const foo bar; \n",
-        "endmodule \n",
+       " task sleep; ",
+       " endtask\n",
+       " class myclass;\n",
+       "endclass\n",
+       {kTag, "package p; \n endpackage"}},
+      {{kTag, "package p1; \n endpackage"},
+       "\n",
+       "module m; \n",
+       "const foo bar; \n",
+       "endmodule \n",
        {kTag, "package p2; \n endpackage"}},
 
-      { "function f; ",
-        "endfunction ",
-        "module m; \n",
-        "const foo bar; \n",
-        "endmodule \n",
+      {"function f; ",
+       "endfunction ",
+       "module m; \n",
+       "const foo bar; \n",
+       "endmodule \n",
        {kTag, "package p; \n endpackage"}},
 
-        {"`include \"stuff.svh\"\n",
-        "`expand_stuff()\n",
-        "`expand_with_semi(name);\n",
-        "`expand_more(name)\n",
-        {kTag, "package p; \n endpackage"}},
+      {"`include \"stuff.svh\"\n",
+       "`expand_stuff()\n",
+       "`expand_with_semi(name);\n",
+       "`expand_more(name)\n",
+       {kTag, "package p; \n endpackage"}},
 
-        {{kTag, "package p; \n endpackage"},
-        "`undef FOOOBAR\n",
-        {kTag, "package p; \n endpackage"}},
+      {{kTag, "package p; \n endpackage"},
+       "`undef FOOOBAR\n",
+       {kTag, "package p; \n endpackage"}},
 
-        {{kTag, "package p; \n endpackage"},
-        " let Peace = Love;\n",
-        {kTag, "package p; \n endpackage"},
-        " let Five() = Two + Two + One;\n",
-        " let Min(a,b) = (a < b) ? a : b;\n",
-        " let Max(a,b=1) = (a > b) ? a : b;\n",
-        {kTag, "package p; \n endpackage"},
-        " let Max(untyped a, bit b=1) = (a > b) ? a : b;\n"},
+      {{kTag, "package p; \n endpackage"},
+       " let Peace = Love;\n",
+       {kTag, "package p; \n endpackage"},
+       " let Five() = Two + Two + One;\n",
+       " let Min(a,b) = (a < b) ? a : b;\n",
+       " let Max(a,b=1) = (a > b) ? a : b;\n",
+       {kTag, "package p; \n endpackage"},
+       " let Max(untyped a, bit b=1) = (a > b) ? a : b;\n"},
 
-        {"localparam real foo = 3.14;\n",
-        "localparam shortreal foo = 159.265;\n",
-        "localparam realtime foo = 358.979ns;\n",
-        {kTag, "package p; \n endpackage"},
-        "  localparam real foo = 323.846;\n"},
+      {"localparam real foo = 3.14;\n",
+       "localparam shortreal foo = 159.265;\n",
+       "localparam realtime foo = 358.979ns;\n",
+       {kTag, "package p; \n endpackage"},
+       "  localparam real foo = 323.846;\n"},
 
-        {{kTag, "package p; \n endpackage"},
-        " import $unit::arnold;\n",
-        " import $unit::*;\n",
-        {kTag, "package p; \n endpackage"}},
+      {{kTag, "package p; \n endpackage"},
+       " import $unit::arnold;\n",
+       " import $unit::*;\n",
+       {kTag, "package p; \n endpackage"}},
 
-        {{kTag, "package p; \n endpackage"},
-        " export bar::baz;\n",
-        " export bar::*;\n",
-        {kTag, "package p; \n endpackage"}},
-         {{kTag, "package p; \n endpackage"},
-        " parameter reg[BITS:0] MR0 = '0;\n"},
+      {{kTag, "package p; \n endpackage"},
+       " export bar::baz;\n",
+       " export bar::*;\n",
+       {kTag, "package p; \n endpackage"}},
+      {{kTag, "package p; \n endpackage"},
+       " parameter reg[BITS:0] MR0 = '0;\n"},
 
-        {{kTag, "package p; \n endpackage"},
-        " bind scope_x type_y z (.*);\n",
-        " bind scope_x type_y z1(.*), z2(.*);\n",
-        " bind module_scope : inst_x type_y inst_z(.*);\n",
-        {kTag, "package p; \n endpackage"}},
+      {{kTag, "package p; \n endpackage"},
+       " bind scope_x type_y z (.*);\n",
+       " bind scope_x type_y z1(.*), z2(.*);\n",
+       " bind module_scope : inst_x type_y inst_z(.*);\n",
+       {kTag, "package p; \n endpackage"}},
 
-        {{kTag, "package p; \n endpackage"},
-        "`ifndef DEBUGGER\n",
-        "`endif\n",
-        "  int num_packets;\n",
-        "`ifdef DEBUGGER\n",
-        "`endif\n",
-        "  int router_size;\n"},
+      {{kTag, "package p; \n endpackage"},
+       "`ifndef DEBUGGER\n",
+       "`endif\n",
+       "  int num_packets;\n",
+       "`ifdef DEBUGGER\n",
+       "`endif\n",
+       "  int router_size;\n"},
 
-        {{kTag, "package p; \n endpackage"},
-        "  int num_packets;\n",
-        "`ifdef DEBUGGER\n",
-        "`elsif BORED\n",
-        "`else\n",
-        "  string source_name;\n",
-        "  string dest_name;\n",
-        "`endif\n",
-        "  int router_size;\n",
-        {kTag, "package p; \n endpackage"}},
+      {{kTag, "package p; \n endpackage"},
+       "  int num_packets;\n",
+       "`ifdef DEBUGGER\n",
+       "`elsif BORED\n",
+       "`else\n",
+       "  string source_name;\n",
+       "  string dest_name;\n",
+       "`endif\n",
+       "  int router_size;\n",
+       {kTag, "package p; \n endpackage"}},
 
-         {{kTag, "package p; \n endpackage"},
-          " virtual a_if b_if;\n",
-          "virtual a_if b_if, c_if;\n",
-          {kTag, "package p; \n endpackage"},
-          "  virtual a_if b_if;\n",
-          {kTag, "package p; \n endpackage"}},
+      {{kTag, "package p; \n endpackage"},
+       " virtual a_if b_if;\n",
+       "virtual a_if b_if, c_if;\n",
+       {kTag, "package p; \n endpackage"},
+       "  virtual a_if b_if;\n",
+       {kTag, "package p; \n endpackage"}},
 
-          {{kTag, "package p; \n endpackage"},
-          "`ifdef DEBUGGER\n",
-          "`endif\n",
-          {kTag, "package p; \n endpackage"},
-          "`ifdef DEBUGGER\n",
-          "`ifdef VERBOSE\n"  ,
-          "`endif\n",
-          "`endif\n",
-          {kTag, "package p; \n endpackage"}}
-
-  };
-  for( const auto & test : testcases)
-  {
+      {{kTag, "package p; \n endpackage"},
+       "`ifdef DEBUGGER\n",
+       "`endif\n",
+       {kTag, "package p; \n endpackage"},
+       "`ifdef DEBUGGER\n",
+       "`ifdef VERBOSE\n",
+       "`endif\n",
+       "`endif\n",
+       {kTag, "package p; \n endpackage"}}};
+  for (const auto& test : testcases) {
     const absl::string_view code(test.code);
     VerilogAnalyzer analyzer(code, "test-file");
     const auto code_copy = analyzer.Data().Contents();
@@ -181,7 +183,6 @@ TEST(FindAllPackageDeclarationsTest, VariousTests) {
 }
 
 TEST(GetPackageNameTokenTest, VariousPackageTokenTests) {
-
   constexpr int kTag = 1;
   const SyntaxTreeSearchTestCase testcases[] = {
       {""},
@@ -191,81 +192,127 @@ TEST(GetPackageNameTokenTest, VariousPackageTokenTests) {
       {"package ", {kTag, "p1"}, "; \n endpackage",
       " task sleep; ",
       " endtask\n",
-      " class myclass;\n",
-      "endclass\n",
-      "package ", {kTag, "p2"}, "; \n endpackage"},
-      {"package ", {kTag, "p1"}, "; \n endpackage",
-      "`ifdef DEBUGGER\n",
-      "`endif\n",
-      "package ", {kTag, "p2"}, "; \n endpackage",
-      "`ifdef DEBUGGER\n",
-      "`ifdef VERBOSE\n"  ,
-      "`endif\n",
-      "`endif\n",
-      "package ", {kTag, "p3"}, "; \n endpackage"},
-      {"package ", {kTag, "p1"}, "; \n endpackage",
-      " virtual a_if b_if;\n",
-      "virtual a_if b_if, c_if;\n",
-      "package ", {kTag, "p2"}, "; \n endpackage",
-      "  virtual a_if b_if;\n",
-      "package ", {kTag, "p3"}, "; \n endpackage"},
-      {"package ", {kTag, "p1"}, "; \n endpackage",
-      "  int num_packets;\n",
-      "`ifdef DEBUGGER\n",
-      "`elsif BORED\n",
-      "`else\n",
-      "  string source_name;\n",
-      "  string dest_name;\n",
-      "`endif\n",
-      "  int router_size;\n",
-      "package ", {kTag, "p2"}, "; \n endpackage"},
-      {"package ", {kTag, "p1"}, "; \n endpackage",
-      " bind scope_x type_y z (.*);\n",
-      " bind scope_x type_y z1(.*), z2(.*);\n",
-      " bind module_scope : inst_x type_y inst_z(.*);\n",
-      "package ", {kTag, "p2"}, "; \n endpackage"},
-      {"package ", {kTag, "p1"}, "; \n endpackage",
-      " import $unit::arnold;\n",
-      " import $unit::*;\n",
-      "package ", {kTag, "p2"}, "; \n endpackage"},
-      {"package ", {kTag, "p1"}, "; \n endpackage",
-      " export bar::baz;\n",
-      " export bar::*;\n",
-      "package ", {kTag, "p2"}, "; \n endpackage"},
-      {"package ", {kTag, "p1"}, "; \n endpackage",
-      " parameter reg[BITS:0] MR0 = '0;\n"},
+       " endtask\n",
+       " class myclass;\n",
+       "endclass\n",
+       "package ",
+       {kTag, "p2"},
+       "; \n endpackage"},
+      {"package ",
+       {kTag, "p1"},
+       "; \n endpackage",
+       "`ifdef DEBUGGER\n",
+       "`endif\n",
+       "package ",
+       {kTag, "p2"},
+       "; \n endpackage",
+       "`ifdef DEBUGGER\n",
+       "`ifdef VERBOSE\n",
+       "`endif\n",
+       "`endif\n",
+       "package ",
+       {kTag, "p3"},
+       "; \n endpackage"},
+      {"package ",
+       {kTag, "p1"},
+       "; \n endpackage",
+       " virtual a_if b_if;\n",
+       "virtual a_if b_if, c_if;\n",
+       "package ",
+       {kTag, "p2"},
+       "; \n endpackage",
+       "  virtual a_if b_if;\n",
+       "package ",
+       {kTag, "p3"},
+       "; \n endpackage"},
+      {"package ",
+       {kTag, "p1"},
+       "; \n endpackage",
+       "  int num_packets;\n",
+       "`ifdef DEBUGGER\n",
+       "`elsif BORED\n",
+       "`else\n",
+       "  string source_name;\n",
+       "  string dest_name;\n",
+       "`endif\n",
+       "  int router_size;\n",
+       "package ",
+       {kTag, "p2"},
+       "; \n endpackage"},
+      {"package ",
+       {kTag, "p1"},
+       "; \n endpackage",
+       " bind scope_x type_y z (.*);\n",
+       " bind scope_x type_y z1(.*), z2(.*);\n",
+       " bind module_scope : inst_x type_y inst_z(.*);\n",
+       "package ",
+       {kTag, "p2"},
+       "; \n endpackage"},
+      {"package ",
+       {kTag, "p1"},
+       "; \n endpackage",
+       " import $unit::arnold;\n",
+       " import $unit::*;\n",
+       "package ",
+       {kTag, "p2"},
+       "; \n endpackage"},
+      {"package ",
+       {kTag, "p1"},
+       "; \n endpackage",
+       " export bar::baz;\n",
+       " export bar::*;\n",
+       "package ",
+       {kTag, "p2"},
+       "; \n endpackage"},
+      {"package ",
+       {kTag, "p1"},
+       "; \n endpackage",
+       " parameter reg[BITS:0] MR0 = '0;\n"},
       {"`include \"stuff.svh\"\n",
-      "`expand_stuff()\n",
-      "`expand_with_semi(name);\n",
-      "`expand_more(name)\n",
-      "package ", {kTag, "p2"}, "; \n endpackage"},
-      {"package ", {kTag, "p1"}, "; \n endpackage",
-      "`undef FOOOBAR\n",
-      "package ", {kTag, "p2"}, "; \n endpackage"},
-      {"package ", {kTag, "p1"}, "; \n endpackage",
-      " let Peace = Love;\n",
-      "package ", {kTag, "p2"}, "; \n endpackage",
-      " let Five() = Two + Two + One;\n",
-      " let Min(a,b) = (a < b) ? a : b;\n",
-      " let Max(a,b=1) = (a > b) ? a : b;\n",
-      "package ", {kTag, "p3"}, "; \n endpackage",
-      " let Max(untyped a, bit b=1) = (a > b) ? a : b;\n"},
+       "`expand_stuff()\n",
+       "`expand_with_semi(name);\n",
+       "`expand_more(name)\n",
+       "package ",
+       {kTag, "p2"},
+       "; \n endpackage"},
+      {"package ",
+       {kTag, "p1"},
+       "; \n endpackage",
+       "`undef FOOOBAR\n",
+       "package ",
+       {kTag, "p2"},
+       "; \n endpackage"},
+      {"package ",
+       {kTag, "p1"},
+       "; \n endpackage",
+       " let Peace = Love;\n",
+       "package ",
+       {kTag, "p2"},
+       "; \n endpackage",
+       " let Five() = Two + Two + One;\n",
+       " let Min(a,b) = (a < b) ? a : b;\n",
+       " let Max(a,b=1) = (a > b) ? a : b;\n",
+       "package ",
+       {kTag, "p3"},
+       "; \n endpackage",
+       " let Max(untyped a, bit b=1) = (a > b) ? a : b;\n"},
       {"localparam real foo = 3.14;\n",
-      "localparam shortreal foo = 159.265;\n",
-      "localparam realtime foo = 358.979ns;\n",
-      "package ", {kTag, "p1"}, "; \n endpackage",
-      "  localparam real foo = 323.846;\n"}
-  };
+       "localparam shortreal foo = 159.265;\n",
+       "localparam realtime foo = 358.979ns;\n",
+       "package ",
+       {kTag, "p1"},
+       "; \n endpackage",
+       "  localparam real foo = 323.846;\n"}};
 
-  for( const auto & test : testcases)
-  {
+  for (const auto& test : testcases) {
+>>>>>>> fc96e167613544e6546004a0b73a39f5770b1b4c
     const absl::string_view code(test.code);
     VerilogAnalyzer analyzer(code, "test-file");
     const auto code_copy = analyzer.Data().Contents();
-    ASSERT_OK(analyzer.Analyze()) << "failed on:\n" << code;
     const auto& root = analyzer.Data().SyntaxTree();
 
-    const auto declarations = FindAllPackageDeclarations(*ABSL_DIE_IF_NULL(root));
+    const auto declarations =
+        FindAllPackageDeclarations(*ABSL_DIE_IF_NULL(root));
 
     std::vector<TreeSearchMatch> declIdentifiers;
     for (const auto& decl : declarations) {
@@ -279,7 +326,6 @@ TEST(GetPackageNameTokenTest, VariousPackageTokenTests) {
         << code << "\ndiffs:\n"
         << diffs.str();
   }
-
 }
 
 TEST(GetPackageNameTokenTest, RootIsNotAPackage) {
@@ -302,6 +348,155 @@ TEST(GetPackageNameTokenTest, ValidPackage) {
   // Root node is a description list, not a package.
   const auto& token = GetPackageNameToken(package_node);
   EXPECT_EQ(token.text(), "foo");
+}
+
+TEST(GetPackageNameTest, GetPackageEndLabelName) {
+  constexpr int kTag = 1;
+  const SyntaxTreeSearchTestCase testcases[] = {
+      {""},
+      {"package foo;\n endpackage"},
+      {"package foo;\n endpackage: ", {kTag, "foo"}},
+      {"package foo;\n function int f();\n return 10;\n endfunction: f\n class "
+       "c; endclass: c\n "
+       "endpackage: ",
+       {kTag, "foo"}},
+  };
+
+  for (const auto& test : testcases) {
+    const absl::string_view code(test.code);
+    VerilogAnalyzer analyzer(code, "test-file");
+    const auto code_copy = analyzer.Data().Contents();
+    ASSERT_OK(analyzer.Analyze()) << "failed on:\n" << code;
+    const auto& root = analyzer.Data().SyntaxTree();
+
+    const auto declarations =
+        FindAllPackageDeclarations(*ABSL_DIE_IF_NULL(root));
+
+    std::vector<TreeSearchMatch> names;
+    for (const auto& decl : declarations) {
+      const auto* package_name = GetPackageNameEndLabel(*decl.match);
+      if (package_name == nullptr) continue;
+      names.push_back(TreeSearchMatch{package_name, {}});
+    }
+
+    std::ostringstream diffs;
+    EXPECT_TRUE(test.ExactMatchFindings(names, code_copy, &diffs))
+        << "failed on:\n"
+        << code << "\ndiffs:\n"
+        << diffs.str();
+  }
+}
+
+TEST(GetPackageBodyTest, GetPackageItemList) {
+  constexpr int kTag = 1;
+  const SyntaxTreeSearchTestCase testcases[] = {
+      {""},
+      {"package foo;\n endpackage"},
+      {"package foo;\n endpackage: foo"},
+      {"package foo;\n",
+       {kTag,
+        "function int f();\n return 10;\n endfunction: f\n class "
+        "c; endclass: c"},
+       "\n ",
+       "endpackage: foo"},
+  };
+
+  for (const auto& test : testcases) {
+    const absl::string_view code(test.code);
+    VerilogAnalyzer analyzer(code, "test-file");
+    const auto code_copy = analyzer.Data().Contents();
+    ASSERT_OK(analyzer.Analyze()) << "failed on:\n" << code;
+    const auto& root = analyzer.Data().SyntaxTree();
+
+    const auto declarations =
+        FindAllPackageDeclarations(*ABSL_DIE_IF_NULL(root));
+
+    std::vector<TreeSearchMatch> lists;
+    for (const auto& decl : declarations) {
+      const auto* package_item_list = GetPackageItemList(*decl.match);
+      if (package_item_list == nullptr) continue;
+      lists.push_back(TreeSearchMatch{package_item_list, {}});
+    }
+
+    std::ostringstream diffs;
+    EXPECT_TRUE(test.ExactMatchFindings(lists, code_copy, &diffs))
+        << "failed on:\n"
+        << code << "\ndiffs:\n"
+        << diffs.str();
+  }
+}
+
+TEST(PackageImportTest, GetImportedPackageName) {
+  constexpr int kTag = 1;  // value doesn't matter
+  const SyntaxTreeSearchTestCase kTestCases[] = {
+      {""},
+      {"module m; endmodule\n"},
+      {"package pkg; endpackage\nmodule m();\n import ",
+       {kTag, "pkg"},
+       "::*;\nendmodule"},
+      {"package pkg;\n int my_int;\nendpackage\nmodule m\nimport ",
+       {kTag, "pkg"},
+       "::*;\nimport ",
+       {kTag, "pkg"},
+       "::my_int;\n();\nendmodule"},
+  };
+  for (const auto& test : kTestCases) {
+    TestVerilogSyntaxRangeMatches(
+        __FUNCTION__, test, [](const TextStructureView& text_structure) {
+          const auto& root = text_structure.SyntaxTree();
+          const auto decls = FindAllPackageImportItems(*ABSL_DIE_IF_NULL(root));
+
+          std::vector<TreeSearchMatch> names;
+          for (const auto& decl : decls) {
+            const auto& name = GetImportedPackageName(*decl.match);
+            names.emplace_back(TreeSearchMatch{&name, {/* ignored context */}});
+          }
+          return names;
+        });
+  }
+}
+
+TEST(PackageImportTest, GetImportedItemName) {
+  constexpr int kTag = 1;  // value doesn't matter
+  const SyntaxTreeSearchTestCase kTestCases[] = {
+      {""},
+      {"module m; endmodule\n"},
+      {"package pkg; endpackage\nmodule m();\n import pkg::*;\nendmodule"},
+      {"package pkg;\n int my_int;\nendpackage\nmodule m();\n import "
+       "pkg::*;\nimport pkg::",
+       {kTag, "my_int"},
+       ";\nendmodule"},
+      {"package pkg;\n int my_int;\nclass "
+       "my_class;\nendclass\nendpackage\nmodule m();\n import "
+       "pkg::*;\nimport pkg::",
+       {kTag, "my_int"},
+       ";\nimport pkg::",
+       {kTag, "my_class"},
+       ";\nendmodule"},
+      {"package pkg;\n int my_int;\nclass "
+       "my_class;\nendclass\nendpackage\nmodule m\n import "
+       "pkg::*;\nimport pkg::",
+       {kTag, "my_int"},
+       ";\nimport pkg::",
+       {kTag, "my_class"},
+       ";\n();\n\nendmodule"},
+  };
+  for (const auto& test : kTestCases) {
+    TestVerilogSyntaxRangeMatches(
+        __FUNCTION__, test, [](const TextStructureView& text_structure) {
+          const auto& root = text_structure.SyntaxTree();
+          const auto decls = FindAllPackageImportItems(*ABSL_DIE_IF_NULL(root));
+
+          std::vector<TreeSearchMatch> names;
+          for (const auto& decl : decls) {
+            const auto* name =
+                GeImportedItemNameFromPackageImportItem(*decl.match);
+            if (name == nullptr) continue;
+            names.emplace_back(TreeSearchMatch{name, {/* ignored context*/}});
+          }
+          return names;
+        });
+  }
 }
 
 }  // namespace

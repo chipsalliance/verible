@@ -82,6 +82,17 @@ TEST(VerilogTokenTest, IsIdentifierLikeTest) {
   EXPECT_TRUE(IsIdentifierLike(verilog_tokentype::MacroCallId));
   EXPECT_TRUE(IsIdentifierLike(verilog_tokentype::SystemTFIdentifier));
   EXPECT_TRUE(IsIdentifierLike(verilog_tokentype::EscapedIdentifier));
+  EXPECT_TRUE(IsIdentifierLike(verilog_tokentype::TK_Swidth));
+  EXPECT_TRUE(IsIdentifierLike(verilog_tokentype::TK_Srecrem));
+  EXPECT_TRUE(IsIdentifierLike(verilog_tokentype::TK_Ssetuphold));
+  EXPECT_TRUE(IsIdentifierLike(verilog_tokentype::TK_Speriod));
+  EXPECT_TRUE(IsIdentifierLike(verilog_tokentype::TK_Shold));
+  EXPECT_TRUE(IsIdentifierLike(verilog_tokentype::TK_Srecovery));
+  EXPECT_TRUE(IsIdentifierLike(verilog_tokentype::TK_Sremoval));
+  EXPECT_TRUE(IsIdentifierLike(verilog_tokentype::TK_Ssetup));
+  EXPECT_TRUE(IsIdentifierLike(verilog_tokentype::TK_Sskew));
+  EXPECT_TRUE(IsIdentifierLike(verilog_tokentype::TK_Stimeskew));
+  EXPECT_TRUE(IsIdentifierLike(verilog_tokentype::TK_Swidth));
   EXPECT_FALSE(IsIdentifierLike(verilog_tokentype::TK_StringLiteral));
   EXPECT_FALSE(IsIdentifierLike(verilog_tokentype::TK_DecNumber));
   EXPECT_FALSE(IsIdentifierLike(verilog_tokentype::TK_DecBase));

@@ -17,6 +17,7 @@
 #include <set>
 #include <string>
 
+#include "absl/strings/match.h"
 #include "absl/strings/str_cat.h"
 #include "common/analysis/citation.h"
 #include "common/analysis/lint_rule_status.h"
@@ -25,6 +26,8 @@
 #include "common/text/token_info.h"
 #include "verilog/analysis/descriptions.h"
 #include "verilog/analysis/lint_rule_registry.h"
+#include "verilog/parser/verilog_lexer.h"
+#include "verilog/parser/verilog_token_classifications.h"
 #include "verilog/parser/verilog_token_enum.h"
 
 namespace verilog {
@@ -42,21 +45,36 @@ VERILOG_REGISTER_LINT_RULE(MacroNameStyleRule);
 absl::string_view MacroNameStyleRule::Name() { return "macro-name-style"; }
 const char MacroNameStyleRule::kTopic[] = "defines";
 const char MacroNameStyleRule::kMessage[] =
-    "Macro names must contain only CAPITALS, underscores, and digits.";
+    "Macro names must contain only CAPITALS, underscores, and digits.  "
+    "Exception: UVM-like macros.";
 
 std::string MacroNameStyleRule::GetDescription(
     DescriptionType description_type) {
   return absl::StrCat(
-      "Checks that every macro name follows ALL_CAPS naming convention. See ",
+      "Checks that every macro name follows ALL_CAPS naming convention.  "
+      "Exception: UVM-like macros.  See ",
       GetStyleGuideCitation(kTopic), ".");
 }
 
 void MacroNameStyleRule::HandleToken(const TokenInfo& token) {
+  const auto token_enum = static_cast<verilog_tokentype>(token.token_enum());
+  const absl::string_view text(token.text());
+  if (IsUnlexed(verilog_tokentype(token.token_enum()))) {
+    // recursively lex to examine inside macro definition bodies, etc.
+    VerilogLexer lexer(text);
+    while (true) {
+      const TokenInfo& subtoken(lexer.DoNextToken());
+      if (subtoken.isEOF()) break;
+      HandleToken(subtoken);
+    }
+    return;
+  }
+
   switch (state_) {
     case State::kNormal: {
       // Only changes state on `define tokens; all others are ignored in this
       // analysis.
-      switch (token.token_enum()) {
+      switch (token_enum) {
         case PP_define:
           state_ = State::kExpectPPIdentifier;
           break;
@@ -66,12 +84,24 @@ void MacroNameStyleRule::HandleToken(const TokenInfo& token) {
       break;
     }
     case State::kExpectPPIdentifier: {
-      switch (token.token_enum()) {
+      switch (token_enum) {
         case TK_SPACE:  // stay in the same state
           break;
         case PP_Identifier: {
-          if (!verible::IsNameAllCapsUnderscoresDigits(token.text()))
-            violations_.insert(LintViolation(token, kMessage));
+          if (absl::StartsWith(text, "uvm_")) {
+            // Special case for uvm_* macros
+            if (!verible::IsLowerSnakeCaseWithDigits(text))
+              violations_.insert(LintViolation(token, kMessage));
+          } else if (absl::StartsWith(text, "UVM_")) {
+            // Special case for UVM_* macros
+            if (!verible::IsNameAllCapsUnderscoresDigits(text))
+              violations_.insert(LintViolation(token, kMessage));
+          } else {
+            // General case for everything else
+            // TODO(fangism): make this configurable
+            if (!verible::IsNameAllCapsUnderscoresDigits(text))
+              violations_.insert(LintViolation(token, kMessage));
+          }
           state_ = State::kNormal;
           break;
         }

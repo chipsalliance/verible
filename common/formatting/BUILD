@@ -4,6 +4,7 @@ licenses(["notice"])
 package(
     default_visibility = [
         "//verilog/formatting:__subpackages__",
+        "//verilog/tools/formatter:__pkg__",
     ],
 )
 
@@ -26,6 +27,7 @@ cc_library(
         "//common/text:tree_utils",
         "//common/util:algorithm",
         "//common/util:container_iterator_range",
+        "//common/util:enum_flags",
         "//common/util:logging",
         "@com_google_absl//absl/strings",
     ],
@@ -40,6 +42,7 @@ cc_test(
         ":token_partition_tree",
         ":unwrapped_line_test_utils",
         "//common/text:tree_builder_test_util",
+        "//common/util:range",
         "//common/util:spacer",
         "@com_google_absl//absl/strings",
         "@com_google_googletest//:gtest_main",
@@ -48,7 +51,21 @@ cc_test(
 
 cc_library(
     name = "basic_format_style",
+    srcs = ["basic_format_style.cc"],
     hdrs = ["basic_format_style.h"],
+    deps = [
+        "//common/util:enum_flags",
+        "@com_google_absl//absl/strings",
+    ],
+)
+
+cc_test(
+    name = "basic_format_style_test",
+    srcs = ["basic_format_style_test.cc"],
+    deps = [
+        ":basic_format_style",
+        "@com_google_googletest//:gtest_main",
+    ],
 )
 
 cc_library(
@@ -133,7 +150,6 @@ cc_library(
         "//common/text:symbol",
         "//common/text:tree_utils",
         "//common/util:container_iterator_range",
-        "//common/util:container_util",
         "//common/util:spacer",
         "@com_google_absl//absl/strings",
     ],
@@ -301,6 +317,28 @@ cc_test(
         ":line_wrap_searcher",
         ":unwrapped_line",
         ":unwrapped_line_test_utils",
+        "@com_google_absl//absl/strings",
+        "@com_google_googletest//:gtest_main",
+    ],
+)
+
+cc_library(
+    name = "verification",
+    srcs = ["verification.cc"],
+    hdrs = ["verification.h"],
+    deps = [
+        "//common/strings:diff",
+        "//common/strings:position",
+        "@com_google_absl//absl/status",
+        "@com_google_absl//absl/strings",
+    ],
+)
+
+cc_test(
+    name = "verification_test",
+    srcs = ["verification_test.cc"],
+    deps = [
+        ":verification",
         "@com_google_absl//absl/strings",
         "@com_google_googletest//:gtest_main",
     ],

@@ -270,19 +270,47 @@ TEST(StringSpanOfSymbolTest, TwoDisjointLeavesTwoTrees) {
 
 TEST(TreePrintTest, RawPrint) {
   constexpr absl::string_view text("leaf 1 leaf 2 leaf 3 leaf 4");
-  SymbolPtr tree =
-      Node(Leaf(0, text.substr(0, 6)),
-           Node(Leaf(1, text.substr(7, 6)), Leaf(2, text.substr(14, 6))),
-           Leaf(3, text.substr(21, 6)));
+  SymbolPtr tree = Node(Leaf(0, text.substr(0, 6)),        //
+                        Node(                              //
+                            Leaf(1, text.substr(7, 6)),    //
+                            Leaf(2, text.substr(14, 6))),  //
+                        Leaf(3, text.substr(21, 6)));
   // Output excludes byte offsets.
   constexpr absl::string_view expected =
-      "Node {\n"
-      "  (#0: \"leaf 1\")\n"
-      "  Node {\n"
-      "    (#1: \"leaf 2\")\n"
-      "    (#2: \"leaf 3\")\n"
+      "Node @0 {\n"
+      "  Leaf @0 (#0: \"leaf 1\")\n"
+      "  Node @1 {\n"
+      "    Leaf @0 (#1: \"leaf 2\")\n"
+      "    Leaf @1 (#2: \"leaf 3\")\n"
       "  }\n"
-      "  (#3: \"leaf 4\")\n"
+      "  Leaf @2 (#3: \"leaf 4\")\n"
+      "}\n";
+  std::ostringstream stream;
+  stream << RawTreePrinter(*tree);
+  EXPECT_EQ(stream.str(), expected);
+}
+
+TEST(TreePrintTest, RawPrintSkipNullptrs) {
+  constexpr absl::string_view text("leaf 1 leaf 2 leaf 3 leaf 4");
+  SymbolPtr tree = Node(nullptr,                           //
+                        Leaf(0, text.substr(0, 6)),        //
+                        nullptr,                           //
+                        Node(                              //
+                            Leaf(1, text.substr(7, 6)),    //
+                            nullptr,                       //
+                            Leaf(2, text.substr(14, 6))),  //
+                        nullptr,                           //
+                        Leaf(3, text.substr(21, 6)),       //
+                        nullptr);
+  // Output excludes byte offsets.
+  constexpr absl::string_view expected =
+      "Node @0 {\n"
+      "  Leaf @1 (#0: \"leaf 1\")\n"
+      "  Node @3 {\n"
+      "    Leaf @0 (#1: \"leaf 2\")\n"
+      "    Leaf @2 (#2: \"leaf 3\")\n"
+      "  }\n"
+      "  Leaf @5 (#3: \"leaf 4\")\n"
       "}\n";
   std::ostringstream stream;
   stream << RawTreePrinter(*tree);
@@ -291,19 +319,59 @@ TEST(TreePrintTest, RawPrint) {
 
 TEST(TreePrintTest, PrettyPrint) {
   constexpr absl::string_view text("leaf 1 leaf 2 leaf 3 leaf 4");
-  SymbolPtr tree =
-      Node(Leaf(0, text.substr(0, 6)),
-           Node(Leaf(1, text.substr(7, 6)), Leaf(2, text.substr(14, 6))),
-           Leaf(3, text.substr(21, 6)));
+  SymbolPtr tree = Node(                 //
+      Leaf(0, text.substr(0, 6)),        //
+      Node(                              //
+          Leaf(1, text.substr(7, 6)),    //
+          Leaf(2, text.substr(14, 6))),  //
+      Leaf(3, text.substr(21, 6)));
   // Output includes byte offsets.
   constexpr absl::string_view expected =
-      "Node {\n"
-      "  (#0 @0-6: \"leaf 1\")\n"
-      "  Node {\n"
-      "    (#1 @7-13: \"leaf 2\")\n"
-      "    (#2 @14-20: \"leaf 3\")\n"
+      "Node @0 {\n"
+      "  Leaf @0 (#0 @0-6: \"leaf 1\")\n"
+      "  Node @1 {\n"
+      "    Leaf @0 (#1 @7-13: \"leaf 2\")\n"
+      "    Leaf @1 (#2 @14-20: \"leaf 3\")\n"
       "  }\n"
-      "  (#3 @21-27: \"leaf 4\")\n"
+      "  Leaf @2 (#3 @21-27: \"leaf 4\")\n"
+      "}\n";
+
+  const TokenInfo::Context context(text);
+  {
+    std::ostringstream stream;
+    PrettyPrintTree(*tree, context, &stream);
+    EXPECT_EQ(stream.str(), expected);
+  }
+  {
+    std::ostringstream stream;
+    stream << TreePrettyPrinter(*tree, context);
+    EXPECT_EQ(stream.str(), expected);
+  }
+}
+
+TEST(TreePrintTest, PrettyPrintSkipNullptrs) {
+  constexpr absl::string_view text("leaf 1 leaf 2 leaf 3 leaf 4");
+  SymbolPtr tree = Node(                 //
+      Leaf(0, text.substr(0, 6)),        //
+      nullptr,                           //
+      nullptr,                           //
+      Node(                              //
+          nullptr,                       //
+          Leaf(1, text.substr(7, 6)),    //
+          nullptr,                       //
+          Leaf(2, text.substr(14, 6))),  //
+      nullptr,                           //
+      nullptr,                           //
+      Leaf(3, text.substr(21, 6)));
+  // Output includes byte offsets.
+  constexpr absl::string_view expected =
+      "Node @0 {\n"
+      "  Leaf @0 (#0 @0-6: \"leaf 1\")\n"
+      "  Node @3 {\n"
+      "    Leaf @1 (#1 @7-13: \"leaf 2\")\n"
+      "    Leaf @3 (#2 @14-20: \"leaf 3\")\n"
+      "  }\n"
+      "  Leaf @6 (#3 @21-27: \"leaf 4\")\n"
       "}\n";
 
   const TokenInfo::Context context(text);

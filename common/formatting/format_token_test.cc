@@ -148,6 +148,34 @@ TEST(PreFormatTokenTest, OriginalLeadingSpaces) {
   }
 }
 
+TEST(PreFormatTokenTest, ExcessSpacesNoNewline) {
+  const absl::string_view text("abcdefgh");
+  const TokenInfo tok(1, text.substr(1, 3));
+  PreFormatToken p(&tok);  // before.preserved_space_start == nullptr
+  EXPECT_EQ(p.ExcessSpaces(), 0);
+
+  p.before.preserved_space_start = text.begin();
+  p.before.spaces_required = 0;
+  EXPECT_EQ(p.ExcessSpaces(), 1);
+
+  p.before.spaces_required = 2;
+  EXPECT_EQ(p.ExcessSpaces(), -1);
+}
+
+TEST(PreFormatTokenTest, ExcessSpacesNewline) {
+  const absl::string_view text("\nbcdefgh");
+  const TokenInfo tok(1, text.substr(1, 3));
+  PreFormatToken p(&tok);  // before.preserved_space_start == nullptr
+  EXPECT_EQ(p.ExcessSpaces(), 0);
+
+  p.before.preserved_space_start = text.begin();
+  p.before.spaces_required = 0;
+  EXPECT_EQ(p.ExcessSpaces(), 0);
+
+  p.before.spaces_required = 2;
+  EXPECT_EQ(p.ExcessSpaces(), 0);
+}
+
 TEST(PreFormatTokenTest, LeadingSpacesLength) {
   const absl::string_view text("abcdefgh");
   const TokenInfo tok1(1, text.substr(1, 3)), tok2(2, text.substr(5, 2));

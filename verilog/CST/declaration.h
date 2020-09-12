@@ -106,11 +106,26 @@ const verible::SyntaxTreeNode* GetQualifiersOfDataDeclaration(
 const verible::SyntaxTreeNode& GetTypeOfDataDeclaration(
     const verible::Symbol& data_declaration);
 
+// For a given data declaration returns the TokenInfo of the module type.
+// e.g. bar b1() returns the TokenInfo for "bar" in instantiation.
+const verible::TokenInfo& GetTypeTokenInfoFromDataDeclaration(
+    const verible::Symbol&);
+
 // For a given data declaration (includes module instantiation), returns the
 // subtree containing instances.  e.g. from "foo bar..., baz...;",
 // this returns the subtree spanning "bar..., baz..."
 const verible::SyntaxTreeNode& GetInstanceListFromDataDeclaration(
     const verible::Symbol& data_declaration);
+
+// For a given gate instance subtree returns the TokenInfo of the module name.
+// e.g. bar b1(); returns TokenInfo for "b1".
+const verible::TokenInfo& GetModuleInstanceNameTokenInfoFromGateInstance(
+    const verible::Symbol&);
+
+// For a given register variable subtree returns the TokenInfo of the instance
+// name. e.g. int b1; returns TokenInfo for "b1".
+const verible::TokenInfo& GetInstanceNameTokenInfoFromRegisterVariable(
+    const verible::Symbol&);
 
 }  // namespace verilog
 

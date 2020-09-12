@@ -1,1 +1,10 @@
+# Enable support for absl types like string_view in gtest.
+build --define="absl=1"
+run --define="absl=1"
+test --define="absl=1"
+# Cannot use 'common' because 'bazel version' fails with this.
+
+# Gather build version information
 build --workspace_status_command=bazel/build-version.sh
+run --workspace_status_command=bazel/build-version.sh
+test --workspace_status_command=bazel/build-version.sh
