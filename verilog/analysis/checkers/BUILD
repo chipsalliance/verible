@@ -20,7 +20,7 @@ cc_library(
         ":case_missing_default_rule",
         ":constraint_name_style_rule",
         ":create_object_name_match_rule",
-        ":declared_identifier_style_rule",
+        ":banned_declared_name_patterns_rule",
         ":endif_comment_rule",
         ":enum_name_style_rule",
         ":explicit_function_lifetime_rule",
@@ -64,9 +64,9 @@ cc_library(
 
 
 cc_library(
-    name = "declared_identifier_style_rule",
-    srcs = ["declared_identifier_style_rule.cc"],
-    hdrs = ["declared_identifier_style_rule.h"],
+    name = "banned_declared_name_patterns_rule",
+    srcs = ["banned_declared_name_patterns_rule.cc"],
+    hdrs = ["banned_declared_name_patterns_rule.h"],
     deps = [
         "//common/analysis:citation",
         "//common/analysis:lint_rule_status",
@@ -89,10 +89,10 @@ cc_library(
 )
 
 cc_test(
-    name = "declared_identifier_style_rule_test",
-    srcs = ["declared_identifier_style_rule_test.cc"],
+    name = "banned_declared_name_patterns_rule_test",
+    srcs = ["banned_declared_name_patterns_rule_test.cc"],
     deps = [
-        ":declared_identifier_style_rule",
+        ":banned_declared_name_patterns_rule",
         "//common/analysis:linter_test_utils",
         "//common/text:symbol",
         "//common/analysis:syntax_tree_linter_test_utils",

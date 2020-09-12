@@ -1,2 +1,1 @@
-module foo;
-endmodule
+module ILLEGALNAME; endmodule
