@@ -42,6 +42,8 @@ To pipe from stdin, use '-' as <file>.
 
 
   Flags from verilog/tools/formatter/verilog_format.cc:
+    --case_items_alignment (Format case items:
+      {align,flush-left,preserve,infer}); default: infer;
     --class_member_variables_alignment (Format class member variables:
       {align,flush-left,preserve,infer}); default: infer;
     --failsafe_success (If true, always exit with 0 status, even if there were
@@ -96,4 +98,4 @@ To pipe from stdin, use '-' as <file>.
 
 ## Version
 
-Generated on 2020-09-10 12:16:27 -0700 from [v0.0-579-gd6f06e4](https://github.com/google/verible/commit/d6f06e4e4eeb838cb48e07546a30fa39c8399e08)
+Generated on 2020-09-11 22:32:16 -0700 from [v0.0-584-gb805ed8](https://github.com/google/verible/commit/b805ed80b42838281ebebe7cc05922bfcd67f925)
