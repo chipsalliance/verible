@@ -155,6 +155,30 @@ static bool IgnoreWithinActualNamedPortPartitionGroup(
   return false;
 }
 
+static bool TokenForcesLineBreak(const PreFormatToken& ftoken) {
+  switch (ftoken.TokenEnum()) {
+    case verilog_tokentype::TK_begin:
+    case verilog_tokentype::TK_fork:
+      return true;
+  }
+  return false;
+}
+
+static bool IgnoreMultilineCaseStatements(const TokenPartitionTree& partition) {
+  if (IgnoreCommentsAndPreprocessingDirectives(partition)) return true;
+
+  const auto& uwline = partition.Value();
+  const auto token_range = uwline.TokensRange();
+
+  // Scan for any tokens that would force a line break.
+  if (std::any_of(token_range.begin(), token_range.end(),
+                  &TokenForcesLineBreak)) {
+    return true;
+  }
+
+  return false;
+}
+
 // This class marks up token-subranges in named parameter assignments for
 // alignment. e.g. ".parameter_name(value_expression)"
 class ActualNamedParameterColumnSchemaScanner : public ColumnSchemaScanner {
@@ -689,6 +713,66 @@ class ParameterDeclarationColumnSchemaScanner : public ColumnSchemaScanner {
   bool new_column_after_open_bracket_ = false;
 };
 
+// This class marks up token-subranges in case items for alignment.
+// e.g. "value1, value2: x = f(y);"
+class CaseItemColumnSchemaScanner : public ColumnSchemaScanner {
+ public:
+  CaseItemColumnSchemaScanner() = default;
+
+  bool ParentContextIsCaseItem() const {
+    return Context().DirectParentIsOneOf(
+        {NodeEnum::kCaseItem, NodeEnum::kDefaultItem});
+  }
+
+  void Visit(const SyntaxTreeNode& node) override {
+    auto tag = NodeEnum(node.Tag().tag);
+    VLOG(2) << __FUNCTION__ << ", node: " << tag << " at "
+            << TreePathFormatter(Path());
+
+    if (previous_token_was_case_colon_) {
+      if (ParentContextIsCaseItem()) {
+        ReserveNewColumn(node, FlushLeft);
+        previous_token_was_case_colon_ = false;
+      }
+    } else {
+      switch (tag) {
+        case NodeEnum::kCaseItem:
+        case NodeEnum::kDefaultItem: {
+          // Start a new column right away.
+          ReserveNewColumn(node, FlushLeft);
+          break;
+        }
+        default:
+          break;
+      }
+    }
+
+    // recursive visitation
+    TreeContextPathVisitor::Visit(node);
+    VLOG(2) << __FUNCTION__ << ", leaving node: " << tag;
+  }
+
+  void Visit(const SyntaxTreeLeaf& leaf) override {
+    VLOG(2) << __FUNCTION__ << ", leaf: " << leaf.get() << " at "
+            << TreePathFormatter(Path());
+    const int tag = leaf.get().token_enum();
+    switch (tag) {
+      case ':':
+        if (ParentContextIsCaseItem()) {
+          // mark the next node as the start of a new column
+          previous_token_was_case_colon_ = true;
+        }
+        break;
+      default:
+        break;
+    }
+    VLOG(2) << __FUNCTION__ << ", leaving leaf: " << leaf.get();
+  }
+
+ private:
+  bool previous_token_was_case_colon_ = false;
+};
+
 static const verible::AlignedFormattingHandler kPortDeclarationAligner{
     .extract_alignment_groups = verible::ExtractAlignmentGroupsAdapter(
         &verible::GetSubpartitionsBetweenBlankLines,
@@ -727,6 +811,14 @@ static const verible::AlignedFormattingHandler kClassPropertyAligner{
         &IgnoreCommentsAndPreprocessingDirectives),
     .alignment_cell_scanner =
         AlignmentCellScannerGenerator<ClassPropertyColumnSchemaScanner>(),
+};
+
+static const verible::AlignedFormattingHandler kCaseItemAligner{
+    .extract_alignment_groups = verible::ExtractAlignmentGroupsAdapter(
+        &verible::GetSubpartitionsBetweenBlankLines,
+        &IgnoreMultilineCaseStatements),
+    .alignment_cell_scanner =
+        AlignmentCellScannerGenerator<CaseItemColumnSchemaScanner>(),
 };
 
 struct AlignedFormattingConfiguration {
@@ -793,6 +885,11 @@ void TabularAlignTokenPartitions(TokenPartitionTree* partition_ptr,
            {kClassPropertyAligner,
             [](const FormatStyle& vstyle) {
               return vstyle.class_member_variable_alignment;
+            }}},
+          {NodeEnum::kCaseItemList,
+           {kCaseItemAligner,
+            [](const FormatStyle& vstyle) {
+              return vstyle.case_items_alignment;
             }}},
       };
   const auto handler_iter = kAlignHandlers->find(NodeEnum(node->Tag().tag));

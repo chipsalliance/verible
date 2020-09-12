@@ -3836,6 +3836,19 @@ static constexpr FormatterTestCase kFormatterTestCases[] = {
      "    end\n"
      "  endcase\n"
      "endfunction\n"},
+    {// case statement, interleaved with comments
+     "function f; case (x) \n//c1\nState0 : a=b;//c2\n//c3\n State1 : "
+     "a=b;//c4\n//c5\n "
+     "endcase endfunction\n",
+     "function f;\n"
+     "  case (x)\n"
+     "    //c1\n"
+     "    State0: a = b;  //c2\n"
+     "    //c3\n"
+     "    State1: a = b;  //c4\n"
+     "    //c5\n"
+     "  endcase\n"
+     "endfunction\n"},
     {// case inside statement
      "function f; case (x)inside k1 : return b; k2 : begin return b; end "
      "endcase endfunction\n",
@@ -3884,7 +3897,7 @@ static constexpr FormatterTestCase kFormatterTestCases[] = {
      "endcase endfunction\n",
      "function f;\n"
      "  case (x)\n"
-     "    k1: if (b) break;\n"
+     "    k1:      if (b) break;\n"  // aligned
      "    default: return 2;\n"
      "  endcase\n"
      "endfunction\n"},
@@ -3893,7 +3906,7 @@ static constexpr FormatterTestCase kFormatterTestCases[] = {
      "endcase endfunction\n",
      "function f;\n"
      "  case (x)\n"
-     "    k1: break;\n"
+     "    k1:      break;\n"  // aligned
      "    default: if (c) return 2;\n"
      "  endcase\n"
      "endfunction\n"},
@@ -7152,6 +7165,106 @@ TEST(FormatterEndToEndTest, AutoInferAlignment) {
        "  int    my_int;\n"  // ... but still indent
        "  foo_pkg::bar_t  my_bar;\n"
        "endclass : cc\n"},
+
+      // case item test cases
+      {// small difference between flush-left and align, so align
+       "function f; case (x)kZZZZ  :if( b )break; default :return 2;"
+       "endcase endfunction\n",
+       "function f;\n"
+       "  case (x)\n"
+       "    kZZZZ:   if (b) break;\n"  // aligned, only adds 2 spaces
+       "    default: return 2;\n"
+       "  endcase\n"
+       "endfunction\n"},
+      {// small error relative to flush-left, so flush-left
+       "function f; case (x)kZ  :if( b )break; default :return 2;"
+       "endcase endfunction\n",
+       "function f;\n"
+       "  case (x)\n"
+       "    kZ: if (b) break;\n"  // flush-left
+       "    default: return 2;\n"
+       "  endcase\n"
+       "endfunction\n"},
+      {// intentional spacing error (delta=4) induces alignment
+       "function f; case (x)kZ  :if( b )break; default    :return 2;"
+       "endcase endfunction\n",
+       "function f;\n"
+       "  case (x)\n"
+       "    kZ:      if (b) break;\n"
+       "    default: return 2;\n"
+       "  endcase\n"
+       "endfunction\n"},
+      {// induced alignment, with ignored comments
+       "function f; case (x)kZ  :if( b )break; \n//c1\n kXX: g = f; "
+       "\n//c2\ndefault    :return 2;"
+       "endcase endfunction\n",
+       "function f;\n"
+       "  case (x)\n"
+       "    kZ:      if (b) break;\n"
+       "    //c1\n"
+       "    kXX:     g = f;\n"
+       "    //c2\n"
+       "    default: return 2;\n"
+       "  endcase\n"
+       "endfunction\n"},
+      {// induced alignment, ignore multiline case item in the middle
+       "function f; case (x)"
+       "kZ  :if( b )break; "
+       "kYY    :return 2;"          // excess spaces induce alignment
+       "    kXXXXXXXXX: begin end"  // multi-line, ignored
+       "    kWWWWW: cc = 23;\n"
+       "    kVVV: cd = 24;\n"
+       "endcase endfunction\n",
+       "function f;\n"
+       "  case (x)\n"
+       "    kZ:     if (b) break;\n"
+       "    kYY:    return 2;\n"
+       "    kXXXXXXXXX: begin\n"  // separates above/below groups
+       "    end\n"
+       "    kWWWWW: cc = 23;\n"
+       "    kVVV:   cd = 24;\n"  // aligned
+       "  endcase\n"
+       "endfunction\n"},
+      {// induced alignment, ignore multiline case item in the middle
+       "function f; case (x)"
+       "kZ  :if( b )break; "
+       "kYY    :return 2;"               // excess spaces induce alignment
+       "    kXXXXXXXXX: if(w)begin end"  // multi-line, ignored
+       "    kWWWWW: cc = 23;\n"
+       "    kVVV: cd = 24;\n"
+       "endcase endfunction\n",
+       "function f;\n"
+       "  case (x)\n"
+       "    kZ:     if (b) break;\n"
+       "    kYY:    return 2;\n"
+       "    kXXXXXXXXX:\n"   // TODO(fangism): allow this to merge with if()
+                             // else indent the following two lines
+       "    if (w) begin\n"  // separates above/below groups
+       "    end\n"
+       "    kWWWWW: cc = 23;\n"
+       "    kVVV:   cd = 24;\n"  // aligned
+       "  endcase\n"
+       "endfunction\n"},
+      {// induced alignment, ignore multiline case item in the middle
+       "task t; case (x)"
+       "kZ  :if( b )break; "
+       "kYY    :return 2;"           // excess spaces induce alignment
+       "    kXXXXXXXXX: fork  join"  // multi-line, ignored
+       "    kWWWWW: cc = 23;\n"
+       "    kVVV: cd = 24;\n"
+       "endcase endtask\n",
+       "task t;\n"
+       "  case (x)\n"
+       "    kZ:     if (b) break;\n"
+       "    kYY:    return 2;\n"
+       "    kXXXXXXXXX:\n"  // TODO(fangism): allow this to merge with fork
+                            // else indent the following two lines
+       "    fork\n"         // separates above/below groups
+       "    join\n"
+       "    kWWWWW: cc = 23;\n"
+       "    kVVV:   cd = 24;\n"  // aligned
+       "  endcase\n"
+       "endtask\n"},
   };
   // Use a fixed style.
   FormatStyle style;

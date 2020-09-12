@@ -70,6 +70,10 @@ struct FormatStyle : public verible::BasicFormatStyle {
   // Internal tests assume these are forced to kAlign.
   AlignmentPolicy class_member_variable_alignment = AlignmentPolicy::kAlign;
 
+  // Control how case items are formatted.
+  // Internal tests assume these are forced to kAlign.
+  AlignmentPolicy case_items_alignment = AlignmentPolicy::kAlign;
+
   // At this time line wrap optimization is problematic and risks ruining
   // otherwise reasonable code.  When set to false, this switch will make the
   // formatter give-up and leave code as-is in cases where it would otherwise
@@ -117,6 +121,7 @@ struct FormatStyle : public verible::BasicFormatStyle {
     module_net_variable_alignment = policy;
     formal_parameters_alignment = policy;
     class_member_variable_alignment = policy;
+    case_items_alignment = policy;
   }
 };
 

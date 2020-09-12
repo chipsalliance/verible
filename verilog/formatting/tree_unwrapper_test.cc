@@ -6891,6 +6891,35 @@ const TreeUnwrapperTestData kUnwrapFunctionTestCases[] = {
     },
 
     {
+        "function with case statement, with comments",
+        "function foo_case;"
+        "case (y) \n"
+        "//c1\n"
+        "k1: return 0;\n"
+        "//c2\n"
+        "k2: return 1;\n"
+        "//c3\n"
+        "endcase "
+        "endfunction",
+        FunctionDeclaration(
+            0, FunctionHeader(0, {"function", "foo_case", ";"}),
+            FlowControl(1, L(1, {"case", "(", "y", ")"}),
+                        CaseItemList(2,                    //
+                                     L(2, {"//c1"}),       //
+                                     N(2,                  //
+                                       L(2, {"k1", ":"}),  //
+                                       L(2, {"return", "0", ";"})),
+                                     L(2, {"//c2"}),       //
+                                     N(2,                  //
+                                       L(2, {"k2", ":"}),  //
+                                       L(2, {"return", "1", ";"})),
+                                     L(2, {"//c3"})  //
+                                     ),              //
+                        L(1, {"endcase"})),          //
+            L(0, {"endfunction"})),
+    },
+
+    {
         "function with case statements",
         "function foo_case;"
         "case (y) "
