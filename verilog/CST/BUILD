@@ -572,8 +572,6 @@ cc_test(
         "//common/util:casts",
         "//common/util:logging",
         "//verilog/analysis:verilog_analyzer",
-        "//common/analysis:syntax_tree_search",
-        "//common/analysis:syntax_tree_search_test_utils",
         "@com_google_absl//absl/status",
         "@com_google_googletest//:gtest_main",
     ],
