@@ -188,7 +188,6 @@ TEST(GetPackageNameTokenTest, VariousPackageTokenTests) {
       {"package ", {kTag, "p1"}, "; \n endpackage",
       " task sleep; ",
       " endtask\n",
-       " endtask\n",
        " class myclass;\n",
        "endclass\n",
        "package ",
@@ -301,13 +300,11 @@ TEST(GetPackageNameTokenTest, VariousPackageTokenTests) {
        "  localparam real foo = 323.846;\n"}};
 
   for (const auto& test : testcases) {
-
     const absl::string_view code(test.code);
     VerilogAnalyzer analyzer(code, "test-file");
     const auto code_copy = analyzer.Data().Contents();
     ASSERT_OK(analyzer.Analyze()) << "failed on:\n" << code;
     const auto& root = analyzer.Data().SyntaxTree();
-
     const auto declarations =
         FindAllPackageDeclarations(*ABSL_DIE_IF_NULL(root));
 
