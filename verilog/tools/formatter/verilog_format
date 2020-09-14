@@ -17,4 +17,10 @@
 #
 # Beware, this will go away, please change your scripts to call the new stable
 # name verible-verilog-format instead.
+>&2 cat <<EOF
+*******************************************************************************
+verilog_format is the deprecated name for verible-verilog-format.
+executing $(dirname $(realpath $0))/verible-verilog-format instead
+*******************************************************************************
+EOF
 exec "$(dirname $(realpath $0))/verible-verilog-format" "$@"
