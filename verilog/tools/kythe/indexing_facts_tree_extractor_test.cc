@@ -424,6 +424,8 @@ TEST(FactsTreeExtractor, ModuleWithPortsNonANSIStyleTest) {
                                                         {kTag, "b"},
                                                         ", input ",
                                                         {kTag, "z"},
+                                                        ", ",
+                                                        {kTag, "h"},
                                                         ");\nendmodule: ",
                                                         {kTag, "foo"}}};
 
@@ -444,7 +446,7 @@ TEST(FactsTreeExtractor, ModuleWithPortsNonANSIStyleTest) {
           {
               {
                   Anchor(kTestCase.expected_tokens[1], kTestCase.code),
-                  Anchor(kTestCase.expected_tokens[9], kTestCase.code),
+                  Anchor(kTestCase.expected_tokens[11], kTestCase.code),
               },
               IndexingFactType::kModule,
           },
@@ -466,6 +468,13 @@ TEST(FactsTreeExtractor, ModuleWithPortsNonANSIStyleTest) {
           T({
               {
                   Anchor(kTestCase.expected_tokens[7], kTestCase.code),
+              },
+              IndexingFactType::kVariableDefinition,
+          }),
+          // refers to h.
+          T({
+              {
+                  Anchor(kTestCase.expected_tokens[9], kTestCase.code),
               },
               IndexingFactType::kVariableDefinition,
           })));
