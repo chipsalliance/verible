@@ -212,6 +212,18 @@ void IndexingFactsTreeExtractor::ExtractModuleHeader(
     return;
   }
 
+  // This boolean is used to distinguish between ANSI and Non-ANSI module ports.
+  // e.g in this case:
+  // module m(a, b);
+  // has_propagated_type will be false as no type has been countered.
+  //
+  // in case like:
+  // module m(a, b, input x, y)
+  // for "a", "b" the boolean will be false but for "x", "y" the boolean will be
+  // true.
+  //
+  // The boolean is used to determine whether this the fact for this variable
+  // should be a reference or a defintiion.
   bool has_propagated_type = false;
   for (const auto& port : port_list->children()) {
     if (port.get()->Kind() == verible::SymbolKind::kLeaf) continue;
@@ -230,7 +242,7 @@ void IndexingFactsTreeExtractor::ExtractModuleHeader(
 }
 
 void IndexingFactsTreeExtractor::ExtractModulePort(
-    const SyntaxTreeNode& module_port_node, bool has_propagated_type = 0) {
+    const SyntaxTreeNode& module_port_node, bool has_propagated_type) {
   const auto tag = static_cast<verilog::NodeEnum>(module_port_node.Tag().tag);
 
   // For extracting cases like:
