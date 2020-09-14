@@ -720,8 +720,9 @@ class CaseItemColumnSchemaScanner : public ColumnSchemaScanner {
   CaseItemColumnSchemaScanner() = default;
 
   bool ParentContextIsCaseItem() const {
-    return Context().DirectParentIsOneOf(
-        {NodeEnum::kCaseItem, NodeEnum::kDefaultItem});
+    return Context().DirectParentIsOneOf({NodeEnum::kCaseItem,
+                                          NodeEnum::kCaseInsideItem,
+                                          NodeEnum::kDefaultItem});
   }
 
   void Visit(const SyntaxTreeNode& node) override {
@@ -737,6 +738,7 @@ class CaseItemColumnSchemaScanner : public ColumnSchemaScanner {
     } else {
       switch (tag) {
         case NodeEnum::kCaseItem:
+        case NodeEnum::kCaseInsideItem:
         case NodeEnum::kDefaultItem: {
           // Start a new column right away.
           ReserveNewColumn(node, FlushLeft);
@@ -854,44 +856,43 @@ void TabularAlignTokenPartitions(TokenPartitionTree* partition_ptr,
   if (node == nullptr) return;
   // Dispatch aligning function based on syntax tree node type.
 
-  static const auto* const kAlignHandlers =
-      new std::map<NodeEnum, AlignedFormattingConfiguration>{
-          {NodeEnum::kPortDeclarationList,
-           {kPortDeclarationAligner,
-            [](const FormatStyle& vstyle) {
-              return vstyle.port_declarations_alignment;
-            }}},
-          {NodeEnum::kActualParameterByNameList,
-           {kActualNamedParameterAligner,
-            [](const FormatStyle& vstyle) {
-              return vstyle.named_parameter_alignment;
-            }}},
-          {NodeEnum::kPortActualList,
-           {kActualNamedPortAligner,
-            [](const FormatStyle& vstyle) {
-              return vstyle.named_port_alignment;
-            }}},
-          {NodeEnum::kModuleItemList,
-           {kDataDeclarationAligner,
-            [](const FormatStyle& vstyle) {
-              return vstyle.module_net_variable_alignment;
-            }}},
-          {NodeEnum::kFormalParameterList,
-           {kParameterDeclarationAligner,
-            [](const FormatStyle& vstyle) {
-              return vstyle.formal_parameters_alignment;
-            }}},
-          {NodeEnum::kClassItems,
-           {kClassPropertyAligner,
-            [](const FormatStyle& vstyle) {
-              return vstyle.class_member_variable_alignment;
-            }}},
-          {NodeEnum::kCaseItemList,
-           {kCaseItemAligner,
-            [](const FormatStyle& vstyle) {
-              return vstyle.case_items_alignment;
-            }}},
-      };
+  static const auto* const kAlignHandlers = new std::map<
+      NodeEnum, AlignedFormattingConfiguration>{
+      {NodeEnum::kPortDeclarationList,
+       {kPortDeclarationAligner,
+        [](const FormatStyle& vstyle) {
+          return vstyle.port_declarations_alignment;
+        }}},
+      {NodeEnum::kActualParameterByNameList,
+       {kActualNamedParameterAligner,
+        [](const FormatStyle& vstyle) {
+          return vstyle.named_parameter_alignment;
+        }}},
+      {NodeEnum::kPortActualList,
+       {kActualNamedPortAligner,
+        [](const FormatStyle& vstyle) { return vstyle.named_port_alignment; }}},
+      {NodeEnum::kModuleItemList,
+       {kDataDeclarationAligner,
+        [](const FormatStyle& vstyle) {
+          return vstyle.module_net_variable_alignment;
+        }}},
+      {NodeEnum::kFormalParameterList,
+       {kParameterDeclarationAligner,
+        [](const FormatStyle& vstyle) {
+          return vstyle.formal_parameters_alignment;
+        }}},
+      {NodeEnum::kClassItems,
+       {kClassPropertyAligner,
+        [](const FormatStyle& vstyle) {
+          return vstyle.class_member_variable_alignment;
+        }}},
+      {NodeEnum::kCaseItemList,
+       {kCaseItemAligner,
+        [](const FormatStyle& vstyle) { return vstyle.case_items_alignment; }}},
+      {NodeEnum::kCaseInsideItemList,
+       {kCaseItemAligner,
+        [](const FormatStyle& vstyle) { return vstyle.case_items_alignment; }}},
+  };
   const auto handler_iter = kAlignHandlers->find(NodeEnum(node->Tag().tag));
   if (handler_iter == kAlignHandlers->end()) return;
   verible::TabularAlignTokens(partition_ptr, handler_iter->second.handler,

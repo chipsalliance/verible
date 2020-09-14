@@ -3849,6 +3849,18 @@ static constexpr FormatterTestCase kFormatterTestCases[] = {
      "    //c5\n"
      "  endcase\n"
      "endfunction\n"},
+    {// case inside statement, comments
+     "function f; case (x)inside \n//comment\n"
+     "[0:1]:x=y; \n"
+     "    //comment\n"
+     "endcase endfunction\n",
+     "function f;\n"
+     "  case (x) inside\n"
+     "    //comment\n"
+     "    [0 : 1]: x = y;\n"
+     "    //comment\n"
+     "  endcase\n"
+     "endfunction\n"},
     {// case inside statement
      "function f; case (x)inside k1 : return b; k2 : begin return b; end "
      "endcase endfunction\n",
@@ -7265,6 +7277,46 @@ TEST(FormatterEndToEndTest, AutoInferAlignment) {
        "    kVVV:   cd = 24;\n"  // aligned
        "  endcase\n"
        "endtask\n"},
+      {// case-inside: small difference between flush-left and align, so align
+       "function f; case (x)inside [0:3]  :yy=zzz; [4:11] :yy=zz;"
+       "endcase endfunction\n",
+       "function f;\n"
+       "  case (x) inside\n"
+       "    [0 : 3]:  yy = zzz;\n"  // aligned, only adds 1 spaces
+       "    [4 : 11]: yy = zz;\n"
+       "  endcase\n"
+       "endfunction\n"},
+      {// case-inside: align with comments
+       "function f; case (x)inside \n//c1\n[0:3]  :yy=zzz;\n//c2\n"
+       " [4:11] :yy=zz;\n//c3\n"
+       "endcase endfunction\n",
+       "function f;\n"
+       "  case (x) inside\n"
+       "    //c1\n"
+       "    [0 : 3]:  yy = zzz;\n"  // aligned, only adds 1 spaces
+       "    //c2\n"
+       "    [4 : 11]: yy = zz;\n"
+       "    //c3\n"
+       "  endcase\n"
+       "endfunction\n"},
+      {// case-inside: flush left
+       "function f; case (x)inside [0:3]  :yy=zzz; [4:999999] :yy=zz;"
+       "endcase endfunction\n",
+       "function f;\n"
+       "  case (x) inside\n"
+       "    [0 : 3]: yy = zzz;\n"  // flush-left
+       "    [4 : 999999]: yy = zz;\n"
+       "  endcase\n"
+       "endfunction\n"},
+      {// case-inside: induce alignment
+       "function f; case (x)inside [0:3    ]  :yy=zzz; [4:999999] :yy=zz;"
+       "endcase endfunction\n",
+       "function f;\n"
+       "  case (x) inside\n"
+       "    [0 : 3]:      yy = zzz;\n"  // aligned
+       "    [4 : 999999]: yy = zz;\n"
+       "  endcase\n"
+       "endfunction\n"},
   };
   // Use a fixed style.
   FormatStyle style;
