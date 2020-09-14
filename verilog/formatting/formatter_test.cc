@@ -7364,6 +7364,30 @@ TEST(FormatterEndToEndTest, AutoInferAlignment) {
        "    kXYYYY: j kk ();\n"
        "  endcase\n"
        "endmodule\n"},
+      {// randcase: align (small difference from flush-left)
+       "task trc  ;randcase 10: x = 1; 1: x = 3; endcase endtask",
+       "task trc;\n"
+       "  randcase\n"
+       "    10: x = 1;\n"
+       "    1:  x = 3;\n"  // aligned
+       "  endcase\n"
+       "endtask\n"},
+      {// randcase: inferred flush-left
+       "task trc  ;randcase 10000: x = 1; 1: x = 3; endcase endtask",
+       "task trc;\n"
+       "  randcase\n"
+       "    10000: x = 1;\n"
+       "    1: x = 3;\n"
+       "  endcase\n"
+       "endtask\n"},
+      {// randcase: induce alignment
+       "task trc  ;randcase 10000: x = 1    ; 1: x = 3; endcase endtask",
+       "task trc;\n"
+       "  randcase\n"
+       "    10000: x = 1;\n"
+       "    1:     x = 3;\n"  // aligned
+       "  endcase\n"
+       "endtask\n"},
   };
   // Use a fixed style.
   FormatStyle style;
