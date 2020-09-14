@@ -98,4 +98,4 @@ To pipe from stdin, use '-' as <file>.
 
 ## Version
 
-Generated on 2020-09-14 10:58:35 -0700 from [v0.0-585-g1ff4cd0](https://github.com/google/verible/commit/1ff4cd03addcbb4bbfa47990bd46bf0f84b8b9de)
+Generated on 2020-09-14 13:42:27 -0700 from [v0.0-588-gb895b01](https://github.com/google/verible/commit/b895b01318ee9d0ebfa535f309ea14b79e462d18)
