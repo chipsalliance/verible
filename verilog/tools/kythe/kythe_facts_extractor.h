@@ -194,11 +194,23 @@ class KytheFactsExtractor {
   // Extracts kythe facts from a macro call node and returns its VName.
   VName ExtractMacroCall(const IndexingFactNode& macro_call_node);
 
+  // Extracts kythe facts from member reference statement and return its vname.
+  // e.g pkg::member or class::member or class.member
+  // The names are treated as anchors e.g:
+  // pkg::member => {Anchor(pkg), Anchor(member)}
+  // pkg::class_name::var => {Anchor(pkg), Anchor(class_name), Anchor(var)}
+  VName ExtractMemberReference(const IndexingFactNode& member_reference_node);
+
   // Generates an anchor VName for kythe.
   VName PrintAnchorVName(const Anchor&);
 
-  // Appends the signatures of previous containing scope vnames to make
-  // signatures unique relative to scopes.
+  // Appends the signatures of given parent scope vname to make
+  // signatures are unique relative to scopes.
+  std::string CreateScopeRelativeSignature(absl::string_view,
+                                           absl::string_view) const;
+
+  // Appends the signatures of previous containing scope vname to make
+  // signatures are unique relative to scopes.
   std::string CreateScopeRelativeSignature(absl::string_view) const;
 
   // Generates fact strings for Kythe facts.

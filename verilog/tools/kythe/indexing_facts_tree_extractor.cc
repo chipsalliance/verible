@@ -164,6 +164,10 @@ void IndexingFactsTreeExtractor::Visit(const SyntaxTreeNode& node) {
       ExtractPackageImport(node);
       break;
     }
+    case NodeEnum::kQualifiedId: {
+      ExtractQualifiedId(node);
+      break;
+    }
     default: {
       TreeContextVisitor::Visit(node);
     }
@@ -571,6 +575,21 @@ void IndexingFactsTreeExtractor::ExtractPackageImport(
   }
 
   facts_tree_context_.top().NewChild(package_import_data);
+}
+
+void IndexingFactsTreeExtractor::ExtractQualifiedId(
+    const verible::SyntaxTreeNode& qualified_id) {
+  IndexingNodeData member_reference_data(IndexingFactType::kMemberReference);
+
+  const std::vector<TreeSearchMatch>& unqualified_ids =
+      FindAllUnqualifiedIds(qualified_id);
+
+  for (const TreeSearchMatch unqualified_id : unqualified_ids) {
+    member_reference_data.AppendAnchor(Anchor(
+        AutoUnwrapIdentifier(*unqualified_id.match)->get(), context_.base));
+  }
+
+  facts_tree_context_.top().NewChild(member_reference_data);
 }
 
 }  // namespace kythe
