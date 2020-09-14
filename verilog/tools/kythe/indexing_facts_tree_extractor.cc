@@ -277,9 +277,14 @@ void IndexingFactsTreeExtractor::ExtractModuleEnd(
 void IndexingFactsTreeExtractor::ExtractModuleInstantiation(
     const SyntaxTreeNode& data_declaration_node,
     const std::vector<TreeSearchMatch>& gate_instances) {
+  IndexingNodeData module_node_data(IndexingFactType::kDataTypeReference);
+  IndexingFactNode module_node(module_node_data);
+
   const verible::TokenInfo& type =
       GetTypeTokenInfoFromDataDeclaration(data_declaration_node);
   const Anchor type_anchor(type, context_.base);
+
+  module_node.Value().AppendAnchor(type_anchor);
 
   // Module instantiations (data declarations) may declare multiple instances
   // sharing the same type in a single statement e.g. bar b1(), b2().
@@ -287,13 +292,13 @@ void IndexingFactsTreeExtractor::ExtractModuleInstantiation(
   // Loop through each instance and associate each declared id with the same
   // type and create its corresponding facts tree node.
   for (const TreeSearchMatch& instance : gate_instances) {
-    IndexingNodeData indexing_node_data(IndexingFactType::kModuleInstance);
+    IndexingNodeData module_instance_node_data(
+        IndexingFactType::kModuleInstance);
 
     const verible::TokenInfo& variable_name =
         GetModuleInstanceNameTokenInfoFromGateInstance(*instance.match);
     const Anchor variable_name_anchor(variable_name, context_.base);
-    indexing_node_data.AppendAnchor(type_anchor);
-    indexing_node_data.AppendAnchor(variable_name_anchor);
+    module_instance_node_data.AppendAnchor(variable_name_anchor);
 
     std::vector<TreeSearchMatch> port_names =
         FindAllUnqualifiedIds(*instance.match);
@@ -303,11 +308,13 @@ void IndexingFactsTreeExtractor::ExtractModuleInstantiation(
       const SyntaxTreeLeaf* leaf = GetIdentifier(*port.match);
       const Anchor port_name_anchor(leaf->get(), context_.base);
 
-      indexing_node_data.AppendAnchor(port_name_anchor);
+      module_instance_node_data.AppendAnchor(port_name_anchor);
     }
 
-    facts_tree_context_.top().NewChild(indexing_node_data);
+    module_node.NewChild(module_instance_node_data);
   }
+
+  facts_tree_context_.top().NewChild(module_node);
 }
 
 void IndexingFactsTreeExtractor::ExtractNetDeclaration(
@@ -530,9 +537,14 @@ void IndexingFactsTreeExtractor::ExtractClassDeclaration(
 void IndexingFactsTreeExtractor::ExtractClassInstances(
     const SyntaxTreeNode& data_declaration_node,
     const std::vector<TreeSearchMatch>& register_variables) {
+  IndexingNodeData class_node_data(IndexingFactType::kDataTypeReference);
+  IndexingFactNode class_node(class_node_data);
+
   const verible::TokenInfo& type =
       GetTypeTokenInfoFromDataDeclaration(data_declaration_node);
   const Anchor type_anchor(type, context_.base);
+
+  class_node.Value().AppendAnchor(type_anchor);
 
   // Class instances may may appear as multiple instances sharing the same type
   // in a single statement e.g. myClass b1 = new, b2 = new.
@@ -547,11 +559,12 @@ void IndexingFactsTreeExtractor::ExtractClassInstances(
         GetInstanceNameTokenInfoFromRegisterVariable(*instance.match);
 
     const Anchor variable_name_anchor(variable_name, context_.base);
-    indexing_node_data.AppendAnchor(type_anchor);
     indexing_node_data.AppendAnchor(variable_name_anchor);
 
-    facts_tree_context_.top().NewChild(indexing_node_data);
+    class_node.NewChild(indexing_node_data);
   }
+  
+  facts_tree_context_.top().NewChild(class_node);
 }
 
 void IndexingFactsTreeExtractor::ExtractPackageImport(

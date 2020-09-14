@@ -14,9 +14,9 @@
 
 #include "verilog/tools/kythe/indexing_facts_tree_extractor.h"
 
-#include "gtest/gtest.h"
 #include "common/analysis/syntax_tree_search_test_utils.h"
 #include "common/text/concrete_syntax_tree.h"
+#include "gtest/gtest.h"
 #include "verilog/analysis/verilog_analyzer.h"
 
 #undef EXPECT_OK
@@ -193,14 +193,21 @@ TEST(FactsTreeExtractor, OneModuleInstanceTest) {
               },
               IndexingFactType::kModule,
           },
-          // refers to bar b1().
-          T({
+          // refers to bar.
+          T(
               {
-                  Anchor(kTestCase.expected_tokens[7], kTestCase.code),
-                  Anchor(kTestCase.expected_tokens[9], kTestCase.code),
+                  {
+                      Anchor(kTestCase.expected_tokens[7], kTestCase.code),
+                  },
+                  IndexingFactType::kDataTypeReference,
               },
-              IndexingFactType ::kModuleInstance,
-          })));
+              // refers to bar b1().
+              T({
+                  {
+                      Anchor(kTestCase.expected_tokens[9], kTestCase.code),
+                  },
+                  IndexingFactType ::kModuleInstance,
+              }))));
 
   const auto facts_tree =
       ExtractOneFile(kTestCase.code, file_name, exit_status, parse_ok);
@@ -258,22 +265,36 @@ TEST(FactsTreeExtractor, TwoModuleInstanceTest) {
               },
               IndexingFactType::kModule,
           },
-          // refers to bar b1().
-          T({
+          // refers to bar.
+          T(
               {
-                  Anchor(kTestCase.expected_tokens[7], kTestCase.code),
-                  Anchor(kTestCase.expected_tokens[9], kTestCase.code),
+                  {
+                      Anchor(kTestCase.expected_tokens[7], kTestCase.code),
+                  },
+                  IndexingFactType ::kDataTypeReference,
               },
-              IndexingFactType ::kModuleInstance,
-          }),
-          // refers to bar b2().
-          T({
+              // refers to bar b1().
+              T({
+                  {
+                      Anchor(kTestCase.expected_tokens[9], kTestCase.code),
+                  },
+                  IndexingFactType ::kModuleInstance,
+              })),
+          // refers to bar.
+          T(
               {
-                  Anchor(kTestCase.expected_tokens[11], kTestCase.code),
-                  Anchor(kTestCase.expected_tokens[13], kTestCase.code),
+                  {
+                      Anchor(kTestCase.expected_tokens[11], kTestCase.code),
+                  },
+                  IndexingFactType ::kDataTypeReference,
               },
-              IndexingFactType ::kModuleInstance,
-          })));
+              // refers to bar b2().
+              T({
+                  {
+                      Anchor(kTestCase.expected_tokens[13], kTestCase.code),
+                  },
+                  IndexingFactType ::kModuleInstance,
+              }))));
 
   const auto facts_tree =
       ExtractOneFile(kTestCase.code, file_name, exit_status, parse_ok);
@@ -329,23 +350,28 @@ TEST(FactsTreeExtractor, MultipleModuleInstancesInTheSameDeclarationTest) {
               },
               IndexingFactType::kModule,
           },
-          // refers to bar b1(), b2().
-          // bar b1().
-          T({
+          // refers to bar.
+          T(
               {
-                  Anchor(kTestCase.expected_tokens[7], kTestCase.code),
-                  Anchor(kTestCase.expected_tokens[9], kTestCase.code),
+                  {
+                      Anchor(kTestCase.expected_tokens[7], kTestCase.code),
+                  },
+                  IndexingFactType ::kDataTypeReference,
               },
-              IndexingFactType ::kModuleInstance,
-          }),
-          // bar b2().
-          T({
-              {
-                  Anchor(kTestCase.expected_tokens[7], kTestCase.code),
-                  Anchor(kTestCase.expected_tokens[11], kTestCase.code),
-              },
-              IndexingFactType ::kModuleInstance,
-          })));
+              // refers to b1().
+              T({
+                  {
+                      Anchor(kTestCase.expected_tokens[9], kTestCase.code),
+                  },
+                  IndexingFactType ::kModuleInstance,
+              }),
+              // refers to bar b2().
+              T({
+                  {
+                      Anchor(kTestCase.expected_tokens[11], kTestCase.code),
+                  },
+                  IndexingFactType ::kModuleInstance,
+              }))));
 
   const auto facts_tree =
       ExtractOneFile(kTestCase.code, file_name, exit_status, parse_ok);
@@ -629,16 +655,23 @@ TEST(FactsTreeExtractor, ModuleInstanceWithPortsTest) {
               },
               IndexingFactType ::kVariableDefinition,
           }),
-          // refers to bar b1(x, y).
-          T({
+          // refers to bar.
+          T(
               {
-                  Anchor(kTestCase.expected_tokens[15], kTestCase.code),
-                  Anchor(kTestCase.expected_tokens[17], kTestCase.code),
-                  Anchor(kTestCase.expected_tokens[19], kTestCase.code),
-                  Anchor(kTestCase.expected_tokens[21], kTestCase.code),
+                  {
+                      Anchor(kTestCase.expected_tokens[15], kTestCase.code),
+                  },
+                  IndexingFactType ::kDataTypeReference,
               },
-              IndexingFactType ::kModuleInstance,
-          })));
+              // refers to b1(x, y).
+              T({
+                  {
+                      Anchor(kTestCase.expected_tokens[17], kTestCase.code),
+                      Anchor(kTestCase.expected_tokens[19], kTestCase.code),
+                      Anchor(kTestCase.expected_tokens[21], kTestCase.code),
+                  },
+                  IndexingFactType ::kModuleInstance,
+              }))));
 
   const auto facts_tree =
       ExtractOneFile(kTestCase.code, file_name, exit_status, parse_ok);
@@ -873,14 +906,21 @@ TEST(FactsTreeExtractor, OneClassInstanceTest) {
               },
               IndexingFactType::kModule,
           },
-          // refers to bar b1().
-          T({
+          // refers to bar.
+          T(
               {
-                  Anchor(kTestCase.expected_tokens[7], kTestCase.code),
-                  Anchor(kTestCase.expected_tokens[9], kTestCase.code),
+                  {
+                      Anchor(kTestCase.expected_tokens[7], kTestCase.code),
+                  },
+                  IndexingFactType ::kDataTypeReference,
               },
-              IndexingFactType ::kClassInstance,
-          })));
+              // refers to b1.
+              T({
+                  {
+                      Anchor(kTestCase.expected_tokens[9], kTestCase.code),
+                  },
+                  IndexingFactType ::kClassInstance,
+              }))));
 
   const auto facts_tree =
       ExtractOneFile(kTestCase.code, file_name, exit_status, parse_ok);
