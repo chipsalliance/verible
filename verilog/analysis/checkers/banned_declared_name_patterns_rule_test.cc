@@ -28,9 +28,10 @@ namespace analysis {
 namespace {
 
 using verible::LintTestCase;
+using verible::RunConfiguredLintTestCases;
 using verible::RunLintTestCases;
 
-// Tests that DeclaredIdentifierStyleRule correctly accepts valid identifiers.
+// Tests that BannedDeclaredNamePatternsRuleTest correctly accepts valid identifiers.
 TEST(BannedDeclaredNamePatternsRuleTest, AcceptTests) {
   const std::initializer_list<LintTestCase> kTestCases = {
       {""},
@@ -41,14 +42,19 @@ TEST(BannedDeclaredNamePatternsRuleTest, AcceptTests) {
   RunLintTestCases<VerilogAnalyzer, BannedDeclaredNamePatternsRule>(kTestCases);
 }
 
-// Tests that DeclaredIdentifierStyleRule correctly rejects invalid patterns.
+// Tests that BannedDeclaredNamePatternsRuleTest correctly rejects invalid patterns.
 TEST(BannedDeclaredNamePatternsRuleTest, RejectTests) {
-  constexpr int kToken = 1;
   const std::initializer_list<LintTestCase> kTestCases = {
-      {"module ", {kToken, "ILLEGALNAME"}, "; endmodule"},
-      {"package ", {kToken, "ILLEGALNAME"}, "; endpackage"},
-      {"module ", {kToken, "illegalname"}, "; endmodule"},
-      {"package ", {kToken, "IllegalName"}, "; endpackage"},
+      {"module legal;\n"
+       "  module ILLEGALNAME;\n"
+       "  endmodule\n"
+       "endmodule"},
+      {"module legal;\n"
+       "  module illegalname;\n"
+       "  endmodule\n"
+       "endmodule"},
+      {"package IllegalName; endpackage"},
+      {"package ILLEGALNAME; endpackage"},
 
   };
   RunLintTestCases<VerilogAnalyzer, BannedDeclaredNamePatternsRule>(kTestCases);

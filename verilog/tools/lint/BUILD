@@ -71,7 +71,7 @@ _linter_test_configs = [
     ("typedef-structs-unions", "typedef_unions", True),
     ("one-module-per-file", "one_module_per_file", False),
     ("uvm-macro-semicolon", "uvm_macro_semicolon", False),
-    ("banned-declared-name-patterns", "banned-declared-name-patterns", False),
+    ("banned-declared-name-patterns", "banned_declared_name_patterns", False),
 ]
 
 [
