@@ -32,6 +32,7 @@ enum class IndexingFactType {
   kClass,
   kClassInstance,
   kModuleInstance,
+  kDataTypeReference,
   kVariableDefinition,
   kVariableReference,
   kFunctionOrTask,
