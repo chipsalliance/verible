@@ -14,9 +14,9 @@
 
 #include "verilog/tools/kythe/indexing_facts_tree_extractor.h"
 
-#include "gtest/gtest.h"
 #include "common/analysis/syntax_tree_search_test_utils.h"
 #include "common/text/concrete_syntax_tree.h"
+#include "gtest/gtest.h"
 #include "verilog/analysis/verilog_analyzer.h"
 
 #undef EXPECT_OK
@@ -422,6 +422,8 @@ TEST(FactsTreeExtractor, ModuleWithPortsNonANSIStyleTest) {
                                                         {kTag, "a"},
                                                         ", ",
                                                         {kTag, "b"},
+                                                        ", input ",
+                                                        {kTag, "z"},
                                                         ");\nendmodule: ",
                                                         {kTag, "foo"}}};
 
@@ -442,23 +444,30 @@ TEST(FactsTreeExtractor, ModuleWithPortsNonANSIStyleTest) {
           {
               {
                   Anchor(kTestCase.expected_tokens[1], kTestCase.code),
-                  Anchor(kTestCase.expected_tokens[7], kTestCase.code),
+                  Anchor(kTestCase.expected_tokens[9], kTestCase.code),
               },
               IndexingFactType::kModule,
           },
-          // refers to input a.
+          // refers to  a.
           T({
               {
                   Anchor(kTestCase.expected_tokens[3], kTestCase.code),
               },
               IndexingFactType::kVariableReference,
           }),
-          // refers to output b.
+          // refers to  b.
           T({
               {
                   Anchor(kTestCase.expected_tokens[5], kTestCase.code),
               },
               IndexingFactType::kVariableReference,
+          }),
+          // refers to input z.
+          T({
+              {
+                  Anchor(kTestCase.expected_tokens[7], kTestCase.code),
+              },
+              IndexingFactType::kVariableDefinition,
           })));
 
   const auto facts_tree =

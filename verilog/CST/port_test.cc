@@ -28,8 +28,6 @@
 #include <utility>
 #include <vector>
 
-#include "gmock/gmock.h"
-#include "gtest/gtest.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
 #include "common/analysis/syntax_tree_search.h"
@@ -39,6 +37,8 @@
 #include "common/text/text_structure.h"
 #include "common/text/token_info.h"
 #include "common/util/logging.h"
+#include "gmock/gmock.h"
+#include "gtest/gtest.h"
 #include "verilog/CST/type.h"
 #include "verilog/CST/verilog_nonterminals.h"
 #include "verilog/analysis/verilog_analyzer.h"
@@ -282,7 +282,8 @@ TEST(GetAllPortReferences, GetPortReferenceIdentifier) {
 
     std::vector<TreeSearchMatch> types;
     for (const auto& decl : decls) {
-      const auto* type = GetIdentifierFromPortReference(*decl.match);
+      const auto* type =
+          GetIdentifierFromPortReference(GetPortReferenceFromPort(*decl.match));
       types.push_back(TreeSearchMatch{type, {/* ignored context */}});
     }
 
