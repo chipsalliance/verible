@@ -715,14 +715,16 @@ class ParameterDeclarationColumnSchemaScanner : public ColumnSchemaScanner {
 
 // This class marks up token-subranges in case items for alignment.
 // e.g. "value1, value2: x = f(y);"
+// This is suitable for a variety of case-like items: statements, generate
+// items.
 class CaseItemColumnSchemaScanner : public ColumnSchemaScanner {
  public:
   CaseItemColumnSchemaScanner() = default;
 
   bool ParentContextIsCaseItem() const {
-    return Context().DirectParentIsOneOf({NodeEnum::kCaseItem,
-                                          NodeEnum::kCaseInsideItem,
-                                          NodeEnum::kDefaultItem});
+    return Context().DirectParentIsOneOf(
+        {NodeEnum::kCaseItem, NodeEnum::kCaseInsideItem,
+         NodeEnum::kGenerateCaseItem, NodeEnum::kDefaultItem});
   }
 
   void Visit(const SyntaxTreeNode& node) override {
@@ -739,6 +741,7 @@ class CaseItemColumnSchemaScanner : public ColumnSchemaScanner {
       switch (tag) {
         case NodeEnum::kCaseItem:
         case NodeEnum::kCaseInsideItem:
+        case NodeEnum::kGenerateCaseItem:
         case NodeEnum::kDefaultItem: {
           // Start a new column right away.
           ReserveNewColumn(node, FlushLeft);
@@ -886,10 +889,14 @@ void TabularAlignTokenPartitions(TokenPartitionTree* partition_ptr,
         [](const FormatStyle& vstyle) {
           return vstyle.class_member_variable_alignment;
         }}},
+      // various case-like constructs:
       {NodeEnum::kCaseItemList,
        {kCaseItemAligner,
         [](const FormatStyle& vstyle) { return vstyle.case_items_alignment; }}},
       {NodeEnum::kCaseInsideItemList,
+       {kCaseItemAligner,
+        [](const FormatStyle& vstyle) { return vstyle.case_items_alignment; }}},
+      {NodeEnum::kGenerateCaseItemList,
        {kCaseItemAligner,
         [](const FormatStyle& vstyle) { return vstyle.case_items_alignment; }}},
   };

@@ -1950,6 +1950,28 @@ const TreeUnwrapperTestData kUnwrapModuleTestCases[] = {
     },
 
     {
+        "module with case generate statements, and comments",
+        "module multi_cases;\n"
+        "case (foo)//c1\n"
+        "//c2\n"
+        "  A: a aa;//c3\n"
+        "//c4\n"
+        "endcase\n"
+        "endmodule",
+        ModuleDeclaration(
+            0, L(0, {"module", "multi_cases", ";"}),
+            FlowControl(1, L(1, {"case", "(", "foo", ")", "//c1"}),
+                        N(2,                      //
+                          L(2, {"//c2"}),         //
+                          N(2, L(2, {"A", ":"}),  //
+                            L(2, {"a", "aa", ";", "//c3"})),
+                          L(2, {"//c4"})  //
+                          ),
+                        L(1, {"endcase"})),
+            L(0, {"endmodule"})),
+    },
+
+    {
         "module with case generate block statements",
         "module case_block;\n"
         "case (foo)\n"

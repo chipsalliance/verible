@@ -3810,6 +3810,16 @@ static constexpr FormatterTestCase kFormatterTestCases[] = {
      "    d: ee f;\n"
      "  endcase\n"
      "endmodule\n"},
+    {// conditional generate (case), with comments
+     "module mc; case(s)\n//comment a\na:bb  c;\n//comment b\n endcase "
+     "endmodule",
+     "module mc;\n"
+     "  case (s)\n"
+     "    //comment a\n"  // indented to case-item level
+     "    a: bb c;\n"
+     "    //comment b\n"  // indented to case-item level
+     "  endcase\n"
+     "endmodule\n"},
 
     {// "default:", not "default :"
      "function f; case (x) default: x=y; endcase endfunction\n",
@@ -7317,6 +7327,43 @@ TEST(FormatterEndToEndTest, AutoInferAlignment) {
        "    [4 : 999999]: yy = zz;\n"
        "  endcase\n"
        "endfunction\n"},
+      {// case-generate: align would add few spaces, so align
+       "module mc ; case (x)kZ  : gg h(); kXYY :j kk();"
+       "endcase endmodule\n",
+       "module mc;\n"
+       "  case (x)\n"
+       "    kZ:   gg h ();\n"  // align
+       "    kXYY: j kk ();\n"
+       "  endcase\n"
+       "endmodule\n"},
+      {// case-generate + comment: align would add few spaces, so align
+       "module mc ; case (x)kZ  : gg h(); \n//c1\n kXYY :j kk();"
+       "endcase endmodule\n",
+       "module mc;\n"
+       "  case (x)\n"
+       "    kZ:   gg h ();\n"  // align
+       "    //c1\n"
+       "    kXYY: j kk ();\n"
+       "  endcase\n"
+       "endmodule\n"},
+      {// case-generate: align would add too many space, so flush-left
+       "module mc ; case (x)kZ  : gg h(); kXYYYY :j kk();"
+       "endcase endmodule\n",
+       "module mc;\n"
+       "  case (x)\n"
+       "    kZ: gg h ();\n"  // flush-left
+       "    kXYYYY: j kk ();\n"
+       "  endcase\n"
+       "endmodule\n"},
+      {// case-generate: inject spaces to induce alignment
+       "module mc ; case (x)kZ  : gg h(); kXYYYY :     j kk();"
+       "endcase endmodule\n",
+       "module mc;\n"
+       "  case (x)\n"
+       "    kZ:     gg h ();\n"  // align
+       "    kXYYYY: j kk ();\n"
+       "  endcase\n"
+       "endmodule\n"},
   };
   // Use a fixed style.
   FormatStyle style;
