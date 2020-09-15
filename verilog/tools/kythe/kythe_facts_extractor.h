@@ -229,6 +229,9 @@ class KytheFactsExtractor {
   void GenerateEdgeString(const VName& source, absl::string_view name,
                           const VName& target) const;
 
+  // Create the signature for the given name (variable, module ..etc).
+  const std::string CreateSignature(absl::string_view name) const;
+
   // The verilog file name which the facts are extracted from.
   std::string file_path_;
 

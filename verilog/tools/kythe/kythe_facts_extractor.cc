@@ -24,6 +24,11 @@
 namespace verilog {
 namespace kythe {
 
+const std::string KytheFactsExtractor::CreateSignature(
+    absl::string_view name) const {
+  return absl::StrCat(name, "#");
+}
+
 void KytheFactsExtractor::ExtractKytheFacts(const IndexingFactNode& root) {
   CreatePackageScopes(root);
   IndexingFactNodeTagResolver(root);
@@ -212,8 +217,8 @@ VName KytheFactsExtractor::ExtractDataTypeReference(
   const auto& anchors = data_type_reference.Value().Anchors();
   const Anchor& type = anchors[0];
 
-  const VName type_vname =
-      *ABSL_DIE_IF_NULL(scope_context_.SearchForDefinition(type.Value()));
+  const VName type_vname = *ABSL_DIE_IF_NULL(
+      scope_context_.SearchForDefinition(CreateSignature(type.Value())));
   const VName type_anchor = PrintAnchorVName(type);
   GenerateEdgeString(type_anchor, kEdgeRef, type_vname);
 
@@ -236,8 +241,8 @@ VName KytheFactsExtractor::ExtractModuleInstanceFact(
 
   for (const auto& anchor :
        verible::make_range(anchors.begin() + 1, anchors.end())) {
-    const VName port_vname_definition =
-        *ABSL_DIE_IF_NULL(scope_context_.SearchForDefinition(anchor.Value()));
+    const VName port_vname_definition = *ABSL_DIE_IF_NULL(
+        scope_context_.SearchForDefinition(CreateSignature(anchor.Value())));
 
     const VName port_vname_anchor = PrintAnchorVName(anchor);
     GenerateEdgeString(port_vname_anchor, kEdgeRef, port_vname_definition);
@@ -268,7 +273,7 @@ VName KytheFactsExtractor::ExtractVariableReferenceFact(
   const VName variable_vname_anchor = PrintAnchorVName(anchor);
 
   const VName* variable_definition_vname =
-      scope_context_.SearchForDefinition(anchor.Value());
+      scope_context_.SearchForDefinition(CreateSignature(anchor.Value()));
   if (variable_definition_vname != nullptr) {
     GenerateEdgeString(variable_vname_anchor, kEdgeRef,
                        *variable_definition_vname);
@@ -308,7 +313,7 @@ VName KytheFactsExtractor::ExtractMacroDefinition(
     const IndexingFactNode& macro_definition_node) {
   const Anchor& macro_name = macro_definition_node.Value().Anchors()[0];
 
-  const VName macro_vname(file_path_, macro_name.Value());
+  const VName macro_vname(file_path_, CreateSignature(macro_name.Value()));
   const VName module_name_anchor = PrintAnchorVName(macro_name);
 
   GenerateFactString(macro_vname, kFactNodeKind, kNodeMacro);
@@ -326,8 +331,8 @@ VName KytheFactsExtractor::ExtractMacroCall(
   // e.g.
   // `define TEN 0
   // `TEN --> removes the `
-  const VName variable_definition_vname(file_path_,
-                                        macro_name.Value().substr(1));
+  const VName variable_definition_vname(
+      file_path_, CreateSignature(macro_name.Value().substr(1)));
 
   GenerateEdgeString(macro_vname_anchor, kEdgeRefExpands,
                      variable_definition_vname);
@@ -356,8 +361,9 @@ VName KytheFactsExtractor::ExtractFunctionOrTaskCall(
     const IndexingFactNode& function_call_fact_node) {
   const auto& function_name = function_call_fact_node.Value().Anchors()[0];
 
-  const VName function_vname = *ABSL_DIE_IF_NULL(
-      scope_context_.SearchForDefinition(function_name.Value()));
+  const VName function_vname =
+      *ABSL_DIE_IF_NULL(scope_context_.SearchForDefinition(
+          CreateSignature(function_name.Value())));
 
   const VName function_vname_anchor = PrintAnchorVName(function_name);
 
@@ -411,7 +417,7 @@ VName KytheFactsExtractor::ExtractPackageImport(
   const auto& anchors = import_fact_node.Value().Anchors();
   const Anchor& package_name = anchors[0];
 
-  const VName package_vname(file_path_, package_name.Value());
+  const VName package_vname(file_path_, CreateSignature(package_name.Value()));
   const VName package_anchor = PrintAnchorVName(package_name);
 
   GenerateEdgeString(package_anchor, kEdgeRefImports, package_vname);
@@ -421,7 +427,8 @@ VName KytheFactsExtractor::ExtractPackageImport(
     const Anchor& imported_item_name = anchors[1];
     const VName& defintion_vname =
         *ABSL_DIE_IF_NULL(SearchForDefinitionVNameInPackage(
-            package_name.Value(), imported_item_name.Value()));
+            CreateSignature(package_name.Value()),
+            CreateSignature(imported_item_name.Value())));
 
     const VName imported_item_anchor = PrintAnchorVName(imported_item_name);
     GenerateEdgeString(imported_item_anchor, kEdgeRef, defintion_vname);
@@ -434,7 +441,7 @@ VName KytheFactsExtractor::ExtractPackageImport(
     // Add all the definitions in that package to the current scope as if it was
     // declared in our scope so that it can be captured without "::".
     const auto current_package_scope =
-        package_scope_context_.find(package_name.Value());
+        package_scope_context_.find(CreateSignature(package_name.Value()));
     for (const VName& vname : current_package_scope->second) {
       scope_context_.top().push_back(vname);
     }
@@ -451,21 +458,24 @@ VName KytheFactsExtractor::ExtractMemberReference(
 
   // Searches for the member in the packages.
   const VName* containing_block_vname = SearchForDefinitionVNameInPackage(
-      containing_block_name.Value(), member_name.Value());
+      CreateSignature(containing_block_name.Value()),
+      CreateSignature(member_name.Value()));
 
   std::string definition_signature = "";
 
   // In case it is a package member.
   if (containing_block_vname != nullptr) {
-    const VName package_vname(file_path_, containing_block_name.Value());
+    const VName package_vname(file_path_,
+                              CreateSignature(containing_block_name.Value()));
     const VName package_anchor = PrintAnchorVName(containing_block_name);
     GenerateEdgeString(package_anchor, kEdgeRef, package_vname);
 
     definition_signature = package_vname.signature;
   } else {
     // In case the member is a class member not a package member.
-    containing_block_vname = ABSL_DIE_IF_NULL(
-        scope_context_.SearchForDefinition(containing_block_name.Value()));
+    containing_block_vname =
+        ABSL_DIE_IF_NULL(scope_context_.SearchForDefinition(
+            CreateSignature(containing_block_name.Value())));
 
     const VName class_anchor = PrintAnchorVName(containing_block_name);
     GenerateEdgeString(class_anchor, kEdgeRef, *containing_block_vname);
@@ -521,13 +531,13 @@ VName KytheFactsExtractor::PrintAnchorVName(const Anchor& anchor) {
 
 std::string KytheFactsExtractor::CreateScopeRelativeSignature(
     absl::string_view signature, absl::string_view parent_signature) const {
-  return absl::StrCat(signature, "#", parent_signature);
+  return absl::StrCat(CreateSignature(signature), parent_signature);
 }
 
 std::string KytheFactsExtractor::CreateScopeRelativeSignature(
     absl::string_view signature) const {
   return vnames_context_.empty()
-             ? std::string(signature)
+             ? CreateSignature(signature)
              : CreateScopeRelativeSignature(signature,
                                             vnames_context_.top().signature);
 }
