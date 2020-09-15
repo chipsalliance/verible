@@ -33,7 +33,7 @@ namespace verilog {
 std::vector<verible::TreeSearchMatch> FindAllModulePortDeclarations(
     const verible::Symbol&);
 
-// Find all individual port references.
+// Find all nodes tagged with kPort.
 std::vector<verible::TreeSearchMatch> FindAllPortReferences(
     const verible::Symbol&);
 
@@ -45,6 +45,9 @@ const verible::SyntaxTreeLeaf* GetIdentifierFromModulePortDeclaration(
 // For Non-ANSI style ports e.g module m(a, b);
 const verible::SyntaxTreeLeaf* GetIdentifierFromPortReference(
     const verible::Symbol&);
+
+// Extracts the node tagged with kPortReference from a node tagged with kPort.
+const verible::SyntaxTreeNode& GetPortReferenceFromPort(const verible::Symbol&);
 
 // Find all task/function port declarations.
 std::vector<verible::TreeSearchMatch> FindAllTaskFunctionPortDeclarations(
