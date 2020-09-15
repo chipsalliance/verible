@@ -154,7 +154,12 @@ void KytheFactsExtractor::IndexingFactNodeTagResolver(
   // Determines whether or not to create the childof relation with the parent.
   switch (tag) {
     case IndexingFactType::kFile:
-    case IndexingFactType::kPackageImport: {
+    case IndexingFactType::kPackageImport:
+    case IndexingFactType::kVariableReference:
+    case IndexingFactType::kDataTypeReference:
+    case IndexingFactType::kMacroCall:
+    case IndexingFactType::kFunctionCall:
+    case IndexingFactType::kMacro: {
       break;
     }
     default: {
@@ -173,7 +178,9 @@ void KytheFactsExtractor::IndexingFactNodeTagResolver(
     case IndexingFactType::kModule:
     case IndexingFactType::kModuleInstance:
     case IndexingFactType::kVariableDefinition:
-    case IndexingFactType::kFunctionOrTask: {
+    case IndexingFactType::kFunctionOrTask:
+    case IndexingFactType::kClass:
+    case IndexingFactType::kMacro: {
       Visit(node, vname, current_scope);
       break;
     }
@@ -238,8 +245,8 @@ VName KytheFactsExtractor::ExtractDataTypeReference(
   const auto& anchors = data_type_reference.Value().Anchors();
   const Anchor& type = anchors[0];
 
-  const VName type_vname = *ABSL_DIE_IF_NULL(
-      scope_context_.SearchForDefinition(CreateModuleSignature(type.Value())));
+  const VName type_vname =
+      *ABSL_DIE_IF_NULL(scope_context_.SearchForDefinition(type.Value()));
   const VName type_anchor = PrintAnchorVName(type);
   GenerateEdgeString(type_anchor, kEdgeRef, type_vname);
 
@@ -284,7 +291,6 @@ VName KytheFactsExtractor::ExtractVariableDefinitionFact(
 
   GenerateFactString(variable_vname, kFactNodeKind, kNodeVariable);
   GenerateFactString(variable_vname, kFactComplete, kCompleteDefinition);
-
   GenerateEdgeString(variable_vname_anchor, kEdgeDefinesBinding,
                      variable_vname);
 
