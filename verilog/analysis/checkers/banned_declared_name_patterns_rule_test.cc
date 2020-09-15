@@ -44,7 +44,7 @@ TEST(BannedDeclaredNamePatternsRuleTest, AcceptTests) {
 
 // Tests that BannedDeclaredNamePatternsRuleTest correctly rejects invalid patterns.
 TEST(BannedDeclaredNamePatternsRuleTest, RejectTests) {
-  constexpr int kTag = 1;
+  constexpr int kTag = verilog_tokentype::SymbolIdentifier;
   const std::initializer_list<LintTestCase> kTestCases = {
       {"module legal; endmodule"},
       {"module ", {kTag, "ILLEGALNAME"}, "; endmodule"},
@@ -58,6 +58,9 @@ TEST(BannedDeclaredNamePatternsRuleTest, RejectTests) {
        "endmodule"},
       {"package ", {kTag, "IllegalName"}, "; endpackage"},
       {"package ", {kTag, "ILLEGALNAME"}, "; endpackage"},
+      {"package ", {kTag, "illegalname"}, "; endpackage"},
+      {"package ", {kTag, "iLLeGalNaMe"}, "; endpackage"},
+
   };
   RunLintTestCases<VerilogAnalyzer, BannedDeclaredNamePatternsRule>(kTestCases);
 }

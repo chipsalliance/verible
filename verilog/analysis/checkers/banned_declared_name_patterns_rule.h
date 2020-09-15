@@ -40,7 +40,7 @@ class BannedDeclaredNamePatternsRule : public verible::SyntaxTreeLintRule {
   // helper flag or markdown depending on the parameter type.
   static std::string GetDescription(DescriptionType);
 
-  void Visit(const verible::SyntaxTreeNode& node);
+  void HandleNode(const verible::SyntaxTreeNode& node, const verible::SyntaxTreeContext& context);
 
   verible::LintRuleStatus Report() const override;
 

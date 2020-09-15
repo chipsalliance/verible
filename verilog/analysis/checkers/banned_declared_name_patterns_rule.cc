@@ -53,7 +53,7 @@ std::string BannedDeclaredNamePatternsRule::GetDescription(
                       " See your project's style guidance regarding naming.");
 }
 
-void BannedDeclaredNamePatternsRule::Visit(const verible::SyntaxTreeNode& node) {
+void BannedDeclaredNamePatternsRule::HandleNode(const verible::SyntaxTreeNode& node, const verible::SyntaxTreeContext& context) {
     const auto tag = static_cast<verilog::NodeEnum>(node.Tag().tag);
     switch(tag) {
 
