@@ -108,11 +108,10 @@ class TabularAlignTokenTest : public AlignmentTestFixture {
 
 static bool IgnoreNone(const TokenPartitionTree&) { return false; }
 
-static const AlignedFormattingHandler kDefaultAlignmentHandler{
-    .extract_alignment_groups = ExtractAlignmentGroupsAdapter(
+static const ExtractAlignmentGroupsFunction kDefaultAlignmentHandler =
+    ExtractAlignmentGroupsAdapter(
         &verible::GetSubpartitionsBetweenBlankLines, &IgnoreNone,
-        AlignmentCellScannerGenerator<TokenColumnizer>()),
-};
+        AlignmentCellScannerGenerator<TokenColumnizer>());
 
 TEST_F(TabularAlignTokenTest, EmptyPartitionRange) {
   const auto begin = pre_format_tokens_.begin();
@@ -280,11 +279,10 @@ TEST_F(Sparse3x3MatrixAlignmentTest, OneInterTokenPaddingExceptFront) {
             "five  six\n");
 }
 
-static const AlignedFormattingHandler kFlushRightAlignmentHandler{
-    .extract_alignment_groups = ExtractAlignmentGroupsAdapter(
+static const ExtractAlignmentGroupsFunction kFlushRightAlignmentHandler =
+    ExtractAlignmentGroupsAdapter(
         &verible::GetSubpartitionsBetweenBlankLines, &IgnoreNone,
-        AlignmentCellScannerGenerator<TokenColumnizerRightFlushed>()),
-};
+        AlignmentCellScannerGenerator<TokenColumnizerRightFlushed>());
 
 TEST_F(Sparse3x3MatrixAlignmentTest, RightFlushed) {
   // Require 1 space between tokens.
@@ -337,11 +335,9 @@ TEST_F(Sparse3x3MatrixAlignmentTest, IgnoreCommentLine) {
     return partition.Value().TokensRange().front().Text() == "three";
   };
 
-  const AlignedFormattingHandler handler{
-      .extract_alignment_groups = ExtractAlignmentGroupsAdapter(
-          &verible::GetSubpartitionsBetweenBlankLines, ignore_threes,
-          AlignmentCellScannerGenerator<TokenColumnizer>()),
-  };
+  const ExtractAlignmentGroupsFunction handler = ExtractAlignmentGroupsAdapter(
+      &verible::GetSubpartitionsBetweenBlankLines, ignore_threes,
+      AlignmentCellScannerGenerator<TokenColumnizer>());
   TabularAlignTokens(&partition_, handler, &pre_format_tokens_, sample_,
                      ByteOffsetSet(), AlignmentPolicy::kAlign, 40);
 

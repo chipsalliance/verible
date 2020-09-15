@@ -815,12 +815,12 @@ static AlignmentPolicy InferUserIntendedAlignmentPolicy(
   return AlignmentPolicy::kPreserve;
 }
 
-void TabularAlignTokens(TokenPartitionTree* partition_ptr,
-                        const AlignedFormattingHandler& alignment_handler,
-                        std::vector<PreFormatToken>* ftokens,
-                        absl::string_view full_text,
-                        const ByteOffsetSet& disabled_byte_ranges,
-                        AlignmentPolicy policy, int column_limit) {
+void TabularAlignTokens(
+    TokenPartitionTree* partition_ptr,
+    const ExtractAlignmentGroupsFunction& extract_alignment_groups,
+    std::vector<PreFormatToken>* ftokens, absl::string_view full_text,
+    const ByteOffsetSet& disabled_byte_ranges, AlignmentPolicy policy,
+    int column_limit) {
   VLOG(1) << __FUNCTION__;
   // Each subpartition is presumed to correspond to a list element or
   // possibly some other ignored element like comments.
@@ -833,7 +833,7 @@ void TabularAlignTokens(TokenPartitionTree* partition_ptr,
   if (subpartitions_range.empty()) return;
   VLOG(1) << "extracting alignment partition groups...";
   const std::vector<AlignablePartitionGroup> alignment_groups(
-      alignment_handler.extract_alignment_groups(subpartitions_range));
+      extract_alignment_groups(subpartitions_range));
   for (const auto& alignment_group : alignment_groups) {
     const TokenPartitionRange partition_range(
         alignment_group.alignable_rows.front(),
