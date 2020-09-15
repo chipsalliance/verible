@@ -110,8 +110,8 @@ static bool IgnoreNone(const TokenPartitionTree&) { return false; }
 
 static const AlignedFormattingHandler kDefaultAlignmentHandler{
     .extract_alignment_groups = ExtractAlignmentGroupsAdapter(
-        &verible::GetSubpartitionsBetweenBlankLines, &IgnoreNone),
-    .alignment_cell_scanner = AlignmentCellScannerGenerator<TokenColumnizer>(),
+        &verible::GetSubpartitionsBetweenBlankLines, &IgnoreNone,
+        AlignmentCellScannerGenerator<TokenColumnizer>()),
 };
 
 TEST_F(TabularAlignTokenTest, EmptyPartitionRange) {
@@ -282,9 +282,8 @@ TEST_F(Sparse3x3MatrixAlignmentTest, OneInterTokenPaddingExceptFront) {
 
 static const AlignedFormattingHandler kFlushRightAlignmentHandler{
     .extract_alignment_groups = ExtractAlignmentGroupsAdapter(
-        &verible::GetSubpartitionsBetweenBlankLines, &IgnoreNone),
-    .alignment_cell_scanner =
-        AlignmentCellScannerGenerator<TokenColumnizerRightFlushed>(),
+        &verible::GetSubpartitionsBetweenBlankLines, &IgnoreNone,
+        AlignmentCellScannerGenerator<TokenColumnizerRightFlushed>()),
 };
 
 TEST_F(Sparse3x3MatrixAlignmentTest, RightFlushed) {
@@ -340,9 +339,8 @@ TEST_F(Sparse3x3MatrixAlignmentTest, IgnoreCommentLine) {
 
   const AlignedFormattingHandler handler{
       .extract_alignment_groups = ExtractAlignmentGroupsAdapter(
-          &verible::GetSubpartitionsBetweenBlankLines, ignore_threes),
-      .alignment_cell_scanner =
-          AlignmentCellScannerGenerator<TokenColumnizer>(),
+          &verible::GetSubpartitionsBetweenBlankLines, ignore_threes,
+          AlignmentCellScannerGenerator<TokenColumnizer>()),
   };
   TabularAlignTokens(&partition_, handler, &pre_format_tokens_, sample_,
                      ByteOffsetSet(), AlignmentPolicy::kAlign, 40);

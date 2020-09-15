@@ -129,16 +129,21 @@ std::vector<TokenPartitionRange> GetPartitionAlignmentSubranges(
         partition_selector,
     int min_match_count = 2);
 
-// This represents one unit of alignable work, which is usually a filtered
-// subset of partitions within a contiguous range of partitions.
-// TODO(fangism): pair this with an AlignmentCellScannerFunction to be able to
-// support heterogeneous subgroup alignment.
-using AlignablePartitionGroup = std::vector<TokenPartitionIterator>;
-
 // This is the interface used to extract alignment cells from ranges of tokens.
 // Note that it is not required to use a ColumnSchemaScanner.
 using AlignmentCellScannerFunction =
     std::function<std::vector<ColumnPositionEntry>(const TokenPartitionTree&)>;
+
+// This represents one unit of alignable work, which is usually a filtered
+// subset of partitions within a contiguous range of partitions.
+struct AlignablePartitionGroup {
+  // The set of partitions to treat as rows for tabular alignment.
+  std::vector<TokenPartitionIterator> alignable_rows;
+
+  // This function scans each row to identify column positions and properties of
+  // alignable cells (containing token ranges).
+  AlignmentCellScannerFunction alignment_cell_scanner;
+};
 
 // This is the interface used to sub-divide a range of token partitions into
 // a sequence of sub-ranges for the purposes of formatting aligned groups.
@@ -157,7 +162,8 @@ using IgnoreAlignmentRowPredicate =
 ExtractAlignmentGroupsFunction ExtractAlignmentGroupsAdapter(
     const std::function<std::vector<TokenPartitionRange>(
         const TokenPartitionRange&)>& legacy_extractor,
-    const IgnoreAlignmentRowPredicate& legacy_ignore_predicate);
+    const IgnoreAlignmentRowPredicate& legacy_ignore_predicate,
+    const AlignmentCellScannerFunction& alignment_cell_scanner);
 
 // Instantiates a ScannerType (implements ColumnSchemaScanner) and extracts
 // column alignment information, suitable as an AlignmentCellScannerFunction.
@@ -236,10 +242,6 @@ struct AlignedFormattingHandler {
   // children of a parent partition of interest) into groups of lines that will
   // align with each other.
   ExtractAlignmentGroupsFunction extract_alignment_groups;
-
-  // This function scans lines (token ranges)
-  // for token positions that mark the start of a new column.
-  AlignmentCellScannerFunction alignment_cell_scanner;
 };
 
 // This aligns sections of text by modifying the spacing between tokens.

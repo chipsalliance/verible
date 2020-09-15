@@ -781,49 +781,52 @@ class CaseItemColumnSchemaScanner : public ColumnSchemaScanner {
 static const verible::AlignedFormattingHandler kPortDeclarationAligner{
     .extract_alignment_groups = verible::ExtractAlignmentGroupsAdapter(
         &verible::GetSubpartitionsBetweenBlankLines,
-        &IgnoreWithinPortDeclarationPartitionGroup),
-    .alignment_cell_scanner =
-        AlignmentCellScannerGenerator<PortDeclarationColumnSchemaScanner>(),
+        &IgnoreWithinPortDeclarationPartitionGroup,
+        AlignmentCellScannerGenerator<PortDeclarationColumnSchemaScanner>()),
 };
 
 static const verible::AlignedFormattingHandler kActualNamedParameterAligner{
     .extract_alignment_groups = verible::ExtractAlignmentGroupsAdapter(
         &verible::GetSubpartitionsBetweenBlankLines,
-        &IgnoreWithinActualNamedParameterPartitionGroup),
-    .alignment_cell_scanner = AlignmentCellScannerGenerator<
-        ActualNamedParameterColumnSchemaScanner>(),
+        &IgnoreWithinActualNamedParameterPartitionGroup,
+        AlignmentCellScannerGenerator<
+            ActualNamedParameterColumnSchemaScanner>()),
 };
 
 static const verible::AlignedFormattingHandler kActualNamedPortAligner{
     .extract_alignment_groups = verible::ExtractAlignmentGroupsAdapter(
         &verible::GetSubpartitionsBetweenBlankLines,
-        &IgnoreWithinActualNamedPortPartitionGroup),
-    .alignment_cell_scanner =
-        AlignmentCellScannerGenerator<ActualNamedPortColumnSchemaScanner>(),
+        &IgnoreWithinActualNamedPortPartitionGroup,
+        AlignmentCellScannerGenerator<ActualNamedPortColumnSchemaScanner>()),
 };
 
 static const verible::AlignedFormattingHandler kDataDeclarationAligner{
     .extract_alignment_groups = verible::ExtractAlignmentGroupsAdapter(
         &GetConsecutiveDataDeclarationGroups,
-        &IgnoreCommentsAndPreprocessingDirectives),
-    .alignment_cell_scanner =
-        AlignmentCellScannerGenerator<DataDeclarationColumnSchemaScanner>(),
+        &IgnoreCommentsAndPreprocessingDirectives,
+        AlignmentCellScannerGenerator<DataDeclarationColumnSchemaScanner>()),
 };
 
 static const verible::AlignedFormattingHandler kClassPropertyAligner{
     .extract_alignment_groups = verible::ExtractAlignmentGroupsAdapter(
         &GetConsecutiveDataDeclarationGroups,
-        &IgnoreCommentsAndPreprocessingDirectives),
-    .alignment_cell_scanner =
-        AlignmentCellScannerGenerator<ClassPropertyColumnSchemaScanner>(),
+        &IgnoreCommentsAndPreprocessingDirectives,
+        AlignmentCellScannerGenerator<ClassPropertyColumnSchemaScanner>()),
 };
 
 static const verible::AlignedFormattingHandler kCaseItemAligner{
     .extract_alignment_groups = verible::ExtractAlignmentGroupsAdapter(
         &verible::GetSubpartitionsBetweenBlankLines,
-        &IgnoreMultilineCaseStatements),
-    .alignment_cell_scanner =
-        AlignmentCellScannerGenerator<CaseItemColumnSchemaScanner>(),
+        &IgnoreMultilineCaseStatements,
+        AlignmentCellScannerGenerator<CaseItemColumnSchemaScanner>()),
+};
+
+static const verible::AlignedFormattingHandler kParameterDeclarationAligner{
+    .extract_alignment_groups = verible::ExtractAlignmentGroupsAdapter(
+        &verible::GetSubpartitionsBetweenBlankLines,
+        &IgnoreWithinPortDeclarationPartitionGroup,
+        AlignmentCellScannerGenerator<
+            ParameterDeclarationColumnSchemaScanner>()),
 };
 
 struct AlignedFormattingConfiguration {
@@ -833,14 +836,6 @@ struct AlignedFormattingConfiguration {
   // This function extracts a specific alignment policy from the
   // Verilog-specific style structure.
   std::function<AlignmentPolicy(const FormatStyle&)> policy;
-};
-
-static const verible::AlignedFormattingHandler kParameterDeclarationAligner{
-    .extract_alignment_groups = verible::ExtractAlignmentGroupsAdapter(
-        &verible::GetSubpartitionsBetweenBlankLines,
-        &IgnoreWithinPortDeclarationPartitionGroup),
-    .alignment_cell_scanner = AlignmentCellScannerGenerator<
-        ParameterDeclarationColumnSchemaScanner>(),
 };
 
 void TabularAlignTokenPartitions(TokenPartitionTree* partition_ptr,
