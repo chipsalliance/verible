@@ -134,6 +134,36 @@ std::vector<TokenPartitionRange> GetPartitionAlignmentSubranges(
 using AlignmentCellScannerFunction =
     std::function<std::vector<ColumnPositionEntry>(const TokenPartitionTree&)>;
 
+// For sections of code that are deemed alignable, this enum controls
+// the formatter behavior.
+enum class AlignmentPolicy {
+  // Preserve text as-is.
+  kPreserve,
+
+  // No-align: flush text to left while obeying spacing constraints
+  kFlushLeft,
+
+  // Attempt tabular alignment.
+  kAlign,
+
+  // Infer whether user wanted flush-left or alignment, based on original
+  // spacing.
+  kInferUserIntent,
+};
+
+namespace internal {
+extern const std::initializer_list<
+    std::pair<const absl::string_view, AlignmentPolicy>>
+    kAlignmentPolicyNameMap;
+}  // namespace internal
+
+std::ostream& operator<<(std::ostream&, AlignmentPolicy);
+
+bool AbslParseFlag(absl::string_view text, AlignmentPolicy* policy,
+                   std::string* error);
+
+std::string AbslUnparseFlag(const AlignmentPolicy& policy);
+
 // This represents one unit of alignable work, which is usually a filtered
 // subset of partitions within a contiguous range of partitions.
 struct AlignablePartitionGroup {
@@ -143,6 +173,14 @@ struct AlignablePartitionGroup {
   // This function scans each row to identify column positions and properties of
   // alignable cells (containing token ranges).
   AlignmentCellScannerFunction alignment_cell_scanner;
+
+  // Controls how this group should be aligned or flushed or preserved.
+  AlignmentPolicy alignment_policy;
+
+  TokenPartitionRange Range() const {
+    return TokenPartitionRange(alignable_rows.front(),
+                               alignable_rows.back() + 1);
+  }
 };
 
 // This is the interface used to sub-divide a range of token partitions into
@@ -163,7 +201,8 @@ ExtractAlignmentGroupsFunction ExtractAlignmentGroupsAdapter(
     const std::function<std::vector<TokenPartitionRange>(
         const TokenPartitionRange&)>& legacy_extractor,
     const IgnoreAlignmentRowPredicate& legacy_ignore_predicate,
-    const AlignmentCellScannerFunction& alignment_cell_scanner);
+    const AlignmentCellScannerFunction& alignment_cell_scanner,
+    AlignmentPolicy alignment_policy);
 
 // Instantiates a ScannerType (implements ColumnSchemaScanner) and extracts
 // column alignment information, suitable as an AlignmentCellScannerFunction.
@@ -202,36 +241,6 @@ AlignmentCellScannerFunction AlignmentCellScannerGenerator() {
   };
 }
 
-// For sections of code that are deemed alignable, this enum controls
-// the formatter behavior.
-enum class AlignmentPolicy {
-  // Preserve text as-is.
-  kPreserve,
-
-  // No-align: flush text to left while obeying spacing constraints
-  kFlushLeft,
-
-  // Attempt tabular alignment.
-  kAlign,
-
-  // Infer whether user wanted flush-left or alignment, based on original
-  // spacing.
-  kInferUserIntent,
-};
-
-namespace internal {
-extern const std::initializer_list<
-    std::pair<const absl::string_view, AlignmentPolicy>>
-    kAlignmentPolicyNameMap;
-}  // namespace internal
-
-std::ostream& operator<<(std::ostream&, AlignmentPolicy);
-
-bool AbslParseFlag(absl::string_view text, AlignmentPolicy* policy,
-                   std::string* error);
-
-std::string AbslUnparseFlag(const AlignmentPolicy& policy);
-
 // This aligns sections of text by modifying the spacing between tokens.
 // 'partition_ptr' is a partition that can span one or more sections of
 // code to align.  The partitions themselves are not reshaped, however,
@@ -253,7 +262,6 @@ std::string AbslUnparseFlag(const AlignmentPolicy& policy);
 // 'ftokens' points to the array of PreFormatTokens that spans 'full_text'.
 // 'disabled_byte_ranges' contains information about which ranges of text
 // are to preserve their original spacing (no-formatting).
-// 'policy' allows selective enabling/disabling of alignment.
 // 'column_limit' is the column width beyond which the aligner should fallback
 // to a safer action, e.g. refusing to align and leaving spacing untouched.
 //
@@ -278,8 +286,7 @@ void TabularAlignTokens(
     TokenPartitionTree* partition_ptr,
     const ExtractAlignmentGroupsFunction& extract_alignment_groups,
     std::vector<PreFormatToken>* ftokens, absl::string_view full_text,
-    const ByteOffsetSet& disabled_byte_ranges, AlignmentPolicy policy,
-    int column_limit);
+    const ByteOffsetSet& disabled_byte_ranges, int column_limit);
 
 }  // namespace verible
 

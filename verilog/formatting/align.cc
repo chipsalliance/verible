@@ -23,6 +23,7 @@
 
 #include "common/formatting/align.h"
 #include "common/formatting/format_token.h"
+#include "common/formatting/token_partition_tree.h"
 #include "common/formatting/unwrapped_line.h"
 #include "common/text/concrete_syntax_leaf.h"
 #include "common/text/concrete_syntax_tree.h"
@@ -41,10 +42,10 @@
 namespace verilog {
 namespace formatter {
 
+using verible::AlignablePartitionGroup;
 using verible::AlignmentCellScannerGenerator;
 using verible::AlignmentColumnProperties;
 using verible::AlignmentGroupAction;
-using verible::AlignmentPolicy;
 using verible::ByteOffsetSet;
 using verible::ColumnSchemaScanner;
 using verible::down_cast;
@@ -778,58 +779,75 @@ class CaseItemColumnSchemaScanner : public ColumnSchemaScanner {
   bool previous_token_was_case_colon_ = false;
 };
 
-static const ExtractAlignmentGroupsFunction kPortDeclarationAligner =
-    verible::ExtractAlignmentGroupsAdapter(
-        &verible::GetSubpartitionsBetweenBlankLines,
-        &IgnoreWithinPortDeclarationPartitionGroup,
-        AlignmentCellScannerGenerator<PortDeclarationColumnSchemaScanner>());
+using AlignSyntaxGroupsFunction =
+    std::function<std::vector<AlignablePartitionGroup>(
+        const TokenPartitionRange& range, const FormatStyle& style)>;
 
-static const ExtractAlignmentGroupsFunction kActualNamedParameterAligner =
-    verible::ExtractAlignmentGroupsAdapter(
-        &verible::GetSubpartitionsBetweenBlankLines,
-        &IgnoreWithinActualNamedParameterPartitionGroup,
-        AlignmentCellScannerGenerator<
-            ActualNamedParameterColumnSchemaScanner>());
+static std::vector<AlignablePartitionGroup> AlignPortDeclarations(
+    const TokenPartitionRange& full_range, const FormatStyle& vstyle) {
+  return verible::ExtractAlignmentGroupsAdapter(
+      &verible::GetSubpartitionsBetweenBlankLines,
+      &IgnoreWithinPortDeclarationPartitionGroup,
+      AlignmentCellScannerGenerator<PortDeclarationColumnSchemaScanner>(),
+      vstyle.port_declarations_alignment)(full_range);
+}
 
-static const ExtractAlignmentGroupsFunction kActualNamedPortAligner =
-    verible::ExtractAlignmentGroupsAdapter(
-        &verible::GetSubpartitionsBetweenBlankLines,
-        &IgnoreWithinActualNamedPortPartitionGroup,
-        AlignmentCellScannerGenerator<ActualNamedPortColumnSchemaScanner>());
+static std::vector<AlignablePartitionGroup> AlignActualNamedParameters(
+    const TokenPartitionRange& full_range, const FormatStyle& vstyle) {
+  return verible::ExtractAlignmentGroupsAdapter(
+      &verible::GetSubpartitionsBetweenBlankLines,
+      &IgnoreWithinActualNamedParameterPartitionGroup,
+      AlignmentCellScannerGenerator<ActualNamedParameterColumnSchemaScanner>(),
+      vstyle.named_parameter_alignment)(full_range);
+}
 
-static const ExtractAlignmentGroupsFunction kDataDeclarationAligner =
-    verible::ExtractAlignmentGroupsAdapter(
-        &GetConsecutiveDataDeclarationGroups,
-        &IgnoreCommentsAndPreprocessingDirectives,
-        AlignmentCellScannerGenerator<DataDeclarationColumnSchemaScanner>());
+static std::vector<AlignablePartitionGroup> AlignActualNamedPorts(
+    const TokenPartitionRange& full_range, const FormatStyle& vstyle) {
+  return verible::ExtractAlignmentGroupsAdapter(
+      &verible::GetSubpartitionsBetweenBlankLines,
+      &IgnoreWithinActualNamedPortPartitionGroup,
+      AlignmentCellScannerGenerator<ActualNamedPortColumnSchemaScanner>(),
+      vstyle.named_port_alignment)(full_range);
+}
 
-static const ExtractAlignmentGroupsFunction kClassPropertyAligner =
-    verible::ExtractAlignmentGroupsAdapter(
-        &GetConsecutiveDataDeclarationGroups,
-        &IgnoreCommentsAndPreprocessingDirectives,
-        AlignmentCellScannerGenerator<ClassPropertyColumnSchemaScanner>());
+static std::vector<AlignablePartitionGroup> AlignModuleItems(
+    const TokenPartitionRange& full_range, const FormatStyle& vstyle) {
+  // Currently, this only handles data/net/variable declarations.
+  // TODO(b/161814377): align continuous assignments
+  return verible::ExtractAlignmentGroupsAdapter(
+      &GetConsecutiveDataDeclarationGroups,
+      &IgnoreCommentsAndPreprocessingDirectives,
+      AlignmentCellScannerGenerator<DataDeclarationColumnSchemaScanner>(),
+      vstyle.module_net_variable_alignment)(full_range);
+}
 
-static const ExtractAlignmentGroupsFunction kCaseItemAligner =
-    verible::ExtractAlignmentGroupsAdapter(
-        &verible::GetSubpartitionsBetweenBlankLines,
-        &IgnoreMultilineCaseStatements,
-        AlignmentCellScannerGenerator<CaseItemColumnSchemaScanner>());
+static std::vector<AlignablePartitionGroup> AlignClassItems(
+    const TokenPartitionRange& full_range, const FormatStyle& vstyle) {
+  // TODO(fangism): align other class items besides member variables.
+  return verible::ExtractAlignmentGroupsAdapter(
+      &GetConsecutiveDataDeclarationGroups,
+      &IgnoreCommentsAndPreprocessingDirectives,
+      AlignmentCellScannerGenerator<ClassPropertyColumnSchemaScanner>(),
+      vstyle.class_member_variable_alignment)(full_range);
+}
 
-static const ExtractAlignmentGroupsFunction kParameterDeclarationAligner =
-    verible::ExtractAlignmentGroupsAdapter(
-        &verible::GetSubpartitionsBetweenBlankLines,
-        &IgnoreWithinPortDeclarationPartitionGroup,
-        AlignmentCellScannerGenerator<
-            ParameterDeclarationColumnSchemaScanner>());
+static std::vector<AlignablePartitionGroup> AlignCaseItems(
+    const TokenPartitionRange& full_range, const FormatStyle& vstyle) {
+  return verible::ExtractAlignmentGroupsAdapter(
+      &verible::GetSubpartitionsBetweenBlankLines,
+      &IgnoreMultilineCaseStatements,
+      AlignmentCellScannerGenerator<CaseItemColumnSchemaScanner>(),
+      vstyle.case_items_alignment)(full_range);
+}
 
-struct AlignedFormattingConfiguration {
-  // Set of functions for driving specific code aligners.
-  ExtractAlignmentGroupsFunction handler;
-
-  // This function extracts a specific alignment policy from the
-  // Verilog-specific style structure.
-  std::function<AlignmentPolicy(const FormatStyle&)> policy;
-};
+static std::vector<AlignablePartitionGroup> AlignParameterDeclarations(
+    const TokenPartitionRange& full_range, const FormatStyle& vstyle) {
+  return verible::ExtractAlignmentGroupsAdapter(
+      &verible::GetSubpartitionsBetweenBlankLines,
+      &IgnoreWithinPortDeclarationPartitionGroup,
+      AlignmentCellScannerGenerator<ParameterDeclarationColumnSchemaScanner>(),
+      vstyle.formal_parameters_alignment)(full_range);
+}
 
 void TabularAlignTokenPartitions(TokenPartitionTree* partition_ptr,
                                  std::vector<PreFormatToken>* ftokens,
@@ -847,53 +865,28 @@ void TabularAlignTokenPartitions(TokenPartitionTree* partition_ptr,
   if (node == nullptr) return;
   // Dispatch aligning function based on syntax tree node type.
 
-  static const auto* const kAlignHandlers = new std::map<
-      NodeEnum, AlignedFormattingConfiguration>{
-      {NodeEnum::kPortDeclarationList,
-       {kPortDeclarationAligner,
-        [](const FormatStyle& vstyle) {
-          return vstyle.port_declarations_alignment;
-        }}},
-      {NodeEnum::kActualParameterByNameList,
-       {kActualNamedParameterAligner,
-        [](const FormatStyle& vstyle) {
-          return vstyle.named_parameter_alignment;
-        }}},
-      {NodeEnum::kPortActualList,
-       {kActualNamedPortAligner,
-        [](const FormatStyle& vstyle) { return vstyle.named_port_alignment; }}},
-      {NodeEnum::kModuleItemList,
-       {kDataDeclarationAligner,
-        [](const FormatStyle& vstyle) {
-          return vstyle.module_net_variable_alignment;
-        }}},
-      {NodeEnum::kFormalParameterList,
-       {kParameterDeclarationAligner,
-        [](const FormatStyle& vstyle) {
-          return vstyle.formal_parameters_alignment;
-        }}},
-      {NodeEnum::kClassItems,
-       {kClassPropertyAligner,
-        [](const FormatStyle& vstyle) {
-          return vstyle.class_member_variable_alignment;
-        }}},
-      // various case-like constructs:
-      {NodeEnum::kCaseItemList,
-       {kCaseItemAligner,
-        [](const FormatStyle& vstyle) { return vstyle.case_items_alignment; }}},
-      {NodeEnum::kCaseInsideItemList,
-       {kCaseItemAligner,
-        [](const FormatStyle& vstyle) { return vstyle.case_items_alignment; }}},
-      {NodeEnum::kGenerateCaseItemList,
-       {kCaseItemAligner,
-        [](const FormatStyle& vstyle) { return vstyle.case_items_alignment; }}},
-  };
+  static const auto* const kAlignHandlers =
+      new std::map<NodeEnum, AlignSyntaxGroupsFunction>{
+          {NodeEnum::kPortDeclarationList, &AlignPortDeclarations},
+          {NodeEnum::kActualParameterByNameList, &AlignActualNamedParameters},
+          {NodeEnum::kPortActualList, &AlignActualNamedPorts},
+          {NodeEnum::kModuleItemList, &AlignModuleItems},
+          {NodeEnum::kFormalParameterList, &AlignParameterDeclarations},
+          {NodeEnum::kClassItems, &AlignClassItems},
+          // various case-like constructs:
+          {NodeEnum::kCaseItemList, &AlignCaseItems},
+          {NodeEnum::kCaseInsideItemList, &AlignCaseItems},
+          {NodeEnum::kGenerateCaseItemList, &AlignCaseItems},
+      };
   const auto handler_iter = kAlignHandlers->find(NodeEnum(node->Tag().tag));
   if (handler_iter == kAlignHandlers->end()) return;
-  verible::TabularAlignTokens(partition_ptr, handler_iter->second.handler,
-                              ftokens, full_text, disabled_byte_ranges,
-                              handler_iter->second.policy(style),
-                              style.column_limit);
+  verible::TabularAlignTokens(
+      partition_ptr,
+      [&style, handler_iter](const TokenPartitionRange& range) {
+        // Return a closure bound to the current formatting style.
+        return handler_iter->second(range, style);
+      },
+      ftokens, full_text, disabled_byte_ranges, style.column_limit);
   VLOG(1) << "end of " << __FUNCTION__;
 }
 
