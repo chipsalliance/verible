@@ -44,18 +44,20 @@ TEST(BannedDeclaredNamePatternsRuleTest, AcceptTests) {
 
 // Tests that BannedDeclaredNamePatternsRuleTest correctly rejects invalid patterns.
 TEST(BannedDeclaredNamePatternsRuleTest, RejectTests) {
+  constexpr int kTag = 1;
   const std::initializer_list<LintTestCase> kTestCases = {
+      {"module legal; endmodule"},
+      {"module ", {kTag, "ILLEGALNAME"}, "; endmodule"},
       {"module legal;\n"
-       "  module ILLEGALNAME;\n"
+       "  module ", {kTag, "ILLEGALNAME"}, ";\n"
        "  endmodule\n"
        "endmodule"},
       {"module legal;\n"
-       "  module illegalname;\n"
+       "  module ", {kTag, "illegalname"}, ";\n"
        "  endmodule\n"
        "endmodule"},
-      {"package IllegalName; endpackage"},
-      {"package ILLEGALNAME; endpackage"},
-
+      {"package ", {kTag, "IllegalName"}, "; endpackage"},
+      {"package ", {kTag, "ILLEGALNAME"}, "; endpackage"},
   };
   RunLintTestCases<VerilogAnalyzer, BannedDeclaredNamePatternsRule>(kTestCases);
 }
