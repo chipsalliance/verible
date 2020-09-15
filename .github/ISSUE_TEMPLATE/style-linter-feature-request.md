@@ -1,7 +1,9 @@
 --------------------------------------------------------------------------------
 
-name: style-linter feature request about: Suggest new style lint rules, or
-improvements for existing ones title: '' labels: enhancement, style-linter
+name: style-linter feature request
+about: Suggest new style lint rules, or improvements for existing ones
+title: ''
+labels: enhancement, style-linter
 assignees: ''
 
 --------------------------------------------------------------------------------

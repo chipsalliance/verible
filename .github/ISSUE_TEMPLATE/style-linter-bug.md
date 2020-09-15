@@ -1,6 +1,9 @@
 --------------------------------------------------------------------------------
 
-name: style-linter bug about: style-linter bugs title: '' labels: style-linter
+name: style-linter bug
+about: style-linter bugs
+title: ''
+labels: style-linter
 assignees: ''
 
 --------------------------------------------------------------------------------

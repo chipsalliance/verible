@@ -1,7 +1,10 @@
 --------------------------------------------------------------------------------
 
-name: lexer/parser issue about: Lexer and parser bugs title: '' labels:
-rejects-valid syntax assignees: ''
+name: lexer/parser issue
+about: Lexer and parser bugs
+title: ''
+labels: rejects-valid syntax
+assignees: ''
 
 --------------------------------------------------------------------------------
 
