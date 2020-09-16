@@ -73,7 +73,7 @@ std::vector<verible::TreeSearchMatch> FindAllFunctionDeclarations(
     const verible::Symbol&);
 
 // Find all function (or Task) calls.
-std::vector<verible::TreeSearchMatch> FindAllFunctionCalls(
+std::vector<verible::TreeSearchMatch> FindAllFunctionOrTaskCalls(
     const verible::Symbol&);
 
 // Returns the function declaration header (return type, id, ports)
@@ -128,8 +128,8 @@ const verible::SyntaxTreeNode& GetFunctionBlockStatementList(
     const verible::Symbol&);
 
 // Return the node spanning the paren group of function call.
-// e.g function(a, b, c) return the node spanning (a, b, c).
-const verible::SyntaxTreeNode& GetParenGroupFromFunctioncall(
+// e.g my_function(a, b, c) return the node spanning (a, b, c).
+const verible::SyntaxTreeNode& GetParenGroupFromFromCall(
     const verible::Symbol&);
 
 }  // namespace verilog

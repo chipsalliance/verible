@@ -522,12 +522,12 @@ TEST(FunctionCallTest, GetFunctionCallArguments) {
     TestVerilogSyntaxRangeMatches(
         __FUNCTION__, test, [](const TextStructureView& text_structure) {
           const auto& root = text_structure.SyntaxTree();
-          const auto& instances = FindAllFunctionCalls(*ABSL_DIE_IF_NULL(root));
+          const auto& instances = FindAllFunctionOrTaskCalls(*ABSL_DIE_IF_NULL(root));
 
           std::vector<TreeSearchMatch> paren_groups;
           for (const auto& decl : instances) {
             const auto& paren_group =
-                GetParenGroupFromFunctioncall(*decl.match);
+                GetParenGroupFromFromCall(*decl.match);
             paren_groups.emplace_back(
                 TreeSearchMatch{&paren_group, {/* ignored context */}});
           }

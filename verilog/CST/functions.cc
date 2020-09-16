@@ -37,7 +37,7 @@ std::vector<verible::TreeSearchMatch> FindAllFunctionDeclarations(
   return verible::SearchSyntaxTree(root, NodekFunctionDeclaration());
 }
 
-std::vector<verible::TreeSearchMatch> FindAllFunctionCalls(const Symbol& root) {
+std::vector<verible::TreeSearchMatch> FindAllFunctionOrTaskCalls(const Symbol& root) {
   return verible::SearchSyntaxTree(root, NodekFunctionCall());
 }
 
@@ -106,7 +106,7 @@ const verible::SyntaxTreeNode& GetFunctionBlockStatementList(
                                    NodeEnum::kBlockItemStatementList);
 }
 
-const verible::SyntaxTreeNode& GetParenGroupFromFunctioncall(
+const verible::SyntaxTreeNode& GetParenGroupFromFromCall(
     const verible::Symbol& function_call) {
   return verible::GetSubtreeAsNode(function_call, NodeEnum::kFunctionCall, 1,
                                    NodeEnum::kParenGroup);

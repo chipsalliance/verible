@@ -120,7 +120,7 @@ class IndexingFactsTreeExtractor : public verible::TreeContextVisitor {
   void ExtractSymbolIdentifier(
       const verible::SyntaxTreeLeaf& symbol_identifier);
 
-  // Extracts parameters and creates its corresponding fact tree.
+  // Extracts parameter declarations and creates its corresponding fact tree.
   void ExtractParam(const verible::SyntaxTreeNode& param_declaration);
 
   // Extracts module instantiation named ports and creates its corresponding
