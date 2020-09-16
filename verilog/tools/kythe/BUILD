@@ -117,6 +117,7 @@ cc_library(
         "//common/text:tree_utils",
         "//verilog/CST:class",
         "//verilog/CST:declaration",
+        "//verilog/CST:parameters",
         "//verilog/CST:functions",
         "//verilog/CST:identifier",
         "//verilog/CST:macro",

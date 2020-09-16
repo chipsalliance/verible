@@ -117,6 +117,11 @@ const verible::TokenInfo& GetTypeTokenInfoFromDataDeclaration(
 const verible::SyntaxTreeNode& GetInstanceListFromDataDeclaration(
     const verible::Symbol& data_declaration);
 
+// For a given module gate instance return the node spanning the paren group.
+// e.g module_type instance(a, b, c) return the node spanning (a, b, c).
+const verible::SyntaxTreeNode& GetParenGroupFromModuleInstantiation(
+    const verible::Symbol& gate_instance);
+
 // For a given gate instance subtree returns the TokenInfo of the module name.
 // e.g. bar b1(); returns TokenInfo for "b1".
 const verible::TokenInfo& GetModuleInstanceNameTokenInfoFromGateInstance(

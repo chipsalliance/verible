@@ -28,8 +28,6 @@
 #include <utility>
 #include <vector>
 
-#include "gmock/gmock.h"
-#include "gtest/gtest.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
 #include "common/analysis/syntax_tree_search.h"
@@ -39,6 +37,9 @@
 #include "common/text/text_structure.h"
 #include "common/text/token_info.h"
 #include "common/util/logging.h"
+#include "gmock/gmock.h"
+#include "gtest/gtest.h"
+#include "verilog/CST/match_test_utils.h"
 #include "verilog/CST/type.h"
 #include "verilog/CST/verilog_nonterminals.h"
 #include "verilog/analysis/verilog_analyzer.h"
@@ -50,6 +51,7 @@ namespace verilog {
 namespace {
 
 using verible::SyntaxTreeSearchTestCase;
+using verible::TextStructureView;
 using verible::TreeSearchMatch;
 
 // Tests that no ports are found from an empty source.
@@ -292,6 +294,68 @@ TEST(GetAllPortReferences, GetPortReferenceIdentifier) {
         << "failed on:\n"
         << code << "\ndiffs:\n"
         << diffs.str();
+  }
+}
+
+TEST(GetActualNamedPort, GetActualPortName) {
+  constexpr int kTag = 1;  // value doesn't matter
+  const SyntaxTreeSearchTestCase kTestCases[] = {
+      {""},
+      {"module m(input in1, input int2, input in3); endmodule: m\nmodule "
+       "foo(input x, input y);\ninput in3;\nm m1(.",
+       {kTag, "in1"},
+       "(x), .",
+       {kTag, "in2"},
+       "(y), "
+       ".",
+       {kTag, "in3"},
+       ");\nendmodule"},
+  };
+  for (const auto& test : kTestCases) {
+    TestVerilogSyntaxRangeMatches(
+        __FUNCTION__, test, [](const TextStructureView& text_structure) {
+          const auto& root = text_structure.SyntaxTree();
+          const auto& ports = FindAllActualNamedPort(*ABSL_DIE_IF_NULL(root));
+
+          std::vector<TreeSearchMatch> names;
+          for (const auto& port : ports) {
+            const auto& name = GetActualNamedPortName(*port.match);
+            names.emplace_back(TreeSearchMatch{&name, {/* ignored context */}});
+          }
+          return names;
+        });
+  }
+}
+
+TEST(GetActualNamedPort, GetActualNamedPortParenGroup) {
+  constexpr int kTag = 1;  // value doesn't matter
+  const SyntaxTreeSearchTestCase kTestCases[] = {
+      {""},
+      {"module m(input in1, input int2, input in3); endmodule: m\nmodule "
+       "foo(input x, input y);\ninput in3;\nm m1(.in1",
+       {kTag, "(x)"},
+       ", .in2",
+       {kTag, "(y)"},
+       ", ",
+       ".in3);\nendmodule"},
+  };
+  for (const auto& test : kTestCases) {
+    TestVerilogSyntaxRangeMatches(
+        __FUNCTION__, test, [](const TextStructureView& text_structure) {
+          const auto& root = text_structure.SyntaxTree();
+          const auto& ports = FindAllActualNamedPort(*ABSL_DIE_IF_NULL(root));
+
+          std::vector<TreeSearchMatch> paren_groups;
+          for (const auto& port : ports) {
+            const auto* paren_group = GetActualNamedPortParenGroup(*port.match);
+            if (paren_group == nullptr) {
+              continue;
+            }
+            paren_groups.emplace_back(
+                TreeSearchMatch{paren_group, {/* ignored context */}});
+          }
+          return paren_groups;
+        });
   }
 }
 

@@ -151,4 +151,10 @@ const verible::TokenInfo& GetInstanceNameTokenInfoFromRegisterVariable(
   return instance_name.get();
 }
 
+const verible::SyntaxTreeNode& GetParenGroupFromModuleInstantiation(
+    const verible::Symbol& gate_instance) {
+  return GetSubtreeAsNode(gate_instance, NodeEnum::kGateInstance, 2,
+                          NodeEnum::kParenGroup);
+}
+
 }  // namespace verilog
