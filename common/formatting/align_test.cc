@@ -110,25 +110,25 @@ static bool IgnoreNone(const TokenPartitionTree&) { return false; }
 
 static const ExtractAlignmentGroupsFunction kDefaultAlignmentHandler =
     ExtractAlignmentGroupsAdapter(
-        &verible::GetSubpartitionsBetweenBlankLines, &IgnoreNone,
+        &verible::GetSubpartitionsBetweenBlankLinesSingleTag, &IgnoreNone,
         AlignmentCellScannerGenerator<TokenColumnizer>(),
         AlignmentPolicy::kAlign);
 
 static const ExtractAlignmentGroupsFunction kFlushLeftAlignmentHandler =
     ExtractAlignmentGroupsAdapter(
-        &verible::GetSubpartitionsBetweenBlankLines, &IgnoreNone,
+        &verible::GetSubpartitionsBetweenBlankLinesSingleTag, &IgnoreNone,
         AlignmentCellScannerGenerator<TokenColumnizer>(),
         AlignmentPolicy::kFlushLeft);
 
 static const ExtractAlignmentGroupsFunction kPreserveAlignmentHandler =
     ExtractAlignmentGroupsAdapter(
-        &verible::GetSubpartitionsBetweenBlankLines, &IgnoreNone,
+        &verible::GetSubpartitionsBetweenBlankLinesSingleTag, &IgnoreNone,
         AlignmentCellScannerGenerator<TokenColumnizer>(),
         AlignmentPolicy::kPreserve);
 
 static const ExtractAlignmentGroupsFunction kInferAlignmentHandler =
     ExtractAlignmentGroupsAdapter(
-        &verible::GetSubpartitionsBetweenBlankLines, &IgnoreNone,
+        &verible::GetSubpartitionsBetweenBlankLinesSingleTag, &IgnoreNone,
         AlignmentCellScannerGenerator<TokenColumnizer>(),
         AlignmentPolicy::kInferUserIntent);
 
@@ -300,7 +300,7 @@ TEST_F(Sparse3x3MatrixAlignmentTest, OneInterTokenPaddingExceptFront) {
 
 static const ExtractAlignmentGroupsFunction kFlushRightAlignmentHandler =
     ExtractAlignmentGroupsAdapter(
-        &verible::GetSubpartitionsBetweenBlankLines, &IgnoreNone,
+        &verible::GetSubpartitionsBetweenBlankLinesSingleTag, &IgnoreNone,
         AlignmentCellScannerGenerator<TokenColumnizerRightFlushed>(),
         AlignmentPolicy::kAlign);
 
@@ -355,7 +355,7 @@ TEST_F(Sparse3x3MatrixAlignmentTest, IgnoreCommentLine) {
   };
 
   const ExtractAlignmentGroupsFunction handler = ExtractAlignmentGroupsAdapter(
-      &verible::GetSubpartitionsBetweenBlankLines, ignore_threes,
+      &verible::GetSubpartitionsBetweenBlankLinesSingleTag, ignore_threes,
       AlignmentCellScannerGenerator<TokenColumnizer>(),
       AlignmentPolicy::kAlign);
   TabularAlignTokens(&partition_, handler, &pre_format_tokens_, sample_,
@@ -706,15 +706,125 @@ TEST_F(GetPartitionAlignmentSubrangesTestFixture, VariousRanges) {
   const TokenPartitionRange children(partition_.Children().begin(),
                                      partition_.Children().end());
 
-  const std::vector<TokenPartitionRange> ranges(
+  const std::vector<TaggedTokenPartitionRange> ranges(
+      GetPartitionAlignmentSubranges(children, [](const TokenPartitionTree&
+                                                      partition) {
+        // Don't care about the subtype tag.
+        return AlignedPartitionClassification{PartitionSelector(partition), 0};
+      }));
+
+  using P = std::pair<int, int>;
+  std::vector<P> range_indices;
+  for (const auto& range : ranges) {
+    range_indices.push_back(SubRangeIndices(range.range, children));
+  }
+  EXPECT_THAT(range_indices, ElementsAre(P(3, 6), P(8, 11)));
+}
+
+class GetPartitionAlignmentSubrangesSubtypedTestFixture
+    : public AlignmentTestFixture {
+ public:
+  GetPartitionAlignmentSubrangesSubtypedTestFixture()
+      : AlignmentTestFixture(
+            "match:X match:X match:X match:Y match:Y match:Y nomatch match:Z "
+            "match:X match:Z match:Z ignore match:Y match:Y"),
+        syntax_tree_(TNode(
+            1,  // one token per partition for simplicity
+            TNode(2, Leaf(1, tokens_[0])),     // match:X start
+            TNode(2, Leaf(1, tokens_[1])),     // ...
+            TNode(2, Leaf(1, tokens_[2])),     // match:X end
+            TNode(2, Leaf(1, tokens_[3])),     // match:Y start
+            TNode(2, Leaf(1, tokens_[4])),     // ...
+            TNode(2, Leaf(1, tokens_[5])),     // match:Y end
+            TNode(2, Leaf(1, tokens_[6])),     //
+            TNode(2, Leaf(1, tokens_[7])),     // match:Z start/end (too small)
+            TNode(2, Leaf(1, tokens_[8])),     // match:X start/end (too small)
+            TNode(2, Leaf(1, tokens_[9])),     // match:Z start
+            TNode(2, Leaf(1, tokens_[10])),    // match:Z end
+            TNode(2, Leaf(1, tokens_[11])),    //
+            TNode(2, Leaf(1, tokens_[12])),    // match:Y start
+            TNode(2, Leaf(1, tokens_[13])))),  // match:Y end
+        partition_(/* temporary */ UnwrappedLine()) {
+    // Establish format token ranges per partition.
+    const auto begin = pre_format_tokens_.begin();
+    UnwrappedLine all(0, begin);
+    all.SpanUpToToken(pre_format_tokens_.end());
+    all.SetOrigin(&*syntax_tree_);
+
+    std::vector<UnwrappedLine> uwlines;
+    for (size_t i = 0; i < pre_format_tokens_.size(); ++i) {
+      uwlines.emplace_back(0, begin + i);
+      uwlines.back().SpanUpToToken(begin + i + 1);
+      uwlines.back().SetOrigin(DescendPath(*syntax_tree_, {i}));
+    }
+
+    // Construct 2-level token partition.
+    using tree_type = TokenPartitionTree;
+    partition_ = tree_type{
+        all,
+        tree_type{uwlines[0]},  // match:X start
+        tree_type{uwlines[1]},  // ...
+        tree_type{uwlines[2]},  // match:X end
+        tree_type{uwlines[3]},  // match:Y start
+        tree_type{uwlines[4]},  // ...
+        tree_type{uwlines[5]},  // match:Y end
+        tree_type{uwlines[6]},
+        tree_type{uwlines[7]},   // match:Z start/end (no group)
+        tree_type{uwlines[8]},   // match:X start/end (no group)
+        tree_type{uwlines[9]},   // match:Z start
+        tree_type{uwlines[10]},  // match:Z end
+        tree_type{uwlines[11]},
+        tree_type{uwlines[12]},  // match:Y start
+        tree_type{uwlines[13]},  // match:Y end
+    };
+  }
+
+ protected:
+  static AlignedPartitionClassification PartitionSelector(
+      const TokenPartitionTree& partition) {
+    const absl::string_view text =
+        partition.Value().TokensRange().front().Text();
+    if (absl::StartsWith(text, "match")) {
+      const auto toks = absl::StrSplit(text, absl::ByChar(':'));
+      CHECK(toks.begin() != toks.end());
+      absl::string_view last = *std::next(toks.begin());
+      // Use the first character after the : as the subtype, so 'X', 'Y', 'Z'.
+      return {AlignmentGroupAction::kMatch, static_cast<int>(last.front())};
+    } else if (text == "nomatch") {
+      return {AlignmentGroupAction::kNoMatch};
+    } else {
+      return {AlignmentGroupAction::kIgnore};
+    }
+  }
+
+ protected:
+  // Syntax tree from which token partition originates.
+  SymbolPtr syntax_tree_;
+
+  // Format token partitioning (what would be the result of TreeUnwrapper).
+  TokenPartitionTree partition_;
+};
+
+TEST_F(GetPartitionAlignmentSubrangesSubtypedTestFixture, VariousRanges) {
+  const TokenPartitionRange children(partition_.Children().begin(),
+                                     partition_.Children().end());
+
+  const std::vector<TaggedTokenPartitionRange> ranges(
       GetPartitionAlignmentSubranges(children, &PartitionSelector));
 
   using P = std::pair<int, int>;
   std::vector<P> range_indices;
   for (const auto& range : ranges) {
-    range_indices.push_back(SubRangeIndices(range, children));
+    range_indices.push_back(SubRangeIndices(range.range, children));
   }
-  EXPECT_THAT(range_indices, ElementsAre(P(3, 6), P(8, 11)));
+  EXPECT_THAT(range_indices,
+              ElementsAre(P(0, 3), P(3, 6), P(9, 12), P(12, 14)));
+  // Check subtype tags.
+  ASSERT_EQ(ranges.size(), 4);
+  EXPECT_EQ(ranges[0].match_subtype, 'X');  // [0,3)
+  EXPECT_EQ(ranges[1].match_subtype, 'Y');  // [3,6)
+  EXPECT_EQ(ranges[2].match_subtype, 'Z');  // [9,12)
+  EXPECT_EQ(ranges[3].match_subtype, 'Y');  // [12,14)
 }
 
 class Dense2x2MatrixAlignmentTest : public MatrixTreeAlignmentTestFixture {

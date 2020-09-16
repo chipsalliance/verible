@@ -91,16 +91,56 @@ class ColumnSchemaScanner : public TreeContextPathVisitor {
   std::vector<ColumnPositionEntry> sparse_columns_;
 };
 
-// This enum drives partition sub-range selection in the
-// GetPartitionAlignmentSubranges() function.
+// This enum signals to the GetPartitionAlignmentSubranges() function
+// how a token partition should be included or excluded in partition groups.
 enum class AlignmentGroupAction {
   kIgnore,   // This does not influence the current matching range.
   kMatch,    // Include this partition in the current matching range.
   kNoMatch,  // Close the current matching range (if any).
 };
 
+// This struct drives partition sub-range selection in the
+// GetPartitionAlignmentSubranges() function.
+struct AlignedPartitionClassification {
+  AlignmentGroupAction action;
+
+  // Matches that differ in subtype will also mark alignment group boundaries.
+  // These values are up to the user's interpretation.  They are only checked
+  // for equality in decision-making.
+  // For example, when scanning a token partition that contains different
+  // syntax groups, like assignments and function calls, the caller could
+  // enumerate these subtypes 1 and 2, respectively, to distinguish the
+  // alignable groups that are returned.
+  // In situations where there can be only one alignment group subtype,
+  // this value does not matter.
+  int match_subtype;
+};
+
+struct TaggedTokenPartitionRange {
+  TokenPartitionRange range;
+
+  // Same as that in AlignedPartitionClassification::match_subtype.
+  int match_subtype;
+
+  TaggedTokenPartitionRange(TokenPartitionRange r, int subtype)
+      : range(r), match_subtype(subtype) {}
+
+  TaggedTokenPartitionRange(TokenPartitionIterator begin,
+                            TokenPartitionIterator end, int subtype)
+      : range(begin, end), match_subtype(subtype) {}
+};
+
+// Adapter function for extracting ranges of tokens that represent the same type
+// of group to align (same syntax).
+std::vector<TaggedTokenPartitionRange>
+GetSubpartitionsBetweenBlankLinesSingleTag(
+    const TokenPartitionRange& full_range);
+
 // From a range of token 'partitions', this selects sub-ranges to align.
 // 'partition_selector' decides which partitions qualify for alignment.
+//   When there is a match, the AlignedPartitionClassification::match_subtype
+//   is also compared: if it matches, continue to grow the current
+//   TaggedTokenPartitionRange, and if it doesn't match, start a new one.
 // 'min_match_count' sets the minimum sub-range size to return.
 //
 // Visualization from 'partition_selector's perspective:
@@ -113,6 +153,7 @@ enum class AlignmentGroupAction {
 // case 2:
 //   nomatch
 //   match    // an alignment group starts here
+//   match    // continues as long as subtype is the same
 //   match    // ends here, inclusively
 //   nomatch
 //
@@ -123,10 +164,17 @@ enum class AlignmentGroupAction {
 //   match    // ends here, inclusively
 //   nomatch
 //
-std::vector<TokenPartitionRange> GetPartitionAlignmentSubranges(
+// case 4:
+//   nomatch
+//   match (A)  // start group subtype A
+//   match (A)  // continue group
+//   match (B)  // finish previous group, start group subtype B
+//   match (B)  // continue group
+//
+std::vector<TaggedTokenPartitionRange> GetPartitionAlignmentSubranges(
     const TokenPartitionRange& partitions,
-    const std::function<AlignmentGroupAction(const TokenPartitionTree&)>&
-        partition_selector,
+    const std::function<AlignedPartitionClassification(
+        const TokenPartitionTree&)>& partition_selector,
     int min_match_count = 2);
 
 // This is the interface used to extract alignment cells from ranges of tokens.
@@ -198,7 +246,7 @@ using IgnoreAlignmentRowPredicate =
 // used in the current interface.  This exists to help migrate existing code
 // to the new interface.
 ExtractAlignmentGroupsFunction ExtractAlignmentGroupsAdapter(
-    const std::function<std::vector<TokenPartitionRange>(
+    const std::function<std::vector<TaggedTokenPartitionRange>(
         const TokenPartitionRange&)>& legacy_extractor,
     const IgnoreAlignmentRowPredicate& legacy_ignore_predicate,
     const AlignmentCellScannerFunction& alignment_cell_scanner,

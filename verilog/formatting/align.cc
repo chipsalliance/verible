@@ -43,6 +43,7 @@ namespace verilog {
 namespace formatter {
 
 using verible::AlignablePartitionGroup;
+using verible::AlignedPartitionClassification;
 using verible::AlignmentCellScannerGenerator;
 using verible::AlignmentColumnProperties;
 using verible::AlignmentGroupAction;
@@ -392,20 +393,29 @@ static bool IsAlignableDeclaration(const SyntaxTreeNode& node) {
   }
 }
 
-static std::vector<TokenPartitionRange> GetConsecutiveDataDeclarationGroups(
-    const TokenPartitionRange& partitions) {
+struct AlignableTokenPartitionRange {
+  TokenPartitionRange range;
+  verible::AlignmentPolicy alignment_policy;
+};
+
+static std::vector<verible::TaggedTokenPartitionRange>
+GetConsecutiveDataDeclarationGroups(const TokenPartitionRange& partitions) {
   VLOG(2) << __FUNCTION__;
+  constexpr int kDataDeclarationGroupSubType = 0;
   return GetPartitionAlignmentSubranges(
       partitions,  //
-      [](const TokenPartitionTree& partition) -> AlignmentGroupAction {
+      [](const TokenPartitionTree& partition)
+          -> AlignedPartitionClassification {
         const Symbol* origin = partition.Value().Origin();
-        if (origin == nullptr) return AlignmentGroupAction::kIgnore;
+        if (origin == nullptr) return {AlignmentGroupAction::kIgnore};
         const verible::SymbolTag symbol_tag = origin->Tag();
         if (symbol_tag.kind != verible::SymbolKind::kNode)
-          return AlignmentGroupAction::kIgnore;
+          return {AlignmentGroupAction::kIgnore};
         const SyntaxTreeNode& node = verible::SymbolCastToNode(*origin);
-        return IsAlignableDeclaration(node) ? AlignmentGroupAction::kMatch
-                                            : AlignmentGroupAction::kNoMatch;
+        return AlignedPartitionClassification{
+            IsAlignableDeclaration(node) ? AlignmentGroupAction::kMatch
+                                         : AlignmentGroupAction::kNoMatch,
+            kDataDeclarationGroupSubType};
       });
 }
 
@@ -786,7 +796,7 @@ using AlignSyntaxGroupsFunction =
 static std::vector<AlignablePartitionGroup> AlignPortDeclarations(
     const TokenPartitionRange& full_range, const FormatStyle& vstyle) {
   return verible::ExtractAlignmentGroupsAdapter(
-      &verible::GetSubpartitionsBetweenBlankLines,
+      &verible::GetSubpartitionsBetweenBlankLinesSingleTag,
       &IgnoreWithinPortDeclarationPartitionGroup,
       AlignmentCellScannerGenerator<PortDeclarationColumnSchemaScanner>(),
       vstyle.port_declarations_alignment)(full_range);
@@ -795,7 +805,7 @@ static std::vector<AlignablePartitionGroup> AlignPortDeclarations(
 static std::vector<AlignablePartitionGroup> AlignActualNamedParameters(
     const TokenPartitionRange& full_range, const FormatStyle& vstyle) {
   return verible::ExtractAlignmentGroupsAdapter(
-      &verible::GetSubpartitionsBetweenBlankLines,
+      &verible::GetSubpartitionsBetweenBlankLinesSingleTag,
       &IgnoreWithinActualNamedParameterPartitionGroup,
       AlignmentCellScannerGenerator<ActualNamedParameterColumnSchemaScanner>(),
       vstyle.named_parameter_alignment)(full_range);
@@ -804,7 +814,7 @@ static std::vector<AlignablePartitionGroup> AlignActualNamedParameters(
 static std::vector<AlignablePartitionGroup> AlignActualNamedPorts(
     const TokenPartitionRange& full_range, const FormatStyle& vstyle) {
   return verible::ExtractAlignmentGroupsAdapter(
-      &verible::GetSubpartitionsBetweenBlankLines,
+      &verible::GetSubpartitionsBetweenBlankLinesSingleTag,
       &IgnoreWithinActualNamedPortPartitionGroup,
       AlignmentCellScannerGenerator<ActualNamedPortColumnSchemaScanner>(),
       vstyle.named_port_alignment)(full_range);
@@ -834,7 +844,7 @@ static std::vector<AlignablePartitionGroup> AlignClassItems(
 static std::vector<AlignablePartitionGroup> AlignCaseItems(
     const TokenPartitionRange& full_range, const FormatStyle& vstyle) {
   return verible::ExtractAlignmentGroupsAdapter(
-      &verible::GetSubpartitionsBetweenBlankLines,
+      &verible::GetSubpartitionsBetweenBlankLinesSingleTag,
       &IgnoreMultilineCaseStatements,
       AlignmentCellScannerGenerator<CaseItemColumnSchemaScanner>(),
       vstyle.case_items_alignment)(full_range);
@@ -843,7 +853,7 @@ static std::vector<AlignablePartitionGroup> AlignCaseItems(
 static std::vector<AlignablePartitionGroup> AlignParameterDeclarations(
     const TokenPartitionRange& full_range, const FormatStyle& vstyle) {
   return verible::ExtractAlignmentGroupsAdapter(
-      &verible::GetSubpartitionsBetweenBlankLines,
+      &verible::GetSubpartitionsBetweenBlankLinesSingleTag,
       &IgnoreWithinPortDeclarationPartitionGroup,
       AlignmentCellScannerGenerator<ParameterDeclarationColumnSchemaScanner>(),
       vstyle.formal_parameters_alignment)(full_range);

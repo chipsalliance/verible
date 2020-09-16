@@ -682,7 +682,7 @@ static std::vector<TokenPartitionIterator> FilterAlignablePartitions(
 }
 
 ExtractAlignmentGroupsFunction ExtractAlignmentGroupsAdapter(
-    const std::function<std::vector<TokenPartitionRange>(
+    const std::function<std::vector<TaggedTokenPartitionRange>(
         const TokenPartitionRange&)>& legacy_extractor,
     const IgnoreAlignmentRowPredicate& legacy_ignore_predicate,
     const AlignmentCellScannerFunction& alignment_cell_scanner,
@@ -690,13 +690,14 @@ ExtractAlignmentGroupsFunction ExtractAlignmentGroupsAdapter(
   return [legacy_extractor, legacy_ignore_predicate, alignment_cell_scanner,
           alignment_policy](const TokenPartitionRange& full_range) {
     // must copy the closures, not just reference, to ensure valid lifetime
-    const std::vector<TokenPartitionRange> ranges(legacy_extractor(full_range));
+    const std::vector<TaggedTokenPartitionRange> ranges(
+        legacy_extractor(full_range));
     std::vector<AlignablePartitionGroup> groups;
     groups.reserve(ranges.size());
     for (const auto& range : ranges) {
       // Apply the same policy to all alignment groups.
       groups.emplace_back(AlignablePartitionGroup{
-          FilterAlignablePartitions(range, legacy_ignore_predicate),
+          FilterAlignablePartitions(range.range, legacy_ignore_predicate),
           alignment_cell_scanner, alignment_policy});
       if (groups.back().alignable_rows.empty()) groups.pop_back();
     }
@@ -908,31 +909,63 @@ void TabularAlignTokens(
   VLOG(1) << "end of " << __FUNCTION__;
 }
 
-std::vector<TokenPartitionRange> GetPartitionAlignmentSubranges(
+std::vector<TaggedTokenPartitionRange>
+GetSubpartitionsBetweenBlankLinesSingleTag(
+    const TokenPartitionRange& full_range) {
+  std::vector<TokenPartitionRange> ranges(
+      GetSubpartitionsBetweenBlankLines(full_range));
+  std::vector<TaggedTokenPartitionRange> result;
+  result.reserve(ranges.size());
+  for (const auto& range : ranges) {
+    // Since the subpartitions are syntactically the same, it doesn't matter
+    // what constant tag value is used.  It only matters when trying to return
+    // different group types (with different policies, different column
+    // scanners).
+    constexpr int kDontCareAlignmentSubtype = 0;
+    result.emplace_back(range, kDontCareAlignmentSubtype);
+  }
+  return result;
+}
+
+std::vector<TaggedTokenPartitionRange> GetPartitionAlignmentSubranges(
     const TokenPartitionRange& partitions,
-    const std::function<AlignmentGroupAction(const TokenPartitionTree&)>&
-        partition_selector,
+    const std::function<AlignedPartitionClassification(
+        const TokenPartitionTree&)>& partition_selector,
     int min_match_count) {
-  std::vector<TokenPartitionRange> result;
+  std::vector<TaggedTokenPartitionRange> result;
 
   // Grab ranges of consecutive data declarations with >= 2 elements.
+  int last_match_subtype = 0;
   int match_count = 0;
   auto last_range_start = partitions.begin();
   for (auto iter = last_range_start; iter != partitions.end(); ++iter) {
-    switch (partition_selector(*iter)) {
+    const AlignedPartitionClassification align_class =
+        partition_selector(*iter);
+    switch (align_class.action) {
       case AlignmentGroupAction::kIgnore:
         continue;
       case AlignmentGroupAction::kMatch: {
         if (match_count == 0) {
           // This is the start of a new range of interest.
           last_range_start = iter;
+          last_match_subtype = align_class.match_subtype;
+        }
+        if (align_class.match_subtype != last_match_subtype) {
+          // Mismatch in substype, so close the last range,
+          // and open a new one.
+          if (match_count >= min_match_count) {
+            result.emplace_back(last_range_start, iter, last_match_subtype);
+          }
+          match_count = 0;
+          last_range_start = iter;
+          last_match_subtype = align_class.match_subtype;
         }
         ++match_count;
         break;
       }
       case AlignmentGroupAction::kNoMatch: {
         if (match_count >= min_match_count) {
-          result.emplace_back(last_range_start, iter);
+          result.emplace_back(last_range_start, iter, last_match_subtype);
         }
         match_count = 0;  // reset
         break;
@@ -941,7 +974,7 @@ std::vector<TokenPartitionRange> GetPartitionAlignmentSubranges(
   }    // for
   // Flush out the last range.
   if (match_count >= min_match_count) {
-    result.emplace_back(last_range_start, partitions.end());
+    result.emplace_back(last_range_start, partitions.end(), last_match_subtype);
   }
   return result;
 }
