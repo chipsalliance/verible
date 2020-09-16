@@ -66,6 +66,7 @@ constexpr const char* kDefaultRuleSet[] = {
     // TODO(b/117131903): "proper-parameter-declaration",
     // TODO(b/131637160): "signal-name-style",
     // TODO: "one-module-per-file",
+    // TODO: "banned-declared-name-patterns",
     // "endif-comment",
 };
 // LINT.ThenChange(../tools/lint/BUILD)

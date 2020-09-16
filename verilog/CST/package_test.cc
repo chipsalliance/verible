@@ -307,7 +307,6 @@ TEST(GetPackageNameTokenTest, VariousPackageTokenTests) {
     const auto code_copy = analyzer.Data().Contents();
     ASSERT_OK(analyzer.Analyze()) << "failed on:\n" << code;
     const auto& root = analyzer.Data().SyntaxTree();
-
     const auto declarations =
         FindAllPackageDeclarations(*ABSL_DIE_IF_NULL(root));
 

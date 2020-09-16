@@ -17,6 +17,7 @@ cc_library(
         ":always_comb_blocking_rule",
         ":always_comb_rule",
         ":always_ff_non_blocking_rule",
+        ":banned_declared_name_patterns_rule",
         ":case_missing_default_rule",
         ":constraint_name_style_rule",
         ":create_object_name_match_rule",
@@ -58,6 +59,45 @@ cc_library(
         ":uvm_macro_semicolon_rule",
         ":v2001_generate_begin_rule",
         ":void_cast_rule",
+    ],
+)
+
+cc_library(
+    name = "banned_declared_name_patterns_rule",
+    srcs = ["banned_declared_name_patterns_rule.cc"],
+    hdrs = ["banned_declared_name_patterns_rule.h"],
+    deps = [
+        "//common/analysis:citation",
+        "//common/analysis:lint_rule_status",
+        "//common/analysis:syntax_tree_lint_rule",
+        "//common/analysis/matcher",
+        "//common/analysis/matcher:bound_symbol_manager",
+        "//common/analysis/matcher:matcher_builders",
+        "//common/strings:naming_utils",
+        "//common/text:symbol",
+        "//common/text:syntax_tree_context",
+        "//verilog/CST:functions",
+        "//verilog/CST:module",
+        "//verilog/CST:package",
+        "//verilog/CST:verilog_matchers",
+        "//verilog/analysis:descriptions",
+        "//verilog/analysis:lint_rule_registry",
+        "@com_google_absl//absl/strings",
+    ],
+    alwayslink = 1,
+)
+
+cc_test(
+    name = "banned_declared_name_patterns_rule_test",
+    srcs = ["banned_declared_name_patterns_rule_test.cc"],
+    deps = [
+        ":banned_declared_name_patterns_rule",
+        "//common/analysis:linter_test_utils",
+        "//common/analysis:syntax_tree_linter_test_utils",
+        "//common/text:symbol",
+        "//verilog/CST:verilog_nonterminals",
+        "//verilog/analysis:verilog_analyzer",
+        "@com_google_googletest//:gtest_main",
     ],
 )
 
