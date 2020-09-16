@@ -37,6 +37,11 @@ std::vector<verible::TreeSearchMatch> FindAllModulePortDeclarations(
   return SearchSyntaxTree(root, NodekPortDeclaration());
 }
 
+std::vector<verible::TreeSearchMatch> FindAllActualNamedPort(
+    const Symbol& root) {
+  return SearchSyntaxTree(root, NodekActualNamedPort());
+}
+
 std::vector<verible::TreeSearchMatch> FindAllPortReferences(
     const verible::Symbol& root) {
   return SearchSyntaxTree(root, NodekPort());
@@ -87,6 +92,18 @@ const SyntaxTreeLeaf* GetIdentifierFromTaskFunctionPortItem(
   const auto& type_id_dimensions =
       GetTypeIdDimensionsFromTaskFunctionPortItem(symbol);
   return AutoUnwrapIdentifier(*ABSL_DIE_IF_NULL(type_id_dimensions[1].get()));
+}
+
+const verible::SyntaxTreeLeaf& GetActualNamedPortName(
+    const verible::Symbol& actual_named_port) {
+  return verible::GetSubtreeAsLeaf(actual_named_port,
+                                   NodeEnum::kActualNamedPort, 1);
+}
+
+const verible::Symbol* GetActualNamedPortParenGroup(
+    const verible::Symbol& actual_named_port) {
+  return verible::GetSubtreeAsSymbol(actual_named_port,
+                                     NodeEnum::kActualNamedPort, 2);
 }
 
 }  // namespace verilog

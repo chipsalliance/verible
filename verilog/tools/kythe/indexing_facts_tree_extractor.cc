@@ -27,6 +27,7 @@
 #include "verilog/CST/module.h"
 #include "verilog/CST/net.h"
 #include "verilog/CST/package.h"
+#include "verilog/CST/parameters.h"
 #include "verilog/CST/port.h"
 #include "verilog/CST/tasks.h"
 #include "verilog/CST/verilog_matchers.h"
@@ -155,6 +156,14 @@ void IndexingFactsTreeExtractor::Visit(const SyntaxTreeNode& node) {
       ExtractClassDeclaration(node);
       break;
     }
+    case NodeEnum::kParamDeclaration: {
+      ExtractParam(node);
+      break;
+    }
+    case NodeEnum::kActualNamedPort: {
+      ExtractModuleNamedPort(node);
+      break;
+    }
     case NodeEnum::kPackageImportItem: {
       ExtractPackageImport(node);
       break;
@@ -173,6 +182,10 @@ void IndexingFactsTreeExtractor::Visit(const verible::SyntaxTreeLeaf& leaf) {
   switch (leaf.get().token_enum()) {
     case verilog_tokentype::MacroIdentifier: {
       ExtractMacroReference(leaf);
+      break;
+    }
+    case verilog_tokentype::SymbolIdentifier: {
+      ExtractSymbolIdentifier(leaf);
       break;
     }
     default:
@@ -271,6 +284,20 @@ void IndexingFactsTreeExtractor::ExtractModulePort(
   }
 }
 
+void IndexingFactsTreeExtractor::ExtractModuleNamedPort(
+    const verible::SyntaxTreeNode& actual_named_port) {
+  const SyntaxTreeLeaf& leaf = GetActualNamedPortName(actual_named_port);
+
+  facts_tree_context_.top().NewChild(IndexingNodeData(
+      {Anchor(leaf.get(), context_.base)}, IndexingFactType::kModuleNamedPort));
+
+  const verible::Symbol* paren_group =
+      GetActualNamedPortParenGroup(actual_named_port);
+  if (paren_group != nullptr) {
+    Visit(verible::SymbolCastToNode(*paren_group));
+  }
+}
+
 void IndexingFactsTreeExtractor::ExtractInputOutputDeclaration(
     const SyntaxTreeNode& identifier_unpacked_dimension) {
   const SyntaxTreeLeaf* port_name_leaf =
@@ -316,24 +343,22 @@ void IndexingFactsTreeExtractor::ExtractModuleInstantiation(
   for (const TreeSearchMatch& instance : gate_instances) {
     IndexingNodeData module_instance_node_data(
         IndexingFactType::kModuleInstance);
+    IndexingFactNode module_instance_node(module_instance_node_data);
 
     const verible::TokenInfo& variable_name =
         GetModuleInstanceNameTokenInfoFromGateInstance(*instance.match);
     const Anchor variable_name_anchor(variable_name, context_.base);
-    module_instance_node_data.AppendAnchor(variable_name_anchor);
+    module_instance_node.Value().AppendAnchor(variable_name_anchor);
 
-    std::vector<TreeSearchMatch> port_names =
-        FindAllUnqualifiedIds(*instance.match);
-
-    // Module ports are treated as anchors in instantiations.
-    for (const TreeSearchMatch& port : port_names) {
-      const SyntaxTreeLeaf* leaf = GetIdentifier(*port.match);
-      const Anchor port_name_anchor(leaf->get(), context_.base);
-
-      module_instance_node_data.AppendAnchor(port_name_anchor);
+    {
+      const IndexingFactsTreeContext::AutoPop p(&facts_tree_context_,
+                                                &module_instance_node);
+      const SyntaxTreeNode& paren_group =
+          GetParenGroupFromModuleInstantiation(*instance.match);
+      Visit(paren_group);
     }
 
-    module_node.NewChild(module_instance_node_data);
+    module_node.NewChild(module_instance_node);
   }
 
   facts_tree_context_.top().NewChild(module_node);
@@ -520,8 +545,10 @@ void IndexingFactsTreeExtractor::ExtractFunctionOrTaskCall(
     const IndexingFactsTreeContext::AutoPop p(&facts_tree_context_,
                                               &function_node);
 
+    const SyntaxTreeNode& arguments = GetParenGroupFromCall(function_call_node);
+
     // Extract function or task parameters.
-    TreeContextVisitor::Visit(function_call_node);
+    Visit(arguments);
   }
 
   facts_tree_context_.top().NewChild(function_node);
@@ -587,6 +614,38 @@ void IndexingFactsTreeExtractor::ExtractClassInstances(
   }
 
   facts_tree_context_.top().NewChild(class_node);
+}
+
+void IndexingFactsTreeExtractor::ExtractSymbolIdentifier(
+    const SyntaxTreeLeaf& unqualified_id) {
+  const SyntaxTreeLeaf* leaf = AutoUnwrapIdentifier(unqualified_id);
+
+  facts_tree_context_.top().NewChild(
+      IndexingNodeData({Anchor(leaf->get(), context_.base)},
+                       IndexingFactType::kVariableReference));
+}
+
+void IndexingFactsTreeExtractor::ExtractParam(
+    const verible::SyntaxTreeNode& param_declaration) {
+  IndexingNodeData param_data(IndexingFactType::kParamDeclaration);
+  IndexingFactNode param_node(param_data);
+
+  const verible::TokenInfo& param_name =
+      GetParameterNameToken(param_declaration);
+
+  param_node.Value().AppendAnchor(Anchor(param_name, context_.base));
+
+  {
+    const IndexingFactsTreeContext::AutoPop p(&facts_tree_context_,
+                                              &param_node);
+
+    const verible::Symbol* assign_expression =
+        GetParamAssignExpression(param_declaration);
+
+    Visit(verible::SymbolCastToNode(*assign_expression));
+  }
+
+  facts_tree_context_.top().NewChild(param_node);
 }
 
 void IndexingFactsTreeExtractor::ExtractPackageImport(

@@ -112,6 +112,20 @@ class IndexingFactsTreeExtractor : public verible::TreeContextVisitor {
       const verible::SyntaxTreeNode& data_declaration,
       const std::vector<verible::TreeSearchMatch>& register_variables);
 
+  // Extracts leaves tagged with SymbolIdentifier and creates its facts tree.
+  // This should only be reached in case of free variable references.
+  // e.g assign out = in & in2.
+  // Other extraction functions should terminate in case the inner
+  // SymbolIdentifiers are extracted.
+  void ExtractSymbolIdentifier(const verible::SyntaxTreeLeaf& unqualified_id);
+
+  // Extracts parameter declarations and creates its corresponding fact tree.
+  void ExtractParam(const verible::SyntaxTreeNode& param_declaration);
+
+  // Extracts module instantiation named ports and creates its corresponding
+  // fact tree.
+  void ExtractModuleNamedPort(const verible::SyntaxTreeNode& actual_named_port);
+
   // Extracts package imports and creates its corresponding fact tree.
   void ExtractPackageImport(const verible::SyntaxTreeNode& package_import_item);
 

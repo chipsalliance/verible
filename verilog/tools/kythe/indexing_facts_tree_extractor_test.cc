@@ -513,6 +513,210 @@ TEST(FactsTreeExtractor, ModuleWithPortsNonANSIStyleTest) {
   EXPECT_EQ(result_pair.right, nullptr) << *result_pair.right;
 }
 
+TEST(FactsTreeExtractor, ModuleInstanceWithActualNamedPorts) {
+  constexpr int kTag = 1;  // value doesn't matter
+
+  const verible::SyntaxTreeSearchTestCase kTestCase = {{"module ",
+                                                        {kTag, "foo"},
+                                                        "(input ",
+                                                        {kTag, "a"},
+                                                        ", input ",
+                                                        {kTag, "b"},
+                                                        ", input wire ",
+                                                        {kTag, "z"},
+                                                        ", output ",
+                                                        {kTag, "h"},
+                                                        ");\nendmodule: ",
+                                                        {kTag, "foo"},
+                                                        "\nmodule ",
+                                                        {kTag, "bar"},
+                                                        "(input ",
+                                                        {kTag, "a"},
+                                                        ", ",
+                                                        {kTag, "b"},
+                                                        ", ",
+                                                        {kTag, "c"},
+                                                        ", ",
+                                                        {kTag, "h"},
+                                                        ");\n",
+                                                        {kTag, "foo"},
+                                                        " ",
+                                                        {kTag, "f1"},
+                                                        "(.",
+                                                        {kTag, "a"},
+                                                        "(",
+                                                        {kTag, "a"},
+                                                        "), .",
+                                                        {kTag, "b"},
+                                                        "(",
+                                                        {kTag, "b"},
+                                                        "), .",
+                                                        {kTag, "z"},
+                                                        "(",
+                                                        {kTag, "c"},
+                                                        "), .",
+                                                        {kTag, "h"},
+                                                        ");\nendmodule"}};
+
+  constexpr absl::string_view file_name = "verilog.v";
+  int exit_status = 0;
+  bool parse_ok = false;
+
+  const IndexingFactNode expected(
+      {
+          {
+              Anchor(file_name, 0, kTestCase.code.size()),
+              Anchor(kTestCase.code, 0, kTestCase.code.size()),
+          },
+          IndexingFactType ::kFile,
+      },
+      // refers to module foo.
+      T(
+          {
+              {
+                  Anchor(kTestCase.expected_tokens[1], kTestCase.code),
+                  Anchor(kTestCase.expected_tokens[11], kTestCase.code),
+              },
+              IndexingFactType::kModule,
+          },
+          // refers to  a.
+          T({
+              {
+                  Anchor(kTestCase.expected_tokens[3], kTestCase.code),
+              },
+              IndexingFactType::kVariableDefinition,
+          }),
+          // refers to  b.
+          T({
+              {
+                  Anchor(kTestCase.expected_tokens[5], kTestCase.code),
+              },
+              IndexingFactType::kVariableDefinition,
+          }),
+          // refers to input z.
+          T({
+              {
+                  Anchor(kTestCase.expected_tokens[7], kTestCase.code),
+              },
+              IndexingFactType::kVariableDefinition,
+          }),
+          // refers to h.
+          T({
+              {
+                  Anchor(kTestCase.expected_tokens[9], kTestCase.code),
+              },
+              IndexingFactType::kVariableDefinition,
+          })),
+      // refers to module bar.
+      T(
+          {
+              {
+                  Anchor(kTestCase.expected_tokens[13], kTestCase.code),
+              },
+              IndexingFactType::kModule,
+          },
+          // refers to input a.
+          T({
+              {
+                  Anchor(kTestCase.expected_tokens[15], kTestCase.code),
+              },
+              IndexingFactType::kVariableDefinition,
+          }),
+          // refers to b.
+          T({
+              {
+                  Anchor(kTestCase.expected_tokens[17], kTestCase.code),
+              },
+              IndexingFactType::kVariableDefinition,
+          }),
+          // refers to c.
+          T({
+              {
+                  Anchor(kTestCase.expected_tokens[19], kTestCase.code),
+              },
+              IndexingFactType::kVariableDefinition,
+          }),
+          // refers to h.
+          T({
+              {
+                  Anchor(kTestCase.expected_tokens[21], kTestCase.code),
+              },
+              IndexingFactType::kVariableDefinition,
+          }),
+          // refers to foo.
+          T(
+              {
+                  {
+                      Anchor(kTestCase.expected_tokens[23], kTestCase.code),
+                  },
+                  IndexingFactType ::kDataTypeReference,
+              },
+              // refers to f1(.a(a), .b(b), .z(c), .h).
+              T(
+                  {
+                      {
+                          Anchor(kTestCase.expected_tokens[25], kTestCase.code),
+                      },
+                      IndexingFactType ::kModuleInstance,
+                  },
+                  // refers to .a
+                  T({
+                      {
+                          Anchor(kTestCase.expected_tokens[27], kTestCase.code),
+                      },
+                      IndexingFactType ::kModuleNamedPort,
+                  }),
+                  // refers to a
+                  T({
+                      {
+                          Anchor(kTestCase.expected_tokens[29], kTestCase.code),
+                      },
+                      IndexingFactType ::kVariableReference,
+                  }),
+                  // refers to .b
+                  T({
+                      {
+                          Anchor(kTestCase.expected_tokens[31], kTestCase.code),
+                      },
+                      IndexingFactType ::kModuleNamedPort,
+                  }),
+                  // refers to b
+                  T({
+                      {
+                          Anchor(kTestCase.expected_tokens[33], kTestCase.code),
+                      },
+                      IndexingFactType ::kVariableReference,
+                  }),
+                  // refers to .z
+                  T({
+                      {
+                          Anchor(kTestCase.expected_tokens[35], kTestCase.code),
+                      },
+                      IndexingFactType ::kModuleNamedPort,
+                  }),
+                  // refers to c
+                  T({
+                      {
+                          Anchor(kTestCase.expected_tokens[37], kTestCase.code),
+                      },
+                      IndexingFactType ::kVariableReference,
+                  }),
+                  // refers to .h
+                  T({
+                      {
+                          Anchor(kTestCase.expected_tokens[39], kTestCase.code),
+                      },
+                      IndexingFactType ::kModuleNamedPort,
+                  })))));
+
+  const auto facts_tree =
+      ExtractOneFile(kTestCase.code, file_name, exit_status, parse_ok);
+
+  const auto result_pair = DeepEqual(facts_tree, expected);
+  EXPECT_EQ(result_pair.left, nullptr) << *result_pair.left;
+  EXPECT_EQ(result_pair.right, nullptr) << *result_pair.right;
+}
+
 TEST(FactsTreeExtractor, ModuleWithPortsDataTypeForwarding) {
   constexpr int kTag = 1;  // value doesn't matter
 
@@ -759,14 +963,27 @@ TEST(FactsTreeExtractor, ModuleInstanceWithPortsTest) {
                   IndexingFactType ::kDataTypeReference,
               },
               // refers to b1(x, y).
-              T({
+              T(
                   {
-                      Anchor(kTestCase.expected_tokens[17], kTestCase.code),
-                      Anchor(kTestCase.expected_tokens[19], kTestCase.code),
-                      Anchor(kTestCase.expected_tokens[21], kTestCase.code),
+                      {
+                          Anchor(kTestCase.expected_tokens[17], kTestCase.code),
+                      },
+                      IndexingFactType ::kModuleInstance,
                   },
-                  IndexingFactType ::kModuleInstance,
-              }))));
+                  // refers to x
+                  T({
+                      {
+                          Anchor(kTestCase.expected_tokens[19], kTestCase.code),
+                      },
+                      IndexingFactType ::kVariableReference,
+                  }),
+                  // refers to y
+                  T({
+                      {
+                          Anchor(kTestCase.expected_tokens[21], kTestCase.code),
+                      },
+                      IndexingFactType ::kVariableReference,
+                  })))));
 
   const auto facts_tree =
       ExtractOneFile(kTestCase.code, file_name, exit_status, parse_ok);
@@ -1387,7 +1604,9 @@ TEST(FactsTreeExtractor, MacroCallTest) {
       "(",
       {kTag, "`TEN"},
       "));\n",
-      "parameter int x = ",
+      "parameter int ",
+      {kTag, "x"},
+      " = ",
       {kTag, "`TEN"},
       ";\n"
       "end\nendmodule"};
@@ -1506,13 +1725,21 @@ TEST(FactsTreeExtractor, MacroCallTest) {
                   },
                   IndexingFactType::kMacroCall,
               })),
-          // refers to macro call TEN.
-          T({
+          // refers to parm x
+          T(
               {
-                  Anchor(kTestCase.expected_tokens[37], kTestCase.code),
+                  {
+                      Anchor(kTestCase.expected_tokens[37], kTestCase.code),
+                  },
+                  IndexingFactType::kParamDeclaration,
               },
-              IndexingFactType::kMacroCall,
-          })));
+              // refers to macro call TEN.
+              T({
+                  {
+                      Anchor(kTestCase.expected_tokens[39], kTestCase.code),
+                  },
+                  IndexingFactType::kMacroCall,
+              }))));
 
   const auto facts_tree =
       ExtractOneFile(kTestCase.code, file_name, exit_status, parse_ok);

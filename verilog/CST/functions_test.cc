@@ -36,6 +36,7 @@
 #include "common/util/logging.h"
 #include "common/util/range.h"
 #include "verilog/CST/identifier.h"
+#include "verilog/CST/match_test_utils.h"
 #include "verilog/analysis/verilog_analyzer.h"
 #include "verilog/parser/verilog_token_enum.h"
 
@@ -48,6 +49,7 @@ namespace {
 using verible::CheckSymbolAsLeaf;
 using verible::SymbolCastToNode;
 using verible::SyntaxTreeSearchTestCase;
+using verible::TextStructureView;
 using verible::TreeSearchMatch;
 
 TEST(FindAllFunctionDeclarationsTest, EmptySource) {
@@ -499,6 +501,38 @@ TEST(GetFunctionBlockStatement, GetFunctionBody) {
         << "failed on:\n"
         << code << "\ndiffs:\n"
         << diffs.str();
+  }
+}
+
+TEST(FunctionCallTest, GetFunctionCallArguments) {
+  constexpr int kTag = 1;  // value doesn't matter
+  const SyntaxTreeSearchTestCase kTestCases[] = {
+      {"module m;\ninitial foo", {kTag, "()"}, ";\nendmodule"},
+      {"module m;\ninitial foo", {kTag, "(a, b, c)"}, ";\nendmodule"},
+      {"class c;\nfunction foo();\nendfunction\nfunction "
+       "bar();\nfoo",
+       {kTag, "()"},
+       ";\nendfunction\ntask tsk(x, y);\nendtask\ntask "
+       "task_2();\ntsk",
+       {kTag, "(a, b)"},
+       ";\nendtask\nendclass"},
+  };
+
+  for (const auto& test : kTestCases) {
+    TestVerilogSyntaxRangeMatches(
+        __FUNCTION__, test, [](const TextStructureView& text_structure) {
+          const auto& root = text_structure.SyntaxTree();
+          const auto& instances =
+              FindAllFunctionOrTaskCalls(*ABSL_DIE_IF_NULL(root));
+
+          std::vector<TreeSearchMatch> paren_groups;
+          for (const auto& decl : instances) {
+            const auto& paren_group = GetParenGroupFromCall(*decl.match);
+            paren_groups.emplace_back(
+                TreeSearchMatch{&paren_group, {/* ignored context */}});
+          }
+          return paren_groups;
+        });
   }
 }
 

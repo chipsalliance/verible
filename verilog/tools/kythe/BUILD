@@ -123,6 +123,7 @@ cc_library(
         "//verilog/CST:module",
         "//verilog/CST:net",
         "//verilog/CST:package",
+        "//verilog/CST:parameters",
         "//verilog/CST:port",
         "//verilog/CST:tasks",
         "//verilog/CST:verilog_matchers",

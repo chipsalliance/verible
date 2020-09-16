@@ -175,6 +175,59 @@ TEST(FindAllGateInstancesTest, Various) {
   }
 }
 
+TEST(FindAllGateInstancesTest, FindArgumentListOfGateInstance) {
+  constexpr int kTag = 1;  // value doesn't matter
+  const SyntaxTreeSearchTestCase kTestCases[] = {
+      // bar is inside kVariableDeclarationAssignment
+      // {"foo ", {kTag, "bar"}, ";\n"},
+      {"module m;\nlogic bar;\nendmodule\n"},
+      {"module m;\nreg bar;\nendmodule\n"},
+      {"module m;\nfoo bar;\nendmodule\n"},
+      {"module m;\nfoo bar", {kTag, "()"}, ";\nendmodule\n"},
+      {"module m;\nfoo bar",
+       {kTag, "()"},
+       ", baz",
+       {kTag, "()"},
+       ";\nendmodule\n"},
+      {"module m;\nfoo bar",
+       {kTag, "()"},
+       ";\ngoo baz",
+       {kTag, "()"},
+       ";\nendmodule\n"},
+      {"module m;\nfoo bar", {kTag, "(baz)"}, ";\nendmodule\n"},
+      {"module m;\nfoo bar", {kTag, "(baz, blah)"}, ";\nendmodule\n"},
+      {"module m;\nfoo bar", {kTag, "(.baz)"}, ";\nendmodule\n"},
+      {"module m;\nfoo bar", {kTag, "(.baz(baz))"}, ";\nendmodule\n"},
+      {"module m;\nfoo bar", {kTag, "(.baz(baz), .c(c))"}, ";\nendmodule\n"},
+      {"module m;\nfoo #() bar", {kTag, "()"}, ";\nendmodule\n"},
+      {"module m;\nfoo #(N) bar", {kTag, "()"}, ";\nendmodule\n"},
+      {"module m;\nfoo #(.N(N)) bar", {kTag, "()"}, ";\nendmodule\n"},
+      {"module m;\nfoo #(M, N) bar", {kTag, "()"}, ";\nendmodule\n"},
+      {"module m;\nfoo #(.N(N), .M(M)) bar", {kTag, "()"}, ";\nendmodule\n"},
+      {"module m;\nfoo #(.N(N), .M(M))  bar",
+       {kTag, "()"},
+       ",blah",
+       {kTag, "()"},
+       ";\nendmodule\n"},
+  };
+  for (const auto& test : kTestCases) {
+    TestVerilogSyntaxRangeMatches(
+        __FUNCTION__, test, [](const TextStructureView& text_structure) {
+          const auto& root = text_structure.SyntaxTree();
+          const auto& instances = FindAllGateInstances(*ABSL_DIE_IF_NULL(root));
+
+          std::vector<TreeSearchMatch> paren_groups;
+          for (const auto& decl : instances) {
+            const auto& paren_group =
+                GetParenGroupFromModuleInstantiation(*decl.match);
+            paren_groups.emplace_back(
+                TreeSearchMatch{&paren_group, {/* ignored context */}});
+          }
+          return paren_groups;
+        });
+  }
+}
+
 TEST(GetQualifiersOfDataDeclarationTest, NoQualifiers) {
   constexpr int kTag = 1;  // value doesn't matter
   const SyntaxTreeSearchTestCase kTestCases[] = {

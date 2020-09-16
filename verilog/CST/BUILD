@@ -314,6 +314,7 @@ cc_test(
     deps = [
         ":functions",
         ":identifier",
+        ":match_test_utils",
         "//common/analysis:syntax_tree_search",
         "//common/analysis:syntax_tree_search_test_utils",
         "//common/analysis/matcher:matcher_builders",
@@ -643,6 +644,7 @@ cc_test(
     name = "port_test",
     srcs = ["port_test.cc"],
     deps = [
+        ":match_test_utils",
         ":port",
         ":type",
         ":verilog_nonterminals",

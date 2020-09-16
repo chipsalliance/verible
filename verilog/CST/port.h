@@ -37,6 +37,10 @@ std::vector<verible::TreeSearchMatch> FindAllModulePortDeclarations(
 std::vector<verible::TreeSearchMatch> FindAllPortReferences(
     const verible::Symbol&);
 
+// Find all nodes tagged with kActualNamedPort.
+std::vector<verible::TreeSearchMatch> FindAllActualNamedPort(
+    const verible::Symbol&);
+
 // Extract the name of the module port identifier from a port declaration.
 const verible::SyntaxTreeLeaf* GetIdentifierFromModulePortDeclaration(
     const verible::Symbol&);
@@ -71,6 +75,16 @@ const verible::Symbol* GetTypeOfTaskFunctionPortItem(const verible::Symbol&);
 // Extract the declared identifier from a task/function port item.
 const verible::SyntaxTreeLeaf* GetIdentifierFromTaskFunctionPortItem(
     const verible::Symbol&);
+
+// Returns the leaf node containing the name of the actual named port.
+// example: from ".x(y)" this returns the leaf spanning "x".
+const verible::SyntaxTreeLeaf& GetActualNamedPortName(const verible::Symbol&);
+
+// Returns the node containing the paren group of the actual named port (if
+// exists).
+// e.g. from ".x(y)" returns the node spanning (y), from ".z" return
+// nullptr.
+const verible::Symbol* GetActualNamedPortParenGroup(const verible::Symbol&);
 
 }  // namespace verilog
 
