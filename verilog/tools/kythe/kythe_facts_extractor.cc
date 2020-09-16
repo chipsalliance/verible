@@ -24,8 +24,7 @@
 namespace verilog {
 namespace kythe {
 
-const std::string KytheFactsExtractor::CreateSignature(
-    absl::string_view name) const {
+std::string CreateSignature(absl::string_view name) {
   return absl::StrCat(name, "#");
 }
 

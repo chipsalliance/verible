@@ -597,7 +597,7 @@ void IndexingFactsTreeExtractor::ExtractQualifiedId(
   const std::vector<TreeSearchMatch>& unqualified_ids =
       FindAllUnqualifiedIds(qualified_id);
 
-  for (const TreeSearchMatch unqualified_id : unqualified_ids) {
+  for (const TreeSearchMatch& unqualified_id : unqualified_ids) {
     member_reference_data.AppendAnchor(Anchor(
         AutoUnwrapIdentifier(*unqualified_id.match)->get(), context_.base));
   }
