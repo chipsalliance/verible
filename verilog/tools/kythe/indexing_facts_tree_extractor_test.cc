@@ -1629,6 +1629,85 @@ TEST(PackageImportTest, PackageAndImportedItemName) {
   EXPECT_EQ(result_pair.right, nullptr) << *result_pair.right;
 }
 
+TEST(PackageImportTest, PackageDirectMemberReference) {
+  constexpr int kTag = 1;  // value doesn't matter
+  const verible::SyntaxTreeSearchTestCase kTestCase = {
+      {"package ",
+       {kTag, "pkg"},
+       ";\nclass ",
+       {kTag, "my_class"},
+       ";\nendclass\nwire ",
+       {kTag, "x"},
+       ";\nendpackage\nmodule ",
+       {kTag, "m"},
+       "();\n",
+       "initial $display(",
+       {kTag, "pkg"},
+       "::",
+       {kTag, "x"},
+       ");\n",
+       ";\nendmodule"},
+  };
+
+  constexpr absl::string_view file_name = "verilog.v";
+  int exit_status = 0;
+  bool parse_ok = false;
+
+  const IndexingFactNode expected(
+      {
+          {
+              Anchor(file_name, 0, kTestCase.code.size()),
+              Anchor(kTestCase.code, 0, kTestCase.code.size()),
+          },
+          IndexingFactType ::kFile,
+      },
+      // refers to package pkg.
+      T(
+          {
+              {
+                  Anchor(kTestCase.expected_tokens[1], kTestCase.code),
+              },
+              IndexingFactType ::kPackage,
+          },
+          // refers to class my_class.
+          T({
+              {
+                  Anchor(kTestCase.expected_tokens[3], kTestCase.code),
+              },
+              IndexingFactType ::kClass,
+          }),
+          // refers to wire x.
+          T({
+              {
+                  Anchor(kTestCase.expected_tokens[5], kTestCase.code),
+              },
+              IndexingFactType ::kVariableDefinition,
+          })),
+      // refers to module m..
+      T(
+          {
+              {
+                  Anchor(kTestCase.expected_tokens[7], kTestCase.code),
+              },
+              IndexingFactType ::kModule,
+          },
+          // refers to $display(pkg::x).
+          T({
+              {
+                  Anchor(kTestCase.expected_tokens[10], kTestCase.code),
+                  Anchor(kTestCase.expected_tokens[12], kTestCase.code),
+              },
+              IndexingFactType ::kMemberReference,
+          })));
+
+  const auto facts_tree =
+      ExtractOneFile(kTestCase.code, file_name, exit_status, parse_ok);
+
+  const auto result_pair = DeepEqual(facts_tree, expected);
+  EXPECT_EQ(result_pair.left, nullptr) << *result_pair.left;
+  EXPECT_EQ(result_pair.right, nullptr) << *result_pair.right;
+}
+
 }  // namespace
 }  // namespace kythe
 }  // namespace verilog

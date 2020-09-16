@@ -38,6 +38,7 @@ enum class IndexingFactType {
   kFunctionOrTask,
   kFunctionCall,
   kPackageImport,
+  kMemberReference,
   // END GENERATE -- do not delete
 };
 

@@ -115,6 +115,10 @@ class IndexingFactsTreeExtractor : public verible::TreeContextVisitor {
   // Extracts package imports and creates its corresponding fact tree.
   void ExtractPackageImport(const verible::SyntaxTreeNode& package_import_item);
 
+  // Extracts qualified ids and creates its corresponding fact tree.
+  // e.g pkg::member or class::member.
+  void ExtractQualifiedId(const verible::SyntaxTreeNode& qualified_id);
+
   // The Root of the constructed tree
   IndexingFactNode root_{IndexingNodeData(IndexingFactType::kFile)};
 
