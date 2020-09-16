@@ -542,7 +542,7 @@ void IndexingFactsTreeExtractor::ExtractFunctionOrTaskCall(
                                               &function_node);
 
     const SyntaxTreeNode& arguments =
-        GetParenGroupFromFromCall(function_call_node);
+        GetParenGroupFromCall(function_call_node);
 
     // Extract function or task parameters.
     Visit(arguments);

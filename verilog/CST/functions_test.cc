@@ -527,7 +527,7 @@ TEST(FunctionCallTest, GetFunctionCallArguments) {
           std::vector<TreeSearchMatch> paren_groups;
           for (const auto& decl : instances) {
             const auto& paren_group =
-                GetParenGroupFromFromCall(*decl.match);
+                GetParenGroupFromCall(*decl.match);
             paren_groups.emplace_back(
                 TreeSearchMatch{&paren_group, {/* ignored context */}});
           }

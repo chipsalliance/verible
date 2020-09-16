@@ -77,7 +77,7 @@ const verible::SyntaxTreeLeaf* GetIdentifierFromTaskFunctionPortItem(
     const verible::Symbol&);
 
 // Returns the leaf node containing the name of the actual named port.
-// example: from ".x(y)" this returns the node spanning "x"
+// example: from ".x(y)" this returns the leaf spanning "x".
 const verible::SyntaxTreeLeaf& GetActualNamedPortName(const verible::Symbol&);
 
 // Returns the node containing the paren group of the actual named port (if

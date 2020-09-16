@@ -106,7 +106,7 @@ const verible::SyntaxTreeNode& GetFunctionBlockStatementList(
                                    NodeEnum::kBlockItemStatementList);
 }
 
-const verible::SyntaxTreeNode& GetParenGroupFromFromCall(
+const verible::SyntaxTreeNode& GetParenGroupFromCall(
     const verible::Symbol& function_call) {
   return verible::GetSubtreeAsNode(function_call, NodeEnum::kFunctionCall, 1,
                                    NodeEnum::kParenGroup);

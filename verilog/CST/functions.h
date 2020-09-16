@@ -129,7 +129,7 @@ const verible::SyntaxTreeNode& GetFunctionBlockStatementList(
 
 // Return the node spanning the paren group of function call.
 // e.g my_function(a, b, c) return the node spanning (a, b, c).
-const verible::SyntaxTreeNode& GetParenGroupFromFromCall(
+const verible::SyntaxTreeNode& GetParenGroupFromCall(
     const verible::Symbol&);
 
 }  // namespace verilog
