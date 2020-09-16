@@ -612,7 +612,7 @@ void IndexingFactsTreeExtractor::ExtractQualifiedId(
     const verible::SyntaxTreeNode& qualified_id) {
   IndexingNodeData member_reference_data(IndexingFactType::kMemberReference);
 
-  const std::vector<TreeSearchMatch>& unqualified_ids =
+  const std::vector<TreeSearchMatch> unqualified_ids =
       FindAllUnqualifiedIds(qualified_id);
 
   for (const TreeSearchMatch& unqualified_id : unqualified_ids) {
