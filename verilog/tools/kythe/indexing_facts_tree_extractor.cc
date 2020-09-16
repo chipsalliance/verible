@@ -119,11 +119,6 @@ void IndexingFactsTreeExtractor::Visit(const SyntaxTreeNode& node) {
 
       break;
     }
-    case NodeEnum::kPortDeclaration:
-    case NodeEnum::kPortReference: {
-      ExtractModulePort(node);
-      break;
-    }
     case NodeEnum::kIdentifierUnpackedDimensions: {
       ExtractInputOutputDeclaration(node);
       break;
@@ -221,16 +216,38 @@ void IndexingFactsTreeExtractor::ExtractModuleHeader(
     return;
   }
 
-  Visit(*port_list);
+  // This boolean is used to distinguish between ANSI and Non-ANSI module ports.
+  // e.g in this case:
+  // module m(a, b);
+  // has_propagated_type will be false as no type has been countered.
+  //
+  // in case like:
+  // module m(a, b, input x, y)
+  // for "a", "b" the boolean will be false but for "x", "y" the boolean will be
+  // true.
+  //
+  // The boolean is used to determine whether this the fact for this variable
+  // should be a reference or a defintiion.
+  bool has_propagated_type = false;
+  for (const auto& port : port_list->children()) {
+    if (port->Kind() == verible::SymbolKind::kLeaf) continue;
+
+    const SyntaxTreeNode& port_node = verible::SymbolCastToNode(*port);
+    const auto tag = static_cast<verilog::NodeEnum>(port_node.Tag().tag);
+
+    if (tag == NodeEnum::kPortDeclaration) {
+      has_propagated_type = true;
+      ExtractModulePort(port_node, has_propagated_type);
+    } else if (tag == NodeEnum::kPort) {
+      ExtractModulePort(GetPortReferenceFromPort(port_node),
+                        has_propagated_type);
+    }
+  }
 }
 
 void IndexingFactsTreeExtractor::ExtractModulePort(
-    const SyntaxTreeNode& module_port_node) {
+    const SyntaxTreeNode& module_port_node, bool has_propagated_type) {
   const auto tag = static_cast<verilog::NodeEnum>(module_port_node.Tag().tag);
-
-  // TODO(minatoma): Fix case like:
-  // module m(input a, b); --> b is treated as a reference but should be a
-  // definition.
 
   // For extracting cases like:
   // module m(input a, input b);
@@ -241,15 +258,16 @@ void IndexingFactsTreeExtractor::ExtractModulePort(
     facts_tree_context_.top().NewChild(
         IndexingNodeData({Anchor(leaf->get(), context_.base)},
                          IndexingFactType::kVariableDefinition));
-  } else {
+  } else if (tag == NodeEnum::kPortReference) {
     // For extracting Non-ANSI style ports:
     // module m(a, b);
     const SyntaxTreeLeaf* leaf =
         GetIdentifierFromPortReference(module_port_node);
 
-    facts_tree_context_.top().NewChild(
-        IndexingNodeData({Anchor(leaf->get(), context_.base)},
-                         IndexingFactType::kVariableReference));
+    facts_tree_context_.top().NewChild(IndexingNodeData(
+        {Anchor(leaf->get(), context_.base)},
+        has_propagated_type ? IndexingFactType::kVariableDefinition
+                            : IndexingFactType::kVariableReference));
   }
 }
 

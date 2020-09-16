@@ -17,4 +17,10 @@
 #
 # Beware, this will go away, please change your scripts to call the new stable
 # name verible-verilog-syntax instead.
+>&2 cat <<EOF
+*******************************************************************************
+verilog_syntax is the deprecated name for verible-verilog-syntax.
+executing $(dirname $(realpath $0))/verible-verilog-syntax instead
+*******************************************************************************
+EOF
 exec "$(dirname $(realpath $0))/verible-verilog-syntax" "$@"

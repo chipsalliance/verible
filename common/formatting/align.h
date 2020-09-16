@@ -129,16 +129,59 @@ std::vector<TokenPartitionRange> GetPartitionAlignmentSubranges(
         partition_selector,
     int min_match_count = 2);
 
-// This represents one unit of alignable work, which is usually a filtered
-// subset of partitions within a contiguous range of partitions.
-// TODO(fangism): pair this with an AlignmentCellScannerFunction to be able to
-// support heterogeneous subgroup alignment.
-using AlignablePartitionGroup = std::vector<TokenPartitionIterator>;
-
 // This is the interface used to extract alignment cells from ranges of tokens.
 // Note that it is not required to use a ColumnSchemaScanner.
 using AlignmentCellScannerFunction =
     std::function<std::vector<ColumnPositionEntry>(const TokenPartitionTree&)>;
+
+// For sections of code that are deemed alignable, this enum controls
+// the formatter behavior.
+enum class AlignmentPolicy {
+  // Preserve text as-is.
+  kPreserve,
+
+  // No-align: flush text to left while obeying spacing constraints
+  kFlushLeft,
+
+  // Attempt tabular alignment.
+  kAlign,
+
+  // Infer whether user wanted flush-left or alignment, based on original
+  // spacing.
+  kInferUserIntent,
+};
+
+namespace internal {
+extern const std::initializer_list<
+    std::pair<const absl::string_view, AlignmentPolicy>>
+    kAlignmentPolicyNameMap;
+}  // namespace internal
+
+std::ostream& operator<<(std::ostream&, AlignmentPolicy);
+
+bool AbslParseFlag(absl::string_view text, AlignmentPolicy* policy,
+                   std::string* error);
+
+std::string AbslUnparseFlag(const AlignmentPolicy& policy);
+
+// This represents one unit of alignable work, which is usually a filtered
+// subset of partitions within a contiguous range of partitions.
+struct AlignablePartitionGroup {
+  // The set of partitions to treat as rows for tabular alignment.
+  std::vector<TokenPartitionIterator> alignable_rows;
+
+  // This function scans each row to identify column positions and properties of
+  // alignable cells (containing token ranges).
+  AlignmentCellScannerFunction alignment_cell_scanner;
+
+  // Controls how this group should be aligned or flushed or preserved.
+  AlignmentPolicy alignment_policy;
+
+  TokenPartitionRange Range() const {
+    return TokenPartitionRange(alignable_rows.front(),
+                               alignable_rows.back() + 1);
+  }
+};
 
 // This is the interface used to sub-divide a range of token partitions into
 // a sequence of sub-ranges for the purposes of formatting aligned groups.
@@ -157,7 +200,9 @@ using IgnoreAlignmentRowPredicate =
 ExtractAlignmentGroupsFunction ExtractAlignmentGroupsAdapter(
     const std::function<std::vector<TokenPartitionRange>(
         const TokenPartitionRange&)>& legacy_extractor,
-    const IgnoreAlignmentRowPredicate& legacy_ignore_predicate);
+    const IgnoreAlignmentRowPredicate& legacy_ignore_predicate,
+    const AlignmentCellScannerFunction& alignment_cell_scanner,
+    AlignmentPolicy alignment_policy);
 
 // Instantiates a ScannerType (implements ColumnSchemaScanner) and extracts
 // column alignment information, suitable as an AlignmentCellScannerFunction.
@@ -196,73 +241,27 @@ AlignmentCellScannerFunction AlignmentCellScannerGenerator() {
   };
 }
 
-// For sections of code that are deemed alignable, this enum controls
-// the formatter behavior.
-enum class AlignmentPolicy {
-  // Preserve text as-is.
-  kPreserve,
-
-  // No-align: flush text to left while obeying spacing constraints
-  kFlushLeft,
-
-  // Attempt tabular alignment.
-  kAlign,
-
-  // Infer whether user wanted flush-left or alignment, based on original
-  // spacing.
-  kInferUserIntent,
-};
-
-namespace internal {
-extern const std::initializer_list<
-    std::pair<const absl::string_view, AlignmentPolicy>>
-    kAlignmentPolicyNameMap;
-}  // namespace internal
-
-std::ostream& operator<<(std::ostream&, AlignmentPolicy);
-
-bool AbslParseFlag(absl::string_view text, AlignmentPolicy* policy,
-                   std::string* error);
-
-std::string AbslUnparseFlag(const AlignmentPolicy& policy);
-
-// This struct bundles together the various functions needed for aligned
-// formatting.
-// TODO(fangism): Support heterogeneous sub-range alignment.
-// The current structure limits each node-type's handler to have only
-// one aligner for all of its sub-ranges.
-struct AlignedFormattingHandler {
-  // This function subdivides a range of token partitions (e.g. all of the
-  // children of a parent partition of interest) into groups of lines that will
-  // align with each other.
-  ExtractAlignmentGroupsFunction extract_alignment_groups;
-
-  // This function scans lines (token ranges)
-  // for token positions that mark the start of a new column.
-  AlignmentCellScannerFunction alignment_cell_scanner;
-};
-
 // This aligns sections of text by modifying the spacing between tokens.
 // 'partition_ptr' is a partition that can span one or more sections of
 // code to align.  The partitions themselves are not reshaped, however,
 // the inter-token spacing of tokens spanned by these partitions can be
 // modified.
-// Currently, alignment groups are separated at partition boundaries
-// that span one or more blank lines (hard-coded for now).
+// 'extract_alignment_groups' is a function that returns groups of token
+// partitions to align along with their column extraction functions.
+// (See AlignablePartitionGroup.)
 //
+// How it works:
 // Let a 'line' be a unit of text to be aligned.
 // Groups of lines are aligned together, as if their contents were table cells.
 // Vertical alignment is achieved by sizing each column in the table to
 // the max cell width in each column, and padding spaces as necessary.
 //
-// See description of AlignedFormattingHandler for a description of each
-// function needed for aligned formatting.
-//
 // Other parameters:
 // 'full_text' is the string_view buffer of whole text being formatted, not just
 // the text spanned by 'partition_ptr'.
 // 'ftokens' points to the array of PreFormatTokens that spans 'full_text'.
-// 'policy' allows selective enabling/disabling of alignment.
+// 'disabled_byte_ranges' contains information about which ranges of text
+// are to preserve their original spacing (no-formatting).
 // 'column_limit' is the column width beyond which the aligner should fallback
 // to a safer action, e.g. refusing to align and leaving spacing untouched.
 //
@@ -283,12 +282,11 @@ struct AlignedFormattingHandler {
 //    aaa     bb [11]  [22]
 //    ccc[33] dd [444]
 //
-void TabularAlignTokens(TokenPartitionTree* partition_ptr,
-                        const AlignedFormattingHandler& alignment_handler,
-                        std::vector<PreFormatToken>* ftokens,
-                        absl::string_view full_text,
-                        const ByteOffsetSet& disabled_byte_ranges,
-                        AlignmentPolicy policy, int column_limit);
+void TabularAlignTokens(
+    TokenPartitionTree* partition_ptr,
+    const ExtractAlignmentGroupsFunction& extract_alignment_groups,
+    std::vector<PreFormatToken>* ftokens, absl::string_view full_text,
+    const ByteOffsetSet& disabled_byte_ranges, int column_limit);
 
 }  // namespace verible
 

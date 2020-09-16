@@ -282,7 +282,8 @@ TEST(GetAllPortReferences, GetPortReferenceIdentifier) {
 
     std::vector<TreeSearchMatch> types;
     for (const auto& decl : decls) {
-      const auto* type = GetIdentifierFromPortReference(*decl.match);
+      const auto* type =
+          GetIdentifierFromPortReference(GetPortReferenceFromPort(*decl.match));
       types.push_back(TreeSearchMatch{type, {/* ignored context */}});
     }
 

@@ -3810,6 +3810,16 @@ static constexpr FormatterTestCase kFormatterTestCases[] = {
      "    d: ee f;\n"
      "  endcase\n"
      "endmodule\n"},
+    {// conditional generate (case), with comments
+     "module mc; case(s)\n//comment a\na:bb  c;\n//comment b\n endcase "
+     "endmodule",
+     "module mc;\n"
+     "  case (s)\n"
+     "    //comment a\n"  // indented to case-item level
+     "    a: bb c;\n"
+     "    //comment b\n"  // indented to case-item level
+     "  endcase\n"
+     "endmodule\n"},
 
     {// "default:", not "default :"
      "function f; case (x) default: x=y; endcase endfunction\n",
@@ -3847,6 +3857,18 @@ static constexpr FormatterTestCase kFormatterTestCases[] = {
      "    //c3\n"
      "    State1: a = b;  //c4\n"
      "    //c5\n"
+     "  endcase\n"
+     "endfunction\n"},
+    {// case inside statement, comments
+     "function f; case (x)inside \n//comment\n"
+     "[0:1]:x=y; \n"
+     "    //comment\n"
+     "endcase endfunction\n",
+     "function f;\n"
+     "  case (x) inside\n"
+     "    //comment\n"
+     "    [0 : 1]: x = y;\n"
+     "    //comment\n"
      "  endcase\n"
      "endfunction\n"},
     {// case inside statement
@@ -7263,6 +7285,107 @@ TEST(FormatterEndToEndTest, AutoInferAlignment) {
        "    join\n"
        "    kWWWWW: cc = 23;\n"
        "    kVVV:   cd = 24;\n"  // aligned
+       "  endcase\n"
+       "endtask\n"},
+      {// case-inside: small difference between flush-left and align, so align
+       "function f; case (x)inside [0:3]  :yy=zzz; [4:11] :yy=zz;"
+       "endcase endfunction\n",
+       "function f;\n"
+       "  case (x) inside\n"
+       "    [0 : 3]:  yy = zzz;\n"  // aligned, only adds 1 spaces
+       "    [4 : 11]: yy = zz;\n"
+       "  endcase\n"
+       "endfunction\n"},
+      {// case-inside: align with comments
+       "function f; case (x)inside \n//c1\n[0:3]  :yy=zzz;\n//c2\n"
+       " [4:11] :yy=zz;\n//c3\n"
+       "endcase endfunction\n",
+       "function f;\n"
+       "  case (x) inside\n"
+       "    //c1\n"
+       "    [0 : 3]:  yy = zzz;\n"  // aligned, only adds 1 spaces
+       "    //c2\n"
+       "    [4 : 11]: yy = zz;\n"
+       "    //c3\n"
+       "  endcase\n"
+       "endfunction\n"},
+      {// case-inside: flush left
+       "function f; case (x)inside [0:3]  :yy=zzz; [4:999999] :yy=zz;"
+       "endcase endfunction\n",
+       "function f;\n"
+       "  case (x) inside\n"
+       "    [0 : 3]: yy = zzz;\n"  // flush-left
+       "    [4 : 999999]: yy = zz;\n"
+       "  endcase\n"
+       "endfunction\n"},
+      {// case-inside: induce alignment
+       "function f; case (x)inside [0:3    ]  :yy=zzz; [4:999999] :yy=zz;"
+       "endcase endfunction\n",
+       "function f;\n"
+       "  case (x) inside\n"
+       "    [0 : 3]:      yy = zzz;\n"  // aligned
+       "    [4 : 999999]: yy = zz;\n"
+       "  endcase\n"
+       "endfunction\n"},
+      {// case-generate: align would add few spaces, so align
+       "module mc ; case (x)kZ  : gg h(); kXYY :j kk();"
+       "endcase endmodule\n",
+       "module mc;\n"
+       "  case (x)\n"
+       "    kZ:   gg h ();\n"  // align
+       "    kXYY: j kk ();\n"
+       "  endcase\n"
+       "endmodule\n"},
+      {// case-generate + comment: align would add few spaces, so align
+       "module mc ; case (x)kZ  : gg h(); \n//c1\n kXYY :j kk();"
+       "endcase endmodule\n",
+       "module mc;\n"
+       "  case (x)\n"
+       "    kZ:   gg h ();\n"  // align
+       "    //c1\n"
+       "    kXYY: j kk ();\n"
+       "  endcase\n"
+       "endmodule\n"},
+      {// case-generate: align would add too many space, so flush-left
+       "module mc ; case (x)kZ  : gg h(); kXYYYY :j kk();"
+       "endcase endmodule\n",
+       "module mc;\n"
+       "  case (x)\n"
+       "    kZ: gg h ();\n"  // flush-left
+       "    kXYYYY: j kk ();\n"
+       "  endcase\n"
+       "endmodule\n"},
+      {// case-generate: inject spaces to induce alignment
+       "module mc ; case (x)kZ  : gg h(); kXYYYY :     j kk();"
+       "endcase endmodule\n",
+       "module mc;\n"
+       "  case (x)\n"
+       "    kZ:     gg h ();\n"  // align
+       "    kXYYYY: j kk ();\n"
+       "  endcase\n"
+       "endmodule\n"},
+      {// randcase: align (small difference from flush-left)
+       "task trc  ;randcase 10: x = 1; 1: x = 3; endcase endtask",
+       "task trc;\n"
+       "  randcase\n"
+       "    10: x = 1;\n"
+       "    1:  x = 3;\n"  // aligned
+       "  endcase\n"
+       "endtask\n"},
+      {// randcase: inferred flush-left
+       "task trc  ;randcase 10000: x = 1; 1: x = 3; endcase endtask",
+       "task trc;\n"
+       "  randcase\n"
+       "    10000: x = 1;\n"
+       "    1: x = 3;\n"
+       "  endcase\n"
+       "endtask\n"},
+      {// randcase: induce alignment
+       "task trc  ;randcase 10000: x = 1    ; 1: x = 3; endcase endtask",
+       "task trc;\n"
+       "  randcase\n"
+       "    10000: x = 1;\n"
+       "    1:     x = 3;\n"  // aligned
        "  endcase\n"
        "endtask\n"},
   };

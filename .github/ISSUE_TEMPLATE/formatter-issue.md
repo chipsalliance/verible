@@ -1,9 +1,11 @@
---------------------------------------------------------------------------------
+---
+name: formatter issue
+about: formatter bugs and feature requests
+title: ''
+labels: formatter
+assignees: ''
 
-name: formatter issue about: formatter bugs and feature requests title: ''
-labels: formatter assignees: ''
-
---------------------------------------------------------------------------------
+---
 
 **Test case**
 

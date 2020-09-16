@@ -58,7 +58,8 @@ class IndexingFactsTreeExtractor : public verible::TreeContextVisitor {
   void ExtractModuleHeader(const verible::SyntaxTreeNode& module_header_node);
 
   // Extracts modules ports and creates its corresponding fact tree.
-  void ExtractModulePort(const verible::SyntaxTreeNode& module_port_node);
+  void ExtractModulePort(const verible::SyntaxTreeNode& module_port_node,
+                         bool has_propagated_type);
 
   // Extracts "a" from input a, output a and creates its corresponding fact
   // tree.
