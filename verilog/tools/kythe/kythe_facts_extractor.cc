@@ -147,7 +147,8 @@ void KytheFactsExtractor::IndexingFactNodeTagResolver(
     case IndexingFactType::kDataTypeReference:
     case IndexingFactType::kMacroCall:
     case IndexingFactType::kFunctionCall:
-    case IndexingFactType::kMacro: {
+    case IndexingFactType::kMacro:
+    case IndexingFactType::kModuleNamedPort: {
       break;
     }
     default: {
