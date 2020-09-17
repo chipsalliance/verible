@@ -57,9 +57,6 @@ module Non_ANSI (
   //- @Non_ANSI ref NON_ANSI
 endmodule : Non_ANSI
 
-
-// TODO(minatoma): add data type forwarding after merging PR #447
-
 //- @my_module defines/binding MyModule
 //- MyModule.node/kind record
 //- MyModule.subkind module
@@ -96,30 +93,30 @@ module my_module (
   //- W3Def childof MyModule
   wire w1, w2, w3;
 
-  //- @Non_ANSI ref NON_ANSI
-  //- @instance1 defines/binding Instance1Def
-  //- Instance1Def.node/kind variable
-  //- Instance1Def.complete definition
-  //- Instance1Def childof MyModule
-  //- @instance2 defines/binding Instance2Def
-  //- Instance2Def.node/kind variable
-  //- Instance2Def.complete definition
-  //- Instance2Def childof MyModule
-  //- @x ref XDef
-  //- @y ref YDef
-  //- @z ref ZDef
-  //- @w1 ref W1Def
-  //- @w2 ref W2Def
-  //- @w3 ref W3Def
+  //- @Non_ANSI ref NON_ANSI  
   Non_ANSI
+      //- @instance1 defines/binding Instance1Def
+      //- Instance1Def.node/kind variable
+      //- Instance1Def.complete definition
+      //- Instance1Def childof MyModule
       instance1 (
+          //- @x ref XDef
           x,
+          //- @y ref YDef
           y,
+          //- @z ref ZDef
           z
       ),
+      //- @instance2 defines/binding Instance2Def
+      //- Instance2Def.node/kind variable
+      //- Instance2Def.complete definition
+      //- Instance2Def childof MyModule
       instance2 (
+          //- @w1 ref W1Def
           w1,
+          //- @w2 ref W2Def
           w2,
+          //- @w3 ref W3Def
           w3
       );
 

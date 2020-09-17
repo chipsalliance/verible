@@ -298,16 +298,23 @@ void IndexingFactsTreeExtractor::ExtractModulePort(
 
 void IndexingFactsTreeExtractor::ExtractModuleNamedPort(
     const verible::SyntaxTreeNode& actual_named_port) {
+  IndexingNodeData actual_port_data(IndexingFactType::kModuleNamedPort);
+  IndexingFactNode actual_port_node(actual_port_data);
+
   const SyntaxTreeLeaf& leaf = GetActualNamedPortName(actual_named_port);
+  actual_port_node.Value().AppendAnchor(Anchor(leaf.get(), context_.base));
 
-  facts_tree_context_.top().NewChild(IndexingNodeData(
-      {Anchor(leaf.get(), context_.base)}, IndexingFactType::kModuleNamedPort));
-
-  const verible::Symbol* paren_group =
-      GetActualNamedPortParenGroup(actual_named_port);
-  if (paren_group != nullptr) {
-    Visit(verible::SymbolCastToNode(*paren_group));
+  {
+    const IndexingFactsTreeContext::AutoPop p(&facts_tree_context_,
+                                              &actual_port_node);
+    const verible::Symbol* paren_group =
+        GetActualNamedPortParenGroup(actual_named_port);
+    if (paren_group != nullptr) {
+      Visit(verible::SymbolCastToNode(*paren_group));
+    }
   }
+
+  facts_tree_context_.top().NewChild(actual_port_node);
 }
 
 void IndexingFactsTreeExtractor::ExtractInputOutputDeclaration(
@@ -332,9 +339,6 @@ void IndexingFactsTreeExtractor::ExtractModuleEnd(
   }
 }
 
-// TODO(minatoma): consider this case:
-//  foo_module foo_instance(id1[id2],id3[id4]);  // where instance is
-//  "foo_instance(...)"
 void IndexingFactsTreeExtractor::ExtractModuleInstantiation(
     const SyntaxTreeNode& data_declaration_node,
     const std::vector<TreeSearchMatch>& gate_instances) {

@@ -660,47 +660,56 @@ TEST(FactsTreeExtractor, ModuleInstanceWithActualNamedPorts) {
                       IndexingFactType ::kModuleInstance,
                   },
                   // refers to .a
-                  T({
+                  T(
                       {
-                          Anchor(kTestCase.expected_tokens[27], kTestCase.code),
+                          {
+                              Anchor(kTestCase.expected_tokens[27],
+                                     kTestCase.code),
+                          },
+                          IndexingFactType ::kModuleNamedPort,
                       },
-                      IndexingFactType ::kModuleNamedPort,
-                  }),
-                  // refers to a
-                  T({
-                      {
-                          Anchor(kTestCase.expected_tokens[29], kTestCase.code),
-                      },
-                      IndexingFactType ::kVariableReference,
-                  }),
+                      // refers to a
+                      T({
+                          {
+                              Anchor(kTestCase.expected_tokens[29],
+                                     kTestCase.code),
+                          },
+                          IndexingFactType ::kVariableReference,
+                      })),
                   // refers to .b
-                  T({
+                  T(
                       {
-                          Anchor(kTestCase.expected_tokens[31], kTestCase.code),
+                          {
+                              Anchor(kTestCase.expected_tokens[31],
+                                     kTestCase.code),
+                          },
+                          IndexingFactType ::kModuleNamedPort,
                       },
-                      IndexingFactType ::kModuleNamedPort,
-                  }),
-                  // refers to b
-                  T({
-                      {
-                          Anchor(kTestCase.expected_tokens[33], kTestCase.code),
-                      },
-                      IndexingFactType ::kVariableReference,
-                  }),
+                      // refers to b
+                      T({
+                          {
+                              Anchor(kTestCase.expected_tokens[33],
+                                     kTestCase.code),
+                          },
+                          IndexingFactType ::kVariableReference,
+                      })),
                   // refers to .z
-                  T({
+                  T(
                       {
-                          Anchor(kTestCase.expected_tokens[35], kTestCase.code),
+                          {
+                              Anchor(kTestCase.expected_tokens[35],
+                                     kTestCase.code),
+                          },
+                          IndexingFactType ::kModuleNamedPort,
                       },
-                      IndexingFactType ::kModuleNamedPort,
-                  }),
-                  // refers to c
-                  T({
-                      {
-                          Anchor(kTestCase.expected_tokens[37], kTestCase.code),
-                      },
-                      IndexingFactType ::kVariableReference,
-                  }),
+                      // refers to c
+                      T({
+                          {
+                              Anchor(kTestCase.expected_tokens[37],
+                                     kTestCase.code),
+                          },
+                          IndexingFactType ::kVariableReference,
+                      })),
                   // refers to .h
                   T({
                       {
