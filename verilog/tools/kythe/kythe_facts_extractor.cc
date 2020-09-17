@@ -288,8 +288,9 @@ VName KytheFactsExtractor::ExtractModuleNamedPort(
   GenerateEdgeString(port_vname_anchor, kEdgeRef, actual_port_vname);
 
   if (named_port_node.Children().empty()) {
-    const VName* definition_vname =
-        scope_context_.SearchForDefinition(CreateSignature(port_name.Value()));
+    const VName* definition_vname = ABSL_DIE_IF_NULL(
+        scope_context_.SearchForDefinition(CreateSignature(port_name.Value())));
+
     GenerateEdgeString(port_vname_anchor, kEdgeRef, *definition_vname);
   }
 

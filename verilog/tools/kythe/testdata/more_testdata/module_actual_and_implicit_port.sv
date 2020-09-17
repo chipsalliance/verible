@@ -65,3 +65,46 @@ module my_module2 (
         );
 
 endmodule
+
+//- @my_module3 defines/binding MyModule3
+//- MyModule3.node/kind record
+//- MyModule3.subkind module
+//- MyModule3.complete definition
+module my_module3 (
+);
+
+    //- @x defines/binding X1Def
+    //- X1Def.node/kind variable
+    //- X1Def.complete definition
+    //- X1Def childof MyModule3
+    input x;
+    //- @y defines/binding Y1Def
+    //- Y1Def.node/kind variable
+    //- Y1Def.complete definition
+    //- Y1Def childof MyModule3
+    wire y;
+    //- @z defines/binding ZDef3
+    //- ZDef3.node/kind variable
+    //- ZDef3.complete definition
+    //- ZDef3 childof MyModule3
+    wire z;
+
+    //- @my_module ref MyModule
+    my_module
+        //- @instance1 defines/binding Instance2Def
+        //- Instance2Def.node/kind variable
+        //- Instance2Def.complete definition
+        //- Instance2Def childof MyModule3
+        instance1(
+            //- @x ref X1Def
+            //- @in1 ref In1Def
+            .in1(x),
+            //- @y ref Y1Def
+            //- @in2 ref In2Def
+            .in2(y),
+            //- @z ref ZDef
+            //- @z ref ZDef3
+            .z
+        );
+
+endmodule

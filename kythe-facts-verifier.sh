@@ -15,7 +15,6 @@
 
 usage() {
   cat <<EOF
-$0 verilog file...
 
 Extracts Kythe facts from the given verilog file and runs Kythe verifier on the produced facts.
 EOF
@@ -24,6 +23,9 @@ EOF
 set -o pipefail
 KYTHE_BINDIR="/opt/kythe/tools"
 KYTHE_OUT="./kythe-out"
+
+# The files are expected to be self-contained single-file test cases.
+# TODO(minatoma) : make the changes after having multi-file tests.
 VERILOG_TEST_FILES="./verilog/tools/kythe/testdata/more_testdata/*.sv"
 # You can find prebuilt binaries at https://github.com/kythe/kythe/releases.
 # This script assumes that they are installed to /opt/kythe.
