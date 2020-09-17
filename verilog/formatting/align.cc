@@ -449,7 +449,7 @@ GetConsecutiveModuleItemGroups(const TokenPartitionRange& partitions) {
 }
 
 static std::vector<verible::TaggedTokenPartitionRange>
-GetConsecutiveDataDeclarationGroups(const TokenPartitionRange& partitions) {
+GetConsecutiveClassItemGroups(const TokenPartitionRange& partitions) {
   VLOG(2) << __FUNCTION__;
   return GetPartitionAlignmentSubranges(
       partitions,  //
@@ -464,7 +464,7 @@ GetConsecutiveDataDeclarationGroups(const TokenPartitionRange& partitions) {
         return AlignClassify(IsAlignableDeclaration(node)
                                  ? AlignmentGroupAction::kMatch
                                  : AlignmentGroupAction::kNoMatch,
-                             AlignableSyntaxSubtype::kDataDeclaration);
+                             AlignableSyntaxSubtype::kClassMemberVariables);
       });
 }
 
@@ -847,6 +847,81 @@ PartitionBetweenBlankLines(AlignableSyntaxSubtype subtype) {
   };
 }
 
+// Each alignment group subtype maps to a set of functions.
+struct AlignmentGroupHandlers {
+  verible::AlignmentCellScannerFunction column_scanner;
+  std::function<verible::AlignmentPolicy(const FormatStyle& vstyle)>
+      policy_func;
+};
+
+// Convert a pointer-to-member to a function/lambda that accesses that member.
+// Returns the referenced member by value.
+// TODO(fangism): move this to an STL-style util/functional library
+template <typename MemberType, typename StructType>
+std::function<MemberType(const StructType&)> function_from_pointer_to_member(
+    MemberType StructType::*member) {
+  return [member](const StructType& obj) { return obj.*member; };
+}
+
+using AlignmentHandlerMapType =
+    std::map<AlignableSyntaxSubtype, AlignmentGroupHandlers>;
+
+// Global registry of all known alignment handlers for Verilog.
+// This organization lets the same handlers be re-used in multiple syntactic
+// contexts, e.g. data declarations can be module items and generate items and
+// block statement items.
+static const AlignmentHandlerMapType& AlignmentHandlerLibrary() {
+  static const auto* handler_map = new AlignmentHandlerMapType{
+      {AlignableSyntaxSubtype::kDataDeclaration,
+       {AlignmentCellScannerGenerator<DataDeclarationColumnSchemaScanner>(),
+        function_from_pointer_to_member(
+            &FormatStyle::module_net_variable_alignment)}},
+      {AlignableSyntaxSubtype::kNamedActualParameters,
+       {AlignmentCellScannerGenerator<
+            ActualNamedParameterColumnSchemaScanner>(),
+        function_from_pointer_to_member(
+            &FormatStyle::named_parameter_alignment)}},
+      {AlignableSyntaxSubtype::kNamedActualPorts,
+       {AlignmentCellScannerGenerator<ActualNamedPortColumnSchemaScanner>(),
+        function_from_pointer_to_member(&FormatStyle::named_port_alignment)}},
+      {AlignableSyntaxSubtype::kParameterDeclaration,
+       {AlignmentCellScannerGenerator<
+            ParameterDeclarationColumnSchemaScanner>(),
+        function_from_pointer_to_member(
+            &FormatStyle::formal_parameters_alignment)}},
+      {AlignableSyntaxSubtype::kPortDeclaration,
+       {AlignmentCellScannerGenerator<PortDeclarationColumnSchemaScanner>(),
+        function_from_pointer_to_member(
+            &FormatStyle::port_declarations_alignment)}},
+      {AlignableSyntaxSubtype::kClassMemberVariables,
+       {AlignmentCellScannerGenerator<ClassPropertyColumnSchemaScanner>(),
+        function_from_pointer_to_member(
+            &FormatStyle::class_member_variable_alignment)}},
+      {AlignableSyntaxSubtype::kCaseLikeItems,
+       {AlignmentCellScannerGenerator<CaseItemColumnSchemaScanner>(),
+        function_from_pointer_to_member(&FormatStyle::case_items_alignment)}},
+  };
+  return *handler_map;
+}
+
+static verible::AlignmentCellScannerFunction AlignmentColumnScannerSelector(
+    int subtype) {
+  static const auto& handler_map = AlignmentHandlerLibrary();
+  const auto iter = handler_map.find(AlignableSyntaxSubtype(subtype));
+  CHECK(iter != handler_map.end()) << "subtype: " << subtype;
+  return iter->second.column_scanner;
+}
+
+static std::function<verible::AlignmentPolicy(int)> AlignmentPolicySelector(
+    const FormatStyle& vstyle) {
+  static const auto& handler_map = AlignmentHandlerLibrary();
+  return [&vstyle](int subtype) {
+    const auto iter = handler_map.find(AlignableSyntaxSubtype(subtype));
+    CHECK(iter != handler_map.end()) << "subtype: " << subtype;
+    return iter->second.policy_func(vstyle);
+  };
+}
+
 using AlignSyntaxGroupsFunction =
     std::function<std::vector<AlignablePartitionGroup>(
         const TokenPartitionRange& range, const FormatStyle& style)>;
@@ -856,8 +931,8 @@ static std::vector<AlignablePartitionGroup> AlignPortDeclarations(
   return verible::ExtractAlignmentGroupsAdapter(
       PartitionBetweenBlankLines(AlignableSyntaxSubtype::kPortDeclaration),
       &IgnoreWithinPortDeclarationPartitionGroup,
-      AlignmentCellScannerGenerator<PortDeclarationColumnSchemaScanner>(),
-      vstyle.port_declarations_alignment)(full_range);
+      &AlignmentColumnScannerSelector,
+      AlignmentPolicySelector(vstyle))(full_range);
 }
 
 static std::vector<AlignablePartitionGroup> AlignActualNamedParameters(
@@ -866,8 +941,8 @@ static std::vector<AlignablePartitionGroup> AlignActualNamedParameters(
       PartitionBetweenBlankLines(
           AlignableSyntaxSubtype::kNamedActualParameters),
       &IgnoreWithinActualNamedParameterPartitionGroup,
-      AlignmentCellScannerGenerator<ActualNamedParameterColumnSchemaScanner>(),
-      vstyle.named_parameter_alignment)(full_range);
+      &AlignmentColumnScannerSelector,
+      AlignmentPolicySelector(vstyle))(full_range);
 }
 
 static std::vector<AlignablePartitionGroup> AlignActualNamedPorts(
@@ -875,8 +950,8 @@ static std::vector<AlignablePartitionGroup> AlignActualNamedPorts(
   return verible::ExtractAlignmentGroupsAdapter(
       PartitionBetweenBlankLines(AlignableSyntaxSubtype::kNamedActualPorts),
       &IgnoreWithinActualNamedPortPartitionGroup,
-      AlignmentCellScannerGenerator<ActualNamedPortColumnSchemaScanner>(),
-      vstyle.named_port_alignment)(full_range);
+      &AlignmentColumnScannerSelector,
+      AlignmentPolicySelector(vstyle))(full_range);
 }
 
 static std::vector<AlignablePartitionGroup> AlignModuleItems(
@@ -886,27 +961,25 @@ static std::vector<AlignablePartitionGroup> AlignModuleItems(
   return verible::ExtractAlignmentGroupsAdapter(
       &GetConsecutiveModuleItemGroups,
       &IgnoreCommentsAndPreprocessingDirectives,
-      AlignmentCellScannerGenerator<DataDeclarationColumnSchemaScanner>(),
-      vstyle.module_net_variable_alignment)(full_range);
+      &AlignmentColumnScannerSelector,
+      AlignmentPolicySelector(vstyle))(full_range);
 }
 
 static std::vector<AlignablePartitionGroup> AlignClassItems(
     const TokenPartitionRange& full_range, const FormatStyle& vstyle) {
   // TODO(fangism): align other class items besides member variables.
   return verible::ExtractAlignmentGroupsAdapter(
-      &GetConsecutiveDataDeclarationGroups,
-      &IgnoreCommentsAndPreprocessingDirectives,
-      AlignmentCellScannerGenerator<ClassPropertyColumnSchemaScanner>(),
-      vstyle.class_member_variable_alignment)(full_range);
+      &GetConsecutiveClassItemGroups, &IgnoreCommentsAndPreprocessingDirectives,
+      &AlignmentColumnScannerSelector,
+      AlignmentPolicySelector(vstyle))(full_range);
 }
 
 static std::vector<AlignablePartitionGroup> AlignCaseItems(
     const TokenPartitionRange& full_range, const FormatStyle& vstyle) {
   return verible::ExtractAlignmentGroupsAdapter(
       PartitionBetweenBlankLines(AlignableSyntaxSubtype::kCaseLikeItems),
-      &IgnoreMultilineCaseStatements,
-      AlignmentCellScannerGenerator<CaseItemColumnSchemaScanner>(),
-      vstyle.case_items_alignment)(full_range);
+      &IgnoreMultilineCaseStatements, &AlignmentColumnScannerSelector,
+      AlignmentPolicySelector(vstyle))(full_range);
 }
 
 static std::vector<AlignablePartitionGroup> AlignParameterDeclarations(
@@ -914,8 +987,8 @@ static std::vector<AlignablePartitionGroup> AlignParameterDeclarations(
   return verible::ExtractAlignmentGroupsAdapter(
       PartitionBetweenBlankLines(AlignableSyntaxSubtype::kParameterDeclaration),
       &IgnoreWithinPortDeclarationPartitionGroup,
-      AlignmentCellScannerGenerator<ParameterDeclarationColumnSchemaScanner>(),
-      vstyle.formal_parameters_alignment)(full_range);
+      &AlignmentColumnScannerSelector,
+      AlignmentPolicySelector(vstyle))(full_range);
 }
 
 void TabularAlignTokenPartitions(TokenPartitionTree* partition_ptr,

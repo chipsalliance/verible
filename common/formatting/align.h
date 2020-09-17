@@ -242,15 +242,26 @@ using ExtractAlignmentGroupsFunction =
 using IgnoreAlignmentRowPredicate =
     std::function<bool(const TokenPartitionTree&)>;
 
-// This adapter composes two functions for alignment (legacy interface) into one
-// used in the current interface.  This exists to help migrate existing code
+// This adapter composes several functions for alignment (legacy interface) into
+// one used in the current interface.  This exists to help migrate existing code
 // to the new interface.
+// TODO(fangism): phase this out this interface by rewriting
+// TabularAlignTokens().
 ExtractAlignmentGroupsFunction ExtractAlignmentGroupsAdapter(
     const std::function<std::vector<TaggedTokenPartitionRange>(
         const TokenPartitionRange&)>& legacy_extractor,
     const IgnoreAlignmentRowPredicate& legacy_ignore_predicate,
-    const AlignmentCellScannerFunction& alignment_cell_scanner,
-    AlignmentPolicy alignment_policy);
+    // The function returned is what will markup the partitioning of tokens into
+    // columns to be aligned.
+    // The int parameter of the dispatcher is the subtype enumeration from
+    // TaggedTokenPartitionRange::match_subtype.
+    const std::function<AlignmentCellScannerFunction(int)>&
+        alignment_cell_scanner_dispatcher,
+    // This function returns the policy that will control the alignment behavior
+    // of a particular alignable group.
+    // The int parameter of the dispatcher is the subtype enumeration from
+    // TaggedTokenPartitionRange::match_subtype.
+    const std::function<AlignmentPolicy(int)>& alignment_policy_dispatcher);
 
 // Instantiates a ScannerType (implements ColumnSchemaScanner) and extracts
 // column alignment information, suitable as an AlignmentCellScannerFunction.

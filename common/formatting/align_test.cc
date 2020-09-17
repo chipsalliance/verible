@@ -117,26 +117,26 @@ PartitionBetweenBlankLines(const TokenPartitionRange& range) {
 static const ExtractAlignmentGroupsFunction kDefaultAlignmentHandler =
     ExtractAlignmentGroupsAdapter(
         &PartitionBetweenBlankLines, &IgnoreNone,
-        AlignmentCellScannerGenerator<TokenColumnizer>(),
-        AlignmentPolicy::kAlign);
+        [](int) { return AlignmentCellScannerGenerator<TokenColumnizer>(); },
+        [](int) { return AlignmentPolicy::kAlign; });
 
 static const ExtractAlignmentGroupsFunction kFlushLeftAlignmentHandler =
     ExtractAlignmentGroupsAdapter(
         &PartitionBetweenBlankLines, &IgnoreNone,
-        AlignmentCellScannerGenerator<TokenColumnizer>(),
-        AlignmentPolicy::kFlushLeft);
+        [](int) { return AlignmentCellScannerGenerator<TokenColumnizer>(); },
+        [](int) { return AlignmentPolicy::kFlushLeft; });
 
 static const ExtractAlignmentGroupsFunction kPreserveAlignmentHandler =
     ExtractAlignmentGroupsAdapter(
         &PartitionBetweenBlankLines, &IgnoreNone,
-        AlignmentCellScannerGenerator<TokenColumnizer>(),
-        AlignmentPolicy::kPreserve);
+        [](int) { return AlignmentCellScannerGenerator<TokenColumnizer>(); },
+        [](int) { return AlignmentPolicy::kPreserve; });
 
 static const ExtractAlignmentGroupsFunction kInferAlignmentHandler =
     ExtractAlignmentGroupsAdapter(
         &PartitionBetweenBlankLines, &IgnoreNone,
-        AlignmentCellScannerGenerator<TokenColumnizer>(),
-        AlignmentPolicy::kInferUserIntent);
+        [](int) { return AlignmentCellScannerGenerator<TokenColumnizer>(); },
+        [](int) { return AlignmentPolicy::kInferUserIntent; });
 
 TEST_F(TabularAlignTokenTest, EmptyPartitionRange) {
   const auto begin = pre_format_tokens_.begin();
@@ -307,8 +307,10 @@ TEST_F(Sparse3x3MatrixAlignmentTest, OneInterTokenPaddingExceptFront) {
 static const ExtractAlignmentGroupsFunction kFlushRightAlignmentHandler =
     ExtractAlignmentGroupsAdapter(
         &PartitionBetweenBlankLines, &IgnoreNone,
-        AlignmentCellScannerGenerator<TokenColumnizerRightFlushed>(),
-        AlignmentPolicy::kAlign);
+        [](int) {
+          return AlignmentCellScannerGenerator<TokenColumnizerRightFlushed>();
+        },
+        [](int) { return AlignmentPolicy::kAlign; });
 
 TEST_F(Sparse3x3MatrixAlignmentTest, RightFlushed) {
   // Require 1 space between tokens.
@@ -362,8 +364,8 @@ TEST_F(Sparse3x3MatrixAlignmentTest, IgnoreCommentLine) {
 
   const ExtractAlignmentGroupsFunction handler = ExtractAlignmentGroupsAdapter(
       &PartitionBetweenBlankLines, ignore_threes,
-      AlignmentCellScannerGenerator<TokenColumnizer>(),
-      AlignmentPolicy::kAlign);
+      [](int) { return AlignmentCellScannerGenerator<TokenColumnizer>(); },
+      [](int) { return AlignmentPolicy::kAlign; });
   TabularAlignTokens(&partition_, handler, &pre_format_tokens_, sample_,
                      ByteOffsetSet(), 40);
 
