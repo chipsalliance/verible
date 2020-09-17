@@ -499,5 +499,64 @@ TEST(GetInstanceListFromDataDeclarationTest, InstanceLists) {
   }
 }
 
+TEST(GetVariableDeclarationAssign, VariableName) {
+  constexpr int kTag = 1;  // value doesn't matter
+  const SyntaxTreeSearchTestCase kTestCases[] = {
+      {""},
+      {"module m;\nendmodule\n"},
+      {"class class_c;\nendclass\nmodule m;\nclass_c c = new();\nendmodule"},
+      {"package pkg;\nint ",
+       {kTag, "x"},
+       ", ",
+       {kTag, "y"},
+       ";\nbit ",
+       {kTag, "b1"},
+       ", ",
+       {kTag, "b2"},
+       ";\nlogic ",
+       {kTag, "l1"},
+       ", ",
+       {kTag, "l2"},
+       ";\nstring ",
+       {kTag, "s1"},
+       ", ",
+       {kTag, "s2"},
+       ";\nendpackage"},
+      {"class class_c;\nint ",
+       {kTag, "x"},
+       ", ",
+       {kTag, "y"},
+       ";\nbit ",
+       {kTag, "b1"},
+       ", ",
+       {kTag, "b2"},
+       ";\nlogic ",
+       {kTag, "l1"},
+       ", ",
+       {kTag, "l2"},
+       ";\nstring ",
+       {kTag, "s1"},
+       ", ",
+       {kTag, "s2"},
+       ";\nendclass"},
+  };
+  for (const auto& test : kTestCases) {
+    TestVerilogSyntaxRangeMatches(
+        __FUNCTION__, test, [](const TextStructureView& text_structure) {
+          const auto& root = text_structure.SyntaxTree();
+          const auto decls =
+              FindAllVariableDeclarationAssignment(*ABSL_DIE_IF_NULL(root));
+
+          std::vector<TreeSearchMatch> names;
+          for (const auto& decl : decls) {
+            const auto& name =
+                GetUnqualifiedIdFromVariableDeclarationAssignment(*decl.match);
+            names.emplace_back(TreeSearchMatch{&name, {/* ignored context */}});
+          }
+          return names;
+        });
+  }
+}
+
 }  // namespace
 }  // namespace verilog
