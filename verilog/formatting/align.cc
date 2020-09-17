@@ -393,15 +393,64 @@ static bool IsAlignableDeclaration(const SyntaxTreeNode& node) {
   }
 }
 
-struct AlignableTokenPartitionRange {
-  TokenPartitionRange range;
-  verible::AlignmentPolicy alignment_policy;
+// These enums classify alignable groups of token partitions by their syntax
+// structure, which then map to different alignment handler routines.
+// These need not have a 1:1 correspondence to verilog::NodeEnum syntax tree
+// enums, a single value here could apply to a group of syntax tree node types.
+enum class AlignableSyntaxSubtype {
+  kDontCare = 0,
+  // named actual parameters
+  kNamedActualParameters,
+  // named actual ports
+  kNamedActualPorts,
+  // parameter declarations
+  kParameterDeclaration,
+  // port declarations
+  kPortDeclaration,
+  // net/variable declarations
+  kDataDeclaration,
+  // class member variable declarations
+  kClassMemberVariables,
+  // case-like items
+  kCaseLikeItems,
 };
+
+static AlignedPartitionClassification AlignClassify(
+    AlignmentGroupAction match,
+    AlignableSyntaxSubtype subtype = AlignableSyntaxSubtype::kDontCare) {
+  if (match == AlignmentGroupAction::kMatch) {
+    CHECK(subtype != AlignableSyntaxSubtype::kDontCare);
+  }
+  return {match, static_cast<int>(subtype)};
+}
+
+static std::vector<verible::TaggedTokenPartitionRange>
+GetConsecutiveModuleItemGroups(const TokenPartitionRange& partitions) {
+  VLOG(2) << __FUNCTION__;
+  return GetPartitionAlignmentSubranges(
+      partitions,  //
+      [](const TokenPartitionTree& partition)
+          -> AlignedPartitionClassification {
+        const Symbol* origin = partition.Value().Origin();
+        if (origin == nullptr) return {AlignmentGroupAction::kIgnore};
+        const verible::SymbolTag symbol_tag = origin->Tag();
+        if (symbol_tag.kind != verible::SymbolKind::kNode)
+          return AlignClassify(AlignmentGroupAction::kIgnore);
+        const SyntaxTreeNode& node = verible::SymbolCastToNode(*origin);
+        // Align net/variable declarations.
+        if (IsAlignableDeclaration(node)) {
+          return AlignClassify(AlignmentGroupAction::kMatch,
+                               AlignableSyntaxSubtype::kDataDeclaration);
+        }
+        // TODO(b/161814377): Align continuous assignment, like "assign foo =
+        // bar;"
+        return AlignClassify(AlignmentGroupAction::kNoMatch);
+      });
+}
 
 static std::vector<verible::TaggedTokenPartitionRange>
 GetConsecutiveDataDeclarationGroups(const TokenPartitionRange& partitions) {
   VLOG(2) << __FUNCTION__;
-  constexpr int kDataDeclarationGroupSubType = 0;
   return GetPartitionAlignmentSubranges(
       partitions,  //
       [](const TokenPartitionTree& partition)
@@ -412,10 +461,10 @@ GetConsecutiveDataDeclarationGroups(const TokenPartitionRange& partitions) {
         if (symbol_tag.kind != verible::SymbolKind::kNode)
           return {AlignmentGroupAction::kIgnore};
         const SyntaxTreeNode& node = verible::SymbolCastToNode(*origin);
-        return AlignedPartitionClassification{
-            IsAlignableDeclaration(node) ? AlignmentGroupAction::kMatch
-                                         : AlignmentGroupAction::kNoMatch,
-            kDataDeclarationGroupSubType};
+        return AlignClassify(IsAlignableDeclaration(node)
+                                 ? AlignmentGroupAction::kMatch
+                                 : AlignmentGroupAction::kNoMatch,
+                             AlignableSyntaxSubtype::kDataDeclaration);
       });
 }
 
@@ -789,6 +838,15 @@ class CaseItemColumnSchemaScanner : public ColumnSchemaScanner {
   bool previous_token_was_case_colon_ = false;
 };
 
+static std::function<
+    std::vector<verible::TaggedTokenPartitionRange>(const TokenPartitionRange&)>
+PartitionBetweenBlankLines(AlignableSyntaxSubtype subtype) {
+  return [subtype](const TokenPartitionRange& range) {
+    return verible::GetSubpartitionsBetweenBlankLinesSingleTag(
+        range, static_cast<int>(subtype));
+  };
+}
+
 using AlignSyntaxGroupsFunction =
     std::function<std::vector<AlignablePartitionGroup>(
         const TokenPartitionRange& range, const FormatStyle& style)>;
@@ -796,7 +854,7 @@ using AlignSyntaxGroupsFunction =
 static std::vector<AlignablePartitionGroup> AlignPortDeclarations(
     const TokenPartitionRange& full_range, const FormatStyle& vstyle) {
   return verible::ExtractAlignmentGroupsAdapter(
-      &verible::GetSubpartitionsBetweenBlankLinesSingleTag,
+      PartitionBetweenBlankLines(AlignableSyntaxSubtype::kPortDeclaration),
       &IgnoreWithinPortDeclarationPartitionGroup,
       AlignmentCellScannerGenerator<PortDeclarationColumnSchemaScanner>(),
       vstyle.port_declarations_alignment)(full_range);
@@ -805,7 +863,8 @@ static std::vector<AlignablePartitionGroup> AlignPortDeclarations(
 static std::vector<AlignablePartitionGroup> AlignActualNamedParameters(
     const TokenPartitionRange& full_range, const FormatStyle& vstyle) {
   return verible::ExtractAlignmentGroupsAdapter(
-      &verible::GetSubpartitionsBetweenBlankLinesSingleTag,
+      PartitionBetweenBlankLines(
+          AlignableSyntaxSubtype::kNamedActualParameters),
       &IgnoreWithinActualNamedParameterPartitionGroup,
       AlignmentCellScannerGenerator<ActualNamedParameterColumnSchemaScanner>(),
       vstyle.named_parameter_alignment)(full_range);
@@ -814,7 +873,7 @@ static std::vector<AlignablePartitionGroup> AlignActualNamedParameters(
 static std::vector<AlignablePartitionGroup> AlignActualNamedPorts(
     const TokenPartitionRange& full_range, const FormatStyle& vstyle) {
   return verible::ExtractAlignmentGroupsAdapter(
-      &verible::GetSubpartitionsBetweenBlankLinesSingleTag,
+      PartitionBetweenBlankLines(AlignableSyntaxSubtype::kNamedActualPorts),
       &IgnoreWithinActualNamedPortPartitionGroup,
       AlignmentCellScannerGenerator<ActualNamedPortColumnSchemaScanner>(),
       vstyle.named_port_alignment)(full_range);
@@ -825,7 +884,7 @@ static std::vector<AlignablePartitionGroup> AlignModuleItems(
   // Currently, this only handles data/net/variable declarations.
   // TODO(b/161814377): align continuous assignments
   return verible::ExtractAlignmentGroupsAdapter(
-      &GetConsecutiveDataDeclarationGroups,
+      &GetConsecutiveModuleItemGroups,
       &IgnoreCommentsAndPreprocessingDirectives,
       AlignmentCellScannerGenerator<DataDeclarationColumnSchemaScanner>(),
       vstyle.module_net_variable_alignment)(full_range);
@@ -844,7 +903,7 @@ static std::vector<AlignablePartitionGroup> AlignClassItems(
 static std::vector<AlignablePartitionGroup> AlignCaseItems(
     const TokenPartitionRange& full_range, const FormatStyle& vstyle) {
   return verible::ExtractAlignmentGroupsAdapter(
-      &verible::GetSubpartitionsBetweenBlankLinesSingleTag,
+      PartitionBetweenBlankLines(AlignableSyntaxSubtype::kCaseLikeItems),
       &IgnoreMultilineCaseStatements,
       AlignmentCellScannerGenerator<CaseItemColumnSchemaScanner>(),
       vstyle.case_items_alignment)(full_range);
@@ -853,7 +912,7 @@ static std::vector<AlignablePartitionGroup> AlignCaseItems(
 static std::vector<AlignablePartitionGroup> AlignParameterDeclarations(
     const TokenPartitionRange& full_range, const FormatStyle& vstyle) {
   return verible::ExtractAlignmentGroupsAdapter(
-      &verible::GetSubpartitionsBetweenBlankLinesSingleTag,
+      PartitionBetweenBlankLines(AlignableSyntaxSubtype::kParameterDeclaration),
       &IgnoreWithinPortDeclarationPartitionGroup,
       AlignmentCellScannerGenerator<ParameterDeclarationColumnSchemaScanner>(),
       vstyle.formal_parameters_alignment)(full_range);
@@ -880,6 +939,7 @@ void TabularAlignTokenPartitions(TokenPartitionTree* partition_ptr,
           {NodeEnum::kPortDeclarationList, &AlignPortDeclarations},
           {NodeEnum::kActualParameterByNameList, &AlignActualNamedParameters},
           {NodeEnum::kPortActualList, &AlignActualNamedPorts},
+          // TODO(fangism): make the following apply to generate-item lists too
           {NodeEnum::kModuleItemList, &AlignModuleItems},
           {NodeEnum::kFormalParameterList, &AlignParameterDeclarations},
           {NodeEnum::kClassItems, &AlignClassItems},

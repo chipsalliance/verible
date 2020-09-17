@@ -134,7 +134,7 @@ struct TaggedTokenPartitionRange {
 // of group to align (same syntax).
 std::vector<TaggedTokenPartitionRange>
 GetSubpartitionsBetweenBlankLinesSingleTag(
-    const TokenPartitionRange& full_range);
+    const TokenPartitionRange& full_range, int subtype);
 
 // From a range of token 'partitions', this selects sub-ranges to align.
 // 'partition_selector' decides which partitions qualify for alignment.

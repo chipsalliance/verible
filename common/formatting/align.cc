@@ -911,18 +911,13 @@ void TabularAlignTokens(
 
 std::vector<TaggedTokenPartitionRange>
 GetSubpartitionsBetweenBlankLinesSingleTag(
-    const TokenPartitionRange& full_range) {
+    const TokenPartitionRange& full_range, int subtype) {
   std::vector<TokenPartitionRange> ranges(
       GetSubpartitionsBetweenBlankLines(full_range));
   std::vector<TaggedTokenPartitionRange> result;
   result.reserve(ranges.size());
   for (const auto& range : ranges) {
-    // Since the subpartitions are syntactically the same, it doesn't matter
-    // what constant tag value is used.  It only matters when trying to return
-    // different group types (with different policies, different column
-    // scanners).
-    constexpr int kDontCareAlignmentSubtype = 0;
-    result.emplace_back(range, kDontCareAlignmentSubtype);
+    result.emplace_back(range, subtype);
   }
   return result;
 }
