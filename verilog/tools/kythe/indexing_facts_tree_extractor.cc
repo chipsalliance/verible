@@ -116,6 +116,18 @@ void IndexingFactsTreeExtractor::Visit(const SyntaxTreeNode& node) {
           ExtractClassInstances(node, register_variables);
           break;
         }
+
+        // for primitive types inside tagged with kRegisterVariable;
+        ExtractPrimitiveVariables(node, register_variables);
+        break;
+      }
+
+      const std::vector<TreeSearchMatch> variable_declaration_assign =
+          FindAllVariableDeclarationAssign(node);
+
+      if (!variable_declaration_assign.empty()) {
+        ExtractPrimitiveVariables(node, variable_declaration_assign);
+        break;
       }
 
       break;
@@ -614,6 +626,30 @@ void IndexingFactsTreeExtractor::ExtractClassInstances(
   }
 
   facts_tree_context_.top().NewChild(class_node);
+}
+
+void IndexingFactsTreeExtractor::ExtractPrimitiveVariables(
+    const verible::SyntaxTreeNode& enclosing_node,
+    const std::vector<verible::TreeSearchMatch>& variable_matches) {
+  for (const TreeSearchMatch& register_variable : variable_matches) {
+    const auto tag =
+        static_cast<verilog::NodeEnum>(register_variable.match->Tag().tag);
+
+    if (tag == NodeEnum::kRegisterVariable) {
+      const verible::TokenInfo& variable_name_token_info =
+          GetInstanceNameTokenInfoFromRegisterVariable(
+              *register_variable.match);
+      facts_tree_context_.top().NewChild(
+          IndexingNodeData({Anchor(variable_name_token_info, context_.base)},
+                           IndexingFactType::kVariableDefinition));
+    } else if (tag == NodeEnum::kVariableDeclarationAssignment) {
+      const SyntaxTreeLeaf& leaf = GetUnqualifiedIdFromVariableDeclaratioAssign(
+          *register_variable.match);
+      facts_tree_context_.top().NewChild(
+          IndexingNodeData({Anchor(leaf.get(), context_.base)},
+                           IndexingFactType::kVariableDefinition));
+    }
+  }
 }
 
 void IndexingFactsTreeExtractor::ExtractSymbolIdentifier(

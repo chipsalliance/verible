@@ -76,6 +76,11 @@ std::vector<verible::TreeSearchMatch> FindAllGateInstances(const Symbol& root) {
   return SearchSyntaxTree(root, NodekGateInstance());
 }
 
+std::vector<verible::TreeSearchMatch> FindAllVariableDeclarationAssign(
+    const verible::Symbol& root) {
+  return SearchSyntaxTree(root, NodekVariableDeclarationAssignment());
+}
+
 // Don't want to expose kInstantiationBase because it is an artificial grouping.
 static const SyntaxTreeNode& GetInstantiationBaseFromDataDeclaration(
     const Symbol& data_declaration) {
@@ -155,6 +160,13 @@ const verible::SyntaxTreeNode& GetParenGroupFromModuleInstantiation(
     const verible::Symbol& gate_instance) {
   return GetSubtreeAsNode(gate_instance, NodeEnum::kGateInstance, 2,
                           NodeEnum::kParenGroup);
+}
+
+const verible::SyntaxTreeLeaf& GetUnqualifiedIdFromVariableDeclaratioAssign(
+    const verible::Symbol& variable_declaration_assign) {
+  return *AutoUnwrapIdentifier(*ABSL_DIE_IF_NULL(
+      GetSubtreeAsSymbol(variable_declaration_assign,
+                         NodeEnum::kVariableDeclarationAssignment, 0)));
 }
 
 }  // namespace verilog

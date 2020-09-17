@@ -90,6 +90,8 @@ std::vector<verible::TreeSearchMatch> FindAllRegisterVariables(
     const verible::Symbol&);
 std::vector<verible::TreeSearchMatch> FindAllGateInstances(
     const verible::Symbol&);
+std::vector<verible::TreeSearchMatch> FindAllVariableDeclarationAssign(
+    const verible::Symbol&);
 
 // For a given data declaration (includes module instantiation), returns the
 // subtree containing qualifiers.  e.g. from "const foo bar, baz;",
@@ -131,6 +133,11 @@ const verible::TokenInfo& GetModuleInstanceNameTokenInfoFromGateInstance(
 // name. e.g. int b1; returns TokenInfo for "b1".
 const verible::TokenInfo& GetInstanceNameTokenInfoFromRegisterVariable(
     const verible::Symbol&);
+
+// For a given node tagged with kVariableDeclarationAssign return the
+// unqualified id inside that node.
+const verible::SyntaxTreeLeaf& GetUnqualifiedIdFromVariableDeclaratioAssign(
+    const verible::Symbol& variable_declaration_assign);
 
 }  // namespace verilog
 

@@ -112,6 +112,12 @@ class IndexingFactsTreeExtractor : public verible::TreeContextVisitor {
       const verible::SyntaxTreeNode& data_declaration,
       const std::vector<verible::TreeSearchMatch>& register_variables);
 
+  // Extracts primitive types declarations and creates its corresponding fact
+  // tree.
+  void ExtractPrimitiveVariables(
+      const verible::SyntaxTreeNode& data_declaration,
+      const std::vector<verible::TreeSearchMatch>& register_variables);
+
   // Extracts leaves tagged with SymbolIdentifier and creates its facts tree.
   // This should only be reached in case of free variable references.
   // e.g assign out = in & in2.

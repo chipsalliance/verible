@@ -14,9 +14,9 @@
 
 #include "verilog/tools/kythe/indexing_facts_tree_extractor.h"
 
-#include "gtest/gtest.h"
 #include "common/analysis/syntax_tree_search_test_utils.h"
 #include "common/text/concrete_syntax_tree.h"
+#include "gtest/gtest.h"
 #include "verilog/analysis/verilog_analyzer.h"
 
 #undef EXPECT_OK
@@ -784,6 +784,288 @@ TEST(FactsTreeExtractor, ModuleWithPortsDataTypeForwarding) {
                   Anchor(kTestCase.expected_tokens[9], kTestCase.code),
               },
               IndexingFactType::kVariableDefinition,
+          })));
+
+  const auto facts_tree =
+      ExtractOneFile(kTestCase.code, file_name, exit_status, parse_ok);
+
+  const auto result_pair = DeepEqual(facts_tree, expected);
+  EXPECT_EQ(result_pair.left, nullptr) << *result_pair.left;
+  EXPECT_EQ(result_pair.right, nullptr) << *result_pair.right;
+}
+
+TEST(FactsTreeExtractor, PrimitiveTypeExtraction) {
+  constexpr int kTag = 1;  // value doesn't matter
+
+  const verible::SyntaxTreeSearchTestCase kTestCase = {
+      {"package ",
+       {kTag, "pkg"},
+       ";\n int ",
+       {kTag, "x"},
+       ", ",
+       {kTag, "y"},
+       ";\nlogic ",
+       {kTag, "l1"},
+       ", ",
+       {kTag, "l2"},
+       ";\nbit ",
+       {kTag, "b1"},
+       ", ",
+       {kTag, "b2"},
+       ";\nstring ",
+       {kTag, "s1"},
+       ", ",
+       {kTag, "s2"},
+       ";\nendpackage\nclass ",
+       {kTag, "cla"},
+       ";\n int ",
+       {kTag, "x"},
+       ", ",
+       {kTag, "y"},
+       ";\nlogic ",
+       {kTag, "l1"},
+       ", ",
+       {kTag, "l2"},
+       ";\nbit ",
+       {kTag, "b1"},
+       ", ",
+       {kTag, "b2"},
+       ";\nstring ",
+       {kTag, "s1"},
+       ", ",
+       {kTag, "s2"},
+       ";\nendclass\nfunction int ",
+       {kTag, "fun"},
+       "();\n int ",
+       {kTag, "x"},
+       ", ",
+       {kTag, "y"},
+       ";\nlogic ",
+       {kTag, "l1"},
+       ", ",
+       {kTag, "l2"},
+       ";\nbit ",
+       {kTag, "b1"},
+       ", ",
+       {kTag, "b2"},
+       ";\nstring ",
+       {kTag, "s1"},
+       ", ",
+       {kTag, "s2"},
+       ";\nreturn ",
+       {kTag, "x"},
+       ";\nendfunction"}};
+
+  constexpr absl::string_view file_name = "verilog.v";
+  int exit_status = 0;
+  bool parse_ok = false;
+
+  const IndexingFactNode expected(
+      {
+          {
+              Anchor(file_name, 0, kTestCase.code.size()),
+              Anchor(kTestCase.code, 0, kTestCase.code.size()),
+          },
+          IndexingFactType ::kFile,
+      },
+      // refers to package pkg.
+      T(
+          {
+              {
+                  Anchor(kTestCase.expected_tokens[1], kTestCase.code),
+              },
+              IndexingFactType::kPackage,
+          },
+          // refers to x;
+          T({
+              {
+                  Anchor(kTestCase.expected_tokens[3], kTestCase.code),
+              },
+              IndexingFactType::kVariableDefinition,
+          }),
+          // refers to y;
+          T({
+              {
+                  Anchor(kTestCase.expected_tokens[5], kTestCase.code),
+              },
+              IndexingFactType::kVariableDefinition,
+          }),
+          // refers to l1;
+          T({
+              {
+                  Anchor(kTestCase.expected_tokens[7], kTestCase.code),
+              },
+              IndexingFactType::kVariableDefinition,
+          }),
+          // refers to l2;
+          T({
+              {
+                  Anchor(kTestCase.expected_tokens[9], kTestCase.code),
+              },
+              IndexingFactType::kVariableDefinition,
+          }),
+          // refers to b1;
+          T({
+              {
+                  Anchor(kTestCase.expected_tokens[11], kTestCase.code),
+              },
+              IndexingFactType::kVariableDefinition,
+          }),
+          // refers to b2;
+          T({
+              {
+                  Anchor(kTestCase.expected_tokens[13], kTestCase.code),
+              },
+              IndexingFactType::kVariableDefinition,
+          }),
+          // refers to s1;
+          T({
+              {
+                  Anchor(kTestCase.expected_tokens[15], kTestCase.code),
+              },
+              IndexingFactType::kVariableDefinition,
+          }),
+          // refers to s2;
+          T({
+              {
+                  Anchor(kTestCase.expected_tokens[17], kTestCase.code),
+              },
+              IndexingFactType::kVariableDefinition,
+          })),
+      // refers to class cla.
+      T(
+          {
+              {
+                  Anchor(kTestCase.expected_tokens[19], kTestCase.code),
+              },
+              IndexingFactType::kClass,
+          },
+          // refers to x;
+          T({
+              {
+                  Anchor(kTestCase.expected_tokens[21], kTestCase.code),
+              },
+              IndexingFactType::kVariableDefinition,
+          }),
+          // refers to y;
+          T({
+              {
+                  Anchor(kTestCase.expected_tokens[23], kTestCase.code),
+              },
+              IndexingFactType::kVariableDefinition,
+          }),
+          // refers to l1;
+          T({
+              {
+                  Anchor(kTestCase.expected_tokens[25], kTestCase.code),
+              },
+              IndexingFactType::kVariableDefinition,
+          }),
+          // refers to l2;
+          T({
+              {
+                  Anchor(kTestCase.expected_tokens[27], kTestCase.code),
+              },
+              IndexingFactType::kVariableDefinition,
+          }),
+          // refers to b1;
+          T({
+              {
+                  Anchor(kTestCase.expected_tokens[29], kTestCase.code),
+              },
+              IndexingFactType::kVariableDefinition,
+          }),
+          // refers to b2;
+          T({
+              {
+                  Anchor(kTestCase.expected_tokens[31], kTestCase.code),
+              },
+              IndexingFactType::kVariableDefinition,
+          }),
+          // refers to s1;
+          T({
+              {
+                  Anchor(kTestCase.expected_tokens[33], kTestCase.code),
+              },
+              IndexingFactType::kVariableDefinition,
+          }),
+          // refers to s2;
+          T({
+              {
+                  Anchor(kTestCase.expected_tokens[35], kTestCase.code),
+              },
+              IndexingFactType::kVariableDefinition,
+          })),
+      // refers to function fun.
+      T(
+          {
+              {
+                  Anchor(kTestCase.expected_tokens[37], kTestCase.code),
+              },
+              IndexingFactType::kFunctionOrTask,
+          },
+          // refers to x;
+          T({
+              {
+                  Anchor(kTestCase.expected_tokens[39], kTestCase.code),
+              },
+              IndexingFactType::kVariableDefinition,
+          }),
+          // refers to y;
+          T({
+              {
+                  Anchor(kTestCase.expected_tokens[41], kTestCase.code),
+              },
+              IndexingFactType::kVariableDefinition,
+          }),
+          // refers to l1;
+          T({
+              {
+                  Anchor(kTestCase.expected_tokens[43], kTestCase.code),
+              },
+              IndexingFactType::kVariableDefinition,
+          }),
+          // refers to l2;
+          T({
+              {
+                  Anchor(kTestCase.expected_tokens[45], kTestCase.code),
+              },
+              IndexingFactType::kVariableDefinition,
+          }),
+          // refers to b1;
+          T({
+              {
+                  Anchor(kTestCase.expected_tokens[47], kTestCase.code),
+              },
+              IndexingFactType::kVariableDefinition,
+          }),
+          // refers to b2;
+          T({
+              {
+                  Anchor(kTestCase.expected_tokens[49], kTestCase.code),
+              },
+              IndexingFactType::kVariableDefinition,
+          }),
+          // refers to s1;
+          T({
+              {
+                  Anchor(kTestCase.expected_tokens[51], kTestCase.code),
+              },
+              IndexingFactType::kVariableDefinition,
+          }),
+          // refers to s2;
+          T({
+              {
+                  Anchor(kTestCase.expected_tokens[53], kTestCase.code),
+              },
+              IndexingFactType::kVariableDefinition,
+          }),
+          // refers to return x;
+          T({
+              {
+                  Anchor(kTestCase.expected_tokens[55], kTestCase.code),
+              },
+              IndexingFactType::kVariableReference,
           })));
 
   const auto facts_tree =
