@@ -136,6 +136,7 @@ const verible::TokenInfo& GetInstanceNameTokenInfoFromRegisterVariable(
 
 // For a given node tagged with kVariableDeclarationAssign return the
 // unqualified id inside that node.
+// e.g from "int x" or "logic x" or "bit x" return the leaf spanning "x".
 const verible::SyntaxTreeLeaf&
 GetUnqualifiedIdFromVariableDeclarationAssignment(
     const verible::Symbol& variable_declaration_assign);

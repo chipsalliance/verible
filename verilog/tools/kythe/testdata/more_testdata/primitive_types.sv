@@ -13,6 +13,22 @@ package my_pkg1;
     //- Int2Def childof MyPkg1
     int int1, int2;
 
+    //- @var1 defines/binding Var1Def
+    //- Var1Def.node/kind variable
+    //- Var1Def.complete definition
+    //- Var1Def childof MyPkg1
+    int var1 = 1;
+
+    //- @var2 defines/binding Var2Def
+    //- Var2Def.node/kind variable
+    //- Var2Def.complete definition
+    //- Var2Def childof MyPkg1
+    //- @var3 defines/binding Var3Def
+    //- Var3Def.node/kind variable
+    //- Var3Def.complete definition
+    //- Var3Def childof MyPkg1
+    int var2 = 2, var3 = 3;
+
     //- @logic1 defines/binding Logic1Def
     //- Logic1Def.node/kind variable
     //- Logic1Def.complete definition
@@ -56,6 +72,23 @@ package my_pkg1;
     //- MyArg2.complete definition
     //- MyArg2 childof MyFunction
     function int my_function(int my_arg1, int my_arg2);
+
+        //- @var1_fun defines/binding Var1FunDef
+        //- Var1FunDef.node/kind variable
+        //- Var1FunDef.complete definition
+        //- Var1FunDef childof MyFunction
+        int var1_fun = 1;
+
+        //- @var2_fun defines/binding Var2FunDef
+        //- Var2FunDef.node/kind variable
+        //- Var2FunDef.complete definition
+        //- Var2FunDef childof MyFunction
+        //- @var3_fun defines/binding Var3FunDef
+        //- Var3FunDef.node/kind variable
+        //- Var3FunDef.complete definition
+        //- Var3FunDef childof MyFunction
+        int var2_fun = 2, var3_fun = 3;
+
         //- @x defines/binding XDef
         //- XDef.node/kind variable
         //- XDef.complete definition
