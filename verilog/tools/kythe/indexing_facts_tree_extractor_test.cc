@@ -14,9 +14,9 @@
 
 #include "verilog/tools/kythe/indexing_facts_tree_extractor.h"
 
-#include "gtest/gtest.h"
 #include "common/analysis/syntax_tree_search_test_utils.h"
 #include "common/text/concrete_syntax_tree.h"
+#include "gtest/gtest.h"
 #include "verilog/analysis/verilog_analyzer.h"
 
 #undef EXPECT_OK
@@ -660,47 +660,56 @@ TEST(FactsTreeExtractor, ModuleInstanceWithActualNamedPorts) {
                       IndexingFactType ::kModuleInstance,
                   },
                   // refers to .a
-                  T({
+                  T(
                       {
-                          Anchor(kTestCase.expected_tokens[27], kTestCase.code),
+                          {
+                              Anchor(kTestCase.expected_tokens[27],
+                                     kTestCase.code),
+                          },
+                          IndexingFactType ::kModuleNamedPort,
                       },
-                      IndexingFactType ::kModuleNamedPort,
-                  }),
-                  // refers to a
-                  T({
-                      {
-                          Anchor(kTestCase.expected_tokens[29], kTestCase.code),
-                      },
-                      IndexingFactType ::kVariableReference,
-                  }),
+                      // refers to a
+                      T({
+                          {
+                              Anchor(kTestCase.expected_tokens[29],
+                                     kTestCase.code),
+                          },
+                          IndexingFactType ::kVariableReference,
+                      })),
                   // refers to .b
-                  T({
+                  T(
                       {
-                          Anchor(kTestCase.expected_tokens[31], kTestCase.code),
+                          {
+                              Anchor(kTestCase.expected_tokens[31],
+                                     kTestCase.code),
+                          },
+                          IndexingFactType ::kModuleNamedPort,
                       },
-                      IndexingFactType ::kModuleNamedPort,
-                  }),
-                  // refers to b
-                  T({
-                      {
-                          Anchor(kTestCase.expected_tokens[33], kTestCase.code),
-                      },
-                      IndexingFactType ::kVariableReference,
-                  }),
+                      // refers to b
+                      T({
+                          {
+                              Anchor(kTestCase.expected_tokens[33],
+                                     kTestCase.code),
+                          },
+                          IndexingFactType ::kVariableReference,
+                      })),
                   // refers to .z
-                  T({
+                  T(
                       {
-                          Anchor(kTestCase.expected_tokens[35], kTestCase.code),
+                          {
+                              Anchor(kTestCase.expected_tokens[35],
+                                     kTestCase.code),
+                          },
+                          IndexingFactType ::kModuleNamedPort,
                       },
-                      IndexingFactType ::kModuleNamedPort,
-                  }),
-                  // refers to c
-                  T({
-                      {
-                          Anchor(kTestCase.expected_tokens[37], kTestCase.code),
-                      },
-                      IndexingFactType ::kVariableReference,
-                  }),
+                      // refers to c
+                      T({
+                          {
+                              Anchor(kTestCase.expected_tokens[37],
+                                     kTestCase.code),
+                          },
+                          IndexingFactType ::kVariableReference,
+                      })),
                   // refers to .h
                   T({
                       {

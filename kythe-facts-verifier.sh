@@ -24,11 +24,15 @@ EOF
 set -o pipefail
 KYTHE_BINDIR="/opt/kythe/tools"
 KYTHE_OUT="./kythe-out"
+VERILOG_TEST_FILES="./verilog/tools/kythe/testdata/more_testdata/*.sv"
 # You can find prebuilt binaries at https://github.com/kythe/kythe/releases.
 # This script assumes that they are installed to /opt/kythe.
 bazel build //verilog/tools/kythe:all
-bazel-bin/verilog/tools/kythe/verible-verilog-kythe-extractor "$1"  --printkythefacts > ${KYTHE_OUT}/entries
-# Read JSON entries from standard in to a graphstore.
-${KYTHE_BINDIR}/entrystream --read_format=json < ${KYTHE_OUT}/entries \
-  | ${KYTHE_BINDIR}/verifier "$1" --annotated_graphviz > ${KYTHE_OUT}/foo.dot
-xdot ${KYTHE_OUT}/foo.dot
+
+for i in $VERILOG_TEST_FILES; do
+  # Read JSON entries from standard in to a graphstore.
+  bazel-bin/verilog/tools/kythe/verible-verilog-kythe-extractor "$i"  --printkythefacts > ${KYTHE_OUT}/entries
+
+  ${KYTHE_BINDIR}/entrystream --read_format=json < ${KYTHE_OUT}/entries \
+  | ${KYTHE_BINDIR}/verifier "$i"
+done

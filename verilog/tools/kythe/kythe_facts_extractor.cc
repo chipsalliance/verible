@@ -56,6 +56,10 @@ void KytheFactsExtractor::IndexingFactNodeTagResolver(
 
   VName vname("");
 
+  // TODO(minatoma): Refactor this switch and move
+  // scope_context_.top().push_back(vname);
+  // to another function to make the code more readable.
+  //
   // Directs flow to the appropriate function suitable to extract kythe facts
   // for this node.
   switch (tag) {
@@ -75,6 +79,10 @@ void KytheFactsExtractor::IndexingFactNodeTagResolver(
     case IndexingFactType::kModuleInstance: {
       vname = ExtractModuleInstanceFact(node);
       scope_context_.top().push_back(vname);
+      break;
+    }
+    case IndexingFactType::kModuleNamedPort: {
+      vname = ExtractModuleNamedPort(node);
       break;
     }
     case IndexingFactType::kVariableDefinition: {
@@ -130,6 +138,7 @@ void KytheFactsExtractor::IndexingFactNodeTagResolver(
     }
   }
 
+  // TODO(minatoma): move to a function to make the code more readable.
   // Determines whether or not to create the childof relation with the parent.
   switch (tag) {
     case IndexingFactType::kFile:
@@ -151,6 +160,7 @@ void KytheFactsExtractor::IndexingFactNodeTagResolver(
 
   std::vector<VName> current_scope;
 
+  // TODO(minatoma): move to a function to make the code more readable
   // Determines whether or not to add the current node as a scope in vnames
   // context.
   switch (tag) {
@@ -255,6 +265,34 @@ VName KytheFactsExtractor::ExtractModuleInstanceFact(
   }
 
   return module_instance_vname;
+}
+
+VName KytheFactsExtractor::ExtractModuleNamedPort(
+    const IndexingFactNode& named_port_node) {
+  const auto& port_name = named_port_node.Value().Anchors()[0];
+
+  // TODO(minatoma): Change this to use the general scope that will be created.
+  //
+  // Parent Node must be kModuleInstance and the grand parent node must be
+  // kDataTypeReference.
+  const Anchor& module_type =
+      named_port_node.Parent()->Parent()->Value().Anchors()[0];
+  const VName* named_port_module_vname =
+      scope_context_.SearchForDefinition(CreateSignature(module_type.Value()));
+
+  const VName actual_port_vname(
+      file_path_, CreateScopeRelativeSignature(
+                      port_name.Value(), named_port_module_vname->signature));
+  const VName port_vname_anchor = PrintAnchorVName(port_name);
+  GenerateEdgeString(port_vname_anchor, kEdgeRef, actual_port_vname);
+
+  if (named_port_node.Children().empty()) {
+    const VName* definition_vname =
+        scope_context_.SearchForDefinition(CreateSignature(port_name.Value()));
+    GenerateEdgeString(port_vname_anchor, kEdgeRef, *definition_vname);
+  }
+
+  return actual_port_vname;
 }
 
 VName KytheFactsExtractor::ExtractVariableDefinitionFact(
