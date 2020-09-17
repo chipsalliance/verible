@@ -160,6 +160,9 @@ ABSL_FLAG(AlignmentPolicy, class_member_variables_alignment,
 ABSL_FLAG(AlignmentPolicy, case_items_alignment,
           AlignmentPolicy::kInferUserIntent,
           "Format case items: {align,flush-left,preserve,infer}");
+ABSL_FLAG(AlignmentPolicy, assignment_statement_alignment,
+          AlignmentPolicy::kInferUserIntent,
+          "Format various assignments: {align,flush-left,preserve,infer}");
 
 ABSL_FLAG(bool, try_wrap_long_lines, false,
           "If true, let the formatter attempt to optimize line wrapping "
@@ -241,6 +244,8 @@ static bool formatOneFile(absl::string_view filename,
         absl::GetFlag(FLAGS_class_member_variables_alignment);
     format_style.case_items_alignment =
         absl::GetFlag(FLAGS_case_items_alignment);
+    format_style.assignment_statement_alignment =
+        absl::GetFlag(FLAGS_assignment_statement_alignment);
   }
 
   std::ostringstream stream;

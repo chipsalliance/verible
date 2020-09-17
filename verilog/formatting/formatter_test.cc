@@ -7122,6 +7122,46 @@ TEST(FormatterEndToEndTest, AutoInferAlignment) {
        "  foo_pkg::baz_t lll;\n"
        "endmodule : nn\n"},
 
+      // continuous assignments
+      {"module m_assign;\n"
+       "assign foo = 1'b1;\n"  // alignment adds few spaces, so align
+       "assign baar = 1'b0;\n"
+       "endmodule\n",
+       "module m_assign;\n"
+       "  assign foo  = 1'b1;\n"  // aligned
+       "  assign baar = 1'b0;\n"
+       "endmodule\n"},
+      {"module m_assign;\n"
+       "assign foo  =  1'b1;\n"  // alignment adds too many spaces, so
+                                 // flush-left
+       "assign baaaaaar = 1'b0;\n"
+       "endmodule\n",
+       "module m_assign;\n"
+       "  assign foo = 1'b1;\n"  // flush-left
+       "  assign baaaaaar = 1'b0;\n"
+       "endmodule\n"},
+      {"module m_assign;\n"
+       "assign foo  =     1'b1;\n"  // induce alignment with excess spaces
+       "assign baaaaaar = 1'b0;\n"
+       "endmodule\n",
+       "module m_assign;\n"
+       "  assign foo      = 1'b1;\n"  // aligned
+       "  assign baaaaaar = 1'b0;\n"
+       "endmodule\n"},
+      {// mixed net declaration and continuous assignment, both groups aligned
+       "module m_assign;\n"
+       "wire     wwwww;\n"  // induce alignment
+       "foo_pkg::baz_t lll;\n"
+       "assign foo  =     1'b1;\n"  // induce alignment
+       "assign baaaaaar = 1'b0;\n"
+       "endmodule\n",
+       "module m_assign;\n"
+       "  wire           wwwww;\n"  // aligned
+       "  foo_pkg::baz_t lll;\n"
+       "  assign foo      = 1'b1;\n"  // aligned
+       "  assign baaaaaar = 1'b0;\n"
+       "endmodule\n"},
+
       // formal parameters
       {"module pp #(\n"
        "int W,\n"

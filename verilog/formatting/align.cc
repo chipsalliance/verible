@@ -413,6 +413,8 @@ enum class AlignableSyntaxSubtype {
   kClassMemberVariables,
   // case-like items
   kCaseLikeItems,
+  // continuous assignment statements
+  kContinuousAssignment,
 };
 
 static AlignedPartitionClassification AlignClassify(
@@ -442,8 +444,11 @@ GetConsecutiveModuleItemGroups(const TokenPartitionRange& partitions) {
           return AlignClassify(AlignmentGroupAction::kMatch,
                                AlignableSyntaxSubtype::kDataDeclaration);
         }
-        // TODO(b/161814377): Align continuous assignment, like "assign foo =
-        // bar;"
+        // Align continuous assignment, like "assign foo = bar;"
+        if (node.MatchesTag(NodeEnum::kContinuousAssignmentStatement)) {
+          return AlignClassify(AlignmentGroupAction::kMatch,
+                               AlignableSyntaxSubtype::kContinuousAssignment);
+        }
         return AlignClassify(AlignmentGroupAction::kNoMatch);
       });
 }
@@ -838,6 +843,50 @@ class CaseItemColumnSchemaScanner : public ColumnSchemaScanner {
   bool previous_token_was_case_colon_ = false;
 };
 
+// This class marks up token-subranges in assignment statements for alignment.
+// e.g. "assign foo = bar;"
+class ContinuousAssignmentColumnSchemaScanner : public ColumnSchemaScanner {
+ public:
+  ContinuousAssignmentColumnSchemaScanner() = default;
+
+  void Visit(const SyntaxTreeNode& node) override {
+    auto tag = NodeEnum(node.Tag().tag);
+    VLOG(2) << __FUNCTION__ << ", node: " << tag << " at "
+            << TreePathFormatter(Path());
+
+    switch (tag) {
+      case NodeEnum::kContinuousAssignmentStatement: {
+        // Start a new column right away.
+        ReserveNewColumn(node, FlushLeft);
+        break;
+      }
+      default:
+        break;
+    }
+
+    // recursive visitation
+    TreeContextPathVisitor::Visit(node);
+    VLOG(2) << __FUNCTION__ << ", leaving node: " << tag;
+  }
+
+  void Visit(const SyntaxTreeLeaf& leaf) override {
+    VLOG(2) << __FUNCTION__ << ", leaf: " << leaf.get() << " at "
+            << TreePathFormatter(Path());
+    const int tag = leaf.get().token_enum();
+    switch (tag) {
+      case '=':  // align at '='
+        if (Context().DirectParentIs(NodeEnum::kNetVariableAssignment)) {
+          ReserveNewColumn(leaf, FlushLeft);
+          break;
+        }
+        break;
+      default:
+        break;
+    }
+    VLOG(2) << __FUNCTION__ << ", leaving leaf: " << leaf.get();
+  }
+};
+
 static std::function<
     std::vector<verible::TaggedTokenPartitionRange>(const TokenPartitionRange&)>
 PartitionBetweenBlankLines(AlignableSyntaxSubtype subtype) {
@@ -900,6 +949,11 @@ static const AlignmentHandlerMapType& AlignmentHandlerLibrary() {
       {AlignableSyntaxSubtype::kCaseLikeItems,
        {AlignmentCellScannerGenerator<CaseItemColumnSchemaScanner>(),
         function_from_pointer_to_member(&FormatStyle::case_items_alignment)}},
+      {AlignableSyntaxSubtype::kContinuousAssignment,
+       {AlignmentCellScannerGenerator<
+            ContinuousAssignmentColumnSchemaScanner>(),
+        function_from_pointer_to_member(
+            &FormatStyle::assignment_statement_alignment)}},
   };
   return *handler_map;
 }

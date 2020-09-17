@@ -59,6 +59,12 @@ struct FormatStyle : public verible::BasicFormatStyle {
   // Internal tests assume these are forced to kAlign.
   AlignmentPolicy module_net_variable_alignment = AlignmentPolicy::kAlign;
 
+  // Control how various assignment statements should be aligned.
+  // This covers: continuous assignment statements.
+  // TODO(fangism): cover blocking, and nonblocking assignments.
+  // Internal tests assume these are forced to kAlign.
+  AlignmentPolicy assignment_statement_alignment = AlignmentPolicy::kAlign;
+
   // Control indentation amount for formal parameter declarations.
   IndentationStyle formal_parameters_indentation = IndentationStyle::kWrap;
 
@@ -122,6 +128,7 @@ struct FormatStyle : public verible::BasicFormatStyle {
     formal_parameters_alignment = policy;
     class_member_variable_alignment = policy;
     case_items_alignment = policy;
+    assignment_statement_alignment = policy;
   }
 };
 
