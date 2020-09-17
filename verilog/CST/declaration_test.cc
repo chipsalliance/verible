@@ -545,12 +545,12 @@ TEST(GetVariableDeclarationAssign, VariableName) {
         __FUNCTION__, test, [](const TextStructureView& text_structure) {
           const auto& root = text_structure.SyntaxTree();
           const auto decls =
-              FindAllVariableDeclarationAssign(*ABSL_DIE_IF_NULL(root));
+              FindAllVariableDeclarationAssignment(*ABSL_DIE_IF_NULL(root));
 
           std::vector<TreeSearchMatch> names;
           for (const auto& decl : decls) {
             const auto& name =
-                GetUnqualifiedIdFromVariableDeclaratioAssign(*decl.match);
+                GetUnqualifiedIdFromVariableDeclarationAssignment(*decl.match);
             names.emplace_back(TreeSearchMatch{&name, {/* ignored context */}});
           }
           return names;

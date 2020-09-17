@@ -123,7 +123,7 @@ void IndexingFactsTreeExtractor::Visit(const SyntaxTreeNode& node) {
       }
 
       const std::vector<TreeSearchMatch> variable_declaration_assign =
-          FindAllVariableDeclarationAssign(node);
+          FindAllVariableDeclarationAssignment(node);
 
       if (!variable_declaration_assign.empty()) {
         ExtractPrimitiveVariables(node, variable_declaration_assign);
@@ -643,7 +643,7 @@ void IndexingFactsTreeExtractor::ExtractPrimitiveVariables(
           IndexingNodeData({Anchor(variable_name_token_info, context_.base)},
                            IndexingFactType::kVariableDefinition));
     } else if (tag == NodeEnum::kVariableDeclarationAssignment) {
-      const SyntaxTreeLeaf& leaf = GetUnqualifiedIdFromVariableDeclaratioAssign(
+      const SyntaxTreeLeaf& leaf = GetUnqualifiedIdFromVariableDeclarationAssignment(
           *register_variable.match);
       facts_tree_context_.top().NewChild(
           IndexingNodeData({Anchor(leaf.get(), context_.base)},

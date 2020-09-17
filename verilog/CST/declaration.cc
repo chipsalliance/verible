@@ -76,7 +76,7 @@ std::vector<verible::TreeSearchMatch> FindAllGateInstances(const Symbol& root) {
   return SearchSyntaxTree(root, NodekGateInstance());
 }
 
-std::vector<verible::TreeSearchMatch> FindAllVariableDeclarationAssign(
+std::vector<verible::TreeSearchMatch> FindAllVariableDeclarationAssignment(
     const verible::Symbol& root) {
   return SearchSyntaxTree(root, NodekVariableDeclarationAssignment());
 }
@@ -162,7 +162,7 @@ const verible::SyntaxTreeNode& GetParenGroupFromModuleInstantiation(
                           NodeEnum::kParenGroup);
 }
 
-const verible::SyntaxTreeLeaf& GetUnqualifiedIdFromVariableDeclaratioAssign(
+const verible::SyntaxTreeLeaf& GetUnqualifiedIdFromVariableDeclarationAssignment(
     const verible::Symbol& variable_declaration_assign) {
   return *AutoUnwrapIdentifier(*ABSL_DIE_IF_NULL(
       GetSubtreeAsSymbol(variable_declaration_assign,
