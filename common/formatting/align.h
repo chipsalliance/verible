@@ -214,7 +214,8 @@ std::string AbslUnparseFlag(const AlignmentPolicy& policy);
 
 // This represents one unit of alignable work, which is usually a filtered
 // subset of partitions within a contiguous range of partitions.
-struct AlignablePartitionGroup {
+class AlignablePartitionGroup {
+ public:
   AlignablePartitionGroup(const std::vector<TokenPartitionIterator>& rows,
                           const AlignmentCellScannerFunction& scanner,
                           AlignmentPolicy policy)
