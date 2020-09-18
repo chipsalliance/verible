@@ -664,9 +664,7 @@ void AlignablePartitionGroup::ApplyAlignment(
   VLOG(1) << "end of " << __FUNCTION__;
 }
 
-// Select subset of iterators inside a partition range that are not ignored
-// by the predicate.
-static std::vector<TokenPartitionIterator> FilterAlignablePartitions(
+std::vector<TokenPartitionIterator> FilterAlignablePartitions(
     const TokenPartitionRange& range,
     const IgnoreAlignmentRowPredicate& ignore_partition_predicate) {
   // This partition range may contain partitions that should not be
@@ -689,23 +687,21 @@ ExtractAlignmentGroupsFunction ExtractAlignmentGroupsAdapter(
     const std::function<std::vector<TaggedTokenPartitionRange>(
         const TokenPartitionRange&)>& legacy_extractor,
     const IgnoreAlignmentRowPredicate& legacy_ignore_predicate,
-    const std::function<AlignmentCellScannerFunction(int)>&
-        alignment_cell_scanner_dispatcher,
-    const std::function<AlignmentPolicy(int)>& alignment_policy_dispatcher) {
-  return [legacy_extractor, legacy_ignore_predicate,
-          alignment_cell_scanner_dispatcher,
-          alignment_policy_dispatcher](const TokenPartitionRange& full_range) {
+    const AlignmentCellScannerFunction& alignment_cell_scanner,
+    AlignmentPolicy alignment_policy) {
+  return [legacy_extractor, legacy_ignore_predicate, alignment_cell_scanner,
+          alignment_policy](const TokenPartitionRange& full_range) {
     // must copy the closures, not just reference, to ensure valid lifetime
     const std::vector<TaggedTokenPartitionRange> ranges(
         legacy_extractor(full_range));
     std::vector<AlignablePartitionGroup> groups;
     groups.reserve(ranges.size());
     for (const auto& range : ranges) {
-      // Apply the same policy to all alignment groups.
+      // Apply the same alignment scanner and policy to all alignment groups.
+      // This ignores range.match_subtype.
       groups.emplace_back(AlignablePartitionGroup{
           FilterAlignablePartitions(range.range, legacy_ignore_predicate),
-          alignment_cell_scanner_dispatcher(range.match_subtype),
-          alignment_policy_dispatcher(range.match_subtype)});
+          alignment_cell_scanner, alignment_policy});
       if (groups.back().IsEmpty()) groups.pop_back();
     }
     return groups;

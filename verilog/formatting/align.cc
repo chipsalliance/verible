@@ -1019,14 +1019,34 @@ static verible::AlignmentCellScannerFunction AlignmentColumnScannerSelector(
   return iter->second.column_scanner;
 }
 
-static std::function<verible::AlignmentPolicy(int)> AlignmentPolicySelector(
-    const FormatStyle& vstyle) {
+static verible::AlignmentPolicy AlignmentPolicySelector(
+    const FormatStyle& vstyle, int subtype) {
   static const auto& handler_map = AlignmentHandlerLibrary();
-  return [&vstyle](int subtype) {
-    const auto iter = handler_map.find(AlignableSyntaxSubtype(subtype));
-    CHECK(iter != handler_map.end()) << "subtype: " << subtype;
-    return iter->second.policy_func(vstyle);
-  };
+  const auto iter = handler_map.find(AlignableSyntaxSubtype(subtype));
+  CHECK(iter != handler_map.end()) << "subtype: " << subtype;
+  return iter->second.policy_func(vstyle);
+}
+
+static std::vector<AlignablePartitionGroup> ExtractAlignablePartitionGroups(
+    const std::function<std::vector<TaggedTokenPartitionRange>(
+        const TokenPartitionRange&)>& group_extractor,
+    const verible::IgnoreAlignmentRowPredicate& ignore_group_predicate,
+    const TokenPartitionRange& full_range, const FormatStyle& vstyle) {
+  const std::vector<TaggedTokenPartitionRange> ranges(
+      group_extractor(full_range));
+  std::vector<AlignablePartitionGroup> groups;
+  groups.reserve(ranges.size());
+  for (const auto& range : ranges) {
+    // Use the alignment scanner and policy that correspond to the
+    // match_subtype.  This supports aligning a heterogenous collection of
+    // alignable partition groups from the same parent partition (full_range).
+    groups.emplace_back(AlignablePartitionGroup{
+        FilterAlignablePartitions(range.range, ignore_group_predicate),
+        AlignmentColumnScannerSelector(range.match_subtype),
+        AlignmentPolicySelector(vstyle, range.match_subtype)});
+    if (groups.back().IsEmpty()) groups.pop_back();
+  }
+  return groups;
 }
 
 using AlignSyntaxGroupsFunction =
@@ -1035,76 +1055,62 @@ using AlignSyntaxGroupsFunction =
 
 static std::vector<AlignablePartitionGroup> AlignPortDeclarations(
     const TokenPartitionRange& full_range, const FormatStyle& vstyle) {
-  return verible::ExtractAlignmentGroupsAdapter(
+  return ExtractAlignablePartitionGroups(
       PartitionBetweenBlankLines(AlignableSyntaxSubtype::kPortDeclaration),
-      &IgnoreWithinPortDeclarationPartitionGroup,
-      &AlignmentColumnScannerSelector,
-      AlignmentPolicySelector(vstyle))(full_range);
+      &IgnoreWithinPortDeclarationPartitionGroup, full_range, vstyle);
 }
 
 static std::vector<AlignablePartitionGroup> AlignActualNamedParameters(
     const TokenPartitionRange& full_range, const FormatStyle& vstyle) {
-  return verible::ExtractAlignmentGroupsAdapter(
+  return ExtractAlignablePartitionGroups(
       PartitionBetweenBlankLines(
           AlignableSyntaxSubtype::kNamedActualParameters),
-      &IgnoreWithinActualNamedParameterPartitionGroup,
-      &AlignmentColumnScannerSelector,
-      AlignmentPolicySelector(vstyle))(full_range);
+      &IgnoreWithinActualNamedParameterPartitionGroup, full_range, vstyle);
 }
 
 static std::vector<AlignablePartitionGroup> AlignActualNamedPorts(
     const TokenPartitionRange& full_range, const FormatStyle& vstyle) {
-  return verible::ExtractAlignmentGroupsAdapter(
+  return ExtractAlignablePartitionGroups(
       PartitionBetweenBlankLines(AlignableSyntaxSubtype::kNamedActualPorts),
-      &IgnoreWithinActualNamedPortPartitionGroup,
-      &AlignmentColumnScannerSelector,
-      AlignmentPolicySelector(vstyle))(full_range);
+      &IgnoreWithinActualNamedPortPartitionGroup, full_range, vstyle);
 }
 
 static std::vector<AlignablePartitionGroup> AlignModuleItems(
     const TokenPartitionRange& full_range, const FormatStyle& vstyle) {
   // Currently, this only handles data/net/variable declarations.
   // TODO(b/161814377): align continuous assignments
-  return verible::ExtractAlignmentGroupsAdapter(
+  return ExtractAlignablePartitionGroups(
       &GetConsecutiveModuleItemGroups,
-      &IgnoreCommentsAndPreprocessingDirectives,
-      &AlignmentColumnScannerSelector,
-      AlignmentPolicySelector(vstyle))(full_range);
+      &IgnoreCommentsAndPreprocessingDirectives, full_range, vstyle);
 }
 
 static std::vector<AlignablePartitionGroup> AlignClassItems(
     const TokenPartitionRange& full_range, const FormatStyle& vstyle) {
   // TODO(fangism): align other class items besides member variables.
-  return verible::ExtractAlignmentGroupsAdapter(
+  return ExtractAlignablePartitionGroups(
       &GetConsecutiveClassItemGroups, &IgnoreCommentsAndPreprocessingDirectives,
-      &AlignmentColumnScannerSelector,
-      AlignmentPolicySelector(vstyle))(full_range);
+      full_range, vstyle);
 }
 
 static std::vector<AlignablePartitionGroup> AlignCaseItems(
     const TokenPartitionRange& full_range, const FormatStyle& vstyle) {
-  return verible::ExtractAlignmentGroupsAdapter(
+  return ExtractAlignablePartitionGroups(
       PartitionBetweenBlankLines(AlignableSyntaxSubtype::kCaseLikeItems),
-      &IgnoreMultilineCaseStatements, &AlignmentColumnScannerSelector,
-      AlignmentPolicySelector(vstyle))(full_range);
+      &IgnoreMultilineCaseStatements, full_range, vstyle);
 }
 
 static std::vector<AlignablePartitionGroup> AlignEnumItems(
     const TokenPartitionRange& full_range, const FormatStyle& vstyle) {
-  return verible::ExtractAlignmentGroupsAdapter(
+  return ExtractAlignablePartitionGroups(
       PartitionBetweenBlankLines(AlignableSyntaxSubtype::kEnumListAssignment),
-      &IgnoreCommentsAndPreprocessingDirectives,
-      &AlignmentColumnScannerSelector,
-      AlignmentPolicySelector(vstyle))(full_range);
+      &IgnoreCommentsAndPreprocessingDirectives, full_range, vstyle);
 }
 
 static std::vector<AlignablePartitionGroup> AlignParameterDeclarations(
     const TokenPartitionRange& full_range, const FormatStyle& vstyle) {
-  return verible::ExtractAlignmentGroupsAdapter(
+  return ExtractAlignablePartitionGroups(
       PartitionBetweenBlankLines(AlignableSyntaxSubtype::kParameterDeclaration),
-      &IgnoreWithinPortDeclarationPartitionGroup,
-      &AlignmentColumnScannerSelector,
-      AlignmentPolicySelector(vstyle))(full_range);
+      &IgnoreWithinPortDeclarationPartitionGroup, full_range, vstyle);
 }
 
 void TabularAlignTokenPartitions(TokenPartitionTree* partition_ptr,
