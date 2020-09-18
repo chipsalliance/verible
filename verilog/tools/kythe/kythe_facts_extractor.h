@@ -132,7 +132,7 @@ class KytheFactsExtractor {
 
   // Searches for a definition suitable for the given reference within package
   // scope context of the given package name.
-  const VName* SearchForDefinitionVNameInPackage(
+  const VName* SearchForDefinitionVNameInScopeContext(
       absl::string_view package_name, absl::string_view reference_name) const;
 
   // Resolves the tag of the given node and directs the flow to the appropriate
@@ -140,13 +140,13 @@ class KytheFactsExtractor {
   void IndexingFactNodeTagResolver(const IndexingFactNode&);
 
   // Add the given VName to vnames_context (to be used in scope relative
-  // signatures) and visits the children of the given node.
+  // signatures) and visits the children of the given node creating a new scope
+  // for the given node.
   void Visit(const IndexingFactNode& node, const VName& vname,
              std::vector<VName>& current_scope);
 
-  // Directs the flow to the children of the given node creating new scope for
-  // that node.
-  void Visit(const IndexingFactNode& node, std::vector<VName>& current_scope);
+  // Directs the flow to the children of the given node.
+  void Visit(const IndexingFactNode& node);
 
   // Extracts Packages and saves its scope to package_scope_context to be used
   // for definition searching.
@@ -242,7 +242,7 @@ class KytheFactsExtractor {
 
   // Keeps track of scopes and definitions inside the scopes of ancestors as
   // the visitor traverses the facts tree.
-  ScopeContext scope_context_;
+  ScopeContext vertical_scope_context_;
 
   // Saved packages signatures alongside with their inner members.
   // This is used for resolving references to some variables after using import
@@ -263,7 +263,7 @@ class KytheFactsExtractor {
   //   "pkg1": ["my_fun", "my_class"],
   //   "pkg2": ["my_fun", "my_class"]
   // }
-  std::map<std::string, std::vector<VName>> package_scope_context_;
+  std::map<std::string, std::vector<VName>> scope_context_;
 
   // Output stream for capturing, redirecting, testing and verifying the
   // output.

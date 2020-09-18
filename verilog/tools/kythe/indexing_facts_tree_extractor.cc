@@ -126,6 +126,14 @@ void IndexingFactsTreeExtractor::Visit(const SyntaxTreeNode& node) {
           FindAllVariableDeclarationAssignment(node);
 
       if (!variable_declaration_assign.empty()) {
+        // for classes.
+        const std::vector<TreeSearchMatch> class_instances =
+            verible::SearchSyntaxTree(node, NodekClassNew());
+        if (!class_instances.empty()) {
+          ExtractClassInstances(node, variable_declaration_assign);
+          break;
+        }
+
         ExtractPrimitiveVariables(node, variable_declaration_assign);
         break;
       }
@@ -601,7 +609,7 @@ void IndexingFactsTreeExtractor::ExtractClassDeclaration(
 
 void IndexingFactsTreeExtractor::ExtractClassInstances(
     const SyntaxTreeNode& data_declaration_node,
-    const std::vector<TreeSearchMatch>& register_variables) {
+    const std::vector<TreeSearchMatch>& class_instances) {
   IndexingNodeData class_node_data(IndexingFactType::kDataTypeReference);
   IndexingFactNode class_node(class_node_data);
 
@@ -617,16 +625,22 @@ void IndexingFactsTreeExtractor::ExtractClassInstances(
   //
   // Loop through each instance and associate each declared id with the same
   // type and create its corresponding facts tree node.
-  for (const TreeSearchMatch& instance : register_variables) {
-    IndexingNodeData indexing_node_data(IndexingFactType::kClassInstance);
+  for (const TreeSearchMatch& instance : class_instances) {
+    const auto tag = static_cast<verilog::NodeEnum>(instance.match->Tag().tag);
+    if (tag == NodeEnum::kRegisterVariable) {
+      const verible::TokenInfo& instance_name =
+          GetInstanceNameTokenInfoFromRegisterVariable(*instance.match);
 
-    const verible::TokenInfo& variable_name =
-        GetInstanceNameTokenInfoFromRegisterVariable(*instance.match);
-
-    const Anchor variable_name_anchor(variable_name, context_.base);
-    indexing_node_data.AppendAnchor(variable_name_anchor);
-
-    class_node.NewChild(indexing_node_data);
+      class_node.NewChild(
+          IndexingNodeData({Anchor(instance_name, context_.base)},
+                           IndexingFactType::kClassInstance));
+    } else {
+      const SyntaxTreeLeaf& leaf =
+          GetUnqualifiedIdFromVariableDeclarationAssignment(
+              *instance.match);
+      class_node.NewChild(IndexingNodeData({Anchor(leaf.get(), context_.base)},
+                                           IndexingFactType::kClassInstance));
+    }
   }
 
   facts_tree_context_.top().NewChild(class_node);

@@ -46,7 +46,7 @@ void KytheFactsExtractor::CreatePackageScopes(const IndexingFactNode& root) {
     Visit(child, package_vname, current_scope);
 
     // Save the scope and the members of each package.
-    package_scope_context_[package_vname.signature] = current_scope;
+    scope_context_[package_vname.signature] = current_scope;
   }
 }
 
@@ -69,7 +69,7 @@ void KytheFactsExtractor::IndexingFactNodeTagResolver(
     }
     case IndexingFactType::kModule: {
       vname = ExtractModuleFact(node);
-      scope_context_.top().push_back(vname);
+      vertical_scope_context_.top().push_back(vname);
       break;
     }
     case IndexingFactType::kDataTypeReference: {
@@ -78,7 +78,7 @@ void KytheFactsExtractor::IndexingFactNodeTagResolver(
     }
     case IndexingFactType::kModuleInstance: {
       vname = ExtractModuleInstanceFact(node);
-      scope_context_.top().push_back(vname);
+      vertical_scope_context_.top().push_back(vname);
       break;
     }
     case IndexingFactType::kModuleNamedPort: {
@@ -87,12 +87,12 @@ void KytheFactsExtractor::IndexingFactNodeTagResolver(
     }
     case IndexingFactType::kVariableDefinition: {
       vname = ExtractVariableDefinitionFact(node);
-      scope_context_.top().push_back(vname);
+      vertical_scope_context_.top().push_back(vname);
       break;
     }
     case IndexingFactType::kMacro: {
       vname = ExtractMacroDefinition(node);
-      scope_context_.top().push_back(vname);
+      vertical_scope_context_.top().push_back(vname);
       break;
     }
     case IndexingFactType::kVariableReference: {
@@ -101,16 +101,17 @@ void KytheFactsExtractor::IndexingFactNodeTagResolver(
     }
     case IndexingFactType::kClass: {
       vname = ExtractClassFact(node);
-      scope_context_.top().push_back(vname);
+      vertical_scope_context_.top().push_back(vname);
       break;
     }
     case IndexingFactType::kClassInstance: {
       vname = ExtractClassInstances(node);
+      vertical_scope_context_.top().push_back(vname);
       break;
     }
     case IndexingFactType::kFunctionOrTask: {
       vname = ExtractFunctionOrTask(node);
-      scope_context_.top().push_back(vname);
+      vertical_scope_context_.top().push_back(vname);
       break;
     }
     case IndexingFactType::kFunctionCall: {
@@ -130,7 +131,8 @@ void KytheFactsExtractor::IndexingFactNodeTagResolver(
       break;
     }
     case IndexingFactType::kPackage: {
-      // Return as packages should be extracted at the first pass.
+      // vname = ExtractPackageDeclaration(node);
+      // vertical_scope_context_.top().push_back(vname);
       return;
     }
     default: {
@@ -165,17 +167,44 @@ void KytheFactsExtractor::IndexingFactNodeTagResolver(
   // Determines whether or not to add the current node as a scope in vnames
   // context.
   switch (tag) {
+    case IndexingFactType::kFile:
     case IndexingFactType::kModule:
-    case IndexingFactType::kModuleInstance:
     case IndexingFactType::kVariableDefinition:
     case IndexingFactType::kFunctionOrTask:
     case IndexingFactType::kClass:
     case IndexingFactType::kMacro: {
       Visit(node, vname, current_scope);
+      scope_context_[vname.signature] = current_scope;
       break;
     }
     default: {
-      Visit(node, current_scope);
+      Visit(node);
+    }
+  }
+
+  // TODO(minatoma): move to a function to make the code more readable
+  // Determines whether or not to add the current scope to the scope context.
+  switch (tag) {
+    case IndexingFactType::kFile:
+    case IndexingFactType::kModule:
+    case IndexingFactType::kVariableDefinition:
+    case IndexingFactType::kFunctionOrTask:
+    case IndexingFactType::kClass:
+    case IndexingFactType::kMacro:
+    case IndexingFactType::kPackage: {
+      scope_context_[vname.signature] = current_scope;
+      break;
+    }
+    case IndexingFactType::kModuleInstance:
+    case IndexingFactType::kClassInstance: {
+      // TODO(minatoma): Refactor this to get rid of this search.
+      const VName* found_vname = vertical_scope_context_.SearchForDefinition(
+          CreateSignature(node.Parent()->Value().Anchors()[0].Value()));
+
+      scope_context_[vname.signature] = scope_context_[found_vname->signature];
+    }
+    default: {
+      break;
     }
   }
 }
@@ -184,12 +213,17 @@ void KytheFactsExtractor::Visit(const IndexingFactNode& node,
                                 const VName& vname,
                                 std::vector<VName>& current_scope) {
   const VNameContext::AutoPop vnames_auto_pop(&vnames_context_, &vname);
-  Visit(node, current_scope);
+  const ScopeContext::AutoPop scope_auto_pop(&vertical_scope_context_,
+                                             &current_scope);
+  LOG(INFO) << "START " << vname.signature;
+  Visit(node);
+  for (auto x : current_scope) {
+    LOG(INFO) << x.signature;
+  }
+  LOG(INFO) << "End " << vname.signature;
 }
 
-void KytheFactsExtractor::Visit(const IndexingFactNode& node,
-                                std::vector<VName>& current_scope) {
-  const ScopeContext::AutoPop scope_auto_pop(&scope_context_, &current_scope);
+void KytheFactsExtractor::Visit(const IndexingFactNode& node) {
   for (const IndexingFactNode& child : node.Children()) {
     IndexingFactNodeTagResolver(child);
   }
@@ -234,12 +268,17 @@ VName KytheFactsExtractor::ExtractDataTypeReference(
   const auto& anchors = data_type_reference.Value().Anchors();
   const Anchor& type = anchors[0];
 
-  const VName type_vname = *ABSL_DIE_IF_NULL(
-      scope_context_.SearchForDefinition(CreateSignature(type.Value())));
-  const VName type_anchor = PrintAnchorVName(type);
-  GenerateEdgeString(type_anchor, kEdgeRef, type_vname);
+  const VName* type_vname = vertical_scope_context_.SearchForDefinition(
+      CreateSignature(type.Value()));
 
-  return type_vname;
+  if (type_vname == nullptr) {
+    return VName("");
+  }
+
+  const VName type_anchor = PrintAnchorVName(type);
+  GenerateEdgeString(type_anchor, kEdgeRef, *type_vname);
+
+  return *type_vname;
 }
 
 VName KytheFactsExtractor::ExtractModuleInstanceFact(
@@ -256,13 +295,20 @@ VName KytheFactsExtractor::ExtractModuleInstanceFact(
   GenerateEdgeString(module_instance_anchor, kEdgeDefinesBinding,
                      module_instance_vname);
 
+  // TODO(minatoma): Consider changing to children so that they can be extracted
+  // using ExtractVariableReference.
   for (const auto& anchor :
        verible::make_range(anchors.begin() + 1, anchors.end())) {
-    const VName port_vname_definition = *ABSL_DIE_IF_NULL(
-        scope_context_.SearchForDefinition(CreateSignature(anchor.Value())));
+    const VName* port_vname_definition =
+        vertical_scope_context_.SearchForDefinition(
+            CreateSignature(anchor.Value()));
+
+    if (port_vname_definition == nullptr) {
+      continue;
+    }
 
     const VName port_vname_anchor = PrintAnchorVName(anchor);
-    GenerateEdgeString(port_vname_anchor, kEdgeRef, port_vname_definition);
+    GenerateEdgeString(port_vname_anchor, kEdgeRef, *port_vname_definition);
   }
 
   return module_instance_vname;
@@ -279,7 +325,12 @@ VName KytheFactsExtractor::ExtractModuleNamedPort(
   const Anchor& module_type =
       named_port_node.Parent()->Parent()->Value().Anchors()[0];
   const VName* named_port_module_vname =
-      scope_context_.SearchForDefinition(CreateSignature(module_type.Value()));
+      vertical_scope_context_.SearchForDefinition(
+          CreateSignature(module_type.Value()));
+
+  if (named_port_module_vname == nullptr) {
+    return VName("");
+  }
 
   const VName actual_port_vname(
       file_path_, CreateScopeRelativeSignature(
@@ -288,8 +339,12 @@ VName KytheFactsExtractor::ExtractModuleNamedPort(
   GenerateEdgeString(port_vname_anchor, kEdgeRef, actual_port_vname);
 
   if (named_port_node.Children().empty()) {
-    const VName* definition_vname = ABSL_DIE_IF_NULL(
-        scope_context_.SearchForDefinition(CreateSignature(port_name.Value())));
+    const VName* definition_vname = vertical_scope_context_.SearchForDefinition(
+        CreateSignature(port_name.Value()));
+
+    if (definition_vname == nullptr) {
+      return VName("");
+    }
 
     GenerateEdgeString(port_vname_anchor, kEdgeRef, *definition_vname);
   }
@@ -318,7 +373,8 @@ VName KytheFactsExtractor::ExtractVariableReferenceFact(
   const VName variable_vname_anchor = PrintAnchorVName(anchor);
 
   const VName* variable_definition_vname =
-      scope_context_.SearchForDefinition(CreateSignature(anchor.Value()));
+      vertical_scope_context_.SearchForDefinition(
+          CreateSignature(anchor.Value()));
   if (variable_definition_vname != nullptr) {
     GenerateEdgeString(variable_vname_anchor, kEdgeRef,
                        *variable_definition_vname);
@@ -406,14 +462,17 @@ VName KytheFactsExtractor::ExtractFunctionOrTaskCall(
     const IndexingFactNode& function_call_fact_node) {
   const auto& function_name = function_call_fact_node.Value().Anchors()[0];
 
-  const VName function_vname =
-      *ABSL_DIE_IF_NULL(scope_context_.SearchForDefinition(
-          CreateSignature(function_name.Value())));
+  const VName* function_vname = vertical_scope_context_.SearchForDefinition(
+      CreateSignature(function_name.Value()));
+
+  if (function_vname == nullptr) {
+    return VName("");
+  }
 
   const VName function_vname_anchor = PrintAnchorVName(function_name);
 
-  GenerateEdgeString(function_vname_anchor, kEdgeRef, function_vname);
-  GenerateEdgeString(function_vname_anchor, kEdgeRefCall, function_vname);
+  GenerateEdgeString(function_vname_anchor, kEdgeRef, *function_vname);
+  GenerateEdgeString(function_vname_anchor, kEdgeRefCall, *function_vname);
 
   return function_vname_anchor;
 }
@@ -470,25 +529,33 @@ VName KytheFactsExtractor::ExtractPackageImport(
   // case of import pkg::my_variable.
   if (anchors.size() > 1) {
     const Anchor& imported_item_name = anchors[1];
-    const VName& defintion_vname =
-        *ABSL_DIE_IF_NULL(SearchForDefinitionVNameInPackage(
-            CreateSignature(package_name.Value()),
-            CreateSignature(imported_item_name.Value())));
+    const VName* defintion_vname = SearchForDefinitionVNameInScopeContext(
+        CreateSignature(package_name.Value()),
+        CreateSignature(imported_item_name.Value()));
+
+    if (defintion_vname == nullptr) {
+      return VName("");
+    }
 
     const VName imported_item_anchor = PrintAnchorVName(imported_item_name);
-    GenerateEdgeString(imported_item_anchor, kEdgeRef, defintion_vname);
+    GenerateEdgeString(imported_item_anchor, kEdgeRef, *defintion_vname);
 
     // Add the found definition to the current scope as if it was declared in
     // our scope so that it can be captured without "::".
-    scope_context_.top().push_back(defintion_vname);
+    vertical_scope_context_.top().push_back(*defintion_vname);
   } else {
     // case of import pkg::*.
     // Add all the definitions in that package to the current scope as if it was
     // declared in our scope so that it can be captured without "::".
     const auto current_package_scope =
-        package_scope_context_.find(CreateSignature(package_name.Value()));
+        scope_context_.find(CreateSignature(package_name.Value()));
+
+    if (current_package_scope == scope_context_.end()) {
+      return VName("");
+    }
+
     for (const VName& vname : current_package_scope->second) {
-      scope_context_.top().push_back(vname);
+      vertical_scope_context_.top().push_back(vname);
     }
   }
 
@@ -502,52 +569,50 @@ VName KytheFactsExtractor::ExtractMemberReference(
   const Anchor& member_name = anchors[1];
 
   // Searches for the member in the packages.
-  const VName* containing_block_vname = SearchForDefinitionVNameInPackage(
+  const VName* containing_block_vname = SearchForDefinitionVNameInScopeContext(
       CreateSignature(containing_block_name.Value()),
       CreateSignature(member_name.Value()));
 
   std::string definition_signature = "";
 
-  // In case it is a package member.
-  if (containing_block_vname != nullptr) {
-    const VName package_vname(file_path_,
-                              CreateSignature(containing_block_name.Value()));
-    const VName package_anchor = PrintAnchorVName(containing_block_name);
-    GenerateEdgeString(package_anchor, kEdgeRef, package_vname);
+  const VName package_vname(file_path_,
+                            CreateSignature(containing_block_name.Value()));
+  const VName package_anchor = PrintAnchorVName(containing_block_name);
+  GenerateEdgeString(package_anchor, kEdgeRef, package_vname);
 
-    definition_signature = package_vname.signature;
-  } else {
-    // In case the member is a class member not a package member.
-    containing_block_vname =
-        ABSL_DIE_IF_NULL(scope_context_.SearchForDefinition(
-            CreateSignature(containing_block_name.Value())));
-
-    const VName class_anchor = PrintAnchorVName(containing_block_name);
-    GenerateEdgeString(class_anchor, kEdgeRef, *containing_block_vname);
-
-    definition_signature = containing_block_vname->signature;
-  }
+  definition_signature = package_vname.signature;
 
   // Generate reference edge for all the members.
   // e.g pkg::my_class::my_inner_class::static_var.
   for (const auto& anchor :
        verible::make_range(anchors.begin() + 1, anchors.end())) {
-    definition_signature =
-        CreateScopeRelativeSignature(anchor.Value(), definition_signature);
+    const VName* definition_vname = SearchForDefinitionVNameInScopeContext(
+        definition_signature, CreateSignature(anchor.Value()));
 
-    const VName definition_vname(file_path_, definition_signature);
     const VName reference_anchor = PrintAnchorVName(anchor);
-    GenerateEdgeString(reference_anchor, kEdgeRef, definition_vname);
+    GenerateEdgeString(reference_anchor, kEdgeRef, *definition_vname);
+
+    definition_signature = definition_vname->signature;
   }
 
   return *containing_block_vname;
 }
 
-const VName* KytheFactsExtractor::SearchForDefinitionVNameInPackage(
+const VName* KytheFactsExtractor::SearchForDefinitionVNameInScopeContext(
     absl::string_view package_name, absl::string_view reference_name) const {
-  const auto package_scope =
-      package_scope_context_.find(std::string(package_name));
-  if (package_scope == package_scope_context_.end()) {
+  LOG(INFO) << "================================";
+  LOG(INFO) << "FIND " << package_name << " ++> " << reference_name;
+  for (auto x : scope_context_) {
+    LOG(INFO) << "NAME " << x.first;
+    for (auto y : x.second) {
+      LOG(INFO) << y.signature;
+    }
+    LOG(INFO) << "END\n";
+  }
+  LOG(INFO) << "================================";
+
+  const auto package_scope = scope_context_.find(std::string(package_name));
+  if (package_scope == scope_context_.end()) {
     return nullptr;
   }
 
