@@ -235,6 +235,30 @@ std::vector<TokenPartitionRange> GetSubpartitionsBetweenBlankLines(
   return result;
 }
 
+static absl::string_view StringSpanOfPartitionRange(
+    const TokenPartitionRange& range) {
+  CHECK(!range.empty());
+  const auto front_range = range.front().Value().TokensRange();
+  const auto back_range = range.back().Value().TokensRange();
+  CHECK(!front_range.empty());
+  CHECK(!back_range.empty());
+  return make_string_view_range(front_range.front().Text().begin(),
+                                back_range.back().Text().end());
+}
+
+bool AnyPartitionSubRangeIsDisabled(TokenPartitionRange range,
+                                    absl::string_view full_text,
+                                    const ByteOffsetSet& disabled_byte_ranges) {
+  if (range.empty()) return false;
+  const absl::string_view span = StringSpanOfPartitionRange(range);
+  VLOG(4) << "text spanned: " << AutoTruncate{span, 40};
+  const std::pair<int, int> span_offsets = SubstringOffsets(span, full_text);
+  ByteOffsetSet diff(disabled_byte_ranges);  // copy
+  diff.Complement(span_offsets);             // enabled range(s)
+  const ByteOffsetSet span_set{span_offsets};
+  return diff != span_set;
+}
+
 void AdjustIndentationRelative(TokenPartitionTree* tree, int amount) {
   ABSL_DIE_IF_NULL(tree)->ApplyPreOrder([&](UnwrappedLine& line) {
     const int new_indent = std::max<int>(line.IndentationSpaces() + amount, 0);
@@ -247,6 +271,28 @@ void AdjustIndentationAbsolute(TokenPartitionTree* tree, int amount) {
   const int indent_diff = amount - tree->Value().IndentationSpaces();
   if (indent_diff == 0) return;
   AdjustIndentationRelative(tree, indent_diff);
+}
+
+static absl::string_view StringSpanOfTokenRange(const FormatTokenRange& range) {
+  CHECK(!range.empty());
+  return make_string_view_range(range.front().Text().begin(),
+                                range.back().Text().end());
+}
+
+void IndentButPreserveOtherSpacing(TokenPartitionRange partition_range,
+                                   absl::string_view full_text,
+                                   std::vector<PreFormatToken>* ftokens) {
+  for (const auto& partition : partition_range) {
+    const auto token_range = partition.Value().TokensRange();
+    const absl::string_view partition_text =
+        StringSpanOfTokenRange(token_range);
+    std::pair<int, int> byte_range =
+        SubstringOffsets(partition_text, full_text);
+    // Tweak byte range to allow the first token to still obey indentation.
+    ++byte_range.first;
+    PreserveSpacesOnDisabledTokenRanges(ftokens, ByteOffsetSet{byte_range},
+                                        full_text);
+  }
 }
 
 void MergeConsecutiveSiblings(TokenPartitionTree* tree, size_t pos) {

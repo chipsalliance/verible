@@ -22,6 +22,7 @@
 #include "common/formatting/basic_format_style.h"
 #include "common/formatting/format_token.h"
 #include "common/formatting/unwrapped_line.h"
+#include "common/strings/position.h"  // for ByteOffsetSet
 #include "common/util/container_iterator_range.h"
 #include "common/util/vector_tree.h"
 
@@ -88,6 +89,14 @@ struct TokenPartitionTreePrinter {
 std::ostream& operator<<(std::ostream& stream,
                          const TokenPartitionTreePrinter& printer);
 
+// Returns true if any substring range spanned by the token partition 'range' is
+// disabled by 'disabled_byte_ranges'.
+// 'full_text' is the original string_view that spans the text from which
+// tokens were lexed, and is used in byte-offset calculation.
+bool AnyPartitionSubRangeIsDisabled(TokenPartitionRange range,
+                                    absl::string_view full_text,
+                                    const ByteOffsetSet& disabled_byte_ranges);
+
 // Return ranges of subpartitions separated by blank lines.
 // This does not modify the partition, but does return ranges of mutable
 // iterators of partitions.
@@ -104,6 +113,13 @@ void AdjustIndentationRelative(TokenPartitionTree* tree, int amount);
 // Adjusts indentation to align root of partition tree to new indentation
 // amount.
 void AdjustIndentationAbsolute(TokenPartitionTree* tree, int amount);
+
+// Mark ranges of tokens (corresponding to formatting-disabled lines) to
+// have their original spacing preserved, except allow the first token
+// to follow the formatter's calculated indentation.
+void IndentButPreserveOtherSpacing(TokenPartitionRange partition_range,
+                                   absl::string_view full_text,
+                                   std::vector<PreFormatToken>* ftokens);
 
 // Merges the two subpartitions of tree at index pos and pos+1.
 void MergeConsecutiveSiblings(TokenPartitionTree* tree, size_t pos);

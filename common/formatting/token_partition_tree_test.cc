@@ -910,6 +910,58 @@ TEST_F(MergeConsecutiveSiblingsTest, TwoGenerations) {
                                     << *diff.right << '\n';
 }
 
+class AnyPartitionSubRangeIsDisabledTest
+    : public TokenPartitionTreeTestFixture {};
+
+TEST_F(AnyPartitionSubRangeIsDisabledTest, Various) {
+  // Construct three partitions, sizes: 1, 3, 2
+  const auto& preformat_tokens = pre_format_tokens_;
+  const auto begin = preformat_tokens.begin();
+  UnwrappedLine all(0, begin);
+  all.SpanUpToToken(preformat_tokens.end());
+  UnwrappedLine partition0(0, begin);
+  partition0.SpanUpToToken(begin + 1);
+  UnwrappedLine partition1(0, partition0.TokensRange().end());
+  partition1.SpanUpToToken(begin + 4);
+  UnwrappedLine partition2(0, partition1.TokensRange().end());
+  partition2.SpanUpToToken(preformat_tokens.end());
+  ASSERT_EQ(partition2.TokensRange().size(), 2);
+
+  // Construct an artificial tree using the above partitions.
+  using tree_type = TokenPartitionTree;
+  tree_type tree{
+      all,
+      tree_type{partition0},
+      tree_type{partition1},
+      tree_type{partition2},
+  };
+
+  {
+    const TokenPartitionRange empty(tree.Children().begin(),
+                                    tree.Children().begin());
+    EXPECT_FALSE(AnyPartitionSubRangeIsDisabled(empty, joined_token_text_,
+                                                ByteOffsetSet{}));
+  }
+  {
+    const TokenPartitionRange range(tree.Children().begin(),
+                                    tree.Children().end());
+    EXPECT_FALSE(AnyPartitionSubRangeIsDisabled(range, joined_token_text_,
+                                                ByteOffsetSet{}));
+    EXPECT_TRUE(AnyPartitionSubRangeIsDisabled(range, joined_token_text_,
+                                               ByteOffsetSet{{0, 1}}));
+    EXPECT_TRUE(AnyPartitionSubRangeIsDisabled(range, joined_token_text_,
+                                               ByteOffsetSet{{10, 20}}));
+    EXPECT_TRUE(AnyPartitionSubRangeIsDisabled(range, joined_token_text_,
+                                               ByteOffsetSet{{21, 22}}));
+    EXPECT_FALSE(AnyPartitionSubRangeIsDisabled(range, joined_token_text_,
+                                                ByteOffsetSet{{22, 23}}));
+    EXPECT_FALSE(AnyPartitionSubRangeIsDisabled(range, joined_token_text_,
+                                                ByteOffsetSet{{30, 40}}));
+    EXPECT_TRUE(AnyPartitionSubRangeIsDisabled(
+        range, joined_token_text_, ByteOffsetSet{{5, 6}, {30, 40}}));
+  }
+}
+
 class GetSubpartitionsBetweenBlankLinesTest
     : public ::testing::Test,
       public UnwrappedLineMemoryHandler {
@@ -1007,6 +1059,46 @@ TEST_F(GetSubpartitionsWithBlanksTest, WithBlanks) {
       ElementsAre(TokenPartitionRange(range.begin(), range.begin() + 1),
                   TokenPartitionRange(range.begin() + 1, range.begin() + 3),
                   TokenPartitionRange(range.begin() + 3, range.begin() + 4)));
+}
+
+class IndentButPreserveOtherSpacingTest : public TokenPartitionTreeTestFixture {
+};
+
+TEST_F(IndentButPreserveOtherSpacingTest, Various) {
+  // Construct three partitions, sizes: 1, 3, 2
+  const auto& preformat_tokens = pre_format_tokens_;
+  const auto begin = preformat_tokens.begin();
+  UnwrappedLine all(0, begin);
+  all.SpanUpToToken(preformat_tokens.end());
+  UnwrappedLine partition0(0, begin);
+  partition0.SpanUpToToken(begin + 1);
+  UnwrappedLine partition1(0, partition0.TokensRange().end());
+  partition1.SpanUpToToken(begin + 4);
+  UnwrappedLine partition2(0, partition1.TokensRange().end());
+  partition2.SpanUpToToken(preformat_tokens.end());
+
+  // Construct an artificial tree using the above partitions.
+  using tree_type = TokenPartitionTree;
+  tree_type tree{
+      all,
+      tree_type{partition0},
+      tree_type{partition1},
+      tree_type{partition2},
+  };
+
+  const TokenPartitionRange range(tree.Children().begin(),
+                                  tree.Children().end());
+  IndentButPreserveOtherSpacing(range, joined_token_text_, &pre_format_tokens_);
+  // The first tokens on each partition need not be preserved, but all
+  // subsequent tokens should be preserved.
+  for (const auto& child : range) {
+    auto token_range = child.Value().TokensRange();
+    if (token_range.empty()) continue;
+    token_range.pop_front();
+    for (const auto& ftoken : token_range) {
+      EXPECT_EQ(ftoken.before.break_decision, SpacingOptions::Preserve);
+    }
+  }
 }
 
 class ReshapeFittingSubpartitionsTest : public TokenPartitionTreeTestFixture {};

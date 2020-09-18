@@ -708,54 +708,6 @@ ExtractAlignmentGroupsFunction ExtractAlignmentGroupsAdapter(
   };
 }
 
-// TODO(fangism): move this to common/formatting/token_partition_tree
-static absl::string_view StringSpanOfTokenRange(const FormatTokenRange& range) {
-  CHECK(!range.empty());
-  return make_string_view_range(range.front().Text().begin(),
-                                range.back().Text().end());
-}
-
-// TODO(fangism): move this to common/formatting/token_partition_tree
-static absl::string_view StringSpanOfPartitionRange(
-    const TokenPartitionRange& range) {
-  const auto front_range = range.front().Value().TokensRange();
-  const auto back_range = range.back().Value().TokensRange();
-  CHECK(!front_range.empty());
-  CHECK(!back_range.empty());
-  return make_string_view_range(front_range.front().Text().begin(),
-                                back_range.back().Text().end());
-}
-
-static bool AnyPartitionSubRangeIsDisabled(
-    TokenPartitionRange range, absl::string_view full_text,
-    const ByteOffsetSet& disabled_byte_ranges) {
-  const absl::string_view span = StringSpanOfPartitionRange(range);
-  const std::pair<int, int> span_offsets = SubstringOffsets(span, full_text);
-  ByteOffsetSet diff(disabled_byte_ranges);  // copy
-  diff.Complement(span_offsets);             // enabled range(s)
-  const ByteOffsetSet span_set{span_offsets};
-  return diff != span_set;
-}
-
-// Mark ranges of tokens (corresponding to formatting-disabled lines) to
-// have their original spacing preserved, except allow the first token
-// to follow the formatter's calculated indentation.
-static void IndentButPreserveOtherSpacing(
-    TokenPartitionRange partition_range, absl::string_view full_text,
-    std::vector<PreFormatToken>* ftokens) {
-  for (const auto& partition : partition_range) {
-    const auto token_range = partition.Value().TokensRange();
-    const absl::string_view partition_text =
-        StringSpanOfTokenRange(token_range);
-    std::pair<int, int> byte_range =
-        SubstringOffsets(partition_text, full_text);
-    // Tweak byte range to allow the first token to still obey indentation.
-    ++byte_range.first;
-    PreserveSpacesOnDisabledTokenRanges(ftokens, ByteOffsetSet{byte_range},
-                                        full_text);
-  }
-}
-
 static int MaxOfPositives2D(const std::vector<std::vector<int>>& values) {
   int result = 0;
   for (const auto& row : values) {
