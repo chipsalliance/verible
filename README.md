@@ -99,6 +99,8 @@ The parser can be tested as a standalone program,
 verible-verilog-syntax: usage: verible-verilog-syntax [options] <file> [<file>...]
 
   Flags from verilog/tools/syntax/verilog_syntax.cc:
+    -error_limit (Limit the number of syntax errors reported. (0: unlimited));
+      default: 0;
     -printrawtokens (Prints all lexed tokens, including filtered ones.);
       default: false;
     -printtokens (Prints all lexed and filtered tokens); default: false;

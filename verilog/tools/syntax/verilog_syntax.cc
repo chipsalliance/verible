@@ -46,6 +46,9 @@ ABSL_FLAG(bool, printtree, false, "Whether or not to print the tree");
 ABSL_FLAG(bool, printtokens, false, "Prints all lexed and filtered tokens");
 ABSL_FLAG(bool, printrawtokens, false,
           "Prints all lexed tokens, including filtered ones.");
+ABSL_FLAG(int, error_limit, 0,
+          "Limit the number of syntax errors reported.  "
+          "(0: unlimited)");
 ABSL_FLAG(
     bool, verifytree, false,
     "Verifies that all tokens are parsed into tree, prints unmatched tokens");
@@ -82,8 +85,12 @@ static int AnalyzeOneFile(absl::string_view content,
   if (!lex_status.ok() || !parse_status.ok()) {
     const std::vector<std::string> syntax_error_messages(
         analyzer->LinterTokenErrorMessages());
+    const int error_limit = absl::GetFlag(FLAGS_error_limit);
+    int error_count = 0;
     for (const auto& message : syntax_error_messages) {
       std::cout << message << std::endl;
+      ++error_count;
+      if (error_limit != 0 && error_count >= error_limit) break;
     }
     exit_status = 1;
   }
@@ -95,7 +102,7 @@ static int AnalyzeOneFile(absl::string_view content,
       });
   // Check for printtokens flag, print all filtered tokens if on.
   if (absl::GetFlag(FLAGS_printtokens)) {
-    std::cout << std::endl << "Lexed and filtered tokens: " << std::endl;
+    std::cout << std::endl << "Lexed and filtered tokens:" << std::endl;
     for (const auto& t : analyzer->Data().GetTokenStreamView()) {
       t->ToStream(std::cout, context) << std::endl;
     }
@@ -103,7 +110,7 @@ static int AnalyzeOneFile(absl::string_view content,
 
   // Check for printrawtokens flag, print all tokens if on.
   if (absl::GetFlag(FLAGS_printrawtokens)) {
-    std::cout << std::endl << "All lexed tokens: " << std::endl;
+    std::cout << std::endl << "All lexed tokens:" << std::endl;
     for (const auto& t : analyzer->Data().TokenStream()) {
       t.ToStream(std::cout, context) << std::endl;
     }
@@ -116,7 +123,7 @@ static int AnalyzeOneFile(absl::string_view content,
   if (absl::GetFlag(FLAGS_printtree) && syntax_tree != nullptr) {
     std::cout << std::endl
               << "Parse Tree"
-              << (!parse_ok ? " (incomplete due to syntax errors): " : ": ")
+              << (!parse_ok ? " (incomplete due to syntax errors):" : ":")
               << std::endl;
     verilog::PrettyPrintVerilogTree(*syntax_tree, analyzer->Data().Contents(),
                                     &std::cout);
