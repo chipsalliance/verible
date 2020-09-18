@@ -65,6 +65,9 @@ struct FormatStyle : public verible::BasicFormatStyle {
   // Internal tests assume these are forced to kAlign.
   AlignmentPolicy assignment_statement_alignment = AlignmentPolicy::kAlign;
 
+  // Assignment within enumerations.
+  AlignmentPolicy enum_assignment_statement_alignment = AlignmentPolicy::kAlign;
+
   // Control indentation amount for formal parameter declarations.
   IndentationStyle formal_parameters_indentation = IndentationStyle::kWrap;
 
@@ -129,6 +132,7 @@ struct FormatStyle : public verible::BasicFormatStyle {
     class_member_variable_alignment = policy;
     case_items_alignment = policy;
     assignment_statement_alignment = policy;
+    enum_assignment_statement_alignment = policy;
   }
 };
 

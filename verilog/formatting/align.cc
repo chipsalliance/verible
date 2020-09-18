@@ -415,6 +415,8 @@ enum class AlignableSyntaxSubtype {
   kCaseLikeItems,
   // continuous assignment statements
   kContinuousAssignment,
+  // Constants aligned in enums.
+  kEnumListAssignment,
 };
 
 static AlignedPartitionClassification AlignClassify(
@@ -887,6 +889,52 @@ class ContinuousAssignmentColumnSchemaScanner : public ColumnSchemaScanner {
   }
 };
 
+// Aligns enums that have assignment.
+// enum {       // cols:
+//   foo = 42   // foo: flush left | =: left | ...: (default left)
+// }
+class EnumWithAssignmentsColumnSchemaScanner : public ColumnSchemaScanner {
+ public:
+  EnumWithAssignmentsColumnSchemaScanner() = default;
+
+  void Visit(const SyntaxTreeNode& node) final {
+    auto tag = NodeEnum(node.Tag().tag);
+    VLOG(2) << __FUNCTION__ << ", node: " << tag << " at "
+            << TreePathFormatter(Path());
+
+    switch (tag) {
+      case NodeEnum::kEnumName:
+        ReserveNewColumn(node, FlushLeft);
+        break;
+
+      default: {
+        // TODO(hzeller): Add third column for the assignment expression and
+        // make (configurably?) align right if all of them are numbers ?
+        // Need to keep track in little state machine, and across rows, as the
+        // right side can also be any expression. If there is any expression,
+        // we'd want to keep all left aligned. (nested TODO: keep state across
+        // multiple rows ?)
+      }
+    }
+
+    TreeContextPathVisitor::Visit(node);  // Recurse down.
+    VLOG(2) << __FUNCTION__ << ", leaving node: " << tag;
+  }
+
+  void Visit(const SyntaxTreeLeaf& leaf) final {
+    VLOG(2) << __FUNCTION__ << ", leaf: " << leaf.get() << " at "
+            << TreePathFormatter(Path());
+
+    // Make sure that we only catch an = at the expected point
+    if (Context().DirectParentIs(NodeEnum::kTrailingAssign) &&
+        leaf.get().token_enum() == '=') {
+      ReserveNewColumn(leaf, FlushLeft);
+    }
+
+    VLOG(2) << __FUNCTION__ << ", leaving leaf: " << leaf.get();
+  }
+};
+
 static std::function<
     std::vector<verible::TaggedTokenPartitionRange>(const TokenPartitionRange&)>
 PartitionBetweenBlankLines(AlignableSyntaxSubtype subtype) {
@@ -954,6 +1002,10 @@ static const AlignmentHandlerMapType& AlignmentHandlerLibrary() {
             ContinuousAssignmentColumnSchemaScanner>(),
         function_from_pointer_to_member(
             &FormatStyle::assignment_statement_alignment)}},
+      {AlignableSyntaxSubtype::kEnumListAssignment,
+       {AlignmentCellScannerGenerator<EnumWithAssignmentsColumnSchemaScanner>(),
+        function_from_pointer_to_member(
+            &FormatStyle::enum_assignment_statement_alignment)}},
   };
   return *handler_map;
 }
@@ -1036,6 +1088,15 @@ static std::vector<AlignablePartitionGroup> AlignCaseItems(
       AlignmentPolicySelector(vstyle))(full_range);
 }
 
+static std::vector<AlignablePartitionGroup> AlignEnumItems(
+    const TokenPartitionRange& full_range, const FormatStyle& vstyle) {
+  return verible::ExtractAlignmentGroupsAdapter(
+      PartitionBetweenBlankLines(AlignableSyntaxSubtype::kEnumListAssignment),
+      &IgnoreCommentsAndPreprocessingDirectives,
+      &AlignmentColumnScannerSelector,
+      AlignmentPolicySelector(vstyle))(full_range);
+}
+
 static std::vector<AlignablePartitionGroup> AlignParameterDeclarations(
     const TokenPartitionRange& full_range, const FormatStyle& vstyle) {
   return verible::ExtractAlignmentGroupsAdapter(
@@ -1074,6 +1135,7 @@ void TabularAlignTokenPartitions(TokenPartitionTree* partition_ptr,
           {NodeEnum::kCaseItemList, &AlignCaseItems},
           {NodeEnum::kCaseInsideItemList, &AlignCaseItems},
           {NodeEnum::kGenerateCaseItemList, &AlignCaseItems},
+          {NodeEnum::kEnumNameList, &AlignEnumItems},
       };
   const auto handler_iter = kAlignHandlers->find(NodeEnum(node->Tag().tag));
   if (handler_iter == kAlignHandlers->end()) return;
