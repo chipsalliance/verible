@@ -215,20 +215,49 @@ std::string AbslUnparseFlag(const AlignmentPolicy& policy);
 // This represents one unit of alignable work, which is usually a filtered
 // subset of partitions within a contiguous range of partitions.
 struct AlignablePartitionGroup {
+  AlignablePartitionGroup(const std::vector<TokenPartitionIterator>& rows,
+                          const AlignmentCellScannerFunction& scanner,
+                          AlignmentPolicy policy)
+      : alignable_rows_(rows),
+        alignment_cell_scanner_(scanner),
+        alignment_policy_(policy) {}
+
+  bool IsEmpty() const { return alignable_rows_.empty(); }
+
+  TokenPartitionRange Range() const {
+    return TokenPartitionRange(alignable_rows_.front(),
+                               alignable_rows_.back() + 1);
+  }
+
+  // This executes alignment, depending on the alignment_policy.
+  // 'full_text' is the original text buffer that spans all string_views
+  // referenced by format tokens and token partition trees.
+  // 'column_limit' is the maximum text width allowed post-alignment.
+  // 'ftokens' is the original mutable array of formatting tokens from which
+  // token partition trees were created.
+  void Align(absl::string_view full_text, int column_limit,
+             std::vector<PreFormatToken>* ftokens) const;
+
+ private:
+  struct GroupAlignmentData;
+  static GroupAlignmentData CalculateAlignmentSpacings(
+      const std::vector<TokenPartitionIterator>& rows,
+      const AlignmentCellScannerFunction& cell_scanner_gen,
+      MutableFormatTokenRange::iterator ftoken_base, int column_limit);
+
+  void ApplyAlignment(const GroupAlignmentData& align_data,
+                      MutableFormatTokenRange::iterator ftoken_base) const;
+
+ private:
   // The set of partitions to treat as rows for tabular alignment.
-  std::vector<TokenPartitionIterator> alignable_rows;
+  const std::vector<TokenPartitionIterator> alignable_rows_;
 
   // This function scans each row to identify column positions and properties of
   // alignable cells (containing token ranges).
-  AlignmentCellScannerFunction alignment_cell_scanner;
+  const AlignmentCellScannerFunction alignment_cell_scanner_;
 
   // Controls how this group should be aligned or flushed or preserved.
-  AlignmentPolicy alignment_policy;
-
-  TokenPartitionRange Range() const {
-    return TokenPartitionRange(alignable_rows.front(),
-                               alignable_rows.back() + 1);
-  }
+  const AlignmentPolicy alignment_policy_;
 };
 
 // This is the interface used to sub-divide a range of token partitions into

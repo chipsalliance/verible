@@ -58,6 +58,7 @@ using verible::Symbol;
 using verible::SyntaxTreeLeaf;
 using verible::SyntaxTreeNode;
 using verible::SyntaxTreePath;
+using verible::TaggedTokenPartitionRange;
 using verible::TokenPartitionRange;
 using verible::TokenPartitionTree;
 using verible::TreeContextPathVisitor;
@@ -428,8 +429,8 @@ static AlignedPartitionClassification AlignClassify(
   return {match, static_cast<int>(subtype)};
 }
 
-static std::vector<verible::TaggedTokenPartitionRange>
-GetConsecutiveModuleItemGroups(const TokenPartitionRange& partitions) {
+static std::vector<TaggedTokenPartitionRange> GetConsecutiveModuleItemGroups(
+    const TokenPartitionRange& partitions) {
   VLOG(2) << __FUNCTION__;
   return GetPartitionAlignmentSubranges(
       partitions,  //
@@ -455,8 +456,8 @@ GetConsecutiveModuleItemGroups(const TokenPartitionRange& partitions) {
       });
 }
 
-static std::vector<verible::TaggedTokenPartitionRange>
-GetConsecutiveClassItemGroups(const TokenPartitionRange& partitions) {
+static std::vector<TaggedTokenPartitionRange> GetConsecutiveClassItemGroups(
+    const TokenPartitionRange& partitions) {
   VLOG(2) << __FUNCTION__;
   return GetPartitionAlignmentSubranges(
       partitions,  //
@@ -936,7 +937,7 @@ class EnumWithAssignmentsColumnSchemaScanner : public ColumnSchemaScanner {
 };
 
 static std::function<
-    std::vector<verible::TaggedTokenPartitionRange>(const TokenPartitionRange&)>
+    std::vector<TaggedTokenPartitionRange>(const TokenPartitionRange&)>
 PartitionBetweenBlankLines(AlignableSyntaxSubtype subtype) {
   return [subtype](const TokenPartitionRange& range) {
     return verible::GetSubpartitionsBetweenBlankLinesSingleTag(
@@ -1139,13 +1140,40 @@ void TabularAlignTokenPartitions(TokenPartitionTree* partition_ptr,
       };
   const auto handler_iter = kAlignHandlers->find(NodeEnum(node->Tag().tag));
   if (handler_iter == kAlignHandlers->end()) return;
-  verible::TabularAlignTokens(
-      partition_ptr,
-      [&style, handler_iter](const TokenPartitionRange& range) {
-        // Return a closure bound to the current formatting style.
-        return handler_iter->second(range, style);
-      },
-      ftokens, full_text, disabled_byte_ranges, style.column_limit);
+
+  const AlignSyntaxGroupsFunction& alignment_partitioner(handler_iter->second);
+
+  auto& subpartitions = partition.Children();
+  // Identify groups of partitions to align, separated by blank lines.
+  const TokenPartitionRange subpartitions_range(subpartitions.begin(),
+                                                subpartitions.end());
+  if (subpartitions_range.empty()) return;
+  VLOG(1) << "extracting alignment partition groups...";
+  const std::vector<AlignablePartitionGroup> alignment_groups(
+      alignment_partitioner(subpartitions_range, style));
+  for (const auto& alignment_group : alignment_groups) {
+    const TokenPartitionRange partition_range(alignment_group.Range());
+    if (partition_range.empty()) continue;
+    if (AnyPartitionSubRangeIsDisabled(partition_range, full_text,
+                                       disabled_byte_ranges)) {
+      // Within an aligned group, if the group is partially disabled
+      // due to incremental formatting, then leave the new lines
+      // unformatted rather than falling back to compact-left formatting.
+      // However, allow the first token to be correctly indented.
+      IndentButPreserveOtherSpacing(partition_range, full_text, ftokens);
+      continue;
+
+      // TODO(fangism): instead of disabling the whole range, sub-partition
+      // it one more level, and operate on those ranges, essentially treating
+      // no-format ranges like alignment group boundaries.
+      // Requires IntervalSet::Intersect operation.
+
+      // TODO(b/159824483): attempt to detect and re-use pre-existing alignment
+    }
+
+    // Calculate alignment and possibly apply it depending on alignment policy.
+    alignment_group.Align(full_text, style.column_limit, ftokens);
+  }
   VLOG(1) << "end of " << __FUNCTION__;
 }
 
