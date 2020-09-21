@@ -318,4 +318,4 @@ Enabled by default: true
 
 ## Version
 
-Generated on 2020-09-18 16:01:24 -0700 from [v0.0-611-g1334181](https://github.com/google/verible/commit/13341811f15326f6918cc60889b1a3d897cff221)
+Generated on 2020-09-21 09:44:52 -0700 from [v0.0-614-gd3661b5](https://github.com/google/verible/commit/d3661b5a979a9da113b5ace533e25dffb9cd9a0e)

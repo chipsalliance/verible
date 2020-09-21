@@ -41,6 +41,8 @@ verible-verilog-syntax: usage: bazel-bin/verilog/tools/syntax/verible-verilog-sy
 
 
   Flags from verilog/tools/syntax/verilog_syntax.cc:
+    --error_limit (Limit the number of syntax errors reported. (0: unlimited));
+      default: 0;
     --printrawtokens (Prints all lexed tokens, including filtered ones.);
       default: false;
     --printtokens (Prints all lexed and filtered tokens); default: false;
@@ -51,4 +53,4 @@ verible-verilog-syntax: usage: bazel-bin/verilog/tools/syntax/verible-verilog-sy
 
 ## Version
 
-Generated on 2020-09-18 16:01:24 -0700 from [v0.0-611-g1334181](https://github.com/google/verible/commit/13341811f15326f6918cc60889b1a3d897cff221)
+Generated on 2020-09-21 09:44:52 -0700 from [v0.0-614-gd3661b5](https://github.com/google/verible/commit/d3661b5a979a9da113b5ace533e25dffb9cd9a0e)
