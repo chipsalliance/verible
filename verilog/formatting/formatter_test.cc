@@ -7121,6 +7121,19 @@ TEST(FormatterEndToEndTest, AutoInferAlignment) {
        "  wire           wwwww;\n"  // ... and gets alignment
        "  foo_pkg::baz_t lll;\n"
        "endmodule : nn\n"},
+      {// data/net declarations as generate items (conditional)
+       "module nn;\n"
+       "if (cc)begin:fff\n"
+       "wire wwwww;\n"
+       "logic lll;\n"
+       "end:fff\n"
+       "endmodule : nn\n",
+       "module nn;\n"
+       "  if (cc) begin : fff\n"
+       "    wire  wwwww;\n"  // alignment adds few spaces, so align
+       "    logic lll;\n"
+       "  end : fff\n"
+       "endmodule : nn\n"},
 
       // continuous assignments
       {"module m_assign;\n"
@@ -7160,6 +7173,55 @@ TEST(FormatterEndToEndTest, AutoInferAlignment) {
        "  foo_pkg::baz_t lll;\n"
        "  assign foo      = 1'b1;\n"  // aligned
        "  assign baaaaaar = 1'b0;\n"
+       "endmodule\n"},
+      {// continuous assignments as generate items (conditional)
+       "module m_assign;\n"
+       "if (xy) begin\n"
+       "assign foo  =  1'b0;\n"  // align: adds few spaces
+       "assign baaar = 1'b1;\n"
+       "end else begin\n"
+       "assign goo  =      1'b1;\n"  // induce alignment with excess spaces
+       "assign zaaaaaar = 1'b0;\n"
+       "end\n"
+       "endmodule\n",
+       "module m_assign;\n"
+       "  if (xy) begin\n"
+       "    assign foo   = 1'b0;\n"  // aligned
+       "    assign baaar = 1'b1;\n"
+       "  end else begin\n"
+       "    assign goo      = 1'b1;\n"  // induce alignment with excess spaces
+       "    assign zaaaaaar = 1'b0;\n"
+       "  end\n"
+       "endmodule\n"},
+      {// continuous assignments as generate items (loop)
+       "module m_assign;\n"
+       "for(genvar i=0; i<k; ++i ) begin\n"
+       "assign foo  =  1'b0;\n"  // align: adds few spaces
+       "assign baaar = 1'b1;\n"
+       "end\n"
+       "endmodule\n",
+       "module m_assign;\n"
+       "  for (genvar i = 0; i < k; ++i) begin\n"
+       "    assign foo   = 1'b0;\n"  // aligned
+       "    assign baaar = 1'b1;\n"
+       "  end\n"
+       "endmodule\n"},
+      {// continuous assignments as generate items (case)
+       "module m_assign;\n"
+       "case (c)\n"
+       "jk:begin\n"
+       "assign foo  =  1'b0;\n"  // align: adds few spaces
+       "assign baaar = 1'b1;\n"
+       "end\n"
+       "endcase\n"
+       "endmodule\n",
+       "module m_assign;\n"
+       "  case (c)\n"
+       "    jk: begin\n"
+       "      assign foo   = 1'b0;\n"  // aligned
+       "      assign baaar = 1'b1;\n"
+       "    end\n"
+       "  endcase\n"
        "endmodule\n"},
 
       // formal parameters

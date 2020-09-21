@@ -947,7 +947,6 @@ void TreeUnwrapper::SetIndentationsAndCreatePartitions(
     // Add a level of indentation.
     case NodeEnum::kPackageItemList:
     case NodeEnum::kInterfaceClassDeclaration:
-    case NodeEnum::kGenerateItemList:
     case NodeEnum::kCasePatternItemList:
     case NodeEnum::kStructUnionMemberList:
     case NodeEnum::kConstraintBlockItemList:
@@ -1009,6 +1008,7 @@ void TreeUnwrapper::SetIndentationsAndCreatePartitions(
     case NodeEnum::kGenerateCaseItemList:
     case NodeEnum::kClassItems:
     case NodeEnum::kModuleItemList:
+    case NodeEnum::kGenerateItemList:
     case NodeEnum::kEnumNameList: {
       const int indent = suppress_indentation ? 0 : style_.indentation_spaces;
       VisitIndentedSection(node, indent,

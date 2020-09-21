@@ -1134,8 +1134,8 @@ void TabularAlignTokenPartitions(TokenPartitionTree* partition_ptr,
           {NodeEnum::kPortDeclarationList, &AlignPortDeclarations},
           {NodeEnum::kActualParameterByNameList, &AlignActualNamedParameters},
           {NodeEnum::kPortActualList, &AlignActualNamedPorts},
-          // TODO(fangism): make the following apply to generate-item lists too
           {NodeEnum::kModuleItemList, &AlignModuleItems},
+          {NodeEnum::kGenerateItemList, &AlignModuleItems},
           {NodeEnum::kFormalParameterList, &AlignParameterDeclarations},
           {NodeEnum::kClassItems, &AlignClassItems},
           // various case-like constructs:
