@@ -636,7 +636,7 @@ void IndexingFactsTreeExtractor::ExtractClassInstances(
       class_node.NewChild(
           IndexingNodeData({Anchor(instance_name, context_.base)},
                            IndexingFactType::kClassInstance));
-    } else {
+    } else if (tag == NodeEnum::kVariableDeclarationAssignment) {
       const SyntaxTreeLeaf& leaf =
           GetUnqualifiedIdFromVariableDeclarationAssignment(*instance.match);
       class_node.NewChild(IndexingNodeData({Anchor(leaf.get(), context_.base)},
