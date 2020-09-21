@@ -82,9 +82,11 @@ bool BoundsEqual(const LRange& l, const RRange& r) {
 template <class SubRange, class SuperRange>
 std::pair<int, int> SubRangeIndices(const SubRange& subrange,
                                     const SuperRange& superrange) {
-  CHECK(IsSubRange(subrange, superrange));
+  const int max = std::distance(superrange.begin(), superrange.end());
   const int begin = std::distance(superrange.begin(), subrange.begin());
   const int end = std::distance(superrange.begin(), subrange.end());
+  CHECK(IsSubRange(subrange, superrange))
+      << "got: (" << begin << ',' << end << "), max: " << max;
   return {begin, end};
 }
 

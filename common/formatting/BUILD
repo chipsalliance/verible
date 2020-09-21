@@ -112,6 +112,7 @@ cc_library(
         ":line_wrap_searcher",
         ":unwrapped_line",
         "//common/strings:display_utils",
+        "//common/strings:position",
         "//common/strings:range",
         "//common/text:tree_utils",
         "//common/util:algorithm",

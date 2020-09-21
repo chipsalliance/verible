@@ -8496,6 +8496,86 @@ TEST(FormatterEndToEndTest, FormatElseStatements) {
   }
 }
 
+static constexpr FormatterTestCase kFormatterTestCasesEnumDeclarations[] = {
+    // Inferring user intent: not too many spaces to be added: align.
+    {"typedef enum { kA=1, kAB=2, kABC=3} x;",
+     "typedef enum {\n"
+     "  kA   = 1,\n"
+     "  kAB  = 2,\n"
+     "  kABC = 3\n} x;\n"},
+
+    // Lots of spaces would've to be be added - keep flush
+    {"typedef enum { kA=1, kAB=2, kABCDEFGHIJKLMN=3} x;",
+     "typedef enum {\n"
+     "  kA = 1,\n"
+     "  kAB = 2,\n"
+     "  kABCDEFGHIJKLMN = 3\n} x;\n"},
+
+    // Source spaces indicate alignment wish.
+    {"typedef enum { kA     =1, kAB=2, kABCDEFGHIJKLMN=3} x;",
+     "typedef enum {\n"
+     "  kA              = 1,\n"
+     "  kAB             = 2,\n"
+     "  kABCDEFGHIJKLMN = 3\n} x;\n"},
+
+    // An empty line groups into several sections, to be aligned independently
+    {"typedef enum { kA=1, kAB=2, \n\n kABC=3} x;",
+     "typedef enum {\n"
+     "  kA  = 1,\n"
+     "  kAB = 2,\n"
+     "\n"
+     "  kABC = 3\n} x;\n"},
+
+    // Lines with comments don't interrupt alignment
+    {"typedef enum { kA=1,\n"
+     "// hello world\n"
+     "kAB=2, kABC=3} x;",
+     "typedef enum {\n"
+     "  kA   = 1,\n"
+     "  // hello world\n"
+     "  kAB  = 2,\n"
+     "  kABC = 3\n} x;\n"},
+
+    // Generally, comment locations are preserved, and full line comments
+    // indented to enum name level.
+    {"typedef enum { kA=1,// value kA\n"
+     "// hello world\n"
+     "kAB=2,// value kAB\n"
+     "kABC=3// value kABC\n"
+     "} x;",
+     "typedef enum {\n"
+     "  kA   = 1,  // value kA\n"
+     "  // hello world\n"
+     "  kAB  = 2,  // value kAB\n"
+     "  kABC = 3  // value kABC"
+     "\n} x;\n"},
+
+    // Numeric constants are currently flushed left, but maybe todo
+    // align right in the future ?
+    {"typedef enum { kA=1, kAB=10, kABC=100} x;",
+     "typedef enum {\n"
+     "  kA   = 1,\n"
+     "  kAB  = 10,\n"
+     "  kABC = 100\n} x;\n"},
+};
+
+TEST(FormatterEndToEndTest, FormatAlignEnumDeclarations) {
+  // Use a fixed style.
+  FormatStyle style;
+  style.column_limit = 40;
+  style.indentation_spaces = 2;
+  style.wrap_spaces = 4;
+  style.enum_assignment_statement_alignment = AlignmentPolicy::kInferUserIntent;
+  for (const auto& test_case : kFormatterTestCasesEnumDeclarations) {
+    VLOG(1) << "code-to-format:\n" << test_case.input << "<EOF>";
+    std::ostringstream stream;
+    const auto status =
+        FormatVerilog(test_case.input, "<filename>", style, stream);
+    EXPECT_OK(status) << status.message();
+    EXPECT_EQ(stream.str(), test_case.expected) << "code:\n" << test_case.input;
+  }
+}
+
 TEST(FormatterEndToEndTest, DiagnosticShowFullTree) {
   // Use a fixed style.
   FormatStyle style;

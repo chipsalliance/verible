@@ -7431,7 +7431,24 @@ const TreeUnwrapperTestData kUnwrapEnumTestCases[] = {
                        L(1, {"three", "=", "3", "// baz"})),
           L(0, {"}", "foo_e", ";"})),
     },
-};
+
+    {
+        "In-line and single line comments should be kept",
+        "typedef enum {//c1\n"
+        "//c2\n"
+        "one=1,  //c3\n"
+        "//c4\n"
+        "two=2  //c5\n"
+        "//c6\n"
+        "} x;\n",
+        N(0, L(0, {"typedef", "enum", "{", "//c1"}),
+          EnumItemList(1, L(1, {"//c2"}),                     //
+                       L(1, {"one", "=", "1", ",", "//c3"}),  //
+                       L(1, {"//c4"}),                        //
+                       L(1, {"two", "=", "2", "//c5"}),       //
+                       L(1, {"//c6"})),                       //
+          L(0, {"}", "x", ";"})),
+    }};
 
 // Test that TreeUnwrapper produces correct UnwrappedLines from structs
 TEST_F(TreeUnwrapperTest, UnwrapEnumTests) {
