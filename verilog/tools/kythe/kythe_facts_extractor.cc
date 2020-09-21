@@ -524,8 +524,9 @@ VName KytheFactsExtractor::ExtractPackageImport(
     // Add all the definitions in that package to the current scope as if it was
     // declared in our scope so that it can be captured without "::".
     const auto current_package_scope =
-        scope_context_.find(CreateSignature(package_name.Value()));
+        scope_context_.find(package_vname.signature);
 
+    vertical_scope_context_.top().push_back(package_vname);
     for (const VName& vname : current_package_scope->second) {
       vertical_scope_context_.top().push_back(vname);
     }
@@ -547,12 +548,25 @@ VName KytheFactsExtractor::ExtractMemberReference(
 
   std::string definition_signature = "";
 
-  const VName package_vname(file_path_,
-                            CreateSignature(containing_block_name.Value()));
-  const VName package_anchor = PrintAnchorVName(containing_block_name);
-  GenerateEdgeString(package_anchor, kEdgeRef, package_vname);
+  // In case it is a package member e.g pkg::var.
+  if (containing_block_vname != nullptr) {
+    const VName package_vname(file_path_,
+                              CreateSignature(containing_block_name.Value()));
+    const VName package_anchor = PrintAnchorVName(containing_block_name);
+    GenerateEdgeString(package_anchor, kEdgeRef, package_vname);
 
-  definition_signature = package_vname.signature;
+    definition_signature = package_vname.signature;
+  } else {
+    // In case the member is a class member not a package member.
+    containing_block_vname =
+        ABSL_DIE_IF_NULL(vertical_scope_context_.SearchForDefinition(
+            CreateSignature(containing_block_name.Value())));
+
+    const VName class_anchor = PrintAnchorVName(containing_block_name);
+    GenerateEdgeString(class_anchor, kEdgeRef, *containing_block_vname);
+
+    definition_signature = containing_block_vname->signature;
+  }
 
   // Generate reference edge for all the members.
   // e.g pkg::my_class::my_inner_class::static_var.
