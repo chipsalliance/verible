@@ -119,6 +119,10 @@ const verible::Symbol* GetFunctionId(const verible::Symbol& function_decl);
 // e.g. function my_fun(); return leaf node for "my_fun".
 const verible::SyntaxTreeLeaf* GetFunctionName(const verible::Symbol&);
 
+// Returns local root node from node tagged with kFunctionCall.
+const verible::SyntaxTreeNode& GetLocalRootFromFunctionCall(
+    const verible::Symbol&);
+
 // Returns leaf node for function name in function call.
 // e.g my_function(); return leaf node for "my_function".
 const verible::SyntaxTreeLeaf* GetFunctionCallName(const verible::Symbol&);

@@ -89,10 +89,15 @@ const verible::SyntaxTreeLeaf* GetFunctionName(
   return ABSL_DIE_IF_NULL(GetIdentifier(*function_id));
 }
 
+const verible::SyntaxTreeNode& GetLocalRootFromFunctionCall(
+    const verible::Symbol& function_call) {
+  return GetSubtreeAsNode(function_call, NodeEnum::kFunctionCall, 0,
+                          NodeEnum::kLocalRoot);
+}
+
 const verible::SyntaxTreeLeaf* GetFunctionCallName(
     const verible::Symbol& function_call) {
-  const auto& local_root = GetSubtreeAsNode(
-      function_call, NodeEnum::kFunctionCall, 0, NodeEnum::kLocalRoot);
+  const auto& local_root = GetLocalRootFromFunctionCall(function_call);
 
   const auto& unqualified_id = GetSubtreeAsNode(
       local_root, NodeEnum::kLocalRoot, 0, NodeEnum::kUnqualifiedId);

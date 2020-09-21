@@ -563,16 +563,20 @@ void IndexingFactsTreeExtractor::ExtractFunctionOrTaskCall(
   IndexingFactNode function_node(function_node_data);
 
   // Extract function or task name.
-  const auto* function_name_leaf = GetFunctionCallName(function_call_node);
-  const Anchor task_name_anchor(function_name_leaf->get(), context_.base);
-  function_node.Value().AppendAnchor(task_name_anchor);
+  // It can be single or preceeded with a pkg or class names.
+  const SyntaxTreeNode& local_root =
+      GetLocalRootFromFunctionCall(function_call_node);
+  const std::vector<TreeSearchMatch> unqualified_ids =
+      FindAllUnqualifiedIds(local_root);
+  for (const TreeSearchMatch& unqualified_id : unqualified_ids) {
+    function_node.Value().AppendAnchor(Anchor(
+        AutoUnwrapIdentifier(*unqualified_id.match)->get(), context_.base));
+  }
 
   {
     const IndexingFactsTreeContext::AutoPop p(&facts_tree_context_,
                                               &function_node);
-
     const SyntaxTreeNode& arguments = GetParenGroupFromCall(function_call_node);
-
     // Extract function or task parameters.
     Visit(arguments);
   }
