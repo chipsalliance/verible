@@ -48,4 +48,4 @@ See the [README file for further information.](README.md)
 
 ## Version
 
-Generated on 2020-09-21 13:23:26 -0700 from [v0.0-615-gc765124](https://github.com/google/verible/commit/c7651249dd8f549f04aa3a2659be2b53dc9b8024)
+Generated on 2020-09-21 13:39:36 -0700 from [v0.0-616-g8633798](https://github.com/google/verible/commit/86337987cd582c0c60d8a8cdbf9ff547d373442f)
