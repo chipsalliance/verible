@@ -211,7 +211,6 @@ void KytheFactsExtractor::ConstructFlattenedScope(
     }
     case IndexingFactType::kModuleInstance:
     case IndexingFactType::kClassInstance: {
-      // TODO(minatoma): Refactor this to get rid of this search.
       const VName* found_vname = vertical_scope_context_.SearchForDefinition(
           CreateSignature(node.Parent()->Value().Anchors()[0].Value()));
 
