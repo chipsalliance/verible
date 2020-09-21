@@ -7224,6 +7224,157 @@ TEST(FormatterEndToEndTest, AutoInferAlignment) {
        "  endcase\n"
        "endmodule\n"},
 
+      // net/variable assignments: blocking and nonblocking
+      {"module  ma ;\n"
+       "initial  begin\n"
+       "aa = b;\n"
+       "c = 1'b0;\n"
+       "end\n"
+       "endmodule\n",
+       "module ma;\n"
+       "  initial begin\n"
+       "    aa = b;\n"
+       "    c  = 1'b0;\n"  // only one space to align
+       "  end\n"
+       "endmodule\n"},
+      {"function void  fa ;\n"
+       "c = 1'b0;\n"
+       "aa = b;\n"
+       "endfunction\n",
+       "function void fa;\n"
+       "  c  = 1'b0;\n"  // only one space to align
+       "  aa = b;\n"
+       "endfunction\n"},
+      {"task  ta ; \n"
+       "aa =  b;\n"
+       "c = 1'b0;\n"
+       "endtask\n",
+       "task ta;\n"
+       "  aa = b;\n"
+       "  c  = 1'b0;\n"  // only one space to align
+       "endtask\n"},
+      {"module  ma ;\n"
+       "always@( posedge clk) begin\n"
+       "aaa <= b;\n"
+       "c <= 1'b0;\n"
+       "end\n"
+       "endmodule\n",
+       "module ma;\n"
+       "  always @(posedge clk) begin\n"
+       "    aaa <= b;\n"
+       "    c   <= 1'b0;\n"  // only two spaces to align
+       "  end\n"
+       "endmodule\n"},
+      {"function int  fa ;\n"
+       "c <= 1'b0;\n"
+       "aa <= b;\n"
+       "return 0 ;\n"
+       "endfunction\n",
+       "function int fa;\n"
+       "  c  <= 1'b0;\n"  // only one space to align
+       "  aa <= b;\n"
+       "  return 0;\n"
+       "endfunction\n"},
+      {"task  ta ; \n"
+       "$display (\"hello\" );\n"
+       "aa <=  b;\n"
+       "c <= 1'b0;\n"
+       "endtask\n",
+       "task ta;\n"
+       "  $display(\"hello\");\n"
+       "  aa <= b;\n"
+       "  c  <= 1'b0;\n"  // only one space to align
+       "endtask\n"},
+      {// mixed blocking and nonblocking assignments
+       "module  ma ;\n"
+       "always@( posedge clk) begin\n"
+       "aaaaa  = b;\n"
+       "ccc  = 1'b0;\n"
+       "aaa <= b;\n"
+       "c <= 1'b0;\n"
+       "end\n"
+       "endmodule\n",
+       "module ma;\n"
+       "  always @(posedge clk) begin\n"
+       "    aaaaa = b;\n"
+       "    ccc   = 1'b0;\n"  // only two spaces to align
+       "    aaa <= b;\n"
+       "    c   <= 1'b0;\n"  // only two spaces to align (separate group)
+       "  end\n"
+       "endmodule\n"},
+      {"task  ta ; \n"
+       "aa <=  b;\n"
+       "c <= 1'b0;\n"
+       "$display (\"hello\" );\n"  // separates above/below alignment groups
+       "zzaa <=  b;\n"
+       "zzc <= 1'b0;\n"
+       "endtask\n",
+       "task ta;\n"
+       "  aa <= b;\n"
+       "  c  <= 1'b0;\n"  // only one space to align
+       "  $display(\"hello\");\n"
+       "  zzaa <= b;\n"
+       "  zzc  <= 1'b0;\n"  // only one space to align
+       "endtask\n"},
+      {"task  ta ; \n"
+       "$display (\"hello\" );\n"
+       "aaaaa <=  b;\n"
+       "c <= 1'b0;\n"  // need too many spaces to align
+       "endtask\n",
+       "task ta;\n"
+       "  $display(\"hello\");\n"
+       "  aaaaa <= b;\n"
+       "  c <= 1'b0;\n"  // so keep flush-left
+       "endtask\n"},
+      {"function void  fa ; \n"
+       "$display (\"hello\" );\n"
+       "aaaaa =  b;\n"
+       "c = 1'b0;\n"  // need too many spaces to align
+       "endfunction\n",
+       "function void fa;\n"
+       "  $display(\"hello\");\n"
+       "  aaaaa = b;\n"
+       "  c = 1'b0;\n"  // so keep flush-left
+       "endfunction\n"},
+      {"module  ma ;\n"
+       "always@( posedge clk) begin\n"
+       "aaaxx <= b;\n"
+       "c <= 1'b0;\n"  // need too many spaces to align
+       "end\n"
+       "endmodule\n",
+       "module ma;\n"
+       "  always @(posedge clk) begin\n"
+       "    aaaxx <= b;\n"
+       "    c <= 1'b0;\n"  // so keep flush-left
+       "  end\n"
+       "endmodule\n"},
+      {"module  ma ;\n"
+       "always@( posedge clk) begin\n"
+       "aaaxx <= b    ;\n"  // inject 4 spaces to induce alignment
+       "c <= 1'b0;\n"
+       "end\n"
+       "endmodule\n",
+       "module ma;\n"
+       "  always @(posedge clk) begin\n"
+       "    aaaxx <= b;\n"
+       "    c     <= 1'b0;\n"  // induced alignment
+       "  end\n"
+       "endmodule\n"},
+      {"module  ma ;\n"
+       "always@( posedge clk) begin\n"
+       "aaaxx <= b    ;\n"  // inject 4 spaces to induce alignment
+       "//comment\n"
+       "c <= 1'b0;\n"
+       "end\n"
+       "endmodule\n",
+       "module ma;\n"
+       "  always @(posedge clk) begin\n"
+       "    aaaxx <= b;\n"
+       "    //comment\n"       // ignored within alignment group
+       "    c     <= 1'b0;\n"  // induced alignment
+       "  end\n"
+       "endmodule\n"},
+
       // formal parameters
       {"module pp #(\n"
        "int W,\n"

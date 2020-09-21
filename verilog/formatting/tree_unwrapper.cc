@@ -952,7 +952,6 @@ void TreeUnwrapper::SetIndentationsAndCreatePartitions(
     case NodeEnum::kConstraintBlockItemList:
     case NodeEnum::kConstraintExpressionList:
     case NodeEnum::kDistributionItemList:
-    case NodeEnum::kBlockItemStatementList:
     case NodeEnum::kFunctionItemList:
     case NodeEnum::kAssertionVariableDeclarationList:
     // The final sequence_expr of a sequence_declaration is same indentation
@@ -965,7 +964,6 @@ void TreeUnwrapper::SetIndentationsAndCreatePartitions(
     case NodeEnum::kUdpPortDeclaration:
     case NodeEnum::kUdpSequenceEntry:
     case NodeEnum::kUdpCombEntry:
-    case NodeEnum::kStatementList:
     case NodeEnum::kSpecifyItemList:
     case NodeEnum::kClockingItemList: {
       // Do not further indent preprocessor clauses.
@@ -1003,6 +1001,8 @@ void TreeUnwrapper::SetIndentationsAndCreatePartitions(
       }
     }
 
+    case NodeEnum::kBlockItemStatementList:
+    case NodeEnum::kStatementList:
     case NodeEnum::kCaseItemList:
     case NodeEnum::kCaseInsideItemList:
     case NodeEnum::kGenerateCaseItemList:

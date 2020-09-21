@@ -418,6 +418,10 @@ enum class AlignableSyntaxSubtype {
   kContinuousAssignment,
   // Constants aligned in enums.
   kEnumListAssignment,
+  // Blocking assignments.
+  kBlockingAssignment,
+  // Nonblocking assignments.
+  kNonBlockingAssignment,
 };
 
 static AlignedPartitionClassification AlignClassify(
@@ -473,6 +477,34 @@ static std::vector<TaggedTokenPartitionRange> GetConsecutiveClassItemGroups(
                                  ? AlignmentGroupAction::kMatch
                                  : AlignmentGroupAction::kNoMatch,
                              AlignableSyntaxSubtype::kClassMemberVariables);
+      });
+}
+
+static std::vector<TaggedTokenPartitionRange> GetAlignableStatementGroups(
+    const TokenPartitionRange& partitions) {
+  VLOG(2) << __FUNCTION__;
+  return GetPartitionAlignmentSubranges(
+      partitions,  //
+      [](const TokenPartitionTree& partition)
+          -> AlignedPartitionClassification {
+        const Symbol* origin = partition.Value().Origin();
+        if (origin == nullptr) return {AlignmentGroupAction::kIgnore};
+        const verible::SymbolTag symbol_tag = origin->Tag();
+        if (symbol_tag.kind != verible::SymbolKind::kNode)
+          return AlignClassify(AlignmentGroupAction::kIgnore);
+        const SyntaxTreeNode& node = verible::SymbolCastToNode(*origin);
+        // Align blocking assignments.
+        if (node.MatchesTagAnyOf({NodeEnum::kBlockingAssignmentStatement,
+                                  NodeEnum::kNetVariableAssignment})) {
+          return AlignClassify(AlignmentGroupAction::kMatch,
+                               AlignableSyntaxSubtype::kBlockingAssignment);
+        }
+        // Align nonblocking assignments.
+        if (node.MatchesTag(NodeEnum::kNonblockingAssignmentStatement)) {
+          return AlignClassify(AlignmentGroupAction::kMatch,
+                               AlignableSyntaxSubtype::kNonBlockingAssignment);
+        }
+        return AlignClassify(AlignmentGroupAction::kNoMatch);
       });
 }
 
@@ -846,11 +878,14 @@ class CaseItemColumnSchemaScanner : public ColumnSchemaScanner {
   bool previous_token_was_case_colon_ = false;
 };
 
-// This class marks up token-subranges in assignment statements for alignment.
-// e.g. "assign foo = bar;"
-class ContinuousAssignmentColumnSchemaScanner : public ColumnSchemaScanner {
+// This class marks up token-subranges in various assignment statements for
+// alignment.  e.g.
+// * assign foo = bar;
+// * foo = bar;
+// * foo <= bar;
+class AssignmentColumnSchemaScanner : public ColumnSchemaScanner {
  public:
-  ContinuousAssignmentColumnSchemaScanner() = default;
+  AssignmentColumnSchemaScanner() = default;
 
   void Visit(const SyntaxTreeNode& node) override {
     auto tag = NodeEnum(node.Tag().tag);
@@ -858,6 +893,9 @@ class ContinuousAssignmentColumnSchemaScanner : public ColumnSchemaScanner {
             << TreePathFormatter(Path());
 
     switch (tag) {
+      case NodeEnum::kNetVariableAssignment:
+      case NodeEnum::kBlockingAssignmentStatement:
+      case NodeEnum::kNonblockingAssignmentStatement:
       case NodeEnum::kContinuousAssignmentStatement: {
         // Start a new column right away.
         ReserveNewColumn(node, FlushLeft);
@@ -878,9 +916,16 @@ class ContinuousAssignmentColumnSchemaScanner : public ColumnSchemaScanner {
     const int tag = leaf.get().token_enum();
     switch (tag) {
       case '=':  // align at '='
-        if (Context().DirectParentIs(NodeEnum::kNetVariableAssignment)) {
+        if (Context().DirectParentIsOneOf(
+                {NodeEnum::kNetVariableAssignment,
+                 NodeEnum::kBlockingAssignmentStatement})) {
           ReserveNewColumn(leaf, FlushLeft);
-          break;
+        }
+        break;
+      case verilog_tokentype::TK_LE:  // '<=' for nonblocking assignments
+        if (Context().DirectParentIs(
+                NodeEnum::kNonblockingAssignmentStatement)) {
+          ReserveNewColumn(leaf, FlushLeft);
         }
         break;
       default:
@@ -999,8 +1044,15 @@ static const AlignmentHandlerMapType& AlignmentHandlerLibrary() {
        {AlignmentCellScannerGenerator<CaseItemColumnSchemaScanner>(),
         function_from_pointer_to_member(&FormatStyle::case_items_alignment)}},
       {AlignableSyntaxSubtype::kContinuousAssignment,
-       {AlignmentCellScannerGenerator<
-            ContinuousAssignmentColumnSchemaScanner>(),
+       {AlignmentCellScannerGenerator<AssignmentColumnSchemaScanner>(),
+        function_from_pointer_to_member(
+            &FormatStyle::assignment_statement_alignment)}},
+      {AlignableSyntaxSubtype::kBlockingAssignment,
+       {AlignmentCellScannerGenerator<AssignmentColumnSchemaScanner>(),
+        function_from_pointer_to_member(
+            &FormatStyle::assignment_statement_alignment)}},
+      {AlignableSyntaxSubtype::kNonBlockingAssignment,
+       {AlignmentCellScannerGenerator<AssignmentColumnSchemaScanner>(),
         function_from_pointer_to_member(
             &FormatStyle::assignment_statement_alignment)}},
       {AlignableSyntaxSubtype::kEnumListAssignment,
@@ -1113,6 +1165,13 @@ static std::vector<AlignablePartitionGroup> AlignParameterDeclarations(
       &IgnoreWithinPortDeclarationPartitionGroup, full_range, vstyle);
 }
 
+static std::vector<AlignablePartitionGroup> AlignStatements(
+    const TokenPartitionRange& full_range, const FormatStyle& vstyle) {
+  return ExtractAlignablePartitionGroups(
+      &GetAlignableStatementGroups, &IgnoreCommentsAndPreprocessingDirectives,
+      full_range, vstyle);
+}
+
 void TabularAlignTokenPartitions(TokenPartitionTree* partition_ptr,
                                  std::vector<PreFormatToken>* ftokens,
                                  absl::string_view full_text,
@@ -1143,6 +1202,9 @@ void TabularAlignTokenPartitions(TokenPartitionTree* partition_ptr,
           {NodeEnum::kCaseInsideItemList, &AlignCaseItems},
           {NodeEnum::kGenerateCaseItemList, &AlignCaseItems},
           {NodeEnum::kEnumNameList, &AlignEnumItems},
+          // align various statements, like assignments
+          {NodeEnum::kStatementList, &AlignStatements},
+          {NodeEnum::kBlockItemStatementList, &AlignStatements},
       };
   const auto handler_iter = kAlignHandlers->find(NodeEnum(node->Tag().tag));
   if (handler_iter == kAlignHandlers->end()) return;
