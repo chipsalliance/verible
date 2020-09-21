@@ -29,5 +29,3 @@ module my_module2;
 //- @my_integer ref MyInteger2
   initial $display(my_pkg2::my_integer);
 endmodule
-
-

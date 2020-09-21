@@ -117,7 +117,7 @@ void IndexingFactsTreeExtractor::Visit(const SyntaxTreeNode& node) {
           break;
         }
 
-        // for primitive types inside tagged with kRegisterVariable;
+        // for primitive types inside tagged with kRegisterVariable.
         ExtractPrimitiveVariables(node, register_variables);
         break;
       }
@@ -134,6 +134,8 @@ void IndexingFactsTreeExtractor::Visit(const SyntaxTreeNode& node) {
           break;
         }
 
+        // for primitive types inside tagged with
+        // kVariableDeclarationAssignment.
         ExtractPrimitiveVariables(node, variable_declaration_assign);
         break;
       }
@@ -636,8 +638,7 @@ void IndexingFactsTreeExtractor::ExtractClassInstances(
                            IndexingFactType::kClassInstance));
     } else {
       const SyntaxTreeLeaf& leaf =
-          GetUnqualifiedIdFromVariableDeclarationAssignment(
-              *instance.match);
+          GetUnqualifiedIdFromVariableDeclarationAssignment(*instance.match);
       class_node.NewChild(IndexingNodeData({Anchor(leaf.get(), context_.base)},
                                            IndexingFactType::kClassInstance));
     }
