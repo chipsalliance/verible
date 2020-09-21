@@ -215,6 +215,7 @@ void KytheFactsExtractor::ConstructFlattenedScope(
           CreateSignature(node.Parent()->Value().Anchors()[0].Value()));
 
       scope_context_[vname.signature] = scope_context_[found_vname->signature];
+      break;
     }
     default: {
       break;
