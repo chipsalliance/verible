@@ -473,6 +473,7 @@ static std::vector<TaggedTokenPartitionRange> GetConsecutiveClassItemGroups(
         if (symbol_tag.kind != verible::SymbolKind::kNode)
           return {AlignmentGroupAction::kIgnore};
         const SyntaxTreeNode& node = verible::SymbolCastToNode(*origin);
+        // Align class member variables.
         return AlignClassify(IsAlignableDeclaration(node)
                                  ? AlignmentGroupAction::kMatch
                                  : AlignmentGroupAction::kNoMatch,
@@ -493,6 +494,11 @@ static std::vector<TaggedTokenPartitionRange> GetAlignableStatementGroups(
         if (symbol_tag.kind != verible::SymbolKind::kNode)
           return AlignClassify(AlignmentGroupAction::kIgnore);
         const SyntaxTreeNode& node = verible::SymbolCastToNode(*origin);
+        // Align local variable declarations.
+        if (IsAlignableDeclaration(node)) {
+          return AlignClassify(AlignmentGroupAction::kMatch,
+                               AlignableSyntaxSubtype::kDataDeclaration);
+        }
         // Align blocking assignments.
         if (node.MatchesTagAnyOf({NodeEnum::kBlockingAssignmentStatement,
                                   NodeEnum::kNetVariableAssignment})) {
@@ -1205,6 +1211,7 @@ void TabularAlignTokenPartitions(TokenPartitionTree* partition_ptr,
           // align various statements, like assignments
           {NodeEnum::kStatementList, &AlignStatements},
           {NodeEnum::kBlockItemStatementList, &AlignStatements},
+          {NodeEnum::kFunctionItemList, &AlignStatements},
       };
   const auto handler_iter = kAlignHandlers->find(NodeEnum(node->Tag().tag));
   if (handler_iter == kAlignHandlers->end()) return;

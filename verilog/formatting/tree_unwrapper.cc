@@ -529,6 +529,7 @@ void TreeUnwrapper::InterChildNodeHook(const SyntaxTreeNode& node) {
     case NodeEnum::kPackageItemList:
     case NodeEnum::kSpecifyItemList:
     case NodeEnum::kBlockItemStatementList:
+    case NodeEnum::kFunctionItemList:
     case NodeEnum::kCaseItemList:
     case NodeEnum::kCaseInsideItemList:
     case NodeEnum::kGenerateCaseItemList:
@@ -952,7 +953,6 @@ void TreeUnwrapper::SetIndentationsAndCreatePartitions(
     case NodeEnum::kConstraintBlockItemList:
     case NodeEnum::kConstraintExpressionList:
     case NodeEnum::kDistributionItemList:
-    case NodeEnum::kFunctionItemList:
     case NodeEnum::kAssertionVariableDeclarationList:
     // The final sequence_expr of a sequence_declaration is same indentation
     // level as the kAssertionVariableDeclarationList that precedes it.
@@ -1003,6 +1003,7 @@ void TreeUnwrapper::SetIndentationsAndCreatePartitions(
 
     case NodeEnum::kBlockItemStatementList:
     case NodeEnum::kStatementList:
+    case NodeEnum::kFunctionItemList:
     case NodeEnum::kCaseItemList:
     case NodeEnum::kCaseInsideItemList:
     case NodeEnum::kGenerateCaseItemList:

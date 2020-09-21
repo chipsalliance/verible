@@ -2604,7 +2604,7 @@ static constexpr FormatterTestCase kFormatterTestCases[] = {
         "module m;\n"
         "  initial begin\n"
         "    automatic int a;\n"
-        "    static byte s = 0;\n"
+        "    static byte   s = 0;\n"  // aligned
         "  end\n"
         "endmodule\n",
     },
@@ -7374,6 +7374,56 @@ TEST(FormatterEndToEndTest, AutoInferAlignment) {
        "    c     <= 1'b0;\n"  // induced alignment
        "  end\n"
        "endmodule\n"},
+
+      // local variable declarations as statements
+      {"task tt ;\n"
+       "int foo;\n"  // only 2 spaces needed to align
+       "bar_t baz;\n"
+       "endtask\n",
+       "task tt;\n"
+       "  int   foo;\n"  // aligned
+       "  bar_t baz;\n"
+       "endtask\n"},
+      {"function ff ;\n"
+       "bar_t baz;\n"
+       "int foo;\n"  // only 2 spaces needed to align
+       "endfunction\n",
+       "function ff;\n"
+       "  bar_t baz;\n"
+       "  int   foo;\n"  // aligned
+       "endfunction\n"},
+      {"task tt ;\n"
+       "int  foo;\n"  // too many spaces needed to align
+       "baaaar_t baz;\n"
+       "endtask\n",
+       "task tt;\n"
+       "  int foo;\n"  // so flush-left
+       "  baaaar_t baz;\n"
+       "endtask\n"},
+      {"function ff ;\n"
+       "baaaar_t baz;\n"
+       "int  foo;\n"  // too many spaces needed to align
+       "endfunction\n",
+       "function ff;\n"
+       "  baaaar_t baz;\n"
+       "  int foo;\n"  // so flush-left
+       "endfunction\n"},
+      {"task tt ;\n"
+       "int        foo;\n"  // injected spaces to induce alignment
+       "baaaar_t baz;\n"
+       "endtask\n",
+       "task tt;\n"
+       "  int      foo;\n"  // aligned
+       "  baaaar_t baz;\n"
+       "endtask\n"},
+      {"function ff ;\n"
+       "baaaar_t baz    ;\n"  // injected spaces to induce alignment
+       "int  foo;\n"
+       "endfunction\n",
+       "function ff;\n"
+       "  baaaar_t baz;\n"
+       "  int      foo;\n"  // so aligned
+       "endfunction\n"},
 
       // formal parameters
       {"module pp #(\n"
