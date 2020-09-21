@@ -132,21 +132,35 @@ class KytheFactsExtractor {
 
   // Searches for a definition suitable for the given reference within package
   // scope context of the given package name.
-  const VName* SearchForDefinitionVNameInPackage(
+  const VName* SearchForDefinitionVNameInScopeContext(
       absl::string_view package_name, absl::string_view reference_name) const;
 
   // Resolves the tag of the given node and directs the flow to the appropriate
   // function to extract kythe facts for that node.
   void IndexingFactNodeTagResolver(const IndexingFactNode&);
 
-  // Add the given VName to vnames_context (to be used in scope relative
-  // signatures) and visits the children of the given node.
-  void Visit(const IndexingFactNode& node, const VName& vname,
-             std::vector<VName>& current_scope);
+  // Determines whether to create a scope for this node or not and visits the
+  // children.
+  void Visit(const IndexingFactNode& node, const VName& vname);
 
-  // Directs the flow to the children of the given node creating new scope for
-  // that node.
-  void Visit(const IndexingFactNode& node, std::vector<VName>& current_scope);
+  // Add the given VName to vnames_context (to be used in scope relative
+  // signatures) and visits the children of the given node creating a new scope
+  // for the given node.
+  void Visit(const IndexingFactNode& node, const VName&, std::vector<VName>&);
+
+  // Directs the flow to the children of the given node.
+  void Visit(const IndexingFactNode& node);
+
+  // Determines whether or not to add the VName.
+  void AddVNameToVerticalScope(IndexingFactType, const VName&);
+
+  // Appends the extracted children vnames to the scope of the current node.
+  void ConstructFlattenedScope(const IndexingFactNode&, const VName&,
+                               const std::vector<VName>&);
+
+  // Determines whether or not to create a child of edge between the current
+  // node and the previous node.
+  void CreateChildOfEdge(IndexingFactType, const VName&);
 
   // Extracts Packages and saves its scope to package_scope_context to be used
   // for definition searching.
@@ -157,27 +171,25 @@ class KytheFactsExtractor {
 
   // Extracts kythe facts a reference to a user defined data type like class or
   // module.
-  VName ExtractDataTypeReference(const IndexingFactNode&);
+  void ExtractDataTypeReference(const IndexingFactNode&);
 
   // Extracts kythe facts from module instance node and returns it VName.
-  VName ExtractModuleInstanceFact(const IndexingFactNode&);
+  VName ExtractModuleInstance(const IndexingFactNode&);
 
-  // Extracts kythe facts from module named port node e.g("m(.in1(a))") and
-  // returns it VName.
-  VName ExtractModuleNamedPort(const IndexingFactNode&);
+  // Extracts kythe facts from module named port node e.g("m(.in1(a))").
+  void ExtractModuleNamedPort(const IndexingFactNode&);
 
   // Extracts kythe facts from module node and returns it VName.
   VName ExtractModuleFact(const IndexingFactNode&);
 
   // Extracts kythe facts from class node and returns it VName.
-  VName ExtractClassFact(const IndexingFactNode&);
+  VName ExtractClass(const IndexingFactNode&);
 
   // Extracts kythe facts from module port node and returns its VName.
-  VName ExtractVariableDefinitionFact(const IndexingFactNode& node);
+  VName ExtractVariableDefinition(const IndexingFactNode& node);
 
-  // Extracts kythe facts from a module port reference node and returns its
-  // VName.
-  VName ExtractVariableReferenceFact(const IndexingFactNode& node);
+  // Extracts kythe facts from a module port reference node.
+  void ExtractVariableReference(const IndexingFactNode& node);
 
   // Extracts Kythe facts from class instance node and return its VName.
   VName ExtractClassInstances(const IndexingFactNode& class_instance_fact_node);
@@ -185,29 +197,28 @@ class KytheFactsExtractor {
   // Extracts kythe facts from a function or task node and returns its VName.
   VName ExtractFunctionOrTask(const IndexingFactNode& function_fact_node);
 
-  // Extracts kythe facts from a function or task call node and returns its
-  // VName.
-  VName ExtractFunctionOrTaskCall(
+  // Extracts kythe facts from a function or task call node.
+  void ExtractFunctionOrTaskCall(
       const IndexingFactNode& function_call_fact_node);
 
   // Extracts kythe facts from a package declaration node and returns its VName.
   VName ExtractPackageDeclaration(const IndexingFactNode& node);
 
-  // Extracts kythe facts from package import node and returns its VName.
-  VName ExtractPackageImport(const IndexingFactNode& node);
+  // Extracts kythe facts from package import node.
+  void ExtractPackageImport(const IndexingFactNode& node);
 
   // Extracts kythe facts from a macro definition node and returns its VName.
   VName ExtractMacroDefinition(const IndexingFactNode& macro_definition_node);
 
-  // Extracts kythe facts from a macro call node and returns its VName.
-  VName ExtractMacroCall(const IndexingFactNode& macro_call_node);
+  // Extracts kythe facts from a macro call node.
+  void ExtractMacroCall(const IndexingFactNode& macro_call_node);
 
-  // Extracts kythe facts from member reference statement and return its vname.
+  // Extracts kythe facts from member reference statement.
   // e.g pkg::member or class::member or class.member
   // The names are treated as anchors e.g:
   // pkg::member => {Anchor(pkg), Anchor(member)}
   // pkg::class_name::var => {Anchor(pkg), Anchor(class_name), Anchor(var)}
-  VName ExtractMemberReference(const IndexingFactNode& member_reference_node);
+  void ExtractMemberReference(const IndexingFactNode& member_reference_node);
 
   // Generates an anchor VName for kythe.
   VName PrintAnchorVName(const Anchor&);
@@ -242,7 +253,7 @@ class KytheFactsExtractor {
 
   // Keeps track of scopes and definitions inside the scopes of ancestors as
   // the visitor traverses the facts tree.
-  ScopeContext scope_context_;
+  ScopeContext vertical_scope_context_;
 
   // Saved packages signatures alongside with their inner members.
   // This is used for resolving references to some variables after using import
@@ -263,7 +274,7 @@ class KytheFactsExtractor {
   //   "pkg1": ["my_fun", "my_class"],
   //   "pkg2": ["my_fun", "my_class"]
   // }
-  std::map<std::string, std::vector<VName>> package_scope_context_;
+  std::map<std::string, std::vector<VName>> scope_context_;
 
   // Output stream for capturing, redirecting, testing and verifying the
   // output.
