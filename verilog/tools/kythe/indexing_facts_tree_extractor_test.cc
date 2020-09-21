@@ -115,6 +115,26 @@ TEST(FactsTreeExtractor, EmptyCSTTest) {
   EXPECT_EQ(result_pair.right, nullptr) << *result_pair.right;
 }
 
+TEST(FactsTreeExtractor, ParseErrorTest) {
+  // These inputs are lexically or syntactically invalid.
+  constexpr absl::string_view code_texts[] = {
+      "9badid foo;\n"       // lexical error
+      "final v;\n",         // syntax error
+      "module unfinished",  // syntax error
+  };
+  constexpr absl::string_view file_name = "verilog.v";
+
+  for (const auto& code_text : code_texts) {
+    int exit_status = 0;
+    bool parse_ok = true;
+
+    const auto facts_tree =
+        ExtractOneFile(code_text, file_name, exit_status, parse_ok);
+    EXPECT_FALSE(parse_ok) << "code\n" << code_text;
+    EXPECT_EQ(exit_status, 1) << "code\n" << code_text;
+  }
+}
+
 TEST(FactsTreeExtractor, EmptyModuleTest) {
   constexpr int kTag = 1;  // value doesn't matter
   const verible::SyntaxTreeSearchTestCase kTestCase = {
