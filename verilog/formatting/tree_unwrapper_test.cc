@@ -5968,7 +5968,8 @@ const TreeUnwrapperTestData kUnwrapFunctionTestCases[] = {
         "endfunction : foo",
         FunctionDeclaration(
             0, FunctionHeader(0, {"function", "foo", ";", "// foo does x"}),
-            L(1, {"// statement comment"}), L(0, {"endfunction", ":", "foo"})),
+            L(1, {"// statement comment"}),  //
+            L(0, {"endfunction", ":", "foo"})),
     },
 
     {
@@ -6031,6 +6032,21 @@ const TreeUnwrapperTestData kUnwrapFunctionTestCases[] = {
         "endfunction",
         FunctionDeclaration(0, FunctionHeader(0, {"function", "foo", ";"}),
                             L(1, {"int", "value", ";"}), L(0, {"endfunction"})),
+    },
+    {
+        "function with only one variable declaration and comments",
+        "function foo;// foo does x\n"
+        "//comment1\n"
+        "int bar; //comment2\n"
+        "//comment3\n"
+        "endfunction : foo",
+        FunctionDeclaration(
+            0, FunctionHeader(0, {"function", "foo", ";", "// foo does x"}),
+            N(1,                                        //
+              L(1, {"//comment1"}),                     //
+              L(1, {"int", "bar", ";", "//comment2"}),  //
+              L(1, {"//comment3"})),                    //
+            L(0, {"endfunction", ":", "foo"})),
     },
 
     {

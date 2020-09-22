@@ -42,6 +42,11 @@ std::vector<verible::TreeSearchMatch> FindAllFunctionOrTaskCalls(
   return verible::SearchSyntaxTree(root, NodekFunctionCall());
 }
 
+std::vector<verible::TreeSearchMatch> FindAllFunctionOrTaskCallsExtension(
+    const Symbol& root) {
+  return verible::SearchSyntaxTree(root, NodekMethodCallExtension());
+}
+
 const verible::SyntaxTreeNode& GetFunctionHeader(const Symbol& function_decl) {
   return GetSubtreeAsNode(function_decl, NodeEnum::kFunctionDeclaration, 0,
                           NodeEnum::kFunctionHeader);
@@ -89,15 +94,29 @@ const verible::SyntaxTreeLeaf* GetFunctionName(
   return ABSL_DIE_IF_NULL(GetIdentifier(*function_id));
 }
 
+const verible::SyntaxTreeNode& GetLocalRootFromFunctionCall(
+    const verible::Symbol& function_call) {
+  return GetSubtreeAsNode(function_call, NodeEnum::kFunctionCall, 0,
+                          NodeEnum::kLocalRoot);
+}
+
 const verible::SyntaxTreeLeaf* GetFunctionCallName(
     const verible::Symbol& function_call) {
-  const auto& local_root = GetSubtreeAsNode(
-      function_call, NodeEnum::kFunctionCall, 0, NodeEnum::kLocalRoot);
+  const auto& local_root = GetLocalRootFromFunctionCall(function_call);
 
   const auto& unqualified_id = GetSubtreeAsNode(
       local_root, NodeEnum::kLocalRoot, 0, NodeEnum::kUnqualifiedId);
 
   return ABSL_DIE_IF_NULL(GetIdentifier(unqualified_id));
+}
+
+const verible::SyntaxTreeLeaf& GetFunctionCallNameFromCallExtension(
+    const verible::Symbol& function_call) {
+  const auto& unqualified_id =
+      GetSubtreeAsNode(function_call, NodeEnum::kMethodCallExtension, 1,
+                       NodeEnum::kUnqualifiedId);
+
+  return *ABSL_DIE_IF_NULL(GetIdentifier(unqualified_id));
 }
 
 const verible::SyntaxTreeNode& GetFunctionBlockStatementList(
@@ -111,6 +130,12 @@ const verible::SyntaxTreeNode& GetParenGroupFromCall(
     const verible::Symbol& function_call) {
   return verible::GetSubtreeAsNode(function_call, NodeEnum::kFunctionCall, 1,
                                    NodeEnum::kParenGroup);
+}
+
+const verible::SyntaxTreeNode& GetParenGroupFromCallExtension(
+    const verible::Symbol& function_call) {
+  return verible::GetSubtreeAsNode(
+      function_call, NodeEnum::kMethodCallExtension, 2, NodeEnum::kParenGroup);
 }
 
 }  // namespace verilog

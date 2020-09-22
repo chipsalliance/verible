@@ -60,8 +60,8 @@ struct FormatStyle : public verible::BasicFormatStyle {
   AlignmentPolicy module_net_variable_alignment = AlignmentPolicy::kAlign;
 
   // Control how various assignment statements should be aligned.
-  // This covers: continuous assignment statements.
-  // TODO(fangism): cover blocking, and nonblocking assignments.
+  // This covers: continuous assignment statements,
+  // blocking, and nonblocking assignments.
   // Internal tests assume these are forced to kAlign.
   AlignmentPolicy assignment_statement_alignment = AlignmentPolicy::kAlign;
 

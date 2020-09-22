@@ -2604,7 +2604,7 @@ static constexpr FormatterTestCase kFormatterTestCases[] = {
         "module m;\n"
         "  initial begin\n"
         "    automatic int a;\n"
-        "    static byte s = 0;\n"
+        "    static byte   s = 0;\n"  // aligned
         "  end\n"
         "endmodule\n",
     },
@@ -7121,6 +7121,19 @@ TEST(FormatterEndToEndTest, AutoInferAlignment) {
        "  wire           wwwww;\n"  // ... and gets alignment
        "  foo_pkg::baz_t lll;\n"
        "endmodule : nn\n"},
+      {// data/net declarations as generate items (conditional)
+       "module nn;\n"
+       "if (cc)begin:fff\n"
+       "wire wwwww;\n"
+       "logic lll;\n"
+       "end:fff\n"
+       "endmodule : nn\n",
+       "module nn;\n"
+       "  if (cc) begin : fff\n"
+       "    wire  wwwww;\n"  // alignment adds few spaces, so align
+       "    logic lll;\n"
+       "  end : fff\n"
+       "endmodule : nn\n"},
 
       // continuous assignments
       {"module m_assign;\n"
@@ -7161,6 +7174,256 @@ TEST(FormatterEndToEndTest, AutoInferAlignment) {
        "  assign foo      = 1'b1;\n"  // aligned
        "  assign baaaaaar = 1'b0;\n"
        "endmodule\n"},
+      {// continuous assignments as generate items (conditional)
+       "module m_assign;\n"
+       "if (xy) begin\n"
+       "assign foo  =  1'b0;\n"  // align: adds few spaces
+       "assign baaar = 1'b1;\n"
+       "end else begin\n"
+       "assign goo  =      1'b1;\n"  // induce alignment with excess spaces
+       "assign zaaaaaar = 1'b0;\n"
+       "end\n"
+       "endmodule\n",
+       "module m_assign;\n"
+       "  if (xy) begin\n"
+       "    assign foo   = 1'b0;\n"  // aligned
+       "    assign baaar = 1'b1;\n"
+       "  end else begin\n"
+       "    assign goo      = 1'b1;\n"  // induce alignment with excess spaces
+       "    assign zaaaaaar = 1'b0;\n"
+       "  end\n"
+       "endmodule\n"},
+      {// continuous assignments as generate items (loop)
+       "module m_assign;\n"
+       "for(genvar i=0; i<k; ++i ) begin\n"
+       "assign foo  =  1'b0;\n"  // align: adds few spaces
+       "assign baaar = 1'b1;\n"
+       "end\n"
+       "endmodule\n",
+       "module m_assign;\n"
+       "  for (genvar i = 0; i < k; ++i) begin\n"
+       "    assign foo   = 1'b0;\n"  // aligned
+       "    assign baaar = 1'b1;\n"
+       "  end\n"
+       "endmodule\n"},
+      {// continuous assignments as generate items (case)
+       "module m_assign;\n"
+       "case (c)\n"
+       "jk:begin\n"
+       "assign foo  =  1'b0;\n"  // align: adds few spaces
+       "assign baaar = 1'b1;\n"
+       "end\n"
+       "endcase\n"
+       "endmodule\n",
+       "module m_assign;\n"
+       "  case (c)\n"
+       "    jk: begin\n"
+       "      assign foo   = 1'b0;\n"  // aligned
+       "      assign baaar = 1'b1;\n"
+       "    end\n"
+       "  endcase\n"
+       "endmodule\n"},
+
+      // net/variable assignments: blocking and nonblocking
+      {"module  ma ;\n"
+       "initial  begin\n"
+       "aa = b;\n"
+       "c = 1'b0;\n"
+       "end\n"
+       "endmodule\n",
+       "module ma;\n"
+       "  initial begin\n"
+       "    aa = b;\n"
+       "    c  = 1'b0;\n"  // only one space to align
+       "  end\n"
+       "endmodule\n"},
+      {"function void  fa ;\n"
+       "c = 1'b0;\n"
+       "aa = b;\n"
+       "endfunction\n",
+       "function void fa;\n"
+       "  c  = 1'b0;\n"  // only one space to align
+       "  aa = b;\n"
+       "endfunction\n"},
+      {"task  ta ; \n"
+       "aa =  b;\n"
+       "c = 1'b0;\n"
+       "endtask\n",
+       "task ta;\n"
+       "  aa = b;\n"
+       "  c  = 1'b0;\n"  // only one space to align
+       "endtask\n"},
+      {"module  ma ;\n"
+       "always@( posedge clk) begin\n"
+       "aaa <= b;\n"
+       "c <= 1'b0;\n"
+       "end\n"
+       "endmodule\n",
+       "module ma;\n"
+       "  always @(posedge clk) begin\n"
+       "    aaa <= b;\n"
+       "    c   <= 1'b0;\n"  // only two spaces to align
+       "  end\n"
+       "endmodule\n"},
+      {"function int  fa ;\n"
+       "c <= 1'b0;\n"
+       "aa <= b;\n"
+       "return 0 ;\n"
+       "endfunction\n",
+       "function int fa;\n"
+       "  c  <= 1'b0;\n"  // only one space to align
+       "  aa <= b;\n"
+       "  return 0;\n"
+       "endfunction\n"},
+      {"task  ta ; \n"
+       "$display (\"hello\" );\n"
+       "aa <=  b;\n"
+       "c <= 1'b0;\n"
+       "endtask\n",
+       "task ta;\n"
+       "  $display(\"hello\");\n"
+       "  aa <= b;\n"
+       "  c  <= 1'b0;\n"  // only one space to align
+       "endtask\n"},
+      {// mixed blocking and nonblocking assignments
+       "module  ma ;\n"
+       "always@( posedge clk) begin\n"
+       "aaaaa  = b;\n"
+       "ccc  = 1'b0;\n"
+       "aaa <= b;\n"
+       "c <= 1'b0;\n"
+       "end\n"
+       "endmodule\n",
+       "module ma;\n"
+       "  always @(posedge clk) begin\n"
+       "    aaaaa = b;\n"
+       "    ccc   = 1'b0;\n"  // only two spaces to align
+       "    aaa <= b;\n"
+       "    c   <= 1'b0;\n"  // only two spaces to align (separate group)
+       "  end\n"
+       "endmodule\n"},
+      {"task  ta ; \n"
+       "aa <=  b;\n"
+       "c <= 1'b0;\n"
+       "$display (\"hello\" );\n"  // separates above/below alignment groups
+       "zzaa <=  b;\n"
+       "zzc <= 1'b0;\n"
+       "endtask\n",
+       "task ta;\n"
+       "  aa <= b;\n"
+       "  c  <= 1'b0;\n"  // only one space to align
+       "  $display(\"hello\");\n"
+       "  zzaa <= b;\n"
+       "  zzc  <= 1'b0;\n"  // only one space to align
+       "endtask\n"},
+      {"task  ta ; \n"
+       "$display (\"hello\" );\n"
+       "aaaaa <=  b;\n"
+       "c <= 1'b0;\n"  // need too many spaces to align
+       "endtask\n",
+       "task ta;\n"
+       "  $display(\"hello\");\n"
+       "  aaaaa <= b;\n"
+       "  c <= 1'b0;\n"  // so keep flush-left
+       "endtask\n"},
+      {"function void  fa ; \n"
+       "$display (\"hello\" );\n"
+       "aaaaa =  b;\n"
+       "c = 1'b0;\n"  // need too many spaces to align
+       "endfunction\n",
+       "function void fa;\n"
+       "  $display(\"hello\");\n"
+       "  aaaaa = b;\n"
+       "  c = 1'b0;\n"  // so keep flush-left
+       "endfunction\n"},
+      {"module  ma ;\n"
+       "always@( posedge clk) begin\n"
+       "aaaxx <= b;\n"
+       "c <= 1'b0;\n"  // need too many spaces to align
+       "end\n"
+       "endmodule\n",
+       "module ma;\n"
+       "  always @(posedge clk) begin\n"
+       "    aaaxx <= b;\n"
+       "    c <= 1'b0;\n"  // so keep flush-left
+       "  end\n"
+       "endmodule\n"},
+      {"module  ma ;\n"
+       "always@( posedge clk) begin\n"
+       "aaaxx <= b    ;\n"  // inject 4 spaces to induce alignment
+       "c <= 1'b0;\n"
+       "end\n"
+       "endmodule\n",
+       "module ma;\n"
+       "  always @(posedge clk) begin\n"
+       "    aaaxx <= b;\n"
+       "    c     <= 1'b0;\n"  // induced alignment
+       "  end\n"
+       "endmodule\n"},
+      {"module  ma ;\n"
+       "always@( posedge clk) begin\n"
+       "aaaxx <= b    ;\n"  // inject 4 spaces to induce alignment
+       "//comment\n"
+       "c <= 1'b0;\n"
+       "end\n"
+       "endmodule\n",
+       "module ma;\n"
+       "  always @(posedge clk) begin\n"
+       "    aaaxx <= b;\n"
+       "    //comment\n"       // ignored within alignment group
+       "    c     <= 1'b0;\n"  // induced alignment
+       "  end\n"
+       "endmodule\n"},
+
+      // local variable declarations as statements
+      {"task tt ;\n"
+       "int foo;\n"  // only 2 spaces needed to align
+       "bar_t baz;\n"
+       "endtask\n",
+       "task tt;\n"
+       "  int   foo;\n"  // aligned
+       "  bar_t baz;\n"
+       "endtask\n"},
+      {"function ff ;\n"
+       "bar_t baz;\n"
+       "int foo;\n"  // only 2 spaces needed to align
+       "endfunction\n",
+       "function ff;\n"
+       "  bar_t baz;\n"
+       "  int   foo;\n"  // aligned
+       "endfunction\n"},
+      {"task tt ;\n"
+       "int  foo;\n"  // too many spaces needed to align
+       "baaaar_t baz;\n"
+       "endtask\n",
+       "task tt;\n"
+       "  int foo;\n"  // so flush-left
+       "  baaaar_t baz;\n"
+       "endtask\n"},
+      {"function ff ;\n"
+       "baaaar_t baz;\n"
+       "int  foo;\n"  // too many spaces needed to align
+       "endfunction\n",
+       "function ff;\n"
+       "  baaaar_t baz;\n"
+       "  int foo;\n"  // so flush-left
+       "endfunction\n"},
+      {"task tt ;\n"
+       "int        foo;\n"  // injected spaces to induce alignment
+       "baaaar_t baz;\n"
+       "endtask\n",
+       "task tt;\n"
+       "  int      foo;\n"  // aligned
+       "  baaaar_t baz;\n"
+       "endtask\n"},
+      {"function ff ;\n"
+       "baaaar_t baz    ;\n"  // injected spaces to induce alignment
+       "int  foo;\n"
+       "endfunction\n",
+       "function ff;\n"
+       "  baaaar_t baz;\n"
+       "  int      foo;\n"  // so aligned
+       "endfunction\n"},
 
       // formal parameters
       {"module pp #(\n"

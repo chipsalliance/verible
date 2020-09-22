@@ -455,6 +455,37 @@ TEST(GetFunctionHeaderTest, GetFunctionName) {
   }
 }
 
+TEST(GetFunctionHeaderTest, GetFunctionClassCallName) {
+  constexpr int kTag = 1;  // value doesn't matter
+  const SyntaxTreeSearchTestCase kTestCases[] = {
+      {""},
+      {"module m(); endmodule: m"},
+      {"module m();\n initial $display(my_class.",
+       {kTag, "function_name"},
+       "());\nendmodule"},
+      {"module m();\n initial "
+       "$display(pkg::my_class.",
+       {kTag, "function_name"},
+       "());\nendmodule"},
+  };
+  for (const auto& test : kTestCases) {
+    TestVerilogSyntaxRangeMatches(
+        __FUNCTION__, test, [](const TextStructureView& text_structure) {
+          const auto& root = text_structure.SyntaxTree();
+          const auto calls =
+              FindAllFunctionOrTaskCallsExtension(*ABSL_DIE_IF_NULL(root));
+
+          std::vector<TreeSearchMatch> names;
+          for (const auto& Call : calls) {
+            const auto& name =
+                GetFunctionCallNameFromCallExtension(*Call.match);
+            names.emplace_back(TreeSearchMatch{&name, {/* ignored context */}});
+          }
+          return names;
+        });
+  }
+}
+
 TEST(GetFunctionBlockStatement, GetFunctionBody) {
   constexpr int kTag = 1;  // value doesn't matter
   const SyntaxTreeSearchTestCase kTestCases[] = {
@@ -528,6 +559,39 @@ TEST(FunctionCallTest, GetFunctionCallArguments) {
           std::vector<TreeSearchMatch> paren_groups;
           for (const auto& decl : instances) {
             const auto& paren_group = GetParenGroupFromCall(*decl.match);
+            paren_groups.emplace_back(
+                TreeSearchMatch{&paren_group, {/* ignored context */}});
+          }
+          return paren_groups;
+        });
+  }
+}
+
+TEST(FunctionCallTest, GetFunctionCallExtensionArguments) {
+  constexpr int kTag = 1;  // value doesn't matter
+  const SyntaxTreeSearchTestCase kTestCases[] = {
+      {""},
+      {"module m(); endmodule: m"},
+      {"module m();\n initial $display(my_class.function_name",
+       {kTag, "(x, y)"},
+       ");\nendmodule"},
+      {"module m();\n initial "
+       "$display(pkg::my_class.function_name",
+       {kTag, "()"},
+       ");\nendmodule"},
+  };
+
+  for (const auto& test : kTestCases) {
+    TestVerilogSyntaxRangeMatches(
+        __FUNCTION__, test, [](const TextStructureView& text_structure) {
+          const auto& root = text_structure.SyntaxTree();
+          const auto& instances =
+              FindAllFunctionOrTaskCallsExtension(*ABSL_DIE_IF_NULL(root));
+
+          std::vector<TreeSearchMatch> paren_groups;
+          for (const auto& decl : instances) {
+            const auto& paren_group =
+                GetParenGroupFromCallExtension(*decl.match);
             paren_groups.emplace_back(
                 TreeSearchMatch{&paren_group, {/* ignored context */}});
           }

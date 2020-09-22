@@ -24,7 +24,7 @@ readonly MY_OUTPUT_FILE
 lint_tool="$1"
 
 ################################################################################
-# Test no command.
+echo "=== Test no file"
 
 "$lint_tool" > "$MY_OUTPUT_FILE" 2>&1
 
@@ -35,7 +35,7 @@ status="$?"
 }
 
 ################################################################################
-# Test the '--helpfull' command.
+echo "=== Test the '--helpfull' flag"
 
 "$lint_tool" --helpfull > "$MY_OUTPUT_FILE" 2>&1
 
@@ -52,10 +52,124 @@ grep -q -e "--rules" "$MY_OUTPUT_FILE" || {
 }
 
 ################################################################################
-# Test '--waiver_files'.
-TEST_FILE="${TEST_TMPDIR}/instance_parameters.sv"
+echo "=== Test the '--help_rules' flag"
+
+"$lint_tool" --help_rules=no-tabs > "$MY_OUTPUT_FILE" 2>&1
+
+status="$?"
+[[ $status == 0 ]] || {
+  echo "Expected exit code 0, but got $status"
+  exit 1
+}
+
+################################################################################
+echo "=== Test the '--generate_markdown' flag"
+
+"$lint_tool" --generate_markdown > "$MY_OUTPUT_FILE"
+
+status="$?"
+[[ $status == 0 ]] || {
+  echo "Expected exit code 0, but got $status"
+  exit 1
+}
+
+[[ -s "$MY_OUTPUT_FILE" ]] || {
+  echo "Expected $MY_OUTPUT_FILE to be non-empty, but got empty."
+  exit 1
+}
+
+################################################################################
+echo "=== Test --parse_fatal (default)"
+
+TEST_FILE="${TEST_TMPDIR}/syntax-error.sv"
 
 cat > ${TEST_FILE} <<EOF
+class c  // missing semicolon
+endclass
+EOF
+
+"$lint_tool" "$TEST_FILE" > /dev/null 2> "${MY_OUTPUT_FILE}.err"
+
+status="$?"
+[[ $status == 1 ]] || {
+  echo "Expected exit code 1, but got $status"
+  exit 1
+}
+
+echo "=== Test --parse_fatal"
+"$lint_tool" "$TEST_FILE" --parse_fatal > /dev/null 2> "${MY_OUTPUT_FILE}.err"
+
+status="$?"
+[[ $status == 1 ]] || {
+  echo "Expected exit code 1, but got $status"
+  exit 1
+}
+
+echo "=== Test --noparse_fatal"
+"$lint_tool" "$TEST_FILE" --noparse_fatal > /dev/null 2> "${MY_OUTPUT_FILE}.err"
+
+status="$?"
+[[ $status == 0 ]] || {
+  echo "Expected exit code 0, but got $status"
+  exit 1
+}
+
+################################################################################
+echo "=== Test --lint_fatal (default)"
+
+TEST_FILE="${TEST_TMPDIR}/lint-error.sv"
+
+cat > "${TEST_FILE}" <<EOF
+class	c;  // tabs
+endclass
+EOF
+
+"$lint_tool" --rules=no-tabs "$TEST_FILE" > /dev/null 2> "${MY_OUTPUT_FILE}.err"
+
+status="$?"
+[[ $status == 1 ]] || {
+  echo "Expected exit code 1, but got $status"
+  exit 1
+}
+
+echo "=== Test --lint_fatal"
+"$lint_tool" --rules=no-tabs --lint_fatal "$TEST_FILE" > /dev/null 2> "${MY_OUTPUT_FILE}.err"
+
+status="$?"
+[[ $status == 1 ]] || {
+  echo "Expected exit code 1, but got $status"
+  exit 1
+}
+
+echo "=== Test --nolint_fatal"
+"$lint_tool" --rules=no-tabs --nolint_fatal "$TEST_FILE" > /dev/null 2> "${MY_OUTPUT_FILE}.err"
+
+status="$?"
+[[ $status == 0 ]] || {
+  echo "Expected exit code 0, but got $status"
+  exit 1
+}
+
+################################################################################
+echo "=== Test invalid rule (--rules)"
+
+# using same ${TEST_FILE}
+
+echo "=== Test --nolint_fatal"
+"$lint_tool" --rules=does-not-exist-fake-rule --nolint_fatal "$TEST_FILE" > /dev/null 2> "${MY_OUTPUT_FILE}.err"
+
+status="$?"
+[[ $status == 1 ]] || {
+  echo "Expected exit code 1, but got $status"
+  exit 1
+}
+
+################################################################################
+echo "=== Test '--waiver_files'."
+
+TEST_FILE="${TEST_TMPDIR}/instance_parameters.sv"
+
+cat > "${TEST_FILE}" <<EOF
 module instance_parameters;
   bar #(4, 8) baz;
 endmodule
@@ -75,6 +189,7 @@ grep -q "ERROR: Missing the value for the flag 'waiver_files'" "${MY_OUTPUT_FILE
   exit 1
 }
 
+echo "=== Test --waiver_files $WAIVER_FILE with one rule"
 WAIVER_FILE="${TEST_TMPDIR}/waive_module-parameter.vlt"
 cat > ${WAIVER_FILE} <<EOF
 waive --rule=module-parameter
@@ -88,6 +203,7 @@ status="$?"
   exit 1
 }
 
+echo "=== Test --waiver_files $WAIVER_FILE with one rule on one line"
 WAIVER_FILE="${TEST_TMPDIR}/waive_module-parameter_line.vlt"
 cat > ${WAIVER_FILE} <<EOF
 waive --rule=module-parameter --line=1
@@ -98,8 +214,8 @@ EOF
 "$lint_tool" "$TEST_FILE" --waiver_files "$WAIVER_FILE" > "${MY_OUTPUT_FILE}.err" 2>&1
 
 status="$?"
-[[ $status == 0 ]] || {
-  echo "Expected exit code 0, but got $status"
+[[ $status == 1 ]] || {
+  echo "Expected exit code 1, but got $status"
   exit 1
 }
 
