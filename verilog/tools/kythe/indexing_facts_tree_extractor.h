@@ -99,7 +99,7 @@ class IndexingFactsTreeExtractor : public verible::TreeContextVisitor {
   void ExtractFunctionOrTaskCall(
       const verible::SyntaxTreeNode& function_call_node);
 
-  // Extracts function or task call tagged with kMethodCalLExtension (treated as
+  // Extracts function or task call tagged with kMethodCallExtension (treated as
   // kFunctionOrTaskCall in facts tree) creates its corresponding fact tree.
   void ExtractMethodCallExtension(
       const verible::SyntaxTreeNode& call_extension_node);

@@ -219,7 +219,7 @@ class KytheFactsExtractor {
   // pkg::member => {Anchor(pkg), Anchor(member)}
   // pkg::class_name::var => {Anchor(pkg), Anchor(class_name), Anchor(var)}
   //
-  // is_function_call determins whether this member reference is function call
+  // is_function_call determines whether this member reference is function call
   // or not e.g pkg::class1::function_x().
   void ExtractMemberReference(const IndexingFactNode& member_reference_node,
                               bool is_function_call);
