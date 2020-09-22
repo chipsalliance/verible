@@ -110,7 +110,7 @@ void KytheFactsExtractor::IndexingFactNodeTagResolver(
       break;
     }
     case IndexingFactType::kMemberReference: {
-      ExtractMemberReference(node);
+      ExtractMemberReference(node, false);
       break;
     }
     case IndexingFactType::kPackage: {
@@ -148,7 +148,7 @@ void KytheFactsExtractor::AddVNameToVerticalScope(IndexingFactType tag,
 
 void KytheFactsExtractor::CreateChildOfEdge(IndexingFactType tag,
                                             const VName& vname) {
-  // Determins whether to create a child of edge to the parent node or not.
+  // Determines whether to create a child of edge to the parent node or not.
   switch (tag) {
     case IndexingFactType::kFile:
     case IndexingFactType::kPackageImport:
@@ -213,6 +213,10 @@ void KytheFactsExtractor::ConstructFlattenedScope(
     case IndexingFactType::kClassInstance: {
       const VName* found_vname = vertical_scope_context_.SearchForDefinition(
           CreateSignature(node.Parent()->Value().Anchors()[0].Value()));
+
+      if (found_vname == nullptr) {
+        break;
+      }
 
       scope_context_[vname.signature] = scope_context_[found_vname->signature];
       break;
@@ -456,19 +460,32 @@ VName KytheFactsExtractor::ExtractFunctionOrTask(
 
 void KytheFactsExtractor::ExtractFunctionOrTaskCall(
     const IndexingFactNode& function_call_fact_node) {
-  const auto& function_name = function_call_fact_node.Value().Anchors()[0];
+  const auto& anchors = function_call_fact_node.Value().Anchors();
 
-  const VName* function_vname = vertical_scope_context_.SearchForDefinition(
-      CreateSignature(function_name.Value()));
+  // In case function_name();
+  if (anchors.size() == 1) {
+    const auto& function_name = anchors[0];
 
-  if (function_vname == nullptr) {
-    return;
+    const VName* function_vname = vertical_scope_context_.SearchForDefinition(
+        CreateSignature(function_name.Value()));
+
+    if (function_vname == nullptr) {
+      return;
+    }
+
+    const VName function_vname_anchor = PrintAnchorVName(function_name);
+
+    GenerateEdgeString(function_vname_anchor, kEdgeRef, *function_vname);
+    GenerateEdgeString(function_vname_anchor, kEdgeRefCall, *function_vname);
+  } else {
+    // In case pkg::class1::function_name().
+    IndexingNodeData member_reference_data(IndexingFactType::kMemberReference);
+    for (const Anchor& anchor : anchors) {
+      member_reference_data.AppendAnchor(
+          Anchor(anchor.Value(), anchor.StartLocation(), anchor.EndLocation()));
+    }
+    ExtractMemberReference(IndexingFactNode(member_reference_data), true);
   }
-
-  const VName function_vname_anchor = PrintAnchorVName(function_name);
-
-  GenerateEdgeString(function_vname_anchor, kEdgeRef, *function_vname);
-  GenerateEdgeString(function_vname_anchor, kEdgeRefCall, *function_vname);
 }
 
 VName KytheFactsExtractor::ExtractClass(
@@ -556,7 +573,7 @@ void KytheFactsExtractor::ExtractPackageImport(
 }
 
 void KytheFactsExtractor::ExtractMemberReference(
-    const IndexingFactNode& member_reference_node) {
+    const IndexingFactNode& member_reference_node, bool is_function_call) {
   const auto& anchors = member_reference_node.Value().Anchors();
   const Anchor& containing_block_name = anchors[0];
   const Anchor& member_name = anchors[1];
@@ -597,19 +614,25 @@ void KytheFactsExtractor::ExtractMemberReference(
 
   // Generate reference edge for all the members.
   // e.g pkg::my_class::my_inner_class::static_var.
+  const VName* definition_vname;
+  VName reference_anchor("");
   for (const auto& anchor :
        verible::make_range(anchors.begin() + 1, anchors.end())) {
-    const VName* definition_vname = SearchForDefinitionVNameInScopeContext(
+    definition_vname = SearchForDefinitionVNameInScopeContext(
         definition_signature, CreateSignature(anchor.Value()));
 
     if (definition_vname == nullptr) {
       continue;
     }
 
-    const VName reference_anchor = PrintAnchorVName(anchor);
+    reference_anchor = PrintAnchorVName(anchor);
     GenerateEdgeString(reference_anchor, kEdgeRef, *definition_vname);
 
     definition_signature = definition_vname->signature;
+  }
+
+  if (is_function_call && definition_vname != nullptr) {
+    GenerateEdgeString(reference_anchor, kEdgeRefCall, *definition_vname);
   }
 }
 
