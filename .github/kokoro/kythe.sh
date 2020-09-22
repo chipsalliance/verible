@@ -19,6 +19,9 @@ set -e
 # Source the internal common scripts.
 source "${KOKORO_GFILE_DIR}/common_google.sh"
 
+# Cleanup previous build cache.
+rm -rf "/home/kbuilder/.cache"
+
 # Setup kythe
 export KYTHE_VERSION=v0.0.38
 cd "${TMPDIR}"
