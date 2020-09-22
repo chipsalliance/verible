@@ -640,7 +640,8 @@ void IndexingFactsTreeExtractor::ExtractClassInstances(
       class_instance_node.Value().AppendAnchor(
           Anchor(instance_name, context_.base));
 
-      trailing_expression = GetTrailingExpressionFromRegisterVariable(*instance.match);
+      trailing_expression =
+          GetTrailingExpressionFromRegisterVariable(*instance.match);
     } else if (tag == NodeEnum::kVariableDeclarationAssignment) {
       const SyntaxTreeLeaf& leaf =
           GetUnqualifiedIdFromVariableDeclarationAssignment(*instance.match);
@@ -652,12 +653,10 @@ void IndexingFactsTreeExtractor::ExtractClassInstances(
     }
 
     if (trailing_expression != nullptr) {
-      {
-        const IndexingFactsTreeContext::AutoPop p(&facts_tree_context_,
-                                                  &class_instance_node);
-        // Visit Trailing Assignment Expression.
-        Visit(*trailing_expression);
-      }
+      const IndexingFactsTreeContext::AutoPop p(&facts_tree_context_,
+                                                &class_instance_node);
+      // Visit Trailing Assignment Expression.
+      Visit(*trailing_expression);
     }
 
     class_node.NewChild(class_instance_node);
@@ -682,23 +681,22 @@ void IndexingFactsTreeExtractor::ExtractPrimitiveVariables(
           GetInstanceNameTokenInfoFromRegisterVariable(*variable_match.match);
       variable_node.Value().AppendAnchor(
           Anchor(variable_name_token_info, context_.base));
-      expression = GetTrailingExpressionFromRegisterVariable(*variable_match.match);
+      expression =
+          GetTrailingExpressionFromRegisterVariable(*variable_match.match);
     } else if (tag == NodeEnum::kVariableDeclarationAssignment) {
       const SyntaxTreeLeaf& leaf =
           GetUnqualifiedIdFromVariableDeclarationAssignment(
               *variable_match.match);
       variable_node.Value().AppendAnchor(Anchor(leaf.get(), context_.base));
-      expression =
-          GetTrailingExpressionFromVariableDeclarationAssign(*variable_match.match);
+      expression = GetTrailingExpressionFromVariableDeclarationAssign(
+          *variable_match.match);
     }
 
     if (expression != nullptr) {
-      {
-        const IndexingFactsTreeContext::AutoPop p(&facts_tree_context_,
-                                                  &variable_node);
-        // Visit Trailing Assignment Expression.
-        Visit(*expression);
-      }
+      const IndexingFactsTreeContext::AutoPop p(&facts_tree_context_,
+                                                &variable_node);
+      // Visit Trailing Assignment Expression.
+      Visit(*expression);
     }
 
     facts_tree_context_.top().NewChild(variable_node);
