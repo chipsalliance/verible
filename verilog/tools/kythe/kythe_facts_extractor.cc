@@ -148,7 +148,7 @@ void KytheFactsExtractor::AddVNameToVerticalScope(IndexingFactType tag,
 
 void KytheFactsExtractor::CreateChildOfEdge(IndexingFactType tag,
                                             const VName& vname) {
-  // Determins whether to create a child of edge to the parent node or not.
+  // Determines whether to create a child of edge to the parent node or not.
   switch (tag) {
     case IndexingFactType::kFile:
     case IndexingFactType::kPackageImport:

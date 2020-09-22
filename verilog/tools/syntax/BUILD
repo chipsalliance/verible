@@ -41,3 +41,12 @@ sh_binary(
     name = "triage_parser",
     srcs = ["triage_parser.sh"],
 )
+
+sh_test(
+    name = "verilog_syntax_test",
+    size = "small",
+    srcs = ["verilog_syntax_test.sh"],
+    args = ["$(location :verible-verilog-syntax)"],
+    data = [":verible-verilog-syntax"],
+    deps = [],
+)

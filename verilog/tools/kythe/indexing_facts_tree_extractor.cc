@@ -48,24 +48,24 @@ using verible::TreeSearchMatch;
 IndexingFactNode ExtractOneFile(absl::string_view content,
                                 absl::string_view filename, int& exit_status,
                                 bool& parse_ok) {
-  const auto analyzer =
-      verilog::VerilogAnalyzer::AnalyzeAutomaticMode(content, filename);
-  const auto lex_status = ABSL_DIE_IF_NULL(analyzer)->LexStatus();
-  const auto parse_status = analyzer->ParseStatus();
-  if (!lex_status.ok() || !parse_status.ok()) {
+  verilog::VerilogAnalyzer analyzer(content, filename);
+  // Do not parse using AnalyzeAutomaticMode() because index extraction is only
+  // expected to work on self-contained files with full syntactic context.
+  const auto status = analyzer.Analyze();
+  if (!status.ok()) {
     const std::vector<std::string> syntax_error_messages(
-        analyzer->LinterTokenErrorMessages());
+        analyzer.LinterTokenErrorMessages());
     for (const auto& message : syntax_error_messages) {
       std::cout << message << std::endl;
     }
     exit_status = 1;
   }
-  parse_ok = parse_status.ok();
+  parse_ok = status.ok();
 
-  const auto& text_structure = analyzer->Data();
+  const auto& text_structure = analyzer.Data();
   const auto& syntax_tree = text_structure.SyntaxTree();
 
-  return BuildIndexingFactsTree(syntax_tree, analyzer->Data().Contents(),
+  return BuildIndexingFactsTree(syntax_tree, analyzer.Data().Contents(),
                                 filename);
 }
 
