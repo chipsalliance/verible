@@ -14,9 +14,9 @@
 
 #include "verilog/tools/kythe/indexing_facts_tree_extractor.h"
 
-#include "gtest/gtest.h"
 #include "common/analysis/syntax_tree_search_test_utils.h"
 #include "common/text/concrete_syntax_tree.h"
+#include "gtest/gtest.h"
 #include "verilog/analysis/verilog_analyzer.h"
 
 #undef EXPECT_OK
@@ -867,9 +867,15 @@ TEST(FactsTreeExtractor, PrimitiveTypeExtraction) {
        {kTag, "fun"},
        "();\n int ",
        {kTag, "x"},
-       ", ",
+       " = 5, ",
        {kTag, "y"},
-       ";\nlogic ",
+       " = ",
+       {kTag, "my_fun"},
+       "(",
+       {kTag, "o"},
+       ", ",
+       {kTag, "l"},
+       ");\nlogic ",
        {kTag, "l1"},
        ", ",
        {kTag, "l2"},
@@ -1041,58 +1047,81 @@ TEST(FactsTreeExtractor, PrimitiveTypeExtraction) {
               IndexingFactType::kVariableDefinition,
           }),
           // refers to y;
-          T({
+          T(
               {
-                  Anchor(kTestCase.expected_tokens[41], kTestCase.code),
+                  {
+                      Anchor(kTestCase.expected_tokens[41], kTestCase.code),
+                  },
+                  IndexingFactType::kVariableDefinition,
               },
-              IndexingFactType::kVariableDefinition,
-          }),
+              // refers to my_fun;
+              T(
+                  {
+                      {
+                          Anchor(kTestCase.expected_tokens[43], kTestCase.code),
+                      },
+                      IndexingFactType::kFunctionCall,
+                  },
+                  // refers to o;
+                  T({
+                      {
+                          Anchor(kTestCase.expected_tokens[45], kTestCase.code),
+                      },
+                      IndexingFactType::kVariableReference,
+                  }),
+                  // refers to l;
+                  T({
+                      {
+                          Anchor(kTestCase.expected_tokens[47], kTestCase.code),
+                      },
+                      IndexingFactType::kVariableReference,
+                  }))),
           // refers to l1;
-          T({
-              {
-                  Anchor(kTestCase.expected_tokens[43], kTestCase.code),
-              },
-              IndexingFactType::kVariableDefinition,
-          }),
-          // refers to l2;
-          T({
-              {
-                  Anchor(kTestCase.expected_tokens[45], kTestCase.code),
-              },
-              IndexingFactType::kVariableDefinition,
-          }),
-          // refers to b1;
-          T({
-              {
-                  Anchor(kTestCase.expected_tokens[47], kTestCase.code),
-              },
-              IndexingFactType::kVariableDefinition,
-          }),
-          // refers to b2;
           T({
               {
                   Anchor(kTestCase.expected_tokens[49], kTestCase.code),
               },
               IndexingFactType::kVariableDefinition,
           }),
-          // refers to s1;
+          // refers to l2;
           T({
               {
                   Anchor(kTestCase.expected_tokens[51], kTestCase.code),
               },
               IndexingFactType::kVariableDefinition,
           }),
-          // refers to s2;
+          // refers to b1;
           T({
               {
                   Anchor(kTestCase.expected_tokens[53], kTestCase.code),
               },
               IndexingFactType::kVariableDefinition,
           }),
-          // refers to return x;
+          // refers to b2;
           T({
               {
                   Anchor(kTestCase.expected_tokens[55], kTestCase.code),
+              },
+              IndexingFactType::kVariableDefinition,
+          }),
+          // refers to s1;
+          T({
+              {
+                  Anchor(kTestCase.expected_tokens[57], kTestCase.code),
+              },
+              IndexingFactType::kVariableDefinition,
+          }),
+          // refers to s2;
+          T({
+              {
+                  Anchor(kTestCase.expected_tokens[59], kTestCase.code),
+              },
+              IndexingFactType::kVariableDefinition,
+          }),
+          // refers to return x;
+          T({
+              {
+                  Anchor(kTestCase.expected_tokens[61], kTestCase.code),
               },
               IndexingFactType::kVariableReference,
           })));

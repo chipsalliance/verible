@@ -81,6 +81,13 @@ std::vector<verible::TreeSearchMatch> FindAllVariableDeclarationAssignment(
   return SearchSyntaxTree(root, NodekVariableDeclarationAssignment());
 }
 
+// Extracts node tagged with kExpression from node tagged with kTrailingAssign.
+static const SyntaxTreeNode& GetExpressionFromkTrailingAssign(
+    const Symbol& data_declaration) {
+  return GetSubtreeAsNode(data_declaration, NodeEnum::kTrailingAssign, 1,
+                          NodeEnum::kExpression);
+}
+
 // Don't want to expose kInstantiationBase because it is an artificial grouping.
 static const SyntaxTreeNode& GetInstantiationBaseFromDataDeclaration(
     const Symbol& data_declaration) {
@@ -168,6 +175,28 @@ GetUnqualifiedIdFromVariableDeclarationAssignment(
   return *AutoUnwrapIdentifier(*ABSL_DIE_IF_NULL(
       GetSubtreeAsSymbol(variable_declaration_assign,
                          NodeEnum::kVariableDeclarationAssignment, 0)));
+}
+
+const verible::SyntaxTreeNode* GetExpressionFromVariableDeclarationAssign(
+    const verible::Symbol& variable_declaration_assign) {
+  const Symbol* trailing_expression = GetSubtreeAsSymbol(
+      variable_declaration_assign, NodeEnum::kVariableDeclarationAssignment, 2);
+  if (verible::CheckOptionalSymbolAsNode(
+          trailing_expression, NodeEnum::kTrailingAssign) == nullptr) {
+    return nullptr;
+  }
+  return &GetExpressionFromkTrailingAssign(*trailing_expression);
+}
+
+const verible::SyntaxTreeNode* GetExpressionFromRegisterVariable(
+    const verible::Symbol& register_variable) {
+  const Symbol* trailing_expression =
+      GetSubtreeAsSymbol(register_variable, NodeEnum::kRegisterVariable, 2);
+  if (verible::CheckOptionalSymbolAsNode(
+          trailing_expression, NodeEnum::kTrailingAssign) == nullptr) {
+    return nullptr;
+  }
+  return &GetExpressionFromkTrailingAssign(*trailing_expression);
 }
 
 }  // namespace verilog
