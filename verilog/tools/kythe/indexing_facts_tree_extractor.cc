@@ -628,20 +628,39 @@ void IndexingFactsTreeExtractor::ExtractClassInstances(
   // Loop through each instance and associate each declared id with the same
   // type and create its corresponding facts tree node.
   for (const TreeSearchMatch& instance : class_instances) {
+    IndexingNodeData class_instance_data(IndexingFactType::kClassInstance);
+    IndexingFactNode class_instance_node(class_instance_data);
     const auto tag = static_cast<verilog::NodeEnum>(instance.match->Tag().tag);
+
+    const SyntaxTreeNode* trailing_expression = nullptr;
     if (tag == NodeEnum::kRegisterVariable) {
       const verible::TokenInfo& instance_name =
           GetInstanceNameTokenInfoFromRegisterVariable(*instance.match);
 
-      class_node.NewChild(
-          IndexingNodeData({Anchor(instance_name, context_.base)},
-                           IndexingFactType::kClassInstance));
+      class_instance_node.Value().AppendAnchor(
+          Anchor(instance_name, context_.base));
+
+      trailing_expression = GetTrailingExpressionFromRegisterVariable(*instance.match);
     } else if (tag == NodeEnum::kVariableDeclarationAssignment) {
       const SyntaxTreeLeaf& leaf =
           GetUnqualifiedIdFromVariableDeclarationAssignment(*instance.match);
-      class_node.NewChild(IndexingNodeData({Anchor(leaf.get(), context_.base)},
-                                           IndexingFactType::kClassInstance));
+      class_instance_node.Value().AppendAnchor(
+          Anchor(leaf.get(), context_.base));
+
+      trailing_expression =
+          GetTrailingExpressionFromVariableDeclarationAssign(*instance.match);
     }
+
+    if (trailing_expression != nullptr) {
+      {
+        const IndexingFactsTreeContext::AutoPop p(&facts_tree_context_,
+                                                  &class_instance_node);
+        // Visit Trailing Assignment Expression.
+        Visit(*trailing_expression);
+      }
+    }
+
+    class_node.NewChild(class_instance_node);
   }
 
   facts_tree_context_.top().NewChild(class_node);
@@ -663,14 +682,14 @@ void IndexingFactsTreeExtractor::ExtractPrimitiveVariables(
           GetInstanceNameTokenInfoFromRegisterVariable(*variable_match.match);
       variable_node.Value().AppendAnchor(
           Anchor(variable_name_token_info, context_.base));
-      expression = GetExpressionFromRegisterVariable(*variable_match.match);
+      expression = GetTrailingExpressionFromRegisterVariable(*variable_match.match);
     } else if (tag == NodeEnum::kVariableDeclarationAssignment) {
       const SyntaxTreeLeaf& leaf =
           GetUnqualifiedIdFromVariableDeclarationAssignment(
               *variable_match.match);
       variable_node.Value().AppendAnchor(Anchor(leaf.get(), context_.base));
       expression =
-          GetExpressionFromVariableDeclarationAssign(*variable_match.match);
+          GetTrailingExpressionFromVariableDeclarationAssign(*variable_match.match);
     }
 
     if (expression != nullptr) {

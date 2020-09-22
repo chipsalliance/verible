@@ -1515,19 +1515,24 @@ TEST(FactsTreeExtractor, NestedClassTest) {
 
 TEST(FactsTreeExtractor, OneClassInstanceTest) {
   constexpr int kTag = 1;  // value doesn't matter
-  const verible::SyntaxTreeSearchTestCase kTestCase = {
-      {"class ",
-       {kTag, "bar"},
-       ";\n endclass: ",
-       {kTag, "bar"},
-       "\nmodule ",
-       {kTag, "foo"},
-       "();\n ",
-       {kTag, "bar"},
-       " ",
-       {kTag, "b1"},
-       "= new();\n endmodule: ",
-       {kTag, "foo"}}};
+  const verible::SyntaxTreeSearchTestCase kTestCase = {{"class ",
+                                                        {kTag, "bar"},
+                                                        ";\n endclass: ",
+                                                        {kTag, "bar"},
+                                                        "\nmodule ",
+                                                        {kTag, "foo"},
+                                                        "();\n ",
+                                                        {kTag, "bar"},
+                                                        " ",
+                                                        {kTag, "b1"},
+                                                        "= new(), ",
+                                                        {kTag, "b2"},
+                                                        " = new(",
+                                                        {kTag, "x"},
+                                                        ", ",
+                                                        {kTag, "y"},
+                                                        ");\n endmodule: ",
+                                                        {kTag, "foo"}}};
 
   constexpr absl::string_view file_name = "verilog.v";
   int exit_status = 0;
@@ -1554,7 +1559,7 @@ TEST(FactsTreeExtractor, OneClassInstanceTest) {
           {
               {
                   Anchor(kTestCase.expected_tokens[5], kTestCase.code),
-                  Anchor(kTestCase.expected_tokens[11], kTestCase.code),
+                  Anchor(kTestCase.expected_tokens[17], kTestCase.code),
               },
               IndexingFactType::kModule,
           },
@@ -1572,7 +1577,29 @@ TEST(FactsTreeExtractor, OneClassInstanceTest) {
                       Anchor(kTestCase.expected_tokens[9], kTestCase.code),
                   },
                   IndexingFactType ::kClassInstance,
-              }))));
+              }),
+              // refers to b2.
+              T(
+                  {
+                      {
+                          Anchor(kTestCase.expected_tokens[11], kTestCase.code),
+                      },
+                      IndexingFactType ::kClassInstance,
+                  },
+                  // refers to x.
+                  T({
+                      {
+                          Anchor(kTestCase.expected_tokens[13], kTestCase.code),
+                      },
+                      IndexingFactType ::kVariableReference,
+                  }),
+                  // refers to y.
+                  T({
+                      {
+                          Anchor(kTestCase.expected_tokens[15], kTestCase.code),
+                      },
+                      IndexingFactType ::kVariableReference,
+                  })))));
 
   const auto facts_tree =
       ExtractOneFile(kTestCase.code, file_name, exit_status, parse_ok);

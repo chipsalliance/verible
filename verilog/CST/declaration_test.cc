@@ -565,19 +565,19 @@ TEST(GetVariableDeclarationAssign,
       {""},
       {"module m;\nendmodule\n"},
       {"class class_c;\nendclass\nmodule m;\nclass_c c = new();\nendmodule"},
-      {"package pkg;\n int x = ",
-       {kTag, "4"},
-       ", y = ",
-       {kTag, "4"},
-       ";\nlogic k = ",
-       {kTag, "fun_call()"},
+      {"package pkg;\n int x ",
+       {kTag, "= 4"},
+       ", y ",
+       {kTag, "= 4"},
+       ";\nlogic k ",
+       {kTag, "= fun_call()"},
        ";\nendpackage"},
-      {"class pkg;\n int x = ",
-       {kTag, "4"},
-       ", y = ",
-       {kTag, "4"},
-       ";\nlogic k = ",
-       {kTag, "fun_call()"},
+      {"class cls;\n int x ",
+       {kTag, "= 4"},
+       ", y ",
+       {kTag, "= 4"},
+       ";\nlogic k ",
+       {kTag, "= fun_call()"},
        ";\nendclass"},
   };
   for (const auto& test : kTestCases) {
@@ -590,7 +590,7 @@ TEST(GetVariableDeclarationAssign,
           std::vector<TreeSearchMatch> paren_groups;
           for (const auto& decl : instances) {
             const auto* paren_group =
-                GetExpressionFromVariableDeclarationAssign(*decl.match);
+                GetTrailingExpressionFromVariableDeclarationAssign(*decl.match);
             paren_groups.emplace_back(
                 TreeSearchMatch{paren_group, {/* ignored context */}});
           }
@@ -604,26 +604,29 @@ TEST(FindAllRegisterVariablesTest, FindTrailingAssignOfRegisterVariable) {
   const SyntaxTreeSearchTestCase kTestCases[] = {
       {""},
       {"module m;\nendmodule\n"},
-      {"module module_m();\n int x = ",
-       {kTag, "4"},
-       ", y = ",
-       {kTag, "4"},
-       ";\nlogic k = ",
-       {kTag, "fun_call()"},
+      {"class class_c;\nendclass\nmodule m;\nclass_c c ",
+       {kTag, "= new()"},
        ";\nendmodule"},
-      {"task tsk();\n int x = ",
-       {kTag, "4"},
-       ", y = ",
-       {kTag, "4"},
-       ";\nlogic k = ",
-       {kTag, "fun_call()"},
+      {"module module_m();\n int x ",
+       {kTag, "= 4"},
+       ", y ",
+       {kTag, "= 4"},
+       ";\nlogic k ",
+       {kTag, "= fun_call()"},
+       ";\nendmodule"},
+      {"task tsk();\n int x ",
+       {kTag, "= 4"},
+       ", y ",
+       {kTag, "= 4"},
+       ";\nlogic k ",
+       {kTag, "= fun_call()"},
        ";\nendtask"},
-      {"function int fun();\n int x = ",
-       {kTag, "4"},
-       ", y = ",
-       {kTag, "4"},
-       ";\nlogic k = ",
-       {kTag, "fun_call()"},
+      {"function int fun();\n int x ",
+       {kTag, "= 4"},
+       ", y ",
+       {kTag, "= 4"},
+       ";\nlogic k ",
+       {kTag, "= fun_call()"},
        ";\nreturn 1;\nendfunction"},
   };
   for (const auto& test : kTestCases) {
@@ -636,7 +639,7 @@ TEST(FindAllRegisterVariablesTest, FindTrailingAssignOfRegisterVariable) {
           std::vector<TreeSearchMatch> paren_groups;
           for (const auto& decl : instances) {
             const auto* paren_group =
-                GetExpressionFromRegisterVariable(*decl.match);
+                GetTrailingExpressionFromRegisterVariable(*decl.match);
             paren_groups.emplace_back(
                 TreeSearchMatch{paren_group, {/* ignored context */}});
           }
