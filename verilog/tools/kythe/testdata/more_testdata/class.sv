@@ -10,20 +10,29 @@ package my_pkg;
   //- MyClass1 childof MyPkg
   class my_class1;
 
+    //- @my_var defines/binding MyVar
+    int my_var;
+
+    //- @my_static_var defines/binding MyStaticVar
+    static int my_static_var;
+
     //- @my_function defines/binding MyFunction
     //- MyFunction.node/kind function
     //- MyFunction.complete definition
     //- MyFunction childof MyClass1
     virtual function int my_function();
-      return 1;
+      //- @my_var ref MyVar
+      return my_var;
     endfunction
 
     //- @my_task defines/binding MyTask
     //- MyTask.node/kind function
     //- MyTask.complete definition
     //- MyTask childof MyClass1
-    task my_task();
-      $display(1);
+    //- @my_arg2 defines/binding MyArg2
+    task my_task(int my_arg2);
+      //- @my_arg2 ref MyArg2
+      $display(my_arg2);
     endtask
 
     //- @nested_class defines/binding NestedClass
@@ -71,6 +80,20 @@ module my_module;
     //- Handle4.complete definition
     //- Handle4 childof MyModule
     my_class1 handle3 = new(), handle4 = new();
+
+    //- @handle1 ref Handle1
+    //- @my_function ref MyFunction
+    //- @my_function ref/call MyFunction
+    $display(handle1.my_function());
+
+    //- @handle1 ref Handle1
+    //- @my_task ref/call MyTask
+    handle1.my_task(2);
+
+
+    //- @my_class1 ref MyClass1
+    //- @my_static_var ref MyStaticVar
+    $display(my_class1::my_static_var);
   end
 
   //- @my_class3 defines/binding MyClass3

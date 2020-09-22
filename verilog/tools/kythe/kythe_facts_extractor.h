@@ -218,7 +218,11 @@ class KytheFactsExtractor {
   // The names are treated as anchors e.g:
   // pkg::member => {Anchor(pkg), Anchor(member)}
   // pkg::class_name::var => {Anchor(pkg), Anchor(class_name), Anchor(var)}
-  void ExtractMemberReference(const IndexingFactNode& member_reference_node);
+  //
+  // is_function_call determins whether this member reference is function call
+  // or not e.g pkg::class1::function_x().
+  void ExtractMemberReference(const IndexingFactNode& member_reference_node,
+                              bool is_function_call);
 
   // Generates an anchor VName for kythe.
   VName PrintAnchorVName(const Anchor&);
@@ -256,10 +260,8 @@ class KytheFactsExtractor {
   ScopeContext vertical_scope_context_;
 
   // Saved packages signatures alongside with their inner members.
-  // This is used for resolving references to some variables after using import
-  // pkg::*.
-  // e.g
-  // package pkg1;
+  // This is used for resolving references to some variables after using
+  // import pkg::*. e.g package pkg1;
   //   function my_fun(); endfunction
   //   class my_class; endclass
   // endpackage

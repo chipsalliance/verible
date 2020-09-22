@@ -12,7 +12,9 @@
 //- MyArg2.complete definition
 //- MyArg2 childof MyFunction
 function int my_function(int my_arg1, int my_arg2);
-  return 1;
+  //- @my_arg1 ref MyArg1
+  //- @my_arg2 ref MyArg2
+  return my_arg1 + my_arg2;
 endfunction
 
 //- @my_task defines/binding MyTask
@@ -27,16 +29,18 @@ endfunction
 //- MyArg4.complete definition
 //- MyArg4 childof MyTask
 task my_task(int my_arg3, int my_arg4);
-  $display(1);
+  //- @my_arg3 ref MyArg3
+  //- @my_arg4 ref MyArg4
+  $display(my_arg3 + my_arg4);
 endtask : my_task
 
 module my_module;
   initial begin
     //- @my_function ref MyFunction
     //- @my_function ref/call MyFunction
-    my_function(2);
+    my_function(2, 5);
     //- @my_task ref MyTask
     //- @my_task ref/call MyTask
-    my_task(1);
+    my_task(1, 4);
   end
 endmodule
