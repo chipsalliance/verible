@@ -62,9 +62,9 @@ verible-verilog-lint: usage: bazel-bin/verilog/tools/lint/verible-verilog-lint [
     --help_rules ([all|<rule-name>], print the description of one rule/all rules
       and exit immediately.); default: "";
     --lint_fatal (If true, exit nonzero if linter finds violations.);
-      default: false;
+      default: true;
     --parse_fatal (If true, exit nonzero if there are any syntax errors.);
-      default: false;
+      default: true;
 ```
 
 ## Lint Rules
@@ -318,4 +318,4 @@ Enabled by default: true
 
 ## Version
 
-Generated on 2020-09-21 13:39:36 -0700 from [v0.0-616-g8633798](https://github.com/google/verible/commit/86337987cd582c0c60d8a8cdbf9ff547d373442f)
+Generated on 2020-09-22 09:30:01 -0700 from [v0.0-620-gb46d580](https://github.com/google/verible/commit/b46d580344c68c714a82c4626e125c75c1b9cdb9)
