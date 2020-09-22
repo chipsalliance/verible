@@ -70,7 +70,6 @@ mkdir -p "${KYTHE_OUTPUT_DIRECTORY}"
 bazel --bazelrc="${KYTHE_DIR}/extractors.bazelrc" \
   build --override_repository kythe_release="${KYTHE_DIR}" \
   --define=kythe_corpus=github.com/google/verible \
-  --config=short_logs \
   -- \
   //...
 
