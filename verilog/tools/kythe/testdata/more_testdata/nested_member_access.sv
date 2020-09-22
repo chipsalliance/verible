@@ -80,5 +80,18 @@ module my_module ();
   //- @var1 ref Var1Def
   initial $display(nested_class0::handle1::handle2::var1);
 
+  //- @nested_class0 ref NestedClass0
+  //- @inner_class ref InnerClass
+  //- @nested_function ref NestedFunction
+  //- @nested_function ref/call NestedFunction
+  initial $display(nested_class0::inner_class::nested_function());
+
+  //- @nested_class0 ref NestedClass0
+  //- @handle1 ref Handle1
+  //- @handle2 ref Handle2
+  //- @nested_function ref NestedFunctionNestedClass2
+  //- @nested_function ref/call NestedFunctionNestedClass2
+  initial $display(nested_class0::handle1::handle2::nested_function());
+
   //- @my_module ref MyModule
 endmodule : my_module
