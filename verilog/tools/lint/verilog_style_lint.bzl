@@ -119,6 +119,9 @@ def _verilog_style_lint_report(name, srcs, flags = None):
         Examples: --parse_fatal, --lint_fatal.
     """
     output = name + "-style_lint_report.txt"
+
+    # ignore error status for the sake of generating full report
+    use_flags = ["--noparse_fatal", "--nolint_fatal"] + (flags or [])
     if srcs:
         files_target = name + "_files"
 
@@ -129,7 +132,7 @@ def _verilog_style_lint_report(name, srcs, flags = None):
 
         lint_cmd = "$(location {tool}) {flags} $(SRCS) > $@".format(
             tool = _linter_tool,
-            flags = " ".join(flags or []),
+            flags = " ".join(use_flags),
         )
 
         native.genrule(
@@ -208,7 +211,7 @@ _verilog_style_lint_diagnostics_test = rule(
     implementation = _style_lint_test_diagnostics_impl,
 )
 
-def _verilog_style_lint_test(name, srcs, flags = [], expect_fail = None):
+def _verilog_style_lint_test(name, srcs, flags = None, expect_fail = None):
     """Macro for running Verilog style lint tests in the silo.
 
     Args:
@@ -224,7 +227,7 @@ def _verilog_style_lint_test(name, srcs, flags = [], expect_fail = None):
     _verilog_style_lint_report(
         name = name + "-report",
         srcs = srcs,
-        flags = flags + forced_flags,
+        flags = (flags or []) + forced_flags,
     )
     _verilog_style_lint_diagnostics_test(
         name = name,

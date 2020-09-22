@@ -33,13 +33,9 @@
 #include "verilog/analysis/verilog_linter.h"
 #include "verilog/analysis/verilog_linter_configuration.h"
 
-// Reminder: The linter service expects the program to return 0 unless
-// there is a fatal error, regardless of parse/lint status.
-// The following flags should only be used in contexts where returning
-// nonzero is applicable (e.g. running as a presubmit test, or a user wants it).
-ABSL_FLAG(bool, parse_fatal, false,
+ABSL_FLAG(bool, parse_fatal, true,
           "If true, exit nonzero if there are any syntax errors.");
-ABSL_FLAG(bool, lint_fatal, false,
+ABSL_FLAG(bool, lint_fatal, true,
           "If true, exit nonzero if linter finds violations.");
 ABSL_FLAG(std::string, help_rules, "",
           "[all|<rule-name>], print the description of one rule/all rules "
