@@ -25,13 +25,14 @@ namespace verilog {
 namespace kythe {
 
 // Unique identifier for Kythe facts.
-struct Signature {
+class Signature {
+ public:
   Signature(absl::string_view name = "")
-      : names(std::vector<std::string>{std::string(name)}) {}
+      : names_(std::vector<std::string>{std::string(name)}) {}
 
   Signature(const Signature& parent, absl::string_view name) {
-    names = parent.names;
-    names.push_back(std::string(name));
+    names_ = parent.Names();
+    names_.push_back(std::string(name));
   }
 
   bool operator==(const Signature& o) const;
@@ -45,14 +46,17 @@ struct Signature {
 
   // Checks whether this signature represents the same given variable in its
   // scope.
-  bool IsEqualToIgnoringScope(absl::string_view) const;
+  bool IsNameEqual(absl::string_view) const;
 
   // Appends variable name to the end of the current signature.
   void AppendName(absl::string_view);
 
-  // List that uniquely determins this signature and differentiates it from any
-  // other signautre.
-  // This list reprsents the name of some signautre in a scope.
+  const std::vector<std::string> Names() const { return names_; }
+
+ private:
+  // List that uniquely determines this signature and differentiates it from any
+  // other signature.
+  // This list represents the name of some signature in a scope.
   // e.g
   // class m;
   //    int x;
@@ -60,7 +64,7 @@ struct Signature {
   //
   // for "m" ==> ["m"]
   // for "x" ==> ["m", "x"]
-  std::vector<std::string> names;
+  std::vector<std::string> names_;
 };
 
 // Node vector name for kythe facts.
@@ -69,7 +73,8 @@ struct VName {
                  const Signature& signature = Signature(),
                  absl::string_view root = "",
                  absl::string_view language = "verilog",
-                 absl::string_view corpus = "https://github.com/google/verible")
+                 // TODO(minatoma): change the corpus if needed.
+                 absl::string_view corpus = "")
       : signature(signature),
         path(path),
         language(language),

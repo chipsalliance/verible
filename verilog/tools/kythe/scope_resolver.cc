@@ -21,7 +21,7 @@ namespace verilog {
 namespace kythe {
 
 void Scope::AddMemberItem(const ScopeMemberItem& member_item) {
-  members.push_back(member_item);
+  members_.push_back(member_item);
 }
 
 void Scope::AppendScope(const Scope& scope) {
@@ -32,8 +32,8 @@ void Scope::AppendScope(const Scope& scope) {
 
 const VName* Scope::SearchForDefinition(absl::string_view name) const {
   for (const ScopeMemberItem& member_item :
-       verible::make_range(members.rbegin(), members.rend())) {
-    if (member_item.vname.signature.IsEqualToIgnoringScope(name)) {
+       verible::make_range(members_.rbegin(), members_.rend())) {
+    if (member_item.vname.signature.IsNameEqual(name)) {
       return &member_item.vname;
     }
   }

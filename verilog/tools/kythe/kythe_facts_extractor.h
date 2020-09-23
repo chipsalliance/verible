@@ -198,7 +198,7 @@ class KytheFactsExtractor {
 
   // Keeps track of scopes and definitions inside the scopes of ancestors as
   // the visitor traverses the facts tree.
-  VerticalScopeResolver vertical_scope_resolver;
+  VerticalScopeResolver vertical_scope_resolver_;
 
   // Keeps track and saves the explored scopes with a <key, value> and maps
   // every signature to its scope.

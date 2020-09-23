@@ -26,11 +26,11 @@
 namespace verilog {
 namespace kythe {
 
-// Used to wrap whatever needs to be recored in a scope item.
+// Used to wrap whatever needs to be recorded in a scope item.
 struct ScopeMemberItem {
   ScopeMemberItem(const VName& vname) : vname(vname) {}
 
-  // VNames of the members inside this scope.
+  // VName of this member.
   VName vname;
 };
 
@@ -38,27 +38,27 @@ struct ScopeMemberItem {
 class Scope {
  public:
   Scope() {}
-  Scope(const Signature& signature) : signature(signature) {}
+  Scope(const Signature& signature) : signature_(signature) {}
 
-  // Appedns the given vname to the members of this scope.
+  // Appends the given VName to the members of this scope.
   void AddMemberItem(const ScopeMemberItem& vname);
 
   // Appends the member of the given scope to the current scope.
   void AppendScope(const Scope& scope);
 
-  const std::vector<ScopeMemberItem>& Members() const { return members; }
-  const Signature& GetSignature() const { return signature; }
+  const std::vector<ScopeMemberItem>& Members() const { return members_; }
+  const Signature& GetSignature() const { return signature_; }
 
   // Searches for the given reference_name in the current scope and returns its
-  // VName.
+  // VName or nullptr if not found.
   const VName* SearchForDefinition(absl::string_view name) const;
 
  private:
   // Signature of the owner of this scope.
-  Signature signature;
+  Signature signature_;
 
   // list of the members inside this scope.
-  std::vector<ScopeMemberItem> members;
+  std::vector<ScopeMemberItem> members_;
 };
 
 // Container with a stack of Scopes to hold the accessible scopes during
@@ -126,9 +126,11 @@ class HorizontalScopeResolver {
                                       const Signature& other_signature);
 
  private:
-  // Saved packages signatures alongside with their inner members.
+  // Saves signatures alongside with their inner members (scope).
   // This is used for resolving references to some variables after using
-  // import pkg::*. e.g package pkg1;
+  // import pkg::*. or other member access like class_Type::my_var.
+  // e.g
+  // package pkg1;
   //   function my_fun(); endfunction
   //   class my_class; endclass
   // endpackage

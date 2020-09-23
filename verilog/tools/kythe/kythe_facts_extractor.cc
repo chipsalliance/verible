@@ -134,7 +134,7 @@ void KytheFactsExtractor::AddVNameToVerticalScope(IndexingFactType tag,
     case IndexingFactType::kClass:
     case IndexingFactType::kClassInstance:
     case IndexingFactType::kFunctionOrTask: {
-      vertical_scope_resolver.top().AddMemberItem(vname);
+      vertical_scope_resolver_.top().AddMemberItem(vname);
       break;
     }
     default: {
@@ -210,7 +210,7 @@ void KytheFactsExtractor::ConstructFlattenedScope(const IndexingFactNode& node,
     case IndexingFactType::kModuleInstance:
     case IndexingFactType::kClassInstance: {
       // TODO(minatoma): fix this in case the name was kQualified id.
-      const VName* found_vname = vertical_scope_resolver.SearchForDefinition(
+      const VName* found_vname = vertical_scope_resolver_.SearchForDefinition(
           node.Parent()->Value().Anchors()[0].Value());
 
       if (found_vname == nullptr) {
@@ -231,7 +231,7 @@ void KytheFactsExtractor::ConstructFlattenedScope(const IndexingFactNode& node,
 void KytheFactsExtractor::Visit(const IndexingFactNode& node,
                                 const VName& vname, Scope& current_scope) {
   const VNameContext::AutoPop vnames_auto_pop(&vnames_context_, &vname);
-  const VerticalScopeResolver::AutoPop scope_auto_pop(&vertical_scope_resolver,
+  const VerticalScopeResolver::AutoPop scope_auto_pop(&vertical_scope_resolver_,
                                                       &current_scope);
   Visit(node);
 }
@@ -282,7 +282,7 @@ void KytheFactsExtractor::ExtractDataTypeReference(
   const Anchor& type = anchors[0];
 
   const VName* type_vname =
-      vertical_scope_resolver.SearchForDefinition(type.Value());
+      vertical_scope_resolver_.SearchForDefinition(type.Value());
 
   if (type_vname == nullptr) {
     return;
@@ -311,7 +311,7 @@ VName KytheFactsExtractor::ExtractModuleInstance(
   for (const auto& anchor :
        verible::make_range(anchors.begin() + 1, anchors.end())) {
     const VName* port_vname_definition =
-        vertical_scope_resolver.SearchForDefinition(anchor.Value());
+        vertical_scope_resolver_.SearchForDefinition(anchor.Value());
 
     if (port_vname_definition == nullptr) {
       continue;
@@ -333,7 +333,7 @@ void KytheFactsExtractor::ExtractModuleNamedPort(
   const Anchor& module_type =
       named_port_node.Parent()->Parent()->Value().Anchors()[0];
   const VName* named_port_module_vname =
-      vertical_scope_resolver.SearchForDefinition(module_type.Value());
+      vertical_scope_resolver_.SearchForDefinition(module_type.Value());
 
   const VName port_vname_anchor = PrintAnchorVName(port_name);
 
@@ -349,7 +349,7 @@ void KytheFactsExtractor::ExtractModuleNamedPort(
 
   if (named_port_node.Children().empty()) {
     const VName* definition_vname =
-        vertical_scope_resolver.SearchForDefinition(port_name.Value());
+        vertical_scope_resolver_.SearchForDefinition(port_name.Value());
 
     if (definition_vname != nullptr) {
       GenerateEdgeString(port_vname_anchor, kEdgeRef, *definition_vname);
@@ -378,7 +378,7 @@ void KytheFactsExtractor::ExtractVariableReference(
   const VName variable_vname_anchor = PrintAnchorVName(anchor);
 
   const VName* variable_definition_vname =
-      vertical_scope_resolver.SearchForDefinition(anchor.Value());
+      vertical_scope_resolver_.SearchForDefinition(anchor.Value());
   if (variable_definition_vname != nullptr) {
     GenerateEdgeString(variable_vname_anchor, kEdgeRef,
                        *variable_definition_vname);
@@ -465,7 +465,7 @@ void KytheFactsExtractor::ExtractFunctionOrTaskCall(
     const auto& function_name = anchors[0];
 
     const VName* function_vname =
-        vertical_scope_resolver.SearchForDefinition(function_name.Value());
+        vertical_scope_resolver_.SearchForDefinition(function_name.Value());
 
     if (function_vname == nullptr) {
       return;
@@ -551,7 +551,7 @@ void KytheFactsExtractor::ExtractPackageImport(
 
     // Add the found definition to the current scope as if it was declared in
     // our scope so that it can be captured without "::".
-    vertical_scope_resolver.top().AddMemberItem(*defintion_vname);
+    vertical_scope_resolver_.top().AddMemberItem(*defintion_vname);
   } else {
     // case of import pkg::*.
     // Add all the definitions in that package to the current scope as if it was
@@ -563,8 +563,8 @@ void KytheFactsExtractor::ExtractPackageImport(
       return;
     }
 
-    vertical_scope_resolver.top().AddMemberItem(package_vname);
-    vertical_scope_resolver.top().AppendScope(*current_package_scope);
+    vertical_scope_resolver_.top().AddMemberItem(package_vname);
+    vertical_scope_resolver_.top().AppendScope(*current_package_scope);
   }
 }
 
@@ -595,7 +595,7 @@ void KytheFactsExtractor::ExtractMemberReference(
     //
     // In case the member is a class member not a package member.
     const VName* containing_block_vname =
-        vertical_scope_resolver.SearchForDefinition(
+        vertical_scope_resolver_.SearchForDefinition(
             containing_block_name.Value());
 
     if (containing_block_vname == nullptr) {

@@ -18,6 +18,7 @@
 #include <string>
 
 #include "absl/strings/escaping.h"
+#include "absl/strings/string_view.h"
 #include "absl/strings/substitute.h"
 
 namespace verilog {
@@ -32,18 +33,18 @@ bool Signature::operator<(const Signature& other) const {
 }
 
 void Signature::AppendName(absl::string_view name) {
-  names.push_back(std::string(name));
+  names_.push_back(std::string(name));
 }
 
-bool Signature::IsEqualToIgnoringScope(absl::string_view name) const {
-  return names.back() == name;
+bool Signature::IsNameEqual(absl::string_view name) const {
+  return names_.back() == name;
 }
 
 std::string Signature::ToString() const {
   std::string signature = "";
-  for (const std::string name : names) {
+  for (absl::string_view name : names_) {
     if (name.empty()) continue;
-    signature += name + "#";
+    absl::StrAppend(&signature, name, "#");
   }
   return signature;
 }
