@@ -602,7 +602,7 @@ void IndexingFactsTreeExtractor::ExtractMethodCallExtension(
 
   const auto fact_type = previous_node.Value().GetIndexingFactType();
   if (fact_type != IndexingFactType::kMemberReference &&
-      fact_type != IndexingFactType::kVariableDefinition) {
+      fact_type != IndexingFactType::kVariableReference) {
     return;
   }
 
