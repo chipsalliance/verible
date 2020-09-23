@@ -672,20 +672,38 @@ void IndexingFactsTreeExtractor::ExtractClassInstances(
   // Loop through each instance and associate each declared id with the same
   // type and create its corresponding facts tree node.
   for (const TreeSearchMatch& instance : class_instances) {
+    IndexingNodeData class_instance_data(IndexingFactType::kClassInstance);
+    IndexingFactNode class_instance_node(class_instance_data);
     const auto tag = static_cast<verilog::NodeEnum>(instance.match->Tag().tag);
+
+    const SyntaxTreeNode* trailing_expression = nullptr;
     if (tag == NodeEnum::kRegisterVariable) {
       const verible::TokenInfo& instance_name =
           GetInstanceNameTokenInfoFromRegisterVariable(*instance.match);
 
-      class_node.NewChild(
-          IndexingNodeData({Anchor(instance_name, context_.base)},
-                           IndexingFactType::kClassInstance));
+      class_instance_node.Value().AppendAnchor(
+          Anchor(instance_name, context_.base));
+
+      trailing_expression =
+          GetTrailingExpressionFromRegisterVariable(*instance.match);
     } else if (tag == NodeEnum::kVariableDeclarationAssignment) {
       const SyntaxTreeLeaf& leaf =
           GetUnqualifiedIdFromVariableDeclarationAssignment(*instance.match);
-      class_node.NewChild(IndexingNodeData({Anchor(leaf.get(), context_.base)},
-                                           IndexingFactType::kClassInstance));
+      class_instance_node.Value().AppendAnchor(
+          Anchor(leaf.get(), context_.base));
+
+      trailing_expression =
+          GetTrailingExpressionFromVariableDeclarationAssign(*instance.match);
     }
+
+    if (trailing_expression != nullptr) {
+      const IndexingFactsTreeContext::AutoPop p(&facts_tree_context_,
+                                                &class_instance_node);
+      // Visit Trailing Assignment Expression.
+      Visit(*trailing_expression);
+    }
+
+    class_node.NewChild(class_instance_node);
   }
 
   facts_tree_context_.top().NewChild(class_node);
@@ -694,25 +712,38 @@ void IndexingFactsTreeExtractor::ExtractClassInstances(
 void IndexingFactsTreeExtractor::ExtractPrimitiveVariables(
     const verible::SyntaxTreeNode& enclosing_node,
     const std::vector<verible::TreeSearchMatch>& variable_matches) {
-  for (const TreeSearchMatch& register_variable : variable_matches) {
+  for (const TreeSearchMatch& variable_match : variable_matches) {
+    IndexingNodeData variable_node_data(IndexingFactType::kVariableDefinition);
+    IndexingFactNode variable_node(variable_node_data);
+
+    const SyntaxTreeNode* expression = nullptr;
     const auto tag =
-        static_cast<verilog::NodeEnum>(register_variable.match->Tag().tag);
+        static_cast<verilog::NodeEnum>(variable_match.match->Tag().tag);
 
     if (tag == NodeEnum::kRegisterVariable) {
       const verible::TokenInfo& variable_name_token_info =
-          GetInstanceNameTokenInfoFromRegisterVariable(
-              *register_variable.match);
-      facts_tree_context_.top().NewChild(
-          IndexingNodeData({Anchor(variable_name_token_info, context_.base)},
-                           IndexingFactType::kVariableDefinition));
+          GetInstanceNameTokenInfoFromRegisterVariable(*variable_match.match);
+      variable_node.Value().AppendAnchor(
+          Anchor(variable_name_token_info, context_.base));
+      expression =
+          GetTrailingExpressionFromRegisterVariable(*variable_match.match);
     } else if (tag == NodeEnum::kVariableDeclarationAssignment) {
       const SyntaxTreeLeaf& leaf =
           GetUnqualifiedIdFromVariableDeclarationAssignment(
-              *register_variable.match);
-      facts_tree_context_.top().NewChild(
-          IndexingNodeData({Anchor(leaf.get(), context_.base)},
-                           IndexingFactType::kVariableDefinition));
+              *variable_match.match);
+      variable_node.Value().AppendAnchor(Anchor(leaf.get(), context_.base));
+      expression = GetTrailingExpressionFromVariableDeclarationAssign(
+          *variable_match.match);
     }
+
+    if (expression != nullptr) {
+      const IndexingFactsTreeContext::AutoPop p(&facts_tree_context_,
+                                                &variable_node);
+      // Visit Trailing Assignment Expression.
+      Visit(*expression);
+    }
+
+    facts_tree_context_.top().NewChild(variable_node);
   }
 }
 

@@ -141,6 +141,17 @@ const verible::SyntaxTreeLeaf&
 GetUnqualifiedIdFromVariableDeclarationAssignment(
     const verible::Symbol& variable_declaration_assign);
 
+// Extracts kExpression node from nodes tagged with kVariableDeclarationAssign
+// (if exists).
+const verible::SyntaxTreeNode*
+GetTrailingExpressionFromVariableDeclarationAssign(
+    const verible::Symbol& variable_declaration_assign);
+
+// Extracts kExpression node from nodes tagged with kRegisterVariable (if
+// exists).
+const verible::SyntaxTreeNode* GetTrailingExpressionFromRegisterVariable(
+    const verible::Symbol& register_variable);
+
 }  // namespace verilog
 
 #endif  // VERIBLE_VERILOG_CST_DECLARATION_H_

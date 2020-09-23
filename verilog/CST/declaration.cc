@@ -170,4 +170,21 @@ GetUnqualifiedIdFromVariableDeclarationAssignment(
                          NodeEnum::kVariableDeclarationAssignment, 0)));
 }
 
+const verible::SyntaxTreeNode*
+GetTrailingExpressionFromVariableDeclarationAssign(
+    const verible::Symbol& variable_declaration_assign) {
+  const Symbol* trailing_expression = GetSubtreeAsSymbol(
+      variable_declaration_assign, NodeEnum::kVariableDeclarationAssignment, 2);
+  return verible::CheckOptionalSymbolAsNode(trailing_expression,
+                                            NodeEnum::kTrailingAssign);
+}
+
+const verible::SyntaxTreeNode* GetTrailingExpressionFromRegisterVariable(
+    const verible::Symbol& register_variable) {
+  const Symbol* trailing_expression =
+      GetSubtreeAsSymbol(register_variable, NodeEnum::kRegisterVariable, 2);
+  return verible::CheckOptionalSymbolAsNode(trailing_expression,
+                                            NodeEnum::kTrailingAssign);
+}
+
 }  // namespace verilog
