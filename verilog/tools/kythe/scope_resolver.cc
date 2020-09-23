@@ -57,7 +57,6 @@ const Scope* HorizontalScopeResolver::SearchForScope(
   if (scope == scopes_.end()) {
     return nullptr;
   }
-
   return &scope->second;
 }
 
