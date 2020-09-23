@@ -7161,6 +7161,25 @@ TEST(FormatterEndToEndTest, AutoInferAlignment) {
        "  assign foo      = 1'b1;\n"  // aligned
        "  assign baaaaaar = 1'b0;\n"
        "endmodule\n"},
+      {// currently, does not assign across ifdefs
+       "module m_assign;\n"
+       "`ifdef FOO\n"
+       "assign foo  =     1'b1;\n"  // induce alignment with excess spaces
+       "assign baaaaaar = 1'b0;\n"
+       "`else\n"
+       "assign zooo = 2'b11;\n"
+       "assign yoo = 2'b00;\n"
+       "`endif\n"
+       "endmodule\n",
+       "module m_assign;\n"
+       "`ifdef FOO\n"
+       "  assign foo      = 1'b1;\n"  // aligned
+       "  assign baaaaaar = 1'b0;\n"
+       "`else\n"                   // aligned separately above/below
+       "  assign zooo = 2'b11;\n"  // aligned
+       "  assign yoo  = 2'b00;\n"  // aligned
+       "`endif\n"
+       "endmodule\n"},
       {// mixed net declaration and continuous assignment, both groups aligned
        "module m_assign;\n"
        "wire     wwwww;\n"  // induce alignment
