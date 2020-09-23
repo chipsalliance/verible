@@ -23,7 +23,7 @@ source "${KOKORO_GFILE_DIR}/common_google.sh"
 rm -rf "$HOME/.cache/bazel"
 
 # Setup kythe
-export KYTHE_VERSION=v0.0.48
+export KYTHE_VERSION=v0.0.38
 cd "${TMPDIR}"
 wget -q -O kythe.tar.gz \
     https://github.com/kythe/kythe/releases/download/$KYTHE_VERSION/kythe-$KYTHE_VERSION.tar.gz
