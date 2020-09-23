@@ -20,7 +20,7 @@ set -e
 source "${KOKORO_GFILE_DIR}/common_google.sh"
 
 # Cleanup previous build cache.
-rm -rf "/home/kbuilder/.cache"
+rm -rf "$HOME/.cache/bazel"
 
 # Setup kythe
 export KYTHE_VERSION=v0.0.48
