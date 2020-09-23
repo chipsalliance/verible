@@ -614,7 +614,7 @@ void KytheFactsExtractor::ExtractMemberReference(
 
   // Generate reference edge for all the members.
   // e.g pkg::my_class::my_inner_class::static_var.
-  const VName* definition_vname;
+  const VName* definition_vname = nullptr;
   VName reference_anchor("");
   for (const auto& anchor :
        verible::make_range(anchors.begin() + 1, anchors.end())) {
