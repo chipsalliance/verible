@@ -558,5 +558,95 @@ TEST(GetVariableDeclarationAssign, VariableName) {
   }
 }
 
+TEST(GetVariableDeclarationAssign,
+     FindTrailingAssignOfVariableDeclarationAssign) {
+  constexpr int kTag = 1;  // value doesn't matter
+  const SyntaxTreeSearchTestCase kTestCases[] = {
+      {""},
+      {"module m;\nendmodule\n"},
+      {"class class_c;\nendclass\nmodule m;\nclass_c c = new();\nendmodule"},
+      {"package pkg;\n int x ",
+       {kTag, "= 4"},
+       ", y ",
+       {kTag, "= 4"},
+       ";\nlogic k ",
+       {kTag, "= fun_call()"},
+       ";\nendpackage"},
+      {"class cls;\n int x ",
+       {kTag, "= 4"},
+       ", y ",
+       {kTag, "= 4"},
+       ";\nlogic k ",
+       {kTag, "= fun_call()"},
+       ";\nendclass"},
+  };
+  for (const auto& test : kTestCases) {
+    TestVerilogSyntaxRangeMatches(
+        __FUNCTION__, test, [](const TextStructureView& text_structure) {
+          const auto& root = text_structure.SyntaxTree();
+          const auto& instances =
+              FindAllVariableDeclarationAssignment(*ABSL_DIE_IF_NULL(root));
+
+          std::vector<TreeSearchMatch> paren_groups;
+          for (const auto& decl : instances) {
+            const auto* paren_group =
+                GetTrailingExpressionFromVariableDeclarationAssign(*decl.match);
+            paren_groups.emplace_back(
+                TreeSearchMatch{paren_group, {/* ignored context */}});
+          }
+          return paren_groups;
+        });
+  }
+}
+
+TEST(FindAllRegisterVariablesTest, FindTrailingAssignOfRegisterVariable) {
+  constexpr int kTag = 1;  // value doesn't matter
+  const SyntaxTreeSearchTestCase kTestCases[] = {
+      {""},
+      {"module m;\nendmodule\n"},
+      {"class class_c;\nendclass\nmodule m;\nclass_c c ",
+       {kTag, "= new()"},
+       ";\nendmodule"},
+      {"module module_m();\n int x ",
+       {kTag, "= 4"},
+       ", y ",
+       {kTag, "= 4"},
+       ";\nlogic k ",
+       {kTag, "= fun_call()"},
+       ";\nendmodule"},
+      {"task tsk();\n int x ",
+       {kTag, "= 4"},
+       ", y ",
+       {kTag, "= 4"},
+       ";\nlogic k ",
+       {kTag, "= fun_call()"},
+       ";\nendtask"},
+      {"function int fun();\n int x ",
+       {kTag, "= 4"},
+       ", y ",
+       {kTag, "= 4"},
+       ";\nlogic k ",
+       {kTag, "= fun_call()"},
+       ";\nreturn 1;\nendfunction"},
+  };
+  for (const auto& test : kTestCases) {
+    TestVerilogSyntaxRangeMatches(
+        __FUNCTION__, test, [](const TextStructureView& text_structure) {
+          const auto& root = text_structure.SyntaxTree();
+          const auto& instances =
+              FindAllRegisterVariables(*ABSL_DIE_IF_NULL(root));
+
+          std::vector<TreeSearchMatch> paren_groups;
+          for (const auto& decl : instances) {
+            const auto* paren_group =
+                GetTrailingExpressionFromRegisterVariable(*decl.match);
+            paren_groups.emplace_back(
+                TreeSearchMatch{paren_group, {/* ignored context */}});
+          }
+          return paren_groups;
+        });
+  }
+}
+
 }  // namespace
 }  // namespace verilog

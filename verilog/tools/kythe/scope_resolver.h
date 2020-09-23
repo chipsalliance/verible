@@ -68,6 +68,26 @@ class Scope {
 // This is modified during tree traversal because in case of entering new
 // scope the new scope is resolved first and after that it's added to the
 // containing scope and the next scope is being analyzed.
+// e.g
+// package pkg;
+//    int x;
+//    function int my_fun();
+//      return x;
+//    endfunction
+// endpackage
+//
+// Vertical scope when extracting my_fun:
+// The Global Scope
+// {
+//    "pkg"
+// }
+// Pkg Scope
+// {
+//   pkg#x
+// }
+// when trying to find a definition for "x" in "return x" VerticalScopeResolver
+// searches the above scope in reverse order till if finds a definition or
+// returns a nullptr if not found.
 class VerticalScopeResolver : public verible::AutoPopStack<Scope*> {
  public:
   typedef verible::AutoPopStack<Scope*> base_type;
@@ -108,6 +128,31 @@ class VerticalScopeResolver : public verible::AutoPopStack<Scope*> {
 
 // Keeps track and saves the explored scopes with a <key, value> and maps every
 // signature to its scope.
+//
+// HorizontalScopeResolver saves the scopes generated while traversing the
+// IndexingFactsTree so that it can be use to find some definition.
+// Here the scopes are saved in a flattened manner instead of tree like
+// hierarchy.
+// e.g
+// class m;
+//    int x;
+//    function int my_fun();
+//        int x;
+//        return x;
+//    endfunction
+// endclass
+//
+// The genrated scope would be:
+// {
+//    "m": {
+//      m#x,
+//      m#my_fun
+//    },
+//    "my_fun": {
+//      m#my_fun#x
+//    }
+// }
+// this way definitions can be found using the signatures.
 class HorizontalScopeResolver {
  public:
   // Searches for a VName with the given name in the scope with the given

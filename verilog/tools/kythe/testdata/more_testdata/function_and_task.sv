@@ -38,9 +38,11 @@ module my_module;
   initial begin
     //- @my_function ref MyFunction
     //- @my_function ref/call MyFunction
-    my_function(2, 5);
+    //- @ii defines/binding VarI
+    automatic integer ii = my_function(2, 6);
     //- @my_task ref MyTask
     //- @my_task ref/call MyTask
-    my_task(1, 4);
+    //- @ii ref VarI
+    my_task(ii, 6);
   end
 endmodule
