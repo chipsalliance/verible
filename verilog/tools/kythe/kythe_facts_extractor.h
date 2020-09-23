@@ -24,6 +24,7 @@
 #include "verilog/tools/kythe/indexing_facts_tree_context.h"
 #include "verilog/tools/kythe/indexing_facts_tree_extractor.h"
 #include "verilog/tools/kythe/kythe_facts.h"
+#include "verilog/tools/kythe/scope_resolver.h"
 
 namespace verilog {
 namespace kythe {
@@ -75,66 +76,6 @@ class KytheFactsExtractor {
     const VName& top() const { return *ABSL_DIE_IF_NULL(base_type::top()); }
   };
 
-  // Container with a stack of Scopes to hold the accessible scopes during
-  // traversing an Indexing Facts Tree.
-  // This is used to get the definitions of some reference.
-  //
-  // This is modified during tree traversal because in case of entering new
-  // scope the new scope is resolved first and after that it's added to the
-  // containing scope and the next scope is being analyzed.
-  class ScopeContext : public verible::AutoPopStack<std::vector<VName>*> {
-   public:
-    typedef verible::AutoPopStack<std::vector<VName>*> base_type;
-
-    // member class to handle push and pop of stack safely
-    using AutoPop = base_type::AutoPop;
-
-    // returns the top VName of the stack
-    std::vector<VName>& top() { return *ABSL_DIE_IF_NULL(base_type::top()); }
-
-    // TODO(minatoma): improve performance and memory for this function.
-    //
-    // This function uses string matching to find the definition of some
-    // variable in reverse order of the current scopes.
-    //
-    // Improvement can be replacing the string matching to comparison based on
-    // integers or enums and reshaping the scope to be one vector instead of
-    // vector of vectors.
-    //
-    // TODO(minatoma): consider using vector<pair<name, type>> for signature.
-    //
-    // Search function to get the VName of a definitions of some reference.
-    // It loops over the scopes in reverse order and loops over every scope in
-    // reverse order to find a definition for the variable with given prefix
-    // signature.
-    // e.g
-    // {
-    //    bar#module,
-    //    foo#module,
-    // }
-    // {
-    //    other scope,
-    // }
-    // Given bar#module it return the whole VName of that definition.
-    // And if more than one match is found the first would be returned.
-    const VName* SearchForDefinition(std::string prefix) {
-      for (const auto& scope : verible::make_range(rbegin(), rend())) {
-        for (const VName& vname :
-             verible::make_range(scope->rbegin(), scope->rend())) {
-          if (absl::StartsWith(vname.signature, prefix)) {
-            return &vname;
-          }
-        }
-      }
-      return nullptr;
-    }
-  };
-
-  // Searches for a definition suitable for the given reference within package
-  // scope context of the given package name.
-  const VName* SearchForDefinitionVNameInScopeContext(
-      absl::string_view package_name, absl::string_view reference_name) const;
-
   // Resolves the tag of the given node and directs the flow to the appropriate
   // function to extract kythe facts for that node.
   void IndexingFactNodeTagResolver(const IndexingFactNode&);
@@ -146,7 +87,7 @@ class KytheFactsExtractor {
   // Add the given VName to vnames_context (to be used in scope relative
   // signatures) and visits the children of the given node creating a new scope
   // for the given node.
-  void Visit(const IndexingFactNode& node, const VName&, std::vector<VName>&);
+  void Visit(const IndexingFactNode& node, const VName&, Scope&);
 
   // Directs the flow to the children of the given node.
   void Visit(const IndexingFactNode& node);
@@ -156,7 +97,7 @@ class KytheFactsExtractor {
 
   // Appends the extracted children vnames to the scope of the current node.
   void ConstructFlattenedScope(const IndexingFactNode&, const VName&,
-                               const std::vector<VName>&);
+                               const Scope&);
 
   // Determines whether or not to create a child of edge between the current
   // node and the previous node.
@@ -229,12 +170,12 @@ class KytheFactsExtractor {
 
   // Appends the signatures of given parent scope vname to make
   // signatures are unique relative to scopes.
-  std::string CreateScopeRelativeSignature(absl::string_view,
-                                           absl::string_view) const;
+  Signature CreateScopeRelativeSignature(absl::string_view,
+                                         const Signature&) const;
 
   // Appends the signatures of previous containing scope vname to make
   // signatures are unique relative to scopes.
-  std::string CreateScopeRelativeSignature(absl::string_view) const;
+  Signature CreateScopeRelativeSignature(absl::string_view) const;
 
   // Generates fact strings for Kythe facts.
   // Schema for this fact can be found here:
@@ -257,26 +198,11 @@ class KytheFactsExtractor {
 
   // Keeps track of scopes and definitions inside the scopes of ancestors as
   // the visitor traverses the facts tree.
-  ScopeContext vertical_scope_context_;
+  VerticalScopeResolver vertical_scope_resolver;
 
-  // Saved packages signatures alongside with their inner members.
-  // This is used for resolving references to some variables after using
-  // import pkg::*. e.g package pkg1;
-  //   function my_fun(); endfunction
-  //   class my_class; endclass
-  // endpackage
-  //
-  // package pkg2;
-  //   function my_fun(); endfunction
-  //   class my_class; endclass
-  // endpackage
-  //
-  // Creates the following:
-  // {
-  //   "pkg1": ["my_fun", "my_class"],
-  //   "pkg2": ["my_fun", "my_class"]
-  // }
-  std::map<std::string, std::vector<VName>> scope_context_;
+  // Keeps track and saves the explored scopes with a <key, value> and maps
+  // every signature to its scope.
+  HorizontalScopeResolver horizontal_scope_resolver_;
 
   // Output stream for capturing, redirecting, testing and verifying the
   // output.

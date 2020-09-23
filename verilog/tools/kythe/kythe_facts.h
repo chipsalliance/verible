@@ -17,21 +17,60 @@
 
 #include <iosfwd>
 #include <string>
+#include <vector>
 
-#include "absl/strings/escaping.h"
 #include "absl/strings/string_view.h"
 
 namespace verilog {
 namespace kythe {
 
+// Unique identifier for Kythe facts.
+struct Signature {
+  Signature(absl::string_view name = "")
+      : names(std::vector<std::string>{std::string(name)}) {}
+
+  Signature(const Signature& parent, absl::string_view name) {
+    names = parent.names;
+    names.push_back(std::string(name));
+  }
+
+  bool operator==(const Signature& o) const;
+  bool operator<(const Signature& o) const;
+
+  // Returns the the signature concatenated as a string.
+  std::string ToString() const;
+
+  // Returns the the signature concatenated as a string in base 64.
+  std::string ToBase64() const;
+
+  // Checks whether this signature represents the same given variable in its
+  // scope.
+  bool IsEqualToIgnoringScope(absl::string_view) const;
+
+  // Appends variable name to the end of the current signature.
+  void AppendName(absl::string_view);
+
+  // List that uniquely determins this signature and differentiates it from any
+  // other signautre.
+  // This list reprsents the name of some signautre in a scope.
+  // e.g
+  // class m;
+  //    int x;
+  // endclass
+  //
+  // for "m" ==> ["m"]
+  // for "x" ==> ["m", "x"]
+  std::vector<std::string> names;
+};
+
 // Node vector name for kythe facts.
 struct VName {
-  explicit VName(absl::string_view path, absl::string_view signature = "",
+  explicit VName(absl::string_view path = "",
+                 const Signature& signature = Signature(),
                  absl::string_view root = "",
                  absl::string_view language = "verilog",
                  absl::string_view corpus = "https://github.com/google/verible")
       : signature(signature),
-        signature_base_64(absl::Base64Escape(signature)),
         path(path),
         language(language),
         corpus(corpus),
@@ -40,10 +79,7 @@ struct VName {
   std::string ToString() const;
 
   // Unique identifier for this VName.
-  std::string signature;
-
-  // Unique identifier for this VName in base 64.
-  std::string signature_base_64;
+  Signature signature;
 
   // Path for the file the name is extracted from.
   std::string path;

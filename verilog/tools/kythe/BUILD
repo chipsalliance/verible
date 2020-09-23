@@ -34,6 +34,22 @@ cc_library(
 )
 
 cc_library(
+    name = "scope_resolver",
+    srcs = [
+        "scope_resolver.cc",
+    ],
+    hdrs = [
+        "scope_resolver.h",
+    ],
+    deps = [
+        ":kythe_facts",
+        "@com_google_absl//absl/strings",
+        "//common/util:auto_pop_stack",
+        "//common/util:iterator_range",
+    ]
+)
+
+cc_library(
     name = "indexing_facts_tree_context",
     hdrs = [
         "indexing_facts_tree_context.h",
@@ -61,6 +77,7 @@ cc_library(
         "kythe_facts_extractor.h",
     ],
     deps = [
+        ":scope_resolver",
         ":indexing_facts_tree",
         ":indexing_facts_tree_context",
         ":indexing_facts_tree_extractor",
