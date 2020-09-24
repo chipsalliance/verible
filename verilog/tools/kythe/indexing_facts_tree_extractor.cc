@@ -198,6 +198,10 @@ void IndexingFactsTreeExtractor::Visit(const SyntaxTreeNode& node) {
       ExtractQualifiedId(node);
       break;
     }
+    case NodeEnum::kForInitialization: {
+      ExtractForInitialization(node);
+      break;
+    }
     default: {
       TreeContextVisitor::Visit(node);
     }
@@ -280,6 +284,8 @@ void IndexingFactsTreeExtractor::ExtractModuleHeader(
     } else if (tag == NodeEnum::kPort) {
       ExtractModulePort(GetPortReferenceFromPort(port_node),
                         has_propagated_type);
+    } else {
+      Visit(port_node);
     }
   }
 }
@@ -812,6 +818,9 @@ void IndexingFactsTreeExtractor::ExtractQualifiedId(
 
   facts_tree_context_.top().NewChild(member_reference_data);
 }
+
+void IndexingFactsTreeExtractor::ExtractForInitialization(
+    const verible::SyntaxTreeNode& for_initialization) {}
 
 }  // namespace kythe
 }  // namespace verilog
