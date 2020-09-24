@@ -57,10 +57,11 @@ module associative_arrays;
     //- @#3i ref I
     //- @#4i ref I
     //- @var1 ref Var1
-    //- @var2 ref Var2
+    //- @#0var2 ref Var2
+    //- @#1var2 ref Var2
     //- @j defines/binding _
     //- @m defines/binding _
-    for (int i = 0, j = 0, bit [var1:var2] m = 0; i < 50; i++) begin
+    for (int i = 0, j = 0, bit [var1:var2] m = var2; i < 50; i++) begin
       //- @real_arr ref RealArr
       //- @#0i ref I
       //- @#1i ref I
