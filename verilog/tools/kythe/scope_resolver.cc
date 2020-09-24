@@ -14,7 +14,6 @@
 
 #include "verilog/tools/kythe/scope_resolver.h"
 
-#include <iostream>
 #include <string>
 
 namespace verilog {

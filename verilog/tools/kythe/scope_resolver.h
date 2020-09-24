@@ -140,7 +140,7 @@ class VerticalScopeResolver : public verible::AutoPopStack<Scope*> {
 //    endfunction
 // endclass
 //
-// The genrated scope would be:
+// The generated scope would be:
 // {
 //    "m": {
 //      m#x,
