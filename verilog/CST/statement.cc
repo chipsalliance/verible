@@ -24,6 +24,8 @@
 #include "common/text/symbol.h"
 #include "common/text/token_info.h"
 #include "common/text/tree_utils.h"
+#include "verilog/CST/declaration.h"
+#include "verilog/CST/identifier.h"
 #include "verilog/CST/verilog_matchers.h"  // IWYU pragma: keep
 
 namespace verilog {
@@ -31,6 +33,11 @@ namespace verilog {
 using verible::Symbol;
 using verible::SymbolCastToNode;
 using verible::SyntaxTreeNode;
+
+std::vector<verible::TreeSearchMatch> FindAllForLoops(
+    const verible::Symbol& root) {
+  return SearchSyntaxTree(root, NodekForSpec());
+}
 
 static const SyntaxTreeNode& GetGenericStatementBody(
     const SyntaxTreeNode& node) {
@@ -401,6 +408,35 @@ const SyntaxTreeNode* GetAnyConditionalElseClause(const Symbol& conditional) {
     default:
       return nullptr;
   }
+}
+
+// Returns the data type node from for loop initialization.
+const verible::SyntaxTreeNode* GetDataTypeFromForInitialization(
+    const verible::Symbol& for_initialization) {
+  const auto* data_type = verible::GetSubtreeAsSymbol(
+      for_initialization, NodeEnum::kForInitialization, 1);
+  return verible::CheckOptionalSymbolAsNode(data_type,
+                                            NodeEnum::kDataTypePrimitive);
+}
+
+// Returns the variable name leaf from for loop initialization.
+const verible::SyntaxTreeLeaf& GetVariableNameFromForInitialization(
+    const verible::Symbol& for_initialization) {
+  const Symbol* child = verible::GetSubtreeAsSymbol(
+      for_initialization, NodeEnum::kForInitialization, 2);
+  if (child->Kind() == verible::SymbolKind::kLeaf) {
+    return SymbolCastToLeaf(*child);
+  }
+  return *AutoUnwrapIdentifier(GetUnqualifiedIdFromReferenceCallBase(
+      verible::GetSubtreeAsNode(*child, NodeEnum::kLPValue, 0)));
+}
+
+// Returns the rhs expression from for loop initialization.
+const verible::SyntaxTreeNode& GetExpressionFromForInitialization(
+    const verible::Symbol& for_initialization) {
+  return verible::GetSubtreeAsNode(for_initialization,
+                                   NodeEnum::kForInitialization, 4,
+                                   NodeEnum::kExpression);
 }
 
 }  // namespace verilog

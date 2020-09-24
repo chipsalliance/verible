@@ -29,6 +29,7 @@
 #include "verilog/CST/package.h"
 #include "verilog/CST/parameters.h"
 #include "verilog/CST/port.h"
+#include "verilog/CST/statement.h"
 #include "verilog/CST/tasks.h"
 #include "verilog/CST/verilog_matchers.h"
 #include "verilog/CST/verilog_nonterminals.h"
@@ -284,8 +285,6 @@ void IndexingFactsTreeExtractor::ExtractModuleHeader(
     } else if (tag == NodeEnum::kPort) {
       ExtractModulePort(GetPortReferenceFromPort(port_node),
                         has_propagated_type);
-    } else {
-      Visit(port_node);
     }
   }
 }
@@ -313,6 +312,18 @@ void IndexingFactsTreeExtractor::ExtractModulePort(
         {Anchor(leaf->get(), context_.base)},
         has_propagated_type ? IndexingFactType::kVariableDefinition
                             : IndexingFactType::kVariableReference));
+  }
+
+  // Extract unpacked and packed dimensions.
+  for (const auto& child : module_port_node.children()) {
+    if (child == nullptr || child.get()->Kind() == verible::SymbolKind::kLeaf) {
+      continue;
+    }
+    const auto tag = static_cast<verilog::NodeEnum>(child.get()->Tag().tag);
+    if (tag == NodeEnum::kUnqualifiedId) {
+      continue;
+    }
+    Visit(verible::SymbolCastToNode(*child));
   }
 }
 
@@ -820,7 +831,23 @@ void IndexingFactsTreeExtractor::ExtractQualifiedId(
 }
 
 void IndexingFactsTreeExtractor::ExtractForInitialization(
-    const verible::SyntaxTreeNode& for_initialization) {}
+    const verible::SyntaxTreeNode& for_initialization) {
+  const SyntaxTreeLeaf& variable_name =
+      GetVariableNameFromForInitialization(for_initialization);
+  facts_tree_context_.top().NewChild(
+      IndexingNodeData({Anchor(variable_name.get(), context_.base)},
+                       IndexingFactType::kVariableDefinition));
+
+  const SyntaxTreeNode* data_type_node =
+      GetDataTypeFromForInitialization(for_initialization);
+  if (data_type_node != nullptr) {
+    Visit(*data_type_node);
+  }
+
+  const SyntaxTreeNode& expression =
+      GetExpressionFromForInitialization(for_initialization);
+  Visit(expression);
+}
 
 }  // namespace kythe
 }  // namespace verilog

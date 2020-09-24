@@ -702,6 +702,7 @@ cc_library(
     hdrs = ["statement.h"],
     deps = [
         ":verilog_matchers",  # fixdeps: keep
+        ":declaration",
         "//common/analysis:syntax_tree_search",
         "//common/analysis/matcher",
         "//common/analysis/matcher:matcher_builders",

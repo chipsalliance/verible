@@ -93,6 +93,10 @@ std::vector<verible::TreeSearchMatch> FindAllGateInstances(
 std::vector<verible::TreeSearchMatch> FindAllVariableDeclarationAssignment(
     const verible::Symbol&);
 
+// Returns node tagged with unqualified id from node reference call base.
+const verible::SyntaxTreeNode& GetUnqualifiedIdFromReferenceCallBase(
+    const verible::Symbol&);
+
 // For a given data declaration (includes module instantiation), returns the
 // subtree containing qualifiers.  e.g. from "const foo bar, baz;",
 // this returns the subtree spanning "const".  Returns nullptr if there

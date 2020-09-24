@@ -120,6 +120,7 @@ cc_library(
         "//verilog/CST:functions",
         "//verilog/CST:identifier",
         "//verilog/CST:macro",
+        "//verilog/CST:statement",
         "//verilog/CST:module",
         "//verilog/CST:net",
         "//verilog/CST:package",
