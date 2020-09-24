@@ -55,7 +55,7 @@ class Scope {
 
  private:
   // Signature of the owner of this scope.
-  const Signature signature_;
+  Signature signature_;
 
   // list of the members inside this scope.
   std::vector<ScopeMemberItem> members_;
