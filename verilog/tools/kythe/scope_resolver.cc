@@ -51,7 +51,7 @@ const VName* VerticalScopeResolver::SearchForDefinition(
   return nullptr;
 }
 
-const Scope* HorizontalScopeResolver::SearchForScope(
+const Scope* FlattenedScopeResolver::SearchForScope(
     const Signature& signature) const {
   const auto scope = scopes_.find(signature);
   if (scope == scopes_.end()) {
@@ -60,7 +60,7 @@ const Scope* HorizontalScopeResolver::SearchForScope(
   return &scope->second;
 }
 
-const VName* HorizontalScopeResolver::SearchForVNameInScope(
+const VName* FlattenedScopeResolver::SearchForVNameInScope(
     const Signature& signature, absl::string_view name) const {
   const Scope* scope = SearchForScope(signature);
   if (scope == nullptr) {
@@ -69,12 +69,12 @@ const VName* HorizontalScopeResolver::SearchForVNameInScope(
   return scope->SearchForDefinition(name);
 }
 
-void HorizontalScopeResolver::MapSignatureToScope(const Signature& signature,
+void FlattenedScopeResolver::MapSignatureToScope(const Signature& signature,
                                                   const Scope& scope) {
   scopes_[signature] = scope;
 }
 
-void HorizontalScopeResolver::MapSignatureToScopeOfSignature(
+void FlattenedScopeResolver::MapSignatureToScopeOfSignature(
     const Signature& signature, const Signature& other_signature) {
   const Scope* other_scope = SearchForScope(other_signature);
   if (other_scope == nullptr) {

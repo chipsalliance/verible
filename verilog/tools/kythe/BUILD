@@ -49,6 +49,16 @@ cc_library(
     ]
 )
 
+cc_test(
+    name = "scope_resolver_test",
+    srcs = ["scope_resolver_test.cc"],
+    deps = [
+        ":scope_resolver",
+        ":kythe_facts",
+        "@com_google_googletest//:gtest_main",
+    ],
+)
+
 cc_library(
     name = "indexing_facts_tree_context",
     hdrs = [

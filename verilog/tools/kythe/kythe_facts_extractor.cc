@@ -203,7 +203,7 @@ void KytheFactsExtractor::ConstructFlattenedScope(const IndexingFactNode& node,
     case IndexingFactType::kClass:
     case IndexingFactType::kMacro:
     case IndexingFactType::kPackage: {
-      horizontal_scope_resolver_.MapSignatureToScope(vname.signature,
+      flattened_scope_resolver_.MapSignatureToScope(vname.signature,
                                                      current_scope);
       break;
     }
@@ -217,7 +217,7 @@ void KytheFactsExtractor::ConstructFlattenedScope(const IndexingFactNode& node,
         break;
       }
 
-      horizontal_scope_resolver_.MapSignatureToScopeOfSignature(
+      flattened_scope_resolver_.MapSignatureToScopeOfSignature(
           vname.signature, found_vname->signature);
 
       break;
@@ -339,7 +339,7 @@ void KytheFactsExtractor::ExtractModuleNamedPort(
 
   if (named_port_module_vname != nullptr) {
     const VName* actual_port_vname =
-        horizontal_scope_resolver_.SearchForVNameInScope(
+        flattened_scope_resolver_.SearchForVNameInScope(
             named_port_module_vname->signature, port_name.Value());
 
     if (actual_port_vname != nullptr) {
@@ -539,7 +539,7 @@ void KytheFactsExtractor::ExtractPackageImport(
   if (anchors.size() > 1) {
     const Anchor& imported_item_name = anchors[1];
     const VName* defintion_vname =
-        horizontal_scope_resolver_.SearchForVNameInScope(
+        flattened_scope_resolver_.SearchForVNameInScope(
             Signature(package_name.Value()), imported_item_name.Value());
 
     if (defintion_vname == nullptr) {
@@ -557,7 +557,7 @@ void KytheFactsExtractor::ExtractPackageImport(
     // Add all the definitions in that package to the current scope as if it was
     // declared in our scope so that it can be captured without "::".
     const Scope* current_package_scope =
-        horizontal_scope_resolver_.SearchForScope(package_vname.signature);
+        flattened_scope_resolver_.SearchForScope(package_vname.signature);
 
     if (current_package_scope == nullptr) {
       return;
@@ -575,7 +575,7 @@ void KytheFactsExtractor::ExtractMemberReference(
 
   // Searches for the member in the packages.
   const Scope* containing_block_scope =
-      horizontal_scope_resolver_.SearchForScope(
+      flattened_scope_resolver_.SearchForScope(
           Signature(containing_block_name.Value()));
 
   Signature definition_signature;
@@ -614,7 +614,7 @@ void KytheFactsExtractor::ExtractMemberReference(
   VName reference_anchor;
   for (const auto& anchor :
        verible::make_range(anchors.begin() + 1, anchors.end())) {
-    definition_vname = horizontal_scope_resolver_.SearchForVNameInScope(
+    definition_vname = flattened_scope_resolver_.SearchForVNameInScope(
         definition_signature, anchor.Value());
 
     if (definition_vname == nullptr) {

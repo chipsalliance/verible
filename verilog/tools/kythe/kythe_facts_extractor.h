@@ -202,7 +202,7 @@ class KytheFactsExtractor {
 
   // Keeps track and saves the explored scopes with a <key, value> and maps
   // every signature to its scope.
-  HorizontalScopeResolver horizontal_scope_resolver_;
+  FlattenedScopeResolver flattened_scope_resolver_;
 
   // Output stream for capturing, redirecting, testing and verifying the
   // output.

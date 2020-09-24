@@ -151,7 +151,7 @@ class VerticalScopeResolver : public verible::AutoPopStack<Scope*> {
 //    }
 // }
 // this way definitions can be found using the signatures.
-class HorizontalScopeResolver {
+class FlattenedScopeResolver {
  public:
   // Searches for a VName with the given name in the scope with the given
   // signature.
