@@ -17,15 +17,46 @@
 #include <iostream>
 #include <string>
 
+#include "absl/strings/escaping.h"
+#include "absl/strings/string_view.h"
 #include "absl/strings/substitute.h"
 
 namespace verilog {
 namespace kythe {
 
+bool Signature::operator==(const Signature& other) const {
+  return this->ToString() == other.ToString();
+}
+
+bool Signature::operator<(const Signature& other) const {
+  return this->ToString() < other.ToString();
+}
+
+void Signature::AppendName(absl::string_view name) {
+  names_.push_back(std::string(name));
+}
+
+bool Signature::IsNameEqual(absl::string_view name) const {
+  return names_.back() == name;
+}
+
+std::string Signature::ToString() const {
+  std::string signature = "";
+  for (absl::string_view name : names_) {
+    if (name.empty()) continue;
+    absl::StrAppend(&signature, name, "#");
+  }
+  return signature;
+}
+
+std::string Signature::ToBase64() const {
+  return absl::Base64Escape(ToString());
+}
+
 std::string VName::ToString() const {
   return absl::Substitute(
       R"({"signature": "$0","path": "$1","language": "$2","root": "$3","corpus": "$4"})",
-      signature_base_64, path, language, root, corpus);
+      signature.ToBase64(), path, language, root, corpus);
 }
 
 std::ostream& operator<<(std::ostream& stream, const VName& vname) {

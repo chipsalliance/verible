@@ -593,8 +593,18 @@ void IndexingFactsTreeExtractor::ExtractMethodCallExtension(
   IndexingNodeData function_node_data(IndexingFactType::kFunctionCall);
   IndexingFactNode function_node(function_node_data);
 
+  if (facts_tree_context_.top().Children().empty()) {
+    return;
+  }
+
   const IndexingFactNode& previous_node =
       facts_tree_context_.top().Children().back();
+
+  const auto fact_type = previous_node.Value().GetIndexingFactType();
+  if (fact_type != IndexingFactType::kMemberReference &&
+      fact_type != IndexingFactType::kVariableReference) {
+    return;
+  }
 
   // Fill the anchors of the previous node to the current node.
   // Previous node should be a kMemberReference or kVariableReference.
