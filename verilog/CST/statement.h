@@ -27,7 +27,7 @@ namespace verilog {
 std::vector<verible::TreeSearchMatch> FindAllConditionalStatements(
     const verible::Symbol& root);
 
-std::vector<verible::TreeSearchMatch> FindAllForLoops(
+std::vector<verible::TreeSearchMatch> FindAllForLoopsInitializations(
     const verible::Symbol& root);
 
 // Generate flow control constructs

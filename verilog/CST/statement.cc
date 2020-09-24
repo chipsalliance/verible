@@ -34,9 +34,9 @@ using verible::Symbol;
 using verible::SymbolCastToNode;
 using verible::SyntaxTreeNode;
 
-std::vector<verible::TreeSearchMatch> FindAllForLoops(
+std::vector<verible::TreeSearchMatch> FindAllForLoopsInitializations(
     const verible::Symbol& root) {
-  return SearchSyntaxTree(root, NodekForSpec());
+  return SearchSyntaxTree(root, NodekForInitialization());
 }
 
 static const SyntaxTreeNode& GetGenericStatementBody(

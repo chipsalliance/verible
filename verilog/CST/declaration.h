@@ -93,7 +93,8 @@ std::vector<verible::TreeSearchMatch> FindAllGateInstances(
 std::vector<verible::TreeSearchMatch> FindAllVariableDeclarationAssignment(
     const verible::Symbol&);
 
-// Returns node tagged with unqualified id from node reference call base.
+// Returns node tagged with unqualified id from node tagged with
+// kReferenceCallBase.
 const verible::SyntaxTreeNode& GetUnqualifiedIdFromReferenceCallBase(
     const verible::Symbol&);
 

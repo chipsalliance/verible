@@ -17,8 +17,6 @@
 #include <memory>
 #include <vector>
 
-#include "gmock/gmock.h"
-#include "gtest/gtest.h"
 #include "common/analysis/matcher/matcher_builders.h"
 #include "common/analysis/syntax_tree_search.h"
 #include "common/analysis/syntax_tree_search_test_utils.h"
@@ -30,6 +28,9 @@
 #include "common/util/casts.h"
 #include "common/util/logging.h"
 #include "common/util/range.h"
+#include "gmock/gmock.h"
+#include "gtest/gtest.h"
+#include "verilog/CST/match_test_utils.h"
 #include "verilog/CST/verilog_matchers.h"
 #include "verilog/CST/verilog_nonterminals.h"
 #include "verilog/analysis/verilog_analyzer.h"
@@ -46,6 +47,7 @@ namespace {
 using verible::SymbolKind;
 using verible::SymbolTag;
 using verible::SyntaxTreeSearchTestCase;
+using verible::TextStructureView;
 using verible::TreeSearchMatch;
 
 struct ControlStatementTestData {
@@ -1155,6 +1157,120 @@ TEST(GetAnyConditionalElseClauseTest, HaveElseClause) {
         << "failed on:\n"
         << code << "\ndiffs:\n"
         << diffs.str();
+  }
+}
+
+TEST(FindAllForLoopsInitializations, FindForInitializationNames) {
+  constexpr int kTag = 1;  // value doesn't matter
+  const SyntaxTreeSearchTestCase kTestCases[] = {
+      {""},
+      {"module m;\nendmodule\n"},
+      {"function int my_fun();\nint x = 0;\nfor (int ",
+       {kTag, "i"},
+       " = 0, ",
+       {kTag, "j"},
+       " = 0; i < 50; i++) begin\nx+=i;\nend\nreturn x;\nendfunction"},
+      {"module m();\nint x = 0;\ninitial begin\nfor (int ",
+       {kTag, "i"},
+       " = 0, ",
+       {kTag, "j"},
+       " = 0, bit ",
+       {kTag, "k"},
+       " = 0; i < 50; i++) begin\nx+=i;\nend\nend\nendmodule"},
+  };
+  for (const auto& test : kTestCases) {
+    TestVerilogSyntaxRangeMatches(
+        __FUNCTION__, test, [](const TextStructureView& text_structure) {
+          const auto& root = text_structure.SyntaxTree();
+          const auto& instances =
+              FindAllForLoopsInitializations(*ABSL_DIE_IF_NULL(root));
+
+          std::vector<TreeSearchMatch> names;
+          for (const auto& instance : instances) {
+            const auto& variable_name =
+                GetVariableNameFromForInitialization(*instance.match);
+            names.emplace_back(
+                TreeSearchMatch{&variable_name, {/* ignored context */}});
+          }
+          return names;
+        });
+  }
+}
+
+TEST(FindAllForLoopsInitializations, FindForInitializationDataTypes) {
+  constexpr int kTag = 1;  // value doesn't matter
+  const SyntaxTreeSearchTestCase kTestCases[] = {
+      {""},
+      {"module m;\nendmodule\n"},
+      {"function int my_fun();\nint x = 0;\nfor (",
+       {kTag, "int"},
+       " i = 0, j = 0; i < 50; i++) begin\nx+=i;\nend\nreturn x;\nendfunction"},
+      {"module m();\nint x = 0;\ninitial begin\nfor (",
+       {kTag, "int"},
+       " i = 0, j = 0, ",
+       {kTag, "bit"},
+       " k = 0; i < 50; i++) begin\nx+=i;\nend\nend\nendmodule"},
+      {"module m();\nint x = 0;\ninitial begin\nfor (",
+       {kTag, "int[x:y]"},
+       " i = 0, j = 0, ",
+       {kTag, "bit"},
+       " k = 0; i < 50; i++) begin\nx+=i;\nend\nend\nendmodule"},
+  };
+  for (const auto& test : kTestCases) {
+    TestVerilogSyntaxRangeMatches(
+        __FUNCTION__, test, [](const TextStructureView& text_structure) {
+          const auto& root = text_structure.SyntaxTree();
+          const auto& instances =
+              FindAllForLoopsInitializations(*ABSL_DIE_IF_NULL(root));
+
+          std::vector<TreeSearchMatch> types;
+          for (const auto& instance : instances) {
+            const auto* type =
+                GetDataTypeFromForInitialization(*instance.match);
+            if (type == nullptr) {
+              continue;
+            }
+            types.emplace_back(TreeSearchMatch{type, {/* ignored context */}});
+          }
+          return types;
+        });
+  }
+}
+
+TEST(FindAllForLoopsInitializations, FindForInitializationExpressions) {
+  constexpr int kTag = 1;  // value doesn't matter
+  const SyntaxTreeSearchTestCase kTestCases[] = {
+      {""},
+      {"module m;\nendmodule\n"},
+      {"function int my_fun();\nint x = 0;\nfor (int i = ",
+       {kTag, "0"},
+       ", j = ",
+       {kTag, "0"},
+       "; i < 50;i++) begin\nx+=i;\nend\nreturn x;\nendfunction"},
+      {"module m();\nint x = 0;\ninitial begin\nfor (int i = ",
+       {kTag, "0"},
+       ", j = ",
+       {kTag, "y + x"},
+       ", bit k = ",
+       {kTag, "0"},
+       "; i < 50;i++) begin\nx+=i;\nend\nend\nendmodule"},
+  };
+  for (const auto& test : kTestCases) {
+    TestVerilogSyntaxRangeMatches(
+        __FUNCTION__, test, [](const TextStructureView& text_structure) {
+          const auto& root = text_structure.SyntaxTree();
+          const auto& instances =
+              FindAllForLoopsInitializations(*ABSL_DIE_IF_NULL(root));
+
+          std::vector<TreeSearchMatch> expressions;
+          for (const auto& instance : instances) {
+            const auto& expression =
+                GetExpressionFromForInitialization(*instance.match);
+            expressions.emplace_back(
+                TreeSearchMatch{&expression, {/* ignored context */}});
+          }
+          return expressions;
+        });
   }
 }
 

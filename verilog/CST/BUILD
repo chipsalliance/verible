@@ -721,6 +721,7 @@ cc_test(
         ":statement",
         ":verilog_matchers",
         ":verilog_nonterminals",
+        ":match_test_utils",
         "//common/analysis:syntax_tree_search",
         "//common/analysis:syntax_tree_search_test_utils",
         "//common/analysis/matcher:matcher_builders",

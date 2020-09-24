@@ -14,9 +14,9 @@
 
 #include "verilog/tools/kythe/indexing_facts_tree_extractor.h"
 
-#include "gtest/gtest.h"
 #include "common/analysis/syntax_tree_search_test_utils.h"
 #include "common/text/concrete_syntax_tree.h"
+#include "gtest/gtest.h"
 #include "verilog/analysis/verilog_analyzer.h"
 
 #undef EXPECT_OK
@@ -446,6 +446,98 @@ TEST(FactsTreeExtractor, ModuleWithPortsTest) {
                   Anchor(kTestCase.expected_tokens[5], kTestCase.code),
               },
               IndexingFactType::kVariableDefinition,
+          })));
+
+  const auto facts_tree =
+      ExtractOneFile(kTestCase.code, file_name, exit_status, parse_ok);
+
+  const auto result_pair = DeepEqual(facts_tree, expected);
+  EXPECT_EQ(result_pair.left, nullptr) << *result_pair.left;
+  EXPECT_EQ(result_pair.right, nullptr) << *result_pair.right;
+}
+
+TEST(FactsTreeExtractor, ModuleDimensionTypePortsTest) {
+  constexpr int kTag = 1;  // value doesn't matter
+  const verible::SyntaxTreeSearchTestCase kTestCase = {
+      {"module ",
+       {kTag, "foo"},
+       "(input ",
+       {kTag, "a"},
+       ", output [",
+       {kTag, "x"},
+       ":",
+       {kTag, "y"},
+       "] ",
+       {kTag, "b"},
+       " [",
+       {kTag, "x"},
+       ":",
+       {kTag, "y"},
+       "]);\nendmodule"},
+  };
+
+  constexpr absl::string_view file_name = "verilog.v";
+  int exit_status = 0;
+  bool parse_ok = false;
+
+  const IndexingFactNode expected(
+      {
+          {
+              Anchor(file_name, 0, kTestCase.code.size()),
+              Anchor(kTestCase.code, 0, kTestCase.code.size()),
+          },
+          IndexingFactType ::kFile,
+      },
+      // refers to module foo.
+      T(
+          {
+              {
+                  Anchor(kTestCase.expected_tokens[1], kTestCase.code),
+              },
+              IndexingFactType::kModule,
+          },
+          // refers to input a.
+          T({
+              {
+                  Anchor(kTestCase.expected_tokens[3], kTestCase.code),
+              },
+              IndexingFactType::kVariableDefinition,
+          }),
+          // refers to output b.
+          T({
+              {
+                  Anchor(kTestCase.expected_tokens[9], kTestCase.code),
+              },
+              IndexingFactType::kVariableDefinition,
+          }),
+          // refers to input x.
+          T({
+              {
+                  Anchor(kTestCase.expected_tokens[5], kTestCase.code),
+              },
+              IndexingFactType::kVariableReference,
+          }),
+          // refers to input y.
+          T({
+              {
+                  Anchor(kTestCase.expected_tokens[7], kTestCase.code),
+              },
+              IndexingFactType::kVariableReference,
+          }),
+
+          // refers to input x.
+          T({
+              {
+                  Anchor(kTestCase.expected_tokens[11], kTestCase.code),
+              },
+              IndexingFactType::kVariableReference,
+          }),
+          // refers to input y.
+          T({
+              {
+                  Anchor(kTestCase.expected_tokens[13], kTestCase.code),
+              },
+              IndexingFactType::kVariableReference,
           })));
 
   const auto facts_tree =
@@ -2656,6 +2748,133 @@ TEST(PackageImportTest, PackageDirectMemberReference) {
                   Anchor(kTestCase.expected_tokens[12], kTestCase.code),
               },
               IndexingFactType ::kMemberReference,
+          })));
+
+  const auto facts_tree =
+      ExtractOneFile(kTestCase.code, file_name, exit_status, parse_ok);
+
+  const auto result_pair = DeepEqual(facts_tree, expected);
+  EXPECT_EQ(result_pair.left, nullptr) << *result_pair.left;
+  EXPECT_EQ(result_pair.right, nullptr) << *result_pair.right;
+}
+
+TEST(FactsTreeExtractor, ForLoopInitializations) {
+  constexpr int kTag = 1;  // value doesn't matter
+  const verible::SyntaxTreeSearchTestCase kTestCase = {
+      {"function int ",
+       {kTag, "foo"},
+       "();\n for (int ",
+       {kTag, "i"},
+       " = 0, bit ",
+       {kTag, "j"},
+       " = 0, bit[",
+       {kTag, "l"},
+       ":",
+       {kTag, "r"},
+       "] ",
+       {kTag, "tm"},
+       " = 0; ",
+       {kTag, "i"},
+       " < 50; ",
+       {kTag, "i"},
+       "++) begin\n",
+       {kTag, "x"},
+       "+=",
+       {kTag, "i"},
+       ";\nend\nreturn ",
+       {kTag, "x"},
+       ";\n\nendfunction "},
+  };
+  LOG(INFO) << kTestCase.code;
+  constexpr absl::string_view file_name = "verilog.v";
+  int exit_status = 0;
+  bool parse_ok = false;
+
+  const IndexingFactNode expected(
+      {
+          {
+              Anchor(file_name, 0, kTestCase.code.size()),
+              Anchor(kTestCase.code, 0, kTestCase.code.size()),
+          },
+          IndexingFactType ::kFile,
+      },
+      // refers to function foo
+      T(
+          {
+              {
+                  Anchor(kTestCase.expected_tokens[1], kTestCase.code),
+              },
+              IndexingFactType::kFunctionOrTask,
+          },
+          // refers to i
+          T({
+              {
+                  Anchor(kTestCase.expected_tokens[3], kTestCase.code),
+              },
+              IndexingFactType ::kVariableDefinition,
+          }),
+          // refers to j
+          T({
+              {
+                  Anchor(kTestCase.expected_tokens[5], kTestCase.code),
+              },
+              IndexingFactType ::kVariableDefinition,
+          }),
+          // refers to tm
+          T({
+              {
+                  Anchor(kTestCase.expected_tokens[11], kTestCase.code),
+              },
+              IndexingFactType ::kVariableDefinition,
+          }),
+          // refers to l
+          T({
+              {
+                  Anchor(kTestCase.expected_tokens[7], kTestCase.code),
+              },
+              IndexingFactType ::kVariableReference,
+          }),
+          // refers to r
+          T({
+              {
+                  Anchor(kTestCase.expected_tokens[9], kTestCase.code),
+              },
+              IndexingFactType ::kVariableReference,
+          }),
+          // refers to i
+          T({
+              {
+                  Anchor(kTestCase.expected_tokens[13], kTestCase.code),
+              },
+              IndexingFactType ::kVariableReference,
+          }),
+          // refers to i
+          T({
+              {
+                  Anchor(kTestCase.expected_tokens[15], kTestCase.code),
+              },
+              IndexingFactType ::kVariableReference,
+          }),
+          // refers to x
+          T({
+              {
+                  Anchor(kTestCase.expected_tokens[17], kTestCase.code),
+              },
+              IndexingFactType ::kVariableReference,
+          }),
+          // refers to i
+          T({
+              {
+                  Anchor(kTestCase.expected_tokens[19], kTestCase.code),
+              },
+              IndexingFactType ::kVariableReference,
+          }),
+          // refers to x
+          T({
+              {
+                  Anchor(kTestCase.expected_tokens[21], kTestCase.code),
+              },
+              IndexingFactType ::kVariableReference,
           })));
 
   const auto facts_tree =
