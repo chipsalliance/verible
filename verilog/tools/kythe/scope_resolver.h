@@ -37,8 +37,8 @@ struct ScopeMemberItem {
 // Represents some scope in SystemVerilog code like class or module.
 class Scope {
  public:
-  Scope() {}
-  Scope(const Signature& signature) : signature_(signature) {}
+  Scope() = default;
+  explicit Scope(const Signature& signature) : signature_(signature) {}
 
   // Appends the given VName to the members of this scope.
   void AddMemberItem(const ScopeMemberItem& vname);
@@ -55,7 +55,7 @@ class Scope {
 
  private:
   // Signature of the owner of this scope.
-  Signature signature_;
+  const Signature signature_;
 
   // list of the members inside this scope.
   std::vector<ScopeMemberItem> members_;
@@ -106,8 +106,6 @@ class VerticalScopeResolver : public verible::AutoPopStack<Scope*> {
   // Improvement can be replacing the string matching to comparison based on
   // integers or enums and reshaping the scope to be one vector instead of
   // vector of vectors.
-  //
-  // TODO(minatoma): consider using vector<pair<name, type>> for signature.
   //
   // Search function to get the VName of a definitions of some reference.
   // It loops over the scopes in reverse order and loops over every scope in
