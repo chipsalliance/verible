@@ -156,10 +156,10 @@ class FlattenedScopeResolver {
   // Searches for a VName with the given name in the scope with the given
   // signature.
   const VName* SearchForVNameInScope(const Signature& signature,
-                                     absl::string_view name) const;
+                                     absl::string_view name);
 
   // Searches for a scope with the given signature in the scopes.
-  const Scope* SearchForScope(const Signature& signature) const;
+  Scope* SearchForScope(const Signature& signature);
 
   // Maps the given signature to the given scope.
   void MapSignatureToScope(const Signature& signature, const Scope& scope);
@@ -168,7 +168,7 @@ class FlattenedScopeResolver {
   void MapSignatureToScopeOfSignature(const Signature& signature,
                                       const Signature& other_signature);
 
- private:
+//  private:
   // Saves signatures alongside with their inner members (scope).
   // This is used for resolving references to some variables after using
   // import pkg::*. or other member access like class_Type::my_var.
