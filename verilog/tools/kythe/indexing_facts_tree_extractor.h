@@ -144,6 +144,11 @@ class IndexingFactsTreeExtractor : public verible::TreeContextVisitor {
   // e.g pkg::member or class::member.
   void ExtractQualifiedId(const verible::SyntaxTreeNode& qualified_id);
 
+  // Extracts initializations in for loop and creates its corresponding fact
+  // tree. e.g for(int i = 0, j = k; ...) extracts "i", "j" and "k".
+  void ExtractForInitialization(
+      const verible::SyntaxTreeNode& for_initialization);
+
   // The Root of the constructed tree
   IndexingFactNode root_{IndexingNodeData(IndexingFactType::kFile)};
 

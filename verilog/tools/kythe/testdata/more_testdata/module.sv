@@ -122,3 +122,42 @@ module my_module (
 
   //- @my_module ref MyModule
 endmodule : my_module
+
+//- @int1 defines/binding Int1Def
+//- Int1Def.node/kind variable
+//- Int1Def.complete definition
+//- Int1Def childof MyPkg1
+//- @int2 defines/binding Int2Def
+//- Int2Def.node/kind variable
+//- Int2Def.complete definition
+//- Int2Def childof MyPkg1
+int int1, int2;
+
+//- @my_module2 defines/binding MyModule2
+//- MyModule2.node/kind record
+//- MyModule2.subkind module
+//- MyModule2.complete definition
+module my_module2 (
+    //- @x defines/binding XDef1
+    //- XDef1.node/kind variable
+    //- XDef1.complete definition
+    //- XDef1 childof MyModule2
+    //- @#0int1 ref LDef
+    //- @#1int1 ref LDef
+    //- @#0int2 ref RDef
+    //- @#1int2 ref RDef
+    input [int1:int2] x[int1:int2],
+    //- @y defines/binding YDef2
+    //- YDef2.node/kind variable
+    //- YDef2.complete definition
+    //- YDef2 childof MyModule2
+    //- @#0int1 ref LDef
+    //- @#1int1 ref LDef
+    //- @#0int2 ref RDef
+    //- @#1int2 ref RDef
+    input wire [int1:int2] y[int1:int2]
+);
+
+  //- @my_module2 ref MyModule2
+endmodule : my_module2
+

@@ -126,17 +126,22 @@ const SyntaxTreeNode& GetUnqualifiedIdFromLocalRoot(const Symbol& local_root) {
   return GetSubtreeAsNode(local_root, NodeEnum::kLocalRoot, 0);
 }
 
+const verible::SyntaxTreeNode& GetUnqualifiedIdFromReferenceCallBase(
+    const verible::Symbol& reference_call_base) {
+  const SyntaxTreeNode& refernce =
+      GetReferenceFromReferenceCallBase(reference_call_base);
+  const SyntaxTreeNode& local_root = GetLocalRootFromReference(refernce);
+  return GetUnqualifiedIdFromLocalRoot(local_root);
+}
+
 const verible::TokenInfo& GetTypeTokenInfoFromDataDeclaration(
     const verible::Symbol& data_declaration) {
   const SyntaxTreeNode& instantiation_type =
       GetTypeOfDataDeclaration(data_declaration);
   const SyntaxTreeNode& reference_call_base =
       GetReferenceCallBaseFromInstantiationType(instantiation_type);
-  const SyntaxTreeNode& reference =
-      GetReferenceFromReferenceCallBase(reference_call_base);
-  const SyntaxTreeNode& local_root = GetLocalRootFromReference(reference);
   const SyntaxTreeNode& unqualified_id =
-      GetUnqualifiedIdFromLocalRoot(local_root);
+      GetUnqualifiedIdFromReferenceCallBase(reference_call_base);
   const verible::SyntaxTreeLeaf* instance_symbol_identifier =
       GetIdentifier(unqualified_id);
   return instance_symbol_identifier->get();

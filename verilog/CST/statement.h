@@ -27,6 +27,9 @@ namespace verilog {
 std::vector<verible::TreeSearchMatch> FindAllConditionalStatements(
     const verible::Symbol& root);
 
+std::vector<verible::TreeSearchMatch> FindAllForLoopsInitializations(
+    const verible::Symbol& root);
+
 // Generate flow control constructs
 //
 // TODO(fangism): consider moving the *GenerateBody functions to generate.{h,cc}
@@ -167,6 +170,18 @@ const verible::SyntaxTreeNode* GetAnyConditionalIfClause(
 // doesn't exist.
 const verible::SyntaxTreeNode* GetAnyConditionalElseClause(
     const verible::Symbol& conditional);
+
+// Returns the data type node from for loop initialization.
+const verible::SyntaxTreeNode* GetDataTypeFromForInitialization(
+    const verible::Symbol&);
+
+// Returns the variable name leaf from for loop initialization.
+const verible::SyntaxTreeLeaf& GetVariableNameFromForInitialization(
+    const verible::Symbol&);
+
+// Returns the rhs expression from for loop initialization.
+const verible::SyntaxTreeNode& GetExpressionFromForInitialization(
+    const verible::Symbol&);
 
 }  // namespace verilog
 

@@ -701,6 +701,8 @@ cc_library(
     srcs = ["statement.cc"],
     hdrs = ["statement.h"],
     deps = [
+        ":declaration",
+        ":identifier",
         ":verilog_matchers",  # fixdeps: keep
         "//common/analysis:syntax_tree_search",
         "//common/analysis/matcher",
@@ -717,6 +719,7 @@ cc_test(
     name = "statement_test",
     srcs = ["statement_test.cc"],
     deps = [
+        ":match_test_utils",
         ":statement",
         ":verilog_matchers",
         ":verilog_nonterminals",
