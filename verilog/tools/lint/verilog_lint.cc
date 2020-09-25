@@ -33,6 +33,8 @@
 #include "verilog/analysis/verilog_linter.h"
 #include "verilog/analysis/verilog_linter_configuration.h"
 
+ABSL_FLAG(bool, check_syntax, true,
+          "If true, check for lexical and syntax errors, otherwise ignore.");
 ABSL_FLAG(bool, parse_fatal, true,
           "If true, exit nonzero if there are any syntax errors.");
 ABSL_FLAG(bool, lint_fatal, true,
@@ -75,7 +77,8 @@ int main(int argc, char** argv) {
         verilog::LinterConfigurationFromFlags(filename));
 
     const int lint_status = verilog::LintOneFile(
-        &std::cout, filename, config, absl::GetFlag(FLAGS_parse_fatal),
+        &std::cout, filename, config,  //
+        absl::GetFlag(FLAGS_check_syntax), absl::GetFlag(FLAGS_parse_fatal),
         absl::GetFlag(FLAGS_lint_fatal));
     exit_status = std::max(lint_status, exit_status);
   }  // for each file

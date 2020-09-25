@@ -67,13 +67,13 @@ class LintOneFileTest : public DefaultLinterConfigTestFixture,
 TEST_F(LintOneFileTest, FileNotFound) {
   std::ostringstream output;
   const int exit_code =
-      LintOneFile(&output, "FileNotFound.sv", config_, false, false);
+      LintOneFile(&output, "FileNotFound.sv", config_, true, false, false);
   EXPECT_EQ(exit_code, 2);
 }
 
 // Tests that clean code exits 0 (success).
 TEST_F(LintOneFileTest, LintCleanFiles) {
-  const absl::string_view kTestCases[] = {
+  constexpr absl::string_view kTestCases[] = {
       "",  // empty file
       "\n",
       "class foo;\n"
@@ -83,51 +83,66 @@ TEST_F(LintOneFileTest, LintCleanFiles) {
     const ScopedTestFile temp_file(testing::TempDir(), test_code);
     std::ostringstream output;
     const int exit_code =
-        LintOneFile(&output, temp_file.filename(), config_, false, false);
+        LintOneFile(&output, temp_file.filename(), config_, true, false, false);
     EXPECT_EQ(exit_code, 0);
+    EXPECT_TRUE(output.str().empty());  // silence
   }
 }
 
 // Tests that invalid code is handled according to 'parse_fatal' parameter.
 TEST_F(LintOneFileTest, SyntaxError) {
-  const absl::string_view kTestCases[] = {
-      "class foo;\n",      // no endclass
-      "endclass : foo\n",  // no begin class
+  constexpr absl::string_view kTestCases[] = {
+      "class foo;\n",                     // no endclass
+      "endclass : foo\n",                 // no begin class
+      "module 444bad_name; endmodule\n",  // lexical error
   };
   for (const auto test_code : kTestCases) {
     const ScopedTestFile temp_file(testing::TempDir(), test_code);
-    std::ostringstream output;
     {  // continue even with syntax error
-      const int exit_code =
-          LintOneFile(&output, temp_file.filename(), config_, false, false);
+      std::ostringstream output;
+      const int exit_code = LintOneFile(&output, temp_file.filename(), config_,
+                                        true, false, false);
       EXPECT_EQ(exit_code, 0);
+      EXPECT_FALSE(output.str().empty());
     }
     {  // abort on syntax error
-      const int exit_code =
-          LintOneFile(&output, temp_file.filename(), config_, true, false);
+      std::ostringstream output;
+      const int exit_code = LintOneFile(&output, temp_file.filename(), config_,
+                                        true, true, false);
       EXPECT_EQ(exit_code, 1);
+      EXPECT_FALSE(output.str().empty());
+    }
+    {  // ignore syntax error
+      std::ostringstream output;
+      const int exit_code = LintOneFile(&output, temp_file.filename(), config_,
+                                        false, false, false);
+      EXPECT_EQ(exit_code, 0);
+      EXPECT_TRUE(output.str().empty());  // silence
     }
   }
 }
 
 TEST_F(LintOneFileTest, LintError) {
-  const absl::string_view kTestCases[] = {
+  constexpr absl::string_view kTestCases[] = {
       "task automatic foo;\n"
       "  $psprintf(\"blah\");\n"  // forbidden function
       "endtask\n",
   };
   for (const auto test_code : kTestCases) {
     const ScopedTestFile temp_file(testing::TempDir(), test_code);
-    std::ostringstream output;
     {  // continue even with lint error
-      const int exit_code =
-          LintOneFile(&output, temp_file.filename(), config_, false, false);
+      std::ostringstream output;
+      const int exit_code = LintOneFile(&output, temp_file.filename(), config_,
+                                        true, false, false);
       EXPECT_EQ(exit_code, 0) << "output:\n" << output.str();
+      EXPECT_FALSE(output.str().empty());
     }
     {  // abort on lint error
-      const int exit_code =
-          LintOneFile(&output, temp_file.filename(), config_, false, true);
+      std::ostringstream output;
+      const int exit_code = LintOneFile(&output, temp_file.filename(), config_,
+                                        true, false, true);
       EXPECT_EQ(exit_code, 1) << "output:\n" << output.str();
+      EXPECT_FALSE(output.str().empty());
     }
   }
 }

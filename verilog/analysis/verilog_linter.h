@@ -39,14 +39,15 @@ namespace verilog {
 // Diagnostics are printed to 'stream'.
 // 'filename' is the path to the file to analyze.
 // 'config' controls lint rules for analysis.
+// If 'check_syntax' is true, report lexical and syntax errors.
 // If 'parse_fatal' is true, abort after encountering syntax errors, else
 // continue to analyze the salvaged code structure.
 // If 'lint_fatal' is true, exit nonzero on finding lint violations.
 // Returns an exit_code like status where 0 means success, 1 means some
 // errors were found (syntax, lint), and anything else is a fatal error.
 int LintOneFile(std::ostream* stream, absl::string_view filename,
-                const LinterConfiguration& config, bool parse_fatal,
-                bool lint_fatal);
+                const LinterConfiguration& config, bool check_syntax,
+                bool parse_fatal, bool lint_fatal);
 
 // VerilogLinter analyzes a TextStructureView of Verilog source code.
 // This uses syntax-tree based analyses and lexical token-stream analyses.

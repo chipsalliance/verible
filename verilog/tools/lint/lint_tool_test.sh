@@ -115,6 +115,48 @@ status="$?"
 }
 
 ################################################################################
+echo "=== Test --check_syntax (default) and --parse_fatal (default)"
+
+TEST_FILE="${TEST_TMPDIR}/syntax-error.sv"
+
+cat > ${TEST_FILE} <<EOF
+class c  // missing semicolon
+endclass
+EOF
+
+"$lint_tool" "$TEST_FILE" > /dev/null 2> "${MY_OUTPUT_FILE}.err"
+
+status="$?"
+[[ $status == 1 ]] || {
+  echo "Expected exit code 1, but got $status"
+  exit 1
+}
+
+echo "=== Test --check_syntax"
+"$lint_tool" "$TEST_FILE" --check_syntax > /dev/null 2> "${MY_OUTPUT_FILE}.err"
+
+status="$?"
+[[ $status == 1 ]] || {
+  echo "Expected exit code 1, but got $status"
+  exit 1
+}
+
+echo "=== Test --nocheck_syntax"
+"$lint_tool" "$TEST_FILE" --nocheck_syntax > /dev/null 2> "${MY_OUTPUT_FILE}.err"
+
+status="$?"
+[[ $status == 0 ]] || {
+  echo "Expected exit code 0, but got $status"
+  exit 1
+}
+
+[[ ! -s "${MY_OUTPUT_FILE}.err" ]] || {
+  echo "Expected ${MY_OUTPUT_FILE}.err to be empty, but got:"
+  cat "${MY_OUTPUT_FILE}.err"
+  exit 1
+}
+
+################################################################################
 echo "=== Test --lint_fatal (default)"
 
 TEST_FILE="${TEST_TMPDIR}/lint-error.sv"

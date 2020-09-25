@@ -81,8 +81,8 @@ using verible::TokenInfo;
 //  1: linting error (if parse_fatal == true)
 //  2..: other fatal issues such as file not found.
 int LintOneFile(std::ostream* stream, absl::string_view filename,
-                const LinterConfiguration& config, bool parse_fatal,
-                bool lint_fatal) {
+                const LinterConfiguration& config, bool check_syntax,
+                bool parse_fatal, bool lint_fatal) {
   std::string content;
   const absl::Status content_status =
       verible::file::GetContents(filename, &content);
@@ -95,18 +95,20 @@ int LintOneFile(std::ostream* stream, absl::string_view filename,
   // Lex and parse the contents of the file.
   const auto analyzer =
       VerilogAnalyzer::AnalyzeAutomaticMode(content, filename);
-  const auto lex_status = ABSL_DIE_IF_NULL(analyzer)->LexStatus();
-  const auto parse_status = analyzer->ParseStatus();
-  if (!lex_status.ok() || !parse_status.ok()) {
-    const std::vector<std::string> syntax_error_messages(
-        analyzer->LinterTokenErrorMessages());
-    for (const auto& message : syntax_error_messages) {
-      *stream << message << std::endl;
-    }
-    if (parse_fatal) {
-      return 1;
-      // With syntax-error recovery, one can still continue to analyze a partial
-      // syntax tree.
+  if (check_syntax) {
+    const auto lex_status = ABSL_DIE_IF_NULL(analyzer)->LexStatus();
+    const auto parse_status = analyzer->ParseStatus();
+    if (!lex_status.ok() || !parse_status.ok()) {
+      const std::vector<std::string> syntax_error_messages(
+          analyzer->LinterTokenErrorMessages());
+      for (const auto& message : syntax_error_messages) {
+        *stream << message << std::endl;
+      }
+      if (parse_fatal) {
+        return 1;
+        // With syntax-error recovery, one can still continue to analyze a
+        // partial syntax tree.
+      }
     }
   }
 
