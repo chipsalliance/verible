@@ -33,14 +33,16 @@ namespace kythe {
 // Usage: stream << KytheFactsPrinter(*tree_root);
 class KytheFactsPrinter {
  public:
-  explicit KytheFactsPrinter(const IndexingFactNode& root) : root_(root) {}
+  explicit KytheFactsPrinter(IndexingFactNode& root) : root_(root) {}
 
   std::ostream& Print(std::ostream&) const;
 
  private:
   // The root of the indexing facts tree to extract kythe facts from.
-  const IndexingFactNode& root_;
+  IndexingFactNode& root_;
 };
+
+std::ostream& operator<<(std::ostream&, const KytheFactsPrinter&);
 
 // Responsible for traversing IndexingFactsTree and processing its different
 // nodes to produce kythe indexing facts.
@@ -51,7 +53,7 @@ class KytheFactsExtractor {
       : file_path_(file_path), stream_(stream) {}
 
   // Extracts kythe facts from the given IndexingFactsTree root.
-  void ExtractKytheFacts(const IndexingFactNode&);
+  void ExtractKytheFacts(IndexingFactNode&);
 
  private:
   // Container with a stack of VNames to hold context of VNames during traversal
@@ -78,19 +80,19 @@ class KytheFactsExtractor {
 
   // Resolves the tag of the given node and directs the flow to the appropriate
   // function to extract kythe facts for that node.
-  void IndexingFactNodeTagResolver(const IndexingFactNode&);
+  void IndexingFactNodeTagResolver(IndexingFactNode&);
 
   // Determines whether to create a scope for this node or not and visits the
   // children.
-  void Visit(const IndexingFactNode& node, const VName& vname);
+  void Visit(IndexingFactNode& node, const VName& vname);
 
   // Add the given VName to vnames_context (to be used in scope relative
   // signatures) and visits the children of the given node creating a new scope
   // for the given node.
-  void Visit(const IndexingFactNode& node, const VName&, Scope&);
+  void Visit(IndexingFactNode& node, const VName&, Scope&);
 
   // Directs the flow to the children of the given node.
-  void Visit(const IndexingFactNode& node);
+  void Visit(IndexingFactNode& node);
 
   // Determines whether or not to add the VName.
   void AddVNameToVerticalScope(IndexingFactType, const VName&);
@@ -102,10 +104,6 @@ class KytheFactsExtractor {
   // Determines whether or not to create a child of edge between the current
   // node and the previous node.
   void CreateChildOfEdge(IndexingFactType, const VName&);
-
-  // Extracts Packages and saves its scope to package_scope_context to be used
-  // for definition searching.
-  void CreatePackageScopes(const IndexingFactNode&);
 
   // Extracts kythe facts from file node and returns it VName.
   VName ExtractFileFact(const IndexingFactNode&);
@@ -208,8 +206,6 @@ class KytheFactsExtractor {
   // output.
   std::ostream* stream_;
 };
-
-std::ostream& operator<<(std::ostream&, const KytheFactsPrinter&);
 
 }  // namespace kythe
 }  // namespace verilog

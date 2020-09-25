@@ -25,26 +25,13 @@
 namespace verilog {
 namespace kythe {
 
-void KytheFactsExtractor::ExtractKytheFacts(const IndexingFactNode& root) {
-  CreatePackageScopes(root);
-  IndexingFactNodeTagResolver(root);
-}
-
-void KytheFactsExtractor::CreatePackageScopes(const IndexingFactNode& root) {
-  // Searches for packages as a first pass and saves their scope to be used for
-  // imports.
-  for (const IndexingFactNode& child : root.Children()) {
-    if (child.Value().GetIndexingFactType() != IndexingFactType::kPackage) {
-      continue;
-    }
-
-    VName package_vname = ExtractPackageDeclaration(child);
-    Visit(child, package_vname);
+void KytheFactsExtractor::ExtractKytheFacts(IndexingFactNode& root) {
+  for (int i = 0; i < 10; i++) {
+    IndexingFactNodeTagResolver(root);
   }
 }
 
-void KytheFactsExtractor::IndexingFactNodeTagResolver(
-    const IndexingFactNode& node) {
+void KytheFactsExtractor::IndexingFactNodeTagResolver(IndexingFactNode& node) {
   const auto tag = node.Value().GetIndexingFactType();
 
   VName vname;
@@ -111,8 +98,8 @@ void KytheFactsExtractor::IndexingFactNodeTagResolver(
       break;
     }
     case IndexingFactType::kPackage: {
-      // Return as packages should be extracted at the first pass.
-      return;
+      vname = ExtractPackageDeclaration(node);
+      break;
     }
     default: {
       break;
@@ -167,8 +154,7 @@ void KytheFactsExtractor::CreateChildOfEdge(IndexingFactType tag,
   }
 }
 
-void KytheFactsExtractor::Visit(const IndexingFactNode& node,
-                                const VName& vname) {
+void KytheFactsExtractor::Visit(IndexingFactNode& node, const VName& vname) {
   Scope current_scope(vname.signature);
   const auto tag = node.Value().GetIndexingFactType();
 
@@ -228,16 +214,16 @@ void KytheFactsExtractor::ConstructFlattenedScope(const IndexingFactNode& node,
   }
 }
 
-void KytheFactsExtractor::Visit(const IndexingFactNode& node,
-                                const VName& vname, Scope& current_scope) {
+void KytheFactsExtractor::Visit(IndexingFactNode& node, const VName& vname,
+                                Scope& current_scope) {
   const VNameContext::AutoPop vnames_auto_pop(&vnames_context_, &vname);
   const VerticalScopeResolver::AutoPop scope_auto_pop(&vertical_scope_resolver_,
                                                       &current_scope);
   Visit(node);
 }
 
-void KytheFactsExtractor::Visit(const IndexingFactNode& node) {
-  for (const IndexingFactNode& child : node.Children()) {
+void KytheFactsExtractor::Visit(IndexingFactNode& node) {
+  for (IndexingFactNode& child : node.Children()) {
     IndexingFactNodeTagResolver(child);
   }
 }
@@ -305,21 +291,6 @@ VName KytheFactsExtractor::ExtractModuleInstance(
   GenerateFactString(module_instance_vname, kFactComplete, kCompleteDefinition);
   GenerateEdgeString(module_instance_anchor, kEdgeDefinesBinding,
                      module_instance_vname);
-
-  // TODO(minatoma): Consider changing to children so that they can be extracted
-  // using ExtractVariableReference.
-  for (const auto& anchor :
-       verible::make_range(anchors.begin() + 1, anchors.end())) {
-    const VName* port_vname_definition =
-        vertical_scope_resolver_.SearchForDefinition(anchor.Value());
-
-    if (port_vname_definition == nullptr) {
-      continue;
-    }
-
-    const VName port_vname_anchor = PrintAnchorVName(anchor);
-    GenerateEdgeString(port_vname_anchor, kEdgeRef, *port_vname_definition);
-  }
 
   return module_instance_vname;
 }
