@@ -742,7 +742,6 @@ void TreeUnwrapper::SetIndentationsAndCreatePartitions(
     case NodeEnum::kIfClause:
     case NodeEnum::kElseClause:
     case NodeEnum::kIfHeader:
-      // TODO(fangism): k{Assert,Assume,Expect}PropertyClause
     case NodeEnum::kAssertionClause:
     case NodeEnum::kAssumeClause:
     case NodeEnum::kAssertPropertyClause:

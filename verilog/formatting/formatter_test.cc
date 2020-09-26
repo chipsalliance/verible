@@ -3303,6 +3303,21 @@ static constexpr FormatterTestCase kFormatterTestCases[] = {
         "  }\n"
         "endclass\n",
     },
+    {
+        "class c; "
+        "constraint c_has_config_error {"
+        "if (yyy) {zzzz == 1;} else {yyyyyyy == 0;}} "
+        "endclass",
+        "class c;\n"
+        "  constraint c_has_config_error {\n"
+        "    if (yyy) {\n"
+        "      zzzz == 1;\n"
+        "    } else {\n"
+        "      yyyyyyy == 0;\n"
+        "    }\n"
+        "  }\n"
+        "endclass\n",
+    },
 
     // class with empty parameter list
     {"class foo #(); endclass",

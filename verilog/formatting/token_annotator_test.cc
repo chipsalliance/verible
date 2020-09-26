@@ -4184,6 +4184,30 @@ TEST(TokenAnnotatorTest, AnnotateFormattingWithContextTest) {
       },
       {
           DefaultStyle,
+          {TK_end, "end"},
+          {TK_else, "else"},
+          {},  // default context
+          {},  // default context
+          {1, SpacingOptions::MustAppend},
+      },
+      {
+          DefaultStyle,
+          {'}', "}"},
+          {TK_else, "else"},
+          {},  // default context
+          {},  // default context
+          {1, SpacingOptions::MustAppend},
+      },
+      {
+          DefaultStyle,
+          {';', ";"},
+          {TK_else, "else"},
+          {},  // default context
+          {},  // default context
+          {1, SpacingOptions::MustWrap},
+      },
+      {
+          DefaultStyle,
           {TK_default, "default"},
           {TK_clocking, "clocking"},
           {},  // default context

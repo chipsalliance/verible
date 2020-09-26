@@ -798,13 +798,16 @@ static WithReason<SpacingOptions> BreakDecisionBetween(
   }
 
   if (right.TokenEnum() == TK_else) {
-    if (left.TokenEnum() != TK_end)
-      return {SpacingOptions::MustWrap,
-              "'else' token should start its own line unless preceded by 'end' "
-              "without label."};
-    else
+    // TODO(fangism): feels like this should be the responsibility of
+    // tree_unwrapper, handled by kElseClause, kGenerateElseClause, etc.
+    if (left.TokenEnum() == TK_end)
       return {SpacingOptions::MustAppend,
-              "'end'-'else' tokens should be together on one line."};
+              "'end'-'else' and should be together on one line."};
+    if (left.TokenEnum() == '}')
+      return {SpacingOptions::MustAppend,
+              "'}'-'else' and should be together on one line."};
+    // TODO(fangism): Some styles prefer to start with 'else' on its own line.
+    return {SpacingOptions::MustWrap, "'else' starts its own line."};
   }
 
   if ((left.TokenEnum() == TK_else) && (right.TokenEnum() == TK_begin)) {
