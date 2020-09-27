@@ -3618,6 +3618,22 @@ static constexpr FormatterTestCase kFormatterTestCases[] = {
      "  for (x = 0; x < N; ++x)  //\n"
      "    y = x;\n"
      "endfunction\n"},
+    {// for loop with function call in initializer
+     "function  void looper(); "
+     "for (int i=f(n); i>=0; i -- ) begin end "
+     "endfunction",
+     "function void looper();\n"
+     "  for (int i = f(n); i >= 0; i--) begin\n"
+     "  end\n"
+     "endfunction\n"},
+    {// for loop with function call in condition
+     "function  void looper(); "
+     "for (int i=0; i<f(m); i -- ) begin end "
+     "endfunction",
+     "function void looper();\n"
+     "  for (int i = 0; i < f(m); i--) begin\n"
+     "  end\n"
+     "endfunction\n"},
     {// forever loop
      "function\nvoid\tforevah;forever  begin "
      "++k\n;end endfunction\n",

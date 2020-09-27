@@ -1665,7 +1665,7 @@ void TreeUnwrapper::ReshapeTokenPartitions(
       // This applies to loop statements and loop generate constructs.
       // There are two 'partitions' with ';'.
       // Merge those with their predecessor sibling partitions.
-      const auto& children = partition.Children();
+      auto& children = partition.Children();
       const auto iter1 = std::find_if(children.begin(), children.end(),
                                       PartitionStartsWithSemicolon);
       CHECK(iter1 != children.end());
@@ -1674,13 +1674,13 @@ void TreeUnwrapper::ReshapeTokenPartitions(
       CHECK(iter2 != children.end());
       const int dist1 = std::distance(children.begin(), iter1);
       const int dist2 = std::distance(children.begin(), iter2);
-      VLOG(4) << "kForSpec got ';' at " << dist1 << " and " << dist2;
+      VLOG(4) << "kForSpec got ';' at child " << dist1 << " and " << dist2;
       // Merge from back-to-front to keep indices valid.
       if (dist2 > 0 && (dist2 - dist1 > 1)) {
-        verible::MergeConsecutiveSiblings(&partition, dist2 - 1);
+        verible::MergeLeafIntoPreviousLeaf(&*iter2);
       }
       if (dist1 > 0) {
-        verible::MergeConsecutiveSiblings(&partition, dist1 - 1);
+        verible::MergeLeafIntoPreviousLeaf(&*iter1);
       }
       break;
     }

@@ -6726,6 +6726,52 @@ const TreeUnwrapperTestData kUnwrapFunctionTestCases[] = {
     },
 
     {
+        "function with for loop with function call in initializer",
+        "function void looper();\n"
+        "  for (int i=f(m); i>=0; i--) begin\n"
+        "  end\n"
+        "endfunction\n",
+        FunctionDeclaration(
+            0, FunctionHeader(0, {"function", "void", "looper", "(", ")", ";"}),
+            FlowControl(
+                1,
+                LoopHeader(1, L(1, {"for", "("}),
+                           ForSpec(3,                                    //
+                                   N(3,                                  //
+                                     L(3, {"int", "i", "=", "f", "("}),  //
+                                     L(5, {"m"}),                        //
+                                     L(3, {")", ";"})                    //
+                                     ),
+                                   L(3, {"i", ">=", "0", ";"}),  //
+                                   L(3, {"i", "--"})),
+                           L(1, {")", "begin"})),
+                L(1, {"end"})),
+            L(0, {"endfunction"})),
+    },
+
+    {
+        "function with for loop with function call in condition",
+        "function void looper();\n"
+        "  for (int i = 0; i < f(m); i++) begin\n"
+        "  end\n"
+        "endfunction\n",
+        FunctionDeclaration(
+            0, FunctionHeader(0, {"function", "void", "looper", "(", ")", ";"}),
+            FlowControl(1,
+                        LoopHeader(1, L(1, {"for", "("}),
+                                   ForSpec(3, L(3, {"int", "i", "=", "0", ";"}),
+                                           N(3,                           //
+                                             L(3, {"i", "<", "f", "("}),  //
+                                             L(5, {"m"}),                 //
+                                             L(3, {")", ";"})             //
+                                             ),
+                                           L(3, {"i", "++"})),
+                                   L(1, {")", "begin"})),
+                        L(1, {"end"})),
+            L(0, {"endfunction"})),
+    },
+
+    {
         "function with for loop, labeled begin and end",
         "function foo;"
         "for (x=0;x<N;++x) begin:yyy "
