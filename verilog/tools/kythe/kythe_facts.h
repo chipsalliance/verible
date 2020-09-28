@@ -81,6 +81,9 @@ struct VName {
         corpus(corpus),
         root(root) {}
 
+  bool operator==(const VName& o) const;
+  bool operator<(const VName& o) const;
+
   std::string ToString() const;
 
   // Unique identifier for this VName.
@@ -100,6 +103,50 @@ struct VName {
 };
 
 std::ostream& operator<<(std::ostream&, const VName&);
+
+// Facts for kythe.
+struct Fact {
+  Fact(const VName& vname, absl::string_view name, absl::string_view value)
+      : node_vname(vname), fact_name(name), fact_value(value) {}
+
+  bool operator==(const Fact& o) const;
+  bool operator<(const Fact& o) const;
+
+  std::string ToString() const;
+
+  // The vname of the node this fact is about.
+  const VName node_vname;
+
+  // The name identifying this fact.
+  const std::string fact_name;
+
+  // The given value to this fact.
+  const std::string fact_value;
+};
+
+std::ostream& operator<<(std::ostream&, const Fact&);
+
+// Edges for kythe.
+struct Edge {
+  Edge(const VName& source, absl::string_view name, const VName& target)
+      : source_node(source), edge_name(name), target_node(target) {}
+
+  bool operator==(const Edge& o) const;
+  bool operator<(const Edge& o) const;
+
+  std::string ToString() const;
+
+  // The vname of the source node of this edge.
+  const VName source_node;
+
+  // The edge name which identifies the edge kind.
+  const std::string edge_name;
+
+  // The vname of the target node of this edge.
+  const VName target_node;
+};
+
+std::ostream& operator<<(std::ostream&, const Edge&);
 
 }  // namespace kythe
 }  // namespace verilog

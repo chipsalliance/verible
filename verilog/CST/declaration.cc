@@ -128,9 +128,9 @@ const SyntaxTreeNode& GetUnqualifiedIdFromLocalRoot(const Symbol& local_root) {
 
 const verible::SyntaxTreeNode& GetUnqualifiedIdFromReferenceCallBase(
     const verible::Symbol& reference_call_base) {
-  const SyntaxTreeNode& refernce =
+  const SyntaxTreeNode& reference =
       GetReferenceFromReferenceCallBase(reference_call_base);
-  const SyntaxTreeNode& local_root = GetLocalRootFromReference(refernce);
+  const SyntaxTreeNode& local_root = GetLocalRootFromReference(reference);
   return GetUnqualifiedIdFromLocalRoot(local_root);
 }
 

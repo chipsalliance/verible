@@ -53,6 +53,13 @@ std::string Signature::ToBase64() const {
   return absl::Base64Escape(ToString());
 }
 
+bool VName::operator==(const VName& other) const {
+  return this->ToString() == other.ToString();
+}
+bool VName::operator<(const VName& other) const {
+  return this->ToString() < other.ToString();
+}
+
 std::string VName::ToString() const {
   return absl::Substitute(
       R"({"signature": "$0","path": "$1","language": "$2","root": "$3","corpus": "$4"})",
@@ -61,6 +68,44 @@ std::string VName::ToString() const {
 
 std::ostream& operator<<(std::ostream& stream, const VName& vname) {
   stream << vname.ToString();
+  return stream;
+}
+
+bool Fact::operator==(const Fact& other) const {
+  return this->ToString() == other.ToString();
+}
+
+bool Fact::operator<(const Fact& other) const {
+  return this->ToString() < other.ToString();
+}
+
+std::string Fact::ToString() const {
+  return absl::Substitute(
+      R"({"source": $0,"fact_name": "$1","fact_value": "$2"})",
+      node_vname.ToString(), fact_name, absl::Base64Escape(fact_value));
+}
+
+std::ostream& operator<<(std::ostream& stream, const Fact& fact) {
+  stream << fact.ToString();
+  return stream;
+}
+
+bool Edge::operator==(const Edge& other) const {
+  return this->ToString() == other.ToString();
+}
+
+bool Edge::operator<(const Edge& other) const {
+  return this->ToString() < other.ToString();
+}
+
+std::string Edge::ToString() const {
+  return absl::Substitute(
+      R"({"source": $0,"edge_kind": "$1","target": $2,"fact_name": "/"})",
+      source_node.ToString(), edge_name, target_node.ToString());
+}
+
+std::ostream& operator<<(std::ostream& stream, const Edge& edge) {
+  stream << edge.ToString();
   return stream;
 }
 

@@ -16,6 +16,7 @@
 #define VERIBLE_VERILOG_TOOLS_KYTHE_KYTHE_FACTS_EXTRACTOR_H_
 
 #include <map>
+#include <set>
 #include <string>
 #include <utility>
 
@@ -33,13 +34,13 @@ namespace kythe {
 // Usage: stream << KytheFactsPrinter(*tree_root);
 class KytheFactsPrinter {
  public:
-  explicit KytheFactsPrinter(IndexingFactNode& root) : root_(root) {}
+  explicit KytheFactsPrinter(const IndexingFactNode& root) : root_(root) {}
 
   std::ostream& Print(std::ostream&) const;
 
  private:
   // The root of the indexing facts tree to extract kythe facts from.
-  IndexingFactNode& root_;
+  const IndexingFactNode& root_;
 };
 
 std::ostream& operator<<(std::ostream&, const KytheFactsPrinter&);
@@ -55,7 +56,7 @@ class KytheFactsExtractor {
       : file_path_(file_path), stream_(stream), is_new_facts_extracted_(true) {}
 
   // Extracts kythe facts from the given IndexingFactsTree root.
-  void ExtractKytheFacts(IndexingFactNode&);
+  void ExtractKytheFacts(const IndexingFactNode&);
 
  private:
   // Container with a stack of VNames to hold context of VNames during traversal
@@ -82,19 +83,19 @@ class KytheFactsExtractor {
 
   // Resolves the tag of the given node and directs the flow to the appropriate
   // function to extract kythe facts for that node.
-  void IndexingFactNodeTagResolver(IndexingFactNode&);
+  void IndexingFactNodeTagResolver(const IndexingFactNode&);
 
   // Determines whether to create a scope for this node or not and visits the
   // children.
-  void Visit(IndexingFactNode& node, const VName& vname);
+  void Visit(const IndexingFactNode& node, const VName& vname);
 
   // Add the given VName to vnames_context (to be used in scope relative
   // signatures) and visits the children of the given node creating a new scope
   // for the given node.
-  void Visit(IndexingFactNode& node, const VName&, Scope&);
+  void Visit(const IndexingFactNode& node, const VName&, Scope&);
 
   // Directs the flow to the children of the given node.
-  void Visit(IndexingFactNode& node);
+  void Visit(const IndexingFactNode& node);
 
   // Determines whether or not to add the VName.
   void AddVNameToVerticalScope(IndexingFactType, const VName&);
@@ -108,50 +109,51 @@ class KytheFactsExtractor {
   void CreateChildOfEdge(IndexingFactType, const VName&);
 
   // Extracts kythe facts from file node and returns it VName.
-  VName ExtractFileFact(IndexingFactNode&);
+  VName ExtractFileFact(const IndexingFactNode&);
 
   // Extracts kythe facts a reference to a user defined data type like class or
   // module.
-  void ExtractDataTypeReference(IndexingFactNode&);
+  void ExtractDataTypeReference(const IndexingFactNode&);
 
   // Extracts kythe facts from module instance node and returns it VName.
-  VName ExtractModuleInstance(IndexingFactNode&);
+  VName ExtractModuleInstance(const IndexingFactNode&);
 
   // Extracts kythe facts from module named port node e.g("m(.in1(a))").
-  void ExtractModuleNamedPort(IndexingFactNode&);
+  void ExtractModuleNamedPort(const IndexingFactNode&);
 
   // Extracts kythe facts from module node and returns it VName.
-  VName ExtractModuleFact(IndexingFactNode&);
+  VName ExtractModuleFact(const IndexingFactNode&);
 
   // Extracts kythe facts from class node and returns it VName.
-  VName ExtractClass(IndexingFactNode&);
+  VName ExtractClass(const IndexingFactNode&);
 
   // Extracts kythe facts from module port node and returns its VName.
-  VName ExtractVariableDefinition(IndexingFactNode& node);
+  VName ExtractVariableDefinition(const IndexingFactNode& node);
 
   // Extracts kythe facts from a module port reference node.
-  void ExtractVariableReference(IndexingFactNode& node);
+  void ExtractVariableReference(const IndexingFactNode& node);
 
   // Extracts Kythe facts from class instance node and return its VName.
-  VName ExtractClassInstances(IndexingFactNode& class_instance_fact_node);
+  VName ExtractClassInstances(const IndexingFactNode& class_instance_fact_node);
 
   // Extracts kythe facts from a function or task node and returns its VName.
-  VName ExtractFunctionOrTask(IndexingFactNode& function_fact_node);
+  VName ExtractFunctionOrTask(const IndexingFactNode& function_fact_node);
 
   // Extracts kythe facts from a function or task call node.
-  void ExtractFunctionOrTaskCall(IndexingFactNode& function_call_fact_node);
+  void ExtractFunctionOrTaskCall(
+      const IndexingFactNode& function_call_fact_node);
 
   // Extracts kythe facts from a package declaration node and returns its VName.
-  VName ExtractPackageDeclaration(IndexingFactNode& node);
+  VName ExtractPackageDeclaration(const IndexingFactNode& node);
 
   // Extracts kythe facts from package import node.
-  void ExtractPackageImport(IndexingFactNode& node);
+  void ExtractPackageImport(const IndexingFactNode& node);
 
   // Extracts kythe facts from a macro definition node and returns its VName.
-  VName ExtractMacroDefinition(IndexingFactNode& macro_definition_node);
+  VName ExtractMacroDefinition(const IndexingFactNode& macro_definition_node);
 
   // Extracts kythe facts from a macro call node.
-  void ExtractMacroCall(IndexingFactNode& macro_call_node);
+  void ExtractMacroCall(const IndexingFactNode& macro_call_node);
 
   // Extracts kythe facts from member reference statement.
   // e.g pkg::member or class::member or class.member
@@ -161,7 +163,7 @@ class KytheFactsExtractor {
   //
   // is_function_call determines whether this member reference is function call
   // or not e.g pkg::class1::function_x().
-  void ExtractMemberReference(IndexingFactNode& member_reference_node,
+  void ExtractMemberReference(const IndexingFactNode& member_reference_node,
                               bool is_function_call);
 
   // Generates an anchor VName for kythe.
@@ -179,14 +181,14 @@ class KytheFactsExtractor {
   // Generates fact strings for Kythe facts.
   // Schema for this fact can be found here:
   // https://kythe.io/docs/schema/writing-an-indexer.html
-  void GenerateFactString(const VName& vname, absl::string_view name,
-                          absl::string_view value) const;
+  void CreateFact(const VName& vname, absl::string_view name,
+                  absl::string_view value);
 
   // Generates edge strings for Kythe edges.
   // Schema for this edge can be found here:
   // https://kythe.io/docs/schema/writing-an-indexer.html
-  void GenerateEdgeString(const VName& source, absl::string_view name,
-                          const VName& target) const;
+  void CreateEdge(const VName& source, absl::string_view name,
+                  const VName& target);
 
   // The verilog file name which the facts are extracted from.
   std::string file_path_;
@@ -212,6 +214,12 @@ class KytheFactsExtractor {
 
   // Used to get the VName that was extracted from the given node.
   std::map<const IndexingFactNode*, VName> indexing_node_to_vname;
+
+  // Used to save of all the generated facts uniquiely.
+  std::set<Fact> facts_;
+
+  // Used to save of all the generated edges uniquiely.
+  std::set<Edge> edges_;
 };
 
 }  // namespace kythe

@@ -71,13 +71,11 @@ class Anchor {
 class IndexingNodeData {
  public:
   explicit IndexingNodeData(IndexingFactType language_feature)
-      : indexing_fact_type_(language_feature), is_extracted_(false) {}
+      : indexing_fact_type_(language_feature) {}
 
   IndexingNodeData(std::vector<Anchor> anchor,
                    IndexingFactType language_feature)
-      : anchors_(std::move(anchor)),
-        indexing_fact_type_(language_feature),
-        is_extracted_(false) {}
+      : anchors_(std::move(anchor)), indexing_fact_type_(language_feature) {}
 
   void AppendAnchor(const Anchor& anchor) { anchors_.push_back(anchor); }
 
@@ -91,8 +89,6 @@ class IndexingNodeData {
 
   const std::vector<Anchor>& Anchors() const { return anchors_; }
   IndexingFactType GetIndexingFactType() const { return indexing_fact_type_; }
-  bool IsExtracted() const { return is_extracted_; }
-  void SetExtracted() { is_extracted_ = true; }
 
   bool operator==(const IndexingNodeData&) const;
 
@@ -102,9 +98,6 @@ class IndexingNodeData {
 
   // Represents which language feature this indexing fact is about.
   IndexingFactType indexing_fact_type_;
-
-  // Represents whether kythe facts of this node is extracted or not.
-  bool is_extracted_;
 };
 
 // human-readable form for debugging
