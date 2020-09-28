@@ -26,6 +26,10 @@ namespace verilog {
 namespace kythe {
 
 void KytheFactsExtractor::ExtractKytheFacts(const IndexingFactNode& root) {
+  // For every iteration:
+  // saves the current number of extracted facts, do another iteration to
+  // extract more facts and if new facts were extracted do another iteration and
+  // so on.
   std::size_t number_of_extracted_facts = 0;
   do {
     number_of_extracted_facts = facts_.size();

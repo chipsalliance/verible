@@ -5,6 +5,8 @@ class class1;
 
     //- @my_function defines/binding _
     function int my_function();
+        // TODO(minatoma): change the :: to instance.var1.
+
         //- @instance1 ref Instance1
         //- @instance2 ref Instance2
         //- @instance3 ref Instance3

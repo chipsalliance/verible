@@ -35,8 +35,8 @@ class Signature {
     names_.push_back(std::string(name));
   }
 
-  bool operator==(const Signature& o) const;
-  bool operator<(const Signature& o) const;
+  bool operator==(const Signature& other) const;
+  bool operator<(const Signature& other) const;
 
   // Returns the the signature concatenated as a string.
   std::string ToString() const;
@@ -81,8 +81,8 @@ struct VName {
         corpus(corpus),
         root(root) {}
 
-  bool operator==(const VName& o) const;
-  bool operator<(const VName& o) const;
+  bool operator==(const VName& other) const;
+  bool operator<(const VName& other) const;
 
   std::string ToString() const;
 
@@ -105,12 +105,15 @@ struct VName {
 std::ostream& operator<<(std::ostream&, const VName&);
 
 // Facts for kythe.
+// For more information:
+// https://www.kythe.io/docs/kythe-storage.html#_a_id_termfact_a_fact
+// https://www.kythe.io/docs/schema/writing-an-indexer.html#_modeling_kythe_entries
 struct Fact {
   Fact(const VName& vname, absl::string_view name, absl::string_view value)
       : node_vname(vname), fact_name(name), fact_value(value) {}
 
-  bool operator==(const Fact& o) const;
-  bool operator<(const Fact& o) const;
+  bool operator==(const Fact& other) const;
+  bool operator<(const Fact& other) const;
 
   std::string ToString() const;
 
@@ -127,12 +130,14 @@ struct Fact {
 std::ostream& operator<<(std::ostream&, const Fact&);
 
 // Edges for kythe.
+// For more information:
+// https://www.kythe.io/docs/schema/writing-an-indexer.html#_modeling_kythe_entries
 struct Edge {
   Edge(const VName& source, absl::string_view name, const VName& target)
       : source_node(source), edge_name(name), target_node(target) {}
 
-  bool operator==(const Edge& o) const;
-  bool operator<(const Edge& o) const;
+  bool operator==(const Edge& other) const;
+  bool operator<(const Edge& other) const;
 
   std::string ToString() const;
 

@@ -47,7 +47,7 @@ std::ostream& operator<<(std::ostream&, const KytheFactsPrinter&);
 
 // Responsible for traversing IndexingFactsTree and processing its different
 // nodes to produce kythe indexing facts.
-// Iteratively extracts facts and keeps running till no new facts are found in
+// Iteratively extracts facts and keeps running until no new facts are found in
 // the last iteration.
 class KytheFactsExtractor {
  public:
@@ -209,10 +209,10 @@ class KytheFactsExtractor {
   // output.
   std::ostream* stream_;
 
-  // Used to save all the generated facts uniquiely.
+  // Used to save all the generated facts Uniquely.
   std::set<Fact> facts_;
 
-  // Used to save all the generated edges uniquiely.
+  // Used to save all the generated edges Uniquely.
   std::set<Edge> edges_;
 };
 

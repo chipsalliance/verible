@@ -24,10 +24,12 @@
 namespace verilog {
 namespace kythe {
 
+// TODO(minatoma): change this string comparison to a tuple comparison.
 bool Signature::operator==(const Signature& other) const {
   return this->ToString() == other.ToString();
 }
 
+// TODO(minatoma): change this string comparison to a tuple comparison.
 bool Signature::operator<(const Signature& other) const {
   return this->ToString() < other.ToString();
 }
@@ -53,10 +55,12 @@ std::string Signature::ToBase64() const {
   return absl::Base64Escape(ToString());
 }
 
+// TODO(minatoma): change this string comparison to a tuple comparison.
 bool VName::operator==(const VName& other) const {
   return this->ToString() == other.ToString();
 }
 
+// TODO(minatoma): change this string comparison to a tuple comparison.
 bool VName::operator<(const VName& other) const {
   return this->ToString() < other.ToString();
 }
@@ -72,10 +76,12 @@ std::ostream& operator<<(std::ostream& stream, const VName& vname) {
   return stream;
 }
 
+// TODO(minatoma): change this string comparison to a tuple comparison.
 bool Fact::operator==(const Fact& other) const {
   return this->ToString() == other.ToString();
 }
 
+// TODO(minatoma): change this string comparison to a tuple comparison.
 bool Fact::operator<(const Fact& other) const {
   return this->ToString() < other.ToString();
 }
@@ -91,10 +97,12 @@ std::ostream& operator<<(std::ostream& stream, const Fact& fact) {
   return stream;
 }
 
+// TODO(minatoma): change this string comparison to a tuple comparison.
 bool Edge::operator==(const Edge& other) const {
   return this->ToString() == other.ToString();
 }
 
+// TODO(minatoma): change this string comparison to a tuple comparison.
 bool Edge::operator<(const Edge& other) const {
   return this->ToString() < other.ToString();
 }

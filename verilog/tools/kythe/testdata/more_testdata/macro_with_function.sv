@@ -1,3 +1,6 @@
+// Copyright 2020 Google LLC.
+// SPDX-License-Identifier: Apache-2.0
+
 //- @PRINT_STRING defines/binding _
 `define PRINT_STRING(str1) $display("%s\n", str1)
 
