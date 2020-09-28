@@ -606,7 +606,7 @@ void KytheFactsExtractor::ExtractMemberReference(
         definition_signature, anchor.Value());
 
     if (definition_vname == nullptr) {
-      continue;
+      return;
     }
 
     reference_anchor = PrintAnchorVName(anchor);
