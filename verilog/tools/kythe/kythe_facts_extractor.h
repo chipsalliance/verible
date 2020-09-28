@@ -209,10 +209,10 @@ class KytheFactsExtractor {
   // output.
   std::ostream* stream_;
 
-  // Used to save of all the generated facts uniquiely.
+  // Used to save all the generated facts uniquiely.
   std::set<Fact> facts_;
 
-  // Used to save of all the generated edges uniquiely.
+  // Used to save all the generated edges uniquiely.
   std::set<Edge> edges_;
 };
 
