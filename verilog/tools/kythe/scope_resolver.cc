@@ -50,7 +50,8 @@ const VName* VerticalScopeResolver::SearchForDefinition(
   return nullptr;
 }
 
-Scope* FlattenedScopeResolver::SearchForScope(const Signature& signature) {
+const Scope* FlattenedScopeResolver::SearchForScope(
+    const Signature& signature) const {
   const auto scope = scopes_.find(signature);
   if (scope == scopes_.end()) {
     return nullptr;
@@ -59,8 +60,8 @@ Scope* FlattenedScopeResolver::SearchForScope(const Signature& signature) {
 }
 
 const VName* FlattenedScopeResolver::SearchForVNameInScope(
-    const Signature& signature, absl::string_view name) {
-  Scope* scope = SearchForScope(signature);
+    const Signature& signature, absl::string_view name) const {
+  const Scope* scope = SearchForScope(signature);
   if (scope == nullptr) {
     return nullptr;
   }

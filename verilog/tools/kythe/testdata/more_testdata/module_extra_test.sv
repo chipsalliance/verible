@@ -1,10 +1,6 @@
-// Copyright 2020 Google LLC.
-// SPDX-License-Identifier: Apache-2.0
-
 //- _FileNode.node/kind file
 
 //- @my_module defines/binding MyModule
-//- MyModule.node/kind function
 module my_module (
   //- @in1 defines/binding In1
   input bit in1,
@@ -21,7 +17,6 @@ module my_module (
 endmodule
 
 //- @top defines/binding Top
-//- Top.node/kind function
 module top;
   //- @aa defines/binding AA
   //- @bb defines/binding BB
@@ -30,9 +25,6 @@ module top;
 
   //- @my_module ref MyModule
   //- @dut defines/binding _
-  //- @dut ref MyModule
-  //- @"my_module dut(.in1(aa), .in2(bb), .out1(cc));" ref/call MyModule
-  //- @"my_module dut(.in1(aa), .in2(bb), .out1(cc));" childof Top
   //- @aa ref AA
   //- @bb ref BB
   //- @cc ref CC
@@ -42,6 +34,8 @@ endmodule
 
 //- @top_top defines/binding TopTop
 module top_top;
-  //- @"top top_module();" childof TopTop
+  //- @#0top ref Top
+  //- @top_module defines/binding TopInstance
+  //- TopInstance childof TopTop
   top top_module();
 endmodule

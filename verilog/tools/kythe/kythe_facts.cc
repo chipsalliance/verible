@@ -56,6 +56,7 @@ std::string Signature::ToBase64() const {
 bool VName::operator==(const VName& other) const {
   return this->ToString() == other.ToString();
 }
+
 bool VName::operator<(const VName& other) const {
   return this->ToString() < other.ToString();
 }

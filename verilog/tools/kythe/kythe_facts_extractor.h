@@ -53,7 +53,7 @@ class KytheFactsExtractor {
  public:
   explicit KytheFactsExtractor(absl::string_view file_path,
                                std::ostream* stream)
-      : file_path_(file_path), stream_(stream), is_new_facts_extracted_(true) {}
+      : file_path_(file_path), stream_(stream) {}
 
   // Extracts kythe facts from the given IndexingFactsTree root.
   void ExtractKytheFacts(const IndexingFactNode&);
@@ -208,12 +208,6 @@ class KytheFactsExtractor {
   // Output stream for capturing, redirecting, testing and verifying the
   // output.
   std::ostream* stream_;
-
-  // Determines whether new facts were extracted in this iteration or not.
-  bool is_new_facts_extracted_;
-
-  // Used to get the VName that was extracted from the given node.
-  std::map<const IndexingFactNode*, VName> indexing_node_to_vname;
 
   // Used to save of all the generated facts uniquiely.
   std::set<Fact> facts_;

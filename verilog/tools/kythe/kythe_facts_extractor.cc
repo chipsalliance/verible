@@ -29,7 +29,6 @@ void KytheFactsExtractor::ExtractKytheFacts(const IndexingFactNode& root) {
   std::size_t number_of_extracted_facts = 0;
   do {
     number_of_extracted_facts = facts_.size();
-    is_new_facts_extracted_ = false;
     IndexingFactNodeTagResolver(root);
   } while (number_of_extracted_facts != facts_.size());
 
@@ -182,7 +181,7 @@ void KytheFactsExtractor::Visit(const IndexingFactNode& node,
     case IndexingFactType::kClassInstance: {
       // Get the old scope of this node (if it was extracted in a previous
       // iteration).
-      Scope* old_scope =
+      const Scope* old_scope =
           flattened_scope_resolver_.SearchForScope(vname.signature);
       if (old_scope != nullptr) {
         current_scope.AppendScope(*old_scope);

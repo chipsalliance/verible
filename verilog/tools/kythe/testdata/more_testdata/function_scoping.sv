@@ -1,6 +1,4 @@
-// Copyright 2020 Google LLC.
-// SPDX-License-Identifier: Apache-2.0
-
+//- @top_pkg defines/binding TopPkg
 package top_pkg;
   //- @my_function defines/binding PkgFunction
   //- PkgFunction.node/kind function
@@ -10,11 +8,11 @@ package top_pkg;
     return my_arg1;
   endfunction
 
-  //- @your_function defines/binding YourFunction
+  //- @your_function defines/binding _
   function automatic int your_function(int your_arg1);
     //- @my_function ref PkgFunction
-    //- @"top_pkg::my_function(your_arg1)" ref/call PkgFunction
-    //- @"top_pkg::my_function(your_arg1)" childof YourFunction
+    //- @my_function ref/call PkgFunction
+    //- @top_pkg ref TopPkg
     return top_pkg::my_function(your_arg1);
   endfunction
 endpackage
@@ -34,7 +32,7 @@ module function_scoping;
 
   initial begin
     //- @my_function ref PkgFunction
-    //- @"my_function(2)" ref/call PkgFunction
+    //- @my_function ref/call PkgFunction
     automatic int i = my_function(2);
 
     //- @nc_instance defines/binding ClassInstance
@@ -42,7 +40,7 @@ module function_scoping;
 
     //- @nc_instance ref ClassInstance
     //- @my_function ref ClassFunction
-    //- @"nc_instance.my_function(2)" ref/call ClassFunction
+    //- @my_function ref/call ClassFunction
     automatic int j = nc_instance.my_function(2);
   end
 endmodule
