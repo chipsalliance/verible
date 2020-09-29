@@ -99,4 +99,13 @@ const verible::SyntaxTreeNode& GetModuleItemList(
                                    NodeEnum::kModuleItemList);
 }
 
+const verible::SyntaxTreeNode* GetModuleParamDeclarationList(
+    const verible::Symbol& module_declaration) {
+  const auto& header_node = GetModuleHeader(module_declaration);
+  const verible::Symbol* param_declaration_list =
+      verible::GetSubtreeAsSymbol(header_node, NodeEnum::kModuleHeader, 4);
+  return verible::CheckOptionalSymbolAsNode(
+      param_declaration_list, NodeEnum::kFormalParameterListDeclaration);
+}
+
 }  // namespace verilog

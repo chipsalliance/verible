@@ -147,6 +147,19 @@ const verible::TokenInfo& GetTypeTokenInfoFromDataDeclaration(
   return instance_symbol_identifier->get();
 }
 
+const verible::SyntaxTreeNode* GetParamListFromDataDeclaration(
+    const verible::Symbol& data_declaration) {
+  const SyntaxTreeNode& instantiation_type =
+      GetTypeOfDataDeclaration(data_declaration);
+  const SyntaxTreeNode& reference_call_base =
+      GetReferenceCallBaseFromInstantiationType(instantiation_type);
+  const SyntaxTreeNode& unqualified_id =
+      GetUnqualifiedIdFromReferenceCallBase(reference_call_base);
+  const verible::Symbol* param_list =
+      GetSubtreeAsSymbol(unqualified_id, NodeEnum::kUnqualifiedId, 1);
+  return CheckOptionalSymbolAsNode(param_list, NodeEnum::kActualParameterList);
+}
+
 const verible::TokenInfo& GetModuleInstanceNameTokenInfoFromGateInstance(
     const verible::Symbol& gate_instance) {
   const verible::SyntaxTreeLeaf& instance_name =
