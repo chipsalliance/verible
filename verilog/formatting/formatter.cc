@@ -284,7 +284,6 @@ static void DeterminePartitionExpansion(
     absl::string_view full_text, const ByteOffsetSet& disabled_ranges,
     const FormatStyle& style) {
   auto& node_view = node->Value();
-  const auto& children = node->Children();
   const UnwrappedLine& uwline = node_view.Value();
   VLOG(3) << "unwrapped line: " << uwline;
   const verible::FormatTokenRange ftoken_range(uwline.TokensRange());
@@ -303,14 +302,14 @@ static void DeterminePartitionExpansion(
   // Expand or not, depending on partition policy and other conditions.
 
   // If this is a leaf partition, there is nothing to expand.
-  if (children.empty()) {
+  if (node->is_leaf()) {
     VLOG(3) << "No children to expand.";
     node_view.Unexpand();
     if (partition_policy == PartitionPolicyEnum::kFitOnLineElseExpand &&
         !style.try_wrap_long_lines &&
         !verible::FitsOnLine(uwline, style).fits) {
       // give-up early and preserve original spacing
-      VLOG(3) << "Does not fit, preserving.";
+      VLOG(3) << "Does not fit (leaf), preserving.";
       PreserveSpaces();
     }
     return;
@@ -319,6 +318,7 @@ static void DeterminePartitionExpansion(
   // If any children are expanded, then this node must be expanded,
   // regardless of the UnwrappedLine's chosen policy.
   // Thus, this function must be executed with a post-order traversal.
+  const auto& children = node->Children();
   if (std::any_of(children.begin(), children.end(),
                   [](const partition_node_type& child) {
                     return child.Value().IsExpanded();
@@ -370,19 +370,13 @@ static void DeterminePartitionExpansion(
     // If it doesn't fit expand to grouped nodes.
     case PartitionPolicyEnum::kAppendFittingSubPartitions:
     case PartitionPolicyEnum::kFitOnLineElseExpand: {
+      // !style.try_wrap_long_lines was already handled above
       if (verible::FitsOnLine(uwline, style).fits) {
         VLOG(3) << "Fits, un-expanding.";
         node_view.Unexpand();
       } else {
-        if (style.try_wrap_long_lines) {
-          VLOG(3) << "Does not fit, expanding.";
-          node_view.Expand();
-        } else {
-          // give-up early and preserve original spacing
-          VLOG(3) << "Does not fit, preserving.";
-          node_view.Unexpand();
-          PreserveSpaces();
-        }
+        VLOG(3) << "Does not fit, expanding.";
+        node_view.Expand();
       }
     }
   }

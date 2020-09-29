@@ -8105,13 +8105,27 @@ TEST(FormatterEndToEndTest, DisableTryWrapLongLines) {
        "  initial assign a = b;\n"
        "endmodule\n"},
       {"module  m(   ) ;\n"
-       "initial assign a = {never +gonna +give +you +up,\n"  // over 40 columns,
+       "initial assign a = {never +gonna +give +you +up,\n"
+       "never + gonna +Let +you +down};\n"
+       "  endmodule\n",
+       "module m ();\n"
+       "  initial\n"
+       "    assign a = {\n"
+       "      never + gonna + give + you + up,\n"
+       "      never + gonna + Let + you + down\n"
+       "    };\n"
+       "endmodule\n"},
+      {"module  m(   ) ;\n"
+       "initial assign a = {never +gonna +give +you +up+\n"  // over 40 columns,
                                                              // give up
        "never + gonna +Let +you +down};\n"
        "  endmodule\n",
        "module m ();\n"
-       "  initial assign a = {never +gonna +give +you +up,\n"
-       "never + gonna +Let +you +down};\n"
+       "  initial\n"
+       "    assign a = {\n"
+       "      never +gonna +give +you +up+\n"  // indented properly, but
+       "never + gonna +Let +you +down\n"       // preserved original
+       "    };\n"
        "endmodule\n"},
       {// The if-header is a single leaf partition, and does not fit,
        // so its original spacing should be preserved.
@@ -8128,6 +8142,41 @@ TEST(FormatterEndToEndTest, DisableTryWrapLongLines) {
        "       (hhhhhhhhhhhhhhh+iiiiiiiiiiiiiiiiiiii))) begin\n"
        "  end\n"  // indentation fixed
        "endfunction\n"},
+
+      // Make sure indentation still works with wrapping disabled,
+      // and leaf partitions fit on one line.
+      {"function void f();\n"
+       "for (int i = N; i > 0; i--) begin\n"
+       "end\n"
+       "endfunction\n",
+       "function void f();\n"
+       "  for (int i = N; i > 0; i--) begin\n"
+       "  end\n"
+       "endfunction\n"},
+      {"function void f();"
+       "if(i > 0 ) begin end "
+       "endfunction",
+       "function void f();\n"
+       "  if (i > 0) begin\n"
+       "  end\n"
+       "endfunction\n"},
+      {"function void f();"  // newlines absent from input
+       "for (int i = N; i > 0; i--) begin end "
+       "endfunction",
+       "function void f();\n"
+       "  for (int i = N; i > 0; i--) begin\n"
+       "  end\n"
+       "endfunction\n"},
+      {"module m( );\n"
+       "  always_ff  @  (  posedge  (  clk  )  ) begin\n"
+       "out  <=  rst_clk  ?  0 : in  ;\n"
+       "end\n"
+       "endmodule : simple\n",
+       "module m ();\n"
+       "  always_ff @(posedge (clk)) begin\n"
+       "    out <= rst_clk ? 0 : in;\n"
+       "  end\n"
+       "endmodule : simple\n"},
   };
   FormatStyle style;
   style.column_limit = 40;
