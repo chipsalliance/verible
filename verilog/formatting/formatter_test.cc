@@ -8161,10 +8161,10 @@ TEST(FormatterEndToEndTest, DisableTryWrapLongLines) {
        "  end\n"
        "endfunction\n"},
       {"function void f();"  // newlines absent from input
-       "for (int i = N; i > 0; i--) begin end "
+       "for (int i=N; i>0; i--) begin end "
        "endfunction",
        "function void f();\n"
-       "  for (int i = N; i > 0; i--) begin\n"
+       "  for (int i = N; i > 0; i--) begin\n"  // spacing corrected
        "  end\n"
        "endfunction\n"},
       {"module m( );\n"
