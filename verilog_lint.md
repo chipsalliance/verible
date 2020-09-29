@@ -56,6 +56,8 @@ verible-verilog-lint: usage: bazel-bin/verilog/tools/lint/verible-verilog-lint [
 
 
   Flags from verilog/tools/lint/verilog_lint.cc:
+    --check_syntax (If true, check for lexical and syntax errors, otherwise
+      ignore.); default: true;
     --generate_markdown (If true, print the description of every rule formatted
       for the markdown and exit immediately. Intended for the output to be
       written to a snippet of markdown.); default: false;
@@ -318,4 +320,4 @@ Enabled by default: true
 
 ## Version
 
-Generated on 2020-09-24 22:03:25 -0700 from [v0.0-633-gded8ad5](https://github.com/google/verible/commit/ded8ad5e03d0eca2125d9ae3ba6c4f07919b4565)
+Generated on 2020-09-29 05:24:17 -0700 from [v0.0-637-ge57f68b](https://github.com/google/verible/commit/e57f68b47f155ed90b70d74d4068a3aa174eed66)
