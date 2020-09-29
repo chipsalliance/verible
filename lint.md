@@ -250,4 +250,4 @@ Enabled by default: true
 
 ## Version
 
-Generated on 2020-09-29 05:24:17 -0700 from [v0.0-637-ge57f68b](https://github.com/google/verible/commit/e57f68b47f155ed90b70d74d4068a3aa174eed66)
+Generated on 2020-09-29 09:03:44 -0700 from [v0.0-639-ga133eb9](https://github.com/google/verible/commit/a133eb92d9902b76293fce69fa0036fe05994279)
