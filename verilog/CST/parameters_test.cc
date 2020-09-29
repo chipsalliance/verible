@@ -19,9 +19,9 @@
 #include <utility>
 #include <vector>
 
-#include "gmock/gmock.h"
-#include "gtest/gtest.h"
 #include "absl/strings/string_view.h"
+#include "common/analysis/syntax_tree_search.h"
+#include "common/analysis/syntax_tree_search_test_utils.h"
 #include "common/text/concrete_syntax_leaf.h"
 #include "common/text/concrete_syntax_tree.h"
 #include "common/text/symbol.h"
@@ -29,6 +29,9 @@
 #include "common/text/token_info.h"
 #include "common/util/casts.h"
 #include "common/util/logging.h"
+#include "gmock/gmock.h"
+#include "gtest/gtest.h"
+#include "verilog/CST/match_test_utils.h"
 #include "verilog/CST/verilog_nonterminals.h"
 #include "verilog/analysis/verilog_analyzer.h"
 #include "verilog/parser/verilog_token_enum.h"
@@ -40,6 +43,9 @@ namespace verilog {
 namespace {
 
 using verible::down_cast;
+using verible::SyntaxTreeSearchTestCase;
+using verible::TextStructureView;
+using verible::TreeSearchMatch;
 
 // Tests that the correct amount of kParameterDeclarations are found.
 TEST(FindAllParamDeclarationsTest, BasicParams) {
@@ -471,6 +477,82 @@ TEST(IsTypeInfoEmptyTest, NonEmptyTests) {
     EXPECT_EQ(t.kind, verible::SymbolKind::kNode);
     EXPECT_EQ(NodeEnum(t.tag), NodeEnum::kTypeInfo);
     EXPECT_FALSE(IsTypeInfoEmpty(*type_info_symbol));
+  }
+}
+
+TEST(FindAllParamByNameTest, FindNamesOfParams) {
+  constexpr int kTag = 1;  // value doesn't matter
+  const SyntaxTreeSearchTestCase kTestCases[] = {
+      {""},
+      {"module m;\nendmodule\n"},
+      {"module m;\n module_type #(2, 2) y1();\nendmodule"},
+      {"module m;\n module_type #(.",
+       {kTag, "P"},
+       "(2), .",
+       {kTag, "P2"},
+       "(2)) y1();\nendmodule"},
+      {"module m;\n module_type #(.",
+       {kTag, "P"},
+       "(2), .",
+       {kTag, "P1"},
+       "(3)) y1();\nendmodule"},
+      {"module m;\n module_type #(x, y) y1();\nendmodule"},
+  };
+  for (const auto& test : kTestCases) {
+    TestVerilogSyntaxRangeMatches(
+        __FUNCTION__, test, [](const TextStructureView& text_structure) {
+          const auto& root = text_structure.SyntaxTree();
+          const auto& instances = FindAllNamedParams(*ABSL_DIE_IF_NULL(root));
+
+          std::vector<TreeSearchMatch> params;
+          for (const auto& instance : instances) {
+            const auto& decl = GetNamedParamFromActualParam(*instance.match);
+
+            params.emplace_back(
+                TreeSearchMatch{&decl, {/* ignored context */}});
+          }
+          return params;
+        });
+  }
+}
+
+TEST(FindAllParamByNameTest, FindParenGroupOfNamedParam) {
+  constexpr int kTag = 1;  // value doesn't matter
+  const SyntaxTreeSearchTestCase kTestCases[] = {
+      {""},
+      {"module m;\nendmodule\n"},
+      {"module m;\n module_type #(2, 2) y1();\nendmodule"},
+      {"module m;\n module_type #(.P",
+       {kTag, "(2)"},
+       ", .P2",
+       {kTag, "(2)"},
+       ") y1();\nendmodule"},
+      {"module m;\n module_type #(.P",
+       {kTag, "(2)"},
+       ", .P1",
+       {kTag, "(3)"},
+       ") y1();\nendmodule"},
+      {"module m;\n module_type #(x, y) y1();\nendmodule"},
+      {"module m;\n module_type #(.x, .y) y1();\nendmodule"},
+  };
+  for (const auto& test : kTestCases) {
+    TestVerilogSyntaxRangeMatches(
+        __FUNCTION__, test, [](const TextStructureView& text_structure) {
+          const auto& root = text_structure.SyntaxTree();
+          const auto& instances = FindAllNamedParams(*ABSL_DIE_IF_NULL(root));
+
+          std::vector<TreeSearchMatch> paren_groups;
+          for (const auto& instance : instances) {
+            const auto* paren_group =
+                GetParenGroupFromActualParam(*instance.match);
+            if (paren_group == nullptr) {
+              continue;
+            }
+            paren_groups.emplace_back(
+                TreeSearchMatch{paren_group, {/* ignored context */}});
+          }
+          return paren_groups;
+        });
   }
 }
 

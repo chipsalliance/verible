@@ -174,7 +174,7 @@ class KytheFactsExtractor {
   VName ExtractParamDeclaration(const IndexingFactNode& param_declaration_node);
 
   // Generates an anchor VName for kythe.
-  VName PrintAnchorVName(const Anchor&);
+  VName CreateAnchor(const Anchor&);
 
   // Appends the signatures of given parent scope vname to make
   // signatures are unique relative to scopes.

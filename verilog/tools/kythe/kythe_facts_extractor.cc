@@ -189,10 +189,7 @@ void KytheFactsExtractor::Visit(const IndexingFactNode& node,
     case IndexingFactType::kFunctionOrTask:
     case IndexingFactType::kClass:
     case IndexingFactType::kMacro:
-    case IndexingFactType::kPackage:
-    case IndexingFactType::kModuleInstance:
-    case IndexingFactType::kVariableDefinition:
-    case IndexingFactType::kClassInstance: {
+    case IndexingFactType::kPackage: {
       // Get the old scope of this node (if it was extracted in a previous
       // iteration).
       const Scope* old_scope =
@@ -282,7 +279,7 @@ VName KytheFactsExtractor::ExtractModuleFact(
 
   const VName module_vname(file_path_,
                            CreateScopeRelativeSignature(module_name.Value()));
-  const VName module_name_anchor = PrintAnchorVName(module_name);
+  const VName module_name_anchor = CreateAnchor(module_name);
 
   CreateFact(module_vname, kFactNodeKind, kNodeRecord);
   CreateFact(module_vname, kFactSubkind, kSubkindModule);
@@ -290,7 +287,7 @@ VName KytheFactsExtractor::ExtractModuleFact(
   CreateEdge(module_name_anchor, kEdgeDefinesBinding, module_vname);
 
   if (anchors.size() > 1) {
-    const VName module_end_label_anchor = PrintAnchorVName(module_end_label);
+    const VName module_end_label_anchor = CreateAnchor(module_end_label);
     CreateEdge(module_end_label_anchor, kEdgeRef, module_vname);
   }
 
@@ -309,7 +306,7 @@ void KytheFactsExtractor::ExtractDataTypeReference(
     return;
   }
 
-  const VName type_anchor = PrintAnchorVName(type);
+  const VName type_anchor = CreateAnchor(type);
   CreateEdge(type_anchor, kEdgeRef, *type_vname);
 }
 
@@ -321,7 +318,7 @@ VName KytheFactsExtractor::ExtractModuleInstance(
   const VName module_instance_vname(
       file_path_, CreateScopeRelativeSignature(instance_name.Value()));
 
-  const VName module_instance_anchor = PrintAnchorVName(instance_name);
+  const VName module_instance_anchor = CreateAnchor(instance_name);
   CreateFact(module_instance_vname, kFactNodeKind, kNodeVariable);
   CreateFact(module_instance_vname, kFactComplete, kCompleteDefinition);
   CreateEdge(module_instance_anchor, kEdgeDefinesBinding,
@@ -351,8 +348,8 @@ void KytheFactsExtractor::ExtractNamedParam(
     return;
   }
 
-  const VName param_vname_anchor = PrintAnchorVName(param_name);
-  GenerateEdgeString(param_vname_anchor, kEdgeRef, *param_vname);
+  const VName param_vname_anchor = CreateAnchor(param_name);
+  CreateEdge(param_vname_anchor, kEdgeRef, *param_vname);
 }
 
 void KytheFactsExtractor::ExtractModuleNamedPort(
@@ -378,7 +375,7 @@ void KytheFactsExtractor::ExtractModuleNamedPort(
     return;
   }
 
-  const VName port_vname_anchor = PrintAnchorVName(port_name);
+  const VName port_vname_anchor = CreateAnchor(port_name);
   CreateEdge(port_vname_anchor, kEdgeRef, *actual_port_vname);
 
   if (named_port_node.Children().empty()) {
@@ -396,7 +393,7 @@ VName KytheFactsExtractor::ExtractVariableDefinition(
   const auto& anchor = variable_definition_node.Value().Anchors()[0];
   const VName variable_vname(file_path_,
                              CreateScopeRelativeSignature(anchor.Value()));
-  const VName variable_vname_anchor = PrintAnchorVName(anchor);
+  const VName variable_vname_anchor = CreateAnchor(anchor);
 
   CreateFact(variable_vname, kFactNodeKind, kNodeVariable);
   CreateFact(variable_vname, kFactComplete, kCompleteDefinition);
@@ -415,7 +412,7 @@ void KytheFactsExtractor::ExtractVariableReference(
     return;
   }
 
-  const VName variable_vname_anchor = PrintAnchorVName(anchor);
+  const VName variable_vname_anchor = CreateAnchor(anchor);
   CreateEdge(variable_vname_anchor, kEdgeRef, *variable_definition_vname);
 }
 
@@ -426,14 +423,14 @@ VName KytheFactsExtractor::ExtractPackageDeclaration(
 
   const VName package_vname(file_path_,
                             CreateScopeRelativeSignature(package_name.Value()));
-  const VName package_name_anchor = PrintAnchorVName(package_name);
+  const VName package_name_anchor = CreateAnchor(package_name);
 
   CreateFact(package_vname, kFactNodeKind, kNodePackage);
   CreateEdge(package_name_anchor, kEdgeDefinesBinding, package_vname);
 
   if (anchors.size() > 1) {
     const Anchor& package_end_label = anchors[1];
-    const VName package_end_label_anchor = PrintAnchorVName(package_end_label);
+    const VName package_end_label_anchor = CreateAnchor(package_end_label);
     CreateEdge(package_end_label_anchor, kEdgeRef, package_vname);
   }
 
@@ -445,7 +442,7 @@ VName KytheFactsExtractor::ExtractMacroDefinition(
   const Anchor& macro_name = macro_definition_node.Value().Anchors()[0];
 
   const VName macro_vname(file_path_, Signature(macro_name.Value()));
-  const VName module_name_anchor = PrintAnchorVName(macro_name);
+  const VName module_name_anchor = CreateAnchor(macro_name);
 
   CreateFact(macro_vname, kFactNodeKind, kNodeMacro);
   CreateEdge(module_name_anchor, kEdgeDefinesBinding, macro_vname);
@@ -456,7 +453,7 @@ VName KytheFactsExtractor::ExtractMacroDefinition(
 void KytheFactsExtractor::ExtractMacroCall(
     const IndexingFactNode& macro_call_node) {
   const Anchor& macro_name = macro_call_node.Value().Anchors()[0];
-  const VName macro_vname_anchor = PrintAnchorVName(macro_name);
+  const VName macro_vname_anchor = CreateAnchor(macro_name);
 
   // We pass a substring to ignore the ` before macro name.
   // e.g.
@@ -475,7 +472,7 @@ VName KytheFactsExtractor::ExtractFunctionOrTask(
   const VName function_vname(
       file_path_, CreateScopeRelativeSignature(function_name.Value()));
 
-  const VName function_vname_anchor = PrintAnchorVName(function_name);
+  const VName function_vname_anchor = CreateAnchor(function_name);
 
   CreateFact(function_vname, kFactNodeKind, kNodeFunction);
   CreateFact(function_vname, kFactComplete, kCompleteDefinition);
@@ -499,7 +496,7 @@ void KytheFactsExtractor::ExtractFunctionOrTaskCall(
       return;
     }
 
-    const VName function_vname_anchor = PrintAnchorVName(function_name);
+    const VName function_vname_anchor = CreateAnchor(function_name);
 
     CreateEdge(function_vname_anchor, kEdgeRef, *function_vname);
     CreateEdge(function_vname_anchor, kEdgeRefCall, *function_vname);
@@ -522,14 +519,14 @@ VName KytheFactsExtractor::ExtractClass(
 
   const VName class_vname(file_path_,
                           CreateScopeRelativeSignature(class_name.Value()));
-  const VName class_name_anchor = PrintAnchorVName(class_name);
+  const VName class_name_anchor = CreateAnchor(class_name);
 
   CreateFact(class_vname, kFactNodeKind, kNodeRecord);
   CreateFact(class_vname, kFactComplete, kCompleteDefinition);
   CreateEdge(class_name_anchor, kEdgeDefinesBinding, class_vname);
 
   if (anchors.size() > 1) {
-    const VName class_end_label_anchor = PrintAnchorVName(class_end_label);
+    const VName class_end_label_anchor = CreateAnchor(class_end_label);
     CreateEdge(class_end_label_anchor, kEdgeRef, class_vname);
   }
 
@@ -543,7 +540,7 @@ VName KytheFactsExtractor::ExtractClassInstances(
 
   const VName class_instance_vname(
       file_path_, CreateScopeRelativeSignature(instance_name.Value()));
-  const VName class_instance_anchor = PrintAnchorVName(instance_name);
+  const VName class_instance_anchor = CreateAnchor(instance_name);
 
   CreateFact(class_instance_vname, kFactNodeKind, kNodeVariable);
   CreateFact(class_instance_vname, kFactComplete, kCompleteDefinition);
@@ -558,7 +555,7 @@ void KytheFactsExtractor::ExtractPackageImport(
   const Anchor& package_name = anchors[0];
 
   const VName package_vname(file_path_, Signature(package_name.Value()));
-  const VName package_anchor = PrintAnchorVName(package_name);
+  const VName package_anchor = CreateAnchor(package_name);
 
   CreateEdge(package_anchor, kEdgeRefImports, package_vname);
 
@@ -573,7 +570,7 @@ void KytheFactsExtractor::ExtractPackageImport(
       return;
     }
 
-    const VName imported_item_anchor = PrintAnchorVName(imported_item_name);
+    const VName imported_item_anchor = CreateAnchor(imported_item_name);
     CreateEdge(imported_item_anchor, kEdgeRef, *defintion_vname);
 
     // Add the found definition to the current scope as if it was declared in
@@ -611,7 +608,7 @@ void KytheFactsExtractor::ExtractMemberReference(
   if (containing_block_scope != nullptr) {
     const VName package_vname(file_path_,
                               containing_block_scope->GetSignature());
-    const VName package_anchor = PrintAnchorVName(containing_block_name);
+    const VName package_anchor = CreateAnchor(containing_block_name);
     CreateEdge(package_anchor, kEdgeRef, package_vname);
 
     definition_signature = package_vname.signature;
@@ -629,7 +626,7 @@ void KytheFactsExtractor::ExtractMemberReference(
       return;
     }
 
-    const VName class_anchor = PrintAnchorVName(containing_block_name);
+    const VName class_anchor = CreateAnchor(containing_block_name);
     CreateEdge(class_anchor, kEdgeRef, *containing_block_vname);
 
     definition_signature = containing_block_vname->signature;
@@ -648,7 +645,7 @@ void KytheFactsExtractor::ExtractMemberReference(
       return;
     }
 
-    reference_anchor = PrintAnchorVName(anchor);
+    reference_anchor = CreateAnchor(anchor);
     CreateEdge(reference_anchor, kEdgeRef, *definition_vname);
 
     definition_signature = definition_vname->signature;
@@ -666,16 +663,16 @@ VName KytheFactsExtractor::ExtractParamDeclaration(
 
   const VName param_vname(file_path_,
                           CreateScopeRelativeSignature(param_name.Value()));
-  const VName param_name_anchor = PrintAnchorVName(param_name);
+  const VName param_name_anchor = CreateAnchor(param_name);
 
-  GenerateFactString(param_vname, kFactNodeKind, kNodeVariable);
-  GenerateFactString(param_vname, kFactComplete, kCompleteDefinition);
-  GenerateEdgeString(param_name_anchor, kEdgeDefinesBinding, param_vname);
+  CreateFact(param_vname, kFactNodeKind, kNodeVariable);
+  CreateFact(param_vname, kFactComplete, kCompleteDefinition);
+  CreateEdge(param_name_anchor, kEdgeDefinesBinding, param_vname);
 
   return param_vname;
 }
 
-VName KytheFactsExtractor::PrintAnchorVName(const Anchor& anchor) {
+VName KytheFactsExtractor::CreateAnchor(const Anchor& anchor) {
   const VName anchor_vname(file_path_, Signature(absl::Substitute(
                                            R"(@$0:$1)", anchor.StartLocation(),
                                            anchor.EndLocation())));

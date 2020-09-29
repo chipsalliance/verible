@@ -184,7 +184,7 @@ void IndexingFactsTreeExtractor::Visit(const SyntaxTreeNode& node) {
       break;
     }
     case NodeEnum::kParamDeclaration: {
-      ExtractParam(node);
+      ExtractParamDeclaration(node);
       break;
     }
     case NodeEnum::kActualNamedPort: {
@@ -257,7 +257,7 @@ void IndexingFactsTreeExtractor::ExtractModuleHeader(
 
   // Extract parameters if exist.
   const SyntaxTreeNode* param_declaration_list =
-      GetModuleParamDeclarationList(module_declaration_node);
+      GetParamDeclarationListFromModuleDeclaration(module_declaration_node);
   if (param_declaration_list != nullptr) {
     Visit(*param_declaration_list);
   }
@@ -803,7 +803,7 @@ void IndexingFactsTreeExtractor::ExtractSymbolIdentifier(
                        IndexingFactType::kVariableReference));
 }
 
-void IndexingFactsTreeExtractor::ExtractParam(
+void IndexingFactsTreeExtractor::ExtractParamDeclaration(
     const verible::SyntaxTreeNode& param_declaration) {
   IndexingNodeData param_data(IndexingFactType::kParamDeclaration);
   IndexingFactNode param_node(param_data);
@@ -811,7 +811,6 @@ void IndexingFactsTreeExtractor::ExtractParam(
   // Extract Param name.
   const verible::TokenInfo& param_name =
       GetParameterNameToken(param_declaration);
-
   param_node.Value().AppendAnchor(Anchor(param_name, context_.base));
 
   {

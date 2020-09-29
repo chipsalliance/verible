@@ -60,6 +60,10 @@ verible::SymbolPtr MakeTypeInfoNode(T0&& primitive_type, T1&& signed_unsigned,
 std::vector<verible::TreeSearchMatch> FindAllParamDeclarations(
     const verible::Symbol&);
 
+// Finds all nodes tagged with kParamByName.
+std::vector<verible::TreeSearchMatch> FindAllNamedParams(
+    const verible::Symbol&);
+
 // Returns the token_enum of the parameter keyword from the node
 // kParamDeclaration (either TK_parameter or TK_localparam).
 verilog_tokentype GetParamKeyword(const verible::Symbol&);
@@ -118,7 +122,7 @@ const verible::SyntaxTreeLeaf& GetNamedParamFromActualParam(
     const verible::Symbol&);
 
 // Return the node spanning the paren group from a node tagged with
-// kParamByName. 
+// kParamByName.
 // e.g module_type #(.N(x)) return the leaf spanning "(x)".
 const verible::SyntaxTreeNode* GetParenGroupFromActualParam(
     const verible::Symbol&);
