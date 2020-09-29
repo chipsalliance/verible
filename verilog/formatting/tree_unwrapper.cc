@@ -1037,6 +1037,19 @@ void TreeUnwrapper::SetIndentationsAndCreatePartitions(
     }
 
     case NodeEnum::kPortDeclarationList: {
+      if (Context().IsInside(NodeEnum::kPortDeclarationList)) {
+        // This "recursion" can occur when there are preprocessing conditional
+        // port declaration lists.
+        // When this occurs, suppress creating another token partition level.
+        // This will essentially flatten all port declarations to the same token
+        // partition tree depth, and importantly, be alignable across
+        // preprocessing directives as sibling subpartitions.
+        // Alternatively, we could have done this flattening during
+        // ReshapeTokenPartitions(), but it would've taken more work to
+        // re-identify the subpartitions (children) to flatten.
+        TraverseChildren(node);
+        break;
+      }
       // Do not further indent preprocessor clauses.
       const int indent =
           suppress_indentation ? 0 : style_.PortDeclarationsIndentation();

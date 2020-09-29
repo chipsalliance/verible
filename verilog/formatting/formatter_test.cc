@@ -7020,6 +7020,84 @@ TEST(FormatterEndToEndTest, AutoInferAlignment) {
        "    output reg            bar\n"  // ... and triggers alignment.
        ");\n"
        "endmodule : pd\n"},
+      {"module pd(\n"
+       "`ifdef FAA\n"  // inside preprocessing conditional
+       "input  baaaz_t foo,\n"
+       "output reg      bar\n"  // user injects 4 excess spaces here ...
+       "`endif\n"
+       ");\n"
+       "endmodule:pd\n",
+       "module pd (\n"
+       "`ifdef FAA\n"
+       "    input  baaaz_t foo,\n"
+       "    output reg     bar\n"  // ... and triggers alignment.
+       "`endif\n"
+       ");\n"
+       "endmodule : pd\n"},
+      {"module pd(\n"
+       "`ifdef FAA\n"  // inside preprocessing conditional
+       "input  baaaz_t foo,\n"
+       "`else\n"
+       "output reg      bar\n"  // user injects 4 excess spaces here ...
+       "`endif\n"
+       ");\n"
+       "endmodule:pd\n",
+       "module pd (\n"
+       "`ifdef FAA\n"
+       "    input  baaaz_t foo,\n"  // aligned
+       "`else\n"                    // aligned across preprocessing directives
+       "    output reg     bar\n"   // ... and triggers alignment.
+       "`endif\n"
+       ");\n"
+       "endmodule : pd\n"},
+      {"module pd(\n"
+       "input logic [31:0] bus,\n"
+       "input logic [7:0] bus2,\n"
+       "`ifdef FAA\n"  // inside preprocessing conditional
+       "input  baaaz_t foo,\n"
+       "`else\n"
+       "output reg      bar,\n"  // user injects 4 excess spaces here ...
+       "`endif\n"
+       "output out_t zout1,\n"
+       "output out_t zout2\n"
+       ");\n"
+       "endmodule:pd\n",
+       "module pd (\n"
+       "    input  logic   [31:0] bus,\n"  // treated as one large group
+       "    input  logic   [ 7:0] bus2,\n"
+       "`ifdef FAA\n"
+       "    input  baaaz_t        foo,\n"  // aligned
+       "`else\n"  // aligned across preprocessing directives
+       "    output reg            bar,\n"  // ... and triggers alignment.
+       "`endif\n"
+       "    output out_t          zout1,\n"
+       "    output out_t          zout2\n"
+       ");\n"
+       "endmodule : pd\n"},
+      {"module pd(\n"
+       "input logic [7:0] bus2,\n"
+       "`ifndef FAA\n"  // inside preprocessing conditional
+       "input logic [31:0] bus,\n"
+       "input  baaaz_t foo,\n"
+       "`elsif BLA\n"
+       "output reg      bar,\n"  // user injects 4 excess spaces here ...
+       "output out_t zout1,\n"
+       "`endif\n"
+       "output out_t zout2\n"
+       ");\n"
+       "endmodule:pd\n",
+       "module pd (\n"
+       "    input  logic   [ 7:0] bus2,\n"
+       "`ifndef FAA\n"
+       "    input  logic   [31:0] bus,\n"  // treated as one large group
+       "    input  baaaz_t        foo,\n"  // aligned
+       "`elsif BLA\n"  // aligned across preprocessing directives
+       "    output reg            bar,\n"  // ... and triggers alignment.
+       "    output out_t          zout1,\n"
+       "`endif\n"
+       "    output out_t          zout2\n"
+       ");\n"
+       "endmodule : pd\n"},
 
       // named parameter arguments
       {"module  mm ;\n"
@@ -7759,7 +7837,7 @@ TEST(FormatterEndToEndTest, AutoInferAlignment) {
     EXPECT_OK(status) << status.message();
     EXPECT_EQ(stream.str(), test_case.expected) << "code:\n" << test_case.input;
   }
-}
+}  // NOLINT(readability/fn_size)
 
 static constexpr FormatterTestCase kFormatterWideTestCases[] = {
     // specify blocks

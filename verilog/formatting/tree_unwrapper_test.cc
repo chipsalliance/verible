@@ -439,6 +439,123 @@ const TreeUnwrapperTestData kUnwrapModuleTestCases[] = {
     },
 
     {
+        "module with conditional multiple port declarations",
+        "module foo ("
+        "`ifndef FOO\n"
+        "input bar1,"
+        "input bar2,"
+        "`endif\n"
+        "output baz"
+        ");"
+        "endmodule",
+        ModuleDeclaration(
+            0,
+            ModuleHeader(
+                0, L(0, {"module", "foo", "("}),
+                ModulePortList(2, L(0, {"`ifndef", "FOO"}),
+                               // conditional and unconditional port
+                               // declarations are direct token partition tree
+                               // siblings.
+                               L(2, {"input", "bar1", ","}),  //
+                               L(2, {"input", "bar2", ","}),  //
+                               L(0, {"`endif"}), L(2, {"output", "baz"})),
+                L(0, {")", ";"})),
+            L(0, {"endmodule"})),
+    },
+
+    {
+        "module with conditional multiple port declarations, with else branch",
+        "module foo ("
+        "`ifndef FOO\n"
+        "input bar1,"
+        "input bar2,\n"
+        "`else\n"
+        "input zar1,"
+        "input zar2,"
+        "`endif\n"
+        "output baz"
+        ");"
+        "endmodule",
+        ModuleDeclaration(
+            0,
+            ModuleHeader(0, L(0, {"module", "foo", "("}),
+                         ModulePortList(2, L(0, {"`ifndef", "FOO"}),
+                                        // conditional and unconditional port
+                                        // declarations are direct token
+                                        // partition tree siblings.
+                                        L(2, {"input", "bar1", ","}),  //
+                                        L(2, {"input", "bar2", ","}),  //
+                                        L(0, {"`else"}),               //
+                                        L(2, {"input", "zar1", ","}),  //
+                                        L(2, {"input", "zar2", ","}),  //
+                                        L(0, {"`endif"}),              //
+                                        L(2, {"output", "baz"})),
+                         L(0, {")", ";"})),
+            L(0, {"endmodule"})),
+    },
+
+    {
+        "module with conditional multiple port declarations, with elsif branch",
+        "module foo ("
+        "`ifndef FOO\n"
+        "input bar1,"
+        "input bar2,\n"
+        "`elsif BAR\n"
+        "input zar1,"
+        "input zar2,"
+        "`endif\n"
+        "output baz"
+        ");"
+        "endmodule",
+        ModuleDeclaration(
+            0,
+            ModuleHeader(0, L(0, {"module", "foo", "("}),
+                         ModulePortList(2, L(0, {"`ifndef", "FOO"}),
+                                        // conditional and unconditional port
+                                        // declarations are direct token
+                                        // partition tree siblings.
+                                        L(2, {"input", "bar1", ","}),  //
+                                        L(2, {"input", "bar2", ","}),  //
+                                        L(0, {"`elsif", "BAR"}),       //
+                                        L(2, {"input", "zar1", ","}),  //
+                                        L(2, {"input", "zar2", ","}),  //
+                                        L(0, {"`endif"}),              //
+                                        L(2, {"output", "baz"})),
+                         L(0, {")", ";"})),
+            L(0, {"endmodule"})),
+    },
+
+    {
+        "module with nested conditional multiple port declarations",
+        "module foo ("
+        "`ifndef FOO\n"
+        "`ifdef ZOO\n"
+        "input bar1,"
+        "input bar2,"
+        "`endif\n"
+        "`endif\n"
+        "output baz"
+        ");"
+        "endmodule",
+        ModuleDeclaration(
+            0,
+            ModuleHeader(0, L(0, {"module", "foo", "("}),
+                         ModulePortList(2,                         //
+                                        L(0, {"`ifndef", "FOO"}),  //
+                                        L(0, {"`ifdef", "ZOO"}),   //
+                                        // conditional and unconditional port
+                                        // declarations are direct token
+                                        // partition tree siblings.
+                                        L(2, {"input", "bar1", ","}),  //
+                                        L(2, {"input", "bar2", ","}),  //
+                                        L(0, {"`endif"}),              //
+                                        L(0, {"`endif"}),              //
+                                        L(2, {"output", "baz"})),
+                         L(0, {")", ";"})),
+            L(0, {"endmodule"})),
+    },
+
+    {
         "module with `include port declarations",
         "module foo ("
         "`include \"ports.svh\"\n"
