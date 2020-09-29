@@ -118,6 +118,11 @@ const verible::SyntaxTreeNode& GetTypeOfDataDeclaration(
 const verible::TokenInfo& GetTypeTokenInfoFromDataDeclaration(
     const verible::Symbol&);
 
+// For a given data declaration returns the node spanning param declaration
+// list. e.g module_type #(N) return the node for "(N)".
+const verible::SyntaxTreeNode* GetParamListFromDataDeclaration(
+    const verible::Symbol&);
+
 // For a given data declaration (includes module instantiation), returns the
 // subtree containing instances.  e.g. from "foo bar..., baz...;",
 // this returns the subtree spanning "bar..., baz..."

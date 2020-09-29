@@ -198,4 +198,16 @@ bool IsTypeInfoEmpty(const verible::Symbol& symbol) {
           type_info_node[2] == nullptr);
 }
 
+const verible::SyntaxTreeLeaf& GetNamedParamFromActualParam(
+    const verible::Symbol& param_by_name) {
+  return *AutoUnwrapIdentifier(
+      verible::GetSubtreeAsLeaf(param_by_name, NodeEnum::kParamByName, 1));
+}
+
+const verible::SyntaxTreeNode* GetParenGroupFromActualParam(
+    const verible::Symbol& param_by_name) {
+  return verible::CheckOptionalSymbolAsNode(
+      verible::GetSubtreeAsSymbol(param_by_name, NodeEnum::kParamByName, 2));
+}
+
 }  // namespace verilog

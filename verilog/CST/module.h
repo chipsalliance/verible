@@ -89,6 +89,11 @@ const verible::TokenInfo* GetModuleEndLabel(const verible::Symbol&);
 const verible::SyntaxTreeNode& GetModuleItemList(
     const verible::Symbol& module_declaration);
 
+// Extract the subnode of a param declaration list from module decalration.
+// e.g module m#(parameter x = 2) return the node spanning "#(parameter x = 2)".
+const verible::SyntaxTreeNode* GetModuleParamDeclarationList(
+    const verible::Symbol&);
+
 }  // namespace verilog
 
 #endif  // VERIBLE_VERILOG_CST_MODULE_H_

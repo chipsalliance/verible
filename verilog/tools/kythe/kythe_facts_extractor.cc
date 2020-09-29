@@ -74,6 +74,10 @@ void KytheFactsExtractor::IndexingFactNodeTagResolver(
       vname = ExtractClass(node);
       break;
     }
+    case IndexingFactType::kParamDeclaration: {
+      vname = ExtractParamDeclaration(node);
+      break;
+    }
     case IndexingFactType::kClassInstance: {
       vname = ExtractClassInstances(node);
       break;
@@ -92,6 +96,10 @@ void KytheFactsExtractor::IndexingFactNodeTagResolver(
     }
     case IndexingFactType::kModuleNamedPort: {
       ExtractModuleNamedPort(node);
+      break;
+    }
+    case IndexingFactType::kNamedParam: {
+      ExtractNamedParam(node);
       break;
     }
     case IndexingFactType::kVariableReference: {
@@ -133,7 +141,8 @@ void KytheFactsExtractor::AddVNameToVerticalScope(IndexingFactType tag,
     case IndexingFactType::kMacro:
     case IndexingFactType::kClass:
     case IndexingFactType::kClassInstance:
-    case IndexingFactType::kFunctionOrTask: {
+    case IndexingFactType::kFunctionOrTask:
+    case IndexingFactType::kParamDeclaration: {
       vertical_scope_resolver_.top().AddMemberItem(vname);
       break;
     }
@@ -175,6 +184,7 @@ void KytheFactsExtractor::Visit(const IndexingFactNode& node,
   // Determines whether to create a scope for this node or not.
   switch (tag) {
     case IndexingFactType::kFile:
+    case IndexingFactType::kParamDeclaration:
     case IndexingFactType::kModule:
     case IndexingFactType::kFunctionOrTask:
     case IndexingFactType::kClass:
@@ -318,6 +328,31 @@ VName KytheFactsExtractor::ExtractModuleInstance(
              module_instance_vname);
 
   return module_instance_vname;
+}
+
+void KytheFactsExtractor::ExtractNamedParam(
+    const IndexingFactNode& named_param_node) {
+  const auto& param_name = named_param_node.Value().Anchors()[0];
+
+  // Parent Node must be kDataType.
+  const Anchor& parent_data_type =
+      named_param_node.Parent()->Value().Anchors()[0];
+  const VName* parent_vname =
+      vertical_scope_resolver_.SearchForDefinition(parent_data_type.Value());
+
+  if (parent_vname == nullptr) {
+    return;
+  }
+
+  const VName* param_vname = flattened_scope_resolver_.SearchForVNameInScope(
+      parent_vname->signature, param_name.Value());
+
+  if (param_vname == nullptr) {
+    return;
+  }
+
+  const VName param_vname_anchor = PrintAnchorVName(param_name);
+  GenerateEdgeString(param_vname_anchor, kEdgeRef, *param_vname);
 }
 
 void KytheFactsExtractor::ExtractModuleNamedPort(
@@ -622,6 +657,22 @@ void KytheFactsExtractor::ExtractMemberReference(
   if (is_function_call && definition_vname != nullptr) {
     CreateEdge(reference_anchor, kEdgeRefCall, *definition_vname);
   }
+}
+
+VName KytheFactsExtractor::ExtractParamDeclaration(
+    const IndexingFactNode& param_declaration_node) {
+  const auto& anchors = param_declaration_node.Value().Anchors();
+  const Anchor& param_name = anchors[0];
+
+  const VName param_vname(file_path_,
+                          CreateScopeRelativeSignature(param_name.Value()));
+  const VName param_name_anchor = PrintAnchorVName(param_name);
+
+  GenerateFactString(param_vname, kFactNodeKind, kNodeVariable);
+  GenerateFactString(param_vname, kFactComplete, kCompleteDefinition);
+  GenerateEdgeString(param_name_anchor, kEdgeDefinesBinding, param_vname);
+
+  return param_vname;
 }
 
 VName KytheFactsExtractor::PrintAnchorVName(const Anchor& anchor) {
