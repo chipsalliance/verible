@@ -12,6 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include <fstream>
 #include <iostream>
 #include <string>
 
@@ -32,6 +33,9 @@ ABSL_FLAG(bool, printextraction, false,
 
 ABSL_FLAG(bool, printkythefacts, false,
           "Whether or not to print the extracted kythe facts");
+
+ABSL_FLAG(std::string, output_path, "",
+          "File path where to write the extracted Kythe facts in JSON format.");
 
 static int ExtractOneFile(absl::string_view content,
                           absl::string_view filename) {
@@ -58,6 +62,15 @@ static int ExtractOneFile(absl::string_view content,
               << std::endl;
 
     std::cout << verilog::kythe::KytheFactsPrinter(facts_tree) << std::endl;
+  }
+
+  const std::string output_path = absl::GetFlag(FLAGS_output_path);
+  if (!output_path.empty()) {
+    std::ofstream f(output_path.c_str());
+    if (!f.good()) {
+      LOG(FATAL) << "Can't write to " << output_path;
+    }
+    f << verilog::kythe::KytheFactsPrinter(facts_tree) << std::endl;
   }
 
   return exit_status;
