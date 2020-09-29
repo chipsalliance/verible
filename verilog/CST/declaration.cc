@@ -147,6 +147,13 @@ const verible::TokenInfo& GetTypeTokenInfoFromDataDeclaration(
   return instance_symbol_identifier->get();
 }
 
+// TODO(minatoma): Recommend adding this to type.cc instead.
+// It makes more sense to extract type parameters from a type node (after
+// GetTypeOfDataDeclaration).
+// Getting type parameters from a type parameter seems more re-usable than
+// getting it from a full data declaration; types can appear other places (such
+// as being passed as type parameters). So if you split/reduce this
+// functionality, you'll be able to cover more in the future (with less work).
 const verible::SyntaxTreeNode* GetParamListFromDataDeclaration(
     const verible::Symbol& data_declaration) {
   const SyntaxTreeNode& instantiation_type =
