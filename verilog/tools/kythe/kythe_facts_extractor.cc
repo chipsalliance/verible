@@ -329,9 +329,11 @@ VName KytheFactsExtractor::ExtractModuleInstance(
 
 void KytheFactsExtractor::ExtractNamedParam(
     const IndexingFactNode& named_param_node) {
+  // Get the anchors.
   const auto& param_name = named_param_node.Value().Anchors()[0];
 
-  // Parent Node must be kDataType.
+  // Search for the module or class that contains this parameter.
+  // Parent Node must be kDataTypeReference.
   const Anchor& parent_data_type =
       named_param_node.Parent()->Value().Anchors()[0];
   const VName* parent_vname =
@@ -341,6 +343,7 @@ void KytheFactsExtractor::ExtractNamedParam(
     return;
   }
 
+  // Search inside the found module or class for the referenced parameter.
   const VName* param_vname = flattened_scope_resolver_.SearchForVNameInScope(
       parent_vname->signature, param_name.Value());
 
@@ -348,6 +351,7 @@ void KytheFactsExtractor::ExtractNamedParam(
     return;
   }
 
+  // Create the facts for this parameter reference.
   const VName param_vname_anchor = CreateAnchor(param_name);
   CreateEdge(param_vname_anchor, kEdgeRef, *param_vname);
 }
@@ -658,13 +662,16 @@ void KytheFactsExtractor::ExtractMemberReference(
 
 VName KytheFactsExtractor::ExtractParamDeclaration(
     const IndexingFactNode& param_declaration_node) {
+  // Get the anchors and the parameter name.
   const auto& anchors = param_declaration_node.Value().Anchors();
   const Anchor& param_name = anchors[0];
 
+  // Create the VName for this variable relative to the current scope.
   const VName param_vname(file_path_,
                           CreateScopeRelativeSignature(param_name.Value()));
-  const VName param_name_anchor = CreateAnchor(param_name);
 
+  // Create the facts for the parameter.
+  const VName param_name_anchor = CreateAnchor(param_name);
   CreateFact(param_vname, kFactNodeKind, kNodeVariable);
   CreateFact(param_vname, kFactComplete, kCompleteDefinition);
   CreateEdge(param_name_anchor, kEdgeDefinesBinding, param_vname);
