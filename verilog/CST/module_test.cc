@@ -221,5 +221,39 @@ TEST(FindAllModuleDeclarationTest, FindModuleParameters) {
   }
 }
 
+TEST(FindAllInterfaceDeclarationTest, FindInterfaceParameters) {
+  constexpr int kTag = 1;  // value doesn't matter
+  const SyntaxTreeSearchTestCase kTestCases[] = {
+      {""},
+      {"interface m;\nendinterface"},
+      {"interface m",
+       {kTag, "#(parameter x = 3, parameter y = 4)"},
+       "();\nendinterface"},
+      {"interface m", {kTag, "#()"}, "();\nendinterface"},
+      {"interface m",
+       {kTag, "#(parameter int x = 3,\n parameter logic y = 4)"},
+       "();\nendinterface"},
+  };
+  for (const auto& test : kTestCases) {
+    TestVerilogSyntaxRangeMatches(
+        __FUNCTION__, test, [](const TextStructureView& text_structure) {
+          const auto& root = text_structure.SyntaxTree();
+          const auto& instances =
+              FindAllInterfaceDeclarations(*ABSL_DIE_IF_NULL(root));
+
+          std::vector<TreeSearchMatch> params;
+          for (const auto& instance : instances) {
+            const auto* decl =
+                GetParamDeclarationListFromInterfaceDeclaration(*instance.match);
+            if (decl == nullptr) {
+              continue;
+            }
+            params.emplace_back(TreeSearchMatch{decl, {/* ignored context */}});
+          }
+          return params;
+        });
+  }
+}
+
 }  // namespace
 }  // namespace verilog

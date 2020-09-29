@@ -2890,7 +2890,7 @@ TEST(FactsTreeExtractor, ParameterExtraction) {
   const verible::SyntaxTreeSearchTestCase kTestCase = {
       {"module ",
        {kTag, "m"},
-       "#(parmeter ",
+       "#(parameter ",
        {kTag, "x"},
        " = 1, parameter ",
        {kTag, "y"},
@@ -2933,7 +2933,7 @@ TEST(FactsTreeExtractor, ParameterExtraction) {
               },
               IndexingFactType ::kModule,
           },
-          // refers to class parameter x.
+          // refers to module parameter x.
           T({
               {
                   Anchor(kTestCase.expected_tokens[3], kTestCase.code),

@@ -57,6 +57,10 @@ verible::SymbolPtr MakeModuleHeader(T0&& keyword, T1&& lifetime, T2&& id,
 std::vector<verible::TreeSearchMatch> FindAllModuleDeclarations(
     const verible::Symbol&);
 
+// Find all interface declarations.
+std::vector<verible::TreeSearchMatch> FindAllInterfaceDeclarations(
+    const verible::Symbol&);
+
 // Returns the full header of a module (params, ports, etc...).
 const verible::SyntaxTreeNode& GetModuleHeader(const verible::Symbol&);
 
@@ -92,6 +96,12 @@ const verible::SyntaxTreeNode& GetModuleItemList(
 // Extract the subnode of a param declaration list from module decalration.
 // e.g module m#(parameter x = 2) return the node spanning "#(parameter x = 2)".
 const verible::SyntaxTreeNode* GetParamDeclarationListFromModuleDeclaration(
+    const verible::Symbol&);
+
+// Extract the subnode of a param declaration list from interface decalration.
+// e.g interface m#(parameter x = 2) return the node spanning "#(parameter x =
+// 2)".
+const verible::SyntaxTreeNode* GetParamDeclarationListFromInterfaceDeclaration(
     const verible::Symbol&);
 
 }  // namespace verilog
