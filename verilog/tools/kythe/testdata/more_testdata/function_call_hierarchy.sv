@@ -1,6 +1,8 @@
 // Copyright 2020 Google LLC.
 // SPDX-License-Identifier: Apache-2.0
 
+//- _FileNode.node/kind file
+
 //- @top_pkg defines/binding TopPkg
 package top_pkg;
   //- @f1 defines/binding F1
@@ -9,7 +11,7 @@ package top_pkg;
   function automatic int f1(int arg1);
     int temp1 = f2(arg1);
     int temp2 = f2(arg1);
-    //- @"f3(arg1)" ref/call F3
+    //- @f3 ref/call F3
     //- @f3 ref F3
     return f3(arg1);
   endfunction
@@ -19,8 +21,7 @@ package top_pkg;
   //- F2 childof TopPkg
   function automatic int f2(int arg1);
     //- @f3 ref F3
-    //- @"f3(arg1)" ref/call F3
-    //- @"f3(arg1)" childof F2
+    //- @f3 ref/call F3
     return f3(arg1);
   endfunction
 

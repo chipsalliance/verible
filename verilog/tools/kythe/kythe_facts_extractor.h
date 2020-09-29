@@ -16,6 +16,7 @@
 #define VERIBLE_VERILOG_TOOLS_KYTHE_KYTHE_FACTS_EXTRACTOR_H_
 
 #include <map>
+#include <set>
 #include <string>
 #include <utility>
 
@@ -42,8 +43,12 @@ class KytheFactsPrinter {
   const IndexingFactNode& root_;
 };
 
+std::ostream& operator<<(std::ostream&, const KytheFactsPrinter&);
+
 // Responsible for traversing IndexingFactsTree and processing its different
 // nodes to produce kythe indexing facts.
+// Iteratively extracts facts and keeps running until no new facts are found in
+// the last iteration.
 class KytheFactsExtractor {
  public:
   explicit KytheFactsExtractor(absl::string_view file_path,
@@ -102,10 +107,6 @@ class KytheFactsExtractor {
   // Determines whether or not to create a child of edge between the current
   // node and the previous node.
   void CreateChildOfEdge(IndexingFactType, const VName&);
-
-  // Extracts Packages and saves its scope to package_scope_context to be used
-  // for definition searching.
-  void CreatePackageScopes(const IndexingFactNode&);
 
   // Extracts kythe facts from file node and returns it VName.
   VName ExtractFileFact(const IndexingFactNode&);
@@ -180,14 +181,14 @@ class KytheFactsExtractor {
   // Generates fact strings for Kythe facts.
   // Schema for this fact can be found here:
   // https://kythe.io/docs/schema/writing-an-indexer.html
-  void GenerateFactString(const VName& vname, absl::string_view name,
-                          absl::string_view value) const;
+  void CreateFact(const VName& vname, absl::string_view name,
+                  absl::string_view value);
 
   // Generates edge strings for Kythe edges.
   // Schema for this edge can be found here:
   // https://kythe.io/docs/schema/writing-an-indexer.html
-  void GenerateEdgeString(const VName& source, absl::string_view name,
-                          const VName& target) const;
+  void CreateEdge(const VName& source, absl::string_view name,
+                  const VName& target);
 
   // The verilog file name which the facts are extracted from.
   std::string file_path_;
@@ -207,9 +208,13 @@ class KytheFactsExtractor {
   // Output stream for capturing, redirecting, testing and verifying the
   // output.
   std::ostream* stream_;
-};
 
-std::ostream& operator<<(std::ostream&, const KytheFactsPrinter&);
+  // Used to save all the generated facts Uniquely.
+  std::set<Fact> facts_;
+
+  // Used to save all the generated edges Uniquely.
+  std::set<Edge> edges_;
+};
 
 }  // namespace kythe
 }  // namespace verilog

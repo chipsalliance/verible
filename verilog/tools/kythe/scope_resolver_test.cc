@@ -43,6 +43,40 @@ const std::vector<VName> vnames{
     VName("", signatures[6]),
 };
 
+TEST(ScopesTest, AppendScope) {
+  /**
+   * signature[0] => {
+   *   vnames[1],  ==> signature[1]
+   *   vnames[2],  ==> signature[2]
+   * }
+   *
+   * signature[1] => {
+   *   vnames[3],  ==> signature[3];
+   *   vnames[4],  ==> signature[4];
+   * }
+   */
+
+  Scope scope(signatures[0]);
+  scope.AddMemberItem(vnames[1]);
+  scope.AddMemberItem(vnames[2]);
+
+  Scope scope2(signatures[1]);
+  scope2.AddMemberItem(vnames[3]);
+  scope2.AddMemberItem(vnames[4]);
+
+  scope2.AppendScope(scope);
+
+  const VName* vname1 = scope2.SearchForDefinition(names[1]);
+  const VName* vname2 = scope2.SearchForDefinition(names[2]);
+  const VName* vname3 = scope2.SearchForDefinition(names[3]);
+  const VName* vname4 = scope2.SearchForDefinition(names[4]);
+
+  EXPECT_EQ(vname1->signature, signatures[1]);
+  EXPECT_EQ(vname2->signature, signatures[2]);
+  EXPECT_EQ(vname3->signature, signatures[3]);
+  EXPECT_EQ(vname4->signature, signatures[4]);
+}
+
 TEST(FlattenedScopeTests, SearchForDefinition) {
   FlattenedScopeResolver flattened_scope_resolver;
 
