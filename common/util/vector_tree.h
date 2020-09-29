@@ -91,7 +91,7 @@ class _VectorTreeImpl {
   // Returns the node reached by descending through Children().front().
   template <typename TP>
   static TP* _LeftmostDescendant(TP* node) {
-    while (!node->Children().empty()) {
+    while (!node->is_leaf()) {
       node = &node->Children().front();
     }
     return node;
@@ -100,7 +100,7 @@ class _VectorTreeImpl {
   // Returns the node reached by descending through Children().back().
   template <typename TP>
   static TP* _RightmostDescendant(TP* node) {
-    while (!node->Children().empty()) {
+    while (!node->is_leaf()) {
       node = &node->Children().back();
     }
     return node;
@@ -376,6 +376,8 @@ class VectorTree : private _VectorTreeImpl {
   subnodes_type& Children() { return children_; }
 
   const subnodes_type& Children() const { return children_; }
+
+  bool is_leaf() const { return children_.empty(); }
 
   // Properties
 
@@ -736,7 +738,7 @@ class VectorTree : private _VectorTreeImpl {
 
     // Concatenate children-without-grandchildren and grandchildren.
     for (auto& child : temp) {
-      if (child.Children().empty()) {
+      if (child.is_leaf()) {
         children_.emplace_back(std::move(child));
       } else {
         AdoptSubtreesFromUnreserved(&child.Children());

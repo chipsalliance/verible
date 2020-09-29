@@ -106,7 +106,7 @@ std::vector<UnwrappedLine> TreeUnwrapper::FullyPartitionedUnwrappedLines()
   // visit only the node's children.
   std::vector<UnwrappedLine> result;
   unwrapped_lines_.ApplyPostOrder([&result](const TokenPartitionTree& node) {
-    if (node.Children().empty()) {
+    if (node.is_leaf()) {
       result.push_back(node.Value());
     }
   });
@@ -191,7 +191,7 @@ void TreeUnwrapper::StartNewUnwrappedLine(PartitionPolicyEnum partitioning,
     // for the sake of being able to correctly indent comments inside blocks.
     // If so, delete those so that token partition range invariants are
     // maintained through re-use of an existing node.
-    if (!active_unwrapped_lines_->Children().empty()) {
+    if (!active_unwrapped_lines_->is_leaf()) {
       VLOG(4) << "removed pre-existing child partitions.";
       active_unwrapped_lines_->Children().clear();
     }

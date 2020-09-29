@@ -346,7 +346,7 @@ void KytheFactsExtractor::ExtractModuleNamedPort(
   const VName port_vname_anchor = PrintAnchorVName(port_name);
   CreateEdge(port_vname_anchor, kEdgeRef, *actual_port_vname);
 
-  if (named_port_node.Children().empty()) {
+  if (named_port_node.is_leaf()) {
     const VName* definition_vname =
         vertical_scope_resolver_.SearchForDefinition(port_name.Value());
 

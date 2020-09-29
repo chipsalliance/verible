@@ -610,8 +610,7 @@ void IndexingFactsTreeExtractor::ExtractMethodCallExtension(
   IndexingNodeData function_node_data(IndexingFactType::kFunctionCall);
   IndexingFactNode function_node(function_node_data);
 
-  if (facts_tree_context_.empty() ||
-      facts_tree_context_.top().Children().empty()) {
+  if (facts_tree_context_.empty() || facts_tree_context_.top().is_leaf()) {
     return;
   }
 

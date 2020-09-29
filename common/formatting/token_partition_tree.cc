@@ -99,7 +99,7 @@ std::vector<const UnwrappedLine*> FindLargestPartitions(
   using partition_set_type = verible::TopN<const UnwrappedLine*, SizeCompare>;
   partition_set_type partitions(num_partitions);
   token_partitions.ApplyPreOrder([&partitions](const TokenPartitionTree& node) {
-    if (node.Children().empty()) {  // only look at leaf partitions
+    if (node.is_leaf()) {  // only look at leaf partitions
       partitions.push(&node.Value());
     }
   });

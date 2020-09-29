@@ -46,7 +46,7 @@ void ExpectPath(const Tree& tree, absl::string_view expect) {
 // Test that basic Tree construction works on a singleton node.
 TEST(VectorTreeTest, RootOnly) {
   const VectorTreeTestType tree(verible::testing::MakeRootOnlyExampleTree());
-  EXPECT_TRUE(tree.Children().empty());
+  EXPECT_TRUE(tree.is_leaf());
   EXPECT_EQ(tree.Parent(), nullptr);
   EXPECT_EQ(tree.NumAncestors(), 0);
   EXPECT_EQ(tree.BirthRank(), 0);  // no parent
@@ -357,7 +357,7 @@ bool operator==(const NamedInterval& left, const NameOnly& right) {
 TEST(VectorTreeTest, RootOnlyTreeTransformConstruction) {
   const VectorTreeTestType tree(verible::testing::MakeRootOnlyExampleTree());
   const auto other_tree = tree.Transform<NameOnly>(NameOnlyConverter);
-  EXPECT_TRUE(other_tree.Children().empty());
+  EXPECT_TRUE(other_tree.is_leaf());
   EXPECT_EQ(other_tree.Parent(), nullptr);
   EXPECT_EQ(other_tree.NumAncestors(), 0);
   EXPECT_EQ(other_tree.BirthRank(), 0);  // no parent
@@ -410,7 +410,7 @@ TEST(VectorTreeTest, NewChild) {
     auto* child = tree.NewChild(NamedInterval(1, 2, "child"));
     EXPECT_EQ(child->Parent(), &tree);
     EXPECT_EQ(child->Root(), &tree);
-    EXPECT_TRUE(child->Children().empty());
+    EXPECT_TRUE(child->is_leaf());
 
     const auto& value(child->Value());
     EXPECT_EQ(value.left, 1);
@@ -423,7 +423,7 @@ TEST(VectorTreeTest, NewChild) {
     auto* child = tree.NewChild(NamedInterval(2, 3, "lil-bro"));
     EXPECT_EQ(child->Parent(), &tree);
     EXPECT_EQ(child->Root(), &tree);
-    EXPECT_TRUE(child->Children().empty());
+    EXPECT_TRUE(child->is_leaf());
 
     const auto& value(child->Value());
     EXPECT_EQ(value.left, 2);
@@ -446,7 +446,7 @@ TEST(VectorTreeTest, NewSibling) {
     // Recall that NewSibling() may invalidate reference to first_child.
     EXPECT_EQ(second_child->Parent(), &tree);
     EXPECT_EQ(second_child->Root(), &tree);
-    EXPECT_TRUE(second_child->Children().empty());
+    EXPECT_TRUE(second_child->is_leaf());
 
     const auto& value(second_child->Value());
     EXPECT_EQ(value.left, 2);
@@ -460,7 +460,7 @@ TEST(VectorTreeTest, NewSibling) {
 TEST(VectorTreeTest, OneChildPolicy) {
   const auto tree = verible::testing::MakeOneChildPolicyExampleTree();
   EXPECT_EQ(tree.Parent(), nullptr);
-  EXPECT_FALSE(tree.Children().empty());
+  EXPECT_FALSE(tree.is_leaf());
 
   const auto& value = tree.Value();
   EXPECT_EQ(value.left, 0);
@@ -471,7 +471,7 @@ TEST(VectorTreeTest, OneChildPolicy) {
     const auto& child = tree.Children().front();
     EXPECT_EQ(child.Parent(), &tree);
     EXPECT_EQ(child.Root(), &tree);
-    EXPECT_FALSE(child.Children().empty());
+    EXPECT_FALSE(child.is_leaf());
     EXPECT_EQ(child.NumAncestors(), 1);
     EXPECT_EQ(child.BirthRank(), 0);
     EXPECT_TRUE(child.IsFirstChild());
@@ -494,7 +494,7 @@ TEST(VectorTreeTest, OneChildPolicy) {
       const auto& grandchild = child.Children().front();
       EXPECT_EQ(grandchild.Parent(), &child);
       EXPECT_EQ(grandchild.Root(), &tree);
-      EXPECT_TRUE(grandchild.Children().empty());
+      EXPECT_TRUE(grandchild.is_leaf());
       EXPECT_EQ(grandchild.NumAncestors(), 2);
       EXPECT_EQ(grandchild.BirthRank(), 0);
       EXPECT_TRUE(grandchild.IsFirstChild());
@@ -622,7 +622,7 @@ template <typename T>
 void VerifyFamilyTree(const VectorTree<T>& tree) {
   EXPECT_EQ(tree.Parent(), nullptr);
   EXPECT_EQ(tree.Root(), &tree);
-  EXPECT_FALSE(tree.Children().empty());
+  EXPECT_FALSE(tree.is_leaf());
   EXPECT_EQ(tree.NumAncestors(), 0);
   EXPECT_EQ(tree.BirthRank(), 0);
 
@@ -634,7 +634,7 @@ void VerifyFamilyTree(const VectorTree<T>& tree) {
     const auto& child = tree.Children()[i];
     EXPECT_EQ(child.Parent(), &tree);
     EXPECT_EQ(child.Root(), &tree);
-    EXPECT_FALSE(child.Children().empty());
+    EXPECT_FALSE(child.is_leaf());
     EXPECT_EQ(child.NumAncestors(), 1);
     EXPECT_EQ(child.BirthRank(), i);
     EXPECT_EQ(child.IsFirstChild(), i == 0);
@@ -648,7 +648,7 @@ void VerifyFamilyTree(const VectorTree<T>& tree) {
       const auto& grandchild = child.Children()[j];
       EXPECT_EQ(grandchild.Parent(), &child);
       EXPECT_EQ(grandchild.Root(), &tree);
-      EXPECT_TRUE(grandchild.Children().empty());
+      EXPECT_TRUE(grandchild.is_leaf());
       EXPECT_EQ(grandchild.NumAncestors(), 2);
       EXPECT_EQ(grandchild.BirthRank(), j);
       EXPECT_EQ(grandchild.IsFirstChild(), j == 0);
@@ -1271,7 +1271,7 @@ TEST(VectorTreeTest, HoistOnlyChildRootOnly) {
   // No children, no change.
   EXPECT_FALSE(tree.HoistOnlyChild());
 
-  EXPECT_TRUE(tree.Children().empty());
+  EXPECT_TRUE(tree.is_leaf());
   EXPECT_EQ(tree.Parent(), nullptr);
   EXPECT_EQ(tree.NumAncestors(), 0);
   EXPECT_EQ(tree.BirthRank(), 0);  // no parent
@@ -1293,7 +1293,7 @@ TEST(VectorTreeTest, HoistOnlyChildOneChildTreeGreatestAncestor) {
     const auto& child = tree;
     EXPECT_EQ(child.Parent(), nullptr);
     EXPECT_EQ(child.Root(), &tree);
-    EXPECT_FALSE(child.Children().empty());
+    EXPECT_FALSE(child.is_leaf());
     EXPECT_EQ(child.NumAncestors(), 0);
     EXPECT_EQ(child.BirthRank(), 0);
 
@@ -1314,7 +1314,7 @@ TEST(VectorTreeTest, HoistOnlyChildOneChildTreeGreatestAncestor) {
       const auto& grandchild = child.Children().front();
       EXPECT_EQ(grandchild.Parent(), &child);
       EXPECT_EQ(grandchild.Root(), &tree);
-      EXPECT_TRUE(grandchild.Children().empty());
+      EXPECT_TRUE(grandchild.is_leaf());
       EXPECT_EQ(grandchild.NumAncestors(), 1);
       EXPECT_EQ(grandchild.BirthRank(), 0);
 
@@ -1362,7 +1362,7 @@ TEST(VectorTreeTest, HoistOnlyChildOneChildTreeMiddleAncestor) {
       const auto& grandchild = tree.Children().front();
       EXPECT_EQ(grandchild.Parent(), &tree);
       EXPECT_EQ(grandchild.Root(), &tree);
-      EXPECT_TRUE(grandchild.Children().empty());
+      EXPECT_TRUE(grandchild.is_leaf());
       EXPECT_EQ(grandchild.NumAncestors(), 1);
       EXPECT_EQ(grandchild.BirthRank(), 0);
 
@@ -1408,12 +1408,12 @@ static std::vector<typename T::value_type> NodeValues(const T& node) {
 TEST(VectorTreeTest, AdoptSubtreesFromEmptyToEmpty) {
   typedef VectorTree<int> tree_type;
   tree_type tree1(1), tree2(2);  // no subtrees
-  EXPECT_TRUE(tree1.Children().empty());
-  EXPECT_TRUE(tree2.Children().empty());
+  EXPECT_TRUE(tree1.is_leaf());
+  EXPECT_TRUE(tree2.is_leaf());
 
   tree1.AdoptSubtreesFrom(&tree2);
-  EXPECT_TRUE(tree1.Children().empty());
-  EXPECT_TRUE(tree2.Children().empty());
+  EXPECT_TRUE(tree1.is_leaf());
+  EXPECT_TRUE(tree2.is_leaf());
 }
 
 TEST(VectorTreeTest, AdoptSubtreesFromEmptyToNonempty) {

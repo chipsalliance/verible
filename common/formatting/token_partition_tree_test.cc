@@ -459,7 +459,7 @@ TEST_F(MergeLeafIntoPreviousLeafTest, OneChild) {
   tree_type tree{
       all, tree_type{all},  // subtree spans same range
   };
-  ASSERT_FALSE(tree.Children().empty());
+  ASSERT_FALSE(tree.is_leaf());
 
   const auto saved_tree(tree);  // deep copy
   auto* parent = MergeLeafIntoPreviousLeaf(&tree.Children().front());
@@ -650,7 +650,7 @@ TEST_F(MergeLeafIntoNextLeafTest, OneChild) {
   tree_type tree{
       all, tree_type{all},  // subtree spans same range
   };
-  ASSERT_FALSE(tree.Children().empty());
+  ASSERT_FALSE(tree.is_leaf());
 
   const auto saved_tree(tree);  // deep copy
   auto* parent = MergeLeafIntoNextLeaf(&tree.Children().front());

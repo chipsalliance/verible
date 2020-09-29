@@ -150,7 +150,7 @@ class ExpandableTreeView {
   // termination condition is different.
   static const impl_type* first_unexpanded_child(const impl_type& current) {
     const auto& info = current.Value();
-    if (info.IsExpanded() && !current.Children().empty()) {
+    if (info.IsExpanded() && !current.is_leaf()) {
       // Let compiler to tail-call optimize self-recursion.
       return first_unexpanded_child(current.Children().front());
     } else {

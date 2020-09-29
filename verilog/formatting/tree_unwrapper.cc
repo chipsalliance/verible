@@ -1628,8 +1628,7 @@ void TreeUnwrapper::ReshapeTokenPartitions(
       AttachTrailingSemicolonToPreviousPartition(&partition);
       // RHS may have been further partitioned, e.g. a macro call.
       auto& children = partition.Children();
-      if (children.size() == 2 &&
-          children.front().Children().empty() /* left side */) {
+      if (children.size() == 2 && children.front().is_leaf() /* left side */) {
         verible::MergeLeafIntoNextLeaf(&children.front());
         VLOG(4) << "after merge leaf (left-into-right):\n" << partition;
       }
@@ -1708,7 +1707,7 @@ void TreeUnwrapper::ReshapeTokenPartitions(
         VLOG(4) << "block partition: " << seq_block_partition;
         auto& begin_partition = *seq_block_partition.LeftmostDescendant();
         VLOG(4) << "begin partition: " << begin_partition;
-        CHECK(begin_partition.Children().empty());
+        CHECK(begin_partition.is_leaf());
         verible::MergeLeafIntoPreviousLeaf(&begin_partition);
         VLOG(4) << "after merging 'begin' to predecessor:\n" << partition;
         // Flatten only the statement block so that the control partition
