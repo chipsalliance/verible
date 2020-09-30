@@ -767,11 +767,11 @@ void IndexingFactsTreeExtractor::ExtractClassInstances(
 void IndexingFactsTreeExtractor::ExtractPrimitiveVariables(
     const verible::SyntaxTreeNode& data_declaration,
     const std::vector<verible::TreeSearchMatch>& variable_matches) {
-  for (const TreeSearchMatch& variable_match : variable_matches) {
-    const SyntaxTreeNode& packed_dimension =
-        GetPackedDimensionFromDataDeclaration(data_declaration);
-    Visit(packed_dimension);
+  const SyntaxTreeNode& packed_dimension =
+      GetPackedDimensionFromDataDeclaration(data_declaration);
+  Visit(packed_dimension);
 
+  for (const TreeSearchMatch& variable_match : variable_matches) {
     IndexingNodeData variable_node_data(IndexingFactType::kVariableDefinition);
     IndexingFactNode variable_node(variable_node_data);
 
