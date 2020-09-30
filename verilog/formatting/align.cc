@@ -422,6 +422,8 @@ enum class AlignableSyntaxSubtype {
   kBlockingAssignment,
   // Nonblocking assignments.
   kNonBlockingAssignment,
+  // Distribution items.
+  kDistItem,
 };
 
 static AlignedPartitionClassification AlignClassify(
@@ -987,6 +989,41 @@ class EnumWithAssignmentsColumnSchemaScanner : public ColumnSchemaScanner {
   }
 };
 
+// Distribution items should align on the :/ and := operators.
+class DistItemColumnSchemaScanner : public ColumnSchemaScanner {
+ public:
+  DistItemColumnSchemaScanner() = default;
+
+  void Visit(const SyntaxTreeNode& node) final {
+    const auto tag = NodeEnum(node.Tag().tag);
+    switch (tag) {
+      case NodeEnum::kDistributionItem:
+        // Start first column right away.
+        ReserveNewColumn(node, FlushLeft);
+        break;
+
+        // TODO(fangism): the left-hand-side may contain [x:y] ranges that could
+        // be further aligned.
+      default:
+        break;
+    }
+
+    TreeContextPathVisitor::Visit(node);  // Recurse down.
+  }
+
+  void Visit(const SyntaxTreeLeaf& leaf) final {
+    switch (leaf.get().token_enum()) {
+      case verilog_tokentype::TK_COLON_EQ:
+      case verilog_tokentype::TK_COLON_DIV: {
+        ReserveNewColumn(leaf, FlushLeft);
+        break;
+      }
+      default:
+        break;
+    }
+  }
+};
+
 static std::function<
     std::vector<TaggedTokenPartitionRange>(const TokenPartitionRange&)>
 PartitionBetweenBlankLines(AlignableSyntaxSubtype subtype) {
@@ -1065,6 +1102,10 @@ static const AlignmentHandlerMapType& AlignmentHandlerLibrary() {
        {AlignmentCellScannerGenerator<EnumWithAssignmentsColumnSchemaScanner>(),
         function_from_pointer_to_member(
             &FormatStyle::enum_assignment_statement_alignment)}},
+      {AlignableSyntaxSubtype::kDistItem,
+       {AlignmentCellScannerGenerator<DistItemColumnSchemaScanner>(),
+        function_from_pointer_to_member(
+            &FormatStyle::distribution_items_alignment)}},
   };
   return *handler_map;
 }
@@ -1178,6 +1219,13 @@ static std::vector<AlignablePartitionGroup> AlignStatements(
       full_range, vstyle);
 }
 
+static std::vector<AlignablePartitionGroup> AlignDistItems(
+    const TokenPartitionRange& full_range, const FormatStyle& vstyle) {
+  return ExtractAlignablePartitionGroups(
+      PartitionBetweenBlankLines(AlignableSyntaxSubtype::kDistItem),
+      &IgnoreCommentsAndPreprocessingDirectives, full_range, vstyle);
+}
+
 void TabularAlignTokenPartitions(TokenPartitionTree* partition_ptr,
                                  std::vector<PreFormatToken>* ftokens,
                                  absl::string_view full_text,
@@ -1212,6 +1260,7 @@ void TabularAlignTokenPartitions(TokenPartitionTree* partition_ptr,
           {NodeEnum::kStatementList, &AlignStatements},
           {NodeEnum::kBlockItemStatementList, &AlignStatements},
           {NodeEnum::kFunctionItemList, &AlignStatements},
+          {NodeEnum::kDistributionItemList, &AlignDistItems},
       };
   const auto handler_iter = kAlignHandlers->find(NodeEnum(node->Tag().tag));
   if (handler_iter == kAlignHandlers->end()) return;

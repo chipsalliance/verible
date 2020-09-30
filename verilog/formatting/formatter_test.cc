@@ -3282,7 +3282,7 @@ static constexpr FormatterTestCase kFormatterTestCases[] = {
      "  constraint c {\n"
      "    timer_enable dist {\n"
      "      [8'h0 : 8'hfe] :/ 90,\n"
-     "      8'hff :/ 10\n"
+     "      8'hff          :/ 10\n"  // aligned
      "    };\n"
      "  }\n"
      "endclass\n"},
@@ -7827,6 +7827,71 @@ TEST(FormatterEndToEndTest, AutoInferAlignment) {
        "    1:     x = 3;\n"  // aligned
        "  endcase\n"
        "endtask\n"},
+
+      // distributions
+      {"class foo;\n"
+       "constraint c { "
+       "timer_enable dist {\n"
+       "8'hfe :=  9 , \n"
+       "12'hfff  := 1 }; "
+       "} endclass\n",
+       "class foo;\n"
+       "  constraint c {\n"
+       "    timer_enable dist {\n"
+       "      8'hfe   := 9,\n"  // only two spaces needed to align
+       "      12'hfff := 1\n"   // so align
+       "    };\n"
+       "  }\n"
+       "endclass\n"},
+      {"class foo;\n"
+       "constraint c { "
+       "timer_enable dist {\n"
+       "[ 8'h0 : 8'hfe ] :/  9 , \n"
+       "8'hff  :/ 1 }; "  // takes many spaces to align this, so...
+       "} endclass\n",
+       "class foo;\n"
+       "  constraint c {\n"
+       "    timer_enable dist {\n"
+       "      [8'h0 : 8'hfe] :/ 9,\n"
+       "      8'hff :/ 1\n"  // flush-left
+       "    };\n"
+       "  }\n"
+       "endclass\n"},
+      {"class foo;\n"
+       "constraint c { "
+       "timer_enable dist {\n"
+       "[ 8'h0 : 8'hfe ] :/  9 , \n"
+       "8'hff  :/     1 }; "  // inject excess spaces to trigger alignment
+       "} endclass\n",
+       "class foo;\n"
+       "  constraint c {\n"
+       "    timer_enable dist {\n"
+       "      [8'h0 : 8'hfe] :/ 9,\n"
+       "      8'hff          :/ 1\n"  // aligned
+       "    };\n"
+       "  }\n"
+       "endclass\n"},
+      {"class foo;\n"
+       "constraint c { "
+       "timer_enable dist {\n"
+       "//comment1\n"
+       "[ 8'h0 : 8'hfe ] :/  9 , \n"
+       "//comment2\n"
+       "8'hff  :/     1 \n"
+       "//comment3\n"
+       "}; "  // inject excess spaces to trigger alignment
+       "} endclass\n",
+       "class foo;\n"
+       "  constraint c {\n"
+       "    timer_enable dist {\n"
+       "      //comment1\n"
+       "      [8'h0 : 8'hfe] :/ 9,\n"
+       "      //comment2\n"           // align across comment
+       "      8'hff          :/ 1\n"  // aligned
+       "      //comment3\n"
+       "    };\n"
+       "  }\n"
+       "endclass\n"},
   };
   // Use a fixed style.
   FormatStyle style;

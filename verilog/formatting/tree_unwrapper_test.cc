@@ -3765,6 +3765,34 @@ const TreeUnwrapperTestData kClassTestCases[] = {
     },
 
     {
+        "class with constraints, distribution list, with comments",
+        "class Foo; constraint bar_c { "
+        " timer_enable dist { //c1\n"
+        "//c2\n"
+        "[0:9] :/ 20, //c3\n"
+        "//c4\n"
+        "10 :/ 80 //c5\n"
+        "//c6\n"
+        "};"
+        " } endclass",
+        ClassDeclaration(
+            0, L(0, {"class", "Foo", ";"}),
+            ClassItemList(1, L(1, {"constraint", "bar_c", "{"}),
+                          ConstraintItemList(
+                              2, L(2, {"timer_enable", "dist", "{", "//c1"}),
+                              DistItemList(3,               //
+                                           L(3, {"//c2"}),  //
+                                           L(3, {"[", "0", ":", "9", "]", ":/",
+                                                 "20", ",", "//c3"}),
+                                           L(3, {"//c4"}),  //
+                                           L(3, {"10", ":/", "80", "//c5"}),
+                                           L(3, {"//c6"})),
+                              L(2, {"}", ";"})),
+                          L(1, {"}"})),
+            L(0, {"endclass"})),
+    },
+
+    {
         "class with empty parameter list",
         "class Foo #(); endclass",
         ClassDeclaration(0, L(0, {"class", "Foo", "#", "(", ")", ";"}),

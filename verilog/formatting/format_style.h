@@ -83,6 +83,10 @@ struct FormatStyle : public verible::BasicFormatStyle {
   // Internal tests assume these are forced to kAlign.
   AlignmentPolicy case_items_alignment = AlignmentPolicy::kAlign;
 
+  // Control how distribution items are formatted.
+  // Internal tests assume these are forced to kAlign.
+  AlignmentPolicy distribution_items_alignment = AlignmentPolicy::kAlign;
+
   // At this time line wrap optimization is problematic and risks ruining
   // otherwise reasonable code.  When set to false, this switch will make the
   // formatter give-up and leave code as-is in cases where it would otherwise
@@ -133,6 +137,7 @@ struct FormatStyle : public verible::BasicFormatStyle {
     case_items_alignment = policy;
     assignment_statement_alignment = policy;
     enum_assignment_statement_alignment = policy;
+    distribution_items_alignment = policy;
   }
 };
 

@@ -535,6 +535,7 @@ void TreeUnwrapper::InterChildNodeHook(const SyntaxTreeNode& node) {
     case NodeEnum::kGenerateCaseItemList:
     case NodeEnum::kConstraintExpressionList:
     case NodeEnum::kConstraintBlockItemList:
+    case NodeEnum::kDistributionItemList:
       LookAheadBeyondCurrentNode();
       break;
     default: {
@@ -951,7 +952,6 @@ void TreeUnwrapper::SetIndentationsAndCreatePartitions(
     case NodeEnum::kStructUnionMemberList:
     case NodeEnum::kConstraintBlockItemList:
     case NodeEnum::kConstraintExpressionList:
-    case NodeEnum::kDistributionItemList:
     case NodeEnum::kAssertionVariableDeclarationList:
     // The final sequence_expr of a sequence_declaration is same indentation
     // level as the kAssertionVariableDeclarationList that precedes it.
@@ -1009,6 +1009,7 @@ void TreeUnwrapper::SetIndentationsAndCreatePartitions(
     case NodeEnum::kClassItems:
     case NodeEnum::kModuleItemList:
     case NodeEnum::kGenerateItemList:
+    case NodeEnum::kDistributionItemList:
     case NodeEnum::kEnumNameList: {
       const int indent = suppress_indentation ? 0 : style_.indentation_spaces;
       VisitIndentedSection(node, indent,
@@ -1851,6 +1852,7 @@ void TreeUnwrapper::Visit(const verible::SyntaxTreeLeaf& leaf) {
               NodeEnum::kMacroArgList,               // MacroArg
               NodeEnum::kFormalParameterList,        // kParamDeclaration
               NodeEnum::kEnumNameList,               // kEnumName
+              NodeEnum::kDistributionItemList,       // kDistribution
               NodeEnum::kActualParameterByNameList,  // kParamByName
               NodeEnum::kPortDeclarationList,        // kPort, kPortDeclaration
               NodeEnum::kPortActualList,             // kActualNamedPort,
