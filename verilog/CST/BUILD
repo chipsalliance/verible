@@ -461,7 +461,10 @@ cc_test(
     name = "module_test",
     srcs = ["module_test.cc"],
     deps = [
+        ":match_test_utils",
         ":module",
+        "//common/analysis:syntax_tree_search",
+        "//common/analysis:syntax_tree_search_test_utils",
         "//common/text:concrete_syntax_tree",
         "//common/text:symbol",
         "//common/text:text_structure",
@@ -605,8 +608,11 @@ cc_test(
     name = "parameters_test",
     srcs = ["parameters_test.cc"],
     deps = [
+        ":match_test_utils",
         ":parameters",
         ":verilog_nonterminals",
+        "//common/analysis:syntax_tree_search",
+        "//common/analysis:syntax_tree_search_test_utils",
         "//common/text:concrete_syntax_leaf",
         "//common/text:concrete_syntax_tree",
         "//common/text:symbol",

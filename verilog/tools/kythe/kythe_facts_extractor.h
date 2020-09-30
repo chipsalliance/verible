@@ -121,6 +121,10 @@ class KytheFactsExtractor {
   // Extracts kythe facts from module named port node e.g("m(.in1(a))").
   void ExtractModuleNamedPort(const IndexingFactNode&);
 
+  // Extracts kythe facts from named param
+  // e.g module_type #(.N(x)) extracts "N";
+  void ExtractNamedParam(const IndexingFactNode&);
+
   // Extracts kythe facts from module node and returns it VName.
   VName ExtractModuleFact(const IndexingFactNode&);
 
@@ -166,8 +170,11 @@ class KytheFactsExtractor {
   void ExtractMemberReference(const IndexingFactNode& member_reference_node,
                               bool is_function_call);
 
+  // Extracts kythe facts from param declaration node.
+  VName ExtractParamDeclaration(const IndexingFactNode& param_declaration_node);
+
   // Generates an anchor VName for kythe.
-  VName PrintAnchorVName(const Anchor&);
+  VName CreateAnchor(const Anchor&);
 
   // Appends the signatures of given parent scope vname to make
   // signatures are unique relative to scopes.

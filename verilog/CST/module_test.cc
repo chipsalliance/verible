@@ -27,6 +27,8 @@
 
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
+#include "common/analysis/syntax_tree_search.h"
+#include "common/analysis/syntax_tree_search_test_utils.h"
 #include "common/text/concrete_syntax_tree.h"
 #include "common/text/symbol.h"
 #include "common/text/text_structure.h"
@@ -35,6 +37,7 @@
 #include "common/util/casts.h"
 #include "common/util/logging.h"
 #include "common/util/range.h"
+#include "verilog/CST/match_test_utils.h"
 #include "verilog/analysis/verilog_analyzer.h"
 
 #undef EXPECT_OK
@@ -48,7 +51,10 @@ namespace {
 
 using verible::down_cast;
 using verible::SyntaxTreeNode;
+using verible::SyntaxTreeSearchTestCase;
+using verible::TextStructureView;
 using verible::TokenInfoTestData;
+using verible::TreeSearchMatch;
 
 TEST(FindAllModuleDeclarationsTest, EmptySource) {
   VerilogAnalyzer analyzer("", "");
@@ -178,6 +184,74 @@ TEST(GetModulePortDeclarationListTest, WithPorts) {
     ASSERT_TRUE(verible::IsSubRange(expected_span, code_copy));
     EXPECT_EQ(ports_span, expected_span);
     EXPECT_TRUE(verible::BoundsEqual(ports_span, expected_span));
+  }
+}
+
+TEST(FindAllModuleDeclarationTest, FindModuleParameters) {
+  constexpr int kTag = 1;  // value doesn't matter
+  const SyntaxTreeSearchTestCase kTestCases[] = {
+      {""},
+      {"module m;\nendmodule\n"},
+      {"module m",
+       {kTag, "#(parameter x = 3, parameter y = 4)"},
+       "();\nendmodule"},
+      {"module m", {kTag, "#()"}, "();\nendmodule"},
+      {"module m",
+       {kTag, "#(parameter int x = 3,\n parameter logic y = 4)"},
+       "();\nendmodule"},
+  };
+  for (const auto& test : kTestCases) {
+    TestVerilogSyntaxRangeMatches(
+        __FUNCTION__, test, [](const TextStructureView& text_structure) {
+          const auto& root = text_structure.SyntaxTree();
+          const auto& instances =
+              FindAllModuleDeclarations(*ABSL_DIE_IF_NULL(root));
+
+          std::vector<TreeSearchMatch> params;
+          for (const auto& instance : instances) {
+            const auto* decl =
+                GetParamDeclarationListFromModuleDeclaration(*instance.match);
+            if (decl == nullptr) {
+              continue;
+            }
+            params.emplace_back(TreeSearchMatch{decl, {/* ignored context */}});
+          }
+          return params;
+        });
+  }
+}
+
+TEST(FindAllInterfaceDeclarationTest, FindInterfaceParameters) {
+  constexpr int kTag = 1;  // value doesn't matter
+  const SyntaxTreeSearchTestCase kTestCases[] = {
+      {""},
+      {"interface m;\nendinterface"},
+      {"interface m",
+       {kTag, "#(parameter x = 3, parameter y = 4)"},
+       "();\nendinterface"},
+      {"interface m", {kTag, "#()"}, "();\nendinterface"},
+      {"interface m",
+       {kTag, "#(parameter int x = 3,\n parameter logic y = 4)"},
+       "();\nendinterface"},
+  };
+  for (const auto& test : kTestCases) {
+    TestVerilogSyntaxRangeMatches(
+        __FUNCTION__, test, [](const TextStructureView& text_structure) {
+          const auto& root = text_structure.SyntaxTree();
+          const auto& instances =
+              FindAllInterfaceDeclarations(*ABSL_DIE_IF_NULL(root));
+
+          std::vector<TreeSearchMatch> params;
+          for (const auto& instance : instances) {
+            const auto* decl = GetParamDeclarationListFromInterfaceDeclaration(
+                *instance.match);
+            if (decl == nullptr) {
+              continue;
+            }
+            params.emplace_back(TreeSearchMatch{decl, {/* ignored context */}});
+          }
+          return params;
+        });
   }
 }
 

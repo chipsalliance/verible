@@ -648,5 +648,39 @@ TEST(FindAllRegisterVariablesTest, FindTrailingAssignOfRegisterVariable) {
   }
 }
 
+TEST(FindAllDataDeclarationTest, FindDataDeclarationParameters) {
+  constexpr int kTag = 1;  // value doesn't matter
+  const SyntaxTreeSearchTestCase kTestCases[] = {
+      {""},
+      {"module m;\nendmodule\n"},
+      {"module m;\n module_type ", {kTag, "#(2, 2)"}, " y1();\nendmodule"},
+      {"module m;\n module_type ",
+       {kTag, "#(.P(2), .P2(2))"},
+       " y1();\nendmodule"},
+      {"module m;\n module_type ",
+       {kTag, "#(.P(2), .P1(3))"},
+       "y1();\nendmodule"},
+      {"module m;\n module_type ", {kTag, "#(x, y)"}, "y1();\nendmodule"},
+  };
+  for (const auto& test : kTestCases) {
+    TestVerilogSyntaxRangeMatches(
+        __FUNCTION__, test, [](const TextStructureView& text_structure) {
+          const auto& root = text_structure.SyntaxTree();
+          const auto& instances =
+              FindAllDataDeclarations(*ABSL_DIE_IF_NULL(root));
+
+          std::vector<TreeSearchMatch> params;
+          for (const auto& instance : instances) {
+            const auto* decl = GetParamListFromDataDeclaration(*instance.match);
+            if (decl == nullptr) {
+              continue;
+            }
+            params.emplace_back(TreeSearchMatch{decl, {/* ignored context */}});
+          }
+          return params;
+        });
+  }
+}
+
 }  // namespace
 }  // namespace verilog

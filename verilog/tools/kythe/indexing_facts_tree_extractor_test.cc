@@ -2885,6 +2885,137 @@ TEST(FactsTreeExtractor, ForLoopInitializations) {
   EXPECT_EQ(result_pair.right, nullptr) << *result_pair.right;
 }
 
+TEST(FactsTreeExtractor, ParameterExtraction) {
+  constexpr int kTag = 1;  // value doesn't matter
+  const verible::SyntaxTreeSearchTestCase kTestCase = {
+      {"module ",
+       {kTag, "m"},
+       "#(parameter ",
+       {kTag, "x"},
+       " = 1, parameter ",
+       {kTag, "y"},
+       " = 2) (input ",
+       {kTag, "z"},
+       ");\n ",
+       {kTag, "bar"},
+       " #(.",
+       {kTag, "p1"},
+       "(",
+       {kTag, "x"},
+       "), .",
+       {kTag, "p2"},
+       "(",
+       {kTag, "y"},
+       ")) ",
+       {kTag, "b1"},
+       "(",
+       {kTag, "z"},
+       ");\nendmodule"},
+  };
+
+  constexpr absl::string_view file_name = "verilog.v";
+  int exit_status = 0;
+  bool parse_ok = false;
+
+  const IndexingFactNode expected(
+      {
+          {
+              Anchor(file_name, 0, kTestCase.code.size()),
+              Anchor(kTestCase.code, 0, kTestCase.code.size()),
+          },
+          IndexingFactType ::kFile,
+      },
+      // refers to module m.
+      T(
+          {
+              {
+                  Anchor(kTestCase.expected_tokens[1], kTestCase.code),
+              },
+              IndexingFactType ::kModule,
+          },
+          // refers to module parameter x.
+          T({
+              {
+                  Anchor(kTestCase.expected_tokens[3], kTestCase.code),
+              },
+              IndexingFactType ::kParamDeclaration,
+          }),
+          // refers to class parameter y.
+          T({
+              {
+                  Anchor(kTestCase.expected_tokens[5], kTestCase.code),
+              },
+              IndexingFactType ::kParamDeclaration,
+          }),
+          // refers to class input x.
+          T({
+              {
+                  Anchor(kTestCase.expected_tokens[7], kTestCase.code),
+              },
+              IndexingFactType ::kVariableDefinition,
+          }),
+          // refers to bar.
+          T(
+              {
+                  {
+                      Anchor(kTestCase.expected_tokens[9], kTestCase.code),
+                  },
+                  IndexingFactType::kDataTypeReference,
+              },
+              // refers to .p1(x).
+              T(
+                  {
+                      {
+                          Anchor(kTestCase.expected_tokens[11], kTestCase.code),
+                      },
+                      IndexingFactType ::kNamedParam,
+                  },
+                  // refers to x.
+                  T({
+                      {
+                          Anchor(kTestCase.expected_tokens[13], kTestCase.code),
+                      },
+                      IndexingFactType ::kVariableReference,
+                  })),
+              // refers to .p2(y).
+              T(
+                  {
+                      {
+                          Anchor(kTestCase.expected_tokens[15], kTestCase.code),
+                      },
+                      IndexingFactType ::kNamedParam,
+                  },
+                  // refers to y.
+                  T({
+                      {
+                          Anchor(kTestCase.expected_tokens[17], kTestCase.code),
+                      },
+                      IndexingFactType ::kVariableReference,
+                  })),
+              // refers to b1.
+              T(
+                  {
+                      {
+                          Anchor(kTestCase.expected_tokens[19], kTestCase.code),
+                      },
+                      IndexingFactType ::kModuleInstance,
+                  },
+                  // refers to z.
+                  T({
+                      {
+                          Anchor(kTestCase.expected_tokens[21], kTestCase.code),
+                      },
+                      IndexingFactType ::kVariableReference,
+                  })))));
+
+  const auto facts_tree =
+      ExtractOneFile(kTestCase.code, file_name, exit_status, parse_ok);
+
+  const auto result_pair = DeepEqual(facts_tree, expected);
+  EXPECT_EQ(result_pair.left, nullptr) << *result_pair.left;
+  EXPECT_EQ(result_pair.right, nullptr) << *result_pair.right;
+}
+
 }  // namespace
 }  // namespace kythe
 }  // namespace verilog

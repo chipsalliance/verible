@@ -42,6 +42,11 @@ std::vector<verible::TreeSearchMatch> FindAllParamDeclarations(
   return verible::SearchSyntaxTree(root, NodekParamDeclaration());
 }
 
+std::vector<verible::TreeSearchMatch> FindAllNamedParams(
+    const verible::Symbol& root) {
+  return verible::SearchSyntaxTree(root, NodekParamByName());
+}
+
 verilog_tokentype GetParamKeyword(const verible::Symbol& symbol) {
   // Currently the LRM is vague on what to do if no parameter/localparam is
   // declared, see example below. As such, if it's not declared, we will treat
@@ -196,6 +201,18 @@ bool IsTypeInfoEmpty(const verible::Symbol& symbol) {
 
   return (type_info_node[0] == nullptr && type_info_node[1] == nullptr &&
           type_info_node[2] == nullptr);
+}
+
+const verible::SyntaxTreeLeaf& GetNamedParamFromActualParam(
+    const verible::Symbol& param_by_name) {
+  return *AutoUnwrapIdentifier(
+      verible::GetSubtreeAsLeaf(param_by_name, NodeEnum::kParamByName, 1));
+}
+
+const verible::SyntaxTreeNode* GetParenGroupFromActualParam(
+    const verible::Symbol& param_by_name) {
+  return verible::CheckOptionalSymbolAsNode(
+      verible::GetSubtreeAsSymbol(param_by_name, NodeEnum::kParamByName, 2));
 }
 
 }  // namespace verilog
