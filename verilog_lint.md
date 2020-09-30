@@ -320,4 +320,4 @@ Enabled by default: true
 
 ## Version
 
-Generated on 2020-09-30 02:08:39 -0700 from [v0.0-643-gd181a42](https://github.com/google/verible/commit/d181a42c793af995964a909992fe76ebe174c32e)
+Generated on 2020-09-30 08:47:04 -0700 from [v0.0-644-g5089a9c](https://github.com/google/verible/commit/5089a9c407bc84cc5dbeb6dfd12456b50dc7e97f)
