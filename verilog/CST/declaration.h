@@ -162,6 +162,20 @@ GetTrailingExpressionFromVariableDeclarationAssign(
 const verible::SyntaxTreeNode* GetTrailingExpressionFromRegisterVariable(
     const verible::Symbol& register_variable);
 
+// Extracts kPackedDimensions node from nodes tagged with kDataDeclaration.
+const verible::SyntaxTreeNode& GetPackedDimensionFromDataDeclaration(
+    const verible::Symbol& data_declaration);
+
+// Extracts kUnpackedDimensions node from nodes tagged with kRegisterVariable.
+const verible::SyntaxTreeNode& GetUnpackedDimensionFromRegisterVariable(
+    const verible::Symbol& register_variable);
+
+// Extracts kUnpackedDimensions node from nodes tagged with
+// kVariableDeclarationAssign.
+const verible::SyntaxTreeNode&
+GetUnpackedDimensionFromVariableDeclarationAssign(
+    const verible::Symbol& variable_declaration_assign);
+
 }  // namespace verilog
 
 #endif  // VERIBLE_VERILOG_CST_DECLARATION_H_

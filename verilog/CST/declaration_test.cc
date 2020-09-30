@@ -16,12 +16,12 @@
 
 #include <vector>
 
-#include "gmock/gmock.h"
-#include "gtest/gtest.h"
 #include "common/analysis/syntax_tree_search.h"
 #include "common/analysis/syntax_tree_search_test_utils.h"
 #include "common/text/text_structure.h"
 #include "common/text/tree_utils.h"
+#include "gmock/gmock.h"
+#include "gtest/gtest.h"
 #include "verilog/CST/match_test_utils.h"
 
 #undef ASSERT_OK
@@ -678,6 +678,138 @@ TEST(FindAllDataDeclarationTest, FindDataDeclarationParameters) {
             params.emplace_back(TreeSearchMatch{decl, {/* ignored context */}});
           }
           return params;
+        });
+  }
+}
+
+TEST(GetVariableDeclarationAssign,
+     FindUnpackedDimensionOfVariableDeclarationAssign) {
+  constexpr int kTag = 1;  // value doesn't matter
+  const SyntaxTreeSearchTestCase kTestCases[] = {
+      {""},
+      {"module m;\nendmodule\n"},
+      {"class class_c;\nendclass\nmodule m;\nclass_c c = new();\nendmodule"},
+      {"package pkg;\nint x",
+       {kTag, "[k:y]"},
+       " = 4, y ",
+       {kTag, "[k:y]"},
+       " = 4;\nlogic k ",
+       {kTag, "[k:y]"},
+       " = fun_call();\nendpackage"},
+      {"class cls;\n int x ",
+       {kTag, "[k:y]"},
+       " = 4, y ",
+       {kTag, "[k:y]"},
+       " = 4;\nlogic k ",
+       {kTag, "[k:y]"},
+       " = fun_call();\nendclass"},
+  };
+  for (const auto& test : kTestCases) {
+    TestVerilogSyntaxRangeMatches(
+        __FUNCTION__, test, [](const TextStructureView& text_structure) {
+          const auto& root = text_structure.SyntaxTree();
+          const auto& instances =
+              FindAllVariableDeclarationAssignment(*ABSL_DIE_IF_NULL(root));
+
+          std::vector<TreeSearchMatch> unpacked_dimensions;
+          for (const auto& decl : instances) {
+            const auto& unpacked_dimension =
+                GetUnpackedDimensionFromVariableDeclarationAssign(*decl.match);
+            unpacked_dimensions.emplace_back(
+                TreeSearchMatch{&unpacked_dimension, {/* ignored context */}});
+          }
+          return unpacked_dimensions;
+        });
+  }
+}
+
+TEST(FindAllRegisterVariablesTest, FindUnpackedDimensionOfRegisterVariable) {
+  constexpr int kTag = 1;  // value doesn't matter
+  const SyntaxTreeSearchTestCase kTestCases[] = {
+      {""},
+      {"module m;\nendmodule\n"},
+      {"module module_m();\n int x ",
+       {kTag, "[k:y]"},
+       " = 4, y ",
+       {kTag, "[k:y]"},
+       "= 4;\nlogic k ",
+       {kTag, "[k:y]"},
+       "= fun_call();\nendmodule"},
+      {"task tsk();\n int x ",
+       {kTag, "[k:y]"},
+       "= 4, y ",
+       {kTag, "[k:y]"},
+       "= 4;\nlogic k ",
+       {kTag, "[k:y]"},
+       "= fun_call();\nendtask"},
+      {"function int fun();\n int x ",
+       {kTag, "[k:y]"},
+       "= 4, y ",
+       {kTag, "[k:y]"},
+       "= 4;\nlogic k ",
+       {kTag, "[k:y]"},
+       "= fun_call();\nreturn 1;\nendfunction"},
+  };
+  for (const auto& test : kTestCases) {
+    TestVerilogSyntaxRangeMatches(
+        __FUNCTION__, test, [](const TextStructureView& text_structure) {
+          const auto& root = text_structure.SyntaxTree();
+          const auto& instances =
+              FindAllRegisterVariables(*ABSL_DIE_IF_NULL(root));
+
+          std::vector<TreeSearchMatch> unpacked_dimensions;
+          for (const auto& decl : instances) {
+            const auto& unpacked_dimension =
+                GetUnpackedDimensionFromRegisterVariable(*decl.match);
+            unpacked_dimensions.emplace_back(
+                TreeSearchMatch{&unpacked_dimension, {/* ignored context */}});
+          }
+          return unpacked_dimensions;
+        });
+  }
+}
+
+TEST(GetVariableDeclaration, FindPackedDimensionFromDataDeclaration) {
+  constexpr int kTag = 1;  // value doesn't matter
+  const SyntaxTreeSearchTestCase kTestCases[] = {
+      {""},
+      {"module m;\nendmodule\n"},
+      {"module m;\n int ",
+       {kTag, "[k:y]"},
+       " v1;\n logic ",
+       {kTag, "[k:y]"},
+       "v2, v3;\nendmodule"},
+      {"class m;\n int ",
+       {kTag, "[k:y]"},
+       " v1;\n logic ",
+       {kTag, "[k:y]"},
+       " v2, v3;\nendclass"},
+      {"package m;\n int ",
+       {kTag, "[k:y]"},
+       " v1 = 2;\n logic ",
+       {kTag, "[k:y]"},
+       " v2 = 2;\nendpackage"},
+      {"function m();\n int ",
+       {kTag, "[k:y]"},
+       " v1;\n logic ",
+       {kTag, "[k:y]"},
+       " v2, v3;\nendfunction"},
+  };
+  for (const auto& test : kTestCases) {
+    TestVerilogSyntaxRangeMatches(
+        __FUNCTION__, test, [](const TextStructureView& text_structure) {
+          const auto& root = text_structure.SyntaxTree();
+          const auto& instances =
+              FindAllDataDeclarations(*ABSL_DIE_IF_NULL(root));
+
+          std::vector<TreeSearchMatch> packed_dimensions;
+          for (const auto& decl : instances) {
+            const auto& packed_dimension =
+                GetPackedDimensionFromDataDeclaration(*decl.match);
+            packed_dimensions.emplace_back(
+                TreeSearchMatch{&packed_dimension, {/* ignored context */}});
+          }
+          return packed_dimensions;
         });
   }
 }

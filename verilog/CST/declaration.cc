@@ -212,4 +212,51 @@ const verible::SyntaxTreeNode* GetTrailingExpressionFromRegisterVariable(
                                             NodeEnum::kTrailingAssign);
 }
 
+const verible::SyntaxTreeNode& GetPackedDimensionFromDataTypePrimitive(
+    const verible::Symbol& data_type_primitive) {
+  const verible::SyntaxTreeLeaf& leaf = verible::GetSubtreeAsLeaf(
+      data_type_primitive, NodeEnum::kDataTypePrimitive, 0);
+  if (leaf.get().token_enum() == verilog_tokentype::TK_string) {
+    return verible::GetSubtreeAsNode(data_type_primitive,
+                                     NodeEnum::kDataTypePrimitive, 1,
+                                     NodeEnum::kPackedDimensions);
+  }
+  return verible::GetSubtreeAsNode(data_type_primitive,
+                                   NodeEnum::kDataTypePrimitive, 2,
+                                   NodeEnum::kPackedDimensions);
+}
+
+const verible::SyntaxTreeNode& GetPackedDimensionFromDataDeclaration(
+    const verible::Symbol& data_declaration) {
+  const verible::SyntaxTreeNode& instantiation_type =
+      GetTypeOfDataDeclaration(data_declaration);
+  const verible::SyntaxTreeNode& data_type = verible::GetSubtreeAsNode(
+      instantiation_type, NodeEnum::kInstantiationType, 0);
+
+  if (NodeEnum(data_type.Tag().tag) == NodeEnum::kDataTypePrimitive) {
+    return GetPackedDimensionFromDataTypePrimitive(data_type);
+  }
+
+  const verible::SyntaxTreeNode& data_type_primitive =
+      verible::GetSubtreeAsNode(data_type, NodeEnum::kDataType, 0,
+                                NodeEnum::kDataTypePrimitive);
+
+  return GetPackedDimensionFromDataTypePrimitive(data_type_primitive);
+}
+
+const verible::SyntaxTreeNode& GetUnpackedDimensionFromRegisterVariable(
+    const verible::Symbol& register_variable) {
+  return verible::GetSubtreeAsNode(register_variable,
+                                   NodeEnum::kRegisterVariable, 1,
+                                   NodeEnum::kUnpackedDimensions);
+}
+
+const verible::SyntaxTreeNode&
+GetUnpackedDimensionFromVariableDeclarationAssign(
+    const verible::Symbol& variable_declaration_assign) {
+  return verible::GetSubtreeAsNode(variable_declaration_assign,
+                                   NodeEnum::kVariableDeclarationAssignment, 1,
+                                   NodeEnum::kUnpackedDimensions);
+}
+
 }  // namespace verilog
