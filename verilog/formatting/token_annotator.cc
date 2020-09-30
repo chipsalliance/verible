@@ -298,6 +298,8 @@ static WithReason<int> SpacesRequiredBetween(
     // General handling of ID '(' spacing:
     if (left.format_token_enum == FormatTokenType::identifier ||
         IsKeywordCallable(verilog_tokentype(left.TokenEnum()))) {
+      // TODO(fangism): This logic should use .DirectParentIs() to minimize risk
+      // of unintended reach.
       if (right_context.IsInside(NodeEnum::kActualNamedPort) ||
           right_context.IsInside(NodeEnum::kPort)) {
         return {0, "Named port: no space between ID and '('"};
@@ -306,7 +308,7 @@ static WithReason<int> SpacesRequiredBetween(
           right_context.IsInside(NodeEnum::kPrimitiveGateInstance)) {
         return {1, "Module/primitive instance: want space between ID and '('"};
       }
-      if (right_context.IsInside(NodeEnum::kModuleHeader)) {
+      if (left_context.DirectParentIs(NodeEnum::kModuleHeader)) {
         return {1,
                 "Module/interface declarations: want space between ID and '('"};
       }

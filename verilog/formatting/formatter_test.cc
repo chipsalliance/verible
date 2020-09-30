@@ -1488,6 +1488,14 @@ static constexpr FormatterTestCase kFormatterTestCases[] = {
      "    parameter int yyyy\n"
      ");\n"
      "endmodule : foo\n"},
+    {"module foo #(parameter int x = $clog2  (N) ,parameter int y ) "
+     ";endmodule:foo\n",
+     // parameters don't fit
+     "module foo #(\n"
+     "    parameter int x = $clog2(N),\n"  // no space after $clog2
+     "    parameter int y\n"
+     ");\n"
+     "endmodule : foo\n"},
     {"module foo #(//comment\n"
      "parameter bar =1,\n"
      "localparam baz =2"
