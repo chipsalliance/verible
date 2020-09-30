@@ -774,7 +774,9 @@ TEST(GetVariableDeclaration, FindPackedDimensionFromDataDeclaration) {
   const SyntaxTreeSearchTestCase kTestCases[] = {
       {""},
       {"module m;\nendmodule\n"},
-      {"module m;\n int ",
+      {"module m;\n string ",
+       {kTag, "[x:y]"},
+       "s;\nint ",
        {kTag, "[k:y]"},
        " v1;\n logic ",
        {kTag, "[k:y]"},
