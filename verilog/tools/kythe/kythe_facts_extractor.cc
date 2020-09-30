@@ -48,6 +48,9 @@ void KytheFactsExtractor::IndexingFactNodeTagResolver(
     const IndexingFactNode& node) {
   const auto tag = node.Value().GetIndexingFactType();
 
+  // This VName is used to keep track of the new generated VName and it will be
+  // used in scopes, finding variable definitions and creating childof
+  // relations.
   VName vname;
   switch (tag) {
     case IndexingFactType::kFile: {

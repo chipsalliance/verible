@@ -44,6 +44,22 @@ using verible::SyntaxTreeLeaf;
 using verible::SyntaxTreeNode;
 using verible::TreeSearchMatch;
 
+// Given a root to CST this function traverses the tree and extracts and
+// constructs the indexing facts tree.
+IndexingFactNode BuildIndexingFactsTree(
+    const verible::ConcreteSyntaxTree& syntax_tree, absl::string_view base,
+    absl::string_view file_name) {
+  IndexingFactsTreeExtractor visitor(base, file_name);
+  if (syntax_tree == nullptr) {
+    return visitor.GetRoot();
+  }
+
+  const SyntaxTreeNode& root = verible::SymbolCastToNode(*syntax_tree);
+  root.Accept(&visitor);
+
+  return visitor.GetRoot();
+}
+
 }  // namespace
 
 IndexingFactNode ExtractOneFile(absl::string_view content,
@@ -70,24 +86,13 @@ IndexingFactNode ExtractOneFile(absl::string_view content,
                                 filename);
 }
 
-IndexingFactNode BuildIndexingFactsTree(
-    const verible::ConcreteSyntaxTree& syntax_tree, absl::string_view base,
-    absl::string_view file_name) {
-  IndexingFactsTreeExtractor visitor(base, file_name);
-  if (syntax_tree == nullptr) {
-    return visitor.GetRoot();
-  }
-
-  const SyntaxTreeNode& root = verible::SymbolCastToNode(*syntax_tree);
-  root.Accept(&visitor);
-
-  return visitor.GetRoot();
-}
-
 void IndexingFactsTreeExtractor::Visit(const SyntaxTreeNode& node) {
   const auto tag = static_cast<verilog::NodeEnum>(node.Tag().tag);
   switch (tag) {
     case NodeEnum ::kDescriptionList: {
+      // Adds the current root to facts tree context to keep track of the parent
+      // node so that it can be used to construct the tree and add children to
+      // it.
       const IndexingFactsTreeContext::AutoPop p(&facts_tree_context_,
                                                 &GetRoot());
       TreeContextVisitor::Visit(node);
@@ -98,49 +103,7 @@ void IndexingFactsTreeExtractor::Visit(const SyntaxTreeNode& node) {
       break;
     }
     case NodeEnum::kDataDeclaration: {
-      // For module instantiations
-      const std::vector<TreeSearchMatch> gate_instances =
-          FindAllGateInstances(node);
-      if (!gate_instances.empty()) {
-        ExtractModuleInstantiation(node, gate_instances);
-        break;
-      }
-
-      // For bit, int and classes
-      const std::vector<TreeSearchMatch> register_variables =
-          FindAllRegisterVariables(node);
-      if (!register_variables.empty()) {
-        // for classes.
-        const std::vector<TreeSearchMatch> class_instances =
-            verible::SearchSyntaxTree(node, NodekClassNew());
-        if (!class_instances.empty()) {
-          ExtractClassInstances(node, register_variables);
-          break;
-        }
-
-        // for primitive types inside tagged with kRegisterVariable.
-        ExtractPrimitiveVariables(node, register_variables);
-        break;
-      }
-
-      const std::vector<TreeSearchMatch> variable_declaration_assign =
-          FindAllVariableDeclarationAssignment(node);
-
-      if (!variable_declaration_assign.empty()) {
-        // for classes.
-        const std::vector<TreeSearchMatch> class_instances =
-            verible::SearchSyntaxTree(node, NodekClassNew());
-        if (!class_instances.empty()) {
-          ExtractClassInstances(node, variable_declaration_assign);
-          break;
-        }
-
-        // for primitive types inside tagged with
-        // kVariableDeclarationAssignment.
-        ExtractPrimitiveVariables(node, variable_declaration_assign);
-        break;
-      }
-
+      ExtractDataDeclaration(node);
       break;
     }
     case NodeEnum::kIdentifierUnpackedDimensions: {
@@ -225,6 +188,52 @@ void IndexingFactsTreeExtractor::Visit(const verible::SyntaxTreeLeaf& leaf) {
     }
     default:
       break;
+  }
+}
+
+void IndexingFactsTreeExtractor::ExtractDataDeclaration(
+    const verible::SyntaxTreeNode& data_declaration) {
+  // For module instantiations
+  const std::vector<TreeSearchMatch> gate_instances =
+      FindAllGateInstances(data_declaration);
+  if (!gate_instances.empty()) {
+    ExtractModuleInstantiation(data_declaration, gate_instances);
+    return;
+  }
+
+  // For bit, int and classes
+  const std::vector<TreeSearchMatch> register_variables =
+      FindAllRegisterVariables(data_declaration);
+  if (!register_variables.empty()) {
+    // for classes.
+    const std::vector<TreeSearchMatch> class_instances =
+        verible::SearchSyntaxTree(data_declaration, NodekClassNew());
+    if (!class_instances.empty()) {
+      ExtractClassInstances(data_declaration, register_variables);
+      return;
+    }
+
+    // for primitive types inside tagged with kRegisterVariable.
+    ExtractPrimitiveVariables(data_declaration, register_variables);
+    return;
+  }
+
+  const std::vector<TreeSearchMatch> variable_declaration_assign =
+      FindAllVariableDeclarationAssignment(data_declaration);
+
+  if (!variable_declaration_assign.empty()) {
+    // for classes.
+    const std::vector<TreeSearchMatch> class_instances =
+        verible::SearchSyntaxTree(data_declaration, NodekClassNew());
+    if (!class_instances.empty()) {
+      ExtractClassInstances(data_declaration, variable_declaration_assign);
+      return;
+    }
+
+    // for primitive types inside tagged with
+    // kVariableDeclarationAssignment.
+    ExtractPrimitiveVariables(data_declaration, variable_declaration_assign);
+    return;
   }
 }
 

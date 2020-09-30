@@ -103,6 +103,8 @@ class IndexingNodeData {
 // human-readable form for debugging
 std::ostream& operator<<(std::ostream&, const IndexingNodeData&);
 
+// Renaming for VectorTree; IndexingFactNode is actually a VectorTree which is a
+// class for constructing trees and dealing with them in a elegant manner.
 using IndexingFactNode = verible::VectorTree<IndexingNodeData>;
 
 }  // namespace kythe

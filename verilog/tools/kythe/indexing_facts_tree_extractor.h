@@ -154,6 +154,10 @@ class IndexingFactsTreeExtractor : public verible::TreeContextVisitor {
   // e.g counter #(.N(r)) extracts "N".
   void ExtractParamByName(const verible::SyntaxTreeNode& param_by_name);
 
+  // Determines how to deal with the given data declaration node as it may be
+  // module instance, class instance or primitive variable.
+  void ExtractDataDeclaration(const verible::SyntaxTreeNode& data_declaration);
+
   // The Root of the constructed tree
   IndexingFactNode root_{IndexingNodeData(IndexingFactType::kFile)};
 
@@ -168,12 +172,6 @@ class IndexingFactsTreeExtractor : public verible::TreeContextVisitor {
 IndexingFactNode ExtractOneFile(absl::string_view content,
                                 absl::string_view filename, int& exit_status,
                                 bool& parse_ok);
-
-// Given a root to CST this function traverses the tree and extracts and
-// constructs the indexing facts tree.
-IndexingFactNode BuildIndexingFactsTree(
-    const verible::ConcreteSyntaxTree& syntax_tree, absl::string_view base,
-    absl::string_view file_name);
 
 }  // namespace kythe
 }  // namespace verilog
