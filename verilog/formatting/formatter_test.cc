@@ -3417,6 +3417,11 @@ static constexpr FormatterTestCase kFormatterTestCases[] = {
      "  A = 0,\n"
      "  B = 1\n"
      "} foo_t;\n"},
+    {"typedef enum uint8_t\t{ kA=8'b0, kB=8'b1 }foo_t;",
+     "typedef enum uint8_t {\n"  // uint8_t is user-defined
+     "  kA = 8'b0,\n"
+     "  kB = 8'b1\n"
+     "} foo_t;\n"},
     {// With comments on same line as enum value
      "typedef enum logic\t{ A=0, // foo\n"
      "B,// bar\n"

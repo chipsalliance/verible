@@ -3857,6 +3857,15 @@ TEST(TokenAnnotatorTest, AnnotateFormattingWithContextTest) {
           {NodeEnum::kCoverPoint, NodeEnum::kBraceGroup},
           {1, SpacingOptions::Undecided},
       },
+      // enum name TYPEID {
+      {
+          DefaultStyle,
+          {SymbolIdentifier, "mytype_t"},
+          {'{', "{"},
+          {/* unspecified context */},
+          {NodeEnum::kEnumType, NodeEnum::kBraceGroup},
+          {1, SpacingOptions::Undecided},
+      },
 
       // x < y (binary operator)
       {

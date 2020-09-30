@@ -344,6 +344,10 @@ static WithReason<int> SpacesRequiredBetween(
             {NodeEnum::kBraceGroup, NodeEnum::kCoverPoint})) {
       return {1, "Space before '{' when opening a coverpoint body."};
     }
+    if (right_context.DirectParentsAre(
+            {NodeEnum::kBraceGroup, NodeEnum::kEnumType})) {
+      return {1, "Space before '{' when opening an enum type."};
+    }
     if (left.TokenEnum() == ')') {
       return {1, "Space betwen ')' and '{', e.g. conditional constraint."};
     }
