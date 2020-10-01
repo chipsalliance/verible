@@ -72,4 +72,70 @@ const verible::SyntaxTreeLeaf* GetIdentifierFromTypeDeclaration(
   return AutoUnwrapIdentifier(*ABSL_DIE_IF_NULL(identifier_symbol));
 }
 
+const verible::SyntaxTreeNode& GetPackedDimensionFromDataType(
+    const verible::Symbol& data_type) {
+  if (NodeEnum(data_type.Tag().tag) == NodeEnum::kDataType) {
+    return verible::GetSubtreeAsNode(data_type, NodeEnum::kDataType, 1,
+                                     NodeEnum::kPackedDimensions);
+  }
+
+  const verible::SyntaxTreeLeaf& leaf =
+      verible::GetSubtreeAsLeaf(data_type, NodeEnum::kDataTypePrimitive, 0);
+  if (leaf.get().token_enum() == verilog_tokentype::TK_string) {
+    return verible::GetSubtreeAsNode(data_type, NodeEnum::kDataTypePrimitive, 1,
+                                     NodeEnum::kPackedDimensions);
+  }
+
+  return verible::GetSubtreeAsNode(data_type, NodeEnum::kDataTypePrimitive, 2,
+                                   NodeEnum::kPackedDimensions);
+}
+
+const verible::SyntaxTreeNode& GetReferenceCallBaseFromInstantiationType(
+    const verible::Symbol& instantiation_type) {
+  return verible::GetSubtreeAsNode(instantiation_type,
+                                   NodeEnum::kInstantiationType, 0);
+}
+
+const verible::SyntaxTreeNode& GetReferenceFromReferenceCallBase(
+    const verible::Symbol& reference_call_base) {
+  return verible::GetSubtreeAsNode(reference_call_base,
+                                   NodeEnum::kReferenceCallBase, 0);
+}
+
+const verible::SyntaxTreeNode& GetLocalRootFromReference(
+    const verible::Symbol& reference) {
+  return verible::GetSubtreeAsNode(reference, NodeEnum::kReference, 0);
+}
+
+const verible::SyntaxTreeNode& GetUnqualifiedIdFromLocalRoot(
+    const verible::Symbol& local_root) {
+  return verible::GetSubtreeAsNode(local_root, NodeEnum::kLocalRoot, 0);
+}
+
+const verible::SyntaxTreeNode& GetUnqualifiedIdFromReferenceCallBase(
+    const verible::Symbol& reference_call_base) {
+  const verible::SyntaxTreeNode& reference =
+      GetReferenceFromReferenceCallBase(reference_call_base);
+  const verible::SyntaxTreeNode& local_root =
+      GetLocalRootFromReference(reference);
+  return GetUnqualifiedIdFromLocalRoot(local_root);
+}
+
+const verible::SyntaxTreeNode& GetUnqualifiedIdFromInstantiationType(
+    const verible::Symbol& instantiation_type) {
+  const verible::SyntaxTreeNode& reference_call_base =
+      GetReferenceCallBaseFromInstantiationType(instantiation_type);
+  return GetUnqualifiedIdFromReferenceCallBase(reference_call_base);
+}
+
+const verible::SyntaxTreeNode* GetParamListFromInstantiationType(
+    const verible::Symbol& instantiation_type) {
+  const verible::SyntaxTreeNode& unqualified_id =
+      GetUnqualifiedIdFromInstantiationType(instantiation_type);
+  const verible::Symbol* param_list =
+      verible::GetSubtreeAsSymbol(unqualified_id, NodeEnum::kUnqualifiedId, 1);
+  return verible::CheckOptionalSymbolAsNode(param_list,
+                                            NodeEnum::kActualParameterList);
+}
+
 }  // namespace verilog

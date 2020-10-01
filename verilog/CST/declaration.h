@@ -163,7 +163,7 @@ const verible::SyntaxTreeNode* GetTrailingExpressionFromRegisterVariable(
     const verible::Symbol& register_variable);
 
 // Extracts kPackedDimensions node from nodes tagged with kDataDeclaration.
-const verible::SyntaxTreeNode& GetPackedDimensionFromDataDeclaration(
+const verible::SyntaxTreeNode* GetPackedDimensionFromDataDeclaration(
     const verible::Symbol& data_declaration);
 
 // Extracts kUnpackedDimensions node from nodes tagged with kRegisterVariable.

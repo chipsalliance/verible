@@ -197,6 +197,7 @@ cc_library(
     deps = [
         ":identifier",
         ":verilog_matchers",
+        ":type",
         ":verilog_nonterminals",
         "//common/analysis:syntax_tree_search",
         "//common/text:concrete_syntax_leaf",

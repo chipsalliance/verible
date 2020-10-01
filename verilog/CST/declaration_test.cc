@@ -749,6 +749,20 @@ TEST(FindAllRegisterVariablesTest, FindUnpackedDimensionOfRegisterVariable) {
        "= 4;\nlogic k ",
        {kTag, "[k:y]"},
        "= fun_call();\nreturn 1;\nendfunction"},
+      {"task tsk();\n int [k:y] x ",
+       {kTag, "[k:y]"},
+       "= 4, y ",
+       {kTag, "[k:y]"},
+       "= 4;\nlogic [k:y] k ",
+       {kTag, "[k:y]"},
+       "= fun_call();\nendtask"},
+      {"function int fun();\n int [k:y] x ",
+       {kTag, "[k:y]"},
+       "= 4, y ",
+       {kTag, "[k:y]"},
+       "= 4;\nlogic [k:y] k ",
+       {kTag, "[k:y]"},
+       "= fun_call();\nreturn 1;\nendfunction"},
   };
   for (const auto& test : kTestCases) {
     TestVerilogSyntaxRangeMatches(
@@ -796,6 +810,18 @@ TEST(GetVariableDeclaration, FindPackedDimensionFromDataDeclaration) {
        " v1;\n logic ",
        {kTag, "[k:y]"},
        " v2, v3;\nendfunction"},
+      {"package m;\n int ",
+       {kTag, "[k:y]"},
+       " v1 [x:y] = 2;\n logic ",
+       {kTag, "[k:y]"},
+       " v2 [x:y] = 2;\nendpackage"},
+      {"function m();\n int ",
+       {kTag, "[k:y]"},
+       " v1 [x:y];\n logic ",
+       {kTag, "[k:y]"},
+       " v2 [x:y], v3 [x:y];\nendfunction"},
+      {"package c;\n uint ", {kTag, "[x:y]"}, " x;\nendpackage"},
+      {"class c;\n class_type x;\nendclass"},
   };
   for (const auto& test : kTestCases) {
     TestVerilogSyntaxRangeMatches(
@@ -806,10 +832,13 @@ TEST(GetVariableDeclaration, FindPackedDimensionFromDataDeclaration) {
 
           std::vector<TreeSearchMatch> packed_dimensions;
           for (const auto& decl : instances) {
-            const auto& packed_dimension =
+            const auto* packed_dimension =
                 GetPackedDimensionFromDataDeclaration(*decl.match);
+            if (packed_dimension == nullptr) {
+              continue;
+            }
             packed_dimensions.emplace_back(
-                TreeSearchMatch{&packed_dimension, {/* ignored context */}});
+                TreeSearchMatch{packed_dimension, {/* ignored context */}});
           }
           return packed_dimensions;
         });
