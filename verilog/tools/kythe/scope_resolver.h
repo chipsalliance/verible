@@ -168,7 +168,7 @@ class FlattenedScopeResolver {
   void MapSignatureToScopeOfSignature(const Signature& signature,
                                       const Signature& other_signature);
 
- private:
+//  private:
   // Saves signatures alongside with their inner members (scope).
   // This is used for resolving references to some variables after using
   // import pkg::*. or other member access like class_Type::my_var.

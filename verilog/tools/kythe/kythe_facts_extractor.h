@@ -58,6 +58,10 @@ class KytheFactsExtractor {
   // Extracts kythe facts from the given IndexingFactsTree root.
   void ExtractKytheFacts(const IndexingFactNode&);
 
+  const FlattenedScopeResolver GetFlattenedScopeResolver() const {
+    return flattened_scope_resolver_;
+  }
+
  private:
   // Container with a stack of VNames to hold context of VNames during traversal
   // of an IndexingFactsTree.
@@ -222,6 +226,9 @@ class KytheFactsExtractor {
   // Used to save all the generated edges Uniquely.
   std::set<Edge> edges_;
 };
+
+// Returns the file path which this tree contains facts about.
+std::string GetFilePathFromRoot(const IndexingFactNode& root);
 
 }  // namespace kythe
 }  // namespace verilog

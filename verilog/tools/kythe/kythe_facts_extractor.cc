@@ -145,7 +145,8 @@ void KytheFactsExtractor::AddVNameToVerticalScope(IndexingFactType tag,
     case IndexingFactType::kClass:
     case IndexingFactType::kClassInstance:
     case IndexingFactType::kFunctionOrTask:
-    case IndexingFactType::kParamDeclaration: {
+    case IndexingFactType::kParamDeclaration:
+    case IndexingFactType::kPackage: {
       vertical_scope_resolver_.top().AddMemberItem(vname);
       break;
     }
@@ -558,6 +559,8 @@ VName KytheFactsExtractor::ExtractClassInstances(
 
 void KytheFactsExtractor::ExtractPackageImport(
     const IndexingFactNode& import_fact_node) {
+  // TODO(minatoma): remove the imported vnames before exporting the scope as
+  // imports aren't intended to be accessible from outside the enclosing parent.
   const auto& anchors = import_fact_node.Value().Anchors();
   const Anchor& package_name = anchors[0];
 
@@ -727,7 +730,6 @@ std::string GetFilePathFromRoot(const IndexingFactNode& root) {
 
 std::ostream& KytheFactsPrinter::Print(std::ostream& stream) const {
   KytheFactsExtractor kythe_extractor(GetFilePathFromRoot(root_), &stream);
-
   kythe_extractor.ExtractKytheFacts(root_);
   return stream;
 }

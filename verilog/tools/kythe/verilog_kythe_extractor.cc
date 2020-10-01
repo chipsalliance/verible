@@ -26,6 +26,7 @@
 #include "verilog/analysis/verilog_analyzer.h"
 #include "verilog/tools/kythe/indexing_facts_tree_extractor.h"
 #include "verilog/tools/kythe/kythe_facts_extractor.h"
+#include "verilog/tools/kythe/multi_file_kythe_facts_extractor.h"
 
 ABSL_FLAG(bool, printextraction, false,
           "Whether or not to print the extracted general indexing facts "
@@ -37,8 +38,9 @@ ABSL_FLAG(bool, printkythefacts, false,
 ABSL_FLAG(std::string, output_path, "",
           "File path where to write the extracted Kythe facts in JSON format.");
 
-static int ExtractOneFile(absl::string_view content,
-                          absl::string_view filename) {
+static int ExtractOneFile(absl::string_view content, absl::string_view filename,
+                          verilog::kythe::MultiFileKytheFactsExtractor&
+                              multi_file_kythe_facts_extractor) {
   int exit_status = 0;
   bool parse_ok = false;
 
@@ -60,8 +62,7 @@ static int ExtractOneFile(absl::string_view content,
     std::cout << std::endl
               << (!parse_ok ? " (incomplete due to syntax errors): " : "")
               << std::endl;
-
-    std::cout << verilog::kythe::KytheFactsPrinter(facts_tree) << std::endl;
+    multi_file_kythe_facts_extractor.ExtractKytheFacts(facts_tree);
   }
 
   const std::string output_path = absl::GetFlag(FLAGS_output_path);
@@ -92,6 +93,7 @@ verible-verilog-kythe-extractor files...)");
   const auto args = verible::InitCommandLine(usage, &argc, &argv);
 
   int exit_status = 0;
+  verilog::kythe::MultiFileKytheFactsExtractor multi_file_kythe_facts_extractor;
   // All positional arguments are file names.  Exclude program name.
   for (const auto filename :
        verible::make_range(args.begin() + 1, args.end())) {
@@ -101,7 +103,8 @@ verible-verilog-kythe-extractor files...)");
       continue;
     }
 
-    int file_status = ExtractOneFile(content, filename);
+    int file_status =
+        ExtractOneFile(content, filename, multi_file_kythe_facts_extractor);
     exit_status = std::max(exit_status, file_status);
   }
   return exit_status;

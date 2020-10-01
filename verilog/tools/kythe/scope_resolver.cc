@@ -20,6 +20,12 @@ namespace verilog {
 namespace kythe {
 
 void Scope::AddMemberItem(const ScopeMemberItem& member_item) {
+  // Verifies that this member won't be added again if it exists.
+  for (const ScopeMemberItem& item : members_) {
+    if (item.vname == member_item.vname) {
+      return;
+    }
+  }
   members_.push_back(member_item);
 }
 
