@@ -1,10 +1,7 @@
 # Verible's Language-Agnostic Core Library
 
-Despite this package living under `//third_party/verible/common`, the classes
-and functions defined herein are language-agnostic and have nothing to do with
-Verilog.
-
-TODO(b/140521618): Migrate out of `//third_party/verible`.
+The classes and functions defined herein are language-agnostic and have nothing
+to do with specific languages like Verilog.
 
 ## Subdirectory Summary
 
