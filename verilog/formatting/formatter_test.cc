@@ -6963,6 +6963,30 @@ static constexpr FormatterTestCase kFormatterTestCases[] = {
      "    type TT = my_pkg::my_type2_t\n"
      ");\n"
      "endinterface\n"},
+     {// wildcard import package at module header
+     "module foo import bar::*; (baz); endmodule\n",
+     "module foo\n"
+     "  import bar::*;\n"
+     "(\n"
+     "    baz\n"
+     ");\n"
+     "endmodule\n"},
+     {// import package at module header
+     "module foo import bar::baz; (qux); endmodule\n",
+     "module foo\n"
+     "  import bar::baz;\n"
+     "(\n"
+     "    qux\n"
+     ");\n"
+     "endmodule\n"},
+     {// wildcard import mutiple packages at module header
+     "module foo import bar::*,baz::*; (qux); endmodule\n",
+     "module foo\n"
+     "  import bar::*, baz::*;\n"
+     "(\n"
+     "    qux\n"
+     ");\n"
+     "endmodule\n"},
     //{   // parameterized class with 'parameter_declaration' and MACRO
     //    "class foo #(parameter int a = 2,\n"
     //    "parameter int aaa = `MACRO);\n"
