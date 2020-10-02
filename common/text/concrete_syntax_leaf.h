@@ -18,6 +18,7 @@
 #ifndef VERIBLE_COMMON_TEXT_CONCRETE_SYNTAX_LEAF_H_
 #define VERIBLE_COMMON_TEXT_CONCRETE_SYNTAX_LEAF_H_
 
+#include <iosfwd>
 #include <utility>
 
 #include "common/text/symbol.h"
@@ -67,6 +68,8 @@ class SyntaxTreeLeaf : public Symbol {
 
 // Returns a SyntaxTreeLeaf down_casted from a Symbol.
 const SyntaxTreeLeaf& SymbolCastToLeaf(const Symbol&);
+
+std::ostream& operator<<(std::ostream& os, const SyntaxTreeLeaf& l);
 
 }  // namespace verible
 
