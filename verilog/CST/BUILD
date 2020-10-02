@@ -196,6 +196,7 @@ cc_library(
     hdrs = ["declaration.h"],
     deps = [
         ":identifier",
+        ":type",
         ":verilog_matchers",
         ":verilog_nonterminals",
         "//common/analysis:syntax_tree_search",
@@ -807,8 +808,10 @@ cc_test(
         ":context_functions",
         ":type",
         "//common/analysis:syntax_tree_search",
+        "//common/analysis:syntax_tree_search_test_utils",
         "//common/text:text_structure",
         "//common/util:logging",
+        "//verilog/CST:match_test_utils",
         "//verilog/analysis:verilog_analyzer",
         "@com_google_googletest//:gtest_main",
     ],
