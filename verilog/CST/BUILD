@@ -806,9 +806,11 @@ cc_test(
     srcs = ["type_test.cc"],
     deps = [
         ":context_functions",
+        "//common/analysis:syntax_tree_search_test_utils",
         ":type",
         "//common/analysis:syntax_tree_search",
         "//common/text:text_structure",
+        "//verilog/CST:match_test_utils",
         "//common/util:logging",
         "//verilog/analysis:verilog_analyzer",
         "@com_google_googletest//:gtest_main",

@@ -29,6 +29,11 @@ namespace verilog {
 std::vector<verible::TreeSearchMatch> FindAllDataTypeDeclarations(
     const verible::Symbol&);
 
+// Finds all node kDataTypePrimitive declarations. Used for testing the
+// functions below.
+std::vector<verible::TreeSearchMatch> FindAllDataTypePrimitive(
+    const verible::Symbol& root);
+
 // Finds all kTypeDeclaration nodes. Used for testing the functions below.
 std::vector<verible::TreeSearchMatch> FindAllTypeDeclarations(
     const verible::Symbol&);
