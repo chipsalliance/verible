@@ -864,6 +864,7 @@ cc_test(
         "//verilog/CST:verilog_nonterminals",
         "//verilog/CST:verilog_treebuilder_utils",
         "//verilog/analysis:verilog_analyzer",
+        "//verilog/parser:verilog_token_enum",
         "@com_google_googletest//:gtest_main",
     ],
 )

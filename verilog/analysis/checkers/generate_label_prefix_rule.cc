@@ -41,9 +41,12 @@ VERILOG_REGISTER_LINT_RULE(GenerateLabelPrefixRule);
 absl::string_view GenerateLabelPrefixRule::Name() {
   return "generate-label-prefix";
 }
-const char GenerateLabelPrefixRule::kTopic[] = "generate-statements";
+const char GenerateLabelPrefixRule::kTopic[] = "generate-constructs";
 const char GenerateLabelPrefixRule::kMessage[] =
     "All generate block labels must start with g_ or gen_";
+// TODO(fangism): and be lower_snake_case?
+// TODO(fangism): generalize to a configurable pattern and
+// rename this class/rule to GenerateLabelNamingStyle?
 
 std::string GenerateLabelPrefixRule::GetDescription(
     DescriptionType description_type) {

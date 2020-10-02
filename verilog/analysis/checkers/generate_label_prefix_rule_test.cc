@@ -23,6 +23,7 @@
 #include "verilog/CST/verilog_nonterminals.h"
 #include "verilog/CST/verilog_treebuilder_utils.h"
 #include "verilog/analysis/verilog_analyzer.h"
+#include "verilog/parser/verilog_token_enum.h"
 
 namespace verilog {
 namespace analysis {
@@ -124,6 +125,17 @@ TEST(GenerateLabelPrefixRuleTest, Various) {
        "parameter x = 0;\n"
        "if (x == 0) begin : gen_i\n"
        "end : g_end\n"
+       "endmodule\n"},
+      {"module mod_b;\n"
+       "parameter x = 0;\n"
+       "if (x == 0) begin : gen_i\n"
+       "end : g_end\n"
+       "else begin : ",
+       {SymbolIdentifier, "jen_i"},
+       "\n"
+       "end : ",
+       {SymbolIdentifier, "j_end"},
+       "\n"
        "endmodule\n"},
       {"module mod_b;\n"
        "parameter x = 0;\n"
