@@ -400,30 +400,18 @@ static bool IsAlignableDeclaration(const SyntaxTreeNode& node) {
 // enums, a single value here could apply to a group of syntax tree node types.
 enum class AlignableSyntaxSubtype {
   kDontCare = 0,
-  // named actual parameters
   kNamedActualParameters,
-  // named actual ports
   kNamedActualPorts,
-  // parameter declarations
   kParameterDeclaration,
-  // port declarations
   kPortDeclaration,
-  // net/variable declarations
-  kDataDeclaration,
-  // class member variable declarations
+  kDataDeclaration,  // net/variable declarations
   kClassMemberVariables,
-  // case-like items
   kCaseLikeItems,
-  // continuous assignment statements
   kContinuousAssignment,
-  // Constants aligned in enums.
-  kEnumListAssignment,
-  // Blocking assignments.
+  kEnumListAssignment,  // Constants aligned in enums.
   kBlockingAssignment,
-  // Nonblocking assignments.
   kNonBlockingAssignment,
-  // Distribution items.
-  kDistItem,
+  kDistItem,  // Distribution items.
 };
 
 static AlignedPartitionClassification AlignClassify(
