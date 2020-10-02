@@ -24,3 +24,5 @@ To learn more about how to use Kythe to
 ## Transformers
 
 ## Formatting
+
+*   [Formatter](./foramtter.md): How the formatter works, and how to debug it.
