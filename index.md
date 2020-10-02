@@ -4,7 +4,7 @@
 # Verible
 
 The Verible project's main mission is to parse SystemVerilog (IEEE 1800-2017)
-for a wide variety of applications.
+for a wide variety of applications, including developer tools.
 
 It was born out of a need to parse *un-preprocessed* source files, which is
 suitable for single-file applications like style-linting and formatting. In
@@ -14,11 +14,16 @@ real compilers and toolchains require.
 The spirit of the project is that no-one should ever have to develop a
 SystemVerilog parser for their own application, because developing a
 standard-compliant parser is an enormous task due to the syntactic complexity of
-the language.
+the language. Verible's parser is also regularly tested against an ever-growing
+suite of (tool-independent) language compliance tests at
+https://symbiflow.github.io/sv-tests/.
 
 A lesser (but notable) objective is that the language-agnostic components of
 Verible be usable for rapidly developing language support tools for other
 languages.
+
+For source code browsing, we recommend using the fully-indexed and searchable
+mirror at https://cs.opensource.google/verible/verible.
 
 If you'd like to contribute, check out the [contributing](./CONTRIBUTING.md)
 guide and the [development resources](./doc/development.md).
@@ -48,4 +53,4 @@ See the [README file for further information.](README.md)
 
 ## Version
 
-Generated on 2020-10-01 02:02:28 -0700 from [v0.0-647-g546c29d](https://github.com/google/verible/commit/546c29d67340bb198e14a0ef103380414053a647)
+Generated on 2020-10-02 02:26:15 -0700 from [v0.0-650-g1c187b5](https://github.com/google/verible/commit/1c187b547f11c72cc668b548a24200c8f8b00239)
