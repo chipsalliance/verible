@@ -156,7 +156,7 @@ class ScopeResolver {
   explicit ScopeResolver(const ScopeResolver* previous_file_scope_resolver)
       : previous_file_scope_resolver_(previous_file_scope_resolver) {}
 
-  const std::vector<const VName*> SearchForDefinition(
+  const std::vector<const VName*> SearchForDefinitions(
       const std::vector<std::string>& names) const;
 
   // Adds the VNames of the definitions it given scope to the scope context.
@@ -218,9 +218,8 @@ class ScopeResolver {
   // }
   std::map<Signature, Scope> scopes_;
 
-  // List of the previous files' discovered scopes in case previous files were
-  // extracted.
-  // This is used for definition finding in cross-file referencing.
+  // Pointer to the previous file's discovered scopes (if a previous file
+  // exists). This is used for definition finding in cross-file referencing.
   const ScopeResolver* previous_file_scope_resolver_;
 };
 

@@ -60,8 +60,6 @@ class KytheFactsExtractor {
   // Extracts kythe facts from the given IndexingFactsTree root.
   void ExtractKytheFacts(const IndexingFactNode&);
 
-  // ScopeResolver GetScopeResolver() const { return scope_resolver_; }
-
  private:
   // Container with a stack of VNames to hold context of VNames during traversal
   // of an IndexingFactsTree.
@@ -223,7 +221,8 @@ class KytheFactsExtractor {
   std::set<Edge> edges_;
 };
 
-// Returns the file path which this tree contains facts about.
+// Returns the file path from the given tree which this tree contains facts
+// about.
 std::string GetFilePathFromRoot(const IndexingFactNode& root);
 
 }  // namespace kythe

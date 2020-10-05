@@ -105,7 +105,7 @@ const VName* ScopeResolver::SearchForDefinitionInScopeContext(
   return nullptr;
 }
 
-const std::vector<const VName*> ScopeResolver::SearchForDefinition(
+const std::vector<const VName*> ScopeResolver::SearchForDefinitions(
     const std::vector<std::string>& names) const {
   std::vector<const VName*> definitions;
 

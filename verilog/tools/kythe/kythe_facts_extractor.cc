@@ -231,7 +231,7 @@ void KytheFactsExtractor::ConstructFlattenedScope(const IndexingFactNode& node,
     case IndexingFactType::kClassInstance: {
       // TODO(minatoma): fix this in case the name was kQualified id.
       const std::vector<const VName*> found_vname =
-          scope_resolver_->SearchForDefinition(
+          scope_resolver_->SearchForDefinitions(
               {node.Parent()->Value().Anchors()[0].Value()});
 
       if (found_vname.empty()) {
@@ -303,7 +303,7 @@ void KytheFactsExtractor::ExtractDataTypeReference(
   const Anchor& type = anchors[0];
 
   const std::vector<const VName*> type_vname =
-      scope_resolver_->SearchForDefinition({type.Value()});
+      scope_resolver_->SearchForDefinitions({type.Value()});
 
   if (type_vname.empty()) {
     return;
@@ -342,7 +342,7 @@ void KytheFactsExtractor::ExtractNamedParam(
 
   // Search inside the found module or class for the referenced parameter.
   const std::vector<const VName*> param_vnames =
-      scope_resolver_->SearchForDefinition(
+      scope_resolver_->SearchForDefinitions(
           {parent_data_type.Value(), param_name.Value()});
 
   if (param_vnames.size() != 2) {
@@ -364,7 +364,7 @@ void KytheFactsExtractor::ExtractModuleNamedPort(
       named_port_node.Parent()->Parent()->Value().Anchors()[0];
 
   const std::vector<const VName*> actual_port_vname =
-      scope_resolver_->SearchForDefinition(
+      scope_resolver_->SearchForDefinitions(
           {module_type.Value(), port_name.Value()});
 
   if (actual_port_vname.size() != 2) {
@@ -376,7 +376,7 @@ void KytheFactsExtractor::ExtractModuleNamedPort(
 
   if (named_port_node.is_leaf()) {
     const std::vector<const VName*> definition_vname =
-        scope_resolver_->SearchForDefinition({port_name.Value()});
+        scope_resolver_->SearchForDefinitions({port_name.Value()});
 
     if (!definition_vname.empty()) {
       CreateEdge(port_vname_anchor, kEdgeRef, *definition_vname[0]);
@@ -403,7 +403,7 @@ void KytheFactsExtractor::ExtractVariableReference(
   const auto& anchor = variable_reference_node.Value().Anchors()[0];
 
   const std::vector<const VName*> variable_definition_vname =
-      scope_resolver_->SearchForDefinition({anchor.Value()});
+      scope_resolver_->SearchForDefinitions({anchor.Value()});
   if (variable_definition_vname.empty()) {
     return;
   }
@@ -486,7 +486,7 @@ void KytheFactsExtractor::ExtractFunctionOrTaskCall(
     const auto& function_name = anchors[0];
 
     const std::vector<const VName*> function_vname =
-        scope_resolver_->SearchForDefinition({function_name.Value()});
+        scope_resolver_->SearchForDefinitions({function_name.Value()});
 
     if (function_vname.empty()) {
       return;
@@ -558,7 +558,7 @@ void KytheFactsExtractor::ExtractPackageImport(
 
     // Search for member hierarchy in the scopes.
     const std::vector<const VName*> defintion_vname =
-        scope_resolver_->SearchForDefinition(
+        scope_resolver_->SearchForDefinitions(
             {package_name_anchor.Value(), imported_item_name.Value()});
 
     // Loop over the found definitions and create kythe facts.
@@ -585,7 +585,7 @@ void KytheFactsExtractor::ExtractPackageImport(
 
     // Search for member hierarchy in the scopes.
     const std::vector<const VName*> defintion_vname =
-        scope_resolver_->SearchForDefinition({package_name_anchor.Value()});
+        scope_resolver_->SearchForDefinitions({package_name_anchor.Value()});
     if (defintion_vname.empty()) {
       return;
     }
@@ -616,7 +616,7 @@ void KytheFactsExtractor::ExtractMemberReference(
 
   // Search for member hierarchy in the scopes.
   const std::vector<const VName*> definitions =
-      scope_resolver_->SearchForDefinition(names);
+      scope_resolver_->SearchForDefinitions(names);
 
   // Loop over the found definitions and create kythe facts.
   for (size_t i = 0; i < definitions.size(); i++) {
