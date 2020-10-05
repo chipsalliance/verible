@@ -51,12 +51,17 @@ std::ostream& operator<<(std::ostream&, const KytheFactsPrinter&);
 // the last iteration.
 class KytheFactsExtractor {
  public:
-  explicit KytheFactsExtractor(absl::string_view file_path,
-                               std::ostream* stream)
-      : file_path_(file_path), stream_(stream) {}
+  explicit KytheFactsExtractor(absl::string_view file_path)
+      : file_path_(file_path) {}
 
   // Extracts kythe facts from the given IndexingFactsTree root.
   void ExtractKytheFacts(const IndexingFactNode&);
+
+  // Returns all extracted Kythe facts.
+  const std::set<Fact>& GetExtractedFacts() const;
+
+  // Returns all extracted Kythe edges.
+  const std::set<Edge>& GetExtractedEdges() const;
 
  private:
   // Container with a stack of VNames to hold context of VNames during traversal
@@ -211,10 +216,6 @@ class KytheFactsExtractor {
   // Keeps track and saves the explored scopes with a <key, value> and maps
   // every signature to its scope.
   FlattenedScopeResolver flattened_scope_resolver_;
-
-  // Output stream for capturing, redirecting, testing and verifying the
-  // output.
-  std::ostream* stream_;
 
   // Used to save all the generated facts Uniquely.
   std::set<Fact> facts_;
