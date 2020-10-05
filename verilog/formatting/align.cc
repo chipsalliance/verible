@@ -69,10 +69,12 @@ static const AlignmentColumnProperties FlushLeft(true);
 static const AlignmentColumnProperties FlushRight(false);
 
 template <class T>
-static bool TokensAreAllComments(const T& tokens) {
+static bool TokensAreAllCommentsOrAttributes(const T& tokens) {
   return std::all_of(
       tokens.begin(), tokens.end(), [](const typename T::value_type& token) {
-        return IsComment(verilog_tokentype(token.token->token_enum()));
+        const auto tag = static_cast<verilog_tokentype>(token.TokenEnum());
+        return IsComment(verilog_tokentype(tag)) ||
+               tag == verilog_tokentype::TK_ATTRIBUTE;
       });
 }
 
@@ -90,7 +92,7 @@ static bool IgnoreWithinPortDeclarationPartitionGroup(
   const auto token_range = uwline.TokensRange();
   CHECK(!token_range.empty());
   // ignore lines containing only comments
-  if (TokensAreAllComments(token_range)) return true;
+  if (TokensAreAllCommentsOrAttributes(token_range)) return true;
 
   // ignore partitions belonging to preprocessing directives
   if (IsPreprocessorKeyword(verilog_tokentype(token_range.front().TokenEnum())))
@@ -110,7 +112,7 @@ static bool IgnoreCommentsAndPreprocessingDirectives(
   const auto token_range = uwline.TokensRange();
   CHECK(!token_range.empty());
   // ignore lines containing only comments
-  if (TokensAreAllComments(token_range)) return true;
+  if (TokensAreAllCommentsOrAttributes(token_range)) return true;
 
   // ignore partitions belonging to preprocessing directives
   if (IsPreprocessorKeyword(verilog_tokentype(token_range.front().TokenEnum())))

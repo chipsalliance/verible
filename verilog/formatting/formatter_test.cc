@@ -1459,6 +1459,42 @@ static constexpr FormatterTestCase kFormatterTestCases[] = {
      "  logic aaa = expr1;\n"
      "  bit   b = expr2;\n"  // no alignment at '=' yet
      "endmodule\n"},
+    {"module mattr;\n"
+     "(* attr1=\"value1\" *)\n"  // attribute ignored
+     "ex_input_pins_t ex_input_pins;\n"
+     "(* attr2=\"value2\" *)\n"  // attribute ignored
+     "ex_output_pins_t ex_output_pins;\n"
+     "(* attr3=\"value3\" *)\n"  // attribute ignored
+     "ex wrap_ex ( );\n"
+     "endmodule\n",
+     "module mattr;\n"
+     "  (* attr1=\"value1\" *)\n"           // indented
+     "  ex_input_pins_t  ex_input_pins;\n"  // aligned
+     "  (* attr2=\"value2\" *)\n"           // indented
+     "  ex_output_pins_t ex_output_pins;\n"
+     "  (* attr3=\"value3\" *)\n"  // indented
+     "  ex wrap_ex ();\n"
+     "endmodule\n"},
+    {"module mattr;\n"
+     "ex_input_pins_t ex_input_pins;\n"
+     "ex_output_pins_t ex_output_pins;\n"
+     "(* package_definition=\"ex_pkg\" *)\n"  // attribute ignored
+     "ex wrap_ex (\n"
+     ".clk(ex_input_pins.clk),\n"
+     ".rst(ex_input_pins.rst),\n"
+     ".in(ex_input_pins.in)\n"
+     ");\n"
+     "endmodule\n",
+     "module mattr;\n"
+     "  ex_input_pins_t  ex_input_pins;\n"  // aligned
+     "  ex_output_pins_t ex_output_pins;\n"
+     "  (* package_definition=\"ex_pkg\" *)\n"  // indented
+     "  ex wrap_ex (\n"
+     "      .clk(ex_input_pins.clk),\n"
+     "      .rst(ex_input_pins.rst),\n"
+     "      .in (ex_input_pins.in)\n"  // aligned
+     "  );\n"
+     "endmodule\n"},
 
     {"module foo #(int x,int y) ;endmodule:foo\n",  // parameters
      "module foo #(\n"
