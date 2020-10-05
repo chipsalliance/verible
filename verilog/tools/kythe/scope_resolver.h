@@ -177,7 +177,7 @@ class ScopeResolver {
 
   ScopeContext& GetScopeContext() { return scope_context_; }
 
- private:
+//  private:
   // Return the global scope of the current scope_resolver.
   const Scope* GetGlobalScope() const;
 

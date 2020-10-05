@@ -705,6 +705,17 @@ std::ostream& KytheFactsPrinter::Print(std::ostream& stream) const {
     KytheFactsExtractor kythe_extractor(GetFilePathFromRoot(root), &stream,
                                         &scope_resolvers.back());
     kythe_extractor.ExtractKytheFacts(root);
+
+    LOG(INFO) << "FILE";
+    for(auto x : scope_resolvers) {
+      for(auto y : x.scopes_) {
+        LOG(INFO) << "STARET " << y.first.ToString();
+        for(auto j : y.second.Members()) {
+          LOG(INFO) << j.vname.signature.ToString();
+        }
+        LOG(INFO) << "END";
+      }
+    }
   }
 
   return stream;
