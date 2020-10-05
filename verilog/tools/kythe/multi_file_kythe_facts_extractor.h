@@ -25,19 +25,20 @@ namespace kythe {
 
 // Responsible for extracting Kythe facts from multi-files in which they may
 // have cross-files references.
-// The order of the given trees should be ordered by dependency between files in
+// The given trees (files) should be ordered by dependency between files in
 // which the first one doesn't depend on other files.
 class MultiFileKytheFactsExtractor {
  public:
   // Extracts Kythe facts form the given Indexing facts tree and saves the
   // discovered scopes so that they can be used for definition resolving for the
-  // next extracted trees.
+  // next extracted files.
   void ExtractKytheFacts(const IndexingFactNode& root);
 
  private:
-  // List of the extracted scopes from every files.
-  // This list is used to find definition while extracting files.
-  std::vector<FlattenedScopeResolver> scope_resolvers_;
+  // Saves the extracted scopes from every files.
+  // This is used to find definition cross-file references while extracting
+  // multi-files.
+  std::vector<ScopeResolver> files_scope_resolvers_;
 };
 
 }  // namespace kythe

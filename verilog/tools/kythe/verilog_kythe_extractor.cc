@@ -43,7 +43,6 @@ static int ExtractOneFile(absl::string_view content, absl::string_view filename,
                               multi_file_kythe_facts_extractor) {
   int exit_status = 0;
   bool parse_ok = false;
-
   const verilog::kythe::IndexingFactNode facts_tree(
       verilog::kythe::ExtractOneFile(content, filename, exit_status, parse_ok));
 
@@ -94,6 +93,7 @@ verible-verilog-kythe-extractor files...)");
 
   int exit_status = 0;
   verilog::kythe::MultiFileKytheFactsExtractor multi_file_kythe_facts_extractor;
+  
   // All positional arguments are file names.  Exclude program name.
   for (const auto filename :
        verible::make_range(args.begin() + 1, args.end())) {

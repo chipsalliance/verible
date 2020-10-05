@@ -23,21 +23,16 @@ namespace kythe {
 
 void MultiFileKytheFactsExtractor::ExtractKytheFacts(
     const IndexingFactNode& root) {
-  KytheFactsExtractor kythe_extractor(GetFilePathFromRoot(root), &std::cout);
-  kythe_extractor.ExtractKytheFacts(root);
-
-  LOG(INFO) << "FILE";
-  auto x = kythe_extractor.GetFlattenedScopeResolver();
-  for (auto i : x.scopes_) {
-    LOG(INFO) << "start " << i.first.ToString();
-    for (auto j : i.second.Members()) {
-      LOG(INFO) << j.vname.signature.ToString();
-    }
-    LOG(INFO) << "end " << i.first.ToString();
-    LOG(INFO) << "";
+  if (!files_scope_resolvers_.empty()) {
+    files_scope_resolvers_.push_back(
+        ScopeResolver(files_scope_resolvers_.back()));
+  } else {
+    files_scope_resolvers_.push_back(ScopeResolver(nullptr));
   }
 
-  scope_resolvers_.push_back(kythe_extractor.GetFlattenedScopeResolver());
+  KytheFactsExtractor kythe_extractor(GetFilePathFromRoot(root), &std::cout,
+                                      &files_scope_resolvers_.back());
+  kythe_extractor.ExtractKytheFacts(root);
 }
 
 }  // namespace kythe

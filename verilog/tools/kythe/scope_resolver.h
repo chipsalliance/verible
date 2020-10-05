@@ -85,10 +85,10 @@ class Scope {
 // {
 //   pkg#x
 // }
-// when trying to find a definition for "x" in "return x" VerticalScopeResolver
-// searches the above scope in reverse order till if finds a definition or
+// when trying to find a definition for "x" in "return x" ScopeContext
+// searches the above scopes in reverse order till if finds a definition or
 // returns a nullptr if not found.
-class VerticalScopeResolver : public verible::AutoPopStack<Scope*> {
+class ScopeContext : public verible::AutoPopStack<Scope*> {
  public:
   typedef verible::AutoPopStack<Scope*> base_type;
 
@@ -127,10 +127,10 @@ class VerticalScopeResolver : public verible::AutoPopStack<Scope*> {
 // Keeps track and saves the explored scopes with a <key, value> and maps every
 // signature to its scope.
 //
-// HorizontalScopeResolver saves the scopes generated while traversing the
-// IndexingFactsTree so that it can be use to find some definition.
+// ScopeResolver saves the scopes generated while traversing the
+// IndexingFactsTree so that they can be use to find some definition.
 // Here the scopes are saved in a flattened manner instead of tree like
-// hierarchy.
+// hierarchy (in a structure which looks like symbol tables).
 // e.g
 // class m;
 //    int x;
@@ -151,12 +151,19 @@ class VerticalScopeResolver : public verible::AutoPopStack<Scope*> {
 //    }
 // }
 // this way definitions can be found using the signatures.
-class FlattenedScopeResolver {
+class ScopeResolver {
  public:
-  // Searches for a VName with the given name in the scope with the given
-  // signature.
-  const VName* SearchForVNameInScope(const Signature& signature,
-                                     absl::string_view name) const;
+  explicit ScopeResolver(const ScopeResolver* previous_file_scope_resolver)
+      : previous_file_scope_resolver_(previous_file_scope_resolver) {}
+
+  const std::vector<const VName*> SearchForDefinition(
+      const std::vector<std::string>& names) const;
+
+  // Adds the VNames of the definitions it given scope to the scope context.
+  void AppendScopeToScopeContext(const Scope& scope);
+
+  // Adds a ScopeMemberItem of a definition to the scope context.
+  void AddDefinitionToScopeContext(const ScopeMemberItem& new_member);
 
   // Searches for a scope with the given signature in the scopes.
   const Scope* SearchForScope(const Signature& signature) const;
@@ -168,7 +175,28 @@ class FlattenedScopeResolver {
   void MapSignatureToScopeOfSignature(const Signature& signature,
                                       const Signature& other_signature);
 
-//  private:
+  ScopeContext& GetScopeContext() { return scope_context_; }
+
+ private:
+  // Return the global scope of the current scope_resolver.
+  const Scope* GetGlobalScope() const;
+
+  // Searches for a definition with the given name in the scope context.
+  const VName* SearchForDefinitionInScopeContext(absl::string_view name) const;
+
+  // Searches for a definition with the given name in all the scopes of the
+  // current ScopeResolver.
+  const VName* SearchForDefinitionInGlobalScope(absl::string_view name) const;
+
+  // Searches for a definition with the given name in the scope with the given
+  // signature.
+  const VName* SearchForDefinitionInScope(const Signature& signature,
+                                          absl::string_view name) const;
+
+  // Keeps track of scopes and definitions inside the scopes of ancestors as
+  // the visitor traverses the facts tree.
+  ScopeContext scope_context_;
+
   // Saves signatures alongside with their inner members (scope).
   // This is used for resolving references to some variables after using
   // import pkg::*. or other member access like class_Type::my_var.
@@ -189,6 +217,11 @@ class FlattenedScopeResolver {
   //   "pkg2": ["my_fun", "my_class"]
   // }
   std::map<Signature, Scope> scopes_;
+
+  // List of the previous files' discovered scopes in case previous files were
+  // extracted.
+  // This is used for definition finding in cross-file referencing.
+  const ScopeResolver* previous_file_scope_resolver_;
 };
 
 }  // namespace kythe
