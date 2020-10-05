@@ -55,12 +55,16 @@ static int ExtractOneFile(
   }
   LOG(INFO) << '\n' << facts_tree;
 
+  indexing_facts_trees.push_back(facts_tree);
+
+  return exit_status;
+}
+
+static void ExtractKytheFacts(
+    const std::vector<verilog::kythe::IndexingFactNode>& facts_tree) {
   // check for printkythefacts flag, and print the facts if on
   if (absl::GetFlag(FLAGS_printkythefacts)) {
-    std::cout << std::endl
-              << (!parse_ok ? " (incomplete due to syntax errors): " : "")
-              << std::endl;
-    indexing_facts_trees.push_back(facts_tree);
+    std::cout << verilog::kythe::KytheFactsPrinter(facts_tree) << std::endl;
   }
 
   const std::string output_path = absl::GetFlag(FLAGS_output_path);
@@ -69,10 +73,8 @@ static int ExtractOneFile(
     if (!f.good()) {
       LOG(FATAL) << "Can't write to " << output_path;
     }
-    std::cout << verilog::kythe::KytheFactsPrinter({facts_tree}) << std::endl;
+    f << verilog::kythe::KytheFactsPrinter(facts_tree) << std::endl;
   }
-
-  return exit_status;
 }
 
 int main(int argc, char** argv) {
@@ -106,8 +108,7 @@ verible-verilog-kythe-extractor files...)");
     exit_status = std::max(exit_status, file_status);
   }
 
-  std::cout << verilog::kythe::KytheFactsPrinter(indexing_facts_trees)
-            << std::endl;
+  ExtractKytheFacts(indexing_facts_trees);
 
   return exit_status;
 }
