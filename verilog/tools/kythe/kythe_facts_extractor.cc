@@ -610,7 +610,7 @@ void KytheFactsExtractor::ExtractMemberReference(
 
   // Extract the list of reference_names.
   std::vector<std::string> names;
-  for (const Anchor anchor : anchors) {
+  for (const Anchor& anchor : anchors) {
     names.push_back(anchor.Value());
   }
 
@@ -692,18 +692,27 @@ std::string GetFilePathFromRoot(const IndexingFactNode& root) {
   return root.Value().Anchors()[0].Value();
 }
 
-std::ostream& KytheFactsPrinter::Print(std::ostream& stream,
-                                       const IndexingFactNode& root) {
-  if (!files_scope_resolvers_.empty()) {
-    files_scope_resolvers_.push_back(
-        ScopeResolver(files_scope_resolvers_.back()));
-  } else {
-    files_scope_resolvers_.push_back(ScopeResolver(nullptr));
+std::ostream& KytheFactsPrinter::Print(std::ostream& stream) const {
+  std::vector<ScopeResolver> scope_resolvers;
+
+  for (const IndexingFactNode& root : trees_) {
+    if (!scope_resolvers.empty()) {
+      scope_resolvers.push_back(ScopeResolver(scope_resolvers.back()));
+    } else {
+      scope_resolvers.push_back(ScopeResolver(nullptr));
+    }
+
+    KytheFactsExtractor kythe_extractor(GetFilePathFromRoot(root), &stream,
+                                        &scope_resolvers.back());
+    kythe_extractor.ExtractKytheFacts(root);
   }
 
-  KytheFactsExtractor kythe_extractor(GetFilePathFromRoot(root), &stream,
-                                      &files_scope_resolvers_.back());
-  kythe_extractor.ExtractKytheFacts(root);
+  return stream;
+}
+
+std::ostream& operator<<(std::ostream& stream,
+                         const KytheFactsPrinter& kythe_facts_printer) {
+  kythe_facts_printer.Print(stream);
   return stream;
 }
 

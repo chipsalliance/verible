@@ -39,7 +39,7 @@ ABSL_FLAG(std::string, output_path, "",
 
 static int ExtractOneFile(
     absl::string_view content, absl::string_view filename,
-    verilog::kythe::KytheFactsPrinter& kythe_facts_printer) {
+    std::vector<verilog::kythe::IndexingFactNode>& indexing_facts_trees) {
   int exit_status = 0;
   bool parse_ok = false;
   const verilog::kythe::IndexingFactNode facts_tree(
@@ -60,7 +60,7 @@ static int ExtractOneFile(
     std::cout << std::endl
               << (!parse_ok ? " (incomplete due to syntax errors): " : "")
               << std::endl;
-    kythe_facts_printer.Print(std::cout, facts_tree);
+    indexing_facts_trees.push_back(facts_tree);
   }
 
   const std::string output_path = absl::GetFlag(FLAGS_output_path);
@@ -69,7 +69,7 @@ static int ExtractOneFile(
     if (!f.good()) {
       LOG(FATAL) << "Can't write to " << output_path;
     }
-    kythe_facts_printer.Print(std::cout, facts_tree) << std::endl;
+    std::cout << verilog::kythe::KytheFactsPrinter({facts_tree}) << std::endl;
   }
 
   return exit_status;
@@ -91,7 +91,7 @@ verible-verilog-kythe-extractor files...)");
   const auto args = verible::InitCommandLine(usage, &argc, &argv);
 
   int exit_status = 0;
-  verilog::kythe::KytheFactsPrinter kythe_facts_printer;
+  std::vector<verilog::kythe::IndexingFactNode> indexing_facts_trees;
 
   // All positional arguments are file names.  Exclude program name.
   for (const auto filename :
@@ -102,8 +102,12 @@ verible-verilog-kythe-extractor files...)");
       continue;
     }
 
-    int file_status = ExtractOneFile(content, filename, kythe_facts_printer);
+    int file_status = ExtractOneFile(content, filename, indexing_facts_trees);
     exit_status = std::max(exit_status, file_status);
   }
+
+  std::cout << verilog::kythe::KytheFactsPrinter(indexing_facts_trees)
+            << std::endl;
+
   return exit_status;
 }

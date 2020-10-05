@@ -34,14 +34,14 @@ namespace kythe {
 // Usage: stream << KytheFactsPrinter(*tree_root);
 class KytheFactsPrinter {
  public:
-  // Prints the extracted Kythe facts from the given tree to the given stream.
-  std::ostream& Print(std::ostream&, const IndexingFactNode&);
+  explicit KytheFactsPrinter(const std::vector<IndexingFactNode>& root)
+      : trees_(root) {}
+
+  std::ostream& Print(std::ostream&) const;
 
  private:
-  // Saves the extracted scopes from every files.
-  // This is used to find definition cross-file references while extracting
-  // multi-files.
-  std::vector<ScopeResolver> files_scope_resolvers_;
+  // The roots of the indexing facts trees to extract kythe facts from.
+  const std::vector<IndexingFactNode>& trees_;
 };
 
 std::ostream& operator<<(std::ostream&, const KytheFactsPrinter&);
@@ -222,8 +222,7 @@ class KytheFactsExtractor {
   std::set<Edge> edges_;
 };
 
-// Returns the file path from the given tree which this tree contains facts
-// about.
+// Returns the file path from the given indexing facts tree.
 std::string GetFilePathFromRoot(const IndexingFactNode& root);
 
 }  // namespace kythe
