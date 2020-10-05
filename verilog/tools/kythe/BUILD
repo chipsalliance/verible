@@ -98,21 +98,6 @@ cc_library(
 )
 
 cc_library(
-    name = "multi_file_kythe_facts_extractor",
-    srcs = [
-        "multi_file_kythe_facts_extractor.cc",
-    ],
-    hdrs = [
-        "multi_file_kythe_facts_extractor.h",
-    ],
-    deps = [
-        ":indexing_facts_tree",
-        ":scope_resolver",
-        ":kythe_facts_extractor",
-    ],
-)
-
-cc_library(
     name = "verilog_extractor_indexing_fact_type",
     srcs = [
         "verilog_extractor_indexing_fact_type.cc",
@@ -199,7 +184,6 @@ cc_binary(
     deps = [
         ":indexing_facts_tree_extractor",
         ":kythe_facts_extractor",
-        ":multi_file_kythe_facts_extractor",
         ":verilog_extractor_indexing_fact_type",
         "//common/text:concrete_syntax_tree",
         "//common/text:parser_verifier",

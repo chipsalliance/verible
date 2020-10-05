@@ -692,17 +692,18 @@ std::string GetFilePathFromRoot(const IndexingFactNode& root) {
   return root.Value().Anchors()[0].Value();
 }
 
-std::ostream& KytheFactsPrinter::Print(std::ostream& stream) const {
-  ScopeResolver scope_resolver(nullptr);
-  KytheFactsExtractor kythe_extractor(GetFilePathFromRoot(root_), &stream,
-                                      &scope_resolver);
-  kythe_extractor.ExtractKytheFacts(root_);
-  return stream;
-}
+std::ostream& KytheFactsPrinter::Print(std::ostream& stream,
+                                       const IndexingFactNode& root) {
+  if (!files_scope_resolvers_.empty()) {
+    files_scope_resolvers_.push_back(
+        ScopeResolver(files_scope_resolvers_.back()));
+  } else {
+    files_scope_resolvers_.push_back(ScopeResolver(nullptr));
+  }
 
-std::ostream& operator<<(std::ostream& stream,
-                         const KytheFactsPrinter& kythe_facts_printer) {
-  kythe_facts_printer.Print(stream);
+  KytheFactsExtractor kythe_extractor(GetFilePathFromRoot(root), &stream,
+                                      &files_scope_resolvers_.back());
+  kythe_extractor.ExtractKytheFacts(root);
   return stream;
 }
 
