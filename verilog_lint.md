@@ -59,8 +59,8 @@ verible-verilog-lint: usage: bazel-bin/verilog/tools/lint/verible-verilog-lint [
     --check_syntax (If true, check for lexical and syntax errors, otherwise
       ignore.); default: true;
     --generate_markdown (If true, print the description of every rule formatted
-      for the markdown and exit immediately. Intended for the output to be
-      written to a snippet of markdown.); default: false;
+      for the Markdown and exit immediately. Intended for the output to be
+      written to a snippet of Markdown.); default: false;
     --help_rules ([all|<rule-name>], print the description of one rule/all rules
       and exit immediately.); default: "";
     --lint_fatal (If true, exit nonzero if linter finds violations.);
@@ -159,7 +159,7 @@ Checks that every generate block statement is labeled. See [Style: generate-stat
 Enabled by default: true
 
 ### generate-label-prefix
-Checks that every generate block label starts with g_ or gen_. See [Style: generate-statements].
+Checks that every generate block label starts with g_ or gen_. See [Style: generate-constructs].
 
 Enabled by default: false
 
@@ -325,4 +325,4 @@ Enabled by default: true
 
 ## Version
 
-Generated on 2020-10-06 13:59:46 -0700 from [v0.0-653-g3746110](https://github.com/google/verible/commit/3746110b543c8f5ead01a91a593e8f2b657e4462)
+Generated on 2020-10-06 14:00:57 -0700 from [v0.0-659-g8349b5c](https://github.com/google/verible/commit/8349b5ce33f5858ee7388f23448050d31b30964d)
