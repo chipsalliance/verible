@@ -38,7 +38,7 @@ for i in "$@"; do
   bazel-bin/verilog/tools/kythe/verible-verilog-kythe-extractor "$i"  --printkythefacts > "${KYTHE_OUT}"/entries
   # Write entry stream into a GraphStore
   "${KYTHE_BINDIR}"/entrystream --read_format=json < "${KYTHE_OUT}"/entries \
-  | ${KYTHE_BINDIR}/write_entries -graphstore "${KYTHE_OUT}"/graphstore
+  | "${KYTHE_BINDIR}"/write_entries -graphstore "${KYTHE_OUT}"/graphstore
 done
 
 # Convert the graphstore to serving tables.
