@@ -230,16 +230,16 @@ void KytheFactsExtractor::ConstructFlattenedScope(const IndexingFactNode& node,
     case IndexingFactType::kModuleInstance:
     case IndexingFactType::kClassInstance: {
       // TODO(minatoma): fix this in case the name was kQualified id.
-      const std::vector<const VName*> found_vname =
+      const std::vector<const VName*> found_vnames =
           scope_resolver_->SearchForDefinitions(
               {node.Parent()->Value().Anchors()[0].Value()});
 
-      if (found_vname.empty()) {
+      if (found_vnames.empty()) {
         break;
       }
 
       scope_resolver_->MapSignatureToScopeOfSignature(
-          vname.signature, found_vname[0]->signature);
+          vname.signature, found_vnames[0]->signature);
 
       break;
     }
@@ -302,15 +302,15 @@ void KytheFactsExtractor::ExtractDataTypeReference(
   const auto& anchors = data_type_reference.Value().Anchors();
   const Anchor& type = anchors[0];
 
-  const std::vector<const VName*> type_vname =
+  const std::vector<const VName*> type_vnames =
       scope_resolver_->SearchForDefinitions({type.Value()});
 
-  if (type_vname.empty()) {
+  if (type_vnames.empty()) {
     return;
   }
 
   const VName type_anchor = CreateAnchor(type);
-  CreateEdge(type_anchor, kEdgeRef, *type_vname[0]);
+  CreateEdge(type_anchor, kEdgeRef, *type_vnames[0]);
 }
 
 VName KytheFactsExtractor::ExtractModuleInstance(
@@ -363,23 +363,23 @@ void KytheFactsExtractor::ExtractModuleNamedPort(
   const Anchor& module_type =
       named_port_node.Parent()->Parent()->Value().Anchors()[0];
 
-  const std::vector<const VName*> actual_port_vname =
+  const std::vector<const VName*> actual_port_vnames =
       scope_resolver_->SearchForDefinitions(
           {module_type.Value(), port_name.Value()});
 
-  if (actual_port_vname.size() != 2) {
+  if (actual_port_vnames.size() != 2) {
     return;
   }
 
   const VName port_vname_anchor = CreateAnchor(port_name);
-  CreateEdge(port_vname_anchor, kEdgeRef, *actual_port_vname[1]);
+  CreateEdge(port_vname_anchor, kEdgeRef, *actual_port_vnames[1]);
 
   if (named_port_node.is_leaf()) {
-    const std::vector<const VName*> definition_vname =
+    const std::vector<const VName*> definition_vnames =
         scope_resolver_->SearchForDefinitions({port_name.Value()});
 
-    if (!definition_vname.empty()) {
-      CreateEdge(port_vname_anchor, kEdgeRef, *definition_vname[0]);
+    if (!definition_vnames.empty()) {
+      CreateEdge(port_vname_anchor, kEdgeRef, *definition_vnames[0]);
     }
   }
 }
@@ -402,14 +402,14 @@ void KytheFactsExtractor::ExtractVariableReference(
     const IndexingFactNode& variable_reference_node) {
   const auto& anchor = variable_reference_node.Value().Anchors()[0];
 
-  const std::vector<const VName*> variable_definition_vname =
+  const std::vector<const VName*> variable_definition_vnames =
       scope_resolver_->SearchForDefinitions({anchor.Value()});
-  if (variable_definition_vname.empty()) {
+  if (variable_definition_vnames.empty()) {
     return;
   }
 
   const VName variable_vname_anchor = CreateAnchor(anchor);
-  CreateEdge(variable_vname_anchor, kEdgeRef, *variable_definition_vname[0]);
+  CreateEdge(variable_vname_anchor, kEdgeRef, *variable_definition_vnames[0]);
 }
 
 VName KytheFactsExtractor::ExtractPackageDeclaration(
@@ -485,17 +485,17 @@ void KytheFactsExtractor::ExtractFunctionOrTaskCall(
   if (anchors.size() == 1) {
     const auto& function_name = anchors[0];
 
-    const std::vector<const VName*> function_vname =
+    const std::vector<const VName*> function_vnames =
         scope_resolver_->SearchForDefinitions({function_name.Value()});
 
-    if (function_vname.empty()) {
+    if (function_vnames.empty()) {
       return;
     }
 
     const VName function_vname_anchor = CreateAnchor(function_name);
 
-    CreateEdge(function_vname_anchor, kEdgeRef, *function_vname[0]);
-    CreateEdge(function_vname_anchor, kEdgeRefCall, *function_vname[0]);
+    CreateEdge(function_vname_anchor, kEdgeRef, *function_vnames[0]);
+    CreateEdge(function_vname_anchor, kEdgeRefCall, *function_vnames[0]);
   } else {
     // In case pkg::class1::function_name().
     IndexingNodeData member_reference_data(IndexingFactType::kMemberReference);
@@ -549,6 +549,8 @@ void KytheFactsExtractor::ExtractPackageImport(
     const IndexingFactNode& import_fact_node) {
   // TODO(minatoma): remove the imported vnames before exporting the scope as
   // imports aren't intended to be accessible from outside the enclosing parent.
+  // Alternatively, maintain separate sets: exported, non-exported, or provide
+  // an attribute to distinguish.
   const auto& anchors = import_fact_node.Value().Anchors();
   const Anchor& package_name_anchor = anchors[0];
 
@@ -557,49 +559,49 @@ void KytheFactsExtractor::ExtractPackageImport(
     const Anchor& imported_item_name = anchors[1];
 
     // Search for member hierarchy in the scopes.
-    const std::vector<const VName*> defintion_vname =
+    const std::vector<const VName*> definition_vnames =
         scope_resolver_->SearchForDefinitions(
             {package_name_anchor.Value(), imported_item_name.Value()});
 
     // Loop over the found definitions and create kythe facts.
-    for (size_t i = 0; i < defintion_vname.size(); i++) {
+    for (size_t i = 0; i < definition_vnames.size(); i++) {
       const VName current_anchor = CreateAnchor(anchors[i]);
       if (i == 0) {
-        CreateEdge(current_anchor, kEdgeRefImports, *defintion_vname[i]);
+        CreateEdge(current_anchor, kEdgeRefImports, *definition_vnames[i]);
       } else {
-        CreateEdge(current_anchor, kEdgeRef, *defintion_vname[i]);
+        CreateEdge(current_anchor, kEdgeRef, *definition_vnames[i]);
       }
     }
 
-    if (defintion_vname.size() != 2) {
+    if (definition_vnames.size() != 2) {
       return;
     }
 
     // Add the found definition to the current scope as if it was declared in
     // our scope so that it can be captured without "::".
-    scope_resolver_->AddDefinitionToScopeContext(*defintion_vname[1]);
+    scope_resolver_->AddDefinitionToScopeContext(*definition_vnames[1]);
   } else {
     // case of import pkg::*.
     // Add all the definitions in that package to the current scope as if it was
     // declared in our scope so that it can be captured without "::".
 
     // Search for member hierarchy in the scopes.
-    const std::vector<const VName*> defintion_vname =
+    const std::vector<const VName*> definition_vnames =
         scope_resolver_->SearchForDefinitions({package_name_anchor.Value()});
-    if (defintion_vname.empty()) {
+    if (definition_vnames.empty()) {
       return;
     }
 
     const VName current_anchor = CreateAnchor(package_name_anchor);
-    CreateEdge(current_anchor, kEdgeRefImports, *defintion_vname[0]);
+    CreateEdge(current_anchor, kEdgeRefImports, *definition_vnames[0]);
 
     const Scope* current_package_scope =
-        scope_resolver_->SearchForScope(defintion_vname[0]->signature);
+        scope_resolver_->SearchForScope(definition_vnames[0]->signature);
     if (current_package_scope == nullptr) {
       return;
     }
 
-    scope_resolver_->AddDefinitionToScopeContext(*defintion_vname[0]);
+    scope_resolver_->AddDefinitionToScopeContext(*definition_vnames[0]);
     scope_resolver_->AppendScopeToScopeContext(*current_package_scope);
   }
 }
@@ -609,24 +611,27 @@ void KytheFactsExtractor::ExtractMemberReference(
   const auto& anchors = member_reference_node.Value().Anchors();
 
   // Extract the list of reference_names.
-  std::vector<std::string> names;
+  std::vector<std::string> references_names;
   for (const Anchor& anchor : anchors) {
-    names.push_back(anchor.Value());
+    references_names.push_back(anchor.Value());
   }
 
   // Search for member hierarchy in the scopes.
   const std::vector<const VName*> definitions =
-      scope_resolver_->SearchForDefinitions(names);
+      scope_resolver_->SearchForDefinitions(references_names);
 
   // Loop over the found definitions and create kythe facts.
   for (size_t i = 0; i < definitions.size(); i++) {
-    const VName current_anchor = CreateAnchor(anchors[i]);
-    CreateEdge(current_anchor, kEdgeRef, *definitions[i]);
+    const VName current_anchor_vname = CreateAnchor(anchors[i]);
+    CreateEdge(current_anchor_vname, kEdgeRef, *definitions[i]);
+  }
 
-    if (i == definitions.size() - 1 && is_function_call &&
-        definitions.size() == anchors.size()) {
-      CreateEdge(current_anchor, kEdgeRefCall, *definitions.back());
-    }
+  // Checking if we found all the member heirarchy by ensuring the size of the
+  // found definitions is equal to the size of the given anchors and then
+  // creating ref/call edge if it was a function call.
+  if (definitions.size() == anchors.size() && is_function_call) {
+    const VName current_anchor_vname = CreateAnchor(anchors.back());
+    CreateEdge(current_anchor_vname, kEdgeRefCall, *definitions.back());
   }
 }
 
@@ -696,6 +701,11 @@ std::ostream& KytheFactsPrinter::Print(std::ostream& stream) const {
   std::vector<ScopeResolver> scope_resolvers;
 
   for (const IndexingFactNode& root : trees_) {
+    // Create a new ScopeResolver and give the ownership to the scope_resolvers
+    // vector so that it can outlive KytheFactsExtractor.
+    // The ScopeResolver-s are created and linked together as a linked-list
+    // structure so that the current ScopeResolver can search for definitions in
+    // the previous files' scopes.
     if (!scope_resolvers.empty()) {
       scope_resolvers.push_back(ScopeResolver(scope_resolvers.back()));
     } else {

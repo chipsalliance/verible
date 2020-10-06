@@ -20,14 +20,15 @@
 namespace verilog {
 namespace kythe {
 
+bool ScopeMemberItem::operator==(const ScopeMemberItem& other) const {
+  return this->vname == other.vname;
+}
+bool ScopeMemberItem::operator<(const ScopeMemberItem& other) const {
+  return this->vname < other.vname;
+}
+
 void Scope::AddMemberItem(const ScopeMemberItem& member_item) {
-  // Verifies that this member won't be added again if it exists.
-  for (const ScopeMemberItem& item : members_) {
-    if (item.vname == member_item.vname) {
-      return;
-    }
-  }
-  members_.push_back(member_item);
+  members_.insert(member_item);
 }
 
 void Scope::AppendScope(const Scope& scope) {
@@ -62,13 +63,11 @@ void ScopeResolver::MapSignatureToScope(const Signature& signature,
 }
 
 void ScopeResolver::AppendScopeToScopeContext(const Scope& scope) {
-  if (scope_context_.empty()) return;
   scope_context_.top().AppendScope(scope);
 }
 
 void ScopeResolver::AddDefinitionToScopeContext(
     const ScopeMemberItem& new_member) {
-  if (scope_context_.empty()) return;
   scope_context_.top().AddMemberItem(new_member);
 }
 
@@ -109,7 +108,7 @@ const std::vector<const VName*> ScopeResolver::SearchForDefinitions(
     const std::vector<std::string>& names) const {
   std::vector<const VName*> definitions;
 
-  // Try to find the scope in the previous explored scopes.
+  // Try to find the definition in the previous explored scopes.
   const VName* definition = SearchForDefinitionInScopeContext(names[0]);
   if (definition == nullptr) {
     return definitions;
@@ -118,9 +117,8 @@ const std::vector<const VName*> ScopeResolver::SearchForDefinitions(
   definitions.push_back(definition);
   const Scope* current_scope = SearchForScope(definition->signature);
 
-  // Iterate over the names and try to find the defintion in the current scope.
-  for (absl::string_view name :
-       std::vector<absl::string_view>(names.begin() + 1, names.end())) {
+  // Iterate over the names and try to find the definition in the current scope.
+  for (const auto& name : verible::make_range(names.begin() + 1, names.end())) {
     if (current_scope == nullptr) {
       break;
     }

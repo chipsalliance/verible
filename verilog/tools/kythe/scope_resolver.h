@@ -16,6 +16,7 @@
 #define VERIBLE_VERILOG_TOOLS_KYTHE_SCOPE_RESOLVER_H_
 
 #include <map>
+#include <set>
 #include <vector>
 
 #include "absl/strings/string_view.h"
@@ -29,6 +30,9 @@ namespace kythe {
 // Used to wrap whatever needs to be recorded in a scope item.
 struct ScopeMemberItem {
   ScopeMemberItem(const VName& vname) : vname(vname) {}
+
+  bool operator==(const ScopeMemberItem& other) const;
+  bool operator<(const ScopeMemberItem& other) const;
 
   // VName of this member.
   VName vname;
@@ -46,7 +50,7 @@ class Scope {
   // Appends the member of the given scope to the current scope.
   void AppendScope(const Scope& scope);
 
-  const std::vector<ScopeMemberItem>& Members() const { return members_; }
+  const std::set<ScopeMemberItem>& Members() const { return members_; }
   const Signature& GetSignature() const { return signature_; }
 
   // Searches for the given reference_name in the current scope and returns its
@@ -58,7 +62,7 @@ class Scope {
   Signature signature_;
 
   // list of the members inside this scope.
-  std::vector<ScopeMemberItem> members_;
+  std::set<ScopeMemberItem> members_;
 };
 
 // Container with a stack of Scopes to hold the accessible scopes during
@@ -86,8 +90,8 @@ class Scope {
 //   pkg#x
 // }
 // when trying to find a definition for "x" in "return x" ScopeContext
-// searches the above scopes in reverse order till if finds a definition or
-// returns a nullptr if not found.
+// try to find the first matching definition starting from the innermost/nearest
+// scope or returns a nullptr if not found.
 class ScopeContext : public verible::AutoPopStack<Scope*> {
  public:
   typedef verible::AutoPopStack<Scope*> base_type;
@@ -177,15 +181,17 @@ class ScopeResolver {
 
   ScopeContext& GetScopeContext() { return scope_context_; }
 
-//  private:
+ private:
   // Return the global scope of the current scope_resolver.
   const Scope* GetGlobalScope() const;
 
-  // Searches for a definition with the given name in the scope context.
+  // Searches for a definition with the given name in the scope context and if
+  // not found searches the global scopes of the previous files' scopes (returns
+  // nullptr if a definitions is not found).
   const VName* SearchForDefinitionInScopeContext(absl::string_view name) const;
 
-  // Searches for a definition with the given name in all the scopes of the
-  // current ScopeResolver.
+  // Searches for a definition with the given name in the global scope of this
+  // ScopeResolver.
   const VName* SearchForDefinitionInGlobalScope(absl::string_view name) const;
 
   // Searches for a definition with the given name in the scope with the given
