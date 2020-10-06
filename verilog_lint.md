@@ -158,6 +158,11 @@ Checks that every generate block statement is labeled. See [Style: generate-stat
 
 Enabled by default: true
 
+### generate-label-prefix
+Checks that every generate block label starts with g_ or gen_. See [Style: generate-statements].
+
+Enabled by default: false
+
 ### interface-name-style
 Checks that `interface` names use lower_snake_case naming convention and end with '_if'. See [Style: interface-conventions].
 
@@ -320,4 +325,4 @@ Enabled by default: true
 
 ## Version
 
-Generated on 2020-10-02 02:26:15 -0700 from [v0.0-650-g1c187b5](https://github.com/google/verible/commit/1c187b547f11c72cc668b548a24200c8f8b00239)
+Generated on 2020-10-06 13:59:46 -0700 from [v0.0-653-g3746110](https://github.com/google/verible/commit/3746110b543c8f5ead01a91a593e8f2b657e4462)
