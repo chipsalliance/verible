@@ -45,8 +45,8 @@ ABSL_FLAG(std::string, help_rules, "",
 ABSL_FLAG(
     bool, generate_markdown, false,
     "If true, print the description of every rule formatted for the "
-    "markdown and exit immediately. Intended for the output to be written "
-    "to a snippet of markdown.");
+    "Markdown and exit immediately. Intended for the output to be written "
+    "to a snippet of Markdown.");
 
 using verilog::LinterConfiguration;
 
