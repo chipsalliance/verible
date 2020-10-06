@@ -173,6 +173,13 @@ cc_test(
     ],
 )
 
+filegroup(
+    name = "verifier_testdata",
+    srcs = glob([
+        "testdata/more_testdata/*.sv",
+    ]),
+)
+
 cc_binary(
     name = "verible-verilog-kythe-extractor",
     srcs = [

@@ -3016,6 +3016,144 @@ TEST(FactsTreeExtractor, ParameterExtraction) {
   EXPECT_EQ(result_pair.right, nullptr) << *result_pair.right;
 }
 
+TEST(FactsTreeExtractor, PackedAndUnpackedDimension) {
+  constexpr int kTag = 1;  // value doesn't matter
+  const verible::SyntaxTreeSearchTestCase kTestCase = {
+      {"package ",
+       {kTag, "pkg"},
+       ";\nint [",
+       {kTag, "k"},
+       ":",
+       {kTag, "y"},
+       "] ",
+       {kTag, "x"},
+       " [",
+       {kTag, "l"},
+       ":",
+       {kTag, "r"},
+       "];\nendpackage\nmodule ",
+       {kTag, "m"},
+       ";\nint [",
+       {kTag, "j"},
+       ":",
+       {kTag, "o"},
+       "] ",
+       {kTag, "v"},
+       " [",
+       {kTag, "e"},
+       ":",
+       {kTag, "t"},
+       "];\nendmodule"},
+  };
+
+  constexpr absl::string_view file_name = "verilog.v";
+  int exit_status = 0;
+  bool parse_ok = false;
+
+  const IndexingFactNode expected(
+      {
+          {
+              Anchor(file_name, 0, kTestCase.code.size()),
+              Anchor(kTestCase.code, 0, kTestCase.code.size()),
+          },
+          IndexingFactType ::kFile,
+      },
+      // refers to package pkg.
+      T(
+          {
+              {
+                  Anchor(kTestCase.expected_tokens[1], kTestCase.code),
+              },
+              IndexingFactType ::kPackage,
+          },
+          // refers to k.
+          T({
+              {
+                  Anchor(kTestCase.expected_tokens[3], kTestCase.code),
+              },
+              IndexingFactType ::kVariableReference,
+          }),
+          // refers to y.
+          T({
+              {
+                  Anchor(kTestCase.expected_tokens[5], kTestCase.code),
+              },
+              IndexingFactType ::kVariableReference,
+          }),
+          // refers to l.
+          T({
+              {
+                  Anchor(kTestCase.expected_tokens[9], kTestCase.code),
+              },
+              IndexingFactType ::kVariableReference,
+          }),
+          // refers to r.
+          T({
+              {
+                  Anchor(kTestCase.expected_tokens[11], kTestCase.code),
+              },
+              IndexingFactType ::kVariableReference,
+          }),
+          // refers to x.
+          T({
+              {
+                  Anchor(kTestCase.expected_tokens[7], kTestCase.code),
+              },
+              IndexingFactType ::kVariableDefinition,
+          })),
+      // refers to module m.
+      T(
+          {
+              {
+                  Anchor(kTestCase.expected_tokens[13], kTestCase.code),
+              },
+              IndexingFactType::kModule,
+          },
+          // refers to j.
+          T({
+              {
+                  Anchor(kTestCase.expected_tokens[15], kTestCase.code),
+              },
+              IndexingFactType ::kVariableReference,
+          }),
+          // refers to o.
+          T({
+              {
+                  Anchor(kTestCase.expected_tokens[17], kTestCase.code),
+              },
+              IndexingFactType ::kVariableReference,
+          }),
+          // refers to e.
+          T({
+              {
+                  Anchor(kTestCase.expected_tokens[21], kTestCase.code),
+              },
+              IndexingFactType ::kVariableReference,
+          }),
+          // refers to t.
+          T({
+              {
+                  Anchor(kTestCase.expected_tokens[23], kTestCase.code),
+              },
+              IndexingFactType ::kVariableReference,
+          }),
+          // refers to v.
+          T({
+              {
+                  Anchor(kTestCase.expected_tokens[19], kTestCase.code),
+              },
+              IndexingFactType ::kVariableDefinition,
+          })));
+
+  const auto facts_tree =
+      ExtractOneFile(kTestCase.code, file_name, exit_status, parse_ok);
+  LOG(INFO) << facts_tree;
+  LOG(INFO) << expected;
+  const auto result_pair = DeepEqual(facts_tree, expected);
+  EXPECT_EQ(result_pair.left, nullptr) << *result_pair.left;
+  EXPECT_EQ(result_pair.right, nullptr) << *result_pair.right;
+}
+
 }  // namespace
 }  // namespace kythe
 }  // namespace verilog

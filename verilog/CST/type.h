@@ -29,6 +29,11 @@ namespace verilog {
 std::vector<verible::TreeSearchMatch> FindAllDataTypeDeclarations(
     const verible::Symbol&);
 
+// Finds all node kDataTypePrimitive declarations. Used for testing the
+// functions below.
+std::vector<verible::TreeSearchMatch> FindAllDataTypePrimitive(
+    const verible::Symbol& root);
+
 // Finds all kTypeDeclaration nodes. Used for testing the functions below.
 std::vector<verible::TreeSearchMatch> FindAllTypeDeclarations(
     const verible::Symbol&);
@@ -60,6 +65,39 @@ bool IsStorageTypeOfDataTypeSpecified(const verible::Symbol&);
 // declaration.
 const verible::SyntaxTreeLeaf* GetIdentifierFromTypeDeclaration(
     const verible::Symbol& symbol);
+
+// Extracts kReferenceCallBase node from nodes tagged with kInstantiationType.
+const verible::SyntaxTreeNode& GetReferenceCallBaseFromInstantiationType(
+    const verible::Symbol& instantiation_type);
+
+// Extracts kReference node from nodes tagged with kReferenceCallBase.
+const verible::SyntaxTreeNode& GetReferenceFromReferenceCallBase(
+    const verible::Symbol& reference_call_base);
+
+// Extracts kLocalRoot node from nodes tagged with kReference.
+const verible::SyntaxTreeNode& GetLocalRootFromReference(
+    const verible::Symbol& reference);
+
+// Extracts kUnqualifiedId node from nodes tagged with kLocalRoot.
+const verible::SyntaxTreeNode& GetUnqualifiedIdFromLocalRoot(
+    const verible::Symbol& local_root);
+
+// Extracts kUnqualifiedId node from nodes tagged with kReferenceCallBase.
+const verible::SyntaxTreeNode& GetUnqualifiedIdFromReferenceCallBase(
+    const verible::Symbol& reference_call_base);
+
+// Extracts kPackedDimensions node from node tagged with kDataTypePrimitive.
+const verible::SyntaxTreeNode& GetPackedDimensionFromDataType(
+    const verible::Symbol& data_type_primitive);
+
+// Extracts kUnqualifiedId node from nodes tagged with kInstantiationType.
+const verible::SyntaxTreeNode& GetUnqualifiedIdFromInstantiationType(
+    const verible::Symbol& instantiation_type);
+
+// For a given instantiation type node returns the node spanning param
+// declaration.
+const verible::SyntaxTreeNode* GetParamListFromInstantiationType(
+    const verible::Symbol& instantiation_type);
 
 }  // namespace verilog
 

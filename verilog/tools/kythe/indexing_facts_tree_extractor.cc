@@ -765,8 +765,14 @@ void IndexingFactsTreeExtractor::ExtractClassInstances(
 }
 
 void IndexingFactsTreeExtractor::ExtractPrimitiveVariables(
-    const verible::SyntaxTreeNode& enclosing_node,
+    const verible::SyntaxTreeNode& data_declaration,
     const std::vector<verible::TreeSearchMatch>& variable_matches) {
+  const SyntaxTreeNode* packed_dimension =
+      GetPackedDimensionFromDataDeclaration(data_declaration);
+  if (packed_dimension != nullptr) {
+    Visit(*packed_dimension);
+  }
+
   for (const TreeSearchMatch& variable_match : variable_matches) {
     IndexingNodeData variable_node_data(IndexingFactType::kVariableDefinition);
     IndexingFactNode variable_node(variable_node_data);
@@ -782,6 +788,11 @@ void IndexingFactsTreeExtractor::ExtractPrimitiveVariables(
           Anchor(variable_name_token_info, context_.base));
       expression =
           GetTrailingExpressionFromRegisterVariable(*variable_match.match);
+
+      const SyntaxTreeNode& unpacked_dimension =
+          GetUnpackedDimensionFromRegisterVariable(*variable_match.match);
+      Visit(unpacked_dimension);
+
     } else if (tag == NodeEnum::kVariableDeclarationAssignment) {
       const SyntaxTreeLeaf& leaf =
           GetUnqualifiedIdFromVariableDeclarationAssignment(
@@ -789,6 +800,11 @@ void IndexingFactsTreeExtractor::ExtractPrimitiveVariables(
       variable_node.Value().AppendAnchor(Anchor(leaf.get(), context_.base));
       expression = GetTrailingExpressionFromVariableDeclarationAssign(
           *variable_match.match);
+
+      const SyntaxTreeNode& unpacked_dimension =
+          GetUnpackedDimensionFromVariableDeclarationAssign(
+              *variable_match.match);
+      Visit(unpacked_dimension);
     }
 
     if (expression != nullptr) {

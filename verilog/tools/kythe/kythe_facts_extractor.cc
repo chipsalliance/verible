@@ -35,13 +35,6 @@ void KytheFactsExtractor::ExtractKytheFacts(const IndexingFactNode& root) {
     number_of_extracted_facts = facts_.size();
     IndexingFactNodeTagResolver(root);
   } while (number_of_extracted_facts != facts_.size());
-
-  for (const Fact& fact : facts_) {
-    *stream_ << fact;
-  }
-  for (const Edge& edge : edges_) {
-    *stream_ << edge;
-  }
 }
 
 void KytheFactsExtractor::IndexingFactNodeTagResolver(
@@ -693,6 +686,14 @@ void KytheFactsExtractor::CreateEdge(const VName& source_node,
   edges_.insert(Edge(source_node, edge_name, target_node));
 }
 
+const std::set<Fact>& KytheFactsExtractor::GetExtractedFacts() const {
+  return facts_;
+}
+
+const std::set<Edge>& KytheFactsExtractor::GetExtractedEdges() const {
+  return edges_;
+}
+
 std::string GetFilePathFromRoot(const IndexingFactNode& root) {
   return root.Value().Anchors()[0].Value();
 }
@@ -712,9 +713,15 @@ std::ostream& KytheFactsPrinter::Print(std::ostream& stream) const {
       scope_resolvers.push_back(ScopeResolver(nullptr));
     }
 
-    KytheFactsExtractor kythe_extractor(GetFilePathFromRoot(root), &stream,
+    KytheFactsExtractor kythe_extractor(GetFilePathFromRoot(root),
                                         &scope_resolvers.back());
     kythe_extractor.ExtractKytheFacts(root);
+    for (const Fact& fact : kythe_extractor.GetExtractedFacts()) {
+      stream << fact;
+    }
+    for (const Edge& edge : kythe_extractor.GetExtractedEdges()) {
+      stream << edge;
+    }
   }
 
   return stream;

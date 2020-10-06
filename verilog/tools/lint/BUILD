@@ -31,6 +31,7 @@ _linter_test_configs = [
     ("forbid-consecutive-null-statements", "forbid_consecutive_null_statements", True),
     ("generate-label", "generate_label_module", True),
     ("generate-label", "generate-label-module-body", True),  # uses parse directive
+    ("generate-label-prefix", "generate_label_prefix", False),
     ("invalid-system-task-function", "psprintf", True),
     ("interface-name-style", "interface_type_name_style", True),
     ("macro-name-style", "macro_name_style", True),

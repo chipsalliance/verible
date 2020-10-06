@@ -26,6 +26,7 @@
 #include "common/text/tree_utils.h"
 #include "common/util/container_util.h"
 #include "verilog/CST/identifier.h"
+#include "verilog/CST/type.h"
 #include "verilog/CST/verilog_matchers.h"
 #include "verilog/CST/verilog_nonterminals.h"
 #include "verilog/parser/verilog_token_enum.h"
@@ -108,63 +109,22 @@ const SyntaxTreeNode& GetInstanceListFromDataDeclaration(
       NodeEnum::kInstantiationBase, 1);
 }
 
-const SyntaxTreeNode& GetReferenceCallBaseFromInstantiationType(
-    const Symbol& instantiation_type) {
-  return GetSubtreeAsNode(instantiation_type, NodeEnum::kInstantiationType, 0);
-}
-
-const SyntaxTreeNode& GetReferenceFromReferenceCallBase(
-    const Symbol& reference_call_base) {
-  return GetSubtreeAsNode(reference_call_base, NodeEnum::kReferenceCallBase, 0);
-}
-
-const SyntaxTreeNode& GetLocalRootFromReference(const Symbol& reference) {
-  return GetSubtreeAsNode(reference, NodeEnum::kReference, 0);
-}
-
-const SyntaxTreeNode& GetUnqualifiedIdFromLocalRoot(const Symbol& local_root) {
-  return GetSubtreeAsNode(local_root, NodeEnum::kLocalRoot, 0);
-}
-
-const verible::SyntaxTreeNode& GetUnqualifiedIdFromReferenceCallBase(
-    const verible::Symbol& reference_call_base) {
-  const SyntaxTreeNode& reference =
-      GetReferenceFromReferenceCallBase(reference_call_base);
-  const SyntaxTreeNode& local_root = GetLocalRootFromReference(reference);
-  return GetUnqualifiedIdFromLocalRoot(local_root);
-}
-
 const verible::TokenInfo& GetTypeTokenInfoFromDataDeclaration(
     const verible::Symbol& data_declaration) {
   const SyntaxTreeNode& instantiation_type =
       GetTypeOfDataDeclaration(data_declaration);
-  const SyntaxTreeNode& reference_call_base =
-      GetReferenceCallBaseFromInstantiationType(instantiation_type);
   const SyntaxTreeNode& unqualified_id =
-      GetUnqualifiedIdFromReferenceCallBase(reference_call_base);
+      GetUnqualifiedIdFromInstantiationType(instantiation_type);
   const verible::SyntaxTreeLeaf* instance_symbol_identifier =
       GetIdentifier(unqualified_id);
   return instance_symbol_identifier->get();
 }
 
-// TODO(minatoma): Recommend adding this to type.cc instead.
-// It makes more sense to extract type parameters from a type node (after
-// GetTypeOfDataDeclaration).
-// Getting type parameters from a type parameter seems more re-usable than
-// getting it from a full data declaration; types can appear other places (such
-// as being passed as type parameters). So if you split/reduce this
-// functionality, you'll be able to cover more in the future (with less work).
 const verible::SyntaxTreeNode* GetParamListFromDataDeclaration(
     const verible::Symbol& data_declaration) {
   const SyntaxTreeNode& instantiation_type =
       GetTypeOfDataDeclaration(data_declaration);
-  const SyntaxTreeNode& reference_call_base =
-      GetReferenceCallBaseFromInstantiationType(instantiation_type);
-  const SyntaxTreeNode& unqualified_id =
-      GetUnqualifiedIdFromReferenceCallBase(reference_call_base);
-  const verible::Symbol* param_list =
-      GetSubtreeAsSymbol(unqualified_id, NodeEnum::kUnqualifiedId, 1);
-  return CheckOptionalSymbolAsNode(param_list, NodeEnum::kActualParameterList);
+  return GetParamListFromInstantiationType(instantiation_type);
 }
 
 const verible::TokenInfo& GetModuleInstanceNameTokenInfoFromGateInstance(
@@ -210,6 +170,47 @@ const verible::SyntaxTreeNode* GetTrailingExpressionFromRegisterVariable(
       GetSubtreeAsSymbol(register_variable, NodeEnum::kRegisterVariable, 2);
   return verible::CheckOptionalSymbolAsNode(trailing_expression,
                                             NodeEnum::kTrailingAssign);
+}
+
+const verible::SyntaxTreeNode* GetPackedDimensionFromDataDeclaration(
+    const verible::Symbol& data_declaration) {
+  const verible::SyntaxTreeNode& instantiation_type =
+      GetTypeOfDataDeclaration(data_declaration);
+  const verible::Symbol* data_type = verible::GetSubtreeAsSymbol(
+      instantiation_type, NodeEnum::kInstantiationType, 0);
+
+  auto tag = NodeEnum(data_type->Tag().tag);
+  if (tag != NodeEnum::kDataTypePrimitive && tag != NodeEnum::kDataType) {
+    return nullptr;
+  }
+
+  if (NodeEnum(data_type->Tag().tag) == NodeEnum::kDataTypePrimitive) {
+    return &GetPackedDimensionFromDataType(*data_type);
+  }
+
+  const verible::SyntaxTreeNode& data_type_primitive =
+      verible::GetSubtreeAsNode(*data_type, NodeEnum::kDataType, 0);
+
+  if (NodeEnum(data_type_primitive.Tag().tag) == NodeEnum::kUnqualifiedId) {
+    return &GetPackedDimensionFromDataType(*data_type);
+  }
+
+  return &GetPackedDimensionFromDataType(data_type_primitive);
+}
+
+const verible::SyntaxTreeNode& GetUnpackedDimensionFromRegisterVariable(
+    const verible::Symbol& register_variable) {
+  return verible::GetSubtreeAsNode(register_variable,
+                                   NodeEnum::kRegisterVariable, 1,
+                                   NodeEnum::kUnpackedDimensions);
+}
+
+const verible::SyntaxTreeNode&
+GetUnpackedDimensionFromVariableDeclarationAssign(
+    const verible::Symbol& variable_declaration_assign) {
+  return verible::GetSubtreeAsNode(variable_declaration_assign,
+                                   NodeEnum::kVariableDeclarationAssignment, 1,
+                                   NodeEnum::kUnpackedDimensions);
 }
 
 }  // namespace verilog

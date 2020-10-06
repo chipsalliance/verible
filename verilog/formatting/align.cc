@@ -69,10 +69,12 @@ static const AlignmentColumnProperties FlushLeft(true);
 static const AlignmentColumnProperties FlushRight(false);
 
 template <class T>
-static bool TokensAreAllComments(const T& tokens) {
+static bool TokensAreAllCommentsOrAttributes(const T& tokens) {
   return std::all_of(
       tokens.begin(), tokens.end(), [](const typename T::value_type& token) {
-        return IsComment(verilog_tokentype(token.token->token_enum()));
+        const auto tag = static_cast<verilog_tokentype>(token.TokenEnum());
+        return IsComment(verilog_tokentype(tag)) ||
+               tag == verilog_tokentype::TK_ATTRIBUTE;
       });
 }
 
@@ -90,7 +92,7 @@ static bool IgnoreWithinPortDeclarationPartitionGroup(
   const auto token_range = uwline.TokensRange();
   CHECK(!token_range.empty());
   // ignore lines containing only comments
-  if (TokensAreAllComments(token_range)) return true;
+  if (TokensAreAllCommentsOrAttributes(token_range)) return true;
 
   // ignore partitions belonging to preprocessing directives
   if (IsPreprocessorKeyword(verilog_tokentype(token_range.front().TokenEnum())))
@@ -110,7 +112,7 @@ static bool IgnoreCommentsAndPreprocessingDirectives(
   const auto token_range = uwline.TokensRange();
   CHECK(!token_range.empty());
   // ignore lines containing only comments
-  if (TokensAreAllComments(token_range)) return true;
+  if (TokensAreAllCommentsOrAttributes(token_range)) return true;
 
   // ignore partitions belonging to preprocessing directives
   if (IsPreprocessorKeyword(verilog_tokentype(token_range.front().TokenEnum())))
@@ -400,30 +402,18 @@ static bool IsAlignableDeclaration(const SyntaxTreeNode& node) {
 // enums, a single value here could apply to a group of syntax tree node types.
 enum class AlignableSyntaxSubtype {
   kDontCare = 0,
-  // named actual parameters
   kNamedActualParameters,
-  // named actual ports
   kNamedActualPorts,
-  // parameter declarations
   kParameterDeclaration,
-  // port declarations
   kPortDeclaration,
-  // net/variable declarations
-  kDataDeclaration,
-  // class member variable declarations
+  kDataDeclaration,  // net/variable declarations
   kClassMemberVariables,
-  // case-like items
   kCaseLikeItems,
-  // continuous assignment statements
   kContinuousAssignment,
-  // Constants aligned in enums.
-  kEnumListAssignment,
-  // Blocking assignments.
+  kEnumListAssignment,  // Constants aligned in enums.
   kBlockingAssignment,
-  // Nonblocking assignments.
   kNonBlockingAssignment,
-  // Distribution items.
-  kDistItem,
+  kDistItem,  // Distribution items.
 };
 
 static AlignedPartitionClassification AlignClassify(

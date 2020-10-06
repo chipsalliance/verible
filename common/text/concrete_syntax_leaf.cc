@@ -14,6 +14,7 @@
 
 #include "common/text/concrete_syntax_leaf.h"
 
+#include <iostream>
 #include <memory>
 
 #include "common/text/concrete_syntax_tree.h"
@@ -54,6 +55,10 @@ void SyntaxTreeLeaf::Accept(MutableTreeVisitorRecursive *visitor,
 
 void SyntaxTreeLeaf::Accept(SymbolVisitor *visitor) const {
   visitor->Visit(*this);
+}
+
+std::ostream &operator<<(std::ostream &os, const SyntaxTreeLeaf &l) {
+  return os << l.get();
 }
 
 }  // namespace verible
