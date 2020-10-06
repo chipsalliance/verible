@@ -34,6 +34,8 @@ struct FormatStyle : public verible::BasicFormatStyle {
     over_column_limit_penalty = 10000;
   }
 
+  FormatStyle(const FormatStyle&) = default;
+
   // Control indentation amount for port declarations.
   IndentationStyle port_declarations_indentation = IndentationStyle::kWrap;
 

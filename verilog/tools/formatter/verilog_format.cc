@@ -228,6 +228,10 @@ static bool formatOneFile(absl::string_view filename,
         absl::GetFlag(FLAGS_port_declarations_indentation);
     format_style.formal_parameters_indentation =
         absl::GetFlag(FLAGS_formal_parameters_indentation);
+    format_style.named_parameter_indentation =
+        absl::GetFlag(FLAGS_named_parameter_indentation);
+    format_style.named_port_indentation =
+        absl::GetFlag(FLAGS_named_port_indentation);
 
     // various alignment control
     format_style.port_declarations_alignment =
