@@ -96,6 +96,7 @@ const VName* ScopeResolver::SearchForDefinitionInScopeContext(
   }
 
   // Try to find the definition in the previous files' scopes.
+  // Comment here that this is a linear-time search over files.
   if (previous_file_scope_resolver_ != nullptr) {
     return previous_file_scope_resolver_->SearchForDefinitionInGlobalScope(
         reference_name);
@@ -140,6 +141,7 @@ const Scope* ScopeResolver::SearchForScope(const Signature& signature) const {
   }
 
   // Try to find the definition in the previous files' scopes.
+  // Comment here that this is a linear-time search over files.
   if (previous_file_scope_resolver_ != nullptr) {
     return previous_file_scope_resolver_->SearchForScope(signature);
   }

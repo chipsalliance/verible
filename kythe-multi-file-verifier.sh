@@ -16,7 +16,7 @@
 usage() {
   cat <<EOF
 
-Extracts Kythe facts from the given verilog file and runs Kythe verifier on the produced facts.
+Extracts Kythe facts from the given verilog files and runs Kythe verifier on the produced facts.
 EOF
 }
 
@@ -31,7 +31,7 @@ VERILOG_MULTI_FILE_TEST_FILES="./verilog/tools/kythe/testdata/more_testdata/mult
 bazel build //verilog/tools/kythe:all
 
 # Read JSON entries from standard in to a graphstore.
-bazel-bin/verilog/tools/kythe/verible-verilog-kythe-extractor ${VERILOG_MULTI_FILE_TEST_FILES} --printkythefacts > ${KYTHE_OUT}/entries
+bazel-bin/verilog/tools/kythe/verible-verilog-kythe-extractor ${VERILOG_MULTI_FILE_TEST_FILES} --printkythefacts > "${KYTHE_OUT}"/entries
 
-${KYTHE_BINDIR}/entrystream --read_format=json < ${KYTHE_OUT}/entries \
+${KYTHE_BINDIR}/entrystream --read_format=json < "${KYTHE_OUT}"/entries \
 | ${KYTHE_BINDIR}/verifier ${VERILOG_MULTI_FILE_TEST_FILES}

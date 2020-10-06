@@ -102,31 +102,32 @@ TEST(ScopeResolverTests, SearchForDefinition) {
 
   {
     Scope global_scope(signatures[7]);
-    ScopeContext::AutoPop p1(&scope_resolver.GetScopeContext(), &global_scope);
+    ScopeContext::AutoPop p1(&scope_resolver.GetMutableScopeContext(),
+                             &global_scope);
     scope_resolver.AddDefinitionToScopeContext(vnames[0]);
     scope_resolver.MapSignatureToScope(signatures[0], scope);
     {
-      const std::vector<const VName*> vname =
+      const std::vector<const VName*> vnames =
           scope_resolver.SearchForDefinitions({names[0], names[1]});
-      LOG(INFO) << vname.size();
-      EXPECT_EQ(vname.size(), 2);
-      EXPECT_EQ(vname[1]->signature, signatures[1]);
+      EXPECT_EQ(vnames.size(), 2);
+      EXPECT_EQ(vnames[1]->signature, signatures[1]);
     }
     {
-      const std::vector<const VName*> vname =
+      const std::vector<const VName*> vnames =
           scope_resolver.SearchForDefinitions({names[0], names[2]});
-      EXPECT_EQ(vname.size(), 2);
-      EXPECT_EQ(vname[1]->signature, signatures[2]);
+      EXPECT_EQ(vnames.size(), 2);
+      EXPECT_EQ(vnames[1]->signature, signatures[2]);
     }
     {
-      const std::vector<const VName*> vname =
+      const std::vector<const VName*> vnames =
           scope_resolver.SearchForDefinitions({names[0], names[3]});
-      EXPECT_EQ(vname.size(), 1);
+      EXPECT_EQ(vnames.size(), 1);
+      EXPECT_EQ(vnames[0]->signature, signatures[0]);
     }
     {
-      const std::vector<const VName*> vname =
+      const std::vector<const VName*> vnames =
           scope_resolver.SearchForDefinitions({names[2], names[1]});
-      EXPECT_EQ(vname.size(), 0);
+      EXPECT_TRUE(vnames.empty());
     }
   }
 }
@@ -161,7 +162,8 @@ TEST(ScopeResolverTests, SearchForNestedDefinition) {
 
   {
     Scope global_scope(signatures[7]);
-    ScopeContext::AutoPop p1(&scope_resolver.GetScopeContext(), &global_scope);
+    ScopeContext::AutoPop p1(&scope_resolver.GetMutableScopeContext(),
+                             &global_scope);
     scope_resolver.AddDefinitionToScopeContext(vnames[0]);
     scope_resolver.AddDefinitionToScopeContext(vnames[1]);
     scope_resolver.AddDefinitionToScopeContext(vnames[5]);
@@ -185,25 +187,25 @@ TEST(ScopeResolverTests, SearchForNestedDefinition) {
       EXPECT_EQ(found_scope, nullptr);
     }
     {
-      const std::vector<const VName*> vname =
+      const std::vector<const VName*> vnames =
           scope_resolver.SearchForDefinitions({names[0], names[1]});
-      EXPECT_EQ(vname[1]->signature, signatures[1]);
+      EXPECT_EQ(vnames[1]->signature, signatures[1]);
     }
     {
-      const std::vector<const VName*> vname =
+      const std::vector<const VName*> vnames =
           scope_resolver.SearchForDefinitions({names[1], names[3]});
-      EXPECT_EQ(vname[1]->signature, signatures[3]);
+      EXPECT_EQ(vnames[1]->signature, signatures[3]);
     }
     {
-      const std::vector<const VName*> vname =
+      const std::vector<const VName*> vnames =
           scope_resolver.SearchForDefinitions({names[6], names[3]});
-      EXPECT_EQ(vname[1]->signature, signatures[3]);
+      EXPECT_EQ(vnames[1]->signature, signatures[3]);
     }
 
     {
-      const std::vector<const VName*> vname =
+      const std::vector<const VName*> vnames =
           scope_resolver.SearchForDefinitions({names[6], names[6]});
-      EXPECT_EQ(vname.size(), 1);
+      EXPECT_EQ(vnames.size(), 1);
     }
   }
 }

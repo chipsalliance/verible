@@ -31,7 +31,7 @@ namespace verilog {
 namespace kythe {
 
 // Streamable printing class for kythe facts.
-// Usage: stream << KytheFactsPrinter(*tree_root);
+// Usage: stream << KytheFactsPrinter(vector<IndexingFactNode>);
 class KytheFactsPrinter {
  public:
   explicit KytheFactsPrinter(const std::vector<IndexingFactNode>& root)

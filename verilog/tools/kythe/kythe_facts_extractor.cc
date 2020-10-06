@@ -253,7 +253,7 @@ void KytheFactsExtractor::Visit(const IndexingFactNode& node,
                                 const VName& vname, Scope& current_scope) {
   const VNameContext::AutoPop vnames_auto_pop(&vnames_context_, &vname);
   const ScopeContext::AutoPop scope_auto_pop(
-      &scope_resolver_->GetScopeContext(), &current_scope);
+      &scope_resolver_->GetMutableScopeContext(), &current_scope);
   Visit(node);
 }
 

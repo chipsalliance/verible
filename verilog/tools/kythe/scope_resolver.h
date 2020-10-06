@@ -179,7 +179,7 @@ class ScopeResolver {
   void MapSignatureToScopeOfSignature(const Signature& signature,
                                       const Signature& other_signature);
 
-  ScopeContext& GetScopeContext() { return scope_context_; }
+  ScopeContext& GetMutableScopeContext() { return scope_context_; }
 
  private:
   // Return the global scope of the current scope_resolver.
@@ -226,6 +226,7 @@ class ScopeResolver {
 
   // Pointer to the previous file's discovered scopes (if a previous file
   // exists). This is used for definition finding in cross-file referencing.
+  // This forms a null-terminated singly-linked list across files.
   const ScopeResolver* previous_file_scope_resolver_;
 };
 

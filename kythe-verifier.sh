@@ -32,8 +32,8 @@ bazel build //verilog/tools/kythe:all
 
 for i in $VERILOG_TEST_FILES; do
   # Read JSON entries from standard in to a graphstore.
-  bazel-bin/verilog/tools/kythe/verible-verilog-kythe-extractor "$i"  --printkythefacts > ${KYTHE_OUT}/entries
+  bazel-bin/verilog/tools/kythe/verible-verilog-kythe-extractor "$i"  --printkythefacts > "${KYTHE_OUT}"/entries
 
-  ${KYTHE_BINDIR}/entrystream --read_format=json < ${KYTHE_OUT}/entries \
+  "${KYTHE_BINDIR}"/entrystream --read_format=json < "${KYTHE_OUT}"/entries \
   | ${KYTHE_BINDIR}/verifier "$i"
 done
