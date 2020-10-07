@@ -92,7 +92,7 @@ cat > $SYNTAX_DOC <<EOF
 # \`verible-verilog-syntax\`
 
 Tool for looking at the syntax of Verilog and SystemVerilog code. Part of the
-verible tool suite.
+Verible tool suite.
 
 ## Command line arguments
 \`\`\`
@@ -113,7 +113,7 @@ LINT_DOC=$PAGES_DIR/verilog_lint.md
 cat > $LINT_DOC <<EOF
 # \`verible-verilog-lint\`
 
-Tool for formatting Verilog and SystemVerilog code. Part of the verible tool
+Tool for linting Verilog and SystemVerilog code. Part of the Verible tool
 suite.
 
 ## Command line arguments
@@ -141,7 +141,7 @@ FORMAT_DOC=$PAGES_DIR/verilog_format.md
 cat > $FORMAT_DOC <<EOF
 # \`verible-verilog-format\`
 
-Tool for formatting Verilog and SystemVerilog code. Part of the verible tool
+Tool for formatting Verilog and SystemVerilog code. Part of the Verible tool
 suite.
 
 ## Command line arguments
