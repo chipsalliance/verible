@@ -15,35 +15,25 @@
 
 usage() {
   cat <<EOF
-$0 verilog file...
 
-Extracts Kythe facts from the given verilog file and run Kythe web ui to visualize code navigation.
+Extracts Kythe facts from the given verilog file and runs Kythe verifier on the produced facts.
 EOF
 }
 
 set -o pipefail
-BROWSE_PORT="${BROWSE_PORT:-8080}"
 KYTHE_BINDIR="/opt/kythe/tools"
 KYTHE_OUT="./kythe-out"
+
+# The files are expected to be self-contained single-file test cases.
+VERILOG_TEST_FILES="./verilog/tools/kythe/testdata/more_testdata/*.sv"
 # You can find prebuilt binaries at https://github.com/kythe/kythe/releases.
 # This script assumes that they are installed to /opt/kythe.
-# If you build the tools yourself or install them to a different location,
-# make sure to pass the correct public_resources directory to http_server.
-rm -f -- ${KYTHE_OUT}/graphstore/* ${KYTHE_OUT}/tables/*
-mkdir -p ${KYTHE_OUT}/graphstore ${KYTHE_OUT}/tables
 bazel build //verilog/tools/kythe:all
 
-for i in "$@"; do
+for i in $VERILOG_TEST_FILES; do
   # Read JSON entries from standard in to a graphstore.
   bazel-bin/verilog/tools/kythe/verible-verilog-kythe-extractor "$i"  --printkythefacts > "${KYTHE_OUT}"/entries
-  # Write entry stream into a GraphStore
-  "${KYTHE_BINDIR}"/entrystream --read_format=json < "${KYTHE_OUT}"/entries \
-  | "${KYTHE_BINDIR}"/write_entries -graphstore "${KYTHE_OUT}"/graphstore
-done
 
-# Convert the graphstore to serving tables.
-"${KYTHE_BINDIR}"/write_tables -graphstore "${KYTHE_OUT}"/graphstore -out="${KYTHE_OUT}"/tables
-# Host the browser UI.
-"${KYTHE_BINDIR}"/http_server -serving_table "${KYTHE_OUT}"/tables \
-  -public_resources="/opt/kythe/web/ui" \
-  -listen="localhost:${BROWSE_PORT}"  # ":${BROWSE_PORT}" allows access from other machines
+  "${KYTHE_BINDIR}"/entrystream --read_format=json < "${KYTHE_OUT}"/entries \
+  | ${KYTHE_BINDIR}/verifier "$i"
+done

@@ -31,16 +31,17 @@ namespace verilog {
 namespace kythe {
 
 // Streamable printing class for kythe facts.
-// Usage: stream << KytheFactsPrinter(*tree_root);
+// Usage: stream << KytheFactsPrinter(vector<IndexingFactNode>);
 class KytheFactsPrinter {
  public:
-  explicit KytheFactsPrinter(const IndexingFactNode& root) : root_(root) {}
+  explicit KytheFactsPrinter(const std::vector<IndexingFactNode>& root)
+      : trees_(root) {}
 
   std::ostream& Print(std::ostream&) const;
 
  private:
-  // The root of the indexing facts tree to extract kythe facts from.
-  const IndexingFactNode& root_;
+  // The roots of the indexing facts trees to extract kythe facts from.
+  const std::vector<IndexingFactNode>& trees_;
 };
 
 std::ostream& operator<<(std::ostream&, const KytheFactsPrinter&);
@@ -51,8 +52,9 @@ std::ostream& operator<<(std::ostream&, const KytheFactsPrinter&);
 // the last iteration.
 class KytheFactsExtractor {
  public:
-  explicit KytheFactsExtractor(absl::string_view file_path)
-      : file_path_(file_path) {}
+  KytheFactsExtractor(absl::string_view file_path,
+                      ScopeResolver* previous_files_scopes)
+      : file_path_(file_path), scope_resolver_(previous_files_scopes) {}
 
   // Extracts kythe facts from the given IndexingFactsTree root.
   void ExtractKytheFacts(const IndexingFactNode&);
@@ -209,13 +211,9 @@ class KytheFactsExtractor {
   // tree.
   VNameContext vnames_context_;
 
-  // Keeps track of scopes and definitions inside the scopes of ancestors as
-  // the visitor traverses the facts tree.
-  VerticalScopeResolver vertical_scope_resolver_;
-
   // Keeps track and saves the explored scopes with a <key, value> and maps
   // every signature to its scope.
-  FlattenedScopeResolver flattened_scope_resolver_;
+  ScopeResolver* scope_resolver_;
 
   // Used to save all the generated facts Uniquely.
   std::set<Fact> facts_;
@@ -223,6 +221,9 @@ class KytheFactsExtractor {
   // Used to save all the generated edges Uniquely.
   std::set<Edge> edges_;
 };
+
+// Returns the file path from the given indexing facts tree.
+std::string GetFilePathFromRoot(const IndexingFactNode& root);
 
 }  // namespace kythe
 }  // namespace verilog

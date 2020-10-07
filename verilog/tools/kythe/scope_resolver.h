@@ -16,6 +16,7 @@
 #define VERIBLE_VERILOG_TOOLS_KYTHE_SCOPE_RESOLVER_H_
 
 #include <map>
+#include <set>
 #include <vector>
 
 #include "absl/strings/string_view.h"
@@ -29,6 +30,9 @@ namespace kythe {
 // Used to wrap whatever needs to be recorded in a scope item.
 struct ScopeMemberItem {
   ScopeMemberItem(const VName& vname) : vname(vname) {}
+
+  bool operator==(const ScopeMemberItem& other) const;
+  bool operator<(const ScopeMemberItem& other) const;
 
   // VName of this member.
   VName vname;
@@ -46,7 +50,7 @@ class Scope {
   // Appends the member of the given scope to the current scope.
   void AppendScope(const Scope& scope);
 
-  const std::vector<ScopeMemberItem>& Members() const { return members_; }
+  const std::set<ScopeMemberItem>& Members() const { return members_; }
   const Signature& GetSignature() const { return signature_; }
 
   // Searches for the given reference_name in the current scope and returns its
@@ -58,7 +62,7 @@ class Scope {
   Signature signature_;
 
   // list of the members inside this scope.
-  std::vector<ScopeMemberItem> members_;
+  std::set<ScopeMemberItem> members_;
 };
 
 // Container with a stack of Scopes to hold the accessible scopes during
@@ -85,10 +89,10 @@ class Scope {
 // {
 //   pkg#x
 // }
-// when trying to find a definition for "x" in "return x" VerticalScopeResolver
-// searches the above scope in reverse order till if finds a definition or
-// returns a nullptr if not found.
-class VerticalScopeResolver : public verible::AutoPopStack<Scope*> {
+// when trying to find a definition for "x" in "return x" ScopeContext
+// try to find the first matching definition starting from the innermost/nearest
+// scope or returns a nullptr if not found.
+class ScopeContext : public verible::AutoPopStack<Scope*> {
  public:
   typedef verible::AutoPopStack<Scope*> base_type;
 
@@ -127,10 +131,10 @@ class VerticalScopeResolver : public verible::AutoPopStack<Scope*> {
 // Keeps track and saves the explored scopes with a <key, value> and maps every
 // signature to its scope.
 //
-// HorizontalScopeResolver saves the scopes generated while traversing the
-// IndexingFactsTree so that it can be use to find some definition.
+// ScopeResolver saves the scopes generated while traversing the
+// IndexingFactsTree so that they can be use to find some definition.
 // Here the scopes are saved in a flattened manner instead of tree like
-// hierarchy.
+// hierarchy (in a structure which looks like symbol tables).
 // e.g
 // class m;
 //    int x;
@@ -151,12 +155,19 @@ class VerticalScopeResolver : public verible::AutoPopStack<Scope*> {
 //    }
 // }
 // this way definitions can be found using the signatures.
-class FlattenedScopeResolver {
+class ScopeResolver {
  public:
-  // Searches for a VName with the given name in the scope with the given
-  // signature.
-  const VName* SearchForVNameInScope(const Signature& signature,
-                                     absl::string_view name) const;
+  explicit ScopeResolver(const ScopeResolver* previous_file_scope_resolver)
+      : previous_file_scope_resolver_(previous_file_scope_resolver) {}
+
+  const std::vector<const VName*> SearchForDefinitions(
+      const std::vector<std::string>& names) const;
+
+  // Adds the VNames of the definitions it given scope to the scope context.
+  void AppendScopeToScopeContext(const Scope& scope);
+
+  // Adds a ScopeMemberItem of a definition to the scope context.
+  void AddDefinitionToScopeContext(const ScopeMemberItem& new_member);
 
   // Searches for a scope with the given signature in the scopes.
   const Scope* SearchForScope(const Signature& signature) const;
@@ -168,7 +179,30 @@ class FlattenedScopeResolver {
   void MapSignatureToScopeOfSignature(const Signature& signature,
                                       const Signature& other_signature);
 
+  ScopeContext& GetMutableScopeContext() { return scope_context_; }
+
  private:
+  // Return the global scope of the current scope_resolver.
+  const Scope* GetGlobalScope() const;
+
+  // Searches for a definition with the given name in the scope context and if
+  // not found searches the global scopes of the previous files' scopes (returns
+  // nullptr if a definitions is not found).
+  const VName* SearchForDefinitionInScopeContext(absl::string_view name) const;
+
+  // Searches for a definition with the given name in the global scope of this
+  // ScopeResolver.
+  const VName* SearchForDefinitionInGlobalScope(absl::string_view name) const;
+
+  // Searches for a definition with the given name in the scope with the given
+  // signature.
+  const VName* SearchForDefinitionInScope(const Signature& signature,
+                                          absl::string_view name) const;
+
+  // Keeps track of scopes and definitions inside the scopes of ancestors as
+  // the visitor traverses the facts tree.
+  ScopeContext scope_context_;
+
   // Saves signatures alongside with their inner members (scope).
   // This is used for resolving references to some variables after using
   // import pkg::*. or other member access like class_Type::my_var.
@@ -189,6 +223,11 @@ class FlattenedScopeResolver {
   //   "pkg2": ["my_fun", "my_class"]
   // }
   std::map<Signature, Scope> scopes_;
+
+  // Pointer to the previous file's discovered scopes (if a previous file
+  // exists). This is used for definition finding in cross-file referencing.
+  // This forms a null-terminated singly-linked list across files.
+  const ScopeResolver* previous_file_scope_resolver_;
 };
 
 }  // namespace kythe

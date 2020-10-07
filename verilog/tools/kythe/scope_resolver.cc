@@ -15,12 +15,20 @@
 #include "verilog/tools/kythe/scope_resolver.h"
 
 #include <string>
+#include <vector>
 
 namespace verilog {
 namespace kythe {
 
+bool ScopeMemberItem::operator==(const ScopeMemberItem& other) const {
+  return this->vname == other.vname;
+}
+bool ScopeMemberItem::operator<(const ScopeMemberItem& other) const {
+  return this->vname < other.vname;
+}
+
 void Scope::AddMemberItem(const ScopeMemberItem& member_item) {
-  members_.push_back(member_item);
+  members_.insert(member_item);
 }
 
 void Scope::AppendScope(const Scope& scope) {
@@ -39,8 +47,7 @@ const VName* Scope::SearchForDefinition(absl::string_view name) const {
   return nullptr;
 }
 
-const VName* VerticalScopeResolver::SearchForDefinition(
-    absl::string_view name) const {
+const VName* ScopeContext::SearchForDefinition(absl::string_view name) const {
   for (const auto& scope : verible::make_range(rbegin(), rend())) {
     const VName* result = scope->SearchForDefinition(name);
     if (result != nullptr) {
@@ -50,16 +57,99 @@ const VName* VerticalScopeResolver::SearchForDefinition(
   return nullptr;
 }
 
-const Scope* FlattenedScopeResolver::SearchForScope(
-    const Signature& signature) const {
-  const auto scope = scopes_.find(signature);
-  if (scope == scopes_.end()) {
-    return nullptr;
-  }
-  return &scope->second;
+void ScopeResolver::MapSignatureToScope(const Signature& signature,
+                                        const Scope& scope) {
+  scopes_[signature] = scope;
 }
 
-const VName* FlattenedScopeResolver::SearchForVNameInScope(
+void ScopeResolver::AppendScopeToScopeContext(const Scope& scope) {
+  scope_context_.top().AppendScope(scope);
+}
+
+void ScopeResolver::AddDefinitionToScopeContext(
+    const ScopeMemberItem& new_member) {
+  scope_context_.top().AddMemberItem(new_member);
+}
+
+const Signature CreateGlobalScopeSignature() {
+  // The signature for the global scope is always empty.
+  return Signature("");
+}
+
+const Scope* ScopeResolver::GetGlobalScope() const {
+  return SearchForScope(CreateGlobalScopeSignature());
+}
+
+const VName* ScopeResolver::SearchForDefinitionInGlobalScope(
+    absl::string_view reference_name) const {
+  return SearchForDefinitionInScope(CreateGlobalScopeSignature(),
+                                    reference_name);
+}
+
+const VName* ScopeResolver::SearchForDefinitionInScopeContext(
+    absl::string_view reference_name) const {
+  // Try to find the definition in the current ScopeContext.
+  const VName* definition_vname =
+      scope_context_.SearchForDefinition(reference_name);
+  if (definition_vname != nullptr) {
+    return definition_vname;
+  }
+
+  // Try to find the definition in the previous files' scopes.
+  // Comment here that this is a linear-time search over files.
+  if (previous_file_scope_resolver_ != nullptr) {
+    return previous_file_scope_resolver_->SearchForDefinitionInGlobalScope(
+        reference_name);
+  }
+
+  return nullptr;
+}
+
+const std::vector<const VName*> ScopeResolver::SearchForDefinitions(
+    const std::vector<std::string>& names) const {
+  std::vector<const VName*> definitions;
+
+  // Try to find the definition in the previous explored scopes.
+  const VName* definition = SearchForDefinitionInScopeContext(names[0]);
+  if (definition == nullptr) {
+    return definitions;
+  }
+
+  definitions.push_back(definition);
+  const Scope* current_scope = SearchForScope(definition->signature);
+
+  // Iterate over the names and try to find the definition in the current scope.
+  for (const auto& name : verible::make_range(names.begin() + 1, names.end())) {
+    if (current_scope == nullptr) {
+      break;
+    }
+    const VName* definition = current_scope->SearchForDefinition(name);
+    if (definition == nullptr) {
+      break;
+    }
+    definitions.push_back(definition);
+    current_scope = SearchForScope(definition->signature);
+  }
+
+  return definitions;
+}
+
+const Scope* ScopeResolver::SearchForScope(const Signature& signature) const {
+  const auto scope = scopes_.find(signature);
+  if (scope != scopes_.end()) {
+    return &scope->second;
+  }
+
+  // Try to find the definition in the previous files' scopes.
+  // Comment here that this is a linear-time search over files.
+  if (previous_file_scope_resolver_ != nullptr) {
+    return previous_file_scope_resolver_->SearchForScope(signature);
+  }
+
+  return nullptr;
+}
+
+const VName* ScopeResolver::SearchForDefinitionInScope(
     const Signature& signature, absl::string_view name) const {
   const Scope* scope = SearchForScope(signature);
   if (scope == nullptr) {
@@ -68,12 +158,7 @@ const VName* FlattenedScopeResolver::SearchForVNameInScope(
   return scope->SearchForDefinition(name);
 }
 
-void FlattenedScopeResolver::MapSignatureToScope(const Signature& signature,
-                                                 const Scope& scope) {
-  scopes_[signature] = scope;
-}
-
-void FlattenedScopeResolver::MapSignatureToScopeOfSignature(
+void ScopeResolver::MapSignatureToScopeOfSignature(
     const Signature& signature, const Signature& other_signature) {
   const Scope* other_scope = SearchForScope(other_signature);
   if (other_scope == nullptr) {
