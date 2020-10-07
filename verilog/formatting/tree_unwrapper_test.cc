@@ -702,6 +702,75 @@ const TreeUnwrapperTestData kUnwrapModuleTestCases[] = {
     },
 
     {
+        "module with header import",
+        "module foo import p_pkg::*;\n"
+        "(qux);"
+        "endmodule",
+        ModuleDeclaration(
+            0,
+            ModuleHeader(0,                                          //
+                         L(0, {"module", "foo"}),                    //
+                         L(1, {"import", "p_pkg", "::", "*", ";"}),  //
+                         L(0, {"("}),                                //
+                         L(2, {"qux"}),                              //
+                         L(0, {")", ";"})),                          //
+            L(0, {"endmodule"})),
+    },
+
+    {
+        "module with header import, multiple in one declaration",
+        "module foo import p_pkg::*, q_pkg::qux;\n"
+        "(qux);"
+        "endmodule",
+        ModuleDeclaration(0,
+                          ModuleHeader(0,                        //
+                                       L(0, {"module", "foo"}),  //
+                                       L(1, {"import", "p_pkg", "::", "*", ",",
+                                             "q_pkg", "::", "qux", ";"}),  //
+                                       L(0, {"("}),                        //
+                                       L(2, {"qux"}),                      //
+                                       L(0, {")", ";"})),                  //
+                          L(0, {"endmodule"})),
+    },
+
+    {
+        "module with header import, multiple in separate declarations",
+        "module foo import p_pkg::*; import q_pkg::qux;\n"
+        "(qux);"
+        "endmodule",
+        ModuleDeclaration(
+            0,
+            ModuleHeader(0,                                               //
+                         L(0, {"module", "foo"}),                         //
+                         N(1,                                             //
+                           L(1, {"import", "p_pkg", "::", "*", ";"}),     //
+                           L(1, {"import", "q_pkg", "::", "qux", ";"})),  //
+                         L(0, {"("}),                                     //
+                         L(2, {"qux"}),                                   //
+                         L(0, {")", ";"})),                               //
+            L(0, {"endmodule"})),
+    },
+
+    {
+        "module with header import before parameters",
+        "module foo import p_pkg::*;\n"
+        "#(int w = 2)"
+        "(qux);"
+        "endmodule",
+        ModuleDeclaration(
+            0,
+            ModuleHeader(0,                                          //
+                         L(0, {"module", "foo"}),                    //
+                         L(1, {"import", "p_pkg", "::", "*", ";"}),  //
+                         L(0, {"#", "("}),                           //
+                         L(2, {"int", "w", "=", "2"}),               //
+                         L(0, {")", "("}),                           //
+                         L(2, {"qux"}),                              //
+                         L(0, {")", ";"})),                          //
+            L(0, {"endmodule"})),
+    },
+
+    {
         "two modules with end-labels",
         "module foo ();"
         "endmodule : foo "

@@ -2738,6 +2738,32 @@ static const char* kModuleTests[] = {
     "import thatpkg::thing;\n"
     "module import_tax;\n"
     "endmodule",
+    "module import_tax\n"
+    "  import thatpkg::thing;\n"
+    "();\n"  // empty ports
+    "endmodule",
+    "module import_tax\n"
+    "  import thatpkg::thing;\n"
+    "#() ();\n"  // empty parameters and empty ports
+    "endmodule",
+    "module import_tax\n"
+    "  import thatpkg::*;\n"  // wildcard
+    "();\n"
+    "endmodule",
+    "module import_tax\n"
+    "  import thispkg::blah, thatpkg::*;\n"  // multiple imports
+    "();\n"
+    "endmodule",
+    "module import_tax\n"
+    "  import thispkg::blah;\n"  // separate imports
+    "  import thatpkg::*;\n"
+    "();\n"
+    "endmodule",
+    "module import_tax\n"
+    "  import thispkg::blah, baz::*;\n"
+    "  import thatpkg::*, another_one::foobar;\n"
+    "#(int p = 4) (input clk);\n"
+    "endmodule",
     "import thatpkg::*;\n"
     "module import_tax;\n"
     "endmodule",

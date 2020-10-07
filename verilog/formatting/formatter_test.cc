@@ -7015,11 +7015,30 @@ static constexpr FormatterTestCase kFormatterTestCases[] = {
      "    qux\n"
      ");\n"
      "endmodule\n"},
-    {// wildcard import mutiple packages at module header
+    {// wildcard import multiple packages at module header
      "module foo import bar::*,baz::*; (qux); endmodule\n",
      "module foo\n"
      "  import bar::*, baz::*;\n"
      "(\n"
+     "    qux\n"
+     ");\n"
+     "endmodule\n"},
+    {// separate package import declarations in module header
+     "module foo import bar::*,baz::*; import q_pkg::qux; (qux); endmodule\n",
+     "module foo\n"
+     "  import bar::*, baz::*;\n"
+     "  import q_pkg::qux;\n"
+     "(\n"
+     "    qux\n"
+     ");\n"
+     "endmodule\n"},
+    {// import package at module header
+     "module foo import bar::baz; #(int p = 3)(qux); endmodule\n",
+     "module foo\n"
+     "  import bar::baz;\n"
+     "#(\n"
+     "    int p = 3\n"
+     ") (\n"
      "    qux\n"
      ");\n"
      "endmodule\n"},
