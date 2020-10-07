@@ -255,4 +255,4 @@ Enabled by default: true
 
 ## Version
 
-Generated on 2020-10-06 18:31:42 -0700 from [v0.0-664-g0abe3dd](https://github.com/google/verible/commit/0abe3dd90415d156f559695fc8d667c643c685c1)
+Generated on 2020-10-07 15:13:04 -0700 from [v0.0-666-g4b00bdf](https://github.com/google/verible/commit/4b00bdf4f59c20d204af4e8fd6527b93d307020b)
