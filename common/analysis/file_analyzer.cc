@@ -134,7 +134,6 @@ std::vector<std::string> FileAnalyzer::TokenErrorMessages() const {
   return messages;
 }
 
-// Synchronize with 'VerilogLint' regex in glint.cfg.
 std::string FileAnalyzer::LinterTokenErrorMessage(
     const RejectedToken& error_token) const {
   const LineColumnMap& line_column_map = Data().GetLineColumnMap();
