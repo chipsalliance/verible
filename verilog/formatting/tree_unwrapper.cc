@@ -946,6 +946,7 @@ void TreeUnwrapper::SetIndentationsAndCreatePartitions(
 
     // For the following constructs, always expand the view to subpartitions.
     // Add a level of indentation.
+    case NodeEnum::kPackageImportList:
     case NodeEnum::kPackageItemList:
     case NodeEnum::kInterfaceClassDeclaration:
     case NodeEnum::kCasePatternItemList:
