@@ -14,6 +14,7 @@
 
 #include "common/util/file_util.h"
 
+#include <dirent.h>
 #include <errno.h>
 #include <stdlib.h>
 #include <string.h>
@@ -21,6 +22,7 @@
 #include <sys/types.h>
 #include <unistd.h>
 
+#include <algorithm>
 #include <fstream>
 #include <iostream>
 #include <streambuf>
@@ -31,6 +33,7 @@
 #include "absl/strings/str_join.h"
 #include "absl/strings/str_split.h"
 #include "absl/strings/string_view.h"
+#include "absl/strings/substitute.h"
 #include "common/util/logging.h"
 
 namespace verible {
@@ -159,6 +162,67 @@ absl::Status CreateDir(absl::string_view dir) {
   int ret = mkdir(path.c_str(), 0755);
   if (ret == 0 || errno == EEXIST) return absl::OkStatus();
   return CreateErrorStatusFromErrno("can't create directory");
+}
+
+absl::StatusOr<Directory> ListDir(absl::string_view dir) {
+  Directory d;
+  d.path = dir.empty() ? "." : std::string(dir);
+
+  // Reset the errno and open the directory
+  errno = 0;
+  DIR *handle = opendir(d.path.c_str());
+  if (handle == nullptr) {
+    if (errno == ENOTDIR) return absl::NotFoundError(d.path);
+    return absl::InternalError(absl::Substitute(
+        "Failed to open the directory '$0'. Got error: $1", d.path, errno));
+  }
+  struct stat statbuf;
+  while (true) {
+    errno = 0;
+    auto *entry = readdir(handle);
+    if (errno) {
+      closedir(handle);
+      return absl::InternalError(absl::Substitute(
+          "Failed to read the contents of directory '$0'. Got error: $1",
+          d.path, errno));
+    }
+    // Finished listing the directory.
+    if (entry == nullptr) {
+      break;
+    }
+    absl::string_view d_name(entry->d_name);
+    // Skip '.' and '..' directory links
+    if (d_name == "." || d_name == "..") {
+      continue;
+    }
+
+    std::string full_path = verible::file::JoinPath(d.path, d_name);
+    auto d_type = entry->d_type;
+    if (d_type == DT_LNK || d_type == DT_UNKNOWN) {
+      // Try to resolve symlinks and unknown nodes.
+      if (stat(full_path.c_str(), &statbuf) == -1) {
+        LOG(WARNING) << "Stat failed. Ignoring " << d_name;
+        continue;
+      }
+      if (S_ISDIR(statbuf.st_mode)) {
+        d.directories.push_back(full_path);
+      } else if (S_ISREG(statbuf.st_mode)) {
+        d.files.push_back(full_path);
+      } else {
+        LOG(INFO) << "Ignoring " << d_name
+                  << " because st_mode == " << statbuf.st_mode;
+        continue;
+      }
+    } else if (d_type == DT_DIR) {
+      d.directories.push_back(full_path);
+    } else {
+      d.files.push_back(full_path);
+    }
+  }
+  closedir(handle);
+  std::sort(d.files.begin(), d.files.end());
+  std::sort(d.directories.begin(), d.directories.end());
+  return d;
 }
 
 namespace testing {

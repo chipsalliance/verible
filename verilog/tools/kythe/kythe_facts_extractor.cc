@@ -16,6 +16,7 @@
 
 #include <iostream>
 #include <string>
+#include <vector>
 
 #include "absl/strings/escaping.h"
 #include "absl/strings/substitute.h"

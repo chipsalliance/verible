@@ -18,12 +18,25 @@
 #define VERIBLE_COMMON_UTIL_FILE_UTIL_H_
 
 #include <string>
+#include <vector>
 
 #include "absl/status/status.h"
+#include "absl/status/statusor.h"
 #include "absl/strings/string_view.h"
 
 namespace verible {
 namespace file {
+
+// A representation of a filesystem directory.
+struct Directory {
+  // Path to the directory.
+  std::string path;
+  // Files inside this directory (prefixed by the path). Sorted.
+  std::vector<std::string> files;
+  // Directories inside this directory (prefixed by the path). Sorted.
+  std::vector<std::string> directories;
+};
+
 // Returns the part of the path after the final "/".  If there is no
 // "/" in the path, the result is the same as the input.
 // Note that this function's behavior differs from the Unix basename
@@ -56,6 +69,13 @@ std::string JoinPath(absl::string_view base, absl::string_view name);
 
 // Create directory with given name, return success.
 absl::Status CreateDir(absl::string_view dir);
+
+// Returns the content of the directory. POSIX only. Ignores symlinks and
+// unknown nodes which it fails to resolve to a file or a directory. Returns an
+// error status on any read error (doesn't allow partial results) except
+// resolving symlinks and unknown nodes.
+// TODO (after bump to c++17) rewrite this function to use std::filesystem
+absl::StatusOr<Directory> ListDir(absl::string_view dir);
 
 namespace testing {
 // Useful for testing: a temporary file that is pre-populated with a particular

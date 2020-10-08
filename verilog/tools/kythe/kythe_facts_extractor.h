@@ -19,8 +19,8 @@
 #include <set>
 #include <string>
 #include <utility>
+#include <vector>
 
-#include "absl/strings/match.h"
 #include "verilog/tools/kythe/indexing_facts_tree.h"
 #include "verilog/tools/kythe/indexing_facts_tree_context.h"
 #include "verilog/tools/kythe/indexing_facts_tree_extractor.h"
