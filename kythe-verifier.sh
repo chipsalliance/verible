@@ -26,13 +26,16 @@ KYTHE_OUT="./kythe-out"
 
 # The files are expected to be self-contained single-file test cases.
 VERILOG_TEST_FILES="./verilog/tools/kythe/testdata/more_testdata/*.sv"
+VERILOG_TEST_FILE_LIST="./verilog/tools/kythe/testdata/more_testdata/file_list.txt"
 # You can find prebuilt binaries at https://github.com/kythe/kythe/releases.
 # This script assumes that they are installed to /opt/kythe.
 bazel build //verilog/tools/kythe:all
 
 for i in $VERILOG_TEST_FILES; do
+  echo "$(basename $i)" > "$VERILOG_TEST_FILE_LIST"
+  cat "$VERILOG_TEST_FILE_LIST"
   # Read JSON entries from standard in to a graphstore.
-  bazel-bin/verilog/tools/kythe/verible-verilog-kythe-extractor "$i"  --printkythefacts > "${KYTHE_OUT}"/entries
+  bazel-bin/verilog/tools/kythe/verible-verilog-kythe-extractor "$VERILOG_TEST_FILE_LIST"  --printkythefacts > "${KYTHE_OUT}"/entries
 
   "${KYTHE_BINDIR}"/entrystream --read_format=json < "${KYTHE_OUT}"/entries \
   | ${KYTHE_BINDIR}/verifier "$i"
