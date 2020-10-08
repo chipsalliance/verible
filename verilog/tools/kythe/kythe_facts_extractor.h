@@ -19,6 +19,7 @@
 #include <set>
 #include <string>
 #include <utility>
+#include <vector>
 
 #include "absl/strings/match.h"
 #include "verilog/tools/kythe/indexing_facts_tree.h"
@@ -45,6 +46,20 @@ class KytheFactsPrinter {
 };
 
 std::ostream& operator<<(std::ostream&, const KytheFactsPrinter&);
+
+// Extracted Kythe indexing facts and edges.
+struct KytheIndexingData {
+  // Extracted Kythe indexing facts.
+  std::set<Fact> facts;
+
+  // Extracted Kythe edges.
+  std::set<Edge> edges;
+};
+
+// Returns the extracted Kythe indexing facts and edges.
+// TODO(minatoma): Encapsulate this into KytheFactsExtractor. Simplify the API.
+KytheIndexingData CollectKytheIndexingData(
+    const std::vector<IndexingFactNode>& indexing_trees);
 
 // Responsible for traversing IndexingFactsTree and processing its different
 // nodes to produce kythe indexing facts.

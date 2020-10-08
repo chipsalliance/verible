@@ -14,7 +14,9 @@
 
 #include "common/util/file_util.h"
 
+#include <algorithm>
 #include <string>
+#include <vector>
 
 #include "gtest/gtest.h"
 #include "absl/strings/string_view.h"
@@ -90,6 +92,49 @@ TEST(FileUtil, ScopedTestFileStdin) {
   std::string read_back_content;
   EXPECT_OK(file::GetContents("-", &read_back_content));
   EXPECT_EQ(test_content, read_back_content);
+}
+
+TEST(FileUtil, ReadEmptyDirectory) {
+  const std::string test_dir = file::JoinPath(testing::TempDir(), "empty_dir");
+  ASSERT_TRUE(file::CreateDir(test_dir).ok());
+
+  auto dir_or = file::ListDir(test_dir);
+  ASSERT_TRUE(dir_or.ok());
+
+  auto dir = dir_or.ValueOrDie();
+  EXPECT_EQ(dir.path, test_dir);
+  EXPECT_TRUE(dir.directories.empty());
+  EXPECT_TRUE(dir.files.empty());
+}
+
+TEST(FileUtil, ReadDirectory) {
+  const std::string test_dir = file::JoinPath(testing::TempDir(), "mixed_dir");
+
+  const std::string test_subdir1 = file::JoinPath(test_dir, "subdir1");
+  const std::string test_subdir2 = file::JoinPath(test_dir, "subdir2");
+  std::vector<std::string> test_directories{test_subdir1, test_subdir2};
+  ASSERT_TRUE(file::CreateDir(test_dir).ok());
+  ASSERT_TRUE(file::CreateDir(test_subdir1).ok());
+  ASSERT_TRUE(file::CreateDir(test_subdir2).ok());
+
+  const absl::string_view test_content = "Hello World!";
+  file::testing::ScopedTestFile test_file1(test_dir, test_content);
+  file::testing::ScopedTestFile test_file2(test_dir, test_content);
+  file::testing::ScopedTestFile test_file3(test_dir, test_content);
+  std::vector<std::string> test_files;
+  test_files.emplace_back(test_file1.filename());
+  test_files.emplace_back(test_file2.filename());
+  test_files.emplace_back(test_file3.filename());
+  std::sort(test_files.begin(), test_files.end());
+
+  auto dir_or = file::ListDir(test_dir);
+  LOG(ERROR) << dir_or.status();
+  ASSERT_TRUE(dir_or.ok());
+
+  auto dir = dir_or.ValueOrDie();
+  EXPECT_EQ(dir.path, test_dir);
+  EXPECT_EQ(dir.directories, test_directories);
+  EXPECT_EQ(dir.files, test_files);
 }
 
 }  // namespace

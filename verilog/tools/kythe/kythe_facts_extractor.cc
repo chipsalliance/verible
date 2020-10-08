@@ -16,6 +16,7 @@
 
 #include <iostream>
 #include <string>
+#include <vector>
 
 #include "absl/strings/escaping.h"
 #include "absl/strings/substitute.h"
@@ -700,9 +701,27 @@ std::string GetFilePathFromRoot(const IndexingFactNode& root) {
 }
 
 std::ostream& KytheFactsPrinter::Print(std::ostream& stream) const {
-  std::vector<ScopeResolver> scope_resolvers;
+  auto indexing_data = CollectKytheIndexingData(trees_);
+  for (const Fact& fact : indexing_data.facts) {
+    stream << fact;
+  }
+  for (const Edge& edge : indexing_data.edges) {
+    stream << edge;
+  }
+  return stream;
+}
 
-  for (const IndexingFactNode& root : trees_) {
+std::ostream& operator<<(std::ostream& stream,
+                         const KytheFactsPrinter& kythe_facts_printer) {
+  kythe_facts_printer.Print(stream);
+  return stream;
+}
+
+KytheIndexingData CollectKytheIndexingData(
+    const std::vector<IndexingFactNode>& indexing_trees) {
+  KytheIndexingData indexing_data;
+  std::vector<ScopeResolver> scope_resolvers;
+  for (const IndexingFactNode& root : indexing_trees) {
     // Create a new ScopeResolver and give the ownership to the scope_resolvers
     // vector so that it can outlive KytheFactsExtractor.
     // The ScopeResolver-s are created and linked together as a linked-list
@@ -718,20 +737,13 @@ std::ostream& KytheFactsPrinter::Print(std::ostream& stream) const {
                                         &scope_resolvers.back());
     kythe_extractor.ExtractKytheFacts(root);
     for (const Fact& fact : kythe_extractor.GetExtractedFacts()) {
-      stream << fact;
+      indexing_data.facts.insert(fact);
     }
     for (const Edge& edge : kythe_extractor.GetExtractedEdges()) {
-      stream << edge;
+      indexing_data.edges.insert(edge);
     }
   }
-
-  return stream;
-}
-
-std::ostream& operator<<(std::ostream& stream,
-                         const KytheFactsPrinter& kythe_facts_printer) {
-  kythe_facts_printer.Print(stream);
-  return stream;
+  return indexing_data;
 }
 
 }  // namespace kythe
