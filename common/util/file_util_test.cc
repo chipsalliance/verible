@@ -101,7 +101,7 @@ TEST(FileUtil, ReadEmptyDirectory) {
   auto dir_or = file::ListDir(test_dir);
   ASSERT_TRUE(dir_or.ok());
 
-  auto dir = dir_or.ValueOrDie();
+  const auto& dir = *dir_or;
   EXPECT_EQ(dir.path, test_dir);
   EXPECT_TRUE(dir.directories.empty());
   EXPECT_TRUE(dir.files.empty());
@@ -128,10 +128,9 @@ TEST(FileUtil, ReadDirectory) {
   std::sort(test_files.begin(), test_files.end());
 
   auto dir_or = file::ListDir(test_dir);
-  LOG(ERROR) << dir_or.status();
-  ASSERT_TRUE(dir_or.ok());
+  ASSERT_TRUE(dir_or.ok()) << dir_or.status().message();
 
-  auto dir = dir_or.ValueOrDie();
+  const auto& dir = *dir_or;
   EXPECT_EQ(dir.path, test_dir);
   EXPECT_EQ(dir.directories, test_directories);
   EXPECT_EQ(dir.files, test_files);
