@@ -40,3 +40,5 @@ for i in $VERILOG_TEST_FILES; do
   "${KYTHE_BINDIR}"/entrystream --read_format=json < "${KYTHE_OUT}"/entries \
   | ${KYTHE_BINDIR}/verifier "$i"
 done
+
+rm "$VERILOG_TEST_FILE_LIST"
