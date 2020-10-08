@@ -31,8 +31,12 @@ namespace kythe {
 class IndexingFactsTreeExtractor : public verible::TreeContextVisitor {
  public:
   IndexingFactsTreeExtractor(absl::string_view base,
-                             absl::string_view file_name)
-      : context_(verible::TokenInfo::Context(base)) {
+                             absl::string_view file_name,
+                             IndexingFactNode& file_list_facts_tree,
+                             std::set<std::string>& extracted_files)
+      : context_(verible::TokenInfo::Context(base)),
+        file_list_facts_tree_(file_list_facts_tree),
+        extracted_files_(extracted_files) {
     root_.Value().AppendAnchor(Anchor(file_name, 0, base.size()));
     root_.Value().AppendAnchor(Anchor(base, 0, base.size()));
   }
@@ -86,6 +90,9 @@ class IndexingFactsTreeExtractor : public verible::TreeContextVisitor {
   // Extract macro names from kMacroIdentifiers which are considered references
   // to macros and creates its corresponding facts tree.
   void ExtractMacroReference(const verible::SyntaxTreeLeaf& macro_identifier);
+
+  // Extracts Include statements and creates its corresponding fact tree.
+  void ExtractInclude(const verible::SyntaxTreeNode& preprocessor_include);
 
   // Extracts function and creates its corresponding fact tree.
   void ExtractFunctionDeclaration(
@@ -166,12 +173,22 @@ class IndexingFactsTreeExtractor : public verible::TreeContextVisitor {
 
   // Keeps track of facts tree ancestors as the visitor traverses CST.
   IndexingFactsTreeContext facts_tree_context_;
+
+  // Add comment.
+  IndexingFactNode& file_list_facts_tree_;
+
+  // Set of the file paths of the extracted files.
+  // Used to avoid extracting some file more than one time.
+  std::set<std::string>& extracted_files_;
 };
 
-// Given a verilog file returns the extracted indexing facts tree.
-IndexingFactNode ExtractOneFile(absl::string_view content,
-                                absl::string_view filename, int& exit_status,
-                                bool& parse_ok);
+// Given the ordered SystemVerilog files, Extracts and returns the
+// IndexingFactsTree from the given files.
+// The returned Root will have the files as children and the will be ordered as
+// the given order.
+IndexingFactNode ExtractFiles(std::vector<std::string> ordered_file_list,
+                              int& exist_status,
+                              absl::string_view file_list_dir);
 
 }  // namespace kythe
 }  // namespace verilog

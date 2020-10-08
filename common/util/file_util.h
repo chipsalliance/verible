@@ -31,6 +31,10 @@ namespace file {
 // empty string.
 absl::string_view Basename(absl::string_view filename);
 
+// Returns the part of the path after the final "/".  If there is no
+// "/" in the path, the result is the same as the input.
+absl::string_view Direname(absl::string_view filename);
+
 // Returns the part of the basename of path prior to the final ".".  If
 // there is no "." in the basename, this is equivalent to file::Basename(path).
 absl::string_view Stem(absl::string_view filename);
@@ -42,7 +46,7 @@ absl::Status UpwardFileSearch(absl::string_view start,
                               absl::string_view filename, std::string* result);
 
 // Read file "filename" and store its content in "content"
-absl::Status GetContents(absl::string_view filename, std::string *content);
+absl::Status GetContents(absl::string_view filename, std::string* content);
 
 // Create file "filename" and store given content in it.
 absl::Status SetContents(absl::string_view filename, absl::string_view content);

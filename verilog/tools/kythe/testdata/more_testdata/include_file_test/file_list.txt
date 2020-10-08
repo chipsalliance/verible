@@ -1,0 +1,3 @@
+module.sv
+module2.sv
+package_with_include.sv

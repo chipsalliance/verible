@@ -43,6 +43,14 @@ absl::string_view Basename(absl::string_view filename) {
              : filename.substr(last_slash_pos + 1);
 }
 
+absl::string_view Direname(absl::string_view filename) {
+  auto last_slash_pos = filename.find_last_of("/\\");
+
+  return last_slash_pos == absl::string_view::npos
+             ? filename
+             : filename.substr(0, last_slash_pos);
+}
+
 absl::string_view Stem(absl::string_view filename) {
   auto last_dot_pos = filename.find_last_of('.');
 
@@ -116,7 +124,7 @@ absl::Status UpwardFileSearch(absl::string_view start,
 
 absl::Status GetContents(absl::string_view filename, std::string *content) {
   std::ifstream fs;
-  std::istream* stream = nullptr;
+  std::istream *stream = nullptr;
   const bool use_stdin = filename == "-";
   if (use_stdin) {
     // convention: honor "-" as stdin

@@ -13,20 +13,14 @@ module my_module;
     //- @my_class1 ref MyClass1
     static my_class1 handle1 = new();
 
-    //- @my_class2 ref MyClass2
-    static my_class2 handle2 = new();
-
     //- @my_var ref MyVar
-    handle1.my_var = 10;
+    handle1::my_var = 10;
 
     //- @my_function ref MyFunction
     $display(handle1.my_function());
 
     //- @my_task ref/call MyTask
     handle1.my_task(2);
-
-    //- @my_function ref MyFunctionOverride
-    $display(handle2.my_function());
 
     //- @my_class2 ref MyClass2
     //- @my_static_var ref MyStaticVar

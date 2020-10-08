@@ -141,6 +141,7 @@ cc_library(
         ":indexing_facts_tree_context",
         "//common/analysis:syntax_tree_search",
         "//common/text:tree_context_visitor",
+        "//common/util:file_util",
         "//common/text:tree_utils",
         "//verilog/CST:class",
         "//verilog/CST:declaration",

@@ -31,17 +31,17 @@ namespace verilog {
 namespace kythe {
 
 // Streamable printing class for kythe facts.
-// Usage: stream << KytheFactsPrinter(vector<IndexingFactNode>);
+// Usage: stream << KytheFactsPrinter(IndexingFactNode);
 class KytheFactsPrinter {
  public:
-  explicit KytheFactsPrinter(const std::vector<IndexingFactNode>& root)
-      : trees_(root) {}
+  explicit KytheFactsPrinter(const IndexingFactNode& file_list_facts_tree)
+      : file_list_facts_tree_(file_list_facts_tree) {}
 
   std::ostream& Print(std::ostream&) const;
 
  private:
   // The roots of the indexing facts trees to extract kythe facts from.
-  const std::vector<IndexingFactNode>& trees_;
+  const IndexingFactNode& file_list_facts_tree_;
 };
 
 std::ostream& operator<<(std::ostream&, const KytheFactsPrinter&);
@@ -105,7 +105,7 @@ class KytheFactsExtractor {
   void Visit(const IndexingFactNode& node);
 
   // Determines whether or not to add the VName.
-  void AddVNameToVerticalScope(IndexingFactType, const VName&);
+  void AddVNameToScopeContext(IndexingFactType, const VName&);
 
   // Appends the extracted children vnames to the scope of the current node.
   void ConstructFlattenedScope(const IndexingFactNode&, const VName&,
@@ -114,6 +114,8 @@ class KytheFactsExtractor {
   // Determines whether or not to create a child of edge between the current
   // node and the previous node.
   void CreateChildOfEdge(IndexingFactType, const VName&);
+
+  void ExtractFileList(const IndexingFactNode& file_list);
 
   // Extracts kythe facts from file node and returns it VName.
   VName ExtractFileFact(const IndexingFactNode&);
@@ -165,6 +167,9 @@ class KytheFactsExtractor {
 
   // Extracts kythe facts from a macro call node.
   void ExtractMacroCall(const IndexingFactNode& macro_call_node);
+
+  // Extracts kythe facts from a `include node.
+  void ExtractInclude(const IndexingFactNode& include_node);
 
   // Extracts kythe facts from member reference statement.
   // e.g pkg::member or class::member or class.member
@@ -221,9 +226,6 @@ class KytheFactsExtractor {
   // Used to save all the generated edges Uniquely.
   std::set<Edge> edges_;
 };
-
-// Returns the file path from the given indexing facts tree.
-std::string GetFilePathFromRoot(const IndexingFactNode& root);
 
 }  // namespace kythe
 }  // namespace verilog

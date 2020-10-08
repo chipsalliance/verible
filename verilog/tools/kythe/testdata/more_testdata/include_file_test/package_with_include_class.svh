@@ -22,13 +22,14 @@ endclass
 
 //- @my_class2 defines/binding MyClass2
 //- MyClass2 childof MyPkg
-class my_class2 extends my_class1;
+class my_class2;
 
   //- @my_static_var defines/binding MyStaticVar
   static int my_static_var;
 
-  //- @my_function defines/binding MyFunctionOverride
+  //- @my_function defines/binding _
   function int my_function();
-    return super.my_function();
+    //- @my_static_var ref MyStaticVar
+    return my_static_var;
   endfunction
 endclass
