@@ -27,8 +27,6 @@ namespace kythe {
 // Unique identifier for Kythe facts.
 class Signature {
  public:
-  Signature(const Signature& Signature) : names_(Signature.Names()) {}
-
   Signature(absl::string_view name = "")
       : names_(std::vector<std::string>{std::string(name)}) {}
 

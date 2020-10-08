@@ -318,15 +318,12 @@ void KytheFactsExtractor::ExtractFileList(const IndexingFactNode& file_list) {
 
 VName KytheFactsExtractor::ExtractFileFact(
     const IndexingFactNode& file_fact_node) {
-  VName file_vname(file_path_, Signature(""), "", "");
+  const VName file_vname(file_path_, Signature(""), "", "");
   const std::string& code_text = file_fact_node.Value().Anchors()[1].Value();
 
   CreateFact(file_vname, kFactNodeKind, kNodeFile);
   CreateFact(file_vname, kFactText, code_text);
 
-  // Update the signature to be the file path so that it can be used in
-  // definition finding.
-  // file_vname.signature = Signature(file_path_);
   return file_vname;
 }
 

@@ -40,7 +40,7 @@ class KytheFactsPrinter {
   std::ostream& Print(std::ostream&) const;
 
  private:
-  // The roots of the indexing facts trees to extract kythe facts from.
+  // The root of the indexing facts tree to extract kythe facts from.
   const IndexingFactNode& file_list_facts_tree_;
 };
 
@@ -115,6 +115,8 @@ class KytheFactsExtractor {
   // node and the previous node.
   void CreateChildOfEdge(IndexingFactType, const VName&);
 
+  // Extracts node tagged with kFileList where it iterates over every child node
+  // tagged with kFile from the begining and extracts the facts for each file.
   void ExtractFileList(const IndexingFactNode& file_list);
 
   // Extracts kythe facts from file node and returns it VName.

@@ -143,7 +143,7 @@ const Scope* ScopeResolver::SearchForScope(const Signature& signature) const {
   // Try to find the definition in the previous files' scopes.
   // This is a linear-time search over files.
   if (previous_file_scope_resolver_ != nullptr) {
-    return previous_file_scope_resolver_->SearchForScope(Signature("min"));
+    return previous_file_scope_resolver_->SearchForScope(signature);
   }
 
   return nullptr;

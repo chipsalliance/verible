@@ -43,7 +43,7 @@ static int ExtractFiles(std::vector<std::string> ordered_file_list,
 
   const verilog::kythe::IndexingFactNode file_list_facts_tree(
       verilog::kythe::ExtractFiles(ordered_file_list, exit_status,
-                                      file_list_dir));
+                                   file_list_dir));
 
   // check for printextraction flag, and print extraction if on
   if (absl::GetFlag(FLAGS_printextraction)) {
@@ -69,19 +69,18 @@ static int ExtractFiles(std::vector<std::string> ordered_file_list,
   return exit_status;
 }
 
-// update usage
 int main(int argc, char** argv) {
   const auto usage =
       absl::StrCat("usage: ", argv[0], " [options] <file> [<file>...]\n",
                    R"(
 verilog_kythe_extractor is a simple command-line utility
-to extract kythe indexing facts from the given file.
+to extract kythe indexing facts from the given file list.
 
-Expected Input: verilog file.
+Expected Input: verilog file list which contains the path of verilog files.
 Expected output: Produces Indexing Facts for kythe.
 
 Example usage:
-verible-verilog-kythe-extractor files...)");
+verible-verilog-kythe-extractor file_list)");
 
   const auto args = verible::InitCommandLine(usage, &argc, &argv);
 

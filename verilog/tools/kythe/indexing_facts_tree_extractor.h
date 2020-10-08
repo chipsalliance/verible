@@ -174,7 +174,10 @@ class IndexingFactsTreeExtractor : public verible::TreeContextVisitor {
   // Keeps track of facts tree ancestors as the visitor traverses CST.
   IndexingFactsTreeContext facts_tree_context_;
 
-  // Add comment.
+  // IndexingFactNode with tag kFileList which holds the extracted facts trees
+  // of the files in the ordered file list.
+  // The extracted files will be children of this node and ordered as they are
+  // given in the ordered file list.
   IndexingFactNode& file_list_facts_tree_;
 
   // Set of the file paths of the extracted files.

@@ -157,7 +157,7 @@ class ScopeContext : public verible::AutoPopStack<Scope*> {
 // this way definitions can be found using the signatures.
 class ScopeResolver {
  public:
-  ScopeResolver(const ScopeResolver* previous_file_scope_resolver)
+  explicit ScopeResolver(const ScopeResolver* previous_file_scope_resolver)
       : previous_file_scope_resolver_(previous_file_scope_resolver) {}
 
   const std::vector<const VName*> SearchForDefinitions(
@@ -181,7 +181,7 @@ class ScopeResolver {
 
   ScopeContext& GetMutableScopeContext() { return scope_context_; }
 
-  //  private:
+ private:
   // Return the global scope of the current scope_resolver.
   const Scope* GetGlobalScope() const;
 
