@@ -40,6 +40,11 @@ std::string GetFileListDirFromRoot(const IndexingFactNode& root) {
   return root.Value().Anchors()[0].Value();
 }
 
+// Create the global signature for the given file.
+Signature CreateGlobalSignature(absl::string_view file_path) {
+  return Signature(file_path);
+}
+
 }  // namespace
 
 const KytheIndexingData KytheFactsExtractor::ExtractKytheFacts(
@@ -199,7 +204,8 @@ void KytheFactsExtractor::CreateChildOfEdge(IndexingFactType tag,
     case IndexingFactType::kFunctionCall:
     case IndexingFactType::kMacro:
     case IndexingFactType::kModuleNamedPort:
-    case IndexingFactType::kMemberReference: {
+    case IndexingFactType::kMemberReference:
+    case IndexingFactType::kInclude: {
       break;
     }
     default: {
@@ -250,15 +256,7 @@ void KytheFactsExtractor::ConstructFlattenedScope(const IndexingFactNode& node,
 
   // Determines whether to add the current scope to the scope context or not.
   switch (tag) {
-    case IndexingFactType::kFile: {
-      // TODO(minatoma): fix this and map it only to Signature(file_path_).
-      // file's signature are assumed to be Signature("") but this should change
-      // to Signature(file_path_);
-      scope_resolver_->MapSignatureToScope(Signature(file_path_),
-                                           current_scope);
-      scope_resolver_->MapSignatureToScope(vname.signature, current_scope);
-      break;
-    }
+    case IndexingFactType::kFile:
     case IndexingFactType::kModule:
     case IndexingFactType::kClass:
     case IndexingFactType::kMacro:
@@ -308,12 +306,16 @@ void KytheFactsExtractor::ExtractFileList(const IndexingFactNode& file_list) {
   // The ScopeResolver-s are created and linked together as a linked-list
   // structure so that the current ScopeResolver can search for definitions in
   // the previous files' scopes.
-  std::vector<ScopeResolver> scope_resolvers;
-  scope_resolvers.push_back(ScopeResolver(nullptr));
+  std::vector<std::unique_ptr<ScopeResolver>> scope_resolvers;
+  scope_resolvers.push_back(
+      std::move(std::unique_ptr<ScopeResolver>(scope_resolver_)));
 
   for (const IndexingFactNode& root : file_list.Children()) {
-    KytheFactsExtractor kythe_extractor(GetFilePathFromRoot(root),
-                                        &scope_resolvers.back());
+    std::string file_path = GetFilePathFromRoot(root);
+    scope_resolvers.push_back(std::move(absl::make_unique<ScopeResolver>(
+        CreateGlobalSignature(file_path), scope_resolvers.back().get())));
+    KytheFactsExtractor kythe_extractor(file_path,
+                                        scope_resolvers.back().get());
 
     const auto indexing_data = kythe_extractor.ExtractKytheFacts(root);
     for (const Fact& fact : indexing_data.facts) {
@@ -322,20 +324,19 @@ void KytheFactsExtractor::ExtractFileList(const IndexingFactNode& file_list) {
     for (const Edge& edge : indexing_data.edges) {
       edges_.insert(edge);
     }
-
-    // TODO(minatoma): fix this to pass a pointer to the last scope_resolver.
-    scope_resolvers.push_back(ScopeResolver(scope_resolvers.back()));
   }
 }
 
 VName KytheFactsExtractor::ExtractFileFact(
     const IndexingFactNode& file_fact_node) {
-  const VName file_vname(file_path_, Signature(""), "", "");
+  VName file_vname(file_path_, Signature(""), "", "");
   const std::string& code_text = file_fact_node.Value().Anchors()[1].Value();
 
   CreateFact(file_vname, kFactNodeKind, kNodeFile);
   CreateFact(file_vname, kFactText, code_text);
 
+  // Update the signature of the file to be the global signature.
+  file_vname.signature = CreateGlobalSignature(file_path_);
   return file_vname;
 }
 
@@ -787,11 +788,10 @@ void KytheFactsExtractor::CreateEdge(const VName& source_node,
 }
 
 std::ostream& KytheFactsPrinter::Print(std::ostream& stream) const {
-  // Creates a scope for this kythe_extractor as the scopes aren't owned by the
-  // extractor and should outlive the extractor.
-  ScopeResolver scope_resolver(nullptr);
+  // Passing the scope resolver as nullptr as this should be the end of scopes'
+  // linked list.
   KytheFactsExtractor kythe_extractor(
-      GetFileListDirFromRoot(file_list_facts_tree_), &scope_resolver);
+      GetFileListDirFromRoot(file_list_facts_tree_), nullptr);
 
   auto indexing_data = kythe_extractor.ExtractKytheFacts(file_list_facts_tree_);
   for (const Fact& fact : indexing_data.facts) {

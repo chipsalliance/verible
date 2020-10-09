@@ -157,8 +157,10 @@ class ScopeContext : public verible::AutoPopStack<Scope*> {
 // this way definitions can be found using the signatures.
 class ScopeResolver {
  public:
-  explicit ScopeResolver(const ScopeResolver* previous_file_scope_resolver)
-      : previous_file_scope_resolver_(previous_file_scope_resolver) {}
+  ScopeResolver(const Signature& global_scope_signature,
+                const ScopeResolver* previous_file_scope_resolver)
+      : previous_file_scope_resolver_(previous_file_scope_resolver),
+        global_scope_signature_(global_scope_signature) {}
 
   const std::vector<const VName*> SearchForDefinitions(
       const std::vector<std::string>& names) const;
@@ -181,10 +183,7 @@ class ScopeResolver {
 
   ScopeContext& GetMutableScopeContext() { return scope_context_; }
 
- private:
-  // Return the global scope of the current scope_resolver.
-  const Scope* GetGlobalScope() const;
-
+//  private:
   // Searches for a definition with the given name in the scope context and if
   // not found searches the global scopes of the previous files' scopes (returns
   // nullptr if a definitions is not found).
@@ -228,6 +227,9 @@ class ScopeResolver {
   // exists). This is used for definition finding in cross-file referencing.
   // This forms a null-terminated singly-linked list across files.
   const ScopeResolver* previous_file_scope_resolver_;
+
+  // The signature of the global scope of this ScopeResolver.
+  const Signature global_scope_signature_;
 };
 
 }  // namespace kythe

@@ -87,7 +87,7 @@ TEST(ScopesTest, AppendScope) {
 }
 
 TEST(ScopeResolverTests, SearchForDefinition) {
-  ScopeResolver scope_resolver(nullptr);
+  ScopeResolver scope_resolver(Signature(""), nullptr);
 
   /**
    * signature[0] => {
@@ -133,7 +133,7 @@ TEST(ScopeResolverTests, SearchForDefinition) {
 }
 
 TEST(ScopeResolverTests, SearchForNestedDefinition) {
-  ScopeResolver scope_resolver(nullptr);
+  ScopeResolver scope_resolver(Signature(""), nullptr);
 
   /**
    * signature[0] => {
