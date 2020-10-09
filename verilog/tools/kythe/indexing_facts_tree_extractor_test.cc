@@ -3381,6 +3381,112 @@ TEST(FactsTreeExtractor, PackedAndUnpackedDimension) {
   EXPECT_EQ(result_pair.right, nullptr) << *result_pair.right;
 }
 
+TEST(FactsTreeExtractor, FileIncludes) {
+  constexpr int kTag = 1;  // value doesn't matter
+  const verible::SyntaxTreeSearchTestCase kTestCase0 = {
+      {"class ",
+       {kTag, "my_class"},
+       ";\n static int ",
+       {kTag, "var5"},
+       ";\n endclass"},
+  };
+
+  ScopedTestFile included_test_file(testing::TempDir(), kTestCase0.code);
+
+  std::string filename_included =
+      std::string(verible::file::Basename(included_test_file.filename()));
+  filename_included = "\"" + filename_included + "\"";
+
+  const verible::SyntaxTreeSearchTestCase kTestCase = {
+      {"`include ",
+       {kTag, filename_included},
+       "\n module ",
+       {kTag, "my_module"},
+       "();\n initial begin\n$display(",
+       {kTag, "my_class"},
+       "::",
+       {kTag, "var5"},
+       ");\n "
+       "end\nendmodule"},
+  };
+
+  ScopedTestFile test_file(testing::TempDir(), kTestCase.code);
+  int exit_status = 0;
+
+  const IndexingFactNode expected(T(
+      {
+          {
+              Anchor(testing::TempDir(), 0, 0),
+          },
+          IndexingFactType::kFileList,
+      },
+      T(
+          {
+              {
+                  Anchor(included_test_file.filename(), 0,
+                         kTestCase0.code.size()),
+                  Anchor(kTestCase0.code, 0, kTestCase0.code.size()),
+              },
+              IndexingFactType ::kFile,
+          },
+          // refers to class my_class.
+          T(
+              {
+                  {
+                      Anchor(kTestCase0.expected_tokens[1], kTestCase0.code),
+                  },
+                  IndexingFactType ::kClass,
+              },
+              // refers to int var5.
+              T({
+                  {
+                      Anchor(kTestCase0.expected_tokens[3], kTestCase0.code),
+                  },
+                  IndexingFactType ::kVariableDefinition,
+              }))),
+      T(
+          {
+              {
+                  Anchor(test_file.filename(), 0, kTestCase.code.size()),
+                  Anchor(kTestCase.code, 0, kTestCase.code.size()),
+              },
+              IndexingFactType ::kFile,
+          },
+          // refers to include.
+          T({
+              {
+                  Anchor(kTestCase.expected_tokens[1], kTestCase.code),
+                  Anchor(included_test_file.filename(), 0, 0),
+              },
+              IndexingFactType ::kInclude,
+          }),
+          // refers to module my_module.
+          T(
+              {
+                  {
+                      Anchor(kTestCase.expected_tokens[3], kTestCase.code),
+                  },
+                  IndexingFactType ::kModule,
+              },
+
+              // refers to $display(my_class::var5).
+              T({
+                  {
+                      Anchor(kTestCase.expected_tokens[5], kTestCase.code),
+                      Anchor(kTestCase.expected_tokens[7], kTestCase.code),
+                  },
+                  IndexingFactType ::kMemberReference,
+              })))));
+
+  const auto facts_tree =
+      ExtractFiles({std::string(verible::file::Basename(test_file.filename()))},
+                   exit_status, testing::TempDir());
+
+  const auto result_pair = DeepEqual(facts_tree, expected);
+  EXPECT_EQ(result_pair.left, nullptr) << *result_pair.left;
+  EXPECT_EQ(result_pair.right, nullptr) << *result_pair.right;
+}
+
 }  // namespace
 }  // namespace kythe
 }  // namespace verilog

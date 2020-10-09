@@ -189,8 +189,8 @@ class IndexingFactsTreeExtractor : public verible::TreeContextVisitor {
 // IndexingFactsTree from the given files.
 // The returned Root will have the files as children and the will be ordered as
 // the given order.
-IndexingFactNode ExtractFiles(std::vector<std::string> ordered_file_list,
-                              int& exist_status,
+IndexingFactNode ExtractFiles(const std::vector<std::string>& ordered_file_list,
+                              int& exit_status,
                               absl::string_view file_list_dir);
 
 }  // namespace kythe

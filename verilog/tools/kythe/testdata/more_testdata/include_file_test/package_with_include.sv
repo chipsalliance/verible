@@ -4,6 +4,7 @@
 //- _FileNode.node/kind file
 //- @package_with_include defines/binding MyPkg
 package package_with_include;
+  //- @"\"package_with_include_class.svh\"" ref/includes vname(_,_, _, "./verilog/tools/kythe/testdata/more_testdata/include_file_test/package_with_include_class.svh", _)
   `include "package_with_include_class.svh"
 endpackage
 

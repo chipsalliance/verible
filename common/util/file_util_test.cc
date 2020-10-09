@@ -35,12 +35,15 @@ TEST(FileUtil, Basename) {
   EXPECT_EQ(file::Basename(""), "");
 }
 
-TEST(FileUtil, Direname) {
-  EXPECT_EQ(file::Direname("/foo/bar/baz"), "/foo/bar");
-  EXPECT_EQ(file::Direname("foo/bar/baz"), "foo/bar");
-  EXPECT_EQ(file::Direname("/foo/bar/"), "/foo/bar");
-  EXPECT_EQ(file::Basename("/"), "");
-  EXPECT_EQ(file::Basename(""), "");
+TEST(FileUtil, Dirname) {
+  EXPECT_EQ(file::Dirname("/foo/bar/baz"), "/foo/bar");
+  EXPECT_EQ(file::Dirname("/foo/bar/baz.txt"), "/foo/bar");
+  EXPECT_EQ(file::Dirname("foo/bar/baz"), "foo/bar");
+  EXPECT_EQ(file::Dirname("/foo/bar/"), "/foo/bar");
+  EXPECT_EQ(file::Dirname("/"), "");
+  EXPECT_EQ(file::Dirname(""), "");
+  EXPECT_EQ(file::Dirname("."), ".");
+  EXPECT_EQ(file::Dirname("./"), ".");
 }
 
 TEST(FileUtil, Stem) {

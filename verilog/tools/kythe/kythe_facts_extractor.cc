@@ -28,19 +28,22 @@ namespace kythe {
 
 namespace {
 
-// Returns the file path from the given indexing facts tree.
+// Returns the file path of the file from the given indexing facts tree node
+// tagged with kFile.
 std::string GetFilePathFromRoot(const IndexingFactNode& root) {
   return root.Value().Anchors()[0].Value();
 }
 
-// Returns the file path from the given indexing facts tree.
+// Returns the file path of the file list from the given indexing facts tree
+// node tagged with kFileList.
 std::string GetFileListDirFromRoot(const IndexingFactNode& root) {
   return root.Value().Anchors()[0].Value();
 }
 
 }  // namespace
 
-void KytheFactsExtractor::ExtractKytheFacts(const IndexingFactNode& root) {
+const KytheIndexingData KytheFactsExtractor::ExtractKytheFacts(
+    const IndexingFactNode& root) {
   // For every iteration:
   // saves the current number of extracted facts, do another iteration to
   // extract more facts and if new facts were extracted do another iteration and
@@ -50,6 +53,16 @@ void KytheFactsExtractor::ExtractKytheFacts(const IndexingFactNode& root) {
     number_of_extracted_facts = facts_.size();
     IndexingFactNodeTagResolver(root);
   } while (number_of_extracted_facts != facts_.size());
+
+  KytheIndexingData indexing_data;
+  for (const Fact& fact : facts_) {
+    indexing_data.facts.insert(fact);
+  }
+  for (const Edge& edge : edges_) {
+    indexing_data.edges.insert(edge);
+  }
+
+  return indexing_data;
 }
 
 void KytheFactsExtractor::IndexingFactNodeTagResolver(
@@ -290,30 +303,28 @@ void KytheFactsExtractor::Visit(const IndexingFactNode& node) {
 }
 
 void KytheFactsExtractor::ExtractFileList(const IndexingFactNode& file_list) {
+  // Create a new ScopeResolver and give the ownership to the scope_resolvers
+  // vector so that it can outlive KytheFactsExtractor.
+  // The ScopeResolver-s are created and linked together as a linked-list
+  // structure so that the current ScopeResolver can search for definitions in
+  // the previous files' scopes.
   std::vector<ScopeResolver> scope_resolvers;
+  scope_resolvers.push_back(ScopeResolver(nullptr));
 
   for (const IndexingFactNode& root : file_list.Children()) {
-    // Create a new ScopeResolver and give the ownership to the scope_resolvers
-    // vector so that it can outlive KytheFactsExtractor.
-    // The ScopeResolver-s are created and linked together as a linked-list
-    // structure so that the current ScopeResolver can search for definitions in
-    // the previous files' scopes.
-    std::string file_path = GetFilePathFromRoot(root);
-    if (scope_resolvers.empty()) {
-      scope_resolvers.push_back(ScopeResolver(nullptr));
-    } else {
-      // TODO(minatoma): fix this to pass a pointer to the last scope_resolver.
-      scope_resolvers.push_back(ScopeResolver(scope_resolvers.back()));
-    }
+    KytheFactsExtractor kythe_extractor(GetFilePathFromRoot(root),
+                                        &scope_resolvers.back());
 
-    KytheFactsExtractor kythe_extractor(file_path, &scope_resolvers.back());
-    kythe_extractor.ExtractKytheFacts(root);
-    for (const Fact& fact : kythe_extractor.GetExtractedFacts()) {
+    const auto indexing_data = kythe_extractor.ExtractKytheFacts(root);
+    for (const Fact& fact : indexing_data.facts) {
       facts_.insert(fact);
     }
-    for (const Edge& edge : kythe_extractor.GetExtractedEdges()) {
+    for (const Edge& edge : indexing_data.edges) {
       edges_.insert(edge);
     }
+
+    // TODO(minatoma): fix this to pass a pointer to the last scope_resolver.
+    scope_resolvers.push_back(ScopeResolver(scope_resolvers.back()));
   }
 }
 
@@ -728,8 +739,8 @@ void KytheFactsExtractor::ExtractInclude(const IndexingFactNode& include_node) {
 
   // Create child of edge between the parent and the member of the included
   // file.
-  for (const ScopeMemberItem& item : included_file_scope->Members()) {
-    CreateEdge(item.vname, kEdgeChildOf, vnames_context_.top());
+  for (const ScopeMemberItem& member : included_file_scope->Members()) {
+    CreateEdge(member.vname, kEdgeChildOf, vnames_context_.top());
   }
 
   // Append the scope of the included file to the current scope.
@@ -775,24 +786,18 @@ void KytheFactsExtractor::CreateEdge(const VName& source_node,
   edges_.insert(Edge(source_node, edge_name, target_node));
 }
 
-const std::set<Fact>& KytheFactsExtractor::GetExtractedFacts() const {
-  return facts_;
-}
-
-const std::set<Edge>& KytheFactsExtractor::GetExtractedEdges() const {
-  return edges_;
-}
-
 std::ostream& KytheFactsPrinter::Print(std::ostream& stream) const {
+  // Creates a scope for this kythe_extractor as the scopes aren't owned by the
+  // extractor and should outlive the extractor.
   ScopeResolver scope_resolver(nullptr);
   KytheFactsExtractor kythe_extractor(
       GetFileListDirFromRoot(file_list_facts_tree_), &scope_resolver);
 
-  kythe_extractor.ExtractKytheFacts(file_list_facts_tree_);
-  for (const Fact& fact : kythe_extractor.GetExtractedFacts()) {
+  auto indexing_data = kythe_extractor.ExtractKytheFacts(file_list_facts_tree_);
+  for (const Fact& fact : indexing_data.facts) {
     stream << fact;
   }
-  for (const Edge& edge : kythe_extractor.GetExtractedEdges()) {
+  for (const Edge& edge : indexing_data.edges) {
     stream << edge;
   }
 

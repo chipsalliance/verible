@@ -44,9 +44,10 @@ struct Directory {
 // empty string.
 absl::string_view Basename(absl::string_view filename);
 
-// Returns the part of the path after the final "/".  If there is no
+// Returns the the directory that contains the file.  If there is no
 // "/" in the path, the result is the same as the input.
-absl::string_view Direname(absl::string_view filename);
+// If no "/" is found the result is the same as the input.
+absl::string_view Dirname(absl::string_view filename);
 
 // Returns the part of the basename of path prior to the final ".".  If
 // there is no "." in the basename, this is equivalent to file::Basename(path).

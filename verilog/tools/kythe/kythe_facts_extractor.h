@@ -46,6 +46,15 @@ class KytheFactsPrinter {
 
 std::ostream& operator<<(std::ostream&, const KytheFactsPrinter&);
 
+// Extracted Kythe indexing facts and edges.
+struct KytheIndexingData {
+  // Extracted Kythe indexing facts.
+  std::set<Fact> facts;
+
+  // Extracted Kythe edges.
+  std::set<Edge> edges;
+};
+
 // Responsible for traversing IndexingFactsTree and processing its different
 // nodes to produce kythe indexing facts.
 // Iteratively extracts facts and keeps running until no new facts are found in
@@ -57,13 +66,7 @@ class KytheFactsExtractor {
       : file_path_(file_path), scope_resolver_(previous_files_scopes) {}
 
   // Extracts kythe facts from the given IndexingFactsTree root.
-  void ExtractKytheFacts(const IndexingFactNode&);
-
-  // Returns all extracted Kythe facts.
-  const std::set<Fact>& GetExtractedFacts() const;
-
-  // Returns all extracted Kythe edges.
-  const std::set<Edge>& GetExtractedEdges() const;
+  const KytheIndexingData ExtractKytheFacts(const IndexingFactNode&);
 
  private:
   // Container with a stack of VNames to hold context of VNames during traversal

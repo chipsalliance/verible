@@ -46,7 +46,7 @@ absl::string_view Basename(absl::string_view filename) {
              : filename.substr(last_slash_pos + 1);
 }
 
-absl::string_view Direname(absl::string_view filename) {
+absl::string_view Dirname(absl::string_view filename) {
   auto last_slash_pos = filename.find_last_of("/\\");
 
   return last_slash_pos == absl::string_view::npos

@@ -37,7 +37,7 @@ ABSL_FLAG(bool, printkythefacts, false,
 ABSL_FLAG(std::string, output_path, "",
           "File path where to write the extracted Kythe facts in JSON format.");
 
-static int ExtractFiles(std::vector<std::string> ordered_file_list,
+static int ExtractFiles(const std::vector<std::string>& ordered_file_list,
                         absl::string_view file_list_dir) {
   int exit_status = 0;
 
@@ -49,7 +49,7 @@ static int ExtractFiles(std::vector<std::string> ordered_file_list,
   if (absl::GetFlag(FLAGS_printextraction)) {
     std::cout << file_list_facts_tree << std::endl;
   }
-  LOG(INFO) << '\n' << file_list_facts_tree;
+  // LOG(INFO) << '\n' << file_list_facts_tree;
 
   // check for printkythefacts flag, and print the facts if on
   if (absl::GetFlag(FLAGS_printkythefacts)) {
@@ -77,6 +77,8 @@ verilog_kythe_extractor is a simple command-line utility
 to extract kythe indexing facts from the given file list.
 
 Expected Input: verilog file list which contains the path of verilog files.
+These files are top-level translation units, and should exclude `include-d files.
+
 Expected output: Produces Indexing Facts for kythe.
 
 Example usage:
@@ -88,7 +90,7 @@ verible-verilog-kythe-extractor file_list)");
 
   std::string content;
   if (!verible::file::GetContents(args[1], &content).ok()) {
-    LOG(INFO) << "Erro while reading file: " << args[1];
+    LOG(ERROR) << "Error while reading file: " << args[1];
     return 1;
   };
 
@@ -97,9 +99,10 @@ verible-verilog-kythe-extractor file_list)");
 
   std::stringstream stream(content);
   while (stream >> filename) {
+    // TODO(minatoma): ignore blank lines and "# ..." comments
     files_names.push_back(filename);
   }
 
-  int exit_status = ExtractFiles(files_names, verible::file::Direname(args[1]));
+  int exit_status = ExtractFiles(files_names, verible::file::Dirname(args[1]));
   return exit_status;
 }
