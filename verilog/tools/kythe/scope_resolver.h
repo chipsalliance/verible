@@ -183,7 +183,7 @@ class ScopeResolver {
 
   ScopeContext& GetMutableScopeContext() { return scope_context_; }
 
-//  private:
+ private:
   // Searches for a definition with the given name in the scope context and if
   // not found searches the global scopes of the previous files' scopes (returns
   // nullptr if a definitions is not found).
