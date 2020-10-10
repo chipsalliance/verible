@@ -4,8 +4,8 @@
 freshness: { owner: 'fangism' reviewed: '2020-10-04' }
 *-->
 
-`verible-verilog-diff` compares two SystemVerilog source files and reports the first
-lexical difference. Equivalence is determined by the comparison `--mode`.
+`verible-verilog-diff` compares two SystemVerilog source files and reports the
+first lexical difference. Equivalence is determined by the comparison `--mode`.
 
 *   `--mode=format` Checks for equivalence of text ignoring whitespaces.
 *   `--mode=obfuscate` Checks for equivalence including spaces, and verifies

@@ -78,17 +78,13 @@ static void ExtractKytheFacts(
 }
 
 int main(int argc, char** argv) {
-  const auto usage =
-      absl::StrCat("usage: ", argv[0], " [options] <file> [<file>...]\n",
-                   R"(
-verilog_kythe_extractor is a simple command-line utility
-to extract kythe indexing facts from the given file.
+  const auto usage = absl::StrCat("usage: ", argv[0], " [options] <files...>\n",
+                                  R"(
+Extracts kythe indexing facts from the given SystemVerilog source files.
 
-Expected Input: verilog file.
-Expected output: Produces Indexing Facts for kythe.
-
-Example usage:
-verible-verilog-kythe-extractor files...)");
+Input: SystemVerilog file(s).
+Output: Produces Indexing Facts for kythe (http://kythe.io).
+)");
 
   const auto args = verible::InitCommandLine(usage, &argc, &argv);
 

@@ -50,3 +50,14 @@ _Ideal_ properties of CST nodes:
 This is not the case today because of the haste in which initial development
 took place, but help is wanted towards achieving the aforementioned ideals. See
 also https://github.com/google/verible/issues/159.
+
+## Abstract Syntax Tree?
+
+_Wouldn't an abstract syntax tree (AST) satisfy the above ideals?_ Yes, this
+would take time to write, and we would need
+[help](https://github.com/google/verible/issues/184).
+
+An AST may not be a great representation for _unpreprocessed_ code, which is the
+focus of the first developer tool applications. Having a
+[standard-compliant SV preprocessor](https://github.com/google/verible/issues/183)
+would pave the way to making an AST more useful.
