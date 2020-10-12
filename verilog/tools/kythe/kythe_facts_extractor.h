@@ -66,7 +66,7 @@ class KytheFactsExtractor {
       : file_path_(file_path), scope_resolver_(previous_files_scopes) {}
 
   // Extracts kythe facts from the given IndexingFactsTree root.
-  const KytheIndexingData ExtractKytheFacts(const IndexingFactNode&);
+  KytheIndexingData ExtractKytheFacts(const IndexingFactNode&);
 
  private:
   // Container with a stack of VNames to hold context of VNames during traversal
