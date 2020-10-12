@@ -47,7 +47,7 @@ Signature CreateGlobalSignature(absl::string_view file_path) {
 
 }  // namespace
 
-const KytheIndexingData KytheFactsExtractor::ExtractKytheFacts(
+KytheIndexingData KytheFactsExtractor::ExtractKytheFacts(
     const IndexingFactNode& root) {
   // For every iteration:
   // saves the current number of extracted facts, do another iteration to
