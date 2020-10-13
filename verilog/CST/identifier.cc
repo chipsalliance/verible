@@ -48,6 +48,11 @@ std::vector<verible::TreeSearchMatch> FindAllQualifiedIds(
   return verible::SearchSyntaxTree(root, NodekQualifiedId());
 }
 
+std::vector<verible::TreeSearchMatch> FindAllSymbolIdentifierLeafs(
+    const verible::Symbol& root) {
+  return verible::SearchSyntaxTree(root, SymbolIdentifierLeaf());
+}
+
 bool IdIsQualified(const verible::Symbol& symbol) {
   auto t = symbol.Tag();
   if (t.kind != SymbolKind::kNode) return false;

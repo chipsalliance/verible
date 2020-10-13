@@ -62,6 +62,14 @@ static const LeafMatcher<SystemTFIdentifier> SystemTFIdentifierLeaf;
 //
 static const LeafMatcher<MacroCallId> MacroCallIdLeaf;
 
+// Matches against symbol identifiers.
+//
+// For instance, matches 'foo' in:
+//    wire foo;
+//    parameter foo = 32'hDEADBEEF;
+//
+static const LeafMatcher<SymbolIdentifier> SymbolIdentifierLeaf;
+
 // Declaration of Node Matchers
 
 // Declare every syntax tree node matcher.

@@ -37,6 +37,11 @@ std::vector<verible::TreeSearchMatch> FindAllModuleDeclarations(
   return SearchSyntaxTree(root, NodekModuleDeclaration());
 }
 
+std::vector<verible::TreeSearchMatch> FindAllModuleHeaders(
+    const Symbol& root) {
+  return SearchSyntaxTree(root, NodekModuleHeader());
+}
+
 std::vector<verible::TreeSearchMatch> FindAllInterfaceDeclarations(
     const verible::Symbol& root) {
   return SearchSyntaxTree(root, NodekInterfaceDeclaration());
