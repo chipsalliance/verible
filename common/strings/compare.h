@@ -15,6 +15,8 @@
 #ifndef VERIBLE_COMMON_STRINGS_COMPARE_H_
 #define VERIBLE_COMMON_STRINGS_COMPARE_H_
 
+#include <set>
+
 #include "absl/strings/string_view.h"
 
 namespace verible {
@@ -33,6 +35,8 @@ struct StringViewCompare {
     return a < b;
   }
 };
+
+typedef std::set<std::string, verible::StringViewCompare> StringSet;
 
 }  // namespace verible
 

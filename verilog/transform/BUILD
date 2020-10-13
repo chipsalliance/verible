@@ -20,6 +20,7 @@ cc_library(
         "//common/text:token_info",
         "//common/util:logging",
         "//verilog/analysis:verilog_equivalence",
+        "//verilog/analysis:verilog_analyzer",
         "//verilog/parser:verilog_lexer",
         "//verilog/parser:verilog_token_enum",
         "@com_google_absl//absl/status",

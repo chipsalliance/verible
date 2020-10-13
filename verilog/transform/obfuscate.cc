@@ -24,8 +24,11 @@
 #include "common/text/token_info.h"
 #include "common/util/logging.h"
 #include "verilog/analysis/verilog_equivalence.h"
+#include "verilog/analysis/verilog_analyzer.h"
 #include "verilog/parser/verilog_lexer.h"
 #include "verilog/parser/verilog_token_enum.h"
+#include "verilog/CST/module.h"
+#include "verilog/CST/identifier.h"
 
 namespace verilog {
 
@@ -139,6 +142,38 @@ static absl::Status VerifyEquivalence(absl::string_view original,
           original, encoded);
   }
   return absl::OkStatus();
+}
+
+// Find all modules and collect interface names
+absl::Status CollectInterfaceNames(absl::string_view content,
+                                   verible::StringSet* if_names) {
+  VLOG(1) << __FUNCTION__;
+
+  const auto analyzer =
+      verilog::VerilogAnalyzer::AnalyzeAutomaticMode(content, NULL);
+  const auto lex_status = ABSL_DIE_IF_NULL(analyzer)->LexStatus();
+  const auto parse_status = analyzer->ParseStatus();
+
+  if (lex_status.ok() && parse_status.ok()) {
+    const auto& syntax_tree = analyzer->SyntaxTree();
+    const auto mod_headers =
+      FindAllModuleHeaders(*ABSL_DIE_IF_NULL(syntax_tree).get());
+
+    // For each module, collect all indentifiers under the module
+    // header tree into the StringSet.
+    for(auto const& mod_header: mod_headers) {
+      const auto if_leafs =
+        FindAllSymbolIdentifierLeafs(*mod_header.match);
+      for(auto const& if_leaf_match: if_leafs) {
+        const auto if_leaf = SymbolCastToLeaf(*if_leaf_match.match);
+        absl::string_view if_name = if_leaf.get().text();
+        if_names->insert(std::string(if_name)); // TODO: use absl::string_view
+      }
+    }
+    return absl::OkStatus();
+  }
+  return absl::InvalidArgumentError(
+      "Lexer or parser error, input is invalid.");
 }
 
 absl::Status ObfuscateVerilogCode(absl::string_view content,

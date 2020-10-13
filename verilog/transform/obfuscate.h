@@ -23,6 +23,12 @@
 
 namespace verilog {
 
+// Collect all identifiers under module header subtree in the CTS.
+// This could be useful when interface names are required to be
+// preserved.
+absl::Status CollectInterfaceNames(absl::string_view content,
+                                   verible::StringSet* if_names);
+
 // Obfuscates Verilog code.  Identifiers are randomized as equal length
 // replacements, and transformations are recorded (in subst) and re-applied
 // to the same strings seen.  Input code only needs to be lexically valid,

@@ -50,6 +50,12 @@ ABSL_FLAG(                //
     "reverse to de-obfuscate the source code, and do not obfuscate any unseen "
     "identifiers.  There is no need to --save_map with this option, because "
     "no new substitutions are established.");
+ABSL_FLAG(                //
+    bool, preserve_interface, false,  //
+    "If true, module name and port names will be preserved.  The translation "
+    "map saved with --save_map will have identical mapping for these "
+    "identifiers.  When used with --load_map, the mapping explicitly specified "
+    "in the map file will have higher priority than this option.");
 
 int main(int argc, char** argv) {
   const auto usage = absl::StrCat("usage: ", argv[0],
@@ -93,6 +99,19 @@ Output is written to stdout.
   std::string content;
   if (!verible::file::GetContents("-", &content).ok()) {
     return 1;
+  }
+
+  // Preserve interface names (e.g. module name, port names).
+  const bool preserve_interface = absl::GetFlag(FLAGS_preserve_interface);
+  verible::StringSet preserved;
+  if (preserve_interface) {
+    const auto status = verilog::CollectInterfaceNames(content, &preserved);
+    if (!status.ok()) {
+      std::cerr << status.message();
+      return 1;
+    }
+    for (auto const& preserved_name : preserved)
+      subst.encode(preserved_name, preserved_name);
   }
 
   // Encode/obfuscate.  Also verifies decode-ability.
