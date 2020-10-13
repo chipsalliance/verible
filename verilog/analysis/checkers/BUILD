@@ -44,6 +44,7 @@ cc_library(
         ":module_instantiation_rules",
         ":no_tabs_rule",
         ":no_trailing_spaces_rule",
+        ":numeric_format_string_style_rule",
         ":one_module_per_file_rule",
         ":package_filename_rule",
         ":packed_dimensions_rule",
@@ -1400,6 +1401,40 @@ cc_test(
     srcs = ["macro_name_style_rule_test.cc"],
     deps = [
         ":macro_name_style_rule",
+        "//common/analysis:linter_test_utils",
+        "//common/analysis:token_stream_linter_test_utils",
+        "//common/text:symbol",
+        "//verilog/analysis:verilog_analyzer",
+        "//verilog/parser:verilog_token_enum",
+        "@com_google_googletest//:gtest_main",
+    ],
+)
+
+cc_library(
+    name = "numeric_format_string_style_rule",
+    srcs = ["numeric_format_string_style_rule.cc"],
+    hdrs = ["numeric_format_string_style_rule.h"],
+    deps = [
+        "//common/analysis:citation",
+        "//common/analysis:lint_rule_status",
+        "//common/analysis:token_stream_lint_rule",
+        "//common/strings:naming_utils",
+        "//common/text:token_info",
+        "//verilog/analysis:descriptions",
+        "//verilog/analysis:lint_rule_registry",
+        "//verilog/parser:verilog_lexer",
+        "//verilog/parser:verilog_token_classifications",
+        "//verilog/parser:verilog_token_enum",
+        "@com_google_absl//absl/strings",
+    ],
+    alwayslink = 1,
+)
+
+cc_test(
+    name = "numeric_format_string_style_rule_test",
+    srcs = ["numeric_format_string_style_rule_test.cc"],
+    deps = [
+        ":numeric_format_string_style_rule",
         "//common/analysis:linter_test_utils",
         "//common/analysis:token_stream_linter_test_utils",
         "//common/text:symbol",
