@@ -71,19 +71,18 @@ void ScopeResolver::AddDefinitionToScopeContext(
   scope_context_.top().AddMemberItem(new_member);
 }
 
-const Signature CreateGlobalScopeSignature() {
-  // The signature for the global scope is always empty.
-  return Signature("");
-}
-
-const Scope* ScopeResolver::GetGlobalScope() const {
-  return SearchForScope(CreateGlobalScopeSignature());
-}
-
 const VName* ScopeResolver::SearchForDefinitionInGlobalScope(
     absl::string_view reference_name) const {
-  return SearchForDefinitionInScope(CreateGlobalScopeSignature(),
-                                    reference_name);
+  const VName* definition =
+      SearchForDefinitionInScope(global_scope_signature_, reference_name);
+  if (definition != nullptr) {
+    return definition;
+  }
+  if (previous_file_scope_resolver_ != nullptr) {
+    return previous_file_scope_resolver_->SearchForDefinitionInGlobalScope(
+        reference_name);
+  }
+  return nullptr;
 }
 
 const VName* ScopeResolver::SearchForDefinitionInScopeContext(
@@ -96,7 +95,7 @@ const VName* ScopeResolver::SearchForDefinitionInScopeContext(
   }
 
   // Try to find the definition in the previous files' scopes.
-  // Comment here that this is a linear-time search over files.
+  // This is a linear-time search over files.
   if (previous_file_scope_resolver_ != nullptr) {
     return previous_file_scope_resolver_->SearchForDefinitionInGlobalScope(
         reference_name);
@@ -141,7 +140,7 @@ const Scope* ScopeResolver::SearchForScope(const Signature& signature) const {
   }
 
   // Try to find the definition in the previous files' scopes.
-  // Comment here that this is a linear-time search over files.
+  // This is a linear-time search over files.
   if (previous_file_scope_resolver_ != nullptr) {
     return previous_file_scope_resolver_->SearchForScope(signature);
   }

@@ -17,8 +17,10 @@
 #include <iostream>
 #include <string>
 
+#include "absl/strings/strip.h"
 #include "common/text/tree_context_visitor.h"
 #include "common/text/tree_utils.h"
+#include "common/util/file_util.h"
 #include "verilog/CST/class.h"
 #include "verilog/CST/declaration.h"
 #include "verilog/CST/functions.h"
@@ -48,23 +50,24 @@ using verible::TreeSearchMatch;
 // constructs the indexing facts tree.
 IndexingFactNode BuildIndexingFactsTree(
     const verible::ConcreteSyntaxTree& syntax_tree, absl::string_view base,
-    absl::string_view file_name) {
-  IndexingFactsTreeExtractor visitor(base, file_name);
+    absl::string_view file_name, IndexingFactNode& file_list_facts_tree,
+    std::set<std::string>& extracted_files) {
+  IndexingFactsTreeExtractor visitor(base, file_name, file_list_facts_tree,
+                                     extracted_files);
   if (syntax_tree == nullptr) {
     return visitor.GetRoot();
   }
 
   const SyntaxTreeNode& root = verible::SymbolCastToNode(*syntax_tree);
   root.Accept(&visitor);
-
   return visitor.GetRoot();
 }
 
-}  // namespace
-
+// Given a verilog file returns the extracted indexing facts tree.
 IndexingFactNode ExtractOneFile(absl::string_view content,
-                                absl::string_view filename, int& exit_status,
-                                bool& parse_ok) {
+                                absl::string_view filename,
+                                IndexingFactNode& file_list_facts_tree,
+                                std::set<std::string>& extracted_files) {
   verilog::VerilogAnalyzer analyzer(content, filename);
   // Do not parse using AnalyzeAutomaticMode() because index extraction is only
   // expected to work on self-contained files with full syntactic context.
@@ -75,15 +78,54 @@ IndexingFactNode ExtractOneFile(absl::string_view content,
     for (const auto& message : syntax_error_messages) {
       std::cout << message << std::endl;
     }
-    exit_status = 1;
   }
-  parse_ok = status.ok();
 
   const auto& text_structure = analyzer.Data();
   const auto& syntax_tree = text_structure.SyntaxTree();
 
   return BuildIndexingFactsTree(syntax_tree, analyzer.Data().Contents(),
-                                filename);
+                                filename, file_list_facts_tree,
+                                extracted_files);
+}
+
+// Returns the path of the file relative to the file list.
+std::string GetPathRelativeToFileList(absl::string_view file_list_dir,
+                                      absl::string_view filename) {
+  return verible::file::JoinPath(file_list_dir, filename);
+}
+
+}  // namespace
+
+IndexingFactNode ExtractFiles(const std::vector<std::string>& ordered_file_list,
+                              int& exit_status,
+                              absl::string_view file_list_dir) {
+  // Create a node to hold the dirname of the ordered file list and group all
+  // the files and acts as a ordered file list of these files.
+  IndexingFactNode file_list_facts_tree(IndexingNodeData(
+      {Anchor(file_list_dir, 0, 0)}, IndexingFactType::kFileList));
+  std::set<std::string> extracted_files;
+
+  for (const auto& filename : ordered_file_list) {
+    std::string file_path = GetPathRelativeToFileList(file_list_dir, filename);
+
+    // Check if this included file was extracted before.
+    if (extracted_files.find(file_path) != extracted_files.end()) {
+      continue;
+    }
+    extracted_files.insert(file_path);
+
+    std::string content;
+    if (!verible::file::GetContents(file_path, &content).ok()) {
+      LOG(ERROR) << "Error while reading file: " << file_path;
+      exit_status = 1;
+      continue;
+    }
+
+    file_list_facts_tree.NewChild(ExtractOneFile(
+        content, file_path, file_list_facts_tree, extracted_files));
+  }
+
+  return file_list_facts_tree;
 }
 
 void IndexingFactsTreeExtractor::Visit(const SyntaxTreeNode& node) {
@@ -168,6 +210,10 @@ void IndexingFactsTreeExtractor::Visit(const SyntaxTreeNode& node) {
     }
     case NodeEnum::kParamByName: {
       ExtractParamByName(node);
+      break;
+    }
+    case NodeEnum::kPreprocessorInclude: {
+      ExtractInclude(node);
       break;
     }
     default: {
@@ -936,6 +982,54 @@ void IndexingFactsTreeExtractor::ExtractForInitialization(
   const SyntaxTreeNode& expression =
       GetExpressionFromForInitialization(for_initialization);
   Visit(expression);
+}
+
+// Returns string_view of `text` with outermost double-quotes removed.
+// If `text` is not wrapped in quotes, return it as-is.
+absl::string_view StripOuterQuotes(absl::string_view text) {
+  return absl::StripSuffix(absl::StripPrefix(text, "\""), "\"");
+}
+
+void IndexingFactsTreeExtractor::ExtractInclude(
+    const verible::SyntaxTreeNode& preprocessor_include) {
+  const SyntaxTreeLeaf& included_filename =
+      GetFileFromPreprocessorInclude(preprocessor_include);
+
+  std::string file_list_dirname =
+      file_list_facts_tree_.Value().Anchors()[0].Value();
+
+  absl::string_view filename_text = included_filename.get().text();
+
+  // Remove the double quotes from the filesname.
+  absl::string_view filename = StripOuterQuotes(filename_text);
+  int startLocation = included_filename.get().left(context_.base);
+  int endLocation = included_filename.get().right(context_.base);
+
+  std::string file_path =
+      GetPathRelativeToFileList(file_list_dirname, filename);
+
+  // Create a node for include statement with two Anchors:
+  // 1st one holds the actual text in the include statement.
+  // 2nd one holds the path of the included file relative to the file list.
+  facts_tree_context_.top().NewChild(
+      IndexingNodeData({Anchor(filename_text, startLocation, endLocation),
+                        Anchor(file_path, 0, 0)},
+                       IndexingFactType::kInclude));
+
+  // Check if this included file was extracted before.
+  if (extracted_files_.find(file_path) != extracted_files_.end()) {
+    return;
+  }
+  extracted_files_.insert(file_path);
+
+  std::string content;
+  if (!verible::file::GetContents(file_path, &content).ok()) {
+    LOG(ERROR) << "Error while reading file: " << file_path;
+    return;
+  }
+
+  file_list_facts_tree_.NewChild(ExtractOneFile(
+      content, file_path, file_list_facts_tree_, extracted_files_));
 }
 
 }  // namespace kythe
