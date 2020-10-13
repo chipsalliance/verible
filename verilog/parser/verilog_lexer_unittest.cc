@@ -18,6 +18,7 @@
 #include <initializer_list>
 #include <utility>
 
+#include "gmock/gmock.h"
 #include "gtest/gtest.h"
 #include "absl/strings/string_view.h"
 #include "common/lexer/lexer_test_util.h"
@@ -27,12 +28,15 @@
 namespace verilog {
 namespace {
 
+using testing::ElementsAre;
+using verible::TokenInfo;
+
 // Removes non-essential tokens from token output stream, such as spaces.
 class FilteredVerilogLexer : public VerilogLexer {
  public:
   explicit FilteredVerilogLexer(absl::string_view code) : VerilogLexer(code) {}
 
-  const verible::TokenInfo& DoNextToken() override {
+  const TokenInfo& DoNextToken() override {
     do {
       VerilogLexer::DoNextToken();
     } while (!VerilogLexer::KeepSyntaxTreeTokens(GetLastToken()));
@@ -2212,6 +2216,16 @@ TEST(VerilogLexerTest, PreprocessorUnfiltered) {
 TEST(VerilogLexerTest, Directives) { TestLexer(kDirectiveTests); }
 TEST(VerilogLexerTest, DirectivesUnfiltered) {
   TestLexer(kUnfilteredDirectiveTests);
+}
+
+TEST(RecursiveLexTextTest, Basic) {
+  constexpr absl::string_view text("hello;");
+  std::vector<TokenInfo> tokens;
+  RecursiveLexText(text,
+                   [&tokens](const TokenInfo& t) { tokens.push_back(t); });
+  EXPECT_THAT(tokens,
+              ElementsAre(TokenInfo(SymbolIdentifier, text.substr(0, 5)),
+                          TokenInfo(';', text.substr(5, 1))));
 }
 
 }  // namespace

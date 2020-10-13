@@ -88,16 +88,10 @@ void NumericFormatStringStyleRule::HandleToken(const TokenInfo& token) {
   const auto token_enum = static_cast<verilog_tokentype>(token.token_enum());
   const absl::string_view text(token.text());
 
-  // TODO(fangism): Refactor this. Right now it's a copy-paste from
-  // macro_name_style_rule.cc
   if (IsUnlexed(verilog_tokentype(token.token_enum()))) {
     // recursively lex to examine inside macro definition bodies, etc.
-    VerilogLexer lexer(text);
-    while (true) {
-      const TokenInfo& subtoken(lexer.DoNextToken());
-      if (subtoken.isEOF()) break;
-      HandleToken(subtoken);
-    }
+    RecursiveLexText(
+        text, [this](const TokenInfo& subtoken) { HandleToken(subtoken); });
     return;
   }
 

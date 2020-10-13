@@ -69,6 +69,11 @@ class VerilogLexer : public verible::FlexLexerAdapter<verilogFlexLexer> {
   int macro_arg_length_;
 };
 
+// Recursively lex the given 'text', and apply 'func' to each subtoken.
+void RecursiveLexText(
+    absl::string_view text,
+    const std::function<void(const verible::TokenInfo&)>& func);
+
 }  // namespace verilog
 
 #endif  // VERIBLE_VERILOG_PARSER_VERILOG_LEXER_H__
