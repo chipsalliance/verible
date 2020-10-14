@@ -618,6 +618,7 @@ void KytheFactsExtractor::ExtractExtends(const IndexingFactNode& extends_node) {
   const auto& anchors = extends_node.Value().Anchors();
   const Anchor& extended_class = anchors[0];
 
+  // Search for the extended class vname.
   const std::vector<const VName*> base_class_vname =
       scope_resolver_->SearchForDefinitions({extended_class.Value()});
 
@@ -625,11 +626,13 @@ void KytheFactsExtractor::ExtractExtends(const IndexingFactNode& extends_node) {
     return;
   }
 
+  // Create kythe facts for extends.
   const VName& derived_class_vname = vnames_context_.top();
   const VName base_class_anchor = CreateAnchor(extended_class);
   CreateEdge(derived_class_vname, kEdgeExtends, *base_class_vname[0]);
   CreateEdge(base_class_anchor, kEdgeExtends, *base_class_vname[0]);
 
+  // Search for the extended class's scope and append it to the derived class.
   const Scope* base_class_scope =
       scope_resolver_->SearchForScope(base_class_vname[0]->signature);
   if (base_class_scope == nullptr) {
