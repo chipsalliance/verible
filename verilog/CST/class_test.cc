@@ -26,8 +26,6 @@
 #include <sstream>
 #include <vector>
 
-#include "gmock/gmock.h"
-#include "gtest/gtest.h"
 #include "common/analysis/syntax_tree_search_test_utils.h"
 #include "common/text/concrete_syntax_tree.h"
 #include "common/text/symbol.h"
@@ -37,6 +35,9 @@
 #include "common/util/casts.h"
 #include "common/util/logging.h"
 #include "common/util/range.h"
+#include "gmock/gmock.h"
+#include "gtest/gtest.h"
+#include "verilog/CST/match_test_utils.h"
 #include "verilog/analysis/verilog_analyzer.h"
 
 #undef ASSERT_OK
@@ -46,6 +47,7 @@ namespace verilog {
 namespace {
 
 using verible::SyntaxTreeSearchTestCase;
+using verible::TextStructureView;
 using verible::TreeSearchMatch;
 
 TEST(GetClassNameTest, ClassName) {
@@ -144,6 +146,35 @@ TEST(GetClassNameTest, NoClassEndLabelTest) {
       const auto* type = GetClassEndLabel(*decl.match);
       EXPECT_EQ(type, nullptr);
     }
+  }
+}
+
+TEST(GetClassMemberTest, GetMemberName) {
+  constexpr int kTag = 1;  // value doesn't matter
+  const SyntaxTreeSearchTestCase kTestCases[] = {
+      {"class foo; endclass"},
+      {"module m();\ninitial $display(my_class.", {kTag, "x"}, ");\nendmodule"},
+      {"module m();\ninitial $display(my_class.",
+       {kTag, "instance1"},
+       ".",
+       {kTag, "x"},
+       ");\nendmodule"},
+  };
+  for (const auto& test : kTestCases) {
+    TestVerilogSyntaxRangeMatches(
+        __FUNCTION__, test, [](const TextStructureView& text_structure) {
+          const auto& root = text_structure.SyntaxTree();
+          const auto& members =
+              FindAllHierarchyExtensions(*ABSL_DIE_IF_NULL(root));
+
+          std::vector<TreeSearchMatch> names;
+          for (const auto& decl : members) {
+            const auto& name =
+                GetUnqualifiedIdFromHierarchyExtension(*decl.match);
+            names.emplace_back(TreeSearchMatch{&name, {/* ignored context */}});
+          }
+          return names;
+        });
   }
 }
 
