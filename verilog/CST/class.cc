@@ -24,6 +24,7 @@
 #include "common/text/symbol.h"
 #include "common/text/token_info.h"
 #include "common/text/tree_utils.h"
+#include "verilog/CST/identifier.h"
 #include "verilog/CST/verilog_matchers.h"  // IWYU pragma: keep
 
 namespace verilog {
@@ -48,6 +49,18 @@ const verible::SyntaxTreeLeaf& GetClassName(
   const auto& name_leaf =
       verible::GetSubtreeAsLeaf(header_node, NodeEnum::kClassHeader, 3);
   return name_leaf;
+}
+
+const verible::SyntaxTreeLeaf* GetExtendedClassName(
+    const verible::Symbol& class_declaration) {
+  const auto& class_header = GetClassHeader(class_declaration);
+  const auto* extends_list =
+      verible::GetSubtreeAsSymbol(class_header, NodeEnum::kClassHeader, 5);
+  if (extends_list == nullptr) {
+    return nullptr;
+  }
+  return AutoUnwrapIdentifier(verible::GetSubtreeAsNode(
+      *extends_list, NodeEnum::kExtendsList, 1, NodeEnum::kUnqualifiedId));
 }
 
 const verible::SyntaxTreeLeaf* GetClassEndLabel(

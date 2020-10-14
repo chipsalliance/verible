@@ -33,6 +33,11 @@ const verible::SyntaxTreeNode& GetClassHeader(const verible::Symbol&);
 // Returns the leaf node for class name.
 const verible::SyntaxTreeLeaf& GetClassName(const verible::Symbol&);
 
+// Returns the leaf node for the extended class name(if exists).
+// e.g class my_class extends other_class; return "other_class".
+// e.g class my_class; return nullptr.
+const verible::SyntaxTreeLeaf* GetExtendedClassName(const verible::Symbol&);
+
 // Returns class name token after endclass.
 // e.g. from "class foo; endclass: foo" returns the second "foo".
 const verible::SyntaxTreeLeaf* GetClassEndLabel(const verible::Symbol&);

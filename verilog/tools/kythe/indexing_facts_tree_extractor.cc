@@ -746,6 +746,14 @@ void IndexingFactsTreeExtractor::ExtractClassDeclaration(
       facts_tree_context_.top().Value().AppendAnchor(class_end_anchor);
     }
 
+    const SyntaxTreeLeaf* extended_class =
+        GetExtendedClassName(class_declaration);
+    if (extended_class != nullptr) {
+      class_node.NewChild(
+          IndexingNodeData({Anchor(extended_class->get(), context_.base)},
+                           IndexingFactType::kExtends));
+    }
+
     // Visit class body.
     const SyntaxTreeNode& class_item_list = GetClassItemList(class_declaration);
     Visit(class_item_list);

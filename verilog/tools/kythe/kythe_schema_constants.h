@@ -50,6 +50,7 @@ constexpr absl::string_view kEdgeRef = "/kythe/edge/ref";
 constexpr absl::string_view kEdgeRefExpands = "/kythe/edge/ref/expands";
 constexpr absl::string_view kEdgeRefCall = "/kythe/edge/ref/call";
 constexpr absl::string_view kEdgeRefImports = "/kythe/edge/ref/imports";
+constexpr absl::string_view kEdgeExtends = "/kythe/edge/extends";
 constexpr absl::string_view kEdgeRefIncludes = "/kythe/edge/ref/includes";
 constexpr absl::string_view kEdgeTyped = "/kythe/edge/typed";
 

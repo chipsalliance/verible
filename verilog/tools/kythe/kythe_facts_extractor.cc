@@ -137,6 +137,10 @@ void KytheFactsExtractor::IndexingFactNodeTagResolver(
       ExtractNamedParam(node);
       break;
     }
+    case IndexingFactType::kExtends: {
+      ExtractExtends(node);
+      break;
+    }
     case IndexingFactType::kVariableReference: {
       ExtractVariableReference(node);
       break;
@@ -608,6 +612,31 @@ VName KytheFactsExtractor::ExtractClassInstances(
   CreateEdge(class_instance_anchor, kEdgeDefinesBinding, class_instance_vname);
 
   return class_instance_vname;
+}
+
+void KytheFactsExtractor::ExtractExtends(const IndexingFactNode& extends_node) {
+  const auto& anchors = extends_node.Value().Anchors();
+  const Anchor& extended_class = anchors[0];
+
+  const std::vector<const VName*> extended_class_vname =
+      scope_resolver_->SearchForDefinitions({extended_class.Value()});
+
+  if (extended_class_vname.empty()) {
+    return;
+  }
+
+  const VName& extending_class_vname = vnames_context_.top();
+  const VName extended_class_anchor = CreateAnchor(extended_class);
+  CreateEdge(extending_class_vname, kEdgeExtends, *extended_class_vname[0]);
+  CreateEdge(extended_class_anchor, kEdgeExtends, *extended_class_vname[0]);
+
+  const Scope* extended_class_scope =
+      scope_resolver_->SearchForScope(extended_class_vname[0]->signature);
+  if (extended_class_scope == nullptr) {
+    return;
+  }
+
+  scope_resolver_->AppendScopeToScopeContext(*extended_class_scope);
 }
 
 void KytheFactsExtractor::ExtractPackageImport(
