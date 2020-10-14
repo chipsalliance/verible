@@ -741,6 +741,8 @@ void IndexingFactsTreeExtractor::ExtractMemberExtension(
   const IndexingFactNode& previous_node =
       facts_tree_context_.top().Children().back();
 
+  // Check the previous node and it should be kMemberReference or
+  // kVariableReference.
   const auto fact_type = previous_node.Value().GetIndexingFactType();
   if (fact_type != IndexingFactType::kMemberReference &&
       fact_type != IndexingFactType::kVariableReference) {
@@ -758,6 +760,7 @@ void IndexingFactsTreeExtractor::ExtractMemberExtension(
   // The node is removed so that it can be treated as a function call.
   facts_tree_context_.top().Children().pop_back();
 
+  // Append the member name to the current anchors.
   const SyntaxTreeLeaf& member_name =
       GetUnqualifiedIdFromHierarchyExtension(hierarchy_extension_node);
   member_node.Value().AppendAnchor(Anchor(member_name.get(), context_.base));
