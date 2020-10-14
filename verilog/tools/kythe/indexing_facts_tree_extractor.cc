@@ -1093,12 +1093,15 @@ void IndexingFactsTreeExtractor::ExtractEnumTypeDeclaration(
 
 void IndexingFactsTreeExtractor::ExtractTypeDeclaration(
     const verible::SyntaxTreeNode& type_declaration) {
+  // Determine if this type declaration is a enum type.
   const std::vector<TreeSearchMatch> enum_types =
       FindAllEnumTypes(type_declaration);
   if (!enum_types.empty()) {
     ExtractEnumTypeDeclaration(type_declaration);
     return;
   }
+
+  // Determine if this type declaration is a struct type.
   const std::vector<TreeSearchMatch> struct_types =
       FindAllStructTypes(type_declaration);
   if (!struct_types.empty()) {
