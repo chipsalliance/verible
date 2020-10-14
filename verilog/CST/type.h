@@ -104,7 +104,7 @@ const verible::SyntaxTreeNode* GetParamListFromInstantiationType(
     const verible::Symbol& instantiation_type);
 
 // Extracts symbol identifier node from node tagged with kEnumName.
-// e.g enum {first, second} extracts "first".
+// e.g enum {first} extracts "first".
 const verible::SyntaxTreeLeaf& GetSymbolIdentifierFromEnumName(
     const verible::Symbol& enum_name);
 
