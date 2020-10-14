@@ -33,6 +33,11 @@ std::vector<verible::TreeSearchMatch> FindAllDataTypeDeclarations(
   return verible::SearchSyntaxTree(root, NodekDataType());
 }
 
+std::vector<verible::TreeSearchMatch> FindAllEnumNames(
+    const verible::Symbol& root) {
+  return verible::SearchSyntaxTree(root, NodekEnumName());
+}
+
 std::vector<verible::TreeSearchMatch> FindAllDataTypePrimitive(
     const verible::Symbol& root) {
   return verible::SearchSyntaxTree(root, NodekDataTypePrimitive());

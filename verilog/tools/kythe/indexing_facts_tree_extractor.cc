@@ -1064,7 +1064,7 @@ void IndexingFactsTreeExtractor::ExtractEnumName(
 
   // Iterate over the children and traverse them to extract facts form inner
   // nodes and ignore the leaves.
-  // e.g enum {RED[x] = 1, OLD=y}.
+  // e.g enum {RED[x] = 1, OLD=y} => explores "[x]", "=y".
   {
     const IndexingFactsTreeContext::AutoPop p(&facts_tree_context_, &enum_node);
     for (const auto& child : enum_name.children()) {

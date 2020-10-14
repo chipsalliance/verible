@@ -19,12 +19,12 @@
 #include <utility>
 #include <vector>
 
-#include "gmock/gmock.h"
-#include "gtest/gtest.h"
 #include "common/analysis/syntax_tree_search.h"
 #include "common/analysis/syntax_tree_search_test_utils.h"
 #include "common/text/text_structure.h"
 #include "common/util/logging.h"
+#include "gmock/gmock.h"
+#include "gtest/gtest.h"
 #include "verilog/CST/context_functions.h"
 #include "verilog/CST/match_test_utils.h"
 #include "verilog/analysis/verilog_analyzer.h"
@@ -403,6 +403,48 @@ TEST(GetVariableDeclaration, FindPackedDimensionFromDataDeclaration) {
                 TreeSearchMatch{&packed_dimension, {/* ignored context */}});
           }
           return packed_dimensions;
+        });
+  }
+}
+
+TEST(GetEnumName, GetEnumNameIdentifier) {
+  constexpr int kTag = 1;  // value doesn't matter
+  const SyntaxTreeSearchTestCase kTestCases[] = {
+      {""},
+      {"module m;\nendmodule\n"},
+      {"module m;\nenum {",
+       {kTag, "AA"},
+       ", ",
+       {kTag, "BB"},
+       "} enum_var;\n endmodule"},
+      {"module m;\ntypedef enum {",
+       {kTag, "AA"},
+       ", ",
+       {kTag, "BB"},
+       "} enum_var;\nendmodule"},
+      {"package m;\ntypedef enum {",
+       {kTag, "AA"},
+       ", ",
+       {kTag, "BB"},
+       "} enum_var;\nendpackage"},
+      {"package m;\ntypedef enum {",
+       {kTag, "AA"},
+       ", ",
+       {kTag, "BB"},
+       "} enum_var;\nendpackage"},
+  };
+  for (const auto& test : kTestCases) {
+    TestVerilogSyntaxRangeMatches(
+        __FUNCTION__, test, [](const TextStructureView& text_structure) {
+          const auto& root = text_structure.SyntaxTree();
+          const auto& instances = FindAllEnumNames(*ABSL_DIE_IF_NULL(root));
+
+          std::vector<TreeSearchMatch> names;
+          for (const auto& decl : instances) {
+            const auto& name = GetSymbolIdentifierFromEnumName(*decl.match);
+            names.emplace_back(TreeSearchMatch{&name, {/* ignored context */}});
+          }
+          return names;
         });
   }
 }
