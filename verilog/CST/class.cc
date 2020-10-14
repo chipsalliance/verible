@@ -56,6 +56,18 @@ const verible::SyntaxTreeLeaf& GetClassName(
   return name_leaf;
 }
 
+const verible::SyntaxTreeLeaf* GetExtendedClassName(
+    const verible::Symbol& class_declaration) {
+  const auto& class_header = GetClassHeader(class_declaration);
+  const auto* extends_list =
+      verible::GetSubtreeAsSymbol(class_header, NodeEnum::kClassHeader, 5);
+  if (extends_list == nullptr) {
+    return nullptr;
+  }
+  return AutoUnwrapIdentifier(verible::GetSubtreeAsNode(
+      *extends_list, NodeEnum::kExtendsList, 1, NodeEnum::kUnqualifiedId));
+}
+
 const verible::SyntaxTreeLeaf* GetClassEndLabel(
     const verible::Symbol& class_declaration) {
   const auto* label_node = verible::GetSubtreeAsSymbol(

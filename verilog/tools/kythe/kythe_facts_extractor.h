@@ -151,6 +151,9 @@ class KytheFactsExtractor {
   // Extracts kythe facts from class node and returns it VName.
   VName ExtractClass(const IndexingFactNode&);
 
+  // Extracts kythe facts from class extends node and returns it VName.
+  void ExtractExtends(const IndexingFactNode&);
+
   // Extracts kythe facts from module port node and returns its VName.
   VName ExtractVariableDefinition(const IndexingFactNode& node);
 
