@@ -143,6 +143,7 @@ cc_library(
         "//common/text:tree_context_visitor",
         "//common/text:tree_utils",
         "//common/util:file_util",
+        "//verilog/CST:type",
         "//verilog/CST:class",
         "//verilog/CST:declaration",
         "//verilog/CST:functions",

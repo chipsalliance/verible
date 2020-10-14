@@ -99,6 +99,11 @@ const verible::SyntaxTreeNode& GetUnqualifiedIdFromInstantiationType(
 const verible::SyntaxTreeNode* GetParamListFromInstantiationType(
     const verible::Symbol& instantiation_type);
 
+// Extracts symbol identifier node from node tagged with kEnumName.
+// e.g enum {first, second} extracts "first".
+const verible::SyntaxTreeLeaf& GetSymbolIdentifierFromEnumName(
+    const verible::Symbol& enum_name);
+
 }  // namespace verilog
 
 #endif  // VERIBLE_VERILOG_CST_TYPE_H_

@@ -143,4 +143,9 @@ const verible::SyntaxTreeNode* GetParamListFromInstantiationType(
                                             NodeEnum::kActualParameterList);
 }
 
+const verible::SyntaxTreeLeaf& GetSymbolIdentifierFromEnumName(
+    const verible::Symbol& enum_name) {
+  return verible::GetSubtreeAsLeaf(enum_name, NodeEnum::kEnumName, 0);
+}
+
 }  // namespace verilog

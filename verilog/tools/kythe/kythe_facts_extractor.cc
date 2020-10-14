@@ -101,6 +101,10 @@ void KytheFactsExtractor::IndexingFactNodeTagResolver(
       vname = ExtractVariableDefinition(node);
       break;
     }
+    case IndexingFactType::kConstant: {
+      vname = ExtractConstnat(node);
+      break;
+    }
     case IndexingFactType::kMacro: {
       vname = ExtractMacroDefinition(node);
       break;
@@ -182,7 +186,8 @@ void KytheFactsExtractor::AddVNameToScopeContext(IndexingFactType tag,
     case IndexingFactType::kClassInstance:
     case IndexingFactType::kFunctionOrTask:
     case IndexingFactType::kParamDeclaration:
-    case IndexingFactType::kPackage: {
+    case IndexingFactType::kPackage:
+    case IndexingFactType::kConstant: {
       scope_resolver_->AddDefinitionToScopeContext(vname);
       break;
     }
@@ -745,6 +750,18 @@ void KytheFactsExtractor::ExtractInclude(const IndexingFactNode& include_node) {
 
   // Append the scope of the included file to the current scope.
   scope_resolver_->AppendScopeToScopeContext(*included_file_scope);
+}
+
+VName KytheFactsExtractor::ExtractConstnat(const IndexingFactNode& constant) {
+  const auto& anchor = constant.Value().Anchors()[0];
+  const VName constant_vname(file_path_,
+                             CreateScopeRelativeSignature(anchor.Value()));
+  const VName variable_vname_anchor = CreateAnchor(anchor);
+
+  CreateFact(constant_vname, kFactNodeKind, kNodeConstant);
+  CreateEdge(variable_vname_anchor, kEdgeDefinesBinding, constant_vname);
+
+  return constant_vname;
 }
 
 VName KytheFactsExtractor::CreateAnchor(const Anchor& anchor) {

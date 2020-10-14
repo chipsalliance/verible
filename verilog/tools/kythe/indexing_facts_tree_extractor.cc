@@ -33,6 +33,7 @@
 #include "verilog/CST/port.h"
 #include "verilog/CST/statement.h"
 #include "verilog/CST/tasks.h"
+#include "verilog/CST/type.h"
 #include "verilog/CST/verilog_matchers.h"
 #include "verilog/CST/verilog_nonterminals.h"
 #include "verilog/analysis/verilog_analyzer.h"
@@ -76,7 +77,9 @@ IndexingFactNode ExtractOneFile(absl::string_view content,
     const std::vector<std::string> syntax_error_messages(
         analyzer.LinterTokenErrorMessages());
     for (const auto& message : syntax_error_messages) {
-      std::cout << message << std::endl;
+      // logging instead of outputing to std stream because it's used by the
+      // extractor.
+      LOG(INFO) << message << std::endl;
     }
   }
 
@@ -216,6 +219,22 @@ void IndexingFactsTreeExtractor::Visit(const SyntaxTreeNode& node) {
       ExtractInclude(node);
       break;
     }
+    case NodeEnum::kRegisterVariable: {
+      ExtractRegisterVariable(node);
+      break;
+    }
+    case NodeEnum::kVariableDeclarationAssignment: {
+      ExtractVariableDeclarationAssignment(node);
+      break;
+    }
+    case NodeEnum::kEnumName: {
+      ExtractEnumName(node);
+      break;
+    }
+    case NodeEnum::kTypeDeclaration: {
+      ExtractTypeDeclaration(node);
+      break;
+    }
     default: {
       TreeContextVisitor::Visit(node);
     }
@@ -259,8 +278,8 @@ void IndexingFactsTreeExtractor::ExtractDataDeclaration(
       return;
     }
 
-    // for primitive types inside tagged with kRegisterVariable.
-    ExtractPrimitiveVariables(data_declaration, register_variables);
+    // Traverse the children to extract inner nodes.
+    TreeContextVisitor::Visit(data_declaration);
     return;
   }
 
@@ -276,11 +295,13 @@ void IndexingFactsTreeExtractor::ExtractDataDeclaration(
       return;
     }
 
-    // for primitive types inside tagged with
-    // kVariableDeclarationAssignment.
-    ExtractPrimitiveVariables(data_declaration, variable_declaration_assign);
+    // Traverse the children to extract inner nodes.
+    TreeContextVisitor::Visit(data_declaration);
     return;
   }
+
+  // Traverse the children to extract inner nodes.
+  TreeContextVisitor::Visit(data_declaration);
 }
 
 void IndexingFactsTreeExtractor::ExtractModule(
@@ -810,58 +831,58 @@ void IndexingFactsTreeExtractor::ExtractClassInstances(
   facts_tree_context_.top().NewChild(class_node);
 }
 
-void IndexingFactsTreeExtractor::ExtractPrimitiveVariables(
-    const verible::SyntaxTreeNode& data_declaration,
-    const std::vector<verible::TreeSearchMatch>& variable_matches) {
-  const SyntaxTreeNode* packed_dimension =
-      GetPackedDimensionFromDataDeclaration(data_declaration);
-  if (packed_dimension != nullptr) {
-    Visit(*packed_dimension);
+void IndexingFactsTreeExtractor::ExtractRegisterVariable(
+    const verible::SyntaxTreeNode& register_variable) {
+  IndexingNodeData variable_node_data(IndexingFactType::kVariableDefinition);
+  IndexingFactNode variable_node(variable_node_data);
+
+  const verible::TokenInfo& variable_name_token_info =
+      GetInstanceNameTokenInfoFromRegisterVariable(register_variable);
+  variable_node.Value().AppendAnchor(
+      Anchor(variable_name_token_info, context_.base));
+
+  const SyntaxTreeNode& unpacked_dimension =
+      GetUnpackedDimensionFromRegisterVariable(register_variable);
+  Visit(unpacked_dimension);
+
+  const SyntaxTreeNode* expression =
+      GetTrailingExpressionFromRegisterVariable(register_variable);
+  if (expression != nullptr) {
+    const IndexingFactsTreeContext::AutoPop p(&facts_tree_context_,
+                                              &variable_node);
+    // Visit Trailing Assignment Expression.
+    Visit(*expression);
   }
 
-  for (const TreeSearchMatch& variable_match : variable_matches) {
-    IndexingNodeData variable_node_data(IndexingFactType::kVariableDefinition);
-    IndexingFactNode variable_node(variable_node_data);
+  facts_tree_context_.top().NewChild(variable_node);
+}
 
-    const SyntaxTreeNode* expression = nullptr;
-    const auto tag =
-        static_cast<verilog::NodeEnum>(variable_match.match->Tag().tag);
+void IndexingFactsTreeExtractor::ExtractVariableDeclarationAssignment(
+    const verible::SyntaxTreeNode& variable_declaration_assignment) {
+  IndexingNodeData variable_node_data(IndexingFactType::kVariableDefinition);
+  IndexingFactNode variable_node(variable_node_data);
 
-    if (tag == NodeEnum::kRegisterVariable) {
-      const verible::TokenInfo& variable_name_token_info =
-          GetInstanceNameTokenInfoFromRegisterVariable(*variable_match.match);
-      variable_node.Value().AppendAnchor(
-          Anchor(variable_name_token_info, context_.base));
-      expression =
-          GetTrailingExpressionFromRegisterVariable(*variable_match.match);
+  const SyntaxTreeLeaf& leaf =
+      GetUnqualifiedIdFromVariableDeclarationAssignment(
+          variable_declaration_assignment);
+  variable_node.Value().AppendAnchor(Anchor(leaf.get(), context_.base));
 
-      const SyntaxTreeNode& unpacked_dimension =
-          GetUnpackedDimensionFromRegisterVariable(*variable_match.match);
-      Visit(unpacked_dimension);
+  const SyntaxTreeNode& unpacked_dimension =
+      GetUnpackedDimensionFromVariableDeclarationAssign(
+          variable_declaration_assignment);
+  Visit(unpacked_dimension);
 
-    } else if (tag == NodeEnum::kVariableDeclarationAssignment) {
-      const SyntaxTreeLeaf& leaf =
-          GetUnqualifiedIdFromVariableDeclarationAssignment(
-              *variable_match.match);
-      variable_node.Value().AppendAnchor(Anchor(leaf.get(), context_.base));
-      expression = GetTrailingExpressionFromVariableDeclarationAssign(
-          *variable_match.match);
-
-      const SyntaxTreeNode& unpacked_dimension =
-          GetUnpackedDimensionFromVariableDeclarationAssign(
-              *variable_match.match);
-      Visit(unpacked_dimension);
-    }
-
-    if (expression != nullptr) {
-      const IndexingFactsTreeContext::AutoPop p(&facts_tree_context_,
-                                                &variable_node);
-      // Visit Trailing Assignment Expression.
-      Visit(*expression);
-    }
-
-    facts_tree_context_.top().NewChild(variable_node);
+  const SyntaxTreeNode* expression =
+      GetTrailingExpressionFromVariableDeclarationAssign(
+          variable_declaration_assignment);
+  if (expression != nullptr) {
+    const IndexingFactsTreeContext::AutoPop p(&facts_tree_context_,
+                                              &variable_node);
+    // Visit Trailing Assignment Expression.
+    Visit(*expression);
   }
+
+  facts_tree_context_.top().NewChild(variable_node);
 }
 
 void IndexingFactsTreeExtractor::ExtractSymbolIdentifier(
@@ -890,7 +911,8 @@ void IndexingFactsTreeExtractor::ExtractParamDeclaration(
     const verible::Symbol* assign_expression =
         GetParamAssignExpression(param_declaration);
 
-    if (assign_expression != nullptr) {
+    if (assign_expression != nullptr &&
+        assign_expression->Kind() == verible::SymbolKind::kNode) {
       // Extract trailing expression.
       Visit(verible::SymbolCastToNode(*assign_expression));
     }
@@ -1030,6 +1052,63 @@ void IndexingFactsTreeExtractor::ExtractInclude(
 
   file_list_facts_tree_.NewChild(ExtractOneFile(
       content, file_path, file_list_facts_tree_, extracted_files_));
+}
+
+void IndexingFactsTreeExtractor::ExtractEnumName(
+    const verible::SyntaxTreeNode& enum_name) {
+  IndexingNodeData enum_name_data(IndexingFactType::kConstant);
+  IndexingFactNode enum_node(enum_name_data);
+
+  const SyntaxTreeLeaf& name = GetSymbolIdentifierFromEnumName(enum_name);
+  enum_node.Value().AppendAnchor(Anchor{name.get(), context_.base});
+
+  // Iterate over the children and traverse them to extract facts form inner
+  // nodes and ignore the leaves.
+  // e.g enum {RED[x] = 1, OLD=y}.
+  {
+    const IndexingFactsTreeContext::AutoPop p(&facts_tree_context_, &enum_node);
+    for (const auto& child : enum_name.children()) {
+      if (child == nullptr || child->Kind() == verible::SymbolKind::kLeaf) {
+        continue;
+      }
+      Visit(verible::SymbolCastToNode(*child));
+    }
+  }
+
+  facts_tree_context_.top().NewChild(enum_node);
+}
+
+void IndexingFactsTreeExtractor::ExtractEnumTypeDeclaration(
+    const verible::SyntaxTreeNode& enum_type_declaration) {
+  // Extract enum type name.
+  const SyntaxTreeLeaf* enum_type_name =
+      GetIdentifierFromTypeDeclaration(enum_type_declaration);
+  facts_tree_context_.top().NewChild(
+      IndexingNodeData({Anchor(enum_type_name->get(), context_.base)},
+                       IndexingFactType::kVariableDefinition));
+
+  // Explore the children of this enum type to extract.
+  for (const auto& child : enum_type_declaration.children()) {
+    if (child == nullptr || child->Kind() == verible::SymbolKind::kLeaf) {
+      continue;
+    }
+    Visit(verible::SymbolCastToNode(*child));
+  }
+}
+
+void IndexingFactsTreeExtractor::ExtractTypeDeclaration(
+    const verible::SyntaxTreeNode& type_declaration) {
+  const std::vector<TreeSearchMatch> enum_types =
+      FindAllEnumTypes(type_declaration);
+  if (!enum_types.empty()) {
+    ExtractEnumTypeDeclaration(type_declaration);
+    return;
+  }
+  const std::vector<TreeSearchMatch> struct_types =
+      FindAllStructTypes(type_declaration);
+  if (!struct_types.empty()) {
+    return;
+  }
 }
 
 }  // namespace kythe

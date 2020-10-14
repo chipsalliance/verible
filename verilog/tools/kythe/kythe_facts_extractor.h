@@ -125,9 +125,15 @@ class KytheFactsExtractor {
   // Extracts kythe facts from file node and returns it VName.
   VName ExtractFileFact(const IndexingFactNode&);
 
-  // Extracts kythe facts a reference to a user defined data type like class or
-  // module.
+  // Extracts kythe facts for a reference to some user defined data type like
+  // class or module.
   void ExtractDataTypeReference(const IndexingFactNode&);
+
+  // Extracts kythe facts for a user defined type like enum or struct.
+  VName ExtractTypeDefine(const IndexingFactNode&);
+
+  // Extracts kythe facts for a constant like member in enums.
+  VName ExtractConstnat(const IndexingFactNode&);
 
   // Extracts kythe facts from module instance node and returns it VName.
   VName ExtractModuleInstance(const IndexingFactNode&);
