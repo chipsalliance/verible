@@ -5,21 +5,32 @@ Verible. Collecting development aids and design concepts.
 
 ## Searching and Navigating Verible's Source Code
 
-https://cs.opensource.google/verible/verible
+https://cs.opensource.google/verible/verible is a search-indexed mirror of
+[Verible's source code](https://github.com/google/verible). Expect to spend a
+lot of time here as you familiarize yourself with the codebase.
+
+https://developers.google.com/code-search/reference provides a reference for
+search syntax and more.
 
 To learn more about how to use Kythe to
 [index the source code yourself, read here](./indexing.md).
 
 ## Code Organization
 
-*   common/ contains all language-agnostic library code
-*   verilog/ contains Verilog-specific libraries and tools
+Each directory in the source tree contains a short README.md describing the
+contents.
+
+*   [common/](../common) contains all language-agnostic libraries and tools
+*   [verilog/](../verilog) contains Verilog-specific libraries and tools
+*   [external_libs/](../external_libs) contains some library dependencies
 
 ## Verilog Front-End
 
-*   [Lexer and Parser](./parser_design.md)
+*   [Lexer and Parser design](./parser_design.md)
 
 ## Analyzers
+
+*   [How to implement lint rules](./style_lint.md)
 
 ## Transformers
 

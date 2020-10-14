@@ -3,6 +3,18 @@
 We'd love to accept your patches and contributions to this project. There are
 just a few small guidelines you need to follow.
 
+## Communciation
+
+Communication will help your concept reach consensus before getting to code, and
+potentially conserve time and effort.
+
+*   Join the developer's mailing list: verible-dev@googlegroups.com
+    ([join](https://groups.google.com/forum/#!forum/verible-dev/join))
+*   Use the github issue tracker to discuss and comment on specific issues. We
+    use the assignment status to signal who is working on what. Ask to be
+    assigned to an issue if you'd like to volunteer, and un-assign yourself if
+    you find yourself unavailable.
+
 ## Contributor License Agreement
 
 Contributions to this project must be accompanied by a Contributor License
@@ -22,7 +34,24 @@ use GitHub pull requests for this purpose. Consult
 [GitHub Help](https://help.github.com/articles/about-pull-requests/) for more
 information on using pull requests.
 
+### Style
+
+Our C++ code mostly follows [Google's C++ style guide][google-cpp-style]. We can
+take care of automatic code formatting for you when we import your pull
+requests.
+
+### Testing
+
+Testing is a critical component to any code contribution. Make sure your the
+changes you introduce come with test code to protect against future regression.
+Prefer unit-tests in most cases, and end-to-end tests in others. We also welcome
+contributions that contain _only_ test cases (where no code change is needed)!
+
 ## Community Guidelines
 
 This project follows
 [Google's Open Source Community Guidelines](https://opensource.google/conduct/).
+
+<!-- reference links -->
+
+[google-cpp-style]: https://google.github.io/styleguide/cppguide.html

@@ -307,6 +307,9 @@ absl::Status LinterConfiguration::AppendFromFile(
 
 absl::Status LinterConfiguration::ConfigureFromOptions(
     const LinterOptions& options) {
+  // Apply the ruleset bundle first.
+  // TODO(b/170876028): reduce the number of ways to select a group of rules,
+  // migrate these into hosted project configurations.
   UseRuleSet(options.ruleset);
 
   if (options.config_file_is_custom) {
