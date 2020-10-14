@@ -2168,7 +2168,7 @@ TEST(FactsTreeExtractor, ClassMember) {
                   },
                   IndexingFactType ::kMemberReference,
               }),
-              // refers to my_class.x
+              // refers to my_class.instance1.x
               T({
                   {
                       Anchor(kTestCase.expected_tokens[7], kTestCase.code),
