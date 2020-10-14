@@ -306,8 +306,7 @@ void IndexingFactsTreeExtractor::ExtractDataDeclaration(
 
 void IndexingFactsTreeExtractor::ExtractModule(
     const SyntaxTreeNode& module_declaration_node) {
-  IndexingNodeData module_node_data(IndexingFactType::kModule);
-  IndexingFactNode module_node(module_node_data);
+  IndexingFactNode module_node(IndexingNodeData(IndexingFactType::kModule));
 
   {
     const IndexingFactsTreeContext::AutoPop p(&facts_tree_context_,
@@ -416,8 +415,8 @@ void IndexingFactsTreeExtractor::ExtractModulePort(
 
 void IndexingFactsTreeExtractor::ExtractModuleNamedPort(
     const verible::SyntaxTreeNode& actual_named_port) {
-  IndexingNodeData actual_port_data(IndexingFactType::kModuleNamedPort);
-  IndexingFactNode actual_port_node(actual_port_data);
+  IndexingFactNode actual_port_node(
+      IndexingNodeData(IndexingFactType::kModuleNamedPort));
 
   const SyntaxTreeLeaf& leaf = GetActualNamedPortName(actual_named_port);
   actual_port_node.Value().AppendAnchor(Anchor(leaf.get(), context_.base));
@@ -460,8 +459,8 @@ void IndexingFactsTreeExtractor::ExtractModuleEnd(
 void IndexingFactsTreeExtractor::ExtractModuleInstantiation(
     const SyntaxTreeNode& data_declaration_node,
     const std::vector<TreeSearchMatch>& gate_instances) {
-  IndexingNodeData type_node_data(IndexingFactType::kDataTypeReference);
-  IndexingFactNode type_node(type_node_data);
+  IndexingFactNode type_node(
+      IndexingNodeData(IndexingFactType::kDataTypeReference));
 
   // Extract module type name.
   const verible::TokenInfo& type =
@@ -483,9 +482,8 @@ void IndexingFactsTreeExtractor::ExtractModuleInstantiation(
   // Loop through each instance and associate each declared id with the same
   // type and create its corresponding facts tree node.
   for (const TreeSearchMatch& instance : gate_instances) {
-    IndexingNodeData module_instance_node_data(
-        IndexingFactType::kModuleInstance);
-    IndexingFactNode module_instance_node(module_instance_node_data);
+    IndexingFactNode module_instance_node(
+        IndexingNodeData(IndexingFactType::kModuleInstance));
 
     const verible::TokenInfo& variable_name =
         GetModuleInstanceNameTokenInfoFromGateInstance(*instance.match);
@@ -525,8 +523,7 @@ void IndexingFactsTreeExtractor::ExtractNetDeclaration(
 
 void IndexingFactsTreeExtractor::ExtractPackageDeclaration(
     const SyntaxTreeNode& package_declaration_node) {
-  IndexingNodeData package_node_data(IndexingFactType::kPackage);
-  IndexingFactNode package_node(package_node_data);
+  IndexingFactNode package_node(IndexingNodeData(IndexingFactType::kPackage));
 
   {
     const IndexingFactsTreeContext::AutoPop p(&facts_tree_context_,
@@ -608,8 +605,8 @@ void IndexingFactsTreeExtractor::ExtractMacroReference(
 
 void IndexingFactsTreeExtractor::ExtractFunctionDeclaration(
     const SyntaxTreeNode& function_declaration_node) {
-  IndexingNodeData function_node_data(IndexingFactType::kFunctionOrTask);
-  IndexingFactNode function_node(function_node_data);
+  IndexingFactNode function_node(
+      IndexingNodeData(IndexingFactType::kFunctionOrTask));
 
   // Extract function name.
   const auto* function_name_leaf = GetFunctionName(function_declaration_node);
@@ -633,8 +630,8 @@ void IndexingFactsTreeExtractor::ExtractFunctionDeclaration(
 
 void IndexingFactsTreeExtractor::ExtractTaskDeclaration(
     const SyntaxTreeNode& task_declaration_node) {
-  IndexingNodeData task_node_data(IndexingFactType::kFunctionOrTask);
-  IndexingFactNode task_node(task_node_data);
+  IndexingFactNode task_node(
+      IndexingNodeData(IndexingFactType::kFunctionOrTask));
 
   // Extract task name.
   const auto* task_name_leaf = GetTaskName(task_declaration_node);
@@ -675,8 +672,8 @@ void IndexingFactsTreeExtractor::ExtractFunctionTaskPort(
 
 void IndexingFactsTreeExtractor::ExtractFunctionOrTaskCall(
     const SyntaxTreeNode& function_call_node) {
-  IndexingNodeData function_node_data(IndexingFactType::kFunctionCall);
-  IndexingFactNode function_node(function_node_data);
+  IndexingFactNode function_node(
+      IndexingNodeData(IndexingFactType::kFunctionCall));
 
   // Extract function or task name.
   // It can be single or preceeded with a pkg or class names.
@@ -702,8 +699,8 @@ void IndexingFactsTreeExtractor::ExtractFunctionOrTaskCall(
 
 void IndexingFactsTreeExtractor::ExtractMethodCallExtension(
     const verible::SyntaxTreeNode& call_extension_node) {
-  IndexingNodeData function_node_data(IndexingFactType::kFunctionCall);
-  IndexingFactNode function_node(function_node_data);
+  IndexingFactNode function_node(
+      IndexingNodeData(IndexingFactType::kFunctionCall));
 
   if (facts_tree_context_.empty() || facts_tree_context_.top().is_leaf()) {
     return;
@@ -748,8 +745,7 @@ void IndexingFactsTreeExtractor::ExtractMethodCallExtension(
 
 void IndexingFactsTreeExtractor::ExtractClassDeclaration(
     const SyntaxTreeNode& class_declaration) {
-  IndexingNodeData class_node_data(IndexingFactType::kClass);
-  IndexingFactNode class_node(class_node_data);
+  IndexingFactNode class_node(IndexingNodeData(IndexingFactType::kClass));
 
   {
     const IndexingFactsTreeContext::AutoPop p(&facts_tree_context_,
@@ -778,8 +774,8 @@ void IndexingFactsTreeExtractor::ExtractClassDeclaration(
 void IndexingFactsTreeExtractor::ExtractClassInstances(
     const SyntaxTreeNode& data_declaration_node,
     const std::vector<TreeSearchMatch>& class_instances) {
-  IndexingNodeData class_node_data(IndexingFactType::kDataTypeReference);
-  IndexingFactNode class_node(class_node_data);
+  IndexingFactNode class_node(
+      IndexingNodeData(IndexingFactType::kDataTypeReference));
 
   const verible::TokenInfo& type =
       GetTypeTokenInfoFromDataDeclaration(data_declaration_node);
@@ -794,8 +790,8 @@ void IndexingFactsTreeExtractor::ExtractClassInstances(
   // Loop through each instance and associate each declared id with the same
   // type and create its corresponding facts tree node.
   for (const TreeSearchMatch& instance : class_instances) {
-    IndexingNodeData class_instance_data(IndexingFactType::kClassInstance);
-    IndexingFactNode class_instance_node(class_instance_data);
+    IndexingFactNode class_instance_node(
+        IndexingNodeData(IndexingFactType::kClassInstance));
     const auto tag = static_cast<verilog::NodeEnum>(instance.match->Tag().tag);
 
     const SyntaxTreeNode* trailing_expression = nullptr;
@@ -833,8 +829,8 @@ void IndexingFactsTreeExtractor::ExtractClassInstances(
 
 void IndexingFactsTreeExtractor::ExtractRegisterVariable(
     const verible::SyntaxTreeNode& register_variable) {
-  IndexingNodeData variable_node_data(IndexingFactType::kVariableDefinition);
-  IndexingFactNode variable_node(variable_node_data);
+  IndexingFactNode variable_node(
+      IndexingNodeData(IndexingFactType::kVariableDefinition));
 
   const verible::TokenInfo& variable_name_token_info =
       GetInstanceNameTokenInfoFromRegisterVariable(register_variable);
@@ -859,8 +855,8 @@ void IndexingFactsTreeExtractor::ExtractRegisterVariable(
 
 void IndexingFactsTreeExtractor::ExtractVariableDeclarationAssignment(
     const verible::SyntaxTreeNode& variable_declaration_assignment) {
-  IndexingNodeData variable_node_data(IndexingFactType::kVariableDefinition);
-  IndexingFactNode variable_node(variable_node_data);
+  IndexingFactNode variable_node(
+      IndexingNodeData(IndexingFactType::kVariableDefinition));
 
   const SyntaxTreeLeaf& leaf =
       GetUnqualifiedIdFromVariableDeclarationAssignment(
@@ -896,8 +892,8 @@ void IndexingFactsTreeExtractor::ExtractSymbolIdentifier(
 
 void IndexingFactsTreeExtractor::ExtractParamDeclaration(
     const verible::SyntaxTreeNode& param_declaration) {
-  IndexingNodeData param_data(IndexingFactType::kParamDeclaration);
-  IndexingFactNode param_node(param_data);
+  IndexingFactNode param_node(
+      IndexingNodeData(IndexingFactType::kParamDeclaration));
 
   // Extract Param name.
   const verible::TokenInfo& param_name =
@@ -923,8 +919,8 @@ void IndexingFactsTreeExtractor::ExtractParamDeclaration(
 
 void IndexingFactsTreeExtractor::ExtractParamByName(
     const verible::SyntaxTreeNode& param_by_name) {
-  IndexingNodeData named_param_data(IndexingFactType::kNamedParam);
-  IndexingFactNode named_param_node(named_param_data);
+  IndexingFactNode named_param_node(
+      IndexingNodeData(IndexingFactType::kNamedParam));
 
   const SyntaxTreeLeaf& leaf = GetNamedParamFromActualParam(param_by_name);
   named_param_node.Value().AppendAnchor(Anchor(leaf.get(), context_.base));
@@ -1056,8 +1052,7 @@ void IndexingFactsTreeExtractor::ExtractInclude(
 
 void IndexingFactsTreeExtractor::ExtractEnumName(
     const verible::SyntaxTreeNode& enum_name) {
-  IndexingNodeData enum_name_data(IndexingFactType::kConstant);
-  IndexingFactNode enum_node(enum_name_data);
+  IndexingFactNode enum_node(IndexingNodeData(IndexingFactType::kConstant));
 
   const SyntaxTreeLeaf& name = GetSymbolIdentifierFromEnumName(enum_name);
   enum_node.Value().AppendAnchor(Anchor{name.get(), context_.base});
@@ -1107,6 +1102,7 @@ void IndexingFactsTreeExtractor::ExtractTypeDeclaration(
   const std::vector<TreeSearchMatch> struct_types =
       FindAllStructTypes(type_declaration);
   if (!struct_types.empty()) {
+    // TODO(minatoma): add extraction for structs here.
     return;
   }
 }

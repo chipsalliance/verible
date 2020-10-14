@@ -133,7 +133,7 @@ class KytheFactsExtractor {
   VName ExtractTypeDefine(const IndexingFactNode&);
 
   // Extracts kythe facts for a constant like member in enums.
-  VName ExtractConstnat(const IndexingFactNode&);
+  VName ExtractConstant(const IndexingFactNode&);
 
   // Extracts kythe facts from module instance node and returns it VName.
   VName ExtractModuleInstance(const IndexingFactNode&);

@@ -102,7 +102,7 @@ void KytheFactsExtractor::IndexingFactNodeTagResolver(
       break;
     }
     case IndexingFactType::kConstant: {
-      vname = ExtractConstnat(node);
+      vname = ExtractConstant(node);
       break;
     }
     case IndexingFactType::kMacro: {
@@ -752,7 +752,7 @@ void KytheFactsExtractor::ExtractInclude(const IndexingFactNode& include_node) {
   scope_resolver_->AppendScopeToScopeContext(*included_file_scope);
 }
 
-VName KytheFactsExtractor::ExtractConstnat(const IndexingFactNode& constant) {
+VName KytheFactsExtractor::ExtractConstant(const IndexingFactNode& constant) {
   const auto& anchor = constant.Value().Anchors()[0];
   const VName constant_vname(file_path_,
                              CreateScopeRelativeSignature(anchor.Value()));

@@ -203,8 +203,8 @@ class IndexingFactsTreeExtractor : public verible::TreeContextVisitor {
 
 // Given the ordered SystemVerilog files, Extracts and returns the
 // IndexingFactsTree from the given files.
-// The returned Root will have the files as children and the will be ordered
-// as the given order.
+// The returned Root will have the files as children and they will retain their
+// original ordering from the file list.
 IndexingFactNode ExtractFiles(const std::vector<std::string>& ordered_file_list,
                               int& exit_status,
                               absl::string_view file_list_dir);
