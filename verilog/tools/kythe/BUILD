@@ -93,6 +93,7 @@ cc_library(
         ":kythe_facts",
         ":kythe_schema_constants",
         ":scope_resolver",
+        "@com_google_absl//absl/memory",
         "@com_google_absl//absl/strings",
     ],
 )

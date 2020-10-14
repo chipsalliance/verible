@@ -18,6 +18,7 @@
 #include <string>
 #include <vector>
 
+#include "absl/memory/memory.h"
 #include "absl/strings/escaping.h"
 #include "absl/strings/substitute.h"
 #include "verilog/tools/kythe/kythe_schema_constants.h"
