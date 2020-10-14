@@ -409,6 +409,7 @@ cc_library(
     hdrs = ["class.h"],
     deps = [
         ":verilog_matchers",  # fixdeps: keep
+        ":identifier",
         "//common/analysis:syntax_tree_search",
         "//common/analysis/matcher",
         "//common/analysis/matcher:matcher_builders",
@@ -425,6 +426,7 @@ cc_test(
     srcs = ["class_test.cc"],
     deps = [
         ":class",
+        ":match_test_utils",
         "//common/analysis:syntax_tree_search_test_utils",
         "//common/text:concrete_syntax_tree",
         "//common/text:symbol",
