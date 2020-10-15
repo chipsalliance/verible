@@ -36,12 +36,14 @@ namespace verilog {
 
 using ParserTestData = verible::TokenInfoTestData;
 
+using ParserTestCaseArray = std::initializer_list<const char*>;
+
 // No syntax tree expected from these inputs.
-static const char* kEmptyTests[] = {
+static const ParserTestCaseArray kEmptyTests = {
     "", "    ", "\t\t\t", "\n\n", "// comment\n", "/* comment */\n",
 };
 
-static const char* kPreprocessorTests[] = {
+static const ParserTestCaseArray kPreprocessorTests = {
     "`define TRUTH\n",        // definition without value
     "`define FOO BAR-1\n",    // definition with value
     "`include \"foo.svh\"\n"  // include directive
@@ -101,7 +103,7 @@ static const char* kPreprocessorTests[] = {
 };
 
 // Make sure line continuations, newlines and spaces get filtered out
-static const char* kLexerFilterTests[] = {
+static const ParserTestCaseArray kLexerFilterTests = {
     "parameter \tfoo =\t\t0;",
     "parameter\n\nfoo =\n 0;",
     "parameter \\\nfoo =\\\n 0;",
@@ -111,7 +113,7 @@ static const char* kLexerFilterTests[] = {
 };
 
 // Numbers are parsed as ([width], [signed]base, digits)
-static const char* kNumberTests[] = {
+static const ParserTestCaseArray kNumberTests = {
     "parameter foo = 0;",
     "parameter int foo = 0;",
     "parameter int foo = '0;",
@@ -197,7 +199,7 @@ static const char* kNumberTests[] = {
 };
 
 // classes are a System Verilog construct
-static const char* kClassTests[] = {
+static const ParserTestCaseArray kClassTests = {
     "class semicolon_classy; ; ;;; ; ; ;endclass",
     "class Foo; endclass",
     "class static Foo; endclass",
@@ -497,7 +499,7 @@ static const char* kClassTests[] = {
     "endclass",
 };
 
-static const char* kFunctionTests[] = {
+static const ParserTestCaseArray kFunctionTests = {
     "function integer add;\n"
     "input a, b;\n"
     "begin\n"
@@ -874,7 +876,7 @@ static const char* kFunctionTests[] = {
     "endfunction",
 };
 
-static const char* kTaskTests[] = {
+static const ParserTestCaseArray kTaskTests = {
     "task task_a;\n"
     "endtask",
     "task static task_a;\n"
@@ -1275,7 +1277,7 @@ static const char* kTaskTests[] = {
     "endtask",
 };
 
-static const char* kModuleTests[] = {
+static const ParserTestCaseArray kModuleTests = {
     "module modular_thing;\n"
     "endmodule",
     "module semicolon_madness;;;;;\n"
@@ -2780,7 +2782,8 @@ static const char* kModuleTests[] = {
     // using escaped identifier as alias:
     "import \"DPI-C\" \\foo = function void bar(input chandle ch);\n",
     "import \"DPI-C\" `foo = function void bar(input chandle ch);\n",  // macro
-    "import \"DPI-C\" foo = function longint unsigned bar(input chandle ch);\n",
+    "import \"DPI-C\" foo = function longint unsigned bar(input chandle "
+    "ch);\n",
     "module zoobar ();\n"
     "import \"DPI-C\" function void fizzbuzz (\n"
     "  input in val, output int nothing);\n"
@@ -3334,7 +3337,7 @@ static const char* kModuleTests[] = {
     "endmodule",
 };
 
-static const char* kModuleInstanceTests[] = {
+static const ParserTestCaseArray kModuleInstanceTests = {
     "module tryme;\n"
     "logic lol;\n"   // is a data_declaration
     "wire money;\n"  // is a net_declaration
@@ -3383,7 +3386,7 @@ static const char* kModuleInstanceTests[] = {
     "endmodule",
 };
 
-static const char* kInterfaceTests[] = {
+static const ParserTestCaseArray kInterfaceTests = {
     "interface Face;\n"
     "endinterface",
     "interface Face;\n"
@@ -3521,7 +3524,7 @@ endinterface : conduit_if
     "endinterface",
 };
 
-static const char* kTypedefTests[] = {
+static const ParserTestCaseArray kTypedefTests = {
     "typedef i_am_a_type_really;",
     "typedef reg[3:0] quartet;",
     "typedef reg quartet[3:0];",
@@ -3603,7 +3606,7 @@ static const char* kTypedefTests[] = {
 };
 
 // typedefs as forward declarations
-static const char* kStructTests[] = {
+static const ParserTestCaseArray kStructTests = {
     "typedef struct mystruct_fwd;",
     // anonymous structs:
     "struct { int i; bit b; } foo;",
@@ -3612,11 +3615,11 @@ static const char* kStructTests[] = {
     "struct packed unsigned { int i; bit b; } foo;",
 };
 
-static const char* kEnumTests[] = {
+static const ParserTestCaseArray kEnumTests = {
     "typedef enum myenum_fwd;",
 };
 
-static const char* kUnionTests[] = {
+static const ParserTestCaseArray kUnionTests = {
     "typedef union myunion_fwd;",
     // anonymous unions:
     "union { int i; bit b; } foo;",
@@ -3632,7 +3635,7 @@ static const char* kUnionTests[] = {
 // TODO(fangism): implement and test ENUM_CONSTANT
 
 // packages
-static const char* kPackageTests[] = {
+static const ParserTestCaseArray kPackageTests = {
     "package mypkg;\n"
     "endpackage",
     "package automatic mypkg;\n"
@@ -3847,7 +3850,7 @@ static const char* kPackageTests[] = {
     "endpackage",
 };
 
-static const char* kDescriptionTests[] = {
+static const ParserTestCaseArray kDescriptionTests = {
     // preprocessor balanced top-level description items
     "`ifdef DEBUGGER\n"  // empty
     "`endif\n",
@@ -3945,7 +3948,7 @@ static const char* kDescriptionTests[] = {
     "`endif\n",
 };
 
-static const char* kSequenceTests[] = {
+static const ParserTestCaseArray kSequenceTests = {
     "sequence myseq;\n"
     "  a != b\n"
     "endsequence\n",
@@ -3989,7 +3992,7 @@ static const char* kSequenceTests[] = {
     "endsequence\n",
 };
 
-static const char* kPropertyTests[] = {
+static const ParserTestCaseArray kPropertyTests = {
     "property ready_follows_valid_bounded_P;\n"
     "  @(posedge clk) disable iff (reset)\n"
     "  valid |-> eventually [0:Bound] (ready);\n"
@@ -4154,7 +4157,7 @@ static const char* kPropertyTests[] = {
     "endproperty\n",
 };
 
-static const char* kModuleMemberTests[] = {
+static const ParserTestCaseArray kModuleMemberTests = {
     "module mymodule;\n"
     "task subtask;\n"
     "endtask\n"
@@ -4470,7 +4473,7 @@ static const char* kModuleMemberTests[] = {
     "endgroup",
 };
 
-static const char* kClassMemberTests[] = {
+static const ParserTestCaseArray kClassMemberTests = {
     // member tasks
     "class myclass;\n"
     "task subtask;\n"
@@ -4763,7 +4766,7 @@ static const char* kClassMemberTests[] = {
     "endclass",
 };
 
-static const char* kInterfaceClassTests[] = {
+static const ParserTestCaseArray kInterfaceClassTests = {
     "interface class base_ic;\n"
     "endclass",
     "interface class base_ic;\n"
@@ -4808,7 +4811,7 @@ static const char* kInterfaceClassTests[] = {
     "endclass",
 };
 
-static const char* kConstraintTests[] = {
+static const ParserTestCaseArray kConstraintTests = {
     "constraint solve_this {\n"
     "  solve x.z before y.x;\n"
     "}",
@@ -4962,7 +4965,7 @@ static const char* kConstraintTests[] = {
     "}",
 };
 
-static const char* kConfigTests[] = {
+static const ParserTestCaseArray kConfigTests = {
     "config cfg;\n"
     "  design foo.bar;\n"  // library-qualified cell-id
     "endconfig",
@@ -5189,7 +5192,7 @@ static const char* kConfigTests[] = {
     "endconfig",
 };
 
-static const char* kPrimitiveTests[] = {
+static const ParserTestCaseArray kPrimitiveTests = {
     "primitive ape (output out, input in1, input in2);\n"
     "  table\n"
     "    0:0:0;\n"  // sequential entry
@@ -5262,7 +5265,7 @@ static const char* kPrimitiveTests[] = {
     "endprimitive",
 };
 
-static const char* kDisciplineTests[] = {
+static const ParserTestCaseArray kDisciplineTests = {
     "discipline d;\n"
     "enddiscipline\n",
     "discipline d \n"  // no ';'
@@ -5281,7 +5284,7 @@ static const char* kDisciplineTests[] = {
     "enddiscipline\n",
 };
 
-static const char* kMultiBlockTests[] = {
+static const ParserTestCaseArray kMultiBlockTests = {
     // check for correct scope switching around timescale and module
     "module modular_thing1;\n"
     "endmodule\n"
@@ -5317,7 +5320,7 @@ static const char* kMultiBlockTests[] = {
     "  endtask\n"
     "endclass\n"};
 
-static const char* kRandSequenceTests[] = {
+static const ParserTestCaseArray kRandSequenceTests = {
     // randsequence inside initial block
     "module foo();\n"
     "initial begin\n"
@@ -5473,7 +5476,7 @@ static const char* kRandSequenceTests[] = {
     "endtask\n",
 };
 
-static const char* kNetAliasTests[] = {
+static const ParserTestCaseArray kNetAliasTests = {
     "module byte_swap (inout wire [31:0] A, inout wire [31:0] B);\n"
     "  alias {A[7:0],A[15:8],A[23:16],A[31:24]} = B;\n"
     "endmodule\n",
@@ -5842,11 +5845,11 @@ static const verible::ErrorRecoveryTestCase kErrorRecoveryTests[] = {
 namespace {
 
 // Tests that valid code is accepted.
-template <int N>
-static void TestVerilogParser(const char* (&data)[N]) {
-  for (int i = 0; i < N; ++i) {
-    const std::string code(data[i]);
+static void TestVerilogParser(const ParserTestCaseArray& data) {
+  int i = 0;
+  for (const auto& code : data) {
     verible::TestParserAcceptValid<VerilogAnalyzer>(code, i);
+    ++i;
   }
 }
 
@@ -5863,21 +5866,19 @@ static void TestVerilogParserReject(
 template <int N>
 static void TestVerilogParserErrorRecovery(
     const verible::ErrorRecoveryTestCase (&data)[N]) {
-  for (int i = 0; i < N; ++i) {
-    verible::TestParserErrorRecovered<VerilogAnalyzer>(data[i], i);
+  int i = 0;
+  for (const auto& test : data) {
+    verible::TestParserErrorRecovered<VerilogAnalyzer>(test, i);
+    ++i;
   }
 }
 
-template <int N>
-static void TestVerilogParserMatchAll(const char* (&data)[N], int num_tests) {
-  for (int i = 0; i < std::min(N, num_tests); ++i) {
-    verible::TestParserAllMatched<VerilogAnalyzer>(data[i], i);
+static void TestVerilogParserMatchAll(const ParserTestCaseArray& data) {
+  int i = 0;
+  for (const auto& code : data) {
+    verible::TestParserAllMatched<VerilogAnalyzer>(code, i);
+    ++i;
   }
-}
-
-template <int N>
-static void TestVerilogParserMatchAll(const char* (&data)[N]) {
-  TestVerilogParserMatchAll<N>(data, N);
 }
 
 // Tests on valid code.
@@ -5961,7 +5962,7 @@ TEST(VerilogParserTest, InternalStackRealloc) {
 
 // Tests that Tokenize() properly sets the range of the EOF token.
 TEST(VerilogParserTest, TokenizeTerimnatesEOFRange) {
-  const std::string kCode[] = {
+  constexpr absl::string_view kCode[] = {
       "",       "\t",       "\n",          "\n\n",
       "module", "module\n", "module foo;", "module foo;\n",
   };

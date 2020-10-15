@@ -34,7 +34,7 @@ namespace verible {
 // class AnalyzerType is any class with a absl::Status AnalyzerType::Analyze()
 // method.
 template <class AnalyzerType>
-void TestParserAcceptValid(const std::string& code, int i) {
+void TestParserAcceptValid(absl::string_view code, int i) {
   VLOG(1) << "test_data[" << i << "] = '" << code << "'\n";
   AnalyzerType analyzer(code, "<<inline-test>>");
   absl::Status status = analyzer.Analyze();
@@ -116,7 +116,7 @@ void TestParserErrorRecovered(const ErrorRecoveryTestCase& test, int i) {
 }
 
 template <class AnalyzerType>
-void TestParserAllMatched(const std::string& code, int i) {
+void TestParserAllMatched(absl::string_view code, int i) {
   VLOG(1) << "test_data[" << i << "] = '" << code << "'\n";
 
   AnalyzerType analyzer(code, "<<inline-test>>");
