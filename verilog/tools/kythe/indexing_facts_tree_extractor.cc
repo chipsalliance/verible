@@ -143,7 +143,12 @@ void IndexingFactsTreeExtractor::Visit(const SyntaxTreeNode& node) {
       TreeContextVisitor::Visit(node);
       break;
     }
-    case NodeEnum::kModuleDeclaration: {
+    case NodeEnum::kInterfaceDeclaration: {
+      ExtractInterface(node);
+      break;
+    }
+    case NodeEnum::kModuleDeclaration:
+    case NodeEnum::kProgramDeclaration: {
       ExtractModule(node);
       break;
     }
@@ -304,22 +309,40 @@ void IndexingFactsTreeExtractor::ExtractDataDeclaration(
   TreeContextVisitor::Visit(data_declaration);
 }
 
+// Extracts information from module, intraface and program declarations.
+void IndexingFactsTreeExtractor::ExtractModuleAndInterfaceAndProgram(
+    const SyntaxTreeNode& declaration_node, IndexingFactNode& facts_node) {
+  const IndexingFactsTreeContext::AutoPop p(&facts_tree_context_, &facts_node);
+  ExtractModuleHeader(declaration_node);
+  ExtractModuleEnd(declaration_node);
+
+  const SyntaxTreeNode* item_list = GetModuleItemList(declaration_node);
+  if (item_list != nullptr) {
+    Visit(*item_list);
+  }
+}
+
 void IndexingFactsTreeExtractor::ExtractModule(
     const SyntaxTreeNode& module_declaration_node) {
   IndexingFactNode module_node(IndexingNodeData{IndexingFactType::kModule});
-
-  {
-    const IndexingFactsTreeContext::AutoPop p(&facts_tree_context_,
-                                              &module_node);
-    ExtractModuleHeader(module_declaration_node);
-    ExtractModuleEnd(module_declaration_node);
-
-    const SyntaxTreeNode& module_item_list =
-        GetModuleItemList(module_declaration_node);
-    Visit(module_item_list);
-  }
-
+  ExtractModuleAndInterfaceAndProgram(module_declaration_node, module_node);
   facts_tree_context_.top().NewChild(module_node);
+}
+
+void IndexingFactsTreeExtractor::ExtractInterface(
+    const SyntaxTreeNode& interface_declaration_node) {
+  IndexingFactNode interface_node(
+      IndexingNodeData{IndexingFactType::kInterface});
+  ExtractModuleAndInterfaceAndProgram(interface_declaration_node,
+                                      interface_node);
+  facts_tree_context_.top().NewChild(interface_node);
+}
+
+void IndexingFactsTreeExtractor::ExtractProgram(
+    const SyntaxTreeNode& program_declaration_node) {
+  IndexingFactNode program_node(IndexingNodeData{IndexingFactType::kProgram});
+  ExtractModuleAndInterfaceAndProgram(program_declaration_node, program_node);
+  facts_tree_context_.top().NewChild(program_node);
 }
 
 void IndexingFactsTreeExtractor::ExtractModuleHeader(
