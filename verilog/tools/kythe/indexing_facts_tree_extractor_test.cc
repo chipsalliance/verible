@@ -3700,19 +3700,22 @@ TEST(FactsTreeExtractor, EnumTest) {
                       IndexingFactType ::kConstant,
                   },
                   // refers to y.
-                  T({
+                  T(
                       {
-                          Anchor(kTestCase.expected_tokens[23], kTestCase.code),
+                          {
+                              Anchor(kTestCase.expected_tokens[23],
+                                     kTestCase.code),
+                          },
+                          IndexingFactType ::kVariableReference,
                       },
-                      IndexingFactType ::kVariableReference,
-                  }),
-                  // refers to idx.
-                  T({
-                      {
-                          Anchor(kTestCase.expected_tokens[25], kTestCase.code),
-                      },
-                      IndexingFactType ::kVariableReference,
-                  })),
+                      // refers to idx.
+                      T({
+                          {
+                              Anchor(kTestCase.expected_tokens[25],
+                                     kTestCase.code),
+                          },
+                          IndexingFactType ::kVariableReference,
+                      }))),
               // refers to enum var3.
               T({
                   {
@@ -3735,20 +3738,23 @@ TEST(FactsTreeExtractor, EnumTest) {
                       },
                       IndexingFactType ::kConstant,
                   },
-                  // refers to HH.
-                  T({
+                  // refers to yh.
+                  T(
                       {
-                          Anchor(kTestCase.expected_tokens[31], kTestCase.code),
+                          {
+                              Anchor(kTestCase.expected_tokens[31],
+                                     kTestCase.code),
+                          },
+                          IndexingFactType ::kVariableReference,
                       },
-                      IndexingFactType ::kVariableReference,
-                  }),
-                  // refers to HH.
-                  T({
-                      {
-                          Anchor(kTestCase.expected_tokens[33], kTestCase.code),
-                      },
-                      IndexingFactType ::kVariableReference,
-                  }))))));
+                      // refers to idx2.
+                      T({
+                          {
+                              Anchor(kTestCase.expected_tokens[33],
+                                     kTestCase.code),
+                          },
+                          IndexingFactType ::kVariableReference,
+                      })))))));
 
   const auto facts_tree =
       ExtractFiles({std::string(verible::file::Basename(test_file.filename()))},

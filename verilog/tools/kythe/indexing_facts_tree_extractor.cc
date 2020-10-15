@@ -768,7 +768,7 @@ void IndexingFactsTreeExtractor::ExtractMethodCallExtension(
 void IndexingFactsTreeExtractor::ExtractMemberExtension(
     const verible::SyntaxTreeNode& hierarchy_extension_node) {
   IndexingFactNode member_node(
-      IndexingNodeData(IndexingFactType::kMemberReference));
+      IndexingNodeData{IndexingFactType::kMemberReference});
 
   // Terminate if there is no parent or the parent has no children.
   if (facts_tree_context_.empty() || facts_tree_context_.top().is_leaf()) {
