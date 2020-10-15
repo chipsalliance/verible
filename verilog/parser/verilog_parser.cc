@@ -18,6 +18,7 @@
 
 #include "absl/flags/flag.h"
 #include "common/parser/parser_param.h"
+#include "common/util/value_saver.h"
 
 // This flag is referenced in verilog_parse_wrapper (verilog_parser.h),
 // where it controls tracing of the parser.
@@ -30,12 +31,13 @@ namespace verilog {
 // from verilog.y, by the genyacc rule for 'verilog_y'.
 extern int verilog_parse(::verible::ParserParam* param);
 
-// Controls yacc's detailed verilog traces
+// Controls yacc/bison's detailed verilog traces
 extern int verilog_debug;  // symbol defined in bison-generated verilog.tab.cc
 
 // parser wrapper to enable debug traces
 int verilog_parse_wrapper(::verible::ParserParam* param) {
-  verilog_debug = absl::GetFlag(FLAGS_verilog_trace_parser) ? 1 : 0;
+  const verible::ValueSaver<int> save_global_debug(
+      &verilog_debug, absl::GetFlag(FLAGS_verilog_trace_parser) ? 1 : 0);
   return verilog_parse(param);
 }
 
