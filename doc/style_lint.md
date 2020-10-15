@@ -65,10 +65,10 @@ The major classes of text analyses available today are:
         aforementioned forms.
 
     Examples:
-    [module_filename_rule](http://cs/&q=file://depot/google3/third_party/verible/verilog/analysis/checkers/module_filename_rule.h+class:ModuleFilenameRule),
-    [line_length_rule](http://cs/&q=file://depot/google3/third_party/verible/verilog/analysis/checkers/line_length_rule.h+class:LineLengthRule),
+    [module_filename_rule](https://cs.opensource.google/verible/verible/+/master:verilog/analysis/checkers/module_filename_rule.h?q=class:%5CbModuleFilenameRule),
+    [line_length_rule](https://cs.opensource.google/verible/verible/+/master:verilog/analysis/checkers/line_length_rule.h?q=class:%5CbLineLengthRule),
     and
-    [posix_eof_rule](http://cs/&q=file://depot/google3/third_party/verible/verilog/analysis/checkers/posix_eof_rule.h+class:PosixEOFRule).
+    [posix_eof_rule](https://cs.opensource.google/verible/verible/+/master:verilog/analysis/checkers/posix_eof_rule.h?q=class:%5CbPosixEOFRule).
 
 For complete links to examples of each of the above lint rule classes, click on
 the class definition and navigate to "Extended By" inside the "Cross References"
