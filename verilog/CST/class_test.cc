@@ -159,6 +159,15 @@ TEST(GetClassMemberTest, GetMemberName) {
        ".",
        {kTag, "x"},
        ");\nendmodule"},
+      {"module m();\ninitial x.",
+       {kTag, "y"},
+       ".",
+       {kTag, "z"},
+       " <= p.",
+       {kTag, "q"},
+       ".",
+       {kTag, "r"},
+       ";\nendmodule"},
   };
   for (const auto& test : kTestCases) {
     TestVerilogSyntaxRangeMatches(

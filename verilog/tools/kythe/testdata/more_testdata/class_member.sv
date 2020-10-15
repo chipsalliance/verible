@@ -6,6 +6,7 @@ class my_class;
     //- @instance1 defines/binding Instance1
     my_class instance1 = new();
 
+    my_class instance3 = new();
     //- @var1 defines/binding Var1
     int var1;
 endclass
@@ -46,6 +47,18 @@ module my_module();
         //- @#1instance1 ref Instance1
         //- @var1 ref Var1
         $display(m_class.instance1.instance1.var1);
+
+        //- @m_class ref MClass
+        //- @instance1 ref Instance1
+        //- @var1 ref Var1
+        $display(m_class.instance1.var1);
+
+        //- @#0m_class ref MClass
+        //- @#1m_class ref MClass
+        //- @#0var1 ref Var1
+        //- @#1var1 ref Var1
+        m_class.var1 <= m_class.var1;
+
     end
 
 endmodule

@@ -49,6 +49,7 @@ static int ExtractFiles(const std::vector<std::string>& ordered_file_list,
   if (absl::GetFlag(FLAGS_printextraction)) {
     std::cout << file_list_facts_tree << std::endl;
   }
+  LOG(INFO) << file_list_facts_tree << std::endl;
 
   // check for printkythefacts flag, and print the facts if on
   if (absl::GetFlag(FLAGS_printkythefacts)) {
