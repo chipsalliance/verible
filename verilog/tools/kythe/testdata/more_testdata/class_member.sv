@@ -6,7 +6,6 @@ class my_class;
     //- @instance1 defines/binding Instance1
     my_class instance1 = new();
 
-    my_class instance3 = new();
     //- @var1 defines/binding Var1
     int var1;
 endclass
