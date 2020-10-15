@@ -5918,7 +5918,7 @@ TEST(VerilogParserTest, MultiBlockTests) {
 TEST(VerilogParserTest, RandSequenceTests) {
   TestVerilogParser(kRandSequenceTests);
 }
-TEST(VerilogParserTest, Aliases) { TestVerilogParserMatchAll(kNetAliasTests); }
+TEST(VerilogParserTest, Aliases) { TestVerilogParser(kNetAliasTests); }
 
 // Tests on invalid code.
 TEST(VerilogParserTest, InvalidCode) {
