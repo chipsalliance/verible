@@ -38,5 +38,4 @@ program my_program; endprogram
 
 //- @my_interface defines/binding _
 interface my_interface; endinterface
-    
-    
+  

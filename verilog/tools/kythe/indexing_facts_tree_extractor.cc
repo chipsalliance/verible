@@ -147,9 +147,12 @@ void IndexingFactsTreeExtractor::Visit(const SyntaxTreeNode& node) {
       ExtractInterface(node);
       break;
     }
-    case NodeEnum::kModuleDeclaration:
-    case NodeEnum::kProgramDeclaration: {
+    case NodeEnum::kModuleDeclaration: {
       ExtractModule(node);
+      break;
+    }
+    case NodeEnum::kProgramDeclaration: {
+      ExtractProgram(node);
       break;
     }
     case NodeEnum::kDataDeclaration: {
@@ -309,7 +312,6 @@ void IndexingFactsTreeExtractor::ExtractDataDeclaration(
   TreeContextVisitor::Visit(data_declaration);
 }
 
-// Extracts information from module, intraface and program declarations.
 void IndexingFactsTreeExtractor::ExtractModuleAndInterfaceAndProgram(
     const SyntaxTreeNode& declaration_node, IndexingFactNode& facts_node) {
   const IndexingFactsTreeContext::AutoPop p(&facts_tree_context_, &facts_node);

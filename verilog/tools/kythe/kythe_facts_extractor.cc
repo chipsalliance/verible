@@ -381,6 +381,7 @@ VName KytheFactsExtractor::ExtractModuleFact(
 
   return module_vname;
 }
+
 VName KytheFactsExtractor::ExtractProgramFact(
     const IndexingFactNode& program_fact_node) {
   const auto& anchors = program_fact_node.Value().Anchors();
