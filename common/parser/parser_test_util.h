@@ -121,7 +121,8 @@ void TestParserAllMatched(absl::string_view code, int i) {
 
   AnalyzerType analyzer(code, "<<inline-test>>");
   absl::Status status = analyzer.Analyze();
-  EXPECT_TRUE(status.ok());
+  EXPECT_TRUE(status.ok()) << status.message() << "\nRejected: "
+                           << analyzer.GetRejectedTokens().front().token_info;
 
   const Symbol* tree_ptr = analyzer.SyntaxTree().get();
   EXPECT_NE(tree_ptr, nullptr) << "Missing syntax tree with input:\n" << code;

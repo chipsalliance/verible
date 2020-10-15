@@ -497,6 +497,7 @@ enum class NodeEnum {
   kRandSequenceDefaultItem,
   kTypeInfo,
   kConcatenationExpression,
+  kLibraryDescriptionList,
   kLibraryDeclaration,
   kLibraryIncdirSpec,
   kLibraryInclude,

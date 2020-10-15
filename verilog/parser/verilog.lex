@@ -224,6 +224,10 @@ PragmaEndProtected {Pragma}{Space}+protect{Space}+end_protected
 {Space}+ { UpdateLocation(); return TK_SPACE; }
 {LineTerminator} { UpdateLocation(); return TK_NEWLINE; }
 
+  /* Internal-use-only tokens to trigger library map (LRM:33) parsing mode. */
+`____verible_verilog_library_begin____ { UpdateLocation(); return PD_LIBRARY_SYNTAX_BEGIN; }
+`____verible_verilog_library_end____ { UpdateLocation(); return PD_LIBRARY_SYNTAX_END; }
+
   /* Clarification:
    * `protected and `endprotected enclose an already encrypted section.
    * `protect and `endprotect tell the compiler *to* encrypt a section.

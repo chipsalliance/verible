@@ -703,6 +703,10 @@ is not locally defined, so the grammar here uses only generic identifiers.
 
 %token TK_FILEPATH "<<filepath>>"
 
+/* hack: artificial markers to switch to a different syntax mode */
+%token PD_LIBRARY_SYNTAX_BEGIN "`____verible_verilog_library_begin____"
+%token PD_LIBRARY_SYNTAX_END "`____verible_verilog_library_end____"
+
 /* most likely a lexical error */
 %token TK_OTHER
 // LINT.ThenChange(../formatting/verilog_token.cc)
@@ -2300,14 +2304,10 @@ description
     { $$ = move($1); }
   | preprocessor_action
     { $$ = move($1); }
-    /* The following are only allowed in the library map sublanguage.
-     * See LRM: Ch. 33
-     * TODO(b/170767520): make this available as a mini-parser,
-     * using same token enums as in CST/verilog_nonterminals.h.
-     */
-  | library_declaration
-    { $$ = move($1); }
-  | include_statement
+  /* The following are only allowed in the library map sublanguage.
+   * See LRM: Ch. 33
+   */
+  | library_source
     { $$ = move($1); }
   ;
 description_list_opt
@@ -2322,6 +2322,34 @@ description_list
   | description_list description
     { $$ = ExtendNode($1, $2); }
   ;
+
+library_source
+  : PD_LIBRARY_SYNTAX_BEGIN library_description_list_opt PD_LIBRARY_SYNTAX_END
+    { $$ = MakeNode($1, $2, $3); }
+  ;
+library_description_list_opt
+  : library_description_list
+    { $$ = move($1); }
+  | /* empty */
+    { $$ = nullptr; }
+  ;
+library_description_list
+  : library_description_list library_description
+    { $$ = ExtendNode($1, $2); }
+  | library_description
+    { $$ = MakeTaggedNode(N::kLibraryDescriptionList, $1); }
+  ;
+library_description
+  : library_declaration
+    { $$ = move($1); }
+  | include_statement
+    { $$ = move($1); }
+  | config_declaration
+    { $$ = move($1); }
+  | ';'
+    { $$ = move($1); }
+  ;
+
 preprocessor_balanced_description_items
   : preprocessor_if_header description_list_opt
     preprocessor_elsif_description_items_opt

@@ -30,6 +30,7 @@
 #include "common/text/token_info_test_util.h"
 #include "verilog/CST/verilog_nonterminals.h"
 #include "verilog/analysis/verilog_analyzer.h"
+#include "verilog/analysis/verilog_excerpt_parse.h"
 #include "verilog/parser/verilog_token_enum.h"
 
 namespace verilog {
@@ -5745,6 +5746,10 @@ static const std::initializer_list<ParserTestData> kInvalidCodeTests = {
      " fn < a; fn++) begin\n"
      "end\n"
      "endtask\n"},
+    // The following tests are valid library map syntax (LRM Ch. 33),
+    // but invalid for the rest of SystemVerilog:
+    {{TK_library, "library"}, " foo bar;\n"},
+    {{TK_include, "include"}, " foo/bar/*.v;\n"},
 };
 
 using verible::LeafTag;
@@ -5899,6 +5904,30 @@ static void TestVerilogParser(const ParserTestCaseArray& data) {
   }
 }
 
+static void TestVerilogLibraryParser(const ParserTestCaseArray& data) {
+  int i = 0;
+  for (const auto& code : data) {
+    VLOG(1) << "test_data[" << i << "] = '" << code << "'\n";
+    // TODO(fangism): refactor TestParserAcceptValid to accept a lambda
+    const auto analyzer = AnalyzeVerilogLibraryMap(code, "<<inline-test>>");
+    const absl::Status status = ABSL_DIE_IF_NULL(analyzer)->ParseStatus();
+    if (!status.ok()) {
+      // Print more detailed error message.
+      const auto& rejected_tokens = analyzer->GetRejectedTokens();
+      if (!rejected_tokens.empty()) {
+        EXPECT_TRUE(status.ok())
+            << "Rejected valid code:\n"
+            << code << "\nRejected token: " << rejected_tokens[0].token_info;
+      } else {
+        EXPECT_TRUE(status.ok()) << "Rejected valid code:\n" << code;
+      }
+    }
+    EXPECT_TRUE(analyzer->SyntaxTree().get()) << "Missing tree on code:\n"
+                                              << code;
+    ++i;
+  }
+}
+
 // Tests that invalid code is rejected.
 static void TestVerilogParserReject(
     std::initializer_list<ParserTestData> data) {
@@ -5923,6 +5952,35 @@ static void TestVerilogParserMatchAll(const ParserTestCaseArray& data) {
   int i = 0;
   for (const auto& code : data) {
     verible::TestParserAllMatched<VerilogAnalyzer>(code, i);
+    ++i;
+  }
+}
+
+static void TestVerilogLibraryParserMatchAll(const ParserTestCaseArray& data) {
+  using verible::Symbol;
+  int i = 0;
+  for (const auto& code : data) {
+    VLOG(1) << "test_data[" << i << "] = '" << code << "'\n";
+
+    // TODO(fangism): refactor TestParserAllMatched to accept a lambda
+    const auto analyzer = AnalyzeVerilogLibraryMap(code, "<<inline-test>>");
+    const absl::Status status = ABSL_DIE_IF_NULL(analyzer)->ParseStatus();
+    EXPECT_TRUE(status.ok())
+        << status.message()
+        << "\nRejected: " << analyzer->GetRejectedTokens().front().token_info;
+
+    const Symbol* tree_ptr = analyzer->SyntaxTree().get();
+    EXPECT_NE(tree_ptr, nullptr) << "Missing syntax tree with input:\n" << code;
+    if (tree_ptr == nullptr) return;  // Already failed, abort this test case.
+    const Symbol& root = *tree_ptr;
+
+    verible::ParserVerifier verifier(root,
+                                     analyzer->Data().GetTokenStreamView());
+    const auto unmatched = verifier.Verify();
+
+    EXPECT_EQ(unmatched.size(), 0)
+        << "On code:\n"
+        << code << "\nFirst unmatched token: " << unmatched.front();
     ++i;
   }
 }
@@ -5966,7 +6024,7 @@ TEST(VerilogParserTest, RandSequenceTests) {
   TestVerilogParser(kRandSequenceTests);
 }
 TEST(VerilogParserTest, Aliases) { TestVerilogParser(kNetAliasTests); }
-TEST(VerilogParserTest, Library) { TestVerilogParser(kLibraryTests); }
+TEST(VerilogParserTest, Library) { TestVerilogLibraryParser(kLibraryTests); }
 
 // Tests on invalid code.
 TEST(VerilogParserTest, InvalidCode) {
@@ -6140,7 +6198,7 @@ TEST(VerilogParserTestMatchAll, NetAlias) {
 }
 
 TEST(VerilogParserTestMatchAll, Library) {
-  TestVerilogParserMatchAll(kLibraryTests);
+  TestVerilogLibraryParserMatchAll(kLibraryTests);
 }
 
 }  // namespace
