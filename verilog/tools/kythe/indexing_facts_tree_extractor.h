@@ -59,7 +59,8 @@ class IndexingFactsTreeExtractor : public verible::TreeContextVisitor {
   void ExtractModuleEnd(const verible::SyntaxTreeNode& module_declaration_node);
 
   // Extracts modules headers and creates its corresponding fact tree.
-  void ExtractModuleHeader(const verible::SyntaxTreeNode& module_header_node);
+  void ExtractModuleHeader(
+      const verible::SyntaxTreeNode& module_declaration_node);
 
   // Extracts modules ports and creates its corresponding fact tree.
   void ExtractModulePort(const verible::SyntaxTreeNode& module_port_node,
@@ -124,11 +125,27 @@ class IndexingFactsTreeExtractor : public verible::TreeContextVisitor {
       const verible::SyntaxTreeNode& data_declaration,
       const std::vector<verible::TreeSearchMatch>& register_variables);
 
-  // Extracts primitive types declarations and creates its corresponding fact
-  // tree.
-  void ExtractPrimitiveVariables(
-      const verible::SyntaxTreeNode& enclosing_node,
-      const std::vector<verible::TreeSearchMatch>& variable_matches);
+  // Extracts primitive types declarations tagged with kRegisterVariable and
+  // creates its corresponding fact tree.
+  void ExtractRegisterVariable(
+      const verible::SyntaxTreeNode& register_variable);
+
+  // Extracts primitive types declarations tagged with
+  // kVariableDeclarationAssignment and creates its corresponding fact tree.
+  void ExtractVariableDeclarationAssignment(
+      const verible::SyntaxTreeNode& variable_declaration_assignment);
+
+  // Extracts enum name and creates its corresponding fact tree.
+  void ExtractEnumName(const verible::SyntaxTreeNode& enum_name);
+
+  // Extracts type declaration preceeded with "typedef" and creates its
+  // corresponding fact tree.
+  void ExtractTypeDeclaration(const verible::SyntaxTreeNode& type_declaration);
+
+  // Extracts enum type declaration preceeded with "typedef" and creates its
+  // corresponding fact tree.
+  void ExtractEnumTypeDeclaration(
+      const verible::SyntaxTreeNode& enum_type_declaration);
 
   // Extracts leaves tagged with SymbolIdentifier and creates its facts tree.
   // This should only be reached in case of free variable references.
@@ -187,8 +204,8 @@ class IndexingFactsTreeExtractor : public verible::TreeContextVisitor {
 
 // Given the ordered SystemVerilog files, Extracts and returns the
 // IndexingFactsTree from the given files.
-// The returned Root will have the files as children and the will be ordered as
-// the given order.
+// The returned Root will have the files as children and they will retain their
+// original ordering from the file list.
 IndexingFactNode ExtractFiles(const std::vector<std::string>& ordered_file_list,
                               int& exit_status,
                               absl::string_view file_list_dir);

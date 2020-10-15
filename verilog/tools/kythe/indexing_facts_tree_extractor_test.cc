@@ -3487,6 +3487,207 @@ TEST(FactsTreeExtractor, FileIncludes) {
   EXPECT_EQ(result_pair.right, nullptr) << *result_pair.right;
 }
 
+TEST(FactsTreeExtractor, EnumTest) {
+  constexpr int kTag = 1;  // value doesn't matter
+  const verible::SyntaxTreeSearchTestCase kTestCase = {
+      {"package ",
+       {kTag, "pkg"},
+       ";\nenum {",
+       {kTag, "AA"},
+       "} ",
+       {kTag, "m_var"},
+       ";\ntypedef enum {",
+       {kTag, "BB"},
+       "} ",
+       {kTag, "var2"},
+       ";\nendpackage\nmodule ",
+       {kTag, "m"},
+       "();\nenum {",
+       {kTag, "CC"},
+       "} ",
+       {kTag, "m_var"},
+       ";\ntypedef enum {",
+       {kTag, "DD"},
+       "} ",
+       {kTag, "var3"},
+       ";\nenum {",
+       {kTag, "GG"},
+       "=",
+       {kTag, "y"},
+       "[",
+       {kTag, "idx"},
+       "]} ",
+       {kTag, "var6"},
+       ";\ntypedef enum {",
+       {kTag, "HH"},
+       "=",
+       {kTag, "yh"},
+       "[",
+       {kTag, "idx2"},
+       "]} ",
+       {kTag, "var5"},
+       ";\n"
+       "endmodule"},
+  };
+
+  ScopedTestFile test_file(testing::TempDir(), kTestCase.code);
+  int exit_status = 0;
+
+  const IndexingFactNode expected(T(
+      {
+          {
+              Anchor(testing::TempDir(), 0, 0),
+          },
+          IndexingFactType::kFileList,
+      },
+      T(
+          {
+              {
+                  Anchor(test_file.filename(), 0, kTestCase.code.size()),
+                  Anchor(kTestCase.code, 0, kTestCase.code.size()),
+              },
+              IndexingFactType ::kFile,
+          },
+          // refers to package pkg.
+          T(
+              {
+                  {
+                      Anchor(kTestCase.expected_tokens[1], kTestCase.code),
+                  },
+                  IndexingFactType ::kPackage,
+              },
+              // refers to AA.
+              T({
+                  {
+                      Anchor(kTestCase.expected_tokens[3], kTestCase.code),
+                  },
+                  IndexingFactType ::kConstant,
+              }),
+              // refers to enum m_var.
+              T({
+                  {
+                      Anchor(kTestCase.expected_tokens[5], kTestCase.code),
+                  },
+                  IndexingFactType ::kVariableDefinition,
+              }),
+              // refers to enum var.
+              T({
+                  {
+                      Anchor(kTestCase.expected_tokens[9], kTestCase.code),
+                  },
+                  IndexingFactType ::kVariableDefinition,
+              }),
+              // refers to BB.
+              T({
+                  {
+                      Anchor(kTestCase.expected_tokens[7], kTestCase.code),
+                  },
+                  IndexingFactType ::kConstant,
+              })),
+          // refers to module m.
+          T(
+              {
+                  {
+                      Anchor(kTestCase.expected_tokens[11], kTestCase.code),
+                  },
+                  IndexingFactType ::kModule,
+              },
+              // refers to CC.
+              T({
+                  {
+                      Anchor(kTestCase.expected_tokens[13], kTestCase.code),
+                  },
+                  IndexingFactType ::kConstant,
+              }),
+              // refers to enum m_var.
+              T({
+                  {
+                      Anchor(kTestCase.expected_tokens[15], kTestCase.code),
+                  },
+                  IndexingFactType ::kVariableDefinition,
+              }),
+              // refers to enum var2.
+              T({
+                  {
+                      Anchor(kTestCase.expected_tokens[19], kTestCase.code),
+                  },
+                  IndexingFactType ::kVariableDefinition,
+              }),
+              // refers to DD.
+              T({
+                  {
+                      Anchor(kTestCase.expected_tokens[17], kTestCase.code),
+                  },
+                  IndexingFactType ::kConstant,
+              }),
+              // refers to GG.
+              T(
+                  {
+                      {
+                          Anchor(kTestCase.expected_tokens[21], kTestCase.code),
+                      },
+                      IndexingFactType ::kConstant,
+                  },
+                  // refers to y.
+                  T({
+                      {
+                          Anchor(kTestCase.expected_tokens[23], kTestCase.code),
+                      },
+                      IndexingFactType ::kVariableReference,
+                  }),
+                  // refers to idx.
+                  T({
+                      {
+                          Anchor(kTestCase.expected_tokens[25], kTestCase.code),
+                      },
+                      IndexingFactType ::kVariableReference,
+                  })),
+              // refers to enum var3.
+              T({
+                  {
+                      Anchor(kTestCase.expected_tokens[27], kTestCase.code),
+                  },
+                  IndexingFactType ::kVariableDefinition,
+              }),
+              // refers to enum var5.
+              T({
+                  {
+                      Anchor(kTestCase.expected_tokens[35], kTestCase.code),
+                  },
+                  IndexingFactType ::kVariableDefinition,
+              }),
+              // refers to HH.
+              T(
+                  {
+                      {
+                          Anchor(kTestCase.expected_tokens[29], kTestCase.code),
+                      },
+                      IndexingFactType ::kConstant,
+                  },
+                  // refers to HH.
+                  T({
+                      {
+                          Anchor(kTestCase.expected_tokens[31], kTestCase.code),
+                      },
+                      IndexingFactType ::kVariableReference,
+                  }),
+                  // refers to HH.
+                  T({
+                      {
+                          Anchor(kTestCase.expected_tokens[33], kTestCase.code),
+                      },
+                      IndexingFactType ::kVariableReference,
+                  }))))));
+
+  const auto facts_tree =
+      ExtractFiles({std::string(verible::file::Basename(test_file.filename()))},
+                   exit_status, testing::TempDir());
+
+  const auto result_pair = DeepEqual(facts_tree, expected);
+  EXPECT_EQ(result_pair.left, nullptr) << *result_pair.left;
+  EXPECT_EQ(result_pair.right, nullptr) << *result_pair.right;
+}
+
 }  // namespace
 }  // namespace kythe
 }  // namespace verilog

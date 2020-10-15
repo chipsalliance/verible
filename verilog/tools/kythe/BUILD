@@ -156,6 +156,7 @@ cc_library(
         "//verilog/CST:port",
         "//verilog/CST:statement",
         "//verilog/CST:tasks",
+        "//verilog/CST:type",
         "//verilog/CST:verilog_matchers",
         "//verilog/CST:verilog_nonterminals",
         "//verilog/analysis:verilog_analyzer",

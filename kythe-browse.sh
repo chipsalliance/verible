@@ -35,16 +35,16 @@ mkdir -p ${KYTHE_OUT}/graphstore ${KYTHE_OUT}/tables
 bazel build -c opt //verilog/tools/kythe:all
 
 for i in "$@"; do
-  echo "$(basename $i)" > "$VERILOG_TEST_FILE_LIST"
-  cat "$VERILOG_TEST_FILE_LIST"
+  echo "$(basename $i)" > "$(dirname $i)/file_name.txt"
+  cat "$(dirname $i)/file_name.txt"
   # Read JSON entries from standard in to a graphstore.
-  bazel-bin/verilog/tools/kythe/verible-verilog-kythe-extractor "$VERILOG_TEST_FILE_LIST"  --printkythefacts > "${KYTHE_OUT}"/entries
+  bazel-bin/verilog/tools/kythe/verible-verilog-kythe-extractor "$(dirname $i)/file_name.txt"  --printkythefacts > "${KYTHE_OUT}"/entries
   # Write entry stream into a GraphStore
   "${KYTHE_BINDIR}"/entrystream --read_format=json < "${KYTHE_OUT}"/entries \
   | "${KYTHE_BINDIR}"/write_entries -graphstore "${KYTHE_OUT}"/graphstore
-done
 
-rm "$VERILOG_TEST_FILE_LIST"
+  rm "$(dirname $i)/file_name.txt"
+done
 
 # Convert the graphstore to serving tables.
 "${KYTHE_BINDIR}"/write_tables -graphstore "${KYTHE_OUT}"/graphstore -out="${KYTHE_OUT}"/tables
