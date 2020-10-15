@@ -531,6 +531,7 @@ static const auto* FormatTokenTypeMap =
         // string_literal
         {verilog_tokentype::TK_StringLiteral, FTT::string_literal},
         {verilog_tokentype::TK_EvalStringLiteral, FTT::string_literal},
+        {verilog_tokentype::TK_FILEPATH, FTT::string_literal},
 
         // unary operators
         {verilog_tokentype::TK_INCR, FTT::unary_operator},

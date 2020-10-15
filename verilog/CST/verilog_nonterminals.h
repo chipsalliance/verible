@@ -497,6 +497,10 @@ enum class NodeEnum {
   kRandSequenceDefaultItem,
   kTypeInfo,
   kConcatenationExpression,
+  kLibraryDeclaration,
+  kLibraryIncdirSpec,
+  kLibraryInclude,
+  kFilePathSpecList,
   // END GENERATE -- do not delete
 
   // kInvalidTag is used to mark past-the-end of the last valid enum,

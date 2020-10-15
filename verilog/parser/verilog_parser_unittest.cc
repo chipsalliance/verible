@@ -5508,6 +5508,52 @@ static const ParserTestCaseArray kNetAliasTests = {
     "endmodule;\n",
 };
 
+// These tests target LRM Ch. 33
+static const ParserTestCaseArray kLibraryTests = {
+    ";\n",
+    "library foolib bar;\n",
+    "library foolib *.bar;\n",
+    "library foolib ?.bar;\n",
+    "library foolib /bar;\n",
+    "library foolib bar/;\n",
+    "library foolib ../bar;\n",
+    "library foolib ../bar/;\n",
+    "library foolib */bar;\n",
+    "library foolib b/a/r;\n",
+    "library foolib /b/a/r/;\n",
+    "library foolib b/a/r/*.v;\n",
+    "library foolib b/a/r/*.vg;\n",
+    "library foolib *.v,*.vg;\n",
+    "library  foolib  *.v , *.vg ; \n",
+    "library foolib foo/*.v -incdir bar; \n",
+    "library foolib foo/*.v -incdir bar, baz; \n",
+    "library foolib bar1;\n"
+    "library foolib bar2;\n",
+    "include foo/*.bar;\n",
+    "include /foo/*.bar;\n",
+    "include /foo/bar/;\n",
+    "include foo/*.bar;\n"
+    "include bar/*.foo;\n",
+    // most of config_declaration syntax already covered in kConfigTests
+    "config cfg;\n"
+    "  design foo.bar;\n"
+    "endconfig",
+    "config cfg;\n"
+    "  design foo.bar baz;\n"
+    "  instance top.x.y use bert.ernie;\n"
+    "endconfig",
+    "config cfg;\n"
+    "  design foo.bar baz;\n"
+    "  cell y.zz liblist grouch zeppo;\n"
+    "endconfig",
+    // mixed, all valid library_description elements
+    "library foolib foo/lib/*.v;\n"
+    "include foo/inc/;\n"
+    "config cfg;\n"
+    "  design foo.bar;\n"
+    "endconfig\n",
+};
+
 // In the positions where we specify a token via {enum, string} or single
 // character like 'x', is where we expect an error to be found.
 // All other string literals are only used for concatenating the test case's
@@ -5920,6 +5966,7 @@ TEST(VerilogParserTest, RandSequenceTests) {
   TestVerilogParser(kRandSequenceTests);
 }
 TEST(VerilogParserTest, Aliases) { TestVerilogParser(kNetAliasTests); }
+TEST(VerilogParserTest, Library) { TestVerilogParser(kLibraryTests); }
 
 // Tests on invalid code.
 TEST(VerilogParserTest, InvalidCode) {
@@ -6090,6 +6137,10 @@ TEST(VerilogParserTestMatchAll, RandSequence) {
 
 TEST(VerilogParserTestMatchAll, NetAlias) {
   TestVerilogParserMatchAll(kNetAliasTests);
+}
+
+TEST(VerilogParserTestMatchAll, Library) {
+  TestVerilogParserMatchAll(kLibraryTests);
 }
 
 }  // namespace
