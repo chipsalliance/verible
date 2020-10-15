@@ -94,6 +94,14 @@ void KytheFactsExtractor::IndexingFactNodeTagResolver(
       vname = ExtractModuleFact(node);
       break;
     }
+    case IndexingFactType::kInterface: {
+      vname = ExtractInterfaceFact(node);
+      break;
+    }
+    case IndexingFactType::kProgram: {
+      vname = ExtractProgramFact(node);
+      break;
+    }
     case IndexingFactType::kModuleInstance: {
       vname = ExtractModuleInstance(node);
       break;
@@ -192,7 +200,9 @@ void KytheFactsExtractor::AddVNameToScopeContext(IndexingFactType tag,
     case IndexingFactType::kFunctionOrTask:
     case IndexingFactType::kParamDeclaration:
     case IndexingFactType::kPackage:
-    case IndexingFactType::kConstant: {
+    case IndexingFactType::kConstant:
+    case IndexingFactType::kInterface:
+    case IndexingFactType::kProgram: {
       scope_resolver_->AddDefinitionToScopeContext(vname);
       break;
     }
@@ -240,7 +250,9 @@ void KytheFactsExtractor::Visit(const IndexingFactNode& node,
     case IndexingFactType::kFunctionOrTask:
     case IndexingFactType::kClass:
     case IndexingFactType::kMacro:
-    case IndexingFactType::kPackage: {
+    case IndexingFactType::kPackage:
+    case IndexingFactType::kInterface:
+    case IndexingFactType::kProgram: {
       // Get the old scope of this node (if it was extracted in a previous
       // iteration).
       const Scope* old_scope = scope_resolver_->SearchForScope(vname.signature);
@@ -270,7 +282,9 @@ void KytheFactsExtractor::ConstructFlattenedScope(const IndexingFactNode& node,
     case IndexingFactType::kModule:
     case IndexingFactType::kClass:
     case IndexingFactType::kMacro:
-    case IndexingFactType::kPackage: {
+    case IndexingFactType::kPackage:
+    case IndexingFactType::kInterface:
+    case IndexingFactType::kProgram: {
       scope_resolver_->MapSignatureToScope(vname.signature, current_scope);
       break;
     }
@@ -353,7 +367,6 @@ VName KytheFactsExtractor::ExtractModuleFact(
     const IndexingFactNode& module_fact_node) {
   const auto& anchors = module_fact_node.Value().Anchors();
   const Anchor& module_name = anchors[0];
-  const Anchor& module_end_label = anchors[1];
 
   const VName module_vname(file_path_,
                            CreateScopeRelativeSignature(module_name.Value()));
@@ -365,11 +378,54 @@ VName KytheFactsExtractor::ExtractModuleFact(
   CreateEdge(module_name_anchor, kEdgeDefinesBinding, module_vname);
 
   if (anchors.size() > 1) {
+    const Anchor& module_end_label = anchors[1];
     const VName module_end_label_anchor = CreateAnchor(module_end_label);
     CreateEdge(module_end_label_anchor, kEdgeRef, module_vname);
   }
 
   return module_vname;
+}
+VName KytheFactsExtractor::ExtractProgramFact(
+    const IndexingFactNode& program_fact_node) {
+  const auto& anchors = program_fact_node.Value().Anchors();
+  const Anchor& program_name = anchors[0];
+
+  const VName program_vname(file_path_,
+                            CreateScopeRelativeSignature(program_name.Value()));
+  const VName program_name_anchor = CreateAnchor(program_name);
+
+  CreateFact(program_vname, kFactNodeKind, kNodeRecord);
+  CreateFact(program_vname, kFactSubkind, kSubkindProgram);
+  CreateEdge(program_name_anchor, kEdgeDefinesBinding, program_vname);
+
+  if (anchors.size() > 1) {
+    const Anchor& program_end_label = anchors[1];
+    const VName program_end_label_anchor = CreateAnchor(program_end_label);
+    CreateEdge(program_end_label_anchor, kEdgeRef, program_vname);
+  }
+
+  return program_vname;
+}
+
+VName KytheFactsExtractor::ExtractInterfaceFact(
+    const IndexingFactNode& interface_fact_node) {
+  const auto& anchors = interface_fact_node.Value().Anchors();
+  const Anchor& interface_name = anchors[0];
+
+  const VName interface_vname(
+      file_path_, CreateScopeRelativeSignature(interface_name.Value()));
+  const VName interface_name_anchor = CreateAnchor(interface_name);
+
+  CreateFact(interface_vname, kFactNodeKind, kNodeInterface);
+  CreateEdge(interface_name_anchor, kEdgeDefinesBinding, interface_vname);
+
+  if (anchors.size() > 1) {
+    const Anchor& interface_end_label = anchors[1];
+    const VName interface_end_label_anchor = CreateAnchor(interface_end_label);
+    CreateEdge(interface_end_label_anchor, kEdgeRef, interface_vname);
+  }
+
+  return interface_vname;
 }
 
 void KytheFactsExtractor::ExtractDataTypeReference(

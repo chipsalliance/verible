@@ -36,7 +36,7 @@ package baz_pkg;
   endclass
 endpackage
 
-// TODO(minatoma): add verification here after extracting interfaces.
+//- @core_ibex_instr_monitor_if defines/binding _
 interface core_ibex_instr_monitor_if #(
     //- @DATA_WIDTH defines/binding DATA_WIDTH2
     parameter DATA_WIDTH = 32

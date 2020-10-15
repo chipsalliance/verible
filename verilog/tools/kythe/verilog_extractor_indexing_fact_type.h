@@ -28,6 +28,8 @@ enum class IndexingFactType {
   kFile,
   kMacro,
   kModule,
+  kInterface,
+  kProgram,
   kPackage,
   kMacroCall,
   kClass,

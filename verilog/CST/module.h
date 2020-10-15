@@ -62,7 +62,7 @@ std::vector<verible::TreeSearchMatch> FindAllInterfaceDeclarations(
     const verible::Symbol&);
 
 // Returns the full header of a module (params, ports, etc...).
-const verible::SyntaxTreeNode& GetModuleHeader(const verible::Symbol&);
+const verible::SyntaxTreeNode* GetModuleHeader(const verible::Symbol&);
 
 // Returns the full header of an interface (params, ports, etc...).
 const verible::SyntaxTreeNode& GetInterfaceHeader(const verible::Symbol&);
@@ -90,7 +90,7 @@ const verible::SyntaxTreeNode* GetModulePortDeclarationList(
 const verible::TokenInfo* GetModuleEndLabel(const verible::Symbol&);
 
 // Returns the node spanning module's Item list.
-const verible::SyntaxTreeNode& GetModuleItemList(
+const verible::SyntaxTreeNode* GetModuleItemList(
     const verible::Symbol& module_declaration);
 
 // Extract the subnode of a param declaration list from module decalration.
