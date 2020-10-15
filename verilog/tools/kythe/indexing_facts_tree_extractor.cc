@@ -192,6 +192,10 @@ void IndexingFactsTreeExtractor::Visit(const SyntaxTreeNode& node) {
       ExtractClassDeclaration(node);
       break;
     }
+    case NodeEnum::kSelectVariableDimension: {
+      ExtractSelectVariableDimension(node);
+      break;
+    }
     case NodeEnum::kParamDeclaration: {
       ExtractParamDeclaration(node);
       break;
@@ -489,6 +493,23 @@ void IndexingFactsTreeExtractor::ExtractModuleInstantiation(
   facts_tree_context_.top().NewChild(type_node);
 }
 
+void IndexingFactsTreeExtractor::ExtractSelectVariableDimension(
+    const verible::SyntaxTreeNode& variable_dimension) {
+  // Terminate if there is no parent or the parent has no children.
+  if (facts_tree_context_.empty() || facts_tree_context_.top().is_leaf()) {
+    return;
+  }
+
+  // Make the previous node the parent of this node.
+  // e.g x[i] ==> make node of "x" the parent of the current variable dimension
+  // "[i]".
+  const IndexingFactsTreeContext::AutoPop p(
+      &facts_tree_context_, &facts_tree_context_.top().Children().back());
+
+  // Visit the children of this node.
+  TreeContextVisitor::Visit(variable_dimension);
+}
+
 void IndexingFactsTreeExtractor::ExtractNetDeclaration(
     const SyntaxTreeNode& net_declaration_node) {
   // Nets are treated as children of the enclosing parent.
@@ -688,6 +709,7 @@ void IndexingFactsTreeExtractor::ExtractMethodCallExtension(
   IndexingNodeData function_node_data(IndexingFactType::kFunctionCall);
   IndexingFactNode function_node(function_node_data);
 
+  // Terminate if there is no parent or the parent has no children.
   if (facts_tree_context_.empty() || facts_tree_context_.top().is_leaf()) {
     return;
   }
@@ -695,20 +717,16 @@ void IndexingFactsTreeExtractor::ExtractMethodCallExtension(
   const IndexingFactNode& previous_node =
       facts_tree_context_.top().Children().back();
 
-  const auto fact_type = previous_node.Value().GetIndexingFactType();
-  if (fact_type != IndexingFactType::kMemberReference &&
-      fact_type != IndexingFactType::kVariableReference) {
-    return;
-  }
-
   // Fill the anchors of the previous node to the current node.
-  // Previous node should be a kMemberReference or kVariableReference.
   for (const Anchor& anchor : previous_node.Value().Anchors()) {
     function_node.Value().AppendAnchor(anchor);
   }
 
-  // Remove the last node as it was either kMemberReference or
-  // kVariableReference.
+  // Move the children of the previous node to this node.
+  for (const IndexingFactNode& child : previous_node.Children()) {
+    function_node.NewChild(child);
+  }
+
   // The node is removed so that it can be treated as a function call.
   facts_tree_context_.top().Children().pop_back();
 
@@ -734,6 +752,7 @@ void IndexingFactsTreeExtractor::ExtractMemberExtension(
   IndexingFactNode member_node(
       IndexingNodeData(IndexingFactType::kMemberReference));
 
+  // Terminate if there is no parent or the parent has no children.
   if (facts_tree_context_.empty() || facts_tree_context_.top().is_leaf()) {
     return;
   }
@@ -741,23 +760,18 @@ void IndexingFactsTreeExtractor::ExtractMemberExtension(
   const IndexingFactNode& previous_node =
       facts_tree_context_.top().Children().back();
 
-  // Check the previous node and it should be kMemberReference or
-  // kVariableReference.
-  const auto fact_type = previous_node.Value().GetIndexingFactType();
-  if (fact_type != IndexingFactType::kMemberReference &&
-      fact_type != IndexingFactType::kVariableReference) {
-    return;
-  }
-
   // Fill the anchors of the previous node to the current node.
   // Previous node should be a kMemberReference or kVariableReference.
   for (const Anchor& anchor : previous_node.Value().Anchors()) {
     member_node.Value().AppendAnchor(anchor);
   }
 
-  // Remove the last node as it was either kMemberReference or
-  // kVariableReference.
-  // The node is removed so that it can be treated as a function call.
+  // Move the children of the previous node to this node.
+  for (const IndexingFactNode& child : previous_node.Children()) {
+    member_node.NewChild(child);
+  }
+
+  // The node is removed so that it can be treated as a member.
   facts_tree_context_.top().Children().pop_back();
 
   // Append the member name to the current anchors.
