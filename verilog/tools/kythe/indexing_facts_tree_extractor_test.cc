@@ -2116,6 +2116,77 @@ TEST(FactsTreeExtractor, FunctionAndTaskDeclarationWithArgs) {
   EXPECT_EQ(result_pair.right, nullptr) << *result_pair.right;
 }
 
+TEST(FactsTreeExtractor, ClassMember) {
+  constexpr int kTag = 1;  // value doesn't matter
+  const verible::SyntaxTreeSearchTestCase kTestCase = {{
+      "module ",
+      {kTag, "m"},
+      "();\ninitial begin\n$display(",
+      {kTag, "my_class"},
+      ".",
+      {kTag, "x"},
+      ");\n$display(",
+      {kTag, "my_class"},
+      ".",
+      {kTag, "instance1"},
+      ".",
+      {kTag, "y"},
+      ");\nend\nendmodule",
+  }};
+
+  ScopedTestFile test_file(testing::TempDir(), kTestCase.code);
+  int exit_status = 0;
+
+  const IndexingFactNode expected(T(
+      {
+          {
+              Anchor(testing::TempDir(), 0, 0),
+          },
+          IndexingFactType::kFileList,
+      },
+      T(
+          {
+              {
+                  Anchor(test_file.filename(), 0, kTestCase.code.size()),
+                  Anchor(kTestCase.code, 0, kTestCase.code.size()),
+              },
+              IndexingFactType ::kFile,
+          },
+          // refers to module m
+          T(
+              {
+                  {
+                      Anchor(kTestCase.expected_tokens[1], kTestCase.code),
+                  },
+                  IndexingFactType::kModule,
+              },
+              // refers to my_class.x
+              T({
+                  {
+                      Anchor(kTestCase.expected_tokens[3], kTestCase.code),
+                      Anchor(kTestCase.expected_tokens[5], kTestCase.code),
+                  },
+                  IndexingFactType ::kMemberReference,
+              }),
+              // refers to my_class.instance1.x
+              T({
+                  {
+                      Anchor(kTestCase.expected_tokens[7], kTestCase.code),
+                      Anchor(kTestCase.expected_tokens[9], kTestCase.code),
+                      Anchor(kTestCase.expected_tokens[11], kTestCase.code),
+                  },
+                  IndexingFactType ::kMemberReference,
+              })))));
+
+  const auto facts_tree =
+      ExtractFiles({std::string(verible::file::Basename(test_file.filename()))},
+                   exit_status, testing::TempDir());
+
+  const auto result_pair = DeepEqual(facts_tree, expected);
+  EXPECT_EQ(result_pair.left, nullptr) << *result_pair.left;
+  EXPECT_EQ(result_pair.right, nullptr) << *result_pair.right;
+}
+
 TEST(FactsTreeExtractor, FunctionAndTaskCallNoArgs) {
   constexpr int kTag = 1;  // value doesn't matter
   const verible::SyntaxTreeSearchTestCase kTestCase = {{
@@ -3629,19 +3700,22 @@ TEST(FactsTreeExtractor, EnumTest) {
                       IndexingFactType ::kConstant,
                   },
                   // refers to y.
-                  T({
+                  T(
                       {
-                          Anchor(kTestCase.expected_tokens[23], kTestCase.code),
+                          {
+                              Anchor(kTestCase.expected_tokens[23],
+                                     kTestCase.code),
+                          },
+                          IndexingFactType ::kVariableReference,
                       },
-                      IndexingFactType ::kVariableReference,
-                  }),
-                  // refers to idx.
-                  T({
-                      {
-                          Anchor(kTestCase.expected_tokens[25], kTestCase.code),
-                      },
-                      IndexingFactType ::kVariableReference,
-                  })),
+                      // refers to idx.
+                      T({
+                          {
+                              Anchor(kTestCase.expected_tokens[25],
+                                     kTestCase.code),
+                          },
+                          IndexingFactType ::kVariableReference,
+                      }))),
               // refers to enum var3.
               T({
                   {
@@ -3664,20 +3738,23 @@ TEST(FactsTreeExtractor, EnumTest) {
                       },
                       IndexingFactType ::kConstant,
                   },
-                  // refers to HH.
-                  T({
+                  // refers to yh.
+                  T(
                       {
-                          Anchor(kTestCase.expected_tokens[31], kTestCase.code),
+                          {
+                              Anchor(kTestCase.expected_tokens[31],
+                                     kTestCase.code),
+                          },
+                          IndexingFactType ::kVariableReference,
                       },
-                      IndexingFactType ::kVariableReference,
-                  }),
-                  // refers to HH.
-                  T({
-                      {
-                          Anchor(kTestCase.expected_tokens[33], kTestCase.code),
-                      },
-                      IndexingFactType ::kVariableReference,
-                  }))))));
+                      // refers to idx2.
+                      T({
+                          {
+                              Anchor(kTestCase.expected_tokens[33],
+                                     kTestCase.code),
+                          },
+                          IndexingFactType ::kVariableReference,
+                      })))))));
 
   const auto facts_tree =
       ExtractFiles({std::string(verible::file::Basename(test_file.filename()))},

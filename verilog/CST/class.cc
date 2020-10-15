@@ -24,6 +24,7 @@
 #include "common/text/symbol.h"
 #include "common/text/token_info.h"
 #include "common/text/tree_utils.h"
+#include "verilog/CST/identifier.h"
 #include "verilog/CST/verilog_matchers.h"  // IWYU pragma: keep
 
 namespace verilog {
@@ -34,6 +35,11 @@ using verible::SyntaxTreeNode;
 std::vector<verible::TreeSearchMatch> FindAllClassDeclarations(
     const verible::Symbol& root) {
   return SearchSyntaxTree(root, NodekClassDeclaration());
+}
+
+std::vector<verible::TreeSearchMatch> FindAllHierarchyExtensions(
+    const verible::Symbol& root) {
+  return SearchSyntaxTree(root, NodekHierarchyExtension());
 }
 
 const verible::SyntaxTreeNode& GetClassHeader(
@@ -66,6 +72,13 @@ const verible::SyntaxTreeNode& GetClassItemList(
     const verible::Symbol& class_declaration) {
   return verible::GetSubtreeAsNode(
       class_declaration, NodeEnum::kClassDeclaration, 1, NodeEnum::kClassItems);
+}
+
+const verible::SyntaxTreeLeaf& GetUnqualifiedIdFromHierarchyExtension(
+    const verible::Symbol& hierarchy_extension) {
+  return *AutoUnwrapIdentifier(verible::GetSubtreeAsNode(
+      hierarchy_extension, NodeEnum::kHierarchyExtension, 1,
+      NodeEnum::kUnqualifiedId));
 }
 
 }  // namespace verilog
