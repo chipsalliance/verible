@@ -13,6 +13,8 @@ class my_class1;
 endclass 
 
 //- @my_class2 defines/binding MyClass2
+//- @my_class1 ref MyClass1
+//- MyClass2 extends MyClass1
 class my_class2 extends my_class1;
     //- @instance2 defines/binding Instance2
     //- Instance2 childof MyClass2

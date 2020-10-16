@@ -56,7 +56,7 @@ const verible::SyntaxTreeLeaf& GetClassName(
   return name_leaf;
 }
 
-const verible::SyntaxTreeLeaf* GetExtendedClassName(
+const verible::SyntaxTreeNode* GetExtendedClass(
     const verible::Symbol& class_declaration) {
   const auto& class_header = GetClassHeader(class_declaration);
   const auto* extends_list =
@@ -64,8 +64,7 @@ const verible::SyntaxTreeLeaf* GetExtendedClassName(
   if (extends_list == nullptr) {
     return nullptr;
   }
-  return AutoUnwrapIdentifier(verible::GetSubtreeAsNode(
-      *extends_list, NodeEnum::kExtendsList, 1, NodeEnum::kUnqualifiedId));
+  return &verible::GetSubtreeAsNode(*extends_list, NodeEnum::kExtendsList, 1);
 }
 
 const verible::SyntaxTreeLeaf* GetClassEndLabel(

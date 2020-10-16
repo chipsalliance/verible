@@ -820,12 +820,26 @@ void IndexingFactsTreeExtractor::ExtractClassDeclaration(
       facts_tree_context_.top().Value().AppendAnchor(class_end_anchor);
     }
 
-    const SyntaxTreeLeaf* extended_class =
-        GetExtendedClassName(class_declaration);
+    const SyntaxTreeNode* extended_class = GetExtendedClass(class_declaration);
     if (extended_class != nullptr) {
-      class_node.NewChild(
-          IndexingNodeData({Anchor(extended_class->get(), context_.base)},
-                           IndexingFactType::kExtends));
+      // In case of => class X extends Y.
+      if (NodeEnum(extended_class->Tag().tag) == NodeEnum::kUnqualifiedId) {
+        class_node.NewChild(IndexingNodeData(
+            {Anchor(AutoUnwrapIdentifier(*extended_class)->get(),
+                    context_.base)},
+            IndexingFactType::kExtends));
+      } else {
+        // In case of => class X extends pkg1::Y.
+        ExtractQualifiedId(*extended_class);
+
+        // Construct extends node from the last node which is kMemberReference,
+        // remove kMemberReference node and append the new extends node.
+        IndexingFactNode extends_node(
+            IndexingNodeData(class_node.Children().back().Value().Anchors(),
+                             IndexingFactType::kExtends));
+        class_node.Children().pop_back();
+        class_node.NewChild(extends_node);
+      }
     }
 
     // Visit class body.

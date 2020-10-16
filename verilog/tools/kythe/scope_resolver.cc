@@ -133,6 +133,8 @@ const std::vector<const VName*> ScopeResolver::SearchForDefinitions(
   return definitions;
 }
 
+// TODO(minatoma): separate this function into two function one for searching in
+// current file's scopes and one for searching in all the files' scopes.
 const Scope* ScopeResolver::SearchForScope(const Signature& signature) const {
   const auto scope = scopes_.find(signature);
   if (scope != scopes_.end()) {
