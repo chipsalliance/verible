@@ -142,6 +142,10 @@ void KytheFactsExtractor::IndexingFactNodeTagResolver(
       ExtractNamedParam(node);
       break;
     }
+    case IndexingFactType::kExtends: {
+      ExtractExtends(node);
+      break;
+    }
     case IndexingFactType::kVariableReference: {
       ExtractVariableReference(node);
       break;
@@ -616,6 +620,45 @@ VName KytheFactsExtractor::ExtractClassInstances(
   return class_instance_vname;
 }
 
+void KytheFactsExtractor::ExtractExtends(const IndexingFactNode& extends_node) {
+  const auto& anchors = extends_node.Value().Anchors();
+
+  // Extract the list of reference_names.
+  std::vector<std::string> references_names;
+  references_names.reserve(anchors.size());
+  for (const Anchor& anchor : anchors) {
+    references_names.push_back(anchor.Value());
+  }
+
+  // Search for member hierarchy in the scopes.
+  const std::vector<const VName*> definitions =
+      scope_resolver_->SearchForDefinitions(references_names);
+
+  // Loop over the found definitions and create kythe facts.
+  for (size_t i = 0; i < definitions.size(); i++) {
+    const VName current_anchor_vname = CreateAnchor(anchors[i]);
+    CreateEdge(current_anchor_vname, kEdgeRef, *definitions[i]);
+  }
+
+  // Check if all the definitions were found.
+  if (definitions.size() != anchors.size() || definitions.empty()) {
+    return;
+  }
+
+  // Create kythe facts for extends.
+  const VName& derived_class_vname = vnames_context_.top();
+  CreateEdge(derived_class_vname, kEdgeExtends, *definitions.back());
+
+  // Search for the extended class's scope and append it to the derived class.
+  const Scope* base_class_scope =
+      scope_resolver_->SearchForScope(definitions.back()->signature);
+  if (base_class_scope == nullptr) {
+    return;
+  }
+
+  scope_resolver_->AppendScopeToScopeContext(*base_class_scope);
+}
+
 void KytheFactsExtractor::ExtractPackageImport(
     const IndexingFactNode& import_fact_node) {
   // TODO(minatoma): remove the imported vnames before exporting the scope as
@@ -701,6 +744,7 @@ void KytheFactsExtractor::ExtractMemberReference(
   // Checking if we found all the member heirarchy by ensuring the size of the
   // found definitions is equal to the size of the given anchors and then
   // creating ref/call edge if it was a function call.
+  // TODO(minatoma): refactor code to get rid of this if condition.
   if (definitions.size() == anchors.size() && is_function_call) {
     const VName current_anchor_vname = CreateAnchor(anchors.back());
     CreateEdge(current_anchor_vname, kEdgeRefCall, *definitions.back());
