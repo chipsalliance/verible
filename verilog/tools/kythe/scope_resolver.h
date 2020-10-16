@@ -164,6 +164,8 @@ class ScopeResolver {
 
   // TODO(minatoma): add overloaded function which takes anchors (and add
   // tests).
+  // TODO(minatoma): returns scopes with VNames to decrease search time for
+  // scopes.
   // Searches for the definitions of the given names.
   const std::vector<const VName*> SearchForDefinitions(
       const std::vector<std::string>& names) const;

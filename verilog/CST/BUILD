@@ -408,7 +408,6 @@ cc_library(
     srcs = ["class.cc"],
     hdrs = ["class.h"],
     deps = [
-        ":identifier",
         ":verilog_matchers",  # fixdeps: keep
         ":identifier",
         "//common/analysis:syntax_tree_search",

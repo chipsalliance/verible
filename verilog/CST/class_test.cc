@@ -26,8 +26,6 @@
 #include <sstream>
 #include <vector>
 
-#include "gmock/gmock.h"
-#include "gtest/gtest.h"
 #include "common/analysis/syntax_tree_search_test_utils.h"
 #include "common/text/concrete_syntax_tree.h"
 #include "common/text/symbol.h"
@@ -37,6 +35,8 @@
 #include "common/util/casts.h"
 #include "common/util/logging.h"
 #include "common/util/range.h"
+#include "gmock/gmock.h"
+#include "gtest/gtest.h"
 #include "verilog/CST/match_test_utils.h"
 #include "verilog/analysis/verilog_analyzer.h"
 
@@ -183,6 +183,37 @@ TEST(GetClassMemberTest, GetMemberName) {
             names.emplace_back(TreeSearchMatch{&name, {/* ignored context */}});
           }
           return names;
+        });
+  }
+}
+
+TEST(GetClassExtendTest, GetExtendListIdentifiers) {
+  constexpr int kTag = 1;  // value doesn't matter
+  const SyntaxTreeSearchTestCase kTestCases[] = {
+      {""},
+      {"class foo; endclass"},
+      {"module m();\ninitial $display(my_class.x);\nendmodule"},
+      {"class X extends ", {kTag, "Y"}, ";\nendclass"},
+      {"class X extends ", {kTag, "Y::K::h"}, ";\nendclass"},
+      {"class X extends ", {kTag, "Y::O"}, ";\nendclass"},
+  };
+  for (const auto& test : kTestCases) {
+    TestVerilogSyntaxRangeMatches(
+        __FUNCTION__, test, [](const TextStructureView& text_structure) {
+          const auto& root = text_structure.SyntaxTree();
+          const auto& members =
+              FindAllClassDeclarations(*ABSL_DIE_IF_NULL(root));
+
+          std::vector<TreeSearchMatch> identifiers;
+          for (const auto& decl : members) {
+            const auto* identifier = GetExtendedClass(*decl.match);
+            if (identifier == nullptr) {
+              continue;
+            }
+            identifiers.emplace_back(
+                TreeSearchMatch{identifier, {/* ignored context */}});
+          }
+          return identifiers;
         });
   }
 }

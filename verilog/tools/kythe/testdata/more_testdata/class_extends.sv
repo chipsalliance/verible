@@ -46,7 +46,7 @@ module my_module();
        $display(instance1::var1);
         //- @instance1 ref Instance1
         //- @var2 ref Var2
-       $display(instance1::var2);
+       $display(instance1.var2);
        
         //- @instance1 ref Instance1
         //- @instance2 ref Instance2
@@ -55,7 +55,7 @@ module my_module();
         //- @instance1 ref Instance1
         //- @instance2 ref Instance2
         //- @var2 ref Var2
-       $display(instance1::instance2::var2);
+       $display(instance1.instance2.var2);
 
         //- @instance1 ref Instance1
         //- @my_function1 ref Function1
@@ -75,7 +75,7 @@ module my_module();
         //- @instance2 ref Instance2
         //- @my_function2 ref Function2
         //- @my_function2 ref/call Function2
-       $display(instance1::instance2.my_function2());
+       $display(instance1.instance2.my_function2());
     end
 
 endmodule
