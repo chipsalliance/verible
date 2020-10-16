@@ -19,11 +19,9 @@
 
 #include <algorithm>
 #include <cstddef>
-#include <initializer_list>
+#include <iostream>
 #include <iterator>
-#include <memory>
 #include <string>
-#include <utility>
 
 #include "absl/strings/string_view.h"
 #include "common/lexer/token_stream_adapter.h"
@@ -44,19 +42,15 @@ using verible::TokenSequence;
 // TODO(fangism): majority of this code is not Verilog-specific and could
 // be factored into a common/analysis library.
 
-static constexpr std::initializer_list<
-    std::pair<const absl::string_view, DiffStatus>>
-    kDiffStatusStringMap = {
-        {"equivalent", DiffStatus::kEquivalent},
-        {"different", DiffStatus::kDifferent},
-        {"left-error", DiffStatus::kLeftError},
-        {"right-error", DiffStatus::kRightError},
+static const verible::EnumNameMap<DiffStatus> kDiffStatusStringMap = {
+    {"equivalent", DiffStatus::kEquivalent},
+    {"different", DiffStatus::kDifferent},
+    {"left-error", DiffStatus::kLeftError},
+    {"right-error", DiffStatus::kRightError},
 };
 
 std::ostream& operator<<(std::ostream& stream, DiffStatus status) {
-  static const auto* flag_map =
-      verible::MakeEnumToStringMap(kDiffStatusStringMap);
-  return stream << flag_map->find(status)->second;
+  return kDiffStatusStringMap.Unparse(status, stream);
 }
 
 // Lex a token into smaller substrings/subtokens.

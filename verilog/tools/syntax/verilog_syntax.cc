@@ -56,28 +56,19 @@ enum class LanguageMode {
   kVerilogLibraryMap,
 };
 
-static const verible::BijectiveMap<absl::string_view, LanguageMode,
-                                   verible::StringViewCompare>
-    kLanguageModeStringMap{{
-        {"auto", LanguageMode::kAutoDetect},
-        {"sv", LanguageMode::kSystemVerilog},
-        {"lib", LanguageMode::kVerilogLibraryMap},
-    }};
+static const verible::EnumNameMap<LanguageMode> kLanguageModeStringMap{{
+    {"auto", LanguageMode::kAutoDetect},
+    {"sv", LanguageMode::kSystemVerilog},
+    {"lib", LanguageMode::kVerilogLibraryMap},
+}};
 
 static std::ostream& operator<<(std::ostream& stream, LanguageMode mode) {
-  return stream << *kLanguageModeStringMap.find_reverse(mode);
+  return kLanguageModeStringMap.Unparse(mode, stream);
 }
 
 static bool AbslParseFlag(absl::string_view text, LanguageMode* mode,
                           std::string* error) {
-  const LanguageMode* found_mode = kLanguageModeStringMap.find_forward(text);
-  if (found_mode != nullptr) {
-    *mode = *found_mode;
-    return true;
-  } else {
-    *error = absl::StrCat("No language mode for ", text, ".\n");
-    return false;
-  }
+  return kLanguageModeStringMap.Parse(text, mode, error, "--flag value");
 }
 
 static std::string AbslUnparseFlag(const LanguageMode& mode) {

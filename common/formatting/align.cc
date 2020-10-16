@@ -40,30 +40,21 @@
 
 namespace verible {
 
-namespace internal {
-
-const std::initializer_list<std::pair<const absl::string_view, AlignmentPolicy>>
-    kAlignmentPolicyNameMap = {
-        {"align", AlignmentPolicy::kAlign},
-        {"flush-left", AlignmentPolicy::kFlushLeft},
-        {"preserve", AlignmentPolicy::kPreserve},
-        {"infer", AlignmentPolicy::kInferUserIntent},
-        // etc.
+static const verible::EnumNameMap<AlignmentPolicy> kAlignmentPolicyNameMap = {
+    {"align", AlignmentPolicy::kAlign},
+    {"flush-left", AlignmentPolicy::kFlushLeft},
+    {"preserve", AlignmentPolicy::kPreserve},
+    {"infer", AlignmentPolicy::kInferUserIntent},
+    // etc.
 };
 
-}  // namespace internal
-
 std::ostream& operator<<(std::ostream& stream, AlignmentPolicy policy) {
-  static const auto* flag_map =
-      MakeEnumToStringMap(internal::kAlignmentPolicyNameMap);
-  return stream << flag_map->find(policy)->second;
+  return kAlignmentPolicyNameMap.Unparse(policy, stream);
 }
 
 bool AbslParseFlag(absl::string_view text, AlignmentPolicy* policy,
                    std::string* error) {
-  static const auto* flag_map =
-      MakeStringToEnumMap(internal::kAlignmentPolicyNameMap);
-  return EnumMapParseFlag(*flag_map, text, policy, error);
+  return kAlignmentPolicyNameMap.Parse(text, policy, error, "AlignmentPolicy");
 }
 
 std::string AbslUnparseFlag(const AlignmentPolicy& policy) {
