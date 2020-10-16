@@ -48,7 +48,7 @@ class IndexingFactsTreeExtractor : public verible::TreeContextVisitor {
 
  private:
   // Extracts facts from module, intraface and program declarations.
-  void ExtractModuleAndInterfaceAndProgram(
+  void ExtractModuleOrInterfaceOrProgram(
       const verible::SyntaxTreeNode& declaration_node,
       IndexingFactNode& facts_node);
 

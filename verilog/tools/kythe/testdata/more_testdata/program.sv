@@ -2,7 +2,7 @@
 interface mem_intf;
     //- @clk defines/binding CLK
     logic      clk;
-  endinterface
+endinterface
    
 //- @testcase defines/binding TestCase
 //- TestCase.node/kind record
@@ -27,7 +27,7 @@ module tbench_top;
     //- @#1intf defines/binding Intf1
     mem_intf intf();
 
-    //- @memry ref Memory
+    //- @memory ref Memory
     //- @dut defines/binding _
     memory dut(
         //- @#0clk ref Clk2
@@ -35,7 +35,6 @@ module tbench_top;
         //- @#1clk ref CLK
         .clk(intf.clk),
         );
-
 
     //- @testcase ref TestCase
     //- @#1test defines/binding _

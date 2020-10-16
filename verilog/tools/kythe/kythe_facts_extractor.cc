@@ -289,7 +289,14 @@ void KytheFactsExtractor::ConstructFlattenedScope(const IndexingFactNode& node,
       break;
     }
     case IndexingFactType::kModuleInstance:
-    case IndexingFactType::kClassInstance: {
+    case IndexingFactType::kClassInstance:
+    case IndexingFactType::kVariableDefinition: {
+      if (node.Parent() == nullptr ||
+          node.Parent()->Value().GetIndexingFactType() !=
+              IndexingFactType::kDataTypeReference) {
+        break;
+      }
+
       // TODO(minatoma): fix this in case the name was kQualified id.
       const std::vector<const VName*> found_vnames =
           scope_resolver_->SearchForDefinitions(
