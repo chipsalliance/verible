@@ -1,7 +1,7 @@
 # SystemVerilog Analysis Library
 
 <!--*
-freshness: { owner: 'fangism' reviewed: '2020-10-07' }
+freshness: { owner: 'fangism' reviewed: '2020-10-15' }
 *-->
 
 This directory contains libraries for analyzing SystemVerilog code. Analysis is
@@ -51,6 +51,7 @@ Available parser modes include:
 *   `parse-as-module-body`: Text occurs inside a module definition.
 *   `parse-as-class-body`: Text occurs inside a class definition.
 *   `parse-as-package-body`: Text occurs inside a package definition.
+*   `parse-as-library-map`: Verilog library map sub-language (LRM: Ch. 33).
 
 ## Lint Rules
 
