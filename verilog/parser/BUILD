@@ -148,6 +148,7 @@ cc_library(
         "//common/parser:bison_parser_adapter",
         "//common/parser:parse",
         "//common/parser:parser_param",
+        "//common/util:value_saver",
         "@com_google_absl//absl/flags:flag",
     ],
     alwayslink = 1,

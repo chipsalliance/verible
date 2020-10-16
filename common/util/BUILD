@@ -204,19 +204,9 @@ cc_library(
     name = "enum_flags",
     hdrs = ["enum_flags.h"],
     deps = [
-        ":logging",
+        ":bijective_map",
         "//common/strings:compare",
         "@com_google_absl//absl/strings",
-    ],
-)
-
-cc_library(
-    name = "enum_flags_test_util",
-    testonly = 1,
-    hdrs = ["enum_flags_test_util.h"],
-    deps = [
-        "@com_google_absl//absl/strings",
-        "@com_google_googletest//:gtest",  # for library testonly
     ],
 )
 
@@ -413,7 +403,6 @@ cc_test(
     srcs = ["enum_flags_test.cc"],
     deps = [
         ":enum_flags",
-        ":enum_flags_test_util",
         "@com_google_absl//absl/strings",
         "@com_google_googletest//:gtest_main",
     ],

@@ -56,6 +56,10 @@ std::unique_ptr<VerilogAnalyzer> AnalyzeVerilogPackageBody(
 
 // TODO(fangism): analogous functions for: function, task, ...
 
+// Analyzes text as any Verilog library map.
+std::unique_ptr<VerilogAnalyzer> AnalyzeVerilogLibraryMap(
+    absl::string_view text, absl::string_view filename);
+
 // Analyzes text in the selected parsing `mode`.
 std::unique_ptr<VerilogAnalyzer> AnalyzeVerilogWithMode(
     absl::string_view text, absl::string_view filename, absl::string_view mode);

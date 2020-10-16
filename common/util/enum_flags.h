@@ -16,120 +16,26 @@
 #define VERIBLE_COMMON_UTIL_ENUM_FLAGS_H_
 
 #include <initializer_list>
-#include <map>
 #include <sstream>
 #include <string>
 #include <utility>
-#include <vector>
 
-#include "absl/strings/str_cat.h"
 #include "absl/strings/str_join.h"
 #include "absl/strings/string_view.h"
 #include "common/strings/compare.h"
-#include "common/util/logging.h"
+#include "common/util/bijective_map.h"
 
 namespace verible {
 
-/**
-This library provides some boilerplate functions for handling enums as flags.
-The main benefit of this is having to only specify the relationship between
-values and their string names once in an initializer_list.
-This operates smoothly with the absl flags library.
-
-Usage:
-(in your .h file)
-namespace your_namespace {
-
-enum class MyEnumType {
-  kValue1,
-  kValue2,
-  kValue3,
-  ...
-};
-
 namespace internal {
-// data that is private to the implementation and tests
-extern const std::initializer_list<
-    std::pair<const absl::string_view, MyEnumType>>
-    kMyEnumTypeStringMap;
-}  // namespace internal
-
-std::ostream& operator<<(std::ostream&, MyEnumType);
-
-// For use with the absl flags library, declare the following:
-
-bool AbslParseFlag(absl::string_view, MyEnumType*, std::string*);
-
-std::string AbslUnparseFlag(const MyEnumType&);
-
-}  // namespace your_namespace
-
-
-(in your .cc file, which includes your .h file)
-
-namespace your_namespace {
-namespace internal {
-// This mapping defines how this enum is displayed and parsed.
-// By providing this mapping, the other necessary flag functions can be
-// generated for you.
-const std::initializer_list<
-    std::pair<const absl::string_view, MyEnumType>>
-    kMyEnumTypeStringMap = {
-        {"value1", MyEnumType::kValue1},
-        {"value2", MyEnumType::kValue2},
-        {"value3", MyEnumType::kValue3},
-        // etc.
-};
-}  // namespace internal
-
-// Conventional stream printer (declared in header providing enum).
-std::ostream& operator<<(std::ostream& stream, MyEnumType p) {
-  static const auto* flag_map =
-      MakeEnumToStringMap(internal::kMyEnumTypeStringMap);
-  return stream << flag_map->find(p)->second;
-}
-
-bool AbslParseFlag(absl::string_view text, MyEnumType* mode,
-                   std::string* error) {
-  static const auto* flag_map =
-      MakeStringToEnumMap(internal::kMyEnumTypeStringMap);
-  return EnumMapParseFlag(*flag_map, text, mode, error);
-}
-
-std::string AbslUnparseFlag(const MyEnumType& mode) {
-  std::ostringstream stream;
-  stream << mode;
-  return stream.str();
-}
-
-}  // namespace your_namespace
-**/
-
 // Functor that extracts the first element of a pair and appends it to a string.
 // Suitable for use with absl::StrJoin()'s formatter arguments.
 struct FirstElementFormatter {
   template <class P>
   void operator()(std::string* out, const P& p) const {
-    out->append(std::string(p.first));
+    out->append(p.first.begin(), p.first.end());
   }
 };
-
-// Looks up an enum value given its string name, and sets it by reference.
-// Suitable for use with AbslParseFlag().
-template <typename M>
-bool EnumMapParseFlag(const M& flag_map, absl::string_view text,
-                      typename M::mapped_type* flag, std::string* error) {
-  const auto p = flag_map.find(text);
-  if (p != flag_map.end()) {
-    *flag = p->second;
-    return true;
-  } else {
-    *error = absl::StrCat(
-        "unknown value for enumeration '", text, "'.  Valid options are: ",
-        absl::StrJoin(flag_map, ",", FirstElementFormatter()));
-    return false;
-  }
-}
 
 // For enums to be comparable for uniqueness/mapping sake,
 // force interpret them as integers.
@@ -139,30 +45,117 @@ struct EnumCompare {
     return static_cast<int>(left) < static_cast<int>(right);
   }
 };
+}  // namespace internal
 
-// Constructs a map<S, V> from a sequence of pair<S, V>'s.
-// V is an enum type, S is only string_view
-template <class V>
-const std::map<absl::string_view, V, verible::StringViewCompare>*
-MakeStringToEnumMap(
-    std::initializer_list<std::pair<const absl::string_view, V>> elements) {
-  return new std::map<absl::string_view, V, verible::StringViewCompare>(
-      elements);
+/**
+EnumNameMap provides a consistent way to parse and unparse enumerations with
+string/named representations.
+This makes enumeration types easy to use with absl flags.
+
+Usage:
+
+////////////////// .h header file ///////////////////
+// Define an enum in public header.
+enum class MyEnumType { ... };
+
+// Conventional stream printer (declared in header providing enum).
+std::ostream& operator<<(std::ostream& stream, MyEnumType p);
+
+// If making this usable as an absl flag, provide the following overloads:
+bool AbslParseFlag(absl::string_view text, MyEnumType* mode,
+                   std::string* error);
+std::string AbslUnparseFlag(const MyEnumType& mode);
+
+
+/////////////// .cc implementation file ////////////////
+const EnumNameMap<MyEnumType> MyEnumTypeNames{{
+  {"enum1", MyEnumType::kEnum1},
+  {"enum2", MyEnumType::kEnum2},
+  ...
+}};
+
+std::ostream& operator<<(std::ostream& stream, MyEnumType p) {
+  return MyEnumTypeNames.Unparse(p, stream);
 }
 
-// Constructs a (reverse) map<V, S> from a sequence of pair<S, V>'s.
-// V is an enum type, S is only string_view
-// Fatal error if any keys are duplicate.
-template <class V>
-const std::map<V, absl::string_view, EnumCompare>* MakeEnumToStringMap(
-    std::initializer_list<std::pair<const absl::string_view, V>> elements) {
-  auto* result = new std::map<V, absl::string_view, EnumCompare>;
-  for (const auto& p : elements) {
-    const auto it = result->emplace(p.second, p.first);
-    CHECK(it.second) << "Duplicate element forbidden at key: " << p.second;
+bool AbslParseFlag(absl::string_view text, MyEnumType* mode,
+                   std::string* error) {
+  return kLanguageModeStringMap.Parse(text, mode, error, "MyEnumType");
+}
+
+std::string AbslUnparseFlag(const MyEnumType& mode) {
+  std::ostringstream stream;
+  stream << mode;
+  return stream.str();
+}
+
+**/
+template <typename EnumType>
+class EnumNameMap {
+  // Using a string_view is safe when the string-memory owned elsewhere is
+  // guaranteed to outlive objects of this class.
+  // String-literals are acceptable sources of string_views for this purpose.
+  typedef absl::string_view key_type;
+
+  // Storage type for mapping information.
+  // StringViewCompare gives the benefit of copy-free heterogeneous lookup.
+  typedef BijectiveMap<key_type, EnumType, StringViewCompare,
+                       internal::EnumCompare>
+      map_type;
+
+ public:
+  EnumNameMap(std::initializer_list<std::pair<key_type, EnumType>> pairs)
+      : enum_name_map_(pairs) {}
+  ~EnumNameMap() = default;
+
+  EnumNameMap(const EnumNameMap&) = delete;
+  EnumNameMap(EnumNameMap&&) = delete;
+  EnumNameMap& operator=(const EnumNameMap&) = delete;
+  EnumNameMap& operator=(EnumNameMap&&) = delete;
+
+  // Print a list of string representations of the enums.
+  std::ostream& ListNames(std::ostream& stream, absl::string_view sep) const {
+    return stream << absl::StrJoin(enum_name_map_.forward_view(), sep,
+                                   internal::FirstElementFormatter());
   }
-  return result;
-}
+
+  // Converts the name of an enum to its corresponding value.
+  // 'type_name' is a text name for the enum type used in diagnostics.
+  // This variant write diagnostics to the 'errstream' stream.
+  // Returns true if successful.
+  bool Parse(key_type text, EnumType* enum_value, std::ostream& errstream,
+             absl::string_view type_name) const {
+    const EnumType* found_value = enum_name_map_.find_forward(text);
+    if (found_value != nullptr) {
+      *enum_value = *found_value;
+      return true;
+    } else {
+      errstream << "Invalid " << type_name << ": '" << text
+                << "'\nValid options are: ";
+      ListNames(errstream, ",");
+      return false;
+    }
+  }
+
+  // Converts the name of an enum to its corresponding value.
+  // This variant write diagnostics to the 'error' string.
+  bool Parse(key_type text, EnumType* enum_value, std::string* error,
+             absl::string_view type_name) const {
+    std::ostringstream stream;
+    const bool success = Parse(text, enum_value, stream, type_name);
+    *error += stream.str();
+    return success;
+  }
+
+  // Prints the string representation of an enum to stream.
+  std::ostream& Unparse(EnumType value, std::ostream& stream) const {
+    return stream << *enum_name_map_.find_reverse(value);
+  }
+
+ protected:  // for testing
+  // Stores the enum/string mapping.
+  map_type enum_name_map_;
+};
 
 }  // namespace verible
 

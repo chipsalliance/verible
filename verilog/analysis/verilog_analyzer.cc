@@ -119,6 +119,12 @@ static const absl::string_view FailingTokenKeywordToParsingMode(
 
       // TODO(b/134023515): handle class-unique keywords
 
+    // Keywords that are unique to library maps:
+    case verilog_tokentype::TK_library:
+    case verilog_tokentype::TK_include:
+    case verilog_tokentype::TK_incdir:
+      return "parse-as-library-map";
+
     default:
       break;
   }

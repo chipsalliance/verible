@@ -109,6 +109,17 @@ std::unique_ptr<VerilogAnalyzer> AnalyzeVerilogPackageBody(
                                  filename);
 }
 
+std::unique_ptr<VerilogAnalyzer> AnalyzeVerilogLibraryMap(
+    absl::string_view text, absl::string_view filename) {
+  // The prolog/epilog strings come from verilog.lex as token enums:
+  // PD_LIBRARY_SYNTAX_BEGIN and PD_LIBRARY_SYNTAX_END.
+  // These are used in verilog.y to enclose the complete library_description
+  // grammar rule.
+  return AnalyzeVerilogConstruct(
+      "`____verible_verilog_library_begin____\n", text,
+      "\n`____verible_verilog_library_end____\n", filename);
+}
+
 std::unique_ptr<VerilogAnalyzer> AnalyzeVerilogWithMode(
     absl::string_view text, absl::string_view filename,
     absl::string_view mode) {
@@ -122,6 +133,7 @@ std::unique_ptr<VerilogAnalyzer> AnalyzeVerilogWithMode(
           {"parse-as-class-body", &AnalyzeVerilogClassBody},
           {"parse-as-package-body", &AnalyzeVerilogPackageBody},
           {"parse-as-property-spec", &AnalyzeVerilogPropertySpec},
+          {"parse-as-library-map", &AnalyzeVerilogLibraryMap},
       };
   auto func_ptr = FindOrNull(*func_map, mode);
   if (func_ptr == nullptr) return nullptr;

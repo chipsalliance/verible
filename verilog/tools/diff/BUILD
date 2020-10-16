@@ -12,6 +12,7 @@ cc_binary(
         "//common/util:enum_flags",
         "//common/util:file_util",
         "//common/util:init_command_line",
+        "//common/util:logging",
         "//verilog/analysis:verilog_equivalence",
         "@com_google_absl//absl/flags:flag",
         "@com_google_absl//absl/strings",

@@ -199,12 +199,6 @@ enum class AlignmentPolicy {
   kInferUserIntent,
 };
 
-namespace internal {
-extern const std::initializer_list<
-    std::pair<const absl::string_view, AlignmentPolicy>>
-    kAlignmentPolicyNameMap;
-}  // namespace internal
-
 std::ostream& operator<<(std::ostream&, AlignmentPolicy);
 
 bool AbslParseFlag(absl::string_view text, AlignmentPolicy* policy,

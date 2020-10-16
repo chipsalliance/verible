@@ -16,12 +16,13 @@
 
 #include <initializer_list>
 #include <iostream>
+#include <sstream>
 #include <string>
 
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
+#include "absl/strings/match.h"
 #include "absl/strings/string_view.h"
-#include "common/util/enum_flags_test_util.h"
 
 namespace verible {
 namespace {
@@ -32,26 +33,36 @@ enum class MyFakeEnum {
   kValue3,
 };
 
-// This mapping defines how this enum is displayed and parsed.
-static const std::initializer_list<
-    std::pair<const absl::string_view, MyFakeEnum>>
-    kMyFakeEnumStringMap = {
-        {"value1", MyFakeEnum::kValue1},
-        {"value2", MyFakeEnum::kValue2},
-        {"value3", MyFakeEnum::kValue3},
-        // etc.
+class TestMapType : public EnumNameMap<MyFakeEnum> {
+ public:
+  TestMapType()
+      : EnumNameMap({
+            // This mapping defines how this enum is displayed and parsed.
+            {"value1", MyFakeEnum::kValue1},
+            {"value2", MyFakeEnum::kValue2},
+            {"value3", MyFakeEnum::kValue3},
+            // etc.
+        }) {}
 };
+
+class EnumNameMapTest : public ::testing::Test, public TestMapType {
+ public:
+  EnumNameMapTest() = default;
+};
+
+static const TestMapType test_map;
 
 // Conventional stream printer (declared in header providing enum).
 std::ostream& operator<<(std::ostream& stream, MyFakeEnum p) {
-  static const auto* flag_map = MakeEnumToStringMap(kMyFakeEnumStringMap);
-  return stream << flag_map->find(p)->second;
+  return test_map.Unparse(p, stream);
 }
+
+// Testing using the absl::flags API, but we're only testing this particular
+// overload, and thus, don't actually need to depend on their library.
 
 bool AbslParseFlag(absl::string_view text, MyFakeEnum* mode,
                    std::string* error) {
-  static const auto* flag_map = MakeStringToEnumMap(kMyFakeEnumStringMap);
-  return EnumMapParseFlag(*flag_map, text, mode, error);
+  return test_map.Parse(text, mode, error, "MyFakeEnum");
 }
 
 std::string AbslUnparseFlag(const MyFakeEnum& mode) {
@@ -60,16 +71,33 @@ std::string AbslUnparseFlag(const MyFakeEnum& mode) {
   return stream.str();
 }
 
-TEST(EnumFlagsTest, ParseFlagValidValues) {
-  EnumFlagsParseValidValuesTester<MyFakeEnum>(kMyFakeEnumStringMap);
+TEST_F(EnumNameMapTest, ParseFlagValueValues) {
+  for (const auto& p : enum_name_map_.forward_view()) {
+    MyFakeEnum e;
+    std::string error;
+    EXPECT_TRUE(AbslParseFlag(p.first, &e, &error)) << " parsing " << p.first;
+    EXPECT_EQ(e, *p.second) << " from " << p.first;
+    EXPECT_TRUE(error.empty()) << " from " << p.first;
+  }
 }
 
-TEST(EnumFlagsTest, ParseFlagTestInvalidValue) {
-  EnumFlagsParseInvalidValuesTester<MyFakeEnum>(kMyFakeEnumStringMap, "value4");
+TEST_F(EnumNameMapTest, ParseFlagTestInvalidValue) {
+  MyFakeEnum e;
+  std::string error;
+  constexpr absl::string_view bad_value("invalidEnumName");
+  EXPECT_FALSE(AbslParseFlag(bad_value, &e, &error));
+  // Make sure error message names the offending value, and lists all valid
+  // values (map keys).
+  EXPECT_TRUE(absl::StrContains(error, bad_value));
+  for (const auto& p : enum_name_map_.forward_view()) {
+    EXPECT_TRUE(absl::StrContains(error, p.first));
+  }
 }
 
-TEST(EnumFlagsTest, UnparseFlags) {
-  EnumFlagsUnparseFlagsTester<MyFakeEnum>(kMyFakeEnumStringMap);
+TEST_F(EnumNameMapTest, UnparseFlags) {
+  for (const auto& p : enum_name_map_.forward_view()) {
+    EXPECT_EQ(AbslUnparseFlag(*p.second), p.first);
+  }
 }
 
 }  // namespace

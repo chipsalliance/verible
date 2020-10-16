@@ -144,8 +144,7 @@ enum TokenScannerState {
   kEndNoNewline,
 };
 
-static const std::initializer_list<
-    std::pair<const absl::string_view, TokenScannerState>>
+static const verible::EnumNameMap<TokenScannerState>
     kTokenScannerStateStringMap = {
         {"kStart", TokenScannerState::kStart},
         {"kHaveNewline", TokenScannerState::kHaveNewline},
@@ -156,9 +155,7 @@ static const std::initializer_list<
 
 // Conventional stream printer (declared in header providing enum).
 std::ostream& operator<<(std::ostream& stream, TokenScannerState p) {
-  static const auto* flag_map =
-      verible::MakeEnumToStringMap(kTokenScannerStateStringMap);
-  return stream << flag_map->find(p)->second;
+  return kTokenScannerStateStringMap.Unparse(p, stream);
 }
 
 // This finite state machine class is used to determine the placement of
