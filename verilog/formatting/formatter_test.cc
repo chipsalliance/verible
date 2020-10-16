@@ -7042,6 +7042,43 @@ static constexpr FormatterTestCase kFormatterTestCases[] = {
      "    qux\n"
      ");\n"
      "endmodule\n"},
+    // Space between return keyword and return value
+    {
+     "function int foo(logic [31:0] data); return{<<8{data}}; endfunction",
+     "function int foo(logic [31:0] data);\n"
+     "  return {<<8{data}};\n"
+     "endfunction\n"
+     },
+     {
+     "function int f;return(1);endfunction",
+     "function int f;\n"
+     "  return (1);\n"
+     "endfunction\n"
+     },
+     {
+     "function int f;return-1;endfunction",
+     "function int f;\n"
+     "  return -1;\n"
+     "endfunction\n"
+     },
+     {
+     "function int f ;return    ! x\n;endfunction",
+     "function int f;\n"
+     "  return !x;\n"
+     "endfunction\n"
+     },
+     {
+     "function int f ;return    ~ x\n;endfunction",
+     "function int f;\n"
+     "  return ~x;\n"
+     "endfunction\n"
+     },
+    {
+     "function int f ;return    $x\n;endfunction",
+     "function int f;\n"
+     "  return $x;\n"
+     "endfunction\n"
+     },
     //{   // parameterized class with 'parameter_declaration' and MACRO
     //    "class foo #(parameter int a = 2,\n"
     //    "parameter int aaa = `MACRO);\n"
