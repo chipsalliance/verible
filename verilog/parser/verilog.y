@@ -701,6 +701,12 @@ is not locally defined, so the grammar here uses only generic identifiers.
 %token TK_LINE_CONT "<<\\line-cont>>"
 %token TK_ATTRIBUTE "(*attribute*)"
 
+%token TK_FILEPATH "<<filepath>>"
+
+/* hack: artificial markers to switch to a different syntax mode */
+%token PD_LIBRARY_SYNTAX_BEGIN "`____verible_verilog_library_begin____"
+%token PD_LIBRARY_SYNTAX_END "`____verible_verilog_library_end____"
+
 /* most likely a lexical error */
 %token TK_OTHER
 // LINT.ThenChange(../formatting/verilog_token.cc)
@@ -2298,6 +2304,11 @@ description
     { $$ = move($1); }
   | preprocessor_action
     { $$ = move($1); }
+  /* The following are only allowed in the library map sublanguage.
+   * See LRM: Ch. 33
+   */
+  | library_source
+    { $$ = move($1); }
   ;
 description_list_opt
   : description_list
@@ -2311,6 +2322,34 @@ description_list
   | description_list description
     { $$ = ExtendNode($1, $2); }
   ;
+
+library_source
+  : PD_LIBRARY_SYNTAX_BEGIN library_description_list_opt PD_LIBRARY_SYNTAX_END
+    { $$ = MakeNode($1, $2, $3); }
+  ;
+library_description_list_opt
+  : library_description_list
+    { $$ = move($1); }
+  | /* empty */
+    { $$ = nullptr; }
+  ;
+library_description_list
+  : library_description_list library_description
+    { $$ = ExtendNode($1, $2); }
+  | library_description
+    { $$ = MakeTaggedNode(N::kLibraryDescriptionList, $1); }
+  ;
+library_description
+  : library_declaration
+    { $$ = move($1); }
+  | include_statement
+    { $$ = move($1); }
+  | config_declaration
+    { $$ = move($1); }
+  | ';'
+    { $$ = move($1); }
+  ;
+
 preprocessor_balanced_description_items
   : preprocessor_if_header description_list_opt
     preprocessor_elsif_description_items_opt
@@ -3913,6 +3952,36 @@ nature_item
   | TK_access '=' GenericIdentifier ';'
   | TK_idt_nature '=' GenericIdentifier ';'
   | TK_ddt_nature '=' GenericIdentifier ';'
+  ;
+
+library_declaration
+  : TK_library SymbolIdentifier file_path_spec_list incdir_spec_opt ';'
+    { $$ = MakeTaggedNode(N::kLibraryDeclaration, $1, $2, $3, $4, $5); }
+  ;
+incdir_spec_opt
+  : incdir_spec
+    { $$ = move($1); }
+  | /* empty */
+    { $$ = nullptr; }
+  ;
+incdir_spec
+  : '-' TK_incdir file_path_spec_list
+    /* $1,$2 should really be one "-incdir" token */
+    { $$ = MakeTaggedNode(N::kLibraryIncdirSpec, $1, $2, $3); }
+  ;
+include_statement
+  : TK_include file_path_spec ';'
+    { $$ = MakeTaggedNode(N::kLibraryInclude, $1, $2, $3); }
+  ;
+file_path_spec_list
+  : file_path_spec_list ',' file_path_spec
+    { $$ = ExtendNode($1, $2, $3); }
+  | file_path_spec
+    { $$ = MakeTaggedNode(N::kFilePathSpecList, $1); }
+  ;
+file_path_spec
+  : TK_FILEPATH
+    { $$ = move($1); }
   ;
 
 config_declaration

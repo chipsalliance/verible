@@ -314,6 +314,18 @@ TEST(AnalyzeVerilogClassBodyTest, RejectsWireDeclaration) {
   DiagnosticMessagesContainFilename(*analyzer_ptr, "<file>");
 }
 
+TEST(AnalyzeVerilogLibraryMapTest, ParsesLibraryDeclaration) {
+  std::unique_ptr<VerilogAnalyzer> analyzer_ptr =
+      AnalyzeVerilogLibraryMap("library foo bar/*.v;", "<file>");
+  EXPECT_OK(ABSL_DIE_IF_NULL(analyzer_ptr)->ParseStatus());
+}
+
+TEST(AnalyzeVerilogLibraryMapTest, ParsesLibraryInclude) {
+  std::unique_ptr<VerilogAnalyzer> analyzer_ptr =
+      AnalyzeVerilogLibraryMap("include /foo/bar/?.v;", "<file>");
+  EXPECT_OK(ABSL_DIE_IF_NULL(analyzer_ptr)->ParseStatus());
+}
+
 // The following tests verify that parser mode selection works.
 TEST(AnalyzeVerilogAutomaticMode, NormalModeEmptyText) {
   std::unique_ptr<VerilogAnalyzer> analyzer_ptr =
@@ -408,6 +420,31 @@ TEST(AnalyzeVerilogAutomaticMode, InferredModuleBodyMode) {
   constexpr const char* test_cases[] = {
       "always @(posedge clk) begin x<=y; end\n",
       "initial begin x = 0; end;\n",
+  };
+  for (const char* code : test_cases) {
+    std::unique_ptr<VerilogAnalyzer> analyzer_ptr =
+        VerilogAnalyzer::AnalyzeAutomaticMode(code, "<file>");
+    EXPECT_OK(ABSL_DIE_IF_NULL(analyzer_ptr)->ParseStatus()) << "code was:\n"
+                                                             << code;
+  }
+}
+
+// Tests that automatic mode parsing can detect that some first failing
+// keywords will trigger (successful) re-parsing as a library map.
+TEST(AnalyzeVerilogAutomaticMode, InferredLibraryMapMode) {
+  constexpr const char* test_cases[] = {
+      "library foolib bar/*.vg;\n",
+      "include bar/*.vg;\n",
+      // config_declaration, followed by library declaration
+      "config cfg;\n"
+      "  design foo.bar;\n"
+      "endconfig\n"
+      "library foolib bar/*.vg -incdir inky/;\n",
+      // config_declaration, followed by library include
+      "config cfg;\n"
+      "  design foo.bar;\n"
+      "endconfig\n"
+      "include foo_inc/bar/...;\n",
   };
   for (const char* code : test_cases) {
     std::unique_ptr<VerilogAnalyzer> analyzer_ptr =

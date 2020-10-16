@@ -31,16 +31,58 @@
 #include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
 #include "absl/types/span.h"  // for MakeArraySlice
+#include "common/strings/compare.h"
 #include "common/text/concrete_syntax_tree.h"
 #include "common/text/parser_verifier.h"
 #include "common/text/text_structure.h"
 #include "common/text/token_info.h"
+#include "common/util/bijective_map.h"
+#include "common/util/enum_flags.h"
 #include "common/util/file_util.h"
 #include "common/util/init_command_line.h"
 #include "common/util/logging.h"  // for operator<<, LOG, LogMessage, etc
 #include "verilog/CST/verilog_tree_print.h"
 #include "verilog/analysis/verilog_analyzer.h"
+#include "verilog/analysis/verilog_excerpt_parse.h"
 #include "verilog/parser/verilog_parser.h"
+
+// Controls parser selection behavior
+enum class LanguageMode {
+  // May try multiple language options starting with SV, stops on first success.
+  kAutoDetect,
+  // Strict SystemVerilog 2017, no automatic trying of alternative parsing modes
+  kSystemVerilog,
+  // Verilog library map sub-language only.  LRM Chapter 33.
+  kVerilogLibraryMap,
+};
+
+static const verible::EnumNameMap<LanguageMode> kLanguageModeStringMap{{
+    {"auto", LanguageMode::kAutoDetect},
+    {"sv", LanguageMode::kSystemVerilog},
+    {"lib", LanguageMode::kVerilogLibraryMap},
+}};
+
+static std::ostream& operator<<(std::ostream& stream, LanguageMode mode) {
+  return kLanguageModeStringMap.Unparse(mode, stream);
+}
+
+static bool AbslParseFlag(absl::string_view text, LanguageMode* mode,
+                          std::string* error) {
+  return kLanguageModeStringMap.Parse(text, mode, error, "--flag value");
+}
+
+static std::string AbslUnparseFlag(const LanguageMode& mode) {
+  std::ostringstream stream;
+  stream << mode;
+  return stream.str();
+}
+
+ABSL_FLAG(
+    LanguageMode, lang, LanguageMode::kAutoDetect,  //
+    "Selects language variant to parse.  Options:\n"
+    "  auto: SystemVerilog-2017, but may auto-detect alternate parsing modes\n"
+    "  sv: strict SystemVerilog-2017, with explicit alternate parsing modes\n"
+    "  lib: Verilog library map language (LRM Ch. 33)\n");
 
 ABSL_FLAG(bool, printtree, false, "Whether or not to print the tree");
 ABSL_FLAG(bool, printtokens, false, "Prints all lexed and filtered tokens");
@@ -56,6 +98,24 @@ ABSL_FLAG(
 using verible::ConcreteSyntaxTree;
 using verible::ParserVerifier;
 using verible::TextStructureView;
+using verilog::VerilogAnalyzer;
+
+static std::unique_ptr<VerilogAnalyzer> ParseWithLanguageMode(
+    absl::string_view content, absl::string_view filename) {
+  switch (absl::GetFlag(FLAGS_lang)) {
+    case LanguageMode::kAutoDetect:
+      return VerilogAnalyzer::AnalyzeAutomaticMode(content, filename);
+    case LanguageMode::kSystemVerilog: {
+      auto analyzer = absl::make_unique<VerilogAnalyzer>(content, filename);
+      const auto status = ABSL_DIE_IF_NULL(analyzer)->Analyze();
+      if (!status.ok()) std::cerr << status.message() << std::endl;
+      return analyzer;
+    }
+    case LanguageMode::kVerilogLibraryMap:
+      return verilog::AnalyzeVerilogLibraryMap(content, filename);
+  }
+  return nullptr;
+}
 
 // Prints all tokens in view that are not matched in root.
 static void VerifyParseTree(const TextStructureView& text_structure) {
@@ -78,8 +138,7 @@ static void VerifyParseTree(const TextStructureView& text_structure) {
 static int AnalyzeOneFile(absl::string_view content,
                           absl::string_view filename) {
   int exit_status = 0;
-  const auto analyzer =
-      verilog::VerilogAnalyzer::AnalyzeAutomaticMode(content, filename);
+  const auto analyzer = ParseWithLanguageMode(content, filename);
   const auto lex_status = ABSL_DIE_IF_NULL(analyzer)->LexStatus();
   const auto parse_status = analyzer->ParseStatus();
   if (!lex_status.ok() || !parse_status.ok()) {

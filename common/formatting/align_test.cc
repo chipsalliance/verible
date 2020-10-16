@@ -35,12 +35,10 @@ namespace {
 using ::testing::ElementsAre;
 
 TEST(AlignmentPolicyTest, StringRepresentation) {
-  for (const auto& p : internal::kAlignmentPolicyNameMap) {
     std::ostringstream stream;
-    stream << p.second;
-    EXPECT_EQ(stream.str(), p.first);
-    EXPECT_EQ(AbslUnparseFlag(p.second), p.first);
-  }
+    stream << AlignmentPolicy::kAlign;
+    EXPECT_EQ(stream.str(), "align");
+    EXPECT_EQ(AbslUnparseFlag(AlignmentPolicy::kAlign), "align");
 }
 
 TEST(AlignmentPolicyTest, InvalidEnum) {

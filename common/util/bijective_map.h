@@ -16,6 +16,7 @@
 #define VERIBLE_COMMON_UTIL_BIJECTIVE_MAP_H_
 
 #include <functional>
+#include <initializer_list>
 #include <map>
 #include <utility>
 
@@ -42,6 +43,20 @@ class BijectiveMap {
 
  public:
   BijectiveMap() = default;
+
+  // Initializes from a pair of iterators (to key-value pairs).
+  // Duplicate key or value entries will be dropped.
+  template <class Iter>
+  BijectiveMap(Iter begin, Iter end) {
+    for (; begin != end; ++begin) {
+      insert(*begin);
+    }
+  }
+
+  // Initializes from a list of pairs.
+  // Duplicate key or value entries will be dropped.
+  BijectiveMap(std::initializer_list<std::pair<K, V>> pairs)
+      : BijectiveMap(pairs.begin(), pairs.end()) {}
 
   // Returns number of keys, which is same as number of values.
   size_t size() const { return forward_map.size(); }

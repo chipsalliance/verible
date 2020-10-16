@@ -1,7 +1,7 @@
 # SystemVerilog Syntax Tool
 
 <!--*
-freshness: { owner: 'fangism' reviewed: '2020-10-07' }
+freshness: { owner: 'fangism' reviewed: '2020-10-15' }
 *-->
 
 `verible-verilog-syntax` checks SystemVerilog syntax, and provides some useful
@@ -18,12 +18,17 @@ usage: verible-verilog-syntax [options] <file(s)...>
   Flags from verilog/tools/syntax/verilog_syntax.cc:
     --error_limit (Limit the number of syntax errors reported. (0: unlimited));
       default: 0;
+    --lang (Selects language variant to parse. Options:
+      auto: SystemVerilog-2017, but may auto-detect alternate parsing modes
+      sv: strict SystemVerilog-2017
+      lib: Verilog library map language (LRM Ch. 33)
+      ); default: auto;
     --printrawtokens (Prints all lexed tokens, including filtered ones.);
       default: false;
     --printtokens (Prints all lexed and filtered tokens); default: false;
     --printtree (Whether or not to print the tree); default: false;
-    --verifytree (Verifies that all tokens are parsed into tree, prints unmatched
-      tokens); default: false;
+    --verifytree (Verifies that all tokens are parsed into tree, prints
+      unmatched tokens); default: false;
 ```
 
 ## Features

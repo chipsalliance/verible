@@ -95,6 +95,8 @@
 %x POST_MACRO_ID
 %x IGNORE_REST_OF_LINE
 %x IN_EOL_COMMENT
+%x LIBRARY_EXPECT_ID
+%x LIBRARY_FILEPATHS
 
 /* identifier */
 Alpha [a-zA-Z]
@@ -113,6 +115,14 @@ EscapedIdentifier "\\"[^ \t\f\b\n]+
 Identifier  {BasicIdentifier}
 
 SystemTFIdentifier "$"{BasicIdentifier}
+
+/* LRM: 33.3.1: file_path_spec characters include [.*?/] */
+/* Windows might need '\' for path separators. */
+/* PathChars [^ ,;\t\r\n] */
+/* LeadingPathChars [^ -,;\t\r\n] */
+PathChars ({Letter}|{Digit}|[-_.?*/])
+LeadingPathChars ({Letter}|{Digit}|[_.?*/])
+FilePath {LeadingPathChars}{PathChars}*
 
 /* white space */
 LineTerminator \r|\n|\r\n|\0
@@ -213,6 +223,10 @@ PragmaEndProtected {Pragma}{Space}+protect{Space}+end_protected
 
 {Space}+ { UpdateLocation(); return TK_SPACE; }
 {LineTerminator} { UpdateLocation(); return TK_NEWLINE; }
+
+  /* Internal-use-only tokens to trigger library map (LRM:33) parsing mode. */
+`____verible_verilog_library_begin____ { UpdateLocation(); return PD_LIBRARY_SYNTAX_BEGIN; }
+`____verible_verilog_library_end____ { UpdateLocation(); return PD_LIBRARY_SYNTAX_END; }
 
   /* Clarification:
    * `protected and `endprotected enclose an already encrypted section.
@@ -517,11 +531,23 @@ cell { UpdateLocation(); return TK_cell; }
 config { UpdateLocation(); return TK_config; }
 design { UpdateLocation(); return TK_design; }
 endconfig { UpdateLocation(); return TK_endconfig; }
-incdir { UpdateLocation(); return TK_incdir; }
-include { UpdateLocation(); return TK_include; }
+incdir {
+  UpdateLocation();
+  yy_push_state(LIBRARY_FILEPATHS);
+  return TK_incdir;
+}
+include {
+  UpdateLocation();
+  yy_push_state(LIBRARY_FILEPATHS);
+  return TK_include;
+}
 instance { UpdateLocation(); return TK_instance; }
 liblist { UpdateLocation(); return TK_liblist; }
-library { UpdateLocation(); return TK_library; }
+library {
+  UpdateLocation();
+  yy_push_state(LIBRARY_EXPECT_ID);
+  return TK_library;
+}
 use { UpdateLocation(); return TK_use; }
 wone { UpdateLocation(); return TK_wone; }
 uwire { UpdateLocation(); return TK_uwire; }
@@ -1587,6 +1613,47 @@ zi_zp { UpdateLocation(); return TK_zi_zp; }
     yy_pop_state();
   }
 }  /* <AFTER_DOT> */
+
+<LIBRARY_EXPECT_ID>{
+  {Identifier} {
+    UpdateLocation();
+    yy_set_top_state(LIBRARY_FILEPATHS);
+    return SymbolIdentifier;
+  }
+  {Space}+ { UpdateLocation(); return TK_SPACE; }
+  {LineTerminator} { UpdateLocation(); return TK_NEWLINE; }
+  {TraditionalComment} {
+    UpdateLocation();
+    return TK_COMMENT_BLOCK;
+  }
+  {EndOfLineComment} {
+    yyless(yyleng-1);  /* return \n to input stream */
+    UpdateLocation();
+    return TK_EOL_COMMENT;
+  }
+  . {
+    yyless(0);
+    yy_pop_state();
+  }
+}
+<LIBRARY_FILEPATHS>{
+  {FilePath} {
+    UpdateLocation();
+    return TK_FILEPATH;
+  }
+  , { UpdateLocation(); return ','; }
+  {Space}+ { UpdateLocation(); return TK_SPACE; }
+  {LineTerminator} { UpdateLocation(); return TK_NEWLINE; }
+
+  /* Don't support comments here, because
+   * slash-star could be interpreted as the start of a path.
+   */
+
+  . {
+    yyless(0);
+    yy_pop_state();
+  }
+}
 
 {RejectChar} { UpdateLocation(); return TK_OTHER; }
 
