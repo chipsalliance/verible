@@ -27,13 +27,39 @@ namespace {
 using TestMapType = BijectiveMap<std::string, int>;
 
 TEST(BijectiveMapTest, DefaultCtor) {
-  TestMapType m;
+  const TestMapType m;
   EXPECT_EQ(m.size(), 0);
   EXPECT_TRUE(m.empty());
   EXPECT_FALSE(m.find_forward("a"));
   EXPECT_FALSE(m.find_reverse(1));
   EXPECT_TRUE(m.forward_view().empty());
   EXPECT_TRUE(m.reverse_view().empty());
+}
+
+TEST(BijectiveMapTest, InitializerListCtor) {
+  const TestMapType m{{{"www", 2}, {"qqq", 3}}};
+  EXPECT_EQ(m.size(), 2);
+  EXPECT_FALSE(m.empty());
+  EXPECT_FALSE(m.find_forward("a"));
+  EXPECT_FALSE(m.find_reverse(1));
+  EXPECT_EQ(*m.find_forward("qqq"), 3);
+  EXPECT_EQ(*m.find_reverse(2), "www");
+  EXPECT_FALSE(m.forward_view().empty());
+  EXPECT_FALSE(m.reverse_view().empty());
+}
+
+TEST(BijectiveMapTest, IteratorPairCtor) {
+  const std::initializer_list<std::pair<std::string, int>> values = {
+      {"qqq", 3}, {"www", 2}};
+  const TestMapType m(values.begin(), values.end());
+  EXPECT_EQ(m.size(), 2);
+  EXPECT_FALSE(m.empty());
+  EXPECT_FALSE(m.find_forward("a"));
+  EXPECT_FALSE(m.find_reverse(1));
+  EXPECT_EQ(*m.find_forward("qqq"), 3);
+  EXPECT_EQ(*m.find_reverse(2), "www");
+  EXPECT_FALSE(m.forward_view().empty());
+  EXPECT_FALSE(m.reverse_view().empty());
 }
 
 TEST(BijectiveMapTest, OneElement) {
