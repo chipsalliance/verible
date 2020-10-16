@@ -320,7 +320,7 @@ void IndexingFactsTreeExtractor::ExtractDataDeclaration(
   TreeContextVisitor::Visit(data_declaration);
 }
 
-void IndexingFactsTreeExtractor::ExtractModuleAndInterfaceAndProgram(
+void IndexingFactsTreeExtractor::ExtractModuleOrInterfaceOrProgram(
     const SyntaxTreeNode& declaration_node, IndexingFactNode& facts_node) {
   const IndexingFactsTreeContext::AutoPop p(&facts_tree_context_, &facts_node);
   ExtractModuleHeader(declaration_node);
@@ -335,7 +335,7 @@ void IndexingFactsTreeExtractor::ExtractModuleAndInterfaceAndProgram(
 void IndexingFactsTreeExtractor::ExtractModule(
     const SyntaxTreeNode& module_declaration_node) {
   IndexingFactNode module_node(IndexingNodeData{IndexingFactType::kModule});
-  ExtractModuleAndInterfaceAndProgram(module_declaration_node, module_node);
+  ExtractModuleOrInterfaceOrProgram(module_declaration_node, module_node);
   facts_tree_context_.top().NewChild(module_node);
 }
 
@@ -343,15 +343,14 @@ void IndexingFactsTreeExtractor::ExtractInterface(
     const SyntaxTreeNode& interface_declaration_node) {
   IndexingFactNode interface_node(
       IndexingNodeData{IndexingFactType::kInterface});
-  ExtractModuleAndInterfaceAndProgram(interface_declaration_node,
-                                      interface_node);
+  ExtractModuleOrInterfaceOrProgram(interface_declaration_node, interface_node);
   facts_tree_context_.top().NewChild(interface_node);
 }
 
 void IndexingFactsTreeExtractor::ExtractProgram(
     const SyntaxTreeNode& program_declaration_node) {
   IndexingFactNode program_node(IndexingNodeData{IndexingFactType::kProgram});
-  ExtractModuleAndInterfaceAndProgram(program_declaration_node, program_node);
+  ExtractModuleOrInterfaceOrProgram(program_declaration_node, program_node);
   facts_tree_context_.top().NewChild(program_node);
 }
 
@@ -427,10 +426,32 @@ void IndexingFactsTreeExtractor::ExtractModulePort(
     const SyntaxTreeLeaf* leaf =
         GetIdentifierFromPortReference(module_port_node);
 
-    facts_tree_context_.top().NewChild(IndexingNodeData(
-        {Anchor(leaf->get(), context_.base)},
-        has_propagated_type ? IndexingFactType::kVariableDefinition
-                            : IndexingFactType::kVariableReference));
+    if (has_propagated_type) {
+      // Check if the last type was not a primitive type.
+      // e.g module (interface_type x, y).
+      if (facts_tree_context_.empty() || facts_tree_context_.top().is_leaf() ||
+          facts_tree_context_.top()
+                  .Children()
+                  .back()
+                  .Value()
+                  .GetIndexingFactType() !=
+              IndexingFactType::kDataTypeReference) {
+        // Append this as a variable definition.
+        facts_tree_context_.top().NewChild(
+            IndexingNodeData({Anchor(leaf->get(), context_.base)},
+                             IndexingFactType::kVariableDefinition));
+      } else {
+        // Append this as a child to previous kDataTypeReference.
+        facts_tree_context_.top().Children().back().NewChild(
+            IndexingNodeData({Anchor(leaf->get(), context_.base)},
+                             IndexingFactType::kVariableDefinition));
+      }
+    } else {
+      // In case no preceeded data type.
+      facts_tree_context_.top().NewChild(
+          IndexingNodeData({Anchor(leaf->get(), context_.base)},
+                           IndexingFactType::kVariableReference));
+    }
   }
 
   // Extract unpacked and packed dimensions.
@@ -441,6 +462,26 @@ void IndexingFactsTreeExtractor::ExtractModulePort(
     const auto tag = static_cast<verilog::NodeEnum>(child->Tag().tag);
     if (tag == NodeEnum::kUnqualifiedId) {
       continue;
+    }
+    if (tag == NodeEnum::kDataType) {
+      const SyntaxTreeLeaf* data_type = GetTypeIdentifierFromDataType(*child);
+      // If not null this is a non primitive type and should create
+      // kDataTypeReference node for it.
+      // This data_type may be some class or interface type.
+      if (data_type != nullptr) {
+        // Create a node for this data type and append its anchor.
+        IndexingFactNode data_type_node(
+            IndexingNodeData{IndexingFactType::kDataTypeReference});
+        data_type_node.Value().AppendAnchor(
+            Anchor(data_type->get(), context_.base));
+
+        // Make the current port node child of this data type, remove it and
+        // push the kDataTypeRefernceNode.
+        data_type_node.NewChild(facts_tree_context_.top().Children().back());
+        facts_tree_context_.top().Children().pop_back();
+        facts_tree_context_.top().NewChild(data_type_node);
+        continue;
+      }
     }
     Visit(verible::SymbolCastToNode(*child));
   }
@@ -480,12 +521,12 @@ void IndexingFactsTreeExtractor::ExtractInputOutputDeclaration(
 
 void IndexingFactsTreeExtractor::ExtractModuleEnd(
     const SyntaxTreeNode& module_declaration_node) {
-  const verible::TokenInfo* module_name =
+  const verible::SyntaxTreeLeaf* module_name =
       GetModuleEndLabel(module_declaration_node);
 
   if (module_name != nullptr) {
-    const Anchor module_end_anchor(*module_name, context_.base);
-    facts_tree_context_.top().Value().AppendAnchor(module_end_anchor);
+    facts_tree_context_.top().Value().AppendAnchor(
+        Anchor(module_name->get(), context_.base));
   }
 }
 
