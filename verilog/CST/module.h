@@ -61,8 +61,12 @@ std::vector<verible::TreeSearchMatch> FindAllModuleDeclarations(
 std::vector<verible::TreeSearchMatch> FindAllInterfaceDeclarations(
     const verible::Symbol&);
 
+// Find all program declarations.
+std::vector<verible::TreeSearchMatch> FindAllProgramDeclarations(
+    const verible::Symbol& root);
+
 // Returns the full header of a module (params, ports, etc...).
-const verible::SyntaxTreeNode& GetModuleHeader(const verible::Symbol&);
+const verible::SyntaxTreeNode* GetModuleHeader(const verible::Symbol&);
 
 // Returns the full header of an interface (params, ports, etc...).
 const verible::SyntaxTreeNode& GetInterfaceHeader(const verible::Symbol&);
@@ -85,12 +89,12 @@ const verible::SyntaxTreeNode* GetModulePortParenGroup(
 const verible::SyntaxTreeNode* GetModulePortDeclarationList(
     const verible::Symbol& module_declaration);
 
-// Returns module name token after endmodule.
+// Returns module name leaf after endmodule.
 // e.g. from "module foo(); endmodule: foo" returns the second "foo".
-const verible::TokenInfo* GetModuleEndLabel(const verible::Symbol&);
+const verible::SyntaxTreeLeaf* GetModuleEndLabel(const verible::Symbol&);
 
 // Returns the node spanning module's Item list.
-const verible::SyntaxTreeNode& GetModuleItemList(
+const verible::SyntaxTreeNode* GetModuleItemList(
     const verible::Symbol& module_declaration);
 
 // Extract the subnode of a param declaration list from module decalration.
