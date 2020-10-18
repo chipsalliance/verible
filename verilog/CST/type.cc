@@ -131,26 +131,61 @@ const verible::SyntaxTreeNode& GetUnqualifiedIdFromReferenceCallBase(
   return GetUnqualifiedIdFromLocalRoot(local_root);
 }
 
-const verible::SyntaxTreeNode& GetUnqualifiedIdFromInstantiationType(
+const verible::SyntaxTreeNode* GetUnqualifiedIdFromInstantiationType(
     const verible::Symbol& instantiation_type) {
   const verible::SyntaxTreeNode& reference_call_base =
       GetReferenceCallBaseFromInstantiationType(instantiation_type);
-  return GetUnqualifiedIdFromReferenceCallBase(reference_call_base);
+  if (NodeEnum(reference_call_base.Tag().tag) != NodeEnum::kReferenceCallBase) {
+    return nullptr;
+  }
+  return &GetUnqualifiedIdFromReferenceCallBase(reference_call_base);
 }
 
 const verible::SyntaxTreeNode* GetParamListFromInstantiationType(
     const verible::Symbol& instantiation_type) {
-  const verible::SyntaxTreeNode& unqualified_id =
+  const verible::SyntaxTreeNode* unqualified_id =
       GetUnqualifiedIdFromInstantiationType(instantiation_type);
+  if (unqualified_id == nullptr) {
+    return nullptr;
+  }
   const verible::Symbol* param_list =
-      verible::GetSubtreeAsSymbol(unqualified_id, NodeEnum::kUnqualifiedId, 1);
+      verible::GetSubtreeAsSymbol(*unqualified_id, NodeEnum::kUnqualifiedId, 1);
   return verible::CheckOptionalSymbolAsNode(param_list,
                                             NodeEnum::kActualParameterList);
+}
+
+const verible::SyntaxTreeLeaf&
+GetSymbolIdentifierFromDataTypeImplicitIdDimensions(
+    const verible::Symbol& struct_union_member) {
+  
+  return verible::GetSubtreeAsLeaf(struct_union_member,
+                                   NodeEnum::kDataTypeImplicitIdDimensions, 2);
 }
 
 const verible::SyntaxTreeLeaf& GetSymbolIdentifierFromEnumName(
     const verible::Symbol& enum_name) {
   return verible::GetSubtreeAsLeaf(enum_name, NodeEnum::kEnumName, 0);
+}
+
+const verible::SyntaxTreeLeaf* GetTypeIdentifierFromInstantiationType(
+    const verible::Symbol& instantiation_type) {
+  const verible::SyntaxTreeNode& data_type = verible::GetSubtreeAsNode(
+      instantiation_type, NodeEnum::kInstantiationType, 0);
+  if (NodeEnum(data_type.Tag().tag) != NodeEnum::kDataType) {
+    return nullptr;
+  }
+  return GetTypeIdentifierFromDataType(data_type);
+}
+
+const verible::SyntaxTreeLeaf* GetTypeIdentifierFromDataType(
+    const verible::Symbol& data_type) {
+  const verible::Symbol* identifier =
+      verible::GetSubtreeAsSymbol(data_type, NodeEnum::kDataType, 0);
+  if (identifier == nullptr ||
+      NodeEnum(identifier->Tag().tag) != NodeEnum::kUnqualifiedId) {
+    return nullptr;
+  }
+  return AutoUnwrapIdentifier(*identifier);
 }
 
 }  // namespace verilog

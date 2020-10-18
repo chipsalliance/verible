@@ -157,8 +157,31 @@ class IndexingFactsTreeExtractor : public verible::TreeContextVisitor {
   void ExtractEnumTypeDeclaration(
       const verible::SyntaxTreeNode& enum_type_declaration);
 
-  // Extracts leaves tagged with SymbolIdentifier and creates its facts tree.
-  // This should only be reached in case of free variable references.
+  // Extracts struct type declaration preceeded with "typedef" and creates its
+  // corresponding fact tree.
+  void ExtractStructTypeDeclaration(
+      const verible::SyntaxTreeNode& type_declaration,
+      const verible::TreeSearchMatch& struct_type);
+
+  // Extracts struct declaration preceeded with  and creates its corresponding
+  // fact tree.
+  void ExtractStructUnionDeclaration(
+      const verible::TreeSearchMatch& data_declaration,
+      const std::vector<verible::TreeSearchMatch>& variables_matche);
+
+  // Extracts struct and union members and creates its corresponding fact tree.
+  void ExtractDataTypeImplicitIdDimensions(
+      const verible::SyntaxTreeNode& struct_member);
+
+  // Extracts variable definitions preceeded with some data type and creates its
+  // corresponding fact tree.
+  // e.g some_type var1;
+  void ExtractTypedVariableDefinition(
+      const verible::SyntaxTreeLeaf& type_identifier,
+      const std::vector<verible::TreeSearchMatch>& variables_matche);
+
+  // Extracts leaves tagged with SymbolIdentifier and creates its facts
+  // tree. This should only be reached in case of free variable references.
   // e.g assign out = in & in2.
   // Other extraction functions should terminate in case the inner
   // SymbolIdentifiers are extracted.

@@ -109,17 +109,6 @@ const SyntaxTreeNode& GetInstanceListFromDataDeclaration(
       NodeEnum::kInstantiationBase, 1);
 }
 
-const verible::TokenInfo& GetTypeTokenInfoFromDataDeclaration(
-    const verible::Symbol& data_declaration) {
-  const SyntaxTreeNode& instantiation_type =
-      GetTypeOfDataDeclaration(data_declaration);
-  const SyntaxTreeNode& unqualified_id =
-      GetUnqualifiedIdFromInstantiationType(instantiation_type);
-  const verible::SyntaxTreeLeaf* instance_symbol_identifier =
-      GetIdentifier(unqualified_id);
-  return instance_symbol_identifier->get();
-}
-
 const verible::SyntaxTreeNode* GetParamListFromDataDeclaration(
     const verible::Symbol& data_declaration) {
   const SyntaxTreeNode& instantiation_type =
@@ -211,6 +200,30 @@ GetUnpackedDimensionFromVariableDeclarationAssign(
   return verible::GetSubtreeAsNode(variable_declaration_assign,
                                    NodeEnum::kVariableDeclarationAssignment, 1,
                                    NodeEnum::kUnpackedDimensions);
+}
+
+const verible::SyntaxTreeLeaf* GetTypeIdentifierFromDataDeclaration(
+    const verible::Symbol& data_declaration) {
+  const SyntaxTreeNode& instantiation_type =
+      GetTypeOfDataDeclaration(data_declaration);
+
+  const verible::SyntaxTreeLeaf* identifier =
+      GetTypeIdentifierFromInstantiationType(instantiation_type);
+  if (identifier != nullptr) {
+    return identifier;
+  }
+
+  const SyntaxTreeNode* unqualified_id =
+      GetUnqualifiedIdFromInstantiationType(instantiation_type);
+  if (unqualified_id != nullptr) {
+    // TODO(minatoma): refactor AutoUnwrapIdentifier to take qualified id and
+    // get rid of this condition.
+    if (NodeEnum(unqualified_id->Tag().tag) != NodeEnum::kUnqualifiedId) {
+      return nullptr;
+    }
+    return AutoUnwrapIdentifier(*unqualified_id);
+  }
+  return nullptr;
 }
 
 }  // namespace verilog

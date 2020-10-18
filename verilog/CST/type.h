@@ -95,8 +95,15 @@ const verible::SyntaxTreeNode& GetPackedDimensionFromDataType(
     const verible::Symbol& data_type_primitive);
 
 // Extracts kUnqualifiedId node from nodes tagged with kInstantiationType.
-const verible::SyntaxTreeNode& GetUnqualifiedIdFromInstantiationType(
+const verible::SyntaxTreeNode* GetUnqualifiedIdFromInstantiationType(
     const verible::Symbol& instantiation_type);
+
+// Extracts symbol identifier node from node tagged with
+// kDataTypeImplicitIdDimension.
+// e.g struct {byte xx;} extracts "xx".
+const verible::SyntaxTreeLeaf&
+GetSymbolIdentifierFromDataTypeImplicitIdDimensions(
+    const verible::Symbol& struct_union_member);
 
 // For a given instantiation type node returns the node spanning param
 // declaration.
@@ -107,6 +114,18 @@ const verible::SyntaxTreeNode* GetParamListFromInstantiationType(
 // e.g enum {first} extracts "first".
 const verible::SyntaxTreeLeaf& GetSymbolIdentifierFromEnumName(
     const verible::Symbol& enum_name);
+
+// Returns symbol identifier node for the type name from node tagged with
+// kInstantiationType (if exists) or return nullptr.
+//- e.g some_type x; return "some_type".
+const verible::SyntaxTreeLeaf* GetTypeIdentifierFromInstantiationType(
+    const verible::Symbol& instantiation_type);
+
+// Returns symbol identifier node for the type name from node tagged with
+// kDataType (if exists) or return nullptr.
+//- e.g module m(Bus x) => extracts "Bus".
+const verible::SyntaxTreeLeaf* GetTypeIdentifierFromDataType(
+    const verible::Symbol& data_type);
 
 }  // namespace verilog
 

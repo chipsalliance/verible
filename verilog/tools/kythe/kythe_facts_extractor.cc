@@ -130,6 +130,10 @@ void KytheFactsExtractor::IndexingFactNodeTagResolver(
       vname = ExtractPackageDeclaration(node);
       break;
     }
+    case IndexingFactType::kStructOrUnion: {
+      vname = ExtractStructOrUnion(node);
+      break;
+    }
     case IndexingFactType::kDataTypeReference: {
       ExtractDataTypeReference(node);
       break;
@@ -187,6 +191,7 @@ void KytheFactsExtractor::AddVNameToScopeContext(IndexingFactType tag,
     case IndexingFactType::kModuleInstance:
     case IndexingFactType::kVariableDefinition:
     case IndexingFactType::kMacro:
+    case IndexingFactType::kStructOrUnion:
     case IndexingFactType::kClass:
     case IndexingFactType::kClassInstance:
     case IndexingFactType::kFunctionOrTask:
@@ -237,6 +242,8 @@ void KytheFactsExtractor::Visit(const IndexingFactNode& node,
     case IndexingFactType::kFile:
     case IndexingFactType::kParamDeclaration:
     case IndexingFactType::kModule:
+    case IndexingFactType::kStructOrUnion:
+    case IndexingFactType::kVariableDefinition:
     case IndexingFactType::kFunctionOrTask:
     case IndexingFactType::kClass:
     case IndexingFactType::kMacro:
@@ -268,10 +275,38 @@ void KytheFactsExtractor::ConstructFlattenedScope(const IndexingFactNode& node,
   switch (tag) {
     case IndexingFactType::kFile:
     case IndexingFactType::kModule:
+    case IndexingFactType::kStructOrUnion:
     case IndexingFactType::kClass:
     case IndexingFactType::kMacro:
     case IndexingFactType::kPackage: {
       scope_resolver_->MapSignatureToScope(vname.signature, current_scope);
+      break;
+    }
+    case IndexingFactType::kVariableDefinition: {
+      scope_resolver_->MapSignatureToScope(vname.signature, current_scope);
+
+      // Break if this variable has no type.
+      if (node.Parent() == nullptr ||
+          node.Parent()->Value().GetIndexingFactType() !=
+              IndexingFactType::kDataTypeReference) {
+        break;
+      }
+
+      // TODO(minatoma): refactor this and the below case into function.
+      // TODO(minatoma): consider getting tid of kModuleInstance and
+      // kClassInstance and use kVaraibleDefinition if they don't provide
+      // anything new.
+      const std::vector<const VName*> found_vnames =
+          scope_resolver_->SearchForDefinitions(
+              {node.Parent()->Value().Anchors()[0].Value()});
+
+      if (found_vnames.empty()) {
+        break;
+      }
+
+      scope_resolver_->MapSignatureToScopeOfSignature(
+          vname.signature, found_vnames[0]->signature);
+
       break;
     }
     case IndexingFactType::kModuleInstance:
@@ -807,6 +842,21 @@ VName KytheFactsExtractor::ExtractConstant(const IndexingFactNode& constant) {
   CreateEdge(variable_vname_anchor, kEdgeDefinesBinding, constant_vname);
 
   return constant_vname;
+}
+
+VName KytheFactsExtractor::ExtractStructOrUnion(
+    const IndexingFactNode& struct_node) {
+  const auto& anchors = struct_node.Value().Anchors();
+  const Anchor& struct_name = anchors[0];
+
+  const VName struct_vname(file_path_,
+                           CreateScopeRelativeSignature(struct_name.Value()));
+  const VName struct_name_anchor = CreateAnchor(struct_name);
+
+  CreateFact(struct_vname, kFactNodeKind, kNodeRecord);
+  CreateEdge(struct_name_anchor, kEdgeDefinesBinding, struct_vname);
+
+  return struct_vname;
 }
 
 VName KytheFactsExtractor::CreateAnchor(const Anchor& anchor) {

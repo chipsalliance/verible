@@ -219,6 +219,10 @@ void IndexingFactsTreeExtractor::Visit(const SyntaxTreeNode& node) {
       ExtractForInitialization(node);
       break;
     }
+    case NodeEnum::kDataTypeImplicitIdDimensions: {
+      ExtractDataTypeImplicitIdDimensions(node);
+      break;
+    }
     case NodeEnum::kParamByName: {
       ExtractParamByName(node);
       break;
@@ -286,6 +290,21 @@ void IndexingFactsTreeExtractor::ExtractDataDeclaration(
       return;
     }
 
+    // for struct types.
+    const std::vector<TreeSearchMatch> struct_types =
+        FindAllStructTypes(data_declaration);
+    if (!struct_types.empty()) {
+      ExtractStructUnionDeclaration(*struct_types.begin(), register_variables);
+      return;
+    }
+
+    const SyntaxTreeLeaf* type_identifier =
+        GetTypeIdentifierFromDataDeclaration(data_declaration);
+    if (type_identifier != nullptr) {
+      ExtractTypedVariableDefinition(*type_identifier, register_variables);
+      return;
+    }
+
     // Traverse the children to extract inner nodes.
     TreeContextVisitor::Visit(data_declaration);
     return;
@@ -303,6 +322,23 @@ void IndexingFactsTreeExtractor::ExtractDataDeclaration(
       return;
     }
 
+    // for struct types.
+    const std::vector<TreeSearchMatch> struct_types =
+        FindAllStructTypes(data_declaration);
+    if (!struct_types.empty()) {
+      ExtractStructUnionDeclaration(*struct_types.begin(),
+                                    variable_declaration_assign);
+      return;
+    }
+
+    const SyntaxTreeLeaf* type_identifier =
+        GetTypeIdentifierFromDataDeclaration(data_declaration);
+    if (type_identifier != nullptr) {
+      ExtractTypedVariableDefinition(*type_identifier,
+                                     variable_declaration_assign);
+      return;
+    }
+
     // Traverse the children to extract inner nodes.
     TreeContextVisitor::Visit(data_declaration);
     return;
@@ -310,6 +346,24 @@ void IndexingFactsTreeExtractor::ExtractDataDeclaration(
 
   // Traverse the children to extract inner nodes.
   TreeContextVisitor::Visit(data_declaration);
+}
+
+void IndexingFactsTreeExtractor::ExtractTypedVariableDefinition(
+    const SyntaxTreeLeaf& type_identifier,
+    const std::vector<TreeSearchMatch>& variables_matche) {
+  IndexingFactNode type_node(
+      IndexingNodeData{IndexingFactType::kDataTypeReference});
+
+  type_node.Value().AppendAnchor(Anchor(type_identifier.get(), context_.base));
+
+  {
+    const IndexingFactsTreeContext::AutoPop p(&facts_tree_context_, &type_node);
+    for (const TreeSearchMatch& variable : variables_matche) {
+      Visit(verible::SymbolCastToNode(*variable.match));
+    }
+  }
+
+  facts_tree_context_.top().NewChild(type_node);
 }
 
 void IndexingFactsTreeExtractor::ExtractModule(
@@ -471,10 +525,12 @@ void IndexingFactsTreeExtractor::ExtractModuleInstantiation(
       IndexingNodeData{IndexingFactType::kDataTypeReference});
 
   // Extract module type name.
-  const verible::TokenInfo& type =
-      GetTypeTokenInfoFromDataDeclaration(data_declaration_node);
-  const Anchor type_anchor(type, context_.base);
-  type_node.Value().AppendAnchor(type_anchor);
+  const SyntaxTreeLeaf* type =
+      GetTypeIdentifierFromDataDeclaration(data_declaration_node);
+  if (type == nullptr) {
+    return;
+  }
+  type_node.Value().AppendAnchor(Anchor(type->get(), context_.base));
 
   // Extract parameter list
   const SyntaxTreeNode* param_list =
@@ -853,14 +909,18 @@ void IndexingFactsTreeExtractor::ExtractClassDeclaration(
 void IndexingFactsTreeExtractor::ExtractClassInstances(
     const SyntaxTreeNode& data_declaration_node,
     const std::vector<TreeSearchMatch>& class_instances) {
+  // TODO(minatoma): refactor this function and git rid of the logic in the for
+  // loop because kRegister variable and kVariableDeclarationAssignment are
+  // extracted in function.
   IndexingFactNode class_node(
       IndexingNodeData{IndexingFactType::kDataTypeReference});
 
-  const verible::TokenInfo& type =
-      GetTypeTokenInfoFromDataDeclaration(data_declaration_node);
-  const Anchor type_anchor(type, context_.base);
-
-  class_node.Value().AppendAnchor(type_anchor);
+  const verible::SyntaxTreeLeaf* type =
+      GetTypeIdentifierFromDataDeclaration(data_declaration_node);
+  if (type == nullptr) {
+    return;
+  }
+  class_node.Value().AppendAnchor(Anchor(type->get(), context_.base));
 
   // Class instances may may appear as multiple instances sharing the same type
   // in a single statement e.g. myClass b1 = new, b2 = new.
@@ -916,17 +976,21 @@ void IndexingFactsTreeExtractor::ExtractRegisterVariable(
   variable_node.Value().AppendAnchor(
       Anchor(variable_name_token_info, context_.base));
 
-  const SyntaxTreeNode& unpacked_dimension =
-      GetUnpackedDimensionFromRegisterVariable(register_variable);
-  Visit(unpacked_dimension);
-
-  const SyntaxTreeNode* expression =
-      GetTrailingExpressionFromRegisterVariable(register_variable);
-  if (expression != nullptr) {
+  {
     const IndexingFactsTreeContext::AutoPop p(&facts_tree_context_,
                                               &variable_node);
-    // Visit Trailing Assignment Expression.
-    Visit(*expression);
+    const SyntaxTreeNode& unpacked_dimension =
+        GetUnpackedDimensionFromRegisterVariable(register_variable);
+    Visit(unpacked_dimension);
+
+    const SyntaxTreeNode* expression =
+        GetTrailingExpressionFromRegisterVariable(register_variable);
+    if (expression != nullptr) {
+      const IndexingFactsTreeContext::AutoPop p(&facts_tree_context_,
+                                                &variable_node);
+      // Visit Trailing Assignment Expression.
+      Visit(*expression);
+    }
   }
 
   facts_tree_context_.top().NewChild(variable_node);
@@ -942,21 +1006,24 @@ void IndexingFactsTreeExtractor::ExtractVariableDeclarationAssignment(
           variable_declaration_assignment);
   variable_node.Value().AppendAnchor(Anchor(leaf.get(), context_.base));
 
-  const SyntaxTreeNode& unpacked_dimension =
-      GetUnpackedDimensionFromVariableDeclarationAssign(
-          variable_declaration_assignment);
-  Visit(unpacked_dimension);
-
-  const SyntaxTreeNode* expression =
-      GetTrailingExpressionFromVariableDeclarationAssign(
-          variable_declaration_assignment);
-  if (expression != nullptr) {
+  {
     const IndexingFactsTreeContext::AutoPop p(&facts_tree_context_,
                                               &variable_node);
-    // Visit Trailing Assignment Expression.
-    Visit(*expression);
-  }
+    const SyntaxTreeNode& unpacked_dimension =
+        GetUnpackedDimensionFromVariableDeclarationAssign(
+            variable_declaration_assignment);
+    Visit(unpacked_dimension);
 
+    const SyntaxTreeNode* expression =
+        GetTrailingExpressionFromVariableDeclarationAssign(
+            variable_declaration_assignment);
+    if (expression != nullptr) {
+      const IndexingFactsTreeContext::AutoPop p(&facts_tree_context_,
+                                                &variable_node);
+      // Visit Trailing Assignment Expression.
+      Visit(*expression);
+    }
+  }
   facts_tree_context_.top().NewChild(variable_node);
 }
 
@@ -1170,6 +1237,80 @@ void IndexingFactsTreeExtractor::ExtractEnumTypeDeclaration(
   }
 }
 
+void IndexingFactsTreeExtractor::ExtractStructTypeDeclaration(
+    const verible::SyntaxTreeNode& type_declaration,
+    const verible::TreeSearchMatch& struct_type) {
+  IndexingFactNode struct_type_node(
+      IndexingNodeData{IndexingFactType::kStructOrUnion});
+
+  // Extract struct type name.
+  const SyntaxTreeLeaf* struct_type_name =
+      GetIdentifierFromTypeDeclaration(type_declaration);
+  struct_type_node.Value().AppendAnchor(
+      Anchor(struct_type_name->get(), context_.base));
+
+  // Explore the children of this enum type to extract.
+  {
+    const IndexingFactsTreeContext::AutoPop p(&facts_tree_context_,
+                                              &struct_type_node);
+    Visit(verible::SymbolCastToNode(*struct_type.match));
+  }
+
+  facts_tree_context_.top().NewChild(struct_type_node);
+}
+
+void IndexingFactsTreeExtractor::ExtractStructUnionDeclaration(
+    const TreeSearchMatch& struct_type,
+    const std::vector<TreeSearchMatch>& variables_matche) {
+  // Dummy data type to hold the extracted struct members because there is no
+  // data type here.
+  IndexingFactNode struct_node(
+      IndexingNodeData{IndexingFactType::kStructOrUnion});
+
+  {
+    const IndexingFactsTreeContext::AutoPop p(&facts_tree_context_,
+                                              &struct_node);
+    // Extract struct members.
+    Visit(verible::SymbolCastToNode(*struct_type.match));
+  }
+
+  for (const TreeSearchMatch& variable : variables_matche) {
+    // Extract this variable.
+    // This can be kRegisterVariable or kVariableDeclarationAssign.
+    Visit(verible::SymbolCastToNode(*variable.match));
+
+    // Append the struct members to be a children of this variable.
+    for (const auto& child : struct_node.Children()) {
+      facts_tree_context_.top().Children().back().NewChild(child);
+    }
+  }
+}
+
+void IndexingFactsTreeExtractor::ExtractDataTypeImplicitIdDimensions(
+    const SyntaxTreeNode& struct_member) {
+  IndexingFactNode variable_node(
+      IndexingNodeData{IndexingFactType::kVariableDefinition});
+
+  const SyntaxTreeLeaf& variable_name =
+      GetSymbolIdentifierFromDataTypeImplicitIdDimensions(struct_member);
+  variable_node.Value().AppendAnchor(
+      Anchor(variable_name.get(), context_.base));
+
+  // Extract packed and unpacked dimensions.
+  {
+    const IndexingFactsTreeContext::AutoPop p(&facts_tree_context_,
+                                              &variable_node);
+    for (const auto& child : struct_member.children()) {
+      if (child == nullptr || child->Kind() == verible::SymbolKind::kLeaf) {
+        continue;
+      }
+      Visit(verible::SymbolCastToNode(*child));
+    }
+  }
+
+  facts_tree_context_.top().NewChild(variable_node);
+}
+
 void IndexingFactsTreeExtractor::ExtractTypeDeclaration(
     const verible::SyntaxTreeNode& type_declaration) {
   // Determine if this type declaration is a enum type.
@@ -1184,7 +1325,7 @@ void IndexingFactsTreeExtractor::ExtractTypeDeclaration(
   const std::vector<TreeSearchMatch> struct_types =
       FindAllStructTypes(type_declaration);
   if (!struct_types.empty()) {
-    // TODO(minatoma): add extraction for structs here.
+    ExtractStructTypeDeclaration(type_declaration, *struct_types.begin());
     return;
   }
 }
