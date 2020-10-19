@@ -290,11 +290,14 @@ void IndexingFactsTreeExtractor::ExtractDataDeclaration(
       return;
     }
 
-    // for struct types.
-    const std::vector<TreeSearchMatch> struct_types =
-        FindAllStructTypes(data_declaration);
-    if (!struct_types.empty()) {
-      ExtractStructUnionDeclaration(*struct_types.begin(), register_variables);
+    // for struct and union types.
+    const SyntaxTreeNode* type_node =
+        GetStructOrUnionOrEnumTypeFromDataDeclaration(data_declaration);
+
+    // Ignore if this isn't a struct or union type.
+    if (type_node != nullptr &&
+        NodeEnum(type_node->Tag().tag) != NodeEnum::kEnumType) {
+      ExtractStructUnionDeclaration(*type_node, register_variables);
       return;
     }
 
@@ -322,12 +325,14 @@ void IndexingFactsTreeExtractor::ExtractDataDeclaration(
       return;
     }
 
-    // for struct types.
-    const std::vector<TreeSearchMatch> struct_types =
-        FindAllStructTypes(data_declaration);
-    if (!struct_types.empty()) {
-      ExtractStructUnionDeclaration(*struct_types.begin(),
-                                    variable_declaration_assign);
+    // for struct and union types.
+    const SyntaxTreeNode* type_node =
+        GetStructOrUnionOrEnumTypeFromDataDeclaration(data_declaration);
+
+    // Ignore if this isn't a struct or union type.
+    if (type_node != nullptr &&
+        NodeEnum(type_node->Tag().tag) != NodeEnum::kEnumType) {
+      ExtractStructUnionDeclaration(*type_node, variable_declaration_assign);
       return;
     }
 
@@ -1237,9 +1242,8 @@ void IndexingFactsTreeExtractor::ExtractEnumTypeDeclaration(
   }
 }
 
-void IndexingFactsTreeExtractor::ExtractStructTypeDeclaration(
-    const verible::SyntaxTreeNode& type_declaration,
-    const verible::TreeSearchMatch& struct_type) {
+void IndexingFactsTreeExtractor::ExtractStructUnionTypeDeclaration(
+    const SyntaxTreeNode& type_declaration, const SyntaxTreeNode& struct_type) {
   IndexingFactNode struct_type_node(
       IndexingNodeData{IndexingFactType::kStructOrUnion});
 
@@ -1253,14 +1257,14 @@ void IndexingFactsTreeExtractor::ExtractStructTypeDeclaration(
   {
     const IndexingFactsTreeContext::AutoPop p(&facts_tree_context_,
                                               &struct_type_node);
-    Visit(verible::SymbolCastToNode(*struct_type.match));
+    Visit(struct_type);
   }
 
   facts_tree_context_.top().NewChild(struct_type_node);
 }
 
 void IndexingFactsTreeExtractor::ExtractStructUnionDeclaration(
-    const TreeSearchMatch& struct_type,
+    const SyntaxTreeNode& struct_type,
     const std::vector<TreeSearchMatch>& variables_matche) {
   // Dummy data type to hold the extracted struct members because there is no
   // data type here.
@@ -1271,7 +1275,7 @@ void IndexingFactsTreeExtractor::ExtractStructUnionDeclaration(
     const IndexingFactsTreeContext::AutoPop p(&facts_tree_context_,
                                               &struct_node);
     // Extract struct members.
-    Visit(verible::SymbolCastToNode(*struct_type.match));
+    Visit(struct_type);
   }
 
   for (const TreeSearchMatch& variable : variables_matche) {
@@ -1287,46 +1291,86 @@ void IndexingFactsTreeExtractor::ExtractStructUnionDeclaration(
 }
 
 void IndexingFactsTreeExtractor::ExtractDataTypeImplicitIdDimensions(
-    const SyntaxTreeNode& struct_member) {
+    const SyntaxTreeNode& data_type_implicit_id_dimensions) {
+  // This node has 2 cases:
+  // 1st case:
+  // typedef struct {
+  //    data_type var_name;
+  // } my_struct;
+  // In this case this should be a kDataTypeReference with var_name as a child.
+  //
+  // 2nd case:
+  // typedef struct {
+  //    struct {int xx;} var_name;
+  // } my_struct;
+  // In this case var_name should contain "xx" inside it.
+
+  std::pair<const verible::SyntaxTreeLeaf*, int> variable_name =
+      GetSymbolIdentifierFromDataTypeImplicitIdDimensions(
+          data_type_implicit_id_dimensions);
+
   IndexingFactNode variable_node(
       IndexingNodeData{IndexingFactType::kVariableDefinition});
-
-  const SyntaxTreeLeaf& variable_name =
-      GetSymbolIdentifierFromDataTypeImplicitIdDimensions(struct_member);
   variable_node.Value().AppendAnchor(
-      Anchor(variable_name.get(), context_.base));
+      Anchor(variable_name.first->get(), context_.base));
 
-  // Extract packed and unpacked dimensions.
-  {
-    const IndexingFactsTreeContext::AutoPop p(&facts_tree_context_,
-                                              &variable_node);
-    for (const auto& child : struct_member.children()) {
-      if (child == nullptr || child->Kind() == verible::SymbolKind::kLeaf) {
-        continue;
-      }
-      Visit(verible::SymbolCastToNode(*child));
+  if (variable_name.second == 1) {
+    const SyntaxTreeLeaf* type_identifier =
+        GetTypeOfDataTypeImplicitIdDimensions(data_type_implicit_id_dimensions);
+
+    if (type_identifier == nullptr) {
+      return;
     }
-  }
 
-  facts_tree_context_.top().NewChild(variable_node);
+    IndexingFactNode type_node(
+        IndexingNodeData{IndexingFactType::kDataTypeReference});
+    type_node.Value().AppendAnchor(
+        Anchor(type_identifier->get(), context_.base));
+
+    type_node.NewChild(variable_node);
+    facts_tree_context_.top().NewChild(type_node);
+  } else if (variable_name.second == 2) {
+    {
+      const IndexingFactsTreeContext::AutoPop p(&facts_tree_context_,
+                                                &variable_node);
+      for (const auto& child : data_type_implicit_id_dimensions.children()) {
+        if (child == nullptr || child->Kind() == verible::SymbolKind::kLeaf) {
+          continue;
+        }
+        Visit(verible::SymbolCastToNode(*child));
+      }
+    }
+
+    facts_tree_context_.top().NewChild(variable_node);
+  }
 }
 
 void IndexingFactsTreeExtractor::ExtractTypeDeclaration(
     const verible::SyntaxTreeNode& type_declaration) {
-  // Determine if this type declaration is a enum type.
-  const std::vector<TreeSearchMatch> enum_types =
-      FindAllEnumTypes(type_declaration);
-  if (!enum_types.empty()) {
-    ExtractEnumTypeDeclaration(type_declaration);
+  const SyntaxTreeNode* type = GetTypeOfTypeDeclaration(type_declaration);
+
+  if (type == nullptr) {
     return;
   }
 
-  // Determine if this type declaration is a struct type.
-  const std::vector<TreeSearchMatch> struct_types =
-      FindAllStructTypes(type_declaration);
-  if (!struct_types.empty()) {
-    ExtractStructTypeDeclaration(type_declaration, *struct_types.begin());
-    return;
+  const auto tag = static_cast<verilog::NodeEnum>(type->Tag().tag);
+
+  switch (tag) {
+    case NodeEnum::kEnumType: {
+      ExtractEnumTypeDeclaration(type_declaration);
+      break;
+    }
+    case NodeEnum::kStructType: {
+      ExtractStructUnionTypeDeclaration(type_declaration, *type);
+      break;
+    }
+    case NodeEnum::kUnionType: {
+      ExtractStructUnionTypeDeclaration(type_declaration, *type);
+      break;
+    }
+    default: {
+      break;
+    }
   }
 }
 

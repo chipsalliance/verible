@@ -340,7 +340,7 @@ TEST(GetTypeOfDataDeclarationTest, ExplicitTypes) {
 
           std::vector<TreeSearchMatch> types;
           for (const auto& decl : decls) {
-            const auto& type = GetTypeOfDataDeclaration(*decl.match);
+            const auto& type = GetInstantiationTypeOfDataDeclaration(*decl.match);
             types.emplace_back(TreeSearchMatch{&type, {/* ignored context */}});
           }
           return types;

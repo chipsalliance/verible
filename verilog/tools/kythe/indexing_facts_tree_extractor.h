@@ -159,19 +159,19 @@ class IndexingFactsTreeExtractor : public verible::TreeContextVisitor {
 
   // Extracts struct type declaration preceeded with "typedef" and creates its
   // corresponding fact tree.
-  void ExtractStructTypeDeclaration(
+  void ExtractStructUnionTypeDeclaration(
       const verible::SyntaxTreeNode& type_declaration,
-      const verible::TreeSearchMatch& struct_type);
+      const verible::SyntaxTreeNode& struct_type);
 
   // Extracts struct declaration preceeded with  and creates its corresponding
   // fact tree.
   void ExtractStructUnionDeclaration(
-      const verible::TreeSearchMatch& data_declaration,
+      const verible::SyntaxTreeNode& data_declaration,
       const std::vector<verible::TreeSearchMatch>& variables_matche);
 
   // Extracts struct and union members and creates its corresponding fact tree.
   void ExtractDataTypeImplicitIdDimensions(
-      const verible::SyntaxTreeNode& struct_member);
+      const verible::SyntaxTreeNode& data_type_implicit_id_dimensions);
 
   // Extracts variable definitions preceeded with some data type and creates its
   // corresponding fact tree.

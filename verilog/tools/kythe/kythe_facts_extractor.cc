@@ -293,7 +293,7 @@ void KytheFactsExtractor::ConstructFlattenedScope(const IndexingFactNode& node,
       }
 
       // TODO(minatoma): refactor this and the below case into function.
-      // TODO(minatoma): consider getting tid of kModuleInstance and
+      // TODO(minatoma): consider getting rid of kModuleInstance and
       // kClassInstance and use kVaraibleDefinition if they don't provide
       // anything new.
       const std::vector<const VName*> found_vnames =

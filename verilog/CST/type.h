@@ -90,6 +90,11 @@ const verible::SyntaxTreeNode& GetUnqualifiedIdFromLocalRoot(
 const verible::SyntaxTreeNode& GetUnqualifiedIdFromReferenceCallBase(
     const verible::Symbol& reference_call_base);
 
+// Returns the node tagged with kStructType, kEnumType or kUnionType from node
+// tagged with kInstantationType.
+const verible::SyntaxTreeNode* GetStructOrUnionOrEnumTypeFromInstantiationType(
+    const verible::Symbol& instantiation_type);
+
 // Extracts kPackedDimensions node from node tagged with kDataTypePrimitive.
 const verible::SyntaxTreeNode& GetPackedDimensionFromDataType(
     const verible::Symbol& data_type_primitive);
@@ -98,12 +103,26 @@ const verible::SyntaxTreeNode& GetPackedDimensionFromDataType(
 const verible::SyntaxTreeNode* GetUnqualifiedIdFromInstantiationType(
     const verible::Symbol& instantiation_type);
 
+// Return the type node of the given type decalration.
+//- The type can kStructType, kUnionType or kEnumType.
+const verible::SyntaxTreeNode* GetTypeOfTypeDeclaration(
+    const verible::Symbol& type_declaration);
+
 // Extracts symbol identifier node from node tagged with
 // kDataTypeImplicitIdDimension.
 // e.g struct {byte xx;} extracts "xx".
-const verible::SyntaxTreeLeaf&
+// The symbol can be found at index 1 or 2 and each one is different so the
+// index is returned to distinguish between them.
+std::pair<const verible::SyntaxTreeLeaf*, int>
 GetSymbolIdentifierFromDataTypeImplicitIdDimensions(
     const verible::Symbol& struct_union_member);
+
+// For a given node tagged with GetTypeOfDataTypeImplicitIdDimensions returns
+// the node spanning the type if it's not primitive type or returns nullptr.
+// e.g logic x => returns nullptr.
+// e.g some_type x => return "some_type".
+const verible::SyntaxTreeLeaf* GetTypeOfDataTypeImplicitIdDimensions(
+    const verible::Symbol& data_type_implicit_id_dimensions);
 
 // For a given instantiation type node returns the node spanning param
 // declaration.
