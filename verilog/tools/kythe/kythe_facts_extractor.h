@@ -111,8 +111,7 @@ class KytheFactsExtractor {
   void AddVNameToScopeContext(IndexingFactType, const VName&);
 
   // Appends the extracted children vnames to the scope of the current node.
-  void ConstructFlattenedScope(const IndexingFactNode&, const VName&,
-                               const Scope&);
+  void ConstructFlattenedScope(const IndexingFactNode&, const VName&, Scope&);
 
   // Determines whether or not to create a child of edge between the current
   // node and the previous node.

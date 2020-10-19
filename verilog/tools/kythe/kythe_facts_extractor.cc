@@ -268,7 +268,7 @@ void KytheFactsExtractor::Visit(const IndexingFactNode& node,
 
 void KytheFactsExtractor::ConstructFlattenedScope(const IndexingFactNode& node,
                                                   const VName& vname,
-                                                  const Scope& current_scope) {
+                                                  Scope& current_scope) {
   const auto tag = node.Value().GetIndexingFactType();
 
   // Determines whether to add the current scope to the scope context or not.
@@ -283,12 +283,11 @@ void KytheFactsExtractor::ConstructFlattenedScope(const IndexingFactNode& node,
       break;
     }
     case IndexingFactType::kVariableDefinition: {
-      scope_resolver_->MapSignatureToScope(vname.signature, current_scope);
-
       // Break if this variable has no type.
       if (node.Parent() == nullptr ||
           node.Parent()->Value().GetIndexingFactType() !=
               IndexingFactType::kDataTypeReference) {
+        scope_resolver_->MapSignatureToScope(vname.signature, current_scope);
         break;
       }
 
@@ -304,8 +303,13 @@ void KytheFactsExtractor::ConstructFlattenedScope(const IndexingFactNode& node,
         break;
       }
 
-      scope_resolver_->MapSignatureToScopeOfSignature(
-          vname.signature, found_vnames[0]->signature);
+      const Scope* type_scope =
+          scope_resolver_->SearchForScope(found_vnames[0]->signature);
+      if (type_scope != nullptr) {
+        current_scope.AppendScope(*type_scope);
+      }
+
+      scope_resolver_->MapSignatureToScope(vname.signature, current_scope);
 
       break;
     }
