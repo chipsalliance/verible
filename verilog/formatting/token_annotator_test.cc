@@ -4672,6 +4672,55 @@ TEST(TokenAnnotatorTest, AnnotateFormattingWithContextTest) {
           {/* any context */},
           {0, SpacingOptions::MustWrap},
       },
+      // Space between return keyword and return value
+      {
+          DefaultStyle,
+          {verilog_tokentype::TK_return, "return"},
+          {'{', "{"},
+          {/* unspecified context */},
+          {/* unspecified context */},
+          {1, SpacingOptions::Undecided},
+      },
+      {
+          DefaultStyle,
+          {verilog_tokentype::TK_return, "return"},
+          {'(', "("},
+          {/* unspecified context */},
+          {/* unspecified context */},
+          {1, SpacingOptions::Undecided},
+      },
+      {
+          DefaultStyle,
+          {verilog_tokentype::TK_return, "return"},
+          {'-', "-"},
+          {/* unspecified context */},
+          {/* unspecified context */},
+          {1, SpacingOptions::Undecided},
+      },
+      {
+          DefaultStyle,
+          {verilog_tokentype::TK_return, "return"},
+          {'!', "!"},
+          {/* unspecified context */},
+          {/* unspecified context */},
+          {1, SpacingOptions::Undecided},
+      },
+      {
+          DefaultStyle,
+          {verilog_tokentype::TK_return, "return"},
+          {'~', "~"},
+          {/* unspecified context */},
+          {/* unspecified context */},
+          {1, SpacingOptions::Undecided},
+      },
+      {
+          DefaultStyle,
+          {verilog_tokentype::TK_return, "return"},
+          {verilog_tokentype::SystemTFIdentifier, "$foo"},
+          {/* unspecified context */},
+          {/* unspecified context */},
+          {1, SpacingOptions::Undecided},
+      },
   };
   int test_index = 0;
   for (const auto& test_case : kTestCases) {
