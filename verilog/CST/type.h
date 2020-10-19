@@ -52,6 +52,11 @@ std::vector<verible::TreeSearchMatch> FindAllEnumTypes(
 std::vector<verible::TreeSearchMatch> FindAllStructTypes(
     const verible::Symbol& root);
 
+// Finds all node kDataTypeImplicitIdDimensions. Used for testing if the type
+// declaration is a struct.
+std::vector<verible::TreeSearchMatch> FindAllDataTypeImplicitIdDimensions(
+    const verible::Symbol& root);
+
 // Finds all node kUnionType declarations. Used for testing if the type
 // declaration is a union.
 std::vector<verible::TreeSearchMatch> FindAllUnionTypes(

@@ -16,12 +16,12 @@
 
 #include <vector>
 
-#include "gmock/gmock.h"
-#include "gtest/gtest.h"
 #include "common/analysis/syntax_tree_search.h"
 #include "common/analysis/syntax_tree_search_test_utils.h"
 #include "common/text/text_structure.h"
 #include "common/text/tree_utils.h"
+#include "gmock/gmock.h"
+#include "gtest/gtest.h"
 #include "verilog/CST/match_test_utils.h"
 
 #undef ASSERT_OK
@@ -340,7 +340,8 @@ TEST(GetTypeOfDataDeclarationTest, ExplicitTypes) {
 
           std::vector<TreeSearchMatch> types;
           for (const auto& decl : decls) {
-            const auto& type = GetInstantiationTypeOfDataDeclaration(*decl.match);
+            const auto& type =
+                GetInstantiationTypeOfDataDeclaration(*decl.match);
             types.emplace_back(TreeSearchMatch{&type, {/* ignored context */}});
           }
           return types;
@@ -554,6 +555,76 @@ TEST(GetVariableDeclarationAssign, VariableName) {
             names.emplace_back(TreeSearchMatch{&name, {/* ignored context */}});
           }
           return names;
+        });
+  }
+}
+
+TEST(GetTypeFromDeclaration, GetTypeName) {
+  constexpr int kTag = 1;  // value doesn't matter
+  const SyntaxTreeSearchTestCase kTestCases[] = {
+      {""},
+      {"module m();\nendmodule"},
+      {"module m();\n",
+       {kTag, "some_type"},
+       " x;\n",
+       {kTag, "some_type"},
+       " m();\n",
+       {kTag, "some_type"},
+       " x = new;\nendmodule"},
+  };
+  for (const auto& test : kTestCases) {
+    TestVerilogSyntaxRangeMatches(
+        __FUNCTION__, test, [](const TextStructureView& text_structure) {
+          const auto& root = text_structure.SyntaxTree();
+          const auto& instances =
+              FindAllDataDeclarations(*ABSL_DIE_IF_NULL(root));
+
+          std::vector<TreeSearchMatch> names;
+          for (const auto& decl : instances) {
+            const auto* name =
+                GetTypeIdentifierFromDataDeclaration(*decl.match);
+            names.emplace_back(TreeSearchMatch{name, {/* ignored context */}});
+          }
+          return names;
+        });
+  }
+}
+
+TEST(GetStructTypeFromDeclaration, GetStructOrUnionOrEnumType) {
+  constexpr int kTag = 1;  // value doesn't matter
+  const SyntaxTreeSearchTestCase kTestCases[] = {
+      {""},
+      {"module m();\nendmodule"},
+      {"package pkg;\nendpackage"},
+      {"module m();\n",
+       {kTag, "struct {int x;}"},
+       " var1;\n",
+       {kTag, "union {int x;}"},
+       " var1;\n",
+       {kTag, "enum {x}"},
+       " var1;\nendmodule"},
+      {"package pkg;\n",
+       {kTag, "struct {int x;}"},
+       " var1;\n",
+       {kTag, "union {int x;}"},
+       " var1;\n",
+       {kTag, "enum {x}"},
+       " var1;\nendpackage"},
+  };
+  for (const auto& test : kTestCases) {
+    TestVerilogSyntaxRangeMatches(
+        __FUNCTION__, test, [](const TextStructureView& text_structure) {
+          const auto& root = text_structure.SyntaxTree();
+          const auto& instances =
+              FindAllDataDeclarations(*ABSL_DIE_IF_NULL(root));
+
+          std::vector<TreeSearchMatch> types;
+          for (const auto& decl : instances) {
+            const auto* type =
+                GetStructOrUnionOrEnumTypeFromDataDeclaration(*decl.match);
+            types.emplace_back(TreeSearchMatch{type, {/* ignored context */}});
+          }
+          return types;
         });
   }
 }

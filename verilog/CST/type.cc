@@ -58,6 +58,11 @@ std::vector<verible::TreeSearchMatch> FindAllStructTypes(
   return verible::SearchSyntaxTree(root, NodekStructType());
 }
 
+std::vector<verible::TreeSearchMatch> FindAllDataTypeImplicitIdDimensions(
+    const verible::Symbol& root) {
+  return verible::SearchSyntaxTree(root, NodekDataTypeImplicitIdDimensions());
+}
+
 std::vector<verible::TreeSearchMatch> FindAllUnionTypes(
     const verible::Symbol& root) {
   return verible::SearchSyntaxTree(root, NodekUnionType());
