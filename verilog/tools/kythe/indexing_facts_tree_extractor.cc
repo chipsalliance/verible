@@ -357,9 +357,9 @@ void IndexingFactsTreeExtractor::ExtractProgram(
 void IndexingFactsTreeExtractor::ExtractModuleHeader(
     const SyntaxTreeNode& module_declaration_node) {
   // Extract module name e.g module my_module extracts "my_module".
-  const verible::TokenInfo& module_name_token =
-      GetModuleNameToken(module_declaration_node);
-  const Anchor module_name_anchor(module_name_token, context_.base);
+  const verible::SyntaxTreeLeaf& module_name_leaf =
+      GetModuleName(module_declaration_node);
+  const Anchor module_name_anchor(module_name_leaf.get(), context_.base);
   facts_tree_context_.top().Value().AppendAnchor(module_name_anchor);
 
   // Extract parameters if exist.
@@ -475,8 +475,11 @@ void IndexingFactsTreeExtractor::ExtractModulePort(
         data_type_node.Value().AppendAnchor(
             Anchor(data_type->get(), context_.base));
 
+        // TODO(fangism): try to improve this using move semantics, avoid a
+        // deep-copy where possible.
+
         // Make the current port node child of this data type, remove it and
-        // push the kDataTypeRefernceNode.
+        // push the kDataTypeRefernce Node.
         data_type_node.NewChild(facts_tree_context_.top().Children().back());
         facts_tree_context_.top().Children().pop_back();
         facts_tree_context_.top().NewChild(data_type_node);

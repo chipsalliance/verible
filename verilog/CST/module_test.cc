@@ -108,72 +108,88 @@ TEST(GetModuleNameTokenTest, RootIsNotAModule) {
   const auto& root = analyzer.Data().SyntaxTree();
   // CHECK should fail: root node is a description list, not a module.
   // If this happens, it is a programmer error, not user error.
-  EXPECT_DEATH(GetModuleNameToken(*ABSL_DIE_IF_NULL(root)), "t != nullptr");
+  EXPECT_DEATH(GetModuleName(*ABSL_DIE_IF_NULL(root)), "0 vs. 1");
 }
 
 TEST(GetModuleNameTokenTest, ValidModule) {
-  VerilogAnalyzer analyzer("module foo; endmodule", "");
-  EXPECT_OK(analyzer.Analyze());
-  const auto& root = analyzer.Data().SyntaxTree();
-  const auto module_declarations = FindAllModuleDeclarations(*root);
-  EXPECT_EQ(module_declarations.size(), 1);
-  const auto& module_node =
-      down_cast<const SyntaxTreeNode&>(*module_declarations.front().match);
-  // Root node is a description list, not a module.
-  const auto& token = GetModuleNameToken(module_node);
-  EXPECT_EQ(token.text(), "foo");
+  constexpr int kTag = 1;  // value doesn't matter
+  const SyntaxTreeSearchTestCase kTestCases[] = {
+      {""},
+      {"interface m;\nendinterface\n"},
+      {"module ", {kTag, "foo"}, "; endmodule"},
+  };
+  for (const auto& test : kTestCases) {
+    TestVerilogSyntaxRangeMatches(
+        __FUNCTION__, test, [](const TextStructureView& text_structure) {
+          const auto& root = text_structure.SyntaxTree();
+          const auto& programs =
+              FindAllModuleDeclarations(*ABSL_DIE_IF_NULL(root));
+
+          std::vector<TreeSearchMatch> names;
+          for (const auto& instance : programs) {
+            const auto& name = GetModuleName(*instance.match);
+            names.emplace_back(TreeSearchMatch{&name, {/* ignored context */}});
+          }
+          return names;
+        });
+  }
 }
 
 TEST(GetModuleNameTokenTest, ValidInterface) {
-  VerilogAnalyzer analyzer("interface foo; endinterface", "");
-  EXPECT_OK(analyzer.Analyze());
-  const auto& root = analyzer.Data().SyntaxTree();
-  const auto module_declarations = FindAllInterfaceDeclarations(*root);
-  EXPECT_EQ(module_declarations.size(), 1);
-  const auto& module_node =
-      down_cast<const SyntaxTreeNode&>(*module_declarations.front().match);
-  // Root node is a description list, not a module.
-  const auto& token = GetModuleNameToken(module_node);
-  EXPECT_EQ(token.text(), "foo");
+  constexpr int kTag = 1;  // value doesn't matter
+  const SyntaxTreeSearchTestCase kTestCases[] = {
+      {""},
+      {"module m;\nendmodule\n"},
+      {"interface ", {kTag, "foo"}, "; endinterface"},
+  };
+  for (const auto& test : kTestCases) {
+    TestVerilogSyntaxRangeMatches(
+        __FUNCTION__, test, [](const TextStructureView& text_structure) {
+          const auto& root = text_structure.SyntaxTree();
+          const auto& programs =
+              FindAllInterfaceDeclarations(*ABSL_DIE_IF_NULL(root));
+
+          std::vector<TreeSearchMatch> names;
+          for (const auto& instance : programs) {
+            const auto& name = GetModuleName(*instance.match);
+            names.emplace_back(TreeSearchMatch{&name, {/* ignored context */}});
+          }
+          return names;
+        });
+  }
 }
 
 TEST(GetModuleNameTokenTest, ValidProgram) {
-  VerilogAnalyzer analyzer("program foo; endprogram", "");
-  EXPECT_OK(analyzer.Analyze());
-  const auto& root = analyzer.Data().SyntaxTree();
-  const auto module_declarations = FindAllProgramDeclarations(*root);
-  EXPECT_EQ(module_declarations.size(), 1);
-  const auto& module_node =
-      down_cast<const SyntaxTreeNode&>(*module_declarations.front().match);
-  // Root node is a description list, not a module.
-  const auto& token = GetModuleNameToken(module_node);
-  EXPECT_EQ(token.text(), "foo");
+  constexpr int kTag = 1;  // value doesn't matter
+  const SyntaxTreeSearchTestCase kTestCases[] = {
+      {""},
+      {"module m;\nendmodule\n"},
+      {"program ", {kTag, "foo"}, "; endprogram"},
+  };
+  for (const auto& test : kTestCases) {
+    TestVerilogSyntaxRangeMatches(
+        __FUNCTION__, test, [](const TextStructureView& text_structure) {
+          const auto& root = text_structure.SyntaxTree();
+          const auto& programs =
+              FindAllProgramDeclarations(*ABSL_DIE_IF_NULL(root));
+
+          std::vector<TreeSearchMatch> names;
+          for (const auto& instance : programs) {
+            const auto& name = GetModuleName(*instance.match);
+            names.emplace_back(TreeSearchMatch{&name, {/* ignored context */}});
+          }
+          return names;
+        });
+  }
 }
 
-TEST(GetModulePortDeclarationListTest, NoPorts) {
-  const verible::TokenInfoTestData kTestCases[] = {
+TEST(GetModulePortDeclarationListTest, ModulePorts) {
+  constexpr int kTag = 1;  // value doesn't matter
+  const SyntaxTreeSearchTestCase kTestCases[] = {
       // No () ports lists.
       {"module m;\nendmodule\n"},
       {"module m\t;  \n  endmodule\n"},
       {"module m;\nfunction f;\nendfunction\nendmodule\n"},
-  };
-  for (const auto& test : kTestCases) {
-    const absl::string_view code(test.code);
-    VerilogAnalyzer analyzer(code, "test-file");
-    ASSERT_OK(analyzer.Analyze()) << "failed on:\n" << code;
-    const auto& root = analyzer.Data().SyntaxTree();
-
-    const auto modules = FindAllModuleDeclarations(*root);
-    ASSERT_EQ(modules.size(), 1);
-    const auto& module = *modules.front().match;
-    const auto* return_type = GetModulePortParenGroup(module);
-    EXPECT_EQ(return_type, nullptr);
-  }
-}
-
-TEST(GetModulePortDeclarationListTest, WithPorts) {
-  constexpr int kTag = 1;  // value not important
-  const verible::TokenInfoTestData kTestCases[] = {
       {"module m", {kTag, "()"}, ";\nendmodule\n"},
       {"module m    ", {kTag, "()"}, "   ;\nendmodule\n"},
       {"module m", {kTag, "(input clk)"}, ";\nendmodule\n"},
@@ -182,33 +198,23 @@ TEST(GetModulePortDeclarationListTest, WithPorts) {
       {"module m", {kTag, "(\ninput   clk,\noutput foo\n)"}, ";\nendmodule\n"},
   };
   for (const auto& test : kTestCases) {
-    const absl::string_view code(test.code);
-    VerilogAnalyzer analyzer(code, "test-file");
-    const absl::string_view code_copy(analyzer.Data().Contents());
-    ASSERT_OK(analyzer.Analyze()) << "failed on:\n" << code;
-    const auto& root = analyzer.Data().SyntaxTree();
+    TestVerilogSyntaxRangeMatches(
+        __FUNCTION__, test, [](const TextStructureView& text_structure) {
+          const auto& root = text_structure.SyntaxTree();
+          const auto& modules =
+              FindAllModuleDeclarations(*ABSL_DIE_IF_NULL(root));
 
-    const auto modules = FindAllModuleDeclarations(*root);
-    ASSERT_EQ(modules.size(), 1);
-    const auto& module = *modules.front().match;
-    const auto* ports = GetModulePortParenGroup(module);
-    ASSERT_NE(ports, nullptr);
-    const auto ports_span = verible::StringSpanOfSymbol(*ports);
-    EXPECT_FALSE(ports_span.empty());
-
-    // TODO(b/151371397): Refactor this test code along with
-    // common/analysis/linter_test_util.h to be able to compare set-symmetric
-    // differences in 'findings'.
-
-    // Find the tokens, rebased into the other buffer.
-    const auto expected_excerpts = test.FindImportantTokens(code_copy);
-    ASSERT_EQ(expected_excerpts.size(), 1);
-    // Compare the string_views and their exact spans.
-    const auto expected_span = expected_excerpts.front().text();
-    ASSERT_TRUE(verible::IsSubRange(ports_span, code_copy));
-    ASSERT_TRUE(verible::IsSubRange(expected_span, code_copy));
-    EXPECT_EQ(ports_span, expected_span);
-    EXPECT_TRUE(verible::BoundsEqual(ports_span, expected_span));
+          std::vector<TreeSearchMatch> groups;
+          for (const auto& instance : modules) {
+            const auto* group = GetModulePortParenGroup(*instance.match);
+            if (group == nullptr) {
+              continue;
+            }
+            groups.emplace_back(
+                TreeSearchMatch{group, {/* ignored context */}});
+          }
+          return groups;
+        });
   }
 }
 
