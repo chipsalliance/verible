@@ -17,6 +17,25 @@ is to populate those attributes based on the attributes, types, and syntactic
 context of adjacent pairs of tokens. Formatting rules around punctuation tokens
 like parenthesis and brackets often depend on syntactic context.
 
+#### Rules and Reasons
+
+The main functions that determine inter-token attributes are written as
+_priority-ordered rules_, i.e. series of `if (condition) return ...;`. There may
+be an _O(N^2)_ number of inter-token pair combinations, however, we aim to cover
+as much of that space as possible with few rules.
+[Test cases](https://cs.opensource.google/verible/verible/+/master:verilog/formatting/token_annotator_test.cc),
+however, should cover as much as possible explicitly, to prevent accidental
+regression.
+
+When running with logging enabled, you will observe that every value or
+attribute returned by these functions is accompanied with a _reason_ string like
+_"Always insert a space after X"_. This not only tells you the value returned
+but the exact line or rule that triggered it, which is critical for debugging.
+When fixing issues, don't immediately think of what code to add to solve an
+issue, consider whether a re-ordering of the rules may work. In some case, code
+can be simplified by grouping similar case conditions together, or by
+generalizing rules more broadly.
+
 ### Token Partition Tree
 
 [TokenPartitionTree](https://cs.opensource.google/verible/verible/+/master:common/formatting/token_partition_tree.h)
