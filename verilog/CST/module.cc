@@ -102,7 +102,7 @@ const verible::SyntaxTreeLeaf* GetModuleEndLabel(
     const verible::Symbol& module_declaration) {
   const SyntaxTreeNode& module_node =
       verible::SymbolCastToNode(module_declaration);
-  CHECK_EQ(IsModuleOrInterfaceOrProgramDeclaration(module_node), true);
+  CHECK(IsModuleOrInterfaceOrProgramDeclaration(module_node));
 
   const auto* label_node = module_node[3].get();
   if (label_node == nullptr) {
@@ -113,13 +113,13 @@ const verible::SyntaxTreeLeaf* GetModuleEndLabel(
   return &module_name;
 }
 
-const verible::SyntaxTreeNode* GetModuleItemList(
+const verible::SyntaxTreeNode& GetModuleItemList(
     const verible::Symbol& module_declaration) {
   const SyntaxTreeNode& module_node =
       verible::SymbolCastToNode(module_declaration);
-  CHECK_EQ(IsModuleOrInterfaceOrProgramDeclaration(module_node), true);
+  CHECK(IsModuleOrInterfaceOrProgramDeclaration(module_node));
 
-  return &verible::SymbolCastToNode(*module_node[1].get());
+  return verible::SymbolCastToNode(*ABSL_DIE_IF_NULL(module_node[1].get()));
 }
 
 const verible::SyntaxTreeNode* GetParamDeclarationListFromModuleDeclaration(

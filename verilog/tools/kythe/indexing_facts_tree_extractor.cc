@@ -326,10 +326,8 @@ void IndexingFactsTreeExtractor::ExtractModuleOrInterfaceOrProgram(
   ExtractModuleHeader(declaration_node);
   ExtractModuleEnd(declaration_node);
 
-  const SyntaxTreeNode* item_list = GetModuleItemList(declaration_node);
-  if (item_list != nullptr) {
-    Visit(*item_list);
-  }
+  const SyntaxTreeNode& item_list = GetModuleItemList(declaration_node);
+  Visit(item_list);
 }
 
 void IndexingFactsTreeExtractor::ExtractModule(
