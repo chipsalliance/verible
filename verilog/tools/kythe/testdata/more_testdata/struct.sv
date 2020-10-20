@@ -5,7 +5,8 @@
 package pkg;
   struct {
     //- @aa defines/binding AA1
-    byte aa;
+    //- @dd defines/binding _
+    byte aa, dd;
     //- @bb defines/binding _
     reg bb;
     //- @cc defines/binding CC1
