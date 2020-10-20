@@ -108,9 +108,8 @@ const verible::SyntaxTreeNode& GetPackedDimensionFromDataType(
 const verible::SyntaxTreeNode* GetUnqualifiedIdFromInstantiationType(
     const verible::Symbol& instantiation_type);
 
-// Return the type node of the given type decalration.
-//- The type can kStructType, kUnionType or kEnumType.
-const verible::SyntaxTreeNode* GetTypeOfTypeDeclaration(
+// Return the type node of the given type declaration.
+const verible::SyntaxTreeNode* GetReferencedTypeOfTypeDeclaration(
     const verible::Symbol& type_declaration);
 
 // Extracts symbol identifier node from node tagged with
@@ -118,6 +117,7 @@ const verible::SyntaxTreeNode* GetTypeOfTypeDeclaration(
 // e.g struct {byte xx;} extracts "xx".
 // The symbol can be found at index 1 or 2 and each one is different so the
 // index is returned to distinguish between them.
+// This works around CST structural inconsistency (bug).
 std::pair<const verible::SyntaxTreeLeaf*, int>
 GetSymbolIdentifierFromDataTypeImplicitIdDimensions(
     const verible::Symbol& struct_union_member);
@@ -125,8 +125,8 @@ GetSymbolIdentifierFromDataTypeImplicitIdDimensions(
 // For a given node tagged with GetTypeOfDataTypeImplicitIdDimensions returns
 // the node spanning the type if it's not primitive type or returns nullptr.
 // e.g logic x => returns nullptr.
-// e.g some_type x => return "some_type".
-const verible::SyntaxTreeLeaf* GetTypeOfDataTypeImplicitIdDimensions(
+// e.g from "some_type x" => return "some_type".
+const verible::SyntaxTreeLeaf* GetNonprimitiveTypeOfDataTypeImplicitDimensions(
     const verible::Symbol& data_type_implicit_id_dimensions);
 
 // For a given instantiation type node returns the node spanning param
@@ -135,19 +135,19 @@ const verible::SyntaxTreeNode* GetParamListFromInstantiationType(
     const verible::Symbol& instantiation_type);
 
 // Extracts symbol identifier node from node tagged with kEnumName.
-// e.g enum {first} extracts "first".
+// e.g from "enum {first}" extracts "first".
 const verible::SyntaxTreeLeaf& GetSymbolIdentifierFromEnumName(
     const verible::Symbol& enum_name);
 
 // Returns symbol identifier node for the type name from node tagged with
 // kInstantiationType (if exists) or return nullptr.
-//- e.g some_type x; return "some_type".
+//- e.g from "some_type x;" return "some_type".
 const verible::SyntaxTreeLeaf* GetTypeIdentifierFromInstantiationType(
     const verible::Symbol& instantiation_type);
 
 // Returns symbol identifier node for the type name from node tagged with
 // kDataType (if exists) or return nullptr.
-//- e.g module m(Bus x) => extracts "Bus".
+//- e.g "Bus x" => extracts "Bus".
 const verible::SyntaxTreeLeaf* GetTypeIdentifierFromDataType(
     const verible::Symbol& data_type);
 

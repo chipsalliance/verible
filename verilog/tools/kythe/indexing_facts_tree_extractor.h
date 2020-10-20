@@ -163,11 +163,10 @@ class IndexingFactsTreeExtractor : public verible::TreeContextVisitor {
       const verible::SyntaxTreeNode& type_declaration,
       const verible::SyntaxTreeNode& struct_type);
 
-  // Extracts struct declaration preceeded with  and creates its corresponding
-  // fact tree.
+  // Extracts struct declaration and creates its corresponding fact tree.
   void ExtractStructUnionDeclaration(
       const verible::SyntaxTreeNode& data_declaration,
-      const std::vector<verible::TreeSearchMatch>& variables_matche);
+      const std::vector<verible::TreeSearchMatch>& variables_matched);
 
   // Extracts struct and union members and creates its corresponding fact tree.
   void ExtractDataTypeImplicitIdDimensions(
@@ -178,7 +177,7 @@ class IndexingFactsTreeExtractor : public verible::TreeContextVisitor {
   // e.g some_type var1;
   void ExtractTypedVariableDefinition(
       const verible::SyntaxTreeLeaf& type_identifier,
-      const std::vector<verible::TreeSearchMatch>& variables_matche);
+      const std::vector<verible::TreeSearchMatch>& variables_matched);
 
   // Extracts leaves tagged with SymbolIdentifier and creates its facts
   // tree. This should only be reached in case of free variable references.

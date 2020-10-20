@@ -915,7 +915,7 @@ void IndexingFactsTreeExtractor::ExtractClassInstances(
     const SyntaxTreeNode& data_declaration_node,
     const std::vector<TreeSearchMatch>& class_instances) {
   // TODO(minatoma): refactor this function and git rid of the logic in the for
-  // loop because kRegister variable and kVariableDeclarationAssignment are
+  // loop because kRegisterVariable and kVariableDeclarationAssignment are
   // extracted in function.
   IndexingFactNode class_node(
       IndexingNodeData{IndexingFactType::kDataTypeReference});
@@ -1265,7 +1265,7 @@ void IndexingFactsTreeExtractor::ExtractStructUnionTypeDeclaration(
 
 void IndexingFactsTreeExtractor::ExtractStructUnionDeclaration(
     const SyntaxTreeNode& struct_type,
-    const std::vector<TreeSearchMatch>& variables_matche) {
+    const std::vector<TreeSearchMatch>& variables_matched) {
   // Dummy data type to hold the extracted struct members because there is no
   // data type here.
   IndexingFactNode struct_node(
@@ -1278,7 +1278,7 @@ void IndexingFactsTreeExtractor::ExtractStructUnionDeclaration(
     Visit(struct_type);
   }
 
-  for (const TreeSearchMatch& variable : variables_matche) {
+  for (const TreeSearchMatch& variable : variables_matched) {
     // Extract this variable.
     // This can be kRegisterVariable or kVariableDeclarationAssign.
     Visit(verible::SymbolCastToNode(*variable.match));
@@ -1316,7 +1316,8 @@ void IndexingFactsTreeExtractor::ExtractDataTypeImplicitIdDimensions(
 
   if (variable_name.second == 1) {
     const SyntaxTreeLeaf* type_identifier =
-        GetTypeOfDataTypeImplicitIdDimensions(data_type_implicit_id_dimensions);
+        GetNonprimitiveTypeOfDataTypeImplicitDimensions(
+            data_type_implicit_id_dimensions);
 
     if (type_identifier == nullptr) {
       return;
@@ -1347,7 +1348,8 @@ void IndexingFactsTreeExtractor::ExtractDataTypeImplicitIdDimensions(
 
 void IndexingFactsTreeExtractor::ExtractTypeDeclaration(
     const verible::SyntaxTreeNode& type_declaration) {
-  const SyntaxTreeNode* type = GetTypeOfTypeDeclaration(type_declaration);
+  const SyntaxTreeNode* type =
+      GetReferencedTypeOfTypeDeclaration(type_declaration);
 
   if (type == nullptr) {
     return;

@@ -28,16 +28,16 @@ typedef union {
     bit [var5:var6] a1;
     //- @a2 defines/binding A2
     bit a2;
-//- @s_1 defines/binding S1
+//- @u_1 defines/binding S1
 //- S1.node/kind record
-} s_1;
+} u_1;
 
 typedef struct {
     //- @b1 defines/binding B1
     logic [7:0] b1;
-    //- @s_1 ref S1
+    //- @u_1 ref S1
     //- @b2 defines/binding B2
-    s_1 b2;
+    u_1 b2;
 //- @union_type2 defines/binding UnionType2
 //- UnionType2.node/kind record
 } union_type2;

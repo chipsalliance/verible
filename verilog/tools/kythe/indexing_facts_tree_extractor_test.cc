@@ -4283,7 +4283,7 @@ TEST(FactsTreeExtractor, StructTypeInPackage) {
   EXPECT_EQ(result_pair.right, nullptr) << *result_pair.right;
 }
 
-TEST(FactsTreeExtractor, StructTypenModule) {
+TEST(FactsTreeExtractor, StructTypedefModule) {
   constexpr int kTag = 1;  // value doesn't matter
   const verible::SyntaxTreeSearchTestCase kTestCase = {
       {"module ",

@@ -438,7 +438,7 @@ TEST(GetType, GetStructOrUnionOrEnumType) {
 
           std::vector<TreeSearchMatch> names;
           for (const auto& decl : types) {
-            const auto* name = GetTypeOfTypeDeclaration(*decl.match);
+            const auto* name = GetReferencedTypeOfTypeDeclaration(*decl.match);
             if (name == nullptr) {
               continue;
             }
@@ -496,7 +496,7 @@ TEST(GetDataImplicitIdDimensions, GetTypeOfDataImplicitIdDimensions) {
           std::vector<TreeSearchMatch> inner_types;
           for (const auto& decl : types) {
             const auto* inner_type =
-                GetTypeOfDataTypeImplicitIdDimensions(*decl.match);
+                GetNonprimitiveTypeOfDataTypeImplicitDimensions(*decl.match);
             if (inner_type == nullptr) {
               continue;
             }
@@ -534,6 +534,12 @@ TEST(GetDataImplicitIdDimensions, GetNameOfDataImplicitIdDimensions) {
       {"typedef struct {int ", {kTag, "xx"}, ";} var1;"},
       {"struct {some_type ", {kTag, "xx"}, ";} var1;"},
       {"union {some_type ", {kTag, "xx"}, ";} var1;"},
+      {"struct {some_type ", {kTag, "xx"}, ";\nint ", {kTag, "yy"}, ";} var1;"},
+      {"typedef struct{\nstruct{\nint ",
+       {kTag, "yy"},
+       ";\n} ",
+       {kTag, "yy"},
+       ";}\nfar;"},
   };
   for (const auto& test : kTestCases) {
     TestVerilogSyntaxRangeMatches(

@@ -165,6 +165,8 @@ const verible::SyntaxTreeNode* GetUnqualifiedIdFromInstantiationType(
   if (NodeEnum(reference_call_base.Tag().tag) != NodeEnum::kReferenceCallBase) {
     return nullptr;
   }
+  // TODO(fangism): transform kReferenceCallBase subtrees into a proper type
+  // expression subtree: CST -> CST transform.
   return &GetUnqualifiedIdFromReferenceCallBase(reference_call_base);
 }
 
@@ -196,7 +198,7 @@ GetSymbolIdentifierFromDataTypeImplicitIdDimensions(
           1};
 }
 
-const verible::SyntaxTreeLeaf* GetTypeOfDataTypeImplicitIdDimensions(
+const verible::SyntaxTreeLeaf* GetNonprimitiveTypeOfDataTypeImplicitDimensions(
     const verible::Symbol& data_type_implicit_id_dimensions) {
   const verible::SyntaxTreeNode& type_node =
       verible::GetSubtreeAsNode(data_type_implicit_id_dimensions,
@@ -210,7 +212,7 @@ const verible::SyntaxTreeLeaf* GetTypeOfDataTypeImplicitIdDimensions(
   return &verible::SymbolCastToLeaf(*identifier);
 }
 
-const verible::SyntaxTreeNode* GetTypeOfTypeDeclaration(
+const verible::SyntaxTreeNode* GetReferencedTypeOfTypeDeclaration(
     const verible::Symbol& type_declaration) {
   const verible::Symbol* data_type_primitive = verible::GetSubtreeAsSymbol(
       type_declaration, NodeEnum::kTypeDeclaration, 1);

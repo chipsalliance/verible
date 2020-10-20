@@ -622,6 +622,9 @@ TEST(GetStructTypeFromDeclaration, GetStructOrUnionOrEnumType) {
           for (const auto& decl : instances) {
             const auto* type =
                 GetStructOrUnionOrEnumTypeFromDataDeclaration(*decl.match);
+            if (type != nullptr) {
+              continue;
+            }
             types.emplace_back(TreeSearchMatch{type, {/* ignored context */}});
           }
           return types;

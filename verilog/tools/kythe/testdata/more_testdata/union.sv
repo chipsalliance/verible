@@ -66,7 +66,8 @@ module my_module
         //- @in1 ref In1
         my_union.a1 <= in1;
     end
-    
+
+    //@ clk ref Clk
     always@(posedge clk) begin
         //- @out1 ref Out1
         //- @my_union ref MyUnion
