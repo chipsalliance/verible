@@ -3383,6 +3383,357 @@ TEST(FactsTreeExtractor, ParameterExtraction) {
   EXPECT_EQ(result_pair.right, nullptr) << *result_pair.right;
 }
 
+TEST(FactsTreeExtractor, InterfaceParameterExtraction) {
+  constexpr int kTag = 1;  // value doesn't matter
+  const verible::SyntaxTreeSearchTestCase kTestCase = {
+      {"interface ",
+       {kTag, "m"},
+       "#(parameter ",
+       {kTag, "x"},
+       " = 1, parameter ",
+       {kTag, "y"},
+       " = 2) (input ",
+       {kTag, "z"},
+       ");\n ",
+       {kTag, "bar"},
+       " #(.",
+       {kTag, "p1"},
+       "(",
+       {kTag, "x"},
+       "), .",
+       {kTag, "p2"},
+       "(",
+       {kTag, "y"},
+       ")) ",
+       {kTag, "b1"},
+       "(",
+       {kTag, "z"},
+       ");\nendinterface"},
+  };
+
+  ScopedTestFile test_file(testing::TempDir(), kTestCase.code);
+  int exit_status = 0;
+
+  const IndexingFactNode expected(T(
+      {
+          {
+              Anchor(testing::TempDir(), 0, 0),
+          },
+          IndexingFactType::kFileList,
+      },
+      T(
+          {
+              {
+                  Anchor(test_file.filename(), 0, kTestCase.code.size()),
+                  Anchor(kTestCase.code, 0, kTestCase.code.size()),
+              },
+              IndexingFactType ::kFile,
+          },
+          // refers to interface m.
+          T(
+              {
+                  {
+                      Anchor(kTestCase.expected_tokens[1], kTestCase.code),
+                  },
+                  IndexingFactType ::kInterface,
+              },
+              // refers to module parameter x.
+              T({
+                  {
+                      Anchor(kTestCase.expected_tokens[3], kTestCase.code),
+                  },
+                  IndexingFactType ::kParamDeclaration,
+              }),
+              // refers to class parameter y.
+              T({
+                  {
+                      Anchor(kTestCase.expected_tokens[5], kTestCase.code),
+                  },
+                  IndexingFactType ::kParamDeclaration,
+              }),
+              // refers to class input x.
+              T({
+                  {
+                      Anchor(kTestCase.expected_tokens[7], kTestCase.code),
+                  },
+                  IndexingFactType ::kVariableDefinition,
+              }),
+              // refers to bar.
+              T(
+                  {
+                      {
+                          Anchor(kTestCase.expected_tokens[9], kTestCase.code),
+                      },
+                      IndexingFactType::kDataTypeReference,
+                  },
+                  // refers to .p1(x).
+                  T(
+                      {
+                          {
+                              Anchor(kTestCase.expected_tokens[11],
+                                     kTestCase.code),
+                          },
+                          IndexingFactType ::kNamedParam,
+                      },
+                      // refers to x.
+                      T({
+                          {
+                              Anchor(kTestCase.expected_tokens[13],
+                                     kTestCase.code),
+                          },
+                          IndexingFactType ::kVariableReference,
+                      })),
+                  // refers to .p2(y).
+                  T(
+                      {
+                          {
+                              Anchor(kTestCase.expected_tokens[15],
+                                     kTestCase.code),
+                          },
+                          IndexingFactType ::kNamedParam,
+                      },
+                      // refers to y.
+                      T({
+                          {
+                              Anchor(kTestCase.expected_tokens[17],
+                                     kTestCase.code),
+                          },
+                          IndexingFactType ::kVariableReference,
+                      })),
+                  // refers to b1.
+                  T(
+                      {
+                          {
+                              Anchor(kTestCase.expected_tokens[19],
+                                     kTestCase.code),
+                          },
+                          IndexingFactType ::kModuleInstance,
+                      },
+                      // refers to z.
+                      T({
+                          {
+                              Anchor(kTestCase.expected_tokens[21],
+                                     kTestCase.code),
+                          },
+                          IndexingFactType ::kVariableReference,
+                      })))))));
+
+  const auto facts_tree =
+      ExtractFiles({std::string(verible::file::Basename(test_file.filename()))},
+                   exit_status, testing::TempDir());
+
+  const auto result_pair = DeepEqual(facts_tree, expected);
+  EXPECT_EQ(result_pair.left, nullptr) << *result_pair.left;
+  EXPECT_EQ(result_pair.right, nullptr) << *result_pair.right;
+}
+
+TEST(FactsTreeExtractor, ClassAsPort) {
+  constexpr int kTag = 1;  // value doesn't matter
+  const verible::SyntaxTreeSearchTestCase kTestCase = {
+      {"module ",
+       {kTag, "m"},
+       "(",
+       {kTag, "class_type"},
+       " ",
+       {kTag, "x"},
+       ");\nendmodule"},
+  };
+
+  ScopedTestFile test_file(testing::TempDir(), kTestCase.code);
+  int exit_status = 0;
+
+  const IndexingFactNode expected(T(
+      {
+          {
+              Anchor(testing::TempDir(), 0, 0),
+          },
+          IndexingFactType::kFileList,
+      },
+      T(
+          {
+              {
+                  Anchor(test_file.filename(), 0, kTestCase.code.size()),
+                  Anchor(kTestCase.code, 0, kTestCase.code.size()),
+              },
+              IndexingFactType ::kFile,
+          },
+          // refers to module m.
+          T(
+              {
+                  {
+                      Anchor(kTestCase.expected_tokens[1], kTestCase.code),
+                  },
+                  IndexingFactType ::kModule,
+              },
+              // refers to class_type.
+              T(
+                  {
+                      {
+                          Anchor(kTestCase.expected_tokens[3], kTestCase.code),
+                      },
+                      IndexingFactType ::kDataTypeReference,
+                  },
+                  // refers to x.
+                  T({
+                      {
+                          Anchor(kTestCase.expected_tokens[5], kTestCase.code),
+                      },
+                      IndexingFactType ::kVariableDefinition,
+                  }))))));
+
+  const auto facts_tree =
+      ExtractFiles({std::string(verible::file::Basename(test_file.filename()))},
+                   exit_status, testing::TempDir());
+
+  const auto result_pair = DeepEqual(facts_tree, expected);
+  EXPECT_EQ(result_pair.left, nullptr) << *result_pair.left;
+  EXPECT_EQ(result_pair.right, nullptr) << *result_pair.right;
+}
+
+TEST(FactsTreeExtractor, ProgramParameterExtraction) {
+  constexpr int kTag = 1;  // value doesn't matter
+  const verible::SyntaxTreeSearchTestCase kTestCase = {
+      {"program ",
+       {kTag, "m"},
+       "#(parameter ",
+       {kTag, "x"},
+       " = 1, parameter ",
+       {kTag, "y"},
+       " = 2) (input ",
+       {kTag, "z"},
+       ");\n ",
+       {kTag, "bar"},
+       " #(.",
+       {kTag, "p1"},
+       "(",
+       {kTag, "x"},
+       "), .",
+       {kTag, "p2"},
+       "(",
+       {kTag, "y"},
+       ")) ",
+       {kTag, "b1"},
+       "(",
+       {kTag, "z"},
+       ");\nendprogram"},
+  };
+
+  ScopedTestFile test_file(testing::TempDir(), kTestCase.code);
+  int exit_status = 0;
+
+  const IndexingFactNode expected(T(
+      {
+          {
+              Anchor(testing::TempDir(), 0, 0),
+          },
+          IndexingFactType::kFileList,
+      },
+      T(
+          {
+              {
+                  Anchor(test_file.filename(), 0, kTestCase.code.size()),
+                  Anchor(kTestCase.code, 0, kTestCase.code.size()),
+              },
+              IndexingFactType ::kFile,
+          },
+          // refers to program m.
+          T(
+              {
+                  {
+                      Anchor(kTestCase.expected_tokens[1], kTestCase.code),
+                  },
+                  IndexingFactType ::kProgram,
+              },
+              // refers to module parameter x.
+              T({
+                  {
+                      Anchor(kTestCase.expected_tokens[3], kTestCase.code),
+                  },
+                  IndexingFactType ::kParamDeclaration,
+              }),
+              // refers to class parameter y.
+              T({
+                  {
+                      Anchor(kTestCase.expected_tokens[5], kTestCase.code),
+                  },
+                  IndexingFactType ::kParamDeclaration,
+              }),
+              // refers to class input x.
+              T({
+                  {
+                      Anchor(kTestCase.expected_tokens[7], kTestCase.code),
+                  },
+                  IndexingFactType ::kVariableDefinition,
+              }),
+              // refers to bar.
+              T(
+                  {
+                      {
+                          Anchor(kTestCase.expected_tokens[9], kTestCase.code),
+                      },
+                      IndexingFactType::kDataTypeReference,
+                  },
+                  // refers to .p1(x).
+                  T(
+                      {
+                          {
+                              Anchor(kTestCase.expected_tokens[11],
+                                     kTestCase.code),
+                          },
+                          IndexingFactType ::kNamedParam,
+                      },
+                      // refers to x.
+                      T({
+                          {
+                              Anchor(kTestCase.expected_tokens[13],
+                                     kTestCase.code),
+                          },
+                          IndexingFactType ::kVariableReference,
+                      })),
+                  // refers to .p2(y).
+                  T(
+                      {
+                          {
+                              Anchor(kTestCase.expected_tokens[15],
+                                     kTestCase.code),
+                          },
+                          IndexingFactType ::kNamedParam,
+                      },
+                      // refers to y.
+                      T({
+                          {
+                              Anchor(kTestCase.expected_tokens[17],
+                                     kTestCase.code),
+                          },
+                          IndexingFactType ::kVariableReference,
+                      })),
+                  // refers to b1.
+                  T(
+                      {
+                          {
+                              Anchor(kTestCase.expected_tokens[19],
+                                     kTestCase.code),
+                          },
+                          IndexingFactType ::kModuleInstance,
+                      },
+                      // refers to z.
+                      T({
+                          {
+                              Anchor(kTestCase.expected_tokens[21],
+                                     kTestCase.code),
+                          },
+                          IndexingFactType ::kVariableReference,
+                      })))))));
+
+  const auto facts_tree =
+      ExtractFiles({std::string(verible::file::Basename(test_file.filename()))},
+                   exit_status, testing::TempDir());
+
+  const auto result_pair = DeepEqual(facts_tree, expected);
+  EXPECT_EQ(result_pair.left, nullptr) << *result_pair.left;
+  EXPECT_EQ(result_pair.right, nullptr) << *result_pair.right;
+}
+
 TEST(FactsTreeExtractor, PackedAndUnpackedDimension) {
   constexpr int kTag = 1;  // value doesn't matter
   const verible::SyntaxTreeSearchTestCase kTestCase = {

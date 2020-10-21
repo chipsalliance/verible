@@ -108,6 +108,12 @@ const verible::SyntaxTreeNode* GetParamListFromInstantiationType(
 const verible::SyntaxTreeLeaf& GetSymbolIdentifierFromEnumName(
     const verible::Symbol& enum_name);
 
+// Returns symbol identifier node for the type name from node tagged with
+// kDataType (if exists) or return nullptr.
+//- e.g module m(Bus x) => extracts "Bus".
+const verible::SyntaxTreeLeaf* GetTypeIdentifierFromDataType(
+    const verible::Symbol& data_type);
+
 }  // namespace verilog
 
 #endif  // VERIBLE_VERILOG_CST_TYPE_H_

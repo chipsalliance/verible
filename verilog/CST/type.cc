@@ -153,4 +153,15 @@ const verible::SyntaxTreeLeaf& GetSymbolIdentifierFromEnumName(
   return verible::GetSubtreeAsLeaf(enum_name, NodeEnum::kEnumName, 0);
 }
 
+const verible::SyntaxTreeLeaf* GetTypeIdentifierFromDataType(
+    const verible::Symbol& data_type) {
+  const verible::Symbol* identifier =
+      verible::GetSubtreeAsSymbol(data_type, NodeEnum::kDataType, 0);
+  if (identifier == nullptr ||
+      NodeEnum(identifier->Tag().tag) != NodeEnum::kUnqualifiedId) {
+    return nullptr;
+  }
+  return AutoUnwrapIdentifier(*identifier);
+}
+
 }  // namespace verilog
