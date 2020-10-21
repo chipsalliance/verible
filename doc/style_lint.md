@@ -1,5 +1,9 @@
 # SV Style Linter Developer Guide
 
+<!--*
+freshness: { owner: 'fangism' reviewed: '2020-10-19' }
+*-->
+
 This document describes how to implement style lint rules.
 
 Before you begin, familiarize yourself with:
@@ -139,6 +143,8 @@ The Syntax Tree Matcher library uses some principles from
 Pros:
 
 *   Expressive and composeable.
+*   More resilient to CST positional substructure changes such as changing child
+    ranks.
 
 Cons:
 
@@ -147,9 +153,9 @@ Cons:
 ### Single Node Type Matchers
 
 For every [SystemVerilog CST node enum](../verilog/CST/verilog_nonterminals.h),
-we produce a [corresponding node-matcher](../verilog/CST/verilog_matchers.h)
-that finds that node type. For example, `NodekFunctionDeclaration` matches nodes
-tagged `kFunctionDeclaration`.
+we produce a corresponding node-matcher in [verilog_matchers.h] that finds that
+node type. For example, `NodekFunctionDeclaration` matches nodes tagged
+`kFunctionDeclaration`. These are defined using [TagMatchBuilder].
 
 ### Path-based Matchers
 
@@ -157,15 +163,36 @@ Path matchers are a shorthand for expressing a match on an ancestral chain of
 node types. For example, `MakePathMatcher({X, Y, Z})`, where `X`, `Y`, and `Z`
 are CST tags for specific nodes types, creates a matcher that will find nodes of
 type `X` that directly contain a `Y` child that directly contains a `Z` child.
-[verilog_matchers.h](../verilog/CST/verilog_matchers.h) contains several
-examples.
+[verilog_matchers.h] contains several examples.
 
 ### Composition
 
 Every matcher object can accept inner matchers that can refine matching
-conditions.
+conditions and narrow search results. Composing matchers looks like
+`OuterMatcher(InnerMatcher(...), ...)`, which would return a positive match on a
+node that matches `OuterMatcher`, whose subtree also satisfies `InnerMatcher`.
+
+Matcher _operators_ are functions described in [core_matchers.h].
+
+Summary:
+
+*   `AllOf(...)` matches positively if _all_ of its inner matchers positively.
+*   `AnyOf(...)` matches positively if _any_ of its inner matchers positively.
+*   `Unless(...)` matches positively if its inner matcher does **not** to match.
+
+[TagMatchBuilder]s by default combines its inner matchers with `AllOf`, so can
+write `NodekFoo(InnerMatcher1(), InnerMatcher2())` instead of the equivalent
+`NodekFoo(AllOf(InnerMatcher1(), InnerMatcher2()))`.
+
+The order of the inner matchers to the above functions is inconsequential to the
+match result; they are fully commutative.
 
 ### Named Binding of Symbols
+
+Many matchers support _binding_ to user-provided names called
+[BindableMatchers]. This lets you save interesting subtree positions found
+during the match and retrieve them from a [BoundSymbolManager].
+[Example using `.Bind()`](third_party/verible/verilog/analysis/checkers/undersized_binary_literal_rule.h).
 
 ## Reporting Positive Findings
 
@@ -226,3 +253,8 @@ Make sure to include negative tests that expect no lint violations.
 [LintViolation]: https://cs.opensource.google/verible/verible/+/master:common/analysis/lint_rule_status.h?q=class:%5CbLintViolation%5Cb&ss=verible%2Fverible
 [LintRuleStatus]: https://cs.opensource.google/verible/verible/+/master:common/analysis/lint_rule_status.h?q=class:%5CbLintRuleStatus%5Cb&ss=verible%2Fverible
 [LintTestCase]: https://cs.opensource.google/verible/verible/+/master:common/analysis/linter_test_utils.h?q=class:%5CbLintTestCase%5Cb&ss=verible%2Fverible
+[core_matchers.h]: https://cs.opensource.google/verible/verible/+/master:common/analysis/matcher/core_matchers.h
+[verilog_matchers.h]: https://cs.opensource.google/verible/verible/+/master:verilog/CST/verilog_matchers.h
+[TagMatchBuilder]: https://cs.opensource.google/verible/verible/+/master:common/analysis/matcher/matcher_builders.h?q=class:%5CbTagMatchBuilder%5Cb%20&ss=verible%2Fverible
+[BindableMatcher]: https://cs.opensource.google/verible/verible/+/master:common/analysis/matcher/matcher.h?q=class:%5CbBindableMatcher%5Cb%20&ss=verible%2Fverible
+[BoundSymbolManager]: https://cs.opensource.google/verible/verible/+/master:common/analysis/matcher/bound_symbol_manager.h?q=class:BoundSymbolManager&ss=verible%2Fverible
