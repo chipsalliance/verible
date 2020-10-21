@@ -19,8 +19,6 @@
 #include <utility>
 #include <vector>
 
-#include "gmock/gmock.h"
-#include "gtest/gtest.h"
 #include "absl/strings/string_view.h"
 #include "common/analysis/syntax_tree_search.h"
 #include "common/analysis/syntax_tree_search_test_utils.h"
@@ -31,6 +29,8 @@
 #include "common/text/token_info.h"
 #include "common/util/casts.h"
 #include "common/util/logging.h"
+#include "gmock/gmock.h"
+#include "gtest/gtest.h"
 #include "verilog/CST/match_test_utils.h"
 #include "verilog/CST/verilog_nonterminals.h"
 #include "verilog/analysis/verilog_analyzer.h"
@@ -552,6 +552,45 @@ TEST(FindAllParamByNameTest, FindParenGroupOfNamedParam) {
                 TreeSearchMatch{paren_group, {/* ignored context */}});
           }
           return paren_groups;
+        });
+  }
+}
+
+TEST(FindAllParamTest, FindExpressionFromParameterType) {
+  constexpr int kTag = 1;  // value doesn't matter
+  const SyntaxTreeSearchTestCase kTestCases[] = {
+      {""},
+      {"module m;\nendmodule\n"},
+      {"module foo; parameter type Bar = ", {kTag, "1"}, "; endmodule"},
+      {"module foo #(parameter type Bar = ", {kTag, "H.y"}, "); endmodule"},
+      {"module foo; localparam type Bar = ", {kTag, "var1"}, "; endmodule"},
+      {"class foo; parameter type Bar = ", {kTag, "1"}, "; endclass"},
+      {"class foo; localparam type Bar = ", {kTag, "1"}, "; endclass"},
+      {"package foo; parameter type Bar = ", {kTag, "1"}, "; endpackage"},
+      {"parameter type Bar = ", {kTag, "1"}, ";"},
+  };
+  for (const auto& test : kTestCases) {
+    TestVerilogSyntaxRangeMatches(
+        __FUNCTION__, test, [](const TextStructureView& text_structure) {
+          const auto& root = text_structure.SyntaxTree();
+          const auto& types = FindAllParamDeclarations(*ABSL_DIE_IF_NULL(root));
+
+          std::vector<TreeSearchMatch> expressions;
+          for (const auto& type : types) {
+            const auto* type_assignment =
+                GetTypeAssignmentFromParamDeclaration(*type.match);
+            if (type_assignment == nullptr) {
+              continue;
+            }
+            const auto* expression =
+                GetExpressionFromTypeAssignment(*type_assignment);
+            if (expression == nullptr) {
+              continue;
+            }
+            expressions.emplace_back(
+                TreeSearchMatch{expression, {/* ignored context */}});
+          }
+          return expressions;
         });
   }
 }

@@ -26,8 +26,6 @@
 #include <sstream>
 #include <vector>
 
-#include "gmock/gmock.h"
-#include "gtest/gtest.h"
 #include "common/analysis/syntax_tree_search_test_utils.h"
 #include "common/text/concrete_syntax_tree.h"
 #include "common/text/symbol.h"
@@ -37,6 +35,8 @@
 #include "common/util/casts.h"
 #include "common/util/logging.h"
 #include "common/util/range.h"
+#include "gmock/gmock.h"
+#include "gtest/gtest.h"
 #include "verilog/CST/match_test_utils.h"
 #include "verilog/analysis/verilog_analyzer.h"
 
@@ -183,6 +183,41 @@ TEST(GetClassMemberTest, GetMemberName) {
             names.emplace_back(TreeSearchMatch{&name, {/* ignored context */}});
           }
           return names;
+        });
+  }
+}
+
+TEST(FindAllModuleDeclarationTest, FindClassParameters) {
+  constexpr int kTag = 1;  // value doesn't matter
+  const SyntaxTreeSearchTestCase kTestCases[] = {
+      {""},
+      {"class m;\nendclass\n"},
+      {"class m", {kTag, "#(parameter x = 3, parameter y = 4)"}, ";\nendclass"},
+      {"class m", {kTag, "#()"}, ";\nendclass"},
+      {"class m",
+       {kTag, "#(parameter int x = 3,\n parameter logic y = 4)"},
+       ";\nendclass"},
+      {"class m",
+       {kTag, "#(parameter type x = 3,\n parameter logic y = 4)"},
+       ";\nendclass"},
+  };
+  for (const auto& test : kTestCases) {
+    TestVerilogSyntaxRangeMatches(
+        __FUNCTION__, test, [](const TextStructureView& text_structure) {
+          const auto& root = text_structure.SyntaxTree();
+          const auto& instances =
+              FindAllClassDeclarations(*ABSL_DIE_IF_NULL(root));
+
+          std::vector<TreeSearchMatch> params;
+          for (const auto& instance : instances) {
+            const auto* decl =
+                GetParamDeclarationListFromClassDeclaration(*instance.match);
+            if (decl == nullptr) {
+              continue;
+            }
+            params.emplace_back(TreeSearchMatch{decl, {/* ignored context */}});
+          }
+          return params;
         });
   }
 }

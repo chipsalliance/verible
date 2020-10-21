@@ -150,7 +150,8 @@ const verible::SyntaxTreeNode* GetTypeAssignmentFromParamDeclaration(
   // Check which type of node it is.
   if (NodeEnum(assignment_tag.tag) == NodeEnum::kTypeAssignment) {
     return &assignment_symbol;
-  } else if (NodeEnum(assignment_tag.tag) == NodeEnum::kTypeAssignment) {
+  } else if (NodeEnum(assignment_tag.tag) == NodeEnum::kTypeAssignment ||
+             NodeEnum(assignment_tag.tag) == NodeEnum::kTypeAssignmentList) {
     const auto& type_symbol = verible::GetSubtreeAsNode(
         assignment_symbol, NodeEnum::kTypeAssignmentList, 0,
         NodeEnum::kTypeAssignment);

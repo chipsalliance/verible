@@ -436,16 +436,6 @@ void IndexingFactsTreeExtractor::ExtractModulePort(
 
   // Extract unpacked and packed dimensions.
   Visit(module_port_node, {NodeEnum::kUnqualifiedId}, true);
-  // for (const auto& child : module_port_node.children()) {
-  //   if (child == nullptr || child->Kind() == verible::SymbolKind::kLeaf) {
-  //     continue;
-  //   }
-  //   const auto tag = static_cast<verilog::NodeEnum>(child->Tag().tag);
-  //   if (tag == NodeEnum::kUnqualifiedId) {
-  //     continue;
-  //   }
-  //   Visit(verible::SymbolCastToNode(*child));
-  // }
 }
 
 void IndexingFactsTreeExtractor::ExtractModuleNamedPort(

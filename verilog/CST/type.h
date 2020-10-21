@@ -82,7 +82,8 @@ const verible::SyntaxTreeNode& GetReferenceFromReferenceCallBase(
 const verible::SyntaxTreeNode& GetLocalRootFromReference(
     const verible::Symbol& reference);
 
-// Extracts kUnqualifiedId node from nodes tagged with kLocalRoot.
+// Extracts kUnqualifiedId or kQualifiedId node from nodes tagged with
+// kLocalRoot.
 const verible::SyntaxTreeNode& GetIdentifiersFromLocalRoot(
     const verible::Symbol& local_root);
 
