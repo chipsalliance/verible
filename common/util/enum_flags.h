@@ -104,6 +104,8 @@ class EnumNameMap {
       map_type;
 
  public:
+  // Pairs must contain unique keys or values, or this will result in a fatal
+  // error.
   EnumNameMap(std::initializer_list<std::pair<key_type, EnumType>> pairs)
       : enum_name_map_(pairs) {}
   ~EnumNameMap() = default;
@@ -149,7 +151,9 @@ class EnumNameMap {
 
   // Prints the string representation of an enum to stream.
   std::ostream& Unparse(EnumType value, std::ostream& stream) const {
-    return stream << *enum_name_map_.find_reverse(value);
+    const auto* key = enum_name_map_.find_reverse(value);
+    if (key == nullptr) return stream << "???";
+    return stream << *key;
   }
 
  protected:  // for testing

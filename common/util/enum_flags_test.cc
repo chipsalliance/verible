@@ -31,6 +31,7 @@ enum class MyFakeEnum {
   kValue1,
   kValue2,
   kValue3,
+  kValue4,
 };
 
 class TestMapType : public EnumNameMap<MyFakeEnum> {
@@ -41,6 +42,7 @@ class TestMapType : public EnumNameMap<MyFakeEnum> {
             {"value1", MyFakeEnum::kValue1},
             {"value2", MyFakeEnum::kValue2},
             {"value3", MyFakeEnum::kValue3},
+            // intentionally omitting kValue4
             // etc.
         }) {}
 };
@@ -98,6 +100,41 @@ TEST_F(EnumNameMapTest, UnparseFlags) {
   for (const auto& p : enum_name_map_.forward_view()) {
     EXPECT_EQ(AbslUnparseFlag(*p.second), p.first);
   }
+}
+
+TEST_F(EnumNameMapTest, UnparseFlagsForgottenEnum) {
+  // don't die, could print string like "???"
+  AbslUnparseFlag(MyFakeEnum::kValue4);
+}
+
+enum class AnotherFakeEnum {
+  kValueA,
+  kValueB,
+  kValueC,
+};
+
+std::ostream& operator<<(std::ostream& stream, AnotherFakeEnum p) {
+  return stream << "!!!";  // don't care
+}
+
+TEST(DuplicateKeyTest, ExpectFail) {
+  EXPECT_DEATH(const EnumNameMap<AnotherFakeEnum> m({
+                   {"value1", AnotherFakeEnum::kValueA},
+                   {"value2", AnotherFakeEnum::kValueB},
+                   {"value1", AnotherFakeEnum::kValueC},  // duplicate key
+                                                          // etc.
+               }),
+               "duplicate");
+}
+
+TEST(DuplicateValueTest, ExpectFail) {
+  EXPECT_DEATH(const EnumNameMap<AnotherFakeEnum> m({
+                   {"value1", AnotherFakeEnum::kValueA},
+                   {"value2", AnotherFakeEnum::kValueB},
+                   {"value3", AnotherFakeEnum::kValueB},  // duplicate value
+                                                          // etc.
+               }),
+               "duplicate");
 }
 
 }  // namespace
