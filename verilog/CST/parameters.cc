@@ -140,7 +140,7 @@ bool IsParamTypeDeclaration(const verible::Symbol& symbol) {
   return false;
 }
 
-const verible::Symbol* GetTypeAssignmentFromParamDeclaration(
+const verible::SyntaxTreeNode* GetTypeAssignmentFromParamDeclaration(
     const verible::Symbol& symbol) {
   // Get the Type AssignmentList or kTypeAssignment symbol.
   const auto& assignment_symbol =
@@ -150,17 +150,30 @@ const verible::Symbol* GetTypeAssignmentFromParamDeclaration(
   // Check which type of node it is.
   if (NodeEnum(assignment_tag.tag) == NodeEnum::kTypeAssignment) {
     return &assignment_symbol;
-  } else {
+  } else if (NodeEnum(assignment_tag.tag) == NodeEnum::kTypeAssignment) {
     const auto& type_symbol = verible::GetSubtreeAsNode(
         assignment_symbol, NodeEnum::kTypeAssignmentList, 0,
         NodeEnum::kTypeAssignment);
     return &type_symbol;
   }
+
+  return nullptr;
 }
 
 const verible::SyntaxTreeLeaf* GetIdentifierLeafFromTypeAssignment(
     const verible::Symbol& symbol) {
   return &verible::GetSubtreeAsLeaf(symbol, NodeEnum::kTypeAssignment, 0);
+}
+
+const verible::SyntaxTreeNode* GetExpressionFromTypeAssignment(
+    const verible::Symbol& type_assignment) {
+  const verible::Symbol* expression = verible::GetSubtreeAsSymbol(
+      type_assignment, NodeEnum::kTypeAssignment, 2);
+  if (expression == nullptr ||
+      NodeEnum(expression->Tag().tag) != NodeEnum::kExpression) {
+    return nullptr;
+  }
+  return &verible::SymbolCastToNode(*expression);
 }
 
 const verible::Symbol* GetParamTypeInfoSymbol(const verible::Symbol& symbol) {

@@ -83,7 +83,7 @@ const verible::SyntaxTreeNode& GetLocalRootFromReference(
     const verible::Symbol& reference);
 
 // Extracts kUnqualifiedId node from nodes tagged with kLocalRoot.
-const verible::SyntaxTreeNode& GetUnqualifiedIdFromLocalRoot(
+const verible::SyntaxTreeNode& GetIdentifiersFromLocalRoot(
     const verible::Symbol& local_root);
 
 // Extracts kUnqualifiedId node from nodes tagged with kReferenceCallBase.
@@ -97,6 +97,11 @@ const verible::SyntaxTreeNode& GetPackedDimensionFromDataType(
 // Extracts kUnqualifiedId node from nodes tagged with kInstantiationType.
 const verible::SyntaxTreeNode& GetUnqualifiedIdFromInstantiationType(
     const verible::Symbol& instantiation_type);
+
+// For a given unqualified id node returns the node spanning param
+// declaration.
+const verible::SyntaxTreeNode* GetParamListFromUnqualifiedId(
+    const verible::Symbol& unqualified_id);
 
 // For a given instantiation type node returns the node spanning param
 // declaration.

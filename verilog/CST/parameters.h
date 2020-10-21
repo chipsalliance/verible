@@ -105,12 +105,17 @@ bool IsParamTypeDeclaration(const verible::Symbol&);
 
 // Returns a pointer to the symbol holding the node kTypeAssignment under the
 // node kParamDeclaration.
-const verible::Symbol* GetTypeAssignmentFromParamDeclaration(
+const verible::SyntaxTreeNode* GetTypeAssignmentFromParamDeclaration(
     const verible::Symbol&);
 
 // Returns a pointer to the identifier leaf holding the SymbolIdentifier under
 // the node kTypeAssignment.
 const verible::SyntaxTreeLeaf* GetIdentifierLeafFromTypeAssignment(
+    const verible::Symbol&);
+
+// Returns a pointer to the expression node holding under the node
+// kTypeAssignment.
+const verible::SyntaxTreeNode* GetExpressionFromTypeAssignment(
     const verible::Symbol&);
 
 // Returns true if the node kTypeInfo is empty (all children are nullptr).

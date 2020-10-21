@@ -46,6 +46,26 @@ Signature CreateGlobalSignature(absl::string_view file_path) {
   return Signature(file_path);
 }
 
+// From the given list of anchors returns the list of Anchor values.
+std::vector<std::string> GetListOfReferencesfromListOfAnchor(
+    const std::vector<Anchor>& anchors) {
+  std::vector<std::string> references;
+  for (const auto& anchor : anchors) {
+    references.push_back(anchor.Value());
+  }
+  return references;
+}
+
+// Returns the list of references from the given anchors list and appends the
+// second Anchor to the end of the list.
+std::vector<std::string> GetListOfReferences(const std::vector<Anchor>& anchors,
+                                             const Anchor& anchor) {
+  std::vector<std::string> references(
+      GetListOfReferencesfromListOfAnchor(anchors));
+  references.push_back(anchor.Value());
+  return references;
+}
+
 }  // namespace
 
 KytheIndexingData KytheFactsExtractor::ExtractKytheFacts(
@@ -279,7 +299,8 @@ void KytheFactsExtractor::ConstructFlattenedScope(const IndexingFactNode& node,
       // TODO(minatoma): fix this in case the name was kQualified id.
       const std::vector<const VName*> found_vnames =
           scope_resolver_->SearchForDefinitions(
-              {node.Parent()->Value().Anchors()[0].Value()});
+              GetListOfReferencesfromListOfAnchor(
+                  node.Parent()->Value().Anchors()));
 
       if (found_vnames.empty()) {
         break;
@@ -411,22 +432,23 @@ void KytheFactsExtractor::ExtractNamedParam(
   const auto& param_name = named_param_node.Value().Anchors()[0];
 
   // Search for the module or class that contains this parameter.
-  // Parent Node must be kDataTypeReference.
-  const Anchor& parent_data_type =
-      named_param_node.Parent()->Value().Anchors()[0];
+  // Parent Node must be kDataTypeReference or kMemberReference or kExtends.
+  const std::vector<Anchor>& parent_data_type =
+      named_param_node.Parent()->Value().Anchors();
 
   // Search inside the found module or class for the referenced parameter.
   const std::vector<const VName*> param_vnames =
       scope_resolver_->SearchForDefinitions(
-          {parent_data_type.Value(), param_name.Value()});
+          GetListOfReferences(parent_data_type, param_name));
 
-  if (param_vnames.size() != 2) {
+  // Check if all the references are found.
+  if (param_vnames.size() != parent_data_type.size() + 1) {
     return;
   }
 
   // Create the facts for this parameter reference.
   const VName param_vname_anchor = CreateAnchor(param_name);
-  CreateEdge(param_vname_anchor, kEdgeRef, *param_vnames[1]);
+  CreateEdge(param_vname_anchor, kEdgeRef, *param_vnames.back());
 }
 
 void KytheFactsExtractor::ExtractModuleNamedPort(
@@ -435,12 +457,12 @@ void KytheFactsExtractor::ExtractModuleNamedPort(
 
   // Parent Node must be kModuleInstance and the grand parent node must be
   // kDataTypeReference.
-  const Anchor& module_type =
-      named_port_node.Parent()->Parent()->Value().Anchors()[0];
+  const std::vector<Anchor>& module_type =
+      named_port_node.Parent()->Parent()->Value().Anchors();
 
   const std::vector<const VName*> actual_port_vnames =
       scope_resolver_->SearchForDefinitions(
-          {module_type.Value(), port_name.Value()});
+          GetListOfReferences(module_type, port_name));
 
   if (actual_port_vnames.size() != 2) {
     return;
@@ -623,16 +645,10 @@ VName KytheFactsExtractor::ExtractClassInstances(
 void KytheFactsExtractor::ExtractExtends(const IndexingFactNode& extends_node) {
   const auto& anchors = extends_node.Value().Anchors();
 
-  // Extract the list of reference_names.
-  std::vector<std::string> references_names;
-  references_names.reserve(anchors.size());
-  for (const Anchor& anchor : anchors) {
-    references_names.push_back(anchor.Value());
-  }
-
   // Search for member hierarchy in the scopes.
   const std::vector<const VName*> definitions =
-      scope_resolver_->SearchForDefinitions(references_names);
+      scope_resolver_->SearchForDefinitions(
+          GetListOfReferencesfromListOfAnchor(anchors));
 
   // Loop over the found definitions and create kythe facts.
   for (size_t i = 0; i < definitions.size(); i++) {
@@ -724,16 +740,10 @@ void KytheFactsExtractor::ExtractMemberReference(
     const IndexingFactNode& member_reference_node, bool is_function_call) {
   const auto& anchors = member_reference_node.Value().Anchors();
 
-  // Extract the list of reference_names.
-  std::vector<std::string> references_names;
-  references_names.reserve(anchors.size());
-  for (const Anchor& anchor : anchors) {
-    references_names.push_back(anchor.Value());
-  }
-
   // Search for member hierarchy in the scopes.
   const std::vector<const VName*> definitions =
-      scope_resolver_->SearchForDefinitions(references_names);
+      scope_resolver_->SearchForDefinitions(
+          GetListOfReferencesfromListOfAnchor(anchors));
 
   // Loop over the found definitions and create kythe facts.
   for (size_t i = 0; i < definitions.size(); i++) {

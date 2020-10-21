@@ -297,6 +297,7 @@ cc_library(
     hdrs = ["functions.h"],
     deps = [
         ":identifier",
+        ":type",
         ":verilog_matchers",  # fixdeps: keep
         ":verilog_nonterminals",
         ":verilog_treebuilder_utils",

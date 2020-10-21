@@ -56,6 +56,11 @@ const verible::SyntaxTreeNode& GetClassItemList(const verible::Symbol&);
 const verible::SyntaxTreeLeaf& GetUnqualifiedIdFromHierarchyExtension(
     const verible::Symbol&);
 
+// Extract the subnode of a param declaration list from class decalration.
+// e.g class m#(parameter x = 2) return the node spanning "#(parameter x = 2)".
+const verible::SyntaxTreeNode* GetParamDeclarationListFromClassDeclaration(
+    const verible::Symbol&);
+
 }  // namespace verilog
 
 #endif  // VERIBLE_VERILOG_CST_CLASS_H_

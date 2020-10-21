@@ -23,6 +23,7 @@
 #include "common/text/symbol.h"
 #include "common/text/tree_utils.h"
 #include "verilog/CST/identifier.h"
+#include "verilog/CST/type.h"
 #include "verilog/CST/verilog_matchers.h"  // pragma IWYU: keep
 
 namespace verilog {
@@ -98,6 +99,13 @@ const verible::SyntaxTreeNode& GetLocalRootFromFunctionCall(
     const verible::Symbol& function_call) {
   return GetSubtreeAsNode(function_call, NodeEnum::kFunctionCall, 0,
                           NodeEnum::kLocalRoot);
+}
+
+const verible::SyntaxTreeNode& GetIdentifiersFromFunctionCall(
+    const verible::Symbol& function_call) {
+  const verible::SyntaxTreeNode& local_root = GetSubtreeAsNode(
+      function_call, NodeEnum::kFunctionCall, 0, NodeEnum::kLocalRoot);
+  return GetIdentifiersFromLocalRoot(local_root);
 }
 
 const verible::SyntaxTreeLeaf* GetFunctionCallName(
