@@ -65,14 +65,19 @@ std::vector<verible::TreeSearchMatch> FindAllModuleHeaders(
 std::vector<verible::TreeSearchMatch> FindAllInterfaceDeclarations(
     const verible::Symbol&);
 
+// Find all program declarations.
+std::vector<verible::TreeSearchMatch> FindAllProgramDeclarations(
+    const verible::Symbol& root);
+
 // Returns the full header of a module (params, ports, etc...).
+// Works also with interfaces and programs.
 const verible::SyntaxTreeNode& GetModuleHeader(const verible::Symbol&);
 
 // Returns the full header of an interface (params, ports, etc...).
 const verible::SyntaxTreeNode& GetInterfaceHeader(const verible::Symbol&);
 
 // Extract the subnode of a module declaration that is the module name.
-const verible::TokenInfo& GetModuleNameToken(const verible::Symbol&);
+const verible::SyntaxTreeLeaf& GetModuleName(const verible::Symbol&);
 
 // Extract the subnode of an interface declaration that is the module name.
 const verible::TokenInfo& GetInterfaceNameToken(const verible::Symbol&);
@@ -89,9 +94,9 @@ const verible::SyntaxTreeNode* GetModulePortParenGroup(
 const verible::SyntaxTreeNode* GetModulePortDeclarationList(
     const verible::Symbol& module_declaration);
 
-// Returns module name token after endmodule.
+// Returns module name leaf after endmodule.
 // e.g. from "module foo(); endmodule: foo" returns the second "foo".
-const verible::TokenInfo* GetModuleEndLabel(const verible::Symbol&);
+const verible::SyntaxTreeLeaf* GetModuleEndLabel(const verible::Symbol&);
 
 // Returns the node spanning module's Item list.
 const verible::SyntaxTreeNode& GetModuleItemList(

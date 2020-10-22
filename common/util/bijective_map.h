@@ -16,10 +16,12 @@
 #define VERIBLE_COMMON_UTIL_BIJECTIVE_MAP_H_
 
 #include <functional>
+#include <initializer_list>
 #include <map>
 #include <utility>
 
 #include "common/util/forward.h"
+#include "common/util/logging.h"
 
 namespace verible {
 
@@ -42,6 +44,21 @@ class BijectiveMap {
 
  public:
   BijectiveMap() = default;
+
+  // Initializes from a pair of iterators (to key-value pairs).
+  // Duplicate key or value entries will result in a fatal error.
+  template <class Iter>
+  BijectiveMap(Iter begin, Iter end) {
+    for (; begin != end; ++begin) {
+      CHECK(insert(*begin)) << "duplicate key or value: (" << begin->first
+                            << ", " << begin->second << ')';
+    }
+  }
+
+  // Initializes from a list of pairs.
+  // Duplicate key or value entries will result in a fatal error.
+  BijectiveMap(std::initializer_list<std::pair<K, V>> pairs)
+      : BijectiveMap(pairs.begin(), pairs.end()) {}
 
   // Returns number of keys, which is same as number of values.
   size_t size() const { return forward_map.size(); }
@@ -80,9 +97,11 @@ class BijectiveMap {
     return iter == reverse_map.end() ? nullptr : iter->second;
   }
 
+  // Returns true if successfully inserted new pair.
   bool insert(const std::pair<K, V>& p) { return insert(p.first, p.second); }
 
   // Establishes 1-1 association between key and value.
+  // Returns true if successfully inserted new pair.
   bool insert(const K& k, const V& v) {
     const auto fwd_p = forward_map.insert(std::make_pair(k, nullptr));
     const auto rev_p = reverse_map.insert(std::make_pair(v, nullptr));

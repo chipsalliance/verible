@@ -4,9 +4,33 @@
 freshness: { owner: 'fangism' reviewed: '2020-10-07' }
 *-->
 
-The SV style linter analyzes code for patterns and constructs that are deemed
-undesirable according to the implemented lint rules. Ideally, each lint rule
-should reference a passage from an authoritative style guide.
+The `verible-verilog-lint` SV style linter analyzes code for patterns and
+constructs that are deemed undesirable according to the implemented lint rules.
+Ideally, each lint rule should reference a passage from an authoritative style
+guide. The style linter operates on *single unpreprocessed files* in isolation.
+
+The style linter excels at:
+
+*   Finding patterns in code that can be expressed in terms of syntax tree or
+    token matching rules.
+    *   Expressing rules with syntactic context-sensitivity.
+
+Consequences of reading unpreprocessed input:
+
+*   Can examine comments.
+*   Good at examining uses of _unexpanded_ macros.
+
+Currrent limitations:
+
+*   No attempt to understand preprocessing conditional branches.
+*   No semantic analysis (such as connectivity). This requires:
+    *   preprocessing
+    *   multi-file analysis
+    *   abstract syntax tree
+
+## Developers
+
+[Style lint rule development guide](../../../doc/style_lint.md).
 
 ## Usage
 
@@ -32,6 +56,25 @@ usage: verible-verilog-lint [options] <file> [<file>...]
       default: false;
     --parse_fatal (If true, exit nonzero if there are any syntax errors.);
       default: false;
+```
+
+We recommend each project maintain its own configuration file for convenience
+and consistency among project members.
+
+## Diagnostics
+
+Syntax errors and lint rule findings have the following format:
+
+```
+FILE:LINE:COL: text...
+```
+
+Examples:
+
+```
+path/to/missing-endmodule.sv:3:1: syntax error (unexpected EOF).
+path/to/number-as-statement.sv:2:3: syntax error, rejected "123".
+path/to/bad-dimensions.sv:114:43: Packed dimension range must be in decreasing order. http://your.style/guide.html#packed-ordering [packed-dimensions-range-ordering]
 ```
 
 ## Lint Rules
@@ -72,6 +115,8 @@ separated with the newline character.
 
 ## Waiving Lint Violations {#lint-waiver}
 
+### In-file waiver comments
+
 In the rare circumstance where a line needs to be waived from a particular lint
 rule, you can use the following waiver comment:
 
@@ -97,11 +142,17 @@ All lines in between will be waived for rule-X
 // verilog_lint: waive-stop rule-X
 ```
 
-Another option is to use a configuration file with the `--waiver_files` flag.
-The flag accepts a single file or a list of files (comma-separated). Specifying
-multiple files is equivalent to concatenating the files in order of appearance.
-By default, the rules are applied to all files, but with `--location` you can to
-choose to only apply them to filenames matching the location regexp.
+### External waiver files
+
+If you prefer to manage waivers out-of-source, then waiver files may be a
+suitable option, especially if the use of multiple linters risks cluttering your
+source with too many lint waiver directives.
+
+The `--waiver_files` flag accepts a single configuration file or a list of files
+(comma-separated). Specifying multiple files is equivalent to concatenating the
+files in order of appearance. By default, the rules are applied to all files,
+but with `--location` you can choose to only apply them to filenames matching
+the location regexp.
 
 The format of this file is as follows:
 

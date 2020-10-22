@@ -24,9 +24,12 @@ namespace verilog {
 // IndexingFactNode
 enum class IndexingFactType {
   // BEGIN GENERATE -- do not delete
+  kFileList,
   kFile,
   kMacro,
   kModule,
+  kInterface,
+  kProgram,
   kPackage,
   kMacroCall,
   kClass,
@@ -34,13 +37,16 @@ enum class IndexingFactType {
   kModuleInstance,
   kDataTypeReference,
   kParamDeclaration,
+  kConstant,
   kModuleNamedPort,
   kNamedParam,
   kVariableDefinition,
+  kInclude,
   kVariableReference,
   kFunctionOrTask,
   kFunctionCall,
   kPackageImport,
+  kExtends,
   kMemberReference,
   // END GENERATE -- do not delete
 };

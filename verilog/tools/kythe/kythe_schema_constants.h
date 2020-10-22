@@ -26,11 +26,14 @@ constexpr absl::string_view kModuleBuiltin = "module#builtin";
 // Kythe Nodes.
 constexpr absl::string_view kNodeAnchor = "anchor";
 constexpr absl::string_view kNodeRecord = "record";
+constexpr absl::string_view kNodeInterface = "interface";
 constexpr absl::string_view kNodePackage = "package";
 constexpr absl::string_view kNodeMacro = "macro";
+constexpr absl::string_view kNodeConstant = "constant";
 constexpr absl::string_view kNodeFile = "file";
 constexpr absl::string_view kNodeBuiltin = "tbuiltin";
 constexpr absl::string_view kSubkindModule = "module";
+constexpr absl::string_view kSubkindProgram = "program";
 constexpr absl::string_view kCompleteDefinition = "definition";
 constexpr absl::string_view kNodeVariable = "variable";
 constexpr absl::string_view kNodeFunction = "function";
@@ -50,6 +53,8 @@ constexpr absl::string_view kEdgeRef = "/kythe/edge/ref";
 constexpr absl::string_view kEdgeRefExpands = "/kythe/edge/ref/expands";
 constexpr absl::string_view kEdgeRefCall = "/kythe/edge/ref/call";
 constexpr absl::string_view kEdgeRefImports = "/kythe/edge/ref/imports";
+constexpr absl::string_view kEdgeExtends = "/kythe/edge/extends";
+constexpr absl::string_view kEdgeRefIncludes = "/kythe/edge/ref/includes";
 constexpr absl::string_view kEdgeTyped = "/kythe/edge/typed";
 
 }  // namespace kythe

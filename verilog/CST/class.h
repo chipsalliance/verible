@@ -27,11 +27,22 @@ namespace verilog {
 std::vector<verible::TreeSearchMatch> FindAllClassDeclarations(
     const verible::Symbol&);
 
+// Find all hierarchy extensions.
+std::vector<verible::TreeSearchMatch> FindAllHierarchyExtensions(
+    const verible::Symbol&);
+
 // Returns the full header of a class.
 const verible::SyntaxTreeNode& GetClassHeader(const verible::Symbol&);
 
 // Returns the leaf node for class name.
 const verible::SyntaxTreeLeaf& GetClassName(const verible::Symbol&);
+
+// Returns the node that spans the extended class name(if exists).
+// e.g class my_class extends other_class; return "other_class".
+// e.g class my_class extends pkg::my_class2 => return the node that spans
+// "pkg::my_class2".
+// e.g class my_class; return nullptr.
+const verible::SyntaxTreeNode* GetExtendedClass(const verible::Symbol&);
 
 // Returns class name token after endclass.
 // e.g. from "class foo; endclass: foo" returns the second "foo".
@@ -39,6 +50,11 @@ const verible::SyntaxTreeLeaf* GetClassEndLabel(const verible::Symbol&);
 
 // Returns the node spanning class's Item list.
 const verible::SyntaxTreeNode& GetClassItemList(const verible::Symbol&);
+
+// Returns the identifier from node tagged with kHierarchyExtension.
+// e.g instance1.x => return "x".
+const verible::SyntaxTreeLeaf& GetUnqualifiedIdFromHierarchyExtension(
+    const verible::Symbol&);
 
 }  // namespace verilog
 

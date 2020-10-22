@@ -24,7 +24,6 @@
 #include <iostream>
 #include <sstream>  // IWYU pragma: keep  // for ostringstream
 #include <string>   // for string, allocator, etc
-#include <utility>
 
 #include "absl/flags/flag.h"
 #include "absl/strings/str_cat.h"
@@ -33,6 +32,7 @@
 #include "common/util/enum_flags.h"
 #include "common/util/file_util.h"
 #include "common/util/init_command_line.h"
+#include "common/util/logging.h"
 #include "verilog/analysis/verilog_equivalence.h"
 
 // Enumeration type for selecting
@@ -43,22 +43,17 @@ enum class DiffMode {
   kObfuscate,
 };
 
-static const std::initializer_list<std::pair<const absl::string_view, DiffMode>>
-    kDiffModeStringMap = {
-        {"format", DiffMode::kFormat},
-        {"obfuscate", DiffMode::kObfuscate},
+static const verible::EnumNameMap<DiffMode> kDiffModeStringMap = {
+    {"format", DiffMode::kFormat},
+    {"obfuscate", DiffMode::kObfuscate},
 };
 
 std::ostream& operator<<(std::ostream& stream, DiffMode p) {
-  static const auto* flag_map =
-      verible::MakeEnumToStringMap(kDiffModeStringMap);
-  return stream << flag_map->find(p)->second;
+  return kDiffModeStringMap.Unparse(p, stream);
 }
 
 bool AbslParseFlag(absl::string_view text, DiffMode* mode, std::string* error) {
-  static const auto* flag_map =
-      verible::MakeStringToEnumMap(kDiffModeStringMap);
-  return EnumMapParseFlag(*flag_map, text, mode, error);
+  return kDiffModeStringMap.Parse(text, mode, error, "--mode value");
 }
 
 std::string AbslUnparseFlag(const DiffMode& mode) {

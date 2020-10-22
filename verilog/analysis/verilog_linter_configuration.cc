@@ -16,11 +16,10 @@
 
 #include <algorithm>
 #include <functional>
-#include <initializer_list>
 #include <map>
 #include <memory>
+#include <sstream>
 #include <string>
-#include <utility>
 #include <vector>
 
 #include "absl/status/status.h"
@@ -307,6 +306,9 @@ absl::Status LinterConfiguration::AppendFromFile(
 
 absl::Status LinterConfiguration::ConfigureFromOptions(
     const LinterOptions& options) {
+  // Apply the ruleset bundle first.
+  // TODO(b/170876028): reduce the number of ways to select a group of rules,
+  // migrate these into hosted project configurations.
   UseRuleSet(options.ruleset);
 
   if (options.config_file_is_custom) {
@@ -353,18 +355,14 @@ std::ostream& operator<<(std::ostream& stream,
                 << " }";
 }
 
-static constexpr std::initializer_list<
-    std::pair<const absl::string_view, RuleSet>>
-    kRuleSetEnumStringMap = {
-        {"all", RuleSet::kAll},
-        {"none", RuleSet::kNone},
-        {"default", RuleSet::kDefault},
+static const verible::EnumNameMap<RuleSet> kRuleSetEnumStringMap = {
+    {"all", RuleSet::kAll},
+    {"none", RuleSet::kNone},
+    {"default", RuleSet::kDefault},
 };
 
 std::ostream& operator<<(std::ostream& stream, RuleSet rules) {
-  static const auto* flag_map =
-      verible::MakeEnumToStringMap(kRuleSetEnumStringMap);
-  return stream << flag_map->find(rules)->second;
+  return kRuleSetEnumStringMap.Unparse(rules, stream);
 }
 
 //
@@ -377,9 +375,7 @@ std::string AbslUnparseFlag(const RuleSet& rules) {
 }
 
 bool AbslParseFlag(absl::string_view text, RuleSet* rules, std::string* error) {
-  static const auto* flag_map =
-      verible::MakeStringToEnumMap(kRuleSetEnumStringMap);
-  return EnumMapParseFlag(*flag_map, text, rules, error);
+  return kRuleSetEnumStringMap.Parse(text, rules, error, "--ruleset value");
 }
 
 std::string AbslUnparseFlag(const RuleBundle& bundle) {

@@ -37,34 +37,23 @@ ABSL_FLAG(bool, printkythefacts, false,
 ABSL_FLAG(std::string, output_path, "",
           "File path where to write the extracted Kythe facts in JSON format.");
 
-static int ExtractOneFile(
-    absl::string_view content, absl::string_view filename,
-    std::vector<verilog::kythe::IndexingFactNode>& indexing_facts_trees) {
+static int ExtractFiles(const std::vector<std::string>& ordered_file_list,
+                        absl::string_view file_list_dir) {
   int exit_status = 0;
-  bool parse_ok = false;
-  const verilog::kythe::IndexingFactNode facts_tree(
-      verilog::kythe::ExtractOneFile(content, filename, exit_status, parse_ok));
+
+  const verilog::kythe::IndexingFactNode file_list_facts_tree(
+      verilog::kythe::ExtractFiles(ordered_file_list, exit_status,
+                                   file_list_dir));
 
   // check for printextraction flag, and print extraction if on
   if (absl::GetFlag(FLAGS_printextraction)) {
-    std::cout << std::endl
-              << (!parse_ok ? " (incomplete due to syntax errors): " : "")
-              << std::endl;
-
-    std::cout << facts_tree << std::endl;
+    std::cout << file_list_facts_tree << std::endl;
   }
-  LOG(INFO) << '\n' << facts_tree;
 
-  indexing_facts_trees.push_back(facts_tree);
-
-  return exit_status;
-}
-
-static void ExtractKytheFacts(
-    const std::vector<verilog::kythe::IndexingFactNode>& facts_tree) {
   // check for printkythefacts flag, and print the facts if on
   if (absl::GetFlag(FLAGS_printkythefacts)) {
-    std::cout << verilog::kythe::KytheFactsPrinter(facts_tree) << std::endl;
+    std::cout << verilog::kythe::KytheFactsPrinter(file_list_facts_tree)
+              << std::endl;
   }
 
   const std::string output_path = absl::GetFlag(FLAGS_output_path);
@@ -73,38 +62,41 @@ static void ExtractKytheFacts(
     if (!f.good()) {
       LOG(FATAL) << "Can't write to " << output_path;
     }
-    f << verilog::kythe::KytheFactsPrinter(facts_tree) << std::endl;
+    f << verilog::kythe::KytheFactsPrinter(file_list_facts_tree) << std::endl;
   }
+
+  return exit_status;
 }
 
 int main(int argc, char** argv) {
-  const auto usage = absl::StrCat("usage: ", argv[0], " [options] <files...>\n",
-                                  R"(
+  const auto usage =
+      absl::StrCat("usage: ", argv[0], " [options] file_list_path\n", R"(
 Extracts kythe indexing facts from the given SystemVerilog source files.
 
-Input: SystemVerilog file(s).
+Input: A file which lists paths to the SystemVerilog top-level translation
+       unit files (one per line; the path is relative to the location of the
+       file list).
 Output: Produces Indexing Facts for kythe (http://kythe.io).
 )");
-
   const auto args = verible::InitCommandLine(usage, &argc, &argv);
 
-  int exit_status = 0;
   std::vector<verilog::kythe::IndexingFactNode> indexing_facts_trees;
 
-  // All positional arguments are file names.  Exclude program name.
-  for (const auto filename :
-       verible::make_range(args.begin() + 1, args.end())) {
-    std::string content;
-    if (!verible::file::GetContents(filename, &content).ok()) {
-      exit_status = 1;
-      continue;
-    }
-
-    int file_status = ExtractOneFile(content, filename, indexing_facts_trees);
-    exit_status = std::max(exit_status, file_status);
+  std::string content;
+  if (!verible::file::GetContents(args[1], &content).ok()) {
+    LOG(ERROR) << "Error while reading file: " << args[1];
+    return 1;
   }
 
-  ExtractKytheFacts(indexing_facts_trees);
+  std::vector<std::string> files_names;
+  std::string filename;
 
+  std::stringstream stream(content);
+  while (stream >> filename) {
+    // TODO(minatoma): ignore blank lines and "# ..." comments
+    files_names.push_back(filename);
+  }
+
+  int exit_status = ExtractFiles(files_names, verible::file::Dirname(args[1]));
   return exit_status;
 }

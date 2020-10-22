@@ -7,10 +7,13 @@ cc_binary(
     srcs = ["verilog_syntax.cc"],
     visibility = ["//visibility:public"],  # for verilog_style_lint.bzl
     deps = [
+        "//common/strings:compare",
         "//common/text:concrete_syntax_tree",
         "//common/text:parser_verifier",
         "//common/text:text_structure",
         "//common/text:token_info",
+        "//common/util:bijective_map",
+        "//common/util:enum_flags",
         "//common/util:file_util",
         "//common/util:init_command_line",
         "//common/util:logging",

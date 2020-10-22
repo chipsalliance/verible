@@ -80,9 +80,9 @@ void OneModulePerFileRule::Lint(const TextStructureView& text_structure,
 
   if (module_cleaned.size() > 1) {
     // Report second module declaration
-    const auto& second_module_id = GetModuleNameToken(*module_cleaned[1].match);
+    const auto& second_module_id = GetModuleName(*module_cleaned[1].match);
     violations_.insert(verible::LintViolation(
-        second_module_id, absl::StrCat(kMessage, module_cleaned.size())));
+        second_module_id.get(), absl::StrCat(kMessage, module_cleaned.size())));
   }
 }
 

@@ -31,8 +31,12 @@ namespace kythe {
 class IndexingFactsTreeExtractor : public verible::TreeContextVisitor {
  public:
   IndexingFactsTreeExtractor(absl::string_view base,
-                             absl::string_view file_name)
-      : context_(verible::TokenInfo::Context(base)) {
+                             absl::string_view file_name,
+                             IndexingFactNode& file_list_facts_tree,
+                             std::set<std::string>& extracted_files)
+      : context_(verible::TokenInfo::Context(base)),
+        file_list_facts_tree_(file_list_facts_tree),
+        extracted_files_(extracted_files) {
     root_.Value().AppendAnchor(Anchor(file_name, 0, base.size()));
     root_.Value().AppendAnchor(Anchor(base, 0, base.size()));
   }
@@ -43,8 +47,20 @@ class IndexingFactsTreeExtractor : public verible::TreeContextVisitor {
   IndexingFactNode& GetRoot() { return root_; }
 
  private:
+  // Extracts facts from module, intraface and program declarations.
+  void ExtractModuleOrInterfaceOrProgram(
+      const verible::SyntaxTreeNode& declaration_node,
+      IndexingFactNode& facts_node);
+
   // Extracts modules and creates its corresponding fact tree.
   void ExtractModule(const verible::SyntaxTreeNode& module_declaration_node);
+
+  // Extracts interfaces and creates its corresponding fact tree.
+  void ExtractInterface(
+      const verible::SyntaxTreeNode& interface_declaration_node);
+
+  // Extracts programs and creates its corresponding fact tree.
+  void ExtractProgram(const verible::SyntaxTreeNode& program_declaration_node);
 
   // Extracts modules instantiations and creates its corresponding fact tree.
   void ExtractModuleInstantiation(
@@ -55,11 +71,17 @@ class IndexingFactsTreeExtractor : public verible::TreeContextVisitor {
   void ExtractModuleEnd(const verible::SyntaxTreeNode& module_declaration_node);
 
   // Extracts modules headers and creates its corresponding fact tree.
-  void ExtractModuleHeader(const verible::SyntaxTreeNode& module_header_node);
+  void ExtractModuleHeader(
+      const verible::SyntaxTreeNode& module_declaration_node);
 
   // Extracts modules ports and creates its corresponding fact tree.
   void ExtractModulePort(const verible::SyntaxTreeNode& module_port_node,
                          bool has_propagated_type);
+
+  // Extracts variable dimensions and creates its corresponding fact tree.
+  // e.g x[i] ==> extracts "[i]".
+  void ExtractSelectVariableDimension(
+      const verible::SyntaxTreeNode& variable_dimension);
 
   // Extracts "a" from input a, output a and creates its corresponding fact
   // tree.
@@ -87,6 +109,9 @@ class IndexingFactsTreeExtractor : public verible::TreeContextVisitor {
   // to macros and creates its corresponding facts tree.
   void ExtractMacroReference(const verible::SyntaxTreeLeaf& macro_identifier);
 
+  // Extracts Include statements and creates its corresponding fact tree.
+  void ExtractInclude(const verible::SyntaxTreeNode& preprocessor_include);
+
   // Extracts function and creates its corresponding fact tree.
   void ExtractFunctionDeclaration(
       const verible::SyntaxTreeNode& function_declaration_node);
@@ -100,9 +125,14 @@ class IndexingFactsTreeExtractor : public verible::TreeContextVisitor {
       const verible::SyntaxTreeNode& function_call_node);
 
   // Extracts function or task call tagged with kMethodCallExtension (treated as
-  // kFunctionOrTaskCall in facts tree) creates its corresponding fact tree.
+  // kFunctionOrTaskCall in facts tree) and creates its corresponding fact tree.
   void ExtractMethodCallExtension(
       const verible::SyntaxTreeNode& call_extension_node);
+
+  // Extracts members tagged with kHierarchyExtension (treated as
+  // kMemberReference in facts tree) and creates its corresponding fact tree.
+  void ExtractMemberExtension(
+      const verible::SyntaxTreeNode& hierarchy_extension_node);
 
   // Extracts function or task ports and parameters.
   void ExtractFunctionTaskPort(
@@ -117,11 +147,27 @@ class IndexingFactsTreeExtractor : public verible::TreeContextVisitor {
       const verible::SyntaxTreeNode& data_declaration,
       const std::vector<verible::TreeSearchMatch>& register_variables);
 
-  // Extracts primitive types declarations and creates its corresponding fact
-  // tree.
-  void ExtractPrimitiveVariables(
-      const verible::SyntaxTreeNode& enclosing_node,
-      const std::vector<verible::TreeSearchMatch>& variable_matches);
+  // Extracts primitive types declarations tagged with kRegisterVariable and
+  // creates its corresponding fact tree.
+  void ExtractRegisterVariable(
+      const verible::SyntaxTreeNode& register_variable);
+
+  // Extracts primitive types declarations tagged with
+  // kVariableDeclarationAssignment and creates its corresponding fact tree.
+  void ExtractVariableDeclarationAssignment(
+      const verible::SyntaxTreeNode& variable_declaration_assignment);
+
+  // Extracts enum name and creates its corresponding fact tree.
+  void ExtractEnumName(const verible::SyntaxTreeNode& enum_name);
+
+  // Extracts type declaration preceeded with "typedef" and creates its
+  // corresponding fact tree.
+  void ExtractTypeDeclaration(const verible::SyntaxTreeNode& type_declaration);
+
+  // Extracts enum type declaration preceeded with "typedef" and creates its
+  // corresponding fact tree.
+  void ExtractEnumTypeDeclaration(
+      const verible::SyntaxTreeNode& enum_type_declaration);
 
   // Extracts leaves tagged with SymbolIdentifier and creates its facts tree.
   // This should only be reached in case of free variable references.
@@ -166,12 +212,25 @@ class IndexingFactsTreeExtractor : public verible::TreeContextVisitor {
 
   // Keeps track of facts tree ancestors as the visitor traverses CST.
   IndexingFactsTreeContext facts_tree_context_;
+
+  // IndexingFactNode with tag kFileList which holds the extracted facts trees
+  // of the files in the ordered file list.
+  // The extracted files will be children of this node and ordered as they are
+  // given in the ordered file list.
+  IndexingFactNode& file_list_facts_tree_;
+
+  // Set of the file paths of the extracted files.
+  // Used to avoid extracting some file more than one time.
+  std::set<std::string>& extracted_files_;
 };
 
-// Given a verilog file returns the extracted indexing facts tree.
-IndexingFactNode ExtractOneFile(absl::string_view content,
-                                absl::string_view filename, int& exit_status,
-                                bool& parse_ok);
+// Given the ordered SystemVerilog files, Extracts and returns the
+// IndexingFactsTree from the given files.
+// The returned Root will have the files as children and they will retain their
+// original ordering from the file list.
+IndexingFactNode ExtractFiles(const std::vector<std::string>& ordered_file_list,
+                              int& exit_status,
+                              absl::string_view file_list_dir);
 
 }  // namespace kythe
 }  // namespace verilog

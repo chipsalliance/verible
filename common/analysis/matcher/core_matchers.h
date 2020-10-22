@@ -33,13 +33,17 @@ namespace matcher {
 // If AllOf matches, then all of its inner matchers bound symbols are preserved.
 // If it does not match, then no symobls are bound.
 //
+// The order of inner matchers is inconsequential; they are fully commutative.
+//
 // AllOf does not implement the Bind interface.
 //
 // Usage:
-//  auto matcher = Node5(AllOf(HasNode5Child(), HasNode5Child()));
+//  auto matcher = Node5(AllOf(HasNode5Child(), HasLeaf5Child()));
+//
 // This matches:
 //  TNode(5, Leaf(5), TNode(5));
-// And fails to match
+//
+// And fails to match:
 //  TNode(5, Leaf(5));
 //  TNode(5, Node(5));
 //  TNode(5, Leaf(2));
@@ -69,22 +73,26 @@ Matcher AllOf(Args&&... args) {
 // remaining inner matchers are not tested and do not bind symbols.
 // If no inner matchers match, then no symbols are bound.
 //
+// The order of inner matchers is inconsequential; they are fully commutative.
+//
 // AnyOf does not implement the Bind interface.
 //
 // Usage:
-//  auto matcher = Node5(AnyOf(HasNode5Child(), HasNode5Child()));
+//  auto matcher = Node5(AnyOf(HasNode5Child(), HasLeaf5Child()));
+//
 // This matches:
 //  TNode(5, Leaf(5), TNode(5));
 //  TNode(5, Leaf(5));
 //  TNode(5, Node(5));
-// And fails to match
+//
+// And fails to match:
 //  TNode(5, Leaf(2));
 template <typename... Args>
 Matcher AnyOf(Args&&... args) {
   static_assert(sizeof...(args) > 0,
                 "AnyOf requires at least one inner matcher");
 
-  // AnyOf matcher's behavior is completely determined by its inner_matchers
+  // AnyOf matcher's behavior is completely determined by its inner_matchers.
   auto predicate = [](const Symbol& symbol) { return true; };
 
   Matcher matcher(predicate, InnerMatchAny);
@@ -104,14 +112,18 @@ Matcher AnyOf(Args&&... args) {
 // Every matching inner matcher gets to bind symbols.
 // If no inner matchers matcher, then no symbols are bound.
 //
+// The order of inner matchers is inconsequential; they are fully commutative.
+//
 // EachOf does not implement the Bind interface.
 //
 // Usage:
-//  auto matcher = Node5(EachOf(HasNode5Child(), HasNode5Child()));
+//  auto matcher = Node5(EachOf(HasNode5Child(), HasLeaf5Child()));
+//
 // This matches:
 //  TNode(5, Leaf(5), TNode(5));
 //  TNode(5, Leaf(5));
 //  TNode(5, Node(5));
+//
 // And fails to match
 //  TNode(5, Leaf(2));
 template <typename... Args>
@@ -119,7 +131,7 @@ Matcher EachOf(Args&&... args) {
   static_assert(sizeof...(args) > 0,
                 "EachOf requires at least one inner matcher");
 
-  // EachOf matcher's behavior is completely determined by its inner_matchers
+  // EachOf matcher's behavior is completely determined by its inner_matchers.
   auto predicate = [](const Symbol& symbol) { return true; };
 
   Matcher matcher(predicate, InnerMatchEachOf);
@@ -147,7 +159,7 @@ Matcher EachOf(Args&&... args) {
 //  TNode(5, TNode(5));
 template <typename... Args>
 Matcher Unless(const Matcher& inner_matcher) {
-  // Unless matcher's behavior is completely determined by its inner_matchers
+  // Unless matcher's behavior is completely determined by its inner_matcher.
   auto predicate = [](const Symbol& symbol) { return true; };
 
   Matcher matcher(predicate, InnerMatchUnless);

@@ -46,6 +46,17 @@ status="$?"
 }
 
 ################################################################################
+echo "=== Test --help"
+
+"$syntax_checker" --help > "$MY_OUTPUT_FILE" 2>&1
+
+status="$?"
+[[ $status == 1 ]] || {
+  "Expected exit code 1, but got $status"
+  exit 1
+}
+
+################################################################################
 echo "=== Test nonexisting input file"
 
 "$syntax_checker" "$MY_INPUT_FILE.does.not.exist" > /dev/null
@@ -212,5 +223,82 @@ status="$?"
   exit 1
 }
 
+################################################################################
+echo "=== Test --lang=sv,lib,auto on library file"
+
+"$syntax_checker" --lang=sv - > "$MY_OUTPUT_FILE" <<EOF
+library foo_lib foo/lib/*.v;
+EOF
+
+status="$?"
+[[ $status == 1 ]] || {
+  "Expected exit code 1, but got $status"
+  exit 1
+}
+
+"$syntax_checker" --lang=lib - > "$MY_OUTPUT_FILE" <<EOF
+library foo_lib foo/lib/*.v;
+EOF
+
+status="$?"
+[[ $status == 0 ]] || {
+  "Expected exit code 0, but got $status"
+  exit 1
+}
+
+"$syntax_checker" --lang=auto - > "$MY_OUTPUT_FILE" <<EOF
+library foo_lib foo/lib/*.v;
+EOF
+
+status="$?"
+[[ $status == 0 ]] || {
+  "Expected exit code 0, but got $status"
+  exit 1
+}
+
+################################################################################
+echo "=== Test --lang=sv,lib,auto on SV file"
+
+"$syntax_checker" --lang=sv - > "$MY_OUTPUT_FILE" <<EOF
+module m; endmodule
+EOF
+
+status="$?"
+[[ $status == 0 ]] || {
+  "Expected exit code 0, but got $status"
+  exit 1
+}
+
+"$syntax_checker" --lang=lib - > "$MY_OUTPUT_FILE" <<EOF
+module m; endmodule
+EOF
+
+status="$?"
+[[ $status == 1 ]] || {
+  "Expected exit code 1, but got $status"
+  exit 1
+}
+
+"$syntax_checker" --lang=auto - > "$MY_OUTPUT_FILE" <<EOF
+module m; endmodule
+EOF
+
+status="$?"
+[[ $status == 0 ]] || {
+  "Expected exit code 0, but got $status"
+  exit 1
+}
+
+# explicit alternate parsing mode directives honored
+"$syntax_checker" --lang=sv - > "$MY_OUTPUT_FILE" <<EOF
+// verilog_syntax: parse-as-module-body
+wire www;
+EOF
+
+status="$?"
+[[ $status == 0 ]] || {
+  "Expected exit code 0, but got $status"
+  exit 1
+}
 ################################################################################
 echo "PASS"

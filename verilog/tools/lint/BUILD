@@ -38,6 +38,7 @@ _linter_test_configs = [
     ("mismatched-labels", "mismatched_labels", False),
     ("module-begin-block", "module_begin_block", True),
     ("module-filename", "module_filename", True),
+    ("numeric-format-string-style", "numeric_format_string_style", False),
     ("package-filename", "package_filename_pkg", True),
     ("packed-dimensions-range-ordering", "packed_dimensions", True),
     ("parameter-name-style", "localparam_name_style", True),

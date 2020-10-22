@@ -20,6 +20,8 @@
 
 namespace verilog {
 
+using verible::TokenInfo;
+
 VerilogLexer::VerilogLexer(const absl::string_view code)
     : parent_lexer_type(code),
       // These initial values should not matter, the lexer actions should
@@ -35,13 +37,13 @@ void VerilogLexer::Restart(absl::string_view code) {
   macro_arg_length_ = 0;
 }
 
-bool VerilogLexer::TokenIsError(const verible::TokenInfo& token) const {
+bool VerilogLexer::TokenIsError(const TokenInfo& token) const {
   // TODO(fangism): Distinguish different lexical errors by returning different
   // enums.
   return token.token_enum() == TK_OTHER;
 }
 
-bool VerilogLexer::KeepSyntaxTreeTokens(const verible::TokenInfo& t) {
+bool VerilogLexer::KeepSyntaxTreeTokens(const TokenInfo& t) {
   switch (t.token_enum()) {
     case TK_COMMENT_BLOCK:  // fall-through
     case TK_EOL_COMMENT:    // fall-through
@@ -53,6 +55,16 @@ bool VerilogLexer::KeepSyntaxTreeTokens(const verible::TokenInfo& t) {
       return false;
     default:
       return true;
+  }
+}
+
+void RecursiveLexText(absl::string_view text,
+                      const std::function<void(const TokenInfo&)>& func) {
+  VerilogLexer lexer(text);
+  while (true) {
+    const TokenInfo& subtoken(lexer.DoNextToken());
+    if (subtoken.isEOF()) break;
+    func(subtoken);
   }
 }
 

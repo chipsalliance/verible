@@ -148,6 +148,7 @@ cc_library(
         "//common/parser:bison_parser_adapter",
         "//common/parser:parse",
         "//common/parser:parser_param",
+        "//common/util:value_saver",
         "@com_google_absl//absl/flags:flag",
     ],
     alwayslink = 1,
@@ -161,6 +162,8 @@ cc_library(
         ":verilog_token_enum",
         "//common/text:token_info",
         "//common/text:token_stream_view",
+        "//common/util:logging",
+        "//common/util:with_reason",
     ],
 )
 

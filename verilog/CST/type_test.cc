@@ -407,5 +407,47 @@ TEST(GetVariableDeclaration, FindPackedDimensionFromDataDeclaration) {
   }
 }
 
+TEST(GetEnumName, GetEnumNameIdentifier) {
+  constexpr int kTag = 1;  // value doesn't matter
+  const SyntaxTreeSearchTestCase kTestCases[] = {
+      {""},
+      {"module m;\nendmodule\n"},
+      {"module m;\nenum {",
+       {kTag, "AA"},
+       ", ",
+       {kTag, "BB"},
+       "} enum_var;\n endmodule"},
+      {"module m;\ntypedef enum {",
+       {kTag, "AA"},
+       ", ",
+       {kTag, "BB"},
+       "} enum_var;\nendmodule"},
+      {"package m;\ntypedef enum {",
+       {kTag, "AA"},
+       ", ",
+       {kTag, "BB"},
+       "} enum_var;\nendpackage"},
+      {"package m;\ntypedef enum {",
+       {kTag, "AA"},
+       ", ",
+       {kTag, "BB"},
+       "} enum_var;\nendpackage"},
+  };
+  for (const auto& test : kTestCases) {
+    TestVerilogSyntaxRangeMatches(
+        __FUNCTION__, test, [](const TextStructureView& text_structure) {
+          const auto& root = text_structure.SyntaxTree();
+          const auto& instances = FindAllEnumNames(*ABSL_DIE_IF_NULL(root));
+
+          std::vector<TreeSearchMatch> names;
+          for (const auto& decl : instances) {
+            const auto& name = GetSymbolIdentifierFromEnumName(*decl.match);
+            names.emplace_back(TreeSearchMatch{&name, {/* ignored context */}});
+          }
+          return names;
+        });
+  }
+}
+
 }  // namespace
 }  // namespace verilog

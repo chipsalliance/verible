@@ -33,6 +33,11 @@ std::vector<verible::TreeSearchMatch> FindAllDataTypeDeclarations(
   return verible::SearchSyntaxTree(root, NodekDataType());
 }
 
+std::vector<verible::TreeSearchMatch> FindAllEnumNames(
+    const verible::Symbol& root) {
+  return verible::SearchSyntaxTree(root, NodekEnumName());
+}
+
 std::vector<verible::TreeSearchMatch> FindAllDataTypePrimitive(
     const verible::Symbol& root) {
   return verible::SearchSyntaxTree(root, NodekDataTypePrimitive());
@@ -141,6 +146,22 @@ const verible::SyntaxTreeNode* GetParamListFromInstantiationType(
       verible::GetSubtreeAsSymbol(unqualified_id, NodeEnum::kUnqualifiedId, 1);
   return verible::CheckOptionalSymbolAsNode(param_list,
                                             NodeEnum::kActualParameterList);
+}
+
+const verible::SyntaxTreeLeaf& GetSymbolIdentifierFromEnumName(
+    const verible::Symbol& enum_name) {
+  return verible::GetSubtreeAsLeaf(enum_name, NodeEnum::kEnumName, 0);
+}
+
+const verible::SyntaxTreeLeaf* GetTypeIdentifierFromDataType(
+    const verible::Symbol& data_type) {
+  const verible::Symbol* identifier =
+      verible::GetSubtreeAsSymbol(data_type, NodeEnum::kDataType, 0);
+  if (identifier == nullptr ||
+      NodeEnum(identifier->Tag().tag) != NodeEnum::kUnqualifiedId) {
+    return nullptr;
+  }
+  return AutoUnwrapIdentifier(*identifier);
 }
 
 }  // namespace verilog

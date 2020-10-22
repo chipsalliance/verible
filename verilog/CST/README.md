@@ -35,7 +35,7 @@ _Ideal_ properties of CST nodes:
     allows one to write simple functions that directly access substructure by
     descending through CST nodes positionally. For every node enumeration
     `kFoo`, there should be `MakeFoo` function that constructs a CST node from
-    its arguments.
+    its arguments. Accessor functions should be short and composable.
     *   Construction also provides an opportunity to check that the programmer
         has not made a mistake, by asserting invariant properties about the
         arguments.
@@ -61,3 +61,19 @@ An AST may not be a great representation for _unpreprocessed_ code, which is the
 focus of the first developer tool applications. Having a
 [standard-compliant SV preprocessor](https://github.com/google/verible/issues/183)
 would pave the way to making an AST more useful.
+
+## Testing
+
+Most CST accessor function tests should follow this outline:
+
+*   Declare an array of test data in the form of
+    [SyntaxTreeSearchTestCase](https://cs.opensource.google/verible/verible/+/master:common/analysis/syntax_tree_search_test_utils.h)
+    *   Each element compactly represents the code to analyze, and the set of
+        expected findings as annotated subranges of text.
+*   For every function-under-test, establish a function that extracts the
+    targeted subranges of text (which must be non-overlapping). This could be a
+    simple find-function on a syntax tree or contain any sequence of search
+    refinements.
+*   Pass these into the
+    [TestVerilogSyntaxRangeMatches](https://cs.opensource.google/verible/verible/+/master:verilog/CST/match_test_utils.h)
+    test driver function which compare actual vs. expected subranges.

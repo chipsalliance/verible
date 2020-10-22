@@ -22,11 +22,13 @@
 #include <vector>
 
 #include "common/text/token_info.h"
+#include "common/util/logging.h"
 #include "verilog/parser/verilog_token_enum.h"
 
 namespace verilog {
 
 using verible::TokenInfo;
+using verible::WithReason;
 
 // Returns true for begin/end-like tokens that can be followed with an optional
 // label.
@@ -689,32 +691,41 @@ bool LexicalContext::ExpectingStatement() const {
   if (in_function_body_ || in_task_body_ ||
       in_initial_always_final_construct_) {
     // Exclude states that are partially into a statement.
-    return ExpectingBodyItemStart();
+    const auto state = ExpectingBodyItemStart();
+    VLOG(2) << state.reason;
+    return state.value;
   }
   // TODO(fangism): There are many more contexts that expect statements, add
   // them as they are needed.  In verilog.y (grammar), see statement_or_null.
   return false;
 }
 
-bool LexicalContext::ExpectingBodyItemStart() const {
+WithReason<bool> LexicalContext::ExpectingBodyItemStart() const {
   // True when immediately entering a body section.
   // Usually false immediately after a keyword that starts a body item.
   // Usually false inside header sections of most declarations.
+  // Usually false inside any () [] or {}
   // Usually true immediately after a ';' or end-like tokens.
-  if (InFlowControlHeader()) return false;
-  if (InAnyDeclarationHeader()) return false;
+  if (InFlowControlHeader()) return {false, "in flow control header"};
+  if (InAnyDeclarationHeader()) return {false, "in other declaration header"};
+  if (!balance_stack_.empty()) return {false, "balance stack not empty"};
   if (previous_token_ == nullptr) {
-    return true;  // First token should be start of a description/package item.
+    // First token should be start of a description/package item.
+    return {true, "first token"};
   }
-  if (InAnyDeclaration() && previous_token_finished_header_) return true;
+  if (InAnyDeclaration() && previous_token_finished_header_) {
+    return {true, "inside declaration, and reached end of header"};
+  }
+  if (keyword_label_tracker_.Done()) {
+    return {true, "keyword label is in done state"};
+  }
   switch (previous_token_->token_enum()) {
     case ';':
-      return true;
+      return {true, "immediately following ';'"};
     default:
       break;
   }
-  if (keyword_label_tracker_.Done()) return true;
-  return false;
+  return {false, "all other cases (default)"};
 }
 
 }  // namespace verilog

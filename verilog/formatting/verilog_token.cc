@@ -414,6 +414,10 @@ static const auto* FormatTokenTypeMap =
         {verilog_tokentype::TK_zi_zd, FTT::keyword},
         {verilog_tokentype::TK_zi_zp, FTT::keyword},
 
+        // internal parser directives
+        {verilog_tokentype::PD_LIBRARY_SYNTAX_BEGIN, FTT::keyword},
+        {verilog_tokentype::PD_LIBRARY_SYNTAX_END, FTT::keyword},
+
         // TODO(fangism): These are built-in function identifiers, and there
         // are even more above, e.g. math functions.
         {verilog_tokentype::TK_find, FTT::keyword},
@@ -531,6 +535,7 @@ static const auto* FormatTokenTypeMap =
         // string_literal
         {verilog_tokentype::TK_StringLiteral, FTT::string_literal},
         {verilog_tokentype::TK_EvalStringLiteral, FTT::string_literal},
+        {verilog_tokentype::TK_FILEPATH, FTT::string_literal},
 
         // unary operators
         {verilog_tokentype::TK_INCR, FTT::unary_operator},

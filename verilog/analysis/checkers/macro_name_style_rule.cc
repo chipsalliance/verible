@@ -61,12 +61,8 @@ void MacroNameStyleRule::HandleToken(const TokenInfo& token) {
   const absl::string_view text(token.text());
   if (IsUnlexed(verilog_tokentype(token.token_enum()))) {
     // recursively lex to examine inside macro definition bodies, etc.
-    VerilogLexer lexer(text);
-    while (true) {
-      const TokenInfo& subtoken(lexer.DoNextToken());
-      if (subtoken.isEOF()) break;
-      HandleToken(subtoken);
-    }
+    RecursiveLexText(
+        text, [this](const TokenInfo& subtoken) { HandleToken(subtoken); });
     return;
   }
 

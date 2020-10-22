@@ -18,6 +18,7 @@
 #include <initializer_list>
 #include <utility>
 
+#include "gmock/gmock.h"
 #include "gtest/gtest.h"
 #include "absl/strings/string_view.h"
 #include "common/lexer/lexer_test_util.h"
@@ -27,12 +28,15 @@
 namespace verilog {
 namespace {
 
+using testing::ElementsAre;
+using verible::TokenInfo;
+
 // Removes non-essential tokens from token output stream, such as spaces.
 class FilteredVerilogLexer : public VerilogLexer {
  public:
   explicit FilteredVerilogLexer(absl::string_view code) : VerilogLexer(code) {}
 
-  const verible::TokenInfo& DoNextToken() override {
+  const TokenInfo& DoNextToken() override {
     do {
       VerilogLexer::DoNextToken();
     } while (!VerilogLexer::KeepSyntaxTreeTokens(GetLastToken()));
@@ -2122,6 +2126,145 @@ static std::initializer_list<LexerTestData> kDirectiveTests = {
     {{DR_default_nettype, "`default_nettype"}, " ", {SymbolIdentifier, "blah"}},
 };
 
+static std::initializer_list<LexerTestData> kLibraryTests = {
+    {
+        {TK_library, "library"},
+        {TK_SPACE, " "},
+        {SymbolIdentifier, "mylib"},
+        {TK_SPACE, " "},
+        {TK_FILEPATH, "1mylibpath/"},  // not an identifier
+        ';',
+        {SymbolIdentifier, "foo_bar_pkg"},  // not a file-path
+        {TK_NEWLINE, "\n"},
+    },
+    {
+        // with newlines instead of spaces
+        {TK_library, "library"},
+        {TK_NEWLINE, "\n"},
+        {SymbolIdentifier, "mylib"},
+        {TK_NEWLINE, "\n"},
+        {TK_FILEPATH, "6666/"},  // not a number
+        {TK_NEWLINE, "\n"},
+        ';',
+        {SymbolIdentifier, "foo_bar_pkg"},  // not a file-path
+        {TK_NEWLINE, "\n"},
+    },
+    {
+        // with comments
+        {TK_library, "library"},
+        {TK_COMMENT_BLOCK, "/*c1*/"},
+        {SymbolIdentifier, "mylib"},
+        {TK_SPACE, " "},
+        {TK_FILEPATH, "2222"},  // not a number
+        ';',
+        {TK_COMMENT_BLOCK, "/*c3*/"},
+        {SymbolIdentifier, "foo_bar_pkg"},  // not a file-path
+        {TK_NEWLINE, "\n"},
+    },
+    {
+        {TK_library, "library"},
+        {TK_SPACE, " "},
+        {SymbolIdentifier, "_my_lib"},
+        {TK_SPACE, " "},
+        {TK_FILEPATH, "_1my_lib_path/"},  // underscores
+        ';',
+        {SymbolIdentifier, "foo_bar_pkg"},  // not a file-path
+        {TK_NEWLINE, "\n"},
+    },
+    {
+        {TK_library, "library"},
+        {TK_SPACE, " "},
+        {SymbolIdentifier, "_my_lib"},
+        {TK_SPACE, " "},
+        {TK_FILEPATH, "1my-lib-path/"},  // dashes
+        ';',
+        {SymbolIdentifier, "foo_bar_pkg"},  // not a file-path
+        {TK_NEWLINE, "\n"},
+    },
+    {{TK_library, "library"},
+     {TK_SPACE, " "},
+     {SymbolIdentifier, "mylib"},
+     {TK_SPACE, " "},
+     {TK_FILEPATH, "/path1"},  // absolute path
+     ',',
+     {TK_SPACE, " "},
+     {TK_FILEPATH, "/path2/path3"},
+     ';',
+     {TK_NEWLINE, "\n"}},
+    {{TK_library, "library"},
+     {TK_SPACE, " "},
+     {SymbolIdentifier, "mylib"},
+     {TK_SPACE, " "},
+     {TK_FILEPATH, "*.v"},  // * wildcard
+     ';',
+     {TK_NEWLINE, "\n"}},
+    {{TK_library, "library"},
+     {TK_SPACE, " "},
+     {SymbolIdentifier, "mylib"},
+     {TK_SPACE, " "},
+     {TK_FILEPATH, "foo?.v"},  // ? wildcard
+     ';',
+     {TK_NEWLINE, "\n"}},
+    {{TK_library, "library"},
+     {TK_SPACE, " "},
+     {SymbolIdentifier, "mylib"},
+     {TK_SPACE, " "},
+     {TK_FILEPATH, "foo/"},
+     ';',
+     {TK_NEWLINE, "\n"}},
+    {{TK_library, "library"},
+     {TK_SPACE, " "},
+     {SymbolIdentifier, "mylib"},
+     {TK_SPACE, " "},
+     {TK_FILEPATH, "Foo/*.v"},
+     ';',
+     {TK_NEWLINE, "\n"}},
+    {{TK_library, "library"},
+     {TK_SPACE, " "},
+     {SymbolIdentifier, "mylib"},
+     {TK_SPACE, " "},
+     {TK_FILEPATH, "*.v"},
+     {TK_SPACE, " "},
+     '-',
+     {TK_incdir, "incdir"},
+     {TK_SPACE, " "},
+     {TK_FILEPATH, "/path/to/files"},  // absolute path
+     ',',
+     {TK_SPACE, " "},
+     {TK_FILEPATH, "/path/to/morefiles"},
+     ';',
+     {TK_NEWLINE, "\n"},
+     {SymbolIdentifier, "not_a_path"}},
+    {{TK_include, "include"},
+     {TK_SPACE, " "},
+     {TK_FILEPATH, "foo/*.v"},
+     ';',
+     {TK_NEWLINE, "\n"}},
+    {{TK_include, "include"},
+     {TK_SPACE, " "},
+     {TK_FILEPATH, "../../foo/*.v"},  // up-dir, relative
+     ';',
+     {TK_NEWLINE, "\n"}},
+    {{TK_include, "include"},
+     {TK_SPACE, " "},
+     {TK_FILEPATH, "../../foo/..."},  // ... wildcard
+     ';',
+     {TK_NEWLINE, "\n"}},
+    {{TK_include, "include"},
+     {TK_SPACE, " "},
+     {TK_FILEPATH, "../foo/.../*.vg"},  // ... wildcard
+     ';',
+     {TK_NEWLINE, "\n"}},
+    {{TK_include, "include"},
+     {TK_SPACE, " "},
+     {TK_FILEPATH, "foo/*.v"},
+     ',',
+     {TK_SPACE, " "},
+     {TK_FILEPATH, "bar/*.vg"},
+     ';',
+     {TK_NEWLINE, "\n"}},
+};
+
 static std::initializer_list<LexerTestData> kLexicalErrorTests = {
     // TODO(fangism): Return different error enums for different errors.
     {{TK_OTHER, "111wire"}},
@@ -2212,6 +2355,17 @@ TEST(VerilogLexerTest, PreprocessorUnfiltered) {
 TEST(VerilogLexerTest, Directives) { TestLexer(kDirectiveTests); }
 TEST(VerilogLexerTest, DirectivesUnfiltered) {
   TestLexer(kUnfilteredDirectiveTests);
+}
+TEST(VerilogLexerTest, Library) { TestLexer(kLibraryTests); }
+
+TEST(RecursiveLexTextTest, Basic) {
+  constexpr absl::string_view text("hello;");
+  std::vector<TokenInfo> tokens;
+  RecursiveLexText(text,
+                   [&tokens](const TokenInfo& t) { tokens.push_back(t); });
+  EXPECT_THAT(tokens,
+              ElementsAre(TokenInfo(SymbolIdentifier, text.substr(0, 5)),
+                          TokenInfo(';', text.substr(5, 1))));
 }
 
 }  // namespace
