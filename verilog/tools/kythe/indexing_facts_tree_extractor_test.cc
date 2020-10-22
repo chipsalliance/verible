@@ -3928,27 +3928,28 @@ TEST(FactsTreeExtractor, PackedAndUnpackedDimension) {
                   },
                   IndexingFactType ::kVariableReference,
               }),
-              // refers to l.
-              T({
-                  {
-                      Anchor(kTestCase.expected_tokens[9], kTestCase.code),
-                  },
-                  IndexingFactType ::kVariableReference,
-              }),
-              // refers to r.
-              T({
-                  {
-                      Anchor(kTestCase.expected_tokens[11], kTestCase.code),
-                  },
-                  IndexingFactType ::kVariableReference,
-              }),
               // refers to x.
-              T({
+              T(
                   {
-                      Anchor(kTestCase.expected_tokens[7], kTestCase.code),
+                      {
+                          Anchor(kTestCase.expected_tokens[7], kTestCase.code),
+                      },
+                      IndexingFactType ::kVariableDefinition,
                   },
-                  IndexingFactType ::kVariableDefinition,
-              })),
+                  // refers to l.
+                  T({
+                      {
+                          Anchor(kTestCase.expected_tokens[9], kTestCase.code),
+                      },
+                      IndexingFactType ::kVariableReference,
+                  }),
+                  // refers to r.
+                  T({
+                      {
+                          Anchor(kTestCase.expected_tokens[11], kTestCase.code),
+                      },
+                      IndexingFactType ::kVariableReference,
+                  }))),
           // refers to module m.
           T(
               {
@@ -3971,27 +3972,28 @@ TEST(FactsTreeExtractor, PackedAndUnpackedDimension) {
                   },
                   IndexingFactType ::kVariableReference,
               }),
-              // refers to e.
-              T({
-                  {
-                      Anchor(kTestCase.expected_tokens[21], kTestCase.code),
-                  },
-                  IndexingFactType ::kVariableReference,
-              }),
-              // refers to t.
-              T({
-                  {
-                      Anchor(kTestCase.expected_tokens[23], kTestCase.code),
-                  },
-                  IndexingFactType ::kVariableReference,
-              }),
               // refers to v.
-              T({
+              T(
                   {
-                      Anchor(kTestCase.expected_tokens[19], kTestCase.code),
+                      {
+                          Anchor(kTestCase.expected_tokens[19], kTestCase.code),
+                      },
+                      IndexingFactType ::kVariableDefinition,
                   },
-                  IndexingFactType ::kVariableDefinition,
-              })))));
+                  // refers to e.
+                  T({
+                      {
+                          Anchor(kTestCase.expected_tokens[21], kTestCase.code),
+                      },
+                      IndexingFactType ::kVariableReference,
+                  }),
+                  // refers to t.
+                  T({
+                      {
+                          Anchor(kTestCase.expected_tokens[23], kTestCase.code),
+                      },
+                      IndexingFactType ::kVariableReference,
+                  }))))));
 
   const auto facts_tree =
       ExtractFiles({std::string(verible::file::Basename(test_file.filename()))},
@@ -4305,6 +4307,856 @@ TEST(FactsTreeExtractor, EnumTest) {
                           },
                           IndexingFactType ::kVariableReference,
                       })))))));
+
+  const auto facts_tree =
+      ExtractFiles({std::string(verible::file::Basename(test_file.filename()))},
+                   exit_status, testing::TempDir());
+
+  const auto result_pair = DeepEqual(facts_tree, expected);
+  EXPECT_EQ(result_pair.left, nullptr) << *result_pair.left;
+  EXPECT_EQ(result_pair.right, nullptr) << *result_pair.right;
+}
+
+TEST(FactsTreeExtractor, StructInModule) {
+  constexpr int kTag = 1;  // value doesn't matter
+  const verible::SyntaxTreeSearchTestCase kTestCase = {
+      {"module ",
+       {kTag, "pkg"},
+       ";\n struct {int ",
+       {kTag, "xx"},
+       ";} ",
+       {kTag, "var1"},
+       ";\nendmodule"},
+  };
+
+  ScopedTestFile test_file(testing::TempDir(), kTestCase.code);
+  int exit_status = 0;
+
+  const IndexingFactNode expected(T(
+      {
+          {
+              Anchor(testing::TempDir(), 0, 0),
+          },
+          IndexingFactType::kFileList,
+      },
+      T(
+          {
+              {
+                  Anchor(test_file.filename(), 0, kTestCase.code.size()),
+                  Anchor(kTestCase.code, 0, kTestCase.code.size()),
+              },
+              IndexingFactType ::kFile,
+          },
+          // refers to module pkg.
+          T(
+              {
+                  {
+                      Anchor(kTestCase.expected_tokens[1], kTestCase.code),
+                  },
+                  IndexingFactType::kModule,
+              },
+              // refers to var1.
+              T(
+                  {
+                      {
+                          Anchor(kTestCase.expected_tokens[5], kTestCase.code),
+                      },
+                      IndexingFactType ::kVariableDefinition,
+                  },
+                  // refers to x.
+                  T({
+                      {
+                          Anchor(kTestCase.expected_tokens[3], kTestCase.code),
+                      },
+                      IndexingFactType ::kVariableDefinition,
+                  }))))));
+
+  const auto facts_tree =
+      ExtractFiles({std::string(verible::file::Basename(test_file.filename()))},
+                   exit_status, testing::TempDir());
+
+  const auto result_pair = DeepEqual(facts_tree, expected);
+  EXPECT_EQ(result_pair.left, nullptr) << *result_pair.left;
+  EXPECT_EQ(result_pair.right, nullptr) << *result_pair.right;
+}
+
+TEST(FactsTreeExtractor, StructInPackage) {
+  constexpr int kTag = 1;  // value doesn't matter
+  const verible::SyntaxTreeSearchTestCase kTestCase = {
+      {"package ",
+       {kTag, "pkg"},
+       ";\n struct {int ",
+       {kTag, "xx"},
+       ";} ",
+       {kTag, "var1"},
+       ";\nendpackage"},
+  };
+
+  ScopedTestFile test_file(testing::TempDir(), kTestCase.code);
+  int exit_status = 0;
+
+  const IndexingFactNode expected(T(
+      {
+          {
+              Anchor(testing::TempDir(), 0, 0),
+          },
+          IndexingFactType::kFileList,
+      },
+      T(
+          {
+              {
+                  Anchor(test_file.filename(), 0, kTestCase.code.size()),
+                  Anchor(kTestCase.code, 0, kTestCase.code.size()),
+              },
+              IndexingFactType ::kFile,
+          },
+          // refers to package pkg.
+          T(
+              {
+                  {
+                      Anchor(kTestCase.expected_tokens[1], kTestCase.code),
+                  },
+                  IndexingFactType::kPackage,
+              },
+              // refers to var1.
+              T(
+                  {
+                      {
+                          Anchor(kTestCase.expected_tokens[5], kTestCase.code),
+                      },
+                      IndexingFactType ::kVariableDefinition,
+                  },
+                  // refers to x.
+                  T({
+                      {
+                          Anchor(kTestCase.expected_tokens[3], kTestCase.code),
+                      },
+                      IndexingFactType ::kVariableDefinition,
+                  }))))));
+
+  const auto facts_tree =
+      ExtractFiles({std::string(verible::file::Basename(test_file.filename()))},
+                   exit_status, testing::TempDir());
+
+  const auto result_pair = DeepEqual(facts_tree, expected);
+  EXPECT_EQ(result_pair.left, nullptr) << *result_pair.left;
+  EXPECT_EQ(result_pair.right, nullptr) << *result_pair.right;
+}
+
+TEST(FactsTreeExtractor, UnionInModule) {
+  constexpr int kTag = 1;  // value doesn't matter
+  const verible::SyntaxTreeSearchTestCase kTestCase = {
+      {"module ",
+       {kTag, "pkg"},
+       ";\n union {int ",
+       {kTag, "xx"},
+       ";} ",
+       {kTag, "var1"},
+       ";\nendmodule"},
+  };
+
+  ScopedTestFile test_file(testing::TempDir(), kTestCase.code);
+  int exit_status = 0;
+
+  const IndexingFactNode expected(T(
+      {
+          {
+              Anchor(testing::TempDir(), 0, 0),
+          },
+          IndexingFactType::kFileList,
+      },
+      T(
+          {
+              {
+                  Anchor(test_file.filename(), 0, kTestCase.code.size()),
+                  Anchor(kTestCase.code, 0, kTestCase.code.size()),
+              },
+              IndexingFactType ::kFile,
+          },
+          // refers to module pkg.
+          T(
+              {
+                  {
+                      Anchor(kTestCase.expected_tokens[1], kTestCase.code),
+                  },
+                  IndexingFactType::kModule,
+              },
+              // refers to var1.
+              T(
+                  {
+                      {
+                          Anchor(kTestCase.expected_tokens[5], kTestCase.code),
+                      },
+                      IndexingFactType ::kVariableDefinition,
+                  },
+                  // refers to x.
+                  T({
+                      {
+                          Anchor(kTestCase.expected_tokens[3], kTestCase.code),
+                      },
+                      IndexingFactType ::kVariableDefinition,
+                  }))))));
+
+  const auto facts_tree =
+      ExtractFiles({std::string(verible::file::Basename(test_file.filename()))},
+                   exit_status, testing::TempDir());
+
+  const auto result_pair = DeepEqual(facts_tree, expected);
+  EXPECT_EQ(result_pair.left, nullptr) << *result_pair.left;
+  EXPECT_EQ(result_pair.right, nullptr) << *result_pair.right;
+}
+
+TEST(FactsTreeExtractor, UnionInPackage) {
+  constexpr int kTag = 1;  // value doesn't matter
+  const verible::SyntaxTreeSearchTestCase kTestCase = {
+      {"package ",
+       {kTag, "pkg"},
+       ";\n union {int ",
+       {kTag, "xx"},
+       ";} ",
+       {kTag, "var1"},
+       ";\nendpackage"},
+  };
+
+  ScopedTestFile test_file(testing::TempDir(), kTestCase.code);
+  int exit_status = 0;
+
+  const IndexingFactNode expected(T(
+      {
+          {
+              Anchor(testing::TempDir(), 0, 0),
+          },
+          IndexingFactType::kFileList,
+      },
+      T(
+          {
+              {
+                  Anchor(test_file.filename(), 0, kTestCase.code.size()),
+                  Anchor(kTestCase.code, 0, kTestCase.code.size()),
+              },
+              IndexingFactType ::kFile,
+          },
+          // refers to package pkg.
+          T(
+              {
+                  {
+                      Anchor(kTestCase.expected_tokens[1], kTestCase.code),
+                  },
+                  IndexingFactType::kPackage,
+              },
+              // refers to var1.
+              T(
+                  {
+                      {
+                          Anchor(kTestCase.expected_tokens[5], kTestCase.code),
+                      },
+                      IndexingFactType ::kVariableDefinition,
+                  },
+                  // refers to x.
+                  T({
+                      {
+                          Anchor(kTestCase.expected_tokens[3], kTestCase.code),
+                      },
+                      IndexingFactType ::kVariableDefinition,
+                  }))))));
+
+  const auto facts_tree =
+      ExtractFiles({std::string(verible::file::Basename(test_file.filename()))},
+                   exit_status, testing::TempDir());
+
+  const auto result_pair = DeepEqual(facts_tree, expected);
+  EXPECT_EQ(result_pair.left, nullptr) << *result_pair.left;
+  EXPECT_EQ(result_pair.right, nullptr) << *result_pair.right;
+}
+
+TEST(FactsTreeExtractor, UnionTypeInPackage) {
+  constexpr int kTag = 1;  // value doesn't matter
+  const verible::SyntaxTreeSearchTestCase kTestCase = {
+      {"package ",
+       {kTag, "pkg"},
+       ";\n typedef union {int ",
+       {kTag, "xx"},
+       ";} ",
+       {kTag, "var1"},
+       ";\nendpackage"},
+  };
+
+  ScopedTestFile test_file(testing::TempDir(), kTestCase.code);
+  int exit_status = 0;
+
+  const IndexingFactNode expected(T(
+      {
+          {
+              Anchor(testing::TempDir(), 0, 0),
+          },
+          IndexingFactType::kFileList,
+      },
+      T(
+          {
+              {
+                  Anchor(test_file.filename(), 0, kTestCase.code.size()),
+                  Anchor(kTestCase.code, 0, kTestCase.code.size()),
+              },
+              IndexingFactType ::kFile,
+          },
+          // refers to package pkg.
+          T(
+              {
+                  {
+                      Anchor(kTestCase.expected_tokens[1], kTestCase.code),
+                  },
+                  IndexingFactType::kPackage,
+              },
+              // refers to var1.
+              T(
+                  {
+                      {
+                          Anchor(kTestCase.expected_tokens[5], kTestCase.code),
+                      },
+                      IndexingFactType ::kStructOrUnion,
+                  },
+                  // refers to x.
+                  T({
+                      {
+                          Anchor(kTestCase.expected_tokens[3], kTestCase.code),
+                      },
+                      IndexingFactType ::kVariableDefinition,
+                  }))))));
+
+  const auto facts_tree =
+      ExtractFiles({std::string(verible::file::Basename(test_file.filename()))},
+                   exit_status, testing::TempDir());
+
+  const auto result_pair = DeepEqual(facts_tree, expected);
+  EXPECT_EQ(result_pair.left, nullptr) << *result_pair.left;
+  EXPECT_EQ(result_pair.right, nullptr) << *result_pair.right;
+}
+
+TEST(FactsTreeExtractor, UnionTypenModule) {
+  constexpr int kTag = 1;  // value doesn't matter
+  const verible::SyntaxTreeSearchTestCase kTestCase = {
+      {"module ",
+       {kTag, "pkg"},
+       ";\n typedef union {int ",
+       {kTag, "xx"},
+       ";} ",
+       {kTag, "var1"},
+       ";\nendmodule"},
+  };
+
+  ScopedTestFile test_file(testing::TempDir(), kTestCase.code);
+  int exit_status = 0;
+
+  const IndexingFactNode expected(T(
+      {
+          {
+              Anchor(testing::TempDir(), 0, 0),
+          },
+          IndexingFactType::kFileList,
+      },
+      T(
+          {
+              {
+                  Anchor(test_file.filename(), 0, kTestCase.code.size()),
+                  Anchor(kTestCase.code, 0, kTestCase.code.size()),
+              },
+              IndexingFactType ::kFile,
+          },
+          // refers to module pkg.
+          T(
+              {
+                  {
+                      Anchor(kTestCase.expected_tokens[1], kTestCase.code),
+                  },
+                  IndexingFactType::kModule,
+              },
+              // refers to var1.
+              T(
+                  {
+                      {
+                          Anchor(kTestCase.expected_tokens[5], kTestCase.code),
+                      },
+                      IndexingFactType ::kStructOrUnion,
+                  },
+                  // refers to x.
+                  T({
+                      {
+                          Anchor(kTestCase.expected_tokens[3], kTestCase.code),
+                      },
+                      IndexingFactType ::kVariableDefinition,
+                  }))))));
+
+  const auto facts_tree =
+      ExtractFiles({std::string(verible::file::Basename(test_file.filename()))},
+                   exit_status, testing::TempDir());
+
+  const auto result_pair = DeepEqual(facts_tree, expected);
+  EXPECT_EQ(result_pair.left, nullptr) << *result_pair.left;
+  EXPECT_EQ(result_pair.right, nullptr) << *result_pair.right;
+}
+
+TEST(FactsTreeExtractor, StructTypeInPackage) {
+  constexpr int kTag = 1;  // value doesn't matter
+  const verible::SyntaxTreeSearchTestCase kTestCase = {
+      {"package ",
+       {kTag, "pkg"},
+       ";\n typedef struct {int ",
+       {kTag, "xx"},
+       ";} ",
+       {kTag, "var1"},
+       ";\nendpackage"},
+  };
+
+  ScopedTestFile test_file(testing::TempDir(), kTestCase.code);
+  int exit_status = 0;
+
+  const IndexingFactNode expected(T(
+      {
+          {
+              Anchor(testing::TempDir(), 0, 0),
+          },
+          IndexingFactType::kFileList,
+      },
+      T(
+          {
+              {
+                  Anchor(test_file.filename(), 0, kTestCase.code.size()),
+                  Anchor(kTestCase.code, 0, kTestCase.code.size()),
+              },
+              IndexingFactType ::kFile,
+          },
+          // refers to package pkg.
+          T(
+              {
+                  {
+                      Anchor(kTestCase.expected_tokens[1], kTestCase.code),
+                  },
+                  IndexingFactType::kPackage,
+              },
+              // refers to var1.
+              T(
+                  {
+                      {
+                          Anchor(kTestCase.expected_tokens[5], kTestCase.code),
+                      },
+                      IndexingFactType ::kStructOrUnion,
+                  },
+                  // refers to x.
+                  T({
+                      {
+                          Anchor(kTestCase.expected_tokens[3], kTestCase.code),
+                      },
+                      IndexingFactType ::kVariableDefinition,
+                  }))))));
+
+  const auto facts_tree =
+      ExtractFiles({std::string(verible::file::Basename(test_file.filename()))},
+                   exit_status, testing::TempDir());
+
+  const auto result_pair = DeepEqual(facts_tree, expected);
+  EXPECT_EQ(result_pair.left, nullptr) << *result_pair.left;
+  EXPECT_EQ(result_pair.right, nullptr) << *result_pair.right;
+}
+
+TEST(FactsTreeExtractor, StructTypedefModule) {
+  constexpr int kTag = 1;  // value doesn't matter
+  const verible::SyntaxTreeSearchTestCase kTestCase = {
+      {"module ",
+       {kTag, "pkg"},
+       ";\n typedef struct {int ",
+       {kTag, "xx"},
+       ";} ",
+       {kTag, "var1"},
+       ";\nendmodule"},
+  };
+
+  ScopedTestFile test_file(testing::TempDir(), kTestCase.code);
+  int exit_status = 0;
+
+  const IndexingFactNode expected(T(
+      {
+          {
+              Anchor(testing::TempDir(), 0, 0),
+          },
+          IndexingFactType::kFileList,
+      },
+      T(
+          {
+              {
+                  Anchor(test_file.filename(), 0, kTestCase.code.size()),
+                  Anchor(kTestCase.code, 0, kTestCase.code.size()),
+              },
+              IndexingFactType ::kFile,
+          },
+          // refers to module pkg.
+          T(
+              {
+                  {
+                      Anchor(kTestCase.expected_tokens[1], kTestCase.code),
+                  },
+                  IndexingFactType::kModule,
+              },
+              // refers to var1.
+              T(
+                  {
+                      {
+                          Anchor(kTestCase.expected_tokens[5], kTestCase.code),
+                      },
+                      IndexingFactType ::kStructOrUnion,
+                  },
+                  // refers to x.
+                  T({
+                      {
+                          Anchor(kTestCase.expected_tokens[3], kTestCase.code),
+                      },
+                      IndexingFactType ::kVariableDefinition,
+                  }))))));
+
+  const auto facts_tree =
+      ExtractFiles({std::string(verible::file::Basename(test_file.filename()))},
+                   exit_status, testing::TempDir());
+
+  const auto result_pair = DeepEqual(facts_tree, expected);
+  EXPECT_EQ(result_pair.left, nullptr) << *result_pair.left;
+  EXPECT_EQ(result_pair.right, nullptr) << *result_pair.right;
+}
+
+TEST(FactsTreeExtractor, StructInUnionType) {
+  constexpr int kTag = 1;  // value doesn't matter
+  const verible::SyntaxTreeSearchTestCase kTestCase = {
+      {"typedef union {\n struct {int ",
+       {kTag, "xx"},
+       ";} ",
+       {kTag, "var1"},
+       ";}",
+       {kTag, "var2"},
+       ";"},
+  };
+
+  ScopedTestFile test_file(testing::TempDir(), kTestCase.code);
+  int exit_status = 0;
+
+  const IndexingFactNode expected(T(
+      {
+          {
+              Anchor(testing::TempDir(), 0, 0),
+          },
+          IndexingFactType::kFileList,
+      },
+      T(
+          {
+              {
+                  Anchor(test_file.filename(), 0, kTestCase.code.size()),
+                  Anchor(kTestCase.code, 0, kTestCase.code.size()),
+              },
+              IndexingFactType ::kFile,
+          },
+          // refers to union var1.
+          T(
+              {
+                  {
+                      Anchor(kTestCase.expected_tokens[5], kTestCase.code),
+                  },
+                  IndexingFactType::kStructOrUnion,
+              },
+              // refers to struct var2.
+              T(
+                  {
+                      {
+                          Anchor(kTestCase.expected_tokens[3], kTestCase.code),
+                      },
+                      IndexingFactType ::kVariableDefinition,
+                  },
+                  // refers to x.
+                  T({
+                      {
+                          Anchor(kTestCase.expected_tokens[1], kTestCase.code),
+                      },
+                      IndexingFactType ::kVariableDefinition,
+                  }))))));
+
+  const auto facts_tree =
+      ExtractFiles({std::string(verible::file::Basename(test_file.filename()))},
+                   exit_status, testing::TempDir());
+
+  const auto result_pair = DeepEqual(facts_tree, expected);
+  EXPECT_EQ(result_pair.left, nullptr) << *result_pair.left;
+  EXPECT_EQ(result_pair.right, nullptr) << *result_pair.right;
+}
+
+TEST(FactsTreeExtractor, StructInUnion) {
+  constexpr int kTag = 1;  // value doesn't matter
+  const verible::SyntaxTreeSearchTestCase kTestCase = {
+      {"union {\n struct {int ",
+       {kTag, "xx"},
+       ";} ",
+       {kTag, "var1"},
+       ";}",
+       {kTag, "var2"},
+       ";"},
+  };
+
+  ScopedTestFile test_file(testing::TempDir(), kTestCase.code);
+  int exit_status = 0;
+
+  const IndexingFactNode expected(T(
+      {
+          {
+              Anchor(testing::TempDir(), 0, 0),
+          },
+          IndexingFactType::kFileList,
+      },
+      T(
+          {
+              {
+                  Anchor(test_file.filename(), 0, kTestCase.code.size()),
+                  Anchor(kTestCase.code, 0, kTestCase.code.size()),
+              },
+              IndexingFactType ::kFile,
+          },
+          // refers to union var1.
+          T(
+              {
+                  {
+                      Anchor(kTestCase.expected_tokens[5], kTestCase.code),
+                  },
+                  IndexingFactType::kVariableDefinition,
+              },
+              // refers to struct var2.
+              T(
+                  {
+                      {
+                          Anchor(kTestCase.expected_tokens[3], kTestCase.code),
+                      },
+                      IndexingFactType ::kVariableDefinition,
+                  },
+                  // refers to x.
+                  T({
+                      {
+                          Anchor(kTestCase.expected_tokens[1], kTestCase.code),
+                      },
+                      IndexingFactType ::kVariableDefinition,
+                  }))))));
+
+  const auto facts_tree =
+      ExtractFiles({std::string(verible::file::Basename(test_file.filename()))},
+                   exit_status, testing::TempDir());
+
+  const auto result_pair = DeepEqual(facts_tree, expected);
+  EXPECT_EQ(result_pair.left, nullptr) << *result_pair.left;
+  EXPECT_EQ(result_pair.right, nullptr) << *result_pair.right;
+}
+
+TEST(FactsTreeExtractor, UnionInStructType) {
+  constexpr int kTag = 1;  // value doesn't matter
+  const verible::SyntaxTreeSearchTestCase kTestCase = {
+      {"typedef struct {\n union {int ",
+       {kTag, "xx"},
+       ";} ",
+       {kTag, "var1"},
+       ";}",
+       {kTag, "var2"},
+       ";"},
+  };
+
+  ScopedTestFile test_file(testing::TempDir(), kTestCase.code);
+  int exit_status = 0;
+
+  const IndexingFactNode expected(T(
+      {
+          {
+              Anchor(testing::TempDir(), 0, 0),
+          },
+          IndexingFactType::kFileList,
+      },
+      T(
+          {
+              {
+                  Anchor(test_file.filename(), 0, kTestCase.code.size()),
+                  Anchor(kTestCase.code, 0, kTestCase.code.size()),
+              },
+              IndexingFactType ::kFile,
+          },
+          // refers to union var1.
+          T(
+              {
+                  {
+                      Anchor(kTestCase.expected_tokens[5], kTestCase.code),
+                  },
+                  IndexingFactType::kStructOrUnion,
+              },
+              // refers to struct var2.
+              T(
+                  {
+                      {
+                          Anchor(kTestCase.expected_tokens[3], kTestCase.code),
+                      },
+                      IndexingFactType ::kVariableDefinition,
+                  },
+                  // refers to x.
+                  T({
+                      {
+                          Anchor(kTestCase.expected_tokens[1], kTestCase.code),
+                      },
+                      IndexingFactType ::kVariableDefinition,
+                  }))))));
+
+  const auto facts_tree =
+      ExtractFiles({std::string(verible::file::Basename(test_file.filename()))},
+                   exit_status, testing::TempDir());
+
+  const auto result_pair = DeepEqual(facts_tree, expected);
+  EXPECT_EQ(result_pair.left, nullptr) << *result_pair.left;
+  EXPECT_EQ(result_pair.right, nullptr) << *result_pair.right;
+}
+
+TEST(FactsTreeExtractor, UnionInStruct) {
+  constexpr int kTag = 1;  // value doesn't matter
+  const verible::SyntaxTreeSearchTestCase kTestCase = {
+      {"struct {\n union {int ",
+       {kTag, "xx"},
+       ";} ",
+       {kTag, "var1"},
+       ";}",
+       {kTag, "var2"},
+       ";"},
+  };
+
+  ScopedTestFile test_file(testing::TempDir(), kTestCase.code);
+  int exit_status = 0;
+
+  const IndexingFactNode expected(T(
+      {
+          {
+              Anchor(testing::TempDir(), 0, 0),
+          },
+          IndexingFactType::kFileList,
+      },
+      T(
+          {
+              {
+                  Anchor(test_file.filename(), 0, kTestCase.code.size()),
+                  Anchor(kTestCase.code, 0, kTestCase.code.size()),
+              },
+              IndexingFactType ::kFile,
+          },
+          // refers to union var1.
+          T(
+              {
+                  {
+                      Anchor(kTestCase.expected_tokens[5], kTestCase.code),
+                  },
+                  IndexingFactType::kVariableDefinition,
+              },
+              // refers to struct var2.
+              T(
+                  {
+                      {
+                          Anchor(kTestCase.expected_tokens[3], kTestCase.code),
+                      },
+                      IndexingFactType ::kVariableDefinition,
+                  },
+                  // refers to x.
+                  T({
+                      {
+                          Anchor(kTestCase.expected_tokens[1], kTestCase.code),
+                      },
+                      IndexingFactType ::kVariableDefinition,
+                  }))))));
+
+  const auto facts_tree =
+      ExtractFiles({std::string(verible::file::Basename(test_file.filename()))},
+                   exit_status, testing::TempDir());
+
+  const auto result_pair = DeepEqual(facts_tree, expected);
+  EXPECT_EQ(result_pair.left, nullptr) << *result_pair.left;
+  EXPECT_EQ(result_pair.right, nullptr) << *result_pair.right;
+}
+
+TEST(FactsTreeExtractor, TypedVariable) {
+  constexpr int kTag = 1;  // value doesn't matter
+  const verible::SyntaxTreeSearchTestCase kTestCase = {
+      {
+          "package ",
+          {kTag, "m"},
+          ";\n",
+          {kTag, "some_type"},
+          " ",
+          {kTag, "var1"},
+          ";\nendpackage\nmodule ",
+          {kTag, "m"},
+          "();\n",
+          {kTag, "some_type1"},
+          " ",
+          {kTag, "var2"},
+          ";\nendmodule",
+      },
+  };
+
+  ScopedTestFile test_file(testing::TempDir(), kTestCase.code);
+  int exit_status = 0;
+
+  const IndexingFactNode expected(T(
+      {
+          {
+              Anchor(testing::TempDir(), 0, 0),
+          },
+          IndexingFactType::kFileList,
+      },
+      T(
+          {
+              {
+                  Anchor(test_file.filename(), 0, kTestCase.code.size()),
+                  Anchor(kTestCase.code, 0, kTestCase.code.size()),
+              },
+              IndexingFactType ::kFile,
+          },
+          // refers to package m.
+          T(
+              {
+                  {
+                      Anchor(kTestCase.expected_tokens[1], kTestCase.code),
+                  },
+                  IndexingFactType ::kPackage,
+              },
+              // refers to some_type.
+              T(
+                  {
+                      {
+                          Anchor(kTestCase.expected_tokens[3], kTestCase.code),
+                      },
+                      IndexingFactType::kDataTypeReference,
+                  },
+                  // refers to var1.
+                  T({
+                      {
+                          Anchor(kTestCase.expected_tokens[5], kTestCase.code),
+                      },
+                      IndexingFactType ::kVariableDefinition,
+                  }))),
+          // refers to module m.
+          T(
+              {
+                  {
+                      Anchor(kTestCase.expected_tokens[7], kTestCase.code),
+                  },
+                  IndexingFactType ::kModule,
+              },
+              // refers to some_type1.
+              T(
+                  {
+                      {
+                          Anchor(kTestCase.expected_tokens[9], kTestCase.code),
+                      },
+                      IndexingFactType::kDataTypeReference,
+                  },
+                  // refers to var2.
+                  T({
+                      {
+                          Anchor(kTestCase.expected_tokens[11], kTestCase.code),
+                      },
+                      IndexingFactType ::kVariableDefinition,
+                  }))))));
 
   const auto facts_tree =
       ExtractFiles({std::string(verible::file::Basename(test_file.filename()))},

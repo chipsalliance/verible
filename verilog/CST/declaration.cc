@@ -96,7 +96,8 @@ const SyntaxTreeNode* GetQualifiersOfDataDeclaration(
   return verible::CheckOptionalSymbolAsNode(quals, NodeEnum::kQualifierList);
 }
 
-const SyntaxTreeNode& GetTypeOfDataDeclaration(const Symbol& data_declaration) {
+const SyntaxTreeNode& GetInstantiationTypeOfDataDeclaration(
+    const Symbol& data_declaration) {
   return GetSubtreeAsNode(
       GetInstantiationBaseFromDataDeclaration(data_declaration),
       NodeEnum::kInstantiationBase, 0);
@@ -109,21 +110,10 @@ const SyntaxTreeNode& GetInstanceListFromDataDeclaration(
       NodeEnum::kInstantiationBase, 1);
 }
 
-const verible::TokenInfo& GetTypeTokenInfoFromDataDeclaration(
-    const verible::Symbol& data_declaration) {
-  const SyntaxTreeNode& instantiation_type =
-      GetTypeOfDataDeclaration(data_declaration);
-  const SyntaxTreeNode& unqualified_id =
-      GetUnqualifiedIdFromInstantiationType(instantiation_type);
-  const verible::SyntaxTreeLeaf* instance_symbol_identifier =
-      GetIdentifier(unqualified_id);
-  return instance_symbol_identifier->get();
-}
-
 const verible::SyntaxTreeNode* GetParamListFromDataDeclaration(
     const verible::Symbol& data_declaration) {
   const SyntaxTreeNode& instantiation_type =
-      GetTypeOfDataDeclaration(data_declaration);
+      GetInstantiationTypeOfDataDeclaration(data_declaration);
   return GetParamListFromInstantiationType(instantiation_type);
 }
 
@@ -175,7 +165,7 @@ const verible::SyntaxTreeNode* GetTrailingExpressionFromRegisterVariable(
 const verible::SyntaxTreeNode* GetPackedDimensionFromDataDeclaration(
     const verible::Symbol& data_declaration) {
   const verible::SyntaxTreeNode& instantiation_type =
-      GetTypeOfDataDeclaration(data_declaration);
+      GetInstantiationTypeOfDataDeclaration(data_declaration);
   const verible::Symbol* data_type = verible::GetSubtreeAsSymbol(
       instantiation_type, NodeEnum::kInstantiationType, 0);
 
@@ -211,6 +201,37 @@ GetUnpackedDimensionFromVariableDeclarationAssign(
   return verible::GetSubtreeAsNode(variable_declaration_assign,
                                    NodeEnum::kVariableDeclarationAssignment, 1,
                                    NodeEnum::kUnpackedDimensions);
+}
+
+const verible::SyntaxTreeLeaf* GetTypeIdentifierFromDataDeclaration(
+    const verible::Symbol& data_declaration) {
+  const SyntaxTreeNode& instantiation_type =
+      GetInstantiationTypeOfDataDeclaration(data_declaration);
+
+  const verible::SyntaxTreeLeaf* identifier =
+      GetTypeIdentifierFromInstantiationType(instantiation_type);
+  if (identifier != nullptr) {
+    return identifier;
+  }
+
+  const SyntaxTreeNode* unqualified_id =
+      GetUnqualifiedIdFromInstantiationType(instantiation_type);
+  if (unqualified_id != nullptr) {
+    // TODO(minatoma): refactor AutoUnwrapIdentifier to take qualified id and
+    // get rid of this condition.
+    if (NodeEnum(unqualified_id->Tag().tag) != NodeEnum::kUnqualifiedId) {
+      return nullptr;
+    }
+    return AutoUnwrapIdentifier(*unqualified_id);
+  }
+  return nullptr;
+}
+
+const verible::SyntaxTreeNode* GetStructOrUnionOrEnumTypeFromDataDeclaration(
+    const verible::Symbol& data_declaration) {
+  const SyntaxTreeNode& instantiation_type =
+      GetInstantiationTypeOfDataDeclaration(data_declaration);
+  return GetStructOrUnionOrEnumTypeFromInstantiationType(instantiation_type);
 }
 
 }  // namespace verilog

@@ -41,6 +41,7 @@ enum class IndexingFactType {
   kModuleNamedPort,
   kNamedParam,
   kVariableDefinition,
+  kStructOrUnion,
   kInclude,
   kVariableReference,
   kFunctionOrTask,

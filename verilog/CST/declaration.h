@@ -110,13 +110,8 @@ const verible::SyntaxTreeNode* GetQualifiersOfDataDeclaration(
 // this returns the subtree spanning "foo #(...)".
 // It is possible for type to be implicit, in which case, the node
 // will be an empty subtree.
-const verible::SyntaxTreeNode& GetTypeOfDataDeclaration(
+const verible::SyntaxTreeNode& GetInstantiationTypeOfDataDeclaration(
     const verible::Symbol& data_declaration);
-
-// For a given data declaration returns the TokenInfo of the module type.
-// e.g. bar b1() returns the TokenInfo for "bar" in instantiation.
-const verible::TokenInfo& GetTypeTokenInfoFromDataDeclaration(
-    const verible::Symbol&);
 
 // For a given data declaration returns the node spanning param declaration
 // list. e.g module_type #(N) return the node for "(N)".
@@ -175,6 +170,18 @@ const verible::SyntaxTreeNode& GetUnpackedDimensionFromRegisterVariable(
 const verible::SyntaxTreeNode&
 GetUnpackedDimensionFromVariableDeclarationAssign(
     const verible::Symbol& variable_declaration_assign);
+
+// Returns the type name from data declaration (if exists).
+// The type can be inside a node tagged with kDataType or kLocalRoot.
+// e.g module_type m();  return "module_type".
+// e.g some_type m; return "some_type".
+const verible::SyntaxTreeLeaf* GetTypeIdentifierFromDataDeclaration(
+    const verible::Symbol&);
+
+// Returns the node tagged with kStructType, kEnumType or kUnionType from node
+// tagged with kDataDeclaration.
+const verible::SyntaxTreeNode* GetStructOrUnionOrEnumTypeFromDataDeclaration(
+    const verible::Symbol&);
 
 }  // namespace verilog
 
