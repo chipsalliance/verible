@@ -213,7 +213,10 @@ cc_library(
 cc_library(
     name = "bijective_map",
     hdrs = ["bijective_map.h"],
-    deps = [":forward"],
+    deps = [
+        ":forward",
+        ":logging",
+    ],
 )
 
 cc_library(

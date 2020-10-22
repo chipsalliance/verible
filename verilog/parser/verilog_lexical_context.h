@@ -22,6 +22,7 @@
 
 #include "common/text/token_info.h"
 #include "common/text/token_stream_view.h"
+#include "common/util/with_reason.h"
 
 namespace verilog {
 
@@ -262,7 +263,7 @@ class LexicalContext {
   // State functions:
 
   bool ExpectingStatement() const;
-  bool ExpectingBodyItemStart() const;
+  verible::WithReason<bool> ExpectingBodyItemStart() const;
 
   bool InFlowControlHeader() const;
   bool InModuleDeclarationHeader() const {

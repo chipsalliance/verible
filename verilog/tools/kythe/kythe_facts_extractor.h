@@ -140,6 +140,12 @@ class KytheFactsExtractor {
   // Extracts kythe facts from module instance node and returns it VName.
   VName ExtractModuleInstance(const IndexingFactNode&);
 
+  // Extracts kythe facts from interface node and returns it VName.
+  VName ExtractInterfaceFact(const IndexingFactNode& interface_fact_node);
+
+  // Extracts kythe facts from program node and returns it VName.
+  VName ExtractProgramFact(const IndexingFactNode& program_fact_node);
+
   // Extracts kythe facts from module named port node e.g("m(.in1(a))").
   void ExtractModuleNamedPort(const IndexingFactNode&);
 
