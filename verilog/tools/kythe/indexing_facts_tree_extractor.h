@@ -230,7 +230,7 @@ class IndexingFactsTreeExtractor : public verible::TreeContextVisitor {
 
   // Copies the anchors and children from the the last sibling of
   // facts_tree_context_, adds them to the new_node and pops that sibling.
-  void CopyAndDeleteLasSibling(IndexingFactNode& new_node);
+  void MoveAndDeleteLastSibling(IndexingFactNode& new_node);
 
   // The Root of the constructed tree
   IndexingFactNode root_{IndexingNodeData(IndexingFactType::kFile)};

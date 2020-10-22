@@ -83,10 +83,14 @@ class IndexingNodeData {
     anchors_.insert(anchors_.end(), anchors.begin(), anchors.end());
   }
 
+  // Swaps the anchors with the given IndexingNodeData.
+  void SwapAnchors(IndexingNodeData* other) { anchors_.swap(other->Anchors()); }
+
   // This function is for debugging only and isn't intended to be textual
   // representation of this class.
   std::ostream& DebugString(std::ostream* stream) const;
 
+  std::vector<Anchor>& Anchors() { return anchors_; }
   const std::vector<Anchor>& Anchors() const { return anchors_; }
   IndexingFactType GetIndexingFactType() const { return indexing_fact_type_; }
 

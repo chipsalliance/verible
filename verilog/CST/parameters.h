@@ -115,7 +115,7 @@ const verible::SyntaxTreeLeaf* GetIdentifierLeafFromTypeAssignment(
 
 // Returns a pointer to the expression node holding under the node
 // kTypeAssignment.
-// e.g "from class m(type x = y)" returns the node spanning "y".
+// e.g from "class m(type x = y)" returns the node spanning "y".
 const verible::SyntaxTreeNode* GetExpressionFromTypeAssignment(
     const verible::Symbol&);
 

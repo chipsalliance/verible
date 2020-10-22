@@ -834,8 +834,9 @@ void IndexingFactsTreeExtractor::ExtractFunctionOrTaskCall(
       GetIdentifiersFromFunctionCall(function_call_node);
   Visit(identifiers);
 
-  // Move the data from the last sibling to the current node and delete it.
-  CopyAndDeleteLasSibling(function_node);
+  // Move the data from the last sibling to the current node and delete that
+  // sibling.
+  MoveAndDeleteLastSibling(function_node);
 
   {
     const IndexingFactsTreeContext::AutoPop p(&facts_tree_context_,
@@ -853,8 +854,9 @@ void IndexingFactsTreeExtractor::ExtractMethodCallExtension(
   IndexingFactNode function_node(
       IndexingNodeData{IndexingFactType::kFunctionCall});
 
-  // Move the data from the last sibling to the current node and delete it.
-  CopyAndDeleteLasSibling(function_node);
+  // Move the data from the last sibling to the current node and delete that
+  // sibling
+  MoveAndDeleteLastSibling(function_node);
 
   const SyntaxTreeLeaf& function_name =
       GetFunctionCallNameFromCallExtension(call_extension_node);
@@ -878,7 +880,9 @@ void IndexingFactsTreeExtractor::ExtractMemberExtension(
   IndexingFactNode member_node(
       IndexingNodeData{IndexingFactType::kMemberReference});
 
-  CopyAndDeleteLasSibling(member_node);
+  // Move the data from the last sibling to the current node and delete that
+  // sibling
+  MoveAndDeleteLastSibling(member_node);
 
   // Append the member name to the current anchors.
   const SyntaxTreeLeaf& member_name =
@@ -1454,25 +1458,21 @@ void IndexingFactsTreeExtractor::ExtractTypeDeclaration(
   }
 }
 
-void IndexingFactsTreeExtractor::CopyAndDeleteLasSibling(
+void IndexingFactsTreeExtractor::MoveAndDeleteLastSibling(
     IndexingFactNode& new_node) {
   // Terminate if there is no parent or the parent has no children.
   if (facts_tree_context_.empty() || facts_tree_context_.top().is_leaf()) {
     return;
   }
 
-  const IndexingFactNode& previous_node =
-      facts_tree_context_.top().Children().back();
+  // Get The last sibling.
+  IndexingFactNode& previous_node = facts_tree_context_.top().Children().back();
 
   // Fill the anchors of the previous node to the current node.
-  for (const Anchor& anchor : previous_node.Value().Anchors()) {
-    new_node.Value().AppendAnchor(anchor);
-  }
+  new_node.Value().SwapAnchors(&previous_node.Value());
 
   // Move the children of the previous node to this node.
-  for (const IndexingFactNode& child : previous_node.Children()) {
-    new_node.NewChild(child);
-  }
+  new_node.AdoptSubtreesFrom(&previous_node);
 
   // The node is removed so that it can be treated as a function call.
   facts_tree_context_.top().Children().pop_back();
