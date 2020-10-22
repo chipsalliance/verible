@@ -568,6 +568,14 @@ TEST(FindAllParamTest, FindExpressionFromParameterType) {
       {"class foo; localparam type Bar = ", {kTag, "1"}, "; endclass"},
       {"package foo; parameter type Bar = ", {kTag, "1"}, "; endpackage"},
       {"parameter type Bar = ", {kTag, "1"}, ";"},
+      {"module foo #(parameter type Bar = int); endmodule"},
+      {"module foo #(parameter type Bar = ", {kTag, "Foo#(1)"}, "); endmodule"},
+      {"module foo #(parameter type Bar = ",
+       {kTag, "Foo#(int)"},
+       "); endmodule"},
+      {"module foo #(parameter type Bar = ",
+       {kTag, "Foo#(Baz#(int))"},
+       "); endmodule"},
   };
   for (const auto& test : kTestCases) {
     TestVerilogSyntaxRangeMatches(

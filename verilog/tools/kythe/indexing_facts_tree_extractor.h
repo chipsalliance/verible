@@ -200,9 +200,9 @@ class IndexingFactsTreeExtractor : public verible::TreeContextVisitor {
   // module instance, class instance or primitive variable.
   void ExtractDataDeclaration(const verible::SyntaxTreeNode& data_declaration);
 
-  // Copies the anchors and children from the the last child of the top node of
-  // facts_tree_context_, adds them to the new_node and pops that last child.
-  void CopyAndDeleteLastNode(IndexingFactNode& new_node);
+  // Copies the anchors and children from the the last sibling of
+  // facts_tree_context_, adds them to the new_node and pops that sibling.
+  void CopyAndDeleteLasSibling(IndexingFactNode& new_node);
 
   // The Root of the constructed tree
   IndexingFactNode root_{IndexingNodeData(IndexingFactType::kFile)};

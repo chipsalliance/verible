@@ -435,6 +435,7 @@ void IndexingFactsTreeExtractor::ExtractModulePort(
   }
 
   // Extract unpacked and packed dimensions.
+  // Visits the children and ignore the kUnqualifiedId node.
   Visit(module_port_node, {NodeEnum::kUnqualifiedId}, true);
 }
 
@@ -723,7 +724,8 @@ void IndexingFactsTreeExtractor::ExtractFunctionOrTaskCall(
       GetIdentifiersFromFunctionCall(function_call_node);
   Visit(identifiers);
 
-  CopyAndDeleteLastNode(function_node);
+  // Move the data from the last sibling to the current node and delete it.
+  CopyAndDeleteLasSibling(function_node);
 
   {
     const IndexingFactsTreeContext::AutoPop p(&facts_tree_context_,
@@ -741,7 +743,8 @@ void IndexingFactsTreeExtractor::ExtractMethodCallExtension(
   IndexingFactNode function_node(
       IndexingNodeData{IndexingFactType::kFunctionCall});
 
-  CopyAndDeleteLastNode(function_node);
+  // Move the data from the last sibling to the current node and delete it.
+  CopyAndDeleteLasSibling(function_node);
 
   const SyntaxTreeLeaf& function_name =
       GetFunctionCallNameFromCallExtension(call_extension_node);
@@ -765,7 +768,7 @@ void IndexingFactsTreeExtractor::ExtractMemberExtension(
   IndexingFactNode member_node(
       IndexingNodeData{IndexingFactType::kMemberReference});
 
-  CopyAndDeleteLastNode(member_node);
+  CopyAndDeleteLasSibling(member_node);
 
   // Append the member name to the current anchors.
   const SyntaxTreeLeaf& member_name =
@@ -978,11 +981,11 @@ void IndexingFactsTreeExtractor::ExtractParamDeclaration(
       {
         const IndexingFactsTreeContext::AutoPop p(&facts_tree_context_,
                                                   &param_node);
-        Visit(verible::SymbolCastToNode(*expression));
+        Visit(*expression);
       }
     }
   } else {
-    // 2st => parameter int x;
+    // 2nd => parameter int x;
     // Extract Param name.
     const verible::TokenInfo& param_name =
         GetParameterNameToken(param_declaration);
@@ -1213,7 +1216,7 @@ void IndexingFactsTreeExtractor::ExtractTypeDeclaration(
   }
 }
 
-void IndexingFactsTreeExtractor::CopyAndDeleteLastNode(
+void IndexingFactsTreeExtractor::CopyAndDeleteLasSibling(
     IndexingFactNode& new_node) {
   // Terminate if there is no parent or the parent has no children.
   if (facts_tree_context_.empty() || facts_tree_context_.top().is_leaf()) {

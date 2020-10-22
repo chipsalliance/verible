@@ -26,6 +26,16 @@ module my_module();
     //- @Stack ref Stack
     //- @real_stack defines/binding _
     Stack #(real) real_stack = new();
+    
+    //- @#0Stack ref Stack
+    //- @#1Stack ref Stack
+    //- @instance1 defines/binding _
+    Stack#(Stack#(int)) instance1 = new;
+
+    //- @#0Vector ref Vector
+    //- @#1Vector ref Vector
+    //- @instance2 defines/binding _
+    Vector#(Vector#(int)) instance2 = new;
 
     //- @Vector ref Vector
     //- @v1 defines/binding _

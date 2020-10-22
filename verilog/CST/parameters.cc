@@ -147,11 +147,11 @@ const verible::SyntaxTreeNode* GetTypeAssignmentFromParamDeclaration(
       verible::GetSubtreeAsNode(symbol, NodeEnum::kParamDeclaration, 2);
   const auto assignment_tag = assignment_symbol.Tag();
 
+  // TODO(fangism): restructure CST for consistency and simplify this logic
   // Check which type of node it is.
   if (NodeEnum(assignment_tag.tag) == NodeEnum::kTypeAssignment) {
     return &assignment_symbol;
-  } else if (NodeEnum(assignment_tag.tag) == NodeEnum::kTypeAssignment ||
-             NodeEnum(assignment_tag.tag) == NodeEnum::kTypeAssignmentList) {
+  } else if (NodeEnum(assignment_tag.tag) == NodeEnum::kTypeAssignmentList) {
     const auto& type_symbol = verible::GetSubtreeAsNode(
         assignment_symbol, NodeEnum::kTypeAssignmentList, 0,
         NodeEnum::kTypeAssignment);

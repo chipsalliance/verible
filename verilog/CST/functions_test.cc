@@ -542,6 +542,9 @@ TEST(FunctionCallTest, GetFunctionCallName) {
       {"module m;\nendmodule"},
       {"module m;\ninitial begin\n", {kTag, "f1"}, "();\nend\nendmodule"},
       {"module m;\ninitial begin\n", {kTag, "pkg::f1"}, "();\nend\nendmodule"},
+      {"module m;\ninitial begin\n",
+       {kTag, "class_name#(1)::f1"},
+       "(a, b, c);\nend\nendmodule"},
   };
 
   for (const auto& test : kTestCases) {

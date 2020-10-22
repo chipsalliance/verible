@@ -720,7 +720,7 @@ TEST(FactsTreeExtractor, ClassParams) {
                   },
                   IndexingFactType::kClass,
               },
-              // refers to paramter x
+              // refers to parameter x
               T({
                   {
                       Anchor(kTestCase.expected_tokens[3], kTestCase.code),
@@ -751,9 +751,9 @@ TEST(FactsTreeExtractor, ClassTypeParams) {
        {kTag, "my_class"},
        " #(type ",
        {kTag, "x"},
-       " = 4, ",
+       " = int, ",
        {kTag, "y"},
-       " = 4); endclass"},
+       " = int); endclass"},
   };
 
   ScopedTestFile test_file(testing::TempDir(), kTestCase.code);
@@ -782,7 +782,7 @@ TEST(FactsTreeExtractor, ClassTypeParams) {
                   },
                   IndexingFactType::kClass,
               },
-              // refers to paramter x
+              // refers to parameter x
               T({
                   {
                       Anchor(kTestCase.expected_tokens[3], kTestCase.code),

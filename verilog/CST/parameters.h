@@ -115,6 +115,7 @@ const verible::SyntaxTreeLeaf* GetIdentifierLeafFromTypeAssignment(
 
 // Returns a pointer to the expression node holding under the node
 // kTypeAssignment.
+// e.g "from class m(type x = y)" returns the node spanning "y".
 const verible::SyntaxTreeNode* GetExpressionFromTypeAssignment(
     const verible::Symbol&);
 
@@ -122,13 +123,13 @@ const verible::SyntaxTreeNode* GetExpressionFromTypeAssignment(
 bool IsTypeInfoEmpty(const verible::Symbol&);
 
 // Return the node spanning param name from a node tagged with kParamByName.
-// e.g module_type #(.N(x)) return the leaf spanning "N".
+// e.g from "module_type #(.N(x))" return the leaf spanning "N".
 const verible::SyntaxTreeLeaf& GetNamedParamFromActualParam(
     const verible::Symbol&);
 
 // Return the node spanning the paren group from a node tagged with
 // kParamByName.
-// e.g module_type #(.N(x)) return the leaf spanning "(x)".
+// e.g from "module_type #(.N(x))" return the leaf spanning "(x)".
 const verible::SyntaxTreeNode* GetParenGroupFromActualParam(
     const verible::Symbol&);
 

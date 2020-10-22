@@ -50,6 +50,7 @@ Signature CreateGlobalSignature(absl::string_view file_path) {
 std::vector<std::string> GetListOfReferencesfromListOfAnchor(
     const std::vector<Anchor>& anchors) {
   std::vector<std::string> references;
+  references.reserve(anchors.size());
   for (const auto& anchor : anchors) {
     references.push_back(anchor.Value());
   }
@@ -58,8 +59,8 @@ std::vector<std::string> GetListOfReferencesfromListOfAnchor(
 
 // Returns the list of references from the given anchors list and appends the
 // second Anchor to the end of the list.
-std::vector<std::string> GetListOfReferences(const std::vector<Anchor>& anchors,
-                                             const Anchor& anchor) {
+std::vector<std::string> ConcatenateReferences(
+    const std::vector<Anchor>& anchors, const Anchor& anchor) {
   std::vector<std::string> references(
       GetListOfReferencesfromListOfAnchor(anchors));
   references.push_back(anchor.Value());
@@ -439,7 +440,7 @@ void KytheFactsExtractor::ExtractNamedParam(
   // Search inside the found module or class for the referenced parameter.
   const std::vector<const VName*> param_vnames =
       scope_resolver_->SearchForDefinitions(
-          GetListOfReferences(parent_data_type, param_name));
+          ConcatenateReferences(parent_data_type, param_name));
 
   // Check if all the references are found.
   if (param_vnames.size() != parent_data_type.size() + 1) {
@@ -462,7 +463,7 @@ void KytheFactsExtractor::ExtractModuleNamedPort(
 
   const std::vector<const VName*> actual_port_vnames =
       scope_resolver_->SearchForDefinitions(
-          GetListOfReferences(module_type, port_name));
+          ConcatenateReferences(module_type, port_name));
 
   if (actual_port_vnames.size() != 2) {
     return;

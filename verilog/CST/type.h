@@ -84,6 +84,7 @@ const verible::SyntaxTreeNode& GetLocalRootFromReference(
 
 // Extracts kUnqualifiedId or kQualifiedId node from nodes tagged with
 // kLocalRoot.
+// e.g from "pkg::some_type var1" return "pkg::some_type".
 const verible::SyntaxTreeNode& GetIdentifiersFromLocalRoot(
     const verible::Symbol& local_root);
 
@@ -101,6 +102,7 @@ const verible::SyntaxTreeNode& GetUnqualifiedIdFromInstantiationType(
 
 // For a given unqualified id node returns the node spanning param
 // declaration.
+// e.g from "class_name#(x, y)" returns returns the node spanning "#(x, y)".
 const verible::SyntaxTreeNode* GetParamListFromUnqualifiedId(
     const verible::Symbol& unqualified_id);
 
@@ -110,7 +112,7 @@ const verible::SyntaxTreeNode* GetParamListFromInstantiationType(
     const verible::Symbol& instantiation_type);
 
 // Extracts symbol identifier node from node tagged with kEnumName.
-// e.g enum {first} extracts "first".
+// e.g from "enum {first}" extracts "first".
 const verible::SyntaxTreeLeaf& GetSymbolIdentifierFromEnumName(
     const verible::Symbol& enum_name);
 
