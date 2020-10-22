@@ -47,6 +47,10 @@ changes you introduce come with test code to protect against future regression.
 Prefer unit-tests in most cases, and end-to-end tests in others. We also welcome
 contributions that contain _only_ test cases (where no code change is needed)!
 
+We encourage you to start on any open issue by proposing test cases for
+discussion before diving into any implementation. Where applicable, also
+consider _negative_ tests. Try to keep the majority of tests small and focused.
+
 ## Community Guidelines
 
 This project follows

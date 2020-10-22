@@ -33,3 +33,10 @@ endpackage
 //- @my_module defines/binding _
 module my_module; endmodule
 
+//- @my_program defines/binding _
+program my_program; endprogram
+
+//- @my_interface defines/binding _
+interface my_interface; endinterface
+
+

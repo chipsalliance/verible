@@ -193,6 +193,7 @@ const verible::Symbol* TryDescentPath(
     const verible::Symbol& symbol, std::initializer_list<EnumTokenIndex> path) {
   const verible::Symbol* value = &symbol;
   for (auto p : path) {
+    if (NodeEnum(value->Tag().tag) != p.expected_type) return nullptr;
     value = GetSubtreeAsSymbol(*value, p.expected_type, p.next_index);
     if (value == nullptr) return nullptr;
   }

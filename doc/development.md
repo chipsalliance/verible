@@ -15,6 +15,14 @@ search syntax and more.
 To learn more about how to use Kythe to
 [index the source code yourself, read here](./indexing.md).
 
+### Tips
+
+*   Read the test code. Most `.h` and `.cc` files come with a `_test.cc` set of
+    unit tests. The tests are never outdated because they are kept passing.
+*   Find examples. Dig through history. Follow blame and annotation layers to
+    see when particular lines of code were touched. Look for related closed
+    issues and see the commits that addressed them.
+
 ## Code Organization
 
 Each directory in the source tree contains a short README.md describing the

@@ -46,17 +46,23 @@ class IndexingFactsTreeExtractor : public verible::TreeContextVisitor {
   void Visit(const verible::SyntaxTreeLeaf& leaf) override;
   void Visit(const verible::SyntaxTreeNode& node) override;
 
-  // Traveres the children of the given node and ignores the children with the
-  // given tags.
-  void Visit(const verible::SyntaxTreeNode& node,
-             const std::initializer_list<verilog::NodeEnum>& ignored_node_tags,
-             bool ignore_leaves);
-
   IndexingFactNode& GetRoot() { return root_; }
 
  private:
+  // Extracts facts from module, intraface and program declarations.
+  void ExtractModuleOrInterfaceOrProgram(
+      const verible::SyntaxTreeNode& declaration_node,
+      IndexingFactNode& facts_node);
+
   // Extracts modules and creates its corresponding fact tree.
   void ExtractModule(const verible::SyntaxTreeNode& module_declaration_node);
+
+  // Extracts interfaces and creates its corresponding fact tree.
+  void ExtractInterface(
+      const verible::SyntaxTreeNode& interface_declaration_node);
+
+  // Extracts programs and creates its corresponding fact tree.
+  void ExtractProgram(const verible::SyntaxTreeNode& program_declaration_node);
 
   // Extracts modules instantiations and creates its corresponding fact tree.
   void ExtractModuleInstantiation(

@@ -35,6 +35,7 @@
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 #include "absl/memory/memory.h"
+#include "absl/strings/match.h"
 #include "absl/strings/string_view.h"
 #include "common/text/text_structure.h"
 #include "common/text/token_info.h"
@@ -53,6 +54,24 @@ namespace {
 using verible::TokenInfo;
 using verible::TokenSequence;
 using verible::TokenStreamReferenceView;
+
+// TODO(fangism): move this to a test-only library
+// Compare value and reason.
+// We define it as a macro so that when it fails, you get a meaningful line
+// number.
+//
+// If this were a function, its signature would be:
+// template <typename T>
+// inline void EXPECT_EQ_REASON(const verible::WithReason<T>& r, const T&
+// expected, absl::string_view pattern);
+#define EXPECT_EQ_REASON(expr, expected, pattern)                        \
+  {                                                                      \
+    const auto& r = expr; /* evaluate expr once, auto-extend lifetime */ \
+    EXPECT_EQ(r.value, expected) << r.reason;                            \
+    /* value could be correct, but reason could be wrong. */             \
+    EXPECT_TRUE(absl::StrContains(absl::string_view(r.reason), pattern)) \
+        << "value: " << r.value << "\nreason: " << r.reason;             \
+  }
 
 template <class SM>
 void ExpectStateMachineTokenSequence(
@@ -1140,7 +1159,7 @@ class LexicalContextTest : public ::testing::Test, public LexicalContext {
     EXPECT_TRUE(keyword_label_tracker_.Done());
     EXPECT_TRUE(balance_stack_.empty());
     EXPECT_TRUE(block_stack_.empty());
-    EXPECT_TRUE(ExpectingBodyItemStart());
+    EXPECT_EQ_REASON(ExpectingBodyItemStart(), true, "first token");
   }
 
   void AdvanceToken() {
@@ -1225,31 +1244,34 @@ TEST_F(LexicalContextTest, ScanEmptyFunctionDeclaration) {
   ExpectTokenSequence({TK_function});
   EXPECT_TRUE(in_function_declaration_);
   EXPECT_FALSE(in_function_body_);
-  EXPECT_FALSE(ExpectingBodyItemStart());
+  EXPECT_EQ_REASON(ExpectingBodyItemStart(), false,
+                   "in other declaration header");
   EXPECT_FALSE(ExpectingStatement());
 
   ExpectTokenSequence({TK_void});
   EXPECT_TRUE(in_function_declaration_);
   EXPECT_FALSE(in_function_body_);
-  EXPECT_FALSE(ExpectingBodyItemStart());
+  EXPECT_EQ_REASON(ExpectingBodyItemStart(), false,
+                   "in other declaration header");
   EXPECT_FALSE(ExpectingStatement());
 
   ExpectTokenSequence({SymbolIdentifier});
   EXPECT_TRUE(in_function_declaration_);
   EXPECT_FALSE(in_function_body_);
-  EXPECT_FALSE(ExpectingBodyItemStart());
+  EXPECT_EQ_REASON(ExpectingBodyItemStart(), false,
+                   "in other declaration header");
   EXPECT_FALSE(ExpectingStatement());
 
   ExpectTokenSequence({';'});
   EXPECT_TRUE(in_function_declaration_);
   EXPECT_TRUE(in_function_body_);
-  EXPECT_TRUE(ExpectingBodyItemStart());
+  EXPECT_EQ_REASON(ExpectingBodyItemStart(), true, "end of header");
   EXPECT_TRUE(ExpectingStatement());
 
   ExpectTokenSequence({TK_endfunction});
   EXPECT_FALSE(in_function_declaration_);
   EXPECT_FALSE(in_function_body_);
-  EXPECT_TRUE(ExpectingBodyItemStart());
+  EXPECT_EQ_REASON(ExpectingBodyItemStart(), true, "keyword label is in done");
   EXPECT_FALSE(ExpectingStatement());
 }
 
@@ -1263,33 +1285,33 @@ TEST_F(LexicalContextTest, ScanFunctionDeclarationEmptyPorts) {
   ExpectTokenSequence({TK_function});
   EXPECT_TRUE(in_function_declaration_);
   EXPECT_FALSE(in_function_body_);
-  EXPECT_FALSE(ExpectingBodyItemStart());
+  EXPECT_FALSE(ExpectingBodyItemStart().value);
   EXPECT_FALSE(ExpectingStatement());
 
   ExpectTokenSequence({TK_void});
   EXPECT_TRUE(in_function_declaration_);
   EXPECT_FALSE(in_function_body_);
-  EXPECT_FALSE(ExpectingBodyItemStart());
+  EXPECT_FALSE(ExpectingBodyItemStart().value);
   EXPECT_FALSE(ExpectingStatement());
 
   ExpectTokenSequence({SymbolIdentifier});
   EXPECT_TRUE(in_function_declaration_);
   EXPECT_FALSE(in_function_body_);
-  EXPECT_FALSE(ExpectingBodyItemStart());
+  EXPECT_FALSE(ExpectingBodyItemStart().value);
   EXPECT_FALSE(ExpectingStatement());
   EXPECT_TRUE(balance_stack_.empty());
 
   ExpectTokenSequence({'('});
   EXPECT_TRUE(in_function_declaration_);
   EXPECT_FALSE(in_function_body_);
-  EXPECT_FALSE(ExpectingBodyItemStart());
+  EXPECT_FALSE(ExpectingBodyItemStart().value);
   EXPECT_FALSE(ExpectingStatement());
   EXPECT_EQ(balance_stack_.size(), 1);
 
   ExpectTokenSequence({')'});
   EXPECT_TRUE(in_function_declaration_);
   EXPECT_FALSE(in_function_body_);
-  EXPECT_FALSE(ExpectingBodyItemStart());
+  EXPECT_FALSE(ExpectingBodyItemStart().value);
   EXPECT_FALSE(ExpectingStatement());
   EXPECT_TRUE(balance_stack_.empty());
 
@@ -1297,12 +1319,13 @@ TEST_F(LexicalContextTest, ScanFunctionDeclarationEmptyPorts) {
   EXPECT_TRUE(in_function_declaration_);
   EXPECT_TRUE(in_function_body_);
   EXPECT_TRUE(ExpectingStatement());
-  EXPECT_TRUE(ExpectingBodyItemStart());
+  EXPECT_EQ_REASON(ExpectingBodyItemStart(), true, "end of header");
 
   ExpectTokenSequence({TK_endfunction});
   EXPECT_FALSE(in_function_declaration_);
   EXPECT_FALSE(in_function_body_);
-  EXPECT_TRUE(ExpectingBodyItemStart());
+  EXPECT_EQ_REASON(ExpectingBodyItemStart(), true,
+                   "keyword label is in done state");
   EXPECT_FALSE(ExpectingStatement());
 }
 
@@ -1316,68 +1339,68 @@ TEST_F(LexicalContextTest, ScanFunctionDeclarationWithPorts) {
   ExpectTokenSequence({TK_function});
   EXPECT_TRUE(in_function_declaration_);
   EXPECT_FALSE(in_function_body_);
-  EXPECT_FALSE(ExpectingBodyItemStart());
+  EXPECT_FALSE(ExpectingBodyItemStart().value);
   EXPECT_FALSE(ExpectingStatement());
 
   ExpectTokenSequence({TK_void});
   EXPECT_TRUE(in_function_declaration_);
   EXPECT_FALSE(in_function_body_);
-  EXPECT_FALSE(ExpectingBodyItemStart());
+  EXPECT_FALSE(ExpectingBodyItemStart().value);
   EXPECT_FALSE(ExpectingStatement());
 
   ExpectTokenSequence({SymbolIdentifier});
   EXPECT_TRUE(in_function_declaration_);
   EXPECT_FALSE(in_function_body_);
-  EXPECT_FALSE(ExpectingBodyItemStart());
+  EXPECT_FALSE(ExpectingBodyItemStart().value);
   EXPECT_FALSE(ExpectingStatement());
   EXPECT_TRUE(balance_stack_.empty());
 
   ExpectTokenSequence({'('});
   EXPECT_TRUE(in_function_declaration_);
   EXPECT_FALSE(in_function_body_);
-  EXPECT_FALSE(ExpectingBodyItemStart());
+  EXPECT_FALSE(ExpectingBodyItemStart().value);
   EXPECT_FALSE(ExpectingStatement());
   EXPECT_EQ(balance_stack_.size(), 1);
 
   ExpectTokenSequence({TK_int});
   EXPECT_TRUE(in_function_declaration_);
   EXPECT_FALSE(in_function_body_);
-  EXPECT_FALSE(ExpectingBodyItemStart());
+  EXPECT_FALSE(ExpectingBodyItemStart().value);
   EXPECT_FALSE(ExpectingStatement());
   EXPECT_EQ(balance_stack_.size(), 1);
 
   ExpectTokenSequence({SymbolIdentifier});
   EXPECT_TRUE(in_function_declaration_);
   EXPECT_FALSE(in_function_body_);
-  EXPECT_FALSE(ExpectingBodyItemStart());
+  EXPECT_FALSE(ExpectingBodyItemStart().value);
   EXPECT_FALSE(ExpectingStatement());
   EXPECT_EQ(balance_stack_.size(), 1);
 
   ExpectTokenSequence({','});
   EXPECT_TRUE(in_function_declaration_);
   EXPECT_FALSE(in_function_body_);
-  EXPECT_FALSE(ExpectingBodyItemStart());
+  EXPECT_FALSE(ExpectingBodyItemStart().value);
   EXPECT_FALSE(ExpectingStatement());
   EXPECT_EQ(balance_stack_.size(), 1);
 
   ExpectTokenSequence({TK_int});
   EXPECT_TRUE(in_function_declaration_);
   EXPECT_FALSE(in_function_body_);
-  EXPECT_FALSE(ExpectingBodyItemStart());
+  EXPECT_FALSE(ExpectingBodyItemStart().value);
   EXPECT_FALSE(ExpectingStatement());
   EXPECT_EQ(balance_stack_.size(), 1);
 
   ExpectTokenSequence({SymbolIdentifier});
   EXPECT_TRUE(in_function_declaration_);
   EXPECT_FALSE(in_function_body_);
-  EXPECT_FALSE(ExpectingBodyItemStart());
+  EXPECT_FALSE(ExpectingBodyItemStart().value);
   EXPECT_FALSE(ExpectingStatement());
   EXPECT_EQ(balance_stack_.size(), 1);
 
   ExpectTokenSequence({')'});
   EXPECT_TRUE(in_function_declaration_);
   EXPECT_FALSE(in_function_body_);
-  EXPECT_FALSE(ExpectingBodyItemStart());
+  EXPECT_FALSE(ExpectingBodyItemStart().value);
   EXPECT_FALSE(ExpectingStatement());
   EXPECT_TRUE(balance_stack_.empty());
 
@@ -1385,12 +1408,12 @@ TEST_F(LexicalContextTest, ScanFunctionDeclarationWithPorts) {
   EXPECT_TRUE(in_function_declaration_);
   EXPECT_TRUE(in_function_body_);
   EXPECT_TRUE(ExpectingStatement());
-  EXPECT_TRUE(ExpectingBodyItemStart());
+  EXPECT_EQ_REASON(ExpectingBodyItemStart(), true, "end of header");
 
   ExpectTokenSequence({TK_endfunction});
   EXPECT_FALSE(in_function_declaration_);
   EXPECT_FALSE(in_function_body_);
-  EXPECT_TRUE(ExpectingBodyItemStart());
+  EXPECT_EQ_REASON(ExpectingBodyItemStart(), true, "keyword label is in done");
   EXPECT_FALSE(ExpectingStatement());
 }
 
@@ -1432,7 +1455,7 @@ TEST_F(LexicalContextTest, ScanFunctionDeclarationWithRightArrows) {
   EXPECT_FALSE(InAnyDeclarationHeader());
   EXPECT_TRUE(in_function_body_);
   EXPECT_TRUE(previous_token_finished_header_);
-  EXPECT_TRUE(ExpectingBodyItemStart());
+  EXPECT_EQ_REASON(ExpectingBodyItemStart(), true, "end of header");
   EXPECT_TRUE(ExpectingStatement());
 
   ExpectTransformedToken(_TK_RARROW, TK_TRIGGER);
@@ -1451,11 +1474,11 @@ TEST_F(LexicalContextTest, ScanFunctionDeclarationWithRightArrows) {
   EXPECT_FALSE(InAnyDeclarationHeader());
   EXPECT_TRUE(in_function_body_);
   EXPECT_TRUE(previous_token_finished_header_);
-  EXPECT_TRUE(ExpectingBodyItemStart());
+  EXPECT_EQ_REASON(ExpectingBodyItemStart(), true, "end of header");
   EXPECT_TRUE(ExpectingStatement());
 
   ExpectTokenSequence({TK_begin});
-  EXPECT_TRUE(ExpectingBodyItemStart());
+  EXPECT_EQ_REASON(ExpectingBodyItemStart(), true, "keyword label is in done");
   EXPECT_TRUE(ExpectingStatement());
 
   ExpectTransformedToken(_TK_RARROW, TK_TRIGGER);
@@ -1496,7 +1519,7 @@ TEST_F(LexicalContextTest,
   EXPECT_FALSE(InAnyDeclarationHeader());
   EXPECT_TRUE(in_function_body_);
   EXPECT_TRUE(previous_token_finished_header_);
-  EXPECT_TRUE(ExpectingBodyItemStart());
+  EXPECT_EQ_REASON(ExpectingBodyItemStart(), true, "end of header");
   EXPECT_TRUE(ExpectingStatement());
 
   ExpectTokenSequence({TK_begin, ':', SymbolIdentifier /* bar */});
@@ -1749,7 +1772,7 @@ TEST_F(LexicalContextTest, ScanTaskDeclarationWithRightArrows) {
   EXPECT_FALSE(InAnyDeclarationHeader());
   EXPECT_TRUE(in_task_body_);
   EXPECT_TRUE(previous_token_finished_header_);
-  EXPECT_TRUE(ExpectingBodyItemStart());
+  EXPECT_EQ_REASON(ExpectingBodyItemStart(), true, "end of header");
   EXPECT_TRUE(ExpectingStatement());
 
   ExpectTransformedToken(_TK_RARROW, TK_TRIGGER);
@@ -1768,11 +1791,11 @@ TEST_F(LexicalContextTest, ScanTaskDeclarationWithRightArrows) {
   EXPECT_FALSE(InAnyDeclarationHeader());
   EXPECT_TRUE(in_task_body_);
   EXPECT_TRUE(previous_token_finished_header_);
-  EXPECT_TRUE(ExpectingBodyItemStart());
+  EXPECT_EQ_REASON(ExpectingBodyItemStart(), true, "end of header");
   EXPECT_TRUE(ExpectingStatement());
 
   ExpectTokenSequence({TK_begin});
-  EXPECT_TRUE(ExpectingBodyItemStart());
+  EXPECT_EQ_REASON(ExpectingBodyItemStart(), true, "keyword label is in done");
   EXPECT_TRUE(ExpectingStatement());
 
   ExpectTransformedToken(_TK_RARROW, TK_TRIGGER);
@@ -1812,7 +1835,7 @@ TEST_F(LexicalContextTest, ScanTaskDeclarationWithRightArrowsControlLabels) {
   EXPECT_FALSE(InAnyDeclarationHeader());
   EXPECT_TRUE(in_task_body_);
   EXPECT_TRUE(previous_token_finished_header_);
-  EXPECT_TRUE(ExpectingBodyItemStart());
+  EXPECT_EQ_REASON(ExpectingBodyItemStart(), true, "end of header");
   EXPECT_TRUE(ExpectingStatement());
 
   ExpectTokenSequence({TK_begin, ':', SymbolIdentifier /* bar */});
@@ -1930,7 +1953,7 @@ TEST_F(LexicalContextTest, ScanInitialBlockWithRightArrows) {
   EXPECT_FALSE(InAnyDeclarationHeader());
   EXPECT_TRUE(in_module_body_);
   EXPECT_TRUE(previous_token_finished_header_);
-  EXPECT_TRUE(ExpectingBodyItemStart());
+  EXPECT_EQ_REASON(ExpectingBodyItemStart(), true, "end of header");
   EXPECT_TRUE(ExpectingStatement());
 
   ExpectTokenSequence({TK_begin, ':', SymbolIdentifier /* bar */});
@@ -2082,7 +2105,7 @@ endmodule
   EXPECT_TRUE(in_task_body_);
   ExpectTokenSequence({TK_begin});
   EXPECT_TRUE(in_task_body_);
-  EXPECT_TRUE(ExpectingBodyItemStart());
+  EXPECT_EQ_REASON(ExpectingBodyItemStart(), true, "keyword label is in done");
   EXPECT_TRUE(ExpectingStatement());
   ExpectTransformedToken(_TK_RARROW, TK_TRIGGER);
   ExpectTokenSequence({SymbolIdentifier, ';'});
