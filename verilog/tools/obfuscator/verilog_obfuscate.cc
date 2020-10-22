@@ -24,6 +24,7 @@
 #include <sstream>  // IWYU pragma: keep  // for ostringstream
 #include <string>   // for string, allocator, etc
 #include <utility>
+#include <set>
 
 #include "absl/flags/flag.h"
 #include "absl/strings/str_cat.h"
@@ -32,6 +33,7 @@
 #include "common/util/file_util.h"
 #include "common/util/init_command_line.h"
 #include "verilog/analysis/verilog_analyzer.h"
+#include "verilog/analysis/extractors.h"
 #include "verilog/transform/obfuscate.h"
 
 using verible::IdentifierObfuscator;
@@ -52,10 +54,10 @@ ABSL_FLAG(                //
     "no new substitutions are established.");
 ABSL_FLAG(                //
     bool, preserve_interface, false,  //
-    "If true, module name and port names will be preserved.  The translation "
-    "map saved with --save_map will have identical mapping for these "
-    "identifiers.  When used with --load_map, the mapping explicitly specified "
-    "in the map file will have higher priority than this option.");
+    "If true, module name, port names and parameter names will be preserved.  "
+    "The translation map saved with --save_map will have identity mappings for "
+    "these identifiers.  When used with --load_map, the mapping explicitly "
+    "specified in the map file will have higher priority than this option.");
 
 int main(int argc, char** argv) {
   const auto usage = absl::StrCat("usage: ", argv[0],
@@ -103,9 +105,10 @@ Output is written to stdout.
 
   // Preserve interface names (e.g. module name, port names).
   const bool preserve_interface = absl::GetFlag(FLAGS_preserve_interface);
-  verible::StringSet preserved;
+  std::set<std::string> preserved;
   if (preserve_interface) {
-    const auto status = verilog::CollectInterfaceNames(content, &preserved);
+    const auto status =
+        verilog::analysis::CollectInterfaceNames(content, &preserved);
     if (!status.ok()) {
       std::cerr << status.message();
       return 1;

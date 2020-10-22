@@ -12,6 +12,7 @@ cc_binary(
         "//common/util:file_util",
         "//common/util:init_command_line",
         "//verilog/analysis:verilog_analyzer",
+        "//verilog/analysis:extractors",
         "//verilog/transform:obfuscate",
         "@com_google_absl//absl/flags:flag",
         "@com_google_absl//absl/strings",

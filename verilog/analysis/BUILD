@@ -39,6 +39,16 @@ cc_library(
 )
 
 cc_library(
+    name = "extractors",
+    srcs = ["extractors.cc"],
+    hdrs = ["extractors.h"],
+    deps = [
+        "//verilog/analysis:verilog_analyzer",
+        "@com_google_absl//absl/strings",
+        ],
+)
+
+cc_library(
     name = "lint_rule_registry",
     srcs = ["lint_rule_registry.cc"],
     hdrs = ["lint_rule_registry.h"],
