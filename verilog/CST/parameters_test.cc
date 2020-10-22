@@ -556,5 +556,52 @@ TEST(FindAllParamByNameTest, FindParenGroupOfNamedParam) {
   }
 }
 
+TEST(FindAllParamTest, FindExpressionFromParameterType) {
+  constexpr int kTag = 1;  // value doesn't matter
+  const SyntaxTreeSearchTestCase kTestCases[] = {
+      {""},
+      {"module m;\nendmodule\n"},
+      {"module foo; parameter type Bar = ", {kTag, "1"}, "; endmodule"},
+      {"module foo #(parameter type Bar = ", {kTag, "H.y"}, "); endmodule"},
+      {"module foo; localparam type Bar = ", {kTag, "var1"}, "; endmodule"},
+      {"class foo; parameter type Bar = ", {kTag, "1"}, "; endclass"},
+      {"class foo; localparam type Bar = ", {kTag, "1"}, "; endclass"},
+      {"package foo; parameter type Bar = ", {kTag, "1"}, "; endpackage"},
+      {"parameter type Bar = ", {kTag, "1"}, ";"},
+      {"module foo #(parameter type Bar = int); endmodule"},
+      {"module foo #(parameter type Bar = ", {kTag, "Foo#(1)"}, "); endmodule"},
+      {"module foo #(parameter type Bar = ",
+       {kTag, "Foo#(int)"},
+       "); endmodule"},
+      {"module foo #(parameter type Bar = ",
+       {kTag, "Foo#(Baz#(int))"},
+       "); endmodule"},
+  };
+  for (const auto& test : kTestCases) {
+    TestVerilogSyntaxRangeMatches(
+        __FUNCTION__, test, [](const TextStructureView& text_structure) {
+          const auto& root = text_structure.SyntaxTree();
+          const auto& types = FindAllParamDeclarations(*ABSL_DIE_IF_NULL(root));
+
+          std::vector<TreeSearchMatch> expressions;
+          for (const auto& type : types) {
+            const auto* type_assignment =
+                GetTypeAssignmentFromParamDeclaration(*type.match);
+            if (type_assignment == nullptr) {
+              continue;
+            }
+            const auto* expression =
+                GetExpressionFromTypeAssignment(*type_assignment);
+            if (expression == nullptr) {
+              continue;
+            }
+            expressions.emplace_back(
+                TreeSearchMatch{expression, {/* ignored context */}});
+          }
+          return expressions;
+        });
+  }
+}
+
 }  // namespace
 }  // namespace verilog

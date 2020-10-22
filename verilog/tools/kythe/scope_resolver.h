@@ -162,8 +162,6 @@ class ScopeResolver {
       : previous_file_scope_resolver_(previous_file_scope_resolver),
         global_scope_signature_(global_scope_signature) {}
 
-  // TODO(minatoma): add overloaded function which takes anchors (and add
-  // tests).
   // TODO(minatoma): returns scopes with VNames to decrease search time for
   // scopes.
   // Searches for the definitions of the given names.

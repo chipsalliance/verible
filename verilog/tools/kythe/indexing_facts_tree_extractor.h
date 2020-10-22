@@ -15,6 +15,8 @@
 #ifndef VERIBLE_VERILOG_TOOLS_KYTHE_INDEXING_FACTS_TREE_EXTRACTOR_H_
 #define VERIBLE_VERILOG_TOOLS_KYTHE_INDEXING_FACTS_TREE_EXTRACTOR_H_
 
+#include <initializer_list>
+
 #include "absl/strings/string_view.h"
 #include "common/analysis/syntax_tree_search.h"
 #include "common/text/tree_context_visitor.h"
@@ -225,6 +227,10 @@ class IndexingFactsTreeExtractor : public verible::TreeContextVisitor {
   // Determines how to deal with the given data declaration node as it may be
   // module instance, class instance or primitive variable.
   void ExtractDataDeclaration(const verible::SyntaxTreeNode& data_declaration);
+
+  // Copies the anchors and children from the the last sibling of
+  // facts_tree_context_, adds them to the new_node and pops that sibling.
+  void MoveAndDeleteLastSibling(IndexingFactNode& new_node);
 
   // The Root of the constructed tree
   IndexingFactNode root_{IndexingNodeData(IndexingFactType::kFile)};

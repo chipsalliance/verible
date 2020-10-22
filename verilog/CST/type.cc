@@ -122,7 +122,7 @@ const verible::SyntaxTreeNode& GetLocalRootFromReference(
   return verible::GetSubtreeAsNode(reference, NodeEnum::kReference, 0);
 }
 
-const verible::SyntaxTreeNode& GetUnqualifiedIdFromLocalRoot(
+const verible::SyntaxTreeNode& GetIdentifiersFromLocalRoot(
     const verible::Symbol& local_root) {
   return verible::GetSubtreeAsNode(local_root, NodeEnum::kLocalRoot, 0);
 }
@@ -133,7 +133,7 @@ const verible::SyntaxTreeNode& GetUnqualifiedIdFromReferenceCallBase(
       GetReferenceFromReferenceCallBase(reference_call_base);
   const verible::SyntaxTreeNode& local_root =
       GetLocalRootFromReference(reference);
-  return GetUnqualifiedIdFromLocalRoot(local_root);
+  return GetIdentifiersFromLocalRoot(local_root);
 }
 
 const verible::SyntaxTreeNode* GetStructOrUnionOrEnumTypeFromInstantiationType(
@@ -170,6 +170,14 @@ const verible::SyntaxTreeNode* GetUnqualifiedIdFromInstantiationType(
   return &GetUnqualifiedIdFromReferenceCallBase(reference_call_base);
 }
 
+const verible::SyntaxTreeNode* GetParamListFromUnqualifiedId(
+    const verible::Symbol& unqualified_id) {
+  const verible::Symbol* param_list =
+      verible::GetSubtreeAsSymbol(unqualified_id, NodeEnum::kUnqualifiedId, 1);
+  return verible::CheckOptionalSymbolAsNode(param_list,
+                                            NodeEnum::kActualParameterList);
+}
+
 const verible::SyntaxTreeNode* GetParamListFromInstantiationType(
     const verible::Symbol& instantiation_type) {
   const verible::SyntaxTreeNode* unqualified_id =
@@ -177,10 +185,7 @@ const verible::SyntaxTreeNode* GetParamListFromInstantiationType(
   if (unqualified_id == nullptr) {
     return nullptr;
   }
-  const verible::Symbol* param_list =
-      verible::GetSubtreeAsSymbol(*unqualified_id, NodeEnum::kUnqualifiedId, 1);
-  return verible::CheckOptionalSymbolAsNode(param_list,
-                                            NodeEnum::kActualParameterList);
+  return GetParamListFromUnqualifiedId(*unqualified_id);
 }
 
 std::pair<const verible::SyntaxTreeLeaf*, int>

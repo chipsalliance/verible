@@ -535,6 +535,37 @@ TEST(GetFunctionBlockStatement, GetFunctionBody) {
   }
 }
 
+TEST(FunctionCallTest, GetFunctionCallName) {
+  constexpr int kTag = 1;  // value doesn't matter
+  const SyntaxTreeSearchTestCase kTestCases[] = {
+      {""},
+      {"module m;\nendmodule"},
+      {"module m;\ninitial begin\n", {kTag, "f1"}, "();\nend\nendmodule"},
+      {"module m;\ninitial begin\n", {kTag, "pkg::f1"}, "();\nend\nendmodule"},
+      {"module m;\ninitial begin\n",
+       {kTag, "class_name#(1)::f1"},
+       "(a, b, c);\nend\nendmodule"},
+  };
+
+  for (const auto& test : kTestCases) {
+    TestVerilogSyntaxRangeMatches(
+        __FUNCTION__, test, [](const TextStructureView& text_structure) {
+          const auto& root = text_structure.SyntaxTree();
+          const auto& calls =
+              FindAllFunctionOrTaskCalls(*ABSL_DIE_IF_NULL(root));
+
+          std::vector<TreeSearchMatch> paren_groups;
+          for (const auto& call : calls) {
+            const auto& paren_group =
+                GetIdentifiersFromFunctionCall(*call.match);
+            paren_groups.emplace_back(
+                TreeSearchMatch{&paren_group, {/* ignored context */}});
+          }
+          return paren_groups;
+        });
+  }
+}
+
 TEST(FunctionCallTest, GetFunctionCallArguments) {
   constexpr int kTag = 1;  // value doesn't matter
   const SyntaxTreeSearchTestCase kTestCases[] = {

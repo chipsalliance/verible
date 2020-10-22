@@ -830,14 +830,13 @@ void IndexingFactsTreeExtractor::ExtractFunctionOrTaskCall(
 
   // Extract function or task name.
   // It can be single or preceeded with a pkg or class names.
-  const SyntaxTreeNode& local_root =
-      GetLocalRootFromFunctionCall(function_call_node);
-  const std::vector<TreeSearchMatch> unqualified_ids =
-      FindAllUnqualifiedIds(local_root);
-  for (const TreeSearchMatch& unqualified_id : unqualified_ids) {
-    function_node.Value().AppendAnchor(Anchor(
-        AutoUnwrapIdentifier(*unqualified_id.match)->get(), context_.base));
-  }
+  const SyntaxTreeNode& identifiers =
+      GetIdentifiersFromFunctionCall(function_call_node);
+  Visit(identifiers);
+
+  // Move the data from the last sibling to the current node and delete that
+  // sibling.
+  MoveAndDeleteLastSibling(function_node);
 
   {
     const IndexingFactsTreeContext::AutoPop p(&facts_tree_context_,
@@ -855,26 +854,9 @@ void IndexingFactsTreeExtractor::ExtractMethodCallExtension(
   IndexingFactNode function_node(
       IndexingNodeData{IndexingFactType::kFunctionCall});
 
-  // Terminate if there is no parent or the parent has no children.
-  if (facts_tree_context_.empty() || facts_tree_context_.top().is_leaf()) {
-    return;
-  }
-
-  const IndexingFactNode& previous_node =
-      facts_tree_context_.top().Children().back();
-
-  // Fill the anchors of the previous node to the current node.
-  for (const Anchor& anchor : previous_node.Value().Anchors()) {
-    function_node.Value().AppendAnchor(anchor);
-  }
-
-  // Move the children of the previous node to this node.
-  for (const IndexingFactNode& child : previous_node.Children()) {
-    function_node.NewChild(child);
-  }
-
-  // The node is removed so that it can be treated as a function call.
-  facts_tree_context_.top().Children().pop_back();
+  // Move the data from the last sibling to the current node and delete that
+  // sibling
+  MoveAndDeleteLastSibling(function_node);
 
   const SyntaxTreeLeaf& function_name =
       GetFunctionCallNameFromCallExtension(call_extension_node);
@@ -898,27 +880,9 @@ void IndexingFactsTreeExtractor::ExtractMemberExtension(
   IndexingFactNode member_node(
       IndexingNodeData{IndexingFactType::kMemberReference});
 
-  // Terminate if there is no parent or the parent has no children.
-  if (facts_tree_context_.empty() || facts_tree_context_.top().is_leaf()) {
-    return;
-  }
-
-  const IndexingFactNode& previous_node =
-      facts_tree_context_.top().Children().back();
-
-  // Fill the anchors of the previous node to the current node.
-  // Previous node should be a kMemberReference or kVariableReference.
-  for (const Anchor& anchor : previous_node.Value().Anchors()) {
-    member_node.Value().AppendAnchor(anchor);
-  }
-
-  // Move the children of the previous node to this node.
-  for (const IndexingFactNode& child : previous_node.Children()) {
-    member_node.NewChild(child);
-  }
-
-  // The node is removed so that it can be treated as a member.
-  facts_tree_context_.top().Children().pop_back();
+  // Move the data from the last sibling to the current node and delete that
+  // sibling
+  MoveAndDeleteLastSibling(member_node);
 
   // Append the member name to the current anchors.
   const SyntaxTreeLeaf& member_name =
@@ -946,6 +910,12 @@ void IndexingFactsTreeExtractor::ExtractClassDeclaration(
     if (class_end_name != nullptr) {
       const Anchor class_end_anchor(class_end_name->get(), context_.base);
       facts_tree_context_.top().Value().AppendAnchor(class_end_anchor);
+    }
+
+    const SyntaxTreeNode* param_list =
+        GetParamDeclarationListFromClassDeclaration(class_declaration);
+    if (param_list != nullptr) {
+      Visit(*param_list);
     }
 
     const SyntaxTreeNode* extended_class = GetExtendedClass(class_declaration);
@@ -984,7 +954,7 @@ void IndexingFactsTreeExtractor::ExtractClassInstances(
   // TODO(minatoma): refactor this function and git rid of the logic in the for
   // loop because kRegisterVariable and kVariableDeclarationAssignment are
   // extracted in function.
-  IndexingFactNode class_node(
+  IndexingFactNode type_node(
       IndexingNodeData{IndexingFactType::kDataTypeReference});
 
   const verible::SyntaxTreeLeaf* type =
@@ -992,7 +962,16 @@ void IndexingFactsTreeExtractor::ExtractClassInstances(
   if (type == nullptr) {
     return;
   }
-  class_node.Value().AppendAnchor(Anchor(type->get(), context_.base));
+  const Anchor type_anchor(type->get(), context_.base);
+  type_node.Value().AppendAnchor(type_anchor);
+
+  // Extract parameter list
+  const SyntaxTreeNode* param_list =
+      GetParamListFromDataDeclaration(data_declaration_node);
+  if (param_list != nullptr) {
+    const IndexingFactsTreeContext::AutoPop p(&facts_tree_context_, &type_node);
+    Visit(*param_list);
+  }
 
   // Class instances may may appear as multiple instances sharing the same type
   // in a single statement e.g. myClass b1 = new, b2 = new.
@@ -1032,10 +1011,10 @@ void IndexingFactsTreeExtractor::ExtractClassInstances(
       Visit(*trailing_expression);
     }
 
-    class_node.NewChild(class_instance_node);
+    type_node.NewChild(class_instance_node);
   }
 
-  facts_tree_context_.top().NewChild(class_node);
+  facts_tree_context_.top().NewChild(type_node);
 }
 
 void IndexingFactsTreeExtractor::ExtractRegisterVariable(
@@ -1113,22 +1092,44 @@ void IndexingFactsTreeExtractor::ExtractParamDeclaration(
   IndexingFactNode param_node(
       IndexingNodeData{IndexingFactType::kParamDeclaration});
 
-  // Extract Param name.
-  const verible::TokenInfo& param_name =
-      GetParameterNameToken(param_declaration);
-  param_node.Value().AppendAnchor(Anchor(param_name, context_.base));
+  const SyntaxTreeNode* type_assignment =
+      GetTypeAssignmentFromParamDeclaration(param_declaration);
 
-  {
-    const IndexingFactsTreeContext::AutoPop p(&facts_tree_context_,
-                                              &param_node);
+  // Parameters can be in two cases:
+  // 1st => parameter type x;
+  if (type_assignment != nullptr) {
+    const SyntaxTreeLeaf* identifier =
+        GetIdentifierLeafFromTypeAssignment(*type_assignment);
+    param_node.Value().AppendAnchor(Anchor(identifier->get(), context_.base));
 
-    const verible::Symbol* assign_expression =
-        GetParamAssignExpression(param_declaration);
+    const SyntaxTreeNode* expression =
+        GetExpressionFromTypeAssignment(*type_assignment);
+    if (expression != nullptr) {
+      {
+        const IndexingFactsTreeContext::AutoPop p(&facts_tree_context_,
+                                                  &param_node);
+        Visit(*expression);
+      }
+    }
+  } else {
+    // 2nd => parameter int x;
+    // Extract Param name.
+    const verible::TokenInfo& param_name =
+        GetParameterNameToken(param_declaration);
+    param_node.Value().AppendAnchor(Anchor(param_name, context_.base));
 
-    if (assign_expression != nullptr &&
-        assign_expression->Kind() == verible::SymbolKind::kNode) {
-      // Extract trailing expression.
-      Visit(verible::SymbolCastToNode(*assign_expression));
+    {
+      const IndexingFactsTreeContext::AutoPop p(&facts_tree_context_,
+                                                &param_node);
+
+      const verible::Symbol* assign_expression =
+          GetParamAssignExpression(param_declaration);
+
+      if (assign_expression != nullptr &&
+          assign_expression->Kind() == verible::SymbolKind::kNode) {
+        // Extract trailing expression.
+        Visit(verible::SymbolCastToNode(*assign_expression));
+      }
     }
   }
 
@@ -1184,12 +1185,26 @@ void IndexingFactsTreeExtractor::ExtractQualifiedId(
   IndexingNodeData member_reference_data(IndexingFactType::kMemberReference);
 
   // Get all the variable names in the qualified id.
-  const std::vector<TreeSearchMatch> unqualified_ids =
-      FindAllUnqualifiedIds(qualified_id);
+  for (const auto& child : qualified_id.children()) {
+    if (child == nullptr) continue;
+    if (NodeEnum(child->Tag().tag) != NodeEnum::kUnqualifiedId) {
+      continue;
+    }
+    member_reference_data.AppendAnchor(
+        Anchor(AutoUnwrapIdentifier(*child)->get(), context_.base));
 
-  for (const TreeSearchMatch& unqualified_id : unqualified_ids) {
-    member_reference_data.AppendAnchor(Anchor(
-        AutoUnwrapIdentifier(*unqualified_id.match)->get(), context_.base));
+    const SyntaxTreeNode* param_list = GetParamListFromUnqualifiedId(*child);
+    if (param_list != nullptr) {
+      IndexingFactNode param_member_reference(member_reference_data);
+
+      {
+        const IndexingFactsTreeContext::AutoPop p(&facts_tree_context_,
+                                                  &param_member_reference);
+        Visit(*param_list);
+      }
+
+      facts_tree_context_.top().NewChild(param_member_reference);
+    }
   }
 
   facts_tree_context_.top().NewChild(member_reference_data);
@@ -1441,6 +1456,26 @@ void IndexingFactsTreeExtractor::ExtractTypeDeclaration(
       break;
     }
   }
+}
+
+void IndexingFactsTreeExtractor::MoveAndDeleteLastSibling(
+    IndexingFactNode& new_node) {
+  // Terminate if there is no parent or the parent has no children.
+  if (facts_tree_context_.empty() || facts_tree_context_.top().is_leaf()) {
+    return;
+  }
+
+  // Get The last sibling.
+  IndexingFactNode& previous_node = facts_tree_context_.top().Children().back();
+
+  // Fill the anchors of the previous node to the current node.
+  new_node.Value().SwapAnchors(&previous_node.Value());
+
+  // Move the children of the previous node to this node.
+  new_node.AdoptSubtreesFrom(&previous_node);
+
+  // The node is removed so that it can be treated as a function call.
+  facts_tree_context_.top().Children().pop_back();
 }
 
 }  // namespace kythe

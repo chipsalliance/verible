@@ -92,4 +92,13 @@ const verible::SyntaxTreeLeaf& GetUnqualifiedIdFromHierarchyExtension(
       NodeEnum::kUnqualifiedId));
 }
 
+const verible::SyntaxTreeNode* GetParamDeclarationListFromClassDeclaration(
+    const verible::Symbol& class_declaration) {
+  const auto& header_node = GetClassHeader(class_declaration);
+  const verible::Symbol* param_declaration_list =
+      verible::GetSubtreeAsSymbol(header_node, NodeEnum::kClassHeader, 4);
+  return verible::CheckOptionalSymbolAsNode(
+      param_declaration_list, NodeEnum::kFormalParameterListDeclaration);
+}
+
 }  // namespace verilog
