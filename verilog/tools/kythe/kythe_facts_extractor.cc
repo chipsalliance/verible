@@ -138,6 +138,10 @@ void KytheFactsExtractor::IndexingFactNodeTagResolver(
       vname = ExtractPackageDeclaration(node);
       break;
     }
+    case IndexingFactType::kStructOrUnion: {
+      vname = ExtractStructOrUnion(node);
+      break;
+    }
     case IndexingFactType::kDataTypeReference: {
       ExtractDataTypeReference(node);
       break;
@@ -195,6 +199,7 @@ void KytheFactsExtractor::AddVNameToScopeContext(IndexingFactType tag,
     case IndexingFactType::kModuleInstance:
     case IndexingFactType::kVariableDefinition:
     case IndexingFactType::kMacro:
+    case IndexingFactType::kStructOrUnion:
     case IndexingFactType::kClass:
     case IndexingFactType::kClassInstance:
     case IndexingFactType::kFunctionOrTask:
@@ -247,6 +252,8 @@ void KytheFactsExtractor::Visit(const IndexingFactNode& node,
     case IndexingFactType::kFile:
     case IndexingFactType::kParamDeclaration:
     case IndexingFactType::kModule:
+    case IndexingFactType::kStructOrUnion:
+    case IndexingFactType::kVariableDefinition:
     case IndexingFactType::kFunctionOrTask:
     case IndexingFactType::kClass:
     case IndexingFactType::kMacro:
@@ -273,13 +280,14 @@ void KytheFactsExtractor::Visit(const IndexingFactNode& node,
 
 void KytheFactsExtractor::ConstructFlattenedScope(const IndexingFactNode& node,
                                                   const VName& vname,
-                                                  const Scope& current_scope) {
+                                                  Scope& current_scope) {
   const auto tag = node.Value().GetIndexingFactType();
 
   // Determines whether to add the current scope to the scope context or not.
   switch (tag) {
     case IndexingFactType::kFile:
     case IndexingFactType::kModule:
+    case IndexingFactType::kStructOrUnion:
     case IndexingFactType::kClass:
     case IndexingFactType::kMacro:
     case IndexingFactType::kPackage:
@@ -288,9 +296,41 @@ void KytheFactsExtractor::ConstructFlattenedScope(const IndexingFactNode& node,
       scope_resolver_->MapSignatureToScope(vname.signature, current_scope);
       break;
     }
-    case IndexingFactType::kModuleInstance:
-    case IndexingFactType::kClassInstance:
     case IndexingFactType::kVariableDefinition: {
+      // Break if this variable has no type.
+      if (node.Parent() == nullptr ||
+          node.Parent()->Value().GetIndexingFactType() !=
+              IndexingFactType::kDataTypeReference) {
+        scope_resolver_->MapSignatureToScope(vname.signature, current_scope);
+        break;
+      }
+
+      // TODO(minatoma): refactor this and the below case into function.
+      // TODO(minatoma): move this case to below and make variable definitions
+      // scope-less.
+      // TODO(minatoma): consider getting rid of kModuleInstance and
+      // kClassInstance and use kVariableDefinition if they don't provide
+      // anything new.
+      const std::vector<const VName*> found_vnames =
+          scope_resolver_->SearchForDefinitions(
+              {node.Parent()->Value().Anchors()[0].Value()});
+
+      if (found_vnames.empty()) {
+        break;
+      }
+
+      const Scope* type_scope =
+          scope_resolver_->SearchForScope(found_vnames[0]->signature);
+      if (type_scope != nullptr) {
+        current_scope.AppendScope(*type_scope);
+      }
+
+      scope_resolver_->MapSignatureToScope(vname.signature, current_scope);
+
+      break;
+    }
+    case IndexingFactType::kModuleInstance:
+    case IndexingFactType::kClassInstance: {
       if (node.Parent() == nullptr ||
           node.Parent()->Value().GetIndexingFactType() !=
               IndexingFactType::kDataTypeReference) {
@@ -871,6 +911,21 @@ VName KytheFactsExtractor::ExtractConstant(const IndexingFactNode& constant) {
   CreateEdge(variable_vname_anchor, kEdgeDefinesBinding, constant_vname);
 
   return constant_vname;
+}
+
+VName KytheFactsExtractor::ExtractStructOrUnion(
+    const IndexingFactNode& struct_node) {
+  const auto& anchors = struct_node.Value().Anchors();
+  const Anchor& struct_name = anchors[0];
+
+  const VName struct_vname(file_path_,
+                           CreateScopeRelativeSignature(struct_name.Value()));
+  const VName struct_name_anchor = CreateAnchor(struct_name);
+
+  CreateFact(struct_vname, kFactNodeKind, kNodeRecord);
+  CreateEdge(struct_name_anchor, kEdgeDefinesBinding, struct_vname);
+
+  return struct_vname;
 }
 
 VName KytheFactsExtractor::CreateAnchor(const Anchor& anchor) {
