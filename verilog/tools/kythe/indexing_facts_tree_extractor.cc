@@ -52,9 +52,10 @@ using verible::TreeSearchMatch;
 IndexingFactNode BuildIndexingFactsTree(
     const verible::ConcreteSyntaxTree& syntax_tree, absl::string_view base,
     absl::string_view file_name, IndexingFactNode& file_list_facts_tree,
-    std::set<std::string>& extracted_files) {
+    std::set<std::string>& extracted_files,
+    const std::vector<std::string>& include_dir_paths) {
   IndexingFactsTreeExtractor visitor(base, file_name, file_list_facts_tree,
-                                     extracted_files);
+                                     extracted_files, include_dir_paths);
   if (syntax_tree == nullptr) {
     return visitor.GetRoot();
   }
@@ -65,10 +66,11 @@ IndexingFactNode BuildIndexingFactsTree(
 }
 
 // Given a verilog file returns the extracted indexing facts tree.
-IndexingFactNode ExtractOneFile(absl::string_view content,
-                                absl::string_view filename,
-                                IndexingFactNode& file_list_facts_tree,
-                                std::set<std::string>& extracted_files) {
+IndexingFactNode ExtractOneFile(
+    absl::string_view content, absl::string_view filename,
+    IndexingFactNode& file_list_facts_tree,
+    std::set<std::string>& extracted_files,
+    const std::vector<std::string>& include_dir_paths) {
   verilog::VerilogAnalyzer analyzer(content, filename);
   // Do not parse using AnalyzeAutomaticMode() because index extraction is only
   // expected to work on self-contained files with full syntactic context.
@@ -87,8 +89,8 @@ IndexingFactNode ExtractOneFile(absl::string_view content,
   const auto& syntax_tree = text_structure.SyntaxTree();
 
   return BuildIndexingFactsTree(syntax_tree, analyzer.Data().Contents(),
-                                filename, file_list_facts_tree,
-                                extracted_files);
+                                filename, file_list_facts_tree, extracted_files,
+                                include_dir_paths);
 }
 
 // Returns the path of the file relative to the file list.
@@ -99,9 +101,10 @@ std::string GetPathRelativeToFileList(absl::string_view file_list_dir,
 
 }  // namespace
 
-IndexingFactNode ExtractFiles(const std::vector<std::string>& ordered_file_list,
-                              int& exit_status,
-                              absl::string_view file_list_dir) {
+IndexingFactNode ExtractFiles(
+    const std::vector<std::string>& ordered_file_list, int& exit_status,
+    absl::string_view file_list_dir,
+    const std::vector<std::string>& include_dir_paths) {
   // Create a node to hold the dirname of the ordered file list and group all
   // the files and acts as a ordered file list of these files.
   IndexingFactNode file_list_facts_tree(IndexingNodeData(
@@ -124,8 +127,9 @@ IndexingFactNode ExtractFiles(const std::vector<std::string>& ordered_file_list,
       continue;
     }
 
-    file_list_facts_tree.NewChild(ExtractOneFile(
-        content, file_path, file_list_facts_tree, extracted_files));
+    file_list_facts_tree.NewChild(
+        ExtractOneFile(content, file_path, file_list_facts_tree,
+                       extracted_files, include_dir_paths));
   }
 
   return file_list_facts_tree;
@@ -1279,8 +1283,9 @@ void IndexingFactsTreeExtractor::ExtractInclude(
     return;
   }
 
-  file_list_facts_tree_.NewChild(ExtractOneFile(
-      content, file_path, file_list_facts_tree_, extracted_files_));
+  file_list_facts_tree_.NewChild(
+      ExtractOneFile(content, file_path, file_list_facts_tree_,
+                     extracted_files_, include_dir_paths_));
 }
 
 void IndexingFactsTreeExtractor::ExtractEnumName(

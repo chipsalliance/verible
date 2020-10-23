@@ -35,10 +35,12 @@ class IndexingFactsTreeExtractor : public verible::TreeContextVisitor {
   IndexingFactsTreeExtractor(absl::string_view base,
                              absl::string_view file_name,
                              IndexingFactNode& file_list_facts_tree,
-                             std::set<std::string>& extracted_files)
+                             std::set<std::string>& extracted_files,
+                             const std::vector<std::string>& include_dir_paths)
       : context_(verible::TokenInfo::Context(base)),
         file_list_facts_tree_(file_list_facts_tree),
-        extracted_files_(extracted_files) {
+        extracted_files_(extracted_files),
+        include_dir_paths_(include_dir_paths) {
     root_.Value().AppendAnchor(Anchor(file_name, 0, base.size()));
     root_.Value().AppendAnchor(Anchor(base, 0, base.size()));
   }
@@ -250,15 +252,20 @@ class IndexingFactsTreeExtractor : public verible::TreeContextVisitor {
   // Set of the file paths of the extracted files.
   // Used to avoid extracting some file more than one time.
   std::set<std::string>& extracted_files_;
+
+  // Holds the paths of the directories used to look for the included
+  // files.
+  const std::vector<std::string>& include_dir_paths_;
 };
 
 // Given the ordered SystemVerilog files, Extracts and returns the
 // IndexingFactsTree from the given files.
 // The returned Root will have the files as children and they will retain their
 // original ordering from the file list.
-IndexingFactNode ExtractFiles(const std::vector<std::string>& ordered_file_list,
-                              int& exit_status,
-                              absl::string_view file_list_dir);
+IndexingFactNode ExtractFiles(
+    const std::vector<std::string>& ordered_file_list, int& exit_status,
+    absl::string_view file_list_dir,
+    const std::vector<std::string>& include_dir_paths);
 
 }  // namespace kythe
 }  // namespace verilog
