@@ -140,15 +140,17 @@ const verible::SyntaxTreeNode& GetParenGroupFromModuleInstantiation(
 const verible::SyntaxTreeLeaf&
 GetUnqualifiedIdFromVariableDeclarationAssignment(
     const verible::Symbol& variable_declaration_assign) {
-  const verible::Symbol* identifier = GetSubtreeAsSymbol(
-      variable_declaration_assign, NodeEnum::kVariableDeclarationAssignment, 0);
+  const verible::Symbol* identifier = ABSL_DIE_IF_NULL(
+      GetSubtreeAsSymbol(variable_declaration_assign,
+                         NodeEnum::kVariableDeclarationAssignment, 0));
   if (identifier->Kind() == verible::SymbolKind::kLeaf) {
     // This is a workaround for the below:
     // TODO(fangism): remove this condition after fixing the issue for "branch".
     // "riscv_instr          branch;"
-    return verible::SymbolCastToLeaf(*ABSL_DIE_IF_NULL(identifier));
+    // issue on github: https://github.com/google/verible/issues/547
+    return verible::SymbolCastToLeaf(*identifier);
   }
-  return *AutoUnwrapIdentifier(*ABSL_DIE_IF_NULL(identifier));
+  return *AutoUnwrapIdentifier(*identifier);
 }
 
 const verible::SyntaxTreeNode*

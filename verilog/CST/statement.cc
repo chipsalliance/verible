@@ -418,9 +418,6 @@ const verible::SyntaxTreeNode* GetDataTypeFromForInitialization(
   if (data_type == nullptr) {
     return nullptr;
   }
-  // TODO(fangism): add checks here and tests after solving the bug for "uint"
-  // in:
-  // for (uint x = .....)
   return &verible::SymbolCastToNode(*data_type);
 }
 

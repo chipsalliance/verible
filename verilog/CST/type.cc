@@ -262,6 +262,7 @@ const verible::SyntaxTreeLeaf* GetTypeIdentifierFromDataType(
   // TODO(fangism): remove this check after fixing this bug:
   // x = 1;
   // This is the whole test case.
+  // issue on github: https://github.com/google/verible/issues/549
   if (data_type_node.children().empty()) {
     return nullptr;
   }
