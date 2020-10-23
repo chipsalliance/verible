@@ -19,8 +19,6 @@
 #include <utility>
 #include <vector>
 
-#include "gmock/gmock.h"
-#include "gtest/gtest.h"
 #include "absl/strings/string_view.h"
 #include "common/analysis/syntax_tree_search.h"
 #include "common/analysis/syntax_tree_search_test_utils.h"
@@ -31,6 +29,8 @@
 #include "common/text/token_info.h"
 #include "common/util/casts.h"
 #include "common/util/logging.h"
+#include "gmock/gmock.h"
+#include "gtest/gtest.h"
 #include "verilog/CST/identifier.h"
 #include "verilog/analysis/verilog_analyzer.h"
 #include "verilog/parser/verilog_token_enum.h"
@@ -269,6 +269,43 @@ TEST(GetTaskHeaderTest, GetTaskName) {
 
     std::ostringstream diffs;
     EXPECT_TRUE(test.ExactMatchFindings(types, code_copy, &diffs))
+        << "failed on:\n"
+        << code << "\ndiffs:\n"
+        << diffs.str();
+  }
+}  // namespace
+
+TEST(GetTaskHeaderTest, GetTaskBody) {
+  constexpr int kTag = 1;  // value doesn't matter
+  const SyntaxTreeSearchTestCase kTestCases[] = {
+      {""},
+      {"module m(); endmodule: m"},
+      {"task t();\n ", {kTag, "int x = 1;"}, "\nendtask"},
+      {"task t;\n ", {kTag, "int x = 1;"}, "\nendtask"},
+      {"package pkg;\ntask t;\n ",
+       {kTag, "int x = 1;"},
+       "\nendtask\nendpackage"},
+      {"package pkg;\ntask t();\n ",
+       {kTag, "int x = 1;"},
+       "\nendtask\nendpackage"},
+  };
+  for (const auto& test : kTestCases) {
+    const absl::string_view code(test.code);
+    VerilogAnalyzer analyzer(code, "test-file");
+    const auto code_copy = analyzer.Data().Contents();
+    ASSERT_OK(analyzer.Analyze()) << "failed on:\n" << code;
+    const auto& root = analyzer.Data().SyntaxTree();
+
+    const auto decls = FindAllTaskDeclarations(*ABSL_DIE_IF_NULL(root));
+
+    std::vector<TreeSearchMatch> bodies;
+    for (const auto& decl : decls) {
+      const auto& body = GetTaskStatementList(*decl.match);
+      bodies.push_back(TreeSearchMatch{&body, {/* ignored context */}});
+    }
+
+    std::ostringstream diffs;
+    EXPECT_TRUE(test.ExactMatchFindings(bodies, code_copy, &diffs))
         << "failed on:\n"
         << code << "\ndiffs:\n"
         << diffs.str();

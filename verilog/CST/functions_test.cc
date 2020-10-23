@@ -19,8 +19,6 @@
 #include <utility>
 #include <vector>
 
-#include "gmock/gmock.h"
-#include "gtest/gtest.h"
 #include "absl/strings/string_view.h"
 #include "common/analysis/matcher/matcher_builders.h"
 #include "common/analysis/syntax_tree_search.h"
@@ -35,6 +33,8 @@
 #include "common/util/casts.h"
 #include "common/util/logging.h"
 #include "common/util/range.h"
+#include "gmock/gmock.h"
+#include "gtest/gtest.h"
 #include "verilog/CST/identifier.h"
 #include "verilog/CST/match_test_utils.h"
 #include "verilog/analysis/verilog_analyzer.h"
@@ -511,6 +511,10 @@ TEST(GetFunctionBlockStatement, GetFunctionBody) {
       {"class m;\n static function int my_fun();\n ",
        {kTag, "return 10;"},
        "\n endfunction\n  endclass"},
+      {"function int f;\n", {kTag, "return 1;"}, "\nendfunction"},
+      {"class s;\nfunction int f;",
+       {kTag, "return 1;"},
+       "\nendfunction\nendclass"},
   };
   for (const auto& test : kTestCases) {
     const absl::string_view code(test.code);

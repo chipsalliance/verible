@@ -259,6 +259,9 @@ const verible::SyntaxTreeLeaf* GetTypeIdentifierFromDataType(
     const verible::Symbol& data_type) {
   const verible::SyntaxTreeNode& data_type_node =
       verible::SymbolCastToNode(data_type);
+  // TODO(fangism): remove this check after fixing this bug:
+  // x = 1;
+  // This is the whole test case.
   if (data_type_node.children().empty()) {
     return nullptr;
   }
