@@ -354,6 +354,8 @@ TEST(GetTypeAssignmentFromParamDeclarationTests, BasicTests) {
       {"class foo; localparam type Bar = 1; endclass"},
       {"package foo; parameter type Bar = 1; endpackage"},
       {"parameter type Bar = 1;"},
+      {"module m#(parameter type Bar)();\nendmodule"},
+      {"module m#(parameter Bar)();\nendmodule"},
   };
   for (const auto& test : kTestCases) {
     VerilogAnalyzer analyzer(test, "");
@@ -362,6 +364,9 @@ TEST(GetTypeAssignmentFromParamDeclarationTests, BasicTests) {
     const auto param_declarations = FindAllParamDeclarations(*root);
     const auto* type_assignment_symbol = GetTypeAssignmentFromParamDeclaration(
         *param_declarations.front().match);
+    if (type_assignment_symbol == nullptr) {
+      continue;
+    }
     const auto t = type_assignment_symbol->Tag();
     EXPECT_EQ(t.kind, verible::SymbolKind::kNode);
     EXPECT_EQ(NodeEnum(t.tag), NodeEnum::kTypeAssignment);
