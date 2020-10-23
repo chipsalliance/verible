@@ -143,17 +143,21 @@ bool IsParamTypeDeclaration(const verible::Symbol& symbol) {
 const verible::SyntaxTreeNode* GetTypeAssignmentFromParamDeclaration(
     const verible::Symbol& symbol) {
   // Get the Type AssignmentList or kTypeAssignment symbol.
-  const auto& assignment_symbol =
-      verible::GetSubtreeAsNode(symbol, NodeEnum::kParamDeclaration, 2);
-  const auto assignment_tag = assignment_symbol.Tag();
+  const auto* assignment_symbol =
+      verible::GetSubtreeAsSymbol(symbol, NodeEnum::kParamDeclaration, 2);
+  if (assignment_symbol == nullptr) {
+    return nullptr;
+  }
+
+  const auto assignment_tag = assignment_symbol->Tag();
 
   // TODO(fangism): restructure CST for consistency and simplify this logic
   // Check which type of node it is.
   if (NodeEnum(assignment_tag.tag) == NodeEnum::kTypeAssignment) {
-    return &assignment_symbol;
+    return &verible::SymbolCastToNode(*assignment_symbol);
   } else if (NodeEnum(assignment_tag.tag) == NodeEnum::kTypeAssignmentList) {
     const auto& type_symbol = verible::GetSubtreeAsNode(
-        assignment_symbol, NodeEnum::kTypeAssignmentList, 0,
+        *assignment_symbol, NodeEnum::kTypeAssignmentList, 0,
         NodeEnum::kTypeAssignment);
     return &type_symbol;
   }
