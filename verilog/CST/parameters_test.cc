@@ -19,8 +19,6 @@
 #include <utility>
 #include <vector>
 
-#include "gmock/gmock.h"
-#include "gtest/gtest.h"
 #include "absl/strings/string_view.h"
 #include "common/analysis/syntax_tree_search.h"
 #include "common/analysis/syntax_tree_search_test_utils.h"
@@ -31,6 +29,8 @@
 #include "common/text/token_info.h"
 #include "common/util/casts.h"
 #include "common/util/logging.h"
+#include "gmock/gmock.h"
+#include "gtest/gtest.h"
 #include "verilog/CST/match_test_utils.h"
 #include "verilog/CST/verilog_nonterminals.h"
 #include "verilog/analysis/verilog_analyzer.h"
@@ -354,6 +354,8 @@ TEST(GetTypeAssignmentFromParamDeclarationTests, BasicTests) {
       {"class foo; localparam type Bar = 1; endclass"},
       {"package foo; parameter type Bar = 1; endpackage"},
       {"parameter type Bar = 1;"},
+      {"module m#(parameter type Bar)();\nendmodule"},
+      {"module m#(parameter Bar)();\nendmodule"},
   };
   for (const auto& test : kTestCases) {
     VerilogAnalyzer analyzer(test, "");
@@ -362,6 +364,9 @@ TEST(GetTypeAssignmentFromParamDeclarationTests, BasicTests) {
     const auto param_declarations = FindAllParamDeclarations(*root);
     const auto* type_assignment_symbol = GetTypeAssignmentFromParamDeclaration(
         *param_declarations.front().match);
+    if (type_assignment_symbol == nullptr) {
+      continue;
+    }
     const auto t = type_assignment_symbol->Tag();
     EXPECT_EQ(t.kind, verible::SymbolKind::kNode);
     EXPECT_EQ(NodeEnum(t.tag), NodeEnum::kTypeAssignment);
