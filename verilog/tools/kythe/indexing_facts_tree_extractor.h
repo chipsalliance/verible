@@ -224,6 +224,9 @@ class IndexingFactsTreeExtractor : public verible::TreeContextVisitor {
   // e.g counter #(.N(r)) extracts "N".
   void ExtractParamByName(const verible::SyntaxTreeNode& param_by_name);
 
+  // Creates new scope with unique id for if conditions and loops.
+  void ExtractTemporaryScope(const verible::SyntaxTreeNode& node);
+
   // Determines how to deal with the given data declaration node as it may be
   // module instance, class instance or primitive variable.
   void ExtractDataDeclaration(const verible::SyntaxTreeNode& data_declaration);

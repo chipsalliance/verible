@@ -36,6 +36,7 @@ enum class IndexingFactType {
   kClassInstance,
   kModuleInstance,
   kDataTypeReference,
+  kTemporaryScope,
   kParamDeclaration,
   kConstant,
   kModuleNamedPort,
