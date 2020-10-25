@@ -130,8 +130,7 @@ const verible::SyntaxTreeLeaf& GetFunctionCallNameFromCallExtension(
 const verible::SyntaxTreeNode& GetFunctionBlockStatementList(
     const verible::Symbol& function_decl) {
   return verible::GetSubtreeAsNode(function_decl,
-                                   NodeEnum::kFunctionDeclaration, 2,
-                                   NodeEnum::kBlockItemStatementList);
+                                   NodeEnum::kFunctionDeclaration, 2);
 }
 
 const verible::SyntaxTreeNode& GetParenGroupFromCall(

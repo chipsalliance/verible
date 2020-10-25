@@ -762,9 +762,13 @@ void IndexingFactsTreeExtractor::ExtractFunctionDeclaration(
       IndexingNodeData{IndexingFactType::kFunctionOrTask});
 
   // Extract function name.
-  const auto* function_name_leaf = GetFunctionName(function_declaration_node);
-  const Anchor function_name_anchor(function_name_leaf->get(), context_.base);
-  function_node.Value().AppendAnchor(function_name_anchor);
+  const verible::Symbol* function_name =
+      GetFunctionId(function_declaration_node);
+  if (function_name == nullptr) {
+    return;
+  }
+  Visit(verible::SymbolCastToNode(*function_name));
+  MoveAndDeleteLastSibling(function_node);
 
   {
     const IndexingFactsTreeContext::AutoPop p(&facts_tree_context_,
@@ -787,9 +791,12 @@ void IndexingFactsTreeExtractor::ExtractTaskDeclaration(
       IndexingNodeData{IndexingFactType::kFunctionOrTask});
 
   // Extract task name.
-  const auto* task_name_leaf = GetTaskName(task_declaration_node);
-  const Anchor task_name_anchor(task_name_leaf->get(), context_.base);
-  task_node.Value().AppendAnchor(task_name_anchor);
+  const auto* task_name = GetTaskId(task_declaration_node);
+  if (task_name == nullptr) {
+    return;
+  }
+  Visit(verible::SymbolCastToNode(*task_name));
+  MoveAndDeleteLastSibling(task_node);
 
   {
     const IndexingFactsTreeContext::AutoPop p(&facts_tree_context_, &task_node);

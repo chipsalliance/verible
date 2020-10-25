@@ -511,6 +511,10 @@ TEST(GetFunctionBlockStatement, GetFunctionBody) {
       {"class m;\n static function int my_fun();\n ",
        {kTag, "return 10;"},
        "\n endfunction\n  endclass"},
+      {"function int f;\n", {kTag, "return 1;"}, "\nendfunction"},
+      {"class s;\nfunction int f;",
+       {kTag, "return 1;"},
+       "\nendfunction\nendclass"},
   };
   for (const auto& test : kTestCases) {
     const absl::string_view code(test.code);

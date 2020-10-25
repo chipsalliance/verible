@@ -5167,6 +5167,66 @@ TEST(FactsTreeExtractor, TypedVariable) {
   EXPECT_EQ(result_pair.right, nullptr) << *result_pair.right;
 }
 
+TEST(FactsTreeExtractor, FunctionNameAsQualifiedId) {
+  constexpr int kTag = 1;  // value doesn't matter
+  const verible::SyntaxTreeSearchTestCase kTestCase = {
+      {
+          "function ",
+          {kTag, "pkg"},
+          "::",
+          {kTag, "f"},
+          ";\nendfunction\ntask ",
+          {kTag, "pkg"},
+          "::",
+          {kTag, "t"},
+          ";\nendtask",
+      },
+  };
+
+  ScopedTestFile test_file(testing::TempDir(), kTestCase.code);
+  int exit_status = 0;
+
+  const IndexingFactNode expected(T(
+      {
+          {
+              Anchor(testing::TempDir(), 0, 0),
+          },
+          IndexingFactType::kFileList,
+      },
+      T(
+          {
+              {
+                  Anchor(test_file.filename(), 0, kTestCase.code.size()),
+                  Anchor(kTestCase.code, 0, kTestCase.code.size()),
+              },
+              IndexingFactType ::kFile,
+          },
+          // refers to function pkg::f.
+          T({
+              {
+                  Anchor(kTestCase.expected_tokens[1], kTestCase.code),
+                  Anchor(kTestCase.expected_tokens[3], kTestCase.code),
+              },
+              IndexingFactType ::kFunctionOrTask,
+          }),
+          // refers to task pkg::t.
+          T({
+              {
+                  Anchor(kTestCase.expected_tokens[5], kTestCase.code),
+                  Anchor(kTestCase.expected_tokens[7], kTestCase.code),
+              },
+              IndexingFactType ::kFunctionOrTask,
+          }))));
+
+  const auto facts_tree =
+      ExtractFiles({std::string(verible::file::Basename(test_file.filename()))},
+                   exit_status, testing::TempDir());
+
+  const auto result_pair = DeepEqual(facts_tree, expected);
+  EXPECT_EQ(result_pair.left, nullptr) << *result_pair.left;
+  EXPECT_EQ(result_pair.right, nullptr) << *result_pair.right;
+}
+
 TEST(FactsTreeExtractor, FunctinoNamedArgument) {
   constexpr int kTag = 1;  // value doesn't matter
   const verible::SyntaxTreeSearchTestCase kTestCase = {
