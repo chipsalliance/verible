@@ -259,8 +259,17 @@ void IndexingFactsTreeExtractor::Visit(const SyntaxTreeNode& node) {
       break;
     }
     case NodeEnum::kLoopGenerateConstruct:
-    case NodeEnum::kConditionalGenerateConstruct:
-    case NodeEnum::kForLoopStatement: {
+    case NodeEnum::kIfClause:
+    case NodeEnum::kFinalStatement:
+    case NodeEnum::kGenerateElseBody:
+    case NodeEnum::kElseClause:
+    case NodeEnum::kGenerateIfClause:
+    case NodeEnum::kForLoopStatement:
+    case NodeEnum::kDoWhileLoopStatement:
+    case NodeEnum::kWhileLoopStatement:
+    case NodeEnum::kForeachLoopStatement:
+    case NodeEnum::kRepeatLoopStatement:
+    case NodeEnum::kForeverLoopStatement: {
       ExtractTemporaryScope(node);
       break;
     }
@@ -1471,7 +1480,7 @@ void IndexingFactsTreeExtractor::ExtractTemporaryScope(
     const verible::SyntaxTreeNode& node) {
   IndexingFactNode temp_scope_node(
       IndexingNodeData{IndexingFactType::kTemporaryScope});
-  
+
   // Generate unique id for this scope.
   temp_scope_node.Value().AppendAnchor(
       Anchor(absl::StrCat("temp-scope-", getpid(), "-", random()), 0, 0));

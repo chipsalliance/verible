@@ -171,7 +171,7 @@ class KytheFactsExtractor {
   // Extracts Kythe facts from class instance node and return its VName.
   VName ExtractClassInstances(const IndexingFactNode& class_instance_fact_node);
 
-  // Creates a new temporary scope for if conditions and for loops.
+  // Creates a new temporary scope for if conditions and loops.
   VName ExtractTempScope(const IndexingFactNode& temp_scope);
 
   // Extracts kythe facts from a function or task node and returns its VName.
