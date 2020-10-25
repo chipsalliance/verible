@@ -42,7 +42,7 @@ ABSL_FLAG(std::string, include_dir_paths, "",
 
 static int ExtractFiles(const std::vector<std::string>& ordered_file_list,
                         absl::string_view file_list_dir,
-                        const std::vector<std::string>& include_dir_paths) {
+                        const std::set<std::string>& include_dir_paths) {
   int exit_status = 0;
 
   const verilog::kythe::IndexingFactNode file_list_facts_tree(
@@ -59,6 +59,7 @@ static int ExtractFiles(const std::vector<std::string>& ordered_file_list,
     std::cout << verilog::kythe::KytheFactsPrinter(file_list_facts_tree)
               << std::endl;
   }
+  // LOG(INFO) << std::endl << file_list_facts_tree << std::endl;
 
   const std::string output_path = absl::GetFlag(FLAGS_output_path);
   if (!output_path.empty()) {
@@ -84,16 +85,20 @@ Output: Produces Indexing Facts for kythe (http://kythe.io).
 )");
   const auto args = verible::InitCommandLine(usage, &argc, &argv);
 
-  std::vector<std::string> include_dir_paths;
+  // Set to hold the unique directories for where to look for files.
+  std::set<std::string> include_dir_paths;
   const std::string include_dir_string = absl::GetFlag(FLAGS_include_dir_paths);
   if (!include_dir_string.empty()) {
     const std::vector<absl::string_view> paths =
         absl::StrSplit(include_dir_string.c_str(), ',');
 
     for (absl::string_view path : paths) {
-      include_dir_paths.push_back(std::string(path));
+      include_dir_paths.insert(std::string(path));
     }
   }
+
+  // Add the directory of the file list to included files directories.
+  include_dir_paths.insert(std::string(verible::file::Dirname(args[1])));
 
   std::string content;
   if (!verible::file::GetContents(args[1], &content).ok()) {

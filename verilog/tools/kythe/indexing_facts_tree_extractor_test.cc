@@ -117,7 +117,7 @@ TEST(FactsTreeExtractor, EmptyCSTTest) {
 
   const auto facts_tree =
       ExtractFiles({std::string(verible::file::Basename(test_file.filename()))},
-                   exit_status, testing::TempDir(), {});
+                   exit_status, testing::TempDir(), {testing::TempDir()});
 
   const auto result_pair = DeepEqual(facts_tree, expected);
   EXPECT_EQ(result_pair.left, nullptr) << *result_pair.left;
@@ -177,7 +177,7 @@ TEST(FactsTreeExtractor, EmptyModuleTest) {
 
   const auto facts_tree =
       ExtractFiles({std::string(verible::file::Basename(test_file.filename()))},
-                   exit_status, testing::TempDir(), {});
+                   exit_status, testing::TempDir(), {testing::TempDir()});
 
   const auto result_pair = DeepEqual(facts_tree, expected);
   EXPECT_EQ(result_pair.left, nullptr) << *result_pair.left;
@@ -252,7 +252,7 @@ TEST(FactsTreeExtractor, OneModuleInstanceTest) {
 
   const auto facts_tree =
       ExtractFiles({std::string(verible::file::Basename(test_file.filename()))},
-                   exit_status, testing::TempDir(), {});
+                   exit_status, testing::TempDir(), {testing::TempDir()});
 
   const auto result_pair = DeepEqual(facts_tree, expected);
   EXPECT_EQ(result_pair.left, nullptr) << *result_pair.left;
@@ -346,7 +346,7 @@ TEST(FactsTreeExtractor, TwoModuleInstanceTest) {
 
   const auto facts_tree =
       ExtractFiles({std::string(verible::file::Basename(test_file.filename()))},
-                   exit_status, testing::TempDir(), {});
+                   exit_status, testing::TempDir(), {testing::TempDir()});
 
   const auto result_pair = DeepEqual(facts_tree, expected);
   EXPECT_EQ(result_pair.left, nullptr) << *result_pair.left;
@@ -430,7 +430,7 @@ TEST(FactsTreeExtractor, MultipleModuleInstancesInTheSameDeclarationTest) {
 
   const auto facts_tree =
       ExtractFiles({std::string(verible::file::Basename(test_file.filename()))},
-                   exit_status, testing::TempDir(), {});
+                   exit_status, testing::TempDir(), {testing::TempDir()});
 
   const auto result_pair = DeepEqual(facts_tree, expected);
   EXPECT_EQ(result_pair.left, nullptr) << *result_pair.left;
@@ -492,7 +492,7 @@ TEST(FactsTreeExtractor, ModuleWithPortsTest) {
 
   const auto facts_tree =
       ExtractFiles({std::string(verible::file::Basename(test_file.filename()))},
-                   exit_status, testing::TempDir(), {});
+                   exit_status, testing::TempDir(), {testing::TempDir()});
 
   const auto result_pair = DeepEqual(facts_tree, expected);
   EXPECT_EQ(result_pair.left, nullptr) << *result_pair.left;
@@ -591,7 +591,7 @@ TEST(FactsTreeExtractor, ModuleDimensionTypePortsTest) {
 
   const auto facts_tree =
       ExtractFiles({std::string(verible::file::Basename(test_file.filename()))},
-                   exit_status, testing::TempDir(), {});
+                   exit_status, testing::TempDir(), {testing::TempDir()});
 
   const auto result_pair = DeepEqual(facts_tree, expected);
   EXPECT_EQ(result_pair.left, nullptr) << *result_pair.left;
@@ -675,7 +675,7 @@ TEST(FactsTreeExtractor, ModuleWithPortsNonANSIStyleTest) {
 
   const auto facts_tree =
       ExtractFiles({std::string(verible::file::Basename(test_file.filename()))},
-                   exit_status, testing::TempDir(), {});
+                   exit_status, testing::TempDir(), {testing::TempDir()});
 
   const auto result_pair = DeepEqual(facts_tree, expected);
   EXPECT_EQ(result_pair.left, nullptr) << *result_pair.left;
@@ -737,7 +737,7 @@ TEST(FactsTreeExtractor, ClassParams) {
 
   const auto facts_tree =
       ExtractFiles({std::string(verible::file::Basename(test_file.filename()))},
-                   exit_status, testing::TempDir(), {});
+                   exit_status, testing::TempDir(), {testing::TempDir()});
 
   const auto result_pair = DeepEqual(facts_tree, expected);
   EXPECT_EQ(result_pair.left, nullptr) << *result_pair.left;
@@ -799,7 +799,7 @@ TEST(FactsTreeExtractor, ClassTypeParams) {
 
   const auto facts_tree =
       ExtractFiles({std::string(verible::file::Basename(test_file.filename()))},
-                   exit_status, testing::TempDir(), {});
+                   exit_status, testing::TempDir(), {testing::TempDir()});
 
   const auto result_pair = DeepEqual(facts_tree, expected);
   EXPECT_EQ(result_pair.left, nullptr) << *result_pair.left;
@@ -1021,7 +1021,7 @@ TEST(FactsTreeExtractor, ModuleInstanceWithActualNamedPorts) {
 
   const auto facts_tree =
       ExtractFiles({std::string(verible::file::Basename(test_file.filename()))},
-                   exit_status, testing::TempDir(), {});
+                   exit_status, testing::TempDir(), {testing::TempDir()});
 
   const auto result_pair = DeepEqual(facts_tree, expected);
   EXPECT_EQ(result_pair.left, nullptr) << *result_pair.left;
@@ -1105,7 +1105,7 @@ TEST(FactsTreeExtractor, ModuleWithPortsDataTypeForwarding) {
 
   const auto facts_tree =
       ExtractFiles({std::string(verible::file::Basename(test_file.filename()))},
-                   exit_status, testing::TempDir(), {});
+                   exit_status, testing::TempDir(), {testing::TempDir()});
 
   const auto result_pair = DeepEqual(facts_tree, expected);
   EXPECT_EQ(result_pair.left, nullptr) << *result_pair.left;
@@ -1426,7 +1426,7 @@ TEST(FactsTreeExtractor, PrimitiveTypeExtraction) {
 
   const auto facts_tree =
       ExtractFiles({std::string(verible::file::Basename(test_file.filename()))},
-                   exit_status, testing::TempDir(), {});
+                   exit_status, testing::TempDir(), {testing::TempDir()});
 
   const auto result_pair = DeepEqual(facts_tree, expected);
   EXPECT_EQ(result_pair.left, nullptr) << *result_pair.left;
@@ -1508,7 +1508,7 @@ TEST(FactsTreeExtractor, MultiSignalDeclaration) {
 
   const auto facts_tree =
       ExtractFiles({std::string(verible::file::Basename(test_file.filename()))},
-                   exit_status, testing::TempDir(), {});
+                   exit_status, testing::TempDir(), {testing::TempDir()});
 
   const auto result_pair = DeepEqual(facts_tree, expected);
   EXPECT_EQ(result_pair.left, nullptr) << *result_pair.left;
@@ -1642,7 +1642,7 @@ TEST(FactsTreeExtractor, ModuleInstanceWithPortsTest) {
 
   const auto facts_tree =
       ExtractFiles({std::string(verible::file::Basename(test_file.filename()))},
-                   exit_status, testing::TempDir(), {});
+                   exit_status, testing::TempDir(), {testing::TempDir()});
 
   const auto result_pair = DeepEqual(facts_tree, expected);
   EXPECT_EQ(result_pair.left, nullptr) << *result_pair.left;
@@ -1695,7 +1695,7 @@ TEST(FactsTreeExtractor, WireTest) {
 
   const auto facts_tree =
       ExtractFiles({std::string(verible::file::Basename(test_file.filename()))},
-                   exit_status, testing::TempDir(), {});
+                   exit_status, testing::TempDir(), {testing::TempDir()});
 
   const auto result_pair = DeepEqual(facts_tree, expected);
   EXPECT_EQ(result_pair.left, nullptr) << *result_pair.left;
@@ -1736,7 +1736,7 @@ TEST(FactsTreeExtractor, ClassTest) {
 
   const auto facts_tree =
       ExtractFiles({std::string(verible::file::Basename(test_file.filename()))},
-                   exit_status, testing::TempDir(), {});
+                   exit_status, testing::TempDir(), {testing::TempDir()});
 
   const auto result_pair = DeepEqual(facts_tree, expected);
   EXPECT_EQ(result_pair.left, nullptr) << *result_pair.left;
@@ -1792,7 +1792,7 @@ TEST(FactsTreeExtractor, CLassWithinModuleTest) {
 
   const auto facts_tree =
       ExtractFiles({std::string(verible::file::Basename(test_file.filename()))},
-                   exit_status, testing::TempDir(), {});
+                   exit_status, testing::TempDir(), {testing::TempDir()});
 
   const auto result_pair = DeepEqual(facts_tree, expected);
   EXPECT_EQ(result_pair.left, nullptr) << *result_pair.left;
@@ -1850,7 +1850,7 @@ TEST(FactsTreeExtractor, NestedClassTest) {
 
   const auto facts_tree =
       ExtractFiles({std::string(verible::file::Basename(test_file.filename()))},
-                   exit_status, testing::TempDir(), {});
+                   exit_status, testing::TempDir(), {testing::TempDir()});
 
   const auto result_pair = DeepEqual(facts_tree, expected);
   EXPECT_EQ(result_pair.left, nullptr) << *result_pair.left;
@@ -1956,7 +1956,7 @@ TEST(FactsTreeExtractor, OneClassInstanceTest) {
 
   const auto facts_tree =
       ExtractFiles({std::string(verible::file::Basename(test_file.filename()))},
-                   exit_status, testing::TempDir(), {});
+                   exit_status, testing::TempDir(), {testing::TempDir()});
 
   const auto result_pair = DeepEqual(facts_tree, expected);
   EXPECT_EQ(result_pair.left, nullptr) << *result_pair.left;
@@ -2075,7 +2075,7 @@ TEST(FactsTreeExtractor, ClassMemberAccess) {
 
   const auto facts_tree =
       ExtractFiles({std::string(verible::file::Basename(test_file.filename()))},
-                   exit_status, testing::TempDir(), {});
+                   exit_status, testing::TempDir(), {testing::TempDir()});
 
   const auto result_pair = DeepEqual(facts_tree, expected);
   EXPECT_EQ(result_pair.left, nullptr) << *result_pair.left;
@@ -2130,7 +2130,7 @@ TEST(FactsTreeExtractor, FunctionAndTaskDeclarationNoArgs) {
 
   const auto facts_tree =
       ExtractFiles({std::string(verible::file::Basename(test_file.filename()))},
-                   exit_status, testing::TempDir(), {});
+                   exit_status, testing::TempDir(), {testing::TempDir()});
 
   const auto result_pair = DeepEqual(facts_tree, expected);
   EXPECT_EQ(result_pair.left, nullptr) << *result_pair.left;
@@ -2233,7 +2233,7 @@ TEST(FactsTreeExtractor, FunctionAndTaskDeclarationWithArgs) {
 
   const auto facts_tree =
       ExtractFiles({std::string(verible::file::Basename(test_file.filename()))},
-                   exit_status, testing::TempDir(), {});
+                   exit_status, testing::TempDir(), {testing::TempDir()});
 
   const auto result_pair = DeepEqual(facts_tree, expected);
   EXPECT_EQ(result_pair.left, nullptr) << *result_pair.left;
@@ -2304,7 +2304,7 @@ TEST(FactsTreeExtractor, ClassMember) {
 
   const auto facts_tree =
       ExtractFiles({std::string(verible::file::Basename(test_file.filename()))},
-                   exit_status, testing::TempDir(), {});
+                   exit_status, testing::TempDir(), {testing::TempDir()});
 
   const auto result_pair = DeepEqual(facts_tree, expected);
   EXPECT_EQ(result_pair.left, nullptr) << *result_pair.left;
@@ -2387,7 +2387,7 @@ TEST(FactsTreeExtractor, FunctionAndTaskCallNoArgs) {
 
   const auto facts_tree =
       ExtractFiles({std::string(verible::file::Basename(test_file.filename()))},
-                   exit_status, testing::TempDir(), {});
+                   exit_status, testing::TempDir(), {testing::TempDir()});
 
   const auto result_pair = DeepEqual(facts_tree, expected);
   EXPECT_EQ(result_pair.left, nullptr) << *result_pair.left;
@@ -2646,7 +2646,7 @@ TEST(FactsTreeExtractor, FunctionClassCall) {
 
   const auto facts_tree =
       ExtractFiles({std::string(verible::file::Basename(test_file.filename()))},
-                   exit_status, testing::TempDir(), {});
+                   exit_status, testing::TempDir(), {testing::TempDir()});
 
   const auto result_pair = DeepEqual(facts_tree, expected);
   EXPECT_EQ(result_pair.left, nullptr) << *result_pair.left;
@@ -2753,7 +2753,7 @@ TEST(FactsTreeExtractor, MacroDefinitionTest) {
 
   const auto facts_tree =
       ExtractFiles({std::string(verible::file::Basename(test_file.filename()))},
-                   exit_status, testing::TempDir(), {});
+                   exit_status, testing::TempDir(), {testing::TempDir()});
 
   const auto result_pair = DeepEqual(facts_tree, expected);
   EXPECT_EQ(result_pair.left, nullptr) << *result_pair.left;
@@ -2947,7 +2947,7 @@ TEST(FactsTreeExtractor, MacroCallTest) {
 
   const auto facts_tree =
       ExtractFiles({std::string(verible::file::Basename(test_file.filename()))},
-                   exit_status, testing::TempDir(), {});
+                   exit_status, testing::TempDir(), {testing::TempDir()});
 
   const auto result_pair = DeepEqual(facts_tree, expected);
   EXPECT_EQ(result_pair.left, nullptr) << *result_pair.left;
@@ -3061,7 +3061,7 @@ TEST(PackageImportTest, PackageAndImportedItemName) {
 
   const auto facts_tree =
       ExtractFiles({std::string(verible::file::Basename(test_file.filename()))},
-                   exit_status, testing::TempDir(), {});
+                   exit_status, testing::TempDir(), {testing::TempDir()});
 
   const auto result_pair = DeepEqual(facts_tree, expected);
   EXPECT_EQ(result_pair.left, nullptr) << *result_pair.left;
@@ -3147,7 +3147,7 @@ TEST(PackageImportTest, PackageDirectMemberReference) {
 
   const auto facts_tree =
       ExtractFiles({std::string(verible::file::Basename(test_file.filename()))},
-                   exit_status, testing::TempDir(), {});
+                   exit_status, testing::TempDir(), {testing::TempDir()});
 
   const auto result_pair = DeepEqual(facts_tree, expected);
   EXPECT_EQ(result_pair.left, nullptr) << *result_pair.left;
@@ -3281,7 +3281,7 @@ TEST(FactsTreeExtractor, ForLoopInitializations) {
 
   const auto facts_tree =
       ExtractFiles({std::string(verible::file::Basename(test_file.filename()))},
-                   exit_status, testing::TempDir(), {});
+                   exit_status, testing::TempDir(), {testing::TempDir()});
 
   const auto result_pair = DeepEqual(facts_tree, expected);
   EXPECT_EQ(result_pair.left, nullptr) << *result_pair.left;
@@ -3356,7 +3356,7 @@ TEST(FactsTreeExtractor, ClassExtends) {
 
   const auto facts_tree =
       ExtractFiles({std::string(verible::file::Basename(test_file.filename()))},
-                   exit_status, testing::TempDir(), {});
+                   exit_status, testing::TempDir(), {testing::TempDir()});
 
   const auto result_pair = DeepEqual(facts_tree, expected);
   EXPECT_EQ(result_pair.left, nullptr) << *result_pair.left;
@@ -3500,7 +3500,7 @@ TEST(FactsTreeExtractor, ParameterExtraction) {
 
   const auto facts_tree =
       ExtractFiles({std::string(verible::file::Basename(test_file.filename()))},
-                   exit_status, testing::TempDir(), {});
+                   exit_status, testing::TempDir(), {testing::TempDir()});
 
   const auto result_pair = DeepEqual(facts_tree, expected);
   EXPECT_EQ(result_pair.left, nullptr) << *result_pair.left;
@@ -3644,7 +3644,7 @@ TEST(FactsTreeExtractor, InterfaceParameterExtraction) {
 
   const auto facts_tree =
       ExtractFiles({std::string(verible::file::Basename(test_file.filename()))},
-                   exit_status, testing::TempDir(), {});
+                   exit_status, testing::TempDir(), {testing::TempDir()});
 
   const auto result_pair = DeepEqual(facts_tree, expected);
   EXPECT_EQ(result_pair.left, nullptr) << *result_pair.left;
@@ -3707,7 +3707,7 @@ TEST(FactsTreeExtractor, ClassAsPort) {
 
   const auto facts_tree =
       ExtractFiles({std::string(verible::file::Basename(test_file.filename()))},
-                   exit_status, testing::TempDir(), {});
+                   exit_status, testing::TempDir(), {testing::TempDir()});
 
   const auto result_pair = DeepEqual(facts_tree, expected);
   EXPECT_EQ(result_pair.left, nullptr) << *result_pair.left;
@@ -3851,7 +3851,7 @@ TEST(FactsTreeExtractor, ProgramParameterExtraction) {
 
   const auto facts_tree =
       ExtractFiles({std::string(verible::file::Basename(test_file.filename()))},
-                   exit_status, testing::TempDir(), {});
+                   exit_status, testing::TempDir(), {testing::TempDir()});
 
   const auto result_pair = DeepEqual(facts_tree, expected);
   EXPECT_EQ(result_pair.left, nullptr) << *result_pair.left;
@@ -3997,7 +3997,7 @@ TEST(FactsTreeExtractor, PackedAndUnpackedDimension) {
 
   const auto facts_tree =
       ExtractFiles({std::string(verible::file::Basename(test_file.filename()))},
-                   exit_status, testing::TempDir(), {});
+                   exit_status, testing::TempDir(), {testing::TempDir()});
 
   const auto result_pair = DeepEqual(facts_tree, expected);
   EXPECT_EQ(result_pair.left, nullptr) << *result_pair.left;
@@ -4103,7 +4103,7 @@ TEST(FactsTreeExtractor, FileIncludes) {
 
   const auto facts_tree =
       ExtractFiles({std::string(verible::file::Basename(test_file.filename()))},
-                   exit_status, testing::TempDir(), {});
+                   exit_status, testing::TempDir(), {testing::TempDir()});
 
   const auto result_pair = DeepEqual(facts_tree, expected);
   EXPECT_EQ(result_pair.left, nullptr) << *result_pair.left;
@@ -4310,7 +4310,7 @@ TEST(FactsTreeExtractor, EnumTest) {
 
   const auto facts_tree =
       ExtractFiles({std::string(verible::file::Basename(test_file.filename()))},
-                   exit_status, testing::TempDir(), {});
+                   exit_status, testing::TempDir(), {testing::TempDir()});
 
   const auto result_pair = DeepEqual(facts_tree, expected);
   EXPECT_EQ(result_pair.left, nullptr) << *result_pair.left;
@@ -4373,7 +4373,7 @@ TEST(FactsTreeExtractor, StructInModule) {
 
   const auto facts_tree =
       ExtractFiles({std::string(verible::file::Basename(test_file.filename()))},
-                   exit_status, testing::TempDir(), {});
+                   exit_status, testing::TempDir(), {testing::TempDir()});
 
   const auto result_pair = DeepEqual(facts_tree, expected);
   EXPECT_EQ(result_pair.left, nullptr) << *result_pair.left;
@@ -4436,7 +4436,7 @@ TEST(FactsTreeExtractor, StructInPackage) {
 
   const auto facts_tree =
       ExtractFiles({std::string(verible::file::Basename(test_file.filename()))},
-                   exit_status, testing::TempDir(), {});
+                   exit_status, testing::TempDir(), {testing::TempDir()});
 
   const auto result_pair = DeepEqual(facts_tree, expected);
   EXPECT_EQ(result_pair.left, nullptr) << *result_pair.left;
@@ -4499,7 +4499,7 @@ TEST(FactsTreeExtractor, UnionInModule) {
 
   const auto facts_tree =
       ExtractFiles({std::string(verible::file::Basename(test_file.filename()))},
-                   exit_status, testing::TempDir(), {});
+                   exit_status, testing::TempDir(), {testing::TempDir()});
 
   const auto result_pair = DeepEqual(facts_tree, expected);
   EXPECT_EQ(result_pair.left, nullptr) << *result_pair.left;
@@ -4562,7 +4562,7 @@ TEST(FactsTreeExtractor, UnionInPackage) {
 
   const auto facts_tree =
       ExtractFiles({std::string(verible::file::Basename(test_file.filename()))},
-                   exit_status, testing::TempDir(), {});
+                   exit_status, testing::TempDir(), {testing::TempDir()});
 
   const auto result_pair = DeepEqual(facts_tree, expected);
   EXPECT_EQ(result_pair.left, nullptr) << *result_pair.left;
@@ -4625,7 +4625,7 @@ TEST(FactsTreeExtractor, UnionTypeInPackage) {
 
   const auto facts_tree =
       ExtractFiles({std::string(verible::file::Basename(test_file.filename()))},
-                   exit_status, testing::TempDir(), {});
+                   exit_status, testing::TempDir(), {testing::TempDir()});
 
   const auto result_pair = DeepEqual(facts_tree, expected);
   EXPECT_EQ(result_pair.left, nullptr) << *result_pair.left;
@@ -4688,7 +4688,7 @@ TEST(FactsTreeExtractor, UnionTypenModule) {
 
   const auto facts_tree =
       ExtractFiles({std::string(verible::file::Basename(test_file.filename()))},
-                   exit_status, testing::TempDir(), {});
+                   exit_status, testing::TempDir(), {testing::TempDir()});
 
   const auto result_pair = DeepEqual(facts_tree, expected);
   EXPECT_EQ(result_pair.left, nullptr) << *result_pair.left;
@@ -4751,7 +4751,7 @@ TEST(FactsTreeExtractor, StructTypeInPackage) {
 
   const auto facts_tree =
       ExtractFiles({std::string(verible::file::Basename(test_file.filename()))},
-                   exit_status, testing::TempDir(), {});
+                   exit_status, testing::TempDir(), {testing::TempDir()});
 
   const auto result_pair = DeepEqual(facts_tree, expected);
   EXPECT_EQ(result_pair.left, nullptr) << *result_pair.left;
@@ -4814,7 +4814,7 @@ TEST(FactsTreeExtractor, StructTypedefModule) {
 
   const auto facts_tree =
       ExtractFiles({std::string(verible::file::Basename(test_file.filename()))},
-                   exit_status, testing::TempDir(), {});
+                   exit_status, testing::TempDir(), {testing::TempDir()});
 
   const auto result_pair = DeepEqual(facts_tree, expected);
   EXPECT_EQ(result_pair.left, nullptr) << *result_pair.left;
@@ -4877,7 +4877,7 @@ TEST(FactsTreeExtractor, StructInUnionType) {
 
   const auto facts_tree =
       ExtractFiles({std::string(verible::file::Basename(test_file.filename()))},
-                   exit_status, testing::TempDir(), {});
+                   exit_status, testing::TempDir(), {testing::TempDir()});
 
   const auto result_pair = DeepEqual(facts_tree, expected);
   EXPECT_EQ(result_pair.left, nullptr) << *result_pair.left;
@@ -4940,7 +4940,7 @@ TEST(FactsTreeExtractor, StructInUnion) {
 
   const auto facts_tree =
       ExtractFiles({std::string(verible::file::Basename(test_file.filename()))},
-                   exit_status, testing::TempDir(), {});
+                   exit_status, testing::TempDir(), {testing::TempDir()});
 
   const auto result_pair = DeepEqual(facts_tree, expected);
   EXPECT_EQ(result_pair.left, nullptr) << *result_pair.left;
@@ -5003,7 +5003,7 @@ TEST(FactsTreeExtractor, UnionInStructType) {
 
   const auto facts_tree =
       ExtractFiles({std::string(verible::file::Basename(test_file.filename()))},
-                   exit_status, testing::TempDir(), {});
+                   exit_status, testing::TempDir(), {testing::TempDir()});
 
   const auto result_pair = DeepEqual(facts_tree, expected);
   EXPECT_EQ(result_pair.left, nullptr) << *result_pair.left;
@@ -5066,7 +5066,7 @@ TEST(FactsTreeExtractor, UnionInStruct) {
 
   const auto facts_tree =
       ExtractFiles({std::string(verible::file::Basename(test_file.filename()))},
-                   exit_status, testing::TempDir(), {});
+                   exit_status, testing::TempDir(), {testing::TempDir()});
 
   const auto result_pair = DeepEqual(facts_tree, expected);
   EXPECT_EQ(result_pair.left, nullptr) << *result_pair.left;
@@ -5160,7 +5160,7 @@ TEST(FactsTreeExtractor, TypedVariable) {
 
   const auto facts_tree =
       ExtractFiles({std::string(verible::file::Basename(test_file.filename()))},
-                   exit_status, testing::TempDir(), {});
+                   exit_status, testing::TempDir(), {testing::TempDir()});
 
   const auto result_pair = DeepEqual(facts_tree, expected);
   EXPECT_EQ(result_pair.left, nullptr) << *result_pair.left;

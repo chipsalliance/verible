@@ -32,11 +32,11 @@ namespace kythe {
 // facts from CST nodes and constructs a tree of indexing facts.
 class IndexingFactsTreeExtractor : public verible::TreeContextVisitor {
  public:
-  IndexingFactsTreeExtractor(absl::string_view base,
-                             absl::string_view file_name,
-                             IndexingFactNode& file_list_facts_tree,
-                             std::set<std::string>& extracted_files,
-                             const std::vector<std::string>& include_dir_paths)
+  IndexingFactsTreeExtractor(
+      absl::string_view base, absl::string_view file_name,
+      IndexingFactNode& file_list_facts_tree,
+      std::map<std::string, std::string>& extracted_files,
+      const std::set<std::string>& include_dir_paths)
       : context_(verible::TokenInfo::Context(base)),
         file_list_facts_tree_(file_list_facts_tree),
         extracted_files_(extracted_files),
@@ -249,23 +249,22 @@ class IndexingFactsTreeExtractor : public verible::TreeContextVisitor {
   // given in the ordered file list.
   IndexingFactNode& file_list_facts_tree_;
 
-  // Set of the file paths of the extracted files.
+  // Maps which maps every file name to it's file path.
   // Used to avoid extracting some file more than one time.
-  std::set<std::string>& extracted_files_;
+  std::map<std::string, std::string>& extracted_files_;
 
   // Holds the paths of the directories used to look for the included
   // files.
-  const std::vector<std::string>& include_dir_paths_;
+  const std::set<std::string>& include_dir_paths_;
 };
 
 // Given the ordered SystemVerilog files, Extracts and returns the
 // IndexingFactsTree from the given files.
 // The returned Root will have the files as children and they will retain their
 // original ordering from the file list.
-IndexingFactNode ExtractFiles(
-    const std::vector<std::string>& ordered_file_list, int& exit_status,
-    absl::string_view file_list_dir,
-    const std::vector<std::string>& include_dir_paths);
+IndexingFactNode ExtractFiles(const std::vector<std::string>& ordered_file_list,
+                              int& exit_status, absl::string_view file_list_dir,
+                              const std::set<std::string>& include_dir_paths);
 
 }  // namespace kythe
 }  // namespace verilog
