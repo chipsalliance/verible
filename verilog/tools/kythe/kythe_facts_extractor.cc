@@ -310,6 +310,7 @@ void KytheFactsExtractor::ConstructFlattenedScope(const IndexingFactNode& node,
     case IndexingFactType::kModule:
     case IndexingFactType::kStructOrUnion:
     case IndexingFactType::kClass:
+    case IndexingFactType::kFunctionOrTask:
     case IndexingFactType::kMacro:
     case IndexingFactType::kPackage:
     case IndexingFactType::kInterface:
