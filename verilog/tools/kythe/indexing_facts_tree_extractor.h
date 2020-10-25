@@ -249,7 +249,7 @@ class IndexingFactsTreeExtractor : public verible::TreeContextVisitor {
   // given in the ordered file list.
   IndexingFactNode& file_list_facts_tree_;
 
-  // Maps which maps every file name to it's file path.
+  // Maps every file name to it's file path.
   // Used to avoid extracting some file more than one time.
   std::map<std::string, std::string>& extracted_files_;
 

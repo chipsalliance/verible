@@ -50,7 +50,6 @@ bazel-bin/verilog/tools/kythe/verible-verilog-kythe-extractor "${VERILOG_INCLUDE
 ${KYTHE_BINDIR}/entrystream --read_format=json < "${KYTHE_OUT}"/entries \
 | ${KYTHE_BINDIR}/verifier ${VERILOG_INCLUDE_DIR_TEST_FILES}
 
-
 # Test ordered multi-files.
 bazel-bin/verilog/tools/kythe/verible-verilog-kythe-extractor "${VERILOG_MULTI_FILE_TEST_FILE_LIST}" --printkythefacts > "${KYTHE_OUT}"/entries
 
