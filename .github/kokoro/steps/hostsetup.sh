@@ -58,6 +58,7 @@ sudo apt-get install -y \
 echo "----------------------------------------"
 
 echo
+BAZEL_VERSION=3.4.1
 echo "========================================"
 echo "Installing bazel"
 echo "----------------------------------------"
@@ -65,8 +66,8 @@ echo "----------------------------------------"
   set -x
   bazel version || true
 
-  wget https://github.com/bazelbuild/bazel/releases/download/3.4.1/bazel_3.4.1-linux-x86_64.deb
-  sudo dpkg -i bazel_3.4.1-linux-x86_64.deb
+  wget "https://github.com/bazelbuild/bazel/releases/download/${BAZEL_VERSION}/bazel_${BAZEL_VERSION}-linux-x86_64.deb"
+  sudo dpkg -i "bazel_${BAZEL_VERSION}-linux-x86_64.deb"
 
   dpkg --listfiles bazel
 
