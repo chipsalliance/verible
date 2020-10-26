@@ -21,6 +21,10 @@ CALLED=$_
 SCRIPT_SRC="$(realpath ${BASH_SOURCE[0]})"
 SCRIPT_DIR="$(dirname "${SCRIPT_SRC}")"
 
+# TODO(b/171679296): re-enable c++11 support
+#   by downgrading kythe build requirements.
+BAZEL_CXXOPTS=(--cxxopt=-std=c++17)
+
 export PATH="/usr/sbin:/usr/bin:/sbin:/bin"
 
 cd github/$KOKORO_DIR
@@ -37,7 +41,7 @@ echo "---------------------------------------------------------------"
 echo " Building Verible"
 echo "---------------------------------------------------------------"
 set -x
-bazel build -c opt --noshow_progress --cxxopt='-std=c++17' //...
+bazel build -c opt --noshow_progress "${BAZEL_CXXOPTS[@]}" //...
 RET=$?
 set +x
 
@@ -47,7 +51,7 @@ if [[ $RET = 0 ]]; then
   echo " Testing Verible"
   echo "---------------------------------------------------------------"
   set -x
-  bazel test --noshow_progress --cxxopt='-std=c++17' //...
+  bazel test --noshow_progress "${BAZEL_CXXOPTS[@]}" //...
   RET=$?
   set +x
 else
