@@ -2063,15 +2063,23 @@ TEST(FactsTreeExtractor, ClassMemberAccess) {
                       },
                       IndexingFactType ::kClassInstance,
                   })),
-              // refers to bar::in::x.
-              T({
+              // anonymous scope for initial.
+              T(
                   {
-                      Anchor(kTestCase.expected_tokens[20], kTestCase.code),
-                      Anchor(kTestCase.expected_tokens[22], kTestCase.code),
-                      Anchor(kTestCase.expected_tokens[24], kTestCase.code),
+                      {
+                          Anchor("anonymous-scope-0", 0, 0),
+                      },
+                      IndexingFactType ::kAnonymousScope,
                   },
-                  IndexingFactType ::kMemberReference,
-              })))));
+                  // refers to bar::in::x.
+                  T({
+                      {
+                          Anchor(kTestCase.expected_tokens[20], kTestCase.code),
+                          Anchor(kTestCase.expected_tokens[22], kTestCase.code),
+                          Anchor(kTestCase.expected_tokens[24], kTestCase.code),
+                      },
+                      IndexingFactType ::kMemberReference,
+                  }))))));
 
   const auto facts_tree =
       ExtractFiles({std::string(verible::file::Basename(test_file.filename()))},
@@ -2284,23 +2292,31 @@ TEST(FactsTreeExtractor, ClassMember) {
                   },
                   IndexingFactType::kModule,
               },
-              // refers to my_class.x
-              T({
+              // anonymous scope for initial.
+              T(
                   {
-                      Anchor(kTestCase.expected_tokens[3], kTestCase.code),
-                      Anchor(kTestCase.expected_tokens[5], kTestCase.code),
+                      {
+                          Anchor("anonymous-scope-0", 0, 0),
+                      },
+                      IndexingFactType ::kAnonymousScope,
                   },
-                  IndexingFactType ::kMemberReference,
-              }),
-              // refers to my_class.instance1.x
-              T({
-                  {
-                      Anchor(kTestCase.expected_tokens[7], kTestCase.code),
-                      Anchor(kTestCase.expected_tokens[9], kTestCase.code),
-                      Anchor(kTestCase.expected_tokens[11], kTestCase.code),
-                  },
-                  IndexingFactType ::kMemberReference,
-              })))));
+                  // refers to my_class.x
+                  T({
+                      {
+                          Anchor(kTestCase.expected_tokens[3], kTestCase.code),
+                          Anchor(kTestCase.expected_tokens[5], kTestCase.code),
+                      },
+                      IndexingFactType ::kMemberReference,
+                  }),
+                  // refers to my_class.instance1.x
+                  T({
+                      {
+                          Anchor(kTestCase.expected_tokens[7], kTestCase.code),
+                          Anchor(kTestCase.expected_tokens[9], kTestCase.code),
+                          Anchor(kTestCase.expected_tokens[11], kTestCase.code),
+                      },
+                      IndexingFactType ::kMemberReference,
+                  }))))));
 
   const auto facts_tree =
       ExtractFiles({std::string(verible::file::Basename(test_file.filename()))},
@@ -2372,18 +2388,26 @@ TEST(FactsTreeExtractor, FunctionAndTaskCallNoArgs) {
                   },
                   IndexingFactType ::kModule,
               },
-              T({
+              // anonymous scope for initial.
+              T(
                   {
-                      Anchor(kTestCase.expected_tokens[11], kTestCase.code),
+                      {
+                          Anchor("anonymous-scope-0", 0, 0),
+                      },
+                      IndexingFactType ::kAnonymousScope,
                   },
-                  IndexingFactType ::kFunctionCall,
-              }),
-              T({
-                  {
-                      Anchor(kTestCase.expected_tokens[13], kTestCase.code),
-                  },
-                  IndexingFactType ::kFunctionCall,
-              })))));
+                  T({
+                      {
+                          Anchor(kTestCase.expected_tokens[11], kTestCase.code),
+                      },
+                      IndexingFactType ::kFunctionCall,
+                  }),
+                  T({
+                      {
+                          Anchor(kTestCase.expected_tokens[13], kTestCase.code),
+                      },
+                      IndexingFactType ::kFunctionCall,
+                  }))))));
 
   const auto facts_tree =
       ExtractFiles({std::string(verible::file::Basename(test_file.filename()))},
@@ -2573,24 +2597,40 @@ TEST(FactsTreeExtractor, FunctionClassCall) {
                       },
                       IndexingFactType ::kClassInstance,
                   })),
-              // refers to bar::in::my_fun().
-              T({
+              // anonymous scope for initial.
+              T(
                   {
-                      Anchor(kTestCase.expected_tokens[30], kTestCase.code),
-                      Anchor(kTestCase.expected_tokens[32], kTestCase.code),
-                      Anchor(kTestCase.expected_tokens[34], kTestCase.code),
+                      {
+                          Anchor("anonymous-scope-0", 0, 0),
+                      },
+                      IndexingFactType ::kAnonymousScope,
                   },
-                  IndexingFactType ::kFunctionCall,
-              }),
-              // refers to bar::in.my_fun().
-              T({
+                  // refers to bar::in::my_fun().
+                  T({
+                      {
+                          Anchor(kTestCase.expected_tokens[30], kTestCase.code),
+                          Anchor(kTestCase.expected_tokens[32], kTestCase.code),
+                          Anchor(kTestCase.expected_tokens[34], kTestCase.code),
+                      },
+                      IndexingFactType ::kFunctionCall,
+                  })),
+              // anonymous scope for initial.
+              T(
                   {
-                      Anchor(kTestCase.expected_tokens[36], kTestCase.code),
-                      Anchor(kTestCase.expected_tokens[38], kTestCase.code),
-                      Anchor(kTestCase.expected_tokens[40], kTestCase.code),
+                      {
+                          Anchor("anonymous-scope-1", 0, 0),
+                      },
+                      IndexingFactType ::kAnonymousScope,
                   },
-                  IndexingFactType ::kFunctionCall,
-              }),
+                  // refers to bar::in.my_fun().
+                  T({
+                      {
+                          Anchor(kTestCase.expected_tokens[36], kTestCase.code),
+                          Anchor(kTestCase.expected_tokens[38], kTestCase.code),
+                          Anchor(kTestCase.expected_tokens[40], kTestCase.code),
+                      },
+                      IndexingFactType ::kFunctionCall,
+                  })),
               // refers to inner in1.
               T(
                   {
@@ -2620,29 +2660,41 @@ TEST(FactsTreeExtractor, FunctionClassCall) {
                   },
                   IndexingFactType ::kVariableDefinition,
               }),
-              // refers to in1.my_fun().
+              // anonymous scope for initial.
               T(
                   {
                       {
-                          Anchor(kTestCase.expected_tokens[50], kTestCase.code),
-                          Anchor(kTestCase.expected_tokens[52], kTestCase.code),
+                          Anchor("anonymous-scope-2", 0, 0),
                       },
-                      IndexingFactType ::kFunctionCall,
+                      IndexingFactType ::kAnonymousScope,
                   },
-                  // refers to x.
-                  T({
+                  // refers to in1.my_fun().
+                  T(
                       {
-                          Anchor(kTestCase.expected_tokens[54], kTestCase.code),
+                          {
+                              Anchor(kTestCase.expected_tokens[50],
+                                     kTestCase.code),
+                              Anchor(kTestCase.expected_tokens[52],
+                                     kTestCase.code),
+                          },
+                          IndexingFactType ::kFunctionCall,
                       },
-                      IndexingFactType ::kVariableReference,
-                  }),
-                  // refers to y.
-                  T({
-                      {
-                          Anchor(kTestCase.expected_tokens[56], kTestCase.code),
-                      },
-                      IndexingFactType ::kVariableReference,
-                  }))))));
+                      // refers to x.
+                      T({
+                          {
+                              Anchor(kTestCase.expected_tokens[54],
+                                     kTestCase.code),
+                          },
+                          IndexingFactType ::kVariableReference,
+                      }),
+                      // refers to y.
+                      T({
+                          {
+                              Anchor(kTestCase.expected_tokens[56],
+                                     kTestCase.code),
+                          },
+                          IndexingFactType ::kVariableReference,
+                      })))))));
 
   const auto facts_tree =
       ExtractFiles({std::string(verible::file::Basename(test_file.filename()))},
@@ -2901,49 +2953,61 @@ TEST(FactsTreeExtractor, MacroCallTest) {
                   },
                   IndexingFactType::kModule,
               },
-              // refers to macro call PRINT_3_STRINGS.
-              T({
-                  {
-                      Anchor(kTestCase.expected_tokens[26], kTestCase.code),
-                  },
-                  IndexingFactType::kMacroCall,
-              }),
-              // refers to macro call TEN.
-              T({
-                  {
-                      Anchor(kTestCase.expected_tokens[29], kTestCase.code),
-                  },
-                  IndexingFactType::kMacroCall,
-              }),
-              // refers to macro call NUM.
+              // anonymous scope for initial.
               T(
                   {
                       {
-                          Anchor(kTestCase.expected_tokens[32], kTestCase.code),
+                          Anchor("anonymous-scope-0", 0, 0),
                       },
-                      IndexingFactType::kMacroCall,
-                  },  // refers to macro call TEN.
+                      IndexingFactType ::kAnonymousScope,
+                  },
+                  // refers to macro call PRINT_3_STRINGS.
                   T({
                       {
-                          Anchor(kTestCase.expected_tokens[34], kTestCase.code),
+                          Anchor(kTestCase.expected_tokens[26], kTestCase.code),
                       },
                       IndexingFactType::kMacroCall,
-                  })),
-              // refers to parm x
-              T(
-                  {
-                      {
-                          Anchor(kTestCase.expected_tokens[37], kTestCase.code),
-                      },
-                      IndexingFactType::kParamDeclaration,
-                  },
+                  }),
                   // refers to macro call TEN.
                   T({
                       {
-                          Anchor(kTestCase.expected_tokens[39], kTestCase.code),
+                          Anchor(kTestCase.expected_tokens[29], kTestCase.code),
                       },
                       IndexingFactType::kMacroCall,
-                  }))))));
+                  }),
+                  // refers to macro call NUM.
+                  T(
+                      {
+                          {
+                              Anchor(kTestCase.expected_tokens[32],
+                                     kTestCase.code),
+                          },
+                          IndexingFactType::kMacroCall,
+                      },  // refers to macro call TEN.
+                      T({
+                          {
+                              Anchor(kTestCase.expected_tokens[34],
+                                     kTestCase.code),
+                          },
+                          IndexingFactType::kMacroCall,
+                      })),
+                  // refers to parm x
+                  T(
+                      {
+                          {
+                              Anchor(kTestCase.expected_tokens[37],
+                                     kTestCase.code),
+                          },
+                          IndexingFactType::kParamDeclaration,
+                      },
+                      // refers to macro call TEN.
+                      T({
+                          {
+                              Anchor(kTestCase.expected_tokens[39],
+                                     kTestCase.code),
+                          },
+                          IndexingFactType::kMacroCall,
+                      })))))));
 
   const auto facts_tree =
       ExtractFiles({std::string(verible::file::Basename(test_file.filename()))},
@@ -3136,13 +3200,163 @@ TEST(PackageImportTest, PackageDirectMemberReference) {
                   },
                   IndexingFactType ::kModule,
               },
-              // refers to $display(pkg::x).
+              // anonymous scope for initial.
+              T(
+                  {
+                      {
+                          Anchor("anonymous-scope-0", 0, 0),
+                      },
+                      IndexingFactType ::kAnonymousScope,
+                  },
+                  // refers to $display(pkg::x).
+                  T({
+                      {
+                          Anchor(kTestCase.expected_tokens[10], kTestCase.code),
+                          Anchor(kTestCase.expected_tokens[12], kTestCase.code),
+                      },
+                      IndexingFactType ::kMemberReference,
+                  }))))));
+
+  const auto facts_tree =
+      ExtractFiles({std::string(verible::file::Basename(test_file.filename()))},
+                   exit_status, testing::TempDir());
+
+  const auto result_pair = DeepEqual(facts_tree, expected);
+  EXPECT_EQ(result_pair.left, nullptr) << *result_pair.left;
+  EXPECT_EQ(result_pair.right, nullptr) << *result_pair.right;
+}
+
+TEST(FactsTreeExtractor, ForLoopInitializations) {
+  constexpr int kTag = 1;  // value doesn't matter
+  const verible::SyntaxTreeSearchTestCase kTestCase = {
+      {"function int ",
+       {kTag, "foo"},
+       "();\n for (int ",
+       {kTag, "i"},
+       " = 0, bit ",
+       {kTag, "j"},
+       " = 0, bit[",
+       {kTag, "l"},
+       ":",
+       {kTag, "r"},
+       "] ",
+       {kTag, "tm"},
+       " = 0; ",
+       {kTag, "i"},
+       " < 50; ",
+       {kTag, "i"},
+       "++) begin\n",
+       {kTag, "x"},
+       "+=",
+       {kTag, "i"},
+       ";\nend\nreturn ",
+       {kTag, "x"},
+       ";\n\nendfunction "},
+  };
+
+  ScopedTestFile test_file(testing::TempDir(), kTestCase.code);
+  int exit_status = 0;
+
+  const IndexingFactNode expected(T(
+      {
+          {
+              Anchor(testing::TempDir(), 0, 0),
+          },
+          IndexingFactType::kFileList,
+      },
+      T(
+          {
+              {
+                  Anchor(test_file.filename(), 0, kTestCase.code.size()),
+                  Anchor(kTestCase.code, 0, kTestCase.code.size()),
+              },
+              IndexingFactType ::kFile,
+          },
+          // refers to function foo
+          T(
+              {
+                  {
+                      Anchor(kTestCase.expected_tokens[1], kTestCase.code),
+                  },
+                  IndexingFactType::kFunctionOrTask,
+              },
+              // anonymous scope for initial.
+              T(
+                  {
+                      {
+                          Anchor("anonymous-scope-0", 0, 0),
+                      },
+                      IndexingFactType ::kAnonymousScope,
+                  },
+                  // refers to i
+                  T({
+                      {
+                          Anchor(kTestCase.expected_tokens[3], kTestCase.code),
+                      },
+                      IndexingFactType ::kVariableDefinition,
+                  }),
+                  // refers to j
+                  T({
+                      {
+                          Anchor(kTestCase.expected_tokens[5], kTestCase.code),
+                      },
+                      IndexingFactType ::kVariableDefinition,
+                  }),
+                  // refers to tm
+                  T({
+                      {
+                          Anchor(kTestCase.expected_tokens[11], kTestCase.code),
+                      },
+                      IndexingFactType ::kVariableDefinition,
+                  }),
+                  // refers to l
+                  T({
+                      {
+                          Anchor(kTestCase.expected_tokens[7], kTestCase.code),
+                      },
+                      IndexingFactType ::kVariableReference,
+                  }),
+                  // refers to r
+                  T({
+                      {
+                          Anchor(kTestCase.expected_tokens[9], kTestCase.code),
+                      },
+                      IndexingFactType ::kVariableReference,
+                  }),
+                  // refers to i
+                  T({
+                      {
+                          Anchor(kTestCase.expected_tokens[13], kTestCase.code),
+                      },
+                      IndexingFactType ::kVariableReference,
+                  }),
+                  // refers to i
+                  T({
+                      {
+                          Anchor(kTestCase.expected_tokens[15], kTestCase.code),
+                      },
+                      IndexingFactType ::kVariableReference,
+                  }),
+                  // refers to x
+                  T({
+                      {
+                          Anchor(kTestCase.expected_tokens[17], kTestCase.code),
+                      },
+                      IndexingFactType ::kVariableReference,
+                  }),
+                  // refers to i
+                  T({
+                      {
+                          Anchor(kTestCase.expected_tokens[19], kTestCase.code),
+                      },
+                      IndexingFactType ::kVariableReference,
+                  })),
+              // refers to x
               T({
                   {
-                      Anchor(kTestCase.expected_tokens[10], kTestCase.code),
-                      Anchor(kTestCase.expected_tokens[12], kTestCase.code),
+                      Anchor(kTestCase.expected_tokens[21], kTestCase.code),
                   },
-                  IndexingFactType ::kMemberReference,
+                  IndexingFactType ::kVariableReference,
               })))));
 
   const auto facts_tree =
@@ -3957,15 +4171,22 @@ TEST(FactsTreeExtractor, FileIncludes) {
                   },
                   IndexingFactType ::kModule,
               },
-
-              // refers to $display(my_class::var5).
-              T({
+              // anonymous scope for initial.
+              T(
                   {
-                      Anchor(kTestCase.expected_tokens[5], kTestCase.code),
-                      Anchor(kTestCase.expected_tokens[7], kTestCase.code),
+                      {
+                          Anchor("anonymous-scope-0", 0, 0),
+                      },
+                      IndexingFactType ::kAnonymousScope,
                   },
-                  IndexingFactType ::kMemberReference,
-              })))));
+                  // refers to $display(my_class::var5).
+                  T({
+                      {
+                          Anchor(kTestCase.expected_tokens[5], kTestCase.code),
+                          Anchor(kTestCase.expected_tokens[7], kTestCase.code),
+                      },
+                      IndexingFactType ::kMemberReference,
+                  }))))));
 
   const auto facts_tree =
       ExtractFiles({std::string(verible::file::Basename(test_file.filename()))},

@@ -14,9 +14,6 @@
 
 #include "verilog/tools/kythe/indexing_facts_tree_extractor.h"
 
-#include <stdlib.h>
-#include <unistd.h>
-
 #include <iostream>
 #include <string>
 
@@ -261,6 +258,7 @@ void IndexingFactsTreeExtractor::Visit(const SyntaxTreeNode& node) {
     case NodeEnum::kLoopGenerateConstruct:
     case NodeEnum::kIfClause:
     case NodeEnum::kFinalStatement:
+    case NodeEnum::kInitialStatement:
     case NodeEnum::kGenerateElseBody:
     case NodeEnum::kElseClause:
     case NodeEnum::kGenerateIfClause:
@@ -270,7 +268,7 @@ void IndexingFactsTreeExtractor::Visit(const SyntaxTreeNode& node) {
     case NodeEnum::kForeachLoopStatement:
     case NodeEnum::kRepeatLoopStatement:
     case NodeEnum::kForeverLoopStatement: {
-      ExtractTemporaryScope(node);
+      ExtractAnonymousScope(node);
       break;
     }
     default: {
@@ -1476,14 +1474,14 @@ void IndexingFactsTreeExtractor::ExtractTypeDeclaration(
   }
 }
 
-void IndexingFactsTreeExtractor::ExtractTemporaryScope(
+void IndexingFactsTreeExtractor::ExtractAnonymousScope(
     const verible::SyntaxTreeNode& node) {
   IndexingFactNode temp_scope_node(
-      IndexingNodeData{IndexingFactType::kTemporaryScope});
+      IndexingNodeData{IndexingFactType::kAnonymousScope});
 
   // Generate unique id for this scope.
   temp_scope_node.Value().AppendAnchor(
-      Anchor(absl::StrCat("temp-scope-", getpid(), "-", random()), 0, 0));
+      Anchor(absl::StrCat("anonymous-scope-", next_anonymous_id++), 0, 0));
   {
     const IndexingFactsTreeContext::AutoPop p(&facts_tree_context_,
                                               &temp_scope_node);

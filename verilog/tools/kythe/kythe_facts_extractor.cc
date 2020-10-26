@@ -163,8 +163,8 @@ void KytheFactsExtractor::IndexingFactNodeTagResolver(
       vname = ExtractStructOrUnion(node);
       break;
     }
-    case IndexingFactType::kTemporaryScope: {
-      vname = ExtractTempScope(node);
+    case IndexingFactType::kAnonymousScope: {
+      vname = ExtractAnonymousScope(node);
       break;
     }
     case IndexingFactType::kDataTypeReference: {
@@ -256,7 +256,7 @@ void KytheFactsExtractor::CreateChildOfEdge(IndexingFactType tag,
     case IndexingFactType::kModuleNamedPort:
     case IndexingFactType::kMemberReference:
     case IndexingFactType::kInclude:
-    case IndexingFactType::kTemporaryScope: {
+    case IndexingFactType::kAnonymousScope: {
       break;
     }
     default: {
@@ -296,7 +296,7 @@ void KytheFactsExtractor::Visit(const IndexingFactNode& node,
       Visit(node, vname, current_scope);
       break;
     }
-    case IndexingFactType::kTemporaryScope: {
+    case IndexingFactType::kAnonymousScope: {
       Visit(node, vname, current_scope);
       break;
     }
@@ -921,7 +921,7 @@ void KytheFactsExtractor::ExtractInclude(const IndexingFactNode& include_node) {
   scope_resolver_->AppendScopeToScopeContext(*included_file_scope);
 }
 
-VName KytheFactsExtractor::ExtractTempScope(
+VName KytheFactsExtractor::ExtractAnonymousScope(
     const IndexingFactNode& temp_scope) {
   const auto& scope_id = temp_scope.Value().Anchors()[0];
   return VName(file_path_, CreateScopeRelativeSignature(scope_id.Value()));
