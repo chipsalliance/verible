@@ -249,6 +249,10 @@ class KytheFactsExtractor {
   std::set<Edge> edges_;
 };
 
+// Returns the file path of the file list from the given indexing facts tree
+// node tagged with kFileList.
+std::string GetFileListDirFromRoot(const IndexingFactNode& root);
+
 }  // namespace kythe
 }  // namespace verilog
 

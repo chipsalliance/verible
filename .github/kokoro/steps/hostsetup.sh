@@ -37,8 +37,25 @@ sudo apt-get install -y \
             make \
             psmisc \
             wget
+echo "----------------------------------------"
 
-  echo "----------------------------------------"
+echo
+echo "========================================"
+echo "Install packages required to compile Kythe"
+echo "----------------------------------------"
+# From: https://www.kythe.io/getting-started/
+sudo apt-get install -y \
+           asciidoc \
+           asciidoctor \
+           bison \
+           flex \
+           graphviz \
+           libncurses-dev \
+           openjdk-8-jdk \
+           parallel \
+           source-highlight \
+           uuid-dev
+echo "----------------------------------------"
 
 echo
 echo "========================================"
@@ -48,8 +65,8 @@ echo "----------------------------------------"
   set -x
   bazel version || true
 
-  wget https://github.com/bazelbuild/bazel/releases/download/1.2.0/bazel_1.2.0-linux-x86_64.deb
-  sudo dpkg -i bazel_1.2.0-linux-x86_64.deb
+  wget https://github.com/bazelbuild/bazel/releases/download/3.4.1/bazel_3.4.1-linux-x86_64.deb
+  sudo dpkg -i bazel_3.4.1-linux-x86_64.deb
 
   dpkg --listfiles bazel
 

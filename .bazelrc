@@ -8,3 +8,9 @@ test --define="absl=1"
 build --workspace_status_command=bazel/build-version.sh
 run --workspace_status_command=bazel/build-version.sh
 test --workspace_status_command=bazel/build-version.sh
+
+# Use C++17 (bazel defaults to C++0x (pre-C++11))
+# TODO(b/171679296): Lower the requirement, go back to c++11
+build --cxxopt=-std=c++17 --host_cxxopt=-std=c++17 --client_env=BAZEL_CXXOPTS=-std=c++17
+run --cxxopt=-std=c++17 --host_cxxopt=-std=c++17 --client_env=BAZEL_CXXOPTS=-std=c++17
+test --cxxopt=-std=c++17 --host_cxxopt=-std=c++17 --client_env=BAZEL_CXXOPTS=-std=c++17
