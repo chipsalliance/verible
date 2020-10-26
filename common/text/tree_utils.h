@@ -28,6 +28,7 @@
 #include "common/text/token_info.h"
 #include "common/text/visitors.h"
 #include "common/util/logging.h"
+#include "common/util/type_traits.h"
 
 namespace verible {
 
@@ -49,6 +50,13 @@ absl::string_view StringSpanOfSymbol(const Symbol& lsym, const Symbol& rsym);
 const SyntaxTreeNode& SymbolCastToNode(const Symbol&);
 // Mutable variant.
 SyntaxTreeNode& SymbolCastToNode(Symbol&);
+
+// The following no-op overloads allow SymbolCastToNode() to work with zero
+// overhead when the argument type is statically known to be the same.
+inline const SyntaxTreeNode& SymbolCastToNode(const SyntaxTreeNode& node) {
+  return node;
+}
+inline SyntaxTreeNode& SymbolCastToNode(SyntaxTreeNode& node) { return node; }
 
 // Returns a SyntaxTreeLeaf down_casted from a Symbol.
 const SyntaxTreeLeaf& SymbolCastToLeaf(const Symbol&);
@@ -83,15 +91,22 @@ const SyntaxTreeLeaf& CheckLeafEnum(const SyntaxTreeLeaf& leaf,
   return leaf;
 }
 
+template <typename S>
+struct MustBeCSTSymbolOrNode {
+  typedef typename std::remove_const<S>::type base_type;
+  static_assert(std::is_same<base_type, Symbol>::value ||
+                    std::is_same<base_type, SyntaxTreeNode>::value,
+                "");
+};
+
 // Succeeds if symbol is a node enumerated 'node_enum'.
 // Returns a casted reference on success.
-template <typename E>
-const SyntaxTreeNode& CheckSymbolAsNode(const Symbol& symbol, E node_enum) {
-  return CheckNodeEnum(SymbolCastToNode(symbol), node_enum);
-}
-// Mutable variant.
-template <typename E>
-SyntaxTreeNode& CheckSymbolAsNode(Symbol& symbol, E node_enum) {
+// Constness is deduced from S and reflected in the return type.
+// S can be {const,non-const}x{Symbol,SyntaxTreeNode}.
+template <typename E, typename S>
+typename match_const<SyntaxTreeNode, S>::type& CheckSymbolAsNode(S& symbol,
+                                                                 E node_enum) {
+  MustBeCSTSymbolOrNode<S> check;
   return CheckNodeEnum(SymbolCastToNode(symbol), node_enum);
 }
 
@@ -143,39 +158,39 @@ const SyntaxTreeLeaf* CheckOptionalSymbolAsLeaf(const std::nullptr_t& symbol,
 
 // Extracts a particular child of a node by position, verifying the parent's
 // node enumeration.
-template <typename E>
-const Symbol* GetSubtreeAsSymbol(const SyntaxTreeNode& node,
-                                 E parent_must_be_node_enum,
-                                 size_t child_position) {
-  return CheckNodeEnum(node, parent_must_be_node_enum)[child_position].get();
-}
-
-template <typename E>
-const Symbol* GetSubtreeAsSymbol(const Symbol& symbol,
-                                 E parent_must_be_node_enum,
-                                 size_t child_position) {
-  return GetSubtreeAsSymbol(SymbolCastToNode(symbol), parent_must_be_node_enum,
-                            child_position);
+// S can be {const,non-const}x{Symbol,SyntaxTreeNode}
+// constness is deduced from S and reflected in the return type.
+template <typename E, typename S>
+typename match_const<Symbol, S>::type* GetSubtreeAsSymbol(
+    S& symbol, E parent_must_be_node_enum, size_t child_position) {
+  MustBeCSTSymbolOrNode<S> check;
+  return CheckNodeEnum(SymbolCastToNode(symbol),
+                       parent_must_be_node_enum)[child_position]
+      .get();
 }
 
 // Same as GetSubtreeAsSymbol, but casts the result to a node.
+// S can be {const,non-const}x{Symbol,SyntaxTreeNode}
+// constness is deduced from S and reflected in the return type.
 template <class S, class E>
-const SyntaxTreeNode& GetSubtreeAsNode(const S& symbol,
-                                       E parent_must_be_node_enum,
-                                       size_t child_position) {
+typename match_const<SyntaxTreeNode, S>::type& GetSubtreeAsNode(
+    S& symbol, E parent_must_be_node_enum, size_t child_position) {
+  MustBeCSTSymbolOrNode<S> check;
   return SymbolCastToNode(*ABSL_DIE_IF_NULL(
       GetSubtreeAsSymbol(symbol, parent_must_be_node_enum, child_position)));
 }
 
 // This variant further checks the returned node's enumeration.
+// S can be {const,non-const}x{Symbol,SyntaxTreeNode}
+// constness is deduced from S and reflected in the return type.
 template <class S, class E>
-const SyntaxTreeNode& GetSubtreeAsNode(const S& symbol,
-                                       E parent_must_be_node_enum,
-                                       size_t child_position,
-                                       E child_must_be_node_enum) {
-  const SyntaxTreeNode& node(
-      GetSubtreeAsNode(symbol, parent_must_be_node_enum, child_position));
-  return CheckNodeEnum(node, child_must_be_node_enum);
+typename match_const<SyntaxTreeNode, S>::type& GetSubtreeAsNode(
+    S& symbol, E parent_must_be_node_enum, size_t child_position,
+    E child_must_be_node_enum) {
+  MustBeCSTSymbolOrNode<S> check;
+  return CheckNodeEnum(
+      GetSubtreeAsNode(symbol, parent_must_be_node_enum, child_position),
+      child_must_be_node_enum);
 }
 
 // Same as GetSubtreeAsSymbol, but casts the result to a leaf.
@@ -183,6 +198,7 @@ template <class S, class E>
 const SyntaxTreeLeaf& GetSubtreeAsLeaf(const S& symbol,
                                        E parent_must_be_node_enum,
                                        size_t child_position) {
+  MustBeCSTSymbolOrNode<S> check;
   return SymbolCastToLeaf(*ABSL_DIE_IF_NULL(
       GetSubtreeAsSymbol(symbol, parent_must_be_node_enum, child_position)));
 }
@@ -190,6 +206,7 @@ const SyntaxTreeLeaf& GetSubtreeAsLeaf(const S& symbol,
 template <class S, class E>
 E GetSubtreeNodeEnum(const S& symbol, E parent_must_be_node_enum,
                      size_t child_position) {
+  MustBeCSTSymbolOrNode<S> check;
   return static_cast<E>(
       GetSubtreeAsNode(symbol, parent_must_be_node_enum, child_position)
           .Tag()

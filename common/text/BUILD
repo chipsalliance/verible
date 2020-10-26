@@ -195,6 +195,7 @@ cc_library(
         "//common/util:iterator_adaptors",
         "//common/util:logging",
         "//common/util:spacer",
+        "//common/util:type_traits",
         "//common/util:value_saver",
         "@com_google_absl//absl/strings",
     ],
