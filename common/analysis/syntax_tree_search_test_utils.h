@@ -43,6 +43,7 @@ struct SyntaxTreeSearchTestCase : public SynthesizedLexerTestData {
   // Detailed differences are written to diffstream.
   // 'base' is the full text buffer that was analyzed, and is used to
   // calculate byte offsets in diagnostics.
+  // Matches with nullptr or empty string spans are ignored.
   // Returns true if every element is an exact match to the expected set.
   // TODO(b/141875806): Take a symbol translator function to produce a
   // human-readable, language-specific enum name.
