@@ -5227,7 +5227,7 @@ TEST(FactsTreeExtractor, FunctionNameAsQualifiedId) {
   EXPECT_EQ(result_pair.right, nullptr) << *result_pair.right;
 }
 
-TEST(FactsTreeExtractor, FunctinoNamedArgument) {
+TEST(FactsTreeExtractor, FunctionNamedArgument) {
   constexpr int kTag = 1;  // value doesn't matter
   const verible::SyntaxTreeSearchTestCase kTestCase = {
       {
