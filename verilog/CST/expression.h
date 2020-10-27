@@ -21,6 +21,7 @@
 
 #include <utility>
 
+#include "common/analysis/syntax_tree_search.h"
 #include "common/text/concrete_syntax_tree.h"
 #include "common/text/symbol.h"
 #include "verilog/CST/verilog_nonterminals.h"
@@ -47,6 +48,18 @@ bool IsZero(const verible::Symbol&);
 bool ConstantIntegerValue(const verible::Symbol&, int*);
 
 // TODO(fangism): evaluate constant expressions
+
+// From a statement like "a[i].j[k] = p[q].r(s);", returns full references
+// expressions "a[i].j[k]" and "p[q].r(s)".
+// References include any indexing [], hierarchy ".x" or call "(...)"
+// extensions.
+std::vector<verible::TreeSearchMatch> FindAllReferenceFullExpressions(
+    const verible::Symbol&);
+
+// Returns true if reference expression is a plain variable reference with no
+// hierarchy, no indexing, no calls.
+const verible::TokenInfo* ReferenceIsSimpleIdentifier(
+    const verible::Symbol& reference);
 
 }  // namespace verilog
 

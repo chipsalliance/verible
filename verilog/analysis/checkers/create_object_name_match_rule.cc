@@ -29,8 +29,11 @@
 #include "common/text/symbol.h"
 #include "common/text/syntax_tree_context.h"
 #include "common/text/token_info.h"
+#include "common/text/tree_utils.h"
 #include "common/util/casts.h"
+#include "verilog/CST/expression.h"
 #include "verilog/CST/verilog_nonterminals.h"
+#include "verilog/CST/verilog_tree_print.h"
 #include "verilog/analysis/descriptions.h"
 #include "verilog/analysis/lint_rule_registry.h"
 #include "verilog/parser/verilog_token_enum.h"
@@ -168,22 +171,25 @@ void CreateObjectNameMatchRule::HandleSymbol(const verible::Symbol& symbol,
   if (!create_assignment_matcher_.Matches(symbol, &manager)) return;
 
   // Extract named bindings for matched nodes within this match.
-  if (const auto* lval = manager.GetAs<SyntaxTreeLeaf>("lval")) {
-    const TokenInfo& lval_token = lval->get();
-    if (lval_token.token_enum() != SymbolIdentifier) return;
-    const auto* call = manager.GetAs<SyntaxTreeNode>("func");
-    const auto* args = manager.GetAs<SyntaxTreeNode>("args");
-    if (call == nullptr && args == nullptr) return;
-    if (!QualifiedCallIsTypeIdCreate(*call)) return;
 
-    // The first argument is a string that must match the variable name, lval.
-    if (const auto* expr = GetFirstExpressionFromArgs(*args)) {
-      if (const TokenInfo* name_token = ExtractStringLiteralToken(*expr)) {
-        if (StripOuterQuotes(name_token->text()) != lval_token.text()) {
-          violations_.insert(LintViolation(
-              *name_token,
-              FormatReason(lval_token.text(), name_token->text())));
-        }
+  const auto* lval_ref = manager.GetAs<SyntaxTreeNode>("lval_ref");
+  if (lval_ref == nullptr) return;
+  const TokenInfo* lval_id = ReferenceIsSimpleIdentifier(*lval_ref);
+  if (lval_id == nullptr) return;
+  if (lval_id->token_enum() != SymbolIdentifier) return;
+
+  const auto* call = manager.GetAs<SyntaxTreeNode>("func");
+  const auto* args = manager.GetAs<SyntaxTreeNode>("args");
+  if (call == nullptr) return;
+  if (args == nullptr) return;
+  if (!QualifiedCallIsTypeIdCreate(*call)) return;
+
+  // The first argument is a string that must match the variable name, lval.
+  if (const auto* expr = GetFirstExpressionFromArgs(*args)) {
+    if (const TokenInfo* name_token = ExtractStringLiteralToken(*expr)) {
+      if (StripOuterQuotes(name_token->text()) != lval_id->text()) {
+        violations_.insert(LintViolation(
+            *name_token, FormatReason(lval_id->text(), name_token->text())));
       }
     }
   }

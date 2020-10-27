@@ -176,24 +176,9 @@ const verible::SyntaxTreeNode* GetPackedDimensionFromDataDeclaration(
       GetInstantiationTypeOfDataDeclaration(data_declaration);
   const verible::Symbol* data_type = verible::GetSubtreeAsSymbol(
       instantiation_type, NodeEnum::kInstantiationType, 0);
+  if (data_type == nullptr) return nullptr;
 
-  auto tag = NodeEnum(data_type->Tag().tag);
-  if (tag != NodeEnum::kDataTypePrimitive && tag != NodeEnum::kDataType) {
-    return nullptr;
-  }
-
-  if (NodeEnum(data_type->Tag().tag) == NodeEnum::kDataTypePrimitive) {
-    return &GetPackedDimensionFromDataType(*data_type);
-  }
-
-  const verible::SyntaxTreeNode& data_type_primitive =
-      verible::GetSubtreeAsNode(*data_type, NodeEnum::kDataType, 0);
-
-  if (NodeEnum(data_type_primitive.Tag().tag) == NodeEnum::kUnqualifiedId) {
-    return &GetPackedDimensionFromDataType(*data_type);
-  }
-
-  return &GetPackedDimensionFromDataType(data_type_primitive);
+  return GetPackedDimensionFromDataType(*data_type);
 }
 
 const verible::SyntaxTreeNode& GetUnpackedDimensionFromRegisterVariable(
@@ -222,17 +207,10 @@ const verible::SyntaxTreeLeaf* GetTypeIdentifierFromDataDeclaration(
     return identifier;
   }
 
-  const SyntaxTreeNode* unqualified_id =
-      GetUnqualifiedIdFromInstantiationType(instantiation_type);
-  if (unqualified_id != nullptr) {
-    // TODO(minatoma): refactor AutoUnwrapIdentifier to take qualified id and
-    // get rid of this condition.
-    if (NodeEnum(unqualified_id->Tag().tag) != NodeEnum::kUnqualifiedId) {
-      return nullptr;
-    }
-    return AutoUnwrapIdentifier(*unqualified_id);
-  }
-  return nullptr;
+  const verible::Symbol* base_type =
+      GetBaseTypeFromInstantiationType(instantiation_type);
+  if (base_type == nullptr) return nullptr;
+  return GetTypeIdentifierFromBaseType(*base_type);
 }
 
 const verible::SyntaxTreeNode* GetStructOrUnionOrEnumTypeFromDataDeclaration(

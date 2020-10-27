@@ -15,16 +15,22 @@
 #include "verilog/CST/expression.h"
 
 #include <memory>
+#include <vector>
 
 #include "absl/strings/numbers.h"
 #include "absl/strings/string_view.h"
+#include "common/analysis/syntax_tree_search.h"
 #include "common/text/concrete_syntax_leaf.h"
 #include "common/text/concrete_syntax_tree.h"
 #include "common/text/symbol.h"
 #include "common/text/token_info.h"
 #include "common/text/tree_utils.h"
 #include "common/util/casts.h"
+#include "common/util/logging.h"
+#include "verilog/CST/type.h"
+#include "verilog/CST/verilog_matchers.h"
 #include "verilog/CST/verilog_nonterminals.h"
+#include "verilog/parser/verilog_token_enum.h"
 
 namespace verilog {
 
@@ -33,6 +39,7 @@ using verible::Symbol;
 using verible::SymbolKind;
 using verible::SyntaxTreeLeaf;
 using verible::SyntaxTreeNode;
+using verible::TreeSearchMatch;
 
 bool IsExpression(const verible::SymbolPtr& symbol_ptr) {
   if (symbol_ptr == nullptr) return false;
@@ -63,6 +70,48 @@ bool ConstantIntegerValue(const verible::Symbol& expr, int* value) {
   // Don't even need to check the leaf token's enumeration type.
   auto text = term.get().text();
   return absl::SimpleAtoi(text, value);
+}
+
+std::vector<TreeSearchMatch> FindAllReferenceFullExpressions(
+    const verible::Symbol& root) {
+  return verible::SearchSyntaxTree(root, NodekReferenceCallBase());
+}
+
+static const verible::TokenInfo* ReferenceBaseIsSimple(
+    const verible::SyntaxTreeNode& reference_base) {
+  const verible::Symbol& bottom(
+      *ABSL_DIE_IF_NULL(verible::DescendThroughSingletons(reference_base)));
+  const auto tag = bottom.Tag();
+  if (tag.kind == verible::SymbolKind::kLeaf) {
+    const auto& token(verible::SymbolCastToLeaf(bottom).get());
+    return token.token_enum() == SymbolIdentifier ? &token : nullptr;
+  }
+  // Expect to hit kUnqualifiedId, which has two children.
+  // child[0] should be a SymbolIdentifier (or similar) token.
+  // child[1] are optional #(parameters), which would imply child[0] is
+  // referring to a parameterized type.
+  const auto& unqualified_id(
+      verible::CheckSymbolAsNode(bottom, NodeEnum::kUnqualifiedId));
+  const auto* params = GetParamListFromUnqualifiedId(unqualified_id);
+  // If there are parameters, it is not simple reference.
+  // It is most likely a class-qualified static reference.
+  return params == nullptr
+             ? &verible::SymbolCastToLeaf(*unqualified_id.children().front())
+                    .get()
+             : nullptr;
+}
+
+const verible::TokenInfo* ReferenceIsSimpleIdentifier(
+    const verible::Symbol& reference) {
+  const auto& reference_node(
+      verible::CheckSymbolAsNode(reference, NodeEnum::kReferenceCallBase));
+  // A simple reference contains one component without hierarchy, indexing, or
+  // calls; it looks like just an identifier.
+  if (reference_node.children().size() > 1) return nullptr;
+  const auto& base_node = verible::SymbolCastToNode(
+      *ABSL_DIE_IF_NULL(reference_node.children().front()));
+  if (!base_node.MatchesTag(NodeEnum::kReference)) return nullptr;
+  return ReferenceBaseIsSimple(base_node);
 }
 
 }  // namespace verilog

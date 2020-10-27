@@ -303,20 +303,13 @@ static const auto AlwaysFFKeyword =
 static const auto HasGenerateBlock = verible::matcher::MakePathMatcher(
     {N(kGenerateItemList), N(kGenerateBlock)});
 
-static const auto ReferenceHasHierarchy =
-    verible::matcher::MakePathMatcher({N(kHierarchyExtension)});
-
-static const auto ReferenceHasIndex =
-    verible::matcher::MakePathMatcher({N(kSelectVariableDimension)});
-
 // Matches the LHS of an assignment (lvalue) to a local variable.
 // For instance, matches 'var' in:
 //
 //   var = ...;
 //
 // where `var` could also be a complex reference, such as var.x, or var[k].
-static const auto LValueOfAssignment =
-    verible::matcher::MakePathMatcher({N(kLPValue), N(kReferenceCallBase)});
+static const auto LValueOfAssignment = PathkLPValue;
 
 // Matches the RHS of an assignment that is a function call.
 // For instance, matches "bar(...)" in:

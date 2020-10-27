@@ -109,12 +109,12 @@ static bool PairwiseNonmergeable(const PreFormatToken& ftoken) {
 
 static bool InDeclaredDimensions(const SyntaxTreeContext& context) {
   return context.IsInsideFirst(
-      {NodeEnum::kDimensionRange, NodeEnum::kDimensionScalar}, {});
+      {NodeEnum::kPackedDimensions, NodeEnum::kUnpackedDimensions}, {});
 }
 
 static bool InRangeLikeContext(const SyntaxTreeContext& context) {
   return context.IsInsideFirst(
-      {NodeEnum::kSelectVariableDimension, NodeEnum::kDimensionRange,
+      {NodeEnum::kDimensionScalar, NodeEnum::kDimensionRange,
        NodeEnum::kDimensionSlice, NodeEnum::kCycleDelayRange},
       {});
 }

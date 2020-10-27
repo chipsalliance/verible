@@ -267,13 +267,18 @@ cc_library(
     srcs = ["expression.cc"],
     hdrs = ["expression.h"],
     deps = [
+        ":type",
+        ":verilog_matchers",
         ":verilog_nonterminals",
+        "//common/analysis:syntax_tree_search",
         "//common/text:concrete_syntax_leaf",
         "//common/text:concrete_syntax_tree",
         "//common/text:symbol",
         "//common/text:token_info",
         "//common/text:tree_utils",
         "//common/util:casts",
+        "//common/util:logging",
+        "//verilog/parser:verilog_token_enum",
         "@com_google_absl//absl/strings",
     ],
 )
@@ -283,8 +288,13 @@ cc_test(
     srcs = ["expression_test.cc"],
     deps = [
         ":expression",
+        ":match_test_utils",
         ":verilog_nonterminals",
+        ":verilog_tree_print",
+        "//common/analysis:syntax_tree_search",
+        "//common/analysis:syntax_tree_search_test_utils",
         "//common/text:symbol",
+        "//common/text:tree_utils",
         "//common/util:logging",
         "//verilog/analysis:verilog_analyzer",
         "@com_google_googletest//:gtest_main",
@@ -794,6 +804,7 @@ cc_library(
     deps = [
         ":identifier",
         ":verilog_matchers",  # fixdeps: keep
+        ":verilog_nonterminals",
         "//common/analysis:syntax_tree_search",
         "//common/analysis/matcher",
         "//common/analysis/matcher:matcher_builders",
@@ -801,6 +812,8 @@ cc_library(
         "//common/text:concrete_syntax_tree",
         "//common/text:symbol",
         "//common/text:tree_utils",
+        "//common/util:logging",
+        "//verilog/parser:verilog_token_enum",
     ],
 )
 
@@ -809,12 +822,14 @@ cc_test(
     srcs = ["type_test.cc"],
     deps = [
         ":context_functions",
+        ":declaration",
+        ":match_test_utils",
         ":type",
         "//common/analysis:syntax_tree_search",
         "//common/analysis:syntax_tree_search_test_utils",
         "//common/text:text_structure",
+        "//common/text:tree_utils",
         "//common/util:logging",
-        "//verilog/CST:match_test_utils",
         "//verilog/analysis:verilog_analyzer",
         "@com_google_googletest//:gtest_main",
     ],

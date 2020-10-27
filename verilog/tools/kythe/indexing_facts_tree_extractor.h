@@ -85,12 +85,12 @@ class IndexingFactsTreeExtractor : public verible::TreeContextVisitor {
   void ExtractSelectVariableDimension(
       const verible::SyntaxTreeNode& variable_dimension);
 
-  // Extracts "a" from input a, output a and creates its corresponding fact
+  // Extracts "a" from "input a", "output a" and creates its corresponding fact
   // tree.
   void ExtractInputOutputDeclaration(
-      const verible::SyntaxTreeNode& module_port_declaration_node);
+      const verible::SyntaxTreeNode& identifier_unpacked_dimensions);
 
-  // Extracts "a" from wire a and creates its corresponding fact tree.
+  // Extracts "a" from "wire a" and creates its corresponding fact tree.
   void ExtractNetDeclaration(
       const verible::SyntaxTreeNode& net_declaration_node);
 
