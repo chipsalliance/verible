@@ -449,7 +449,7 @@ int64_t MinVLogLevelFromEnv();
 
 }  // namespace internal
 
-// LogSink support adapted from //base/logging.h
+// LogSink support adapted from base/logging.h
 //
 // `LogSink` is an interface which can be extended to intercept and process
 // all log messages. LogSink implementations must be thread-safe. A single
