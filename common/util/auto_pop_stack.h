@@ -20,6 +20,7 @@
 #include <type_traits>
 #include <vector>
 
+#include "absl/base/attributes.h"
 #include "common/util/iterator_adaptors.h"
 #include "common/util/logging.h"
 
@@ -109,7 +110,7 @@ class AutoPopStack {
 
  private:
   stack_type stack_;
-};
+} ABSL_ATTRIBUTE_UNUSED;
 
 }  // namespace verible
 

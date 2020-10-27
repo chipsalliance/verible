@@ -20,6 +20,7 @@ cc_library(
     deps = [
         ":iterator_adaptors",
         ":logging",
+        "@com_google_absl//absl/base:core_headers",
     ],
 )
 
