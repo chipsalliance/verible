@@ -177,13 +177,6 @@ cc_test(
     ],
 )
 
-filegroup(
-    name = "verifier_testdata",
-    srcs = glob([
-        "testdata/more_testdata/*.sv",
-    ]),
-)
-
 cc_binary(
     name = "verible-verilog-kythe-extractor",
     srcs = [
@@ -213,5 +206,24 @@ cc_binary(
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/strings",
         "@com_google_absl//absl/types:span",
+        "@com_google_protobuf//:protobuf",
+        "@io_kythe//kythe/cxx/common/indexing:caching_output",
+        "@io_kythe//kythe/proto:storage_cc_proto",
+    ],
+)
+
+sh_test(
+    name = "verification_test",
+    srcs = ["verification_test.sh"],
+    data = glob([
+        "testdata/**",
+    ]) + [
+        ":verible-verilog-kythe-extractor",
+        "@io_kythe//kythe/cxx/verifier",
+    ],
+    shard_count = 2,
+    deps = [
+        "@bazel_tools//tools/bash/runfiles",
+        "@io_bazel//src/test/shell:bashunit",
     ],
 )

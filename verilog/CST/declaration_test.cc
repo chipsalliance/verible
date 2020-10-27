@@ -540,7 +540,8 @@ TEST(GetVariableDeclarationAssign, VariableName) {
        ", ",
        {kTag, "s2"},
        ";\nendclass"},
-  };
+      // `branch` lexed as a (AMS) keyword, not identifier.
+      {"class m;\n some_type ", {kTag, "branch"}, ";\nendclass"}};
   for (const auto& test : kTestCases) {
     TestVerilogSyntaxRangeMatches(
         __FUNCTION__, test, [](const TextStructureView& text_structure) {

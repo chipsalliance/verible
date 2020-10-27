@@ -144,7 +144,8 @@ const verible::SyntaxTreeNode* GetStructOrUnionOrEnumTypeFromInstantiationType(
     type = verible::GetSubtreeAsSymbol(*type, NodeEnum::kDataType, 0);
   }
 
-  if (NodeEnum(type->Tag().tag) != NodeEnum::kDataTypePrimitive) {
+  if (type == nullptr ||
+      NodeEnum(type->Tag().tag) != NodeEnum::kDataTypePrimitive) {
     return nullptr;
   }
 
@@ -172,6 +173,11 @@ const verible::SyntaxTreeNode* GetUnqualifiedIdFromInstantiationType(
 
 const verible::SyntaxTreeNode* GetParamListFromUnqualifiedId(
     const verible::Symbol& unqualified_id) {
+  const verible::SyntaxTreeNode& unqualified_id_node =
+      verible::SymbolCastToNode(unqualified_id);
+  if (unqualified_id_node.children().size() < 2) {
+    return nullptr;
+  }
   const verible::Symbol* param_list =
       verible::GetSubtreeAsSymbol(unqualified_id, NodeEnum::kUnqualifiedId, 1);
   return verible::CheckOptionalSymbolAsNode(param_list,
@@ -251,6 +257,15 @@ const verible::SyntaxTreeLeaf* GetTypeIdentifierFromInstantiationType(
 
 const verible::SyntaxTreeLeaf* GetTypeIdentifierFromDataType(
     const verible::Symbol& data_type) {
+  const verible::SyntaxTreeNode& data_type_node =
+      verible::SymbolCastToNode(data_type);
+  // TODO(fangism): remove this check after fixing this bug:
+  // x = 1;
+  // This is the whole test case.
+  // issue on github: https://github.com/google/verible/issues/549
+  if (data_type_node.children().empty()) {
+    return nullptr;
+  }
   const verible::Symbol* identifier =
       verible::GetSubtreeAsSymbol(data_type, NodeEnum::kDataType, 0);
   if (identifier == nullptr ||

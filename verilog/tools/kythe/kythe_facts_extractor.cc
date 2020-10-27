@@ -35,12 +35,6 @@ std::string GetFilePathFromRoot(const IndexingFactNode& root) {
   return root.Value().Anchors()[0].Value();
 }
 
-// Returns the file path of the file list from the given indexing facts tree
-// node tagged with kFileList.
-std::string GetFileListDirFromRoot(const IndexingFactNode& root) {
-  return root.Value().Anchors()[0].Value();
-}
-
 // Create the global signature for the given file.
 Signature CreateGlobalSignature(absl::string_view file_path) {
   return Signature(file_path);
@@ -999,6 +993,10 @@ std::ostream& operator<<(std::ostream& stream,
                          const KytheFactsPrinter& kythe_facts_printer) {
   kythe_facts_printer.Print(stream);
   return stream;
+}
+
+std::string GetFileListDirFromRoot(const IndexingFactNode& root) {
+  return root.Value().Anchors()[0].Value();
 }
 
 }  // namespace kythe

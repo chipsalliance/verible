@@ -75,8 +75,12 @@ bool SyntaxTreeSearchTestCase::ExactMatchFindings(
   // Convert actual_findings into string ranges.  Ignore matches' context.
   StringRangeSet actual_findings_ranges;
   for (const auto& finding : actual_findings) {
-    actual_findings_ranges.insert(
-        StringSpanOfSymbol(*ABSL_DIE_IF_NULL(finding.match)));
+    if (finding.match == nullptr) continue;
+    const auto& match_symbol(*finding.match);
+    const absl::string_view spanned_text = StringSpanOfSymbol(match_symbol);
+    // Spanned text can be empty when a subtree is devoid of leaves.
+    if (spanned_text.empty()) continue;
+    actual_findings_ranges.insert(spanned_text);
   }
 
   // Due to the order in which findings are visited, we can assert that

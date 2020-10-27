@@ -17,10 +17,14 @@ set -x
 set -e
 export TRAVIS_TAG=${TRAVIS_TAG:-$(git describe --match=v*)}
 
-case $MODE in
+# TODO(b/171679296): re-enable c++11 support
+#   by downgrading kythe build requirements.
+BAZEL_CXXOPTS=(--cxxopt=-std=c++17)
+
+case "$MODE" in
 compile-n-test)
-    bazel test --noshow_progress --cxxopt='-std=c++11' //...
-    bazel build -c opt --noshow_progress --cxxopt='-std=c++11' //...
+    bazel test --noshow_progress "${BAZEL_CXXOPTS[@]}" //...
+    bazel build -c opt --noshow_progress "${BAZEL_CXXOPTS[@]}" //...
     ;;
 
 bin)
