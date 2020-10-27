@@ -53,7 +53,7 @@ IndexingFactNode BuildIndexingFactsTree(
     const verible::ConcreteSyntaxTree& syntax_tree, absl::string_view base,
     absl::string_view file_name, IndexingFactNode& file_list_facts_tree,
     std::map<std::string, std::string>& extracted_files,
-    const std::set<std::string>& include_dir_paths) {
+    const std::vector<std::string>& include_dir_paths) {
   IndexingFactsTreeExtractor visitor(base, file_name, file_list_facts_tree,
                                      extracted_files, include_dir_paths);
   if (syntax_tree == nullptr) {
@@ -70,7 +70,7 @@ IndexingFactNode ExtractOneFile(
     absl::string_view content, absl::string_view filename,
     IndexingFactNode& file_list_facts_tree,
     std::map<std::string, std::string>& extracted_files,
-    const std::set<std::string>& include_dir_paths) {
+    const std::vector<std::string>& include_dir_paths) {
   verilog::VerilogAnalyzer analyzer(content, filename);
   // Do not parse using AnalyzeAutomaticMode() because index extraction is only
   // expected to work on self-contained files with full syntactic context.
@@ -95,10 +95,10 @@ IndexingFactNode ExtractOneFile(
 
 // Tries to read the files in all the given directories.
 // Returns the first file it find in case of many files with the same name.
-bool TryToReadFile(std::string& file_path, std::string& content,
-                   absl::string_view filename,
-                   const std::set<std::string>& directories) {
-  for (auto& dir_path : directories) {
+bool SearchForFileAndGetContents(std::string& file_path, std::string& content,
+                                 absl::string_view filename,
+                                 const std::vector<std::string>& directories) {
+  for (const auto& dir_path : directories) {
     file_path = verible::file::JoinPath(dir_path, filename);
     if (verible::file::GetContents(file_path, &content).ok()) {
       return true;
@@ -109,9 +109,10 @@ bool TryToReadFile(std::string& file_path, std::string& content,
 
 }  // namespace
 
-IndexingFactNode ExtractFiles(const std::vector<std::string>& ordered_file_list,
-                              int& exit_status, absl::string_view file_list_dir,
-                              const std::set<std::string>& include_dir_paths) {
+IndexingFactNode ExtractFiles(
+    const std::vector<std::string>& ordered_file_list, int& exit_status,
+    absl::string_view file_list_dir,
+    const std::vector<std::string>& include_dir_paths) {
   // Create a node to hold the dirname of the ordered file list and group all
   // the files and acts as a ordered file list of these files.
   IndexingFactNode file_list_facts_tree(IndexingNodeData(
@@ -126,7 +127,8 @@ IndexingFactNode ExtractFiles(const std::vector<std::string>& ordered_file_list,
 
     std::string file_path;
     std::string content;
-    if (!TryToReadFile(file_path, content, filename, include_dir_paths)) {
+    if (!SearchForFileAndGetContents(file_path, content, filename,
+                                     include_dir_paths)) {
       LOG(ERROR) << "Error while reading file: " << filename;
       // exit_status = 1;
       continue;
@@ -1258,15 +1260,18 @@ void IndexingFactsTreeExtractor::ExtractInclude(
   absl::string_view filename_text = included_filename.get().text();
 
   // Remove the double quotes from the filesname.
-  std::string filename = std::string(StripOuterQuotes(filename_text));
+  const absl::string_view filename_unquoted = StripOuterQuotes(filename_text);
+  const std::string filename(filename_unquoted.begin(),
+                             filename_unquoted.end());
   int startLocation = included_filename.get().left(context_.base);
   int endLocation = included_filename.get().right(context_.base);
 
   std::string file_path = "";
 
   // Check if this included file was extracted before.
-  if (extracted_files_.find(filename) != extracted_files_.end()) {
-    file_path = extracted_files_[filename];
+  const auto filename_itr = extracted_files_.find(filename);
+  if (filename_itr != extracted_files_.end()) {
+    file_path = filename_itr->second;
 
     // Create a node for include statement with two Anchors:
     // 1st one holds the actual text in the include statement.
@@ -1277,7 +1282,8 @@ void IndexingFactsTreeExtractor::ExtractInclude(
                          IndexingFactType::kInclude));
   } else {
     std::string content;
-    if (!TryToReadFile(file_path, content, filename, include_dir_paths_)) {
+    if (!SearchForFileAndGetContents(file_path, content, filename,
+                                     include_dir_paths_)) {
       // Couldn't find the included file in any of include directories.
       LOG(ERROR) << "Error while reading file: " << filename;
       return;
@@ -1291,7 +1297,7 @@ void IndexingFactsTreeExtractor::ExtractInclude(
     // list.
     facts_tree_context_.top().NewChild(
         IndexingNodeData({Anchor(filename_text, startLocation, endLocation),
-                          Anchor(extracted_files_[filename], 0, 0)},
+                          Anchor(file_path, 0, 0)},
                          IndexingFactType::kInclude));
 
     file_list_facts_tree_.NewChild(
