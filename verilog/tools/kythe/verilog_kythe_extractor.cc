@@ -38,18 +38,23 @@ ABSL_FLAG(std::string, output_path, "",
           "File path where to write the extracted Kythe facts in JSON format.");
 
 // TODO: support repeatable flag
-ABSL_FLAG(std::vector<std::string>, include_dir_paths,
-          std::vector<std::string>(),
-          "Paths of the directories used to look for included files.");
+ABSL_FLAG(
+    std::vector<std::string>, include_dir_paths, {},
+    R"(Comma seperated paths of the directories used to look for included files.
+Note: The order of the files here is important.
+e.g --include_dir_paths dir1 dir2
+if "A.sv" exists in both "dir1" and "dir2" the one in "dir1" is the one we will use.
+)");
 
-static int ExtractFiles(const std::vector<std::string>& ordered_file_list,
-                        absl::string_view file_list_dir,
-                        const std::vector<std::string>& include_dir_paths) {
-  int exit_status = 0;
+static std::vector<absl::Status> ExtractFiles(
+    const std::vector<std::string>& ordered_file_list,
+    absl::string_view file_list_dir,
+    const std::vector<std::string>& include_dir_paths) {
+  std::vector<absl::Status> status;
 
   const verilog::kythe::IndexingFactNode file_list_facts_tree(
-      verilog::kythe::ExtractFiles(ordered_file_list, exit_status,
-                                   file_list_dir, include_dir_paths));
+      verilog::kythe::ExtractFiles(ordered_file_list, status, file_list_dir,
+                                   include_dir_paths));
 
   // check for printextraction flag, and print extraction if on
   if (absl::GetFlag(FLAGS_printextraction)) {
@@ -72,7 +77,7 @@ static int ExtractFiles(const std::vector<std::string>& ordered_file_list,
     f << verilog::kythe::KytheFactsPrinter(file_list_facts_tree) << std::endl;
   }
 
-  return exit_status;
+  return status;
 }
 
 int main(int argc, char** argv) {
@@ -90,7 +95,7 @@ Output: Produces Indexing Facts for kythe (http://kythe.io).
   // List of the directories for where to look for included files.
   const std::vector<std::string> include_dir_paths =
       absl::GetFlag(FLAGS_include_dir_paths);
-      for(auto x : include_dir_paths) LOG(INFO) << x;
+  for (auto x : include_dir_paths) LOG(INFO) << x;
 
   std::string content;
   if (!verible::file::GetContents(args[1], &content).ok()) {
@@ -107,7 +112,7 @@ Output: Produces Indexing Facts for kythe (http://kythe.io).
     files_names.push_back(filename);
   }
 
-  int exit_status = ExtractFiles(files_names, verible::file::Dirname(args[1]),
-                                 include_dir_paths);
-  return exit_status;
+  std::vector<absl::Status> status = ExtractFiles(
+      files_names, verible::file::Dirname(args[1]), include_dir_paths);
+  return 0;
 }

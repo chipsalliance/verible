@@ -17,6 +17,7 @@
 
 #include <initializer_list>
 
+#include "absl/status/status.h"
 #include "absl/strings/string_view.h"
 #include "common/analysis/syntax_tree_search.h"
 #include "common/text/tree_context_visitor.h"
@@ -264,8 +265,8 @@ class IndexingFactsTreeExtractor : public verible::TreeContextVisitor {
 // The returned Root will have the files as children and they will retain their
 // original ordering from the file list.
 IndexingFactNode ExtractFiles(
-    const std::vector<std::string>& ordered_file_list, int& exit_status,
-    absl::string_view file_list_dir,
+    const std::vector<std::string>& ordered_file_list,
+    std::vector<absl::Status>& exit_status, absl::string_view file_list_dir,
     const std::vector<std::string>& include_dir_paths);
 
 }  // namespace kythe

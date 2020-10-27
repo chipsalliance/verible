@@ -95,23 +95,23 @@ IndexingFactNode ExtractOneFile(
 
 // Tries to read the files in all the given directories.
 // Returns the first file it find in case of many files with the same name.
-bool SearchForFileAndGetContents(std::string& file_path, std::string& content,
-                                 absl::string_view filename,
-                                 const std::vector<std::string>& directories) {
+absl::Status SearchForFileAndGetContents(
+    std::string& file_path, std::string& content, absl::string_view filename,
+    const std::vector<std::string>& directories) {
   for (const auto& dir_path : directories) {
     file_path = verible::file::JoinPath(dir_path, filename);
     if (verible::file::GetContents(file_path, &content).ok()) {
-      return true;
+      return absl::OkStatus();
     }
   }
-  return false;
+  return absl::NotFoundError(absl::StrCat("Couldn't find file: ", filename));
 }
 
 }  // namespace
 
 IndexingFactNode ExtractFiles(
-    const std::vector<std::string>& ordered_file_list, int& exit_status,
-    absl::string_view file_list_dir,
+    const std::vector<std::string>& ordered_file_list,
+    std::vector<absl::Status>& status, absl::string_view file_list_dir,
     const std::vector<std::string>& include_dir_paths) {
   // Create a node to hold the dirname of the ordered file list and group all
   // the files and acts as a ordered file list of these files.
@@ -128,9 +128,11 @@ IndexingFactNode ExtractFiles(
     std::string file_path;
     std::string content;
     if (!SearchForFileAndGetContents(file_path, content, filename,
-                                     include_dir_paths)) {
+                                     include_dir_paths)
+             .ok()) {
       LOG(ERROR) << "Error while reading file: " << filename;
-      // exit_status = 1;
+      status.push_back(
+          absl::NotFoundError(absl::StrCat("Couldn't find file: ", filename)));
       continue;
     }
 
@@ -1283,7 +1285,8 @@ void IndexingFactsTreeExtractor::ExtractInclude(
   } else {
     std::string content;
     if (!SearchForFileAndGetContents(file_path, content, filename,
-                                     include_dir_paths_)) {
+                                     include_dir_paths_)
+             .ok()) {
       // Couldn't find the included file in any of include directories.
       LOG(ERROR) << "Error while reading file: " << filename;
       return;
