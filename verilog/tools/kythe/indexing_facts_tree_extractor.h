@@ -224,6 +224,10 @@ class IndexingFactsTreeExtractor : public verible::TreeContextVisitor {
   // e.g counter #(.N(r)) extracts "N".
   void ExtractParamByName(const verible::SyntaxTreeNode& param_by_name);
 
+  // Extracts new scope with unique id.
+  // specifically, intended for conditional/loop generate constructs.
+  void ExtractAnonymousScope(const verible::SyntaxTreeNode& node);
+
   // Determines how to deal with the given data declaration node as it may be
   // module instance, class instance or primitive variable.
   void ExtractDataDeclaration(const verible::SyntaxTreeNode& data_declaration);
@@ -250,6 +254,9 @@ class IndexingFactsTreeExtractor : public verible::TreeContextVisitor {
   // Set of the file paths of the extracted files.
   // Used to avoid extracting some file more than one time.
   std::set<std::string>& extracted_files_;
+
+  // Counter used as an id for the anonymous scopes.
+  int next_anonymous_id = 0;
 };
 
 // Given the ordered SystemVerilog files, Extracts and returns the

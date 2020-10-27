@@ -255,6 +255,22 @@ void IndexingFactsTreeExtractor::Visit(const SyntaxTreeNode& node) {
       ExtractTypeDeclaration(node);
       break;
     }
+    case NodeEnum::kLoopGenerateConstruct:
+    case NodeEnum::kIfClause:
+    case NodeEnum::kFinalStatement:
+    case NodeEnum::kInitialStatement:
+    case NodeEnum::kGenerateElseBody:
+    case NodeEnum::kElseClause:
+    case NodeEnum::kGenerateIfClause:
+    case NodeEnum::kForLoopStatement:
+    case NodeEnum::kDoWhileLoopStatement:
+    case NodeEnum::kWhileLoopStatement:
+    case NodeEnum::kForeachLoopStatement:
+    case NodeEnum::kRepeatLoopStatement:
+    case NodeEnum::kForeverLoopStatement: {
+      ExtractAnonymousScope(node);
+      break;
+    }
     default: {
       TreeContextVisitor::Visit(node);
     }
@@ -1463,6 +1479,23 @@ void IndexingFactsTreeExtractor::ExtractTypeDeclaration(
       break;
     }
   }
+}
+
+void IndexingFactsTreeExtractor::ExtractAnonymousScope(
+    const verible::SyntaxTreeNode& node) {
+  IndexingFactNode temp_scope_node(
+      IndexingNodeData{IndexingFactType::kAnonymousScope});
+
+  // Generate unique id for this scope.
+  temp_scope_node.Value().AppendAnchor(
+      Anchor(absl::StrCat("anonymous-scope-", next_anonymous_id++), 0, 0));
+  {
+    const IndexingFactsTreeContext::AutoPop p(&facts_tree_context_,
+                                              &temp_scope_node);
+    TreeContextVisitor::Visit(node);
+  }
+
+  facts_tree_context_.top().NewChild(temp_scope_node);
 }
 
 void IndexingFactsTreeExtractor::MoveAndDeleteLastSibling(
