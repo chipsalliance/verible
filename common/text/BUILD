@@ -197,7 +197,6 @@ cc_library(
         "//common/util:spacer",
         "//common/util:type_traits",
         "//common/util:value_saver",
-        "@com_google_absl//absl/base:core_headers",
         "@com_google_absl//absl/strings",
     ],
 )
