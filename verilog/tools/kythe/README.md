@@ -18,6 +18,6 @@ verible-verilog-kythe-extractor [options] <files...>
       format.); default: "";
     --printextraction (Whether or not to print the extracted general indexing
       facts from the middle layer)); default: false;
-    --printkythefacts (Whether or not to print the extracted kythe facts);
+    --print_kythe_facts_json (Whether or not to print the extracted kythe facts);
       default: false;
 ```

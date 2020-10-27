@@ -267,6 +267,7 @@ class IndexingFactsTreeExtractor : public verible::TreeContextVisitor {
 IndexingFactNode ExtractFiles(
     const std::vector<std::string>& ordered_file_list,
     std::vector<absl::Status>& exit_status, absl::string_view file_list_dir,
+    absl::string_view file_list_root,
     const std::vector<std::string>& include_dir_paths);
 
 }  // namespace kythe

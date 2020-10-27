@@ -126,9 +126,18 @@ absl::Status UpwardFileSearch(absl::string_view start,
   return absl::NotFoundError("No matching file found.");
 }
 
+absl::Status FileExists(const std::string &filename) {
+  struct stat buffer;
+  if (stat(filename.c_str(), &buffer) == 0) {
+    return absl::OkStatus();
+  }
+  return absl::NotFoundError(
+      absl::StrCat("file :", filename, "does not exist"));
+}
+
 absl::Status GetContents(absl::string_view filename, std::string *content) {
   std::ifstream fs;
-  std::istream* stream = nullptr;
+  std::istream *stream = nullptr;
   const bool use_stdin = filename == "-";
   if (use_stdin) {
     // convention: honor "-" as stdin

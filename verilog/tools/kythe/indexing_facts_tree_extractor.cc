@@ -100,8 +100,8 @@ absl::Status SearchForFileAndGetContents(
     const std::vector<std::string>& directories) {
   for (const auto& dir_path : directories) {
     file_path = verible::file::JoinPath(dir_path, filename);
-    if (verible::file::GetContents(file_path, &content).ok()) {
-      return absl::OkStatus();
+    if (verible::file::FileExists(file_path).ok()) {
+      return verible::file::GetContents(file_path, &content);
     }
   }
   return absl::NotFoundError(absl::StrCat("Couldn't find file: ", filename));
@@ -112,11 +112,13 @@ absl::Status SearchForFileAndGetContents(
 IndexingFactNode ExtractFiles(
     const std::vector<std::string>& ordered_file_list,
     std::vector<absl::Status>& status, absl::string_view file_list_dir,
+    absl::string_view file_list_root,
     const std::vector<std::string>& include_dir_paths) {
   // Create a node to hold the dirname of the ordered file list and group all
   // the files and acts as a ordered file list of these files.
   IndexingFactNode file_list_facts_tree(IndexingNodeData(
-      {Anchor(file_list_dir, 0, 0)}, IndexingFactType::kFileList));
+      {Anchor(file_list_dir, 0, 0), Anchor(file_list_root, 0, 0)},
+      IndexingFactType::kFileList));
   std::map<std::string, std::string> extracted_files;
 
   for (const auto& filename : ordered_file_list) {
@@ -125,11 +127,9 @@ IndexingFactNode ExtractFiles(
       continue;
     }
 
-    std::string file_path;
+    std::string file_path = verible::file::JoinPath(file_list_root, filename);
     std::string content;
-    if (!SearchForFileAndGetContents(file_path, content, filename,
-                                     include_dir_paths)
-             .ok()) {
+    if (!verible::file::GetContents(file_path, &content).ok()) {
       LOG(ERROR) << "Error while reading file: " << filename;
       status.push_back(
           absl::NotFoundError(absl::StrCat("Couldn't find file: ", filename)));

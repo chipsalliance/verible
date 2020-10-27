@@ -34,7 +34,7 @@ bazel build -c opt //verilog/tools/kythe:all
 for i in $VERILOG_TEST_FILES; do
   echo "$(basename $i)" | tee "$VERILOG_TEST_FILE_LIST"
   # Read JSON entries from standard in to a graphstore.
-  bazel-bin/verilog/tools/kythe/verible-verilog-kythe-extractor "$VERILOG_TEST_FILE_LIST"  --printkythefacts > "${KYTHE_OUT}"/entries
+  bazel-bin/verilog/tools/kythe/verible-verilog-kythe-extractor "$VERILOG_TEST_FILE_LIST"  --print_kythe_facts_json > "${KYTHE_OUT}"/entries
 
   "${KYTHE_BINDIR}"/entrystream --read_format=json < "${KYTHE_OUT}"/entries \
   | ${KYTHE_BINDIR}/verifier "$i"

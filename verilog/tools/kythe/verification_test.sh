@@ -34,7 +34,7 @@ source "$(rlocation "io_bazel/src/test/shell/unittest.bash")" ||
     echo "unittest.bash not found!" >&2
     exit 1
   }
-TESTS_DIR="$(rlocation "com_google_verible/verilog/tools/kythe/testdata/more_testdata")" ||
+TESTS_DIR="$(rlocation "com_google_verible/verilog/tools/kythe/testdata")" ||
   {
     echo "Can't load the test data!" >&2
     exit 1
@@ -64,7 +64,7 @@ function test_single_files() {
     echo "${test_filename}" > "${filelist_path}"
 
     echo "Running Kythe verification test for ${test_filename}" >> "$TEST_log"
-    "${VERIBLE_EXTRACTOR_BIN}" --print_kythe_facts_proto "${filelist_path}" > "${test_dir}/entries" ||
+    "${VERIBLE_EXTRACTOR_BIN}" --file_list_path "${filelist_path}" --file_list_root "${test_dir}" --print_kythe_facts_proto  > "${test_dir}/entries" ||
       fail "Failed to extract Kythe facts"
     cat "${test_dir}/entries" | "${KYTHE_VERIFER_BIN}" --nocheck_for_singletons "${test_dir}/${test_filename}" >> "$TEST_log" ||
       fail "Verification failed for ${test_filename}"

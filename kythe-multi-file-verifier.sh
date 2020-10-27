@@ -45,19 +45,19 @@ VERILOG_INCLUDE_DIR_TEST_FILES="${VERILOG_INCLUDE_DIR_TEST_DIR}/*.sv ${VERILOG_I
 bazel build -c opt //verilog/tools/kythe:all
 
 # Test include_with_dir.
-bazel-bin/verilog/tools/kythe/verible-verilog-kythe-extractor "${VERILOG_INCLUDE_DIR_TEST_FILE_LIST}" --printkythefacts --include_dir_paths "${VERILOG_INCLUDE_DIR_TEST_DIR},${VERILOG_INCLUDE_FILE_TEST_DIR},${VERILOG_INCLUDE_DIR_TEST_INCLUDE_DIR_PATH}" > "${KYTHE_OUT}"/entries
+bazel-bin/verilog/tools/kythe/verible-verilog-kythe-extractor "${VERILOG_INCLUDE_DIR_TEST_FILE_LIST}" --print_kythe_facts_json --include_dir_paths "${VERILOG_INCLUDE_DIR_TEST_DIR},${VERILOG_INCLUDE_FILE_TEST_DIR},${VERILOG_INCLUDE_DIR_TEST_INCLUDE_DIR_PATH}" > "${KYTHE_OUT}"/entries
 
 ${KYTHE_BINDIR}/entrystream --read_format=json < "${KYTHE_OUT}"/entries \
 | ${KYTHE_BINDIR}/verifier ${VERILOG_INCLUDE_DIR_TEST_FILES}
 
 # Test ordered multi-files.
-bazel-bin/verilog/tools/kythe/verible-verilog-kythe-extractor "${VERILOG_MULTI_FILE_TEST_FILE_LIST}" --printkythefacts > "${KYTHE_OUT}"/entries
+bazel-bin/verilog/tools/kythe/verible-verilog-kythe-extractor "${VERILOG_MULTI_FILE_TEST_FILE_LIST}" --print_kythe_facts_json > "${KYTHE_OUT}"/entries
 
 ${KYTHE_BINDIR}/entrystream --read_format=json < "${KYTHE_OUT}"/entries \
 | ${KYTHE_BINDIR}/verifier ${VERILOG_MULTI_FILE_TEST_FILES}
 
 # Test include_file.
-bazel-bin/verilog/tools/kythe/verible-verilog-kythe-extractor "${VERILOG_INCLUDE_FILE_TEST_FILE_LIST}" --printkythefacts > "${KYTHE_OUT}"/entries
+bazel-bin/verilog/tools/kythe/verible-verilog-kythe-extractor "${VERILOG_INCLUDE_FILE_TEST_FILE_LIST}" --print_kythe_facts_json > "${KYTHE_OUT}"/entries
 
 ${KYTHE_BINDIR}/entrystream --read_format=json < "${KYTHE_OUT}"/entries \
 | ${KYTHE_BINDIR}/verifier ${VERILOG_INCLUDE_FILE_TEST_FILES}
