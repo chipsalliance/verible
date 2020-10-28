@@ -5771,6 +5771,9 @@ static const std::initializer_list<ParserTestData> kInvalidCodeTests = {
      " fn < a; fn++) begin\n"
      "end\n"
      "endtask\n"},
+    // unbalanced `endif
+    {{PP_endif, "`endif"}},
+    {{PP_endif, "`endif"}, "\n"},
     // The following tests are valid library map syntax (LRM Ch. 33),
     // but invalid for the rest of SystemVerilog:
     {{TK_library, "library"}, " foo bar;\n"},
