@@ -32,6 +32,7 @@
 #include "common/text/tree_utils.h"
 #include "common/util/casts.h"
 #include "verilog/CST/expression.h"
+#include "verilog/CST/verilog_matchers.h"
 #include "verilog/CST/verilog_nonterminals.h"
 #include "verilog/CST/verilog_tree_print.h"
 #include "verilog/analysis/descriptions.h"
@@ -49,6 +50,7 @@ using verible::SyntaxTreeContext;
 using verible::SyntaxTreeLeaf;
 using verible::SyntaxTreeNode;
 using verible::TokenInfo;
+using verible::matcher::Matcher;
 
 // Register CreateObjectNameMatchRule
 VERILOG_REGISTER_LINT_RULE(CreateObjectNameMatchRule);
@@ -65,6 +67,23 @@ std::string CreateObjectNameMatchRule::GetDescription(
       Codify("type_id::create()", description_type),
       " matches the name of the variable to which it is assigned. See ",
       GetVerificationCitation(kTopic), ".");
+}
+
+// Matches against assignments to typename::type_id::create() calls.
+//
+// For example:
+//   var_h = mytype::type_id::create("var_h", ...);
+//
+// Here, the LHS var_h will be bound to "lval" (only for simple references),
+// the qualified function call (mytype::type_id::create) will be bound to
+// "func", and the list of function call arguments will be bound to "args".
+static const Matcher& CreateAssignmentMatcher() {
+  // function-local static to avoid initialization-ordering problems
+  static const Matcher matcher(NodekNetVariableAssignment(
+      PathkLPValue(PathkReferenceCallBase().Bind("lval_ref")),
+      RValueIsFunctionCall(FunctionCallIsQualified().Bind("func"),
+                           FunctionCallArguments().Bind("args"))));
+  return matcher;
 }
 
 // Returns true if the underyling unqualified identifiers matches `name`,
@@ -168,7 +187,7 @@ void CreateObjectNameMatchRule::HandleSymbol(const verible::Symbol& symbol,
                                              const SyntaxTreeContext& context) {
   // Check for assignments that match the pattern.
   verible::matcher::BoundSymbolManager manager;
-  if (!create_assignment_matcher_.Matches(symbol, &manager)) return;
+  if (!CreateAssignmentMatcher().Matches(symbol, &manager)) return;
 
   // Extract named bindings for matched nodes within this match.
 
