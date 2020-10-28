@@ -5778,6 +5778,10 @@ static const std::initializer_list<ParserTestData> kInvalidCodeTests = {
     // but invalid for the rest of SystemVerilog:
     {{TK_library, "library"}, " foo bar;\n"},
     {{TK_include, "include"}, " foo/bar/*.v;\n"},
+    // fuzzer-discovered cases: (these may have crashed at one point in history)
+    {"`g((\\x\" `g(::\"\n"
+     "),",
+     {verible::TK_EOF, ""}},
 };
 
 using verible::LeafTag;
