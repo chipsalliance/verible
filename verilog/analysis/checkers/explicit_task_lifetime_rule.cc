@@ -21,12 +21,14 @@
 #include "common/analysis/citation.h"
 #include "common/analysis/lint_rule_status.h"
 #include "common/analysis/matcher/bound_symbol_manager.h"
+#include "common/analysis/matcher/matcher.h"
 #include "common/text/symbol.h"
 #include "common/text/syntax_tree_context.h"
 #include "common/text/tree_utils.h"
 #include "verilog/CST/context_functions.h"
 #include "verilog/CST/identifier.h"
 #include "verilog/CST/tasks.h"
+#include "verilog/CST/verilog_matchers.h"
 #include "verilog/analysis/descriptions.h"
 #include "verilog/analysis/lint_rule_registry.h"
 
@@ -37,6 +39,7 @@ using verible::GetStyleGuideCitation;
 using verible::LintRuleStatus;
 using verible::LintViolation;
 using verible::SyntaxTreeContext;
+using Matcher = verible::matcher::Matcher;
 
 // Register ExplicitTaskLifetimeRule
 VERILOG_REGISTER_LINT_RULE(ExplicitTaskLifetimeRule);
@@ -57,13 +60,18 @@ std::string ExplicitTaskLifetimeRule::GetDescription(
       GetStyleGuideCitation(kTopic), ".");
 }
 
+static const Matcher& TaskMatcher() {
+  static const Matcher matcher(NodekTaskDeclaration());
+  return matcher;
+}
+
 void ExplicitTaskLifetimeRule::HandleSymbol(const verible::Symbol& symbol,
                                             const SyntaxTreeContext& context) {
   // Don't need to check for lifetime declaration if context is inside a class
   if (ContextIsInsideClass(context)) return;
 
   verible::matcher::BoundSymbolManager manager;
-  if (matcher_.Matches(symbol, &manager)) {
+  if (TaskMatcher().Matches(symbol, &manager)) {
     // If task id is qualified, it is an out-of-line
     // class task definition, which is also exempt.
     const auto* task_id = GetTaskId(symbol);

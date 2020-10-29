@@ -21,12 +21,14 @@
 #include "common/analysis/citation.h"
 #include "common/analysis/lint_rule_status.h"
 #include "common/analysis/matcher/bound_symbol_manager.h"
+#include "common/analysis/matcher/matcher.h"
 #include "common/text/concrete_syntax_leaf.h"
 #include "common/text/symbol.h"
 #include "common/text/syntax_tree_context.h"
 #include "common/util/logging.h"
 #include "verilog/CST/port.h"
 #include "verilog/CST/type.h"
+#include "verilog/CST/verilog_matchers.h"
 #include "verilog/analysis/descriptions.h"
 #include "verilog/analysis/lint_rule_registry.h"
 
@@ -37,6 +39,7 @@ using verible::GetStyleGuideCitation;
 using verible::LintRuleStatus;
 using verible::LintViolation;
 using verible::SyntaxTreeContext;
+using Matcher = verible::matcher::Matcher;
 
 // Register ExplicitFunctionTaskParameterTypeRule
 VERILOG_REGISTER_LINT_RULE(ExplicitFunctionTaskParameterTypeRule);
@@ -57,10 +60,15 @@ std::string ExplicitFunctionTaskParameterTypeRule::GetDescription(
       GetStyleGuideCitation(kTopic), ".");
 }
 
+static const Matcher& PortMatcher() {
+  static const Matcher matcher(NodekPortItem());
+  return matcher;
+}
+
 void ExplicitFunctionTaskParameterTypeRule::HandleSymbol(
     const verible::Symbol& symbol, const SyntaxTreeContext& context) {
   verible::matcher::BoundSymbolManager manager;
-  if (matcher_.Matches(symbol, &manager)) {
+  if (PortMatcher().Matches(symbol, &manager)) {
     const auto* type_node = GetTypeOfTaskFunctionPortItem(symbol);
     if (!IsStorageTypeOfDataTypeSpecified(*ABSL_DIE_IF_NULL(type_node))) {
       const auto* port_id = GetIdentifierFromTaskFunctionPortItem(symbol);

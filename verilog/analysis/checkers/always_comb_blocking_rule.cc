@@ -22,9 +22,11 @@
 #include "common/analysis/citation.h"
 #include "common/analysis/lint_rule_status.h"
 #include "common/analysis/matcher/bound_symbol_manager.h"
+#include "common/analysis/matcher/matcher.h"
 #include "common/analysis/syntax_tree_search.h"
 #include "common/text/symbol.h"
 #include "common/text/syntax_tree_context.h"
+#include "verilog/CST/verilog_matchers.h"  // IWYU pragma: keep
 #include "verilog/analysis/descriptions.h"
 #include "verilog/analysis/lint_rule_registry.h"
 
@@ -36,6 +38,7 @@ using verible::LintRuleStatus;
 using verible::LintViolation;
 using verible::SearchSyntaxTree;
 using verible::SyntaxTreeContext;
+using verible::matcher::Matcher;
 
 // Register AlwaysCombBlockingRule
 VERILOG_REGISTER_LINT_RULE(AlwaysCombBlockingRule);
@@ -53,11 +56,17 @@ std::string AlwaysCombBlockingRule::GetDescription(
                       "non-blocking assignment in combinational logic.");
 }
 
+// Matches always_comb blocks.
+static const Matcher& AlwaysCombMatcher() {
+  static const Matcher matcher(NodekAlwaysStatement(AlwaysCombKeyword()));
+  return matcher;
+}
+
 void AlwaysCombBlockingRule::HandleSymbol(const verible::Symbol& symbol,
                                           const SyntaxTreeContext& context) {
   verible::matcher::BoundSymbolManager manager;
 
-  if (always_comb_matcher_.Matches(symbol, &manager)) {
+  if (AlwaysCombMatcher().Matches(symbol, &manager)) {
     for (const auto& match :
          SearchSyntaxTree(symbol, NodekNonblockingAssignmentStatement())) {
       auto* node = dynamic_cast<const verible::SyntaxTreeNode*>(match.match);

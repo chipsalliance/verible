@@ -27,6 +27,7 @@
 #include "common/text/symbol.h"
 #include "common/text/syntax_tree_context.h"
 #include "common/text/token_info.h"
+#include "verilog/CST/verilog_matchers.h"
 #include "verilog/analysis/descriptions.h"
 #include "verilog/analysis/lint_rule_registry.h"
 
@@ -34,6 +35,7 @@ namespace verilog {
 namespace analysis {
 
 using verible::GetStyleGuideCitation;
+using verible::matcher::Matcher;
 
 VERILOG_REGISTER_LINT_RULE(PlusargAssignmentRule);
 
@@ -50,10 +52,15 @@ std::string PlusargAssignmentRule::GetDescription(
                       " system task. See ", GetStyleGuideCitation(kTopic), ".");
 }
 
+static const Matcher& IdMatcher() {
+  static const Matcher matcher(SystemTFIdentifierLeaf().Bind("name"));
+  return matcher;
+}
+
 void PlusargAssignmentRule::HandleSymbol(
     const verible::Symbol& symbol, const verible::SyntaxTreeContext& context) {
   verible::matcher::BoundSymbolManager manager;
-  if (matcher_.Matches(symbol, &manager)) {
+  if (IdMatcher().Matches(symbol, &manager)) {
     if (auto leaf = manager.GetAs<verible::SyntaxTreeLeaf>("name")) {
       if (kForbiddenFunctionName == leaf->get().text()) {
         violations_.insert(

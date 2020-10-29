@@ -33,6 +33,7 @@
 #include "common/util/casts.h"
 #include "common/util/logging.h"
 #include "verilog/CST/context_functions.h"
+#include "verilog/CST/verilog_matchers.h"
 #include "verilog/CST/verilog_nonterminals.h"
 #include "verilog/analysis/descriptions.h"
 #include "verilog/analysis/lint_rule_registry.h"
@@ -42,6 +43,7 @@ namespace analysis {
 
 using verible::down_cast;
 using verible::GetStyleGuideCitation;
+using verible::matcher::Matcher;
 
 // Register the linter rule
 VERILOG_REGISTER_LINT_RULE(ModuleParameterRule);
@@ -64,6 +66,27 @@ std::string ModulePortRule::GetDescription(DescriptionType description_type) {
       "Checks that module instantiations with more than one port are passed "
       "in as named ports, rather than positional ports. See ",
       GetStyleGuideCitation(kTopic), ".");
+}
+
+// Matches against a gate instance with a port list and bind that port list
+// to "list".
+// For example:
+//   foo bar (port1, port2);
+// Here, the node representing "port1, port2" will be bound to "list"
+static const Matcher& InstanceMatcher() {
+  static const Matcher matcher(
+      NodekGateInstance(GateInstanceHasPortList().Bind("list")));
+  return matcher;
+}
+
+// Matches against a parameter list that has positional parameters
+// For examples:
+//   foo #(1, 2) bar;
+// Here, the node representing "1, 2" will be bound to "list".
+static const Matcher& ParamsMatcher() {
+  static const Matcher matcher(NodekActualParameterList(
+      ActualParameterListHasPositionalParameterList().Bind("list")));
+  return matcher;
 }
 
 static bool IsComma(const verible::Symbol& symbol) {
@@ -100,7 +123,7 @@ void ModuleParameterRule::HandleSymbol(
   if (!ContextIsInsideModule(context)) return;
 
   verible::matcher::BoundSymbolManager manager;
-  if (matcher_.Matches(symbol, &manager)) {
+  if (ParamsMatcher().Matches(symbol, &manager)) {
     if (auto list = manager.GetAs<verible::SyntaxTreeNode>("list")) {
       const auto& children = list->children();
       auto parameter_count = std::count_if(
@@ -136,7 +159,7 @@ void ModulePortRule::HandleSymbol(const verible::Symbol& symbol,
                                   const verible::SyntaxTreeContext& context) {
   verible::matcher::BoundSymbolManager manager;
 
-  if (matcher_.Matches(symbol, &manager)) {
+  if (InstanceMatcher().Matches(symbol, &manager)) {
     if (auto port_list_node = manager.GetAs<verible::SyntaxTreeNode>("list")) {
       // Don't know how to handle unexpected non-portlist, so proceed
       if (!port_list_node->MatchesTag(NodeEnum::kPortActualList)) return;

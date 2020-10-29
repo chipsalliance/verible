@@ -29,6 +29,7 @@
 #include "verilog/CST/context_functions.h"
 #include "verilog/CST/dimensions.h"
 #include "verilog/CST/expression.h"
+#include "verilog/CST/verilog_matchers.h"
 #include "verilog/analysis/descriptions.h"
 #include "verilog/analysis/lint_rule_registry.h"
 
@@ -39,6 +40,7 @@ using verible::GetStyleGuideCitation;
 using verible::LintRuleStatus;
 using verible::LintViolation;
 using verible::SyntaxTreeContext;
+using verible::matcher::Matcher;
 
 VERILOG_REGISTER_LINT_RULE(UnpackedDimensionsRule);
 
@@ -69,6 +71,11 @@ std::string UnpackedDimensionsRule::GetDescription(
       GetStyleGuideCitation(kTopic), ".");
 }
 
+static const Matcher& DimensionRangeMatcher() {
+  static const Matcher matcher(NodekDimensionRange());
+  return matcher;
+}
+
 void UnpackedDimensionsRule::HandleSymbol(
     const verible::Symbol& symbol, const verible::SyntaxTreeContext& context) {
   if (!ContextIsInsideUnpackedDimensions(context) ||
@@ -76,7 +83,7 @@ void UnpackedDimensionsRule::HandleSymbol(
     return;
 
   verible::matcher::BoundSymbolManager manager;
-  if (matcher_.Matches(symbol, &manager)) {
+  if (DimensionRangeMatcher().Matches(symbol, &manager)) {
     // Check whether or not bounds are numeric constants, including 0.
     // If one can conclude that left > right, then record as violation.
 

@@ -16,7 +16,6 @@
 
 #include <set>
 #include <string>
-#include <vector>
 
 #include "absl/strings/str_cat.h"
 #include "common/analysis/citation.h"
@@ -30,6 +29,7 @@
 #include "common/text/tree_utils.h"
 #include "verilog/CST/identifier.h"
 #include "verilog/CST/seq_block.h"
+#include "verilog/CST/verilog_matchers.h"
 #include "verilog/analysis/descriptions.h"
 #include "verilog/analysis/lint_rule_registry.h"
 
@@ -37,6 +37,7 @@ namespace verilog {
 namespace analysis {
 
 using verible::GetStyleGuideCitation;
+using verible::matcher::Matcher;
 
 // Register the lint rule
 VERILOG_REGISTER_LINT_RULE(MismatchedLabelsRule);
@@ -54,11 +55,17 @@ std::string MismatchedLabelsRule::GetDescription(
                       ".");
 }
 
+// Matches the begin node.
+static const Matcher& BeginMatcher() {
+  static const Matcher matcher(NodekBegin());
+  return matcher;
+}
+
 void MismatchedLabelsRule::HandleSymbol(
     const verible::Symbol& symbol, const verible::SyntaxTreeContext& context) {
   verible::matcher::BoundSymbolManager manager;
 
-  if (matcher_.Matches(symbol, &manager)) {
+  if (BeginMatcher().Matches(symbol, &manager)) {
     const auto& matchingEnd = GetMatchingEnd(symbol, context);
 
     const auto* begin_label = GetBeginLabelTokenInfo(symbol);

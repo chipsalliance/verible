@@ -20,12 +20,9 @@
 
 #include "absl/strings/string_view.h"
 #include "common/analysis/lint_rule_status.h"
-#include "common/analysis/matcher/matcher.h"
-#include "common/analysis/matcher/matcher_builders.h"
 #include "common/analysis/syntax_tree_lint_rule.h"
 #include "common/text/symbol.h"
 #include "common/text/syntax_tree_context.h"
-#include "verilog/CST/verilog_matchers.h"  // IWYU pragma: keep
 #include "verilog/analysis/descriptions.h"
 
 namespace verilog {
@@ -57,15 +54,6 @@ class UndersizedBinaryLiteralRule : public verible::SyntaxTreeLintRule {
 
   // Link to style guide rule.
   static const char kTopic[];
-
-  // Broadly, start by matching all number nodes with a
-  // constant width and based literal.
-  // TODO(fangism): If more precision is needed than what the inner matcher
-  // provides, pass a more specific predicate matching function instead.
-  const verible::matcher::Matcher number_matcher_ = NodekNumber(
-      NumberHasConstantWidth().Bind("width"),
-      NumberHasBasedLiteral(NumberIsBinary().Bind("base"),
-                            NumberHasBinaryDigits().Bind("digits")));
 
   std::set<verible::LintViolation> violations_;
 };

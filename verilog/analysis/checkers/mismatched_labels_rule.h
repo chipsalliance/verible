@@ -19,13 +19,10 @@
 #include <string>
 
 #include "common/analysis/lint_rule_status.h"
-#include "common/analysis/matcher/matcher.h"
-#include "common/analysis/matcher/matcher_builders.h"
 #include "common/analysis/syntax_tree_lint_rule.h"
 #include "common/text/concrete_syntax_tree.h"
 #include "common/text/symbol.h"
 #include "common/text/syntax_tree_context.h"
-#include "verilog/CST/verilog_matchers.h"
 #include "verilog/analysis/descriptions.h"
 
 namespace verilog {
@@ -48,9 +45,6 @@ class MismatchedLabelsRule : public verible::SyntaxTreeLintRule {
   verible::LintRuleStatus Report() const override;
 
  private:
-  // Matches the begin node.
-  const verible::matcher::Matcher matcher_ = NodekBegin();
-
   // Link to style guide rule.
   static const char kTopic[];
 

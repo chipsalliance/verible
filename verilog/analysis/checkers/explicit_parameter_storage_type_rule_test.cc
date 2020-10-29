@@ -23,6 +23,7 @@
 #include "common/text/symbol.h"
 #include "verilog/CST/verilog_nonterminals.h"
 #include "verilog/analysis/verilog_analyzer.h"
+#include "verilog/parser/verilog_token_enum.h"
 
 namespace verilog {
 namespace analysis {
