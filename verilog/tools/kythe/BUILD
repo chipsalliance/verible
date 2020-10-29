@@ -198,6 +198,8 @@ cc_binary(
         "//common/util:init_command_line",
         "//common/util:logging",
         "//verilog/CST:verilog_nonterminals",
+        "//common/util:bijective_map",
+        "//common/util:enum_flags",
         "//verilog/CST:verilog_tree_print",
         "//verilog/analysis:verilog_analyzer",
         "//verilog/analysis/checkers:verilog_lint_rules",

@@ -64,7 +64,7 @@ function test_single_files() {
     echo "${test_filename}" > "${filelist_path}"
 
     echo "Running Kythe verification test for ${test_filename}" >> "$TEST_log"
-    "${VERIBLE_EXTRACTOR_BIN}" --file_list_path "${filelist_path}" --file_list_root "${test_dir}" --print_kythe_facts_proto  > "${test_dir}/entries" ||
+    "${VERIBLE_EXTRACTOR_BIN}" --file_list_path "${filelist_path}" --file_list_root "${test_dir}" --print_kythe_facts proto  > "${test_dir}/entries" ||
       fail "Failed to extract Kythe facts"
     cat "${test_dir}/entries" | "${KYTHE_VERIFER_BIN}" --nocheck_for_singletons "${test_dir}/${test_filename}" >> "$TEST_log" ||
       fail "Verification failed for ${test_filename}"
@@ -87,7 +87,7 @@ function test_multi_files() {
     ls "${test_case_dir}" > "${filelist_path}"
 
     echo "Running Kythe verification multi file test for ${test_name}" >> "$TEST_log"
-    "${VERIBLE_EXTRACTOR_BIN}" --print_kythe_facts_proto "${filelist_path}" > "${test_dir}/entries" ||
+    "${VERIBLE_EXTRACTOR_BIN}" --print_kythe_facts proto "${filelist_path}" > "${test_dir}/entries" ||
       fail "Failed to extract Kythe facts"
     cat "${test_dir}/entries" | "${KYTHE_VERIFER_BIN}" "${test_dir}"/*.* >> "$TEST_log" ||
       fail "Verification failed for ${test_name}"

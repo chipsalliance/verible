@@ -252,7 +252,7 @@ class IndexingFactsTreeExtractor : public verible::TreeContextVisitor {
 
   // Maps every file name to its file path.
   // Used to avoid extracting some file more than one time.
-  // Key "filename", Value "file_path" for that file.
+  //"Key: referenced file name (could be relative), Value: resolved file path"
   std::map<std::string, std::string>& extracted_files_;
 
   // Holds the paths of the directories used to look for the included
@@ -266,7 +266,7 @@ class IndexingFactsTreeExtractor : public verible::TreeContextVisitor {
 // original ordering from the file list.
 IndexingFactNode ExtractFiles(
     const std::vector<std::string>& ordered_file_list,
-    std::vector<absl::Status>& exit_status, absl::string_view file_list_dir,
+    std::vector<absl::Status>& statuses, absl::string_view file_list_dir,
     absl::string_view file_list_root,
     const std::vector<std::string>& include_dir_paths);
 

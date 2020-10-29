@@ -111,7 +111,7 @@ absl::Status SearchForFileAndGetContents(
 
 IndexingFactNode ExtractFiles(
     const std::vector<std::string>& ordered_file_list,
-    std::vector<absl::Status>& status, absl::string_view file_list_dir,
+    std::vector<absl::Status>& statuses, absl::string_view file_list_dir,
     absl::string_view file_list_root,
     const std::vector<std::string>& include_dir_paths) {
   // Create a node to hold the dirname of the ordered file list and group all
@@ -129,10 +129,11 @@ IndexingFactNode ExtractFiles(
 
     std::string file_path = verible::file::JoinPath(file_list_root, filename);
     std::string content;
-    if (!verible::file::GetContents(file_path, &content).ok()) {
-      LOG(ERROR) << "Error while reading file: " << filename;
-      status.push_back(
-          absl::NotFoundError(absl::StrCat("Couldn't find file: ", filename)));
+
+    auto status = verible::file::GetContents(file_path, &content);
+    statuses.push_back(status);
+    if (!status.ok()) {
+      LOG(ERROR) << status.message();
       continue;
     }
 
@@ -1291,15 +1292,16 @@ void IndexingFactsTreeExtractor::ExtractInclude(
                          IndexingFactType::kInclude));
   } else {
     std::string content;
-    if (!SearchForFileAndGetContents(file_path, content, filename,
-                                     include_dir_paths_)
-             .ok()) {
+
+    auto status = SearchForFileAndGetContents(file_path, content, filename,
+                                              include_dir_paths_);
+    if (!status.ok()) {
       // Couldn't find the included file in any of include directories.
       LOG(ERROR) << "Error while reading file: " << filename;
       return;
     }
 
-    extracted_files_[filename] = file_path;
+    filename_itr->second = file_path;
 
     // Create a node for include statement with two Anchors:
     // 1st one holds the actual text in the include statement.

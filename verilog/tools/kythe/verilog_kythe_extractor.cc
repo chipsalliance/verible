@@ -22,6 +22,8 @@
 #include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
 #include "absl/strings/substitute.h"
+#include "common/util/bijective_map.h"
+#include "common/util/enum_flags.h"
 #include "common/util/file_util.h"
 #include "common/util/init_command_line.h"
 #include "google/protobuf/io/zero_copy_stream_impl.h"
@@ -31,30 +33,58 @@
 #include "verilog/tools/kythe/indexing_facts_tree_extractor.h"
 #include "verilog/tools/kythe/kythe_facts_extractor.h"
 
+enum class PrintMode {
+  kNoPrint,
+  kJSON,
+  kProto,
+};
+
+static const verible::EnumNameMap<PrintMode> kPrintModeStringMap{{
+    {"no_print", PrintMode::kNoPrint},
+    {"json", PrintMode::kJSON},
+    {"proto", PrintMode::kProto},
+}};
+
+static std::ostream& operator<<(std::ostream& stream, PrintMode mode) {
+  return kPrintModeStringMap.Unparse(mode, stream);
+}
+
+static bool AbslParseFlag(absl::string_view text, PrintMode* mode,
+                          std::string* error) {
+  return kPrintModeStringMap.Parse(text, mode, error, "--flag value");
+}
+
+static std::string AbslUnparseFlag(const PrintMode& mode) {
+  std::ostringstream stream;
+  stream << mode;
+  return stream.str();
+}
+
 ABSL_FLAG(bool, printextraction, false,
           "Whether or not to print the extracted general indexing facts "
           "from the middle layer)");
 
-ABSL_FLAG(bool, print_kythe_facts_json, false,
-          "If true, prints the extracted Kythe facts in JSON format");
-
-ABSL_FLAG(bool, print_kythe_facts_proto, false,
-          "If true, prints the extracted Kythe facts in protobuf format");
+ABSL_FLAG(PrintMode, print_kythe_facts, PrintMode::kNoPrint,  //
+          "Determines how to print Kythe indexing facts.  Options:\n"
+          "  json: Outputs Kythe facts in json format\n"
+          "  proto: Outputs Kythe facts in proto format\n");
 
 ABSL_FLAG(
     std::string, file_list_path, "",
-    R"(The path to the file list which contains the names of SystermVerilog files.)");
+    R"(The path to the file list which contains the names of SystemVerilog files.
+    The files should be ordered by definition dependencies.)");
 
 ABSL_FLAG(
-    std::string, file_list_root, "",
+    std::string, file_list_root, ".",
     R"(The absolute location which we prepend to the files in the file list (where listed files are relative to).)");
 
 // TODO: support repeatable flag
 ABSL_FLAG(
     std::vector<std::string>, include_dir_paths, {},
     R"(Comma seperated paths of the directories used to look for included files.
-Note: The order of the files here is important.
-e.g --include_dir_paths dir1 dir2
+Note: The order of the files here is important. 
+File search will stop at the the first found among the listed directories.
+e.g --include_dir_paths directory1 directory2
 if "A.sv" exists in both "dir1" and "dir2" the one in "dir1" is the one we will use.
 )");
 
@@ -126,13 +156,19 @@ static std::vector<absl::Status> ExtractFiles(
     std::cout << file_list_facts_tree << std::endl;
   }
 
-  // check for print_kythe_facts_json flag, and print the facts if on
-  if (absl::GetFlag(FLAGS_print_kythe_facts_json)) {
-    std::cout << KytheFactsPrinter(file_list_facts_tree) << std::endl;
-  }
-
-  if (absl::GetFlag(FLAGS_print_kythe_facts_proto)) {
-    PrintKytheFactsProtoEntries(file_list_facts_tree);
+  // check how kythe facts.
+  switch (absl::GetFlag(FLAGS_print_kythe_facts)) {
+    case PrintMode::kJSON: {
+      std::cout << KytheFactsPrinter(file_list_facts_tree) << std::endl;
+      break;
+    }
+    case PrintMode::kProto: {
+      PrintKytheFactsProtoEntries(file_list_facts_tree);
+      break;
+    }
+    default: {
+      break;
+    }
   }
 
   return status;
@@ -162,12 +198,7 @@ Output: Produces Indexing Facts for kythe (http://kythe.io).
     LOG(ERROR) << "No file list path was specified";
     return 1;
   }
-
   const std::string file_list_root = absl::GetFlag(FLAGS_file_list_root);
-  if (file_list_root.empty()) {
-    LOG(ERROR) << "No file list root was specified";
-    return 1;
-  }
 
   std::string content;
   if (!verible::file::GetContents(file_list_path, &content).ok()) {
