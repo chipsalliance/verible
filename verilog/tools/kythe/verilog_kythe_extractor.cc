@@ -34,13 +34,11 @@
 #include "verilog/tools/kythe/kythe_facts_extractor.h"
 
 enum class PrintMode {
-  kNoPrint,
   kJSON,
   kProto,
 };
 
 static const verible::EnumNameMap<PrintMode> kPrintModeStringMap{{
-    {"no_print", PrintMode::kNoPrint},
     {"json", PrintMode::kJSON},
     {"proto", PrintMode::kProto},
 }};
@@ -64,10 +62,11 @@ ABSL_FLAG(bool, printextraction, false,
           "Whether or not to print the extracted general indexing facts "
           "from the middle layer)");
 
-ABSL_FLAG(PrintMode, print_kythe_facts, PrintMode::kNoPrint,  //
+ABSL_FLAG(PrintMode, print_kythe_facts, PrintMode::kJSON,
           "Determines how to print Kythe indexing facts.  Options:\n"
           "  json: Outputs Kythe facts in json format\n"
-          "  proto: Outputs Kythe facts in proto format\n");
+          "  proto: Outputs Kythe facts in proto format\n"
+          "Default: json\n");
 
 ABSL_FLAG(
     std::string, file_list_path, "",
@@ -84,7 +83,7 @@ ABSL_FLAG(
     R"(Comma seperated paths of the directories used to look for included files.
 Note: The order of the files here is important. 
 File search will stop at the the first found among the listed directories.
-e.g --include_dir_paths directory1 directory2
+e.g --include_dir_paths directory1,directory2
 if "A.sv" exists in both "dir1" and "dir2" the one in "dir1" is the one we will use.
 )");
 
@@ -163,9 +162,6 @@ static std::vector<absl::Status> ExtractFiles(
     }
     case PrintMode::kProto: {
       PrintKytheFactsProtoEntries(file_list_facts_tree);
-      break;
-    }
-    default: {
       break;
     }
   }
