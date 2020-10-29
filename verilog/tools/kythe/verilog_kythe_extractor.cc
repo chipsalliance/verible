@@ -112,11 +112,8 @@ static VNameRef ConvertToVnameRef(const VName& vname,
 // Prints Kythe facts in proto format to stdout.
 static void PrintKytheFactsProtoEntries(
     const IndexingFactNode& file_list_facts_tree) {
-  KytheFactsExtractor kythe_extractor(
-      GetFileListDirFromRoot(file_list_facts_tree),
-      /*previous_files_scopes=*/nullptr);
   const auto indexing_data =
-      kythe_extractor.ExtractKytheFacts(file_list_facts_tree);
+      KytheFactsExtractor::ExtractKytheFacts(file_list_facts_tree);
   google::protobuf::io::FileOutputStream file_output(STDOUT_FILENO);
   file_output.SetCloseOnDelete(true);
   ::kythe::FileOutputStream kythe_output(&file_output);
