@@ -25,22 +25,69 @@
 #include "absl/strings/substitute.h"
 #include "kythe/cxx/common/indexing/KytheCachingOutput.h"
 #include "kythe/proto/storage.pb.h"
+#include "common/util/bijective_map.h"
+#include "common/util/enum_flags.h"
 #include "common/util/file_util.h"
 #include "common/util/init_command_line.h"
 #include "verilog/analysis/verilog_analyzer.h"
 #include "verilog/tools/kythe/indexing_facts_tree_extractor.h"
 #include "verilog/tools/kythe/kythe_facts_extractor.h"
 
+// for --print_kythe_facts flag
+enum class PrintMode {
+  kJSON,
+  kProto,
+};
+
+static const verible::EnumNameMap<PrintMode> kPrintModeStringMap{{
+    {"json", PrintMode::kJSON},
+    {"proto", PrintMode::kProto},
+}};
+
+static std::ostream& operator<<(std::ostream& stream, PrintMode mode) {
+  return kPrintModeStringMap.Unparse(mode, stream);
+}
+
+static bool AbslParseFlag(absl::string_view text, PrintMode* mode,
+                          std::string* error) {
+  return kPrintModeStringMap.Parse(text, mode, error,
+                                   "--print_kythe_facts value");
+}
+
+static std::string AbslUnparseFlag(const PrintMode& mode) {
+  std::ostringstream stream;
+  stream << mode;
+  return stream.str();
+}
+
 ABSL_FLAG(bool, printextraction, false,
           "Whether or not to print the extracted general indexing facts "
           "from the middle layer)");
 
-// TODO(ikr): Rename to print_kythe_facts_json
-ABSL_FLAG(bool, printkythefacts, false,
-          "If true, prints the extracted Kythe facts in JSON format");
+ABSL_FLAG(PrintMode, print_kythe_facts, PrintMode::kJSON,
+          "Determines how to print Kythe indexing facts.  Options:\n"
+          "  json: Outputs Kythe facts in JSON format\n"
+          "  proto: Outputs Kythe facts in proto format\n"
+          "Default: json\n");
 
-ABSL_FLAG(bool, print_kythe_facts_proto, false,
-          "If true, prints the extracted Kythe facts in protobuf format");
+ABSL_FLAG(
+    std::string, file_list_path, "",
+    R"(The path to the file list which contains the names of SystemVerilog files.
+    The files should be ordered by definition dependencies.)");
+
+ABSL_FLAG(
+    std::string, file_list_root, ".",
+    R"(The absolute location which we prepend to the files in the file list (where listed files are relative to).)");
+
+// TODO: support repeatable flag
+ABSL_FLAG(
+    std::vector<std::string>, include_dir_paths, {},
+    R"(Comma seperated paths of the directories used to look for included files.
+Note: The order of the files here is important.
+File search will stop at the the first found among the listed directories.
+e.g --include_dir_paths directory1,directory2
+if "A.sv" exists in both "dir1" and "dir2" the one in "dir1" is the one we will use.
+)");
 
 namespace verilog {
 namespace kythe {
@@ -50,8 +97,8 @@ using ::kythe::FactRef;
 using ::kythe::VNameRef;
 
 // Returns VNameRef based on Verible's VName.
-VNameRef ConvertToVnameRef(const VName& vname,
-                           std::deque<std::string>* signatures) {
+static VNameRef ConvertToVnameRef(const VName& vname,
+                                  std::deque<std::string>* signatures) {
   VNameRef vname_ref;
   signatures->push_back(vname.signature.ToString());
   vname_ref.set_signature(signatures->back());
@@ -63,11 +110,13 @@ VNameRef ConvertToVnameRef(const VName& vname,
 }
 
 // Prints Kythe facts in proto format to stdout.
-void PrintKytheFactsProtoEntries(const IndexingFactNode& file_list_facts_tree) {
+static void PrintKytheFactsProtoEntries(
+    const IndexingFactNode& file_list_facts_tree) {
   KytheFactsExtractor kythe_extractor(
       GetFileListDirFromRoot(file_list_facts_tree),
       /*previous_files_scopes=*/nullptr);
-  auto indexing_data = kythe_extractor.ExtractKytheFacts(file_list_facts_tree);
+  const auto indexing_data =
+      kythe_extractor.ExtractKytheFacts(file_list_facts_tree);
   google::protobuf::io::FileOutputStream file_output(STDOUT_FILENO);
   file_output.SetCloseOnDelete(true);
   ::kythe::FileOutputStream kythe_output(&file_output);
@@ -95,28 +144,33 @@ void PrintKytheFactsProtoEntries(const IndexingFactNode& file_list_facts_tree) {
   }
 }
 
-static int ExtractFiles(const std::vector<std::string>& ordered_file_list,
-                        absl::string_view file_list_dir) {
-  int exit_status = 0;
-
-  const IndexingFactNode file_list_facts_tree(
-      ExtractFiles(ordered_file_list, exit_status, file_list_dir));
+static std::vector<absl::Status> ExtractFiles(
+    const std::vector<std::string>& ordered_file_list,
+    absl::string_view file_list_dir, absl::string_view file_list_root,
+    const std::vector<std::string>& include_dir_paths) {
+  std::vector<absl::Status> statuses;
+  const verilog::kythe::IndexingFactNode file_list_facts_tree(
+      verilog::kythe::ExtractFiles(ordered_file_list, statuses, file_list_dir,
+                                   file_list_root, include_dir_paths));
 
   // check for printextraction flag, and print extraction if on
   if (absl::GetFlag(FLAGS_printextraction)) {
     std::cout << file_list_facts_tree << std::endl;
   }
 
-  // check for printkythefacts flag, and print the facts if on
-  if (absl::GetFlag(FLAGS_printkythefacts)) {
-    std::cout << KytheFactsPrinter(file_list_facts_tree) << std::endl;
+  // check how kythe facts.
+  switch (absl::GetFlag(FLAGS_print_kythe_facts)) {
+    case PrintMode::kJSON: {
+      std::cout << KytheFactsPrinter(file_list_facts_tree) << std::endl;
+      break;
+    }
+    case PrintMode::kProto: {
+      PrintKytheFactsProtoEntries(file_list_facts_tree);
+      break;
+    }
   }
 
-  if (absl::GetFlag(FLAGS_print_kythe_facts_proto)) {
-    PrintKytheFactsProtoEntries(file_list_facts_tree);
-  }
-
-  return exit_status;
+  return statuses;
 }
 
 }  // namespace kythe
@@ -124,7 +178,7 @@ static int ExtractFiles(const std::vector<std::string>& ordered_file_list,
 
 int main(int argc, char** argv) {
   const auto usage =
-      absl::StrCat("usage: ", argv[0], " [options] file_list_path\n", R"(
+      absl::StrCat("usage: ", argv[0], " [options] --file_list_path FILE\n", R"(
 Extracts kythe indexing facts from the given SystemVerilog source files.
 
 Input: A file which lists paths to the SystemVerilog top-level translation
@@ -134,11 +188,20 @@ Output: Produces Indexing Facts for kythe (http://kythe.io).
 )");
   const auto args = verible::InitCommandLine(usage, &argc, &argv);
 
-  std::vector<verilog::kythe::IndexingFactNode> indexing_facts_trees;
+  // List of the directories for where to look for included files.
+  const std::vector<std::string> include_dir_paths =
+      absl::GetFlag(FLAGS_include_dir_paths);
+
+  const std::string file_list_path = absl::GetFlag(FLAGS_file_list_path);
+  if (file_list_path.empty()) {
+    LOG(ERROR) << "No file list path was specified";
+    return 1;
+  }
+  const std::string file_list_root = absl::GetFlag(FLAGS_file_list_root);
 
   std::string content;
-  if (!verible::file::GetContents(args[1], &content).ok()) {
-    LOG(ERROR) << "Error while reading file: " << args[1];
+  if (!verible::file::GetContents(file_list_path, &content).ok()) {
+    LOG(ERROR) << "Error while reading file list at: " << file_list_path;
     return 1;
   }
 
@@ -151,7 +214,8 @@ Output: Produces Indexing Facts for kythe (http://kythe.io).
     files_names.push_back(filename);
   }
 
-  int exit_status = verilog::kythe::ExtractFiles(
-      files_names, verible::file::Dirname(args[1]));
-  return exit_status;
+  std::vector<absl::Status> statuses = verilog::kythe::ExtractFiles(
+      files_names, file_list_path, file_list_root, include_dir_paths);
+  // TODO(fangism): print these diagnostics
+  return 0;
 }

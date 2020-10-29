@@ -38,7 +38,7 @@ for i in "$@"; do
   echo "$(basename $i)" > "$(dirname $i)/file_list.txt"
   cat "$(dirname $i)/file_list.txt"
   # Read JSON entries from standard in to a graphstore.
-  bazel-bin/verilog/tools/kythe/verible-verilog-kythe-extractor "$(dirname $i)/file_list.txt"  --printkythefacts > "${KYTHE_OUT}"/entries
+  bazel-bin/verilog/tools/kythe/verible-verilog-kythe-extractor "$(dirname $i)/file_list.txt"  --print_kythe_facts_json > "${KYTHE_OUT}"/entries
   # Write entry stream into a GraphStore
   "${KYTHE_BINDIR}"/entrystream --read_format=json < "${KYTHE_OUT}"/entries \
   | "${KYTHE_BINDIR}"/write_entries -graphstore "${KYTHE_OUT}"/graphstore

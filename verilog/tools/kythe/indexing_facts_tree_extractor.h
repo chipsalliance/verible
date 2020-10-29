@@ -17,6 +17,7 @@
 
 #include <initializer_list>
 
+#include "absl/status/status.h"
 #include "absl/strings/string_view.h"
 #include "common/analysis/syntax_tree_search.h"
 #include "common/text/tree_context_visitor.h"
@@ -32,13 +33,15 @@ namespace kythe {
 // facts from CST nodes and constructs a tree of indexing facts.
 class IndexingFactsTreeExtractor : public verible::TreeContextVisitor {
  public:
-  IndexingFactsTreeExtractor(absl::string_view base,
-                             absl::string_view file_name,
-                             IndexingFactNode& file_list_facts_tree,
-                             std::set<std::string>& extracted_files)
+  IndexingFactsTreeExtractor(
+      absl::string_view base, absl::string_view file_name,
+      IndexingFactNode& file_list_facts_tree,
+      std::map<std::string, std::string>& extracted_files,
+      const std::vector<std::string>& include_dir_paths)
       : context_(verible::TokenInfo::Context(base)),
         file_list_facts_tree_(file_list_facts_tree),
-        extracted_files_(extracted_files) {
+        extracted_files_(extracted_files),
+        include_dir_paths_(include_dir_paths) {
     root_.Value().AppendAnchor(Anchor(file_name, 0, base.size()));
     root_.Value().AppendAnchor(Anchor(base, 0, base.size()));
   }
@@ -251,9 +254,14 @@ class IndexingFactsTreeExtractor : public verible::TreeContextVisitor {
   // given in the ordered file list.
   IndexingFactNode& file_list_facts_tree_;
 
-  // Set of the file paths of the extracted files.
+  // Maps every file name to its file path.
   // Used to avoid extracting some file more than one time.
-  std::set<std::string>& extracted_files_;
+  // "Key: referenced file name (could be relative), Value: resolved file path"
+  std::map<std::string, std::string>& extracted_files_;
+
+  // Holds the paths of the directories used to look for the included
+  // files.
+  const std::vector<std::string>& include_dir_paths_;
 
   // Counter used as an id for the anonymous scopes.
   int next_anonymous_id = 0;
@@ -263,9 +271,11 @@ class IndexingFactsTreeExtractor : public verible::TreeContextVisitor {
 // IndexingFactsTree from the given files.
 // The returned Root will have the files as children and they will retain their
 // original ordering from the file list.
-IndexingFactNode ExtractFiles(const std::vector<std::string>& ordered_file_list,
-                              int& exit_status,
-                              absl::string_view file_list_dir);
+IndexingFactNode ExtractFiles(
+    const std::vector<std::string>& ordered_file_list,
+    std::vector<absl::Status>& statuses, absl::string_view file_list_dir,
+    absl::string_view file_list_root,
+    const std::vector<std::string>& include_dir_paths);
 
 }  // namespace kythe
 }  // namespace verilog

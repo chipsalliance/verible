@@ -162,6 +162,7 @@ cc_library(
         "//verilog/CST:verilog_nonterminals",
         "//verilog/CST:verilog_tree_print",
         "//verilog/analysis:verilog_analyzer",
+        "@com_google_absl//absl/status",
         "@com_google_absl//absl/strings",
     ],
 )
@@ -175,6 +176,7 @@ cc_test(
         "//common/text:concrete_syntax_tree",
         "//common/util:file_util",
         "//verilog/analysis:verilog_analyzer",
+        "@com_google_absl//absl/status",
         "@com_google_googletest//:gtest_main",
     ],
 )
@@ -196,6 +198,8 @@ cc_binary(
         "//common/text:symbol",
         "//common/text:text_structure",
         "//common/text:token_info",
+        "//common/util:bijective_map",
+        "//common/util:enum_flags",
         "//common/util:file_util",
         "//common/util:init_command_line",
         "//common/util:logging",
@@ -223,7 +227,7 @@ sh_test(
         ":verible-verilog-kythe-extractor",
         "@io_kythe//kythe/cxx/verifier",
     ],
-    shard_count = 2,
+    shard_count = 4,
     deps = [
         "@bazel_tools//tools/bash/runfiles",
         "@io_bazel//src/test/shell:bashunit",

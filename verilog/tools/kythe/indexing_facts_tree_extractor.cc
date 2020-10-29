@@ -54,9 +54,10 @@ using verible::TreeSearchMatch;
 IndexingFactNode BuildIndexingFactsTree(
     const verible::ConcreteSyntaxTree& syntax_tree, absl::string_view base,
     absl::string_view file_name, IndexingFactNode& file_list_facts_tree,
-    std::set<std::string>& extracted_files) {
+    std::map<std::string, std::string>& extracted_files,
+    const std::vector<std::string>& include_dir_paths) {
   IndexingFactsTreeExtractor visitor(base, file_name, file_list_facts_tree,
-                                     extracted_files);
+                                     extracted_files, include_dir_paths);
   if (syntax_tree == nullptr) {
     return visitor.GetRoot();
   }
@@ -67,10 +68,11 @@ IndexingFactNode BuildIndexingFactsTree(
 }
 
 // Given a verilog file returns the extracted indexing facts tree.
-IndexingFactNode ExtractOneFile(absl::string_view content,
-                                absl::string_view filename,
-                                IndexingFactNode& file_list_facts_tree,
-                                std::set<std::string>& extracted_files) {
+IndexingFactNode ExtractOneFile(
+    absl::string_view content, absl::string_view filename,
+    IndexingFactNode& file_list_facts_tree,
+    std::map<std::string, std::string>& extracted_files,
+    const std::vector<std::string>& include_dir_paths) {
   verilog::VerilogAnalyzer analyzer(content, filename);
   // Do not parse using AnalyzeAutomaticMode() because index extraction is only
   // expected to work on self-contained files with full syntactic context.
@@ -89,45 +91,57 @@ IndexingFactNode ExtractOneFile(absl::string_view content,
   const auto& syntax_tree = text_structure.SyntaxTree();
 
   return BuildIndexingFactsTree(syntax_tree, analyzer.Data().Contents(),
-                                filename, file_list_facts_tree,
-                                extracted_files);
+                                filename, file_list_facts_tree, extracted_files,
+                                include_dir_paths);
 }
 
-// Returns the path of the file relative to the file list.
-std::string GetPathRelativeToFileList(absl::string_view file_list_dir,
-                                      absl::string_view filename) {
-  return verible::file::JoinPath(file_list_dir, filename);
+// Tries to read the files in all the given directories.
+// Returns the first file it find in case of many files with the same name.
+absl::Status SearchForFileAndGetContents(
+    std::string& file_path, std::string& content, absl::string_view filename,
+    const std::vector<std::string>& directories) {
+  for (const auto& dir_path : directories) {
+    file_path = verible::file::JoinPath(dir_path, filename);
+    if (verible::file::FileExists(file_path).ok()) {
+      return verible::file::GetContents(file_path, &content);
+    }
+  }
+  return absl::NotFoundError(absl::StrCat("Couldn't find file: ", filename));
 }
 
 }  // namespace
 
-IndexingFactNode ExtractFiles(const std::vector<std::string>& ordered_file_list,
-                              int& exit_status,
-                              absl::string_view file_list_dir) {
+IndexingFactNode ExtractFiles(
+    const std::vector<std::string>& ordered_file_list,
+    std::vector<absl::Status>& statuses, absl::string_view file_list_dir,
+    absl::string_view file_list_root,
+    const std::vector<std::string>& include_dir_paths) {
   // Create a node to hold the dirname of the ordered file list and group all
   // the files and acts as a ordered file list of these files.
   IndexingFactNode file_list_facts_tree(IndexingNodeData(
-      {Anchor(file_list_dir, 0, 0)}, IndexingFactType::kFileList));
-  std::set<std::string> extracted_files;
+      {Anchor(file_list_dir, 0, 0), Anchor(file_list_root, 0, 0)},
+      IndexingFactType::kFileList));
+  std::map<std::string, std::string> extracted_files;
 
   for (const auto& filename : ordered_file_list) {
-    std::string file_path = GetPathRelativeToFileList(file_list_dir, filename);
-
     // Check if this included file was extracted before.
-    if (extracted_files.find(file_path) != extracted_files.end()) {
+    if (extracted_files.find(filename) != extracted_files.end()) {
       continue;
     }
-    extracted_files.insert(file_path);
 
+    std::string file_path = verible::file::JoinPath(file_list_root, filename);
     std::string content;
-    if (!verible::file::GetContents(file_path, &content).ok()) {
-      LOG(ERROR) << "Error while reading file: " << file_path;
-      exit_status = 1;
+
+    const auto status = verible::file::GetContents(file_path, &content);
+    statuses.push_back(status);
+    if (!status.ok()) {
+      LOG(ERROR) << status.message();
       continue;
     }
 
-    file_list_facts_tree.NewChild(ExtractOneFile(
-        content, file_path, file_list_facts_tree, extracted_files));
+    file_list_facts_tree.NewChild(
+        ExtractOneFile(content, file_path, file_list_facts_tree,
+                       extracted_files, include_dir_paths));
   }
 
   return file_list_facts_tree;
@@ -1271,41 +1285,55 @@ void IndexingFactsTreeExtractor::ExtractInclude(
   const SyntaxTreeLeaf& included_filename =
       GetFileFromPreprocessorInclude(preprocessor_include);
 
-  std::string file_list_dirname =
-      file_list_facts_tree_.Value().Anchors()[0].Value();
-
   absl::string_view filename_text = included_filename.get().text();
 
   // Remove the double quotes from the filesname.
-  absl::string_view filename = StripOuterQuotes(filename_text);
+  const absl::string_view filename_unquoted = StripOuterQuotes(filename_text);
+  const std::string filename(filename_unquoted.begin(),
+                             filename_unquoted.end());
   int startLocation = included_filename.get().left(context_.base);
   int endLocation = included_filename.get().right(context_.base);
 
-  std::string file_path =
-      GetPathRelativeToFileList(file_list_dirname, filename);
-
-  // Create a node for include statement with two Anchors:
-  // 1st one holds the actual text in the include statement.
-  // 2nd one holds the path of the included file relative to the file list.
-  facts_tree_context_.top().NewChild(
-      IndexingNodeData({Anchor(filename_text, startLocation, endLocation),
-                        Anchor(file_path, 0, 0)},
-                       IndexingFactType::kInclude));
+  std::string file_path = "";
 
   // Check if this included file was extracted before.
-  if (extracted_files_.find(file_path) != extracted_files_.end()) {
-    return;
-  }
-  extracted_files_.insert(file_path);
+  const auto filename_itr = extracted_files_.find(filename);
+  if (filename_itr != extracted_files_.end()) {
+    file_path = filename_itr->second;
 
-  std::string content;
-  if (!verible::file::GetContents(file_path, &content).ok()) {
-    LOG(ERROR) << "Error while reading file: " << file_path;
-    return;
-  }
+    // Create a node for include statement with two Anchors:
+    // 1st one holds the actual text in the include statement.
+    // 2nd one holds the path of the included file relative to the file list.
+    facts_tree_context_.top().NewChild(
+        IndexingNodeData({Anchor(filename_text, startLocation, endLocation),
+                          Anchor(file_path, 0, 0)},
+                         IndexingFactType::kInclude));
+  } else {
+    std::string content;
 
-  file_list_facts_tree_.NewChild(ExtractOneFile(
-      content, file_path, file_list_facts_tree_, extracted_files_));
+    auto status = SearchForFileAndGetContents(file_path, content, filename,
+                                              include_dir_paths_);
+    if (!status.ok()) {
+      // Couldn't find the included file in any of include directories.
+      LOG(ERROR) << "Error while reading file: " << filename;
+      return;
+    }
+
+    extracted_files_[filename] = file_path;
+
+    // Create a node for include statement with two Anchors:
+    // 1st one holds the actual text in the include statement.
+    // 2nd one holds the path of the included file relative to the file
+    // list.
+    facts_tree_context_.top().NewChild(
+        IndexingNodeData({Anchor(filename_text, startLocation, endLocation),
+                          Anchor(file_path, 0, 0)},
+                         IndexingFactType::kInclude));
+
+    file_list_facts_tree_.NewChild(
+        ExtractOneFile(content, file_path, file_list_facts_tree_,
+                       extracted_files_, include_dir_paths_));
+  }
 }
 
 void IndexingFactsTreeExtractor::ExtractEnumName(
