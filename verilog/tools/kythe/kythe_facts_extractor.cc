@@ -63,7 +63,7 @@ std::vector<std::string> ConcatenateReferences(
 
 }  // namespace
 
-KytheIndexingData KytheFactsExtractor::ExtractKytheFacts(
+KytheIndexingData KytheFactsExtractor::ExtractFile(
     const IndexingFactNode& root) {
   // For every iteration:
   // saves the current number of extracted facts, do another iteration to
@@ -391,7 +391,7 @@ void KytheFactsExtractor::Visit(const IndexingFactNode& node) {
   }
 }
 
-KytheIndexingData KytheFactsExtractor::ExtractFileList(
+KytheIndexingData KytheFactsExtractor::ExtractKytheFacts(
     const IndexingFactNode& file_list) {
   // Create a new ScopeResolver and give the ownership to the scope_resolvers
   // vector so that it can outlive KytheFactsExtractor.
@@ -409,7 +409,7 @@ KytheIndexingData KytheFactsExtractor::ExtractFileList(
     KytheFactsExtractor kythe_extractor(file_path,
                                         scope_resolvers.back().get());
 
-    const auto indexing_data = kythe_extractor.ExtractKytheFacts(root);
+    const auto indexing_data = kythe_extractor.ExtractFile(root);
     aggregated_indexing_facts.facts.insert(indexing_data.facts.begin(),
                                            indexing_data.facts.end());
     aggregated_indexing_facts.edges.insert(indexing_data.edges.begin(),
@@ -986,7 +986,7 @@ void KytheFactsExtractor::CreateEdge(const VName& source_node,
 
 std::ostream& KytheFactsPrinter::Print(std::ostream& stream) const {
   auto indexing_data =
-      KytheFactsExtractor::ExtractFileList(file_list_facts_tree_);
+      KytheFactsExtractor::ExtractKytheFacts(file_list_facts_tree_);
 
   for (const Fact& fact : indexing_data.facts) {
     stream << fact;

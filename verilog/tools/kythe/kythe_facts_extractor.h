@@ -67,7 +67,7 @@ class KytheFactsExtractor {
 
   // Extracts node tagged with kFileList where it iterates over every child node
   // tagged with kFile from the begining and extracts the facts for each file.
-  static KytheIndexingData ExtractFileList(const IndexingFactNode& file_list);
+  static KytheIndexingData ExtractKytheFacts(const IndexingFactNode& file_list);
 
  private:
   // Container with a stack of VNames to hold context of VNames during traversal
@@ -93,7 +93,7 @@ class KytheFactsExtractor {
   };
 
   // Extracts kythe facts from the given IndexingFactsTree root.
-  KytheIndexingData ExtractKytheFacts(const IndexingFactNode&);
+  KytheIndexingData ExtractFile(const IndexingFactNode&);
 
   // Resolves the tag of the given node and directs the flow to the appropriate
   // function to extract kythe facts for that node.
