@@ -26,7 +26,7 @@ rm -rf "$HOME/.cache/bazel"
 export KYTHE_VERSION=v0.0.38
 cd "${TMPDIR}"
 wget -q -O kythe.tar.gz \
-    https://github.com/kythe/kythe/releases/download/$KYTHE_VERSION/kythe-$KYTHE_VERSION.tar.gz
+    "https://github.com/kythe/kythe/releases/download/$KYTHE_VERSION/kythe-$KYTHE_VERSION.tar.gz"
 tar -xzf kythe.tar.gz
 export KYTHE_DIRNAME="kythe-${KYTHE_VERSION}"
 sudo cp -R "${KYTHE_DIRNAME}" /opt
