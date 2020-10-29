@@ -738,19 +738,22 @@ TEST(FindAllDataDeclarationTest, FindDataDeclarationParameters) {
       {"module m;\n module_type ", {kTag, "#(x, y)"}, "y1();\nendmodule"},
   };
   for (const auto& test : kTestCases) {
+    VLOG(1) << "code:\n" << test.code;
     TestVerilogSyntaxRangeMatches(
         __FUNCTION__, test, [](const TextStructureView& text_structure) {
           const auto& root = text_structure.SyntaxTree();
-          const auto& instances =
-              FindAllDataDeclarations(*ABSL_DIE_IF_NULL(root));
+          const auto& decls = FindAllDataDeclarations(*ABSL_DIE_IF_NULL(root));
 
           std::vector<TreeSearchMatch> params;
-          for (const auto& instance : instances) {
-            const auto* decl = GetParamListFromDataDeclaration(*instance.match);
-            if (decl == nullptr) {
+          for (const auto& decl : decls) {
+            VLOG(1) << "decl: " << verible::StringSpanOfSymbol(*decl.match);
+            const auto* param_list =
+                GetParamListFromDataDeclaration(*decl.match);
+            if (param_list == nullptr) {
               continue;
             }
-            params.emplace_back(TreeSearchMatch{decl, {/* ignored context */}});
+            params.emplace_back(
+                TreeSearchMatch{param_list, {/* ignored context */}});
           }
           return params;
         });
@@ -875,6 +878,16 @@ TEST(GetVariableDeclaration, FindPackedDimensionFromDataDeclaration) {
        " v1;\n logic ",
        {kTag, "[k:y]"},
        " v2, v3;\nendclass"},
+      {"class c;\n uint ", {kTag, "[k][y]"}, " v1;\n", "endclass"},
+      {"class c;\n uint ", {kTag, "[k][y]"}, " v1 [0:N];\n", "endclass"},
+      {"class c;\n foo_pkg::bar ", {kTag, "[k:0][y:0]"}, " v1;\n", "endclass"},
+      {"class c;\n foo#(24) ", {kTag, "[k:0][y]"}, " v1;\n", "endclass"},
+      {"class c;\n foo#(24)::bar_t ", {kTag, "[k][y:0]"}, " v1;\n", "endclass"},
+      {"class c;\n uint ",
+       {kTag, "[k:y]"},
+       " v1;\n foo_pkg::bar ",
+       {kTag, "[k:y]"},
+       " v2, v3;\nendclass"},
       {"package m;\n int ",
        {kTag, "[k:y]"},
        " v1 = 2;\n logic ",
@@ -896,9 +909,16 @@ TEST(GetVariableDeclaration, FindPackedDimensionFromDataDeclaration) {
        {kTag, "[k:y]"},
        " v2 [x:y], v3 [x:y];\nendfunction"},
       {"package c;\n uint ", {kTag, "[x:y]"}, " x;\nendpackage"},
+      {"package c;\n bar_pkg::foo x[N];\nendpackage"},
+      {"package c;\n bar_pkg::foo ", {kTag, "[x]"}, " x[N];\nendpackage"},
+      {"package c;\n bar_pkg::foo ", {kTag, "[x]"}, " x;\nendpackage"},
+      {"package c;\n bar_pkg::foo ", {kTag, "[x:y]"}, " x;\nendpackage"},
+      {"package c;\n bar_pkg::foo ", {kTag, "[x][y]"}, " x;\nendpackage"},
+      {"package c;\n bar#(foo)::baz ", {kTag, "[x+1][y-1]"}, " x;\nendpackage"},
       {"class c;\n class_type x;\nendclass"},
   };
   for (const auto& test : kTestCases) {
+    VLOG(1) << "code:\n" << test.code;
     TestVerilogSyntaxRangeMatches(
         __FUNCTION__, test, [](const TextStructureView& text_structure) {
           const auto& root = text_structure.SyntaxTree();

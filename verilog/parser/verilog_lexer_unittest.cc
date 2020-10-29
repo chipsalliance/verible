@@ -349,6 +349,13 @@ static std::initializer_list<LexerTestData> kMacroCallTests = {
      {MacroArg, "//multi\n//line\n//comment\n bar"},
      "\n",
      ')'},
+    {
+        // fuzzer test case
+        {MacroCallId, "`g"},
+        '(',
+        {MacroArg, "(\\x\" `g(::\"\n)"},
+        ','  // unterminated call, unexpected EOF here
+    },
 };
 
 static std::initializer_list<LexerTestData> kUnfilteredMacroCallTests = {

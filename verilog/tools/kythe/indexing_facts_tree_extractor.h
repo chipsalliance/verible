@@ -88,12 +88,12 @@ class IndexingFactsTreeExtractor : public verible::TreeContextVisitor {
   void ExtractSelectVariableDimension(
       const verible::SyntaxTreeNode& variable_dimension);
 
-  // Extracts "a" from input a, output a and creates its corresponding fact
+  // Extracts "a" from "input a", "output a" and creates its corresponding fact
   // tree.
   void ExtractInputOutputDeclaration(
-      const verible::SyntaxTreeNode& module_port_declaration_node);
+      const verible::SyntaxTreeNode& identifier_unpacked_dimensions);
 
-  // Extracts "a" from wire a and creates its corresponding fact tree.
+  // Extracts "a" from "wire a" and creates its corresponding fact tree.
   void ExtractNetDeclaration(
       const verible::SyntaxTreeNode& net_declaration_node);
 
@@ -227,6 +227,10 @@ class IndexingFactsTreeExtractor : public verible::TreeContextVisitor {
   // e.g counter #(.N(r)) extracts "N".
   void ExtractParamByName(const verible::SyntaxTreeNode& param_by_name);
 
+  // Extracts new scope with unique id.
+  // specifically, intended for conditional/loop generate constructs.
+  void ExtractAnonymousScope(const verible::SyntaxTreeNode& node);
+
   // Determines how to deal with the given data declaration node as it may be
   // module instance, class instance or primitive variable.
   void ExtractDataDeclaration(const verible::SyntaxTreeNode& data_declaration);
@@ -252,12 +256,15 @@ class IndexingFactsTreeExtractor : public verible::TreeContextVisitor {
 
   // Maps every file name to its file path.
   // Used to avoid extracting some file more than one time.
-  //"Key: referenced file name (could be relative), Value: resolved file path"
+  // "Key: referenced file name (could be relative), Value: resolved file path"
   std::map<std::string, std::string>& extracted_files_;
 
   // Holds the paths of the directories used to look for the included
   // files.
   const std::vector<std::string>& include_dir_paths_;
+
+  // Counter used as an id for the anonymous scopes.
+  int next_anonymous_id = 0;
 };
 
 // Given the ordered SystemVerilog files, Extracts and returns the

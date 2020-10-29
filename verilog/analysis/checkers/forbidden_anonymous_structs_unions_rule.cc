@@ -72,8 +72,9 @@ absl::Status ForbiddenAnonymousStructsUnionsRule::Configure(
 }
 
 static bool IsPreceededByTypedef(const verible::SyntaxTreeContext& context) {
-  return context.DirectParentsAre(
-      {NodeEnum::kDataTypePrimitive, NodeEnum::kTypeDeclaration});
+  return context.DirectParentsAre({NodeEnum::kDataTypePrimitive,
+                                   NodeEnum::kDataType,
+                                   NodeEnum::kTypeDeclaration});
 }
 
 static bool NestedInStructOrUnion(const verible::SyntaxTreeContext& context) {

@@ -146,7 +146,6 @@ static std::vector<absl::Status> ExtractFiles(
     absl::string_view file_list_dir, absl::string_view file_list_root,
     const std::vector<std::string>& include_dir_paths) {
   std::vector<absl::Status> status;
-
   const verilog::kythe::IndexingFactNode file_list_facts_tree(
       verilog::kythe::ExtractFiles(ordered_file_list, status, file_list_dir,
                                    file_list_root, include_dir_paths));

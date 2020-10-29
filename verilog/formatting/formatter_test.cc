@@ -7215,6 +7215,28 @@ TEST(FormatterEndToEndTest, AutoInferAlignment) {
        "    output out_t          zout2\n"
        ");\n"
        "endmodule : pd\n"},
+      {// data declaration and net declaration in ports
+       "module m(\n"
+       "logic [x:y]a    ,\n"    // packed dimensions, induce alignment
+       "wire [pp:qq] [e:f]b\n"  // packed dimensions, 2D
+       ") ;\n"
+       "endmodule\n",
+       "module m (\n"
+       "    logic [  x:y]      a,\n"
+       "    wire  [pp:qq][e:f] b\n"
+       ");\n"
+       "endmodule\n"},
+      {// used-defined data declarations in ports
+       "module m(\n"
+       "a::bb [x:y]a    ,\n"       // packed dimensions, induce alignment
+       "c#(d,e) [pp:qq] [e:f]b\n"  // packed dimensions, 2D
+       ") ;\n"
+       "endmodule\n",
+       "module m (\n"
+       "    a::bb    [  x:y]      a,\n"
+       "    c#(d, e) [pp:qq][e:f] b\n"
+       ");\n"
+       "endmodule\n"},
 
       // named parameter arguments
       {"module  mm ;\n"

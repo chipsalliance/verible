@@ -91,13 +91,15 @@ const SyntaxTreeLeaf& CheckLeafEnum(const SyntaxTreeLeaf& leaf,
   return leaf;
 }
 
+namespace internal {
 template <typename S>
-struct MustBeCSTSymbolOrNode {
+void MustBeCSTSymbolOrNode(S&) {
   typedef typename std::remove_const<S>::type base_type;
   static_assert(std::is_same<base_type, Symbol>::value ||
                     std::is_same<base_type, SyntaxTreeNode>::value,
                 "");
-};
+}
+}  // namespace internal
 
 // Succeeds if symbol is a node enumerated 'node_enum'.
 // Returns a casted reference on success.
@@ -106,7 +108,7 @@ struct MustBeCSTSymbolOrNode {
 template <typename E, typename S>
 typename match_const<SyntaxTreeNode, S>::type& CheckSymbolAsNode(S& symbol,
                                                                  E node_enum) {
-  const MustBeCSTSymbolOrNode<S> check;
+  internal::MustBeCSTSymbolOrNode(symbol);
   return CheckNodeEnum(SymbolCastToNode(symbol), node_enum);
 }
 
@@ -163,7 +165,7 @@ const SyntaxTreeLeaf* CheckOptionalSymbolAsLeaf(const std::nullptr_t& symbol,
 template <typename E, typename S>
 typename match_const<Symbol, S>::type* GetSubtreeAsSymbol(
     S& symbol, E parent_must_be_node_enum, size_t child_position) {
-  const MustBeCSTSymbolOrNode<S> check;
+  internal::MustBeCSTSymbolOrNode(symbol);
   return CheckNodeEnum(SymbolCastToNode(symbol),
                        parent_must_be_node_enum)[child_position]
       .get();
@@ -175,7 +177,7 @@ typename match_const<Symbol, S>::type* GetSubtreeAsSymbol(
 template <class S, class E>
 typename match_const<SyntaxTreeNode, S>::type& GetSubtreeAsNode(
     S& symbol, E parent_must_be_node_enum, size_t child_position) {
-  const MustBeCSTSymbolOrNode<S> check;
+  internal::MustBeCSTSymbolOrNode(symbol);
   return SymbolCastToNode(*ABSL_DIE_IF_NULL(
       GetSubtreeAsSymbol(symbol, parent_must_be_node_enum, child_position)));
 }
@@ -187,7 +189,7 @@ template <class S, class E>
 typename match_const<SyntaxTreeNode, S>::type& GetSubtreeAsNode(
     S& symbol, E parent_must_be_node_enum, size_t child_position,
     E child_must_be_node_enum) {
-  const MustBeCSTSymbolOrNode<S> check;
+  internal::MustBeCSTSymbolOrNode(symbol);
   return CheckNodeEnum(
       GetSubtreeAsNode(symbol, parent_must_be_node_enum, child_position),
       child_must_be_node_enum);
@@ -198,7 +200,7 @@ template <class S, class E>
 const SyntaxTreeLeaf& GetSubtreeAsLeaf(const S& symbol,
                                        E parent_must_be_node_enum,
                                        size_t child_position) {
-  const MustBeCSTSymbolOrNode<S> check;
+  internal::MustBeCSTSymbolOrNode(symbol);
   return SymbolCastToLeaf(*ABSL_DIE_IF_NULL(
       GetSubtreeAsSymbol(symbol, parent_must_be_node_enum, child_position)));
 }
@@ -206,7 +208,7 @@ const SyntaxTreeLeaf& GetSubtreeAsLeaf(const S& symbol,
 template <class S, class E>
 E GetSubtreeNodeEnum(const S& symbol, E parent_must_be_node_enum,
                      size_t child_position) {
-  const MustBeCSTSymbolOrNode<S> check;
+  internal::MustBeCSTSymbolOrNode(symbol);
   return static_cast<E>(
       GetSubtreeAsNode(symbol, parent_must_be_node_enum, child_position)
           .Tag()

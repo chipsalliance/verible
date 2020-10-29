@@ -3713,6 +3713,15 @@ static const ParserTestCaseArray kPackageTests = {
     "package p;\n"
     "  virtual a_if b_if, d_if;\n"
     "endpackage : p\n",
+    "package p;\n"
+    "  uint [x:y] g = 2;\n"  // user-defined type, packed dimensions
+    "endpackage\n",
+    "package p;\n"
+    "  uint [x][y] g = 2;\n"  // user-defined type, packed dimensions
+    "endpackage\n",
+    "package p;\n"
+    "  uint [x:y] g[z] = 2;\n"  // user-defined type, packed+unpacked dimensions
+    "endpackage\n",
     // import directives
     "package foo;\n"
     "import $unit::skynet;\n"
@@ -4532,6 +4541,22 @@ static const ParserTestCaseArray kClassMemberTests = {
     "  protected const var int counted = 1;\n"
     "  protected const myclass::msg_t null_msg = {1'b1, 1'b0};\n"
     "endclass",
+    "class c;\n"
+    "  uint [x:y] g = 2;\n"  // user-defined type, packed dimensions
+    "endclass\n",
+    "class c;\n"
+    "  uint [x][y] g = 2;\n"  // user-defined type, packed dimensions
+    "endclass\n",
+    "class c;\n"
+    "  uint [x:y] g[y:g] = 2;\n"  // user-defined type, packed+unpacked
+                                  // dimensions
+    "endclass\n",
+    "class c;\n"
+    "  foo_pkg::uint [x:y] g = 2;\n"  // user-defined type, packed dimensions
+    "endclass\n",
+    "class c;\n"
+    "  bar#(foo)::uint [x:y] g = 2;\n"  // user-defined type, packed dimensions
+    "endclass\n",
     // member functions
     "class myclass;\n"
     "function integer subroutine;\n"
@@ -5746,10 +5771,17 @@ static const std::initializer_list<ParserTestData> kInvalidCodeTests = {
      " fn < a; fn++) begin\n"
      "end\n"
      "endtask\n"},
+    // unbalanced `endif
+    {{PP_endif, "`endif"}},
+    {{PP_endif, "`endif"}, "\n"},
     // The following tests are valid library map syntax (LRM Ch. 33),
     // but invalid for the rest of SystemVerilog:
     {{TK_library, "library"}, " foo bar;\n"},
     {{TK_include, "include"}, " foo/bar/*.v;\n"},
+    // fuzzer-discovered cases: (these may have crashed at one point in history)
+    {"`g((\\x\" `g(::\"\n"
+     "),",
+     {verible::TK_EOF, ""}},
 };
 
 using verible::LeafTag;

@@ -114,7 +114,7 @@ const verible::SyntaxTreeNode& GetInstantiationTypeOfDataDeclaration(
     const verible::Symbol& data_declaration);
 
 // For a given data declaration returns the node spanning param declaration
-// list. e.g module_type #(N) return the node for "(N)".
+// list. e.g "module_type #(N)" return the node for "#(N)".
 const verible::SyntaxTreeNode* GetParamListFromDataDeclaration(
     const verible::Symbol&);
 
@@ -125,17 +125,17 @@ const verible::SyntaxTreeNode& GetInstanceListFromDataDeclaration(
     const verible::Symbol& data_declaration);
 
 // For a given module gate instance return the node spanning the paren group.
-// e.g module_type instance(a, b, c) return the node spanning (a, b, c).
+// e.g "module_type instance(a, b, c)" return the node spanning "(a, b, c)".
 const verible::SyntaxTreeNode& GetParenGroupFromModuleInstantiation(
     const verible::Symbol& gate_instance);
 
 // For a given gate instance subtree returns the TokenInfo of the module name.
-// e.g. bar b1(); returns TokenInfo for "b1".
+// e.g. "bar b1();" returns TokenInfo for "b1".
 const verible::TokenInfo& GetModuleInstanceNameTokenInfoFromGateInstance(
     const verible::Symbol&);
 
 // For a given register variable subtree returns the TokenInfo of the instance
-// name. e.g. int b1; returns TokenInfo for "b1".
+// name. e.g. "int b1;" returns TokenInfo for "b1".
 const verible::TokenInfo& GetInstanceNameTokenInfoFromRegisterVariable(
     const verible::Symbol&);
 

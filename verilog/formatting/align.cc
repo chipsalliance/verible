@@ -262,10 +262,12 @@ class PortDeclarationColumnSchemaScanner : public ColumnSchemaScanner {
     }
     switch (tag) {
       case NodeEnum::kPackedDimensions: {
-        // Kludge: kPackedDimensions can appear in paths [2,1] and [2,0,2],
+        // Kludge: kPackedDimensions can appear in paths
+        //   [1,0,3] inside a kNetDeclaration and at
+        //   [1,0,0,3] inside a kDataDeclaration,
         // but we want them to line up in the same column.  Make it so.
-        if (current_path_ == SyntaxTreePath{2, 1}) {
-          SyntaxTreePath new_path{2, 0, 2};
+        if (current_path_ == SyntaxTreePath{1, 0, 3}) {
+          SyntaxTreePath new_path{1, 0, 0, 3};
           const ValueSaver<SyntaxTreePath> path_saver(&current_path_, new_path);
           // TODO(fangism): a swap-based saver would be more efficient
           // for vectors.
@@ -537,11 +539,11 @@ class DataDeclarationColumnSchemaScanner : public ColumnSchemaScanner {
       }
       case NodeEnum::kPackedDimensions: {
         // Kludge: kPackedDimensions can appear in paths:
-        //   [1,0,0,2] in kDataDeclaration
-        //   [1,0,1] in kNetDeclaration
+        //   [1,0,3] inside a kNetDeclaration and at
+        //   [1,0,0,3] inside a kDataDeclaration,
         // but we want them to line up in the same column.  Make it so.
-        if (current_path_ == SyntaxTreePath{1, 0, 0, 2}) {
-          SyntaxTreePath new_path{1, 0, 1};
+        if (current_path_ == SyntaxTreePath{1, 0, 0, 3}) {
+          SyntaxTreePath new_path{1, 0, 3};
           const ValueSaver<SyntaxTreePath> path_saver(&current_path_, new_path);
           TreeContextPathVisitor::Visit(node);
           return;

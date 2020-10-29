@@ -35,12 +35,12 @@ endclass
 
 //- @my_module defines/binding MyModule
 module my_module();
-    initial begin
-        //- @my_class2 ref MyClass2
-        //- @instance1 defines/binding Instance1
-        //- Instance1 childof MyModule
-        my_class2 instance1 = new();
+    //- @my_class2 ref MyClass2
+    //- @instance1 defines/binding Instance1
+    //- Instance1 childof MyModule
+    my_class2 instance1 = new();
 
+    initial begin
         //- @instance1 ref Instance1
         //- @var1 ref Var1
        $display(instance1::var1);

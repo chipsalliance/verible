@@ -62,25 +62,26 @@ endpackage : my_pkg
 module my_module;
   //- @my_pkg ref/imports MyPkg
   import my_pkg::*;
+
+  //- @my_class1 ref MyClass1
+  //- @handle1 defines/binding Handle1
+  //- Handle1.node/kind variable
+  //- Handle1.complete definition
+  //- Handle1 childof MyModule
+  static my_class1 handle1 = new();
+
+  //- @my_class1 ref MyClass1
+  //- @handle3 defines/binding Handle3
+  //- Handle3.node/kind variable
+  //- Handle3.complete definition
+  //- Handle3 childof MyModule
+  //- @handle4 defines/binding Handle4
+  //- Handle4.node/kind variable
+  //- Handle4.complete definition
+  //- Handle4 childof MyModule
+  my_class1 handle3 = new(), handle4 = new();
+  
   initial begin
-    //- @my_class1 ref MyClass1
-    //- @handle1 defines/binding Handle1
-    //- Handle1.node/kind variable
-    //- Handle1.complete definition
-    //- Handle1 childof MyModule
-    static my_class1 handle1 = new();
-
-    //- @my_class1 ref MyClass1
-    //- @handle3 defines/binding Handle3
-    //- Handle3.node/kind variable
-    //- Handle3.complete definition
-    //- Handle3 childof MyModule
-    //- @handle4 defines/binding Handle4
-    //- Handle4.node/kind variable
-    //- Handle4.complete definition
-    //- Handle4 childof MyModule
-    my_class1 handle3 = new(), handle4 = new();
-
     //- @handle1 ref Handle1
     //- @my_function ref MyFunction
     //- @my_function ref/call MyFunction

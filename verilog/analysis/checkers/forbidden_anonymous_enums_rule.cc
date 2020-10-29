@@ -56,8 +56,9 @@ void ForbiddenAnonymousEnumsRule::HandleSymbol(
   verible::matcher::BoundSymbolManager manager;
   if (matcher_.Matches(symbol, &manager)) {
     // Check if it is preceded by a typedef
-    if (!context.DirectParentsAre(
-            {NodeEnum::kDataTypePrimitive, NodeEnum::kTypeDeclaration})) {
+    if (!context.DirectParentsAre({NodeEnum::kDataTypePrimitive,
+                                   NodeEnum::kDataType,
+                                   NodeEnum::kTypeDeclaration})) {
       violations_.insert(LintViolation(symbol, kMessage, context));
     }
   }

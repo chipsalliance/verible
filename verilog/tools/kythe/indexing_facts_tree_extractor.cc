@@ -18,6 +18,7 @@
 #include <string>
 
 #include "absl/strings/strip.h"
+#include "common/text/concrete_syntax_tree.h"
 #include "common/text/tree_context_visitor.h"
 #include "common/text/tree_utils.h"
 #include "common/util/file_util.h"
@@ -36,6 +37,7 @@
 #include "verilog/CST/type.h"
 #include "verilog/CST/verilog_matchers.h"
 #include "verilog/CST/verilog_nonterminals.h"
+#include "verilog/CST/verilog_tree_print.h"
 #include "verilog/analysis/verilog_analyzer.h"
 
 namespace verilog {
@@ -217,7 +219,7 @@ void IndexingFactsTreeExtractor::Visit(const SyntaxTreeNode& node) {
       ExtractClassDeclaration(node);
       break;
     }
-    case NodeEnum::kSelectVariableDimension: {
+    case NodeEnum::kSelectVariableDimensionList: {
       ExtractSelectVariableDimension(node);
       break;
     }
@@ -267,6 +269,22 @@ void IndexingFactsTreeExtractor::Visit(const SyntaxTreeNode& node) {
     }
     case NodeEnum::kTypeDeclaration: {
       ExtractTypeDeclaration(node);
+      break;
+    }
+    case NodeEnum::kLoopGenerateConstruct:
+    case NodeEnum::kIfClause:
+    case NodeEnum::kFinalStatement:
+    case NodeEnum::kInitialStatement:
+    case NodeEnum::kGenerateElseBody:
+    case NodeEnum::kElseClause:
+    case NodeEnum::kGenerateIfClause:
+    case NodeEnum::kForLoopStatement:
+    case NodeEnum::kDoWhileLoopStatement:
+    case NodeEnum::kWhileLoopStatement:
+    case NodeEnum::kForeachLoopStatement:
+    case NodeEnum::kRepeatLoopStatement:
+    case NodeEnum::kForeverLoopStatement: {
+      ExtractAnonymousScope(node);
       break;
     }
     default: {
@@ -1301,7 +1319,7 @@ void IndexingFactsTreeExtractor::ExtractInclude(
       return;
     }
 
-    filename_itr->second = file_path;
+    extracted_files_[filename] = file_path;
 
     // Create a node for include statement with two Anchors:
     // 1st one holds the actual text in the include statement.
@@ -1325,7 +1343,7 @@ void IndexingFactsTreeExtractor::ExtractEnumName(
   const SyntaxTreeLeaf& name = GetSymbolIdentifierFromEnumName(enum_name);
   enum_node.Value().AppendAnchor(Anchor{name.get(), context_.base});
 
-  // Iterate over the children and traverse them to extract facts form inner
+  // Iterate over the children and traverse them to extract facts from inner
   // nodes and ignore the leaves.
   // e.g enum {RED[x] = 1, OLD=y} => explores "[x]", "=y".
   {
@@ -1465,16 +1483,19 @@ void IndexingFactsTreeExtractor::ExtractDataTypeImplicitIdDimensions(
 
 void IndexingFactsTreeExtractor::ExtractTypeDeclaration(
     const verible::SyntaxTreeNode& type_declaration) {
+  VLOG(1) << __FUNCTION__;
   const SyntaxTreeNode* type =
       GetReferencedTypeOfTypeDeclaration(type_declaration);
+  if (type == nullptr) return;
 
-  if (type == nullptr) {
-    return;
-  }
+  // Look for enum/struct/union in the referenced type.
+  const auto tag = static_cast<NodeEnum>(type->Tag().tag);
+  if (tag != NodeEnum::kDataType) return;
+  const SyntaxTreeNode* primitive =
+      GetStructOrUnionOrEnumTypeFromDataType(*type);
+  if (primitive == nullptr) return;
 
-  const auto tag = static_cast<verilog::NodeEnum>(type->Tag().tag);
-
-  switch (tag) {
+  switch (NodeEnum(primitive->Tag().tag)) {
     case NodeEnum::kEnumType: {
       ExtractEnumTypeDeclaration(type_declaration);
       break;
@@ -1491,6 +1512,23 @@ void IndexingFactsTreeExtractor::ExtractTypeDeclaration(
       break;
     }
   }
+}
+
+void IndexingFactsTreeExtractor::ExtractAnonymousScope(
+    const verible::SyntaxTreeNode& node) {
+  IndexingFactNode temp_scope_node(
+      IndexingNodeData{IndexingFactType::kAnonymousScope});
+
+  // Generate unique id for this scope.
+  temp_scope_node.Value().AppendAnchor(
+      Anchor(absl::StrCat("anonymous-scope-", next_anonymous_id++), 0, 0));
+  {
+    const IndexingFactsTreeContext::AutoPop p(&facts_tree_context_,
+                                              &temp_scope_node);
+    TreeContextVisitor::Visit(node);
+  }
+
+  facts_tree_context_.top().NewChild(temp_scope_node);
 }
 
 void IndexingFactsTreeExtractor::MoveAndDeleteLastSibling(
