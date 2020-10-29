@@ -4753,6 +4753,12 @@ struct OriginalSpacingSensitiveTestCase {
   ExpectedInterTokenInfo expected_annotation;
 };
 
+static const auto CompactIndexSelectionStyle = [](){
+  auto style = DefaultStyle;
+  style.compact_indexing_and_selections = false;
+  return style;
+}();
+
 // These tests are allowed to be sensitive to original inter-token spacing.
 TEST(TokenAnnotatorTest, OriginalSpacingSensitiveTests) {
   const OriginalSpacingSensitiveTestCase kTestCases[] = {
@@ -5187,19 +5193,103 @@ TEST(TokenAnnotatorTest, OriginalSpacingSensitiveTests) {
           "+",
           {NodeEnum::kDimensionScalar},
           {NodeEnum::kDimensionScalar},
-          {1, SpacingOptions::Undecided},
+          {0, SpacingOptions::Undecided},
       },
       {
           // [a  +b]
           DefaultStyle,
           verilog_tokentype::SymbolIdentifier,
           "a",
-          " ",  // 2 spaces originally
+          "  ",  // 2 spaces originally
           '+',
           "+",
           {NodeEnum::kDimensionScalar},
           {NodeEnum::kDimensionScalar},
+          {0, SpacingOptions::Undecided},  // no spacing
+      },
+      {
+          // [a     :    b]
+          DefaultStyle,
+          verilog_tokentype::SymbolIdentifier,
+          "a",
+          "     ",
+          ':',
+          ":",
+          {NodeEnum::kDimensionRange},
+          {NodeEnum::kDimensionRange},
           {1, SpacingOptions::Undecided},  // limit to 1
+      },
+      {
+          // [a     :    b]
+          DefaultStyle,
+          ':',
+          ":",
+          "    ",
+          verilog_tokentype::SymbolIdentifier,
+          "b",
+          {NodeEnum::kDimensionRange},
+          {NodeEnum::kDimensionRange},
+          {0, SpacingOptions::Undecided},
+      },
+      {
+          // [a+b]
+          CompactIndexSelectionStyle,
+          verilog_tokentype::SymbolIdentifier,
+          "a",
+          "",  // no spaces originally
+          '+',
+          "+",
+          {NodeEnum::kDimensionScalar},
+          {NodeEnum::kDimensionScalar},
+          {0, SpacingOptions::Undecided},
+      },
+      {
+          // [a +b]
+          CompactIndexSelectionStyle,
+          verilog_tokentype::SymbolIdentifier,
+          "a",
+          " ",  // 1 space originally
+          '+',
+          "+",
+          {NodeEnum::kDimensionScalar},
+          {NodeEnum::kDimensionScalar},
+          {1, SpacingOptions::Undecided},  // limit to 1 space
+      },
+      {
+          // [a  +b]
+          CompactIndexSelectionStyle,
+          verilog_tokentype::SymbolIdentifier,
+          "a",
+          "  ",  // 2 spaces originally
+          '+',
+          "+",
+          {NodeEnum::kDimensionScalar},
+          {NodeEnum::kDimensionScalar},
+          {1, SpacingOptions::Undecided},   // limit to 1 space
+      },
+      {
+          // [a     :    b]
+          CompactIndexSelectionStyle,
+          verilog_tokentype::SymbolIdentifier,
+          "a",
+          "     ",
+          ':',
+          ":",
+          {NodeEnum::kDimensionRange},
+          {NodeEnum::kDimensionRange},
+          {1, SpacingOptions::Undecided},   // limit to 1 space
+      },
+      {
+          // [a     :    b]
+          CompactIndexSelectionStyle,
+          ':',
+          ":",
+          "    ",
+          verilog_tokentype::SymbolIdentifier,
+          "b",
+          {NodeEnum::kDimensionRange},
+          {NodeEnum::kDimensionRange},
+          {0, SpacingOptions::Undecided},
       },
       {
           DefaultStyle,
