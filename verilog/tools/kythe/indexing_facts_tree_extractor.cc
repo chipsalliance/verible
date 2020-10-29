@@ -111,11 +111,11 @@ absl::Status SearchForFileAndGetContents(
 
 }  // namespace
 
-IndexingFactNode ExtractFiles(
-    const std::vector<std::string>& ordered_file_list,
-    std::vector<absl::Status>& statuses, absl::string_view file_list_dir,
-    absl::string_view file_list_root,
-    const std::vector<std::string>& include_dir_paths) {
+IndexingFactNode ExtractFiles(const std::vector<std::string>& ordered_file_list,
+                              absl::string_view file_list_dir,
+                              absl::string_view file_list_root,
+                              const std::vector<std::string>& include_dir_paths,
+                              std::vector<absl::Status>& errors) {
   // Create a node to hold the dirname of the ordered file list and group all
   // the files and acts as a ordered file list of these files.
   IndexingFactNode file_list_facts_tree(IndexingNodeData(
@@ -133,8 +133,8 @@ IndexingFactNode ExtractFiles(
     std::string content;
 
     const auto status = verible::file::GetContents(file_path, &content);
-    statuses.push_back(status);
     if (!status.ok()) {
+      errors.push_back(status);
       LOG(ERROR) << status.message();
       continue;
     }

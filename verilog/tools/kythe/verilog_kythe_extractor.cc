@@ -148,10 +148,10 @@ static std::vector<absl::Status> ExtractFiles(
     const std::vector<std::string>& ordered_file_list,
     absl::string_view file_list_dir, absl::string_view file_list_root,
     const std::vector<std::string>& include_dir_paths) {
-  std::vector<absl::Status> statuses;
+  std::vector<absl::Status> errors;
   const verilog::kythe::IndexingFactNode file_list_facts_tree(
-      verilog::kythe::ExtractFiles(ordered_file_list, statuses, file_list_dir,
-                                   file_list_root, include_dir_paths));
+      verilog::kythe::ExtractFiles(ordered_file_list, file_list_dir,
+                                   file_list_root, include_dir_paths, errors));
 
   // check for printextraction flag, and print extraction if on
   if (absl::GetFlag(FLAGS_printextraction)) {
@@ -170,7 +170,7 @@ static std::vector<absl::Status> ExtractFiles(
     }
   }
 
-  return statuses;
+  return errors;
 }
 
 }  // namespace kythe
@@ -199,23 +199,34 @@ Output: Produces Indexing Facts for kythe (http://kythe.io).
   }
   const std::string file_list_root = absl::GetFlag(FLAGS_file_list_root);
 
-  std::string content;
-  if (!verible::file::GetContents(file_list_path, &content).ok()) {
-    LOG(ERROR) << "Error while reading file list at: " << file_list_path;
-    return 1;
-  }
-
   std::vector<std::string> files_names;
-  std::string filename;
+  {
+    std::string content;
+    if (!verible::file::GetContents(file_list_path, &content).ok()) {
+      LOG(ERROR) << "Error while reading file list at: " << file_list_path;
+      return 1;
+    }
 
-  std::stringstream stream(content);
-  while (stream >> filename) {
-    // TODO(minatoma): ignore blank lines and "# ..." comments
-    files_names.push_back(filename);
+    std::string filename;
+    std::istringstream stream(content);
+    while (stream >> filename) {
+      // TODO(minatoma): ignore blank lines and "# ..." comments
+      files_names.push_back(filename);
+    }
   }
 
-  std::vector<absl::Status> statuses = verilog::kythe::ExtractFiles(
-      files_names, file_list_path, file_list_root, include_dir_paths);
-  // TODO(fangism): print these diagnostics
+  const std::vector<absl::Status> errors(verilog::kythe::ExtractFiles(
+      files_names, file_list_path, file_list_root, include_dir_paths));
+  if (!errors.empty()) {
+    LOG(ERROR) << "Encountered some issues while indexing files (could result "
+                  "in missing indexing data):"
+               << std::endl;
+    for (const auto& error : errors) {
+      LOG(ERROR) << error.message();
+    }
+    // TODO(ikr): option to cause any errors to exit non-zero, like
+    // (bool) --index_files_fatal.  This can signal to user/caller that
+    // something went wrong, and surface errors.
+  }
   return 0;
 }
