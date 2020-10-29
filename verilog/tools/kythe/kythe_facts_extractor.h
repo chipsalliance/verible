@@ -65,8 +65,9 @@ class KytheFactsExtractor {
                       ScopeResolver* previous_files_scopes)
       : file_path_(file_path), scope_resolver_(previous_files_scopes) {}
 
-  // Extracts kythe facts from the given IndexingFactsTree root.
-  KytheIndexingData ExtractKytheFacts(const IndexingFactNode&);
+  // Extracts node tagged with kFileList where it iterates over every child node
+  // tagged with kFile from the begining and extracts the facts for each file.
+  static KytheIndexingData ExtractFileList(const IndexingFactNode& file_list);
 
  private:
   // Container with a stack of VNames to hold context of VNames during traversal
@@ -90,6 +91,9 @@ class KytheFactsExtractor {
     // returns the top VName of the stack
     const VName& top() const { return *ABSL_DIE_IF_NULL(base_type::top()); }
   };
+
+  // Extracts kythe facts from the given IndexingFactsTree root.
+  KytheIndexingData ExtractKytheFacts(const IndexingFactNode&);
 
   // Resolves the tag of the given node and directs the flow to the appropriate
   // function to extract kythe facts for that node.
@@ -116,10 +120,6 @@ class KytheFactsExtractor {
   // Determines whether or not to create a child of edge between the current
   // node and the previous node.
   void CreateChildOfEdge(IndexingFactType, const VName&);
-
-  // Extracts node tagged with kFileList where it iterates over every child node
-  // tagged with kFile from the begining and extracts the facts for each file.
-  void ExtractFileList(const IndexingFactNode& file_list);
 
   // Extracts kythe facts from file node and returns it VName.
   VName ExtractFileFact(const IndexingFactNode&);

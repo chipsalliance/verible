@@ -17,16 +17,16 @@
 #include <iostream>
 #include <string>
 
-#include "google/protobuf/io/zero_copy_stream_impl.h"
 #include "absl/flags/flag.h"
 #include "absl/status/status.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
 #include "absl/strings/substitute.h"
-#include "kythe/cxx/common/indexing/KytheCachingOutput.h"
-#include "kythe/proto/storage.pb.h"
 #include "common/util/file_util.h"
 #include "common/util/init_command_line.h"
+#include "google/protobuf/io/zero_copy_stream_impl.h"
+#include "kythe/cxx/common/indexing/KytheCachingOutput.h"
+#include "kythe/proto/storage.pb.h"
 #include "verilog/analysis/verilog_analyzer.h"
 #include "verilog/tools/kythe/indexing_facts_tree_extractor.h"
 #include "verilog/tools/kythe/kythe_facts_extractor.h"
@@ -64,10 +64,8 @@ VNameRef ConvertToVnameRef(const VName& vname,
 
 // Prints Kythe facts in proto format to stdout.
 void PrintKytheFactsProtoEntries(const IndexingFactNode& file_list_facts_tree) {
-  KytheFactsExtractor kythe_extractor(
-      GetFileListDirFromRoot(file_list_facts_tree),
-      /*previous_files_scopes=*/nullptr);
-  auto indexing_data = kythe_extractor.ExtractKytheFacts(file_list_facts_tree);
+  auto indexing_data =
+      KytheFactsExtractor::ExtractFileList(file_list_facts_tree);
   google::protobuf::io::FileOutputStream file_output(STDOUT_FILENO);
   file_output.SetCloseOnDelete(true);
   ::kythe::FileOutputStream kythe_output(&file_output);

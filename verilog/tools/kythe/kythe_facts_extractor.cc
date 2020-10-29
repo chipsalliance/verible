@@ -95,12 +95,6 @@ void KytheFactsExtractor::IndexingFactNodeTagResolver(
   // relations.
   VName vname;
   switch (tag) {
-    case IndexingFactType::kFileList: {
-      ExtractFileList(node);
-      // Terminate as this node isn't a langauge feature but only a way to group
-      // files.
-      return;
-    }
     case IndexingFactType::kFile: {
       vname = ExtractFileFact(node);
       break;
@@ -397,15 +391,17 @@ void KytheFactsExtractor::Visit(const IndexingFactNode& node) {
   }
 }
 
-void KytheFactsExtractor::ExtractFileList(const IndexingFactNode& file_list) {
+KytheIndexingData KytheFactsExtractor::ExtractFileList(
+    const IndexingFactNode& file_list) {
   // Create a new ScopeResolver and give the ownership to the scope_resolvers
   // vector so that it can outlive KytheFactsExtractor.
   // The ScopeResolver-s are created and linked together as a linked-list
   // structure so that the current ScopeResolver can search for definitions in
   // the previous files' scopes.
   std::vector<std::unique_ptr<ScopeResolver>> scope_resolvers;
-  scope_resolvers.push_back(std::unique_ptr<ScopeResolver>(scope_resolver_));
+  scope_resolvers.push_back(std::unique_ptr<ScopeResolver>(nullptr));
 
+  KytheIndexingData aggregated_indexing_facts;
   for (const IndexingFactNode& root : file_list.Children()) {
     std::string file_path = GetFilePathFromRoot(root);
     scope_resolvers.push_back(absl::make_unique<ScopeResolver>(
@@ -414,13 +410,13 @@ void KytheFactsExtractor::ExtractFileList(const IndexingFactNode& file_list) {
                                         scope_resolvers.back().get());
 
     const auto indexing_data = kythe_extractor.ExtractKytheFacts(root);
-    for (const Fact& fact : indexing_data.facts) {
-      facts_.insert(fact);
-    }
-    for (const Edge& edge : indexing_data.edges) {
-      edges_.insert(edge);
-    }
+    aggregated_indexing_facts.facts.insert(indexing_data.facts.begin(),
+                                           indexing_data.facts.end());
+    aggregated_indexing_facts.edges.insert(indexing_data.edges.begin(),
+                                           indexing_data.edges.end());
   }
+
+  return aggregated_indexing_facts;
 }
 
 VName KytheFactsExtractor::ExtractFileFact(
@@ -989,12 +985,9 @@ void KytheFactsExtractor::CreateEdge(const VName& source_node,
 }
 
 std::ostream& KytheFactsPrinter::Print(std::ostream& stream) const {
-  // Passing the scope resolver as nullptr as this should be the end of scopes'
-  // linked list.
-  KytheFactsExtractor kythe_extractor(
-      GetFileListDirFromRoot(file_list_facts_tree_), nullptr);
+  auto indexing_data =
+      KytheFactsExtractor::ExtractFileList(file_list_facts_tree_);
 
-  auto indexing_data = kythe_extractor.ExtractKytheFacts(file_list_facts_tree_);
   for (const Fact& fact : indexing_data.facts) {
     stream << fact;
   }
