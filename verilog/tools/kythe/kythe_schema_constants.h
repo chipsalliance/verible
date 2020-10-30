@@ -37,6 +37,7 @@ constexpr absl::string_view kSubkindProgram = "program";
 constexpr absl::string_view kCompleteDefinition = "definition";
 constexpr absl::string_view kNodeVariable = "variable";
 constexpr absl::string_view kNodeFunction = "function";
+constexpr absl::string_view kNodeTAlias = "talias";
 
 // Facts for kythe.
 constexpr absl::string_view kFactText = "/kythe/text";
