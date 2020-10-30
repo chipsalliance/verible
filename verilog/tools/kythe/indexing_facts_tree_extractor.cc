@@ -1494,7 +1494,7 @@ void IndexingFactsTreeExtractor::ExtractTypeDeclaration(
   const SyntaxTreeNode* primitive =
       GetStructOrUnionOrEnumTypeFromDataType(*type);
   if (primitive == nullptr) {
-    // Extract enum type name.
+    // Extract type name.
     const SyntaxTreeLeaf* type_name =
         GetIdentifierFromTypeDeclaration(type_declaration);
     facts_tree_context_.top().NewChild(
