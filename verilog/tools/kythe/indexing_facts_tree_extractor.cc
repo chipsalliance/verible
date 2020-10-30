@@ -1499,7 +1499,7 @@ void IndexingFactsTreeExtractor::ExtractTypeDeclaration(
         GetIdentifierFromTypeDeclaration(type_declaration);
     facts_tree_context_.top().NewChild(
         IndexingNodeData({Anchor(type_name->get(), context_.base)},
-                         IndexingFactType::kVariableDefinition));
+                         IndexingFactType::kTypeDeclaration));
     return;
   }
 
