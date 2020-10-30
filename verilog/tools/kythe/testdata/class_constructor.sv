@@ -11,19 +11,18 @@ class my_class3;
   //- Var1Def childof MyClass3
   int var1 = 1;
 
-  // TODO(minatoma): add this after extracting class constructor.
-  // //- @new defines/binding New
-  // //- New.node/kind function
-  // //- New.complete definition
-  // //- New childof MyClass3
-  // //- @my_arg1 defines/binding MyArg1
-  // //- MyArg1.node/kind variable
-  // //- MyArg1.complete definition
-  // //- MyArg1 childof MyFunction
-  // //- @my_arg2 defines/binding MyArg2
-  // //- MyArg2.node/kind variable
-  // //- MyArg2.complete definition
-  // //- MyArg2 childof MyFunction
+  //- @new defines/binding New
+  //- New.node/kind function
+  //- New.complete definition
+  //- New childof MyClass3
+  //- @my_arg1 defines/binding MyArg1
+  //- MyArg1.node/kind variable
+  //- MyArg1.complete definition
+  //- MyArg1 childof New
+  //- @my_arg2 defines/binding MyArg2
+  //- MyArg2.node/kind variable
+  //- MyArg2.complete definition
+  //- MyArg2 childof New
   function new(int my_arg1, int my_arg2);
     // //- @var1 ref Var1Def
     // //- @my_arg1 reg MyArg1

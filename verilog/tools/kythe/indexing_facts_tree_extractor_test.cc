@@ -14,11 +14,11 @@
 
 #include "verilog/tools/kythe/indexing_facts_tree_extractor.h"
 
-#include "gtest/gtest.h"
 #include "absl/status/status.h"
 #include "common/analysis/syntax_tree_search_test_utils.h"
 #include "common/text/concrete_syntax_tree.h"
 #include "common/util/file_util.h"
+#include "gtest/gtest.h"
 #include "verilog/analysis/verilog_analyzer.h"
 
 #undef EXPECT_OK
@@ -4532,6 +4532,80 @@ TEST(FactsTreeExtractor, StructInModule) {
                           Anchor(kTestCase.expected_tokens[3], kTestCase.code),
                       },
                       IndexingFactType ::kVariableDefinition,
+                  }))))));
+
+  const auto facts_tree =
+      ExtractFiles({std::string(verible::file::Basename(test_file.filename()))},
+                   testing::TempDir(),
+                   verible::file::Dirname(test_file.filename()), {}, errors);
+
+  const auto result_pair = DeepEqual(facts_tree, expected);
+  EXPECT_EQ(result_pair.left, nullptr) << *result_pair.left;
+  EXPECT_EQ(result_pair.right, nullptr) << *result_pair.right;
+}
+
+TEST(FactsTreeExtractor, ClassConstructor) {
+  constexpr int kTag = 1;  // value doesn't matter
+  const verible::SyntaxTreeSearchTestCase kTestCase = {
+      {"class ",
+       {kTag, "my_class"},
+       ";\nfunction ",
+       {kTag, "new"},
+       "(int ",
+       {kTag, "x"},
+       ");\n",
+       {kTag, "x"},
+       " = 1;\nendfunction\nendclass"},
+  };
+
+  ScopedTestFile test_file(testing::TempDir(), kTestCase.code);
+  std::vector<absl::Status> errors;
+
+  const IndexingFactNode expected(T(
+      {
+          {
+              Anchor(testing::TempDir(), 0, 0),
+              Anchor(verible::file::Dirname(test_file.filename()), 0, 0),
+          },
+          IndexingFactType::kFileList,
+      },
+      T(
+          {
+              {
+                  Anchor(test_file.filename(), 0, kTestCase.code.size()),
+                  Anchor(kTestCase.code, 0, kTestCase.code.size()),
+              },
+              IndexingFactType ::kFile,
+          },
+          // refers to class my_class.
+          T(
+              {
+                  {
+                      Anchor(kTestCase.expected_tokens[1], kTestCase.code),
+                  },
+                  IndexingFactType::kClass,
+              },
+              // refers to new.
+              T(
+                  {
+                      {
+                          Anchor(kTestCase.expected_tokens[3], kTestCase.code),
+                      },
+                      IndexingFactType ::kFunctionOrTask,
+                  },
+                  // refers to x.
+                  T({
+                      {
+                          Anchor(kTestCase.expected_tokens[5], kTestCase.code),
+                      },
+                      IndexingFactType ::kVariableDefinition,
+                  }),
+                  // refers to x.
+                  T({
+                      {
+                          Anchor(kTestCase.expected_tokens[7], kTestCase.code),
+                      },
+                      IndexingFactType ::kVariableReference,
                   }))))));
 
   const auto facts_tree =

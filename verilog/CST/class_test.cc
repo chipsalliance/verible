@@ -26,8 +26,6 @@
 #include <sstream>
 #include <vector>
 
-#include "gmock/gmock.h"
-#include "gtest/gtest.h"
 #include "common/analysis/syntax_tree_search_test_utils.h"
 #include "common/text/concrete_syntax_tree.h"
 #include "common/text/symbol.h"
@@ -37,6 +35,8 @@
 #include "common/util/casts.h"
 #include "common/util/logging.h"
 #include "common/util/range.h"
+#include "gmock/gmock.h"
+#include "gtest/gtest.h"
 #include "verilog/CST/match_test_utils.h"
 #include "verilog/analysis/verilog_analyzer.h"
 
@@ -249,6 +249,62 @@ TEST(GetClassExtendTest, GetExtendListIdentifiers) {
                 TreeSearchMatch{identifier, {/* ignored context */}});
           }
           return identifiers;
+        });
+  }
+}
+
+TEST(GetClassConstructorTest, GetConstructorBody) {
+  constexpr int kTag = 1;  // value doesn't matter
+  const SyntaxTreeSearchTestCase kTestCases[] = {
+      {""},
+      {"class foo; endclass"},
+      {"module m;endmodule"},
+      {"class foo;\nfunction new();\n",
+       {kTag, "x = y;"},
+       "\nendfunction\nendclass"},
+  };
+  for (const auto& test : kTestCases) {
+    TestVerilogSyntaxRangeMatches(
+        __FUNCTION__, test, [](const TextStructureView& text_structure) {
+          const auto& root = text_structure.SyntaxTree();
+          const auto& constructors =
+              FindAllClassConstructors(*ABSL_DIE_IF_NULL(root));
+
+          std::vector<TreeSearchMatch> bodies;
+          for (const auto& constructor : constructors) {
+            const auto& body =
+                GetClassConstructorStatementList(*constructor.match);
+            bodies.emplace_back(
+                TreeSearchMatch{&body, {/* ignored context */}});
+          }
+          return bodies;
+        });
+  }
+}
+
+TEST(GetClassConstructorTest, GetNewKeyword) {
+  constexpr int kTag = 1;  // value doesn't matter
+  const SyntaxTreeSearchTestCase kTestCases[] = {
+      {""},
+      {"class foo; endclass"},
+      {"module m;endmodule"},
+      {"class foo;\nfunction ", {kTag, "new"}, "();\n\nendfunction\nendclass"},
+  };
+  for (const auto& test : kTestCases) {
+    TestVerilogSyntaxRangeMatches(
+        __FUNCTION__, test, [](const TextStructureView& text_structure) {
+          const auto& root = text_structure.SyntaxTree();
+          const auto& constructors =
+              FindAllClassConstructors(*ABSL_DIE_IF_NULL(root));
+
+          std::vector<TreeSearchMatch> keywords;
+          for (const auto& constructor : constructors) {
+            const auto& keyword =
+                GetNewKeywordFromClassConstructor(*constructor.match);
+            keywords.emplace_back(
+                TreeSearchMatch{&keyword, {/* ignored context */}});
+          }
+          return keywords;
         });
   }
 }
