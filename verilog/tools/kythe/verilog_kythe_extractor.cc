@@ -154,7 +154,6 @@ static std::vector<absl::Status> ExtractFiles(
   if (absl::GetFlag(FLAGS_printextraction)) {
     std::cout << file_list_facts_tree << std::endl;
   }
-  LOG(INFO) << file_list_facts_tree << std::endl;
 
   // check how kythe facts.
   switch (absl::GetFlag(FLAGS_print_kythe_facts)) {
