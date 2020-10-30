@@ -23,14 +23,27 @@ source "${KOKORO_GFILE_DIR}/common_google.sh"
 rm -rf "$HOME/.cache/bazel"
 
 # Setup kythe
-export KYTHE_VERSION=v0.0.38
+# TODO(ikr): bump to version >= 0.0.49 after it is released
+# KYTHE_VERSION=master
+KYTHE_VERSION=v0.0.48
+
 cd "${TMPDIR}"
-wget -q -O kythe.tar.gz \
+
+if [[ "$KYTHE_VERSION" == "master" ]]
+then
+  wget -q -O kythe.zip \
+    https://github.com/kythe/kythe/archive/master.zip
+  unzip kythe.zip
+else
+  # use release
+  wget -q -O kythe.tar.gz \
     "https://github.com/kythe/kythe/releases/download/$KYTHE_VERSION/kythe-$KYTHE_VERSION.tar.gz"
-tar -xzf kythe.tar.gz
-export KYTHE_DIRNAME="kythe-${KYTHE_VERSION}"
+  tar -xzf kythe.tar.gz
+fi
+
+KYTHE_DIRNAME="kythe-${KYTHE_VERSION}"
 sudo cp -R "${KYTHE_DIRNAME}" /opt
-export KYTHE_DIR="/opt/${KYTHE_DIRNAME}"
+KYTHE_DIR="/opt/${KYTHE_DIRNAME}"
 sudo chmod -R 755 "${KYTHE_DIR}"
 echo "KYTHE_DIR=${KYTHE_DIR}" >> ~/.bashrc
 
