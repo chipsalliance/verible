@@ -121,6 +121,10 @@ class IndexingFactsTreeExtractor : public verible::TreeContextVisitor {
   void ExtractFunctionDeclaration(
       const verible::SyntaxTreeNode& function_declaration_node);
 
+  // Extracts class constructor and creates its corresponding fact tree.
+  void ExtractClassConstructor(
+      const verible::SyntaxTreeNode& class_constructor);
+
   // Extracts task and creates its corresponding fact tree.
   void ExtractTaskDeclaration(
       const verible::SyntaxTreeNode& task_declaration_node);
@@ -140,7 +144,7 @@ class IndexingFactsTreeExtractor : public verible::TreeContextVisitor {
       const verible::SyntaxTreeNode& hierarchy_extension_node);
 
   // Extracts function or task ports and parameters.
-  void ExtractFunctionTaskPort(
+  void ExtractFunctionTaskConstructorPort(
       const verible::SyntaxTreeNode& function_declaration_node);
 
   // Extracts classes and creates its corresponding fact tree.

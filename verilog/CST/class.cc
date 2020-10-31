@@ -37,6 +37,11 @@ std::vector<verible::TreeSearchMatch> FindAllClassDeclarations(
   return SearchSyntaxTree(root, NodekClassDeclaration());
 }
 
+std::vector<verible::TreeSearchMatch> FindAllClassConstructors(
+    const verible::Symbol& root) {
+  return SearchSyntaxTree(root, NodekClassConstructor());
+}
+
 std::vector<verible::TreeSearchMatch> FindAllHierarchyExtensions(
     const verible::Symbol& root) {
   return SearchSyntaxTree(root, NodekHierarchyExtension());
@@ -99,6 +104,22 @@ const verible::SyntaxTreeNode* GetParamDeclarationListFromClassDeclaration(
       verible::GetSubtreeAsSymbol(header_node, NodeEnum::kClassHeader, 4);
   return verible::CheckOptionalSymbolAsNode(
       param_declaration_list, NodeEnum::kFormalParameterListDeclaration);
+}
+
+const verible::SyntaxTreeNode& GetClassConstructorStatementList(
+    const verible::Symbol& class_constructor) {
+  return verible::GetSubtreeAsNode(class_constructor,
+                                   NodeEnum::kClassConstructor, 2);
+}
+
+const verible::SyntaxTreeLeaf& GetNewKeywordFromClassConstructor(
+    const verible::Symbol& class_constructor) {
+  const verible::SyntaxTreeNode& constructor_prototype =
+      verible::GetSubtreeAsNode(class_constructor, NodeEnum::kClassConstructor,
+                                1, NodeEnum::kClassConstructorPrototype);
+
+  return verible::GetSubtreeAsLeaf(constructor_prototype,
+                                   NodeEnum::kClassConstructorPrototype, 1);
 }
 
 }  // namespace verilog

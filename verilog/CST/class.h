@@ -27,6 +27,10 @@ namespace verilog {
 std::vector<verible::TreeSearchMatch> FindAllClassDeclarations(
     const verible::Symbol&);
 
+// Find all class constructors.
+std::vector<verible::TreeSearchMatch> FindAllClassConstructors(
+    const verible::Symbol& root);
+
 // Find all hierarchy extensions.
 std::vector<verible::TreeSearchMatch> FindAllHierarchyExtensions(
     const verible::Symbol&);
@@ -60,6 +64,15 @@ const verible::SyntaxTreeLeaf& GetUnqualifiedIdFromHierarchyExtension(
 // = 2)".
 const verible::SyntaxTreeNode* GetParamDeclarationListFromClassDeclaration(
     const verible::Symbol&);
+
+// Returns the node spanning the class constructor body (tagged with
+// kStatementList) from node tagged with kClassConstructor.
+const verible::SyntaxTreeNode& GetClassConstructorStatementList(
+    const verible::Symbol& class_constructor);
+
+// Returns the leaf spanning the "new" keyword from class constructor.
+const verible::SyntaxTreeLeaf& GetNewKeywordFromClassConstructor(
+    const verible::Symbol& class_constructor);
 
 }  // namespace verilog
 

@@ -203,6 +203,10 @@ void IndexingFactsTreeExtractor::Visit(const SyntaxTreeNode& node) {
       ExtractTaskDeclaration(node);
       break;
     }
+    case NodeEnum::kClassConstructor: {
+      ExtractClassConstructor(node);
+      break;
+    }
     case NodeEnum::kFunctionCall: {
       ExtractFunctionOrTaskCall(node);
       break;
@@ -788,6 +792,32 @@ void IndexingFactsTreeExtractor::ExtractMacroReference(
                        IndexingFactType::kMacroCall));
 }
 
+void IndexingFactsTreeExtractor::ExtractClassConstructor(
+    const verible::SyntaxTreeNode& class_constructor) {
+  IndexingFactNode constructor_node(
+      IndexingNodeData{IndexingFactType::kFunctionOrTask});
+
+  const SyntaxTreeLeaf& new_keyword =
+      GetNewKeywordFromClassConstructor(class_constructor);
+  constructor_node.Value().AppendAnchor(
+      Anchor(new_keyword.get(), context_.base));
+
+  {
+    const IndexingFactsTreeContext::AutoPop p(&facts_tree_context_,
+                                              &constructor_node);
+
+    // Extract ports.
+    ExtractFunctionTaskConstructorPort(class_constructor);
+
+    // Extract constructor body.
+    const SyntaxTreeNode& constructor_body =
+        GetClassConstructorStatementList(class_constructor);
+    Visit(constructor_body);
+  }
+
+  facts_tree_context_.top().NewChild(constructor_node);
+}
+
 void IndexingFactsTreeExtractor::ExtractFunctionDeclaration(
     const SyntaxTreeNode& function_declaration_node) {
   IndexingFactNode function_node(
@@ -806,7 +836,7 @@ void IndexingFactsTreeExtractor::ExtractFunctionDeclaration(
     const IndexingFactsTreeContext::AutoPop p(&facts_tree_context_,
                                               &function_node);
     // Extract function ports.
-    ExtractFunctionTaskPort(function_declaration_node);
+    ExtractFunctionTaskConstructorPort(function_declaration_node);
 
     // Extract function body.
     const SyntaxTreeNode& function_body =
@@ -834,7 +864,7 @@ void IndexingFactsTreeExtractor::ExtractTaskDeclaration(
     const IndexingFactsTreeContext::AutoPop p(&facts_tree_context_, &task_node);
 
     // Extract task ports.
-    ExtractFunctionTaskPort(task_declaration_node);
+    ExtractFunctionTaskConstructorPort(task_declaration_node);
 
     // Extract task body.
     const SyntaxTreeNode& task_body =
@@ -845,7 +875,7 @@ void IndexingFactsTreeExtractor::ExtractTaskDeclaration(
   facts_tree_context_.top().NewChild(task_node);
 }
 
-void IndexingFactsTreeExtractor::ExtractFunctionTaskPort(
+void IndexingFactsTreeExtractor::ExtractFunctionTaskConstructorPort(
     const SyntaxTreeNode& function_declaration_node) {
   const std::vector<TreeSearchMatch> ports =
       FindAllTaskFunctionPortDeclarations(function_declaration_node);
