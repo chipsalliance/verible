@@ -80,6 +80,7 @@ export KYTHE_OUTPUT_DIRECTORY="${KOKORO_ARTIFACTS_DIR}/kythe_output"
 mkdir -p "${KYTHE_OUTPUT_DIRECTORY}"
 
 # Build everything
+# kythe_release expects an absolute dir
 bazel --bazelrc="${KYTHE_DIR}/extractors.bazelrc" \
   build --override_repository kythe_release="${KYTHE_DIR}" \
   --define=kythe_corpus=github.com/google/verible \

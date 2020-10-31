@@ -58,7 +58,7 @@ sudo apt-get install -y \
 echo "----------------------------------------"
 
 echo
-BAZEL_VERSION=3.4.1
+BAZEL_VERSION=3.7.0
 echo "========================================"
 echo "Installing bazel"
 echo "----------------------------------------"
