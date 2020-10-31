@@ -1493,7 +1493,19 @@ void IndexingFactsTreeExtractor::ExtractTypeDeclaration(
   if (tag != NodeEnum::kDataType) return;
   const SyntaxTreeNode* primitive =
       GetStructOrUnionOrEnumTypeFromDataType(*type);
-  if (primitive == nullptr) return;
+  if (primitive == nullptr) {
+    // Then this is a user-defined type.
+    // Extract type name.
+    const SyntaxTreeLeaf* type_name =
+        GetIdentifierFromTypeDeclaration(type_declaration);
+    if (type_name == nullptr) {
+      return;
+    }
+    facts_tree_context_.top().NewChild(
+        IndexingNodeData({Anchor(type_name->get(), context_.base)},
+                         IndexingFactType::kTypeDeclaration));
+    return;
+  }
 
   switch (NodeEnum(primitive->Tag().tag)) {
     case NodeEnum::kEnumType: {

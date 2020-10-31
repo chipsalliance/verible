@@ -155,6 +155,10 @@ void KytheFactsExtractor::IndexingFactNodeTagResolver(
       vname = ExtractAnonymousScope(node);
       break;
     }
+    case IndexingFactType::kTypeDeclaration: {
+      vname = ExtractTypeDeclaration(node);
+      break;
+    }
     case IndexingFactType::kDataTypeReference: {
       ExtractDataTypeReference(node);
       break;
@@ -219,6 +223,7 @@ void KytheFactsExtractor::AddVNameToScopeContext(IndexingFactType tag,
     case IndexingFactType::kParamDeclaration:
     case IndexingFactType::kPackage:
     case IndexingFactType::kConstant:
+    case IndexingFactType::kTypeDeclaration:
     case IndexingFactType::kInterface:
     case IndexingFactType::kProgram: {
       scope_resolver_->AddDefinitionToScopeContext(vname);
@@ -529,6 +534,19 @@ VName KytheFactsExtractor::ExtractModuleInstance(
              module_instance_vname);
 
   return module_instance_vname;
+}
+
+VName KytheFactsExtractor::ExtractTypeDeclaration(
+    const IndexingFactNode& type_declaration) {
+  const auto& anchor = type_declaration.Value().Anchors()[0];
+  const VName type_vname(file_path_,
+                         CreateScopeRelativeSignature(anchor.Value()));
+  const VName type_vname_anchor = CreateAnchor(anchor);
+
+  CreateFact(type_vname, kFactNodeKind, kNodeTAlias);
+  CreateEdge(type_vname_anchor, kEdgeDefinesBinding, type_vname);
+
+  return type_vname;
 }
 
 void KytheFactsExtractor::ExtractNamedParam(
