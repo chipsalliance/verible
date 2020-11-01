@@ -26,12 +26,22 @@ source "${KOKORO_GFILE_DIR}/common_google.sh"
 # Cleanup previous build cache.
 rm -rf "$HOME/.cache/bazel"
 
+echo "Selecting modern version of bazel"
+# TODO(b/171989992): This setup should be done elsewhere in a common area.
+# This is a short-term workaround to finding the wrong version of bazel
+# in /usr/local/bin, when the one we want is in /usr/bin/bazel.
+# Copied from steps/hostsetup.sh.
+BAZEL_VERSION=3.7.0
+wget "https://github.com/bazelbuild/bazel/releases/download/${BAZEL_VERSION}/bazel_${BAZEL_VERSION}-linux-x86_64.deb"
+sudo dpkg -i "bazel_${BAZEL_VERSION}-linux-x86_64.deb"
+BAZEL=/usr/bin/bazel
+
 # Rely on set -e to fail on first missing prereq.
 echo "Checking prerequisites ..."
 which wget
 which unzip
 which tar
-which bazel && bazel version
+which "$BAZEL" && "$BAZEL" version
 echo "... done."
 
 # Setup kythe
@@ -41,6 +51,7 @@ KYTHE_VERSION=v0.0.48
 
 cd "${TMPDIR}"
 
+echo "Fetching kythe"
 if [[ "$KYTHE_VERSION" == "master" ]]
 then
   # Note: top-of-tree archive does not come with binaries
@@ -71,6 +82,11 @@ fi
 # Prepare the environment for verible build
 cd "${KOKORO_ARTIFACTS_DIR}/github/verible"
 
+# TODO(hzeller): bazelisk section looks dead/unused.
+# Clean-up in favor of installing a versioned release,
+# like in steps/hostsetup.sh.
+#
+# https://github.com/bazelbuild/bazelisk
 # Downloads bazelisk to ~/bin as `bazel`.
 function set_bazel_outdir {
   mkdir -p /tmpfs/bazel_output
@@ -101,7 +117,7 @@ mkdir -p "${KYTHE_OUTPUT_DIRECTORY}"
 
 # Build everything in Verible to index its source
 # --override_repository kythe_release expects an absolute dir
-bazel --bazelrc="${KYTHE_DIR_ABS}/extractors.bazelrc" \
+"$BAZEL" --bazelrc="${KYTHE_DIR_ABS}/extractors.bazelrc" \
   build --override_repository kythe_release="${KYTHE_DIR_ABS}" \
   --define=kythe_corpus=github.com/google/verible \
   -- \
