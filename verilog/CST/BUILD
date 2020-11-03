@@ -362,6 +362,7 @@ cc_library(
         "//common/text:tree_utils",
         "//common/util:casts",
         "//common/util:logging",
+        "//verilog/parser:verilog_token_classifications",
         "//verilog/parser:verilog_token_enum",
     ],
 )
@@ -371,6 +372,7 @@ cc_test(
     srcs = ["identifier_test.cc"],
     deps = [
         ":identifier",
+        ":match_test_utils",
         "//common/analysis:syntax_tree_search",
         "//common/analysis:syntax_tree_search_test_utils",
         "//common/text:concrete_syntax_leaf",

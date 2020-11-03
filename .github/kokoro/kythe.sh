@@ -23,16 +23,13 @@ set -e
 # Source the internal common scripts.
 source "${KOKORO_GFILE_DIR}/common_google.sh"
 
-# Cleanup previous build cache.
-rm -rf "$HOME/.cache/bazel"
-
 echo "Selecting modern version of bazel"
 # TODO(b/171989992): This setup should be done elsewhere in a common area.
 # This is a short-term workaround to finding the wrong version of bazel
 # in /usr/local/bin, when the one we want is in /usr/bin/bazel.
 # Copied from steps/hostsetup.sh.
 BAZEL_VERSION=3.7.0
-wget "https://github.com/bazelbuild/bazel/releases/download/${BAZEL_VERSION}/bazel_${BAZEL_VERSION}-linux-x86_64.deb"
+wget --no-verbose "https://github.com/bazelbuild/bazel/releases/download/${BAZEL_VERSION}/bazel_${BAZEL_VERSION}-linux-x86_64.deb"
 sudo dpkg -i "bazel_${BAZEL_VERSION}-linux-x86_64.deb"
 BAZEL=/usr/bin/bazel
 
@@ -44,25 +41,25 @@ which tar
 which "$BAZEL" && "$BAZEL" version
 echo "... done."
 
-# Setup kythe
-# TODO(ikr): bump to version >= 0.0.49 after it is released
-# KYTHE_VERSION=master
-KYTHE_VERSION=v0.0.48
-
 cd "${TMPDIR}"
 
 echo "Fetching kythe"
+# TODO(b/171989992): revert to using release version after upgrading system
+#   libraries/image (need: GLIBCXX_3.4.26, CXXABI_1.3.11, GLIBC_2.29).
+# KYTHE_VERSION=master
+KYTHE_VERSION=v0.0.48
+
 if [[ "$KYTHE_VERSION" == "master" ]]
 then
   # Note: top-of-tree archive does not come with binaries
   # Caution: Building kythe itself will require all of its build dependencies
   # and be extremely compute-intensive.
-  wget -q -O kythe.zip \
+  wget --no-verbose -O kythe.zip \
     https://github.com/kythe/kythe/archive/master.zip
   unzip kythe.zip
 else
   # Use release, which comes with pre-built binaries
-  wget -q -O kythe.tar.gz \
+  wget --no-verbose -O kythe.tar.gz \
     "https://github.com/kythe/kythe/releases/download/$KYTHE_VERSION/kythe-$KYTHE_VERSION.tar.gz"
   tar -xzf kythe.tar.gz
 fi
@@ -81,6 +78,10 @@ fi
 
 # Prepare the environment for verible build
 cd "${KOKORO_ARTIFACTS_DIR}/github/verible"
+
+# Cleanup previous build cache.
+# or: "$BAZEL" clean
+rm -rf "$HOME/.cache/bazel"
 
 # TODO(hzeller): bazelisk section looks dead/unused.
 # Clean-up in favor of installing a versioned release,
@@ -116,12 +117,29 @@ KYTHE_OUTPUT_DIRECTORY="${KOKORO_ARTIFACTS_DIR}/kythe_output"
 mkdir -p "${KYTHE_OUTPUT_DIRECTORY}"
 
 # Build everything in Verible to index its source
-# --override_repository kythe_release expects an absolute dir
-"$BAZEL" --bazelrc="${KYTHE_DIR_ABS}/extractors.bazelrc" \
-  build --override_repository kythe_release="${KYTHE_DIR_ABS}" \
-  --define=kythe_corpus=github.com/google/verible \
-  -- \
-  //...
+if [[ "$KYTHE_VERSION" == "master" ]]
+then
+  # Attempt to build kythe's tools on-the-fly.
+  # This will drag in massive dependencies like LLVM.
+  # :extract_cxx still points to locally installed kythe binaries,
+  # TODO: may need to hack verible/BUILD to adjust locations.
+  "$BAZEL" \
+    build \
+    --experimental_action_listener=":extract_cxx" \
+    --define="kythe_corpus=github.com/google/verible" \
+    -- \
+    //...
+else
+  # Use kythe's released tools.
+  # --override_repository kythe_release expects an absolute dir
+  "$BAZEL" \
+    --bazelrc="${KYTHE_DIR_ABS}/extractors.bazelrc" \
+    build \
+    --override_repository kythe_release="${KYTHE_DIR_ABS}" \
+    --define="kythe_corpus=github.com/google/verible" \
+    -- \
+    //...
+fi
 
 # Merge the kzips and move them to kokoro artifacts directory.
 # Note: kzip tool path assumes it came with the release pre-built.
