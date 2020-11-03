@@ -18,7 +18,7 @@ set -e
 export TRAVIS_TAG=${TRAVIS_TAG:-$(git describe --match=v*)}
 
 case $MODE in
-compile-n-test)
+compile|test)
     ./.github/travis/set-compiler.sh 9
     ./.github/travis/install-bazel.sh
     git fetch --tags

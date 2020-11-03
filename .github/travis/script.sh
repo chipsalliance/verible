@@ -22,14 +22,18 @@ export TRAVIS_TAG=${TRAVIS_TAG:-$(git describe --match=v*)}
 BAZEL_CXXOPTS=(--cxxopt=-std=c++17)
 
 case "$MODE" in
-compile-n-test)
+test)
     bazel test --noshow_progress --curses=no --show_timestamps "${BAZEL_CXXOPTS[@]}" //...
+    ;;
+
+compile)
     bazel build -c opt --noshow_loading_progress --curses=no --progress_report_interval 60 --show_timestamps "${BAZEL_CXXOPTS[@]}" //...
     ;;
 
 bin)
     cd Docker
     ./docker-generate.sh ${OS}-${OS_VERSION}
+
     ./docker-run.sh ${OS}-${OS_VERSION}
     mkdir -p /tmp/releases
     cp out/*.tar.gz /tmp/releases/
