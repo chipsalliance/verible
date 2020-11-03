@@ -405,6 +405,7 @@ cc_test(
     srcs = ["macro_test.cc"],
     deps = [
         ":macro",
+        ":match_test_utils",
         ":verilog_nonterminals",
         "//common/analysis:syntax_tree_search",
         "//common/analysis:syntax_tree_search_test_utils",

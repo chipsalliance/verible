@@ -34,6 +34,10 @@ std::vector<verible::TreeSearchMatch> FindAllMacroDefinitions(
 // Find all macro calls.
 std::vector<verible::TreeSearchMatch> FindAllMacroCalls(const verible::Symbol&);
 
+// Find all preprocessor includes.
+std::vector<verible::TreeSearchMatch> FindAllPreprocessorInclude(
+    const verible::Symbol& root);
+
 // Find all macro calls that are whole item-level constructs.
 // Compared to FindAllMacroCalls, this excludes macro call expressions.
 std::vector<verible::TreeSearchMatch> FindAllMacroGenericItems(
@@ -68,8 +72,10 @@ const verible::SyntaxTreeLeaf& GetMacroName(const verible::Symbol&);
 const verible::SyntaxTreeLeaf& GetMacroArgName(const verible::Symbol&);
 
 // Returns the leaf node containing the filename from the node tagged with
-// kPreprocessorInclude.
-const verible::Symbol& GetFileFromPreprocessorInclude(const verible::Symbol&);
+// kPreprocessorInclude or nullptr if the argument is not a simple
+// string-literal.
+const verible::SyntaxTreeLeaf* GetFileFromPreprocessorInclude(
+    const verible::Symbol&);
 
 }  // namespace verilog
 

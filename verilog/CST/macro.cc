@@ -32,6 +32,11 @@ std::vector<verible::TreeSearchMatch> FindAllMacroDefinitions(
   return SearchSyntaxTree(root, NodekPreprocessorDefine());
 }
 
+std::vector<verible::TreeSearchMatch> FindAllPreprocessorInclude(
+    const verible::Symbol& root) {
+  return SearchSyntaxTree(root, NodekPreprocessorInclude());
+}
+
 std::vector<verible::TreeSearchMatch> FindAllMacroCalls(const Symbol& root) {
   return SearchSyntaxTree(root, NodekMacroCall());
 }
@@ -83,10 +88,17 @@ const verible::SyntaxTreeLeaf& GetMacroArgName(
   return GetSubtreeAsLeaf(macro_formal_arg, NodeEnum::kMacroFormalArg, 0);
 }
 
-const verible::Symbol& GetFileFromPreprocessorInclude(
+const verible::SyntaxTreeLeaf* GetFileFromPreprocessorInclude(
     const verible::Symbol& preprocessor_include) {
-  return *ABSL_DIE_IF_NULL(verible::GetSubtreeAsSymbol(
-      preprocessor_include, NodeEnum::kPreprocessorInclude, 1));
+  const verible::Symbol& included_filename =
+      *ABSL_DIE_IF_NULL(verible::GetSubtreeAsSymbol(
+          preprocessor_include, NodeEnum::kPreprocessorInclude, 1));
+  // Terminate if this isn't a string literal.
+  if (included_filename.Tag().tag != verilog_tokentype::TK_StringLiteral) {
+    return nullptr;
+  }
+
+  return &verible::SymbolCastToLeaf(included_filename);
 }
 
 }  // namespace verilog
