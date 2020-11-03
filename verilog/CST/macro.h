@@ -69,8 +69,7 @@ const verible::SyntaxTreeLeaf& GetMacroArgName(const verible::Symbol&);
 
 // Returns the leaf node containing the filename from the node tagged with
 // kPreprocessorInclude.
-const verible::SyntaxTreeLeaf& GetFileFromPreprocessorInclude(
-    const verible::Symbol&);
+const verible::Symbol& GetFileFromPreprocessorInclude(const verible::Symbol&);
 
 }  // namespace verilog
 

@@ -83,10 +83,10 @@ const verible::SyntaxTreeLeaf& GetMacroArgName(
   return GetSubtreeAsLeaf(macro_formal_arg, NodeEnum::kMacroFormalArg, 0);
 }
 
-const verible::SyntaxTreeLeaf& GetFileFromPreprocessorInclude(
+const verible::Symbol& GetFileFromPreprocessorInclude(
     const verible::Symbol& preprocessor_include) {
-  return GetSubtreeAsLeaf(preprocessor_include, NodeEnum::kPreprocessorInclude,
-                          1);
+  return *ABSL_DIE_IF_NULL(verible::GetSubtreeAsSymbol(
+      preprocessor_include, NodeEnum::kPreprocessorInclude, 1));
 }
 
 }  // namespace verilog

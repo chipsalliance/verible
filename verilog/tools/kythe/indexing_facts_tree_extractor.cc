@@ -1312,8 +1312,18 @@ absl::string_view StripOuterQuotes(absl::string_view text) {
 
 void IndexingFactsTreeExtractor::ExtractInclude(
     const verible::SyntaxTreeNode& preprocessor_include) {
-  const SyntaxTreeLeaf& included_filename =
+  const verible::Symbol& included_filename_symbol =
       GetFileFromPreprocessorInclude(preprocessor_include);
+
+  // Terminate if this isn't a string literal.
+  if (included_filename_symbol.Kind() != verible::SymbolKind::kLeaf ||
+      included_filename_symbol.Tag().tag !=
+          verilog_tokentype::TK_StringLiteral) {
+    return;
+  }
+
+  const SyntaxTreeLeaf& included_filename =
+      verible::SymbolCastToLeaf(included_filename_symbol);
 
   absl::string_view filename_text = included_filename.get().text();
 
