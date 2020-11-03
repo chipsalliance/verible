@@ -765,13 +765,26 @@ void IndexingFactsTreeExtractor::ExtractMacroDefinition(
   facts_tree_context_.top().NewChild(macro_node);
 }
 
+Anchor GetMacroNameFromTokenInfo(const verible::TokenInfo& macro_token_info,
+                                 absl::string_view base) {
+  // Strip the prefix "`".
+  // e.g.
+  // `define TEN 0
+  // `TEN --> removes the `
+  const absl::string_view macro_name =
+      absl::StripPrefix(macro_token_info.text(), "`");
+  int startLocation = macro_token_info.left(base) + 1;
+  int endLocation = macro_token_info.right(base);
+
+  return Anchor(macro_name, startLocation, endLocation);
+}
+
 void IndexingFactsTreeExtractor::ExtractMacroCall(
     const verible::SyntaxTreeNode& macro_call) {
   const verible::TokenInfo& macro_call_name_token = GetMacroCallId(macro_call);
-
-  IndexingFactNode macro_node(
-      IndexingNodeData({Anchor(macro_call_name_token, context_.base)},
-                       IndexingFactType::kMacroCall));
+  IndexingFactNode macro_node(IndexingNodeData(
+      {GetMacroNameFromTokenInfo(macro_call_name_token, context_.base)},
+      IndexingFactType::kMacroCall));
 
   {
     const IndexingFactsTreeContext::AutoPop p(&facts_tree_context_,
@@ -787,9 +800,9 @@ void IndexingFactsTreeExtractor::ExtractMacroCall(
 
 void IndexingFactsTreeExtractor::ExtractMacroReference(
     const verible::SyntaxTreeLeaf& macro_identifier) {
-  facts_tree_context_.top().NewChild(
-      IndexingNodeData({Anchor(macro_identifier.get(), context_.base)},
-                       IndexingFactType::kMacroCall));
+  facts_tree_context_.top().NewChild(IndexingNodeData(
+      {GetMacroNameFromTokenInfo(macro_identifier.get(), context_.base)},
+      IndexingFactType::kMacroCall));
 }
 
 void IndexingFactsTreeExtractor::ExtractClassConstructor(

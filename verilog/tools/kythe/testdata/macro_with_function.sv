@@ -28,11 +28,11 @@ module macro;
 
     //- @ii defines/binding _
     //- @my_function ref/call MyFunction
-    //- @"`TEN" ref/expands Ten
+    //- @"TEN" ref/expands Ten
     //- @arg2 ref Arg2
     automatic integer ii = my_pkg::my_function(`TEN, arg2);
 
-    //- @"`PRINT_3_STRINGS" ref/expands Print3Strings
+    //- @"PRINT_3_STRINGS" ref/expands Print3Strings
     `PRINT_3_STRINGS("Grand", "Tour", "S4");
   end
 endmodule

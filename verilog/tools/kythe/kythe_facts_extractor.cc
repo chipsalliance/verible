@@ -671,12 +671,8 @@ void KytheFactsExtractor::ExtractMacroCall(
   const Anchor& macro_name = macro_call_node.Value().Anchors()[0];
   const VName macro_vname_anchor = CreateAnchor(macro_name);
 
-  // We pass a substring to ignore the ` before macro name.
-  // e.g.
-  // `define TEN 0
-  // `TEN --> removes the `
-  const VName variable_definition_vname(
-      file_path_, Signature(macro_name.Value().substr(1)));
+  const VName variable_definition_vname(file_path_,
+                                        Signature(macro_name.Value()));
 
   CreateEdge(macro_vname_anchor, kEdgeRefExpands, variable_definition_vname);
 }
