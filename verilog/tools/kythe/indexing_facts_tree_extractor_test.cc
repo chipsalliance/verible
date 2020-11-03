@@ -14,11 +14,11 @@
 
 #include "verilog/tools/kythe/indexing_facts_tree_extractor.h"
 
-#include "gtest/gtest.h"
 #include "absl/status/status.h"
 #include "common/analysis/syntax_tree_search_test_utils.h"
 #include "common/text/concrete_syntax_tree.h"
 #include "common/util/file_util.h"
+#include "gtest/gtest.h"
 #include "verilog/analysis/verilog_analyzer.h"
 
 #undef EXPECT_OK
@@ -2968,23 +2968,24 @@ TEST(FactsTreeExtractor, MacroCallTest) {
       ") i\n",
       "module ",
       {kTag, "macro"},
-      ";\ninitial begin\n",
-      {kTag, "`PRINT_3_STRINGS"},
+      ";\ninitial begin\n`",
+      {kTag, "PRINT_3_STRINGS"},
       "(\"Grand\", \"Tour\", \"S4\");\n",
-      "$display(\"%d\\n\", ",
-      {kTag, "`TEN"},
+      "$display(\"%d\\n\", `",
+      {kTag, "TEN"},
       ");\n",
-      "$display(\"%d\\n\", ",
-      {kTag, "`NUM"},
-      "(",
-      {kTag, "`TEN"},
+      "$display(\"%d\\n\", `",
+      {kTag, "NUM"},
+      "(`",
+      {kTag, "TEN"},
       "));\n",
       "parameter int ",
       {kTag, "x"},
-      " = ",
-      {kTag, "`TEN"},
+      " = `",
+      {kTag, "TEN"},
       ";\n"
-      "end\nendmodule"};
+      "end\nendmodule",
+  };
 
   ScopedTestFile test_file(testing::TempDir(), kTestCase.code);
   std::vector<absl::Status> errors;
