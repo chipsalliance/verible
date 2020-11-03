@@ -908,7 +908,7 @@ void IndexingFactsTreeExtractor::ExtractFunctionOrTaskCall(
   MoveAndDeleteLastSibling(function_node);
 
   // Terminate if no function name is found.
-  // in case of built-in functions: "sin()";
+  // in case of built-in functions: "q.sort()";
   if (function_node.Value().Anchors().empty()) {
     return;
   }
@@ -934,7 +934,7 @@ void IndexingFactsTreeExtractor::ExtractMethodCallExtension(
   MoveAndDeleteLastSibling(function_node);
   
   // Terminate if no function name is found.
-  // in case of built-in functions: "sin()";
+  // in case of built-in functions: "q.sort()";
   if (function_node.Value().Anchors().empty()) {
     return;
   }

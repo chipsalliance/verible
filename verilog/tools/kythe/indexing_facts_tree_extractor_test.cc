@@ -5569,7 +5569,13 @@ TEST(FactsTreeExtractor, BuiltInFunction) {
        {kTag, "t1"},
        "();\n",
        {kTag, "b1"},
-       "(sin());\nendtask"},
+       "(sin());\nendtask\ntask ",
+       {kTag, "t"},
+       "(input foo ",
+       {kTag, "bar"},
+       "[$]);\n",
+       {kTag, "bar"},
+       ".sort();\nendtask"},
   };
 
   ScopedTestFile test_file(testing::TempDir(), kTestCase.code);
@@ -5612,6 +5618,28 @@ TEST(FactsTreeExtractor, BuiltInFunction) {
                       Anchor(kTestCase.expected_tokens[5], kTestCase.code),
                   },
                   IndexingFactType ::kFunctionCall,
+              })),
+          // refers to t.
+          T(
+              {
+                  {
+                      Anchor(kTestCase.expected_tokens[7], kTestCase.code),
+                  },
+                  IndexingFactType ::kFunctionOrTask,
+              },
+              // refers to bar.
+              T({
+                  {
+                      Anchor(kTestCase.expected_tokens[9], kTestCase.code),
+                  },
+                  IndexingFactType ::kVariableDefinition,
+              }),
+              // refers to bar.sort().
+              T({
+                  {
+                      Anchor(kTestCase.expected_tokens[11], kTestCase.code),
+                  },
+                  IndexingFactType ::kVariableReference,
               })))));
 
   const auto facts_tree =
