@@ -1325,17 +1325,21 @@ absl::string_view StripOuterQuotes(absl::string_view text) {
 
 void IndexingFactsTreeExtractor::ExtractInclude(
     const verible::SyntaxTreeNode& preprocessor_include) {
-  const SyntaxTreeLeaf& included_filename =
+  const SyntaxTreeLeaf* included_filename =
       GetFileFromPreprocessorInclude(preprocessor_include);
 
-  absl::string_view filename_text = included_filename.get().text();
+  if (included_filename == nullptr) {
+    return;
+  }
+
+  absl::string_view filename_text = included_filename->get().text();
 
   // Remove the double quotes from the filesname.
   const absl::string_view filename_unquoted = StripOuterQuotes(filename_text);
   const std::string filename(filename_unquoted.begin(),
                              filename_unquoted.end());
-  int startLocation = included_filename.get().left(context_.base);
-  int endLocation = included_filename.get().right(context_.base);
+  int startLocation = included_filename->get().left(context_.base);
+  int endLocation = included_filename->get().right(context_.base);
 
   std::string file_path = "";
 
