@@ -593,14 +593,12 @@ static constexpr FormatterTestCase kFormatterTestCases[] = {
                                                   // (symmetrized)
     },
     {
-        "  parameter  int   foo=bar [ a +b ] ;",  // binary inside index expr
-        "parameter int foo = bar[a + b];\n",      // allowed to be 1 space
-                                                  // (symmetrized)
+        "  parameter  int   foo=bar [ a +b ] ;",  // compact binary inside
+        "parameter int foo = bar[a+b];\n",        // index expression
     },
     {
-        "  parameter  int   foo=bar [ a  +b ] ;",  // binary inside index expr
-        "parameter int foo = bar[a + b];\n",       // limited to 1 space (and
-                                                   // symmetrized)
+        "  parameter  int   foo=bar [ a  +b ] ;",  // compact binary inside
+        "parameter int foo = bar[a+b];\n",         // index expression
     },
     {
         // with line continuations

@@ -132,7 +132,7 @@ static bool IsAnySemicolon(const PreFormatToken& ftoken) {
 static WithReason<int> SpacesRequiredBetween(
     const PreFormatToken& left, const PreFormatToken& right,
     const SyntaxTreeContext& left_context,
-    const SyntaxTreeContext& right_context) {
+    const SyntaxTreeContext& right_context, const FormatStyle& style) {
   VLOG(3) << "Spacing between " << verilog_symbol_name(left.TokenEnum())
           << " and " << verilog_symbol_name(right.TokenEnum());
   // Higher precedence rules should be handled earlier in this function.
@@ -241,6 +241,13 @@ static WithReason<int> SpacesRequiredBetween(
     // TODO(fangism): make this behavior configurable
     if (right.format_token_enum == FormatTokenType::binary_operator &&
         InRangeLikeContext(right_context)) {
+      if (style.compact_indexing_and_selections &&
+          !InDeclaredDimensions(right_context)) {
+        return {0,
+                "Compact binary expressions inside indexing / bit selection "
+                "operator []"};
+      }
+
       int spaces = right.OriginalLeadingSpaces().length();
       if (spaces > 1) {
         spaces = 1;
@@ -560,7 +567,7 @@ static SpacePolicy SpacesRequiredBetween(
   // Default for unhandled cases, 1 space to be conservative.
   constexpr int kUnhandledSpacesDefault = 1;
   const auto spaces =
-      SpacesRequiredBetween(left, right, left_context, right_context);
+      SpacesRequiredBetween(left, right, left_context, right_context, style);
   VLOG(1) << "spaces: " << spaces.value << ", reason: " << spaces.reason;
 
   if (spaces.value == kUnhandledSpacesRequired) {
