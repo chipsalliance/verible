@@ -5782,6 +5782,12 @@ static const std::initializer_list<ParserTestData> kInvalidCodeTests = {
     {"`g((\\x\" `g(::\"\n"
      "),",
      {verible::TK_EOF, ""}},
+    // members may only be unqualified (unlike C++)
+    {"function int bad;\n"
+     "  return x.y",
+     {TK_SCOPE_RES, "::"},
+     "z;\n"
+     "endfunction\n"},
 };
 
 using verible::LeafTag;

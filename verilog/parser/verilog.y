@@ -4971,21 +4971,19 @@ switchtype
   ;
 
 
+/* In SystemVerilog, member identifiers can only be unqualified plain identifiers
+ * (unlike C++, which allows "obj.foo::bar").
+ */
 hierarchy_extension
-  : '.' class_id
+  : '.' unqualified_id
     { $$ = MakeTaggedNode(N::kHierarchyExtension, $1, $2); }
-  /* TODO(fangism): Most of the time, $2 should be a GenericIdentifier;
-   * a qualified class_id should only be permitted when preceded by
-   * implicit_class_handle.
-   * (This happens to resemble C++-syntax: obj.foo::bar .)
-   */
   | '.' MacroCall
     { $$ = MakeTaggedNode(N::kMacroCallExtension, $1, $2);}
   ;
 hierarchy_or_call_extension
-  : '.' class_id
+  : '.' unqualified_id
     { $$ = MakeTaggedNode(N::kHierarchyExtension, $1, $2); }
-  | '.' class_id '(' argument_list_opt ')'
+  | '.' unqualified_id '(' argument_list_opt ')'
     { $$ = MakeTaggedNode(N::kMethodCallExtension, $1, $2, MakeParenGroup($3, $4, $5)); }
   | '.' MacroCall
     { $$ = MakeTaggedNode(N::kMacroCallExtension, $1, $2); }
