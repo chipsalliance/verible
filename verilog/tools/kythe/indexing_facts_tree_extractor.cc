@@ -907,6 +907,12 @@ void IndexingFactsTreeExtractor::ExtractFunctionOrTaskCall(
   // sibling.
   MoveAndDeleteLastSibling(function_node);
 
+  // Terminate if no function name is found.
+  // in case of built-in functions: "sin()";
+  if (function_node.Value().Anchors().empty()) {
+    return;
+  }
+
   {
     const IndexingFactsTreeContext::AutoPop p(&facts_tree_context_,
                                               &function_node);
@@ -926,6 +932,12 @@ void IndexingFactsTreeExtractor::ExtractMethodCallExtension(
   // Move the data from the last sibling to the current node and delete that
   // sibling
   MoveAndDeleteLastSibling(function_node);
+  
+  // Terminate if no function name is found.
+  // in case of built-in functions: "sin()";
+  if (function_node.Value().Anchors().empty()) {
+    return;
+  }
 
   const SyntaxTreeLeaf& function_name =
       GetFunctionCallNameFromCallExtension(call_extension_node);
