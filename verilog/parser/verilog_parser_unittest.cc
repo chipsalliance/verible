@@ -101,6 +101,7 @@ static const ParserTestCaseArray kPreprocessorTests = {
     "`MACRO(` )\n",  // call arg contains a lexical error, but remains unlexed
     "`MACRO(`DEEPER(`))\n",  // call arg contains a lexical error, but remains
                              // unlexed
+    "`c(;d());\n"            // ";d()" remains unlexed
 };
 
 // Make sure line continuations, newlines and spaces get filtered out
@@ -5933,6 +5934,12 @@ static const verible::ErrorRecoveryTestCase kErrorRecoveryTests[] = {
      "endtask\n",
      {NodeTag(kTaskDeclaration), NodeTag(kStatementList),
       NodeTag(kConditionalStatement), NodeTag(kIfClause), NodeTag(kIfHeader)}},
+    {"module m;\n"
+     "if (a+);\n"
+     "endmodule\n",
+     {NodeTag(kModuleDeclaration), NodeTag(kModuleItemList),
+      NodeTag(kConditionalGenerateConstruct), NodeTag(kGenerateIfClause),
+      NodeTag(kGenerateIfHeader)}},
 };
 #undef NodeTag
 

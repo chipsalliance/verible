@@ -48,19 +48,11 @@ std::string EmbedInClassMethod(absl::string_view text) {
   return EmbedInClass(EmbedInFunction(text));
 }
 
-bool EqualNodeTag(const verible::SymbolPtr& symbol, NodeEnum e) {
-  if (symbol == nullptr || symbol->Kind() != verible::SymbolKind::kNode)
-    return false;
-
-  const auto* node_ptr =
-      down_cast<const verible::SyntaxTreeNode*>(symbol.get());
-  return node_ptr->MatchesTag(e);
-}
-
 void ExpectString(const verible::SymbolPtr& symbol,
                   absl::string_view expected) {
   const auto* leaf = down_cast<const verible::SyntaxTreeLeaf*>(symbol.get());
-  CHECK_EQ(ABSL_DIE_IF_NULL(leaf)->get().text(), expected);
+  CHECK_NE(leaf, nullptr) << "expected: " << expected;
+  CHECK_EQ(leaf->get().text(), expected);
 }
 
 }  // namespace verilog

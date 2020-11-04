@@ -16,6 +16,7 @@
 
 #include "common/analysis/file_analyzer.h"
 
+#include <sstream>
 #include <string>
 
 #include "gtest/gtest.h"
@@ -27,6 +28,17 @@
 
 namespace verible {
 namespace {
+
+TEST(RejectedTokenStreamTest, StringRepresentation) {
+  const RejectedToken reject{
+      TokenInfo(77, "foobar"),
+      AnalysisPhase::kParsePhase,
+      "bad syntax",
+  };
+  std::ostringstream stream;
+  stream << reject;
+  EXPECT_EQ(stream.str(), "(#77: \"foobar\") (syntax): bad syntax");
+}
 
 // Subclass for the purpose of testing FileAnalyzer.
 class FakeFileAnalyzer : public FileAnalyzer {

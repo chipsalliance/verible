@@ -53,14 +53,13 @@ std::string EmbedInClassMethod(absl::string_view text);
 // Uses gunit's CHECK to raise error
 void ExpectString(const verible::SymbolPtr& symbol, absl::string_view expected);
 
-// Returns true if symbol is a kNode and has a tag that matched NodeEnum e
-bool EqualNodeTag(const verible::SymbolPtr& symbol, NodeEnum e);
-
 template <typename T1, typename T2, typename T3>
 verible::SymbolPtr MakeParenGroup(T1&& left_paren, T2&& contents,
                                   T3&& right_paren) {
   ExpectString(left_paren, "(");
-  ExpectString(right_paren, ")");
+  if (contents != nullptr) {
+    ExpectString(right_paren, ")");
+  }  // else right_paren might be dropped due to error-recovery
   return verible::MakeTaggedNode(
       NodeEnum::kParenGroup, std::forward<T1>(left_paren),
       std::forward<T2>(contents), std::forward<T3>(right_paren));

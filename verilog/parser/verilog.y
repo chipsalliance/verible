@@ -5908,8 +5908,8 @@ always_any
     { $$ = move($1); }
   ;
 generate_if
-  : TK_if '(' expression ')'
-    { $$ = MakeTaggedNode(N::kGenerateIf, $1, MakeParenGroup($2, $3, $4)); }
+  : TK_if expression_in_parens
+    { $$ = MakeTaggedNode(N::kGenerateIf, $1, $2); }
   ;
 generate_case_items
   : generate_case_items generate_case_item
@@ -8509,6 +8509,7 @@ expression_in_parens
   /* error recovery inside balanced parens */
   | '(' error ')'
     { yyerrok; $$ = MakeParenGroup($1, Recover(), $3); }
+    /* note: $3 is nullptr */
   ;
 
 expression_in_parens_opt

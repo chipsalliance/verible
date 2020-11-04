@@ -101,6 +101,17 @@ cc_library(
     ],
 )
 
+cc_test(
+    name = "verilog_treebuilder_utils_test",
+    srcs = ["verilog_treebuilder_utils_test.cc"],
+    deps = [
+        ":verilog_treebuilder_utils",
+        "//common/text:tree_builder_test_util",
+        "//common/text:tree_utils",
+        "@com_google_googletest//:gtest_main",
+    ],
+)
+
 cc_library(
     name = "match_test_utils",
     testonly = 1,
