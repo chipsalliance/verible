@@ -23,7 +23,8 @@ verible-verilog-kythe-extractor [options] --file_list_path FILE
                         default: json;
     --file_list_path (The path to the file list which contains the names of SystemVerilog files.
                       The files should be ordered by definition dependencies)
-    --file_list_root (The absolute location which we prepend to the files in the file list (where listed files are relative to)
+    --file_list_root (The absolute location which we prepend to the files in the file list (where listed files are relative to);
+                      default: the place of invocation.
     --include_dir_paths (Comma separated paths of the directories used to look for included files.
                          Note: The order of the files here is important.
                          File search will stop at the the first found among the listed directories.

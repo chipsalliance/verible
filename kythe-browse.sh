@@ -15,9 +15,13 @@
 
 usage() {
   cat <<EOF
-$0 verilog file...
+$0 PATH DIR INCLUDE_DIRs
 
-Extracts Kythe facts from the given verilog file and run Kythe web ui to visualize code navigation.
+PATH is the path to the file list.
+DIR is the file list root.
+INCLUDE_DIRs the directories for includes.
+
+Extracts Kythe facts from the given verilog file list and run Kythe web ui to visualize code navigation.
 EOF
 }
 
@@ -25,7 +29,6 @@ set -o pipefail
 BROWSE_PORT="${BROWSE_PORT:-8080}"
 KYTHE_BINDIR="/opt/kythe/tools"
 KYTHE_OUT="./kythe-out"
-VERILOG_TEST_FILE_LIST="./verilog/tools/kythe/testdata/more_testdata/file_list.txt"
 # You can find prebuilt binaries at https://github.com/kythe/kythe/releases.
 # This script assumes that they are installed to /opt/kythe.
 # If you build the tools yourself or install them to a different location,
@@ -34,18 +37,11 @@ rm -f -- ${KYTHE_OUT}/graphstore/* ${KYTHE_OUT}/tables/*
 mkdir -p ${KYTHE_OUT}/graphstore ${KYTHE_OUT}/tables
 bazel build -c opt //verilog/tools/kythe:all
 
-for i in "$@"; do
-  echo "$(basename $i)" > "$(dirname $i)/file_list.txt"
-  cat "$(dirname $i)/file_list.txt"
-  # Read JSON entries from standard in to a graphstore.
-  bazel-bin/verilog/tools/kythe/verible-verilog-kythe-extractor --printextraction --file_list_path "$(dirname $i)/file_list.txt" --file_list_root "$(dirname $i)"  --print_kythe_facts json  > "${KYTHE_OUT}"/entries
-
-  # Write entry stream into a GraphStore
-  "${KYTHE_BINDIR}"/entrystream --read_format=json < "${KYTHE_OUT}"/entries \
-  | "${KYTHE_BINDIR}"/write_entries -graphstore "${KYTHE_OUT}"/graphstore
-
-  rm "$(dirname $i)/file_list.txt"
-done
+# Read JSON entries from standard in to a graphstore.
+bazel-bin/verilog/tools/kythe/verible-verilog-kythe-extractor --file_list_path "$1" --file_list_root "$2" --print_kythe_facts json --include_dir_paths "$3" > "${KYTHE_OUT}"/entries
+# Write entry stream into a GraphStore
+"${KYTHE_BINDIR}"/entrystream --read_format=json < "${KYTHE_OUT}"/entries \
+| "${KYTHE_BINDIR}"/write_entries -graphstore "${KYTHE_OUT}"/graphstore
 
 # Convert the graphstore to serving tables.
 "${KYTHE_BINDIR}"/write_tables -graphstore "${KYTHE_OUT}"/graphstore -out="${KYTHE_OUT}"/tables

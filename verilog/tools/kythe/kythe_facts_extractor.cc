@@ -700,7 +700,9 @@ void KytheFactsExtractor::ExtractFunctionOrTaskCall(
   CreateAnchorReferences(anchors, definitions);
 
   // creating ref/call edge.
-  if (definitions.size() == anchors.size()) {
+  // If the sizes aren't equal that means we couldn't find the function
+  // defintion.
+  if (!definitions.empty() && definitions.size() == anchors.size()) {
     const VName current_anchor_vname = CreateAnchor(anchors.back());
     CreateEdge(current_anchor_vname, kEdgeRefCall, *definitions.back());
   }
