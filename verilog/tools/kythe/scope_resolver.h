@@ -165,7 +165,7 @@ class ScopeResolver {
   // TODO(minatoma): returns scopes with VNames to decrease search time for
   // scopes.
   // Searches for the definitions of the given names.
-  const std::vector<const VName*> SearchForDefinitions(
+  const std::vector<std::pair<const VName*, const Scope*>> SearchForDefinitions(
       const std::vector<std::string>& names) const;
 
   // Adds the VNames of the definitions it given scope to the scope context.

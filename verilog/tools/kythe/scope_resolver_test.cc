@@ -107,25 +107,25 @@ TEST(ScopeResolverTests, SearchForDefinition) {
     scope_resolver.AddDefinitionToScopeContext(vnames[0]);
     scope_resolver.MapSignatureToScope(signatures[0], scope);
     {
-      const std::vector<const VName*> vnames =
+      const std::vector<std::pair<const VName*, const Scope*>> vnames =
           scope_resolver.SearchForDefinitions({names[0], names[1]});
       EXPECT_EQ(vnames.size(), 2);
-      EXPECT_EQ(vnames[1]->signature, signatures[1]);
+      EXPECT_EQ(vnames[1].first->signature, signatures[1]);
     }
     {
-      const std::vector<const VName*> vnames =
+      const std::vector<std::pair<const VName*, const Scope*>> vnames =
           scope_resolver.SearchForDefinitions({names[0], names[2]});
       EXPECT_EQ(vnames.size(), 2);
-      EXPECT_EQ(vnames[1]->signature, signatures[2]);
+      EXPECT_EQ(vnames[1].first->signature, signatures[2]);
     }
     {
-      const std::vector<const VName*> vnames =
+      const std::vector<std::pair<const VName*, const Scope*>> vnames =
           scope_resolver.SearchForDefinitions({names[0], names[3]});
       EXPECT_EQ(vnames.size(), 1);
-      EXPECT_EQ(vnames[0]->signature, signatures[0]);
+      EXPECT_EQ(vnames[0].first->signature, signatures[0]);
     }
     {
-      const std::vector<const VName*> vnames =
+      const std::vector<std::pair<const VName*, const Scope*>> vnames =
           scope_resolver.SearchForDefinitions({names[2], names[1]});
       EXPECT_TRUE(vnames.empty());
     }
@@ -187,23 +187,23 @@ TEST(ScopeResolverTests, SearchForNestedDefinition) {
       EXPECT_EQ(found_scope, nullptr);
     }
     {
-      const std::vector<const VName*> vnames =
+      const std::vector<std::pair<const VName*, const Scope*>> vnames =
           scope_resolver.SearchForDefinitions({names[0], names[1]});
-      EXPECT_EQ(vnames[1]->signature, signatures[1]);
+      EXPECT_EQ(vnames[1].first->signature, signatures[1]);
     }
     {
-      const std::vector<const VName*> vnames =
+      const std::vector<std::pair<const VName*, const Scope*>> vnames =
           scope_resolver.SearchForDefinitions({names[1], names[3]});
-      EXPECT_EQ(vnames[1]->signature, signatures[3]);
+      EXPECT_EQ(vnames[1].first->signature, signatures[3]);
     }
     {
-      const std::vector<const VName*> vnames =
+      const std::vector<std::pair<const VName*, const Scope*>> vnames =
           scope_resolver.SearchForDefinitions({names[6], names[3]});
-      EXPECT_EQ(vnames[1]->signature, signatures[3]);
+      EXPECT_EQ(vnames[1].first->signature, signatures[3]);
     }
 
     {
-      const std::vector<const VName*> vnames =
+      const std::vector<std::pair<const VName*, const Scope*>> vnames =
           scope_resolver.SearchForDefinitions({names[6], names[6]});
       EXPECT_EQ(vnames.size(), 1);
     }
