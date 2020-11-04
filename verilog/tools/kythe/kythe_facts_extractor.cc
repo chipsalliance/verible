@@ -511,12 +511,7 @@ void KytheFactsExtractor::ExtractDataTypeReference(
   const std::vector<const VName*> type_vnames =
       scope_resolver_->SearchForDefinitions({type.Value()});
 
-  if (type_vnames.empty()) {
-    return;
-  }
-
-  const VName type_anchor = CreateAnchor(type);
-  CreateEdge(type_anchor, kEdgeRef, *type_vnames[0]);
+  CreateAnchorReferences(anchors, type_vnames);
 }
 
 VName KytheFactsExtractor::ExtractModuleInstance(
@@ -697,29 +692,17 @@ void KytheFactsExtractor::ExtractFunctionOrTaskCall(
     const IndexingFactNode& function_call_fact_node) {
   const auto& anchors = function_call_fact_node.Value().Anchors();
 
-  // In case function_name();
-  if (anchors.size() == 1) {
-    const auto& function_name = anchors[0];
+  // Search for member hierarchy in the scopes.
+  const std::vector<const VName*> definitions =
+      scope_resolver_->SearchForDefinitions(
+          GetListOfReferencesfromListOfAnchor(anchors));
 
-    const std::vector<const VName*> function_vnames =
-        scope_resolver_->SearchForDefinitions({function_name.Value()});
+  CreateAnchorReferences(anchors, definitions);
 
-    if (function_vnames.empty()) {
-      return;
-    }
-
-    const VName function_vname_anchor = CreateAnchor(function_name);
-
-    CreateEdge(function_vname_anchor, kEdgeRef, *function_vnames[0]);
-    CreateEdge(function_vname_anchor, kEdgeRefCall, *function_vnames[0]);
-  } else {
-    // In case pkg::class1::function_name().
-    IndexingNodeData member_reference_data(IndexingFactType::kMemberReference);
-    for (const Anchor& anchor : anchors) {
-      member_reference_data.AppendAnchor(
-          Anchor(anchor.Value(), anchor.StartLocation(), anchor.EndLocation()));
-    }
-    ExtractMemberReference(IndexingFactNode(member_reference_data), true);
+  // creating ref/call edge.
+  if (definitions.size() == anchors.size()) {
+    const VName current_anchor_vname = CreateAnchor(anchors.back());
+    CreateEdge(current_anchor_vname, kEdgeRefCall, *definitions.back());
   }
 }
 
@@ -769,11 +752,7 @@ void KytheFactsExtractor::ExtractExtends(const IndexingFactNode& extends_node) {
       scope_resolver_->SearchForDefinitions(
           GetListOfReferencesfromListOfAnchor(anchors));
 
-  // Loop over the found definitions and create kythe facts.
-  for (size_t i = 0; i < definitions.size(); i++) {
-    const VName current_anchor_vname = CreateAnchor(anchors[i]);
-    CreateEdge(current_anchor_vname, kEdgeRef, *definitions[i]);
-  }
+  CreateAnchorReferences(anchors, definitions);
 
   // Check if all the definitions were found.
   if (definitions.size() != anchors.size() || definitions.empty()) {
@@ -864,20 +843,7 @@ void KytheFactsExtractor::ExtractMemberReference(
       scope_resolver_->SearchForDefinitions(
           GetListOfReferencesfromListOfAnchor(anchors));
 
-  // Loop over the found definitions and create kythe facts.
-  for (size_t i = 0; i < definitions.size(); i++) {
-    const VName current_anchor_vname = CreateAnchor(anchors[i]);
-    CreateEdge(current_anchor_vname, kEdgeRef, *definitions[i]);
-  }
-
-  // Checking if we found all the member heirarchy by ensuring the size of the
-  // found definitions is equal to the size of the given anchors and then
-  // creating ref/call edge if it was a function call.
-  // TODO(minatoma): refactor code to get rid of this if condition.
-  if (definitions.size() == anchors.size() && is_function_call) {
-    const VName current_anchor_vname = CreateAnchor(anchors.back());
-    CreateEdge(current_anchor_vname, kEdgeRefCall, *definitions.back());
-  }
+  CreateAnchorReferences(anchors, definitions);
 }
 
 VName KytheFactsExtractor::ExtractParamDeclaration(
@@ -957,6 +923,16 @@ VName KytheFactsExtractor::ExtractStructOrUnion(
   CreateEdge(struct_name_anchor, kEdgeDefinesBinding, struct_vname);
 
   return struct_vname;
+}
+
+void KytheFactsExtractor::CreateAnchorReferences(
+    const std::vector<Anchor>& anchors,
+    const std::vector<const VName*>& definitions) {
+  // Loop over the definitions and create kythe facts.
+  for (size_t i = 0; i < definitions.size(); i++) {
+    const VName current_anchor_vname = CreateAnchor(anchors[i]);
+    CreateEdge(current_anchor_vname, kEdgeRef, *definitions[i]);
+  }
 }
 
 VName KytheFactsExtractor::CreateAnchor(const Anchor& anchor) {

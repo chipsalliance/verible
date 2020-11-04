@@ -17,18 +17,18 @@
 #include <iostream>
 #include <string>
 
-#include "google/protobuf/io/zero_copy_stream_impl.h"
 #include "absl/flags/flag.h"
 #include "absl/status/status.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
 #include "absl/strings/substitute.h"
-#include "kythe/cxx/common/indexing/KytheCachingOutput.h"
-#include "kythe/proto/storage.pb.h"
 #include "common/util/bijective_map.h"
 #include "common/util/enum_flags.h"
 #include "common/util/file_util.h"
 #include "common/util/init_command_line.h"
+#include "google/protobuf/io/zero_copy_stream_impl.h"
+#include "kythe/cxx/common/indexing/KytheCachingOutput.h"
+#include "kythe/proto/storage.pb.h"
 #include "verilog/analysis/verilog_analyzer.h"
 #include "verilog/tools/kythe/indexing_facts_tree_extractor.h"
 #include "verilog/tools/kythe/kythe_facts_extractor.h"
@@ -82,11 +82,11 @@ ABSL_FLAG(
 // TODO: support repeatable flag
 ABSL_FLAG(
     std::vector<std::string>, include_dir_paths, {},
-    R"(Comma seperated paths of the directories used to look for included files.
+    R"(Comma separated paths of the directories used to look for included files.
 Note: The order of the files here is important.
 File search will stop at the the first found among the listed directories.
 e.g --include_dir_paths directory1,directory2
-if "A.sv" exists in both "dir1" and "dir2" the one in "dir1" is the one we will use.
+if "A.sv" exists in both "directory1" and "directory2" the one in "directory1" is the one we will use.
 )");
 
 namespace verilog {
@@ -152,7 +152,8 @@ static std::vector<absl::Status> ExtractFiles(
 
   // check for printextraction flag, and print extraction if on
   if (absl::GetFlag(FLAGS_printextraction)) {
-    std::cout << file_list_facts_tree << std::endl;
+    // Don't use std::cout unless KytheFactsPrinter uses another stream.
+    LOG(INFO) << file_list_facts_tree << std::endl;
   }
 
   // check how kythe facts.
