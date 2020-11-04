@@ -26,6 +26,14 @@ namespace verilog {
 std::vector<verible::TreeSearchMatch> FindAllTaskDeclarations(
     const verible::Symbol&);
 
+// Find all task headers, which are common to declarations and prototypes.
+std::vector<verible::TreeSearchMatch> FindAllTaskHeaders(
+    const verible::Symbol&);
+
+// Find all task prototypes, including class method prototypes.
+std::vector<verible::TreeSearchMatch> FindAllTaskPrototypes(
+    const verible::Symbol&);
+
 // Returns the task declaration header
 const verible::SyntaxTreeNode& GetTaskHeader(const verible::Symbol&);
 
