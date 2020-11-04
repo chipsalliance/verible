@@ -22,6 +22,8 @@ DIR is the file list root.
 INCLUDE_DIRs the directories for includes.
 
 Extracts Kythe facts from the given verilog file list and run Kythe web ui to visualize code navigation.
+This script assumes that the script is to be run from Verible project root.
+This script assumes that Kythe binaries are installed to /opt/kythe.
 EOF
 }
 
@@ -29,6 +31,10 @@ set -o pipefail
 BROWSE_PORT="${BROWSE_PORT:-8080}"
 KYTHE_BINDIR="/opt/kythe/tools"
 KYTHE_OUT="./kythe-out"
+
+[[ "$#" == 3 ]] || { usage; exit 1; }
+[[ -x "$KYTHE_BINDIR"/entrystream ]] || { echo "Missing kythe tool: ..." ; exit 1; }
+
 # You can find prebuilt binaries at https://github.com/kythe/kythe/releases.
 # This script assumes that they are installed to /opt/kythe.
 # If you build the tools yourself or install them to a different location,
