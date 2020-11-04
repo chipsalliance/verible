@@ -5928,6 +5928,11 @@ static const verible::ErrorRecoveryTestCase kErrorRecoveryTests[] = {
      "endclass\n",
      {NodeTag(kClassDeclaration), NodeTag(kClassHeader),
       LeafTag(SymbolIdentifier)}},
+    {"task t;\n"
+     "if (;c());\n"  // error on the first ';'
+     "endtask\n",
+     {NodeTag(kTaskDeclaration), NodeTag(kStatementList),
+      NodeTag(kConditionalStatement), NodeTag(kIfClause), NodeTag(kIfHeader)}},
 };
 #undef NodeTag
 

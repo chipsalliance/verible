@@ -6813,19 +6813,19 @@ case_statement
   ;
 
 conditional_statement
-  : unique_priority_opt TK_if '(' expression ')' statement_or_null
+  : unique_priority_opt TK_if expression_in_parens statement_or_null
     %prec less_than_TK_else
     { $$ = MakeTaggedNode(N::kConditionalStatement,
              MakeTaggedNode(N::kIfClause,
-               MakeTaggedNode(N::kIfHeader, $1, $2, MakeParenGroup($3, $4, $5)),
-               MakeTaggedNode(N::kIfBody, $6)));}
-  | unique_priority_opt TK_if '(' expression ')' statement_or_null
+               MakeTaggedNode(N::kIfHeader, $1, $2, $3),
+               MakeTaggedNode(N::kIfBody, $4)));}
+  | unique_priority_opt TK_if expression_in_parens statement_or_null
     TK_else statement_or_null
     { $$ = MakeTaggedNode(N::kConditionalStatement,
              MakeTaggedNode(N::kIfClause,
-               MakeTaggedNode(N::kIfHeader, $1, $2, MakeParenGroup($3, $4, $5)),
-               MakeTaggedNode(N::kIfBody, $6)),
-             MakeTaggedNode(N::kElseClause, $7, MakeTaggedNode(N::kElseBody, $8)));}
+               MakeTaggedNode(N::kIfHeader, $1, $2, $3),
+               MakeTaggedNode(N::kIfBody, $4)),
+             MakeTaggedNode(N::kElseClause, $5, MakeTaggedNode(N::kElseBody, $6)));}
   ;
 
 event_trigger
@@ -8502,9 +8502,18 @@ rs_production_list_or_rand_join
     { $$ = MakeTaggedNode(N::kRandJoin, $1, $2, $3, $4); }
   ;
 
-expression_in_parens_opt
+/* TODO(fangism): use this nonterminal everywhere equivalent to enable error-recovery */
+expression_in_parens
   : '(' expression ')'
     { $$ = MakeParenGroup($1, $2, $3); }
+  /* error recovery inside balanced parens */
+  | '(' error ')'
+    { yyerrok; $$ = MakeParenGroup($1, Recover(), $3); }
+  ;
+
+expression_in_parens_opt
+  : expression_in_parens
+    { $$ = move($1); }
   | /* empty */
     { $$ = nullptr; }
   ;
