@@ -37,21 +37,21 @@
 #include <string>
 #include <utility>
 
+#include "absl/strings/string_view.h"
 #include "common/text/concrete_syntax_tree.h"
 #include "verilog/CST/verilog_nonterminals.h"
 
 namespace verilog {
 
 // Set of utility functions for embedding a statement into a certain context.
-std::string EmbedInModule(const std::string& text);
-std::string EmbedInClass(const std::string& text);
-std::string EmbedInFunction(const std::string& text);
-std::string EmbedInClassMethod(const std::string& text);
+std::string EmbedInModule(absl::string_view text);
+std::string EmbedInClass(absl::string_view text);
+std::string EmbedInFunction(absl::string_view text);
+std::string EmbedInClassMethod(absl::string_view text);
 
 // Checks that symbol is symbol is a leaf and its text matches expected
 // Uses gunit's CHECK to raise error
-void ExpectString(const verible::SymbolPtr& symbol,
-                  const std::string& expected);
+void ExpectString(const verible::SymbolPtr& symbol, absl::string_view expected);
 
 // Returns true if symbol is a kNode and has a tag that matched NodeEnum e
 bool EqualNodeTag(const verible::SymbolPtr& symbol, NodeEnum e);
