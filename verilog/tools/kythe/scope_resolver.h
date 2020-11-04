@@ -101,6 +101,7 @@ class ScopeContext : public verible::AutoPopStack<Scope*> {
 
   // returns the top VName of the stack
   Scope& top() { return *ABSL_DIE_IF_NULL(base_type::top()); }
+  const Scope& top() const { return *ABSL_DIE_IF_NULL(base_type::top()); }
 
   // TODO(minatoma): improve performance and memory for this function.
   //
@@ -164,9 +165,13 @@ class ScopeResolver {
 
   // TODO(minatoma): returns scopes with VNames to decrease search time for
   // scopes.
-  // Searches for the definitions of the given names.
+  // Searches for the definitions of the given references' names.
   const std::vector<std::pair<const VName*, const Scope*>> SearchForDefinitions(
       const std::vector<std::string>& names) const;
+
+  // Searches for definition of the given reference's name in the current
+  // scope (the top of scope_context).
+  const VName* SearchForDefinitionInCurrentScope(absl::string_view name) const;
 
   // Adds the VNames of the definitions it given scope to the scope context.
   void AppendScopeToScopeContext(const Scope& scope);

@@ -57,6 +57,7 @@ constexpr absl::string_view kEdgeRefImports = "/kythe/edge/ref/imports";
 constexpr absl::string_view kEdgeExtends = "/kythe/edge/extends";
 constexpr absl::string_view kEdgeRefIncludes = "/kythe/edge/ref/includes";
 constexpr absl::string_view kEdgeTyped = "/kythe/edge/typed";
+constexpr absl::string_view kEdgeOverrides = "/kythe/edge/overrides";
 
 }  // namespace kythe
 }  // namespace verilog

@@ -693,6 +693,19 @@ VName KytheFactsExtractor::ExtractFunctionOrTask(
   CreateFact(function_vname, kFactComplete, kCompleteDefinition);
   CreateEdge(function_vname_anchor, kEdgeDefinesBinding, function_vname);
 
+  // Check if there is a function with the same name in the current scope and if
+  // exists output "overrides" edge.
+  const VName* overridden_function_vname =
+      scope_resolver_->SearchForDefinitionInCurrentScope(function_name.Value());
+
+  // TODO(minatoma): add a check to output this edge only if the parent is class
+  // or interface.
+  // TODO(minatoma): add a function like SyntaxTreeNode::MatchesTagAnyOf to
+  // IndexingFactsTree.
+  if (overridden_function_vname != nullptr) {
+    CreateEdge(function_vname, kEdgeOverrides, *overridden_function_vname);
+  }
+
   return function_vname;
 }
 
