@@ -215,8 +215,9 @@ class KytheFactsExtractor {
 
   // Create "ref" edges that point from the given anchors to the given
   // definitions in order.
-  void CreateAnchorReferences(const std::vector<Anchor>& anchors,
-                              const std::vector<const VName*>& definitions);
+  void CreateAnchorReferences(
+      const std::vector<Anchor>& anchors,
+      const std::vector<std::pair<const VName*, const Scope*>>& definitions);
 
   // Generates an anchor VName for kythe.
   VName CreateAnchor(const Anchor&);

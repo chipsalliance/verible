@@ -87,35 +87,36 @@ const VName* ScopeResolver::SearchForDefinitionInGlobalScope(
 
 const VName* ScopeResolver::SearchForDefinitionInScopeContext(
     absl::string_view reference_name) const {
-  // Try to find the definition in the current ScopeContext.
-  const VName* definition_vname =
-      scope_context_.SearchForDefinition(reference_name);
-  if (definition_vname != nullptr) {
-    return definition_vname;
-  }
-
-  // Try to find the definition in the previous files' scopes.
-  // This is a linear-time search over files.
-  if (previous_file_scope_resolver_ != nullptr) {
-    return previous_file_scope_resolver_->SearchForDefinitionInGlobalScope(
-        reference_name);
-  }
-
-  return nullptr;
+  return scope_context_.SearchForDefinition(reference_name);
 }
 
-const std::vector<const VName*> ScopeResolver::SearchForDefinitions(
-    const std::vector<std::string>& names) const {
-  std::vector<const VName*> definitions;
+const VName* ScopeResolver::SearchForDefinitionInCurrentScope(
+    absl::string_view name) const {
+  return scope_context_.top().SearchForDefinition(name);
+}
 
-  // Try to find the definition in the previous explored scopes.
+const std::vector<std::pair<const VName*, const Scope*>>
+ScopeResolver::SearchForDefinitions(
+    const std::vector<std::string>& names) const {
+  std::vector<std::pair<const VName*, const Scope*>> definitions;
+
+  // Try to find the definition in the scopes of the current file.
   const VName* definition = SearchForDefinitionInScopeContext(names[0]);
+
+  // Try to find the definition in the previous files' scopes.
+  if (definition == nullptr && previous_file_scope_resolver_ != nullptr) {
+    // This is a linear-time search over files.
+    definition =
+        previous_file_scope_resolver_->SearchForDefinitionInGlobalScope(
+            names[0]);
+  }
+
   if (definition == nullptr) {
     return definitions;
   }
 
-  definitions.push_back(definition);
   const Scope* current_scope = SearchForScope(definition->signature);
+  definitions.push_back({definition, current_scope});
 
   // Iterate over the names and try to find the definition in the current scope.
   for (const auto& name : verible::make_range(names.begin() + 1, names.end())) {
@@ -126,15 +127,13 @@ const std::vector<const VName*> ScopeResolver::SearchForDefinitions(
     if (definition == nullptr) {
       break;
     }
-    definitions.push_back(definition);
     current_scope = SearchForScope(definition->signature);
+    definitions.push_back({definition, current_scope});
   }
 
   return definitions;
 }
 
-// TODO(minatoma): separate this function into two function one for searching in
-// current file's scopes and one for searching in all the files' scopes.
 const Scope* ScopeResolver::SearchForScope(const Signature& signature) const {
   const auto scope = scopes_.find(signature);
   if (scope != scopes_.end()) {
