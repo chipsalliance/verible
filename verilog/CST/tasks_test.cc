@@ -29,9 +29,11 @@
 #include "common/text/symbol.h"
 #include "common/text/text_structure.h"
 #include "common/text/token_info.h"
+#include "common/text/tree_utils.h"
 #include "common/util/casts.h"
 #include "common/util/logging.h"
 #include "verilog/CST/identifier.h"
+#include "verilog/CST/match_test_utils.h"
 #include "verilog/analysis/verilog_analyzer.h"
 #include "verilog/parser/verilog_token_enum.h"
 
@@ -43,95 +45,152 @@ namespace {
 
 using verible::down_cast;
 using verible::SyntaxTreeSearchTestCase;
+using verible::TextStructureView;
 using verible::TreeSearchMatch;
 
-TEST(FindAllTaskDeclarationsTest, EmptySource) {
-  VerilogAnalyzer analyzer("", "");
-  ASSERT_OK(analyzer.Analyze());
-  const auto& root = analyzer.Data().SyntaxTree();
-  const auto task_declarations =
-      FindAllTaskDeclarations(*ABSL_DIE_IF_NULL(root));
-  EXPECT_TRUE(task_declarations.empty());
+TEST(FindAllTaskDeclarationsTest, Various) {
+  constexpr int kTag = 1;  // value doesn't matter
+  const SyntaxTreeSearchTestCase kTestCases[] = {
+      {""},
+      {"class foo; endclass"},
+      {"module m(); endmodule: m"},
+      {"function f(); endfunction"},
+      {{kTag, "task foo();\nendtask"}},
+      {{kTag, "task foo();\nendtask : foo"}},
+      {{kTag, "task t();\nint x = 1;\nendtask"}},
+      {// task inside package
+       "package pkg;\n",
+       {kTag,
+        "task t;\n "
+        "int x = 1;"
+        "\nendtask"},
+       "\nendpackage"},
+      {// multiple tasks
+       {kTag, "task foo();\nendtask"},
+       "\n",
+       {kTag, "task foo2();\nendtask"}},
+      {// task declaration as class method
+       "class bar;\n",
+       {kTag, "task foo();\nendtask"},
+       " endclass"},
+      {// task declaration inside module
+       "module bar;\n",
+       {kTag, "task foo();\nendtask"},
+       " endmodule"},
+  };
+  for (const auto& test : kTestCases) {
+    TestVerilogSyntaxRangeMatches(
+        __FUNCTION__, test, [](const TextStructureView& text_structure) {
+          const auto& root = text_structure.SyntaxTree();
+          return FindAllTaskDeclarations(*ABSL_DIE_IF_NULL(root));
+        });
+  }
 }
 
-TEST(FindAllTaskDeclarationsTest, OnlyClass) {
-  VerilogAnalyzer analyzer("class foo; endclass", "");
-  ASSERT_OK(analyzer.Analyze());
-  const auto& root = analyzer.Data().SyntaxTree();
-  const auto task_declarations =
-      FindAllTaskDeclarations(*ABSL_DIE_IF_NULL(root));
-  EXPECT_TRUE(task_declarations.empty());
+TEST(FindAllTaskPrototypesTest, Various) {
+  constexpr int kTag = 1;  // value doesn't matter
+  const SyntaxTreeSearchTestCase kTestCases[] = {
+      {// task declaration is not considered a prototype
+       "task foo();\n"
+       "endtask"},
+      {// task declaration is not considered a prototype
+       "class bar;\n"
+       "  task foo();\n"
+       "  endtask\n"
+       "endclass"},
+      {// virtual task can be defined and is overridable
+       "class bar;\n"
+       "  virtual task foo();\n"
+       "  endtask\n"
+       "endclass"},
+      {// pure virtual is a prototype
+       "class bar;\n",
+       "pure virtual ",
+       {kTag, "task foo();"},
+       "\nendclass"},
+      {// extern is a prototype
+       "class bar;\n",
+       "extern ",
+       {kTag, "task foo();"},
+       "\nendclass"},
+  };
+  for (const auto& test : kTestCases) {
+    TestVerilogSyntaxRangeMatches(
+        __FUNCTION__, test, [](const TextStructureView& text_structure) {
+          const auto& root = text_structure.SyntaxTree();
+          return FindAllTaskPrototypes(*ABSL_DIE_IF_NULL(root));
+        });
+  }
 }
 
-TEST(FindAllTaskDeclarationsTest, OnlyModule) {
-  VerilogAnalyzer analyzer("module foo; endmodule", "");
-  ASSERT_OK(analyzer.Analyze());
-  const auto& root = analyzer.Data().SyntaxTree();
-  const auto task_declarations =
-      FindAllTaskDeclarations(*ABSL_DIE_IF_NULL(root));
-  EXPECT_TRUE(task_declarations.empty());
-}
-
-TEST(FindAllTaskDeclarationsTest, OneTask) {
-  VerilogAnalyzer analyzer("task foo(); endtask", "");
-  ASSERT_OK(analyzer.Analyze());
-  const auto& root = analyzer.Data().SyntaxTree();
-  const auto task_declarations =
-      FindAllTaskDeclarations(*ABSL_DIE_IF_NULL(root));
-  ASSERT_EQ(task_declarations.size(), 1);
-}
-
-TEST(FindAllTaskDeclarationsTest, TwoTasks) {
-  VerilogAnalyzer analyzer(R"(
-task foo(); endtask
-task foo2(); endtask
-)",
-                           "");
-  ASSERT_OK(analyzer.Analyze());
-  const auto& root = analyzer.Data().SyntaxTree();
-  const auto task_declarations =
-      FindAllTaskDeclarations(*ABSL_DIE_IF_NULL(root));
-  EXPECT_EQ(task_declarations.size(), 2);
-}
-
-TEST(FindAllTaskDeclarationsTest, TaskInsideClass) {
-  VerilogAnalyzer analyzer("class bar; task foo(); endtask endclass", "");
-  ASSERT_OK(analyzer.Analyze());
-  const auto& root = analyzer.Data().SyntaxTree();
-  const auto task_declarations =
-      FindAllTaskDeclarations(*ABSL_DIE_IF_NULL(root));
-  EXPECT_EQ(task_declarations.size(), 1);
-}
-
-TEST(FindAllTaskDeclarationsTest, TaskInsideModule) {
-  VerilogAnalyzer analyzer("module bar; task foo(); endtask endmodule", "");
-  ASSERT_OK(analyzer.Analyze());
-  const auto& root = analyzer.Data().SyntaxTree();
-  const auto task_declarations =
-      FindAllTaskDeclarations(*ABSL_DIE_IF_NULL(root));
-  EXPECT_EQ(task_declarations.size(), 1);
+TEST(FindAllTaskHeadersTest, Various) {
+  constexpr int kTag = 1;  // value doesn't matter
+  const SyntaxTreeSearchTestCase kTestCases[] = {
+      {""},
+      {"class c; endclass"},
+      {"package c; endpackage"},
+      {"module m; endmodule"},
+      {"function f; endfunction"},
+      {{kTag, "task foo();"},
+       "\n"
+       "endtask"},
+      {"class bar;\n"
+       "  ",
+       {kTag, "task foo();"},
+       "\n"
+       "  endtask\n"
+       "endclass"},
+      {"class bar;\n",
+       {kTag, "virtual task foo();"},
+       "\n"
+       "  endtask\n"
+       "endclass"},
+      {// pure virtual is a prototype
+       "class bar;\n",
+       "pure virtual ",
+       {kTag, "task foo();"},
+       "\nendclass"},
+      {// extern is a prototype
+       "class bar;\n",
+       "extern ",
+       {kTag, "task foo();"},
+       "\nendclass"},
+  };
+  for (const auto& test : kTestCases) {
+    TestVerilogSyntaxRangeMatches(
+        __FUNCTION__, test, [](const TextStructureView& text_structure) {
+          const auto& root = text_structure.SyntaxTree();
+          return FindAllTaskHeaders(*ABSL_DIE_IF_NULL(root));
+        });
+  }
 }
 
 // TODO(kathuriac): Add test case for task inside cross_body_item see
 // (verilog.y)
 
-TEST(GetTaskHeaderTest, Header) {
-  const char* kTestCases[] = {
-      "task foo(); endtask",
-      "class c; task foo(); endtask endclass",
-      "module m; task foo(); endtask endmodule",
+TEST(GetTaskHeaderTest, DeclarationsHeader) {
+  constexpr int kTag = 1;  // value doesn't matter
+  const SyntaxTreeSearchTestCase kTestCases[] = {
+      {{kTag, "task foo();"}, " endtask"},
+      {{kTag, "task my_class::foo();"}, " endtask"},
+      {"class c; ", {kTag, "task foo();"}, " endtask endclass"},
+      {"module m; ", {kTag, "task foo();"}, " endtask endmodule"},
+      {"package p; ", {kTag, "task foo();"}, " endtask endpackage"},
   };
-  for (const auto test : kTestCases) {
-    VerilogAnalyzer analyzer(test, "");
-    ASSERT_OK(analyzer.Analyze());
-    // Root node is a description list, not a task.
-    const auto& root = analyzer.Data().SyntaxTree();
-    const auto task_declarations = FindAllTaskDeclarations(*root);
-    ASSERT_EQ(task_declarations.size(), 1);
-    const auto& task_node = down_cast<const verible::SyntaxTreeNode&>(
-        *task_declarations.front().match);
-    GetTaskHeader(task_node);
-    // Reaching here is success.  Function has internal checks already.
+  for (const auto& test : kTestCases) {
+    TestVerilogSyntaxRangeMatches(
+        __FUNCTION__, test, [](const TextStructureView& text_structure) {
+          // Root node is a description list, not a task.
+          const auto& root = text_structure.SyntaxTree();
+          const auto task_declarations = FindAllTaskDeclarations(*root);
+          std::vector<TreeSearchMatch> headers;
+          for (const auto& decl : task_declarations) {
+            const auto& task_node = verible::SymbolCastToNode(*decl.match);
+            headers.push_back(
+                TreeSearchMatch{&GetTaskHeader(task_node), /* no context */});
+          }
+          return headers;
+        });
   }
 }
 
@@ -142,8 +201,8 @@ TEST(GetTaskLifetimeTest, NoLifetimeDeclared) {
   const auto& root = analyzer.Data().SyntaxTree();
   const auto task_declarations = FindAllTaskDeclarations(*root);
   ASSERT_EQ(task_declarations.size(), 1);
-  const auto& task_node = down_cast<const verible::SyntaxTreeNode&>(
-      *task_declarations.front().match);
+  const auto& task_node =
+      verible::SymbolCastToNode(*task_declarations.front().match);
   const auto* lifetime = GetTaskLifetime(task_node);
   EXPECT_EQ(lifetime, nullptr);
 }
@@ -155,11 +214,11 @@ TEST(GetTaskLifetimeTest, StaticLifetimeDeclared) {
   const auto& root = analyzer.Data().SyntaxTree();
   const auto task_declarations = FindAllTaskDeclarations(*root);
   ASSERT_EQ(task_declarations.size(), 1);
-  const auto& task_node = down_cast<const verible::SyntaxTreeNode&>(
-      *task_declarations.front().match);
+  const auto& task_node =
+      verible::SymbolCastToNode(*task_declarations.front().match);
   const auto* lifetime = GetTaskLifetime(task_node);
-  const auto* leaf = down_cast<const verible::SyntaxTreeLeaf*>(lifetime);
-  EXPECT_EQ(leaf->get().token_enum(), TK_static);
+  const auto& leaf = verible::SymbolCastToLeaf(*ABSL_DIE_IF_NULL(lifetime));
+  EXPECT_EQ(leaf.get().token_enum(), TK_static);
 }
 
 TEST(GetTaskLifetimeTest, AutomaticLifetimeDeclared) {
@@ -169,11 +228,11 @@ TEST(GetTaskLifetimeTest, AutomaticLifetimeDeclared) {
   const auto& root = analyzer.Data().SyntaxTree();
   const auto task_declarations = FindAllTaskDeclarations(*root);
   ASSERT_EQ(task_declarations.size(), 1);
-  const auto& task_node = down_cast<const verible::SyntaxTreeNode&>(
-      *task_declarations.front().match);
+  const auto& task_node =
+      verible::SymbolCastToNode(*task_declarations.front().match);
   const auto* lifetime = GetTaskLifetime(task_node);
-  const auto* leaf = down_cast<const verible::SyntaxTreeLeaf*>(lifetime);
-  EXPECT_EQ(leaf->get().token_enum(), TK_automatic);
+  const auto& leaf = verible::SymbolCastToLeaf(*ABSL_DIE_IF_NULL(lifetime));
+  EXPECT_EQ(leaf.get().token_enum(), TK_automatic);
 }
 
 TEST(GetTaskIdTest, UnqualifiedIds) {
@@ -206,22 +265,28 @@ TEST(GetTaskIdTest, UnqualifiedIds) {
 }
 
 TEST(GetTaskIdTest, QualifiedIds) {
-  const std::pair<std::string, int> kTestCases[] = {
-      {"task foo(); endtask", 0},
-      {"task myclass::foo(); endtask", 1},
+  constexpr int kTag = 1;  // value doesn't matter
+  const SyntaxTreeSearchTestCase kTestCases[] = {
+      {"task foo(); endtask"},
+      {"class c; task foo(); endtask endclass"},
+      {"task ", {kTag, "myclass::foo"}, "(); endtask"},
   };
-  for (const auto test : kTestCases) {
-    VerilogAnalyzer analyzer(test.first, "");
-    ASSERT_OK(analyzer.Analyze());
-    // Root node is a description list, not a task.
-    const auto& root = analyzer.Data().SyntaxTree();
-    const auto task_declarations = FindAllTaskDeclarations(*root);
-    ASSERT_EQ(task_declarations.size(), 1);
-    const auto& task_node = down_cast<const verible::SyntaxTreeNode&>(
-        *task_declarations.front().match);
-    const auto* task_id = GetTaskId(task_node);
-    const auto ids = FindAllQualifiedIds(*task_id);
-    EXPECT_EQ(ids.size(), test.second);
+  for (const auto& test : kTestCases) {
+    TestVerilogSyntaxRangeMatches(
+        __FUNCTION__, test, [](const TextStructureView& text_structure) {
+          // Root node is a description list, not a task.
+          const auto& root = text_structure.SyntaxTree();
+          const auto task_declarations = FindAllTaskDeclarations(*root);
+          std::vector<TreeSearchMatch> ids;
+          for (const auto& decl : task_declarations) {
+            const auto& task_node = verible::SymbolCastToNode(*decl.match);
+            const auto* task_id = GetTaskId(task_node);
+            for (const auto id : FindAllQualifiedIds(*task_id)) {
+              ids.push_back(id);
+            }
+          }
+          return ids;
+        });
   }
 }
 
@@ -253,25 +318,19 @@ TEST(GetTaskHeaderTest, GetTaskName) {
        "();\n endtask\n  endclass"},
   };
   for (const auto& test : kTestCases) {
-    const absl::string_view code(test.code);
-    VerilogAnalyzer analyzer(code, "test-file");
-    const auto code_copy = analyzer.Data().Contents();
-    ASSERT_OK(analyzer.Analyze()) << "failed on:\n" << code;
-    const auto& root = analyzer.Data().SyntaxTree();
+    TestVerilogSyntaxRangeMatches(
+        __FUNCTION__, test, [](const TextStructureView& text_structure) {
+          const auto& root = text_structure.SyntaxTree();
 
-    const auto decls = FindAllTaskDeclarations(*ABSL_DIE_IF_NULL(root));
+          const auto decls = FindAllTaskDeclarations(*ABSL_DIE_IF_NULL(root));
 
-    std::vector<TreeSearchMatch> types;
-    for (const auto& decl : decls) {
-      const auto* type = GetTaskName(*decl.match);
-      types.push_back(TreeSearchMatch{type, {/* ignored context */}});
-    }
-
-    std::ostringstream diffs;
-    EXPECT_TRUE(test.ExactMatchFindings(types, code_copy, &diffs))
-        << "failed on:\n"
-        << code << "\ndiffs:\n"
-        << diffs.str();
+          std::vector<TreeSearchMatch> types;
+          for (const auto& decl : decls) {
+            const auto* type = GetTaskName(*decl.match);
+            types.push_back(TreeSearchMatch{type, {/* ignored context */}});
+          }
+          return types;
+        });
   }
 }  // namespace
 
@@ -290,27 +349,21 @@ TEST(GetTaskHeaderTest, GetTaskBody) {
        "\nendtask\nendpackage"},
   };
   for (const auto& test : kTestCases) {
-    const absl::string_view code(test.code);
-    VerilogAnalyzer analyzer(code, "test-file");
-    const auto code_copy = analyzer.Data().Contents();
-    ASSERT_OK(analyzer.Analyze()) << "failed on:\n" << code;
-    const auto& root = analyzer.Data().SyntaxTree();
+    TestVerilogSyntaxRangeMatches(
+        __FUNCTION__, test, [](const TextStructureView& text_structure) {
+          const auto& root = text_structure.SyntaxTree();
 
-    const auto decls = FindAllTaskDeclarations(*ABSL_DIE_IF_NULL(root));
+          const auto decls = FindAllTaskDeclarations(*ABSL_DIE_IF_NULL(root));
 
-    std::vector<TreeSearchMatch> bodies;
-    for (const auto& decl : decls) {
-      const auto& body = GetTaskStatementList(*decl.match);
-      bodies.push_back(TreeSearchMatch{&body, {/* ignored context */}});
-    }
-
-    std::ostringstream diffs;
-    EXPECT_TRUE(test.ExactMatchFindings(bodies, code_copy, &diffs))
-        << "failed on:\n"
-        << code << "\ndiffs:\n"
-        << diffs.str();
+          std::vector<TreeSearchMatch> bodies;
+          for (const auto& decl : decls) {
+            const auto& body = GetTaskStatementList(*decl.match);
+            bodies.push_back(TreeSearchMatch{&body, {/* ignored context */}});
+          }
+          return bodies;
+        });
   }
-}  // namespace
+}
 
 }  // namespace
 }  // namespace verilog

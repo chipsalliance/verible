@@ -5940,6 +5940,70 @@ static const verible::ErrorRecoveryTestCase kErrorRecoveryTests[] = {
      {NodeTag(kModuleDeclaration), NodeTag(kModuleItemList),
       NodeTag(kConditionalGenerateConstruct), NodeTag(kGenerateIfClause),
       NodeTag(kGenerateIfHeader)}},
+    {"class c;\n"
+     "  `BAD function new();\n"  // real problem here is the macro,
+     // but 'function' keyword gets rejected because it is only then that
+     // there is conclusively an error.
+     // From error-recovery, this entire function/constructor declaration will
+     // be dropped.
+     "  endfunction\n"
+     // recovered from here onward
+     "  int count;\n"  // this data declaration will be recovered and saved
+     "endclass\n",
+     {NodeTag(kClassDeclaration), NodeTag(kClassItems),
+      NodeTag(kDataDeclaration)}},
+    {"class c;\n"
+     "  `BAD task rabbit();\n"  // real problem here is the macro,
+     // but 'task' keyword gets rejected because it is only then that
+     // there is conclusively an error.
+     // From error-recovery, this entire function/constructor declaration will
+     // be dropped.
+     "  endtask\n"
+     // recovered from here onward
+     "  int count;\n"  // this data declaration will be recovered and saved
+     "endclass\n",
+     {NodeTag(kClassDeclaration), NodeTag(kClassItems),
+      NodeTag(kDataDeclaration)}},
+    {"class c;\n"
+     "  `BAD task rabbit();\n"  // real problem here is the macro
+     "  endtask\n"
+     // recovered from here onward
+     "    static function bit r();\n"
+     "    if (m == null) m = new();\n"
+     "    uvm_resource#(T)::m_set_converter(m_singleton);\n"
+     "  endfunction\n"
+     "endclass\n",
+     {NodeTag(kClassDeclaration), NodeTag(kClassItems),
+      NodeTag(kFunctionDeclaration), NodeTag(kBlockItemStatementList),
+      NodeTag(kConditionalStatement), NodeTag(kIfClause)}},
+    {"class c;\n"
+     "  `BAD covergroup cg;\n"  // real problem here is the macro
+     "  endgroup\n"             // this covergroup will be lost
+     // recovered from here onward
+     "  int count;\n"  // this data declaration will be recovered and saved
+     "endclass\n",
+     {NodeTag(kClassDeclaration), NodeTag(kClassItems),
+      NodeTag(kDataDeclaration)}},
+    {"class c;\n"
+     "  covergroup cg;\n"
+     "    cp: coverpoint foo.bar {\n"
+     "      123;\n"  // syntax error here
+     // recovered from here onward
+     "    }\n"
+     "  endgroup\n"
+     "endclass\n",
+     {NodeTag(kClassDeclaration), NodeTag(kClassItems),
+      NodeTag(kCovergroupDeclaration)}},
+    {"class c;\n"
+     "  covergroup cg;\n"
+     "    cp: coverpoint foo.bar {\n"
+     "      --\n"  // syntax error here
+     // recovered from here onward
+     "    }\n"
+     "  endgroup\n"
+     "endclass\n",
+     {NodeTag(kClassDeclaration), NodeTag(kClassItems),
+      NodeTag(kCovergroupDeclaration)}},
 };
 #undef NodeTag
 

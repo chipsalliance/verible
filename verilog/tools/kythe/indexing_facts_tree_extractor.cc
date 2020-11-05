@@ -1045,9 +1045,6 @@ void IndexingFactsTreeExtractor::ExtractClassDeclaration(
 void IndexingFactsTreeExtractor::ExtractClassInstances(
     const SyntaxTreeNode& data_declaration_node,
     const std::vector<TreeSearchMatch>& class_instances) {
-  // TODO(minatoma): refactor this function and git rid of the logic in the for
-  // loop because kRegisterVariable and kVariableDeclarationAssignment are
-  // extracted in function.
   IndexingFactNode type_node(
       IndexingNodeData{IndexingFactType::kDataTypeReference});
 
@@ -1076,34 +1073,11 @@ void IndexingFactsTreeExtractor::ExtractClassInstances(
   for (const TreeSearchMatch& instance : class_instances) {
     IndexingFactNode class_instance_node(
         IndexingNodeData{IndexingFactType::kClassInstance});
-    const auto tag = static_cast<verilog::NodeEnum>(instance.match->Tag().tag);
 
-    const SyntaxTreeNode* trailing_expression = nullptr;
-    if (tag == NodeEnum::kRegisterVariable) {
-      const verible::TokenInfo& instance_name =
-          GetInstanceNameTokenInfoFromRegisterVariable(*instance.match);
-
-      class_instance_node.Value().AppendAnchor(
-          Anchor(instance_name, context_.base));
-
-      trailing_expression =
-          GetTrailingExpressionFromRegisterVariable(*instance.match);
-    } else if (tag == NodeEnum::kVariableDeclarationAssignment) {
-      const SyntaxTreeLeaf& leaf =
-          GetUnqualifiedIdFromVariableDeclarationAssignment(*instance.match);
-      class_instance_node.Value().AppendAnchor(
-          Anchor(leaf.get(), context_.base));
-
-      trailing_expression =
-          GetTrailingExpressionFromVariableDeclarationAssign(*instance.match);
-    }
-
-    if (trailing_expression != nullptr) {
-      const IndexingFactsTreeContext::AutoPop p(&facts_tree_context_,
-                                                &class_instance_node);
-      // Visit Trailing Assignment Expression.
-      Visit(*trailing_expression);
-    }
+    // Re-use the kRegisterVariable and kVariableDeclarationAssignment tag
+    // resolver.
+    Visit(verible::SymbolCastToNode(*instance.match));
+    MoveAndDeleteLastSibling(class_instance_node);
 
     type_node.NewChild(class_instance_node);
   }

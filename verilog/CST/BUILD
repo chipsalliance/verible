@@ -794,6 +794,7 @@ cc_test(
     srcs = ["tasks_test.cc"],
     deps = [
         ":identifier",
+        ":match_test_utils",
         ":tasks",
         "//common/analysis:syntax_tree_search",
         "//common/analysis:syntax_tree_search_test_utils",
@@ -802,6 +803,7 @@ cc_test(
         "//common/text:symbol",
         "//common/text:text_structure",
         "//common/text:token_info",
+        "//common/text:tree_utils",
         "//common/util:casts",
         "//common/util:logging",
         "//verilog/analysis:verilog_analyzer",
