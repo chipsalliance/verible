@@ -163,8 +163,6 @@ class ScopeResolver {
       : previous_file_scope_resolver_(previous_file_scope_resolver),
         global_scope_signature_(global_scope_signature) {}
 
-  // TODO(minatoma): returns scopes with VNames to decrease search time for
-  // scopes.
   // Searches for the definitions of the given references' names.
   const std::vector<std::pair<const VName*, const Scope*>> SearchForDefinitions(
       const std::vector<std::string>& names) const;

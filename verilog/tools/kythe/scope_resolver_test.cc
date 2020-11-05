@@ -132,6 +132,45 @@ TEST(ScopeResolverTests, SearchForDefinition) {
   }
 }
 
+TEST(ScopeResolverTests, SearchForDefinitionInCurrentScope) {
+  ScopeResolver scope_resolver(Signature(""), nullptr);
+
+  /**
+   * signature[0] => {
+   *   vnames[1],  ==> signature[1]
+   *   vnames[2],  ==> signature[2]
+   * }
+   */
+
+  Scope scope(signatures[0]);
+  scope.AddMemberItem(vnames[1]);
+  scope.AddMemberItem(vnames[2]);
+
+  {
+    ScopeContext::AutoPop p1(&scope_resolver.GetMutableScopeContext(), &scope);
+    {
+      const VName* vname =
+          scope_resolver.SearchForDefinitionInCurrentScope(names[1].c_str());
+      EXPECT_EQ(vname->signature, signatures[1]);
+    }
+    {
+      const VName* vname =
+          scope_resolver.SearchForDefinitionInCurrentScope(names[2].c_str());
+      EXPECT_EQ(vname->signature, signatures[2]);
+    }
+    {
+      const VName* vname =
+          scope_resolver.SearchForDefinitionInCurrentScope(names[3].c_str());
+      EXPECT_EQ(vname, nullptr);
+    }
+    {
+      const VName* vname =
+          scope_resolver.SearchForDefinitionInCurrentScope(names[4].c_str());
+      EXPECT_EQ(vname, nullptr);
+    }
+  }
+}
+
 TEST(ScopeResolverTests, SearchForNestedDefinition) {
   ScopeResolver scope_resolver(Signature(""), nullptr);
 
