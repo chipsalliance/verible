@@ -32,6 +32,16 @@ std::vector<verible::TreeSearchMatch> FindAllTaskDeclarations(
   return verible::SearchSyntaxTree(root, NodekTaskDeclaration());
 }
 
+std::vector<verible::TreeSearchMatch> FindAllTaskPrototypes(
+    const verible::Symbol& root) {
+  return verible::SearchSyntaxTree(root, NodekTaskPrototype());
+}
+
+std::vector<verible::TreeSearchMatch> FindAllTaskHeaders(
+    const verible::Symbol& root) {
+  return verible::SearchSyntaxTree(root, NodekTaskHeader());
+}
+
 const verible::SyntaxTreeNode& GetTaskHeader(const verible::Symbol& symbol) {
   return verible::GetSubtreeAsNode(symbol, NodeEnum::kTaskDeclaration, 0,
                                    NodeEnum::kTaskHeader);

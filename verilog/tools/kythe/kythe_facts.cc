@@ -19,7 +19,6 @@
 
 #include "absl/strings/escaping.h"
 #include "absl/strings/string_view.h"
-#include "absl/strings/substitute.h"
 
 namespace verilog {
 namespace kythe {
@@ -66,9 +65,10 @@ bool VName::operator<(const VName& other) const {
 }
 
 std::string VName::ToString() const {
-  return absl::Substitute(
-      R"({"signature": "$0","path": "$1","language": "$2","root": "$3","corpus": "$4"})",
-      signature.ToBase64(), path, language, root, corpus);
+  return absl::StrCat("{\"signature\": \"", signature.ToBase64(),
+                      "\",\"path\": \"", path, "\",\"language\": \"", language,
+                      "\",\"root\": \"", root, "\",\"corpus\": \"", corpus,
+                      "\"}");
 }
 
 std::ostream& operator<<(std::ostream& stream, const VName& vname) {
@@ -87,9 +87,9 @@ bool Fact::operator<(const Fact& other) const {
 }
 
 std::string Fact::ToString() const {
-  return absl::Substitute(
-      R"({"source": $0,"fact_name": "$1","fact_value": "$2"})",
-      node_vname.ToString(), fact_name, absl::Base64Escape(fact_value));
+  return absl::StrCat("{\"source\": ", node_vname.ToString(),
+                      ",\"fact_name\": \"", fact_name, "\",\"fact_value\": \"",
+                      absl::Base64Escape(fact_value), "\"}");
 }
 
 std::ostream& operator<<(std::ostream& stream, const Fact& fact) {
@@ -108,9 +108,9 @@ bool Edge::operator<(const Edge& other) const {
 }
 
 std::string Edge::ToString() const {
-  return absl::Substitute(
-      R"({"source": $0,"edge_kind": "$1","target": $2,"fact_name": "/"})",
-      source_node.ToString(), edge_name, target_node.ToString());
+  return absl::StrCat(
+      "{\"source\":", source_node.ToString(), ",\"edge_kind\":\"", edge_name,
+      "\",\"target\":", target_node.ToString(), ",\"fact_name\":\"/\"}");
 }
 
 std::ostream& operator<<(std::ostream& stream, const Edge& edge) {

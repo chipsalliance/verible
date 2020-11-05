@@ -1260,7 +1260,7 @@ class_item
   | TK_virtual method_qualifier_list_opt task_declaration
     { SetChild(SymbolCastToNode(*$3)[0] /* kTaskHeader */, 0,
           MakeTaggedNode(N::kQualifierList, $1, ForwardChildren($2)));
-      $$ =  move($3); }
+      $$ = move($3); }
   /* TODO(fangism): Method qualifiers should be grouped together into one list,
    * rather than being split between virtual and method_qualifier list.
    */
@@ -1272,17 +1272,17 @@ class_item
   | TK_virtual method_qualifier_list_opt function_declaration
     { SetChild(SymbolCastToNode(*$3)[0] /* kFunctionHeader */, 0,
           MakeTaggedNode(N::kQualifierList, $1, ForwardChildren($2)));
-      $$ =  move($3); }
+      $$ = move($3); }
   /* pure virtual method prototypes: */
   | TK_pure TK_virtual class_item_qualifier_list_opt method_prototype ';'
    { $$ = MakeTaggedNode(N::kForwardDeclaration,
                         MakeTaggedNode(N::kQualifierList, $1, $2, ForwardChildren($3)),
-                        ExtendNode($4, $5)); }
+                        ExtendLastSublist($4, $5) /* kTaskHeader or kFunctionHeader */ ); }
   /* forward declarations (excludes definition body): */
   | TK_extern method_qualifier_list_opt method_prototype ';'
      { $$ = MakeTaggedNode(N::kForwardDeclaration,
                         MakeTaggedNode(N::kQualifierList, $1, ForwardChildren($2)),
-                        ExtendNode($3, $4)); }
+                        ExtendLastSublist($3, $4) /* kTaskHeader or kFunctionHeader */ ); }
   | TK_extern method_qualifier_list_opt class_constructor_prototype ';'
      { $$ = MakeTaggedNode(N::kForwardDeclaration,
                         MakeTaggedNode(N::kQualifierList, $1, ForwardChildren($2)),
@@ -1301,14 +1301,21 @@ class_item
     { $$ = move($1); }
   | ';'
     { $$ = MakeTaggedNode(N::kNullDeclaration, $1); }
-  | error ';'
-    { yyerrok; $$ = Recover(); }
   | macro_call_or_item
     { $$ = move($1); }
   | preprocessor_balanced_class_items
     { $$ = move($1); }
   | preprocessor_action
     { $$ = move($1); }
+    /* error-recovery rules */
+  | error ';'
+    { yyerrok; $$ = Recover(); }
+  | error TK_endfunction
+    { yyerrok; $$ = Recover(); }
+  | error TK_endtask
+    { yyerrok; $$ = Recover(); }
+  | error TK_endgroup
+    { yyerrok; $$ = Recover(); }
   ;
 
 interface_data_declaration
@@ -2414,7 +2421,9 @@ function_prototype
     data_type_or_implicit_basic_followed_by_id_and_dimensions_opt
     tf_port_list_paren_opt
     { $$ = MakeTaggedNode(N::kFunctionPrototype,
-                          qualifier_placeholder, $1, $2, $3, $4); }
+                          MakeTaggedNode(N::kFunctionHeader,
+                                         qualifier_placeholder,
+                                         $1, $2, $3, $4)); }
     /* Without port list, is suitable for export declarations. */
   ;
 
@@ -2736,9 +2745,9 @@ dpi_import_item
    */
   : TK_import dpi_spec_string dpi_import_property_opt
     GenericIdentifier '=' method_prototype ';'
-    { $$ = MakeDPIImport($1, $2, $3, $4, $5, $6, $7); }
+    { $$ = MakeDPIImport($1, $2, $3, $4, $5, ExtendLastSublist($6, $7)); }
   | TK_import dpi_spec_string dpi_import_property_opt method_prototype ';'
-    { $$ = MakeDPIImport($1, $2, $3, nullptr, nullptr, $4, $5); }
+    { $$ = MakeDPIImport($1, $2, $3, nullptr, nullptr, ExtendLastSublist($4, $5)); }
   ;
 
 modport_ports_declaration_trailing_comma
@@ -3264,8 +3273,9 @@ slice_size
 task_prototype
   : TK_task lifetime_opt GenericIdentifier tf_port_list_paren_opt
   /* users of this rule may append a trailing ';' */
-    { $$ = MakeTaggedNode(N::kTaskPrototype, qualifier_placeholder,
-                          $1, $2, $3, $4); }
+    { $$ = MakeTaggedNode(N::kTaskPrototype,
+                          MakeTaggedNode(N::kTaskHeader, qualifier_placeholder,
+                                         $1, $2, $3, $4)); }
 
   ;
 task_declaration
@@ -3292,6 +3302,7 @@ task_declaration
 **/
   ;
 task_declaration_id
+  /* for out-of-line class task method definitions: */
   : GenericIdentifier scope_or_if_res GenericIdentifier
     { $$ = MakeTaggedNode(N::kQualifiedId,
            MakeTaggedNode(N::kUnqualifiedId, $1), $2,
@@ -8257,6 +8268,9 @@ bins_or_options_list_opt
      */
   | ';'
     { $$ = move($1); }
+  /* error-recovery */
+  | '{' error '}'
+    { yyerrok; $$ = Recover(); }
   ;
 bins_or_options_list
   : bins_or_options_list bins_or_options
@@ -8273,6 +8287,9 @@ bins_or_options
     { $$ = move($1); }
   | macro_call_or_item
     { $$ = move($1); }
+  /* error-recovery */
+  | error ';'
+    { yyerrok; $$ = Recover(); }
   ;
 
 bins_or_options_list_opt_pp

@@ -213,6 +213,12 @@ class KytheFactsExtractor {
   // Extracts kythe facts from param declaration node.
   VName ExtractParamDeclaration(const IndexingFactNode& param_declaration_node);
 
+  // Create "ref" edges that point from the given anchors to the given
+  // definitions in order.
+  void CreateAnchorReferences(
+      const std::vector<Anchor>& anchors,
+      const std::vector<std::pair<const VName*, const Scope*>>& definitions);
+
   // Generates an anchor VName for kythe.
   VName CreateAnchor(const Anchor&);
 
