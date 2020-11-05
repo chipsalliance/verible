@@ -1301,14 +1301,19 @@ class_item
     { $$ = move($1); }
   | ';'
     { $$ = MakeTaggedNode(N::kNullDeclaration, $1); }
-  | error ';'
-    { yyerrok; $$ = Recover(); }
   | macro_call_or_item
     { $$ = move($1); }
   | preprocessor_balanced_class_items
     { $$ = move($1); }
   | preprocessor_action
     { $$ = move($1); }
+    /* error-recovery rules */
+  | error ';'
+    { yyerrok; $$ = Recover(); }
+  | error TK_endfunction
+    { yyerrok; $$ = Recover(); }
+  | error TK_endtask
+    { yyerrok; $$ = Recover(); }
   ;
 
 interface_data_declaration
