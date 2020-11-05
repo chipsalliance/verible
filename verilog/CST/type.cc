@@ -198,7 +198,9 @@ const verible::SyntaxTreeNode* GetStructOrUnionOrEnumTypeFromInstantiationType(
     const verible::Symbol& instantiation_type) {
   const verible::Symbol* type =
       &GetDataTypeFromInstantiationType(instantiation_type);
-  if (type == nullptr) return nullptr;
+  if (type == nullptr || NodeEnum(type->Tag().tag) != NodeEnum::kDataType) {
+    return nullptr;
+  }
   return GetStructOrUnionOrEnumTypeFromDataType(*type);
 }
 
