@@ -34,6 +34,7 @@
 #include "common/util/logging.h"
 #include "verilog/CST/identifier.h"
 #include "verilog/CST/match_test_utils.h"
+#include "verilog/CST/verilog_nonterminals.h"
 #include "verilog/analysis/verilog_analyzer.h"
 #include "verilog/parser/verilog_token_enum.h"
 
@@ -119,6 +120,54 @@ TEST(FindAllTaskPrototypesTest, Various) {
         __FUNCTION__, test, [](const TextStructureView& text_structure) {
           const auto& root = text_structure.SyntaxTree();
           return FindAllTaskPrototypes(*ABSL_DIE_IF_NULL(root));
+        });
+  }
+  // Prototype header span the same range as their enclosing prototypes.
+  for (const auto& test : kTestCases) {
+    TestVerilogSyntaxRangeMatches(
+        __FUNCTION__, test, [](const TextStructureView& text_structure) {
+          const auto& root = text_structure.SyntaxTree();
+          std::vector<TreeSearchMatch> headers;
+          for (const auto& proto :
+               FindAllTaskPrototypes(*ABSL_DIE_IF_NULL(root))) {
+            headers.push_back(TreeSearchMatch{
+                &GetTaskPrototypeHeader(*proto.match), /* no context */});
+          }
+          return headers;
+        });
+  }
+}
+
+TEST(TaskPrototypesIdsTest, Various) {
+  constexpr int kTag = 1;  // value doesn't matter
+  const SyntaxTreeSearchTestCase kTestCases[] = {
+      {// pure virtual is a prototype
+       "class bar;\n",
+       "pure virtual task ",
+       {kTag, "foo"},
+       "();\n"
+       "endclass"},
+      {// extern is a prototype
+       "class bar;\n",
+       "extern task ",
+       {kTag, "ggghhh"},
+       "();\n"
+       "endclass"},
+  };
+  for (const auto& test : kTestCases) {
+    TestVerilogSyntaxRangeMatches(
+        __FUNCTION__, test, [](const TextStructureView& text_structure) {
+          const auto& root = text_structure.SyntaxTree();
+          std::vector<TreeSearchMatch> ids;
+          for (const auto& proto :
+               FindAllTaskPrototypes(*ABSL_DIE_IF_NULL(root))) {
+            const auto& header = GetTaskPrototypeHeader(*proto.match);
+            const auto* id = ABSL_DIE_IF_NULL(GetTaskHeaderId(header));
+            EXPECT_TRUE(verible::SymbolCastToNode(*id).MatchesTag(
+                NodeEnum::kUnqualifiedId));
+            ids.push_back(TreeSearchMatch{id, /* no context */});
+          }
+          return ids;
         });
   }
 }

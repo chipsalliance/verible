@@ -3273,7 +3273,7 @@ task_prototype
   /* users of this rule may append a trailing ';' */
     { $$ = MakeTaggedNode(N::kTaskPrototype,
                           MakeTaggedNode(N::kTaskHeader, qualifier_placeholder,
-                                         $1, $2, $3, $4)); }
+                                         $1, $2, MakeTaggedNode(N::kUnqualifiedId, $3), $4)); }
 
   ;
 task_declaration

@@ -796,6 +796,7 @@ cc_test(
         ":identifier",
         ":match_test_utils",
         ":tasks",
+        ":verilog_nonterminals",
         "//common/analysis:syntax_tree_search",
         "//common/analysis:syntax_tree_search_test_utils",
         "//common/text:concrete_syntax_leaf",
