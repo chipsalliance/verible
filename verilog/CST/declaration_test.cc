@@ -572,7 +572,7 @@ TEST(GetTypeFromDeclaration, GetTypeName) {
        " m();\n",
        {kTag, "some_type"},
        " x = new;\nendmodule"},
-  };
+      {"class x;\nvirtual ", {kTag, "y"}, " m;\nendclass"}};
   for (const auto& test : kTestCases) {
     TestVerilogSyntaxRangeMatches(
         __FUNCTION__, test, [](const TextStructureView& text_structure) {

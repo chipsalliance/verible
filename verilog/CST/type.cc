@@ -198,7 +198,9 @@ const verible::SyntaxTreeNode* GetStructOrUnionOrEnumTypeFromInstantiationType(
     const verible::Symbol& instantiation_type) {
   const verible::Symbol* type =
       &GetDataTypeFromInstantiationType(instantiation_type);
-  if (type == nullptr) return nullptr;
+  if (type == nullptr || NodeEnum(type->Tag().tag) != NodeEnum::kDataType) {
+    return nullptr;
+  }
   return GetStructOrUnionOrEnumTypeFromDataType(*type);
 }
 
@@ -282,14 +284,22 @@ const verible::SyntaxTreeLeaf& GetSymbolIdentifierFromEnumName(
   return verible::GetSubtreeAsLeaf(enum_name, NodeEnum::kEnumName, 0);
 }
 
+const verible::SyntaxTreeLeaf& GetTypeIdentifierFromInterfaceType(
+    const verible::Symbol& interface_type) {
+  return verible::GetSubtreeAsLeaf(interface_type, NodeEnum::kInterfaceType, 2);
+}
+
 const verible::SyntaxTreeLeaf* GetTypeIdentifierFromInstantiationType(
     const verible::Symbol& instantiation_type) {
   const verible::SyntaxTreeNode& data_type =
       GetDataTypeFromInstantiationType(instantiation_type);
-  if (NodeEnum(data_type.Tag().tag) != NodeEnum::kDataType) {
-    return nullptr;
+  if (NodeEnum(data_type.Tag().tag) == NodeEnum::kDataType) {
+    return GetTypeIdentifierFromDataType(data_type);
   }
-  return GetTypeIdentifierFromDataType(data_type);
+  if (NodeEnum(data_type.Tag().tag) == NodeEnum::kInterfaceType) {
+    return &GetTypeIdentifierFromInterfaceType(data_type);
+  }
+  return nullptr;
 }
 
 const verible::SyntaxTreeLeaf* GetTypeIdentifierFromDataType(
