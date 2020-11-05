@@ -5778,7 +5778,7 @@ TEST(FactsTreeExtractor, VirtualDataDeclaration) {
                   // refers to m_if.
                   T({
                       {
-                          Anchor(kTestCase.expected_tokens[5], kTestCase.code),
+                          Anchor(kTestCase.expected_tokens[7], kTestCase.code),
                       },
                       IndexingFactType ::kVariableDefinition,
                   }))))));

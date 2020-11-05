@@ -16,12 +16,12 @@
 
 #include <vector>
 
-#include "gmock/gmock.h"
-#include "gtest/gtest.h"
 #include "common/analysis/syntax_tree_search.h"
 #include "common/analysis/syntax_tree_search_test_utils.h"
 #include "common/text/text_structure.h"
 #include "common/text/tree_utils.h"
+#include "gmock/gmock.h"
+#include "gtest/gtest.h"
 #include "verilog/CST/match_test_utils.h"
 
 #undef ASSERT_OK
@@ -572,7 +572,7 @@ TEST(GetTypeFromDeclaration, GetTypeName) {
        " m();\n",
        {kTag, "some_type"},
        " x = new;\nendmodule"},
-  };
+      {"class x;\nvirtual ", {kTag, "y"}, " m;\nendclass"}};
   for (const auto& test : kTestCases) {
     TestVerilogSyntaxRangeMatches(
         __FUNCTION__, test, [](const TextStructureView& text_structure) {
