@@ -165,9 +165,6 @@ TEST(FindAllTaskHeadersTest, Various) {
   }
 }
 
-// TODO(kathuriac): Add test case for task inside cross_body_item see
-// (verilog.y)
-
 TEST(GetTaskHeaderTest, DeclarationsHeader) {
   constexpr int kTag = 1;  // value doesn't matter
   const SyntaxTreeSearchTestCase kTestCases[] = {

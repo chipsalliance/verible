@@ -4355,6 +4355,15 @@ static const ParserTestCaseArray kModuleMemberTests = {
     "endmodule",
     "module cover_that;\n"
     "covergroup settings;\n"
+    "  _name : cross dbi, mask {\n"
+    "    function int foo(int bar);\n"  // function declaration
+    "      return bar;\n"
+    "    endfunction\n"
+    "  }\n"
+    "endgroup\n"
+    "endmodule",
+    "module cover_that;\n"
+    "covergroup settings;\n"
     "  coverpoint cfgpsr {\n"
     "    bins legal = {[0:12]};\n"
     "    illegal_bins illegal = {4,6};\n"

@@ -52,96 +52,206 @@ using verible::SyntaxTreeSearchTestCase;
 using verible::TextStructureView;
 using verible::TreeSearchMatch;
 
-TEST(FindAllFunctionDeclarationsTest, EmptySource) {
-  VerilogAnalyzer analyzer("", "");
-  ASSERT_OK(analyzer.Analyze());
-  const auto& root = analyzer.Data().SyntaxTree();
-  const auto function_declarations =
-      FindAllFunctionDeclarations(*ABSL_DIE_IF_NULL(root));
-  EXPECT_TRUE(function_declarations.empty());
-}
-
-TEST(FindAllFunctionDeclarationsTest, OnlyClass) {
-  VerilogAnalyzer analyzer("class foo; endclass", "");
-  ASSERT_OK(analyzer.Analyze());
-  const auto& root = analyzer.Data().SyntaxTree();
-  const auto function_declarations =
-      FindAllFunctionDeclarations(*ABSL_DIE_IF_NULL(root));
-  EXPECT_TRUE(function_declarations.empty());
-}
-
-TEST(FindAllFunctionDeclarationsTest, OnlyModule) {
-  VerilogAnalyzer analyzer("module foo; endmodule", "");
-  ASSERT_OK(analyzer.Analyze());
-  const auto& root = analyzer.Data().SyntaxTree();
-  const auto function_declarations =
-      FindAllFunctionDeclarations(*ABSL_DIE_IF_NULL(root));
-  EXPECT_TRUE(function_declarations.empty());
-}
-
-TEST(FindAllFunctionDeclarationsTest, OneFunction) {
-  VerilogAnalyzer analyzer("function foo(); endfunction", "");
-  ASSERT_OK(analyzer.Analyze());
-  const auto& root = analyzer.Data().SyntaxTree();
-  const auto function_declarations =
-      FindAllFunctionDeclarations(*ABSL_DIE_IF_NULL(root));
-  ASSERT_EQ(function_declarations.size(), 1);
-}
-
-TEST(FindAllFunctionDeclarationsTest, TwoFunctions) {
-  VerilogAnalyzer analyzer(R"(
-function foo(); endfunction
-function foo2(); endfunction
-)",
-                           "");
-  ASSERT_OK(analyzer.Analyze());
-  const auto& root = analyzer.Data().SyntaxTree();
-  const auto function_declarations =
-      FindAllFunctionDeclarations(*ABSL_DIE_IF_NULL(root));
-  EXPECT_EQ(function_declarations.size(), 2);
-}
-
-TEST(FindAllFunctionDeclarationsTest, FunctionInsideClass) {
-  VerilogAnalyzer analyzer("class bar; function foo(); endfunction endclass",
-                           "");
-  ASSERT_OK(analyzer.Analyze());
-  const auto& root = analyzer.Data().SyntaxTree();
-  const auto function_declarations =
-      FindAllFunctionDeclarations(*ABSL_DIE_IF_NULL(root));
-  EXPECT_EQ(function_declarations.size(), 1);
-}
-
-TEST(FindAllFunctionDeclarationsTest, FunctionInsideModule) {
-  VerilogAnalyzer analyzer("module bar; function foo(); endfunction endmodule",
-                           "");
-  ASSERT_OK(analyzer.Analyze());
-  const auto& root = analyzer.Data().SyntaxTree();
-  const auto function_declarations =
-      FindAllFunctionDeclarations(*ABSL_DIE_IF_NULL(root));
-  EXPECT_EQ(function_declarations.size(), 1);
-}
-
-// TODO(kathuriac): Add test case for function inside cross_body_item see
-// (verilog.y)
-
-TEST(GetFunctionHeaderTest, Header) {
-  const char* kTestCases[] = {
-      "function foo(); endfunction",
-      "class c; function foo(); endfunction endclass",
-      "module m; function foo(); endfunction endmodule",
+TEST(FindAllFunctionDeclarationsTest, Various) {
+  constexpr int kTag = 1;  // value doesn't matter
+  const SyntaxTreeSearchTestCase kTestCases[] = {
+      {""},
+      {"class foo; endclass"},
+      {"task foo; endtask"},
+      {"module foo; endmodule"},
+      {{kTag, "function foo(); endfunction"}},
+      {// multiple function declarations
+       {kTag, "function foo(); endfunction"},
+       "\n",
+       {kTag, "function foo2(); endfunction"},
+       "\n"},
+      {// package function method declaration
+       "package bar;\n",
+       {kTag, "function foo(); endfunction"},
+       "\nendpackage\n"},
+      {// class function method declaration
+       "class bar;\n",
+       {kTag, "function foo(); endfunction"},
+       "\nendclass\n"},
+      {// function declaration inside module
+       "module bar;\n",
+       {kTag, "function foo(); endfunction"},
+       "\nendmodule\n"},
+      {// forward declaration is not a full function declaration
+       "class bar;\n",
+       "extern function foo();\n"
+       "endclass\n"},
+      {// pure virtual is not a full function declaration
+       "class bar;\n",
+       "pure virtual function foo();\n"
+       "endclass\n"},
+      {// virtual is a full function declaration
+       "class bar;\n",
+       {kTag,
+        "virtual function foo();\n"
+        "endfunction"},
+       "\n"
+       "endclass\n"},
+      {// function declaration inside cross_body_item
+       "module cover_that;\n"
+       "covergroup settings;\n"
+       "  _name : cross dbi, mask {\n"
+       "    ",
+       {kTag,
+        "function int foo(int bar);\n"  // function declaration
+        "      return bar;\n"
+        "    endfunction"},
+       "\n"
+       "  }\n"
+       "endgroup\n"
+       "endmodule"},
   };
-  for (const auto test : kTestCases) {
-    VerilogAnalyzer analyzer(test, "");
-    ASSERT_OK(analyzer.Analyze());
-    // Root node is a description list, not a function.
-    const auto& root = analyzer.Data().SyntaxTree();
-    const auto function_declarations = FindAllFunctionDeclarations(*root);
-    ASSERT_EQ(function_declarations.size(), 1);
-    const auto& function_node =
-        SymbolCastToNode(*function_declarations.front().match);
-    GetFunctionHeader(function_node);
-    // Reaching here is success, function includes internal checks already.
-    // TODO(b/151371397): verify substring range
+  for (const auto& test : kTestCases) {
+    TestVerilogSyntaxRangeMatches(
+        __FUNCTION__, test, [](const TextStructureView& text_structure) {
+          const auto& root = text_structure.SyntaxTree();
+          return FindAllFunctionDeclarations(*ABSL_DIE_IF_NULL(root));
+        });
+  }
+}
+
+TEST(FindAllFunctionPrototypesTest, Various) {
+  constexpr int kTag = 1;  // value doesn't matter
+  const SyntaxTreeSearchTestCase kTestCases[] = {
+      {""},
+      {"class foo; endclass"},
+      {"task foo; endtask"},
+      {"module foo; endmodule"},
+      {"function foo(); endfunction"},
+      {// package function method declaration
+       "package bar;\n",
+       "function foo(); endfunction\n"
+       "endpackage\n"},
+      {// class function method declaration (not a prototype)
+       "class bar;\n",
+       "function foo(); endfunction\n"
+       "endclass\n"},
+      {// function declaration inside module
+       "module bar;\n"
+       "function foo(); endfunction\n"
+       "endmodule\n"},
+      {// forward declaration is a prototype
+       "class bar;\n",
+       "extern ",
+       {kTag, "function foo();"},
+       "\n"
+       "endclass\n"},
+      {// pure virtual is a prototype
+       "class bar;\n",
+       "pure virtual ",
+       {kTag, "function foo();"},
+       "\n"
+       "endclass\n"},
+      {// virtual declaration is not a prototype
+       "class bar;\n",
+       "virtual function foo();\n"
+       "endfunction\n"
+       "endclass\n"},
+  };
+  for (const auto& test : kTestCases) {
+    TestVerilogSyntaxRangeMatches(
+        __FUNCTION__, test, [](const TextStructureView& text_structure) {
+          const auto& root = text_structure.SyntaxTree();
+          return FindAllFunctionPrototypes(*ABSL_DIE_IF_NULL(root));
+        });
+  }
+}
+
+TEST(FindAllFunctionHeadersTest, Various) {
+  constexpr int kTag = 1;  // value doesn't matter
+  const SyntaxTreeSearchTestCase kTestCases[] = {
+      {""},
+      {"class foo; endclass"},
+      {"task foo; endtask"},
+      {"module foo; endmodule"},
+      {{kTag, "function foo();"}, " endfunction"},
+      {// multiple function declarations
+       {kTag, "function foo();"},
+       " endfunction\n",
+       {kTag, "function foo2();"},
+       " endfunction\n"},
+      {// package function method declaration
+       "package bar;\n",
+       {kTag, "function foo();"},
+       " endfunction"
+       "\nendpackage\n"},
+      {// class function method declaration
+       "class bar;\n",
+       {kTag, "function foo();"},
+       " endfunction"
+       "\nendclass\n"},
+      {// function declaration inside module
+       "module bar;\n",
+       {kTag, "function foo();"},
+       " endfunction"
+       "\nendmodule\n"},
+      {// forward declaration
+       "class bar;\n",
+       "extern ",
+       {kTag, "function foo();"},
+       "\n"
+       "endclass\n"},
+      {// pure virtual
+       "class bar;\n",
+       "pure virtual ",
+       {kTag, "function foo();"},
+       "\n"
+       "endclass\n"},
+      {// virtual
+       "class bar;\n",
+       {kTag, "virtual function foo();"},
+       "\n"
+       "endfunction\n"
+       "endclass\n"},
+      {// function declaration inside cross_body_item
+       "module cover_that;\n"
+       "covergroup settings;\n"
+       "  _name : cross dbi, mask {\n"
+       "    ",
+       {kTag, "function int foo(int bar);"},
+       "\n"
+       "      return bar;\n"
+       "    endfunction\n"
+       "  }\n"
+       "endgroup\n"
+       "endmodule"},
+  };
+  for (const auto& test : kTestCases) {
+    TestVerilogSyntaxRangeMatches(
+        __FUNCTION__, test, [](const TextStructureView& text_structure) {
+          const auto& root = text_structure.SyntaxTree();
+          return FindAllFunctionHeaders(*ABSL_DIE_IF_NULL(root));
+        });
+  }
+}
+
+TEST(GetFunctionHeaderTest, DeclarationHeader) {
+  constexpr int kTag = 1;  // value doesn't matter
+  const SyntaxTreeSearchTestCase kTestCases[] = {
+      {{kTag, "function foo();"}, " endfunction"},
+      {"class c; ", {kTag, "function foo();"}, " endfunction endclass"},
+      {"module m; ", {kTag, "function foo();"}, " endfunction endmodule"},
+      {"package p; ", {kTag, "function foo();"}, " endfunction endpackage"},
+  };
+  for (const auto& test : kTestCases) {
+    TestVerilogSyntaxRangeMatches(
+        __FUNCTION__, test, [](const TextStructureView& text_structure) {
+          const auto& root = text_structure.SyntaxTree();
+          // Root node is a description list, not a function.
+          const auto function_declarations = FindAllFunctionDeclarations(*root);
+          std::vector<TreeSearchMatch> headers;
+          for (const auto& decl : function_declarations) {
+            const auto& function_node = SymbolCastToNode(*decl.match);
+            headers.push_back(TreeSearchMatch{&GetFunctionHeader(function_node),
+                                              /* no context */});
+          }
+          return headers;
+        });
   }
 }
 
@@ -187,53 +297,55 @@ TEST(GetFunctionLifetimeTest, AutomaticLifetimeDeclared) {
 }
 
 TEST(GetFunctionIdTest, UnqualifiedIds) {
-  const std::pair<std::string, std::vector<absl::string_view>> kTestCases[] = {
-      {"function foo(); endfunction", {"foo"}},
-      {"function automatic bar(); endfunction", {"bar"}},
-      {"function static baz(); endfunction", {"baz"}},
-      {"package p; function foo(); endfunction endpackage", {"foo"}},
-      {"class c; function zoo(); endfunction endclass", {"zoo"}},
-      {"function myclass::foo(); endfunction", {"myclass", "foo"}},
+  constexpr int kTag = 1;  // don't care
+  const SyntaxTreeSearchTestCase kTestCases[] = {
+      {"function ", {kTag, "foo"}, "(); endfunction"},
+      {"function automatic ", {kTag, "bar"}, "(); endfunction"},
+      {"function static ", {kTag, "baz"}, "(); endfunction"},
+      {"package p; function ", {kTag, "foo"}, "(); endfunction endpackage"},
+      {"class c; function ", {kTag, "zoo"}, "(); endfunction endclass"},
+      {"function ", {kTag, "myclass"}, "::", {kTag, "foo"}, "(); endfunction"},
   };
-  for (const auto test : kTestCases) {
-    VerilogAnalyzer analyzer(test.first, "");
-    ASSERT_OK(analyzer.Analyze());
-    // Root node is a description list, not a function.
-    const auto& root = analyzer.Data().SyntaxTree();
-    const auto function_declarations = FindAllFunctionDeclarations(*root);
-    ASSERT_EQ(function_declarations.size(), 1);
-    const auto& function_node =
-        SymbolCastToNode(*function_declarations.front().match);
-    const auto* function_id = GetFunctionId(function_node);
-    const auto ids = FindAllUnqualifiedIds(*function_id);
-    std::vector<absl::string_view> got_ids;
-    for (const auto& id : ids) {
-      const verible::SyntaxTreeLeaf* base = GetIdentifier(*id.match);
-      got_ids.push_back(ABSL_DIE_IF_NULL(base)->get().text());
-    }
-    EXPECT_EQ(got_ids, test.second);
-    // TODO(b/151371397): verify substring range
+  for (const auto& test : kTestCases) {
+    TestVerilogSyntaxRangeMatches(
+        __FUNCTION__, test, [](const TextStructureView& text_structure) {
+          const auto& root = text_structure.SyntaxTree();
+          const auto function_declarations = FindAllFunctionDeclarations(*root);
+          std::vector<TreeSearchMatch> got_ids;
+          for (const auto& decl : function_declarations) {
+            const auto& function_node = SymbolCastToNode(*decl.match);
+            const auto* function_id = GetFunctionId(function_node);
+            for (const auto& id : FindAllUnqualifiedIds(*function_id)) {
+              const verible::SyntaxTreeLeaf* base = GetIdentifier(*id.match);
+              got_ids.push_back(TreeSearchMatch{base, /* empty context */});
+            }
+          }
+          return got_ids;
+        });
   }
 }
 
 TEST(GetFunctionIdTest, QualifiedIds) {
-  const std::pair<std::string, int> kTestCases[] = {
-      {"function foo(); endfunction", 0},
-      {"function myclass::foo(); endfunction", 1},
+  constexpr int kTag = 1;  // don't care
+  const SyntaxTreeSearchTestCase kTestCases[] = {
+      {"function foo(); endfunction"},
+      {"function ", {kTag, "myclass::foo"}, "(); endfunction"},
   };
-  for (const auto test : kTestCases) {
-    VerilogAnalyzer analyzer(test.first, "");
-    ASSERT_OK(analyzer.Analyze());
-    // Root node is a description list, not a function.
-    const auto& root = analyzer.Data().SyntaxTree();
-    const auto function_declarations = FindAllFunctionDeclarations(*root);
-    ASSERT_EQ(function_declarations.size(), 1);
-    const auto& function_node =
-        SymbolCastToNode(*function_declarations.front().match);
-    const auto* function_id = GetFunctionId(function_node);
-    const auto ids = FindAllQualifiedIds(*function_id);
-    EXPECT_EQ(ids.size(), test.second);
-    // TODO(b/151371397): verify substring range
+  for (const auto& test : kTestCases) {
+    TestVerilogSyntaxRangeMatches(
+        __FUNCTION__, test, [](const TextStructureView& text_structure) {
+          const auto& root = text_structure.SyntaxTree();
+          const auto function_declarations = FindAllFunctionDeclarations(*root);
+          std::vector<TreeSearchMatch> got_ids;
+          for (const auto& decl : function_declarations) {
+            const auto& function_node = SymbolCastToNode(*decl.match);
+            const auto* function_id = GetFunctionId(function_node);
+            for (const auto& id : FindAllQualifiedIds(*function_id)) {
+              got_ids.push_back(id);
+            }
+          }
+          return got_ids;
+        });
   }
 }
 
@@ -242,154 +354,87 @@ struct SubtreeTestData {
   verible::TokenInfoTestData token_data;
 };
 
-TEST(GetFunctionReturnTypeTest, NoReturnType) {
-  const SubtreeTestData kTestCases[] = {
-      {NodeEnum::kFunctionDeclaration, {"function f;endfunction\n"}},
-      {NodeEnum::kFunctionDeclaration,
-       {"package p;\nfunction f;\nendfunction\nendpackage\n"}},
-      {NodeEnum::kFunctionDeclaration,
-       {"class c;\nfunction f;\nendfunction\nendclass\n"}},
-      {NodeEnum::kFunctionDeclaration,
-       {"module m;\nfunction f;\nendfunction\nendmodule\n"}},
+TEST(GetFunctionReturnTypeTest, VariousReturnTypes) {
+  constexpr int kTag = 1;  // don't care
+  const SyntaxTreeSearchTestCase kTestCases[] = {
+      // implicit/missing return types
+      {"function f;endfunction\n"},
+      {"package p;\nfunction f;\nendfunction\nendpackage\n"},
+      {"class c;\nfunction f;\nendfunction\nendclass\n"},
+      {"module m;\nfunction f;\nendfunction\nendmodule\n"},
+      // explicit return types
+      {"function ", {kTag, "void"}, " f;endfunction\n"},
+      {"package p;\nfunction ",
+       {kTag, "int"},
+       " f;\nendfunction\nendpackage\n"},
+      {"class c;\nfunction ",
+       {kTag, "foo_pkg::bar_t"},
+       " f;\nendfunction\nendclass\n"},
+      {"module m;\nfunction ",
+       {kTag, "foo#(bar)"},
+       " f;\nendfunction\nendmodule\n"},
   };
   for (const auto& test : kTestCases) {
-    const absl::string_view code(test.token_data.code);
-    VerilogAnalyzer analyzer(code, "test-file");
-    ASSERT_OK(analyzer.Analyze()) << "failed on:\n" << code;
-    const auto& root = analyzer.Data().SyntaxTree();
+    TestVerilogSyntaxRangeMatches(
+        __FUNCTION__, test, [](const TextStructureView& text_structure) {
+          const auto& root = text_structure.SyntaxTree();
 
-    const auto statements = FindAllFunctionDeclarations(*root);
-    ASSERT_EQ(statements.size(), 1);
-    const auto& statement = *statements.front().match;
-    const auto* return_type = GetFunctionReturnType(statement);
-    // Expect a type node, even when type is implicit or empty.
-    ASSERT_NE(return_type, nullptr);
-    const auto return_type_span = verible::StringSpanOfSymbol(*return_type);
-    EXPECT_TRUE(return_type_span.empty());
+          const auto decls = FindAllFunctionDeclarations(*root);
+          std::vector<TreeSearchMatch> returns;
+          for (const auto& decl : decls) {
+            const auto& statement = *decl.match;
+            const auto* return_type = GetFunctionReturnType(statement);
+            // Expect a type node, even when type is implicit or empty.
+            if (return_type == nullptr) continue;
+            const auto return_type_span =
+                verible::StringSpanOfSymbol(*return_type);
+            if (!return_type_span.empty()) {
+              returns.push_back(TreeSearchMatch{return_type, /* no context */});
+            }
+          }
+          return returns;
+        });
   }
 }
 
-TEST(GetFunctionReturnTypeTest, WithReturnType) {
-  constexpr int kTag = 1;  // value not important
-  const SubtreeTestData kTestCases[] = {
-      {NodeEnum::kFunctionDeclaration,
-       {"function ", {kTag, "void"}, " f;endfunction\n"}},
-      {NodeEnum::kFunctionDeclaration,
-       {"package p;\nfunction ",
-        {kTag, "int"},
-        " f;\nendfunction\nendpackage\n"}},
-      {NodeEnum::kFunctionDeclaration,
-       {"class c;\nfunction ",
-        {kTag, "foo_pkg::bar_t"},
-        " f;\nendfunction\nendclass\n"}},
-      {NodeEnum::kFunctionDeclaration,
-       {"module m;\nfunction ",
-        {kTag, "foo#(bar)"},
-        " f;\nendfunction\nendmodule\n"}},
+TEST(GetFunctionFormalPortsGroupTest, MixedFormalPorts) {
+  constexpr int kTag = 1;  // don't care
+  const SyntaxTreeSearchTestCase kTestCases[] = {
+      // no ports
+      {"function f;endfunction\n"},
+      {"package p;\nfunction f;\nendfunction\nendpackage\n"},
+      {"class c;\nfunction f;\nendfunction\nendclass\n"},
+      {"module m;\nfunction f;\nendfunction\nendmodule\n"},
+      // with ports
+      {"function f", {kTag, "()"}, ";endfunction\n"},
+      {"package p;\nfunction f",
+       {kTag, "(string s)"},
+       ";\nendfunction\nendpackage\n"},
+      {"class c;\nfunction f",
+       {kTag, "(int i, string s)"},
+       ";\nendfunction\nendclass\n"},
+      {"module m;\nfunction f",
+       {kTag, "(input logic foo, bar)"},
+       ";\nendfunction\nendmodule\n"},
   };
   for (const auto& test : kTestCases) {
-    const absl::string_view code(test.token_data.code);
-    VerilogAnalyzer analyzer(code, "test-file");
-    const absl::string_view code_copy(analyzer.Data().Contents());
-    ASSERT_OK(analyzer.Analyze()) << "failed on:\n" << code;
-    const auto& root = analyzer.Data().SyntaxTree();
+    TestVerilogSyntaxRangeMatches(
+        __FUNCTION__, test, [](const TextStructureView& text_structure) {
+          const auto& root = text_structure.SyntaxTree();
 
-    const auto statements = FindAllFunctionDeclarations(*root);
-    ASSERT_EQ(statements.size(), 1);
-    const auto& statement = *statements.front().match;
-    const auto* return_type = GetFunctionReturnType(statement);
-    ASSERT_NE(return_type, nullptr);
-    const auto return_type_span = verible::StringSpanOfSymbol(*return_type);
-    EXPECT_FALSE(return_type_span.empty());
-
-    // TODO(b/151371397): Refactor this test code along with
-    // common/analysis/linter_test_util.h to be able to compare set-symmetric
-    // differences in 'findings'.
-
-    // Find the tokens, rebased into the other buffer.
-    const auto expected_excerpts =
-        test.token_data.FindImportantTokens(code_copy);
-    ASSERT_EQ(expected_excerpts.size(), 1);
-    // Compare the string_views and their exact spans.
-    const auto expected_span = expected_excerpts.front().text();
-    ASSERT_TRUE(verible::IsSubRange(return_type_span, code_copy));
-    ASSERT_TRUE(verible::IsSubRange(expected_span, code_copy));
-    EXPECT_EQ(return_type_span, expected_span);
-    EXPECT_TRUE(verible::BoundsEqual(return_type_span, expected_span));
-  }
-}
-
-TEST(GetFunctionFormalPortsGroupTest, NoFormalPorts) {
-  const SubtreeTestData kTestCases[] = {
-      {NodeEnum::kFunctionDeclaration, {"function f;endfunction\n"}},
-      {NodeEnum::kFunctionDeclaration,
-       {"package p;\nfunction f;\nendfunction\nendpackage\n"}},
-      {NodeEnum::kFunctionDeclaration,
-       {"class c;\nfunction f;\nendfunction\nendclass\n"}},
-      {NodeEnum::kFunctionDeclaration,
-       {"module m;\nfunction f;\nendfunction\nendmodule\n"}},
-  };
-  for (const auto& test : kTestCases) {
-    const absl::string_view code(test.token_data.code);
-    VerilogAnalyzer analyzer(code, "test-file");
-    ASSERT_OK(analyzer.Analyze()) << "failed on:\n" << code;
-    const auto& root = analyzer.Data().SyntaxTree();
-
-    const auto statements = FindAllFunctionDeclarations(*root);
-    ASSERT_EQ(statements.size(), 1);
-    const auto& statement = *statements.front().match;
-    const auto* return_type = GetFunctionFormalPortsGroup(statement);
-    EXPECT_EQ(return_type, nullptr);
-  }
-}
-
-TEST(GetFunctionFormalPortsGroupTest, WithFormalPorts) {
-  constexpr int kTag = 1;  // value not important
-  const SubtreeTestData kTestCases[] = {
-      {NodeEnum::kFunctionDeclaration,
-       {"function f", {kTag, "()"}, ";endfunction\n"}},
-      {NodeEnum::kFunctionDeclaration,
-       {"package p;\nfunction f",
-        {kTag, "(string s)"},
-        ";\nendfunction\nendpackage\n"}},
-      {NodeEnum::kFunctionDeclaration,
-       {"class c;\nfunction f",
-        {kTag, "(int i, string s)"},
-        ";\nendfunction\nendclass\n"}},
-      {NodeEnum::kFunctionDeclaration,
-       {"module m;\nfunction f",
-        {kTag, "(input logic foo, bar)"},
-        ";\nendfunction\nendmodule\n"}},
-  };
-  for (const auto& test : kTestCases) {
-    const absl::string_view code(test.token_data.code);
-    VerilogAnalyzer analyzer(code, "test-file");
-    const absl::string_view code_copy(analyzer.Data().Contents());
-    ASSERT_OK(analyzer.Analyze()) << "failed on:\n" << code;
-    const auto& root = analyzer.Data().SyntaxTree();
-
-    const auto statements = FindAllFunctionDeclarations(*root);
-    ASSERT_EQ(statements.size(), 1);
-    const auto& statement = *statements.front().match;
-    const auto* port_formals = GetFunctionFormalPortsGroup(statement);
-    ASSERT_NE(port_formals, nullptr);
-    const auto port_formals_span = verible::StringSpanOfSymbol(*port_formals);
-    EXPECT_FALSE(port_formals_span.empty());
-
-    // TODO(b/151371397): Refactor this test code along with
-    // common/analysis/linter_test_util.h to be able to compare set-symmetric
-    // differences in 'findings'.
-
-    // Find the tokens, rebased into the other buffer.
-    const auto expected_excerpts =
-        test.token_data.FindImportantTokens(code_copy);
-    ASSERT_EQ(expected_excerpts.size(), 1);
-    // Compare the string_views and their exact spans.
-    const auto expected_span = expected_excerpts.front().text();
-    ASSERT_TRUE(verible::IsSubRange(port_formals_span, code_copy));
-    ASSERT_TRUE(verible::IsSubRange(expected_span, code_copy));
-    EXPECT_EQ(port_formals_span, expected_span);
-    EXPECT_TRUE(verible::BoundsEqual(port_formals_span, expected_span));
+          const auto decls = FindAllFunctionDeclarations(*root);
+          std::vector<TreeSearchMatch> ports;
+          for (const auto& decl : decls) {
+            const auto& statement = *decl.match;
+            const auto* port_formals = GetFunctionFormalPortsGroup(statement);
+            if (port_formals == nullptr) continue;
+            const auto port_formals_span =
+                verible::StringSpanOfSymbol(*port_formals);
+            if (port_formals_span.empty()) continue;
+            ports.push_back(TreeSearchMatch{port_formals, /* no context */});
+          }
+          return ports;
+        });
   }
 }
 
@@ -433,25 +478,19 @@ TEST(GetFunctionHeaderTest, GetFunctionName) {
        "();\n return 10;\n endfunction\n  endclass"},
   };
   for (const auto& test : kTestCases) {
-    const absl::string_view code(test.code);
-    VerilogAnalyzer analyzer(code, "test-file");
-    const auto code_copy = analyzer.Data().Contents();
-    ASSERT_OK(analyzer.Analyze()) << "failed on:\n" << code;
-    const auto& root = analyzer.Data().SyntaxTree();
+    TestVerilogSyntaxRangeMatches(
+        __FUNCTION__, test, [](const TextStructureView& text_structure) {
+          const auto& root = text_structure.SyntaxTree();
+          const auto decls =
+              FindAllFunctionDeclarations(*ABSL_DIE_IF_NULL(root));
 
-    const auto decls = FindAllFunctionDeclarations(*ABSL_DIE_IF_NULL(root));
-
-    std::vector<TreeSearchMatch> types;
-    for (const auto& decl : decls) {
-      const auto* type = GetFunctionName(*decl.match);
-      types.push_back(TreeSearchMatch{type, {/* ignored context */}});
-    }
-
-    std::ostringstream diffs;
-    EXPECT_TRUE(test.ExactMatchFindings(types, code_copy, &diffs))
-        << "failed on:\n"
-        << code << "\ndiffs:\n"
-        << diffs.str();
+          std::vector<TreeSearchMatch> types;
+          for (const auto& decl : decls) {
+            const auto* type = GetFunctionName(*decl.match);
+            types.push_back(TreeSearchMatch{type, {/* ignored context */}});
+          }
+          return types;
+        });
   }
 }
 
@@ -517,25 +556,20 @@ TEST(GetFunctionBlockStatement, GetFunctionBody) {
        "\nendfunction\nendclass"},
   };
   for (const auto& test : kTestCases) {
-    const absl::string_view code(test.code);
-    VerilogAnalyzer analyzer(code, "test-file");
-    const auto code_copy = analyzer.Data().Contents();
-    ASSERT_OK(analyzer.Analyze()) << "failed on:\n" << code;
-    const auto& root = analyzer.Data().SyntaxTree();
+    TestVerilogSyntaxRangeMatches(
+        __FUNCTION__, test, [](const TextStructureView& text_structure) {
+          const auto& root = text_structure.SyntaxTree();
+          const auto decls =
+              FindAllFunctionDeclarations(*ABSL_DIE_IF_NULL(root));
 
-    const auto decls = FindAllFunctionDeclarations(*ABSL_DIE_IF_NULL(root));
-
-    std::vector<TreeSearchMatch> functions_body;
-    for (const auto& decl : decls) {
-      const auto& body = GetFunctionBlockStatementList(*decl.match);
-      functions_body.push_back(TreeSearchMatch{&body, {/* ignored context */}});
-    }
-
-    std::ostringstream diffs;
-    EXPECT_TRUE(test.ExactMatchFindings(functions_body, code_copy, &diffs))
-        << "failed on:\n"
-        << code << "\ndiffs:\n"
-        << diffs.str();
+          std::vector<TreeSearchMatch> functions_body;
+          for (const auto& decl : decls) {
+            const auto& body = GetFunctionBlockStatementList(*decl.match);
+            functions_body.push_back(
+                TreeSearchMatch{&body, {/* ignored context */}});
+          }
+          return functions_body;
+        });
   }
 }
 

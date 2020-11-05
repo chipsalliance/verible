@@ -38,6 +38,16 @@ std::vector<verible::TreeSearchMatch> FindAllFunctionDeclarations(
   return verible::SearchSyntaxTree(root, NodekFunctionDeclaration());
 }
 
+std::vector<verible::TreeSearchMatch> FindAllFunctionPrototypes(
+    const Symbol& root) {
+  return verible::SearchSyntaxTree(root, NodekFunctionPrototype());
+}
+
+std::vector<verible::TreeSearchMatch> FindAllFunctionHeaders(
+    const Symbol& root) {
+  return verible::SearchSyntaxTree(root, NodekFunctionHeader());
+}
+
 std::vector<verible::TreeSearchMatch> FindAllFunctionOrTaskCalls(
     const Symbol& root) {
   return verible::SearchSyntaxTree(root, NodekFunctionCall());

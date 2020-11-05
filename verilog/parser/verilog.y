@@ -2414,16 +2414,14 @@ assignment_statement_no_expr
   ;
 
 function_prototype
-  /* TODO(fangism): can this be structured like FunctionHeader? */
   /* users of this rule may append a trailing ';' */
   : TK_function lifetime_opt
-    /* data_type_or_implicit_or_void GenericIdentifier */
-    data_type_or_implicit_basic_followed_by_id_and_dimensions_opt
+    /* LRM: data_type_or_implicit_or_void function_identifier */
+    function_return_type_and_id
     tf_port_list_paren_opt
     { $$ = MakeTaggedNode(N::kFunctionPrototype,
-                          MakeTaggedNode(N::kFunctionHeader,
-                                         qualifier_placeholder,
-                                         $1, $2, $3, $4)); }
+                          MakeFunctionHeader(qualifier_placeholder,
+                                             $1, $2, $3, $4)); }
     /* Without port list, is suitable for export declarations. */
   ;
 

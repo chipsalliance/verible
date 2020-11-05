@@ -31,21 +31,37 @@
 
 namespace verilog {
 
-template <typename T0, typename T1, typename T2, typename T3, typename T4,
-          typename T5>
+// Construct a function header CST node, without the trailing ';'.
+template <typename T0, typename T1, typename T2, typename T3, typename T4>
 verible::SymbolPtr MakeFunctionHeader(T0&& qualifiers, T1&& function_start,
                                       T2&& lifetime, T3&& return_type_id,
-                                      T4&& ports, T5&& semicolon) {
+                                      T4&& ports) {
   verible::CheckOptionalSymbolAsNode(qualifiers, NodeEnum::kQualifierList);
   ExpectString(function_start, "function");
   verible::CheckOptionalSymbolAsNode(ports, NodeEnum::kParenGroup);
-  ExpectString(semicolon, ";");
   return verible::MakeTaggedNode(
       NodeEnum::kFunctionHeader, std::forward<T0>(qualifiers),
       std::forward<T1>(function_start), std::forward<T2>(lifetime),
       std::forward<T3>(
           return_type_id) /* flattens to separate type and id nodes */,
-      std::forward<T4>(ports), std::forward<T5>(semicolon));
+      std::forward<T4>(ports));
+}
+
+// Construct a function header CST node, with the trailing ';'.
+template <typename T0, typename T1, typename T2, typename T3, typename T4,
+          typename T5>
+verible::SymbolPtr MakeFunctionHeader(T0&& qualifiers, T1&& function_start,
+                                      T2&& lifetime, T3&& return_type_id,
+                                      T4&& ports, T5&& semicolon) {
+  ExpectString(semicolon, ";");
+  return ExtendNode(
+      MakeFunctionHeader(
+          std::forward<T0>(qualifiers), std::forward<T1>(function_start),
+          std::forward<T2>(lifetime),
+          std::forward<T3>(
+              return_type_id) /* flattens to separate type and id nodes */,
+          std::forward<T4>(ports)),
+      std::forward<T5>(semicolon));
 }
 
 template <typename T0, typename T1, typename T2, typename T3, typename T4,
@@ -70,6 +86,14 @@ verible::SymbolPtr MakeFunctionDeclaration(T0&& qualifiers, T1&& function_start,
 
 // Find all function declarations, including class method declarations.
 std::vector<verible::TreeSearchMatch> FindAllFunctionDeclarations(
+    const verible::Symbol&);
+
+// Find all function headers (in declarations and prototypes).
+std::vector<verible::TreeSearchMatch> FindAllFunctionHeaders(
+    const verible::Symbol&);
+
+// Find all function prototypes (extern, pure virtual).
+std::vector<verible::TreeSearchMatch> FindAllFunctionPrototypes(
     const verible::Symbol&);
 
 // Find all function (or Task) calls.
