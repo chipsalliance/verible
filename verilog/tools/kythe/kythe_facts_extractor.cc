@@ -341,11 +341,7 @@ void KytheFactsExtractor::ConstructFlattenedScope(const IndexingFactNode& node,
       const std::vector<std::pair<const VName*, const Scope*>> definitions =
           scope_resolver_->SearchForDefinitions(
               GetListOfReferencesfromListOfAnchor(parent_anchors));
-
-      if (definitions.empty()) {
-        break;
-      }
-
+              
       if (!definitions.empty() && definitions.size() == parent_anchors.size() &&
           definitions.back().second != nullptr) {
         current_scope.AppendScope(*definitions.back().second);
