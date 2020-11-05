@@ -1314,6 +1314,8 @@ class_item
     { yyerrok; $$ = Recover(); }
   | error TK_endtask
     { yyerrok; $$ = Recover(); }
+  | error TK_endgroup
+    { yyerrok; $$ = Recover(); }
   ;
 
 interface_data_declaration
@@ -8266,6 +8268,9 @@ bins_or_options_list_opt
      */
   | ';'
     { $$ = move($1); }
+  /* error-recovery */
+  | '{' error '}'
+    { yyerrok; $$ = Recover(); }
   ;
 bins_or_options_list
   : bins_or_options_list bins_or_options
@@ -8282,6 +8287,9 @@ bins_or_options
     { $$ = move($1); }
   | macro_call_or_item
     { $$ = move($1); }
+  /* error-recovery */
+  | error ';'
+    { yyerrok; $$ = Recover(); }
   ;
 
 bins_or_options_list_opt_pp
