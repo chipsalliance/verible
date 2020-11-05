@@ -2421,7 +2421,7 @@ function_prototype
     tf_port_list_paren_opt
     { $$ = MakeTaggedNode(N::kFunctionPrototype,
                           MakeFunctionHeader(qualifier_placeholder,
-                                             $1, $2, $3, $4)); }
+                                             $1, $2, ForwardChildren($3), $4)); }
     /* Without port list, is suitable for export declarations. */
   ;
 

@@ -63,6 +63,12 @@ const verible::SyntaxTreeNode& GetFunctionHeader(const Symbol& function_decl) {
                           NodeEnum::kFunctionHeader);
 }
 
+const verible::SyntaxTreeNode& GetFunctionPrototypeHeader(
+    const Symbol& function_decl) {
+  return GetSubtreeAsNode(function_decl, NodeEnum::kFunctionPrototype, 0,
+                          NodeEnum::kFunctionHeader);
+}
+
 const Symbol* GetFunctionHeaderLifetime(const Symbol& function_header) {
   return GetSubtreeAsSymbol(function_header, NodeEnum::kFunctionHeader, 2);
 }

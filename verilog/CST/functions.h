@@ -108,6 +108,10 @@ std::vector<verible::TreeSearchMatch> FindAllFunctionOrTaskCallsExtension(
 const verible::SyntaxTreeNode& GetFunctionHeader(
     const verible::Symbol& function_decl);
 
+// Returns the function prototype header (return type, id, ports)
+const verible::SyntaxTreeNode& GetFunctionPrototypeHeader(
+    const verible::Symbol& function_decl);
+
 // FunctionHeader accessors
 
 // Returns the function lifetime of the function header.

@@ -160,6 +160,112 @@ TEST(FindAllFunctionPrototypesTest, Various) {
           return FindAllFunctionPrototypes(*ABSL_DIE_IF_NULL(root));
         });
   }
+  // Protype headers map to the same range as the enclosing prototype.
+  for (const auto& test : kTestCases) {
+    TestVerilogSyntaxRangeMatches(
+        __FUNCTION__, test, [](const TextStructureView& text_structure) {
+          const auto& root = text_structure.SyntaxTree();
+          const auto protos(FindAllFunctionPrototypes(*ABSL_DIE_IF_NULL(root)));
+          std::vector<TreeSearchMatch> headers;
+          for (const auto& proto : protos) {
+            headers.push_back(TreeSearchMatch{
+                &GetFunctionPrototypeHeader(*proto.match), /* no context */});
+          }
+          return headers;
+        });
+  }
+}
+
+TEST(FunctionPrototypesReturnTypesTest, Various) {
+  constexpr int kTag = 1;  // value doesn't matter
+  const SyntaxTreeSearchTestCase kTestCases[] = {
+      {""},
+      {// forward declaration is a prototype, implicit return type
+       "class bar;\n"
+       "extern function foo();\n"
+       "endclass\n"},
+      {// forward declaration is a prototype, explicit return type
+       "class bar;\n"
+       "extern function ",
+       {kTag, "bar#(int)"},
+       " foo();\n"
+       "endclass\n"},
+      {// pure virtual is a prototype, implicit return type
+       "class bar;\n"
+       "pure virtual function foo();\n"
+       "endclass\n"},
+      {// pure virtual is a prototype, explicit return type
+       "class bar;\n"
+       "pure virtual function ",
+       {kTag, "p_pkg::baz_t"},
+       " foo();\n"
+       "endclass\n"},
+  };
+  // Protype headers map to the same range as the enclosing prototype.
+  for (const auto& test : kTestCases) {
+    TestVerilogSyntaxRangeMatches(
+        __FUNCTION__, test, [](const TextStructureView& text_structure) {
+          const auto& root = text_structure.SyntaxTree();
+          const auto protos(FindAllFunctionPrototypes(*ABSL_DIE_IF_NULL(root)));
+          std::vector<TreeSearchMatch> returns;
+          for (const auto& proto : protos) {
+            const auto* return_type = GetFunctionHeaderReturnType(
+                GetFunctionPrototypeHeader(*proto.match));
+            if (return_type == nullptr) continue;
+            if (verible::StringSpanOfSymbol(*return_type).empty()) continue;
+            returns.push_back(TreeSearchMatch{return_type, /* no context */});
+          }
+          return returns;
+        });
+  }
+}
+
+TEST(FunctionPrototypesIdsTest, Various) {
+  constexpr int kTag = 1;  // value doesn't matter
+  const SyntaxTreeSearchTestCase kTestCases[] = {
+      {""},
+      {// forward declaration is a prototype, implicit return type
+       "class bar;\n"
+       "extern function ",
+       {kTag, "moo"},
+       "();\n"
+       "endclass\n"},
+      {// forward declaration is a prototype, explicit return type
+       "class bar;\n"
+       "extern function bar#(int) ",
+       {kTag, "gooo"},
+       "();\n"
+       "endclass\n"},
+      {// pure virtual is a prototype, implicit return type
+       "class bar;\n"
+       "pure virtual function ",
+       {kTag, "weeee"},
+       "();\n"
+       "endclass\n"},
+      {// pure virtual is a prototype, explicit return type
+       "class bar;\n",
+       "pure virtual function p_pkg::baz_t ",
+       {kTag, "h456"},
+       "();\n"
+       "endclass\n"},
+  };
+  // Protype headers map to the same range as the enclosing prototype.
+  for (const auto& test : kTestCases) {
+    TestVerilogSyntaxRangeMatches(
+        __FUNCTION__, test, [](const TextStructureView& text_structure) {
+          const auto& root = text_structure.SyntaxTree();
+          const auto protos(FindAllFunctionPrototypes(*ABSL_DIE_IF_NULL(root)));
+          std::vector<TreeSearchMatch> ids;
+          for (const auto& proto : protos) {
+            const auto* id =
+                GetFunctionHeaderId(GetFunctionPrototypeHeader(*proto.match));
+            if (id == nullptr) continue;
+            if (verible::StringSpanOfSymbol(*id).empty()) continue;
+            ids.push_back(TreeSearchMatch{id, /* no context */});
+          }
+          return ids;
+        });
+  }
 }
 
 TEST(FindAllFunctionHeadersTest, Various) {
