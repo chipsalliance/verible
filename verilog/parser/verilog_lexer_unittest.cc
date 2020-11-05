@@ -1897,6 +1897,16 @@ static std::initializer_list<LexerTestData> kUDPTests = {
      "\n",
      {'1', "1"},
      {'0', "0"}},
+    {// should not crash or stack-underflow
+     {TK_endprimitive, "endprimitive"}},
+    {// should not crash or stack-underflow
+     {TK_endprimitive, "endprimitive"},
+     " ",
+     {TK_endprimitive, "endprimitive"}},
+    {// should not crash or stack-underflow
+     {TK_EOL_COMMENT, "//zzz"},
+     "\n",
+     {TK_endprimitive, "endprimitive"}},
 };
 
 static std::initializer_list<LexerTestData> kUnfilteredUDPTests = {

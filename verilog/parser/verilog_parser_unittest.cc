@@ -5789,6 +5789,8 @@ static const std::initializer_list<ParserTestData> kInvalidCodeTests = {
      {TK_SCOPE_RES, "::"},
      "z;\n"
      "endfunction\n"},
+    {{TK_endprimitive, "endprimitive"}},
+    {"//www\n", {TK_endprimitive, "endprimitive"}},
 };
 
 using verible::LeafTag;
