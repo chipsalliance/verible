@@ -157,7 +157,7 @@ const verible::SyntaxTreeNode& GetLocalRootFromFunctionCall(
 
 // Return the node spanning identifier for the function call node.
 // e.g from "pkg::get()" returns the node spanning "pkg::get".
-const verible::SyntaxTreeNode& GetIdentifiersFromFunctionCall(
+const verible::SyntaxTreeNode* GetIdentifiersFromFunctionCall(
     const verible::Symbol& function_call);
 
 // Returns leaf node for function name in function call.

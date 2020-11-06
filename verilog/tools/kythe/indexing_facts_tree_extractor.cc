@@ -912,9 +912,12 @@ void IndexingFactsTreeExtractor::ExtractFunctionOrTaskCall(
 
   // Extract function or task name.
   // It can be single or preceeded with a pkg or class names.
-  const SyntaxTreeNode& identifiers =
+  const SyntaxTreeNode* identifier =
       GetIdentifiersFromFunctionCall(function_call_node);
-  Visit(identifiers);
+  if (identifier == nullptr) {
+    return;
+  }
+  Visit(*identifier);
 
   // Move the data from the last sibling to the current node and delete that
   // sibling.

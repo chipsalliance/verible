@@ -19,8 +19,6 @@
 #include <utility>
 #include <vector>
 
-#include "gmock/gmock.h"
-#include "gtest/gtest.h"
 #include "absl/strings/string_view.h"
 #include "common/analysis/matcher/matcher_builders.h"
 #include "common/analysis/syntax_tree_search.h"
@@ -35,6 +33,8 @@
 #include "common/util/casts.h"
 #include "common/util/logging.h"
 #include "common/util/range.h"
+#include "gmock/gmock.h"
+#include "gtest/gtest.h"
 #include "verilog/CST/identifier.h"
 #include "verilog/CST/match_test_utils.h"
 #include "verilog/analysis/verilog_analyzer.h"
@@ -689,6 +689,7 @@ TEST(FunctionCallTest, GetFunctionCallName) {
       {"module m;\ninitial begin\n",
        {kTag, "class_name#(1)::f1"},
        "(a, b, c);\nend\nendmodule"},
+      {"r=this();"},
   };
 
   for (const auto& test : kTestCases) {
@@ -698,17 +699,20 @@ TEST(FunctionCallTest, GetFunctionCallName) {
           const auto& calls =
               FindAllFunctionOrTaskCalls(*ABSL_DIE_IF_NULL(root));
 
-          std::vector<TreeSearchMatch> paren_groups;
+          std::vector<TreeSearchMatch> identifiers;
           for (const auto& call : calls) {
-            const auto& paren_group =
+            const auto* identifier =
                 GetIdentifiersFromFunctionCall(*call.match);
-            paren_groups.emplace_back(
-                TreeSearchMatch{&paren_group, {/* ignored context */}});
+            if (identifier == nullptr) {
+              continue;
+            }
+            identifiers.emplace_back(
+                TreeSearchMatch{identifier, {/* ignored context */}});
           }
-          return paren_groups;
+          return identifiers;
         });
   }
-}
+}  // namespace
 
 TEST(FunctionCallTest, GetFunctionCallArguments) {
   constexpr int kTag = 1;  // value doesn't matter
