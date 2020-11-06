@@ -189,6 +189,50 @@ TEST(FactsTreeExtractor, EmptyModuleTest) {
   EXPECT_EQ(result_pair.left, nullptr) << *result_pair.left;
   EXPECT_EQ(result_pair.right, nullptr) << *result_pair.right;
 }
+TEST(FactsTreeExtractor, NoIdentifierInsideNet) {
+  constexpr int kTag = 1;  // value doesn't matter
+  const verible::SyntaxTreeSearchTestCase kTestCase = {{
+      "module ",
+      {kTag, "foo"},
+      ";\n tri sin;\n endmodule",
+  }};
+
+  ScopedTestFile test_file(testing::TempDir(), kTestCase.code);
+  std::vector<absl::Status> errors;
+
+  const IndexingFactNode expected(T(
+      {
+          {
+              Anchor(testing::TempDir(), 0, 0),
+              Anchor(verible::file::Dirname(test_file.filename()), 0, 0),
+          },
+          IndexingFactType::kFileList,
+      },
+      T(
+          {
+              {
+                  Anchor(test_file.filename(), 0, kTestCase.code.size()),
+                  Anchor(kTestCase.code, 0, kTestCase.code.size()),
+              },
+              IndexingFactType ::kFile,
+          },
+          // refers to module foo.
+          T({
+              {
+                  Anchor(kTestCase.expected_tokens[1], kTestCase.code),
+              },
+              IndexingFactType::kModule,
+          }))));
+
+  const auto facts_tree =
+      ExtractFiles({std::string(verible::file::Basename(test_file.filename()))},
+                   testing::TempDir(),
+                   verible::file::Dirname(test_file.filename()), {}, errors);
+
+  const auto result_pair = DeepEqual(facts_tree, expected);
+  EXPECT_EQ(result_pair.left, nullptr) << *result_pair.left;
+  EXPECT_EQ(result_pair.right, nullptr) << *result_pair.right;
+}
 
 TEST(FactsTreeExtractor, OneLocalNetTest) {
   constexpr int kTag = 1;  // value doesn't matter
