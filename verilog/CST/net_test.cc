@@ -23,13 +23,13 @@
 
 #include <vector>
 
-#include "gmock/gmock.h"
-#include "gtest/gtest.h"
 #include "absl/strings/str_cat.h"
 #include "common/analysis/syntax_tree_search.h"
 #include "common/text/syntax_tree_context.h"
 #include "common/text/text_structure.h"
 #include "common/util/logging.h"
+#include "gmock/gmock.h"
+#include "gtest/gtest.h"
 #include "verilog/CST/verilog_nonterminals.h"
 #include "verilog/analysis/verilog_analyzer.h"
 
@@ -136,6 +136,15 @@ TEST(FindAllNetDeclarationsTest, OneLocalNetInModule) {
 
 TEST(GetIdentifiersFromNetDeclarationTest, EmptySource) {
   VerilogAnalyzer analyzer("", "");
+  ASSERT_OK(analyzer.Analyze());
+  const auto& root = analyzer.Data().SyntaxTree();
+  const auto net_declarations =
+      GetIdentifiersFromNetDeclaration(*ABSL_DIE_IF_NULL(root));
+  EXPECT_TRUE(net_declarations.empty());
+}
+
+TEST(GetIdentifiersFromNetDeclarationTest, NoNetIdentifier) {
+  VerilogAnalyzer analyzer("module foo; tri sin; endmodule", "");
   ASSERT_OK(analyzer.Analyze());
   const auto& root = analyzer.Data().SyntaxTree();
   const auto net_declarations =
