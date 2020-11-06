@@ -117,11 +117,15 @@ const verible::SyntaxTreeNode& GetLocalRootFromFunctionCall(
                           NodeEnum::kLocalRoot);
 }
 
-const verible::SyntaxTreeNode& GetIdentifiersFromFunctionCall(
+const verible::SyntaxTreeNode* GetIdentifiersFromFunctionCall(
     const verible::Symbol& function_call) {
   const verible::SyntaxTreeNode& local_root = GetSubtreeAsNode(
       function_call, NodeEnum::kFunctionCall, 0, NodeEnum::kLocalRoot);
-  return GetIdentifiersFromLocalRoot(local_root);
+  const verible::Symbol& identifier = GetIdentifiersFromLocalRoot(local_root);
+  if (identifier.Kind() != verible::SymbolKind::kNode) {
+    return nullptr;
+  }
+  return &verible::SymbolCastToNode(identifier);
 }
 
 const verible::SyntaxTreeLeaf* GetFunctionCallName(

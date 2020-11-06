@@ -161,9 +161,10 @@ static const verible::SyntaxTreeNode& GetLocalRootFromReference(
   return verible::GetSubtreeAsNode(reference, NodeEnum::kReference, 0);
 }
 
-const verible::SyntaxTreeNode& GetIdentifiersFromLocalRoot(
+const verible::Symbol& GetIdentifiersFromLocalRoot(
     const verible::Symbol& local_root) {
-  return verible::GetSubtreeAsNode(local_root, NodeEnum::kLocalRoot, 0);
+  return *ABSL_DIE_IF_NULL(
+      verible::GetSubtreeAsSymbol(local_root, NodeEnum::kLocalRoot, 0));
 }
 
 const verible::SyntaxTreeNode& GetUnqualifiedIdFromReferenceCallBase(
@@ -172,7 +173,7 @@ const verible::SyntaxTreeNode& GetUnqualifiedIdFromReferenceCallBase(
       GetReferenceFromReferenceCallBase(reference_call_base);
   const verible::SyntaxTreeNode& local_root =
       GetLocalRootFromReference(reference);
-  return GetIdentifiersFromLocalRoot(local_root);
+  return verible::SymbolCastToNode(GetIdentifiersFromLocalRoot(local_root));
 }
 
 const verible::SyntaxTreeNode* GetStructOrUnionOrEnumTypeFromDataType(
