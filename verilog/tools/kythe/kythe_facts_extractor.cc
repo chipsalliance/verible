@@ -696,10 +696,11 @@ VName KytheFactsExtractor::ExtractFunctionOrTask(
   if (overridden_function_vname != nullptr) {
     CreateEdge(function_vname, kEdgeOverrides, *overridden_function_vname);
 
-    // Delete that base class function from the current scope so that any
-    // reference would reference the current function and not the function in
-    // the base class.
-    scope_resolver_->RemoveDefinitionFromCurrentScope(*overridden_function_vname);
+    // Delete the overriden base class function from the current scope so that
+    // any reference would reference the current function and not the function
+    // in the base class.
+    scope_resolver_->RemoveDefinitionFromCurrentScope(
+        *overridden_function_vname);
   }
 
   return function_vname;
