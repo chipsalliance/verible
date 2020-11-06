@@ -173,6 +173,21 @@ class IndexingFactsTreeExtractor : public verible::TreeContextVisitor {
   // corresponding fact tree.
   void ExtractTypeDeclaration(const verible::SyntaxTreeNode& type_declaration);
 
+  // Extracts pure virtual functions and creates its corresponding fact tree.
+  void ExtractPureVirtualFunction(
+      const verible::SyntaxTreeNode& function_prototype);
+
+  // Extracts pure virtual tasks and creates its corresponding fact tree.
+  void ExtractPureVirtualTask(const verible::SyntaxTreeNode& task_prototype);
+
+  // Extracts function header and creates its corresponding fact tree.
+  void ExtractFunctionHeader(const verible::SyntaxTreeNode& function_header,
+                             IndexingFactNode& function_node);
+
+  // Extracts task header and creates its corresponding fact tree.
+  void ExtractTaskHeader(const verible::SyntaxTreeNode& task_header,
+                         IndexingFactNode& task_node);
+
   // Extracts enum type declaration preceeded with "typedef" and creates its
   // corresponding fact tree.
   void ExtractEnumTypeDeclaration(

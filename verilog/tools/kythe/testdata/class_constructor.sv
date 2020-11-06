@@ -13,7 +13,6 @@ class my_class3;
 
   //- @new defines/binding New
   //- New.node/kind function
-  //- New.complete definition
   //- New childof MyClass3
   //- @my_arg1 defines/binding MyArg1
   //- MyArg1.node/kind variable
@@ -34,7 +33,6 @@ endclass : my_class3
 
 //- @my_function defines/binding MyFunctionOut
 //- MyFunctionOut.node/kind function
-//- MyFunctionOut.complete definition
 //- @my_arg3 defines/binding MyArg3
 //- MyArg3.node/kind variable
 //- MyArg3.complete definition

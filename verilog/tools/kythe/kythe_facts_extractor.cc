@@ -680,8 +680,8 @@ VName KytheFactsExtractor::ExtractFunctionOrTask(
 
   const VName function_vname_anchor = CreateAnchor(function_name);
 
+  // TODO(minatoma): add function.complete or function.incomplete if needed.
   CreateFact(function_vname, kFactNodeKind, kNodeFunction);
-  CreateFact(function_vname, kFactComplete, kCompleteDefinition);
   CreateEdge(function_vname_anchor, kEdgeDefinesBinding, function_vname);
 
   // Check if there is a function with the same name in the current scope and if
@@ -695,6 +695,11 @@ VName KytheFactsExtractor::ExtractFunctionOrTask(
   // IndexingFactsTree.
   if (overridden_function_vname != nullptr) {
     CreateEdge(function_vname, kEdgeOverrides, *overridden_function_vname);
+
+    // Delete that base class function from the current scope so that any
+    // reference would reference the current function and not the function in
+    // the base class.
+    scope_resolver_->RemoveDefinitionFromCurrentScope(*overridden_function_vname);
   }
 
   return function_vname;

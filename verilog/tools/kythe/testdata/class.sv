@@ -18,7 +18,6 @@ package my_pkg;
 
     //- @my_function defines/binding MyFunction
     //- MyFunction.node/kind function
-    //- MyFunction.complete definition
     //- MyFunction childof MyClass1
     virtual function int my_function();
       //- @my_var ref MyVar
@@ -27,7 +26,6 @@ package my_pkg;
 
     //- @my_task defines/binding MyTask
     //- MyTask.node/kind function
-    //- MyTask.complete definition
     //- MyTask childof MyClass1
     //- @my_arg2 defines/binding MyArg2
     task my_task(int my_arg2);
@@ -42,7 +40,6 @@ package my_pkg;
     class nested_class;
       //- @nested_function defines/binding NestedFunction
       //- NestedFunction.node/kind function
-      //- NestedFunction.complete definition
       //- NestedFunction childof NestedClass
       function int nested_function();
         return 1;
@@ -104,7 +101,6 @@ module my_module;
   class my_class3;
     //- @my_function3 defines/binding MyFunction3
     //- MyFunction3.node/kind function
-    //- MyFunction3.complete definition
     //- MyFunction3 childof MyClass3
     function int my_function3();
       return 1;

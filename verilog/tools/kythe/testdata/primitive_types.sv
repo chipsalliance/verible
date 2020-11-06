@@ -61,7 +61,6 @@ package my_pkg1;
 
     //- @my_function defines/binding MyFunction
     //- MyFunction.node/kind function
-    //- MyFunction.complete definition
     //- MyFunction childof MyPkg1
     //- @my_arg1 defines/binding MyArg1
     //- MyArg1.node/kind variable

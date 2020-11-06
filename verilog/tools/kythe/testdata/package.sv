@@ -17,7 +17,6 @@ package my_pkg1;
 
     //- @my_function1 defines/binding MyFunction1
     //- MyFunction1.node/kind function
-    //- MyFunction1.complete definition
     //- MyFunction1 childof MyClass1
     function int my_function1();
       return 1;
@@ -26,7 +25,6 @@ package my_pkg1;
 
   //- @my_function2 defines/binding MyFunction2
   //- MyFunction2.node/kind function
-  //- MyFunction2.complete definition
   //- MyFunction2 childof MyPkg1
   function int my_function2();
     return 1;
@@ -112,7 +110,6 @@ package my_pkg3;
 
   //- @my_function3 defines/binding MyFunction3
   //- MyFunction3.node/kind function
-  //- MyFunction3.complete definition
   //- MyFunction3 childof MyPkg3
   function int my_function3();
     return 6;
