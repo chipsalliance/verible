@@ -23,11 +23,11 @@ BAZEL_CXXOPTS=(--cxxopt=-std=c++17)
 
 case "$MODE" in
 test)
-    bazel test --noshow_progress --curses=no --show_timestamps "${BAZEL_CXXOPTS[@]}" //...
+    bazel test -c opt "${BAZEL_CXXOPTS[@]}" //...
     ;;
 
 compile)
-    bazel build -c opt --noshow_loading_progress --curses=no --progress_report_interval 60 --show_timestamps "${BAZEL_CXXOPTS[@]}" //...
+    bazel build -c opt "${BAZEL_CXXOPTS[@]}" //...
     ;;
 
 bin)
