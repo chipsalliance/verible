@@ -47,6 +47,10 @@ const VName* Scope::SearchForDefinition(absl::string_view name) const {
   return nullptr;
 }
 
+void Scope::RemoveMember(const ScopeMemberItem& member) {
+  members_.erase(member);
+}
+
 const VName* ScopeContext::SearchForDefinition(absl::string_view name) const {
   for (const auto& scope : verible::make_range(rbegin(), rend())) {
     const VName* result = scope->SearchForDefinition(name);
@@ -55,6 +59,10 @@ const VName* ScopeContext::SearchForDefinition(absl::string_view name) const {
     }
   }
   return nullptr;
+}
+
+void ScopeResolver::RemoveDefinitionFromCurrentScope(const VName& vname) {
+  scope_context_.top().RemoveMember(vname);
 }
 
 void ScopeResolver::MapSignatureToScope(const Signature& signature,

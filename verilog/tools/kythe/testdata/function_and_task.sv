@@ -21,8 +21,8 @@ function int my_function(int my_arg1, int my_arg2);
 endfunction
 
 //- @my_task defines/binding MyTask
-//- MyFunction.node/kind function
-//- MyFunction.complete definition
+//- MyTask.node/kind function
+//- MyTask.complete definition
 //- @my_arg3 defines/binding MyArg3
 //- MyArg3.node/kind variable
 //- MyArg3.complete definition

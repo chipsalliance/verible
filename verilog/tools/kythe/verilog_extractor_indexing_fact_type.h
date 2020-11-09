@@ -47,6 +47,8 @@ enum class IndexingFactType {
   kInclude,
   kVariableReference,
   kFunctionOrTask,
+  kFunctionOrTaskForwardDeclaration,
+  kConstructor,
   kFunctionCall,
   kPackageImport,
   kExtends,

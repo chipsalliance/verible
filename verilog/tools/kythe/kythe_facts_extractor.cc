@@ -139,7 +139,9 @@ void KytheFactsExtractor::IndexingFactNodeTagResolver(
       vname = ExtractClassInstances(node);
       break;
     }
-    case IndexingFactType::kFunctionOrTask: {
+    case IndexingFactType::kFunctionOrTask:
+    case IndexingFactType::kFunctionOrTaskForwardDeclaration:
+    case IndexingFactType::kConstructor: {
       vname = ExtractFunctionOrTask(node);
       break;
     }
@@ -219,6 +221,8 @@ void KytheFactsExtractor::AddVNameToScopeContext(IndexingFactType tag,
     case IndexingFactType::kStructOrUnion:
     case IndexingFactType::kClass:
     case IndexingFactType::kClassInstance:
+    case IndexingFactType::kFunctionOrTaskForwardDeclaration:
+    case IndexingFactType::kConstructor:
     case IndexingFactType::kFunctionOrTask:
     case IndexingFactType::kParamDeclaration:
     case IndexingFactType::kPackage:
@@ -274,6 +278,8 @@ void KytheFactsExtractor::Visit(const IndexingFactNode& node,
     case IndexingFactType::kStructOrUnion:
     case IndexingFactType::kVariableDefinition:
     case IndexingFactType::kFunctionOrTask:
+    case IndexingFactType::kFunctionOrTaskForwardDeclaration:
+    case IndexingFactType::kConstructor:
     case IndexingFactType::kClass:
     case IndexingFactType::kMacro:
     case IndexingFactType::kPackage:
@@ -315,6 +321,8 @@ void KytheFactsExtractor::ConstructFlattenedScope(const IndexingFactNode& node,
     case IndexingFactType::kFunctionOrTask:
     case IndexingFactType::kMacro:
     case IndexingFactType::kPackage:
+    case IndexingFactType::kFunctionOrTaskForwardDeclaration:
+    case IndexingFactType::kConstructor:
     case IndexingFactType::kInterface:
     case IndexingFactType::kProgram: {
       scope_resolver_->MapSignatureToScope(vname.signature, current_scope);
@@ -681,8 +689,26 @@ VName KytheFactsExtractor::ExtractFunctionOrTask(
   const VName function_vname_anchor = CreateAnchor(function_name);
 
   CreateFact(function_vname, kFactNodeKind, kNodeFunction);
-  CreateFact(function_vname, kFactComplete, kCompleteDefinition);
   CreateEdge(function_vname_anchor, kEdgeDefinesBinding, function_vname);
+
+  auto tag = function_fact_node.Value().GetIndexingFactType();
+  switch (tag) {
+    case IndexingFactType::kFunctionOrTask: {
+      CreateFact(function_vname, kFactComplete, kCompleteDefinition);
+      break;
+    }
+    case IndexingFactType::kFunctionOrTaskForwardDeclaration: {
+      CreateFact(function_vname, kFactComplete, kInComplete);
+      break;
+    }
+    case IndexingFactType::kConstructor: {
+      CreateFact(function_vname, kFactSubkind, kSubkindConstructor);
+      break;
+    }
+    default: {
+      break;
+    }
+  }
 
   // Check if there is a function with the same name in the current scope and if
   // exists output "overrides" edge.
@@ -695,6 +721,12 @@ VName KytheFactsExtractor::ExtractFunctionOrTask(
   // IndexingFactsTree.
   if (overridden_function_vname != nullptr) {
     CreateEdge(function_vname, kEdgeOverrides, *overridden_function_vname);
+
+    // Delete the overriden base class function from the current scope so that
+    // any reference would reference the current function and not the function
+    // in the base class.
+    scope_resolver_->RemoveDefinitionFromCurrentScope(
+        *overridden_function_vname);
   }
 
   return function_vname;
@@ -776,6 +808,9 @@ void KytheFactsExtractor::ExtractExtends(const IndexingFactNode& extends_node) {
   // Create kythe facts for extends.
   const VName& derived_class_vname = vnames_context_.top();
   CreateEdge(derived_class_vname, kEdgeExtends, *definitions.back().first);
+
+  // Append the members of the parent class as members of the current class's
+  // scope.
   scope_resolver_->AppendScopeToScopeContext(*definitions.back().second);
 }
 

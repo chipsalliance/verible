@@ -57,6 +57,9 @@ class Scope {
   // VName or nullptr if not found.
   const VName* SearchForDefinition(absl::string_view name) const;
 
+  // Removes the given VName from the members.
+  void RemoveMember(const ScopeMemberItem& member);
+
  private:
   // Signature of the owner of this scope.
   Signature signature_;
@@ -170,6 +173,9 @@ class ScopeResolver {
   // Searches for definition of the given reference's name in the current
   // scope (the top of scope_context).
   const VName* SearchForDefinitionInCurrentScope(absl::string_view name) const;
+
+  // Removes the given VName from the current scope (the top of scope_context).
+  void RemoveDefinitionFromCurrentScope(const VName& vname);
 
   // Adds the VNames of the definitions it given scope to the scope context.
   void AppendScopeToScopeContext(const Scope& scope);

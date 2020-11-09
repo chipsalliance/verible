@@ -263,6 +263,14 @@ void IndexingFactsTreeExtractor::Visit(const SyntaxTreeNode& node) {
       ExtractRegisterVariable(node);
       break;
     }
+    case NodeEnum::kFunctionPrototype: {
+      ExtractPureVirtualFunction(node);
+      break;
+    }
+    case NodeEnum::kTaskPrototype: {
+      ExtractPureVirtualTask(node);
+      break;
+    }
     case NodeEnum::kVariableDeclarationAssignment: {
       ExtractVariableDeclarationAssignment(node);
       break;
@@ -808,7 +816,7 @@ void IndexingFactsTreeExtractor::ExtractMacroReference(
 void IndexingFactsTreeExtractor::ExtractClassConstructor(
     const verible::SyntaxTreeNode& class_constructor) {
   IndexingFactNode constructor_node(
-      IndexingNodeData{IndexingFactType::kFunctionOrTask});
+      IndexingNodeData{IndexingFactType::kConstructor});
 
   const SyntaxTreeLeaf& new_keyword =
       GetNewKeywordFromClassConstructor(class_constructor);
@@ -831,27 +839,45 @@ void IndexingFactsTreeExtractor::ExtractClassConstructor(
   facts_tree_context_.top().NewChild(constructor_node);
 }
 
+void IndexingFactsTreeExtractor::ExtractPureVirtualFunction(
+    const verible::SyntaxTreeNode& function_prototype) {
+  IndexingFactNode function_node(
+      IndexingNodeData{IndexingFactType::kFunctionOrTaskForwardDeclaration});
+
+  // Extract function header.
+  const SyntaxTreeNode& function_header =
+      GetFunctionPrototypeHeader(function_prototype);
+  ExtractFunctionHeader(function_header, function_node);
+
+  facts_tree_context_.top().NewChild(function_node);
+}
+
+void IndexingFactsTreeExtractor::ExtractPureVirtualTask(
+    const verible::SyntaxTreeNode& task_prototype) {
+  IndexingFactNode task_node(
+      IndexingNodeData{IndexingFactType::kFunctionOrTaskForwardDeclaration});
+
+  // Extract task header.
+  const SyntaxTreeNode& task_header = GetTaskPrototypeHeader(task_prototype);
+  ExtractTaskHeader(task_header, task_node);
+
+  facts_tree_context_.top().NewChild(task_node);
+}
+
 void IndexingFactsTreeExtractor::ExtractFunctionDeclaration(
     const SyntaxTreeNode& function_declaration_node) {
   IndexingFactNode function_node(
       IndexingNodeData{IndexingFactType::kFunctionOrTask});
 
-  // Extract function name.
-  const verible::Symbol* function_name =
-      GetFunctionId(function_declaration_node);
-  if (function_name == nullptr) {
-    return;
-  }
-  Visit(verible::SymbolCastToNode(*function_name));
-  MoveAndDeleteLastSibling(function_node);
+  // Extract function header.
+  const SyntaxTreeNode& function_header =
+      GetFunctionHeader(function_declaration_node);
+  ExtractFunctionHeader(function_header, function_node);
 
   {
+    // Extract function body.
     const IndexingFactsTreeContext::AutoPop p(&facts_tree_context_,
                                               &function_node);
-    // Extract function ports.
-    ExtractFunctionTaskConstructorPort(function_declaration_node);
-
-    // Extract function body.
     const SyntaxTreeNode& function_body =
         GetFunctionBlockStatementList(function_declaration_node);
     Visit(function_body);
@@ -865,8 +891,44 @@ void IndexingFactsTreeExtractor::ExtractTaskDeclaration(
   IndexingFactNode task_node(
       IndexingNodeData{IndexingFactType::kFunctionOrTask});
 
+  // Extract task header.
+  const SyntaxTreeNode& task_header = GetTaskHeader(task_declaration_node);
+  ExtractTaskHeader(task_header, task_node);
+
+  {
+    // Extract task body.
+    const IndexingFactsTreeContext::AutoPop p(&facts_tree_context_, &task_node);
+    const SyntaxTreeNode& task_body =
+        GetTaskStatementList(task_declaration_node);
+    Visit(task_body);
+  }
+
+  facts_tree_context_.top().NewChild(task_node);
+}
+
+void IndexingFactsTreeExtractor::ExtractFunctionHeader(
+    const verible::SyntaxTreeNode& function_header,
+    IndexingFactNode& function_node) {
+  // Extract function name.
+  const verible::Symbol* function_name = GetFunctionHeaderId(function_header);
+  if (function_name == nullptr) {
+    return;
+  }
+  Visit(verible::SymbolCastToNode(*function_name));
+  MoveAndDeleteLastSibling(function_node);
+
+  {
+    const IndexingFactsTreeContext::AutoPop p(&facts_tree_context_,
+                                              &function_node);
+    // Extract function ports.
+    ExtractFunctionTaskConstructorPort(function_header);
+  }
+}
+
+void IndexingFactsTreeExtractor::ExtractTaskHeader(
+    const verible::SyntaxTreeNode& task_header, IndexingFactNode& task_node) {
   // Extract task name.
-  const auto* task_name = GetTaskId(task_declaration_node);
+  const verible::Symbol* task_name = GetTaskHeaderId(task_header);
   if (task_name == nullptr) {
     return;
   }
@@ -875,17 +937,9 @@ void IndexingFactsTreeExtractor::ExtractTaskDeclaration(
 
   {
     const IndexingFactsTreeContext::AutoPop p(&facts_tree_context_, &task_node);
-
     // Extract task ports.
-    ExtractFunctionTaskConstructorPort(task_declaration_node);
-
-    // Extract task body.
-    const SyntaxTreeNode& task_body =
-        GetTaskStatementList(task_declaration_node);
-    Visit(task_body);
+    ExtractFunctionTaskConstructorPort(task_header);
   }
-
-  facts_tree_context_.top().NewChild(task_node);
 }
 
 void IndexingFactsTreeExtractor::ExtractFunctionTaskConstructorPort(

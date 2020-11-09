@@ -86,6 +86,40 @@ TEST(ScopesTest, AppendScope) {
   }
 }
 
+TEST(ScopesTest, RemoveMember) {
+  /**
+   * signature[0] => {
+   *   vnames[1],  ==> signature[1]
+   *   vnames[2],  ==> signature[2]
+   * }
+   *
+   * signature[1] => {
+   *   vnames[3],  ==> signature[3];
+   *   vnames[4],  ==> signature[4];
+   * }
+   */
+
+  Scope scope(signatures[0]);
+  scope.AddMemberItem(vnames[1]);
+  scope.AddMemberItem(vnames[2]);
+
+  {
+    const VName* vname = scope.SearchForDefinition(names[1]);
+    EXPECT_EQ(vname->signature, signatures[1]);
+  }
+
+  {
+    scope.RemoveMember(vnames[1]);
+    const VName* vname = scope.SearchForDefinition(names[1]);
+    EXPECT_EQ(vname, nullptr);
+  }
+
+  {
+    const VName* vname = scope.SearchForDefinition(names[2]);
+    EXPECT_EQ(vname->signature, signatures[2]);
+  }
+}
+
 TEST(ScopeResolverTests, SearchForDefinition) {
   ScopeResolver scope_resolver(Signature(""), nullptr);
 
@@ -167,6 +201,42 @@ TEST(ScopeResolverTests, SearchForDefinitionInCurrentScope) {
       const VName* vname =
           scope_resolver.SearchForDefinitionInCurrentScope(names[4].c_str());
       EXPECT_EQ(vname, nullptr);
+    }
+  }
+}
+
+TEST(ScopeResolverTests, DeleteDefinitionFromCurrentScope) {
+  ScopeResolver scope_resolver(Signature(""), nullptr);
+
+  /**
+   * signature[0] => {
+   *   vnames[1],  ==> signature[1]
+   *   vnames[2],  ==> signature[2]
+   * }
+   */
+
+  Scope scope(signatures[0]);
+  scope.AddMemberItem(vnames[1]);
+  scope.AddMemberItem(vnames[2]);
+
+  {
+    ScopeContext::AutoPop p1(&scope_resolver.GetMutableScopeContext(), &scope);
+    {
+      const VName* vname =
+          scope_resolver.SearchForDefinitionInCurrentScope(names[1].c_str());
+      EXPECT_EQ(vname->signature, signatures[1]);
+    }
+
+    {
+      scope_resolver.RemoveDefinitionFromCurrentScope(vnames[1]);
+      const VName* vname =
+          scope_resolver.SearchForDefinitionInCurrentScope(names[1].c_str());
+      EXPECT_EQ(vname, nullptr);
+    }
+    {
+      const VName* vname =
+          scope_resolver.SearchForDefinitionInCurrentScope(names[2].c_str());
+      EXPECT_EQ(vname->signature, signatures[2]);
     }
   }
 }

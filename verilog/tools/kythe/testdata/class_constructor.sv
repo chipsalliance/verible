@@ -13,7 +13,7 @@ class my_class3;
 
   //- @new defines/binding New
   //- New.node/kind function
-  //- New.complete definition
+  //- New.subkind constructor
   //- New childof MyClass3
   //- @my_arg1 defines/binding MyArg1
   //- MyArg1.node/kind variable
