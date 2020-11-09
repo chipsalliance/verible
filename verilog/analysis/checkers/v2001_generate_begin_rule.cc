@@ -27,6 +27,7 @@
 #include "common/text/symbol.h"
 #include "common/text/syntax_tree_context.h"
 #include "common/text/tree_utils.h"
+#include "verilog/CST/verilog_matchers.h"
 #include "verilog/analysis/descriptions.h"
 #include "verilog/analysis/lint_rule_registry.h"
 
@@ -35,6 +36,7 @@ namespace analysis {
 
 using verible::GetStyleGuideCitation;
 using verible::LintViolation;
+using verible::matcher::Matcher;
 
 // Register the lint rule
 VERILOG_REGISTER_LINT_RULE(V2001GenerateBeginRule);
@@ -45,6 +47,12 @@ absl::string_view V2001GenerateBeginRule::Name() {
 const char V2001GenerateBeginRule::kTopic[] = "generate-constructs";
 const char V2001GenerateBeginRule::kMessage[] =
     "Do not begin a generate block inside a generate region.";
+
+static const Matcher& GenerateRegionMatcher() {
+  static const Matcher matcher(
+      NodekGenerateRegion(HasGenerateBlock().Bind("block")));
+  return matcher;
+}
 
 std::string V2001GenerateBeginRule::GetDescription(
     DescriptionType description_type) {
@@ -57,7 +65,7 @@ std::string V2001GenerateBeginRule::GetDescription(
 void V2001GenerateBeginRule::HandleSymbol(
     const verible::Symbol& symbol, const verible::SyntaxTreeContext& context) {
   verible::matcher::BoundSymbolManager manager;
-  if (matcher_.Matches(symbol, &manager)) {
+  if (GenerateRegionMatcher().Matches(symbol, &manager)) {
     if (const auto* block = manager.GetAs<verible::SyntaxTreeNode>("block")) {
       violations_.insert(LintViolation(verible::GetLeftmostLeaf(*block)->get(),
                                        kMessage, context));

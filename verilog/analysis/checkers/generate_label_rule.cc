@@ -21,9 +21,11 @@
 #include "common/analysis/citation.h"
 #include "common/analysis/lint_rule_status.h"
 #include "common/analysis/matcher/bound_symbol_manager.h"
+#include "common/analysis/matcher/core_matchers.h"
 #include "common/analysis/matcher/matcher.h"
 #include "common/text/symbol.h"
 #include "common/text/syntax_tree_context.h"
+#include "verilog/CST/verilog_matchers.h"
 #include "verilog/analysis/descriptions.h"
 #include "verilog/analysis/lint_rule_registry.h"
 
@@ -31,6 +33,7 @@ namespace verilog {
 namespace analysis {
 
 using verible::GetStyleGuideCitation;
+using verible::matcher::Matcher;
 
 // Register the lint rule
 VERILOG_REGISTER_LINT_RULE(GenerateLabelRule);
@@ -47,10 +50,23 @@ std::string GenerateLabelRule::GetDescription(
       GetStyleGuideCitation(kTopic), ".");
 }
 
+// Matches against generate blocks that do not have a label
+//
+// For example:
+//   if (TypeIsPosedge) begin
+//      always @(posedge clk) foo <= bar;
+//    end
+//
+static const Matcher& BlockMatcher() {
+  static const Matcher matcher(
+      NodekGenerateBlock(verible::matcher::Unless(HasBeginLabel())));
+  return matcher;
+}
+
 void GenerateLabelRule::HandleSymbol(
     const verible::Symbol& symbol, const verible::SyntaxTreeContext& context) {
   verible::matcher::BoundSymbolManager manager;
-  if (matcher_.Matches(symbol, &manager)) {
+  if (BlockMatcher().Matches(symbol, &manager)) {
     violations_.insert(verible::LintViolation(symbol, kMessage, context));
   }
 }

@@ -141,6 +141,7 @@ cc_library(
         ":indexing_facts_tree",
         ":indexing_facts_tree_context",
         "//common/analysis:syntax_tree_search",
+        "//common/text:concrete_syntax_tree",
         "//common/text:tree_context_visitor",
         "//common/text:tree_utils",
         "//common/util:file_util",
@@ -159,7 +160,9 @@ cc_library(
         "//verilog/CST:type",
         "//verilog/CST:verilog_matchers",
         "//verilog/CST:verilog_nonterminals",
+        "//verilog/CST:verilog_tree_print",
         "//verilog/analysis:verilog_analyzer",
+        "@com_google_absl//absl/status",
         "@com_google_absl//absl/strings",
     ],
 )
@@ -173,15 +176,9 @@ cc_test(
         "//common/text:concrete_syntax_tree",
         "//common/util:file_util",
         "//verilog/analysis:verilog_analyzer",
+        "@com_google_absl//absl/status",
         "@com_google_googletest//:gtest_main",
     ],
-)
-
-filegroup(
-    name = "verifier_testdata",
-    srcs = glob([
-        "testdata/more_testdata/*.sv",
-    ]),
 )
 
 cc_binary(
@@ -201,6 +198,8 @@ cc_binary(
         "//common/text:symbol",
         "//common/text:text_structure",
         "//common/text:token_info",
+        "//common/util:bijective_map",
+        "//common/util:enum_flags",
         "//common/util:file_util",
         "//common/util:init_command_line",
         "//common/util:logging",
@@ -213,5 +212,24 @@ cc_binary(
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/strings",
         "@com_google_absl//absl/types:span",
+        "@com_google_protobuf//:protobuf",
+        "@io_kythe//kythe/cxx/common/indexing:caching_output",
+        "@io_kythe//kythe/proto:storage_cc_proto",
+    ],
+)
+
+sh_test(
+    name = "verification_test",
+    srcs = ["verification_test.sh"],
+    data = glob([
+        "testdata/**",
+    ]) + [
+        ":verible-verilog-kythe-extractor",
+        "@io_kythe//kythe/cxx/verifier",
+    ],
+    shard_count = 4,
+    deps = [
+        "@bazel_tools//tools/bash/runfiles",
+        "@io_bazel//src/test/shell:bashunit",
     ],
 )

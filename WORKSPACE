@@ -1,6 +1,7 @@
 workspace(name = "com_google_verible")
 
 load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
+load("@bazel_tools//tools/build_defs/repo:git.bzl", "git_repository")
 
 http_archive(
     name = "com_google_absl",
@@ -22,6 +23,22 @@ http_archive(
     strip_prefix = "rules_cc-e7c97c3af74e279a5db516a19f642e862ff58548",
     urls = ["https://github.com/bazelbuild/rules_cc/archive/e7c97c3af74e279a5db516a19f642e862ff58548.zip"],
 )
+
+# Needed for Kythe
+http_archive(
+    name = "io_bazel_rules_go",
+    sha256 = "ac03931e56c3b229c145f1a8b2a2ad3e8d8f1af57e43ef28a26123362a1e3c7e",
+    urls = [
+        "https://mirror.bazel.build/github.com/bazelbuild/rules_go/releases/download/v0.24.4/rules_go-v0.24.4.tar.gz",
+        "https://github.com/bazelbuild/rules_go/releases/download/v0.24.4/rules_go-v0.24.4.tar.gz",
+    ],
+)
+
+load("@io_bazel_rules_go//go:deps.bzl", "go_register_toolchains", "go_rules_dependencies")
+
+go_rules_dependencies()
+
+go_register_toolchains()
 
 #
 # External tools needed
@@ -88,3 +105,51 @@ http_archive(
     strip_prefix = "m4-1.4.18",
     urls = ["https://ftp.gnu.org/gnu/m4/m4-1.4.18.tar.gz"],
 )
+
+http_archive(
+    name = "bazel_toolchains",
+    sha256 = "882fecfc88d3dc528f5c5681d95d730e213e39099abff2e637688a91a9619395",
+    strip_prefix = "bazel-toolchains-3.4.0",
+    urls = [
+        "https://github.com/bazelbuild/bazel-toolchains/releases/download/3.4.0/bazel-toolchains-3.4.0.tar.gz",
+        "https://mirror.bazel.build/github.com/bazelbuild/bazel-toolchains/releases/download/3.4.0/bazel-toolchains-3.4.0.tar.gz",
+    ],
+)
+
+# TODO(ikr): This is a huge dependency pulled in only for bash unit test
+# framework. Find a smaller alternative that works both internally and
+# externally.
+http_archive(
+    name = "io_bazel",
+    #sha256 = "882fecfc88d3dc528f5c5681d95d730e213e39099abff2e637688a91a9619395",
+    strip_prefix = "bazel-3.7.0",
+    urls = [
+        "https://github.com/bazelbuild/bazel/archive/3.7.0.tar.gz",
+    ],
+)
+
+http_archive(
+    name = "com_google_protobuf",
+    repo_mapping = {"@zlib": "@net_zlib"},
+    sha256 = "1c744a6a1f2c901e68c5521bc275e22bdc66256eeb605c2781923365b7087e5f",
+    strip_prefix = "protobuf-3.13.0",
+    urls = [
+        "https://mirror.bazel.build/github.com/protocolbuffers/protobuf/archive/v3.13.0.zip",
+        "https://github.com/protocolbuffers/protobuf/archive/v3.13.0.zip",
+    ],
+)
+
+# TODO(ikr): Replace with a Kythe release once it moves beyond 0.48
+git_repository(
+    name = "io_kythe",
+    branch = "master",
+    remote = "https://github.com/kythe/kythe",
+)
+
+load("@io_kythe//:setup.bzl", "kythe_rule_repositories")
+
+kythe_rule_repositories()
+
+load("@io_kythe//:external.bzl", "kythe_dependencies")
+
+kythe_dependencies()

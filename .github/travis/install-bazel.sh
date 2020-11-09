@@ -13,7 +13,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-wget https://github.com/bazelbuild/bazel/releases/download/1.2.0/bazel_1.2.0-linux-x86_64.deb -O /tmp/bazel.deb
+BAZEL_VERSION=3.7.0
+wget "https://github.com/bazelbuild/bazel/releases/download/${BAZEL_VERSION}/bazel_${BAZEL_VERSION}-linux-x86_64.deb" -O /tmp/bazel.deb
 sudo dpkg -i /tmp/bazel.deb || true
 sudo apt-get -f install
 bazel --version

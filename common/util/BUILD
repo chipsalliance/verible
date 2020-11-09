@@ -20,6 +20,7 @@ cc_library(
     deps = [
         ":iterator_adaptors",
         ":logging",
+        "@com_google_absl//absl/base:core_headers",
     ],
 )
 
@@ -165,6 +166,11 @@ cc_library(
 )
 
 cc_library(
+    name = "type_traits",
+    hdrs = ["type_traits.h"],
+)
+
+cc_library(
     name = "auto_iterator",
     hdrs = ["auto_iterator.h"],
 )
@@ -213,7 +219,10 @@ cc_library(
 cc_library(
     name = "bijective_map",
     hdrs = ["bijective_map.h"],
-    deps = [":forward"],
+    deps = [
+        ":forward",
+        ":logging",
+    ],
 )
 
 cc_library(
@@ -261,6 +270,15 @@ cc_test(
         ":algorithm",
         ":iterator_range",
         "@com_google_absl//absl/strings",
+        "@com_google_googletest//:gtest_main",
+    ],
+)
+
+cc_test(
+    name = "auto_iterator_test",
+    srcs = ["auto_iterator_test.cc"],
+    deps = [
+        ":auto_iterator",
         "@com_google_googletest//:gtest_main",
     ],
 )
@@ -385,6 +403,15 @@ cc_test(
     srcs = ["top_n_test.cc"],
     deps = [
         ":top_n",
+        "@com_google_googletest//:gtest_main",
+    ],
+)
+
+cc_test(
+    name = "type_traits_test",
+    srcs = ["type_traits_test.cc"],
+    deps = [
+        ":type_traits",
         "@com_google_googletest//:gtest_main",
     ],
 )

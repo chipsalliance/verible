@@ -134,6 +134,7 @@ cc_library(
         "//verilog/CST:module",
         "//verilog/CST:parameters",
         "//verilog/CST:port",
+        "//verilog/CST:type",
         "//verilog/CST:verilog_nonterminals",
         "//verilog/CST:verilog_treebuilder_utils",
     ],
@@ -162,6 +163,8 @@ cc_library(
         ":verilog_token_enum",
         "//common/text:token_info",
         "//common/text:token_stream_view",
+        "//common/util:logging",
+        "//common/util:with_reason",
     ],
 )
 

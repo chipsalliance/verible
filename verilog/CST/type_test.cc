@@ -24,8 +24,10 @@
 #include "common/analysis/syntax_tree_search.h"
 #include "common/analysis/syntax_tree_search_test_utils.h"
 #include "common/text/text_structure.h"
+#include "common/text/tree_utils.h"
 #include "common/util/logging.h"
 #include "verilog/CST/context_functions.h"
+#include "verilog/CST/declaration.h"
 #include "verilog/CST/match_test_utils.h"
 #include "verilog/analysis/verilog_analyzer.h"
 
@@ -278,7 +280,9 @@ TEST(IsStorageTypeOfDataTypeSpecifiedTest, AcceptTests) {
     for (const auto& data_type : data_type_declarations) {
       // Only check the node kDataTypes within a node kPortList.
       if (analysis::ContextIsInsideTaskFunctionPortList(data_type.context)) {
-        EXPECT_TRUE(IsStorageTypeOfDataTypeSpecified(*(data_type.match)));
+        EXPECT_TRUE(IsStorageTypeOfDataTypeSpecified(*(data_type.match)))
+            << "Input code:\n"
+            << test.first;
       }
     }
   }
@@ -389,20 +393,178 @@ TEST(GetVariableDeclaration, FindPackedDimensionFromDataDeclaration) {
       {"class c;\n class_type x;\nendclass"},
   };
   for (const auto& test : kTestCases) {
+    VLOG(1) << "code:\n" << test.code;
     TestVerilogSyntaxRangeMatches(
         __FUNCTION__, test, [](const TextStructureView& text_structure) {
           const auto& root = text_structure.SyntaxTree();
-          const auto& instances =
-              FindAllDataTypePrimitive(*ABSL_DIE_IF_NULL(root));
+          const auto& decls = FindAllDataDeclarations(*ABSL_DIE_IF_NULL(root));
 
           std::vector<TreeSearchMatch> packed_dimensions;
-          for (const auto& decl : instances) {
-            const auto& packed_dimension =
-                GetPackedDimensionFromDataType(*decl.match);
+          for (const auto& decl : decls) {
+            VLOG(1) << "decl: " << verible::StringSpanOfSymbol(*decl.match);
+            const auto* packed_dimension =
+                GetPackedDimensionFromDataDeclaration(*decl.match);
+            if (packed_dimension == nullptr) continue;
+            if (packed_dimension->children().empty()) continue;
             packed_dimensions.emplace_back(
-                TreeSearchMatch{&packed_dimension, {/* ignored context */}});
+                TreeSearchMatch{packed_dimension, {/* ignored context */}});
           }
           return packed_dimensions;
+        });
+  }
+}
+
+TEST(GetType, GetStructOrUnionOrEnumType) {
+  constexpr int kTag = 1;  // value doesn't matter
+  const SyntaxTreeSearchTestCase kTestCases[] = {
+      {""},
+      {"typedef ", {kTag, "struct { int a; bit [8:0] b; }"}, " name;"},
+      {"typedef ",
+       {kTag, "struct { int a; bit [8:0] b; }"},
+       " name;\ntypedef ",
+       {kTag, "struct { int c; bit [8:0] d; }"},
+       " other_name;"},
+      {"typedef ",
+       {kTag, "union { int a; bit [8:0] b; }"},
+       " name;\ntypedef ",
+       {kTag, "struct { int c; bit [8:0] d; }"},
+       " other_name;"},
+      {"typedef ",
+       {kTag, "union { int a; bit [8:0] b; }"},
+       " name;\ntypedef ",
+       {kTag, "struct { int c; bit [8:0] d; }"},
+       " other_name;\ntypedef ",
+       {kTag, "enum { Idle, Busy }"},
+       " another_name;"},
+  };
+  for (const auto& test : kTestCases) {
+    VLOG(1) << "code:\n" << test.code;
+    TestVerilogSyntaxRangeMatches(
+        __FUNCTION__, test, [](const TextStructureView& text_structure) {
+          const auto& root = text_structure.SyntaxTree();
+          const auto& types = FindAllTypeDeclarations(*ABSL_DIE_IF_NULL(root));
+
+          std::vector<TreeSearchMatch> names;
+          for (const auto& decl : types) {
+            const auto* name = GetReferencedTypeOfTypeDeclaration(*decl.match);
+            if (name == nullptr) continue;
+            names.emplace_back(TreeSearchMatch{name, {/* ignored context */}});
+          }
+          return names;
+        });
+  }
+}
+
+TEST(GetTypeIdentifier, GetNameOfDataType) {
+  constexpr int kTag = 1;  // value doesn't matter
+  const SyntaxTreeSearchTestCase kTestCases[] = {
+      {""},
+      {"module m(logic x);\nendmodule"},
+      {"module m(", {kTag, "bus"}, " x);\nendmodule"},
+  };
+  for (const auto& test : kTestCases) {
+    TestVerilogSyntaxRangeMatches(
+        __FUNCTION__, test, [](const TextStructureView& text_structure) {
+          const auto& root = text_structure.SyntaxTree();
+          const auto& types =
+              FindAllDataTypeDeclarations(*ABSL_DIE_IF_NULL(root));
+
+          std::vector<TreeSearchMatch> names;
+          for (const auto& decl : types) {
+            const auto* name = GetTypeIdentifierFromDataType(*decl.match);
+            if (name == nullptr) {
+              continue;
+            }
+            names.emplace_back(TreeSearchMatch{name, {/* ignored context */}});
+          }
+          return names;
+        });
+  }
+}
+
+TEST(GetDataImplicitIdDimensions, GetTypeOfDataImplicitIdDimensions) {
+  constexpr int kTag = 1;  // value doesn't matter
+  const SyntaxTreeSearchTestCase kTestCases[] = {
+      {""},
+      {"module m(logic x);\nendmodule"},
+      {"struct {struct {int x;} var2;} var1;"},
+      {"struct {", {kTag, "my_type"}, " var2;} var1;"},
+      {"union {union {int x;} var2;} var1;"},
+      {"union {", {kTag, "my_type"}, " var2;} var1;"},
+  };
+  for (const auto& test : kTestCases) {
+    VLOG(1) << "code:\n" << test.code;
+    TestVerilogSyntaxRangeMatches(
+        __FUNCTION__, test, [](const TextStructureView& text_structure) {
+          const auto& root = text_structure.SyntaxTree();
+          const auto& types =
+              FindAllDataTypeImplicitIdDimensions(*ABSL_DIE_IF_NULL(root));
+
+          std::vector<TreeSearchMatch> inner_types;
+          for (const auto& decl : types) {
+            VLOG(1) << "type: " << verible::StringSpanOfSymbol(*decl.match);
+            const auto* inner_type =
+                GetNonprimitiveTypeOfDataTypeImplicitDimensions(*decl.match);
+            if (inner_type == nullptr) {
+              continue;
+            }
+            inner_types.emplace_back(
+                TreeSearchMatch{inner_type, {/* ignored context */}});
+          }
+          return inner_types;
+        });
+  }
+}
+
+TEST(GetDataImplicitIdDimensions, GetNameOfDataImplicitIdDimensions) {
+  constexpr int kTag = 1;  // value doesn't matter
+  const SyntaxTreeSearchTestCase kTestCases[] = {
+      {""},
+      {"module m(logic x);\nendmodule"},
+      {"struct {int ", {kTag, "xx"}, ";} var1;"},
+      {"union {int ", {kTag, "xx"}, ";} var1;"},
+      {"struct {int ",
+       {kTag, "xx"},
+       ";\n struct {int  ",
+       {kTag, "xx"},
+       ";} ",
+       {kTag, "var2"},
+       ";} var1;"},
+      {"union {int ",
+       {kTag, "xx"},
+       ";\n struct {int  ",
+       {kTag, "xx"},
+       ";} ",
+       {kTag, "var2"},
+       ";} var1;"},
+      {"union {int ", {kTag, "xx"}, ";} var1;"},
+      {"typedef union {int ", {kTag, "xx"}, ";} var1;"},
+      {"typedef struct {int ", {kTag, "xx"}, ";} var1;"},
+      {"struct {some_type ", {kTag, "xx"}, ";} var1;"},
+      {"union {some_type ", {kTag, "xx"}, ";} var1;"},
+      {"struct {some_type ", {kTag, "xx"}, ";\nint ", {kTag, "yy"}, ";} var1;"},
+      {"typedef struct{\nstruct{\nint ",
+       {kTag, "yy"},
+       ";\n} ",
+       {kTag, "yy"},
+       ";}\nfar;"},
+  };
+  for (const auto& test : kTestCases) {
+    TestVerilogSyntaxRangeMatches(
+        __FUNCTION__, test, [](const TextStructureView& text_structure) {
+          const auto& root = text_structure.SyntaxTree();
+          const auto& types =
+              FindAllDataTypeImplicitIdDimensions(*ABSL_DIE_IF_NULL(root));
+
+          std::vector<TreeSearchMatch> names;
+          for (const auto& decl : types) {
+            const auto name =
+                GetSymbolIdentifierFromDataTypeImplicitIdDimensions(
+                    *decl.match);
+            names.emplace_back(
+                TreeSearchMatch{name.first, {/* ignored context */}});
+          }
+          return names;
         });
   }
 }

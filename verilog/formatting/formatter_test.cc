@@ -593,14 +593,12 @@ static constexpr FormatterTestCase kFormatterTestCases[] = {
                                                   // (symmetrized)
     },
     {
-        "  parameter  int   foo=bar [ a +b ] ;",  // binary inside index expr
-        "parameter int foo = bar[a + b];\n",      // allowed to be 1 space
-                                                  // (symmetrized)
+        "  parameter  int   foo=bar [ a +b ] ;",  // compact binary inside
+        "parameter int foo = bar[a+b];\n",        // index expression
     },
     {
-        "  parameter  int   foo=bar [ a  +b ] ;",  // binary inside index expr
-        "parameter int foo = bar[a + b];\n",       // limited to 1 space (and
-                                                   // symmetrized)
+        "  parameter  int   foo=bar [ a  +b ] ;",  // compact binary inside
+        "parameter int foo = bar[a+b];\n",         // index expression
     },
     {
         // with line continuations
@@ -7042,6 +7040,31 @@ static constexpr FormatterTestCase kFormatterTestCases[] = {
      "    qux\n"
      ");\n"
      "endmodule\n"},
+    // Space between return keyword and return value
+    {"function int foo(logic [31:0] data); return{<<8{data}}; endfunction",
+     "function int foo(logic [31:0] data);\n"
+     "  return {<<8{data}};\n"
+     "endfunction\n"},
+    {"function int f;return(1);endfunction",
+     "function int f;\n"
+     "  return (1);\n"
+     "endfunction\n"},
+    {"function int f;return-1;endfunction",
+     "function int f;\n"
+     "  return -1;\n"
+     "endfunction\n"},
+    {"function int f ;return    ! x\n;endfunction",
+     "function int f;\n"
+     "  return !x;\n"
+     "endfunction\n"},
+    {"function int f ;return    ~ x\n;endfunction",
+     "function int f;\n"
+     "  return ~x;\n"
+     "endfunction\n"},
+    {"function int f ;return    $x\n;endfunction",
+     "function int f;\n"
+     "  return $x;\n"
+     "endfunction\n"},
     //{   // parameterized class with 'parameter_declaration' and MACRO
     //    "class foo #(parameter int a = 2,\n"
     //    "parameter int aaa = `MACRO);\n"
@@ -7190,6 +7213,28 @@ TEST(FormatterEndToEndTest, AutoInferAlignment) {
        "    output out_t          zout2\n"
        ");\n"
        "endmodule : pd\n"},
+      {// data declaration and net declaration in ports
+       "module m(\n"
+       "logic [x:y]a    ,\n"    // packed dimensions, induce alignment
+       "wire [pp:qq] [e:f]b\n"  // packed dimensions, 2D
+       ") ;\n"
+       "endmodule\n",
+       "module m (\n"
+       "    logic [  x:y]      a,\n"
+       "    wire  [pp:qq][e:f] b\n"
+       ");\n"
+       "endmodule\n"},
+      {// used-defined data declarations in ports
+       "module m(\n"
+       "a::bb [x:y]a    ,\n"       // packed dimensions, induce alignment
+       "c#(d,e) [pp:qq] [e:f]b\n"  // packed dimensions, 2D
+       ") ;\n"
+       "endmodule\n",
+       "module m (\n"
+       "    a::bb    [  x:y]      a,\n"
+       "    c#(d, e) [pp:qq][e:f] b\n"
+       ");\n"
+       "endmodule\n"},
 
       // named parameter arguments
       {"module  mm ;\n"

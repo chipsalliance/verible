@@ -2771,22 +2771,6 @@ TEST(TokenAnnotatorTest, AnnotateFormattingWithContextTest) {
       },
       {
           DefaultStyle,
-          {'*', "*"},
-          {verilog_tokentype::SymbolIdentifier, "foo"},
-          {/* any context */},
-          {NodeEnum::kDimensionRange},
-          {1, SpacingOptions::Preserve},
-      },
-      {
-          DefaultStyle,
-          {verilog_tokentype::SymbolIdentifier, "foo"},
-          {'*', "*"},
-          {/* any context */},
-          {NodeEnum::kDimensionRange},
-          {1, SpacingOptions::Preserve},
-      },
-      {
-          DefaultStyle,
           {':', ":"},
           {verilog_tokentype::SymbolIdentifier, "foo"},
           {/* any context */},
@@ -3616,7 +3600,7 @@ TEST(TokenAnnotatorTest, AnnotateFormattingWithContextTest) {
           {verilog_tokentype::TK_DecNumber, "1"},
           {':', ":"},
           {/* unspecified context */},
-          {NodeEnum::kSelectVariableDimension},
+          {NodeEnum::kDimensionRange},
           // no spaces preceding ':' in unit test context
           {0, SpacingOptions::Undecided},
       },
@@ -3626,7 +3610,7 @@ TEST(TokenAnnotatorTest, AnnotateFormattingWithContextTest) {
           {':', ":"},
           {verilog_tokentype::TK_DecNumber, "0"},
           {/* unspecified context */},
-          {NodeEnum::kSelectVariableDimension},
+          {NodeEnum::kDimensionRange},
           // no spaces preceding ':' in unit test context
           {0, SpacingOptions::Undecided},
       },
@@ -3636,7 +3620,7 @@ TEST(TokenAnnotatorTest, AnnotateFormattingWithContextTest) {
           {SymbolIdentifier, "a"},
           {':', ":"},
           {/* unspecified context */},
-          {NodeEnum::kSelectVariableDimension},
+          {NodeEnum::kDimensionRange},
           // no spaces preceding ':' in unit test context
           {0, SpacingOptions::Undecided},
       },
@@ -3646,7 +3630,7 @@ TEST(TokenAnnotatorTest, AnnotateFormattingWithContextTest) {
           {':', ":"},
           {SymbolIdentifier, "b"},
           {/* unspecified context */},
-          {NodeEnum::kSelectVariableDimension},
+          {NodeEnum::kDimensionRange},
           // no spaces preceding ':' in unit test context
           {0, SpacingOptions::Undecided},
       },
@@ -3813,19 +3797,21 @@ TEST(TokenAnnotatorTest, AnnotateFormattingWithContextTest) {
 
       {
           // "] {" in "typedef logic [N] { ..."
+          // where [N] is a packed dimension
           DefaultStyle,
           {']', "]"},
           {'{', "{"},
-          {NodeEnum::kDimensionScalar},
+          {NodeEnum::kPackedDimensions},
           {/* unspecified context */},
           {1, SpacingOptions::Undecided},
       },
       {
           // "] {" in "typedef logic [M:N] { ..."
+          // where [M:N] is a packed dimension
           DefaultStyle,
           {']', "]"},
           {'{', "{"},
-          {NodeEnum::kDimensionRange},
+          {NodeEnum::kPackedDimensions},
           {/* unspecified context */},
           {1, SpacingOptions::Undecided},
       },
@@ -4672,6 +4658,55 @@ TEST(TokenAnnotatorTest, AnnotateFormattingWithContextTest) {
           {/* any context */},
           {0, SpacingOptions::MustWrap},
       },
+      // Space between return keyword and return value
+      {
+          DefaultStyle,
+          {verilog_tokentype::TK_return, "return"},
+          {'{', "{"},
+          {/* unspecified context */},
+          {/* unspecified context */},
+          {1, SpacingOptions::Undecided},
+      },
+      {
+          DefaultStyle,
+          {verilog_tokentype::TK_return, "return"},
+          {'(', "("},
+          {/* unspecified context */},
+          {/* unspecified context */},
+          {1, SpacingOptions::Undecided},
+      },
+      {
+          DefaultStyle,
+          {verilog_tokentype::TK_return, "return"},
+          {'-', "-"},
+          {/* unspecified context */},
+          {/* unspecified context */},
+          {1, SpacingOptions::Undecided},
+      },
+      {
+          DefaultStyle,
+          {verilog_tokentype::TK_return, "return"},
+          {'!', "!"},
+          {/* unspecified context */},
+          {/* unspecified context */},
+          {1, SpacingOptions::Undecided},
+      },
+      {
+          DefaultStyle,
+          {verilog_tokentype::TK_return, "return"},
+          {'~', "~"},
+          {/* unspecified context */},
+          {/* unspecified context */},
+          {1, SpacingOptions::Undecided},
+      },
+      {
+          DefaultStyle,
+          {verilog_tokentype::TK_return, "return"},
+          {verilog_tokentype::SystemTFIdentifier, "$foo"},
+          {/* unspecified context */},
+          {/* unspecified context */},
+          {1, SpacingOptions::Undecided},
+      },
   };
   int test_index = 0;
   for (const auto& test_case : kTestCases) {
@@ -4717,6 +4752,12 @@ struct OriginalSpacingSensitiveTestCase {
 
   ExpectedInterTokenInfo expected_annotation;
 };
+
+static const auto CompactIndexSelectionStyle = []() {
+  auto style = DefaultStyle;
+  style.compact_indexing_and_selections = false;
+  return style;
+}();
 
 // These tests are allowed to be sensitive to original inter-token spacing.
 TEST(TokenAnnotatorTest, OriginalSpacingSensitiveTests) {
@@ -5138,8 +5179,8 @@ TEST(TokenAnnotatorTest, OriginalSpacingSensitiveTests) {
           "",  // no spaces originally
           '+',
           "+",
-          {NodeEnum::kSelectVariableDimension},
-          {NodeEnum::kSelectVariableDimension},
+          {NodeEnum::kDimensionScalar},
+          {NodeEnum::kDimensionScalar},
           {0, SpacingOptions::Undecided},
       },
       {
@@ -5150,21 +5191,193 @@ TEST(TokenAnnotatorTest, OriginalSpacingSensitiveTests) {
           " ",  // 1 space originally
           '+',
           "+",
-          {NodeEnum::kSelectVariableDimension},
-          {NodeEnum::kSelectVariableDimension},
-          {1, SpacingOptions::Undecided},
+          {NodeEnum::kDimensionScalar},
+          {NodeEnum::kDimensionScalar},
+          {0, SpacingOptions::Undecided},
       },
       {
           // [a  +b]
           DefaultStyle,
           verilog_tokentype::SymbolIdentifier,
           "a",
-          " ",  // 2 spaces originally
+          "  ",  // 2 spaces originally
           '+',
           "+",
-          {NodeEnum::kSelectVariableDimension},
-          {NodeEnum::kSelectVariableDimension},
+          {NodeEnum::kDimensionScalar},
+          {NodeEnum::kDimensionScalar},
+          {0, SpacingOptions::Undecided},  // no spacing
+      },
+      {
+          // [a     :    b]
+          DefaultStyle,
+          verilog_tokentype::SymbolIdentifier,
+          "a",
+          "     ",
+          ':',
+          ":",
+          {NodeEnum::kDimensionRange},
+          {NodeEnum::kDimensionRange},
           {1, SpacingOptions::Undecided},  // limit to 1
+      },
+      {
+          // [a     :    b]
+          DefaultStyle,
+          ':',
+          ":",
+          "    ",
+          verilog_tokentype::SymbolIdentifier,
+          "b",
+          {NodeEnum::kDimensionRange},
+          {NodeEnum::kDimensionRange},
+          {0, SpacingOptions::Undecided},
+      },
+      {
+          // [a+b]
+          CompactIndexSelectionStyle,
+          verilog_tokentype::SymbolIdentifier,
+          "a",
+          "",  // no spaces originally
+          '+',
+          "+",
+          {NodeEnum::kDimensionScalar},
+          {NodeEnum::kDimensionScalar},
+          {0, SpacingOptions::Undecided},
+      },
+      {
+          // [a +b]
+          CompactIndexSelectionStyle,
+          verilog_tokentype::SymbolIdentifier,
+          "a",
+          " ",  // 1 space originally
+          '+',
+          "+",
+          {NodeEnum::kDimensionScalar},
+          {NodeEnum::kDimensionScalar},
+          {1, SpacingOptions::Undecided},  // limit to 1 space
+      },
+      {
+          // [a  +b]
+          CompactIndexSelectionStyle,
+          verilog_tokentype::SymbolIdentifier,
+          "a",
+          "  ",  // 2 spaces originally
+          '+',
+          "+",
+          {NodeEnum::kDimensionScalar},
+          {NodeEnum::kDimensionScalar},
+          {1, SpacingOptions::Undecided},  // limit to 1 space
+      },
+      {
+          // [a     :    b]
+          CompactIndexSelectionStyle,
+          verilog_tokentype::SymbolIdentifier,
+          "a",
+          "     ",
+          ':',
+          ":",
+          {NodeEnum::kDimensionRange},
+          {NodeEnum::kDimensionRange},
+          {1, SpacingOptions::Undecided},  // limit to 1 space
+      },
+      {
+          // [a     :    b]
+          CompactIndexSelectionStyle,
+          ':',
+          ":",
+          "    ",
+          verilog_tokentype::SymbolIdentifier,
+          "b",
+          {NodeEnum::kDimensionRange},
+          {NodeEnum::kDimensionRange},
+          {0, SpacingOptions::Undecided},
+      },
+      {
+          DefaultStyle,
+          '*',
+          "*",
+          "",  // 0 spaces originally
+          verilog_tokentype::SymbolIdentifier,
+          "foo",
+          {NodeEnum::kDimensionRange},
+          {NodeEnum::kDimensionRange},
+          {0, SpacingOptions::Undecided},
+      },
+      {
+          DefaultStyle,
+          verilog_tokentype::SymbolIdentifier,
+          "foo",
+          "",  // 0 spaces originally
+          '*',
+          "*",
+          {NodeEnum::kDimensionRange},
+          {NodeEnum::kDimensionRange},
+          {0, SpacingOptions::Undecided},
+      },
+      {
+          DefaultStyle,
+          '*',
+          "*",
+          "",  // 0 spaces originally
+          verilog_tokentype::SymbolIdentifier,
+          "foo",
+          {NodeEnum::kDimensionScalar},
+          {NodeEnum::kDimensionScalar},
+          {0, SpacingOptions::Undecided},
+      },
+      {
+          DefaultStyle,
+          verilog_tokentype::SymbolIdentifier,
+          "foo",
+          "",  // 0 spaces originally
+          '*',
+          "*",
+          {NodeEnum::kDimensionScalar},
+          {NodeEnum::kDimensionScalar},
+          {0, SpacingOptions::Undecided},
+      },
+      {
+          DefaultStyle,
+          '*',
+          "*",
+          " ",  // 1 space originally
+          verilog_tokentype::SymbolIdentifier,
+          "foo",
+          {NodeEnum::kPackedDimensions},
+          {NodeEnum::kPackedDimensions},
+          {1, SpacingOptions::Preserve},
+      },
+      {
+          DefaultStyle,
+          verilog_tokentype::SymbolIdentifier,
+          "foo",
+          " ",  // 1 space originally
+          '*',
+          "*",
+          {NodeEnum::kPackedDimensions},
+          {NodeEnum::kPackedDimensions},
+          {1, SpacingOptions::Preserve},
+      },
+      {
+          DefaultStyle,
+          '*',
+          "*",
+          " ",  // 1 space originally
+          verilog_tokentype::SymbolIdentifier,
+          "foo",
+          {NodeEnum::kUnpackedDimensions},
+          {NodeEnum::kUnpackedDimensions},
+          {1, SpacingOptions::Preserve},
+      },
+      {
+          DefaultStyle,
+          verilog_tokentype::SymbolIdentifier,
+          "foo",
+          " ",  // 1 space originally
+          '*',
+          "*",
+          {NodeEnum::kUnpackedDimensions},
+          {NodeEnum::kUnpackedDimensions},
+          {1, SpacingOptions::Preserve},
       },
   };
   int test_index = 0;
@@ -5189,12 +5402,16 @@ TEST(TokenAnnotatorTest, OriginalSpacingSensitiveTests) {
     right.format_token_enum =
         GetFormatTokenType(verilog_tokentype(right.TokenEnum()));
 
+    VLOG(1) << "left context: " << test_case.left_context;
     VLOG(1) << "right context: " << test_case.right_context;
-    AnnotateFormatToken(test_case.style, left, &right, {},
+    AnnotateFormatToken(test_case.style, left, &right, test_case.left_context,
                         test_case.right_context);
     EXPECT_EQ(test_case.expected_annotation, right.before)
-        << "Index: " << test_index << " Context: " << test_case.right_context
-        << " with left=" << left.Text() << " and right=" << right.Text();
+        << "Index: " << test_index                        //
+        << " Left context: " << test_case.left_context    //
+        << " Right context: " << test_case.right_context  //
+        << " with left=" << left.Text()                   //
+        << " and right=" << right.Text();
     ++test_index;
   }
 }

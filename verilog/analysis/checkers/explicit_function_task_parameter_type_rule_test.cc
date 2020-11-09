@@ -15,8 +15,6 @@
 #include "verilog/analysis/checkers/explicit_function_task_parameter_type_rule.h"
 
 #include <initializer_list>
-#include <memory>
-#include <set>
 
 #include "gtest/gtest.h"
 #include "absl/memory/memory.h"

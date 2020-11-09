@@ -27,6 +27,7 @@
 #include "common/text/syntax_tree_context.h"
 #include "verilog/CST/identifier.h"
 #include "verilog/CST/seq_block.h"
+#include "verilog/CST/verilog_matchers.h"
 #include "verilog/analysis/descriptions.h"
 #include "verilog/analysis/lint_rule_registry.h"
 
@@ -34,6 +35,7 @@ namespace verilog {
 namespace analysis {
 
 using verible::GetStyleGuideCitation;
+using verible::matcher::Matcher;
 
 // Register the lint rule
 VERILOG_REGISTER_LINT_RULE(GenerateLabelPrefixRule);
@@ -55,10 +57,16 @@ std::string GenerateLabelPrefixRule::GetDescription(
       GetStyleGuideCitation(kTopic), ".");
 }
 
+// Matches begin statements
+static const Matcher& BlockMatcher() {
+  static const Matcher matcher(NodekGenerateBlock());
+  return matcher;
+}
+
 void GenerateLabelPrefixRule::HandleSymbol(
     const verible::Symbol& symbol, const verible::SyntaxTreeContext& context) {
   verible::matcher::BoundSymbolManager manager;
-  if (matcher_.Matches(symbol, &manager)) {
+  if (BlockMatcher().Matches(symbol, &manager)) {
     // Exclude case generate statements, as kGenerateBlock is generated for
     // each 'case' item too.
     if (context.IsInside(NodeEnum::kGenerateCaseItemList)) {

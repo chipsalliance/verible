@@ -327,7 +327,8 @@ end { UpdateLocation(); return TK_end; }
 endcase { UpdateLocation(); return TK_endcase; }
 endfunction { UpdateLocation(); return TK_endfunction; }
 endmodule { UpdateLocation(); return TK_endmodule; }
-endprimitive { UpdateLocation(); yy_safe_pop_state(); return TK_endprimitive; }
+<PRIMITIVE>endprimitive { UpdateLocation(); yy_safe_pop_state(); return TK_endprimitive; }
+endprimitive { UpdateLocation(); return TK_endprimitive; }
 endspecify { UpdateLocation(); return TK_endspecify; }
 <UDPTABLE>endtable {
   UpdateLocation();

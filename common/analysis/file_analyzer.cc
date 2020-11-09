@@ -55,6 +55,10 @@ std::ostream& operator<<(std::ostream& stream, const AnalysisPhase& phase) {
   return stream << AnalysisPhaseName(phase);
 }
 
+std::ostream& operator<<(std::ostream& stream, const RejectedToken& r) {
+  return stream << r.token_info << " (" << r.phase << "): " << r.explanation;
+}
+
 // Grab tokens until EOF, and initialize a stream view with all tokens.
 absl::Status FileAnalyzer::Tokenize(Lexer* lexer) {
   const auto buffer = Data().Contents();

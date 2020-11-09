@@ -40,83 +40,102 @@ const auto PathLeaf2 = MakePathMatcher({LeafTag(2)});
 
 // Basic test case for AnyOf
 TEST(MatcherBuildersTest, AnyOfSimple) {
-  auto matcher = Node5(AnyOf(PathLeaf1(), PathNode1()));
-  BoundSymbolManager bound_symbol_manager;
+  const auto matchers = {
+      Node5(AnyOf(PathLeaf1(), PathNode1())),
+      Node5(AnyOf(PathNode1(), PathLeaf1())),  // commutative
+  };
 
-  auto should_match_leaf = TNode(5, XLeaf(1));
-  EXPECT_TRUE(matcher.Matches(*should_match_leaf, &bound_symbol_manager));
-
-  bound_symbol_manager.Clear();
-
-  auto should_match_node = TNode(5, TNode(1));
-  EXPECT_TRUE(matcher.Matches(*should_match_node, &bound_symbol_manager));
-
-  bound_symbol_manager.Clear();
-
-  auto should_match_both = TNode(5, TNode(1), XLeaf(1));
-  EXPECT_TRUE(matcher.Matches(*should_match_both, &bound_symbol_manager));
+  for (const auto& matcher : matchers) {
+    BoundSymbolManager bound_symbol_manager;
+    {
+      const auto should_match_leaf = TNode(5, XLeaf(1));
+      EXPECT_TRUE(matcher.Matches(*should_match_leaf, &bound_symbol_manager));
+    }
+    {
+      bound_symbol_manager.Clear();
+      const auto should_match_node = TNode(5, TNode(1));
+      EXPECT_TRUE(matcher.Matches(*should_match_node, &bound_symbol_manager));
+    }
+    {
+      bound_symbol_manager.Clear();
+      const auto should_match_both = TNode(5, TNode(1), XLeaf(1));
+      EXPECT_TRUE(matcher.Matches(*should_match_both, &bound_symbol_manager));
+    }
+  }
 }
 
 // Basic test case for EachOf
 TEST(MatcherBuildersTest, EachOfSimple) {
-  auto matcher =
-      Node5(EachOf(PathLeaf1().Bind("leaf1"), PathNode1().Bind("node1")));
-  BoundSymbolManager bound_symbol_manager;
+  const auto matchers = {
+      Node5(EachOf(PathLeaf1().Bind("leaf1"), PathNode1().Bind("node1"))),
+      // swap order (commutative):
+      Node5(EachOf(PathNode1().Bind("node1"), PathLeaf1().Bind("leaf1"))),
+  };
 
-  auto should_match_leaf = TNode(5, XLeaf(1));
-  EXPECT_TRUE(matcher.Matches(*should_match_leaf, &bound_symbol_manager));
-  EXPECT_TRUE(bound_symbol_manager.ContainsSymbol("leaf1"));
-
-  bound_symbol_manager.Clear();
-
-  auto should_match_node = TNode(5, TNode(1));
-  EXPECT_TRUE(matcher.Matches(*should_match_node, &bound_symbol_manager));
-  EXPECT_TRUE(bound_symbol_manager.ContainsSymbol("node1"));
-
-  bound_symbol_manager.Clear();
-
-  auto should_match_both = TNode(5, TNode(1), XLeaf(1));
-  EXPECT_TRUE(matcher.Matches(*should_match_both, &bound_symbol_manager));
-  EXPECT_TRUE(bound_symbol_manager.ContainsSymbol("leaf1"));
-  EXPECT_TRUE(bound_symbol_manager.ContainsSymbol("node1"));
+  for (const auto& matcher : matchers) {
+    BoundSymbolManager bound_symbol_manager;
+    {
+      const auto should_match_leaf = TNode(5, XLeaf(1));
+      EXPECT_TRUE(matcher.Matches(*should_match_leaf, &bound_symbol_manager));
+      EXPECT_TRUE(bound_symbol_manager.ContainsSymbol("leaf1"));
+    }
+    {
+      bound_symbol_manager.Clear();
+      const auto should_match_node = TNode(5, TNode(1));
+      EXPECT_TRUE(matcher.Matches(*should_match_node, &bound_symbol_manager));
+      EXPECT_TRUE(bound_symbol_manager.ContainsSymbol("node1"));
+    }
+    {
+      bound_symbol_manager.Clear();
+      const auto should_match_both = TNode(5, TNode(1), XLeaf(1));
+      EXPECT_TRUE(matcher.Matches(*should_match_both, &bound_symbol_manager));
+      EXPECT_TRUE(bound_symbol_manager.ContainsSymbol("leaf1"));
+      EXPECT_TRUE(bound_symbol_manager.ContainsSymbol("node1"));
+    }
+  }
 }
 
 // Basic test case for AllOf
 TEST(MatcherBuildersTest, AllOfSimple) {
-  auto matcher = Node5(AllOf(PathLeaf1(), PathNode1()));
-  BoundSymbolManager bound_symbol_manager;
+  const auto matchers = {
+      Node5(AllOf(PathLeaf1(), PathNode1())),
+      Node5(AllOf(PathNode1(), PathLeaf1())),  // commutative
+  };
 
-  auto should_match = TNode(5, XLeaf(1), XLeaf(2), TNode(1));
-  EXPECT_TRUE(matcher.Matches(*should_match, &bound_symbol_manager));
-
-  bound_symbol_manager.Clear();
-
-  auto no_match_node = TNode(5, XLeaf(1));
-  EXPECT_FALSE(matcher.Matches(*no_match_node, &bound_symbol_manager));
-
-  bound_symbol_manager.Clear();
-
-  auto no_match_leaf = TNode(5, TNode(1));
-  EXPECT_FALSE(matcher.Matches(*no_match_leaf, &bound_symbol_manager));
+  for (const auto& matcher : matchers) {
+    BoundSymbolManager bound_symbol_manager;
+    {
+      const auto should_match = TNode(5, XLeaf(1), XLeaf(2), TNode(1));
+      EXPECT_TRUE(matcher.Matches(*should_match, &bound_symbol_manager));
+    }
+    {
+      const auto no_match_node = TNode(5, XLeaf(1));
+      EXPECT_FALSE(matcher.Matches(*no_match_node, &bound_symbol_manager));
+    }
+    {
+      const auto no_match_leaf = TNode(5, TNode(1));
+      EXPECT_FALSE(matcher.Matches(*no_match_leaf, &bound_symbol_manager));
+    }
+  }
 }
 
 // Basic test case for Unless
 TEST(MatcherBuildersTest, UnlessSimple) {
-  auto matcher = Node5(Unless(PathNode1()));
+  const auto matcher = Node5(Unless(PathNode1()));
   BoundSymbolManager bound_symbol_manager;
 
-  auto no_match1 = TNode(5, XLeaf(1), XLeaf(2), TNode(1));
-  EXPECT_FALSE(matcher.Matches(*no_match1, &bound_symbol_manager));
-
-  bound_symbol_manager.Clear();
-
-  auto yes_match1 = TNode(5, XLeaf(1));
-  EXPECT_TRUE(matcher.Matches(*yes_match1, &bound_symbol_manager));
-
-  bound_symbol_manager.Clear();
-
-  auto no_match2 = TNode(5, TNode(1));
-  EXPECT_FALSE(matcher.Matches(*no_match2, &bound_symbol_manager));
+  {
+    const auto no_match1 = TNode(5, XLeaf(1), XLeaf(2), TNode(1));
+    EXPECT_FALSE(matcher.Matches(*no_match1, &bound_symbol_manager));
+  }
+  {
+    const auto yes_match1 = TNode(5, XLeaf(1));
+    EXPECT_TRUE(matcher.Matches(*yes_match1, &bound_symbol_manager));
+  }
+  {
+    const auto no_match2 = TNode(5, TNode(1));
+    EXPECT_FALSE(matcher.Matches(*no_match2, &bound_symbol_manager));
+  }
 }
 
 TEST(CoreMatchers, AnyOfManyTests) {

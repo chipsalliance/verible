@@ -48,6 +48,14 @@ TEST(BijectiveMapTest, InitializerListCtor) {
   EXPECT_FALSE(m.reverse_view().empty());
 }
 
+TEST(BijectiveMapTest, InitializerListCtorDupeKey) {
+  EXPECT_DEATH(const TestMapType m({{"www", 2}, {"www", 3}}), "duplicate");
+}
+
+TEST(BijectiveMapTest, InitializerListCtorDupeValue) {
+  EXPECT_DEATH(const TestMapType m({{"www", 2}, {"qqq", 2}}), "duplicate");
+}
+
 TEST(BijectiveMapTest, IteratorPairCtor) {
   const std::initializer_list<std::pair<std::string, int>> values = {
       {"qqq", 3}, {"www", 2}};
@@ -60,6 +68,18 @@ TEST(BijectiveMapTest, IteratorPairCtor) {
   EXPECT_EQ(*m.find_reverse(2), "www");
   EXPECT_FALSE(m.forward_view().empty());
   EXPECT_FALSE(m.reverse_view().empty());
+}
+
+TEST(BijectiveMapTest, IteratorPairCtorDupeKey) {
+  const std::initializer_list<std::pair<std::string, int>> values = {
+      {"qqq", 4}, {"qqq", 2}};
+  EXPECT_DEATH(const TestMapType m(values.begin(), values.end()), "duplicate");
+}
+
+TEST(BijectiveMapTest, IteratorPairCtorDupeValue) {
+  const std::initializer_list<std::pair<std::string, int>> values = {
+      {"zzz", 3}, {"qqq", 3}};
+  EXPECT_DEATH(const TestMapType m(values.begin(), values.end()), "duplicate");
 }
 
 TEST(BijectiveMapTest, OneElement) {

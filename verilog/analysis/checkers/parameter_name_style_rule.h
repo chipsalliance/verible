@@ -20,12 +20,9 @@
 #include <string>
 
 #include "common/analysis/lint_rule_status.h"
-#include "common/analysis/matcher/matcher.h"
-#include "common/analysis/matcher/matcher_builders.h"
 #include "common/analysis/syntax_tree_lint_rule.h"
 #include "common/text/symbol.h"
 #include "common/text/syntax_tree_context.h"
-#include "verilog/CST/verilog_matchers.h"  // IWYU pragma: keep
 #include "verilog/analysis/descriptions.h"
 
 namespace verilog {
@@ -66,10 +63,6 @@ class ParameterNameStyleRule : public verible::SyntaxTreeLintRule {
 
   uint32_t localparam_allowed_style_ = kUpperCamelCase;
   uint32_t parameter_allowed_style_ = kUpperCamelCase | kAllCaps;
-
-  using Matcher = verible::matcher::Matcher;
-
-  Matcher matcher_ = NodekParamDeclaration();
 
   std::set<verible::LintViolation> violations_;
 };

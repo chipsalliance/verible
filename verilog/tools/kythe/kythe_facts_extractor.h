@@ -65,8 +65,9 @@ class KytheFactsExtractor {
                       ScopeResolver* previous_files_scopes)
       : file_path_(file_path), scope_resolver_(previous_files_scopes) {}
 
-  // Extracts kythe facts from the given IndexingFactsTree root.
-  KytheIndexingData ExtractKytheFacts(const IndexingFactNode&);
+  // Extracts node tagged with kFileList where it iterates over every child node
+  // tagged with kFile from the begining and extracts the facts for each file.
+  static KytheIndexingData ExtractKytheFacts(const IndexingFactNode& file_list);
 
  private:
   // Container with a stack of VNames to hold context of VNames during traversal
@@ -91,6 +92,9 @@ class KytheFactsExtractor {
     const VName& top() const { return *ABSL_DIE_IF_NULL(base_type::top()); }
   };
 
+  // Extracts kythe facts from the given IndexingFactsTree root.
+  KytheIndexingData ExtractFile(const IndexingFactNode&);
+
   // Resolves the tag of the given node and directs the flow to the appropriate
   // function to extract kythe facts for that node.
   void IndexingFactNodeTagResolver(const IndexingFactNode&);
@@ -111,16 +115,11 @@ class KytheFactsExtractor {
   void AddVNameToScopeContext(IndexingFactType, const VName&);
 
   // Appends the extracted children vnames to the scope of the current node.
-  void ConstructFlattenedScope(const IndexingFactNode&, const VName&,
-                               const Scope&);
+  void ConstructFlattenedScope(const IndexingFactNode&, const VName&, Scope&);
 
   // Determines whether or not to create a child of edge between the current
   // node and the previous node.
   void CreateChildOfEdge(IndexingFactType, const VName&);
-
-  // Extracts node tagged with kFileList where it iterates over every child node
-  // tagged with kFile from the begining and extracts the facts for each file.
-  void ExtractFileList(const IndexingFactNode& file_list);
 
   // Extracts kythe facts from file node and returns it VName.
   VName ExtractFileFact(const IndexingFactNode&);
@@ -135,8 +134,20 @@ class KytheFactsExtractor {
   // Extracts kythe facts for a constant like member in enums.
   VName ExtractConstant(const IndexingFactNode&);
 
+  // Extracts kythe facts for a structs or unions.
+  VName ExtractStructOrUnion(const IndexingFactNode&);
+
+  // Extracts kythe facts for a type declaration.
+  VName ExtractTypeDeclaration(const IndexingFactNode&);
+
   // Extracts kythe facts from module instance node and returns it VName.
   VName ExtractModuleInstance(const IndexingFactNode&);
+
+  // Extracts kythe facts from interface node and returns it VName.
+  VName ExtractInterfaceFact(const IndexingFactNode& interface_fact_node);
+
+  // Extracts kythe facts from program node and returns it VName.
+  VName ExtractProgramFact(const IndexingFactNode& program_fact_node);
 
   // Extracts kythe facts from module named port node e.g("m(.in1(a))").
   void ExtractModuleNamedPort(const IndexingFactNode&);
@@ -162,6 +173,9 @@ class KytheFactsExtractor {
 
   // Extracts Kythe facts from class instance node and return its VName.
   VName ExtractClassInstances(const IndexingFactNode& class_instance_fact_node);
+
+  // Creates a new anonymous scope for if conditions and loops.
+  VName ExtractAnonymousScope(const IndexingFactNode& temp_scope);
 
   // Extracts kythe facts from a function or task node and returns its VName.
   VName ExtractFunctionOrTask(const IndexingFactNode& function_fact_node);
@@ -198,6 +212,12 @@ class KytheFactsExtractor {
 
   // Extracts kythe facts from param declaration node.
   VName ExtractParamDeclaration(const IndexingFactNode& param_declaration_node);
+
+  // Create "ref" edges that point from the given anchors to the given
+  // definitions in order.
+  void CreateAnchorReferences(
+      const std::vector<Anchor>& anchors,
+      const std::vector<std::pair<const VName*, const Scope*>>& definitions);
 
   // Generates an anchor VName for kythe.
   VName CreateAnchor(const Anchor&);
@@ -240,6 +260,10 @@ class KytheFactsExtractor {
   // Used to save all the generated edges Uniquely.
   std::set<Edge> edges_;
 };
+
+// Returns the file path of the file list from the given indexing facts tree
+// node tagged with kFileList.
+std::string GetFileListDirFromRoot(const IndexingFactNode& root);
 
 }  // namespace kythe
 }  // namespace verilog

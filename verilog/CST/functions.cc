@@ -23,6 +23,7 @@
 #include "common/text/symbol.h"
 #include "common/text/tree_utils.h"
 #include "verilog/CST/identifier.h"
+#include "verilog/CST/type.h"
 #include "verilog/CST/verilog_matchers.h"  // pragma IWYU: keep
 
 namespace verilog {
@@ -37,6 +38,16 @@ std::vector<verible::TreeSearchMatch> FindAllFunctionDeclarations(
   return verible::SearchSyntaxTree(root, NodekFunctionDeclaration());
 }
 
+std::vector<verible::TreeSearchMatch> FindAllFunctionPrototypes(
+    const Symbol& root) {
+  return verible::SearchSyntaxTree(root, NodekFunctionPrototype());
+}
+
+std::vector<verible::TreeSearchMatch> FindAllFunctionHeaders(
+    const Symbol& root) {
+  return verible::SearchSyntaxTree(root, NodekFunctionHeader());
+}
+
 std::vector<verible::TreeSearchMatch> FindAllFunctionOrTaskCalls(
     const Symbol& root) {
   return verible::SearchSyntaxTree(root, NodekFunctionCall());
@@ -49,6 +60,12 @@ std::vector<verible::TreeSearchMatch> FindAllFunctionOrTaskCallsExtension(
 
 const verible::SyntaxTreeNode& GetFunctionHeader(const Symbol& function_decl) {
   return GetSubtreeAsNode(function_decl, NodeEnum::kFunctionDeclaration, 0,
+                          NodeEnum::kFunctionHeader);
+}
+
+const verible::SyntaxTreeNode& GetFunctionPrototypeHeader(
+    const Symbol& function_decl) {
+  return GetSubtreeAsNode(function_decl, NodeEnum::kFunctionPrototype, 0,
                           NodeEnum::kFunctionHeader);
 }
 
@@ -100,6 +117,17 @@ const verible::SyntaxTreeNode& GetLocalRootFromFunctionCall(
                           NodeEnum::kLocalRoot);
 }
 
+const verible::SyntaxTreeNode* GetIdentifiersFromFunctionCall(
+    const verible::Symbol& function_call) {
+  const verible::SyntaxTreeNode& local_root = GetSubtreeAsNode(
+      function_call, NodeEnum::kFunctionCall, 0, NodeEnum::kLocalRoot);
+  const verible::Symbol& identifier = GetIdentifiersFromLocalRoot(local_root);
+  if (identifier.Kind() != verible::SymbolKind::kNode) {
+    return nullptr;
+  }
+  return &verible::SymbolCastToNode(identifier);
+}
+
 const verible::SyntaxTreeLeaf* GetFunctionCallName(
     const verible::Symbol& function_call) {
   const auto& local_root = GetLocalRootFromFunctionCall(function_call);
@@ -122,8 +150,7 @@ const verible::SyntaxTreeLeaf& GetFunctionCallNameFromCallExtension(
 const verible::SyntaxTreeNode& GetFunctionBlockStatementList(
     const verible::Symbol& function_decl) {
   return verible::GetSubtreeAsNode(function_decl,
-                                   NodeEnum::kFunctionDeclaration, 2,
-                                   NodeEnum::kBlockItemStatementList);
+                                   NodeEnum::kFunctionDeclaration, 2);
 }
 
 const verible::SyntaxTreeNode& GetParenGroupFromCall(

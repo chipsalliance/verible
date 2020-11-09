@@ -19,14 +19,10 @@
 #include <string>
 
 #include "common/analysis/lint_rule_status.h"
-#include "common/analysis/matcher/core_matchers.h"
-#include "common/analysis/matcher/matcher.h"
-#include "common/analysis/matcher/matcher_builders.h"
 #include "common/analysis/syntax_tree_lint_rule.h"
 #include "common/text/concrete_syntax_leaf.h"
 #include "common/text/symbol.h"
 #include "common/text/syntax_tree_context.h"
-#include "verilog/CST/verilog_matchers.h"  // IWYU pragma: keep
 #include "verilog/analysis/descriptions.h"
 
 namespace verilog {
@@ -55,31 +51,7 @@ class VoidCastRule : public verible::SyntaxTreeLintRule {
   // Link to style guide rule.
   static const char kTopic[];
 
-  using Matcher = verible::matcher::Matcher;
-
   static const std::set<std::string>& ForbiddenFunctionsSet();
-
-  // Matches against top level function calls within void casts
-  // For example:
-  //   void'(foo());
-  // Here, the leaf representing "foo" will be bound to id
-  const Matcher forbidden_function_matcher_ =
-      NodekVoidcast(VoidcastHasExpression(
-          ExpressionHasFunctionCall(FunctionCallHasId().Bind("id"))));
-
-  // Matches against both calls to randomize and randomize methods within
-  // voidcasts.
-  // For example:
-  //   void'(obj.randomize(...));
-  // Here, the node representing "randomize(...)" will be bound to "id"
-  //
-  // For example:
-  //   void'(randomize(obj));
-  // Here, the node representing "randomize(obj)" will be bound to "id"
-  //
-  const Matcher randomize_matcher_ = NodekVoidcast(VoidcastHasExpression(
-      verible::matcher::AnyOf(ExpressionHasRandomizeCallExtension().Bind("id"),
-                              ExpressionHasRandomizeFunction().Bind("id"))));
 
   std::set<verible::LintViolation> violations_;
 };

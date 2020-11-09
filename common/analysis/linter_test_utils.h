@@ -20,7 +20,7 @@
 #include <iosfwd>
 #include <memory>
 #include <set>
-#include <string>
+#include <sstream>
 
 #include "gtest/gtest.h"
 #include "absl/status/status.h"
@@ -68,7 +68,7 @@ class LintRunner;
 template <class AnalyzerType, class RuleType>
 void RunLintTestCase(const LintTestCase& test,
                      const LintRuleGenerator<RuleType>& make_rule,
-                     const std::string& filename) {
+                     absl::string_view filename) {
   // All linters start by parsing to yield a TextStructure.
   AnalyzerType analyzer(test.code, filename);
   absl::Status unused_parser_status = analyzer.Analyze();
@@ -90,7 +90,7 @@ void RunLintTestCase(const LintTestCase& test,
 template <class AnalyzerType, class RuleClass>
 void RunConfiguredLintTestCases(
     std::initializer_list<LintTestCase> tests, absl::string_view configuration,
-    const std::string& filename = "<<inline-test>>") {
+    absl::string_view filename = "<<inline-test>>") {
   typedef typename RuleClass::rule_type rule_type;
   auto rule_generator = [&configuration]() -> std::unique_ptr<rule_type> {
     std::unique_ptr<rule_type> instance(new RuleClass());
@@ -105,7 +105,7 @@ void RunConfiguredLintTestCases(
 
 template <class AnalyzerType, class RuleClass>
 void RunLintTestCases(std::initializer_list<LintTestCase> tests,
-                      const std::string& filename = "<<inline-test>>") {
+                      absl::string_view filename = "<<inline-test>>") {
   RunConfiguredLintTestCases<AnalyzerType, RuleClass>(tests, "", filename);
 }
 }  // namespace verible

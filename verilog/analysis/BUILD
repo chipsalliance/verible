@@ -207,6 +207,7 @@ cc_test(
     deps = [
         ":verilog_analyzer",
         "//common/analysis:file_analyzer",
+        "//common/strings:display_utils",
         "//common/text:concrete_syntax_leaf",
         "//common/text:concrete_syntax_tree",
         "//common/text:constants",

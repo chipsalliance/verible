@@ -57,6 +57,9 @@ class Scope {
   // VName or nullptr if not found.
   const VName* SearchForDefinition(absl::string_view name) const;
 
+  // Removes the given VName from the members.
+  void RemoveMember(const ScopeMemberItem& member);
+
  private:
   // Signature of the owner of this scope.
   Signature signature_;
@@ -101,6 +104,7 @@ class ScopeContext : public verible::AutoPopStack<Scope*> {
 
   // returns the top VName of the stack
   Scope& top() { return *ABSL_DIE_IF_NULL(base_type::top()); }
+  const Scope& top() const { return *ABSL_DIE_IF_NULL(base_type::top()); }
 
   // TODO(minatoma): improve performance and memory for this function.
   //
@@ -162,13 +166,16 @@ class ScopeResolver {
       : previous_file_scope_resolver_(previous_file_scope_resolver),
         global_scope_signature_(global_scope_signature) {}
 
-  // TODO(minatoma): add overloaded function which takes anchors (and add
-  // tests).
-  // TODO(minatoma): returns scopes with VNames to decrease search time for
-  // scopes.
-  // Searches for the definitions of the given names.
-  const std::vector<const VName*> SearchForDefinitions(
+  // Searches for the definitions of the given references' names.
+  const std::vector<std::pair<const VName*, const Scope*>> SearchForDefinitions(
       const std::vector<std::string>& names) const;
+
+  // Searches for definition of the given reference's name in the current
+  // scope (the top of scope_context).
+  const VName* SearchForDefinitionInCurrentScope(absl::string_view name) const;
+
+  // Removes the given VName from the current scope (the top of scope_context).
+  void RemoveDefinitionFromCurrentScope(const VName& vname);
 
   // Adds the VNames of the definitions it given scope to the scope context.
   void AppendScopeToScopeContext(const Scope& scope);

@@ -1,7 +1,7 @@
 # SystemVerilog Formatting
 
 <!--*
-freshness: { owner: 'fangism' reviewed: '2020-10-07' }
+freshness: { owner: 'fangism' reviewed: '2020-10-16' }
 *-->
 
 This directory contains all of the SystemVerilog-specific formatter
@@ -10,6 +10,10 @@ implementation.
 [Tool user documentation can be found here](../tools/formatter).
 
 ## Formatter Subsystems
+
+[Full developer documentation can be found here](../../doc/formatter.md).
+
+Below is a quick summary of the major components.
 
 [formatter.h](formatter.h) contains the top-level entry point into the
 formatter. Text-in-text-out tests are in [formatter_test.cc](formatter_test.cc).

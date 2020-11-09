@@ -19,12 +19,9 @@
 #include <string>
 
 #include "common/analysis/lint_rule_status.h"
-#include "common/analysis/matcher/matcher.h"
-#include "common/analysis/matcher/matcher_builders.h"
 #include "common/analysis/syntax_tree_lint_rule.h"
 #include "common/text/symbol.h"
 #include "common/text/syntax_tree_context.h"
-#include "verilog/CST/verilog_matchers.h"  // IWYU pragma: keep
 #include "verilog/analysis/descriptions.h"
 
 namespace verilog {
@@ -50,11 +47,6 @@ class AlwaysCombBlockingRule : public verible::SyntaxTreeLintRule {
 
   // Diagnostic message.
   static const char kMessage[];
-
-  using Matcher = verible::matcher::Matcher;
-
-  const Matcher always_comb_matcher_ =
-      NodekAlwaysStatement(AlwaysCombKeyword());
 
   std::set<verible::LintViolation> violations_;
 };

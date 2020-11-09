@@ -415,8 +415,10 @@ const verible::SyntaxTreeNode* GetDataTypeFromForInitialization(
     const verible::Symbol& for_initialization) {
   const auto* data_type = verible::GetSubtreeAsSymbol(
       for_initialization, NodeEnum::kForInitialization, 1);
-  return verible::CheckOptionalSymbolAsNode(data_type,
-                                            NodeEnum::kDataTypePrimitive);
+  if (data_type == nullptr) {
+    return nullptr;
+  }
+  return &verible::SymbolCastToNode(*data_type);
 }
 
 // Returns the variable name leaf from for loop initialization.

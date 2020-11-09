@@ -29,3 +29,17 @@ filegroup(
     ],
     visibility = ["//visibility:public"],
 )
+
+sh_test(
+    name = "obfuscate_test",
+    size = "small",
+    srcs = ["obfuscate_test.sh"],
+    args = [
+        "$(location :verible-verilog-obfuscate)",
+        "$(location //verilog/tools/diff:verible-verilog-diff)",
+    ],
+    data = [
+        ":verible-verilog-obfuscate",
+        "//verilog/tools/diff:verible-verilog-diff",
+    ],
+)

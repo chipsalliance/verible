@@ -86,6 +86,40 @@ TEST(ScopesTest, AppendScope) {
   }
 }
 
+TEST(ScopesTest, RemoveMember) {
+  /**
+   * signature[0] => {
+   *   vnames[1],  ==> signature[1]
+   *   vnames[2],  ==> signature[2]
+   * }
+   *
+   * signature[1] => {
+   *   vnames[3],  ==> signature[3];
+   *   vnames[4],  ==> signature[4];
+   * }
+   */
+
+  Scope scope(signatures[0]);
+  scope.AddMemberItem(vnames[1]);
+  scope.AddMemberItem(vnames[2]);
+
+  {
+    const VName* vname = scope.SearchForDefinition(names[1]);
+    EXPECT_EQ(vname->signature, signatures[1]);
+  }
+
+  {
+    scope.RemoveMember(vnames[1]);
+    const VName* vname = scope.SearchForDefinition(names[1]);
+    EXPECT_EQ(vname, nullptr);
+  }
+
+  {
+    const VName* vname = scope.SearchForDefinition(names[2]);
+    EXPECT_EQ(vname->signature, signatures[2]);
+  }
+}
+
 TEST(ScopeResolverTests, SearchForDefinition) {
   ScopeResolver scope_resolver(Signature(""), nullptr);
 
@@ -107,27 +141,102 @@ TEST(ScopeResolverTests, SearchForDefinition) {
     scope_resolver.AddDefinitionToScopeContext(vnames[0]);
     scope_resolver.MapSignatureToScope(signatures[0], scope);
     {
-      const std::vector<const VName*> vnames =
+      const std::vector<std::pair<const VName*, const Scope*>> vnames =
           scope_resolver.SearchForDefinitions({names[0], names[1]});
       EXPECT_EQ(vnames.size(), 2);
-      EXPECT_EQ(vnames[1]->signature, signatures[1]);
+      EXPECT_EQ(vnames[1].first->signature, signatures[1]);
     }
     {
-      const std::vector<const VName*> vnames =
+      const std::vector<std::pair<const VName*, const Scope*>> vnames =
           scope_resolver.SearchForDefinitions({names[0], names[2]});
       EXPECT_EQ(vnames.size(), 2);
-      EXPECT_EQ(vnames[1]->signature, signatures[2]);
+      EXPECT_EQ(vnames[1].first->signature, signatures[2]);
     }
     {
-      const std::vector<const VName*> vnames =
+      const std::vector<std::pair<const VName*, const Scope*>> vnames =
           scope_resolver.SearchForDefinitions({names[0], names[3]});
       EXPECT_EQ(vnames.size(), 1);
-      EXPECT_EQ(vnames[0]->signature, signatures[0]);
+      EXPECT_EQ(vnames[0].first->signature, signatures[0]);
     }
     {
-      const std::vector<const VName*> vnames =
+      const std::vector<std::pair<const VName*, const Scope*>> vnames =
           scope_resolver.SearchForDefinitions({names[2], names[1]});
       EXPECT_TRUE(vnames.empty());
+    }
+  }
+}
+
+TEST(ScopeResolverTests, SearchForDefinitionInCurrentScope) {
+  ScopeResolver scope_resolver(Signature(""), nullptr);
+
+  /**
+   * signature[0] => {
+   *   vnames[1],  ==> signature[1]
+   *   vnames[2],  ==> signature[2]
+   * }
+   */
+
+  Scope scope(signatures[0]);
+  scope.AddMemberItem(vnames[1]);
+  scope.AddMemberItem(vnames[2]);
+
+  {
+    ScopeContext::AutoPop p1(&scope_resolver.GetMutableScopeContext(), &scope);
+    {
+      const VName* vname =
+          scope_resolver.SearchForDefinitionInCurrentScope(names[1].c_str());
+      EXPECT_EQ(vname->signature, signatures[1]);
+    }
+    {
+      const VName* vname =
+          scope_resolver.SearchForDefinitionInCurrentScope(names[2].c_str());
+      EXPECT_EQ(vname->signature, signatures[2]);
+    }
+    {
+      const VName* vname =
+          scope_resolver.SearchForDefinitionInCurrentScope(names[3].c_str());
+      EXPECT_EQ(vname, nullptr);
+    }
+    {
+      const VName* vname =
+          scope_resolver.SearchForDefinitionInCurrentScope(names[4].c_str());
+      EXPECT_EQ(vname, nullptr);
+    }
+  }
+}
+
+TEST(ScopeResolverTests, DeleteDefinitionFromCurrentScope) {
+  ScopeResolver scope_resolver(Signature(""), nullptr);
+
+  /**
+   * signature[0] => {
+   *   vnames[1],  ==> signature[1]
+   *   vnames[2],  ==> signature[2]
+   * }
+   */
+
+  Scope scope(signatures[0]);
+  scope.AddMemberItem(vnames[1]);
+  scope.AddMemberItem(vnames[2]);
+
+  {
+    ScopeContext::AutoPop p1(&scope_resolver.GetMutableScopeContext(), &scope);
+    {
+      const VName* vname =
+          scope_resolver.SearchForDefinitionInCurrentScope(names[1].c_str());
+      EXPECT_EQ(vname->signature, signatures[1]);
+    }
+
+    {
+      scope_resolver.RemoveDefinitionFromCurrentScope(vnames[1]);
+      const VName* vname =
+          scope_resolver.SearchForDefinitionInCurrentScope(names[1].c_str());
+      EXPECT_EQ(vname, nullptr);
+    }
+    {
+      const VName* vname =
+          scope_resolver.SearchForDefinitionInCurrentScope(names[2].c_str());
+      EXPECT_EQ(vname->signature, signatures[2]);
     }
   }
 }
@@ -187,23 +296,23 @@ TEST(ScopeResolverTests, SearchForNestedDefinition) {
       EXPECT_EQ(found_scope, nullptr);
     }
     {
-      const std::vector<const VName*> vnames =
+      const std::vector<std::pair<const VName*, const Scope*>> vnames =
           scope_resolver.SearchForDefinitions({names[0], names[1]});
-      EXPECT_EQ(vnames[1]->signature, signatures[1]);
+      EXPECT_EQ(vnames[1].first->signature, signatures[1]);
     }
     {
-      const std::vector<const VName*> vnames =
+      const std::vector<std::pair<const VName*, const Scope*>> vnames =
           scope_resolver.SearchForDefinitions({names[1], names[3]});
-      EXPECT_EQ(vnames[1]->signature, signatures[3]);
+      EXPECT_EQ(vnames[1].first->signature, signatures[3]);
     }
     {
-      const std::vector<const VName*> vnames =
+      const std::vector<std::pair<const VName*, const Scope*>> vnames =
           scope_resolver.SearchForDefinitions({names[6], names[3]});
-      EXPECT_EQ(vnames[1]->signature, signatures[3]);
+      EXPECT_EQ(vnames[1].first->signature, signatures[3]);
     }
 
     {
-      const std::vector<const VName*> vnames =
+      const std::vector<std::pair<const VName*, const Scope*>> vnames =
           scope_resolver.SearchForDefinitions({names[6], names[6]});
       EXPECT_EQ(vnames.size(), 1);
     }

@@ -25,7 +25,6 @@
 #include "common/analysis/syntax_tree_lint_rule.h"
 #include "common/text/symbol.h"
 #include "common/text/syntax_tree_context.h"
-#include "verilog/CST/verilog_matchers.h"  // IWYU pragma: keep
 #include "verilog/analysis/descriptions.h"
 
 namespace verilog {
@@ -58,24 +57,6 @@ class CreateObjectNameMatchRule : public verible::SyntaxTreeLintRule {
  private:
   // Link to style guide rule.
   static const char kTopic[];
-
-  using Matcher = verible::matcher::Matcher;
-
-  // Matches against assignments to typename::type_id::create() calls.
-  //
-  // For example:
-  //   var_h = mytype::type_id::create("var_h", ...);
-  //
-  // Here, the LHS var_h will be bound to "lval" (only for simple references),
-  // the qualified function call (mytype::type_id::create) will be bound to
-  // "func", and the list of function call arguments will be bound to "args".
-  const Matcher create_assignment_matcher_ = NodekNetVariableAssignment(
-      LValueOfAssignment(
-          PathkReference(UnqualifiedReferenceHasId().Bind("lval")),
-          verible::matcher::Unless(ReferenceHasHierarchy()),
-          verible::matcher::Unless(ReferenceHasIndex())),
-      RValueIsFunctionCall(FunctionCallIsQualified().Bind("func"),
-                           FunctionCallArguments().Bind("args")));
 
   // Record of found violations.
   std::set<verible::LintViolation> violations_;

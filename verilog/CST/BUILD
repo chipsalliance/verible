@@ -101,6 +101,17 @@ cc_library(
     ],
 )
 
+cc_test(
+    name = "verilog_treebuilder_utils_test",
+    srcs = ["verilog_treebuilder_utils_test.cc"],
+    deps = [
+        ":verilog_treebuilder_utils",
+        "//common/text:tree_builder_test_util",
+        "//common/text:tree_utils",
+        "@com_google_googletest//:gtest_main",
+    ],
+)
+
 cc_library(
     name = "match_test_utils",
     testonly = 1,
@@ -267,13 +278,18 @@ cc_library(
     srcs = ["expression.cc"],
     hdrs = ["expression.h"],
     deps = [
+        ":type",
+        ":verilog_matchers",
         ":verilog_nonterminals",
+        "//common/analysis:syntax_tree_search",
         "//common/text:concrete_syntax_leaf",
         "//common/text:concrete_syntax_tree",
         "//common/text:symbol",
         "//common/text:token_info",
         "//common/text:tree_utils",
         "//common/util:casts",
+        "//common/util:logging",
+        "//verilog/parser:verilog_token_enum",
         "@com_google_absl//absl/strings",
     ],
 )
@@ -283,8 +299,13 @@ cc_test(
     srcs = ["expression_test.cc"],
     deps = [
         ":expression",
+        ":match_test_utils",
         ":verilog_nonterminals",
+        ":verilog_tree_print",
+        "//common/analysis:syntax_tree_search",
+        "//common/analysis:syntax_tree_search_test_utils",
         "//common/text:symbol",
+        "//common/text:tree_utils",
         "//common/util:logging",
         "//verilog/analysis:verilog_analyzer",
         "@com_google_googletest//:gtest_main",
@@ -297,6 +318,7 @@ cc_library(
     hdrs = ["functions.h"],
     deps = [
         ":identifier",
+        ":type",
         ":verilog_matchers",  # fixdeps: keep
         ":verilog_nonterminals",
         ":verilog_treebuilder_utils",
@@ -351,6 +373,7 @@ cc_library(
         "//common/text:tree_utils",
         "//common/util:casts",
         "//common/util:logging",
+        "//verilog/parser:verilog_token_classifications",
         "//verilog/parser:verilog_token_enum",
     ],
 )
@@ -360,6 +383,7 @@ cc_test(
     srcs = ["identifier_test.cc"],
     deps = [
         ":identifier",
+        ":match_test_utils",
         "//common/analysis:syntax_tree_search",
         "//common/analysis:syntax_tree_search_test_utils",
         "//common/text:concrete_syntax_leaf",
@@ -392,6 +416,7 @@ cc_test(
     srcs = ["macro_test.cc"],
     deps = [
         ":macro",
+        ":match_test_utils",
         ":verilog_nonterminals",
         "//common/analysis:syntax_tree_search",
         "//common/analysis:syntax_tree_search_test_utils",
@@ -769,7 +794,9 @@ cc_test(
     srcs = ["tasks_test.cc"],
     deps = [
         ":identifier",
+        ":match_test_utils",
         ":tasks",
+        ":verilog_nonterminals",
         "//common/analysis:syntax_tree_search",
         "//common/analysis:syntax_tree_search_test_utils",
         "//common/text:concrete_syntax_leaf",
@@ -777,6 +804,7 @@ cc_test(
         "//common/text:symbol",
         "//common/text:text_structure",
         "//common/text:token_info",
+        "//common/text:tree_utils",
         "//common/util:casts",
         "//common/util:logging",
         "//verilog/analysis:verilog_analyzer",
@@ -793,6 +821,7 @@ cc_library(
     deps = [
         ":identifier",
         ":verilog_matchers",  # fixdeps: keep
+        ":verilog_nonterminals",
         "//common/analysis:syntax_tree_search",
         "//common/analysis/matcher",
         "//common/analysis/matcher:matcher_builders",
@@ -800,6 +829,8 @@ cc_library(
         "//common/text:concrete_syntax_tree",
         "//common/text:symbol",
         "//common/text:tree_utils",
+        "//common/util:logging",
+        "//verilog/parser:verilog_token_enum",
     ],
 )
 
@@ -808,12 +839,14 @@ cc_test(
     srcs = ["type_test.cc"],
     deps = [
         ":context_functions",
+        ":declaration",
+        ":match_test_utils",
         ":type",
         "//common/analysis:syntax_tree_search",
         "//common/analysis:syntax_tree_search_test_utils",
         "//common/text:text_structure",
+        "//common/text:tree_utils",
         "//common/util:logging",
-        "//verilog/CST:match_test_utils",
         "//verilog/analysis:verilog_analyzer",
         "@com_google_googletest//:gtest_main",
     ],

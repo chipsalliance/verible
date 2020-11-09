@@ -508,22 +508,22 @@ TEST(VerilogMatchers, AlwaysStatementHasEventControlStarTests) {
 }
 
 // Tests that matcher finds left-hand-sides of assignments.
-TEST(VerilogMatchers, LValueOfAssignmentTests) {
+TEST(VerilogMatchers, PathkLPValueTests) {
   const verible::matcher::RawMatcherTestCase tests[] = {
-      {LValueOfAssignment(), EmbedInClassMethod(""), 0},
-      {LValueOfAssignment(), EmbedInClassMethod("foo();"), 0},
-      {LValueOfAssignment(), EmbedInClassMethod("x = 1;"), 1},
-      {LValueOfAssignment(), EmbedInClassMethod("x = a + b;"), 1},
-      {LValueOfAssignment(), EmbedInModule("initial begin\nfoo();\nend\n"), 0},
-      {LValueOfAssignment(), EmbedInModule("initial begin\nx = 1;\nend\n"), 1},
-      {LValueOfAssignment(), EmbedInClassMethod("x[1] = 1;"), 1},
-      {LValueOfAssignment(), EmbedInClassMethod("x.y = 2;"), 1},
-      {LValueOfAssignment(), EmbedInClassMethod("x[0].y = 3;"), 1},
-      {LValueOfAssignment(), EmbedInClassMethod("x.y[2] = 4;"), 1},
-      {LValueOfAssignment(), EmbedInClassMethod("x[0].y[0] = 5;"), 1},
-      {LValueOfAssignment(), EmbedInClassMethod("if (0) x = 1;"), 1},
-      {LValueOfAssignment(), EmbedInClassMethod("forever x = y;"), 1},
-      {LValueOfAssignment(), EmbedInClassMethod("x = 1;\ny = two();"), 2},
+      {PathkLPValue(), EmbedInClassMethod(""), 0},
+      {PathkLPValue(), EmbedInClassMethod("foo();"), 0},
+      {PathkLPValue(), EmbedInClassMethod("x = 1;"), 1},
+      {PathkLPValue(), EmbedInClassMethod("x = a + b;"), 1},
+      {PathkLPValue(), EmbedInModule("initial begin\nfoo();\nend\n"), 0},
+      {PathkLPValue(), EmbedInModule("initial begin\nx = 1;\nend\n"), 1},
+      {PathkLPValue(), EmbedInClassMethod("x[1] = 1;"), 1},
+      {PathkLPValue(), EmbedInClassMethod("x.y = 2;"), 1},
+      {PathkLPValue(), EmbedInClassMethod("x[0].y = 3;"), 1},
+      {PathkLPValue(), EmbedInClassMethod("x.y[2] = 4;"), 1},
+      {PathkLPValue(), EmbedInClassMethod("x[0].y[0] = 5;"), 1},
+      {PathkLPValue(), EmbedInClassMethod("if (0) x = 1;"), 1},
+      {PathkLPValue(), EmbedInClassMethod("forever x = y;"), 1},
+      {PathkLPValue(), EmbedInClassMethod("x = 1;\ny = two();"), 2},
   };
   for (const auto& test : tests)
     verible::matcher::RunRawMatcherTestCase<VerilogAnalyzer>(test);

@@ -17,6 +17,7 @@
 #include <memory>
 #include <string>
 
+#include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
 #include "common/text/concrete_syntax_leaf.h"
 #include "common/text/concrete_syntax_tree.h"
@@ -30,35 +31,28 @@ namespace verilog {
 using verible::down_cast;
 
 // Set of utility functions for embedded a statement into a certain context.
-std::string EmbedInClass(const std::string& text) {
-  return "class test_class;\n" + text + "\nendclass\n";
+std::string EmbedInClass(absl::string_view text) {
+  return absl::StrCat("class test_class;\n", text, "\nendclass\n");
 }
 
-std::string EmbedInModule(const std::string& text) {
-  return "module test_module;\n" + text + "\nendmodule\n";
+std::string EmbedInModule(absl::string_view text) {
+  return absl::StrCat("module test_module;\n", text, "\nendmodule\n");
 }
 
-std::string EmbedInFunction(const std::string& text) {
-  return "function integer test_function;\n" + text + "\nendfunction\n";
+std::string EmbedInFunction(absl::string_view text) {
+  return absl::StrCat("function integer test_function;\n", text,
+                      "\nendfunction\n");
 }
 
-std::string EmbedInClassMethod(const std::string& text) {
+std::string EmbedInClassMethod(absl::string_view text) {
   return EmbedInClass(EmbedInFunction(text));
 }
 
-bool EqualNodeTag(const verible::SymbolPtr& symbol, NodeEnum e) {
-  if (symbol == nullptr || symbol->Kind() != verible::SymbolKind::kNode)
-    return false;
-
-  const auto* node_ptr =
-      down_cast<const verible::SyntaxTreeNode*>(symbol.get());
-  return node_ptr->MatchesTag(e);
-}
-
 void ExpectString(const verible::SymbolPtr& symbol,
-                  const std::string& expected) {
+                  absl::string_view expected) {
   const auto* leaf = down_cast<const verible::SyntaxTreeLeaf*>(symbol.get());
-  CHECK_EQ(std::string(ABSL_DIE_IF_NULL(leaf)->get().text()), expected);
+  CHECK_NE(leaf, nullptr) << "expected: " << expected;
+  CHECK_EQ(leaf->get().text(), expected);
 }
 
 }  // namespace verilog

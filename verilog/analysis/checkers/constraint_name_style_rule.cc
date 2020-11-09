@@ -23,11 +23,13 @@
 #include "common/analysis/citation.h"
 #include "common/analysis/lint_rule_status.h"
 #include "common/analysis/matcher/bound_symbol_manager.h"
+#include "common/analysis/matcher/matcher.h"
 #include "common/strings/naming_utils.h"
 #include "common/text/symbol.h"
 #include "common/text/syntax_tree_context.h"
 #include "common/text/token_info.h"
 #include "verilog/CST/constraints.h"
+#include "verilog/CST/verilog_matchers.h"
 #include "verilog/analysis/descriptions.h"
 #include "verilog/analysis/lint_rule_registry.h"
 #include "verilog/parser/verilog_token_enum.h"
@@ -39,6 +41,7 @@ using verible::GetStyleGuideCitation;
 using verible::LintRuleStatus;
 using verible::LintViolation;
 using verible::SyntaxTreeContext;
+using verible::matcher::Matcher;
 
 // Register ConstraintNameStyleRule.
 VERILOG_REGISTER_LINT_RULE(ConstraintNameStyleRule);
@@ -58,10 +61,15 @@ std::string ConstraintNameStyleRule::GetDescription(
       GetStyleGuideCitation(kTopic), ".");
 }
 
+static const Matcher& ConstraintMatcher() {
+  static const Matcher matcher(NodekConstraintDeclaration());
+  return matcher;
+}
+
 void ConstraintNameStyleRule::HandleSymbol(const verible::Symbol& symbol,
                                            const SyntaxTreeContext& context) {
   verible::matcher::BoundSymbolManager manager;
-  if (matcher_.Matches(symbol, &manager)) {
+  if (ConstraintMatcher().Matches(symbol, &manager)) {
     // Since an out-of-line definition is always followed by a forward
     // declaration somewhere else (in this case inside a class), we can just
     // ignore all out-of-line definitions to  avoid duplicate lint errors on

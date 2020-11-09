@@ -1,18 +1,25 @@
-// Copyright 2020 Google LLC.
-// SPDX-License-Identifier: Apache-2.0
-
 //- _FileNode.node/kind file
+
 //- @my_pkg defines/binding MyPkg
+//- MyPkg.node/kind package
 package my_pkg;
 
   //- @my_class1 defines/binding MyClass1
   //- MyClass1.node/kind record
+  //- MyClass1.complete definition
   //- MyClass1 childof MyPkg
   class my_class1;
+
     //- @my_var defines/binding MyVar
     int my_var;
 
+    //- @my_static_var defines/binding MyStaticVar
+    static int my_static_var;
+
     //- @my_function defines/binding MyFunction
+    //- MyFunction.node/kind function
+    //- MyFunction.complete definition
+    //- MyFunction childof MyClass1
     virtual function int my_function();
       //- @my_var ref MyVar
       return my_var;
@@ -20,6 +27,8 @@ package my_pkg;
 
     //- @my_task defines/binding MyTask
     //- MyTask.node/kind function
+    //- MyTask.complete definition
+    //- MyTask childof MyClass1
     //- @my_arg2 defines/binding MyArg2
     task my_task(int my_arg2);
       //- @my_arg2 ref MyArg2
@@ -28,80 +37,78 @@ package my_pkg;
 
     //- @nested_class defines/binding NestedClass
     //- NestedClass.node/kind record
+    //- NestedClass.complete definition
     //- NestedClass childof MyClass1
     class nested_class;
       //- @nested_function defines/binding NestedFunction
+      //- NestedFunction.node/kind function
+      //- NestedFunction.complete definition
       //- NestedFunction childof NestedClass
       function int nested_function();
         return 1;
       endfunction
     endclass
 
-  endclass
-
-  //- @my_class2 defines/binding MyClass2
-  //- MyClass2.node/kind record
-  //- MyClass2 extends MyClass1
-  //- MyClass2 childof MyPkg
-  //- @my_class1 ref MyClass1
-  class my_class2 extends my_class1;
-
-    //- @my_static_var defines/binding MyStaticVar
-    static int my_static_var;
-
-    //- @my_function defines/binding MyFunctionOverride
-    //- MyFunctionOverride overrides MyFunction
-    function int my_function();
-      //- @my_function ref MyFunction
-      //- @"super.my_function()" ref/call MyFunction
-      //- @"super.my_function()" childof MyFunctionOverride
-      return super.my_function();
-    endfunction
-
-  endclass
-
-  class my_class3 extends my_class2;
-    //- @my_function defines/binding MyFunctionOverride2
-    //- MyFunctionOverride2 overrides MyFunction
-    function int my_function();
-      return super.my_function();
-    endfunction
-  endclass
-endpackage
-
-
-module my_module;
-  import my_pkg::*;
-  initial begin
     //- @my_class1 ref MyClass1
-    //- @handle1 defines/binding Handle1
-    static my_class1 handle1 = new();
+  endclass : my_class1
 
-    //- @my_class2 ref MyClass2
-    //- @handle2 defines/binding Handle2
-    static my_class2 handle2 = new();
+  //- @my_pkg ref MyPkg
+endpackage : my_pkg
 
-    //- @handle1 ref Handle1
-    //- @my_var ref MyVar
-    handle1.my_var = 10;
+//- @my_module defines/binding MyModule
+//- MyModule.node/kind record
+//- MyModule.subkind module
+//- MyModule.complete definition
+module my_module;
+  //- @my_pkg ref/imports MyPkg
+  import my_pkg::*;
 
+  //- @my_class1 ref MyClass1
+  //- @handle1 defines/binding Handle1
+  //- Handle1.node/kind variable
+  //- Handle1.complete definition
+  //- Handle1 childof MyModule
+  static my_class1 handle1 = new();
+
+  //- @my_class1 ref MyClass1
+  //- @handle3 defines/binding Handle3
+  //- Handle3.node/kind variable
+  //- Handle3.complete definition
+  //- Handle3 childof MyModule
+  //- @handle4 defines/binding Handle4
+  //- Handle4.node/kind variable
+  //- Handle4.complete definition
+  //- Handle4 childof MyModule
+  my_class1 handle3 = new(), handle4 = new();
+  
+  initial begin
     //- @handle1 ref Handle1
     //- @my_function ref MyFunction
-    //- @"handle1.my_function()" ref/call MyFunction
+    //- @my_function ref/call MyFunction
     $display(handle1.my_function());
 
     //- @handle1 ref Handle1
     //- @my_task ref/call MyTask
     handle1.my_task(2);
 
-    //- @handle2 ref Handle2
-    //- @my_function ref MyFunctionOverride
-    //- @"handle2.my_function()" ref/call MyFunctionOverride
-    $display(handle2.my_function());
 
-    //- @my_class2 ref MyClass2
+    //- @my_class1 ref MyClass1
     //- @my_static_var ref MyStaticVar
-    $display(my_class2::my_static_var);
-
+    $display(my_class1::my_static_var);
   end
+
+  //- @my_class3 defines/binding MyClass3
+  //- MyClass3.node/kind record
+  //- MyClass3.complete definition
+  //- MyClass3 childof MyModule
+  class my_class3;
+    //- @my_function3 defines/binding MyFunction3
+    //- MyFunction3.node/kind function
+    //- MyFunction3.complete definition
+    //- MyFunction3 childof MyClass3
+    function int my_function3();
+      return 1;
+    endfunction
+    //- @my_class3 ref MyClass3
+  endclass : my_class3
 endmodule

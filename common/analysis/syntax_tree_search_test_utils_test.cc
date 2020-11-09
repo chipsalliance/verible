@@ -59,6 +59,57 @@ TEST(SyntaxTreeSearchTestCaseExactMatchFindingsTest, OneMatchingViolation) {
   EXPECT_TRUE(diffstream.str().empty());
 }
 
+TEST(SyntaxTreeSearchTestCaseExactMatchFindingsTest, IgnoreEmptyStringSpan) {
+  constexpr int kToken = 42;
+  const SyntaxTreeSearchTestCase test{
+      "abc",
+      {kToken, "def"},
+      "ghi",
+  };
+  const std::string text_copy(test.code);
+  const absl::string_view text_view(text_copy);
+
+  // string buffers are in different memory
+  EXPECT_FALSE(BoundsEqual(absl::string_view(test.code), text_view));
+
+  const absl::string_view bad_text = text_view.substr(3, 3);
+  constexpr int kTag = -1;
+  auto leaf = Leaf(kTag, bad_text);
+  auto ignored_leaf = Leaf(kTag, bad_text.substr(0, 0));
+  const std::vector<TreeSearchMatch> actual_findings{
+      {ignored_leaf.get(), {/* context ignored */}},
+      {leaf.get(), {/* context ignored */}},
+  };
+  std::ostringstream diffstream;
+  EXPECT_TRUE(test.ExactMatchFindings(actual_findings, text_view, &diffstream));
+  EXPECT_TRUE(diffstream.str().empty());
+}
+
+TEST(SyntaxTreeSearchTestCaseExactMatchFindingsTest, IgnoreNullptrSymbol) {
+  constexpr int kToken = 42;
+  const SyntaxTreeSearchTestCase test{
+      "abc",
+      {kToken, "def"},
+      "ghi",
+  };
+  const std::string text_copy(test.code);
+  const absl::string_view text_view(text_copy);
+
+  // string buffers are in different memory
+  EXPECT_FALSE(BoundsEqual(absl::string_view(test.code), text_view));
+
+  const absl::string_view bad_text = text_view.substr(3, 3);
+  constexpr int kTag = -1;
+  auto leaf = Leaf(kTag, bad_text);
+  const std::vector<TreeSearchMatch> actual_findings{
+      {leaf.get(), {/* context ignored */}},
+      {nullptr, {/* context ignored */}},
+  };
+  std::ostringstream diffstream;
+  EXPECT_TRUE(test.ExactMatchFindings(actual_findings, text_view, &diffstream));
+  EXPECT_TRUE(diffstream.str().empty());
+}
+
 TEST(SyntaxTreeSearchTestCaseExactMatchFindingsTest,
      MultipleMatchingViolations) {
   constexpr int kToken = 42;  // enum ignored

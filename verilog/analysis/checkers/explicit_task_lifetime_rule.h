@@ -53,10 +53,6 @@ class ExplicitTaskLifetimeRule : public verible::SyntaxTreeLintRule {
   // Diagnostic message.
   static const char kMessage[];
 
-  using Matcher = verible::matcher::Matcher;
-
-  Matcher matcher_ = NodekTaskDeclaration();
-
   std::set<verible::LintViolation> violations_;
 };
 
