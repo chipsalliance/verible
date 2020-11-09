@@ -3776,7 +3776,7 @@ static constexpr FormatterTestCase kFormatterTestCases[] = {
      "    ++m;\n"
      "  end\n"
      "endfunction\n"},
-    {// spaces in ternary expression
+    {// spaces in condition expression
      "function f; return {a}? {b} :{ c };endfunction",
      "function f;\n"
      "  return {a} ? {b} : {c};\n"
