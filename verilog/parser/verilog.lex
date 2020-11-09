@@ -553,6 +553,7 @@ wone { UpdateLocation(); return TK_wone; }
 uwire { UpdateLocation(); return TK_uwire; }
 alias { UpdateLocation(); return TK_alias; }
 always_comb { UpdateLocation(); return TK_always_comb; }
+suggest_parentheses { UpdateLocation(); return TK_suggest_parentheses; }
 always_ff { UpdateLocation(); return TK_always_ff; }
 always_latch { UpdateLocation(); return TK_always_latch; }
 assert { UpdateLocation(); return TK_assert; }

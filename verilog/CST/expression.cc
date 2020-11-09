@@ -65,4 +65,38 @@ bool ConstantIntegerValue(const verible::Symbol& expr, int* value) {
   return absl::SimpleAtoi(text, value);
 }
 
+const verible::Symbol* UnwrapExpression(const verible::Symbol& expr) {
+  
+  const auto& node = verible::SymbolCastToNode(expr);
+  const auto tag = static_cast<verilog::NodeEnum>(node.Tag().tag);
+
+  if (expr.Kind() == SymbolKind::kLeaf || tag != NodeEnum::kExpression) {
+    return &expr;
+  }
+
+  const auto& children = node.children();
+  return &(*children.front());
+}
+
+const verible::Symbol* GetConditionExpressionPredicate(const verible::Symbol& condition_expr) {
+  const auto& node = verible::SymbolCastToNode(condition_expr);
+  const auto& children = node.children();
+  const auto& predicateNode = children[0];
+  return &(*predicateNode);
+}
+
+const verible::Symbol* GetConditionExpressionTrueCase(const verible::Symbol& condition_expr) {
+  const auto& node = verible::SymbolCastToNode(condition_expr);
+  const auto& children = node.children();
+  const auto& trueCaseNode = children[2];
+  return &(*trueCaseNode);
+}
+
+const verible::Symbol* GetConditionExpressionFalseCase(const verible::Symbol& condition_expr) {
+  const auto& node = verible::SymbolCastToNode(condition_expr);
+  const auto& children = node.children();
+  const auto& falseCaseNode = children[4];
+  return &(*falseCaseNode);
+}
+
 }  // namespace verilog

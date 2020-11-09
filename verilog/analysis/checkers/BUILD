@@ -16,6 +16,7 @@ cc_library(
     deps = [
         ":always_comb_blocking_rule",
         ":always_comb_rule",
+        ":suggest_parentheses_rule",
         ":always_ff_non_blocking_rule",
         ":banned_declared_name_patterns_rule",
         ":case_missing_default_rule",
@@ -1065,6 +1066,30 @@ cc_test(
         "//common/text:symbol",
         "//verilog/CST:verilog_nonterminals",
         "//verilog/CST:verilog_treebuilder_utils",
+        "//verilog/analysis:verilog_analyzer",
+        "@com_google_googletest//:gtest_main",
+    ],
+)
+
+cc_library(
+    name = "suggest_parentheses_rule",
+    srcs = ["suggest_parentheses_rule.cc"],
+    hdrs = ["suggest_parentheses_rule.h"],
+    deps = [
+        "//common/analysis:citation",
+        "//common/analysis:syntax_tree_lint_rule",
+        "//verilog/CST:expression",
+        "//verilog/analysis:descriptions",
+        "//verilog/analysis:lint_rule_registry",
+    ],
+    alwayslink = 1,
+)
+cc_test(
+    name = "suggest_parentheses_rule_test",
+    srcs = ["suggest_parentheses_rule_test.cc"],
+    deps = [
+        ":suggest_parentheses_rule",
+        "//common/analysis:syntax_tree_linter_test_utils",
         "//verilog/analysis:verilog_analyzer",
         "@com_google_googletest//:gtest_main",
     ],

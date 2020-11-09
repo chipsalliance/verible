@@ -17,6 +17,7 @@ _linter_test_configs = [
     # (rule-name, testdata/FILE.sv, default-enabled?)
     # See verilog/analysis/default_rules.h for default-enabled rules.
     ("always-comb", "always_comb_module", True),
+    ("suggest-parentheses", "suggest_parentheses_example", False),
     ("always-comb-blocking", "always_comb_blocking", True),
     ("always-ff-non-blocking", "always_ff_non_blocking", True),
     ("case-missing-default", "case_missing_default", True),

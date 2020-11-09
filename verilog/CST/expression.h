@@ -46,6 +46,18 @@ bool IsZero(const verible::Symbol&);
 // Returns true if integer value is successfully interpreted.
 bool ConstantIntegerValue(const verible::Symbol&, int*);
 
+// Returns the Symbol directly underneath a `kExpression` node, otherwise returns itself.
+const verible::Symbol* UnwrapExpression(const verible::Symbol&);
+
+// Returns the predicate expression of a kConditionExpression.
+const verible::Symbol* GetConditionExpressionPredicate(const verible::Symbol&);
+
+// Returns the true-case expression of a kConditionExpression.
+const verible::Symbol* GetConditionExpressionTrueCase(const verible::Symbol&);
+
+// Returns the false-case expression of a kConditionExpression.
+const verible::Symbol* GetConditionExpressionFalseCase(const verible::Symbol&);
+
 // TODO(fangism): evaluate constant expressions
 
 }  // namespace verilog
