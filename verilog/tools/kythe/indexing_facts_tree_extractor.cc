@@ -816,7 +816,7 @@ void IndexingFactsTreeExtractor::ExtractMacroReference(
 void IndexingFactsTreeExtractor::ExtractClassConstructor(
     const verible::SyntaxTreeNode& class_constructor) {
   IndexingFactNode constructor_node(
-      IndexingNodeData{IndexingFactType::kFunctionOrTask});
+      IndexingNodeData{IndexingFactType::kConstructor});
 
   const SyntaxTreeLeaf& new_keyword =
       GetNewKeywordFromClassConstructor(class_constructor);
@@ -842,7 +842,7 @@ void IndexingFactsTreeExtractor::ExtractClassConstructor(
 void IndexingFactsTreeExtractor::ExtractPureVirtualFunction(
     const verible::SyntaxTreeNode& function_prototype) {
   IndexingFactNode function_node(
-      IndexingNodeData{IndexingFactType::kFunctionOrTask});
+      IndexingNodeData{IndexingFactType::kFunctionOrTaskForwardDeclaration});
 
   // Extract function header.
   const SyntaxTreeNode& function_header =
@@ -855,7 +855,7 @@ void IndexingFactsTreeExtractor::ExtractPureVirtualFunction(
 void IndexingFactsTreeExtractor::ExtractPureVirtualTask(
     const verible::SyntaxTreeNode& task_prototype) {
   IndexingFactNode task_node(
-      IndexingNodeData{IndexingFactType::kFunctionOrTask});
+      IndexingNodeData{IndexingFactType::kFunctionOrTaskForwardDeclaration});
 
   // Extract task header.
   const SyntaxTreeNode& task_header = GetTaskPrototypeHeader(task_prototype);

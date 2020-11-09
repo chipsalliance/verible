@@ -6,11 +6,13 @@ virtual class BaseClass;
 
     //- @f1 defines/binding F1
     //- F1 childof BaseClass
+    //- F1.complete incomplete
     //- @x1 defines/binding _
     extern function void f1(int x1);
 
     //- @getData defines/binding GetData1
     //- GetData1 childof BaseClass
+    //- GetData1.complete incomplete
     //- @x defines/binding X
     //- X childof GetData1
     //- @y defines/binding Y
@@ -24,6 +26,7 @@ virtual class BaseClass;
     //- @getData defines/binding GetData
     //- GetData overrides GetData1
     //- GetData childof ChildClass
+    //- GetData.complete definition
     //- @x defines/binding X1
     //- X1 childof GetData
     //- @y defines/binding Y1

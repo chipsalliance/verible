@@ -5,6 +5,7 @@
 
 //- @my_function defines/binding MyFunction
 //- MyFunction.node/kind function
+//- MyFunction.complete definition
 //- @my_arg1 defines/binding MyArg1
 //- MyArg1.node/kind variable
 //- MyArg1.complete definition
@@ -21,6 +22,7 @@ endfunction
 
 //- @my_task defines/binding MyTask
 //- MyTask.node/kind function
+//- MyTask.complete definition
 //- @my_arg3 defines/binding MyArg3
 //- MyArg3.node/kind variable
 //- MyArg3.complete definition

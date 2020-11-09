@@ -11,6 +11,7 @@ class nested_class2;
 
   //- @nested_function defines/binding NestedFunctionNestedClass2
   //- NestedFunctionNestedClass2.node/kind function
+  //- NestedFunctionNestedClass2.complete definition
   //- NestedFunctionNestedClass2 childof NestedClass2
   function int nested_function();
     return 1;
@@ -51,6 +52,7 @@ class nested_class0;
   class inner_class;
     //- @nested_function defines/binding NestedFunction
     //- NestedFunction.node/kind function
+    //- NestedFunction.complete definition
     //- NestedFunction childof InnerClass
     function int nested_function();
       return 1;
