@@ -212,7 +212,7 @@ class IndexingFactsTreeExtractor : public verible::TreeContextVisitor {
   // corresponding fact tree.
   // e.g some_type var1;
   void ExtractTypedVariableDefinition(
-      const verible::SyntaxTreeLeaf& type_identifier,
+      const verible::Symbol& type_identifier,
       const std::vector<verible::TreeSearchMatch>& variables_matched);
 
   // Extracts leaves tagged with SymbolIdentifier and creates its facts

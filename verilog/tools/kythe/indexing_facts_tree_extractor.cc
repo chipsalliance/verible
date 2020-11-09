@@ -353,7 +353,7 @@ void IndexingFactsTreeExtractor::ExtractDataDeclaration(
       return;
     }
 
-    const SyntaxTreeLeaf* type_identifier =
+    const verible::Symbol* type_identifier =
         GetTypeIdentifierFromDataDeclaration(data_declaration);
     if (type_identifier != nullptr) {
       ExtractTypedVariableDefinition(*type_identifier, register_variables);
@@ -388,7 +388,7 @@ void IndexingFactsTreeExtractor::ExtractDataDeclaration(
       return;
     }
 
-    const SyntaxTreeLeaf* type_identifier =
+    const verible::Symbol* type_identifier =
         GetTypeIdentifierFromDataDeclaration(data_declaration);
     if (type_identifier != nullptr) {
       ExtractTypedVariableDefinition(*type_identifier,
@@ -406,12 +406,18 @@ void IndexingFactsTreeExtractor::ExtractDataDeclaration(
 }
 
 void IndexingFactsTreeExtractor::ExtractTypedVariableDefinition(
-    const SyntaxTreeLeaf& type_identifier,
+    const verible::Symbol& type_identifier,
     const std::vector<TreeSearchMatch>& variables_matche) {
   IndexingFactNode type_node(
       IndexingNodeData{IndexingFactType::kDataTypeReference});
 
-  type_node.Value().AppendAnchor(Anchor(type_identifier.get(), context_.base));
+  if (type_identifier.Kind() == verible::SymbolKind::kNode) {
+    Visit(verible::SymbolCastToNode(type_identifier));
+    MoveAndDeleteLastSibling(type_node);
+  } else if (type_identifier.Kind() == verible::SymbolKind::kLeaf) {
+    type_node.Value().AppendAnchor(Anchor(
+        verible::SymbolCastToLeaf(type_identifier).get(), context_.base));
+  }
 
   {
     const IndexingFactsTreeContext::AutoPop p(&facts_tree_context_, &type_node);
@@ -565,7 +571,7 @@ void IndexingFactsTreeExtractor::ExtractModulePort(
       continue;
     }
     if (tag == NodeEnum::kDataType) {
-      const SyntaxTreeLeaf* data_type = GetTypeIdentifierFromDataType(*child);
+      const SyntaxTreeNode* data_type = GetTypeIdentifierFromDataType(*child);
       // If not null this is a non primitive type and should create
       // kDataTypeReference node for it.
       // This data_type may be some class or interface type.
@@ -573,8 +579,8 @@ void IndexingFactsTreeExtractor::ExtractModulePort(
         // Create a node for this data type and append its anchor.
         IndexingFactNode data_type_node(
             IndexingNodeData{IndexingFactType::kDataTypeReference});
-        data_type_node.Value().AppendAnchor(
-            Anchor(data_type->get(), context_.base));
+        Visit(verible::SymbolCastToNode(*data_type));
+        MoveAndDeleteLastSibling(data_type_node);
 
         // TODO(fangism): try to improve this using move semantics, avoid a
         // deep-copy where possible.
@@ -641,20 +647,21 @@ void IndexingFactsTreeExtractor::ExtractModuleInstantiation(
       IndexingNodeData{IndexingFactType::kDataTypeReference});
 
   // Extract module type name.
-  const SyntaxTreeLeaf* type =
+  const verible::Symbol* type =
       GetTypeIdentifierFromDataDeclaration(data_declaration_node);
   if (type == nullptr) {
     return;
   }
-  type_node.Value().AppendAnchor(Anchor(type->get(), context_.base));
+  Visit(verible::SymbolCastToNode(*type));
+  MoveAndDeleteLastSibling(type_node);
 
-  // Extract parameter list
-  const SyntaxTreeNode* param_list =
-      GetParamListFromDataDeclaration(data_declaration_node);
-  if (param_list != nullptr) {
-    const IndexingFactsTreeContext::AutoPop p(&facts_tree_context_, &type_node);
-    Visit(*param_list);
-  }
+  // // Extract parameter list
+  // const SyntaxTreeNode* param_list =
+  //     GetParamListFromDataDeclaration(data_declaration_node);
+  // if (param_list != nullptr) {
+  //   const IndexingFactsTreeContext::AutoPop p(&facts_tree_context_, &type_node);
+  //   Visit(*param_list);
+  // }
 
   // Module instantiations (data declarations) may declare multiple instances
   // sharing the same type in a single statement e.g. bar b1(), b2().
@@ -1105,13 +1112,13 @@ void IndexingFactsTreeExtractor::ExtractClassInstances(
   IndexingFactNode type_node(
       IndexingNodeData{IndexingFactType::kDataTypeReference});
 
-  const verible::SyntaxTreeLeaf* type =
+  const verible::Symbol* type =
       GetTypeIdentifierFromDataDeclaration(data_declaration_node);
   if (type == nullptr) {
     return;
   }
-  const Anchor type_anchor(type->get(), context_.base);
-  type_node.Value().AppendAnchor(type_anchor);
+  Visit(verible::SymbolCastToNode(*type));
+  MoveAndDeleteLastSibling(type_node);
 
   // Extract parameter list
   const SyntaxTreeNode* param_list =

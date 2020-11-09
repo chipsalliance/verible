@@ -290,7 +290,7 @@ const verible::SyntaxTreeLeaf& GetTypeIdentifierFromInterfaceType(
   return verible::GetSubtreeAsLeaf(interface_type, NodeEnum::kInterfaceType, 2);
 }
 
-const verible::SyntaxTreeLeaf* GetTypeIdentifierFromInstantiationType(
+const verible::Symbol* GetTypeIdentifierFromInstantiationType(
     const verible::Symbol& instantiation_type) {
   const verible::SyntaxTreeNode& data_type =
       GetDataTypeFromInstantiationType(instantiation_type);
@@ -303,7 +303,7 @@ const verible::SyntaxTreeLeaf* GetTypeIdentifierFromInstantiationType(
   return nullptr;
 }
 
-const verible::SyntaxTreeLeaf* GetTypeIdentifierFromDataType(
+const verible::SyntaxTreeNode* GetTypeIdentifierFromDataType(
     const verible::Symbol& data_type) {
   const verible::SyntaxTreeNode& data_type_node =
       verible::SymbolCastToNode(data_type);
@@ -321,12 +321,13 @@ const verible::SyntaxTreeLeaf* GetTypeIdentifierFromDataType(
   return GetTypeIdentifierFromBaseType(*base_type);
 }
 
-const verible::SyntaxTreeLeaf* GetTypeIdentifierFromBaseType(
+const verible::SyntaxTreeNode* GetTypeIdentifierFromBaseType(
     const verible::Symbol& base_type) {
-  if (NodeEnum(base_type.Tag().tag) != NodeEnum::kUnqualifiedId) {
-    return nullptr;
+  const auto tag = static_cast<NodeEnum>(base_type.Tag().tag);
+  if (tag == NodeEnum::kUnqualifiedId || tag == NodeEnum::kQualifiedId) {
+    return &verible::SymbolCastToNode(base_type);
   }
-  return AutoUnwrapIdentifier(base_type);
+  return nullptr;
 }
 
 }  // namespace verilog
