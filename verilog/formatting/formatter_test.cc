@@ -3509,6 +3509,15 @@ static constexpr FormatterTestCase kFormatterTestCases[] = {
      "    D = 1\n"
      "  } bar_t;\n"
      "endpackage : typey\n"},
+    {// net type declarations
+     "package foo_pkg;"
+     "nettype shortreal\t\tfoo  ;"
+     "nettype\nbar[1:0 ] baz  with\tquux ;"
+     "endpackage",
+     "package foo_pkg;\n"
+     "  nettype shortreal foo;\n"
+     "  nettype bar [1:0] baz with quux;\n"
+     "endpackage\n"},
     {"package foo_pkg; \n"
      "// function description.......\n"
      "function automatic void bar();"
