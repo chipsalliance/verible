@@ -15,30 +15,34 @@
 
 set -x
 set -e
-export TRAVIS_TAG=${TRAVIS_TAG:-$(git describe --match=v*)}
+export TAG=${TAG:-$(git rev-parse --short "$GITHUB_SHA")}
 
-git config --local user.name "Deployment Bot"
-git config --local user.email "verible-dev@googlegroups.com"
+# TODO(b/171679296): re-enable c++11 support
+#   by downgrading kythe build requirements.
+BAZEL_CXXOPTS=(--cxxopt=-std=c++17)
 
-case $MODE in
+# Reduce log noise.
+BAZEL_OPTS=(--show_progress_rate_limit=10.0)
+
+case "$MODE" in
 test)
-    # Nothing to do
+    bazel test -c opt "${BAZEL_OPTS[@]}" "${BAZEL_CXXOPTS[@]}" //...
     ;;
 
 compile)
-    # Set up things for GitHub Pages deployment
-    ./.github/travis/github-pages-setup.sh
+    bazel build -c opt "${BAZEL_OPTS[@]}" "${BAZEL_CXXOPTS[@]}" //...
     ;;
 
 bin)
-    # Create a tag of form v0.0-183-gdf2b162-20191112132344
-    rm -rf Docker/out
-    git tag $TRAVIS_TAG || true
-    ls -l /tmp/releases
+    cd Docker
+    ./docker-generate.sh ${OS}-${OS_VERSION}
+    ./docker-run.sh ${OS}-${OS_VERSION}
+    mkdir -p /tmp/releases
+    cp out/*.tar.gz /tmp/releases/
     ;;
 
 *)
-    echo "success.sh: Unknown mode $MODE"
+    echo "script.sh: Unknown mode $MODE"
     exit 1
     ;;
 esac
