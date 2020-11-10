@@ -21,7 +21,11 @@ git config --local user.name "Deployment Bot"
 git config --local user.email "verible-dev@googlegroups.com"
 
 case $MODE in
-compile-n-test)
+test)
+    # Nothing to do
+    ;;
+
+compile)
     # Set up things for GitHub Pages deployment
     ./.github/travis/github-pages-setup.sh
     ;;
