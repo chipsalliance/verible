@@ -58,4 +58,4 @@ verible-verilog-syntax: usage: bazel-bin/verilog/tools/syntax/verible-verilog-sy
 
 ## Version
 
-Generated on 2020-11-10 10:52:14 -0500 from [v0.0-757-g32cfeaa](https://github.com/google/verible/commit/32cfeaada52d447d196c577bc765adec7db25300)
+Generated on 2020-11-10 15:10:27 -0500 from [v0.0-758-g5db5f99](https://github.com/google/verible/commit/5db5f99a9686642785a2ce67e1aff9c830307e16)
