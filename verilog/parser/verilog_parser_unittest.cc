@@ -5855,6 +5855,21 @@ static const std::initializer_list<ParserTestData> kInvalidCodeTests = {
      "endfunction\n"},
     {{TK_endprimitive, "endprimitive"}},
     {"//www\n", {TK_endprimitive, "endprimitive"}},
+    {"module m;\n"
+     "  foo()",
+     {';', ";"},
+     "\n"
+     "endmodule\n"},
+    {"module m;\n"
+     "  if ((",
+     {')', ")"},  // empty paren is invalid expression
+     "foo());"
+     "\n"
+     "endmodule\n"},
+    {"[i()",  // unexpected EOF
+     {verible::TK_EOF, ""}},
+    {"[i()'",  // unexpected EOF
+     {verible::TK_EOF, ""}},
 };
 
 using verible::LeafTag;
@@ -6070,6 +6085,12 @@ static const verible::ErrorRecoveryTestCase kErrorRecoveryTests[] = {
      "endclass\n",
      {NodeTag(kClassDeclaration), NodeTag(kClassItems),
       NodeTag(kCovergroupDeclaration)}},
+    {"module m;\n"
+     "  foo();\n"  // invalid syntax, recover from here
+     "  wire w;\n"
+     "endmodule\n",
+     {NodeTag(kModuleDeclaration), NodeTag(kModuleItemList),
+      NodeTag(kNetDeclaration)}},
 };
 #undef NodeTag
 
