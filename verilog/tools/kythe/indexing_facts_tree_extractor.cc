@@ -49,8 +49,8 @@ using verible::SyntaxTreeLeaf;
 using verible::SyntaxTreeNode;
 using verible::TreeSearchMatch;
 
-// Given a root to CST this function traverses the tree and extracts and
-// constructs the indexing facts tree.
+// Given a root to CST this function traverses the tree, extracts and constructs
+// the indexing facts tree.
 IndexingFactNode BuildIndexingFactsTree(
     const verible::ConcreteSyntaxTree& syntax_tree, absl::string_view base,
     absl::string_view file_name, IndexingFactNode& file_list_facts_tree,
@@ -67,7 +67,7 @@ IndexingFactNode BuildIndexingFactsTree(
   return visitor.GetRoot();
 }
 
-// Given a verilog file returns the extracted indexing facts tree.
+// Extracts indexing facts tree for one file.
 IndexingFactNode ExtractOneFile(
     absl::string_view content, absl::string_view filename,
     IndexingFactNode& file_list_facts_tree,
@@ -95,8 +95,9 @@ IndexingFactNode ExtractOneFile(
                                 include_dir_paths);
 }
 
-// Tries to read the files in all the given directories.
-// Returns the first file it find in case of many files with the same name.
+// Searches for the given "filename" in all the given diretories.
+// If the a file with name "filename" exists in more than one of the given
+// directories the first found one will be returned.
 absl::Status SearchForFileAndGetContents(
     std::string& file_path, std::string& content, absl::string_view filename,
     const std::vector<std::string>& directories) {
@@ -112,15 +113,18 @@ absl::Status SearchForFileAndGetContents(
 }  // namespace
 
 IndexingFactNode ExtractFiles(const std::vector<std::string>& ordered_file_list,
-                              absl::string_view file_list_dir,
+                              absl::string_view file_list_path,
                               absl::string_view file_list_root,
                               const std::vector<std::string>& include_dir_paths,
                               std::vector<absl::Status>& errors) {
-  // Create a node to hold the dirname of the ordered file list and group all
-  // the files and acts as a ordered file list of these files.
+  // Create a node to hold the path and root of the ordered file list, group
+  // all the files and acts as a ordered file list of these files.
   IndexingFactNode file_list_facts_tree(IndexingNodeData(
-      {Anchor(file_list_dir, 0, 0), Anchor(file_list_root, 0, 0)},
+      {Anchor(file_list_path, 0, 0), Anchor(file_list_root, 0, 0)},
       IndexingFactType::kFileList));
+
+  // Maps each "filename" to its file path.
+  // Used to prevent extracting the same file more than once.
   std::map<std::string, std::string> extracted_files;
 
   for (const auto& filename : ordered_file_list) {
@@ -828,7 +832,7 @@ void IndexingFactsTreeExtractor::ExtractClassConstructor(
                                               &constructor_node);
 
     // Extract ports.
-    ExtractFunctionTaskConstructorPort(class_constructor);
+    ExtractFunctionOrTaskOrConstructorPort(class_constructor);
 
     // Extract constructor body.
     const SyntaxTreeNode& constructor_body =
@@ -915,13 +919,13 @@ void IndexingFactsTreeExtractor::ExtractFunctionHeader(
     return;
   }
   Visit(verible::SymbolCastToNode(*function_name));
-  MoveAndDeleteLastSibling(function_node);
+  MoveAndDeleteLastExtractedNode(function_node);
 
   {
     const IndexingFactsTreeContext::AutoPop p(&facts_tree_context_,
                                               &function_node);
     // Extract function ports.
-    ExtractFunctionTaskConstructorPort(function_header);
+    ExtractFunctionOrTaskOrConstructorPort(function_header);
   }
 }
 
@@ -933,16 +937,16 @@ void IndexingFactsTreeExtractor::ExtractTaskHeader(
     return;
   }
   Visit(verible::SymbolCastToNode(*task_name));
-  MoveAndDeleteLastSibling(task_node);
+  MoveAndDeleteLastExtractedNode(task_node);
 
   {
     const IndexingFactsTreeContext::AutoPop p(&facts_tree_context_, &task_node);
     // Extract task ports.
-    ExtractFunctionTaskConstructorPort(task_header);
+    ExtractFunctionOrTaskOrConstructorPort(task_header);
   }
 }
 
-void IndexingFactsTreeExtractor::ExtractFunctionTaskConstructorPort(
+void IndexingFactsTreeExtractor::ExtractFunctionOrTaskOrConstructorPort(
     const SyntaxTreeNode& function_declaration_node) {
   const std::vector<TreeSearchMatch> ports =
       FindAllTaskFunctionPortDeclarations(function_declaration_node);
@@ -975,7 +979,7 @@ void IndexingFactsTreeExtractor::ExtractFunctionOrTaskCall(
 
   // Move the data from the last sibling to the current node and delete that
   // sibling.
-  MoveAndDeleteLastSibling(function_node);
+  MoveAndDeleteLastExtractedNode(function_node);
 
   // Terminate if no function name is found.
   // in case of built-in functions: "sin(x)";
@@ -1001,7 +1005,7 @@ void IndexingFactsTreeExtractor::ExtractMethodCallExtension(
 
   // Move the data from the last sibling to the current node and delete that
   // sibling
-  MoveAndDeleteLastSibling(function_node);
+  MoveAndDeleteLastExtractedNode(function_node);
 
   // Terminate if no function name is found.
   // in case of built-in functions: "q.sort()";
@@ -1033,7 +1037,7 @@ void IndexingFactsTreeExtractor::ExtractMemberExtension(
 
   // Move the data from the last sibling to the current node and delete that
   // sibling
-  MoveAndDeleteLastSibling(member_node);
+  MoveAndDeleteLastExtractedNode(member_node);
 
   // Append the member name to the current anchors.
   const SyntaxTreeLeaf& member_name =
@@ -1134,7 +1138,7 @@ void IndexingFactsTreeExtractor::ExtractClassInstances(
     // Re-use the kRegisterVariable and kVariableDeclarationAssignment tag
     // resolver.
     Visit(verible::SymbolCastToNode(*instance.match));
-    MoveAndDeleteLastSibling(class_instance_node);
+    MoveAndDeleteLastExtractedNode(class_instance_node);
 
     type_node.NewChild(class_instance_node);
   }
@@ -1633,7 +1637,7 @@ void IndexingFactsTreeExtractor::ExtractAnonymousScope(
   facts_tree_context_.top().NewChild(temp_scope_node);
 }
 
-void IndexingFactsTreeExtractor::MoveAndDeleteLastSibling(
+void IndexingFactsTreeExtractor::MoveAndDeleteLastExtractedNode(
     IndexingFactNode& new_node) {
   // Terminate if there is no parent or the parent has no children.
   if (facts_tree_context_.empty() || facts_tree_context_.top().is_leaf()) {
