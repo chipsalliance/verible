@@ -62,8 +62,7 @@ IndexingFactNode BuildIndexingFactsTree(
     return visitor.GetRoot();
   }
 
-  const SyntaxTreeNode& root = verible::SymbolCastToNode(*syntax_tree);
-  root.Accept(&visitor);
+  syntax_tree->Accept(&visitor);
   return visitor.GetRoot();
 }
 
@@ -412,7 +411,7 @@ void IndexingFactsTreeExtractor::ExtractTypedVariableDefinition(
       IndexingNodeData{IndexingFactType::kDataTypeReference});
 
   if (type_identifier.Kind() == verible::SymbolKind::kNode) {
-    Visit(verible::SymbolCastToNode(type_identifier));
+    type_identifier.Accept(this);
     MoveAndDeleteLastSibling(type_node);
   } else if (type_identifier.Kind() == verible::SymbolKind::kLeaf) {
     type_node.Value().AppendAnchor(Anchor(
@@ -422,7 +421,7 @@ void IndexingFactsTreeExtractor::ExtractTypedVariableDefinition(
   {
     const IndexingFactsTreeContext::AutoPop p(&facts_tree_context_, &type_node);
     for (const TreeSearchMatch& variable : variables_matche) {
-      Visit(verible::SymbolCastToNode(*variable.match));
+      variable.match->Accept(this);
     }
   }
 
@@ -579,7 +578,7 @@ void IndexingFactsTreeExtractor::ExtractModulePort(
         // Create a node for this data type and append its anchor.
         IndexingFactNode data_type_node(
             IndexingNodeData{IndexingFactType::kDataTypeReference});
-        Visit(verible::SymbolCastToNode(*data_type));
+        data_type->Accept(this);
         MoveAndDeleteLastSibling(data_type_node);
 
         // TODO(fangism): try to improve this using move semantics, avoid a
@@ -593,7 +592,7 @@ void IndexingFactsTreeExtractor::ExtractModulePort(
         continue;
       }
     }
-    Visit(verible::SymbolCastToNode(*child));
+    child->Accept(this);
   }
 }
 
@@ -611,7 +610,7 @@ void IndexingFactsTreeExtractor::ExtractModuleNamedPort(
     const verible::Symbol* paren_group =
         GetActualNamedPortParenGroup(actual_named_port);
     if (paren_group != nullptr) {
-      Visit(verible::SymbolCastToNode(*paren_group));
+      paren_group->Accept(this);
     }
   }
 
@@ -652,16 +651,18 @@ void IndexingFactsTreeExtractor::ExtractModuleInstantiation(
   if (type == nullptr) {
     return;
   }
-  Visit(verible::SymbolCastToNode(*type));
-  MoveAndDeleteLastSibling(type_node);
 
-  // // Extract parameter list
-  // const SyntaxTreeNode* param_list =
-  //     GetParamListFromDataDeclaration(data_declaration_node);
-  // if (param_list != nullptr) {
-  //   const IndexingFactsTreeContext::AutoPop p(&facts_tree_context_, &type_node);
-  //   Visit(*param_list);
-  // }
+  const SyntaxTreeLeaf& type_identifier =
+      *ABSL_DIE_IF_NULL(AutoUnwrapIdentifier(*type));
+  type_node.Value().AppendAnchor(Anchor(type_identifier.get(), context_.base));
+
+  // Extract parameter list
+  const SyntaxTreeNode* param_list =
+      GetParamListFromDataDeclaration(data_declaration_node);
+  if (param_list != nullptr) {
+    const IndexingFactsTreeContext::AutoPop p(&facts_tree_context_, &type_node);
+    Visit(*param_list);
+  }
 
   // Module instantiations (data declarations) may declare multiple instances
   // sharing the same type in a single statement e.g. bar b1(), b2().
@@ -751,7 +752,7 @@ void IndexingFactsTreeExtractor::ExtractPackageDeclaration(
     const verible::Symbol* package_item_list =
         GetPackageItemList(package_declaration_node);
     if (package_item_list != nullptr) {
-      Visit(verible::SymbolCastToNode(*package_item_list));
+      package_item_list->Accept(this);
     }
   }
 
@@ -921,7 +922,7 @@ void IndexingFactsTreeExtractor::ExtractFunctionHeader(
   if (function_name == nullptr) {
     return;
   }
-  Visit(verible::SymbolCastToNode(*function_name));
+  function_name->Accept(this);
   MoveAndDeleteLastSibling(function_node);
 
   {
@@ -939,7 +940,7 @@ void IndexingFactsTreeExtractor::ExtractTaskHeader(
   if (task_name == nullptr) {
     return;
   }
-  Visit(verible::SymbolCastToNode(*task_name));
+  task_name->Accept(this);
   MoveAndDeleteLastSibling(task_node);
 
   {
@@ -1117,15 +1118,32 @@ void IndexingFactsTreeExtractor::ExtractClassInstances(
   if (type == nullptr) {
     return;
   }
-  Visit(verible::SymbolCastToNode(*type));
-  MoveAndDeleteLastSibling(type_node);
 
-  // Extract parameter list
-  const SyntaxTreeNode* param_list =
-      GetParamListFromDataDeclaration(data_declaration_node);
-  if (param_list != nullptr) {
-    const IndexingFactsTreeContext::AutoPop p(&facts_tree_context_, &type_node);
-    Visit(*param_list);
+  const auto tag = static_cast<NodeEnum>(type->Tag().tag);
+  if (tag == NodeEnum::kQualifiedId) {
+    // Then this is a qualified id node.
+    // e.g. "pkg::my_class var_name".
+    type->Accept(this);
+    MoveAndDeleteLastSibling(type_node);
+  } else if (tag == NodeEnum::kUnqualifiedId) {
+    // Then this is an unqualified id node.
+    // e.g "my_class var_name".
+    const SyntaxTreeLeaf& type_identifier =
+        *ABSL_DIE_IF_NULL(AutoUnwrapIdentifier(*type));
+    type_node.Value().AppendAnchor(
+        Anchor(type_identifier.get(), context_.base));
+
+    // Extract parameter list
+    const SyntaxTreeNode* param_list =
+        GetParamListFromDataDeclaration(data_declaration_node);
+    if (param_list != nullptr) {
+      const IndexingFactsTreeContext::AutoPop p(&facts_tree_context_,
+                                                &type_node);
+      Visit(*param_list);
+    }
+  } else {
+    // Safe return if the tags didn't match any of the previous conditions.
+    return;
   }
 
   // Class instances may may appear as multiple instances sharing the same type
@@ -1140,7 +1158,7 @@ void IndexingFactsTreeExtractor::ExtractClassInstances(
 
     // Re-use the kRegisterVariable and kVariableDeclarationAssignment tag
     // resolver.
-    Visit(verible::SymbolCastToNode(*instance.match));
+    instance.match->Accept(this);
     MoveAndDeleteLastSibling(class_instance_node);
 
     type_node.NewChild(class_instance_node);
@@ -1260,7 +1278,7 @@ void IndexingFactsTreeExtractor::ExtractParamDeclaration(
       if (assign_expression != nullptr &&
           assign_expression->Kind() == verible::SymbolKind::kNode) {
         // Extract trailing expression.
-        Visit(verible::SymbolCastToNode(*assign_expression));
+        assign_expression->Accept(this);
       }
     }
   }
@@ -1449,7 +1467,7 @@ void IndexingFactsTreeExtractor::ExtractEnumName(
       if (child == nullptr || child->Kind() == verible::SymbolKind::kLeaf) {
         continue;
       }
-      Visit(verible::SymbolCastToNode(*child));
+      child->Accept(this);
     }
   }
 
@@ -1470,7 +1488,7 @@ void IndexingFactsTreeExtractor::ExtractEnumTypeDeclaration(
     if (child == nullptr || child->Kind() == verible::SymbolKind::kLeaf) {
       continue;
     }
-    Visit(verible::SymbolCastToNode(*child));
+    child->Accept(this);
   }
 }
 
@@ -1513,7 +1531,7 @@ void IndexingFactsTreeExtractor::ExtractStructUnionDeclaration(
   for (const TreeSearchMatch& variable : variables_matched) {
     // Extract this variable.
     // This can be kRegisterVariable or kVariableDeclarationAssign.
-    Visit(verible::SymbolCastToNode(*variable.match));
+    variable.match->Accept(this);
 
     // Append the struct members to be a children of this variable.
     for (const auto& child : struct_node.Children()) {
@@ -1570,7 +1588,7 @@ void IndexingFactsTreeExtractor::ExtractDataTypeImplicitIdDimensions(
         if (child == nullptr || child->Kind() == verible::SymbolKind::kLeaf) {
           continue;
         }
-        Visit(verible::SymbolCastToNode(*child));
+        child->Accept(this);
       }
     }
 

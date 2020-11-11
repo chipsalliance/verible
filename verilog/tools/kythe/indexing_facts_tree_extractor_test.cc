@@ -3076,7 +3076,7 @@ TEST(FactsTreeExtractor, MacroCallTest) {
       ";\n"
       "end\nendmodule",
   };
-
+LOG(INFO) << kTestCase.code;
   ScopedTestFile test_file(testing::TempDir(), kTestCase.code);
   std::vector<absl::Status> errors;
 
