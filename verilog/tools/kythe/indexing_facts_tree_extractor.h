@@ -57,28 +57,21 @@ class IndexingFactsTreeExtractor : public verible::TreeContextVisitor {
   // Extracts facts from module, intraface and program declarations.
   void ExtractModuleOrInterfaceOrProgram(
       const verible::SyntaxTreeNode& declaration_node,
-      IndexingFactNode& facts_node);
-
-  // Extracts modules and creates its corresponding fact tree.
-  void ExtractModule(const verible::SyntaxTreeNode& module_declaration_node);
-
-  // Extracts interfaces and creates its corresponding fact tree.
-  void ExtractInterface(
-      const verible::SyntaxTreeNode& interface_declaration_node);
-
-  // Extracts programs and creates its corresponding fact tree.
-  void ExtractProgram(const verible::SyntaxTreeNode& program_declaration_node);
+      IndexingFactType node_type);
 
   // Extracts modules instantiations and creates its corresponding fact tree.
   void ExtractModuleInstantiation(
       const verible::SyntaxTreeNode& data_declaration_node,
       const std::vector<verible::TreeSearchMatch>& gate_instances);
 
-  // Extracts endmodule and creates its corresponding fact tree.
-  void ExtractModuleEnd(const verible::SyntaxTreeNode& module_declaration_node);
+  // Extracts endmodule, endinterface, endprogram and creates its corresponding
+  // fact tree.
+  void ExtractModuleOrInterfaceOrProgramEnd(
+      const verible::SyntaxTreeNode& module_declaration_node);
 
-  // Extracts modules headers and creates its corresponding fact tree.
-  void ExtractModuleHeader(
+  // Extracts module, interface, program headers and creates its corresponding
+  // fact tree.
+  void ExtractModuleOrInterfaceOrProgramHeader(
       const verible::SyntaxTreeNode& module_declaration_node);
 
   // Extracts modules ports and creates its corresponding fact tree.

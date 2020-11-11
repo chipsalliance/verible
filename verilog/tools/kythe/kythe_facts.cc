@@ -33,10 +33,6 @@ bool Signature::operator<(const Signature& other) const {
   return this->ToString() < other.ToString();
 }
 
-void Signature::AppendName(absl::string_view name) {
-  names_.push_back(std::string(name));
-}
-
 bool Signature::IsNameEqual(absl::string_view name) const {
   return names_.back() == name;
 }

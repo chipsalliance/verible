@@ -38,18 +38,15 @@ class Signature {
   bool operator==(const Signature& other) const;
   bool operator<(const Signature& other) const;
 
-  // Returns the the signature concatenated as a string.
+  // Returns the signature concatenated as a string.
   std::string ToString() const;
 
-  // Returns the the signature concatenated as a string in base 64.
+  // Returns the signature concatenated as a string in base 64.
   std::string ToBase64() const;
 
   // Checks whether this signature represents the same given variable in its
   // scope.
   bool IsNameEqual(absl::string_view) const;
-
-  // Appends variable name to the end of the current signature.
-  void AppendName(absl::string_view);
 
   const std::vector<std::string> Names() const { return names_; }
 
@@ -89,10 +86,10 @@ struct VName {
   // Unique identifier for this VName.
   Signature signature;
 
-  // Path for the file the name is extracted from.
+  // Path for the file the VName is extracted from.
   std::string path;
 
-  // The language this name belongs to.
+  // The language this VName belongs to.
   std::string language;
 
   // The corpus of source code this VName belongs to.
@@ -117,7 +114,7 @@ struct Fact {
 
   std::string ToString() const;
 
-  // The vname of the node this fact is about.
+  // The VName of the node this fact is about.
   const VName node_vname;
 
   // The name identifying this fact.
@@ -141,13 +138,13 @@ struct Edge {
 
   std::string ToString() const;
 
-  // The vname of the source node of this edge.
+  // The VName of the source node of this edge.
   const VName source_node;
 
   // The edge name which identifies the edge kind.
   const std::string edge_name;
 
-  // The vname of the target node of this edge.
+  // The VName of the target node of this edge.
   const VName target_node;
 };
 
