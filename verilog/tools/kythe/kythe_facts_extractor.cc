@@ -986,16 +986,9 @@ VName KytheFactsExtractor::CreateAnchor(const Anchor& anchor) {
 }
 
 Signature KytheFactsExtractor::CreateScopeRelativeSignature(
-    absl::string_view signature, const Signature& parent_signature) const {
-  return Signature(parent_signature, signature);
-}
-
-Signature KytheFactsExtractor::CreateScopeRelativeSignature(
     absl::string_view signature) const {
-  return vnames_context_.empty()
-             ? Signature(signature)
-             : CreateScopeRelativeSignature(signature,
-                                            vnames_context_.top().signature);
+  // Append the given signature to the signature of the parent.
+  return Signature(vnames_context_.top().signature, signature);
 }
 
 void KytheFactsExtractor::CreateFact(const VName& vname,
