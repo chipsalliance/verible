@@ -20,9 +20,6 @@
 namespace verilog {
 namespace kythe {
 
-// Const Signatures,
-constexpr absl::string_view kModuleBuiltin = "module#builtin";
-
 // Kythe Nodes.
 constexpr absl::string_view kNodeAnchor = "anchor";
 constexpr absl::string_view kNodeRecord = "record";
