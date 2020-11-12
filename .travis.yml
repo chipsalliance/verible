@@ -30,9 +30,12 @@ git:
 jobs:
   include:
    - stage: Check
-     name: "Compile & Test"
+     name: "Test"
      env:
-      - MODE=compile-n-test
+      - MODE=test
+   - name: "Compile"
+     env:
+      - MODE=compile
      deploy:
       - provider: pages
         cleanup: true

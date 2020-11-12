@@ -21,15 +21,22 @@ export TRAVIS_TAG=${TRAVIS_TAG:-$(git describe --match=v*)}
 #   by downgrading kythe build requirements.
 BAZEL_CXXOPTS=(--cxxopt=-std=c++17)
 
+# Reduce log noise.
+BAZEL_OPTS=(--show_progress_rate_limit=10.0)
+
 case "$MODE" in
-compile-n-test)
-    bazel test --noshow_progress "${BAZEL_CXXOPTS[@]}" //...
-    bazel build -c opt --noshow_progress "${BAZEL_CXXOPTS[@]}" //...
+test)
+    bazel test -c opt "${BAZEL_OPTS[@]}" "${BAZEL_CXXOPTS[@]}" //...
+    ;;
+
+compile)
+    bazel build -c opt "${BAZEL_OPTS[@]}" "${BAZEL_CXXOPTS[@]}" //...
     ;;
 
 bin)
     cd Docker
     ./docker-generate.sh ${OS}-${OS_VERSION}
+
     ./docker-run.sh ${OS}-${OS_VERSION}
     mkdir -p /tmp/releases
     cp out/*.tar.gz /tmp/releases/
