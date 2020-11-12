@@ -81,11 +81,6 @@ class IndexingFactsTreeExtractor : public verible::TreeContextVisitor {
   void ExtractModulePort(const verible::SyntaxTreeNode& module_port_node,
                          bool has_propagated_type);
 
-  // Extracts variable dimensions and creates its corresponding fact tree.
-  // e.g from "x[i]" ==> extracts "[i]".
-  void ExtractSelectVariableDimension(
-      const verible::SyntaxTreeNode& variable_dimension);
-
   // Extracts "a" from "input a", "output a" and creates its corresponding fact
   // tree.
   void ExtractInputOutputDeclaration(

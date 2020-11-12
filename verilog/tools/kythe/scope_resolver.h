@@ -31,7 +31,6 @@ namespace kythe {
 struct ScopeMemberItem {
   ScopeMemberItem(const VName& vname) : vname(vname) {}
 
-  bool operator==(const ScopeMemberItem& other) const;
   bool operator<(const ScopeMemberItem& other) const;
 
   // VName of this member.

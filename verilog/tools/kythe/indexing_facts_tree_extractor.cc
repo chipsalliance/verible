@@ -226,10 +226,6 @@ void IndexingFactsTreeExtractor::Visit(const SyntaxTreeNode& node) {
       ExtractClassDeclaration(node);
       break;
     }
-    case NodeEnum::kSelectVariableDimensionList: {
-      ExtractSelectVariableDimension(node);
-      break;
-    }
     case NodeEnum::kParamDeclaration: {
       ExtractParamDeclaration(node);
       break;
@@ -528,7 +524,7 @@ void IndexingFactsTreeExtractor::ExtractModulePort(
     if (has_propagated_type) {
       // Check if the last type was not a primitive type.
       // e.g module (interface_type x, y).
-      if (facts_tree_context_.empty() || facts_tree_context_.top().is_leaf() ||
+      if (facts_tree_context_.top().is_leaf() ||
           facts_tree_context_.top()
                   .Children()
                   .back()
@@ -675,24 +671,6 @@ void IndexingFactsTreeExtractor::ExtractModuleInstantiation(
   }
 
   facts_tree_context_.top().NewChild(type_node);
-}
-
-void IndexingFactsTreeExtractor::ExtractSelectVariableDimension(
-    const verible::SyntaxTreeNode& variable_dimension) {
-  // Terminate if there is no parent or the parent has no children.
-  if (facts_tree_context_.empty() || facts_tree_context_.top().is_leaf()) {
-    return;
-  }
-
-  // Make the previous node the parent of this node.
-  // e.g x[i] ==> make node of "x" the parent of the current variable
-  // dimension
-  // "[i]".
-  const IndexingFactsTreeContext::AutoPop p(
-      &facts_tree_context_, &facts_tree_context_.top().Children().back());
-
-  // Visit the children of this node.
-  TreeContextVisitor::Visit(variable_dimension);
 }
 
 void IndexingFactsTreeExtractor::ExtractNetDeclaration(

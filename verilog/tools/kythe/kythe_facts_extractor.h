@@ -210,11 +210,6 @@ class KytheFactsExtractor {
   // Generates an anchor VName for kythe.
   VName CreateAnchor(const Anchor&);
 
-  // Appends the signatures of given parent scope vname to make signatures
-  // unique relative to scopes.
-  Signature CreateScopeRelativeSignature(absl::string_view,
-                                         const Signature&) const;
-
   // Appends the signatures of previous containing scope vname to make
   // signatures unique relative to scopes.
   Signature CreateScopeRelativeSignature(absl::string_view) const;
