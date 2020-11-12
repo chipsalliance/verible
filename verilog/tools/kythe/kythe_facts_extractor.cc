@@ -505,10 +505,10 @@ VName KytheFactsExtractor::ExtractInterfaceFact(
 void KytheFactsExtractor::ExtractDataTypeReference(
     const IndexingFactNode& data_type_reference) {
   const auto& anchors = data_type_reference.Value().Anchors();
-  const Anchor& type = anchors[0];
 
   const std::vector<std::pair<const VName*, const Scope*>> type_vnames =
-      scope_resolver_->SearchForDefinitions({type.Value()});
+      scope_resolver_->SearchForDefinitions(
+          GetListOfReferencesfromListOfAnchor(anchors));
 
   CreateAnchorReferences(anchors, type_vnames);
 }

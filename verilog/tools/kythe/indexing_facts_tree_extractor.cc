@@ -62,8 +62,7 @@ IndexingFactNode BuildIndexingFactsTree(
     return visitor.GetRoot();
   }
 
-  const SyntaxTreeNode& root = verible::SymbolCastToNode(*syntax_tree);
-  root.Accept(&visitor);
+  syntax_tree->Accept(&visitor);
   return visitor.GetRoot();
 }
 
@@ -303,6 +302,10 @@ void IndexingFactsTreeExtractor::Visit(const SyntaxTreeNode& node) {
       ExtractAnonymousScope(node);
       break;
     }
+    case NodeEnum::kUnqualifiedId: {
+      ExtractUnqualifiedId(node);
+      break;
+    }
     default: {
       TreeContextVisitor::Visit(node);
     }
@@ -311,17 +314,21 @@ void IndexingFactsTreeExtractor::Visit(const SyntaxTreeNode& node) {
 
 void IndexingFactsTreeExtractor::Visit(const verible::SyntaxTreeLeaf& leaf) {
   switch (leaf.get().token_enum()) {
-    case verilog_tokentype::MacroIdentifier: {
-      ExtractMacroReference(leaf);
-      break;
-    }
     case verilog_tokentype::SymbolIdentifier: {
       ExtractSymbolIdentifier(leaf);
       break;
     }
-    default:
+    default: {
       break;
+    }
   }
+}
+
+void IndexingFactsTreeExtractor::ExtractSymbolIdentifier(
+    const verible::SyntaxTreeLeaf& symbol_identifier) {
+  facts_tree_context_.top().NewChild(
+      IndexingNodeData({Anchor(symbol_identifier.get(), context_.base)},
+                       IndexingFactType::kVariableReference));
 }
 
 void IndexingFactsTreeExtractor::ExtractDataDeclaration(
@@ -358,7 +365,7 @@ void IndexingFactsTreeExtractor::ExtractDataDeclaration(
     }
 
     // In case "some_type var1".
-    const SyntaxTreeLeaf* type_identifier =
+    const verible::Symbol* type_identifier =
         GetTypeIdentifierFromDataDeclaration(data_declaration);
     if (type_identifier != nullptr) {
       ExtractTypedVariableDefinition(*type_identifier, register_variables);
@@ -394,7 +401,7 @@ void IndexingFactsTreeExtractor::ExtractDataDeclaration(
     }
 
     // In case "some_type var1".
-    const SyntaxTreeLeaf* type_identifier =
+    const verible::Symbol* type_identifier =
         GetTypeIdentifierFromDataDeclaration(data_declaration);
     if (type_identifier != nullptr) {
       ExtractTypedVariableDefinition(*type_identifier,
@@ -412,17 +419,18 @@ void IndexingFactsTreeExtractor::ExtractDataDeclaration(
 }
 
 void IndexingFactsTreeExtractor::ExtractTypedVariableDefinition(
-    const SyntaxTreeLeaf& type_identifier,
+    const verible::Symbol& type_identifier,
     const std::vector<TreeSearchMatch>& variables_matche) {
   IndexingFactNode type_node(
       IndexingNodeData{IndexingFactType::kDataTypeReference});
 
-  type_node.Value().AppendAnchor(Anchor(type_identifier.get(), context_.base));
+  type_identifier.Accept(this);
+  MoveAndDeleteLastExtractedNode(type_node);
 
   {
     const IndexingFactsTreeContext::AutoPop p(&facts_tree_context_, &type_node);
     for (const TreeSearchMatch& variable : variables_matche) {
-      Visit(verible::SymbolCastToNode(*variable.match));
+      variable.match->Accept(this);
     }
   }
 
@@ -470,15 +478,14 @@ void IndexingFactsTreeExtractor::ExtractModuleOrInterfaceOrProgramHeader(
     return;
   }
 
-  // This boolean is used to distinguish between ANSI and Non-ANSI module ports.
-  // e.g in this case:
-  // module m(a, b);
-  // has_propagated_type will be false as no type has been countered.
+  // This boolean is used to distinguish between ANSI and Non-ANSI module
+  // ports. e.g in this case: module m(a, b); has_propagated_type will be
+  // false as no type has been countered.
   //
   // in case like:
   // module m(a, b, input x, y)
-  // for "a", "b" the boolean will be false but for "x", "y" the boolean will be
-  // true.
+  // for "a", "b" the boolean will be false but for "x", "y" the boolean will
+  // be true.
   //
   // The boolean is used to determine whether this the fact for this variable
   // should be a reference or a defintiion.
@@ -556,7 +563,7 @@ void IndexingFactsTreeExtractor::ExtractModulePort(
       continue;
     }
     if (tag == NodeEnum::kDataType) {
-      const SyntaxTreeLeaf* data_type = GetTypeIdentifierFromDataType(*child);
+      const SyntaxTreeNode* data_type = GetTypeIdentifierFromDataType(*child);
       // If not null this is a non primitive type and should create
       // kDataTypeReference node for it.
       // This data_type may be some class or interface type.
@@ -564,8 +571,8 @@ void IndexingFactsTreeExtractor::ExtractModulePort(
         // Create a node for this data type and append its anchor.
         IndexingFactNode data_type_node(
             IndexingNodeData{IndexingFactType::kDataTypeReference});
-        data_type_node.Value().AppendAnchor(
-            Anchor(data_type->get(), context_.base));
+        data_type->Accept(this);
+        MoveAndDeleteLastExtractedNode(data_type_node);
 
         // TODO(fangism): try to improve this using move semantics, avoid a
         // deep-copy where possible.
@@ -578,7 +585,7 @@ void IndexingFactsTreeExtractor::ExtractModulePort(
         continue;
       }
     }
-    Visit(verible::SymbolCastToNode(*child));
+    child->Accept(this);
   }
 }
 
@@ -596,7 +603,7 @@ void IndexingFactsTreeExtractor::ExtractModuleNamedPort(
     const verible::Symbol* paren_group =
         GetActualNamedPortParenGroup(actual_named_port);
     if (paren_group != nullptr) {
-      Visit(verible::SymbolCastToNode(*paren_group));
+      paren_group->Accept(this);
     }
   }
 
@@ -632,20 +639,15 @@ void IndexingFactsTreeExtractor::ExtractModuleInstantiation(
       IndexingNodeData{IndexingFactType::kDataTypeReference});
 
   // Extract module type name.
-  const SyntaxTreeLeaf* type =
+  const verible::Symbol* type =
       GetTypeIdentifierFromDataDeclaration(data_declaration_node);
   if (type == nullptr) {
     return;
   }
-  type_node.Value().AppendAnchor(Anchor(type->get(), context_.base));
 
-  // Extract parameter list
-  const SyntaxTreeNode* param_list =
-      GetParamListFromDataDeclaration(data_declaration_node);
-  if (param_list != nullptr) {
-    const IndexingFactsTreeContext::AutoPop p(&facts_tree_context_, &type_node);
-    Visit(*param_list);
-  }
+  // Extract module instance type and parameters.
+  type->Accept(this);
+  MoveAndDeleteLastExtractedNode(type_node);
 
   // Module instantiations (data declarations) may declare multiple instances
   // sharing the same type in a single statement e.g. bar b1(), b2().
@@ -683,7 +685,8 @@ void IndexingFactsTreeExtractor::ExtractSelectVariableDimension(
   }
 
   // Make the previous node the parent of this node.
-  // e.g x[i] ==> make node of "x" the parent of the current variable dimension
+  // e.g x[i] ==> make node of "x" the parent of the current variable
+  // dimension
   // "[i]".
   const IndexingFactsTreeContext::AutoPop p(
       &facts_tree_context_, &facts_tree_context_.top().Children().back());
@@ -695,8 +698,8 @@ void IndexingFactsTreeExtractor::ExtractSelectVariableDimension(
 void IndexingFactsTreeExtractor::ExtractNetDeclaration(
     const SyntaxTreeNode& net_declaration_node) {
   // Nets are treated as children of the enclosing parent.
-  // Net declarations may declare multiple instances sharing the same type in a
-  // single statement.
+  // Net declarations may declare multiple instances sharing the same type in
+  // a single statement.
   const std::vector<const verible::TokenInfo*> identifiers =
       GetIdentifiersFromNetDeclaration(net_declaration_node);
 
@@ -735,7 +738,7 @@ void IndexingFactsTreeExtractor::ExtractPackageDeclaration(
     const verible::Symbol* package_item_list =
         GetPackageItemList(package_declaration_node);
     if (package_item_list != nullptr) {
-      Visit(verible::SymbolCastToNode(*package_item_list));
+      package_item_list->Accept(this);
     }
   }
 
@@ -905,7 +908,7 @@ void IndexingFactsTreeExtractor::ExtractFunctionHeader(
   if (function_name == nullptr) {
     return;
   }
-  Visit(verible::SymbolCastToNode(*function_name));
+  function_name->Accept(this);
   MoveAndDeleteLastExtractedNode(function_node);
 
   {
@@ -923,7 +926,7 @@ void IndexingFactsTreeExtractor::ExtractTaskHeader(
   if (task_name == nullptr) {
     return;
   }
-  Visit(verible::SymbolCastToNode(*task_name));
+  task_name->Accept(this);
   MoveAndDeleteLastExtractedNode(task_node);
 
   {
@@ -1095,25 +1098,19 @@ void IndexingFactsTreeExtractor::ExtractClassInstances(
   IndexingFactNode type_node(
       IndexingNodeData{IndexingFactType::kDataTypeReference});
 
-  const verible::SyntaxTreeLeaf* type =
+  const verible::Symbol* type =
       GetTypeIdentifierFromDataDeclaration(data_declaration_node);
   if (type == nullptr) {
     return;
   }
-  const Anchor type_anchor(type->get(), context_.base);
-  type_node.Value().AppendAnchor(type_anchor);
 
-  // Extract parameter list
-  const SyntaxTreeNode* param_list =
-      GetParamListFromDataDeclaration(data_declaration_node);
-  if (param_list != nullptr) {
-    const IndexingFactsTreeContext::AutoPop p(&facts_tree_context_, &type_node);
-    Visit(*param_list);
-  }
+  // Extract class type and parameters.
+  type->Accept(this);
+  MoveAndDeleteLastExtractedNode(type_node);
 
-  // Class instances may may appear as multiple instances sharing the same type
-  // in a single statement e.g. myClass b1 = new, b2 = new.
-  // LRM 8.8 Typed constructor calls
+  // Class instances may may appear as multiple instances sharing the same
+  // type in a single statement e.g. myClass b1 = new, b2 = new. LRM 8.8 Typed
+  // constructor calls
   //
   // Loop through each instance and associate each declared id with the same
   // type and create its corresponding facts tree node.
@@ -1123,7 +1120,7 @@ void IndexingFactsTreeExtractor::ExtractClassInstances(
 
     // Re-use the kRegisterVariable and kVariableDeclarationAssignment tag
     // resolver.
-    Visit(verible::SymbolCastToNode(*instance.match));
+    instance.match->Accept(this);
     MoveAndDeleteLastExtractedNode(class_instance_node);
 
     type_node.NewChild(class_instance_node);
@@ -1193,16 +1190,39 @@ void IndexingFactsTreeExtractor::ExtractVariableDeclarationAssignment(
   facts_tree_context_.top().NewChild(variable_node);
 }
 
-void IndexingFactsTreeExtractor::ExtractSymbolIdentifier(
-    const SyntaxTreeLeaf& unqualified_id) {
-  // Get the symbol name.
-  const SyntaxTreeLeaf* leaf = AutoUnwrapIdentifier(unqualified_id);
-  if (leaf == nullptr) {
+void IndexingFactsTreeExtractor::ExtractUnqualifiedId(
+    const SyntaxTreeNode& unqualified_id) {
+  const SyntaxTreeLeaf* identifier = AutoUnwrapIdentifier(unqualified_id);
+  if (identifier == nullptr) {
     return;
   }
-  facts_tree_context_.top().NewChild(
-      IndexingNodeData({Anchor(leaf->get(), context_.base)},
-                       IndexingFactType::kVariableReference));
+
+  switch (identifier->get().token_enum()) {
+    case verilog_tokentype::MacroIdentifier: {
+      ExtractMacroReference(*identifier);
+      break;
+    }
+    case verilog_tokentype::SymbolIdentifier: {
+      IndexingFactNode variable_reference(
+          IndexingNodeData{IndexingFactType::kVariableReference});
+      ExtractSymbolIdentifier(*identifier);
+      MoveAndDeleteLastExtractedNode(variable_reference);
+
+      const SyntaxTreeNode* param_list =
+          GetParamListFromUnqualifiedId(unqualified_id);
+      if (param_list != nullptr) {
+        const IndexingFactsTreeContext::AutoPop p(&facts_tree_context_,
+                                                  &variable_reference);
+        param_list->Accept(this);
+      }
+
+      facts_tree_context_.top().NewChild(variable_reference);
+      break;
+    }
+    default: {
+      break;
+    }
+  }
 }
 
 void IndexingFactsTreeExtractor::ExtractParamDeclaration(
@@ -1244,7 +1264,7 @@ void IndexingFactsTreeExtractor::ExtractParamDeclaration(
       if (assign_expression != nullptr &&
           assign_expression->Kind() == verible::SymbolKind::kNode) {
         // Extract trailing expression.
-        Visit(verible::SymbolCastToNode(*assign_expression));
+        assign_expression->Accept(this);
       }
     }
   }
@@ -1302,8 +1322,8 @@ void IndexingFactsTreeExtractor::ExtractQualifiedId(
 
   // Get all the variable names in the qualified id.
   for (const auto& child : qualified_id.children()) {
-    if (child == nullptr) continue;
-    if (NodeEnum(child->Tag().tag) != NodeEnum::kUnqualifiedId) {
+    if (child == nullptr ||
+        NodeEnum(child->Tag().tag) != NodeEnum::kUnqualifiedId) {
       continue;
     }
     member_reference_data.AppendAnchor(
@@ -1426,7 +1446,7 @@ void IndexingFactsTreeExtractor::ExtractEnumName(
       if (child == nullptr || child->Kind() == verible::SymbolKind::kLeaf) {
         continue;
       }
-      Visit(verible::SymbolCastToNode(*child));
+      child->Accept(this);
     }
   }
 
@@ -1447,7 +1467,7 @@ void IndexingFactsTreeExtractor::ExtractEnumTypeDeclaration(
     if (child == nullptr || child->Kind() == verible::SymbolKind::kLeaf) {
       continue;
     }
-    Visit(verible::SymbolCastToNode(*child));
+    child->Accept(this);
   }
 }
 
@@ -1490,7 +1510,7 @@ void IndexingFactsTreeExtractor::ExtractStructUnionDeclaration(
   for (const TreeSearchMatch& variable : variables_matched) {
     // Extract this variable.
     // This can be kRegisterVariable or kVariableDeclarationAssign.
-    Visit(verible::SymbolCastToNode(*variable.match));
+    variable.match->Accept(this);
 
     // Append the struct members to be a children of this variable.
     for (const auto& child : struct_node.Children()) {
@@ -1506,7 +1526,8 @@ void IndexingFactsTreeExtractor::ExtractDataTypeImplicitIdDimensions(
   // typedef struct {
   //    data_type var_name;
   // } my_struct;
-  // In this case this should be a kDataTypeReference with var_name as a child.
+  // In this case this should be a kDataTypeReference with var_name as a
+  // child.
   //
   // 2nd case:
   // typedef struct {
@@ -1547,7 +1568,7 @@ void IndexingFactsTreeExtractor::ExtractDataTypeImplicitIdDimensions(
         if (child == nullptr || child->Kind() == verible::SymbolKind::kLeaf) {
           continue;
         }
-        Visit(verible::SymbolCastToNode(*child));
+        child->Accept(this);
       }
     }
 

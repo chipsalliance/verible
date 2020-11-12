@@ -217,21 +217,21 @@ const verible::SyntaxTreeLeaf& GetSymbolIdentifierFromEnumName(
 // Returns symbol identifier node for the type name from node tagged with
 // kInstantiationType (if exists) or return nullptr.
 //- e.g from "some_type x;" return "some_type".
-const verible::SyntaxTreeLeaf* GetTypeIdentifierFromInstantiationType(
+const verible::Symbol* GetTypeIdentifierFromInstantiationType(
     const verible::Symbol& instantiation_type);
 
 // Returns symbol identifier node for the type name from node tagged with
 // kDataType (if exists) or return nullptr if the base type is not a named
 // user-defined type.
 //- e.g "Bus [x:y]" => extracts "Bus".
-const verible::SyntaxTreeLeaf* GetTypeIdentifierFromDataType(
+const verible::SyntaxTreeNode* GetTypeIdentifierFromDataType(
     const verible::Symbol& data_type);
 
 // Returns symbol identifier node for the type name from node tagged with
 // kDataType (if exists) or return nullptr if the base type is not a named
 // user-defined type.
 //- e.g "Bus" (as a type) return "Bus" (leaf token).
-const verible::SyntaxTreeLeaf* GetTypeIdentifierFromBaseType(
+const verible::SyntaxTreeNode* GetTypeIdentifierFromBaseType(
     const verible::Symbol& base_type);
 
 }  // namespace verilog

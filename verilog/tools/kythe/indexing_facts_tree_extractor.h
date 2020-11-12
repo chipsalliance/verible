@@ -211,7 +211,7 @@ class IndexingFactsTreeExtractor : public verible::TreeContextVisitor {
   // corresponding fact tree.
   // e.g "some_type var1;"
   void ExtractTypedVariableDefinition(
-      const verible::SyntaxTreeLeaf& type_identifier,
+      const verible::Symbol& type_identifier,
       const std::vector<verible::TreeSearchMatch>& variables_matched);
 
   // Extracts leaves tagged with SymbolIdentifier and creates its facts
@@ -219,7 +219,11 @@ class IndexingFactsTreeExtractor : public verible::TreeContextVisitor {
   // e.g "assign out = in & in2."
   // Other extraction functions should terminate in case the inner
   // SymbolIdentifiers are extracted.
-  void ExtractSymbolIdentifier(const verible::SyntaxTreeLeaf& unqualified_id);
+  void ExtractSymbolIdentifier(
+      const verible::SyntaxTreeLeaf& symbol_identifier);
+
+  // Extracts nodes tagged with "kUnqualifiedId".
+  void ExtractUnqualifiedId(const verible::SyntaxTreeNode& unqualified_id);
 
   // Extracts parameter declarations and creates its corresponding fact tree.
   void ExtractParamDeclaration(
