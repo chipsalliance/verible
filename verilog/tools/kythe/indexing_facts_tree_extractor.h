@@ -220,7 +220,11 @@ class IndexingFactsTreeExtractor : public verible::TreeContextVisitor {
   // e.g assign out = in & in2.
   // Other extraction functions should terminate in case the inner
   // SymbolIdentifiers are extracted.
-  void ExtractSymbolIdentifier(const verible::SyntaxTreeLeaf& unqualified_id);
+  void ExtractSymbolIdentifier(
+      const verible::SyntaxTreeLeaf& symbol_identifier);
+
+  // Extracts nodes tagged with "kUnqualifiedId".
+  void ExtractUnqualifiedId(const verible::SyntaxTreeNode& unqualified_id);
 
   // Extracts parameter declarations and creates its corresponding fact tree.
   void ExtractParamDeclaration(

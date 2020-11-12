@@ -298,6 +298,10 @@ void IndexingFactsTreeExtractor::Visit(const SyntaxTreeNode& node) {
       ExtractAnonymousScope(node);
       break;
     }
+    case NodeEnum::kUnqualifiedId: {
+      ExtractUnqualifiedId(node);
+      break;
+    }
     default: {
       TreeContextVisitor::Visit(node);
     }
@@ -306,17 +310,21 @@ void IndexingFactsTreeExtractor::Visit(const SyntaxTreeNode& node) {
 
 void IndexingFactsTreeExtractor::Visit(const verible::SyntaxTreeLeaf& leaf) {
   switch (leaf.get().token_enum()) {
-    case verilog_tokentype::MacroIdentifier: {
-      ExtractMacroReference(leaf);
-      break;
-    }
     case verilog_tokentype::SymbolIdentifier: {
       ExtractSymbolIdentifier(leaf);
       break;
     }
-    default:
+    default: {
       break;
+    }
   }
+}
+
+void IndexingFactsTreeExtractor::ExtractSymbolIdentifier(
+    const verible::SyntaxTreeLeaf& symbol_identifier) {
+  facts_tree_context_.top().NewChild(
+      IndexingNodeData({Anchor(symbol_identifier.get(), context_.base)},
+                       IndexingFactType::kVariableReference));
 }
 
 void IndexingFactsTreeExtractor::ExtractDataDeclaration(
@@ -410,13 +418,8 @@ void IndexingFactsTreeExtractor::ExtractTypedVariableDefinition(
   IndexingFactNode type_node(
       IndexingNodeData{IndexingFactType::kDataTypeReference});
 
-  if (type_identifier.Kind() == verible::SymbolKind::kNode) {
-    type_identifier.Accept(this);
-    MoveAndDeleteLastSibling(type_node);
-  } else if (type_identifier.Kind() == verible::SymbolKind::kLeaf) {
-    type_node.Value().AppendAnchor(Anchor(
-        verible::SymbolCastToLeaf(type_identifier).get(), context_.base));
-  }
+  type_identifier.Accept(this);
+  MoveAndDeleteLastSibling(type_node);
 
   {
     const IndexingFactsTreeContext::AutoPop p(&facts_tree_context_, &type_node);
@@ -484,15 +487,14 @@ void IndexingFactsTreeExtractor::ExtractModuleHeader(
     return;
   }
 
-  // This boolean is used to distinguish between ANSI and Non-ANSI module ports.
-  // e.g in this case:
-  // module m(a, b);
-  // has_propagated_type will be false as no type has been countered.
+  // This boolean is used to distinguish between ANSI and Non-ANSI module
+  // ports. e.g in this case: module m(a, b); has_propagated_type will be
+  // false as no type has been countered.
   //
   // in case like:
   // module m(a, b, input x, y)
-  // for "a", "b" the boolean will be false but for "x", "y" the boolean will be
-  // true.
+  // for "a", "b" the boolean will be false but for "x", "y" the boolean will
+  // be true.
   //
   // The boolean is used to determine whether this the fact for this variable
   // should be a reference or a defintiion.
@@ -652,17 +654,9 @@ void IndexingFactsTreeExtractor::ExtractModuleInstantiation(
     return;
   }
 
-  const SyntaxTreeLeaf& type_identifier =
-      *ABSL_DIE_IF_NULL(AutoUnwrapIdentifier(*type));
-  type_node.Value().AppendAnchor(Anchor(type_identifier.get(), context_.base));
-
-  // Extract parameter list
-  const SyntaxTreeNode* param_list =
-      GetParamListFromDataDeclaration(data_declaration_node);
-  if (param_list != nullptr) {
-    const IndexingFactsTreeContext::AutoPop p(&facts_tree_context_, &type_node);
-    Visit(*param_list);
-  }
+  // Extract module instance type and parameters.
+  type->Accept(this);
+  MoveAndDeleteLastSibling(type_node);
 
   // Module instantiations (data declarations) may declare multiple instances
   // sharing the same type in a single statement e.g. bar b1(), b2().
@@ -700,7 +694,8 @@ void IndexingFactsTreeExtractor::ExtractSelectVariableDimension(
   }
 
   // Make the previous node the parent of this node.
-  // e.g x[i] ==> make node of "x" the parent of the current variable dimension
+  // e.g x[i] ==> make node of "x" the parent of the current variable
+  // dimension
   // "[i]".
   const IndexingFactsTreeContext::AutoPop p(
       &facts_tree_context_, &facts_tree_context_.top().Children().back());
@@ -712,8 +707,8 @@ void IndexingFactsTreeExtractor::ExtractSelectVariableDimension(
 void IndexingFactsTreeExtractor::ExtractNetDeclaration(
     const SyntaxTreeNode& net_declaration_node) {
   // Nets are treated as children of the enclosing parent.
-  // Net declarations may declare multiple instances sharing the same type in a
-  // single statement.
+  // Net declarations may declare multiple instances sharing the same type in
+  // a single statement.
   const std::vector<const verible::TokenInfo*> identifiers =
       GetIdentifiersFromNetDeclaration(net_declaration_node);
 
@@ -1089,8 +1084,9 @@ void IndexingFactsTreeExtractor::ExtractClassDeclaration(
         // In case of => class X extends pkg1::Y.
         ExtractQualifiedId(*extended_class);
 
-        // Construct extends node from the last node which is kMemberReference,
-        // remove kMemberReference node and append the new extends node.
+        // Construct extends node from the last node which is
+        // kMemberReference, remove kMemberReference node and append the new
+        // extends node.
         IndexingFactNode extends_node(
             IndexingNodeData(class_node.Children().back().Value().Anchors(),
                              IndexingFactType::kExtends));
@@ -1119,36 +1115,13 @@ void IndexingFactsTreeExtractor::ExtractClassInstances(
     return;
   }
 
-  const auto tag = static_cast<NodeEnum>(type->Tag().tag);
-  if (tag == NodeEnum::kQualifiedId) {
-    // Then this is a qualified id node.
-    // e.g. "pkg::my_class var_name".
-    type->Accept(this);
-    MoveAndDeleteLastSibling(type_node);
-  } else if (tag == NodeEnum::kUnqualifiedId) {
-    // Then this is an unqualified id node.
-    // e.g "my_class var_name".
-    const SyntaxTreeLeaf& type_identifier =
-        *ABSL_DIE_IF_NULL(AutoUnwrapIdentifier(*type));
-    type_node.Value().AppendAnchor(
-        Anchor(type_identifier.get(), context_.base));
+  // Extract class type and parameters.
+  type->Accept(this);
+  MoveAndDeleteLastSibling(type_node);
 
-    // Extract parameter list
-    const SyntaxTreeNode* param_list =
-        GetParamListFromDataDeclaration(data_declaration_node);
-    if (param_list != nullptr) {
-      const IndexingFactsTreeContext::AutoPop p(&facts_tree_context_,
-                                                &type_node);
-      Visit(*param_list);
-    }
-  } else {
-    // Safe return if the tags didn't match any of the previous conditions.
-    return;
-  }
-
-  // Class instances may may appear as multiple instances sharing the same type
-  // in a single statement e.g. myClass b1 = new, b2 = new.
-  // LRM 8.8 Typed constructor calls
+  // Class instances may may appear as multiple instances sharing the same
+  // type in a single statement e.g. myClass b1 = new, b2 = new. LRM 8.8 Typed
+  // constructor calls
   //
   // Loop through each instance and associate each declared id with the same
   // type and create its corresponding facts tree node.
@@ -1228,13 +1201,39 @@ void IndexingFactsTreeExtractor::ExtractVariableDeclarationAssignment(
   facts_tree_context_.top().NewChild(variable_node);
 }
 
-void IndexingFactsTreeExtractor::ExtractSymbolIdentifier(
-    const SyntaxTreeLeaf& unqualified_id) {
-  // Get the symbol name.
-  const SyntaxTreeLeaf* leaf = AutoUnwrapIdentifier(unqualified_id);
-  facts_tree_context_.top().NewChild(
-      IndexingNodeData({Anchor(leaf->get(), context_.base)},
-                       IndexingFactType::kVariableReference));
+void IndexingFactsTreeExtractor::ExtractUnqualifiedId(
+    const SyntaxTreeNode& unqualified_id) {
+  const SyntaxTreeLeaf* identifier = AutoUnwrapIdentifier(unqualified_id);
+  if (identifier == nullptr) {
+    return;
+  }
+
+  switch (identifier->get().token_enum()) {
+    case verilog_tokentype::MacroIdentifier: {
+      ExtractMacroReference(*identifier);
+      break;
+    }
+    case verilog_tokentype::SymbolIdentifier: {
+      IndexingFactNode variable_reference(
+          IndexingNodeData{IndexingFactType::kVariableReference});
+      ExtractSymbolIdentifier(*identifier);
+      MoveAndDeleteLastSibling(variable_reference);
+
+      const SyntaxTreeNode* param_list =
+          GetParamListFromUnqualifiedId(unqualified_id);
+      if (param_list != nullptr) {
+        const IndexingFactsTreeContext::AutoPop p(&facts_tree_context_,
+                                                  &variable_reference);
+        param_list->Accept(this);
+      }
+
+      facts_tree_context_.top().NewChild(variable_reference);
+      break;
+    }
+    default: {
+      break;
+    }
+  }
 }
 
 void IndexingFactsTreeExtractor::ExtractParamDeclaration(
@@ -1336,8 +1335,7 @@ void IndexingFactsTreeExtractor::ExtractQualifiedId(
 
   // Get all the variable names in the qualified id.
   for (const auto& child : qualified_id.children()) {
-    if (child == nullptr) continue;
-    if (NodeEnum(child->Tag().tag) != NodeEnum::kUnqualifiedId) {
+    if (child == nullptr || NodeEnum(child->Tag().tag) != NodeEnum::kUnqualifiedId) {
       continue;
     }
     member_reference_data.AppendAnchor(
@@ -1547,7 +1545,8 @@ void IndexingFactsTreeExtractor::ExtractDataTypeImplicitIdDimensions(
   // typedef struct {
   //    data_type var_name;
   // } my_struct;
-  // In this case this should be a kDataTypeReference with var_name as a child.
+  // In this case this should be a kDataTypeReference with var_name as a
+  // child.
   //
   // 2nd case:
   // typedef struct {
