@@ -5,13 +5,11 @@ class class1;
 
     //- @my_function defines/binding _
     function int my_function();
-        // TODO(minatoma): change the :: to instance.var1.
-
         //- @instance1 ref Instance1
         //- @instance2 ref Instance2
         //- @instance3 ref Instance3
         //- @var1 ref Var1
-        return instance1::instance2::instance3::var1;
+        return instance1.instance2.instance3.var1;
     endfunction
 
     //- @class2 ref MyClass2
@@ -47,7 +45,7 @@ module top_module;
     //- @dut ref DutDef
     //- @instance5 ref Instance5
     //- @var2 ref Var2
-    initial $display(dut::instance5::var2);
+    initial $display(dut.instance5.var2);
 endmodule
 
 //- @my_module defines/binding MyModule
