@@ -20,10 +20,6 @@
 namespace verilog {
 namespace kythe {
 
-bool ScopeMemberItem::operator==(const ScopeMemberItem& other) const {
-  return this->vname == other.vname;
-}
-
 bool ScopeMemberItem::operator<(const ScopeMemberItem& other) const {
   return this->vname < other.vname;
 }

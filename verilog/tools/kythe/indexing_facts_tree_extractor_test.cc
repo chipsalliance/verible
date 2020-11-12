@@ -3687,6 +3687,61 @@ TEST(PackageImportTest, ClassInstanceWithMultiParams) {
   EXPECT_EQ(result_pair.right, nullptr) << *result_pair.right;
 }
 
+TEST(PackageImportTest, UserDefinedType) {
+  constexpr int kTag = 1;  // value doesn't matter
+  const verible::SyntaxTreeSearchTestCase kTestCase = {
+      {"class ",
+       {kTag, "Stack"},
+       ";\ntypedef int ",
+       {kTag, "some_type"},
+       ";\nendclass"},
+  };
+
+  ScopedTestFile test_file(testing::TempDir(), kTestCase.code);
+  std::vector<absl::Status> errors;
+
+  const IndexingFactNode expected(T(
+      {
+          {
+              Anchor(testing::TempDir(), 0, 0),
+              Anchor(verible::file::Dirname(test_file.filename()), 0, 0),
+          },
+          IndexingFactType::kFileList,
+      },
+      T(
+          {
+              {
+                  Anchor(test_file.filename(), 0, kTestCase.code.size()),
+                  Anchor(kTestCase.code, 0, kTestCase.code.size()),
+              },
+              IndexingFactType ::kFile,
+          },
+          // refers to class stack.
+          T(
+              {
+                  {
+                      Anchor(kTestCase.expected_tokens[1], kTestCase.code),
+                  },
+                  IndexingFactType ::kClass,
+              },
+              // refers to some_type.
+              T({
+                  {
+                      Anchor(kTestCase.expected_tokens[3], kTestCase.code),
+                  },
+                  IndexingFactType ::kTypeDeclaration,
+              })))));
+
+  const auto facts_tree =
+      ExtractFiles({std::string(verible::file::Basename(test_file.filename()))},
+                   testing::TempDir(),
+                   verible::file::Dirname(test_file.filename()), {}, errors);
+
+  const auto result_pair = DeepEqual(facts_tree, expected);
+  EXPECT_EQ(result_pair.left, nullptr) << *result_pair.left;
+  EXPECT_EQ(result_pair.right, nullptr) << *result_pair.right;
+}
+
 TEST(PackageImportTest, ClassParameterType) {
   constexpr int kTag = 1;  // value doesn't matter
   const verible::SyntaxTreeSearchTestCase kTestCase = {
@@ -5701,6 +5756,71 @@ TEST(FactsTreeExtractor, StructTypedefModule) {
                       IndexingFactType ::kStructOrUnion,
                   },
                   // refers to x.
+                  T({
+                      {
+                          Anchor(kTestCase.expected_tokens[3], kTestCase.code),
+                      },
+                      IndexingFactType ::kVariableDefinition,
+                  }))))));
+
+  const auto facts_tree =
+      ExtractFiles({std::string(verible::file::Basename(test_file.filename()))},
+                   testing::TempDir(),
+                   verible::file::Dirname(test_file.filename()), {}, errors);
+
+  const auto result_pair = DeepEqual(facts_tree, expected);
+  EXPECT_EQ(result_pair.left, nullptr) << *result_pair.left;
+  EXPECT_EQ(result_pair.right, nullptr) << *result_pair.right;
+}
+
+TEST(FactsTreeExtractor, DataTypeReferenceInUnionType) {
+  constexpr int kTag = 1;  // value doesn't matter
+  const verible::SyntaxTreeSearchTestCase kTestCase = {
+      {"typedef struct {\n ",
+       {kTag, "some_type"},
+       " ",
+       {kTag, "var1"},
+       ";}",
+       {kTag, "var2"},
+       ";"},
+  };
+
+  ScopedTestFile test_file(testing::TempDir(), kTestCase.code);
+  std::vector<absl::Status> errors;
+
+  const IndexingFactNode expected(T(
+      {
+          {
+              Anchor(testing::TempDir(), 0, 0),
+              Anchor(verible::file::Dirname(test_file.filename()), 0, 0),
+          },
+          IndexingFactType::kFileList,
+      },
+      T(
+          {
+              {
+                  Anchor(test_file.filename(), 0, kTestCase.code.size()),
+                  Anchor(kTestCase.code, 0, kTestCase.code.size()),
+              },
+              IndexingFactType ::kFile,
+          },
+          // refers to struct var1.
+          T(
+              {
+                  {
+                      Anchor(kTestCase.expected_tokens[5], kTestCase.code),
+                  },
+                  IndexingFactType::kStructOrUnion,
+              },
+              // refers to some_type var1.
+              T(
+                  {
+                      {
+                          Anchor(kTestCase.expected_tokens[1], kTestCase.code),
+                      },
+                      IndexingFactType ::kDataTypeReference,
+                  },
+                  // refers to var1.
                   T({
                       {
                           Anchor(kTestCase.expected_tokens[3], kTestCase.code),
