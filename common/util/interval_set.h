@@ -56,37 +56,35 @@ class _IntervalSetImpl {
   template <typename M>                            // M is a map-type
   static typename auto_iterator_selector<M>::type  // const_iterator or iterator
   FindLowerBound(M& intervals, const typename M::mapped_type& value) {
-    const auto iter = intervals.lower_bound(value);
-    if (iter == intervals.begin()) {
-      return iter;
+    const auto lower_bound = intervals.lower_bound(value);
+    if (lower_bound == intervals.begin()) {
+      return lower_bound;
     }
 
     // Check whether the previous interval's .max spans 'value'.
-    const auto prev = std::prev(iter);
+    const auto prev = std::prev(lower_bound);
     if (AsInterval(*prev).contains(value)) {
       return prev;
     }
-    return iter;
+    return lower_bound;
   }
 
+  // Returns an iterator in the 'intervals' map whose range spans that of
+  // 'interval', if one exists, else end().
   template <typename M>                            // M is a map-type
   static typename auto_iterator_selector<M>::type  // const_iterator or iterator
   FindSpanningInterval(M& intervals,
                        const Interval<typename M::mapped_type>& interval) {
     CHECK(interval.valid());
     // Nothing 'contains' an empty interval.
-    if (interval.empty()) return intervals.end();
-
-    auto iter = intervals.upper_bound(interval.min);
-    // lower_bound misses equality condition
-    if (iter != intervals.begin()) {
-      const auto prev = std::prev(iter);  // look at interval before
-      CHECK_LE(prev->first, interval.min);
-      if (AsInterval(*prev).contains(interval)) {
-        return prev;
+    if (!interval.empty()) {
+      // Find an interval that contains the lower bound.
+      const auto found = FindSpanningInterval(intervals, interval.min);
+      if (found != intervals.end()) {
+        // Check if the same interval covers the upper bound.
+        if (interval.max <= found->second) return found;
       }
     }
-    // else interval.min is already less than lowest interval
     return intervals.end();
   }
 
@@ -95,10 +93,10 @@ class _IntervalSetImpl {
   template <typename M>                            // M is a map-type
   static typename auto_iterator_selector<M>::type  // const_iterator or iterator
   FindSpanningInterval(M& intervals, const typename M::mapped_type& value) {
-    const auto iter = intervals.upper_bound(value);
+    const auto upper_bound = intervals.upper_bound(value);
     // lower_bound misses equality condition
-    if (iter != intervals.begin()) {
-      const auto prev = std::prev(iter);  // look at interval before
+    if (upper_bound != intervals.begin()) {
+      const auto prev = std::prev(upper_bound);  // look at interval before
       if (AsInterval(*prev).contains(value)) {
         return prev;
       }
