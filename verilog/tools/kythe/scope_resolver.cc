@@ -104,6 +104,9 @@ const std::vector<std::pair<const VName*, const Scope*>>
 ScopeResolver::SearchForDefinitions(
     const std::vector<std::string>& names) const {
   std::vector<std::pair<const VName*, const Scope*>> definitions;
+  if (names.empty()) {
+    return definitions;
+  }
 
   // Try to find the definition in the scopes of the current file.
   const VName* definition = SearchForDefinitionInScopeContext(names[0]);

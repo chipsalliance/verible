@@ -79,6 +79,15 @@ GetTypeIdDimensionsFromTaskFunctionPortItem(const Symbol& symbol) {
       NodeEnum::kDataTypeImplicitBasicIdDimensions);
 }
 
+const verible::SyntaxTreeNode& GetUnpackedDimensionsFromTaskFunctionPortItem(
+    const verible::Symbol& port_item) {
+  const auto& type_id_dimensions =
+      GetTypeIdDimensionsFromTaskFunctionPortItem(port_item);
+  return verible::GetSubtreeAsNode(type_id_dimensions,
+                                   NodeEnum::kDataTypeImplicitBasicIdDimensions,
+                                   2, NodeEnum::kUnpackedDimensions);
+}
+
 const Symbol* GetTypeOfTaskFunctionPortItem(const verible::Symbol& symbol) {
   const auto& type_id_dimensions =
       GetTypeIdDimensionsFromTaskFunctionPortItem(symbol);
