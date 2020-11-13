@@ -14,23 +14,27 @@
 
 #include "verilog/tools/kythe/kythe_facts.h"
 
+#include <algorithm>
 #include <iostream>
+#include <sstream>
 #include <string>
+#include <tuple>
 
 #include "absl/strings/escaping.h"
 #include "absl/strings/string_view.h"
+#include "common/util/spacer.h"
 
 namespace verilog {
 namespace kythe {
 
-// TODO(minatoma): change this string comparison to a tuple comparison.
 bool Signature::operator==(const Signature& other) const {
-  return this->ToString() == other.ToString();
+  return names_.size() == other.names_.size() &&
+         std::equal(names_.begin(), names_.end(), other.names_.begin());
 }
 
-// TODO(minatoma): change this string comparison to a tuple comparison.
 bool Signature::operator<(const Signature& other) const {
-  return this->ToString() < other.ToString();
+  return std::lexicographical_compare(names_.begin(), names_.end(),
+                                      other.names_.begin(), other.names_.end());
 }
 
 bool Signature::IsNameEqual(absl::string_view name) const {
@@ -50,68 +54,95 @@ std::string Signature::ToBase64() const {
   return absl::Base64Escape(ToString());
 }
 
-// TODO(minatoma): change this string comparison to a tuple comparison.
 bool VName::operator==(const VName& other) const {
-  return this->ToString() == other.ToString();
+  return std::tie(signature, path, language, root, corpus) ==
+         std::tie(other.signature, other.path, other.language, other.root,
+                  other.corpus);
 }
 
-// TODO(minatoma): change this string comparison to a tuple comparison.
 bool VName::operator<(const VName& other) const {
-  return this->ToString() < other.ToString();
+  return std::tie(signature, path, language, root, corpus) <
+         std::tie(other.signature, other.path, other.language, other.root,
+                  other.corpus);
 }
 
-std::string VName::ToString() const {
-  return absl::StrCat("{\"signature\": \"", signature.ToBase64(),
-                      "\",\"path\": \"", path, "\",\"language\": \"", language,
-                      "\",\"root\": \"", root, "\",\"corpus\": \"", corpus,
-                      "\"}");
+std::ostream& VName::FormatJSON(std::ostream& stream, bool debug,
+                                int indentation) const {
+  stream << "{\n";
+  const verible::Spacer idt(indentation + 2);
+  stream << idt << "\"signature\": \""
+         << (debug ? signature.ToString() : signature.ToBase64()) << "\",\n"  //
+         << idt << "\"path\": \"" << path << "\",\n"                          //
+         << idt << "\"language\": \"" << language << "\",\n"                  //
+         << idt << "\"root\": \"" << root << "\",\n"                          //
+         << idt << "\"corpus\": \"" << corpus << "\"\n"                       //
+         << verible::Spacer(indentation) << "}";
+  return stream;
 }
 
 std::ostream& operator<<(std::ostream& stream, const VName& vname) {
-  stream << vname.ToString();
-  return stream;
+  return vname.FormatJSON(stream, true);
 }
 
-// TODO(minatoma): change this string comparison to a tuple comparison.
 bool Fact::operator==(const Fact& other) const {
-  return this->ToString() == other.ToString();
+  return std::tie(node_vname, fact_name, fact_value) ==
+         std::tie(other.node_vname, other.fact_name, other.fact_value);
 }
 
-// TODO(minatoma): change this string comparison to a tuple comparison.
 bool Fact::operator<(const Fact& other) const {
-  return this->ToString() < other.ToString();
+  return std::tie(node_vname, fact_name, fact_value) <
+         std::tie(other.node_vname, other.fact_name, other.fact_value);
 }
 
-std::string Fact::ToString() const {
-  return absl::StrCat("{\"source\": ", node_vname.ToString(),
-                      ",\"fact_name\": \"", fact_name, "\",\"fact_value\": \"",
-                      absl::Base64Escape(fact_value), "\"}");
+std::ostream& Fact::FormatJSON(std::ostream& stream, bool debug,
+                               int indentation) const {
+  const int indent_more = indentation + 2;
+  const verible::Spacer idt(indent_more);
+  stream << "{\n";
+  {
+    stream << idt << "\"source\": ";
+    node_vname.FormatJSON(stream, debug, indent_more) << ",\n";
+  }
+  stream << idt << "\"fact_name\": \"" << fact_name << "\",\n"  //
+         << idt << "\"fact_value\": \""
+         << (debug ? fact_value : absl::Base64Escape(fact_value)) << "\"\n"  //
+         << verible::Spacer(indentation) << "}";
+  return stream;
 }
 
 std::ostream& operator<<(std::ostream& stream, const Fact& fact) {
-  stream << fact.ToString();
-  return stream;
+  return fact.FormatJSON(stream, true);
 }
 
-// TODO(minatoma): change this string comparison to a tuple comparison.
 bool Edge::operator==(const Edge& other) const {
-  return this->ToString() == other.ToString();
+  return std::tie(source_node, edge_name, target_node) ==
+         std::tie(other.source_node, other.edge_name, other.target_node);
 }
 
-// TODO(minatoma): change this string comparison to a tuple comparison.
 bool Edge::operator<(const Edge& other) const {
-  return this->ToString() < other.ToString();
+  return std::tie(source_node, edge_name, target_node) <
+         std::tie(other.source_node, other.edge_name, other.target_node);
 }
 
-std::string Edge::ToString() const {
-  return absl::StrCat(
-      "{\"source\":", source_node.ToString(), ",\"edge_kind\":\"", edge_name,
-      "\",\"target\":", target_node.ToString(), ",\"fact_name\":\"/\"}");
+std::ostream& Edge::FormatJSON(std::ostream& stream, bool debug,
+                               int indentation) const {
+  const int indent_more = indentation + 2;
+  const verible::Spacer idt(indent_more);
+  stream << "{\n";
+  {
+    stream << idt << "\"source\": ";
+    source_node.FormatJSON(stream, debug, indent_more) << ",\n";
+  }
+  { stream << idt << "\"edge_kind\": \"" << edge_name << "\",\n"; }
+  {
+    stream << idt << "\"target\": ";
+    target_node.FormatJSON(stream, debug, indent_more) << ",\n";
+  }
+  return stream << verible::Spacer(indentation) << "}";
 }
 
 std::ostream& operator<<(std::ostream& stream, const Edge& edge) {
-  stream << edge.ToString();
-  return stream;
+  return edge.FormatJSON(stream, true);
 }
 
 }  // namespace kythe

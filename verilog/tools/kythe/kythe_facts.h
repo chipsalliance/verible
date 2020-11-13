@@ -36,6 +36,7 @@ class Signature {
   }
 
   bool operator==(const Signature& other) const;
+  bool operator!=(const Signature& other) const { return !(*this == other); }
   bool operator<(const Signature& other) const;
 
   // Returns the signature concatenated as a string.
@@ -48,7 +49,7 @@ class Signature {
   // scope.
   bool IsNameEqual(absl::string_view) const;
 
-  const std::vector<std::string> Names() const { return names_; }
+  const std::vector<std::string>& Names() const { return names_; }
 
  private:
   // List that uniquely determines this signature and differentiates it from any
@@ -81,7 +82,8 @@ struct VName {
   bool operator==(const VName& other) const;
   bool operator<(const VName& other) const;
 
-  std::string ToString() const;
+  std::ostream& FormatJSON(std::ostream&, bool debug,
+                           int indentation = 0) const;
 
   // Unique identifier for this VName.
   Signature signature;
@@ -110,10 +112,11 @@ struct Fact {
       : node_vname(vname), fact_name(name), fact_value(value) {}
 
   bool operator==(const Fact& other) const;
+  bool operator!=(const Fact& other) const { return !(*this == other); }
   bool operator<(const Fact& other) const;
 
-  std::string ToString() const;
-
+  std::ostream& FormatJSON(std::ostream&, bool debug,
+                           int indentation = 0) const;
   // The VName of the node this fact is about.
   const VName node_vname;
 
@@ -134,9 +137,11 @@ struct Edge {
       : source_node(source), edge_name(name), target_node(target) {}
 
   bool operator==(const Edge& other) const;
+  bool operator!=(const Edge& other) const { return !(*this == other); }
   bool operator<(const Edge& other) const;
 
-  std::string ToString() const;
+  std::ostream& FormatJSON(std::ostream&, bool debug,
+                           int indentation = 0) const;
 
   // The VName of the source node of this edge.
   const VName source_node;

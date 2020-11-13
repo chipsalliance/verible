@@ -946,14 +946,14 @@ void KytheFactsExtractor::CreateEdge(const VName& source_node,
 }
 
 std::ostream& KytheFactsPrinter::Print(std::ostream& stream) const {
-  auto indexing_data =
+  const auto indexing_data =
       KytheFactsExtractor::ExtractKytheFacts(file_list_facts_tree_);
 
   for (const Fact& fact : indexing_data.facts) {
-    stream << fact;
+    fact.FormatJSON(stream, debug_) << std::endl;
   }
   for (const Edge& edge : indexing_data.edges) {
-    stream << edge;
+    edge.FormatJSON(stream, debug_) << std::endl;
   }
 
   return stream;

@@ -34,14 +34,18 @@ namespace kythe {
 // Usage: stream << KytheFactsPrinter(IndexingFactNode);
 class KytheFactsPrinter {
  public:
-  explicit KytheFactsPrinter(const IndexingFactNode& file_list_facts_tree)
-      : file_list_facts_tree_(file_list_facts_tree) {}
+  explicit KytheFactsPrinter(const IndexingFactNode& file_list_facts_tree,
+                             bool debug = false)
+      : file_list_facts_tree_(file_list_facts_tree), debug_(debug) {}
 
   std::ostream& Print(std::ostream&) const;
 
  private:
   // The root of the indexing facts tree to extract kythe facts from.
   const IndexingFactNode& file_list_facts_tree_;
+
+  // When debugging is enabled, print human-readable un-encoded text.
+  const bool debug_;
 };
 
 std::ostream& operator<<(std::ostream&, const KytheFactsPrinter&);

@@ -36,11 +36,13 @@
 // for --print_kythe_facts flag
 enum class PrintMode {
   kJSON,
+  kJSONDebug,
   kProto,
 };
 
 static const verible::EnumNameMap<PrintMode> kPrintModeStringMap{{
     {"json", PrintMode::kJSON},
+    {"json_debug", PrintMode::kJSONDebug},
     {"proto", PrintMode::kProto},
 }};
 
@@ -64,11 +66,13 @@ ABSL_FLAG(bool, printextraction, false,
           "Whether or not to print the extracted general indexing facts tree "
           "from the middle layer)");
 
-ABSL_FLAG(PrintMode, print_kythe_facts, PrintMode::kJSON,
-          "Determines how to print Kythe indexing facts.  Options:\n"
-          "  json: Outputs Kythe facts in JSON format\n"
-          "  proto: Outputs Kythe facts in proto format\n"
-          "Default: json\n");
+ABSL_FLAG(
+    PrintMode, print_kythe_facts, PrintMode::kJSON,
+    "Determines how to print Kythe indexing facts.  Options:\n"
+    "  json: Outputs Kythe facts in JSON format\n"
+    "  json_debug: Outputs Kythe facts in JSON format (without encoding)\n"
+    "  proto: Outputs Kythe facts in proto format\n"
+    "Default: json\n");
 
 ABSL_FLAG(
     std::string, file_list_path, "",
@@ -160,6 +164,11 @@ static std::vector<absl::Status> ExtractFiles(
   switch (absl::GetFlag(FLAGS_print_kythe_facts)) {
     case PrintMode::kJSON: {
       std::cout << KytheFactsPrinter(file_list_facts_tree) << std::endl;
+      break;
+    }
+    case PrintMode::kJSONDebug: {
+      std::cout << KytheFactsPrinter(file_list_facts_tree, /* debug= */ true)
+                << std::endl;
       break;
     }
     case PrintMode::kProto: {
