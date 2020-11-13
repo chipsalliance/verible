@@ -359,5 +359,38 @@ TEST(GetActualNamedPort, GetActualNamedPortParenGroup) {
   }
 }
 
+TEST(FunctionPort, GetUnpackedDimensions) {
+  constexpr int kTag = 1;  // value doesn't matter
+  const SyntaxTreeSearchTestCase kTestCases[] = {
+      {""},
+      {"module m(input in1, input int2, input in3); endmodule: m"},
+      {"function void f(int x", {kTag, "[s:g]"}, ");\nendfunction"},
+      {"task f(int x", {kTag, "[s:g]"}, ");\nendtask"},
+      {"task f(int x",
+       {kTag, "[s:g]"},
+       ",int y",
+       {kTag, "[s:g]"},
+       ");\nendtask"},
+  };
+
+  for (const auto& test : kTestCases) {
+    TestVerilogSyntaxRangeMatches(
+        __FUNCTION__, test, [](const TextStructureView& text_structure) {
+          const auto& root = text_structure.SyntaxTree();
+          const auto& ports =
+              FindAllTaskFunctionPortDeclarations(*ABSL_DIE_IF_NULL(root));
+
+          std::vector<TreeSearchMatch> dimensions;
+          for (const auto& port : ports) {
+            const auto& dimension =
+                GetUnpackedDimensionsFromTaskFunctionPortItem(*port.match);
+            dimensions.emplace_back(
+                TreeSearchMatch{&dimension, {/* ignored context */}});
+          }
+          return dimensions;
+        });
+  }
+}
+
 }  // namespace
 }  // namespace verilog

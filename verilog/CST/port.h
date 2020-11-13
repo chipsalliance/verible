@@ -76,6 +76,10 @@ const verible::Symbol* GetTypeOfTaskFunctionPortItem(const verible::Symbol&);
 const verible::SyntaxTreeLeaf* GetIdentifierFromTaskFunctionPortItem(
     const verible::Symbol&);
 
+// Extract the unpacked dimensions from a task/function port item.
+const verible::SyntaxTreeNode& GetUnpackedDimensionsFromTaskFunctionPortItem(
+    const verible::Symbol&);
+
 // Returns the leaf node containing the name of the actual named port.
 // example: from ".x(y)" this returns the leaf spanning "x".
 const verible::SyntaxTreeLeaf& GetActualNamedPortName(const verible::Symbol&);

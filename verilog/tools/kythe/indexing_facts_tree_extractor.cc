@@ -920,14 +920,91 @@ void IndexingFactsTreeExtractor::ExtractFunctionOrTaskOrConstructorPort(
       FindAllTaskFunctionPortDeclarations(function_declaration_node);
 
   for (const TreeSearchMatch& port : ports) {
-    const SyntaxTreeLeaf* leaf =
-        GetIdentifierFromTaskFunctionPortItem(*port.match);
+    const verible::Symbol* port_type =
+        GetTypeOfTaskFunctionPortItem(*port.match);
+    if (port_type != nullptr) {
+      // port variable name.
+      const SyntaxTreeLeaf* port_identifier =
+          GetIdentifierFromTaskFunctionPortItem(*port.match);
 
-    // TODO(minatoma): Consider using kPorts or kParam for ports and params
-    // instead of variables (same goes for modules).
-    facts_tree_context_.top().NewChild(
-        IndexingNodeData({Anchor(leaf->get(), context_.base)},
-                         IndexingFactType::kVariableDefinition));
+      // variable identifier node.
+      IndexingFactNode variable_node(
+          IndexingNodeData{IndexingFactType::kVariableDefinition});
+      variable_node.Value().AppendAnchor(
+          Anchor(port_identifier->get(), context_.base));
+
+      // if this port has struct/union/enum data type.
+      const SyntaxTreeNode* struct_type =
+          GetStructOrUnionOrEnumTypeFromDataType(*port_type);
+
+      if (struct_type != nullptr) {
+        // Then this data type is struct/union/enum
+        {
+          const IndexingFactsTreeContext::AutoPop p(&facts_tree_context_,
+                                                    &variable_node);
+          struct_type->Accept(this);
+        }
+
+        facts_tree_context_.top().NewChild(variable_node);
+
+        continue;
+      }
+
+      const SyntaxTreeNode* type_identifier =
+          GetTypeIdentifierFromDataType(*port_type);
+
+      if (type_identifier == nullptr) {
+        // Then this is a primitive data type.
+        // e.g "task f1(int x);"
+
+        {
+          const IndexingFactsTreeContext::AutoPop p(&facts_tree_context_,
+                                                    &variable_node);
+
+          const SyntaxTreeNode* packed_dim =
+              GetPackedDimensionFromDataType(*port_type);
+          if (packed_dim != nullptr) {
+            packed_dim->Accept(this);
+          }
+
+          const SyntaxTreeNode& unpacked_dimension =
+              GetUnpackedDimensionsFromTaskFunctionPortItem(*port.match);
+          unpacked_dimension.Accept(this);
+        }
+
+        facts_tree_context_.top().NewChild(variable_node);
+
+        continue;
+      }
+      // else this is a user defined type.
+      // e.g "task f1(some_class var1);".
+
+      IndexingFactNode type_node(
+          IndexingNodeData{IndexingFactType::kDataTypeReference});
+      type_identifier->Accept(this);
+      MoveAndDeleteLastExtractedNode(type_node);
+
+      type_node.NewChild(
+          IndexingNodeData({Anchor(port_identifier->get(), context_.base)},
+                           IndexingFactType::kVariableDefinition));
+
+      {
+        const IndexingFactsTreeContext::AutoPop p(&facts_tree_context_,
+                                                  &type_node);
+
+        const SyntaxTreeNode* packed_dim =
+            GetPackedDimensionFromDataType(*port_type);
+        if (packed_dim != nullptr) {
+          packed_dim->Accept(this);
+        }
+
+        const SyntaxTreeNode& unpacked_dimension =
+            GetUnpackedDimensionsFromTaskFunctionPortItem(*port.match);
+        unpacked_dimension.Accept(this);
+      }
+
+      facts_tree_context_.top().NewChild(type_node);
+    }
   }
 }
 
