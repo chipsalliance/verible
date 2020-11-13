@@ -6,8 +6,7 @@ class Stack #(parameter type T=int);
     //- @idx defines/binding _
     T items[64], idx=0;
 
-    // TODO(minatoma): remove this comment after extracting this T.
-    // //- @T ref T
+    //- @T ref T
     //- @val defines/binding _
     function void push(input T val);
     endfunction
