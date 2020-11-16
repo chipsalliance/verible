@@ -40,9 +40,9 @@ status="$?"
 }
 
 ################################################################################
-echo "=== Test '--help'."
+echo "=== Test '--helpfull'."
 
-"$extractor" --help > "$MY_OUTPUT_FILE" 2>&1
+"$extractor" --helpfull > "$MY_OUTPUT_FILE" 2>&1
 
 status="$?"
 [[ $status == 1 ]] || {
