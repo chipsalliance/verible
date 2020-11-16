@@ -302,3 +302,24 @@ cc_test(
         "@com_google_googletest//:gtest_main",
     ],
 )
+
+cc_library(
+    name = "string_memory_map",
+    hdrs = ["string_memory_map.h"],
+    deps = [
+        "//common/util:interval_map",
+        "@com_google_absl//absl/strings",
+    ],
+)
+
+cc_test(
+    name = "string_memory_map_test",
+    srcs = ["string_memory_map_test.cc"],
+    deps = [
+        ":range",
+        ":string_memory_map",
+        "//common/util:range",
+        "@com_google_absl//absl/memory",
+        "@com_google_googletest//:gtest_main",
+    ],
+)
