@@ -119,6 +119,15 @@ cc_library(
 )
 
 cc_library(
+    name = "interval_map",
+    hdrs = ["interval_map.h"],
+    deps = [
+        ":auto_iterator",
+        ":logging",
+    ],
+)
+
+cc_library(
     name = "interval_set",
     hdrs = ["interval_set.h"],
     deps = [
@@ -308,6 +317,17 @@ cc_test(
     srcs = ["interval_test.cc"],
     deps = [
         ":interval",
+        "@com_google_googletest//:gtest_main",
+    ],
+)
+
+cc_test(
+    name = "interval_map_test",
+    srcs = ["interval_map_test.cc"],
+    deps = [
+        ":interval_map",
+        ":range",
+        "@com_google_absl//absl/memory",
         "@com_google_googletest//:gtest_main",
     ],
 )
