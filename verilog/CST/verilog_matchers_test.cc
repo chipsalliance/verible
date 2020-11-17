@@ -25,9 +25,11 @@
 namespace verilog {
 namespace {
 
+using verible::matcher::RawMatcherTestCase;
+
 // Tests for SystemTFIdentifierLeaf matching
 TEST(VerilogMatchers, SystemTFIdentifierLeafTests) {
-  const verible::matcher::RawMatcherTestCase tests[] = {
+  const RawMatcherTestCase tests[] = {
       {SystemTFIdentifierLeaf(), EmbedInClassMethod("$psprintf(\"foo\");"), 1},
       {SystemTFIdentifierLeaf(), EmbedInClassMethod("psprintf(\"foo\");"), 0},
       {SystemTFIdentifierLeaf(), EmbedInClass(""), 0},
@@ -39,7 +41,7 @@ TEST(VerilogMatchers, SystemTFIdentifierLeafTests) {
 
 // Tests for MacroCallIdLeaf matching
 TEST(VerilogMatchers, MacroCallIdLeafTests) {
-  const verible::matcher::RawMatcherTestCase tests[] = {
+  const RawMatcherTestCase tests[] = {
       {MacroCallIdLeaf(), "", 0},
       {MacroCallIdLeaf(), EmbedInClass(""), 0},
       {MacroCallIdLeaf(), EmbedInClassMethod("`uvm_foo"), 0},  // not a call
@@ -56,7 +58,7 @@ TEST(VerilogMatchers, MacroCallIdLeafTests) {
 
 // Tests for NodekVoidcast matching
 TEST(VerilogMatchers, VoidCastNodeTests) {
-  const verible::matcher::RawMatcherTestCase tests[] = {
+  const RawMatcherTestCase tests[] = {
       {NodekVoidcast(), EmbedInClassMethod("void'(bad());"), 1},
       {NodekVoidcast(), EmbedInClassMethod("rar(bad());"), 0},
       {NodekVoidcast(), EmbedInClass(""), 0},
@@ -68,7 +70,7 @@ TEST(VerilogMatchers, VoidCastNodeTests) {
 
 // Tests for NodekExpression matching
 TEST(VerilogMatchers, ExpressionNodeTests) {
-  const verible::matcher::RawMatcherTestCase tests[] = {
+  const RawMatcherTestCase tests[] = {
       {NodekExpression(), EmbedInClassMethod("x = 1;"), 1},
       {NodekExpression(), EmbedInClassMethod("foo();"), 0},
       {NodekExpression(), EmbedInClass(""), 0},
@@ -80,7 +82,7 @@ TEST(VerilogMatchers, ExpressionNodeTests) {
 
 // Tests for ExpressionHasFunctionCall matching
 TEST(VerilogMatchers, ExpressionHasFunctionCallTests) {
-  const verible::matcher::RawMatcherTestCase tests[] = {
+  const RawMatcherTestCase tests[] = {
       {ExpressionHasFunctionCall(), EmbedInClassMethod("foo();"), 1},
       {ExpressionHasFunctionCall(), EmbedInClassMethod("x = foo();"), 1},
       {ExpressionHasFunctionCall(), EmbedInClassMethod("foo(bar);"), 1},
@@ -101,7 +103,7 @@ TEST(VerilogMatchers, ExpressionHasFunctionCallTests) {
 
 // Tests for ExpressionHasRandomizeCallExtension matching
 TEST(VerilogMatchers, ExpressionHasRandomizeCallExtensionTests) {
-  const verible::matcher::RawMatcherTestCase tests[] = {
+  const RawMatcherTestCase tests[] = {
       {ExpressionHasRandomizeCallExtension(),
        EmbedInClassMethod("foo().randomize();"), 1},
       {ExpressionHasRandomizeCallExtension(), EmbedInClassMethod("foo;"), 0},
@@ -116,7 +118,7 @@ TEST(VerilogMatchers, ExpressionHasRandomizeCallExtensionTests) {
 
 // Tests for ExpressionHasRandomizeFunction matching
 TEST(VerilogMatchers, ExpressionHasRandomizeFunctionTests) {
-  const verible::matcher::RawMatcherTestCase tests[] = {
+  const RawMatcherTestCase tests[] = {
       {ExpressionHasRandomizeFunction(), EmbedInClassMethod("randomize();"), 1},
       {ExpressionHasRandomizeFunction(), EmbedInClassMethod("foo.randomize();"),
        0},
@@ -129,7 +131,7 @@ TEST(VerilogMatchers, ExpressionHasRandomizeFunctionTests) {
 
 // Tests for FunctionCallHasId matching
 TEST(VerilogMatchers, FunctionCallHasIdTests) {
-  const verible::matcher::RawMatcherTestCase tests[] = {
+  const RawMatcherTestCase tests[] = {
       {FunctionCallHasId(), EmbedInClassMethod("foo();"), 1},
   };
   for (const auto& test : tests)
@@ -138,7 +140,7 @@ TEST(VerilogMatchers, FunctionCallHasIdTests) {
 
 // Tests for NumberHasConstantWidth matching
 TEST(VerilogMatchers, NumberHasConstantWidthTests) {
-  const verible::matcher::RawMatcherTestCase tests[] = {
+  const RawMatcherTestCase tests[] = {
       {NumberHasConstantWidth(), "", 0},
       {NumberHasConstantWidth(), "localparam x = 1'bx;", 1},
       {NumberHasConstantWidth(), "localparam x = 2'b 01;", 1},
@@ -151,7 +153,7 @@ TEST(VerilogMatchers, NumberHasConstantWidthTests) {
 
 // Tests for NumberHasBasedLiteral matching
 TEST(VerilogMatchers, NumberHasBasedLiteralTests) {
-  const verible::matcher::RawMatcherTestCase tests[] = {
+  const RawMatcherTestCase tests[] = {
       {NumberHasBasedLiteral(), "", 0},
       {NumberHasBasedLiteral(), "localparam x = 1'0;", 0},
       {NumberHasBasedLiteral(), "localparam x = 1'b0;", 1},
@@ -174,7 +176,7 @@ TEST(VerilogMatchers, NumberHasBasedLiteralTests) {
 
 // Tests for NumberIsBinary matching
 TEST(VerilogMatchers, NumberIsBinaryTests) {
-  const verible::matcher::RawMatcherTestCase tests[] = {
+  const RawMatcherTestCase tests[] = {
       {NumberIsBinary(), "", 0},
       {NumberIsBinary(), "localparam x = 1'0;", 0},
       {NumberIsBinary(), "localparam x = 1'b0;", 1},
@@ -198,7 +200,7 @@ TEST(VerilogMatchers, NumberIsBinaryTests) {
 
 // Tests for NumberHasBInaryDigits matching
 TEST(VerilogMatchers, NumberHasBinaryDigitsTests) {
-  const verible::matcher::RawMatcherTestCase tests[] = {
+  const RawMatcherTestCase tests[] = {
       {NumberHasBinaryDigits(), "", 0},
       {NumberHasBinaryDigits(), "localparam x = 1'0;", 0},
       {NumberHasBinaryDigits(), "localparam x = 1'b0;", 1},
@@ -222,7 +224,7 @@ TEST(VerilogMatchers, NumberHasBinaryDigitsTests) {
 
 // Tests for NodekActualParameterList matching
 TEST(VerilogMatchers, ActualParameterListNodeTests) {
-  const verible::matcher::RawMatcherTestCase tests[] = {
+  const RawMatcherTestCase tests[] = {
       {NodekActualParameterList(), EmbedInModule("foo #(1, 2) bar;"), 1},
       {NodekActualParameterList(),
        EmbedInModule("foo #(.foo(1), .bar(5)) bar;"), 1},
@@ -236,7 +238,7 @@ TEST(VerilogMatchers, ActualParameterListNodeTests) {
 
 // Tests for ActualParameterListHasPositionalParameterList matching
 TEST(VerilogMatchers, ActualParameterListHasPositionalParameterListTests) {
-  const verible::matcher::RawMatcherTestCase tests[] = {
+  const RawMatcherTestCase tests[] = {
       {ActualParameterListHasPositionalParameterList(),
        EmbedInModule("foo #(1, 2) bar;"), 1},
       {ActualParameterListHasPositionalParameterList(),
@@ -250,7 +252,7 @@ TEST(VerilogMatchers, ActualParameterListHasPositionalParameterListTests) {
 
 // Tests for NodekGateInstance matching
 TEST(VerilogMatchers, GateInstanceNodeTests) {
-  const verible::matcher::RawMatcherTestCase tests[] = {
+  const RawMatcherTestCase tests[] = {
       {NodekGateInstance(), EmbedInModule("foo bar(1, 2);"), 1},
       {NodekGateInstance(), EmbedInModule("foo bar;"), 0},
       {NodekGateInstance(), EmbedInModule("and a0(a, b, x1);"), 0},
@@ -263,7 +265,7 @@ TEST(VerilogMatchers, GateInstanceNodeTests) {
 
 // Tests for GateInstanceHasPortList matching
 TEST(VerilogMatchers, GateInstanceHasPortListTests) {
-  const verible::matcher::RawMatcherTestCase tests[] = {
+  const RawMatcherTestCase tests[] = {
       {GateInstanceHasPortList(), EmbedInModule("foo bar(1, 2);"), 1},
       {GateInstanceHasPortList(), EmbedInModule("foo bar;"), 0},
       {GateInstanceHasPortList(), EmbedInModule(""), 0},
@@ -275,7 +277,7 @@ TEST(VerilogMatchers, GateInstanceHasPortListTests) {
 
 // Tests for NodekGenerateBlock matching
 TEST(VerilogMatchers, GenerateBlockNodeTests) {
-  const verible::matcher::RawMatcherTestCase tests[] = {
+  const RawMatcherTestCase tests[] = {
       {NodekGenerateBlock(),
        EmbedInModule("generate\n"
                      "if (TypeIsPosedge) begin : gen_posedge\n"
@@ -296,7 +298,7 @@ TEST(VerilogMatchers, GenerateBlockNodeTests) {
 
 // Tests for GenerateRegionNode matching
 TEST(VerilogMatchers, GenerateRegionNodeTests) {
-  const verible::matcher::RawMatcherTestCase tests[] = {
+  const RawMatcherTestCase tests[] = {
       {NodekGenerateRegion(),
        EmbedInModule("generate\n"
                      "if (TypeIsPosedge) begin : foobar\n"
@@ -318,7 +320,7 @@ TEST(VerilogMatchers, GenerateRegionNodeTests) {
 
 // Tests for HasBeginLabel matching
 TEST(VerilogMatchers, HasBeginLabelTests) {
-  const verible::matcher::RawMatcherTestCase tests[] = {
+  const RawMatcherTestCase tests[] = {
       {HasBeginLabel(),
        EmbedInModule("generate\n"
                      "if (TypeIsPosedge) begin : gen_posedge\n"
@@ -342,7 +344,7 @@ TEST(VerilogMatchers, HasBeginLabelTests) {
 
 // Tests for HasGenerateBlock matching
 TEST(VerilogMatchers, HasGenerateBlockTests) {
-  const verible::matcher::RawMatcherTestCase tests[] = {
+  const RawMatcherTestCase tests[] = {
       {HasGenerateBlock(), "", 0},
       {HasGenerateBlock(), EmbedInModule(""), 0},
       {HasGenerateBlock(),
@@ -380,7 +382,7 @@ TEST(VerilogMatchers, HasGenerateBlockTests) {
 
 // Tests for integration between NodekGenerateBlock and HasBeginLabel
 TEST(VerilogMatchers, GenerateBlockHasBeginLabelTests) {
-  const verible::matcher::RawMatcherTestCase tests[] = {
+  const RawMatcherTestCase tests[] = {
       {NodekGenerateBlock(verible::matcher::Unless(HasBeginLabel())),
        EmbedInModule("generate\n"
                      "if (TypeIsPosedge) begin\n"
@@ -402,7 +404,7 @@ TEST(VerilogMatchers, GenerateBlockHasBeginLabelTests) {
 
 // Tests for NodekAlwaysStatement matching
 TEST(VerilogMatchers, AlwaysStatementNodeTests) {
-  const verible::matcher::RawMatcherTestCase tests[] = {
+  const RawMatcherTestCase tests[] = {
       {NodekAlwaysStatement(), EmbedInModule(""), 0},
       {NodekAlwaysStatement(), EmbedInModule("initial begin a <= 0; end"), 0},
       {NodekAlwaysStatement(), EmbedInModule("always_ff begin a <= b; end"), 1},
@@ -424,7 +426,7 @@ TEST(VerilogMatchers, AlwaysStatementNodeTests) {
 
 // Tests for AlwaysKeyword matching
 TEST(VerilogMatchers, AlwaysKeywordTests) {
-  const verible::matcher::RawMatcherTestCase tests[] = {
+  const RawMatcherTestCase tests[] = {
       {AlwaysKeyword(), EmbedInModule(""), 0},
       {AlwaysKeyword(), EmbedInModule("initial begin a <= 0; end"), 0},
       {AlwaysKeyword(), EmbedInModule("always_ff begin a <= b; end"), 0},
@@ -444,7 +446,7 @@ TEST(VerilogMatchers, AlwaysKeywordTests) {
 
 // Tests for AlwaysCombKeyword matching
 TEST(VerilogMatchers, AlwaysCombKeywordTests) {
-  const verible::matcher::RawMatcherTestCase tests[] = {
+  const RawMatcherTestCase tests[] = {
       {AlwaysCombKeyword(), EmbedInModule(""), 0},
       {AlwaysCombKeyword(), EmbedInModule("initial begin a <= 0; end"), 0},
       {AlwaysCombKeyword(), EmbedInModule("always_ff begin a <= b; end"), 0},
@@ -464,7 +466,7 @@ TEST(VerilogMatchers, AlwaysCombKeywordTests) {
 
 // Tests for AlwaysFFKeyword matching
 TEST(VerilogMatchers, AlwaysFFKeywordTests) {
-  const verible::matcher::RawMatcherTestCase tests[] = {
+  const RawMatcherTestCase tests[] = {
       {AlwaysFFKeyword(), EmbedInModule(""), 0},
       {AlwaysFFKeyword(), EmbedInModule("initial begin a <= 0; end"), 0},
       {AlwaysFFKeyword(), EmbedInModule("always_ff begin a <= b; end"), 1},
@@ -484,7 +486,7 @@ TEST(VerilogMatchers, AlwaysFFKeywordTests) {
 
 // Tests for AlwaysStatementHasEventControlStar matching
 TEST(VerilogMatchers, AlwaysStatementHasEventControlStarTests) {
-  const verible::matcher::RawMatcherTestCase tests[] = {
+  const RawMatcherTestCase tests[] = {
       {AlwaysStatementHasEventControlStar(), EmbedInModule(""), 0},
       {AlwaysStatementHasEventControlStar(),
        EmbedInModule("initial begin a <= 0; end"), 0},
@@ -509,7 +511,7 @@ TEST(VerilogMatchers, AlwaysStatementHasEventControlStarTests) {
 
 // Tests that matcher finds left-hand-sides of assignments.
 TEST(VerilogMatchers, PathkLPValueTests) {
-  const verible::matcher::RawMatcherTestCase tests[] = {
+  const RawMatcherTestCase tests[] = {
       {PathkLPValue(), EmbedInClassMethod(""), 0},
       {PathkLPValue(), EmbedInClassMethod("foo();"), 0},
       {PathkLPValue(), EmbedInClassMethod("x = 1;"), 1},
@@ -531,7 +533,7 @@ TEST(VerilogMatchers, PathkLPValueTests) {
 
 // Tests that matcher finds assignments values that are function calls.
 TEST(VerilogMatchers, RValueIsFunctionCallTest) {
-  const verible::matcher::RawMatcherTestCase tests[] = {
+  const RawMatcherTestCase tests[] = {
       {RValueIsFunctionCall(), EmbedInModule(""), 0},
       {RValueIsFunctionCall(), EmbedInClassMethod(""), 0},
       {RValueIsFunctionCall(), EmbedInClassMethod("x = 1;"), 0},
@@ -552,7 +554,7 @@ TEST(VerilogMatchers, RValueIsFunctionCallTest) {
 
 // Tests that qualified function calls are found.
 TEST(VerilogMatchers, FunctionCallIsQualifiedTest) {
-  const verible::matcher::RawMatcherTestCase tests[] = {
+  const RawMatcherTestCase tests[] = {
       {FunctionCallIsQualified(), EmbedInModule(""), 0},
       {FunctionCallIsQualified(), EmbedInClassMethod(""), 0},
       {FunctionCallIsQualified(), EmbedInClassMethod("x = 1;"), 0},
@@ -574,7 +576,7 @@ TEST(VerilogMatchers, FunctionCallIsQualifiedTest) {
 
 // Tests that assignments to qualified function calls are found.
 TEST(VerilogMatchers, RValueFunctionCallIsQualifiedTest) {
-  const verible::matcher::RawMatcherTestCase tests[] = {
+  const RawMatcherTestCase tests[] = {
       {RValueIsFunctionCall(FunctionCallIsQualified()), EmbedInModule(""), 0},
       {RValueIsFunctionCall(FunctionCallIsQualified()), EmbedInClassMethod(""),
        0},
@@ -621,7 +623,7 @@ TEST(VerilogMatchers, RValueFunctionCallIsQualifiedTest) {
 
 // Tests that function call arguments are matched.
 TEST(VerilogMatchers, FunctionCallArgumentsTest) {
-  const verible::matcher::RawMatcherTestCase tests[] = {
+  const RawMatcherTestCase tests[] = {
       {FunctionCallArguments(), EmbedInModule(""), 0},
       {FunctionCallArguments(), EmbedInClassMethod(""), 0},
       {FunctionCallArguments(), EmbedInClassMethod("a = 1 + 2;"), 0},
@@ -642,7 +644,7 @@ TEST(VerilogMatchers, FunctionCallArgumentsTest) {
 
 // Tests that ranged dimensions are matched.
 TEST(VerilogMatchers, DeclarationDimensionsHasRanges) {
-  const verible::matcher::RawMatcherTestCase tests[] = {
+  const RawMatcherTestCase tests[] = {
       {DeclarationDimensionsHasRanges(), "", 0},
       {DeclarationDimensionsHasRanges(), EmbedInModule(""), 0},
       {DeclarationDimensionsHasRanges(), "wire w;", 0},
@@ -661,7 +663,7 @@ TEST(VerilogMatchers, DeclarationDimensionsHasRanges) {
 
 // Tests for HasDefaultCase matching.
 TEST(VerilogMatchers, HasDefaultCaseTests) {
-  const verible::matcher::RawMatcherTestCase tests[] = {
+  const RawMatcherTestCase tests[] = {
       {HasDefaultCase(), "", 0},
       {HasDefaultCase(),
        R"(

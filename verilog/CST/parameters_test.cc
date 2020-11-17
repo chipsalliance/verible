@@ -49,38 +49,40 @@ using verible::TreeSearchMatch;
 
 // Tests that the correct amount of kParameterDeclarations are found.
 TEST(FindAllParamDeclarationsTest, BasicParams) {
-  const std::pair<std::string, int> kTestCases[] = {
-      {"", 0},
-      {"module foo; endmodule", 0},
-      {"module foo (input bar); endmodule", 0},
-      {"module foo; localparam Bar = 1; endmodule", 1},
-      {"module foo; localparam int Bar = 1; endmodule", 1},
-      {"module foo; parameter int Bar = 1; endmodule", 1},
-      {"module foo #(parameter int Bar = 1); endmodule", 1},
-      {"module foo; localparam int Bar = 1; localparam int BarSecond = 2; "
-       "endmodule",
-       2},
-      {"class foo; localparam int Bar = 1; endclass", 1},
-      {"class foo #(parameter int Bar = 1); endclass", 1},
-      {"package foo; parameter Bar = 1; endpackage", 1},
-      {"package foo; parameter int Bar = 1; endpackage", 1},
-      {"parameter int Bar = 1;", 1},
-      {"parameter Bar = 1;", 1},
+  constexpr int kTag = 1;  // don't care
+  const SyntaxTreeSearchTestCase kTestCases[] = {
+      {""},
+      {"module foo; endmodule"},
+      {"module foo (input bar); endmodule"},
+      {"module foo; ", {kTag, "localparam Bar = 1;"}, " endmodule"},
+      {"module foo; ", {kTag, "localparam int Bar = 1;"}, " endmodule"},
+      {"module foo; ", {kTag, "parameter int Bar = 1;"}, " endmodule"},
+      {"module foo #(", {kTag, "parameter int Bar = 1"}, "); endmodule"},
+      {"module foo; ",
+       {kTag, "localparam int Bar = 1;"},
+       " ",
+       {kTag, "localparam int BarSecond = 2;"},
+       " endmodule"},
+      {"class foo; ", {kTag, "localparam int Bar = 1;"}, " endclass"},
+      {"class foo #(", {kTag, "parameter int Bar = 1"}, "); endclass"},
+      {"package foo; ", {kTag, "parameter Bar = 1;"}, " endpackage"},
+      {"package foo; ", {kTag, "parameter int Bar = 1;"}, " endpackage"},
+      {{kTag, "parameter int Bar = 1;"}},
+      {{kTag, "parameter Bar = 1;"}},
   };
   for (const auto& test : kTestCases) {
-    VerilogAnalyzer analyzer(test.first, "");
-    ASSERT_OK(analyzer.Analyze());
-    const auto& root = analyzer.Data().SyntaxTree();
-    const auto param_declarations =
-        FindAllParamDeclarations(*ABSL_DIE_IF_NULL(root));
-    EXPECT_EQ(param_declarations.size(), test.second);
+    TestVerilogSyntaxRangeMatches(
+        __FUNCTION__, test, [](const TextStructureView& text_structure) {
+          const auto& root = text_structure.SyntaxTree();
+          return FindAllParamDeclarations(*ABSL_DIE_IF_NULL(root));
+        });
   }
 }
 
 // Tests that GetParamKeyword correctly returns that the parameter type is
 // localparam.
 TEST(GetParamKeywordTest, LocalParamDeclared) {
-  const std::pair<std::string, int> kTestCases[] = {
+  constexpr std::pair<absl::string_view, int> kTestCases[] = {
       {"module foo; localparam int Bar = 1; endmodule", 1},
       {"class foo; localparam int Bar = 1; endclass", 1},
       {"module foo; localparam Bar = 1; endmodule", 1},
@@ -101,7 +103,7 @@ TEST(GetParamKeywordTest, LocalParamDeclared) {
 // Tests that GetParamKeyword correctly returns that the parameter type is
 // parameter.
 TEST(GetParamKeywordTest, ParameterDeclared) {
-  const std::pair<std::string, int> kTestCases[] = {
+  constexpr std::pair<absl::string_view, int> kTestCases[] = {
       {"module foo; parameter int Bar = 1; endmodule", 1},
       {"module foo #(parameter int Bar = 1); endmodule", 1},
       {"module foo #(int Bar = 1); endmodule", 1},
@@ -129,7 +131,7 @@ TEST(GetParamKeywordTest, ParameterDeclared) {
 // Tests that GetParamKeyword correctly returns the parameter type when multiple
 // parameters are defined.
 TEST(GetParamKeywordTest, MultipleParamsDeclared) {
-  const std::string kTestCases[] = {
+  constexpr absl::string_view kTestCases[] = {
       {"module foo; parameter int Bar = 1; localparam int Bar_2 = 2; "
        "endmodule"},
       {"class foo; parameter int Bar = 1; localparam int Bar_2 = 2; endclass"},
@@ -156,7 +158,7 @@ TEST(GetParamKeywordTest, MultipleParamsDeclared) {
 
 // Tests that GetParamTypeSymbol correctly returns the kParamType node.
 TEST(GetParamTypeSymbolTest, BasicTests) {
-  const std::string kTestCases[] = {
+  constexpr absl::string_view kTestCases[] = {
       {"module foo; parameter Bar = 1; endmodule"},
       {"module foo; parameter int Bar = 1; endmodule"},
       {"module foo #(parameter int Bar = 1); endmodule"},
@@ -182,7 +184,7 @@ TEST(GetParamTypeSymbolTest, BasicTests) {
 // Tests that GetParameterNameToken correctly returns the token of the
 // parameter.
 TEST(GetParameterNameTokenTest, BasicTests) {
-  const std::pair<std::string, absl::string_view> kTestCases[] = {
+  constexpr std::pair<absl::string_view, absl::string_view> kTestCases[] = {
       {"module foo; parameter Bar = 1; endmodule", "Bar"},
       {"module foo; localparam Bar_1 = 1; endmodule", "Bar_1"},
       {"module foo; localparam int HelloWorld = 1; endmodule", "HelloWorld"},
@@ -207,7 +209,7 @@ TEST(GetParameterNameTokenTest, BasicTests) {
 
 // Test that GetAllParameterNameTokens correctly returns all tokens
 TEST(GetAllParameterNameTokensTest, BasicTests) {
-  const std::pair<std::string, int> kTestCases[] = {
+  constexpr std::pair<absl::string_view, int> kTestCases[] = {
       {"module foo; parameter Bar = 1; endmodule", 1},
       {"module foo; localparam Bar_1 = 1; endmodule", 1},
       {"module foo; localparam int HelloWorld = 1; endmodule", 1},
@@ -239,7 +241,7 @@ TEST(GetAllParameterNameTokensTest, BasicTests) {
 // Tests that GetAllAssignedParameterSymbols correctly returns all the
 // symbols for each kParameterAssign node
 TEST(GetAllAssignedParameterSymbolsTest, BasicTests) {
-  const std::pair<std::string, int> kTestCases[] = {
+  constexpr std::pair<absl::string_view, int> kTestCases[] = {
       {"module foo; parameter Bar = 1; endmodule", 0},
       {"module foo; localparam Bar_1 = 1; endmodule", 0},
       {"module foo; localparam int HelloWorld = 1; endmodule", 0},
@@ -269,7 +271,7 @@ TEST(GetAllAssignedParameterSymbolsTest, BasicTests) {
 }
 
 TEST(GetAssignedParameterNameToken, BasicTests) {
-  const std::pair<std::string, absl::string_view> kTestCases[] = {
+  constexpr std::pair<absl::string_view, absl::string_view> kTestCases[] = {
       {"parameter int Bar = 1, Foo = 1;", "Foo"},
       {"module foo; parameter int Bar = 1, Fox = 1; endmodule;", "Fox"},
   };
@@ -292,7 +294,7 @@ TEST(GetAssignedParameterNameToken, BasicTests) {
 // Tests that GetSymbolIdentifierFromParamDeclaration correctly returns the
 // token of the symbol identifier.
 TEST(GetSymbolIdentifierFromParamDeclarationTest, BasicTests) {
-  const std::pair<std::string, absl::string_view> kTestCases[] = {
+  constexpr std::pair<absl::string_view, absl::string_view> kTestCases[] = {
       {"module foo; parameter type Bar; endmodule", "Bar"},
       {"module foo; localparam type Bar_1; endmodule", "Bar_1"},
       {"module foo #(parameter type HelloWorld1); endmodule", "HelloWorld1"},
@@ -316,7 +318,7 @@ TEST(GetSymbolIdentifierFromParamDeclarationTest, BasicTests) {
 // Tests that IsParamTypeDeclaration correctly returns true if the parameter is
 // a parameter type declaration.
 TEST(IsParamTypeDeclarationTest, BasicTests) {
-  const std::pair<std::string, bool> kTestCases[] = {
+  constexpr std::pair<absl::string_view, bool> kTestCases[] = {
       {"module foo; parameter type Bar; endmodule", true},
       {"module foo; localparam type Bar_1; endmodule", true},
       {"module foo #(parameter type HelloWorld1); endmodule", true},
@@ -346,7 +348,7 @@ TEST(IsParamTypeDeclarationTest, BasicTests) {
 // Tests that GetTypeAssignmentFromParamDeclaration correctly returns the
 // kTypeAssignment node.
 TEST(GetTypeAssignmentFromParamDeclarationTests, BasicTests) {
-  const std::string kTestCases[] = {
+  constexpr absl::string_view kTestCases[] = {
       {"module foo; parameter type Bar = 1; endmodule"},
       {"module foo #(parameter type Bar = 1); endmodule"},
       {"module foo; localparam type Bar = 1; endmodule"},
@@ -376,32 +378,38 @@ TEST(GetTypeAssignmentFromParamDeclarationTests, BasicTests) {
 // Tests that GetIdentifierLeafFromTypeAssignment correctly returns the
 // SyntaxTreeLeaf of the symbol identifier.
 TEST(GetIdentifierLeafFromTypeAssignmentTest, BasicTests) {
-  const std::pair<std::string, absl::string_view> kTestCases[] = {
-      {"module foo; parameter type Bar; endmodule", "Bar"},
-      {"module foo; localparam type Bar_1; endmodule", "Bar_1"},
-      {"module foo #(parameter type HelloWorld1); endmodule", "HelloWorld1"},
-      {"class foo #(parameter type Bar); endclass", "Bar"},
-      {"class foo; parameter type HelloWorld_1; endclass", "HelloWorld_1"},
-      {"class foo; localparam type Bar_1_1; endclass", "Bar_1_1"},
-      {"package foo; parameter type HELLO_WORLD; endpackage", "HELLO_WORLD"},
-      {"parameter type Bar;", "Bar"},
+  constexpr int kTag = 1;  // don't care
+  const SyntaxTreeSearchTestCase kTestCases[] = {
+      {"module foo; parameter type ", {kTag, "Bar"}, "; endmodule"},
+      {"module foo; localparam type ", {kTag, "Bar_1"}, "; endmodule"},
+      {"module foo #(parameter type ", {kTag, "HelloWorld1"}, "); endmodule"},
+      {"class foo #(parameter type ", {kTag, "Bar"}, "); endclass"},
+      {"class foo; parameter type ", {kTag, "HelloWorld_1"}, "; endclass"},
+      {"class foo; localparam type ", {kTag, "Bar_1_1"}, "; endclass"},
+      {"package foo; parameter type ", {kTag, "HELLO_WORLD"}, "; endpackage"},
+      {"parameter type ", {kTag, "Bar"}, ";"},
   };
   for (const auto& test : kTestCases) {
-    VerilogAnalyzer analyzer(test.first, "");
-    ASSERT_OK(analyzer.Analyze());
-    const auto& root = analyzer.Data().SyntaxTree();
-    const auto param_declarations = FindAllParamDeclarations(*root);
-    const auto* type_assignment_symbol = GetTypeAssignmentFromParamDeclaration(
-        *param_declarations.front().match);
-    const auto* identifier_leaf =
-        GetIdentifierLeafFromTypeAssignment(*type_assignment_symbol);
-    EXPECT_EQ(identifier_leaf->get().text(), test.second);
+    TestVerilogSyntaxRangeMatches(
+        __FUNCTION__, test, [](const TextStructureView& text_structure) {
+          const auto& root = text_structure.SyntaxTree();
+          const auto param_declarations = FindAllParamDeclarations(*root);
+          std::vector<TreeSearchMatch> ids;
+          for (const auto& decl : param_declarations) {
+            const auto* type_assignment_symbol =
+                GetTypeAssignmentFromParamDeclaration(*decl.match);
+            ids.push_back(TreeSearchMatch{
+                GetIdentifierLeafFromTypeAssignment(*type_assignment_symbol),
+                /* no context */});
+          }
+          return ids;
+        });
   }
 }
 
 // Tests that GetParamTypeInfoSymbol correctly returns the kTypeInfo node.
 TEST(GetParamTypeInfoSymbolTest, BasicTests) {
-  const std::string kTestCases[] = {
+  constexpr absl::string_view kTestCases[] = {
       {"module foo; parameter Bar = 1; endmodule"},
       {"module foo; parameter int Bar = 1; endmodule"},
       {"module foo #(parameter int Bar = 1); endmodule"},
@@ -425,7 +433,7 @@ TEST(GetParamTypeInfoSymbolTest, BasicTests) {
 }
 
 TEST(IsTypeInfoEmptyTest, EmptyTests) {
-  const std::string kTestCases[] = {
+  constexpr absl::string_view kTestCases[] = {
       {"module foo; parameter Bar = 1; endmodule"},
       {"module foo #(parameter Bar = 1); endmodule"},
       {"module foo; localparam Bar = 1; endmodule"},
@@ -449,7 +457,7 @@ TEST(IsTypeInfoEmptyTest, EmptyTests) {
 }
 
 TEST(IsTypeInfoEmptyTest, NonEmptyTests) {
-  const std::string kTestCases[] = {
+  constexpr absl::string_view kTestCases[] = {
       {"module foo; localparam bit Bar = 1; endmodule"},
       {"module foo #(parameter int Bar = 1); endmodule"},
       {"module foo; parameter int Bar = 1; endmodule"},

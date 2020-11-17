@@ -49,11 +49,8 @@
 namespace verilog {
 namespace {
 
-using verible::down_cast;
-using verible::SyntaxTreeNode;
 using verible::SyntaxTreeSearchTestCase;
 using verible::TextStructureView;
-using verible::TokenInfoTestData;
 using verible::TreeSearchMatch;
 
 TEST(FindAllModuleDeclarationsTest, EmptySource) {
