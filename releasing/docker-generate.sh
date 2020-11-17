@@ -38,9 +38,10 @@ RUN \
 RUN apt-get install -y \
     bazel \
     build-essential \
-    gcc \
-    g++ \
     file \
+    g++ \
+    gcc \
+    git \
     lsb-release \
     wget \
 
@@ -75,9 +76,9 @@ FROM centos:$CENTOS_VERSION
 
 RUN yum install -y \
     file \
+    git \
     redhat-lsb \
     tar \
-    git \
     wget \
 
 EOF
