@@ -22,23 +22,36 @@ GIT_DATE=${GIT_DATE:-$(git show -s --format=%ci)}
 GIT_VERSION=${GIT_VERSION:-$(git describe --match=v*)}
 GIT_HASH=${GIT_HASH:-$(git rev-parse HEAD)}
 
+if [ -z "${BAZEL_VERSION}" ]; then
+	echo "Make sure that \$BAZEL_VERSION is set."
+	exit 1
+fi
+if [ -z "${BAZEL_CXXOPTS}" ]; then
+	echo "Make sure that \$BAZEL_CXXOPTS ($BAZEL_CXXOPTS) is set."
+	exit 1
+fi
+BAZEL_LINKOPTS="-static-libstdc++:-lm"
+BAZEL_LINKLIBS="-l%:libstdc++.a"
+
 # Generate the docker files for ubuntu versions
 for UBUNTU_VERSION in trusty xenial bionic eoan focal; do
     cat > ubuntu-${UBUNTU_VERSION}/Dockerfile <<EOF
 FROM ubuntu:$UBUNTU_VERSION
 
 RUN apt-get update
-RUN apt-get install -y curl gnupg software-properties-common
+RUN apt-get install -y curl gnupg software-properties-common wget
 
 RUN \
-    curl https://bazel.build/bazel-release.pub.gpg | apt-key add - ; \
-    echo "deb [arch=amd64] http://storage.googleapis.com/bazel-apt stable jdk1.8" | tee /etc/apt/sources.list.d/bazel.list ; \
-    apt-get update
+    wget "https://github.com/bazelbuild/bazel/releases/download/${BAZEL_VERSION}/bazel_${BAZEL_VERSION}-linux-x86_64.deb" -O /tmp/bazel.deb; \
+    dpkg -i /tmp/bazel.deb || true; \
+    apt-get -f install -y
 
 RUN apt-get install -y \
     bazel \
+    bison \
     build-essential \
     file \
+    flex \
     g++ \
     gcc \
     git \
@@ -60,8 +73,9 @@ RUN ln -sf /usr/bin/gcc-6 /usr/bin/gcc
 RUN ln -sf /usr/bin/g++-6 /usr/bin/g++
 
 # Link libstdc++ statically
-ENV BAZEL_LINKOPTS "-static-libstdc++:-lm"
-ENV BAZEL_LINKLIBS "-l%:libstdc++.a"
+ENV BAZEL_CXXOPTS "${BAZEL_CXXOPTS}"
+ENV BAZEL_LINKOPTS "${BAZEL_LINKOPTS}"
+ENV BAZEL_LINKLIBS "${BAZEL_LINKLIBS}"
 EOF
             ;;
     esac
@@ -93,8 +107,9 @@ RUN yum install -y --nogpgcheck devtoolset-7
 SHELL [ "scl", "enable", "devtoolset-7" ]
 
 # Link libstdc++ statically
-ENV BAZEL_LINKOPTS "-static-libstdc++:-lm -static-libstdc++:-lrt"
-ENV BAZEL_LINKLIBS "-l%:libstdc++.a"
+ENV BAZEL_CXXOPTS "${BAZEL_CSSOPTS}"
+ENV BAZEL_LINKOPTS "${BAZEL_LINKOPTS} -static-libstdc++:-lrt"
+ENV BAZEL_LINKLIBS "${BAZEL_LINKLIBS}"
 EOF
             ;;
         8)
@@ -128,10 +143,10 @@ RUN python --version
 RUN python3 --version
 
 # Build bazel
-RUN wget https://github.com/bazelbuild/bazel/releases/download/2.1.0/bazel-2.1.0-dist.zip
-RUN unzip bazel-2.1.0-dist.zip -d bazel-2.1.0-dist
-RUN cd bazel-2.1.0-dist; ./compile.sh
-RUN cp bazel-2.1.0-dist/output/bazel /usr/local/bin
+RUN wget https://github.com/bazelbuild/bazel/releases/download/${BAZEL_VERSION}/bazel-${BAZEL_VERSION}-dist.zip
+RUN unzip bazel-${BAZEL_VERSION}-dist.zip -d bazel-${BAZEL_VERSION}-dist
+RUN cd bazel-${BAZEL_VERSION}-dist; ./compile.sh
+RUN cp bazel-${BAZEL_VERSION}-dist/output/bazel /usr/local/bin
 RUN bazel --version
 
 SHELL [ "scl", "enable", "devtoolset-7" ]
