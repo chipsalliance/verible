@@ -17,7 +17,7 @@ set -x
 set -e
 
 DIRS=${1:-$(find -mindepth 1 -maxdepth 1 -type d)}
-export TAG=${TAG:-$(git rev-parse --short "$GITHUB_SHA")}
+export TAG=${TAG:-$(git describe --match=v*)}
 
 ./docker-generate.sh $DIRS
 

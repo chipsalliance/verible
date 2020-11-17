@@ -19,7 +19,7 @@ DIRS=${1:-$(find -mindepth 1 -maxdepth 1 -type d)}
 
 REPO_SLUG=${GITHUB_REPOSITORY_SLUG:-google/verible}
 GIT_DATE=${GIT_DATE:-$(git show -s --format=%ci)}
-GIT_VERSION=${GIT_VERSION:-$(git rev-parse --short "$GITHUB_SHA")}
+GIT_VERSION=${GIT_VERSION:-$(git describe --match=v*)}
 GIT_HASH=${GIT_HASH:-$(git rev-parse HEAD)}
 
 # Generate the docker files for ubuntu versions
