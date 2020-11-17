@@ -28,7 +28,7 @@ for UBUNTU_VERSION in trusty xenial bionic eoan focal; do
 FROM ubuntu:$UBUNTU_VERSION
 
 RUN apt-get update
-RUN apt-get install -y curl gnupg software-properties-common
+RUN DEBIAN_FRONTEND="noninteractive" apt-get install -y curl gnupg software-properties-common git flex bison
 
 RUN \
     curl https://bazel.build/bazel-release.pub.gpg | apt-key add - ; \
@@ -46,17 +46,19 @@ RUN apt-get install -y \
 
 EOF
     case $UBUNTU_VERSION in
-        trusty)
+        trusty|xenial)
             cat >> ubuntu-${UBUNTU_VERSION}/Dockerfile <<EOF
-# Get a newer GCC version
+# Get a newer GCC and flex version
+RUN echo "deb http://archive.ubuntu.com/ubuntu/ xenial main restricted" >> /etc/apt/sources.list
 RUN add-apt-repository ppa:ubuntu-toolchain-r/test; \
     apt-get update
 RUN apt-get install -y \
-    gcc-6 \
-    g++-6 \
+    gcc-7 \
+    g++-7 \
+    flex \
 
-RUN ln -sf /usr/bin/gcc-6 /usr/bin/gcc
-RUN ln -sf /usr/bin/g++-6 /usr/bin/g++
+RUN ln -sf /usr/bin/gcc-7 /usr/bin/gcc
+RUN ln -sf /usr/bin/g++-7 /usr/bin/g++
 
 # Link libstdc++ statically
 ENV BAZEL_LINKOPTS "-static-libstdc++:-lm"
@@ -79,6 +81,8 @@ RUN yum install -y \
     tar \
     git \
     wget \
+    flex \
+    bison \
 
 EOF
 
@@ -127,10 +131,10 @@ RUN python --version
 RUN python3 --version
 
 # Build bazel
-RUN wget https://github.com/bazelbuild/bazel/releases/download/2.1.0/bazel-2.1.0-dist.zip
-RUN unzip bazel-2.1.0-dist.zip -d bazel-2.1.0-dist
-RUN cd bazel-2.1.0-dist; ./compile.sh
-RUN cp bazel-2.1.0-dist/output/bazel /usr/local/bin
+RUN wget https://github.com/bazelbuild/bazel/releases/download/2.2.0/bazel-2.2.0-dist.zip
+RUN unzip bazel-2.2.0-dist.zip -d bazel-2.2.0-dist
+RUN cd bazel-2.2.0-dist; ./compile.sh
+RUN cp bazel-2.2.0-dist/output/bazel /usr/local/bin
 RUN bazel --version
 
 SHELL [ "scl", "enable", "devtoolset-7" ]
@@ -139,7 +143,7 @@ EOF
         7|8)
             cat >> centos-${CENTOS_VERSION}/Dockerfile <<EOF
 ADD https://copr.fedorainfracloud.org/coprs/vbatts/bazel/repo/epel-${CENTOS_VERSION}/vbatts-bazel-epel-${CENTOS_VERSION}.repo /etc/yum.repos.d
-RUN yum install -y --nogpgcheck bazel
+RUN yum install -y --nogpgcheck bazel3
 EOF
     esac
 
