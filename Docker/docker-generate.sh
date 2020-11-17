@@ -17,9 +17,9 @@ set -e
 
 DIRS=${1:-$(find -mindepth 1 -maxdepth 1 -type d)}
 
-REPO_SLUG=${TRAVIS_REPO_SLUG:-google/verible}
+REPO_SLUG=${GITHUB_REPOSITORY_SLUG:-google/verible}
 GIT_DATE=${GIT_DATE:-$(git show -s --format=%ci)}
-GIT_VERSION=${GIT_VERSION:-$(git describe --match=v*)}
+GIT_VERSION=${GIT_VERSION:-$(git rev-parse --short "$GITHUB_SHA")}
 GIT_HASH=${GIT_HASH:-$(git rev-parse HEAD)}
 
 # Generate the docker files for ubuntu versions
@@ -176,8 +176,8 @@ RUN echo $GIT_DATE
 RUN echo $GIT_HASH
 RUN echo $GIT_VERSION
 
-RUN ./.github/travis/github-pages-setup.sh
-RUN ./.github/travis/github-releases-setup.sh /out/
+RUN ./.github/workflows/github-pages-setup.sh
+RUN ./.github/workflows/github-releases-setup.sh /out/
 EOF
 done
 

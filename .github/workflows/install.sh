@@ -13,14 +13,23 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-find -L -name \*.log
-for F in $(find -L -name \*.log); do
-    echo
-    export FOLD_NAME=$(echo $F | sed -e's/[^A-Za-z0-9]/_/g')
-    travis_fold start $FOLD_NAME
-    echo -e "\n\n$F\n--------------"
-    cat $F
-    echo "--------------"
-    travis_fold end $FOLD_NAME
-    echo
-done
+set -x
+set -e
+export TAG=${TAG:-$(git rev-parse --short "$GITHUB_SHA")}
+
+case $MODE in
+compile|test)
+    ./.github/workflows/set-compiler.sh 9
+    ./.github/workflows/install-bazel.sh
+    git fetch --tags
+    ;;
+
+bin)
+    docker pull $OS:$OS_VERSION
+    ;;
+
+*)
+    echo "install.sh: Unknown mode $MODE"
+    exit 1
+    ;;
+esac

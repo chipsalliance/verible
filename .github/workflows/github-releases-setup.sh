@@ -20,7 +20,7 @@
 RELEASE_DIR=${1:-/tmp/releases}
 rm -rf $RELEASE_DIR
 
-GIT_VERSION=${GIT_VERSION:-$(git describe --match=v*)}
+GIT_VERSION=${GIT_VERSION:-$(git rev-parse --short "$GITHUB_SHA")}
 
 PREFIX=$RELEASE_DIR/verible-$GIT_VERSION
 PREFIX_BIN=$PREFIX/bin
