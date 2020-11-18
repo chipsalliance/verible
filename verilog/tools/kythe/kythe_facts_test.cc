@@ -165,7 +165,7 @@ TEST(EdgeTest, FormatJSON) {
     "root": "",
     "corpus": ""
   },
-  "fact_name": ""
+  "fact_name": "/"
 })");
 }
 

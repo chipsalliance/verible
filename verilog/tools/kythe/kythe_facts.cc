@@ -138,7 +138,7 @@ std::ostream& Edge::FormatJSON(std::ostream& stream, bool debug,
     stream << idt << "\"target\": ";
     target_node.FormatJSON(stream, debug, indent_more) << ",\n";
   }
-  { stream << idt << "\"fact_name\": \"\"\n"; }
+  { stream << idt << "\"fact_name\": \"/\"\n"; }
   return stream << verible::Spacer(indentation) << "}";
 }
 
