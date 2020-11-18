@@ -30,6 +30,7 @@ if [ -z "${BAZEL_CXXOPTS}" ]; then
 	echo "Make sure that \$BAZEL_CXXOPTS ($BAZEL_CXXOPTS) is set."
 	exit 1
 fi
+# Link libstdc++ statically
 BAZEL_LINKOPTS="-static-libstdc++:-lm"
 BAZEL_LINKLIBS="-l%:libstdc++.a"
 
@@ -72,7 +73,7 @@ RUN apt-get install -y \
 RUN ln -sf /usr/bin/gcc-6 /usr/bin/gcc
 RUN ln -sf /usr/bin/g++-6 /usr/bin/g++
 
-# Link libstdc++ statically
+ENV BAZEL_OPTS "${BAZEL_OPTS}"
 ENV BAZEL_CXXOPTS "${BAZEL_CXXOPTS}"
 ENV BAZEL_LINKOPTS "${BAZEL_LINKOPTS}"
 ENV BAZEL_LINKLIBS "${BAZEL_LINKLIBS}"
@@ -106,7 +107,7 @@ RUN yum install -y --nogpgcheck centos-release-scl
 RUN yum install -y --nogpgcheck devtoolset-7
 SHELL [ "scl", "enable", "devtoolset-7" ]
 
-# Link libstdc++ statically
+ENV BAZEL_OPTS "${BAZEL_OPTS}"
 ENV BAZEL_CXXOPTS "${BAZEL_CSSOPTS}"
 ENV BAZEL_LINKOPTS "${BAZEL_LINKOPTS} -static-libstdc++:-lrt"
 ENV BAZEL_LINKLIBS "${BAZEL_LINKLIBS}"
@@ -186,7 +187,7 @@ ENV GIT_HASH $GIT_HASH
 
 ADD verible-$GIT_VERSION.tar.gz /src/verible
 WORKDIR /src/verible/verible-$GIT_VERSION
-RUN bazel build --workspace_status_command=bazel/build-version.sh -c opt //...
+RUN bazel build --workspace_status_command=bazel/build-version.sh $BAZEL_OPTS //...
 RUN echo $REPO_SLUG
 RUN echo $GIT_DATE
 RUN echo $GIT_HASH

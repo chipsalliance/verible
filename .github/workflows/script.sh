@@ -20,11 +20,11 @@ source ./.github/settings.sh
 
 case "$MODE" in
 test)
-    bazel test -c opt $BAZEL_OPTS $BAZEL_CXXOPTS //...
+    bazel test $BAZEL_OPTS //...
     ;;
 
 compile)
-    bazel build -c opt $BAZEL_OPTS $BAZEL_CXXOPTS //...
+    bazel build $BAZEL_OPTS //...
     ;;
 
 bin)
