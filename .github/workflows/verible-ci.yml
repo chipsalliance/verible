@@ -39,7 +39,7 @@ jobs:
             FOLDER: /tmp/pages
             CLEAN: true
 
-   Deploy:
+   Release:
       runs-on: ubuntu-16.04
       strategy:
         fail-fast: false
