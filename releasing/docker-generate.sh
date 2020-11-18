@@ -118,6 +118,8 @@ EOF
             export BAZEL_LINKOPTS="$BAZEL_LINKOPTS -static-libstdc++:-lrt"
 
             cat >> centos-${CENTOS_VERSION}/Dockerfile <<EOF
+RUN yum -y install flex
+
 # Get a newer GCC version
 RUN yum install -y --nogpgcheck centos-release-scl
 RUN yum install -y --nogpgcheck devtoolset-7
@@ -126,6 +128,8 @@ EOF
             ;;
         8)
             cat >> centos-${CENTOS_VERSION}/Dockerfile <<EOF
+RUN yum -y install flex
+
 # Install C++ compiler
 RUN yum -y group install --nogpgcheck "Development Tools" || yum -y groupinstall --nogpgcheck "Development Tools"
 RUN gcc --version
