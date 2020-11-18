@@ -36,7 +36,7 @@ BAZEL_LINKLIBS="-l%:libstdc++.a"
 
 # Generate the docker files for ubuntu versions
 # ==================================================================
-for UBUNTU_VERSION in trusty xenial bionic eoan focal; do
+for UBUNTU_VERSION in xenial bionic eoan focal; do
     # Install basic tools
     # --------------------------------------------------------------
     cat > ubuntu-${UBUNTU_VERSION}/Dockerfile <<EOF
@@ -65,22 +65,6 @@ RUN apt-get install -y \
     gcc \
 
 EOF
-
-    case $UBUNTU_VERSION in
-        trusty)
-            cat >> ubuntu-${UBUNTU_VERSION}/Dockerfile <<EOF
-# Get a newer GCC version
-RUN add-apt-repository ppa:ubuntu-toolchain-r/test; \
-    apt-get update
-RUN apt-get install -y \
-    gcc-6 \
-    g++-6 \
-
-RUN ln -sf /usr/bin/gcc-6 /usr/bin/gcc
-RUN ln -sf /usr/bin/g++-6 /usr/bin/g++
-EOF
-            ;;
-    esac
 
     # Install Bazel
     # --------------------------------------------------------------

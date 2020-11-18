@@ -45,7 +45,6 @@ jobs:
         fail-fast: false
         matrix:
           env:
-            - { MODE: bin, OS: ubuntu, OS_VERSION: trusty }
             - { MODE: bin, OS: ubuntu, OS_VERSION: xenial }
             - { MODE: bin, OS: ubuntu, OS_VERSION: bionic }
             - { MODE: bin, OS: ubuntu, OS_VERSION: eoan }
