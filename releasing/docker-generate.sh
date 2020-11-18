@@ -46,6 +46,9 @@ for UBUNTU_VERSION in xenial bionic eoan focal groovy; do
     cat > ubuntu-${UBUNTU_VERSION}/Dockerfile <<EOF
 FROM ubuntu:$UBUNTU_VERSION
 
+ENV DEBIAN_FRONTEND noninteractive
+ENV TZ UTC
+
 RUN apt-get update
 
 # Install basic tools
