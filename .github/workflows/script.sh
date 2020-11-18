@@ -34,7 +34,7 @@ compile)
     ;;
 
 bin)
-    cd Docker
+    cd releasing
     ./docker-generate.sh ${OS}-${OS_VERSION}
     ./docker-run.sh ${OS}-${OS_VERSION}
     mkdir -p /tmp/releases

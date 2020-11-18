@@ -183,5 +183,5 @@ done
 
 # Create archive for each docker directory
 for DIR in $DIRS; do
-    (cd .. ; git archive --prefix verible-$GIT_VERSION/ --output Docker/$DIR/verible-$GIT_VERSION.tar.gz HEAD)
+    (cd .. ; git archive --prefix verible-$GIT_VERSION/ --output releasing/$DIR/verible-$GIT_VERSION.tar.gz HEAD)
 done
