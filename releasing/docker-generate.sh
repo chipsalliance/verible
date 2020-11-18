@@ -114,7 +114,7 @@ EOF
     case $CENTOS_VERSION in
         6|7)
             cat >> centos-${CENTOS_VERSION}/Dockerfile <<EOF
-# Link libstdc++ statically so people don't have to install devtoolset-7
+# Link libstdc++ statically so people don't have to install devtoolset-8
 # just to use verible.
 ENV BAZEL_LINKOPTS "-static-libstdc++:-lm -static-libstdc++:-lrt"
 ENV BAZEL_LINKLIBS "-l%:libstdc++.a"
@@ -123,8 +123,8 @@ RUN yum -y install flex
 
 # Get a newer GCC version
 RUN yum install -y --nogpgcheck centos-release-scl
-RUN yum install -y --nogpgcheck devtoolset-7
-SHELL [ "scl", "enable", "devtoolset-7" ]
+RUN yum install -y --nogpgcheck devtoolset-8
+SHELL [ "scl", "enable", "devtoolset-8" ]
 EOF
             ;;
         8)
@@ -163,7 +163,7 @@ EOF
         6)
             cat >> centos-${CENTOS_VERSION}/Dockerfile <<EOF
 RUN yum install -y --nogpgcheck rh-python36
-SHELL [ "scl", "enable", "rh-python36", "devtoolset-7" ]
+SHELL [ "scl", "enable", "rh-python36", "devtoolset-8" ]
 
 RUN python --version
 RUN python3 --version
@@ -175,7 +175,6 @@ RUN cd bazel-${BAZEL_VERSION}-dist; ./compile.sh
 RUN cp bazel-${BAZEL_VERSION}-dist/output/bazel /usr/local/bin
 RUN bazel --version
 
-SHELL [ "scl", "enable", "devtoolset-7" ]
 EOF
             ;;
         7|8)
