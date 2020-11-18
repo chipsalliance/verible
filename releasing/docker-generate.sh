@@ -43,7 +43,7 @@ RUN apt-get update
 RUN apt-get install -y curl gnupg software-properties-common wget
 
 RUN \
-    wget "https://github.com/bazelbuild/bazel/releases/download/${BAZEL_VERSION}/bazel_${BAZEL_VERSION}-linux-x86_64.deb" -O /tmp/bazel.deb; \
+    wget --no-verbose "https://github.com/bazelbuild/bazel/releases/download/${BAZEL_VERSION}/bazel_${BAZEL_VERSION}-linux-x86_64.deb" -O /tmp/bazel.deb; \
     dpkg -i /tmp/bazel.deb || true; \
     apt-get -f install -y
 
@@ -144,7 +144,7 @@ RUN python --version
 RUN python3 --version
 
 # Build bazel
-RUN wget https://github.com/bazelbuild/bazel/releases/download/${BAZEL_VERSION}/bazel-${BAZEL_VERSION}-dist.zip
+RUN wget --no-verbose https://github.com/bazelbuild/bazel/releases/download/${BAZEL_VERSION}/bazel-${BAZEL_VERSION}-dist.zip
 RUN unzip bazel-${BAZEL_VERSION}-dist.zip -d bazel-${BAZEL_VERSION}-dist
 RUN cd bazel-${BAZEL_VERSION}-dist; ./compile.sh
 RUN cp bazel-${BAZEL_VERSION}-dist/output/bazel /usr/local/bin
@@ -164,7 +164,7 @@ EOF
     cat >> centos-${CENTOS_VERSION}/Dockerfile <<EOF
 # Install gflags2man
 RUN \
-    wget https://repo.anaconda.com/miniconda/Miniconda2-latest-Linux-x86_64.sh; \
+    wget --no-verbose https://repo.anaconda.com/miniconda/Miniconda2-latest-Linux-x86_64.sh; \
     chmod a+x Miniconda2-latest-Linux-x86_64.sh; \
     ./Miniconda2-latest-Linux-x86_64.sh -p /usr/local -b -f; \
     conda --version
