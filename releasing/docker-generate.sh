@@ -199,6 +199,7 @@ RUN cd bazel-${BAZEL_VERSION}-dist; \\
 RUN cp bazel-${BAZEL_VERSION}-dist/output/bazel /usr/local/bin
 RUN bazel --version
 
+SHELL [ "scl", "enable", "devtoolset-8" ]
 EOF
             ;;
         7|8)
