@@ -13,23 +13,15 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-set -x
-set -e
+# WARNING: All values set in this file need to be plain strings as they have to
+# pass through things like Docker files which don't support bash arrays and
+# similar functionality.
 
-source ./.github/settings.sh
+BAZEL_VERSION=3.7.0
 
-case $MODE in
-compile|test)
-    ./.github/workflows/set-compiler.sh 9
-    ./.github/workflows/install-bazel.sh
-    ;;
+# TODO(b/171679296): re-enable c++11 support
+#   by downgrading kythe build requirements.
+BAZEL_CXXOPTS="--cxxopt=-std=c++17"
 
-bin)
-    docker pull $OS:$OS_VERSION
-    ;;
-
-*)
-    echo "install.sh: Unknown mode $MODE"
-    exit 1
-    ;;
-esac
+# Reduce the verbosity of progress output on CI
+BAZEL_OPTS="--show_progress_rate_limit=10.0"
