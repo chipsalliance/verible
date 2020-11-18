@@ -96,12 +96,12 @@ EOF
     # --------------------------------------------------------------
     case $CENTOS_VERSION in
         6|7)
-            # Link libstdc++ statically so people don't have to install
-            # devtoolset-7 just to use verible.
-            export BAZEL_LINKOPTS="-static-libstdc++:-lm -static-libstdc++:-lrt"
-            export BAZEL_LINKLIBS="-l%:libstdc++.a"
-
             cat >> centos-${CENTOS_VERSION}/Dockerfile <<EOF
+# Link libstdc++ statically so people don't have to install devtoolset-7
+# just to use verible.
+ENV BAZEL_LINKOPTS "-static-libstdc++:-lm -static-libstdc++:-lrt"
+ENV BAZEL_LINKLIBS "-l%:libstdc++.a"
+
 RUN yum -y install flex
 
 # Get a newer GCC version
@@ -197,8 +197,6 @@ for DFILE in $(find -name Dockerfile); do
 
 ENV BAZEL_OPTS "${BAZEL_OPTS}"
 ENV BAZEL_CXXOPTS "${BAZEL_CXXOPTS}"
-ENV BAZEL_LINKOPTS "${BAZEL_LINKOPTS}"
-ENV BAZEL_LINKLIBS "${BAZEL_LINKLIBS}"
 
 ENV REPO_SLUG $REPO_SLUG
 ENV GIT_VERSION $GIT_VERSION
