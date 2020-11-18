@@ -55,7 +55,7 @@ EOF
 
     # Install compiler
     # --------------------------------------------------------------
-    cat > ubuntu-${UBUNTU_VERSION}/Dockerfile <<EOF
+    cat >> ubuntu-${UBUNTU_VERSION}/Dockerfile <<EOF
 
 # Install compiler
 RUN apt-get install -y  \\
@@ -69,7 +69,7 @@ EOF
 
     # Install Bazel
     # --------------------------------------------------------------
-    cat > ubuntu-${UBUNTU_VERSION}/Dockerfile <<EOF
+    cat >> ubuntu-${UBUNTU_VERSION}/Dockerfile <<EOF
 
 # Install bazel
 RUN \\
