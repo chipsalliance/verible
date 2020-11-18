@@ -38,7 +38,7 @@ echo "---------------------------------------------------------------"
 echo " Building Verible"
 echo "---------------------------------------------------------------"
 set -x
-bazel build -c opt --noshow_progress $BAZEL_CXXOPTS //...
+bazel build -c opt --noshow_progress //...
 RET=$?
 set +x
 
@@ -48,7 +48,7 @@ if [[ $RET = 0 ]]; then
   echo " Testing Verible"
   echo "---------------------------------------------------------------"
   set -x
-  bazel test --noshow_progress $BAZEL_CXXOPTS //...
+  bazel test --noshow_progress //...
   RET=$?
   set +x
 else
