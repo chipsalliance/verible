@@ -108,7 +108,7 @@ RUN yum install -y --nogpgcheck devtoolset-7
 SHELL [ "scl", "enable", "devtoolset-7" ]
 
 ENV BAZEL_OPTS "${BAZEL_OPTS}"
-ENV BAZEL_CXXOPTS "${BAZEL_CSSOPTS}"
+ENV BAZEL_CXXOPTS "${BAZEL_CXXOPTS}"
 ENV BAZEL_LINKOPTS "${BAZEL_LINKOPTS} -static-libstdc++:-lrt"
 ENV BAZEL_LINKLIBS "${BAZEL_LINKLIBS}"
 EOF
