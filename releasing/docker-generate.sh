@@ -23,43 +23,49 @@ GIT_VERSION=${GIT_VERSION:-$(git describe --match=v*)}
 GIT_HASH=${GIT_HASH:-$(git rev-parse HEAD)}
 
 if [ -z "${BAZEL_VERSION}" ]; then
-	echo "Make sure that \$BAZEL_VERSION is set."
-	exit 1
+    echo "Make sure that \$BAZEL_VERSION is set."
+    exit 1
 fi
 if [ -z "${BAZEL_CXXOPTS}" ]; then
-	echo "Make sure that \$BAZEL_CXXOPTS ($BAZEL_CXXOPTS) is set."
-	exit 1
+    echo "Make sure that \$BAZEL_CXXOPTS ($BAZEL_CXXOPTS) is set."
+    exit 1
 fi
 # Link libstdc++ statically
 BAZEL_LINKOPTS="-static-libstdc++:-lm"
 BAZEL_LINKLIBS="-l%:libstdc++.a"
 
 # Generate the docker files for ubuntu versions
+# ==================================================================
 for UBUNTU_VERSION in trusty xenial bionic eoan focal; do
+    # Install basic tools
+    # --------------------------------------------------------------
     cat > ubuntu-${UBUNTU_VERSION}/Dockerfile <<EOF
 FROM ubuntu:$UBUNTU_VERSION
 
 RUN apt-get update
-RUN apt-get install -y curl gnupg software-properties-common wget
-
-RUN \
-    wget --no-verbose "https://github.com/bazelbuild/bazel/releases/download/${BAZEL_VERSION}/bazel_${BAZEL_VERSION}-linux-x86_64.deb" -O /tmp/bazel.deb; \
-    dpkg -i /tmp/bazel.deb || true; \
-    apt-get -f install -y
-
 RUN apt-get install -y \
-    bazel \
-    bison \
-    build-essential \
+    curl \
     file \
-    flex \
-    g++ \
-    gcc \
     git \
+    gnupg \
     lsb-release \
+    software-properties-common \
     wget \
 
 EOF
+
+    # Install compiler
+    # --------------------------------------------------------------
+    cat > ubuntu-${UBUNTU_VERSION}/Dockerfile <<EOF
+RUN apt-get install -y \
+    bison \
+    build-essential \
+    flex \
+    g++ \
+    gcc \
+
+EOF
+
     case $UBUNTU_VERSION in
         trusty)
             cat >> ubuntu-${UBUNTU_VERSION}/Dockerfile <<EOF
@@ -72,20 +78,27 @@ RUN apt-get install -y \
 
 RUN ln -sf /usr/bin/gcc-6 /usr/bin/gcc
 RUN ln -sf /usr/bin/g++-6 /usr/bin/g++
-
-ENV BAZEL_OPTS "${BAZEL_OPTS}"
-ENV BAZEL_CXXOPTS "${BAZEL_CXXOPTS}"
-ENV BAZEL_LINKOPTS "${BAZEL_LINKOPTS}"
-ENV BAZEL_LINKLIBS "${BAZEL_LINKLIBS}"
 EOF
             ;;
     esac
 
+    # Install Bazel
+    # --------------------------------------------------------------
+    cat > ubuntu-${UBUNTU_VERSION}/Dockerfile <<EOF
+RUN \
+    wget --no-verbose "https://github.com/bazelbuild/bazel/releases/download/${BAZEL_VERSION}/bazel_${BAZEL_VERSION}-linux-x86_64.deb" -O /tmp/bazel.deb; \
+    dpkg -i /tmp/bazel.deb || true; \
+    apt-get -f install -y
+
+EOF
+
 done
 
 # Generate the docker files for centos versions
+# ==================================================================
 for CENTOS_VERSION in 6 7 8; do
     # Install basic tools
+    # --------------------------------------------------------------
     cat > centos-${CENTOS_VERSION}/Dockerfile <<EOF
 FROM centos:$CENTOS_VERSION
 
@@ -99,18 +112,16 @@ RUN yum install -y \
 EOF
 
     # Install compiler
+    # --------------------------------------------------------------
     case $CENTOS_VERSION in
         6|7)
+            export BAZEL_LINKOPTS="$BAZEL_LINKOPTS -static-libstdc++:-lrt"
+
             cat >> centos-${CENTOS_VERSION}/Dockerfile <<EOF
 # Get a newer GCC version
 RUN yum install -y --nogpgcheck centos-release-scl
 RUN yum install -y --nogpgcheck devtoolset-7
 SHELL [ "scl", "enable", "devtoolset-7" ]
-
-ENV BAZEL_OPTS "${BAZEL_OPTS}"
-ENV BAZEL_CXXOPTS "${BAZEL_CXXOPTS}"
-ENV BAZEL_LINKOPTS "${BAZEL_LINKOPTS} -static-libstdc++:-lrt"
-ENV BAZEL_LINKLIBS "${BAZEL_LINKLIBS}"
 EOF
             ;;
         8)
@@ -121,9 +132,14 @@ RUN gcc --version
 RUN g++ --version
 EOF
             ;;
+        *)
+            echo "Unknown Centos version ${CENTOS_VERSION} when installing compiler."
+            exit 1
+            ;;
     esac
 
     # Install Bazel
+    # --------------------------------------------------------------
     cat >> centos-${CENTOS_VERSION}/Dockerfile <<EOF
 # Install bazel
 RUN yum install -y --nogpgcheck \
@@ -156,11 +172,20 @@ EOF
         7|8)
             cat >> centos-${CENTOS_VERSION}/Dockerfile <<EOF
 ADD https://copr.fedorainfracloud.org/coprs/vbatts/bazel/repo/epel-${CENTOS_VERSION}/vbatts-bazel-epel-${CENTOS_VERSION}.repo /etc/yum.repos.d
-RUN yum install -y --nogpgcheck bazel
+RUN yum install -y --nogpgcheck bazel3
 EOF
+            ;;
+        *)
+            echo "Unknown Centos version ${CENTOS_VERSION} when installing bazel"
+            exit 1
+            ;;
     esac
+    cat >> centos-${CENTOS_VERSION}/Dockerfile <<EOF
+RUN bazel --version
+EOF
 
     # Install gflags2man
+    # --------------------------------------------------------------
     cat >> centos-${CENTOS_VERSION}/Dockerfile <<EOF
 # Install gflags2man
 RUN \
@@ -177,13 +202,23 @@ EOF
 
 done
 
+# Build Verible
+# ==================================================================
 for DFILE in $(find -name Dockerfile); do
     cat >> $DFILE <<EOF
+
+ENV BAZEL_OPTS "${BAZEL_OPTS}"
+ENV BAZEL_CXXOPTS "${BAZEL_CXXOPTS}"
+ENV BAZEL_LINKOPTS "${BAZEL_LINKOPTS}"
+ENV BAZEL_LINKLIBS "${BAZEL_LINKLIBS}"
 
 ENV REPO_SLUG $REPO_SLUG
 ENV GIT_VERSION $GIT_VERSION
 ENV GIT_DATE $GIT_DATE
 ENV GIT_HASH $GIT_HASH
+
+RUN which bazel
+RUN bazel --version
 
 ADD verible-$GIT_VERSION.tar.gz /src/verible
 WORKDIR /src/verible/verible-$GIT_VERSION
@@ -199,6 +234,7 @@ EOF
 done
 
 # Create archive for each docker directory
+# ==================================================================
 for DIR in $DIRS; do
     (cd .. ; git archive --prefix verible-$GIT_VERSION/ --output releasing/$DIR/verible-$GIT_VERSION.tar.gz HEAD)
 done
