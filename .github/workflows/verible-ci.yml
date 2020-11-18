@@ -18,6 +18,9 @@ jobs:
       steps:
         - name: Checkout code
           uses: actions/checkout@v2
+          with:
+           # Download complete repository + tags
+           fetch-depth: 0
         - name: Before Install
           run:
             ./.github/workflows/install.sh
@@ -53,6 +56,9 @@ jobs:
       steps:
         - name: Checkout code
           uses: actions/checkout@v2
+          with:
+           # Download complete repository + tags
+           fetch-depth: 0
         - name: Before Install
           run:
             ./.github/workflows/install.sh
