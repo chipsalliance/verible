@@ -144,22 +144,36 @@ EOF
 ENV BAZEL_LINKOPTS "-static-libstdc++:-lm -static-libstdc++:-lrt"
 ENV BAZEL_LINKLIBS "-l%:libstdc++.a"
 
-RUN yum -y install flex
-
 # Get a newer GCC version
 RUN yum install -y --nogpgcheck centos-release-scl
 RUN yum install -y --nogpgcheck devtoolset-8
+
+RUN yum install -y bison flex
+
+# Build a newer version of flex
+RUN \\
+    wget --no-verbose "https://github.com/westes/flex/files/981163/flex-2.6.4.tar.gz" && \\
+    tar -xvf flex-2.6.4.tar.gz && \\
+    cd flex-2.6.4 && \\
+    ./configure --prefix=/usr && \\
+    make -j && \\
+    make install && \\
+    cd .. && \\
+    rm -rf flex-*
+RUN flex --version
+
 SHELL [ "scl", "enable", "devtoolset-8" ]
 EOF
             ;;
         8)
             cat >> centos-${CENTOS_VERSION}/Dockerfile <<EOF
-RUN yum -y install flex
-
 # Install C++ compiler
 RUN \\
     yum -y group install --nogpgcheck "Development Tools" || \\
     yum -y groupinstall --nogpgcheck "Development Tools"
+
+RUN yum install -y bison flex
+
 RUN gcc --version
 RUN g++ --version
 EOF
