@@ -24,10 +24,17 @@ GIT_HASH=${GIT_HASH:-$(git rev-parse HEAD)}
 
 if [ -z "${BAZEL_VERSION}" ]; then
     echo "Make sure that \$BAZEL_VERSION is set."
+    echo " (try 'source ../.github/settings.sh')"
+    exit 1
+fi
+if [ -z "${BAZEL_OPTS}" ]; then
+    echo "Make sure that \$BAZEL_OPTS ($BAZEL_OPTS) is set."
+    echo " (try 'source ../.github/settings.sh')"
     exit 1
 fi
 if [ -z "${BAZEL_CXXOPTS}" ]; then
     echo "Make sure that \$BAZEL_CXXOPTS ($BAZEL_CXXOPTS) is set."
+    echo " (try 'source ../.github/settings.sh')"
     exit 1
 fi
 
