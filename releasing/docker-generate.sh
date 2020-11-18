@@ -38,6 +38,7 @@ if [ -z "${BAZEL_CXXOPTS}" ]; then
     exit 1
 fi
 
+# ==================================================================
 # Generate the docker files for ubuntu versions
 # ==================================================================
 for UBUNTU_VERSION in xenial bionic eoan focal groovy; do
@@ -114,6 +115,7 @@ EOF
 
 done
 
+# ==================================================================
 # Generate the docker files for centos versions
 # ==================================================================
 for CENTOS_VERSION in 6 7 8; do
@@ -217,9 +219,13 @@ EOF
 RUN bazel --version
 EOF
 
+done
+# ==================================================================
+
+for DFILE in $(find -name Dockerfile); do
     # Install gflags2man
     # --------------------------------------------------------------
-    cat >> centos-${CENTOS_VERSION}/Dockerfile <<EOF
+    cat >> $DFILE <<EOF
 
 # Install gflags2man
 RUN \\
@@ -234,11 +240,8 @@ RUN ln -s /usr/local/bin/gflags2man.py /usr/bin/gflags2man
 RUN gflags2man
 EOF
 
-done
-
-# Build Verible
-# ==================================================================
-for DFILE in $(find -name Dockerfile); do
+    # Build Verible
+    # ==================================================================
     cat >> $DFILE <<EOF
 
 ENV BAZEL_OPTS "${BAZEL_OPTS}"
