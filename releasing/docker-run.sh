@@ -13,7 +13,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-set -x
 set -e
 
 DIRS=${1:-$(find -mindepth 1 -maxdepth 1 -type d)}
@@ -23,8 +22,25 @@ export TAG=${TAG:-$(git describe --match=v*)}
 
 for DIR in $DIRS; do
     IMAGE="verible:$DIR-$TAG"
-    docker build --tag $IMAGE  $DIR
+    echo
+    echo "Docker file for $IMAGE"
+    echo "--------------------------------"
+    cat $DIR/Dockerfile
+    echo "--------------------------------"
+    echo
+    echo "Docker build for $IMAGE"
+    echo "--------------------------------"
+    docker build --tag $IMAGE $DIR
+    echo "--------------------------------"
+    echo
+    echo "Build extraction for $IMAGE"
+    echo "--------------------------------"
     DOCKER_ID=$(docker create $IMAGE)
     docker cp $DOCKER_ID:/out - | tar xvf -
+    echo "--------------------------------"
+    echo
+    echo "Cleanup for $IMAGE"
+    echo "--------------------------------"
     docker rm -v $DOCKER_ID
+    echo "--------------------------------"
 done
