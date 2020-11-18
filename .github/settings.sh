@@ -17,6 +17,13 @@
 # pass through things like Docker files which don't support bash arrays and
 # similar functionality.
 
+[[ "${BASH_SOURCE[0]}" != "${0}" ]] && SOURCED=1 || SOURCED=0
+
+if [ $SOURCED -ne 1 ]; then
+	echo "settings.sh should be sourced, not run."
+	exit 1
+fi
+
 BAZEL_VERSION=3.7.0
 
 # TODO(b/171679296): re-enable c++11 support
