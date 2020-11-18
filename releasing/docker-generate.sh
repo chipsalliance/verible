@@ -194,7 +194,8 @@ RUN python3 --version
 # Build bazel
 RUN wget --no-verbose https://github.com/bazelbuild/bazel/releases/download/${BAZEL_VERSION}/bazel-${BAZEL_VERSION}-dist.zip
 RUN unzip bazel-${BAZEL_VERSION}-dist.zip -d bazel-${BAZEL_VERSION}-dist
-RUN cd bazel-${BAZEL_VERSION}-dist; ./compile.sh
+RUN cd bazel-${BAZEL_VERSION}-dist; \\
+    EXTRA_BAZEL_ARGS="--copt=-D__STDC_FORMAT_MACROS --host_copt=-D__STDC_FORMAT_MACROS" ./compile.sh
 RUN cp bazel-${BAZEL_VERSION}-dist/output/bazel /usr/local/bin
 RUN bazel --version
 
