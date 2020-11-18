@@ -40,35 +40,41 @@ for UBUNTU_VERSION in xenial bionic eoan focal; do
 FROM ubuntu:$UBUNTU_VERSION
 
 RUN apt-get update
-RUN apt-get install -y \
-    curl \
-    file \
-    git \
-    gnupg \
-    lsb-release \
-    software-properties-common \
-    wget \
+
+# Install basic tools
+RUN apt-get install -y          \\
+    curl                        \\
+    file                        \\
+    git                         \\
+    gnupg                       \\
+    lsb-release                 \\
+    software-properties-common  \\
+    wget
 
 EOF
 
     # Install compiler
     # --------------------------------------------------------------
     cat > ubuntu-${UBUNTU_VERSION}/Dockerfile <<EOF
-RUN apt-get install -y \
-    bison \
-    build-essential \
-    flex \
-    g++ \
-    gcc \
+
+# Install compiler
+RUN apt-get install -y  \\
+    bison               \\
+    build-essential     \\
+    flex                \\
+    g++                 \\
+    gcc
 
 EOF
 
     # Install Bazel
     # --------------------------------------------------------------
     cat > ubuntu-${UBUNTU_VERSION}/Dockerfile <<EOF
-RUN \
-    wget --no-verbose "https://github.com/bazelbuild/bazel/releases/download/${BAZEL_VERSION}/bazel_${BAZEL_VERSION}-linux-x86_64.deb" -O /tmp/bazel.deb; \
-    dpkg -i /tmp/bazel.deb || true; \
+
+# Install bazel
+RUN \\
+    wget --no-verbose "https://github.com/bazelbuild/bazel/releases/download/${BAZEL_VERSION}/bazel_${BAZEL_VERSION}-linux-x86_64.deb" -O /tmp/bazel.deb; \\
+    dpkg -i /tmp/bazel.deb || true; \\
     apt-get -f install -y
 
 EOF
@@ -83,12 +89,13 @@ for CENTOS_VERSION in 6 7 8; do
     cat > centos-${CENTOS_VERSION}/Dockerfile <<EOF
 FROM centos:$CENTOS_VERSION
 
-RUN yum install -y \
-    file \
-    git \
-    redhat-lsb \
-    tar \
-    wget \
+# Install basic tools
+RUN yum install -y  \\
+    file            \\
+    git             \\
+    redhat-lsb      \\
+    tar             \\
+    wget
 
 EOF
 
@@ -115,7 +122,9 @@ EOF
 RUN yum -y install flex
 
 # Install C++ compiler
-RUN yum -y group install --nogpgcheck "Development Tools" || yum -y groupinstall --nogpgcheck "Development Tools"
+RUN \\
+    yum -y group install --nogpgcheck "Development Tools" || \\
+    yum -y groupinstall --nogpgcheck "Development Tools"
 RUN gcc --version
 RUN g++ --version
 EOF
@@ -129,15 +138,17 @@ EOF
     # Install Bazel
     # --------------------------------------------------------------
     cat >> centos-${CENTOS_VERSION}/Dockerfile <<EOF
+
 # Install bazel
-RUN yum install -y --nogpgcheck \
-    java-1.8.0-openjdk-devel \
-    unzip \
-    zip \
+RUN yum install -y --nogpgcheck \\
+    java-1.8.0-openjdk-devel \\
+    unzip \\
+    zip
 
 RUN java -version
 RUN javac -version
 EOF
+
     case $CENTOS_VERSION in
         6)
             cat >> centos-${CENTOS_VERSION}/Dockerfile <<EOF
@@ -175,11 +186,12 @@ EOF
     # Install gflags2man
     # --------------------------------------------------------------
     cat >> centos-${CENTOS_VERSION}/Dockerfile <<EOF
+
 # Install gflags2man
-RUN \
-    wget --no-verbose https://repo.anaconda.com/miniconda/Miniconda2-latest-Linux-x86_64.sh; \
-    chmod a+x Miniconda2-latest-Linux-x86_64.sh; \
-    ./Miniconda2-latest-Linux-x86_64.sh -p /usr/local -b -f; \
+RUN \\
+    wget --no-verbose https://repo.anaconda.com/miniconda/Miniconda2-latest-Linux-x86_64.sh; \\
+    chmod a+x Miniconda2-latest-Linux-x86_64.sh; \\
+    ./Miniconda2-latest-Linux-x86_64.sh -p /usr/local -b -f; \\
     conda --version
 RUN which pip
 RUN /usr/local/bin/pip install python-gflags
