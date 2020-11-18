@@ -73,6 +73,11 @@ jobs:
         - name: Main script
           run: ./.github/workflows/script.sh
 
+        - name: Upload binary
+          uses: actions/upload-artifact@v2
+          with:
+            path: /tmp/releases/verible-*.tar.gz
+
         - name: After success
           if: ${{ success() }}
           run: ./.github/workflows/success.sh
