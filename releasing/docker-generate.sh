@@ -30,9 +30,6 @@ if [ -z "${BAZEL_CXXOPTS}" ]; then
     echo "Make sure that \$BAZEL_CXXOPTS ($BAZEL_CXXOPTS) is set."
     exit 1
 fi
-# Link libstdc++ statically
-BAZEL_LINKOPTS="-static-libstdc++:-lm"
-BAZEL_LINKLIBS="-l%:libstdc++.a"
 
 # Generate the docker files for ubuntu versions
 # ==================================================================
@@ -99,7 +96,10 @@ EOF
     # --------------------------------------------------------------
     case $CENTOS_VERSION in
         6|7)
-            export BAZEL_LINKOPTS="$BAZEL_LINKOPTS -static-libstdc++:-lrt"
+            # Link libstdc++ statically so people don't have to install
+            # devtoolset-7 just to use verible.
+            export BAZEL_LINKOPTS="-static-libstdc++:-lm -static-libstdc++:-lrt"
+            export BAZEL_LINKLIBS="-l%:libstdc++.a"
 
             cat >> centos-${CENTOS_VERSION}/Dockerfile <<EOF
 RUN yum -y install flex
