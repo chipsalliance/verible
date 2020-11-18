@@ -8,6 +8,7 @@ jobs:
    Check:
       runs-on: ubuntu-16.04
       strategy:
+        fail-fast: false
         matrix:
           env:
             - MODE: test
@@ -41,6 +42,7 @@ jobs:
    Deploy:
       runs-on: ubuntu-16.04
       strategy:
+        fail-fast: false
         matrix:
           env:
             - { MODE: bin, OS: ubuntu, OS_VERSION: trusty }
