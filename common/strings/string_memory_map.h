@@ -18,7 +18,10 @@
 #include <utility>
 
 #include "absl/strings/string_view.h"
+#include "common/strings/range.h"
 #include "common/util/interval_map.h"
+#include "common/util/interval_set.h"
+#include "common/util/logging.h"
 
 namespace verible {
 
@@ -29,6 +32,59 @@ string_view_to_pair(absl::string_view sv) {
   return std::make_pair(sv.begin(), sv.end());
 }
 }  // namespace internal
+
+// StringViewSuperRangeMap maps a string_view to a super-range to which it
+// belongs.  This can associate a string_view with the full text (file) from
+// which it originated.
+// Since this operates solely on string_views, it is not responsible for owning
+// any of the referenced memory -- the user is responsible for maintaining
+// proper string lifetime, owning strings must outlive these objects.
+class StringViewSuperRangeMap {
+  typedef DisjointIntervalSet<absl::string_view::const_iterator> impl_type;
+
+ public:
+  // This iterator dereferences to a std::pair of
+  // absl::string_view::const_iterator, which can be constructed into a
+  // string_view.
+  typedef impl_type::const_iterator const_iterator;
+
+  StringViewSuperRangeMap() = default;
+
+  StringViewSuperRangeMap(const StringViewSuperRangeMap&) = default;
+  StringViewSuperRangeMap(StringViewSuperRangeMap&&) = default;
+  StringViewSuperRangeMap& operator=(const StringViewSuperRangeMap&) = default;
+  StringViewSuperRangeMap& operator=(StringViewSuperRangeMap&&) = default;
+
+  bool empty() const { return string_map_.empty(); }
+  const_iterator begin() const { return string_map_.begin(); }
+  const_iterator end() const { return string_map_.end(); }
+
+  // Given a substring, return an iterator pointing to the superstring that
+  // fully contains the substring, if it exists, else return end().
+  const_iterator find(absl::string_view substring) const {
+    return string_map_.find({substring.begin(), substring.end()});
+  }
+
+  // Similar to find(), but asserts that a superstring range is found,
+  // and converts the result directly to a string_view.
+  absl::string_view must_find(absl::string_view substring) const {
+    const const_iterator found(find(substring));
+    CHECK(found != string_map_.end());
+    return make_string_view_range(found->first, found->second);  // superstring
+  }
+
+  // Insert a superstring (range) that does not overlap with any previously
+  // inserted string range.  This is suitable for string ranges that correspond
+  // to allocated memory, because allocators only return non-overlapping memory
+  // blocks.
+  const_iterator must_emplace(absl::string_view superstring) {
+    return string_map_.must_emplace(superstring.begin(), superstring.end());
+  }
+
+ private:
+  // Internal representation of string range map.
+  impl_type string_map_;
+};
 
 // StringMemoryMap maps (non-owned) string_views to owned memory.
 // This class provides a set-like interface to objects of type T.

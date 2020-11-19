@@ -79,9 +79,10 @@ FindSpanningInterval(M& intervals, const typename M::key_type interval) {
 
 // Returns (iterator, true) if a valid insertion point is found
 // that doesn't overlap with an existing range, else (undefined, false).
+// Abutment (where a start == end) does not count as overlap.
 // Precondition: 'intervals' map contains non-overlapping key ranges.
 template <typename M>  // M is a map-type
-static std::pair<typename M::iterator, bool> FindEmplacePosition(
+static std::pair<typename M::iterator, bool> FindNonoverlappingEmplacePosition(
     M& intervals, const typename M::key_type& interval) {
   if (intervals.empty()) return {intervals.end(), true};
   const auto iter =
@@ -176,7 +177,8 @@ class DisjointIntervalMap {
   // The 'value' must be moved in (emplace).
   std::pair<iterator, bool> emplace(key_type key, V&& value) {
     CHECK(key.first <= key.second);  // CHECK_LE requires printability
-    const std::pair<iterator, bool> p(internal::FindEmplacePosition(map_, key));
+    const std::pair<iterator, bool> p(
+        internal::FindNonoverlappingEmplacePosition(map_, key));
     // p.second: ok to emplace
     if (p.second) {
       return {map_.emplace_hint(p.first, std::move(key), std::move(value)),

@@ -307,7 +307,10 @@ cc_library(
     name = "string_memory_map",
     hdrs = ["string_memory_map.h"],
     deps = [
+        ":range",
         "//common/util:interval_map",
+        "//common/util:interval_set",
+        "//common/util:logging",
         "@com_google_absl//absl/strings",
     ],
 )

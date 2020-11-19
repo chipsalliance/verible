@@ -46,6 +46,7 @@ TEST(DisjointIntervalMapTest, EmplaceOne) {
   EXPECT_TRUE(p.second);
   EXPECT_EQ(p.first->first, std::make_pair(3, 4));
   EXPECT_EQ(*p.first->second, 5);
+  EXPECT_FALSE(imap.empty());
 }
 
 TEST(DisjointIntervalMapTest, EmplaceOneEnsureMove) {
