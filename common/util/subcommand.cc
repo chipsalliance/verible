@@ -52,7 +52,7 @@ const SubcommandEntry& SubcommandRegistry::GetSubcommandEntry(
   const auto iter = commands.find(command);  // heterogenous lookup
 #else
   // without heterogenous lookup
-  const auto iter = commands.find(std::string(command));
+  const auto iter = commands.find(std::string(command.begin(), command.end()));
 #endif
   if (iter == commands.end()) {
     // Command not found, print help and exit non-zero.
@@ -67,7 +67,7 @@ absl::Status SubcommandRegistry::RegisterCommand(
 #if __cplusplus >= 201402L
       name,  // heterogenous lookup
 #else
-      std::string(name),  // without heterogenous lookup
+      std::string(name.begin(), name.end()),  // without heterogenous lookup
 #endif
       command);
   if (!p.second) {
