@@ -13,11 +13,23 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-if [ -z "${BAZEL_VERSION}" ]; then
-        echo "Set \$BAZEL_VERSION"
+# WARNING: All values set in this file need to be plain strings as they have to
+# pass through things like Docker files which don't support bash arrays and
+# similar functionality.
+
+[[ "${BASH_SOURCE[0]}" != "${0}" ]] && SOURCED=1 || SOURCED=0
+
+if [ $SOURCED -ne 1 ]; then
+        echo "settings.sh should be sourced, not run."
         exit 1
 fi
-wget "https://github.com/bazelbuild/bazel/releases/download/${BAZEL_VERSION}/bazel_${BAZEL_VERSION}-linux-x86_64.deb" -O /tmp/bazel.deb
-sudo dpkg -i /tmp/bazel.deb || true
-sudo apt-get -f install
-bazel --version
+
+export BAZEL_VERSION=3.7.0
+
+
+# TODO(b/171679296): re-enable c++11 support
+#   by downgrading kythe build requirements.
+export BAZEL_CXXOPTS="-std=c++17"
+
+# Reduce the verbosity of progress output on CI
+export BAZEL_OPTS="-c opt --show_progress_rate_limit=10.0"

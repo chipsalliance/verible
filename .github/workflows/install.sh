@@ -15,13 +15,13 @@
 
 set -x
 set -e
-export TAG=${TAG:-$(git rev-parse --short "$GITHUB_SHA")}
+
+source ./.github/settings.sh
 
 case $MODE in
 compile|test)
     ./.github/workflows/set-compiler.sh 9
     ./.github/workflows/install-bazel.sh
-    git fetch --tags
     ;;
 
 bin)

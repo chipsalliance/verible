@@ -15,26 +15,20 @@
 
 set -x
 set -e
-export TAG=${TAG:-$(git rev-parse --short "$GITHUB_SHA")}
 
-# TODO(b/171679296): re-enable c++11 support
-#   by downgrading kythe build requirements.
-BAZEL_CXXOPTS=(--cxxopt=-std=c++17)
-
-# Reduce log noise.
-BAZEL_OPTS=(--show_progress_rate_limit=10.0)
+source ./.github/settings.sh
 
 case "$MODE" in
 test)
-    bazel test -c opt "${BAZEL_OPTS[@]}" "${BAZEL_CXXOPTS[@]}" //...
+    bazel test $BAZEL_OPTS //...
     ;;
 
 compile)
-    bazel build -c opt "${BAZEL_OPTS[@]}" "${BAZEL_CXXOPTS[@]}" //...
+    bazel build $BAZEL_OPTS //...
     ;;
 
 bin)
-    cd Docker
+    cd releasing
     ./docker-generate.sh ${OS}-${OS_VERSION}
     ./docker-run.sh ${OS}-${OS_VERSION}
     mkdir -p /tmp/releases

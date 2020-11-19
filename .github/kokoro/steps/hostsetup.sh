@@ -13,6 +13,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+if [ -z "${BAZEL_VERSION}" ]; then
+       echo "Set \$BAZEL_VERSION"
+       exit 1
+fi
+
 set -e
 
 echo
@@ -58,7 +63,6 @@ sudo apt-get install -y \
 echo "----------------------------------------"
 
 echo
-BAZEL_VERSION=3.7.0
 echo "========================================"
 echo "Installing bazel"
 echo "----------------------------------------"
@@ -68,6 +72,7 @@ echo "----------------------------------------"
 
   wget "https://github.com/bazelbuild/bazel/releases/download/${BAZEL_VERSION}/bazel_${BAZEL_VERSION}-linux-x86_64.deb"
   sudo dpkg -i "bazel_${BAZEL_VERSION}-linux-x86_64.deb"
+  sudo apt-get -f install -y
 
   dpkg --listfiles bazel
 

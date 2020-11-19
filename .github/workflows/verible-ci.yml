@@ -8,6 +8,7 @@ jobs:
    Check:
       runs-on: ubuntu-16.04
       strategy:
+        fail-fast: false
         matrix:
           env:
             - MODE: test
@@ -18,16 +19,23 @@ jobs:
       steps:
         - name: Checkout code
           uses: actions/checkout@v2
+          with:
+           # Download complete repository + tags
+           fetch-depth: 0
+
         - name: Before Install
           run:
             ./.github/workflows/install.sh
+
         - name: Main script
           run: ./.github/workflows/script.sh
+
         - name: After success
           if: ${{ success() }}
           run: ./.github/workflows/success.sh
+
         - name: Deployment
-          if: ${{ matrix.env.MODE == 'compile' && success() }}
+          if: ${{ github.ref == 'refs/heads/master' && github.event_name != 'pull_request' && matrix.env.MODE == 'compile' && success() }}
           uses: JamesIves/github-pages-deploy-action@3.7.1
           with:
             GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -35,17 +43,18 @@ jobs:
             FOLDER: /tmp/pages
             CLEAN: true
 
-   Deploy:
+   Release:
       runs-on: ubuntu-16.04
       strategy:
+        fail-fast: false
         matrix:
           env:
-            - { MODE: bin, OS: ubuntu, OS_VERSION: trusty }
             - { MODE: bin, OS: ubuntu, OS_VERSION: xenial }
             - { MODE: bin, OS: ubuntu, OS_VERSION: bionic }
             - { MODE: bin, OS: ubuntu, OS_VERSION: eoan }
             - { MODE: bin, OS: ubuntu, OS_VERSION: focal }
-            - { MODE: bin, OS: centos, OS_VERSION: 6 }
+            - { MODE: bin, OS: ubuntu, OS_VERSION: groovy }
+#           - { MODE: bin, OS: centos, OS_VERSION: 6 }
             - { MODE: bin, OS: centos, OS_VERSION: 7 }
             - { MODE: bin, OS: centos, OS_VERSION: 8 }
       name: ${{ matrix.env.OS }} ${{ matrix.env.OS_VERSION }}
@@ -53,16 +62,28 @@ jobs:
       steps:
         - name: Checkout code
           uses: actions/checkout@v2
+          with:
+           # Download complete repository + tags
+           fetch-depth: 0
+
         - name: Before Install
           run:
             ./.github/workflows/install.sh
+
         - name: Main script
           run: ./.github/workflows/script.sh
+
+        - name: Upload binary
+          uses: actions/upload-artifact@v2
+          with:
+            path: /tmp/releases/verible-*.tar.gz
+
         - name: After success
           if: ${{ success() }}
           run: ./.github/workflows/success.sh
+
         - name: Deployment
-          if: ${{ success() }}
+          if: ${{ github.ref == 'refs/heads/master' && github.event_name != 'pull_request' && success() }}
           uses: svenstaro/upload-release-action@v2
           with:
             repo_token: ${{ secrets.GITHUB_TOKEN }}
