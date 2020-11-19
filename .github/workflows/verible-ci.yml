@@ -54,7 +54,7 @@ jobs:
             - { MODE: bin, OS: ubuntu, OS_VERSION: eoan }
             - { MODE: bin, OS: ubuntu, OS_VERSION: focal }
             - { MODE: bin, OS: ubuntu, OS_VERSION: groovy }
-            - { MODE: bin, OS: centos, OS_VERSION: 6 }
+#           - { MODE: bin, OS: centos, OS_VERSION: 6 }
             - { MODE: bin, OS: centos, OS_VERSION: 7 }
             - { MODE: bin, OS: centos, OS_VERSION: 8 }
       name: ${{ matrix.env.OS }} ${{ matrix.env.OS_VERSION }}
