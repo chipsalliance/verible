@@ -9,6 +9,13 @@ and extracts the built content.
 The general aim is to support all current versions of Ubuntu and CentOS (for
 RedHat Enterprise Linux support).
 
-Currently supported Linux distributions are; - [x] CentOS 6 - [x] CentOS 7 - [x]
-CentOS 8 - [x] Ubuntu Xenial (16.04 LTS) - [x] Ubuntu Bionic (18.04 LTS) - [x]
-Ubuntu Eoan (19.10) - [x] Ubuntu Focal (20.04 LTS) - [x] Ubuntu Groovy (20.10)
+Currently supported Linux distributions are:
+
+ - [x] CentOS 6
+ - [x] CentOS 7
+ - [x] CentOS 8
+ - [x] Ubuntu Xenial (16.04 LTS)
+ - [x] Ubuntu Bionic (18.04 LTS)
+ - [x] Ubuntu Eoan (19.10)
+ - [x] Ubuntu Focal (20.04 LTS)
+ - [x] Ubuntu Groovy (20.10)
