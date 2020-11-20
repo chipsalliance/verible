@@ -1,0 +1,142 @@
+// Copyright 2017-2020 The Verible Authors.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+#include "verilog/analysis/verilog_project.h"
+
+#include "absl/memory/memory.h"
+#include "absl/status/status.h"
+#include "absl/strings/str_join.h"
+#include "common/text/text_structure.h"
+#include "common/util/file_util.h"
+#include "common/util/logging.h"
+#include "verilog/analysis/verilog_analyzer.h"
+
+namespace verilog {
+
+absl::Status VerilogSourceFile::Open() {
+  // Don't re-open.  analyzed_structure_ should be set/written once only.
+  if (state_ != State::kInitialized) return status_;
+
+  // Load file contents.
+  std::string content;
+  status_ = verible::file::GetContents(ResolvedPath(), &content);
+  if (!status_.ok()) return status_;
+
+  // TODO(fangism): std::move or memory-map to avoid a short-term copy.
+  analyzed_structure_ =
+      absl::make_unique<VerilogAnalyzer>(content, ResolvedPath());
+  state_ = State::kOpened;
+  // status_ is Ok here.
+  return status_;
+}
+
+absl::Status VerilogSourceFile::Parse() {
+  // Parsed state is cached.
+  if (state_ == State::kParsed) return status_;
+
+  // Open file and load contents if not already done.
+  status_ = Open();
+  if (!status_.ok()) return status_;
+
+  // Lex, parse, populate underlying TextStructureView.
+  status_ = analyzed_structure_->Analyze();
+  state_ = State::kParsed;
+  return status_;
+}
+
+const verible::TextStructureView* VerilogSourceFile::GetTextStructure() const {
+  if (analyzed_structure_ == nullptr) return nullptr;
+  return &analyzed_structure_->Data();
+}
+
+absl::StatusOr<VerilogSourceFile*> VerilogProject::OpenFile(
+    absl::string_view referenced_filename,
+    absl::string_view resolved_filename) {
+  const auto inserted =
+      files_.emplace(referenced_filename,
+                     VerilogSourceFile(referenced_filename, resolved_filename));
+  CHECK(inserted.second);  // otherwise, would have already returned above
+  VerilogSourceFile& file(inserted.first->second);
+
+  // Read the file's contents.
+  const absl::Status status = file.Open();
+  if (!status.ok()) return status;
+
+  const absl::string_view contents(file.GetTextStructure()->Contents());
+
+  // Register the file's contents range in string_view_map_.
+  string_view_map_.must_emplace(contents);
+
+  // Map the start of the file's contents to its corresponding owner
+  // VerilogSourceFile.
+  const auto map_inserted =
+      buffer_to_analyzer_map_.emplace(contents.begin(), inserted.first);
+  CHECK(map_inserted.second);
+
+  return &file;
+}
+
+absl::StatusOr<VerilogSourceFile*> VerilogProject::OpenTranslationUnit(
+    absl::string_view referenced_filename) {
+  // Check for a pre-existing entry to avoid duplicate files.
+  {
+    const auto found = files_.find(referenced_filename);
+    if (found != files_.end()) {
+      const auto status = found->second.Status();
+      if (!status.ok()) return status;
+      return &found->second;
+    }
+  }
+
+  // Locate the file among the base paths.
+  const std::string resolved_filename =
+      verible::file::JoinPath(translation_unit_root_, referenced_filename);
+
+  return OpenFile(referenced_filename, resolved_filename);
+}
+
+absl::StatusOr<VerilogSourceFile*> VerilogProject::OpenIncludedFile(
+    absl::string_view referenced_filename) {
+  // Check for a pre-existing entry to avoid duplicate files.
+  {
+    const auto found = files_.find(referenced_filename);
+    if (found != files_.end()) {
+      const auto status = found->second.Status();
+      if (!status.ok()) return status;
+      return &found->second;
+    }
+  }
+
+  // Locate the file among the base paths.
+  for (const auto& include_path : include_paths_) {
+    const std::string resolved_filename =
+        verible::file::JoinPath(include_path, referenced_filename);
+    if (verible::file::FileExists(resolved_filename).ok()) {
+      return OpenFile(referenced_filename, resolved_filename);
+    }
+  }
+  return absl::NotFoundError(absl::StrCat(
+      "Unable to find '", referenced_filename,
+      "' among the included paths: ", absl::StrJoin(include_paths_, ", ")));
+}
+
+std::vector<absl::Status> VerilogProject::GetStatuses() const {
+  std::vector<absl::Status> statuses;
+  for (const auto& file : files_) {
+    statuses.push_back(file.second.Status());
+  }
+  return statuses;
+}
+
+}  // namespace verilog
