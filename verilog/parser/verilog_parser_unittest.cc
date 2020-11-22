@@ -876,6 +876,12 @@ static const ParserTestCaseArray kFunctionTests = {
     "`endif\n"
     "  a1 = b.x;\n"
     "endfunction",
+    "function net_type_decls;\n"
+    "  nettype shortreal analog_wire;\n"
+    "endfunction\n",
+    "function net_type_decls;\n"
+    "  nettype foo::bar[1:0] analog_wire with fire;\n"
+    "endfunction\n",
 };
 
 static const ParserTestCaseArray kTaskTests = {
@@ -1277,6 +1283,12 @@ static const ParserTestCaseArray kTaskTests = {
     "  z4.dfg[0] <= ##50 ww[1].xx;\n"
     "end\n"
     "endtask",
+    "task net_type_decls;\n"
+    "  nettype shortreal analog_wire;\n"
+    "endtask\n",
+    "task net_type_decls;\n"
+    "  nettype foo::bar[1:0] analog_wire with fire;\n"
+    "endtask\n",
 };
 
 static const ParserTestCaseArray kModuleTests = {
@@ -3859,6 +3871,30 @@ static const ParserTestCaseArray kPackageTests = {
     "`endif\n"
     "  int router_size;\n"
     "endpackage",
+    // net_type_declarations
+    "nettype shortreal foo_wire;\n",
+    "nettype real foo_wire;\n",
+    "nettype real foo_wire with bar;\n",
+    "nettype real foo_wire with bar::baz;\n",
+    "nettype logic[3:0] foo_wire with bar;\n",
+    "package p;\n"
+    "  nettype real foo_wire;\n"
+    "endpackage\n",
+    "package p;\n"
+    "  nettype shortreal[2] foo_wire with fire;\n"
+    "endpackage\n",
+    "package p;\n"
+    "  nettype foo_pkg::bar_t baz_wire;\n"
+    "endpackage\n",
+    "package p;\n"
+    "  nettype foo#(x,y,z)::bar_t baz_wire;\n"
+    "endpackage\n",
+    "package p;\n"
+    "  nettype foo#(x,y,z)::bar_t[2:0] baz_wire;\n"
+    "endpackage\n",
+    "package p;\n"
+    "  nettype foo#(x,y,z)::bar_t baz_wire with quux;\n"
+    "endpackage\n",
 };
 
 static const ParserTestCaseArray kDescriptionTests = {
@@ -4800,6 +4836,25 @@ static const ParserTestCaseArray kClassMemberTests = {
     "  solve x.z[2], f[1], g before q, r[4], y[3].x;\n"
     "}\n"
     "endclass",
+    // net_type_declarations
+    "class c;\n"
+    "  nettype real foo_wire;\n"
+    "endclass\n",
+    "class c;\n"
+    "  nettype shortreal[2] foo_wire with fire;\n"
+    "endclass\n",
+    "class c;\n"
+    "  nettype foo_pkg::bar_t baz_wire;\n"
+    "endclass\n",
+    "class c;\n"
+    "  nettype foo#(x,y,z)::bar_t baz_wire;\n"
+    "endclass\n",
+    "class c;\n"
+    "  nettype foo#(x,y,z)::bar_t[2:0] baz_wire;\n"
+    "endclass\n",
+    "class c;\n"
+    "  nettype foo#(x,y,z)::bar_t baz_wire with quux;\n"
+    "endclass\n",
 };
 
 static const ParserTestCaseArray kInterfaceClassTests = {
@@ -5800,6 +5855,21 @@ static const std::initializer_list<ParserTestData> kInvalidCodeTests = {
      "endfunction\n"},
     {{TK_endprimitive, "endprimitive"}},
     {"//www\n", {TK_endprimitive, "endprimitive"}},
+    {"module m;\n"
+     "  foo()",
+     {';', ";"},
+     "\n"
+     "endmodule\n"},
+    {"module m;\n"
+     "  if ((",
+     {')', ")"},  // empty paren is invalid expression
+     "foo());"
+     "\n"
+     "endmodule\n"},
+    {"[i()",  // unexpected EOF
+     {verible::TK_EOF, ""}},
+    {"[i()'",  // unexpected EOF
+     {verible::TK_EOF, ""}},
 };
 
 using verible::LeafTag;
@@ -6015,6 +6085,12 @@ static const verible::ErrorRecoveryTestCase kErrorRecoveryTests[] = {
      "endclass\n",
      {NodeTag(kClassDeclaration), NodeTag(kClassItems),
       NodeTag(kCovergroupDeclaration)}},
+    {"module m;\n"
+     "  foo();\n"  // invalid syntax, recover from here
+     "  wire w;\n"
+     "endmodule\n",
+     {NodeTag(kModuleDeclaration), NodeTag(kModuleItemList),
+      NodeTag(kNetDeclaration)}},
 };
 #undef NodeTag
 

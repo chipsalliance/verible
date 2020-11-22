@@ -22,25 +22,27 @@ genrule(
 
 cc_library(
     name = "kythe_facts",
-    srcs = [
-        "kythe_facts.cc",
-    ],
-    hdrs = [
-        "kythe_facts.h",
-    ],
+    srcs = ["kythe_facts.cc"],
+    hdrs = ["kythe_facts.h"],
     deps = [
+        "//common/util:spacer",
         "@com_google_absl//absl/strings",
+    ],
+)
+
+cc_test(
+    name = "kythe_facts_test",
+    srcs = ["kythe_facts_test.cc"],
+    deps = [
+        ":kythe_facts",
+        "@com_google_googletest//:gtest_main",
     ],
 )
 
 cc_library(
     name = "scope_resolver",
-    srcs = [
-        "scope_resolver.cc",
-    ],
-    hdrs = [
-        "scope_resolver.h",
-    ],
+    srcs = ["scope_resolver.cc"],
+    hdrs = ["scope_resolver.h"],
     deps = [
         ":kythe_facts",
         "//common/util:auto_pop_stack",
@@ -61,9 +63,7 @@ cc_test(
 
 cc_library(
     name = "indexing_facts_tree_context",
-    hdrs = [
-        "indexing_facts_tree_context.h",
-    ],
+    hdrs = ["indexing_facts_tree_context.h"],
     deps = [
         ":indexing_facts_tree",
         "//common/util:auto_pop_stack",
@@ -72,20 +72,14 @@ cc_library(
 
 cc_library(
     name = "kythe_schema_constants",
-    hdrs = [
-        "kythe_schema_constants.h",
-    ],
+    hdrs = ["kythe_schema_constants.h"],
     deps = ["@com_google_absl//absl/strings"],
 )
 
 cc_library(
     name = "kythe_facts_extractor",
-    srcs = [
-        "kythe_facts_extractor.cc",
-    ],
-    hdrs = [
-        "kythe_facts_extractor.h",
-    ],
+    srcs = ["kythe_facts_extractor.cc"],
+    hdrs = ["kythe_facts_extractor.h"],
     deps = [
         ":indexing_facts_tree",
         ":indexing_facts_tree_context",
@@ -105,9 +99,7 @@ cc_library(
         "verilog_extractor_indexing_fact_type_foreach.inc",
         "verilog_extractor_indexing_fact_type_foreach-gen.inc",
     ],
-    hdrs = [
-        "verilog_extractor_indexing_fact_type.h",
-    ],
+    hdrs = ["verilog_extractor_indexing_fact_type.h"],
     deps = [
         "@com_google_absl//absl/strings",
     ],
@@ -115,12 +107,8 @@ cc_library(
 
 cc_library(
     name = "indexing_facts_tree",
-    srcs = [
-        "indexing_facts_tree.cc",
-    ],
-    hdrs = [
-        "indexing_facts_tree.h",
-    ],
+    srcs = ["indexing_facts_tree.cc"],
+    hdrs = ["indexing_facts_tree.h"],
     deps = [
         ":verilog_extractor_indexing_fact_type",
         "//common/text:token_info",
@@ -131,12 +119,8 @@ cc_library(
 
 cc_library(
     name = "indexing_facts_tree_extractor",
-    srcs = [
-        "indexing_facts_tree_extractor.cc",
-    ],
-    hdrs = [
-        "indexing_facts_tree_extractor.h",
-    ],
+    srcs = ["indexing_facts_tree_extractor.cc"],
+    hdrs = ["indexing_facts_tree_extractor.h"],
     deps = [
         ":indexing_facts_tree",
         ":indexing_facts_tree_context",
@@ -216,6 +200,15 @@ cc_binary(
         "@io_kythe//kythe/cxx/common/indexing:caching_output",
         "@io_kythe//kythe/proto:storage_cc_proto",
     ],
+)
+
+sh_test(
+    name = "verilog_kythe_extractor_test",
+    size = "small",
+    srcs = ["verilog_kythe_extractor_test.sh"],
+    args = ["$(location :verible-verilog-kythe-extractor)"],
+    data = [":verible-verilog-kythe-extractor"],
+    deps = [],
 )
 
 sh_test(

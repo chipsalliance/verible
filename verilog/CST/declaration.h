@@ -175,7 +175,7 @@ GetUnpackedDimensionFromVariableDeclarationAssign(
 // The type can be inside a node tagged with kDataType or kLocalRoot.
 // e.g module_type m();  return "module_type".
 // e.g some_type m; return "some_type".
-const verible::SyntaxTreeLeaf* GetTypeIdentifierFromDataDeclaration(
+const verible::Symbol* GetTypeIdentifierFromDataDeclaration(
     const verible::Symbol&);
 
 // Returns the node tagged with kStructType, kEnumType or kUnionType from node

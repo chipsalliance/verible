@@ -31,7 +31,6 @@ namespace kythe {
 struct ScopeMemberItem {
   ScopeMemberItem(const VName& vname) : vname(vname) {}
 
-  bool operator==(const ScopeMemberItem& other) const;
   bool operator<(const ScopeMemberItem& other) const;
 
   // VName of this member.
@@ -44,7 +43,7 @@ class Scope {
   Scope() = default;
   explicit Scope(const Signature& signature) : signature_(signature) {}
 
-  // Appends the given VName to the members of this scope.
+  // Appends the given scope item to the members of this scope.
   void AddMemberItem(const ScopeMemberItem& member_item);
 
   // Appends the member of the given scope to the current scope.
@@ -83,7 +82,7 @@ class Scope {
 //    endfunction
 // endpackage
 //
-// Vertical scope when extracting my_fun:
+// Scope stack when extracting my_fun:
 // The Global Scope
 // {
 //    "pkg"
@@ -112,13 +111,12 @@ class ScopeContext : public verible::AutoPopStack<Scope*> {
   // variable in reverse order of the current scopes.
   //
   // Improvement can be replacing the string matching to comparison based on
-  // integers or enums and reshaping the scope to be one vector instead of
-  // vector of vectors.
+  // integers or enums.
   //
   // Search function to get the VName of a definitions of some reference.
-  // It loops over the scopes in reverse order and loops over every scope in
-  // reverse order to find a definition for the variable with given prefix
-  // signature.
+  // It loops over the scopes in reverse order and loops over members of every
+  // scope in reverse order to find a definition for the variable with given
+  // prefix signature.
   // e.g
   // {
   //    bar#module,
@@ -177,11 +175,12 @@ class ScopeResolver {
   // Removes the given VName from the current scope (the top of scope_context).
   void RemoveDefinitionFromCurrentScope(const VName& vname);
 
-  // Adds the VNames of the definitions it given scope to the scope context.
-  void AppendScopeToScopeContext(const Scope& scope);
+  // Adds the members of the given scope to the current scope (the top of
+  // scope_context).
+  void AppendScopeToCurrentScope(const Scope& scope);
 
-  // Adds a ScopeMemberItem of a definition to the scope context.
-  void AddDefinitionToScopeContext(const ScopeMemberItem& new_member);
+  // Adds a ScopeMemberItem to the current scope (the top of scope_context).
+  void AddDefinitionToCurrentScope(const ScopeMemberItem& new_member);
 
   // Searches for a scope with the given signature in the scopes.
   const Scope* SearchForScope(const Signature& signature) const;
@@ -189,15 +188,10 @@ class ScopeResolver {
   // Maps the given signature to the given scope.
   void MapSignatureToScope(const Signature& signature, const Scope& scope);
 
-  // Maps the given signature to the scope of the other signature.
-  void MapSignatureToScopeOfSignature(const Signature& signature,
-                                      const Signature& other_signature);
-
   ScopeContext& GetMutableScopeContext() { return scope_context_; }
 
  private:
-  // Searches for a definition with the given name in the scope context and if
-  // not found searches the global scopes of the previous files' scopes (returns
+  // Searches for a definition with the given name in the scope context (returns
   // nullptr if a definitions is not found).
   const VName* SearchForDefinitionInScopeContext(absl::string_view name) const;
 

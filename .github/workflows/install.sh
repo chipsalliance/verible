@@ -16,15 +16,20 @@
 set -x
 set -e
 
-DIRS=${1:-$(find -mindepth 1 -maxdepth 1 -type d)}
-export TRAVIS_TAG=${TRAVIS_TAG:-$(git describe --match=v*)}
+source ./.github/settings.sh
 
-./docker-generate.sh $DIRS
+case $MODE in
+compile|test)
+    ./.github/workflows/set-compiler.sh 9
+    ./.github/workflows/install-bazel.sh
+    ;;
 
-for DIR in $DIRS; do
-    IMAGE=verible:$DIR-$TRAVIS_TAG
-    docker build --tag $IMAGE  $DIR
-    DOCKER_ID=$(docker create $IMAGE)
-    docker cp $DOCKER_ID:/out - | tar xvf -
-    docker rm -v $DOCKER_ID
-done
+bin)
+    docker pull $OS:$OS_VERSION
+    ;;
+
+*)
+    echo "install.sh: Unknown mode $MODE"
+    exit 1
+    ;;
+esac

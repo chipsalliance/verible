@@ -196,12 +196,12 @@ GetUnpackedDimensionFromVariableDeclarationAssign(
                                    NodeEnum::kUnpackedDimensions);
 }
 
-const verible::SyntaxTreeLeaf* GetTypeIdentifierFromDataDeclaration(
+const verible::Symbol* GetTypeIdentifierFromDataDeclaration(
     const verible::Symbol& data_declaration) {
   const SyntaxTreeNode& instantiation_type =
       GetInstantiationTypeOfDataDeclaration(data_declaration);
 
-  const verible::SyntaxTreeLeaf* identifier =
+  const verible::Symbol* identifier =
       GetTypeIdentifierFromInstantiationType(instantiation_type);
   if (identifier != nullptr) {
     return identifier;

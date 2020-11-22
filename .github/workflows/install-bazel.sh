@@ -13,28 +13,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-set -x
-set -e
-export TRAVIS_TAG=${TRAVIS_TAG:-$(git describe --match=v*)}
-
-git config --local user.name "Deployment Bot"
-git config --local user.email "verible-dev@googlegroups.com"
-
-case $MODE in
-compile-n-test)
-    # Set up things for GitHub Pages deployment
-    ./.github/travis/github-pages-setup.sh
-    ;;
-
-bin)
-    # Create a tag of form v0.0-183-gdf2b162-20191112132344
-    rm -rf Docker/out
-    git tag $TRAVIS_TAG || true
-    ls -l /tmp/releases
-    ;;
-
-*)
-    echo "success.sh: Unknown mode $MODE"
-    exit 1
-    ;;
-esac
+if [ -z "${BAZEL_VERSION}" ]; then
+        echo "Set \$BAZEL_VERSION"
+        exit 1
+fi
+wget "https://github.com/bazelbuild/bazel/releases/download/${BAZEL_VERSION}/bazel_${BAZEL_VERSION}-linux-x86_64.deb" -O /tmp/bazel.deb
+sudo dpkg -i /tmp/bazel.deb || true
+sudo apt-get -f install
+bazel --version

@@ -13,14 +13,32 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-find -L -name \*.log
-for F in $(find -L -name \*.log); do
-    echo
-    export FOLD_NAME=$(echo $F | sed -e's/[^A-Za-z0-9]/_/g')
-    travis_fold start $FOLD_NAME
-    echo -e "\n\n$F\n--------------"
-    cat $F
-    echo "--------------"
-    travis_fold end $FOLD_NAME
-    echo
-done
+set -x
+set -e
+export TAG=${TAG:-$(git rev-parse --short "$GITHUB_SHA")}
+
+git config --local user.name "Deployment Bot"
+git config --local user.email "verible-dev@googlegroups.com"
+
+case $MODE in
+test)
+    # Nothing to do
+    ;;
+
+compile)
+    # Set up things for GitHub Pages deployment
+    ./.github/workflows/github-pages-setup.sh
+    ;;
+
+bin)
+    # Create a tag of form v0.0-183-gdf2b162-20191112132344
+    rm -rf releasing/out
+    git tag "$TAG" || true
+    ls -l /tmp/releases
+    ;;
+
+*)
+    echo "success.sh: Unknown mode $MODE"
+    exit 1
+    ;;
+esac

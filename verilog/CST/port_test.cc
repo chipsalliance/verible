@@ -125,49 +125,61 @@ TEST(FindAllModulePortDeclarationsTest, OnePortInModule) {
   }
 }
 
-TEST(GetIdentifierFromModulePortDeclarationTest, OnePort) {
-  const std::pair<std::string, absl::string_view> kTestCases[] = {
-      {"module foo(input bar); endmodule", "bar"},
-      {"module foo(input logic b_a_r); endmodule", "b_a_r"},
-      {"module foo(input wire hello_world = 1); endmodule", "hello_world"},
-      {"module foo(wire hello_world1 = 1); endmodule", "hello_world1"},
-      {"module foo(input logic [3:0] bar2); endmodule", "bar2"},
-      {"module foo(input logic b_a_r [3:0]); endmodule", "b_a_r"},
-      {"module foo(input logic bar [4]); endmodule", "bar"},
+TEST(GetIdentifierFromModulePortDeclarationTest, VariousPorts) {
+  constexpr int kTag = 1;  // don't care
+  const SyntaxTreeSearchTestCase kTestCases[] = {
+      {"module foo(input ", {kTag, "bar"}, "); endmodule"},
+      {"module foo(input logic ", {kTag, "b_a_r"}, "); endmodule"},
+      {"module foo(input wire ", {kTag, "hello_world"}, " = 1); endmodule"},
+      {"module foo(wire ", {kTag, "hello_world1"}, " = 1); endmodule"},
+      {"module foo(input logic [3:0] ", {kTag, "bar2"}, "); endmodule"},
+      {"module foo(input logic ", {kTag, "b_a_r"}, " [3:0]); endmodule"},
+      {"module foo(input logic ", {kTag, "bar"}, " [4]); endmodule"},
+      // multiple ports
+      {"module foo(input ",
+       {kTag, "bar"},
+       ", output ",
+       {kTag, "bar2"},
+       "); endmodule"},
+      {"module foo(input logic ",
+       {kTag, "bar"},
+       ", input wire ",
+       {kTag, "bar2"},
+       "); endmodule"},
+      {"module foo(input logic ",
+       {kTag, "bar"},
+       ", output ",
+       {kTag, "bar2"},
+       "); endmodule"},
+      {"module foo(wire ",
+       {kTag, "bar"},
+       ", wire ",
+       {kTag, "bar2"},
+       " = 1); endmodule"},
+      {"module foo(input logic [3:0] ",
+       {kTag, "bar"},
+       ", input logic ",
+       {kTag, "bar2"},
+       " [4]); endmodule"},
+      {"module foo(input logic ",
+       {kTag, "bar"},
+       " [3:0], input logic [3:0] ",
+       {kTag, "bar2"},
+       "); endmodule"},
   };
   for (const auto& test : kTestCases) {
-    VerilogAnalyzer analyzer(test.first, "");
-    ASSERT_OK(analyzer.Analyze());
-    const auto& root = analyzer.Data().SyntaxTree();
-    const auto port_declarations = FindAllModulePortDeclarations(*root);
-    const auto* identifier_leaf = GetIdentifierFromModulePortDeclaration(
-        *port_declarations.front().match);
-    EXPECT_EQ(identifier_leaf->get().text(), test.second);
-  }
-}
-
-TEST(GetIdentifierFromModulePortDeclarationTest, MultiplePorts) {
-  const std::string kTestCases[] = {
-      {"module foo(input bar, output bar2); endmodule"},
-      {"module foo(input logic bar, input wire bar2); endmodule"},
-      {"module foo(input logic bar, output bar2); endmodule"},
-      {"module foo(wire bar, wire bar2 = 1); endmodule"},
-      {"module foo(input logic [3:0] bar, input logic bar2 [4]); endmodule"},
-      {"module foo(input logic bar [3:0], input logic [3:0] bar2); endmodule"},
-  };
-  for (const auto& test : kTestCases) {
-    VerilogAnalyzer analyzer(test, "");
-    ASSERT_OK(analyzer.Analyze());
-    const auto& root = analyzer.Data().SyntaxTree();
-    const auto port_declarations = FindAllModulePortDeclarations(*root);
-    ASSERT_EQ(port_declarations.size(), 2);
-
-    const auto* identifier_leaf_1 =
-        GetIdentifierFromModulePortDeclaration(*port_declarations[0].match);
-    EXPECT_EQ(identifier_leaf_1->get().text(), "bar");
-    const auto* identifier_leaf_2 =
-        GetIdentifierFromModulePortDeclaration(*port_declarations[1].match);
-    EXPECT_EQ(identifier_leaf_2->get().text(), "bar2");
+    TestVerilogSyntaxRangeMatches(
+        __FUNCTION__, test, [](const TextStructureView& text_structure) {
+          const auto& root = text_structure.SyntaxTree();
+          const auto port_declarations = FindAllModulePortDeclarations(*root);
+          std::vector<TreeSearchMatch> ids;
+          for (const auto& port : port_declarations) {
+            const auto* identifier_leaf =
+                GetIdentifierFromModulePortDeclaration(*port.match);
+            ids.push_back(TreeSearchMatch{identifier_leaf, /* no context */});
+          }
+          return ids;
+        });
   }
 }
 
@@ -274,26 +286,20 @@ TEST(GetAllPortReferences, GetPortReferenceIdentifier) {
       {"module m(wire a,", {kTag, "b"}, "[0:1]); endmodule: m"},
   };
   for (const auto& test : kTestCases) {
-    const absl::string_view code(test.code);
-    VerilogAnalyzer analyzer(code, "test-file");
-    const auto code_copy = analyzer.Data().Contents();
-    ASSERT_OK(analyzer.Analyze()) << "failed on:\n" << code;
-    const auto& root = analyzer.Data().SyntaxTree();
+    TestVerilogSyntaxRangeMatches(
+        __FUNCTION__, test, [](const TextStructureView& text_structure) {
+          const auto& root = text_structure.SyntaxTree();
 
-    const auto decls = FindAllPortReferences(*ABSL_DIE_IF_NULL(root));
+          const auto decls = FindAllPortReferences(*ABSL_DIE_IF_NULL(root));
 
-    std::vector<TreeSearchMatch> types;
-    for (const auto& decl : decls) {
-      const auto* type =
-          GetIdentifierFromPortReference(GetPortReferenceFromPort(*decl.match));
-      types.push_back(TreeSearchMatch{type, {/* ignored context */}});
-    }
-
-    std::ostringstream diffs;
-    EXPECT_TRUE(test.ExactMatchFindings(types, code_copy, &diffs))
-        << "failed on:\n"
-        << code << "\ndiffs:\n"
-        << diffs.str();
+          std::vector<TreeSearchMatch> types;
+          for (const auto& decl : decls) {
+            const auto* type = GetIdentifierFromPortReference(
+                GetPortReferenceFromPort(*decl.match));
+            types.push_back(TreeSearchMatch{type, {/* ignored context */}});
+          }
+          return types;
+        });
   }
 }
 
@@ -355,6 +361,39 @@ TEST(GetActualNamedPort, GetActualNamedPortParenGroup) {
                 TreeSearchMatch{paren_group, {/* ignored context */}});
           }
           return paren_groups;
+        });
+  }
+}
+
+TEST(FunctionPort, GetUnpackedDimensions) {
+  constexpr int kTag = 1;  // value doesn't matter
+  const SyntaxTreeSearchTestCase kTestCases[] = {
+      {""},
+      {"module m(input in1, input int2, input in3); endmodule: m"},
+      {"function void f(int x", {kTag, "[s:g]"}, ");\nendfunction"},
+      {"task f(int x", {kTag, "[s:g]"}, ");\nendtask"},
+      {"task f(int x",
+       {kTag, "[s:g]"},
+       ",int y",
+       {kTag, "[s:g]"},
+       ");\nendtask"},
+  };
+
+  for (const auto& test : kTestCases) {
+    TestVerilogSyntaxRangeMatches(
+        __FUNCTION__, test, [](const TextStructureView& text_structure) {
+          const auto& root = text_structure.SyntaxTree();
+          const auto& ports =
+              FindAllTaskFunctionPortDeclarations(*ABSL_DIE_IF_NULL(root));
+
+          std::vector<TreeSearchMatch> dimensions;
+          for (const auto& port : ports) {
+            const auto& dimension =
+                GetUnpackedDimensionsFromTaskFunctionPortItem(*port.match);
+            dimensions.emplace_back(
+                TreeSearchMatch{&dimension, {/* ignored context */}});
+          }
+          return dimensions;
         });
   }
 }

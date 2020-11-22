@@ -13,30 +13,23 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-set -x
-set -e
-export TRAVIS_TAG=${TRAVIS_TAG:-$(git describe --match=v*)}
+# WARNING: All values set in this file need to be plain strings as they have to
+# pass through things like Docker files which don't support bash arrays and
+# similar functionality.
+
+[[ "${BASH_SOURCE[0]}" != "${0}" ]] && SOURCED=1 || SOURCED=0
+
+if [ $SOURCED -ne 1 ]; then
+        echo "settings.sh should be sourced, not run."
+        exit 1
+fi
+
+export BAZEL_VERSION=3.7.0
+
 
 # TODO(b/171679296): re-enable c++11 support
 #   by downgrading kythe build requirements.
-BAZEL_CXXOPTS=(--cxxopt=-std=c++17)
+export BAZEL_CXXOPTS="-std=c++17"
 
-case "$MODE" in
-compile-n-test)
-    bazel test --noshow_progress "${BAZEL_CXXOPTS[@]}" //...
-    bazel build -c opt --noshow_progress "${BAZEL_CXXOPTS[@]}" //...
-    ;;
-
-bin)
-    cd Docker
-    ./docker-generate.sh ${OS}-${OS_VERSION}
-    ./docker-run.sh ${OS}-${OS_VERSION}
-    mkdir -p /tmp/releases
-    cp out/*.tar.gz /tmp/releases/
-    ;;
-
-*)
-    echo "script.sh: Unknown mode $MODE"
-    exit 1
-    ;;
-esac
+# Reduce the verbosity of progress output on CI
+export BAZEL_OPTS="-c opt --show_progress_rate_limit=10.0"

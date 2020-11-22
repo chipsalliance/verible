@@ -36,11 +36,13 @@
 // for --print_kythe_facts flag
 enum class PrintMode {
   kJSON,
+  kJSONDebug,
   kProto,
 };
 
 static const verible::EnumNameMap<PrintMode> kPrintModeStringMap{{
     {"json", PrintMode::kJSON},
+    {"json_debug", PrintMode::kJSONDebug},
     {"proto", PrintMode::kProto},
 }};
 
@@ -61,14 +63,16 @@ static std::string AbslUnparseFlag(const PrintMode& mode) {
 }
 
 ABSL_FLAG(bool, printextraction, false,
-          "Whether or not to print the extracted general indexing facts "
+          "Whether or not to print the extracted general indexing facts tree "
           "from the middle layer)");
 
-ABSL_FLAG(PrintMode, print_kythe_facts, PrintMode::kJSON,
-          "Determines how to print Kythe indexing facts.  Options:\n"
-          "  json: Outputs Kythe facts in JSON format\n"
-          "  proto: Outputs Kythe facts in proto format\n"
-          "Default: json\n");
+ABSL_FLAG(
+    PrintMode, print_kythe_facts, PrintMode::kJSON,
+    "Determines how to print Kythe indexing facts.  Options:\n"
+    "  json: Outputs Kythe facts in JSON format\n"
+    "  json_debug: Outputs Kythe facts in JSON format (without encoding)\n"
+    "  proto: Outputs Kythe facts in proto format\n"
+    "Default: json\n");
 
 ABSL_FLAG(
     std::string, file_list_path, "",
@@ -143,11 +147,11 @@ static void PrintKytheFactsProtoEntries(
 
 static std::vector<absl::Status> ExtractFiles(
     const std::vector<std::string>& ordered_file_list,
-    absl::string_view file_list_dir, absl::string_view file_list_root,
+    absl::string_view file_list_path, absl::string_view file_list_root,
     const std::vector<std::string>& include_dir_paths) {
   std::vector<absl::Status> errors;
   const verilog::kythe::IndexingFactNode file_list_facts_tree(
-      verilog::kythe::ExtractFiles(ordered_file_list, file_list_dir,
+      verilog::kythe::ExtractFiles(ordered_file_list, file_list_path,
                                    file_list_root, include_dir_paths, errors));
 
   // check for printextraction flag, and print extraction if on
@@ -156,10 +160,15 @@ static std::vector<absl::Status> ExtractFiles(
     LOG(INFO) << file_list_facts_tree << std::endl;
   }
 
-  // check how kythe facts.
+  // check how to output kythe facts.
   switch (absl::GetFlag(FLAGS_print_kythe_facts)) {
     case PrintMode::kJSON: {
       std::cout << KytheFactsPrinter(file_list_facts_tree) << std::endl;
+      break;
+    }
+    case PrintMode::kJSONDebug: {
+      std::cout << KytheFactsPrinter(file_list_facts_tree, /* debug= */ true)
+                << std::endl;
       break;
     }
     case PrintMode::kProto: {
@@ -208,7 +217,8 @@ Output: Produces Indexing Facts for kythe (http://kythe.io).
     std::string filename;
     std::istringstream stream(content);
     while (stream >> filename) {
-      // TODO(minatoma): ignore blank lines and "# ..." comments
+      // Ignore blank lines and "# ..." comments
+      if (filename.empty() || filename[0] == '#') continue;
       files_names.push_back(filename);
     }
   }

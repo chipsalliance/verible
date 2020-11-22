@@ -1245,9 +1245,14 @@ class_item
                               $4),
                           $5); }
   | interface_data_declaration
+  /* TODO(fangism): this should allow a property_qualifier_list_opt prefix */
     { $$ = move($1); }
-
+  | net_type_declaration
+  /* TODO(fangism): this should allow a property_qualifier_list_opt prefix */
+    { $$ = move($1); }
+    /* In the LRM, net_type_declaration is covered by data_declaration. */
   | package_import_declaration
+  /* TODO(fangism): this should allow a property_qualifier_list_opt prefix */
     { $$ = move($1); }
     /* In the LRM, package_import_declaration is covered by data_declaration. */
 
@@ -2979,6 +2984,8 @@ package_item_no_pp
     { $$ = move($1); }
   | data_declaration
     { $$ = move($1); }
+  | net_type_declaration
+    { $$ = move($1); }
   | interface_data_declaration
     { $$ = move($1); }
   | clocking_declaration
@@ -3578,12 +3585,21 @@ data_declaration_or_module_instantiation
   /* Using data_declaration_modifiers_opt causes S/R conflict.  */
   ;
 
+net_type_declaration
+  : TK_nettype data_type unqualified_id ';'
+    { $$ = MakeTaggedNode(N::kNetTypeDeclaration, $1, $2, $3, nullptr, nullptr, $4); }
+  | TK_nettype data_type unqualified_id TK_with class_id ';'
+    { $$ = MakeTaggedNode(N::kNetTypeDeclaration, $1, $2, $3, $4, $5, $6); }
+  ;
+
 block_item_decl
   : data_declaration_or_module_instantiation
     { $$ = move($1); }
   /* temporarily removed
   | TK_reg data_type register_variable_list ';'
   */
+  | net_type_declaration
+    { $$ = move($1); }
   | package_import_declaration
     { $$ = move($1); }
   | any_param_declaration

@@ -32,7 +32,7 @@ class IndexingFactsTreeContext
   using AutoPop = base_type::AutoPop;
 
  public:
-  // returns the top IndexingFactsNode of the stack
+  // returns the top IndexingFactsNode of the stack.
   IndexingFactNode& top() { return *ABSL_DIE_IF_NULL(base_type::top()); }
 };
 

@@ -20,9 +20,6 @@
 namespace verilog {
 namespace kythe {
 
-bool ScopeMemberItem::operator==(const ScopeMemberItem& other) const {
-  return this->vname == other.vname;
-}
 bool ScopeMemberItem::operator<(const ScopeMemberItem& other) const {
   return this->vname < other.vname;
 }
@@ -70,11 +67,11 @@ void ScopeResolver::MapSignatureToScope(const Signature& signature,
   scopes_[signature] = scope;
 }
 
-void ScopeResolver::AppendScopeToScopeContext(const Scope& scope) {
+void ScopeResolver::AppendScopeToCurrentScope(const Scope& scope) {
   scope_context_.top().AppendScope(scope);
 }
 
-void ScopeResolver::AddDefinitionToScopeContext(
+void ScopeResolver::AddDefinitionToCurrentScope(
     const ScopeMemberItem& new_member) {
   scope_context_.top().AddMemberItem(new_member);
 }
@@ -107,6 +104,9 @@ const std::vector<std::pair<const VName*, const Scope*>>
 ScopeResolver::SearchForDefinitions(
     const std::vector<std::string>& names) const {
   std::vector<std::pair<const VName*, const Scope*>> definitions;
+  if (names.empty()) {
+    return definitions;
+  }
 
   // Try to find the definition in the scopes of the current file.
   const VName* definition = SearchForDefinitionInScopeContext(names[0]);
@@ -164,15 +164,6 @@ const VName* ScopeResolver::SearchForDefinitionInScope(
     return nullptr;
   }
   return scope->SearchForDefinition(name);
-}
-
-void ScopeResolver::MapSignatureToScopeOfSignature(
-    const Signature& signature, const Signature& other_signature) {
-  const Scope* other_scope = SearchForScope(other_signature);
-  if (other_scope == nullptr) {
-    return;
-  }
-  MapSignatureToScope(signature, *other_scope);
 }
 
 }  // namespace kythe

@@ -212,24 +212,18 @@ TEST(FindAllMacroDefinitions, MacroName) {
        " 10\n endclass\n module m(); int x = `TEN;\n endmodule"},
   };
   for (const auto& test : kTestCases) {
-    const absl::string_view code(test.code);
-    VerilogAnalyzer analyzer(code, "test-file");
-    const auto code_copy = analyzer.Data().Contents();
-    ASSERT_OK(analyzer.Analyze()) << "failed on:\n" << code;
-    const auto& root = analyzer.Data().SyntaxTree();
+    TestVerilogSyntaxRangeMatches(
+        __FUNCTION__, test, [](const TextStructureView& text_structure) {
+          const auto& root = text_structure.SyntaxTree();
 
-    const auto decls = FindAllMacroDefinitions(*ABSL_DIE_IF_NULL(root));
-    std::vector<TreeSearchMatch> names;
-    for (const auto& decl : decls) {
-      const auto& type = GetMacroName(*decl.match);
-      names.push_back(TreeSearchMatch{&type, {/* ignored context */}});
-    }
-
-    std::ostringstream diffs;
-    EXPECT_TRUE(test.ExactMatchFindings(names, code_copy, &diffs))
-        << "failed on:\n"
-        << code << "\ndiffs:\n"
-        << diffs.str();
+          const auto decls = FindAllMacroDefinitions(*ABSL_DIE_IF_NULL(root));
+          std::vector<TreeSearchMatch> names;
+          for (const auto& decl : decls) {
+            const auto& type = GetMacroName(*decl.match);
+            names.push_back(TreeSearchMatch{&type, {/* ignored context */}});
+          }
+          return names;
+        });
   }
 }
 
@@ -268,27 +262,21 @@ TEST(FindAllMacroDefinitions, MacroArgsName) {
        ") i\n endclass\n module m(); int x = `TEN(1);\n endmodule"},
   };
   for (const auto& test : kTestCases) {
-    const absl::string_view code(test.code);
-    VerilogAnalyzer analyzer(code, "test-file");
-    const auto code_copy = analyzer.Data().Contents();
-    ASSERT_OK(analyzer.Analyze()) << "failed on:\n" << code;
-    const auto& root = analyzer.Data().SyntaxTree();
+    TestVerilogSyntaxRangeMatches(
+        __FUNCTION__, test, [](const TextStructureView& text_structure) {
+          const auto& root = text_structure.SyntaxTree();
 
-    const auto decls = FindAllMacroDefinitions(*ABSL_DIE_IF_NULL(root));
-    std::vector<TreeSearchMatch> names;
-    for (const auto& decl : decls) {
-      const auto& args = FindAllMacroDefinitionsArgs(*decl.match);
-      for (const auto& arg : args) {
-        const auto& name = GetMacroArgName(*arg.match);
-        names.push_back(TreeSearchMatch{&name, {/* ignored context */}});
-      }
-    }
-
-    std::ostringstream diffs;
-    EXPECT_TRUE(test.ExactMatchFindings(names, code_copy, &diffs))
-        << "failed on:\n"
-        << code << "\ndiffs:\n"
-        << diffs.str();
+          const auto decls = FindAllMacroDefinitions(*ABSL_DIE_IF_NULL(root));
+          std::vector<TreeSearchMatch> names;
+          for (const auto& decl : decls) {
+            const auto& args = FindAllMacroDefinitionsArgs(*decl.match);
+            for (const auto& arg : args) {
+              const auto& name = GetMacroArgName(*arg.match);
+              names.push_back(TreeSearchMatch{&name, {/* ignored context */}});
+            }
+          }
+          return names;
+        });
   }
 }
 

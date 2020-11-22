@@ -282,31 +282,35 @@ TEST(GetTaskLifetimeTest, AutomaticLifetimeDeclared) {
 }
 
 TEST(GetTaskIdTest, UnqualifiedIds) {
-  const std::pair<std::string, std::vector<absl::string_view>> kTestCases[] = {
-      {"task foo(); endtask", {"foo"}},
-      {"task automatic bar(); endtask", {"bar"}},
-      {"task static baz(); endtask", {"baz"}},
-      {"package p; task foo(); endtask endpackage", {"foo"}},
-      {"class c; task zoo(); endtask endclass", {"zoo"}},
-      {"task myclass::foo(); endtask", {"myclass", "foo"}},
+  constexpr int kTag = 1;  // don't care
+  const SyntaxTreeSearchTestCase kTestCases[] = {
+      {"task ", {kTag, "foo"}, "(); endtask"},
+      {"task automatic ", {kTag, "bar"}, "(); endtask"},
+      {"task static ", {kTag, "baz"}, "(); endtask"},
+      {"package p; task ", {kTag, "foo"}, "(); endtask endpackage"},
+      {"class c; task ", {kTag, "zoo"}, "(); endtask endclass"},
+      {"task ", {kTag, "myclass"}, "::", {kTag, "foo"}, "(); endtask"},
   };
-  for (const auto test : kTestCases) {
-    VerilogAnalyzer analyzer(test.first, "");
-    ASSERT_OK(analyzer.Analyze());
-    // Root node is a description list, not a task.
-    const auto& root = analyzer.Data().SyntaxTree();
-    const auto task_declarations = FindAllTaskDeclarations(*root);
-    ASSERT_EQ(task_declarations.size(), 1);
-    const auto& task_node = down_cast<const verible::SyntaxTreeNode&>(
-        *task_declarations.front().match);
-    const auto* task_id = GetTaskId(task_node);
-    const auto ids = FindAllUnqualifiedIds(*task_id);
-    std::vector<absl::string_view> got_ids;
-    for (const auto& id : ids) {
-      const verible::SyntaxTreeLeaf* base = GetIdentifier(*id.match);
-      got_ids.push_back(ABSL_DIE_IF_NULL(base)->get().text());
-    }
-    EXPECT_EQ(got_ids, test.second);
+  for (const auto& test : kTestCases) {
+    TestVerilogSyntaxRangeMatches(
+        __FUNCTION__, test, [](const TextStructureView& text_structure) {
+          // Root node is a description list, not a task.
+          const auto& root = text_structure.SyntaxTree();
+          const auto task_declarations = FindAllTaskDeclarations(*root);
+          std::vector<TreeSearchMatch> got_ids;
+          for (const auto& task_decl : task_declarations) {
+            const auto& task_node =
+                down_cast<const verible::SyntaxTreeNode&>(*task_decl.match);
+            const auto* task_id = GetTaskId(task_node);
+            const auto ids = FindAllUnqualifiedIds(*task_id);
+            for (const auto& id : ids) {
+              got_ids.push_back(TreeSearchMatch{
+                  GetIdentifier(*ABSL_DIE_IF_NULL(id.match)),
+                  /* no context */});
+            }
+          }
+          return got_ids;
+        });
   }
 }
 

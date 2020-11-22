@@ -15,21 +15,28 @@
 
 set -x
 set -e
-export TRAVIS_TAG=${TRAVIS_TAG:-$(git describe --match=v*)}
 
-case $MODE in
-compile-n-test)
-    ./.github/travis/set-compiler.sh 9
-    ./.github/travis/install-bazel.sh
-    git fetch --tags
+source ./.github/settings.sh
+
+case "$MODE" in
+test)
+    bazel test $BAZEL_OPTS //...
+    ;;
+
+compile)
+    bazel build $BAZEL_OPTS //...
     ;;
 
 bin)
-    docker pull $OS:$OS_VERSION
+    cd releasing
+    ./docker-generate.sh ${OS}-${OS_VERSION}
+    ./docker-run.sh ${OS}-${OS_VERSION}
+    mkdir -p /tmp/releases
+    cp out/*.tar.gz /tmp/releases/
     ;;
 
 *)
-    echo "install.sh: Unknown mode $MODE"
+    echo "script.sh: Unknown mode $MODE"
     exit 1
     ;;
 esac

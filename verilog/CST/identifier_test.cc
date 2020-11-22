@@ -44,7 +44,7 @@ using verible::TreeSearchMatch;
 // Finds all qualified ids are found.
 TEST(IdIsQualifiedTest, VariousIds) {
   // Each test should have only 1 id, qualified or unqualified
-  const std::pair<std::string, int> kTestCases[] = {
+  constexpr std::pair<absl::string_view, int> kTestCases[] = {
       {"function foo(); endfunction", 0 /* foo */},
       {"function myclass::foo(); endfunction", 1 /* myclass::foo */},
       {"task goo(); endtask", 0 /* goo */},

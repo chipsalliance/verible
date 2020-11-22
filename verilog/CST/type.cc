@@ -49,6 +49,15 @@ SymbolPtr ReinterpretReferenceCallBaseAsDataTypePackedDimensions(
       *ABSL_DIE_IF_NULL(reference_call_base), NodeEnum::kReferenceCallBase));
   auto& children(base.mutable_children());
   CHECK(!children.empty());
+
+  Symbol& reference(*children.front());
+  if (reference.Kind() != verible::SymbolKind::kNode ||
+      !verible::SymbolCastToNode(reference).MatchesTag(NodeEnum::kReference)) {
+    // function call -like syntax can never be interpreted as a type,
+    // so return the whole subtree unmodified.
+    return std::move(reference_call_base);
+  }
+
   SymbolPtr packed_dimensions(
       verible::MakeTaggedNode(NodeEnum::kPackedDimensions));
   verible::SyntaxTreeNode& pdim_node(
@@ -69,8 +78,7 @@ SymbolPtr ReinterpretReferenceCallBaseAsDataTypePackedDimensions(
     // TODO(fangism): instead of ignoring, retain non-tag-matched nodes as
     // syntax error nodes.
   }
-  return MakeDataType(ReinterpretReferenceAsType(*children.front()),
-                      packed_dimensions);
+  return MakeDataType(ReinterpretReferenceAsType(reference), packed_dimensions);
 }
 
 std::vector<verible::TreeSearchMatch> FindAllDataTypeDeclarations(
@@ -290,7 +298,7 @@ const verible::SyntaxTreeLeaf& GetTypeIdentifierFromInterfaceType(
   return verible::GetSubtreeAsLeaf(interface_type, NodeEnum::kInterfaceType, 2);
 }
 
-const verible::SyntaxTreeLeaf* GetTypeIdentifierFromInstantiationType(
+const verible::Symbol* GetTypeIdentifierFromInstantiationType(
     const verible::Symbol& instantiation_type) {
   const verible::SyntaxTreeNode& data_type =
       GetDataTypeFromInstantiationType(instantiation_type);
@@ -303,7 +311,7 @@ const verible::SyntaxTreeLeaf* GetTypeIdentifierFromInstantiationType(
   return nullptr;
 }
 
-const verible::SyntaxTreeLeaf* GetTypeIdentifierFromDataType(
+const verible::SyntaxTreeNode* GetTypeIdentifierFromDataType(
     const verible::Symbol& data_type) {
   const verible::SyntaxTreeNode& data_type_node =
       verible::SymbolCastToNode(data_type);
@@ -321,12 +329,13 @@ const verible::SyntaxTreeLeaf* GetTypeIdentifierFromDataType(
   return GetTypeIdentifierFromBaseType(*base_type);
 }
 
-const verible::SyntaxTreeLeaf* GetTypeIdentifierFromBaseType(
+const verible::SyntaxTreeNode* GetTypeIdentifierFromBaseType(
     const verible::Symbol& base_type) {
-  if (NodeEnum(base_type.Tag().tag) != NodeEnum::kUnqualifiedId) {
-    return nullptr;
+  const auto tag = static_cast<NodeEnum>(base_type.Tag().tag);
+  if (tag == NodeEnum::kUnqualifiedId || tag == NodeEnum::kQualifiedId) {
+    return &verible::SymbolCastToNode(base_type);
   }
-  return AutoUnwrapIdentifier(base_type);
+  return nullptr;
 }
 
 }  // namespace verilog

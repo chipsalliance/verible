@@ -20,6 +20,8 @@
 set -x
 set -e
 
+source "${KOKORO_ARTIFACTS_DIR}/github/verible/.github/settings.sh"
+
 # Source the internal common scripts.
 source "${KOKORO_GFILE_DIR}/common_google.sh"
 

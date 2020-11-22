@@ -155,7 +155,9 @@ cc_test(
     srcs = ["constraints_test.cc"],
     deps = [
         ":constraints",
+        ":match_test_utils",
         ":verilog_nonterminals",
+        "//common/analysis:syntax_tree_search_test_utils",
         "//common/text:concrete_syntax_leaf",
         "//common/text:concrete_syntax_tree",
         "//common/text:symbol",
@@ -193,6 +195,10 @@ cc_test(
     srcs = ["DPI_test.cc"],
     deps = [
         ":DPI",
+        ":match_test_utils",
+        "//common/analysis:syntax_tree_search",
+        "//common/analysis:syntax_tree_search_test_utils",
+        "//common/text:text_structure",
         "//common/text:token_info_test_util",
         "//common/text:tree_utils",
         "//common/util:range",

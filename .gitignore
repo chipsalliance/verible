@@ -1,5 +1,6 @@
 *~
 /bazel-*
 tags
-Docker/centos*
-Docker/ubuntu*
+releasing/centos*
+releasing/ubuntu*
+releasing/out

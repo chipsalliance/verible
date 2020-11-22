@@ -17,10 +17,10 @@
 # ---------------
 # Generate the GitHub pages to deploy
 
-REPO_SLUG=${REPO_SLUG:-${TRAVIS_REPO_SLUG:-google/verible}}
+REPO_SLUG=${REPO_SLUG:-${GITHUB_REPOSITORY_SLUG:-google/verible}}
 GIT_DATE=${GIT_DATE:-$(git show -s --format=%ci)}
 GIT_HASH=${GIT_HASH:-$(git rev-parse HEAD)}
-GIT_VERSION=${GIT_VERSION:-$(git describe --match=v*)}
+GIT_VERSION=${GIT_VERSION:-$(git rev-parse --short "$GITHUB_SHA")}
 
 echo "Git date:    $GIT_DATE"
 echo "Git hash:    $GIT_HASH"

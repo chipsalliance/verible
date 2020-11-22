@@ -157,6 +157,7 @@ enum class NodeEnum {
   kTypeDeclaration,
   kTypeReference,
   kLetDeclaration,
+  kNetTypeDeclaration,
   kDataType,
   kDataTypePrimitive,
   kDataTypeImplicitBasicId,
