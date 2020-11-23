@@ -124,7 +124,6 @@ cc_library(
     deps = [
         ":indexing_facts_tree",
         ":indexing_facts_tree_context",
-        "//common/analysis:syntax_tree_search",
         "//common/text:concrete_syntax_tree",
         "//common/text:tree_context_visitor",
         "//common/text:tree_utils",

@@ -16,7 +16,9 @@
 
 #include <iostream>
 #include <string>
+#include <vector>
 
+#include "absl/status/status.h"
 #include "absl/strings/strip.h"
 #include "common/text/concrete_syntax_tree.h"
 #include "common/text/tree_context_visitor.h"
@@ -40,15 +42,259 @@
 #include "verilog/CST/verilog_tree_print.h"
 #include "verilog/analysis/verilog_analyzer.h"
 #include "verilog/analysis/verilog_project.h"
+#include "verilog/tools/kythe/indexing_facts_tree_context.h"
 
 namespace verilog {
 namespace kythe {
 
 namespace {
 
+using verible::Symbol;
+using verible::SymbolKind;
 using verible::SyntaxTreeLeaf;
 using verible::SyntaxTreeNode;
+using verible::TokenInfo;
 using verible::TreeSearchMatch;
+
+// This class is used for traversing CST and extracting different indexing
+// facts from CST nodes and constructs a tree of indexing facts.
+class IndexingFactsTreeExtractor : public verible::TreeContextVisitor {
+ public:
+  IndexingFactsTreeExtractor(IndexingFactNode& file_list_facts_tree,
+                             const VerilogSourceFile& source_file,
+                             VerilogProject* project)
+      : context_(
+            TokenInfo::Context(source_file.GetTextStructure()->Contents())),
+        file_list_facts_tree_(file_list_facts_tree),
+        source_file_(source_file),
+        project_(project) {
+    const absl::string_view base = source_file_.GetTextStructure()->Contents();
+    // Create the Anchors for file path node.
+    root_.Value().AppendAnchor(
+        Anchor(source_file_.ResolvedPath(), 0, base.size()));
+    // Create the Anchors for text (code) node.
+    root_.Value().AppendAnchor(Anchor(base, 0, base.size()));
+  }
+
+  void Visit(const SyntaxTreeLeaf& leaf) override;
+  void Visit(const SyntaxTreeNode& node) override;
+
+  IndexingFactNode TakeRoot() { return std::move(root_); }
+
+ private:  // methods
+  // Extracts facts from module, intraface and program declarations.
+  void ExtractModuleOrInterfaceOrProgram(const SyntaxTreeNode& declaration_node,
+                                         IndexingFactType node_type);
+
+  // Extracts modules instantiations and creates its corresponding fact tree.
+  void ExtractModuleInstantiation(
+      const SyntaxTreeNode& data_declaration_node,
+      const std::vector<TreeSearchMatch>& gate_instances);
+
+  // Extracts endmodule, endinterface, endprogram and creates its corresponding
+  // fact tree.
+  void ExtractModuleOrInterfaceOrProgramEnd(
+      const SyntaxTreeNode& module_declaration_node);
+
+  // Extracts module, interface, program headers and creates its corresponding
+  // fact tree.
+  void ExtractModuleOrInterfaceOrProgramHeader(
+      const SyntaxTreeNode& module_declaration_node);
+
+  // Extracts modules ports and creates its corresponding fact tree.
+  // "has_propagated_type" determines if this port is "Non-ANSI" or not.
+  // e.g "module m(a, b, input c, d)" starting from "c" "has_propagated_type"
+  // will be true.
+  void ExtractModulePort(const SyntaxTreeNode& module_port_node,
+                         bool has_propagated_type);
+
+  // Extracts "a" from "input a", "output a" and creates its corresponding fact
+  // tree.
+  void ExtractInputOutputDeclaration(
+      const SyntaxTreeNode& identifier_unpacked_dimensions);
+
+  // Extracts "a" from "wire a" and creates its corresponding fact tree.
+  void ExtractNetDeclaration(const SyntaxTreeNode& net_declaration_node);
+
+  // Extract package declarations and creates its corresponding facts tree.
+  void ExtractPackageDeclaration(
+      const SyntaxTreeNode& package_declaration_node);
+
+  // Extract macro definitions and explores its arguments and creates its
+  // corresponding facts tree.
+  void ExtractMacroDefinition(const SyntaxTreeNode& preprocessor_definition);
+
+  // Extract macro calls and explores its arguments and creates its
+  // corresponding facts tree.
+  void ExtractMacroCall(const SyntaxTreeNode& macro_call);
+
+  // Extract macro names from "kMacroIdentifiers" which are considered
+  // references to macros and creates its corresponding facts tree.
+  void ExtractMacroReference(const SyntaxTreeLeaf& macro_identifier);
+
+  // Extracts Include statements and creates its corresponding fact tree.
+  void ExtractInclude(const SyntaxTreeNode& preprocessor_include);
+
+  // Extracts function and creates its corresponding fact tree.
+  void ExtractFunctionDeclaration(
+      const SyntaxTreeNode& function_declaration_node);
+
+  // Extracts class constructor and creates its corresponding fact tree.
+  void ExtractClassConstructor(const SyntaxTreeNode& class_constructor);
+
+  // Extracts task and creates its corresponding fact tree.
+  void ExtractTaskDeclaration(const SyntaxTreeNode& task_declaration_node);
+
+  // Extracts function or task call and creates its corresponding fact tree.
+  void ExtractFunctionOrTaskCall(const SyntaxTreeNode& function_call_node);
+
+  // Extracts function or task call tagged with "kMethodCallExtension" (treated
+  // as kFunctionOrTaskCall in facts tree) and creates its corresponding fact
+  // tree.
+  void ExtractMethodCallExtension(const SyntaxTreeNode& call_extension_node);
+
+  // Extracts members tagged with "kHierarchyExtension" (treated as
+  // kMemberReference in facts tree) and creates its corresponding fact tree.
+  void ExtractMemberExtension(const SyntaxTreeNode& hierarchy_extension_node);
+
+  // Extracts function or task ports and parameters.
+  void ExtractFunctionOrTaskOrConstructorPort(
+      const SyntaxTreeNode& function_declaration_node);
+
+  // Extracts classes and creates its corresponding fact tree.
+  void ExtractClassDeclaration(const SyntaxTreeNode& class_declaration);
+
+  // Extracts class instances and creates its corresponding fact tree.
+  void ExtractClassInstances(
+      const SyntaxTreeNode& data_declaration,
+      const std::vector<TreeSearchMatch>& class_instances);
+
+  // Extracts primitive types declarations tagged with kRegisterVariable and
+  // creates its corresponding fact tree.
+  void ExtractRegisterVariable(const SyntaxTreeNode& register_variable);
+
+  // Extracts primitive types declarations tagged with
+  // kVariableDeclarationAssignment and creates its corresponding fact tree.
+  void ExtractVariableDeclarationAssignment(
+      const SyntaxTreeNode& variable_declaration_assignment);
+
+  // Extracts enum name and creates its corresponding fact tree.
+  void ExtractEnumName(const SyntaxTreeNode& enum_name);
+
+  // Extracts type declaration preceeded with "typedef" and creates its
+  // corresponding fact tree.
+  void ExtractTypeDeclaration(const SyntaxTreeNode& type_declaration);
+
+  // Extracts pure virtual functions and creates its corresponding fact tree.
+  void ExtractPureVirtualFunction(const SyntaxTreeNode& function_prototype);
+
+  // Extracts pure virtual tasks and creates its corresponding fact tree.
+  void ExtractPureVirtualTask(const SyntaxTreeNode& task_prototype);
+
+  // Extracts function header and creates its corresponding fact tree.
+  void ExtractFunctionHeader(const SyntaxTreeNode& function_header,
+                             IndexingFactNode& function_node);
+
+  // Extracts task header and creates its corresponding fact tree.
+  void ExtractTaskHeader(const SyntaxTreeNode& task_header,
+                         IndexingFactNode& task_node);
+
+  // Extracts enum type declaration preceeded with "typedef" and creates its
+  // corresponding fact tree.
+  void ExtractEnumTypeDeclaration(const SyntaxTreeNode& enum_type_declaration);
+
+  // Extracts struct type declaration preceeded with "typedef" and creates its
+  // corresponding fact tree.
+  void ExtractStructUnionTypeDeclaration(const SyntaxTreeNode& type_declaration,
+                                         const SyntaxTreeNode& struct_type);
+
+  // Extracts struct declaration and creates its corresponding fact tree.
+  void ExtractStructUnionDeclaration(
+      const SyntaxTreeNode& struct_type,
+      const std::vector<TreeSearchMatch>& variables_matched);
+
+  // Extracts struct and union members and creates its corresponding fact tree.
+  void ExtractDataTypeImplicitIdDimensions(
+      const SyntaxTreeNode& data_type_implicit_id_dimensions);
+
+  // Extracts variable definitions preceeded with some data type and creates its
+  // corresponding fact tree.
+  // e.g "some_type var1;"
+  void ExtractTypedVariableDefinition(
+      const Symbol& type_identifier,
+      const std::vector<TreeSearchMatch>& variables_matched);
+
+  // Extracts leaves tagged with SymbolIdentifier and creates its facts
+  // tree. This should only be reached in case of free variable references.
+  // e.g "assign out = in & in2."
+  // Other extraction functions should terminate in case the inner
+  // SymbolIdentifiers are extracted.
+  void ExtractSymbolIdentifier(const SyntaxTreeLeaf& symbol_identifier);
+
+  // Extracts nodes tagged with "kUnqualifiedId".
+  void ExtractUnqualifiedId(const SyntaxTreeNode& unqualified_id);
+
+  // Extracts parameter declarations and creates its corresponding fact tree.
+  void ExtractParamDeclaration(const SyntaxTreeNode& param_declaration);
+
+  // Extracts module instantiation named ports and creates its corresponding
+  // fact tree.
+  void ExtractModuleNamedPort(const SyntaxTreeNode& actual_named_port);
+
+  // Extracts package imports and creates its corresponding fact tree.
+  void ExtractPackageImport(const SyntaxTreeNode& package_import_item);
+
+  // Extracts qualified ids and creates its corresponding fact tree.
+  // e.g "pkg::member" or "class::member".
+  void ExtractQualifiedId(const SyntaxTreeNode& qualified_id);
+
+  // Extracts initializations in for loop and creates its corresponding fact
+  // tree. e.g from "for(int i = 0, j = k; ...)" extracts "i", "j" and "k".
+  void ExtractForInitialization(const SyntaxTreeNode& for_initialization);
+
+  // Extracts param references and the actual references names.
+  // e.g from "counter #(.N(r))" extracts "N".
+  void ExtractParamByName(const SyntaxTreeNode& param_by_name);
+
+  // Extracts new scope and assign unique id to it.
+  // specifically, intended for conditional/loop generate constructs.
+  void ExtractAnonymousScope(const SyntaxTreeNode& node);
+
+  // Determines how to deal with the given data declaration node as it may be
+  // module instance, class instance or primitive variable.
+  void ExtractDataDeclaration(const SyntaxTreeNode& data_declaration);
+
+  // Moves the anchors and children from the the last extracted node in
+  // "facts_tree_context_", adds them to the new_node and pops remove the last
+  // extracted node.
+  void MoveAndDeleteLastExtractedNode(IndexingFactNode& new_node);
+
+ private:  // data members
+  // The Root of the constructed facts tree.
+  IndexingFactNode root_{IndexingNodeData(IndexingFactType::kFile)};
+
+  // Used for getting token offsets in code text.
+  // TODO(fangism): if a string_view is enough, get it from source_file_.
+  TokenInfo::Context context_;
+
+  // Keeps track of indexing facts tree ancestors as the visitor traverses CST.
+  IndexingFactsTreeContext facts_tree_context_;
+
+  // "IndexingFactNode" with tag kFileList which holds the extracted indexing
+  // facts trees of the files in the ordered file list. The extracted files will
+  // be children of this node and ordered as they are given in the ordered file
+  // list.
+  IndexingFactNode& file_list_facts_tree_;
+
+  // The current file being extracted.
+  const VerilogSourceFile& source_file_;
+
+  // The project configuration used to find included files.
+  VerilogProject* const project_;
+
+  // Counter used as an id for the anonymous scopes.
+  int next_anonymous_id = 0;
+};
 
 // Given a root to CST this function traverses the tree, extracts and constructs
 // the indexing facts tree.
@@ -280,7 +526,7 @@ void IndexingFactsTreeExtractor::Visit(const SyntaxTreeNode& node) {
   }
 }
 
-void IndexingFactsTreeExtractor::Visit(const verible::SyntaxTreeLeaf& leaf) {
+void IndexingFactsTreeExtractor::Visit(const SyntaxTreeLeaf& leaf) {
   switch (leaf.get().token_enum()) {
     case verilog_tokentype::SymbolIdentifier: {
       ExtractSymbolIdentifier(leaf);
@@ -293,14 +539,14 @@ void IndexingFactsTreeExtractor::Visit(const verible::SyntaxTreeLeaf& leaf) {
 }
 
 void IndexingFactsTreeExtractor::ExtractSymbolIdentifier(
-    const verible::SyntaxTreeLeaf& symbol_identifier) {
+    const SyntaxTreeLeaf& symbol_identifier) {
   facts_tree_context_.top().NewChild(
       IndexingNodeData({Anchor(symbol_identifier.get(), context_.base)},
                        IndexingFactType::kVariableReference));
 }
 
 void IndexingFactsTreeExtractor::ExtractDataDeclaration(
-    const verible::SyntaxTreeNode& data_declaration) {
+    const SyntaxTreeNode& data_declaration) {
   // For module instantiations
   const std::vector<TreeSearchMatch> gate_instances =
       FindAllGateInstances(data_declaration);
@@ -333,7 +579,7 @@ void IndexingFactsTreeExtractor::ExtractDataDeclaration(
     }
 
     // In case "some_type var1".
-    const verible::Symbol* type_identifier =
+    const Symbol* type_identifier =
         GetTypeIdentifierFromDataDeclaration(data_declaration);
     if (type_identifier != nullptr) {
       ExtractTypedVariableDefinition(*type_identifier, register_variables);
@@ -369,7 +615,7 @@ void IndexingFactsTreeExtractor::ExtractDataDeclaration(
     }
 
     // In case "some_type var1".
-    const verible::Symbol* type_identifier =
+    const Symbol* type_identifier =
         GetTypeIdentifierFromDataDeclaration(data_declaration);
     if (type_identifier != nullptr) {
       ExtractTypedVariableDefinition(*type_identifier,
@@ -387,7 +633,7 @@ void IndexingFactsTreeExtractor::ExtractDataDeclaration(
 }
 
 void IndexingFactsTreeExtractor::ExtractTypedVariableDefinition(
-    const verible::Symbol& type_identifier,
+    const Symbol& type_identifier,
     const std::vector<TreeSearchMatch>& variables_matche) {
   IndexingFactNode type_node(
       IndexingNodeData{IndexingFactType::kDataTypeReference});
@@ -425,7 +671,7 @@ void IndexingFactsTreeExtractor::ExtractModuleOrInterfaceOrProgram(
 void IndexingFactsTreeExtractor::ExtractModuleOrInterfaceOrProgramHeader(
     const SyntaxTreeNode& module_declaration_node) {
   // Extract module name e.g from "module my_module" extracts "my_module".
-  const verible::SyntaxTreeLeaf& module_name_leaf =
+  const SyntaxTreeLeaf& module_name_leaf =
       GetModuleName(module_declaration_node);
   facts_tree_context_.top().Value().AppendAnchor(
       Anchor(module_name_leaf.get(), context_.base)
@@ -461,9 +707,9 @@ void IndexingFactsTreeExtractor::ExtractModuleOrInterfaceOrProgramHeader(
   // should be a reference or a defintiion.
   bool has_propagated_type = false;
   for (const auto& port : port_list->children()) {
-    if (port->Kind() == verible::SymbolKind::kLeaf) continue;
+    if (port->Kind() == SymbolKind::kLeaf) continue;
 
-    const SyntaxTreeNode& port_node = verible::SymbolCastToNode(*port);
+    const SyntaxTreeNode& port_node = SymbolCastToNode(*port);
     const auto tag = static_cast<verilog::NodeEnum>(port_node.Tag().tag);
 
     if (tag == NodeEnum::kPortDeclaration) {
@@ -525,7 +771,7 @@ void IndexingFactsTreeExtractor::ExtractModulePort(
 
   // Extract unpacked and packed dimensions.
   for (const auto& child : module_port_node.children()) {
-    if (child == nullptr || child->Kind() == verible::SymbolKind::kLeaf) {
+    if (child == nullptr || child->Kind() == SymbolKind::kLeaf) {
       continue;
     }
     const auto tag = static_cast<verilog::NodeEnum>(child->Tag().tag);
@@ -560,7 +806,7 @@ void IndexingFactsTreeExtractor::ExtractModulePort(
 }
 
 void IndexingFactsTreeExtractor::ExtractModuleNamedPort(
-    const verible::SyntaxTreeNode& actual_named_port) {
+    const SyntaxTreeNode& actual_named_port) {
   IndexingFactNode actual_port_node(
       IndexingNodeData{IndexingFactType::kModuleNamedPort});
 
@@ -570,8 +816,7 @@ void IndexingFactsTreeExtractor::ExtractModuleNamedPort(
   {
     const IndexingFactsTreeContext::AutoPop p(&facts_tree_context_,
                                               &actual_port_node);
-    const verible::Symbol* paren_group =
-        GetActualNamedPortParenGroup(actual_named_port);
+    const Symbol* paren_group = GetActualNamedPortParenGroup(actual_named_port);
     if (paren_group != nullptr) {
       paren_group->Accept(this);
     }
@@ -593,7 +838,7 @@ void IndexingFactsTreeExtractor::ExtractInputOutputDeclaration(
 
 void IndexingFactsTreeExtractor::ExtractModuleOrInterfaceOrProgramEnd(
     const SyntaxTreeNode& module_declaration_node) {
-  const verible::SyntaxTreeLeaf* module_name =
+  const SyntaxTreeLeaf* module_name =
       GetModuleEndLabel(module_declaration_node);
 
   if (module_name != nullptr) {
@@ -609,7 +854,7 @@ void IndexingFactsTreeExtractor::ExtractModuleInstantiation(
       IndexingNodeData{IndexingFactType::kDataTypeReference});
 
   // Extract module type name.
-  const verible::Symbol* type =
+  const Symbol* type =
       GetTypeIdentifierFromDataDeclaration(data_declaration_node);
   if (type == nullptr) {
     return;
@@ -628,7 +873,7 @@ void IndexingFactsTreeExtractor::ExtractModuleInstantiation(
     IndexingFactNode module_instance_node(
         IndexingNodeData{IndexingFactType::kModuleInstance});
 
-    const verible::TokenInfo& variable_name =
+    const TokenInfo& variable_name =
         GetModuleInstanceNameTokenInfoFromGateInstance(*instance.match);
     module_instance_node.Value().AppendAnchor(
         Anchor(variable_name, context_.base));
@@ -652,12 +897,12 @@ void IndexingFactsTreeExtractor::ExtractNetDeclaration(
   // Nets are treated as children of the enclosing parent.
   // Net declarations may declare multiple instances sharing the same type in
   // a single statement.
-  const std::vector<const verible::TokenInfo*> identifiers =
+  const std::vector<const TokenInfo*> identifiers =
       GetIdentifiersFromNetDeclaration(net_declaration_node);
 
   // Loop through each instance and associate each declared id with the same
   // type.
-  for (const verible::TokenInfo* wire_token_info : identifiers) {
+  for (const TokenInfo* wire_token_info : identifiers) {
     facts_tree_context_.top().NewChild(
         IndexingNodeData({Anchor(*wire_token_info, context_.base)},
                          IndexingFactType::kVariableDefinition));
@@ -687,7 +932,7 @@ void IndexingFactsTreeExtractor::ExtractPackageDeclaration(
     }
 
     // Visit package body it exists.
-    const verible::Symbol* package_item_list =
+    const Symbol* package_item_list =
         GetPackageItemList(package_declaration_node);
     if (package_item_list != nullptr) {
       package_item_list->Accept(this);
@@ -698,18 +943,17 @@ void IndexingFactsTreeExtractor::ExtractPackageDeclaration(
 }
 
 void IndexingFactsTreeExtractor::ExtractMacroDefinition(
-    const verible::SyntaxTreeNode& preprocessor_definition) {
-  const verible::SyntaxTreeLeaf& macro_name =
-      GetMacroName(preprocessor_definition);
+    const SyntaxTreeNode& preprocessor_definition) {
+  const SyntaxTreeLeaf& macro_name = GetMacroName(preprocessor_definition);
 
   IndexingFactNode macro_node(IndexingNodeData(
       {Anchor(macro_name.get(), context_.base)}, IndexingFactType::kMacro));
 
-  const std::vector<verible::TreeSearchMatch> args =
+  const std::vector<TreeSearchMatch> args =
       FindAllMacroDefinitionsArgs(preprocessor_definition);
 
-  for (const verible::TreeSearchMatch& arg : args) {
-    const verible::SyntaxTreeLeaf& leaf = GetMacroArgName(*arg.match);
+  for (const TreeSearchMatch& arg : args) {
+    const SyntaxTreeLeaf& leaf = GetMacroArgName(*arg.match);
 
     macro_node.NewChild(
         IndexingNodeData({Anchor(leaf.get(), context_.base)},
@@ -719,7 +963,7 @@ void IndexingFactsTreeExtractor::ExtractMacroDefinition(
   facts_tree_context_.top().NewChild(macro_node);
 }
 
-Anchor GetMacroAnchorFromTokenInfo(const verible::TokenInfo& macro_token_info,
+Anchor GetMacroAnchorFromTokenInfo(const TokenInfo& macro_token_info,
                                    absl::string_view base) {
   // Strip the prefix "`".
   // e.g.
@@ -734,8 +978,8 @@ Anchor GetMacroAnchorFromTokenInfo(const verible::TokenInfo& macro_token_info,
 }
 
 void IndexingFactsTreeExtractor::ExtractMacroCall(
-    const verible::SyntaxTreeNode& macro_call) {
-  const verible::TokenInfo& macro_call_name_token = GetMacroCallId(macro_call);
+    const SyntaxTreeNode& macro_call) {
+  const TokenInfo& macro_call_name_token = GetMacroCallId(macro_call);
   IndexingFactNode macro_node(IndexingNodeData(
       {GetMacroAnchorFromTokenInfo(macro_call_name_token, context_.base)},
       IndexingFactType::kMacroCall));
@@ -744,8 +988,7 @@ void IndexingFactsTreeExtractor::ExtractMacroCall(
     const IndexingFactsTreeContext::AutoPop p(&facts_tree_context_,
                                               &macro_node);
 
-    const verible::SyntaxTreeNode& macro_call_args =
-        GetMacroCallArgs(macro_call);
+    const SyntaxTreeNode& macro_call_args = GetMacroCallArgs(macro_call);
     Visit(macro_call_args);
   }
 
@@ -753,14 +996,14 @@ void IndexingFactsTreeExtractor::ExtractMacroCall(
 }
 
 void IndexingFactsTreeExtractor::ExtractMacroReference(
-    const verible::SyntaxTreeLeaf& macro_identifier) {
+    const SyntaxTreeLeaf& macro_identifier) {
   facts_tree_context_.top().NewChild(IndexingNodeData(
       {GetMacroAnchorFromTokenInfo(macro_identifier.get(), context_.base)},
       IndexingFactType::kMacroCall));
 }
 
 void IndexingFactsTreeExtractor::ExtractClassConstructor(
-    const verible::SyntaxTreeNode& class_constructor) {
+    const SyntaxTreeNode& class_constructor) {
   IndexingFactNode constructor_node(
       IndexingNodeData{IndexingFactType::kConstructor});
 
@@ -786,7 +1029,7 @@ void IndexingFactsTreeExtractor::ExtractClassConstructor(
 }
 
 void IndexingFactsTreeExtractor::ExtractPureVirtualFunction(
-    const verible::SyntaxTreeNode& function_prototype) {
+    const SyntaxTreeNode& function_prototype) {
   IndexingFactNode function_node(
       IndexingNodeData{IndexingFactType::kFunctionOrTaskForwardDeclaration});
 
@@ -799,7 +1042,7 @@ void IndexingFactsTreeExtractor::ExtractPureVirtualFunction(
 }
 
 void IndexingFactsTreeExtractor::ExtractPureVirtualTask(
-    const verible::SyntaxTreeNode& task_prototype) {
+    const SyntaxTreeNode& task_prototype) {
   IndexingFactNode task_node(
       IndexingNodeData{IndexingFactType::kFunctionOrTaskForwardDeclaration});
 
@@ -853,10 +1096,9 @@ void IndexingFactsTreeExtractor::ExtractTaskDeclaration(
 }
 
 void IndexingFactsTreeExtractor::ExtractFunctionHeader(
-    const verible::SyntaxTreeNode& function_header,
-    IndexingFactNode& function_node) {
+    const SyntaxTreeNode& function_header, IndexingFactNode& function_node) {
   // Extract function name.
-  const verible::Symbol* function_name = GetFunctionHeaderId(function_header);
+  const Symbol* function_name = GetFunctionHeaderId(function_header);
   if (function_name == nullptr) {
     return;
   }
@@ -872,9 +1114,9 @@ void IndexingFactsTreeExtractor::ExtractFunctionHeader(
 }
 
 void IndexingFactsTreeExtractor::ExtractTaskHeader(
-    const verible::SyntaxTreeNode& task_header, IndexingFactNode& task_node) {
+    const SyntaxTreeNode& task_header, IndexingFactNode& task_node) {
   // Extract task name.
-  const verible::Symbol* task_name = GetTaskHeaderId(task_header);
+  const Symbol* task_name = GetTaskHeaderId(task_header);
   if (task_name == nullptr) {
     return;
   }
@@ -894,8 +1136,7 @@ void IndexingFactsTreeExtractor::ExtractFunctionOrTaskOrConstructorPort(
       FindAllTaskFunctionPortDeclarations(function_declaration_node);
 
   for (const TreeSearchMatch& port : ports) {
-    const verible::Symbol* port_type =
-        GetTypeOfTaskFunctionPortItem(*port.match);
+    const Symbol* port_type = GetTypeOfTaskFunctionPortItem(*port.match);
     if (port_type != nullptr) {
       // port variable name.
       const SyntaxTreeLeaf* port_identifier =
@@ -1018,7 +1259,7 @@ void IndexingFactsTreeExtractor::ExtractFunctionOrTaskCall(
 }
 
 void IndexingFactsTreeExtractor::ExtractMethodCallExtension(
-    const verible::SyntaxTreeNode& call_extension_node) {
+    const SyntaxTreeNode& call_extension_node) {
   IndexingFactNode function_node(
       IndexingNodeData{IndexingFactType::kFunctionCall});
 
@@ -1050,7 +1291,7 @@ void IndexingFactsTreeExtractor::ExtractMethodCallExtension(
 }
 
 void IndexingFactsTreeExtractor::ExtractMemberExtension(
-    const verible::SyntaxTreeNode& hierarchy_extension_node) {
+    const SyntaxTreeNode& hierarchy_extension_node) {
   IndexingFactNode member_node(
       IndexingNodeData{IndexingFactType::kMemberReference});
 
@@ -1127,7 +1368,7 @@ void IndexingFactsTreeExtractor::ExtractClassInstances(
   IndexingFactNode type_node(
       IndexingNodeData{IndexingFactType::kDataTypeReference});
 
-  const verible::Symbol* type =
+  const Symbol* type =
       GetTypeIdentifierFromDataDeclaration(data_declaration_node);
   if (type == nullptr) {
     return;
@@ -1159,11 +1400,11 @@ void IndexingFactsTreeExtractor::ExtractClassInstances(
 }
 
 void IndexingFactsTreeExtractor::ExtractRegisterVariable(
-    const verible::SyntaxTreeNode& register_variable) {
+    const SyntaxTreeNode& register_variable) {
   IndexingFactNode variable_node(
       IndexingNodeData{IndexingFactType::kVariableDefinition});
 
-  const verible::TokenInfo& variable_name_token_info =
+  const TokenInfo& variable_name_token_info =
       GetInstanceNameTokenInfoFromRegisterVariable(register_variable);
   variable_node.Value().AppendAnchor(
       Anchor(variable_name_token_info, context_.base));
@@ -1189,7 +1430,7 @@ void IndexingFactsTreeExtractor::ExtractRegisterVariable(
 }
 
 void IndexingFactsTreeExtractor::ExtractVariableDeclarationAssignment(
-    const verible::SyntaxTreeNode& variable_declaration_assignment) {
+    const SyntaxTreeNode& variable_declaration_assignment) {
   IndexingFactNode variable_node(
       IndexingNodeData{IndexingFactType::kVariableDefinition});
 
@@ -1255,7 +1496,7 @@ void IndexingFactsTreeExtractor::ExtractUnqualifiedId(
 }
 
 void IndexingFactsTreeExtractor::ExtractParamDeclaration(
-    const verible::SyntaxTreeNode& param_declaration) {
+    const SyntaxTreeNode& param_declaration) {
   IndexingFactNode param_node(
       IndexingNodeData{IndexingFactType::kParamDeclaration});
 
@@ -1279,19 +1520,18 @@ void IndexingFactsTreeExtractor::ExtractParamDeclaration(
   } else {
     // 2nd => parameter int x;
     // Extract Param name.
-    const verible::TokenInfo& param_name =
-        GetParameterNameToken(param_declaration);
+    const TokenInfo& param_name = GetParameterNameToken(param_declaration);
     param_node.Value().AppendAnchor(Anchor(param_name, context_.base));
 
     {
       const IndexingFactsTreeContext::AutoPop p(&facts_tree_context_,
                                                 &param_node);
 
-      const verible::Symbol* assign_expression =
+      const Symbol* assign_expression =
           GetParamAssignExpression(param_declaration);
 
       if (assign_expression != nullptr &&
-          assign_expression->Kind() == verible::SymbolKind::kNode) {
+          assign_expression->Kind() == SymbolKind::kNode) {
         // Extract trailing expression.
         assign_expression->Accept(this);
       }
@@ -1302,7 +1542,7 @@ void IndexingFactsTreeExtractor::ExtractParamDeclaration(
 }
 
 void IndexingFactsTreeExtractor::ExtractParamByName(
-    const verible::SyntaxTreeNode& param_by_name) {
+    const SyntaxTreeNode& param_by_name) {
   IndexingFactNode named_param_node(
       IndexingNodeData{IndexingFactType::kNamedParam});
 
@@ -1312,7 +1552,7 @@ void IndexingFactsTreeExtractor::ExtractParamByName(
   {
     const IndexingFactsTreeContext::AutoPop p(&facts_tree_context_,
                                               &named_param_node);
-    const verible::SyntaxTreeNode* paren_group =
+    const SyntaxTreeNode* paren_group =
         GetParenGroupFromActualParam(param_by_name);
     if (paren_group != nullptr) {
       Visit(*paren_group);
@@ -1346,7 +1586,7 @@ void IndexingFactsTreeExtractor::ExtractPackageImport(
 }
 
 void IndexingFactsTreeExtractor::ExtractQualifiedId(
-    const verible::SyntaxTreeNode& qualified_id) {
+    const SyntaxTreeNode& qualified_id) {
   IndexingNodeData member_reference_data(IndexingFactType::kMemberReference);
 
   // Get all the variable names in the qualified id.
@@ -1378,7 +1618,7 @@ void IndexingFactsTreeExtractor::ExtractQualifiedId(
 }
 
 void IndexingFactsTreeExtractor::ExtractForInitialization(
-    const verible::SyntaxTreeNode& for_initialization) {
+    const SyntaxTreeNode& for_initialization) {
   // Extracts the variable name from for initialization.
   // e.g from "int i = 0"; ==> extracts "i".
   const SyntaxTreeLeaf& variable_name =
@@ -1409,7 +1649,7 @@ absl::string_view StripOuterQuotes(absl::string_view text) {
 }
 
 void IndexingFactsTreeExtractor::ExtractInclude(
-    const verible::SyntaxTreeNode& preprocessor_include) {
+    const SyntaxTreeNode& preprocessor_include) {
   const SyntaxTreeLeaf* included_filename =
       GetFileFromPreprocessorInclude(preprocessor_include);
   if (included_filename == nullptr) {
@@ -1450,7 +1690,7 @@ void IndexingFactsTreeExtractor::ExtractInclude(
 }
 
 void IndexingFactsTreeExtractor::ExtractEnumName(
-    const verible::SyntaxTreeNode& enum_name) {
+    const SyntaxTreeNode& enum_name) {
   IndexingFactNode enum_node(IndexingNodeData{IndexingFactType::kConstant});
 
   const SyntaxTreeLeaf& name = GetSymbolIdentifierFromEnumName(enum_name);
@@ -1462,7 +1702,7 @@ void IndexingFactsTreeExtractor::ExtractEnumName(
   {
     const IndexingFactsTreeContext::AutoPop p(&facts_tree_context_, &enum_node);
     for (const auto& child : enum_name.children()) {
-      if (child == nullptr || child->Kind() == verible::SymbolKind::kLeaf) {
+      if (child == nullptr || child->Kind() == SymbolKind::kLeaf) {
         continue;
       }
       child->Accept(this);
@@ -1473,7 +1713,7 @@ void IndexingFactsTreeExtractor::ExtractEnumName(
 }
 
 void IndexingFactsTreeExtractor::ExtractEnumTypeDeclaration(
-    const verible::SyntaxTreeNode& enum_type_declaration) {
+    const SyntaxTreeNode& enum_type_declaration) {
   // Extract enum type name.
   const SyntaxTreeLeaf* enum_type_name =
       GetIdentifierFromTypeDeclaration(enum_type_declaration);
@@ -1483,7 +1723,7 @@ void IndexingFactsTreeExtractor::ExtractEnumTypeDeclaration(
 
   // Explore the children of this enum type to extract.
   for (const auto& child : enum_type_declaration.children()) {
-    if (child == nullptr || child->Kind() == verible::SymbolKind::kLeaf) {
+    if (child == nullptr || child->Kind() == SymbolKind::kLeaf) {
       continue;
     }
     child->Accept(this);
@@ -1554,7 +1794,7 @@ void IndexingFactsTreeExtractor::ExtractDataTypeImplicitIdDimensions(
   // } my_struct;
   // In this case var_name should contain "xx" inside it.
 
-  std::pair<const verible::SyntaxTreeLeaf*, int> variable_name =
+  std::pair<const SyntaxTreeLeaf*, int> variable_name =
       GetSymbolIdentifierFromDataTypeImplicitIdDimensions(
           data_type_implicit_id_dimensions);
 
@@ -1584,7 +1824,7 @@ void IndexingFactsTreeExtractor::ExtractDataTypeImplicitIdDimensions(
       const IndexingFactsTreeContext::AutoPop p(&facts_tree_context_,
                                                 &variable_node);
       for (const auto& child : data_type_implicit_id_dimensions.children()) {
-        if (child == nullptr || child->Kind() == verible::SymbolKind::kLeaf) {
+        if (child == nullptr || child->Kind() == SymbolKind::kLeaf) {
           continue;
         }
         child->Accept(this);
@@ -1596,7 +1836,7 @@ void IndexingFactsTreeExtractor::ExtractDataTypeImplicitIdDimensions(
 }
 
 void IndexingFactsTreeExtractor::ExtractTypeDeclaration(
-    const verible::SyntaxTreeNode& type_declaration) {
+    const SyntaxTreeNode& type_declaration) {
   VLOG(1) << __FUNCTION__;
   const SyntaxTreeNode* type =
       GetReferencedTypeOfTypeDeclaration(type_declaration);
@@ -1641,7 +1881,7 @@ void IndexingFactsTreeExtractor::ExtractTypeDeclaration(
 }
 
 void IndexingFactsTreeExtractor::ExtractAnonymousScope(
-    const verible::SyntaxTreeNode& node) {
+    const SyntaxTreeNode& node) {
   IndexingFactNode temp_scope_node(
       IndexingNodeData{IndexingFactType::kAnonymousScope});
 
