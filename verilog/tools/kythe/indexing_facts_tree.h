@@ -71,20 +71,21 @@ class Anchor {
 // This class is a simplified representation of CST and contains information
 // that can be used for extracting indexing-facts for different indexing tools.
 //
-// This is intended to be an abstract layer between the parser and the indexing
-// tool.
+// This is intended to be an abstract layer between the parser generated CST
+// and the indexing tool.
 class IndexingNodeData {
  public:
-  explicit IndexingNodeData(IndexingFactType language_feature)
-      : indexing_fact_type_(language_feature) {}
+  template <typename... Args>
+  IndexingNodeData(IndexingFactType language_feature, Args&&... args)
+      : indexing_fact_type_(language_feature) {
+    AppendAnchor(std::forward<Args>(args)...);
+  }
 
-  IndexingNodeData(std::vector<Anchor> anchor,
-                   IndexingFactType language_feature)
-      : indexing_fact_type_(language_feature), anchors_(std::move(anchor)) {}
-
-  // Consume an Anchor object.
-  void AppendAnchor(Anchor&& anchor) {
+  // Consume an Anchor object(s), variadically.
+  template <typename... Args>
+  void AppendAnchor(Anchor&& anchor, Args&&... args) {
     anchors_.emplace_back(std::move(anchor));
+    AppendAnchor(std::forward<Args>(args)...);
   }
 
   // Swaps the anchors with the given IndexingNodeData.
@@ -98,6 +99,10 @@ class IndexingNodeData {
   IndexingFactType GetIndexingFactType() const { return indexing_fact_type_; }
 
   bool operator==(const IndexingNodeData&) const;
+
+ private:
+  // Base case for variadic AppendAnchor()
+  void AppendAnchor() const {}
 
  private:
   // Represents which language feature this indexing fact is about.
