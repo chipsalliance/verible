@@ -32,6 +32,7 @@ namespace {
 using verible::file::testing::ScopedTestFile;
 
 typedef IndexingFactNode T;
+typedef IndexingNodeData D;
 
 // SimpleTestProject create a single-file project for testing.
 class SimpleTestProject : public VerilogProject {
@@ -84,33 +85,33 @@ TEST(FactsTreeExtractor, EqualOperatorTest) {
   constexpr absl::string_view code_text = "";
   constexpr absl::string_view file_name = "verilog.v";
 
-  const IndexingFactNode expected({
+  const IndexingFactNode expected(D{
       IndexingFactType::kFile,
       Anchor(file_name, 0, code_text.size()),
   });
 
-  const IndexingFactNode tree({
+  const IndexingFactNode tree(D{
       IndexingFactType::kFile,
       Anchor(file_name, 0, code_text.size()),
   });
 
-  const IndexingFactNode tree2({
+  const IndexingFactNode tree2(D{
       IndexingFactType::kFile,
       Anchor(file_name, 0, 556),
   });
 
-  const IndexingFactNode tree3({
+  const IndexingFactNode tree3(D{
       IndexingFactType::kFile,
       Anchor(file_name, 0, 4589),
       Anchor(file_name, 0, 987),
   });
 
   const IndexingFactNode tree4(
-      {
+      D{
           IndexingFactType::kFile,
           Anchor(file_name, 0, code_text.size()),
       },
-      T({
+      T(D{
           IndexingFactType::kModule,
           Anchor(absl::string_view("foo"), 7, 10),
           Anchor(absl::string_view("foo"), 23, 26),
@@ -176,7 +177,7 @@ TEST(FactsTreeExtractor, EmptyModuleTest) {
       project.ExpectedFileListData(),
       T(project.ExpectedFileData(),
         // refers to module foo.
-        T({
+        T(D{
             IndexingFactType::kModule,
             Anchor(kTestCase.expected_tokens[1], kTestCase.code),
             Anchor(kTestCase.expected_tokens[3], kTestCase.code),
@@ -203,7 +204,7 @@ TEST(FactsTreeExtractor, NoIdentifierInsideNet) {
       project.ExpectedFileListData(),
       T(project.ExpectedFileData(),
         // refers to module foo.
-        T({
+        T(D{
             IndexingFactType::kModule,
             Anchor(kTestCase.expected_tokens[1], kTestCase.code),
         })));
@@ -236,23 +237,23 @@ TEST(FactsTreeExtractor, PropagatedUserDefinedTypeInModulePort) {
       T(project.ExpectedFileData(),
         // refers to module foo.
         T(
-            {
+            D{
                 IndexingFactType::kModule,
                 Anchor(kTestCase.expected_tokens[1], kTestCase.code),
             },
             // refers to My_type.
             T(
-                {
+                D{
                     IndexingFactType::kDataTypeReference,
                     Anchor(kTestCase.expected_tokens[3], kTestCase.code),
                 },
                 // refers to x.
-                T({
+                T(D{
                     IndexingFactType::kVariableDefinition,
                     Anchor(kTestCase.expected_tokens[5], kTestCase.code),
                 }),
                 // refers to y.
-                T({
+                T(D{
                     IndexingFactType::kVariableDefinition,
                     Anchor(kTestCase.expected_tokens[7], kTestCase.code),
                 })))));
@@ -286,19 +287,19 @@ TEST(FactsTreeExtractor, OneLocalNetTest) {
       T(project.ExpectedFileData(),
         // refers to module bar.
         T(
-            {
+            D{
                 IndexingFactType::kModule,
                 Anchor(kTestCase.expected_tokens[1], kTestCase.code),
             },
             // refers to w.
-            T({
+            T(D{
                 IndexingFactType::kVariableDefinition,
                 Anchor(kTestCase.expected_tokens[3], kTestCase.code),
             }),
             // refers to `x
             // TODO(minatoma): suppress declarations that use macro
             // identifiers because they evaluate to something unknown.
-            T({
+            T(D{
                 IndexingFactType::kVariableDefinition,
                 Anchor(kTestCase.expected_tokens[5], kTestCase.code),
             }))));
@@ -331,26 +332,26 @@ TEST(FactsTreeExtractor, OneModuleInstanceTest) {
       project.ExpectedFileListData(),
       T(project.ExpectedFileData(),
         // refers to module bar.
-        T({
+        T(D{
             IndexingFactType::kModule,
             Anchor(kTestCase.expected_tokens[1], kTestCase.code),
             Anchor(kTestCase.expected_tokens[3], kTestCase.code),
         }),
         // refers to module foo.
         T(
-            {
+            D{
                 IndexingFactType::kModule,
                 Anchor(kTestCase.expected_tokens[5], kTestCase.code),
                 Anchor(kTestCase.expected_tokens[11], kTestCase.code),
             },
             // refers to bar.
             T(
-                {
+                D{
                     IndexingFactType::kDataTypeReference,
                     Anchor(kTestCase.expected_tokens[7], kTestCase.code),
                 },
                 // refers to bar b1().
-                T({
+                T(D{
                     IndexingFactType::kModuleInstance,
                     Anchor(kTestCase.expected_tokens[9], kTestCase.code),
                 })))));
@@ -387,37 +388,37 @@ TEST(FactsTreeExtractor, TwoModuleInstanceTest) {
       project.ExpectedFileListData(),
       T(project.ExpectedFileData(),
         // refers to module bar.
-        T({
+        T(D{
             IndexingFactType::kModule,
             Anchor(kTestCase.expected_tokens[1], kTestCase.code),
             Anchor(kTestCase.expected_tokens[3], kTestCase.code),
         }),
         // refers to module foo.
         T(
-            {
+            D{
                 IndexingFactType::kModule,
                 Anchor(kTestCase.expected_tokens[5], kTestCase.code),
                 Anchor(kTestCase.expected_tokens[15], kTestCase.code),
             },
             // refers to bar.
             T(
-                {
+                D{
                     IndexingFactType::kDataTypeReference,
                     Anchor(kTestCase.expected_tokens[7], kTestCase.code),
                 },
                 // refers to bar b1().
-                T({
+                T(D{
                     IndexingFactType::kModuleInstance,
                     Anchor(kTestCase.expected_tokens[9], kTestCase.code),
                 })),
             // refers to bar.
             T(
-                {
+                D{
                     IndexingFactType::kDataTypeReference,
                     Anchor(kTestCase.expected_tokens[11], kTestCase.code),
                 },
                 // refers to bar b2().
-                T({
+                T(D{
                     IndexingFactType::kModuleInstance,
                     Anchor(kTestCase.expected_tokens[13], kTestCase.code),
                 })))));
@@ -452,31 +453,31 @@ TEST(FactsTreeExtractor, MultipleModuleInstancesInTheSameDeclarationTest) {
       project.ExpectedFileListData(),
       T(project.ExpectedFileData(),
         // refers to module bar.
-        T({
+        T(D{
             IndexingFactType::kModule,
             Anchor(kTestCase.expected_tokens[1], kTestCase.code),
             Anchor(kTestCase.expected_tokens[3], kTestCase.code),
         }),
         // refers to module foo.
         T(
-            {
+            D{
                 IndexingFactType::kModule,
                 Anchor(kTestCase.expected_tokens[5], kTestCase.code),
                 Anchor(kTestCase.expected_tokens[13], kTestCase.code),
             },
             // refers to bar.
             T(
-                {
+                D{
                     IndexingFactType::kDataTypeReference,
                     Anchor(kTestCase.expected_tokens[7], kTestCase.code),
                 },
                 // refers to b1().
-                T({
+                T(D{
                     IndexingFactType::kModuleInstance,
                     Anchor(kTestCase.expected_tokens[9], kTestCase.code),
                 }),
                 // refers to bar b2().
-                T({
+                T(D{
                     IndexingFactType::kModuleInstance,
                     Anchor(kTestCase.expected_tokens[11], kTestCase.code),
                 })))));
@@ -506,18 +507,18 @@ TEST(FactsTreeExtractor, ModuleWithPortsTest) {
       T(project.ExpectedFileData(),
         // refers to module foo.
         T(
-            {
+            D{
                 IndexingFactType::kModule,
                 Anchor(kTestCase.expected_tokens[1], kTestCase.code),
                 Anchor(kTestCase.expected_tokens[7], kTestCase.code),
             },
             // refers to input a.
-            T({
+            T(D{
                 IndexingFactType::kVariableDefinition,
                 Anchor(kTestCase.expected_tokens[3], kTestCase.code),
             }),
             // refers to output b.
-            T({
+            T(D{
                 IndexingFactType::kVariableDefinition,
                 Anchor(kTestCase.expected_tokens[5], kTestCase.code),
             }))));
@@ -556,38 +557,38 @@ TEST(FactsTreeExtractor, ModuleDimensionTypePortsTest) {
       T(project.ExpectedFileData(),
         // refers to module foo.
         T(
-            {
+            D{
                 IndexingFactType::kModule,
                 Anchor(kTestCase.expected_tokens[1], kTestCase.code),
             },
             // refers to input a.
-            T({
+            T(D{
                 IndexingFactType::kVariableDefinition,
                 Anchor(kTestCase.expected_tokens[3], kTestCase.code),
             }),
             // refers to output b.
-            T({
+            T(D{
                 IndexingFactType::kVariableDefinition,
                 Anchor(kTestCase.expected_tokens[9], kTestCase.code),
             }),
             // refers to input x.
-            T({
+            T(D{
                 IndexingFactType::kVariableReference,
                 Anchor(kTestCase.expected_tokens[5], kTestCase.code),
             }),
             // refers to input y.
-            T({
+            T(D{
                 IndexingFactType::kVariableReference,
                 Anchor(kTestCase.expected_tokens[7], kTestCase.code),
             }),
 
             // refers to input x.
-            T({
+            T(D{
                 IndexingFactType::kVariableReference,
                 Anchor(kTestCase.expected_tokens[11], kTestCase.code),
             }),
             // refers to input y.
-            T({
+            T(D{
                 IndexingFactType::kVariableReference,
                 Anchor(kTestCase.expected_tokens[13], kTestCase.code),
             }))));
@@ -625,28 +626,28 @@ TEST(FactsTreeExtractor, ModuleWithPortsNonANSIStyleTest) {
       T(project.ExpectedFileData(),
         // refers to module foo.
         T(
-            {
+            D{
                 IndexingFactType::kModule,
                 Anchor(kTestCase.expected_tokens[1], kTestCase.code),
                 Anchor(kTestCase.expected_tokens[11], kTestCase.code),
             },
             // refers to  a.
-            T({
+            T(D{
                 IndexingFactType::kVariableReference,
                 Anchor(kTestCase.expected_tokens[3], kTestCase.code),
             }),
             // refers to  b.
-            T({
+            T(D{
                 IndexingFactType::kVariableReference,
                 Anchor(kTestCase.expected_tokens[5], kTestCase.code),
             }),
             // refers to input z.
-            T({
+            T(D{
                 IndexingFactType::kVariableDefinition,
                 Anchor(kTestCase.expected_tokens[7], kTestCase.code),
             }),
             // refers to h.
-            T({
+            T(D{
                 IndexingFactType::kVariableDefinition,
                 Anchor(kTestCase.expected_tokens[9], kTestCase.code),
             }))));
@@ -677,17 +678,17 @@ TEST(FactsTreeExtractor, ClassParams) {
       T(project.ExpectedFileData(),
         // refers to class my_class.
         T(
-            {
+            D{
                 IndexingFactType::kClass,
                 Anchor(kTestCase.expected_tokens[1], kTestCase.code),
             },
             // refers to parameter x
-            T({
+            T(D{
                 IndexingFactType::kParamDeclaration,
                 Anchor(kTestCase.expected_tokens[3], kTestCase.code),
             }),
             // refers to y
-            T({
+            T(D{
                 IndexingFactType::kParamDeclaration,
                 Anchor(kTestCase.expected_tokens[5], kTestCase.code),
             }))));
@@ -725,31 +726,31 @@ TEST(FactsTreeExtractor, QualifiedVariableType) {
       T(project.ExpectedFileData(),
         // refers to module m.
         T(
-            {
+            D{
                 IndexingFactType::kModule,
                 Anchor(kTestCase.expected_tokens[1], kTestCase.code),
             },
             // refers to pkg::X
             T(
-                {
+                D{
                     IndexingFactType::kDataTypeReference,
                     Anchor(kTestCase.expected_tokens[3], kTestCase.code),
                     Anchor(kTestCase.expected_tokens[5], kTestCase.code),
                 },
                 // refers to y
-                T({
+                T(D{
                     IndexingFactType::kVariableDefinition,
                     Anchor(kTestCase.expected_tokens[7], kTestCase.code),
                 })),
             // refers to pkg::H
             T(
-                {
+                D{
                     IndexingFactType::kDataTypeReference,
                     Anchor(kTestCase.expected_tokens[9], kTestCase.code),
                     Anchor(kTestCase.expected_tokens[11], kTestCase.code),
                 },
                 // refers to j
-                T({
+                T(D{
                     IndexingFactType::kClassInstance,
                     Anchor(kTestCase.expected_tokens[13], kTestCase.code),
                 })))));
@@ -780,17 +781,17 @@ TEST(FactsTreeExtractor, ClassTypeParams) {
       T(project.ExpectedFileData(),
         // refers to class my_class.
         T(
-            {
+            D{
                 IndexingFactType::kClass,
                 Anchor(kTestCase.expected_tokens[1], kTestCase.code),
             },
             // refers to parameter x
-            T({
+            T(D{
                 IndexingFactType::kParamDeclaration,
                 Anchor(kTestCase.expected_tokens[3], kTestCase.code),
             }),
             // refers to y
-            T({
+            T(D{
                 IndexingFactType::kParamDeclaration,
                 Anchor(kTestCase.expected_tokens[5], kTestCase.code),
             }))));
@@ -854,110 +855,110 @@ TEST(FactsTreeExtractor, ModuleInstanceWithActualNamedPorts) {
       T(project.ExpectedFileData(),
         // refers to module foo.
         T(
-            {
+            D{
                 IndexingFactType::kModule,
                 Anchor(kTestCase.expected_tokens[1], kTestCase.code),
                 Anchor(kTestCase.expected_tokens[11], kTestCase.code),
             },
             // refers to  a.
-            T({
+            T(D{
                 IndexingFactType::kVariableDefinition,
                 Anchor(kTestCase.expected_tokens[3], kTestCase.code),
             }),
             // refers to  b.
-            T({
+            T(D{
                 IndexingFactType::kVariableDefinition,
                 Anchor(kTestCase.expected_tokens[5], kTestCase.code),
             }),
             // refers to input z.
-            T({
+            T(D{
                 IndexingFactType::kVariableDefinition,
                 Anchor(kTestCase.expected_tokens[7], kTestCase.code),
             }),
             // refers to h.
-            T({
+            T(D{
                 IndexingFactType::kVariableDefinition,
                 Anchor(kTestCase.expected_tokens[9], kTestCase.code),
             })),
         // refers to module bar.
         T(
-            {
+            D{
                 IndexingFactType::kModule,
                 Anchor(kTestCase.expected_tokens[13], kTestCase.code),
             },
             // refers to input a.
-            T({
+            T(D{
                 IndexingFactType::kVariableDefinition,
                 Anchor(kTestCase.expected_tokens[15], kTestCase.code),
             }),
             // refers to b.
-            T({
+            T(D{
                 IndexingFactType::kVariableDefinition,
                 Anchor(kTestCase.expected_tokens[17], kTestCase.code),
             }),
             // refers to c.
-            T({
+            T(D{
                 IndexingFactType::kVariableDefinition,
                 Anchor(kTestCase.expected_tokens[19], kTestCase.code),
             }),
             // refers to h.
-            T({
+            T(D{
                 IndexingFactType::kVariableDefinition,
                 Anchor(kTestCase.expected_tokens[21], kTestCase.code),
             }),
             // refers to foo.
             T(
-                {
+                D{
                     IndexingFactType::kDataTypeReference,
                     Anchor(kTestCase.expected_tokens[23], kTestCase.code),
                 },
                 // refers to f1(.a(a), .b(b), .z(c), .h).
                 T(
-                    {
+                    D{
                         IndexingFactType::kModuleInstance,
                         Anchor(kTestCase.expected_tokens[25], kTestCase.code),
                     },
                     // refers to .a
                     T(
-                        {
+                        D{
                             IndexingFactType::kModuleNamedPort,
                             Anchor(kTestCase.expected_tokens[27],
                                    kTestCase.code),
                         },
                         // refers to a
-                        T({
+                        T(D{
                             IndexingFactType::kVariableReference,
                             Anchor(kTestCase.expected_tokens[29],
                                    kTestCase.code),
                         })),
                     // refers to .b
                     T(
-                        {
+                        D{
                             IndexingFactType::kModuleNamedPort,
                             Anchor(kTestCase.expected_tokens[31],
                                    kTestCase.code),
                         },
                         // refers to b
-                        T({
+                        T(D{
                             IndexingFactType::kVariableReference,
                             Anchor(kTestCase.expected_tokens[33],
                                    kTestCase.code),
                         })),
                     // refers to .z
                     T(
-                        {
+                        D{
                             IndexingFactType::kModuleNamedPort,
                             Anchor(kTestCase.expected_tokens[35],
                                    kTestCase.code),
                         },
                         // refers to c
-                        T({
+                        T(D{
                             IndexingFactType::kVariableReference,
                             Anchor(kTestCase.expected_tokens[37],
                                    kTestCase.code),
                         })),
                     // refers to .h
-                    T({
+                    T(D{
                         IndexingFactType::kModuleNamedPort,
                         Anchor(kTestCase.expected_tokens[39], kTestCase.code),
                     }))))));
@@ -995,28 +996,28 @@ TEST(FactsTreeExtractor, ModuleWithPortsDataTypeForwarding) {
       T(project.ExpectedFileData(),
         // refers to module foo.
         T(
-            {
+            D{
                 IndexingFactType::kModule,
                 Anchor(kTestCase.expected_tokens[1], kTestCase.code),
                 Anchor(kTestCase.expected_tokens[11], kTestCase.code),
             },
             // refers to  a.
-            T({
+            T(D{
                 IndexingFactType::kVariableDefinition,
                 Anchor(kTestCase.expected_tokens[3], kTestCase.code),
             }),
             // refers to  b.
-            T({
+            T(D{
                 IndexingFactType::kVariableDefinition,
                 Anchor(kTestCase.expected_tokens[5], kTestCase.code),
             }),
             // refers to input z.
-            T({
+            T(D{
                 IndexingFactType::kVariableDefinition,
                 Anchor(kTestCase.expected_tokens[7], kTestCase.code),
             }),
             // refers to h.
-            T({
+            T(D{
                 IndexingFactType::kVariableDefinition,
                 Anchor(kTestCase.expected_tokens[9], kTestCase.code),
             }))));
@@ -1103,161 +1104,161 @@ TEST(FactsTreeExtractor, PrimitiveTypeExtraction) {
       T(project.ExpectedFileData(),
         // refers to package pkg.
         T(
-            {
+            D{
                 IndexingFactType::kPackage,
                 Anchor(kTestCase.expected_tokens[1], kTestCase.code),
             },
             // refers to x;
-            T({
+            T(D{
                 IndexingFactType::kVariableDefinition,
                 Anchor(kTestCase.expected_tokens[3], kTestCase.code),
             }),
             // refers to y;
-            T({
+            T(D{
                 IndexingFactType::kVariableDefinition,
                 Anchor(kTestCase.expected_tokens[5], kTestCase.code),
             }),
             // refers to l1;
-            T({
+            T(D{
                 IndexingFactType::kVariableDefinition,
                 Anchor(kTestCase.expected_tokens[7], kTestCase.code),
             }),
             // refers to l2;
-            T({
+            T(D{
                 IndexingFactType::kVariableDefinition,
                 Anchor(kTestCase.expected_tokens[9], kTestCase.code),
             }),
             // refers to b1;
-            T({
+            T(D{
                 IndexingFactType::kVariableDefinition,
                 Anchor(kTestCase.expected_tokens[11], kTestCase.code),
             }),
             // refers to b2;
-            T({
+            T(D{
                 IndexingFactType::kVariableDefinition,
                 Anchor(kTestCase.expected_tokens[13], kTestCase.code),
             }),
             // refers to s1;
-            T({
+            T(D{
                 IndexingFactType::kVariableDefinition,
                 Anchor(kTestCase.expected_tokens[15], kTestCase.code),
             }),
             // refers to s2;
-            T({
+            T(D{
                 IndexingFactType::kVariableDefinition,
                 Anchor(kTestCase.expected_tokens[17], kTestCase.code),
             })),
         // refers to class cla.
         T(
-            {
+            D{
                 IndexingFactType::kClass,
                 Anchor(kTestCase.expected_tokens[19], kTestCase.code),
             },
             // refers to x;
-            T({
+            T(D{
                 IndexingFactType::kVariableDefinition,
                 Anchor(kTestCase.expected_tokens[21], kTestCase.code),
             }),
             // refers to y;
-            T({
+            T(D{
                 IndexingFactType::kVariableDefinition,
                 Anchor(kTestCase.expected_tokens[23], kTestCase.code),
             }),
             // refers to l1;
-            T({
+            T(D{
                 IndexingFactType::kVariableDefinition,
                 Anchor(kTestCase.expected_tokens[25], kTestCase.code),
             }),
             // refers to l2;
-            T({
+            T(D{
                 IndexingFactType::kVariableDefinition,
                 Anchor(kTestCase.expected_tokens[27], kTestCase.code),
             }),
             // refers to b1;
-            T({
+            T(D{
                 IndexingFactType::kVariableDefinition,
                 Anchor(kTestCase.expected_tokens[29], kTestCase.code),
             }),
             // refers to b2;
-            T({
+            T(D{
                 IndexingFactType::kVariableDefinition,
                 Anchor(kTestCase.expected_tokens[31], kTestCase.code),
             }),
             // refers to s1;
-            T({
+            T(D{
                 IndexingFactType::kVariableDefinition,
                 Anchor(kTestCase.expected_tokens[33], kTestCase.code),
             }),
             // refers to s2;
-            T({
+            T(D{
                 IndexingFactType::kVariableDefinition,
                 Anchor(kTestCase.expected_tokens[35], kTestCase.code),
             })),
         // refers to function fun.
         T(
-            {
+            D{
                 IndexingFactType::kFunctionOrTask,
                 Anchor(kTestCase.expected_tokens[37], kTestCase.code),
             },
             // refers to x;
-            T({
+            T(D{
                 IndexingFactType::kVariableDefinition,
                 Anchor(kTestCase.expected_tokens[39], kTestCase.code),
             }),
             // refers to y;
             T(
-                {
+                D{
                     IndexingFactType::kVariableDefinition,
                     Anchor(kTestCase.expected_tokens[41], kTestCase.code),
                 },
                 // refers to my_fun;
                 T(
-                    {
+                    D{
                         IndexingFactType::kFunctionCall,
                         Anchor(kTestCase.expected_tokens[43], kTestCase.code),
                     },
                     // refers to o;
-                    T({
+                    T(D{
                         IndexingFactType::kVariableReference,
                         Anchor(kTestCase.expected_tokens[45], kTestCase.code),
                     }),
                     // refers to l;
-                    T({
+                    T(D{
                         IndexingFactType::kVariableReference,
                         Anchor(kTestCase.expected_tokens[47], kTestCase.code),
                     }))),
             // refers to l1;
-            T({
+            T(D{
                 IndexingFactType::kVariableDefinition,
                 Anchor(kTestCase.expected_tokens[49], kTestCase.code),
             }),
             // refers to l2;
-            T({
+            T(D{
                 IndexingFactType::kVariableDefinition,
                 Anchor(kTestCase.expected_tokens[51], kTestCase.code),
             }),
             // refers to b1;
-            T({
+            T(D{
                 IndexingFactType::kVariableDefinition,
                 Anchor(kTestCase.expected_tokens[53], kTestCase.code),
             }),
             // refers to b2;
-            T({
+            T(D{
                 IndexingFactType::kVariableDefinition,
                 Anchor(kTestCase.expected_tokens[55], kTestCase.code),
             }),
             // refers to s1;
-            T({
+            T(D{
                 IndexingFactType::kVariableDefinition,
                 Anchor(kTestCase.expected_tokens[57], kTestCase.code),
             }),
             // refers to s2;
-            T({
+            T(D{
                 IndexingFactType::kVariableDefinition,
                 Anchor(kTestCase.expected_tokens[59], kTestCase.code),
             }),
             // refers to return x;
-            T({
+            T(D{
                 IndexingFactType::kVariableReference,
                 Anchor(kTestCase.expected_tokens[61], kTestCase.code),
             }))));
@@ -1293,28 +1294,28 @@ TEST(FactsTreeExtractor, MultiSignalDeclaration) {
       T(project.ExpectedFileData(),
         // refers to module foo.
         T(
-            {
+            D{
                 IndexingFactType::kModule,
                 Anchor(kTestCase.expected_tokens[1], kTestCase.code),
                 Anchor(kTestCase.expected_tokens[13], kTestCase.code),
             },
             // refers to input in.
-            T({
+            T(D{
                 IndexingFactType::kVariableDefinition,
                 Anchor(kTestCase.expected_tokens[4], kTestCase.code),
             }),
             // refers to output x.
-            T({
+            T(D{
                 IndexingFactType::kVariableDefinition,
                 Anchor(kTestCase.expected_tokens[7], kTestCase.code),
             }),
             // refers to output y
-            T({
+            T(D{
                 IndexingFactType::kVariableDefinition,
                 Anchor(kTestCase.expected_tokens[9], kTestCase.code),
             }),
             // refers to output z.
-            T({
+            T(D{
                 IndexingFactType::kVariableDefinition,
                 Anchor(kTestCase.expected_tokens[11], kTestCase.code),
             }))));
@@ -1360,57 +1361,57 @@ TEST(FactsTreeExtractor, ModuleInstanceWithPortsTest) {
       T(project.ExpectedFileData(),
         // refers to module bar.
         T(
-            {
+            D{
                 IndexingFactType::kModule,
                 Anchor(kTestCase.expected_tokens[1], kTestCase.code),
                 Anchor(kTestCase.expected_tokens[7], kTestCase.code),
             },
             // refers to input x.
-            T({
+            T(D{
                 IndexingFactType::kVariableDefinition,
                 Anchor(kTestCase.expected_tokens[3], kTestCase.code),
             }),
             // refers to output y.
-            T({
+            T(D{
                 IndexingFactType::kVariableDefinition,
                 Anchor(kTestCase.expected_tokens[5], kTestCase.code),
             })),
         // refers to module foo.
         T(
-            {
+            D{
                 IndexingFactType::kModule,
                 Anchor(kTestCase.expected_tokens[9], kTestCase.code),
                 Anchor(kTestCase.expected_tokens[23], kTestCase.code),
             },
             // refers to input x.
-            T({
+            T(D{
                 IndexingFactType::kVariableDefinition,
                 Anchor(kTestCase.expected_tokens[11], kTestCase.code),
             }),
             // refers to output y.
-            T({
+            T(D{
                 IndexingFactType::kVariableDefinition,
                 Anchor(kTestCase.expected_tokens[13], kTestCase.code),
             }),
             // refers to bar.
             T(
-                {
+                D{
                     IndexingFactType::kDataTypeReference,
                     Anchor(kTestCase.expected_tokens[15], kTestCase.code),
                 },
                 // refers to b1(x, y).
                 T(
-                    {
+                    D{
                         IndexingFactType::kModuleInstance,
                         Anchor(kTestCase.expected_tokens[17], kTestCase.code),
                     },
                     // refers to x
-                    T({
+                    T(D{
                         IndexingFactType::kVariableReference,
                         Anchor(kTestCase.expected_tokens[19], kTestCase.code),
                     }),
                     // refers to y
-                    T({
+                    T(D{
                         IndexingFactType::kVariableReference,
                         Anchor(kTestCase.expected_tokens[21], kTestCase.code),
                     }))))));
@@ -1438,13 +1439,13 @@ TEST(FactsTreeExtractor, WireTest) {
       T(project.ExpectedFileData(),
         // refers to module foo
         T(
-            {
+            D{
                 IndexingFactType::kModule,
                 Anchor(kTestCase.expected_tokens[1], kTestCase.code),
                 Anchor(kTestCase.expected_tokens[5], kTestCase.code),
             },
             // refers to "wire a"
-            T({
+            T(D{
                 IndexingFactType::kVariableDefinition,
                 Anchor(kTestCase.expected_tokens[3], kTestCase.code),
             }))));
@@ -1467,7 +1468,7 @@ TEST(FactsTreeExtractor, ClassTest) {
       project.ExpectedFileListData(),
       T(project.ExpectedFileData(),
         // refers to class foo
-        T({
+        T(D{
             IndexingFactType::kClass,
             Anchor(kTestCase.expected_tokens[1], kTestCase.code),
             Anchor(kTestCase.expected_tokens[3], kTestCase.code),
@@ -1498,13 +1499,13 @@ TEST(FactsTreeExtractor, CLassWithinModuleTest) {
       T(project.ExpectedFileData(),
         // refers to module foo
         T(
-            {
+            D{
                 IndexingFactType::kModule,
                 Anchor(kTestCase.expected_tokens[1], kTestCase.code),
                 Anchor(kTestCase.expected_tokens[7], kTestCase.code),
             },
             // refers to "class foo"
-            T({
+            T(D{
                 IndexingFactType::kClass,
                 Anchor(kTestCase.expected_tokens[3], kTestCase.code),
                 Anchor(kTestCase.expected_tokens[5], kTestCase.code),
@@ -1537,13 +1538,13 @@ TEST(FactsTreeExtractor, NestedClassTest) {
       T(project.ExpectedFileData(),
         // refers to class foo
         T(
-            {
+            D{
                 IndexingFactType::kClass,
                 Anchor(kTestCase.expected_tokens[1], kTestCase.code),
                 Anchor(kTestCase.expected_tokens[7], kTestCase.code),
             },
             // refers to class bar
-            T({
+            T(D{
                 IndexingFactType::kClass,
                 Anchor(kTestCase.expected_tokens[3], kTestCase.code),
                 Anchor(kTestCase.expected_tokens[5], kTestCase.code),
@@ -1583,42 +1584,42 @@ TEST(FactsTreeExtractor, OneClassInstanceTest) {
       project.ExpectedFileListData(),
       T(project.ExpectedFileData(),
         // refers to class bar.
-        T({
+        T(D{
             IndexingFactType::kClass,
             Anchor(kTestCase.expected_tokens[1], kTestCase.code),
             Anchor(kTestCase.expected_tokens[3], kTestCase.code),
         }),
         // refers to module foo.
         T(
-            {
+            D{
                 IndexingFactType::kModule,
                 Anchor(kTestCase.expected_tokens[5], kTestCase.code),
                 Anchor(kTestCase.expected_tokens[17], kTestCase.code),
             },
             // refers to bar.
             T(
-                {
+                D{
                     IndexingFactType::kDataTypeReference,
                     Anchor(kTestCase.expected_tokens[7], kTestCase.code),
                 },
                 // refers to b1.
-                T({
+                T(D{
                     IndexingFactType::kClassInstance,
                     Anchor(kTestCase.expected_tokens[9], kTestCase.code),
                 }),
                 // refers to b2.
                 T(
-                    {
+                    D{
                         IndexingFactType::kClassInstance,
                         Anchor(kTestCase.expected_tokens[11], kTestCase.code),
                     },
                     // refers to x.
-                    T({
+                    T(D{
                         IndexingFactType::kVariableReference,
                         Anchor(kTestCase.expected_tokens[13], kTestCase.code),
                     }),
                     // refers to y.
-                    T({
+                    T(D{
                         IndexingFactType::kVariableReference,
                         Anchor(kTestCase.expected_tokens[15], kTestCase.code),
                     }))))));
@@ -1656,59 +1657,59 @@ TEST(FactsTreeExtractor, ClassMemberAccess) {
       T(project.ExpectedFileData(),
         // refers to class inner.
         T(
-            {
+            D{
                 IndexingFactType::kClass,
                 Anchor(kTestCase.expected_tokens[1], kTestCase.code),
             },
             // refers to int x.
-            T({
+            T(D{
                 IndexingFactType::kVariableDefinition,
                 Anchor(kTestCase.expected_tokens[3], kTestCase.code),
             })),
         // refers to class bar.
         T(
-            {
+            D{
                 IndexingFactType::kClass,
                 Anchor(kTestCase.expected_tokens[6], kTestCase.code),
                 Anchor(kTestCase.expected_tokens[12], kTestCase.code),
             },
             // refers to inner in1.
             T(
-                {
+                D{
                     IndexingFactType::kDataTypeReference,
                     Anchor(kTestCase.expected_tokens[8], kTestCase.code),
                 },
                 // refers to in1.
-                T({
+                T(D{
                     IndexingFactType::kClassInstance,
                     Anchor(kTestCase.expected_tokens[10], kTestCase.code),
                 }))),
         // refers to module foo.
         T(
-            {
+            D{
                 IndexingFactType::kModule,
                 Anchor(kTestCase.expected_tokens[14], kTestCase.code),
                 Anchor(kTestCase.expected_tokens[26], kTestCase.code),
             },
             // refers to bar.
             T(
-                {
+                D{
                     IndexingFactType::kDataTypeReference,
                     Anchor(kTestCase.expected_tokens[16], kTestCase.code),
                 },
                 // refers to b1.
-                T({
+                T(D{
                     IndexingFactType::kClassInstance,
                     Anchor(kTestCase.expected_tokens[18], kTestCase.code),
                 })),
             // anonymous scope for initial.
             T(
-                {
+                D{
                     IndexingFactType::kAnonymousScope,
                     Anchor("anonymous-scope-0", 0, 0),
                 },
                 // refers to bar::in::x.
-                T({
+                T(D{
                     IndexingFactType::kMemberReference,
                     Anchor(kTestCase.expected_tokens[20], kTestCase.code),
                     Anchor(kTestCase.expected_tokens[22], kTestCase.code),
@@ -1741,12 +1742,12 @@ TEST(FactsTreeExtractor, FunctionAndTaskDeclarationNoArgs) {
       project.ExpectedFileListData(),
       T(project.ExpectedFileData(),
         // refers to function foo
-        T({
+        T(D{
             IndexingFactType::kFunctionOrTask,
             Anchor(kTestCase.expected_tokens[1], kTestCase.code),
         }),
         // refers to task bar
-        T({
+        T(D{
             IndexingFactType::kFunctionOrTask,
             Anchor(kTestCase.expected_tokens[5], kTestCase.code),
         })));
@@ -1776,45 +1777,45 @@ TEST(FactsTreeExtractor, FunctionAndTaskDeclarationWithArgs) {
       T(project.ExpectedFileData(),
         // refers to function foo
         T(
-            {
+            D{
                 IndexingFactType::kFunctionOrTask,
                 Anchor(kTestCase.expected_tokens[1], kTestCase.code),
             },
-            T({
+            T(D{
                 IndexingFactType::kVariableDefinition,
                 Anchor(kTestCase.expected_tokens[3], kTestCase.code),
             }),
-            T({
+            T(D{
                 IndexingFactType::kVariableDefinition,
                 Anchor(kTestCase.expected_tokens[5], kTestCase.code),
             }),
-            T({
+            T(D{
                 IndexingFactType::kVariableDefinition,
                 Anchor(kTestCase.expected_tokens[7], kTestCase.code),
             }),
-            T({
+            T(D{
                 IndexingFactType::kVariableDefinition,
                 Anchor(kTestCase.expected_tokens[9], kTestCase.code),
             })),
         // refers to task bar
         T(
-            {
+            D{
                 IndexingFactType::kFunctionOrTask,
                 Anchor(kTestCase.expected_tokens[13], kTestCase.code),
             },
-            T({
+            T(D{
                 IndexingFactType::kVariableDefinition,
                 Anchor(kTestCase.expected_tokens[15], kTestCase.code),
             }),
-            T({
+            T(D{
                 IndexingFactType::kVariableDefinition,
                 Anchor(kTestCase.expected_tokens[17], kTestCase.code),
             }),
-            T({
+            T(D{
                 IndexingFactType::kVariableDefinition,
                 Anchor(kTestCase.expected_tokens[19], kTestCase.code),
             }),
-            T({
+            T(D{
                 IndexingFactType::kVariableDefinition,
                 Anchor(kTestCase.expected_tokens[21], kTestCase.code),
             }))));
@@ -1851,24 +1852,24 @@ TEST(FactsTreeExtractor, ClassMember) {
       T(project.ExpectedFileData(),
         // refers to module m
         T(
-            {
+            D{
                 IndexingFactType::kModule,
                 Anchor(kTestCase.expected_tokens[1], kTestCase.code),
             },
             // anonymous scope for initial.
             T(
-                {
+                D{
                     IndexingFactType::kAnonymousScope,
                     Anchor("anonymous-scope-0", 0, 0),
                 },
                 // refers to my_class.x
-                T({
+                T(D{
                     IndexingFactType::kMemberReference,
                     Anchor(kTestCase.expected_tokens[3], kTestCase.code),
                     Anchor(kTestCase.expected_tokens[5], kTestCase.code),
                 }),
                 // refers to my_class.instance1.x
-                T({
+                T(D{
                     IndexingFactType::kMemberReference,
                     Anchor(kTestCase.expected_tokens[7], kTestCase.code),
                     Anchor(kTestCase.expected_tokens[9], kTestCase.code),
@@ -1909,32 +1910,32 @@ TEST(FactsTreeExtractor, FunctionAndTaskCallNoArgs) {
       project.ExpectedFileListData(),
       T(project.ExpectedFileData(),
         // refers to function foo
-        T({
+        T(D{
             IndexingFactType::kFunctionOrTask,
             Anchor(kTestCase.expected_tokens[1], kTestCase.code),
         }),
         // refers to task bar
-        T({
+        T(D{
             IndexingFactType::kFunctionOrTask,
             Anchor(kTestCase.expected_tokens[5], kTestCase.code),
         }),
         T(
-            {
+            D{
                 IndexingFactType::kModule,
                 Anchor(kTestCase.expected_tokens[9], kTestCase.code),
                 Anchor(kTestCase.expected_tokens[15], kTestCase.code),
             },
             // anonymous scope for initial.
             T(
-                {
+                D{
                     IndexingFactType::kAnonymousScope,
                     Anchor("anonymous-scope-0", 0, 0),
                 },
-                T({
+                T(D{
                     IndexingFactType::kFunctionCall,
                     Anchor(kTestCase.expected_tokens[11], kTestCase.code),
                 }),
-                T({
+                T(D{
                     IndexingFactType::kFunctionCall,
                     Anchor(kTestCase.expected_tokens[13], kTestCase.code),
                 })))));
@@ -2016,84 +2017,84 @@ TEST(FactsTreeExtractor, FunctionClassCall) {
       T(project.ExpectedFileData(),
         // refers to class inner.
         T(
-            {
+            D{
                 IndexingFactType::kClass,
                 Anchor(kTestCase.expected_tokens[1], kTestCase.code),
             },
             // refers to function my_fun.
-            T({
+            T(D{
                 IndexingFactType::kFunctionOrTask,
                 Anchor(kTestCase.expected_tokens[3], kTestCase.code),
             }),
             // refers to function fun_2.
             T(
-                {
+                D{
                     IndexingFactType::kFunctionOrTask,
                     Anchor(kTestCase.expected_tokens[5], kTestCase.code),
                 },
                 // refers to x arg in fun_2.
-                T({
+                T(D{
                     IndexingFactType::kVariableDefinition,
                     Anchor(kTestCase.expected_tokens[7], kTestCase.code),
                 }),
                 // refers to y arg in fun_2.
-                T({
+                T(D{
                     IndexingFactType::kVariableDefinition,
                     Anchor(kTestCase.expected_tokens[9], kTestCase.code),
                 }),
                 // refers to x.
-                T({
+                T(D{
                     IndexingFactType::kVariableReference,
                     Anchor(kTestCase.expected_tokens[11], kTestCase.code),
                 }),
                 // refers to x.
-                T({
+                T(D{
                     IndexingFactType::kVariableReference,
                     Anchor(kTestCase.expected_tokens[13], kTestCase.code),
                 }))),
         // refers to class bar.
         T(
-            {
+            D{
                 IndexingFactType::kClass,
                 Anchor(kTestCase.expected_tokens[16], kTestCase.code),
                 Anchor(kTestCase.expected_tokens[22], kTestCase.code),
             },
             // refers to inner in1.
             T(
-                {
+                D{
                     IndexingFactType::kDataTypeReference,
                     Anchor(kTestCase.expected_tokens[18], kTestCase.code),
                 },
                 // refers to in1.
-                T({
+                T(D{
                     IndexingFactType::kClassInstance,
                     Anchor(kTestCase.expected_tokens[20], kTestCase.code),
                 }))),
         // refers to module foo.
         T(
-            {
+            D{
                 IndexingFactType::kModule,
                 Anchor(kTestCase.expected_tokens[24], kTestCase.code),
             },
             // refers to bar.
             T(
-                {
+                D{
                     IndexingFactType::kDataTypeReference,
                     Anchor(kTestCase.expected_tokens[26], kTestCase.code),
                 },
                 // refers to b1.
-                T({
+                T(D{
                     IndexingFactType::kClassInstance,
                     Anchor(kTestCase.expected_tokens[28], kTestCase.code),
                 })),
             // anonymous scope for initial.
             T(
-                {
+                D{
                     IndexingFactType::kAnonymousScope,
                     Anchor("anonymous-scope-0", 0, 0),
                 },
                 // refers to bar::in::my_fun().
-                T({
+                T(D{
                     IndexingFactType::kFunctionCall,
                     Anchor(kTestCase.expected_tokens[30], kTestCase.code),
                     Anchor(kTestCase.expected_tokens[32], kTestCase.code),
@@ -2101,12 +2102,12 @@ TEST(FactsTreeExtractor, FunctionClassCall) {
                 })),
             // anonymous scope for initial.
             T(
-                {
+                D{
                     IndexingFactType::kAnonymousScope,
                     Anchor("anonymous-scope-1", 0, 0),
                 },
                 // refers to bar::in.my_fun().
-                T({
+                T(D{
                     IndexingFactType::kFunctionCall,
                     Anchor(kTestCase.expected_tokens[36], kTestCase.code),
                     Anchor(kTestCase.expected_tokens[38], kTestCase.code),
@@ -2114,45 +2115,45 @@ TEST(FactsTreeExtractor, FunctionClassCall) {
                 })),
             // refers to inner in1.
             T(
-                {
+                D{
                     IndexingFactType::kDataTypeReference,
                     Anchor(kTestCase.expected_tokens[42], kTestCase.code),
                 },
                 // refers to in1.
-                T({
+                T(D{
                     IndexingFactType::kClassInstance,
                     Anchor(kTestCase.expected_tokens[44], kTestCase.code),
                 })),
             // refers to int x.
-            T({
+            T(D{
                 IndexingFactType::kVariableDefinition,
                 Anchor(kTestCase.expected_tokens[46], kTestCase.code),
             }),
             // refers to int y.
-            T({
+            T(D{
                 IndexingFactType::kVariableDefinition,
                 Anchor(kTestCase.expected_tokens[48], kTestCase.code),
             }),
             // anonymous scope for initial.
             T(
-                {
+                D{
                     IndexingFactType::kAnonymousScope,
                     Anchor("anonymous-scope-2", 0, 0),
                 },
                 // refers to in1.my_fun().
                 T(
-                    {
+                    D{
                         IndexingFactType::kFunctionCall,
                         Anchor(kTestCase.expected_tokens[50], kTestCase.code),
                         Anchor(kTestCase.expected_tokens[52], kTestCase.code),
                     },
                     // refers to x.
-                    T({
+                    T(D{
                         IndexingFactType::kVariableReference,
                         Anchor(kTestCase.expected_tokens[54], kTestCase.code),
                     }),
                     // refers to y.
-                    T({
+                    T(D{
                         IndexingFactType::kVariableReference,
                         Anchor(kTestCase.expected_tokens[56], kTestCase.code),
                     }))))));
@@ -2179,7 +2180,7 @@ TEST(FactsTreeExtractor, ThisAsFunctionCall) {
       project.ExpectedFileListData(),
       T(project.ExpectedFileData(),
         // refers to r.
-        T({
+        T(D{
             IndexingFactType::kVariableDefinition,
             Anchor(kTestCase.expected_tokens[0], kTestCase.code),
         })));
@@ -2226,38 +2227,38 @@ TEST(FactsTreeExtractor, MacroDefinitionTest) {
       T(project.ExpectedFileData(),
         // refers to macro PRINT_STRING.
         T(
-            {
+            D{
                 IndexingFactType::kMacro,
                 Anchor(kTestCase.expected_tokens[1], kTestCase.code),
             },
             // refers to str1 arg in PRINT_STRING.
-            T({
+            T(D{
                 IndexingFactType::kVariableDefinition,
                 Anchor(kTestCase.expected_tokens[3], kTestCase.code),
             })),
         // refers to macro PRINT_3_STRING.
         T(
-            {
+            D{
                 IndexingFactType::kMacro,
                 Anchor(kTestCase.expected_tokens[6], kTestCase.code),
             },
             // refers to str1 arg in PRINT_3_STRING.
-            T({
+            T(D{
                 IndexingFactType::kVariableDefinition,
                 Anchor(kTestCase.expected_tokens[8], kTestCase.code),
             }),
             // refers to str2 arg in PRINT_3_STRING.
-            T({
+            T(D{
                 IndexingFactType::kVariableDefinition,
                 Anchor(kTestCase.expected_tokens[10], kTestCase.code),
             }),
             // refers to str3 arg in PRINT_3_STRING.
-            T({
+            T(D{
                 IndexingFactType::kVariableDefinition,
                 Anchor(kTestCase.expected_tokens[12], kTestCase.code),
             })),
         // refers to macro TEN.
-        T({
+        T(D{
             IndexingFactType::kMacro,
             Anchor(kTestCase.expected_tokens[16], kTestCase.code),
         })));
@@ -2326,92 +2327,92 @@ TEST(FactsTreeExtractor, MacroCallTest) {
       T(project.ExpectedFileData(),
         // refers to macro PRINT_STRING.
         T(
-            {
+            D{
                 IndexingFactType::kMacro,
                 Anchor(kTestCase.expected_tokens[1], kTestCase.code),
             },
             // refers to str1 in PRINT_STRING.
-            T({
+            T(D{
                 IndexingFactType::kVariableDefinition,
                 Anchor(kTestCase.expected_tokens[3], kTestCase.code),
             })),
         // refers to macro PRINT_3_STRING.
         T(
-            {
+            D{
                 IndexingFactType::kMacro,
                 Anchor(kTestCase.expected_tokens[6], kTestCase.code),
             },
             // refers to str1 in PRINT_3_STRING.
-            T({
+            T(D{
                 IndexingFactType::kVariableDefinition,
                 Anchor(kTestCase.expected_tokens[8], kTestCase.code),
             }),
             // refers to str2 in PRINT_3_STRING.
-            T({
+            T(D{
                 IndexingFactType::kVariableDefinition,
                 Anchor(kTestCase.expected_tokens[10], kTestCase.code),
             }),
             // refers to str3 in PRINT_3_STRING.
-            T({
+            T(D{
                 IndexingFactType::kVariableDefinition,
                 Anchor(kTestCase.expected_tokens[12], kTestCase.code),
             })),
         // refers to macro TEN.
-        T({
+        T(D{
             IndexingFactType::kMacro,
             Anchor(kTestCase.expected_tokens[16], kTestCase.code),
         }),
         // refers to macro NUM.
         T(
-            {
+            D{
                 IndexingFactType::kMacro,
                 Anchor(kTestCase.expected_tokens[19], kTestCase.code),
             },
             // refers to i in macro NUM.
-            T({
+            T(D{
                 IndexingFactType::kVariableDefinition,
                 Anchor(kTestCase.expected_tokens[21], kTestCase.code),
             })),
         // refers to module macro.
         T(
-            {
+            D{
                 IndexingFactType::kModule,
                 Anchor(kTestCase.expected_tokens[24], kTestCase.code),
             },
             // anonymous scope for initial.
             T(
-                {
+                D{
                     IndexingFactType::kAnonymousScope,
                     Anchor("anonymous-scope-0", 0, 0),
                 },
                 // refers to macro call PRINT_3_STRINGS.
-                T({
+                T(D{
                     IndexingFactType::kMacroCall,
                     Anchor(kTestCase.expected_tokens[26], kTestCase.code),
                 }),
                 // refers to macro call TEN.
-                T({
+                T(D{
                     IndexingFactType::kMacroCall,
                     Anchor(kTestCase.expected_tokens[29], kTestCase.code),
                 }),
                 // refers to macro call NUM.
                 T(
-                    {
+                    D{
                         IndexingFactType::kMacroCall,
                         Anchor(kTestCase.expected_tokens[32], kTestCase.code),
                     },  // refers to macro call TEN.
-                    T({
+                    T(D{
                         IndexingFactType::kMacroCall,
                         Anchor(kTestCase.expected_tokens[34], kTestCase.code),
                     })),
                 // refers to parm x
                 T(
-                    {
+                    D{
                         IndexingFactType::kParamDeclaration,
                         Anchor(kTestCase.expected_tokens[37], kTestCase.code),
                     },
                     // refers to macro call TEN.
-                    T({
+                    T(D{
                         IndexingFactType::kMacroCall,
                         Anchor(kTestCase.expected_tokens[39], kTestCase.code),
                     }))))));
@@ -2455,45 +2456,45 @@ TEST(PackageImportTest, PackageAndImportedItemName) {
       project.ExpectedFileListData(),
       T(project.ExpectedFileData(),
         // refers to package pkg1.
-        T({
+        T(D{
             IndexingFactType::kPackage,
             Anchor(kTestCase.expected_tokens[1], kTestCase.code),
         }),
         // refers to package pkg.
         T(
-            {
+            D{
                 IndexingFactType::kPackage,
                 Anchor(kTestCase.expected_tokens[3], kTestCase.code),
             },
             // refers to class my_class.
-            T({
+            T(D{
                 IndexingFactType::kClass,
                 Anchor(kTestCase.expected_tokens[5], kTestCase.code),
             }),
             // refers to function my_function.
-            T({
+            T(D{
                 IndexingFactType::kFunctionOrTask,
                 Anchor(kTestCase.expected_tokens[7], kTestCase.code),
             })),
         // refers to module m..
         T(
-            {
+            D{
                 IndexingFactType::kModule,
                 Anchor(kTestCase.expected_tokens[9], kTestCase.code),
             },
             // refers to import pkg1::*.
-            T({
+            T(D{
                 IndexingFactType::kPackageImport,
                 Anchor(kTestCase.expected_tokens[11], kTestCase.code),
             }),
             // refers to import pkg::my_function.
-            T({
+            T(D{
                 IndexingFactType::kPackageImport,
                 Anchor(kTestCase.expected_tokens[13], kTestCase.code),
                 Anchor(kTestCase.expected_tokens[15], kTestCase.code),
             }),
             // refers to import pkg::my_class.
-            T({
+            T(D{
                 IndexingFactType::kPackageImport,
                 Anchor(kTestCase.expected_tokens[17], kTestCase.code),
                 Anchor(kTestCase.expected_tokens[19], kTestCase.code),
@@ -2533,34 +2534,34 @@ TEST(PackageImportTest, PackageDirectMemberReference) {
       T(project.ExpectedFileData(),
         // refers to package pkg.
         T(
-            {
+            D{
                 IndexingFactType::kPackage,
                 Anchor(kTestCase.expected_tokens[1], kTestCase.code),
             },
             // refers to class my_class.
-            T({
+            T(D{
                 IndexingFactType::kClass,
                 Anchor(kTestCase.expected_tokens[3], kTestCase.code),
             }),
             // refers to wire x.
-            T({
+            T(D{
                 IndexingFactType::kVariableDefinition,
                 Anchor(kTestCase.expected_tokens[5], kTestCase.code),
             })),
         // refers to module m..
         T(
-            {
+            D{
                 IndexingFactType::kModule,
                 Anchor(kTestCase.expected_tokens[7], kTestCase.code),
             },
             // anonymous scope for initial.
             T(
-                {
+                D{
                     IndexingFactType::kAnonymousScope,
                     Anchor("anonymous-scope-0", 0, 0),
                 },
                 // refers to $display(pkg::x).
-                T({
+                T(D{
                     IndexingFactType::kMemberReference,
                     Anchor(kTestCase.expected_tokens[10], kTestCase.code),
                     Anchor(kTestCase.expected_tokens[12], kTestCase.code),
@@ -2612,69 +2613,69 @@ TEST(PackageImportTest, ClassInstanceWithMultiParams) {
       T(project.ExpectedFileData(),
         // refers to function m.
         T(
-            {
+            D{
                 IndexingFactType::kFunctionOrTask,
                 Anchor(kTestCase.expected_tokens[1], kTestCase.code),
             },
             // refers foo(.A, .B).
             T(
-                {
+                D{
                     IndexingFactType::kMemberReference,
                     Anchor(kTestCase.expected_tokens[3], kTestCase.code),
                 },
                 // refers A.
                 T(
-                    {
+                    D{
                         IndexingFactType::kNamedParam,
                         Anchor(kTestCase.expected_tokens[5], kTestCase.code),
                     },
                     // refers var1.
-                    T({
+                    T(D{
                         IndexingFactType::kVariableReference,
                         Anchor(kTestCase.expected_tokens[7], kTestCase.code),
                     })),
                 // refers B.
                 T(
-                    {
+                    D{
                         IndexingFactType::kNamedParam,
                         Anchor(kTestCase.expected_tokens[9], kTestCase.code),
                     },
                     // refers var2.
-                    T({
+                    T(D{
                         IndexingFactType::kVariableReference,
                         Anchor(kTestCase.expected_tokens[11], kTestCase.code),
                     }))),
             // refers barc(.X, .W).
             T(
-                {
+                D{
                     IndexingFactType::kMemberReference,
                     Anchor(kTestCase.expected_tokens[3], kTestCase.code),
                     Anchor(kTestCase.expected_tokens[13], kTestCase.code),
                 },
                 // refers X.
                 T(
-                    {
+                    D{
                         IndexingFactType::kNamedParam,
                         Anchor(kTestCase.expected_tokens[15], kTestCase.code),
                     },
                     // refers var1.
-                    T({
+                    T(D{
                         IndexingFactType::kVariableReference,
                         Anchor(kTestCase.expected_tokens[17], kTestCase.code),
                     })),
                 // refers W.
                 T(
-                    {
+                    D{
                         IndexingFactType::kNamedParam,
                         Anchor(kTestCase.expected_tokens[19], kTestCase.code),
                     },
                     // refers var2.
-                    T({
+                    T(D{
                         IndexingFactType::kVariableReference,
                         Anchor(kTestCase.expected_tokens[21], kTestCase.code),
                     }))),
             // refers var2.
-            T({
+            T(D{
                 IndexingFactType::kFunctionCall,
                 Anchor(kTestCase.expected_tokens[3], kTestCase.code),
                 Anchor(kTestCase.expected_tokens[13], kTestCase.code),
@@ -2705,12 +2706,12 @@ TEST(PackageImportTest, UserDefinedType) {
       T(project.ExpectedFileData(),
         // refers to class stack.
         T(
-            {
+            D{
                 IndexingFactType::kClass,
                 Anchor(kTestCase.expected_tokens[1], kTestCase.code),
             },
             // refers to some_type.
-            T({
+            T(D{
                 IndexingFactType::kTypeDeclaration,
                 Anchor(kTestCase.expected_tokens[3], kTestCase.code),
             }))));
@@ -2745,22 +2746,22 @@ TEST(PackageImportTest, SelectVariableDimension) {
       T(project.ExpectedFileData(),
         // refers to task t.
         T(
-            {
+            D{
                 IndexingFactType::kFunctionOrTask,
                 Anchor(kTestCase.expected_tokens[1], kTestCase.code),
             },
             // refers to y.
-            T({
+            T(D{
                 IndexingFactType::kVariableDefinition,
                 Anchor(kTestCase.expected_tokens[3], kTestCase.code),
             }),
             // refers to x.
-            T({
+            T(D{
                 IndexingFactType::kVariableReference,
                 Anchor(kTestCase.expected_tokens[5], kTestCase.code),
             }),
             // refers to y.
-            T({
+            T(D{
                 IndexingFactType::kVariableReference,
                 Anchor(kTestCase.expected_tokens[7], kTestCase.code),
             }))));
@@ -2789,12 +2790,12 @@ TEST(PackageImportTest, ClassParameterType) {
       T(project.ExpectedFileData(),
         // refers to class stack.
         T(
-            {
+            D{
                 IndexingFactType::kClass,
                 Anchor(kTestCase.expected_tokens[1], kTestCase.code),
             },
             // refers to T.
-            T({
+            T(D{
                 IndexingFactType::kParamDeclaration,
                 Anchor(kTestCase.expected_tokens[3], kTestCase.code),
             }))));
@@ -2829,23 +2830,23 @@ TEST(PackageImportTest, ClassInstanceWithParams) {
       T(project.ExpectedFileData(),
         // refers to module m.
         T(
-            {
+            D{
                 IndexingFactType::kModule,
                 Anchor(kTestCase.expected_tokens[1], kTestCase.code),
             },
             // refers to clt#(x) v1.
             T(
-                {
+                D{
                     IndexingFactType::kDataTypeReference,
                     Anchor(kTestCase.expected_tokens[3], kTestCase.code),
                 },
                 // refers to x.
-                T({
+                T(D{
                     IndexingFactType::kVariableReference,
                     Anchor(kTestCase.expected_tokens[5], kTestCase.code),
                 }),
                 // refers to v1.
-                T({
+                T(D{
                     IndexingFactType::kClassInstance,
                     Anchor(kTestCase.expected_tokens[7], kTestCase.code),
                 })))));
@@ -2874,7 +2875,7 @@ TEST(PackageImportTest, PackageTest) {
       project.ExpectedFileListData(),
       T(project.ExpectedFileData(),
         // refers to package pkg.
-        T({
+        T(D{
             IndexingFactType::kPackage,
             Anchor(kTestCase.expected_tokens[1], kTestCase.code),
             Anchor(kTestCase.expected_tokens[3], kTestCase.code),
@@ -2922,63 +2923,63 @@ TEST(FactsTreeExtractor, ForLoopInitializations) {
       T(project.ExpectedFileData(),
         // refers to function foo
         T(
-            {
+            D{
                 IndexingFactType::kFunctionOrTask,
                 Anchor(kTestCase.expected_tokens[1], kTestCase.code),
             },
             // anonymous scope for initial.
             T(
-                {
+                D{
                     IndexingFactType::kAnonymousScope,
                     Anchor("anonymous-scope-0", 0, 0),
                 },
                 // refers to i
-                T({
+                T(D{
                     IndexingFactType::kVariableDefinition,
                     Anchor(kTestCase.expected_tokens[3], kTestCase.code),
                 }),
                 // refers to j
-                T({
+                T(D{
                     IndexingFactType::kVariableDefinition,
                     Anchor(kTestCase.expected_tokens[5], kTestCase.code),
                 }),
                 // refers to tm
-                T({
+                T(D{
                     IndexingFactType::kVariableDefinition,
                     Anchor(kTestCase.expected_tokens[11], kTestCase.code),
                 }),
                 // refers to l
-                T({
+                T(D{
                     IndexingFactType::kVariableReference,
                     Anchor(kTestCase.expected_tokens[7], kTestCase.code),
                 }),
                 // refers to r
-                T({
+                T(D{
                     IndexingFactType::kVariableReference,
                     Anchor(kTestCase.expected_tokens[9], kTestCase.code),
                 }),
                 // refers to i
-                T({
+                T(D{
                     IndexingFactType::kVariableReference,
                     Anchor(kTestCase.expected_tokens[13], kTestCase.code),
                 }),
                 // refers to i
-                T({
+                T(D{
                     IndexingFactType::kVariableReference,
                     Anchor(kTestCase.expected_tokens[15], kTestCase.code),
                 }),
                 // refers to x
-                T({
+                T(D{
                     IndexingFactType::kVariableReference,
                     Anchor(kTestCase.expected_tokens[17], kTestCase.code),
                 }),
                 // refers to i
-                T({
+                T(D{
                     IndexingFactType::kVariableReference,
                     Anchor(kTestCase.expected_tokens[19], kTestCase.code),
                 })),
             // refers to x
-            T({
+            T(D{
                 IndexingFactType::kVariableReference,
                 Anchor(kTestCase.expected_tokens[21], kTestCase.code),
             }))));
@@ -3013,23 +3014,23 @@ TEST(FactsTreeExtractor, ClassExtends) {
       T(project.ExpectedFileData(),
         // refers to class X.
         T(
-            {
+            D{
                 IndexingFactType::kClass,
                 Anchor(kTestCase.expected_tokens[1], kTestCase.code),
             },
             // refers to Y.
-            T({
+            T(D{
                 IndexingFactType::kExtends,
                 Anchor(kTestCase.expected_tokens[3], kTestCase.code),
             })),
         // refers to H.
         T(
-            {
+            D{
                 IndexingFactType::kClass,
                 Anchor(kTestCase.expected_tokens[5], kTestCase.code),
             },
             // refers to G::K.
-            T({
+            T(D{
                 IndexingFactType::kExtends,
                 Anchor(kTestCase.expected_tokens[7], kTestCase.code),
                 Anchor(kTestCase.expected_tokens[9], kTestCase.code),
@@ -3077,61 +3078,61 @@ TEST(FactsTreeExtractor, ParameterExtraction) {
       T(project.ExpectedFileData(),
         // refers to module m.
         T(
-            {
+            D{
                 IndexingFactType::kModule,
                 Anchor(kTestCase.expected_tokens[1], kTestCase.code),
             },
             // refers to module parameter x.
-            T({
+            T(D{
                 IndexingFactType::kParamDeclaration,
                 Anchor(kTestCase.expected_tokens[3], kTestCase.code),
             }),
             // refers to class parameter y.
-            T({
+            T(D{
                 IndexingFactType::kParamDeclaration,
                 Anchor(kTestCase.expected_tokens[5], kTestCase.code),
             }),
             // refers to class input x.
-            T({
+            T(D{
                 IndexingFactType::kVariableDefinition,
                 Anchor(kTestCase.expected_tokens[7], kTestCase.code),
             }),
             // refers to bar.
             T(
-                {
+                D{
                     IndexingFactType::kDataTypeReference,
                     Anchor(kTestCase.expected_tokens[9], kTestCase.code),
                 },
                 // refers to .p1(x).
                 T(
-                    {
+                    D{
                         IndexingFactType::kNamedParam,
                         Anchor(kTestCase.expected_tokens[11], kTestCase.code),
                     },
                     // refers to x.
-                    T({
+                    T(D{
                         IndexingFactType::kVariableReference,
                         Anchor(kTestCase.expected_tokens[13], kTestCase.code),
                     })),
                 // refers to .p2(y).
                 T(
-                    {
+                    D{
                         IndexingFactType::kNamedParam,
                         Anchor(kTestCase.expected_tokens[15], kTestCase.code),
                     },
                     // refers to y.
-                    T({
+                    T(D{
                         IndexingFactType::kVariableReference,
                         Anchor(kTestCase.expected_tokens[17], kTestCase.code),
                     })),
                 // refers to b1.
                 T(
-                    {
+                    D{
                         IndexingFactType::kModuleInstance,
                         Anchor(kTestCase.expected_tokens[19], kTestCase.code),
                     },
                     // refers to z.
-                    T({
+                    T(D{
                         IndexingFactType::kVariableReference,
                         Anchor(kTestCase.expected_tokens[21], kTestCase.code),
                     }))))));
@@ -3178,61 +3179,61 @@ TEST(FactsTreeExtractor, InterfaceParameterExtraction) {
       T(project.ExpectedFileData(),
         // refers to interface m.
         T(
-            {
+            D{
                 IndexingFactType::kInterface,
                 Anchor(kTestCase.expected_tokens[1], kTestCase.code),
             },
             // refers to module parameter x.
-            T({
+            T(D{
                 IndexingFactType::kParamDeclaration,
                 Anchor(kTestCase.expected_tokens[3], kTestCase.code),
             }),
             // refers to class parameter y.
-            T({
+            T(D{
                 IndexingFactType::kParamDeclaration,
                 Anchor(kTestCase.expected_tokens[5], kTestCase.code),
             }),
             // refers to class input x.
-            T({
+            T(D{
                 IndexingFactType::kVariableDefinition,
                 Anchor(kTestCase.expected_tokens[7], kTestCase.code),
             }),
             // refers to bar.
             T(
-                {
+                D{
                     IndexingFactType::kDataTypeReference,
                     Anchor(kTestCase.expected_tokens[9], kTestCase.code),
                 },
                 // refers to .p1(x).
                 T(
-                    {
+                    D{
                         IndexingFactType::kNamedParam,
                         Anchor(kTestCase.expected_tokens[11], kTestCase.code),
                     },
                     // refers to x.
-                    T({
+                    T(D{
                         IndexingFactType::kVariableReference,
                         Anchor(kTestCase.expected_tokens[13], kTestCase.code),
                     })),
                 // refers to .p2(y).
                 T(
-                    {
+                    D{
                         IndexingFactType::kNamedParam,
                         Anchor(kTestCase.expected_tokens[15], kTestCase.code),
                     },
                     // refers to y.
-                    T({
+                    T(D{
                         IndexingFactType::kVariableReference,
                         Anchor(kTestCase.expected_tokens[17], kTestCase.code),
                     })),
                 // refers to b1.
                 T(
-                    {
+                    D{
                         IndexingFactType::kModuleInstance,
                         Anchor(kTestCase.expected_tokens[19], kTestCase.code),
                     },
                     // refers to z.
-                    T({
+                    T(D{
                         IndexingFactType::kVariableReference,
                         Anchor(kTestCase.expected_tokens[21], kTestCase.code),
                     }))))));
@@ -3263,18 +3264,18 @@ TEST(FactsTreeExtractor, ClassAsPort) {
       T(project.ExpectedFileData(),
         // refers to module m.
         T(
-            {
+            D{
                 IndexingFactType::kModule,
                 Anchor(kTestCase.expected_tokens[1], kTestCase.code),
             },
             // refers to class_type.
             T(
-                {
+                D{
                     IndexingFactType::kDataTypeReference,
                     Anchor(kTestCase.expected_tokens[3], kTestCase.code),
                 },
                 // refers to x.
-                T({
+                T(D{
                     IndexingFactType::kVariableDefinition,
                     Anchor(kTestCase.expected_tokens[5], kTestCase.code),
                 })))));
@@ -3321,61 +3322,61 @@ TEST(FactsTreeExtractor, ProgramParameterExtraction) {
       T(project.ExpectedFileData(),
         // refers to program m.
         T(
-            {
+            D{
                 IndexingFactType::kProgram,
                 Anchor(kTestCase.expected_tokens[1], kTestCase.code),
             },
             // refers to module parameter x.
-            T({
+            T(D{
                 IndexingFactType::kParamDeclaration,
                 Anchor(kTestCase.expected_tokens[3], kTestCase.code),
             }),
             // refers to class parameter y.
-            T({
+            T(D{
                 IndexingFactType::kParamDeclaration,
                 Anchor(kTestCase.expected_tokens[5], kTestCase.code),
             }),
             // refers to class input x.
-            T({
+            T(D{
                 IndexingFactType::kVariableDefinition,
                 Anchor(kTestCase.expected_tokens[7], kTestCase.code),
             }),
             // refers to bar.
             T(
-                {
+                D{
                     IndexingFactType::kDataTypeReference,
                     Anchor(kTestCase.expected_tokens[9], kTestCase.code),
                 },
                 // refers to .p1(x).
                 T(
-                    {
+                    D{
                         IndexingFactType::kNamedParam,
                         Anchor(kTestCase.expected_tokens[11], kTestCase.code),
                     },
                     // refers to x.
-                    T({
+                    T(D{
                         IndexingFactType::kVariableReference,
                         Anchor(kTestCase.expected_tokens[13], kTestCase.code),
                     })),
                 // refers to .p2(y).
                 T(
-                    {
+                    D{
                         IndexingFactType::kNamedParam,
                         Anchor(kTestCase.expected_tokens[15], kTestCase.code),
                     },
                     // refers to y.
-                    T({
+                    T(D{
                         IndexingFactType::kVariableReference,
                         Anchor(kTestCase.expected_tokens[17], kTestCase.code),
                     })),
                 // refers to b1.
                 T(
-                    {
+                    D{
                         IndexingFactType::kModuleInstance,
                         Anchor(kTestCase.expected_tokens[19], kTestCase.code),
                     },
                     // refers to z.
-                    T({
+                    T(D{
                         IndexingFactType::kVariableReference,
                         Anchor(kTestCase.expected_tokens[21], kTestCase.code),
                     }))))));
@@ -3424,65 +3425,65 @@ TEST(FactsTreeExtractor, PackedAndUnpackedDimension) {
       T(project.ExpectedFileData(),
         // refers to package pkg.
         T(
-            {
+            D{
                 IndexingFactType::kPackage,
                 Anchor(kTestCase.expected_tokens[1], kTestCase.code),
             },
             // refers to k.
-            T({
+            T(D{
                 IndexingFactType::kVariableReference,
                 Anchor(kTestCase.expected_tokens[3], kTestCase.code),
             }),
             // refers to y.
-            T({
+            T(D{
                 IndexingFactType::kVariableReference,
                 Anchor(kTestCase.expected_tokens[5], kTestCase.code),
             }),
             // refers to x.
             T(
-                {
+                D{
                     IndexingFactType::kVariableDefinition,
                     Anchor(kTestCase.expected_tokens[7], kTestCase.code),
                 },
                 // refers to l.
-                T({
+                T(D{
                     IndexingFactType::kVariableReference,
                     Anchor(kTestCase.expected_tokens[9], kTestCase.code),
                 }),
                 // refers to r.
-                T({
+                T(D{
                     IndexingFactType::kVariableReference,
                     Anchor(kTestCase.expected_tokens[11], kTestCase.code),
                 }))),
         // refers to module m.
         T(
-            {
+            D{
                 IndexingFactType::kModule,
                 Anchor(kTestCase.expected_tokens[13], kTestCase.code),
             },
             // refers to j.
-            T({
+            T(D{
                 IndexingFactType::kVariableReference,
                 Anchor(kTestCase.expected_tokens[15], kTestCase.code),
             }),
             // refers to o.
-            T({
+            T(D{
                 IndexingFactType::kVariableReference,
                 Anchor(kTestCase.expected_tokens[17], kTestCase.code),
             }),
             // refers to v.
             T(
-                {
+                D{
                     IndexingFactType::kVariableDefinition,
                     Anchor(kTestCase.expected_tokens[19], kTestCase.code),
                 },
                 // refers to e.
-                T({
+                T(D{
                     IndexingFactType::kVariableReference,
                     Anchor(kTestCase.expected_tokens[21], kTestCase.code),
                 }),
                 // refers to t.
-                T({
+                T(D{
                     IndexingFactType::kVariableReference,
                     Anchor(kTestCase.expected_tokens[23], kTestCase.code),
                 })))));
@@ -3530,48 +3531,48 @@ TEST(FactsTreeExtractor, FileIncludes) {
   const IndexingFactNode expected(
       project.ExpectedFileListData(),
       T(
-          {
+          D{
               IndexingFactType::kFile,
               Anchor(included_test_file.filename(), 0, kTestCase0.code.size()),
               Anchor(kTestCase0.code, 0, kTestCase0.code.size()),
           },
           // refers to class my_class.
           T(
-              {
+              D{
                   IndexingFactType::kClass,
                   Anchor(kTestCase0.expected_tokens[1], kTestCase0.code),
               },
               // refers to int var5.
-              T({
+              T(D{
                   IndexingFactType::kVariableDefinition,
                   Anchor(kTestCase0.expected_tokens[3], kTestCase0.code),
               }))),
       T(
-          {
+          D{
               IndexingFactType::kFile,
               Anchor(project.OnlyFileName(), 0, kTestCase.code.size()),
               Anchor(kTestCase.code, 0, kTestCase.code.size()),
           },
           // refers to include.
-          T({
+          T(D{
               IndexingFactType::kInclude,
               Anchor(kTestCase.expected_tokens[1], kTestCase.code),
               Anchor(included_test_file.filename(), 0, 0),
           }),
           // refers to module my_module.
           T(
-              {
+              D{
                   IndexingFactType::kModule,
                   Anchor(kTestCase.expected_tokens[3], kTestCase.code),
               },
               // anonymous scope for initial.
               T(
-                  {
+                  D{
                       IndexingFactType::kAnonymousScope,
                       Anchor("anonymous-scope-0", 0, 0),
                   },
                   // refers to $display(my_class::var5).
-                  T({
+                  T(D{
                       IndexingFactType::kMemberReference,
                       Anchor(kTestCase.expected_tokens[5], kTestCase.code),
                       Anchor(kTestCase.expected_tokens[7], kTestCase.code),
@@ -3622,54 +3623,54 @@ TEST(FactsTreeExtractor, FileIncludeSameFileTwice) {
   const IndexingFactNode expected(
       project.ExpectedFileListData(),
       T(
-          {
+          D{
               IndexingFactType::kFile,
               Anchor(included_test_file.filename(), 0, kTestCase0.code.size()),
               Anchor(kTestCase0.code, 0, kTestCase0.code.size()),
           },
           // refers to class my_class.
           T(
-              {
+              D{
                   IndexingFactType::kClass,
                   Anchor(kTestCase0.expected_tokens[1], kTestCase0.code),
               },
               // refers to int var5.
-              T({
+              T(D{
                   IndexingFactType::kVariableDefinition,
                   Anchor(kTestCase0.expected_tokens[3], kTestCase0.code),
               }))),
       T(
-          {
+          D{
               IndexingFactType::kFile,
               Anchor(project.OnlyFileName(), 0, kTestCase.code.size()),
               Anchor(kTestCase.code, 0, kTestCase.code.size()),
           },
           // refers to include.
-          T({
+          T(D{
               IndexingFactType::kInclude,
               Anchor(kTestCase.expected_tokens[1], kTestCase.code),
               Anchor(included_test_file.filename(), 0, 0),
           }),
           // refers to include.
-          T({
+          T(D{
               IndexingFactType::kInclude,
               Anchor(kTestCase.expected_tokens[3], kTestCase.code),
               Anchor(included_test_file.filename(), 0, 0),
           }),
           // refers to module my_module.
           T(
-              {
+              D{
                   IndexingFactType::kModule,
                   Anchor(kTestCase.expected_tokens[5], kTestCase.code),
               },
               // anonymous scope for initial.
               T(
-                  {
+                  D{
                       IndexingFactType::kAnonymousScope,
                       Anchor("anonymous-scope-0", 0, 0),
                   },
                   // refers to $display(my_class::var5).
-                  T({
+                  T(D{
                       IndexingFactType::kMemberReference,
                       Anchor(kTestCase.expected_tokens[7], kTestCase.code),
                       Anchor(kTestCase.expected_tokens[9], kTestCase.code),
@@ -3732,95 +3733,95 @@ TEST(FactsTreeExtractor, EnumTest) {
       T(project.ExpectedFileData(),
         // refers to package pkg.
         T(
-            {
+            D{
                 IndexingFactType::kPackage,
                 Anchor(kTestCase.expected_tokens[1], kTestCase.code),
             },
             // refers to AA.
-            T({
+            T(D{
                 IndexingFactType::kConstant,
                 Anchor(kTestCase.expected_tokens[3], kTestCase.code),
             }),
             // refers to enum m_var.
-            T({
+            T(D{
                 IndexingFactType::kVariableDefinition,
                 Anchor(kTestCase.expected_tokens[5], kTestCase.code),
             }),
             // refers to enum var.
-            T({
+            T(D{
                 IndexingFactType::kVariableDefinition,
                 Anchor(kTestCase.expected_tokens[9], kTestCase.code),
             }),
             // refers to BB.
-            T({
+            T(D{
                 IndexingFactType::kConstant,
                 Anchor(kTestCase.expected_tokens[7], kTestCase.code),
             })),
         // refers to module m.
         T(
-            {
+            D{
                 IndexingFactType::kModule,
                 Anchor(kTestCase.expected_tokens[11], kTestCase.code),
             },
             // refers to CC.
-            T({
+            T(D{
                 IndexingFactType::kConstant,
                 Anchor(kTestCase.expected_tokens[13], kTestCase.code),
             }),
             // refers to enum m_var.
-            T({
+            T(D{
                 IndexingFactType::kVariableDefinition,
                 Anchor(kTestCase.expected_tokens[15], kTestCase.code),
             }),
             // refers to enum var2.
-            T({
+            T(D{
                 IndexingFactType::kVariableDefinition,
                 Anchor(kTestCase.expected_tokens[19], kTestCase.code),
             }),
             // refers to DD.
-            T({
+            T(D{
                 IndexingFactType::kConstant,
                 Anchor(kTestCase.expected_tokens[17], kTestCase.code),
             }),
             // refers to GG.
             T(
-                {
+                D{
                     IndexingFactType::kConstant,
                     Anchor(kTestCase.expected_tokens[21], kTestCase.code),
                 },
                 // refers to y.
-                T({
+                T(D{
                     IndexingFactType::kVariableReference,
                     Anchor(kTestCase.expected_tokens[23], kTestCase.code),
                 }),
                 // refers to idx.
-                T({
+                T(D{
                     IndexingFactType::kVariableReference,
                     Anchor(kTestCase.expected_tokens[25], kTestCase.code),
                 })),
             // refers to enum var3.
-            T({
+            T(D{
                 IndexingFactType::kVariableDefinition,
                 Anchor(kTestCase.expected_tokens[27], kTestCase.code),
             }),
             // refers to enum var5.
-            T({
+            T(D{
                 IndexingFactType::kVariableDefinition,
                 Anchor(kTestCase.expected_tokens[35], kTestCase.code),
             }),
             // refers to HH.
             T(
-                {
+                D{
                     IndexingFactType::kConstant,
                     Anchor(kTestCase.expected_tokens[29], kTestCase.code),
                 },
                 // refers to yh.
-                T({
+                T(D{
                     IndexingFactType::kVariableReference,
                     Anchor(kTestCase.expected_tokens[31], kTestCase.code),
                 }),
                 // refers to idx2.
-                T({
+                T(D{
                     IndexingFactType::kVariableReference,
                     Anchor(kTestCase.expected_tokens[33], kTestCase.code),
                 })))));
@@ -3852,18 +3853,18 @@ TEST(FactsTreeExtractor, NonLiteralIncludeSafeFail) {
       T(project.ExpectedFileData(),
         // refers to module pkg.
         T(
-            {
+            D{
                 IndexingFactType::kModule,
                 Anchor(kTestCase.expected_tokens[1], kTestCase.code),
             },
             // refers to var1.
             T(
-                {
+                D{
                     IndexingFactType::kVariableDefinition,
                     Anchor(kTestCase.expected_tokens[5], kTestCase.code),
                 },
                 // refers to x.
-                T({
+                T(D{
                     IndexingFactType::kVariableDefinition,
                     Anchor(kTestCase.expected_tokens[3], kTestCase.code),
                 })))));
@@ -3894,18 +3895,18 @@ TEST(FactsTreeExtractor, StructInModule) {
       T(project.ExpectedFileData(),
         // refers to module pkg.
         T(
-            {
+            D{
                 IndexingFactType::kModule,
                 Anchor(kTestCase.expected_tokens[1], kTestCase.code),
             },
             // refers to var1.
             T(
-                {
+                D{
                     IndexingFactType::kVariableDefinition,
                     Anchor(kTestCase.expected_tokens[5], kTestCase.code),
                 },
                 // refers to x.
-                T({
+                T(D{
                     IndexingFactType::kVariableDefinition,
                     Anchor(kTestCase.expected_tokens[3], kTestCase.code),
                 })))));
@@ -3938,23 +3939,23 @@ TEST(FactsTreeExtractor, ClassConstructor) {
       T(project.ExpectedFileData(),
         // refers to class my_class.
         T(
-            {
+            D{
                 IndexingFactType::kClass,
                 Anchor(kTestCase.expected_tokens[1], kTestCase.code),
             },
             // refers to new.
             T(
-                {
+                D{
                     IndexingFactType::kConstructor,
                     Anchor(kTestCase.expected_tokens[3], kTestCase.code),
                 },
                 // refers to x.
-                T({
+                T(D{
                     IndexingFactType::kVariableDefinition,
                     Anchor(kTestCase.expected_tokens[5], kTestCase.code),
                 }),
                 // refers to x.
-                T({
+                T(D{
                     IndexingFactType::kVariableReference,
                     Anchor(kTestCase.expected_tokens[7], kTestCase.code),
                 })))));
@@ -3985,18 +3986,18 @@ TEST(FactsTreeExtractor, StructInPackage) {
       T(project.ExpectedFileData(),
         // refers to package pkg.
         T(
-            {
+            D{
                 IndexingFactType::kPackage,
                 Anchor(kTestCase.expected_tokens[1], kTestCase.code),
             },
             // refers to var1.
             T(
-                {
+                D{
                     IndexingFactType::kVariableDefinition,
                     Anchor(kTestCase.expected_tokens[5], kTestCase.code),
                 },
                 // refers to x.
-                T({
+                T(D{
                     IndexingFactType::kVariableDefinition,
                     Anchor(kTestCase.expected_tokens[3], kTestCase.code),
                 })))));
@@ -4027,18 +4028,18 @@ TEST(FactsTreeExtractor, UnionInModule) {
       T(project.ExpectedFileData(),
         // refers to module pkg.
         T(
-            {
+            D{
                 IndexingFactType::kModule,
                 Anchor(kTestCase.expected_tokens[1], kTestCase.code),
             },
             // refers to var1.
             T(
-                {
+                D{
                     IndexingFactType::kVariableDefinition,
                     Anchor(kTestCase.expected_tokens[5], kTestCase.code),
                 },
                 // refers to x.
-                T({
+                T(D{
                     IndexingFactType::kVariableDefinition,
                     Anchor(kTestCase.expected_tokens[3], kTestCase.code),
                 })))));
@@ -4069,18 +4070,18 @@ TEST(FactsTreeExtractor, UnionInPackage) {
       T(project.ExpectedFileData(),
         // refers to package pkg.
         T(
-            {
+            D{
                 IndexingFactType::kPackage,
                 Anchor(kTestCase.expected_tokens[1], kTestCase.code),
             },
             // refers to var1.
             T(
-                {
+                D{
                     IndexingFactType::kVariableDefinition,
                     Anchor(kTestCase.expected_tokens[5], kTestCase.code),
                 },
                 // refers to x.
-                T({
+                T(D{
                     IndexingFactType::kVariableDefinition,
                     Anchor(kTestCase.expected_tokens[3], kTestCase.code),
                 })))));
@@ -4111,18 +4112,18 @@ TEST(FactsTreeExtractor, UnionTypeInPackage) {
       T(project.ExpectedFileData(),
         // refers to package pkg.
         T(
-            {
+            D{
                 IndexingFactType::kPackage,
                 Anchor(kTestCase.expected_tokens[1], kTestCase.code),
             },
             // refers to var1.
             T(
-                {
+                D{
                     IndexingFactType::kStructOrUnion,
                     Anchor(kTestCase.expected_tokens[5], kTestCase.code),
                 },
                 // refers to x.
-                T({
+                T(D{
                     IndexingFactType::kVariableDefinition,
                     Anchor(kTestCase.expected_tokens[3], kTestCase.code),
                 })))));
@@ -4153,18 +4154,18 @@ TEST(FactsTreeExtractor, UnionTypenModule) {
       T(project.ExpectedFileData(),
         // refers to module pkg.
         T(
-            {
+            D{
                 IndexingFactType::kModule,
                 Anchor(kTestCase.expected_tokens[1], kTestCase.code),
             },
             // refers to var1.
             T(
-                {
+                D{
                     IndexingFactType::kStructOrUnion,
                     Anchor(kTestCase.expected_tokens[5], kTestCase.code),
                 },
                 // refers to x.
-                T({
+                T(D{
                     IndexingFactType::kVariableDefinition,
                     Anchor(kTestCase.expected_tokens[3], kTestCase.code),
                 })))));
@@ -4195,18 +4196,18 @@ TEST(FactsTreeExtractor, StructTypeInPackage) {
       T(project.ExpectedFileData(),
         // refers to package pkg.
         T(
-            {
+            D{
                 IndexingFactType::kPackage,
                 Anchor(kTestCase.expected_tokens[1], kTestCase.code),
             },
             // refers to var1.
             T(
-                {
+                D{
                     IndexingFactType::kStructOrUnion,
                     Anchor(kTestCase.expected_tokens[5], kTestCase.code),
                 },
                 // refers to x.
-                T({
+                T(D{
                     IndexingFactType::kVariableDefinition,
                     Anchor(kTestCase.expected_tokens[3], kTestCase.code),
                 })))));
@@ -4237,18 +4238,18 @@ TEST(FactsTreeExtractor, StructTypedefModule) {
       T(project.ExpectedFileData(),
         // refers to module pkg.
         T(
-            {
+            D{
                 IndexingFactType::kModule,
                 Anchor(kTestCase.expected_tokens[1], kTestCase.code),
             },
             // refers to var1.
             T(
-                {
+                D{
                     IndexingFactType::kStructOrUnion,
                     Anchor(kTestCase.expected_tokens[5], kTestCase.code),
                 },
                 // refers to x.
-                T({
+                T(D{
                     IndexingFactType::kVariableDefinition,
                     Anchor(kTestCase.expected_tokens[3], kTestCase.code),
                 })))));
@@ -4279,18 +4280,18 @@ TEST(FactsTreeExtractor, DataTypeReferenceInUnionType) {
       T(project.ExpectedFileData(),
         // refers to struct var1.
         T(
-            {
+            D{
                 IndexingFactType::kStructOrUnion,
                 Anchor(kTestCase.expected_tokens[5], kTestCase.code),
             },
             // refers to some_type var1.
             T(
-                {
+                D{
                     IndexingFactType::kDataTypeReference,
                     Anchor(kTestCase.expected_tokens[1], kTestCase.code),
                 },
                 // refers to var1.
-                T({
+                T(D{
                     IndexingFactType::kVariableDefinition,
                     Anchor(kTestCase.expected_tokens[3], kTestCase.code),
                 })))));
@@ -4321,18 +4322,18 @@ TEST(FactsTreeExtractor, StructInUnionType) {
       T(project.ExpectedFileData(),
         // refers to union var1.
         T(
-            {
+            D{
                 IndexingFactType::kStructOrUnion,
                 Anchor(kTestCase.expected_tokens[5], kTestCase.code),
             },
             // refers to struct var2.
             T(
-                {
+                D{
                     IndexingFactType::kVariableDefinition,
                     Anchor(kTestCase.expected_tokens[3], kTestCase.code),
                 },
                 // refers to x.
-                T({
+                T(D{
                     IndexingFactType::kVariableDefinition,
                     Anchor(kTestCase.expected_tokens[1], kTestCase.code),
                 })))));
@@ -4363,18 +4364,18 @@ TEST(FactsTreeExtractor, StructInUnion) {
       T(project.ExpectedFileData(),
         // refers to union var1.
         T(
-            {
+            D{
                 IndexingFactType::kVariableDefinition,
                 Anchor(kTestCase.expected_tokens[5], kTestCase.code),
             },
             // refers to struct var2.
             T(
-                {
+                D{
                     IndexingFactType::kVariableDefinition,
                     Anchor(kTestCase.expected_tokens[3], kTestCase.code),
                 },
                 // refers to x.
-                T({
+                T(D{
                     IndexingFactType::kVariableDefinition,
                     Anchor(kTestCase.expected_tokens[1], kTestCase.code),
                 })))));
@@ -4405,18 +4406,18 @@ TEST(FactsTreeExtractor, UnionInStructType) {
       T(project.ExpectedFileData(),
         // refers to union var1.
         T(
-            {
+            D{
                 IndexingFactType::kStructOrUnion,
                 Anchor(kTestCase.expected_tokens[5], kTestCase.code),
             },
             // refers to struct var2.
             T(
-                {
+                D{
                     IndexingFactType::kVariableDefinition,
                     Anchor(kTestCase.expected_tokens[3], kTestCase.code),
                 },
                 // refers to x.
-                T({
+                T(D{
                     IndexingFactType::kVariableDefinition,
                     Anchor(kTestCase.expected_tokens[1], kTestCase.code),
                 })))));
@@ -4447,18 +4448,18 @@ TEST(FactsTreeExtractor, UnionInStruct) {
       T(project.ExpectedFileData(),
         // refers to union var1.
         T(
-            {
+            D{
                 IndexingFactType::kVariableDefinition,
                 Anchor(kTestCase.expected_tokens[5], kTestCase.code),
             },
             // refers to struct var2.
             T(
-                {
+                D{
                     IndexingFactType::kVariableDefinition,
                     Anchor(kTestCase.expected_tokens[3], kTestCase.code),
                 },
                 // refers to x.
-                T({
+                T(D{
                     IndexingFactType::kVariableDefinition,
                     Anchor(kTestCase.expected_tokens[1], kTestCase.code),
                 })))));
@@ -4497,35 +4498,35 @@ TEST(FactsTreeExtractor, TypedVariable) {
       T(project.ExpectedFileData(),
         // refers to package m.
         T(
-            {
+            D{
                 IndexingFactType::kPackage,
                 Anchor(kTestCase.expected_tokens[1], kTestCase.code),
             },
             // refers to some_type.
             T(
-                {
+                D{
                     IndexingFactType::kDataTypeReference,
                     Anchor(kTestCase.expected_tokens[3], kTestCase.code),
                 },
                 // refers to var1.
-                T({
+                T(D{
                     IndexingFactType::kVariableDefinition,
                     Anchor(kTestCase.expected_tokens[5], kTestCase.code),
                 }))),
         // refers to module m.
         T(
-            {
+            D{
                 IndexingFactType::kModule,
                 Anchor(kTestCase.expected_tokens[7], kTestCase.code),
             },
             // refers to some_type1.
             T(
-                {
+                D{
                     IndexingFactType::kDataTypeReference,
                     Anchor(kTestCase.expected_tokens[9], kTestCase.code),
                 },
                 // refers to var2.
-                T({
+                T(D{
                     IndexingFactType::kVariableDefinition,
                     Anchor(kTestCase.expected_tokens[11], kTestCase.code),
                 })))));
@@ -4559,13 +4560,13 @@ TEST(FactsTreeExtractor, FunctionNameAsQualifiedId) {
       project.ExpectedFileListData(),
       T(project.ExpectedFileData(),
         // refers to function pkg::f.
-        T({
+        T(D{
             IndexingFactType::kFunctionOrTask,
             Anchor(kTestCase.expected_tokens[1], kTestCase.code),
             Anchor(kTestCase.expected_tokens[3], kTestCase.code),
         }),
         // refers to task pkg::t.
-        T({
+        T(D{
             IndexingFactType::kFunctionOrTask,
             Anchor(kTestCase.expected_tokens[5], kTestCase.code),
             Anchor(kTestCase.expected_tokens[7], kTestCase.code),
@@ -4604,40 +4605,40 @@ TEST(FactsTreeExtractor, BuiltInFunction) {
       project.ExpectedFileListData(),
       T(project.ExpectedFileData(),
         // refers to param x.
-        T({
+        T(D{
             IndexingFactType::kParamDeclaration,
             Anchor(kTestCase.expected_tokens[1], kTestCase.code),
         }),
         // refers to t1.
         T(
-            {
+            D{
                 IndexingFactType::kFunctionOrTask,
                 Anchor(kTestCase.expected_tokens[3], kTestCase.code),
             },
             // refers to b1.
-            T({
+            T(D{
                 IndexingFactType::kFunctionCall,
                 Anchor(kTestCase.expected_tokens[5], kTestCase.code),
             })),
         // refers to t.
         T(
-            {
+            D{
                 IndexingFactType::kFunctionOrTask,
                 Anchor(kTestCase.expected_tokens[7], kTestCase.code),
             },
             // refers to foo.
             T(
-                {
+                D{
                     IndexingFactType::kDataTypeReference,
                     Anchor(kTestCase.expected_tokens[9], kTestCase.code),
                 },
                 // refers to bar.
-                T({
+                T(D{
                     IndexingFactType::kVariableDefinition,
                     Anchor(kTestCase.expected_tokens[11], kTestCase.code),
                 })),
             // refers to bar.sort().
-            T({
+            T(D{
                 IndexingFactType::kVariableReference,
                 Anchor(kTestCase.expected_tokens[13], kTestCase.code),
             }))));
@@ -4668,18 +4669,18 @@ TEST(FactsTreeExtractor, PureVirtualFunction) {
       T(project.ExpectedFileData(),
         // refers to class env.
         T(
-            {
+            D{
                 IndexingFactType::kClass,
                 Anchor(kTestCase.expected_tokens[1], kTestCase.code),
             },
             // refers to function mod_if.
             T(
-                {
+                D{
                     IndexingFactType::kFunctionOrTaskForwardDeclaration,
                     Anchor(kTestCase.expected_tokens[3], kTestCase.code),
                 },
                 // refers to x.
-                T({
+                T(D{
                     IndexingFactType::kVariableDefinition,
                     Anchor(kTestCase.expected_tokens[5], kTestCase.code),
                 })))));
@@ -4710,18 +4711,18 @@ TEST(FactsTreeExtractor, ExternFunction) {
       T(project.ExpectedFileData(),
         // refers to class env.
         T(
-            {
+            D{
                 IndexingFactType::kClass,
                 Anchor(kTestCase.expected_tokens[1], kTestCase.code),
             },
             // refers to function mod_if.
             T(
-                {
+                D{
                     IndexingFactType::kFunctionOrTaskForwardDeclaration,
                     Anchor(kTestCase.expected_tokens[3], kTestCase.code),
                 },
                 // refers to x.
-                T({
+                T(D{
                     IndexingFactType::kVariableDefinition,
                     Anchor(kTestCase.expected_tokens[5], kTestCase.code),
                 })))));
@@ -4752,18 +4753,18 @@ TEST(FactsTreeExtractor, ExternTask) {
       T(project.ExpectedFileData(),
         // refers to class env.
         T(
-            {
+            D{
                 IndexingFactType::kClass,
                 Anchor(kTestCase.expected_tokens[1], kTestCase.code),
             },
             // refers to function mod_if.
             T(
-                {
+                D{
                     IndexingFactType::kFunctionOrTaskForwardDeclaration,
                     Anchor(kTestCase.expected_tokens[3], kTestCase.code),
                 },
                 // refers to x.
-                T({
+                T(D{
                     IndexingFactType::kVariableDefinition,
                     Anchor(kTestCase.expected_tokens[5], kTestCase.code),
                 })))));
@@ -4794,18 +4795,18 @@ TEST(FactsTreeExtractor, PureVirtualTask) {
       T(project.ExpectedFileData(),
         // refers to class env.
         T(
-            {
+            D{
                 IndexingFactType::kClass,
                 Anchor(kTestCase.expected_tokens[1], kTestCase.code),
             },
             // refers to task mod_if.
             T(
-                {
+                D{
                     IndexingFactType::kFunctionOrTaskForwardDeclaration,
                     Anchor(kTestCase.expected_tokens[3], kTestCase.code),
                 },
                 // refers to x.
-                T({
+                T(D{
                     IndexingFactType::kVariableDefinition,
                     Anchor(kTestCase.expected_tokens[5], kTestCase.code),
                 })))));
@@ -4838,23 +4839,23 @@ TEST(FactsTreeExtractor, VirtualDataDeclaration) {
       T(project.ExpectedFileData(),
         // refers to class env.
         T(
-            {
+            D{
                 IndexingFactType::kClass,
                 Anchor(kTestCase.expected_tokens[1], kTestCase.code),
             },
             // refers to extends uvm_env.
-            T({
+            T(D{
                 IndexingFactType::kExtends,
                 Anchor(kTestCase.expected_tokens[3], kTestCase.code),
             }),
             // refers to mod_if.
             T(
-                {
+                D{
                     IndexingFactType::kDataTypeReference,
                     Anchor(kTestCase.expected_tokens[5], kTestCase.code),
                 },
                 // refers to m_if.
-                T({
+                T(D{
                     IndexingFactType::kVariableDefinition,
                     Anchor(kTestCase.expected_tokens[7], kTestCase.code),
                 })))));
@@ -4893,35 +4894,35 @@ TEST(FactsTreeExtractor, FunctionNamedArgument) {
       T(project.ExpectedFileData(),
         // refers to function f1.
         T(
-            {
+            D{
                 IndexingFactType::kFunctionOrTask,
                 Anchor(kTestCase.expected_tokens[1], kTestCase.code),
             },
             // refers to f2.
             T(
-                {
+                D{
                     IndexingFactType::kFunctionCall,
                     Anchor(kTestCase.expected_tokens[3], kTestCase.code),
                 },
                 // refers to a.
                 T(
-                    {
+                    D{
                         IndexingFactType::kNamedParam,
                         Anchor(kTestCase.expected_tokens[5], kTestCase.code),
                     },
                     // refers to x.
-                    T({
+                    T(D{
                         IndexingFactType::kVariableReference,
                         Anchor(kTestCase.expected_tokens[7], kTestCase.code),
                     })),
                 // refers to b.
                 T(
-                    {
+                    D{
                         IndexingFactType::kNamedParam,
                         Anchor(kTestCase.expected_tokens[9], kTestCase.code),
                     },
                     // refers to y.
-                    T({
+                    T(D{
                         IndexingFactType::kVariableReference,
                         Anchor(kTestCase.expected_tokens[11], kTestCase.code),
                     }))))));
@@ -4960,33 +4961,33 @@ TEST(FactsTreeExtractor, FunctionPortPackedAndUnpackedDimsensions) {
       T(project.ExpectedFileData(),
         // refers to function f1.
         T(
-            {
+            D{
                 IndexingFactType::kFunctionOrTask,
                 Anchor(kTestCase.expected_tokens[1], kTestCase.code),
             },
             // refers to t.
             T(
-                {
+                D{
                     IndexingFactType::kVariableDefinition,
                     Anchor(kTestCase.expected_tokens[7], kTestCase.code),
                 },
                 // refers to x.
-                T({
+                T(D{
                     IndexingFactType::kVariableReference,
                     Anchor(kTestCase.expected_tokens[3], kTestCase.code),
                 }),
                 // refers to y.
-                T({
+                T(D{
                     IndexingFactType::kVariableReference,
                     Anchor(kTestCase.expected_tokens[5], kTestCase.code),
                 }),
                 // refers to l.
-                T({
+                T(D{
                     IndexingFactType::kVariableReference,
                     Anchor(kTestCase.expected_tokens[9], kTestCase.code),
                 }),
                 // refers to r.
-                T({
+                T(D{
                     IndexingFactType::kVariableReference,
                     Anchor(kTestCase.expected_tokens[11], kTestCase.code),
                 })))));
@@ -5019,18 +5020,18 @@ TEST(FactsTreeExtractor, UserDefinedTypeFunctionPort) {
       T(project.ExpectedFileData(),
         // refers to function f1.
         T(
-            {
+            D{
                 IndexingFactType::kFunctionOrTask,
                 Anchor(kTestCase.expected_tokens[1], kTestCase.code),
             },
             // refers to foo.
             T(
-                {
+                D{
                     IndexingFactType::kDataTypeReference,
                     Anchor(kTestCase.expected_tokens[3], kTestCase.code),
                 },
                 // refers to bar.
-                T({
+                T(D{
                     IndexingFactType::kVariableDefinition,
                     Anchor(kTestCase.expected_tokens[5], kTestCase.code),
                 })))));
@@ -5063,18 +5064,18 @@ TEST(FactsTreeExtractor, StructFunctionPort) {
       T(project.ExpectedFileData(),
         // refers to function f1.
         T(
-            {
+            D{
                 IndexingFactType::kFunctionOrTask,
                 Anchor(kTestCase.expected_tokens[1], kTestCase.code),
             },
             // refers to bar.
             T(
-                {
+                D{
                     IndexingFactType::kVariableDefinition,
                     Anchor(kTestCase.expected_tokens[5], kTestCase.code),
                 },
                 // refers to foo.
-                T({
+                T(D{
                     IndexingFactType::kVariableDefinition,
                     Anchor(kTestCase.expected_tokens[3], kTestCase.code),
                 })))));
@@ -5109,24 +5110,24 @@ TEST(FactsTreeExtractor, NestedStructFunctionPort) {
       T(project.ExpectedFileData(),
         // refers to function f1.
         T(
-            {
+            D{
                 IndexingFactType::kFunctionOrTask,
                 Anchor(kTestCase.expected_tokens[1], kTestCase.code),
             },
             // refers to bar.
             T(
-                {
+                D{
                     IndexingFactType::kVariableDefinition,
                     Anchor(kTestCase.expected_tokens[7], kTestCase.code),
                 },
                 // refers to foo.
                 T(
-                    {
+                    D{
                         IndexingFactType::kVariableDefinition,
                         Anchor(kTestCase.expected_tokens[5], kTestCase.code),
                     },
                     // refers to y.
-                    T({
+                    T(D{
                         IndexingFactType::kVariableDefinition,
                         Anchor(kTestCase.expected_tokens[3], kTestCase.code),
                     }))))));
