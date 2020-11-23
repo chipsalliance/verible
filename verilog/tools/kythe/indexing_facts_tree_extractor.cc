@@ -64,7 +64,7 @@ IndexingFactNode BuildIndexingFactsTree(IndexingFactNode& file_list_facts_tree,
       syntax_tree->Accept(&visitor);
     }
   }
-  return visitor.GetRoot();
+  return visitor.TakeRoot();
 }
 
 // Extracts indexing facts tree for one file.
@@ -130,8 +130,7 @@ void IndexingFactsTreeExtractor::Visit(const SyntaxTreeNode& node) {
       // Adds the current root to facts tree context to keep track of the parent
       // node so that it can be used to construct the tree and add children to
       // it.
-      const IndexingFactsTreeContext::AutoPop p(&facts_tree_context_,
-                                                &GetRoot());
+      const IndexingFactsTreeContext::AutoPop p(&facts_tree_context_, &root_);
       TreeContextVisitor::Visit(node);
       break;
     }
@@ -428,8 +427,10 @@ void IndexingFactsTreeExtractor::ExtractModuleOrInterfaceOrProgramHeader(
   // Extract module name e.g from "module my_module" extracts "my_module".
   const verible::SyntaxTreeLeaf& module_name_leaf =
       GetModuleName(module_declaration_node);
-  const Anchor module_name_anchor(module_name_leaf.get(), context_.base);
-  facts_tree_context_.top().Value().AppendAnchor(module_name_anchor);
+  facts_tree_context_.top().Value().AppendAnchor(
+      Anchor(module_name_leaf.get(), context_.base)
+
+  );
 
   // Extract parameters if exist.
   const SyntaxTreeNode* param_declaration_list =
@@ -629,8 +630,8 @@ void IndexingFactsTreeExtractor::ExtractModuleInstantiation(
 
     const verible::TokenInfo& variable_name =
         GetModuleInstanceNameTokenInfoFromGateInstance(*instance.match);
-    const Anchor variable_name_anchor(variable_name, context_.base);
-    module_instance_node.Value().AppendAnchor(variable_name_anchor);
+    module_instance_node.Value().AppendAnchor(
+        Anchor(variable_name, context_.base));
 
     {
       const IndexingFactsTreeContext::AutoPop p(&facts_tree_context_,
@@ -673,16 +674,16 @@ void IndexingFactsTreeExtractor::ExtractPackageDeclaration(
     // Extract package name.
     const SyntaxTreeLeaf& package_name_leaf =
         GetPackageNameLeaf(package_declaration_node);
-    const Anchor class_name_anchor(package_name_leaf.get(), context_.base);
-    facts_tree_context_.top().Value().AppendAnchor(class_name_anchor);
+    facts_tree_context_.top().Value().AppendAnchor(
+        Anchor(package_name_leaf.get(), context_.base));
 
     // Extract package name after endpackage if exists.
     const SyntaxTreeLeaf* package_end_name =
         GetPackageNameEndLabel(package_declaration_node);
 
     if (package_end_name != nullptr) {
-      const Anchor package_end_anchor(package_end_name->get(), context_.base);
-      facts_tree_context_.top().Value().AppendAnchor(package_end_anchor);
+      facts_tree_context_.top().Value().AppendAnchor(
+          Anchor(package_end_name->get(), context_.base));
     }
 
     // Visit package body it exists.
@@ -1074,15 +1075,15 @@ void IndexingFactsTreeExtractor::ExtractClassDeclaration(
                                               &class_node);
     // Extract class name.
     const SyntaxTreeLeaf& class_name_leaf = GetClassName(class_declaration);
-    const Anchor class_name_anchor(class_name_leaf.get(), context_.base);
-    facts_tree_context_.top().Value().AppendAnchor(class_name_anchor);
+    facts_tree_context_.top().Value().AppendAnchor(
+        Anchor(class_name_leaf.get(), context_.base));
 
     // Extract class name after endclass.
     const SyntaxTreeLeaf* class_end_name = GetClassEndLabel(class_declaration);
 
     if (class_end_name != nullptr) {
-      const Anchor class_end_anchor(class_end_name->get(), context_.base);
-      facts_tree_context_.top().Value().AppendAnchor(class_end_anchor);
+      facts_tree_context_.top().Value().AppendAnchor(
+          Anchor(class_end_name->get(), context_.base));
     }
 
     const SyntaxTreeNode* param_list =

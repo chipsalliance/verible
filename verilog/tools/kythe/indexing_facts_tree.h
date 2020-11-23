@@ -42,6 +42,11 @@ class Anchor {
         end_location_(token.right(base)),
         value_(token.text()) {}
 
+  Anchor(const Anchor&) = default;  // TODO(fangism): delete, move-only
+  Anchor(Anchor&&) = default;
+  Anchor& operator=(const Anchor&) = delete;
+  Anchor& operator=(Anchor&&) = default;
+
   // This function is for debugging only and isn't intended to be a textual
   // representation of this class.
   std::string DebugString() const;
@@ -75,33 +80,31 @@ class IndexingNodeData {
 
   IndexingNodeData(std::vector<Anchor> anchor,
                    IndexingFactType language_feature)
-      : anchors_(std::move(anchor)), indexing_fact_type_(language_feature) {}
+      : indexing_fact_type_(language_feature), anchors_(std::move(anchor)) {}
 
-  void AppendAnchor(const Anchor& anchor) { anchors_.push_back(anchor); }
-
-  void AppendAnchor(std::vector<Anchor> anchors) {
-    anchors_.insert(anchors_.end(), anchors.begin(), anchors.end());
+  // Consume an Anchor object.
+  void AppendAnchor(Anchor&& anchor) {
+    anchors_.emplace_back(std::move(anchor));
   }
 
   // Swaps the anchors with the given IndexingNodeData.
-  void SwapAnchors(IndexingNodeData* other) { anchors_.swap(other->Anchors()); }
+  void SwapAnchors(IndexingNodeData* other) { anchors_.swap(other->anchors_); }
 
   // This function is for debugging only and isn't intended to be textual
   // representation of this class.
   std::ostream& DebugString(std::ostream* stream) const;
 
-  std::vector<Anchor>& Anchors() { return anchors_; }
   const std::vector<Anchor>& Anchors() const { return anchors_; }
   IndexingFactType GetIndexingFactType() const { return indexing_fact_type_; }
 
   bool operator==(const IndexingNodeData&) const;
 
  private:
+  // Represents which language feature this indexing fact is about.
+  const IndexingFactType indexing_fact_type_;
+
   // Anchors representing the different tokens of this indexing fact.
   std::vector<Anchor> anchors_;
-
-  // Represents which language feature this indexing fact is about.
-  IndexingFactType indexing_fact_type_;
 };
 
 // human-readable form for debugging

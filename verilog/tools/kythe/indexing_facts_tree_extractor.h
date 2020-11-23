@@ -32,6 +32,7 @@ namespace kythe {
 
 // This class is used for traversing CST and extracting different indexing
 // facts from CST nodes and constructs a tree of indexing facts.
+// TODO(fangism): move this entire class to .cc as an implementation detail.
 class IndexingFactsTreeExtractor : public verible::TreeContextVisitor {
  public:
   IndexingFactsTreeExtractor(IndexingFactNode& file_list_facts_tree,
@@ -53,7 +54,7 @@ class IndexingFactsTreeExtractor : public verible::TreeContextVisitor {
   void Visit(const verible::SyntaxTreeLeaf& leaf) override;
   void Visit(const verible::SyntaxTreeNode& node) override;
 
-  IndexingFactNode& GetRoot() { return root_; }
+  IndexingFactNode TakeRoot() { return std::move(root_); }
 
  private:  // methods
   // Extracts facts from module, intraface and program declarations.
