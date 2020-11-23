@@ -29,6 +29,8 @@
 
 namespace verilog {
 
+class VerilogProject;
+
 // A read-only view of a single Verilog source file.
 class VerilogSourceFile {
  public:
@@ -85,6 +87,13 @@ class VerilogSourceFile {
   };
 
  private:
+  friend class VerilogProject;
+
+  // When a file is not found among a set of paths, remember it with an
+  // error status.
+  VerilogSourceFile(absl::string_view referenced_path, absl::Status status);
+
+ private:
   // Tracking state for linear progression of analysis, which allows
   // prerequisite actions to be cached.
   enum State {
@@ -125,6 +134,16 @@ class VerilogSourceFile {
 // files. This is responsible for owning string memory that corresponds
 // to files' contents.
 class VerilogProject {
+  // Collection of per-file metadata and analyzer objects
+  // key: referenced file name (as opposed to resolved filename)
+  // A std::map is important for iterator stability for buffer_to_analyzer_map_.
+  typedef std::map<std::string, VerilogSourceFile, VerilogSourceFile::Less>
+      file_set_type;
+
+ public:
+  typedef file_set_type::iterator iterator;
+  typedef file_set_type::const_iterator const_iterator;
+
  public:
   VerilogProject(absl::string_view root,
                  const std::vector<std::string>& include_paths)
@@ -134,6 +153,16 @@ class VerilogProject {
   VerilogProject(VerilogProject&&) = delete;
   VerilogProject& operator=(const VerilogProject&) = delete;
   VerilogProject& operator=(VerilogProject&&) = delete;
+
+  const_iterator begin() const { return files_.begin(); }
+  iterator begin() { return files_.begin(); }
+  const_iterator end() const { return files_.end(); }
+  iterator end() { return files_.end(); }
+
+  // Returns the directory to which translation units are referenced relatively.
+  absl::string_view TranslationUnitRoot() const {
+    return translation_unit_root_;
+  }
 
   // Opens a single top-level file, known as a "translation unit".
   // This uses translation_unit_root_ directory to calculate the file's path.
@@ -146,21 +175,27 @@ class VerilogProject {
   absl::StatusOr<VerilogSourceFile*> OpenIncludedFile(
       absl::string_view referenced_filename);
 
-  // Returns a collection of diagnostics for the entire project.
-  std::vector<absl::Status> GetStatuses() const;
+  // Returns a collection of non-ok diagnostics for the entire project.
+  std::vector<absl::Status> GetErrorStatuses() const;
+
+  // Returns a previously referenced file, or else nullptr.
+  VerilogSourceFile* LookupRegisteredFile(
+      absl::string_view referenced_filename) {
+    const auto found = files_.find(referenced_filename);
+    if (found == files_.end()) return nullptr;
+    return &found->second;
+  }
 
  private:
   absl::StatusOr<VerilogSourceFile*> OpenFile(
       absl::string_view referenced_filename,
       absl::string_view resolved_filename);
 
- private:
-  // Collection of per-file metadata and analyzer objects
-  // key: referenced file name (as opposed to resolved filename)
-  // A std::map is important for iterator stability for buffer_to_analyzer_map_.
-  typedef std::map<std::string, VerilogSourceFile, VerilogSourceFile::Less>
-      file_set_type;
+  // Error status factory, when include file is not found.
+  absl::Status IncludeFileNotFoundError(
+      absl::string_view referenced_filename) const;
 
+ private:
   // The path from which top-level translation units are referenced relatively
   // (often from a file list).  This path can be relative or absolute.
   // Default: the working directory of the invoking process.

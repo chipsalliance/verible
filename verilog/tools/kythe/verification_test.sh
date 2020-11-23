@@ -44,7 +44,7 @@ VERIBLE_EXTRACTOR_BIN="$(rlocation "com_google_verible/verilog/tools/kythe/verib
     echo "Can't load the extractor binary!" >&2
     exit 1
   }
-KYTHE_VERIFER_BIN="$(rlocation "io_kythe/kythe/cxx/verifier/verifier")" ||
+KYTHE_VERIFIER_BIN="$(rlocation "io_kythe/kythe/cxx/verifier/verifier")" ||
   {
     echo "Can't load the verifier binary!" >&2
     exit 1
@@ -66,7 +66,8 @@ function test_single_files() {
     echo "Running Kythe verification test for ${test_filename}" >> "$TEST_log"
     "${VERIBLE_EXTRACTOR_BIN}" --file_list_path "${filelist_path}" --file_list_root "${test_dir}" --print_kythe_facts proto  > "${test_dir}/entries" ||
       fail "Failed to extract Kythe facts"
-    cat "${test_dir}/entries" | "${KYTHE_VERIFER_BIN}" --nocheck_for_singletons "${test_dir}/${test_filename}" >> "$TEST_log" ||
+    echo "Extracted.  Now verifying." >> "$TEST_log"
+    cat "${test_dir}/entries" | "${KYTHE_VERIFIER_BIN}" --nocheck_for_singletons "${test_dir}/${test_filename}" >> "$TEST_log" ||
       fail "Verification failed for ${test_filename}"
     test_count=$((${test_count} + 1))
   done
@@ -81,10 +82,11 @@ function test_multi_files() {
   cp "${test_case_dir}"/* "${test_dir}/"
   filelist_path="${test_dir}/filelist"
   ls "${test_case_dir}" > "${filelist_path}"
-  echo "Running Kythe verification multi file test for ${test_name}" >> "$TEST_log"
+  echo "Running Kythe verification 'multi file' test for ${test_name}" >> "$TEST_log"
   "${VERIBLE_EXTRACTOR_BIN}" --file_list_path "${filelist_path}" --file_list_root "${test_dir}" --print_kythe_facts proto  > "${test_dir}/entries" ||
       fail "Failed to extract Kythe facts"
-  cat "${test_dir}/entries" | "${KYTHE_VERIFER_BIN}" "${test_dir}"/*.* >> "$TEST_log" ||
+  echo "Extracted.  Now verifying." >> "$TEST_log"
+  cat "${test_dir}/entries" | "${KYTHE_VERIFIER_BIN}" "${test_dir}"/*.sv >> "$TEST_log" ||
     fail "Verification failed for ${test_name}"
 }
 
@@ -95,10 +97,11 @@ function test_multi_files_with_include() {
   mkdir "${test_dir}"
   cp "${test_case_dir}"/* "${test_dir}/"
   filelist_path="${test_dir}/file_list.txt"
-  echo "Running Kythe verification multi file test for ${test_name}" >> "$TEST_log"
+  echo "Running Kythe verification 'multi file with include' test for ${test_name}" >> "$TEST_log"
   "${VERIBLE_EXTRACTOR_BIN}" --include_dir_paths "${test_dir}" --file_list_path "${filelist_path}" --file_list_root "${test_dir}" --print_kythe_facts proto > "${test_dir}/entries" ||
       fail "Failed to extract Kythe facts"
-  cat "${test_dir}/entries" | "${KYTHE_VERIFER_BIN}" "${test_dir}"/*.sv* >> "$TEST_log" ||
+  echo "Extracted.  Now verifying." >> "$TEST_log"
+  cat "${test_dir}/entries" | "${KYTHE_VERIFIER_BIN}" "${test_dir}"/*.sv* >> "$TEST_log" ||
     fail "Verification failed for ${test_name}"
 }
 
@@ -119,10 +122,11 @@ function test_multi_files_with_include_dir() {
   second_include_dir="${test_dir}/include_dir"
   VERILOG_INCLUDE_DIR_TEST_FILES="${test_dir}/*.sv ${first_include_dir}/A.svh ${first_include_dir}/B.svh ${second_include_dir}/*.svh"
 
-  echo "Running Kythe verification multi file test for ${test_name}" >> "$TEST_log"
+  echo "Running Kythe verification 'multi file with include dir' test for ${test_name}" >> "$TEST_log"
   "${VERIBLE_EXTRACTOR_BIN}" --include_dir_paths "${first_include_dir},${second_include_dir}" --file_list_path "${filelist_path}" --file_list_root "${test_dir}" --print_kythe_facts proto > "${test_dir}/entries" ||
       fail "Failed to extract Kythe facts"
-  cat "${test_dir}/entries" | "${KYTHE_VERIFER_BIN}" ${VERILOG_INCLUDE_DIR_TEST_FILES} >> "$TEST_log" ||
+  echo "Extracted.  Now verifying." >> "$TEST_log"
+  cat "${test_dir}/entries" | "${KYTHE_VERIFIER_BIN}" ${VERILOG_INCLUDE_DIR_TEST_FILES} >> "$TEST_log" ||
     fail "Verification failed for ${test_name}"
 }
 

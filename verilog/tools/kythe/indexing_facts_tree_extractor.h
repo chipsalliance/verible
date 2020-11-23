@@ -23,6 +23,7 @@
 #include "common/text/tree_context_visitor.h"
 #include "verilog/CST/verilog_matchers.h"
 #include "verilog/CST/verilog_nonterminals.h"
+#include "verilog/analysis/verilog_project.h"
 #include "verilog/tools/kythe/indexing_facts_tree.h"
 #include "verilog/tools/kythe/indexing_facts_tree_context.h"
 
@@ -33,17 +34,18 @@ namespace kythe {
 // facts from CST nodes and constructs a tree of indexing facts.
 class IndexingFactsTreeExtractor : public verible::TreeContextVisitor {
  public:
-  IndexingFactsTreeExtractor(
-      absl::string_view base, absl::string_view file_name,
-      IndexingFactNode& file_list_facts_tree,
-      std::map<std::string, std::string>& extracted_files,
-      const std::vector<std::string>& include_dir_paths)
-      : context_(verible::TokenInfo::Context(base)),
+  IndexingFactsTreeExtractor(IndexingFactNode& file_list_facts_tree,
+                             const VerilogSourceFile& source_file,
+                             VerilogProject* project)
+      : context_(verible::TokenInfo::Context(
+            source_file.GetTextStructure()->Contents())),
         file_list_facts_tree_(file_list_facts_tree),
-        extracted_files_(extracted_files),
-        include_dir_paths_(include_dir_paths) {
+        source_file_(source_file),
+        project_(project) {
+    const absl::string_view base = source_file.GetTextStructure()->Contents();
     // Create the Anchors for file path node.
-    root_.Value().AppendAnchor(Anchor(file_name, 0, base.size()));
+    root_.Value().AppendAnchor(
+        Anchor(source_file.ResolvedPath(), 0, base.size()));
     // Create the Anchors for text (code) node.
     root_.Value().AppendAnchor(Anchor(base, 0, base.size()));
   }
@@ -53,7 +55,7 @@ class IndexingFactsTreeExtractor : public verible::TreeContextVisitor {
 
   IndexingFactNode& GetRoot() { return root_; }
 
- private:
+ private:  // methods
   // Extracts facts from module, intraface and program declarations.
   void ExtractModuleOrInterfaceOrProgram(
       const verible::SyntaxTreeNode& declaration_node,
@@ -257,10 +259,12 @@ class IndexingFactsTreeExtractor : public verible::TreeContextVisitor {
   // extracted node.
   void MoveAndDeleteLastExtractedNode(IndexingFactNode& new_node);
 
+ private:  // data members
   // The Root of the constructed facts tree.
   IndexingFactNode root_{IndexingNodeData(IndexingFactType::kFile)};
 
   // Used for getting token offsets in code text.
+  // TODO(fangism): if a string_view is enough, get it from source_file_.
   verible::TokenInfo::Context context_;
 
   // Keeps track of indexing facts tree ancestors as the visitor traverses CST.
@@ -272,28 +276,23 @@ class IndexingFactsTreeExtractor : public verible::TreeContextVisitor {
   // list.
   IndexingFactNode& file_list_facts_tree_;
 
-  // Maps every file name to its file path.
-  // Used to avoid extracting some file more than one time.
-  // "Key: referenced file name (could be relative), Value: resolved file path"
-  std::map<std::string, std::string>& extracted_files_;
+  // The current file being extracted.
+  const VerilogSourceFile& source_file_;
 
-  // Holds the paths of the directories used to look for the included
-  // files.
-  const std::vector<std::string>& include_dir_paths_;
+  // The project configuration used to find included files.
+  VerilogProject* const project_;
 
   // Counter used as an id for the anonymous scopes.
   int next_anonymous_id = 0;
 };
 
-// Given the ordered SystemVerilog files, Extracts and returns the
+// Given a set of SystemVerilog project files, extracts and returns the
 // IndexingFactsTree for the given files.
 // The returned Root will have the files as children and they will retain their
 // original ordering from the file list.
-IndexingFactNode ExtractFiles(const std::vector<std::string>& ordered_file_list,
-                              absl::string_view file_list_path,
-                              absl::string_view file_list_root,
-                              const std::vector<std::string>& include_dir_paths,
-                              std::vector<absl::Status>& errors);
+IndexingFactNode ExtractFiles(absl::string_view file_list_path,
+                              VerilogProject* project,
+                              const std::vector<std::string>& file_names);
 
 }  // namespace kythe
 }  // namespace verilog

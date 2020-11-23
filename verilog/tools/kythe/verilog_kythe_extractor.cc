@@ -30,6 +30,7 @@
 #include "common/util/file_util.h"
 #include "common/util/init_command_line.h"
 #include "verilog/analysis/verilog_analyzer.h"
+#include "verilog/analysis/verilog_project.h"
 #include "verilog/tools/kythe/indexing_facts_tree_extractor.h"
 #include "verilog/tools/kythe/kythe_facts_extractor.h"
 
@@ -145,14 +146,11 @@ static void PrintKytheFactsProtoEntries(
   }
 }
 
-static std::vector<absl::Status> ExtractFiles(
-    const std::vector<std::string>& ordered_file_list,
-    absl::string_view file_list_path, absl::string_view file_list_root,
-    const std::vector<std::string>& include_dir_paths) {
-  std::vector<absl::Status> errors;
+static std::vector<absl::Status> ExtractTranslationUnits(
+    absl::string_view file_list_path, VerilogProject* project,
+    const std::vector<std::string>& file_names) {
   const verilog::kythe::IndexingFactNode file_list_facts_tree(
-      verilog::kythe::ExtractFiles(ordered_file_list, file_list_path,
-                                   file_list_root, include_dir_paths, errors));
+      verilog::kythe::ExtractFiles(file_list_path, project, file_names));
 
   // check for printextraction flag, and print extraction if on
   if (absl::GetFlag(FLAGS_printextraction)) {
@@ -177,7 +175,7 @@ static std::vector<absl::Status> ExtractFiles(
     }
   }
 
-  return errors;
+  return project->GetErrorStatuses();
 }
 
 }  // namespace kythe
@@ -206,6 +204,8 @@ Output: Produces Indexing Facts for kythe (http://kythe.io).
   }
   const std::string file_list_root = absl::GetFlag(FLAGS_file_list_root);
 
+  // TODO(fangism): Push the following block into a VerilogProject method for
+  // consuming a file-list.
   std::vector<std::string> files_names;
   {
     std::string content;
@@ -223,8 +223,11 @@ Output: Produces Indexing Facts for kythe (http://kythe.io).
     }
   }
 
-  const std::vector<absl::Status> errors(verilog::kythe::ExtractFiles(
-      files_names, file_list_path, file_list_root, include_dir_paths));
+  verilog::VerilogProject project(file_list_root, include_dir_paths);
+
+  const std::vector<absl::Status> errors(
+      verilog::kythe::ExtractTranslationUnits(file_list_path, &project,
+                                              files_names));
   if (!errors.empty()) {
     LOG(ERROR) << "Encountered some issues while indexing files (could result "
                   "in missing indexing data):"

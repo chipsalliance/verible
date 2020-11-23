@@ -33,8 +33,8 @@ using verible::file::testing::ScopedTestFile;
 
 class TempDirFile : public ScopedTestFile {
  public:
-  TempDirFile(absl::string_view basename)
-      : ScopedTestFile(::testing::TempDir(), basename) {}
+  TempDirFile(absl::string_view content)
+      : ScopedTestFile(::testing::TempDir(), content) {}
 };
 
 TEST(VerilogSourceFileTest, Initialization) {
@@ -133,7 +133,7 @@ TEST(VerilogSourceFileTest, ParseInvalidFile) {
 TEST(VerilogProjectTest, Initialization) {
   const auto tempdir = ::testing::TempDir();
   VerilogProject project(tempdir, {tempdir});
-  EXPECT_TRUE(project.GetStatuses().empty());
+  EXPECT_TRUE(project.GetErrorStatuses().empty());
 }
 
 TEST(VerilogProjectTest, NonexistentTranslationUnit) {
@@ -141,6 +141,7 @@ TEST(VerilogProjectTest, NonexistentTranslationUnit) {
   VerilogProject project(tempdir, {tempdir});
   const auto status_or_file = project.OpenTranslationUnit("never-there.v");
   EXPECT_FALSE(status_or_file.ok());
+  EXPECT_EQ(project.GetErrorStatuses().size(), 1);
 }
 
 TEST(VerilogProjectTest, NonexistentIncludeFile) {
@@ -148,6 +149,15 @@ TEST(VerilogProjectTest, NonexistentIncludeFile) {
   VerilogProject project(tempdir, {tempdir});
   const auto status_or_file = project.OpenIncludedFile("nope.svh");
   EXPECT_FALSE(status_or_file.ok());
+  EXPECT_EQ(project.GetErrorStatuses().size(), 1);
+}
+
+TEST(VerilogProjectTest, NonexistentFileLookup) {
+  const auto tempdir = ::testing::TempDir();
+  VerilogProject project(tempdir, {tempdir});
+  VerilogSourceFile* file = project.LookupRegisteredFile("never-there.v");
+  EXPECT_EQ(file, nullptr);
+  EXPECT_TRUE(project.GetErrorStatuses().empty());
 }
 
 TEST(VerilogProjectTest, ValidTranslationUnit) {
@@ -166,11 +176,9 @@ TEST(VerilogProjectTest, ValidTranslationUnit) {
   EXPECT_TRUE(verilog_source_file->Status().ok());
   EXPECT_EQ(verilog_source_file->ReferencedPath(), Basename(tf.filename()));
   EXPECT_EQ(verilog_source_file->ResolvedPath(), tf.filename());
-  const auto statuses = project.GetStatuses();
-  EXPECT_EQ(statuses.size(), 1);
-  for (const auto& status : statuses) {
-    EXPECT_TRUE(status.ok());
-  }
+  EXPECT_EQ(project.LookupRegisteredFile(Basename(tf.filename())),
+            verilog_source_file);
+  EXPECT_TRUE(project.GetErrorStatuses().empty());
 
   EXPECT_TRUE(verilog_source_file->Parse().ok());
   const auto* tree = ABSL_DIE_IF_NULL(
@@ -192,6 +200,14 @@ TEST(VerilogProjectTest, ValidTranslationUnit) {
     EXPECT_EQ(verilog_source_file2, verilog_source_file);
     EXPECT_TRUE(verilog_source_file2->Status().ok());
   }
+
+  // Testing begin/end iteration.
+  for (auto& file : project) {
+    EXPECT_TRUE(file.second.Parse().ok());
+  }
+  for (const auto& file : project) {
+    EXPECT_TRUE(file.second.Status().ok());
+  }
 }
 
 TEST(VerilogProjectTest, ValidIncludeFile) {
@@ -210,11 +226,9 @@ TEST(VerilogProjectTest, ValidIncludeFile) {
   EXPECT_TRUE(verilog_source_file->Status().ok());
   EXPECT_EQ(verilog_source_file->ReferencedPath(), basename);
   EXPECT_EQ(verilog_source_file->ResolvedPath(), tf.filename());
-  const auto statuses = project.GetStatuses();
-  EXPECT_EQ(statuses.size(), 1);
-  for (const auto& status : statuses) {
-    EXPECT_TRUE(status.ok());
-  }
+  EXPECT_EQ(project.LookupRegisteredFile(Basename(tf.filename())),
+            verilog_source_file);
+  EXPECT_TRUE(project.GetErrorStatuses().empty());
 
   // Re-opening same file, changes nothing
   {
@@ -257,7 +271,7 @@ TEST(VerilogProjectTest, TranslationUnitNotFound) {
     EXPECT_FALSE(status_or_file.ok());
   }
   {
-    const auto statuses = project.GetStatuses();
+    const auto statuses = project.GetErrorStatuses();
     EXPECT_EQ(statuses.size(), 1);
     for (const auto& status : statuses) {
       EXPECT_FALSE(status.ok());
@@ -286,8 +300,7 @@ TEST(VerilogProjectTest, IncludeFileNotFound) {
         project.OpenIncludedFile(Basename(tf.filename()));
     EXPECT_FALSE(status_or_file.ok());
   }
-  const auto statuses = project.GetStatuses();
-  EXPECT_TRUE(statuses.empty());
+  EXPECT_EQ(project.GetErrorStatuses().size(), 1);
 }
 
 }  // namespace

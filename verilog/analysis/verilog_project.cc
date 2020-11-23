@@ -24,6 +24,10 @@
 
 namespace verilog {
 
+VerilogSourceFile::VerilogSourceFile(absl::string_view referenced_path,
+                                     absl::Status status)
+    : referenced_path_(referenced_path), status_(status) {}
+
 absl::Status VerilogSourceFile::Open() {
   // Don't re-open.  analyzed_structure_ should be set/written once only.
   if (state_ != State::kInitialized) return status_;
@@ -101,9 +105,16 @@ absl::StatusOr<VerilogSourceFile*> VerilogProject::OpenTranslationUnit(
 
   // Locate the file among the base paths.
   const std::string resolved_filename =
-      verible::file::JoinPath(translation_unit_root_, referenced_filename);
+      verible::file::JoinPath(TranslationUnitRoot(), referenced_filename);
 
   return OpenFile(referenced_filename, resolved_filename);
+}
+
+absl::Status VerilogProject::IncludeFileNotFoundError(
+    absl::string_view referenced_filename) const {
+  return absl::NotFoundError(absl::StrCat(
+      "Unable to find '", referenced_filename,
+      "' among the included paths: ", absl::StrJoin(include_paths_, ", ")));
 }
 
 absl::StatusOr<VerilogSourceFile*> VerilogProject::OpenIncludedFile(
@@ -125,16 +136,25 @@ absl::StatusOr<VerilogSourceFile*> VerilogProject::OpenIncludedFile(
     if (verible::file::FileExists(resolved_filename).ok()) {
       return OpenFile(referenced_filename, resolved_filename);
     }
+    VLOG(2) << "Checked for file'" << resolved_filename << "', but not found.";
   }
-  return absl::NotFoundError(absl::StrCat(
-      "Unable to find '", referenced_filename,
-      "' among the included paths: ", absl::StrJoin(include_paths_, ", ")));
+
+  // Not found in any path.  Cache this status.
+  const auto inserted = files_.emplace(
+      referenced_filename,
+      VerilogSourceFile(referenced_filename,
+                        IncludeFileNotFoundError(referenced_filename)));
+  CHECK(inserted.second) << "Not-found file should have been recorded as such.";
+  return inserted.first->second.Status();
 }
 
-std::vector<absl::Status> VerilogProject::GetStatuses() const {
+std::vector<absl::Status> VerilogProject::GetErrorStatuses() const {
   std::vector<absl::Status> statuses;
   for (const auto& file : files_) {
-    statuses.push_back(file.second.Status());
+    const auto status = file.second.Status();
+    if (!status.ok()) {
+      statuses.push_back(status);
+    }
   }
   return statuses;
 }

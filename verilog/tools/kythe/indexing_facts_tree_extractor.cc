@@ -39,6 +39,7 @@
 #include "verilog/CST/verilog_nonterminals.h"
 #include "verilog/CST/verilog_tree_print.h"
 #include "verilog/analysis/verilog_analyzer.h"
+#include "verilog/analysis/verilog_project.h"
 
 namespace verilog {
 namespace kythe {
@@ -51,102 +52,74 @@ using verible::TreeSearchMatch;
 
 // Given a root to CST this function traverses the tree, extracts and constructs
 // the indexing facts tree.
-IndexingFactNode BuildIndexingFactsTree(
-    const verible::ConcreteSyntaxTree& syntax_tree, absl::string_view base,
-    absl::string_view file_name, IndexingFactNode& file_list_facts_tree,
-    std::map<std::string, std::string>& extracted_files,
-    const std::vector<std::string>& include_dir_paths) {
-  IndexingFactsTreeExtractor visitor(base, file_name, file_list_facts_tree,
-                                     extracted_files, include_dir_paths);
-  if (syntax_tree == nullptr) {
-    return visitor.GetRoot();
-  }
+IndexingFactNode BuildIndexingFactsTree(IndexingFactNode& file_list_facts_tree,
+                                        const VerilogSourceFile& source_file,
+                                        VerilogProject* project) {
+  IndexingFactsTreeExtractor visitor(file_list_facts_tree, source_file,
+                                     project);
 
-  syntax_tree->Accept(&visitor);
+  if (source_file.Status().ok()) {
+    const auto& syntax_tree = source_file.GetTextStructure()->SyntaxTree();
+    if (syntax_tree != nullptr) {
+      syntax_tree->Accept(&visitor);
+    }
+  }
   return visitor.GetRoot();
 }
 
 // Extracts indexing facts tree for one file.
-IndexingFactNode ExtractOneFile(
-    absl::string_view content, absl::string_view filename,
-    IndexingFactNode& file_list_facts_tree,
-    std::map<std::string, std::string>& extracted_files,
-    const std::vector<std::string>& include_dir_paths) {
-  verilog::VerilogAnalyzer analyzer(content, filename);
-  // Do not parse using AnalyzeAutomaticMode() because index extraction is only
-  // expected to work on self-contained files with full syntactic context.
-  const auto status = analyzer.Analyze();
-  if (!status.ok()) {
-    const std::vector<std::string> syntax_error_messages(
-        analyzer.LinterTokenErrorMessages());
-    for (const auto& message : syntax_error_messages) {
-      // logging instead of outputing to std stream because it's used by the
-      // extractor.
-      LOG(INFO) << message << std::endl;
-    }
+IndexingFactNode ExtractOneFile(IndexingFactNode& file_list_facts_tree,
+                                VerilogSourceFile* translation_unit,
+                                VerilogProject* project) {
+  const auto status = translation_unit->Parse();
+  if (status.ok()) {
+    LOG(INFO) << status.message() << std::endl;
   }
-
-  const auto& text_structure = analyzer.Data();
-  const auto& syntax_tree = text_structure.SyntaxTree();
-
-  return BuildIndexingFactsTree(syntax_tree, analyzer.Data().Contents(),
-                                filename, file_list_facts_tree, extracted_files,
-                                include_dir_paths);
-}
-
-// Searches for the given "filename" in all the given diretories.
-// If the a file with name "filename" exists in more than one of the given
-// directories the first found one will be returned.
-absl::Status SearchForFileAndGetContents(
-    std::string& file_path, std::string& content, absl::string_view filename,
-    const std::vector<std::string>& directories) {
-  for (const auto& dir_path : directories) {
-    file_path = verible::file::JoinPath(dir_path, filename);
-    if (verible::file::FileExists(file_path).ok()) {
-      return verible::file::GetContents(file_path, &content);
-    }
-  }
-  return absl::NotFoundError(absl::StrCat("Couldn't find file: ", filename));
+  // translation unit retains state internal for later recall
+  return BuildIndexingFactsTree(file_list_facts_tree, *translation_unit,
+                                project);
 }
 
 }  // namespace
 
-IndexingFactNode ExtractFiles(const std::vector<std::string>& ordered_file_list,
-                              absl::string_view file_list_path,
-                              absl::string_view file_list_root,
-                              const std::vector<std::string>& include_dir_paths,
-                              std::vector<absl::Status>& errors) {
-  // Create a node to hold the path and root of the ordered file list, group
-  // all the files and acts as a ordered file list of these files.
-  IndexingFactNode file_list_facts_tree(IndexingNodeData(
-      {Anchor(file_list_path, 0, 0), Anchor(file_list_root, 0, 0)},
-      IndexingFactType::kFileList));
-
-  // Maps each "filename" to its file path.
-  // Used to prevent extracting the same file more than once.
-  std::map<std::string, std::string> extracted_files;
-
-  for (const auto& filename : ordered_file_list) {
-    // Check if this included file was extracted before.
-    if (extracted_files.find(filename) != extracted_files.end()) {
-      continue;
-    }
-
-    std::string file_path = verible::file::JoinPath(file_list_root, filename);
-    std::string content;
-
-    const auto status = verible::file::GetContents(file_path, &content);
-    if (!status.ok()) {
-      errors.push_back(status);
-      LOG(ERROR) << status.message();
-      continue;
-    }
-
-    file_list_facts_tree.NewChild(
-        ExtractOneFile(content, file_path, file_list_facts_tree,
-                       extracted_files, include_dir_paths));
+IndexingFactNode ExtractFiles(absl::string_view file_list_path,
+                              VerilogProject* project,
+                              const std::vector<std::string>& file_names) {
+  // Open all of the translation units.
+  for (const auto& file_name : file_names) {
+    const auto status_or_file = project->OpenTranslationUnit(file_name);
+    // For now, collect all diagnostics at the end.
+    // TODO(fangism): offer a mode to exit-early if there are file-not-found
+    // or read-permission issues (fail-fast, alert-user).
   }
 
+  // Create a node to hold the path and root of the ordered file list, group
+  // all the files and acts as a ordered file list of these files.
+  IndexingFactNode file_list_facts_tree(
+      IndexingNodeData({Anchor(file_list_path, 0, 0),
+                        Anchor(project->TranslationUnitRoot(), 0, 0)},
+                       IndexingFactType::kFileList));
+
+  // Snapshot the initial list of files as translation units, because the map of
+  // files could grow as it iterates due to encountering include files, even
+  // though the iterators remain stable.  Preserve the original file list
+  // ordering for extracting files one-by-one.
+  // TODO(#574): automate ordering based on discovered dependencies.
+  std::vector<VerilogSourceFile*> translation_units;
+  translation_units.reserve(file_names.size());
+  for (const auto& file_name : file_names) {
+    translation_units.push_back(project->LookupRegisteredFile(file_name));
+  }
+
+  for (auto* translation_unit : translation_units) {
+    if (translation_unit == nullptr) continue;
+    const auto parse_status = translation_unit->Parse();
+    // status is also stored in translation_unit for later retrieval.
+    if (parse_status.ok()) {
+      file_list_facts_tree.NewChild(
+          ExtractOneFile(file_list_facts_tree, translation_unit, project));
+    }
+  }
   return file_list_facts_tree;
 }
 
@@ -1438,50 +1411,40 @@ void IndexingFactsTreeExtractor::ExtractInclude(
     const verible::SyntaxTreeNode& preprocessor_include) {
   const SyntaxTreeLeaf* included_filename =
       GetFileFromPreprocessorInclude(preprocessor_include);
-
   if (included_filename == nullptr) {
     return;
   }
 
-  absl::string_view filename_text = included_filename->get().text();
+  const absl::string_view filename_text = included_filename->get().text();
 
   // Remove the double quotes from the filesname.
   const absl::string_view filename_unquoted = StripOuterQuotes(filename_text);
-  const std::string filename(filename_unquoted.begin(),
-                             filename_unquoted.end());
-  int startLocation = included_filename->get().left(context_.base);
-  int endLocation = included_filename->get().right(context_.base);
+  const int startLocation = included_filename->get().left(context_.base);
+  const int endLocation = included_filename->get().right(context_.base);
 
-  std::string file_path = "";
+  // If we've already seen this file before, skip traversal.
+  VerilogSourceFile* included_file = [&]() -> VerilogSourceFile* {
+    VerilogSourceFile* registered_file =
+        project_->LookupRegisteredFile(filename_unquoted);
+    if (registered_file != nullptr) return registered_file;
 
-  // Check if this included file was extracted before.
-  const auto filename_itr = extracted_files_.find(filename);
-  if (filename_itr != extracted_files_.end()) {
-    file_path = filename_itr->second;
-  } else {
-    std::string content;
+    const auto status_or_file = project_->OpenIncludedFile(filename_unquoted);
+    if (!status_or_file.ok()) return nullptr;
 
-    auto status = SearchForFileAndGetContents(file_path, content, filename,
-                                              include_dir_paths_);
-    if (!status.ok()) {
-      // Couldn't find the included file in any of include directories.
-      LOG(ERROR) << "Error while reading file: " << filename;
-      return;
-    }
-
-    extracted_files_[filename] = file_path;
-
+    VerilogSourceFile* fresh_file = *status_or_file;
     file_list_facts_tree_.NewChild(
-        ExtractOneFile(content, file_path, file_list_facts_tree_,
-                       extracted_files_, include_dir_paths_));
-  }
+        ExtractOneFile(file_list_facts_tree_, fresh_file, project_));
+    return fresh_file;
+  }();
+
+  if (included_file == nullptr) return;
 
   // Create a node for include statement with two Anchors:
   // 1st one holds the actual text in the include statement.
   // 2nd one holds the path of the included file relative to the file list.
   facts_tree_context_.top().NewChild(
       IndexingNodeData({Anchor(filename_text, startLocation, endLocation),
-                        Anchor(file_path, 0, 0)},
+                        Anchor(included_file->ResolvedPath(), 0, 0)},
                        IndexingFactType::kInclude));
 }
 
