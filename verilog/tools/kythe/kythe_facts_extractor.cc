@@ -21,6 +21,7 @@
 #include "absl/memory/memory.h"
 #include "absl/strings/escaping.h"
 #include "absl/strings/substitute.h"
+#include "common/util/logging.h"
 #include "verilog/tools/kythe/kythe_schema_constants.h"
 #include "verilog/tools/kythe/scope_resolver.h"
 
@@ -584,7 +585,9 @@ void KytheFactsExtractor::ExtractModuleNamedPort(
 
 VName KytheFactsExtractor::ExtractVariable(
     const IndexingFactNode& variable_definition_node) {
-  const auto& anchor = variable_definition_node.Value().Anchors()[0];
+  const auto& anchors = variable_definition_node.Value().Anchors();
+  CHECK(!anchors.empty());
+  const Anchor& anchor = anchors[0];
   const VName variable_vname(file_path_,
                              CreateScopeRelativeSignature(anchor.Value()));
   const VName variable_vname_anchor = CreateAnchor(anchor);
@@ -833,6 +836,11 @@ void KytheFactsExtractor::ExtractPackageImport(
 
 void KytheFactsExtractor::ExtractMemberReference(
     const IndexingFactNode& member_reference_node) {
+  // TODO(fangism): [algorithm] For member references like "A::B::C::D",
+  // we currently construct member reference chains "A", "A,B", "A,B,C"...
+  // which is O(N^2), so "A" is being looked-up repeatedly, the result of
+  // previous lookups is not being re-used.  Re-structure and fix this.
+
   const auto& anchors = member_reference_node.Value().Anchors();
 
   // Search for member hierarchy in the scopes.

@@ -81,6 +81,12 @@ class IndexingNodeData {
     AppendAnchor(std::forward<Args>(args)...);
   }
 
+  // TODO(fangism): delete copy-ctor to make this move-only
+  IndexingNodeData(const IndexingNodeData&) = default;
+  IndexingNodeData(IndexingNodeData&&) = default;
+  IndexingNodeData& operator=(const IndexingNodeData&) = delete;
+  IndexingNodeData& operator=(IndexingNodeData&&) = delete;
+
   // Consume an Anchor object(s), variadically.
   template <typename... Args>
   void AppendAnchor(Anchor&& anchor, Args&&... args) {
