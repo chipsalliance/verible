@@ -19,6 +19,7 @@
 #include <vector>
 
 #include "gtest/gtest.h"
+#include "absl/status/status.h"
 #include "absl/strings/string_view.h"
 
 #undef EXPECT_OK
@@ -152,6 +153,23 @@ TEST(FileUtil, ReadEmptyDirectory) {
   EXPECT_EQ(dir.path, test_dir);
   EXPECT_TRUE(dir.directories.empty());
   EXPECT_TRUE(dir.files.empty());
+}
+
+TEST(FileUtil, ReadNonexistentDirectory) {
+  const std::string test_dir =
+      file::JoinPath(testing::TempDir(), "dir_not_there");
+
+  auto dir_or = file::ListDir(test_dir);
+  EXPECT_FALSE(dir_or.ok());
+  EXPECT_EQ(dir_or.status().code(), absl::StatusCode::kInternal);
+}
+
+TEST(FileUtil, ListNotADirectory) {
+  ScopedTestFile tempfile(testing::TempDir(), "O HAI, WRLD");
+
+  auto dir_or = file::ListDir(tempfile.filename());
+  EXPECT_FALSE(dir_or.ok());
+  EXPECT_EQ(dir_or.status().code(), absl::StatusCode::kNotFound);
 }
 
 TEST(FileUtil, ReadDirectory) {

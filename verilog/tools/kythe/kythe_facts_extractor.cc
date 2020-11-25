@@ -20,7 +20,7 @@
 
 #include "absl/memory/memory.h"
 #include "absl/strings/escaping.h"
-#include "absl/strings/substitute.h"
+#include "absl/strings/str_cat.h"
 #include "common/util/logging.h"
 #include "verilog/tools/kythe/kythe_schema_constants.h"
 #include "verilog/tools/kythe/scope_resolver.h"
@@ -922,15 +922,14 @@ void KytheFactsExtractor::CreateAnchorReferences(
 }
 
 VName KytheFactsExtractor::CreateAnchor(const Anchor& anchor) {
-  const VName anchor_vname(file_path_, Signature(absl::Substitute(
-                                           R"(@$0:$1)", anchor.StartLocation(),
-                                           anchor.EndLocation())));
+  const VName anchor_vname(
+      file_path_, Signature(absl::StrCat("@", anchor.StartLocation(), ":",
+                                         anchor.EndLocation())));
 
   CreateFact(anchor_vname, kFactNodeKind, kNodeAnchor);
   CreateFact(anchor_vname, kFactAnchorStart,
-             absl::Substitute(R"($0)", anchor.StartLocation()));
-  CreateFact(anchor_vname, kFactAnchorEnd,
-             absl::Substitute(R"($0)", anchor.EndLocation()));
+             absl::StrCat(anchor.StartLocation()));
+  CreateFact(anchor_vname, kFactAnchorEnd, absl::StrCat(anchor.EndLocation()));
 
   return anchor_vname;
 }
