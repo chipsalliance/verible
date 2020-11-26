@@ -17,6 +17,7 @@
 
 #include <map>
 #include <set>
+#include <utility>
 #include <vector>
 
 #include "absl/strings/string_view.h"
@@ -166,7 +167,7 @@ class ScopeResolver {
 
   // Searches for the definitions of the given references' names.
   const std::vector<std::pair<const VName*, const Scope*>> SearchForDefinitions(
-      const std::vector<std::string>& names) const;
+      const std::vector<absl::string_view>& names) const;
 
   // Searches for definition of the given reference's name in the current
   // scope (the top of scope_context).

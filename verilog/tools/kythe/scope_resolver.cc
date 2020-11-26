@@ -14,8 +14,9 @@
 
 #include "verilog/tools/kythe/scope_resolver.h"
 
-#include <string>
 #include <vector>
+
+#include "absl/strings/string_view.h"
 
 namespace verilog {
 namespace kythe {
@@ -102,7 +103,7 @@ const VName* ScopeResolver::SearchForDefinitionInCurrentScope(
 
 const std::vector<std::pair<const VName*, const Scope*>>
 ScopeResolver::SearchForDefinitions(
-    const std::vector<std::string>& names) const {
+    const std::vector<absl::string_view>& names) const {
   std::vector<std::pair<const VName*, const Scope*>> definitions;
   if (names.empty()) {
     return definitions;

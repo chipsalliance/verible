@@ -42,9 +42,9 @@ Signature CreateGlobalSignature(absl::string_view file_path) {
 }
 
 // From the given list of anchors returns the list of Anchor values.
-std::vector<std::string> GetListOfReferencesfromListOfAnchor(
+std::vector<absl::string_view> GetListOfReferencesfromListOfAnchor(
     const std::vector<Anchor>& anchors) {
-  std::vector<std::string> references;
+  std::vector<absl::string_view> references;
   references.reserve(anchors.size());
   for (const auto& anchor : anchors) {
     references.push_back(anchor.Value());
@@ -54,9 +54,9 @@ std::vector<std::string> GetListOfReferencesfromListOfAnchor(
 
 // Returns the list of references from the given anchors list and appends the
 // second Anchor to the end of the list.
-std::vector<std::string> ConcatenateReferences(
+std::vector<absl::string_view> ConcatenateReferences(
     const std::vector<Anchor>& anchors, const Anchor& anchor) {
-  std::vector<std::string> references(
+  std::vector<absl::string_view> references(
       GetListOfReferencesfromListOfAnchor(anchors));
   references.push_back(anchor.Value());
   return references;
