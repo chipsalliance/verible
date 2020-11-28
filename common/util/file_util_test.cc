@@ -19,6 +19,7 @@
 #include <vector>
 
 #include "gtest/gtest.h"
+#include "absl/status/status.h"
 #include "absl/strings/string_view.h"
 
 #undef EXPECT_OK
@@ -27,6 +28,9 @@
 namespace verible {
 namespace util {
 namespace {
+
+using file::testing::ScopedTestFile;
+
 TEST(FileUtil, Basename) {
   EXPECT_EQ(file::Basename("/foo/bar/baz"), "baz");
   EXPECT_EQ(file::Basename("foo/bar/baz"), "baz");
@@ -88,7 +92,7 @@ TEST(FileUtil, StatusErrorReporting) {
 
 TEST(FileUtil, ScopedTestFile) {
   const absl::string_view test_content = "Hello World!";
-  file::testing::ScopedTestFile test_file(testing::TempDir(), test_content);
+  ScopedTestFile test_file(testing::TempDir(), test_content);
   std::string read_back_content;
   EXPECT_OK(file::GetContents(test_file.filename(), &read_back_content));
   EXPECT_EQ(test_content, read_back_content);
@@ -105,6 +109,39 @@ TEST(FileUtil, ScopedTestFileStdin) {
   EXPECT_EQ(test_content, read_back_content);
 }
 
+static ScopedTestFile TestFileGenerator(absl::string_view content) {
+  return ScopedTestFile(testing::TempDir(), content);
+}
+
+static void TestFileConsumer(ScopedTestFile&& f) {
+  ScopedTestFile temp(std::move(f));
+}
+
+TEST(FileUtil, ScopedTestFileMove) {
+  ScopedTestFile f(TestFileGenerator("barfoo"));
+  std::string tmpname(f.filename());
+  EXPECT_TRUE(file::FileExists(tmpname).ok());
+  TestFileConsumer(std::move(f));
+  EXPECT_FALSE(file::FileExists(tmpname).ok());
+}
+
+TEST(FileUtil, ScopedTestFileEmplace) {
+  std::vector<std::string> names;
+  {
+    std::vector<ScopedTestFile> files;
+    for (size_t i = 0; i < 10; ++i) {
+      files.emplace_back(::testing::TempDir(), "zzz");
+      names.push_back(std::string(files.back().filename()));
+    }
+    for (const auto& name : names) {
+      EXPECT_TRUE(file::FileExists(name).ok());
+    }
+  }
+  for (const auto& name : names) {
+    EXPECT_FALSE(file::FileExists(name).ok());
+  }
+}
+
 TEST(FileUtil, ReadEmptyDirectory) {
   const std::string test_dir = file::JoinPath(testing::TempDir(), "empty_dir");
   ASSERT_TRUE(file::CreateDir(test_dir).ok());
@@ -116,6 +153,23 @@ TEST(FileUtil, ReadEmptyDirectory) {
   EXPECT_EQ(dir.path, test_dir);
   EXPECT_TRUE(dir.directories.empty());
   EXPECT_TRUE(dir.files.empty());
+}
+
+TEST(FileUtil, ReadNonexistentDirectory) {
+  const std::string test_dir =
+      file::JoinPath(testing::TempDir(), "dir_not_there");
+
+  auto dir_or = file::ListDir(test_dir);
+  EXPECT_FALSE(dir_or.ok());
+  EXPECT_EQ(dir_or.status().code(), absl::StatusCode::kInternal);
+}
+
+TEST(FileUtil, ListNotADirectory) {
+  ScopedTestFile tempfile(testing::TempDir(), "O HAI, WRLD");
+
+  auto dir_or = file::ListDir(tempfile.filename());
+  EXPECT_FALSE(dir_or.ok());
+  EXPECT_EQ(dir_or.status().code(), absl::StatusCode::kNotFound);
 }
 
 TEST(FileUtil, ReadDirectory) {

@@ -286,3 +286,34 @@ cc_test(
         "@com_google_googletest//:gtest_main",
     ],
 )
+
+cc_library(
+    name = "verilog_project",
+    srcs = ["verilog_project.cc"],
+    hdrs = ["verilog_project.h"],
+    deps = [
+        ":verilog_analyzer",
+        "//common/strings:string_memory_map",
+        "//common/text:text_structure",
+        "//common/util:file_util",
+        "//common/util:logging",
+        "@com_google_absl//absl/memory",
+        "@com_google_absl//absl/status",
+        "@com_google_absl//absl/status:statusor",
+        "@com_google_absl//absl/strings",
+    ],
+)
+
+cc_test(
+    name = "verilog_project_test",
+    srcs = ["verilog_project_test.cc"],
+    deps = [
+        ":verilog_project",
+        "//common/text:text_structure",
+        "//common/util:file_util",
+        "//common/util:logging",
+        "//common/util:range",
+        "//verilog/CST:module",
+        "@com_google_googletest//:gtest_main",
+    ],
+)

@@ -20,7 +20,8 @@
 
 #include "absl/memory/memory.h"
 #include "absl/strings/escaping.h"
-#include "absl/strings/substitute.h"
+#include "absl/strings/str_cat.h"
+#include "common/util/logging.h"
 #include "verilog/tools/kythe/kythe_schema_constants.h"
 #include "verilog/tools/kythe/scope_resolver.h"
 
@@ -41,9 +42,9 @@ Signature CreateGlobalSignature(absl::string_view file_path) {
 }
 
 // From the given list of anchors returns the list of Anchor values.
-std::vector<std::string> GetListOfReferencesfromListOfAnchor(
+std::vector<absl::string_view> GetListOfReferencesfromListOfAnchor(
     const std::vector<Anchor>& anchors) {
-  std::vector<std::string> references;
+  std::vector<absl::string_view> references;
   references.reserve(anchors.size());
   for (const auto& anchor : anchors) {
     references.push_back(anchor.Value());
@@ -53,9 +54,9 @@ std::vector<std::string> GetListOfReferencesfromListOfAnchor(
 
 // Returns the list of references from the given anchors list and appends the
 // second Anchor to the end of the list.
-std::vector<std::string> ConcatenateReferences(
+std::vector<absl::string_view> ConcatenateReferences(
     const std::vector<Anchor>& anchors, const Anchor& anchor) {
-  std::vector<std::string> references(
+  std::vector<absl::string_view> references(
       GetListOfReferencesfromListOfAnchor(anchors));
   references.push_back(anchor.Value());
   return references;
@@ -584,7 +585,9 @@ void KytheFactsExtractor::ExtractModuleNamedPort(
 
 VName KytheFactsExtractor::ExtractVariable(
     const IndexingFactNode& variable_definition_node) {
-  const auto& anchor = variable_definition_node.Value().Anchors()[0];
+  const auto& anchors = variable_definition_node.Value().Anchors();
+  CHECK(!anchors.empty());
+  const Anchor& anchor = anchors[0];
   const VName variable_vname(file_path_,
                              CreateScopeRelativeSignature(anchor.Value()));
   const VName variable_vname_anchor = CreateAnchor(anchor);
@@ -833,6 +836,11 @@ void KytheFactsExtractor::ExtractPackageImport(
 
 void KytheFactsExtractor::ExtractMemberReference(
     const IndexingFactNode& member_reference_node) {
+  // TODO(fangism): [algorithm] For member references like "A::B::C::D",
+  // we currently construct member reference chains "A", "A,B", "A,B,C"...
+  // which is O(N^2), so "A" is being looked-up repeatedly, the result of
+  // previous lookups is not being re-used.  Re-structure and fix this.
+
   const auto& anchors = member_reference_node.Value().Anchors();
 
   // Search for member hierarchy in the scopes.
@@ -914,15 +922,14 @@ void KytheFactsExtractor::CreateAnchorReferences(
 }
 
 VName KytheFactsExtractor::CreateAnchor(const Anchor& anchor) {
-  const VName anchor_vname(file_path_, Signature(absl::Substitute(
-                                           R"(@$0:$1)", anchor.StartLocation(),
-                                           anchor.EndLocation())));
+  const VName anchor_vname(
+      file_path_, Signature(absl::StrCat("@", anchor.StartLocation(), ":",
+                                         anchor.EndLocation())));
 
   CreateFact(anchor_vname, kFactNodeKind, kNodeAnchor);
   CreateFact(anchor_vname, kFactAnchorStart,
-             absl::Substitute(R"($0)", anchor.StartLocation()));
-  CreateFact(anchor_vname, kFactAnchorEnd,
-             absl::Substitute(R"($0)", anchor.EndLocation()));
+             absl::StrCat(anchor.StartLocation()));
+  CreateFact(anchor_vname, kFactAnchorEnd, absl::StrCat(anchor.EndLocation()));
 
   return anchor_vname;
 }

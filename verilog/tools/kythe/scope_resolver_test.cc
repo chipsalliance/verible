@@ -23,12 +23,13 @@ namespace verilog {
 namespace kythe {
 namespace {
 
-const std::vector<std::string> names{
+constexpr absl::string_view names[] = {
     "signature0", "signature1", "signature2", "signature3",
     "signature4", "signature5", "signature6", "signature7",
     "signature8", "signature9", "",
 };
-const std::vector<Signature> signatures{
+
+static const std::vector<Signature> signatures{
     Signature(names[0]),
     Signature(names[1]),
     Signature(names[2]),
@@ -38,7 +39,8 @@ const std::vector<Signature> signatures{
     Signature(Signature(Signature(names[7]), names[8]), names[9]),
     Signature(names[10]),
 };
-const std::vector<VName> vnames{
+
+static const std::vector<VName> vnames{
     VName("", signatures[0]), VName("", signatures[1]),
     VName("", signatures[2]), VName("", signatures[3]),
     VName("", signatures[4]), VName("", signatures[5]),
@@ -231,22 +233,22 @@ TEST(ScopeResolverTests, SearchForDefinitionInCurrentScope) {
     ScopeContext::AutoPop p1(&scope_resolver.GetMutableScopeContext(), &scope);
     {
       const VName* vname =
-          scope_resolver.SearchForDefinitionInCurrentScope(names[1].c_str());
+          scope_resolver.SearchForDefinitionInCurrentScope(names[1]);
       EXPECT_EQ(vname->signature, signatures[1]);
     }
     {
       const VName* vname =
-          scope_resolver.SearchForDefinitionInCurrentScope(names[2].c_str());
+          scope_resolver.SearchForDefinitionInCurrentScope(names[2]);
       EXPECT_EQ(vname->signature, signatures[2]);
     }
     {
       const VName* vname =
-          scope_resolver.SearchForDefinitionInCurrentScope(names[3].c_str());
+          scope_resolver.SearchForDefinitionInCurrentScope(names[3]);
       EXPECT_EQ(vname, nullptr);
     }
     {
       const VName* vname =
-          scope_resolver.SearchForDefinitionInCurrentScope(names[4].c_str());
+          scope_resolver.SearchForDefinitionInCurrentScope(names[4]);
       EXPECT_EQ(vname, nullptr);
     }
   }
@@ -270,19 +272,19 @@ TEST(ScopeResolverTests, DeleteDefinitionFromCurrentScope) {
     ScopeContext::AutoPop p1(&scope_resolver.GetMutableScopeContext(), &scope);
     {
       const VName* vname =
-          scope_resolver.SearchForDefinitionInCurrentScope(names[1].c_str());
+          scope_resolver.SearchForDefinitionInCurrentScope(names[1]);
       EXPECT_EQ(vname->signature, signatures[1]);
     }
 
     {
       scope_resolver.RemoveDefinitionFromCurrentScope(vnames[1]);
       const VName* vname =
-          scope_resolver.SearchForDefinitionInCurrentScope(names[1].c_str());
+          scope_resolver.SearchForDefinitionInCurrentScope(names[1]);
       EXPECT_EQ(vname, nullptr);
     }
     {
       const VName* vname =
-          scope_resolver.SearchForDefinitionInCurrentScope(names[2].c_str());
+          scope_resolver.SearchForDefinitionInCurrentScope(names[2]);
       EXPECT_EQ(vname->signature, signatures[2]);
     }
   }
