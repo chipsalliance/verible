@@ -29,6 +29,7 @@
 #include "common/text/syntax_tree_context.h"
 #include "common/text/token_info.h"
 #include "common/util/container_util.h"
+#include "verilog/CST/verilog_matchers.h"
 #include "verilog/analysis/descriptions.h"
 #include "verilog/analysis/lint_rule_registry.h"
 
@@ -37,6 +38,7 @@ namespace analysis {
 
 using verible::GetVerificationCitation;
 using verible::container::FindWithDefault;
+using verible::matcher::Matcher;
 
 // Register ForbiddenMacroRule
 VERILOG_REGISTER_LINT_RULE(ForbiddenMacroRule);
@@ -51,6 +53,12 @@ std::string ForbiddenMacroRule::GetDescription(
                       GetVerificationCitation(kTopic), ".");
 }
 
+// Matches all macro call ids, like `foo.
+static const Matcher& MacroCallMatcher() {
+  static const Matcher matcher(MacroCallIdLeaf().Bind("name"));
+  return matcher;
+}
+
 // Set of invalid macros and URLs
 const std::map<std::string, std::string>&
 ForbiddenMacroRule::InvalidMacrosMap() {
@@ -63,7 +71,7 @@ ForbiddenMacroRule::InvalidMacrosMap() {
 void ForbiddenMacroRule::HandleSymbol(
     const verible::Symbol& symbol, const verible::SyntaxTreeContext& context) {
   verible::matcher::BoundSymbolManager manager;
-  if (matcher_.Matches(symbol, &manager)) {
+  if (MacroCallMatcher().Matches(symbol, &manager)) {
     if (auto leaf = manager.GetAs<verible::SyntaxTreeLeaf>("name")) {
       const auto& imm = InvalidMacrosMap();
       if (imm.find(std::string(leaf->get().text())) != imm.end()) {

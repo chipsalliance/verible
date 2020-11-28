@@ -21,8 +21,12 @@
 #include "common/analysis/citation.h"
 #include "common/analysis/lint_rule_status.h"
 #include "common/analysis/matcher/bound_symbol_manager.h"
+#include "common/analysis/matcher/core_matchers.h"
+#include "common/analysis/matcher/matcher.h"
+#include "common/analysis/matcher/matcher_builders.h"
 #include "common/text/symbol.h"
 #include "common/text/syntax_tree_context.h"
+#include "verilog/CST/verilog_matchers.h"
 #include "verilog/analysis/descriptions.h"
 #include "verilog/analysis/lint_rule_registry.h"
 
@@ -33,6 +37,7 @@ using verible::GetStyleGuideCitation;
 using verible::LintRuleStatus;
 using verible::LintViolation;
 using verible::SyntaxTreeContext;
+using verible::matcher::Matcher;
 
 // Register CaseMissingDefaultRule
 VERILOG_REGISTER_LINT_RULE(CaseMissingDefaultRule);
@@ -50,11 +55,17 @@ std::string CaseMissingDefaultRule::GetDescription(
                       GetStyleGuideCitation(kTopic), ".");
 }
 
+static const Matcher& CaseMatcher() {
+  static const Matcher matcher(
+      NodekCaseItemList(verible::matcher::Unless(HasDefaultCase())));
+  return matcher;
+}
+
 void CaseMissingDefaultRule::HandleSymbol(
     const verible::Symbol& symbol, const verible::SyntaxTreeContext& context) {
   verible::matcher::BoundSymbolManager manager;
   if (context.DirectParentIs(NodeEnum::kCaseStatement) &&
-      matcher_.Matches(symbol, &manager)) {
+      CaseMatcher().Matches(symbol, &manager)) {
     violations_.insert(LintViolation(symbol, kMessage, context));
   }
 }

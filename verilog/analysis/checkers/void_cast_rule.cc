@@ -22,12 +22,15 @@
 #include "common/analysis/citation.h"
 #include "common/analysis/lint_rule_status.h"
 #include "common/analysis/matcher/bound_symbol_manager.h"
+#include "common/analysis/matcher/core_matchers.h"
+#include "common/analysis/matcher/matcher.h"
 #include "common/text/concrete_syntax_leaf.h"
 #include "common/text/concrete_syntax_tree.h"
 #include "common/text/symbol.h"
 #include "common/text/syntax_tree_context.h"
 #include "common/text/token_info.h"
 #include "common/text/tree_utils.h"
+#include "verilog/CST/verilog_matchers.h"
 #include "verilog/analysis/descriptions.h"
 #include "verilog/analysis/lint_rule_registry.h"
 
@@ -40,6 +43,7 @@ using verible::LintViolation;
 using verible::SyntaxTreeContext;
 using verible::SyntaxTreeLeaf;
 using verible::SyntaxTreeNode;
+using verible::matcher::Matcher;
 
 // Register VoidCastRule
 VERILOG_REGISTER_LINT_RULE(VoidCastRule);
@@ -60,11 +64,38 @@ const std::set<std::string>& VoidCastRule::ForbiddenFunctionsSet() {
   return *forbidden_functions;
 }
 
+// Matches against top level function calls within void casts
+// For example:
+//   void'(foo());
+// Here, the leaf representing "foo" will be bound to id
+static const Matcher& FunctionMatcher() {
+  static const Matcher matcher(NodekVoidcast(VoidcastHasExpression(
+      ExpressionHasFunctionCall(FunctionCallHasId().Bind("id")))));
+  return matcher;
+}
+
+// Matches against both calls to randomize and randomize methods within
+// voidcasts.
+// For example:
+//   void'(obj.randomize(...));
+// Here, the node representing "randomize(...)" will be bound to "id"
+//
+// For example:
+//   void'(randomize(obj));
+// Here, the node representing "randomize(obj)" will be bound to "id"
+//
+static const Matcher& RandomizeMatcher() {
+  static const Matcher matcher(NodekVoidcast(VoidcastHasExpression(
+      verible::matcher::AnyOf(ExpressionHasRandomizeCallExtension().Bind("id"),
+                              ExpressionHasRandomizeFunction().Bind("id")))));
+  return matcher;
+}
+
 void VoidCastRule::HandleSymbol(const verible::Symbol& symbol,
                                 const SyntaxTreeContext& context) {
   // Check for forbidden function names
   verible::matcher::BoundSymbolManager manager;
-  if (forbidden_function_matcher_.Matches(symbol, &manager)) {
+  if (FunctionMatcher().Matches(symbol, &manager)) {
     if (auto function_id = manager.GetAs<verible::SyntaxTreeLeaf>("id")) {
       const auto& bfs = ForbiddenFunctionsSet();
       if (bfs.find(std::string(function_id->get().text())) != bfs.end()) {
@@ -76,7 +107,7 @@ void VoidCastRule::HandleSymbol(const verible::Symbol& symbol,
 
   // Check for forbidden calls to randomize
   manager.Clear();
-  if (randomize_matcher_.Matches(symbol, &manager)) {
+  if (RandomizeMatcher().Matches(symbol, &manager)) {
     if (auto randomize_node = manager.GetAs<verible::SyntaxTreeNode>("id")) {
       auto leaf_ptr = verible::GetLeftmostLeaf(*randomize_node);
       const verible::TokenInfo token = ABSL_DIE_IF_NULL(leaf_ptr)->get();

@@ -59,6 +59,9 @@ absl::string_view Stem(absl::string_view filename);
 absl::Status UpwardFileSearch(absl::string_view start,
                               absl::string_view filename, std::string* result);
 
+// Determines whether the given filename exists or not.
+absl::Status FileExists(const std::string& filename);
+
 // Read file "filename" and store its content in "content"
 absl::Status GetContents(absl::string_view filename, std::string* content);
 
@@ -79,21 +82,33 @@ absl::Status CreateDir(absl::string_view dir);
 absl::StatusOr<Directory> ListDir(absl::string_view dir);
 
 namespace testing {
-// Useful for testing: a temporary file that is pre-populated with a particular
-// content. File is deleted when instance goes out of scope.
+
+// Useful for testing: a temporary file with a randomly generated name
+// that is pre-populated with a particular content.
+// File is deleted when instance goes out of scope.
 class ScopedTestFile {
  public:
   // Initialize a new file in directory "base_dir" with given "content".
   ScopedTestFile(absl::string_view base_dir, absl::string_view content);
   ~ScopedTestFile();
 
+  // not copy-able
+  ScopedTestFile(const ScopedTestFile&) = delete;
+  ScopedTestFile& operator=(const ScopedTestFile&) = delete;
+
+  // move-able (to support vector::emplace_back())
+  ScopedTestFile(ScopedTestFile&&) = default;
+  ScopedTestFile& operator=(ScopedTestFile&&) = default;
+
   // Filename created by this instance.
   absl::string_view filename() const { return filename_; }
 
  private:
-  const std::string filename_;
+  std::string filename_;
 };
+
 }  // namespace testing
 }  // namespace file
 }  // namespace verible
+
 #endif  // VERIBLE_COMMON_UTIL_FILE_UTIL_H_

@@ -24,6 +24,7 @@
 #include "common/analysis/matcher/matcher.h"
 #include "common/text/symbol.h"
 #include "common/text/syntax_tree_context.h"
+#include "verilog/CST/verilog_matchers.h"
 #include "verilog/analysis/descriptions.h"
 #include "verilog/analysis/lint_rule_registry.h"
 
@@ -31,6 +32,7 @@ namespace verilog {
 namespace analysis {
 
 using verible::GetStyleGuideCitation;
+using verible::matcher::Matcher;
 
 // Register the lint rule
 VERILOG_REGISTER_LINT_RULE(ForbidDefparamRule);
@@ -45,10 +47,16 @@ std::string ForbidDefparamRule::GetDescription(
       "Do not use defparam. See:", GetStyleGuideCitation(kTopic), ".");
 }
 
+// Matches the defparam construct.
+static const Matcher& OverrideMatcher() {
+  static const Matcher matcher(NodekParameterOverride());
+  return matcher;
+}
+
 void ForbidDefparamRule::HandleSymbol(
     const verible::Symbol& symbol, const verible::SyntaxTreeContext& context) {
   verible::matcher::BoundSymbolManager manager;
-  if (matcher_.Matches(symbol, &manager)) {
+  if (OverrideMatcher().Matches(symbol, &manager)) {
     const auto& defparam_token =
         GetSubtreeAsLeaf(symbol, NodeEnum::kParameterOverride, 0).get();
     CHECK_EQ(defparam_token.token_enum(), TK_defparam);

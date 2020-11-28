@@ -52,7 +52,15 @@ information. [TokenPartitionTree] has the following properties:
     nodes.
 
 The role of the [TreeUnwrapper] is to convert a SystemVerilog concrete syntax
-tree into a [TokenPartitionTree].
+tree into a [TokenPartitionTree]. Once in [TokenPartitionTree] form, the
+original syntax structure has been abstracted away and is no longer relevant to
+the rest of the formatter. If one chose to implement the formatter without
+relying on a valid syntax tree, one only has to produce a [TokenPartitionTree]
+form to reuse everything else that follows. For example, one could just as well
+produce a [TokenPartitionTree] directly from a lexical token stream. Such a
+strategy could better accomodate preprocessing-heavy code which might otherwise
+be rejected by the parser before producing a syntax tree, at the expense of
+having to do some pseudo-parsing.
 
 Think of each node in the [TokenPartitionTree] representing a formatting
 subproblem: _Given a box width constraint, what are the best ways to format a

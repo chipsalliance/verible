@@ -26,21 +26,45 @@ namespace verilog {
 std::vector<verible::TreeSearchMatch> FindAllTaskDeclarations(
     const verible::Symbol&);
 
-// Returns the task declaration header
-const verible::SyntaxTreeNode& GetTaskHeader(const verible::Symbol&);
+// Find all task headers, which are common to declarations and prototypes.
+std::vector<verible::TreeSearchMatch> FindAllTaskHeaders(
+    const verible::Symbol&);
 
-// Returns the task lifetime of the node.
-const verible::Symbol* GetTaskLifetime(const verible::Symbol&);
+// Find all task prototypes, including class method prototypes.
+std::vector<verible::TreeSearchMatch> FindAllTaskPrototypes(
+    const verible::Symbol&);
+
+// Returns the task declaration header
+const verible::SyntaxTreeNode& GetTaskHeader(const verible::Symbol& task_decl);
+
+// Returns the task prototype header
+const verible::SyntaxTreeNode& GetTaskPrototypeHeader(
+    const verible::Symbol& task_proto);
+
+// task header accessors
+
+// Returns the task header's lifetime.
+const verible::Symbol* GetTaskHeaderLifetime(
+    const verible::Symbol& task_header);
 
 // Returns the id of the task declaration.
-const verible::Symbol* GetTaskId(const verible::Symbol&);
+const verible::Symbol* GetTaskHeaderId(const verible::Symbol& task_header);
+
+// task declaration accessors
+
+// Returns the task lifetime of the node.
+const verible::Symbol* GetTaskLifetime(const verible::Symbol& task_decl);
+
+// Returns the id of the task declaration.
+const verible::Symbol* GetTaskId(const verible::Symbol& task_decl);
 
 // Returns leaf node for task name.
 // e.g. task my_task(); return leaf node for "my_task".
-const verible::SyntaxTreeLeaf* GetTaskName(const verible::Symbol&);
+const verible::SyntaxTreeLeaf* GetTaskName(const verible::Symbol& task_decl);
 
 // Returns the task declaration body.
-const verible::SyntaxTreeNode& GetTaskStatementList(const verible::Symbol&);
+const verible::SyntaxTreeNode& GetTaskStatementList(
+    const verible::Symbol& task_decl);
 
 }  // namespace verilog
 

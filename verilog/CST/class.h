@@ -27,6 +27,10 @@ namespace verilog {
 std::vector<verible::TreeSearchMatch> FindAllClassDeclarations(
     const verible::Symbol&);
 
+// Find all class constructors.
+std::vector<verible::TreeSearchMatch> FindAllClassConstructors(
+    const verible::Symbol& root);
+
 // Find all hierarchy extensions.
 std::vector<verible::TreeSearchMatch> FindAllHierarchyExtensions(
     const verible::Symbol&);
@@ -38,10 +42,9 @@ const verible::SyntaxTreeNode& GetClassHeader(const verible::Symbol&);
 const verible::SyntaxTreeLeaf& GetClassName(const verible::Symbol&);
 
 // Returns the node that spans the extended class name(if exists).
-// e.g class my_class extends other_class; return "other_class".
-// e.g class my_class extends pkg::my_class2 => return the node that spans
-// "pkg::my_class2".
-// e.g class my_class; return nullptr.
+// e.g from "class my_class extends other_class;" return "other_class".
+// e.g from "class my_class extends pkg::my_class2" => return the node that
+// spans "pkg::my_class2". e.g "class my_class;" return "nullptr".
 const verible::SyntaxTreeNode* GetExtendedClass(const verible::Symbol&);
 
 // Returns class name token after endclass.
@@ -52,9 +55,24 @@ const verible::SyntaxTreeLeaf* GetClassEndLabel(const verible::Symbol&);
 const verible::SyntaxTreeNode& GetClassItemList(const verible::Symbol&);
 
 // Returns the identifier from node tagged with kHierarchyExtension.
-// e.g instance1.x => return "x".
+// e.g from "instance1.x" => return "x".
 const verible::SyntaxTreeLeaf& GetUnqualifiedIdFromHierarchyExtension(
     const verible::Symbol&);
+
+// Extract the subnode of a param declaration list from class decalration.
+// e.g from "class m#(parameter x = 2)" return the node spanning "#(parameter x
+// = 2)".
+const verible::SyntaxTreeNode* GetParamDeclarationListFromClassDeclaration(
+    const verible::Symbol&);
+
+// Returns the node spanning the class constructor body (tagged with
+// kStatementList) from node tagged with kClassConstructor.
+const verible::SyntaxTreeNode& GetClassConstructorStatementList(
+    const verible::Symbol& class_constructor);
+
+// Returns the leaf spanning the "new" keyword from class constructor.
+const verible::SyntaxTreeLeaf& GetNewKeywordFromClassConstructor(
+    const verible::Symbol& class_constructor);
 
 }  // namespace verilog
 

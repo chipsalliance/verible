@@ -21,6 +21,7 @@
 #include "common/analysis/citation.h"
 #include "common/analysis/lint_rule_status.h"
 #include "common/analysis/matcher/bound_symbol_manager.h"
+#include "common/analysis/matcher/matcher.h"
 #include "common/strings/naming_utils.h"
 #include "common/text/concrete_syntax_leaf.h"
 #include "common/text/symbol.h"
@@ -31,6 +32,7 @@
 #include "verilog/CST/identifier.h"
 #include "verilog/CST/net.h"
 #include "verilog/CST/port.h"
+#include "verilog/CST/verilog_matchers.h"
 #include "verilog/analysis/descriptions.h"
 #include "verilog/analysis/lint_rule_registry.h"
 
@@ -43,6 +45,7 @@ using verible::GetStyleGuideCitation;
 using verible::LintRuleStatus;
 using verible::LintViolation;
 using verible::SyntaxTreeContext;
+using verible::matcher::Matcher;
 
 absl::string_view SignalNameStyleRule::Name() { return "signal-name-style"; }
 const char SignalNameStyleRule::kTopic[] = "signal-conventions";
@@ -58,24 +61,39 @@ std::string SignalNameStyleRule::GetDescription(
       GetStyleGuideCitation(kTopic), ".");
 }
 
+static const Matcher& PortMatcher() {
+  static const Matcher matcher(NodekPortDeclaration());
+  return matcher;
+}
+
+static const Matcher& NetMatcher() {
+  static const Matcher matcher(NodekNetDeclaration());
+  return matcher;
+}
+
+static const Matcher& DataMatcher() {
+  static const Matcher matcher(NodekDataDeclaration());
+  return matcher;
+}
+
 void SignalNameStyleRule::HandleSymbol(const verible::Symbol& symbol,
                                        const SyntaxTreeContext& context) {
   verible::matcher::BoundSymbolManager manager;
-  if (matcher_port_.Matches(symbol, &manager)) {
+  if (PortMatcher().Matches(symbol, &manager)) {
     const auto* identifier_leaf =
         GetIdentifierFromModulePortDeclaration(symbol);
     const auto name = ABSL_DIE_IF_NULL(identifier_leaf)->get().text();
     if (!verible::IsLowerSnakeCaseWithDigits(name))
       violations_.insert(
           LintViolation(identifier_leaf->get(), kMessage, context));
-  } else if (matcher_net_.Matches(symbol, &manager)) {
+  } else if (NetMatcher().Matches(symbol, &manager)) {
     const auto identifier_leaves = GetIdentifiersFromNetDeclaration(symbol);
     for (auto& leaf : identifier_leaves) {
       const auto name = leaf->text();
       if (!verible::IsLowerSnakeCaseWithDigits(name))
         violations_.insert(LintViolation(*leaf, kMessage, context));
     }
-  } else if (matcher_data_.Matches(symbol, &manager)) {
+  } else if (DataMatcher().Matches(symbol, &manager)) {
     const auto identifier_leaves = GetIdentifiersFromDataDeclaration(symbol);
     for (auto& leaf : identifier_leaves) {
       const auto name = leaf->text();

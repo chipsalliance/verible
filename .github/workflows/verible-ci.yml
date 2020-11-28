@@ -1,0 +1,93 @@
+name: verible-ci
+
+on:
+  push:
+  pull_request:
+
+jobs:
+   Check:
+      runs-on: ubuntu-16.04
+      strategy:
+        fail-fast: false
+        matrix:
+          env:
+            - MODE: test
+            - MODE: compile
+      env: ${{ matrix.env}}
+      name: ${{ matrix.env.MODE}}
+
+      steps:
+        - name: Checkout code
+          uses: actions/checkout@v2
+          with:
+           # Download complete repository + tags
+           fetch-depth: 0
+
+        - name: Before Install
+          run:
+            ./.github/workflows/install.sh
+
+        - name: Main script
+          run: ./.github/workflows/script.sh
+
+        - name: After success
+          if: ${{ success() }}
+          run: ./.github/workflows/success.sh
+
+        - name: Deployment
+          if: ${{ github.ref == 'refs/heads/master' && github.event_name != 'pull_request' && matrix.env.MODE == 'compile' && success() }}
+          uses: JamesIves/github-pages-deploy-action@3.7.1
+          with:
+            GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+            BRANCH: gh-pages
+            FOLDER: /tmp/pages
+            CLEAN: true
+
+   Release:
+      runs-on: ubuntu-16.04
+      strategy:
+        fail-fast: false
+        matrix:
+          env:
+            - { MODE: bin, OS: ubuntu, OS_VERSION: xenial }
+            - { MODE: bin, OS: ubuntu, OS_VERSION: bionic }
+            - { MODE: bin, OS: ubuntu, OS_VERSION: eoan }
+            - { MODE: bin, OS: ubuntu, OS_VERSION: focal }
+            - { MODE: bin, OS: ubuntu, OS_VERSION: groovy }
+#           - { MODE: bin, OS: centos, OS_VERSION: 6 }
+            - { MODE: bin, OS: centos, OS_VERSION: 7 }
+            - { MODE: bin, OS: centos, OS_VERSION: 8 }
+      name: ${{ matrix.env.OS }} ${{ matrix.env.OS_VERSION }}
+      env: ${{ matrix.env }}
+      steps:
+        - name: Checkout code
+          uses: actions/checkout@v2
+          with:
+           # Download complete repository + tags
+           fetch-depth: 0
+
+        - name: Before Install
+          run:
+            ./.github/workflows/install.sh
+
+        - name: Main script
+          run: ./.github/workflows/script.sh
+
+        - name: Upload binary
+          uses: actions/upload-artifact@v2
+          with:
+            path: /tmp/releases/verible-*.tar.gz
+
+        - name: After success
+          if: ${{ success() }}
+          run: ./.github/workflows/success.sh
+
+        - name: Deployment
+          if: ${{ github.ref == 'refs/heads/master' && github.event_name != 'pull_request' && success() }}
+          uses: svenstaro/upload-release-action@v2
+          with:
+            repo_token: ${{ secrets.GITHUB_TOKEN }}
+            file: /tmp/releases/verible-*.tar.gz
+            tag: ${{ github.ref }}
+            overwrite: true
+            file_glob: true

@@ -946,5 +946,212 @@ TEST(UniformRandomGeneratorTest, MultiRanges) {
   }
 }
 
+// DisjointIntervalSet tests
+
+typedef DisjointIntervalSet<int> IntIntervalSet;
+typedef DisjointIntervalSet<std::vector<int>::const_iterator> VectorIntervalSet;
+
+// Make sure values interior to a range point back to the entire range.
+template <typename M>
+static void DisjointIntervalConsistencyCheck(const M& iset) {
+  // works on integers and iterators
+  for (auto iter = iset.begin(); iter != iset.end(); ++iter) {
+    for (auto i = iter->first; i != iter->second; ++i) {
+      EXPECT_EQ(iset.find(i), iter);
+    }
+  }
+}
+
+TEST(DisjointIntervalSetTest, DefaultCtor) {
+  const IntIntervalSet iset;
+  EXPECT_TRUE(iset.empty());
+}
+
+TEST(DisjointIntervalSetTest, FindEmpty) {
+  const IntIntervalSet iset;
+  EXPECT_EQ(iset.find(3), iset.end());
+}
+
+TEST(DisjointIntervalSetTest, EmplaceOne) {
+  IntIntervalSet iset;
+  const auto p = iset.emplace(3, 4);
+  EXPECT_TRUE(p.second);
+  EXPECT_EQ(p.first->first, 3);
+  EXPECT_EQ(p.first->second, 4);
+  EXPECT_FALSE(iset.empty());
+  DisjointIntervalConsistencyCheck(iset);
+}
+
+template <typename M>
+static typename M::const_iterator VerifyEmplace(M* iset,
+                                                typename M::mapped_type min,
+                                                typename M::mapped_type max) {
+  const auto p = iset->emplace(min, max);
+  EXPECT_TRUE(p.second);
+  EXPECT_EQ(p.first->first, min);
+  EXPECT_EQ(p.first->second, max);
+  return p.first;
+}
+
+TEST(DisjointIntervalSetTest, EmplaceIterators) {
+  VectorIntervalSet iset;
+  std::vector<int> vec{{1, 4, 1, 5, 9, 2, 6}};
+  VerifyEmplace(&iset, vec.begin() + 3, vec.begin() + 5);
+  DisjointIntervalConsistencyCheck(iset);
+}
+
+TEST(DisjointIntervalSetTest, EmplaceNonoverlappingAbutting) {
+  IntIntervalSet iset;
+  const auto iter1 = VerifyEmplace(&iset, 3, 4);
+  // insert new leftmost range
+  const auto iter2 = VerifyEmplace(&iset, 1, 3);
+  // insert new rightmost range
+  const auto iter3 = VerifyEmplace(&iset, 4, 7);
+
+  EXPECT_EQ(iset.find(0), iset.end());
+  for (int i = 1; i < 3; ++i) {
+    EXPECT_EQ(iset.find(i), iter2);
+  }
+  for (int i = 3; i < 4; ++i) {
+    EXPECT_EQ(iset.find(i), iter1);
+  }
+  for (int i = 4; i < 7; ++i) {
+    EXPECT_EQ(iset.find(i), iter3);
+  }
+  EXPECT_EQ(iset.find(7), iset.end());
+  DisjointIntervalConsistencyCheck(iset);
+}
+
+TEST(DisjointIntervalSetTest, EmplaceNonoverlappingWithGaps) {
+  IntIntervalSet iset;
+  const auto iter1 = VerifyEmplace(&iset, 20, 25);
+  // insert new leftmost range
+  const auto iter2 = VerifyEmplace(&iset, 30, 40);
+  // insert new rightmost range
+  const auto iter3 = VerifyEmplace(&iset, 10, 15);
+
+  for (int i = 0; i < 10; ++i) {
+    EXPECT_EQ(iset.find(i), iset.end());
+  }
+  for (int i = 10; i < 15; ++i) {
+    EXPECT_EQ(iset.find(i), iter3);
+  }
+  for (int i = 15; i < 20; ++i) {
+    EXPECT_EQ(iset.find(i), iset.end());
+  }
+  for (int i = 20; i < 25; ++i) {
+    EXPECT_EQ(iset.find(i), iter1);
+  }
+  for (int i = 25; i < 30; ++i) {
+    EXPECT_EQ(iset.find(i), iset.end());
+  }
+  for (int i = 30; i < 40; ++i) {
+    EXPECT_EQ(iset.find(i), iter2);
+  }
+  DisjointIntervalConsistencyCheck(iset);
+}
+
+TEST(DisjointIntervalSetTest, EmplaceBackwardsRange) {
+  IntIntervalSet iset;
+  EXPECT_DEATH(iset.emplace(4, 3), "min_key <= max_key");
+}
+
+TEST(DisjointIntervalSetTest, MustEmplaceSuccess) {
+  IntIntervalSet iset;
+  constexpr std::pair<int, int> kTestValues[] = {
+      {3, 4}, {1, 3}, {4, 7}, {-10, -5}, {10, 15},
+  };
+  for (const auto& t : kTestValues) {
+    const auto iter = iset.must_emplace(t.first, t.second);
+    // Ensure that inserted value is the expected key min and max.
+    EXPECT_EQ(iter->first, t.first);
+    EXPECT_EQ(iter->second, t.second);
+  }
+  DisjointIntervalConsistencyCheck(iset);
+}
+
+TEST(DisjointIntervalSetTest, MustEmplaceOverlapLeft) {
+  IntIntervalSet iset;
+  iset.must_emplace(30, 40);
+  EXPECT_DEATH(iset.must_emplace(20, 31), "Failed to emplace");
+}
+
+TEST(DisjointIntervalSetTest, MustEmplaceOverlapRight) {
+  IntIntervalSet iset;
+  iset.must_emplace(30, 40);
+  EXPECT_DEATH(iset.must_emplace(39, 45), "Failed to emplace");
+}
+
+TEST(DisjointIntervalSetTest, MustEmplaceOverlapInterior) {
+  IntIntervalSet iset;
+  iset.must_emplace(30, 40);
+  EXPECT_DEATH(iset.must_emplace(31, 39), "Failed to emplace");
+}
+
+TEST(DisjointIntervalSetTest, MustEmplaceOverlapEnveloped) {
+  IntIntervalSet iset;
+  iset.must_emplace(30, 40);
+  EXPECT_DEATH(iset.must_emplace(29, 40), "Failed to emplace");
+}
+
+TEST(DisjointIntervalSetTest, MustEmplaceSpanningTwo) {
+  IntIntervalSet iset;
+  iset.must_emplace(30, 40);
+  iset.must_emplace(50, 60);
+  EXPECT_DEATH(iset.must_emplace(35, 55), "Failed to emplace");
+}
+
+TEST(DisjointIntervalSetTest, MustEmplaceOverlapsLower) {
+  IntIntervalSet iset;
+  iset.must_emplace(30, 40);
+  iset.must_emplace(50, 60);
+  EXPECT_DEATH(iset.must_emplace(35, 45), "Failed to emplace");
+}
+
+TEST(DisjointIntervalSetTest, MustEmplaceOverlapsUpper) {
+  IntIntervalSet iset;
+  iset.must_emplace(30, 40);
+  iset.must_emplace(50, 60);
+  EXPECT_DEATH(iset.must_emplace(45, 55), "Failed to emplace");
+}
+
+TEST(DisjointIntervalMapTest, FindInterval) {
+  IntIntervalSet iset;
+  iset.must_emplace(20, 25);
+  for (int i = 19; i < 26; ++i) {
+    for (int j = i + 1; j < 26; ++j) {
+      const auto found = iset.find({i, j});
+      if (i >= 20 && j <= 25) {
+        ASSERT_NE(found, iset.end());
+        EXPECT_EQ(found->first, 20);
+        EXPECT_EQ(found->second, 25);
+      } else {
+        EXPECT_EQ(found, iset.end());
+      }
+    }
+  }
+  DisjointIntervalConsistencyCheck(iset);
+}
+
+TEST(DisjointIntervalMapTest, FindVectorInterval) {
+  std::vector<int> v(40, 1);  // don't care about values
+  VectorIntervalSet iset;
+  const auto base = v.begin();
+  iset.must_emplace(base + 20, base + 25);
+  for (auto i = base + 19; i < base + 26; ++i) {
+    for (auto j = i + 1; j < base + 26; ++j) {
+      const auto found = iset.find({i, j});
+      if (i >= base + 20 && j <= base + 25) {
+        ASSERT_NE(found, iset.end());
+        EXPECT_EQ(found->first, base + 20);
+        EXPECT_EQ(found->second, base + 25);
+      } else {
+        EXPECT_EQ(found, iset.end());
+      }
+    }
+  }
+  DisjointIntervalConsistencyCheck(iset);
+}
+
 }  // namespace
 }  // namespace verible

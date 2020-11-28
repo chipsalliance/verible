@@ -4007,6 +4007,19 @@ const TreeUnwrapperTestData kUnwrapPackageTestCases[] = {
               L(1, {")", "bar_t", ";"})),  //
             L(0, {"endpackage"})),
     },
+    {
+        "package with net_type_declarations",
+        "package foo_pkg;"
+        "nettype shortreal foo;"
+        "nettype bar[1:0] baz with quux;"
+        "endpackage",
+        PackageDeclaration(
+            0, L(0, {"package", "foo_pkg", ";"}),
+            PackageItemList(1, L(1, {"nettype", "shortreal", "foo", ";"}),
+                            L(1, {"nettype", "bar", "[", "1", ":", "0", "]",
+                                  "baz", "with", "quux", ";"})),
+            L(0, {"endpackage"})),
+    },
 
     {
         "package with function declaration, commented",

@@ -22,10 +22,12 @@
 #include "common/analysis/citation.h"
 #include "common/analysis/lint_rule_status.h"
 #include "common/analysis/matcher/bound_symbol_manager.h"
+#include "common/analysis/matcher/matcher.h"
 #include "common/strings/naming_utils.h"
 #include "common/text/symbol.h"
 #include "common/text/syntax_tree_context.h"
 #include "verilog/CST/type.h"
+#include "verilog/CST/verilog_matchers.h"
 #include "verilog/analysis/lint_rule_registry.h"
 
 namespace verilog {
@@ -37,6 +39,7 @@ using verible::GetStyleGuideCitation;
 using verible::LintRuleStatus;
 using verible::LintViolation;
 using verible::SyntaxTreeContext;
+using verible::matcher::Matcher;
 
 absl::string_view EnumNameStyleRule::Name() { return "enum-name-style"; }
 const char EnumNameStyleRule::kTopic[] = "enumerations";
@@ -52,10 +55,15 @@ std::string EnumNameStyleRule::GetDescription(
                       GetStyleGuideCitation(kTopic), ".");
 }
 
+static const Matcher& TypedefMatcher() {
+  static const Matcher matcher(NodekTypeDeclaration());
+  return matcher;
+}
+
 void EnumNameStyleRule::HandleSymbol(const verible::Symbol& symbol,
                                      const SyntaxTreeContext& context) {
   verible::matcher::BoundSymbolManager manager;
-  if (matcher_typedef_.Matches(symbol, &manager)) {
+  if (TypedefMatcher().Matches(symbol, &manager)) {
     // TODO: This can be changed to checking type of child (by index) when we
     // have consistent shape for all kTypeDeclaration nodes.
     if (!FindAllEnumTypes(symbol).empty()) {

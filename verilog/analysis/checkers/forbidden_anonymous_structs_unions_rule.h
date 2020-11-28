@@ -19,12 +19,9 @@
 #include <string>
 
 #include "common/analysis/lint_rule_status.h"
-#include "common/analysis/matcher/matcher.h"
-#include "common/analysis/matcher/matcher_builders.h"
 #include "common/analysis/syntax_tree_lint_rule.h"
 #include "common/text/symbol.h"
 #include "common/text/syntax_tree_context.h"
-#include "verilog/CST/verilog_matchers.h"
 #include "verilog/analysis/descriptions.h"
 
 namespace verilog {
@@ -80,11 +77,6 @@ class ForbiddenAnonymousStructsUnionsRule : public verible::SyntaxTreeLintRule {
   // Diagnostic message.
   static const char kMessageStruct[];
   static const char kMessageUnion[];
-
-  using Matcher = verible::matcher::Matcher;
-
-  const Matcher matcher_struct_ = NodekStructType();
-  const Matcher matcher_union_ = NodekUnionType();
 
   bool allow_anonymous_nested_type_ = false;
 

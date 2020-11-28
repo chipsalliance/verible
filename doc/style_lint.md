@@ -1,7 +1,7 @@
 # SV Style Linter Developer Guide
 
 <!--*
-freshness: { owner: 'fangism' reviewed: '2020-10-19' }
+freshness: { owner: 'fangism' reviewed: '2020-10-28' }
 *-->
 
 This document describes how to implement style lint rules.
@@ -192,7 +192,7 @@ match result; they are fully commutative.
 Many matchers support _binding_ to user-provided names called
 [BindableMatchers]. This lets you save interesting subtree positions found
 during the match and retrieve them from a [BoundSymbolManager].
-[Example using `.Bind()`](third_party/verible/verilog/analysis/checkers/undersized_binary_literal_rule.h).
+[Example using `.Bind()`](../verilog/analysis/checkers/undersized_binary_literal_rule.h).
 
 ## Reporting Positive Findings
 

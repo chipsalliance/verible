@@ -281,7 +281,7 @@ static absl::Status WaiveCommandHandler(
             }
           }
 
-          if (rule == nullptr) {
+          if (rule.empty()) {
             return WaiveCommandError(token_pos, waive_file,
                                      "Invalid rule: ", val);
           }
@@ -349,7 +349,7 @@ static absl::Status WaiveCommandHandler(
         if (!location_match) return absl::OkStatus();
 
         // Check if everything required has been set
-        if (rule == nullptr) {
+        if (rule.empty()) {
           return WaiveCommandError(token_pos, waive_file,
                                    "Insufficient waiver configuration");
         }
@@ -417,7 +417,7 @@ absl::Status LintWaiverBuilder::ApplyExternalWaivers(
     const std::set<absl::string_view>& active_rules,
     absl::string_view lintee_filename, absl::string_view waiver_filename,
     absl::string_view waivers_config_content) {
-  if (waivers_config_content == nullptr) {
+  if (waivers_config_content.empty()) {
     return absl::Status(absl::StatusCode::kInternal,
                         "Broken waiver config handle");
   }

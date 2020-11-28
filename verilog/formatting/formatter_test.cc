@@ -593,14 +593,12 @@ static constexpr FormatterTestCase kFormatterTestCases[] = {
                                                   // (symmetrized)
     },
     {
-        "  parameter  int   foo=bar [ a +b ] ;",  // binary inside index expr
-        "parameter int foo = bar[a + b];\n",      // allowed to be 1 space
-                                                  // (symmetrized)
+        "  parameter  int   foo=bar [ a +b ] ;",  // compact binary inside
+        "parameter int foo = bar[a+b];\n",        // index expression
     },
     {
-        "  parameter  int   foo=bar [ a  +b ] ;",  // binary inside index expr
-        "parameter int foo = bar[a + b];\n",       // limited to 1 space (and
-                                                   // symmetrized)
+        "  parameter  int   foo=bar [ a  +b ] ;",  // compact binary inside
+        "parameter int foo = bar[a+b];\n",         // index expression
     },
     {
         // with line continuations
@@ -3511,6 +3509,15 @@ static constexpr FormatterTestCase kFormatterTestCases[] = {
      "    D = 1\n"
      "  } bar_t;\n"
      "endpackage : typey\n"},
+    {// net type declarations
+     "package foo_pkg;"
+     "nettype shortreal\t\tfoo  ;"
+     "nettype\nbar[1:0 ] baz  with\tquux ;"
+     "endpackage",
+     "package foo_pkg;\n"
+     "  nettype shortreal foo;\n"
+     "  nettype bar [1:0] baz with quux;\n"
+     "endpackage\n"},
     {"package foo_pkg; \n"
      "// function description.......\n"
      "function automatic void bar();"
@@ -7215,6 +7222,28 @@ TEST(FormatterEndToEndTest, AutoInferAlignment) {
        "    output out_t          zout2\n"
        ");\n"
        "endmodule : pd\n"},
+      {// data declaration and net declaration in ports
+       "module m(\n"
+       "logic [x:y]a    ,\n"    // packed dimensions, induce alignment
+       "wire [pp:qq] [e:f]b\n"  // packed dimensions, 2D
+       ") ;\n"
+       "endmodule\n",
+       "module m (\n"
+       "    logic [  x:y]      a,\n"
+       "    wire  [pp:qq][e:f] b\n"
+       ");\n"
+       "endmodule\n"},
+      {// used-defined data declarations in ports
+       "module m(\n"
+       "a::bb [x:y]a    ,\n"       // packed dimensions, induce alignment
+       "c#(d,e) [pp:qq] [e:f]b\n"  // packed dimensions, 2D
+       ") ;\n"
+       "endmodule\n",
+       "module m (\n"
+       "    a::bb    [  x:y]      a,\n"
+       "    c#(d, e) [pp:qq][e:f] b\n"
+       ");\n"
+       "endmodule\n"},
 
       // named parameter arguments
       {"module  mm ;\n"

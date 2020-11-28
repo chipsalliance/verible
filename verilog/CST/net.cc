@@ -70,6 +70,10 @@ std::vector<const TokenInfo*> GetIdentifiersFromNetDeclaration(
     const auto* identifier_leaf =
         AutoUnwrapIdentifier(*ABSL_DIE_IF_NULL(identifier));
 
+    if (identifier_leaf == nullptr) {
+      continue;
+    }
+
     identifiers.push_back(&identifier_leaf->get());
   }
 

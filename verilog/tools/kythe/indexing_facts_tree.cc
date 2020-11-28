@@ -14,17 +14,18 @@
 
 #include "verilog/tools/kythe/indexing_facts_tree.h"
 
+#include <algorithm>
 #include <iostream>
 
+#include "absl/strings/str_cat.h"
 #include "absl/strings/str_join.h"
-#include "absl/strings/substitute.h"
 
 namespace verilog {
 namespace kythe {
 
 std::string Anchor::DebugString() const {
-  return absl::Substitute(R"( {$0 @$1-$2})", value_, start_location_,
-                          end_location_);
+  return absl::StrCat(" {", value_, " @", start_location_, "-", end_location_,
+                      "}");
 }
 
 bool Anchor::operator==(const Anchor& rhs) const {

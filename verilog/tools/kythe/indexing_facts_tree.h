@@ -42,6 +42,11 @@ class Anchor {
         end_location_(token.right(base)),
         value_(token.text()) {}
 
+  Anchor(const Anchor&) = default;  // TODO(fangism): delete, move-only
+  Anchor(Anchor&&) = default;
+  Anchor& operator=(const Anchor&) = delete;
+  Anchor& operator=(Anchor&&) = default;
+
   // This function is for debugging only and isn't intended to be a textual
   // representation of this class.
   std::string DebugString() const;
@@ -66,22 +71,31 @@ class Anchor {
 // This class is a simplified representation of CST and contains information
 // that can be used for extracting indexing-facts for different indexing tools.
 //
-// This is intended to be an abstract layer between the parser and the indexing
-// tool.
+// This is intended to be an abstract layer between the parser generated CST
+// and the indexing tool.
 class IndexingNodeData {
  public:
-  explicit IndexingNodeData(IndexingFactType language_feature)
-      : indexing_fact_type_(language_feature) {}
-
-  IndexingNodeData(std::vector<Anchor> anchor,
-                   IndexingFactType language_feature)
-      : anchors_(std::move(anchor)), indexing_fact_type_(language_feature) {}
-
-  void AppendAnchor(const Anchor& anchor) { anchors_.push_back(anchor); }
-
-  void AppendAnchor(std::vector<Anchor> anchors) {
-    anchors_.insert(anchors_.end(), anchors.begin(), anchors.end());
+  template <typename... Args>
+  IndexingNodeData(IndexingFactType language_feature, Args&&... args)
+      : indexing_fact_type_(language_feature) {
+    AppendAnchor(std::forward<Args>(args)...);
   }
+
+  // TODO(fangism): delete copy-ctor to make this move-only
+  IndexingNodeData(const IndexingNodeData&) = default;
+  IndexingNodeData(IndexingNodeData&&) = default;
+  IndexingNodeData& operator=(const IndexingNodeData&) = delete;
+  IndexingNodeData& operator=(IndexingNodeData&&) = delete;
+
+  // Consume an Anchor object(s), variadically.
+  template <typename... Args>
+  void AppendAnchor(Anchor&& anchor, Args&&... args) {
+    anchors_.emplace_back(std::move(anchor));
+    AppendAnchor(std::forward<Args>(args)...);
+  }
+
+  // Swaps the anchors with the given IndexingNodeData.
+  void SwapAnchors(IndexingNodeData* other) { anchors_.swap(other->anchors_); }
 
   // This function is for debugging only and isn't intended to be textual
   // representation of this class.
@@ -93,11 +107,15 @@ class IndexingNodeData {
   bool operator==(const IndexingNodeData&) const;
 
  private:
+  // Base case for variadic AppendAnchor()
+  void AppendAnchor() const {}
+
+ private:
+  // Represents which language feature this indexing fact is about.
+  const IndexingFactType indexing_fact_type_;
+
   // Anchors representing the different tokens of this indexing fact.
   std::vector<Anchor> anchors_;
-
-  // Represents which language feature this indexing fact is about.
-  IndexingFactType indexing_fact_type_;
 };
 
 // human-readable form for debugging

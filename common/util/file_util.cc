@@ -34,7 +34,6 @@
 #include "absl/strings/str_join.h"
 #include "absl/strings/str_split.h"
 #include "absl/strings/string_view.h"
-#include "absl/strings/substitute.h"
 #include "common/util/logging.h"
 
 namespace verible {
@@ -126,9 +125,18 @@ absl::Status UpwardFileSearch(absl::string_view start,
   return absl::NotFoundError("No matching file found.");
 }
 
+absl::Status FileExists(const std::string &filename) {
+  struct stat file_info;
+  if (stat(filename.c_str(), &file_info) == 0 && S_ISREG(file_info.st_mode)) {
+    return absl::OkStatus();
+  }
+  return absl::NotFoundError(
+      absl::StrCat("file : ", filename, " does not exist"));
+}
+
 absl::Status GetContents(absl::string_view filename, std::string *content) {
   std::ifstream fs;
-  std::istream* stream = nullptr;
+  std::istream *stream = nullptr;
   const bool use_stdin = filename == "-";
   if (use_stdin) {
     // convention: honor "-" as stdin
@@ -174,8 +182,8 @@ absl::StatusOr<Directory> ListDir(absl::string_view dir) {
   DIR *handle = opendir(d.path.c_str());
   if (handle == nullptr) {
     if (errno == ENOTDIR) return absl::NotFoundError(d.path);
-    return absl::InternalError(absl::Substitute(
-        "Failed to open the directory '$0'. Got error: $1", d.path, errno));
+    return absl::InternalError(absl::StrCat("Failed to open the directory '",
+                                            d.path, "'. Got error: ", errno));
   }
   struct stat statbuf;
   while (true) {
@@ -183,9 +191,9 @@ absl::StatusOr<Directory> ListDir(absl::string_view dir) {
     auto *entry = readdir(handle);
     if (errno) {
       closedir(handle);
-      return absl::InternalError(absl::Substitute(
-          "Failed to read the contents of directory '$0'. Got error: $1",
-          d.path, errno));
+      return absl::InternalError(
+          absl::StrCat("Failed to read the contents of directory '", d.path,
+                       "'. Got error: ", errno));
     }
     // Finished listing the directory.
     if (entry == nullptr) {

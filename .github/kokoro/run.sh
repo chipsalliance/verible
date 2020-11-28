@@ -25,6 +25,7 @@ export PATH="/usr/sbin:/usr/bin:/sbin:/bin"
 
 cd github/$KOKORO_DIR
 
+. $SCRIPT_DIR/../settings.sh
 . $SCRIPT_DIR/steps/git.sh
 . $SCRIPT_DIR/steps/hostsetup.sh
 . $SCRIPT_DIR/steps/hostinfo.sh
@@ -37,7 +38,7 @@ echo "---------------------------------------------------------------"
 echo " Building Verible"
 echo "---------------------------------------------------------------"
 set -x
-bazel build -c opt --noshow_progress --cxxopt='-std=c++17' //...
+bazel build -c opt --noshow_progress //...
 RET=$?
 set +x
 
@@ -47,7 +48,7 @@ if [[ $RET = 0 ]]; then
   echo " Testing Verible"
   echo "---------------------------------------------------------------"
   set -x
-  bazel test --noshow_progress --cxxopt='-std=c++17' //...
+  bazel test --noshow_progress //...
   RET=$?
   set +x
 else

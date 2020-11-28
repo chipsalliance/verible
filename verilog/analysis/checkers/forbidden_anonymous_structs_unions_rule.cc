@@ -22,9 +22,11 @@
 #include "common/analysis/citation.h"
 #include "common/analysis/lint_rule_status.h"
 #include "common/analysis/matcher/bound_symbol_manager.h"
+#include "common/analysis/matcher/matcher.h"
 #include "common/text/config_utils.h"
 #include "common/text/symbol.h"
 #include "common/text/syntax_tree_context.h"
+#include "verilog/CST/verilog_matchers.h"
 #include "verilog/analysis/descriptions.h"
 #include "verilog/analysis/lint_rule_registry.h"
 
@@ -34,6 +36,7 @@ namespace analysis {
 using verible::GetStyleGuideCitation;
 using verible::LintRuleStatus;
 using verible::LintViolation;
+using verible::matcher::Matcher;
 
 // Register the lint rule
 VERILOG_REGISTER_LINT_RULE(ForbiddenAnonymousStructsUnionsRule);
@@ -71,9 +74,20 @@ absl::Status ForbiddenAnonymousStructsUnionsRule::Configure(
       {{"allow_anonymous_nested", SetBool(&allow_anonymous_nested_type_)}});
 }
 
+static const Matcher& StructMatcher() {
+  static const Matcher matcher(NodekStructType());
+  return matcher;
+}
+
+static const Matcher& UnionMatcher() {
+  static const Matcher matcher(NodekUnionType());
+  return matcher;
+}
+
 static bool IsPreceededByTypedef(const verible::SyntaxTreeContext& context) {
-  return context.DirectParentsAre(
-      {NodeEnum::kDataTypePrimitive, NodeEnum::kTypeDeclaration});
+  return context.DirectParentsAre({NodeEnum::kDataTypePrimitive,
+                                   NodeEnum::kDataType,
+                                   NodeEnum::kTypeDeclaration});
 }
 
 static bool NestedInStructOrUnion(const verible::SyntaxTreeContext& context) {
@@ -89,9 +103,9 @@ bool ForbiddenAnonymousStructsUnionsRule::IsRuleMet(
 void ForbiddenAnonymousStructsUnionsRule::HandleSymbol(
     const verible::Symbol& symbol, const verible::SyntaxTreeContext& context) {
   verible::matcher::BoundSymbolManager manager;
-  if (matcher_struct_.Matches(symbol, &manager) && !IsRuleMet(context)) {
+  if (StructMatcher().Matches(symbol, &manager) && !IsRuleMet(context)) {
     violations_.insert(LintViolation(symbol, kMessageStruct, context));
-  } else if (matcher_union_.Matches(symbol, &manager) && !IsRuleMet(context)) {
+  } else if (UnionMatcher().Matches(symbol, &manager) && !IsRuleMet(context)) {
     violations_.insert(LintViolation(symbol, kMessageUnion, context));
   }
 }

@@ -29,6 +29,7 @@
 #include "absl/strings/string_view.h"
 #include "absl/types/span.h"
 #include "common/analysis/file_analyzer.h"
+#include "common/strings/display_utils.h"
 #include "common/text/concrete_syntax_leaf.h"
 #include "common/text/concrete_syntax_tree.h"
 #include "common/text/constants.h"
@@ -202,7 +203,9 @@ TEST(AnalyzeVerilogExpressionTest, RejectsModuleItemAttack) {
   auto status = ABSL_DIE_IF_NULL(analyzer_ptr)->ParseStatus();
   EXPECT_FALSE(status.ok());
   const auto& rejects = analyzer_ptr->GetRejectedTokens();
-  EXPECT_THAT(rejects, SizeIs(2));
+  EXPECT_THAT(rejects, SizeIs(1))
+      << "got: [\n"
+      << verible::SequenceFormatter(rejects, "\n") << "\n]";
   EXPECT_EQ(rejects.front().phase, AnalysisPhase::kParsePhase);
   DiagnosticMessagesContainFilename(*analyzer_ptr, "<file>");
 }

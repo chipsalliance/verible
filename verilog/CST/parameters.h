@@ -105,7 +105,7 @@ bool IsParamTypeDeclaration(const verible::Symbol&);
 
 // Returns a pointer to the symbol holding the node kTypeAssignment under the
 // node kParamDeclaration.
-const verible::Symbol* GetTypeAssignmentFromParamDeclaration(
+const verible::SyntaxTreeNode* GetTypeAssignmentFromParamDeclaration(
     const verible::Symbol&);
 
 // Returns a pointer to the identifier leaf holding the SymbolIdentifier under
@@ -113,17 +113,23 @@ const verible::Symbol* GetTypeAssignmentFromParamDeclaration(
 const verible::SyntaxTreeLeaf* GetIdentifierLeafFromTypeAssignment(
     const verible::Symbol&);
 
+// Returns a pointer to the expression node holding under the node
+// kTypeAssignment.
+// e.g from "class m(type x = y)" returns the node spanning "y".
+const verible::SyntaxTreeNode* GetExpressionFromTypeAssignment(
+    const verible::Symbol&);
+
 // Returns true if the node kTypeInfo is empty (all children are nullptr).
 bool IsTypeInfoEmpty(const verible::Symbol&);
 
 // Return the node spanning param name from a node tagged with kParamByName.
-// e.g module_type #(.N(x)) return the leaf spanning "N".
+// e.g from "module_type #(.N(x))" return the leaf spanning "N".
 const verible::SyntaxTreeLeaf& GetNamedParamFromActualParam(
     const verible::Symbol&);
 
 // Return the node spanning the paren group from a node tagged with
 // kParamByName.
-// e.g module_type #(.N(x)) return the leaf spanning "(x)".
+// e.g from "module_type #(.N(x))" return the leaf spanning "(x)".
 const verible::SyntaxTreeNode* GetParenGroupFromActualParam(
     const verible::Symbol&);
 

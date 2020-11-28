@@ -22,25 +22,27 @@ genrule(
 
 cc_library(
     name = "kythe_facts",
-    srcs = [
-        "kythe_facts.cc",
-    ],
-    hdrs = [
-        "kythe_facts.h",
-    ],
+    srcs = ["kythe_facts.cc"],
+    hdrs = ["kythe_facts.h"],
     deps = [
+        "//common/util:spacer",
         "@com_google_absl//absl/strings",
+    ],
+)
+
+cc_test(
+    name = "kythe_facts_test",
+    srcs = ["kythe_facts_test.cc"],
+    deps = [
+        ":kythe_facts",
+        "@com_google_googletest//:gtest_main",
     ],
 )
 
 cc_library(
     name = "scope_resolver",
-    srcs = [
-        "scope_resolver.cc",
-    ],
-    hdrs = [
-        "scope_resolver.h",
-    ],
+    srcs = ["scope_resolver.cc"],
+    hdrs = ["scope_resolver.h"],
     deps = [
         ":kythe_facts",
         "//common/util:auto_pop_stack",
@@ -61,9 +63,7 @@ cc_test(
 
 cc_library(
     name = "indexing_facts_tree_context",
-    hdrs = [
-        "indexing_facts_tree_context.h",
-    ],
+    hdrs = ["indexing_facts_tree_context.h"],
     deps = [
         ":indexing_facts_tree",
         "//common/util:auto_pop_stack",
@@ -72,20 +72,14 @@ cc_library(
 
 cc_library(
     name = "kythe_schema_constants",
-    hdrs = [
-        "kythe_schema_constants.h",
-    ],
+    hdrs = ["kythe_schema_constants.h"],
     deps = ["@com_google_absl//absl/strings"],
 )
 
 cc_library(
     name = "kythe_facts_extractor",
-    srcs = [
-        "kythe_facts_extractor.cc",
-    ],
-    hdrs = [
-        "kythe_facts_extractor.h",
-    ],
+    srcs = ["kythe_facts_extractor.cc"],
+    hdrs = ["kythe_facts_extractor.h"],
     deps = [
         ":indexing_facts_tree",
         ":indexing_facts_tree_context",
@@ -93,6 +87,7 @@ cc_library(
         ":kythe_facts",
         ":kythe_schema_constants",
         ":scope_resolver",
+        "//common/util:logging",
         "@com_google_absl//absl/memory",
         "@com_google_absl//absl/strings",
     ],
@@ -105,9 +100,7 @@ cc_library(
         "verilog_extractor_indexing_fact_type_foreach.inc",
         "verilog_extractor_indexing_fact_type_foreach-gen.inc",
     ],
-    hdrs = [
-        "verilog_extractor_indexing_fact_type.h",
-    ],
+    hdrs = ["verilog_extractor_indexing_fact_type.h"],
     deps = [
         "@com_google_absl//absl/strings",
     ],
@@ -115,12 +108,8 @@ cc_library(
 
 cc_library(
     name = "indexing_facts_tree",
-    srcs = [
-        "indexing_facts_tree.cc",
-    ],
-    hdrs = [
-        "indexing_facts_tree.h",
-    ],
+    srcs = ["indexing_facts_tree.cc"],
+    hdrs = ["indexing_facts_tree.h"],
     deps = [
         ":verilog_extractor_indexing_fact_type",
         "//common/text:token_info",
@@ -131,19 +120,16 @@ cc_library(
 
 cc_library(
     name = "indexing_facts_tree_extractor",
-    srcs = [
-        "indexing_facts_tree_extractor.cc",
-    ],
-    hdrs = [
-        "indexing_facts_tree_extractor.h",
-    ],
+    srcs = ["indexing_facts_tree_extractor.cc"],
+    hdrs = ["indexing_facts_tree_extractor.h"],
     deps = [
         ":indexing_facts_tree",
         ":indexing_facts_tree_context",
-        "//common/analysis:syntax_tree_search",
+        "//common/text:concrete_syntax_tree",
         "//common/text:tree_context_visitor",
         "//common/text:tree_utils",
         "//common/util:file_util",
+        "//common/util:logging",
         "//verilog/CST:class",
         "//verilog/CST:declaration",
         "//verilog/CST:functions",
@@ -159,7 +145,10 @@ cc_library(
         "//verilog/CST:type",
         "//verilog/CST:verilog_matchers",
         "//verilog/CST:verilog_nonterminals",
+        "//verilog/CST:verilog_tree_print",
         "//verilog/analysis:verilog_analyzer",
+        "//verilog/analysis:verilog_project",
+        "@com_google_absl//absl/status",
         "@com_google_absl//absl/strings",
     ],
 )
@@ -173,15 +162,10 @@ cc_test(
         "//common/text:concrete_syntax_tree",
         "//common/util:file_util",
         "//verilog/analysis:verilog_analyzer",
+        "//verilog/analysis:verilog_project",
+        "@com_google_absl//absl/status",
         "@com_google_googletest//:gtest_main",
     ],
-)
-
-filegroup(
-    name = "verifier_testdata",
-    srcs = glob([
-        "testdata/more_testdata/*.sv",
-    ]),
 )
 
 cc_binary(
@@ -201,17 +185,48 @@ cc_binary(
         "//common/text:symbol",
         "//common/text:text_structure",
         "//common/text:token_info",
+        "//common/util:bijective_map",
+        "//common/util:enum_flags",
         "//common/util:file_util",
         "//common/util:init_command_line",
         "//common/util:logging",
         "//verilog/CST:verilog_nonterminals",
         "//verilog/CST:verilog_tree_print",
         "//verilog/analysis:verilog_analyzer",
+        "//verilog/analysis:verilog_project",
         "//verilog/analysis/checkers:verilog_lint_rules",
         "//verilog/parser:verilog_parser",
         "@com_google_absl//absl/flags:flag",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/strings",
         "@com_google_absl//absl/types:span",
+        "@com_google_protobuf//:protobuf",
+        "@io_kythe//kythe/cxx/common/indexing:caching_output",
+        "@io_kythe//kythe/proto:storage_cc_proto",
+    ],
+)
+
+sh_test(
+    name = "verilog_kythe_extractor_test",
+    size = "small",
+    srcs = ["verilog_kythe_extractor_test.sh"],
+    args = ["$(location :verible-verilog-kythe-extractor)"],
+    data = [":verible-verilog-kythe-extractor"],
+    deps = [],
+)
+
+sh_test(
+    name = "verification_test",
+    srcs = ["verification_test.sh"],
+    data = glob([
+        "testdata/**",
+    ]) + [
+        ":verible-verilog-kythe-extractor",
+        "@io_kythe//kythe/cxx/verifier",
+    ],
+    shard_count = 4,
+    deps = [
+        "@bazel_tools//tools/bash/runfiles",
+        "@io_bazel//src/test/shell:bashunit",
     ],
 )

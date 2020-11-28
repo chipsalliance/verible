@@ -96,6 +96,9 @@ struct FormatStyle : public verible::BasicFormatStyle {
   // reduce the risk of harming already decent code.
   bool try_wrap_long_lines = true;
 
+  // Compact binary expressions inside indexing / bit selection operators
+  bool compact_indexing_and_selections = true;
+
   // TODO(fangism): introduce the following knobs:
   //
   // Unless forced by previous line, starting a line with a comma is

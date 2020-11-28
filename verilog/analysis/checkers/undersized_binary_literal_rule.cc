@@ -31,6 +31,7 @@
 #include "common/text/token_info.h"
 #include "common/util/logging.h"
 #include "verilog/CST/numbers.h"
+#include "verilog/CST/verilog_matchers.h"
 #include "verilog/analysis/descriptions.h"
 #include "verilog/analysis/lint_rule_registry.h"
 
@@ -42,6 +43,7 @@ using verible::LintRuleStatus;
 using verible::LintViolation;
 using verible::SyntaxTreeContext;
 using verible::SyntaxTreeLeaf;
+using verible::matcher::Matcher;
 
 // Register UndersizedBinaryLiteralRule
 VERILOG_REGISTER_LINT_RULE(UndersizedBinaryLiteralRule);
@@ -59,10 +61,23 @@ std::string UndersizedBinaryLiteralRule::GetDescription(
       GetStyleGuideCitation(kTopic), ".");
 }
 
+// Broadly, start by matching all number nodes with a
+// constant width and based literal.
+// TODO(fangism): If more precision is needed than what the inner matcher
+// provides, pass a more specific predicate matching function instead.
+
+static const Matcher& NumberMatcher() {
+  static const Matcher matcher(NodekNumber(
+      NumberHasConstantWidth().Bind("width"),
+      NumberHasBasedLiteral(NumberIsBinary().Bind("base"),
+                            NumberHasBinaryDigits().Bind("digits"))));
+  return matcher;
+}
+
 void UndersizedBinaryLiteralRule::HandleSymbol(
     const verible::Symbol& symbol, const SyntaxTreeContext& context) {
   verible::matcher::BoundSymbolManager manager;
-  if (number_matcher_.Matches(symbol, &manager)) {
+  if (NumberMatcher().Matches(symbol, &manager)) {
     if (auto width_leaf = manager.GetAs<SyntaxTreeLeaf>("width")) {
       if (auto base_leaf = manager.GetAs<SyntaxTreeLeaf>("base")) {
         if (auto digits_leaf = manager.GetAs<SyntaxTreeLeaf>("digits")) {

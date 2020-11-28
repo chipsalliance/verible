@@ -28,6 +28,7 @@
 #include "common/text/text_structure.h"
 #include "common/text/token_info.h"
 #include "common/util/logging.h"
+#include "verilog/CST/match_test_utils.h"
 #include "verilog/analysis/verilog_analyzer.h"
 
 #undef ASSERT_OK
@@ -37,12 +38,13 @@ namespace verilog {
 namespace {
 
 using verible::SyntaxTreeSearchTestCase;
+using verible::TextStructureView;
 using verible::TreeSearchMatch;
 
 // Finds all qualified ids are found.
 TEST(IdIsQualifiedTest, VariousIds) {
   // Each test should have only 1 id, qualified or unqualified
-  const std::pair<std::string, int> kTestCases[] = {
+  constexpr std::pair<absl::string_view, int> kTestCases[] = {
       {"function foo(); endfunction", 0 /* foo */},
       {"function myclass::foo(); endfunction", 1 /* myclass::foo */},
       {"task goo(); endtask", 0 /* goo */},
@@ -52,14 +54,14 @@ TEST(IdIsQualifiedTest, VariousIds) {
     VerilogAnalyzer analyzer(test.first, "");
     ASSERT_OK(analyzer.Analyze());
     const auto& root = analyzer.Data().SyntaxTree();
-    auto q_ids = FindAllQualifiedIds(*root);
+    const auto q_ids = FindAllQualifiedIds(*root);
     ASSERT_EQ(q_ids.size(), test.second);
     if (!q_ids.empty()) {
       for (const auto& id : q_ids) {
         EXPECT_TRUE(IdIsQualified(*id.match));
       }
     } else {
-      auto u_ids = FindAllUnqualifiedIds(*root);
+      const auto u_ids = FindAllUnqualifiedIds(*root);
       for (const auto& id : u_ids) {
         EXPECT_FALSE(IdIsQualified(*id.match));
       }
@@ -69,42 +71,62 @@ TEST(IdIsQualifiedTest, VariousIds) {
 
 // Tests that all expected unqualified ids are found.
 TEST(GetIdentifierTest, UnqualifiedIds) {
-  const std::pair<std::string, std::vector<absl::string_view>> kTestCases[] = {
-      {"function foo(); endfunction", {"foo"}},
-      {"function void foo(); endfunction", {"foo"}},
-      {"function type_t foo(); endfunction", {"type_t", "foo"}},
-      {"function automatic bar(); endfunction", {"bar"}},
-      {"function static baz(); endfunction", {"baz"}},
-      {"package p; function foo(); endfunction endpackage", {"foo"}},
-      {"class c; function zoo(); endfunction endclass", {"zoo"}},
-      {"function myclass::foo(); endfunction", {"myclass", "foo"}},
-      {"task goo(); endtask", {"goo"}},
-      {"task fff::goo(); endtask", {"fff", "goo"}},
-      {"function foo1(); endfunction function foo2(); endfunction",
-       {"foo1", "foo2"}},
+  constexpr int kTag = 1;  // value doesn't matter
+  const SyntaxTreeSearchTestCase kTestCases[] = {
+      {"function ", {kTag, "foo"}, "(); endfunction"},
+      {"function void ", {kTag, "foo"}, "(); endfunction"},
+      {"function ", {kTag, "type_t"}, " ", {kTag, "foo"}, "(); endfunction"},
+      {"function automatic ", {kTag, "bar"}, "(); endfunction"},
+      {"function static ", {kTag, "baz"}, "(); endfunction"},
+      {"package p; function ", {kTag, "foo"}, "(); endfunction endpackage"},
+      {"class c; function ", {kTag, "zoo"}, "(); endfunction endclass"},
+      {"function ", {kTag, "myclass"}, "::", {kTag, "foo"}, "(); endfunction"},
+      {"task ", {kTag, "goo"}, "(); endtask"},
+      {"task ", {kTag, "fff"}, "::", {kTag, "goo"}, "(); endtask"},
+      {"function ",
+       {kTag, "foo1"},
+       "(); endfunction function ",
+       {kTag, "foo2"},
+       "(); endfunction"},
+      {"int ", {kTag, "t"}, ";"},  // symbol identifier
+      {"int", {kTag, "`t"}, ";"},  // macro identifier
+      {"wire branch;"},            // branch is an AMS keyword
+      {{kTag, "tree"}, " ", {kTag, "bark"}, ";"},
+      {{kTag, "p_pkg"}, "::", {kTag, "tree"}, " ", {kTag, "bark"}, ";"},
+      {{kTag, "p_pkg"}, "::", {kTag, "tree"}, "#(11) ", {kTag, "bark"}, ";"},
   };
-  for (const auto test : kTestCases) {
-    VerilogAnalyzer analyzer(test.first, "");
-    ASSERT_OK(analyzer.Analyze());
-    const auto& root = analyzer.Data().SyntaxTree();
-    const auto ids = FindAllUnqualifiedIds(*root);
-    {
-      std::vector<absl::string_view> got_ids;
-      for (const auto& id : ids) {
-        const verible::SyntaxTreeLeaf* base = GetIdentifier(*id.match);
-        got_ids.push_back(ABSL_DIE_IF_NULL(base)->get().text());
-      }
-      EXPECT_EQ(got_ids, test.second);
-    }
-    {
-      std::vector<absl::string_view> got_ids;
-      for (const auto& id : ids) {
-        const verible::SyntaxTreeLeaf* base = AutoUnwrapIdentifier(*id.match);
-        got_ids.push_back(ABSL_DIE_IF_NULL(base)->get().text());
-        EXPECT_EQ(AutoUnwrapIdentifier(*base), base);  // check convergence
-      }
-      EXPECT_EQ(got_ids, test.second);
-    }
+  // Test GetIdentifier
+  for (const auto& test : kTestCases) {
+    VLOG(1) << "[GetIdentifier] code:\n" << test.code;
+    TestVerilogSyntaxRangeMatches(
+        __FUNCTION__, test, [](const TextStructureView& text_structure) {
+          const auto& root = text_structure.SyntaxTree();
+          const auto ids = FindAllUnqualifiedIds(*root);
+          std::vector<verible::TreeSearchMatch> got_ids;
+          for (const auto& id : ids) {
+            const verible::SyntaxTreeLeaf* base = GetIdentifier(*id.match);
+            got_ids.push_back(TreeSearchMatch{base, /* ignored context */});
+          }
+          return got_ids;
+        });
+  }
+  // Test AutoUnwrapIdentifier
+  for (const auto& test : kTestCases) {
+    VLOG(1) << "[AutoUnwrapIdentifier] code:\n" << test.code;
+    TestVerilogSyntaxRangeMatches(
+        __FUNCTION__, test, [](const TextStructureView& text_structure) {
+          const auto& root = text_structure.SyntaxTree();
+          const auto ids = FindAllUnqualifiedIds(*root);
+          std::vector<verible::TreeSearchMatch> got_ids;
+          for (const auto& id : ids) {
+            const verible::SyntaxTreeLeaf* base =
+                AutoUnwrapIdentifier(*id.match);
+            if (base == nullptr) continue;
+            got_ids.push_back(TreeSearchMatch{base, /* ignored context */});
+            EXPECT_EQ(AutoUnwrapIdentifier(*base), base);  // check convergence
+          }
+          return got_ids;
+        });
   }
 }
 
@@ -137,28 +159,22 @@ TEST(GetIdentifierTest, IdentifierUnpackedDimensions) {
        ";\nendmodule"},
   };
   for (const auto& test : kTestCases) {
-    const absl::string_view code(test.code);
-    VerilogAnalyzer analyzer(code, "test-file");
-    const auto code_copy = analyzer.Data().Contents();
-    ASSERT_OK(analyzer.Analyze()) << "failed on:\n" << code;
-    const auto& root = analyzer.Data().SyntaxTree();
+    TestVerilogSyntaxRangeMatches(
+        __FUNCTION__, test, [](const TextStructureView& text_structure) {
+          const auto& root = text_structure.SyntaxTree();
+          const auto decls =
+              FindAllIdentifierUnpackedDimensions(*ABSL_DIE_IF_NULL(root));
 
-    const auto decls =
-        FindAllIdentifierUnpackedDimensions(*ABSL_DIE_IF_NULL(root));
-
-    std::vector<TreeSearchMatch> identifiers;
-    for (const auto& decl : decls) {
-      const auto* identifier =
-          GetSymbolIdentifierFromIdentifierUnpackedDimensions(*decl.match);
-      identifiers.push_back(
-          TreeSearchMatch{identifier, {/* ignored context */}});
-    }
-
-    std::ostringstream diffs;
-    EXPECT_TRUE(test.ExactMatchFindings(identifiers, code_copy, &diffs))
-        << "failed on:\n"
-        << code << "\ndiffs:\n"
-        << diffs.str();
+          std::vector<TreeSearchMatch> identifiers;
+          for (const auto& decl : decls) {
+            const auto* identifier =
+                GetSymbolIdentifierFromIdentifierUnpackedDimensions(
+                    *decl.match);
+            identifiers.push_back(
+                TreeSearchMatch{identifier, {/* ignored context */}});
+          }
+          return identifiers;
+        });
   }
 }
 

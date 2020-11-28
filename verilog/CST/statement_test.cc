@@ -500,31 +500,26 @@ TEST(GetAnyControlStatementBodyTest, Various) {
         "endtask\n"}},
   };
   for (const auto& test : kTestCases) {
-    const absl::string_view code(test.token_data.code);
-    VerilogAnalyzer analyzer(code, "test-file");
-    const auto code_copy = analyzer.Data().Contents();
-    ASSERT_OK(analyzer.Analyze()) << "failed on:\n" << code;
-    const auto& root = analyzer.Data().SyntaxTree();
+    TestVerilogSyntaxRangeMatches(
+        __FUNCTION__, test.token_data,
+        [&test](const TextStructureView& text_structure) {
+          const auto& root = text_structure.SyntaxTree();
 
-    // Grab outer statement constructs.
-    const auto statements = verible::SearchSyntaxTree(
-        *ABSL_DIE_IF_NULL(root),
-        verible::matcher::DynamicTagMatchBuilder(SymbolTag{
-            SymbolKind::kNode, static_cast<int>(test.expected_construct)})());
+          // Grab outer statement constructs.
+          const auto statements = verible::SearchSyntaxTree(
+              *ABSL_DIE_IF_NULL(root),
+              verible::matcher::DynamicTagMatchBuilder(
+                  SymbolTag{SymbolKind::kNode,
+                            static_cast<int>(test.expected_construct)})());
 
-    // Extract subtree of interest.
-    std::vector<TreeSearchMatch> bodies;
-    for (const auto& statement : statements) {
-      const auto* body = GetAnyControlStatementBody(*statement.match);
-      bodies.push_back(TreeSearchMatch{body, {/* ignored context */}});
-    }
-
-    // Compare sets of text ranges.
-    std::ostringstream diffs;
-    EXPECT_TRUE(test.token_data.ExactMatchFindings(bodies, code_copy, &diffs))
-        << "failed on:\n"
-        << code << "\ndiffs:\n"
-        << diffs.str();
+          // Extract subtree of interest.
+          std::vector<TreeSearchMatch> bodies;
+          for (const auto& statement : statements) {
+            const auto* body = GetAnyControlStatementBody(*statement.match);
+            bodies.push_back(TreeSearchMatch{body, {/* ignored context */}});
+          }
+          return bodies;
+        });
   }
 }
 
@@ -726,31 +721,26 @@ TEST(GetAnyConditionalIfClauseTest, Various) {
         "endtask\n"}},
   };
   for (const auto& test : kTestCases) {
-    const absl::string_view code(test.token_data.code);
-    VerilogAnalyzer analyzer(code, "test-file");
-    const auto code_copy = analyzer.Data().Contents();
-    ASSERT_OK(analyzer.Analyze()) << "failed on:\n" << code;
-    const auto& root = analyzer.Data().SyntaxTree();
+    TestVerilogSyntaxRangeMatches(
+        __FUNCTION__, test.token_data,
+        [&test](const TextStructureView& text_structure) {
+          const auto& root = text_structure.SyntaxTree();
 
-    // Grab outer statement constructs.
-    const auto statements = verible::SearchSyntaxTree(
-        *ABSL_DIE_IF_NULL(root),
-        verible::matcher::DynamicTagMatchBuilder(SymbolTag{
-            SymbolKind::kNode, static_cast<int>(test.expected_construct)})());
+          // Grab outer statement constructs.
+          const auto statements = verible::SearchSyntaxTree(
+              *ABSL_DIE_IF_NULL(root),
+              verible::matcher::DynamicTagMatchBuilder(
+                  SymbolTag{SymbolKind::kNode,
+                            static_cast<int>(test.expected_construct)})());
 
-    // Extract subtree of interest.
-    std::vector<TreeSearchMatch> bodies;
-    for (const auto& statement : statements) {
-      const auto* clause = GetAnyConditionalIfClause(*statement.match);
-      bodies.push_back(TreeSearchMatch{clause, {/* ignored context */}});
-    }
-
-    // Compare sets of text ranges.
-    std::ostringstream diffs;
-    EXPECT_TRUE(test.token_data.ExactMatchFindings(bodies, code_copy, &diffs))
-        << "failed on:\n"
-        << code << "\ndiffs:\n"
-        << diffs.str();
+          // Extract subtree of interest.
+          std::vector<TreeSearchMatch> bodies;
+          for (const auto& statement : statements) {
+            const auto* clause = GetAnyConditionalIfClause(*statement.match);
+            bodies.push_back(TreeSearchMatch{clause, {/* ignored context */}});
+          }
+          return bodies;
+        });
   }
 }
 
@@ -1132,31 +1122,26 @@ TEST(GetAnyConditionalElseClauseTest, HaveElseClause) {
         "endtask\n"}},
   };
   for (const auto& test : kTestCases) {
-    const absl::string_view code(test.token_data.code);
-    VerilogAnalyzer analyzer(code, "test-file");
-    const auto code_copy = analyzer.Data().Contents();
-    ASSERT_OK(analyzer.Analyze()) << "failed on:\n" << code;
-    const auto& root = analyzer.Data().SyntaxTree();
+    TestVerilogSyntaxRangeMatches(
+        __FUNCTION__, test.token_data,
+        [&test](const TextStructureView& text_structure) {
+          const auto& root = text_structure.SyntaxTree();
 
-    // Grab outer statement constructs.
-    const auto statements = verible::SearchSyntaxTree(
-        *ABSL_DIE_IF_NULL(root),
-        verible::matcher::DynamicTagMatchBuilder(SymbolTag{
-            SymbolKind::kNode, static_cast<int>(test.expected_construct)})());
+          // Grab outer statement constructs.
+          const auto statements = verible::SearchSyntaxTree(
+              *ABSL_DIE_IF_NULL(root),
+              verible::matcher::DynamicTagMatchBuilder(
+                  SymbolTag{SymbolKind::kNode,
+                            static_cast<int>(test.expected_construct)})());
 
-    // Extract subtree of interest.
-    std::vector<TreeSearchMatch> bodies;
-    for (const auto& statement : statements) {
-      const auto* clause = GetAnyConditionalElseClause(*statement.match);
-      bodies.push_back(TreeSearchMatch{clause, {/* ignored context */}});
-    }
-
-    // Compare sets of text ranges.
-    std::ostringstream diffs;
-    EXPECT_TRUE(test.token_data.ExactMatchFindings(bodies, code_copy, &diffs))
-        << "failed on:\n"
-        << code << "\ndiffs:\n"
-        << diffs.str();
+          // Extract subtree of interest.
+          std::vector<TreeSearchMatch> bodies;
+          for (const auto& statement : statements) {
+            const auto* clause = GetAnyConditionalElseClause(*statement.match);
+            bodies.push_back(TreeSearchMatch{clause, {/* ignored context */}});
+          }
+          return bodies;
+        });
   }
 }
 

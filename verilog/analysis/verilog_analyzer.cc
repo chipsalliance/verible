@@ -166,7 +166,7 @@ std::unique_ptr<VerilogAnalyzer> VerilogAnalyzer::AnalyzeAutomaticMode(
       const absl::string_view retry_parse_mode =
           FailingTokenKeywordToParsingMode(
               verilog_tokentype(first_reject.token_info.token_enum()));
-      VLOG(1) << "Retrying parsing in mode: " << retry_parse_mode;
+      VLOG(1) << "Retrying parsing in mode: \"" << retry_parse_mode << "\".";
       if (!retry_parse_mode.empty()) {
         auto retry_analyzer =
             AnalyzeVerilogWithMode(text, name, retry_parse_mode);

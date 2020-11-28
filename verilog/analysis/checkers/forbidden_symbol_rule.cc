@@ -29,6 +29,7 @@
 #include "common/text/syntax_tree_context.h"
 #include "common/text/token_info.h"
 #include "common/util/container_util.h"
+#include "verilog/CST/verilog_matchers.h"
 #include "verilog/analysis/descriptions.h"
 #include "verilog/analysis/lint_rule_registry.h"
 
@@ -37,6 +38,7 @@ namespace analysis {
 
 using verible::GetVerificationCitation;
 using verible::container::FindWithDefault;
+using verible::matcher::Matcher;
 
 // Register ForbiddenSystemTaskFunctionRule
 VERILOG_REGISTER_LINT_RULE(ForbiddenSystemTaskFunctionRule);
@@ -57,6 +59,11 @@ std::string ForbiddenSystemTaskFunctionRule::GetDescription(
       Codify("$dist_*", description_type), ". ", "Also non-LRM function ",
       Codify("$srandom", description_type), ". See ",
       GetVerificationCitation(kTopic), ".");
+}
+
+static const Matcher& IdMatcher() {
+  static const Matcher matcher(SystemTFIdentifierLeaf().Bind("name"));
+  return matcher;
 }
 
 // Set of invalid functions and suggested replacements
@@ -81,7 +88,7 @@ ForbiddenSystemTaskFunctionRule::InvalidSymbolsMap() {
 void ForbiddenSystemTaskFunctionRule::HandleSymbol(
     const verible::Symbol& symbol, const verible::SyntaxTreeContext& context) {
   verible::matcher::BoundSymbolManager manager;
-  if (matcher_.Matches(symbol, &manager)) {
+  if (IdMatcher().Matches(symbol, &manager)) {
     if (auto leaf = manager.GetAs<verible::SyntaxTreeLeaf>("name")) {
       const auto& ism = InvalidSymbolsMap();
       if (ism.find(std::string(leaf->get().text())) != ism.end()) {

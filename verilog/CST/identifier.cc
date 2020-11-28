@@ -26,6 +26,7 @@
 #include "common/util/casts.h"
 #include "common/util/logging.h"
 #include "verilog/CST/verilog_matchers.h"  // IWYU pragma: keep
+#include "verilog/parser/verilog_token_classifications.h"
 #include "verilog/parser/verilog_token_enum.h"
 
 namespace verilog {
@@ -74,8 +75,10 @@ const verible::SyntaxTreeLeaf* AutoUnwrapIdentifier(
   // kUnqualifiedId
   const auto t = symbol.Tag();
   if (t.kind == SymbolKind::kLeaf) {
-    CHECK_EQ(t.tag, verilog_tokentype::SymbolIdentifier);
-    return &verible::SymbolCastToLeaf(symbol);
+    if (IsIdentifierLike(verilog_tokentype(t.tag))) {
+      return &verible::SymbolCastToLeaf(symbol);
+    }
+    return nullptr;
   }
   CHECK_EQ(NodeEnum(t.tag), NodeEnum::kUnqualifiedId);
   return GetIdentifier(symbol);

@@ -94,6 +94,7 @@ void EndifCommentRule::HandleToken(const TokenInfo& token) {
       break;
     }
     case State::kExpectEndifComment: {
+      if (conditional_scopes_.empty()) break;  // unbalanced
       // Checking for comment immediately following `endif.
       // Matching comment must be on the same line as the `endif
       const absl::string_view expect = conditional_scopes_.top().text();

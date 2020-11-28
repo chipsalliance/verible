@@ -69,6 +69,8 @@ struct RejectedToken {
   std::string explanation;
 };
 
+std::ostream& operator<<(std::ostream&, const RejectedToken&);
+
 // FileAnalyzer holds the results of lexing and parsing.
 class FileAnalyzer : public TextStructure {
  public:

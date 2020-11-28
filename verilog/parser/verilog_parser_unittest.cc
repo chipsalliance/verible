@@ -101,6 +101,7 @@ static const ParserTestCaseArray kPreprocessorTests = {
     "`MACRO(` )\n",  // call arg contains a lexical error, but remains unlexed
     "`MACRO(`DEEPER(`))\n",  // call arg contains a lexical error, but remains
                              // unlexed
+    "`c(;d());\n"            // ";d()" remains unlexed
 };
 
 // Make sure line continuations, newlines and spaces get filtered out
@@ -875,6 +876,12 @@ static const ParserTestCaseArray kFunctionTests = {
     "`endif\n"
     "  a1 = b.x;\n"
     "endfunction",
+    "function net_type_decls;\n"
+    "  nettype shortreal analog_wire;\n"
+    "endfunction\n",
+    "function net_type_decls;\n"
+    "  nettype foo::bar[1:0] analog_wire with fire;\n"
+    "endfunction\n",
 };
 
 static const ParserTestCaseArray kTaskTests = {
@@ -1276,6 +1283,12 @@ static const ParserTestCaseArray kTaskTests = {
     "  z4.dfg[0] <= ##50 ww[1].xx;\n"
     "end\n"
     "endtask",
+    "task net_type_decls;\n"
+    "  nettype shortreal analog_wire;\n"
+    "endtask\n",
+    "task net_type_decls;\n"
+    "  nettype foo::bar[1:0] analog_wire with fire;\n"
+    "endtask\n",
 };
 
 static const ParserTestCaseArray kModuleTests = {
@@ -3713,6 +3726,15 @@ static const ParserTestCaseArray kPackageTests = {
     "package p;\n"
     "  virtual a_if b_if, d_if;\n"
     "endpackage : p\n",
+    "package p;\n"
+    "  uint [x:y] g = 2;\n"  // user-defined type, packed dimensions
+    "endpackage\n",
+    "package p;\n"
+    "  uint [x][y] g = 2;\n"  // user-defined type, packed dimensions
+    "endpackage\n",
+    "package p;\n"
+    "  uint [x:y] g[z] = 2;\n"  // user-defined type, packed+unpacked dimensions
+    "endpackage\n",
     // import directives
     "package foo;\n"
     "import $unit::skynet;\n"
@@ -3849,6 +3871,30 @@ static const ParserTestCaseArray kPackageTests = {
     "`endif\n"
     "  int router_size;\n"
     "endpackage",
+    // net_type_declarations
+    "nettype shortreal foo_wire;\n",
+    "nettype real foo_wire;\n",
+    "nettype real foo_wire with bar;\n",
+    "nettype real foo_wire with bar::baz;\n",
+    "nettype logic[3:0] foo_wire with bar;\n",
+    "package p;\n"
+    "  nettype real foo_wire;\n"
+    "endpackage\n",
+    "package p;\n"
+    "  nettype shortreal[2] foo_wire with fire;\n"
+    "endpackage\n",
+    "package p;\n"
+    "  nettype foo_pkg::bar_t baz_wire;\n"
+    "endpackage\n",
+    "package p;\n"
+    "  nettype foo#(x,y,z)::bar_t baz_wire;\n"
+    "endpackage\n",
+    "package p;\n"
+    "  nettype foo#(x,y,z)::bar_t[2:0] baz_wire;\n"
+    "endpackage\n",
+    "package p;\n"
+    "  nettype foo#(x,y,z)::bar_t baz_wire with quux;\n"
+    "endpackage\n",
 };
 
 static const ParserTestCaseArray kDescriptionTests = {
@@ -4345,6 +4391,15 @@ static const ParserTestCaseArray kModuleMemberTests = {
     "endmodule",
     "module cover_that;\n"
     "covergroup settings;\n"
+    "  _name : cross dbi, mask {\n"
+    "    function int foo(int bar);\n"  // function declaration
+    "      return bar;\n"
+    "    endfunction\n"
+    "  }\n"
+    "endgroup\n"
+    "endmodule",
+    "module cover_that;\n"
+    "covergroup settings;\n"
     "  coverpoint cfgpsr {\n"
     "    bins legal = {[0:12]};\n"
     "    illegal_bins illegal = {4,6};\n"
@@ -4532,6 +4587,22 @@ static const ParserTestCaseArray kClassMemberTests = {
     "  protected const var int counted = 1;\n"
     "  protected const myclass::msg_t null_msg = {1'b1, 1'b0};\n"
     "endclass",
+    "class c;\n"
+    "  uint [x:y] g = 2;\n"  // user-defined type, packed dimensions
+    "endclass\n",
+    "class c;\n"
+    "  uint [x][y] g = 2;\n"  // user-defined type, packed dimensions
+    "endclass\n",
+    "class c;\n"
+    "  uint [x:y] g[y:g] = 2;\n"  // user-defined type, packed+unpacked
+                                  // dimensions
+    "endclass\n",
+    "class c;\n"
+    "  foo_pkg::uint [x:y] g = 2;\n"  // user-defined type, packed dimensions
+    "endclass\n",
+    "class c;\n"
+    "  bar#(foo)::uint [x:y] g = 2;\n"  // user-defined type, packed dimensions
+    "endclass\n",
     // member functions
     "class myclass;\n"
     "function integer subroutine;\n"
@@ -4765,6 +4836,25 @@ static const ParserTestCaseArray kClassMemberTests = {
     "  solve x.z[2], f[1], g before q, r[4], y[3].x;\n"
     "}\n"
     "endclass",
+    // net_type_declarations
+    "class c;\n"
+    "  nettype real foo_wire;\n"
+    "endclass\n",
+    "class c;\n"
+    "  nettype shortreal[2] foo_wire with fire;\n"
+    "endclass\n",
+    "class c;\n"
+    "  nettype foo_pkg::bar_t baz_wire;\n"
+    "endclass\n",
+    "class c;\n"
+    "  nettype foo#(x,y,z)::bar_t baz_wire;\n"
+    "endclass\n",
+    "class c;\n"
+    "  nettype foo#(x,y,z)::bar_t[2:0] baz_wire;\n"
+    "endclass\n",
+    "class c;\n"
+    "  nettype foo#(x,y,z)::bar_t baz_wire with quux;\n"
+    "endclass\n",
 };
 
 static const ParserTestCaseArray kInterfaceClassTests = {
@@ -5746,10 +5836,40 @@ static const std::initializer_list<ParserTestData> kInvalidCodeTests = {
      " fn < a; fn++) begin\n"
      "end\n"
      "endtask\n"},
+    // unbalanced `endif
+    {{PP_endif, "`endif"}},
+    {{PP_endif, "`endif"}, "\n"},
     // The following tests are valid library map syntax (LRM Ch. 33),
     // but invalid for the rest of SystemVerilog:
     {{TK_library, "library"}, " foo bar;\n"},
     {{TK_include, "include"}, " foo/bar/*.v;\n"},
+    // fuzzer-discovered cases: (these may have crashed at one point in history)
+    {"`g((\\x\" `g(::\"\n"
+     "),",
+     {verible::TK_EOF, ""}},
+    // members may only be unqualified (unlike C++)
+    {"function int bad;\n"
+     "  return x.y",
+     {TK_SCOPE_RES, "::"},
+     "z;\n"
+     "endfunction\n"},
+    {{TK_endprimitive, "endprimitive"}},
+    {"//www\n", {TK_endprimitive, "endprimitive"}},
+    {"module m;\n"
+     "  foo()",
+     {';', ";"},
+     "\n"
+     "endmodule\n"},
+    {"module m;\n"
+     "  if ((",
+     {')', ")"},  // empty paren is invalid expression
+     "foo());"
+     "\n"
+     "endmodule\n"},
+    {"[i()",  // unexpected EOF
+     {verible::TK_EOF, ""}},
+    {"[i()'",  // unexpected EOF
+     {verible::TK_EOF, ""}},
 };
 
 using verible::LeafTag;
@@ -5890,6 +6010,87 @@ static const verible::ErrorRecoveryTestCase kErrorRecoveryTests[] = {
      "endclass\n",
      {NodeTag(kClassDeclaration), NodeTag(kClassHeader),
       LeafTag(SymbolIdentifier)}},
+    {"task t;\n"
+     "if (;c());\n"  // error on the first ';'
+     "endtask\n",
+     {NodeTag(kTaskDeclaration), NodeTag(kStatementList),
+      NodeTag(kConditionalStatement), NodeTag(kIfClause), NodeTag(kIfHeader)}},
+    {"module m;\n"
+     "if (a+);\n"
+     "endmodule\n",
+     {NodeTag(kModuleDeclaration), NodeTag(kModuleItemList),
+      NodeTag(kConditionalGenerateConstruct), NodeTag(kGenerateIfClause),
+      NodeTag(kGenerateIfHeader)}},
+    {"class c;\n"
+     "  `BAD function new();\n"  // real problem here is the macro,
+     // but 'function' keyword gets rejected because it is only then that
+     // there is conclusively an error.
+     // From error-recovery, this entire function/constructor declaration will
+     // be dropped.
+     "  endfunction\n"
+     // recovered from here onward
+     "  int count;\n"  // this data declaration will be recovered and saved
+     "endclass\n",
+     {NodeTag(kClassDeclaration), NodeTag(kClassItems),
+      NodeTag(kDataDeclaration)}},
+    {"class c;\n"
+     "  `BAD task rabbit();\n"  // real problem here is the macro,
+     // but 'task' keyword gets rejected because it is only then that
+     // there is conclusively an error.
+     // From error-recovery, this entire function/constructor declaration will
+     // be dropped.
+     "  endtask\n"
+     // recovered from here onward
+     "  int count;\n"  // this data declaration will be recovered and saved
+     "endclass\n",
+     {NodeTag(kClassDeclaration), NodeTag(kClassItems),
+      NodeTag(kDataDeclaration)}},
+    {"class c;\n"
+     "  `BAD task rabbit();\n"  // real problem here is the macro
+     "  endtask\n"
+     // recovered from here onward
+     "    static function bit r();\n"
+     "    if (m == null) m = new();\n"
+     "    uvm_resource#(T)::m_set_converter(m_singleton);\n"
+     "  endfunction\n"
+     "endclass\n",
+     {NodeTag(kClassDeclaration), NodeTag(kClassItems),
+      NodeTag(kFunctionDeclaration), NodeTag(kBlockItemStatementList),
+      NodeTag(kConditionalStatement), NodeTag(kIfClause)}},
+    {"class c;\n"
+     "  `BAD covergroup cg;\n"  // real problem here is the macro
+     "  endgroup\n"             // this covergroup will be lost
+     // recovered from here onward
+     "  int count;\n"  // this data declaration will be recovered and saved
+     "endclass\n",
+     {NodeTag(kClassDeclaration), NodeTag(kClassItems),
+      NodeTag(kDataDeclaration)}},
+    {"class c;\n"
+     "  covergroup cg;\n"
+     "    cp: coverpoint foo.bar {\n"
+     "      123;\n"  // syntax error here
+     // recovered from here onward
+     "    }\n"
+     "  endgroup\n"
+     "endclass\n",
+     {NodeTag(kClassDeclaration), NodeTag(kClassItems),
+      NodeTag(kCovergroupDeclaration)}},
+    {"class c;\n"
+     "  covergroup cg;\n"
+     "    cp: coverpoint foo.bar {\n"
+     "      --\n"  // syntax error here
+     // recovered from here onward
+     "    }\n"
+     "  endgroup\n"
+     "endclass\n",
+     {NodeTag(kClassDeclaration), NodeTag(kClassItems),
+      NodeTag(kCovergroupDeclaration)}},
+    {"module m;\n"
+     "  foo();\n"  // invalid syntax, recover from here
+     "  wire w;\n"
+     "endmodule\n",
+     {NodeTag(kModuleDeclaration), NodeTag(kModuleItemList),
+      NodeTag(kNetDeclaration)}},
 };
 #undef NodeTag
 

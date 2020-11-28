@@ -24,8 +24,10 @@
 #include "common/analysis/syntax_tree_search.h"
 #include "common/analysis/syntax_tree_search_test_utils.h"
 #include "common/text/text_structure.h"
+#include "common/text/tree_utils.h"
 #include "common/util/logging.h"
 #include "verilog/CST/context_functions.h"
+#include "verilog/CST/declaration.h"
 #include "verilog/CST/match_test_utils.h"
 #include "verilog/analysis/verilog_analyzer.h"
 
@@ -43,7 +45,7 @@ using verible::TreeSearchMatch;
 
 // Tests that the correct amount of node kDataType declarations are found.
 TEST(FindAllDataTypeDeclarationsTest, BasicTests) {
-  const std::pair<std::string, int> kTestCases[] = {
+  constexpr std::pair<absl::string_view, int> kTestCases[] = {
       {"", 0},
       {"class foo; endclass", 0},
       {"function foo; endfunction", 1},
@@ -71,199 +73,139 @@ TEST(FindAllDataTypeDeclarationsTest, BasicTests) {
 // Tests that the correct amount of kTypeDeclaration nodes
 // are found.
 TEST(FindAllTypeDeclarationsTest, BasicTests) {
-  const std::pair<std::string, int> kTestCases[] = {
-      {"", 0},
-      {"typedef union { int a; bit [8:0] b; } name;", 1},
-      {"typedef struct { int a; bit [8:0] b; } name;", 1},
-      {"typedef enum { Idle, Busy } name;", 1},
-      {"typedef union { int a; bit [8:0] b; } name; "
-       "typedef struct { int a; bit [8:0] b; } a_name; "
-       "typedef enum { Idle, Busy } another_name;",
-       3},
+  constexpr int kTag = 1;  // don't care
+  const SyntaxTreeSearchTestCase kTestCases[] = {
+      {""},
+      {{kTag, "typedef union { int a; bit [8:0] b; } name;"}},
+      {{kTag, "typedef struct { int a; bit [8:0] b; } name;"}},
+      {{kTag, "typedef enum { Idle, Busy } name;"}},
+      {
+          {kTag, "typedef union { int a; bit [8:0] b; } name;"},
+          " ",
+          {kTag, "typedef struct { int a; bit [8:0] b; } a_name;"},
+          " ",
+          {kTag, "typedef enum { Idle, Busy } another_name;"},
+      },
   };
   for (const auto& test : kTestCases) {
-    VerilogAnalyzer analyzer(test.first, "");
-    ASSERT_OK(analyzer.Analyze());
-    const auto& root = analyzer.Data().SyntaxTree();
-    const auto type_declarations =
-        FindAllTypeDeclarations(*ABSL_DIE_IF_NULL(root));
-    EXPECT_EQ(type_declarations.size(), test.second);
+    TestVerilogSyntaxRangeMatches(
+        __FUNCTION__, test, [](const TextStructureView& text_structure) {
+          const auto& root = text_structure.SyntaxTree();
+          return FindAllTypeDeclarations(*ABSL_DIE_IF_NULL(root));
+        });
   }
-}
-
-// Tests that no enums are found in an empty source.
-TEST(FindAllEnumTypesTest, EmptySource) {
-  VerilogAnalyzer analyzer("", "");
-  ASSERT_OK(analyzer.Analyze());
-  const auto& root = analyzer.Data().SyntaxTree();
-  const auto enum_declarations = FindAllEnumTypes(*ABSL_DIE_IF_NULL(root));
-  EXPECT_TRUE(enum_declarations.empty());
-}
-
-// Tests that no enums are found in a struct declaration
-TEST(FindAllEnumTypesTest, EnumSource) {
-  VerilogAnalyzer analyzer("typedef struct { int a; bit [8:0] flags; } name;",
-                           "");
-  ASSERT_OK(analyzer.Analyze());
-  const auto& root = analyzer.Data().SyntaxTree();
-  const auto enum_declarations = FindAllEnumTypes(*ABSL_DIE_IF_NULL(root));
-  EXPECT_TRUE(enum_declarations.empty());
-}
-
-// Tests that no enums are found in a union declaration
-TEST(FindAllEnumTypesTest, StructSource) {
-  VerilogAnalyzer analyzer("typedef union { int a; bit [8:0] flags; } name;",
-                           "");
-  ASSERT_OK(analyzer.Analyze());
-  const auto& root = analyzer.Data().SyntaxTree();
-  const auto enum_declarations = FindAllEnumTypes(*ABSL_DIE_IF_NULL(root));
-  EXPECT_TRUE(enum_declarations.empty());
 }
 
 // Tests that the correct amount of node kEnumType declarations
 // are found.
 TEST(FindAllEnumTypesTest, BasicTests) {
-  const std::pair<std::string, int> kTestCases[] = {
-      {"", 0},
-      {"typedef enum { Red, Green, Blue } name;", 1},
-      {"typedef enum { Red, Green, Blue } name; "
-       "typedef enum { Yellow, Orange, Violet } other_name;",
-       2},
-      {"typedef enum { Idle, Busy } name; "
-       "typedef struct { int c; bit [8:0] d; } other_name;",
-       1},
+  constexpr int kTag = 1;  // don't care
+  const SyntaxTreeSearchTestCase kTestCases[] = {
+      {""},
+      {"typedef struct { int a; bit [8:0] flags; } name;"},
+      {"typedef union { int a; bit [8:0] flags; } name;"},
+      {"typedef ", {kTag, "enum { Red, Green, Blue }"}, " name;"},
+      {"typedef ",
+       {kTag, "enum { Red, Green, Blue }"},
+       " name; "
+       "typedef ",
+       {kTag, "enum { Yellow, Orange, Violet }"},
+       " other_name;"},
+      {"typedef ",
+       {kTag, "enum { Idle, Busy }"},
+       " name; "
+       "typedef struct { int c; bit [8:0] d; } other_name;"},
       {"typedef union { int a; bit [8:0] b; } name; "
-       "typedef enum { Oak, Larch } other_name;",
-       1},
+       "typedef ",
+       {kTag, "enum { Oak, Larch }"},
+       " other_name;"},
       {"typedef struct { int a; bit [8:0] b; } name; "
        "typedef union { int c; bit [8:0] d; } other_name; "
-       "typedef enum { Idle, Busy } another_name;",
-       1},
+       "typedef ",
+       {kTag, "enum { Idle, Busy }"},
+       " another_name;"},
   };
   for (const auto& test : kTestCases) {
-    VerilogAnalyzer analyzer(test.first, "");
-    ASSERT_OK(analyzer.Analyze());
-    const auto& root = analyzer.Data().SyntaxTree();
-    const auto enum_data_type_declarations =
-        FindAllEnumTypes(*ABSL_DIE_IF_NULL(root));
-    EXPECT_EQ(enum_data_type_declarations.size(), test.second);
+    TestVerilogSyntaxRangeMatches(
+        __FUNCTION__, test, [](const TextStructureView& text_structure) {
+          const auto& root = text_structure.SyntaxTree();
+          return FindAllEnumTypes(*ABSL_DIE_IF_NULL(root));
+        });
   }
-}
-
-// Tests that no structs are found from an empty source.
-TEST(FindAllStructTypesTest, EmptySource) {
-  VerilogAnalyzer analyzer("", "");
-  ASSERT_OK(analyzer.Analyze());
-  const auto& root = analyzer.Data().SyntaxTree();
-  const auto struct_declarations = FindAllStructTypes(*ABSL_DIE_IF_NULL(root));
-  EXPECT_TRUE(struct_declarations.empty());
-}
-
-// Tests that no structs are found in an enum declaration
-TEST(FindAllStructTypesTest, EnumSource) {
-  VerilogAnalyzer analyzer("typedef enum { aVal, bVal } name;", "");
-  ASSERT_OK(analyzer.Analyze());
-  const auto& root = analyzer.Data().SyntaxTree();
-  const auto struct_declarations = FindAllStructTypes(*ABSL_DIE_IF_NULL(root));
-  EXPECT_TRUE(struct_declarations.empty());
-}
-
-// Tests that no structs are found in a union declaration
-TEST(FindAllStructTypesTest, UnionSource) {
-  VerilogAnalyzer analyzer("typedef union { int a; bit [8:0] flags; } name;",
-                           "");
-  ASSERT_OK(analyzer.Analyze());
-  const auto& root = analyzer.Data().SyntaxTree();
-  const auto struct_declarations = FindAllStructTypes(*ABSL_DIE_IF_NULL(root));
-  EXPECT_TRUE(struct_declarations.empty());
 }
 
 // Tests that the correct amount of node kStructType declarations
 // are found.
 TEST(FindAllStructTypesTest, BasicTests) {
-  const std::pair<std::string, int> kTestCases[] = {
-      {"", 0},
-      {"typedef struct { int a; bit [8:0] b; } name;", 1},
-      {"typedef struct { int a; bit [8:0] b; } name; "
-       "typedef struct { int c; bit [8:0] d; } other_name;",
-       2},
+  constexpr int kTag = 1;  // don't care
+  const SyntaxTreeSearchTestCase kTestCases[] = {
+      {""},
+      {"typedef enum { aVal, bVal } name;"},
+      {"typedef union { int a; bit [8:0] flags; } name;"},
+      {"typedef ", {kTag, "struct { int a; bit [8:0] b; }"}, " name;"},
+      {"typedef ",
+       {kTag, "struct { int a; bit [8:0] b; }"},
+       " name; "
+       "typedef ",
+       {kTag, "struct { int c; bit [8:0] d; }"},
+       " other_name;"},
       {"typedef union { int a; bit [8:0] b; } name; "
-       "typedef struct { int c; bit [8:0] d; } other_name;",
-       1},
+       "typedef ",
+       {kTag, "struct { int c; bit [8:0] d; }"},
+       " other_name;"},
       {"typedef union { int a; bit [8:0] b; } name; "
-       "typedef struct { int c; bit [8:0] d; } other_name; "
-       "typedef enum { Idle, Busy } another_name;",
-       1},
+       "typedef ",
+       {kTag, "struct { int c; bit [8:0] d; }"},
+       " other_name; "
+       "typedef enum { Idle, Busy } another_name;"},
   };
   for (const auto& test : kTestCases) {
-    VerilogAnalyzer analyzer(test.first, "");
-    ASSERT_OK(analyzer.Analyze());
-    const auto& root = analyzer.Data().SyntaxTree();
-    const auto struct_data_type_declarations =
-        FindAllStructTypes(*ABSL_DIE_IF_NULL(root));
-    EXPECT_EQ(struct_data_type_declarations.size(), test.second);
+    TestVerilogSyntaxRangeMatches(
+        __FUNCTION__, test, [](const TextStructureView& text_structure) {
+          const auto& root = text_structure.SyntaxTree();
+          return FindAllStructTypes(*ABSL_DIE_IF_NULL(root));
+        });
   }
-}
-
-// Tests that no unions are found from an empty source.
-TEST(FindAllUnionTypesTest, EmptySource) {
-  VerilogAnalyzer analyzer("", "");
-  ASSERT_OK(analyzer.Analyze());
-  const auto& root = analyzer.Data().SyntaxTree();
-  const auto union_declarations = FindAllUnionTypes(*ABSL_DIE_IF_NULL(root));
-  EXPECT_TRUE(union_declarations.empty());
-}
-
-// Tests that no unions are found in an enum declaration
-TEST(FindAllUnionTypesTest, EnumSource) {
-  VerilogAnalyzer analyzer("typedef enum { aVal, bVal } name;", "");
-  ASSERT_OK(analyzer.Analyze());
-  const auto& root = analyzer.Data().SyntaxTree();
-  const auto union_declarations = FindAllUnionTypes(*ABSL_DIE_IF_NULL(root));
-  EXPECT_TRUE(union_declarations.empty());
-}
-
-// Tests that no unions are found in a struct declaration
-TEST(FindAllUnionTypesTest, StructSource) {
-  VerilogAnalyzer analyzer("typedef struct { int a; bit [8:0] flags; } name;",
-                           "");
-  ASSERT_OK(analyzer.Analyze());
-  const auto& root = analyzer.Data().SyntaxTree();
-  const auto union_declarations = FindAllUnionTypes(*ABSL_DIE_IF_NULL(root));
-  EXPECT_TRUE(union_declarations.empty());
 }
 
 // Tests that the correct amount of node kUnionType declarations
 // are found.
 TEST(FindAllUnionTypesTest, BasicTests) {
-  const std::pair<std::string, int> kTestCases[] = {
-      {"", 0},
-      {"typedef union { int a; bit [8:0] b; } name;", 1},
-      {"typedef union { int a; bit [8:0] b; } name; "
-       "typedef union { int c; bit [8:0] d; } other_name;",
-       2},
-      {"typedef union { int a; bit [8:0] b; } name; "
-       "typedef struct { int c; bit [8:0] d; } other_name;",
-       1},
+  constexpr int kTag = 1;  // don't care
+  const SyntaxTreeSearchTestCase kTestCases[] = {
+      {""},
+      {"typedef enum { aVal, bVal } name;"},
+      {"typedef struct { int a; bit [8:0] flags; } name;"},
+      {"typedef ", {kTag, "union { int a; bit [8:0] b; }"}, " name;"},
+      {"typedef ",
+       {kTag, "union { int a; bit [8:0] b; }"},
+       " name; "
+       "typedef ",
+       {kTag, "union { int c; bit [8:0] d; }"},
+       " other_name;"},
+      {"typedef ",
+       {kTag, "union { int a; bit [8:0] b; }"},
+       " name; "
+       "typedef struct { int c; bit [8:0] d; } other_name;"},
       {"typedef struct { int a; bit [8:0] b; } name; "
-       "typedef union { int c; bit [8:0] d; } other_name; "
-       "typedef enum { Idle, Busy } another_name;",
-       1},
+       "typedef ",
+       {kTag, "union { int c; bit [8:0] d; }"},
+       " other_name; "
+       "typedef enum { Idle, Busy } another_name;"},
   };
   for (const auto& test : kTestCases) {
-    VerilogAnalyzer analyzer(test.first, "");
-    ASSERT_OK(analyzer.Analyze());
-    const auto& root = analyzer.Data().SyntaxTree();
-    const auto union_data_type_declarations =
-        FindAllUnionTypes(*ABSL_DIE_IF_NULL(root));
-    EXPECT_EQ(union_data_type_declarations.size(), test.second);
+    TestVerilogSyntaxRangeMatches(
+        __FUNCTION__, test, [](const TextStructureView& text_structure) {
+          const auto& root = text_structure.SyntaxTree();
+          return FindAllUnionTypes(*ABSL_DIE_IF_NULL(root));
+        });
   }
 }
 
 // Tests that IsStorageTypeOfDataTypeSpecified correctly returns true if the
 // node kDataType has declared a storage type.
 TEST(IsStorageTypeOfDataTypeSpecifiedTest, AcceptTests) {
-  const std::pair<std::string, int> kTestCases[] = {
+  constexpr std::pair<absl::string_view, int> kTestCases[] = {
       {"function foo(int bar); endfunction", 2},
       {"function foo(int foo, bit bar); endfunction", 3},
       {"function foo (bit [10:0] bar); endfunction", 2},
@@ -278,7 +220,9 @@ TEST(IsStorageTypeOfDataTypeSpecifiedTest, AcceptTests) {
     for (const auto& data_type : data_type_declarations) {
       // Only check the node kDataTypes within a node kPortList.
       if (analysis::ContextIsInsideTaskFunctionPortList(data_type.context)) {
-        EXPECT_TRUE(IsStorageTypeOfDataTypeSpecified(*(data_type.match)));
+        EXPECT_TRUE(IsStorageTypeOfDataTypeSpecified(*(data_type.match)))
+            << "Input code:\n"
+            << test.first;
       }
     }
   }
@@ -287,16 +231,16 @@ TEST(IsStorageTypeOfDataTypeSpecifiedTest, AcceptTests) {
 // Tests that IsStorageTypeOfDataTypeSpecified correctly returns false if the
 // node kDataType has not declared a storage type.
 TEST(IsStorageTypeOfDataTypeSpecifiedTest, RejectTests) {
-  const std::pair<std::string, int> kTestCases[] = {
-      {"function foo (bar); endfunction", 2},
-      {"function foo(foo, ref bar); endfunction", 3},
-      {"function foo(input foo, inout bar); endfunction", 3},
-      {"task foo(bar); endtask", 1},
-      {"task foo(foo, input bar); endtask", 2},
-      {"task foo(input foo, inout bar); endtask", 2},
+  constexpr absl::string_view kTestCases[] = {
+      {"function foo (bar); endfunction"},
+      {"function foo(foo, ref bar); endfunction"},
+      {"function foo(input foo, inout bar); endfunction"},
+      {"task foo(bar); endtask"},
+      {"task foo(foo, input bar); endtask"},
+      {"task foo(input foo, inout bar); endtask"},
   };
   for (const auto& test : kTestCases) {
-    VerilogAnalyzer analyzer(test.first, "");
+    VerilogAnalyzer analyzer(test, "");
     ASSERT_OK(analyzer.Analyze());
     const auto& root = analyzer.Data().SyntaxTree();
     const auto data_type_declarations = FindAllDataTypeDeclarations(*root);
@@ -309,43 +253,35 @@ TEST(IsStorageTypeOfDataTypeSpecifiedTest, RejectTests) {
   }
 }
 
-TEST(GetIdentifierFromTypeDeclarationTest, StructIdentifiers) {
-  const std::pair<std::string, absl::string_view> kTestCases[] = {
-      {"typedef struct { int a; bit [8:0] b; } bar;", "bar"},
-      {"typedef struct { int a; bit [8:0] b; } b_a_r;", "b_a_r"},
-      {"typedef struct { int a; bit [8:0] b; } hello_world;", "hello_world"},
-      {"typedef struct { int a; bit [8:0] b; } hello_world1;", "hello_world1"},
-      {"typedef struct { int a; bit [8:0] b; } bar2;", "bar2"},
-      {"typedef struct { int a; } name;", "name"},
+TEST(GetIdentifierFromTypeDeclarationTest, TypedefNames) {
+  constexpr int kTag = 1;  // don't care
+  const SyntaxTreeSearchTestCase kTestCases[] = {
+      {"typedef struct { int a; bit [8:0] b; } ", {kTag, "bar"}, ";"},
+      {"typedef struct { int a; bit [8:0] b; } ", {kTag, "b_a_r"}, ";"},
+      {"typedef struct { int a; bit [8:0] b; } ", {kTag, "hello_world"}, ";"},
+      {"typedef struct { int a; bit [8:0] b; } ", {kTag, "hello_world1"}, ";"},
+      {"typedef struct { int a; bit [8:0] b; } ", {kTag, "bar2"}, ";"},
+      {"typedef struct { int a; } ", {kTag, "name"}, ";"},
+      {"typedef union { int a; bit [8:0] b; } ", {kTag, "bar"}, ";"},
+      {"typedef union { int a; bit [8:0] b; } ", {kTag, "b_a_r"}, ";"},
+      {"typedef union { int a; bit [8:0] b; } ", {kTag, "hello_world"}, ";"},
+      {"typedef union { int a; bit [8:0] b; } ", {kTag, "hello_world1"}, ";"},
+      {"typedef union { int a; bit [8:0] b; } ", {kTag, "bar2"}, ";"},
+      {"typedef union { int a; } ", {kTag, "name"}, ";"},
   };
   for (const auto& test : kTestCases) {
-    VerilogAnalyzer analyzer(test.first, "");
-    ASSERT_OK(analyzer.Analyze());
-    const auto& root = analyzer.Data().SyntaxTree();
-    const auto type_declarations = FindAllTypeDeclarations(*root);
-    const auto* identifier_leaf =
-        GetIdentifierFromTypeDeclaration(*type_declarations.front().match);
-    EXPECT_EQ(identifier_leaf->get().text(), test.second);
-  }
-}
-
-TEST(GetIdentifierFromTypeDeclarationTest, UnionIdentifiers) {
-  const std::pair<std::string, absl::string_view> kTestCases[] = {
-      {"typedef union { int a; bit [8:0] b; } bar;", "bar"},
-      {"typedef union { int a; bit [8:0] b; } b_a_r;", "b_a_r"},
-      {"typedef union { int a; bit [8:0] b; } hello_world;", "hello_world"},
-      {"typedef union { int a; bit [8:0] b; } hello_world1;", "hello_world1"},
-      {"typedef union { int a; bit [8:0] b; } bar2;", "bar2"},
-      {"typedef union { int a; } name;", "name"},
-  };
-  for (const auto& test : kTestCases) {
-    VerilogAnalyzer analyzer(test.first, "");
-    ASSERT_OK(analyzer.Analyze());
-    const auto& root = analyzer.Data().SyntaxTree();
-    const auto type_declarations = FindAllTypeDeclarations(*root);
-    const auto* identifier_leaf =
-        GetIdentifierFromTypeDeclaration(*type_declarations.front().match);
-    EXPECT_EQ(identifier_leaf->get().text(), test.second);
+    TestVerilogSyntaxRangeMatches(
+        __FUNCTION__, test, [](const TextStructureView& text_structure) {
+          const auto& root = text_structure.SyntaxTree();
+          const auto type_declarations = FindAllTypeDeclarations(*root);
+          std::vector<TreeSearchMatch> ids;
+          for (const auto& decl : type_declarations) {
+            ids.push_back(TreeSearchMatch{
+                GetIdentifierFromTypeDeclaration(*decl.match),
+                /* no context */});
+          }
+          return ids;
+        });
   }
 }
 
@@ -389,20 +325,178 @@ TEST(GetVariableDeclaration, FindPackedDimensionFromDataDeclaration) {
       {"class c;\n class_type x;\nendclass"},
   };
   for (const auto& test : kTestCases) {
+    VLOG(1) << "code:\n" << test.code;
     TestVerilogSyntaxRangeMatches(
         __FUNCTION__, test, [](const TextStructureView& text_structure) {
           const auto& root = text_structure.SyntaxTree();
-          const auto& instances =
-              FindAllDataTypePrimitive(*ABSL_DIE_IF_NULL(root));
+          const auto& decls = FindAllDataDeclarations(*ABSL_DIE_IF_NULL(root));
 
           std::vector<TreeSearchMatch> packed_dimensions;
-          for (const auto& decl : instances) {
-            const auto& packed_dimension =
-                GetPackedDimensionFromDataType(*decl.match);
+          for (const auto& decl : decls) {
+            VLOG(1) << "decl: " << verible::StringSpanOfSymbol(*decl.match);
+            const auto* packed_dimension =
+                GetPackedDimensionFromDataDeclaration(*decl.match);
+            if (packed_dimension == nullptr) continue;
+            if (packed_dimension->children().empty()) continue;
             packed_dimensions.emplace_back(
-                TreeSearchMatch{&packed_dimension, {/* ignored context */}});
+                TreeSearchMatch{packed_dimension, {/* ignored context */}});
           }
           return packed_dimensions;
+        });
+  }
+}
+
+TEST(GetType, GetStructOrUnionOrEnumType) {
+  constexpr int kTag = 1;  // value doesn't matter
+  const SyntaxTreeSearchTestCase kTestCases[] = {
+      {""},
+      {"typedef ", {kTag, "struct { int a; bit [8:0] b; }"}, " name;"},
+      {"typedef ",
+       {kTag, "struct { int a; bit [8:0] b; }"},
+       " name;\ntypedef ",
+       {kTag, "struct { int c; bit [8:0] d; }"},
+       " other_name;"},
+      {"typedef ",
+       {kTag, "union { int a; bit [8:0] b; }"},
+       " name;\ntypedef ",
+       {kTag, "struct { int c; bit [8:0] d; }"},
+       " other_name;"},
+      {"typedef ",
+       {kTag, "union { int a; bit [8:0] b; }"},
+       " name;\ntypedef ",
+       {kTag, "struct { int c; bit [8:0] d; }"},
+       " other_name;\ntypedef ",
+       {kTag, "enum { Idle, Busy }"},
+       " another_name;"},
+  };
+  for (const auto& test : kTestCases) {
+    VLOG(1) << "code:\n" << test.code;
+    TestVerilogSyntaxRangeMatches(
+        __FUNCTION__, test, [](const TextStructureView& text_structure) {
+          const auto& root = text_structure.SyntaxTree();
+          const auto& types = FindAllTypeDeclarations(*ABSL_DIE_IF_NULL(root));
+
+          std::vector<TreeSearchMatch> names;
+          for (const auto& decl : types) {
+            const auto* name = GetReferencedTypeOfTypeDeclaration(*decl.match);
+            if (name == nullptr) continue;
+            names.emplace_back(TreeSearchMatch{name, {/* ignored context */}});
+          }
+          return names;
+        });
+  }
+}
+
+TEST(GetTypeIdentifier, GetNameOfDataType) {
+  constexpr int kTag = 1;  // value doesn't matter
+  const SyntaxTreeSearchTestCase kTestCases[] = {
+      {""},
+      {"module m(logic x);\nendmodule"},
+      {"module m(", {kTag, "bus"}, " x);\nendmodule"},
+  };
+  for (const auto& test : kTestCases) {
+    TestVerilogSyntaxRangeMatches(
+        __FUNCTION__, test, [](const TextStructureView& text_structure) {
+          const auto& root = text_structure.SyntaxTree();
+          const auto& types =
+              FindAllDataTypeDeclarations(*ABSL_DIE_IF_NULL(root));
+
+          std::vector<TreeSearchMatch> names;
+          for (const auto& decl : types) {
+            const auto* name = GetTypeIdentifierFromDataType(*decl.match);
+            if (name == nullptr) {
+              continue;
+            }
+            names.emplace_back(TreeSearchMatch{name, {/* ignored context */}});
+          }
+          return names;
+        });
+  }
+}
+
+TEST(GetDataImplicitIdDimensions, GetTypeOfDataImplicitIdDimensions) {
+  constexpr int kTag = 1;  // value doesn't matter
+  const SyntaxTreeSearchTestCase kTestCases[] = {
+      {""},
+      {"module m(logic x);\nendmodule"},
+      {"struct {struct {int x;} var2;} var1;"},
+      {"struct {", {kTag, "my_type"}, " var2;} var1;"},
+      {"union {union {int x;} var2;} var1;"},
+      {"union {", {kTag, "my_type"}, " var2;} var1;"},
+  };
+  for (const auto& test : kTestCases) {
+    VLOG(1) << "code:\n" << test.code;
+    TestVerilogSyntaxRangeMatches(
+        __FUNCTION__, test, [](const TextStructureView& text_structure) {
+          const auto& root = text_structure.SyntaxTree();
+          const auto& types =
+              FindAllDataTypeImplicitIdDimensions(*ABSL_DIE_IF_NULL(root));
+
+          std::vector<TreeSearchMatch> inner_types;
+          for (const auto& decl : types) {
+            VLOG(1) << "type: " << verible::StringSpanOfSymbol(*decl.match);
+            const auto* inner_type =
+                GetNonprimitiveTypeOfDataTypeImplicitDimensions(*decl.match);
+            if (inner_type == nullptr) {
+              continue;
+            }
+            inner_types.emplace_back(
+                TreeSearchMatch{inner_type, {/* ignored context */}});
+          }
+          return inner_types;
+        });
+  }
+}
+
+TEST(GetDataImplicitIdDimensions, GetNameOfDataImplicitIdDimensions) {
+  constexpr int kTag = 1;  // value doesn't matter
+  const SyntaxTreeSearchTestCase kTestCases[] = {
+      {""},
+      {"module m(logic x);\nendmodule"},
+      {"struct {int ", {kTag, "xx"}, ";} var1;"},
+      {"union {int ", {kTag, "xx"}, ";} var1;"},
+      {"struct {int ",
+       {kTag, "xx"},
+       ";\n struct {int  ",
+       {kTag, "xx"},
+       ";} ",
+       {kTag, "var2"},
+       ";} var1;"},
+      {"union {int ",
+       {kTag, "xx"},
+       ";\n struct {int  ",
+       {kTag, "xx"},
+       ";} ",
+       {kTag, "var2"},
+       ";} var1;"},
+      {"union {int ", {kTag, "xx"}, ";} var1;"},
+      {"typedef union {int ", {kTag, "xx"}, ";} var1;"},
+      {"typedef struct {int ", {kTag, "xx"}, ";} var1;"},
+      {"struct {some_type ", {kTag, "xx"}, ";} var1;"},
+      {"union {some_type ", {kTag, "xx"}, ";} var1;"},
+      {"struct {some_type ", {kTag, "xx"}, ";\nint ", {kTag, "yy"}, ";} var1;"},
+      {"typedef struct{\nstruct{\nint ",
+       {kTag, "yy"},
+       ";\n} ",
+       {kTag, "yy"},
+       ";}\nfar;"},
+  };
+  for (const auto& test : kTestCases) {
+    TestVerilogSyntaxRangeMatches(
+        __FUNCTION__, test, [](const TextStructureView& text_structure) {
+          const auto& root = text_structure.SyntaxTree();
+          const auto& types =
+              FindAllDataTypeImplicitIdDimensions(*ABSL_DIE_IF_NULL(root));
+
+          std::vector<TreeSearchMatch> names;
+          for (const auto& decl : types) {
+            const auto name =
+                GetSymbolIdentifierFromDataTypeImplicitIdDimensions(
+                    *decl.match);
+            names.emplace_back(
+                TreeSearchMatch{name.first, {/* ignored context */}});
+          }
+          return names;
         });
   }
 }

@@ -20,9 +20,6 @@
 namespace verilog {
 namespace kythe {
 
-// Const Signatures,
-constexpr absl::string_view kModuleBuiltin = "module#builtin";
-
 // Kythe Nodes.
 constexpr absl::string_view kNodeAnchor = "anchor";
 constexpr absl::string_view kNodeRecord = "record";
@@ -33,10 +30,13 @@ constexpr absl::string_view kNodeConstant = "constant";
 constexpr absl::string_view kNodeFile = "file";
 constexpr absl::string_view kNodeBuiltin = "tbuiltin";
 constexpr absl::string_view kSubkindModule = "module";
+constexpr absl::string_view kSubkindConstructor = "constructor";
 constexpr absl::string_view kSubkindProgram = "program";
 constexpr absl::string_view kCompleteDefinition = "definition";
+constexpr absl::string_view kInComplete = "incomplete";
 constexpr absl::string_view kNodeVariable = "variable";
 constexpr absl::string_view kNodeFunction = "function";
+constexpr absl::string_view kNodeTAlias = "talias";
 
 // Facts for kythe.
 constexpr absl::string_view kFactText = "/kythe/text";
@@ -56,6 +56,7 @@ constexpr absl::string_view kEdgeRefImports = "/kythe/edge/ref/imports";
 constexpr absl::string_view kEdgeExtends = "/kythe/edge/extends";
 constexpr absl::string_view kEdgeRefIncludes = "/kythe/edge/ref/includes";
 constexpr absl::string_view kEdgeTyped = "/kythe/edge/typed";
+constexpr absl::string_view kEdgeOverrides = "/kythe/edge/overrides";
 
 }  // namespace kythe
 }  // namespace verilog

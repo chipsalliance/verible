@@ -56,37 +56,35 @@ class _IntervalSetImpl {
   template <typename M>                            // M is a map-type
   static typename auto_iterator_selector<M>::type  // const_iterator or iterator
   FindLowerBound(M& intervals, const typename M::mapped_type& value) {
-    const auto iter = intervals.lower_bound(value);
-    if (iter == intervals.begin()) {
-      return iter;
+    const auto lower_bound = intervals.lower_bound(value);
+    if (lower_bound == intervals.begin()) {
+      return lower_bound;
     }
 
     // Check whether the previous interval's .max spans 'value'.
-    const auto prev = std::prev(iter);
+    const auto prev = std::prev(lower_bound);
     if (AsInterval(*prev).contains(value)) {
       return prev;
     }
-    return iter;
+    return lower_bound;
   }
 
+  // Returns an iterator in the 'intervals' map whose range spans that of
+  // 'interval', if one exists, else end().
   template <typename M>                            // M is a map-type
   static typename auto_iterator_selector<M>::type  // const_iterator or iterator
   FindSpanningInterval(M& intervals,
                        const Interval<typename M::mapped_type>& interval) {
     CHECK(interval.valid());
     // Nothing 'contains' an empty interval.
-    if (interval.empty()) return intervals.end();
-
-    auto iter = intervals.upper_bound(interval.min);
-    // lower_bound misses equality condition
-    if (iter != intervals.begin()) {
-      const auto prev = std::prev(iter);  // look at interval before
-      CHECK_LE(prev->first, interval.min);
-      if (AsInterval(*prev).contains(interval)) {
-        return prev;
+    if (!interval.empty()) {
+      // Find an interval that contains the lower bound.
+      const auto found = FindSpanningInterval(intervals, interval.min);
+      if (found != intervals.end()) {
+        // Check if the same interval covers the upper bound.
+        if (interval.max <= found->second) return found;
       }
     }
-    // else interval.min is already less than lowest interval
     return intervals.end();
   }
 
@@ -95,10 +93,10 @@ class _IntervalSetImpl {
   template <typename M>                            // M is a map-type
   static typename auto_iterator_selector<M>::type  // const_iterator or iterator
   FindSpanningInterval(M& intervals, const typename M::mapped_type& value) {
-    const auto iter = intervals.upper_bound(value);
+    const auto upper_bound = intervals.upper_bound(value);
     // lower_bound misses equality condition
-    if (iter != intervals.begin()) {
-      const auto prev = std::prev(iter);  // look at interval before
+    if (upper_bound != intervals.begin()) {
+      const auto prev = std::prev(upper_bound);  // look at interval before
       if (AsInterval(*prev).contains(value)) {
         return prev;
       }
@@ -107,12 +105,36 @@ class _IntervalSetImpl {
     // else value is less than lower bound of first interval
     return intervals.end();
   }
+
+  // Returns (iterator, true) if a valid insertion point is found
+  // that doesn't overlap with an existing range, else (undefined, false).
+  // Abutment (where a start == end) does not count as overlap.
+  // Precondition: 'intervals' map contains non-overlapping key ranges.
+  template <typename M>  // M is a map-type
+  static std::pair<typename M::iterator, bool>
+  FindNonoverlappingEmplacePosition(M& intervals,
+                                    const typename M::mapped_type& min,
+                                    const typename M::mapped_type& max) {
+    if (intervals.empty()) return {intervals.end(), true};
+    const auto iter = intervals.upper_bound(min);
+    if (iter == intervals.begin()) {
+      // Can't use CHECK_LT because iterators are not printable (logging.h).
+      CHECK(min <= iter->first);
+      return {iter, max <= iter->first};
+    } else {
+      const auto prev = std::prev(iter);
+      CHECK(prev->first <= min);
+      return {iter, prev->second <= min &&
+                        (iter == intervals.end() || max <= iter->first)};
+    }
+  }
 };
 
 // IntervalSet represents a set of integral values.
 // Set membership is efficiently represented as a collection of
 // non-overlapping [min, max) intervals.
 // Mutating operations will automatically merge abutting intervals.
+// Type T must be std::less-comparable for binary-search-ability.
 template <typename T>
 class IntervalSet : private _IntervalSetImpl {
  private:
@@ -532,6 +554,84 @@ bool ParseInclusiveRanges(IntervalSet<T>* iset, Iter begin, Iter end,
   }
   return true;
 }
+
+//------------------------------------------------------------------------------
+// DisjointIntervalSet
+//------------------------------------------------------------------------------
+
+// DisjointIntervalSet is a collection of non-overlapping intervals (abutment
+// permitted).
+// Type T must be std::less-comparable for binary-search-ability.
+// e.g. integers, pointers, random-access-iterators.
+// When T is a pointer or iterator, this does not maintain any ownership of the
+// spanned ranges.
+//
+// See also DisjointIntervalMap in interval_map.h.
+template <typename T>
+class DisjointIntervalSet : private _IntervalSetImpl {
+ private:
+  // This makes the value_type an immutable std::pair<const T, const T>.
+  typedef std::map<T, const T> impl_type;
+
+ public:
+  typedef typename impl_type::key_type key_type;
+  typedef typename impl_type::value_type value_type;
+  typedef typename impl_type::mapped_type mapped_type;
+  typedef typename impl_type::const_iterator const_iterator;
+  typedef typename impl_type::const_reverse_iterator const_reverse_iterator;
+  typedef typename impl_type::size_type size_type;
+
+ public:
+  DisjointIntervalSet() = default;
+
+  DisjointIntervalSet(const DisjointIntervalSet&) = default;
+  DisjointIntervalSet(DisjointIntervalSet&&) = default;
+  DisjointIntervalSet& operator=(const DisjointIntervalSet&) = default;
+  DisjointIntervalSet& operator=(DisjointIntervalSet&&) = default;
+
+  bool empty() const { return intervals_.empty(); }
+  const_iterator begin() const { return intervals_.begin(); }
+  const_iterator end() const { return intervals_.end(); }
+
+  // Returns an iterator to the entry whose key-range contains 'key', or else
+  // end().
+  const_iterator find(const T& key) const {
+    return FindSpanningInterval(intervals_, key);
+  }
+  // Returns an iterator to the entry whose key-range wholly contains the 'key'
+  // range, or else end().
+  const_iterator find(const std::pair<T, T>& key) const {
+    return FindSpanningInterval(intervals_, key);
+  }
+
+  // Inserts a value associated with the 'key' interval if it does not overlap
+  // with any other key-interval already in the map.
+  // The 'value' must be moved in (emplace).
+  std::pair<const_iterator, bool> emplace(const T& min_key, const T& max_key) {
+    CHECK(min_key <= max_key);  // CHECK_LE requires printability
+    const std::pair<const_iterator, bool> p(
+        FindNonoverlappingEmplacePosition(intervals_, min_key, max_key));
+    // p.second: ok to emplace
+    if (p.second) {
+      return {intervals_.emplace_hint(p.first, min_key, max_key), p.second};
+    }
+    return p;
+  }
+
+  // Same as emplace(), but fails fatally if emplacement fails,
+  // and only returns the iterator to the new map entry (which should have
+  // consumed 'value').
+  // Recommend using this for key-ranges that correspond to allocated memory,
+  // because allocators must return non-overlapping memory ranges.
+  const_iterator must_emplace(const T& min_key, const T& max_key) {
+    const auto p(emplace(min_key, max_key));
+    CHECK(p.second) << "Failed to emplace!";
+    return p.first;
+  }
+
+ private:
+  impl_type intervals_;
+};
 
 }  // namespace verible
 

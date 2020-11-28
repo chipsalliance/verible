@@ -20,6 +20,7 @@
 #include "common/analysis/syntax_tree_linter_test_utils.h"
 #include "common/text/symbol.h"
 #include "verilog/analysis/verilog_analyzer.h"
+#include "verilog/parser/verilog_token_enum.h"
 
 namespace verilog {
 namespace analysis {

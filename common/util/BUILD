@@ -20,6 +20,7 @@ cc_library(
     deps = [
         ":iterator_adaptors",
         ":logging",
+        "@com_google_absl//absl/base:core_headers",
     ],
 )
 
@@ -118,6 +119,15 @@ cc_library(
 )
 
 cc_library(
+    name = "interval_map",
+    hdrs = ["interval_map.h"],
+    deps = [
+        ":auto_iterator",
+        ":logging",
+    ],
+)
+
+cc_library(
     name = "interval_set",
     hdrs = ["interval_set.h"],
     deps = [
@@ -162,6 +172,11 @@ cc_library(
         ":iterator_range",
         ":range",
     ],
+)
+
+cc_library(
+    name = "type_traits",
+    hdrs = ["type_traits.h"],
 )
 
 cc_library(
@@ -269,6 +284,15 @@ cc_test(
 )
 
 cc_test(
+    name = "auto_iterator_test",
+    srcs = ["auto_iterator_test.cc"],
+    deps = [
+        ":auto_iterator",
+        "@com_google_googletest//:gtest_main",
+    ],
+)
+
+cc_test(
     name = "auto_pop_stack_test",
     srcs = ["auto_pop_stack_test.cc"],
     deps = [
@@ -283,6 +307,7 @@ cc_test(
     srcs = ["file_util_test.cc"],
     deps = [
         ":file_util",
+        "@com_google_absl//absl/status",
         "@com_google_absl//absl/strings",
         "@com_google_googletest//:gtest_main",
     ],
@@ -293,6 +318,17 @@ cc_test(
     srcs = ["interval_test.cc"],
     deps = [
         ":interval",
+        "@com_google_googletest//:gtest_main",
+    ],
+)
+
+cc_test(
+    name = "interval_map_test",
+    srcs = ["interval_map_test.cc"],
+    deps = [
+        ":interval_map",
+        ":range",
+        "@com_google_absl//absl/memory",
         "@com_google_googletest//:gtest_main",
     ],
 )
@@ -388,6 +424,15 @@ cc_test(
     srcs = ["top_n_test.cc"],
     deps = [
         ":top_n",
+        "@com_google_googletest//:gtest_main",
+    ],
+)
+
+cc_test(
+    name = "type_traits_test",
+    srcs = ["type_traits_test.cc"],
+    deps = [
+        ":type_traits",
         "@com_google_googletest//:gtest_main",
     ],
 )

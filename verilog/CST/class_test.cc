@@ -69,25 +69,19 @@ TEST(GetClassNameTest, ClassName) {
        "; endclass\nendclass"},
   };
   for (const auto& test : kTestCases) {
-    const absl::string_view code(test.code);
-    VerilogAnalyzer analyzer(code, "test-file");
-    const auto code_copy = analyzer.Data().Contents();
-    ASSERT_OK(analyzer.Analyze()) << "failed on:\n" << code;
-    const auto& root = analyzer.Data().SyntaxTree();
+    TestVerilogSyntaxRangeMatches(
+        __FUNCTION__, test, [](const TextStructureView& text_structure) {
+          const auto& root = text_structure.SyntaxTree();
 
-    const auto decls = FindAllClassDeclarations(*ABSL_DIE_IF_NULL(root));
+          const auto decls = FindAllClassDeclarations(*ABSL_DIE_IF_NULL(root));
 
-    std::vector<TreeSearchMatch> names;
-    for (const auto& decl : decls) {
-      const auto& type = GetClassName(*decl.match);
-      names.push_back(TreeSearchMatch{&type, {/* ignored context */}});
-    }
-
-    std::ostringstream diffs;
-    EXPECT_TRUE(test.ExactMatchFindings(names, code_copy, &diffs))
-        << "failed on:\n"
-        << code << "\ndiffs:\n"
-        << diffs.str();
+          std::vector<TreeSearchMatch> names;
+          for (const auto& decl : decls) {
+            const auto& type = GetClassName(*decl.match);
+            names.push_back(TreeSearchMatch{&type, {/* ignored context */}});
+          }
+          return names;
+        });
   }
 }
 
@@ -110,25 +104,19 @@ TEST(GetClassNameTest, ClassEndLabel) {
        {kTag, "foo"}},
   };
   for (const auto& test : kTestCases) {
-    const absl::string_view code(test.code);
-    VerilogAnalyzer analyzer(code, "test-file");
-    const auto code_copy = analyzer.Data().Contents();
-    ASSERT_OK(analyzer.Analyze()) << "failed on:\n" << code;
-    const auto& root = analyzer.Data().SyntaxTree();
+    TestVerilogSyntaxRangeMatches(
+        __FUNCTION__, test, [](const TextStructureView& text_structure) {
+          const auto& root = text_structure.SyntaxTree();
 
-    const auto decls = FindAllClassDeclarations(*ABSL_DIE_IF_NULL(root));
+          const auto decls = FindAllClassDeclarations(*ABSL_DIE_IF_NULL(root));
 
-    std::vector<TreeSearchMatch> names;
-    for (const auto& decl : decls) {
-      const auto* name = GetClassEndLabel(*decl.match);
-      names.push_back(TreeSearchMatch{name, {/* ignored context */}});
-    }
-
-    std::ostringstream diffs;
-    EXPECT_TRUE(test.ExactMatchFindings(names, code_copy, &diffs))
-        << "failed on:\n"
-        << code << "\ndiffs:\n"
-        << diffs.str();
+          std::vector<TreeSearchMatch> names;
+          for (const auto& decl : decls) {
+            const auto* name = GetClassEndLabel(*decl.match);
+            names.push_back(TreeSearchMatch{name, {/* ignored context */}});
+          }
+          return names;
+        });
   }
 }
 
@@ -187,6 +175,41 @@ TEST(GetClassMemberTest, GetMemberName) {
   }
 }
 
+TEST(FindAllModuleDeclarationTest, FindClassParameters) {
+  constexpr int kTag = 1;  // value doesn't matter
+  const SyntaxTreeSearchTestCase kTestCases[] = {
+      {""},
+      {"class m;\nendclass\n"},
+      {"class m", {kTag, "#(parameter x = 3, parameter y = 4)"}, ";\nendclass"},
+      {"class m", {kTag, "#()"}, ";\nendclass"},
+      {"class m",
+       {kTag, "#(parameter int x = 3,\n parameter logic y = 4)"},
+       ";\nendclass"},
+      {"class m",
+       {kTag, "#(parameter type x = 3,\n parameter logic y = 4)"},
+       ";\nendclass"},
+  };
+  for (const auto& test : kTestCases) {
+    TestVerilogSyntaxRangeMatches(
+        __FUNCTION__, test, [](const TextStructureView& text_structure) {
+          const auto& root = text_structure.SyntaxTree();
+          const auto& instances =
+              FindAllClassDeclarations(*ABSL_DIE_IF_NULL(root));
+
+          std::vector<TreeSearchMatch> params;
+          for (const auto& instance : instances) {
+            const auto* decl =
+                GetParamDeclarationListFromClassDeclaration(*instance.match);
+            if (decl == nullptr) {
+              continue;
+            }
+            params.emplace_back(TreeSearchMatch{decl, {/* ignored context */}});
+          }
+          return params;
+        });
+  }
+}
+
 TEST(GetClassExtendTest, GetExtendListIdentifiers) {
   constexpr int kTag = 1;  // value doesn't matter
   const SyntaxTreeSearchTestCase kTestCases[] = {
@@ -214,6 +237,62 @@ TEST(GetClassExtendTest, GetExtendListIdentifiers) {
                 TreeSearchMatch{identifier, {/* ignored context */}});
           }
           return identifiers;
+        });
+  }
+}
+
+TEST(GetClassConstructorTest, GetConstructorBody) {
+  constexpr int kTag = 1;  // value doesn't matter
+  const SyntaxTreeSearchTestCase kTestCases[] = {
+      {""},
+      {"class foo; endclass"},
+      {"module m;endmodule"},
+      {"class foo;\nfunction new();\n",
+       {kTag, "x = y;"},
+       "\nendfunction\nendclass"},
+  };
+  for (const auto& test : kTestCases) {
+    TestVerilogSyntaxRangeMatches(
+        __FUNCTION__, test, [](const TextStructureView& text_structure) {
+          const auto& root = text_structure.SyntaxTree();
+          const auto& constructors =
+              FindAllClassConstructors(*ABSL_DIE_IF_NULL(root));
+
+          std::vector<TreeSearchMatch> bodies;
+          for (const auto& constructor : constructors) {
+            const auto& body =
+                GetClassConstructorStatementList(*constructor.match);
+            bodies.emplace_back(
+                TreeSearchMatch{&body, {/* ignored context */}});
+          }
+          return bodies;
+        });
+  }
+}
+
+TEST(GetClassConstructorTest, GetNewKeyword) {
+  constexpr int kTag = 1;  // value doesn't matter
+  const SyntaxTreeSearchTestCase kTestCases[] = {
+      {""},
+      {"class foo; endclass"},
+      {"module m;endmodule"},
+      {"class foo;\nfunction ", {kTag, "new"}, "();\n\nendfunction\nendclass"},
+  };
+  for (const auto& test : kTestCases) {
+    TestVerilogSyntaxRangeMatches(
+        __FUNCTION__, test, [](const TextStructureView& text_structure) {
+          const auto& root = text_structure.SyntaxTree();
+          const auto& constructors =
+              FindAllClassConstructors(*ABSL_DIE_IF_NULL(root));
+
+          std::vector<TreeSearchMatch> keywords;
+          for (const auto& constructor : constructors) {
+            const auto& keyword =
+                GetNewKeywordFromClassConstructor(*constructor.match);
+            keywords.emplace_back(
+                TreeSearchMatch{&keyword, {/* ignored context */}});
+          }
+          return keywords;
         });
   }
 }
