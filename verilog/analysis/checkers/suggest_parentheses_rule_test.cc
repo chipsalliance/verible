@@ -26,14 +26,44 @@ using verible::LintTestCase;
 using verible::RunLintTestCases;
 
 TEST(SuggestParenthesesTest, AcceptTests) {
+  constexpr int kTag = 293;  // don't care
+
   const std::initializer_list<LintTestCase> kSuggestParenthesesTestCases = {
+      // Non rule violation cases.
       {""},
       {"module m;\nendmodule\n"},
       {"module m;\ninitial begin end\nendmodule"},
-      {"module m;\n", "assign foo = condition_a? a : b;\n", "endmodule"},
-      {"module m;\n", "assign foo = condition_a? (condition_b? a : b) : c;\n", "endmodule"},
-      {"module m;\n", "assign foo = condition_a? (condition_b? a : b) : (condition_c? c : d);\n", "endmodule"},
-      {"module m;\n", "assign foo = condition_a? (condition_b? (condition_c? a : b) : c) : d;\n", "endmodule"},
+      {"module m;\n", "assign foo = condition_a? a : b;", "\nendmodule"},
+      {"module m;\n", "assign foo = condition_a? (condition_b? a : b) : c;", "\nendmodule"},
+      {"module m;\n", "assign foo = condition_a? (condition_b? a : b) : (condition_c? c : d);", "\nendmodule"},
+      {"module m;\n", "assign foo = condition_a? (condition_b? (condition_c? a : b) : c) : d;", "\nendmodule"},
+      {"module m;\n", "assign foo = condition_a? (condition_b? a : b) : condition_c? c : d;", "\nendmodule"},
+      {"module m;\n", "parameter foo = condition_a? a : b;" ,"\nendmodule"},
+      {"module m;\n", "always @(posedge clk) begin\n left <= condition_a? a : b; \nend", "\nendmodule"},
+      {"function f;\n g = h(condition_a? a : b); \nendfunction"},
+      {"module m;\n", "always @(posedge clk)\n", "case (condition_a? a : b)\n", "default :;\n", "endcase\n", "\nendmodule"},
+      // Rule Violation cases.
+      {"module m;\n assign foo = condition_a? ", {kTag, "condition_b"}, "? a : b : c;\nendmodule"},
+      {"module m;\n assign foo = condition_a? ", {kTag, "condition_b"}, "? ", {kTag, "condition_c"}, "? a : b : c : d;\nendmodule"},
+      {"module m;\n", "parameter foo = condition_a? ", {kTag, "condition_b"}, "? a : b : c;" ,"\nendmodule\n"},
+      {"module m;\n", "always @(posedge clk) begin\n left <= condition_a? ", {kTag, "condition_b"}, "? a : b : c; \nend", "\nendmodule"},
+      {"function f;\n g = h(condition_a? ", {kTag, "condition_b"}, "? a : b : c); \nendfunction"},
+      {"module m;\n", "always @(posedge clk)\n", "case (condition_a? ", {kTag, "condition_b"}, "? a : b : c)\n", "default :;\n", "endcase\n", "\nendmodule"},
+      // Other expression types for true case expression.
+      {"module m;\n", "assign foo = condition_a? a + b : c;", "\nendmodule"},
+      {"module m;\n", "assign foo = condition_a? a - b : c;", "\nendmodule"},
+      {"module m;\n", "assign foo = condition_a? a * b : c;", "\nendmodule"},
+      {"module m;\n", "assign foo = condition_a? a / b : c;", "\nendmodule"},
+      {"module m;\n", "assign foo = condition_a? a << b : c;", "\nendmodule"},
+      {"module m;\n", "assign foo = condition_a? a >> b : c;", "\nendmodule"},
+      {"module m;\n", "assign foo = condition_a? a & b : c;", "\nendmodule"},
+      {"module m;\n", "assign foo = condition_a? a && b : c;", "\nendmodule"},
+      {"module m;\n", "assign foo = condition_a? a | b : c;", "\nendmodule"},
+      {"module m;\n", "assign foo = condition_a? a || b : c;", "\nendmodule"},
+      {"module m;\n", "assign foo = condition_a? a == b : c;", "\nendmodule"},
+      {"module m;\n", "assign foo = condition_a? a > b : c;", "\nendmodule"},
+      {"module m;\n", "assign foo = condition_a? a < b : c;", "\nendmodule"},
+      {"module m;\n", "assign foo = condition_a? a ^ b : c;", "\nendmodule"},
   };
 
   RunLintTestCases<VerilogAnalyzer, SuggestParenthesesRule>(kSuggestParenthesesTestCases);

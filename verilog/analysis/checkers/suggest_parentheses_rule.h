@@ -21,7 +21,11 @@
 namespace verilog {
 namespace analysis {
 
-// checks that nested expressions are wrapped properly in parentheses.
+// Suggests where extra parentheses can help readability.
+// For example:
+// a1 ? a2 ? b : c : d
+// would be improved as the equivalent:
+// a1 ? (a2 ? b : c) : d
 class SuggestParenthesesRule : public verible::SyntaxTreeLintRule {
  public:
   using rule_type = verible::SyntaxTreeLintRule;
@@ -40,7 +44,7 @@ class SuggestParenthesesRule : public verible::SyntaxTreeLintRule {
   // Link to style guide rule.
   static const char kTopic[];
 
-  // Diagnostic message for constraint name violations.
+  // Diagnostic message for rule violations.
   static const char kMessage[];
 
   std::set<verible::LintViolation> violations_;

@@ -380,7 +380,6 @@ is not locally defined, so the grammar here uses only generic identifiers.
 /* The new tokens from 1800-2005. */
 %token TK_alias "alias"
 %token TK_always_comb "always_comb"
-%token TK_suggest_parentheses "suggest_parentheses"
 %token TK_always_ff "always_ff"
 %token TK_always_latch "always_latch"
 %token TK_assert "assert"

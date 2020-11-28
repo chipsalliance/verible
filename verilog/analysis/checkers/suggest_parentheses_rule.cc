@@ -35,12 +35,12 @@ absl::string_view SuggestParenthesesRule::Name() {
 }
 const char SuggestParenthesesRule::kTopic[] = "parentheses";
 const char SuggestParenthesesRule::kMessage[] =
-    "Use parentheses around nested expressions";
+    "Parenthesize condition expressions that appear in the true-clause of another condition expression.";
 
 std::string SuggestParenthesesRule::GetDescription(
     DescriptionType description_type) {
   return absl::StrCat(
-      "Checks that parentheses are wrapped in nested expressions. See ",
+      "Recommend extra parentheses around subexpressions where it helps readability. See ",
                       GetStyleGuideCitation(kTopic), ".");
 }
 
@@ -53,23 +53,13 @@ void SuggestParenthesesRule::HandleNode(
   switch (tag) {
     case NodeEnum::kConditionExpression: {
       const verible::Symbol* trueCase = GetConditionExpressionTrueCase(node);
-      const verible::Symbol* falseCase = GetConditionExpressionFalseCase(node);
-
-      const auto trueCasetag = static_cast<verilog::NodeEnum>(trueCase->Tag().tag);
-      const auto falseCasetag = static_cast<verilog::NodeEnum>(falseCase->Tag().tag);
-
+     
       const verible::Symbol* trueCaseChild = UnwrapExpression(*trueCase);
-      const verible::Symbol* falseCaseChild = UnwrapExpression(*falseCase);
 
       const auto trueCaseChildtag = static_cast<verilog::NodeEnum>(trueCaseChild->Tag().tag);
-      const auto falseCaseChildtag = static_cast<verilog::NodeEnum>(falseCaseChild->Tag().tag);
       
-      if((trueCasetag == NodeEnum::kExpression && trueCaseChildtag == NodeEnum::kConditionExpression) || trueCasetag == NodeEnum::kConditionExpression){
-        violations_.insert(LintViolation(node, kMessage, context));
-      }
-
-      if((falseCasetag == NodeEnum::kExpression && falseCaseChildtag == NodeEnum::kConditionExpression) || falseCasetag == NodeEnum::kConditionExpression){
-        violations_.insert(LintViolation(node, kMessage, context));
+      if(trueCaseChildtag == NodeEnum::kConditionExpression){
+        violations_.insert(LintViolation(*trueCase, kMessage, context));
       }
     }
     default:

@@ -83,28 +83,20 @@ const verible::Symbol* UnwrapExpression(const verible::Symbol& expr) {
   }
 
   const auto& children = node.children();
-  return &(*children.front());
+  return children.front().get();
 }
 
 const verible::Symbol* GetConditionExpressionPredicate(const verible::Symbol& condition_expr) {
-  const auto& node = verible::SymbolCastToNode(condition_expr);
-  const auto& children = node.children();
-  const auto& predicateNode = children[0];
-  return &(*predicateNode);
+  return GetSubtreeAsSymbol(condition_expr, NodeEnum::kConditionExpression, 0);
 }
 
 const verible::Symbol* GetConditionExpressionTrueCase(const verible::Symbol& condition_expr) {
-  const auto& node = verible::SymbolCastToNode(condition_expr);
-  const auto& children = node.children();
-  const auto& trueCaseNode = children[2];
-  return &(*trueCaseNode);
+  return GetSubtreeAsSymbol(condition_expr, NodeEnum::kConditionExpression, 2);
 }
 
 const verible::Symbol* GetConditionExpressionFalseCase(const verible::Symbol& condition_expr) {
-  const auto& node = verible::SymbolCastToNode(condition_expr);
-  const auto& children = node.children();
-  const auto& falseCaseNode = children[4];
-  return &(*falseCaseNode);
+  return GetSubtreeAsSymbol(condition_expr, NodeEnum::kConditionExpression, 4);
+}
 
 std::vector<TreeSearchMatch> FindAllReferenceFullExpressions(
     const verible::Symbol& root) {
