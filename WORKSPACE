@@ -176,3 +176,13 @@ kythe_rule_repositories()
 load("@io_kythe//:external.bzl", "kythe_dependencies")
 
 kythe_dependencies()
+
+http_archive(
+    name = "jsoncpp_git",
+    sha256 = "77a402fb577b2e0e5d0bdc1cf9c65278915cdb25171e3452c68b6da8a561f8f0",
+    build_file = "//bazel:jsoncpp.BUILD",
+    strip_prefix = "jsoncpp-1.9.2",
+    urls = [
+        "https://github.com/open-source-parsers/jsoncpp/archive/1.9.2.tar.gz",
+    ],
+)
