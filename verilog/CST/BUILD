@@ -892,6 +892,7 @@ cc_library(
         "//common/util:value_saver",
         "//verilog/parser:verilog_parser",
         "@com_google_absl//absl/strings",
+        "@jsoncpp_git//:jsoncpp",
     ],
 )
 
