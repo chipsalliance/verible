@@ -46,6 +46,8 @@
 #include "verilog/analysis/verilog_excerpt_parse.h"
 #include "verilog/parser/verilog_parser.h"
 
+#include "json/json.h"
+
 // Controls parser selection behavior
 enum class LanguageMode {
   // May try multiple language options starting with SV, stops on first success.
@@ -84,6 +86,7 @@ ABSL_FLAG(
     "  sv: strict SystemVerilog-2017, with explicit alternate parsing modes\n"
     "  lib: Verilog library map language (LRM Ch. 33)\n");
 
+ABSL_FLAG(bool, machine, false, "Uses JSON for output. Intended to be used as an input for other tools.");
 ABSL_FLAG(bool, printtree, false, "Whether or not to print the tree");
 ABSL_FLAG(bool, printtokens, false, "Prints all lexed and filtered tokens");
 ABSL_FLAG(bool, printrawtokens, false,
@@ -141,15 +144,61 @@ static int AnalyzeOneFile(absl::string_view content,
   const auto analyzer = ParseWithLanguageMode(content, filename);
   const auto lex_status = ABSL_DIE_IF_NULL(analyzer)->LexStatus();
   const auto parse_status = analyzer->ParseStatus();
+  Json::Value json;
+
+  if (absl::GetFlag(FLAGS_machine)) {
+    json = Json::objectValue;
+    json["filename"] = std::string(filename);
+  }
+
   if (!lex_status.ok() || !parse_status.ok()) {
-    const std::vector<std::string> syntax_error_messages(
-        analyzer->LinterTokenErrorMessages());
     const int error_limit = absl::GetFlag(FLAGS_error_limit);
     int error_count = 0;
-    for (const auto& message : syntax_error_messages) {
-      std::cout << message << std::endl;
-      ++error_count;
-      if (error_limit != 0 && error_count >= error_limit) break;
+    if (!absl::GetFlag(FLAGS_machine)) {
+      const std::vector<std::string> syntax_error_messages(
+          analyzer->LinterTokenErrorMessages());
+      for (const auto& message : syntax_error_messages) {
+        std::cout << message << std::endl;
+        ++error_count;
+        if (error_limit != 0 && error_count >= error_limit) break;
+      }
+    } else {
+      Json::Value &syntax_errors = json["errors"] = Json::arrayValue;
+      const std::vector<verible::RejectedToken> & rejected_tokens = analyzer->GetRejectedTokens();
+      for (const auto& rejected_token : rejected_tokens) {
+        Json::Value &error = syntax_errors.append(Json::objectValue);
+
+        const absl::string_view base_text = analyzer->Data().Contents();
+        const verible::LineColumnMap& line_column_map = analyzer->Data().GetLineColumnMap();
+        if (!rejected_token.token_info.isEOF()) {
+          const auto pos = line_column_map(rejected_token.token_info.left(base_text));
+          error["line"] = pos.line;
+          error["column"] = pos.column;
+          error["text"] = std::string(rejected_token.token_info.text());
+        } else {
+          const int file_size = base_text.length();
+          const auto pos = line_column_map(file_size);
+          error["line"] = pos.line;
+          error["column"] = pos.column;
+          error["text"] = "<EOF>";
+        }
+        switch (rejected_token.phase) {
+          case verible::AnalysisPhase::kLexPhase:
+            error["phase"] = "lex"; break;
+          case verible::AnalysisPhase::kPreprocessPhase:
+            error["phase"] = "preprocess"; break;
+          case verible::AnalysisPhase::kParsePhase:
+            error["phase"] = "parse"; break;
+          default:
+            break;
+        }
+
+        if (!rejected_token.explanation.empty()) {
+          error["message"] = rejected_token.explanation;
+        }
+        ++error_count;
+        if (error_limit != 0 && error_count >= error_limit) break;
+      }
     }
     exit_status = 1;
   }
@@ -180,12 +229,17 @@ static int AnalyzeOneFile(absl::string_view content,
 
   // check for printtree flag, and print tree if on
   if (absl::GetFlag(FLAGS_printtree) && syntax_tree != nullptr) {
-    std::cout << std::endl
-              << "Parse Tree"
-              << (!parse_ok ? " (incomplete due to syntax errors):" : ":")
-              << std::endl;
-    verilog::PrettyPrintVerilogTree(*syntax_tree, analyzer->Data().Contents(),
-                                    &std::cout);
+    if(!absl::GetFlag(FLAGS_machine)) {
+      std::cout << std::endl
+                << "Parse Tree"
+                << (!parse_ok ? " (incomplete due to syntax errors):" : ":")
+                << std::endl;
+      verilog::PrettyPrintVerilogTree(*syntax_tree, analyzer->Data().Contents(),
+                                      &std::cout);
+    } else {
+      json["tree"] = std::move(verilog::ConvertVerilogTreeToJson(*syntax_tree,
+                                   analyzer->Data().Contents()));
+    }
   }
 
   // Check for verifytree, verify tree and print unmatched if on.
@@ -197,6 +251,10 @@ static int AnalyzeOneFile(absl::string_view content,
                 << std::endl;
     }
     VerifyParseTree(text_structure);
+  }
+
+  if(absl::GetFlag(FLAGS_machine)) {
+    std::cout << json;
   }
 
   return exit_status;
