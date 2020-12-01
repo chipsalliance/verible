@@ -780,18 +780,34 @@ class VectorTree : private _VectorTreeImpl {
 
   // Pretty-print in tree-form.  Value() is enclosed in parens, and the whole
   // node is enclosed in braces.
-  std::ostream& PrintTree(std::ostream* stream, size_t indent = 0) const {
-    *stream << Spacer(indent) << "{ (" << Value() << ')';
+  // This variant supports a custom value 'printer'.
+  std::ostream& PrintTree(
+      std::ostream* stream,
+      const std::function<std::ostream&(std::ostream&, const value_type&)>&
+          printer,
+      size_t indent = 0) const {
+    printer(*stream << Spacer(indent) << "{ (", Value()) << ')';
     if (Children().empty()) {
       *stream << " }";
     } else {
       *stream << '\n';
       for (const auto& child : Children()) {
-        child.PrintTree(stream, indent + 2) << '\n';
+        child.PrintTree(stream, printer, indent + 2) << '\n';
       }
       *stream << Spacer(indent) << '}';
     }
     return *stream;
+  }
+
+  // Pretty-print tree, using the default stream printer, which requires that
+  // operator<<(std::ostream&, const value_type&) is defined.
+  std::ostream& PrintTree(std::ostream* stream, size_t indent = 0) const {
+    return PrintTree(
+        stream,
+        [](std::ostream& s, const value_type& v) -> std::ostream& {
+          return s << v;
+        },
+        indent);
   }
 
  private:

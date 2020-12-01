@@ -2035,5 +2035,25 @@ TEST(VectorTreeTest, PrintTree) {
 })");
 }
 
+TEST(VectorTreeTest, PrintTreeCustom) {
+  const auto tree = verible::testing::MakeExampleFamilyTree();
+  std::ostringstream stream;
+  tree.PrintTree(&stream,
+                 [](std::ostream& s,
+                    const decltype(tree)::value_type& value) -> std::ostream& {
+                   return s << value.name;  // print only the name field
+                 });
+  EXPECT_EQ(stream.str(), R"({ (grandparent)
+  { (parent1)
+    { (child1) }
+    { (child2) }
+  }
+  { (parent2)
+    { (child3) }
+    { (child4) }
+  }
+})");
+}
+
 }  // namespace
 }  // namespace verible
