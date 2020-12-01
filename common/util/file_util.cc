@@ -156,6 +156,7 @@ absl::Status GetContents(absl::string_view filename, std::string *content) {
 
 absl::Status SetContents(absl::string_view filename,
                          absl::string_view content) {
+  VLOG(1) << __FUNCTION__ << ": Writing file: " << filename;
   std::ofstream f(std::string(filename).c_str());
   if (!f.good()) return CreateErrorStatusFromErrno("can't write.");
   f << content;
@@ -235,13 +236,21 @@ absl::StatusOr<Directory> ListDir(absl::string_view dir) {
 }
 
 namespace testing {
+
+std::string RandomFileBasename(absl::string_view prefix) {
+  return absl::StrCat(prefix, "-", getpid(), "-", random());
+}
+
 ScopedTestFile::ScopedTestFile(absl::string_view base_dir,
-                               absl::string_view content)
-    // There is no secrecy needed for test files, just need to be unique enough.
-    : filename_(JoinPath(
-          base_dir, absl::StrCat("scoped-file-", getpid(), "-", random()))) {
-  absl::Status status = SetContents(filename_, content);
-  CHECK(status.ok()) << status.message();
+                               absl::string_view content,
+                               absl::string_view use_this_filename)
+    // There is no secrecy needed for test files,
+    // file name just need to be unique enough.
+    : filename_(JoinPath(base_dir, use_this_filename.empty()
+                                       ? RandomFileBasename("scoped-file")
+                                       : use_this_filename)) {
+  const absl::Status status = SetContents(filename_, content);
+  CHECK(status.ok()) << status.message();  // ok for test-only code
 }
 
 ScopedTestFile::~ScopedTestFile() { unlink(filename_.c_str()); }
