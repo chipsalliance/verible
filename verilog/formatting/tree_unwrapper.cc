@@ -1162,6 +1162,20 @@ static bool PartitionIsCloseBrace(const TokenPartitionTree& partition) {
   return token_enum == '}';
 }
 
+static bool PartitionEndsWithOpenBrace(const TokenPartitionTree& partition) {
+  const auto ftokens = partition.Value().TokensRange();
+  if (ftokens.empty()) return false;
+  const auto token_enum = ftokens.back().TokenEnum();
+  return token_enum == '{';
+}
+
+static bool PartitionStartsWithCloseBrace(const TokenPartitionTree& partition) {
+  const auto ftokens = partition.Value().TokensRange();
+  if (ftokens.empty()) return false;
+  const auto token_enum = ftokens.front().TokenEnum();
+  return token_enum == '}';
+}
+
 static void AttachTrailingSemicolonToPreviousPartition(
     TokenPartitionTree* partition) {
   // Attach the trailing ';' partition to the previous sibling leaf.
@@ -1174,6 +1188,34 @@ static void AttachTrailingSemicolonToPreviousPartition(
   if (PartitionStartsWithSemicolon(*partition)) {
     verible::MergeLeafIntoPreviousLeaf(partition->RightmostDescendant());
     VLOG(4) << "after moving semicolon:\n" << *partition;
+  }
+}
+
+static void AdjustSubsequentPartitionsIndentation(
+    TokenPartitionTree* partition, int indentation) {
+  // Adjust indentation of subsequent partitions
+  const auto npartitions = partition->Children().size();
+  if (npartitions > 1) {
+    const auto& first_partition = partition->Children().front();
+    const auto& last_partition  = partition->Children().back();
+
+    // Do not indent intentionally wrapped partitions, e.g.
+    // { (>>[assign foo = {] }
+    // { (>>>>[<auto>]
+    //   { (>>>>[a ,] }
+    //   { (>>>>[b ,] }
+    //   { (>>>>[c ,] }
+    //   { (>>>>[d] }
+    // }
+    // { (>>[} ;] }
+    if (!(PartitionEndsWithOpenBrace(first_partition) &&
+          PartitionStartsWithCloseBrace(last_partition)) &&
+        !(PartitionEndsWithOpenParen(first_partition) &&
+          PartitionIsCloseParenSemi(last_partition))) {
+      for (unsigned int idx = 1 ; idx < npartitions ; ++idx) {
+        AdjustIndentationRelative(&partition->Children()[idx], indentation);
+      }
+    }
   }
 }
 
@@ -1671,6 +1713,8 @@ void TreeUnwrapper::ReshapeTokenPartitions(
       // TODO(fangism): reshape for multiple assignments.
       verible::MergeConsecutiveSiblings(&partition, 0);
       VLOG(4) << "after merging 'assign':\n" << partition;
+      AdjustSubsequentPartitionsIndentation(&partition, style.wrap_spaces);
+      VLOG(4) << "after adjusting partitions indentation:\n" << partition;
       break;
     }
     case NodeEnum::kForSpec: {
