@@ -1162,6 +1162,20 @@ static bool PartitionIsCloseBrace(const TokenPartitionTree& partition) {
   return token_enum == '}';
 }
 
+static bool PartitionEndsWithOpenBrace(const TokenPartitionTree& partition) {
+  const auto ftokens = partition.Value().TokensRange();
+  if (ftokens.empty()) return false;
+  const auto token_enum = ftokens.back().TokenEnum();
+  return token_enum == '{';
+}
+
+static bool PartitionStartsWithCloseBrace(const TokenPartitionTree& partition) {
+  const auto ftokens = partition.Value().TokensRange();
+  if (ftokens.empty()) return false;
+  const auto token_enum = ftokens.front().TokenEnum();
+  return (token_enum == '}');
+}
+
 static void AttachTrailingSemicolonToPreviousPartition(
     TokenPartitionTree* partition) {
   // Attach the trailing ';' partition to the previous sibling leaf.
@@ -1671,6 +1685,24 @@ void TreeUnwrapper::ReshapeTokenPartitions(
       // TODO(fangism): reshape for multiple assignments.
       verible::MergeConsecutiveSiblings(&partition, 0);
       VLOG(4) << "after merging 'assign':\n" << partition;
+
+      // Adjust indentation of subsequent _wrapped_ lines
+      const auto npartitions = partition.Children().size();
+      if (npartitions > 1) {
+        const auto& first_partition = partition.Children().front();
+        const auto& last_partition  = partition.Children().back();
+
+        // Do not indent intentionally wrapped partitions e.g. concatenation
+        //     TODO(fangism): what about '()'?
+        if (!(PartitionEndsWithOpenBrace(first_partition) &&
+              PartitionStartsWithCloseBrace(last_partition)) &&
+            !(PartitionEndsWithOpenParen(first_partition) &&
+              PartitionIsCloseParenSemi(last_partition))) {
+          for (unsigned int idx = 1 ; idx < npartitions ; ++idx) {
+            AdjustIndentationRelative(&partition.Children()[idx], style.wrap_spaces);
+          }
+        }
+      }
       break;
     }
     case NodeEnum::kForSpec: {
