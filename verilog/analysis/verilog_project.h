@@ -41,8 +41,9 @@ class VerilogSourceFile {
   VerilogSourceFile(const VerilogSourceFile&) = delete;
   VerilogSourceFile& operator=(const VerilogSourceFile&) = delete;
 
-  VerilogSourceFile(VerilogSourceFile&&) = default;
-  VerilogSourceFile& operator=(VerilogSourceFile&&) = default;
+  VerilogSourceFile(VerilogSourceFile&&) =
+      default;  // need for std::map::emplace
+  VerilogSourceFile& operator=(VerilogSourceFile&&) = delete;
 
   // Opens a file using the resolved path and loads the contents into memory.
   // This does not attempt to parse/analyze the contents.
@@ -129,6 +130,9 @@ class VerilogSourceFile {
   std::unique_ptr<VerilogAnalyzer> analyzed_structure_;
 };
 
+// Printable representation for debugging.
+std::ostream& operator<<(std::ostream&, const VerilogSourceFile&);
+
 // VerilogProject represents a set of files as a cohesive unit of compilation.
 // Files can include top-level translation units and preprocessor included
 // files. This is responsible for owning string memory that corresponds
@@ -181,6 +185,14 @@ class VerilogProject {
   // Returns a previously referenced file, or else nullptr.
   VerilogSourceFile* LookupRegisteredFile(
       absl::string_view referenced_filename) {
+    const auto found = files_.find(referenced_filename);
+    if (found == files_.end()) return nullptr;
+    return &found->second;
+  }
+
+  // Non-modifying variant of lookup.
+  const VerilogSourceFile* LookupRegisteredFile(
+      absl::string_view referenced_filename) const {
     const auto found = files_.find(referenced_filename);
     if (found == files_.end()) return nullptr;
     return &found->second;

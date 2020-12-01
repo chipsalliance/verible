@@ -64,6 +64,18 @@ const verible::TextStructureView* VerilogSourceFile::GetTextStructure() const {
   return &analyzed_structure_->Data();
 }
 
+std::ostream& operator<<(std::ostream& stream,
+                         const VerilogSourceFile& source) {
+  stream << "referenced path: " << source.ReferencedPath() << std::endl;
+  stream << "resolved path: " << source.ResolvedPath() << std::endl;
+  const auto status = source.Status();
+  stream << "status: " << (status.ok() ? "ok" : status.message()) << std::endl;
+  const auto* text_structure = source.GetTextStructure();
+  stream << "have text structure? "
+         << ((text_structure != nullptr) ? "yes" : "no") << std::endl;
+  return stream;
+}
+
 absl::StatusOr<VerilogSourceFile*> VerilogProject::OpenFile(
     absl::string_view referenced_filename,
     absl::string_view resolved_filename) {
@@ -119,6 +131,7 @@ absl::Status VerilogProject::IncludeFileNotFoundError(
 
 absl::StatusOr<VerilogSourceFile*> VerilogProject::OpenIncludedFile(
     absl::string_view referenced_filename) {
+  VLOG(1) << __FUNCTION__ << ", referenced: " << referenced_filename;
   // Check for a pre-existing entry to avoid duplicate files.
   {
     const auto found = files_.find(referenced_filename);
@@ -134,6 +147,7 @@ absl::StatusOr<VerilogSourceFile*> VerilogProject::OpenIncludedFile(
     const std::string resolved_filename =
         verible::file::JoinPath(include_path, referenced_filename);
     if (verible::file::FileExists(resolved_filename).ok()) {
+      VLOG(2) << "File'" << resolved_filename << "' exists.";
       return OpenFile(referenced_filename, resolved_filename);
     }
     VLOG(2) << "Checked for file'" << resolved_filename << "', but not found.";

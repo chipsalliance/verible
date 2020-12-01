@@ -16,6 +16,7 @@
 
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
+#include "absl/strings/match.h"
 #include "common/text/text_structure.h"
 #include "common/util/file_util.h"
 #include "common/util/logging.h"
@@ -130,6 +131,24 @@ TEST(VerilogSourceFileTest, ParseInvalidFile) {
   EXPECT_EQ(&text_structure->SyntaxTree(), tree);
 }
 
+TEST(VerilogSourceFileTest, StreamPrint) {
+  constexpr absl::string_view text("localparam 1 = p;\n");
+  TempDirFile tf(text);
+  const absl::string_view basename(Basename(tf.filename()));
+  VerilogSourceFile file(basename, tf.filename());
+  std::ostringstream stream;
+
+  stream << file;
+
+  const std::string str(stream.str());
+  EXPECT_TRUE(
+      absl::StrContains(str, absl::StrCat("referenced path: ", basename)));
+  EXPECT_TRUE(
+      absl::StrContains(str, absl::StrCat("resolved path: ", tf.filename())));
+  EXPECT_TRUE(absl::StrContains(str, "status: ok"));
+  EXPECT_TRUE(absl::StrContains(str, "have text structure? no"));
+}
+
 TEST(VerilogProjectTest, Initialization) {
   const auto tempdir = ::testing::TempDir();
   VerilogProject project(tempdir, {tempdir});
@@ -155,9 +174,19 @@ TEST(VerilogProjectTest, NonexistentIncludeFile) {
 TEST(VerilogProjectTest, NonexistentFileLookup) {
   const auto tempdir = ::testing::TempDir();
   VerilogProject project(tempdir, {tempdir});
-  VerilogSourceFile* file = project.LookupRegisteredFile("never-there.v");
-  EXPECT_EQ(file, nullptr);
-  EXPECT_TRUE(project.GetErrorStatuses().empty());
+  {  // non-const-lookup overload
+    VerilogSourceFile* file = project.LookupRegisteredFile("never-there.v");
+    EXPECT_EQ(file, nullptr);
+    EXPECT_TRUE(project.GetErrorStatuses().empty());
+  }
+  {
+    // const-lookup overload
+    const VerilogProject& cproject(project);
+    const VerilogSourceFile* file =
+        cproject.LookupRegisteredFile("never-there.v");
+    EXPECT_EQ(file, nullptr);
+    EXPECT_TRUE(cproject.GetErrorStatuses().empty());
+  }
 }
 
 TEST(VerilogProjectTest, ValidTranslationUnit) {
@@ -178,6 +207,11 @@ TEST(VerilogProjectTest, ValidTranslationUnit) {
   EXPECT_EQ(verilog_source_file->ResolvedPath(), tf.filename());
   EXPECT_EQ(project.LookupRegisteredFile(Basename(tf.filename())),
             verilog_source_file);
+  {  // const-lookup overload
+    const VerilogProject& cproject(project);
+    EXPECT_EQ(cproject.LookupRegisteredFile(Basename(tf.filename())),
+              verilog_source_file);
+  }
   EXPECT_TRUE(project.GetErrorStatuses().empty());
 
   EXPECT_TRUE(verilog_source_file->Parse().ok());
@@ -228,6 +262,11 @@ TEST(VerilogProjectTest, ValidIncludeFile) {
   EXPECT_EQ(verilog_source_file->ResolvedPath(), tf.filename());
   EXPECT_EQ(project.LookupRegisteredFile(Basename(tf.filename())),
             verilog_source_file);
+  {  // const-lookup overload
+    const VerilogProject& cproject(project);
+    EXPECT_EQ(cproject.LookupRegisteredFile(Basename(tf.filename())),
+              verilog_source_file);
+  }
   EXPECT_TRUE(project.GetErrorStatuses().empty());
 
   // Re-opening same file, changes nothing
