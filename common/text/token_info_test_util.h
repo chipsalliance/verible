@@ -84,18 +84,25 @@ static_assert(
 // Encapsulates both input code and expected tokens by concatenating
 // expected tokens' text into a single string.
 struct TokenInfoTestData {
-  // This needs to own the memory for a newly concatenated string.
-  std::string code;
+  // Sequence of expected tokens to find that point into 'code'.
+  // Publicly, this should to be const, but cannot be due to initialization
+  // details.
   std::vector<TokenInfo> expected_tokens;
+
+  // This needs to own the memory for a newly concatenated string.
+  // Publicly, this should to be const, but cannot be due to initialization
+  // details.
+  std::string code;
 
   TokenInfoTestData(std::initializer_list<ExpectedTokenInfo> fragments);
 
   // disallow copy/assign because of relationship between expected_tokens'
-  // string_view and code string buffer, but permit moves.
+  // string_view and code string buffer.
   TokenInfoTestData(const TokenInfoTestData&) = delete;
   TokenInfoTestData& operator=(const TokenInfoTestData&) = delete;
-  TokenInfoTestData(TokenInfoTestData&&) = default;
-  TokenInfoTestData& operator=(TokenInfoTestData&&) = default;
+  // No need for moveability (yet).
+  TokenInfoTestData(TokenInfoTestData&&) = delete;
+  TokenInfoTestData& operator=(TokenInfoTestData&&) = delete;
 
   // Returns subset of expected_tokens that are *not* enumerated
   // ExpectedTokenInfo::kDontCare.

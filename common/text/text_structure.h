@@ -213,6 +213,11 @@ class TextStructure {
  public:
   explicit TextStructure(absl::string_view contents);
 
+  TextStructure(const TextStructure&) = delete;
+  TextStructure& operator=(const TextStructure&) = delete;
+  TextStructure(TextStructure&&) = delete;
+  TextStructure& operator=(TextStructure&&) = delete;
+
   // DeferredExpansion::subanalysis requires this destructor to be virtual.
   virtual ~TextStructure();
 
