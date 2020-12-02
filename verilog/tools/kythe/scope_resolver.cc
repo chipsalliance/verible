@@ -65,7 +65,7 @@ void ScopeResolver::RemoveDefinitionFromCurrentScope(const VName& vname) {
 
 void ScopeResolver::MapSignatureToScope(const Signature& signature,
                                         const Scope& scope) {
-  scopes_[signature] = scope;
+  scopes_[signature] = scope;  // copy-assign
 }
 
 void ScopeResolver::AppendScopeToCurrentScope(const Scope& scope) {

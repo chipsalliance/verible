@@ -44,6 +44,11 @@ class Scope {
   Scope() = default;
   explicit Scope(const Signature& signature) : signature_(signature) {}
 
+  Scope(const Scope&) = default;
+  Scope(Scope&&) = default;
+  Scope& operator=(const Scope&) = default;
+  Scope& operator=(Scope&&) = default;
+
   // Appends the given scope item to the members of this scope.
   void AddMemberItem(const ScopeMemberItem& member_item);
 
@@ -98,6 +103,13 @@ class Scope {
 class ScopeContext : public verible::AutoPopStack<Scope*> {
  public:
   typedef verible::AutoPopStack<Scope*> base_type;
+
+  ScopeContext() = default;
+
+  ScopeContext(const ScopeContext&) = delete;
+  ScopeContext(ScopeContext&&) = delete;
+  ScopeContext& operator=(const ScopeContext&) = delete;
+  ScopeContext& operator=(ScopeContext&&) = delete;
 
   // member class to handle push and pop of stack safely
   using AutoPop = base_type::AutoPop;
@@ -164,6 +176,11 @@ class ScopeResolver {
                 const ScopeResolver* previous_file_scope_resolver)
       : previous_file_scope_resolver_(previous_file_scope_resolver),
         global_scope_signature_(global_scope_signature) {}
+
+  ScopeResolver(const ScopeResolver&) = delete;
+  ScopeResolver(ScopeResolver&&) = delete;
+  ScopeResolver& operator=(const ScopeResolver&) = delete;
+  ScopeResolver& operator=(ScopeResolver&) = delete;
 
   // Searches for the definitions of the given references' names.
   const std::vector<std::pair<const VName*, const Scope*>> SearchForDefinitions(
