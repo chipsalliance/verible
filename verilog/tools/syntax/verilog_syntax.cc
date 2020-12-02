@@ -86,7 +86,7 @@ ABSL_FLAG(
     "  sv: strict SystemVerilog-2017, with explicit alternate parsing modes\n"
     "  lib: Verilog library map language (LRM Ch. 33)\n");
 
-ABSL_FLAG(bool, machine, false, "Uses JSON for output. Intended to be used as an input for other tools.");
+ABSL_FLAG(bool, export_json, false, "Uses JSON for output. Intended to be used as an input for other tools.");
 ABSL_FLAG(bool, printtree, false, "Whether or not to print the tree");
 ABSL_FLAG(bool, printtokens, false, "Prints all lexed and filtered tokens");
 ABSL_FLAG(bool, printrawtokens, false,
@@ -146,7 +146,7 @@ static int AnalyzeOneFile(absl::string_view content,
   const auto parse_status = analyzer->ParseStatus();
   Json::Value json;
 
-  if (absl::GetFlag(FLAGS_machine)) {
+  if (absl::GetFlag(FLAGS_export_json)) {
     json = Json::objectValue;
     json["filename"] = std::string(filename);
   }
@@ -154,7 +154,7 @@ static int AnalyzeOneFile(absl::string_view content,
   if (!lex_status.ok() || !parse_status.ok()) {
     const int error_limit = absl::GetFlag(FLAGS_error_limit);
     int error_count = 0;
-    if (!absl::GetFlag(FLAGS_machine)) {
+    if (!absl::GetFlag(FLAGS_export_json)) {
       const std::vector<std::string> syntax_error_messages(
           analyzer->LinterTokenErrorMessages());
       for (const auto& message : syntax_error_messages) {
@@ -229,7 +229,7 @@ static int AnalyzeOneFile(absl::string_view content,
 
   // check for printtree flag, and print tree if on
   if (absl::GetFlag(FLAGS_printtree) && syntax_tree != nullptr) {
-    if(!absl::GetFlag(FLAGS_machine)) {
+    if(!absl::GetFlag(FLAGS_export_json)) {
       std::cout << std::endl
                 << "Parse Tree"
                 << (!parse_ok ? " (incomplete due to syntax errors):" : ":")
@@ -253,8 +253,8 @@ static int AnalyzeOneFile(absl::string_view content,
     VerifyParseTree(text_structure);
   }
 
-  if(absl::GetFlag(FLAGS_machine)) {
     std::cout << json;
+  if(absl::GetFlag(FLAGS_export_json)) {
   }
 
   return exit_status;
