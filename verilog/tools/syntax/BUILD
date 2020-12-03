@@ -20,6 +20,7 @@ cc_binary(
         "//verilog/CST:verilog_tree_print",
         "//verilog/CST:verilog_tree_json",
         "//verilog/analysis:verilog_analyzer",
+        "//verilog/analysis:json_diagnostics",
         "//verilog/analysis/checkers:verilog_lint_rules",
         "//verilog/parser:verilog_parser",
         "@com_google_absl//absl/flags:flag",

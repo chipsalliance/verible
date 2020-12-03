@@ -62,6 +62,18 @@ cc_test(
 )
 
 cc_library(
+    name = "json_diagnostics",
+    srcs = ["json_diagnostics.cc"],
+    hdrs = ["json_diagnostics.h"],
+    deps = [
+        ":verilog_analyzer",
+        "//common/analysis:file_analyzer",
+        "//common/strings:line_column_map",
+        "@jsoncpp_git//:jsoncpp",
+    ],
+)
+
+cc_library(
     name = "lint_rule_registry",
     srcs = ["lint_rule_registry.cc"],
     hdrs = ["lint_rule_registry.h"],

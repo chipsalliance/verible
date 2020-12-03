@@ -45,6 +45,7 @@
 #include "verilog/CST/verilog_tree_json.h"
 #include "verilog/analysis/verilog_analyzer.h"
 #include "verilog/analysis/verilog_excerpt_parse.h"
+#include "verilog/analysis/json_diagnostics.h"
 #include "verilog/parser/verilog_parser.h"
 #include "json/json.h"
 
@@ -163,41 +164,9 @@ static int AnalyzeOneFile(absl::string_view content,
         if (error_limit != 0 && error_count >= error_limit) break;
       }
     } else {
-      Json::Value &syntax_errors = json["errors"] = Json::arrayValue;
-      const std::vector<verible::RejectedToken>& rejected_tokens = analyzer->GetRejectedTokens();
-      for (const auto& rejected_token : rejected_tokens) {
-        Json::Value &error = syntax_errors.append(Json::objectValue);
-
-        const absl::string_view base_text = analyzer->Data().Contents();
-        const verible::LineColumnMap& line_column_map = analyzer->Data().GetLineColumnMap();
-        if (!rejected_token.token_info.isEOF()) {
-          const auto pos = line_column_map(rejected_token.token_info.left(base_text));
-          error["line"] = pos.line;
-          error["column"] = pos.column;
-          error["text"] = std::string(rejected_token.token_info.text());
-        } else {
-          const int file_size = base_text.length();
-          const auto pos = line_column_map(file_size);
-          error["line"] = pos.line;
-          error["column"] = pos.column;
-          error["text"] = "<EOF>";
-        }
-        switch (rejected_token.phase) {
-          case verible::AnalysisPhase::kLexPhase:
-            error["phase"] = "lex"; break;
-          case verible::AnalysisPhase::kPreprocessPhase:
-            error["phase"] = "preprocess"; break;
-          case verible::AnalysisPhase::kParsePhase:
-            error["phase"] = "parse"; break;
-          default:
-            break;
-        }
-
-        if (!rejected_token.explanation.empty()) {
-          error["message"] = rejected_token.explanation;
-        }
-        ++error_count;
-        if (error_limit != 0 && error_count >= error_limit) break;
+      Json::Value& errors = json["errors"] = verilog::GetLinterTokenErrorsAsJson(analyzer.get());
+      if (error_limit > 0 && errors.size() > unsigned(error_limit)) {
+        errors.resize(error_limit);
       }
     }
     exit_status = 1;
