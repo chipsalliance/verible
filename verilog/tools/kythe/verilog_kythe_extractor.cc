@@ -118,8 +118,7 @@ static VNameRef ConvertToVnameRef(const VName& vname,
 static void PrintKytheFactsProtoEntries(
     const IndexingFactNode& file_list_facts_tree,
     const VerilogProject& project) {
-  const auto indexing_data =
-      KytheFactsExtractor::ExtractKytheFacts(file_list_facts_tree, project);
+  const auto indexing_data = ExtractKytheFacts(file_list_facts_tree, project);
   google::protobuf::io::FileOutputStream file_output(STDOUT_FILENO);
   file_output.SetCloseOnDelete(true);
   ::kythe::FileOutputStream kythe_output(&file_output);

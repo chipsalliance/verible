@@ -15,6 +15,9 @@
 #ifndef VERIBLE_VERILOG_TOOLS_KYTHE_INDEXING_FACTS_TREE_EXTRACTOR_H_
 #define VERIBLE_VERILOG_TOOLS_KYTHE_INDEXING_FACTS_TREE_EXTRACTOR_H_
 
+#include <string>
+#include <vector>
+
 #include "absl/strings/string_view.h"
 #include "verilog/analysis/verilog_project.h"
 #include "verilog/tools/kythe/indexing_facts_tree.h"

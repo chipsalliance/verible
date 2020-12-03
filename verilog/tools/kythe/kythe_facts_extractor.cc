@@ -15,7 +15,10 @@
 #include "verilog/tools/kythe/kythe_facts_extractor.h"
 
 #include <iostream>
+#include <map>
+#include <memory>
 #include <string>
+#include <utility>
 #include <vector>
 
 #include "absl/memory/memory.h"
@@ -67,8 +70,204 @@ std::vector<absl::string_view> ConcatenateReferences(
 
 }  // namespace
 
-KytheIndexingData KytheFactsExtractor::ExtractKytheFacts(
-    const IndexingFactNode& file_list, const VerilogProject& project) {
+// KytheFactsExtractor processes indexing facts for a single file.
+// Responsible for traversing IndexingFactsTree and processing its different
+// nodes to produce kythe indexing facts.
+// Iteratively extracts facts and keeps running until no new facts are found in
+// the last iteration.
+class KytheFactsExtractor {
+ public:
+  KytheFactsExtractor(const VerilogSourceFile& source,
+                      ScopeResolver* previous_files_scopes)
+      : source_(&source), scope_resolver_(previous_files_scopes) {}
+
+ private:
+  // Container with a stack of VNames to hold context of VNames during traversal
+  // of an IndexingFactsTree.
+  // This is used to generate to VNames inside the current scope.
+  // e.g.
+  // module foo();
+  //  wire x; ==> "foo#x"
+  // endmodule: foo
+  //
+  // module bar();
+  //  wire x; ==> "bar#x"
+  // endmodule: bar
+  class VNameContext : public verible::AutoPopStack<const VName*> {
+   public:
+    typedef verible::AutoPopStack<const VName*> base_type;
+
+    // member class to handle push and pop of stack safely
+    using AutoPop = base_type::AutoPop;
+
+    // returns the top VName of the stack
+    const VName& top() const { return *ABSL_DIE_IF_NULL(base_type::top()); }
+  };
+
+  // Returns the path-resolved name of the current source file.
+  absl::string_view FileName() const;
+
+  // Returns the string_view that spans the source file's entire text.
+  absl::string_view SourceText() const;
+
+ public:
+  // Extracts kythe facts from the given IndexingFactsTree root.
+  KytheIndexingData ExtractFile(const IndexingFactNode&);
+
+ private:
+  // Resolves the tag of the given node and directs the flow to the appropriate
+  // function to extract kythe facts for that node.
+  void IndexingFactNodeTagResolver(const IndexingFactNode&);
+
+  // Determines whether to create a scope for this node or not and visits the
+  // children.
+  void VisitAutoConstructScope(const IndexingFactNode& node,
+                               const VName& vname);
+
+  // Add the given VName to vnames_context (to be used in scope relative
+  // signatures) and visits the children of the given node creating a new scope
+  // for the given node.
+  void VisitUsingVName(const IndexingFactNode& node, const VName&, Scope&);
+
+  // Directs the flow to the children of the given node.
+  void Visit(const IndexingFactNode& node);
+
+  // Determines whether or not to add the definition to the current scope.
+  void AddDefinitionToCurrentScope(IndexingFactType, const VName&);
+
+  // Appends the extracted children vnames to the scope of the current node.
+  void ConstructScope(const IndexingFactNode&, const VName&, Scope&);
+
+  // Determines whether or not to create a child of edge between the current
+  // node and the previous node.
+  void CreateChildOfEdge(IndexingFactType, const VName&);
+
+  //=================================================================
+  // Declare* methods create facts (some edges) and may introduce new scopes.
+  // Reference* methods only create edges, and may not modify scopes' contents.
+
+  // Extracts kythe facts from file node and returns it VName.
+  VName DeclareFile(const IndexingFactNode&);
+
+  // Extracts kythe facts for a reference to some user defined data type like
+  // class or module.
+  void ReferenceDataType(const IndexingFactNode&);
+
+  // Extracts kythe facts for a constant like member in enums.
+  VName DeclareConstant(const IndexingFactNode&);
+
+  // Extracts kythe facts for structs or unions.
+  VName DeclareStructOrUnion(const IndexingFactNode&);
+
+  // Extracts kythe facts for a type declaration.
+  VName DeclareTypedef(const IndexingFactNode&);
+
+  // Extracts kythe facts from interface node and returns it VName.
+  VName DeclareInterface(const IndexingFactNode& interface_fact_node);
+
+  // Extracts kythe facts from program node and returns it VName.
+  VName DeclareProgram(const IndexingFactNode& program_fact_node);
+
+  // Extracts kythe facts from module named port node e.g("m(.in1(a))").
+  void ReferenceModuleNamedPort(const IndexingFactNode&);
+
+  // Extracts kythe facts from named param
+  // e.g module_type #(.N(x)) extracts "N";
+  void ReferenceNamedParam(const IndexingFactNode&);
+
+  // Extracts kythe facts from module node and returns it VName.
+  VName DeclareModule(const IndexingFactNode&);
+
+  // Extracts kythe facts from class node and returns it VName.
+  VName DeclareClass(const IndexingFactNode&);
+
+  // Extracts kythe facts from class extends node.
+  void ReferenceExtendsInheritance(const IndexingFactNode&);
+
+  // Extracts kythe facts from module instance, class instance, variable
+  // definition and param declaration nodes and returns its VName.
+  VName DeclareVariable(const IndexingFactNode& node);
+
+  // Extracts kythe facts from a module port reference node.
+  void ReferenceVariable(const IndexingFactNode& node);
+
+  // Creates a new anonymous scope for if conditions and loops.
+  VName DeclareAnonymousScope(const IndexingFactNode& temp_scope);
+
+  // Extracts kythe facts from a function or task node and returns its VName.
+  VName DeclareFunctionOrTask(const IndexingFactNode& function_fact_node);
+
+  // Extracts kythe facts from a function or task call node.
+  void ReferenceFunctionOrTaskCall(
+      const IndexingFactNode& function_call_fact_node);
+
+  // Extracts kythe facts from a package declaration node and returns its VName.
+  VName DeclarePackage(const IndexingFactNode& node);
+
+  // Extracts kythe facts from package import node.
+  void ReferencePackageImport(const IndexingFactNode& node);
+
+  // Extracts kythe facts from a macro definition node and returns its VName.
+  VName DeclareMacroDefinition(const IndexingFactNode& macro_definition_node);
+
+  // Extracts kythe facts from a macro call node.
+  void ReferenceMacroCall(const IndexingFactNode& macro_call_node);
+
+  // Extracts kythe facts from a "`include" node.
+  void ReferenceIncludeFile(const IndexingFactNode& include_node);
+
+  // Extracts kythe facts from member reference statement.
+  // e.g pkg::member or class::member or class.member
+  // The names are treated as anchors e.g:
+  // pkg::member => {Anchor(pkg), Anchor(member)}
+  // pkg::class_name::var => {Anchor(pkg), Anchor(class_name), Anchor(var)}
+  void ReferenceMember(const IndexingFactNode& member_reference_node);
+
+  //============ end of Declare*, Reference* methods ===================
+
+  // Create "ref" edges that point from the given anchors to the given
+  // definitions in order.
+  void CreateAnchorReferences(
+      const std::vector<Anchor>& anchors,
+      const std::vector<std::pair<const VName*, const Scope*>>& definitions);
+
+  // Generates an anchor VName for kythe.
+  VName CreateAnchor(const Anchor&);
+
+  // Appends the signatures of previous containing scope vname to make
+  // signatures unique relative to scopes.
+  Signature CreateScopeRelativeSignature(absl::string_view) const;
+
+  // Generates fact strings for Kythe facts.
+  // Schema for this fact can be found here:
+  // https://kythe.io/docs/schema/writing-an-indexer.html
+  void CreateFact(const VName& vname, absl::string_view name,
+                  absl::string_view value);
+
+  // Generates edge strings for Kythe edges.
+  // Schema for this edge can be found here:
+  // https://kythe.io/docs/schema/writing-an-indexer.html
+  void CreateEdge(const VName& source, absl::string_view name,
+                  const VName& target);
+
+  // The verilog source file from which facts are extracted.
+  const VerilogSourceFile* const source_;
+
+ private:  // data
+  // Keeps track of VNames of ancestors as the visitor traverses the facts
+  // tree.
+  VNameContext vnames_context_;
+
+  // Keeps track and saves the explored scopes with a <key, value> and maps
+  // every signature to its scope.
+  ScopeResolver* scope_resolver_;
+
+  // Contains resulting kythe facts and edges to output.
+  KytheIndexingData kythe_data_;
+};
+
+KytheIndexingData ExtractKytheFacts(const IndexingFactNode& file_list,
+                                    const VerilogProject& project) {
   VLOG(1) << __FUNCTION__;
   // Create a new ScopeResolver and give the ownership to the scope_resolvers
   // vector so that it can outlive KytheFactsExtractor.
@@ -1012,7 +1211,7 @@ void KytheFactsExtractor::CreateEdge(const VName& source_node,
 std::ostream& KytheFactsPrinter::Print(std::ostream& stream) const {
   // TODO(fangism): Print function should not be doing extraction work.
   const auto indexing_data =
-      KytheFactsExtractor::ExtractKytheFacts(file_list_facts_tree_, *project_);
+      ExtractKytheFacts(file_list_facts_tree_, *project_);
 
   for (const Fact& fact : indexing_data.facts) {
     fact.FormatJSON(stream, debug_) << std::endl;

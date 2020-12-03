@@ -82,8 +82,6 @@ cc_library(
     hdrs = ["kythe_facts_extractor.h"],
     deps = [
         ":indexing_facts_tree",
-        ":indexing_facts_tree_context",
-        ":indexing_facts_tree_extractor",
         ":kythe_facts",
         ":kythe_schema_constants",
         ":scope_resolver",
