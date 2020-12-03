@@ -164,7 +164,7 @@ static int AnalyzeOneFile(absl::string_view content,
       }
     } else {
       Json::Value &syntax_errors = json["errors"] = Json::arrayValue;
-      const std::vector<verible::RejectedToken> & rejected_tokens = analyzer->GetRejectedTokens();
+      const std::vector<verible::RejectedToken>& rejected_tokens = analyzer->GetRejectedTokens();
       for (const auto& rejected_token : rejected_tokens) {
         Json::Value &error = syntax_errors.append(Json::objectValue);
 
