@@ -100,4 +100,4 @@ To pipe from stdin, use '-' as <file>.
 
 ## Version
 
-Generated on 2020-12-03 17:11:04 -0500 from [566c205](https://github.com/google/verible/commit/566c205bb440e552f1076cba6e835ee06d4837e9)
+Generated on 2020-12-03 17:11:44 -0500 from [b74ff0d](https://github.com/google/verible/commit/b74ff0df4ae9e9d0457cefaa3e6774f4b1251d6f)
