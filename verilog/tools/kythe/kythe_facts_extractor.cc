@@ -980,9 +980,13 @@ VName KytheFactsExtractor::CreateAnchor(const Anchor& anchor) {
   const int end_location = start_location + anchor.Text().length();
   const VName anchor_vname(
       FileName(),
+      // This is one of the few places that generates a std::string&&
+      // and constructs a signature from it, everywhere else is string_view.
       Signature(absl::StrCat("@", start_location, ":", end_location)));
 
   CreateFact(anchor_vname, kFactNodeKind, kNodeAnchor);
+  // This is one of the only locations that passes a std::string&& to
+  // CreateFact, everywhere else is string_view.
   CreateFact(anchor_vname, kFactAnchorStart, absl::StrCat(start_location));
   CreateFact(anchor_vname, kFactAnchorEnd, absl::StrCat(end_location));
 

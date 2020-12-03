@@ -27,11 +27,11 @@ namespace kythe {
 // Unique identifier for Kythe facts.
 class Signature {
  public:
-  Signature(absl::string_view name = "")
-      : names_(std::vector<std::string>{std::string(name)}) {}
+  explicit Signature(absl::string_view name = "")
+      : names_({std::string(name)}) {}
 
-  Signature(const Signature& parent, absl::string_view name) {
-    names_ = parent.Names();
+  Signature(const Signature& parent, absl::string_view name)
+      : names_(parent.Names()) {
     names_.push_back(std::string(name));
   }
 
@@ -89,16 +89,16 @@ struct VName {
   Signature signature;
 
   // Path for the file the VName is extracted from.
-  std::string path;
+  absl::string_view path;
 
   // The language this VName belongs to.
-  std::string language;
+  absl::string_view language;
 
   // The corpus of source code this VName belongs to.
-  std::string corpus;
+  absl::string_view corpus;
 
   // A directory path or project identifier inside the Corpus.
-  std::string root;
+  absl::string_view root;
 };
 
 std::ostream& operator<<(std::ostream&, const VName&);
@@ -121,7 +121,8 @@ struct Fact {
   const VName node_vname;
 
   // The name identifying this fact.
-  const std::string fact_name;
+  // This is one of the constant strings in "kythe_schema_constants.h"
+  const absl::string_view fact_name;
 
   // The given value to this fact.
   const std::string fact_value;
@@ -147,7 +148,8 @@ struct Edge {
   const VName source_node;
 
   // The edge name which identifies the edge kind.
-  const std::string edge_name;
+  // This is one of the constant strings from "kythe_schema_constants.h"
+  const absl::string_view edge_name;
 
   // The VName of the target node of this edge.
   const VName target_node;
