@@ -18,6 +18,7 @@ cc_binary(
         "//common/util:init_command_line",
         "//common/util:logging",
         "//verilog/CST:verilog_tree_print",
+        "//verilog/CST:verilog_tree_json",
         "//verilog/analysis:verilog_analyzer",
         "//verilog/analysis/checkers:verilog_lint_rules",
         "//verilog/parser:verilog_parser",
@@ -25,6 +26,7 @@ cc_binary(
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/strings",
         "@com_google_absl//absl/types:span",
+        "@jsoncpp_git//:jsoncpp",
     ],
 )
 

@@ -24,9 +24,6 @@
 #include "common/text/symbol.h"
 #include "common/text/tree_utils.h"
 
-#include "common/text/visitors.h"
-#include "json/json.h"
-
 namespace verilog {
 
 class VerilogPrettyPrinter : public verible::PrettyPrinter {
@@ -43,29 +40,6 @@ class VerilogPrettyPrinter : public verible::PrettyPrinter {
 // Prints tree contained at root to stream
 void PrettyPrintVerilogTree(const verible::Symbol& root, absl::string_view base,
                             std::ostream* stream);
-
-class VerilogTreeToJsonConverter : public verible::SymbolVisitor {
- public:
-  explicit VerilogTreeToJsonConverter(absl::string_view base);
-
-  void Visit(const verible::SyntaxTreeLeaf&) override;
-  void Visit(const verible::SyntaxTreeNode&) override;
-
-  Json::Value get_json() { return json_; }
-
- protected:
-  // Range of text spanned by syntax tree, used for offset calculation.
-  const verible::TokenInfo::Context context_;
-
-  // JSON tree root
-  Json::Value json_;
-
-  // Pointer to JSON value of currently visited symbol in its parent's
-  // children list.
-  Json::Value* value_;
-};
-
-Json::Value ConvertVerilogTreeToJson(const verible::Symbol& root, absl::string_view base);
 
 }  // namespace verilog
 

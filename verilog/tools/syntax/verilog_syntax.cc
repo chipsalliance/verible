@@ -42,10 +42,10 @@
 #include "common/util/init_command_line.h"
 #include "common/util/logging.h"  // for operator<<, LOG, LogMessage, etc
 #include "verilog/CST/verilog_tree_print.h"
+#include "verilog/CST/verilog_tree_json.h"
 #include "verilog/analysis/verilog_analyzer.h"
 #include "verilog/analysis/verilog_excerpt_parse.h"
 #include "verilog/parser/verilog_parser.h"
-
 #include "json/json.h"
 
 // Controls parser selection behavior

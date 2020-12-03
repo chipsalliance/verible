@@ -892,6 +892,23 @@ cc_library(
         "//common/util:value_saver",
         "//verilog/parser:verilog_parser",
         "@com_google_absl//absl/strings",
+    ],
+)
+
+cc_library(
+    name = "verilog_tree_json",
+    srcs = ["verilog_tree_json.cc"],
+    hdrs = ["verilog_tree_json.h"],
+    deps = [
+        ":verilog_nonterminals",
+        "//common/text:concrete_syntax_leaf",
+        "//common/text:concrete_syntax_tree",
+        "//common/text:symbol",
+        "//common/text:token_info",
+        "//common/text:tree_utils",
+        "//common/util:value_saver",
+        "//verilog/parser:verilog_parser",
+        "@com_google_absl//absl/strings",
         "@jsoncpp_git//:jsoncpp",
     ],
 )
