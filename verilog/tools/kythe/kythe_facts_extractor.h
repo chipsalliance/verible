@@ -21,6 +21,7 @@
 #include <utility>
 #include <vector>
 
+#include "verilog/analysis/verilog_project.h"
 #include "verilog/tools/kythe/indexing_facts_tree.h"
 #include "verilog/tools/kythe/indexing_facts_tree_context.h"
 #include "verilog/tools/kythe/indexing_facts_tree_extractor.h"
@@ -34,15 +35,20 @@ namespace kythe {
 // Usage: stream << KytheFactsPrinter(IndexingFactNode);
 class KytheFactsPrinter {
  public:
-  explicit KytheFactsPrinter(const IndexingFactNode& file_list_facts_tree,
-                             bool debug = false)
-      : file_list_facts_tree_(file_list_facts_tree), debug_(debug) {}
+  KytheFactsPrinter(const IndexingFactNode& file_list_facts_tree,
+                    const VerilogProject& project, bool debug = false)
+      : file_list_facts_tree_(file_list_facts_tree),
+        project_(&project),
+        debug_(debug) {}
 
   std::ostream& Print(std::ostream&) const;
 
  private:
   // The root of the indexing facts tree to extract kythe facts from.
   const IndexingFactNode& file_list_facts_tree_;
+
+  // This project manages the opening and path resolution of referenced files.
+  const VerilogProject* const project_;
 
   // When debugging is enabled, print human-readable un-encoded text.
   const bool debug_;
@@ -59,19 +65,27 @@ struct KytheIndexingData {
   std::set<Edge> edges;
 };
 
+// KytheFactsExtractor processes indexing facts for a single file.
 // Responsible for traversing IndexingFactsTree and processing its different
 // nodes to produce kythe indexing facts.
 // Iteratively extracts facts and keeps running until no new facts are found in
 // the last iteration.
 class KytheFactsExtractor {
  public:
-  KytheFactsExtractor(absl::string_view file_path,
+  KytheFactsExtractor(const VerilogSourceFile& source,
                       ScopeResolver* previous_files_scopes)
-      : file_path_(file_path), scope_resolver_(previous_files_scopes) {}
+      : source_(&source), scope_resolver_(previous_files_scopes) {}
 
+  // Extract facts across an entire project.
   // Extracts node tagged with kFileList where it iterates over every child node
   // tagged with kFile from the begining and extracts the facts for each file.
-  static KytheIndexingData ExtractKytheFacts(const IndexingFactNode& file_list);
+  // Currently, the file_list must be dependency-ordered for best results, that
+  // is, definitions of symbols should be encountered earlier in the file list
+  // than references to those symbols.
+  // TODO(fangism): make this the only public function in this header, and move
+  // the entire class definition into the .cc as implementation detail.
+  static KytheIndexingData ExtractKytheFacts(const IndexingFactNode& file_list,
+                                             const VerilogProject& project);
 
  private:
   // Container with a stack of VNames to hold context of VNames during traversal
@@ -95,6 +109,12 @@ class KytheFactsExtractor {
     // returns the top VName of the stack
     const VName& top() const { return *ABSL_DIE_IF_NULL(base_type::top()); }
   };
+
+  // Returns the path-resolved name of the current source file.
+  absl::string_view FileName() const;
+
+  // Returns the string_view that spans the source file's entire text.
+  absl::string_view SourceText() const;
 
   // Extracts kythe facts from the given IndexingFactsTree root.
   KytheIndexingData ExtractFile(const IndexingFactNode&);
@@ -230,8 +250,8 @@ class KytheFactsExtractor {
   void CreateEdge(const VName& source, absl::string_view name,
                   const VName& target);
 
-  // The verilog file name which the facts are extracted from.
-  std::string file_path_;
+  // The verilog source file from which facts are extracted.
+  const VerilogSourceFile* const source_;
 
   // Keeps track of VNames of ancestors as the visitor traverses the facts
   // tree.

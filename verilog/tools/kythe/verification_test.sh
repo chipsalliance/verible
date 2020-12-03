@@ -82,6 +82,7 @@ function test_multi_files() {
   cp "${test_case_dir}"/* "${test_dir}/"
   filelist_path="${test_dir}/filelist"
   ls "${test_case_dir}" > "${filelist_path}"
+  # Note: file_list.txt from the original test_case_dir seems unused.
   echo "Running Kythe verification 'multi file' test for ${test_name}" >> "$TEST_log"
   "${VERIBLE_EXTRACTOR_BIN}" --file_list_path "${filelist_path}" --file_list_root "${test_dir}" --print_kythe_facts proto  > "${test_dir}/entries" ||
       fail "Failed to extract Kythe facts"

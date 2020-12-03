@@ -87,7 +87,10 @@ cc_library(
         ":kythe_facts",
         ":kythe_schema_constants",
         ":scope_resolver",
+        ":verilog_extractor_indexing_fact_type",
+        "//common/strings:compare",
         "//common/util:logging",
+        "//verilog/analysis:verilog_project",
         "@com_google_absl//absl/memory",
         "@com_google_absl//absl/strings",
     ],
@@ -113,8 +116,25 @@ cc_library(
     deps = [
         ":verilog_extractor_indexing_fact_type",
         "//common/text:token_info",
+        "//common/util:range",
         "//common/util:vector_tree",
+        "@com_google_absl//absl/memory",
         "@com_google_absl//absl/strings",
+        "@com_google_absl//absl/strings:str_format",
+    ],
+)
+
+cc_test(
+    name = "indexing_facts_tree_test",
+    srcs = ["indexing_facts_tree_test.cc"],
+    deps = [
+        ":indexing_facts_tree",
+        ":verilog_extractor_indexing_fact_type",
+        "//common/text:token_info",
+        "//common/util:range",
+        "@com_google_absl//absl/memory",
+        "@com_google_absl//absl/strings",
+        "@com_google_googletest//:gtest_main",
     ],
 )
 
@@ -157,10 +177,13 @@ cc_test(
     name = "indexing_facts_tree_extractor_test",
     srcs = ["indexing_facts_tree_extractor_test.cc"],
     deps = [
+        ":indexing_facts_tree",
         ":indexing_facts_tree_extractor",
+        ":verilog_extractor_indexing_fact_type",
         "//common/analysis:syntax_tree_search_test_utils",
         "//common/text:concrete_syntax_tree",
         "//common/util:file_util",
+        "//common/util:range",
         "//verilog/analysis:verilog_analyzer",
         "//verilog/analysis:verilog_project",
         "@com_google_absl//absl/status",
