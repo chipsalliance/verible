@@ -253,8 +253,13 @@ static int AnalyzeOneFile(absl::string_view content,
     VerifyParseTree(text_structure);
   }
 
-    std::cout << json;
   if(absl::GetFlag(FLAGS_export_json)) {
+    Json::StreamWriterBuilder builder;
+    // Disable extra space before ':'
+    builder["enableYAMLCompatibility"] = true;
+    std::unique_ptr<Json::StreamWriter> writer(builder.newStreamWriter());
+    writer->write(json, &std::cout);
+    std::cout << std::endl;
   }
 
   return exit_status;
