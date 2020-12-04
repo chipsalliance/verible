@@ -140,17 +140,12 @@ static void VerifyParseTree(const TextStructureView& text_structure) {
 }
 
 static int AnalyzeOneFile(absl::string_view content,
-                          absl::string_view filename) {
+                          absl::string_view filename,
+                          Json::Value& json) {
   int exit_status = 0;
   const auto analyzer = ParseWithLanguageMode(content, filename);
   const auto lex_status = ABSL_DIE_IF_NULL(analyzer)->LexStatus();
   const auto parse_status = analyzer->ParseStatus();
-  Json::Value json;
-
-  if (absl::GetFlag(FLAGS_export_json)) {
-    json = Json::objectValue;
-    json["filename"] = std::string(filename);
-  }
 
   if (!lex_status.ok() || !parse_status.ok()) {
     const int error_limit = absl::GetFlag(FLAGS_error_limit);
@@ -222,15 +217,6 @@ static int AnalyzeOneFile(absl::string_view content,
     VerifyParseTree(text_structure);
   }
 
-  if(absl::GetFlag(FLAGS_export_json)) {
-    Json::StreamWriterBuilder builder;
-    // Disable extra space before ':'
-    builder["enableYAMLCompatibility"] = true;
-    std::unique_ptr<Json::StreamWriter> writer(builder.newStreamWriter());
-    writer->write(json, &std::cout);
-    std::cout << std::endl;
-  }
-
   return exit_status;
 }
 
@@ -238,6 +224,8 @@ int main(int argc, char** argv) {
   const auto usage =
       absl::StrCat("usage: ", argv[0], " [options] <file> [<file>...]");
   const auto args = verible::InitCommandLine(usage, &argc, &argv);
+
+  Json::Value json;
 
   int exit_status = 0;
   // All positional arguments are file names.  Exclude program name.
@@ -249,8 +237,22 @@ int main(int argc, char** argv) {
       continue;
     }
 
-    int file_status = AnalyzeOneFile(content, filename);
+    Json::Value file_json;
+    int file_status = AnalyzeOneFile(content, filename, file_json);
     exit_status = std::max(exit_status, file_status);
+    if(absl::GetFlag(FLAGS_export_json)) {
+      json[filename] = std::move(file_json);
+    }
   }
+
+  if(absl::GetFlag(FLAGS_export_json)) {
+    Json::StreamWriterBuilder builder;
+    // Disable extra space before ':'
+    builder["enableYAMLCompatibility"] = true;
+    std::unique_ptr<Json::StreamWriter> writer(builder.newStreamWriter());
+    writer->write(json, &std::cout);
+    std::cout << std::endl;
+  }
+
   return exit_status;
 }
