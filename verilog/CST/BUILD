@@ -949,3 +949,18 @@ cc_test(
         "@com_google_googletest//:gtest_main",
     ],
 )
+
+cc_test(
+    name = "verilog_tree_json_test",
+    srcs = ["verilog_tree_json_test.cc"],
+    deps = [
+        ":verilog_tree_json",
+        "//common/text:symbol",
+        "//common/util:logging",
+        "//verilog/analysis:verilog_analyzer",
+        "@com_google_absl//absl/memory",
+        "@com_google_absl//absl/strings",
+        "@com_google_googletest//:gtest_main",
+        "@jsoncpp_git//:jsoncpp",
+    ],
+)
