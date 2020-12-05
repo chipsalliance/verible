@@ -19,7 +19,7 @@ set -e
 source ./.github/settings.sh
 
 case $MODE in
-compile|test)
+compile|test|clean)
     ./.github/workflows/set-compiler.sh 9
     ./.github/workflows/install-bazel.sh
     ;;

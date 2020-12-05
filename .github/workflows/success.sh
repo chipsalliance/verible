@@ -21,7 +21,7 @@ git config --local user.name "Deployment Bot"
 git config --local user.email "verible-dev@googlegroups.com"
 
 case $MODE in
-test)
+test|clean)
     # Nothing to do
     ;;
 
