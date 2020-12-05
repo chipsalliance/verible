@@ -34,6 +34,7 @@ bin)
     # Create a tag of form v0.0-183-gdf2b162-20191112132344
     rm -rf releasing/out
     git tag "$TAG" || true
+    echo "::set-output name=TAG::$(echo $TAG)"
     ls -l /tmp/releases
     ;;
 
