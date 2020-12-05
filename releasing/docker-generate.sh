@@ -106,18 +106,7 @@ done
 for CENTOS_VERSION in 7 8; do
     # Install basic tools
     # --------------------------------------------------------------
-    cat > centos-${CENTOS_VERSION}/Dockerfile <<EOF
-FROM centos:$CENTOS_VERSION
-
-# Install basic tools
-RUN yum install -y  \\
-    file            \\
-    git             \\
-    redhat-lsb      \\
-    tar             \\
-    wget
-
-EOF
+    sed "s#centos:VERSION#centos:${CENTOS_VERSION}#g" $(dirname "$0")/centos.dockerfile > centos-${CENTOS_VERSION}/Dockerfile
 
     # Install compiler
     # --------------------------------------------------------------
