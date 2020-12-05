@@ -15,7 +15,7 @@
 
 set -x
 set -e
-export TAG=${TAG:-$(git rev-parse --short "$GITHUB_SHA")}
+export TAG=${TAG:-$(git describe --match=v*)}
 
 git config --local user.name "Deployment Bot"
 git config --local user.email "verible-dev@googlegroups.com"
