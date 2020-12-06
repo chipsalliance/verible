@@ -15,6 +15,7 @@
 #include "verilog/analysis/json_diagnostics.h"
 
 #include <vector>
+#include <string>
 
 #include "absl/strings/string_view.h"
 #include "common/analysis/file_analyzer.h"

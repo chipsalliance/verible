@@ -33,9 +33,9 @@ class VerilogTreeToJsonConverter : public verible::SymbolVisitor {
   void Visit(const verible::SyntaxTreeLeaf&) override;
   void Visit(const verible::SyntaxTreeNode&) override;
 
-  Json::Value get_json() { return std::move(json_); }
+  Json::Value TakeJsonValue() { return std::move(json_); }
 
-//  protected:
+ protected:
   // Range of text spanned by syntax tree, used for offset calculation.
   const verible::TokenInfo::Context context_;
 
@@ -80,7 +80,7 @@ void VerilogTreeToJsonConverter::Visit(const verible::SyntaxTreeNode& node) {
 Json::Value ConvertVerilogTreeToJson(const verible::Symbol& root, absl::string_view base) {
   VerilogTreeToJsonConverter converter(base);
   root.Accept(&converter);
-  return converter.get_json();
+  return converter.TakeJsonValue();
 }
 
 }  // namespace verilog
