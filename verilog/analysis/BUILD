@@ -102,6 +102,20 @@ cc_test(
 )
 
 cc_test(
+    name = "json_diagnostics_test",
+    srcs = ["json_diagnostics_test.cc"],
+    deps = [
+        ":json_diagnostics",
+        ":verilog_analyzer",
+        "//common/util:logging",
+        "@com_google_absl//absl/memory",
+        "@com_google_absl//absl/strings",
+        "@com_google_googletest//:gtest_main",
+        "@jsoncpp_git//:jsoncpp",
+    ],
+)
+
+cc_test(
     name = "lint_rule_registry_test",
     srcs = ["lint_rule_registry_test.cc"],
     deps = [
