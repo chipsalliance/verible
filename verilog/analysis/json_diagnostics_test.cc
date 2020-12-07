@@ -28,9 +28,9 @@ namespace {
 static void CheckJsonErrorItem(const Json::Value& json, const char* phase, const char* text) {
   EXPECT_TRUE(json["column"].isIntegral());
   EXPECT_TRUE(json["line"].isIntegral());
-  EXPECT_TRUE(json["phase"].isString());
+  ASSERT_TRUE(json["phase"].isString());
   EXPECT_EQ(json["phase"].asString(), phase);
-  EXPECT_TRUE(json["text"].isString());
+  ASSERT_TRUE(json["text"].isString());
   EXPECT_EQ(json["text"].asString(), text);
 }
 

@@ -24,7 +24,7 @@
 namespace verilog {
 namespace {
 
-static Json::Value ParseJson(const absl::string_view text) {
+static Json::Value ParseJson(absl::string_view text) {
   Json::Value json;
   std::unique_ptr<Json::CharReader> reader(Json::CharReaderBuilder().newCharReader());
   reader->parse(text.begin(), text.end(), &json, nullptr);
@@ -35,11 +35,11 @@ TEST(VerilogTreeJsonTest, GeneratesGoodJsonTree) {
   const auto analyzer_ptr = absl::make_unique<VerilogAnalyzer>(
       "module foo;\nendmodule\n", "fake_file.sv");
   const auto status = ABSL_DIE_IF_NULL(analyzer_ptr)->Analyze();
-  EXPECT_TRUE(status.ok());
+  EXPECT_TRUE(status.ok()) << status.message();
   const std::unique_ptr<verible::Symbol>& tree_ptr = analyzer_ptr->SyntaxTree();
   ASSERT_NE(tree_ptr, nullptr);
 
-  const Json::Value json = std::move(verilog::ConvertVerilogTreeToJson(*tree_ptr,
+  const Json::Value json(verilog::ConvertVerilogTreeToJson(*tree_ptr,
                                analyzer_ptr->Data().Contents()));
 
   const Json::Value expected_json = ParseJson(R"({
