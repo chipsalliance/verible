@@ -18,9 +18,11 @@ usage: verible-verilog-syntax [options] <file(s)...>
   Flags from verilog/tools/syntax/verilog_syntax.cc:
     --error_limit (Limit the number of syntax errors reported. (0: unlimited));
       default: 0;
+    --export_json (Uses JSON for output. Intended to be used as an input for
+      other tools.); default: false;
     --lang (Selects language variant to parse. Options:
       auto: SystemVerilog-2017, but may auto-detect alternate parsing modes
-      sv: strict SystemVerilog-2017
+      sv: strict SystemVerilog-2017, with explicit alternate parsing modes
       lib: Verilog library map language (LRM Ch. 33)
       ); default: auto;
     --printrawtokens (Prints all lexed tokens, including filtered ones.);
