@@ -14,8 +14,6 @@
 
 #include "verilog/CST/verilog_tree_json.h"
 
-#include <sstream>  // IWYU pragma: keep  // for ostringstream
-
 #include "gtest/gtest.h"
 #include "absl/strings/string_view.h"
 #include "verilog/analysis/verilog_analyzer.h"
@@ -38,8 +36,6 @@ TEST(VerilogTreeJsonTest, GeneratesGoodJsonTree) {
       "module foo;\nendmodule\n", "fake_file.sv");
   const auto status = ABSL_DIE_IF_NULL(analyzer_ptr)->Analyze();
   EXPECT_TRUE(status.ok());
-  std::ostringstream stream;
-  EXPECT_TRUE(stream.str().empty());
   const std::unique_ptr<verible::Symbol>& tree_ptr = analyzer_ptr->SyntaxTree();
   ASSERT_NE(tree_ptr, nullptr);
 
