@@ -182,6 +182,9 @@ nodes are tagged with
 encapsulates a token and is shown with its corresponding byte-offsets in the
 original text (as `@left-right`). Null nodes are not shown.
 
+When `--export_json` flag is set, concrete syntax tree is printed as JSON
+object. See [Parser tree object](#Parser-tree-object) below for details.
+
 The exact structure of the SystemVerilog CST is fragile, and should not be
 considered stable; at any time, node enumerations can be created or removed, and
 subtree structures can be re-shaped. In the above example, `kModuleHeader` is an
@@ -189,6 +192,45 @@ implementation detail of a module definition's composition, and doesn't map
 directly to a named grammar construct in the [SV-LRM]. The
 [`verilog/CST`](../../CST) library provides functions that abstract away
 internal structure.
+
+## JSON output description
+
+JSON root is an object which maps each input file name to an object containing
+parsing result for that file.
+
+### Parsing result object
+
+| Key      | Type   | Description                                              |
+|----------|--------|----------------------------------------------------------|
+| `tree`   | object | Parser tree. Present only when `--printtree` flag is specified and there were no parsing errors. |
+| `errors` | array  | List of error objects. Present only when there were any errors. |
+
+#### Parser tree object
+
+The tree consist of Node and Leaf objects.
+
+##### Node
+
+| Key        | Type   | Description                                            |
+|------------|--------|--------------------------------------------------------|
+| `tag`      | string | Node tag. See `NodeEnum` in [verilog\_nonterminals.h](../../CST/verilog_nonterminals.h) for available values. |
+| `children` | array  | List of children (Node, Leaf, or `null`).              |
+
+##### Leaf
+
+| Key            | Type   | Description                                        |
+|----------------|--------|----------------------------------------------------|
+| `start`, `end` | int    | Byte offset of symbol's first and last character in source text. |
+| `symbol`       | string | Symbol identifier.                                 |
+
+#### Error object
+
+| Key              | Type   | Description                                      |
+|------------------|--------|--------------------------------------------------|
+| `line`, `column` | int    | Line and column in source text. 0-based.         |
+| `phase`          | string | Phase during which the error occured. One of: `lex`, `parse`, `preprocess`, `unknown`. |
+| `text`           | string | Character sequence which caused the error.       |
+| `message`        | string | (optional) Error explanation.                    |
 
 <!-- reference links -->
 
