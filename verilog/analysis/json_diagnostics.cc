@@ -36,7 +36,7 @@ static Json::Value analysis_phase_to_json(const verible::AnalysisPhase& phase) {
     case verible::AnalysisPhase::kParsePhase:
       return "parse";
     default:
-      return "";
+      return "unknown";
   }
 }
 
