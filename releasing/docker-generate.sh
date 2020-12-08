@@ -121,7 +121,7 @@ done
 # ==================================================================
 # Generate the Docker files for centos versions
 # ==================================================================
-for CENTOS_VERSION in 6 7 8; do
+for CENTOS_VERSION in 7 8; do
     # Install basic tools
     # --------------------------------------------------------------
     cat > centos-${CENTOS_VERSION}/Dockerfile <<EOF
