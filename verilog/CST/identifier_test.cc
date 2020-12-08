@@ -178,5 +178,31 @@ TEST(GetIdentifierTest, IdentifierUnpackedDimensions) {
   }
 }
 
+// TODO
+TEST(FindAllSymbolIdentifierTest, VariousIds) {
+  // TODO
+  const std::pair<absl::string_view,
+                  std::set<absl::string_view>> kTestCases[] = {
+                    // TODO more cases
+      {"function foo(); endfunction", {"foo"}},
+      {"function myclass::foo(); endfunction", {"myclass", "foo"}},
+      {"task goo(); endtask", {"goo"}},
+      {"task fff::goo(); endtask", {"fff", "goo"}},
+  };
+  for (const auto test : kTestCases) {
+    VerilogAnalyzer analyzer(test.first, "");
+    ASSERT_OK(analyzer.Analyze());
+    const auto& root = analyzer.Data().SyntaxTree();
+    const auto symb_ids = FindAllSymbolIdentifierLeafs(*root);
+    std::set<absl::string_view> actual;
+    for (const auto& id : symb_ids) {
+      const auto symb_leaf = SymbolCastToLeaf(*id.match);
+      absl::string_view symb_str = symb_leaf.get().text();
+      actual.insert(symb_str);
+    }
+    EXPECT_EQ(actual, test.second);
+  }
+}
+
 }  // namespace
 }  // namespace verilog

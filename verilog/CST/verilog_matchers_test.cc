@@ -56,6 +56,24 @@ TEST(VerilogMatchers, MacroCallIdLeafTests) {
     verible::matcher::RunRawMatcherTestCase<VerilogAnalyzer>(test);
 }
 
+// Tests for SymbolIdentifierLeaf matching
+TEST(VerilogMatchers, SymbolIdentifierLeaf) {
+  const RawMatcherTestCase tests[] = {
+    // TODO cases
+      {SymbolIdentifierLeaf(), "", 0},
+      {SymbolIdentifierLeaf(), EmbedInClass(""), 1},
+      {SymbolIdentifierLeaf(), EmbedInClassMethod("`uvm_foo"), 3},
+      {SymbolIdentifierLeaf(), "`uvm_foo(\"foo\");", 2},
+      {SymbolIdentifierLeaf(), "`uvm_foo(\"foo\")\n", 2},
+      {SymbolIdentifierLeaf(), EmbedInClassMethod("`uvm_foo(\"foo\");"), 4},
+      {SymbolIdentifierLeaf(), EmbedInClassMethod("`uvm_foo(\"foo\")\n"), 4},
+      {SymbolIdentifierLeaf(), EmbedInClassMethod("uvm_foo(\"foo\");"), 4},
+      {SymbolIdentifierLeaf(), EmbedInClassMethod("$uvm_foo(\"foo\");"), 4},
+  };
+  for (const auto& test : tests)
+    verible::matcher::RunRawMatcherTestCase<VerilogAnalyzer>(test);
+}
+
 // Tests for NodekVoidcast matching
 TEST(VerilogMatchers, VoidCastNodeTests) {
   const RawMatcherTestCase tests[] = {
