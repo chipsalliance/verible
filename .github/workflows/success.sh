@@ -15,13 +15,13 @@
 
 set -x
 set -e
-export TAG=${TAG:-$(git rev-parse --short "$GITHUB_SHA")}
+export TAG=${TAG:-$(git describe --match=v*)}
 
 git config --local user.name "Deployment Bot"
 git config --local user.email "verible-dev@googlegroups.com"
 
 case $MODE in
-test)
+test|clean)
     # Nothing to do
     ;;
 
@@ -34,6 +34,7 @@ bin)
     # Create a tag of form v0.0-183-gdf2b162-20191112132344
     rm -rf releasing/out
     git tag "$TAG" || true
+    echo "::set-output name=TAG::$(echo $TAG)"
     ls -l /tmp/releases
     ;;
 
