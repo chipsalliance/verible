@@ -5,6 +5,8 @@ on:
   pull_request:
 
 jobs:
+
+
    Check:
       runs-on: ubuntu-16.04
       strategy:
@@ -13,8 +15,9 @@ jobs:
           env:
             - MODE: test
             - MODE: compile
+            - MODE: clean
       env: ${{ matrix.env}}
-      name: ${{ matrix.env.MODE}}
+      name: Check · ${{ matrix.env.MODE}}
 
       steps:
         - name: Checkout code
@@ -22,6 +25,13 @@ jobs:
           with:
            # Download complete repository + tags
            fetch-depth: 0
+
+        - name: Mount bazel cache
+          uses: actions/cache@v1
+          if: ${{ env.MODE != 'clean' }}
+          with:
+            path: "/home/runner/.cache/bazel"
+            key: bazel-${{ env.MODE }}
 
         - name: Before Install
           run:
@@ -43,23 +53,31 @@ jobs:
             FOLDER: /tmp/pages
             CLEAN: true
 
+
+   Matrix:
+      runs-on: ubuntu-latest
+      outputs:
+        matrix: ${{ steps.generate.outputs.matrix }}
+      steps:
+      - uses: actions/checkout@v2
+      - id: generate
+        run: ./.github/workflows/generate_matrix.sh
+
+
    Release:
-      runs-on: ubuntu-16.04
+      runs-on: ubuntu-20.04
+      needs: Matrix
       strategy:
         fail-fast: false
         matrix:
-          env:
-            - { MODE: bin, OS: ubuntu, OS_VERSION: xenial }
-            - { MODE: bin, OS: ubuntu, OS_VERSION: bionic }
-            - { MODE: bin, OS: ubuntu, OS_VERSION: eoan }
-            - { MODE: bin, OS: ubuntu, OS_VERSION: focal }
-            - { MODE: bin, OS: ubuntu, OS_VERSION: groovy }
-#           - { MODE: bin, OS: centos, OS_VERSION: 6 }
-            - { MODE: bin, OS: centos, OS_VERSION: 7 }
-            - { MODE: bin, OS: centos, OS_VERSION: 8 }
-      name: ${{ matrix.env.OS }} ${{ matrix.env.OS_VERSION }}
-      env: ${{ matrix.env }}
+          include: ${{ fromJson(needs.Matrix.outputs.matrix) }}
+      name: ${{ matrix.OS }} ${{ matrix.OS_VERSION }}
+      env:
+        MODE: bin
+        OS: ${{ matrix.OS }}
+        OS_VERSION: ${{ matrix.OS_VERSION }}
       steps:
+
         - name: Checkout code
           uses: actions/checkout@v2
           with:
@@ -79,6 +97,7 @@ jobs:
             path: /tmp/releases/verible-*.tar.gz
 
         - name: After success
+          id: after_success
           if: ${{ success() }}
           run: ./.github/workflows/success.sh
 
@@ -88,6 +107,6 @@ jobs:
           with:
             repo_token: ${{ secrets.GITHUB_TOKEN }}
             file: /tmp/releases/verible-*.tar.gz
-            tag: ${{ github.ref }}
+            tag: ${{ env.TAG }}
             overwrite: true
             file_glob: true

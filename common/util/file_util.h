@@ -83,13 +83,20 @@ absl::StatusOr<Directory> ListDir(absl::string_view dir);
 
 namespace testing {
 
+// Generate a random file name (no directory).  This does not create any file.
+std::string RandomFileBasename(absl::string_view prefix);
+
 // Useful for testing: a temporary file with a randomly generated name
 // that is pre-populated with a particular content.
 // File is deleted when instance goes out of scope.
 class ScopedTestFile {
  public:
-  // Initialize a new file in directory "base_dir" with given "content".
-  ScopedTestFile(absl::string_view base_dir, absl::string_view content);
+  // Write a new file in directory 'base_dir' with given 'content'.
+  // 'base_dir' needs to already exist, and will not be automatically created.
+  // If 'use_this_filename' is provided as a base name, that will be used,
+  // otherwise, a file name will be randomly generated.
+  ScopedTestFile(absl::string_view base_dir, absl::string_view content,
+                 absl::string_view use_this_filename = "");
   ~ScopedTestFile();
 
   // not copy-able

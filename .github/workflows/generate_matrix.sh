@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # Copyright 2020 The Verible Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,33 +13,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-set -x
 set -e
-export TAG=${TAG:-$(git describe --match=v*)}
 
-git config --local user.name "Deployment Bot"
-git config --local user.email "verible-dev@googlegroups.com"
+matrix='['
+for item in releasing/*/; do
+  matrix+='{"OS": "'"`echo $(basename $item) | cut -d- -f1`"'", "OS_VERSION": "'"`echo $(basename $item) | cut -d- -f2`"'"},'
+done
+matrix+=']'
 
-case $MODE in
-test|clean)
-    # Nothing to do
-    ;;
+echo "$matrix"
 
-compile)
-    # Set up things for GitHub Pages deployment
-    ./.github/workflows/github-pages-setup.sh
-    ;;
-
-bin)
-    # Create a tag of form v0.0-183-gdf2b162-20191112132344
-    rm -rf releasing/out
-    git tag "$TAG" || true
-    echo "TAG=$TAG" >> $GITHUB_ENV
-    ls -l /tmp/releases
-    ;;
-
-*)
-    echo "success.sh: Unknown mode $MODE"
-    exit 1
-    ;;
-esac
+echo "::set-output name=matrix::$matrix"

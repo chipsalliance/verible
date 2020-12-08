@@ -116,9 +116,9 @@ static VNameRef ConvertToVnameRef(const VName& vname,
 
 // Prints Kythe facts in proto format to stdout.
 static void PrintKytheFactsProtoEntries(
-    const IndexingFactNode& file_list_facts_tree) {
-  const auto indexing_data =
-      KytheFactsExtractor::ExtractKytheFacts(file_list_facts_tree);
+    const IndexingFactNode& file_list_facts_tree,
+    const VerilogProject& project) {
+  const auto indexing_data = ExtractKytheFacts(file_list_facts_tree, project);
   google::protobuf::io::FileOutputStream file_output(STDOUT_FILENO);
   file_output.SetCloseOnDelete(true);
   ::kythe::FileOutputStream kythe_output(&file_output);
@@ -161,16 +161,18 @@ static std::vector<absl::Status> ExtractTranslationUnits(
   // check how to output kythe facts.
   switch (absl::GetFlag(FLAGS_print_kythe_facts)) {
     case PrintMode::kJSON: {
-      std::cout << KytheFactsPrinter(file_list_facts_tree) << std::endl;
+      std::cout << KytheFactsPrinter(file_list_facts_tree, *project)
+                << std::endl;
       break;
     }
     case PrintMode::kJSONDebug: {
-      std::cout << KytheFactsPrinter(file_list_facts_tree, /* debug= */ true)
+      std::cout << KytheFactsPrinter(file_list_facts_tree, *project,
+                                     /* debug= */ true)
                 << std::endl;
       break;
     }
     case PrintMode::kProto: {
-      PrintKytheFactsProtoEntries(file_list_facts_tree);
+      PrintKytheFactsProtoEntries(file_list_facts_tree, *project);
       break;
     }
   }

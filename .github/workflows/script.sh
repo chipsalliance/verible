@@ -23,7 +23,7 @@ test)
     bazel test $BAZEL_OPTS //...
     ;;
 
-compile)
+compile|clean)
     bazel build $BAZEL_OPTS //...
     ;;
 

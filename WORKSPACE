@@ -142,7 +142,10 @@ http_archive(
 # TODO(ikr): Replace with a Kythe release once it moves beyond 0.48
 git_repository(
     name = "io_kythe",
-    branch = "master",
+    # branch = "master",
+    # commit = "bee43a5908ce99cb9cf5a2cd42dc2da2972707f8", # broke issue #625
+    # the last working commit on "master" between 0.48 and 0.49:
+    commit = "410f69c5bcb69fabcb78a5200b7631a1bffabd31",
     remote = "https://github.com/kythe/kythe",
 )
 

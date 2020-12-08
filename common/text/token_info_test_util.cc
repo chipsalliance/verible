@@ -44,21 +44,27 @@ ExpectedTokenInfo::ExpectedTokenInfo(char token_enum_and_text)
                                   1)) {
 }
 
-TokenInfoTestData::TokenInfoTestData(
+static std::vector<TokenInfo> ComposeExpectedTokensFromFragments(
     std::initializer_list<ExpectedTokenInfo> fragments) {
-  // Trivially convert ExpectedTokenInfo into TokenInfo.
-  // TODO(fangism): For tokens that use the single (char) construction,
-  // this copying operation will leave new TokenInfos' text pointing into
-  // the source ExpectedTokenInfos' token_enums.  (Deleting the standard
-  // interfaces in ExpectedTokenInfo alone does not prevent this.)
-  // Under most circumstances, this leakage would be deemed dangerous
-  // and unintended, however, since fragments is passed in as an
-  // initializer_list (a const-T proxy to a longer-lived memory),
-  // this operates safely.  The alternative would be to perform a fix-up over
-  // the copy destination array.
+  std::vector<TokenInfo> expected_tokens;
   expected_tokens.resize(fragments.size(), TokenInfo::EOFToken());
   std::copy(fragments.begin(), fragments.end(), expected_tokens.begin());
+  return expected_tokens;  // move
+}
 
+TokenInfoTestData::TokenInfoTestData(
+    std::initializer_list<ExpectedTokenInfo> fragments)
+    :  // Trivially convert ExpectedTokenInfo into TokenInfo.
+       // TODO(fangism): For tokens that use the single (char) construction,
+       // this copying operation will leave new TokenInfos' text pointing into
+       // the source ExpectedTokenInfos' token_enums.  (Deleting the standard
+       // interfaces in ExpectedTokenInfo alone does not prevent this.)
+       // Under most circumstances, this leakage would be deemed dangerous
+       // and unintended, however, since fragments is passed in as an
+       // initializer_list (a const-T proxy to a longer-lived memory),
+       // this operates safely.  The alternative would be to perform a fix-up
+       // over the copy destination array.
+      expected_tokens(ComposeExpectedTokensFromFragments(fragments)) {
   // Construct the whole text to lex from fragments.
   TokenInfo::Concatenate(&code, &expected_tokens);
 }

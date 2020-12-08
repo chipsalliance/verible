@@ -42,7 +42,7 @@ bool Signature::IsNameEqual(absl::string_view name) const {
 }
 
 std::string Signature::ToString() const {
-  std::string signature = "";
+  std::string signature;
   for (absl::string_view name : names_) {
     if (name.empty()) continue;
     absl::StrAppend(&signature, name, "#");

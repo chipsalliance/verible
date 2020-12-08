@@ -15,7 +15,9 @@
 #ifndef VERIBLE_VERILOG_TOOLS_KYTHE_INDEXING_FACTS_TREE_H_
 #define VERIBLE_VERILOG_TOOLS_KYTHE_INDEXING_FACTS_TREE_H_
 
+#include <cstddef>
 #include <iosfwd>
+#include <memory>
 #include <string>
 #include <utility>
 #include <vector>
@@ -28,45 +30,87 @@
 namespace verilog {
 namespace kythe {
 
-// TODO(MinaToma): Investigate this and think to replace it with TokenInfo.
 // Anchor class represents the location and value of some token.
 class Anchor {
+  // Disable implicit conversions when passing values to overloaded
+  // function/constructor.  This work by virtue of the language only allowing
+  // one implicit conversion at most.
+  // e.g. some_function(DisableConversion<absl::string_view>)
+  // accepts only string_views, while disabling string_view's implicit
+  // conversion from std::string (and others).
+  template <class T>
+  struct DisableConversion {
+    /* implicit */ DisableConversion(T v) : value(v) {}
+
+    operator T() const { return value; }
+
+    T value;
+  };
+
  public:
-  Anchor(absl::string_view value, int startLocation, int endLocation)
-      : start_location_(startLocation),
-        end_location_(std::max(0, endLocation)),
-        value_(value) {}
+  // Constructor based on string_view text that is a subtring of memory owned
+  // elsewhere.  Disable implicit conversions from std::string (and others) to
+  // absl::string_view to reduce the chances of accidentally holding onto memory
+  // owned by a temporary/unnamed std::string that is destroyed immediately
+  // after use. This construction should be used the vast majority of the time.
+  // Alternatively, explicitly delete constructors from converted types:
+  //   explicit Anchor(std::string&&) = delete;
+  //   explicit Anchor(const std::string&&) = delete;
+  explicit Anchor(DisableConversion<absl::string_view> value) : view_(value) {}
 
-  Anchor(const verible::TokenInfo& token, absl::string_view base)
-      : start_location_(token.left(base)),
-        end_location_(token.right(base)),
-        value_(token.text()) {}
+  // Delegates construction to use only the string_view spanned by a TokenInfo.
+  // Recall the TokenInfo's string point to substrings of memory owned
+  // elsewhere.
+  explicit Anchor(const verible::TokenInfo& token) : Anchor(token.text()) {}
 
-  Anchor(const Anchor&) = default;  // TODO(fangism): delete, move-only
+  // This constructor assumes ownership over the passed in string (which shall
+  // not be nullptr).  This is suitable for rare occasions that warrant a
+  // locally generated string that does not point to already owned memory.
+  explicit Anchor(std::unique_ptr<std::string> owned_string)
+      : owned_string_(std::move(owned_string)), view_(*owned_string_) {}
+
+  Anchor(const Anchor&);  // TODO(fangism): delete, move-only
   Anchor(Anchor&&) = default;
   Anchor& operator=(const Anchor&) = delete;
-  Anchor& operator=(Anchor&&) = default;
+  Anchor& operator=(Anchor&&) = delete;
 
   // This function is for debugging only and isn't intended to be a textual
   // representation of this class.
-  std::string DebugString() const;
+  // 'base' is the superstring of which Anchor's text is a substring.
+  std::string DebugString(absl::string_view base) const;
 
-  int StartLocation() const { return start_location_; }
-  int EndLocation() const { return end_location_; }
-  const std::string& Value() const { return value_; }
+  absl::string_view Text() const { return view_; }
+
+  // Redirects all non-owned string_view to point into a different copy of the
+  // same text, located 'delta' away.  This is useful for testing, when source
+  // text is copied to a different location. For owned strings (if
+  // this->OwnsMemory()), this does nothing.
+  void RebaseStringViewForTesting(std::ptrdiff_t delta);
 
   bool operator==(const Anchor&) const;
+  bool operator!=(const Anchor& other) const { return !(*this == other); }
+
+ protected:
+  // Returns true if the text represented is owned by this object.
+  bool OwnsMemory() const { return owned_string_ != nullptr; }
 
  private:
-  // Start locations of the current token inside the code text.
-  int start_location_;
+  // The majority of times, this is null when 'view_' points to text that is
+  // owned elsewhere (and outlives these objects).
+  // This pointer should only be used in rare circumstances that require a newly
+  // constructed string (e.g. generated name).
+  // Size: 1 pointer
+  std::unique_ptr<std::string> owned_string_;
 
-  // End locations of the current token inside the code text.
-  int end_location_;
-
-  // Value of the current token.
-  std::string value_;
+  // Most of the time, points to a substring of text that belongs to a file's
+  // contents, without actually copying text.
+  // In rare circumstances, this points to generated text belonging to
+  // 'owned_string_'.
+  // Size: 2 pointers (range bounds)
+  absl::string_view view_;
 };
+
+std::ostream& operator<<(std::ostream&, const Anchor&);
 
 // This class is a simplified representation of CST and contains information
 // that can be used for extracting indexing-facts for different indexing tools.
@@ -99,12 +143,20 @@ class IndexingNodeData {
 
   // This function is for debugging only and isn't intended to be textual
   // representation of this class.
-  std::ostream& DebugString(std::ostream* stream) const;
+  std::ostream& DebugString(std::ostream* stream, absl::string_view base) const;
 
   const std::vector<Anchor>& Anchors() const { return anchors_; }
   IndexingFactType GetIndexingFactType() const { return indexing_fact_type_; }
 
+  // Redirects all non-owned string_views to point into a different copy of the
+  // same text, located 'delta' away.  This is useful for testing, when source
+  // text is copied to a different location.
+  void RebaseStringViewsForTesting(std::ptrdiff_t delta);
+
   bool operator==(const IndexingNodeData&) const;
+  bool operator!=(const IndexingNodeData& other) const {
+    return !(*this == other);
+  }
 
  private:
   // Base case for variadic AppendAnchor()
@@ -118,12 +170,42 @@ class IndexingNodeData {
   std::vector<Anchor> anchors_;
 };
 
-// human-readable form for debugging
+// Without a base string_view, this displays the base-address and length of each
+// Anchor's string_view.  See PrintableIndexingNodeData for a more readable
+// alternative using byte-offsets.
 std::ostream& operator<<(std::ostream&, const IndexingNodeData&);
+
+// Pairs together IndexingNodeData and string_view to be a printable object.
+struct PrintableIndexingNodeData {
+  const IndexingNodeData& data;
+  // The superstring of which all string_views in this subtree is a substring.
+  const absl::string_view base;
+
+  PrintableIndexingNodeData(const IndexingNodeData& data,
+                            absl::string_view base)
+      : data(data), base(base) {}
+};
+
+// Human-readable form for debugging, showing in-file byte offsets of
+// string_views.
+std::ostream& operator<<(std::ostream&, const PrintableIndexingNodeData&);
 
 // Renaming for VectorTree; IndexingFactNode is actually a VectorTree which is a
 // class for constructing trees and dealing with them in a elegant manner.
 using IndexingFactNode = verible::VectorTree<IndexingNodeData>;
+
+struct PrintableIndexingFactNode {
+  const IndexingFactNode& data;
+  // The superstring of which all string_views in this subtree is a substring.
+  const absl::string_view base;
+
+  PrintableIndexingFactNode(const IndexingFactNode& data,
+                            absl::string_view base)
+      : data(data), base(base) {}
+};
+
+// Human-readable form for debugging.
+std::ostream& operator<<(std::ostream&, const PrintableIndexingFactNode&);
 
 }  // namespace kythe
 }  // namespace verilog
