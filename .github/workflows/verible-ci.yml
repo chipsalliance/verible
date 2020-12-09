@@ -4,6 +4,10 @@ on:
   push:
   pull_request:
 
+env:
+  BOT_USER: "Deployment Bot"
+  BOT_EMAIL: "verible-dev@googlegroups.com"
+
 jobs:
 
 
@@ -61,8 +65,9 @@ jobs:
     - name: ${{ matrix.env.mode }} Verible
       run: ./.github/workflows/script.sh
 
-    - name: After success
-      run: ./.github/workflows/success.sh
+    - name: Set up things for GitHub Pages deployment
+      if: matrix.mode == 'compile'
+      run: ./.github/workflows/github-pages-setup.sh
 
     - name: Deployment
       if: github.ref == 'refs/heads/master' && github.event_name != 'pull_request' && matrix.mode == 'compile'
@@ -150,14 +155,12 @@ jobs:
         source ./.github/settings.sh
         cd releasing
         ./docker-run.sh ${{ matrix.os }}-${{ matrix.version }}
-        mkdir -p /tmp/releases
-        cp out/*.tar.gz /tmp/releases/
 
     - name: 📤 Upload artifact
       uses: actions/upload-artifact@v2
       with:
         name: verible-binary-${{ matrix.OS }}-${{ matrix.OS_VERSION }}
-        path: /tmp/releases/verible-*.tar.gz
+        path: releasing/out/verible-*.tar.gz
 
 
   Release:
@@ -176,9 +179,17 @@ jobs:
        fetch-depth: 0
 
     - name: After success
-      run: ./.github/workflows/success.sh
-      env:
-        MODE: bin
+      run: |
+        git config --local user.name "$BOT_USER"
+        git config --local user.email "$BOT_EMAIL"
+
+        # Create a tag of form v0.0-183-gdf2b162-20191112132344
+        TAG="${TAG:-$(git describe --match=v*)}"
+
+        git tag "$TAG" || true
+        echo "TAG=$TAG" >> $GITHUB_ENV
+
+        ls -l artifact
 
     - name: Deployment
       uses: svenstaro/upload-release-action@v2
