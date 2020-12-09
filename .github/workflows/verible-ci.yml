@@ -52,7 +52,11 @@ jobs:
         key: bazel-${{ matrix.mode }}
 
     - name: Install Dependencies
-      run: ./.github/workflows/install.sh
+      run: |
+        set -x
+        source ./.github/settings.sh
+        ./.github/workflows/set-compiler.sh 9
+        ./.github/workflows/install-bazel.sh
 
     - name: ${{ matrix.env.mode }} Verible
       run: ./.github/workflows/script.sh
@@ -140,9 +144,6 @@ jobs:
 
     - run: docker pull ${{ matrix.os }}:${{ matrix.version }}
 
-    - name: Before Install
-      run: ./.github/workflows/install.sh
-
     - name: Main script
       run: |
         set -x
@@ -160,6 +161,8 @@ jobs:
 
     - name: After success
       run: ./.github/workflows/success.sh
+      env:
+        MODE: bin
 
     - name: Deployment
       if: github.ref == 'refs/heads/master' && github.event_name != 'pull_request'
