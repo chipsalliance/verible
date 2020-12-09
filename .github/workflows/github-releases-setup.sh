@@ -54,7 +54,7 @@ done
 DISTRO_ARCH=$(uname -m)
 DISTRO=$(lsb_release --short --id)
 DISTRO_RELEASE=$(lsb_release --short --release)
-DISTRO_CODENAME=$(lsb_release --short --codename)
+DISTRO_CODENAME=$(lsb_release --short --codename | sed -e's/[^A-Za-z0-9]//g')
 TARBALL=$RELEASE_DIR/verible-$GIT_VERSION-$DISTRO-$DISTRO_RELEASE-$DISTRO_CODENAME-$DISTRO_ARCH.tar.gz
 (
     cd $RELEASE_DIR
