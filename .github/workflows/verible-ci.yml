@@ -127,14 +127,14 @@ jobs:
       run: ./.github/workflows/generate_matrix.sh
 
 
-  Release:
+  Build:
     needs: Matrix
     runs-on: ubuntu-20.04
     strategy:
       fail-fast: false
       matrix:
         include: ${{ fromJson(needs.Matrix.outputs.matrix) }}
-    name: Release · ${{ matrix.os }} ${{ matrix.version }}
+    name: Build · ${{ matrix.os }} ${{ matrix.version }}
     steps:
 
     - uses: actions/checkout@v2
@@ -153,11 +153,27 @@ jobs:
         mkdir -p /tmp/releases
         cp out/*.tar.gz /tmp/releases/
 
-    - name: Upload binary
+    - name: 📤 Upload artifact
       uses: actions/upload-artifact@v2
       with:
         name: verible-binary-${{ matrix.OS }}-${{ matrix.OS_VERSION }}
         path: /tmp/releases/verible-*.tar.gz
+
+
+  Release:
+    if: github.ref == 'refs/heads/master' && github.event_name != 'pull_request'
+    needs: [ Check, Build]
+    runs-on: ubuntu-20.04
+    name: 📦 Release
+    steps:
+
+    - name: 📥 Download artifacts
+      uses: actions/download-artifact@v2
+
+    - uses: actions/checkout@v2
+      with:
+       # Download complete repository + tags
+       fetch-depth: 0
 
     - name: After success
       run: ./.github/workflows/success.sh
@@ -165,11 +181,10 @@ jobs:
         MODE: bin
 
     - name: Deployment
-      if: github.ref == 'refs/heads/master' && github.event_name != 'pull_request'
       uses: svenstaro/upload-release-action@v2
       with:
         repo_token: ${{ secrets.GITHUB_TOKEN }}
-        file: /tmp/releases/verible-*.tar.gz
+        file: artifact/verible-*.tar.gz
         tag: ${{ env.TAG }}
         overwrite: true
         file_glob: true
