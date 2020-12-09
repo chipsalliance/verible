@@ -6,6 +6,7 @@ on:
 
 jobs:
 
+
   VerifyFormatting:
     runs-on: ubuntu-20.04
 
@@ -23,18 +24,19 @@ jobs:
     - name: Run formatting style check
       run: ./.github/workflows/run-clang-format.sh
 
+
   Check:
     runs-on: ubuntu-16.04
     strategy:
       fail-fast: false
       matrix:
-        env:
-          - MODE: test
-          - MODE: compile
-          - MODE: clean
-    env: ${{ matrix.env}}
-    name: Check · ${{ matrix.env.MODE}}
-
+        mode:
+        - test
+        - compile
+        - clean
+    env:
+      MODE: ${{ matrix.mode }}
+    name: Check · ${{ matrix.mode }}
     steps:
     - name: Checkout code
       uses: actions/checkout@v2
@@ -44,10 +46,10 @@ jobs:
 
     - name: Mount bazel cache
       uses: actions/cache@v1
-      if: ${{ env.MODE != 'clean' }}
+      if: matrix.mode != 'clean'
       with:
         path: "/home/runner/.cache/bazel"
-        key: bazel-${{ env.MODE }}
+        key: bazel-${{ matrix.mode }}
 
     - name: Install Dependencies
       run: ./.github/workflows/install.sh
@@ -56,17 +58,17 @@ jobs:
       run: ./.github/workflows/script.sh
 
     - name: After success
-      if: ${{ success() }}
       run: ./.github/workflows/success.sh
 
     - name: Deployment
-      if: ${{ github.ref == 'refs/heads/master' && github.event_name != 'pull_request' && matrix.env.MODE == 'compile' && success() }}
+      if: github.ref == 'refs/heads/master' && github.event_name != 'pull_request' && matrix.mode == 'compile'
       uses: JamesIves/github-pages-deploy-action@3.7.1
       with:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         BRANCH: gh-pages
         FOLDER: /tmp/pages
         CLEAN: true
+
 
   Kythe:
     runs-on: ubuntu-20.04
@@ -110,6 +112,7 @@ jobs:
         name: verible-kythe-index
         path: kythe_output/*.kzip
 
+
   Matrix:
     runs-on: ubuntu-latest
     outputs:
@@ -121,17 +124,17 @@ jobs:
 
 
   Release:
-    runs-on: ubuntu-20.04
     needs: Matrix
+    runs-on: ubuntu-20.04
     strategy:
       fail-fast: false
       matrix:
         include: ${{ fromJson(needs.Matrix.outputs.matrix) }}
-    name: ${{ matrix.OS }} ${{ matrix.OS_VERSION }}
+    name: Release · ${{ matrix.os }} ${{ matrix.version }}
     env:
       MODE: bin
-      OS: ${{ matrix.OS }}
-      OS_VERSION: ${{ matrix.OS_VERSION }}
+      OS: ${{ matrix.os }}
+      OS_VERSION: ${{ matrix.version }}
     steps:
 
     - name: Checkout code
@@ -141,8 +144,7 @@ jobs:
        fetch-depth: 0
 
     - name: Before Install
-      run:
-        ./.github/workflows/install.sh
+      run: ./.github/workflows/install.sh
 
     - name: Main script
       run: ./.github/workflows/script.sh
@@ -154,12 +156,10 @@ jobs:
         path: /tmp/releases/verible-*.tar.gz
 
     - name: After success
-      id: after_success
-      if: ${{ success() }}
       run: ./.github/workflows/success.sh
 
     - name: Deployment
-      if: ${{ github.ref == 'refs/heads/master' && github.event_name != 'pull_request' && success() }}
+      if: github.ref == 'refs/heads/master' && github.event_name != 'pull_request'
       uses: svenstaro/upload-release-action@v2
       with:
         repo_token: ${{ secrets.GITHUB_TOKEN }}
