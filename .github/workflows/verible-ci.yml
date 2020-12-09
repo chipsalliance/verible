@@ -131,23 +131,26 @@ jobs:
       matrix:
         include: ${{ fromJson(needs.Matrix.outputs.matrix) }}
     name: Release · ${{ matrix.os }} ${{ matrix.version }}
-    env:
-      MODE: bin
-      OS: ${{ matrix.os }}
-      OS_VERSION: ${{ matrix.version }}
     steps:
 
-    - name: Checkout code
-      uses: actions/checkout@v2
+    - uses: actions/checkout@v2
       with:
        # Download complete repository + tags
        fetch-depth: 0
+
+    - run: docker pull ${{ matrix.os }}:${{ matrix.version }}
 
     - name: Before Install
       run: ./.github/workflows/install.sh
 
     - name: Main script
-      run: ./.github/workflows/script.sh
+      run: |
+        set -x
+        source ./.github/settings.sh
+        cd releasing
+        ./docker-run.sh ${{ matrix.os }}-${{ matrix.version }}
+        mkdir -p /tmp/releases
+        cp out/*.tar.gz /tmp/releases/
 
     - name: Upload binary
       uses: actions/upload-artifact@v2

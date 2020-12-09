@@ -24,10 +24,6 @@ compile|test|clean)
     ./.github/workflows/install-bazel.sh
     ;;
 
-bin)
-    docker pull $OS:$OS_VERSION
-    ;;
-
 *)
     echo "install.sh: Unknown mode $MODE"
     exit 1

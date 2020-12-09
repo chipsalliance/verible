@@ -27,13 +27,6 @@ compile|clean)
     bazel build $BAZEL_OPTS //...
     ;;
 
-bin)
-    cd releasing
-    ./docker-run.sh ${OS}-${OS_VERSION}
-    mkdir -p /tmp/releases
-    cp out/*.tar.gz /tmp/releases/
-    ;;
-
 *)
     echo "script.sh: Unknown mode $MODE"
     exit 1
