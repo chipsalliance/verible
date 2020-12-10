@@ -33,11 +33,10 @@ jobs:
             path: "/home/runner/.cache/bazel"
             key: bazel-${{ env.MODE }}
 
-        - name: Before Install
-          run:
-            ./.github/workflows/install.sh
+        - name: Install Dependencies
+          run: ./.github/workflows/install.sh
 
-        - name: Main script
+        - name: ${{ matrix.env.mode }} Verible
           run: ./.github/workflows/script.sh
 
         - name: After success
