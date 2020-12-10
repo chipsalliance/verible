@@ -91,6 +91,7 @@ jobs:
         - name: Upload Kythe output
           uses: actions/upload-artifact@v2
           with:
+            name: verible-kythe-index
             path: kythe_output/*.kzip
 
    Matrix:
@@ -133,6 +134,7 @@ jobs:
         - name: Upload binary
           uses: actions/upload-artifact@v2
           with:
+            name: verible-binary-${{ matrix.OS }}-${{ matrix.OS_VERSION }}
             path: /tmp/releases/verible-*.tar.gz
 
         - name: After success
