@@ -33,11 +33,10 @@ jobs:
             path: "/home/runner/.cache/bazel"
             key: bazel-${{ env.MODE }}
 
-        - name: Before Install
-          run:
-            ./.github/workflows/install.sh
+        - name: Install Dependencies
+          run: ./.github/workflows/install.sh
 
-        - name: Main script
+        - name: ${{ matrix.env.mode }} Verible
           run: ./.github/workflows/script.sh
 
         - name: After success
@@ -53,6 +52,47 @@ jobs:
             FOLDER: /tmp/pages
             CLEAN: true
 
+   Kythe:
+      runs-on: ubuntu-20.04
+
+      steps:
+        - name: Checkout code
+          uses: actions/checkout@v2
+          with:
+           # Download complete repository + tags
+           fetch-depth: 0
+
+        - name: Mount bazel cache
+          uses: actions/cache@v1
+          with:
+            path: "/home/runner/.cache/bazel"
+            key: bazel-kythe
+
+        - name: Setting compiler
+          run: |
+            source ./.github/settings.sh
+            ./.github/workflows/set-compiler.sh 9
+
+        - name: Install Bazel
+          run: |
+            source ./.github/settings.sh
+            ./.github/workflows/install-bazel.sh
+
+        - name: Install Kythe
+          run: |
+            source ./.github/settings.sh
+            ./.github/workflows/install-kythe.sh
+
+        - name: Run Kythe
+          run: |
+            source ./.github/settings.sh
+            ./.github/workflows/run-kythe.sh
+
+        - name: Upload Kythe output
+          uses: actions/upload-artifact@v2
+          with:
+            name: verible-kythe-index
+            path: kythe_output/*.kzip
 
    Matrix:
       runs-on: ubuntu-latest
@@ -94,6 +134,7 @@ jobs:
         - name: Upload binary
           uses: actions/upload-artifact@v2
           with:
+            name: verible-binary-${{ matrix.OS }}-${{ matrix.OS_VERSION }}
             path: /tmp/releases/verible-*.tar.gz
 
         - name: After success
