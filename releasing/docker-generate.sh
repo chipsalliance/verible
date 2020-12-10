@@ -44,7 +44,7 @@ fi
 # ==================================================================
 # Generate the Docker files for ubuntu versions
 # ==================================================================
-for UBUNTU_VERSION in xenial bionic eoan focal groovy; do
+for UBUNTU_VERSION in xenial bionic focal groovy; do
     # Install basic tools
     # --------------------------------------------------------------
     cat > ubuntu-${UBUNTU_VERSION}/Dockerfile <<EOF
