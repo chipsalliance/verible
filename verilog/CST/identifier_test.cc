@@ -178,16 +178,17 @@ TEST(GetIdentifierTest, IdentifierUnpackedDimensions) {
   }
 }
 
-// TODO
+// Tests that all expected symbol identifiers are found.
 TEST(FindAllSymbolIdentifierTest, VariousIds) {
-  // TODO
   const std::pair<absl::string_view,
                   std::set<absl::string_view>> kTestCases[] = {
-                    // TODO more cases
       {"function foo(); endfunction", {"foo"}},
       {"function myclass::foo(); endfunction", {"myclass", "foo"}},
       {"task goo(); endtask", {"goo"}},
       {"task fff::goo(); endtask", {"fff", "goo"}},
+      {"class cls;\nendclass", {"cls"}},
+      {"package pkg;\nendpackage", {"pkg"}},
+      {"module top\nimport pkg::*;\n(input a);\nendmodule", {"top", "pkg", "a"}},
   };
   for (const auto test : kTestCases) {
     VerilogAnalyzer analyzer(test.first, "");

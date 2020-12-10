@@ -59,10 +59,10 @@ TEST(VerilogMatchers, MacroCallIdLeafTests) {
 // Tests for SymbolIdentifierLeaf matching
 TEST(VerilogMatchers, SymbolIdentifierLeaf) {
   const RawMatcherTestCase tests[] = {
-    // TODO cases
       {SymbolIdentifierLeaf(), "", 0},
-      {SymbolIdentifierLeaf(), EmbedInClass(""), 1},
-      {SymbolIdentifierLeaf(), EmbedInClassMethod("`uvm_foo"), 3},
+      {SymbolIdentifierLeaf(), EmbedInClass(""), 1}, // +1 by the class name
+      {SymbolIdentifierLeaf(),
+        EmbedInClassMethod("`uvm_foo"), 3}, // count +2 by class & method names
       {SymbolIdentifierLeaf(), "`uvm_foo(\"foo\");", 2},
       {SymbolIdentifierLeaf(), "`uvm_foo(\"foo\")\n", 2},
       {SymbolIdentifierLeaf(), EmbedInClassMethod("`uvm_foo(\"foo\");"), 4},

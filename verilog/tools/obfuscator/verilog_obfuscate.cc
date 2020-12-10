@@ -104,9 +104,11 @@ Output is written to stdout.
   }
 
   // Preserve interface names (e.g. module name, port names).
+  // TODO: an inner module's interface in a nested module will be preserved.
+  // but this may not be required.
   const bool preserve_interface = absl::GetFlag(FLAGS_preserve_interface);
-  std::set<std::string> preserved;
   if (preserve_interface) {
+    std::set<std::string> preserved;
     const auto status =
         verilog::analysis::CollectInterfaceNames(content, &preserved);
     if (!status.ok()) {

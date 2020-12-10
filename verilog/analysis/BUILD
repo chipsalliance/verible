@@ -48,6 +48,16 @@ cc_library(
         ],
 )
 
+cc_test(
+    name = "extractors_test",
+    srcs = ["extractors_test.cc"],
+    deps = [
+        ":extractors",
+        "@com_google_absl//absl/strings",
+        "@com_google_googletest//:gtest_main",
+    ],
+)
+
 cc_library(
     name = "lint_rule_registry",
     srcs = ["lint_rule_registry.cc"],

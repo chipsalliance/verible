@@ -220,5 +220,34 @@ status="$?"
 diff -u "${MY_OUTPUT_FILE2}" "${MY_INPUT_FILE}" || exit 1
 
 ###############################################################################
+echo "Test obfuscate --preserve_interface mode"
+
+cat >"${MY_INPUT_FILE}" <<EOF
+  module foo_bar(input clk);
+    foo bar(.baz(baz),
+      .clk(clk));
+  endmodule
+EOF
+
+echo "Run obfuscator.  Save substitutions."
+"${obfuscator}" --preserve_interface --save_map="${MY_SAVEMAP_FILE}" < "${MY_INPUT_FILE}" > "${MY_OUTPUT_FILE}"
+status="$?"
+[[ $status == 0 ]] || {
+  echo "Expected exit code 0, but got $status"
+  exit 1
+}
+
+intact_names=(foo_bar clk)
+echo "Verify the saved map does not change interface names."
+for intact_name in ${intact_names[@]}; do
+  grep "\(${intact_name}\)\s\1" ${MY_SAVEMAP_FILE} > /dev/null
+  status="$?"
+  [[ $status == 0 ]] || {
+    echo "Failed to check mapping for name: ${intact_name}"
+    exit 1
+  }
+done
+
+###############################################################################
 echo "PASS"
 
