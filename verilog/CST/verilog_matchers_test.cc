@@ -62,13 +62,9 @@ TEST(VerilogMatchers, SymbolIdentifierLeaf) {
       {SymbolIdentifierLeaf(), "", 0},
       {SymbolIdentifierLeaf(), EmbedInClass(""), 1}, // +1 by the class name
       {SymbolIdentifierLeaf(),
-        EmbedInClassMethod("`uvm_foo"), 3}, // count +2 by class & method names
-      {SymbolIdentifierLeaf(), "`uvm_foo(\"foo\");", 2},
-      {SymbolIdentifierLeaf(), "`uvm_foo(\"foo\")\n", 2},
-      {SymbolIdentifierLeaf(), EmbedInClassMethod("`uvm_foo(\"foo\");"), 4},
-      {SymbolIdentifierLeaf(), EmbedInClassMethod("`uvm_foo(\"foo\")\n"), 4},
-      {SymbolIdentifierLeaf(), EmbedInClassMethod("uvm_foo(\"foo\");"), 4},
-      {SymbolIdentifierLeaf(), EmbedInClassMethod("$uvm_foo(\"foo\");"), 4},
+        EmbedInClassMethod("reg foo;"), 3}, // count +2 by class & method names
+      {SymbolIdentifierLeaf(), EmbedInClassMethod("uvm_foo(\"foo\");"), 3},
+      {SymbolIdentifierLeaf(), "parameter foo = 32'hDEADBEEF;", 1},
   };
   for (const auto& test : tests)
     verible::matcher::RunRawMatcherTestCase<VerilogAnalyzer>(test);

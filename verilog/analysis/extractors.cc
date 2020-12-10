@@ -29,19 +29,21 @@ absl::Status CollectInterfaceNames(absl::string_view content,
   VLOG(1) << __FUNCTION__;
 
   const auto analyzer =
-      verilog::VerilogAnalyzer::AnalyzeAutomaticMode(content, NULL);
+      verilog::VerilogAnalyzer::AnalyzeAutomaticMode(content, "<file>");
   const auto lex_status = ABSL_DIE_IF_NULL(analyzer)->LexStatus();
   const auto parse_status = analyzer->ParseStatus();
 
   if (!lex_status.ok()) return lex_status;
   if (!parse_status.ok()) return parse_status;
+  // TODO: Having a syntax error may still result in a partial syntax tree
+  // to work with.  Currently, this utility has zero tolerance on syntax error.
 
   const auto& syntax_tree = analyzer->SyntaxTree();
   const auto mod_headers =
     FindAllModuleHeaders(*ABSL_DIE_IF_NULL(syntax_tree).get());
 
   // For each module, collect all identifiers under the module
-  // header tree into the StringSet.
+  // header tree into if_names.
   for(const auto& mod_header: mod_headers) {
     const auto if_leafs =
       FindAllSymbolIdentifierLeafs(*mod_header.match);

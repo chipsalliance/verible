@@ -180,28 +180,31 @@ TEST(GetIdentifierTest, IdentifierUnpackedDimensions) {
 
 // Tests that all expected symbol identifiers are found.
 TEST(FindAllSymbolIdentifierTest, VariousIds) {
-  const std::pair<absl::string_view,
-                  std::set<absl::string_view>> kTestCases[] = {
-      {"function foo(); endfunction", {"foo"}},
-      {"function myclass::foo(); endfunction", {"myclass", "foo"}},
-      {"task goo(); endtask", {"goo"}},
-      {"task fff::goo(); endtask", {"fff", "goo"}},
-      {"class cls;\nendclass", {"cls"}},
-      {"package pkg;\nendpackage", {"pkg"}},
-      {"module top\nimport pkg::*;\n(input a);\nendmodule", {"top", "pkg", "a"}},
+  constexpr int kTag = 1;  // value doesn't matter
+  const SyntaxTreeSearchTestCase kTestCases[] = {
+      {"function ", {kTag, "foo"}, "(); endfunction"},
+      {"function ", {kTag, "myclass"}, "::", {kTag, "foo"}, "(); endfunction"},
+      {"task ", {kTag, "goo"}, "(); endtask"},
+      {"task ", {kTag, "fff"}, "::", {kTag, "goo"}, "(); endtask"},
+      {"class ", {kTag, "cls"}, ";\nendclass"},
+      {"package ", {kTag, "pkg"}, ";\nendpackage"},
+      {"module ", {kTag, "top"}, "\n",
+       "import ", {kTag, "pkg"}, "::*;\n",
+       "(input ", {kTag, "a"}, ");\n",
+       "endmodule"},
   };
-  for (const auto test : kTestCases) {
-    VerilogAnalyzer analyzer(test.first, "");
-    ASSERT_OK(analyzer.Analyze());
-    const auto& root = analyzer.Data().SyntaxTree();
-    const auto symb_ids = FindAllSymbolIdentifierLeafs(*root);
-    std::set<absl::string_view> actual;
-    for (const auto& id : symb_ids) {
-      const auto symb_leaf = SymbolCastToLeaf(*id.match);
-      absl::string_view symb_str = symb_leaf.get().text();
-      actual.insert(symb_str);
-    }
-    EXPECT_EQ(actual, test.second);
+  for (const auto& test : kTestCases) {
+    TestVerilogSyntaxRangeMatches(
+        __FUNCTION__, test, [](const TextStructureView& text_structure) {
+          const auto& root = text_structure.SyntaxTree();
+          const auto symb_ids = FindAllSymbolIdentifierLeafs(*root);
+          std::vector<TreeSearchMatch> identifiers;
+          for (const auto& symb_id : symb_ids) {
+            identifiers.push_back(
+                TreeSearchMatch{symb_id.match, {/* ignored context */}});
+          }
+          return identifiers;
+        });
   }
 }
 
