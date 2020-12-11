@@ -905,6 +905,7 @@ cc_library(
         "//common/text:concrete_syntax_tree",
         "//common/text:symbol",
         "//common/text:token_info",
+        "//common/text:token_info_json",
         "//common/text:tree_utils",
         "//common/util:value_saver",
         "//verilog/parser:verilog_parser",

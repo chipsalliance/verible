@@ -19,6 +19,7 @@
 #include "common/text/concrete_syntax_tree.h"
 #include "common/text/symbol.h"
 #include "common/text/token_info.h"
+#include "common/text/token_info_json.h"
 #include "common/util/value_saver.h"
 #include "verilog/CST/verilog_nonterminals.h"  // for NodeEnumToString
 #include "verilog/parser/verilog_parser.h"  // for verilog_symbol_name
@@ -52,10 +53,7 @@ VerilogTreeToJsonConverter::VerilogTreeToJsonConverter(absl::string_view base)
     json_(Json::objectValue), value_(&json_) {}
 
 void VerilogTreeToJsonConverter::Visit(const verible::SyntaxTreeLeaf& leaf) {
-  *value_ = Json::objectValue;
-  (*value_)["symbol"] = verilog_symbol_name(leaf.get().token_enum());
-  (*value_)["start"]  = leaf.get().left(context_.base);
-  (*value_)["end"]    = leaf.get().right(context_.base);
+  *value_ = verible::ToJson(leaf.get(), context_);
 }
 
 void VerilogTreeToJsonConverter::Visit(const verible::SyntaxTreeNode& node) {

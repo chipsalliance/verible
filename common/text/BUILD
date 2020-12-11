@@ -31,6 +31,17 @@ cc_library(
 )
 
 cc_library(
+    name = "token_info_json",
+    srcs = ["token_info_json.cc"],
+    hdrs = ["token_info_json.h"],
+    deps = [
+        ":token_info",
+        "@jsoncpp_git//:jsoncpp",
+    ],
+)
+
+
+cc_library(
     name = "token_info_test_util",
     testonly = 1,
     srcs = ["token_info_test_util.cc"],
