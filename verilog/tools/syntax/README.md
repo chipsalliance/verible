@@ -200,36 +200,59 @@ parsing result for that file.
 
 ### Parsing result object
 
-| Key      | Type   | Description                                              |
-|----------|--------|----------------------------------------------------------|
-| `tree`   | object | Parser tree. Present only when `--printtree` flag is specified and there were no parsing errors. |
-| `errors` | array  | List of error objects. Present only when there were any errors. |
+| Key         | Type   | Description                                              |
+|-------------|--------|----------------------------------------------------------|
+| `tokens`    | array  | List of [Token](#Token-object) objects, with whitespace tokens filtered out. Present only when `--printtokens` flag is specified. |
+| `rawtokens` | array  | List of [Token](#Token-object) objects. Present only when `--printrawtokens` flag is specified. |
+| `tree`      | object | [Parser tree](#Parser-tree). Present only when `--printtree` flag is specified and parsing errors didn't prevent tree creation. |
+| `errors`    | array  | List of [Error](#Error-object) objects. Present only when there were any errors. |
 
-#### Parser tree object
+#### Parser tree
 
-The tree consist of Node and Leaf objects.
+The tree consist of [Node](#Node-object) and [Token](#Token-object) objects. The tree root is a Node object.
 
-##### Node
+#### Node object
 
 | Key        | Type   | Description                                            |
 |------------|--------|--------------------------------------------------------|
 | `tag`      | string | Node tag. See `NodeEnum` in [verilog\_nonterminals.h](../../CST/verilog_nonterminals.h) for available values. |
-| `children` | array  | List of children (Node, Leaf, or `null`).              |
+| `children` | array  | List of children ([Node](#Node-object) and [Token](#Token-object), or `null`). |
 
-##### Leaf
+#### Token object
 
 | Key            | Type   | Description                                        |
 |----------------|--------|----------------------------------------------------|
-| `start`, `end` | int    | Byte offset of symbol's first and last character in source text. |
-| `symbol`       | string | Symbol identifier.                                 |
+| `start`, `end` | int    | Byte offset of token's first character and a character just past the symbol in source text. |
+| `tag`          | string | Token tag. See [Possible token tag values](#possible-token-tag-values) below for details. |
+
+To get token text, read source file from byte `start` (included) to byte `end` (excluded). Example in Python:
+
+```python
+start = token["start"]
+end = token["end"]
+
+# Read source file contents as bytes
+with open(source_file_path, "rb") as f:
+    source = f.read()
+
+# Get token text from source file contents
+text = source[start:end].decode("utf-8")
+```
+
+##### Possible token `tag` values
+
+Token tag enumerations come from the [parser generator](../../parser/verilog.y). There are 2 types of values:
+
+* Named tokens (e.g. `SymbolIdentifier`, `TK_DecNumber`), which come from `%token TOKEN_TAG` lines.
+* Single character tokens (e.g. `;`, `=`). They can be found using `'.'` regular expression.
 
 #### Error object
 
 | Key              | Type   | Description                                      |
 |------------------|--------|--------------------------------------------------|
 | `line`, `column` | int    | Line and column in source text. 0-based.         |
-| `phase`          | string | Phase during which the error occured. One of: `lex`, `parse`, `preprocess`, `unknown`. |
 | `text`           | string | Character sequence which caused the error.       |
+| `phase`          | string | Phase during which the error occured. One of: `lex`, `parse`, `preprocess`, `unknown`. |
 | `message`        | string | (optional) Error explanation.                    |
 
 <!-- reference links -->
