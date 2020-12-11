@@ -36,6 +36,7 @@
 #include "common/text/parser_verifier.h"
 #include "common/text/text_structure.h"
 #include "common/text/token_info.h"
+#include "common/text/token_info_json.h"
 #include "common/util/bijective_map.h"
 #include "common/util/enum_flags.h"
 #include "common/util/file_util.h"
@@ -174,17 +175,39 @@ static int AnalyzeOneFile(absl::string_view content,
       });
   // Check for printtokens flag, print all filtered tokens if on.
   if (absl::GetFlag(FLAGS_printtokens)) {
-    std::cout << std::endl << "Lexed and filtered tokens:" << std::endl;
-    for (const auto& t : analyzer->Data().GetTokenStreamView()) {
-      t->ToStream(std::cout, context) << std::endl;
+    if (!absl::GetFlag(FLAGS_export_json)) {
+      std::cout << std::endl << "Lexed and filtered tokens:" << std::endl;
+      for (const auto& t : analyzer->Data().GetTokenStreamView()) {
+        t->ToStream(std::cout, context) << std::endl;
+      }
+    } else {
+      Json::Value& tokens = json["tokens"] = Json::arrayValue;
+      const auto& token_stream = analyzer->Data().GetTokenStreamView();
+      tokens.resize(token_stream.size());
+      Json::ArrayIndex token_index = 0;
+      for (const auto& t : token_stream) {
+        tokens[token_index] = verible::ToJson(*t, context);
+        ++token_index;
+      }
     }
   }
 
   // Check for printrawtokens flag, print all tokens if on.
   if (absl::GetFlag(FLAGS_printrawtokens)) {
-    std::cout << std::endl << "All lexed tokens:" << std::endl;
-    for (const auto& t : analyzer->Data().TokenStream()) {
-      t.ToStream(std::cout, context) << std::endl;
+    if (!absl::GetFlag(FLAGS_export_json)) {
+      std::cout << std::endl << "All lexed tokens:" << std::endl;
+      for (const auto& t : analyzer->Data().TokenStream()) {
+        t.ToStream(std::cout, context) << std::endl;
+      }
+    } else {
+      Json::Value& tokens = json["rawtokens"] = Json::arrayValue;
+      const auto& token_stream = analyzer->Data().TokenStream();
+      tokens.resize(token_stream.size());
+      Json::ArrayIndex token_index = 0;
+      for (const auto& t : token_stream) {
+        tokens[token_index] = verible::ToJson(t, context);
+        ++token_index;
+      }
     }
   }
 

@@ -12,6 +12,7 @@ cc_binary(
         "//common/text:parser_verifier",
         "//common/text:text_structure",
         "//common/text:token_info",
+        "//common/text:token_info_json",
         "//common/util:bijective_map",
         "//common/util:enum_flags",
         "//common/util:file_util",
