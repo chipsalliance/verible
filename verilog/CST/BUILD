@@ -908,7 +908,7 @@ cc_library(
         "//common/text:token_info_json",
         "//common/text:tree_utils",
         "//common/util:value_saver",
-        "//verilog/parser:verilog_parser",
+        "//verilog/parser:verilog_token",
         "@com_google_absl//absl/strings",
         "@jsoncpp_git//:jsoncpp",
     ],

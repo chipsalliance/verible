@@ -48,6 +48,7 @@
 #include "verilog/analysis/verilog_excerpt_parse.h"
 #include "verilog/analysis/json_diagnostics.h"
 #include "verilog/parser/verilog_parser.h"
+#include "verilog/parser/verilog_token.h"
 #include "json/json.h"
 
 // Controls parser selection behavior
@@ -169,10 +170,18 @@ static int AnalyzeOneFile(absl::string_view content,
   }
   const bool parse_ok = parse_status.ok();
 
+  std::function<void(std::ostream&, int)> token_translator;
+  if (!absl::GetFlag(FLAGS_export_json)) {
+    token_translator = [](std::ostream& stream, int e) {
+      stream << verilog::verilog_symbol_name(e);
+    };
+  } else {
+    token_translator = [](std::ostream& stream, int e) {
+      stream << verilog::TokenTypeToString(static_cast<verilog_tokentype>(e));
+    };
+  }
   const verible::TokenInfo::Context context(
-      analyzer->Data().Contents(), [](std::ostream& stream, int e) {
-        stream << verilog::verilog_symbol_name(e);
-      });
+      analyzer->Data().Contents(), token_translator);
   // Check for printtokens flag, print all filtered tokens if on.
   if (absl::GetFlag(FLAGS_printtokens)) {
     if (!absl::GetFlag(FLAGS_export_json)) {

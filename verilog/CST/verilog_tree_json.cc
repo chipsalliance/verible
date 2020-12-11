@@ -22,7 +22,7 @@
 #include "common/text/token_info_json.h"
 #include "common/util/value_saver.h"
 #include "verilog/CST/verilog_nonterminals.h"  // for NodeEnumToString
-#include "verilog/parser/verilog_parser.h"  // for verilog_symbol_name
+#include "verilog/parser/verilog_token.h"
 #include "json/json.h"
 
 namespace verilog {
@@ -49,7 +49,10 @@ class VerilogTreeToJsonConverter : public verible::SymbolVisitor {
 };
 
 VerilogTreeToJsonConverter::VerilogTreeToJsonConverter(absl::string_view base)
-    : context_(verible::TokenInfo::Context(base)),
+    : context_(
+          verible::TokenInfo::Context(base, [](std::ostream& stream, int e) {
+            stream << TokenTypeToString(static_cast<verilog_tokentype>(e));
+          })),
     json_(Json::objectValue), value_(&json_) {}
 
 void VerilogTreeToJsonConverter::Visit(const verible::SyntaxTreeLeaf& leaf) {
