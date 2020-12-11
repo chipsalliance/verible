@@ -94,6 +94,8 @@ struct AlignmentCell {
   // as a space-only column, usually no more than 1 space wide.
   int left_border_width = 0;
 
+  int TotalWidth() const { return left_border_width + compact_width; }
+
   FormatTokenRange ConstTokensRange() const {
     return FormatTokenRange(tokens.begin(), tokens.end());
   }
@@ -323,14 +325,42 @@ static void ComputeCellWidths(AlignmentMatrix* matrix) {
 typedef std::vector<AlignedColumnConfiguration> AlignedFormattingColumnSchema;
 
 static AlignedFormattingColumnSchema ComputeColumnWidths(
-    const AlignmentMatrix& matrix) {
+    const AlignmentMatrix& matrix,
+    const std::vector<AlignmentColumnProperties>& column_properties) {
   VLOG(2) << __FUNCTION__;
   AlignedFormattingColumnSchema column_configs(matrix.front().size());
+
+  // Check which cell before delimiter is the longest
+  // If this cell is in the last row, the sizes of column with delimiter
+  // must be set to 0
+  int longest_cell_before_delimiter = 0;
+  bool align_to_last_row = false;
+  for (const auto& row : matrix) {
+    auto column_prop_iter = column_properties.begin();
+    for (const auto& cell : row) {
+      if (std::next(column_prop_iter, 1)->contains_delimiter) {
+        if (longest_cell_before_delimiter < cell.TotalWidth()) {
+          longest_cell_before_delimiter = cell.TotalWidth();
+          if (&row == &matrix.back()) align_to_last_row = true;
+        }
+        break;
+      }
+      ++column_prop_iter;
+    }
+  }
+
   for (const auto& row : matrix) {
     auto column_iter = column_configs.begin();
+    auto column_prop_iter = column_properties.begin();
     for (const auto& cell : row) {
-      column_iter->UpdateFromCell(cell);
+      if (column_prop_iter->contains_delimiter && align_to_last_row) {
+        column_iter->width = 0;
+        column_iter->left_border = 0;
+      } else {
+        column_iter->UpdateFromCell(cell);
+      }
       ++column_iter;
+      ++column_prop_iter;
     }
   }
   VLOG(2) << "end of " << __FUNCTION__;
@@ -385,8 +415,13 @@ static std::vector<DeferredTokenAlignment> ComputeAlignedRowSpacings(
       PreFormatToken& ftoken = cell.tokens.front();
       int left_spacing;
       if (properties_iter->flush_left) {
-        left_spacing = accrued_spaces;
-        accrued_spaces = padding;
+        if (properties_iter->contains_delimiter) {
+          left_spacing = 0;
+          accrued_spaces += padding;
+        } else {
+          left_spacing = accrued_spaces;
+          accrued_spaces = padding;
+        }
       } else {  // flush right
         left_spacing = accrued_spaces + padding;
         accrued_spaces = 0;
@@ -460,15 +495,8 @@ static MutableFormatTokenRange GetMutableFormatTokenRange(
   const Symbol* origin = ABSL_DIE_IF_NULL(unwrapped_line.Origin());
   VLOG(2) << "row: " << StringSpanOfSymbol(*origin);
 
-  // Partition may contain text that is outside of the span of the syntax
-  // tree node that was visited, e.g. a trailing comma delimiter.
-  // Exclude those tokens from alignment consideration (for now).
-  const SyntaxTreeLeaf* last_token = GetRightmostLeaf(*origin);
   const auto range_begin = unwrapped_line.TokensRange().begin();
   auto range_end = unwrapped_line.TokensRange().end();
-  // Backwards search is expected to check at most a few tokens.
-  while (!BoundsEqual(std::prev(range_end)->Text(), last_token->get().text()))
-    --range_end;
   CHECK(range_begin <= range_end);
 
   // Scan each token-range for cell boundaries based on syntax,
@@ -585,12 +613,12 @@ AlignablePartitionGroup::CalculateAlignmentSpacings(
   // Compute compact sizes per cell.
   ComputeCellWidths(&result.matrix);
 
-  // Compute max widths per column.
-  AlignedFormattingColumnSchema column_configs(
-      ComputeColumnWidths(result.matrix));
-
   // Extract other non-computed column properties.
   const auto column_properties = column_schema.ColumnProperties();
+
+  // Compute max widths per column.
+  AlignedFormattingColumnSchema column_configs(
+      ComputeColumnWidths(result.matrix, column_properties));
 
   {
     // Total width does not include initial left-indentation.
