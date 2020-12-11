@@ -73,15 +73,15 @@ TEST(VectorTreeTest, RootOnlyDescendants) {
   }
 }
 
-TEST(VectorTreeTest, RootOnlyContainsAncestor) {
+TEST(VectorTreeTest, RootOnlyHasAncestor) {
   VectorTreeTestType tree(verible::testing::MakeRootOnlyExampleTree());
-  EXPECT_FALSE(tree.ContainsAncestor(nullptr));
-  EXPECT_FALSE(tree.ContainsAncestor(&tree));
+  EXPECT_FALSE(tree.HasAncestor(nullptr));
+  EXPECT_FALSE(tree.HasAncestor(&tree));
 
   // Separate tree
   VectorTreeTestType tree2(verible::testing::MakeRootOnlyExampleTree());
-  EXPECT_FALSE(tree2.ContainsAncestor(&tree));
-  EXPECT_FALSE(tree.ContainsAncestor(&tree2));
+  EXPECT_FALSE(tree2.HasAncestor(&tree));
+  EXPECT_FALSE(tree.HasAncestor(&tree2));
 }
 
 TEST(VectorTreeTest, RootOnlyLeafIteration) {
@@ -523,23 +523,23 @@ TEST(VectorTreeTest, OneChildPolicy) {
   }
 }
 
-TEST(VectorTreeTest, OneChildPolicyContainsAncestor) {
+TEST(VectorTreeTest, OneChildPolicyHasAncestor) {
   const auto tree = verible::testing::MakeOneChildPolicyExampleTree();
 
   {
     const auto& child = tree.Children().front();
 
-    EXPECT_FALSE(tree.ContainsAncestor(&child));
-    EXPECT_TRUE(child.ContainsAncestor(&tree));
+    EXPECT_FALSE(tree.HasAncestor(&child));
+    EXPECT_TRUE(child.HasAncestor(&tree));
 
     {
       const auto& grandchild = child.Children().front();
 
-      EXPECT_FALSE(child.ContainsAncestor(&grandchild));
-      EXPECT_TRUE(grandchild.ContainsAncestor(&child));
+      EXPECT_FALSE(child.HasAncestor(&grandchild));
+      EXPECT_TRUE(grandchild.HasAncestor(&child));
 
-      EXPECT_FALSE(tree.ContainsAncestor(&grandchild));
-      EXPECT_TRUE(grandchild.ContainsAncestor(&tree));
+      EXPECT_FALSE(tree.HasAncestor(&grandchild));
+      EXPECT_TRUE(grandchild.HasAncestor(&tree));
     }
   }
 }
@@ -708,7 +708,7 @@ TEST(VectorTreeTest, FamilyTreeLeftRightmostDescendants) {
   }
 }
 
-TEST(VectorTreeTest, FamilyTreeContainsAncestor) {
+TEST(VectorTreeTest, FamilyTreeHasAncestor) {
   const auto tree = verible::testing::MakeExampleFamilyTree();
   const auto& child_0 = tree.Children()[0];
   const auto& child_1 = tree.Children()[1];
@@ -717,40 +717,40 @@ TEST(VectorTreeTest, FamilyTreeContainsAncestor) {
   const auto& grandchild_10 = child_1.Children()[0];
   const auto& grandchild_11 = child_1.Children()[1];
 
-  EXPECT_FALSE(tree.ContainsAncestor(&child_0));
-  EXPECT_FALSE(tree.ContainsAncestor(&child_1));
-  EXPECT_FALSE(tree.ContainsAncestor(&grandchild_00));
-  EXPECT_FALSE(tree.ContainsAncestor(&grandchild_01));
-  EXPECT_FALSE(tree.ContainsAncestor(&grandchild_10));
-  EXPECT_FALSE(tree.ContainsAncestor(&grandchild_11));
+  EXPECT_FALSE(tree.HasAncestor(&child_0));
+  EXPECT_FALSE(tree.HasAncestor(&child_1));
+  EXPECT_FALSE(tree.HasAncestor(&grandchild_00));
+  EXPECT_FALSE(tree.HasAncestor(&grandchild_01));
+  EXPECT_FALSE(tree.HasAncestor(&grandchild_10));
+  EXPECT_FALSE(tree.HasAncestor(&grandchild_11));
 
-  EXPECT_TRUE(child_0.ContainsAncestor(&tree));
-  EXPECT_TRUE(child_1.ContainsAncestor(&tree));
-  EXPECT_TRUE(grandchild_00.ContainsAncestor(&tree));
-  EXPECT_TRUE(grandchild_01.ContainsAncestor(&tree));
-  EXPECT_TRUE(grandchild_10.ContainsAncestor(&tree));
-  EXPECT_TRUE(grandchild_11.ContainsAncestor(&tree));
+  EXPECT_TRUE(child_0.HasAncestor(&tree));
+  EXPECT_TRUE(child_1.HasAncestor(&tree));
+  EXPECT_TRUE(grandchild_00.HasAncestor(&tree));
+  EXPECT_TRUE(grandchild_01.HasAncestor(&tree));
+  EXPECT_TRUE(grandchild_10.HasAncestor(&tree));
+  EXPECT_TRUE(grandchild_11.HasAncestor(&tree));
 
-  EXPECT_FALSE(child_0.ContainsAncestor(&child_1));
-  EXPECT_FALSE(child_1.ContainsAncestor(&child_0));
+  EXPECT_FALSE(child_0.HasAncestor(&child_1));
+  EXPECT_FALSE(child_1.HasAncestor(&child_0));
 
-  EXPECT_FALSE(child_0.ContainsAncestor(&grandchild_00));
-  EXPECT_FALSE(child_0.ContainsAncestor(&grandchild_01));
-  EXPECT_FALSE(child_0.ContainsAncestor(&grandchild_10));
-  EXPECT_FALSE(child_0.ContainsAncestor(&grandchild_11));
-  EXPECT_FALSE(child_1.ContainsAncestor(&grandchild_00));
-  EXPECT_FALSE(child_1.ContainsAncestor(&grandchild_01));
-  EXPECT_FALSE(child_1.ContainsAncestor(&grandchild_10));
-  EXPECT_FALSE(child_1.ContainsAncestor(&grandchild_11));
+  EXPECT_FALSE(child_0.HasAncestor(&grandchild_00));
+  EXPECT_FALSE(child_0.HasAncestor(&grandchild_01));
+  EXPECT_FALSE(child_0.HasAncestor(&grandchild_10));
+  EXPECT_FALSE(child_0.HasAncestor(&grandchild_11));
+  EXPECT_FALSE(child_1.HasAncestor(&grandchild_00));
+  EXPECT_FALSE(child_1.HasAncestor(&grandchild_01));
+  EXPECT_FALSE(child_1.HasAncestor(&grandchild_10));
+  EXPECT_FALSE(child_1.HasAncestor(&grandchild_11));
 
-  EXPECT_TRUE(grandchild_00.ContainsAncestor(&child_0));
-  EXPECT_FALSE(grandchild_00.ContainsAncestor(&child_1));
-  EXPECT_TRUE(grandchild_01.ContainsAncestor(&child_0));
-  EXPECT_FALSE(grandchild_01.ContainsAncestor(&child_1));
-  EXPECT_FALSE(grandchild_10.ContainsAncestor(&child_0));
-  EXPECT_TRUE(grandchild_10.ContainsAncestor(&child_1));
-  EXPECT_FALSE(grandchild_11.ContainsAncestor(&child_0));
-  EXPECT_TRUE(grandchild_11.ContainsAncestor(&child_1));
+  EXPECT_TRUE(grandchild_00.HasAncestor(&child_0));
+  EXPECT_FALSE(grandchild_00.HasAncestor(&child_1));
+  EXPECT_TRUE(grandchild_01.HasAncestor(&child_0));
+  EXPECT_FALSE(grandchild_01.HasAncestor(&child_1));
+  EXPECT_FALSE(grandchild_10.HasAncestor(&child_0));
+  EXPECT_TRUE(grandchild_10.HasAncestor(&child_1));
+  EXPECT_FALSE(grandchild_11.HasAncestor(&child_0));
+  EXPECT_TRUE(grandchild_11.HasAncestor(&child_1));
 }
 
 TEST(VectorTreeTest, FamilyTreeNextPreviousSiblings) {

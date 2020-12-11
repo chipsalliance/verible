@@ -408,7 +408,7 @@ class VectorTree : private _VectorTreeImpl {
   // This method could have been named IsDescendedFrom().
   // nullptr is never considered an ancestor of any node.
   // 'this' node is not considered an ancestor of itself.
-  bool ContainsAncestor(const this_type* other) const {
+  bool HasAncestor(const this_type* other) const {
     if (other == nullptr) return false;
     for (const this_type* iter = Parent(); iter != nullptr;
          iter = iter->Parent()) {
