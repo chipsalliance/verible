@@ -268,6 +268,15 @@ cc_library(
 )
 
 cc_library(
+    name = "map_tree",
+    hdrs = ["map_tree.h"],
+    deps = [
+        ":logging",
+        ":spacer",
+    ],
+)
+
+cc_library(
     name = "with_reason",
     hdrs = ["with_reason.h"],
 )
@@ -486,6 +495,15 @@ cc_test(
         ":vector_tree",
         ":vector_tree_test_util",
         "@com_google_absl//absl/strings",
+        "@com_google_googletest//:gtest_main",
+    ],
+)
+
+cc_test(
+    name = "map_tree_test",
+    srcs = ["map_tree_test.cc"],
+    deps = [
+        ":map_tree",
         "@com_google_googletest//:gtest_main",
     ],
 )
