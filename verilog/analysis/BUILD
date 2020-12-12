@@ -318,3 +318,39 @@ cc_test(
         "@com_google_googletest//:gtest_main",
     ],
 )
+
+cc_library(
+    name = "symbol_table",
+    srcs = ["symbol_table.cc"],
+    hdrs = ["symbol_table.h"],
+    deps = [
+        ":verilog_project",
+        "//common/strings:compare",
+        "//common/text:concrete_syntax_leaf",
+        "//common/text:concrete_syntax_tree",
+        "//common/text:symbol",
+        "//common/text:visitors",
+        "//common/util:iterator_adaptors",
+        "//common/util:map_tree",
+        "//common/util:value_saver",
+        "//verilog/CST:module",
+        "//verilog/CST:verilog_nonterminals",
+        "//verilog/parser:verilog_token_enum",
+        "@com_google_absl//absl/status",
+        "@com_google_absl//absl/strings",
+    ],
+)
+
+cc_test(
+    name = "symbol_table_test",
+    srcs = ["symbol_table_test.cc"],
+    deps = [
+        ":symbol_table",
+        ":verilog_project",
+        "//common/util:logging",
+        "@com_google_absl//absl/memory",
+        "@com_google_absl//absl/status",
+        "@com_google_absl//absl/strings",
+        "@com_google_googletest//:gtest_main",
+    ],
+)

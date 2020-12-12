@@ -45,9 +45,11 @@ class VerilogSourceFile {
       default;  // need for std::map::emplace
   VerilogSourceFile& operator=(VerilogSourceFile&&) = delete;
 
+  virtual ~VerilogSourceFile() = default;
+
   // Opens a file using the resolved path and loads the contents into memory.
   // This does not attempt to parse/analyze the contents.
-  absl::Status Open();
+  virtual absl::Status Open();
 
   // Attempts to lex and parse the file (without preprocessing).
   // Will Open() if the file is not already opened.
@@ -94,7 +96,7 @@ class VerilogSourceFile {
   // error status.
   VerilogSourceFile(absl::string_view referenced_path, absl::Status status);
 
- private:
+ protected:
   // Tracking state for linear progression of analysis, which allows
   // prerequisite actions to be cached.
   enum State {
