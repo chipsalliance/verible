@@ -463,5 +463,32 @@ TEST(FindProgramEndTest, ProgramEndName) {
   }
 }
 
+// ModuleHeader should be included in a ProgramDeclaration
+TEST(FindAllModuleHeadersTest, MatchesProgram) {
+  VerilogAnalyzer analyzer("program p;\nendprogram\n", "");
+  EXPECT_OK(analyzer.Analyze());
+  const auto& root = analyzer.Data().SyntaxTree();
+  const auto module_headers = FindAllModuleHeaders(*ABSL_DIE_IF_NULL(root));
+  EXPECT_EQ(module_headers.size(), 1);
+}
+
+// ModuleHeader should be included in a InterfaceDeclaration
+TEST(FindAllModuleHeadersTest, MatchesInterface) {
+  VerilogAnalyzer analyzer("interface m;\nendinterface\n", "");
+  EXPECT_OK(analyzer.Analyze());
+  const auto& root = analyzer.Data().SyntaxTree();
+  const auto module_headers = FindAllModuleHeaders(*ABSL_DIE_IF_NULL(root));
+  EXPECT_EQ(module_headers.size(), 1);
+}
+
+// A class should not include ModuleHeader since they have ClassHeader
+TEST(FindAllModuleHeadersTest, ClassNoMatch) {
+  VerilogAnalyzer analyzer("class foo; endclass", "");
+  EXPECT_OK(analyzer.Analyze());
+  const auto& root = analyzer.Data().SyntaxTree();
+  const auto module_headers = FindAllModuleHeaders(*ABSL_DIE_IF_NULL(root));
+  EXPECT_TRUE(module_headers.empty());
+}
+
 }  // namespace
 }  // namespace verilog

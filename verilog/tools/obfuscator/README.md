@@ -23,6 +23,11 @@ Usage: `verible-verilog-obfuscate [options] < original > output`
     --load_map (If provided, pre-load an existing translation dictionary
       (written by --save_map). This is useful for applying pre-existing
       transforms.); default: "";
+    --preserve_interface (If true, module name, port names and parameter names
+      will be preserved. The translation map saved with --save_map will have
+      identity mappings for these identifiers. When used with --load_map, the
+      mapping explicitly specified in the map file will have higher priority
+      than this option.); default: false;
     --save_map (If provided, save the translation to a dictionary for reuse in a
       future obfuscation with --load_map.); default: "";
 ```

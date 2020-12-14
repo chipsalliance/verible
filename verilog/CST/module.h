@@ -57,6 +57,10 @@ verible::SymbolPtr MakeModuleHeader(T0&& keyword, T1&& lifetime, T2&& id,
 std::vector<verible::TreeSearchMatch> FindAllModuleDeclarations(
     const verible::Symbol&);
 
+// Find all module headers.
+std::vector<verible::TreeSearchMatch> FindAllModuleHeaders(
+    const verible::Symbol&);
+
 // Find all interface declarations.
 std::vector<verible::TreeSearchMatch> FindAllInterfaceDeclarations(
     const verible::Symbol&);

@@ -35,6 +35,10 @@ std::vector<verible::TreeSearchMatch> FindAllUnqualifiedIds(
 std::vector<verible::TreeSearchMatch> FindAllQualifiedIds(
     const verible::Symbol&);
 
+// Returns all leafs with token type SymbolIdentifier
+std::vector<verible::TreeSearchMatch> FindAllSymbolIdentifierLeafs(
+    const verible::Symbol&);
+
 // Returns true if identifier node is qualified/scoped.
 bool IdIsQualified(const verible::Symbol&);
 

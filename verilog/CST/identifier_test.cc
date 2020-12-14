@@ -178,5 +178,41 @@ TEST(GetIdentifierTest, IdentifierUnpackedDimensions) {
   }
 }
 
+// Tests that all expected symbol identifiers are found.
+TEST(FindAllSymbolIdentifierTest, VariousIds) {
+  constexpr int kTag = 1;  // value doesn't matter
+  const SyntaxTreeSearchTestCase kTestCases[] = {
+      {"function ", {kTag, "foo"}, "(); endfunction"},
+      {"function ", {kTag, "myclass"}, "::", {kTag, "foo"}, "(); endfunction"},
+      {"task ", {kTag, "goo"}, "(); endtask"},
+      {"task ", {kTag, "fff"}, "::", {kTag, "goo"}, "(); endtask"},
+      {"class ", {kTag, "cls"}, ";\nendclass"},
+      {"package ", {kTag, "pkg"}, ";\nendpackage"},
+      {"module ",
+       {kTag, "top"},
+       "\n",
+       "import ",
+       {kTag, "pkg"},
+       "::*;\n",
+       "(input ",
+       {kTag, "a"},
+       ");\n",
+       "endmodule"},
+  };
+  for (const auto& test : kTestCases) {
+    TestVerilogSyntaxRangeMatches(
+        __FUNCTION__, test, [](const TextStructureView& text_structure) {
+          const auto& root = text_structure.SyntaxTree();
+          const auto symb_ids = FindAllSymbolIdentifierLeafs(*root);
+          std::vector<TreeSearchMatch> identifiers;
+          for (const auto& symb_id : symb_ids) {
+            identifiers.push_back(
+                TreeSearchMatch{symb_id.match, {/* ignored context */}});
+          }
+          return identifiers;
+        });
+  }
+}
+
 }  // namespace
 }  // namespace verilog

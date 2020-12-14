@@ -56,6 +56,20 @@ TEST(VerilogMatchers, MacroCallIdLeafTests) {
     verible::matcher::RunRawMatcherTestCase<VerilogAnalyzer>(test);
 }
 
+// Tests for SymbolIdentifierLeaf matching
+TEST(VerilogMatchers, SymbolIdentifierLeaf) {
+  const RawMatcherTestCase tests[] = {
+      {SymbolIdentifierLeaf(), "", 0},
+      {SymbolIdentifierLeaf(), EmbedInClass(""), 1},  // +1 by the class name
+      {SymbolIdentifierLeaf(), EmbedInClassMethod("reg foo;"),
+       3},  // count +2 by class & method names
+      {SymbolIdentifierLeaf(), EmbedInClassMethod("uvm_foo(\"foo\");"), 3},
+      {SymbolIdentifierLeaf(), "parameter foo = 32'hDEADBEEF;", 1},
+  };
+  for (const auto& test : tests)
+    verible::matcher::RunRawMatcherTestCase<VerilogAnalyzer>(test);
+}
+
 // Tests for NodekVoidcast matching
 TEST(VerilogMatchers, VoidCastNodeTests) {
   const RawMatcherTestCase tests[] = {
