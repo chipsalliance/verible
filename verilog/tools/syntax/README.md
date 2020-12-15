@@ -241,10 +241,11 @@ text = source[start:end].decode("utf-8")
 
 ##### Possible token `tag` values
 
-Token tag enumerations come from the [parser generator](../../parser/verilog.y). There are 2 types of values:
+Token tag enumerations come from the [parser generator](../../parser/verilog.y), with a few overrides specified in [`verilog_token.cc`](../../parser/verilog_token.cc). There are 3 types of values:
 
 * Named tokens (e.g. `SymbolIdentifier`, `TK_DecNumber`), which come from `%token TOKEN_TAG` lines.
-* Single character tokens (e.g. `;`, `=`). They can be found using `'.'` regular expression.
+* String literals (e.g. `module`, `==`), which come from `%token SOME_ID "token_tag"` lines.
+* Single characters (e.g. `;`, `=`). They can be found using `'.'` regular expression.
 
 #### Error object
 

@@ -226,23 +226,12 @@ cc_test(
     ],
 )
 
-genrule(
-    name = "verilog_token_enum_foreach_gen",
-    srcs = ["verilog_token_enum.h"],
-    outs = ["verilog_token_enum_foreach.inc"],
-    cmd = "sed -n -e '1,/^\\s*enum verilog_tokentype/d' " +
-          " -e '/^\\s*\\w\\+/ s/^\\s*\\(\\w\\+\\).*$$/CONSIDER(\\1)/p' " +
-          " -e '/^\\s*};/q' $< > $@",
-)
-
 cc_library(
     name = "verilog_token",
-    srcs = [
-        "verilog_token.cc",
-        "verilog_token_enum_foreach.inc",
-    ],
+    srcs = ["verilog_token.cc"],
     hdrs = ["verilog_token.h"],
     deps = [
+        ":verilog_parser",
         ":verilog_token_enum",
         "@com_google_absl//absl/strings",
     ],
