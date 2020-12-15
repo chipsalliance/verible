@@ -205,23 +205,20 @@ class SyntaxData:
 
 
 class VeribleVerilogSyntax:
-    DEFAULT_OPTIONS = {
-        "gen_tree": True,
-        "gen_tokens": False,
-        "gen_raw_tokens": False,
-    }
-
     def __init__(self, executable="verible-verilog-syntax"):
         self.executable = executable
 
     @staticmethod
-    def _transform_tree(tree, data):
+    def _transform_tree(tree, data, skip_null):
         def transform(tree):
             if tree is None:
-                return LeafNode()
+                return None
             if "children" in tree:
-                children = [transform(child)
-                        for child in tree["children"]]
+                children = [
+                    transform(child) or LeafNode()
+                        for child in tree["children"]
+                        if (not skip_null or child is not None)
+                ]
                 tag = tree["tag"]
                 return BranchNode(tag, children=children)
             tag = tree["tag"]
@@ -247,17 +244,21 @@ class VeribleVerilogSyntax:
         return [Error(t["line"], t["column"], t["phase"], t.get("message", None))
                 for t in tokens]
 
-
     def _parse(self, paths, input=None, options={}):
-        opts = VeribleVerilogSyntax.DEFAULT_OPTIONS.copy()
-        opts.update(options)
+        options = {
+            "gen_tree": True,
+            "skip_null": False,
+            "gen_tokens": False,
+            "gen_rawtokens": False,
+            **options,
+        }
 
         args = ["-export_json"]
-        if opts["gen_tree"]:
+        if options["gen_tree"]:
             args.append("-printtree")
-        if opts["gen_tokens"]:
+        if options["gen_tokens"]:
             args.append("-printtokens")
-        if opts["gen_raw_tokens"]:
+        if options["gen_rawtokens"]:
             args.append("-printrawtokens")
 
         proc = subprocess.run([self.executable, *args , *paths],
@@ -278,7 +279,7 @@ class VeribleVerilogSyntax:
 
             if "tree" in file_json:
                 file_data.tree = VeribleVerilogSyntax._transform_tree(
-                        file_json["tree"], file_data)
+                        file_json["tree"], file_data, options["skip_null"])
 
             if "tokens" in file_json:
                 file_data.tokens = VeribleVerilogSyntax._transform_tokens(
