@@ -19,7 +19,7 @@ from anytree import RenderTree
 
 
 def process_file_data(path, data):
-    print(f"\033[1;7;92mFILE: {path} \033[0m")
+    print(f"\033[1;97;7m{path} \033[0m\n")
     if data.tree:
         for prefix, _, node in RenderTree(data.tree):
             print(f"\033[90m{prefix}\033[0m{node.to_formatted_string()}")

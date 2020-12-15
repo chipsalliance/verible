@@ -16,6 +16,7 @@
 import sys
 
 from verible_verilog_syntax import VeribleVerilogSyntax
+import verible_verilog_syntax
 import anytree
 
 
@@ -23,29 +24,61 @@ def process_file_data(path, data):
     if not data.tree:
         return
 
-    for module in data.tree.find_by_tag("kModuleDeclaration"):
-        header = module.find_by_tag("kModuleHeader", max_count=1)
+    modules_info = []
+
+    # Collect information about each module declaration in the file
+    for module in data.tree.iter_find_all({"tag": "kModuleDeclaration"}):
+        module_info = {
+            "header_text": "",
+            "name": "",
+            "ports": [],
+            "parameters": [],
+            "imports": [],
+        }
+
+        # Find module header
+        header = module.find({"tag": "kModuleHeader"})
         if not header:
             continue
-        name = header.find_by_tag(["SymbolIdentifier", "EscapedIdentifier"], max_count=1, iter=anytree.PreOrderIter)
+        module_info["header_text"] = header.text
+
+        # Find module name
+        name = header.find({"tag": ["SymbolIdentifier", "EscapedIdentifier"]}, iter=anytree.PreOrderIter)
         if not name:
             continue
+        module_info["name"] = name.text
 
-        print(f"module \033[1;32m{name.text}\033[0m (in \033[1m{path}\033[0m)")
-        for port in header.find_by_tag(["kPortDeclaration", "kPort"]):
-            port_name = port.find_by_tag(["SymbolIdentifier", "EscapedIdentifier"], max_count=1)
-            start = port.start
-            end = port.end
-            if start and end:
-                name_start = port_name.start
-                name_end = port_name.end
+        # Get the list of ports
+        for port in header.iter_find_all({"tag": ["kPortDeclaration", "kPort"]}):
+            port_id = port.find({"tag": ["SymbolIdentifier", "EscapedIdentifier"]})
+            module_info["ports"].append(port_id.text)
 
-                code = data.source_code
-                prefix = code[start:name_start].decode("utf8")
-                port_name_text = code[name_start:name_end].decode("utf8")
-                suffix = code[name_end:end].decode("utf8")
-                print(f"    {prefix}\033[32;92m{port_name_text}\033[0m{suffix}")
-        print()
+        # Get the list of parameters
+        for param in header.iter_find_all({"tag": ["kParamDeclaration"]}):
+            param_id = param.find({"tag": ["SymbolIdentifier", "EscapedIdentifier"]})
+            module_info["parameters"].append(param_id.text)
+
+        # Get the list of imports
+        for pkg in module.iter_find_all({"tag": ["kPackageImportItem"]}):
+            module_info["imports"].append(pkg.text)
+
+        modules_info.append(module_info)
+
+    # Print results
+    if len(modules_info) > 0:
+        print(f"\033[1;97;7m{path} \033[0m\n")
+
+    def print_entry(key, values):
+        fmt_values = [f"\033[92m{v}\033[0m" for v in values]
+        value_part = f"\n\033[33m// {' '*len(key)}".join(fmt_values) or "\033[90m-\033[0m"
+        print(f"\033[33m// \033[93m{key}{value_part}")
+
+    for module_info in modules_info:
+        print_entry("name:       ", [module_info['name']])
+        print_entry("ports:      ", module_info['ports'])
+        print_entry("parameters: ", module_info['parameters'])
+        print_entry("imports:    ", module_info['imports'])
+        print(f"\033[97m{module_info['header_text']}\033[0m\n")
 
 
 def main():

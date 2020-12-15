@@ -32,12 +32,6 @@ def _colorize(formats, strings):
     return result
 
 
-class ReversePostOrderIter(PostOrderIter):
-    @staticmethod
-    def _get_children(children, stop):
-        return super()._get_children(reversed(children), stop)
-
-
 class Node(NodeMixin):
     def __init__(self, parent=None):
         self.parent = parent
@@ -78,29 +72,58 @@ class BranchNode(Node):
 
     @property
     def start(self):
-        first_token = self.find(lambda n: isinstance(n, TokenNode), max_count=1, iter=PostOrderIter)
+        first_token = self.find(lambda n: isinstance(n, TokenNode), iter=PostOrderIter)
         return first_token.start if first_token else None
 
     @property
     def end(self):
-        last_token = self.find(lambda n: isinstance(n, TokenNode), max_count=1, iter=ReversePostOrderIter)
-        return last_token.end if last_token else None
+        tokens = self.find_all(lambda n: isinstance(n, TokenNode), iter=PostOrderIter)
+        return tokens[-1].end if len(tokens) > 0 else None
 
-    def find(self, filter_, max_count=0, iter=LevelOrderIter):
-        found = []
-        for item in iter(self, filter_):
-            found.append(item)
-            if max_count > 0 and len(found) >= max_count:
+    def iter_find_all(self, filter_, max_count=0, iter=LevelOrderIter):
+        def as_list(v):
+            return v if isinstance(v, list) else [v]
+
+        if not callable(filter_):
+            filters = filter_
+            def f(node):
+                for attr,value in filters.items():
+                    if not hasattr(node, attr):
+                        return False
+                    if getattr(node, attr) not in as_list(value):
+                        return False
+                return True
+            filter_ = f
+
+        for node in iter(self, filter_):
+            yield node
+            max_count -= 1
+            if max_count == 0:
                 break
-        if max_count == 1:
-            return found[0] if len(found) == 1 else None
-        return found
 
-    def find_by_tag(self, tags, max_count=0, iter=LevelOrderIter):
-        if not isinstance(tags, list):
-            tags = [tags]
-        return self.find(lambda n: (hasattr(n, "tag") and n.tag in tags),
-                max_count, iter)
+    def find(self, filter_, iter=LevelOrderIter):
+        return next(self.iter_find_all(filter_, max_count=1, iter=iter))
+
+    def find_all(self, filter_, max_count=0, iter=LevelOrderIter):
+        return list(self.iter_find_all(filter_, max_count=max_count, iter=iter))
+
+# ---
+
+    #def find(self, filter_, max_count=0, iter=LevelOrderIter):
+    #    found = []
+    #    for item in iter(self, filter_):
+    #        found.append(item)
+    #        if max_count > 0 and len(found) >= max_count:
+    #            break
+    #    if max_count == 1:
+    #        return found[0] if len(found) == 1 else None
+    #    return found
+
+    #def find_by_tag(self, tags, max_count=0, iter=LevelOrderIter):
+    #    if not isinstance(tags, list):
+    #        tags = [tags]
+    #    return self.find(lambda n: (hasattr(n, "tag") and n.tag in tags),
+    #            max_count, iter)
 
     def to_formatted_string(self):
         tag = self.tag if self.tag == repr(self.tag)[1:-1] else repr(self.tag)
