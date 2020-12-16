@@ -49,10 +49,9 @@ class VerilogTreeToJsonConverter : public verible::SymbolVisitor {
 };
 
 VerilogTreeToJsonConverter::VerilogTreeToJsonConverter(absl::string_view base)
-    : context_(
-          verible::TokenInfo::Context(base, [](std::ostream& stream, int e) {
+    : context_(base, [](std::ostream& stream, int e) {
             stream << TokenTypeToString(static_cast<verilog_tokentype>(e));
-          })),
+          }),
     json_(Json::objectValue), value_(&json_) {}
 
 void VerilogTreeToJsonConverter::Visit(const verible::SyntaxTreeLeaf& leaf) {
