@@ -14,14 +14,14 @@
 
 import subprocess
 import json
-from anytree import NodeMixin, LevelOrderIter, PostOrderIter
+import anytree
 import re
-
-from dataclasses import dataclass
+import dataclasses
 from typing import Optional, List
 
 
 _CSI_SEQUENCE = re.compile("\033\\[.*?m")
+
 
 def _colorize(formats, strings):
     result = ""
@@ -32,7 +32,7 @@ def _colorize(formats, strings):
     return result
 
 
-class Node(NodeMixin):
+class Node(anytree.NodeMixin):
     def __init__(self, parent=None):
         self.parent = parent
 
@@ -72,15 +72,15 @@ class BranchNode(Node):
 
     @property
     def start(self):
-        first_token = self.find(lambda n: isinstance(n, TokenNode), iter=PostOrderIter)
+        first_token = self.find(lambda n: isinstance(n, TokenNode), iter=anytree.PostOrderIter)
         return first_token.start if first_token else None
 
     @property
     def end(self):
-        tokens = self.find_all(lambda n: isinstance(n, TokenNode), iter=PostOrderIter)
+        tokens = self.find_all(lambda n: isinstance(n, TokenNode), iter=anytree.PostOrderIter)
         return tokens[-1].end if len(tokens) > 0 else None
 
-    def iter_find_all(self, filter_, max_count=0, iter=LevelOrderIter):
+    def iter_find_all(self, filter_, max_count=0, iter=anytree.LevelOrderIter):
         def as_list(v):
             return v if isinstance(v, list) else [v]
 
@@ -101,29 +101,11 @@ class BranchNode(Node):
             if max_count == 0:
                 break
 
-    def find(self, filter_, iter=LevelOrderIter):
+    def find(self, filter_, iter=anytree.LevelOrderIter):
         return next(self.iter_find_all(filter_, max_count=1, iter=iter), None)
 
-    def find_all(self, filter_, max_count=0, iter=LevelOrderIter):
+    def find_all(self, filter_, max_count=0, iter=anytree.LevelOrderIter):
         return list(self.iter_find_all(filter_, max_count=max_count, iter=iter))
-
-# ---
-
-    #def find(self, filter_, max_count=0, iter=LevelOrderIter):
-    #    found = []
-    #    for item in iter(self, filter_):
-    #        found.append(item)
-    #        if max_count > 0 and len(found) >= max_count:
-    #            break
-    #    if max_count == 1:
-    #        return found[0] if len(found) == 1 else None
-    #    return found
-
-    #def find_by_tag(self, tags, max_count=0, iter=LevelOrderIter):
-    #    if not isinstance(tags, list):
-    #        tags = [tags]
-    #    return self.find(lambda n: (hasattr(n, "tag") and n.tag in tags),
-    #            max_count, iter)
 
     def to_formatted_string(self):
         tag = self.tag if self.tag == repr(self.tag)[1:-1] else repr(self.tag)
@@ -210,7 +192,7 @@ class Token:
         return " ".join(parts)
 
 
-@dataclass
+@dataclasses.dataclass
 class Error:
     line: int
     column: int
@@ -218,7 +200,7 @@ class Error:
     message: str = ""
 
 
-@dataclass
+@dataclasses.dataclass
 class SyntaxData:
     source_code: Optional[str] = None
     tree: Optional[RootNode] = None

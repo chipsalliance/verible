@@ -12,12 +12,26 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+"""Print module name, ports, parameters and imports.
+
+Usage: print_modules.py PATH_TO_VERIBLE_VERILOG_SYNTAX \\
+                        VERILOG_FILE [VERILOG_FILE [...]]
+
+This example shows how to use `verible-verilog-syntax --export_json ...` output
+to extract information about module declarations found in System Verilog
+source files. Extracted information:
+
+* module name
+* module port names
+* module parameter names
+* module imports
+* module header code
+"""
 
 import sys
-
-from verible_verilog_syntax import VeribleVerilogSyntax
-import verible_verilog_syntax
 import anytree
+
+import verible_verilog_syntax
 
 
 def process_file_data(path, data):
@@ -89,7 +103,7 @@ def main():
     parser_path = sys.argv[1]
     files = sys.argv[2:]
 
-    parser = VeribleVerilogSyntax(executable=parser_path)
+    parser = verible_verilog_syntax.VeribleVerilogSyntax(executable=parser_path)
     data = parser.parse_files(files)
 
     for file_path, file_data in data.items():
