@@ -363,7 +363,7 @@ struct DeferredTokenAlignment {
 };
 
 // Align cells by adjusting pre-token spacing for a single row.
-static std::vector<DeferredTokenAlignment> ComputeAignedRowSpacings(
+static std::vector<DeferredTokenAlignment> ComputeAlignedRowSpacings(
     const AlignedFormattingColumnSchema& column_configs,
     const std::vector<AlignmentColumnProperties>& properties,
     const AlignmentRow& row) {
@@ -627,7 +627,7 @@ AlignablePartitionGroup::CalculateAlignmentSpacings(
   result.align_actions_2D.reserve(result.matrix.size());
   for (const auto& row : result.matrix) {
     result.align_actions_2D.push_back(
-        ComputeAignedRowSpacings(column_configs, column_properties, row));
+        ComputeAlignedRowSpacings(column_configs, column_properties, row));
   }
   return result;
 }
