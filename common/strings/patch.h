@@ -31,7 +31,7 @@
 namespace verible {
 namespace internal {
 // Forward declarations
-struct FilePatch;
+class FilePatch;
 
 // function interface like file::GetContents()
 using FileReaderFunction = std::function<absl::Status(
