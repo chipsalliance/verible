@@ -102,7 +102,7 @@ class BranchNode(Node):
                 break
 
     def find(self, filter_, iter=LevelOrderIter):
-        return next(self.iter_find_all(filter_, max_count=1, iter=iter))
+        return next(self.iter_find_all(filter_, max_count=1, iter=iter), None)
 
     def find_all(self, filter_, max_count=0, iter=LevelOrderIter):
         return list(self.iter_find_all(filter_, max_count=max_count, iter=iter))
