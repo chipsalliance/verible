@@ -15,14 +15,13 @@
 #ifndef VERIBLE_VERILOG_TOKEN_VERILOG_TOKEN_H__
 #define VERIBLE_VERILOG_TOKEN_VERILOG_TOKEN_H__
 
-#include <string>
-
 #include "verilog/parser/verilog_token_enum.h"
+#include "absl/strings/string_view.h"
 
 namespace verilog {
 
 // Stringifier for verilog_tokentype
-std::string TokenTypeToString(verilog_tokentype tokentype);
+absl::string_view TokenTypeToString(size_t tokentype);
 
 }  // namespace verilog
 

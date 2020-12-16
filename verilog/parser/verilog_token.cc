@@ -25,13 +25,13 @@ namespace verilog {
 // in verible-verilog-syntax' JSON output. Changing them might
 // break third-party code.
 
-std::string TokenTypeToString(verilog_tokentype tokentype) {
+absl::string_view TokenTypeToString(size_t tokentype) {
   switch (tokentype) {
     // Returns stringified symbol name
     #define CASE_STRINGIFY(val) \
         case verilog_tokentype::val: return #val;
 
-    // Tokens with verbose aliases
+    // Tokens with verbose or unusual aliases
     CASE_STRINGIFY(TK_COMMENT_BLOCK)
     CASE_STRINGIFY(TK_EOL_COMMENT)
     CASE_STRINGIFY(TK_SPACE)
@@ -40,17 +40,26 @@ std::string TokenTypeToString(verilog_tokentype tokentype) {
     CASE_STRINGIFY(TK_ATTRIBUTE)
     CASE_STRINGIFY(TK_FILEPATH)
 
+    CASE_STRINGIFY(PP_define_body)
+    CASE_STRINGIFY(PP_default_text)
+
     #undef CASE_STRINGIFY
+
+    // The string returned by verilog_symbol_name() for single quote character
+    // ("'\\''") contains backslash. This is the only such case, so generic
+    // unescaping code in `default` section below would be superfluous.
+    case '\'':
+      return "'";
 
     // Returns token type name or its alias (if available) as used in verilog.y
     default: {
       absl::string_view symbol_name(verilog_symbol_name(tokentype));
-      if (symbol_name[0] == '"' || symbol_name[0] == '\'') {
+      if (!symbol_name.empty() && (symbol_name[0] == '"'
+                                   || symbol_name[0] == '\'')) {
         // Strip quotes
-        return std::string(symbol_name.substr(1, symbol_name.size() - 2));
-      } else {
-        return std::string(symbol_name);
+        return symbol_name.substr(1, symbol_name.size() - 2);
       }
+      return symbol_name;
     }
   }
 }
