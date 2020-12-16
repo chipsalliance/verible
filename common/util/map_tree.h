@@ -293,6 +293,64 @@ class MapTree {
   }
 
   // Traversals
+  //
+  // Function-application traversals' variants:
+  //   * Apply in pre-order vs. post-order.
+  //   * Apply to attached value at each node vs. the whole node itself.
+  //     Whole node gives access to immediate children (and subtree).
+  //   * Apply function is const vs. mutating.
+  // All combinations of the above are provided.
+  // Note that keys can never be mutated.
+
+  // Applies function 'f' to all nodes in this tree in a pre-order traversal.
+  // Children are visited in key-order.
+  void ApplyPreOrder(const std::function<void(const this_type&)>& f) const {
+    f(*this);
+    for (const auto& child : *this) {
+      child.second.ApplyPreOrder(f);
+    }
+  }
+  void ApplyPreOrder(const std::function<void(this_type&)>& f) {
+    f(*this);
+    for (auto& child : *this) {
+      child.second.ApplyPreOrder(f);
+    }
+  }
+
+  // This variant of ApplyPreOrder expects a function on the underlying
+  // node_value_type (const&).
+  void ApplyPreOrder(
+      const std::function<void(const node_value_type&)>& f) const {
+    ApplyPreOrder([&f](const this_type& t) { f(t.Value()); });
+  }
+  void ApplyPreOrder(const std::function<void(node_value_type&)>& f) {
+    ApplyPreOrder([&f](this_type& t) { f(t.Value()); });
+  }
+
+  // Applies function 'f' to all nodes in this tree in a post-order traversal.
+  // Children are visited in key-order.
+  void ApplyPostOrder(const std::function<void(const this_type&)>& f) const {
+    for (const auto& child : *this) {
+      child.second.ApplyPostOrder(f);
+    }
+    f(*this);
+  }
+  void ApplyPostOrder(const std::function<void(this_type&)>& f) {
+    for (auto& child : *this) {
+      child.second.ApplyPostOrder(f);
+    }
+    f(*this);
+  }
+
+  // This variant of ApplyPostOrder expects a function on the underlying
+  // node_value_type (const&).
+  void ApplyPostOrder(
+      const std::function<void(const node_value_type&)>& f) const {
+    ApplyPostOrder([&f](const this_type& t) { f(t.Value()); });
+  }
+  void ApplyPostOrder(const std::function<void(node_value_type&)>& f) {
+    ApplyPostOrder([&f](this_type& t) { f(t.Value()); });
+  }
 
   // Transforms
 

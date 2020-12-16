@@ -363,6 +363,98 @@ TEST(MapTreeTest, Swap) {
   check2(m1);
 }
 
+TEST(MapTreeTest, TraversePrint) {
+  const MapTreeTestType m(
+      "groot",  //
+      KV{5, MapTreeTestType("pp", KV{4, MapTreeTestType("ss")},
+                            KV{1, MapTreeTestType("tt")})},
+      KV{3, MapTreeTestType("qq", KV{2, MapTreeTestType("ww")},
+                            KV{6, MapTreeTestType("vv")})});
+  // printing has the benefit of verifying traversal order
+
+  // pre-order traversals
+  {  // print node values (string_views)
+    std::ostringstream stream;
+    m.ApplyPreOrder([&stream](const MapTreeTestType::node_value_type& v) {
+      stream << v << " ";
+    });
+    EXPECT_EQ(stream.str(), "groot qq ww vv pp tt ss ");
+  }
+  {  // print keys (ints)
+    std::ostringstream stream;
+    m.ApplyPreOrder([&stream](const MapTreeTestType& node) {
+      const auto* key = node.Key();
+      stream << (key == nullptr ? 0 : *key) << " ";
+    });
+    EXPECT_EQ(stream.str(), "0 3 2 6 5 1 4 ");
+  }
+
+  // post-order traversals
+  {  // print node values (string_views)
+    std::ostringstream stream;
+    m.ApplyPostOrder([&stream](const MapTreeTestType::node_value_type& v) {
+      stream << v << " ";
+    });
+    EXPECT_EQ(stream.str(), "ww vv qq tt ss pp groot ");
+  }
+  {  // print keys (ints)
+    std::ostringstream stream;
+    m.ApplyPostOrder([&stream](const MapTreeTestType& node) {
+      const auto* key = node.Key();
+      stream << (key == nullptr ? 0 : *key) << " ";
+    });
+    EXPECT_EQ(stream.str(), "2 6 3 1 4 5 0 ");
+  }
+}
+
+TEST(MapTreeTest, TraverseMutate) {
+  const MapTreeTestType m(
+      "groot",  //
+      KV{5, MapTreeTestType("pp", KV{4, MapTreeTestType("ss")},
+                            KV{1, MapTreeTestType("tt")})},
+      KV{3, MapTreeTestType("qq", KV{2, MapTreeTestType("ww")},
+                            KV{6, MapTreeTestType("vv")})});
+  // pre-order traversals
+  {                             // mutate node values (string_views)
+    MapTreeTestType m_copy(m);  // deep copy, mutate this copy
+    std::ostringstream stream;
+    m_copy.ApplyPreOrder([&stream](MapTreeTestType::node_value_type& v) {
+      v = v.substr(1);     // mutate: truncate
+      stream << v << " ";  // print to verify order
+    });
+    EXPECT_EQ(stream.str(), "root q w v p t s ");
+  }
+  {                             // mutate nodes
+    MapTreeTestType m_copy(m);  // deep copy, mutate this copy
+    std::ostringstream stream;
+    m_copy.ApplyPreOrder([&stream](MapTreeTestType& v) {
+      v.Value() = v.Value().substr(1);  // mutate: truncate
+      stream << v.Value() << " ";       // print to verify order
+    });
+    EXPECT_EQ(stream.str(), "root q w v p t s ");
+  }
+
+  // post-order traversals
+  {                             // mutate node values (string_views)
+    MapTreeTestType m_copy(m);  // deep copy, mutate this copy
+    std::ostringstream stream;
+    m_copy.ApplyPostOrder([&stream](MapTreeTestType::node_value_type& v) {
+      v = v.substr(1);     // mutate: truncate
+      stream << v << " ";  // print to verify order
+    });
+    EXPECT_EQ(stream.str(), "w v q t s p root ");
+  }
+  {                             // mutate nodes
+    MapTreeTestType m_copy(m);  // deep copy, mutate this copy
+    std::ostringstream stream;
+    m_copy.ApplyPostOrder([&stream](MapTreeTestType& v) {
+      v.Value() = v.Value().substr(1);  // mutate: truncate
+      stream << v.Value() << " ";       // print to verify order
+    });
+    EXPECT_EQ(stream.str(), "w v q t s p root ");
+  }
+}
+
 TEST(MapTreeTest, PrintTreeRootOnly) {
   const MapTreeTestType m("groot");
   std::ostringstream stream;
