@@ -323,7 +323,7 @@ class VeribleVerilogSyntax:
         return self._parse(paths, options=options)
 
     def parse_file(self, path, options={}):
-        return self._parse([path], options=options)
+        return self._parse([path], options=options).get(path, None)
 
     def parse_string(self, string, options={}):
-        return self._parse(["-"], input=string, options=options)
+        return self._parse(["-"], input=string, options=options).get("-", None)
