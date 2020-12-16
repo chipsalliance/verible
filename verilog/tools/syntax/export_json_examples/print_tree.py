@@ -30,26 +30,27 @@ import verible_verilog_syntax
 
 
 def process_file_data(path, data):
-    print(f"\033[1;97;7m{path} \033[0m\n")
-    if data.tree:
-        for prefix, _, node in anytree.RenderTree(data.tree):
-            print(f"\033[90m{prefix}\033[0m{node.to_formatted_string()}")
+  print(f"\033[1;97;7m{path} \033[0m\n")
+  if data.tree:
+    for prefix, _, node in anytree.RenderTree(data.tree):
+      print(f"\033[90m{prefix}\033[0m{node.to_formatted_string()}")
 
 
 def main():
-    if len(sys.argv) < 3:
-        print(f"Usage: {sys.argv[0]} PATH_TO_VERIBLE_VERILOG_SYNTAX VERILOG_FILE [VERILOG_FILE [...]]")
-        return 1
+  if len(sys.argv) < 3:
+    print(f"Usage: {sys.argv[0]} PATH_TO_VERIBLE_VERILOG_SYNTAX " +
+          "VERILOG_FILE [VERILOG_FILE [...]]")
+    return 1
 
-    parser_path = sys.argv[1]
-    files = sys.argv[2:]
+  parser_path = sys.argv[1]
+  files = sys.argv[2:]
 
-    parser = verible_verilog_syntax.VeribleVerilogSyntax(executable=parser_path)
-    data = parser.parse_files(files, options={"gen_tree": True})
+  parser = verible_verilog_syntax.VeribleVerilogSyntax(executable=parser_path)
+  data = parser.parse_files(files, options={"gen_tree": True})
 
-    for file_path, file_data in data.items():
-        process_file_data(file_path, file_data)
+  for file_path, file_data in data.items():
+    process_file_data(file_path, file_data)
 
 
 if __name__ == "__main__":
-    exit(main())
+  sys.exit(main())
