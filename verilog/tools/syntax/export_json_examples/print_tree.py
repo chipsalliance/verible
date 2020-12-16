@@ -34,6 +34,7 @@ def process_file_data(path, data):
   if data.tree:
     for prefix, _, node in anytree.RenderTree(data.tree):
       print(f"\033[90m{prefix}\033[0m{node.to_formatted_string()}")
+    print()
 
 
 def main():
