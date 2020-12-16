@@ -68,7 +68,6 @@ TEST(VerilogTreeJsonTest, GeneratesGoodJsonTree) {
       }
     ]
   })");
-  json.compare(expected_json);
   EXPECT_EQ(json, expected_json);
 }
 
