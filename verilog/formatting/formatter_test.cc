@@ -7497,6 +7497,19 @@ TEST(FormatterEndToEndTest, AutoInferAlignment) {
        "    end\n"
        "  endcase\n"
        "endmodule\n"},
+      {// continuous assignment with comment
+       "module m;\n"
+       "// comment1\n"
+       "assign aaaaa = (bbbbb != ccccc) &\n"
+       "// comment2\n"
+       "(ddddd | (eeeee & ffffff));\n"
+       "endmodule\n",
+       "module m;\n"
+       "  // comment1\n"
+       "  assign aaaaa = (bbbbb != ccccc) &\n"
+       "      // comment2\n"
+       "      (ddddd | (eeeee & ffffff));\n"
+       "endmodule\n"},
 
       // net/variable assignments: blocking and nonblocking
       {"module  ma ;\n"
