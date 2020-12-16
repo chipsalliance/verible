@@ -23,11 +23,11 @@ namespace verible {
 
 Json::Value ToJson(const TokenInfo& token_info, const TokenInfo::Context& context) {
   Json::Value json(Json::objectValue);
-  std::ostringstream tag;
-  context.token_enum_translator(tag, token_info.token_enum());
+  std::ostringstream stream;
+  context.token_enum_translator(stream, token_info.token_enum());
   json["start"] = token_info.left(context.base);
   json["end"]   = token_info.right(context.base);
-  json["tag"]   = tag.str();
+  json["tag"]   = stream.str();
   return json;
 }
 
