@@ -442,7 +442,7 @@ TEST_F(Sparse3x3MatrixAlignmentMoreSpacesTest,
   TabularAlignTokens(
       &partition_, kDefaultAlignmentHandler, &pre_format_tokens_, sample_,
       // Alignment disabled over line 2
-      ByteOffsetSet({{static_cast<int>(sample_.find_first_of("\n") + 1),
+      ByteOffsetSet({{static_cast<int>(sample_.find_first_of('\n') + 1),
                       static_cast<int>(sample_.find("four") + 4)}}),
       40);
 

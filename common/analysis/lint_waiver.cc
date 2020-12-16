@@ -290,7 +290,7 @@ static absl::Status WaiveCommandHandler(
         }
 
         if (option == "line") {
-          size_t range = val.find(":");
+          size_t range = val.find(':');
           if (range != absl::string_view::npos) {
             // line range
             if (!absl::SimpleAtoi(val.substr(0, range), &line_start) ||
