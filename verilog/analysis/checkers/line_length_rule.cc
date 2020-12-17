@@ -152,6 +152,7 @@ static bool AllowLongLineException(TokenSequence::const_iterator token_begin,
     }
     if (absl::StartsWith(text, kLinterTrigger)) {
       // This is the waiver for this linter tool.
+      // verible/verilog/tools/lint/README.md
       return true;
     }
     // TODO(fangism): add "noformat" formatter directives.

@@ -30,6 +30,9 @@ namespace verible {
 //
 // For usage, see linter.h
 //
+// See verible/doc/style_lint.md
+// for a guide to implementing new syntax tree rules.
+//
 // Note that context is a stack nodes representing the ancestors of the
 // Symbol currented being operated on. Most recent ancestors are at the
 // top of the stack/back of vector.

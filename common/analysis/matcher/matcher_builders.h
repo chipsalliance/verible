@@ -37,6 +37,8 @@ namespace matcher {
 // Collections of symbol predicates used by Matcher builders.
 // Some of these are parameterized with template arguments, other are
 // parameterized as functors
+//
+// See verible/doc/style_lint.md for example usage
 
 template <SymbolKind Kind, typename EnumType, EnumType Tag>
 bool EqualTagPredicate(const Symbol& symbol) {
