@@ -17,6 +17,7 @@ import json
 import anytree
 import re
 import dataclasses
+import collections
 from typing import Optional, List
 
 
@@ -30,6 +31,53 @@ def _colorize(formats, strings):
     result += f"\033[{formats[fi]}m{s}\033[0m"
     fi = (fi+1) % len(formats)
   return result
+
+
+# Custom tree iterators with an option for reverse children iteration
+
+class _TreeIterator:
+  def __init__(self, tree, filter_=None, reverse_children=False):
+    self.tree = tree
+    self.reverse_children = reverse_children
+    self.filter_ = filter_ if filter_ else lambda n: True
+
+  def __iter__(self):
+    yield from self._iter_tree(self.tree)
+
+  def _iter_children(self, tree):
+    if not tree or not hasattr(tree, "children"):
+      return []
+    return tree.children if not self.reverse_children \
+                         else reversed(tree.children)
+
+  def _iter_tree(self, tree):
+    raise NotImplementedError("Subclass must implement '_iter_tree' method")
+
+
+class PreOrderTreeIterator(_TreeIterator):
+  def _iter_tree(self, tree):
+    if self.filter_(tree):
+      yield tree
+    for child in self._iter_children(tree):
+      yield from self._iter_tree(child)
+
+
+class PostOrderTreeIterator(_TreeIterator):
+  def _iter_tree(self, tree):
+    for child in self._iter_children(tree):
+      yield from self._iter_tree(child)
+    if self.filter_(tree):
+      yield tree
+
+
+class LevelOrderTreeIterator(_TreeIterator):
+  def _iter_tree(self, tree):
+    queue = collections.deque([tree])
+    while len(queue) > 0:
+      n = queue.popleft()
+      if self.filter_(n):
+        yield n
+      queue.extend(self._iter_children(n))
 
 
 class Node(anytree.NodeMixin):
@@ -73,16 +121,17 @@ class BranchNode(Node):
   @property
   def start(self):
     first_token = self.find(lambda n: isinstance(n, TokenNode),
-                            iter_=anytree.PostOrderIter)
+                            iter_=PostOrderTreeIterator)
     return first_token.start if first_token else None
 
   @property
   def end(self):
-    tokens = self.find_all(lambda n: isinstance(n, TokenNode),
-                           iter_=anytree.PostOrderIter)
-    return tokens[-1].end if len(tokens) > 0 else None
+    last_token = self.find(lambda n: isinstance(n, TokenNode),
+                           iter_=PostOrderTreeIterator, reverse_children=True)
+    return last_token.end if last_token else None
 
-  def iter_find_all(self, filter_, max_count=0, iter_=anytree.LevelOrderIter):
+  def iter_find_all(self, filter_, max_count=0, iter_=LevelOrderTreeIterator,
+                    **kwargs):
     def as_list(v):
       return v if isinstance(v, list) else [v]
 
@@ -97,17 +146,20 @@ class BranchNode(Node):
         return True
       filter_ = f
 
-    for node in iter_(self, filter_):
+    for node in iter_(self, filter_, **kwargs):
       yield node
       max_count -= 1
       if max_count == 0:
         break
 
-  def find(self, filter_, iter_=anytree.LevelOrderIter):
-    return next(self.iter_find_all(filter_, max_count=1, iter_=iter_), None)
+  def find(self, filter_, iter_=LevelOrderTreeIterator, **kwargs):
+    return next(self.iter_find_all(filter_, max_count=1, iter_=iter_,
+                **kwargs), None)
 
-  def find_all(self, filter_, max_count=0, iter_=anytree.LevelOrderIter):
-    return list(self.iter_find_all(filter_, max_count=max_count, iter_=iter_))
+  def find_all(self, filter_, max_count=0, iter_=LevelOrderTreeIterator,
+               **kwargs):
+    return list(self.iter_find_all(filter_, max_count=max_count, iter_=iter_,
+                **kwargs))
 
   def to_formatted_string(self):
     tag = self.tag if self.tag == repr(self.tag)[1:-1] else repr(self.tag)
