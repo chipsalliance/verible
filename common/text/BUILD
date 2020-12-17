@@ -361,6 +361,19 @@ cc_test(
 )
 
 cc_test(
+    name = "token_info_json_test",
+    srcs = ["token_info_json_test.cc"],
+    deps = [
+        ":constants",
+        ":token_info",
+        ":token_info_json",
+        "@com_google_absl//absl/strings",
+        "@com_google_googletest//:gtest_main",
+        "@jsoncpp_git//:jsoncpp",
+    ],
+)
+
+cc_test(
     name = "token_info_test_util_test",
     srcs = ["token_info_test_util_test.cc"],
     deps = [
