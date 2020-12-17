@@ -19,6 +19,7 @@
 // verilog/CST/verilog_treebuilder_utils.h that explains use
 // of std::forward in Make* helper functions.
 
+#include <cstddef>
 #include <utility>
 #include <vector>
 
@@ -58,7 +59,8 @@ verible::SymbolPtr MakeDPIImport(T0&& keyword, T1&& spec, T2&& property,
 // to deduce to that some paths are not reachble/applicable.
 template <typename T0, typename T1, typename T2, typename T3>
 verible::SymbolPtr MakeDPIImport(T0&& keyword, T1&& spec, T2&& property,
-                                 nullptr_t id, nullptr_t equals, T3&& proto) {
+                                 std::nullptr_t id, std::nullptr_t equals,
+                                 T3&& proto) {
   verible::CheckSymbolAsLeaf(*keyword, verilog_tokentype::TK_import);
   verible::CheckSymbolAsLeaf(*spec, verilog_tokentype::TK_StringLiteral);
   CHECK(verible::SymbolCastToNode(*proto).MatchesTagAnyOf(
