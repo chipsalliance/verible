@@ -154,8 +154,8 @@ See https://github.com/google/verible/issues/528
 
 ### Preprocessor
 
-[`verible-verilog-preprocessor`](./verilog/tools/preprocesor) is a collection of
-preprocessor-like tools, (but does not include a fully-featured Verilog
+[`verible-verilog-preprocessor`](./verilog/tools/preprocessor) is a collection
+of preprocessor-like tools, (but does not include a fully-featured Verilog
 preprocessor yet.)
 
 ### Source Code Indexer
