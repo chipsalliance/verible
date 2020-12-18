@@ -54,8 +54,21 @@ static bool ExpectedTagPredicate(const Symbol& symbol) {
   return symbol.Tag() == var_symbol || symbol.Tag() == assign_symbol;
 }
 
+const verible::SyntaxTreeLeaf& GetNameLeafOfNetVariable(
+    const verible::Symbol& net_variable) {
+  return verible::GetSubtreeAsLeaf(net_variable, NodeEnum::kNetVariable, 0);
+}
+
+const verible::SyntaxTreeLeaf& GetNameLeafOfRegisterVariable(
+    const verible::Symbol& register_variable) {
+  return verible::GetSubtreeAsLeaf(register_variable,
+                                   NodeEnum::kRegisterVariable, 0);
+}
+
 std::vector<const TokenInfo*> GetIdentifiersFromNetDeclaration(
     const Symbol& symbol) {
+  // TODO: re-implement this without search, instead using direct access for
+  // efficiency.
   std::vector<const TokenInfo*> identifiers;
 
   auto matcher = verible::matcher::Matcher(ExpectedTagPredicate,

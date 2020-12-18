@@ -28,6 +28,8 @@
 #include "common/text/concrete_syntax_tree.h"
 #include "common/text/symbol.h"
 #include "common/text/token_info.h"
+#include "common/text/tree_utils.h"
+#include "common/util/logging.h"
 #include "verilog/CST/verilog_nonterminals.h"
 #include "verilog/parser/verilog_token_enum.h"
 
@@ -41,6 +43,8 @@ verible::SymbolPtr MakeParamTypeDeclaration(T0&& type_info,
                                             T1&& packed_dimensions,
                                             T2&& identifier,
                                             T3&& unpacked_dimensions) {
+  CHECK(verible::SymbolCastToNode(*ABSL_DIE_IF_NULL(type_info))
+            .MatchesTag(NodeEnum::kTypeInfo));
   return verible::MakeTaggedNode(
       NodeEnum::kParamType, std::forward<T0>(type_info),
       std::forward<T1>(packed_dimensions), std::forward<T2>(identifier),

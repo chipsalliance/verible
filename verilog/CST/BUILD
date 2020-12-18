@@ -533,9 +533,12 @@ cc_test(
     name = "net_test",
     srcs = ["net_test.cc"],
     deps = [
+        ":declaration",
+        ":match_test_utils",
         ":net",
         ":verilog_nonterminals",
         "//common/analysis:syntax_tree_search",
+        "//common/analysis:syntax_tree_search_test_utils",
         "//common/text:syntax_tree_context",
         "//common/text:text_structure",
         "//common/util:logging",

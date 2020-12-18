@@ -27,9 +27,12 @@
 #include "gtest/gtest.h"
 #include "absl/strings/str_cat.h"
 #include "common/analysis/syntax_tree_search.h"
+#include "common/analysis/syntax_tree_search_test_utils.h"
 #include "common/text/syntax_tree_context.h"
 #include "common/text/text_structure.h"
 #include "common/util/logging.h"
+#include "verilog/CST/declaration.h"
+#include "verilog/CST/match_test_utils.h"
 #include "verilog/CST/verilog_nonterminals.h"
 #include "verilog/analysis/verilog_analyzer.h"
 
@@ -40,6 +43,10 @@
 
 namespace verilog {
 namespace {
+
+using verible::SyntaxTreeSearchTestCase;
+using verible::TextStructureView;
+using verible::TreeSearchMatch;
 
 // Tests that no nets are found from an empty source.
 TEST(FindAllNetDeclarationsTest, EmptySource) {
@@ -245,6 +252,137 @@ TEST(GetIdentifiersFromNetDeclarationTest, DoNotMatchAssignedVariables) {
       GetIdentifiersFromNetDeclaration(*ABSL_DIE_IF_NULL(root));
   ASSERT_EQ(net_declarations.size(), 1);
   EXPECT_EQ(net_declarations[0]->text(), "v");
+}
+
+TEST(GetNameLeafOfNetVariableTest, Various) {
+  constexpr int kTag = 1;  // value doesn't matter
+  const verible::SyntaxTreeSearchTestCase kTestCases[] = {
+      {""},
+      {
+          "module m;\n"
+          "endmodule\n",
+      },
+      {
+          "module m;\n"
+          "  wire ",
+          {kTag, "ww"},
+          ";\n"
+          "endmodule\n",
+      },
+      {
+          "module m;\n"
+          "  wire [2:0] ",
+          {kTag, "ww"},
+          "[0:1];\n"
+          "endmodule\n",
+      },
+      {
+          "module m;\n"
+          "  wire ",
+          {kTag, "ww"},
+          ", ",
+          {kTag, "xx"},
+          ";\n"
+          "endmodule\n",
+      },
+      {
+          // port declarations are considered different
+          "module m(\n"
+          "  wire ww);\n"
+          "endmodule\n",
+      },
+      {
+          "module m;\n"
+          "  if (1) begin\n"  // in conditional generate
+          "    wire ",
+          {kTag, "rr"},
+          ";\n"
+          "  end\n"
+          "endmodule\n",
+      },
+  };
+  for (const auto& test : kTestCases) {
+    VLOG(1) << "code:\n" << test.code;
+    TestVerilogSyntaxRangeMatches(
+        __FUNCTION__, test, [](const TextStructureView& text_structure) {
+          const auto& root = text_structure.SyntaxTree();
+          const auto& net_decls = FindAllNetVariables(*ABSL_DIE_IF_NULL(root));
+
+          std::vector<TreeSearchMatch> net_ids;
+          for (const auto& decl : net_decls) {
+            const auto& net_name = GetNameLeafOfNetVariable(*decl.match);
+            net_ids.emplace_back(
+                TreeSearchMatch{&net_name, {/* ignored context */}});
+          }
+          return net_ids;
+        });
+  }
+}
+
+TEST(GetNameLeafOfRegisterVariableTest, Various) {
+  constexpr int kTag = 1;  // value doesn't matter
+  const verible::SyntaxTreeSearchTestCase kTestCases[] = {
+      {""},
+      {
+          "module m;\n"
+          "endmodule\n",
+      },
+      {
+          "module m;\n"
+          "  logic ",
+          {kTag, "ww"},
+          ";\n"
+          "endmodule\n",
+      },
+      {
+          "module m;\n"
+          "  logic [2:0] ",
+          {kTag, "ww"},
+          "[0:1];\n"
+          "endmodule\n",
+      },
+      {
+          "module m;\n"
+          "  logic ",
+          {kTag, "ww"},
+          ", ",
+          {kTag, "xx"},
+          ";\n"
+          "endmodule\n",
+      },
+      {
+          // port declarations are considered different
+          "module m(\n"
+          "  logic ww);\n"
+          "endmodule\n",
+      },
+      {
+          "module m;\n"
+          "  if (1) begin\n"  // in conditional generate
+          "    logic ",
+          {kTag, "rr"},
+          ";\n"
+          "  end\n"
+          "endmodule\n",
+      },
+  };
+  for (const auto& test : kTestCases) {
+    VLOG(1) << "code:\n" << test.code;
+    TestVerilogSyntaxRangeMatches(
+        __FUNCTION__, test, [](const TextStructureView& text_structure) {
+          const auto& root = text_structure.SyntaxTree();
+          const auto& net_decls =
+              FindAllRegisterVariables(*ABSL_DIE_IF_NULL(root));
+
+          std::vector<TreeSearchMatch> net_ids;
+          for (const auto& decl : net_decls) {
+            const auto& net_name = GetNameLeafOfRegisterVariable(*decl.match);
+            net_ids.emplace_back(
+                TreeSearchMatch{&net_name, {/* ignored context */}});
+          }
+          return net_ids;
+        });
+  }
 }
 
 }  // namespace
