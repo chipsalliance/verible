@@ -41,6 +41,10 @@ namespace {
 
 using testing::HasSubstr;
 
+// An in-memory source file that doesn't require file-system access,
+// nor create temporary files.
+using TestVerilogSourceFile = InMemoryVerilogSourceFile;
+
 // Grab the first reference in local_references_to_bind that matches by name.
 static const DependentReferences& GetFirstDependentReferenceByName(
     const SymbolInfo& sym, absl::string_view name) {
@@ -49,28 +53,6 @@ static const DependentReferences& GetFirstDependentReferenceByName(
   }
   CHECK(false) << "No reference to \"" << name << "\" found.";
 }
-
-// An in-memory source file that doesn't require file-system access,
-// nor create temporary files.
-// TODO: if this is useful elsewhere, move to a test-only library.
-class TestVerilogSourceFile : public VerilogSourceFile {
- public:
-  // filename can be fake, it is not used to open any file.
-  TestVerilogSourceFile(absl::string_view filename, absl::string_view contents)
-      : VerilogSourceFile(filename, filename), contents_for_open_(contents) {}
-
-  // Load text into analyzer structure without actually opening a file.
-  absl::Status Open() override {
-    analyzed_structure_ = ABSL_DIE_IF_NULL(
-        absl::make_unique<VerilogAnalyzer>(contents_for_open_, ResolvedPath()));
-    state_ = State::kOpened;
-    status_ = absl::OkStatus();
-    return status_;
-  }
-
- private:
-  const absl::string_view contents_for_open_;
-};
 
 struct ScopePathPrinter {
   const SymbolTableNode& node;

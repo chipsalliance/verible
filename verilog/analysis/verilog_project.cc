@@ -76,6 +76,14 @@ std::ostream& operator<<(std::ostream& stream,
   return stream;
 }
 
+absl::Status InMemoryVerilogSourceFile::Open() {
+  analyzed_structure_ = ABSL_DIE_IF_NULL(
+      absl::make_unique<VerilogAnalyzer>(contents_for_open_, ResolvedPath()));
+  state_ = State::kOpened;
+  status_ = absl::OkStatus();
+  return status_;
+}
+
 absl::StatusOr<VerilogSourceFile*> VerilogProject::OpenFile(
     absl::string_view referenced_filename,
     absl::string_view resolved_filename) {

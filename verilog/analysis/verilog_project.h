@@ -135,6 +135,22 @@ class VerilogSourceFile {
 // Printable representation for debugging.
 std::ostream& operator<<(std::ostream&, const VerilogSourceFile&);
 
+// An in-memory source file that doesn't require file-system access,
+// nor create temporary files.
+class InMemoryVerilogSourceFile : public VerilogSourceFile {
+ public:
+  // filename can be fake, it is not used to open any file.
+  InMemoryVerilogSourceFile(absl::string_view filename,
+                            absl::string_view contents)
+      : VerilogSourceFile(filename, filename), contents_for_open_(contents) {}
+
+  // Load text into analyzer structure without actually opening a file.
+  absl::Status Open() override;
+
+ private:
+  const absl::string_view contents_for_open_;
+};
+
 // VerilogProject represents a set of files as a cohesive unit of compilation.
 // Files can include top-level translation units and preprocessor included
 // files. This is responsible for owning string memory that corresponds

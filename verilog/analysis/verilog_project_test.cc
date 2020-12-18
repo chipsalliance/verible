@@ -149,6 +149,53 @@ TEST(VerilogSourceFileTest, StreamPrint) {
   EXPECT_TRUE(absl::StrContains(str, "have text structure? no"));
 }
 
+TEST(InMemoryVerilogSourceFileTest, ParseValidFile) {
+  constexpr absl::string_view text("localparam int p = 1;\n");
+  InMemoryVerilogSourceFile file("/not/using/file/system.v", text);
+  // Parse automatically opens.
+  EXPECT_TRUE(file.Parse().ok());
+  EXPECT_TRUE(file.Status().ok());
+  const TextStructureView* text_structure =
+      ABSL_DIE_IF_NULL(file.GetTextStructure());
+  const absl::string_view owned_string_range(text_structure->Contents());
+  EXPECT_EQ(owned_string_range, text);
+  const auto* tokens = &text_structure->TokenStream();
+  EXPECT_NE(tokens, nullptr);
+  const auto* tree = &text_structure->SyntaxTree();
+  EXPECT_NE(tree, nullptr);
+
+  // Re-parsing doesn't change anything
+  EXPECT_TRUE(file.Parse().ok());
+  EXPECT_TRUE(file.Status().ok());
+  EXPECT_EQ(file.GetTextStructure(), text_structure);
+  EXPECT_EQ(&text_structure->TokenStream(), tokens);
+  EXPECT_EQ(&text_structure->SyntaxTree(), tree);
+}
+
+TEST(InMemoryVerilogSourceFileTest, ParseInvalidFile) {
+  constexpr absl::string_view text("class \"dismissed\"!\n");
+  InMemoryVerilogSourceFile file("/not/using/file/system.v", text);
+  // Parse automatically opens.
+  EXPECT_FALSE(file.Parse().ok());
+  EXPECT_FALSE(file.Status().ok());
+  const TextStructureView* text_structure =
+      ABSL_DIE_IF_NULL(file.GetTextStructure());
+  const absl::string_view owned_string_range(text_structure->Contents());
+  EXPECT_EQ(owned_string_range, text);
+  const auto* tokens = &text_structure->TokenStream();
+  EXPECT_NE(tokens, nullptr);
+  const auto* tree = &text_structure->SyntaxTree();
+  EXPECT_NE(tree, nullptr);
+  // but syntax tree may be empty, depends on error-recovery
+
+  // Re-parsing doesn't change anything
+  EXPECT_FALSE(file.Parse().ok());
+  EXPECT_FALSE(file.Status().ok());
+  EXPECT_EQ(file.GetTextStructure(), text_structure);
+  EXPECT_EQ(&text_structure->TokenStream(), tokens);
+  EXPECT_EQ(&text_structure->SyntaxTree(), tree);
+}
+
 TEST(VerilogProjectTest, Initialization) {
   const auto tempdir = ::testing::TempDir();
   VerilogProject project(tempdir, {tempdir});
