@@ -859,6 +859,80 @@ TEST(BuildSymbolTableTest, ModuleInstanceNamedPortConnection) {
   }
 }
 
+TEST(BuildSymbolTableTest, ModuleInstanceNamedPortConnectionNonexistentPort) {
+  TestVerilogSourceFile src("foobar.sv",
+                            "module m (\n"
+                            "  input wire clk,\n"
+                            "  output reg q\n"
+                            ");\n"
+                            "endmodule\n"
+                            "module rr;\n"
+                            "  wire c;\n"
+                            "  m m_inst(.clk(c), .p(c));"
+                            // one type reference, two local net references
+                            // two named port references, "p" does not exist
+                            "endmodule\n");
+  const auto status = src.Parse();
+  ASSERT_TRUE(status.ok()) << status.message();
+  SymbolTable symbol_table(nullptr);
+  const SymbolTableNode& root_symbol(symbol_table.Root());
+
+  const auto build_diagnostics = BuildSymbolTable(src, &symbol_table);
+
+  MUST_ASSIGN_LOOKUP_SYMBOL(m_node, root_symbol, "m");
+  EXPECT_TRUE(build_diagnostics.empty()) << "Unexpected diagnostic:\n"
+                                         << build_diagnostics.front().message();
+
+  MUST_ASSIGN_LOOKUP_SYMBOL(clk_node, m_node, "clk");
+
+  MUST_ASSIGN_LOOKUP_SYMBOL(q_node, m_node, "q");
+
+  MUST_ASSIGN_LOOKUP_SYMBOL(rr_node, root_symbol, "rr");
+
+  const DependentReferences* m_inst_ref = nullptr;
+  for (const auto& ref : rr_node_info.local_references_to_bind) {
+    const absl::string_view base_ref(ref.components->Value().identifier);
+    if (base_ref == "m_inst") m_inst_ref = &ref;  // instance self-reference
+  }
+  ASSERT_NE(m_inst_ref, nullptr);
+
+  const ReferenceComponentNode& m_inst_ref_root(*m_inst_ref->components);
+  ASSERT_EQ(m_inst_ref_root.Children().size(), 2);
+  const ReferenceComponentMap port_refs(
+      ReferenceComponentNodeMapView(m_inst_ref_root));
+
+  const auto found_clk_ref = port_refs.find("clk");
+  ASSERT_NE(found_clk_ref, port_refs.end());
+  const ReferenceComponentNode& clk_ref(*found_clk_ref->second);
+  EXPECT_EQ(clk_ref.Value().identifier, "clk");
+  EXPECT_EQ(clk_ref.Value().ref_type, ReferenceType::kObjectMember);
+  EXPECT_EQ(clk_ref.Value().resolved_symbol, nullptr);  // not yet resolved
+
+  const auto found_p_ref = port_refs.find("p");
+  ASSERT_NE(found_p_ref, port_refs.end());
+  const ReferenceComponentNode& p_ref(*found_p_ref->second);
+  EXPECT_EQ(p_ref.Value().identifier, "p");
+  EXPECT_EQ(p_ref.Value().ref_type, ReferenceType::kObjectMember);
+  EXPECT_EQ(p_ref.Value().resolved_symbol, nullptr);  // not yet resolved
+
+  // Get the local symbol definitions for wire "c".
+  MUST_ASSIGN_LOOKUP_SYMBOL(c_node, rr_node, "c");
+
+  {
+    std::vector<absl::Status> resolve_diagnostics;
+    symbol_table.Resolve(&resolve_diagnostics);
+    ASSERT_EQ(resolve_diagnostics.size(), 1);
+    const absl::Status& err(resolve_diagnostics.front());
+    EXPECT_EQ(err.code(), absl::StatusCode::kNotFound);
+    EXPECT_THAT(err.message(),
+                HasSubstr("No member symbol \"p\" in parent scope m."));
+
+    // Expect to resolved named port reference to "clk", but not "p".
+    EXPECT_EQ(clk_ref.Value().resolved_symbol, &clk_node);
+    EXPECT_EQ(p_ref.Value().resolved_symbol, nullptr);  // failed to resolve
+  }
+}
+
 TEST(BuildSymbolTableTest, OneGlobalIntParameter) {
   TestVerilogSourceFile src("foobar.sv", "localparam int mint = 1;\n");
   const auto status = src.Parse();

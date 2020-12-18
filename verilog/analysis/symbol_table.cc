@@ -650,8 +650,9 @@ static void ResolveReferenceComponentNode(
         if (found == type_scope->end()) {
           diagnostics->emplace_back(
               DiagnoseMemberSymbolResolutionFailure(key, *type_scope));
+        } else {
+          component.resolved_symbol = &found->second;
         }
-        component.resolved_symbol = &found->second;
         break;
       }
       case ReferenceType::kUnqualified:
