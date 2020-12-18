@@ -11,6 +11,8 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+"""Wrapper for verible-verilog-syntax --export_json
+"""
 
 import subprocess
 import json
@@ -18,13 +20,13 @@ import anytree
 import re
 import dataclasses
 import collections
-from typing import Optional, List
+from typing import Any, Callable, Dict, Iterable, List, Optional, Union
 
 
 _CSI_SEQUENCE = re.compile("\033\\[.*?m")
 
 
-def _colorize(formats, strings):
+def _colorize(formats: List[str], strings: List[str]) -> str:
   result = ""
   fi = 0
   for s in strings:
@@ -33,45 +35,54 @@ def _colorize(formats, strings):
   return result
 
 
+# Type aliases
+
+CallableFilter = Callable[["Node"], bool]
+KeyValueFilter = Dict[str, Union[str, List[str]]]
+TreeIterator = Union["_TreeIteratorBase", anytree.iterators.AbstractIter]
+
+
 # Custom tree iterators with an option for reverse children iteration
 
-class _TreeIterator:
-  def __init__(self, tree, filter_=None, reverse_children=False):
+class _TreeIteratorBase:
+  def __init__(self, tree: "Node",
+               filter_: Optional[CallableFilter] = None,
+               reverse_children: bool = False):
     self.tree = tree
     self.reverse_children = reverse_children
     self.filter_ = filter_ if filter_ else lambda n: True
 
-  def __iter__(self):
+  def __iter__(self) -> Iterable["Node"]:
     yield from self._iter_tree(self.tree)
 
-  def _iter_children(self, tree):
+  def _iter_children(self, tree: Optional["Node"]) -> Iterable["Node"]:
     if not tree or not hasattr(tree, "children"):
       return []
     return tree.children if not self.reverse_children \
                          else reversed(tree.children)
 
-  def _iter_tree(self, tree):
+  def _iter_tree(self, tree: Optional["Node"]) -> Iterable["Node"]:
     raise NotImplementedError("Subclass must implement '_iter_tree' method")
 
 
-class PreOrderTreeIterator(_TreeIterator):
-  def _iter_tree(self, tree):
+class PreOrderTreeIterator(_TreeIteratorBase):
+  def _iter_tree(self, tree: Optional["Node"]) -> Iterable["Node"]:
     if self.filter_(tree):
       yield tree
     for child in self._iter_children(tree):
       yield from self._iter_tree(child)
 
 
-class PostOrderTreeIterator(_TreeIterator):
-  def _iter_tree(self, tree):
+class PostOrderTreeIterator(_TreeIteratorBase):
+  def _iter_tree(self, tree: Optional["Node"]) -> Iterable["Node"]:
     for child in self._iter_children(tree):
       yield from self._iter_tree(child)
     if self.filter_(tree):
       yield tree
 
 
-class LevelOrderTreeIterator(_TreeIterator):
-  def _iter_tree(self, tree):
+class LevelOrderTreeIterator(_TreeIteratorBase):
+  def _iter_tree(self, tree: Optional["Node"]) -> Iterable["Node"]:
     queue = collections.deque([tree])
     while len(queue) > 0:
       n = queue.popleft()
@@ -81,23 +92,23 @@ class LevelOrderTreeIterator(_TreeIterator):
 
 
 class Node(anytree.NodeMixin):
-  def __init__(self, parent=None):
+  def __init__(self, parent: Optional["Node"] = None):
     self.parent = parent
 
   @property
-  def syntax_data(self):
+  def syntax_data(self) -> Optional["SyntaxData"]:
     return self.parent.syntax_data if self.parent else None
 
   @property
-  def start(self):
+  def start(self) -> Optional[int]:
     raise NotImplementedError("Subclass must implement 'start' property")
 
   @property
-  def end(self):
+  def end(self) -> Optional[int]:
     raise NotImplementedError("Subclass must implement 'start' property")
 
   @property
-  def text(self):
+  def text(self) -> str:
     start = self.start
     end = self.end
     sd = self.syntax_data
@@ -105,37 +116,40 @@ class Node(anytree.NodeMixin):
       return sd.source_code[start:end].decode("utf-8")
     return ""
 
-  def __repr__(self):
+  def __repr__(self) -> str:
     return _CSI_SEQUENCE.sub("", self.to_formatted_string())
 
-  def to_formatted_string(self):
+  def to_formatted_string(self) -> str:
     return super().__repr__()
 
 
 class BranchNode(Node):
-  def __init__(self, tag, parent=None, children=None):
+  def __init__(self, tag: str, parent: Optional[Node] = None,
+               children: Optional[List[Node]] = None):
     super().__init__(parent)
     self.tag = tag
     self.children = children if children is not None else []
 
   @property
-  def start(self):
+  def start(self) -> Optional[int]:
     first_token = self.find(lambda n: isinstance(n, TokenNode),
                             iter_=PostOrderTreeIterator)
     return first_token.start if first_token else None
 
   @property
-  def end(self):
+  def end(self) -> Optional[int]:
     last_token = self.find(lambda n: isinstance(n, TokenNode),
                            iter_=PostOrderTreeIterator, reverse_children=True)
     return last_token.end if last_token else None
 
-  def iter_find_all(self, filter_, max_count=0, iter_=LevelOrderTreeIterator,
-                    **kwargs):
+  def iter_find_all(self, filter_: Union[CallableFilter, KeyValueFilter, None],
+                    max_count: int = 0,
+                    iter_: TreeIterator = LevelOrderTreeIterator,
+                    **kwargs) -> Iterable[Node]:
     def as_list(v):
       return v if isinstance(v, list) else [v]
 
-    if not callable(filter_):
+    if filter_ and not callable(filter_):
       filters = filter_
       def f(node):
         for attr,value in filters.items():
@@ -152,59 +166,64 @@ class BranchNode(Node):
       if max_count == 0:
         break
 
-  def find(self, filter_, iter_=LevelOrderTreeIterator, **kwargs):
+  def find(self, filter_: Union[CallableFilter, KeyValueFilter, None],
+           iter_: TreeIterator = LevelOrderTreeIterator, **kwargs) \
+           -> Optional[Node]:
     return next(self.iter_find_all(filter_, max_count=1, iter_=iter_,
                 **kwargs), None)
 
-  def find_all(self, filter_, max_count=0, iter_=LevelOrderTreeIterator,
-               **kwargs):
+  def find_all(self, filter_: Union[CallableFilter, KeyValueFilter, None],
+               max_count: int = 0, iter_: TreeIterator = LevelOrderTreeIterator,
+               **kwargs) -> List[Node]:
     return list(self.iter_find_all(filter_, max_count=max_count, iter_=iter_,
                 **kwargs))
 
-  def to_formatted_string(self):
+  def to_formatted_string(self) -> str:
     tag = self.tag if self.tag == repr(self.tag)[1:-1] else repr(self.tag)
     return _colorize(["37", "1;97"], ["[", tag, "]"])
 
 
 class RootNode(BranchNode):
-  def __init__(self, tag, syntax_data=None, children=None):
+  def __init__(self, tag: str, syntax_data: Optional["SyntaxData"] = None,
+               children: Optional[List[Node]] = None):
     super().__init__(tag, None, children)
     self._syntax_data = syntax_data
 
   @property
-  def syntax_data(self):
+  def syntax_data(self) -> Optional["SyntaxData"]:
     return self._syntax_data
 
 
 class LeafNode(Node):
   @property
-  def start(self):
-    return 0
+  def start(self) -> None:
+    return None
 
   @property
-  def end(self):
-    return 0
+  def end(self) -> None:
+    return None
 
-  def to_formatted_string(self):
+  def to_formatted_string(self) -> str:
     return _colorize(["90"], ["null"])
 
 
 class TokenNode(LeafNode):
-  def __init__(self, tag, start, end, parent=None):
+  def __init__(self, tag: str, start: int, end: int,
+               parent: Optional[Node] = None):
     super().__init__(parent)
     self.tag = tag
     self._start = start
     self._end = end
 
   @property
-  def start(self):
+  def start(self) -> int:
     return self._start
 
   @property
-  def end(self):
+  def end(self) -> int:
     return self._end
 
-  def to_formatted_string(self):
+  def to_formatted_string(self) -> str:
     tag = self.tag if self.tag == repr(self.tag)[1:-1] else repr(self.tag)
     parts = [
       _colorize(["37", "1;97"], ["[", tag, "]"]),
@@ -217,23 +236,24 @@ class TokenNode(LeafNode):
 
 
 class Token:
-  def __init__(self, tag, start, end, syntax_data=None):
+  def __init__(self, tag: str, start: int, end: int,
+               syntax_data: Optional["SyntaxData"] = None):
     self.tag = tag
     self.start = start
     self.end = end
     self.syntax_data = syntax_data
 
   @property
-  def text(self):
+  def text(self) -> str:
     sd = self.syntax_data
     if sd and sd.source_code and self.end <= len(sd.source_code):
       return sd.source_code[self.start:self.end].decode("utf-8")
     return ""
 
-  def __repr__(self):
+  def __repr__(self) -> str:
     return _CSI_SEQUENCE.sub("", self.to_formatted_string())
 
-  def to_formatted_string(self):
+  def to_formatted_string(self) -> str:
     tag = self.tag if self.tag == repr(self.tag)[1:-1] else repr(self.tag)
     parts = [
       _colorize(["37", "1;97"], ["[", tag, "]"]),
@@ -261,11 +281,11 @@ class SyntaxData:
 
 
 class VeribleVerilogSyntax:
-  def __init__(self, executable="verible-verilog-syntax"):
+  def __init__(self, executable: str = "verible-verilog-syntax"):
     self.executable = executable
 
   @staticmethod
-  def _transform_tree(tree, data, skip_null):
+  def _transform_tree(tree, data: SyntaxData, skip_null: bool) -> RootNode:
     def transform(tree):
       if tree is None:
         return None
@@ -291,16 +311,17 @@ class VeribleVerilogSyntax:
 
 
   @staticmethod
-  def _transform_tokens(tokens, data):
+  def _transform_tokens(tokens, data: SyntaxData) -> List[Token]:
     return [Token(t["tag"], t["start"], t["end"], data) for t in tokens]
 
 
   @staticmethod
-  def _transform_errors(tokens):
+  def _transform_errors(tokens) -> List[Error]:
     return [Error(t["line"], t["column"], t["phase"], t.get("message", None))
         for t in tokens]
 
-  def _parse(self, paths, input_=None, options=None):
+  def _parse(self, paths: List[str], input_: str = None,
+             options: Dict[str, Any] = None) -> Dict[str, SyntaxData]:
     options = {
       "gen_tree": True,
       "skip_null": False,
@@ -354,11 +375,14 @@ class VeribleVerilogSyntax:
 
     return data
 
-  def parse_files(self, paths, options=None):
-    return self._parse(paths, options=options)
+  def parse_files(self, paths: List[str], options: Dict[str, Any] = None) \
+                  -> Dict[str, SyntaxData]:
+    return self._parse(paths, options = options)
 
-  def parse_file(self, path, options=None):
-    return self._parse([path], options=options).get(path, None)
+  def parse_file(self, path: str, options: Dict[str, Any] = None) \
+                 -> Optional[SyntaxData]:
+    return self._parse([path], options = options).get(path, None)
 
-  def parse_string(self, string, options=None):
+  def parse_string(self, string: str, options: Dict[str, Any] = None) \
+                   -> Optional[SyntaxData]:
     return self._parse(["-"], input_=string, options=options).get("-", None)
