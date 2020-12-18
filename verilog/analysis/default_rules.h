@@ -31,6 +31,7 @@ constexpr const char* kDefaultRuleSet[] = {
     "package-filename",
     "void-cast",
     "generate-label",
+    "generate-label-prefix",
     "always-comb",
     "v2001-generate-begin",
     "forbidden-macro",
@@ -65,7 +66,6 @@ constexpr const char* kDefaultRuleSet[] = {
     // TODO(b/155128436): "uvm-macro-semicolon"
     // TODO(b/117131903): "proper-parameter-declaration",
     // TODO(b/131637160): "signal-name-style",
-    // TODO(b/157748205): "generate-label-prefix"
     // TODO(b/120784977): "numeric-format-string-style",
     // TODO: "one-module-per-file",
     // TODO: "banned-declared-name-patterns",
