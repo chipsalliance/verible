@@ -248,6 +248,17 @@ class MapTree {
   // Returns pointer to the key-value pair of which this node is the value.
   // Root nodes return nullptr because they have no associated key.
   const key_value_type* KeyValuePair() const {
+    // Note: The use of offsetof below is technically undefined until C++17
+    // because std::pair is not a standard layout type. However, all compilers
+    // currently provide well-defined behavior as an extension (which is
+    // demonstrated since constexpr evaluation must diagnose all undefined
+    // behavior). However, GCC and Clang also warn about this use of offsetof,
+    // which must be suppressed.
+#ifdef __GNUC__
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Winvalid-offsetof"
+#pragma GCC diagnostic ignored "-Warray-bounds"
+#endif
     // Compute offset of member &key_value_type::second (built-in function).
     static constexpr auto value_offset = offsetof(key_value_type, second);
     if (Parent() == nullptr) return nullptr;  // Root node has no key
@@ -257,6 +268,9 @@ class MapTree {
     // this node value belongs.
     return reinterpret_cast<const key_value_type*>(
         reinterpret_cast<const char*>(this) - value_offset);
+#ifdef __GNUC__
+#pragma GCC diagnostic pop
+#endif
     // TODO(fangism): factor this out into member_offsetof() template function.
   }
 
