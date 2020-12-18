@@ -14,8 +14,11 @@
 
 #include "verilog/analysis/symbol_table.h"
 
+#include <functional>
+
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
+#include "absl/base/attributes.h"
 #include "absl/memory/memory.h"
 #include "absl/status/status.h"
 #include "absl/strings/string_view.h"
@@ -68,6 +71,30 @@ class TestVerilogSourceFile : public VerilogSourceFile {
  private:
   const absl::string_view contents_for_open_;
 };
+
+struct ScopePathPrinter {
+  const SymbolTableNode& node;
+};
+
+static std::ostream& operator<<(std::ostream& stream,
+                                const ScopePathPrinter& p) {
+  return SymbolTableNodeFullPath(stream, p.node);
+}
+
+// Shorthand for asserting that a symbol table lookup from
+// (const SymbolTableNode& scope) using (absl::string_view key) must succeed,
+// and is captured as (const SymbolTableNode& dest).
+// Most of the time, the tester is not interested in the found_* iterator.
+// This also defines 'dest##_info' as the SymbolInfo value attached to the
+// 'dest' SymbolTableNode. Defined as a macro so that failure gives meaningful
+// line numbers, and this allows ASSERT_NE to early exit.
+#define MUST_ASSIGN_LOOKUP_SYMBOL(dest, scope, key)                       \
+  const auto found_##dest = scope.Find(key);                              \
+  ASSERT_NE(found_##dest, scope.end())                                    \
+      << "No symbol at \"" << key << "\" in " << ScopePathPrinter{scope}; \
+  EXPECT_EQ(found_##dest->first, key);                                    \
+  const SymbolTableNode& dest(found_##dest->second);                      \
+  const SymbolInfo& dest##_info ABSL_ATTRIBUTE_UNUSED(dest.Value())
 
 TEST(SymbolTableNodeFullPathTest, Print) {
   typedef SymbolTableNode::key_value_type KV;
@@ -182,13 +209,10 @@ TEST(BuildSymbolTableTest, ModuleDeclarationSingleEmpty) {
 
   const auto build_diagnostics = BuildSymbolTable(src, &symbol_table);
 
-  const auto found = root_symbol.Find("m");
-  ASSERT_NE(found, root_symbol.end());
-  EXPECT_EQ(found->first, "m");
-  const SymbolInfo& module_symbol(found->second.Value());
-  EXPECT_EQ(module_symbol.type, SymbolType::kModule);
-  EXPECT_EQ(module_symbol.file_origin, &src);
-  EXPECT_EQ(module_symbol.declared_type.syntax_origin,
+  MUST_ASSIGN_LOOKUP_SYMBOL(module_node, root_symbol, "m");
+  EXPECT_EQ(module_node_info.type, SymbolType::kModule);
+  EXPECT_EQ(module_node_info.file_origin, &src);
+  EXPECT_EQ(module_node_info.declared_type.syntax_origin,
             nullptr);  // there is no module meta-type
   EXPECT_TRUE(build_diagnostics.empty()) << "Unexpected diagnostic:\n"
                                          << build_diagnostics.front().message();
@@ -213,26 +237,19 @@ TEST(BuildSymbolTableTest, ModuleDeclarationLocalNetsVariables) {
 
   const auto build_diagnostics = BuildSymbolTable(src, &symbol_table);
 
-  const auto found = root_symbol.Find("m");
-  ASSERT_NE(found, root_symbol.end());
-  EXPECT_EQ(found->first, "m");
-  const SymbolTableNode& module_node(found->second);
-  const SymbolInfo& module_symbol(module_node.Value());
-  EXPECT_EQ(module_symbol.type, SymbolType::kModule);
-  EXPECT_EQ(module_symbol.file_origin, &src);
-  EXPECT_EQ(module_symbol.declared_type.syntax_origin,
+  MUST_ASSIGN_LOOKUP_SYMBOL(module_node, root_symbol, "m");
+  EXPECT_EQ(module_node_info.type, SymbolType::kModule);
+  EXPECT_EQ(module_node_info.file_origin, &src);
+  EXPECT_EQ(module_node_info.declared_type.syntax_origin,
             nullptr);  // there is no module meta-type
   EXPECT_TRUE(build_diagnostics.empty()) << "Unexpected diagnostic:\n"
                                          << build_diagnostics.front().message();
 
   static constexpr absl::string_view members[] = {"w1", "w2", "l1", "l2"};
   for (const auto& member : members) {
-    const auto found_member = module_node.Find(member);
-    ASSERT_NE(found_member, module_node.end()) << "looking up: " << member;
-    const SymbolTableNode& member_node(found_member->second);
-    EXPECT_EQ(*member_node.Key(), member);
-    EXPECT_EQ(member_node.Value().type, SymbolType::kDataNetVariableInstance);
-    EXPECT_EQ(member_node.Value().declared_type.user_defined_type,
+    MUST_ASSIGN_LOOKUP_SYMBOL(member_node, module_node, member);
+    EXPECT_EQ(member_node_info.type, SymbolType::kDataNetVariableInstance);
+    EXPECT_EQ(member_node_info.declared_type.user_defined_type,
               nullptr);  // types are primitive
   }
 
@@ -256,14 +273,10 @@ TEST(BuildSymbolTableTest, ModuleDeclarationLocalDuplicateNets) {
 
   const auto build_diagnostics = BuildSymbolTable(src, &symbol_table);
 
-  const auto found = root_symbol.Find("m");
-  ASSERT_NE(found, root_symbol.end());
-  EXPECT_EQ(found->first, "m");
-  const SymbolTableNode& module_node(found->second);
-  const SymbolInfo& module_symbol(module_node.Value());
-  EXPECT_EQ(module_symbol.type, SymbolType::kModule);
-  EXPECT_EQ(module_symbol.file_origin, &src);
-  EXPECT_EQ(module_symbol.declared_type.syntax_origin,
+  MUST_ASSIGN_LOOKUP_SYMBOL(module_node, root_symbol, "m");
+  EXPECT_EQ(module_node_info.type, SymbolType::kModule);
+  EXPECT_EQ(module_node_info.file_origin, &src);
+  EXPECT_EQ(module_node_info.declared_type.syntax_origin,
             nullptr);  // there is no module meta-type
   ASSERT_EQ(build_diagnostics.size(), 1);
   const absl::Status& err_status(build_diagnostics.front());
@@ -292,26 +305,19 @@ TEST(BuildSymbolTableTest, ModuleDeclarationWithPorts) {
 
   const auto build_diagnostics = BuildSymbolTable(src, &symbol_table);
 
-  const auto found = root_symbol.Find("m");
-  ASSERT_NE(found, root_symbol.end());
-  EXPECT_EQ(found->first, "m");
-  const SymbolTableNode& module_node(found->second);
-  const SymbolInfo& module_symbol(module_node.Value());
-  EXPECT_EQ(module_symbol.type, SymbolType::kModule);
-  EXPECT_EQ(module_symbol.file_origin, &src);
-  EXPECT_EQ(module_symbol.declared_type.syntax_origin,
+  MUST_ASSIGN_LOOKUP_SYMBOL(module_node, root_symbol, "m");
+  EXPECT_EQ(module_node_info.type, SymbolType::kModule);
+  EXPECT_EQ(module_node_info.file_origin, &src);
+  EXPECT_EQ(module_node_info.declared_type.syntax_origin,
             nullptr);  // there is no module meta-type
   EXPECT_TRUE(build_diagnostics.empty()) << "Unexpected diagnostic:\n"
                                          << build_diagnostics.front().message();
 
   static constexpr absl::string_view members[] = {"clk", "q"};
   for (const auto& member : members) {
-    const auto found_member = module_node.Find(member);
-    ASSERT_NE(found_member, module_node.end()) << "looking up: " << member;
-    const SymbolTableNode& member_node(found_member->second);
-    EXPECT_EQ(*member_node.Key(), member);
-    EXPECT_EQ(member_node.Value().type, SymbolType::kDataNetVariableInstance);
-    EXPECT_EQ(member_node.Value().declared_type.user_defined_type,
+    MUST_ASSIGN_LOOKUP_SYMBOL(member_node, module_node, member);
+    EXPECT_EQ(member_node_info.type, SymbolType::kDataNetVariableInstance);
+    EXPECT_EQ(member_node_info.declared_type.user_defined_type,
               nullptr);  // types are primitive
   }
 
@@ -335,13 +341,10 @@ TEST(BuildSymbolTableTest, ModuleDeclarationMultiple) {
 
   const absl::string_view expected_modules[] = {"m1", "m2"};
   for (const auto& expected_module : expected_modules) {
-    const auto found = root_symbol.Find(expected_module);
-    ASSERT_NE(found, root_symbol.end());
-    EXPECT_EQ(found->first, expected_module);
-    const SymbolInfo& module_symbol(found->second.Value());
-    EXPECT_EQ(module_symbol.type, SymbolType::kModule);
-    EXPECT_EQ(module_symbol.file_origin, &src);
-    EXPECT_EQ(module_symbol.declared_type.syntax_origin,
+    MUST_ASSIGN_LOOKUP_SYMBOL(module_node, root_symbol, expected_module);
+    EXPECT_EQ(module_node_info.type, SymbolType::kModule);
+    EXPECT_EQ(module_node_info.file_origin, &src);
+    EXPECT_EQ(module_node_info.declared_type.syntax_origin,
               nullptr);  // there is no module meta-type
     EXPECT_TRUE(build_diagnostics.empty())
         << "Unexpected diagnostic:\n"
@@ -366,14 +369,10 @@ TEST(BuildSymbolTableTest, ModuleDeclarationDuplicate) {
 
   const auto build_diagnostics = BuildSymbolTable(src, &symbol_table);
 
-  const absl::string_view expected_module("mm");
-  const auto found = root_symbol.Find(expected_module);
-  ASSERT_NE(found, root_symbol.end());
-  EXPECT_EQ(found->first, expected_module);
-  const SymbolInfo& module_symbol(found->second.Value());
-  EXPECT_EQ(module_symbol.type, SymbolType::kModule);
-  EXPECT_EQ(module_symbol.file_origin, &src);
-  EXPECT_EQ(module_symbol.declared_type.syntax_origin,
+  MUST_ASSIGN_LOOKUP_SYMBOL(module_node, root_symbol, "mm");
+  EXPECT_EQ(module_node_info.type, SymbolType::kModule);
+  EXPECT_EQ(module_node_info.file_origin, &src);
+  EXPECT_EQ(module_node_info.declared_type.syntax_origin,
             nullptr);  // there is no module meta-type
   ASSERT_EQ(build_diagnostics.size(), 1);
   EXPECT_EQ(build_diagnostics.front().code(), absl::StatusCode::kAlreadyExists);
@@ -402,27 +401,18 @@ TEST(BuildSymbolTableTest, ModuleDeclarationNested) {
 
   EXPECT_TRUE(build_diagnostics.empty()) << "Unexpected diagnostic:\n"
                                          << build_diagnostics.front().message();
-  const auto found = root_symbol.Find("m_outer");
-  ASSERT_NE(found, root_symbol.end());
-  EXPECT_EQ(found->first, "m_outer");
-  const SymbolTableNode& outer_module_node(found->second);
+  MUST_ASSIGN_LOOKUP_SYMBOL(outer_module_node, root_symbol, "m_outer");
   {
-    const SymbolInfo& module_symbol(outer_module_node.Value());
-    EXPECT_EQ(module_symbol.type, SymbolType::kModule);
-    EXPECT_EQ(module_symbol.file_origin, &src);
-    EXPECT_EQ(module_symbol.declared_type.syntax_origin,
+    EXPECT_EQ(outer_module_node_info.type, SymbolType::kModule);
+    EXPECT_EQ(outer_module_node_info.file_origin, &src);
+    EXPECT_EQ(outer_module_node_info.declared_type.syntax_origin,
               nullptr);  // there is no module meta-type
   }
-
-  const auto found_inner = outer_module_node.Find("m_inner");
   {
-    ASSERT_NE(found_inner, outer_module_node.end());
-    EXPECT_EQ(found_inner->first, "m_inner");
-    const SymbolTableNode& inner_module_node(found_inner->second);
-    const SymbolInfo& module_symbol(inner_module_node.Value());
-    EXPECT_EQ(module_symbol.type, SymbolType::kModule);
-    EXPECT_EQ(module_symbol.file_origin, &src);
-    EXPECT_EQ(module_symbol.declared_type.syntax_origin,
+    MUST_ASSIGN_LOOKUP_SYMBOL(inner_module_node, outer_module_node, "m_inner");
+    EXPECT_EQ(inner_module_node_info.type, SymbolType::kModule);
+    EXPECT_EQ(inner_module_node_info.file_origin, &src);
+    EXPECT_EQ(inner_module_node_info.declared_type.syntax_origin,
               nullptr);  // there is no module meta-type
   }
   {
@@ -445,9 +435,9 @@ TEST(BuildSymbolTableTest, ModuleDeclarationNestedDuplicate) {
 
   const auto build_diagnostics = BuildSymbolTable(src, &symbol_table);
 
-  const auto found = root_symbol.Find("outer");
-  ASSERT_NE(found, root_symbol.end());
-  EXPECT_EQ(found->first, "outer");
+  MUST_ASSIGN_LOOKUP_SYMBOL(module_node, root_symbol, "outer");
+  EXPECT_EQ(module_node_info.type, SymbolType::kModule);
+
   ASSERT_EQ(build_diagnostics.size(), 1);
   EXPECT_EQ(build_diagnostics.front().code(), absl::StatusCode::kAlreadyExists);
   EXPECT_THAT(build_diagnostics.front().message(),
@@ -489,26 +479,16 @@ TEST(BuildSymbolTableTest, ModuleInstance) {
         << "Unexpected diagnostic:\n"
         << build_diagnostics.front().message();
 
-    const auto found_pp = root_symbol.Find("pp");
-    ASSERT_NE(found_pp, root_symbol.end());
-    EXPECT_EQ(found_pp->first, "pp");
     // Goal: resolve the reference of "pp" to this definition node.
-    const SymbolTableNode& pp(found_pp->second);
+    MUST_ASSIGN_LOOKUP_SYMBOL(pp, root_symbol, "pp");
 
     // Inspect inside the "qq" module definition.
-    const auto found_qq = root_symbol.Find("qq");
-    ASSERT_NE(found_qq, root_symbol.end());
-    EXPECT_EQ(found_qq->first, "qq");
-    const SymbolTableNode& qq(found_qq->second);
+    MUST_ASSIGN_LOOKUP_SYMBOL(qq, root_symbol, "qq");
 
     // "rr" is an instance of type "pp"
-    const auto found_rr = qq.Find("rr");
-    ASSERT_NE(found_rr, qq.end());
-    EXPECT_EQ(found_rr->first, "rr");
-    const SymbolTableNode& rr(found_rr->second);
+    MUST_ASSIGN_LOOKUP_SYMBOL(rr, qq, "rr");
 
     {
-      const SymbolInfo& qq_info(qq.Value());
       // There is only one reference, and it is to the "pp" module type.
       ASSERT_EQ(qq_info.local_references_to_bind.size(), 2);
       EXPECT_EQ(qq_info.file_origin, &src);
@@ -533,7 +513,6 @@ TEST(BuildSymbolTableTest, ModuleInstance) {
       }
     }
 
-    const SymbolInfo& rr_info(rr.Value());
     EXPECT_TRUE(rr_info.local_references_to_bind.empty());
     EXPECT_NE(rr_info.declared_type.user_defined_type, nullptr);
     {
@@ -570,16 +549,9 @@ TEST(BuildSymbolTableTest, ModuleInstanceUndefined) {
   EXPECT_TRUE(build_diagnostics.empty()) << "Unexpected diagnostic:\n"
                                          << build_diagnostics.front().message();
 
-  const auto found_pp = root_symbol.Find("pp");
-  EXPECT_EQ(found_pp, root_symbol.end());
-
   // Inspect inside the "qq" module definition.
-  const auto found_qq = root_symbol.Find("qq");
-  ASSERT_NE(found_qq, root_symbol.end());
-  EXPECT_EQ(found_qq->first, "qq");
-  const SymbolTableNode& qq(found_qq->second);
+  MUST_ASSIGN_LOOKUP_SYMBOL(qq, root_symbol, "qq");
   {
-    const SymbolInfo& qq_info(qq.Value());
     // There is only one reference of interest, the "pp" module type.
     ASSERT_EQ(qq_info.local_references_to_bind.size(), 2);
     EXPECT_EQ(qq_info.file_origin, &src);
@@ -598,12 +570,7 @@ TEST(BuildSymbolTableTest, ModuleInstanceUndefined) {
   }
 
   // "rr" is an instance of type "pp" (which is undefined)
-  const auto found_rr = qq.Find("rr");
-  ASSERT_NE(found_rr, qq.end());
-  EXPECT_EQ(found_rr->first, "rr");
-
-  const SymbolTableNode& rr(found_rr->second);
-  const SymbolInfo& rr_info(rr.Value());
+  MUST_ASSIGN_LOOKUP_SYMBOL(rr, qq, "rr");
   EXPECT_TRUE(rr_info.local_references_to_bind.empty());
   EXPECT_NE(rr_info.declared_type.user_defined_type, nullptr);
   {
@@ -668,18 +635,11 @@ TEST(BuildSymbolTableTest, ModuleInstanceTwoInSameDecl) {
         << "Unexpected diagnostic:\n"
         << build_diagnostics.front().message();
 
-    const auto found_pp = root_symbol.Find("pp");
-    ASSERT_NE(found_pp, root_symbol.end());
-    EXPECT_EQ(found_pp->first, "pp");
-    const SymbolTableNode& pp(found_pp->second);
+    MUST_ASSIGN_LOOKUP_SYMBOL(pp, root_symbol, "pp");
 
     // Inspect inside the "qq" module definition.
-    const auto found_qq = root_symbol.Find("qq");
-    ASSERT_NE(found_qq, root_symbol.end());
-    EXPECT_EQ(found_qq->first, "qq");
-    const SymbolTableNode& qq(found_qq->second);
+    MUST_ASSIGN_LOOKUP_SYMBOL(qq, root_symbol, "qq");
     {
-      const SymbolInfo& qq_info(qq.Value());
       // There is only one type reference of interest, the "pp" module type.
       // The other two are instance self-references.
       ASSERT_EQ(qq_info.local_references_to_bind.size(), 3);
@@ -701,23 +661,17 @@ TEST(BuildSymbolTableTest, ModuleInstanceTwoInSameDecl) {
     // "r1" and "r2" are both instances of type "pp"
     static constexpr absl::string_view pp_instances[] = {"r1", "r2"};
     for (const auto& pp_inst : pp_instances) {
-      const auto found_rr = qq.Find(pp_inst);
-      ASSERT_NE(found_rr, qq.end());
-      EXPECT_EQ(found_rr->first, pp_inst);
+      MUST_ASSIGN_LOOKUP_SYMBOL(rr, qq, pp_inst);
+      EXPECT_TRUE(rr_info.local_references_to_bind.empty());
+      EXPECT_NE(rr_info.declared_type.user_defined_type, nullptr);
       {
-        const SymbolTableNode& rr(found_rr->second);
-        const SymbolInfo& rr_info(rr.Value());
-        EXPECT_TRUE(rr_info.local_references_to_bind.empty());
-        EXPECT_NE(rr_info.declared_type.user_defined_type, nullptr);
-        {
-          const ReferenceComponent& pp_type(
-              rr_info.declared_type.user_defined_type->Value());
-          EXPECT_EQ(pp_type.identifier, "pp");
-          EXPECT_EQ(pp_type.resolved_symbol, nullptr);  // nothing resolved yet
-          EXPECT_EQ(pp_type.ref_type, ReferenceType::kUnqualified);
-        }
-        EXPECT_EQ(rr_info.file_origin, &src);
+        const ReferenceComponent& pp_type(
+            rr_info.declared_type.user_defined_type->Value());
+        EXPECT_EQ(pp_type.identifier, "pp");
+        EXPECT_EQ(pp_type.resolved_symbol, nullptr);  // nothing resolved yet
+        EXPECT_EQ(pp_type.ref_type, ReferenceType::kUnqualified);
       }
+      EXPECT_EQ(rr_info.file_origin, &src);
     }
 
     {
@@ -725,18 +679,12 @@ TEST(BuildSymbolTableTest, ModuleInstanceTwoInSameDecl) {
       symbol_table.Resolve(&resolve_diagnostics);  // nothing to resolve
       EXPECT_TRUE(resolve_diagnostics.empty());
       for (const auto& pp_inst : pp_instances) {
-        const auto found_rr = qq.Find(pp_inst);
-        ASSERT_NE(found_rr, qq.end());
-        EXPECT_EQ(found_rr->first, pp_inst);
-        {
-          const SymbolTableNode& rr(found_rr->second);
-          const SymbolInfo& rr_info(rr.Value());
-          EXPECT_TRUE(rr_info.local_references_to_bind.empty());
-          // Verify that typeof(rr) successfully resolved to module pp.
-          EXPECT_EQ(
-              rr_info.declared_type.user_defined_type->Value().resolved_symbol,
-              &pp);
-        }
+        MUST_ASSIGN_LOOKUP_SYMBOL(rr, qq, pp_inst);
+        EXPECT_TRUE(rr_info.local_references_to_bind.empty());
+        // Verify that typeof(rr) successfully resolved to module pp.
+        EXPECT_EQ(
+            rr_info.declared_type.user_defined_type->Value().resolved_symbol,
+            &pp);
       }
     }
   }
@@ -761,46 +709,32 @@ TEST(BuildSymbolTableTest, ModuleInstancePositionalPortConnection) {
 
   const auto build_diagnostics = BuildSymbolTable(src, &symbol_table);
 
-  const auto m_found = root_symbol.Find("m");
-  ASSERT_NE(m_found, root_symbol.end());
-  EXPECT_EQ(m_found->first, "m");
-  const SymbolTableNode& m_node(m_found->second);
-  const SymbolInfo& m_symbol(m_node.Value());
-  EXPECT_EQ(m_symbol.type, SymbolType::kModule);
-  EXPECT_EQ(m_symbol.file_origin, &src);
-  EXPECT_EQ(m_symbol.declared_type.syntax_origin,
+  MUST_ASSIGN_LOOKUP_SYMBOL(m_node, root_symbol, "m");
+  EXPECT_EQ(m_node_info.type, SymbolType::kModule);
+  EXPECT_EQ(m_node_info.file_origin, &src);
+  EXPECT_EQ(m_node_info.declared_type.syntax_origin,
             nullptr);  // there is no module meta-type
   EXPECT_TRUE(build_diagnostics.empty()) << "Unexpected diagnostic:\n"
                                          << build_diagnostics.front().message();
 
-  const auto found_clk = m_node.Find("clk");
-  ASSERT_NE(found_clk, m_node.end());
-  const SymbolTableNode& clk_node(found_clk->second);
-  EXPECT_EQ(*clk_node.Key(), "clk");
-  EXPECT_EQ(clk_node.Value().type, SymbolType::kDataNetVariableInstance);
-  EXPECT_EQ(clk_node.Value().declared_type.user_defined_type,
+  MUST_ASSIGN_LOOKUP_SYMBOL(clk_node, m_node, "clk");
+  EXPECT_EQ(clk_node_info.type, SymbolType::kDataNetVariableInstance);
+  EXPECT_EQ(clk_node_info.declared_type.user_defined_type,
             nullptr);  // types are primitive
 
-  const auto found_q = m_node.Find("q");
-  ASSERT_NE(found_q, m_node.end());
-  const SymbolTableNode& q_node(found_q->second);
-  EXPECT_EQ(*q_node.Key(), "q");
-  EXPECT_EQ(q_node.Value().type, SymbolType::kDataNetVariableInstance);
-  EXPECT_EQ(q_node.Value().declared_type.user_defined_type,
+  MUST_ASSIGN_LOOKUP_SYMBOL(q_node, m_node, "q");
+  EXPECT_EQ(q_node_info.type, SymbolType::kDataNetVariableInstance);
+  EXPECT_EQ(q_node_info.declared_type.user_defined_type,
             nullptr);  // types are primitive
 
-  const auto rr_found = root_symbol.Find("rr");
-  ASSERT_NE(rr_found, root_symbol.end());
-  EXPECT_EQ(rr_found->first, "rr");
-  const SymbolTableNode& rr_node(rr_found->second);
-  const SymbolInfo& rr_symbol(rr_node.Value());
+  MUST_ASSIGN_LOOKUP_SYMBOL(rr_node, root_symbol, "rr");
 
   // Inspect local references to wires "c" and "d".
-  ASSERT_EQ(rr_symbol.local_references_to_bind.size(), 4);
+  ASSERT_EQ(rr_node_info.local_references_to_bind.size(), 4);
   // Sort references because there are no ordering guarantees among them.
   const DependentReferences* c_ref = nullptr;
   const DependentReferences* d_ref = nullptr;
-  for (const auto& ref : rr_symbol.local_references_to_bind) {
+  for (const auto& ref : rr_node_info.local_references_to_bind) {
     const absl::string_view base_ref(ref.components->Value().identifier);
     if (base_ref == "c") c_ref = &ref;
     if (base_ref == "d") d_ref = &ref;
@@ -813,12 +747,8 @@ TEST(BuildSymbolTableTest, ModuleInstancePositionalPortConnection) {
   EXPECT_EQ(d_ref->LastLeaf()->Value().resolved_symbol, nullptr);
 
   // Get the local symbol definitions for wires "c" and "d".
-  const auto found_c = rr_node.Find("c");
-  ASSERT_NE(found_c, rr_node.end());
-  const SymbolTableNode& c_node(found_c->second);
-  const auto found_d = rr_node.Find("d");
-  ASSERT_NE(found_d, rr_node.end());
-  const SymbolTableNode& d_node(found_d->second);
+  MUST_ASSIGN_LOOKUP_SYMBOL(c_node, rr_node, "c");
+  MUST_ASSIGN_LOOKUP_SYMBOL(d_node, rr_node, "d");
 
   {
     std::vector<absl::Status> resolve_diagnostics;
@@ -851,47 +781,33 @@ TEST(BuildSymbolTableTest, ModuleInstanceNamedPortConnection) {
 
   const auto build_diagnostics = BuildSymbolTable(src, &symbol_table);
 
-  const auto m_found = root_symbol.Find("m");
-  ASSERT_NE(m_found, root_symbol.end());
-  EXPECT_EQ(m_found->first, "m");
-  const SymbolTableNode& m_node(m_found->second);
-  const SymbolInfo& m_symbol(m_node.Value());
-  EXPECT_EQ(m_symbol.type, SymbolType::kModule);
-  EXPECT_EQ(m_symbol.file_origin, &src);
-  EXPECT_EQ(m_symbol.declared_type.syntax_origin,
+  MUST_ASSIGN_LOOKUP_SYMBOL(m_node, root_symbol, "m");
+  EXPECT_EQ(m_node_info.type, SymbolType::kModule);
+  EXPECT_EQ(m_node_info.file_origin, &src);
+  EXPECT_EQ(m_node_info.declared_type.syntax_origin,
             nullptr);  // there is no module meta-type
   EXPECT_TRUE(build_diagnostics.empty()) << "Unexpected diagnostic:\n"
                                          << build_diagnostics.front().message();
 
-  const auto found_clk = m_node.Find("clk");
-  ASSERT_NE(found_clk, m_node.end());
-  const SymbolTableNode& clk_node(found_clk->second);
-  EXPECT_EQ(*clk_node.Key(), "clk");
-  EXPECT_EQ(clk_node.Value().type, SymbolType::kDataNetVariableInstance);
-  EXPECT_EQ(clk_node.Value().declared_type.user_defined_type,
+  MUST_ASSIGN_LOOKUP_SYMBOL(clk_node, m_node, "clk");
+  EXPECT_EQ(clk_node_info.type, SymbolType::kDataNetVariableInstance);
+  EXPECT_EQ(clk_node_info.declared_type.user_defined_type,
             nullptr);  // types are primitive
 
-  const auto found_q = m_node.Find("q");
-  ASSERT_NE(found_q, m_node.end());
-  const SymbolTableNode& q_node(found_q->second);
-  EXPECT_EQ(*q_node.Key(), "q");
-  EXPECT_EQ(q_node.Value().type, SymbolType::kDataNetVariableInstance);
-  EXPECT_EQ(q_node.Value().declared_type.user_defined_type,
+  MUST_ASSIGN_LOOKUP_SYMBOL(q_node, m_node, "q");
+  EXPECT_EQ(q_node_info.type, SymbolType::kDataNetVariableInstance);
+  EXPECT_EQ(q_node_info.declared_type.user_defined_type,
             nullptr);  // types are primitive
 
-  const auto rr_found = root_symbol.Find("rr");
-  ASSERT_NE(rr_found, root_symbol.end());
-  EXPECT_EQ(rr_found->first, "rr");
-  const SymbolTableNode& rr_node(rr_found->second);
-  const SymbolInfo& rr_symbol(rr_node.Value());
+  MUST_ASSIGN_LOOKUP_SYMBOL(rr_node, root_symbol, "rr");
 
   // Inspect local references to wires "c" and "d".
-  ASSERT_EQ(rr_symbol.local_references_to_bind.size(), 4);
+  ASSERT_EQ(rr_node_info.local_references_to_bind.size(), 4);
   // Sort references because there are no ordering guarantees among them.
   const DependentReferences* c_ref = nullptr;
   const DependentReferences* d_ref = nullptr;
   const DependentReferences* m_inst_ref = nullptr;
-  for (const auto& ref : rr_symbol.local_references_to_bind) {
+  for (const auto& ref : rr_node_info.local_references_to_bind) {
     const absl::string_view base_ref(ref.components->Value().identifier);
     if (base_ref == "c") c_ref = &ref;
     if (base_ref == "d") d_ref = &ref;
@@ -925,12 +841,8 @@ TEST(BuildSymbolTableTest, ModuleInstanceNamedPortConnection) {
   EXPECT_EQ(q_ref.Value().resolved_symbol, nullptr);  // not yet resolved
 
   // Get the local symbol definitions for wires "c" and "d".
-  const auto found_c = rr_node.Find("c");
-  ASSERT_NE(found_c, rr_node.end());
-  const SymbolTableNode& c_node(found_c->second);
-  const auto found_d = rr_node.Find("d");
-  ASSERT_NE(found_d, rr_node.end());
-  const SymbolTableNode& d_node(found_d->second);
+  MUST_ASSIGN_LOOKUP_SYMBOL(c_node, rr_node, "c");
+  MUST_ASSIGN_LOOKUP_SYMBOL(d_node, rr_node, "d");
 
   {
     std::vector<absl::Status> resolve_diagnostics;
@@ -956,15 +868,12 @@ TEST(BuildSymbolTableTest, OneGlobalIntParameter) {
 
   const auto build_diagnostics = BuildSymbolTable(src, &symbol_table);
 
-  const auto found = root_symbol.Find("mint");
-  ASSERT_NE(found, root_symbol.end());
-  EXPECT_EQ(found->first, "mint");
-  const SymbolInfo& param_symbol(found->second.Value());
-  EXPECT_EQ(param_symbol.type, SymbolType::kParameter);
-  EXPECT_EQ(param_symbol.file_origin, &src);
-  ASSERT_NE(param_symbol.declared_type.syntax_origin, nullptr);
+  MUST_ASSIGN_LOOKUP_SYMBOL(mint_param, root_symbol, "mint");
+  EXPECT_EQ(mint_param_info.type, SymbolType::kParameter);
+  EXPECT_EQ(mint_param_info.file_origin, &src);
+  ASSERT_NE(mint_param_info.declared_type.syntax_origin, nullptr);
   EXPECT_EQ(
-      verible::StringSpanOfSymbol(*param_symbol.declared_type.syntax_origin),
+      verible::StringSpanOfSymbol(*mint_param_info.declared_type.syntax_origin),
       "int");
   EXPECT_TRUE(build_diagnostics.empty()) << "Unexpected diagnostic:\n"
                                          << build_diagnostics.front().message();
@@ -985,15 +894,12 @@ TEST(BuildSymbolTableTest, OneGlobalUndefinedTypeParameter) {
 
   const auto build_diagnostics = BuildSymbolTable(src, &symbol_table);
 
-  const auto found = root_symbol.Find("gun");
-  ASSERT_NE(found, root_symbol.end());
-  EXPECT_EQ(found->first, "gun");
-  const SymbolInfo& param_symbol(found->second.Value());
-  EXPECT_EQ(param_symbol.type, SymbolType::kParameter);
-  EXPECT_EQ(param_symbol.file_origin, &src);
-  ASSERT_NE(param_symbol.declared_type.syntax_origin, nullptr);
+  MUST_ASSIGN_LOOKUP_SYMBOL(gun_param, root_symbol, "gun");
+  EXPECT_EQ(gun_param_info.type, SymbolType::kParameter);
+  EXPECT_EQ(gun_param_info.file_origin, &src);
+  ASSERT_NE(gun_param_info.declared_type.syntax_origin, nullptr);
   EXPECT_EQ(
-      verible::StringSpanOfSymbol(*param_symbol.declared_type.syntax_origin),
+      verible::StringSpanOfSymbol(*gun_param_info.declared_type.syntax_origin),
       "foo_t");
   EXPECT_TRUE(build_diagnostics.empty()) << "Unexpected diagnostic:\n"
                                          << build_diagnostics.front().message();
@@ -1007,7 +913,7 @@ TEST(BuildSymbolTableTest, OneGlobalUndefinedTypeParameter) {
     EXPECT_THAT(err_status.message(),
                 HasSubstr("Unable to resolve symbol \"foo_t\""));
     EXPECT_EQ(
-        param_symbol.declared_type.user_defined_type->Value().resolved_symbol,
+        gun_param_info.declared_type.user_defined_type->Value().resolved_symbol,
         nullptr);  // not resolved
   }
 }
@@ -1023,21 +929,14 @@ TEST(BuildSymbolTableTest, ReferenceOneParameterExpression) {
 
   const auto build_diagnostics = BuildSymbolTable(src, &symbol_table);
 
-  const auto found_tea = root_symbol.Find("tea");
-  ASSERT_NE(found_tea, root_symbol.end());
-  EXPECT_EQ(found_tea->first, "tea");
-  const SymbolInfo& tea(found_tea->second.Value());
-  EXPECT_EQ(tea.type, SymbolType::kParameter);
+  MUST_ASSIGN_LOOKUP_SYMBOL(tea, root_symbol, "tea");
+  EXPECT_EQ(tea_info.type, SymbolType::kParameter);
 
-  const auto found = root_symbol.Find("mint");
-  ASSERT_NE(found, root_symbol.end());
-  EXPECT_EQ(found->first, "mint");
-  const SymbolTableNode& mint_node(found->second);
-  const SymbolInfo& mint(mint_node.Value());
-  EXPECT_EQ(mint.type, SymbolType::kParameter);
-  EXPECT_EQ(mint.file_origin, &src);
-  ASSERT_NE(mint.declared_type.syntax_origin, nullptr);
-  EXPECT_EQ(verible::StringSpanOfSymbol(*mint.declared_type.syntax_origin),
+  MUST_ASSIGN_LOOKUP_SYMBOL(mint, root_symbol, "mint");
+  EXPECT_EQ(mint_info.type, SymbolType::kParameter);
+  EXPECT_EQ(mint_info.file_origin, &src);
+  ASSERT_NE(mint_info.declared_type.syntax_origin, nullptr);
+  EXPECT_EQ(verible::StringSpanOfSymbol(*mint_info.declared_type.syntax_origin),
             "int");
   EXPECT_TRUE(build_diagnostics.empty()) << "Unexpected diagnostic:\n"
                                          << build_diagnostics.front().message();
@@ -1057,7 +956,7 @@ TEST(BuildSymbolTableTest, ReferenceOneParameterExpression) {
     std::vector<absl::Status> resolve_diagnostics;
     symbol_table.Resolve(&resolve_diagnostics);
     EXPECT_TRUE(resolve_diagnostics.empty());
-    EXPECT_EQ(ref_comp.resolved_symbol, &mint_node);  // resolved
+    EXPECT_EQ(ref_comp.resolved_symbol, &mint);  // resolved
   }
 }
 
@@ -1070,15 +969,11 @@ TEST(BuildSymbolTableTest, OneUnresolvedReferenceInExpression) {
 
   const auto build_diagnostics = BuildSymbolTable(src, &symbol_table);
 
-  const auto found = root_symbol.Find("mint");
-  ASSERT_NE(found, root_symbol.end());
-  EXPECT_EQ(found->first, "mint");
-  const SymbolTableNode& mint_node(found->second);
-  const SymbolInfo& mint(mint_node.Value());
-  EXPECT_EQ(mint.type, SymbolType::kParameter);
-  EXPECT_EQ(mint.file_origin, &src);
-  ASSERT_NE(mint.declared_type.syntax_origin, nullptr);
-  EXPECT_EQ(verible::StringSpanOfSymbol(*mint.declared_type.syntax_origin),
+  MUST_ASSIGN_LOOKUP_SYMBOL(mint, root_symbol, "mint");
+  EXPECT_EQ(mint_info.type, SymbolType::kParameter);
+  EXPECT_EQ(mint_info.file_origin, &src);
+  ASSERT_NE(mint_info.declared_type.syntax_origin, nullptr);
+  EXPECT_EQ(verible::StringSpanOfSymbol(*mint_info.declared_type.syntax_origin),
             "int");
   EXPECT_TRUE(build_diagnostics.empty()) << "Unexpected diagnostic:\n"
                                          << build_diagnostics.front().message();
@@ -1115,13 +1010,10 @@ TEST(BuildSymbolTableTest, PackageDeclarationSingle) {
 
   const auto build_diagnostics = BuildSymbolTable(src, &symbol_table);
 
-  const auto found = root_symbol.Find("my_pkg");
-  ASSERT_NE(found, root_symbol.end());
-  EXPECT_EQ(found->first, "my_pkg");
-  const SymbolInfo& package_symbol(found->second.Value());
-  EXPECT_EQ(package_symbol.type, SymbolType::kPackage);
-  EXPECT_EQ(package_symbol.file_origin, &src);
-  EXPECT_EQ(package_symbol.declared_type.syntax_origin,
+  MUST_ASSIGN_LOOKUP_SYMBOL(my_pkg, root_symbol, "my_pkg");
+  EXPECT_EQ(my_pkg_info.type, SymbolType::kPackage);
+  EXPECT_EQ(my_pkg_info.file_origin, &src);
+  EXPECT_EQ(my_pkg_info.declared_type.syntax_origin,
             nullptr);  // there is no module meta-type
   EXPECT_TRUE(build_diagnostics.empty()) << "Unexpected diagnostic:\n"
                                          << build_diagnostics.front().message();
@@ -1146,34 +1038,23 @@ TEST(BuildSymbolTableTest, ReferenceOneParameterFromPackageToRoot) {
 
   const auto build_diagnostics = BuildSymbolTable(src, &symbol_table);
 
-  const auto found_p = root_symbol.Find("p");
-  ASSERT_NE(found_p, root_symbol.end());
-  EXPECT_EQ(found_p->first, "p");
-  const SymbolTableNode& p_node(found_p->second);
-  const SymbolInfo& p_pkg(p_node.Value());
-  EXPECT_EQ(p_pkg.type, SymbolType::kPackage);
+  MUST_ASSIGN_LOOKUP_SYMBOL(p_pkg, root_symbol, "p");
+  EXPECT_EQ(p_pkg_info.type, SymbolType::kPackage);
 
-  ASSERT_EQ(p_pkg.local_references_to_bind.size(), 1);
+  ASSERT_EQ(p_pkg_info.local_references_to_bind.size(), 1);
   const ReferenceComponent& mint_ref(
-      p_pkg.local_references_to_bind.front().components->Value());
+      p_pkg_info.local_references_to_bind.front().components->Value());
   EXPECT_EQ(mint_ref.identifier, "mint");
   EXPECT_EQ(mint_ref.resolved_symbol, nullptr);  // not yet resolved
 
-  const auto found_tea = p_node.Find("tea");  // p::tea
-  ASSERT_NE(found_tea, p_node.end());
-  EXPECT_EQ(found_tea->first, "tea");
-  const SymbolInfo& tea(found_tea->second.Value());
-  EXPECT_EQ(tea.type, SymbolType::kParameter);
+  MUST_ASSIGN_LOOKUP_SYMBOL(tea, p_pkg, "tea");  // p::tea
+  EXPECT_EQ(tea_info.type, SymbolType::kParameter);
 
-  const auto found = root_symbol.Find("mint");
-  ASSERT_NE(found, root_symbol.end());
-  EXPECT_EQ(found->first, "mint");
-  const SymbolTableNode& mint_node(found->second);
-  const SymbolInfo& mint(mint_node.Value());
-  EXPECT_EQ(mint.type, SymbolType::kParameter);
-  EXPECT_EQ(mint.file_origin, &src);
-  ASSERT_NE(mint.declared_type.syntax_origin, nullptr);
-  EXPECT_EQ(verible::StringSpanOfSymbol(*mint.declared_type.syntax_origin),
+  MUST_ASSIGN_LOOKUP_SYMBOL(mint, root_symbol, "mint");
+  EXPECT_EQ(mint_info.type, SymbolType::kParameter);
+  EXPECT_EQ(mint_info.file_origin, &src);
+  ASSERT_NE(mint_info.declared_type.syntax_origin, nullptr);
+  EXPECT_EQ(verible::StringSpanOfSymbol(*mint_info.declared_type.syntax_origin),
             "int");
   EXPECT_TRUE(build_diagnostics.empty()) << "Unexpected diagnostic:\n"
                                          << build_diagnostics.front().message();
@@ -1182,7 +1063,7 @@ TEST(BuildSymbolTableTest, ReferenceOneParameterFromPackageToRoot) {
     std::vector<absl::Status> resolve_diagnostics;
     symbol_table.Resolve(&resolve_diagnostics);
     EXPECT_TRUE(resolve_diagnostics.empty());
-    EXPECT_EQ(mint_ref.resolved_symbol, &mint_node);  // resolved "mint"
+    EXPECT_EQ(mint_ref.resolved_symbol, &mint);  // resolved "mint"
   }
 }
 
@@ -1201,12 +1082,8 @@ TEST(BuildSymbolTableTest, ReferenceOneParameterFromRootToPackage) {
 
   const auto build_diagnostics = BuildSymbolTable(src, &symbol_table);
 
-  const auto found_p = root_symbol.Find("p");
-  ASSERT_NE(found_p, root_symbol.end());
-  EXPECT_EQ(found_p->first, "p");
-  const SymbolTableNode& p_node(found_p->second);
-  const SymbolInfo& p_pkg(p_node.Value());
-  EXPECT_EQ(p_pkg.type, SymbolType::kPackage);
+  MUST_ASSIGN_LOOKUP_SYMBOL(p_pkg, root_symbol, "p");
+  EXPECT_EQ(p_pkg_info.type, SymbolType::kPackage);
 
   ASSERT_EQ(root_symbol.Value().local_references_to_bind.size(), 1);
   // p_mint_ref is the reference chain for "p::mint".
@@ -1219,21 +1096,14 @@ TEST(BuildSymbolTableTest, ReferenceOneParameterFromRootToPackage) {
   EXPECT_EQ(mint_ref.identifier, "mint");
   EXPECT_EQ(mint_ref.resolved_symbol, nullptr);  // not yet resolved
 
-  const auto found_tea = root_symbol.Find("tea");  // tea
-  ASSERT_NE(found_tea, root_symbol.end());
-  EXPECT_EQ(found_tea->first, "tea");
-  const SymbolInfo& tea(found_tea->second.Value());
-  EXPECT_EQ(tea.type, SymbolType::kParameter);
+  MUST_ASSIGN_LOOKUP_SYMBOL(tea, root_symbol, "tea");
+  EXPECT_EQ(tea_info.type, SymbolType::kParameter);
 
-  const auto found = p_node.Find("mint");  // p::mint
-  ASSERT_NE(found, p_node.end());
-  EXPECT_EQ(found->first, "mint");
-  const SymbolTableNode& mint_node(found->second);
-  const SymbolInfo& mint(mint_node.Value());
-  EXPECT_EQ(mint.type, SymbolType::kParameter);
-  EXPECT_EQ(mint.file_origin, &src);
-  ASSERT_NE(mint.declared_type.syntax_origin, nullptr);
-  EXPECT_EQ(verible::StringSpanOfSymbol(*mint.declared_type.syntax_origin),
+  MUST_ASSIGN_LOOKUP_SYMBOL(mint, p_pkg, "mint");  // p::mint
+  EXPECT_EQ(mint_info.type, SymbolType::kParameter);
+  EXPECT_EQ(mint_info.file_origin, &src);
+  ASSERT_NE(mint_info.declared_type.syntax_origin, nullptr);
+  EXPECT_EQ(verible::StringSpanOfSymbol(*mint_info.declared_type.syntax_origin),
             "int");
   EXPECT_TRUE(build_diagnostics.empty()) << "Unexpected diagnostic:\n"
                                          << build_diagnostics.front().message();
@@ -1242,8 +1112,8 @@ TEST(BuildSymbolTableTest, ReferenceOneParameterFromRootToPackage) {
     std::vector<absl::Status> resolve_diagnostics;
     symbol_table.Resolve(&resolve_diagnostics);
     EXPECT_TRUE(resolve_diagnostics.empty());
-    EXPECT_EQ(p_ref.resolved_symbol, &p_node);        // resolved "p"
-    EXPECT_EQ(mint_ref.resolved_symbol, &mint_node);  // resolved "p::mint"
+    EXPECT_EQ(p_ref.resolved_symbol, &p_pkg);    // resolved "p"
+    EXPECT_EQ(mint_ref.resolved_symbol, &mint);  // resolved "p::mint"
   }
 }
 
@@ -1261,12 +1131,8 @@ TEST(BuildSymbolTableTest, ReferenceOneParameterFromRootToPackageNoSuchMember) {
 
   const auto build_diagnostics = BuildSymbolTable(src, &symbol_table);
 
-  const auto found_p = root_symbol.Find("p");
-  ASSERT_NE(found_p, root_symbol.end());
-  EXPECT_EQ(found_p->first, "p");
-  const SymbolTableNode& p_node(found_p->second);
-  const SymbolInfo& p_pkg(p_node.Value());
-  EXPECT_EQ(p_pkg.type, SymbolType::kPackage);
+  MUST_ASSIGN_LOOKUP_SYMBOL(p_pkg, root_symbol, "p");
+  EXPECT_EQ(p_pkg_info.type, SymbolType::kPackage);
 
   ASSERT_EQ(root_symbol.Value().local_references_to_bind.size(), 1);
   // p_mint_ref is the reference chain for "p::mint".
@@ -1279,21 +1145,14 @@ TEST(BuildSymbolTableTest, ReferenceOneParameterFromRootToPackageNoSuchMember) {
   EXPECT_EQ(zzz_ref.identifier, "zzz");
   EXPECT_EQ(zzz_ref.resolved_symbol, nullptr);  // not yet resolved
 
-  const auto found_tea = root_symbol.Find("tea");  // tea
-  ASSERT_NE(found_tea, root_symbol.end());
-  EXPECT_EQ(found_tea->first, "tea");
-  const SymbolInfo& tea(found_tea->second.Value());
-  EXPECT_EQ(tea.type, SymbolType::kParameter);
+  MUST_ASSIGN_LOOKUP_SYMBOL(tea, root_symbol, "tea");
+  EXPECT_EQ(tea_info.type, SymbolType::kParameter);
 
-  const auto found = p_node.Find("mint");  // p::mint
-  ASSERT_NE(found, p_node.end());
-  EXPECT_EQ(found->first, "mint");
-  const SymbolTableNode& mint_node(found->second);
-  const SymbolInfo& mint(mint_node.Value());
-  EXPECT_EQ(mint.type, SymbolType::kParameter);
-  EXPECT_EQ(mint.file_origin, &src);
-  ASSERT_NE(mint.declared_type.syntax_origin, nullptr);
-  EXPECT_EQ(verible::StringSpanOfSymbol(*mint.declared_type.syntax_origin),
+  MUST_ASSIGN_LOOKUP_SYMBOL(mint, p_pkg, "mint");
+  EXPECT_EQ(mint_info.type, SymbolType::kParameter);
+  EXPECT_EQ(mint_info.file_origin, &src);
+  ASSERT_NE(mint_info.declared_type.syntax_origin, nullptr);
+  EXPECT_EQ(verible::StringSpanOfSymbol(*mint_info.declared_type.syntax_origin),
             "int");
   EXPECT_TRUE(build_diagnostics.empty()) << "Unexpected diagnostic:\n"
                                          << build_diagnostics.front().message();
@@ -1303,7 +1162,7 @@ TEST(BuildSymbolTableTest, ReferenceOneParameterFromRootToPackageNoSuchMember) {
     std::vector<absl::Status> resolve_diagnostics;
     symbol_table.Resolve(&resolve_diagnostics);
     EXPECT_EQ(resolve_diagnostics.size(), 1);
-    EXPECT_EQ(p_ref.resolved_symbol, &p_node);    // resolved "p"
+    EXPECT_EQ(p_ref.resolved_symbol, &p_pkg);     // resolved "p"
     EXPECT_EQ(zzz_ref.resolved_symbol, nullptr);  // unresolved "p::zzz"
   }
 }
@@ -1317,13 +1176,10 @@ TEST(BuildSymbolTableTest, ClassDeclarationSingle) {
 
   const auto build_diagnostics = BuildSymbolTable(src, &symbol_table);
 
-  const auto found = root_symbol.Find("ccc");
-  ASSERT_NE(found, root_symbol.end());
-  EXPECT_EQ(found->first, "ccc");
-  const SymbolInfo& class_symbol(found->second.Value());
-  EXPECT_EQ(class_symbol.type, SymbolType::kClass);
-  EXPECT_EQ(class_symbol.file_origin, &src);
-  EXPECT_EQ(class_symbol.declared_type.syntax_origin,
+  MUST_ASSIGN_LOOKUP_SYMBOL(ccc, root_symbol, "ccc");
+  EXPECT_EQ(ccc_info.type, SymbolType::kClass);
+  EXPECT_EQ(ccc_info.file_origin, &src);
+  EXPECT_EQ(ccc_info.declared_type.syntax_origin,
             nullptr);  // there is no module meta-type
   EXPECT_TRUE(build_diagnostics.empty()) << "Unexpected diagnostic:\n"
                                          << build_diagnostics.front().message();
@@ -1336,10 +1192,9 @@ TEST(BuildSymbolTableTest, ClassDeclarationSingle) {
 }
 
 // TODO:
-// Test out-of-order declarations/references (modules).
 // expressions in ranges of dimensions.
 // parameters package/module/class.
-// Test unresolved symbols.
+// generally, more testing unresolved symbols.
 
 }  // namespace
 }  // namespace verilog
