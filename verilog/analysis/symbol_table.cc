@@ -142,6 +142,9 @@ class SymbolTable::Builder : public TreeContextVisitor {
       case NodeEnum::kExpression:
         DescendExpression(node);
         break;
+      case NodeEnum::kActualParameterList:
+        DescendActualParameterList(node);
+        break;
       case NodeEnum::kPortActualList:
         DescendPortActualList(node);
         break;
@@ -220,6 +223,19 @@ class SymbolTable::Builder : public TreeContextVisitor {
   // originating from the current context.
   // If the context is such that this type is used in a declaration,
   // then capture that type information to be used later.
+  //
+  // The state/stack management here is intended to accommodate type references
+  // of arbitrary complexity.
+  // A generalized type could look like:
+  //   "A#(.B(1))::C#(.D(E#(.F(0))))::G"
+  // This should produce the following reference trees:
+  //   A -+- ::B
+  //      |
+  //      \- ::C -+- ::D
+  //              |
+  //              \- ::G
+  //   E -+- ::F
+  //
   void DescendDataType(const SyntaxTreeNode& data_type_node) {
     VLOG(1) << __FUNCTION__ << verible::StringSpanOfSymbol(data_type_node);
     const CaptureDependentReference capture(this);
@@ -231,6 +247,14 @@ class SymbolTable::Builder : public TreeContextVisitor {
       // with the current declaration.
       const ValueSaver<DeclarationTypeInfo*> not_decl_type(
           &declaration_type_info_, nullptr);
+
+      // Inform that named parameter identifiers will yield parallel children
+      // from this reference branch point.  Start this out as nullptr, and set
+      // it once an unqualified identifier is encountered that starts a
+      // reference tree.
+      const ValueSaver<ReferenceComponentNode*> set_branch(
+          &reference_branch_point_, nullptr);
+
       Descend(data_type_node);
       // declaration_type_info_ will be restored after this closes.
     }
@@ -247,6 +271,15 @@ class SymbolTable::Builder : public TreeContextVisitor {
     // In all cases, a type is being referenced from the current scope, so add
     // it to the list of references to resolve (done by 'capture').
     VLOG(1) << "end of " << __FUNCTION__;
+  }
+
+  void DescendActualParameterList(const SyntaxTreeNode& node) {
+    // Pre-allocate siblings to guarantee pointer/iterator stability.
+    // FindAll* will also catch actual port connections inside preprocessing
+    // conditionals.
+    const size_t num_ports = FindAllNamedParams(node).size();
+    ABSL_DIE_IF_NULL(reference_branch_point_)->Children().reserve(num_ports);
+    Descend(node);
   }
 
   void DescendPortActualList(const SyntaxTreeNode& node) {
@@ -292,9 +325,11 @@ class SymbolTable::Builder : public TreeContextVisitor {
         .ref_type = InferReferenceType(),
     };
 
-    // For instances' named ports, add port references as siblings of the
-    // same parent (which is an instance self-reference).
-    if (Context().DirectParentIs(NodeEnum::kActualNamedPort)) {
+    // For instances' named ports, and types' named parameters,
+    // add references as siblings of the same parent.
+    // (Recall that instances form self-references).
+    if (Context().DirectParentIsOneOf(
+            {NodeEnum::kActualNamedPort, NodeEnum::kParamByName})) {
       CheckedNewChildReferenceNode(ABSL_DIE_IF_NULL(reference_branch_point_),
                                    new_ref);
       return;
@@ -302,6 +337,17 @@ class SymbolTable::Builder : public TreeContextVisitor {
 
     // For all other cases, grow the reference chain deeper.
     ref.PushReferenceComponent(new_ref);
+    if (reference_branch_point_ == nullptr) {
+      // For type references, which may contained named parameters,
+      // when encountering the first unqualified reference, establish its
+      // reference node as the point from which named parameter references
+      // get added as siblings.
+      // e.g. "A#(.B(...), .C(...))" would result in a reference tree:
+      //   A -+- ::B
+      //      |
+      //      \- ::C
+      reference_branch_point_ = ref.components.get();
+    }
   }
 
   void Visit(const SyntaxTreeLeaf& leaf) final {
@@ -332,9 +378,16 @@ class SymbolTable::Builder : public TreeContextVisitor {
       // The root component is always treated as unqualified.
       return ReferenceType::kUnqualified;
     }
+    if (Context().DirectParentIs(NodeEnum::kParamByName)) {
+      // Even though named parameters are referenced with ".PARAM",
+      // they are branched off of a base reference that already points
+      // to the type whose scope should be used, so no additional typeof()
+      // indirection is needed.
+      return ReferenceType::kDirectMember;
+    }
     return ABSL_DIE_IF_NULL(last_hierarchy_operator_)->token_enum() == '.'
-               ? ReferenceType::kObjectMember
-               : ReferenceType::kStaticMember;
+               ? ReferenceType::kMemberOfTypeOfParent
+               : ReferenceType::kDirectMember;
   }
 
   // Creates a named element in the current scope.
@@ -619,7 +672,7 @@ static void ResolveReferenceComponentNode(
     // non-root node:
     // use parent's scope (if resolved successfully) to resolve this node.
     switch (component.ref_type) {
-      case ReferenceType::kStaticMember: {
+      case ReferenceType::kDirectMember: {
         const ReferenceComponent& parent_component(node.Parent()->Value());
 
         const SymbolTableNode* parent_scope = parent_component.resolved_symbol;
@@ -634,7 +687,7 @@ static void ResolveReferenceComponentNode(
         }
         break;
       }
-      case ReferenceType::kObjectMember: {
+      case ReferenceType::kMemberOfTypeOfParent: {
         // Get the type of the object from the parent component.
         const ReferenceComponent& parent_component(node.Parent()->Value());
         const SymbolTableNode* parent_scope = parent_component.resolved_symbol;
@@ -697,8 +750,8 @@ std::ostream& operator<<(std::ostream& stream, ReferenceType ref_type) {
   static const verible::EnumNameMap<ReferenceType> kReferenceTypeNames({
       // short-hand annotation for identifier reference type
       {"@", ReferenceType::kUnqualified},
-      {"::", ReferenceType::kStaticMember},
-      {".", ReferenceType::kObjectMember},
+      {"::", ReferenceType::kDirectMember},
+      {".", ReferenceType::kMemberOfTypeOfParent},
   });
   return kReferenceTypeNames.Unparse(ref_type, stream);
 }

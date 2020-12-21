@@ -127,9 +127,9 @@ TEST(ReferenceNodeFullPathTest, Print) {
   typedef ReferenceComponent Data;
   const Node root(
       Data{.identifier = "xx", .ref_type = ReferenceType::kUnqualified},
-      Node(Data{.identifier = "yy", .ref_type = ReferenceType::kStaticMember},
+      Node(Data{.identifier = "yy", .ref_type = ReferenceType::kDirectMember},
            Node(Data{.identifier = "zz",
-                     .ref_type = ReferenceType::kObjectMember})));
+                     .ref_type = ReferenceType::kMemberOfTypeOfParent})));
   {
     std::ostringstream stream;
     ReferenceNodeFullPath(stream, root);
@@ -282,8 +282,8 @@ TEST(BuildSymbolTableTest, ModuleDeclarationLocalDuplicateNets) {
   EXPECT_EQ(module_node_info.file_origin, &src);
   EXPECT_EQ(module_node_info.declared_type.syntax_origin,
             nullptr);  // there is no module meta-type
-  ASSERT_EQ(build_diagnostics.size(), 1);
-  const absl::Status& err_status(build_diagnostics.front());
+
+  ASSIGN_MUST_HAVE_UNIQUE(err_status, build_diagnostics);
   EXPECT_EQ(err_status.code(), absl::StatusCode::kAlreadyExists);
   EXPECT_THAT(err_status.message(),
               HasSubstr("\"y1\" is already defined in the $root::m scope"));
@@ -378,9 +378,10 @@ TEST(BuildSymbolTableTest, ModuleDeclarationDuplicate) {
   EXPECT_EQ(module_node_info.file_origin, &src);
   EXPECT_EQ(module_node_info.declared_type.syntax_origin,
             nullptr);  // there is no module meta-type
-  ASSERT_EQ(build_diagnostics.size(), 1);
-  EXPECT_EQ(build_diagnostics.front().code(), absl::StatusCode::kAlreadyExists);
-  EXPECT_THAT(build_diagnostics.front().message(),
+
+  ASSIGN_MUST_HAVE_UNIQUE(err, build_diagnostics);
+  EXPECT_EQ(err.code(), absl::StatusCode::kAlreadyExists);
+  EXPECT_THAT(err.message(),
               HasSubstr("\"mm\" is already defined in the $root scope"));
 
   {
@@ -442,9 +443,9 @@ TEST(BuildSymbolTableTest, ModuleDeclarationNestedDuplicate) {
   MUST_ASSIGN_LOOKUP_SYMBOL(module_node, root_symbol, "outer");
   EXPECT_EQ(module_node_info.type, SymbolType::kModule);
 
-  ASSERT_EQ(build_diagnostics.size(), 1);
-  EXPECT_EQ(build_diagnostics.front().code(), absl::StatusCode::kAlreadyExists);
-  EXPECT_THAT(build_diagnostics.front().message(),
+  ASSIGN_MUST_HAVE_UNIQUE(err, build_diagnostics);
+  EXPECT_EQ(err.code(), absl::StatusCode::kAlreadyExists);
+  EXPECT_THAT(err.message(),
               HasSubstr("\"mm\" is already defined in the $root::outer scope"));
   {
     std::vector<absl::Status> resolve_diagnostics;
@@ -529,6 +530,7 @@ TEST(BuildSymbolTableTest, ModuleInstance) {
     // Resolve symbols.
     std::vector<absl::Status> resolve_diagnostics;
     symbol_table.Resolve(&resolve_diagnostics);
+
     EXPECT_TRUE(resolve_diagnostics.empty());
     // Verify that typeof(rr) successfully resolved to module pp.
     EXPECT_EQ(rr_info.declared_type.user_defined_type->Value().resolved_symbol,
@@ -588,8 +590,8 @@ TEST(BuildSymbolTableTest, ModuleInstanceUndefined) {
     // Resolve symbols.  Expect one unresolved symbol.
     std::vector<absl::Status> resolve_diagnostics;
     symbol_table.Resolve(&resolve_diagnostics);
-    EXPECT_EQ(resolve_diagnostics.size(), 1);
-    const auto& err_status(resolve_diagnostics.front());
+
+    ASSIGN_MUST_HAVE_UNIQUE(err_status, resolve_diagnostics);
     EXPECT_EQ(err_status.code(), absl::StatusCode::kNotFound);
     EXPECT_THAT(err_status.message(),
                 HasSubstr("Unable to resolve symbol \"pp\""));
@@ -678,6 +680,7 @@ TEST(BuildSymbolTableTest, ModuleInstanceTwoInSameDecl) {
       std::vector<absl::Status> resolve_diagnostics;
       symbol_table.Resolve(&resolve_diagnostics);  // nothing to resolve
       EXPECT_TRUE(resolve_diagnostics.empty());
+
       for (const auto& pp_inst : pp_instances) {
         MUST_ASSIGN_LOOKUP_SYMBOL(rr, qq, pp_inst);
         EXPECT_TRUE(rr_info.local_references_to_bind.empty());
@@ -814,14 +817,14 @@ TEST(BuildSymbolTableTest, ModuleInstanceNamedPortConnection) {
   ASSERT_NE(found_clk_ref, port_refs.end());
   const ReferenceComponentNode& clk_ref(*found_clk_ref->second);
   EXPECT_EQ(clk_ref.Value().identifier, "clk");
-  EXPECT_EQ(clk_ref.Value().ref_type, ReferenceType::kObjectMember);
+  EXPECT_EQ(clk_ref.Value().ref_type, ReferenceType::kMemberOfTypeOfParent);
   EXPECT_EQ(clk_ref.Value().resolved_symbol, nullptr);  // not yet resolved
 
   const auto found_q_ref = port_refs.find("q");
   ASSERT_NE(found_q_ref, port_refs.end());
   const ReferenceComponentNode& q_ref(*found_q_ref->second);
   EXPECT_EQ(q_ref.Value().identifier, "q");
-  EXPECT_EQ(q_ref.Value().ref_type, ReferenceType::kObjectMember);
+  EXPECT_EQ(q_ref.Value().ref_type, ReferenceType::kMemberOfTypeOfParent);
   EXPECT_EQ(q_ref.Value().resolved_symbol, nullptr);  // not yet resolved
 
   // Get the local symbol definitions for wires "c" and "d".
@@ -840,6 +843,133 @@ TEST(BuildSymbolTableTest, ModuleInstanceNamedPortConnection) {
     // Expect to resolved named port references to "clk" and "q".
     EXPECT_EQ(clk_ref.Value().resolved_symbol, &clk_node);
     EXPECT_EQ(q_ref.Value().resolved_symbol, &q_node);
+  }
+}
+
+TEST(BuildSymbolTableTest, ModuleInstancePositionalParameterAssignment) {
+  TestVerilogSourceFile src("foobar.sv",
+                            "module m #(\n"
+                            "  int N = 1\n"
+                            ");\n"
+                            "endmodule\n"
+                            "module rr;\n"
+                            "  m #(3) m_inst();"
+                            // one type reference to "m"
+                            // one instance self-reference
+                            "endmodule\n");
+  const auto status = src.Parse();
+  ASSERT_TRUE(status.ok()) << status.message();
+  SymbolTable symbol_table(nullptr);
+  const SymbolTableNode& root_symbol(symbol_table.Root());
+
+  const auto build_diagnostics = BuildSymbolTable(src, &symbol_table);
+
+  MUST_ASSIGN_LOOKUP_SYMBOL(m_node, root_symbol, "m");
+  EXPECT_EQ(m_node_info.type, SymbolType::kModule);
+  EXPECT_EQ(m_node_info.file_origin, &src);
+  EXPECT_EQ(m_node_info.declared_type.syntax_origin,
+            nullptr);  // there is no module meta-type
+  EXPECT_TRUE(build_diagnostics.empty()) << "Unexpected diagnostic:\n"
+                                         << build_diagnostics.front().message();
+
+  MUST_ASSIGN_LOOKUP_SYMBOL(n_param, m_node, "N");
+  EXPECT_EQ(n_param_info.type, SymbolType::kParameter);
+  EXPECT_EQ(n_param_info.declared_type.user_defined_type,
+            nullptr);  // types are primitive
+
+  MUST_ASSIGN_LOOKUP_SYMBOL(rr_node, root_symbol, "rr");
+  MUST_ASSIGN_LOOKUP_SYMBOL(m_inst_node, rr_node, "m_inst");
+
+  // Inspect local references to "m" and "m_inst".
+  ASSERT_EQ(rr_node_info.local_references_to_bind.size(), 2);
+  const auto ref_map(rr_node_info.LocalReferencesMapViewForTesting());
+  ASSIGN_MUST_FIND_EXACTLY_ONE_REF(m_ref, ref_map, "m");
+  ASSIGN_MUST_FIND_EXACTLY_ONE_REF(m_inst_ref, ref_map, "m_inst");
+  EXPECT_EQ(m_ref->LastLeaf()->Value().identifier, "m");
+  EXPECT_EQ(m_ref->LastLeaf()->Value().resolved_symbol, nullptr);
+  EXPECT_EQ(m_inst_ref->LastLeaf()->Value().identifier, "m_inst");
+  EXPECT_EQ(m_inst_ref->LastLeaf()->Value().resolved_symbol, &m_inst_node);
+
+  {
+    std::vector<absl::Status> resolve_diagnostics;
+    symbol_table.Resolve(&resolve_diagnostics);
+    EXPECT_TRUE(resolve_diagnostics.empty());
+
+    // Expect to resolve local references to "m" and "m_inst".
+    EXPECT_EQ(m_ref->LastLeaf()->Value().resolved_symbol, &m_node);
+    EXPECT_EQ(m_inst_ref->LastLeaf()->Value().resolved_symbol, &m_inst_node);
+  }
+}
+
+TEST(BuildSymbolTableTest, ModuleInstanceNamedParameterAssignment) {
+  TestVerilogSourceFile src("foobar.sv",
+                            "module m #(\n"
+                            "  int N = 0,\n"
+                            "  int P = 1\n"
+                            ");\n"
+                            "endmodule\n"
+                            "module rr;\n"
+                            "  m #(.N(2), .P(3)) m_inst();"
+                            // one type reference, one instance self-reference
+                            // two named param rereference
+                            "endmodule\n");
+  const auto status = src.Parse();
+  ASSERT_TRUE(status.ok()) << status.message();
+  SymbolTable symbol_table(nullptr);
+  const SymbolTableNode& root_symbol(symbol_table.Root());
+
+  const auto build_diagnostics = BuildSymbolTable(src, &symbol_table);
+
+  MUST_ASSIGN_LOOKUP_SYMBOL(m_node, root_symbol, "m");
+  EXPECT_EQ(m_node_info.type, SymbolType::kModule);
+  EXPECT_EQ(m_node_info.file_origin, &src);
+  EXPECT_EQ(m_node_info.declared_type.syntax_origin,
+            nullptr);  // there is no module meta-type
+  EXPECT_TRUE(build_diagnostics.empty()) << "Unexpected diagnostic:\n"
+                                         << build_diagnostics.front().message();
+
+  MUST_ASSIGN_LOOKUP_SYMBOL(n_param, m_node, "N");
+  EXPECT_EQ(n_param_info.type, SymbolType::kParameter);
+  EXPECT_EQ(n_param_info.declared_type.user_defined_type,
+            nullptr);  // types are primitive
+
+  MUST_ASSIGN_LOOKUP_SYMBOL(p_param, m_node, "P");
+  EXPECT_EQ(p_param_info.type, SymbolType::kParameter);
+  EXPECT_EQ(p_param_info.declared_type.user_defined_type,
+            nullptr);  // types are primitive
+
+  MUST_ASSIGN_LOOKUP_SYMBOL(rr_node, root_symbol, "rr");
+  MUST_ASSIGN_LOOKUP_SYMBOL(m_inst_node, rr_node, "m_inst");
+
+  const auto ref_map(rr_node_info.LocalReferencesMapViewForTesting());
+  ASSIGN_MUST_FIND_EXACTLY_ONE_REF(m_type_ref, ref_map, "m");
+
+  const ReferenceComponentNode& m_type_ref_root(*m_type_ref->components);
+  ASSERT_EQ(m_type_ref_root.Children().size(), 2);
+  const ReferenceComponentMap param_refs(
+      ReferenceComponentNodeMapView(m_type_ref_root));
+
+  ASSIGN_MUST_FIND(n_ref, param_refs, "N");
+  const ReferenceComponent& n_ref_comp(n_ref->Value());
+  EXPECT_EQ(n_ref_comp.identifier, "N");
+  EXPECT_EQ(n_ref_comp.ref_type, ReferenceType::kDirectMember);
+  EXPECT_EQ(n_ref_comp.resolved_symbol, nullptr);  // not yet resolved
+
+  ASSIGN_MUST_FIND(p_ref, param_refs, "P");
+  const ReferenceComponent& p_ref_comp(p_ref->Value());
+  EXPECT_EQ(p_ref_comp.identifier, "P");
+  EXPECT_EQ(p_ref_comp.ref_type, ReferenceType::kDirectMember);
+  EXPECT_EQ(p_ref_comp.resolved_symbol, nullptr);  // not yet resolved
+
+  {
+    std::vector<absl::Status> resolve_diagnostics;
+    symbol_table.Resolve(&resolve_diagnostics);
+    EXPECT_TRUE(resolve_diagnostics.empty())
+        << "Unexpected diagnostic: " << resolve_diagnostics.front().message();
+
+    // Expect ".N" and ".P" to resolve to formal parameters of "m".
+    EXPECT_EQ(n_ref_comp.resolved_symbol, &n_param);
+    EXPECT_EQ(p_ref_comp.resolved_symbol, &p_param);
   }
 }
 
@@ -886,14 +1016,14 @@ TEST(BuildSymbolTableTest, ModuleInstanceNamedPortConnectionNonexistentPort) {
   ASSERT_NE(found_clk_ref, port_refs.end());
   const ReferenceComponentNode& clk_ref(*found_clk_ref->second);
   EXPECT_EQ(clk_ref.Value().identifier, "clk");
-  EXPECT_EQ(clk_ref.Value().ref_type, ReferenceType::kObjectMember);
+  EXPECT_EQ(clk_ref.Value().ref_type, ReferenceType::kMemberOfTypeOfParent);
   EXPECT_EQ(clk_ref.Value().resolved_symbol, nullptr);  // not yet resolved
 
   const auto found_p_ref = port_refs.find("p");
   ASSERT_NE(found_p_ref, port_refs.end());
   const ReferenceComponentNode& p_ref(*found_p_ref->second);
   EXPECT_EQ(p_ref.Value().identifier, "p");
-  EXPECT_EQ(p_ref.Value().ref_type, ReferenceType::kObjectMember);
+  EXPECT_EQ(p_ref.Value().ref_type, ReferenceType::kMemberOfTypeOfParent);
   EXPECT_EQ(p_ref.Value().resolved_symbol, nullptr);  // not yet resolved
 
   // Get the local symbol definitions for wire "c".
@@ -902,8 +1032,8 @@ TEST(BuildSymbolTableTest, ModuleInstanceNamedPortConnectionNonexistentPort) {
   {
     std::vector<absl::Status> resolve_diagnostics;
     symbol_table.Resolve(&resolve_diagnostics);
-    ASSERT_EQ(resolve_diagnostics.size(), 1);
-    const absl::Status& err(resolve_diagnostics.front());
+
+    ASSIGN_MUST_HAVE_UNIQUE(err, resolve_diagnostics);
     EXPECT_EQ(err.code(), absl::StatusCode::kNotFound);
     EXPECT_THAT(err.message(),
                 HasSubstr("No member symbol \"p\" in parent scope m."));
@@ -911,6 +1041,79 @@ TEST(BuildSymbolTableTest, ModuleInstanceNamedPortConnectionNonexistentPort) {
     // Expect to resolved named port reference to "clk", but not "p".
     EXPECT_EQ(clk_ref.Value().resolved_symbol, &clk_node);
     EXPECT_EQ(p_ref.Value().resolved_symbol, nullptr);  // failed to resolve
+  }
+}
+
+TEST(BuildSymbolTableTest, ModuleInstanceNamedParameterNonexistentError) {
+  TestVerilogSourceFile src("foobar.sv",
+                            "module m #(\n"
+                            "  int N = 0,\n"
+                            "  int P = 1\n"
+                            ");\n"
+                            "endmodule\n"
+                            "module rr;\n"
+                            "  m #(.N(2), .Q(3)) m_inst();"
+                            // one type reference, one instance self-reference
+                            // two named param rereference (one error)
+                            "endmodule\n");
+  const auto status = src.Parse();
+  ASSERT_TRUE(status.ok()) << status.message();
+  SymbolTable symbol_table(nullptr);
+  const SymbolTableNode& root_symbol(symbol_table.Root());
+
+  const auto build_diagnostics = BuildSymbolTable(src, &symbol_table);
+
+  MUST_ASSIGN_LOOKUP_SYMBOL(m_node, root_symbol, "m");
+  EXPECT_EQ(m_node_info.type, SymbolType::kModule);
+  EXPECT_EQ(m_node_info.file_origin, &src);
+  EXPECT_EQ(m_node_info.declared_type.syntax_origin,
+            nullptr);  // there is no module meta-type
+  EXPECT_TRUE(build_diagnostics.empty()) << "Unexpected diagnostic:\n"
+                                         << build_diagnostics.front().message();
+
+  MUST_ASSIGN_LOOKUP_SYMBOL(n_param, m_node, "N");
+  EXPECT_EQ(n_param_info.type, SymbolType::kParameter);
+  EXPECT_EQ(n_param_info.declared_type.user_defined_type,
+            nullptr);  // types are primitive
+
+  MUST_ASSIGN_LOOKUP_SYMBOL(p_param, m_node, "P");
+  EXPECT_EQ(p_param_info.type, SymbolType::kParameter);
+  EXPECT_EQ(p_param_info.declared_type.user_defined_type,
+            nullptr);  // types are primitive
+
+  MUST_ASSIGN_LOOKUP_SYMBOL(rr_node, root_symbol, "rr");
+  MUST_ASSIGN_LOOKUP_SYMBOL(m_inst_node, rr_node, "m_inst");
+
+  const auto ref_map(rr_node_info.LocalReferencesMapViewForTesting());
+  ASSIGN_MUST_FIND_EXACTLY_ONE_REF(m_type_ref, ref_map, "m");
+
+  const ReferenceComponentNode& m_type_ref_root(*m_type_ref->components);
+  ASSERT_EQ(m_type_ref_root.Children().size(), 2);
+  const ReferenceComponentMap param_refs(
+      ReferenceComponentNodeMapView(m_type_ref_root));
+
+  ASSIGN_MUST_FIND(n_ref, param_refs, "N");
+  const ReferenceComponent& n_ref_comp(n_ref->Value());
+  EXPECT_EQ(n_ref_comp.identifier, "N");
+  EXPECT_EQ(n_ref_comp.ref_type, ReferenceType::kDirectMember);
+  EXPECT_EQ(n_ref_comp.resolved_symbol, nullptr);  // not yet resolved
+
+  ASSIGN_MUST_FIND(q_ref, param_refs, "Q");
+  const ReferenceComponent& q_ref_comp(q_ref->Value());
+  EXPECT_EQ(q_ref_comp.identifier, "Q");
+  EXPECT_EQ(q_ref_comp.ref_type, ReferenceType::kDirectMember);
+  EXPECT_EQ(q_ref_comp.resolved_symbol, nullptr);  // not yet resolved
+
+  {
+    std::vector<absl::Status> resolve_diagnostics;
+    symbol_table.Resolve(&resolve_diagnostics);
+
+    ASSIGN_MUST_HAVE_UNIQUE(err, resolve_diagnostics);
+    EXPECT_EQ(err.code(), absl::StatusCode::kNotFound);
+
+    // Expect only ".N" to resolve to formal parameters of "m".
+    EXPECT_EQ(n_ref_comp.resolved_symbol, &n_param);
+    EXPECT_EQ(q_ref_comp.resolved_symbol, nullptr);
   }
 }
 
@@ -962,8 +1165,8 @@ TEST(BuildSymbolTableTest, OneGlobalUndefinedTypeParameter) {
   {
     std::vector<absl::Status> resolve_diagnostics;
     symbol_table.Resolve(&resolve_diagnostics);  // nothing to resolve
-    EXPECT_EQ(resolve_diagnostics.size(), 1);
-    const auto& err_status(resolve_diagnostics.front());
+
+    ASSIGN_MUST_HAVE_UNIQUE(err_status, resolve_diagnostics);
     EXPECT_EQ(err_status.code(), absl::StatusCode::kNotFound);
     EXPECT_THAT(err_status.message(),
                 HasSubstr("Unable to resolve symbol \"foo_t\""));
@@ -1047,8 +1250,8 @@ TEST(BuildSymbolTableTest, OneUnresolvedReferenceInExpression) {
   {  // resolve symbols
     std::vector<absl::Status> resolve_diagnostics;
     symbol_table.Resolve(&resolve_diagnostics);
-    ASSERT_EQ(resolve_diagnostics.size(), 1);
-    const absl::Status& err_status(resolve_diagnostics.front());
+
+    ASSIGN_MUST_HAVE_UNIQUE(err_status, resolve_diagnostics);
     EXPECT_EQ(err_status.code(), absl::StatusCode::kNotFound);
     EXPECT_THAT(err_status.message(),
                 HasSubstr("Unable to resolve symbol \"spice\""));
@@ -1119,6 +1322,7 @@ TEST(BuildSymbolTableTest, ReferenceOneParameterFromPackageToRoot) {
     std::vector<absl::Status> resolve_diagnostics;
     symbol_table.Resolve(&resolve_diagnostics);
     EXPECT_TRUE(resolve_diagnostics.empty());
+
     EXPECT_EQ(mint_ref.resolved_symbol, &mint);  // resolved "mint"
   }
 }
@@ -1168,6 +1372,7 @@ TEST(BuildSymbolTableTest, ReferenceOneParameterFromRootToPackage) {
     std::vector<absl::Status> resolve_diagnostics;
     symbol_table.Resolve(&resolve_diagnostics);
     EXPECT_TRUE(resolve_diagnostics.empty());
+
     EXPECT_EQ(p_ref.resolved_symbol, &p_pkg);    // resolved "p"
     EXPECT_EQ(mint_ref.resolved_symbol, &mint);  // resolved "p::mint"
   }
@@ -1217,7 +1422,9 @@ TEST(BuildSymbolTableTest, ReferenceOneParameterFromRootToPackageNoSuchMember) {
   for (int i = 0; i < 2; ++i) {  // resolve symbols
     std::vector<absl::Status> resolve_diagnostics;
     symbol_table.Resolve(&resolve_diagnostics);
-    EXPECT_EQ(resolve_diagnostics.size(), 1);
+
+    ASSIGN_MUST_HAVE_UNIQUE(err_status, resolve_diagnostics);
+    EXPECT_EQ(err_status.code(), absl::StatusCode::kNotFound);
     EXPECT_EQ(p_ref.resolved_symbol, &p_pkg);     // resolved "p"
     EXPECT_EQ(zzz_ref.resolved_symbol, nullptr);  // unresolved "p::zzz"
   }
@@ -1277,9 +1484,9 @@ TEST(BuildSymbolTableTest, ModuleDeclarationWithParameters) {
   {
     std::vector<absl::Status> resolve_diagnostics;
     symbol_table.Resolve(&resolve_diagnostics);
-    EXPECT_EQ(resolve_diagnostics.size(),
-              1);  // type reference 'bar' is unresolved
-    const auto& error(resolve_diagnostics.front());
+
+    ASSIGN_MUST_HAVE_UNIQUE(error, resolve_diagnostics);
+    // type reference 'bar' is unresolved
     EXPECT_EQ(error.code(), absl::StatusCode::kNotFound);
     EXPECT_THAT(error.message(), HasSubstr("Unable to resolve symbol \"bar\""));
 

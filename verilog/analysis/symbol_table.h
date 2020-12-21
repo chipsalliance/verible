@@ -61,12 +61,12 @@ enum class ReferenceType {
   // ::id (for packages, and class static members)
   // These symbols are resolved by searching in the parent symbol's
   // context (or its imported/inherited namespaces).
-  kStaticMember,
+  kDirectMember,
 
   // .id (for object of struct/class type members)
   // These symbols are resolved by searching in the parent object's *type* scope
   // (or its imported/inherited namespaces).
-  kObjectMember,
+  kMemberOfTypeOfParent,
 };
 
 std::ostream& operator<<(std::ostream&, ReferenceType);
