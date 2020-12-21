@@ -184,23 +184,52 @@ TEST(BuildSymbolTableTest, IntegrityCheckDeclaredType) {
 }
 
 TEST(BuildSymbolTableTest, InvalidSyntax) {
-  TestVerilogSourceFile src("foobar.sv", "module;\nendmodule\n");
-  const auto status = src.Parse();
-  EXPECT_FALSE(status.ok());
-  SymbolTable symbol_table(nullptr);
+  constexpr absl::string_view invalid_codes[] = {
+      "module;\nendmodule\n",
+  };
+  for (const auto& code : invalid_codes) {
+    TestVerilogSourceFile src("foobar.sv", code);
+    const auto status = src.Parse();
+    EXPECT_FALSE(status.ok());
+    SymbolTable symbol_table(nullptr);
 
-  {  // Attempt to build symbol table after parse failure.
-    const auto build_diagnostics = BuildSymbolTable(src, &symbol_table);
+    {  // Attempt to build symbol table after parse failure.
+      const auto build_diagnostics = BuildSymbolTable(src, &symbol_table);
 
-    EXPECT_TRUE(symbol_table.Root().Children().empty());
-    EXPECT_TRUE(build_diagnostics.empty())
-        << "Unexpected diagnostic:\n"
-        << build_diagnostics.front().message();
+      EXPECT_TRUE(symbol_table.Root().Children().empty());
+      EXPECT_TRUE(build_diagnostics.empty())
+          << "Unexpected diagnostic:\n"
+          << build_diagnostics.front().message();
+    }
+    {  // Attempt to resolve empty symbol table and references.
+      std::vector<absl::Status> resolve_diagnostics;
+      symbol_table.Resolve(&resolve_diagnostics);  // nothing to resolve
+      EXPECT_TRUE(resolve_diagnostics.empty());
+    }
   }
-  {  // Attempt to resolve empty symbol table and references.
-    std::vector<absl::Status> resolve_diagnostics;
-    symbol_table.Resolve(&resolve_diagnostics);  // nothing to resolve
-    EXPECT_TRUE(resolve_diagnostics.empty());
+}
+
+TEST(BuildSymbolTableTest, AvoidCrashFromFuzzer) {
+  // All that matters is that these test cases do not trigger crashes.
+  constexpr absl::string_view codes[] = {
+      // some of these test cases come from fuzz testing
+      "`e(C*C);\n",              // expect two distinct reference trees
+      "`e(C::D * C.m + 12);\n",  // expect two reference trees
+  };
+  for (const auto& code : codes) {
+    TestVerilogSourceFile src("foobar.sv", code);
+    const auto status = src.Parse();  // don't care if code is valid or not
+    SymbolTable symbol_table(nullptr);
+
+    {  // Attempt to build symbol table.
+      const auto build_diagnostics = BuildSymbolTable(src, &symbol_table);
+      // don't care about diagnostics
+    }
+    {  // Attempt to resolve empty symbol table and references.
+      std::vector<absl::Status> resolve_diagnostics;
+      symbol_table.Resolve(&resolve_diagnostics);
+      // don't care about diagnostics
+    }
   }
 }
 

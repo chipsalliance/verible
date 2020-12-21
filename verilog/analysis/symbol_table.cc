@@ -147,8 +147,8 @@ class SymbolTable::Builder : public TreeContextVisitor {
       case NodeEnum::kDataType:
         DescendDataType(node);
         break;
-      case NodeEnum::kExpression:
-        DescendExpression(node);
+      case NodeEnum::kReferenceCallBase:
+        DescendReferenceExpression(node);
         break;
       case NodeEnum::kActualParameterList:
         DescendActualParameterList(node);
@@ -219,12 +219,12 @@ class SymbolTable::Builder : public TreeContextVisitor {
     Builder* builder_;
   };
 
-  void DescendExpression(const SyntaxTreeNode& expression) {
+  void DescendReferenceExpression(const SyntaxTreeNode& reference) {
     // capture exressions referenced from the current scope
     const CaptureDependentReference capture(this);
 
     // subexpressions' references will be collected before this one
-    Descend(expression);  // no scope change
+    Descend(reference);  // no scope change
   }
 
   // Traverse a subtree for a data type and collects type references
@@ -383,7 +383,7 @@ class SymbolTable::Builder : public TreeContextVisitor {
     CHECK(!reference_builders_.empty())
         << "Not currently in a reference context.";
     const DependentReferences& ref(reference_builders_.top());
-    if (ref.Empty()) {
+    if (ref.Empty() || last_hierarchy_operator_ == nullptr) {
       // The root component is always treated as unqualified.
       return ReferenceType::kUnqualified;
     }
