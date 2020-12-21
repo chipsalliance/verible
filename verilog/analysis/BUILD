@@ -369,6 +369,8 @@ cc_library(
         "//verilog/CST:package",
         "//verilog/CST:parameters",
         "//verilog/CST:port",
+        "//verilog/CST:seq_block",
+        "//verilog/CST:statement",
         "//verilog/CST:type",
         "//verilog/CST:verilog_nonterminals",
         "//verilog/parser:verilog_parser",

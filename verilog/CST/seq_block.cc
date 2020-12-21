@@ -14,18 +14,13 @@
 
 #include "verilog/CST/seq_block.h"
 
-#include <vector>
-
-#include "common/analysis/matcher/matcher.h"
-#include "common/analysis/matcher/matcher_builders.h"
-#include "common/analysis/syntax_tree_search.h"
 #include "common/text/concrete_syntax_leaf.h"
 #include "common/text/concrete_syntax_tree.h"
 #include "common/text/symbol.h"
 #include "common/text/syntax_tree_context.h"
 #include "common/text/tree_utils.h"
 #include "verilog/CST/identifier.h"
-#include "verilog/CST/verilog_matchers.h"  // IWYU pragma: keep
+#include "verilog/CST/verilog_nonterminals.h"
 
 namespace verilog {
 

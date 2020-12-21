@@ -30,6 +30,9 @@ std::vector<verible::TreeSearchMatch> FindAllConditionalStatements(
 std::vector<verible::TreeSearchMatch> FindAllForLoopsInitializations(
     const verible::Symbol& root);
 
+std::vector<verible::TreeSearchMatch> FindAllGenerateBlocks(
+    const verible::Symbol& root);
+
 // Generate flow control constructs
 //
 // TODO(fangism): consider moving the *GenerateBody functions to generate.{h,cc}
@@ -182,6 +185,14 @@ const verible::SyntaxTreeLeaf& GetVariableNameFromForInitialization(
 // Returns the rhs expression from for loop initialization.
 const verible::SyntaxTreeNode& GetExpressionFromForInitialization(
     const verible::Symbol&);
+
+// Returns the 'begin' node of a generate block.
+const verible::SyntaxTreeNode& GetGenerateBlockBegin(
+    const verible::Symbol& generate_block);
+
+// Returns the 'end' node of a generate block.
+const verible::SyntaxTreeNode& GetGenerateBlockEnd(
+    const verible::Symbol& generate_block);
 
 }  // namespace verilog
 

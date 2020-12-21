@@ -39,6 +39,11 @@ std::vector<verible::TreeSearchMatch> FindAllForLoopsInitializations(
   return SearchSyntaxTree(root, NodekForInitialization());
 }
 
+std::vector<verible::TreeSearchMatch> FindAllGenerateBlocks(
+    const verible::Symbol& root) {
+  return SearchSyntaxTree(root, NodekGenerateBlock());
+}
+
 static const SyntaxTreeNode& GetGenericStatementBody(
     const SyntaxTreeNode& node) {
   // In most controlled constructs, the controlled statement body is
@@ -439,6 +444,18 @@ const verible::SyntaxTreeNode& GetExpressionFromForInitialization(
   return verible::GetSubtreeAsNode(for_initialization,
                                    NodeEnum::kForInitialization, 4,
                                    NodeEnum::kExpression);
+}
+
+const verible::SyntaxTreeNode& GetGenerateBlockBegin(
+    const verible::Symbol& generate_block) {
+  return verible::GetSubtreeAsNode(generate_block, NodeEnum::kGenerateBlock, 0,
+                                   NodeEnum::kBegin);
+}
+
+const verible::SyntaxTreeNode& GetGenerateBlockEnd(
+    const verible::Symbol& generate_block) {
+  return verible::GetSubtreeAsNode(generate_block, NodeEnum::kGenerateBlock, 2,
+                                   NodeEnum::kEnd);
 }
 
 }  // namespace verilog

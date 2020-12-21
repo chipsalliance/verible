@@ -42,6 +42,7 @@ std::ostream& SymbolTableNodeFullPath(std::ostream&, const SymbolTableNode&);
 enum class SymbolType {
   kClass,
   kModule,
+  kGenerate,  // loop or conditional generate block
   kPackage,
   kParameter,
   kTypeAlias,
@@ -225,6 +226,15 @@ struct SymbolInfo {
   // This is only set after resolving type references.
   DeclarationTypeInfo declared_type;
 
+  // Collection of generated scope names that exists for the sake of persistent
+  // string memory storage (since all other symbol table node keys rely on
+  // string_views that belong the source file's string memory buffer).
+  // We cannot use std::string directly due to the move-ability requirements
+  // along with the possibility of short-string-optimization.
+  // std::vector is move-able on reallocation and unique_ptr guarantees
+  // move-stability.
+  std::vector<std::unique_ptr<const std::string>> anonymous_scope_names;
+
   // TODO(fangism): symbol attributes
   // visibility: is this symbol (as a member of its parent) public?
   //   ports and parameters can be public, whereas local variables are not.
@@ -253,6 +263,10 @@ struct SymbolInfo {
   SymbolInfo(SymbolInfo&&) = default;
   SymbolInfo& operator=(const SymbolInfo&) = delete;
   SymbolInfo& operator=(SymbolInfo&&) = delete;
+
+  // Generate a scope name whose string memory lives and moves with this object.
+  // 'base' is used as part of the generated name.
+  absl::string_view CreateAnonymousScope(absl::string_view base);
 
   // Attempt to resolve all symbol references.
   void Resolve(const SymbolTableNode& context,

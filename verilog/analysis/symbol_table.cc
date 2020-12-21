@@ -37,6 +37,8 @@
 #include "verilog/CST/package.h"
 #include "verilog/CST/parameters.h"
 #include "verilog/CST/port.h"
+#include "verilog/CST/seq_block.h"
+#include "verilog/CST/statement.h"
 #include "verilog/CST/type.h"
 #include "verilog/CST/verilog_nonterminals.h"
 #include "verilog/parser/verilog_parser.h"
@@ -120,6 +122,12 @@ class SymbolTable::Builder : public TreeContextVisitor {
     switch (tag) {
       case NodeEnum::kModuleDeclaration:
         DeclareModule(node);
+        break;
+      case NodeEnum::kGenerateIfClause:
+        DeclareGenerateIf(node);
+        break;
+      case NodeEnum::kGenerateElseClause:
+        DeclareGenerateElse(node);
         break;
       case NodeEnum::kPackageDeclaration:
         DeclarePackage(node);
@@ -310,6 +318,7 @@ class SymbolTable::Builder : public TreeContextVisitor {
     }
 
     // Capture only referencing identifiers, omit declarative identifiers.
+    // This is set up when traversing references, e.g. types, expressions.
     if (reference_builders_.empty()) return;
 
     // In DeclareInstance(), we already planted a self-reference that is
@@ -442,6 +451,43 @@ class SymbolTable::Builder : public TreeContextVisitor {
   void DeclareModule(const SyntaxTreeNode& module) {
     DeclareScopedElementAndDescend(module, GetModuleName(module).get().text(),
                                    SymbolType::kModule);
+  }
+
+  absl::string_view GetScopeNameFromGenerateBody(const SyntaxTreeNode& body) {
+    if (body.MatchesTag(NodeEnum::kGenerateBlock)) {
+      const TokenInfo* label =
+          GetBeginLabelTokenInfo(GetGenerateBlockBegin(body));
+      if (label != nullptr) {
+        // TODO: Check for a matching end-label here, and if its name matches
+        // the begin label, then immediately create a resolved reference because
+        // it only makes sense for it resolve to this begin.
+        // Otherwise, do nothing with the end label.
+        return label->text();
+      }
+    }
+    return current_scope_->Value().CreateAnonymousScope("generate");
+  }
+
+  void DeclareGenerateIf(const SyntaxTreeNode& generate_if) {
+    const SyntaxTreeNode& body(GetIfClauseGenerateBody(generate_if));
+
+    DeclareScopedElementAndDescend(
+        generate_if, GetScopeNameFromGenerateBody(body), SymbolType::kGenerate);
+  }
+
+  void DeclareGenerateElse(const SyntaxTreeNode& generate_else) {
+    const SyntaxTreeNode& body(GetElseClauseGenerateBody(generate_else));
+
+    if (body.MatchesTag(NodeEnum::kConditionalGenerateConstruct)) {
+      // else-if chained.  Flatten the else block by not creating a new scope
+      // and let the if-clause inside create a scope directly under the current
+      // scope.
+      Descend(body);
+    } else {
+      DeclareScopedElementAndDescend(generate_else,
+                                     GetScopeNameFromGenerateBody(body),
+                                     SymbolType::kGenerate);
+    }
   }
 
   void DeclarePackage(const SyntaxTreeNode& package) {
@@ -768,6 +814,15 @@ void DeclarationTypeInfo::VerifySymbolTableRoot(
       component.VerifySymbolTableRoot(root);
     });
   }
+}
+
+absl::string_view SymbolInfo::CreateAnonymousScope(absl::string_view base) {
+  const size_t n = anonymous_scope_names.size();
+  anonymous_scope_names.emplace_back(absl::make_unique<const std::string>(
+      // Starting with a non-alpha character guarantees it cannot collide with
+      // any user-given identifier.
+      absl::StrCat("%", "anon-", base, "-", n)));
+  return *anonymous_scope_names.back();
 }
 
 void SymbolInfo::VerifySymbolTableRoot(const SymbolTableNode* root) const {

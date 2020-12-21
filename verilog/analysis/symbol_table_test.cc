@@ -295,6 +295,134 @@ TEST(BuildSymbolTableTest, ModuleDeclarationLocalDuplicateNets) {
   }
 }
 
+TEST(BuildSymbolTableTest, ModuleDeclarationConditionalGenerateAnonymous) {
+  constexpr absl::string_view source_variants[] = {
+      // with begin/end
+      "module m;\n"
+      "  if (1) begin\n"
+      "    wire x;\n"
+      "  end else if (2) begin\n"
+      "    wire y;\n"
+      "  end else begin\n"
+      "    wire z;\n"
+      "  end\n"
+      "endmodule\n",
+      // without begin/end
+      "module m;\n"
+      "  if (1)\n"
+      "    wire x;\n"
+      "  else if (2)\n"
+      "    wire y;\n"
+      "  else\n"
+      "    wire z;\n"
+      "endmodule\n",
+  };
+  for (const auto& code : source_variants) {
+    TestVerilogSourceFile src("foobar.sv", code);
+    const auto status = src.Parse();
+    ASSERT_TRUE(status.ok()) << status.message();
+    SymbolTable symbol_table(nullptr);
+    const SymbolTableNode& root_symbol(symbol_table.Root());
+
+    const auto build_diagnostics = BuildSymbolTable(src, &symbol_table);
+
+    MUST_ASSIGN_LOOKUP_SYMBOL(module_node, root_symbol, "m");
+    EXPECT_EQ(module_node_info.type, SymbolType::kModule);
+    EXPECT_EQ(module_node_info.file_origin, &src);
+    EXPECT_EQ(module_node_info.declared_type.syntax_origin,
+              nullptr);  // there is no module meta-type
+    EXPECT_TRUE(build_diagnostics.empty())
+        << "Unexpected diagnostic:\n"
+        << build_diagnostics.front().message();
+
+    ASSERT_EQ(module_node.Children().size(), 3);
+    auto iter = module_node.Children().begin();
+    {
+      const SymbolTableNode& gen_block(iter->second);  // anonymous "...-0"
+      const SymbolInfo& gen_block_info(gen_block.Value());
+      EXPECT_EQ(gen_block_info.type, SymbolType::kGenerate);
+      MUST_ASSIGN_LOOKUP_SYMBOL(wire_x, gen_block, "x");
+      EXPECT_EQ(wire_x_info.type, SymbolType::kDataNetVariableInstance);
+      ++iter;
+    }
+    {
+      const SymbolTableNode& gen_block(iter->second);  // anonymous "...-1"
+      const SymbolInfo& gen_block_info(gen_block.Value());
+      EXPECT_EQ(gen_block_info.type, SymbolType::kGenerate);
+      MUST_ASSIGN_LOOKUP_SYMBOL(wire_y, gen_block, "y");
+      EXPECT_EQ(wire_y_info.type, SymbolType::kDataNetVariableInstance);
+      ++iter;
+    }
+    {
+      const SymbolTableNode& gen_block(iter->second);  // anonymous "...-2"
+      const SymbolInfo& gen_block_info(gen_block.Value());
+      EXPECT_EQ(gen_block_info.type, SymbolType::kGenerate);
+      MUST_ASSIGN_LOOKUP_SYMBOL(wire_z, gen_block, "z");
+      EXPECT_EQ(wire_z_info.type, SymbolType::kDataNetVariableInstance);
+      ++iter;
+    }
+
+    {
+      std::vector<absl::Status> resolve_diagnostics;
+      symbol_table.Resolve(&resolve_diagnostics);  // nothing to resolve
+      EXPECT_TRUE(resolve_diagnostics.empty());
+    }
+  }
+}
+
+TEST(BuildSymbolTableTest, ModuleDeclarationConditionalGenerateLabeled) {
+  TestVerilogSourceFile src("foobar.sv",
+                            "module m;\n"
+                            "  if (1) begin : cc\n"
+                            "    wire x;\n"
+                            "  end else if (2) begin : bb\n"
+                            "    wire y;\n"
+                            "  end else begin : aa\n"
+                            "    wire z;\n"
+                            "  end\n"
+                            "endmodule\n");
+  const auto status = src.Parse();
+  ASSERT_TRUE(status.ok()) << status.message();
+  SymbolTable symbol_table(nullptr);
+  const SymbolTableNode& root_symbol(symbol_table.Root());
+
+  const auto build_diagnostics = BuildSymbolTable(src, &symbol_table);
+
+  MUST_ASSIGN_LOOKUP_SYMBOL(module_node, root_symbol, "m");
+  EXPECT_EQ(module_node_info.type, SymbolType::kModule);
+  EXPECT_EQ(module_node_info.file_origin, &src);
+  EXPECT_EQ(module_node_info.declared_type.syntax_origin,
+            nullptr);  // there is no module meta-type
+  EXPECT_TRUE(build_diagnostics.empty()) << "Unexpected diagnostic:\n"
+                                         << build_diagnostics.front().message();
+
+  ASSERT_EQ(module_node.Children().size(), 3);
+  {
+    MUST_ASSIGN_LOOKUP_SYMBOL(gen_block, module_node, "aa");
+    EXPECT_EQ(gen_block_info.type, SymbolType::kGenerate);
+    MUST_ASSIGN_LOOKUP_SYMBOL(wire_z, gen_block, "z");
+    EXPECT_EQ(wire_z_info.type, SymbolType::kDataNetVariableInstance);
+  }
+  {
+    MUST_ASSIGN_LOOKUP_SYMBOL(gen_block, module_node, "bb");
+    EXPECT_EQ(gen_block_info.type, SymbolType::kGenerate);
+    MUST_ASSIGN_LOOKUP_SYMBOL(wire_y, gen_block, "y");
+    EXPECT_EQ(wire_y_info.type, SymbolType::kDataNetVariableInstance);
+  }
+  {
+    MUST_ASSIGN_LOOKUP_SYMBOL(gen_block, module_node, "cc");
+    EXPECT_EQ(gen_block_info.type, SymbolType::kGenerate);
+    MUST_ASSIGN_LOOKUP_SYMBOL(wire_x, gen_block, "x");
+    EXPECT_EQ(wire_x_info.type, SymbolType::kDataNetVariableInstance);
+  }
+
+  {
+    std::vector<absl::Status> resolve_diagnostics;
+    symbol_table.Resolve(&resolve_diagnostics);  // nothing to resolve
+    EXPECT_TRUE(resolve_diagnostics.empty());
+  }
+}
+
 TEST(BuildSymbolTableTest, ModuleDeclarationWithPorts) {
   TestVerilogSourceFile src("foobar.sv",
                             "module m (\n"

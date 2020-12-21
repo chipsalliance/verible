@@ -1259,5 +1259,119 @@ TEST(FindAllForLoopsInitializations, FindForInitializationExpressions) {
   }
 }
 
+TEST(GetGenerateBlockBeginTest, Various) {
+  constexpr int kTag = 1;  // value doesn't matter
+  const SyntaxTreeSearchTestCase kTestCases[] = {
+      {""},
+      {"module m;\nendmodule\n"},
+      {"module m;\n"
+       "  wire k;\n"
+       "endmodule\n"},
+      {"module m;\n"
+       "  if (1)\n"
+       "    wire www;\n"
+       "endmodule\n"},
+      {"module m;\n"
+       "  if (1) ",
+       {kTag, "begin"},
+       "\n"
+       "  end\n"
+       "endmodule\n"},
+      {"module m;\n"
+       "  if (1) ",
+       {kTag, "begin : my_label"},
+       "\n"
+       "  end : my_label\n"
+       "endmodule\n"},
+      {"module m;\n"
+       "  if (1) ",
+       {kTag, "begin"},
+       "\n"
+       "  end else if (2) ",
+       {kTag, "begin:foo"},
+       "\n"
+       "  end\n"
+       "endmodule\n"},
+      {"module m;\n"
+       "  for (genvar i=0; i<N; ++i) ",
+       {kTag, "begin"},
+       "\n"
+       "  end\n"
+       "endmodule\n"},
+  };
+  for (const auto& test : kTestCases) {
+    TestVerilogSyntaxRangeMatches(
+        __FUNCTION__, test, [](const TextStructureView& text_structure) {
+          const auto& root = text_structure.SyntaxTree();
+          const auto& blocks = FindAllGenerateBlocks(*ABSL_DIE_IF_NULL(root));
+
+          std::vector<TreeSearchMatch> begins;
+          for (const auto& block : blocks) {
+            const auto& begin = GetGenerateBlockBegin(*block.match);
+            begins.emplace_back(
+                TreeSearchMatch{&begin, {/* ignored context */}});
+          }
+          return begins;
+        });
+  }
+}
+
+TEST(GetGenerateBlockEndTest, Various) {
+  constexpr int kTag = 1;  // value doesn't matter
+  const SyntaxTreeSearchTestCase kTestCases[] = {
+      {""},
+      {"module m;\nendmodule\n"},
+      {"module m;\n"
+       "  wire k;\n"
+       "endmodule\n"},
+      {"module m;\n"
+       "  if (1)\n"
+       "    wire www;\n"
+       "endmodule\n"},
+      {"module m;\n"
+       "  if (1) begin\n"
+       "  ",
+       {kTag, "end"},
+       "\n"
+       "endmodule\n"},
+      {"module m;\n"
+       "  if (1) begin : my_label\n"
+       "  ",
+       {kTag, "end : my_label"},
+       "\n"
+       "endmodule\n"},
+      {"module m;\n"
+       "  if (1) begin : my_label\n"
+       "  ",
+       {kTag, "end : my_label"},
+       "\n"
+       "  else if (2) begin : your_label\n"
+       "  ",
+       {kTag, "end : your_label"},
+       "\n"
+       "endmodule\n"},
+      {"module m;\n"
+       "  for (genvar i=0; i<N; ++i) begin\n"
+       "  ",
+       {kTag, "end"},
+       "\n"
+       "endmodule\n"},
+  };
+  for (const auto& test : kTestCases) {
+    TestVerilogSyntaxRangeMatches(
+        __FUNCTION__, test, [](const TextStructureView& text_structure) {
+          const auto& root = text_structure.SyntaxTree();
+          const auto& blocks = FindAllGenerateBlocks(*ABSL_DIE_IF_NULL(root));
+
+          std::vector<TreeSearchMatch> ends;
+          for (const auto& block : blocks) {
+            const auto& end = GetGenerateBlockEnd(*block.match);
+            ends.emplace_back(TreeSearchMatch{&end, {/* ignored context */}});
+          }
+          return ends;
+        });
+  }
+}
+
 }  // namespace
 }  // namespace verilog
