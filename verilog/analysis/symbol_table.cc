@@ -190,6 +190,7 @@ class SymbolTable::Builder : public TreeContextVisitor {
     ~CaptureDependentReference() {
       // This completes the capture of a chain of dependent references.
       // Ref() can be empty if the subtree doesn't reference any identifiers.
+      // Empty refs are non-actionable and must be excluded.
       DependentReferences& ref(Ref());
       if (!ref.Empty()) {
         builder_->current_scope_->Value().local_references_to_bind.emplace_back(
@@ -220,6 +221,7 @@ class SymbolTable::Builder : public TreeContextVisitor {
   // If the context is such that this type is used in a declaration,
   // then capture that type information to be used later.
   void DescendDataType(const SyntaxTreeNode& data_type_node) {
+    VLOG(1) << __FUNCTION__ << verible::StringSpanOfSymbol(data_type_node);
     const CaptureDependentReference capture(this);
 
     {
@@ -244,6 +246,7 @@ class SymbolTable::Builder : public TreeContextVisitor {
 
     // In all cases, a type is being referenced from the current scope, so add
     // it to the list of references to resolve (done by 'capture').
+    VLOG(1) << "end of " << __FUNCTION__;
   }
 
   void DescendPortActualList(const SyntaxTreeNode& node) {
@@ -357,6 +360,7 @@ class SymbolTable::Builder : public TreeContextVisitor {
   // instances.
   SymbolTableNode& EmplaceTypedElementInCurrentScope(
       const verible::Symbol& element, absl::string_view name, SymbolType type) {
+    VLOG(1) << __FUNCTION__ << ": " << name;
     const auto p = current_scope_->TryEmplace(
         name,
         SymbolInfo{
@@ -369,6 +373,7 @@ class SymbolTable::Builder : public TreeContextVisitor {
     if (!p.second) {
       DiagnoseSymbolAlreadyExists(name);
     }
+    VLOG(1) << "end of " << __FUNCTION__ << ": " << name;
     return p.first->second;  // scope of the new (or pre-existing symbol)
   }
 
@@ -428,6 +433,7 @@ class SymbolTable::Builder : public TreeContextVisitor {
 
     // Also create a DependentReferences chain starting with this named instance
     // so that named port references are direct children of this reference root.
+    // This is a self-reference.
     const CaptureDependentReference capture(this);
     capture.Ref().PushReferenceComponent(ReferenceComponent{
         .identifier = instance_name,
@@ -723,6 +729,16 @@ void SymbolInfo::Resolve(const SymbolTableNode& context,
   for (auto& local_ref : local_references_to_bind) {
     local_ref.Resolve(context, diagnostics);
   }
+}
+
+SymbolInfo::references_map_view_type
+SymbolInfo::LocalReferencesMapViewForTesting() const {
+  references_map_view_type map_view;
+  for (const auto& local_ref : local_references_to_bind) {
+    CHECK(!local_ref.Empty()) << "Never add empty DependentReferences.";
+    map_view[local_ref.components->Value().identifier].emplace(&local_ref);
+  }
+  return map_view;
 }
 
 void SymbolTable::CheckIntegrity() const {

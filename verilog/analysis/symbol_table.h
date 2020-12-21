@@ -15,6 +15,7 @@
 #ifndef VERIBLE_VERILOG_ANALYSIS_SYMBOL_TABLE_H_
 #define VERIBLE_VERILOG_ANALYSIS_SYMBOL_TABLE_H_
 
+#include <functional>
 #include <iosfwd>
 #include <map>
 
@@ -237,6 +238,7 @@ struct SymbolInfo {
   // Collection of references to resolve and bind that appear in the same
   // context. There is no sequential ordering dependency among these references,
   // theoretically, they could all be resolved in parallel.
+  // This does not need to be insertion-iterator-stable.
   std::vector<DependentReferences> local_references_to_bind;
   // TODO(fangism): make this searchable by substring offsets.
 
@@ -258,6 +260,35 @@ struct SymbolInfo {
 
   // Internal consistency check.
   void VerifySymbolTableRoot(const SymbolTableNode* root) const;
+
+  // Functor to compare string starting address, for positional sorting.
+  struct StringAddressCompare {
+    using is_transparent = void;  // heterogeneous lookup
+
+    static absl::string_view ToString(absl::string_view s) { return s; }
+    static absl::string_view ToString(const DependentReferences* ref) {
+      return ref->components->Value().identifier;
+    }
+
+    template <typename L, typename R>
+    bool operator()(L l, R r) const {
+      static constexpr std::less<const void*> compare_address;
+      return compare_address(ToString(l).begin(), ToString(r).begin());
+    }
+  };
+
+  typedef std::set<const DependentReferences*, StringAddressCompare>
+      address_ordered_set_type;
+  typedef std::map<absl::string_view, address_ordered_set_type,
+                   verible::StringViewCompare>
+      references_map_view_type;
+
+  // For testing only, quickly find reference candidates by name, and positional
+  // occurence.  The outer map is ordered by string contents, and the inner
+  // associative container is ordered by substring memory address as a secondary
+  // key. The nested map is storage-inefficient (compared to a flat
+  // std::vector), and is only suitable for testing.
+  references_map_view_type LocalReferencesMapViewForTesting() const;
 };
 
 // This map type represents the global namespace of preprocessor macro
