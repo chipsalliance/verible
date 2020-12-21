@@ -15,6 +15,9 @@
 #include "verilog/analysis/symbol_table.h"
 
 #include <functional>
+#include <iostream>
+#include <sstream>
+#include <vector>
 
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
@@ -100,6 +103,12 @@ static std::ostream& operator<<(std::ostream& stream,
   ASSIGN_MUST_FIND(dest##_candidates, map, key); /* set of candidates */ \
   ASSIGN_MUST_HAVE_UNIQUE(dest, dest##_candidates);
 
+TEST(SymbolTypePrintTest, Print) {
+  std::ostringstream stream;
+  stream << SymbolType::kClass;
+  EXPECT_EQ(stream.str(), "class");
+}
+
 TEST(SymbolTableNodeFullPathTest, Print) {
   typedef SymbolTableNode::key_value_type KV;
   const SymbolTableNode root(
@@ -144,6 +153,152 @@ TEST(ReferenceNodeFullPathTest, Print) {
     std::ostringstream stream;
     ReferenceNodeFullPath(stream, root.Children().front().Children().front());
     EXPECT_EQ(stream.str(), "@xx::yy.zz");
+  }
+}
+
+TEST(DependentReferencesTest, PrintEmpty) {
+  DependentReferences dep_refs;
+  std::ostringstream stream;
+  stream << dep_refs;
+  EXPECT_EQ(stream.str(), "(empty-ref)");
+}
+
+TEST(DependentReferencesTest, PrintOnlyRootNodeUnresolved) {
+  const DependentReferences dep_refs{
+      .components = absl::make_unique<ReferenceComponentNode>(
+          ReferenceComponent{.identifier = "foo",
+                             .ref_type = ReferenceType::kUnqualified,
+                             .resolved_symbol = nullptr})};
+  std::ostringstream stream;
+  stream << dep_refs;
+  EXPECT_EQ(stream.str(), "{ (@foo -> <unresolved>) }");
+}
+
+TEST(DependentReferencesTest, PrintNonRootResolved) {
+  // Synthesize a symbol table.
+  typedef SymbolTableNode::key_value_type KV;
+  SymbolTableNode root(
+      SymbolInfo{.type = SymbolType::kRoot},
+      KV{"p_pkg",
+         SymbolTableNode(SymbolInfo{.type = SymbolType::kPackage},
+                         KV{"c_class", SymbolTableNode(SymbolInfo{
+                                           .type = SymbolType::kClass})})});
+
+  // Bookmark symbol table nodes.
+  MUST_ASSIGN_LOOKUP_SYMBOL(p_pkg, root, "p_pkg");
+  MUST_ASSIGN_LOOKUP_SYMBOL(c_class, p_pkg, "c_class");
+
+  // Construct references already resolved to above nodes.
+  const DependentReferences dep_refs{
+      .components = absl::make_unique<ReferenceComponentNode>(
+          ReferenceComponent{.identifier = "p_pkg",
+                             .ref_type = ReferenceType::kUnqualified,
+                             .resolved_symbol = &p_pkg},
+          ReferenceComponentNode(
+              ReferenceComponent{.identifier = "c_class",
+                                 .ref_type = ReferenceType::kDirectMember,
+                                 .resolved_symbol = &c_class}))};
+
+  // Print and compare.
+  std::ostringstream stream;
+  stream << dep_refs;
+  EXPECT_EQ(stream.str(),
+            R"({ (@p_pkg -> $root::p_pkg)
+  { (::c_class -> $root::p_pkg::c_class) }
+})");
+}
+
+TEST(SymbolTablePrintTest, PrintClass) {
+  TestVerilogSourceFile src("foobar.sv",
+                            "module ss;\n"
+                            "endmodule\n"
+                            "module tt;\n"
+                            "  ss qq();\n"
+                            "endmodule\n");
+  const auto status = src.Parse();
+  ASSERT_TRUE(status.ok());
+  SymbolTable symbol_table(nullptr);
+
+  const auto build_diagnostics = BuildSymbolTable(src, &symbol_table);
+  ASSERT_TRUE(build_diagnostics.empty()) << "Unexpected diagnostic:\n"
+                                         << build_diagnostics.front().message();
+
+  {
+    std::ostringstream stream;
+    symbol_table.PrintSymbolDefinitions(stream);
+    EXPECT_EQ(stream.str(), R"({ (
+    metatype: <root>
+)
+  ss: { (
+      metatype: module
+      file: foobar.sv
+  ) }
+  tt: { (
+      metatype: module
+      file: foobar.sv
+  )
+    qq: { (
+        metatype: data/net/var/instance
+        file: foobar.sv
+        type-info { source: "ss", type ref: { (@ss -> <unresolved>) } }
+    ) }
+  }
+})");
+  }
+  {
+    std::ostringstream stream;
+    symbol_table.PrintSymbolReferences(stream);
+    EXPECT_EQ(stream.str(), R"({ (refs: )
+  ss: { (refs: ) }
+  tt: { (refs:
+      { (@ss -> <unresolved>) }
+      { (@qq -> $root::tt::qq) }
+      )
+    qq: { (refs: ) }
+  }
+})");
+  }
+
+  {  // Resolve symbols.
+    std::vector<absl::Status> resolve_diagnostics;
+    symbol_table.Resolve(&resolve_diagnostics);  // nothing to resolve
+    EXPECT_TRUE(resolve_diagnostics.empty());
+  }
+
+  {  // <unresolved> should now become "$root::ss"
+    std::ostringstream stream;
+    symbol_table.PrintSymbolDefinitions(stream);
+    EXPECT_EQ(stream.str(), R"({ (
+    metatype: <root>
+)
+  ss: { (
+      metatype: module
+      file: foobar.sv
+  ) }
+  tt: { (
+      metatype: module
+      file: foobar.sv
+  )
+    qq: { (
+        metatype: data/net/var/instance
+        file: foobar.sv
+        type-info { source: "ss", type ref: { (@ss -> $root::ss) } }
+    ) }
+  }
+})");
+  }
+  {  // <unresolved> should now become "$root::ss"
+    std::ostringstream stream;
+    symbol_table.PrintSymbolReferences(stream);
+    EXPECT_EQ(stream.str(), R"({ (refs: )
+  ss: { (refs: ) }
+  tt: { (refs:
+      { (@ss -> $root::ss) }
+      { (@qq -> $root::tt::qq) }
+      )
+    qq: { (refs: ) }
+  }
+})");
   }
 }
 

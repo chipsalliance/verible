@@ -349,6 +349,7 @@ cc_library(
     deps = [
         ":verilog_project",
         "//common/strings:compare",
+        "//common/strings:display_utils",
         "//common/text:concrete_syntax_leaf",
         "//common/text:concrete_syntax_tree",
         "//common/text:symbol",
@@ -359,6 +360,7 @@ cc_library(
         "//common/util:enum_flags",
         "//common/util:logging",
         "//common/util:map_tree",
+        "//common/util:spacer",
         "//common/util:value_saver",
         "//common/util:vector_tree",
         "//verilog/CST:class",
@@ -377,6 +379,7 @@ cc_library(
         "//verilog/parser:verilog_token_enum",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/strings",
+        "@com_google_absl//absl/strings:str_format",
     ],
 )
 

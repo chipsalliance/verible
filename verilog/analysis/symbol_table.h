@@ -40,6 +40,7 @@ std::ostream& SymbolTableNodeFullPath(std::ostream&, const SymbolTableNode&);
 
 // Classify what type of element a particular symbol is defining.
 enum class SymbolType {
+  kRoot,
   kClass,
   kModule,
   kGenerate,  // loop or conditional generate block
@@ -51,6 +52,8 @@ enum class SymbolType {
   kTask,
   kInterface,
 };
+
+std::ostream& operator<<(std::ostream&, SymbolType);
 
 // This classifies the type of reference that a single identifier is.
 enum class ReferenceType {
@@ -103,6 +106,12 @@ struct ReferenceComponent {
   ReferenceComponent(ReferenceComponent&&) = default;
   ReferenceComponent& operator=(const ReferenceComponent&) = delete;
   ReferenceComponent& operator=(ReferenceComponent&&) = delete;
+
+  // Only print ref_type and identifier.
+  std::ostream& PrintPathComponent(std::ostream&) const;
+
+  // Print everything, showing symbol path if it is resolved.
+  std::ostream& PrintVerbose(std::ostream&) const;
 
   // Structural consistency check.
   void VerifySymbolTableRoot(const SymbolTableNode* root) const;
@@ -165,6 +174,8 @@ struct DependentReferences {
                std::vector<absl::Status>* diagnostics);
 };
 
+std::ostream& operator<<(std::ostream&, const DependentReferences&);
+
 // Contains information about a type used to declare data/instances/variables.
 struct DeclarationTypeInfo {
   // Pointer to the syntax tree origin, e.g. a NodeEnum::kDataType node.
@@ -201,6 +212,8 @@ struct DeclarationTypeInfo {
   // Structural consistency check.
   void VerifySymbolTableRoot(const SymbolTableNode* root) const;
 };
+
+std::ostream& operator<<(std::ostream&, const DeclarationTypeInfo&);
 
 // This data type holds information about what each SystemVerilog symbol is.
 // An alternative implementation could be done using an abstract base class,
@@ -275,6 +288,12 @@ struct SymbolInfo {
   // Internal consistency check.
   void VerifySymbolTableRoot(const SymbolTableNode* root) const;
 
+  // Show definition info of this symbol.
+  std::ostream& PrintDefinition(std::ostream& stream, size_t indent = 0) const;
+
+  // Show references that are to be resolved starting with this node's scope.
+  std::ostream& PrintReferences(std::ostream& stream, size_t indent = 0) const;
+
   // Functor to compare string starting address, for positional sorting.
   struct StringAddressCompare {
     using is_transparent = void;  // heterogeneous lookup
@@ -323,7 +342,9 @@ class SymbolTable {
  public:
   // If 'project' is nullptr, caller assumes responsibility for managing files
   // and string memory, otherwise string memory is owned by 'project'.
-  explicit SymbolTable(VerilogProject* project) : project_(project) {}
+  explicit SymbolTable(VerilogProject* project)
+      : project_(project),
+        symbol_table_root_(SymbolInfo{.type = SymbolType::kRoot}) {}
 
   // can become move-able when needed
   SymbolTable(const SymbolTable&) = delete;
@@ -341,6 +362,13 @@ class SymbolTable {
   // Lookup all symbol references, and bind references where successful.
   // Only attempt to resolve after merging symbol tables.
   void Resolve(std::vector<absl::Status>* diagnostics);
+
+  // Print only the information about symbols defined (no references).
+  std::ostream& PrintSymbolDefinitions(std::ostream&) const;
+
+  // Print only the information about symbol references, and possibly resolved
+  // links to definitions.
+  std::ostream& PrintSymbolReferences(std::ostream&) const;
 
  protected:  // methods
   // Direct mutation is only intended for the Builder implementation.

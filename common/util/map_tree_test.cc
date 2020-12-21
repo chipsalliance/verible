@@ -19,6 +19,7 @@
 
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
+#include "common/util/spacer.h"
 
 namespace verible {
 namespace {
@@ -492,6 +493,60 @@ TEST(MapTreeTest, PrintTreeTwoGenerations) {
             "    4: { (ss) }\n"
             "  }\n"
             "}");
+}
+
+TEST(MapTreeTest, PrintTreeTwoGenerationsUsingIndent) {
+  const MapTreeTestType m(
+      "groot",  //
+      KV{5, MapTreeTestType("pp", KV{4, MapTreeTestType("ss")},
+                            KV{1, MapTreeTestType("tt")})},
+      KV{3, MapTreeTestType("qq", KV{2, MapTreeTestType("ww")},
+                            KV{6, MapTreeTestType("vv")})});
+  std::ostringstream stream;
+  m.PrintTree(stream,
+              [](std::ostream& s, const std::string& text,
+                 size_t indent) -> std::ostream& {
+                const Spacer wrap(indent + 4);
+                for (const auto c : text) {
+                  s << '\n' << wrap << c;
+                }
+                return s << '\n' << Spacer(indent);
+              });
+  EXPECT_EQ(stream.str(),  //
+            R"({ (
+    g
+    r
+    o
+    o
+    t
+)
+  3: { (
+      q
+      q
+  )
+    2: { (
+        w
+        w
+    ) }
+    6: { (
+        v
+        v
+    ) }
+  }
+  5: { (
+      p
+      p
+  )
+    1: { (
+        t
+        t
+    ) }
+    4: { (
+        s
+        s
+    ) }
+  }
+})");
 }
 
 }  // namespace

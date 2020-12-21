@@ -374,11 +374,11 @@ class MapTree {
   // Keys are printed using operator<<.
   std::ostream& PrintTree(
       std::ostream& stream,
-      const std::function<std::ostream&(std::ostream&, const node_value_type&)>&
-          printer,
+      const std::function<std::ostream&(std::ostream&, const node_value_type&,
+                                        size_t value_indent)>& printer,
       size_t indent = 0) const {
     // Indentation will be printed before the key, not here.
-    printer(stream << "{ (", Value()) << ')';
+    printer(stream << "{ (", Value(), indent) << ')';
     if (Children().empty()) {
       stream << " }";
     } else {
@@ -397,9 +397,8 @@ class MapTree {
   std::ostream& PrintTree(std::ostream& stream, size_t indent = 0) const {
     return PrintTree(
         stream,
-        [](std::ostream& s, const node_value_type& v) -> std::ostream& {
-          return s << v;
-        },
+        [](std::ostream& s, const node_value_type& v,
+           size_t unused_indent) -> std::ostream& { return s << v; },
         indent);
   }
 

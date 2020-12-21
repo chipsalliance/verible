@@ -19,7 +19,9 @@
 #include <stack>
 
 #include "absl/status/status.h"
+#include "absl/strings/str_format.h"
 #include "absl/strings/str_join.h"
+#include "common/strings/display_utils.h"
 #include "common/text/concrete_syntax_leaf.h"
 #include "common/text/concrete_syntax_tree.h"
 #include "common/text/token_info.h"
@@ -28,6 +30,7 @@
 #include "common/text/visitors.h"
 #include "common/util/enum_flags.h"
 #include "common/util/logging.h"
+#include "common/util/spacer.h"
 #include "common/util/value_saver.h"
 #include "verilog/CST/class.h"
 #include "verilog/CST/declaration.h"
@@ -52,6 +55,23 @@ using verible::TokenInfo;
 using verible::TreeContextVisitor;
 using verible::ValueSaver;
 
+std::ostream& operator<<(std::ostream& stream, SymbolType symbol_type) {
+  static const verible::EnumNameMap<SymbolType> kSymbolInfoNames({
+      // short-hand annotation for identifier reference type
+      {"<root>", SymbolType::kRoot},
+      {"class", SymbolType::kClass},
+      {"module", SymbolType::kModule},
+      {"package", SymbolType::kPackage},
+      {"parameter", SymbolType::kParameter},
+      {"typedef", SymbolType::kTypeAlias},
+      {"data/net/var/instance", SymbolType::kDataNetVariableInstance},
+      {"function", SymbolType::kFunction},
+      {"task", SymbolType::kTask},
+      {"interface", SymbolType::kInterface},
+  });
+  return kSymbolInfoNames.Unparse(symbol_type, stream);
+}
+
 // Root SymbolTableNode has no key, but we identify it as "$root"
 static constexpr absl::string_view kRoot("$root");
 
@@ -74,15 +94,9 @@ static std::string ContextFullPath(const SymbolTableNode& context) {
 std::ostream& ReferenceNodeFullPath(std::ostream& stream,
                                     const ReferenceComponentNode& node) {
   if (node.Parent() != nullptr) {
-    ReferenceNodeFullPath(stream, *node.Parent());
+    ReferenceNodeFullPath(stream, *node.Parent());  // recursive
   }
-  return stream << node.Value();
-}
-
-// Only for internal diagnostics.
-static std::ostream& operator<<(std::ostream& stream,
-                                const ReferenceComponentNode& node) {
-  return ReferenceNodeFullPath(stream, node);
+  return node.Value().PrintPathComponent(stream);
 }
 
 // Validates iterator/pointer stability when calling VectorTree::NewChild.
@@ -666,6 +680,17 @@ void DependentReferences::VerifySymbolTableRoot(
   }
 }
 
+std::ostream& operator<<(std::ostream& stream,
+                         const DependentReferences& dep_refs) {
+  if (dep_refs.components == nullptr) return stream << "(empty-ref)";
+  dep_refs.components->PrintTree(
+      &stream,
+      [](std::ostream& s, const ReferenceComponent& ref_comp) -> std::ostream& {
+        return s << ref_comp;
+      });
+  return stream;
+}
+
 // Search up-scope, stopping at the first symbol found in the nearest scope.
 static const SymbolTableNode* LookupSymbolUpwards(
     const SymbolTableNode& context, absl::string_view symbol) {
@@ -802,9 +827,22 @@ std::ostream& operator<<(std::ostream& stream, ReferenceType ref_type) {
   return kReferenceTypeNames.Unparse(ref_type, stream);
 }
 
+std::ostream& ReferenceComponent::PrintPathComponent(
+    std::ostream& stream) const {
+  return stream << ref_type << identifier;
+}
+
+std::ostream& ReferenceComponent::PrintVerbose(std::ostream& stream) const {
+  PrintPathComponent(stream) << " -> ";
+  if (resolved_symbol == nullptr) {
+    return stream << "<unresolved>";
+  }
+  return stream << ContextFullPath(*resolved_symbol);
+}
+
 std::ostream& operator<<(std::ostream& stream,
                          const ReferenceComponent& component) {
-  return stream << component.ref_type << component.identifier;
+  return component.PrintVerbose(stream);
 }
 
 void DeclarationTypeInfo::VerifySymbolTableRoot(
@@ -825,6 +863,31 @@ absl::string_view SymbolInfo::CreateAnonymousScope(absl::string_view base) {
   return *anonymous_scope_names.back();
 }
 
+std::ostream& operator<<(std::ostream& stream,
+                         const DeclarationTypeInfo& decl_type_info) {
+  stream << "type-info { ";
+
+  stream << "source: ";
+  if (decl_type_info.syntax_origin != nullptr) {
+    stream << "\""
+           << verible::AutoTruncate{.text = verible::StringSpanOfSymbol(
+                                        *decl_type_info.syntax_origin),
+                                    .max_chars = 25}
+           << "\"";
+  } else {
+    stream << "(unknown)";
+  }
+
+  stream << ", type ref: ";
+  if (decl_type_info.user_defined_type != nullptr) {
+    stream << *decl_type_info.user_defined_type;
+  } else {
+    stream << "(primitive)";
+  }
+
+  return stream << " }";
+}
+
 void SymbolInfo::VerifySymbolTableRoot(const SymbolTableNode* root) const {
   declared_type.VerifySymbolTableRoot(root);
   for (const auto& local_ref : local_references_to_bind) {
@@ -837,6 +900,40 @@ void SymbolInfo::Resolve(const SymbolTableNode& context,
   for (auto& local_ref : local_references_to_bind) {
     local_ref.Resolve(context, diagnostics);
   }
+}
+
+std::ostream& SymbolInfo::PrintDefinition(std::ostream& stream,
+                                          size_t indent) const {
+  // print everything except local_references_to_bind
+  const verible::Spacer wrap(indent);
+  stream << wrap << "metatype: " << type << std::endl;
+  if (file_origin != nullptr) {
+    stream << wrap << "file: " << file_origin->ResolvedPath() << std::endl;
+  }
+  // declared_type only makes sense for elements with potentially user-defined
+  // types, and not for language element declarations like modules and classes.
+  if (type == SymbolType::kDataNetVariableInstance) {
+    stream << wrap << declared_type << std::endl;
+  }
+  return stream;
+}
+
+std::ostream& SymbolInfo::PrintReferences(std::ostream& stream,
+                                          size_t indent) const {
+  // only print local_references_to_bind
+  // TODO: support indentation
+  std::string newline_wrap(indent + 1, ' ');
+  newline_wrap.front() = '\n';
+  stream << "refs:";
+  // When there's at most 1 reference, print more compactly.
+  if (local_references_to_bind.size() > 1)
+    stream << newline_wrap;
+  else
+    stream << ' ';
+  stream << absl::StrJoin(local_references_to_bind, newline_wrap,
+                          absl::StreamFormatter());
+  if (local_references_to_bind.size() > 1) stream << newline_wrap;
+  return stream;
 }
 
 SymbolInfo::references_map_view_type
@@ -858,6 +955,25 @@ void SymbolTable::CheckIntegrity() const {
 void SymbolTable::Resolve(std::vector<absl::Status>* diagnostics) {
   symbol_table_root_.ApplyPreOrder(
       [=](SymbolTableNode& node) { node.Value().Resolve(node, diagnostics); });
+}
+
+std::ostream& SymbolTable::PrintSymbolDefinitions(std::ostream& stream) const {
+  return symbol_table_root_.PrintTree(
+      stream,
+      [](std::ostream& s, const SymbolInfo& sym,
+         size_t indent) -> std::ostream& {
+        return sym.PrintDefinition(s << std::endl, indent + 4 /* wrap */)
+               << verible::Spacer(indent);
+      });
+}
+
+std::ostream& SymbolTable::PrintSymbolReferences(std::ostream& stream) const {
+  return symbol_table_root_.PrintTree(stream,
+                                      [](std::ostream& s, const SymbolInfo& sym,
+                                         size_t indent) -> std::ostream& {
+                                        return sym.PrintReferences(
+                                            s, indent + 4 /* wrap */);
+                                      });
 }
 
 std::vector<absl::Status> BuildSymbolTable(const VerilogSourceFile& source,

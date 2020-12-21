@@ -504,6 +504,7 @@ cc_test(
     srcs = ["map_tree_test.cc"],
     deps = [
         ":map_tree",
+        ":spacer",
         "@com_google_googletest//:gtest_main",
     ],
 )
