@@ -354,7 +354,7 @@ class VeribleVerilogSyntax:
       file_data = SyntaxData()
 
       if file_path == "-":
-        file_data.source_code = input_
+        file_data.source_code = input_.encode("utf-8")
       else:
         with open(file_path, "rb") as f:
           file_data.source_code = f.read()
