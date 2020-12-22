@@ -112,7 +112,8 @@ class Node(anytree.NodeMixin):
     start = self.start
     end = self.end
     sd = self.syntax_data
-    if start and end and sd and sd.source_code and end <= len(sd.source_code):
+    if ((start is not None) and (end is not None) and sd and sd.source_code
+        and end <= len(sd.source_code)):
       return sd.source_code[start:end].decode("utf-8")
     return ""
 
