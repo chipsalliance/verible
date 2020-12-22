@@ -293,7 +293,7 @@ class VeribleVerilogSyntax:
         children = [
           transform(child) or LeafNode()
             for child in tree["children"]
-            if (not skip_null or child is not None)
+            if not (skip_null and child is None)
         ]
         tag = tree["tag"]
         return BranchNode(tag, children=children)
@@ -305,7 +305,11 @@ class VeribleVerilogSyntax:
     if "children" not in tree:
       return None
 
-    children = [transform(child) for child in tree["children"]]
+    children = [
+      transform(child) or LeafNode()
+        for child in tree["children"]
+        if not (skip_null and child is None)
+    ]
     tag = tree["tag"]
     return RootNode(tag, syntax_data=data, children=children)
 
