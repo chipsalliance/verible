@@ -51,10 +51,11 @@ http_archive(
 
 http_archive(
     name = "com_github_google_glog",
-    # Suggested from glog README; version from 2020-10-01
-    sha256 = "62efeb57ff70db9ea2129a16d0f908941e355d09d6d83c9f7b18557c0a7ab59e",
-    strip_prefix = "glog-d516278b1cd33cd148e8989aec488b6049a4ca0b",
-    urls = ["https://github.com/google/glog/archive/d516278b1cd33cd148e8989aec488b6049a4ca0b.zip"],
+    # Using the same version as in kythe
+    # https://github.com/kythe/kythe/blob/410f69c5bcb69fabcb78a5200b7631a1bffabd31/external.bzl#L155
+    sha256 = "9b4867ab66c33c41e2672b5de7e3133d38411cdb75eeb0d2b72c88bb10375c71",
+    strip_prefix = "glog-ba8a9f6952d04d1403b97df24e6836227751454e",
+    urls = ["https://github.com/google/glog/archive/ba8a9f6952d04d1403b97df24e6836227751454e.zip"],
 )
 
 #
