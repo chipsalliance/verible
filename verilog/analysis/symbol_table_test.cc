@@ -26,6 +26,7 @@
 #include "absl/status/status.h"
 #include "absl/strings/string_view.h"
 #include "common/text/tree_utils.h"
+#include "common/util/file_util.h"
 #include "common/util/logging.h"
 #include "common/util/range.h"
 #include "verilog/analysis/verilog_project.h"
@@ -42,7 +43,9 @@ class SymbolTable::Tester : public SymbolTable {
 
 namespace {
 
+using testing::ElementsAreArray;
 using testing::HasSubstr;
+using verible::file::testing::ScopedTestFile;
 
 // An in-memory source file that doesn't require file-system access,
 // nor create temporary files.
@@ -1968,10 +1971,43 @@ TEST(BuildSymbolTableTest, ClassDeclarationWithParameter) {
   }
 }
 
-// TODO:
-// expressions in ranges of dimensions.
-// parameters package/module/class.
-// generally, more testing unresolved symbols.
+struct FileListTestCase {
+  absl::string_view contents;
+  std::vector<absl::string_view> expected_files;
+};
+
+TEST(ParseSourceFileListFromFileTest, FileNotFound) {
+  const auto files_or_status(ParseSourceFileListFromFile("/no/such/file.txt"));
+  EXPECT_FALSE(files_or_status.ok());
+}
+
+TEST(ParseSourceFileListFromFileTest, VariousValidFiles) {
+  const FileListTestCase kTestCases[] = {
+      {"", {}},                // empty
+      {"\n\n", {}},            // blank lines
+      {"foo.sv", {"foo.sv"}},  // missing terminating newline, but still works
+      {"foo.sv\n", {"foo.sv"}},
+      {"file name contains space.sv\n", {"file name contains space.sv"}},
+      {"foo/bar.sv\n", {"foo/bar.sv"}},  // with path separator
+      {" foo.sv\n", {"foo.sv"}},         // remove leading whitespace
+      {"foo.sv \n", {"foo.sv"}},         // remove trailing whitespace
+      {"#foo.sv\n", {}},                 // commented out
+      {"# foo.sv\n", {}},                // commented out
+      {"foo.sv\nbar/bar.sv\n", {"foo.sv", "bar/bar.sv"}},
+      {"/foo/bar.sv\n"
+       "### ignore this one\n"
+       "bar/baz.txt\n",
+       {"/foo/bar.sv", "bar/baz.txt"}},
+  };
+  for (const auto& test : kTestCases) {
+    const ScopedTestFile test_file(testing::TempDir(), test.contents);
+    const auto files_or_status(
+        ParseSourceFileListFromFile(test_file.filename()));
+    ASSERT_TRUE(files_or_status.ok()) << files_or_status.status().message();
+    EXPECT_THAT(*files_or_status, ElementsAreArray(test.expected_files))
+        << "input: " << test.contents;
+  }
+}
 
 }  // namespace
 }  // namespace verilog

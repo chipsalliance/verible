@@ -978,6 +978,7 @@ std::ostream& SymbolTable::PrintSymbolReferences(std::ostream& stream) const {
 
 std::vector<absl::Status> BuildSymbolTable(const VerilogSourceFile& source,
                                            SymbolTable* symbol_table) {
+  VLOG(1) << __FUNCTION__;
   const auto* text_structure = source.GetTextStructure();
   if (text_structure == nullptr) return std::vector<absl::Status>();
   const auto& syntax_tree = text_structure->SyntaxTree();

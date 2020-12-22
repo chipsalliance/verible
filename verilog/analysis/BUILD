@@ -390,6 +390,7 @@ cc_test(
         ":symbol_table",
         ":verilog_project",
         "//common/text:tree_utils",
+        "//common/util:file_util",
         "//common/util:logging",
         "//common/util:range",
         "@com_google_absl//absl/base:core_headers",

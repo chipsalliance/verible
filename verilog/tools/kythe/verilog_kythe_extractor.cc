@@ -206,24 +206,15 @@ Output: Produces Indexing Facts for kythe (http://kythe.io).
   }
   const std::string file_list_root = absl::GetFlag(FLAGS_file_list_root);
 
-  // TODO(fangism): Push the following block into a VerilogProject method for
-  // consuming a file-list.
-  std::vector<std::string> files_names;
-  {
-    std::string content;
-    if (!verible::file::GetContents(file_list_path, &content).ok()) {
-      LOG(ERROR) << "Error while reading file list at: " << file_list_path;
-      return 1;
-    }
-
-    std::string filename;
-    std::istringstream stream(content);
-    while (stream >> filename) {
-      // Ignore blank lines and "# ..." comments
-      if (filename.empty() || filename[0] == '#') continue;
-      files_names.push_back(filename);
-    }
+  // Load file list.
+  const auto files_names_or_status(
+      verilog::ParseSourceFileListFromFile(file_list_path));
+  if (!files_names_or_status.ok()) {
+    LOG(ERROR) << "Error while reading file list: "
+               << files_names_or_status.status().message();
+    return 1;
   }
+  const std::vector<std::string>& files_names(*files_names_or_status);
 
   verilog::VerilogProject project(file_list_root, include_dir_paths);
 

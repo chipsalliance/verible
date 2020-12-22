@@ -24,6 +24,7 @@ installer(
         "//verilog/tools/lint:verible-verilog-lint",
         "//verilog/tools/obfuscator:verible-verilog-obfuscate",
         "//verilog/tools/preprocessor:verible-verilog-preprocessor",
+        "//verilog/tools/project:verible-verilog-project",
         "//verilog/tools/syntax:verible-verilog-syntax",
         "//verilog/tools/kythe:verible-verilog-kythe-extractor",
 

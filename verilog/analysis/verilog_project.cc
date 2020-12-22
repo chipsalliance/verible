@@ -14,8 +14,14 @@
 
 #include "verilog/analysis/verilog_project.h"
 
+#include <iostream>
+#include <string>
+#include <vector>
+
 #include "absl/memory/memory.h"
 #include "absl/status/status.h"
+#include "absl/strings/ascii.h"
+#include "absl/strings/match.h"
 #include "absl/strings/str_join.h"
 #include "common/text/text_structure.h"
 #include "common/util/file_util.h"
@@ -179,6 +185,25 @@ std::vector<absl::Status> VerilogProject::GetErrorStatuses() const {
     }
   }
   return statuses;
+}
+
+absl::StatusOr<std::vector<std::string>> ParseSourceFileListFromFile(
+    absl::string_view file_list_file) {
+  std::string content;
+  const auto read_status = verible::file::GetContents(file_list_file, &content);
+  if (!read_status.ok()) return read_status;
+
+  std::vector<std::string> files_names;
+  std::string filename;
+  std::istringstream stream(content);
+  while (std::getline(stream, filename)) {
+    // Ignore blank lines and "# ..." comments
+    if (filename.empty()) continue;
+    if (filename.front() == '#') continue;
+    absl::RemoveExtraAsciiWhitespace(&filename);
+    files_names.push_back(filename);
+  }
+  return files_names;
 }
 
 }  // namespace verilog

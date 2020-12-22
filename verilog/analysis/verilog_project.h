@@ -249,6 +249,10 @@ class VerilogProject {
       buffer_to_analyzer_map_;
 };
 
+// Reads in a list of files line-by-line from 'file_list_file'.
+absl::StatusOr<std::vector<std::string>> ParseSourceFileListFromFile(
+    absl::string_view file_list_file);
+
 }  // namespace verilog
 
 #endif  // VERIBLE_VERILOG_ANALYSIS_VERILOG_PROJECT_H_
