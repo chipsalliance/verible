@@ -106,7 +106,7 @@ class ExpandableTreeView {
               return node_type(other);
             })) {
     // Guarantee structural equivalence with original tree.
-    CHECK_EQ(StructureEqual(view_, tree).left, nullptr);
+    CHECK(StructureEqual(view_, tree).left == nullptr);
   }
 
   // TODO(fangism): implement later as needed

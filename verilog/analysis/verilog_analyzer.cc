@@ -312,7 +312,7 @@ class MacroCallArgExpander : public MutableTreeVisitorRecursive {
         // and causing excessive reallocation).
         TextStructureView::DeferredExpansion& analysis_slot =
             InsertKeyOrDie(&subtrees_to_splice_, token.left(full_text_));
-        CHECK_EQ(analysis_slot.subanalysis.get(), nullptr)
+        CHECK(analysis_slot.subanalysis.get() == nullptr)
             << "Cannot expand the same location twice.  Token: " << token;
         analysis_slot.expansion_point = leaf_owner;
         analysis_slot.subanalysis = std::move(expr_analyzer);
