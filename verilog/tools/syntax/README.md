@@ -256,6 +256,10 @@ Token tag enumerations come from the [parser generator](../../parser/verilog.y),
 | `phase`          | string | Phase during which the error occured. One of: `lex`, `parse`, `preprocess`, `unknown`. |
 | `message`        | string | (optional) Error explanation.                    |
 
+### Python examples and helper code
+
+[`export_json_examples`](./export_json_examples) directory contains Python wrappers for `verible-verilog-syntax --export_json` ([`verible_verilog_syntax.py`](./export_json_examples/verible_verilog_syntax.py) file) and some examples.
+
 <!-- reference links -->
 
 [SV-LRM]: https://ieeexplore.ieee.org/document/8299595
