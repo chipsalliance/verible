@@ -371,8 +371,11 @@ TEST(BuildSymbolTableTest, AvoidCrashFromFuzzer) {
   // All that matters is that these test cases do not trigger crashes.
   constexpr absl::string_view codes[] = {
       // some of these test cases come from fuzz testing
+      // and may contain syntax errors
       "`e(C*C);\n",              // expect two distinct reference trees
       "`e(C::D * C.m + 12);\n",  // expect two reference trees
+      "n#7;\n",
+      "c#1;;=P;\n",
   };
   for (const auto& code : codes) {
     TestVerilogSourceFile src("foobar.sv", code);

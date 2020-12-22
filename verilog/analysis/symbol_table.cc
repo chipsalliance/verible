@@ -296,20 +296,24 @@ class SymbolTable::Builder : public TreeContextVisitor {
   }
 
   void DescendActualParameterList(const SyntaxTreeNode& node) {
-    // Pre-allocate siblings to guarantee pointer/iterator stability.
-    // FindAll* will also catch actual port connections inside preprocessing
-    // conditionals.
-    const size_t num_ports = FindAllNamedParams(node).size();
-    ABSL_DIE_IF_NULL(reference_branch_point_)->Children().reserve(num_ports);
+    if (reference_branch_point_ != nullptr) {
+      // Pre-allocate siblings to guarantee pointer/iterator stability.
+      // FindAll* will also catch actual port connections inside preprocessing
+      // conditionals.
+      const size_t num_params = FindAllNamedParams(node).size();
+      reference_branch_point_->Children().reserve(num_params);
+    }
     Descend(node);
   }
 
   void DescendPortActualList(const SyntaxTreeNode& node) {
-    // Pre-allocate siblings to guarantee pointer/iterator stability.
-    // FindAll* will also catch actual port connections inside preprocessing
-    // conditionals.
-    const size_t num_ports = FindAllActualNamedPort(node).size();
-    ABSL_DIE_IF_NULL(reference_branch_point_)->Children().reserve(num_ports);
+    if (reference_branch_point_ != nullptr) {
+      // Pre-allocate siblings to guarantee pointer/iterator stability.
+      // FindAll* will also catch actual port connections inside preprocessing
+      // conditionals.
+      const size_t num_ports = FindAllActualNamedPort(node).size();
+      reference_branch_point_->Children().reserve(num_ports);
+    }
     Descend(node);
   }
 
