@@ -14,6 +14,7 @@ cc_binary(
         "//common/util:subcommand",
         "//verilog/analysis:symbol_table",
         "//verilog/analysis:verilog_project",
+        "@com_google_absl//absl/flags:flag",
         "@com_google_absl//absl/flags:usage",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/strings",
