@@ -98,6 +98,7 @@ cc_library(
     srcs = ["init_command_line.cc"],
     hdrs = ["init_command_line.h"],
     deps = [
+        ":logging",
         # these deps are needed by init_command_line.cc:
         ":build_version",  # buildcleaner: keep
         "@com_google_absl//absl/flags:config",  # buildcleaner: keep
@@ -142,13 +143,11 @@ cc_library(
 
 cc_library(
     name = "logging",
-    srcs = ["logging.cc"],
     hdrs = ["logging.h"],
     deps = [
+        "@com_github_google_glog//:glog",
         "@com_google_absl//absl/base",
         "@com_google_absl//absl/base:core_headers",
-        "@com_google_absl//absl/base:log_severity",
-        "@com_google_absl//absl/strings",
     ],
 )
 
