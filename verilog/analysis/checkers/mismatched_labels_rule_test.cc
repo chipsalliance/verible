@@ -209,6 +209,40 @@ TEST(MismatchedLabelsRuleTest, MismatchedLabelsTests) {
        "  end\n"
        "endmodule"},
       // begin label missing
+      {// conditional generate block
+       "module mm;\n"
+       "  if (1) begin : lab1\n"
+       "  end\n"
+       "endmodule\n"},
+      {// conditional generate block
+       "module mm;\n"
+       "  if (1) begin : lab1\n"
+       "  end : lab1\n"
+       "endmodule\n"},
+      {// conditional generate block
+       "module mm;\n"
+       "  if (1) lab1 : begin\n"
+       "  end : lab1\n"
+       "endmodule\n"},
+      {// conditional generate block
+       "module mm;\n"
+       "  if (1) lab1 : begin\n"
+       "  end : ",
+       {SymbolIdentifier, "lab2"},
+       "\n"
+       "endmodule\n"},
+      {// loop generate block
+       "module mm;\n"
+       "  for (genvar i=0; i<2; ++i) lab3 : begin\n"
+       "  end : lab3\n"
+       "endmodule\n"},
+      {// loop generate block
+       "module mm;\n"
+       "  for (genvar i=0; i<2; ++i) lab3 : begin\n"
+       "  end : ",
+       {SymbolIdentifier, "lab4"},
+       "\n"
+       "endmodule\n"},
   };
   RunLintTestCases<VerilogAnalyzer, MismatchedLabelsRule>(kTestCases);
 }

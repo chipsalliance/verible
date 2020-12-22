@@ -93,6 +93,24 @@ endmodule)",
   EXPECT_EQ(beginToken, nullptr);
 }
 
+TEST(GetBeginLabelTokenInfoTest, GenerateBlockPrefixLabel) {
+  VerilogAnalyzer analyzer(R"(
+module foo;
+if (1) prefix_label : begin
+end
+endmodule)",
+                           "");
+
+  ASSERT_OK(analyzer.Analyze());
+  const auto& root = analyzer.Data().SyntaxTree();
+
+  const auto begin_statements = FindAllBeginStatements(*root);
+  ASSERT_EQ(begin_statements.size(), 1);
+
+  const auto* beginToken = GetBeginLabelTokenInfo(*begin_statements[0].match);
+  EXPECT_EQ(ABSL_DIE_IF_NULL(beginToken)->text(), "prefix_label");
+}
+
 TEST(GetEndLabelTokenInfoTest, SingleNoLabel) {
   VerilogAnalyzer analyzer(R"(
 module foo;

@@ -716,6 +716,7 @@ cc_library(
         "//common/text:symbol",
         "//common/text:syntax_tree_context",
         "//common/text:tree_utils",
+        "//verilog/parser:verilog_token_enum",
     ],
 )
 
