@@ -59,6 +59,11 @@ const verible::Symbol* GetConditionExpressionTrueCase(const verible::Symbol&);
 // Returns the false-case expression of a kConditionExpression.
 const verible::Symbol* GetConditionExpressionFalseCase(const verible::Symbol&);
 
+// From a statement like "assign foo = condition_a ? a : b;", returns condition
+// expressions "condition_a ? a : b".
+std::vector<verible::TreeSearchMatch> FindAllConditionExpressions(
+    const verible::Symbol&);
+
 // TODO(fangism): evaluate constant expressions
 
 // From a statement like "a[i].j[k] = p[q].r(s);", returns full references

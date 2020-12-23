@@ -18,6 +18,7 @@
 #include "common/analysis/citation.h"
 #include "verilog/analysis/lint_rule_registry.h"
 #include "verilog/CST/expression.h"
+#include "verilog/CST/verilog_matchers.h"
 
 namespace verilog {
 namespace analysis {
@@ -59,7 +60,9 @@ void SuggestParenthesesRule::HandleNode(
       const auto trueCaseChildtag = static_cast<verilog::NodeEnum>(trueCaseChild->Tag().tag);
       
       if(trueCaseChildtag == NodeEnum::kConditionExpression){
-        violations_.insert(LintViolation(*trueCase, kMessage, context));
+        const verible::TokenInfo token(SymbolIdentifier, verible::StringSpanOfSymbol(*trueCase));
+
+        violations_.insert(LintViolation(token, kMessage, context));
       }
     }
     default:

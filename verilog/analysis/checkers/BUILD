@@ -1079,6 +1079,7 @@ cc_library(
         "//verilog/CST:expression",
         "//verilog/analysis:descriptions",
         "//verilog/analysis:lint_rule_registry",
+        "//verilog/CST:verilog_matchers",
     ],
     alwayslink = 1,
 )

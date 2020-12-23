@@ -110,6 +110,151 @@ TEST(ConstantIntegerValueTest, IsInteger) {
   }
 }
 
+TEST(GetConditionExpressionPredicateTest, Various) {
+  constexpr int kTag = 1;  // value doesn't matter
+  const SyntaxTreeSearchTestCase kTestCases[] = {
+      {""},
+      {"module m; endmodule\n"},
+      {"module m;\ninitial begin end\nendmodule"},
+      {"class   c;  endclass\n"},
+      {"function  f;  endfunction\n"},
+      {"function  f;\n", "a = ", {kTag, "b"}, " ? c : d", "; endfunction\n"},
+      {"module m;\n",
+      "  assign foo = ", {kTag, "condition_a"}, " ? b : c", ";\n",
+      "endmodule\n"},
+      {"module m;\n", "parameter foo = ", {kTag, "condition_a"}, "? a : b" ,";\nendmodule"},
+      {"module m;\n", "always @(posedge clk) begin\n left <= ", {kTag, "condition_a"}, "? a : b", "; \nend", "\nendmodule"},
+      {"function f;\n g = h(", {kTag, "condition_a"}, "? a : b", "); \nendfunction"},
+      {"module m;\n", "always @(posedge clk)\n", "case (", {kTag, "condition_a"}, "? a : b", ")\n", "default :;\n", "endcase\n", "\nendmodule"},
+  };
+  for (const auto& test : kTestCases) {
+        TestVerilogSyntaxRangeMatches(
+        __FUNCTION__, test, [](const TextStructureView& text_structure) {
+          const auto& root = text_structure.SyntaxTree();
+          const auto exprs = FindAllConditionExpressions(*ABSL_DIE_IF_NULL(root));
+
+          std::vector<TreeSearchMatch> predicates;
+          for (const auto& expr : exprs) {
+            const auto* predicate = GetConditionExpressionPredicate(*expr.match);
+            if (predicate != nullptr) {
+              predicates.push_back(TreeSearchMatch{predicate, {/* ignored context */}});
+            } else {
+              EXPECT_NE(predicate, nullptr) << "predicate:\n"
+                                       << verible::RawTreePrinter(*expr.match);
+            }
+          }
+          return predicates;
+        });
+
+  }
+}
+
+TEST(GetConditionExpressionTrueCaseTest, Various) {
+  constexpr int kTag = 1;  // value doesn't matter
+  const SyntaxTreeSearchTestCase kTestCases[] = {
+      {""},
+      {"module m; endmodule\n"},
+      {"module m;\ninitial begin end\nendmodule"},
+      {"class   c;  endclass\n"},
+      {"function  f;  endfunction\n"},
+      {"function  f;\n", "a = ", "b ? ", {kTag, "c"}, " : d", "; endfunction\n"},
+      {"function  f;\n", "a = ", "b ? ", {kTag, "(c + d)"}, " : d", "; endfunction\n"},
+      {"function  f;\n", "a = ", "b ? ", {kTag, "(c << d)"}, " : d", "; endfunction\n"},
+      {"module m;\n",
+      "  assign foo = ", "condition_a ? ", {kTag, "b"}, " : c", ";\n",
+      "endmodule\n"},
+      {"module m;\n", "parameter foo = ", "condition_a ? ", {kTag, "a"}, " : b" ,";\nendmodule"},
+      {"module m;\n", "always @(posedge clk) begin\n left <= ", "condition_a ? ", {kTag, "a"}, " : b", "; \nend", "\nendmodule"},
+      {"function f;\n g = h(", "condition_a ? ", {kTag, "a"}, " : b", "); \nendfunction"},
+      {"module m;\n", "always @(posedge clk)\n", "case (", "condition_a ? ", {kTag, "a"}, " : b", ")\n", "default :;\n", "endcase\n", "\nendmodule"},
+  };
+  for (const auto& test : kTestCases) {
+        TestVerilogSyntaxRangeMatches(
+        __FUNCTION__, test, [](const TextStructureView& text_structure) {
+          const auto& root = text_structure.SyntaxTree();
+          const auto exprs = FindAllConditionExpressions(*ABSL_DIE_IF_NULL(root));
+
+          std::vector<TreeSearchMatch> predicates;
+          for (const auto& expr : exprs) {
+            const auto* predicate = GetConditionExpressionTrueCase(*expr.match);
+            if (predicate != nullptr) {
+              predicates.push_back(TreeSearchMatch{predicate, {/* ignored context */}});
+            } else {
+              EXPECT_NE(predicate, nullptr) << "predicate:\n"
+                                       << verible::RawTreePrinter(*expr.match);
+            }
+          }
+          return predicates;
+        });
+  }
+}
+
+TEST(GetConditionExpressionFalseCaseTest, Various) {
+  constexpr int kTag = 1;  // value doesn't matter
+  const SyntaxTreeSearchTestCase kTestCases[] = {
+      {""},
+      {"module m; endmodule\n"},
+      {"module m;\ninitial begin end\nendmodule"},
+      {"class   c;  endclass\n"},
+      {"function  f;  endfunction\n"},
+      {"function  f;\n", "a = ", "b ? ", "c : ", {kTag, "d"}, "; endfunction\n"},
+      {"function  f;\n", "a = ", "b ? ", "c : ", {kTag, "(c + d)"}, "; endfunction\n"},
+      {"function  f;\n", "a = ", "b ? ", "c : ", {kTag, "(c << d)"}, "; endfunction\n"},
+      {"module m;\n",
+      "  assign foo = ", "condition_a ? ", "b : ", {kTag, "c"}, ";\n",
+      "endmodule\n"},
+      {"module m;\n", "parameter foo = ", "condition_a ? ", "a : ", {kTag, "b"} ,";\nendmodule"},
+      {"module m;\n", "always @(posedge clk) begin\n left <= ", "condition_a ? ", "a : ", {kTag, "b"}, "; \nend", "\nendmodule"},
+      {"function f;\n g = h(", "condition_a ? ", "a : ", {kTag, "b"}, "); \nendfunction"},
+      {"module m;\n", "always @(posedge clk)\n", "case (", "condition_a ? ", "a : ", {kTag, "b"}, ")\n", "default :;\n", "endcase\n", "\nendmodule"},
+  };
+  for (const auto& test : kTestCases) {
+        TestVerilogSyntaxRangeMatches(
+        __FUNCTION__, test, [](const TextStructureView& text_structure) {
+          const auto& root = text_structure.SyntaxTree();
+          const auto exprs = FindAllConditionExpressions(*ABSL_DIE_IF_NULL(root));
+
+          std::vector<TreeSearchMatch> predicates;
+          for (const auto& expr : exprs) {
+            const auto* predicate = GetConditionExpressionFalseCase(*expr.match);
+            if (predicate != nullptr) {
+              predicates.push_back(TreeSearchMatch{predicate, {/* ignored context */}});
+            } else {
+              EXPECT_NE(predicate, nullptr) << "predicate:\n"
+                                       << verible::RawTreePrinter(*expr.match);
+            }
+          }
+          return predicates;
+        });
+  }
+}
+
+TEST(FindAllConditionExpressionsTest, Various) {
+  constexpr int kTag = 1;  // value doesn't matter
+  const SyntaxTreeSearchTestCase kTestCases[] = {
+      {""},
+      {"module m; endmodule\n"},
+      {"module m;\ninitial begin end\nendmodule"},
+      {"class   c;  endclass\n"},
+      {"function  f;  endfunction\n"},
+      {"function  f;\n", "a = ", {kTag, "b ? c : d"}, "; endfunction\n"},
+      {"module m;\n",
+      "  assign foo = ", {kTag, "condition_a ? b : c"}, ";\n",
+      "endmodule\n"},
+      {"module m;\n", "parameter foo = ", {kTag, "condition_a? a : b"} ,";\nendmodule"},
+      {"module m;\n", "always @(posedge clk) begin\n left <= ", {kTag, "condition_a? a : b"}, "; \nend", "\nendmodule"},
+      {"function f;\n g = h(", {kTag, "condition_a? a : b"}, "); \nendfunction"},
+      {"module m;\n", "always @(posedge clk)\n", "case (", {kTag, "condition_a? a : b"}, ")\n", "default :;\n", "endcase\n", "\nendmodule"},
+  };
+  for (const auto& test : kTestCases) {
+    TestVerilogSyntaxRangeMatches(
+        __FUNCTION__, test, [](const TextStructureView& text_structure) {
+          const auto& root = text_structure.SyntaxTree();
+          return FindAllConditionExpressions(*ABSL_DIE_IF_NULL(root));
+        });
+  }
+}
+
 TEST(FindAllReferenceExpressionsTest, Various) {
   constexpr int kTag = 1;  // value doesn't matter
   const SyntaxTreeSearchTestCase kTestCases[] = {
