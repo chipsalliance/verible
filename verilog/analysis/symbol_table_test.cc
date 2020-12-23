@@ -14,6 +14,7 @@
 
 #include "verilog/analysis/symbol_table.h"
 
+#include <algorithm>
 #include <functional>
 #include <iostream>
 #include <sstream>
@@ -1002,7 +1003,7 @@ TEST(BuildSymbolTableTest, ModuleInstanceTwoInSameDecl) {
       for (const auto& pp_inst : pp_instances) {
         MUST_ASSIGN_LOOKUP_SYMBOL(rr, qq, pp_inst);
         EXPECT_TRUE(rr_info.local_references_to_bind.empty());
-        // Verify that typeof(rr) successfully resolved to module pp.
+        // Verify that typeof(r1,r2) successfully resolved to module pp.
         EXPECT_EQ(
             rr_info.declared_type.user_defined_type->Value().resolved_symbol,
             &pp);
@@ -1972,6 +1973,522 @@ TEST(BuildSymbolTableTest, ClassDeclarationWithParameter) {
     symbol_table.Resolve(&resolve_diagnostics);
     EXPECT_TRUE(resolve_diagnostics.empty());
   }
+}
+
+static bool SourceFileLess(const TestVerilogSourceFile* left,
+                           const TestVerilogSourceFile* right) {
+  return left->ReferencedPath() < right->ReferencedPath();
+}
+
+static void SortSourceFiles(
+    std::vector<const TestVerilogSourceFile*>* sources) {
+  std::sort(sources->begin(), sources->end(), SourceFileLess);
+}
+
+static bool PermuteSourceFiles(
+    std::vector<const TestVerilogSourceFile*>* sources) {
+  return std::next_permutation(sources->begin(), sources->end(),
+                               SourceFileLess);
+}
+
+TEST(BuildSymbolTableTest, MultiFileModuleInstance) {
+  // Linear dependency chain between 3 files.
+  TestVerilogSourceFile pp_src("pp.sv",
+                               "module pp;\n"
+                               "endmodule\n");
+  TestVerilogSourceFile qq_src("qq.sv",
+                               "module qq;\n"
+                               "  pp pp_inst();\n"  // instance
+                               "endmodule\n");
+  TestVerilogSourceFile ss_src("ss.sv",
+                               "module ss;\n"
+                               "  qq qq_inst();\n"  // instance
+                               "endmodule\n");
+  {
+    const auto status = pp_src.Parse();
+    ASSERT_TRUE(status.ok()) << status.message();
+  }
+  {
+    const auto status = qq_src.Parse();
+    ASSERT_TRUE(status.ok()) << status.message();
+  }
+  {
+    const auto status = ss_src.Parse();
+    ASSERT_TRUE(status.ok()) << status.message();
+  }
+
+  // All permutations of the following file ordering should end up with the
+  // same results.
+  std::vector<const TestVerilogSourceFile*> ordering(
+      {&pp_src, &qq_src, &ss_src});
+  // start with the lexicographically "lowest" permutation
+  SortSourceFiles(&ordering);
+  int count = 0;
+  do {
+    SymbolTable symbol_table(nullptr);
+    const SymbolTableNode& root_symbol(symbol_table.Root());
+
+    for (const auto* src : ordering) {
+      const auto build_diagnostics = BuildSymbolTable(*src, &symbol_table);
+      EXPECT_TRUE(build_diagnostics.empty())
+          << "Unexpected diagnostic:\n"
+          << build_diagnostics.front().message();
+    }
+
+    // Goal: resolve the reference of "pp" to this definition node.
+    MUST_ASSIGN_LOOKUP_SYMBOL(pp, root_symbol, "pp");
+
+    // Inspect inside the "qq" module definition.
+    MUST_ASSIGN_LOOKUP_SYMBOL(qq, root_symbol, "qq");
+
+    MUST_ASSIGN_LOOKUP_SYMBOL(ss, root_symbol, "ss");
+
+    // "pp_inst" is an instance of type "pp"
+    MUST_ASSIGN_LOOKUP_SYMBOL(pp_inst, qq, "pp_inst");
+
+    // "qq_inst" is an instance of type "qq"
+    MUST_ASSIGN_LOOKUP_SYMBOL(qq_inst, ss, "qq_inst");
+
+    EXPECT_EQ(pp_info.file_origin, &pp_src);
+    EXPECT_EQ(qq_info.file_origin, &qq_src);
+    EXPECT_EQ(ss_info.file_origin, &ss_src);
+    {
+      ASSERT_EQ(qq_info.local_references_to_bind.size(), 2);
+      const auto ref_map(qq_info.LocalReferencesMapViewForTesting());
+      {
+        ASSIGN_MUST_FIND_EXACTLY_ONE_REF(pp_type, ref_map, "pp");
+        const ReferenceComponentNode* ref_node = pp_type->LastLeaf();
+        ASSERT_NE(ref_node, nullptr);
+        const ReferenceComponent& ref(ref_node->Value());
+        EXPECT_EQ(ref.identifier, "pp");
+        EXPECT_TRUE(verible::IsSubRange(ref.identifier,
+                                        qq_src.GetTextStructure()->Contents()));
+        EXPECT_EQ(ref.ref_type, ReferenceType::kUnqualified);
+        EXPECT_EQ(ref.resolved_symbol, nullptr);
+      }
+      {  // self-reference to "pp_inst" instance
+        ASSIGN_MUST_FIND_EXACTLY_ONE_REF(pp_inst_self_ref, ref_map, "pp_inst");
+        EXPECT_TRUE(pp_inst_self_ref->components->is_leaf());  // no named ports
+        // self-reference is already bound.
+        EXPECT_EQ(pp_inst_self_ref->components->Value().resolved_symbol,
+                  &pp_inst);
+      }
+    }
+    {
+      ASSERT_EQ(ss_info.local_references_to_bind.size(), 2);
+      const auto ref_map(ss_info.LocalReferencesMapViewForTesting());
+      {
+        ASSIGN_MUST_FIND_EXACTLY_ONE_REF(qq_type, ref_map, "qq");
+        const ReferenceComponentNode* ref_node = qq_type->LastLeaf();
+        ASSERT_NE(ref_node, nullptr);
+        const ReferenceComponent& ref(ref_node->Value());
+        EXPECT_EQ(ref.identifier, "qq");
+        EXPECT_TRUE(verible::IsSubRange(ref.identifier,
+                                        ss_src.GetTextStructure()->Contents()));
+        EXPECT_EQ(ref.ref_type, ReferenceType::kUnqualified);
+        EXPECT_EQ(ref.resolved_symbol, nullptr);
+      }
+      {  // self-reference to "qq_inst" instance
+        ASSIGN_MUST_FIND_EXACTLY_ONE_REF(qq_inst_self_ref, ref_map, "qq_inst");
+        EXPECT_TRUE(qq_inst_self_ref->components->is_leaf());  // no named ports
+        // self-reference is already bound.
+        EXPECT_EQ(qq_inst_self_ref->components->Value().resolved_symbol,
+                  &qq_inst);
+      }
+    }
+
+    {  // Verify pp_inst's type info
+      EXPECT_TRUE(pp_inst_info.local_references_to_bind.empty());
+      EXPECT_NE(pp_inst_info.declared_type.user_defined_type, nullptr);
+      const ReferenceComponent& pp_type(
+          pp_inst_info.declared_type.user_defined_type->Value());
+      EXPECT_EQ(pp_type.identifier, "pp");
+      EXPECT_EQ(pp_type.resolved_symbol, nullptr);  // nothing resolved yet
+      EXPECT_EQ(pp_type.ref_type, ReferenceType::kUnqualified);
+      EXPECT_EQ(pp_inst_info.file_origin, &qq_src);
+    }
+
+    {  // Verify qq_inst's type info
+      EXPECT_TRUE(qq_inst_info.local_references_to_bind.empty());
+      EXPECT_NE(qq_inst_info.declared_type.user_defined_type, nullptr);
+      const ReferenceComponent& qq_type(
+          qq_inst_info.declared_type.user_defined_type->Value());
+      EXPECT_EQ(qq_type.identifier, "qq");
+      EXPECT_EQ(qq_type.resolved_symbol, nullptr);  // nothing resolved yet
+      EXPECT_EQ(qq_type.ref_type, ReferenceType::kUnqualified);
+      EXPECT_EQ(qq_inst_info.file_origin, &ss_src);
+    }
+
+    // Resolve symbols.
+    std::vector<absl::Status> resolve_diagnostics;
+    symbol_table.Resolve(&resolve_diagnostics);
+
+    EXPECT_TRUE(resolve_diagnostics.empty());
+    // Verify that typeof(pp_inst) successfully resolved to module pp.
+    EXPECT_EQ(
+        pp_inst_info.declared_type.user_defined_type->Value().resolved_symbol,
+        &pp);
+    // Verify that typeof(qq_inst) successfully resolved to module qq.
+    EXPECT_EQ(
+        qq_inst_info.declared_type.user_defined_type->Value().resolved_symbol,
+        &qq);
+    ++count;
+  } while (PermuteSourceFiles(&ordering));
+  EXPECT_EQ(count, 6);  // make sure we covered all permutations
+}
+
+TEST(BuildSymbolTableTest, SingleFileModuleInstanceCyclicDependencies) {
+  // Cyclic dependencies among three modules in one file.
+  // Make sure this can still build and resolve without hanging,
+  // even if this is semantically illegal.
+  TestVerilogSourceFile src("cycle.sv",
+                            "module pp;\n"
+                            "  ss ss_inst();\n"  // instance
+                            "endmodule\n"
+                            "module qq;\n"
+                            "  pp pp_inst();\n"  // instance
+                            "endmodule\n"
+                            "module ss;\n"
+                            "  qq qq_inst();\n"  // instance
+                            "endmodule\n");
+  {
+    const auto status = src.Parse();
+    ASSERT_TRUE(status.ok()) << status.message();
+  }
+
+  SymbolTable symbol_table(nullptr);
+  const SymbolTableNode& root_symbol(symbol_table.Root());
+
+  const auto build_diagnostics = BuildSymbolTable(src, &symbol_table);
+  EXPECT_TRUE(build_diagnostics.empty()) << "Unexpected diagnostic:\n"
+                                         << build_diagnostics.front().message();
+
+  // Goal: resolve the reference of "pp" to this definition node.
+  MUST_ASSIGN_LOOKUP_SYMBOL(pp, root_symbol, "pp");
+
+  // Inspect inside the "qq" module definition.
+  MUST_ASSIGN_LOOKUP_SYMBOL(qq, root_symbol, "qq");
+
+  MUST_ASSIGN_LOOKUP_SYMBOL(ss, root_symbol, "ss");
+
+  // "ss_inst" is an instance of type "ss"
+  MUST_ASSIGN_LOOKUP_SYMBOL(ss_inst, pp, "ss_inst");
+
+  // "pp_inst" is an instance of type "pp"
+  MUST_ASSIGN_LOOKUP_SYMBOL(pp_inst, qq, "pp_inst");
+
+  // "qq_inst" is an instance of type "qq"
+  MUST_ASSIGN_LOOKUP_SYMBOL(qq_inst, ss, "qq_inst");
+
+  EXPECT_EQ(pp_info.file_origin, &src);
+  EXPECT_EQ(qq_info.file_origin, &src);
+  EXPECT_EQ(ss_info.file_origin, &src);
+  {
+    ASSERT_EQ(pp_info.local_references_to_bind.size(), 2);
+    const auto ref_map(pp_info.LocalReferencesMapViewForTesting());
+    {
+      ASSIGN_MUST_FIND_EXACTLY_ONE_REF(ss_type, ref_map, "ss");
+      const ReferenceComponentNode* ref_node = ss_type->LastLeaf();
+      ASSERT_NE(ref_node, nullptr);
+      const ReferenceComponent& ref(ref_node->Value());
+      EXPECT_EQ(ref.identifier, "ss");
+      EXPECT_TRUE(verible::IsSubRange(ref.identifier,
+                                      src.GetTextStructure()->Contents()));
+      EXPECT_EQ(ref.ref_type, ReferenceType::kUnqualified);
+      EXPECT_EQ(ref.resolved_symbol, nullptr);
+    }
+    {  // self-reference to "ss_inst" instance
+      ASSIGN_MUST_FIND_EXACTLY_ONE_REF(ss_inst_self_ref, ref_map, "ss_inst");
+      EXPECT_TRUE(ss_inst_self_ref->components->is_leaf());  // no named ports
+      // self-reference is already bound.
+      EXPECT_EQ(ss_inst_self_ref->components->Value().resolved_symbol,
+                &ss_inst);
+    }
+  }
+  {
+    ASSERT_EQ(qq_info.local_references_to_bind.size(), 2);
+    const auto ref_map(qq_info.LocalReferencesMapViewForTesting());
+    {
+      ASSIGN_MUST_FIND_EXACTLY_ONE_REF(pp_type, ref_map, "pp");
+      const ReferenceComponentNode* ref_node = pp_type->LastLeaf();
+      ASSERT_NE(ref_node, nullptr);
+      const ReferenceComponent& ref(ref_node->Value());
+      EXPECT_EQ(ref.identifier, "pp");
+      EXPECT_TRUE(verible::IsSubRange(ref.identifier,
+                                      src.GetTextStructure()->Contents()));
+      EXPECT_EQ(ref.ref_type, ReferenceType::kUnqualified);
+      EXPECT_EQ(ref.resolved_symbol, nullptr);
+    }
+    {  // self-reference to "pp_inst" instance
+      ASSIGN_MUST_FIND_EXACTLY_ONE_REF(pp_inst_self_ref, ref_map, "pp_inst");
+      EXPECT_TRUE(pp_inst_self_ref->components->is_leaf());  // no named ports
+      // self-reference is already bound.
+      EXPECT_EQ(pp_inst_self_ref->components->Value().resolved_symbol,
+                &pp_inst);
+    }
+  }
+  {
+    ASSERT_EQ(ss_info.local_references_to_bind.size(), 2);
+    const auto ref_map(ss_info.LocalReferencesMapViewForTesting());
+    {
+      ASSIGN_MUST_FIND_EXACTLY_ONE_REF(qq_type, ref_map, "qq");
+      const ReferenceComponentNode* ref_node = qq_type->LastLeaf();
+      ASSERT_NE(ref_node, nullptr);
+      const ReferenceComponent& ref(ref_node->Value());
+      EXPECT_EQ(ref.identifier, "qq");
+      EXPECT_TRUE(verible::IsSubRange(ref.identifier,
+                                      src.GetTextStructure()->Contents()));
+      EXPECT_EQ(ref.ref_type, ReferenceType::kUnqualified);
+      EXPECT_EQ(ref.resolved_symbol, nullptr);
+    }
+    {  // self-reference to "qq_inst" instance
+      ASSIGN_MUST_FIND_EXACTLY_ONE_REF(qq_inst_self_ref, ref_map, "qq_inst");
+      EXPECT_TRUE(qq_inst_self_ref->components->is_leaf());  // no named ports
+      // self-reference is already bound.
+      EXPECT_EQ(qq_inst_self_ref->components->Value().resolved_symbol,
+                &qq_inst);
+    }
+  }
+
+  {  // Verify ss_inst's type info
+    EXPECT_TRUE(ss_inst_info.local_references_to_bind.empty());
+    EXPECT_NE(ss_inst_info.declared_type.user_defined_type, nullptr);
+    const ReferenceComponent& ss_type(
+        ss_inst_info.declared_type.user_defined_type->Value());
+    EXPECT_EQ(ss_type.identifier, "ss");
+    EXPECT_EQ(ss_type.resolved_symbol, nullptr);  // nothing resolved yet
+    EXPECT_EQ(ss_type.ref_type, ReferenceType::kUnqualified);
+    EXPECT_EQ(ss_inst_info.file_origin, &src);
+  }
+
+  {  // Verify pp_inst's type info
+    EXPECT_TRUE(pp_inst_info.local_references_to_bind.empty());
+    EXPECT_NE(pp_inst_info.declared_type.user_defined_type, nullptr);
+    const ReferenceComponent& pp_type(
+        pp_inst_info.declared_type.user_defined_type->Value());
+    EXPECT_EQ(pp_type.identifier, "pp");
+    EXPECT_EQ(pp_type.resolved_symbol, nullptr);  // nothing resolved yet
+    EXPECT_EQ(pp_type.ref_type, ReferenceType::kUnqualified);
+    EXPECT_EQ(pp_inst_info.file_origin, &src);
+  }
+
+  {  // Verify qq_inst's type info
+    EXPECT_TRUE(qq_inst_info.local_references_to_bind.empty());
+    EXPECT_NE(qq_inst_info.declared_type.user_defined_type, nullptr);
+    const ReferenceComponent& qq_type(
+        qq_inst_info.declared_type.user_defined_type->Value());
+    EXPECT_EQ(qq_type.identifier, "qq");
+    EXPECT_EQ(qq_type.resolved_symbol, nullptr);  // nothing resolved yet
+    EXPECT_EQ(qq_type.ref_type, ReferenceType::kUnqualified);
+    EXPECT_EQ(qq_inst_info.file_origin, &src);
+  }
+
+  // Resolve symbols.
+  std::vector<absl::Status> resolve_diagnostics;
+  symbol_table.Resolve(&resolve_diagnostics);
+
+  EXPECT_TRUE(resolve_diagnostics.empty());
+  // Verify that typeof(ss_inst) successfully resolved to module ss.
+  EXPECT_EQ(
+      ss_inst_info.declared_type.user_defined_type->Value().resolved_symbol,
+      &ss);
+  // Verify that typeof(pp_inst) successfully resolved to module pp.
+  EXPECT_EQ(
+      pp_inst_info.declared_type.user_defined_type->Value().resolved_symbol,
+      &pp);
+  // Verify that typeof(qq_inst) successfully resolved to module qq.
+  EXPECT_EQ(
+      qq_inst_info.declared_type.user_defined_type->Value().resolved_symbol,
+      &qq);
+}
+
+TEST(BuildSymbolTableTest, MultiFileModuleInstanceCyclicDependencies) {
+  // Cyclic dependencies among three files.
+  // Make sure this can still build and resolve without hanging,
+  // even if this is semantically illegal.
+  TestVerilogSourceFile pp_src("pp.sv",
+                               "module pp;\n"
+                               "  ss ss_inst();\n"  // instance
+                               "endmodule\n");
+  TestVerilogSourceFile qq_src("qq.sv",
+                               "module qq;\n"
+                               "  pp pp_inst();\n"  // instance
+                               "endmodule\n");
+  TestVerilogSourceFile ss_src("ss.sv",
+                               "module ss;\n"
+                               "  qq qq_inst();\n"  // instance
+                               "endmodule\n");
+  {
+    const auto status = pp_src.Parse();
+    ASSERT_TRUE(status.ok()) << status.message();
+  }
+  {
+    const auto status = qq_src.Parse();
+    ASSERT_TRUE(status.ok()) << status.message();
+  }
+  {
+    const auto status = ss_src.Parse();
+    ASSERT_TRUE(status.ok()) << status.message();
+  }
+
+  // All permutations of the following file ordering should end up with the
+  // same results.
+  std::vector<const TestVerilogSourceFile*> ordering(
+      {&pp_src, &qq_src, &ss_src});
+  // start with the lexicographically "lowest" permutation
+  SortSourceFiles(&ordering);
+  int count = 0;
+  do {
+    SymbolTable symbol_table(nullptr);
+    const SymbolTableNode& root_symbol(symbol_table.Root());
+
+    for (const auto* src : ordering) {
+      const auto build_diagnostics = BuildSymbolTable(*src, &symbol_table);
+      EXPECT_TRUE(build_diagnostics.empty())
+          << "Unexpected diagnostic:\n"
+          << build_diagnostics.front().message();
+    }
+
+    // Goal: resolve the reference of "pp" to this definition node.
+    MUST_ASSIGN_LOOKUP_SYMBOL(pp, root_symbol, "pp");
+
+    // Inspect inside the "qq" module definition.
+    MUST_ASSIGN_LOOKUP_SYMBOL(qq, root_symbol, "qq");
+
+    MUST_ASSIGN_LOOKUP_SYMBOL(ss, root_symbol, "ss");
+
+    // "ss_inst" is an instance of type "ss"
+    MUST_ASSIGN_LOOKUP_SYMBOL(ss_inst, pp, "ss_inst");
+
+    // "pp_inst" is an instance of type "pp"
+    MUST_ASSIGN_LOOKUP_SYMBOL(pp_inst, qq, "pp_inst");
+
+    // "qq_inst" is an instance of type "qq"
+    MUST_ASSIGN_LOOKUP_SYMBOL(qq_inst, ss, "qq_inst");
+
+    EXPECT_EQ(pp_info.file_origin, &pp_src);
+    EXPECT_EQ(qq_info.file_origin, &qq_src);
+    EXPECT_EQ(ss_info.file_origin, &ss_src);
+    {
+      ASSERT_EQ(pp_info.local_references_to_bind.size(), 2);
+      const auto ref_map(pp_info.LocalReferencesMapViewForTesting());
+      {
+        ASSIGN_MUST_FIND_EXACTLY_ONE_REF(ss_type, ref_map, "ss");
+        const ReferenceComponentNode* ref_node = ss_type->LastLeaf();
+        ASSERT_NE(ref_node, nullptr);
+        const ReferenceComponent& ref(ref_node->Value());
+        EXPECT_EQ(ref.identifier, "ss");
+        EXPECT_TRUE(verible::IsSubRange(ref.identifier,
+                                        pp_src.GetTextStructure()->Contents()));
+        EXPECT_EQ(ref.ref_type, ReferenceType::kUnqualified);
+        EXPECT_EQ(ref.resolved_symbol, nullptr);
+      }
+      {  // self-reference to "ss_inst" instance
+        ASSIGN_MUST_FIND_EXACTLY_ONE_REF(ss_inst_self_ref, ref_map, "ss_inst");
+        EXPECT_TRUE(ss_inst_self_ref->components->is_leaf());  // no named ports
+        // self-reference is already bound.
+        EXPECT_EQ(ss_inst_self_ref->components->Value().resolved_symbol,
+                  &ss_inst);
+      }
+    }
+    {
+      ASSERT_EQ(qq_info.local_references_to_bind.size(), 2);
+      const auto ref_map(qq_info.LocalReferencesMapViewForTesting());
+      {
+        ASSIGN_MUST_FIND_EXACTLY_ONE_REF(pp_type, ref_map, "pp");
+        const ReferenceComponentNode* ref_node = pp_type->LastLeaf();
+        ASSERT_NE(ref_node, nullptr);
+        const ReferenceComponent& ref(ref_node->Value());
+        EXPECT_EQ(ref.identifier, "pp");
+        EXPECT_TRUE(verible::IsSubRange(ref.identifier,
+                                        qq_src.GetTextStructure()->Contents()));
+        EXPECT_EQ(ref.ref_type, ReferenceType::kUnqualified);
+        EXPECT_EQ(ref.resolved_symbol, nullptr);
+      }
+      {  // self-reference to "pp_inst" instance
+        ASSIGN_MUST_FIND_EXACTLY_ONE_REF(pp_inst_self_ref, ref_map, "pp_inst");
+        EXPECT_TRUE(pp_inst_self_ref->components->is_leaf());  // no named ports
+        // self-reference is already bound.
+        EXPECT_EQ(pp_inst_self_ref->components->Value().resolved_symbol,
+                  &pp_inst);
+      }
+    }
+    {
+      ASSERT_EQ(ss_info.local_references_to_bind.size(), 2);
+      const auto ref_map(ss_info.LocalReferencesMapViewForTesting());
+      {
+        ASSIGN_MUST_FIND_EXACTLY_ONE_REF(qq_type, ref_map, "qq");
+        const ReferenceComponentNode* ref_node = qq_type->LastLeaf();
+        ASSERT_NE(ref_node, nullptr);
+        const ReferenceComponent& ref(ref_node->Value());
+        EXPECT_EQ(ref.identifier, "qq");
+        EXPECT_TRUE(verible::IsSubRange(ref.identifier,
+                                        ss_src.GetTextStructure()->Contents()));
+        EXPECT_EQ(ref.ref_type, ReferenceType::kUnqualified);
+        EXPECT_EQ(ref.resolved_symbol, nullptr);
+      }
+      {  // self-reference to "qq_inst" instance
+        ASSIGN_MUST_FIND_EXACTLY_ONE_REF(qq_inst_self_ref, ref_map, "qq_inst");
+        EXPECT_TRUE(qq_inst_self_ref->components->is_leaf());  // no named ports
+        // self-reference is already bound.
+        EXPECT_EQ(qq_inst_self_ref->components->Value().resolved_symbol,
+                  &qq_inst);
+      }
+    }
+
+    {  // Verify ss_inst's type info
+      EXPECT_TRUE(ss_inst_info.local_references_to_bind.empty());
+      EXPECT_NE(ss_inst_info.declared_type.user_defined_type, nullptr);
+      const ReferenceComponent& ss_type(
+          ss_inst_info.declared_type.user_defined_type->Value());
+      EXPECT_EQ(ss_type.identifier, "ss");
+      EXPECT_EQ(ss_type.resolved_symbol, nullptr);  // nothing resolved yet
+      EXPECT_EQ(ss_type.ref_type, ReferenceType::kUnqualified);
+      EXPECT_EQ(ss_inst_info.file_origin, &pp_src);
+    }
+
+    {  // Verify pp_inst's type info
+      EXPECT_TRUE(pp_inst_info.local_references_to_bind.empty());
+      EXPECT_NE(pp_inst_info.declared_type.user_defined_type, nullptr);
+      const ReferenceComponent& pp_type(
+          pp_inst_info.declared_type.user_defined_type->Value());
+      EXPECT_EQ(pp_type.identifier, "pp");
+      EXPECT_EQ(pp_type.resolved_symbol, nullptr);  // nothing resolved yet
+      EXPECT_EQ(pp_type.ref_type, ReferenceType::kUnqualified);
+      EXPECT_EQ(pp_inst_info.file_origin, &qq_src);
+    }
+
+    {  // Verify qq_inst's type info
+      EXPECT_TRUE(qq_inst_info.local_references_to_bind.empty());
+      EXPECT_NE(qq_inst_info.declared_type.user_defined_type, nullptr);
+      const ReferenceComponent& qq_type(
+          qq_inst_info.declared_type.user_defined_type->Value());
+      EXPECT_EQ(qq_type.identifier, "qq");
+      EXPECT_EQ(qq_type.resolved_symbol, nullptr);  // nothing resolved yet
+      EXPECT_EQ(qq_type.ref_type, ReferenceType::kUnqualified);
+      EXPECT_EQ(qq_inst_info.file_origin, &ss_src);
+    }
+
+    // Resolve symbols.
+    std::vector<absl::Status> resolve_diagnostics;
+    symbol_table.Resolve(&resolve_diagnostics);
+
+    EXPECT_TRUE(resolve_diagnostics.empty());
+    // Verify that typeof(ss_inst) successfully resolved to module ss.
+    EXPECT_EQ(
+        ss_inst_info.declared_type.user_defined_type->Value().resolved_symbol,
+        &ss);
+    // Verify that typeof(pp_inst) successfully resolved to module pp.
+    EXPECT_EQ(
+        pp_inst_info.declared_type.user_defined_type->Value().resolved_symbol,
+        &pp);
+    // Verify that typeof(qq_inst) successfully resolved to module qq.
+    EXPECT_EQ(
+        qq_inst_info.declared_type.user_defined_type->Value().resolved_symbol,
+        &qq);
+    ++count;
+  } while (PermuteSourceFiles(&ordering));
+  EXPECT_EQ(count, 6);  // make sure we covered all permutations
 }
 
 struct FileListTestCase {
