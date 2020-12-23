@@ -315,12 +315,16 @@ TEST(BuildSymbolTableTest, IntegrityCheckResolvedSymbol) {
     SymbolTableNode& root1(symbol_table_1.MutableRoot());
     SymbolTableNode& root2(symbol_table_2.MutableRoot());
     // Deliberately point from one symbol table to the other.
-    root1.Value().local_references_to_bind.push_back(DependentReferences{
+    // To avoid an use-after-free AddressSanitizer error,
+    // mind the destruction ordering here:
+    // symbol_table1 will outlive symbol_table_2, so give symbol_table_2 a
+    // pointer to symbol_table_1.
+    root2.Value().local_references_to_bind.push_back(DependentReferences{
         .components = absl::make_unique<ReferenceComponentNode>(
             ReferenceComponent{.identifier = "foo",
                                .ref_type = ReferenceType::kUnqualified,
-                               .resolved_symbol = &root2})});
-    // CheckIntegrity() will fail on destruction of symbol_table_1.
+                               .resolved_symbol = &root1})});
+    // CheckIntegrity() will fail on destruction of symbol_table_2.
   };
   EXPECT_DEATH(test_func(),
                "Resolved symbols must point to a node in the same SymbolTable");
@@ -332,6 +336,10 @@ TEST(BuildSymbolTableTest, IntegrityCheckDeclaredType) {
     SymbolTableNode& root1(symbol_table_1.MutableRoot());
     SymbolTableNode& root2(symbol_table_2.MutableRoot());
     // Deliberately point from one symbol table to the other.
+    // To avoid an use-after-free AddressSanitizer error,
+    // mind the destruction ordering here:
+    // symbol_table1 will outlive symbol_table_2, so give symbol_table_2 a
+    // pointer to symbol_table_1.
     root1.Value().local_references_to_bind.push_back(DependentReferences{
         .components = absl::make_unique<ReferenceComponentNode>(
             ReferenceComponent{.identifier = "foo",
