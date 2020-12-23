@@ -132,21 +132,7 @@ struct ProjectSymbols {
     // For now, ingest files in the order they were listed.
     // Without conflicting definitions in files, this order should not matter.
     for (const auto& file : config.files_names) {
-      verilog::VerilogSourceFile* source_file =
-          project->LookupRegisteredFile(file);
-      if (source_file == nullptr) continue;
-
-      // Parse file to get syntax tree.
-      const auto parse_status = source_file->Parse();
-      if (!parse_status.ok()) {
-        build_statuses->push_back(parse_status);
-        continue;
-      }
-
-      const auto statuses =
-          verilog::BuildSymbolTable(*source_file, symbol_table.get());
-      build_statuses->insert(build_statuses->end(), statuses.begin(),
-                             statuses.end());
+      symbol_table->BuildSingleTranslationUnit(file, build_statuses);
     }
   }
 

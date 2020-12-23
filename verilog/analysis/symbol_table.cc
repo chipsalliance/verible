@@ -44,6 +44,7 @@
 #include "verilog/CST/statement.h"
 #include "verilog/CST/type.h"
 #include "verilog/CST/verilog_nonterminals.h"
+#include "verilog/analysis/verilog_project.h"
 #include "verilog/parser/verilog_parser.h"
 #include "verilog/parser/verilog_token_enum.h"
 
@@ -116,7 +117,8 @@ static void CheckedNewChildReferenceNode(ReferenceComponentNode* parent,
 
 class SymbolTable::Builder : public TreeContextVisitor {
  public:
-  Builder(const VerilogSourceFile& source, SymbolTable* symbol_table)
+  Builder(const VerilogSourceFile& source, SymbolTable* symbol_table,
+          VerilogProject* project)
       : source_(&source),
         token_context_(source_->GetTextStructure()->Contents(),
                        [](std::ostream& stream, int e) {
@@ -184,6 +186,7 @@ class SymbolTable::Builder : public TreeContextVisitor {
       case NodeEnum::kGateInstance:
         DeclareInstance(node);
         break;
+        // TODO: case NodeEnum::kPreprocessorInclude: open using project_.
       default:
         Descend(node);
         break;
@@ -600,6 +603,9 @@ class SymbolTable::Builder : public TreeContextVisitor {
   }
 
  private:  // data
+  // TODO: support opening include-d files through VerilogProject.
+  // VerilogProject* const project_;
+
   // Points to the source file that is the origin of symbols.
   // This changes when opening preprocess-included files.
   // TODO(fangism): maintain a vector/stack of these for richer diagnostics
@@ -980,17 +986,53 @@ std::ostream& SymbolTable::PrintSymbolReferences(std::ostream& stream) const {
                                       });
 }
 
+static void ParseFileAndBuildSymbolTable(
+    VerilogSourceFile* source, SymbolTable* symbol_table,
+    VerilogProject* project, std::vector<absl::Status>* diagnostics) {
+  const auto parse_status = source->Parse();
+  if (!parse_status.ok()) diagnostics->push_back(parse_status);
+  // Continue, in case syntax-error recovery left a partial syntax tree.
+
+  // Amend symbol table by analyzing this translation unit.
+  const std::vector<absl::Status> statuses =
+      BuildSymbolTable(*source, symbol_table, project);
+  // Forward diagnostics.
+  diagnostics->insert(diagnostics->end(), statuses.begin(), statuses.end());
+}
+
+void SymbolTable::Build(std::vector<absl::Status>* diagnostics) {
+  for (auto& translation_unit : *project_) {
+    ParseFileAndBuildSymbolTable(&translation_unit.second, this, project_,
+                                 diagnostics);
+  }
+}
+
+void SymbolTable::BuildSingleTranslationUnit(
+    absl::string_view referenced_file_name,
+    std::vector<absl::Status>* diagnostics) {
+  const auto translation_unit_or_status =
+      project_->OpenTranslationUnit(referenced_file_name);
+  if (!translation_unit_or_status.ok()) {
+    diagnostics->push_back(translation_unit_or_status.status());
+    return;
+  }
+  VerilogSourceFile* translation_unit = *translation_unit_or_status;
+
+  ParseFileAndBuildSymbolTable(translation_unit, this, project_, diagnostics);
+}
+
 std::vector<absl::Status> BuildSymbolTable(const VerilogSourceFile& source,
-                                           SymbolTable* symbol_table) {
+                                           SymbolTable* symbol_table,
+                                           VerilogProject* project) {
   VLOG(1) << __FUNCTION__;
   const auto* text_structure = source.GetTextStructure();
   if (text_structure == nullptr) return std::vector<absl::Status>();
   const auto& syntax_tree = text_structure->SyntaxTree();
   if (syntax_tree == nullptr) return std::vector<absl::Status>();
 
-  SymbolTable::Builder builder(source, symbol_table);
+  SymbolTable::Builder builder(source, symbol_table, project);
   syntax_tree->Accept(&builder);
-  return builder.TakeDiagnostics();
+  return builder.TakeDiagnostics();  // move
 }
 
 }  // namespace verilog

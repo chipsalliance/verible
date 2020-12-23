@@ -334,6 +334,21 @@ using MacroSymbolMap =
 // SymbolTable maintains a named hierarchy of named symbols and scopes for
 // SystemVerilog.  This can be built up separately per translation unit,
 // or in a unified table across all translation units.
+//
+// Typical usage:
+//   VerilogProject project(...);
+//   project.OpenTranslationUnit(...);  // open files in loop
+//
+//   SymbolTable symbol_table(&project);
+//
+//   std::vector<absl::Status> diagnostics;
+//   symbol_table.Build(&diagnostics);
+//   // ... optional work ...
+//
+//   symbol_table.Resolve(&diagnostics);
+//   // report diagnostics
+//   // navigate results from symbol_table.Root().
+//
 class SymbolTable {
  public:
   class Builder;  // implementation detail
@@ -359,15 +374,32 @@ class SymbolTable {
   // TODO(fangism): multi-translation-unit merge operation,
   // to be done before any symbol resolution
 
+  // Incrementally construct the symbol table from one translation unit.
+  // This gives the user control over the ordering of processing.
+  // It is safe to build the same unit multiple times, subsequent invocations
+  // will not change the symbol table structure, but will give duplicate symbol
+  // diagnostics.
+  void BuildSingleTranslationUnit(absl::string_view referenced_file_name,
+                                  std::vector<absl::Status>* diagnostics);
+
+  // Construct symbol table definitions and references hierarchically, but do
+  // not attempt to resolve the symbols.
+  // The ordering of translation units processing is implementation defined,
+  // and should not be relied upon, but this only maatters when there are
+  // duplicate definitions among translation units.
+  void Build(std::vector<absl::Status>* diagnostics);
+
   // Lookup all symbol references, and bind references where successful.
   // Only attempt to resolve after merging symbol tables.
   void Resolve(std::vector<absl::Status>* diagnostics);
 
   // Print only the information about symbols defined (no references).
+  // This will print the results of Build().
   std::ostream& PrintSymbolDefinitions(std::ostream&) const;
 
   // Print only the information about symbol references, and possibly resolved
   // links to definitions.
+  // This will print the results of Build() or Resolve().
   std::ostream& PrintSymbolReferences(std::ostream&) const;
 
  protected:  // methods
@@ -400,8 +432,13 @@ class SymbolTable {
 // Construct a partial symbol table and bindings locations from a single source
 // file.  This does not actually resolve symbol references, there is an
 // opportunity to merge symbol tables across files before resolving references.
-std::vector<absl::Status> BuildSymbolTable(const VerilogSourceFile&,
-                                           SymbolTable*);
+// 'source' should already be Parse()d in advance, so that its syntax tree can
+// be accessed.
+// If 'project' is provided, then it can be used to open preprocessing-included
+// files, otherwise include directives will be ignored.
+std::vector<absl::Status> BuildSymbolTable(const VerilogSourceFile& source,
+                                           SymbolTable* symbol_table,
+                                           VerilogProject* project = nullptr);
 
 }  // namespace verilog
 
