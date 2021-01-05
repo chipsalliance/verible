@@ -54,8 +54,8 @@ absl::string_view TokenTypeToString(size_t tokentype) {
     // Returns token type name or its alias (if available) as used in verilog.y
     default: {
       absl::string_view symbol_name(verilog_symbol_name(tokentype));
-      if (!symbol_name.empty() && (symbol_name[0] == '"'
-                                   || symbol_name[0] == '\'')) {
+      if (symbol_name.size() >= 2 && (symbol_name[0] == '"'
+                                      || symbol_name[0] == '\'')) {
         // Strip quotes
         return symbol_name.substr(1, symbol_name.size() - 2);
       }
