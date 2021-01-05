@@ -32,9 +32,9 @@ static Json::Value ParseJson(absl::string_view text) {
 }
 
 TEST(TokenInfoToJsonTest, ToJsonEOF) {
-  const absl::string_view base;  // empty
+  constexpr absl::string_view base;  // empty
   const TokenInfo::Context context(base);
-  TokenInfo token_info(TK_EOF, base);
+  const TokenInfo token_info(TK_EOF, base);
 
   const Json::Value json(ToJson(token_info, context));
   const Json::Value expected_json = ParseJson(R"({
@@ -46,9 +46,9 @@ TEST(TokenInfoToJsonTest, ToJsonEOF) {
 }
 
 TEST(TokenInfoToJsonTest, ToJsonWithBase) {
-  const absl::string_view base("basement cat");
+  constexpr absl::string_view base("basement cat");
   const TokenInfo::Context context(base);
-  TokenInfo token_info(7, base.substr(9, 3));
+  const TokenInfo token_info(7, base.substr(9, 3));
 
   const Json::Value json(ToJson(token_info, context));
   const Json::Value expected_json = ParseJson(R"({
@@ -61,7 +61,7 @@ TEST(TokenInfoToJsonTest, ToJsonWithBase) {
 
 TEST(TokenInfoToJsonTest, ToJsonWithTokenEnumTranslator) {
   constexpr absl::string_view text("string of length 19");
-  TokenInfo token_info(143, text);
+  const TokenInfo token_info(143, text);
 
   const verible::TokenInfo::Context context(
       text, [](std::ostream& stream, int e) {
