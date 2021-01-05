@@ -105,7 +105,7 @@ class Node(anytree.NodeMixin):
 
   @property
   def end(self) -> Optional[int]:
-    raise NotImplementedError("Subclass must implement 'start' property")
+    raise NotImplementedError("Subclass must implement 'end' property")
 
   @property
   def text(self) -> str:
