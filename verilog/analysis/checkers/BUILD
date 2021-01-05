@@ -56,6 +56,7 @@ cc_library(
         ":proper_parameter_declaration_rule",
         ":signal_name_style_rule",
         ":struct_union_name_style_rule",
+        ":suggest_parentheses_rule",
         ":undersized_binary_literal_rule",
         ":unpacked_dimensions_rule",
         ":uvm_macro_semicolon_rule",
@@ -1064,6 +1065,33 @@ cc_test(
         "//verilog/CST:verilog_treebuilder_utils",
         "//verilog/analysis:verilog_analyzer",
         "//verilog/parser:verilog_token_enum",
+        "@com_google_googletest//:gtest_main",
+    ],
+)
+
+cc_library(
+    name = "suggest_parentheses_rule",
+    srcs = ["suggest_parentheses_rule.cc"],
+    hdrs = ["suggest_parentheses_rule.h"],
+    deps = [
+        "//common/analysis:citation",
+        "//common/analysis:syntax_tree_lint_rule",
+        "//verilog/CST:expression",
+        "//verilog/CST:verilog_matchers",
+        "//verilog/analysis:descriptions",
+        "//verilog/analysis:lint_rule_registry",
+        "@com_google_absl//absl/strings",
+    ],
+    alwayslink = 1,
+)
+
+cc_test(
+    name = "suggest_parentheses_rule_test",
+    srcs = ["suggest_parentheses_rule_test.cc"],
+    deps = [
+        ":suggest_parentheses_rule",
+        "//common/analysis:syntax_tree_linter_test_utils",
+        "//verilog/analysis:verilog_analyzer",
         "@com_google_googletest//:gtest_main",
     ],
 )

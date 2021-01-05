@@ -72,6 +72,38 @@ bool ConstantIntegerValue(const verible::Symbol& expr, int* value) {
   return absl::SimpleAtoi(text, value);
 }
 
+const verible::Symbol* UnwrapExpression(const verible::Symbol& expr) {
+  if (expr.Kind() == SymbolKind::kLeaf) return &expr;
+
+  const auto& node = verible::SymbolCastToNode(expr);
+  const auto tag = static_cast<verilog::NodeEnum>(node.Tag().tag);
+
+  if (tag != NodeEnum::kExpression) return &expr;
+
+  const auto& children = node.children();
+  return children.front().get();
+}
+
+const verible::Symbol* GetConditionExpressionPredicate(
+    const verible::Symbol& condition_expr) {
+  return GetSubtreeAsSymbol(condition_expr, NodeEnum::kConditionExpression, 0);
+}
+
+const verible::Symbol* GetConditionExpressionTrueCase(
+    const verible::Symbol& condition_expr) {
+  return GetSubtreeAsSymbol(condition_expr, NodeEnum::kConditionExpression, 2);
+}
+
+const verible::Symbol* GetConditionExpressionFalseCase(
+    const verible::Symbol& condition_expr) {
+  return GetSubtreeAsSymbol(condition_expr, NodeEnum::kConditionExpression, 4);
+}
+
+std::vector<TreeSearchMatch> FindAllConditionExpressions(
+    const verible::Symbol& root) {
+  return verible::SearchSyntaxTree(root, NodekConditionExpression());
+}
+
 std::vector<TreeSearchMatch> FindAllReferenceFullExpressions(
     const verible::Symbol& root) {
   return verible::SearchSyntaxTree(root, NodekReferenceCallBase());

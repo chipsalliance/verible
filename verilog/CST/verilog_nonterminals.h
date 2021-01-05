@@ -61,7 +61,7 @@ enum class NodeEnum {
   kExpressionList,
   kWithGroup,
   kBinaryExpression,
-  kTernaryExpression,
+  kConditionExpression,
   kUnaryPrefixExpression,
   kReference,
   kFunctionCall,

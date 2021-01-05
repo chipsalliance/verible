@@ -2937,57 +2937,57 @@ TEST(TokenAnnotatorTest, AnnotateFormattingWithContextTest) {
           kUnhandledSpacing,
       },
       {
-          // a ? b : c (ternary expression)
+          // a ? b : c (condition expression)
           DefaultStyle,
           {verilog_tokentype::SymbolIdentifier, "b"},
           {':', ":"},
           {/* any context */},
-          {NodeEnum::kTernaryExpression},
+          {NodeEnum::kConditionExpression},
           {1, SpacingOptions::Undecided},
       },
       {
-          // a ? 111 : c (ternary expression)
+          // a ? 111 : c (condition expression)
           DefaultStyle,
           {verilog_tokentype::TK_DecNumber, "111"},
           {':', ":"},
           {/* any context */},
-          {NodeEnum::kTernaryExpression},
+          {NodeEnum::kConditionExpression},
           {1, SpacingOptions::Undecided},
       },
       {
-          // a ? "1" : c (ternary expression)
+          // a ? "1" : c (condition expression)
           DefaultStyle,
           {verilog_tokentype::TK_StringLiteral, "\"1\""},
           {':', ":"},
           {/* any context */},
-          {NodeEnum::kTernaryExpression},
+          {NodeEnum::kConditionExpression},
           {1, SpacingOptions::Undecided},
       },
       {
-          // a ? (1) : c (ternary expression)
+          // a ? (1) : c (condition expression)
           DefaultStyle,
           {')', ":"},
           {':', ":"},
           {/* any context */},
-          {NodeEnum::kTernaryExpression},
+          {NodeEnum::kConditionExpression},
           {1, SpacingOptions::Undecided},
       },
       {
-          // a ? {b} : {c} (ternary expression)
+          // a ? {b} : {c} (condition expression)
           DefaultStyle,
           {'}', "}"},
           {':', ":"},
           {/* any context */},
-          {NodeEnum::kTernaryExpression},
+          {NodeEnum::kConditionExpression},
           {1, SpacingOptions::Undecided},
       },
       {
-          // a ? {b} : {c} (ternary expression)
+          // a ? {b} : {c} (condition expression)
           DefaultStyle,
           {':', ":"},
           {'{', "{"},
           {/* any context */},
-          {NodeEnum::kTernaryExpression},
+          {NodeEnum::kConditionExpression},
           {1, SpacingOptions::Undecided},
       },
 
@@ -3001,39 +3001,39 @@ TEST(TokenAnnotatorTest, AnnotateFormattingWithContextTest) {
           {1, SpacingOptions::Undecided},
       },
       {
-          // a ? b : c (ternary expression)
+          // a ? b : c (condition expression)
           DefaultStyle,
           {':', ":"},
           {verilog_tokentype::SymbolIdentifier, "c"},
           {/* any context */},
-          {NodeEnum::kTernaryExpression},
+          {NodeEnum::kConditionExpression},
           {1, SpacingOptions::Undecided},
       },
       {
-          // a ? b : 7 (ternary expression)
+          // a ? b : 7 (condition expression)
           DefaultStyle,
           {':', ":"},
           {verilog_tokentype::TK_DecNumber, "7"},
           {/* any context */},
-          {NodeEnum::kTernaryExpression},
+          {NodeEnum::kConditionExpression},
           {1, SpacingOptions::Undecided},
       },
       {
-          // a ? b : "7" (ternary expression)
+          // a ? b : "7" (condition expression)
           DefaultStyle,
           {':', ":"},
           {verilog_tokentype::TK_StringLiteral, "\"7\""},
           {/* any context */},
-          {NodeEnum::kTernaryExpression},
+          {NodeEnum::kConditionExpression},
           {1, SpacingOptions::Undecided},
       },
       {
-          // a ? b : (7) (ternary expression)
+          // a ? b : (7) (condition expression)
           DefaultStyle,
           {':', ":"},
           {'(', "("},
           {/* any context */},
-          {NodeEnum::kTernaryExpression},
+          {NodeEnum::kConditionExpression},
           {1, SpacingOptions::Undecided},
       },
 

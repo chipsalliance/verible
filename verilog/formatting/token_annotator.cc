@@ -426,9 +426,9 @@ static WithReason<int> SpacesRequiredBetween(
       return {1, "1 space before ':' in prefix block labels"};
     }
 
-    // kTernaryExpression should have 1 space
-    if (right_context.DirectParentIs(NodeEnum::kTernaryExpression)) {
-      return {1, "Ternary ?: expression wants 1 space around ':'"};
+    // kConditionExpression should have 1 space
+    if (right_context.DirectParentIs(NodeEnum::kConditionExpression)) {
+      return {1, "condition ?: expression wants 1 space around ':'"};
     }
 
     // Spacing in ranges
@@ -665,11 +665,11 @@ static WithReason<int> TokensWithContextBreakPenalty(
       static_cast<verilog_tokentype>(left.TokenEnum());
   const verilog_tokentype right_type =
       static_cast<verilog_tokentype>(right.TokenEnum());
-  if (right_context.DirectParentIs(NodeEnum::kTernaryExpression) &&
+  if (right_context.DirectParentIs(NodeEnum::kConditionExpression) &&
       IsTernaryOperator(right_type)) {
     return {3, "Prefer to split after ternary operators (+3 on left)."};
   }
-  if (left_context.DirectParentIs(NodeEnum::kTernaryExpression) &&
+  if (left_context.DirectParentIs(NodeEnum::kConditionExpression) &&
       IsTernaryOperator(left_type)) {
     return {-1, "Prefer to split after ternary operators (-1 on right)."};
   }

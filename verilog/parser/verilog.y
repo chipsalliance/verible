@@ -4274,7 +4274,7 @@ cond_expr
   : logor_expr
     { $$ = move($1); }
   | logor_expr '?' expression ':' cond_expr
-    { $$ = MakeTaggedNode(N::kTernaryExpression, $1, $2, $3, $4, $5); }
+    { $$ = MakeTaggedNode(N::kConditionExpression, $1, $2, $3, $4, $5); }
   // | cond_expr '?' cond_expr ':' cond_expr
   // | cond_expr '?' logor_expr ':' logor_expr
   /*
