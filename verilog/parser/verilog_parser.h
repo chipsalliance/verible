@@ -34,8 +34,11 @@ int verilog_parse_wrapper(::verible::ParserParam*);
 // TODO(fangism): Use a pseudo-preprocessor between the lexer and parser.
 using VerilogParser = verible::BisonParserAdapter<verilog_parse_wrapper>;
 
-// Lookup token/symbol name by token enum index.
+// Lookup token/symbol name by token enum index. These names are suitable for
+// use in human facing text (like error messages).
 // Defined in verilog.y, emitted in verilog.tab.cc.
+//
+// See also: TokenTypeToString() in verilog_token.h
 const char* verilog_symbol_name(size_t symbol_enum);
 
 }  // namespace verilog

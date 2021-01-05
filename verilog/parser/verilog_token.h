@@ -20,7 +20,16 @@
 
 namespace verilog {
 
-// Stringifier for verilog_tokentype
+// Returns token identifier suitable for use in string-based APIs (such as JSON
+// export in verible-verilog-syntax). The identifiers are easy to type in
+// programming languages and are mostly self-explanatory. They use:
+// - Token text for string and character literal tokens. Examples:
+//   "module", "==", ";", "'"
+// - Token name used in verilog/parser/verilog.y. This uses the original token
+//   names, not their (optional) display names. Examples:
+//   "SymbolIdentifier", "TK_DecNumber", "TK_EOL_COMMENT", "TK_NEWLINE"
+//
+// See also: verilog_symbol_name() in verilog_parser.h
 absl::string_view TokenTypeToString(size_t tokentype);
 
 }  // namespace verilog
