@@ -51,7 +51,7 @@ TEST(VerilogTreeJsonTest, GeneratesGoodJsonTree) {
          {
            "tag": "kModuleHeader",
            "children": [
-             { "start": 0, "end": 6, "tag": "TK_module" },
+             { "start": 0, "end": 6, "tag": "module" },
              null,
              { "start": 7, "end": 10, "tag": "SymbolIdentifier" },
              null,
@@ -62,7 +62,7 @@ TEST(VerilogTreeJsonTest, GeneratesGoodJsonTree) {
            ]
          },
          { "tag": "kModuleItemList", "children": [] },
-         { "start": 12, "end": 21, "tag": "TK_endmodule" },
+         { "start": 12, "end": 21, "tag": "endmodule" },
          null
         ]
       }
