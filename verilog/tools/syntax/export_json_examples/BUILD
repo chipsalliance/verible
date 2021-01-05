@@ -1,14 +1,19 @@
-load("@rules_python//python:defs.bzl", "py_test")
+load("@rules_python//python:defs.bzl", "py_test", "py_library")
+
+py_library(
+    name = "verible_verilog_syntax_py",
+    srcs = ["verible_verilog_syntax.py"],
+    srcs_version = "PY3",
+    data = ["//verilog/tools/syntax:verible-verilog-syntax"],
+)
 
 py_test(
     name = "verible_verilog_syntax_py_test",
     size = "small",
-    srcs = [
-        "verible_verilog_syntax.py",
-        "verible_verilog_syntax_test.py"
-    ],
+    srcs = ["verible_verilog_syntax_test.py"],
     srcs_version = "PY3",
     main = "verible_verilog_syntax_test.py",
+    deps = [":verible_verilog_syntax_py"],
     data = ["//verilog/tools/syntax:verible-verilog-syntax"],
     args = ["$(location //verilog/tools/syntax:verible-verilog-syntax)"],
 )
