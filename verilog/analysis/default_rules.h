@@ -62,6 +62,7 @@ constexpr const char* kDefaultRuleSet[] = {
     "interface-name-style",
     "positive-meaning-parameter-name",
     "constraint-name-style",
+    "suggest-parentheses",
     // TODO(fangism): enable in production:
     // TODO(b/155128436): "uvm-macro-semicolon"
     // TODO(b/117131903): "proper-parameter-declaration",
@@ -69,7 +70,6 @@ constexpr const char* kDefaultRuleSet[] = {
     // TODO(b/120784977): "numeric-format-string-style",
     // TODO: "one-module-per-file",
     // TODO: "banned-declared-name-patterns",
-    // TODO(b/159846534): "suggest-parentheses",
     // "endif-comment",
 };
 // LINT.ThenChange(../tools/lint/BUILD)
