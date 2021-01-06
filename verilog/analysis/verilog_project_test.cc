@@ -16,6 +16,7 @@
 
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
+#include "absl/memory/memory.h"
 #include "absl/strings/match.h"
 #include "common/text/text_structure.h"
 #include "common/util/file_util.h"
@@ -236,6 +237,83 @@ TEST(VerilogProjectTest, NonexistentFileLookup) {
   }
 }
 
+TEST(VerilogProjectTest, LookupFileOriginTest) {
+  const auto tempdir = ::testing::TempDir();
+  const std::string sources_dir = JoinPath(tempdir, "srcs");
+  EXPECT_TRUE(CreateDir(sources_dir).ok());
+  VerilogProject project(sources_dir, {});
+  // no files yet
+
+  {
+    constexpr absl::string_view foreign_text("not from any file");
+    EXPECT_EQ(project.LookupFileOrigin(foreign_text), nullptr);
+  }
+
+  // Add one file.  Don't even need to parse it.
+  const ScopedTestFile tf(sources_dir, "module m;\nendmodule\n");
+  const auto status_or_file =
+      project.OpenTranslationUnit(Basename(tf.filename()));
+  VerilogSourceFile* verilog_source_file = *status_or_file;
+  const TextStructureView& text_structure(
+      *verilog_source_file->GetTextStructure());
+
+  {
+    constexpr absl::string_view foreign_text("still not from any file");
+    EXPECT_EQ(project.LookupFileOrigin(foreign_text), nullptr);
+  }
+
+  // Pick a substring known to come from that file.
+  EXPECT_EQ(project.LookupFileOrigin(text_structure.Contents().substr(2, 4)),
+            verilog_source_file);
+
+  // Add one more file.
+  const ScopedTestFile tf2(sources_dir, "class c;\nendclass\n");
+  const auto status_or_file2 =
+      project.OpenTranslationUnit(Basename(tf2.filename()));
+  VerilogSourceFile* verilog_source_file2 = *status_or_file2;
+  const TextStructureView& text_structure2(
+      *verilog_source_file2->GetTextStructure());
+
+  // Pick substrings known to come from those files.
+  EXPECT_EQ(project.LookupFileOrigin(text_structure.Contents().substr(5, 5)),
+            verilog_source_file);
+  EXPECT_EQ(project.LookupFileOrigin(text_structure2.Contents().substr(9, 4)),
+            verilog_source_file2);
+}
+
+TEST(VerilogProjectTest, LookupFileOriginTestMoreFiles) {
+  const auto tempdir = ::testing::TempDir();
+  const std::string sources_dir = JoinPath(tempdir, __FUNCTION__);
+  EXPECT_TRUE(CreateDir(sources_dir).ok());
+  VerilogProject project(sources_dir, {});
+  // no files yet
+
+  constexpr absl::string_view foreign_text("not from any file");
+
+  // WArning: Test size is quadratic in N, but linear in memory in N.
+  constexpr int N = 50;
+  std::vector<std::unique_ptr<ScopedTestFile>> test_files;
+  std::vector<const VerilogSourceFile*> sources;
+  for (int i = 0; i < N; ++i) {
+    // Write files, need not be parse-able.
+    test_files.emplace_back(absl::make_unique<ScopedTestFile>(
+        sources_dir, "sa89*(98<Na! 89 89891231!@#ajk jasoij(*&^ asaissd0afd "));
+    const auto status_or_file =
+        project.OpenTranslationUnit(Basename(test_files.back()->filename()));
+    const VerilogSourceFile* source_file = *status_or_file;
+    ASSERT_NE(source_file, nullptr);
+    sources.push_back(source_file);
+
+    for (const auto& source : sources) {
+      // Pick substrings known to come from those files.
+      EXPECT_EQ(project.LookupFileOrigin(
+                    source->GetTextStructure()->Contents().substr(15, 12)),
+                source);
+    }
+    EXPECT_EQ(project.LookupFileOrigin(foreign_text), nullptr);
+  }
+}
+
 TEST(VerilogProjectTest, ValidTranslationUnit) {
   const auto tempdir = ::testing::TempDir();
   const std::string sources_dir = JoinPath(tempdir, "srcs");
@@ -254,23 +332,25 @@ TEST(VerilogProjectTest, ValidTranslationUnit) {
   EXPECT_EQ(verilog_source_file->ResolvedPath(), tf.filename());
   EXPECT_EQ(project.LookupRegisteredFile(Basename(tf.filename())),
             verilog_source_file);
+  const TextStructureView& text_structure(
+      *verilog_source_file->GetTextStructure());
   {  // const-lookup overload
     const VerilogProject& cproject(project);
     EXPECT_EQ(cproject.LookupRegisteredFile(Basename(tf.filename())),
+              verilog_source_file);
+    EXPECT_EQ(cproject.LookupFileOrigin(text_structure.Contents().substr(2, 4)),
               verilog_source_file);
   }
   EXPECT_TRUE(project.GetErrorStatuses().empty());
 
   EXPECT_TRUE(verilog_source_file->Parse().ok());
-  const auto* tree = ABSL_DIE_IF_NULL(
-      verilog_source_file->GetTextStructure()->SyntaxTree().get());
+  const auto* tree = ABSL_DIE_IF_NULL(text_structure.SyntaxTree().get());
   EXPECT_EQ(FindAllModuleDeclarations(*tree).size(), 1);
 
   {
     // Re-parsing the file changes nothing.
     EXPECT_TRUE(verilog_source_file->Parse().ok());
-    const auto* tree2 = ABSL_DIE_IF_NULL(
-        verilog_source_file->GetTextStructure()->SyntaxTree().get());
+    const auto* tree2 = ABSL_DIE_IF_NULL(text_structure.SyntaxTree().get());
     EXPECT_EQ(tree2, tree);
     EXPECT_EQ(FindAllModuleDeclarations(*tree).size(), 1);
   }

@@ -337,6 +337,7 @@ cc_test(
         "//common/util:logging",
         "//common/util:range",
         "//verilog/CST:module",
+        "@com_google_absl//absl/memory",
         "@com_google_absl//absl/strings",
         "@com_google_googletest//:gtest_main",
     ],

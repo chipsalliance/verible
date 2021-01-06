@@ -216,6 +216,11 @@ class VerilogProject {
     return &found->second;
   }
 
+  // Find the source file that a particular string_view came from.
+  // Returns nullptr if lookup failed for any reason.
+  const VerilogSourceFile* LookupFileOrigin(
+      absl::string_view content_substring) const;
+
  private:
   absl::StatusOr<VerilogSourceFile*> OpenFile(
       absl::string_view referenced_filename,

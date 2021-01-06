@@ -97,7 +97,8 @@ absl::StatusOr<VerilogSourceFile*> VerilogProject::OpenFile(
       files_.emplace(referenced_filename,
                      VerilogSourceFile(referenced_filename, resolved_filename));
   CHECK(inserted.second);  // otherwise, would have already returned above
-  VerilogSourceFile& file(inserted.first->second);
+  const auto file_iter = inserted.first;
+  VerilogSourceFile& file(file_iter->second);
 
   // Read the file's contents.
   const absl::Status status = file.Open();
@@ -111,7 +112,7 @@ absl::StatusOr<VerilogSourceFile*> VerilogProject::OpenFile(
   // Map the start of the file's contents to its corresponding owner
   // VerilogSourceFile.
   const auto map_inserted =
-      buffer_to_analyzer_map_.emplace(contents.begin(), inserted.first);
+      buffer_to_analyzer_map_.emplace(contents.begin(), file_iter);
   CHECK(map_inserted.second);
 
   return &file;
@@ -185,6 +186,22 @@ std::vector<absl::Status> VerilogProject::GetErrorStatuses() const {
     }
   }
   return statuses;
+}
+
+const VerilogSourceFile* VerilogProject::LookupFileOrigin(
+    absl::string_view content_substring) const {
+  // Look for corresponding source text (superstring) buffer start.
+  const auto found_superstring = string_view_map_.find(content_substring);
+  if (found_superstring == string_view_map_.end()) return nullptr;
+  const absl::string_view::const_iterator buffer_start =
+      found_superstring->first;
+
+  // Reverse-lookup originating file based on buffer start.
+  const auto found_file = buffer_to_analyzer_map_.find(buffer_start);
+  if (found_file == buffer_to_analyzer_map_.end()) return nullptr;
+
+  const VerilogSourceFile* file = &found_file->second->second;
+  return file;
 }
 
 absl::StatusOr<std::vector<std::string>> ParseSourceFileListFromFile(
