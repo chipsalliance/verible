@@ -125,6 +125,14 @@ static void CheckedNewChildReferenceNode(ReferenceComponentNode* parent,
   // Otherwise, this first node had no prior siblings, so no need to check.
 }
 
+static absl::Status DiagnoseMemberSymbolResolutionFailure(
+    absl::string_view name, const SymbolTableNode& context) {
+  const absl::string_view context_name =
+      context.Parent() == nullptr ? kRoot : *context.Key();
+  return absl::NotFoundError(absl::StrCat(
+      "No member symbol \"", name, "\" in parent scope ", context_name, "."));
+}
+
 class SymbolTable::Builder : public TreeContextVisitor {
  public:
   Builder(const VerilogSourceFile& source, SymbolTable* symbol_table,
@@ -158,6 +166,7 @@ class SymbolTable::Builder : public TreeContextVisitor {
       case NodeEnum::kClassDeclaration:
         DeclareClass(node);
         break;
+      case NodeEnum::kFunctionPrototype:  // fall-through
       case NodeEnum::kFunctionDeclaration:
         DeclareFunction(node);
         break;
@@ -166,6 +175,9 @@ class SymbolTable::Builder : public TreeContextVisitor {
         break;
       case NodeEnum::kTaskDeclaration:
         DeclareTask(node);
+        break;
+      case NodeEnum::kPortList:
+        DeclarePorts(node);
         break;
       case NodeEnum::kPortItem:         // fall-through
                                         // for function/task parameters
@@ -203,6 +215,9 @@ class SymbolTable::Builder : public TreeContextVisitor {
         break;
       case NodeEnum::kGateInstance:
         DeclareInstance(node);
+        break;
+      case NodeEnum::kQualifiedId:
+        HandleQualifiedId(node);
         break;
       case NodeEnum::kPreprocessorInclude:
         EnterIncludeFile(node);
@@ -365,13 +380,18 @@ class SymbolTable::Builder : public TreeContextVisitor {
       // private internals members.
       return;
     }
+
     if (Context().DirectParentsAre(
             {NodeEnum::kUnqualifiedId, NodeEnum::kFunctionHeader})) {
       // We deferred adding a declared function to the current scope until this
       // point (from DeclareFunction()).
+      // Note that this excludes the out-of-line definition case,
+      // which is handled in DescendThroughOutOfLineDefinition().
+
       const SyntaxTreeNode* decl_syntax =
           Context().NearestParentMatching([](const SyntaxTreeNode& node) {
-            return node.MatchesTag(NodeEnum::kFunctionDeclaration);
+            return node.MatchesTagAnyOf(
+                {NodeEnum::kFunctionDeclaration, NodeEnum::kFunctionPrototype});
           });
       if (decl_syntax == nullptr) return;
       SymbolTableNode* declared_function = &EmplaceTypedElementInCurrentScope(
@@ -382,14 +402,17 @@ class SymbolTable::Builder : public TreeContextVisitor {
       current_scope_ = declared_function;
       return;
     }
-
-    // Capture only referencing identifiers, omit declarative identifiers.
-    // This is set up when traversing references, e.g. types, expressions.
-    if (reference_builders_.empty()) return;
+    // TODO: kTaskHeader
 
     // In DeclareInstance(), we already planted a self-reference that is
     // resolved to the instance being declared.
     if (Context().DirectParentIs(NodeEnum::kGateInstance)) return;
+
+    // Capture only referencing identifiers, omit declarative identifiers.
+    // This is set up when traversing references, e.g. types, expressions.
+    // All of the code below takes effect inside a CaptureDependentReferences
+    // RAII block.
+    if (reference_builders_.empty()) return;
 
     // Building a reference, possible part of a chain or qualified
     // reference.
@@ -451,6 +474,16 @@ class SymbolTable::Builder : public TreeContextVisitor {
     const DependentReferences& ref(reference_builders_.top());
     if (ref.Empty() || last_hierarchy_operator_ == nullptr) {
       // The root component is always treated as unqualified.
+
+      // Out-of-line definitions' base/outer references must be resolved
+      // immediately.
+      if (Context().DirectParentsAre({NodeEnum::kUnqualifiedId,
+                                      NodeEnum::kQualifiedId,
+                                      NodeEnum::kFunctionHeader})) {
+        return ReferenceType::kImmediate;
+      }
+      // TODO: same for kTaskHeader
+
       return ReferenceType::kUnqualified;
     }
     if (Context().DirectParentIs(NodeEnum::kParamByName)) {
@@ -585,6 +618,32 @@ class SymbolTable::Builder : public TreeContextVisitor {
     Descend(function_node);
   }
 
+  void DeclarePorts(const SyntaxTreeNode& port_list) {
+    // For out-of-line function declarations, do not re-declare ports that
+    // already came from the method prototype.
+    // We designate the prototype as the source-of-truth because in Verilog,
+    // port *names* are part of the public interface (allowing calling with
+    // named parameter assignments, unlike C++ function calls).
+    // LRM 8.24: "The out-of-block method declaration shall match the prototype
+    // declaration exactly, with the following exceptions..."
+    const SyntaxTreeNode* function_header =
+        Context().NearestParentMatching([](const SyntaxTreeNode& node) {
+          return node.MatchesTag(NodeEnum::kFunctionHeader);
+        });
+    if (function_header != nullptr) {
+      const SyntaxTreeNode& id = verible::SymbolCastToNode(
+          *ABSL_DIE_IF_NULL(GetFunctionHeaderId(*function_header)));
+      if (id.MatchesTag(NodeEnum::kQualifiedId)) {
+        // For now, ignore the out-of-line port declarations.
+        // TODO: Diagnose port type/name mismatches between prototypes' and
+        // out-of-line headers' ports.
+        return;
+      }
+    }
+    // TODO: same for kTaskHeader
+    Descend(port_list);
+  }
+
   // Capture the declared function's return type.
   void SetupFunctionHeader(const SyntaxTreeNode& function_header) {
     DeclarationTypeInfo decl_type_info;
@@ -667,6 +726,88 @@ class SymbolTable::Builder : public TreeContextVisitor {
     diagnostics_.push_back(absl::AlreadyExistsError(
         absl::StrCat("Symbol \"", name, "\" is already defined in the ",
                      CurrentScopeFullPath(), " scope.")));
+  }
+
+  absl::StatusOr<SymbolTableNode*> LookupOrInjectOutOfLineDefinition(
+      const SyntaxTreeNode& qualified_id, SymbolType type,
+      const SyntaxTreeNode* definition_syntax) {
+    // e.g. "function int class_c::func(...); ... endfunction"
+    // Use a DependentReference object to establish a self-reference.
+    CaptureDependentReference capture(this);
+    Descend(qualified_id);
+
+    DependentReferences& ref(capture.Ref());
+    // Expecting only two-level reference "outer::inner".
+    CHECK_EQ(ABSL_DIE_IF_NULL(ref.components)->Children().size(), 1);
+
+    // Must resolve base, instead of deferring to resolve phase.
+    // Do not inject the outer_scope (class name) into the current scope.
+    const auto outer_scope_or_status =
+        ref.ResolveOnlyBaseLocally(current_scope_);
+    if (!outer_scope_or_status.ok()) {
+      return outer_scope_or_status.status();
+    }
+    SymbolTableNode* outer_scope = *outer_scope_or_status;
+
+    // Lookup inner symbol in outer_scope, but also allow injection of the
+    // inner symbol name into the outer_scope (with diagnostic).
+    ReferenceComponent& inner_ref = ref.components->Children().front().Value();
+    const absl::string_view inner_key = inner_ref.identifier;
+    const auto p = outer_scope->TryEmplace(
+        inner_key, SymbolInfo{
+                       .type = type,
+                       .file_origin = source_,
+                       .syntax_origin = definition_syntax,
+                   });
+    if (p.second) {
+      // If injection succeeded, then the outer_scope did not already contain a
+      // forward declaration of the inner symbol to be defined.
+      // Diagnose this non-fatally, but continue.
+      diagnostics_.push_back(
+          DiagnoseMemberSymbolResolutionFailure(inner_key, *outer_scope));
+    }
+    SymbolTableNode* inner_symbol = &p.first->second;
+    // Resolve this self-reference immediately.
+    inner_ref.resolved_symbol = inner_symbol;
+    return inner_symbol;  // mutable for purpose of constructing definition
+  }
+
+  void DescendThroughOutOfLineDefinition(const SyntaxTreeNode& qualified_id,
+                                         SymbolType type,
+                                         const SyntaxTreeNode* decl_syntax) {
+    const auto inner_symbol_or_status =
+        LookupOrInjectOutOfLineDefinition(qualified_id, type, decl_syntax);
+    // Change the current scope (which was set up on the stack by
+    // kFunctionDeclaration or kTaskDeclaration) for the rest of the
+    // definition.
+    if (inner_symbol_or_status.ok()) {
+      current_scope_ = *inner_symbol_or_status;
+      Descend(qualified_id);
+    } else {
+      // On failure, skip the entire definition because there is no place
+      // to add its local symbols.
+      diagnostics_.push_back(inner_symbol_or_status.status());
+    }
+  }
+
+  void HandleQualifiedId(const SyntaxTreeNode& qualified_id) {
+    switch (static_cast<NodeEnum>(Context().top().Tag().tag)) {
+      case NodeEnum::kFunctionHeader: {
+        const SyntaxTreeNode* decl_syntax =
+            Context().NearestParentMatching([](const SyntaxTreeNode& node) {
+              return node.MatchesTagAnyOf({NodeEnum::kFunctionDeclaration,
+                                           NodeEnum::kFunctionPrototype});
+            });
+        DescendThroughOutOfLineDefinition(qualified_id, SymbolType::kFunction,
+                                          ABSL_DIE_IF_NULL(decl_syntax));
+        break;
+      }
+      // TODO: same for kTaskHeader
+      default:
+        // Treat this as a reference, not an out-of-line definition.
+        Descend(qualified_id);
+        break;
+    }
   }
 
   void EnterIncludeFile(const SyntaxTreeNode& preprocessor_include) {
@@ -848,31 +989,35 @@ static absl::Status DiagnoseUnqualifiedSymbolResolutionFailure(
                                           ContextFullPath(context), "."));
 }
 
-static absl::Status DiagnoseMemberSymbolResolutionFailure(
-    absl::string_view name, const SymbolTableNode& context) {
-  const absl::string_view context_name =
-      context.Parent() == nullptr ? kRoot : *context.Key();
-  return absl::NotFoundError(absl::StrCat(
-      "No member symbol \"", name, "\" in parent scope ", context_name, "."));
-}
-
 static void ResolveReferenceComponentNodeLocal(ReferenceComponentNode& node,
                                                const SymbolTableNode& context) {
   ReferenceComponent& component(node.Value());
   VLOG(2) << __FUNCTION__ << ": " << component;
+  // If already resolved, skip.
   if (component.resolved_symbol != nullptr) return;  // already bound
   const absl::string_view key(component.identifier);
   CHECK_EQ(node.Parent(), nullptr);  // is root
   // root node: lookup this symbol from its context upward
   CHECK_EQ(component.ref_type, ReferenceType::kUnqualified);
 
-  // If already resolved, skip.
-  if (component.resolved_symbol != nullptr) return;
-
   // Only try to resolve using the same scope in which the reference appeared,
   // local, without upward search.
   const auto found = context.Find(key);
   if (found != context.end()) {
+    component.resolved_symbol = &found->second;
+  }
+}
+
+static void ResolveDirectMember(ReferenceComponent& component,
+                                const SymbolTableNode& context,
+                                std::vector<absl::Status>* diagnostics) {
+  const absl::string_view key(component.identifier);
+  const auto found = context.Find(key);
+  // TODO: lookup members through inherited scopes
+  if (found == context.end()) {
+    diagnostics->emplace_back(
+        DiagnoseMemberSymbolResolutionFailure(key, context));
+  } else {
     component.resolved_symbol = &found->second;
   }
 }
@@ -888,63 +1033,52 @@ static void ResolveReferenceComponentNode(
   if (component.resolved_symbol != nullptr) return;  // already bound
   const absl::string_view key(component.identifier);
 
-  if (node.Parent() == nullptr) {
-    // root node: lookup this symbol from its context upward
-    CHECK_EQ(component.ref_type, ReferenceType::kUnqualified);
-    const SymbolTableNode* resolved = LookupSymbolUpwards(context, key);
-    if (resolved == nullptr) {
-      diagnostics->emplace_back(
-          DiagnoseUnqualifiedSymbolResolutionFailure(key, context));
+  // non-root node:
+  // use parent's scope (if resolved successfully) to resolve this node.
+  switch (component.ref_type) {
+    case ReferenceType::kUnqualified: {
+      // root node: lookup this symbol from its context upward
+      CHECK_EQ(node.Parent(), nullptr);
+      const SymbolTableNode* resolved = LookupSymbolUpwards(context, key);
+      if (resolved == nullptr) {
+        diagnostics->emplace_back(
+            DiagnoseUnqualifiedSymbolResolutionFailure(key, context));
+      }
+      component.resolved_symbol = resolved;
+      break;
     }
-    component.resolved_symbol = resolved;
-  } else {
-    // non-root node:
-    // use parent's scope (if resolved successfully) to resolve this node.
-    switch (component.ref_type) {
-      case ReferenceType::kDirectMember: {
-        const ReferenceComponent& parent_component(node.Parent()->Value());
+    case ReferenceType::kImmediate: {
+      ResolveDirectMember(component, context, diagnostics);
+      break;
+    }
+    case ReferenceType::kDirectMember: {
+      const ReferenceComponent& parent_component(node.Parent()->Value());
 
-        const SymbolTableNode* parent_scope = parent_component.resolved_symbol;
-        if (parent_scope == nullptr) return;  // leave this subtree unresolved
+      const SymbolTableNode* parent_scope = parent_component.resolved_symbol;
+      if (parent_scope == nullptr) return;  // leave this subtree unresolved
 
-        const auto found = parent_scope->Find(key);
-        if (found == parent_scope->end()) {
-          diagnostics->emplace_back(
-              DiagnoseMemberSymbolResolutionFailure(key, *parent_scope));
-        } else {
-          component.resolved_symbol = &found->second;
-        }
-        break;
-      }
-      case ReferenceType::kMemberOfTypeOfParent: {
-        // Get the type of the object from the parent component.
-        const ReferenceComponent& parent_component(node.Parent()->Value());
-        const SymbolTableNode* parent_scope = parent_component.resolved_symbol;
-        if (parent_scope == nullptr) return;  // leave this subtree unresolved
+      ResolveDirectMember(component, *parent_scope, diagnostics);
+      break;
+    }
+    case ReferenceType::kMemberOfTypeOfParent: {
+      // Get the type of the object from the parent component.
+      const ReferenceComponent& parent_component(node.Parent()->Value());
+      const SymbolTableNode* parent_scope = parent_component.resolved_symbol;
+      if (parent_scope == nullptr) return;  // leave this subtree unresolved
 
-        const DeclarationTypeInfo& type_info =
-            parent_scope->Value().declared_type;
-        // Primitive types do not have members.
-        if (type_info.user_defined_type == nullptr) return;
+      const DeclarationTypeInfo& type_info =
+          parent_scope->Value().declared_type;
+      // Primitive types do not have members.
+      if (type_info.user_defined_type == nullptr) return;
 
-        // This referenced object's scope is not a parent of this node, and
-        // this, not guaranteed to have been resolved first.
-        // TODO: cache/memoize the parent's resolved type.
-        const SymbolTableNode* type_scope =
-            type_info.user_defined_type->Value().resolved_symbol;
-        if (type_scope == nullptr) return;
+      // This referenced object's scope is not a parent of this node, and
+      // this, not guaranteed to have been resolved first.
+      const SymbolTableNode* type_scope =
+          type_info.user_defined_type->Value().resolved_symbol;
+      if (type_scope == nullptr) return;
 
-        const auto found = type_scope->Find(key);
-        if (found == type_scope->end()) {
-          diagnostics->emplace_back(
-              DiagnoseMemberSymbolResolutionFailure(key, *type_scope));
-        } else {
-          component.resolved_symbol = &found->second;
-        }
-        break;
-      }
-      case ReferenceType::kUnqualified:
-        CHECK_NE(component.ref_type, ReferenceType::kUnqualified);
+      ResolveDirectMember(component, *type_scope, diagnostics);
+      break;
     }
   }
   VLOG(2) << "end of " << __FUNCTION__;
@@ -981,10 +1115,31 @@ void DependentReferences::ResolveLocally(const SymbolTableNode& context) {
   ResolveReferenceComponentNodeLocal(*components, context);
 }
 
+absl::StatusOr<SymbolTableNode*> DependentReferences::ResolveOnlyBaseLocally(
+    SymbolTableNode* context) {
+  // Similar lookup to ResolveReferenceComponentNodeLocal() but allows
+  // mutability of 'context' for injecting out-of-line definitions.
+
+  ReferenceComponent& base(ABSL_DIE_IF_NULL(components)->Value());
+  CHECK(base.ref_type == ReferenceType::kUnqualified ||
+        base.ref_type == ReferenceType::kImmediate)
+      << "Inconsistent reference type: " << base.ref_type;
+  const absl::string_view key(base.identifier);
+  const auto found = context->Find(key);
+  if (found == context->end()) {
+    return DiagnoseMemberSymbolResolutionFailure(key, *context);
+  }
+
+  SymbolTableNode* resolved = &found->second;
+  base.resolved_symbol = resolved;
+  return resolved;
+}
+
 std::ostream& operator<<(std::ostream& stream, ReferenceType ref_type) {
   static const verible::EnumNameMap<ReferenceType> kReferenceTypeNames({
       // short-hand annotation for identifier reference type
       {"@", ReferenceType::kUnqualified},
+      {"!", ReferenceType::kImmediate},
       {"::", ReferenceType::kDirectMember},
       {".", ReferenceType::kMemberOfTypeOfParent},
   });

@@ -2410,6 +2410,199 @@ TEST(BuildSymbolTableTest,
   }
 }
 
+TEST(BuildSymbolTableTest, FunctionDeclarationOutOfLineMissingOuterClass) {
+  TestVerilogSourceFile src("outofline_func.sv",
+                            "function cc::ff;\n"  // "cc" undeclared
+                            "endfunction\n");
+  const auto status = src.Parse();
+  ASSERT_TRUE(status.ok()) << status.message();
+  SymbolTable symbol_table(nullptr);
+  const SymbolTableNode& root_symbol(symbol_table.Root());
+
+  const auto build_diagnostics = BuildSymbolTable(src, &symbol_table);
+  {
+    ASSERT_EQ(build_diagnostics.size(), 1);
+    const auto err = build_diagnostics.front();
+    EXPECT_EQ(err.code(), absl::StatusCode::kNotFound);
+    EXPECT_THAT(err.message(),
+                HasSubstr("No member symbol \"cc\" in parent scope $root"));
+  }
+
+  // out-of-line declaration creates a self-reference.
+  EXPECT_EQ(root_symbol.Value().local_references_to_bind.size(), 1);
+
+  {
+    std::vector<absl::Status> resolve_diagnostics;
+    symbol_table.Resolve(&resolve_diagnostics);
+    ASSERT_EQ(resolve_diagnostics.size(), 1);
+
+    // Same diagnostic as before.
+    const auto err = resolve_diagnostics.front();
+    EXPECT_EQ(err.code(), absl::StatusCode::kNotFound);
+    EXPECT_THAT(err.message(),
+                HasSubstr("No member symbol \"cc\" in parent scope $root"));
+  }
+}
+
+TEST(BuildSymbolTableTest, FunctionDeclarationOutOfLineMissingPrototype) {
+  TestVerilogSourceFile src("outofline_func.sv",
+                            "class cc;\n"
+                            // no "ff" prototype
+                            "endclass\n"
+                            "function cc::ff;\n"
+                            "endfunction\n");
+  const auto status = src.Parse();
+  ASSERT_TRUE(status.ok()) << status.message();
+  SymbolTable symbol_table(nullptr);
+  const SymbolTableNode& root_symbol(symbol_table.Root());
+
+  const auto build_diagnostics = BuildSymbolTable(src, &symbol_table);
+  {
+    // This diagnostic is non-fatal.
+    // Expect that "ff" will be injected into "cc" when its method prototype is
+    // missing.
+    ASSERT_EQ(build_diagnostics.size(), 1);
+    const auto err = build_diagnostics.front();
+    EXPECT_EQ(err.code(), absl::StatusCode::kNotFound);
+    EXPECT_THAT(err.message(),
+                HasSubstr("No member symbol \"ff\" in parent scope cc"));
+  }
+  MUST_ASSIGN_LOOKUP_SYMBOL(class_cc, root_symbol, "cc");
+  MUST_ASSIGN_LOOKUP_SYMBOL(method_ff, class_cc, "ff");
+  EXPECT_EQ(method_ff_info.type, SymbolType::kFunction);
+
+  // out-of-line declaration creates a self-reference.
+  // Reference must be resolved at Build-time.
+  EXPECT_EQ(root_symbol.Value().local_references_to_bind.size(), 1);
+  const auto ref_map(root_symbol.Value().LocalReferencesMapViewForTesting());
+  ASSIGN_MUST_FIND_EXACTLY_ONE_REF(cc_ref, ref_map, "cc");
+  EXPECT_EQ(cc_ref->components->Value().resolved_symbol, &class_cc);
+
+  // Method reference is resolved to the injected symbol.
+  const ReferenceComponentNode* ff_ref = cc_ref->LastLeaf();
+  const ReferenceComponent& ref(ff_ref->Value());
+  EXPECT_EQ(ref.identifier, "ff");
+  EXPECT_EQ(ref.resolved_symbol, &method_ff);
+
+  {
+    std::vector<absl::Status> resolve_diagnostics;
+    symbol_table.Resolve(&resolve_diagnostics);
+    EXPECT_TRUE(resolve_diagnostics.empty());
+
+    // Already resolved before, still remains resolved.
+    EXPECT_EQ(cc_ref->components->Value().resolved_symbol, &class_cc);
+    EXPECT_EQ(ref.resolved_symbol, &method_ff);
+  }
+}
+
+TEST(BuildSymbolTableTest, FunctionDeclarationMethodPrototypeOnly) {
+  TestVerilogSourceFile src("outofline_func.sv",
+                            "class cc;\n"
+                            "  extern function int ff(logic ll);\n"
+                            "endclass\n");
+  const auto status = src.Parse();
+  ASSERT_TRUE(status.ok()) << status.message();
+  SymbolTable symbol_table(nullptr);
+  const SymbolTableNode& root_symbol(symbol_table.Root());
+
+  const auto build_diagnostics = BuildSymbolTable(src, &symbol_table);
+  EXPECT_TRUE(build_diagnostics.empty()) << "Unexpected diagnostic:\n"
+                                         << build_diagnostics.front().message();
+
+  MUST_ASSIGN_LOOKUP_SYMBOL(class_cc, root_symbol, "cc");
+  MUST_ASSIGN_LOOKUP_SYMBOL(method_ff, class_cc, "ff");
+  EXPECT_EQ(method_ff_info.type, SymbolType::kFunction);
+  ASSERT_NE(method_ff_info.declared_type.syntax_origin, nullptr);
+  EXPECT_EQ(
+      verible::StringSpanOfSymbol(*method_ff_info.declared_type.syntax_origin),
+      "int");
+
+  MUST_ASSIGN_LOOKUP_SYMBOL(port_ll, method_ff, "ll");
+  EXPECT_EQ(port_ll_info.type, SymbolType::kDataNetVariableInstance);
+  ASSERT_NE(port_ll_info.declared_type.syntax_origin, nullptr);
+  EXPECT_EQ(
+      verible::StringSpanOfSymbol(*port_ll_info.declared_type.syntax_origin),
+      "logic");
+
+  // No references to resolve.
+  EXPECT_TRUE(root_symbol.Value().local_references_to_bind.empty());
+  EXPECT_TRUE(class_cc_info.local_references_to_bind.empty());
+  EXPECT_TRUE(method_ff_info.local_references_to_bind.empty());
+
+  {
+    std::vector<absl::Status> resolve_diagnostics;
+    symbol_table.Resolve(&resolve_diagnostics);
+    EXPECT_TRUE(resolve_diagnostics.empty());
+  }
+}
+
+TEST(BuildSymbolTableTest, FunctionDeclarationOutOfLineWithMethodPrototype) {
+  TestVerilogSourceFile src(
+      "outofline_func.sv",
+      "class cc;\n"
+      "  extern function int ff(logic ll);\n"  // prototype
+      "endclass\n"
+      "function int cc::ff(logic ll);\n"  // definition
+      "  bit bb;\n"                       // local variable
+      "endfunction\n");
+  const auto status = src.Parse();
+  ASSERT_TRUE(status.ok()) << status.message();
+  SymbolTable symbol_table(nullptr);
+  const SymbolTableNode& root_symbol(symbol_table.Root());
+
+  const auto build_diagnostics = BuildSymbolTable(src, &symbol_table);
+  EXPECT_TRUE(build_diagnostics.empty()) << "Unexpected diagnostic:\n"
+                                         << build_diagnostics.front().message();
+
+  MUST_ASSIGN_LOOKUP_SYMBOL(class_cc, root_symbol, "cc");
+  MUST_ASSIGN_LOOKUP_SYMBOL(method_ff, class_cc, "ff");
+  EXPECT_EQ(method_ff_info.type, SymbolType::kFunction);
+  ASSERT_NE(method_ff_info.declared_type.syntax_origin, nullptr);
+  EXPECT_EQ(
+      verible::StringSpanOfSymbol(*method_ff_info.declared_type.syntax_origin),
+      "int");
+
+  MUST_ASSIGN_LOOKUP_SYMBOL(port_ll, method_ff, "ll");
+  EXPECT_EQ(port_ll_info.type, SymbolType::kDataNetVariableInstance);
+  ASSERT_NE(port_ll_info.declared_type.syntax_origin, nullptr);
+  EXPECT_EQ(
+      verible::StringSpanOfSymbol(*port_ll_info.declared_type.syntax_origin),
+      "logic");
+
+  MUST_ASSIGN_LOOKUP_SYMBOL(local_bb, method_ff, "bb");
+  EXPECT_EQ(local_bb_info.type, SymbolType::kDataNetVariableInstance);
+  ASSERT_NE(local_bb_info.declared_type.syntax_origin, nullptr);
+  EXPECT_EQ(
+      verible::StringSpanOfSymbol(*local_bb_info.declared_type.syntax_origin),
+      "bit");
+
+  // out-of-line declaration creates a self-reference.
+  // Reference must be resolved at Build-time.
+  EXPECT_EQ(root_symbol.Value().local_references_to_bind.size(), 1);
+  const auto ref_map(root_symbol.Value().LocalReferencesMapViewForTesting());
+  ASSIGN_MUST_FIND_EXACTLY_ONE_REF(cc_ref, ref_map, "cc");
+  EXPECT_EQ(cc_ref->components->Value().resolved_symbol, &class_cc);
+
+  // Method reference is resolved to the injected symbol.
+  const ReferenceComponentNode* ff_ref = cc_ref->LastLeaf();
+  const ReferenceComponent& ref(ff_ref->Value());
+  EXPECT_EQ(ref.identifier, "ff");
+  EXPECT_EQ(ref.resolved_symbol, &method_ff);
+
+  EXPECT_TRUE(class_cc_info.local_references_to_bind.empty());
+  EXPECT_TRUE(method_ff_info.local_references_to_bind.empty());
+
+  {
+    std::vector<absl::Status> resolve_diagnostics;
+    symbol_table.Resolve(&resolve_diagnostics);
+    EXPECT_TRUE(resolve_diagnostics.empty());
+
+    // Already resolved.
+    EXPECT_EQ(cc_ref->components->Value().resolved_symbol, &class_cc);
+    EXPECT_EQ(ref.resolved_symbol, &method_ff);
+  }
+}
+
 TEST(BuildSymbolTableTest, TaskDeclaration) {
   TestVerilogSourceFile src("taskrabbit.sv",
                             "task tt;\n"

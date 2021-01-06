@@ -62,6 +62,12 @@ enum class ReferenceType {
   // current context.
   kUnqualified,
 
+  // Similar to kUnqualified in that it is in base position, however, this
+  // symbol must be resolved only locally in the current context, without any
+  // upward search.  This is suitable for out-of-line definitions, where the
+  // base (in "base::member") must be resolved in only the enclosing scope.
+  kImmediate,
+
   // ::id (for packages, and class static members)
   // These symbols are resolved by searching in the parent symbol's
   // context (or its imported/inherited namespaces).
@@ -175,6 +181,10 @@ struct DependentReferences {
 
   // Attempt to resolve only local symbol references.
   void ResolveLocally(const SymbolTableNode& context);
+
+  // Attempt to only resolve the base of the reference (the first component).
+  absl::StatusOr<SymbolTableNode*> ResolveOnlyBaseLocally(
+      SymbolTableNode* context);
 };
 
 std::ostream& operator<<(std::ostream&, const DependentReferences&);
