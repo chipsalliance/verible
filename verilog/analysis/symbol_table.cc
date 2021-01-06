@@ -66,28 +66,28 @@ static absl::string_view StripOuterQuotes(absl::string_view text) {
   return absl::StripSuffix(absl::StripPrefix(text, "\""), "\"");
 }
 
-static const verible::EnumNameMap<SymbolType> kSymbolInfoNames({
+static const verible::EnumNameMap<SymbolMetaType> kSymbolMetaTypeNames({
     // short-hand annotation for identifier reference type
-    {"<root>", SymbolType::kRoot},
-    {"class", SymbolType::kClass},
-    {"module", SymbolType::kModule},
-    {"package", SymbolType::kPackage},
-    {"parameter", SymbolType::kParameter},
-    {"typedef", SymbolType::kTypeAlias},
-    {"data/net/var/instance", SymbolType::kDataNetVariableInstance},
-    {"function", SymbolType::kFunction},
-    {"task", SymbolType::kTask},
-    {"interface", SymbolType::kInterface},
-    {"<unspecified>", SymbolType::kUnspecified},
-    {"<callable>", SymbolType::kCallable},
+    {"<root>", SymbolMetaType::kRoot},
+    {"class", SymbolMetaType::kClass},
+    {"module", SymbolMetaType::kModule},
+    {"package", SymbolMetaType::kPackage},
+    {"parameter", SymbolMetaType::kParameter},
+    {"typedef", SymbolMetaType::kTypeAlias},
+    {"data/net/var/instance", SymbolMetaType::kDataNetVariableInstance},
+    {"function", SymbolMetaType::kFunction},
+    {"task", SymbolMetaType::kTask},
+    {"interface", SymbolMetaType::kInterface},
+    {"<unspecified>", SymbolMetaType::kUnspecified},
+    {"<callable>", SymbolMetaType::kCallable},
 });
 
-std::ostream& operator<<(std::ostream& stream, SymbolType symbol_type) {
-  return kSymbolInfoNames.Unparse(symbol_type, stream);
+std::ostream& operator<<(std::ostream& stream, SymbolMetaType symbol_type) {
+  return kSymbolMetaTypeNames.Unparse(symbol_type, stream);
 }
 
-static absl::string_view SymbolTypeAsString(SymbolType type) {
-  return kSymbolInfoNames.EnumName(type);
+static absl::string_view SymbolMetaTypeAsString(SymbolMetaType type) {
+  return kSymbolMetaTypeNames.EnumName(type);
 }
 
 // Root SymbolTableNode has no key, but we identify it as "$root"
@@ -145,7 +145,7 @@ static absl::Status DiagnoseMemberSymbolResolutionFailure(
       context.Parent() == nullptr ? kRoot : *context.Key();
   return absl::NotFoundError(absl::StrCat(
       "No member symbol \"", name, "\" in parent scope (",
-      SymbolTypeAsString(context.Value().type), ") ", context_name, "."));
+      SymbolMetaTypeAsString(context.Value().type), ") ", context_name, "."));
 }
 
 class SymbolTable::Builder : public TreeContextVisitor {
@@ -380,7 +380,7 @@ class SymbolTable::Builder : public TreeContextVisitor {
     const absl::string_view text = leaf.get().text();
     if (Context().DirectParentIs(NodeEnum::kParamType)) {
       // This identifier declares a parameter.
-      EmplaceTypedElementInCurrentScope(leaf, text, SymbolType::kParameter);
+      EmplaceTypedElementInCurrentScope(leaf, text, SymbolMetaType::kParameter);
       return;
     }
     if (Context().DirectParentsAre(
@@ -391,8 +391,8 @@ class SymbolTable::Builder : public TreeContextVisitor {
              NodeEnum::kPortItem})) {
       // This identifier declares a (non-parameter) port (of a module,
       // function, task).
-      EmplaceTypedElementInCurrentScope(leaf, text,
-                                        SymbolType::kDataNetVariableInstance);
+      EmplaceTypedElementInCurrentScope(
+          leaf, text, SymbolMetaType::kDataNetVariableInstance);
       // TODO(fangism): Add attributes to distinguish public ports from
       // private internals members.
       return;
@@ -412,7 +412,7 @@ class SymbolTable::Builder : public TreeContextVisitor {
           });
       if (decl_syntax == nullptr) return;
       SymbolTableNode* declared_function = &EmplaceTypedElementInCurrentScope(
-          *decl_syntax, text, SymbolType::kFunction);
+          *decl_syntax, text, SymbolMetaType::kFunction);
       // After this point, we've registered the new function with its return
       // type, so we can switch context over to the newly declared function
       // for its port interface and definition internals.
@@ -433,8 +433,8 @@ class SymbolTable::Builder : public TreeContextVisitor {
                 {NodeEnum::kTaskDeclaration, NodeEnum::kTaskPrototype});
           });
       if (decl_syntax == nullptr) return;
-      SymbolTableNode* declared_task =
-          &EmplaceElementInCurrentScope(*decl_syntax, text, SymbolType::kTask);
+      SymbolTableNode* declared_task = &EmplaceElementInCurrentScope(
+          *decl_syntax, text, SymbolMetaType::kTask);
       // After this point, we've registered the new task,
       // so we can switch context over to the newly declared function
       // for its port interface and definition internals.
@@ -543,7 +543,7 @@ class SymbolTable::Builder : public TreeContextVisitor {
 
   // Does the context necessitate that the symbol being referenced have a
   // particular metatype?
-  SymbolType InferMetaType() const {
+  SymbolMetaType InferMetaType() const {
     const DependentReferences& ref(reference_builders_.top());
     // Out-of-line definitions' base/outer references must be resolved
     // immediately to a class.
@@ -552,25 +552,26 @@ class SymbolTable::Builder : public TreeContextVisitor {
     if (Context().DirectParentsAre({NodeEnum::kUnqualifiedId,
                                     NodeEnum::kQualifiedId,  // out-of-line
                                     NodeEnum::kFunctionHeader})) {
-      return ref.Empty() ? SymbolType::kClass : SymbolType::kFunction;
+      return ref.Empty() ? SymbolMetaType::kClass : SymbolMetaType::kFunction;
     }
     if (Context().DirectParentsAre({NodeEnum::kUnqualifiedId,
                                     NodeEnum::kQualifiedId,  // out-of-line
                                     NodeEnum::kTaskHeader})) {
-      return ref.Empty() ? SymbolType::kClass : SymbolType::kTask;
+      return ref.Empty() ? SymbolMetaType::kClass : SymbolMetaType::kTask;
     }
-    // TODO: import references bases must be resolved as SymbolType::kPackage.
+    // TODO: import references bases must be resolved as
+    // SymbolMetaType::kPackage.
     if (Context().DirectParentIs(NodeEnum::kActualNamedPort)) {
-      return SymbolType::kDataNetVariableInstance;
+      return SymbolMetaType::kDataNetVariableInstance;
     }
     if (Context().DirectParentIs(NodeEnum::kParamByName)) {
-      return SymbolType::kParameter;
+      return SymbolMetaType::kParameter;
     }
     if (Context().DirectParentsAre({NodeEnum::kUnqualifiedId,
                                     NodeEnum::kLocalRoot,
                                     NodeEnum::kFunctionCall})) {
       // bare call like "function_name(...)"
-      return SymbolType::kCallable;
+      return SymbolMetaType::kCallable;
     }
     if (Context().DirectParentsAre(
             {NodeEnum::kUnqualifiedId, NodeEnum::kQualifiedId,
@@ -582,18 +583,18 @@ class SymbolTable::Builder : public TreeContextVisitor {
       const SyntaxTreeNode* unqualified_id =
           Context().NearestParentWithTag(NodeEnum::kUnqualifiedId);
       if (qualified_id->children().back().get() == unqualified_id) {
-        return SymbolType::kCallable;
+        return SymbolMetaType::kCallable;
       }
       // TODO(fangism): could require parents to be kPackage or kClass
     }
     if (Context().DirectParentsAre(
             {NodeEnum::kUnqualifiedId, NodeEnum::kMethodCallExtension})) {
       // method call like "obj.method_name(...)"
-      return SymbolType::kCallable;
+      return SymbolMetaType::kCallable;
       // TODO(fangism): check that method is non-static
     }
     // Default: no specific metatype.
-    return SymbolType::kUnspecified;
+    return SymbolMetaType::kUnspecified;
   }
 
   // Creates a named element in the current scope.
@@ -601,7 +602,7 @@ class SymbolTable::Builder : public TreeContextVisitor {
   // classes, modules, etc...
   SymbolTableNode& EmplaceElementInCurrentScope(const verible::Symbol& element,
                                                 absl::string_view name,
-                                                SymbolType type) {
+                                                SymbolMetaType type) {
     const auto p =
         current_scope_->TryEmplace(name, SymbolInfo{
                                              .type = type,
@@ -618,7 +619,8 @@ class SymbolTable::Builder : public TreeContextVisitor {
   // Suitable for SystemVerilog language elements: nets, parameter, variables,
   // instances, functions (using their return types).
   SymbolTableNode& EmplaceTypedElementInCurrentScope(
-      const verible::Symbol& element, absl::string_view name, SymbolType type) {
+      const verible::Symbol& element, absl::string_view name,
+      SymbolMetaType type) {
     VLOG(1) << __FUNCTION__ << ": " << name << " in " << CurrentScopeFullPath();
     VLOG(1) << "  type info: " << *ABSL_DIE_IF_NULL(declaration_type_info_);
     VLOG(1) << "  full text: " << AutoTruncate{StringSpanOfSymbol(element), 40};
@@ -641,7 +643,8 @@ class SymbolTable::Builder : public TreeContextVisitor {
   // Creates a named element in the current scope, and traverses its subtree
   // inside the new element's scope.
   void DeclareScopedElementAndDescend(const SyntaxTreeNode& element,
-                                      absl::string_view name, SymbolType type) {
+                                      absl::string_view name,
+                                      SymbolMetaType type) {
     SymbolTableNode& enter_scope(
         EmplaceElementInCurrentScope(element, name, type));
     Descend(element, enter_scope);
@@ -649,7 +652,7 @@ class SymbolTable::Builder : public TreeContextVisitor {
 
   void DeclareModule(const SyntaxTreeNode& module) {
     DeclareScopedElementAndDescend(module, GetModuleName(module).get().text(),
-                                   SymbolType::kModule);
+                                   SymbolMetaType::kModule);
   }
 
   absl::string_view GetScopeNameFromGenerateBody(const SyntaxTreeNode& body) {
@@ -670,8 +673,9 @@ class SymbolTable::Builder : public TreeContextVisitor {
   void DeclareGenerateIf(const SyntaxTreeNode& generate_if) {
     const SyntaxTreeNode& body(GetIfClauseGenerateBody(generate_if));
 
-    DeclareScopedElementAndDescend(
-        generate_if, GetScopeNameFromGenerateBody(body), SymbolType::kGenerate);
+    DeclareScopedElementAndDescend(generate_if,
+                                   GetScopeNameFromGenerateBody(body),
+                                   SymbolMetaType::kGenerate);
   }
 
   void DeclareGenerateElse(const SyntaxTreeNode& generate_else) {
@@ -685,18 +689,19 @@ class SymbolTable::Builder : public TreeContextVisitor {
     } else {
       DeclareScopedElementAndDescend(generate_else,
                                      GetScopeNameFromGenerateBody(body),
-                                     SymbolType::kGenerate);
+                                     SymbolMetaType::kGenerate);
     }
   }
 
   void DeclarePackage(const SyntaxTreeNode& package) {
     DeclareScopedElementAndDescend(package, GetPackageNameToken(package).text(),
-                                   SymbolType::kPackage);
+                                   SymbolMetaType::kPackage);
   }
 
   void DeclareClass(const SyntaxTreeNode& class_node) {
-    DeclareScopedElementAndDescend(
-        class_node, GetClassName(class_node).get().text(), SymbolType::kClass);
+    DeclareScopedElementAndDescend(class_node,
+                                   GetClassName(class_node).get().text(),
+                                   SymbolMetaType::kClass);
   }
 
   void DeclareTask(const SyntaxTreeNode& task_node) {
@@ -798,7 +803,7 @@ class SymbolTable::Builder : public TreeContextVisitor {
     const absl::string_view instance_name(
         GetModuleInstanceNameTokenInfoFromGateInstance(instance).text());
     const SymbolTableNode& new_instance(EmplaceTypedElementInCurrentScope(
-        instance, instance_name, SymbolType::kDataNetVariableInstance));
+        instance, instance_name, SymbolMetaType::kDataNetVariableInstance));
 
     // Also create a DependentReferences chain starting with this named instance
     // so that named port references are direct children of this reference root.
@@ -807,7 +812,7 @@ class SymbolTable::Builder : public TreeContextVisitor {
     capture.Ref().PushReferenceComponent(ReferenceComponent{
         .identifier = instance_name,
         .ref_type = ReferenceType::kUnqualified,
-        .metatype = SymbolType::kDataNetVariableInstance,
+        .metatype = SymbolMetaType::kDataNetVariableInstance,
         // Start with its type already resolved to the node we just declared.
         .resolved_symbol = &new_instance,
     });
@@ -826,7 +831,7 @@ class SymbolTable::Builder : public TreeContextVisitor {
     const absl::string_view net_name(
         GetNameLeafOfNetVariable(net_variable).get().text());
     EmplaceTypedElementInCurrentScope(net_variable, net_name,
-                                      SymbolType::kDataNetVariableInstance);
+                                      SymbolMetaType::kDataNetVariableInstance);
     Descend(net_variable);
   }
 
@@ -834,7 +839,7 @@ class SymbolTable::Builder : public TreeContextVisitor {
     const absl::string_view net_name(
         GetNameLeafOfRegisterVariable(reg_variable).get().text());
     EmplaceTypedElementInCurrentScope(reg_variable, net_name,
-                                      SymbolType::kDataNetVariableInstance);
+                                      SymbolMetaType::kDataNetVariableInstance);
     Descend(reg_variable);
   }
 
@@ -845,7 +850,7 @@ class SymbolTable::Builder : public TreeContextVisitor {
   }
 
   absl::StatusOr<SymbolTableNode*> LookupOrInjectOutOfLineDefinition(
-      const SyntaxTreeNode& qualified_id, SymbolType type,
+      const SyntaxTreeNode& qualified_id, SymbolMetaType type,
       const SyntaxTreeNode* definition_syntax) {
     // e.g. "function int class_c::func(...); ... endfunction"
     // Use a DependentReference object to establish a self-reference.
@@ -887,13 +892,13 @@ class SymbolTable::Builder : public TreeContextVisitor {
     } else {
       // Use pre-existing symbol table entry created from the prototype.
       // Check that out-of-line and prototype symbol metatypes match.
-      const SymbolType original_type = inner_symbol->Value().type;
+      const SymbolMetaType original_type = inner_symbol->Value().type;
       if (original_type != type) {
         return absl::AlreadyExistsError(
-            absl::StrCat(SymbolTypeAsString(original_type), " ",
+            absl::StrCat(SymbolMetaTypeAsString(original_type), " ",
                          ContextFullPath(*inner_symbol),
                          " cannot be redefined out-of-line as a ",
-                         SymbolTypeAsString(type)));
+                         SymbolMetaTypeAsString(type)));
       }
     }
     // Resolve this self-reference immediately.
@@ -902,7 +907,7 @@ class SymbolTable::Builder : public TreeContextVisitor {
   }
 
   void DescendThroughOutOfLineDefinition(const SyntaxTreeNode& qualified_id,
-                                         SymbolType type,
+                                         SymbolMetaType type,
                                          const SyntaxTreeNode* decl_syntax) {
     const auto inner_symbol_or_status =
         LookupOrInjectOutOfLineDefinition(qualified_id, type, decl_syntax);
@@ -927,7 +932,8 @@ class SymbolTable::Builder : public TreeContextVisitor {
               return node.MatchesTagAnyOf({NodeEnum::kFunctionDeclaration,
                                            NodeEnum::kFunctionPrototype});
             });
-        DescendThroughOutOfLineDefinition(qualified_id, SymbolType::kFunction,
+        DescendThroughOutOfLineDefinition(qualified_id,
+                                          SymbolMetaType::kFunction,
                                           ABSL_DIE_IF_NULL(decl_syntax));
         break;
       }
@@ -937,7 +943,7 @@ class SymbolTable::Builder : public TreeContextVisitor {
               return node.MatchesTagAnyOf(
                   {NodeEnum::kTaskDeclaration, NodeEnum::kTaskPrototype});
             });
-        DescendThroughOutOfLineDefinition(qualified_id, SymbolType::kTask,
+        DescendThroughOutOfLineDefinition(qualified_id, SymbolMetaType::kTask,
                                           ABSL_DIE_IF_NULL(decl_syntax));
         break;
       }
@@ -1066,13 +1072,13 @@ void ReferenceComponent::VerifySymbolTableRoot(
 }
 
 absl::Status ReferenceComponent::MatchesMetatype(
-    SymbolType found_metatype) const {
+    SymbolMetaType found_metatype) const {
   switch (metatype) {
-    case SymbolType::kUnspecified:
+    case SymbolMetaType::kUnspecified:
       return absl::OkStatus();
-    case SymbolType::kCallable:
-      if (found_metatype == SymbolType::kFunction ||
-          found_metatype == SymbolType::kTask) {
+    case SymbolMetaType::kCallable:
+      if (found_metatype == SymbolMetaType::kFunction ||
+          found_metatype == SymbolMetaType::kTask) {
         return absl::OkStatus();
       }
       break;
@@ -1083,8 +1089,8 @@ absl::Status ReferenceComponent::MatchesMetatype(
   // Otherwise, mismatched metatype.
   return absl::InvalidArgumentError(
       absl::StrCat("Expecting reference \"", identifier, "\" to resolve to a ",
-                   SymbolTypeAsString(metatype), ", but found a ",
-                   SymbolTypeAsString(found_metatype), "."));
+                   SymbolMetaTypeAsString(metatype), ", but found a ",
+                   SymbolMetaTypeAsString(found_metatype), "."));
 }
 
 const ReferenceComponentNode* DependentReferences::LastLeaf() const {
@@ -1354,7 +1360,7 @@ std::ostream& operator<<(std::ostream& stream, ReferenceType ref_type) {
 std::ostream& ReferenceComponent::PrintPathComponent(
     std::ostream& stream) const {
   stream << ref_type << identifier;
-  if (metatype != SymbolType::kUnspecified) {
+  if (metatype != SymbolMetaType::kUnspecified) {
     stream << '[' << metatype << ']';
   }
   return stream;
@@ -1446,7 +1452,7 @@ std::ostream& SymbolInfo::PrintDefinition(std::ostream& stream,
   }
   // declared_type only makes sense for elements with potentially user-defined
   // types, and not for language element declarations like modules and classes.
-  if (type == SymbolType::kDataNetVariableInstance) {
+  if (type == SymbolMetaType::kDataNetVariableInstance) {
     stream << wrap << declared_type << std::endl;
   }
   return stream;

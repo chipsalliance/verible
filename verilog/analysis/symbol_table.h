@@ -39,7 +39,7 @@ using SymbolTableNode =
 std::ostream& SymbolTableNodeFullPath(std::ostream&, const SymbolTableNode&);
 
 // Classify what type of element a particular symbol is defining.
-enum class SymbolType {
+enum class SymbolMetaType {
   kRoot,
   kClass,
   kModule,
@@ -59,7 +59,7 @@ enum class SymbolType {
   kCallable,     // matches only kFunction or kTask
 };
 
-std::ostream& operator<<(std::ostream&, SymbolType);
+std::ostream& operator<<(std::ostream&, SymbolMetaType);
 
 // This classifies the type of reference that a single identifier is.
 enum class ReferenceType {
@@ -108,7 +108,7 @@ struct ReferenceComponent {
   // Inform the symbol resolver that this symbol must be of a certain metatype.
   // SymbolInfo::kUnspecified is interpreted as "any metatype" for cases
   // where it is not known in advance.
-  const SymbolType metatype = SymbolType::kUnspecified;
+  const SymbolMetaType metatype = SymbolMetaType::kUnspecified;
 
   // This points to the definition with which this symbol was resolved.
   // During symbol table construction, this remains nullptr.
@@ -124,7 +124,7 @@ struct ReferenceComponent {
   ReferenceComponent& operator=(const ReferenceComponent&) = delete;
   ReferenceComponent& operator=(ReferenceComponent&&) = delete;
 
-  absl::Status MatchesMetatype(SymbolType) const;
+  absl::Status MatchesMetatype(SymbolMetaType) const;
 
   // Only print ref_type and identifier.
   std::ostream& PrintPathComponent(std::ostream&) const;
@@ -246,7 +246,7 @@ std::ostream& operator<<(std::ostream&, const DeclarationTypeInfo&);
 // and subclasses for each element type.
 struct SymbolInfo {
   // What is this symbol? (package, module, type, variable, etc.)
-  SymbolType type;
+  SymbolMetaType type;
 
   // This symbol's name is stored in the .Key() of the SymbolTableNode that
   // encloses this structure.  (This is SymbolTableNode::Value().)
@@ -388,7 +388,7 @@ class SymbolTable {
   // and string memory, otherwise string memory is owned by 'project'.
   explicit SymbolTable(VerilogProject* project)
       : project_(project),
-        symbol_table_root_(SymbolInfo{.type = SymbolType::kRoot}) {}
+        symbol_table_root_(SymbolInfo{.type = SymbolMetaType::kRoot}) {}
 
   // can become move-able when needed
   SymbolTable(const SymbolTable&) = delete;
