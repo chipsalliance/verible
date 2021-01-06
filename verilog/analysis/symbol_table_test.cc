@@ -2410,6 +2410,164 @@ TEST(BuildSymbolTableTest,
   }
 }
 
+TEST(BuildSymbolTableTest, TaskDeclaration) {
+  TestVerilogSourceFile src("taskrabbit.sv",
+                            "task tt;\n"
+                            "endtask\n");
+  const auto status = src.Parse();
+  ASSERT_TRUE(status.ok()) << status.message();
+  SymbolTable symbol_table(nullptr);
+  const SymbolTableNode& root_symbol(symbol_table.Root());
+
+  const auto build_diagnostics = BuildSymbolTable(src, &symbol_table);
+  EXPECT_TRUE(build_diagnostics.empty()) << "Unexpected diagnostic:\n"
+                                         << build_diagnostics.front().message();
+
+  MUST_ASSIGN_LOOKUP_SYMBOL(task_tt, root_symbol, "tt");
+  EXPECT_EQ(task_tt_info.type, SymbolType::kTask);
+  EXPECT_EQ(task_tt_info.file_origin, &src);
+  // no return type
+  EXPECT_EQ(task_tt_info.declared_type.syntax_origin, nullptr);
+
+  EXPECT_TRUE(task_tt_info.local_references_to_bind.empty());
+
+  {
+    std::vector<absl::Status> resolve_diagnostics;
+    symbol_table.Resolve(&resolve_diagnostics);
+    EXPECT_TRUE(resolve_diagnostics.empty());
+  }
+}
+
+TEST(BuildSymbolTableTest, TaskDeclarationInPackage) {
+  TestVerilogSourceFile src("taskrabbit.sv",
+                            "package pp;\n"
+                            "task tt();\n"
+                            "endtask\n"
+                            "endpackage\n");
+  const auto status = src.Parse();
+  ASSERT_TRUE(status.ok()) << status.message();
+  SymbolTable symbol_table(nullptr);
+  const SymbolTableNode& root_symbol(symbol_table.Root());
+
+  const auto build_diagnostics = BuildSymbolTable(src, &symbol_table);
+  EXPECT_TRUE(build_diagnostics.empty()) << "Unexpected diagnostic:\n"
+                                         << build_diagnostics.front().message();
+
+  MUST_ASSIGN_LOOKUP_SYMBOL(package_pp, root_symbol, "pp");
+  MUST_ASSIGN_LOOKUP_SYMBOL(task_tt, package_pp, "tt");
+  EXPECT_EQ(task_tt_info.type, SymbolType::kTask);
+  EXPECT_EQ(task_tt_info.file_origin, &src);
+  // no return type
+  EXPECT_EQ(task_tt_info.declared_type.syntax_origin, nullptr);
+
+  EXPECT_TRUE(task_tt_info.local_references_to_bind.empty());
+
+  {
+    std::vector<absl::Status> resolve_diagnostics;
+    symbol_table.Resolve(&resolve_diagnostics);
+    EXPECT_TRUE(resolve_diagnostics.empty());
+  }
+}
+
+TEST(BuildSymbolTableTest, TaskDeclarationInModule) {
+  TestVerilogSourceFile src("taskrabbit.sv",
+                            "module mm;\n"
+                            "task tt();\n"
+                            "endtask\n"
+                            "endmodule\n");
+  const auto status = src.Parse();
+  ASSERT_TRUE(status.ok()) << status.message();
+  SymbolTable symbol_table(nullptr);
+  const SymbolTableNode& root_symbol(symbol_table.Root());
+
+  const auto build_diagnostics = BuildSymbolTable(src, &symbol_table);
+  EXPECT_TRUE(build_diagnostics.empty()) << "Unexpected diagnostic:\n"
+                                         << build_diagnostics.front().message();
+
+  MUST_ASSIGN_LOOKUP_SYMBOL(module_mm, root_symbol, "mm");
+  MUST_ASSIGN_LOOKUP_SYMBOL(task_tt, module_mm, "tt");
+  EXPECT_EQ(task_tt_info.type, SymbolType::kTask);
+  EXPECT_EQ(task_tt_info.file_origin, &src);
+  // no return type
+  EXPECT_EQ(task_tt_info.declared_type.syntax_origin, nullptr);
+
+  EXPECT_TRUE(task_tt_info.local_references_to_bind.empty());
+
+  {
+    std::vector<absl::Status> resolve_diagnostics;
+    symbol_table.Resolve(&resolve_diagnostics);
+    EXPECT_TRUE(resolve_diagnostics.empty());
+  }
+}
+
+TEST(BuildSymbolTableTest, TaskDeclarationInClass) {
+  TestVerilogSourceFile src("taskrabbit.sv",
+                            "class cc;\n"
+                            "task tt();\n"
+                            "endtask\n"
+                            "endclass\n");
+  const auto status = src.Parse();
+  ASSERT_TRUE(status.ok()) << status.message();
+  SymbolTable symbol_table(nullptr);
+  const SymbolTableNode& root_symbol(symbol_table.Root());
+
+  const auto build_diagnostics = BuildSymbolTable(src, &symbol_table);
+  EXPECT_TRUE(build_diagnostics.empty()) << "Unexpected diagnostic:\n"
+                                         << build_diagnostics.front().message();
+
+  MUST_ASSIGN_LOOKUP_SYMBOL(class_cc, root_symbol, "cc");
+  MUST_ASSIGN_LOOKUP_SYMBOL(task_tt, class_cc, "tt");
+  EXPECT_EQ(task_tt_info.type, SymbolType::kTask);
+  EXPECT_EQ(task_tt_info.file_origin, &src);
+  // no return type
+  EXPECT_EQ(task_tt_info.declared_type.syntax_origin, nullptr);
+
+  EXPECT_TRUE(task_tt_info.local_references_to_bind.empty());
+
+  {
+    std::vector<absl::Status> resolve_diagnostics;
+    symbol_table.Resolve(&resolve_diagnostics);
+    EXPECT_TRUE(resolve_diagnostics.empty());
+  }
+}
+
+TEST(BuildSymbolTableTest, TaskDeclarationWithPorts) {
+  TestVerilogSourceFile src("taskrabbit.sv",
+                            "task tt(logic ll);\n"
+                            "endtask\n");
+  const auto status = src.Parse();
+  ASSERT_TRUE(status.ok()) << status.message();
+  SymbolTable symbol_table(nullptr);
+  const SymbolTableNode& root_symbol(symbol_table.Root());
+
+  const auto build_diagnostics = BuildSymbolTable(src, &symbol_table);
+  EXPECT_TRUE(build_diagnostics.empty()) << "Unexpected diagnostic:\n"
+                                         << build_diagnostics.front().message();
+
+  MUST_ASSIGN_LOOKUP_SYMBOL(task_tt, root_symbol, "tt");
+  EXPECT_EQ(task_tt_info.type, SymbolType::kTask);
+  EXPECT_EQ(task_tt_info.file_origin, &src);
+  // no return type
+  EXPECT_EQ(task_tt_info.declared_type.syntax_origin, nullptr);
+
+  MUST_ASSIGN_LOOKUP_SYMBOL(logic_ll, task_tt, "ll");
+  EXPECT_EQ(logic_ll_info.type, SymbolType::kDataNetVariableInstance);
+  EXPECT_EQ(logic_ll_info.file_origin, &src);
+  // primitive type
+  ASSERT_NE(logic_ll_info.declared_type.syntax_origin, nullptr);
+  EXPECT_EQ(
+      verible::StringSpanOfSymbol(*logic_ll_info.declared_type.syntax_origin),
+      "logic");
+
+  EXPECT_TRUE(task_tt_info.local_references_to_bind.empty());
+
+  {
+    std::vector<absl::Status> resolve_diagnostics;
+    symbol_table.Resolve(&resolve_diagnostics);
+    EXPECT_TRUE(resolve_diagnostics.empty());
+  }
+}
+
 static bool SourceFileLess(const TestVerilogSourceFile* left,
                            const TestVerilogSourceFile* right) {
   return left->ReferencedPath() < right->ReferencedPath();

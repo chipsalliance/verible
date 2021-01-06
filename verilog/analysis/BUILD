@@ -375,6 +375,7 @@ cc_library(
         "//verilog/CST:port",
         "//verilog/CST:seq_block",
         "//verilog/CST:statement",
+        "//verilog/CST:tasks",
         "//verilog/CST:type",
         "//verilog/CST:verilog_nonterminals",
         "//verilog/parser:verilog_parser",

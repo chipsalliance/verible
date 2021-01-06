@@ -43,6 +43,7 @@
 #include "verilog/CST/port.h"
 #include "verilog/CST/seq_block.h"
 #include "verilog/CST/statement.h"
+#include "verilog/CST/tasks.h"
 #include "verilog/CST/type.h"
 #include "verilog/CST/verilog_nonterminals.h"
 #include "verilog/analysis/verilog_project.h"
@@ -162,6 +163,9 @@ class SymbolTable::Builder : public TreeContextVisitor {
         break;
       case NodeEnum::kFunctionHeader:
         SetupFunctionHeader(node);
+        break;
+      case NodeEnum::kTaskDeclaration:
+        DeclareTask(node);
         break;
       case NodeEnum::kPortItem:         // fall-through
                                         // for function/task parameters
@@ -562,6 +566,13 @@ class SymbolTable::Builder : public TreeContextVisitor {
   void DeclareClass(const SyntaxTreeNode& class_node) {
     DeclareScopedElementAndDescend(
         class_node, GetClassName(class_node).get().text(), SymbolType::kClass);
+  }
+
+  void DeclareTask(const SyntaxTreeNode& task_node) {
+    const SyntaxTreeLeaf* task_name_leaf = GetTaskName(task_node);
+    if (task_name_leaf == nullptr) return;  // TODO: out-of-line definition
+    DeclareScopedElementAndDescend(task_node, task_name_leaf->get().text(),
+                                   SymbolType::kTask);
   }
 
   void DeclareFunction(const SyntaxTreeNode& function_node) {
