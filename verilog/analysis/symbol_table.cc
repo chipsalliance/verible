@@ -729,6 +729,27 @@ static absl::Status DiagnoseMemberSymbolResolutionFailure(
       "No member symbol \"", name, "\" in parent scope ", context_name, "."));
 }
 
+static void ResolveReferenceComponentNodeLocal(ReferenceComponentNode& node,
+                                               const SymbolTableNode& context) {
+  ReferenceComponent& component(node.Value());
+  VLOG(2) << __FUNCTION__ << ": " << component;
+  if (component.resolved_symbol != nullptr) return;  // already bound
+  const absl::string_view key(component.identifier);
+  CHECK_EQ(node.Parent(), nullptr);  // is root
+  // root node: lookup this symbol from its context upward
+  CHECK_EQ(component.ref_type, ReferenceType::kUnqualified);
+
+  // If already resolved, skip.
+  if (component.resolved_symbol != nullptr) return;
+
+  // Only try to resolve using the same scope in which the reference appeared,
+  // local, without upward search.
+  const auto found = context.Find(key);
+  if (found != context.end()) {
+    component.resolved_symbol = &found->second;
+  }
+}
+
 // This is the primary function that resolves references.
 // Dependent (parent) nodes must already be resolved before attempting to
 // resolve children references.
@@ -827,6 +848,12 @@ void DependentReferences::Resolve(const SymbolTableNode& context,
   VLOG(1) << "end of " << __FUNCTION__;
 }
 
+void DependentReferences::ResolveLocally(const SymbolTableNode& context) {
+  if (components == nullptr) return;
+  // Only attempt to resolve the reference root, and none of its subtrees.
+  ResolveReferenceComponentNodeLocal(*components, context);
+}
+
 std::ostream& operator<<(std::ostream& stream, ReferenceType ref_type) {
   static const verible::EnumNameMap<ReferenceType> kReferenceTypeNames({
       // short-hand annotation for identifier reference type
@@ -912,6 +939,12 @@ void SymbolInfo::Resolve(const SymbolTableNode& context,
   }
 }
 
+void SymbolInfo::ResolveLocally(const SymbolTableNode& context) {
+  for (auto& local_ref : local_references_to_bind) {
+    local_ref.ResolveLocally(context);
+  }
+}
+
 std::ostream& SymbolInfo::PrintDefinition(std::ostream& stream,
                                           size_t indent) const {
   // print everything except local_references_to_bind
@@ -965,6 +998,11 @@ void SymbolTable::CheckIntegrity() const {
 void SymbolTable::Resolve(std::vector<absl::Status>* diagnostics) {
   symbol_table_root_.ApplyPreOrder(
       [=](SymbolTableNode& node) { node.Value().Resolve(node, diagnostics); });
+}
+
+void SymbolTable::ResolveLocallyOnly() {
+  symbol_table_root_.ApplyPreOrder(
+      [=](SymbolTableNode& node) { node.Value().ResolveLocally(node); });
 }
 
 std::ostream& SymbolTable::PrintSymbolDefinitions(std::ostream& stream) const {

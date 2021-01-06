@@ -172,6 +172,9 @@ struct DependentReferences {
   // Attempt to resolve all symbol references.
   void Resolve(const SymbolTableNode& context,
                std::vector<absl::Status>* diagnostics);
+
+  // Attempt to resolve only local symbol references.
+  void ResolveLocally(const SymbolTableNode& context);
 };
 
 std::ostream& operator<<(std::ostream&, const DependentReferences&);
@@ -285,6 +288,9 @@ struct SymbolInfo {
   void Resolve(const SymbolTableNode& context,
                std::vector<absl::Status>* diagnostics);
 
+  // Attempt to resolve only symbols local to 'context' (no upward search).
+  void ResolveLocally(const SymbolTableNode& context);
+
   // Internal consistency check.
   void VerifySymbolTableRoot(const SymbolTableNode* root) const;
 
@@ -392,6 +398,15 @@ class SymbolTable {
   // Lookup all symbol references, and bind references where successful.
   // Only attempt to resolve after merging symbol tables.
   void Resolve(std::vector<absl::Status>* diagnostics);
+
+  // A "weaker" version of Resolve() that only attempts to resolve symbol
+  // references to definitions belonging to the same scope as the reference
+  // (without upward search).
+  // This can dramatically prune the number of unresolved references that
+  // require root-level resolution.
+  // No diagnostics are collected because silent no-change-on-failure behavior
+  // is intended.
+  void ResolveLocallyOnly();
 
   // Print only the information about symbols defined (no references).
   // This will print the results of Build().

@@ -1176,6 +1176,100 @@ TEST(BuildSymbolTableTest, ModuleInstanceNamedPortConnection) {
   }
 }
 
+TEST(BuildSymbolTableTest,
+     ModuleInstanceNamedPortConnectionResolveLocallyOnly) {
+  // Similar to ModuleInstanceNamedPortConnection, but will not resolve
+  // non-local references.
+  TestVerilogSourceFile src("foobar.sv",
+                            "module m (\n"
+                            "  input wire clk,\n"
+                            "  output reg q\n"
+                            ");\n"
+                            "endmodule\n"
+                            "module rr;\n"
+                            "  wire c, d;\n"
+                            "  m m_inst(.clk(c), .q(d));"
+                            // one type reference, two local net references
+                            // two named port references
+                            "endmodule\n");
+  const auto status = src.Parse();
+  ASSERT_TRUE(status.ok()) << status.message();
+  SymbolTable symbol_table(nullptr);
+  const SymbolTableNode& root_symbol(symbol_table.Root());
+
+  const auto build_diagnostics = BuildSymbolTable(src, &symbol_table);
+
+  MUST_ASSIGN_LOOKUP_SYMBOL(m_node, root_symbol, "m");
+  EXPECT_EQ(m_node_info.type, SymbolType::kModule);
+  EXPECT_EQ(m_node_info.file_origin, &src);
+  EXPECT_EQ(m_node_info.declared_type.syntax_origin,
+            nullptr);  // there is no module meta-type
+  EXPECT_TRUE(build_diagnostics.empty()) << "Unexpected diagnostic:\n"
+                                         << build_diagnostics.front().message();
+
+  MUST_ASSIGN_LOOKUP_SYMBOL(clk_node, m_node, "clk");
+  EXPECT_EQ(clk_node_info.type, SymbolType::kDataNetVariableInstance);
+  EXPECT_EQ(clk_node_info.declared_type.user_defined_type,
+            nullptr);  // types are primitive
+
+  MUST_ASSIGN_LOOKUP_SYMBOL(q_node, m_node, "q");
+  EXPECT_EQ(q_node_info.type, SymbolType::kDataNetVariableInstance);
+  EXPECT_EQ(q_node_info.declared_type.user_defined_type,
+            nullptr);  // types are primitive
+
+  MUST_ASSIGN_LOOKUP_SYMBOL(rr_node, root_symbol, "rr");
+
+  // Inspect local references to wires "c" and "d".
+  ASSERT_EQ(rr_node_info.local_references_to_bind.size(), 4);
+  const auto ref_map(rr_node_info.LocalReferencesMapViewForTesting());
+  ASSIGN_MUST_FIND_EXACTLY_ONE_REF(c_ref, ref_map, "c");
+  ASSIGN_MUST_FIND_EXACTLY_ONE_REF(d_ref, ref_map, "d");
+  ASSIGN_MUST_FIND_EXACTLY_ONE_REF(m_inst_ref, ref_map, "m_inst");
+  // Initially not resolved, but will be resolved below.
+  EXPECT_EQ(c_ref->LastLeaf()->Value().identifier, "c");
+  EXPECT_EQ(c_ref->LastLeaf()->Value().resolved_symbol, nullptr);
+  EXPECT_EQ(d_ref->LastLeaf()->Value().identifier, "d");
+  EXPECT_EQ(d_ref->LastLeaf()->Value().resolved_symbol, nullptr);
+
+  const ReferenceComponentNode& m_inst_ref_root(*m_inst_ref->components);
+  ASSERT_EQ(m_inst_ref_root.Children().size(), 2);
+  const ReferenceComponentMap port_refs(
+      ReferenceComponentNodeMapView(m_inst_ref_root));
+
+  const auto found_clk_ref = port_refs.find("clk");
+  ASSERT_NE(found_clk_ref, port_refs.end());
+  const ReferenceComponentNode& clk_ref(*found_clk_ref->second);
+  EXPECT_EQ(clk_ref.Value().identifier, "clk");
+  EXPECT_EQ(clk_ref.Value().ref_type, ReferenceType::kMemberOfTypeOfParent);
+  // "clk" is a non-local reference that will not even be resolved below
+  EXPECT_EQ(clk_ref.Value().resolved_symbol, nullptr);
+
+  const auto found_q_ref = port_refs.find("q");
+  ASSERT_NE(found_q_ref, port_refs.end());
+  const ReferenceComponentNode& q_ref(*found_q_ref->second);
+  EXPECT_EQ(q_ref.Value().identifier, "q");
+  EXPECT_EQ(q_ref.Value().ref_type, ReferenceType::kMemberOfTypeOfParent);
+  // "q" is a non-local reference that will not even be resolved below
+  EXPECT_EQ(q_ref.Value().resolved_symbol, nullptr);
+
+  // Get the local symbol definitions for wires "c" and "d".
+  MUST_ASSIGN_LOOKUP_SYMBOL(c_node, rr_node, "c");
+  MUST_ASSIGN_LOOKUP_SYMBOL(d_node, rr_node, "d");
+
+  // Running this twice changes nothing and is safe.
+  for (int i = 0; i < 2; ++i) {
+    symbol_table.ResolveLocallyOnly();
+
+    // Expect to resolve local references to wires c and d
+    EXPECT_EQ(c_ref->LastLeaf()->Value().resolved_symbol, &c_node);
+    EXPECT_EQ(d_ref->LastLeaf()->Value().resolved_symbol, &d_node);
+
+    // Expect to named port references to "clk" and "q" to remain unresolved.
+    EXPECT_EQ(clk_ref.Value().resolved_symbol, nullptr);
+    EXPECT_EQ(q_ref.Value().resolved_symbol, nullptr);
+  }
+}
+
 TEST(BuildSymbolTableTest, ModuleInstancePositionalParameterAssignment) {
   TestVerilogSourceFile src("foobar.sv",
                             "module m #(\n"
