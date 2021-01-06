@@ -335,4 +335,4 @@ Enabled by default: true
 
 ## Version
 
-Generated on 2021-01-06 12:32:37 -0800 from [a238a23](https://github.com/google/verible/commit/a238a23638400cf56438c58256c2f1817fa406eb)
+Generated on 2021-01-06 16:37:37 -0500 from [5949543](https://github.com/google/verible/commit/5949543b82668ab7fea20818a468df846f7ccb03)
