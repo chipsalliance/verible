@@ -250,5 +250,39 @@ TEST(SyntaxTreeContextTest, DirectParentsAreTest) {
   }
 }
 
+TEST(SyntaxTreeContextTest, NearestParentMatchingTest) {
+  // define a few predicate functions
+  const auto True = [](const SyntaxTreeNode& n) { return true; };
+  const auto TagEq = [](int i) {
+    return [i](const SyntaxTreeNode& n) { return n.Tag().tag == i; };
+  };
+
+  SyntaxTreeContext context;
+  // initially empty, always nullptr regardless of predicate
+  EXPECT_EQ(context.NearestParentMatching(True), nullptr);
+  {
+    SyntaxTreeNode node1(1);
+    SyntaxTreeContext::AutoPop p1(&context, &node1);
+    EXPECT_EQ(context.NearestParentMatching(True), &node1);
+    EXPECT_EQ(context.NearestParentMatching(TagEq(0)), nullptr);
+    EXPECT_EQ(context.NearestParentMatching(TagEq(1)), &node1);
+    {
+      SyntaxTreeNode node2(1);
+      SyntaxTreeContext::AutoPop p2(&context, &node2);
+      EXPECT_EQ(context.NearestParentMatching(True), &node2);
+      EXPECT_EQ(context.NearestParentMatching(TagEq(0)), nullptr);
+      EXPECT_EQ(context.NearestParentMatching(TagEq(1)), &node2);
+      {
+        SyntaxTreeNode node3(3);
+        SyntaxTreeContext::AutoPop p3(&context, &node3);
+        EXPECT_EQ(context.NearestParentMatching(True), &node3);
+        EXPECT_EQ(context.NearestParentMatching(TagEq(0)), nullptr);
+        EXPECT_EQ(context.NearestParentMatching(TagEq(1)), &node2);
+        EXPECT_EQ(context.NearestParentMatching(TagEq(3)), &node3);
+      }
+    }
+  }
+}
+
 }  // namespace
 }  // namespace verible

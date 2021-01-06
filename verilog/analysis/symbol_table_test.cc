@@ -2064,7 +2064,7 @@ TEST(BuildSymbolTableTest, ClassDeclarationWithParameter) {
   EXPECT_EQ(class_cc_info.type, SymbolType::kClass);
   EXPECT_EQ(class_cc_info.file_origin, &src);
   EXPECT_EQ(class_cc_info.declared_type.syntax_origin,
-            nullptr);  // there is no module meta-type
+            nullptr);  // there is no class meta-type
   EXPECT_TRUE(build_diagnostics.empty()) << "Unexpected diagnostic:\n"
                                          << build_diagnostics.front().message();
 
@@ -2080,6 +2080,333 @@ TEST(BuildSymbolTableTest, ClassDeclarationWithParameter) {
     std::vector<absl::Status> resolve_diagnostics;
     symbol_table.Resolve(&resolve_diagnostics);
     EXPECT_TRUE(resolve_diagnostics.empty());
+  }
+}
+
+TEST(BuildSymbolTableTest, FunctionDeclarationNoReturnType) {
+  TestVerilogSourceFile src("funkytown.sv",
+                            "function ff;\n"
+                            "endfunction\n");
+  const auto status = src.Parse();
+  ASSERT_TRUE(status.ok()) << status.message();
+  SymbolTable symbol_table(nullptr);
+  const SymbolTableNode& root_symbol(symbol_table.Root());
+
+  const auto build_diagnostics = BuildSymbolTable(src, &symbol_table);
+  EXPECT_TRUE(build_diagnostics.empty()) << "Unexpected diagnostic:\n"
+                                         << build_diagnostics.front().message();
+
+  MUST_ASSIGN_LOOKUP_SYMBOL(function_ff, root_symbol, "ff");
+  EXPECT_EQ(function_ff_info.type, SymbolType::kFunction);
+  EXPECT_EQ(function_ff_info.file_origin, &src);
+  // no return type
+  EXPECT_EQ(function_ff_info.declared_type.syntax_origin, nullptr);
+
+  EXPECT_TRUE(function_ff_info.local_references_to_bind.empty());
+
+  {
+    std::vector<absl::Status> resolve_diagnostics;
+    symbol_table.Resolve(&resolve_diagnostics);
+    EXPECT_TRUE(resolve_diagnostics.empty());
+  }
+}
+
+TEST(BuildSymbolTableTest, FunctionDeclarationWithPort) {
+  TestVerilogSourceFile src("funkytown.sv",
+                            "function ff(int g);\n"
+                            "endfunction\n");
+  // TODO: propagate type for ports like "int g, h"
+  const auto status = src.Parse();
+  ASSERT_TRUE(status.ok()) << status.message();
+  SymbolTable symbol_table(nullptr);
+  const SymbolTableNode& root_symbol(symbol_table.Root());
+
+  const auto build_diagnostics = BuildSymbolTable(src, &symbol_table);
+  EXPECT_TRUE(build_diagnostics.empty()) << "Unexpected diagnostic:\n"
+                                         << build_diagnostics.front().message();
+
+  MUST_ASSIGN_LOOKUP_SYMBOL(function_ff, root_symbol, "ff");
+  EXPECT_EQ(function_ff_info.type, SymbolType::kFunction);
+  EXPECT_EQ(function_ff_info.file_origin, &src);
+  EXPECT_EQ(function_ff_info.declared_type.syntax_origin,
+            nullptr);  // there is no function return type
+
+  MUST_ASSIGN_LOOKUP_SYMBOL(param_g, function_ff, "g");
+  EXPECT_EQ(param_g_info.type, SymbolType::kDataNetVariableInstance);
+  EXPECT_EQ(param_g_info.file_origin, &src);
+  ASSERT_NE(param_g_info.declared_type.syntax_origin, nullptr);
+  EXPECT_EQ(
+      verible::StringSpanOfSymbol(*param_g_info.declared_type.syntax_origin),
+      "int");
+
+  EXPECT_TRUE(function_ff_info.local_references_to_bind.empty());
+  EXPECT_TRUE(param_g_info.local_references_to_bind.empty());
+
+  {
+    std::vector<absl::Status> resolve_diagnostics;
+    symbol_table.Resolve(&resolve_diagnostics);
+    EXPECT_TRUE(resolve_diagnostics.empty());
+  }
+}
+
+TEST(BuildSymbolTableTest, FunctionDeclarationWithLocalVariable) {
+  TestVerilogSourceFile src("funkytown.sv",
+                            "function ff();\n"
+                            "  logic g;\n"
+                            "endfunction\n");
+  // TODO: propagate type for ports like "int g, h"
+  const auto status = src.Parse();
+  ASSERT_TRUE(status.ok()) << status.message();
+  SymbolTable symbol_table(nullptr);
+  const SymbolTableNode& root_symbol(symbol_table.Root());
+
+  const auto build_diagnostics = BuildSymbolTable(src, &symbol_table);
+  EXPECT_TRUE(build_diagnostics.empty()) << "Unexpected diagnostic:\n"
+                                         << build_diagnostics.front().message();
+
+  MUST_ASSIGN_LOOKUP_SYMBOL(function_ff, root_symbol, "ff");
+  EXPECT_EQ(function_ff_info.type, SymbolType::kFunction);
+  EXPECT_EQ(function_ff_info.file_origin, &src);
+  EXPECT_EQ(function_ff_info.declared_type.syntax_origin,
+            nullptr);  // there is no function return type
+
+  MUST_ASSIGN_LOOKUP_SYMBOL(local_g, function_ff, "g");
+  EXPECT_EQ(local_g_info.type, SymbolType::kDataNetVariableInstance);
+  EXPECT_EQ(local_g_info.file_origin, &src);
+  ASSERT_NE(local_g_info.declared_type.syntax_origin, nullptr);
+  EXPECT_EQ(
+      verible::StringSpanOfSymbol(*local_g_info.declared_type.syntax_origin),
+      "logic");
+
+  EXPECT_TRUE(function_ff_info.local_references_to_bind.empty());
+  EXPECT_TRUE(local_g_info.local_references_to_bind.empty());
+
+  {
+    std::vector<absl::Status> resolve_diagnostics;
+    symbol_table.Resolve(&resolve_diagnostics);
+    EXPECT_TRUE(resolve_diagnostics.empty());
+  }
+}
+
+TEST(BuildSymbolTableTest, FunctionDeclarationVoidReturnType) {
+  TestVerilogSourceFile src("funkytown.sv",
+                            "function void ff;\n"
+                            "endfunction\n");
+  const auto status = src.Parse();
+  ASSERT_TRUE(status.ok()) << status.message();
+  SymbolTable symbol_table(nullptr);
+  const SymbolTableNode& root_symbol(symbol_table.Root());
+
+  const auto build_diagnostics = BuildSymbolTable(src, &symbol_table);
+  EXPECT_TRUE(build_diagnostics.empty()) << "Unexpected diagnostic:\n"
+                                         << build_diagnostics.front().message();
+
+  MUST_ASSIGN_LOOKUP_SYMBOL(function_ff, root_symbol, "ff");
+  EXPECT_EQ(function_ff_info.type, SymbolType::kFunction);
+  EXPECT_EQ(function_ff_info.file_origin, &src);
+  ASSERT_NE(function_ff_info.declared_type.syntax_origin, nullptr);
+  EXPECT_EQ(verible::StringSpanOfSymbol(
+                *function_ff_info.declared_type.syntax_origin),
+            "void");
+
+  EXPECT_TRUE(function_ff_info.local_references_to_bind.empty());
+
+  {
+    std::vector<absl::Status> resolve_diagnostics;
+    symbol_table.Resolve(&resolve_diagnostics);
+    EXPECT_TRUE(resolve_diagnostics.empty());
+  }
+}
+
+TEST(BuildSymbolTableTest, FunctionDeclarationClassReturnType) {
+  TestVerilogSourceFile src("funkytown.sv",
+                            "class cc;\n"
+                            "endclass\n"
+                            "function cc ff;\n"  // user-defined return type
+                            "endfunction\n");
+  const auto status = src.Parse();
+  ASSERT_TRUE(status.ok()) << status.message();
+  SymbolTable symbol_table(nullptr);
+  const SymbolTableNode& root_symbol(symbol_table.Root());
+
+  const auto build_diagnostics = BuildSymbolTable(src, &symbol_table);
+  EXPECT_TRUE(build_diagnostics.empty()) << "Unexpected diagnostic:\n"
+                                         << build_diagnostics.front().message();
+
+  MUST_ASSIGN_LOOKUP_SYMBOL(class_cc, root_symbol, "cc");
+  MUST_ASSIGN_LOOKUP_SYMBOL(function_ff, root_symbol, "ff");
+  EXPECT_EQ(function_ff_info.type, SymbolType::kFunction);
+  EXPECT_EQ(function_ff_info.file_origin, &src);
+  ASSERT_NE(function_ff_info.declared_type.syntax_origin, nullptr);
+  EXPECT_EQ(verible::StringSpanOfSymbol(
+                *function_ff_info.declared_type.syntax_origin),
+            "cc");
+  const ReferenceComponentNode* cc_ref =
+      function_ff_info.declared_type.user_defined_type;
+  ASSERT_NE(cc_ref, nullptr);
+  const ReferenceComponent& cc_ref_comp(cc_ref->Value());
+  EXPECT_EQ(cc_ref_comp.ref_type, ReferenceType::kUnqualified);
+  EXPECT_EQ(cc_ref_comp.identifier, "cc");
+  EXPECT_EQ(cc_ref_comp.resolved_symbol, nullptr);
+
+  // There should be one reference to return type "cc" of function "ff".
+  EXPECT_EQ(root_symbol.Value().local_references_to_bind.size(), 1);
+
+  {
+    std::vector<absl::Status> resolve_diagnostics;
+    symbol_table.Resolve(&resolve_diagnostics);
+    EXPECT_TRUE(resolve_diagnostics.empty());
+
+    // Expect "cc" return type to resolve to class declaration.
+    EXPECT_EQ(cc_ref_comp.resolved_symbol, &class_cc);
+  }
+}
+
+TEST(BuildSymbolTableTest, FunctionDeclarationInModule) {
+  TestVerilogSourceFile src("funkytown.sv",
+                            "module mm;\n"
+                            "function void ff();\n"
+                            "endfunction\n"
+                            "endmodule\n");
+  const auto status = src.Parse();
+  ASSERT_TRUE(status.ok()) << status.message();
+  SymbolTable symbol_table(nullptr);
+  const SymbolTableNode& root_symbol(symbol_table.Root());
+
+  const auto build_diagnostics = BuildSymbolTable(src, &symbol_table);
+  EXPECT_TRUE(build_diagnostics.empty()) << "Unexpected diagnostic:\n"
+                                         << build_diagnostics.front().message();
+
+  MUST_ASSIGN_LOOKUP_SYMBOL(module_mm, root_symbol, "mm");
+  MUST_ASSIGN_LOOKUP_SYMBOL(function_ff, module_mm, "ff");
+  EXPECT_EQ(function_ff_info.type, SymbolType::kFunction);
+  EXPECT_EQ(function_ff_info.file_origin, &src);
+  ASSERT_NE(function_ff_info.declared_type.syntax_origin, nullptr);
+  EXPECT_EQ(verible::StringSpanOfSymbol(
+                *function_ff_info.declared_type.syntax_origin),
+            "void");
+  const ReferenceComponentNode* ff_type =
+      function_ff_info.declared_type.user_defined_type;
+  EXPECT_EQ(ff_type, nullptr);
+
+  // There are no references to resolve.
+  EXPECT_TRUE(root_symbol.Value().local_references_to_bind.empty());
+  EXPECT_TRUE(module_mm.Value().local_references_to_bind.empty());
+  EXPECT_TRUE(function_ff.Value().local_references_to_bind.empty());
+
+  {
+    std::vector<absl::Status> resolve_diagnostics;
+    symbol_table.Resolve(&resolve_diagnostics);
+    EXPECT_TRUE(resolve_diagnostics.empty());
+  }
+}
+
+TEST(BuildSymbolTableTest, ClassMethodFunctionDeclaration) {
+  TestVerilogSourceFile src("funkytown.sv",
+                            "class cc;\n"
+                            "function int ff;\n"
+                            "endfunction\n"
+                            "endclass\n");
+  const auto status = src.Parse();
+  ASSERT_TRUE(status.ok()) << status.message();
+  SymbolTable symbol_table(nullptr);
+  const SymbolTableNode& root_symbol(symbol_table.Root());
+
+  const auto build_diagnostics = BuildSymbolTable(src, &symbol_table);
+  EXPECT_TRUE(build_diagnostics.empty()) << "Unexpected diagnostic:\n"
+                                         << build_diagnostics.front().message();
+
+  MUST_ASSIGN_LOOKUP_SYMBOL(class_cc, root_symbol, "cc");
+  MUST_ASSIGN_LOOKUP_SYMBOL(function_ff, class_cc, "ff");
+  EXPECT_EQ(function_ff_info.type, SymbolType::kFunction);
+  EXPECT_EQ(function_ff_info.file_origin, &src);
+  ASSERT_NE(function_ff_info.declared_type.syntax_origin, nullptr);
+  EXPECT_EQ(verible::StringSpanOfSymbol(
+                *function_ff_info.declared_type.syntax_origin),
+            "int");
+  const ReferenceComponentNode* ff_type =
+      function_ff_info.declared_type.user_defined_type;
+  EXPECT_EQ(ff_type, nullptr);
+
+  // There are no references to resolve.
+  EXPECT_TRUE(root_symbol.Value().local_references_to_bind.empty());
+  EXPECT_TRUE(class_cc.Value().local_references_to_bind.empty());
+  EXPECT_TRUE(function_ff.Value().local_references_to_bind.empty());
+
+  {
+    std::vector<absl::Status> resolve_diagnostics;
+    symbol_table.Resolve(&resolve_diagnostics);
+    EXPECT_TRUE(resolve_diagnostics.empty());
+  }
+}
+
+TEST(BuildSymbolTableTest,
+     ClassMethodFunctionDeclarationPackageTypeReturnType) {
+  TestVerilogSourceFile src("funkytown.sv",
+                            "package aa;\n"
+                            "class vv;\n"
+                            "endclass\n"
+                            "endpackage\n"
+                            "package bb;\n"
+                            "class cc;\n"
+                            "function aa::vv ff();\n"
+                            "endfunction\n"
+                            "endclass\n"
+                            "endpackage\n");
+  const auto status = src.Parse();
+  ASSERT_TRUE(status.ok()) << status.message();
+  SymbolTable symbol_table(nullptr);
+  const SymbolTableNode& root_symbol(symbol_table.Root());
+
+  const auto build_diagnostics = BuildSymbolTable(src, &symbol_table);
+  EXPECT_TRUE(build_diagnostics.empty()) << "Unexpected diagnostic:\n"
+                                         << build_diagnostics.front().message();
+
+  MUST_ASSIGN_LOOKUP_SYMBOL(package_aa, root_symbol, "aa");
+  MUST_ASSIGN_LOOKUP_SYMBOL(package_bb, root_symbol, "bb");
+  MUST_ASSIGN_LOOKUP_SYMBOL(class_vv, package_aa, "vv");
+  MUST_ASSIGN_LOOKUP_SYMBOL(class_cc, package_bb, "cc");
+  MUST_ASSIGN_LOOKUP_SYMBOL(function_ff, class_cc, "ff");
+
+  EXPECT_EQ(function_ff_info.type, SymbolType::kFunction);
+  EXPECT_EQ(function_ff_info.file_origin, &src);
+  ASSERT_NE(function_ff_info.declared_type.syntax_origin, nullptr);
+  EXPECT_EQ(verible::StringSpanOfSymbol(
+                *function_ff_info.declared_type.syntax_origin),
+            "aa::vv");
+
+  // return type points to the last component of the chain, "vv"
+  const ReferenceComponentNode* vv_ref =
+      function_ff_info.declared_type.user_defined_type;
+  ASSERT_NE(vv_ref, nullptr);
+  const ReferenceComponent& vv_ref_comp(vv_ref->Value());
+  EXPECT_EQ(vv_ref_comp.ref_type, ReferenceType::kDirectMember);
+  EXPECT_EQ(vv_ref_comp.identifier, "vv");
+  EXPECT_EQ(vv_ref_comp.resolved_symbol, nullptr);
+
+  // dependent reference parent is "aa" in "aa::vv"
+  const ReferenceComponentNode* aa_ref = vv_ref->Parent();
+  ASSERT_NE(aa_ref, nullptr);
+  const ReferenceComponent& aa_ref_comp(aa_ref->Value());
+  EXPECT_EQ(aa_ref_comp.ref_type, ReferenceType::kUnqualified);
+  EXPECT_EQ(aa_ref_comp.identifier, "aa");
+  EXPECT_EQ(aa_ref_comp.resolved_symbol, nullptr);
+
+  // There is only one (type) reference chain to resolve: "aa::vv".
+  EXPECT_TRUE(root_symbol.Value().local_references_to_bind.empty());
+  EXPECT_TRUE(package_aa.Value().local_references_to_bind.empty());
+  EXPECT_TRUE(package_bb.Value().local_references_to_bind.empty());
+  EXPECT_EQ(class_cc.Value().local_references_to_bind.size(), 1);
+  EXPECT_TRUE(function_ff.Value().local_references_to_bind.empty());
+
+  {
+    std::vector<absl::Status> resolve_diagnostics;
+    symbol_table.Resolve(&resolve_diagnostics);
+    EXPECT_TRUE(resolve_diagnostics.empty());
+
+    // Expect to resolve type reference chain "aa:vv"
+    EXPECT_EQ(aa_ref_comp.resolved_symbol, &package_aa);
+    EXPECT_EQ(vv_ref_comp.resolved_symbol, &class_vv);
   }
 }
 

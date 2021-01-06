@@ -17,6 +17,7 @@
 
 #include <algorithm>
 #include <cstddef>
+#include <functional>
 #include <initializer_list>
 #include <iterator>
 #include <vector>
@@ -117,6 +118,18 @@ class SyntaxTreeContext : public AutoPopStack<const SyntaxTreeNode*> {
                       [](E tag, const SyntaxTreeNode* node) {
                         return E(node->Tag().tag) == tag;
                       });
+  }
+
+  // Returns the closest ancestor (starting from top of context stack) that
+  // matches the given 'predicate' function, or nullptr if no match is found.
+  const SyntaxTreeNode* NearestParentMatching(
+      const std::function<bool(const SyntaxTreeNode&)>& predicate) const {
+    const auto ancestors(reversed_view(*this));
+    const auto found = std::find_if(ancestors.begin(), ancestors.end(),
+                                    [&predicate](const SyntaxTreeNode* parent) {
+                                      return predicate(*parent);
+                                    });
+    return found != ancestors.end() ? *found : nullptr;
   }
 };
 

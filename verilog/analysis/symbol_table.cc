@@ -51,6 +51,8 @@
 
 namespace verilog {
 
+using verible::AutoTruncate;
+using verible::StringSpanOfSymbol;
 using verible::SyntaxTreeLeaf;
 using verible::SyntaxTreeNode;
 using verible::TokenInfo;
@@ -155,6 +157,14 @@ class SymbolTable::Builder : public TreeContextVisitor {
       case NodeEnum::kClassDeclaration:
         DeclareClass(node);
         break;
+      case NodeEnum::kFunctionDeclaration:
+        DeclareFunction(node);
+        break;
+      case NodeEnum::kFunctionHeader:
+        SetupFunctionHeader(node);
+        break;
+      case NodeEnum::kPortItem:         // fall-through
+                                        // for function/task parameters
       case NodeEnum::kPortDeclaration:  // fall-through
       case NodeEnum::kNetDeclaration:   // fall-through
       case NodeEnum::kDataDeclaration:
@@ -268,7 +278,7 @@ class SymbolTable::Builder : public TreeContextVisitor {
   //   E -+- ::F
   //
   void DescendDataType(const SyntaxTreeNode& data_type_node) {
-    VLOG(1) << __FUNCTION__ << verible::StringSpanOfSymbol(data_type_node);
+    VLOG(1) << __FUNCTION__ << ": " << StringSpanOfSymbol(data_type_node);
     const CaptureDependentReference capture(this);
 
     {
@@ -291,8 +301,12 @@ class SymbolTable::Builder : public TreeContextVisitor {
     }
 
     if (declaration_type_info_ != nullptr) {
-      // This is the declared type we want to capture.
-      declaration_type_info_->syntax_origin = &data_type_node;
+      // 'declaration_type_info_' holds the declared type we want to capture.
+      if (verible::GetLeftmostLeaf(data_type_node) != nullptr) {
+        declaration_type_info_->syntax_origin = &data_type_node;
+        // Otherwise, if the type subtree contains no leaves (e.g. implicit or
+        // void), then do not assign a syntax origin.
+      }
       if (!capture.Ref()
                .Empty()) {  // then some user-defined type was referenced
         declaration_type_info_->user_defined_type = capture.Ref().LastLeaf();
@@ -334,13 +348,34 @@ class SymbolTable::Builder : public TreeContextVisitor {
       return;
     }
     if (Context().DirectParentsAre(
-            {NodeEnum::kUnqualifiedId, NodeEnum::kPortDeclaration})) {
+            {NodeEnum::kUnqualifiedId, NodeEnum::kPortDeclaration}) ||
+        Context().DirectParentsAre(
+            {NodeEnum::kUnqualifiedId,
+             NodeEnum::kDataTypeImplicitBasicIdDimensions,
+             NodeEnum::kPortItem})) {
       // This identifier declares a (non-parameter) port (of a module,
       // function, task).
       EmplaceTypedElementInCurrentScope(leaf, text,
                                         SymbolType::kDataNetVariableInstance);
       // TODO(fangism): Add attributes to distinguish public ports from
       // private internals members.
+      return;
+    }
+    if (Context().DirectParentsAre(
+            {NodeEnum::kUnqualifiedId, NodeEnum::kFunctionHeader})) {
+      // We deferred adding a declared function to the current scope until this
+      // point (from DeclareFunction()).
+      const SyntaxTreeNode* decl_syntax =
+          Context().NearestParentMatching([](const SyntaxTreeNode& node) {
+            return node.MatchesTag(NodeEnum::kFunctionDeclaration);
+          });
+      if (decl_syntax == nullptr) return;
+      SymbolTableNode* declared_function = &EmplaceTypedElementInCurrentScope(
+          *decl_syntax, text, SymbolType::kFunction);
+      // After this point, we've registered the new function with its return
+      // type, so we can switch context over to the newly declared function
+      // for its port interface and definition internals.
+      current_scope_ = declared_function;
       return;
     }
 
@@ -446,10 +481,12 @@ class SymbolTable::Builder : public TreeContextVisitor {
 
   // Creates a named typed element in the current scope.
   // Suitable for SystemVerilog language elements: nets, parameter, variables,
-  // instances.
+  // instances, functions (using their return types).
   SymbolTableNode& EmplaceTypedElementInCurrentScope(
       const verible::Symbol& element, absl::string_view name, SymbolType type) {
-    VLOG(1) << __FUNCTION__ << ": " << name;
+    VLOG(1) << __FUNCTION__ << ": " << name << " in " << CurrentScopeFullPath();
+    VLOG(1) << "  type info: " << *ABSL_DIE_IF_NULL(declaration_type_info_);
+    VLOG(1) << "  full text: " << AutoTruncate{StringSpanOfSymbol(element), 40};
     const auto p = current_scope_->TryEmplace(
         name,
         SymbolInfo{
@@ -527,6 +564,25 @@ class SymbolTable::Builder : public TreeContextVisitor {
         class_node, GetClassName(class_node).get().text(), SymbolType::kClass);
   }
 
+  void DeclareFunction(const SyntaxTreeNode& function_node) {
+    // Reserve a slot for the function's scope on the stack, but do not set it
+    // until we add it in HandleIdentifier().  This deferral allows us to
+    // evaluate the return type of the declared function as a reference in the
+    // current context.
+    const ValueSaver<SymbolTableNode*> reserve_for_function_decl(
+        &current_scope_);  // no scope change yet
+    Descend(function_node);
+  }
+
+  // Capture the declared function's return type.
+  void SetupFunctionHeader(const SyntaxTreeNode& function_header) {
+    DeclarationTypeInfo decl_type_info;
+    const ValueSaver<DeclarationTypeInfo*> function_return_type(
+        &declaration_type_info_, &decl_type_info);
+    Descend(function_header);
+    // decl_type_info will be safely copied away in HandleIdentifier().
+  }
+
   // TODO: functions and tasks, which could appear as out-of-line definitions.
 
   void DeclareParameter(const SyntaxTreeNode& param_decl_node) {
@@ -541,12 +597,14 @@ class SymbolTable::Builder : public TreeContextVisitor {
 
   // Declares one or more variables/instances/nets.
   void DeclareData(const SyntaxTreeNode& data_decl_node) {
+    VLOG(1) << __FUNCTION__;
     DeclarationTypeInfo decl_type_info;
     // Set declaration_type_info_ to capture any user-defined type used to
     // declare data/variables/instances.
     const ValueSaver<DeclarationTypeInfo*> save_type(&declaration_type_info_,
                                                      &decl_type_info);
     Descend(data_decl_node);
+    VLOG(1) << "end of " << __FUNCTION__;
   }
 
   // Declare one (of potentially multiple) instances in a single declaration
@@ -965,9 +1023,9 @@ std::ostream& operator<<(std::ostream& stream,
   stream << "source: ";
   if (decl_type_info.syntax_origin != nullptr) {
     stream << "\""
-           << verible::AutoTruncate{.text = verible::StringSpanOfSymbol(
-                                        *decl_type_info.syntax_origin),
-                                    .max_chars = 25}
+           << AutoTruncate{.text = StringSpanOfSymbol(
+                               *decl_type_info.syntax_origin),
+                           .max_chars = 25}
            << "\"";
   } else {
     stream << "(unknown)";
