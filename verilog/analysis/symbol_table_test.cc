@@ -225,6 +225,7 @@ TEST(SymbolTablePrintTest, PrintClass) {
   const auto status = src.Parse();
   ASSERT_TRUE(status.ok());
   SymbolTable symbol_table(nullptr);
+  EXPECT_EQ(symbol_table.Project(), nullptr);
 
   const auto build_diagnostics = BuildSymbolTable(src, &symbol_table);
   ASSERT_TRUE(build_diagnostics.empty()) << "Unexpected diagnostic:\n"
@@ -362,6 +363,7 @@ TEST(BuildSymbolTableTest, InvalidSyntax) {
     const auto status = src.Parse();
     EXPECT_FALSE(status.ok());
     SymbolTable symbol_table(nullptr);
+    EXPECT_EQ(symbol_table.Project(), nullptr);
 
     {  // Attempt to build symbol table after parse failure.
       const auto build_diagnostics = BuildSymbolTable(src, &symbol_table);
@@ -393,6 +395,7 @@ TEST(BuildSymbolTableTest, AvoidCrashFromFuzzer) {
     TestVerilogSourceFile src("foobar.sv", code);
     const auto status = src.Parse();  // don't care if code is valid or not
     SymbolTable symbol_table(nullptr);
+    EXPECT_EQ(symbol_table.Project(), nullptr);
 
     {  // Attempt to build symbol table.
       const auto build_diagnostics = BuildSymbolTable(src, &symbol_table);
@@ -2275,6 +2278,7 @@ TEST(BuildSymbolTableTest, ModuleInstancesFromProjectOneFileAtATime) {
   }
 
   SymbolTable symbol_table(&project);
+  EXPECT_EQ(symbol_table.Project(), &project);
 
   // Caller decides order of processing files, which doesn't matter for this
   // example.
@@ -2385,6 +2389,7 @@ TEST(BuildSymbolTableTest, ModuleInstancesFromProjectMissingFile) {
   VerilogProject project(sources_dir, {/* no include path */});
 
   SymbolTable symbol_table(&project);
+  EXPECT_EQ(symbol_table.Project(), &project);
 
   std::vector<absl::Status> build_diagnostics;
   symbol_table.BuildSingleTranslationUnit("file/not/found.txt",
@@ -2426,6 +2431,7 @@ TEST(BuildSymbolTableTest, ModuleInstancesFromProjectFilesGood) {
   }
 
   SymbolTable symbol_table(&project);
+  EXPECT_EQ(symbol_table.Project(), &project);
 
   std::vector<absl::Status> build_diagnostics;
   symbol_table.Build(&build_diagnostics);

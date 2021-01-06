@@ -377,6 +377,8 @@ class SymbolTable {
 
   const SymbolTableNode& Root() const { return symbol_table_root_; }
 
+  const VerilogProject* Project() const { return project_; }
+
   // TODO(fangism): multi-translation-unit merge operation,
   // to be done before any symbol resolution
 

@@ -15,6 +15,7 @@ sources.
 verible-verilog-project COMMAND [options...]
 
 available commands:
+  file-deps
   help
   symbol-table-defs
   symbol-table-refs
@@ -48,3 +49,14 @@ references.
 Builds a unified symbol table over all project files, attempts to resolve all
 symbol references to definitions, and prints a human-readable representation of
 the references.
+
+### `file-deps`
+
+Prints inter-file dependencies.
+
+Example output:
+
+```
+"foo.sv" depends on "bar.sv" for symbols { bar baz }
+"bar.sv" depends on "baz.sv" for symbols { quux }
+```

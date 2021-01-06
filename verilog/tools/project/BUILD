@@ -12,6 +12,7 @@ cc_binary(
         "//common/util:init_command_line",
         "//common/util:logging",
         "//common/util:subcommand",
+        "//verilog/analysis:dependencies",
         "//verilog/analysis:symbol_table",
         "//verilog/analysis:verilog_project",
         "@com_google_absl//absl/flags:flag",

@@ -80,6 +80,9 @@ class VerilogSourceFile {
     static absl::string_view to_string_view(const VerilogSourceFile& f) {
       return f.ReferencedPath();
     }
+    static absl::string_view to_string_view(const VerilogSourceFile* f) {
+      return f->ReferencedPath();
+    }
 
     // T1/T2 could be any combination of:
     // {const VerilogSourceFile&, absl::string_view}.

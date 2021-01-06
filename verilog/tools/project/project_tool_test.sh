@@ -222,4 +222,71 @@ grep -q "[combined statuses]:" "$MY_OUTPUT_FILE" || {
 }
 
 ################################################################################
+echo "=== Show dependencies between two files (parameters)"
+
+cat > "$MY_INPUT_FILE".A <<EOF
+localparam int barr = fooo + 1;
+EOF
+
+cat > "$MY_INPUT_FILE".B <<EOF
+localparam int fooo = 1;
+EOF
+
+ # Construct a file-list on-the-fly as a file-descriptor
+"$project_tool" \
+  file-deps \
+  --file_list_path <(echo myinput.txt.A ; echo myinput.txt.B ) \
+  --file_list_root "$(dirname "$MY_INPUT_FILE".A)" \
+  > "$MY_OUTPUT_FILE" 2>&1
+
+status="$?"
+[[ $status == 0 ]] || {
+  "Expected exit code 0, but got $status"
+  exit 1
+}
+
+cat > "$MY_EXPECT_FILE" <<EOF
+"myinput.txt.A" depends on "myinput.txt.B" for symbols { fooo }
+EOF
+
+diff -u "$MY_EXPECT_FILE" "$MY_OUTPUT_FILE" || { exit 1; }
+
+################################################################################
+echo "=== Show dependencies between two files (modules)"
+
+cat > "$MY_INPUT_FILE".A <<EOF
+module mm;
+endmodule
+
+module mm_test;
+  mm dut();
+endmodule
+EOF
+
+cat > "$MY_INPUT_FILE".B <<EOF
+module qq;
+  mm mm_inst();
+endmodule
+EOF
+
+ # Construct a file-list on-the-fly as a file-descriptor
+"$project_tool" \
+  file-deps \
+  --file_list_path <(echo myinput.txt.A ; echo myinput.txt.B ) \
+  --file_list_root "$(dirname "$MY_INPUT_FILE".A)" \
+  > "$MY_OUTPUT_FILE" 2>&1
+
+status="$?"
+[[ $status == 0 ]] || {
+  "Expected exit code 0, but got $status"
+  exit 1
+}
+
+cat > "$MY_EXPECT_FILE" <<EOF
+"myinput.txt.B" depends on "myinput.txt.A" for symbols { mm }
+EOF
+
+diff -u "$MY_EXPECT_FILE" "$MY_OUTPUT_FILE" || { exit 1; }
+
+################################################################################
 echo "PASS"

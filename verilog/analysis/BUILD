@@ -401,3 +401,28 @@ cc_test(
         "@com_google_googletest//:gtest_main",
     ],
 )
+
+cc_library(
+    name = "dependencies",
+    srcs = ["dependencies.cc"],
+    hdrs = ["dependencies.h"],
+    deps = [
+        ":symbol_table",
+        ":verilog_project",
+        "//common/strings:compare",
+        "//common/strings:display_utils",
+        "//common/util:logging",
+        "@com_google_absl//absl/strings",
+    ],
+)
+
+cc_test(
+    name = "dependencies_test",
+    srcs = ["dependencies_test.cc"],
+    deps = [
+        ":dependencies",
+        "//common/util:file_util",
+        "@com_google_absl//absl/status",
+        "@com_google_googletest//:gtest_main",
+    ],
+)

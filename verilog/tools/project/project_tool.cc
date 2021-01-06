@@ -25,6 +25,7 @@
 #include "common/util/init_command_line.h"
 #include "common/util/logging.h"
 #include "common/util/subcommand.h"
+#include "verilog/analysis/dependencies.h"
 #include "verilog/analysis/symbol_table.h"
 #include "verilog/analysis/verilog_project.h"
 
@@ -224,6 +225,47 @@ static absl::Status ResolveAndShowSymbolReferences(
   return absl::OkStatus();
 }
 
+static absl::Status ShowFileDependencies(const SubcommandArgsRange& args,
+                                         std::istream& ins, std::ostream& outs,
+                                         std::ostream& errs) {
+  VLOG(1) << __FUNCTION__;
+  // Load configuration.
+  VerilogProjectConfig config;
+  {
+    const auto status = config.LoadFromGlobalFlags();
+    if (!status.ok()) return status;
+  }
+
+  // Load project and files.
+  ProjectSymbols project_symbols(config);
+  {
+    const auto status = project_symbols.Load();
+    if (!status.ok()) return status;
+  }
+
+  // Build symbol table.
+  std::vector<absl::Status> statuses;
+  project_symbols.Build(&statuses);
+
+  // Accumulate diagnostics.
+  if (!statuses.empty()) {
+    return absl::InvalidArgumentError(JoinStatusMessages(statuses));
+  }
+
+  // Partially resolve symbols.
+  project_symbols.symbol_table->ResolveLocallyOnly();
+
+  // Compute dependencies.
+  const verilog::FileDependencies deps(*project_symbols.symbol_table);
+
+  // Print.
+  // TODO(hzeller): support various output options {human-readable,
+  // machine-readable, etc.} using subcommand flags (b/164300992).
+  // One variant should include tsort-consumable 2-column text.
+  deps.PrintGraph(outs);
+  return absl::OkStatus();
+}
+
 static const std::pair<absl::string_view, SubcommandEntry> kCommands[] = {
     {"symbol-table-defs",        //
      {&BuildAndShowSymbolTable,  //
@@ -245,9 +287,19 @@ attempting to resolve symbols.
 Input:
 Project options, including source file list.
 )"}},
-    // TODO: print inter-file dependencies "file X depends on file Y for
-    // symbols Z...", something that can be consumed by tsort.
+    {"file-deps",             //
+     {&ShowFileDependencies,  //
+      R"(file-deps [project args]
+
+Prints human-readable representation of inter-file dependencies, e.g.
+
+  "file1.sv" depends on "file2.sv" for symbols { X, Y, Z... }
+
+Input:
+Project options, including source file list.
+)"}},
     // TODO: project-wide transformations like RenameSymbol()
+    // TODO: symbol table name-completion demo
 };
 
 int main(int argc, char* argv[]) {
