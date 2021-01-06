@@ -33,6 +33,8 @@
 #include "verilog/analysis/verilog_linter.h"
 #include "verilog/analysis/verilog_linter_configuration.h"
 
+// LINT.IfChange
+
 ABSL_FLAG(bool, check_syntax, true,
           "If true, check for lexical and syntax errors, otherwise ignore.");
 ABSL_FLAG(bool, parse_fatal, true,
@@ -47,6 +49,8 @@ ABSL_FLAG(
     "If true, print the description of every rule formatted for the "
     "Markdown and exit immediately. Intended for the output to be written "
     "to a snippet of Markdown.");
+
+// LINT.ThenChange(README.md)
 
 using verilog::LinterConfiguration;
 
