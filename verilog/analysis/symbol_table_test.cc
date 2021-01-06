@@ -152,7 +152,9 @@ TEST(ReferenceComponentTest, MatchesMetatypeTest) {
     }
   }
   {  // kCallable matches only kFunction and kTask
-    const ReferenceComponent component{.metatype = SymbolMetaType::kCallable};
+    const ReferenceComponent component{.identifier = "",
+                                       .ref_type = ReferenceType::kUnqualified,
+                                       .metatype = SymbolMetaType::kCallable};
     for (const auto& other :
          {SymbolMetaType::kFunction, SymbolMetaType::kTask}) {
       const auto status = component.MatchesMetatype(other);
