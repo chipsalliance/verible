@@ -140,7 +140,9 @@ TEST(SymbolTableNodeFullPathTest, Print) {
 
 TEST(ReferenceComponentTest, MatchesMetatypeTest) {
   {  // kUnspecified matches all metatypes
-    const ReferenceComponent component{.metatype = SymbolType::kUnspecified};
+    const ReferenceComponent component{.identifier = "",
+                                       .ref_type = ReferenceType::kUnqualified,
+                                       .metatype = SymbolType::kUnspecified};
     for (const auto& other : {SymbolType::kUnspecified, SymbolType::kParameter,
                               SymbolType::kFunction, SymbolType::kTask}) {
       const auto status = component.MatchesMetatype(other);
@@ -148,7 +150,10 @@ TEST(ReferenceComponentTest, MatchesMetatypeTest) {
     }
   }
   {  // all other types must be matched exactly
-    const ReferenceComponent component{.metatype = SymbolType::kFunction};
+    const ReferenceComponent component{.identifier = "",
+                                       .ref_type = ReferenceType::kUnqualified,
+                                       .metatype = SymbolType::kFunction};
+
     for (const auto& other :
          {SymbolType::kUnspecified, SymbolType::kParameter, SymbolType::kModule,
           SymbolType::kTask, SymbolType::kClass}) {
@@ -197,6 +202,7 @@ TEST(DependentReferencesTest, PrintOnlyRootNodeUnresolved) {
       .components = absl::make_unique<ReferenceComponentNode>(
           ReferenceComponent{.identifier = "foo",
                              .ref_type = ReferenceType::kUnqualified,
+                             .metatype = SymbolType::kUnspecified,
                              .resolved_symbol = nullptr})};
   std::ostringstream stream;
   stream << dep_refs;
