@@ -290,6 +290,11 @@ Checks that `struct` and `union` names use lower_snake_case naming convention an
 
 Enabled by default: true
 
+### suggest-parentheses
+Recommend extra parentheses around subexpressions where it helps readability. See [Style: parentheses].
+
+Enabled by default: false
+
 ### typedef-enums
 Checks that a Verilog `enum` declaration is named using `typedef`. See [Style: typedef-enums].
 
@@ -330,4 +335,4 @@ Enabled by default: true
 
 ## Version
 
-Generated on 2020-12-23 20:33:42 -0500 from [d18c101](https://github.com/google/verible/commit/d18c101d845eefe9acbf3406fe365ae2996e4a81)
+Generated on 2021-01-05 23:49:52 -0500 from [ecf05cb](https://github.com/google/verible/commit/ecf05cbaed7abd4e4834cb1d18c22c3bd05116ab)
