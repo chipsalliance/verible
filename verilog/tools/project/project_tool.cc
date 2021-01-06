@@ -147,10 +147,10 @@ static std::string JoinStatusMessages(
     const std::vector<absl::Status>& statuses) {
   return absl::StrCat(
       "[combined statuses]:\n",
-      absl::StrJoin(statuses, "\n",
-                    [](std::string* out, const absl::Status& status) {
-                      out->append(status.message());
-                    }));
+      absl::StrJoin(
+          statuses, "\n", [](std::string* out, const absl::Status& status) {
+            out->append(status.message().begin(), status.message().end());
+          }));
 }
 
 static absl::Status BuildAndShowSymbolTable(const SubcommandArgsRange& args,
