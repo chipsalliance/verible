@@ -139,6 +139,13 @@ See https://github.com/google/verible/issues/528
 [`verible-verilog-diff`](./verilog/tools/diff) compares two input files for
 equivalence.
 
+### Verible project tool
+
+[`verible-verilog-project`](./verilog/tools/project) is a multi-tool that
+operates on whole Verilog projects, consisting of a file list and related
+configurations. This serves as a diagnostic tool for analyzing (and potentially
+transforming) project-level sources.
+
 ### Code Obfuscator
 
 [`verible-verilog-obfuscate`](./verilog/tools/obfuscator) transforms Verilog
