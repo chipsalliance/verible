@@ -367,6 +367,7 @@ cc_library(
         "//verilog/CST:class",
         "//verilog/CST:declaration",
         "//verilog/CST:functions",
+        "//verilog/CST:macro",
         "//verilog/CST:module",
         "//verilog/CST:net",
         "//verilog/CST:package",

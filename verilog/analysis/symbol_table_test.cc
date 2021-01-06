@@ -2884,6 +2884,270 @@ TEST(BuildSymbolTableTest, MultiFileModuleInstanceCyclicDependencies) {
   EXPECT_EQ(count, 6);  // make sure we covered all permutations
 }
 
+TEST(BuildSymbolTableTest, IncludeModuleDefinition) {
+  const auto tempdir = ::testing::TempDir();
+  const std::string sources_dir = JoinPath(tempdir, __FUNCTION__);
+  ASSERT_TRUE(CreateDir(sources_dir).ok());
+
+  // Create files.
+  ScopedTestFile IncludedFile(sources_dir,
+                              "module pp;\n"
+                              "endmodule\n",
+                              "module.sv");
+  ScopedTestFile pp_src(sources_dir, "`include \"module.sv\"\n", "pp.sv");
+
+  VerilogProject project(sources_dir, {sources_dir});
+  const auto file_or_status =
+      project.OpenTranslationUnit(Basename(pp_src.filename()));
+  ASSERT_TRUE(file_or_status.ok()) << file_or_status.status().message();
+
+  SymbolTable symbol_table(&project);
+  const SymbolTableNode& root_symbol(symbol_table.Root());
+
+  std::vector<absl::Status> build_diagnostics;
+  symbol_table.Build(&build_diagnostics);
+  EXPECT_TRUE(build_diagnostics.empty()) << "Unexpected diagnostic:\n"
+                                         << build_diagnostics.front().message();
+
+  MUST_ASSIGN_LOOKUP_SYMBOL(pp, root_symbol, "pp");
+
+  const VerilogSourceFile* included = project.LookupRegisteredFile("module.sv");
+  ASSERT_NE(included, nullptr);
+  EXPECT_EQ(pp_info.file_origin, included);
+
+  // Resolve symbols.  Nothing to resolve.
+  std::vector<absl::Status> resolve_diagnostics;
+  symbol_table.Resolve(&resolve_diagnostics);
+  EXPECT_TRUE(resolve_diagnostics.empty());
+}
+
+TEST(BuildSymbolTableTest, IncludeWithoutProject) {
+  const auto tempdir = ::testing::TempDir();
+  const std::string sources_dir = JoinPath(tempdir, __FUNCTION__);
+  ASSERT_TRUE(CreateDir(sources_dir).ok());
+
+  // Create files.
+  ScopedTestFile IncludedFile(sources_dir,
+                              "module pp;\n"
+                              "endmodule\n",
+                              "module.sv");
+  TestVerilogSourceFile pp_src("pp.sv", "`include \"module.sv\"\n");
+
+  SymbolTable symbol_table(nullptr);
+
+  const auto build_diagnostics = BuildSymbolTable(pp_src, nullptr);
+  // include files are ignored.
+  EXPECT_TRUE(build_diagnostics.empty()) << "Unexpected diagnostic:\n"
+                                         << build_diagnostics.front().message();
+
+  // Resolve symbols.  Nothing to resolve.
+  std::vector<absl::Status> resolve_diagnostics;
+  symbol_table.Resolve(&resolve_diagnostics);
+  EXPECT_TRUE(resolve_diagnostics.empty());
+}
+
+TEST(BuildSymbolTableTest, IncludeFileNotFound) {
+  const auto tempdir = ::testing::TempDir();
+  const std::string sources_dir = JoinPath(tempdir, __FUNCTION__);
+  ASSERT_TRUE(CreateDir(sources_dir).ok());
+
+  // Create files.
+  ScopedTestFile pp_src(sources_dir, "`include \"not-found.sv\"\n", "pp.sv");
+
+  VerilogProject project(sources_dir, {sources_dir});
+  const auto file_or_status =
+      project.OpenTranslationUnit(Basename(pp_src.filename()));
+  ASSERT_TRUE(file_or_status.ok()) << file_or_status.status().message();
+
+  SymbolTable symbol_table(&project);
+  const SymbolTableNode& root_symbol(symbol_table.Root());
+
+  std::vector<absl::Status> build_diagnostics;
+  symbol_table.Build(&build_diagnostics);
+  ASSERT_FALSE(build_diagnostics.empty());
+  EXPECT_EQ(build_diagnostics.front().code(), absl::StatusCode::kNotFound);
+
+  EXPECT_TRUE(root_symbol.Children().empty());
+
+  // Resolve symbols.  Nothing to resolve.
+  std::vector<absl::Status> resolve_diagnostics;
+  symbol_table.Resolve(&resolve_diagnostics);
+  EXPECT_TRUE(resolve_diagnostics.empty());
+}
+
+TEST(BuildSymbolTableTest, IncludeFileParseError) {
+  const auto tempdir = ::testing::TempDir();
+  const std::string sources_dir = JoinPath(tempdir, __FUNCTION__);
+  ASSERT_TRUE(CreateDir(sources_dir).ok());
+
+  // Create files.
+  ScopedTestFile IncludedFile(sources_dir,
+                              "module 333;\n"  // syntax error
+                              "endmodule\n",
+                              "module.sv");
+  ScopedTestFile pp_src(sources_dir, "`include \"module.sv\"\n", "pp.sv");
+
+  VerilogProject project(sources_dir, {sources_dir});
+  const auto file_or_status =
+      project.OpenTranslationUnit(Basename(pp_src.filename()));
+  ASSERT_TRUE(file_or_status.ok()) << file_or_status.status().message();
+
+  SymbolTable symbol_table(&project);
+
+  std::vector<absl::Status> build_diagnostics;
+  symbol_table.Build(&build_diagnostics);
+  ASSERT_FALSE(build_diagnostics.empty());
+  EXPECT_EQ(build_diagnostics.front().code(),
+            absl::StatusCode::kInvalidArgument);
+
+  // Resolve symbols.  Nothing to resolve.
+  std::vector<absl::Status> resolve_diagnostics;
+  symbol_table.Resolve(&resolve_diagnostics);
+  EXPECT_TRUE(resolve_diagnostics.empty());
+}
+
+TEST(BuildSymbolTableTest, IncludeFileEmpty) {
+  const auto tempdir = ::testing::TempDir();
+  const std::string sources_dir = JoinPath(tempdir, __FUNCTION__);
+  ASSERT_TRUE(CreateDir(sources_dir).ok());
+
+  // Create files.
+  ScopedTestFile IncludedFile(sources_dir,
+                              "",  // empty
+                              "empty.sv");
+  ScopedTestFile pp_src(sources_dir, "`include \"empty.sv\"\n", "pp.sv");
+
+  VerilogProject project(sources_dir, {sources_dir});
+  const auto file_or_status =
+      project.OpenTranslationUnit(Basename(pp_src.filename()));
+  ASSERT_TRUE(file_or_status.ok()) << file_or_status.status().message();
+
+  SymbolTable symbol_table(&project);
+
+  std::vector<absl::Status> build_diagnostics;
+  symbol_table.Build(&build_diagnostics);
+  EXPECT_TRUE(build_diagnostics.empty()) << "Unexpected diagnostic:\n"
+                                         << build_diagnostics.front().message();
+
+  // Resolve symbols.  Nothing to resolve.
+  std::vector<absl::Status> resolve_diagnostics;
+  symbol_table.Resolve(&resolve_diagnostics);
+  EXPECT_TRUE(resolve_diagnostics.empty());
+}
+
+TEST(BuildSymbolTableTest, IncludedTwiceFromOneFile) {
+  const auto tempdir = ::testing::TempDir();
+  const std::string sources_dir = JoinPath(tempdir, __FUNCTION__);
+  ASSERT_TRUE(CreateDir(sources_dir).ok());
+
+  // Create files.
+  ScopedTestFile IncludedFile(sources_dir,
+                              "// verilog_syntax: parse-as-module-body\n"
+                              "wire ww;\n",
+                              "wires.sv");
+  ScopedTestFile pp_src(sources_dir,
+                        "module pp;\n"
+                        "`include \"wires.sv\"\n"
+                        "endmodule\n"
+                        "module qq;\n"
+                        "`include \"wires.sv\"\n"
+                        "endmodule\n",
+                        "pp.sv");
+
+  VerilogProject project(sources_dir, {sources_dir});
+  const auto file_or_status =
+      project.OpenTranslationUnit(Basename(pp_src.filename()));
+  ASSERT_TRUE(file_or_status.ok()) << file_or_status.status().message();
+  const VerilogSourceFile* pp_file = *file_or_status;
+  ASSERT_NE(pp_file, nullptr);
+
+  SymbolTable symbol_table(&project);
+  const SymbolTableNode& root_symbol(symbol_table.Root());
+
+  std::vector<absl::Status> build_diagnostics;
+  symbol_table.Build(&build_diagnostics);
+  EXPECT_TRUE(build_diagnostics.empty()) << "Unexpected diagnostic:\n"
+                                         << build_diagnostics.front().message();
+
+  MUST_ASSIGN_LOOKUP_SYMBOL(pp, root_symbol, "pp");
+  MUST_ASSIGN_LOOKUP_SYMBOL(qq, root_symbol, "qq");
+  MUST_ASSIGN_LOOKUP_SYMBOL(pp_ww, pp, "ww");
+  MUST_ASSIGN_LOOKUP_SYMBOL(qq_ww, qq, "ww");
+
+  const VerilogSourceFile* included = project.LookupRegisteredFile("wires.sv");
+  ASSERT_NE(included, nullptr);
+  EXPECT_EQ(pp_info.file_origin, pp_file);
+  EXPECT_EQ(qq_info.file_origin, pp_file);
+  EXPECT_EQ(pp_ww_info.file_origin, included);
+  EXPECT_EQ(qq_ww_info.file_origin, included);
+
+  // Resolve symbols.  Nothing to resolve.
+  std::vector<absl::Status> resolve_diagnostics;
+  symbol_table.Resolve(&resolve_diagnostics);
+  EXPECT_TRUE(resolve_diagnostics.empty());
+}
+
+TEST(BuildSymbolTableTest, IncludedTwiceFromDifferentFiles) {
+  const auto tempdir = ::testing::TempDir();
+  const std::string sources_dir = JoinPath(tempdir, __FUNCTION__);
+  ASSERT_TRUE(CreateDir(sources_dir).ok());
+
+  // Create files.
+  ScopedTestFile IncludedFile(sources_dir,
+                              "// verilog_syntax: parse-as-module-body\n"
+                              "wire ww;\n",
+                              "wires.sv");
+  ScopedTestFile pp_src(sources_dir,
+                        "module pp;\n"
+                        "`include \"wires.sv\"\n"
+                        "endmodule\n",
+                        "pp.sv");
+  ScopedTestFile qq_src(sources_dir,
+                        "module qq;\n"
+                        "`include \"wires.sv\"\n"
+                        "endmodule\n",
+                        "qq.sv");
+
+  VerilogProject project(sources_dir, {sources_dir});
+
+  const auto pp_file_or_status =
+      project.OpenTranslationUnit(Basename(pp_src.filename()));
+  ASSERT_TRUE(pp_file_or_status.ok()) << pp_file_or_status.status().message();
+  const VerilogSourceFile* pp_file = *pp_file_or_status;
+  ASSERT_NE(pp_file, nullptr);
+
+  const auto qq_file_or_status =
+      project.OpenTranslationUnit(Basename(qq_src.filename()));
+  ASSERT_TRUE(qq_file_or_status.ok()) << qq_file_or_status.status().message();
+  const VerilogSourceFile* qq_file = *qq_file_or_status;
+  ASSERT_NE(qq_file, nullptr);
+
+  SymbolTable symbol_table(&project);
+  const SymbolTableNode& root_symbol(symbol_table.Root());
+
+  std::vector<absl::Status> build_diagnostics;
+  symbol_table.Build(&build_diagnostics);
+  EXPECT_TRUE(build_diagnostics.empty()) << "Unexpected diagnostic:\n"
+                                         << build_diagnostics.front().message();
+
+  MUST_ASSIGN_LOOKUP_SYMBOL(pp, root_symbol, "pp");
+  MUST_ASSIGN_LOOKUP_SYMBOL(qq, root_symbol, "qq");
+  MUST_ASSIGN_LOOKUP_SYMBOL(pp_ww, pp, "ww");
+  MUST_ASSIGN_LOOKUP_SYMBOL(qq_ww, qq, "ww");
+
+  const VerilogSourceFile* included = project.LookupRegisteredFile("wires.sv");
+  ASSERT_NE(included, nullptr);
+  EXPECT_EQ(pp_info.file_origin, pp_file);
+  EXPECT_EQ(qq_info.file_origin, qq_file);
+  EXPECT_EQ(pp_ww_info.file_origin, included);
+  EXPECT_EQ(qq_ww_info.file_origin, included);
+
+  // Resolve symbols.  Nothing to resolve.
+  std::vector<absl::Status> resolve_diagnostics;
+  symbol_table.Resolve(&resolve_diagnostics);
+  EXPECT_TRUE(resolve_diagnostics.empty());
+}
+
 struct FileListTestCase {
   absl::string_view contents;
   std::vector<absl::string_view> expected_files;

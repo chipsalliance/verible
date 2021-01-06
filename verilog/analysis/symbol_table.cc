@@ -35,6 +35,7 @@
 #include "verilog/CST/class.h"
 #include "verilog/CST/declaration.h"
 #include "verilog/CST/functions.h"
+#include "verilog/CST/macro.h"
 #include "verilog/CST/module.h"
 #include "verilog/CST/net.h"
 #include "verilog/CST/package.h"
@@ -55,6 +56,12 @@ using verible::SyntaxTreeNode;
 using verible::TokenInfo;
 using verible::TreeContextVisitor;
 using verible::ValueSaver;
+
+// Returns string_view of `text` with outermost double-quotes removed.
+// If `text` is not wrapped in quotes, return it as-is.
+static absl::string_view StripOuterQuotes(absl::string_view text) {
+  return absl::StripSuffix(absl::StripPrefix(text, "\""), "\"");
+}
 
 std::ostream& operator<<(std::ostream& stream, SymbolType symbol_type) {
   static const verible::EnumNameMap<SymbolType> kSymbolInfoNames({
@@ -120,10 +127,7 @@ class SymbolTable::Builder : public TreeContextVisitor {
   Builder(const VerilogSourceFile& source, SymbolTable* symbol_table,
           VerilogProject* project)
       : source_(&source),
-        token_context_(source_->GetTextStructure()->Contents(),
-                       [](std::ostream& stream, int e) {
-                         stream << verilog_symbol_name(e);
-                       }),
+        token_context_(MakeTokenContext()),
         symbol_table_(symbol_table),
         current_scope_(&symbol_table_->MutableRoot()) {}
 
@@ -186,7 +190,9 @@ class SymbolTable::Builder : public TreeContextVisitor {
       case NodeEnum::kGateInstance:
         DeclareInstance(node);
         break;
-        // TODO: case NodeEnum::kPreprocessorInclude: open using project_.
+      case NodeEnum::kPreprocessorInclude:
+        EnterIncludeFile(node);
+        break;
       default:
         Descend(node);
         break;
@@ -594,6 +600,53 @@ class SymbolTable::Builder : public TreeContextVisitor {
                      CurrentScopeFullPath(), " scope.")));
   }
 
+  void EnterIncludeFile(const SyntaxTreeNode& preprocessor_include) {
+    const SyntaxTreeLeaf* included_filename =
+        GetFileFromPreprocessorInclude(preprocessor_include);
+    if (included_filename == nullptr) return;
+
+    const absl::string_view filename_text = included_filename->get().text();
+
+    // Remove the double quotes from the filename.
+    const absl::string_view filename_unquoted = StripOuterQuotes(filename_text);
+    VLOG(1) << "got: `include \"" << filename_unquoted << "\"";
+
+    // Opening included file requires a VerilogProject.
+    // Open this file (could be first time, or previously opened).
+    VerilogProject* project = symbol_table_->project_;
+    if (project == nullptr) return;  // Without project, ignore.
+
+    const auto status_or_file = project->OpenIncludedFile(filename_unquoted);
+    if (!status_or_file.ok()) {
+      diagnostics_.push_back(status_or_file.status());
+      // Errors can be retrieved later.
+      return;
+    }
+
+    VerilogSourceFile* const included_file = *status_or_file;
+    if (included_file == nullptr) return;
+    VLOG(1) << "opened include file: " << included_file->ResolvedPath();
+
+    const auto parse_status = included_file->Parse();
+    if (!parse_status.ok()) {
+      diagnostics_.push_back(parse_status);
+      // For now, don't bother attempting to parse a partial syntax tree.
+      // This would be best handled in the future with actual preprocessing.
+      return;
+    }
+
+    // Depending on application, one may wish to avoid re-processing the same
+    // included file.  If desired, add logic to return early here.
+
+    {  // Traverse included file's syntax tree.
+      const ValueSaver<const VerilogSourceFile*> includer(&source_,
+                                                          included_file);
+      const ValueSaver<TokenInfo::Context> save_context_text(
+          &token_context_, MakeTokenContext());
+      included_file->GetTextStructure()->SyntaxTree()->Accept(this);
+    }
+  }
+
   std::string CurrentScopeFullPath() const {
     return ContextFullPath(*current_scope_);
   }
@@ -602,17 +655,22 @@ class SymbolTable::Builder : public TreeContextVisitor {
     return verible::TokenWithContext{token, token_context_};
   }
 
- private:  // data
-  // TODO: support opening include-d files through VerilogProject.
-  // VerilogProject* const project_;
+  TokenInfo::Context MakeTokenContext() const {
+    return TokenInfo::Context(
+        source_->GetTextStructure()->Contents(),
+        [](std::ostream& stream, int e) { stream << verilog_symbol_name(e); });
+  }
 
+ private:  // data
   // Points to the source file that is the origin of symbols.
   // This changes when opening preprocess-included files.
   // TODO(fangism): maintain a vector/stack of these for richer diagnostics
-  const VerilogSourceFile* const source_;
+  const VerilogSourceFile* source_;
 
   // For human-readable debugging.
-  const verible::TokenInfo::Context token_context_;
+  // This should be constructed using MakeTokenContext(), after setting
+  // 'source_'.
+  TokenInfo::Context token_context_;
 
   // The symbol table to build, never nullptr.
   SymbolTable* const symbol_table_;
