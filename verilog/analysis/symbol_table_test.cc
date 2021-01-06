@@ -149,6 +149,18 @@ TEST(ReferenceComponentTest, MatchesMetatypeTest) {
       EXPECT_TRUE(status.ok()) << status.message();
     }
   }
+  {  // kCallable matches only kFunction and kTask
+    const ReferenceComponent component{.metatype = SymbolType::kCallable};
+    for (const auto& other : {SymbolType::kFunction, SymbolType::kTask}) {
+      const auto status = component.MatchesMetatype(other);
+      EXPECT_TRUE(status.ok()) << status.message();
+    }
+    for (const auto& other :
+         {SymbolType::kModule, SymbolType::kPackage, SymbolType::kClass}) {
+      const auto status = component.MatchesMetatype(other);
+      EXPECT_FALSE(status.ok()) << component.metatype << " vs. " << other;
+    }
+  }
   {  // all other types must be matched exactly
     const ReferenceComponent component{.identifier = "",
                                        .ref_type = ReferenceType::kUnqualified,
@@ -3303,6 +3315,778 @@ TEST(BuildSymbolTableTest, OutOfLineDefinitionMismatchesPrototype) {
 
     EXPECT_EQ(cc_ref->components->Value().resolved_symbol, &class_cc);
     EXPECT_EQ(ref.resolved_symbol, nullptr);  // Still fails to resolve.
+  }
+}
+
+TEST(BuildSymbolTableTest, FunctionCallResolvedSameScope) {
+  TestVerilogSourceFile src("call_me.sv",
+                            "function int tt();\n"
+                            "  return 1;\n"
+                            "endfunction\n"
+                            "function int vv();\n"
+                            "  return tt();\n"
+                            "endfunction\n");
+  const auto status = src.Parse();
+  ASSERT_TRUE(status.ok()) << status.message();
+  SymbolTable symbol_table(nullptr);
+  const SymbolTableNode& root_symbol(symbol_table.Root());
+
+  const auto build_diagnostics = BuildSymbolTable(src, &symbol_table);
+  EXPECT_TRUE(build_diagnostics.empty()) << "Unexpected diagnostic:\n"
+                                         << build_diagnostics.front().message();
+
+  MUST_ASSIGN_LOOKUP_SYMBOL(function_tt, root_symbol, "tt");
+  MUST_ASSIGN_LOOKUP_SYMBOL(function_vv, root_symbol, "vv");
+  EXPECT_EQ(function_tt_info.type, SymbolType::kFunction);
+  ASSERT_NE(function_tt_info.declared_type.syntax_origin, nullptr);
+  EXPECT_EQ(function_vv_info.type, SymbolType::kFunction);
+  ASSERT_NE(function_vv_info.declared_type.syntax_origin, nullptr);
+
+  EXPECT_EQ(function_vv_info.local_references_to_bind.size(), 1);
+  const auto ref_map(function_vv_info.LocalReferencesMapViewForTesting());
+  ASSIGN_MUST_FIND_EXACTLY_ONE_REF(tt_ref, ref_map, "tt");
+  const ReferenceComponent& tt_ref_comp(tt_ref->components->Value());
+  EXPECT_EQ(tt_ref_comp.metatype, SymbolType::kCallable);
+  EXPECT_EQ(tt_ref_comp.resolved_symbol, nullptr);
+
+  {
+    std::vector<absl::Status> resolve_diagnostics;
+    symbol_table.Resolve(&resolve_diagnostics);
+    EXPECT_TRUE(resolve_diagnostics.empty())
+        << "Unexpected diagnostic:\n"
+        << resolve_diagnostics.front().message();
+
+    // Call to "tt" is resolved.
+    EXPECT_EQ(tt_ref_comp.resolved_symbol, &function_tt);
+  }
+}
+
+TEST(BuildSymbolTableTest, FunctionCallUnresolved) {
+  TestVerilogSourceFile src("call_me_not.sv",
+                            "function int vv();\n"
+                            "  return tt();\n"  // undefined
+                            "endfunction\n");
+  const auto status = src.Parse();
+  ASSERT_TRUE(status.ok()) << status.message();
+  SymbolTable symbol_table(nullptr);
+  const SymbolTableNode& root_symbol(symbol_table.Root());
+
+  const auto build_diagnostics = BuildSymbolTable(src, &symbol_table);
+  EXPECT_TRUE(build_diagnostics.empty()) << "Unexpected diagnostic:\n"
+                                         << build_diagnostics.front().message();
+
+  MUST_ASSIGN_LOOKUP_SYMBOL(function_vv, root_symbol, "vv");
+  EXPECT_EQ(function_vv_info.type, SymbolType::kFunction);
+  ASSERT_NE(function_vv_info.declared_type.syntax_origin, nullptr);
+
+  EXPECT_EQ(function_vv_info.local_references_to_bind.size(), 1);
+  const auto ref_map(function_vv_info.LocalReferencesMapViewForTesting());
+  ASSIGN_MUST_FIND_EXACTLY_ONE_REF(tt_ref, ref_map, "tt");
+  const ReferenceComponent& tt_ref_comp(tt_ref->components->Value());
+  EXPECT_EQ(tt_ref_comp.metatype, SymbolType::kCallable);
+  EXPECT_EQ(tt_ref_comp.resolved_symbol, nullptr);
+
+  {
+    std::vector<absl::Status> resolve_diagnostics;
+    symbol_table.Resolve(&resolve_diagnostics);
+    ASSERT_EQ(resolve_diagnostics.size(), 1);
+    const auto& err = resolve_diagnostics.front();
+    EXPECT_EQ(err.code(), absl::StatusCode::kNotFound);
+    EXPECT_THAT(
+        err.message(),
+        HasSubstr("Unable to resolve symbol \"tt\" from context $root::vv"));
+
+    // Call to "tt" is unresolved.
+    EXPECT_EQ(tt_ref_comp.resolved_symbol, nullptr);
+  }
+}
+
+TEST(BuildSymbolTableTest, CallNonFunction) {
+  TestVerilogSourceFile src("call_me.sv",
+                            "module tt();\n"
+                            "endmodule\n"
+                            "function int vv();\n"
+                            "  return tt();\n"  // not a function
+                            "endfunction\n");
+  const auto status = src.Parse();
+  ASSERT_TRUE(status.ok()) << status.message();
+  SymbolTable symbol_table(nullptr);
+  const SymbolTableNode& root_symbol(symbol_table.Root());
+
+  const auto build_diagnostics = BuildSymbolTable(src, &symbol_table);
+  EXPECT_TRUE(build_diagnostics.empty()) << "Unexpected diagnostic:\n"
+                                         << build_diagnostics.front().message();
+
+  MUST_ASSIGN_LOOKUP_SYMBOL(module_tt, root_symbol, "tt");
+  MUST_ASSIGN_LOOKUP_SYMBOL(function_vv, root_symbol, "vv");
+  EXPECT_EQ(module_tt_info.type, SymbolType::kModule);
+  EXPECT_EQ(module_tt_info.declared_type.syntax_origin, nullptr);
+  EXPECT_EQ(function_vv_info.type, SymbolType::kFunction);
+  EXPECT_NE(function_vv_info.declared_type.syntax_origin, nullptr);
+
+  EXPECT_EQ(function_vv_info.local_references_to_bind.size(), 1);
+  const auto ref_map(function_vv_info.LocalReferencesMapViewForTesting());
+  ASSIGN_MUST_FIND_EXACTLY_ONE_REF(tt_ref, ref_map, "tt");
+  const ReferenceComponent& tt_ref_comp(tt_ref->components->Value());
+  EXPECT_EQ(tt_ref_comp.metatype, SymbolType::kCallable);
+  EXPECT_EQ(tt_ref_comp.resolved_symbol, nullptr);
+
+  {
+    std::vector<absl::Status> resolve_diagnostics;
+    symbol_table.Resolve(&resolve_diagnostics);
+    ASSERT_EQ(resolve_diagnostics.size(), 1);
+    const auto& err = resolve_diagnostics.front();
+    EXPECT_EQ(err.code(), absl::StatusCode::kInvalidArgument);
+    EXPECT_THAT(err.message(),
+                HasSubstr("Expecting reference \"tt\" to resolve to a "
+                          "<callable>, but found a module"));
+
+    EXPECT_EQ(tt_ref_comp.resolved_symbol, nullptr);
+  }
+}
+
+TEST(BuildSymbolTableTest, NestedCallsArguments) {
+  TestVerilogSourceFile src("call_me.sv",
+                            "function int tt(int aa);\n"
+                            "  return aa + 1;\n"
+                            "endfunction\n"
+                            "function int vv();\n"
+                            "  return tt(tt(tt(2)));\n"
+                            "endfunction\n");
+  const auto status = src.Parse();
+  ASSERT_TRUE(status.ok()) << status.message();
+  SymbolTable symbol_table(nullptr);
+  const SymbolTableNode& root_symbol(symbol_table.Root());
+
+  const auto build_diagnostics = BuildSymbolTable(src, &symbol_table);
+  EXPECT_TRUE(build_diagnostics.empty()) << "Unexpected diagnostic:\n"
+                                         << build_diagnostics.front().message();
+
+  MUST_ASSIGN_LOOKUP_SYMBOL(function_tt, root_symbol, "tt");
+  MUST_ASSIGN_LOOKUP_SYMBOL(function_vv, root_symbol, "vv");
+  EXPECT_EQ(function_tt_info.type, SymbolType::kFunction);
+  ASSERT_NE(function_tt_info.declared_type.syntax_origin, nullptr);
+  EXPECT_EQ(function_vv_info.type, SymbolType::kFunction);
+  ASSERT_NE(function_vv_info.declared_type.syntax_origin, nullptr);
+
+  MUST_ASSIGN_LOOKUP_SYMBOL(arg_aa, function_tt, "aa");
+  EXPECT_EQ(arg_aa_info.type, SymbolType::kDataNetVariableInstance);
+
+  EXPECT_EQ(function_tt_info.local_references_to_bind.size(), 1);
+  const auto tt_ref_map(function_tt_info.LocalReferencesMapViewForTesting());
+  ASSIGN_MUST_FIND_EXACTLY_ONE_REF(aa_ref, tt_ref_map, "aa");
+  const ReferenceComponent& aa_ref_comp(aa_ref->components->Value());
+  EXPECT_EQ(aa_ref_comp.metatype, SymbolType::kUnspecified);
+  EXPECT_EQ(aa_ref_comp.resolved_symbol, nullptr);
+
+  // Expect 3 calls to "tt" from the same scope.
+  EXPECT_EQ(function_vv_info.local_references_to_bind.size(), 3);
+  const auto vv_ref_map(function_vv_info.LocalReferencesMapViewForTesting());
+  ASSIGN_MUST_FIND(tt_refs, vv_ref_map, "tt");
+  for (const auto& tt_ref : tt_refs) {
+    const ReferenceComponent& tt_ref_comp(tt_ref->components->Value());
+    EXPECT_EQ(tt_ref_comp.metatype, SymbolType::kCallable);
+    EXPECT_EQ(tt_ref_comp.resolved_symbol, nullptr);
+  }
+
+  {
+    std::vector<absl::Status> resolve_diagnostics;
+    symbol_table.Resolve(&resolve_diagnostics);
+    EXPECT_TRUE(resolve_diagnostics.empty())
+        << "Unexpected diagnostic:\n"
+        << resolve_diagnostics.front().message();
+
+    EXPECT_EQ(aa_ref_comp.resolved_symbol, &arg_aa);
+
+    // Calls to "tt" are all resolved.
+    for (const auto& tt_ref : tt_refs) {
+      const ReferenceComponent& tt_ref_comp(tt_ref->components->Value());
+      EXPECT_EQ(tt_ref_comp.resolved_symbol, &function_tt);
+    }
+  }
+}
+
+TEST(BuildSymbolTableTest, SelfRecursion) {
+  TestVerilogSourceFile src("call_me_from_me.sv",
+                            "function int tt();\n"
+                            "  return 1 - tt();\n"
+                            "endfunction\n");
+  const auto status = src.Parse();
+  ASSERT_TRUE(status.ok()) << status.message();
+  SymbolTable symbol_table(nullptr);
+  const SymbolTableNode& root_symbol(symbol_table.Root());
+
+  const auto build_diagnostics = BuildSymbolTable(src, &symbol_table);
+  EXPECT_TRUE(build_diagnostics.empty()) << "Unexpected diagnostic:\n"
+                                         << build_diagnostics.front().message();
+
+  MUST_ASSIGN_LOOKUP_SYMBOL(function_tt, root_symbol, "tt");
+  EXPECT_EQ(function_tt_info.type, SymbolType::kFunction);
+  ASSERT_NE(function_tt_info.declared_type.syntax_origin, nullptr);
+
+  EXPECT_EQ(function_tt_info.local_references_to_bind.size(), 1);
+  const auto tt_ref_map(function_tt_info.LocalReferencesMapViewForTesting());
+  ASSIGN_MUST_FIND_EXACTLY_ONE_REF(tt_ref, tt_ref_map, "tt");
+  const ReferenceComponent& tt_ref_comp(tt_ref->components->Value());
+  EXPECT_EQ(tt_ref_comp.metatype, SymbolType::kCallable);
+  EXPECT_EQ(tt_ref_comp.resolved_symbol, nullptr);
+
+  {
+    std::vector<absl::Status> resolve_diagnostics;
+    symbol_table.Resolve(&resolve_diagnostics);
+    EXPECT_TRUE(resolve_diagnostics.empty())
+        << "Unexpected diagnostic:\n"
+        << resolve_diagnostics.front().message();
+
+    // Call to "tt" (recursive) is resolved.
+    EXPECT_EQ(tt_ref_comp.resolved_symbol, &function_tt);
+  }
+}
+
+TEST(BuildSymbolTableTest, MutualRecursion) {
+  TestVerilogSourceFile src("call_me_back.sv",
+                            "function int tt();\n"
+                            "  return vv();\n"
+                            "endfunction\n"
+                            "function int vv();\n"
+                            "  return tt();\n"
+                            "endfunction\n");
+  const auto status = src.Parse();
+  ASSERT_TRUE(status.ok()) << status.message();
+  SymbolTable symbol_table(nullptr);
+  const SymbolTableNode& root_symbol(symbol_table.Root());
+
+  const auto build_diagnostics = BuildSymbolTable(src, &symbol_table);
+  EXPECT_TRUE(build_diagnostics.empty()) << "Unexpected diagnostic:\n"
+                                         << build_diagnostics.front().message();
+
+  MUST_ASSIGN_LOOKUP_SYMBOL(function_tt, root_symbol, "tt");
+  MUST_ASSIGN_LOOKUP_SYMBOL(function_vv, root_symbol, "vv");
+  EXPECT_EQ(function_tt_info.type, SymbolType::kFunction);
+  ASSERT_NE(function_tt_info.declared_type.syntax_origin, nullptr);
+  EXPECT_EQ(function_vv_info.type, SymbolType::kFunction);
+  ASSERT_NE(function_vv_info.declared_type.syntax_origin, nullptr);
+
+  EXPECT_EQ(function_tt_info.local_references_to_bind.size(), 1);
+  const auto tt_ref_map(function_tt_info.LocalReferencesMapViewForTesting());
+  ASSIGN_MUST_FIND_EXACTLY_ONE_REF(vv_ref, tt_ref_map, "vv");
+  const ReferenceComponent& vv_ref_comp(vv_ref->components->Value());
+  EXPECT_EQ(vv_ref_comp.metatype, SymbolType::kCallable);
+  EXPECT_EQ(vv_ref_comp.resolved_symbol, nullptr);
+
+  EXPECT_EQ(function_vv_info.local_references_to_bind.size(), 1);
+  const auto vv_ref_map(function_vv_info.LocalReferencesMapViewForTesting());
+  ASSIGN_MUST_FIND_EXACTLY_ONE_REF(tt_ref, vv_ref_map, "tt");
+  const ReferenceComponent& tt_ref_comp(tt_ref->components->Value());
+  EXPECT_EQ(tt_ref_comp.metatype, SymbolType::kCallable);
+  EXPECT_EQ(tt_ref_comp.resolved_symbol, nullptr);
+
+  {
+    std::vector<absl::Status> resolve_diagnostics;
+    symbol_table.Resolve(&resolve_diagnostics);
+    EXPECT_TRUE(resolve_diagnostics.empty())
+        << "Unexpected diagnostic:\n"
+        << resolve_diagnostics.front().message();
+
+    // Calls to "tt" and "vv" are all resolved.
+    EXPECT_EQ(vv_ref_comp.resolved_symbol, &function_vv);
+    EXPECT_EQ(tt_ref_comp.resolved_symbol, &function_tt);
+  }
+}
+
+TEST(BuildSymbolTableTest, PackageQualifiedFunctionCall) {
+  TestVerilogSourceFile src("call_me.sv",
+                            "package pp;\n"
+                            "  function int tt();\n"
+                            "    return 1;\n"
+                            "  endfunction\n"
+                            "endpackage\n"
+                            "function int vv();\n"
+                            "  return pp::tt();\n"
+                            "endfunction\n");
+  const auto status = src.Parse();
+  ASSERT_TRUE(status.ok()) << status.message();
+  SymbolTable symbol_table(nullptr);
+  const SymbolTableNode& root_symbol(symbol_table.Root());
+
+  const auto build_diagnostics = BuildSymbolTable(src, &symbol_table);
+  EXPECT_TRUE(build_diagnostics.empty()) << "Unexpected diagnostic:\n"
+                                         << build_diagnostics.front().message();
+
+  MUST_ASSIGN_LOOKUP_SYMBOL(package_pp, root_symbol, "pp");
+  MUST_ASSIGN_LOOKUP_SYMBOL(function_tt, package_pp, "tt");
+  EXPECT_EQ(package_pp_info.type, SymbolType::kPackage);
+  MUST_ASSIGN_LOOKUP_SYMBOL(function_vv, root_symbol, "vv");
+  EXPECT_EQ(function_tt_info.type, SymbolType::kFunction);
+  ASSERT_NE(function_tt_info.declared_type.syntax_origin, nullptr);
+  EXPECT_EQ(function_vv_info.type, SymbolType::kFunction);
+  ASSERT_NE(function_vv_info.declared_type.syntax_origin, nullptr);
+
+  EXPECT_EQ(function_vv_info.local_references_to_bind.size(), 1);
+  const auto ref_map(function_vv_info.LocalReferencesMapViewForTesting());
+  ASSIGN_MUST_FIND_EXACTLY_ONE_REF(pp_ref, ref_map, "pp");
+  ASSERT_EQ(pp_ref->components->Children().size(), 1);
+  const ReferenceComponent& pp_ref_comp(pp_ref->components->Value());
+  EXPECT_EQ(pp_ref_comp.ref_type, ReferenceType::kUnqualified);
+  EXPECT_EQ(pp_ref_comp.metatype, SymbolType::kUnspecified);
+  EXPECT_EQ(pp_ref_comp.resolved_symbol, nullptr);
+
+  const ReferenceComponent& tt_ref_comp(
+      pp_ref->components->Children().front().Value());
+  EXPECT_EQ(tt_ref_comp.identifier, "tt");
+  EXPECT_EQ(tt_ref_comp.ref_type, ReferenceType::kDirectMember);
+  EXPECT_EQ(tt_ref_comp.metatype, SymbolType::kCallable);
+  EXPECT_EQ(tt_ref_comp.resolved_symbol, nullptr);
+
+  {
+    std::vector<absl::Status> resolve_diagnostics;
+    symbol_table.Resolve(&resolve_diagnostics);
+    EXPECT_TRUE(resolve_diagnostics.empty())
+        << "Unexpected diagnostic:\n"
+        << resolve_diagnostics.front().message();
+
+    // Call to "tt" is resolved.
+    EXPECT_EQ(pp_ref_comp.resolved_symbol, &package_pp);
+    EXPECT_EQ(tt_ref_comp.resolved_symbol, &function_tt);
+  }
+}
+
+TEST(BuildSymbolTableTest, ClassQualifiedFunctionCall) {
+  TestVerilogSourceFile src("call_me.sv",
+                            "class cc;\n"
+                            "  function static int tt();\n"
+                            "    return 1;\n"
+                            "  endfunction\n"
+                            "endclass\n"
+                            "function int vv();\n"
+                            "  return cc::tt();\n"
+                            "endfunction\n");
+  const auto status = src.Parse();
+  ASSERT_TRUE(status.ok()) << status.message();
+  SymbolTable symbol_table(nullptr);
+  const SymbolTableNode& root_symbol(symbol_table.Root());
+
+  const auto build_diagnostics = BuildSymbolTable(src, &symbol_table);
+  EXPECT_TRUE(build_diagnostics.empty()) << "Unexpected diagnostic:\n"
+                                         << build_diagnostics.front().message();
+
+  MUST_ASSIGN_LOOKUP_SYMBOL(class_cc, root_symbol, "cc");
+  MUST_ASSIGN_LOOKUP_SYMBOL(function_tt, class_cc, "tt");
+  EXPECT_EQ(class_cc_info.type, SymbolType::kClass);
+  MUST_ASSIGN_LOOKUP_SYMBOL(function_vv, root_symbol, "vv");
+  EXPECT_EQ(function_tt_info.type, SymbolType::kFunction);
+  ASSERT_NE(function_tt_info.declared_type.syntax_origin, nullptr);
+  EXPECT_EQ(function_vv_info.type, SymbolType::kFunction);
+  ASSERT_NE(function_vv_info.declared_type.syntax_origin, nullptr);
+
+  EXPECT_EQ(function_vv_info.local_references_to_bind.size(), 1);
+  const auto ref_map(function_vv_info.LocalReferencesMapViewForTesting());
+  ASSIGN_MUST_FIND_EXACTLY_ONE_REF(cc_ref, ref_map, "cc");
+  ASSERT_EQ(cc_ref->components->Children().size(), 1);
+  const ReferenceComponent& cc_ref_comp(cc_ref->components->Value());
+  EXPECT_EQ(cc_ref_comp.ref_type, ReferenceType::kUnqualified);
+  EXPECT_EQ(cc_ref_comp.metatype, SymbolType::kUnspecified);
+  EXPECT_EQ(cc_ref_comp.resolved_symbol, nullptr);
+
+  const ReferenceComponent& tt_ref_comp(
+      cc_ref->components->Children().front().Value());
+  EXPECT_EQ(tt_ref_comp.identifier, "tt");
+  EXPECT_EQ(tt_ref_comp.ref_type, ReferenceType::kDirectMember);
+  EXPECT_EQ(tt_ref_comp.metatype, SymbolType::kCallable);
+  EXPECT_EQ(tt_ref_comp.resolved_symbol, nullptr);
+
+  {
+    std::vector<absl::Status> resolve_diagnostics;
+    symbol_table.Resolve(&resolve_diagnostics);
+    EXPECT_TRUE(resolve_diagnostics.empty())
+        << "Unexpected diagnostic:\n"
+        << resolve_diagnostics.front().message();
+
+    // Call to "tt" is resolved.
+    EXPECT_EQ(cc_ref_comp.resolved_symbol, &class_cc);
+    EXPECT_EQ(tt_ref_comp.resolved_symbol, &function_tt);
+  }
+}
+
+TEST(BuildSymbolTableTest, ClassQualifiedFunctionCallUnresolved) {
+  TestVerilogSourceFile src("call_me.sv",
+                            "class cc;\n"
+                            "endclass\n"
+                            "function int vv();\n"
+                            "  return cc::tt();\n"
+                            "endfunction\n");
+  const auto status = src.Parse();
+  ASSERT_TRUE(status.ok()) << status.message();
+  SymbolTable symbol_table(nullptr);
+  const SymbolTableNode& root_symbol(symbol_table.Root());
+
+  const auto build_diagnostics = BuildSymbolTable(src, &symbol_table);
+  EXPECT_TRUE(build_diagnostics.empty()) << "Unexpected diagnostic:\n"
+                                         << build_diagnostics.front().message();
+
+  MUST_ASSIGN_LOOKUP_SYMBOL(class_cc, root_symbol, "cc");
+  EXPECT_EQ(class_cc_info.type, SymbolType::kClass);
+  MUST_ASSIGN_LOOKUP_SYMBOL(function_vv, root_symbol, "vv");
+  EXPECT_EQ(function_vv_info.type, SymbolType::kFunction);
+  ASSERT_NE(function_vv_info.declared_type.syntax_origin, nullptr);
+
+  EXPECT_EQ(function_vv_info.local_references_to_bind.size(), 1);
+  const auto ref_map(function_vv_info.LocalReferencesMapViewForTesting());
+  ASSIGN_MUST_FIND_EXACTLY_ONE_REF(cc_ref, ref_map, "cc");
+  ASSERT_EQ(cc_ref->components->Children().size(), 1);
+  const ReferenceComponent& cc_ref_comp(cc_ref->components->Value());
+  EXPECT_EQ(cc_ref_comp.ref_type, ReferenceType::kUnqualified);
+  EXPECT_EQ(cc_ref_comp.metatype, SymbolType::kUnspecified);
+  EXPECT_EQ(cc_ref_comp.resolved_symbol, nullptr);
+
+  const ReferenceComponent& tt_ref_comp(
+      cc_ref->components->Children().front().Value());
+  EXPECT_EQ(tt_ref_comp.identifier, "tt");
+  EXPECT_EQ(tt_ref_comp.ref_type, ReferenceType::kDirectMember);
+  EXPECT_EQ(tt_ref_comp.metatype, SymbolType::kCallable);
+  EXPECT_EQ(tt_ref_comp.resolved_symbol, nullptr);
+
+  {
+    std::vector<absl::Status> resolve_diagnostics;
+    symbol_table.Resolve(&resolve_diagnostics);
+    ASSERT_EQ(resolve_diagnostics.size(), 1);
+    const auto& err = resolve_diagnostics.front();
+    EXPECT_EQ(err.code(), absl::StatusCode::kNotFound);
+
+    EXPECT_EQ(cc_ref_comp.resolved_symbol, &class_cc);
+    EXPECT_EQ(tt_ref_comp.resolved_symbol, nullptr);  // error
+  }
+}
+
+TEST(BuildSymbolTableTest, ClassMethodCall) {
+  TestVerilogSourceFile src("call_me.sv",
+                            "class cc;\n"
+                            "  function int tt();\n"
+                            "    return 1;\n"
+                            "  endfunction\n"
+                            "endclass\n"
+                            "function int vv();\n"
+                            "  cc cc_obj;\n"
+                            "  return cc_obj.tt();\n"
+                            "endfunction\n");
+  const auto status = src.Parse();
+  ASSERT_TRUE(status.ok()) << status.message();
+  SymbolTable symbol_table(nullptr);
+  const SymbolTableNode& root_symbol(symbol_table.Root());
+
+  const auto build_diagnostics = BuildSymbolTable(src, &symbol_table);
+  EXPECT_TRUE(build_diagnostics.empty()) << "Unexpected diagnostic:\n"
+                                         << build_diagnostics.front().message();
+
+  MUST_ASSIGN_LOOKUP_SYMBOL(class_cc, root_symbol, "cc");
+  MUST_ASSIGN_LOOKUP_SYMBOL(function_tt, class_cc, "tt");
+  EXPECT_EQ(class_cc_info.type, SymbolType::kClass);
+  MUST_ASSIGN_LOOKUP_SYMBOL(function_vv, root_symbol, "vv");
+  EXPECT_EQ(function_tt_info.type, SymbolType::kFunction);
+  ASSERT_NE(function_tt_info.declared_type.syntax_origin, nullptr);
+  EXPECT_EQ(function_vv_info.type, SymbolType::kFunction);
+  ASSERT_NE(function_vv_info.declared_type.syntax_origin, nullptr);
+  MUST_ASSIGN_LOOKUP_SYMBOL(cc_obj, function_vv, "cc_obj");
+  EXPECT_EQ(cc_obj_info.type, SymbolType::kDataNetVariableInstance);
+
+  EXPECT_EQ(function_vv_info.local_references_to_bind.size(), 2);
+  const auto ref_map(function_vv_info.LocalReferencesMapViewForTesting());
+
+  ASSIGN_MUST_FIND_EXACTLY_ONE_REF(cc_type_ref, ref_map,
+                                   "cc");  // "cc" is a type
+  const ReferenceComponent& cc_type_ref_comp(cc_type_ref->components->Value());
+
+  ASSIGN_MUST_FIND_EXACTLY_ONE_REF(cc_obj_ref, ref_map,
+                                   "cc_obj");  // "cc_obj" is data
+  ASSERT_EQ(cc_obj_ref->components->Children().size(), 1);
+  const ReferenceComponent& cc_obj_ref_comp(cc_obj_ref->components->Value());
+  EXPECT_EQ(cc_obj_ref_comp.ref_type, ReferenceType::kUnqualified);
+  EXPECT_EQ(cc_obj_ref_comp.metatype, SymbolType::kUnspecified);
+  EXPECT_EQ(cc_obj_ref_comp.resolved_symbol, nullptr);
+
+  const ReferenceComponent& tt_ref_comp(
+      cc_obj_ref->components->Children().front().Value());
+  EXPECT_EQ(tt_ref_comp.identifier, "tt");
+  EXPECT_EQ(tt_ref_comp.ref_type, ReferenceType::kMemberOfTypeOfParent);
+  EXPECT_EQ(tt_ref_comp.metatype, SymbolType::kCallable);
+  EXPECT_EQ(tt_ref_comp.resolved_symbol, nullptr);
+
+  {
+    std::vector<absl::Status> resolve_diagnostics;
+    symbol_table.Resolve(&resolve_diagnostics);
+    EXPECT_TRUE(resolve_diagnostics.empty())
+        << "Unexpected diagnostic:\n"
+        << resolve_diagnostics.front().message();
+
+    // Call to ".tt" is resolved.
+    EXPECT_EQ(cc_type_ref_comp.resolved_symbol, &class_cc);
+    EXPECT_EQ(cc_obj_ref_comp.resolved_symbol, &cc_obj);
+    EXPECT_EQ(tt_ref_comp.resolved_symbol, &function_tt);
+  }
+}
+
+TEST(BuildSymbolTableTest, ClassMethodCallUnresolved) {
+  TestVerilogSourceFile src("call_me.sv",
+                            "class cc;\n"
+                            "endclass\n"
+                            "function int vv();\n"
+                            "  cc cc_obj;\n"
+                            "  return cc_obj.tt();\n"
+                            "endfunction\n");
+  const auto status = src.Parse();
+  ASSERT_TRUE(status.ok()) << status.message();
+  SymbolTable symbol_table(nullptr);
+  const SymbolTableNode& root_symbol(symbol_table.Root());
+
+  const auto build_diagnostics = BuildSymbolTable(src, &symbol_table);
+  EXPECT_TRUE(build_diagnostics.empty()) << "Unexpected diagnostic:\n"
+                                         << build_diagnostics.front().message();
+
+  MUST_ASSIGN_LOOKUP_SYMBOL(class_cc, root_symbol, "cc");
+  EXPECT_EQ(class_cc_info.type, SymbolType::kClass);
+  MUST_ASSIGN_LOOKUP_SYMBOL(function_vv, root_symbol, "vv");
+  EXPECT_EQ(function_vv_info.type, SymbolType::kFunction);
+  ASSERT_NE(function_vv_info.declared_type.syntax_origin, nullptr);
+  MUST_ASSIGN_LOOKUP_SYMBOL(cc_obj, function_vv, "cc_obj");
+  EXPECT_EQ(cc_obj_info.type, SymbolType::kDataNetVariableInstance);
+
+  EXPECT_EQ(function_vv_info.local_references_to_bind.size(), 2);
+  const auto ref_map(function_vv_info.LocalReferencesMapViewForTesting());
+
+  ASSIGN_MUST_FIND_EXACTLY_ONE_REF(cc_type_ref, ref_map,
+                                   "cc");  // "cc" is a type
+  const ReferenceComponent& cc_type_ref_comp(cc_type_ref->components->Value());
+
+  ASSIGN_MUST_FIND_EXACTLY_ONE_REF(cc_obj_ref, ref_map,
+                                   "cc_obj");  // "cc_obj" is data
+  ASSERT_EQ(cc_obj_ref->components->Children().size(), 1);
+  const ReferenceComponent& cc_obj_ref_comp(cc_obj_ref->components->Value());
+  EXPECT_EQ(cc_obj_ref_comp.ref_type, ReferenceType::kUnqualified);
+  EXPECT_EQ(cc_obj_ref_comp.metatype, SymbolType::kUnspecified);
+  EXPECT_EQ(cc_obj_ref_comp.resolved_symbol, nullptr);
+
+  const ReferenceComponent& tt_ref_comp(
+      cc_obj_ref->components->Children().front().Value());
+  EXPECT_EQ(tt_ref_comp.identifier, "tt");
+  EXPECT_EQ(tt_ref_comp.ref_type, ReferenceType::kMemberOfTypeOfParent);
+  EXPECT_EQ(tt_ref_comp.metatype, SymbolType::kCallable);
+  EXPECT_EQ(tt_ref_comp.resolved_symbol, nullptr);
+
+  {
+    std::vector<absl::Status> resolve_diagnostics;
+    symbol_table.Resolve(&resolve_diagnostics);
+    ASSERT_EQ(resolve_diagnostics.size(), 1);
+    const auto& err = resolve_diagnostics.front();
+    EXPECT_EQ(err.code(), absl::StatusCode::kNotFound);
+
+    EXPECT_EQ(cc_type_ref_comp.resolved_symbol, &class_cc);
+    EXPECT_EQ(cc_obj_ref_comp.resolved_symbol, &cc_obj);
+    EXPECT_EQ(tt_ref_comp.resolved_symbol, nullptr);  // unresolved
+  }
+}
+
+TEST(BuildSymbolTableTest, ChainedMethodCall) {
+  TestVerilogSourceFile src("call_me.sv",
+                            "class cc;\n"
+                            "  function dd tt();\n"
+                            "  endfunction\n"
+                            "endclass\n"
+                            "class dd;\n"
+                            "  function cc gg();\n"
+                            "  endfunction\n"
+                            "endclass\n"
+                            "function dd vv();\n"
+                            "  dd dd_obj;\n"
+                            "  return dd_obj.gg().tt();\n"
+                            // .gg() -> cc
+                            // .tt() -> dd
+                            "endfunction\n");
+  const auto status = src.Parse();
+  ASSERT_TRUE(status.ok()) << status.message();
+  SymbolTable symbol_table(nullptr);
+  const SymbolTableNode& root_symbol(symbol_table.Root());
+
+  const auto build_diagnostics = BuildSymbolTable(src, &symbol_table);
+  EXPECT_TRUE(build_diagnostics.empty()) << "Unexpected diagnostic:\n"
+                                         << build_diagnostics.front().message();
+
+  MUST_ASSIGN_LOOKUP_SYMBOL(class_cc, root_symbol, "cc");
+  EXPECT_EQ(class_cc_info.type, SymbolType::kClass);
+
+  MUST_ASSIGN_LOOKUP_SYMBOL(class_dd, root_symbol, "dd");
+  EXPECT_EQ(class_dd_info.type, SymbolType::kClass);
+
+  MUST_ASSIGN_LOOKUP_SYMBOL(function_tt, class_cc, "tt");
+  EXPECT_EQ(function_tt_info.type, SymbolType::kFunction);
+  ASSERT_NE(function_tt_info.declared_type.syntax_origin, nullptr);
+  ASSERT_NE(function_tt_info.declared_type.user_defined_type, nullptr);
+
+  MUST_ASSIGN_LOOKUP_SYMBOL(function_gg, class_dd, "gg");
+  EXPECT_EQ(function_gg_info.type, SymbolType::kFunction);
+  ASSERT_NE(function_gg_info.declared_type.syntax_origin, nullptr);
+  ASSERT_NE(function_gg_info.declared_type.user_defined_type, nullptr);
+
+  MUST_ASSIGN_LOOKUP_SYMBOL(function_vv, root_symbol, "vv");
+  EXPECT_EQ(function_vv_info.type, SymbolType::kFunction);
+  ASSERT_NE(function_vv_info.declared_type.syntax_origin, nullptr);
+
+  MUST_ASSIGN_LOOKUP_SYMBOL(dd_obj, function_vv, "dd_obj");
+  EXPECT_EQ(dd_obj_info.type, SymbolType::kDataNetVariableInstance);
+
+  EXPECT_EQ(function_vv_info.local_references_to_bind.size(), 2);
+  const auto ref_map(function_vv_info.LocalReferencesMapViewForTesting());
+
+  ASSIGN_MUST_FIND_EXACTLY_ONE_REF(dd_type_ref, ref_map,
+                                   "dd");  // "dd" is a type
+  const ReferenceComponent& dd_type_ref_comp(dd_type_ref->components->Value());
+
+  // Examine the dd_obj.gg().tt() reference chain.
+  ASSIGN_MUST_FIND_EXACTLY_ONE_REF(dd_obj_ref, ref_map,
+                                   "dd_obj");  // "dd_obj" is data
+  ASSERT_EQ(dd_obj_ref->components->Children().size(), 1);
+  const ReferenceComponent& dd_obj_ref_comp(dd_obj_ref->components->Value());
+  EXPECT_EQ(dd_obj_ref_comp.ref_type, ReferenceType::kUnqualified);
+  EXPECT_EQ(dd_obj_ref_comp.metatype, SymbolType::kUnspecified);
+  EXPECT_EQ(dd_obj_ref_comp.resolved_symbol, nullptr);
+
+  const ReferenceComponentNode& dd_gg_ref(
+      dd_obj_ref->components->Children().front());
+  const ReferenceComponent& dd_gg_ref_comp(dd_gg_ref.Value());
+  EXPECT_EQ(dd_gg_ref_comp.identifier, "gg");
+  EXPECT_EQ(dd_gg_ref_comp.ref_type, ReferenceType::kMemberOfTypeOfParent);
+  EXPECT_EQ(dd_gg_ref_comp.metatype, SymbolType::kCallable);
+  EXPECT_EQ(dd_gg_ref_comp.resolved_symbol, nullptr);
+
+  const ReferenceComponentNode& dd_gg_tt_ref(dd_gg_ref.Children().front());
+  const ReferenceComponent& dd_gg_tt_ref_comp(dd_gg_tt_ref.Value());
+  EXPECT_EQ(dd_gg_tt_ref_comp.identifier, "tt");
+  EXPECT_EQ(dd_gg_tt_ref_comp.ref_type, ReferenceType::kMemberOfTypeOfParent);
+  EXPECT_EQ(dd_gg_tt_ref_comp.metatype, SymbolType::kCallable);
+  EXPECT_EQ(dd_gg_tt_ref_comp.resolved_symbol, nullptr);
+
+  {
+    std::vector<absl::Status> resolve_diagnostics;
+    symbol_table.Resolve(&resolve_diagnostics);
+    EXPECT_TRUE(resolve_diagnostics.empty())
+        << "Unexpected diagnostic:\n"
+        << resolve_diagnostics.front().message();
+
+    // Return types of methods are resolved.
+    EXPECT_EQ(function_tt_info.declared_type.user_defined_type->Value()
+                  .resolved_symbol,
+              &class_dd);
+    EXPECT_EQ(function_gg_info.declared_type.user_defined_type->Value()
+                  .resolved_symbol,
+              &class_cc);
+
+    // Chained call is resolved.
+    EXPECT_EQ(dd_type_ref_comp.resolved_symbol, &class_dd);
+    EXPECT_EQ(dd_obj_ref_comp.resolved_symbol, &dd_obj);
+    EXPECT_EQ(dd_gg_ref_comp.resolved_symbol, &function_gg);
+    EXPECT_EQ(dd_gg_tt_ref_comp.resolved_symbol, &function_tt);
+  }
+}
+
+TEST(BuildSymbolTableTest, ChainedMethodCallReturnTypeNotAClass) {
+  TestVerilogSourceFile src(
+      "call_me.sv",
+      "class cc;\n"
+      "  function dd tt();\n"
+      "  endfunction\n"
+      "endclass\n"
+      "class dd;\n"
+      "  function int gg();\n"  // return type is a primitive
+      "  endfunction\n"
+      "endclass\n"
+      "function dd vv();\n"
+      "  dd dd_obj;\n"
+      "  return dd_obj.gg().tt();\n"
+      // .gg() -> cc
+      // .tt() -> <error>
+      "endfunction\n");
+  const auto status = src.Parse();
+  ASSERT_TRUE(status.ok()) << status.message();
+  SymbolTable symbol_table(nullptr);
+  const SymbolTableNode& root_symbol(symbol_table.Root());
+
+  const auto build_diagnostics = BuildSymbolTable(src, &symbol_table);
+  EXPECT_TRUE(build_diagnostics.empty()) << "Unexpected diagnostic:\n"
+                                         << build_diagnostics.front().message();
+
+  MUST_ASSIGN_LOOKUP_SYMBOL(class_cc, root_symbol, "cc");
+  EXPECT_EQ(class_cc_info.type, SymbolType::kClass);
+
+  MUST_ASSIGN_LOOKUP_SYMBOL(class_dd, root_symbol, "dd");
+  EXPECT_EQ(class_dd_info.type, SymbolType::kClass);
+
+  MUST_ASSIGN_LOOKUP_SYMBOL(function_tt, class_cc, "tt");
+  EXPECT_EQ(function_tt_info.type, SymbolType::kFunction);
+  ASSERT_NE(function_tt_info.declared_type.syntax_origin, nullptr);
+  ASSERT_NE(function_tt_info.declared_type.user_defined_type, nullptr);
+
+  MUST_ASSIGN_LOOKUP_SYMBOL(function_gg, class_dd, "gg");
+  EXPECT_EQ(function_gg_info.type, SymbolType::kFunction);
+  ASSERT_NE(function_gg_info.declared_type.syntax_origin, nullptr);
+  EXPECT_EQ(function_gg_info.declared_type.user_defined_type, nullptr);
+
+  MUST_ASSIGN_LOOKUP_SYMBOL(function_vv, root_symbol, "vv");
+  EXPECT_EQ(function_vv_info.type, SymbolType::kFunction);
+  ASSERT_NE(function_vv_info.declared_type.syntax_origin, nullptr);
+
+  MUST_ASSIGN_LOOKUP_SYMBOL(dd_obj, function_vv, "dd_obj");
+  EXPECT_EQ(dd_obj_info.type, SymbolType::kDataNetVariableInstance);
+
+  EXPECT_EQ(function_vv_info.local_references_to_bind.size(), 2);
+  const auto ref_map(function_vv_info.LocalReferencesMapViewForTesting());
+
+  ASSIGN_MUST_FIND_EXACTLY_ONE_REF(dd_type_ref, ref_map,
+                                   "dd");  // "dd" is a type
+  const ReferenceComponent& dd_type_ref_comp(dd_type_ref->components->Value());
+
+  // Examine the dd_obj.gg().tt() reference chain.
+  ASSIGN_MUST_FIND_EXACTLY_ONE_REF(dd_obj_ref, ref_map,
+                                   "dd_obj");  // "dd_obj" is data
+  ASSERT_EQ(dd_obj_ref->components->Children().size(), 1);
+  const ReferenceComponent& dd_obj_ref_comp(dd_obj_ref->components->Value());
+  EXPECT_EQ(dd_obj_ref_comp.ref_type, ReferenceType::kUnqualified);
+  EXPECT_EQ(dd_obj_ref_comp.metatype, SymbolType::kUnspecified);
+  EXPECT_EQ(dd_obj_ref_comp.resolved_symbol, nullptr);
+
+  const ReferenceComponentNode& dd_gg_ref(
+      dd_obj_ref->components->Children().front());
+  const ReferenceComponent& dd_gg_ref_comp(dd_gg_ref.Value());
+  EXPECT_EQ(dd_gg_ref_comp.identifier, "gg");
+  EXPECT_EQ(dd_gg_ref_comp.ref_type, ReferenceType::kMemberOfTypeOfParent);
+  EXPECT_EQ(dd_gg_ref_comp.metatype, SymbolType::kCallable);
+  EXPECT_EQ(dd_gg_ref_comp.resolved_symbol, nullptr);
+
+  const ReferenceComponentNode& dd_gg_tt_ref(dd_gg_ref.Children().front());
+  const ReferenceComponent& dd_gg_tt_ref_comp(dd_gg_tt_ref.Value());
+  EXPECT_EQ(dd_gg_tt_ref_comp.identifier, "tt");
+  EXPECT_EQ(dd_gg_tt_ref_comp.ref_type, ReferenceType::kMemberOfTypeOfParent);
+  EXPECT_EQ(dd_gg_tt_ref_comp.metatype, SymbolType::kCallable);
+  EXPECT_EQ(dd_gg_tt_ref_comp.resolved_symbol, nullptr);
+
+  {
+    std::vector<absl::Status> resolve_diagnostics;
+    symbol_table.Resolve(&resolve_diagnostics);
+    ASSERT_EQ(resolve_diagnostics.size(), 1);
+    const auto& err = resolve_diagnostics.front();
+    EXPECT_EQ(err.code(), absl::StatusCode::kInvalidArgument);
+    EXPECT_THAT(err.message(), HasSubstr("Type of parent reference"));
+    // reference text in diagnostic looks like: "@dd_obj.gg[<callable>]"
+    EXPECT_THAT(err.message(), HasSubstr("(int) does not have any members"));
+
+    // Return types of methods are resolved (where non-primitive).
+    EXPECT_EQ(function_tt_info.declared_type.user_defined_type->Value()
+                  .resolved_symbol,
+              &class_dd);
+
+    // Chained call is partially resolved.
+    EXPECT_EQ(dd_type_ref_comp.resolved_symbol, &class_dd);
+    EXPECT_EQ(dd_obj_ref_comp.resolved_symbol, &dd_obj);
+    EXPECT_EQ(dd_gg_ref_comp.resolved_symbol, &function_gg);
+    EXPECT_EQ(dd_gg_tt_ref_comp.resolved_symbol, nullptr);  // failed to resolve
   }
 }
 

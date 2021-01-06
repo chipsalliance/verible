@@ -79,6 +79,7 @@ static const verible::EnumNameMap<SymbolType> kSymbolInfoNames({
     {"task", SymbolType::kTask},
     {"interface", SymbolType::kInterface},
     {"<unspecified>", SymbolType::kUnspecified},
+    {"<callable>", SymbolType::kCallable},
 });
 
 std::ostream& operator<<(std::ostream& stream, SymbolType symbol_type) {
@@ -114,6 +115,13 @@ std::ostream& ReferenceNodeFullPath(std::ostream& stream,
     ReferenceNodeFullPath(stream, *node.Parent());  // recursive
   }
   return node.Value().PrintPathComponent(stream);
+}
+
+static std::string ReferenceNodeFullPathString(
+    const ReferenceComponentNode& node) {
+  std::ostringstream stream;
+  ReferenceNodeFullPath(stream, node);
+  return stream.str();
 }
 
 // Validates iterator/pointer stability when calling VectorTree::NewChild.
@@ -557,6 +565,32 @@ class SymbolTable::Builder : public TreeContextVisitor {
     }
     if (Context().DirectParentIs(NodeEnum::kParamByName)) {
       return SymbolType::kParameter;
+    }
+    if (Context().DirectParentsAre({NodeEnum::kUnqualifiedId,
+                                    NodeEnum::kLocalRoot,
+                                    NodeEnum::kFunctionCall})) {
+      // bare call like "function_name(...)"
+      return SymbolType::kCallable;
+    }
+    if (Context().DirectParentsAre(
+            {NodeEnum::kUnqualifiedId, NodeEnum::kQualifiedId,
+             NodeEnum::kLocalRoot, NodeEnum::kFunctionCall})) {
+      // qualified call like "pkg_or_class::function_name(...)"
+      // Only the last component needs to be callable.
+      const SyntaxTreeNode* qualified_id =
+          Context().NearestParentWithTag(NodeEnum::kQualifiedId);
+      const SyntaxTreeNode* unqualified_id =
+          Context().NearestParentWithTag(NodeEnum::kUnqualifiedId);
+      if (qualified_id->children().back().get() == unqualified_id) {
+        return SymbolType::kCallable;
+      }
+      // TODO(fangism): could require parents to be kPackage or kClass
+    }
+    if (Context().DirectParentsAre(
+            {NodeEnum::kUnqualifiedId, NodeEnum::kMethodCallExtension})) {
+      // method call like "obj.method_name(...)"
+      return SymbolType::kCallable;
+      // TODO(fangism): check that method is non-static
     }
     // Default: no specific metatype.
     return SymbolType::kUnspecified;
@@ -1033,8 +1067,19 @@ void ReferenceComponent::VerifySymbolTableRoot(
 
 absl::Status ReferenceComponent::MatchesMetatype(
     SymbolType found_metatype) const {
-  if (metatype == SymbolType::kUnspecified) return absl::OkStatus();
-  if (metatype == found_metatype) return absl::OkStatus();
+  switch (metatype) {
+    case SymbolType::kUnspecified:
+      return absl::OkStatus();
+    case SymbolType::kCallable:
+      if (found_metatype == SymbolType::kFunction ||
+          found_metatype == SymbolType::kTask) {
+        return absl::OkStatus();
+      }
+      break;
+    default:
+      if (metatype == found_metatype) return absl::OkStatus();
+      break;
+  }
   // Otherwise, mismatched metatype.
   return absl::InvalidArgumentError(
       absl::StrCat("Expecting reference \"", identifier, "\" to resolve to a ",
@@ -1214,10 +1259,18 @@ static void ResolveReferenceComponentNode(
       const DeclarationTypeInfo& type_info =
           parent_scope->Value().declared_type;
       // Primitive types do not have members.
-      if (type_info.user_defined_type == nullptr) return;
+      if (type_info.user_defined_type == nullptr) {
+        diagnostics->push_back(absl::InvalidArgumentError(
+            absl::StrCat("Type of parent reference ",
+                         ReferenceNodeFullPathString(*node.Parent()), " (",
+                         verible::StringSpanOfSymbol(*type_info.syntax_origin),
+                         ") does not have any members.")));
+        return;
+      }
 
       // This referenced object's scope is not a parent of this node, and
-      // this, not guaranteed to have been resolved first.
+      // thus, not guaranteed to have been resolved first.
+      // TODO(fangism): resolve on-demand
       const SymbolTableNode* type_scope =
           type_info.user_defined_type->Value().resolved_symbol;
       if (type_scope == nullptr) return;

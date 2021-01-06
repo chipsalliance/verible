@@ -131,6 +131,14 @@ class SyntaxTreeContext : public AutoPopStack<const SyntaxTreeNode*> {
                                     });
     return found != ancestors.end() ? *found : nullptr;
   }
+
+  // Returns the closest ancestor (starting from top of context stack) with the
+  // specified node tag (enum).
+  template <typename E>
+  const SyntaxTreeNode* NearestParentWithTag(E tag) const {
+    return NearestParentMatching(
+        [tag](const SyntaxTreeNode& node) { return E(node.Tag().tag) == tag; });
+  }
 };
 
 }  // namespace verible

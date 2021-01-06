@@ -51,9 +51,12 @@ enum class SymbolType {
   kFunction,
   kTask,
   kInterface,
-  // Tells symbol resolution that the metatype of particular reference is not
-  // known.
-  kUnspecified,
+
+  // The following enums represent classes/groups of the above types,
+  // and are used for validating metatypes of symbol references.
+
+  kUnspecified,  // matches all of the above (any type)
+  kCallable,     // matches only kFunction or kTask
 };
 
 std::ostream& operator<<(std::ostream&, SymbolType);

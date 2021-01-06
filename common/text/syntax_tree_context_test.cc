@@ -265,20 +265,27 @@ TEST(SyntaxTreeContextTest, NearestParentMatchingTest) {
     SyntaxTreeContext::AutoPop p1(&context, &node1);
     EXPECT_EQ(context.NearestParentMatching(True), &node1);
     EXPECT_EQ(context.NearestParentMatching(TagEq(0)), nullptr);
+    EXPECT_EQ(context.NearestParentWithTag(0), nullptr);
     EXPECT_EQ(context.NearestParentMatching(TagEq(1)), &node1);
+    EXPECT_EQ(context.NearestParentWithTag(1), &node1);
     {
       SyntaxTreeNode node2(1);
       SyntaxTreeContext::AutoPop p2(&context, &node2);
       EXPECT_EQ(context.NearestParentMatching(True), &node2);
       EXPECT_EQ(context.NearestParentMatching(TagEq(0)), nullptr);
+      EXPECT_EQ(context.NearestParentWithTag(0), nullptr);
       EXPECT_EQ(context.NearestParentMatching(TagEq(1)), &node2);
+      EXPECT_EQ(context.NearestParentWithTag(1), &node2);
       {
         SyntaxTreeNode node3(3);
         SyntaxTreeContext::AutoPop p3(&context, &node3);
         EXPECT_EQ(context.NearestParentMatching(True), &node3);
         EXPECT_EQ(context.NearestParentMatching(TagEq(0)), nullptr);
+        EXPECT_EQ(context.NearestParentWithTag(0), nullptr);
         EXPECT_EQ(context.NearestParentMatching(TagEq(1)), &node2);
+        EXPECT_EQ(context.NearestParentWithTag(1), &node2);
         EXPECT_EQ(context.NearestParentMatching(TagEq(3)), &node3);
+        EXPECT_EQ(context.NearestParentWithTag(3), &node3);
       }
     }
   }
