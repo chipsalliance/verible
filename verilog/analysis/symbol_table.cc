@@ -1111,7 +1111,7 @@ static void ResolveReferenceComponentNodeLocal(ReferenceComponentNode& node,
   // If already resolved, skip.
   if (component.resolved_symbol != nullptr) return;  // already bound
   const absl::string_view key(component.identifier);
-  CHECK_EQ(node.Parent(), nullptr);  // is root
+  CHECK(node.Parent() == nullptr);  // is root
   // root node: lookup this symbol from its context upward
   CHECK_EQ(component.ref_type, ReferenceType::kUnqualified);
 
@@ -1186,7 +1186,7 @@ static void ResolveReferenceComponentNode(
   switch (component.ref_type) {
     case ReferenceType::kUnqualified: {
       // root node: lookup this symbol from its context upward
-      CHECK_EQ(node.Parent(), nullptr);
+      CHECK(node.Parent() == nullptr);
       ResolveUnqualifiedName(component, context, diagnostics);
       break;
     }
