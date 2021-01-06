@@ -51,6 +51,9 @@ enum class SymbolType {
   kFunction,
   kTask,
   kInterface,
+  // Tells symbol resolution that the metatype of particular reference is not
+  // known.
+  kUnspecified,
 };
 
 std::ostream& operator<<(std::ostream&, SymbolType);
@@ -99,6 +102,11 @@ struct ReferenceComponent {
   // See enum definition above.
   const ReferenceType ref_type;
 
+  // Inform the symbol resolver that this symbol must be of a certain metatype.
+  // SymbolInfo::kUnspecified is interpreted as "any metatype" for cases
+  // where it is not known in advance.
+  const SymbolType metatype = SymbolType::kUnspecified;
+
   // This points to the definition with which this symbol was resolved.
   // During symbol table construction, this remains nullptr.
   // If symbol resolution succeeds, this will be updated to non-nullptr.
@@ -112,6 +120,8 @@ struct ReferenceComponent {
   ReferenceComponent(ReferenceComponent&&) = default;
   ReferenceComponent& operator=(const ReferenceComponent&) = delete;
   ReferenceComponent& operator=(ReferenceComponent&&) = delete;
+
+  absl::Status MatchesMetatype(SymbolType) const;
 
   // Only print ref_type and identifier.
   std::ostream& PrintPathComponent(std::ostream&) const;

@@ -138,28 +138,50 @@ TEST(SymbolTableNodeFullPathTest, Print) {
   }
 }
 
+TEST(ReferenceComponentTest, MatchesMetatypeTest) {
+  {  // kUnspecified matches all metatypes
+    const ReferenceComponent component{.metatype = SymbolType::kUnspecified};
+    for (const auto& other : {SymbolType::kUnspecified, SymbolType::kParameter,
+                              SymbolType::kFunction, SymbolType::kTask}) {
+      const auto status = component.MatchesMetatype(other);
+      EXPECT_TRUE(status.ok()) << status.message();
+    }
+  }
+  {  // all other types must be matched exactly
+    const ReferenceComponent component{.metatype = SymbolType::kFunction};
+    for (const auto& other :
+         {SymbolType::kUnspecified, SymbolType::kParameter, SymbolType::kModule,
+          SymbolType::kTask, SymbolType::kClass}) {
+      const auto status = component.MatchesMetatype(other);
+      EXPECT_FALSE(status.ok()) << component.metatype << " vs. " << other;
+    }
+  }
+}
+
 TEST(ReferenceNodeFullPathTest, Print) {
   typedef ReferenceComponentNode Node;
   typedef ReferenceComponent Data;
   const Node root(
-      Data{.identifier = "xx", .ref_type = ReferenceType::kUnqualified},
+      Data{.identifier = "xx",
+           .ref_type = ReferenceType::kUnqualified,
+           .metatype = SymbolType::kClass},
       Node(Data{.identifier = "yy", .ref_type = ReferenceType::kDirectMember},
            Node(Data{.identifier = "zz",
                      .ref_type = ReferenceType::kMemberOfTypeOfParent})));
   {
     std::ostringstream stream;
     ReferenceNodeFullPath(stream, root);
-    EXPECT_EQ(stream.str(), "@xx");
+    EXPECT_EQ(stream.str(), "@xx[class]");
   }
   {
     std::ostringstream stream;
     ReferenceNodeFullPath(stream, root.Children().front());
-    EXPECT_EQ(stream.str(), "@xx::yy");
+    EXPECT_EQ(stream.str(), "@xx[class]::yy");
   }
   {
     std::ostringstream stream;
     ReferenceNodeFullPath(stream, root.Children().front().Children().front());
-    EXPECT_EQ(stream.str(), "@xx::yy.zz");
+    EXPECT_EQ(stream.str(), "@xx[class]::yy.zz");
   }
 }
 
@@ -200,18 +222,20 @@ TEST(DependentReferencesTest, PrintNonRootResolved) {
       .components = absl::make_unique<ReferenceComponentNode>(
           ReferenceComponent{.identifier = "p_pkg",
                              .ref_type = ReferenceType::kUnqualified,
+                             .metatype = SymbolType::kPackage,
                              .resolved_symbol = &p_pkg},
           ReferenceComponentNode(
               ReferenceComponent{.identifier = "c_class",
                                  .ref_type = ReferenceType::kDirectMember,
+                                 .metatype = SymbolType::kClass,
                                  .resolved_symbol = &c_class}))};
 
   // Print and compare.
   std::ostringstream stream;
   stream << dep_refs;
   EXPECT_EQ(stream.str(),
-            R"({ (@p_pkg -> $root::p_pkg)
-  { (::c_class -> $root::p_pkg::c_class) }
+            R"({ (@p_pkg[package] -> $root::p_pkg)
+  { (::c_class[class] -> $root::p_pkg::c_class) }
 })");
 }
 
@@ -260,7 +284,7 @@ TEST(SymbolTablePrintTest, PrintClass) {
   ss: { (refs: ) }
   tt: { (refs:
       { (@ss -> <unresolved>) }
-      { (@qq -> $root::tt::qq) }
+      { (@qq[data/net/var/instance] -> $root::tt::qq) }
       )
     qq: { (refs: ) }
   }
@@ -302,7 +326,7 @@ TEST(SymbolTablePrintTest, PrintClass) {
   ss: { (refs: ) }
   tt: { (refs:
       { (@ss -> $root::ss) }
-      { (@qq -> $root::tt::qq) }
+      { (@qq[data/net/var/instance] -> $root::tt::qq) }
       )
     qq: { (refs: ) }
   }
@@ -324,6 +348,7 @@ TEST(BuildSymbolTableTest, IntegrityCheckResolvedSymbol) {
         .components = absl::make_unique<ReferenceComponentNode>(
             ReferenceComponent{.identifier = "foo",
                                .ref_type = ReferenceType::kUnqualified,
+                               .metatype = SymbolType::kUnspecified,
                                .resolved_symbol = &root1})});
     // CheckIntegrity() will fail on destruction of symbol_table_2.
   };
@@ -345,6 +370,7 @@ TEST(BuildSymbolTableTest, IntegrityCheckDeclaredType) {
         .components = absl::make_unique<ReferenceComponentNode>(
             ReferenceComponent{.identifier = "foo",
                                .ref_type = ReferenceType::kUnqualified,
+                               .metatype = SymbolType::kUnspecified,
                                .resolved_symbol = &root1})});
     root2.Value().declared_type.user_defined_type =
         root1.Value().local_references_to_bind.front().components.get();
@@ -839,6 +865,7 @@ TEST(BuildSymbolTableTest, ModuleInstance) {
         EXPECT_TRUE(verible::IsSubRange(ref.identifier,
                                         src.GetTextStructure()->Contents()));
         EXPECT_EQ(ref.ref_type, ReferenceType::kUnqualified);
+        EXPECT_EQ(ref.metatype, SymbolType::kUnspecified);
         EXPECT_EQ(ref.resolved_symbol, nullptr);
       }
       {  // self-reference to "rr" instance
@@ -857,6 +884,7 @@ TEST(BuildSymbolTableTest, ModuleInstance) {
       EXPECT_EQ(pp_type.identifier, "pp");
       EXPECT_EQ(pp_type.resolved_symbol, nullptr);  // nothing resolved yet
       EXPECT_EQ(pp_type.ref_type, ReferenceType::kUnqualified);
+      EXPECT_EQ(pp_type.metatype, SymbolType::kUnspecified);
     }
     EXPECT_EQ(rr_info.file_origin, &src);
 
@@ -902,6 +930,7 @@ TEST(BuildSymbolTableTest, ModuleInstanceUndefined) {
       EXPECT_TRUE(verible::IsSubRange(ref.identifier,
                                       src.GetTextStructure()->Contents()));
       EXPECT_EQ(ref.ref_type, ReferenceType::kUnqualified);
+      EXPECT_EQ(ref.metatype, SymbolType::kUnspecified);
       EXPECT_EQ(ref.resolved_symbol, nullptr);
     }
   }
@@ -916,6 +945,7 @@ TEST(BuildSymbolTableTest, ModuleInstanceUndefined) {
     EXPECT_EQ(pp_type.identifier, "pp");
     EXPECT_EQ(pp_type.resolved_symbol, nullptr);  // nothing resolved yet
     EXPECT_EQ(pp_type.ref_type, ReferenceType::kUnqualified);
+    EXPECT_EQ(pp_type.metatype, SymbolType::kUnspecified);
   }
   EXPECT_EQ(rr_info.file_origin, &src);
 
@@ -990,6 +1020,7 @@ TEST(BuildSymbolTableTest, ModuleInstanceTwoInSameDecl) {
       EXPECT_TRUE(verible::IsSubRange(ref.identifier,
                                       src.GetTextStructure()->Contents()));
       EXPECT_EQ(ref.ref_type, ReferenceType::kUnqualified);
+      EXPECT_EQ(ref.metatype, SymbolType::kUnspecified);
       EXPECT_EQ(ref.resolved_symbol, nullptr);
     }
 
@@ -1005,6 +1036,7 @@ TEST(BuildSymbolTableTest, ModuleInstanceTwoInSameDecl) {
         EXPECT_EQ(pp_type.identifier, "pp");
         EXPECT_EQ(pp_type.resolved_symbol, nullptr);  // nothing resolved yet
         EXPECT_EQ(pp_type.ref_type, ReferenceType::kUnqualified);
+        EXPECT_EQ(pp_type.metatype, SymbolType::kUnspecified);
       }
       EXPECT_EQ(rr_info.file_origin, &src);
     }
@@ -1146,19 +1178,19 @@ TEST(BuildSymbolTableTest, ModuleInstanceNamedPortConnection) {
   const ReferenceComponentMap port_refs(
       ReferenceComponentNodeMapView(m_inst_ref_root));
 
-  const auto found_clk_ref = port_refs.find("clk");
-  ASSERT_NE(found_clk_ref, port_refs.end());
-  const ReferenceComponentNode& clk_ref(*found_clk_ref->second);
-  EXPECT_EQ(clk_ref.Value().identifier, "clk");
-  EXPECT_EQ(clk_ref.Value().ref_type, ReferenceType::kMemberOfTypeOfParent);
-  EXPECT_EQ(clk_ref.Value().resolved_symbol, nullptr);  // not yet resolved
+  ASSIGN_MUST_FIND(clk_ref, port_refs, "clk");
+  const ReferenceComponent& clk_ref_comp(clk_ref->Value());
+  EXPECT_EQ(clk_ref_comp.identifier, "clk");
+  EXPECT_EQ(clk_ref_comp.ref_type, ReferenceType::kMemberOfTypeOfParent);
+  EXPECT_EQ(clk_ref_comp.metatype, SymbolType::kDataNetVariableInstance);
+  EXPECT_EQ(clk_ref_comp.resolved_symbol, nullptr);  // not yet resolved
 
-  const auto found_q_ref = port_refs.find("q");
-  ASSERT_NE(found_q_ref, port_refs.end());
-  const ReferenceComponentNode& q_ref(*found_q_ref->second);
-  EXPECT_EQ(q_ref.Value().identifier, "q");
-  EXPECT_EQ(q_ref.Value().ref_type, ReferenceType::kMemberOfTypeOfParent);
-  EXPECT_EQ(q_ref.Value().resolved_symbol, nullptr);  // not yet resolved
+  ASSIGN_MUST_FIND(q_ref, port_refs, "q");
+  const ReferenceComponent& q_ref_comp(q_ref->Value());
+  EXPECT_EQ(q_ref_comp.identifier, "q");
+  EXPECT_EQ(q_ref_comp.ref_type, ReferenceType::kMemberOfTypeOfParent);
+  EXPECT_EQ(q_ref_comp.metatype, SymbolType::kDataNetVariableInstance);
+  EXPECT_EQ(q_ref_comp.resolved_symbol, nullptr);  // not yet resolved
 
   // Get the local symbol definitions for wires "c" and "d".
   MUST_ASSIGN_LOOKUP_SYMBOL(c_node, rr_node, "c");
@@ -1174,8 +1206,8 @@ TEST(BuildSymbolTableTest, ModuleInstanceNamedPortConnection) {
     EXPECT_EQ(d_ref->LastLeaf()->Value().resolved_symbol, &d_node);
 
     // Expect to resolved named port references to "clk" and "q".
-    EXPECT_EQ(clk_ref.Value().resolved_symbol, &clk_node);
-    EXPECT_EQ(q_ref.Value().resolved_symbol, &q_node);
+    EXPECT_EQ(clk_ref_comp.resolved_symbol, &clk_node);
+    EXPECT_EQ(q_ref_comp.resolved_symbol, &q_node);
   }
 }
 
@@ -1239,21 +1271,21 @@ TEST(BuildSymbolTableTest,
   const ReferenceComponentMap port_refs(
       ReferenceComponentNodeMapView(m_inst_ref_root));
 
-  const auto found_clk_ref = port_refs.find("clk");
-  ASSERT_NE(found_clk_ref, port_refs.end());
-  const ReferenceComponentNode& clk_ref(*found_clk_ref->second);
-  EXPECT_EQ(clk_ref.Value().identifier, "clk");
-  EXPECT_EQ(clk_ref.Value().ref_type, ReferenceType::kMemberOfTypeOfParent);
+  ASSIGN_MUST_FIND(clk_ref, port_refs, "clk");
+  const ReferenceComponent& clk_ref_comp(clk_ref->Value());
+  EXPECT_EQ(clk_ref_comp.identifier, "clk");
+  EXPECT_EQ(clk_ref_comp.ref_type, ReferenceType::kMemberOfTypeOfParent);
+  EXPECT_EQ(clk_ref_comp.metatype, SymbolType::kDataNetVariableInstance);
   // "clk" is a non-local reference that will not even be resolved below
-  EXPECT_EQ(clk_ref.Value().resolved_symbol, nullptr);
+  EXPECT_EQ(clk_ref_comp.resolved_symbol, nullptr);
 
-  const auto found_q_ref = port_refs.find("q");
-  ASSERT_NE(found_q_ref, port_refs.end());
-  const ReferenceComponentNode& q_ref(*found_q_ref->second);
-  EXPECT_EQ(q_ref.Value().identifier, "q");
-  EXPECT_EQ(q_ref.Value().ref_type, ReferenceType::kMemberOfTypeOfParent);
+  ASSIGN_MUST_FIND(q_ref, port_refs, "q");
+  const ReferenceComponent& q_ref_comp(q_ref->Value());
+  EXPECT_EQ(q_ref_comp.identifier, "q");
+  EXPECT_EQ(q_ref_comp.ref_type, ReferenceType::kMemberOfTypeOfParent);
+  EXPECT_EQ(q_ref_comp.metatype, SymbolType::kDataNetVariableInstance);
   // "q" is a non-local reference that will not even be resolved below
-  EXPECT_EQ(q_ref.Value().resolved_symbol, nullptr);
+  EXPECT_EQ(q_ref_comp.resolved_symbol, nullptr);
 
   // Get the local symbol definitions for wires "c" and "d".
   MUST_ASSIGN_LOOKUP_SYMBOL(c_node, rr_node, "c");
@@ -1268,8 +1300,8 @@ TEST(BuildSymbolTableTest,
     EXPECT_EQ(d_ref->LastLeaf()->Value().resolved_symbol, &d_node);
 
     // Expect to named port references to "clk" and "q" to remain unresolved.
-    EXPECT_EQ(clk_ref.Value().resolved_symbol, nullptr);
-    EXPECT_EQ(q_ref.Value().resolved_symbol, nullptr);
+    EXPECT_EQ(clk_ref_comp.resolved_symbol, nullptr);
+    EXPECT_EQ(q_ref_comp.resolved_symbol, nullptr);
   }
 }
 
@@ -1380,12 +1412,14 @@ TEST(BuildSymbolTableTest, ModuleInstanceNamedParameterAssignment) {
   const ReferenceComponent& n_ref_comp(n_ref->Value());
   EXPECT_EQ(n_ref_comp.identifier, "N");
   EXPECT_EQ(n_ref_comp.ref_type, ReferenceType::kDirectMember);
+  EXPECT_EQ(n_ref_comp.metatype, SymbolType::kParameter);
   EXPECT_EQ(n_ref_comp.resolved_symbol, nullptr);  // not yet resolved
 
   ASSIGN_MUST_FIND(p_ref, param_refs, "P");
   const ReferenceComponent& p_ref_comp(p_ref->Value());
   EXPECT_EQ(p_ref_comp.identifier, "P");
   EXPECT_EQ(p_ref_comp.ref_type, ReferenceType::kDirectMember);
+  EXPECT_EQ(p_ref_comp.metatype, SymbolType::kParameter);
   EXPECT_EQ(p_ref_comp.resolved_symbol, nullptr);  // not yet resolved
 
   {
@@ -1397,6 +1431,146 @@ TEST(BuildSymbolTableTest, ModuleInstanceNamedParameterAssignment) {
     // Expect ".N" and ".P" to resolve to formal parameters of "m".
     EXPECT_EQ(n_ref_comp.resolved_symbol, &n_param);
     EXPECT_EQ(p_ref_comp.resolved_symbol, &p_param);
+  }
+}
+
+TEST(BuildSymbolTableTest, ModuleInstanceNamedPortIsParameter) {
+  TestVerilogSourceFile src("foobar.sv",
+                            "module m #(\n"
+                            "  int N = 0\n"
+                            ") (\n"
+                            "  input wire clk\n"
+                            ");\n"
+                            "endmodule\n"
+                            "module rr;\n"
+                            "  m #(.clk(2)) m_inst();"
+                            // error: clk is a net-port, not parameter
+                            "endmodule\n");
+  const auto status = src.Parse();
+  ASSERT_TRUE(status.ok()) << status.message();
+  SymbolTable symbol_table(nullptr);
+  const SymbolTableNode& root_symbol(symbol_table.Root());
+
+  const auto build_diagnostics = BuildSymbolTable(src, &symbol_table);
+
+  MUST_ASSIGN_LOOKUP_SYMBOL(m_node, root_symbol, "m");
+  EXPECT_EQ(m_node_info.type, SymbolType::kModule);
+  EXPECT_EQ(m_node_info.file_origin, &src);
+  EXPECT_EQ(m_node_info.declared_type.syntax_origin,
+            nullptr);  // there is no module meta-type
+  EXPECT_TRUE(build_diagnostics.empty()) << "Unexpected diagnostic:\n"
+                                         << build_diagnostics.front().message();
+
+  MUST_ASSIGN_LOOKUP_SYMBOL(n_param, m_node, "N");
+  EXPECT_EQ(n_param_info.type, SymbolType::kParameter);
+  EXPECT_EQ(n_param_info.declared_type.user_defined_type,
+            nullptr);  // types are primitive
+
+  MUST_ASSIGN_LOOKUP_SYMBOL(clk_port, m_node, "clk");
+  EXPECT_EQ(clk_port_info.type, SymbolType::kDataNetVariableInstance);
+  EXPECT_EQ(clk_port_info.declared_type.user_defined_type,
+            nullptr);  // type is primitive
+
+  MUST_ASSIGN_LOOKUP_SYMBOL(rr_node, root_symbol, "rr");
+  MUST_ASSIGN_LOOKUP_SYMBOL(m_inst_node, rr_node, "m_inst");
+
+  const auto ref_map(rr_node_info.LocalReferencesMapViewForTesting());
+  ASSIGN_MUST_FIND_EXACTLY_ONE_REF(m_type_ref, ref_map, "m");
+
+  const ReferenceComponentNode& m_type_ref_root(*m_type_ref->components);
+  ASSERT_EQ(m_type_ref_root.Children().size(), 1);
+  const ReferenceComponentMap param_refs(
+      ReferenceComponentNodeMapView(m_type_ref_root));
+
+  ASSIGN_MUST_FIND(clk_ref, param_refs, "clk");
+  const ReferenceComponent& clk_ref_comp(clk_ref->Value());
+  EXPECT_EQ(clk_ref_comp.identifier, "clk");
+  EXPECT_EQ(clk_ref_comp.ref_type, ReferenceType::kDirectMember);
+  EXPECT_EQ(clk_ref_comp.metatype, SymbolType::kParameter);
+  EXPECT_EQ(clk_ref_comp.resolved_symbol, nullptr);  // not yet resolved
+
+  {
+    std::vector<absl::Status> resolve_diagnostics;
+    symbol_table.Resolve(&resolve_diagnostics);
+
+    // Expect ".clk" to fail to resolve.
+    ASSERT_EQ(resolve_diagnostics.size(), 1);
+    const auto err = resolve_diagnostics.front();
+    EXPECT_EQ(err.code(), absl::StatusCode::kInvalidArgument);
+    EXPECT_THAT(err.message(),
+                HasSubstr("Expecting reference \"clk\" to resolve to a "
+                          "parameter, but found a data/net/var/instance"));
+    EXPECT_EQ(clk_ref_comp.resolved_symbol, nullptr);  // still unresolved
+  }
+}
+
+TEST(BuildSymbolTableTest, ModuleInstanceNamedParameterIsPort) {
+  TestVerilogSourceFile src("foobar.sv",
+                            "module m #(\n"
+                            "  int N = 0\n"
+                            ") (\n"
+                            "  input wire clk\n"
+                            ");\n"
+                            "endmodule\n"
+                            "module rr;\n"
+                            "  m m_inst(.N(1));"
+                            // error: N is a parameter, not net-port
+                            "endmodule\n");
+  const auto status = src.Parse();
+  ASSERT_TRUE(status.ok()) << status.message();
+  SymbolTable symbol_table(nullptr);
+  const SymbolTableNode& root_symbol(symbol_table.Root());
+
+  const auto build_diagnostics = BuildSymbolTable(src, &symbol_table);
+
+  MUST_ASSIGN_LOOKUP_SYMBOL(m_node, root_symbol, "m");
+  EXPECT_EQ(m_node_info.type, SymbolType::kModule);
+  EXPECT_EQ(m_node_info.file_origin, &src);
+  EXPECT_EQ(m_node_info.declared_type.syntax_origin,
+            nullptr);  // there is no module meta-type
+  EXPECT_TRUE(build_diagnostics.empty()) << "Unexpected diagnostic:\n"
+                                         << build_diagnostics.front().message();
+
+  MUST_ASSIGN_LOOKUP_SYMBOL(n_param, m_node, "N");
+  EXPECT_EQ(n_param_info.type, SymbolType::kParameter);
+  EXPECT_EQ(n_param_info.declared_type.user_defined_type,
+            nullptr);  // type is primitive
+
+  MUST_ASSIGN_LOOKUP_SYMBOL(clk_port, m_node, "clk");
+  EXPECT_EQ(clk_port_info.type, SymbolType::kDataNetVariableInstance);
+  EXPECT_EQ(clk_port_info.declared_type.user_defined_type,
+            nullptr);  // type is primitive
+
+  MUST_ASSIGN_LOOKUP_SYMBOL(rr_node, root_symbol, "rr");
+  MUST_ASSIGN_LOOKUP_SYMBOL(m_inst_node, rr_node, "m_inst");
+
+  const auto ref_map(rr_node_info.LocalReferencesMapViewForTesting());
+  ASSIGN_MUST_FIND_EXACTLY_ONE_REF(m_inst_ref, ref_map, "m_inst");
+
+  const ReferenceComponentNode& m_inst_ref_root(*m_inst_ref->components);
+  ASSERT_EQ(m_inst_ref_root.Children().size(), 1);
+  const ReferenceComponentMap port_refs(
+      ReferenceComponentNodeMapView(m_inst_ref_root));
+
+  ASSIGN_MUST_FIND(n_ref, port_refs, "N");
+  const ReferenceComponent& n_ref_comp(n_ref->Value());
+  EXPECT_EQ(n_ref_comp.identifier, "N");
+  EXPECT_EQ(n_ref_comp.ref_type, ReferenceType::kMemberOfTypeOfParent);
+  EXPECT_EQ(n_ref_comp.metatype, SymbolType::kDataNetVariableInstance);
+  EXPECT_EQ(n_ref_comp.resolved_symbol, nullptr);  // not yet resolved
+
+  {
+    std::vector<absl::Status> resolve_diagnostics;
+    symbol_table.Resolve(&resolve_diagnostics);
+
+    // Expect ".N" to fail to resolve.
+    ASSERT_EQ(resolve_diagnostics.size(), 1);
+    const auto err = resolve_diagnostics.front();
+    EXPECT_EQ(err.code(), absl::StatusCode::kInvalidArgument);
+    EXPECT_THAT(err.message(),
+                HasSubstr("Expecting reference \"N\" to resolve to a "
+                          "data/net/var/instance, but found a parameter"));
+    EXPECT_EQ(n_ref_comp.resolved_symbol, nullptr);  // still unresolved
   }
 }
 
@@ -1439,19 +1613,19 @@ TEST(BuildSymbolTableTest, ModuleInstanceNamedPortConnectionNonexistentPort) {
   const ReferenceComponentMap port_refs(
       ReferenceComponentNodeMapView(m_inst_ref_root));
 
-  const auto found_clk_ref = port_refs.find("clk");
-  ASSERT_NE(found_clk_ref, port_refs.end());
-  const ReferenceComponentNode& clk_ref(*found_clk_ref->second);
-  EXPECT_EQ(clk_ref.Value().identifier, "clk");
-  EXPECT_EQ(clk_ref.Value().ref_type, ReferenceType::kMemberOfTypeOfParent);
-  EXPECT_EQ(clk_ref.Value().resolved_symbol, nullptr);  // not yet resolved
+  ASSIGN_MUST_FIND(clk_ref, port_refs, "clk");
+  const ReferenceComponent& clk_ref_comp(clk_ref->Value());
+  EXPECT_EQ(clk_ref_comp.identifier, "clk");
+  EXPECT_EQ(clk_ref_comp.ref_type, ReferenceType::kMemberOfTypeOfParent);
+  EXPECT_EQ(clk_ref_comp.metatype, SymbolType::kDataNetVariableInstance);
+  EXPECT_EQ(clk_ref_comp.resolved_symbol, nullptr);  // not yet resolved
 
-  const auto found_p_ref = port_refs.find("p");
-  ASSERT_NE(found_p_ref, port_refs.end());
-  const ReferenceComponentNode& p_ref(*found_p_ref->second);
-  EXPECT_EQ(p_ref.Value().identifier, "p");
-  EXPECT_EQ(p_ref.Value().ref_type, ReferenceType::kMemberOfTypeOfParent);
-  EXPECT_EQ(p_ref.Value().resolved_symbol, nullptr);  // not yet resolved
+  ASSIGN_MUST_FIND(p_ref, port_refs, "p");
+  const ReferenceComponent& p_ref_comp(p_ref->Value());
+  EXPECT_EQ(p_ref_comp.identifier, "p");
+  EXPECT_EQ(p_ref_comp.ref_type, ReferenceType::kMemberOfTypeOfParent);
+  EXPECT_EQ(p_ref_comp.metatype, SymbolType::kDataNetVariableInstance);
+  EXPECT_EQ(p_ref_comp.resolved_symbol, nullptr);  // not yet resolved
 
   // Get the local symbol definitions for wire "c".
   MUST_ASSIGN_LOOKUP_SYMBOL(c_node, rr_node, "c");
@@ -1462,12 +1636,13 @@ TEST(BuildSymbolTableTest, ModuleInstanceNamedPortConnectionNonexistentPort) {
 
     ASSIGN_MUST_HAVE_UNIQUE(err, resolve_diagnostics);
     EXPECT_EQ(err.code(), absl::StatusCode::kNotFound);
-    EXPECT_THAT(err.message(),
-                HasSubstr("No member symbol \"p\" in parent scope m."));
+    EXPECT_THAT(
+        err.message(),
+        HasSubstr("No member symbol \"p\" in parent scope (module) m."));
 
     // Expect to resolved named port reference to "clk", but not "p".
-    EXPECT_EQ(clk_ref.Value().resolved_symbol, &clk_node);
-    EXPECT_EQ(p_ref.Value().resolved_symbol, nullptr);  // failed to resolve
+    EXPECT_EQ(clk_ref_comp.resolved_symbol, &clk_node);
+    EXPECT_EQ(p_ref_comp.resolved_symbol, nullptr);  // failed to resolve
   }
 }
 
@@ -1523,12 +1698,14 @@ TEST(BuildSymbolTableTest, ModuleInstanceNamedParameterNonexistentError) {
   const ReferenceComponent& n_ref_comp(n_ref->Value());
   EXPECT_EQ(n_ref_comp.identifier, "N");
   EXPECT_EQ(n_ref_comp.ref_type, ReferenceType::kDirectMember);
+  EXPECT_EQ(n_ref_comp.metatype, SymbolType::kParameter);
   EXPECT_EQ(n_ref_comp.resolved_symbol, nullptr);  // not yet resolved
 
   ASSIGN_MUST_FIND(q_ref, param_refs, "Q");
   const ReferenceComponent& q_ref_comp(q_ref->Value());
   EXPECT_EQ(q_ref_comp.identifier, "Q");
   EXPECT_EQ(q_ref_comp.ref_type, ReferenceType::kDirectMember);
+  EXPECT_EQ(q_ref_comp.metatype, SymbolType::kParameter);
   EXPECT_EQ(q_ref_comp.resolved_symbol, nullptr);  // not yet resolved
 
   {
@@ -1634,6 +1811,7 @@ TEST(BuildSymbolTableTest, ReferenceOneParameterExpression) {
   EXPECT_TRUE(ref->components->is_leaf());
   EXPECT_EQ(ref_comp.identifier, "mint");
   EXPECT_EQ(ref_comp.ref_type, ReferenceType::kUnqualified);
+  EXPECT_EQ(ref_comp.metatype, SymbolType::kUnspecified);
   EXPECT_EQ(ref_comp.resolved_symbol,
             nullptr);  // have not tried to resolve yet
 
@@ -1671,6 +1849,7 @@ TEST(BuildSymbolTableTest, OneUnresolvedReferenceInExpression) {
   EXPECT_TRUE(ref->components->is_leaf());
   EXPECT_EQ(ref_comp.identifier, "spice");
   EXPECT_EQ(ref_comp.ref_type, ReferenceType::kUnqualified);
+  EXPECT_EQ(ref_comp.metatype, SymbolType::kUnspecified);
   EXPECT_EQ(ref_comp.resolved_symbol,
             nullptr);  // have not tried to resolve yet
 
@@ -1890,8 +2069,10 @@ TEST(BuildSymbolTableTest, ModuleDeclarationWithParameters) {
   const ReferenceComponentNode* b_type_ref =
       b_param_info.declared_type.user_defined_type;
   ASSERT_NE(b_type_ref, nullptr);
-  EXPECT_EQ(b_type_ref->Value().ref_type, ReferenceType::kUnqualified);
-  EXPECT_EQ(b_type_ref->Value().identifier, "bar");
+  const ReferenceComponent& b_type_ref_comp(b_type_ref->Value());
+  EXPECT_EQ(b_type_ref_comp.ref_type, ReferenceType::kUnqualified);
+  EXPECT_EQ(b_type_ref_comp.metatype, SymbolType::kUnspecified);
+  EXPECT_EQ(b_type_ref_comp.identifier, "bar");
 
   ASSERT_EQ(module_node_info.local_references_to_bind.size(), 2);
   const auto ref_map(module_node_info.LocalReferencesMapViewForTesting());
@@ -1961,6 +2142,7 @@ TEST(BuildSymbolTableTest, ModuleDeclarationLocalsDependOnParameter) {
   for (const auto& n_ref : n_refs) {
     const ReferenceComponent& n_ref_comp(n_ref->components->Value());
     EXPECT_EQ(n_ref_comp.ref_type, ReferenceType::kUnqualified);
+    EXPECT_EQ(n_ref_comp.metatype, SymbolType::kUnspecified);
     EXPECT_EQ(n_ref_comp.identifier, "N");
     EXPECT_EQ(n_ref_comp.resolved_symbol, nullptr);  // not yet resolved
   }
@@ -2246,6 +2428,7 @@ TEST(BuildSymbolTableTest, FunctionDeclarationClassReturnType) {
   ASSERT_NE(cc_ref, nullptr);
   const ReferenceComponent& cc_ref_comp(cc_ref->Value());
   EXPECT_EQ(cc_ref_comp.ref_type, ReferenceType::kUnqualified);
+  EXPECT_EQ(cc_ref_comp.metatype, SymbolType::kUnspecified);
   EXPECT_EQ(cc_ref_comp.identifier, "cc");
   EXPECT_EQ(cc_ref_comp.resolved_symbol, nullptr);
 
@@ -2381,6 +2564,7 @@ TEST(BuildSymbolTableTest,
   ASSERT_NE(vv_ref, nullptr);
   const ReferenceComponent& vv_ref_comp(vv_ref->Value());
   EXPECT_EQ(vv_ref_comp.ref_type, ReferenceType::kDirectMember);
+  EXPECT_EQ(vv_ref_comp.metatype, SymbolType::kUnspecified);
   EXPECT_EQ(vv_ref_comp.identifier, "vv");
   EXPECT_EQ(vv_ref_comp.resolved_symbol, nullptr);
 
@@ -2389,6 +2573,7 @@ TEST(BuildSymbolTableTest,
   ASSERT_NE(aa_ref, nullptr);
   const ReferenceComponent& aa_ref_comp(aa_ref->Value());
   EXPECT_EQ(aa_ref_comp.ref_type, ReferenceType::kUnqualified);
+  EXPECT_EQ(aa_ref_comp.metatype, SymbolType::kUnspecified);
   EXPECT_EQ(aa_ref_comp.identifier, "aa");
   EXPECT_EQ(aa_ref_comp.resolved_symbol, nullptr);
 
@@ -2424,8 +2609,9 @@ TEST(BuildSymbolTableTest, FunctionDeclarationOutOfLineMissingOuterClass) {
     ASSERT_EQ(build_diagnostics.size(), 1);
     const auto err = build_diagnostics.front();
     EXPECT_EQ(err.code(), absl::StatusCode::kNotFound);
-    EXPECT_THAT(err.message(),
-                HasSubstr("No member symbol \"cc\" in parent scope $root"));
+    EXPECT_THAT(
+        err.message(),
+        HasSubstr("No member symbol \"cc\" in parent scope (<root>) $root"));
   }
 
   // out-of-line declaration creates a self-reference.
@@ -2439,8 +2625,58 @@ TEST(BuildSymbolTableTest, FunctionDeclarationOutOfLineMissingOuterClass) {
     // Same diagnostic as before.
     const auto err = resolve_diagnostics.front();
     EXPECT_EQ(err.code(), absl::StatusCode::kNotFound);
+    EXPECT_THAT(
+        err.message(),
+        HasSubstr("No member symbol \"cc\" in parent scope (<root>) $root"));
+  }
+}
+
+TEST(BuildSymbolTableTest, FunctionDeclarationOutOfLineInvalidModuleInjection) {
+  TestVerilogSourceFile src("outofline_func.sv",
+                            "module mm;\n"
+                            "endmodule\n"
+                            "function mm::ff;\n"
+                            "endfunction\n");
+  const auto status = src.Parse();
+  ASSERT_TRUE(status.ok()) << status.message();
+  SymbolTable symbol_table(nullptr);
+  const SymbolTableNode& root_symbol(symbol_table.Root());
+
+  const auto build_diagnostics = BuildSymbolTable(src, &symbol_table);
+  {
+    // Expect that "tt" will not injected into "mm" because it is a module,
+    // not a class.
+    ASSERT_EQ(build_diagnostics.size(), 1);
+    const auto err = build_diagnostics.front();
+    EXPECT_EQ(err.code(), absl::StatusCode::kInvalidArgument);
     EXPECT_THAT(err.message(),
-                HasSubstr("No member symbol \"cc\" in parent scope $root"));
+                HasSubstr("Expecting reference \"mm\" to resolve to a class, "
+                          "but found a module"));
+  }
+  MUST_ASSIGN_LOOKUP_SYMBOL(module_mm, root_symbol, "mm");
+  EXPECT_EQ(module_mm_info.type, SymbolType::kModule);
+  EXPECT_EQ(module_mm.Find("ff"), module_mm.end());
+
+  // Reference must be resolved at Build-time.
+  EXPECT_EQ(root_symbol.Value().local_references_to_bind.size(), 1);
+  const auto ref_map(root_symbol.Value().LocalReferencesMapViewForTesting());
+  ASSIGN_MUST_FIND_EXACTLY_ONE_REF(mm_ref, ref_map, "mm");
+  EXPECT_EQ(mm_ref->components->Value().resolved_symbol, nullptr);
+
+  // Method injection will not happen for modules.
+  const ReferenceComponentNode* ff_ref = mm_ref->LastLeaf();
+  const ReferenceComponent& ref(ff_ref->Value());
+  EXPECT_EQ(ref.identifier, "ff");
+  EXPECT_EQ(ref.resolved_symbol, nullptr);
+
+  {
+    std::vector<absl::Status> resolve_diagnostics;
+    symbol_table.Resolve(&resolve_diagnostics);
+    ASSERT_EQ(resolve_diagnostics.size(), 1);
+
+    // Still remain unresolved.
+    EXPECT_EQ(mm_ref->components->Value().resolved_symbol, nullptr);
+    EXPECT_EQ(ref.resolved_symbol, nullptr);
   }
 }
 
@@ -2464,8 +2700,9 @@ TEST(BuildSymbolTableTest, FunctionDeclarationOutOfLineMissingPrototype) {
     ASSERT_EQ(build_diagnostics.size(), 1);
     const auto err = build_diagnostics.front();
     EXPECT_EQ(err.code(), absl::StatusCode::kNotFound);
-    EXPECT_THAT(err.message(),
-                HasSubstr("No member symbol \"ff\" in parent scope cc"));
+    EXPECT_THAT(
+        err.message(),
+        HasSubstr("No member symbol \"ff\" in parent scope (class) cc"));
   }
   MUST_ASSIGN_LOOKUP_SYMBOL(class_cc, root_symbol, "cc");
   MUST_ASSIGN_LOOKUP_SYMBOL(method_ff, class_cc, "ff");
@@ -2761,6 +2998,308 @@ TEST(BuildSymbolTableTest, TaskDeclarationWithPorts) {
   }
 }
 
+TEST(BuildSymbolTableTest, TaskDeclarationOutOfLineMissingOuterClass) {
+  TestVerilogSourceFile src("outofline_task.sv",
+                            "task cc::tt;\n"  // "cc" undeclared
+                            "endtask\n");
+  const auto status = src.Parse();
+  ASSERT_TRUE(status.ok()) << status.message();
+  SymbolTable symbol_table(nullptr);
+  const SymbolTableNode& root_symbol(symbol_table.Root());
+
+  const auto build_diagnostics = BuildSymbolTable(src, &symbol_table);
+  {
+    ASSERT_EQ(build_diagnostics.size(), 1);
+    const auto err = build_diagnostics.front();
+    EXPECT_EQ(err.code(), absl::StatusCode::kNotFound);
+    EXPECT_THAT(
+        err.message(),
+        HasSubstr("No member symbol \"cc\" in parent scope (<root>) $root"));
+  }
+
+  // out-of-line declaration creates a self-reference.
+  EXPECT_EQ(root_symbol.Value().local_references_to_bind.size(), 1);
+
+  {
+    std::vector<absl::Status> resolve_diagnostics;
+    symbol_table.Resolve(&resolve_diagnostics);
+    ASSERT_EQ(resolve_diagnostics.size(), 1);
+
+    // Same diagnostic as before.
+    const auto err = resolve_diagnostics.front();
+    EXPECT_EQ(err.code(), absl::StatusCode::kNotFound);
+    EXPECT_THAT(
+        err.message(),
+        HasSubstr("No member symbol \"cc\" in parent scope (<root>) $root"));
+  }
+}
+
+TEST(BuildSymbolTableTest, TaskDeclarationOutOfLineMissingPrototype) {
+  TestVerilogSourceFile src("outofline_task.sv",
+                            "class cc;\n"
+                            // no "tt" prototype
+                            "endclass\n"
+                            "task cc::tt;\n"
+                            "endtask\n");
+  const auto status = src.Parse();
+  ASSERT_TRUE(status.ok()) << status.message();
+  SymbolTable symbol_table(nullptr);
+  const SymbolTableNode& root_symbol(symbol_table.Root());
+
+  const auto build_diagnostics = BuildSymbolTable(src, &symbol_table);
+  {
+    // This diagnostic is non-fatal.
+    // Expect that "tt" will be injected into "cc" when its method prototype is
+    // missing.
+    ASSERT_EQ(build_diagnostics.size(), 1);
+    const auto err = build_diagnostics.front();
+    EXPECT_EQ(err.code(), absl::StatusCode::kNotFound);
+    EXPECT_THAT(
+        err.message(),
+        HasSubstr("No member symbol \"tt\" in parent scope (class) cc"));
+  }
+  MUST_ASSIGN_LOOKUP_SYMBOL(class_cc, root_symbol, "cc");
+  MUST_ASSIGN_LOOKUP_SYMBOL(method_tt, class_cc, "tt");
+  EXPECT_EQ(method_tt_info.type, SymbolType::kTask);
+
+  // out-of-line declaration creates a self-reference.
+  // Reference must be resolved at Build-time.
+  EXPECT_EQ(root_symbol.Value().local_references_to_bind.size(), 1);
+  const auto ref_map(root_symbol.Value().LocalReferencesMapViewForTesting());
+  ASSIGN_MUST_FIND_EXACTLY_ONE_REF(cc_ref, ref_map, "cc");
+  EXPECT_EQ(cc_ref->components->Value().resolved_symbol, &class_cc);
+
+  // Method reference is resolved to the injected symbol.
+  const ReferenceComponentNode* tt_ref = cc_ref->LastLeaf();
+  const ReferenceComponent& ref(tt_ref->Value());
+  EXPECT_EQ(ref.identifier, "tt");
+  EXPECT_EQ(ref.resolved_symbol, &method_tt);
+
+  {
+    std::vector<absl::Status> resolve_diagnostics;
+    symbol_table.Resolve(&resolve_diagnostics);
+    EXPECT_TRUE(resolve_diagnostics.empty());
+
+    // Already resolved before, still remains resolved.
+    EXPECT_EQ(cc_ref->components->Value().resolved_symbol, &class_cc);
+    EXPECT_EQ(ref.resolved_symbol, &method_tt);
+  }
+}
+
+TEST(BuildSymbolTableTest, TaskDeclarationOutOfLineInvalidPackageInjection) {
+  TestVerilogSourceFile src("outofline_task.sv",
+                            "package pp;\n"
+                            "endpackage\n"
+                            "task pp::tt;\n"
+                            "endtask\n");
+  const auto status = src.Parse();
+  ASSERT_TRUE(status.ok()) << status.message();
+  SymbolTable symbol_table(nullptr);
+  const SymbolTableNode& root_symbol(symbol_table.Root());
+
+  const auto build_diagnostics = BuildSymbolTable(src, &symbol_table);
+  {
+    // Expect that "tt" will not injected into "pp" because it is a package,
+    // not a class.
+    ASSERT_EQ(build_diagnostics.size(), 1);
+    const auto err = build_diagnostics.front();
+    EXPECT_EQ(err.code(), absl::StatusCode::kInvalidArgument);
+    EXPECT_THAT(err.message(),
+                HasSubstr("Expecting reference \"pp\" to resolve to a class, "
+                          "but found a package"));
+  }
+  MUST_ASSIGN_LOOKUP_SYMBOL(package_pp, root_symbol, "pp");
+  EXPECT_EQ(package_pp_info.type, SymbolType::kPackage);
+  EXPECT_EQ(package_pp.Find("tt"), package_pp.end());
+
+  // Reference must be resolved at Build-time.
+  EXPECT_EQ(root_symbol.Value().local_references_to_bind.size(), 1);
+  const auto ref_map(root_symbol.Value().LocalReferencesMapViewForTesting());
+  ASSIGN_MUST_FIND_EXACTLY_ONE_REF(pp_ref, ref_map, "pp");
+  EXPECT_EQ(pp_ref->components->Value().resolved_symbol, nullptr);
+
+  // Method injection will not happen for packages.
+  const ReferenceComponentNode* tt_ref = pp_ref->LastLeaf();
+  const ReferenceComponent& ref(tt_ref->Value());
+  EXPECT_EQ(ref.identifier, "tt");
+  EXPECT_EQ(ref.resolved_symbol, nullptr);
+
+  {
+    std::vector<absl::Status> resolve_diagnostics;
+    symbol_table.Resolve(&resolve_diagnostics);
+    ASSERT_EQ(resolve_diagnostics.size(), 1);
+
+    // Still remain unresolved.
+    EXPECT_EQ(pp_ref->components->Value().resolved_symbol, nullptr);
+    EXPECT_EQ(ref.resolved_symbol, nullptr);
+  }
+}
+
+TEST(BuildSymbolTableTest, TaskDeclarationMethodPrototypeOnly) {
+  TestVerilogSourceFile src("outofline_task.sv",
+                            "class cc;\n"
+                            "  extern task tt(logic ll);\n"
+                            "endclass\n");
+  const auto status = src.Parse();
+  ASSERT_TRUE(status.ok()) << status.message();
+  SymbolTable symbol_table(nullptr);
+  const SymbolTableNode& root_symbol(symbol_table.Root());
+
+  const auto build_diagnostics = BuildSymbolTable(src, &symbol_table);
+  EXPECT_TRUE(build_diagnostics.empty()) << "Unexpected diagnostic:\n"
+                                         << build_diagnostics.front().message();
+
+  MUST_ASSIGN_LOOKUP_SYMBOL(class_cc, root_symbol, "cc");
+  MUST_ASSIGN_LOOKUP_SYMBOL(method_tt, class_cc, "tt");
+  EXPECT_EQ(method_tt_info.type, SymbolType::kTask);
+  EXPECT_EQ(method_tt_info.declared_type.syntax_origin, nullptr);
+
+  MUST_ASSIGN_LOOKUP_SYMBOL(port_ll, method_tt, "ll");
+  EXPECT_EQ(port_ll_info.type, SymbolType::kDataNetVariableInstance);
+  ASSERT_NE(port_ll_info.declared_type.syntax_origin, nullptr);
+  EXPECT_EQ(
+      verible::StringSpanOfSymbol(*port_ll_info.declared_type.syntax_origin),
+      "logic");
+
+  // No references to resolve.
+  EXPECT_TRUE(root_symbol.Value().local_references_to_bind.empty());
+  EXPECT_TRUE(class_cc_info.local_references_to_bind.empty());
+  EXPECT_TRUE(method_tt_info.local_references_to_bind.empty());
+
+  {
+    std::vector<absl::Status> resolve_diagnostics;
+    symbol_table.Resolve(&resolve_diagnostics);
+    EXPECT_TRUE(resolve_diagnostics.empty());
+  }
+}
+
+TEST(BuildSymbolTableTest, TaskDeclarationOutOfLineWithMethodPrototype) {
+  TestVerilogSourceFile src("outofline_task.sv",
+                            "class cc;\n"
+                            "  extern task tt(logic ll);\n"  // prototype
+                            "endclass\n"
+                            "task cc::tt(logic ll);\n"  // definition
+                            "  bit bb;\n"               // local variable
+                            "endtask\n");
+  const auto status = src.Parse();
+  ASSERT_TRUE(status.ok()) << status.message();
+  SymbolTable symbol_table(nullptr);
+  const SymbolTableNode& root_symbol(symbol_table.Root());
+
+  const auto build_diagnostics = BuildSymbolTable(src, &symbol_table);
+  EXPECT_TRUE(build_diagnostics.empty()) << "Unexpected diagnostic:\n"
+                                         << build_diagnostics.front().message();
+
+  MUST_ASSIGN_LOOKUP_SYMBOL(class_cc, root_symbol, "cc");
+  MUST_ASSIGN_LOOKUP_SYMBOL(method_tt, class_cc, "tt");
+  EXPECT_EQ(method_tt_info.type, SymbolType::kTask);
+  EXPECT_EQ(method_tt_info.declared_type.syntax_origin, nullptr);
+
+  MUST_ASSIGN_LOOKUP_SYMBOL(port_ll, method_tt, "ll");
+  EXPECT_EQ(port_ll_info.type, SymbolType::kDataNetVariableInstance);
+  ASSERT_NE(port_ll_info.declared_type.syntax_origin, nullptr);
+  EXPECT_EQ(
+      verible::StringSpanOfSymbol(*port_ll_info.declared_type.syntax_origin),
+      "logic");
+
+  MUST_ASSIGN_LOOKUP_SYMBOL(local_bb, method_tt, "bb");
+  EXPECT_EQ(local_bb_info.type, SymbolType::kDataNetVariableInstance);
+  ASSERT_NE(local_bb_info.declared_type.syntax_origin, nullptr);
+  EXPECT_EQ(
+      verible::StringSpanOfSymbol(*local_bb_info.declared_type.syntax_origin),
+      "bit");
+
+  // out-of-line declaration creates a self-reference.
+  // Reference must be resolved at Build-time.
+  EXPECT_EQ(root_symbol.Value().local_references_to_bind.size(), 1);
+  const auto ref_map(root_symbol.Value().LocalReferencesMapViewForTesting());
+  ASSIGN_MUST_FIND_EXACTLY_ONE_REF(cc_ref, ref_map, "cc");
+  EXPECT_EQ(cc_ref->components->Value().resolved_symbol, &class_cc);
+
+  // Method reference is resolved to the injected symbol.
+  const ReferenceComponentNode* tt_ref = cc_ref->LastLeaf();
+  const ReferenceComponent& ref(tt_ref->Value());
+  EXPECT_EQ(ref.identifier, "tt");
+  EXPECT_EQ(ref.resolved_symbol, &method_tt);
+
+  EXPECT_TRUE(class_cc_info.local_references_to_bind.empty());
+  EXPECT_TRUE(method_tt_info.local_references_to_bind.empty());
+
+  {
+    std::vector<absl::Status> resolve_diagnostics;
+    symbol_table.Resolve(&resolve_diagnostics);
+    EXPECT_TRUE(resolve_diagnostics.empty());
+
+    // Already resolved.
+    EXPECT_EQ(cc_ref->components->Value().resolved_symbol, &class_cc);
+    EXPECT_EQ(ref.resolved_symbol, &method_tt);
+  }
+}
+
+TEST(BuildSymbolTableTest, OutOfLineDefinitionMismatchesPrototype) {
+  TestVerilogSourceFile src(
+      "outofline_task_or_func.sv",
+      "class cc;\n"
+      "  extern task tt(logic ll);\n"  // task prototype
+      "endclass\n"
+      "function int cc::tt(logic ll);\n"  // function definition (wrong type)
+      "endfunction\n");
+  const auto status = src.Parse();
+  ASSERT_TRUE(status.ok()) << status.message();
+  SymbolTable symbol_table(nullptr);
+  const SymbolTableNode& root_symbol(symbol_table.Root());
+
+  const auto build_diagnostics = BuildSymbolTable(src, &symbol_table);
+  ASSERT_EQ(build_diagnostics.size(), 1);
+  const auto err = build_diagnostics.front();
+  EXPECT_EQ(err.code(), absl::StatusCode::kAlreadyExists);
+  EXPECT_THAT(
+      err.message(),
+      HasSubstr(
+          "task $root::cc::tt cannot be redefined out-of-line as a function"));
+
+  MUST_ASSIGN_LOOKUP_SYMBOL(class_cc, root_symbol, "cc");
+  MUST_ASSIGN_LOOKUP_SYMBOL(method_tt, class_cc, "tt");
+  EXPECT_EQ(method_tt_info.type, SymbolType::kTask);
+  EXPECT_EQ(method_tt_info.declared_type.syntax_origin, nullptr);
+
+  MUST_ASSIGN_LOOKUP_SYMBOL(port_ll, method_tt, "ll");
+  EXPECT_EQ(port_ll_info.type, SymbolType::kDataNetVariableInstance);
+  ASSERT_NE(port_ll_info.declared_type.syntax_origin, nullptr);
+  EXPECT_EQ(
+      verible::StringSpanOfSymbol(*port_ll_info.declared_type.syntax_origin),
+      "logic");
+
+  // Reference must be resolved at Build-time.
+  EXPECT_EQ(root_symbol.Value().local_references_to_bind.size(), 1);
+  const auto ref_map(root_symbol.Value().LocalReferencesMapViewForTesting());
+  ASSIGN_MUST_FIND_EXACTLY_ONE_REF(cc_ref, ref_map, "cc");
+  EXPECT_EQ(cc_ref->components->Value().resolved_symbol, &class_cc);
+
+  // Method reference "tt" fails to resolve due to metatype mismatch.
+  const ReferenceComponentNode* tt_ref = cc_ref->LastLeaf();
+  const ReferenceComponent& ref(tt_ref->Value());
+  EXPECT_EQ(ref.identifier, "tt");
+  EXPECT_EQ(ref.resolved_symbol, nullptr);
+
+  EXPECT_TRUE(class_cc_info.local_references_to_bind.empty());
+  EXPECT_TRUE(method_tt_info.local_references_to_bind.empty());
+
+  {
+    std::vector<absl::Status> resolve_diagnostics;
+    symbol_table.Resolve(&resolve_diagnostics);
+    EXPECT_EQ(resolve_diagnostics.size(), 1);
+    const auto err = resolve_diagnostics.front();
+    EXPECT_EQ(err.code(), absl::StatusCode::kInvalidArgument);
+    EXPECT_THAT(err.message(),
+                HasSubstr("Expecting reference \"tt\" to resolve to a "
+                          "function, but found a task"));
+
+    EXPECT_EQ(cc_ref->components->Value().resolved_symbol, &class_cc);
+    EXPECT_EQ(ref.resolved_symbol, nullptr);  // Still fails to resolve.
+  }
+}
+
 static bool SourceFileLess(const TestVerilogSourceFile* left,
                            const TestVerilogSourceFile* right) {
   return left->ReferencedPath() < right->ReferencedPath();
@@ -2850,6 +3389,7 @@ TEST(BuildSymbolTableTest, MultiFileModuleInstance) {
         EXPECT_TRUE(verible::IsSubRange(ref.identifier,
                                         qq_src.GetTextStructure()->Contents()));
         EXPECT_EQ(ref.ref_type, ReferenceType::kUnqualified);
+        EXPECT_EQ(ref.metatype, SymbolType::kUnspecified);
         EXPECT_EQ(ref.resolved_symbol, nullptr);
       }
       {  // self-reference to "pp_inst" instance
@@ -2872,6 +3412,7 @@ TEST(BuildSymbolTableTest, MultiFileModuleInstance) {
         EXPECT_TRUE(verible::IsSubRange(ref.identifier,
                                         ss_src.GetTextStructure()->Contents()));
         EXPECT_EQ(ref.ref_type, ReferenceType::kUnqualified);
+        EXPECT_EQ(ref.metatype, SymbolType::kUnspecified);
         EXPECT_EQ(ref.resolved_symbol, nullptr);
       }
       {  // self-reference to "qq_inst" instance
@@ -2891,6 +3432,7 @@ TEST(BuildSymbolTableTest, MultiFileModuleInstance) {
       EXPECT_EQ(pp_type.identifier, "pp");
       EXPECT_EQ(pp_type.resolved_symbol, nullptr);  // nothing resolved yet
       EXPECT_EQ(pp_type.ref_type, ReferenceType::kUnqualified);
+      EXPECT_EQ(pp_type.metatype, SymbolType::kUnspecified);
       EXPECT_EQ(pp_inst_info.file_origin, &qq_src);
     }
 
@@ -2902,6 +3444,7 @@ TEST(BuildSymbolTableTest, MultiFileModuleInstance) {
       EXPECT_EQ(qq_type.identifier, "qq");
       EXPECT_EQ(qq_type.resolved_symbol, nullptr);  // nothing resolved yet
       EXPECT_EQ(qq_type.ref_type, ReferenceType::kUnqualified);
+      EXPECT_EQ(qq_type.metatype, SymbolType::kUnspecified);
       EXPECT_EQ(qq_inst_info.file_origin, &ss_src);
     }
 
@@ -2995,6 +3538,7 @@ TEST(BuildSymbolTableTest, ModuleInstancesFromProjectOneFileAtATime) {
       const ReferenceComponent& ref(ref_node->Value());
       EXPECT_EQ(ref.identifier, "pp");
       EXPECT_EQ(ref.ref_type, ReferenceType::kUnqualified);
+      EXPECT_EQ(ref.metatype, SymbolType::kUnspecified);
       EXPECT_EQ(ref.resolved_symbol, nullptr);
     }
     {  // self-reference to "pp_inst" instance
@@ -3015,6 +3559,7 @@ TEST(BuildSymbolTableTest, ModuleInstancesFromProjectOneFileAtATime) {
       const ReferenceComponent& ref(ref_node->Value());
       EXPECT_EQ(ref.identifier, "qq");
       EXPECT_EQ(ref.ref_type, ReferenceType::kUnqualified);
+      EXPECT_EQ(ref.metatype, SymbolType::kUnspecified);
       EXPECT_EQ(ref.resolved_symbol, nullptr);
     }
     {  // self-reference to "qq_inst" instance
@@ -3034,6 +3579,7 @@ TEST(BuildSymbolTableTest, ModuleInstancesFromProjectOneFileAtATime) {
     EXPECT_EQ(pp_type.identifier, "pp");
     EXPECT_EQ(pp_type.resolved_symbol, nullptr);  // nothing resolved yet
     EXPECT_EQ(pp_type.ref_type, ReferenceType::kUnqualified);
+    EXPECT_EQ(pp_type.metatype, SymbolType::kUnspecified);
   }
 
   {  // Verify qq_inst's type info
@@ -3044,6 +3590,7 @@ TEST(BuildSymbolTableTest, ModuleInstancesFromProjectOneFileAtATime) {
     EXPECT_EQ(qq_type.identifier, "qq");
     EXPECT_EQ(qq_type.resolved_symbol, nullptr);  // nothing resolved yet
     EXPECT_EQ(qq_type.ref_type, ReferenceType::kUnqualified);
+    EXPECT_EQ(qq_type.metatype, SymbolType::kUnspecified);
   }
 
   // Resolve symbols.
@@ -3142,6 +3689,7 @@ TEST(BuildSymbolTableTest, ModuleInstancesFromProjectFilesGood) {
       const ReferenceComponent& ref(ref_node->Value());
       EXPECT_EQ(ref.identifier, "pp");
       EXPECT_EQ(ref.ref_type, ReferenceType::kUnqualified);
+      EXPECT_EQ(ref.metatype, SymbolType::kUnspecified);
       EXPECT_EQ(ref.resolved_symbol, nullptr);
     }
     {  // self-reference to "pp_inst" instance
@@ -3162,6 +3710,7 @@ TEST(BuildSymbolTableTest, ModuleInstancesFromProjectFilesGood) {
       const ReferenceComponent& ref(ref_node->Value());
       EXPECT_EQ(ref.identifier, "qq");
       EXPECT_EQ(ref.ref_type, ReferenceType::kUnqualified);
+      EXPECT_EQ(ref.metatype, SymbolType::kUnspecified);
       EXPECT_EQ(ref.resolved_symbol, nullptr);
     }
     {  // self-reference to "qq_inst" instance
@@ -3181,6 +3730,7 @@ TEST(BuildSymbolTableTest, ModuleInstancesFromProjectFilesGood) {
     EXPECT_EQ(pp_type.identifier, "pp");
     EXPECT_EQ(pp_type.resolved_symbol, nullptr);  // nothing resolved yet
     EXPECT_EQ(pp_type.ref_type, ReferenceType::kUnqualified);
+    EXPECT_EQ(pp_type.metatype, SymbolType::kUnspecified);
   }
 
   {  // Verify qq_inst's type info
@@ -3191,6 +3741,7 @@ TEST(BuildSymbolTableTest, ModuleInstancesFromProjectFilesGood) {
     EXPECT_EQ(qq_type.identifier, "qq");
     EXPECT_EQ(qq_type.resolved_symbol, nullptr);  // nothing resolved yet
     EXPECT_EQ(qq_type.ref_type, ReferenceType::kUnqualified);
+    EXPECT_EQ(qq_type.metatype, SymbolType::kUnspecified);
   }
 
   // Resolve symbols.
@@ -3266,6 +3817,7 @@ TEST(BuildSymbolTableTest, SingleFileModuleInstanceCyclicDependencies) {
       EXPECT_TRUE(verible::IsSubRange(ref.identifier,
                                       src.GetTextStructure()->Contents()));
       EXPECT_EQ(ref.ref_type, ReferenceType::kUnqualified);
+      EXPECT_EQ(ref.metatype, SymbolType::kUnspecified);
       EXPECT_EQ(ref.resolved_symbol, nullptr);
     }
     {  // self-reference to "ss_inst" instance
@@ -3288,6 +3840,7 @@ TEST(BuildSymbolTableTest, SingleFileModuleInstanceCyclicDependencies) {
       EXPECT_TRUE(verible::IsSubRange(ref.identifier,
                                       src.GetTextStructure()->Contents()));
       EXPECT_EQ(ref.ref_type, ReferenceType::kUnqualified);
+      EXPECT_EQ(ref.metatype, SymbolType::kUnspecified);
       EXPECT_EQ(ref.resolved_symbol, nullptr);
     }
     {  // self-reference to "pp_inst" instance
@@ -3310,6 +3863,7 @@ TEST(BuildSymbolTableTest, SingleFileModuleInstanceCyclicDependencies) {
       EXPECT_TRUE(verible::IsSubRange(ref.identifier,
                                       src.GetTextStructure()->Contents()));
       EXPECT_EQ(ref.ref_type, ReferenceType::kUnqualified);
+      EXPECT_EQ(ref.metatype, SymbolType::kUnspecified);
       EXPECT_EQ(ref.resolved_symbol, nullptr);
     }
     {  // self-reference to "qq_inst" instance
@@ -3329,6 +3883,7 @@ TEST(BuildSymbolTableTest, SingleFileModuleInstanceCyclicDependencies) {
     EXPECT_EQ(ss_type.identifier, "ss");
     EXPECT_EQ(ss_type.resolved_symbol, nullptr);  // nothing resolved yet
     EXPECT_EQ(ss_type.ref_type, ReferenceType::kUnqualified);
+    EXPECT_EQ(ss_type.metatype, SymbolType::kUnspecified);
     EXPECT_EQ(ss_inst_info.file_origin, &src);
   }
 
@@ -3340,6 +3895,7 @@ TEST(BuildSymbolTableTest, SingleFileModuleInstanceCyclicDependencies) {
     EXPECT_EQ(pp_type.identifier, "pp");
     EXPECT_EQ(pp_type.resolved_symbol, nullptr);  // nothing resolved yet
     EXPECT_EQ(pp_type.ref_type, ReferenceType::kUnqualified);
+    EXPECT_EQ(pp_type.metatype, SymbolType::kUnspecified);
     EXPECT_EQ(pp_inst_info.file_origin, &src);
   }
 
@@ -3351,6 +3907,7 @@ TEST(BuildSymbolTableTest, SingleFileModuleInstanceCyclicDependencies) {
     EXPECT_EQ(qq_type.identifier, "qq");
     EXPECT_EQ(qq_type.resolved_symbol, nullptr);  // nothing resolved yet
     EXPECT_EQ(qq_type.ref_type, ReferenceType::kUnqualified);
+    EXPECT_EQ(qq_type.metatype, SymbolType::kUnspecified);
     EXPECT_EQ(qq_inst_info.file_origin, &src);
   }
 
@@ -3452,6 +4009,7 @@ TEST(BuildSymbolTableTest, MultiFileModuleInstanceCyclicDependencies) {
         EXPECT_TRUE(verible::IsSubRange(ref.identifier,
                                         pp_src.GetTextStructure()->Contents()));
         EXPECT_EQ(ref.ref_type, ReferenceType::kUnqualified);
+        EXPECT_EQ(ref.metatype, SymbolType::kUnspecified);
         EXPECT_EQ(ref.resolved_symbol, nullptr);
       }
       {  // self-reference to "ss_inst" instance
@@ -3474,6 +4032,7 @@ TEST(BuildSymbolTableTest, MultiFileModuleInstanceCyclicDependencies) {
         EXPECT_TRUE(verible::IsSubRange(ref.identifier,
                                         qq_src.GetTextStructure()->Contents()));
         EXPECT_EQ(ref.ref_type, ReferenceType::kUnqualified);
+        EXPECT_EQ(ref.metatype, SymbolType::kUnspecified);
         EXPECT_EQ(ref.resolved_symbol, nullptr);
       }
       {  // self-reference to "pp_inst" instance
@@ -3496,6 +4055,7 @@ TEST(BuildSymbolTableTest, MultiFileModuleInstanceCyclicDependencies) {
         EXPECT_TRUE(verible::IsSubRange(ref.identifier,
                                         ss_src.GetTextStructure()->Contents()));
         EXPECT_EQ(ref.ref_type, ReferenceType::kUnqualified);
+        EXPECT_EQ(ref.metatype, SymbolType::kUnspecified);
         EXPECT_EQ(ref.resolved_symbol, nullptr);
       }
       {  // self-reference to "qq_inst" instance
@@ -3515,6 +4075,7 @@ TEST(BuildSymbolTableTest, MultiFileModuleInstanceCyclicDependencies) {
       EXPECT_EQ(ss_type.identifier, "ss");
       EXPECT_EQ(ss_type.resolved_symbol, nullptr);  // nothing resolved yet
       EXPECT_EQ(ss_type.ref_type, ReferenceType::kUnqualified);
+      EXPECT_EQ(ss_type.metatype, SymbolType::kUnspecified);
       EXPECT_EQ(ss_inst_info.file_origin, &pp_src);
     }
 
@@ -3526,6 +4087,7 @@ TEST(BuildSymbolTableTest, MultiFileModuleInstanceCyclicDependencies) {
       EXPECT_EQ(pp_type.identifier, "pp");
       EXPECT_EQ(pp_type.resolved_symbol, nullptr);  // nothing resolved yet
       EXPECT_EQ(pp_type.ref_type, ReferenceType::kUnqualified);
+      EXPECT_EQ(pp_type.metatype, SymbolType::kUnspecified);
       EXPECT_EQ(pp_inst_info.file_origin, &qq_src);
     }
 
@@ -3537,6 +4099,7 @@ TEST(BuildSymbolTableTest, MultiFileModuleInstanceCyclicDependencies) {
       EXPECT_EQ(qq_type.identifier, "qq");
       EXPECT_EQ(qq_type.resolved_symbol, nullptr);  // nothing resolved yet
       EXPECT_EQ(qq_type.ref_type, ReferenceType::kUnqualified);
+      EXPECT_EQ(qq_type.metatype, SymbolType::kUnspecified);
       EXPECT_EQ(qq_inst_info.file_origin, &ss_src);
     }
 

@@ -149,11 +149,16 @@ class EnumNameMap {
     return success;
   }
 
+  // Returns the string representation of an enum.
+  absl::string_view EnumName(EnumType value) const {
+    const auto* key = enum_name_map_.find_reverse(value);
+    if (key == nullptr) return "???";
+    return *key;
+  }
+
   // Prints the string representation of an enum to stream.
   std::ostream& Unparse(EnumType value, std::ostream& stream) const {
-    const auto* key = enum_name_map_.find_reverse(value);
-    if (key == nullptr) return stream << "???";
-    return stream << *key;
+    return stream << EnumName(value);
   }
 
  protected:  // for testing
