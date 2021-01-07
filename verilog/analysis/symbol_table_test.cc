@@ -2382,6 +2382,126 @@ TEST(BuildSymbolTableTest, ClassDeclarationDataMemberMultiDeclaration) {
   }
 }
 
+TEST(BuildSymbolTableTest, ClassDeclarationDataMemberAccessedFromMethod) {
+  TestVerilogSourceFile src("member_accessor.sv",
+                            "class cc;\n"
+                            "  int size;\n"
+                            "  function int get_size();\n"
+                            "    return size;\n"
+                            "  endfunction\n"
+                            "endclass\n");
+  const auto status = src.Parse();
+  ASSERT_TRUE(status.ok()) << status.message();
+  SymbolTable symbol_table(nullptr);
+  const SymbolTableNode& root_symbol(symbol_table.Root());
+
+  const auto build_diagnostics = BuildSymbolTable(src, &symbol_table);
+  EXPECT_TRUE(build_diagnostics.empty()) << "Unexpected diagnostic:\n"
+                                         << build_diagnostics.front().message();
+
+  MUST_ASSIGN_LOOKUP_SYMBOL(class_cc, root_symbol, "cc");
+  EXPECT_EQ(class_cc_info.type, SymbolMetaType::kClass);
+  EXPECT_EQ(class_cc_info.file_origin, &src);
+  EXPECT_EQ(class_cc_info.declared_type.syntax_origin, nullptr);
+
+  MUST_ASSIGN_LOOKUP_SYMBOL(size_field, class_cc, "size");
+  EXPECT_EQ(size_field_info.type, SymbolMetaType::kDataNetVariableInstance);
+  const ReferenceComponentNode* size_type_ref =
+      size_field_info.declared_type.user_defined_type;
+  EXPECT_EQ(size_type_ref, nullptr);  // int is primitive type
+  EXPECT_EQ(
+      verible::StringSpanOfSymbol(*size_field_info.declared_type.syntax_origin),
+      "int");
+
+  MUST_ASSIGN_LOOKUP_SYMBOL(get_size, class_cc, "get_size");
+  EXPECT_EQ(get_size_info.type, SymbolMetaType::kFunction);
+  EXPECT_EQ(get_size_info.file_origin, &src);
+  const auto ref_map(get_size_info.LocalReferencesMapViewForTesting());
+
+  ASSIGN_MUST_FIND_EXACTLY_ONE_REF(size_ref, ref_map, "size");
+  const ReferenceComponent& size_ref_comp(size_ref->components->Value());
+  EXPECT_EQ(size_ref_comp.ref_type, ReferenceType::kUnqualified);
+  EXPECT_EQ(size_ref_comp.metatype, SymbolMetaType::kUnspecified);
+  EXPECT_EQ(size_ref_comp.resolved_symbol, nullptr);
+
+  {
+    std::vector<absl::Status> resolve_diagnostics;
+    symbol_table.Resolve(&resolve_diagnostics);
+    EXPECT_TRUE(resolve_diagnostics.empty())
+        << "Unexpected diagnostic:\n"
+        << resolve_diagnostics.front().message();
+
+    // "size" resolved to class data member
+    EXPECT_EQ(size_ref_comp.resolved_symbol, &size_field);
+  }
+}
+
+TEST(BuildSymbolTableTest, ClassDataMemberAccessedDirectly) {
+  TestVerilogSourceFile src("member_accessor.sv",
+                            "class cc;\n"
+                            "  int size;\n"
+                            "endclass\n"
+                            "function int get_size();\n"
+                            "  cc cc_data;\n"
+                            "  return cc_data.size;\n"
+                            "endfunction\n");
+  const auto status = src.Parse();
+  ASSERT_TRUE(status.ok()) << status.message();
+  SymbolTable symbol_table(nullptr);
+  const SymbolTableNode& root_symbol(symbol_table.Root());
+
+  const auto build_diagnostics = BuildSymbolTable(src, &symbol_table);
+  EXPECT_TRUE(build_diagnostics.empty()) << "Unexpected diagnostic:\n"
+                                         << build_diagnostics.front().message();
+
+  MUST_ASSIGN_LOOKUP_SYMBOL(class_cc, root_symbol, "cc");
+  EXPECT_EQ(class_cc_info.type, SymbolMetaType::kClass);
+  EXPECT_EQ(class_cc_info.file_origin, &src);
+  EXPECT_EQ(class_cc_info.declared_type.syntax_origin, nullptr);
+
+  MUST_ASSIGN_LOOKUP_SYMBOL(size_field, class_cc, "size");
+  EXPECT_EQ(size_field_info.type, SymbolMetaType::kDataNetVariableInstance);
+  const ReferenceComponentNode* size_type_ref =
+      size_field_info.declared_type.user_defined_type;
+  EXPECT_EQ(size_type_ref, nullptr);  // int is primitive type
+  EXPECT_EQ(
+      verible::StringSpanOfSymbol(*size_field_info.declared_type.syntax_origin),
+      "int");
+
+  MUST_ASSIGN_LOOKUP_SYMBOL(get_size, root_symbol, "get_size");
+  EXPECT_EQ(get_size_info.type, SymbolMetaType::kFunction);
+  EXPECT_EQ(get_size_info.file_origin, &src);
+
+  MUST_ASSIGN_LOOKUP_SYMBOL(cc_data, get_size, "cc_data");
+  EXPECT_EQ(cc_data_info.type, SymbolMetaType::kDataNetVariableInstance);
+
+  const auto ref_map(get_size_info.LocalReferencesMapViewForTesting());
+  ASSIGN_MUST_FIND_EXACTLY_ONE_REF(cc_data_ref, ref_map, "cc_data");
+  const ReferenceComponent& cc_data_ref_comp(cc_data_ref->components->Value());
+  EXPECT_EQ(cc_data_ref_comp.ref_type, ReferenceType::kUnqualified);
+  EXPECT_EQ(cc_data_ref_comp.metatype, SymbolMetaType::kUnspecified);
+  EXPECT_EQ(cc_data_ref_comp.resolved_symbol, nullptr);
+
+  ASSERT_EQ(cc_data_ref->components->Children().size(), 1);
+  const ReferenceComponentNode& size_ref(
+      cc_data_ref->components->Children().front());
+  const ReferenceComponent& size_ref_comp(size_ref.Value());
+  EXPECT_EQ(size_ref_comp.ref_type, ReferenceType::kMemberOfTypeOfParent);
+  EXPECT_EQ(size_ref_comp.metatype, SymbolMetaType::kUnspecified);
+  EXPECT_EQ(size_ref_comp.resolved_symbol, nullptr);
+
+  {
+    std::vector<absl::Status> resolve_diagnostics;
+    symbol_table.Resolve(&resolve_diagnostics);
+    EXPECT_TRUE(resolve_diagnostics.empty())
+        << "Unexpected diagnostic:\n"
+        << resolve_diagnostics.front().message();
+
+    // "size" resolved to class data member
+    EXPECT_EQ(size_ref_comp.resolved_symbol, &size_field);
+  }
+}
+
 TEST(BuildSymbolTableTest, FunctionDeclarationNoReturnType) {
   TestVerilogSourceFile src("funkytown.sv",
                             "function ff;\n"
