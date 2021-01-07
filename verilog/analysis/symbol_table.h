@@ -284,6 +284,12 @@ struct SymbolInfo {
   // Applicable to packages, classes, modules.
   // These should be looked up when searching for symbols (without copying).
 
+  // For elements with inheritance only: this points to a base class.
+  // Currently limited to single-inheritance.
+  // TODO: extend to support multiple-implementation and interface-class
+  // multiple inheritance.
+  DeclarationTypeInfo parent_type;
+
   // Collection of references to resolve and bind that appear in the same
   // context. There is no sequential ordering dependency among these references,
   // theoretically, they could all be resolved in parallel.

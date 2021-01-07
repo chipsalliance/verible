@@ -2502,6 +2502,62 @@ TEST(BuildSymbolTableTest, ClassDataMemberAccessedDirectly) {
   }
 }
 
+TEST(BuildSymbolTableTest, ClassDeclarationSingleInheritance) {
+  TestVerilogSourceFile src("member_accessor.sv",
+                            "class base;\n"
+                            "endclass\n"
+                            "class derived extends base;\n"
+                            "endclass\n");
+  const auto status = src.Parse();
+  ASSERT_TRUE(status.ok()) << status.message();
+  SymbolTable symbol_table(nullptr);
+  const SymbolTableNode& root_symbol(symbol_table.Root());
+
+  const auto build_diagnostics = BuildSymbolTable(src, &symbol_table);
+  EXPECT_TRUE(build_diagnostics.empty()) << "Unexpected diagnostic:\n"
+                                         << build_diagnostics.front().message();
+
+  MUST_ASSIGN_LOOKUP_SYMBOL(base_class, root_symbol, "base");
+  EXPECT_EQ(base_class_info.type, SymbolMetaType::kClass);
+  EXPECT_EQ(base_class_info.file_origin, &src);
+  EXPECT_EQ(base_class_info.declared_type.syntax_origin, nullptr);
+  EXPECT_TRUE(base_class_info.local_references_to_bind.empty());
+
+  MUST_ASSIGN_LOOKUP_SYMBOL(derived_class, root_symbol, "derived");
+  EXPECT_EQ(derived_class_info.type, SymbolMetaType::kClass);
+  EXPECT_EQ(derived_class_info.file_origin, &src);
+  EXPECT_EQ(derived_class_info.declared_type.syntax_origin, nullptr);
+  EXPECT_TRUE(derived_class_info.local_references_to_bind.empty());
+
+  // "base" is referenced from the scope that contains "derived"
+  EXPECT_EQ(root_symbol.Value().local_references_to_bind.size(), 1);
+  const auto ref_map(root_symbol.Value().LocalReferencesMapViewForTesting());
+  ASSIGN_MUST_FIND_EXACTLY_ONE_REF(base_ref, ref_map, "base");
+  const ReferenceComponent& base_ref_comp(base_ref->components->Value());
+  EXPECT_EQ(base_ref_comp.identifier, "base");
+  EXPECT_EQ(base_ref_comp.ref_type, ReferenceType::kUnqualified);
+  EXPECT_EQ(base_ref_comp.metatype, SymbolMetaType::kClass);
+  EXPECT_EQ(base_ref_comp.resolved_symbol, nullptr);
+
+  // Make sure the "base" reference is linked from the "derived" class.
+  ASSERT_EQ(
+      derived_class_info.parent_type.user_defined_type,
+      root_symbol.Value().local_references_to_bind.front().components.get());
+
+  {
+    std::vector<absl::Status> resolve_diagnostics;
+    symbol_table.Resolve(&resolve_diagnostics);
+    EXPECT_TRUE(resolve_diagnostics.empty())
+        << "Unexpected diagnostic:\n"
+        << resolve_diagnostics.front().message();
+
+    // Resolve the "base" type reference to the "base" class.
+    EXPECT_EQ(derived_class_info.parent_type.user_defined_type->Value()
+                  .resolved_symbol,
+              &base_class);
+  }
+}
+
 TEST(BuildSymbolTableTest, FunctionDeclarationNoReturnType) {
   TestVerilogSourceFile src("funkytown.sv",
                             "function ff;\n"

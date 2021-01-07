@@ -242,6 +242,9 @@ class SymbolTable::Builder : public TreeContextVisitor {
       case NodeEnum::kPreprocessorInclude:
         EnterIncludeFile(node);
         break;
+      case NodeEnum::kExtendsList:
+        DescendExtends(node);
+        break;
       default:
         Descend(node);
         break;
@@ -292,11 +295,34 @@ class SymbolTable::Builder : public TreeContextVisitor {
   };
 
   void DescendReferenceExpression(const SyntaxTreeNode& reference) {
-    // capture exressions referenced from the current scope
+    // capture expressions referenced from the current scope
     const CaptureDependentReference capture(this);
 
     // subexpressions' references will be collected before this one
     Descend(reference);  // no scope change
+  }
+
+  void DescendExtends(const SyntaxTreeNode& extends) {
+    VLOG(2) << __FUNCTION__ << " from: " << CurrentScopeFullPath();
+    {
+      // At this point we are already inside the scope of the class declaration,
+      // however, the base classes should be resolved starting from the scope
+      // that *contains* this class declaration.
+      const ValueSaver<SymbolTableNode*> save(&current_scope_,
+                                              current_scope_->Parent());
+
+      // capture the one base class type referenced by 'extends'
+      const CaptureDependentReference capture(this);
+      Descend(extends);
+    }
+
+    // Link this new type reference as the base type of the current class being
+    // declared.
+    const DependentReferences& recent_ref =
+        current_scope_->Parent()->Value().local_references_to_bind.back();
+    const ReferenceComponentNode* base_type_ref = recent_ref.components.get();
+    SymbolInfo& current_declared_class_info = current_scope_->Value();
+    current_declared_class_info.parent_type.user_defined_type = base_type_ref;
   }
 
   // Traverse a subtree for a data type and collects type references
@@ -563,20 +589,24 @@ class SymbolTable::Builder : public TreeContextVisitor {
                                     NodeEnum::kTaskHeader})) {
       return ref.Empty() ? SymbolMetaType::kClass : SymbolMetaType::kTask;
     }
+
     // TODO: import references bases must be resolved as
     // SymbolMetaType::kPackage.
     if (Context().DirectParentIs(NodeEnum::kActualNamedPort)) {
       return SymbolMetaType::kDataNetVariableInstance;
     }
+
     if (Context().DirectParentIs(NodeEnum::kParamByName)) {
       return SymbolMetaType::kParameter;
     }
+
     if (Context().DirectParentsAre({NodeEnum::kUnqualifiedId,
                                     NodeEnum::kLocalRoot,
                                     NodeEnum::kFunctionCall})) {
       // bare call like "function_name(...)"
       return SymbolMetaType::kCallable;
     }
+
     if (Context().DirectParentsAre(
             {NodeEnum::kUnqualifiedId, NodeEnum::kQualifiedId,
              NodeEnum::kLocalRoot, NodeEnum::kFunctionCall})) {
@@ -591,12 +621,23 @@ class SymbolTable::Builder : public TreeContextVisitor {
       }
       // TODO(fangism): could require parents to be kPackage or kClass
     }
+
     if (Context().DirectParentsAre(
             {NodeEnum::kUnqualifiedId, NodeEnum::kMethodCallExtension})) {
       // method call like "obj.method_name(...)"
       return SymbolMetaType::kCallable;
       // TODO(fangism): check that method is non-static
     }
+
+    if (Context().DirectParentsAre(
+            {NodeEnum::kUnqualifiedId, NodeEnum::kExtendsList})) {
+      // e.g. "base" in "class derived extends base;"
+      return SymbolMetaType::kClass;
+    }
+    // TODO(fangism): .DirectParentsAre({NodeEnum::kUnqualifiedId,
+    //                                   NodeEnum::kQualifiedId,
+    //                                   NodeEnum::kExtendsList}))
+
     // Default: no specific metatype.
     return SymbolMetaType::kUnspecified;
   }
