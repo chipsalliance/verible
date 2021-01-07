@@ -233,6 +233,9 @@ class SymbolTable::Builder : public TreeContextVisitor {
       case NodeEnum::kGateInstance:
         DeclareInstance(node);
         break;
+      case NodeEnum::kVariableDeclarationAssignment:
+        DeclareVariable(node);
+        break;
       case NodeEnum::kQualifiedId:
         HandleQualifiedId(node);
         break;
@@ -378,6 +381,7 @@ class SymbolTable::Builder : public TreeContextVisitor {
 
   void HandleIdentifier(const SyntaxTreeLeaf& leaf) {
     const absl::string_view text = leaf.get().text();
+    VLOG(2) << __FUNCTION__ << ": " << text;
     if (Context().DirectParentIs(NodeEnum::kParamType)) {
       // This identifier declares a parameter.
       EmplaceTypedElementInCurrentScope(leaf, text, SymbolMetaType::kParameter);
@@ -841,6 +845,16 @@ class SymbolTable::Builder : public TreeContextVisitor {
     EmplaceTypedElementInCurrentScope(reg_variable, net_name,
                                       SymbolMetaType::kDataNetVariableInstance);
     Descend(reg_variable);
+  }
+
+  void DeclareVariable(const SyntaxTreeNode& variable) {
+    const absl::string_view var_name(
+        GetUnqualifiedIdFromVariableDeclarationAssignment(variable)
+            .get()
+            .text());
+    EmplaceTypedElementInCurrentScope(variable, var_name,
+                                      SymbolMetaType::kDataNetVariableInstance);
+    Descend(variable);
   }
 
   void DiagnoseSymbolAlreadyExists(absl::string_view name) {

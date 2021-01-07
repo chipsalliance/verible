@@ -2289,6 +2289,99 @@ TEST(BuildSymbolTableTest, ClassDeclarationWithParameter) {
   }
 }
 
+TEST(BuildSymbolTableTest, ClassDeclarationDataMember) {
+  TestVerilogSourceFile src("member_accessor.sv",
+                            "class cc;\n"
+                            "  int size;\n"
+                            "  int count = 0;\n"  // with initializer
+                            "endclass\n");
+  const auto status = src.Parse();
+  ASSERT_TRUE(status.ok()) << status.message();
+  SymbolTable symbol_table(nullptr);
+  const SymbolTableNode& root_symbol(symbol_table.Root());
+
+  const auto build_diagnostics = BuildSymbolTable(src, &symbol_table);
+  EXPECT_TRUE(build_diagnostics.empty()) << "Unexpected diagnostic:\n"
+                                         << build_diagnostics.front().message();
+
+  MUST_ASSIGN_LOOKUP_SYMBOL(class_cc, root_symbol, "cc");
+  EXPECT_EQ(class_cc_info.type, SymbolMetaType::kClass);
+  EXPECT_EQ(class_cc_info.file_origin, &src);
+  EXPECT_EQ(class_cc_info.declared_type.syntax_origin, nullptr);
+
+  MUST_ASSIGN_LOOKUP_SYMBOL(size_field, class_cc, "size");
+  EXPECT_EQ(size_field_info.type, SymbolMetaType::kDataNetVariableInstance);
+  const ReferenceComponentNode* size_type_ref =
+      size_field_info.declared_type.user_defined_type;
+  EXPECT_EQ(size_type_ref, nullptr);  // int is primitive type
+  EXPECT_EQ(
+      verible::StringSpanOfSymbol(*size_field_info.declared_type.syntax_origin),
+      "int");
+
+  MUST_ASSIGN_LOOKUP_SYMBOL(count_field, class_cc, "count");
+  EXPECT_EQ(count_field_info.type, SymbolMetaType::kDataNetVariableInstance);
+  const ReferenceComponentNode* count_type_ref =
+      count_field_info.declared_type.user_defined_type;
+  EXPECT_EQ(count_type_ref, nullptr);  // int is primitive type
+  EXPECT_EQ(verible::StringSpanOfSymbol(
+                *count_field_info.declared_type.syntax_origin),
+            "int");
+
+  EXPECT_TRUE(class_cc_info.local_references_to_bind.empty());
+
+  {  // No references.
+    std::vector<absl::Status> resolve_diagnostics;
+    symbol_table.Resolve(&resolve_diagnostics);
+    EXPECT_TRUE(resolve_diagnostics.empty());
+  }
+}
+
+TEST(BuildSymbolTableTest, ClassDeclarationDataMemberMultiDeclaration) {
+  TestVerilogSourceFile src("member_accessor.sv",
+                            "class cc;\n"
+                            "  real height, width;\n"
+                            "endclass\n");
+  const auto status = src.Parse();
+  ASSERT_TRUE(status.ok()) << status.message();
+  SymbolTable symbol_table(nullptr);
+  const SymbolTableNode& root_symbol(symbol_table.Root());
+
+  const auto build_diagnostics = BuildSymbolTable(src, &symbol_table);
+  EXPECT_TRUE(build_diagnostics.empty()) << "Unexpected diagnostic:\n"
+                                         << build_diagnostics.front().message();
+
+  MUST_ASSIGN_LOOKUP_SYMBOL(class_cc, root_symbol, "cc");
+  EXPECT_EQ(class_cc_info.type, SymbolMetaType::kClass);
+  EXPECT_EQ(class_cc_info.file_origin, &src);
+  EXPECT_EQ(class_cc_info.declared_type.syntax_origin, nullptr);
+
+  MUST_ASSIGN_LOOKUP_SYMBOL(height_field, class_cc, "height");
+  EXPECT_EQ(height_field_info.type, SymbolMetaType::kDataNetVariableInstance);
+  const ReferenceComponentNode* height_type_ref =
+      height_field_info.declared_type.user_defined_type;
+  EXPECT_EQ(height_type_ref, nullptr);  // int is primitive type
+  EXPECT_EQ(verible::StringSpanOfSymbol(
+                *height_field_info.declared_type.syntax_origin),
+            "real");
+
+  MUST_ASSIGN_LOOKUP_SYMBOL(width_field, class_cc, "width");
+  EXPECT_EQ(width_field_info.type, SymbolMetaType::kDataNetVariableInstance);
+  const ReferenceComponentNode* width_type_ref =
+      width_field_info.declared_type.user_defined_type;
+  EXPECT_EQ(width_type_ref, nullptr);  // int is primitive type
+  EXPECT_EQ(verible::StringSpanOfSymbol(
+                *width_field_info.declared_type.syntax_origin),
+            "real");
+
+  EXPECT_TRUE(class_cc_info.local_references_to_bind.empty());
+
+  {  // No references.
+    std::vector<absl::Status> resolve_diagnostics;
+    symbol_table.Resolve(&resolve_diagnostics);
+    EXPECT_TRUE(resolve_diagnostics.empty());
+  }
+}
+
 TEST(BuildSymbolTableTest, FunctionDeclarationNoReturnType) {
   TestVerilogSourceFile src("funkytown.sv",
                             "function ff;\n"
