@@ -127,6 +127,7 @@ cc_library(
     hdrs = [
         "formatter.h",
     ],
+    visibility = ["//visibility:public"],
     deps = [
         ":align",
         ":comment_controls",
