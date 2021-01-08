@@ -30,3 +30,51 @@ filegroup(
     ],
     visibility = ["//visibility:public"],
 )
+
+sh_test(
+    name = "diff_user_errors_test",
+    size = "small",
+    srcs = ["diff_user_errors_test.sh"],
+    args = ["$(location :verible-verilog-diff)"],
+    data = [":verible-verilog-diff"],
+)
+
+sh_test(
+    name = "diff_format_match_test",
+    size = "small",
+    srcs = ["diff_format_match_test.sh"],
+    args = ["$(location :verible-verilog-diff)"],
+    data = [":verible-verilog-diff"],
+)
+
+sh_test(
+    name = "diff_format_mismatch_test",
+    size = "small",
+    srcs = ["diff_format_mismatch_test.sh"],
+    args = ["$(location :verible-verilog-diff)"],
+    data = [":verible-verilog-diff"],
+)
+
+sh_test(
+    name = "diff_format_lex_error_test",
+    size = "small",
+    srcs = ["diff_format_lex_error_test.sh"],
+    args = ["$(location :verible-verilog-diff)"],
+    data = [":verible-verilog-diff"],
+)
+
+sh_test(
+    name = "diff_obfuscate_match_test",
+    size = "small",
+    srcs = ["diff_obfuscate_match_test.sh"],
+    args = ["$(location :verible-verilog-diff)"],
+    data = [":verible-verilog-diff"],
+)
+
+sh_test(
+    name = "diff_obfuscate_mismatch_test",
+    size = "small",
+    srcs = ["diff_obfuscate_mismatch_test.sh"],
+    args = ["$(location :verible-verilog-diff)"],
+    data = [":verible-verilog-diff"],
+)
