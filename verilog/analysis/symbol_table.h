@@ -33,6 +33,9 @@ struct SymbolInfo;  // forward declaration, defined below
 
 // SymbolTableNode represents a named element in the syntax.
 // When it represents a scope, it may have named subtrees.
+// The string_view key carries positional information, it corresponds to a
+// substring owned by a VerilogSourceFile (which must outlive the symbol table),
+// and can be used to look up file origin and position within file.
 using SymbolTableNode =
     verible::MapTree<absl::string_view, SymbolInfo, verible::StringViewCompare>;
 
@@ -99,6 +102,10 @@ std::ostream& operator<<(std::ostream&, ReferenceType);
 struct ReferenceComponent {
   // This is the token substring of the identifier being referenced.
   // String memory is expected to be owned by a VerilogSourceFile.
+  // This string_view also carries positional information: it can be used to
+  // locate the originating VerilogSourceFile via
+  // VerilogProject::LookupFileOrigin() and in-file position from the file's
+  // LineColumnMap.
   const absl::string_view identifier;
 
   // What kind of reference is this, and how should it be resolved?
@@ -152,7 +159,7 @@ std::ostream& ReferenceNodeFullPath(std::ostream&,
 // View a ReferenceComponentNode's children as an ordered map, keyed by
 // reference string. A single node may have multiple references to the same
 // child id, and they are expected to resolve the same way, so one of them is
-// arbitrarily chosen to be included in the map.
+// arbitrarily chosen to be included in the map, while the others are dropped.
 // Primarily for debugging and visualization.
 using ReferenceComponentMap =
     std::map<absl::string_view, const ReferenceComponentNode*,
@@ -253,10 +260,11 @@ struct SymbolInfo {
 
   // In which file is this considered "defined"?
   // Technically, this can be recovered by looking up a string_view range of
-  // text in VerilogProject.
+  // text in VerilogProject (StringSpanOfSymbol(*syntax_origin)).
   const VerilogSourceFile* file_origin = nullptr;
 
   // Pointer to the syntax tree origin.
+  // An easy way to view this text is StringSpanOfSymbol(*syntax_origin).
   // Reminder: Parts of the syntax tree may originate from included files.
   const verible::Symbol* syntax_origin = nullptr;
 
@@ -361,6 +369,8 @@ struct SymbolInfo {
 
 // This map type represents the global namespace of preprocessor macro
 // definitions.
+// The string_view key should be a substring of text whose memory is owned by
+// any VerilogSourceFile that defines the macro.
 // TODO(fangism): This should come from a preprocessor and possibly maintained
 // per translation-unit in multi-file compilation mode.
 using MacroSymbolMap =
@@ -456,7 +466,8 @@ class SymbolTable {
   void CheckIntegrity() const;
 
  private:  // data
-  // This owns all string_views inside the symbol table and outlives objects of
+  // This owns all files used to construct the symbol table and therefore,
+  // owns all string_views inside the symbol table and outlives objects of
   // this class.
   // The project needs to be mutable for the sake of opening `include-d files
   // encountered during tree traversal.
