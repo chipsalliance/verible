@@ -98,8 +98,8 @@ cc_library(
     srcs = ["init_command_line.cc"],
     hdrs = ["init_command_line.h"],
     deps = [
-        ":logging",
         # these deps are needed by init_command_line.cc:
+        ":logging",  # buildcleaner: keep
         ":build_version",  # buildcleaner: keep
         "@com_google_absl//absl/flags:config",  # buildcleaner: keep
         "@com_google_absl//absl/flags:flag",  # buildcleaner: keep
