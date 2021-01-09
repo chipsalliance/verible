@@ -123,6 +123,8 @@ struct ReferenceComponent {
   // This may remain as nullptr if symbol resolution fails.
   // Symbol table merge operations may invalidate these pointers, so make sure
   // merges are done before attempting symbol resolution.
+  // This should only be set by ResolveSymbol().
+  // TODO: privatize this member.
   const SymbolTableNode* resolved_symbol = nullptr;
 
  public:
@@ -132,6 +134,10 @@ struct ReferenceComponent {
   ReferenceComponent& operator=(ReferenceComponent&&) = delete;
 
   absl::Status MatchesMetatype(SymbolMetaType) const;
+
+  // Resolves this symbol and verifies that metatypes are compatible, which is
+  // reflected in the returned Status.
+  absl::Status ResolveSymbol(const SymbolTableNode&);
 
   // Only print ref_type and identifier.
   std::ostream& PrintPathComponent(std::ostream&) const;

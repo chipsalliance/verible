@@ -1160,6 +1160,20 @@ absl::Status ReferenceComponent::MatchesMetatype(
                    SymbolMetaTypeAsString(found_metatype), "."));
 }
 
+absl::Status ReferenceComponent::ResolveSymbol(
+    const SymbolTableNode& resolved) {
+  // Verify metatype match.
+  const auto metatype_match_status = MatchesMetatype(resolved.Value().type);
+  if (metatype_match_status.ok()) {
+    VLOG(2) << "  resolved: " << ContextFullPath(resolved);
+    resolved_symbol = &resolved;
+  } else {
+    VLOG(2) << metatype_match_status.message();
+    return metatype_match_status;
+  }
+  return absl::OkStatus();
+}
+
 const ReferenceComponentNode* DependentReferences::LastLeaf() const {
   if (components == nullptr) return nullptr;
   const ReferenceComponentNode* node = components.get();
@@ -1202,16 +1216,37 @@ std::ostream& operator<<(std::ostream& stream,
   return stream;
 }
 
+// Search through base class's scopes for a symbol.
+static const SymbolTableNode* LookupSymbolThroughInheritedScopes(
+    const SymbolTableNode& context, absl::string_view symbol) {
+  const SymbolTableNode* current_context = &context;
+  do {
+    // Look directly in current scope.
+    const auto found = current_context->Find(symbol);
+    if (found != current_context->end()) return &found->second;
+    // TODO: lookup imported namespaces and symbols
+
+    // Point to next inherited scope.
+    const auto* base_type =
+        current_context->Value().parent_type.user_defined_type;
+    if (base_type == nullptr) break;
+    current_context = base_type->Value().resolved_symbol;
+  } while (current_context != nullptr);
+  return nullptr;  // resolution failed
+}
+
 // Search up-scope, stopping at the first symbol found in the nearest scope.
 static const SymbolTableNode* LookupSymbolUpwards(
     const SymbolTableNode& context, absl::string_view symbol) {
   const SymbolTableNode* current_context = &context;
-  while (current_context != nullptr) {
-    // TODO: lookup imported namespaces and symbols
-    const auto found = current_context->Find(symbol);
-    if (found != current_context->end()) return &found->second;
+  do {
+    const SymbolTableNode* found =
+        LookupSymbolThroughInheritedScopes(*current_context, symbol);
+    if (found != nullptr) return found;
+
+    // Point to next enclosing scope.
     current_context = current_context->Parent();
-  }
+  } while (current_context != nullptr);
   return nullptr;  // resolution failed
 }
 
@@ -1254,13 +1289,31 @@ static void ResolveUnqualifiedName(ReferenceComponent& component,
     return;
   }
 
-  // Verify metatype match.
-  const auto metatype_match_status =
-      component.MatchesMetatype(resolved->Value().type);
-  if (metatype_match_status.ok()) {
-    component.resolved_symbol = resolved;
-  } else {
-    diagnostics->push_back(metatype_match_status);
+  const auto resolve_status = component.ResolveSymbol(*resolved);
+  if (!resolve_status.ok()) {
+    diagnostics->push_back(resolve_status);
+  }
+  VLOG(2) << "end of " << __FUNCTION__;
+}
+
+// Search this scope directly for a symbol, without any upward/inheritance
+// lookups.
+static void ResolveImmediateMember(ReferenceComponent& component,
+                                   const SymbolTableNode& context,
+                                   std::vector<absl::Status>* diagnostics) {
+  VLOG(2) << __FUNCTION__ << ": " << component;
+  const absl::string_view key(component.identifier);
+  const auto found = context.Find(key);
+  if (found == context.end()) {
+    diagnostics->emplace_back(
+        DiagnoseMemberSymbolResolutionFailure(key, context));
+    return;
+  }
+
+  const SymbolTableNode& found_symbol = found->second;
+  const auto resolve_status = component.ResolveSymbol(found_symbol);
+  if (!resolve_status.ok()) {
+    diagnostics->push_back(resolve_status);
   }
   VLOG(2) << "end of " << __FUNCTION__;
 }
@@ -1270,22 +1323,17 @@ static void ResolveDirectMember(ReferenceComponent& component,
                                 std::vector<absl::Status>* diagnostics) {
   VLOG(2) << __FUNCTION__ << ": " << component;
   const absl::string_view key(component.identifier);
-  const auto found = context.Find(key);
-  // TODO: lookup members through inherited scopes
-  if (found == context.end()) {
+  const auto* found = LookupSymbolThroughInheritedScopes(context, key);
+  if (found == nullptr) {
     diagnostics->emplace_back(
         DiagnoseMemberSymbolResolutionFailure(key, context));
     return;
   }
 
-  const SymbolTableNode& found_symbol = found->second;
-  const auto metatype_match_status =
-      component.MatchesMetatype(found_symbol.Value().type);
-  if (metatype_match_status.ok()) {
-    component.resolved_symbol = &found_symbol;
-  } else {
-    VLOG(2) << metatype_match_status.message();
-    diagnostics->push_back(metatype_match_status);
+  const SymbolTableNode& found_symbol = *found;
+  const auto resolve_status = component.ResolveSymbol(found_symbol);
+  if (!resolve_status.ok()) {
+    diagnostics->push_back(resolve_status);
   }
   VLOG(2) << "end of " << __FUNCTION__;
 }
@@ -1309,7 +1357,7 @@ static void ResolveReferenceComponentNode(
       break;
     }
     case ReferenceType::kImmediate: {
-      ResolveDirectMember(component, context, diagnostics);
+      ResolveImmediateMember(component, context, diagnostics);
       break;
     }
     case ReferenceType::kDirectMember: {
@@ -1403,13 +1451,10 @@ absl::StatusOr<SymbolTableNode*> DependentReferences::ResolveOnlyBaseLocally(
   SymbolTableNode& resolved = found->second;
 
   // If metatype doesn't match what is expected, then fail.
-  const auto metatype_match_status =
-      base.MatchesMetatype(resolved.Value().type);
-  if (!metatype_match_status.ok()) {
-    return metatype_match_status;
+  const auto resolve_status = base.ResolveSymbol(resolved);
+  if (!resolve_status.ok()) {
+    return resolve_status;
   }
-
-  base.resolved_symbol = &resolved;
   return &resolved;
 }
 
