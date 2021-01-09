@@ -4,7 +4,7 @@ licenses(["notice"])
 
 package(
     default_visibility = [
-        "//verilog/tools/kythe:__subpackages__",
+        "//visibility:private",
     ],
 )
 
