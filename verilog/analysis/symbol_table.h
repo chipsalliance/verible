@@ -53,6 +53,7 @@ enum class SymbolMetaType {
   kDataNetVariableInstance,
   kFunction,
   kTask,
+  kStruct,
   kInterface,
 
   // The following enums represent classes/groups of the above types,

@@ -392,6 +392,7 @@ cc_test(
     deps = [
         ":symbol_table",
         ":verilog_project",
+        "//common/text:symbol",
         "//common/text:tree_utils",
         "//common/util:file_util",
         "//common/util:logging",

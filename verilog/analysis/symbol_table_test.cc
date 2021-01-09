@@ -26,6 +26,7 @@
 #include "absl/memory/memory.h"
 #include "absl/status/status.h"
 #include "absl/strings/string_view.h"
+#include "common/text/symbol.h"
 #include "common/text/tree_utils.h"
 #include "common/util/file_util.h"
 #include "common/util/logging.h"
@@ -96,8 +97,8 @@ static std::ostream& operator<<(std::ostream& stream,
 // 'dest' SymbolTableNode. Defined as a macro so that failure gives meaningful
 // line numbers, and this allows ASSERT_NE to early exit.
 #define MUST_ASSIGN_LOOKUP_SYMBOL(dest, scope, key)                       \
-  const auto found_##dest = scope.Find(key);                              \
-  ASSERT_NE(found_##dest, scope.end())                                    \
+  const auto found_##dest = (scope).Find(key);                            \
+  ASSERT_NE(found_##dest, (scope).end())                                  \
       << "No symbol at \"" << key << "\" in " << ScopePathPrinter{scope}; \
   EXPECT_EQ(found_##dest->first, key);                                    \
   const SymbolTableNode& dest(found_##dest->second);                      \
@@ -5277,6 +5278,717 @@ TEST(BuildSymbolTableTest, ChainedMethodCallReturnTypeNotAClass) {
     EXPECT_EQ(dd_obj_ref_comp.resolved_symbol, &dd_obj);
     EXPECT_EQ(dd_gg_ref_comp.resolved_symbol, &function_gg);
     EXPECT_EQ(dd_gg_tt_ref_comp.resolved_symbol, nullptr);  // failed to resolve
+  }
+}
+
+TEST(BuildSymbolTableTest, AnonymousStructTypeData) {
+  TestVerilogSourceFile src("structy.sv",
+                            "struct {\n"
+                            "  int size;\n"
+                            "} data;\n");
+  const auto status = src.Parse();
+  ASSERT_TRUE(status.ok()) << status.message();
+  SymbolTable symbol_table(nullptr);
+  const SymbolTableNode& root_symbol(symbol_table.Root());
+
+  const auto build_diagnostics = BuildSymbolTable(src, &symbol_table);
+  EXPECT_EMPTY_STATUSES(build_diagnostics);
+
+  // Expect one anonymous struct definition and reference.
+  EXPECT_EQ(root_symbol.Value().anonymous_scope_names.size(), 1);
+  ASSERT_EQ(root_symbol.Children().size(), 2);
+  // Find the symbol that is a struct (anon), which is not "data".
+  const auto found =
+      std::find_if(root_symbol.Children().begin(), root_symbol.Children().end(),
+                   [](const SymbolTableNode::key_value_type& p) {
+                     return p.first != "data";
+                   });
+  ASSERT_NE(found, root_symbol.Children().end());
+  const SymbolTableNode& anon_struct(found->second);
+  const SymbolInfo& anon_struct_info(anon_struct.Value());
+  EXPECT_EQ(anon_struct_info.metatype, SymbolMetaType::kStruct);
+  EXPECT_TRUE(anon_struct_info.local_references_to_bind.empty());
+
+  // Struct has one member.
+  MUST_ASSIGN_LOOKUP_SYMBOL(int_size, anon_struct, "size");
+  EXPECT_EQ(int_size_info.metatype, SymbolMetaType::kDataNetVariableInstance);
+  EXPECT_EQ(int_size_info.file_origin, &src);
+  EXPECT_EQ(
+      verible::StringSpanOfSymbol(*int_size_info.declared_type.syntax_origin),
+      "int");
+  EXPECT_EQ(int_size_info.declared_type.user_defined_type, nullptr);
+
+  // Expect to bind anonymous struct immediately.
+  ASSERT_EQ(root_symbol.Value().local_references_to_bind.size(), 1);
+  const DependentReferences& anon_struct_ref(
+      root_symbol.Value().local_references_to_bind.front());
+  const ReferenceComponent& anon_struct_ref_comp(
+      anon_struct_ref.components->Value());
+  EXPECT_EQ(anon_struct_ref_comp.ref_type, ReferenceType::kImmediate);
+  EXPECT_EQ(anon_struct_ref_comp.required_metatype, SymbolMetaType::kStruct);
+  EXPECT_EQ(anon_struct_ref_comp.resolved_symbol, &anon_struct);
+
+  // "data"'s type is the (internal) anonymous struct type reference.
+  MUST_ASSIGN_LOOKUP_SYMBOL(data, root_symbol, "data");
+  EXPECT_EQ(data_info.metatype, SymbolMetaType::kDataNetVariableInstance);
+  EXPECT_EQ(data_info.file_origin, &src);
+  EXPECT_EQ(data_info.declared_type.user_defined_type,
+            anon_struct_ref.LastLeaf());
+
+  {
+    std::vector<absl::Status> resolve_diagnostics;
+    symbol_table.Resolve(&resolve_diagnostics);
+    EXPECT_EMPTY_STATUSES(resolve_diagnostics);
+
+    EXPECT_EQ(anon_struct_ref_comp.resolved_symbol, &anon_struct);  // unchanged
+  }
+}
+
+TEST(BuildSymbolTableTest, AnonymousStructTypeDataMultiFields) {
+  TestVerilogSourceFile src("structy.sv",
+                            "struct {\n"
+                            "  int size;\n"
+                            "  real weight;\n"
+                            "} data;\n");
+  const auto status = src.Parse();
+  ASSERT_TRUE(status.ok()) << status.message();
+  SymbolTable symbol_table(nullptr);
+  const SymbolTableNode& root_symbol(symbol_table.Root());
+
+  const auto build_diagnostics = BuildSymbolTable(src, &symbol_table);
+  EXPECT_EMPTY_STATUSES(build_diagnostics);
+
+  // Expect one anonymous struct definition and reference.
+  EXPECT_EQ(root_symbol.Value().anonymous_scope_names.size(), 1);
+  ASSERT_EQ(root_symbol.Children().size(), 2);
+  // Find the symbol that is a struct (anon), which is not "data".
+  const auto found =
+      std::find_if(root_symbol.Children().begin(), root_symbol.Children().end(),
+                   [](const SymbolTableNode::key_value_type& p) {
+                     return p.first != "data";
+                   });
+  ASSERT_NE(found, root_symbol.Children().end());
+  const SymbolTableNode& anon_struct(found->second);
+  const SymbolInfo& anon_struct_info(anon_struct.Value());
+  EXPECT_EQ(anon_struct_info.metatype, SymbolMetaType::kStruct);
+  EXPECT_TRUE(anon_struct_info.local_references_to_bind.empty());
+
+  // Struct has two members.
+  MUST_ASSIGN_LOOKUP_SYMBOL(int_size, anon_struct, "size");
+  EXPECT_EQ(int_size_info.metatype, SymbolMetaType::kDataNetVariableInstance);
+  EXPECT_EQ(int_size_info.file_origin, &src);
+  EXPECT_EQ(
+      verible::StringSpanOfSymbol(*int_size_info.declared_type.syntax_origin),
+      "int");
+  EXPECT_EQ(int_size_info.declared_type.user_defined_type, nullptr);
+
+  MUST_ASSIGN_LOOKUP_SYMBOL(int_weight, anon_struct, "weight");
+  EXPECT_EQ(int_weight_info.metatype, SymbolMetaType::kDataNetVariableInstance);
+  EXPECT_EQ(int_weight_info.file_origin, &src);
+  EXPECT_EQ(
+      verible::StringSpanOfSymbol(*int_weight_info.declared_type.syntax_origin),
+      "real");
+  EXPECT_EQ(int_weight_info.declared_type.user_defined_type, nullptr);
+
+  // Expect to bind anonymous struct immediately.
+  ASSERT_EQ(root_symbol.Value().local_references_to_bind.size(), 1);
+  const DependentReferences& anon_struct_ref(
+      root_symbol.Value().local_references_to_bind.front());
+  const ReferenceComponent& anon_struct_ref_comp(
+      anon_struct_ref.components->Value());
+  EXPECT_EQ(anon_struct_ref_comp.ref_type, ReferenceType::kImmediate);
+  EXPECT_EQ(anon_struct_ref_comp.required_metatype, SymbolMetaType::kStruct);
+  EXPECT_EQ(anon_struct_ref_comp.resolved_symbol, &anon_struct);
+
+  // "data"'s type is the (internal) anonymous struct type reference.
+  MUST_ASSIGN_LOOKUP_SYMBOL(data, root_symbol, "data");
+  EXPECT_EQ(data_info.metatype, SymbolMetaType::kDataNetVariableInstance);
+  EXPECT_EQ(data_info.file_origin, &src);
+  EXPECT_EQ(data_info.declared_type.user_defined_type,
+            anon_struct_ref.LastLeaf());
+
+  {
+    std::vector<absl::Status> resolve_diagnostics;
+    symbol_table.Resolve(&resolve_diagnostics);
+    EXPECT_EMPTY_STATUSES(resolve_diagnostics);
+
+    EXPECT_EQ(anon_struct_ref_comp.resolved_symbol, &anon_struct);  // unchanged
+  }
+}
+
+TEST(BuildSymbolTableTest, AnonymousStructTypeDataMultiDeclaration) {
+  TestVerilogSourceFile src("structy.sv",
+                            "struct {\n"
+                            "  int size, weight;\n"
+                            // Note: the syntax tree structure for "weight"
+                            // looks different than that of the the first
+                            // variable "size". Make sure this test continues to
+                            // work after CST restructuring.
+                            "} data;\n");
+  const auto status = src.Parse();
+  ASSERT_TRUE(status.ok()) << status.message();
+  SymbolTable symbol_table(nullptr);
+  const SymbolTableNode& root_symbol(symbol_table.Root());
+
+  const auto build_diagnostics = BuildSymbolTable(src, &symbol_table);
+  EXPECT_EMPTY_STATUSES(build_diagnostics);
+
+  // Expect one anonymous struct definition and reference.
+  EXPECT_EQ(root_symbol.Value().anonymous_scope_names.size(), 1);
+  ASSERT_EQ(root_symbol.Children().size(), 2);
+  // Find the symbol that is a struct (anon), which is not "data".
+  const auto found =
+      std::find_if(root_symbol.Children().begin(), root_symbol.Children().end(),
+                   [](const SymbolTableNode::key_value_type& p) {
+                     return p.first != "data";
+                   });
+  ASSERT_NE(found, root_symbol.Children().end());
+  const SymbolTableNode& anon_struct(found->second);
+  const SymbolInfo& anon_struct_info(anon_struct.Value());
+  EXPECT_EQ(anon_struct_info.metatype, SymbolMetaType::kStruct);
+  EXPECT_TRUE(anon_struct_info.local_references_to_bind.empty());
+
+  // Struct has two members.
+  MUST_ASSIGN_LOOKUP_SYMBOL(int_size, anon_struct, "size");
+  EXPECT_EQ(int_size_info.metatype, SymbolMetaType::kDataNetVariableInstance);
+  EXPECT_EQ(int_size_info.file_origin, &src);
+  EXPECT_EQ(
+      verible::StringSpanOfSymbol(*int_size_info.declared_type.syntax_origin),
+      "int");
+  EXPECT_EQ(int_size_info.declared_type.user_defined_type, nullptr);
+
+  MUST_ASSIGN_LOOKUP_SYMBOL(int_weight, anon_struct, "weight");
+  EXPECT_EQ(int_weight_info.metatype, SymbolMetaType::kDataNetVariableInstance);
+  EXPECT_EQ(int_weight_info.file_origin, &src);
+  EXPECT_EQ(
+      verible::StringSpanOfSymbol(*int_weight_info.declared_type.syntax_origin),
+      "int");
+  EXPECT_EQ(int_weight_info.declared_type.user_defined_type, nullptr);
+
+  // Expect to bind anonymous struct immediately.
+  ASSERT_EQ(root_symbol.Value().local_references_to_bind.size(), 1);
+  const DependentReferences& anon_struct_ref(
+      root_symbol.Value().local_references_to_bind.front());
+  const ReferenceComponent& anon_struct_ref_comp(
+      anon_struct_ref.components->Value());
+  EXPECT_EQ(anon_struct_ref_comp.ref_type, ReferenceType::kImmediate);
+  EXPECT_EQ(anon_struct_ref_comp.required_metatype, SymbolMetaType::kStruct);
+  EXPECT_EQ(anon_struct_ref_comp.resolved_symbol, &anon_struct);
+
+  // "data"'s type is the (internal) anonymous struct type reference.
+  MUST_ASSIGN_LOOKUP_SYMBOL(data, root_symbol, "data");
+  EXPECT_EQ(data_info.metatype, SymbolMetaType::kDataNetVariableInstance);
+  EXPECT_EQ(data_info.file_origin, &src);
+  EXPECT_EQ(data_info.declared_type.user_defined_type,
+            anon_struct_ref.LastLeaf());
+
+  {
+    std::vector<absl::Status> resolve_diagnostics;
+    symbol_table.Resolve(&resolve_diagnostics);
+    EXPECT_EMPTY_STATUSES(resolve_diagnostics);
+
+    EXPECT_EQ(anon_struct_ref_comp.resolved_symbol, &anon_struct);  // unchanged
+  }
+}
+
+TEST(BuildSymbolTableTest, AnonymousStructTypeDataMultiVariables) {
+  TestVerilogSourceFile src("structy.sv",
+                            "struct {\n"
+                            "  int size;\n"
+                            "} data, foobar;\n");
+  const auto status = src.Parse();
+  ASSERT_TRUE(status.ok()) << status.message();
+  SymbolTable symbol_table(nullptr);
+  const SymbolTableNode& root_symbol(symbol_table.Root());
+
+  const auto build_diagnostics = BuildSymbolTable(src, &symbol_table);
+  EXPECT_EMPTY_STATUSES(build_diagnostics);
+
+  // Expect one anonymous struct definition and two type references.
+  EXPECT_EQ(root_symbol.Value().anonymous_scope_names.size(), 1);
+  ASSERT_EQ(root_symbol.Children().size(), 3);
+  // Find the first symbol that is a struct (anon).
+  const auto found = std::find_if(
+      root_symbol.Children().begin(), root_symbol.Children().end(),
+      [](const SymbolTableNode::key_value_type& p) {
+        return p.second.Value().metatype == SymbolMetaType::kStruct;
+      });
+  ASSERT_NE(found, root_symbol.Children().end());
+  const SymbolTableNode& anon_struct(found->second);
+  const SymbolInfo& anon_struct_info(anon_struct.Value());
+  EXPECT_EQ(anon_struct_info.metatype, SymbolMetaType::kStruct);
+  EXPECT_TRUE(anon_struct_info.local_references_to_bind.empty());
+
+  // Struct has one member.
+  MUST_ASSIGN_LOOKUP_SYMBOL(int_size, anon_struct, "size");
+  EXPECT_EQ(int_size_info.metatype, SymbolMetaType::kDataNetVariableInstance);
+  EXPECT_EQ(int_size_info.file_origin, &src);
+  EXPECT_EQ(
+      verible::StringSpanOfSymbol(*int_size_info.declared_type.syntax_origin),
+      "int");
+  EXPECT_EQ(int_size_info.declared_type.user_defined_type, nullptr);
+
+  // Expect to bind anonymous struct immediately.
+  ASSERT_EQ(root_symbol.Value().local_references_to_bind.size(), 1);
+  const DependentReferences& anon_struct_ref(
+      root_symbol.Value().local_references_to_bind.front());
+  const ReferenceComponent& anon_struct_ref_comp(
+      anon_struct_ref.components->Value());
+  EXPECT_EQ(anon_struct_ref_comp.ref_type, ReferenceType::kImmediate);
+  EXPECT_EQ(anon_struct_ref_comp.required_metatype, SymbolMetaType::kStruct);
+  EXPECT_EQ(anon_struct_ref_comp.resolved_symbol, &anon_struct);
+
+  // "data"'s type is the (internal) anonymous struct type reference.
+  MUST_ASSIGN_LOOKUP_SYMBOL(data, root_symbol, "data");
+  EXPECT_EQ(data_info.metatype, SymbolMetaType::kDataNetVariableInstance);
+  EXPECT_EQ(data_info.file_origin, &src);
+  EXPECT_EQ(data_info.declared_type.user_defined_type,
+            anon_struct_ref.LastLeaf());
+
+  // "foobar" has same anonymous struct type
+  MUST_ASSIGN_LOOKUP_SYMBOL(foobar, root_symbol, "foobar");
+  EXPECT_EQ(foobar_info.metatype, SymbolMetaType::kDataNetVariableInstance);
+  EXPECT_EQ(foobar_info.file_origin, &src);
+  EXPECT_EQ(foobar_info.declared_type.user_defined_type,
+            anon_struct_ref.LastLeaf());
+
+  {
+    std::vector<absl::Status> resolve_diagnostics;
+    symbol_table.Resolve(&resolve_diagnostics);
+    EXPECT_EMPTY_STATUSES(resolve_diagnostics);
+
+    // "data" and "foobar" share the same anonymous struct type.
+    EXPECT_EQ(anon_struct_ref_comp.resolved_symbol, &anon_struct);  // unchanged
+    EXPECT_EQ(
+        data_info.declared_type.user_defined_type->Value().resolved_symbol,
+        &anon_struct);
+    EXPECT_EQ(
+        foobar_info.declared_type.user_defined_type->Value().resolved_symbol,
+        &anon_struct);
+  }
+}
+
+TEST(BuildSymbolTableTest, AnonymousStructTypeDataMultiVariablesDistinctTypes) {
+  TestVerilogSourceFile src("structy.sv",
+                            "struct {\n"
+                            "  int size;\n"
+                            "} data;\n"
+                            "struct {\n"
+                            "  int size;\n"
+                            "} foobar;\n");
+  const auto status = src.Parse();
+  ASSERT_TRUE(status.ok()) << status.message();
+  SymbolTable symbol_table(nullptr);
+  const SymbolTableNode& root_symbol(symbol_table.Root());
+
+  const auto build_diagnostics = BuildSymbolTable(src, &symbol_table);
+  EXPECT_EMPTY_STATUSES(build_diagnostics);
+
+  const auto IsStruct = [](const SymbolTableNode::key_value_type& p) {
+    return p.second.Value().metatype == SymbolMetaType::kStruct;
+  };
+
+  // Expect two anonymous struct definitions and two type references.
+  EXPECT_EQ(root_symbol.Value().anonymous_scope_names.size(), 2);
+  ASSERT_EQ(root_symbol.Children().size(), 4);
+  // Find the symbol that is a struct (anon).
+  const auto found = std::find_if(root_symbol.Children().begin(),
+                                  root_symbol.Children().end(), IsStruct);
+  ASSERT_NE(found, root_symbol.Children().end());
+  const SymbolTableNode& anon_struct(found->second);
+  const SymbolInfo& anon_struct_info(anon_struct.Value());
+  EXPECT_EQ(anon_struct_info.metatype, SymbolMetaType::kStruct);
+  EXPECT_TRUE(anon_struct_info.local_references_to_bind.empty());
+
+  const auto found_2 =
+      std::find_if(std::next(found), root_symbol.Children().end(), IsStruct);
+  ASSERT_NE(found_2, root_symbol.Children().end());
+  const SymbolTableNode& anon_struct_2(found_2->second);
+  const SymbolInfo& anon_struct_2_info(anon_struct.Value());
+  EXPECT_EQ(anon_struct_2_info.metatype, SymbolMetaType::kStruct);
+  EXPECT_TRUE(anon_struct_2_info.local_references_to_bind.empty());
+
+  // Struct has one member.  Both structs have the same elements and structure,
+  // but have distinct scopes in the symbol table.
+  for (const auto* anon_struct_iter : {&anon_struct, &anon_struct_2}) {
+    MUST_ASSIGN_LOOKUP_SYMBOL(int_size, *anon_struct_iter, "size");
+    EXPECT_EQ(int_size_info.metatype, SymbolMetaType::kDataNetVariableInstance);
+    EXPECT_EQ(int_size_info.file_origin, &src);
+    EXPECT_EQ(
+        verible::StringSpanOfSymbol(*int_size_info.declared_type.syntax_origin),
+        "int");
+    EXPECT_EQ(int_size_info.declared_type.user_defined_type, nullptr);
+  }
+
+  // Expect to bind both anonymous structs immediately.
+  ASSERT_EQ(root_symbol.Value().local_references_to_bind.size(), 2);
+  const DependentReferences& anon_struct_ref(
+      root_symbol.Value().local_references_to_bind.front());
+  const ReferenceComponent& anon_struct_ref_comp(
+      anon_struct_ref.components->Value());
+  EXPECT_EQ(anon_struct_ref_comp.ref_type, ReferenceType::kImmediate);
+  EXPECT_EQ(anon_struct_ref_comp.required_metatype, SymbolMetaType::kStruct);
+  EXPECT_EQ(anon_struct_ref_comp.resolved_symbol, &anon_struct);
+
+  const DependentReferences& anon_struct_2_ref(
+      root_symbol.Value().local_references_to_bind.back());
+  const ReferenceComponent& anon_struct_2_ref_comp(
+      anon_struct_2_ref.components->Value());
+  EXPECT_EQ(anon_struct_2_ref_comp.ref_type, ReferenceType::kImmediate);
+  EXPECT_EQ(anon_struct_2_ref_comp.required_metatype, SymbolMetaType::kStruct);
+  EXPECT_EQ(anon_struct_2_ref_comp.resolved_symbol, &anon_struct_2);
+
+  // "data"'s type is the (internal) anonymous struct type reference.
+  MUST_ASSIGN_LOOKUP_SYMBOL(data, root_symbol, "data");
+  EXPECT_EQ(data_info.metatype, SymbolMetaType::kDataNetVariableInstance);
+  EXPECT_EQ(data_info.file_origin, &src);
+  EXPECT_EQ(data_info.declared_type.user_defined_type,
+            anon_struct_ref.LastLeaf());
+
+  // "foobar" has a different anonymous struct type
+  MUST_ASSIGN_LOOKUP_SYMBOL(foobar, root_symbol, "foobar");
+  EXPECT_EQ(foobar_info.metatype, SymbolMetaType::kDataNetVariableInstance);
+  EXPECT_EQ(foobar_info.file_origin, &src);
+  EXPECT_EQ(foobar_info.declared_type.user_defined_type,
+            anon_struct_2_ref.LastLeaf());
+
+  {
+    std::vector<absl::Status> resolve_diagnostics;
+    symbol_table.Resolve(&resolve_diagnostics);
+    EXPECT_EMPTY_STATUSES(resolve_diagnostics);
+
+    // "data" and "foobar" have different anonymous struct types.
+    EXPECT_EQ(anon_struct_ref_comp.resolved_symbol, &anon_struct);  // unchanged
+    EXPECT_EQ(anon_struct_2_ref_comp.resolved_symbol,
+              &anon_struct_2);  // unchanged
+    EXPECT_EQ(
+        data_info.declared_type.user_defined_type->Value().resolved_symbol,
+        &anon_struct);
+    EXPECT_EQ(
+        foobar_info.declared_type.user_defined_type->Value().resolved_symbol,
+        &anon_struct_2);
+  }
+}
+
+TEST(BuildSymbolTableTest, AnonymousStructTypeFunctionParameter) {
+  TestVerilogSourceFile src("structy_funky.sv",
+                            "function int ff(struct {\n"
+                            "      int weight;\n"
+                            "    } data);\n"
+                            "  return data.weight;\n"
+                            "endfunction\n");
+  const auto status = src.Parse();
+  ASSERT_TRUE(status.ok()) << status.message();
+  SymbolTable symbol_table(nullptr);
+  const SymbolTableNode& root_symbol(symbol_table.Root());
+
+  const auto build_diagnostics = BuildSymbolTable(src, &symbol_table);
+  EXPECT_EMPTY_STATUSES(build_diagnostics);
+
+  MUST_ASSIGN_LOOKUP_SYMBOL(ff_function, root_symbol, "ff");
+  EXPECT_EQ(ff_function_info.metatype, SymbolMetaType::kFunction);
+
+  // Expect one anonymous struct definition and reference.
+  EXPECT_EQ(ff_function_info.anonymous_scope_names.size(), 1);
+  ASSERT_EQ(ff_function.Children().size(), 2);
+  // Find the symbol that is a struct (anon).
+  const auto found = std::find_if(
+      ff_function.Children().begin(), ff_function.Children().end(),
+      [](const SymbolTableNode::key_value_type& p) {
+        return p.second.Value().metatype == SymbolMetaType::kStruct;
+      });
+  ASSERT_NE(found, ff_function.Children().end());
+  const SymbolTableNode& anon_struct(found->second);
+  const SymbolInfo& anon_struct_info(anon_struct.Value());
+  EXPECT_EQ(anon_struct_info.metatype, SymbolMetaType::kStruct);
+  EXPECT_TRUE(anon_struct_info.local_references_to_bind.empty());
+
+  MUST_ASSIGN_LOOKUP_SYMBOL(int_weight, anon_struct, "weight");
+  EXPECT_EQ(int_weight_info.metatype, SymbolMetaType::kDataNetVariableInstance);
+  EXPECT_EQ(int_weight_info.file_origin, &src);
+  EXPECT_EQ(
+      verible::StringSpanOfSymbol(*int_weight_info.declared_type.syntax_origin),
+      "int");
+  EXPECT_EQ(int_weight_info.declared_type.user_defined_type, nullptr);
+
+  // Expect to bind anonymous struct immediately.
+  const auto ref_map(ff_function_info.LocalReferencesMapViewForTesting());
+  // Expect one type reference and one reference rooted at "data".
+  ASSIGN_MUST_FIND_EXACTLY_ONE_REF(data_ref, ref_map, "data");
+  const ReferenceComponent& data_ref_comp(data_ref->components->Value());
+  EXPECT_EQ(data_ref_comp.identifier, "data");
+  EXPECT_EQ(data_ref_comp.ref_type, ReferenceType::kUnqualified);
+  EXPECT_EQ(data_ref_comp.required_metatype, SymbolMetaType::kUnspecified);
+  EXPECT_EQ(data_ref_comp.resolved_symbol, nullptr);
+
+  // "data.weight"
+  ASSIGN_MUST_HAVE_UNIQUE(weight_ref, data_ref->components->Children());
+  const ReferenceComponent& weight_ref_comp(weight_ref.Value());
+  EXPECT_EQ(weight_ref_comp.identifier, "weight");
+  EXPECT_EQ(weight_ref_comp.ref_type, ReferenceType::kMemberOfTypeOfParent);
+  EXPECT_EQ(weight_ref_comp.required_metatype, SymbolMetaType::kUnspecified);
+  EXPECT_EQ(weight_ref_comp.resolved_symbol, nullptr);
+
+  const DependentReferences& anon_struct_ref(
+      **std::find_if(ref_map.begin(), ref_map.end(),
+                     [](const decltype(ref_map)::value_type& r) {
+                       return (*r.second.begin())
+                                  ->components->Value()
+                                  .required_metatype == SymbolMetaType::kStruct;
+                     })
+            ->second.begin());
+  const ReferenceComponent& anon_struct_ref_comp(
+      anon_struct_ref.components->Value());
+  EXPECT_EQ(anon_struct_ref_comp.ref_type, ReferenceType::kImmediate);
+  EXPECT_EQ(anon_struct_ref_comp.required_metatype, SymbolMetaType::kStruct);
+  EXPECT_EQ(anon_struct_ref_comp.resolved_symbol, &anon_struct);
+
+  // "data"'s type is the (internal) anonymous struct type reference.
+  MUST_ASSIGN_LOOKUP_SYMBOL(data, ff_function, "data");
+  EXPECT_EQ(data_info.metatype, SymbolMetaType::kDataNetVariableInstance);
+  EXPECT_EQ(data_info.file_origin, &src);
+  EXPECT_EQ(data_info.declared_type.user_defined_type,
+            anon_struct_ref.LastLeaf());
+
+  {
+    std::vector<absl::Status> resolve_diagnostics;
+    symbol_table.Resolve(&resolve_diagnostics);
+    EXPECT_EMPTY_STATUSES(resolve_diagnostics);
+
+    EXPECT_EQ(data_ref_comp.resolved_symbol, &data);          // "data"
+    EXPECT_EQ(weight_ref_comp.resolved_symbol, &int_weight);  // ".weight"
+    EXPECT_EQ(data_info.declared_type.user_defined_type,
+              anon_struct_ref.LastLeaf());
+    EXPECT_EQ(anon_struct_ref_comp.resolved_symbol, &anon_struct);  // unchanged
+  }
+}
+
+TEST(BuildSymbolTableTest, AnonymousStructTypeNested) {
+  TestVerilogSourceFile src("structy.sv",
+                            "struct {\n"
+                            "  struct {\n"
+                            "    int size;\n"
+                            "  } foo;\n"
+                            "} data;\n");
+  const auto status = src.Parse();
+  ASSERT_TRUE(status.ok()) << status.message();
+  SymbolTable symbol_table(nullptr);
+  const SymbolTableNode& root_symbol(symbol_table.Root());
+
+  const auto build_diagnostics = BuildSymbolTable(src, &symbol_table);
+  EXPECT_EMPTY_STATUSES(build_diagnostics);
+
+  const auto IsStruct = [](const SymbolTableNode::key_value_type& p) {
+    return p.second.Value().metatype == SymbolMetaType::kStruct;
+  };
+
+  // Expect one anonymous struct definition and reference at root level.
+  EXPECT_EQ(root_symbol.Value().anonymous_scope_names.size(), 1);
+  ASSERT_EQ(root_symbol.Children().size(), 2);
+  // Find the symbol that is a struct (anon), which is not "data".
+  const auto outer_found = std::find_if(root_symbol.Children().begin(),
+                                        root_symbol.Children().end(), IsStruct);
+  ASSERT_NE(outer_found, root_symbol.Children().end());
+  const SymbolTableNode& outer_anon_struct(outer_found->second);
+  const SymbolInfo& outer_anon_struct_info(outer_anon_struct.Value());
+  EXPECT_EQ(outer_anon_struct_info.metatype, SymbolMetaType::kStruct);
+  EXPECT_EQ(outer_anon_struct_info.local_references_to_bind.size(), 1);
+  // Expect one anonymous struct definition inside the outer struct.
+  EXPECT_EQ(outer_anon_struct_info.anonymous_scope_names.size(), 1);
+
+  // Outer struct has one member.
+  MUST_ASSIGN_LOOKUP_SYMBOL(struct_foo, outer_anon_struct, "foo");
+  EXPECT_TRUE(struct_foo.Children().empty());
+  EXPECT_EQ(struct_foo_info.metatype, SymbolMetaType::kDataNetVariableInstance);
+  EXPECT_EQ(struct_foo_info.file_origin, &src);
+  EXPECT_NE(struct_foo_info.declared_type.syntax_origin, nullptr);
+
+  // Inner struct lives in the scope of the outer struct.
+  const auto inner_found =
+      std::find_if(outer_anon_struct.Children().begin(),
+                   outer_anon_struct.Children().end(), IsStruct);
+  ASSERT_NE(inner_found, outer_anon_struct.Children().end());
+  const SymbolTableNode& inner_anon_struct(inner_found->second);
+  const SymbolInfo& inner_anon_struct_info(inner_anon_struct.Value());
+  EXPECT_EQ(inner_anon_struct_info.metatype, SymbolMetaType::kStruct);
+  EXPECT_TRUE(inner_anon_struct_info.local_references_to_bind.empty());
+
+  // "foo"'s type is pre-bound to the inner anonymous struct.
+  const ReferenceComponentNode* foo_type =
+      struct_foo_info.declared_type.user_defined_type;
+  ASSERT_NE(foo_type, nullptr);
+  const ReferenceComponent& foo_type_comp(foo_type->Value());
+  EXPECT_EQ(foo_type_comp.ref_type, ReferenceType::kImmediate);
+  EXPECT_EQ(foo_type_comp.required_metatype, SymbolMetaType::kStruct);
+  EXPECT_EQ(foo_type_comp.resolved_symbol, &inner_anon_struct);
+
+  // Inner struct has one member.
+  MUST_ASSIGN_LOOKUP_SYMBOL(int_size, inner_anon_struct, "size");
+  EXPECT_EQ(int_size_info.metatype, SymbolMetaType::kDataNetVariableInstance);
+  EXPECT_EQ(int_size_info.file_origin, &src);
+  EXPECT_EQ(
+      verible::StringSpanOfSymbol(*int_size_info.declared_type.syntax_origin),
+      "int");
+  EXPECT_EQ(int_size_info.declared_type.user_defined_type, nullptr);
+
+  // Expect to bind (outer) anonymous struct immediately.
+  ASSERT_EQ(root_symbol.Value().local_references_to_bind.size(), 1);
+  const DependentReferences& anon_struct_ref(
+      root_symbol.Value().local_references_to_bind.front());
+  const ReferenceComponent& anon_struct_ref_comp(
+      anon_struct_ref.components->Value());
+  EXPECT_EQ(anon_struct_ref_comp.ref_type, ReferenceType::kImmediate);
+  EXPECT_EQ(anon_struct_ref_comp.required_metatype, SymbolMetaType::kStruct);
+  EXPECT_EQ(anon_struct_ref_comp.resolved_symbol, &outer_anon_struct);
+
+  // "data"'s type is the (internal) anonymous struct type reference.
+  MUST_ASSIGN_LOOKUP_SYMBOL(data, root_symbol, "data");
+  EXPECT_EQ(data_info.metatype, SymbolMetaType::kDataNetVariableInstance);
+  EXPECT_EQ(data_info.file_origin, &src);
+  EXPECT_EQ(data_info.declared_type.user_defined_type,
+            anon_struct_ref.LastLeaf());
+
+  {
+    std::vector<absl::Status> resolve_diagnostics;
+    symbol_table.Resolve(&resolve_diagnostics);
+    EXPECT_EMPTY_STATUSES(resolve_diagnostics);
+
+    // No change, anonymous types were already bound.
+    EXPECT_EQ(foo_type_comp.resolved_symbol, &inner_anon_struct);
+    EXPECT_EQ(anon_struct_ref_comp.resolved_symbol, &outer_anon_struct);
+  }
+}
+
+TEST(BuildSymbolTableTest, AnonymousStructTypeNestedMemberReference) {
+  TestVerilogSourceFile src("funky_structy.sv",
+                            "function int ff();\n"
+                            "  struct {\n"
+                            "    struct {\n"
+                            "      int size;\n"
+                            "    } foo;\n"
+                            "  } data;\n"
+                            "  return data.foo.size;\n"
+                            "endfunction\n");
+  const auto status = src.Parse();
+  ASSERT_TRUE(status.ok()) << status.message();
+  SymbolTable symbol_table(nullptr);
+  const SymbolTableNode& root_symbol(symbol_table.Root());
+
+  const auto build_diagnostics = BuildSymbolTable(src, &symbol_table);
+  EXPECT_EMPTY_STATUSES(build_diagnostics);
+
+  const auto IsStruct = [](const SymbolTableNode::key_value_type& p) {
+    return p.second.Value().metatype == SymbolMetaType::kStruct;
+  };
+
+  MUST_ASSIGN_LOOKUP_SYMBOL(function_ff, root_symbol, "ff");
+  EXPECT_EQ(function_ff_info.metatype, SymbolMetaType::kFunction);
+  EXPECT_EQ(function_ff_info.file_origin, &src);
+
+  // Expect one anonymous struct definition and reference in function.
+  EXPECT_EQ(function_ff_info.anonymous_scope_names.size(), 1);
+  ASSERT_EQ(function_ff.Children().size(), 2);
+  // Find the symbol that is a struct (anon), which is not "data".
+  const auto outer_found = std::find_if(function_ff.Children().begin(),
+                                        function_ff.Children().end(), IsStruct);
+  ASSERT_NE(outer_found, function_ff.Children().end());
+  const SymbolTableNode& outer_anon_struct(outer_found->second);
+  const SymbolInfo& outer_anon_struct_info(outer_anon_struct.Value());
+  EXPECT_EQ(outer_anon_struct_info.metatype, SymbolMetaType::kStruct);
+  EXPECT_EQ(outer_anon_struct_info.local_references_to_bind.size(), 1);
+  // Expect one anonymous struct definition inside the outer struct.
+  EXPECT_EQ(outer_anon_struct_info.anonymous_scope_names.size(), 1);
+
+  // Outer struct has one member.
+  MUST_ASSIGN_LOOKUP_SYMBOL(struct_foo, outer_anon_struct, "foo");
+  EXPECT_TRUE(struct_foo.Children().empty());
+  EXPECT_EQ(struct_foo_info.metatype, SymbolMetaType::kDataNetVariableInstance);
+  EXPECT_EQ(struct_foo_info.file_origin, &src);
+  EXPECT_NE(struct_foo_info.declared_type.syntax_origin, nullptr);
+
+  // Inner struct lives in the scope of the outer struct.
+  const auto inner_found =
+      std::find_if(outer_anon_struct.Children().begin(),
+                   outer_anon_struct.Children().end(), IsStruct);
+  ASSERT_NE(inner_found, outer_anon_struct.Children().end());
+  const SymbolTableNode& inner_anon_struct(inner_found->second);
+  const SymbolInfo& inner_anon_struct_info(inner_anon_struct.Value());
+  EXPECT_EQ(inner_anon_struct_info.metatype, SymbolMetaType::kStruct);
+  EXPECT_TRUE(inner_anon_struct_info.local_references_to_bind.empty());
+
+  // "foo"'s type is pre-bound to the inner anonymous struct.
+  const ReferenceComponentNode* foo_type =
+      struct_foo_info.declared_type.user_defined_type;
+  ASSERT_NE(foo_type, nullptr);
+  const ReferenceComponent& foo_type_comp(foo_type->Value());
+  EXPECT_EQ(foo_type_comp.ref_type, ReferenceType::kImmediate);
+  EXPECT_EQ(foo_type_comp.required_metatype, SymbolMetaType::kStruct);
+  EXPECT_EQ(foo_type_comp.resolved_symbol, &inner_anon_struct);
+
+  // Inner struct has one member.
+  MUST_ASSIGN_LOOKUP_SYMBOL(int_size, inner_anon_struct, "size");
+  EXPECT_EQ(int_size_info.metatype, SymbolMetaType::kDataNetVariableInstance);
+  EXPECT_EQ(int_size_info.file_origin, &src);
+  EXPECT_EQ(
+      verible::StringSpanOfSymbol(*int_size_info.declared_type.syntax_origin),
+      "int");
+  EXPECT_EQ(int_size_info.declared_type.user_defined_type, nullptr);
+
+  // Expect to bind (outer) anonymous struct immediately.
+  // First reference to anonymous struct, second reference to "data".
+  ASSERT_EQ(function_ff_info.local_references_to_bind.size(), 2);
+
+  const DependentReferences& anon_struct_ref(
+      function_ff_info.local_references_to_bind.front());
+  const ReferenceComponent& anon_struct_ref_comp(
+      anon_struct_ref.components->Value());
+  EXPECT_EQ(anon_struct_ref_comp.ref_type, ReferenceType::kImmediate);
+  EXPECT_EQ(anon_struct_ref_comp.required_metatype, SymbolMetaType::kStruct);
+  EXPECT_EQ(anon_struct_ref_comp.resolved_symbol, &outer_anon_struct);
+
+  // "data"'s type is the (internal) anonymous struct type reference.
+  MUST_ASSIGN_LOOKUP_SYMBOL(data, function_ff, "data");
+  EXPECT_EQ(data_info.metatype, SymbolMetaType::kDataNetVariableInstance);
+  EXPECT_EQ(data_info.file_origin, &src);
+  EXPECT_EQ(data_info.declared_type.user_defined_type,
+            anon_struct_ref.LastLeaf());
+
+  // Find the "data.foo.size" reference
+  const DependentReferences& data_ref(
+      function_ff_info.local_references_to_bind.back());
+  const ReferenceComponent& data_ref_comp(data_ref.components->Value());
+  EXPECT_EQ(data_ref_comp.identifier, "data");
+  EXPECT_EQ(data_ref_comp.ref_type, ReferenceType::kUnqualified);
+  EXPECT_EQ(data_ref_comp.required_metatype, SymbolMetaType::kUnspecified);
+  EXPECT_EQ(data_ref_comp.resolved_symbol, nullptr);
+
+  ASSIGN_MUST_HAVE_UNIQUE(data_foo_ref, data_ref.components->Children());
+  const ReferenceComponent& data_foo_ref_comp(data_foo_ref.Value());
+  EXPECT_EQ(data_foo_ref_comp.identifier, "foo");
+  EXPECT_EQ(data_foo_ref_comp.ref_type, ReferenceType::kMemberOfTypeOfParent);
+  EXPECT_EQ(data_foo_ref_comp.required_metatype, SymbolMetaType::kUnspecified);
+  EXPECT_EQ(data_foo_ref_comp.resolved_symbol, nullptr);
+
+  ASSIGN_MUST_HAVE_UNIQUE(data_foo_size_ref, data_foo_ref.Children());
+  const ReferenceComponent& data_foo_size_ref_comp(data_foo_size_ref.Value());
+  EXPECT_EQ(data_foo_size_ref_comp.identifier, "size");
+  EXPECT_EQ(data_foo_size_ref_comp.ref_type,
+            ReferenceType::kMemberOfTypeOfParent);
+  EXPECT_EQ(data_foo_size_ref_comp.required_metatype,
+            SymbolMetaType::kUnspecified);
+  EXPECT_EQ(data_foo_size_ref_comp.resolved_symbol, nullptr);
+
+  {
+    std::vector<absl::Status> resolve_diagnostics;
+    symbol_table.Resolve(&resolve_diagnostics);
+    EXPECT_EMPTY_STATUSES(resolve_diagnostics);
+
+    EXPECT_EQ(foo_type_comp.resolved_symbol, &inner_anon_struct);
+    EXPECT_EQ(anon_struct_ref_comp.resolved_symbol, &outer_anon_struct);
+    // Resolve the reference chain "data.foo.size".
+    EXPECT_EQ(data_ref_comp.resolved_symbol, &data);
+    EXPECT_EQ(data_foo_ref_comp.resolved_symbol, &struct_foo);
+    EXPECT_EQ(data_foo_size_ref_comp.resolved_symbol, &int_size);
   }
 }
 

@@ -77,6 +77,7 @@ static const verible::EnumNameMap<SymbolMetaType> kSymbolMetaTypeNames({
     {"data/net/var/instance", SymbolMetaType::kDataNetVariableInstance},
     {"function", SymbolMetaType::kFunction},
     {"task", SymbolMetaType::kTask},
+    {"struct", SymbolMetaType::kStruct},
     {"interface", SymbolMetaType::kInterface},
     {"<unspecified>", SymbolMetaType::kUnspecified},
     {"<callable>", SymbolMetaType::kCallable},
@@ -138,6 +139,7 @@ static std::ostream& operator<<(std::ostream& stream,
 // Detects unwanted reallocation.
 static void CheckedNewChildReferenceNode(ReferenceComponentNode* parent,
                                          const ReferenceComponent& component) {
+  VLOG(2) << __FUNCTION__ << "compoent: " << component;
   const auto* saved_begin = parent->Children().data();
   parent->NewChild(component);  // copy
   if (parent->Children().size() > 1) {
@@ -211,6 +213,7 @@ class SymbolTable::Builder : public TreeContextVisitor {
                                         // for function/task parameters
       case NodeEnum::kPortDeclaration:  // fall-through
       case NodeEnum::kNetDeclaration:   // fall-through
+      case NodeEnum::kStructUnionMember:  // fall-through
       case NodeEnum::kDataDeclaration:
         DeclareData(node);
         break;
@@ -255,6 +258,9 @@ class SymbolTable::Builder : public TreeContextVisitor {
         break;
       case NodeEnum::kExtendsList:
         DescendExtends(node);
+        break;
+      case NodeEnum::kStructType:
+        DescendStructType(node);
         break;
       default:
         Descend(node);
@@ -414,6 +420,33 @@ class SymbolTable::Builder : public TreeContextVisitor {
     Descend(node);
   }
 
+  void DescendStructType(const SyntaxTreeNode& struct_type) {
+    CHECK(struct_type.MatchesTag(NodeEnum::kStructType));
+    // Structs do not inherently have names, so they are all anonymous.
+    // Type declarations (typedefs) create named alias elsewhere.
+    const absl::string_view anon_name =
+        current_scope_->Value().CreateAnonymousScope("struct");
+    SymbolTableNode& new_struct = DeclareScopedElementAndDescend(
+        struct_type, anon_name, SymbolMetaType::kStruct);
+
+    // Create a self-reference to this struct type so that it can be linked
+    // for declarations that use this type.
+    const ReferenceComponent anon_type_ref{
+        .identifier = anon_name,
+        .ref_type = ReferenceType::kImmediate,
+        .required_metatype = SymbolMetaType::kStruct,
+        // pre-resolve this symbol immediately
+        .resolved_symbol = &new_struct,
+    };
+
+    const CaptureDependentReference capture(this);
+    capture.Ref().PushReferenceComponent(anon_type_ref);
+
+    if (declaration_type_info_ != nullptr) {
+      declaration_type_info_->user_defined_type = capture.Ref().LastLeaf();
+    }
+  }
+
   void HandleIdentifier(const SyntaxTreeLeaf& leaf) {
     const absl::string_view text = leaf.get().text();
     VLOG(2) << __FUNCTION__ << ": " << text;
@@ -487,6 +520,24 @@ class SymbolTable::Builder : public TreeContextVisitor {
       return;
     }
 
+    if (Context().DirectParentsAre({NodeEnum::kDataTypeImplicitIdDimensions,
+                                    NodeEnum::kStructUnionMember})) {
+      // This is a struct/union member.  Add it to the enclosing scope.
+      // e.g. "foo" in "struct { int foo; }"
+      EmplaceTypedElementInCurrentScope(
+          leaf, text, SymbolMetaType::kDataNetVariableInstance);
+      return;
+    }
+    if (Context().DirectParentsAre(
+            {NodeEnum::kVariableDeclarationAssignment,
+             NodeEnum::kVariableDeclarationAssignmentList,
+             NodeEnum::kStructUnionMember})) {
+      // This is part of a declaration covered by kVariableDeclarationAssignment
+      // already, so do not interpret this as a reference.
+      // e.g. "z" in "struct { int y, z; }"
+      return;
+    }
+
     // In DeclareInstance(), we already planted a self-reference that is
     // resolved to the instance being declared.
     if (Context().DirectParentIs(NodeEnum::kGateInstance)) return;
@@ -519,6 +570,7 @@ class SymbolTable::Builder : public TreeContextVisitor {
 
     // For all other cases, grow the reference chain deeper.
     ref.PushReferenceComponent(new_ref);
+
     if (reference_branch_point_ == nullptr) {
       // For type references, which may contained named parameters,
       // when encountering the first unqualified reference, establish its
@@ -714,12 +766,14 @@ class SymbolTable::Builder : public TreeContextVisitor {
 
   // Creates a named element in the current scope, and traverses its subtree
   // inside the new element's scope.
-  void DeclareScopedElementAndDescend(const SyntaxTreeNode& element,
-                                      absl::string_view name,
-                                      SymbolMetaType type) {
+  // Returns the new scope.
+  SymbolTableNode& DeclareScopedElementAndDescend(const SyntaxTreeNode& element,
+                                                  absl::string_view name,
+                                                  SymbolMetaType type) {
     SymbolTableNode& enter_scope(
         EmplaceElementInCurrentScope(element, name, type));
     Descend(element, enter_scope);
+    return enter_scope;
   }
 
   void DeclareModule(const SyntaxTreeNode& module) {
