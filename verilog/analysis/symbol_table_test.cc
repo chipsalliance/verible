@@ -882,7 +882,7 @@ TEST(BuildSymbolTableTest, ModuleInstance) {
       const auto ref_map(qq_info.LocalReferencesMapViewForTesting());
       {
         ASSIGN_MUST_FIND_EXACTLY_ONE_REF(pp_type, ref_map, "pp");
-        const ReferenceComponentNode* ref_node = pp_type->LastLeaf();
+        const ReferenceComponentNode* ref_node = pp_type->LastTypeComponent();
         ASSERT_NE(ref_node, nullptr);
         const ReferenceComponent& ref(ref_node->Value());
         EXPECT_EQ(ref.identifier, "pp");
@@ -945,7 +945,7 @@ TEST(BuildSymbolTableTest, ModuleInstanceUndefined) {
     const auto ref_map(qq_info.LocalReferencesMapViewForTesting());
     ASSIGN_MUST_FIND_EXACTLY_ONE_REF(pp_type, ref_map, "pp");
     {  // verify that a reference to "pp" was established
-      const ReferenceComponentNode* ref_node = pp_type->LastLeaf();
+      const ReferenceComponentNode* ref_node = pp_type->LastTypeComponent();
       ASSERT_NE(ref_node, nullptr);
       const ReferenceComponent& ref(ref_node->Value());
       EXPECT_EQ(ref.identifier, "pp");
@@ -1032,7 +1032,7 @@ TEST(BuildSymbolTableTest, ModuleInstanceTwoInSameDecl) {
       ASSERT_EQ(qq_info.local_references_to_bind.size(), 3);
       const auto ref_map(qq_info.LocalReferencesMapViewForTesting());
       ASSIGN_MUST_FIND_EXACTLY_ONE_REF(pp_type, ref_map, "pp");
-      const ReferenceComponentNode* ref_node = pp_type->LastLeaf();
+      const ReferenceComponentNode* ref_node = pp_type->LastTypeComponent();
       ASSERT_NE(ref_node, nullptr);
       const ReferenceComponent& ref(ref_node->Value());
       EXPECT_EQ(ref.identifier, "pp");
@@ -2510,8 +2510,9 @@ TEST(BuildSymbolTableTest, ClassDeclarationSingleInheritance) {
   EXPECT_EQ(base_ref_comp.resolved_symbol, nullptr);
 
   // Make sure the "base" reference is linked from the "derived" class.
-  ASSERT_EQ(derived_class_info.parent_type.user_defined_type,
-            root_symbol.Value().local_references_to_bind.front().LastLeaf());
+  ASSERT_EQ(
+      derived_class_info.parent_type.user_defined_type,
+      root_symbol.Value().local_references_to_bind.front().LastTypeComponent());
 
   {
     std::vector<absl::Status> resolve_diagnostics;
@@ -2576,8 +2577,9 @@ TEST(BuildSymbolTableTest, ClassDeclarationSingleInheritanceAcrossPackage) {
   EXPECT_EQ(base_ref_comp.resolved_symbol, nullptr);
 
   // Make sure the "pp::base" reference is linked from the "derived" class.
-  ASSERT_EQ(derived_class_info.parent_type.user_defined_type,
-            root_symbol.Value().local_references_to_bind.front().LastLeaf());
+  ASSERT_EQ(
+      derived_class_info.parent_type.user_defined_type,
+      root_symbol.Value().local_references_to_bind.front().LastTypeComponent());
 
   {
     std::vector<absl::Status> resolve_diagnostics;
@@ -2650,8 +2652,9 @@ TEST(BuildSymbolTableTest, ClassDeclarationSingleInheritancePackageToPackage) {
   EXPECT_EQ(base_ref_comp.resolved_symbol, nullptr);
 
   // Make sure the "pp::base" reference is linked from the "qq::derived" class.
-  ASSERT_EQ(derived_class_info.parent_type.user_defined_type,
-            package_qq_info.local_references_to_bind.front().LastLeaf());
+  ASSERT_EQ(
+      derived_class_info.parent_type.user_defined_type,
+      package_qq_info.local_references_to_bind.front().LastTypeComponent());
 
   {
     std::vector<absl::Status> resolve_diagnostics;
@@ -2725,7 +2728,7 @@ TEST(BuildSymbolTableTest, ClassDeclarationInheritanceFromNestedClass) {
 
   // Make sure the "pp::base" reference is linked from the "qq::derived" class.
   ASSERT_EQ(derived_class_info.parent_type.user_defined_type,
-            class_qq_info.local_references_to_bind.front().LastLeaf());
+            class_qq_info.local_references_to_bind.front().LastTypeComponent());
 
   {
     std::vector<absl::Status> resolve_diagnostics;
@@ -2790,8 +2793,9 @@ TEST(BuildSymbolTableTest, ClassDeclarationReferenceInheritedMemberFromMethod) {
   EXPECT_EQ(count_ref_comp.resolved_symbol, nullptr);
 
   // Make sure the "base" reference is linked from the "derived" class.
-  ASSERT_EQ(derived_class_info.parent_type.user_defined_type,
-            root_symbol.Value().local_references_to_bind.front().LastLeaf());
+  ASSERT_EQ(
+      derived_class_info.parent_type.user_defined_type,
+      root_symbol.Value().local_references_to_bind.front().LastTypeComponent());
 
   {
     std::vector<absl::Status> resolve_diagnostics;
@@ -2881,9 +2885,9 @@ TEST(BuildSymbolTableTest, ClassDeclarationReferenceGrandparentMember) {
   EXPECT_EQ(derived_ref_comp.resolved_symbol, nullptr);
 
   EXPECT_EQ(derived_class_info.parent_type.user_defined_type,
-            base_ref->LastLeaf());
+            base_ref->LastTypeComponent());
   EXPECT_EQ(more_derived_class_info.parent_type.user_defined_type,
-            derived_ref->LastLeaf());
+            derived_ref->LastTypeComponent());
 
   {
     std::vector<absl::Status> resolve_diagnostics;
@@ -2985,8 +2989,9 @@ TEST(BuildSymbolTableTest,
   EXPECT_EQ(dd_count_ref_comp.resolved_symbol, nullptr);
 
   // Make sure the "base" reference is linked from the "derived" class.
-  ASSERT_EQ(derived_class_info.parent_type.user_defined_type,
-            root_symbol.Value().local_references_to_bind.front().LastLeaf());
+  ASSERT_EQ(
+      derived_class_info.parent_type.user_defined_type,
+      root_symbol.Value().local_references_to_bind.front().LastTypeComponent());
 
   {
     std::vector<absl::Status> resolve_diagnostics;
@@ -3058,8 +3063,9 @@ TEST(BuildSymbolTableTest, ClassDeclarationReferenceInheritedBaseClassMethod) {
   EXPECT_EQ(count_ref_comp.resolved_symbol, nullptr);
 
   // Make sure the "base" reference is linked from the "derived" class.
-  ASSERT_EQ(derived_class_info.parent_type.user_defined_type,
-            root_symbol.Value().local_references_to_bind.front().LastLeaf());
+  ASSERT_EQ(
+      derived_class_info.parent_type.user_defined_type,
+      root_symbol.Value().local_references_to_bind.front().LastTypeComponent());
 
   {
     std::vector<absl::Status> resolve_diagnostics;
@@ -3157,8 +3163,9 @@ TEST(BuildSymbolTableTest,
   EXPECT_EQ(dd_count_ref_comp.resolved_symbol, nullptr);
 
   // Make sure the "base" reference is linked from the "derived" class.
-  ASSERT_EQ(derived_class_info.parent_type.user_defined_type,
-            root_symbol.Value().local_references_to_bind.front().LastLeaf());
+  ASSERT_EQ(
+      derived_class_info.parent_type.user_defined_type,
+      root_symbol.Value().local_references_to_bind.front().LastTypeComponent());
 
   {
     std::vector<absl::Status> resolve_diagnostics;
@@ -3255,7 +3262,8 @@ TEST(BuildSymbolTableTest, TypeParameterizedClassDataDeclarations) {
   // Of the two "cc" type refs, the outer one is the first one, by ordering of
   // textual position among references that start with the same identifier.
   const DependentReferences& data_cc_type(**cc_refs.begin());
-  EXPECT_EQ(data_info.declared_type.user_defined_type, data_cc_type.LastLeaf());
+  EXPECT_EQ(data_info.declared_type.user_defined_type,
+            data_cc_type.LastTypeComponent());
 
   {
     std::vector<absl::Status> resolve_diagnostics;
@@ -3341,7 +3349,8 @@ TEST(BuildSymbolTableTest,
   // Of all the "pp::cc" type refs, the outer one is the first one, by ordering
   // of textual position among references that start with the same identifier.
   const DependentReferences& data_cc_type(**pp_refs.begin());
-  EXPECT_EQ(data_info.declared_type.user_defined_type, data_cc_type.LastLeaf());
+  EXPECT_EQ(data_info.declared_type.user_defined_type,
+            data_cc_type.LastTypeComponent());
 
   {
     std::vector<absl::Status> resolve_diagnostics;
@@ -3432,7 +3441,8 @@ TEST(BuildSymbolTableTest, NestedTypeParameterizedClassDataDeclaration) {
   // ordering of textual position among references that start with the same
   // identifier.
   const DependentReferences& data_cc_type(**outer_refs.begin());
-  EXPECT_EQ(data_info.declared_type.user_defined_type, data_cc_type.LastLeaf());
+  EXPECT_EQ(data_info.declared_type.user_defined_type,
+            data_cc_type.LastTypeComponent());
 
   {
     std::vector<absl::Status> resolve_diagnostics;
@@ -3528,6 +3538,126 @@ TEST(BuildSymbolTableTest,
     EXPECT_EQ(cc_ref_comp.resolved_symbol, &cc_class);
     EXPECT_EQ(s_ref_comp.resolved_symbol, &s_type_param);
     EXPECT_EQ(t_ref_comp.resolved_symbol, &t_type_param);
+    // type of "data" is resolved
+    EXPECT_EQ(
+        data_info.declared_type.user_defined_type->Value().resolved_symbol,
+        &cc_class);
+  }
+}
+
+TEST(BuildSymbolTableTest,
+     NestedTypeParameterizedClassDataDeclarationNamedParameters) {
+  TestVerilogSourceFile src(
+      "i_need_to_upgrade_my_RAM_alot.sv",
+      "class outer #(parameter type S = int);\n"
+      "  class cc #(parameter type T = bit);\n"
+      "  endclass\n"
+      "endclass\n"
+      "outer#(.S(outer#(.S(int))::cc#(.T(int))))\n"
+      "    ::cc#(.T(outer#(.S(bit))::cc#(.T(bit)))) data;\n");
+  const auto status = src.Parse();
+  ASSERT_TRUE(status.ok()) << status.message();
+  SymbolTable symbol_table(nullptr);
+  const SymbolTableNode& root_symbol(symbol_table.Root());
+
+  const auto build_diagnostics = BuildSymbolTable(src, &symbol_table);
+  EXPECT_EMPTY_STATUSES(build_diagnostics);
+
+  MUST_ASSIGN_LOOKUP_SYMBOL(outer_class, root_symbol, "outer");
+  EXPECT_EQ(outer_class_info.metatype, SymbolMetaType::kClass);
+  EXPECT_EQ(outer_class_info.file_origin, &src);
+  EXPECT_EQ(outer_class_info.declared_type.syntax_origin, nullptr);
+  EXPECT_TRUE(outer_class_info.local_references_to_bind.empty());
+
+  MUST_ASSIGN_LOOKUP_SYMBOL(s_type_param, outer_class, "S");
+  EXPECT_EQ(s_type_param_info.metatype, SymbolMetaType::kParameter);
+  EXPECT_EQ(s_type_param_info.file_origin, &src);
+
+  MUST_ASSIGN_LOOKUP_SYMBOL(cc_class, outer_class, "cc");
+  EXPECT_EQ(cc_class_info.metatype, SymbolMetaType::kClass);
+  EXPECT_EQ(cc_class_info.file_origin, &src);
+  EXPECT_EQ(cc_class_info.declared_type.syntax_origin, nullptr);
+  EXPECT_TRUE(cc_class_info.local_references_to_bind.empty());
+
+  MUST_ASSIGN_LOOKUP_SYMBOL(t_type_param, cc_class, "T");
+  EXPECT_EQ(t_type_param_info.metatype, SymbolMetaType::kParameter);
+  EXPECT_EQ(t_type_param_info.file_origin, &src);
+
+  MUST_ASSIGN_LOOKUP_SYMBOL(data, root_symbol, "data");
+  EXPECT_EQ(data_info.metatype, SymbolMetaType::kDataNetVariableInstance);
+  EXPECT_EQ(data_info.file_origin, &src);
+
+  ASSERT_EQ(root_symbol.Value().local_references_to_bind.size(), 3);
+
+  const auto ref_map(root_symbol.Value().LocalReferencesMapViewForTesting());
+  ASSIGN_MUST_FIND(outer_refs, ref_map, "outer");
+  EXPECT_EQ(outer_refs.size(), 3);
+
+  // all "outer::cc" references have the same structure
+  for (const auto& outer_ref : outer_refs) {
+    const ReferenceComponent& outer_ref_comp(outer_ref->components->Value());
+    EXPECT_EQ(outer_ref_comp.identifier, "outer");
+    EXPECT_EQ(outer_ref_comp.ref_type, ReferenceType::kUnqualified);
+    EXPECT_EQ(outer_ref_comp.required_metatype, SymbolMetaType::kUnspecified);
+    EXPECT_EQ(outer_ref_comp.resolved_symbol, nullptr);
+
+    ASSERT_EQ(outer_ref->components->Children().size(), 2);
+
+    const ReferenceComponentNode& s_param_ref(
+        outer_ref->components->Children().front());
+    const ReferenceComponent& s_param_ref_comp(s_param_ref.Value());
+    EXPECT_EQ(s_param_ref_comp.ref_type, ReferenceType::kDirectMember);
+    EXPECT_EQ(s_param_ref_comp.required_metatype, SymbolMetaType::kParameter);
+    EXPECT_EQ(s_param_ref_comp.identifier, "S");
+    EXPECT_EQ(s_param_ref_comp.resolved_symbol, nullptr);
+
+    const ReferenceComponentNode& cc_ref(
+        outer_ref->components->Children().back());
+    const ReferenceComponent& cc_ref_comp(cc_ref.Value());
+    EXPECT_EQ(cc_ref_comp.ref_type, ReferenceType::kDirectMember);
+    EXPECT_EQ(cc_ref_comp.required_metatype, SymbolMetaType::kUnspecified);
+    EXPECT_EQ(cc_ref_comp.identifier, "cc");
+    EXPECT_EQ(cc_ref_comp.resolved_symbol, nullptr);
+
+    ASSERT_EQ(cc_ref.Children().size(), 1);
+    const ReferenceComponentNode& t_param_ref(cc_ref.Children().front());
+    const ReferenceComponent& t_param_ref_comp(t_param_ref.Value());
+    EXPECT_EQ(t_param_ref_comp.ref_type, ReferenceType::kDirectMember);
+    EXPECT_EQ(t_param_ref_comp.required_metatype, SymbolMetaType::kParameter);
+    EXPECT_EQ(t_param_ref_comp.identifier, "T");
+    EXPECT_EQ(t_param_ref_comp.resolved_symbol, nullptr);
+  }
+
+  // Of all the "outer::cc" type refs, the outer one is the first one, by
+  // ordering of textual position among references that start with the same
+  // identifier.
+  const DependentReferences& data_cc_type(**outer_refs.begin());
+  EXPECT_EQ(data_info.declared_type.user_defined_type,
+            data_cc_type.LastTypeComponent());
+
+  {
+    std::vector<absl::Status> resolve_diagnostics;
+    symbol_table.Resolve(&resolve_diagnostics);
+    EXPECT_EMPTY_STATUSES(resolve_diagnostics);
+
+    for (const auto& outer_ref : outer_refs) {
+      const ReferenceComponent& outer_ref_comp(outer_ref->components->Value());
+      EXPECT_EQ(outer_ref_comp.resolved_symbol, &outer_class);
+
+      const ReferenceComponentNode& s_param_ref(
+          outer_ref->components->Children().front());
+      const ReferenceComponent& s_param_ref_comp(s_param_ref.Value());
+      EXPECT_EQ(s_param_ref_comp.resolved_symbol, &s_type_param);
+
+      const ReferenceComponentNode& cc_ref(
+          outer_ref->components->Children().back());
+      const ReferenceComponent& cc_ref_comp(cc_ref.Value());
+      EXPECT_EQ(cc_ref_comp.resolved_symbol, &cc_class);
+
+      const ReferenceComponentNode& t_param_ref(cc_ref.Children().front());
+      const ReferenceComponent& t_param_ref_comp(t_param_ref.Value());
+      EXPECT_EQ(t_param_ref_comp.resolved_symbol, &t_type_param);
+    }
     // type of "data" is resolved
     EXPECT_EQ(
         data_info.declared_type.user_defined_type->Value().resolved_symbol,
@@ -6072,7 +6202,7 @@ TEST(BuildSymbolTableTest, MultiFileModuleInstance) {
       const auto ref_map(qq_info.LocalReferencesMapViewForTesting());
       {
         ASSIGN_MUST_FIND_EXACTLY_ONE_REF(pp_type, ref_map, "pp");
-        const ReferenceComponentNode* ref_node = pp_type->LastLeaf();
+        const ReferenceComponentNode* ref_node = pp_type->LastTypeComponent();
         ASSERT_NE(ref_node, nullptr);
         const ReferenceComponent& ref(ref_node->Value());
         EXPECT_EQ(ref.identifier, "pp");
@@ -6095,7 +6225,7 @@ TEST(BuildSymbolTableTest, MultiFileModuleInstance) {
       const auto ref_map(ss_info.LocalReferencesMapViewForTesting());
       {
         ASSIGN_MUST_FIND_EXACTLY_ONE_REF(qq_type, ref_map, "qq");
-        const ReferenceComponentNode* ref_node = qq_type->LastLeaf();
+        const ReferenceComponentNode* ref_node = qq_type->LastTypeComponent();
         ASSERT_NE(ref_node, nullptr);
         const ReferenceComponent& ref(ref_node->Value());
         EXPECT_EQ(ref.identifier, "qq");
@@ -6221,7 +6351,7 @@ TEST(BuildSymbolTableTest, ModuleInstancesFromProjectOneFileAtATime) {
     const auto ref_map(qq_info.LocalReferencesMapViewForTesting());
     {
       ASSIGN_MUST_FIND_EXACTLY_ONE_REF(pp_type, ref_map, "pp");
-      const ReferenceComponentNode* ref_node = pp_type->LastLeaf();
+      const ReferenceComponentNode* ref_node = pp_type->LastTypeComponent();
       ASSERT_NE(ref_node, nullptr);
       const ReferenceComponent& ref(ref_node->Value());
       EXPECT_EQ(ref.identifier, "pp");
@@ -6242,7 +6372,7 @@ TEST(BuildSymbolTableTest, ModuleInstancesFromProjectOneFileAtATime) {
     const auto ref_map(ss_info.LocalReferencesMapViewForTesting());
     {
       ASSIGN_MUST_FIND_EXACTLY_ONE_REF(qq_type, ref_map, "qq");
-      const ReferenceComponentNode* ref_node = qq_type->LastLeaf();
+      const ReferenceComponentNode* ref_node = qq_type->LastTypeComponent();
       ASSERT_NE(ref_node, nullptr);
       const ReferenceComponent& ref(ref_node->Value());
       EXPECT_EQ(ref.identifier, "qq");
@@ -6371,7 +6501,7 @@ TEST(BuildSymbolTableTest, ModuleInstancesFromProjectFilesGood) {
     const auto ref_map(qq_info.LocalReferencesMapViewForTesting());
     {
       ASSIGN_MUST_FIND_EXACTLY_ONE_REF(pp_type, ref_map, "pp");
-      const ReferenceComponentNode* ref_node = pp_type->LastLeaf();
+      const ReferenceComponentNode* ref_node = pp_type->LastTypeComponent();
       ASSERT_NE(ref_node, nullptr);
       const ReferenceComponent& ref(ref_node->Value());
       EXPECT_EQ(ref.identifier, "pp");
@@ -6392,7 +6522,7 @@ TEST(BuildSymbolTableTest, ModuleInstancesFromProjectFilesGood) {
     const auto ref_map(ss_info.LocalReferencesMapViewForTesting());
     {
       ASSIGN_MUST_FIND_EXACTLY_ONE_REF(qq_type, ref_map, "qq");
-      const ReferenceComponentNode* ref_node = qq_type->LastLeaf();
+      const ReferenceComponentNode* ref_node = qq_type->LastTypeComponent();
       ASSERT_NE(ref_node, nullptr);
       const ReferenceComponent& ref(ref_node->Value());
       EXPECT_EQ(ref.identifier, "qq");
@@ -6496,7 +6626,7 @@ TEST(BuildSymbolTableTest, SingleFileModuleInstanceCyclicDependencies) {
     const auto ref_map(pp_info.LocalReferencesMapViewForTesting());
     {
       ASSIGN_MUST_FIND_EXACTLY_ONE_REF(ss_type, ref_map, "ss");
-      const ReferenceComponentNode* ref_node = ss_type->LastLeaf();
+      const ReferenceComponentNode* ref_node = ss_type->LastTypeComponent();
       ASSERT_NE(ref_node, nullptr);
       const ReferenceComponent& ref(ref_node->Value());
       EXPECT_EQ(ref.identifier, "ss");
@@ -6519,7 +6649,7 @@ TEST(BuildSymbolTableTest, SingleFileModuleInstanceCyclicDependencies) {
     const auto ref_map(qq_info.LocalReferencesMapViewForTesting());
     {
       ASSIGN_MUST_FIND_EXACTLY_ONE_REF(pp_type, ref_map, "pp");
-      const ReferenceComponentNode* ref_node = pp_type->LastLeaf();
+      const ReferenceComponentNode* ref_node = pp_type->LastTypeComponent();
       ASSERT_NE(ref_node, nullptr);
       const ReferenceComponent& ref(ref_node->Value());
       EXPECT_EQ(ref.identifier, "pp");
@@ -6542,7 +6672,7 @@ TEST(BuildSymbolTableTest, SingleFileModuleInstanceCyclicDependencies) {
     const auto ref_map(ss_info.LocalReferencesMapViewForTesting());
     {
       ASSIGN_MUST_FIND_EXACTLY_ONE_REF(qq_type, ref_map, "qq");
-      const ReferenceComponentNode* ref_node = qq_type->LastLeaf();
+      const ReferenceComponentNode* ref_node = qq_type->LastTypeComponent();
       ASSERT_NE(ref_node, nullptr);
       const ReferenceComponent& ref(ref_node->Value());
       EXPECT_EQ(ref.identifier, "qq");
@@ -6686,7 +6816,7 @@ TEST(BuildSymbolTableTest, MultiFileModuleInstanceCyclicDependencies) {
       const auto ref_map(pp_info.LocalReferencesMapViewForTesting());
       {
         ASSIGN_MUST_FIND_EXACTLY_ONE_REF(ss_type, ref_map, "ss");
-        const ReferenceComponentNode* ref_node = ss_type->LastLeaf();
+        const ReferenceComponentNode* ref_node = ss_type->LastTypeComponent();
         ASSERT_NE(ref_node, nullptr);
         const ReferenceComponent& ref(ref_node->Value());
         EXPECT_EQ(ref.identifier, "ss");
@@ -6709,7 +6839,7 @@ TEST(BuildSymbolTableTest, MultiFileModuleInstanceCyclicDependencies) {
       const auto ref_map(qq_info.LocalReferencesMapViewForTesting());
       {
         ASSIGN_MUST_FIND_EXACTLY_ONE_REF(pp_type, ref_map, "pp");
-        const ReferenceComponentNode* ref_node = pp_type->LastLeaf();
+        const ReferenceComponentNode* ref_node = pp_type->LastTypeComponent();
         ASSERT_NE(ref_node, nullptr);
         const ReferenceComponent& ref(ref_node->Value());
         EXPECT_EQ(ref.identifier, "pp");
@@ -6732,7 +6862,7 @@ TEST(BuildSymbolTableTest, MultiFileModuleInstanceCyclicDependencies) {
       const auto ref_map(ss_info.LocalReferencesMapViewForTesting());
       {
         ASSIGN_MUST_FIND_EXACTLY_ONE_REF(qq_type, ref_map, "qq");
-        const ReferenceComponentNode* ref_node = qq_type->LastLeaf();
+        const ReferenceComponentNode* ref_node = qq_type->LastTypeComponent();
         ASSERT_NE(ref_node, nullptr);
         const ReferenceComponent& ref(ref_node->Value());
         EXPECT_EQ(ref.identifier, "qq");

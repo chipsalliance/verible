@@ -203,7 +203,9 @@ struct DependentReferences {
   // Structural consistency check.
   // When traversing an unqualified or qualified reference, use this to grow a
   // new leaf node in the reference tree.
-  void PushReferenceComponent(const ReferenceComponent& component);
+  // Returns a pointer to the new node.
+  ReferenceComponentNode* PushReferenceComponent(
+      const ReferenceComponent& component);
 
   // Structural consistency check.
   void VerifySymbolTableRoot(const SymbolTableNode* root) const;

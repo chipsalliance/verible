@@ -137,18 +137,16 @@ static std::ostream& operator<<(std::ostream& stream,
 
 // Validates iterator/pointer stability when calling VectorTree::NewChild.
 // Detects unwanted reallocation.
-static void CheckedNewChildReferenceNode(ReferenceComponentNode* parent,
-                                         const ReferenceComponent& component) {
-  VLOG(2) << __FUNCTION__ << "compoent: " << component;
-  const auto* saved_begin = parent->Children().data();
-  parent->NewChild(component);  // copy
-  if (parent->Children().size() > 1) {
-    // Check that iterators/pointers were not invalidated by a reallocation.
-    CHECK_EQ(parent->Children().data(), saved_begin)
-        << "\nReallocation invalidated pointers to reference nodes at:\n"
+static ReferenceComponentNode* CheckedNewChildReferenceNode(
+    ReferenceComponentNode* parent, const ReferenceComponent& component) {
+  const auto& siblings(parent->Children());
+  if (!siblings.empty()) {
+    CHECK_LT(siblings.size(), siblings.capacity())
+        << "\nReallocation would invalidate pointers to reference nodes at:\n"
         << *parent << "\nFix: pre-allocate child nodes.";
   }
   // Otherwise, this first node had no prior siblings, so no need to check.
+  return parent->NewChild(component);  // copy
 }
 
 static absl::Status DiagnoseMemberSymbolResolutionFailure(
@@ -285,9 +283,14 @@ class SymbolTable::Builder : public TreeContextVisitor {
   // the destructor.
   class CaptureDependentReference {
    public:
-    CaptureDependentReference(Builder* builder) : builder_(builder) {
+    CaptureDependentReference(Builder* builder)
+        : builder_(builder),
+          saved_branch_point_(builder_->reference_branch_point_) {
       // Push stack space to capture references.
       builder_->reference_builders_.emplace(/* DependentReferences */);
+      // Reset the branch point to start new named parameter/port chains
+      // from the same context.
+      builder_->reference_branch_point_ = nullptr;
     }
 
     ~CaptureDependentReference() {
@@ -300,6 +303,7 @@ class SymbolTable::Builder : public TreeContextVisitor {
             std::move(ref));
       }
       builder_->reference_builders_.pop();
+      builder_->reference_branch_point_ = saved_branch_point_;  // restore
     }
 
     // Returns the chain of dependent references that were built.
@@ -309,6 +313,7 @@ class SymbolTable::Builder : public TreeContextVisitor {
 
    private:
     Builder* builder_;
+    ReferenceComponentNode* saved_branch_point_;
   };
 
   void DescendReferenceExpression(const SyntaxTreeNode& reference) {
@@ -404,7 +409,9 @@ class SymbolTable::Builder : public TreeContextVisitor {
       // FindAll* will also catch actual port connections inside preprocessing
       // conditionals.
       const size_t num_params = FindAllNamedParams(node).size();
-      reference_branch_point_->Children().reserve(num_params);
+      // +1 to accommodate the slot needed for a nested type reference
+      // e.g. for "B" in "A#(.X(), .Y(), ...)::B"
+      reference_branch_point_->Children().reserve(num_params + 1);
     }
     Descend(node);
   }
@@ -569,19 +576,15 @@ class SymbolTable::Builder : public TreeContextVisitor {
     }
 
     // For all other cases, grow the reference chain deeper.
-    ref.PushReferenceComponent(new_ref);
-
-    if (reference_branch_point_ == nullptr) {
-      // For type references, which may contained named parameters,
-      // when encountering the first unqualified reference, establish its
-      // reference node as the point from which named parameter references
-      // get added as siblings.
-      // e.g. "A#(.B(...), .C(...))" would result in a reference tree:
-      //   A -+- ::B
-      //      |
-      //      \- ::C
-      reference_branch_point_ = ref.components.get();
-    }
+    // For type references, which may contained named parameters,
+    // when encountering the first unqualified reference, establish its
+    // reference node as the point from which named parameter references
+    // get added as siblings.
+    // e.g. "A#(.B(...), .C(...))" would result in a reference tree:
+    //   A -+- ::B
+    //      |
+    //      \- ::C
+    reference_branch_point_ = ref.PushReferenceComponent(new_ref);
   }
 
   void Visit(const SyntaxTreeLeaf& leaf) final {
@@ -1287,18 +1290,21 @@ ReferenceComponentNode* DependentReferences::LastTypeComponent() {
   return ReferenceLastTypeComponent(node);
 }
 
-void DependentReferences::PushReferenceComponent(
+ReferenceComponentNode* DependentReferences::PushReferenceComponent(
     const ReferenceComponent& component) {
   VLOG(3) << __FUNCTION__ << ", id: " << component.identifier;
+  ReferenceComponentNode* new_child;
   if (Empty()) {
     components = absl::make_unique<ReferenceComponentNode>(component);  // copy
+    new_child = components.get();
   } else {
-    // TODO: track correct node to append in the Builder internal state.
+    // Find the last node from which references can be grown.
+    // Exclude type named parameters.
     ReferenceComponentNode* node = LastTypeComponent();
-    // This is a leaf node, and this is the first child.
-    CheckedNewChildReferenceNode(node, component);
+    new_child = CheckedNewChildReferenceNode(node, component);
   }
   VLOG(3) << "end of " << __FUNCTION__ << ":\n" << *this;
+  return new_child;
 }
 
 void DependentReferences::VerifySymbolTableRoot(
