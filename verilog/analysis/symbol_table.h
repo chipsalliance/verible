@@ -115,7 +115,7 @@ struct ReferenceComponent {
   // Inform the symbol resolver that this symbol must be of a certain metatype.
   // SymbolInfo::kUnspecified is interpreted as "any metatype" for cases
   // where it is not known in advance.
-  const SymbolMetaType metatype = SymbolMetaType::kUnspecified;
+  const SymbolMetaType required_metatype = SymbolMetaType::kUnspecified;
 
   // This points to the definition with which this symbol was resolved.
   // During symbol table construction, this remains nullptr.
@@ -259,7 +259,7 @@ std::ostream& operator<<(std::ostream&, const DeclarationTypeInfo&);
 // and subclasses for each element type.
 struct SymbolInfo {
   // What is this symbol? (package, module, type, variable, etc.)
-  SymbolMetaType type;
+  SymbolMetaType metatype;
 
   // This symbol's name is stored in the .Key() of the SymbolTableNode that
   // encloses this structure.  (This is SymbolTableNode::Value().)
@@ -410,7 +410,7 @@ class SymbolTable {
   // and string memory, otherwise string memory is owned by 'project'.
   explicit SymbolTable(VerilogProject* project)
       : project_(project),
-        symbol_table_root_(SymbolInfo{.type = SymbolMetaType::kRoot}) {}
+        symbol_table_root_(SymbolInfo{.metatype = SymbolMetaType::kRoot}) {}
 
   // can become move-able when needed
   SymbolTable(const SymbolTable&) = delete;

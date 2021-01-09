@@ -143,9 +143,10 @@ static absl::Status DiagnoseMemberSymbolResolutionFailure(
     absl::string_view name, const SymbolTableNode& context) {
   const absl::string_view context_name =
       context.Parent() == nullptr ? kRoot : *context.Key();
-  return absl::NotFoundError(absl::StrCat(
-      "No member symbol \"", name, "\" in parent scope (",
-      SymbolMetaTypeAsString(context.Value().type), ") ", context_name, "."));
+  return absl::NotFoundError(
+      absl::StrCat("No member symbol \"", name, "\" in parent scope (",
+                   SymbolMetaTypeAsString(context.Value().metatype), ") ",
+                   context_name, "."));
 }
 
 class SymbolTable::Builder : public TreeContextVisitor {
@@ -489,7 +490,7 @@ class SymbolTable::Builder : public TreeContextVisitor {
     const ReferenceComponent new_ref{
         .identifier = text,
         .ref_type = InferReferenceType(),
-        .metatype = InferMetaType(),
+        .required_metatype = InferMetaType(),
     };
 
     // For instances' named ports, and types' named parameters,
@@ -659,10 +660,10 @@ class SymbolTable::Builder : public TreeContextVisitor {
   // classes, modules, etc...
   SymbolTableNode& EmplaceElementInCurrentScope(const verible::Symbol& element,
                                                 absl::string_view name,
-                                                SymbolMetaType type) {
+                                                SymbolMetaType metatype) {
     const auto p =
         current_scope_->TryEmplace(name, SymbolInfo{
-                                             .type = type,
+                                             .metatype = metatype,
                                              .file_origin = source_,
                                              .syntax_origin = &element,
                                          });
@@ -677,14 +678,14 @@ class SymbolTable::Builder : public TreeContextVisitor {
   // instances, functions (using their return types).
   SymbolTableNode& EmplaceTypedElementInCurrentScope(
       const verible::Symbol& element, absl::string_view name,
-      SymbolMetaType type) {
+      SymbolMetaType metatype) {
     VLOG(1) << __FUNCTION__ << ": " << name << " in " << CurrentScopeFullPath();
     VLOG(1) << "  type info: " << *ABSL_DIE_IF_NULL(declaration_type_info_);
     VLOG(1) << "  full text: " << AutoTruncate{StringSpanOfSymbol(element), 40};
     const auto p = current_scope_->TryEmplace(
         name,
         SymbolInfo{
-            .type = type,
+            .metatype = metatype,
             .file_origin = source_,
             .syntax_origin = &element,
             // associate this instance with its declared type
@@ -869,7 +870,7 @@ class SymbolTable::Builder : public TreeContextVisitor {
     capture.Ref().PushReferenceComponent(ReferenceComponent{
         .identifier = instance_name,
         .ref_type = ReferenceType::kUnqualified,
-        .metatype = SymbolMetaType::kDataNetVariableInstance,
+        .required_metatype = SymbolMetaType::kDataNetVariableInstance,
         // Start with its type already resolved to the node we just declared.
         .resolved_symbol = &new_instance,
     });
@@ -917,7 +918,7 @@ class SymbolTable::Builder : public TreeContextVisitor {
   }
 
   absl::StatusOr<SymbolTableNode*> LookupOrInjectOutOfLineDefinition(
-      const SyntaxTreeNode& qualified_id, SymbolMetaType type,
+      const SyntaxTreeNode& qualified_id, SymbolMetaType metatype,
       const SyntaxTreeNode* definition_syntax) {
     // e.g. "function int class_c::func(...); ... endfunction"
     // Use a DependentReference object to establish a self-reference.
@@ -945,7 +946,7 @@ class SymbolTable::Builder : public TreeContextVisitor {
 
     const auto p = outer_scope->TryEmplace(
         inner_key, SymbolInfo{
-                       .type = type,
+                       .metatype = metatype,
                        .file_origin = source_,
                        .syntax_origin = definition_syntax,
                    });
@@ -959,13 +960,13 @@ class SymbolTable::Builder : public TreeContextVisitor {
     } else {
       // Use pre-existing symbol table entry created from the prototype.
       // Check that out-of-line and prototype symbol metatypes match.
-      const SymbolMetaType original_type = inner_symbol->Value().type;
-      if (original_type != type) {
+      const SymbolMetaType original_metatype = inner_symbol->Value().metatype;
+      if (original_metatype != metatype) {
         return absl::AlreadyExistsError(
-            absl::StrCat(SymbolMetaTypeAsString(original_type), " ",
+            absl::StrCat(SymbolMetaTypeAsString(original_metatype), " ",
                          ContextFullPath(*inner_symbol),
                          " cannot be redefined out-of-line as a ",
-                         SymbolMetaTypeAsString(type)));
+                         SymbolMetaTypeAsString(metatype)));
       }
     }
     // Resolve this self-reference immediately.
@@ -1140,7 +1141,7 @@ void ReferenceComponent::VerifySymbolTableRoot(
 
 absl::Status ReferenceComponent::MatchesMetatype(
     SymbolMetaType found_metatype) const {
-  switch (metatype) {
+  switch (required_metatype) {
     case SymbolMetaType::kUnspecified:
       return absl::OkStatus();
     case SymbolMetaType::kCallable:
@@ -1150,20 +1151,20 @@ absl::Status ReferenceComponent::MatchesMetatype(
       }
       break;
     default:
-      if (metatype == found_metatype) return absl::OkStatus();
+      if (required_metatype == found_metatype) return absl::OkStatus();
       break;
   }
   // Otherwise, mismatched metatype.
   return absl::InvalidArgumentError(
       absl::StrCat("Expecting reference \"", identifier, "\" to resolve to a ",
-                   SymbolMetaTypeAsString(metatype), ", but found a ",
+                   SymbolMetaTypeAsString(required_metatype), ", but found a ",
                    SymbolMetaTypeAsString(found_metatype), "."));
 }
 
 absl::Status ReferenceComponent::ResolveSymbol(
     const SymbolTableNode& resolved) {
   // Verify metatype match.
-  const auto metatype_match_status = MatchesMetatype(resolved.Value().type);
+  const auto metatype_match_status = MatchesMetatype(resolved.Value().metatype);
   if (metatype_match_status.ok()) {
     VLOG(2) << "  resolved: " << ContextFullPath(resolved);
     resolved_symbol = &resolved;
@@ -1472,8 +1473,8 @@ std::ostream& operator<<(std::ostream& stream, ReferenceType ref_type) {
 std::ostream& ReferenceComponent::PrintPathComponent(
     std::ostream& stream) const {
   stream << ref_type << identifier;
-  if (metatype != SymbolMetaType::kUnspecified) {
-    stream << '[' << metatype << ']';
+  if (required_metatype != SymbolMetaType::kUnspecified) {
+    stream << '[' << required_metatype << ']';
   }
   return stream;
 }
@@ -1558,13 +1559,13 @@ std::ostream& SymbolInfo::PrintDefinition(std::ostream& stream,
                                           size_t indent) const {
   // print everything except local_references_to_bind
   const verible::Spacer wrap(indent);
-  stream << wrap << "metatype: " << type << std::endl;
+  stream << wrap << "metatype: " << metatype << std::endl;
   if (file_origin != nullptr) {
     stream << wrap << "file: " << file_origin->ResolvedPath() << std::endl;
   }
   // declared_type only makes sense for elements with potentially user-defined
   // types, and not for language element declarations like modules and classes.
-  if (type == SymbolMetaType::kDataNetVariableInstance) {
+  if (metatype == SymbolMetaType::kDataNetVariableInstance) {
     stream << wrap << declared_type << std::endl;
   }
   return stream;

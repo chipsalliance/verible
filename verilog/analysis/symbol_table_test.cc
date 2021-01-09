@@ -143,7 +143,7 @@ TEST(ReferenceComponentTest, MatchesMetatypeTest) {
     const ReferenceComponent component{
         .identifier = "",
         .ref_type = ReferenceType::kUnqualified,
-        .metatype = SymbolMetaType::kUnspecified};
+        .required_metatype = SymbolMetaType::kUnspecified};
     for (const auto& other :
          {SymbolMetaType::kUnspecified, SymbolMetaType::kParameter,
           SymbolMetaType::kFunction, SymbolMetaType::kTask}) {
@@ -152,9 +152,10 @@ TEST(ReferenceComponentTest, MatchesMetatypeTest) {
     }
   }
   {  // kCallable matches only kFunction and kTask
-    const ReferenceComponent component{.identifier = "",
-                                       .ref_type = ReferenceType::kUnqualified,
-                                       .metatype = SymbolMetaType::kCallable};
+    const ReferenceComponent component{
+        .identifier = "",
+        .ref_type = ReferenceType::kUnqualified,
+        .required_metatype = SymbolMetaType::kCallable};
     for (const auto& other :
          {SymbolMetaType::kFunction, SymbolMetaType::kTask}) {
       const auto status = component.MatchesMetatype(other);
@@ -163,20 +164,23 @@ TEST(ReferenceComponentTest, MatchesMetatypeTest) {
     for (const auto& other : {SymbolMetaType::kModule, SymbolMetaType::kPackage,
                               SymbolMetaType::kClass}) {
       const auto status = component.MatchesMetatype(other);
-      EXPECT_FALSE(status.ok()) << component.metatype << " vs. " << other;
+      EXPECT_FALSE(status.ok())
+          << component.required_metatype << " vs. " << other;
     }
   }
   {  // all other types must be matched exactly
-    const ReferenceComponent component{.identifier = "",
-                                       .ref_type = ReferenceType::kUnqualified,
-                                       .metatype = SymbolMetaType::kFunction};
+    const ReferenceComponent component{
+        .identifier = "",
+        .ref_type = ReferenceType::kUnqualified,
+        .required_metatype = SymbolMetaType::kFunction};
 
     for (const auto& other :
          {SymbolMetaType::kUnspecified, SymbolMetaType::kParameter,
           SymbolMetaType::kModule, SymbolMetaType::kTask,
           SymbolMetaType::kClass}) {
       const auto status = component.MatchesMetatype(other);
-      EXPECT_FALSE(status.ok()) << component.metatype << " vs. " << other;
+      EXPECT_FALSE(status.ok())
+          << component.required_metatype << " vs. " << other;
     }
   }
 }
@@ -187,7 +191,7 @@ TEST(ReferenceNodeFullPathTest, Print) {
   const Node root(
       Data{.identifier = "xx",
            .ref_type = ReferenceType::kUnqualified,
-           .metatype = SymbolMetaType::kClass},
+           .required_metatype = SymbolMetaType::kClass},
       Node(Data{.identifier = "yy", .ref_type = ReferenceType::kDirectMember},
            Node(Data{.identifier = "zz",
                      .ref_type = ReferenceType::kMemberOfTypeOfParent})));
@@ -220,7 +224,7 @@ TEST(DependentReferencesTest, PrintOnlyRootNodeUnresolved) {
       .components = absl::make_unique<ReferenceComponentNode>(
           ReferenceComponent{.identifier = "foo",
                              .ref_type = ReferenceType::kUnqualified,
-                             .metatype = SymbolMetaType::kUnspecified,
+                             .required_metatype = SymbolMetaType::kUnspecified,
                              .resolved_symbol = nullptr})};
   std::ostringstream stream;
   stream << dep_refs;
@@ -231,11 +235,12 @@ TEST(DependentReferencesTest, PrintNonRootResolved) {
   // Synthesize a symbol table.
   typedef SymbolTableNode::key_value_type KV;
   SymbolTableNode root(
-      SymbolInfo{.type = SymbolMetaType::kRoot},
+      SymbolInfo{.metatype = SymbolMetaType::kRoot},
       KV{"p_pkg",
-         SymbolTableNode(SymbolInfo{.type = SymbolMetaType::kPackage},
-                         KV{"c_class", SymbolTableNode(SymbolInfo{
-                                           .type = SymbolMetaType::kClass})})});
+         SymbolTableNode(
+             SymbolInfo{.metatype = SymbolMetaType::kPackage},
+             KV{"c_class", SymbolTableNode(SymbolInfo{
+                               .metatype = SymbolMetaType::kClass})})});
 
   // Bookmark symbol table nodes.
   MUST_ASSIGN_LOOKUP_SYMBOL(p_pkg, root, "p_pkg");
@@ -246,12 +251,12 @@ TEST(DependentReferencesTest, PrintNonRootResolved) {
       .components = absl::make_unique<ReferenceComponentNode>(
           ReferenceComponent{.identifier = "p_pkg",
                              .ref_type = ReferenceType::kUnqualified,
-                             .metatype = SymbolMetaType::kPackage,
+                             .required_metatype = SymbolMetaType::kPackage,
                              .resolved_symbol = &p_pkg},
           ReferenceComponentNode(
               ReferenceComponent{.identifier = "c_class",
                                  .ref_type = ReferenceType::kDirectMember,
-                                 .metatype = SymbolMetaType::kClass,
+                                 .required_metatype = SymbolMetaType::kClass,
                                  .resolved_symbol = &c_class}))};
 
   // Print and compare.
@@ -371,11 +376,12 @@ TEST(BuildSymbolTableTest, IntegrityCheckResolvedSymbol) {
     // symbol_table1 will outlive symbol_table_2, so give symbol_table_2 a
     // pointer to symbol_table_1.
     root2.Value().local_references_to_bind.push_back(DependentReferences{
-        .components = absl::make_unique<ReferenceComponentNode>(
-            ReferenceComponent{.identifier = "foo",
-                               .ref_type = ReferenceType::kUnqualified,
-                               .metatype = SymbolMetaType::kUnspecified,
-                               .resolved_symbol = &root1})});
+        .components =
+            absl::make_unique<ReferenceComponentNode>(ReferenceComponent{
+                .identifier = "foo",
+                .ref_type = ReferenceType::kUnqualified,
+                .required_metatype = SymbolMetaType::kUnspecified,
+                .resolved_symbol = &root1})});
     // CheckIntegrity() will fail on destruction of symbol_table_2.
   };
   EXPECT_DEATH(test_func(),
@@ -393,11 +399,12 @@ TEST(BuildSymbolTableTest, IntegrityCheckDeclaredType) {
     // symbol_table1 will outlive symbol_table_2, so give symbol_table_2 a
     // pointer to symbol_table_1.
     root1.Value().local_references_to_bind.push_back(DependentReferences{
-        .components = absl::make_unique<ReferenceComponentNode>(
-            ReferenceComponent{.identifier = "foo",
-                               .ref_type = ReferenceType::kUnqualified,
-                               .metatype = SymbolMetaType::kUnspecified,
-                               .resolved_symbol = &root1})});
+        .components =
+            absl::make_unique<ReferenceComponentNode>(ReferenceComponent{
+                .identifier = "foo",
+                .ref_type = ReferenceType::kUnqualified,
+                .required_metatype = SymbolMetaType::kUnspecified,
+                .resolved_symbol = &root1})});
     root2.Value().declared_type.user_defined_type =
         root1.Value().local_references_to_bind.front().components.get();
     // CheckIntegrity() will fail on destruction of symbol_table_2.
@@ -473,7 +480,7 @@ TEST(BuildSymbolTableTest, ModuleDeclarationSingleEmpty) {
   const auto build_diagnostics = BuildSymbolTable(src, &symbol_table);
 
   MUST_ASSIGN_LOOKUP_SYMBOL(module_node, root_symbol, "m");
-  EXPECT_EQ(module_node_info.type, SymbolMetaType::kModule);
+  EXPECT_EQ(module_node_info.metatype, SymbolMetaType::kModule);
   EXPECT_EQ(module_node_info.file_origin, &src);
   EXPECT_EQ(module_node_info.declared_type.syntax_origin,
             nullptr);  // there is no module meta-type
@@ -503,7 +510,7 @@ TEST(BuildSymbolTableTest, ModuleDeclarationLocalNetsVariables) {
   const auto build_diagnostics = BuildSymbolTable(src, &symbol_table);
 
   MUST_ASSIGN_LOOKUP_SYMBOL(module_node, root_symbol, "m");
-  EXPECT_EQ(module_node_info.type, SymbolMetaType::kModule);
+  EXPECT_EQ(module_node_info.metatype, SymbolMetaType::kModule);
   EXPECT_EQ(module_node_info.file_origin, &src);
   EXPECT_EQ(module_node_info.declared_type.syntax_origin,
             nullptr);  // there is no module meta-type
@@ -513,7 +520,8 @@ TEST(BuildSymbolTableTest, ModuleDeclarationLocalNetsVariables) {
   static constexpr absl::string_view members[] = {"w1", "w2", "l1", "l2"};
   for (const auto& member : members) {
     MUST_ASSIGN_LOOKUP_SYMBOL(member_node, module_node, member);
-    EXPECT_EQ(member_node_info.type, SymbolMetaType::kDataNetVariableInstance);
+    EXPECT_EQ(member_node_info.metatype,
+              SymbolMetaType::kDataNetVariableInstance);
     EXPECT_EQ(member_node_info.declared_type.user_defined_type,
               nullptr);  // types are primitive
   }
@@ -541,7 +549,7 @@ TEST(BuildSymbolTableTest, ModuleDeclarationLocalDuplicateNets) {
   const auto build_diagnostics = BuildSymbolTable(src, &symbol_table);
 
   MUST_ASSIGN_LOOKUP_SYMBOL(module_node, root_symbol, "m");
-  EXPECT_EQ(module_node_info.type, SymbolMetaType::kModule);
+  EXPECT_EQ(module_node_info.metatype, SymbolMetaType::kModule);
   EXPECT_EQ(module_node_info.file_origin, &src);
   EXPECT_EQ(module_node_info.declared_type.syntax_origin,
             nullptr);  // there is no module meta-type
@@ -592,7 +600,7 @@ TEST(BuildSymbolTableTest, ModuleDeclarationConditionalGenerateAnonymous) {
     const auto build_diagnostics = BuildSymbolTable(src, &symbol_table);
 
     MUST_ASSIGN_LOOKUP_SYMBOL(module_node, root_symbol, "m");
-    EXPECT_EQ(module_node_info.type, SymbolMetaType::kModule);
+    EXPECT_EQ(module_node_info.metatype, SymbolMetaType::kModule);
     EXPECT_EQ(module_node_info.file_origin, &src);
     EXPECT_EQ(module_node_info.declared_type.syntax_origin,
               nullptr);  // there is no module meta-type
@@ -605,25 +613,25 @@ TEST(BuildSymbolTableTest, ModuleDeclarationConditionalGenerateAnonymous) {
     {
       const SymbolTableNode& gen_block(iter->second);  // anonymous "...-0"
       const SymbolInfo& gen_block_info(gen_block.Value());
-      EXPECT_EQ(gen_block_info.type, SymbolMetaType::kGenerate);
+      EXPECT_EQ(gen_block_info.metatype, SymbolMetaType::kGenerate);
       MUST_ASSIGN_LOOKUP_SYMBOL(wire_x, gen_block, "x");
-      EXPECT_EQ(wire_x_info.type, SymbolMetaType::kDataNetVariableInstance);
+      EXPECT_EQ(wire_x_info.metatype, SymbolMetaType::kDataNetVariableInstance);
       ++iter;
     }
     {
       const SymbolTableNode& gen_block(iter->second);  // anonymous "...-1"
       const SymbolInfo& gen_block_info(gen_block.Value());
-      EXPECT_EQ(gen_block_info.type, SymbolMetaType::kGenerate);
+      EXPECT_EQ(gen_block_info.metatype, SymbolMetaType::kGenerate);
       MUST_ASSIGN_LOOKUP_SYMBOL(wire_y, gen_block, "y");
-      EXPECT_EQ(wire_y_info.type, SymbolMetaType::kDataNetVariableInstance);
+      EXPECT_EQ(wire_y_info.metatype, SymbolMetaType::kDataNetVariableInstance);
       ++iter;
     }
     {
       const SymbolTableNode& gen_block(iter->second);  // anonymous "...-2"
       const SymbolInfo& gen_block_info(gen_block.Value());
-      EXPECT_EQ(gen_block_info.type, SymbolMetaType::kGenerate);
+      EXPECT_EQ(gen_block_info.metatype, SymbolMetaType::kGenerate);
       MUST_ASSIGN_LOOKUP_SYMBOL(wire_z, gen_block, "z");
-      EXPECT_EQ(wire_z_info.type, SymbolMetaType::kDataNetVariableInstance);
+      EXPECT_EQ(wire_z_info.metatype, SymbolMetaType::kDataNetVariableInstance);
       ++iter;
     }
 
@@ -654,7 +662,7 @@ TEST(BuildSymbolTableTest, ModuleDeclarationConditionalGenerateLabeled) {
   const auto build_diagnostics = BuildSymbolTable(src, &symbol_table);
 
   MUST_ASSIGN_LOOKUP_SYMBOL(module_node, root_symbol, "m");
-  EXPECT_EQ(module_node_info.type, SymbolMetaType::kModule);
+  EXPECT_EQ(module_node_info.metatype, SymbolMetaType::kModule);
   EXPECT_EQ(module_node_info.file_origin, &src);
   EXPECT_EQ(module_node_info.declared_type.syntax_origin,
             nullptr);  // there is no module meta-type
@@ -664,21 +672,21 @@ TEST(BuildSymbolTableTest, ModuleDeclarationConditionalGenerateLabeled) {
   ASSERT_EQ(module_node.Children().size(), 3);
   {
     MUST_ASSIGN_LOOKUP_SYMBOL(gen_block, module_node, "aa");
-    EXPECT_EQ(gen_block_info.type, SymbolMetaType::kGenerate);
+    EXPECT_EQ(gen_block_info.metatype, SymbolMetaType::kGenerate);
     MUST_ASSIGN_LOOKUP_SYMBOL(wire_z, gen_block, "z");
-    EXPECT_EQ(wire_z_info.type, SymbolMetaType::kDataNetVariableInstance);
+    EXPECT_EQ(wire_z_info.metatype, SymbolMetaType::kDataNetVariableInstance);
   }
   {
     MUST_ASSIGN_LOOKUP_SYMBOL(gen_block, module_node, "bb");
-    EXPECT_EQ(gen_block_info.type, SymbolMetaType::kGenerate);
+    EXPECT_EQ(gen_block_info.metatype, SymbolMetaType::kGenerate);
     MUST_ASSIGN_LOOKUP_SYMBOL(wire_y, gen_block, "y");
-    EXPECT_EQ(wire_y_info.type, SymbolMetaType::kDataNetVariableInstance);
+    EXPECT_EQ(wire_y_info.metatype, SymbolMetaType::kDataNetVariableInstance);
   }
   {
     MUST_ASSIGN_LOOKUP_SYMBOL(gen_block, module_node, "cc");
-    EXPECT_EQ(gen_block_info.type, SymbolMetaType::kGenerate);
+    EXPECT_EQ(gen_block_info.metatype, SymbolMetaType::kGenerate);
     MUST_ASSIGN_LOOKUP_SYMBOL(wire_x, gen_block, "x");
-    EXPECT_EQ(wire_x_info.type, SymbolMetaType::kDataNetVariableInstance);
+    EXPECT_EQ(wire_x_info.metatype, SymbolMetaType::kDataNetVariableInstance);
   }
 
   {
@@ -703,7 +711,7 @@ TEST(BuildSymbolTableTest, ModuleDeclarationWithPorts) {
   const auto build_diagnostics = BuildSymbolTable(src, &symbol_table);
 
   MUST_ASSIGN_LOOKUP_SYMBOL(module_node, root_symbol, "m");
-  EXPECT_EQ(module_node_info.type, SymbolMetaType::kModule);
+  EXPECT_EQ(module_node_info.metatype, SymbolMetaType::kModule);
   EXPECT_EQ(module_node_info.file_origin, &src);
   EXPECT_EQ(module_node_info.declared_type.syntax_origin,
             nullptr);  // there is no module meta-type
@@ -713,7 +721,8 @@ TEST(BuildSymbolTableTest, ModuleDeclarationWithPorts) {
   static constexpr absl::string_view members[] = {"clk", "q"};
   for (const auto& member : members) {
     MUST_ASSIGN_LOOKUP_SYMBOL(member_node, module_node, member);
-    EXPECT_EQ(member_node_info.type, SymbolMetaType::kDataNetVariableInstance);
+    EXPECT_EQ(member_node_info.metatype,
+              SymbolMetaType::kDataNetVariableInstance);
     EXPECT_EQ(member_node_info.declared_type.user_defined_type,
               nullptr);  // types are primitive
   }
@@ -739,7 +748,7 @@ TEST(BuildSymbolTableTest, ModuleDeclarationMultiple) {
   const absl::string_view expected_modules[] = {"m1", "m2"};
   for (const auto& expected_module : expected_modules) {
     MUST_ASSIGN_LOOKUP_SYMBOL(module_node, root_symbol, expected_module);
-    EXPECT_EQ(module_node_info.type, SymbolMetaType::kModule);
+    EXPECT_EQ(module_node_info.metatype, SymbolMetaType::kModule);
     EXPECT_EQ(module_node_info.file_origin, &src);
     EXPECT_EQ(module_node_info.declared_type.syntax_origin,
               nullptr);  // there is no module meta-type
@@ -767,7 +776,7 @@ TEST(BuildSymbolTableTest, ModuleDeclarationDuplicate) {
   const auto build_diagnostics = BuildSymbolTable(src, &symbol_table);
 
   MUST_ASSIGN_LOOKUP_SYMBOL(module_node, root_symbol, "mm");
-  EXPECT_EQ(module_node_info.type, SymbolMetaType::kModule);
+  EXPECT_EQ(module_node_info.metatype, SymbolMetaType::kModule);
   EXPECT_EQ(module_node_info.file_origin, &src);
   EXPECT_EQ(module_node_info.declared_type.syntax_origin,
             nullptr);  // there is no module meta-type
@@ -801,14 +810,14 @@ TEST(BuildSymbolTableTest, ModuleDeclarationNested) {
                                          << build_diagnostics.front().message();
   MUST_ASSIGN_LOOKUP_SYMBOL(outer_module_node, root_symbol, "m_outer");
   {
-    EXPECT_EQ(outer_module_node_info.type, SymbolMetaType::kModule);
+    EXPECT_EQ(outer_module_node_info.metatype, SymbolMetaType::kModule);
     EXPECT_EQ(outer_module_node_info.file_origin, &src);
     EXPECT_EQ(outer_module_node_info.declared_type.syntax_origin,
               nullptr);  // there is no module meta-type
   }
   {
     MUST_ASSIGN_LOOKUP_SYMBOL(inner_module_node, outer_module_node, "m_inner");
-    EXPECT_EQ(inner_module_node_info.type, SymbolMetaType::kModule);
+    EXPECT_EQ(inner_module_node_info.metatype, SymbolMetaType::kModule);
     EXPECT_EQ(inner_module_node_info.file_origin, &src);
     EXPECT_EQ(inner_module_node_info.declared_type.syntax_origin,
               nullptr);  // there is no module meta-type
@@ -834,7 +843,7 @@ TEST(BuildSymbolTableTest, ModuleDeclarationNestedDuplicate) {
   const auto build_diagnostics = BuildSymbolTable(src, &symbol_table);
 
   MUST_ASSIGN_LOOKUP_SYMBOL(module_node, root_symbol, "outer");
-  EXPECT_EQ(module_node_info.type, SymbolMetaType::kModule);
+  EXPECT_EQ(module_node_info.metatype, SymbolMetaType::kModule);
 
   ASSIGN_MUST_HAVE_UNIQUE(err, build_diagnostics);
   EXPECT_EQ(err.code(), absl::StatusCode::kAlreadyExists);
@@ -899,7 +908,7 @@ TEST(BuildSymbolTableTest, ModuleInstance) {
         EXPECT_TRUE(verible::IsSubRange(ref.identifier,
                                         src.GetTextStructure()->Contents()));
         EXPECT_EQ(ref.ref_type, ReferenceType::kUnqualified);
-        EXPECT_EQ(ref.metatype, SymbolMetaType::kUnspecified);
+        EXPECT_EQ(ref.required_metatype, SymbolMetaType::kUnspecified);
         EXPECT_EQ(ref.resolved_symbol, nullptr);
       }
       {  // self-reference to "rr" instance
@@ -918,7 +927,7 @@ TEST(BuildSymbolTableTest, ModuleInstance) {
       EXPECT_EQ(pp_type.identifier, "pp");
       EXPECT_EQ(pp_type.resolved_symbol, nullptr);  // nothing resolved yet
       EXPECT_EQ(pp_type.ref_type, ReferenceType::kUnqualified);
-      EXPECT_EQ(pp_type.metatype, SymbolMetaType::kUnspecified);
+      EXPECT_EQ(pp_type.required_metatype, SymbolMetaType::kUnspecified);
     }
     EXPECT_EQ(rr_info.file_origin, &src);
 
@@ -965,7 +974,7 @@ TEST(BuildSymbolTableTest, ModuleInstanceUndefined) {
       EXPECT_TRUE(verible::IsSubRange(ref.identifier,
                                       src.GetTextStructure()->Contents()));
       EXPECT_EQ(ref.ref_type, ReferenceType::kUnqualified);
-      EXPECT_EQ(ref.metatype, SymbolMetaType::kUnspecified);
+      EXPECT_EQ(ref.required_metatype, SymbolMetaType::kUnspecified);
       EXPECT_EQ(ref.resolved_symbol, nullptr);
     }
   }
@@ -980,7 +989,7 @@ TEST(BuildSymbolTableTest, ModuleInstanceUndefined) {
     EXPECT_EQ(pp_type.identifier, "pp");
     EXPECT_EQ(pp_type.resolved_symbol, nullptr);  // nothing resolved yet
     EXPECT_EQ(pp_type.ref_type, ReferenceType::kUnqualified);
-    EXPECT_EQ(pp_type.metatype, SymbolMetaType::kUnspecified);
+    EXPECT_EQ(pp_type.required_metatype, SymbolMetaType::kUnspecified);
   }
   EXPECT_EQ(rr_info.file_origin, &src);
 
@@ -1055,7 +1064,7 @@ TEST(BuildSymbolTableTest, ModuleInstanceTwoInSameDecl) {
       EXPECT_TRUE(verible::IsSubRange(ref.identifier,
                                       src.GetTextStructure()->Contents()));
       EXPECT_EQ(ref.ref_type, ReferenceType::kUnqualified);
-      EXPECT_EQ(ref.metatype, SymbolMetaType::kUnspecified);
+      EXPECT_EQ(ref.required_metatype, SymbolMetaType::kUnspecified);
       EXPECT_EQ(ref.resolved_symbol, nullptr);
     }
 
@@ -1071,7 +1080,7 @@ TEST(BuildSymbolTableTest, ModuleInstanceTwoInSameDecl) {
         EXPECT_EQ(pp_type.identifier, "pp");
         EXPECT_EQ(pp_type.resolved_symbol, nullptr);  // nothing resolved yet
         EXPECT_EQ(pp_type.ref_type, ReferenceType::kUnqualified);
-        EXPECT_EQ(pp_type.metatype, SymbolMetaType::kUnspecified);
+        EXPECT_EQ(pp_type.required_metatype, SymbolMetaType::kUnspecified);
       }
       EXPECT_EQ(rr_info.file_origin, &src);
     }
@@ -1113,7 +1122,7 @@ TEST(BuildSymbolTableTest, ModuleInstancePositionalPortConnection) {
   const auto build_diagnostics = BuildSymbolTable(src, &symbol_table);
 
   MUST_ASSIGN_LOOKUP_SYMBOL(m_node, root_symbol, "m");
-  EXPECT_EQ(m_node_info.type, SymbolMetaType::kModule);
+  EXPECT_EQ(m_node_info.metatype, SymbolMetaType::kModule);
   EXPECT_EQ(m_node_info.file_origin, &src);
   EXPECT_EQ(m_node_info.declared_type.syntax_origin,
             nullptr);  // there is no module meta-type
@@ -1121,12 +1130,12 @@ TEST(BuildSymbolTableTest, ModuleInstancePositionalPortConnection) {
                                          << build_diagnostics.front().message();
 
   MUST_ASSIGN_LOOKUP_SYMBOL(clk_node, m_node, "clk");
-  EXPECT_EQ(clk_node_info.type, SymbolMetaType::kDataNetVariableInstance);
+  EXPECT_EQ(clk_node_info.metatype, SymbolMetaType::kDataNetVariableInstance);
   EXPECT_EQ(clk_node_info.declared_type.user_defined_type,
             nullptr);  // types are primitive
 
   MUST_ASSIGN_LOOKUP_SYMBOL(q_node, m_node, "q");
-  EXPECT_EQ(q_node_info.type, SymbolMetaType::kDataNetVariableInstance);
+  EXPECT_EQ(q_node_info.metatype, SymbolMetaType::kDataNetVariableInstance);
   EXPECT_EQ(q_node_info.declared_type.user_defined_type,
             nullptr);  // types are primitive
 
@@ -1178,7 +1187,7 @@ TEST(BuildSymbolTableTest, ModuleInstanceNamedPortConnection) {
   const auto build_diagnostics = BuildSymbolTable(src, &symbol_table);
 
   MUST_ASSIGN_LOOKUP_SYMBOL(m_node, root_symbol, "m");
-  EXPECT_EQ(m_node_info.type, SymbolMetaType::kModule);
+  EXPECT_EQ(m_node_info.metatype, SymbolMetaType::kModule);
   EXPECT_EQ(m_node_info.file_origin, &src);
   EXPECT_EQ(m_node_info.declared_type.syntax_origin,
             nullptr);  // there is no module meta-type
@@ -1186,12 +1195,12 @@ TEST(BuildSymbolTableTest, ModuleInstanceNamedPortConnection) {
                                          << build_diagnostics.front().message();
 
   MUST_ASSIGN_LOOKUP_SYMBOL(clk_node, m_node, "clk");
-  EXPECT_EQ(clk_node_info.type, SymbolMetaType::kDataNetVariableInstance);
+  EXPECT_EQ(clk_node_info.metatype, SymbolMetaType::kDataNetVariableInstance);
   EXPECT_EQ(clk_node_info.declared_type.user_defined_type,
             nullptr);  // types are primitive
 
   MUST_ASSIGN_LOOKUP_SYMBOL(q_node, m_node, "q");
-  EXPECT_EQ(q_node_info.type, SymbolMetaType::kDataNetVariableInstance);
+  EXPECT_EQ(q_node_info.metatype, SymbolMetaType::kDataNetVariableInstance);
   EXPECT_EQ(q_node_info.declared_type.user_defined_type,
             nullptr);  // types are primitive
 
@@ -1217,14 +1226,16 @@ TEST(BuildSymbolTableTest, ModuleInstanceNamedPortConnection) {
   const ReferenceComponent& clk_ref_comp(clk_ref->Value());
   EXPECT_EQ(clk_ref_comp.identifier, "clk");
   EXPECT_EQ(clk_ref_comp.ref_type, ReferenceType::kMemberOfTypeOfParent);
-  EXPECT_EQ(clk_ref_comp.metatype, SymbolMetaType::kDataNetVariableInstance);
+  EXPECT_EQ(clk_ref_comp.required_metatype,
+            SymbolMetaType::kDataNetVariableInstance);
   EXPECT_EQ(clk_ref_comp.resolved_symbol, nullptr);  // not yet resolved
 
   ASSIGN_MUST_FIND(q_ref, port_refs, "q");
   const ReferenceComponent& q_ref_comp(q_ref->Value());
   EXPECT_EQ(q_ref_comp.identifier, "q");
   EXPECT_EQ(q_ref_comp.ref_type, ReferenceType::kMemberOfTypeOfParent);
-  EXPECT_EQ(q_ref_comp.metatype, SymbolMetaType::kDataNetVariableInstance);
+  EXPECT_EQ(q_ref_comp.required_metatype,
+            SymbolMetaType::kDataNetVariableInstance);
   EXPECT_EQ(q_ref_comp.resolved_symbol, nullptr);  // not yet resolved
 
   // Get the local symbol definitions for wires "c" and "d".
@@ -1270,7 +1281,7 @@ TEST(BuildSymbolTableTest,
   const auto build_diagnostics = BuildSymbolTable(src, &symbol_table);
 
   MUST_ASSIGN_LOOKUP_SYMBOL(m_node, root_symbol, "m");
-  EXPECT_EQ(m_node_info.type, SymbolMetaType::kModule);
+  EXPECT_EQ(m_node_info.metatype, SymbolMetaType::kModule);
   EXPECT_EQ(m_node_info.file_origin, &src);
   EXPECT_EQ(m_node_info.declared_type.syntax_origin,
             nullptr);  // there is no module meta-type
@@ -1278,12 +1289,12 @@ TEST(BuildSymbolTableTest,
                                          << build_diagnostics.front().message();
 
   MUST_ASSIGN_LOOKUP_SYMBOL(clk_node, m_node, "clk");
-  EXPECT_EQ(clk_node_info.type, SymbolMetaType::kDataNetVariableInstance);
+  EXPECT_EQ(clk_node_info.metatype, SymbolMetaType::kDataNetVariableInstance);
   EXPECT_EQ(clk_node_info.declared_type.user_defined_type,
             nullptr);  // types are primitive
 
   MUST_ASSIGN_LOOKUP_SYMBOL(q_node, m_node, "q");
-  EXPECT_EQ(q_node_info.type, SymbolMetaType::kDataNetVariableInstance);
+  EXPECT_EQ(q_node_info.metatype, SymbolMetaType::kDataNetVariableInstance);
   EXPECT_EQ(q_node_info.declared_type.user_defined_type,
             nullptr);  // types are primitive
 
@@ -1310,7 +1321,8 @@ TEST(BuildSymbolTableTest,
   const ReferenceComponent& clk_ref_comp(clk_ref->Value());
   EXPECT_EQ(clk_ref_comp.identifier, "clk");
   EXPECT_EQ(clk_ref_comp.ref_type, ReferenceType::kMemberOfTypeOfParent);
-  EXPECT_EQ(clk_ref_comp.metatype, SymbolMetaType::kDataNetVariableInstance);
+  EXPECT_EQ(clk_ref_comp.required_metatype,
+            SymbolMetaType::kDataNetVariableInstance);
   // "clk" is a non-local reference that will not even be resolved below
   EXPECT_EQ(clk_ref_comp.resolved_symbol, nullptr);
 
@@ -1318,7 +1330,8 @@ TEST(BuildSymbolTableTest,
   const ReferenceComponent& q_ref_comp(q_ref->Value());
   EXPECT_EQ(q_ref_comp.identifier, "q");
   EXPECT_EQ(q_ref_comp.ref_type, ReferenceType::kMemberOfTypeOfParent);
-  EXPECT_EQ(q_ref_comp.metatype, SymbolMetaType::kDataNetVariableInstance);
+  EXPECT_EQ(q_ref_comp.required_metatype,
+            SymbolMetaType::kDataNetVariableInstance);
   // "q" is a non-local reference that will not even be resolved below
   EXPECT_EQ(q_ref_comp.resolved_symbol, nullptr);
 
@@ -1359,7 +1372,7 @@ TEST(BuildSymbolTableTest, ModuleInstancePositionalParameterAssignment) {
   const auto build_diagnostics = BuildSymbolTable(src, &symbol_table);
 
   MUST_ASSIGN_LOOKUP_SYMBOL(m_node, root_symbol, "m");
-  EXPECT_EQ(m_node_info.type, SymbolMetaType::kModule);
+  EXPECT_EQ(m_node_info.metatype, SymbolMetaType::kModule);
   EXPECT_EQ(m_node_info.file_origin, &src);
   EXPECT_EQ(m_node_info.declared_type.syntax_origin,
             nullptr);  // there is no module meta-type
@@ -1367,7 +1380,7 @@ TEST(BuildSymbolTableTest, ModuleInstancePositionalParameterAssignment) {
                                          << build_diagnostics.front().message();
 
   MUST_ASSIGN_LOOKUP_SYMBOL(n_param, m_node, "N");
-  EXPECT_EQ(n_param_info.type, SymbolMetaType::kParameter);
+  EXPECT_EQ(n_param_info.metatype, SymbolMetaType::kParameter);
   EXPECT_EQ(n_param_info.declared_type.user_defined_type,
             nullptr);  // types are primitive
 
@@ -1415,7 +1428,7 @@ TEST(BuildSymbolTableTest, ModuleInstanceNamedParameterAssignment) {
   const auto build_diagnostics = BuildSymbolTable(src, &symbol_table);
 
   MUST_ASSIGN_LOOKUP_SYMBOL(m_node, root_symbol, "m");
-  EXPECT_EQ(m_node_info.type, SymbolMetaType::kModule);
+  EXPECT_EQ(m_node_info.metatype, SymbolMetaType::kModule);
   EXPECT_EQ(m_node_info.file_origin, &src);
   EXPECT_EQ(m_node_info.declared_type.syntax_origin,
             nullptr);  // there is no module meta-type
@@ -1423,12 +1436,12 @@ TEST(BuildSymbolTableTest, ModuleInstanceNamedParameterAssignment) {
                                          << build_diagnostics.front().message();
 
   MUST_ASSIGN_LOOKUP_SYMBOL(n_param, m_node, "N");
-  EXPECT_EQ(n_param_info.type, SymbolMetaType::kParameter);
+  EXPECT_EQ(n_param_info.metatype, SymbolMetaType::kParameter);
   EXPECT_EQ(n_param_info.declared_type.user_defined_type,
             nullptr);  // types are primitive
 
   MUST_ASSIGN_LOOKUP_SYMBOL(p_param, m_node, "P");
-  EXPECT_EQ(p_param_info.type, SymbolMetaType::kParameter);
+  EXPECT_EQ(p_param_info.metatype, SymbolMetaType::kParameter);
   EXPECT_EQ(p_param_info.declared_type.user_defined_type,
             nullptr);  // types are primitive
 
@@ -1447,14 +1460,14 @@ TEST(BuildSymbolTableTest, ModuleInstanceNamedParameterAssignment) {
   const ReferenceComponent& n_ref_comp(n_ref->Value());
   EXPECT_EQ(n_ref_comp.identifier, "N");
   EXPECT_EQ(n_ref_comp.ref_type, ReferenceType::kDirectMember);
-  EXPECT_EQ(n_ref_comp.metatype, SymbolMetaType::kParameter);
+  EXPECT_EQ(n_ref_comp.required_metatype, SymbolMetaType::kParameter);
   EXPECT_EQ(n_ref_comp.resolved_symbol, nullptr);  // not yet resolved
 
   ASSIGN_MUST_FIND(p_ref, param_refs, "P");
   const ReferenceComponent& p_ref_comp(p_ref->Value());
   EXPECT_EQ(p_ref_comp.identifier, "P");
   EXPECT_EQ(p_ref_comp.ref_type, ReferenceType::kDirectMember);
-  EXPECT_EQ(p_ref_comp.metatype, SymbolMetaType::kParameter);
+  EXPECT_EQ(p_ref_comp.required_metatype, SymbolMetaType::kParameter);
   EXPECT_EQ(p_ref_comp.resolved_symbol, nullptr);  // not yet resolved
 
   {
@@ -1489,7 +1502,7 @@ TEST(BuildSymbolTableTest, ModuleInstanceNamedPortIsParameter) {
   const auto build_diagnostics = BuildSymbolTable(src, &symbol_table);
 
   MUST_ASSIGN_LOOKUP_SYMBOL(m_node, root_symbol, "m");
-  EXPECT_EQ(m_node_info.type, SymbolMetaType::kModule);
+  EXPECT_EQ(m_node_info.metatype, SymbolMetaType::kModule);
   EXPECT_EQ(m_node_info.file_origin, &src);
   EXPECT_EQ(m_node_info.declared_type.syntax_origin,
             nullptr);  // there is no module meta-type
@@ -1497,12 +1510,12 @@ TEST(BuildSymbolTableTest, ModuleInstanceNamedPortIsParameter) {
                                          << build_diagnostics.front().message();
 
   MUST_ASSIGN_LOOKUP_SYMBOL(n_param, m_node, "N");
-  EXPECT_EQ(n_param_info.type, SymbolMetaType::kParameter);
+  EXPECT_EQ(n_param_info.metatype, SymbolMetaType::kParameter);
   EXPECT_EQ(n_param_info.declared_type.user_defined_type,
             nullptr);  // types are primitive
 
   MUST_ASSIGN_LOOKUP_SYMBOL(clk_port, m_node, "clk");
-  EXPECT_EQ(clk_port_info.type, SymbolMetaType::kDataNetVariableInstance);
+  EXPECT_EQ(clk_port_info.metatype, SymbolMetaType::kDataNetVariableInstance);
   EXPECT_EQ(clk_port_info.declared_type.user_defined_type,
             nullptr);  // type is primitive
 
@@ -1521,7 +1534,7 @@ TEST(BuildSymbolTableTest, ModuleInstanceNamedPortIsParameter) {
   const ReferenceComponent& clk_ref_comp(clk_ref->Value());
   EXPECT_EQ(clk_ref_comp.identifier, "clk");
   EXPECT_EQ(clk_ref_comp.ref_type, ReferenceType::kDirectMember);
-  EXPECT_EQ(clk_ref_comp.metatype, SymbolMetaType::kParameter);
+  EXPECT_EQ(clk_ref_comp.required_metatype, SymbolMetaType::kParameter);
   EXPECT_EQ(clk_ref_comp.resolved_symbol, nullptr);  // not yet resolved
 
   {
@@ -1559,7 +1572,7 @@ TEST(BuildSymbolTableTest, ModuleInstanceNamedParameterIsPort) {
   const auto build_diagnostics = BuildSymbolTable(src, &symbol_table);
 
   MUST_ASSIGN_LOOKUP_SYMBOL(m_node, root_symbol, "m");
-  EXPECT_EQ(m_node_info.type, SymbolMetaType::kModule);
+  EXPECT_EQ(m_node_info.metatype, SymbolMetaType::kModule);
   EXPECT_EQ(m_node_info.file_origin, &src);
   EXPECT_EQ(m_node_info.declared_type.syntax_origin,
             nullptr);  // there is no module meta-type
@@ -1567,12 +1580,12 @@ TEST(BuildSymbolTableTest, ModuleInstanceNamedParameterIsPort) {
                                          << build_diagnostics.front().message();
 
   MUST_ASSIGN_LOOKUP_SYMBOL(n_param, m_node, "N");
-  EXPECT_EQ(n_param_info.type, SymbolMetaType::kParameter);
+  EXPECT_EQ(n_param_info.metatype, SymbolMetaType::kParameter);
   EXPECT_EQ(n_param_info.declared_type.user_defined_type,
             nullptr);  // type is primitive
 
   MUST_ASSIGN_LOOKUP_SYMBOL(clk_port, m_node, "clk");
-  EXPECT_EQ(clk_port_info.type, SymbolMetaType::kDataNetVariableInstance);
+  EXPECT_EQ(clk_port_info.metatype, SymbolMetaType::kDataNetVariableInstance);
   EXPECT_EQ(clk_port_info.declared_type.user_defined_type,
             nullptr);  // type is primitive
 
@@ -1591,7 +1604,8 @@ TEST(BuildSymbolTableTest, ModuleInstanceNamedParameterIsPort) {
   const ReferenceComponent& n_ref_comp(n_ref->Value());
   EXPECT_EQ(n_ref_comp.identifier, "N");
   EXPECT_EQ(n_ref_comp.ref_type, ReferenceType::kMemberOfTypeOfParent);
-  EXPECT_EQ(n_ref_comp.metatype, SymbolMetaType::kDataNetVariableInstance);
+  EXPECT_EQ(n_ref_comp.required_metatype,
+            SymbolMetaType::kDataNetVariableInstance);
   EXPECT_EQ(n_ref_comp.resolved_symbol, nullptr);  // not yet resolved
 
   {
@@ -1652,14 +1666,16 @@ TEST(BuildSymbolTableTest, ModuleInstanceNamedPortConnectionNonexistentPort) {
   const ReferenceComponent& clk_ref_comp(clk_ref->Value());
   EXPECT_EQ(clk_ref_comp.identifier, "clk");
   EXPECT_EQ(clk_ref_comp.ref_type, ReferenceType::kMemberOfTypeOfParent);
-  EXPECT_EQ(clk_ref_comp.metatype, SymbolMetaType::kDataNetVariableInstance);
+  EXPECT_EQ(clk_ref_comp.required_metatype,
+            SymbolMetaType::kDataNetVariableInstance);
   EXPECT_EQ(clk_ref_comp.resolved_symbol, nullptr);  // not yet resolved
 
   ASSIGN_MUST_FIND(p_ref, port_refs, "p");
   const ReferenceComponent& p_ref_comp(p_ref->Value());
   EXPECT_EQ(p_ref_comp.identifier, "p");
   EXPECT_EQ(p_ref_comp.ref_type, ReferenceType::kMemberOfTypeOfParent);
-  EXPECT_EQ(p_ref_comp.metatype, SymbolMetaType::kDataNetVariableInstance);
+  EXPECT_EQ(p_ref_comp.required_metatype,
+            SymbolMetaType::kDataNetVariableInstance);
   EXPECT_EQ(p_ref_comp.resolved_symbol, nullptr);  // not yet resolved
 
   // Get the local symbol definitions for wire "c".
@@ -1701,7 +1717,7 @@ TEST(BuildSymbolTableTest, ModuleInstanceNamedParameterNonexistentError) {
   const auto build_diagnostics = BuildSymbolTable(src, &symbol_table);
 
   MUST_ASSIGN_LOOKUP_SYMBOL(m_node, root_symbol, "m");
-  EXPECT_EQ(m_node_info.type, SymbolMetaType::kModule);
+  EXPECT_EQ(m_node_info.metatype, SymbolMetaType::kModule);
   EXPECT_EQ(m_node_info.file_origin, &src);
   EXPECT_EQ(m_node_info.declared_type.syntax_origin,
             nullptr);  // there is no module meta-type
@@ -1709,12 +1725,12 @@ TEST(BuildSymbolTableTest, ModuleInstanceNamedParameterNonexistentError) {
                                          << build_diagnostics.front().message();
 
   MUST_ASSIGN_LOOKUP_SYMBOL(n_param, m_node, "N");
-  EXPECT_EQ(n_param_info.type, SymbolMetaType::kParameter);
+  EXPECT_EQ(n_param_info.metatype, SymbolMetaType::kParameter);
   EXPECT_EQ(n_param_info.declared_type.user_defined_type,
             nullptr);  // types are primitive
 
   MUST_ASSIGN_LOOKUP_SYMBOL(p_param, m_node, "P");
-  EXPECT_EQ(p_param_info.type, SymbolMetaType::kParameter);
+  EXPECT_EQ(p_param_info.metatype, SymbolMetaType::kParameter);
   EXPECT_EQ(p_param_info.declared_type.user_defined_type,
             nullptr);  // types are primitive
 
@@ -1733,14 +1749,14 @@ TEST(BuildSymbolTableTest, ModuleInstanceNamedParameterNonexistentError) {
   const ReferenceComponent& n_ref_comp(n_ref->Value());
   EXPECT_EQ(n_ref_comp.identifier, "N");
   EXPECT_EQ(n_ref_comp.ref_type, ReferenceType::kDirectMember);
-  EXPECT_EQ(n_ref_comp.metatype, SymbolMetaType::kParameter);
+  EXPECT_EQ(n_ref_comp.required_metatype, SymbolMetaType::kParameter);
   EXPECT_EQ(n_ref_comp.resolved_symbol, nullptr);  // not yet resolved
 
   ASSIGN_MUST_FIND(q_ref, param_refs, "Q");
   const ReferenceComponent& q_ref_comp(q_ref->Value());
   EXPECT_EQ(q_ref_comp.identifier, "Q");
   EXPECT_EQ(q_ref_comp.ref_type, ReferenceType::kDirectMember);
-  EXPECT_EQ(q_ref_comp.metatype, SymbolMetaType::kParameter);
+  EXPECT_EQ(q_ref_comp.required_metatype, SymbolMetaType::kParameter);
   EXPECT_EQ(q_ref_comp.resolved_symbol, nullptr);  // not yet resolved
 
   {
@@ -1766,7 +1782,7 @@ TEST(BuildSymbolTableTest, OneGlobalIntParameter) {
   const auto build_diagnostics = BuildSymbolTable(src, &symbol_table);
 
   MUST_ASSIGN_LOOKUP_SYMBOL(mint_param, root_symbol, "mint");
-  EXPECT_EQ(mint_param_info.type, SymbolMetaType::kParameter);
+  EXPECT_EQ(mint_param_info.metatype, SymbolMetaType::kParameter);
   EXPECT_EQ(mint_param_info.file_origin, &src);
   ASSERT_NE(mint_param_info.declared_type.syntax_origin, nullptr);
   EXPECT_EQ(
@@ -1792,7 +1808,7 @@ TEST(BuildSymbolTableTest, OneGlobalUndefinedTypeParameter) {
   const auto build_diagnostics = BuildSymbolTable(src, &symbol_table);
 
   MUST_ASSIGN_LOOKUP_SYMBOL(gun_param, root_symbol, "gun");
-  EXPECT_EQ(gun_param_info.type, SymbolMetaType::kParameter);
+  EXPECT_EQ(gun_param_info.metatype, SymbolMetaType::kParameter);
   EXPECT_EQ(gun_param_info.file_origin, &src);
   ASSERT_NE(gun_param_info.declared_type.syntax_origin, nullptr);
   EXPECT_EQ(
@@ -1827,10 +1843,10 @@ TEST(BuildSymbolTableTest, ReferenceOneParameterExpression) {
   const auto build_diagnostics = BuildSymbolTable(src, &symbol_table);
 
   MUST_ASSIGN_LOOKUP_SYMBOL(tea, root_symbol, "tea");
-  EXPECT_EQ(tea_info.type, SymbolMetaType::kParameter);
+  EXPECT_EQ(tea_info.metatype, SymbolMetaType::kParameter);
 
   MUST_ASSIGN_LOOKUP_SYMBOL(mint, root_symbol, "mint");
-  EXPECT_EQ(mint_info.type, SymbolMetaType::kParameter);
+  EXPECT_EQ(mint_info.metatype, SymbolMetaType::kParameter);
   EXPECT_EQ(mint_info.file_origin, &src);
   ASSERT_NE(mint_info.declared_type.syntax_origin, nullptr);
   EXPECT_EQ(verible::StringSpanOfSymbol(*mint_info.declared_type.syntax_origin),
@@ -1846,7 +1862,7 @@ TEST(BuildSymbolTableTest, ReferenceOneParameterExpression) {
   EXPECT_TRUE(ref->components->is_leaf());
   EXPECT_EQ(ref_comp.identifier, "mint");
   EXPECT_EQ(ref_comp.ref_type, ReferenceType::kUnqualified);
-  EXPECT_EQ(ref_comp.metatype, SymbolMetaType::kUnspecified);
+  EXPECT_EQ(ref_comp.required_metatype, SymbolMetaType::kUnspecified);
   EXPECT_EQ(ref_comp.resolved_symbol,
             nullptr);  // have not tried to resolve yet
 
@@ -1868,7 +1884,7 @@ TEST(BuildSymbolTableTest, OneUnresolvedReferenceInExpression) {
   const auto build_diagnostics = BuildSymbolTable(src, &symbol_table);
 
   MUST_ASSIGN_LOOKUP_SYMBOL(mint, root_symbol, "mint");
-  EXPECT_EQ(mint_info.type, SymbolMetaType::kParameter);
+  EXPECT_EQ(mint_info.metatype, SymbolMetaType::kParameter);
   EXPECT_EQ(mint_info.file_origin, &src);
   ASSERT_NE(mint_info.declared_type.syntax_origin, nullptr);
   EXPECT_EQ(verible::StringSpanOfSymbol(*mint_info.declared_type.syntax_origin),
@@ -1884,7 +1900,7 @@ TEST(BuildSymbolTableTest, OneUnresolvedReferenceInExpression) {
   EXPECT_TRUE(ref->components->is_leaf());
   EXPECT_EQ(ref_comp.identifier, "spice");
   EXPECT_EQ(ref_comp.ref_type, ReferenceType::kUnqualified);
-  EXPECT_EQ(ref_comp.metatype, SymbolMetaType::kUnspecified);
+  EXPECT_EQ(ref_comp.required_metatype, SymbolMetaType::kUnspecified);
   EXPECT_EQ(ref_comp.resolved_symbol,
             nullptr);  // have not tried to resolve yet
 
@@ -1910,7 +1926,7 @@ TEST(BuildSymbolTableTest, PackageDeclarationSingle) {
   const auto build_diagnostics = BuildSymbolTable(src, &symbol_table);
 
   MUST_ASSIGN_LOOKUP_SYMBOL(my_pkg, root_symbol, "my_pkg");
-  EXPECT_EQ(my_pkg_info.type, SymbolMetaType::kPackage);
+  EXPECT_EQ(my_pkg_info.metatype, SymbolMetaType::kPackage);
   EXPECT_EQ(my_pkg_info.file_origin, &src);
   EXPECT_EQ(my_pkg_info.declared_type.syntax_origin,
             nullptr);  // there is no module meta-type
@@ -1938,7 +1954,7 @@ TEST(BuildSymbolTableTest, ReferenceOneParameterFromPackageToRoot) {
   const auto build_diagnostics = BuildSymbolTable(src, &symbol_table);
 
   MUST_ASSIGN_LOOKUP_SYMBOL(p_pkg, root_symbol, "p");
-  EXPECT_EQ(p_pkg_info.type, SymbolMetaType::kPackage);
+  EXPECT_EQ(p_pkg_info.metatype, SymbolMetaType::kPackage);
 
   ASSERT_EQ(p_pkg_info.local_references_to_bind.size(), 1);
   const auto ref_map(p_pkg_info.LocalReferencesMapViewForTesting());
@@ -1948,10 +1964,10 @@ TEST(BuildSymbolTableTest, ReferenceOneParameterFromPackageToRoot) {
   EXPECT_EQ(mint_ref.resolved_symbol, nullptr);  // not yet resolved
 
   MUST_ASSIGN_LOOKUP_SYMBOL(tea, p_pkg, "tea");  // p::tea
-  EXPECT_EQ(tea_info.type, SymbolMetaType::kParameter);
+  EXPECT_EQ(tea_info.metatype, SymbolMetaType::kParameter);
 
   MUST_ASSIGN_LOOKUP_SYMBOL(mint, root_symbol, "mint");
-  EXPECT_EQ(mint_info.type, SymbolMetaType::kParameter);
+  EXPECT_EQ(mint_info.metatype, SymbolMetaType::kParameter);
   EXPECT_EQ(mint_info.file_origin, &src);
   ASSERT_NE(mint_info.declared_type.syntax_origin, nullptr);
   EXPECT_EQ(verible::StringSpanOfSymbol(*mint_info.declared_type.syntax_origin),
@@ -1984,7 +2000,7 @@ TEST(BuildSymbolTableTest, ReferenceOneParameterFromRootToPackage) {
   const auto build_diagnostics = BuildSymbolTable(src, &symbol_table);
 
   MUST_ASSIGN_LOOKUP_SYMBOL(p_pkg, root_symbol, "p");
-  EXPECT_EQ(p_pkg_info.type, SymbolMetaType::kPackage);
+  EXPECT_EQ(p_pkg_info.metatype, SymbolMetaType::kPackage);
 
   ASSERT_EQ(root_symbol.Value().local_references_to_bind.size(), 1);
   // p_mint_ref is the reference chain for "p::mint".
@@ -1998,10 +2014,10 @@ TEST(BuildSymbolTableTest, ReferenceOneParameterFromRootToPackage) {
   EXPECT_EQ(mint_ref.resolved_symbol, nullptr);  // not yet resolved
 
   MUST_ASSIGN_LOOKUP_SYMBOL(tea, root_symbol, "tea");
-  EXPECT_EQ(tea_info.type, SymbolMetaType::kParameter);
+  EXPECT_EQ(tea_info.metatype, SymbolMetaType::kParameter);
 
   MUST_ASSIGN_LOOKUP_SYMBOL(mint, p_pkg, "mint");  // p::mint
-  EXPECT_EQ(mint_info.type, SymbolMetaType::kParameter);
+  EXPECT_EQ(mint_info.metatype, SymbolMetaType::kParameter);
   EXPECT_EQ(mint_info.file_origin, &src);
   ASSERT_NE(mint_info.declared_type.syntax_origin, nullptr);
   EXPECT_EQ(verible::StringSpanOfSymbol(*mint_info.declared_type.syntax_origin),
@@ -2034,7 +2050,7 @@ TEST(BuildSymbolTableTest, ReferenceOneParameterFromRootToPackageNoSuchMember) {
   const auto build_diagnostics = BuildSymbolTable(src, &symbol_table);
 
   MUST_ASSIGN_LOOKUP_SYMBOL(p_pkg, root_symbol, "p");
-  EXPECT_EQ(p_pkg_info.type, SymbolMetaType::kPackage);
+  EXPECT_EQ(p_pkg_info.metatype, SymbolMetaType::kPackage);
 
   ASSERT_EQ(root_symbol.Value().local_references_to_bind.size(), 1);
   // p_mint_ref is the reference chain for "p::mint".
@@ -2048,10 +2064,10 @@ TEST(BuildSymbolTableTest, ReferenceOneParameterFromRootToPackageNoSuchMember) {
   EXPECT_EQ(zzz_ref.resolved_symbol, nullptr);  // not yet resolved
 
   MUST_ASSIGN_LOOKUP_SYMBOL(tea, root_symbol, "tea");
-  EXPECT_EQ(tea_info.type, SymbolMetaType::kParameter);
+  EXPECT_EQ(tea_info.metatype, SymbolMetaType::kParameter);
 
   MUST_ASSIGN_LOOKUP_SYMBOL(mint, p_pkg, "mint");
-  EXPECT_EQ(mint_info.type, SymbolMetaType::kParameter);
+  EXPECT_EQ(mint_info.metatype, SymbolMetaType::kParameter);
   EXPECT_EQ(mint_info.file_origin, &src);
   ASSERT_NE(mint_info.declared_type.syntax_origin, nullptr);
   EXPECT_EQ(verible::StringSpanOfSymbol(*mint_info.declared_type.syntax_origin),
@@ -2086,7 +2102,7 @@ TEST(BuildSymbolTableTest, ModuleDeclarationWithParameters) {
   const auto build_diagnostics = BuildSymbolTable(src, &symbol_table);
 
   MUST_ASSIGN_LOOKUP_SYMBOL(module_node, root_symbol, "m");
-  EXPECT_EQ(module_node_info.type, SymbolMetaType::kModule);
+  EXPECT_EQ(module_node_info.metatype, SymbolMetaType::kModule);
   EXPECT_EQ(module_node_info.file_origin, &src);
   EXPECT_EQ(module_node_info.declared_type.syntax_origin,
             nullptr);  // there is no module meta-type
@@ -2094,19 +2110,19 @@ TEST(BuildSymbolTableTest, ModuleDeclarationWithParameters) {
                                          << build_diagnostics.front().message();
 
   MUST_ASSIGN_LOOKUP_SYMBOL(w_param, module_node, "W");
-  EXPECT_EQ(w_param_info.type, SymbolMetaType::kParameter);
+  EXPECT_EQ(w_param_info.metatype, SymbolMetaType::kParameter);
   const ReferenceComponentNode* w_type_ref =
       w_param_info.declared_type.user_defined_type;
   EXPECT_EQ(w_type_ref, nullptr);  // int is primitive type
 
   MUST_ASSIGN_LOOKUP_SYMBOL(b_param, module_node, "B");
-  EXPECT_EQ(b_param_info.type, SymbolMetaType::kParameter);
+  EXPECT_EQ(b_param_info.metatype, SymbolMetaType::kParameter);
   const ReferenceComponentNode* b_type_ref =
       b_param_info.declared_type.user_defined_type;
   ASSERT_NE(b_type_ref, nullptr);
   const ReferenceComponent& b_type_ref_comp(b_type_ref->Value());
   EXPECT_EQ(b_type_ref_comp.ref_type, ReferenceType::kUnqualified);
-  EXPECT_EQ(b_type_ref_comp.metatype, SymbolMetaType::kUnspecified);
+  EXPECT_EQ(b_type_ref_comp.required_metatype, SymbolMetaType::kUnspecified);
   EXPECT_EQ(b_type_ref_comp.identifier, "bar");
 
   ASSERT_EQ(module_node_info.local_references_to_bind.size(), 2);
@@ -2156,7 +2172,7 @@ TEST(BuildSymbolTableTest, ModuleDeclarationLocalsDependOnParameter) {
   const auto build_diagnostics = BuildSymbolTable(src, &symbol_table);
 
   MUST_ASSIGN_LOOKUP_SYMBOL(module_m, root_symbol, "m");
-  EXPECT_EQ(module_m_info.type, SymbolMetaType::kModule);
+  EXPECT_EQ(module_m_info.metatype, SymbolMetaType::kModule);
   EXPECT_EQ(module_m_info.file_origin, &src);
   EXPECT_EQ(module_m_info.declared_type.syntax_origin,
             nullptr);  // there is no module meta-type
@@ -2164,7 +2180,7 @@ TEST(BuildSymbolTableTest, ModuleDeclarationLocalsDependOnParameter) {
                                          << build_diagnostics.front().message();
 
   MUST_ASSIGN_LOOKUP_SYMBOL(n_param, module_m, "N");
-  EXPECT_EQ(n_param_info.type, SymbolMetaType::kParameter);
+  EXPECT_EQ(n_param_info.metatype, SymbolMetaType::kParameter);
   const ReferenceComponentNode* n_type_ref =
       n_param_info.declared_type.user_defined_type;
   EXPECT_EQ(n_type_ref, nullptr);  // int is primitive type
@@ -2177,7 +2193,7 @@ TEST(BuildSymbolTableTest, ModuleDeclarationLocalsDependOnParameter) {
   for (const auto& n_ref : n_refs) {
     const ReferenceComponent& n_ref_comp(n_ref->components->Value());
     EXPECT_EQ(n_ref_comp.ref_type, ReferenceType::kUnqualified);
-    EXPECT_EQ(n_ref_comp.metatype, SymbolMetaType::kUnspecified);
+    EXPECT_EQ(n_ref_comp.required_metatype, SymbolMetaType::kUnspecified);
     EXPECT_EQ(n_ref_comp.identifier, "N");
     EXPECT_EQ(n_ref_comp.resolved_symbol, nullptr);  // not yet resolved
   }
@@ -2206,7 +2222,7 @@ TEST(BuildSymbolTableTest, ClassDeclarationSingle) {
   const auto build_diagnostics = BuildSymbolTable(src, &symbol_table);
 
   MUST_ASSIGN_LOOKUP_SYMBOL(ccc, root_symbol, "ccc");
-  EXPECT_EQ(ccc_info.type, SymbolMetaType::kClass);
+  EXPECT_EQ(ccc_info.metatype, SymbolMetaType::kClass);
   EXPECT_EQ(ccc_info.file_origin, &src);
   EXPECT_EQ(ccc_info.declared_type.syntax_origin,
             nullptr);  // there is no module meta-type
@@ -2239,19 +2255,19 @@ TEST(BuildSymbolTableTest, ClassDeclarationNested) {
                                          << build_diagnostics.front().message();
 
   MUST_ASSIGN_LOOKUP_SYMBOL(pp, root_symbol, "pp");
-  EXPECT_EQ(pp_info.type, SymbolMetaType::kPackage);
+  EXPECT_EQ(pp_info.metatype, SymbolMetaType::kPackage);
   EXPECT_EQ(pp_info.file_origin, &src);
   EXPECT_EQ(pp_info.declared_type.syntax_origin,
             nullptr);  // there is no package meta-type
   {
     MUST_ASSIGN_LOOKUP_SYMBOL(c_outer, pp, "c_outer");
-    EXPECT_EQ(c_outer_info.type, SymbolMetaType::kClass);
+    EXPECT_EQ(c_outer_info.metatype, SymbolMetaType::kClass);
     EXPECT_EQ(c_outer_info.file_origin, &src);
     EXPECT_EQ(c_outer_info.declared_type.syntax_origin,
               nullptr);  // there is no class meta-type
     {
       MUST_ASSIGN_LOOKUP_SYMBOL(c_inner, c_outer, "c_inner");
-      EXPECT_EQ(c_inner_info.type, SymbolMetaType::kClass);
+      EXPECT_EQ(c_inner_info.metatype, SymbolMetaType::kClass);
       EXPECT_EQ(c_inner_info.file_origin, &src);
       EXPECT_EQ(c_inner_info.declared_type.syntax_origin,
                 nullptr);  // there is no class meta-type
@@ -2278,7 +2294,7 @@ TEST(BuildSymbolTableTest, ClassDeclarationWithParameter) {
   const auto build_diagnostics = BuildSymbolTable(src, &symbol_table);
 
   MUST_ASSIGN_LOOKUP_SYMBOL(class_cc, root_symbol, "cc");
-  EXPECT_EQ(class_cc_info.type, SymbolMetaType::kClass);
+  EXPECT_EQ(class_cc_info.metatype, SymbolMetaType::kClass);
   EXPECT_EQ(class_cc_info.file_origin, &src);
   EXPECT_EQ(class_cc_info.declared_type.syntax_origin,
             nullptr);  // there is no class meta-type
@@ -2286,7 +2302,7 @@ TEST(BuildSymbolTableTest, ClassDeclarationWithParameter) {
                                          << build_diagnostics.front().message();
 
   MUST_ASSIGN_LOOKUP_SYMBOL(n_param, class_cc, "N");
-  EXPECT_EQ(n_param_info.type, SymbolMetaType::kParameter);
+  EXPECT_EQ(n_param_info.metatype, SymbolMetaType::kParameter);
   const ReferenceComponentNode* n_type_ref =
       n_param_info.declared_type.user_defined_type;
   EXPECT_EQ(n_type_ref, nullptr);  // int is primitive type
@@ -2316,12 +2332,12 @@ TEST(BuildSymbolTableTest, ClassDeclarationDataMember) {
                                          << build_diagnostics.front().message();
 
   MUST_ASSIGN_LOOKUP_SYMBOL(class_cc, root_symbol, "cc");
-  EXPECT_EQ(class_cc_info.type, SymbolMetaType::kClass);
+  EXPECT_EQ(class_cc_info.metatype, SymbolMetaType::kClass);
   EXPECT_EQ(class_cc_info.file_origin, &src);
   EXPECT_EQ(class_cc_info.declared_type.syntax_origin, nullptr);
 
   MUST_ASSIGN_LOOKUP_SYMBOL(size_field, class_cc, "size");
-  EXPECT_EQ(size_field_info.type, SymbolMetaType::kDataNetVariableInstance);
+  EXPECT_EQ(size_field_info.metatype, SymbolMetaType::kDataNetVariableInstance);
   const ReferenceComponentNode* size_type_ref =
       size_field_info.declared_type.user_defined_type;
   EXPECT_EQ(size_type_ref, nullptr);  // int is primitive type
@@ -2330,7 +2346,8 @@ TEST(BuildSymbolTableTest, ClassDeclarationDataMember) {
       "int");
 
   MUST_ASSIGN_LOOKUP_SYMBOL(count_field, class_cc, "count");
-  EXPECT_EQ(count_field_info.type, SymbolMetaType::kDataNetVariableInstance);
+  EXPECT_EQ(count_field_info.metatype,
+            SymbolMetaType::kDataNetVariableInstance);
   const ReferenceComponentNode* count_type_ref =
       count_field_info.declared_type.user_defined_type;
   EXPECT_EQ(count_type_ref, nullptr);  // int is primitive type
@@ -2362,12 +2379,13 @@ TEST(BuildSymbolTableTest, ClassDeclarationDataMemberMultiDeclaration) {
                                          << build_diagnostics.front().message();
 
   MUST_ASSIGN_LOOKUP_SYMBOL(class_cc, root_symbol, "cc");
-  EXPECT_EQ(class_cc_info.type, SymbolMetaType::kClass);
+  EXPECT_EQ(class_cc_info.metatype, SymbolMetaType::kClass);
   EXPECT_EQ(class_cc_info.file_origin, &src);
   EXPECT_EQ(class_cc_info.declared_type.syntax_origin, nullptr);
 
   MUST_ASSIGN_LOOKUP_SYMBOL(height_field, class_cc, "height");
-  EXPECT_EQ(height_field_info.type, SymbolMetaType::kDataNetVariableInstance);
+  EXPECT_EQ(height_field_info.metatype,
+            SymbolMetaType::kDataNetVariableInstance);
   const ReferenceComponentNode* height_type_ref =
       height_field_info.declared_type.user_defined_type;
   EXPECT_EQ(height_type_ref, nullptr);  // int is primitive type
@@ -2376,7 +2394,8 @@ TEST(BuildSymbolTableTest, ClassDeclarationDataMemberMultiDeclaration) {
             "real");
 
   MUST_ASSIGN_LOOKUP_SYMBOL(width_field, class_cc, "width");
-  EXPECT_EQ(width_field_info.type, SymbolMetaType::kDataNetVariableInstance);
+  EXPECT_EQ(width_field_info.metatype,
+            SymbolMetaType::kDataNetVariableInstance);
   const ReferenceComponentNode* width_type_ref =
       width_field_info.declared_type.user_defined_type;
   EXPECT_EQ(width_type_ref, nullptr);  // int is primitive type
@@ -2411,12 +2430,12 @@ TEST(BuildSymbolTableTest, ClassDeclarationDataMemberAccessedFromMethod) {
                                          << build_diagnostics.front().message();
 
   MUST_ASSIGN_LOOKUP_SYMBOL(class_cc, root_symbol, "cc");
-  EXPECT_EQ(class_cc_info.type, SymbolMetaType::kClass);
+  EXPECT_EQ(class_cc_info.metatype, SymbolMetaType::kClass);
   EXPECT_EQ(class_cc_info.file_origin, &src);
   EXPECT_EQ(class_cc_info.declared_type.syntax_origin, nullptr);
 
   MUST_ASSIGN_LOOKUP_SYMBOL(size_field, class_cc, "size");
-  EXPECT_EQ(size_field_info.type, SymbolMetaType::kDataNetVariableInstance);
+  EXPECT_EQ(size_field_info.metatype, SymbolMetaType::kDataNetVariableInstance);
   const ReferenceComponentNode* size_type_ref =
       size_field_info.declared_type.user_defined_type;
   EXPECT_EQ(size_type_ref, nullptr);  // int is primitive type
@@ -2425,14 +2444,14 @@ TEST(BuildSymbolTableTest, ClassDeclarationDataMemberAccessedFromMethod) {
       "int");
 
   MUST_ASSIGN_LOOKUP_SYMBOL(get_size, class_cc, "get_size");
-  EXPECT_EQ(get_size_info.type, SymbolMetaType::kFunction);
+  EXPECT_EQ(get_size_info.metatype, SymbolMetaType::kFunction);
   EXPECT_EQ(get_size_info.file_origin, &src);
   const auto ref_map(get_size_info.LocalReferencesMapViewForTesting());
 
   ASSIGN_MUST_FIND_EXACTLY_ONE_REF(size_ref, ref_map, "size");
   const ReferenceComponent& size_ref_comp(size_ref->components->Value());
   EXPECT_EQ(size_ref_comp.ref_type, ReferenceType::kUnqualified);
-  EXPECT_EQ(size_ref_comp.metatype, SymbolMetaType::kUnspecified);
+  EXPECT_EQ(size_ref_comp.required_metatype, SymbolMetaType::kUnspecified);
   EXPECT_EQ(size_ref_comp.resolved_symbol, nullptr);
 
   {
@@ -2466,12 +2485,12 @@ TEST(BuildSymbolTableTest, ClassDataMemberAccessedDirectly) {
                                          << build_diagnostics.front().message();
 
   MUST_ASSIGN_LOOKUP_SYMBOL(class_cc, root_symbol, "cc");
-  EXPECT_EQ(class_cc_info.type, SymbolMetaType::kClass);
+  EXPECT_EQ(class_cc_info.metatype, SymbolMetaType::kClass);
   EXPECT_EQ(class_cc_info.file_origin, &src);
   EXPECT_EQ(class_cc_info.declared_type.syntax_origin, nullptr);
 
   MUST_ASSIGN_LOOKUP_SYMBOL(size_field, class_cc, "size");
-  EXPECT_EQ(size_field_info.type, SymbolMetaType::kDataNetVariableInstance);
+  EXPECT_EQ(size_field_info.metatype, SymbolMetaType::kDataNetVariableInstance);
   const ReferenceComponentNode* size_type_ref =
       size_field_info.declared_type.user_defined_type;
   EXPECT_EQ(size_type_ref, nullptr);  // int is primitive type
@@ -2480,17 +2499,17 @@ TEST(BuildSymbolTableTest, ClassDataMemberAccessedDirectly) {
       "int");
 
   MUST_ASSIGN_LOOKUP_SYMBOL(get_size, root_symbol, "get_size");
-  EXPECT_EQ(get_size_info.type, SymbolMetaType::kFunction);
+  EXPECT_EQ(get_size_info.metatype, SymbolMetaType::kFunction);
   EXPECT_EQ(get_size_info.file_origin, &src);
 
   MUST_ASSIGN_LOOKUP_SYMBOL(cc_data, get_size, "cc_data");
-  EXPECT_EQ(cc_data_info.type, SymbolMetaType::kDataNetVariableInstance);
+  EXPECT_EQ(cc_data_info.metatype, SymbolMetaType::kDataNetVariableInstance);
 
   const auto ref_map(get_size_info.LocalReferencesMapViewForTesting());
   ASSIGN_MUST_FIND_EXACTLY_ONE_REF(cc_data_ref, ref_map, "cc_data");
   const ReferenceComponent& cc_data_ref_comp(cc_data_ref->components->Value());
   EXPECT_EQ(cc_data_ref_comp.ref_type, ReferenceType::kUnqualified);
-  EXPECT_EQ(cc_data_ref_comp.metatype, SymbolMetaType::kUnspecified);
+  EXPECT_EQ(cc_data_ref_comp.required_metatype, SymbolMetaType::kUnspecified);
   EXPECT_EQ(cc_data_ref_comp.resolved_symbol, nullptr);
 
   ASSERT_EQ(cc_data_ref->components->Children().size(), 1);
@@ -2498,7 +2517,7 @@ TEST(BuildSymbolTableTest, ClassDataMemberAccessedDirectly) {
       cc_data_ref->components->Children().front());
   const ReferenceComponent& size_ref_comp(size_ref.Value());
   EXPECT_EQ(size_ref_comp.ref_type, ReferenceType::kMemberOfTypeOfParent);
-  EXPECT_EQ(size_ref_comp.metatype, SymbolMetaType::kUnspecified);
+  EXPECT_EQ(size_ref_comp.required_metatype, SymbolMetaType::kUnspecified);
   EXPECT_EQ(size_ref_comp.resolved_symbol, nullptr);
 
   {
@@ -2529,13 +2548,13 @@ TEST(BuildSymbolTableTest, ClassDeclarationSingleInheritance) {
                                          << build_diagnostics.front().message();
 
   MUST_ASSIGN_LOOKUP_SYMBOL(base_class, root_symbol, "base");
-  EXPECT_EQ(base_class_info.type, SymbolMetaType::kClass);
+  EXPECT_EQ(base_class_info.metatype, SymbolMetaType::kClass);
   EXPECT_EQ(base_class_info.file_origin, &src);
   EXPECT_EQ(base_class_info.declared_type.syntax_origin, nullptr);
   EXPECT_TRUE(base_class_info.local_references_to_bind.empty());
 
   MUST_ASSIGN_LOOKUP_SYMBOL(derived_class, root_symbol, "derived");
-  EXPECT_EQ(derived_class_info.type, SymbolMetaType::kClass);
+  EXPECT_EQ(derived_class_info.metatype, SymbolMetaType::kClass);
   EXPECT_EQ(derived_class_info.file_origin, &src);
   EXPECT_EQ(derived_class_info.declared_type.syntax_origin, nullptr);
   EXPECT_TRUE(derived_class_info.local_references_to_bind.empty());
@@ -2547,7 +2566,7 @@ TEST(BuildSymbolTableTest, ClassDeclarationSingleInheritance) {
   const ReferenceComponent& base_ref_comp(base_ref->components->Value());
   EXPECT_EQ(base_ref_comp.identifier, "base");
   EXPECT_EQ(base_ref_comp.ref_type, ReferenceType::kUnqualified);
-  EXPECT_EQ(base_ref_comp.metatype, SymbolMetaType::kClass);
+  EXPECT_EQ(base_ref_comp.required_metatype, SymbolMetaType::kClass);
   EXPECT_EQ(base_ref_comp.resolved_symbol, nullptr);
 
   // Make sure the "base" reference is linked from the "derived" class.
@@ -2586,16 +2605,16 @@ TEST(BuildSymbolTableTest, ClassDeclarationSingleInheritanceAcrossPackage) {
                                          << build_diagnostics.front().message();
 
   MUST_ASSIGN_LOOKUP_SYMBOL(package_pp, root_symbol, "pp");
-  EXPECT_EQ(package_pp_info.type, SymbolMetaType::kPackage);
+  EXPECT_EQ(package_pp_info.metatype, SymbolMetaType::kPackage);
 
   MUST_ASSIGN_LOOKUP_SYMBOL(base_class, package_pp, "base");
-  EXPECT_EQ(base_class_info.type, SymbolMetaType::kClass);
+  EXPECT_EQ(base_class_info.metatype, SymbolMetaType::kClass);
   EXPECT_EQ(base_class_info.file_origin, &src);
   EXPECT_EQ(base_class_info.declared_type.syntax_origin, nullptr);
   EXPECT_TRUE(base_class_info.local_references_to_bind.empty());
 
   MUST_ASSIGN_LOOKUP_SYMBOL(derived_class, root_symbol, "derived");
-  EXPECT_EQ(derived_class_info.type, SymbolMetaType::kClass);
+  EXPECT_EQ(derived_class_info.metatype, SymbolMetaType::kClass);
   EXPECT_EQ(derived_class_info.file_origin, &src);
   EXPECT_EQ(derived_class_info.declared_type.syntax_origin, nullptr);
   EXPECT_TRUE(derived_class_info.local_references_to_bind.empty());
@@ -2607,7 +2626,7 @@ TEST(BuildSymbolTableTest, ClassDeclarationSingleInheritanceAcrossPackage) {
   const ReferenceComponent& pp_ref_comp(pp_ref->components->Value());
   EXPECT_EQ(pp_ref_comp.identifier, "pp");
   EXPECT_EQ(pp_ref_comp.ref_type, ReferenceType::kUnqualified);
-  EXPECT_EQ(pp_ref_comp.metatype, SymbolMetaType::kUnspecified);
+  EXPECT_EQ(pp_ref_comp.required_metatype, SymbolMetaType::kUnspecified);
   EXPECT_EQ(pp_ref_comp.resolved_symbol, nullptr);
 
   ASSERT_EQ(pp_ref->components->Children().size(), 1);
@@ -2616,7 +2635,7 @@ TEST(BuildSymbolTableTest, ClassDeclarationSingleInheritanceAcrossPackage) {
   const ReferenceComponent& base_ref_comp(base_ref.Value());
   EXPECT_EQ(base_ref_comp.identifier, "base");
   EXPECT_EQ(base_ref_comp.ref_type, ReferenceType::kDirectMember);
-  EXPECT_EQ(base_ref_comp.metatype, SymbolMetaType::kClass);
+  EXPECT_EQ(base_ref_comp.required_metatype, SymbolMetaType::kClass);
   EXPECT_EQ(base_ref_comp.resolved_symbol, nullptr);
 
   // Make sure the "pp::base" reference is linked from the "derived" class.
@@ -2659,19 +2678,19 @@ TEST(BuildSymbolTableTest, ClassDeclarationSingleInheritancePackageToPackage) {
                                          << build_diagnostics.front().message();
 
   MUST_ASSIGN_LOOKUP_SYMBOL(package_pp, root_symbol, "pp");
-  EXPECT_EQ(package_pp_info.type, SymbolMetaType::kPackage);
+  EXPECT_EQ(package_pp_info.metatype, SymbolMetaType::kPackage);
 
   MUST_ASSIGN_LOOKUP_SYMBOL(base_class, package_pp, "base");
-  EXPECT_EQ(base_class_info.type, SymbolMetaType::kClass);
+  EXPECT_EQ(base_class_info.metatype, SymbolMetaType::kClass);
   EXPECT_EQ(base_class_info.file_origin, &src);
   EXPECT_EQ(base_class_info.declared_type.syntax_origin, nullptr);
   EXPECT_TRUE(base_class_info.local_references_to_bind.empty());
 
   MUST_ASSIGN_LOOKUP_SYMBOL(package_qq, root_symbol, "qq");
-  EXPECT_EQ(package_qq_info.type, SymbolMetaType::kPackage);
+  EXPECT_EQ(package_qq_info.metatype, SymbolMetaType::kPackage);
 
   MUST_ASSIGN_LOOKUP_SYMBOL(derived_class, package_qq, "derived");
-  EXPECT_EQ(derived_class_info.type, SymbolMetaType::kClass);
+  EXPECT_EQ(derived_class_info.metatype, SymbolMetaType::kClass);
   EXPECT_EQ(derived_class_info.file_origin, &src);
   EXPECT_EQ(derived_class_info.declared_type.syntax_origin, nullptr);
   EXPECT_TRUE(derived_class_info.local_references_to_bind.empty());
@@ -2684,7 +2703,7 @@ TEST(BuildSymbolTableTest, ClassDeclarationSingleInheritancePackageToPackage) {
   const ReferenceComponent& pp_ref_comp(pp_ref->components->Value());
   EXPECT_EQ(pp_ref_comp.identifier, "pp");
   EXPECT_EQ(pp_ref_comp.ref_type, ReferenceType::kUnqualified);
-  EXPECT_EQ(pp_ref_comp.metatype, SymbolMetaType::kUnspecified);
+  EXPECT_EQ(pp_ref_comp.required_metatype, SymbolMetaType::kUnspecified);
   EXPECT_EQ(pp_ref_comp.resolved_symbol, nullptr);
 
   ASSERT_EQ(pp_ref->components->Children().size(), 1);
@@ -2693,7 +2712,7 @@ TEST(BuildSymbolTableTest, ClassDeclarationSingleInheritancePackageToPackage) {
   const ReferenceComponent& base_ref_comp(base_ref.Value());
   EXPECT_EQ(base_ref_comp.identifier, "base");
   EXPECT_EQ(base_ref_comp.ref_type, ReferenceType::kDirectMember);
-  EXPECT_EQ(base_ref_comp.metatype, SymbolMetaType::kClass);
+  EXPECT_EQ(base_ref_comp.required_metatype, SymbolMetaType::kClass);
   EXPECT_EQ(base_ref_comp.resolved_symbol, nullptr);
 
   // Make sure the "pp::base" reference is linked from the "qq::derived" class.
@@ -2736,19 +2755,19 @@ TEST(BuildSymbolTableTest, ClassDeclarationInheritanceFromNestedClass) {
                                          << build_diagnostics.front().message();
 
   MUST_ASSIGN_LOOKUP_SYMBOL(class_pp, root_symbol, "pp");
-  EXPECT_EQ(class_pp_info.type, SymbolMetaType::kClass);
+  EXPECT_EQ(class_pp_info.metatype, SymbolMetaType::kClass);
 
   MUST_ASSIGN_LOOKUP_SYMBOL(base_class, class_pp, "base");
-  EXPECT_EQ(base_class_info.type, SymbolMetaType::kClass);
+  EXPECT_EQ(base_class_info.metatype, SymbolMetaType::kClass);
   EXPECT_EQ(base_class_info.file_origin, &src);
   EXPECT_EQ(base_class_info.declared_type.syntax_origin, nullptr);
   EXPECT_TRUE(base_class_info.local_references_to_bind.empty());
 
   MUST_ASSIGN_LOOKUP_SYMBOL(class_qq, root_symbol, "qq");
-  EXPECT_EQ(class_qq_info.type, SymbolMetaType::kClass);
+  EXPECT_EQ(class_qq_info.metatype, SymbolMetaType::kClass);
 
   MUST_ASSIGN_LOOKUP_SYMBOL(derived_class, class_qq, "derived");
-  EXPECT_EQ(derived_class_info.type, SymbolMetaType::kClass);
+  EXPECT_EQ(derived_class_info.metatype, SymbolMetaType::kClass);
   EXPECT_EQ(derived_class_info.file_origin, &src);
   EXPECT_EQ(derived_class_info.declared_type.syntax_origin, nullptr);
   EXPECT_TRUE(derived_class_info.local_references_to_bind.empty());
@@ -2761,7 +2780,7 @@ TEST(BuildSymbolTableTest, ClassDeclarationInheritanceFromNestedClass) {
   const ReferenceComponent& pp_ref_comp(pp_ref->components->Value());
   EXPECT_EQ(pp_ref_comp.identifier, "pp");
   EXPECT_EQ(pp_ref_comp.ref_type, ReferenceType::kUnqualified);
-  EXPECT_EQ(pp_ref_comp.metatype, SymbolMetaType::kUnspecified);
+  EXPECT_EQ(pp_ref_comp.required_metatype, SymbolMetaType::kUnspecified);
   EXPECT_EQ(pp_ref_comp.resolved_symbol, nullptr);
 
   ASSERT_EQ(pp_ref->components->Children().size(), 1);
@@ -2770,7 +2789,7 @@ TEST(BuildSymbolTableTest, ClassDeclarationInheritanceFromNestedClass) {
   const ReferenceComponent& base_ref_comp(base_ref.Value());
   EXPECT_EQ(base_ref_comp.identifier, "base");
   EXPECT_EQ(base_ref_comp.ref_type, ReferenceType::kDirectMember);
-  EXPECT_EQ(base_ref_comp.metatype, SymbolMetaType::kClass);
+  EXPECT_EQ(base_ref_comp.required_metatype, SymbolMetaType::kClass);
   EXPECT_EQ(base_ref_comp.resolved_symbol, nullptr);
 
   // Make sure the "pp::base" reference is linked from the "qq::derived" class.
@@ -2813,23 +2832,23 @@ TEST(BuildSymbolTableTest, ClassDeclarationReferenceInheritedMemberFromMethod) {
                                          << build_diagnostics.front().message();
 
   MUST_ASSIGN_LOOKUP_SYMBOL(base_class, root_symbol, "base");
-  EXPECT_EQ(base_class_info.type, SymbolMetaType::kClass);
+  EXPECT_EQ(base_class_info.metatype, SymbolMetaType::kClass);
   EXPECT_EQ(base_class_info.file_origin, &src);
   EXPECT_EQ(base_class_info.declared_type.syntax_origin, nullptr);
   EXPECT_TRUE(base_class_info.local_references_to_bind.empty());
 
   MUST_ASSIGN_LOOKUP_SYMBOL(int_count, base_class, "count");
-  EXPECT_EQ(int_count_info.type, SymbolMetaType::kDataNetVariableInstance);
+  EXPECT_EQ(int_count_info.metatype, SymbolMetaType::kDataNetVariableInstance);
   EXPECT_EQ(int_count_info.file_origin, &src);
 
   MUST_ASSIGN_LOOKUP_SYMBOL(derived_class, root_symbol, "derived");
-  EXPECT_EQ(derived_class_info.type, SymbolMetaType::kClass);
+  EXPECT_EQ(derived_class_info.metatype, SymbolMetaType::kClass);
   EXPECT_EQ(derived_class_info.file_origin, &src);
   EXPECT_EQ(derived_class_info.declared_type.syntax_origin, nullptr);
   EXPECT_TRUE(derived_class_info.local_references_to_bind.empty());
 
   MUST_ASSIGN_LOOKUP_SYMBOL(get_count, derived_class, "get_count");
-  EXPECT_EQ(get_count_info.type, SymbolMetaType::kFunction);
+  EXPECT_EQ(get_count_info.metatype, SymbolMetaType::kFunction);
   ASSERT_EQ(get_count_info.local_references_to_bind.size(), 1);
 
   // "base::count" is referenced from the "derived::get_count" method
@@ -2839,7 +2858,7 @@ TEST(BuildSymbolTableTest, ClassDeclarationReferenceInheritedMemberFromMethod) {
   const ReferenceComponent& count_ref_comp(count_ref->components->Value());
   EXPECT_EQ(count_ref_comp.identifier, "count");
   EXPECT_EQ(count_ref_comp.ref_type, ReferenceType::kUnqualified);
-  EXPECT_EQ(count_ref_comp.metatype, SymbolMetaType::kUnspecified);
+  EXPECT_EQ(count_ref_comp.required_metatype, SymbolMetaType::kUnspecified);
   EXPECT_EQ(count_ref_comp.resolved_symbol, nullptr);
 
   // Make sure the "base" reference is linked from the "derived" class.
@@ -2883,28 +2902,28 @@ TEST(BuildSymbolTableTest,
                                          << build_diagnostics.front().message();
 
   MUST_ASSIGN_LOOKUP_SYMBOL(base_class, root_symbol, "base");
-  EXPECT_EQ(base_class_info.type, SymbolMetaType::kClass);
+  EXPECT_EQ(base_class_info.metatype, SymbolMetaType::kClass);
   EXPECT_EQ(base_class_info.file_origin, &src);
   EXPECT_EQ(base_class_info.declared_type.syntax_origin, nullptr);
   EXPECT_TRUE(base_class_info.local_references_to_bind.empty());
 
   MUST_ASSIGN_LOOKUP_SYMBOL(int_count, base_class, "count");
-  EXPECT_EQ(int_count_info.type, SymbolMetaType::kDataNetVariableInstance);
+  EXPECT_EQ(int_count_info.metatype, SymbolMetaType::kDataNetVariableInstance);
   EXPECT_EQ(int_count_info.file_origin, &src);
 
   MUST_ASSIGN_LOOKUP_SYMBOL(derived_class, root_symbol, "derived");
-  EXPECT_EQ(derived_class_info.type, SymbolMetaType::kClass);
+  EXPECT_EQ(derived_class_info.metatype, SymbolMetaType::kClass);
   EXPECT_EQ(derived_class_info.file_origin, &src);
   EXPECT_EQ(derived_class_info.declared_type.syntax_origin, nullptr);
   EXPECT_TRUE(derived_class_info.local_references_to_bind.empty());
 
   MUST_ASSIGN_LOOKUP_SYMBOL(get_count, root_symbol, "get_count");
-  EXPECT_EQ(get_count_info.type, SymbolMetaType::kFunction);
+  EXPECT_EQ(get_count_info.metatype, SymbolMetaType::kFunction);
   // references "derived" as a type and "dd" as an argument
   ASSERT_EQ(get_count_info.local_references_to_bind.size(), 2);
 
   MUST_ASSIGN_LOOKUP_SYMBOL(dd_arg, get_count, "dd");
-  EXPECT_EQ(dd_arg_info.type, SymbolMetaType::kDataNetVariableInstance);
+  EXPECT_EQ(dd_arg_info.metatype, SymbolMetaType::kDataNetVariableInstance);
   ASSERT_NE(dd_arg_info.declared_type.user_defined_type, nullptr);
   EXPECT_EQ(dd_arg_info.declared_type.user_defined_type->Value().identifier,
             "derived");
@@ -2919,7 +2938,8 @@ TEST(BuildSymbolTableTest,
   const ReferenceComponent& derived_type_ref_comp(
       derived_type_ref->components->Value());
   EXPECT_EQ(derived_type_ref_comp.ref_type, ReferenceType::kUnqualified);
-  EXPECT_EQ(derived_type_ref_comp.metatype, SymbolMetaType::kUnspecified);
+  EXPECT_EQ(derived_type_ref_comp.required_metatype,
+            SymbolMetaType::kUnspecified);
   EXPECT_EQ(derived_type_ref_comp.identifier, "derived");
   EXPECT_EQ(derived_type_ref_comp.resolved_symbol, nullptr);
   // Make sure "derived dd"'s type uses this type reference.
@@ -2930,7 +2950,7 @@ TEST(BuildSymbolTableTest,
   const ReferenceComponent& dd_ref_comp(dd_ref->components->Value());
   EXPECT_EQ(dd_ref_comp.identifier, "dd");
   EXPECT_EQ(dd_ref_comp.ref_type, ReferenceType::kUnqualified);
-  EXPECT_EQ(dd_ref_comp.metatype, SymbolMetaType::kUnspecified);
+  EXPECT_EQ(dd_ref_comp.required_metatype, SymbolMetaType::kUnspecified);
   EXPECT_EQ(dd_ref_comp.resolved_symbol, nullptr);
 
   ASSERT_EQ(dd_ref->components->Children().size(), 1);
@@ -2939,7 +2959,7 @@ TEST(BuildSymbolTableTest,
   const ReferenceComponent& dd_count_ref_comp(dd_count_ref.Value());
   EXPECT_EQ(dd_count_ref_comp.identifier, "count");
   EXPECT_EQ(dd_count_ref_comp.ref_type, ReferenceType::kMemberOfTypeOfParent);
-  EXPECT_EQ(dd_count_ref_comp.metatype, SymbolMetaType::kUnspecified);
+  EXPECT_EQ(dd_count_ref_comp.required_metatype, SymbolMetaType::kUnspecified);
   EXPECT_EQ(dd_count_ref_comp.resolved_symbol, nullptr);
 
   // Make sure the "base" reference is linked from the "derived" class.
@@ -2982,7 +3002,7 @@ TEST(BuildSymbolTableTest, FunctionDeclarationNoReturnType) {
                                          << build_diagnostics.front().message();
 
   MUST_ASSIGN_LOOKUP_SYMBOL(function_ff, root_symbol, "ff");
-  EXPECT_EQ(function_ff_info.type, SymbolMetaType::kFunction);
+  EXPECT_EQ(function_ff_info.metatype, SymbolMetaType::kFunction);
   EXPECT_EQ(function_ff_info.file_origin, &src);
   // no return type
   EXPECT_EQ(function_ff_info.declared_type.syntax_origin, nullptr);
@@ -3011,13 +3031,13 @@ TEST(BuildSymbolTableTest, FunctionDeclarationWithPort) {
                                          << build_diagnostics.front().message();
 
   MUST_ASSIGN_LOOKUP_SYMBOL(function_ff, root_symbol, "ff");
-  EXPECT_EQ(function_ff_info.type, SymbolMetaType::kFunction);
+  EXPECT_EQ(function_ff_info.metatype, SymbolMetaType::kFunction);
   EXPECT_EQ(function_ff_info.file_origin, &src);
   EXPECT_EQ(function_ff_info.declared_type.syntax_origin,
             nullptr);  // there is no function return type
 
   MUST_ASSIGN_LOOKUP_SYMBOL(param_g, function_ff, "g");
-  EXPECT_EQ(param_g_info.type, SymbolMetaType::kDataNetVariableInstance);
+  EXPECT_EQ(param_g_info.metatype, SymbolMetaType::kDataNetVariableInstance);
   EXPECT_EQ(param_g_info.file_origin, &src);
   ASSERT_NE(param_g_info.declared_type.syntax_origin, nullptr);
   EXPECT_EQ(
@@ -3050,13 +3070,13 @@ TEST(BuildSymbolTableTest, FunctionDeclarationWithLocalVariable) {
                                          << build_diagnostics.front().message();
 
   MUST_ASSIGN_LOOKUP_SYMBOL(function_ff, root_symbol, "ff");
-  EXPECT_EQ(function_ff_info.type, SymbolMetaType::kFunction);
+  EXPECT_EQ(function_ff_info.metatype, SymbolMetaType::kFunction);
   EXPECT_EQ(function_ff_info.file_origin, &src);
   EXPECT_EQ(function_ff_info.declared_type.syntax_origin,
             nullptr);  // there is no function return type
 
   MUST_ASSIGN_LOOKUP_SYMBOL(local_g, function_ff, "g");
-  EXPECT_EQ(local_g_info.type, SymbolMetaType::kDataNetVariableInstance);
+  EXPECT_EQ(local_g_info.metatype, SymbolMetaType::kDataNetVariableInstance);
   EXPECT_EQ(local_g_info.file_origin, &src);
   ASSERT_NE(local_g_info.declared_type.syntax_origin, nullptr);
   EXPECT_EQ(
@@ -3087,7 +3107,7 @@ TEST(BuildSymbolTableTest, FunctionDeclarationVoidReturnType) {
                                          << build_diagnostics.front().message();
 
   MUST_ASSIGN_LOOKUP_SYMBOL(function_ff, root_symbol, "ff");
-  EXPECT_EQ(function_ff_info.type, SymbolMetaType::kFunction);
+  EXPECT_EQ(function_ff_info.metatype, SymbolMetaType::kFunction);
   EXPECT_EQ(function_ff_info.file_origin, &src);
   ASSERT_NE(function_ff_info.declared_type.syntax_origin, nullptr);
   EXPECT_EQ(verible::StringSpanOfSymbol(
@@ -3120,7 +3140,7 @@ TEST(BuildSymbolTableTest, FunctionDeclarationClassReturnType) {
 
   MUST_ASSIGN_LOOKUP_SYMBOL(class_cc, root_symbol, "cc");
   MUST_ASSIGN_LOOKUP_SYMBOL(function_ff, root_symbol, "ff");
-  EXPECT_EQ(function_ff_info.type, SymbolMetaType::kFunction);
+  EXPECT_EQ(function_ff_info.metatype, SymbolMetaType::kFunction);
   EXPECT_EQ(function_ff_info.file_origin, &src);
   ASSERT_NE(function_ff_info.declared_type.syntax_origin, nullptr);
   EXPECT_EQ(verible::StringSpanOfSymbol(
@@ -3131,7 +3151,7 @@ TEST(BuildSymbolTableTest, FunctionDeclarationClassReturnType) {
   ASSERT_NE(cc_ref, nullptr);
   const ReferenceComponent& cc_ref_comp(cc_ref->Value());
   EXPECT_EQ(cc_ref_comp.ref_type, ReferenceType::kUnqualified);
-  EXPECT_EQ(cc_ref_comp.metatype, SymbolMetaType::kUnspecified);
+  EXPECT_EQ(cc_ref_comp.required_metatype, SymbolMetaType::kUnspecified);
   EXPECT_EQ(cc_ref_comp.identifier, "cc");
   EXPECT_EQ(cc_ref_comp.resolved_symbol, nullptr);
 
@@ -3165,7 +3185,7 @@ TEST(BuildSymbolTableTest, FunctionDeclarationInModule) {
 
   MUST_ASSIGN_LOOKUP_SYMBOL(module_mm, root_symbol, "mm");
   MUST_ASSIGN_LOOKUP_SYMBOL(function_ff, module_mm, "ff");
-  EXPECT_EQ(function_ff_info.type, SymbolMetaType::kFunction);
+  EXPECT_EQ(function_ff_info.metatype, SymbolMetaType::kFunction);
   EXPECT_EQ(function_ff_info.file_origin, &src);
   ASSERT_NE(function_ff_info.declared_type.syntax_origin, nullptr);
   EXPECT_EQ(verible::StringSpanOfSymbol(
@@ -3204,7 +3224,7 @@ TEST(BuildSymbolTableTest, ClassMethodFunctionDeclaration) {
 
   MUST_ASSIGN_LOOKUP_SYMBOL(class_cc, root_symbol, "cc");
   MUST_ASSIGN_LOOKUP_SYMBOL(function_ff, class_cc, "ff");
-  EXPECT_EQ(function_ff_info.type, SymbolMetaType::kFunction);
+  EXPECT_EQ(function_ff_info.metatype, SymbolMetaType::kFunction);
   EXPECT_EQ(function_ff_info.file_origin, &src);
   ASSERT_NE(function_ff_info.declared_type.syntax_origin, nullptr);
   EXPECT_EQ(verible::StringSpanOfSymbol(
@@ -3254,7 +3274,7 @@ TEST(BuildSymbolTableTest,
   MUST_ASSIGN_LOOKUP_SYMBOL(class_cc, package_bb, "cc");
   MUST_ASSIGN_LOOKUP_SYMBOL(function_ff, class_cc, "ff");
 
-  EXPECT_EQ(function_ff_info.type, SymbolMetaType::kFunction);
+  EXPECT_EQ(function_ff_info.metatype, SymbolMetaType::kFunction);
   EXPECT_EQ(function_ff_info.file_origin, &src);
   ASSERT_NE(function_ff_info.declared_type.syntax_origin, nullptr);
   EXPECT_EQ(verible::StringSpanOfSymbol(
@@ -3267,7 +3287,7 @@ TEST(BuildSymbolTableTest,
   ASSERT_NE(vv_ref, nullptr);
   const ReferenceComponent& vv_ref_comp(vv_ref->Value());
   EXPECT_EQ(vv_ref_comp.ref_type, ReferenceType::kDirectMember);
-  EXPECT_EQ(vv_ref_comp.metatype, SymbolMetaType::kUnspecified);
+  EXPECT_EQ(vv_ref_comp.required_metatype, SymbolMetaType::kUnspecified);
   EXPECT_EQ(vv_ref_comp.identifier, "vv");
   EXPECT_EQ(vv_ref_comp.resolved_symbol, nullptr);
 
@@ -3276,7 +3296,7 @@ TEST(BuildSymbolTableTest,
   ASSERT_NE(aa_ref, nullptr);
   const ReferenceComponent& aa_ref_comp(aa_ref->Value());
   EXPECT_EQ(aa_ref_comp.ref_type, ReferenceType::kUnqualified);
-  EXPECT_EQ(aa_ref_comp.metatype, SymbolMetaType::kUnspecified);
+  EXPECT_EQ(aa_ref_comp.required_metatype, SymbolMetaType::kUnspecified);
   EXPECT_EQ(aa_ref_comp.identifier, "aa");
   EXPECT_EQ(aa_ref_comp.resolved_symbol, nullptr);
 
@@ -3357,7 +3377,7 @@ TEST(BuildSymbolTableTest, FunctionDeclarationOutOfLineInvalidModuleInjection) {
                           "but found a module"));
   }
   MUST_ASSIGN_LOOKUP_SYMBOL(module_mm, root_symbol, "mm");
-  EXPECT_EQ(module_mm_info.type, SymbolMetaType::kModule);
+  EXPECT_EQ(module_mm_info.metatype, SymbolMetaType::kModule);
   EXPECT_EQ(module_mm.Find("ff"), module_mm.end());
 
   // Reference must be resolved at Build-time.
@@ -3409,7 +3429,7 @@ TEST(BuildSymbolTableTest, FunctionDeclarationOutOfLineMissingPrototype) {
   }
   MUST_ASSIGN_LOOKUP_SYMBOL(class_cc, root_symbol, "cc");
   MUST_ASSIGN_LOOKUP_SYMBOL(method_ff, class_cc, "ff");
-  EXPECT_EQ(method_ff_info.type, SymbolMetaType::kFunction);
+  EXPECT_EQ(method_ff_info.metatype, SymbolMetaType::kFunction);
 
   // out-of-line declaration creates a self-reference.
   // Reference must be resolved at Build-time.
@@ -3451,14 +3471,14 @@ TEST(BuildSymbolTableTest, FunctionDeclarationMethodPrototypeOnly) {
 
   MUST_ASSIGN_LOOKUP_SYMBOL(class_cc, root_symbol, "cc");
   MUST_ASSIGN_LOOKUP_SYMBOL(method_ff, class_cc, "ff");
-  EXPECT_EQ(method_ff_info.type, SymbolMetaType::kFunction);
+  EXPECT_EQ(method_ff_info.metatype, SymbolMetaType::kFunction);
   ASSERT_NE(method_ff_info.declared_type.syntax_origin, nullptr);
   EXPECT_EQ(
       verible::StringSpanOfSymbol(*method_ff_info.declared_type.syntax_origin),
       "int");
 
   MUST_ASSIGN_LOOKUP_SYMBOL(port_ll, method_ff, "ll");
-  EXPECT_EQ(port_ll_info.type, SymbolMetaType::kDataNetVariableInstance);
+  EXPECT_EQ(port_ll_info.metatype, SymbolMetaType::kDataNetVariableInstance);
   ASSERT_NE(port_ll_info.declared_type.syntax_origin, nullptr);
   EXPECT_EQ(
       verible::StringSpanOfSymbol(*port_ll_info.declared_type.syntax_origin),
@@ -3496,21 +3516,21 @@ TEST(BuildSymbolTableTest, FunctionDeclarationOutOfLineWithMethodPrototype) {
 
   MUST_ASSIGN_LOOKUP_SYMBOL(class_cc, root_symbol, "cc");
   MUST_ASSIGN_LOOKUP_SYMBOL(method_ff, class_cc, "ff");
-  EXPECT_EQ(method_ff_info.type, SymbolMetaType::kFunction);
+  EXPECT_EQ(method_ff_info.metatype, SymbolMetaType::kFunction);
   ASSERT_NE(method_ff_info.declared_type.syntax_origin, nullptr);
   EXPECT_EQ(
       verible::StringSpanOfSymbol(*method_ff_info.declared_type.syntax_origin),
       "int");
 
   MUST_ASSIGN_LOOKUP_SYMBOL(port_ll, method_ff, "ll");
-  EXPECT_EQ(port_ll_info.type, SymbolMetaType::kDataNetVariableInstance);
+  EXPECT_EQ(port_ll_info.metatype, SymbolMetaType::kDataNetVariableInstance);
   ASSERT_NE(port_ll_info.declared_type.syntax_origin, nullptr);
   EXPECT_EQ(
       verible::StringSpanOfSymbol(*port_ll_info.declared_type.syntax_origin),
       "logic");
 
   MUST_ASSIGN_LOOKUP_SYMBOL(local_bb, method_ff, "bb");
-  EXPECT_EQ(local_bb_info.type, SymbolMetaType::kDataNetVariableInstance);
+  EXPECT_EQ(local_bb_info.metatype, SymbolMetaType::kDataNetVariableInstance);
   ASSERT_NE(local_bb_info.declared_type.syntax_origin, nullptr);
   EXPECT_EQ(
       verible::StringSpanOfSymbol(*local_bb_info.declared_type.syntax_origin),
@@ -3557,7 +3577,7 @@ TEST(BuildSymbolTableTest, TaskDeclaration) {
                                          << build_diagnostics.front().message();
 
   MUST_ASSIGN_LOOKUP_SYMBOL(task_tt, root_symbol, "tt");
-  EXPECT_EQ(task_tt_info.type, SymbolMetaType::kTask);
+  EXPECT_EQ(task_tt_info.metatype, SymbolMetaType::kTask);
   EXPECT_EQ(task_tt_info.file_origin, &src);
   // no return type
   EXPECT_EQ(task_tt_info.declared_type.syntax_origin, nullptr);
@@ -3588,7 +3608,7 @@ TEST(BuildSymbolTableTest, TaskDeclarationInPackage) {
 
   MUST_ASSIGN_LOOKUP_SYMBOL(package_pp, root_symbol, "pp");
   MUST_ASSIGN_LOOKUP_SYMBOL(task_tt, package_pp, "tt");
-  EXPECT_EQ(task_tt_info.type, SymbolMetaType::kTask);
+  EXPECT_EQ(task_tt_info.metatype, SymbolMetaType::kTask);
   EXPECT_EQ(task_tt_info.file_origin, &src);
   // no return type
   EXPECT_EQ(task_tt_info.declared_type.syntax_origin, nullptr);
@@ -3619,7 +3639,7 @@ TEST(BuildSymbolTableTest, TaskDeclarationInModule) {
 
   MUST_ASSIGN_LOOKUP_SYMBOL(module_mm, root_symbol, "mm");
   MUST_ASSIGN_LOOKUP_SYMBOL(task_tt, module_mm, "tt");
-  EXPECT_EQ(task_tt_info.type, SymbolMetaType::kTask);
+  EXPECT_EQ(task_tt_info.metatype, SymbolMetaType::kTask);
   EXPECT_EQ(task_tt_info.file_origin, &src);
   // no return type
   EXPECT_EQ(task_tt_info.declared_type.syntax_origin, nullptr);
@@ -3650,7 +3670,7 @@ TEST(BuildSymbolTableTest, TaskDeclarationInClass) {
 
   MUST_ASSIGN_LOOKUP_SYMBOL(class_cc, root_symbol, "cc");
   MUST_ASSIGN_LOOKUP_SYMBOL(task_tt, class_cc, "tt");
-  EXPECT_EQ(task_tt_info.type, SymbolMetaType::kTask);
+  EXPECT_EQ(task_tt_info.metatype, SymbolMetaType::kTask);
   EXPECT_EQ(task_tt_info.file_origin, &src);
   // no return type
   EXPECT_EQ(task_tt_info.declared_type.syntax_origin, nullptr);
@@ -3678,13 +3698,13 @@ TEST(BuildSymbolTableTest, TaskDeclarationWithPorts) {
                                          << build_diagnostics.front().message();
 
   MUST_ASSIGN_LOOKUP_SYMBOL(task_tt, root_symbol, "tt");
-  EXPECT_EQ(task_tt_info.type, SymbolMetaType::kTask);
+  EXPECT_EQ(task_tt_info.metatype, SymbolMetaType::kTask);
   EXPECT_EQ(task_tt_info.file_origin, &src);
   // no return type
   EXPECT_EQ(task_tt_info.declared_type.syntax_origin, nullptr);
 
   MUST_ASSIGN_LOOKUP_SYMBOL(logic_ll, task_tt, "ll");
-  EXPECT_EQ(logic_ll_info.type, SymbolMetaType::kDataNetVariableInstance);
+  EXPECT_EQ(logic_ll_info.metatype, SymbolMetaType::kDataNetVariableInstance);
   EXPECT_EQ(logic_ll_info.file_origin, &src);
   // primitive type
   ASSERT_NE(logic_ll_info.declared_type.syntax_origin, nullptr);
@@ -3763,7 +3783,7 @@ TEST(BuildSymbolTableTest, TaskDeclarationOutOfLineMissingPrototype) {
   }
   MUST_ASSIGN_LOOKUP_SYMBOL(class_cc, root_symbol, "cc");
   MUST_ASSIGN_LOOKUP_SYMBOL(method_tt, class_cc, "tt");
-  EXPECT_EQ(method_tt_info.type, SymbolMetaType::kTask);
+  EXPECT_EQ(method_tt_info.metatype, SymbolMetaType::kTask);
 
   // out-of-line declaration creates a self-reference.
   // Reference must be resolved at Build-time.
@@ -3812,7 +3832,7 @@ TEST(BuildSymbolTableTest, TaskDeclarationOutOfLineInvalidPackageInjection) {
                           "but found a package"));
   }
   MUST_ASSIGN_LOOKUP_SYMBOL(package_pp, root_symbol, "pp");
-  EXPECT_EQ(package_pp_info.type, SymbolMetaType::kPackage);
+  EXPECT_EQ(package_pp_info.metatype, SymbolMetaType::kPackage);
   EXPECT_EQ(package_pp.Find("tt"), package_pp.end());
 
   // Reference must be resolved at Build-time.
@@ -3854,11 +3874,11 @@ TEST(BuildSymbolTableTest, TaskDeclarationMethodPrototypeOnly) {
 
   MUST_ASSIGN_LOOKUP_SYMBOL(class_cc, root_symbol, "cc");
   MUST_ASSIGN_LOOKUP_SYMBOL(method_tt, class_cc, "tt");
-  EXPECT_EQ(method_tt_info.type, SymbolMetaType::kTask);
+  EXPECT_EQ(method_tt_info.metatype, SymbolMetaType::kTask);
   EXPECT_EQ(method_tt_info.declared_type.syntax_origin, nullptr);
 
   MUST_ASSIGN_LOOKUP_SYMBOL(port_ll, method_tt, "ll");
-  EXPECT_EQ(port_ll_info.type, SymbolMetaType::kDataNetVariableInstance);
+  EXPECT_EQ(port_ll_info.metatype, SymbolMetaType::kDataNetVariableInstance);
   ASSERT_NE(port_ll_info.declared_type.syntax_origin, nullptr);
   EXPECT_EQ(
       verible::StringSpanOfSymbol(*port_ll_info.declared_type.syntax_origin),
@@ -3895,18 +3915,18 @@ TEST(BuildSymbolTableTest, TaskDeclarationOutOfLineWithMethodPrototype) {
 
   MUST_ASSIGN_LOOKUP_SYMBOL(class_cc, root_symbol, "cc");
   MUST_ASSIGN_LOOKUP_SYMBOL(method_tt, class_cc, "tt");
-  EXPECT_EQ(method_tt_info.type, SymbolMetaType::kTask);
+  EXPECT_EQ(method_tt_info.metatype, SymbolMetaType::kTask);
   EXPECT_EQ(method_tt_info.declared_type.syntax_origin, nullptr);
 
   MUST_ASSIGN_LOOKUP_SYMBOL(port_ll, method_tt, "ll");
-  EXPECT_EQ(port_ll_info.type, SymbolMetaType::kDataNetVariableInstance);
+  EXPECT_EQ(port_ll_info.metatype, SymbolMetaType::kDataNetVariableInstance);
   ASSERT_NE(port_ll_info.declared_type.syntax_origin, nullptr);
   EXPECT_EQ(
       verible::StringSpanOfSymbol(*port_ll_info.declared_type.syntax_origin),
       "logic");
 
   MUST_ASSIGN_LOOKUP_SYMBOL(local_bb, method_tt, "bb");
-  EXPECT_EQ(local_bb_info.type, SymbolMetaType::kDataNetVariableInstance);
+  EXPECT_EQ(local_bb_info.metatype, SymbolMetaType::kDataNetVariableInstance);
   ASSERT_NE(local_bb_info.declared_type.syntax_origin, nullptr);
   EXPECT_EQ(
       verible::StringSpanOfSymbol(*local_bb_info.declared_type.syntax_origin),
@@ -3963,11 +3983,11 @@ TEST(BuildSymbolTableTest, OutOfLineDefinitionMismatchesPrototype) {
 
   MUST_ASSIGN_LOOKUP_SYMBOL(class_cc, root_symbol, "cc");
   MUST_ASSIGN_LOOKUP_SYMBOL(method_tt, class_cc, "tt");
-  EXPECT_EQ(method_tt_info.type, SymbolMetaType::kTask);
+  EXPECT_EQ(method_tt_info.metatype, SymbolMetaType::kTask);
   EXPECT_EQ(method_tt_info.declared_type.syntax_origin, nullptr);
 
   MUST_ASSIGN_LOOKUP_SYMBOL(port_ll, method_tt, "ll");
-  EXPECT_EQ(port_ll_info.type, SymbolMetaType::kDataNetVariableInstance);
+  EXPECT_EQ(port_ll_info.metatype, SymbolMetaType::kDataNetVariableInstance);
   ASSERT_NE(port_ll_info.declared_type.syntax_origin, nullptr);
   EXPECT_EQ(
       verible::StringSpanOfSymbol(*port_ll_info.declared_type.syntax_origin),
@@ -4022,16 +4042,16 @@ TEST(BuildSymbolTableTest, FunctionCallResolvedSameScope) {
 
   MUST_ASSIGN_LOOKUP_SYMBOL(function_tt, root_symbol, "tt");
   MUST_ASSIGN_LOOKUP_SYMBOL(function_vv, root_symbol, "vv");
-  EXPECT_EQ(function_tt_info.type, SymbolMetaType::kFunction);
+  EXPECT_EQ(function_tt_info.metatype, SymbolMetaType::kFunction);
   ASSERT_NE(function_tt_info.declared_type.syntax_origin, nullptr);
-  EXPECT_EQ(function_vv_info.type, SymbolMetaType::kFunction);
+  EXPECT_EQ(function_vv_info.metatype, SymbolMetaType::kFunction);
   ASSERT_NE(function_vv_info.declared_type.syntax_origin, nullptr);
 
   EXPECT_EQ(function_vv_info.local_references_to_bind.size(), 1);
   const auto ref_map(function_vv_info.LocalReferencesMapViewForTesting());
   ASSIGN_MUST_FIND_EXACTLY_ONE_REF(tt_ref, ref_map, "tt");
   const ReferenceComponent& tt_ref_comp(tt_ref->components->Value());
-  EXPECT_EQ(tt_ref_comp.metatype, SymbolMetaType::kCallable);
+  EXPECT_EQ(tt_ref_comp.required_metatype, SymbolMetaType::kCallable);
   EXPECT_EQ(tt_ref_comp.resolved_symbol, nullptr);
 
   {
@@ -4061,14 +4081,14 @@ TEST(BuildSymbolTableTest, FunctionCallUnresolved) {
                                          << build_diagnostics.front().message();
 
   MUST_ASSIGN_LOOKUP_SYMBOL(function_vv, root_symbol, "vv");
-  EXPECT_EQ(function_vv_info.type, SymbolMetaType::kFunction);
+  EXPECT_EQ(function_vv_info.metatype, SymbolMetaType::kFunction);
   ASSERT_NE(function_vv_info.declared_type.syntax_origin, nullptr);
 
   EXPECT_EQ(function_vv_info.local_references_to_bind.size(), 1);
   const auto ref_map(function_vv_info.LocalReferencesMapViewForTesting());
   ASSIGN_MUST_FIND_EXACTLY_ONE_REF(tt_ref, ref_map, "tt");
   const ReferenceComponent& tt_ref_comp(tt_ref->components->Value());
-  EXPECT_EQ(tt_ref_comp.metatype, SymbolMetaType::kCallable);
+  EXPECT_EQ(tt_ref_comp.required_metatype, SymbolMetaType::kCallable);
   EXPECT_EQ(tt_ref_comp.resolved_symbol, nullptr);
 
   {
@@ -4104,16 +4124,16 @@ TEST(BuildSymbolTableTest, CallNonFunction) {
 
   MUST_ASSIGN_LOOKUP_SYMBOL(module_tt, root_symbol, "tt");
   MUST_ASSIGN_LOOKUP_SYMBOL(function_vv, root_symbol, "vv");
-  EXPECT_EQ(module_tt_info.type, SymbolMetaType::kModule);
+  EXPECT_EQ(module_tt_info.metatype, SymbolMetaType::kModule);
   EXPECT_EQ(module_tt_info.declared_type.syntax_origin, nullptr);
-  EXPECT_EQ(function_vv_info.type, SymbolMetaType::kFunction);
+  EXPECT_EQ(function_vv_info.metatype, SymbolMetaType::kFunction);
   EXPECT_NE(function_vv_info.declared_type.syntax_origin, nullptr);
 
   EXPECT_EQ(function_vv_info.local_references_to_bind.size(), 1);
   const auto ref_map(function_vv_info.LocalReferencesMapViewForTesting());
   ASSIGN_MUST_FIND_EXACTLY_ONE_REF(tt_ref, ref_map, "tt");
   const ReferenceComponent& tt_ref_comp(tt_ref->components->Value());
-  EXPECT_EQ(tt_ref_comp.metatype, SymbolMetaType::kCallable);
+  EXPECT_EQ(tt_ref_comp.required_metatype, SymbolMetaType::kCallable);
   EXPECT_EQ(tt_ref_comp.resolved_symbol, nullptr);
 
   {
@@ -4149,19 +4169,19 @@ TEST(BuildSymbolTableTest, NestedCallsArguments) {
 
   MUST_ASSIGN_LOOKUP_SYMBOL(function_tt, root_symbol, "tt");
   MUST_ASSIGN_LOOKUP_SYMBOL(function_vv, root_symbol, "vv");
-  EXPECT_EQ(function_tt_info.type, SymbolMetaType::kFunction);
+  EXPECT_EQ(function_tt_info.metatype, SymbolMetaType::kFunction);
   ASSERT_NE(function_tt_info.declared_type.syntax_origin, nullptr);
-  EXPECT_EQ(function_vv_info.type, SymbolMetaType::kFunction);
+  EXPECT_EQ(function_vv_info.metatype, SymbolMetaType::kFunction);
   ASSERT_NE(function_vv_info.declared_type.syntax_origin, nullptr);
 
   MUST_ASSIGN_LOOKUP_SYMBOL(arg_aa, function_tt, "aa");
-  EXPECT_EQ(arg_aa_info.type, SymbolMetaType::kDataNetVariableInstance);
+  EXPECT_EQ(arg_aa_info.metatype, SymbolMetaType::kDataNetVariableInstance);
 
   EXPECT_EQ(function_tt_info.local_references_to_bind.size(), 1);
   const auto tt_ref_map(function_tt_info.LocalReferencesMapViewForTesting());
   ASSIGN_MUST_FIND_EXACTLY_ONE_REF(aa_ref, tt_ref_map, "aa");
   const ReferenceComponent& aa_ref_comp(aa_ref->components->Value());
-  EXPECT_EQ(aa_ref_comp.metatype, SymbolMetaType::kUnspecified);
+  EXPECT_EQ(aa_ref_comp.required_metatype, SymbolMetaType::kUnspecified);
   EXPECT_EQ(aa_ref_comp.resolved_symbol, nullptr);
 
   // Expect 3 calls to "tt" from the same scope.
@@ -4170,7 +4190,7 @@ TEST(BuildSymbolTableTest, NestedCallsArguments) {
   ASSIGN_MUST_FIND(tt_refs, vv_ref_map, "tt");
   for (const auto& tt_ref : tt_refs) {
     const ReferenceComponent& tt_ref_comp(tt_ref->components->Value());
-    EXPECT_EQ(tt_ref_comp.metatype, SymbolMetaType::kCallable);
+    EXPECT_EQ(tt_ref_comp.required_metatype, SymbolMetaType::kCallable);
     EXPECT_EQ(tt_ref_comp.resolved_symbol, nullptr);
   }
 
@@ -4206,14 +4226,14 @@ TEST(BuildSymbolTableTest, SelfRecursion) {
                                          << build_diagnostics.front().message();
 
   MUST_ASSIGN_LOOKUP_SYMBOL(function_tt, root_symbol, "tt");
-  EXPECT_EQ(function_tt_info.type, SymbolMetaType::kFunction);
+  EXPECT_EQ(function_tt_info.metatype, SymbolMetaType::kFunction);
   ASSERT_NE(function_tt_info.declared_type.syntax_origin, nullptr);
 
   EXPECT_EQ(function_tt_info.local_references_to_bind.size(), 1);
   const auto tt_ref_map(function_tt_info.LocalReferencesMapViewForTesting());
   ASSIGN_MUST_FIND_EXACTLY_ONE_REF(tt_ref, tt_ref_map, "tt");
   const ReferenceComponent& tt_ref_comp(tt_ref->components->Value());
-  EXPECT_EQ(tt_ref_comp.metatype, SymbolMetaType::kCallable);
+  EXPECT_EQ(tt_ref_comp.required_metatype, SymbolMetaType::kCallable);
   EXPECT_EQ(tt_ref_comp.resolved_symbol, nullptr);
 
   {
@@ -4247,23 +4267,23 @@ TEST(BuildSymbolTableTest, MutualRecursion) {
 
   MUST_ASSIGN_LOOKUP_SYMBOL(function_tt, root_symbol, "tt");
   MUST_ASSIGN_LOOKUP_SYMBOL(function_vv, root_symbol, "vv");
-  EXPECT_EQ(function_tt_info.type, SymbolMetaType::kFunction);
+  EXPECT_EQ(function_tt_info.metatype, SymbolMetaType::kFunction);
   ASSERT_NE(function_tt_info.declared_type.syntax_origin, nullptr);
-  EXPECT_EQ(function_vv_info.type, SymbolMetaType::kFunction);
+  EXPECT_EQ(function_vv_info.metatype, SymbolMetaType::kFunction);
   ASSERT_NE(function_vv_info.declared_type.syntax_origin, nullptr);
 
   EXPECT_EQ(function_tt_info.local_references_to_bind.size(), 1);
   const auto tt_ref_map(function_tt_info.LocalReferencesMapViewForTesting());
   ASSIGN_MUST_FIND_EXACTLY_ONE_REF(vv_ref, tt_ref_map, "vv");
   const ReferenceComponent& vv_ref_comp(vv_ref->components->Value());
-  EXPECT_EQ(vv_ref_comp.metatype, SymbolMetaType::kCallable);
+  EXPECT_EQ(vv_ref_comp.required_metatype, SymbolMetaType::kCallable);
   EXPECT_EQ(vv_ref_comp.resolved_symbol, nullptr);
 
   EXPECT_EQ(function_vv_info.local_references_to_bind.size(), 1);
   const auto vv_ref_map(function_vv_info.LocalReferencesMapViewForTesting());
   ASSIGN_MUST_FIND_EXACTLY_ONE_REF(tt_ref, vv_ref_map, "tt");
   const ReferenceComponent& tt_ref_comp(tt_ref->components->Value());
-  EXPECT_EQ(tt_ref_comp.metatype, SymbolMetaType::kCallable);
+  EXPECT_EQ(tt_ref_comp.required_metatype, SymbolMetaType::kCallable);
   EXPECT_EQ(tt_ref_comp.resolved_symbol, nullptr);
 
   {
@@ -4300,11 +4320,11 @@ TEST(BuildSymbolTableTest, PackageQualifiedFunctionCall) {
 
   MUST_ASSIGN_LOOKUP_SYMBOL(package_pp, root_symbol, "pp");
   MUST_ASSIGN_LOOKUP_SYMBOL(function_tt, package_pp, "tt");
-  EXPECT_EQ(package_pp_info.type, SymbolMetaType::kPackage);
+  EXPECT_EQ(package_pp_info.metatype, SymbolMetaType::kPackage);
   MUST_ASSIGN_LOOKUP_SYMBOL(function_vv, root_symbol, "vv");
-  EXPECT_EQ(function_tt_info.type, SymbolMetaType::kFunction);
+  EXPECT_EQ(function_tt_info.metatype, SymbolMetaType::kFunction);
   ASSERT_NE(function_tt_info.declared_type.syntax_origin, nullptr);
-  EXPECT_EQ(function_vv_info.type, SymbolMetaType::kFunction);
+  EXPECT_EQ(function_vv_info.metatype, SymbolMetaType::kFunction);
   ASSERT_NE(function_vv_info.declared_type.syntax_origin, nullptr);
 
   EXPECT_EQ(function_vv_info.local_references_to_bind.size(), 1);
@@ -4313,14 +4333,14 @@ TEST(BuildSymbolTableTest, PackageQualifiedFunctionCall) {
   ASSERT_EQ(pp_ref->components->Children().size(), 1);
   const ReferenceComponent& pp_ref_comp(pp_ref->components->Value());
   EXPECT_EQ(pp_ref_comp.ref_type, ReferenceType::kUnqualified);
-  EXPECT_EQ(pp_ref_comp.metatype, SymbolMetaType::kUnspecified);
+  EXPECT_EQ(pp_ref_comp.required_metatype, SymbolMetaType::kUnspecified);
   EXPECT_EQ(pp_ref_comp.resolved_symbol, nullptr);
 
   const ReferenceComponent& tt_ref_comp(
       pp_ref->components->Children().front().Value());
   EXPECT_EQ(tt_ref_comp.identifier, "tt");
   EXPECT_EQ(tt_ref_comp.ref_type, ReferenceType::kDirectMember);
-  EXPECT_EQ(tt_ref_comp.metatype, SymbolMetaType::kCallable);
+  EXPECT_EQ(tt_ref_comp.required_metatype, SymbolMetaType::kCallable);
   EXPECT_EQ(tt_ref_comp.resolved_symbol, nullptr);
 
   {
@@ -4357,11 +4377,11 @@ TEST(BuildSymbolTableTest, ClassQualifiedFunctionCall) {
 
   MUST_ASSIGN_LOOKUP_SYMBOL(class_cc, root_symbol, "cc");
   MUST_ASSIGN_LOOKUP_SYMBOL(function_tt, class_cc, "tt");
-  EXPECT_EQ(class_cc_info.type, SymbolMetaType::kClass);
+  EXPECT_EQ(class_cc_info.metatype, SymbolMetaType::kClass);
   MUST_ASSIGN_LOOKUP_SYMBOL(function_vv, root_symbol, "vv");
-  EXPECT_EQ(function_tt_info.type, SymbolMetaType::kFunction);
+  EXPECT_EQ(function_tt_info.metatype, SymbolMetaType::kFunction);
   ASSERT_NE(function_tt_info.declared_type.syntax_origin, nullptr);
-  EXPECT_EQ(function_vv_info.type, SymbolMetaType::kFunction);
+  EXPECT_EQ(function_vv_info.metatype, SymbolMetaType::kFunction);
   ASSERT_NE(function_vv_info.declared_type.syntax_origin, nullptr);
 
   EXPECT_EQ(function_vv_info.local_references_to_bind.size(), 1);
@@ -4370,14 +4390,14 @@ TEST(BuildSymbolTableTest, ClassQualifiedFunctionCall) {
   ASSERT_EQ(cc_ref->components->Children().size(), 1);
   const ReferenceComponent& cc_ref_comp(cc_ref->components->Value());
   EXPECT_EQ(cc_ref_comp.ref_type, ReferenceType::kUnqualified);
-  EXPECT_EQ(cc_ref_comp.metatype, SymbolMetaType::kUnspecified);
+  EXPECT_EQ(cc_ref_comp.required_metatype, SymbolMetaType::kUnspecified);
   EXPECT_EQ(cc_ref_comp.resolved_symbol, nullptr);
 
   const ReferenceComponent& tt_ref_comp(
       cc_ref->components->Children().front().Value());
   EXPECT_EQ(tt_ref_comp.identifier, "tt");
   EXPECT_EQ(tt_ref_comp.ref_type, ReferenceType::kDirectMember);
-  EXPECT_EQ(tt_ref_comp.metatype, SymbolMetaType::kCallable);
+  EXPECT_EQ(tt_ref_comp.required_metatype, SymbolMetaType::kCallable);
   EXPECT_EQ(tt_ref_comp.resolved_symbol, nullptr);
 
   {
@@ -4410,9 +4430,9 @@ TEST(BuildSymbolTableTest, ClassQualifiedFunctionCallUnresolved) {
                                          << build_diagnostics.front().message();
 
   MUST_ASSIGN_LOOKUP_SYMBOL(class_cc, root_symbol, "cc");
-  EXPECT_EQ(class_cc_info.type, SymbolMetaType::kClass);
+  EXPECT_EQ(class_cc_info.metatype, SymbolMetaType::kClass);
   MUST_ASSIGN_LOOKUP_SYMBOL(function_vv, root_symbol, "vv");
-  EXPECT_EQ(function_vv_info.type, SymbolMetaType::kFunction);
+  EXPECT_EQ(function_vv_info.metatype, SymbolMetaType::kFunction);
   ASSERT_NE(function_vv_info.declared_type.syntax_origin, nullptr);
 
   EXPECT_EQ(function_vv_info.local_references_to_bind.size(), 1);
@@ -4421,14 +4441,14 @@ TEST(BuildSymbolTableTest, ClassQualifiedFunctionCallUnresolved) {
   ASSERT_EQ(cc_ref->components->Children().size(), 1);
   const ReferenceComponent& cc_ref_comp(cc_ref->components->Value());
   EXPECT_EQ(cc_ref_comp.ref_type, ReferenceType::kUnqualified);
-  EXPECT_EQ(cc_ref_comp.metatype, SymbolMetaType::kUnspecified);
+  EXPECT_EQ(cc_ref_comp.required_metatype, SymbolMetaType::kUnspecified);
   EXPECT_EQ(cc_ref_comp.resolved_symbol, nullptr);
 
   const ReferenceComponent& tt_ref_comp(
       cc_ref->components->Children().front().Value());
   EXPECT_EQ(tt_ref_comp.identifier, "tt");
   EXPECT_EQ(tt_ref_comp.ref_type, ReferenceType::kDirectMember);
-  EXPECT_EQ(tt_ref_comp.metatype, SymbolMetaType::kCallable);
+  EXPECT_EQ(tt_ref_comp.required_metatype, SymbolMetaType::kCallable);
   EXPECT_EQ(tt_ref_comp.resolved_symbol, nullptr);
 
   {
@@ -4465,14 +4485,14 @@ TEST(BuildSymbolTableTest, ClassMethodCall) {
 
   MUST_ASSIGN_LOOKUP_SYMBOL(class_cc, root_symbol, "cc");
   MUST_ASSIGN_LOOKUP_SYMBOL(function_tt, class_cc, "tt");
-  EXPECT_EQ(class_cc_info.type, SymbolMetaType::kClass);
+  EXPECT_EQ(class_cc_info.metatype, SymbolMetaType::kClass);
   MUST_ASSIGN_LOOKUP_SYMBOL(function_vv, root_symbol, "vv");
-  EXPECT_EQ(function_tt_info.type, SymbolMetaType::kFunction);
+  EXPECT_EQ(function_tt_info.metatype, SymbolMetaType::kFunction);
   ASSERT_NE(function_tt_info.declared_type.syntax_origin, nullptr);
-  EXPECT_EQ(function_vv_info.type, SymbolMetaType::kFunction);
+  EXPECT_EQ(function_vv_info.metatype, SymbolMetaType::kFunction);
   ASSERT_NE(function_vv_info.declared_type.syntax_origin, nullptr);
   MUST_ASSIGN_LOOKUP_SYMBOL(cc_obj, function_vv, "cc_obj");
-  EXPECT_EQ(cc_obj_info.type, SymbolMetaType::kDataNetVariableInstance);
+  EXPECT_EQ(cc_obj_info.metatype, SymbolMetaType::kDataNetVariableInstance);
 
   EXPECT_EQ(function_vv_info.local_references_to_bind.size(), 2);
   const auto ref_map(function_vv_info.LocalReferencesMapViewForTesting());
@@ -4486,14 +4506,14 @@ TEST(BuildSymbolTableTest, ClassMethodCall) {
   ASSERT_EQ(cc_obj_ref->components->Children().size(), 1);
   const ReferenceComponent& cc_obj_ref_comp(cc_obj_ref->components->Value());
   EXPECT_EQ(cc_obj_ref_comp.ref_type, ReferenceType::kUnqualified);
-  EXPECT_EQ(cc_obj_ref_comp.metatype, SymbolMetaType::kUnspecified);
+  EXPECT_EQ(cc_obj_ref_comp.required_metatype, SymbolMetaType::kUnspecified);
   EXPECT_EQ(cc_obj_ref_comp.resolved_symbol, nullptr);
 
   const ReferenceComponent& tt_ref_comp(
       cc_obj_ref->components->Children().front().Value());
   EXPECT_EQ(tt_ref_comp.identifier, "tt");
   EXPECT_EQ(tt_ref_comp.ref_type, ReferenceType::kMemberOfTypeOfParent);
-  EXPECT_EQ(tt_ref_comp.metatype, SymbolMetaType::kCallable);
+  EXPECT_EQ(tt_ref_comp.required_metatype, SymbolMetaType::kCallable);
   EXPECT_EQ(tt_ref_comp.resolved_symbol, nullptr);
 
   {
@@ -4528,12 +4548,12 @@ TEST(BuildSymbolTableTest, ClassMethodCallUnresolved) {
                                          << build_diagnostics.front().message();
 
   MUST_ASSIGN_LOOKUP_SYMBOL(class_cc, root_symbol, "cc");
-  EXPECT_EQ(class_cc_info.type, SymbolMetaType::kClass);
+  EXPECT_EQ(class_cc_info.metatype, SymbolMetaType::kClass);
   MUST_ASSIGN_LOOKUP_SYMBOL(function_vv, root_symbol, "vv");
-  EXPECT_EQ(function_vv_info.type, SymbolMetaType::kFunction);
+  EXPECT_EQ(function_vv_info.metatype, SymbolMetaType::kFunction);
   ASSERT_NE(function_vv_info.declared_type.syntax_origin, nullptr);
   MUST_ASSIGN_LOOKUP_SYMBOL(cc_obj, function_vv, "cc_obj");
-  EXPECT_EQ(cc_obj_info.type, SymbolMetaType::kDataNetVariableInstance);
+  EXPECT_EQ(cc_obj_info.metatype, SymbolMetaType::kDataNetVariableInstance);
 
   EXPECT_EQ(function_vv_info.local_references_to_bind.size(), 2);
   const auto ref_map(function_vv_info.LocalReferencesMapViewForTesting());
@@ -4547,14 +4567,14 @@ TEST(BuildSymbolTableTest, ClassMethodCallUnresolved) {
   ASSERT_EQ(cc_obj_ref->components->Children().size(), 1);
   const ReferenceComponent& cc_obj_ref_comp(cc_obj_ref->components->Value());
   EXPECT_EQ(cc_obj_ref_comp.ref_type, ReferenceType::kUnqualified);
-  EXPECT_EQ(cc_obj_ref_comp.metatype, SymbolMetaType::kUnspecified);
+  EXPECT_EQ(cc_obj_ref_comp.required_metatype, SymbolMetaType::kUnspecified);
   EXPECT_EQ(cc_obj_ref_comp.resolved_symbol, nullptr);
 
   const ReferenceComponent& tt_ref_comp(
       cc_obj_ref->components->Children().front().Value());
   EXPECT_EQ(tt_ref_comp.identifier, "tt");
   EXPECT_EQ(tt_ref_comp.ref_type, ReferenceType::kMemberOfTypeOfParent);
-  EXPECT_EQ(tt_ref_comp.metatype, SymbolMetaType::kCallable);
+  EXPECT_EQ(tt_ref_comp.required_metatype, SymbolMetaType::kCallable);
   EXPECT_EQ(tt_ref_comp.resolved_symbol, nullptr);
 
   {
@@ -4596,27 +4616,27 @@ TEST(BuildSymbolTableTest, ChainedMethodCall) {
                                          << build_diagnostics.front().message();
 
   MUST_ASSIGN_LOOKUP_SYMBOL(class_cc, root_symbol, "cc");
-  EXPECT_EQ(class_cc_info.type, SymbolMetaType::kClass);
+  EXPECT_EQ(class_cc_info.metatype, SymbolMetaType::kClass);
 
   MUST_ASSIGN_LOOKUP_SYMBOL(class_dd, root_symbol, "dd");
-  EXPECT_EQ(class_dd_info.type, SymbolMetaType::kClass);
+  EXPECT_EQ(class_dd_info.metatype, SymbolMetaType::kClass);
 
   MUST_ASSIGN_LOOKUP_SYMBOL(function_tt, class_cc, "tt");
-  EXPECT_EQ(function_tt_info.type, SymbolMetaType::kFunction);
+  EXPECT_EQ(function_tt_info.metatype, SymbolMetaType::kFunction);
   ASSERT_NE(function_tt_info.declared_type.syntax_origin, nullptr);
   ASSERT_NE(function_tt_info.declared_type.user_defined_type, nullptr);
 
   MUST_ASSIGN_LOOKUP_SYMBOL(function_gg, class_dd, "gg");
-  EXPECT_EQ(function_gg_info.type, SymbolMetaType::kFunction);
+  EXPECT_EQ(function_gg_info.metatype, SymbolMetaType::kFunction);
   ASSERT_NE(function_gg_info.declared_type.syntax_origin, nullptr);
   ASSERT_NE(function_gg_info.declared_type.user_defined_type, nullptr);
 
   MUST_ASSIGN_LOOKUP_SYMBOL(function_vv, root_symbol, "vv");
-  EXPECT_EQ(function_vv_info.type, SymbolMetaType::kFunction);
+  EXPECT_EQ(function_vv_info.metatype, SymbolMetaType::kFunction);
   ASSERT_NE(function_vv_info.declared_type.syntax_origin, nullptr);
 
   MUST_ASSIGN_LOOKUP_SYMBOL(dd_obj, function_vv, "dd_obj");
-  EXPECT_EQ(dd_obj_info.type, SymbolMetaType::kDataNetVariableInstance);
+  EXPECT_EQ(dd_obj_info.metatype, SymbolMetaType::kDataNetVariableInstance);
 
   EXPECT_EQ(function_vv_info.local_references_to_bind.size(), 2);
   const auto ref_map(function_vv_info.LocalReferencesMapViewForTesting());
@@ -4631,7 +4651,7 @@ TEST(BuildSymbolTableTest, ChainedMethodCall) {
   ASSERT_EQ(dd_obj_ref->components->Children().size(), 1);
   const ReferenceComponent& dd_obj_ref_comp(dd_obj_ref->components->Value());
   EXPECT_EQ(dd_obj_ref_comp.ref_type, ReferenceType::kUnqualified);
-  EXPECT_EQ(dd_obj_ref_comp.metatype, SymbolMetaType::kUnspecified);
+  EXPECT_EQ(dd_obj_ref_comp.required_metatype, SymbolMetaType::kUnspecified);
   EXPECT_EQ(dd_obj_ref_comp.resolved_symbol, nullptr);
 
   const ReferenceComponentNode& dd_gg_ref(
@@ -4639,14 +4659,14 @@ TEST(BuildSymbolTableTest, ChainedMethodCall) {
   const ReferenceComponent& dd_gg_ref_comp(dd_gg_ref.Value());
   EXPECT_EQ(dd_gg_ref_comp.identifier, "gg");
   EXPECT_EQ(dd_gg_ref_comp.ref_type, ReferenceType::kMemberOfTypeOfParent);
-  EXPECT_EQ(dd_gg_ref_comp.metatype, SymbolMetaType::kCallable);
+  EXPECT_EQ(dd_gg_ref_comp.required_metatype, SymbolMetaType::kCallable);
   EXPECT_EQ(dd_gg_ref_comp.resolved_symbol, nullptr);
 
   const ReferenceComponentNode& dd_gg_tt_ref(dd_gg_ref.Children().front());
   const ReferenceComponent& dd_gg_tt_ref_comp(dd_gg_tt_ref.Value());
   EXPECT_EQ(dd_gg_tt_ref_comp.identifier, "tt");
   EXPECT_EQ(dd_gg_tt_ref_comp.ref_type, ReferenceType::kMemberOfTypeOfParent);
-  EXPECT_EQ(dd_gg_tt_ref_comp.metatype, SymbolMetaType::kCallable);
+  EXPECT_EQ(dd_gg_tt_ref_comp.required_metatype, SymbolMetaType::kCallable);
   EXPECT_EQ(dd_gg_tt_ref_comp.resolved_symbol, nullptr);
 
   {
@@ -4699,27 +4719,27 @@ TEST(BuildSymbolTableTest, ChainedMethodCallReturnTypeNotAClass) {
                                          << build_diagnostics.front().message();
 
   MUST_ASSIGN_LOOKUP_SYMBOL(class_cc, root_symbol, "cc");
-  EXPECT_EQ(class_cc_info.type, SymbolMetaType::kClass);
+  EXPECT_EQ(class_cc_info.metatype, SymbolMetaType::kClass);
 
   MUST_ASSIGN_LOOKUP_SYMBOL(class_dd, root_symbol, "dd");
-  EXPECT_EQ(class_dd_info.type, SymbolMetaType::kClass);
+  EXPECT_EQ(class_dd_info.metatype, SymbolMetaType::kClass);
 
   MUST_ASSIGN_LOOKUP_SYMBOL(function_tt, class_cc, "tt");
-  EXPECT_EQ(function_tt_info.type, SymbolMetaType::kFunction);
+  EXPECT_EQ(function_tt_info.metatype, SymbolMetaType::kFunction);
   ASSERT_NE(function_tt_info.declared_type.syntax_origin, nullptr);
   ASSERT_NE(function_tt_info.declared_type.user_defined_type, nullptr);
 
   MUST_ASSIGN_LOOKUP_SYMBOL(function_gg, class_dd, "gg");
-  EXPECT_EQ(function_gg_info.type, SymbolMetaType::kFunction);
+  EXPECT_EQ(function_gg_info.metatype, SymbolMetaType::kFunction);
   ASSERT_NE(function_gg_info.declared_type.syntax_origin, nullptr);
   EXPECT_EQ(function_gg_info.declared_type.user_defined_type, nullptr);
 
   MUST_ASSIGN_LOOKUP_SYMBOL(function_vv, root_symbol, "vv");
-  EXPECT_EQ(function_vv_info.type, SymbolMetaType::kFunction);
+  EXPECT_EQ(function_vv_info.metatype, SymbolMetaType::kFunction);
   ASSERT_NE(function_vv_info.declared_type.syntax_origin, nullptr);
 
   MUST_ASSIGN_LOOKUP_SYMBOL(dd_obj, function_vv, "dd_obj");
-  EXPECT_EQ(dd_obj_info.type, SymbolMetaType::kDataNetVariableInstance);
+  EXPECT_EQ(dd_obj_info.metatype, SymbolMetaType::kDataNetVariableInstance);
 
   EXPECT_EQ(function_vv_info.local_references_to_bind.size(), 2);
   const auto ref_map(function_vv_info.LocalReferencesMapViewForTesting());
@@ -4734,7 +4754,7 @@ TEST(BuildSymbolTableTest, ChainedMethodCallReturnTypeNotAClass) {
   ASSERT_EQ(dd_obj_ref->components->Children().size(), 1);
   const ReferenceComponent& dd_obj_ref_comp(dd_obj_ref->components->Value());
   EXPECT_EQ(dd_obj_ref_comp.ref_type, ReferenceType::kUnqualified);
-  EXPECT_EQ(dd_obj_ref_comp.metatype, SymbolMetaType::kUnspecified);
+  EXPECT_EQ(dd_obj_ref_comp.required_metatype, SymbolMetaType::kUnspecified);
   EXPECT_EQ(dd_obj_ref_comp.resolved_symbol, nullptr);
 
   const ReferenceComponentNode& dd_gg_ref(
@@ -4742,14 +4762,14 @@ TEST(BuildSymbolTableTest, ChainedMethodCallReturnTypeNotAClass) {
   const ReferenceComponent& dd_gg_ref_comp(dd_gg_ref.Value());
   EXPECT_EQ(dd_gg_ref_comp.identifier, "gg");
   EXPECT_EQ(dd_gg_ref_comp.ref_type, ReferenceType::kMemberOfTypeOfParent);
-  EXPECT_EQ(dd_gg_ref_comp.metatype, SymbolMetaType::kCallable);
+  EXPECT_EQ(dd_gg_ref_comp.required_metatype, SymbolMetaType::kCallable);
   EXPECT_EQ(dd_gg_ref_comp.resolved_symbol, nullptr);
 
   const ReferenceComponentNode& dd_gg_tt_ref(dd_gg_ref.Children().front());
   const ReferenceComponent& dd_gg_tt_ref_comp(dd_gg_tt_ref.Value());
   EXPECT_EQ(dd_gg_tt_ref_comp.identifier, "tt");
   EXPECT_EQ(dd_gg_tt_ref_comp.ref_type, ReferenceType::kMemberOfTypeOfParent);
-  EXPECT_EQ(dd_gg_tt_ref_comp.metatype, SymbolMetaType::kCallable);
+  EXPECT_EQ(dd_gg_tt_ref_comp.required_metatype, SymbolMetaType::kCallable);
   EXPECT_EQ(dd_gg_tt_ref_comp.resolved_symbol, nullptr);
 
   {
@@ -4864,7 +4884,7 @@ TEST(BuildSymbolTableTest, MultiFileModuleInstance) {
         EXPECT_TRUE(verible::IsSubRange(ref.identifier,
                                         qq_src.GetTextStructure()->Contents()));
         EXPECT_EQ(ref.ref_type, ReferenceType::kUnqualified);
-        EXPECT_EQ(ref.metatype, SymbolMetaType::kUnspecified);
+        EXPECT_EQ(ref.required_metatype, SymbolMetaType::kUnspecified);
         EXPECT_EQ(ref.resolved_symbol, nullptr);
       }
       {  // self-reference to "pp_inst" instance
@@ -4887,7 +4907,7 @@ TEST(BuildSymbolTableTest, MultiFileModuleInstance) {
         EXPECT_TRUE(verible::IsSubRange(ref.identifier,
                                         ss_src.GetTextStructure()->Contents()));
         EXPECT_EQ(ref.ref_type, ReferenceType::kUnqualified);
-        EXPECT_EQ(ref.metatype, SymbolMetaType::kUnspecified);
+        EXPECT_EQ(ref.required_metatype, SymbolMetaType::kUnspecified);
         EXPECT_EQ(ref.resolved_symbol, nullptr);
       }
       {  // self-reference to "qq_inst" instance
@@ -4907,7 +4927,7 @@ TEST(BuildSymbolTableTest, MultiFileModuleInstance) {
       EXPECT_EQ(pp_type.identifier, "pp");
       EXPECT_EQ(pp_type.resolved_symbol, nullptr);  // nothing resolved yet
       EXPECT_EQ(pp_type.ref_type, ReferenceType::kUnqualified);
-      EXPECT_EQ(pp_type.metatype, SymbolMetaType::kUnspecified);
+      EXPECT_EQ(pp_type.required_metatype, SymbolMetaType::kUnspecified);
       EXPECT_EQ(pp_inst_info.file_origin, &qq_src);
     }
 
@@ -4919,7 +4939,7 @@ TEST(BuildSymbolTableTest, MultiFileModuleInstance) {
       EXPECT_EQ(qq_type.identifier, "qq");
       EXPECT_EQ(qq_type.resolved_symbol, nullptr);  // nothing resolved yet
       EXPECT_EQ(qq_type.ref_type, ReferenceType::kUnqualified);
-      EXPECT_EQ(qq_type.metatype, SymbolMetaType::kUnspecified);
+      EXPECT_EQ(qq_type.required_metatype, SymbolMetaType::kUnspecified);
       EXPECT_EQ(qq_inst_info.file_origin, &ss_src);
     }
 
@@ -5013,7 +5033,7 @@ TEST(BuildSymbolTableTest, ModuleInstancesFromProjectOneFileAtATime) {
       const ReferenceComponent& ref(ref_node->Value());
       EXPECT_EQ(ref.identifier, "pp");
       EXPECT_EQ(ref.ref_type, ReferenceType::kUnqualified);
-      EXPECT_EQ(ref.metatype, SymbolMetaType::kUnspecified);
+      EXPECT_EQ(ref.required_metatype, SymbolMetaType::kUnspecified);
       EXPECT_EQ(ref.resolved_symbol, nullptr);
     }
     {  // self-reference to "pp_inst" instance
@@ -5034,7 +5054,7 @@ TEST(BuildSymbolTableTest, ModuleInstancesFromProjectOneFileAtATime) {
       const ReferenceComponent& ref(ref_node->Value());
       EXPECT_EQ(ref.identifier, "qq");
       EXPECT_EQ(ref.ref_type, ReferenceType::kUnqualified);
-      EXPECT_EQ(ref.metatype, SymbolMetaType::kUnspecified);
+      EXPECT_EQ(ref.required_metatype, SymbolMetaType::kUnspecified);
       EXPECT_EQ(ref.resolved_symbol, nullptr);
     }
     {  // self-reference to "qq_inst" instance
@@ -5054,7 +5074,7 @@ TEST(BuildSymbolTableTest, ModuleInstancesFromProjectOneFileAtATime) {
     EXPECT_EQ(pp_type.identifier, "pp");
     EXPECT_EQ(pp_type.resolved_symbol, nullptr);  // nothing resolved yet
     EXPECT_EQ(pp_type.ref_type, ReferenceType::kUnqualified);
-    EXPECT_EQ(pp_type.metatype, SymbolMetaType::kUnspecified);
+    EXPECT_EQ(pp_type.required_metatype, SymbolMetaType::kUnspecified);
   }
 
   {  // Verify qq_inst's type info
@@ -5065,7 +5085,7 @@ TEST(BuildSymbolTableTest, ModuleInstancesFromProjectOneFileAtATime) {
     EXPECT_EQ(qq_type.identifier, "qq");
     EXPECT_EQ(qq_type.resolved_symbol, nullptr);  // nothing resolved yet
     EXPECT_EQ(qq_type.ref_type, ReferenceType::kUnqualified);
-    EXPECT_EQ(qq_type.metatype, SymbolMetaType::kUnspecified);
+    EXPECT_EQ(qq_type.required_metatype, SymbolMetaType::kUnspecified);
   }
 
   // Resolve symbols.
@@ -5164,7 +5184,7 @@ TEST(BuildSymbolTableTest, ModuleInstancesFromProjectFilesGood) {
       const ReferenceComponent& ref(ref_node->Value());
       EXPECT_EQ(ref.identifier, "pp");
       EXPECT_EQ(ref.ref_type, ReferenceType::kUnqualified);
-      EXPECT_EQ(ref.metatype, SymbolMetaType::kUnspecified);
+      EXPECT_EQ(ref.required_metatype, SymbolMetaType::kUnspecified);
       EXPECT_EQ(ref.resolved_symbol, nullptr);
     }
     {  // self-reference to "pp_inst" instance
@@ -5185,7 +5205,7 @@ TEST(BuildSymbolTableTest, ModuleInstancesFromProjectFilesGood) {
       const ReferenceComponent& ref(ref_node->Value());
       EXPECT_EQ(ref.identifier, "qq");
       EXPECT_EQ(ref.ref_type, ReferenceType::kUnqualified);
-      EXPECT_EQ(ref.metatype, SymbolMetaType::kUnspecified);
+      EXPECT_EQ(ref.required_metatype, SymbolMetaType::kUnspecified);
       EXPECT_EQ(ref.resolved_symbol, nullptr);
     }
     {  // self-reference to "qq_inst" instance
@@ -5205,7 +5225,7 @@ TEST(BuildSymbolTableTest, ModuleInstancesFromProjectFilesGood) {
     EXPECT_EQ(pp_type.identifier, "pp");
     EXPECT_EQ(pp_type.resolved_symbol, nullptr);  // nothing resolved yet
     EXPECT_EQ(pp_type.ref_type, ReferenceType::kUnqualified);
-    EXPECT_EQ(pp_type.metatype, SymbolMetaType::kUnspecified);
+    EXPECT_EQ(pp_type.required_metatype, SymbolMetaType::kUnspecified);
   }
 
   {  // Verify qq_inst's type info
@@ -5216,7 +5236,7 @@ TEST(BuildSymbolTableTest, ModuleInstancesFromProjectFilesGood) {
     EXPECT_EQ(qq_type.identifier, "qq");
     EXPECT_EQ(qq_type.resolved_symbol, nullptr);  // nothing resolved yet
     EXPECT_EQ(qq_type.ref_type, ReferenceType::kUnqualified);
-    EXPECT_EQ(qq_type.metatype, SymbolMetaType::kUnspecified);
+    EXPECT_EQ(qq_type.required_metatype, SymbolMetaType::kUnspecified);
   }
 
   // Resolve symbols.
@@ -5292,7 +5312,7 @@ TEST(BuildSymbolTableTest, SingleFileModuleInstanceCyclicDependencies) {
       EXPECT_TRUE(verible::IsSubRange(ref.identifier,
                                       src.GetTextStructure()->Contents()));
       EXPECT_EQ(ref.ref_type, ReferenceType::kUnqualified);
-      EXPECT_EQ(ref.metatype, SymbolMetaType::kUnspecified);
+      EXPECT_EQ(ref.required_metatype, SymbolMetaType::kUnspecified);
       EXPECT_EQ(ref.resolved_symbol, nullptr);
     }
     {  // self-reference to "ss_inst" instance
@@ -5315,7 +5335,7 @@ TEST(BuildSymbolTableTest, SingleFileModuleInstanceCyclicDependencies) {
       EXPECT_TRUE(verible::IsSubRange(ref.identifier,
                                       src.GetTextStructure()->Contents()));
       EXPECT_EQ(ref.ref_type, ReferenceType::kUnqualified);
-      EXPECT_EQ(ref.metatype, SymbolMetaType::kUnspecified);
+      EXPECT_EQ(ref.required_metatype, SymbolMetaType::kUnspecified);
       EXPECT_EQ(ref.resolved_symbol, nullptr);
     }
     {  // self-reference to "pp_inst" instance
@@ -5338,7 +5358,7 @@ TEST(BuildSymbolTableTest, SingleFileModuleInstanceCyclicDependencies) {
       EXPECT_TRUE(verible::IsSubRange(ref.identifier,
                                       src.GetTextStructure()->Contents()));
       EXPECT_EQ(ref.ref_type, ReferenceType::kUnqualified);
-      EXPECT_EQ(ref.metatype, SymbolMetaType::kUnspecified);
+      EXPECT_EQ(ref.required_metatype, SymbolMetaType::kUnspecified);
       EXPECT_EQ(ref.resolved_symbol, nullptr);
     }
     {  // self-reference to "qq_inst" instance
@@ -5358,7 +5378,7 @@ TEST(BuildSymbolTableTest, SingleFileModuleInstanceCyclicDependencies) {
     EXPECT_EQ(ss_type.identifier, "ss");
     EXPECT_EQ(ss_type.resolved_symbol, nullptr);  // nothing resolved yet
     EXPECT_EQ(ss_type.ref_type, ReferenceType::kUnqualified);
-    EXPECT_EQ(ss_type.metatype, SymbolMetaType::kUnspecified);
+    EXPECT_EQ(ss_type.required_metatype, SymbolMetaType::kUnspecified);
     EXPECT_EQ(ss_inst_info.file_origin, &src);
   }
 
@@ -5370,7 +5390,7 @@ TEST(BuildSymbolTableTest, SingleFileModuleInstanceCyclicDependencies) {
     EXPECT_EQ(pp_type.identifier, "pp");
     EXPECT_EQ(pp_type.resolved_symbol, nullptr);  // nothing resolved yet
     EXPECT_EQ(pp_type.ref_type, ReferenceType::kUnqualified);
-    EXPECT_EQ(pp_type.metatype, SymbolMetaType::kUnspecified);
+    EXPECT_EQ(pp_type.required_metatype, SymbolMetaType::kUnspecified);
     EXPECT_EQ(pp_inst_info.file_origin, &src);
   }
 
@@ -5382,7 +5402,7 @@ TEST(BuildSymbolTableTest, SingleFileModuleInstanceCyclicDependencies) {
     EXPECT_EQ(qq_type.identifier, "qq");
     EXPECT_EQ(qq_type.resolved_symbol, nullptr);  // nothing resolved yet
     EXPECT_EQ(qq_type.ref_type, ReferenceType::kUnqualified);
-    EXPECT_EQ(qq_type.metatype, SymbolMetaType::kUnspecified);
+    EXPECT_EQ(qq_type.required_metatype, SymbolMetaType::kUnspecified);
     EXPECT_EQ(qq_inst_info.file_origin, &src);
   }
 
@@ -5484,7 +5504,7 @@ TEST(BuildSymbolTableTest, MultiFileModuleInstanceCyclicDependencies) {
         EXPECT_TRUE(verible::IsSubRange(ref.identifier,
                                         pp_src.GetTextStructure()->Contents()));
         EXPECT_EQ(ref.ref_type, ReferenceType::kUnqualified);
-        EXPECT_EQ(ref.metatype, SymbolMetaType::kUnspecified);
+        EXPECT_EQ(ref.required_metatype, SymbolMetaType::kUnspecified);
         EXPECT_EQ(ref.resolved_symbol, nullptr);
       }
       {  // self-reference to "ss_inst" instance
@@ -5507,7 +5527,7 @@ TEST(BuildSymbolTableTest, MultiFileModuleInstanceCyclicDependencies) {
         EXPECT_TRUE(verible::IsSubRange(ref.identifier,
                                         qq_src.GetTextStructure()->Contents()));
         EXPECT_EQ(ref.ref_type, ReferenceType::kUnqualified);
-        EXPECT_EQ(ref.metatype, SymbolMetaType::kUnspecified);
+        EXPECT_EQ(ref.required_metatype, SymbolMetaType::kUnspecified);
         EXPECT_EQ(ref.resolved_symbol, nullptr);
       }
       {  // self-reference to "pp_inst" instance
@@ -5530,7 +5550,7 @@ TEST(BuildSymbolTableTest, MultiFileModuleInstanceCyclicDependencies) {
         EXPECT_TRUE(verible::IsSubRange(ref.identifier,
                                         ss_src.GetTextStructure()->Contents()));
         EXPECT_EQ(ref.ref_type, ReferenceType::kUnqualified);
-        EXPECT_EQ(ref.metatype, SymbolMetaType::kUnspecified);
+        EXPECT_EQ(ref.required_metatype, SymbolMetaType::kUnspecified);
         EXPECT_EQ(ref.resolved_symbol, nullptr);
       }
       {  // self-reference to "qq_inst" instance
@@ -5550,7 +5570,7 @@ TEST(BuildSymbolTableTest, MultiFileModuleInstanceCyclicDependencies) {
       EXPECT_EQ(ss_type.identifier, "ss");
       EXPECT_EQ(ss_type.resolved_symbol, nullptr);  // nothing resolved yet
       EXPECT_EQ(ss_type.ref_type, ReferenceType::kUnqualified);
-      EXPECT_EQ(ss_type.metatype, SymbolMetaType::kUnspecified);
+      EXPECT_EQ(ss_type.required_metatype, SymbolMetaType::kUnspecified);
       EXPECT_EQ(ss_inst_info.file_origin, &pp_src);
     }
 
@@ -5562,7 +5582,7 @@ TEST(BuildSymbolTableTest, MultiFileModuleInstanceCyclicDependencies) {
       EXPECT_EQ(pp_type.identifier, "pp");
       EXPECT_EQ(pp_type.resolved_symbol, nullptr);  // nothing resolved yet
       EXPECT_EQ(pp_type.ref_type, ReferenceType::kUnqualified);
-      EXPECT_EQ(pp_type.metatype, SymbolMetaType::kUnspecified);
+      EXPECT_EQ(pp_type.required_metatype, SymbolMetaType::kUnspecified);
       EXPECT_EQ(pp_inst_info.file_origin, &qq_src);
     }
 
@@ -5574,7 +5594,7 @@ TEST(BuildSymbolTableTest, MultiFileModuleInstanceCyclicDependencies) {
       EXPECT_EQ(qq_type.identifier, "qq");
       EXPECT_EQ(qq_type.resolved_symbol, nullptr);  // nothing resolved yet
       EXPECT_EQ(qq_type.ref_type, ReferenceType::kUnqualified);
-      EXPECT_EQ(qq_type.metatype, SymbolMetaType::kUnspecified);
+      EXPECT_EQ(qq_type.required_metatype, SymbolMetaType::kUnspecified);
       EXPECT_EQ(qq_inst_info.file_origin, &ss_src);
     }
 
