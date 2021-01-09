@@ -110,6 +110,11 @@ static std::ostream& operator<<(std::ostream& stream,
   ASSIGN_MUST_FIND(dest##_candidates, map, key); /* set of candidates */ \
   ASSIGN_MUST_HAVE_UNIQUE(dest, dest##_candidates);
 
+// Expect sequence of statuses to be empty, or print first (non-ok) status.
+#define EXPECT_EMPTY_STATUSES(diagnostics)                             \
+  EXPECT_EQ(diagnostics.size(), 0) << "First unexpected diagnostic:\n" \
+                                   << diagnostics.front().message()
+
 TEST(SymbolMetaTypePrintTest, Print) {
   std::ostringstream stream;
   stream << SymbolMetaType::kClass;
@@ -281,8 +286,7 @@ TEST(SymbolTablePrintTest, PrintClass) {
   EXPECT_EQ(symbol_table.Project(), nullptr);
 
   const auto build_diagnostics = BuildSymbolTable(src, &symbol_table);
-  ASSERT_TRUE(build_diagnostics.empty()) << "Unexpected diagnostic:\n"
-                                         << build_diagnostics.front().message();
+  EXPECT_EMPTY_STATUSES(build_diagnostics);
 
   {
     std::ostringstream stream;
@@ -323,9 +327,7 @@ TEST(SymbolTablePrintTest, PrintClass) {
   {  // Resolve symbols.
     std::vector<absl::Status> resolve_diagnostics;
     symbol_table.Resolve(&resolve_diagnostics);  // nothing to resolve
-    EXPECT_TRUE(resolve_diagnostics.empty())
-        << "Unexpected diagnostic:\n"
-        << resolve_diagnostics.front().message();
+    EXPECT_EMPTY_STATUSES(resolve_diagnostics);
   }
 
   {  // <unresolved> should now become "$root::ss"
@@ -428,16 +430,12 @@ TEST(BuildSymbolTableTest, InvalidSyntax) {
       const auto build_diagnostics = BuildSymbolTable(src, &symbol_table);
 
       EXPECT_TRUE(symbol_table.Root().Children().empty());
-      EXPECT_TRUE(build_diagnostics.empty())
-          << "Unexpected diagnostic:\n"
-          << build_diagnostics.front().message();
+      EXPECT_EMPTY_STATUSES(build_diagnostics);
     }
     {  // Attempt to resolve empty symbol table and references.
       std::vector<absl::Status> resolve_diagnostics;
       symbol_table.Resolve(&resolve_diagnostics);  // nothing to resolve
-      EXPECT_TRUE(resolve_diagnostics.empty())
-          << "Unexpected diagnostic:\n"
-          << resolve_diagnostics.front().message();
+      EXPECT_EMPTY_STATUSES(resolve_diagnostics);
     }
   }
 }
@@ -484,15 +482,12 @@ TEST(BuildSymbolTableTest, ModuleDeclarationSingleEmpty) {
   EXPECT_EQ(module_node_info.file_origin, &src);
   EXPECT_EQ(module_node_info.declared_type.syntax_origin,
             nullptr);  // there is no module meta-type
-  EXPECT_TRUE(build_diagnostics.empty()) << "Unexpected diagnostic:\n"
-                                         << build_diagnostics.front().message();
+  EXPECT_EMPTY_STATUSES(build_diagnostics);
 
   {
     std::vector<absl::Status> resolve_diagnostics;
     symbol_table.Resolve(&resolve_diagnostics);  // nothing to resolve
-    EXPECT_TRUE(resolve_diagnostics.empty())
-        << "Unexpected diagnostic:\n"
-        << resolve_diagnostics.front().message();
+    EXPECT_EMPTY_STATUSES(resolve_diagnostics);
   }
 }
 
@@ -514,8 +509,7 @@ TEST(BuildSymbolTableTest, ModuleDeclarationLocalNetsVariables) {
   EXPECT_EQ(module_node_info.file_origin, &src);
   EXPECT_EQ(module_node_info.declared_type.syntax_origin,
             nullptr);  // there is no module meta-type
-  EXPECT_TRUE(build_diagnostics.empty()) << "Unexpected diagnostic:\n"
-                                         << build_diagnostics.front().message();
+  EXPECT_EMPTY_STATUSES(build_diagnostics);
 
   static constexpr absl::string_view members[] = {"w1", "w2", "l1", "l2"};
   for (const auto& member : members) {
@@ -529,9 +523,7 @@ TEST(BuildSymbolTableTest, ModuleDeclarationLocalNetsVariables) {
   {
     std::vector<absl::Status> resolve_diagnostics;
     symbol_table.Resolve(&resolve_diagnostics);  // nothing to resolve
-    EXPECT_TRUE(resolve_diagnostics.empty())
-        << "Unexpected diagnostic:\n"
-        << resolve_diagnostics.front().message();
+    EXPECT_EMPTY_STATUSES(resolve_diagnostics);
   }
 }
 
@@ -562,9 +554,7 @@ TEST(BuildSymbolTableTest, ModuleDeclarationLocalDuplicateNets) {
   {
     std::vector<absl::Status> resolve_diagnostics;
     symbol_table.Resolve(&resolve_diagnostics);  // nothing to resolve
-    EXPECT_TRUE(resolve_diagnostics.empty())
-        << "Unexpected diagnostic:\n"
-        << resolve_diagnostics.front().message();
+    EXPECT_EMPTY_STATUSES(resolve_diagnostics);
   }
 }
 
@@ -598,15 +588,13 @@ TEST(BuildSymbolTableTest, ModuleDeclarationConditionalGenerateAnonymous) {
     const SymbolTableNode& root_symbol(symbol_table.Root());
 
     const auto build_diagnostics = BuildSymbolTable(src, &symbol_table);
+    EXPECT_EMPTY_STATUSES(build_diagnostics);
 
     MUST_ASSIGN_LOOKUP_SYMBOL(module_node, root_symbol, "m");
     EXPECT_EQ(module_node_info.metatype, SymbolMetaType::kModule);
     EXPECT_EQ(module_node_info.file_origin, &src);
     EXPECT_EQ(module_node_info.declared_type.syntax_origin,
               nullptr);  // there is no module meta-type
-    EXPECT_TRUE(build_diagnostics.empty())
-        << "Unexpected diagnostic:\n"
-        << build_diagnostics.front().message();
 
     ASSERT_EQ(module_node.Children().size(), 3);
     auto iter = module_node.Children().begin();
@@ -638,7 +626,7 @@ TEST(BuildSymbolTableTest, ModuleDeclarationConditionalGenerateAnonymous) {
     {
       std::vector<absl::Status> resolve_diagnostics;
       symbol_table.Resolve(&resolve_diagnostics);  // nothing to resolve
-      EXPECT_TRUE(resolve_diagnostics.empty());
+      EXPECT_EMPTY_STATUSES(resolve_diagnostics);
     }
   }
 }
@@ -660,14 +648,13 @@ TEST(BuildSymbolTableTest, ModuleDeclarationConditionalGenerateLabeled) {
   const SymbolTableNode& root_symbol(symbol_table.Root());
 
   const auto build_diagnostics = BuildSymbolTable(src, &symbol_table);
+  EXPECT_EMPTY_STATUSES(build_diagnostics);
 
   MUST_ASSIGN_LOOKUP_SYMBOL(module_node, root_symbol, "m");
   EXPECT_EQ(module_node_info.metatype, SymbolMetaType::kModule);
   EXPECT_EQ(module_node_info.file_origin, &src);
   EXPECT_EQ(module_node_info.declared_type.syntax_origin,
             nullptr);  // there is no module meta-type
-  EXPECT_TRUE(build_diagnostics.empty()) << "Unexpected diagnostic:\n"
-                                         << build_diagnostics.front().message();
 
   ASSERT_EQ(module_node.Children().size(), 3);
   {
@@ -692,7 +679,7 @@ TEST(BuildSymbolTableTest, ModuleDeclarationConditionalGenerateLabeled) {
   {
     std::vector<absl::Status> resolve_diagnostics;
     symbol_table.Resolve(&resolve_diagnostics);  // nothing to resolve
-    EXPECT_TRUE(resolve_diagnostics.empty());
+    EXPECT_EMPTY_STATUSES(resolve_diagnostics);
   }
 }
 
@@ -709,14 +696,13 @@ TEST(BuildSymbolTableTest, ModuleDeclarationWithPorts) {
   const SymbolTableNode& root_symbol(symbol_table.Root());
 
   const auto build_diagnostics = BuildSymbolTable(src, &symbol_table);
+  EXPECT_EMPTY_STATUSES(build_diagnostics);
 
   MUST_ASSIGN_LOOKUP_SYMBOL(module_node, root_symbol, "m");
   EXPECT_EQ(module_node_info.metatype, SymbolMetaType::kModule);
   EXPECT_EQ(module_node_info.file_origin, &src);
   EXPECT_EQ(module_node_info.declared_type.syntax_origin,
             nullptr);  // there is no module meta-type
-  EXPECT_TRUE(build_diagnostics.empty()) << "Unexpected diagnostic:\n"
-                                         << build_diagnostics.front().message();
 
   static constexpr absl::string_view members[] = {"clk", "q"};
   for (const auto& member : members) {
@@ -730,7 +716,7 @@ TEST(BuildSymbolTableTest, ModuleDeclarationWithPorts) {
   {
     std::vector<absl::Status> resolve_diagnostics;
     symbol_table.Resolve(&resolve_diagnostics);  // nothing to resolve
-    EXPECT_TRUE(resolve_diagnostics.empty());
+    EXPECT_EMPTY_STATUSES(resolve_diagnostics);
   }
 }
 
@@ -744,6 +730,7 @@ TEST(BuildSymbolTableTest, ModuleDeclarationMultiple) {
   const SymbolTableNode& root_symbol(symbol_table.Root());
 
   const auto build_diagnostics = BuildSymbolTable(src, &symbol_table);
+  EXPECT_EMPTY_STATUSES(build_diagnostics);
 
   const absl::string_view expected_modules[] = {"m1", "m2"};
   for (const auto& expected_module : expected_modules) {
@@ -752,15 +739,12 @@ TEST(BuildSymbolTableTest, ModuleDeclarationMultiple) {
     EXPECT_EQ(module_node_info.file_origin, &src);
     EXPECT_EQ(module_node_info.declared_type.syntax_origin,
               nullptr);  // there is no module meta-type
-    EXPECT_TRUE(build_diagnostics.empty())
-        << "Unexpected diagnostic:\n"
-        << build_diagnostics.front().message();
   }
 
   {
     std::vector<absl::Status> resolve_diagnostics;
     symbol_table.Resolve(&resolve_diagnostics);  // nothing to resolve
-    EXPECT_TRUE(resolve_diagnostics.empty());
+    EXPECT_EMPTY_STATUSES(resolve_diagnostics);
   }
 }
 
@@ -789,7 +773,7 @@ TEST(BuildSymbolTableTest, ModuleDeclarationDuplicate) {
   {
     std::vector<absl::Status> resolve_diagnostics;
     symbol_table.Resolve(&resolve_diagnostics);  // nothing to resolve
-    EXPECT_TRUE(resolve_diagnostics.empty());
+    EXPECT_EMPTY_STATUSES(resolve_diagnostics);
   }
 }
 
@@ -805,9 +789,8 @@ TEST(BuildSymbolTableTest, ModuleDeclarationNested) {
   const SymbolTableNode& root_symbol(symbol_table.Root());
 
   const auto build_diagnostics = BuildSymbolTable(src, &symbol_table);
+  EXPECT_EMPTY_STATUSES(build_diagnostics);
 
-  EXPECT_TRUE(build_diagnostics.empty()) << "Unexpected diagnostic:\n"
-                                         << build_diagnostics.front().message();
   MUST_ASSIGN_LOOKUP_SYMBOL(outer_module_node, root_symbol, "m_outer");
   {
     EXPECT_EQ(outer_module_node_info.metatype, SymbolMetaType::kModule);
@@ -825,7 +808,7 @@ TEST(BuildSymbolTableTest, ModuleDeclarationNested) {
   {
     std::vector<absl::Status> resolve_diagnostics;
     symbol_table.Resolve(&resolve_diagnostics);  // nothing to resolve
-    EXPECT_TRUE(resolve_diagnostics.empty());
+    EXPECT_EMPTY_STATUSES(resolve_diagnostics);
   }
 }
 
@@ -852,7 +835,7 @@ TEST(BuildSymbolTableTest, ModuleDeclarationNestedDuplicate) {
   {
     std::vector<absl::Status> resolve_diagnostics;
     symbol_table.Resolve(&resolve_diagnostics);  // nothing to resolve
-    EXPECT_TRUE(resolve_diagnostics.empty());
+    EXPECT_EMPTY_STATUSES(resolve_diagnostics);
   }
 }
 
@@ -881,10 +864,7 @@ TEST(BuildSymbolTableTest, ModuleInstance) {
     const SymbolTableNode& root_symbol(symbol_table.Root());
 
     const auto build_diagnostics = BuildSymbolTable(src, &symbol_table);
-
-    EXPECT_TRUE(build_diagnostics.empty())
-        << "Unexpected diagnostic:\n"
-        << build_diagnostics.front().message();
+    EXPECT_EMPTY_STATUSES(build_diagnostics);
 
     // Goal: resolve the reference of "pp" to this definition node.
     MUST_ASSIGN_LOOKUP_SYMBOL(pp, root_symbol, "pp");
@@ -934,9 +914,8 @@ TEST(BuildSymbolTableTest, ModuleInstance) {
     // Resolve symbols.
     std::vector<absl::Status> resolve_diagnostics;
     symbol_table.Resolve(&resolve_diagnostics);
+    EXPECT_EMPTY_STATUSES(resolve_diagnostics);
 
-    EXPECT_TRUE(resolve_diagnostics.empty())
-        << "Unexpected diagnostic: " << resolve_diagnostics.front().message();
     // Verify that typeof(rr) successfully resolved to module pp.
     EXPECT_EQ(rr_info.declared_type.user_defined_type->Value().resolved_symbol,
               &pp);
@@ -954,9 +933,7 @@ TEST(BuildSymbolTableTest, ModuleInstanceUndefined) {
   const SymbolTableNode& root_symbol(symbol_table.Root());
 
   const auto build_diagnostics = BuildSymbolTable(src, &symbol_table);
-
-  EXPECT_TRUE(build_diagnostics.empty()) << "Unexpected diagnostic:\n"
-                                         << build_diagnostics.front().message();
+  EXPECT_EMPTY_STATUSES(build_diagnostics);
 
   // Inspect inside the "qq" module definition.
   MUST_ASSIGN_LOOKUP_SYMBOL(qq, root_symbol, "qq");
@@ -1041,10 +1018,7 @@ TEST(BuildSymbolTableTest, ModuleInstanceTwoInSameDecl) {
     const SymbolTableNode& root_symbol(symbol_table.Root());
 
     const auto build_diagnostics = BuildSymbolTable(src, &symbol_table);
-
-    EXPECT_TRUE(build_diagnostics.empty())
-        << "Unexpected diagnostic:\n"
-        << build_diagnostics.front().message();
+    EXPECT_EMPTY_STATUSES(build_diagnostics);
 
     MUST_ASSIGN_LOOKUP_SYMBOL(pp, root_symbol, "pp");
 
@@ -1088,7 +1062,7 @@ TEST(BuildSymbolTableTest, ModuleInstanceTwoInSameDecl) {
     {
       std::vector<absl::Status> resolve_diagnostics;
       symbol_table.Resolve(&resolve_diagnostics);  // nothing to resolve
-      EXPECT_TRUE(resolve_diagnostics.empty());
+      EXPECT_EMPTY_STATUSES(resolve_diagnostics);
 
       for (const auto& pp_inst : pp_instances) {
         MUST_ASSIGN_LOOKUP_SYMBOL(rr, qq, pp_inst);
@@ -1120,14 +1094,13 @@ TEST(BuildSymbolTableTest, ModuleInstancePositionalPortConnection) {
   const SymbolTableNode& root_symbol(symbol_table.Root());
 
   const auto build_diagnostics = BuildSymbolTable(src, &symbol_table);
+  EXPECT_EMPTY_STATUSES(build_diagnostics);
 
   MUST_ASSIGN_LOOKUP_SYMBOL(m_node, root_symbol, "m");
   EXPECT_EQ(m_node_info.metatype, SymbolMetaType::kModule);
   EXPECT_EQ(m_node_info.file_origin, &src);
   EXPECT_EQ(m_node_info.declared_type.syntax_origin,
             nullptr);  // there is no module meta-type
-  EXPECT_TRUE(build_diagnostics.empty()) << "Unexpected diagnostic:\n"
-                                         << build_diagnostics.front().message();
 
   MUST_ASSIGN_LOOKUP_SYMBOL(clk_node, m_node, "clk");
   EXPECT_EQ(clk_node_info.metatype, SymbolMetaType::kDataNetVariableInstance);
@@ -1158,7 +1131,7 @@ TEST(BuildSymbolTableTest, ModuleInstancePositionalPortConnection) {
   {
     std::vector<absl::Status> resolve_diagnostics;
     symbol_table.Resolve(&resolve_diagnostics);
-    EXPECT_TRUE(resolve_diagnostics.empty());
+    EXPECT_EMPTY_STATUSES(resolve_diagnostics);
 
     // Expect to resolve local references to wires "c" and "d".
     EXPECT_EQ(c_ref->LastLeaf()->Value().resolved_symbol, &c_node);
@@ -1185,14 +1158,13 @@ TEST(BuildSymbolTableTest, ModuleInstanceNamedPortConnection) {
   const SymbolTableNode& root_symbol(symbol_table.Root());
 
   const auto build_diagnostics = BuildSymbolTable(src, &symbol_table);
+  EXPECT_EMPTY_STATUSES(build_diagnostics);
 
   MUST_ASSIGN_LOOKUP_SYMBOL(m_node, root_symbol, "m");
   EXPECT_EQ(m_node_info.metatype, SymbolMetaType::kModule);
   EXPECT_EQ(m_node_info.file_origin, &src);
   EXPECT_EQ(m_node_info.declared_type.syntax_origin,
             nullptr);  // there is no module meta-type
-  EXPECT_TRUE(build_diagnostics.empty()) << "Unexpected diagnostic:\n"
-                                         << build_diagnostics.front().message();
 
   MUST_ASSIGN_LOOKUP_SYMBOL(clk_node, m_node, "clk");
   EXPECT_EQ(clk_node_info.metatype, SymbolMetaType::kDataNetVariableInstance);
@@ -1245,7 +1217,7 @@ TEST(BuildSymbolTableTest, ModuleInstanceNamedPortConnection) {
   {
     std::vector<absl::Status> resolve_diagnostics;
     symbol_table.Resolve(&resolve_diagnostics);
-    EXPECT_TRUE(resolve_diagnostics.empty());
+    EXPECT_EMPTY_STATUSES(resolve_diagnostics);
 
     // Expect to resolve local references to wires c and d
     EXPECT_EQ(c_ref->LastLeaf()->Value().resolved_symbol, &c_node);
@@ -1279,14 +1251,13 @@ TEST(BuildSymbolTableTest,
   const SymbolTableNode& root_symbol(symbol_table.Root());
 
   const auto build_diagnostics = BuildSymbolTable(src, &symbol_table);
+  EXPECT_EMPTY_STATUSES(build_diagnostics);
 
   MUST_ASSIGN_LOOKUP_SYMBOL(m_node, root_symbol, "m");
   EXPECT_EQ(m_node_info.metatype, SymbolMetaType::kModule);
   EXPECT_EQ(m_node_info.file_origin, &src);
   EXPECT_EQ(m_node_info.declared_type.syntax_origin,
             nullptr);  // there is no module meta-type
-  EXPECT_TRUE(build_diagnostics.empty()) << "Unexpected diagnostic:\n"
-                                         << build_diagnostics.front().message();
 
   MUST_ASSIGN_LOOKUP_SYMBOL(clk_node, m_node, "clk");
   EXPECT_EQ(clk_node_info.metatype, SymbolMetaType::kDataNetVariableInstance);
@@ -1370,14 +1341,13 @@ TEST(BuildSymbolTableTest, ModuleInstancePositionalParameterAssignment) {
   const SymbolTableNode& root_symbol(symbol_table.Root());
 
   const auto build_diagnostics = BuildSymbolTable(src, &symbol_table);
+  EXPECT_EMPTY_STATUSES(build_diagnostics);
 
   MUST_ASSIGN_LOOKUP_SYMBOL(m_node, root_symbol, "m");
   EXPECT_EQ(m_node_info.metatype, SymbolMetaType::kModule);
   EXPECT_EQ(m_node_info.file_origin, &src);
   EXPECT_EQ(m_node_info.declared_type.syntax_origin,
             nullptr);  // there is no module meta-type
-  EXPECT_TRUE(build_diagnostics.empty()) << "Unexpected diagnostic:\n"
-                                         << build_diagnostics.front().message();
 
   MUST_ASSIGN_LOOKUP_SYMBOL(n_param, m_node, "N");
   EXPECT_EQ(n_param_info.metatype, SymbolMetaType::kParameter);
@@ -1400,7 +1370,7 @@ TEST(BuildSymbolTableTest, ModuleInstancePositionalParameterAssignment) {
   {
     std::vector<absl::Status> resolve_diagnostics;
     symbol_table.Resolve(&resolve_diagnostics);
-    EXPECT_TRUE(resolve_diagnostics.empty());
+    EXPECT_EMPTY_STATUSES(resolve_diagnostics);
 
     // Expect to resolve local references to "m" and "m_inst".
     EXPECT_EQ(m_ref->LastLeaf()->Value().resolved_symbol, &m_node);
@@ -1426,14 +1396,13 @@ TEST(BuildSymbolTableTest, ModuleInstanceNamedParameterAssignment) {
   const SymbolTableNode& root_symbol(symbol_table.Root());
 
   const auto build_diagnostics = BuildSymbolTable(src, &symbol_table);
+  EXPECT_EMPTY_STATUSES(build_diagnostics);
 
   MUST_ASSIGN_LOOKUP_SYMBOL(m_node, root_symbol, "m");
   EXPECT_EQ(m_node_info.metatype, SymbolMetaType::kModule);
   EXPECT_EQ(m_node_info.file_origin, &src);
   EXPECT_EQ(m_node_info.declared_type.syntax_origin,
             nullptr);  // there is no module meta-type
-  EXPECT_TRUE(build_diagnostics.empty()) << "Unexpected diagnostic:\n"
-                                         << build_diagnostics.front().message();
 
   MUST_ASSIGN_LOOKUP_SYMBOL(n_param, m_node, "N");
   EXPECT_EQ(n_param_info.metatype, SymbolMetaType::kParameter);
@@ -1473,8 +1442,7 @@ TEST(BuildSymbolTableTest, ModuleInstanceNamedParameterAssignment) {
   {
     std::vector<absl::Status> resolve_diagnostics;
     symbol_table.Resolve(&resolve_diagnostics);
-    EXPECT_TRUE(resolve_diagnostics.empty())
-        << "Unexpected diagnostic: " << resolve_diagnostics.front().message();
+    EXPECT_EMPTY_STATUSES(resolve_diagnostics);
 
     // Expect ".N" and ".P" to resolve to formal parameters of "m".
     EXPECT_EQ(n_ref_comp.resolved_symbol, &n_param);
@@ -1500,14 +1468,13 @@ TEST(BuildSymbolTableTest, ModuleInstanceNamedPortIsParameter) {
   const SymbolTableNode& root_symbol(symbol_table.Root());
 
   const auto build_diagnostics = BuildSymbolTable(src, &symbol_table);
+  EXPECT_EMPTY_STATUSES(build_diagnostics);
 
   MUST_ASSIGN_LOOKUP_SYMBOL(m_node, root_symbol, "m");
   EXPECT_EQ(m_node_info.metatype, SymbolMetaType::kModule);
   EXPECT_EQ(m_node_info.file_origin, &src);
   EXPECT_EQ(m_node_info.declared_type.syntax_origin,
             nullptr);  // there is no module meta-type
-  EXPECT_TRUE(build_diagnostics.empty()) << "Unexpected diagnostic:\n"
-                                         << build_diagnostics.front().message();
 
   MUST_ASSIGN_LOOKUP_SYMBOL(n_param, m_node, "N");
   EXPECT_EQ(n_param_info.metatype, SymbolMetaType::kParameter);
@@ -1542,8 +1509,7 @@ TEST(BuildSymbolTableTest, ModuleInstanceNamedPortIsParameter) {
     symbol_table.Resolve(&resolve_diagnostics);
 
     // Expect ".clk" to fail to resolve.
-    ASSERT_EQ(resolve_diagnostics.size(), 1);
-    const auto err = resolve_diagnostics.front();
+    ASSIGN_MUST_HAVE_UNIQUE(err, resolve_diagnostics);
     EXPECT_EQ(err.code(), absl::StatusCode::kInvalidArgument);
     EXPECT_THAT(err.message(),
                 HasSubstr("Expecting reference \"clk\" to resolve to a "
@@ -1570,14 +1536,13 @@ TEST(BuildSymbolTableTest, ModuleInstanceNamedParameterIsPort) {
   const SymbolTableNode& root_symbol(symbol_table.Root());
 
   const auto build_diagnostics = BuildSymbolTable(src, &symbol_table);
+  EXPECT_EMPTY_STATUSES(build_diagnostics);
 
   MUST_ASSIGN_LOOKUP_SYMBOL(m_node, root_symbol, "m");
   EXPECT_EQ(m_node_info.metatype, SymbolMetaType::kModule);
   EXPECT_EQ(m_node_info.file_origin, &src);
   EXPECT_EQ(m_node_info.declared_type.syntax_origin,
             nullptr);  // there is no module meta-type
-  EXPECT_TRUE(build_diagnostics.empty()) << "Unexpected diagnostic:\n"
-                                         << build_diagnostics.front().message();
 
   MUST_ASSIGN_LOOKUP_SYMBOL(n_param, m_node, "N");
   EXPECT_EQ(n_param_info.metatype, SymbolMetaType::kParameter);
@@ -1613,8 +1578,7 @@ TEST(BuildSymbolTableTest, ModuleInstanceNamedParameterIsPort) {
     symbol_table.Resolve(&resolve_diagnostics);
 
     // Expect ".N" to fail to resolve.
-    ASSERT_EQ(resolve_diagnostics.size(), 1);
-    const auto err = resolve_diagnostics.front();
+    ASSIGN_MUST_HAVE_UNIQUE(err, resolve_diagnostics);
     EXPECT_EQ(err.code(), absl::StatusCode::kInvalidArgument);
     EXPECT_THAT(err.message(),
                 HasSubstr("Expecting reference \"N\" to resolve to a "
@@ -1642,10 +1606,9 @@ TEST(BuildSymbolTableTest, ModuleInstanceNamedPortConnectionNonexistentPort) {
   const SymbolTableNode& root_symbol(symbol_table.Root());
 
   const auto build_diagnostics = BuildSymbolTable(src, &symbol_table);
+  EXPECT_EMPTY_STATUSES(build_diagnostics);
 
   MUST_ASSIGN_LOOKUP_SYMBOL(m_node, root_symbol, "m");
-  EXPECT_TRUE(build_diagnostics.empty()) << "Unexpected diagnostic:\n"
-                                         << build_diagnostics.front().message();
 
   MUST_ASSIGN_LOOKUP_SYMBOL(clk_node, m_node, "clk");
 
@@ -1715,14 +1678,13 @@ TEST(BuildSymbolTableTest, ModuleInstanceNamedParameterNonexistentError) {
   const SymbolTableNode& root_symbol(symbol_table.Root());
 
   const auto build_diagnostics = BuildSymbolTable(src, &symbol_table);
+  EXPECT_EMPTY_STATUSES(build_diagnostics);
 
   MUST_ASSIGN_LOOKUP_SYMBOL(m_node, root_symbol, "m");
   EXPECT_EQ(m_node_info.metatype, SymbolMetaType::kModule);
   EXPECT_EQ(m_node_info.file_origin, &src);
   EXPECT_EQ(m_node_info.declared_type.syntax_origin,
             nullptr);  // there is no module meta-type
-  EXPECT_TRUE(build_diagnostics.empty()) << "Unexpected diagnostic:\n"
-                                         << build_diagnostics.front().message();
 
   MUST_ASSIGN_LOOKUP_SYMBOL(n_param, m_node, "N");
   EXPECT_EQ(n_param_info.metatype, SymbolMetaType::kParameter);
@@ -1780,6 +1742,7 @@ TEST(BuildSymbolTableTest, OneGlobalIntParameter) {
   const SymbolTableNode& root_symbol(symbol_table.Root());
 
   const auto build_diagnostics = BuildSymbolTable(src, &symbol_table);
+  EXPECT_EMPTY_STATUSES(build_diagnostics);
 
   MUST_ASSIGN_LOOKUP_SYMBOL(mint_param, root_symbol, "mint");
   EXPECT_EQ(mint_param_info.metatype, SymbolMetaType::kParameter);
@@ -1788,13 +1751,11 @@ TEST(BuildSymbolTableTest, OneGlobalIntParameter) {
   EXPECT_EQ(
       verible::StringSpanOfSymbol(*mint_param_info.declared_type.syntax_origin),
       "int");
-  EXPECT_TRUE(build_diagnostics.empty()) << "Unexpected diagnostic:\n"
-                                         << build_diagnostics.front().message();
 
   {
     std::vector<absl::Status> resolve_diagnostics;
     symbol_table.Resolve(&resolve_diagnostics);  // nothing to resolve
-    EXPECT_TRUE(resolve_diagnostics.empty());
+    EXPECT_EMPTY_STATUSES(resolve_diagnostics);
   }
 }
 
@@ -1806,6 +1767,7 @@ TEST(BuildSymbolTableTest, OneGlobalUndefinedTypeParameter) {
   const SymbolTableNode& root_symbol(symbol_table.Root());
 
   const auto build_diagnostics = BuildSymbolTable(src, &symbol_table);
+  EXPECT_EMPTY_STATUSES(build_diagnostics);
 
   MUST_ASSIGN_LOOKUP_SYMBOL(gun_param, root_symbol, "gun");
   EXPECT_EQ(gun_param_info.metatype, SymbolMetaType::kParameter);
@@ -1814,8 +1776,6 @@ TEST(BuildSymbolTableTest, OneGlobalUndefinedTypeParameter) {
   EXPECT_EQ(
       verible::StringSpanOfSymbol(*gun_param_info.declared_type.syntax_origin),
       "foo_t");
-  EXPECT_TRUE(build_diagnostics.empty()) << "Unexpected diagnostic:\n"
-                                         << build_diagnostics.front().message();
 
   {
     std::vector<absl::Status> resolve_diagnostics;
@@ -1841,6 +1801,7 @@ TEST(BuildSymbolTableTest, ReferenceOneParameterExpression) {
   const SymbolTableNode& root_symbol(symbol_table.Root());
 
   const auto build_diagnostics = BuildSymbolTable(src, &symbol_table);
+  EXPECT_EMPTY_STATUSES(build_diagnostics);
 
   MUST_ASSIGN_LOOKUP_SYMBOL(tea, root_symbol, "tea");
   EXPECT_EQ(tea_info.metatype, SymbolMetaType::kParameter);
@@ -1851,8 +1812,6 @@ TEST(BuildSymbolTableTest, ReferenceOneParameterExpression) {
   ASSERT_NE(mint_info.declared_type.syntax_origin, nullptr);
   EXPECT_EQ(verible::StringSpanOfSymbol(*mint_info.declared_type.syntax_origin),
             "int");
-  EXPECT_TRUE(build_diagnostics.empty()) << "Unexpected diagnostic:\n"
-                                         << build_diagnostics.front().message();
 
   // There should be one reference: "mint" (line 2)
   EXPECT_EQ(root_symbol.Value().local_references_to_bind.size(), 1);
@@ -1869,7 +1828,8 @@ TEST(BuildSymbolTableTest, ReferenceOneParameterExpression) {
   {  // resolve symbols
     std::vector<absl::Status> resolve_diagnostics;
     symbol_table.Resolve(&resolve_diagnostics);
-    EXPECT_TRUE(resolve_diagnostics.empty());
+    EXPECT_EMPTY_STATUSES(resolve_diagnostics);
+
     EXPECT_EQ(ref_comp.resolved_symbol, &mint);  // resolved
   }
 }
@@ -1882,6 +1842,7 @@ TEST(BuildSymbolTableTest, OneUnresolvedReferenceInExpression) {
   const SymbolTableNode& root_symbol(symbol_table.Root());
 
   const auto build_diagnostics = BuildSymbolTable(src, &symbol_table);
+  EXPECT_EMPTY_STATUSES(build_diagnostics);
 
   MUST_ASSIGN_LOOKUP_SYMBOL(mint, root_symbol, "mint");
   EXPECT_EQ(mint_info.metatype, SymbolMetaType::kParameter);
@@ -1889,8 +1850,6 @@ TEST(BuildSymbolTableTest, OneUnresolvedReferenceInExpression) {
   ASSERT_NE(mint_info.declared_type.syntax_origin, nullptr);
   EXPECT_EQ(verible::StringSpanOfSymbol(*mint_info.declared_type.syntax_origin),
             "int");
-  EXPECT_TRUE(build_diagnostics.empty()) << "Unexpected diagnostic:\n"
-                                         << build_diagnostics.front().message();
 
   // There should be one reference: "spice" (line 2)
   EXPECT_EQ(root_symbol.Value().local_references_to_bind.size(), 1);
@@ -1924,19 +1883,18 @@ TEST(BuildSymbolTableTest, PackageDeclarationSingle) {
   const SymbolTableNode& root_symbol(symbol_table.Root());
 
   const auto build_diagnostics = BuildSymbolTable(src, &symbol_table);
+  EXPECT_EMPTY_STATUSES(build_diagnostics);
 
   MUST_ASSIGN_LOOKUP_SYMBOL(my_pkg, root_symbol, "my_pkg");
   EXPECT_EQ(my_pkg_info.metatype, SymbolMetaType::kPackage);
   EXPECT_EQ(my_pkg_info.file_origin, &src);
   EXPECT_EQ(my_pkg_info.declared_type.syntax_origin,
             nullptr);  // there is no module meta-type
-  EXPECT_TRUE(build_diagnostics.empty()) << "Unexpected diagnostic:\n"
-                                         << build_diagnostics.front().message();
 
   {
     std::vector<absl::Status> resolve_diagnostics;
     symbol_table.Resolve(&resolve_diagnostics);  // nothing to resolve
-    EXPECT_TRUE(resolve_diagnostics.empty());
+    EXPECT_EMPTY_STATUSES(resolve_diagnostics);
   }
 }
 
@@ -1952,6 +1910,7 @@ TEST(BuildSymbolTableTest, ReferenceOneParameterFromPackageToRoot) {
   const SymbolTableNode& root_symbol(symbol_table.Root());
 
   const auto build_diagnostics = BuildSymbolTable(src, &symbol_table);
+  EXPECT_EMPTY_STATUSES(build_diagnostics);
 
   MUST_ASSIGN_LOOKUP_SYMBOL(p_pkg, root_symbol, "p");
   EXPECT_EQ(p_pkg_info.metatype, SymbolMetaType::kPackage);
@@ -1972,13 +1931,11 @@ TEST(BuildSymbolTableTest, ReferenceOneParameterFromPackageToRoot) {
   ASSERT_NE(mint_info.declared_type.syntax_origin, nullptr);
   EXPECT_EQ(verible::StringSpanOfSymbol(*mint_info.declared_type.syntax_origin),
             "int");
-  EXPECT_TRUE(build_diagnostics.empty()) << "Unexpected diagnostic:\n"
-                                         << build_diagnostics.front().message();
 
   {  // resolve symbols
     std::vector<absl::Status> resolve_diagnostics;
     symbol_table.Resolve(&resolve_diagnostics);
-    EXPECT_TRUE(resolve_diagnostics.empty());
+    EXPECT_EMPTY_STATUSES(resolve_diagnostics);
 
     EXPECT_EQ(mint_ref.resolved_symbol, &mint);  // resolved "mint"
   }
@@ -1998,6 +1955,7 @@ TEST(BuildSymbolTableTest, ReferenceOneParameterFromRootToPackage) {
   const SymbolTableNode& root_symbol(symbol_table.Root());
 
   const auto build_diagnostics = BuildSymbolTable(src, &symbol_table);
+  EXPECT_EMPTY_STATUSES(build_diagnostics);
 
   MUST_ASSIGN_LOOKUP_SYMBOL(p_pkg, root_symbol, "p");
   EXPECT_EQ(p_pkg_info.metatype, SymbolMetaType::kPackage);
@@ -2022,13 +1980,11 @@ TEST(BuildSymbolTableTest, ReferenceOneParameterFromRootToPackage) {
   ASSERT_NE(mint_info.declared_type.syntax_origin, nullptr);
   EXPECT_EQ(verible::StringSpanOfSymbol(*mint_info.declared_type.syntax_origin),
             "int");
-  EXPECT_TRUE(build_diagnostics.empty()) << "Unexpected diagnostic:\n"
-                                         << build_diagnostics.front().message();
 
   {  // resolve symbols
     std::vector<absl::Status> resolve_diagnostics;
     symbol_table.Resolve(&resolve_diagnostics);
-    EXPECT_TRUE(resolve_diagnostics.empty());
+    EXPECT_EMPTY_STATUSES(resolve_diagnostics);
 
     EXPECT_EQ(p_ref.resolved_symbol, &p_pkg);    // resolved "p"
     EXPECT_EQ(mint_ref.resolved_symbol, &mint);  // resolved "p::mint"
@@ -2048,6 +2004,7 @@ TEST(BuildSymbolTableTest, ReferenceOneParameterFromRootToPackageNoSuchMember) {
   const SymbolTableNode& root_symbol(symbol_table.Root());
 
   const auto build_diagnostics = BuildSymbolTable(src, &symbol_table);
+  EXPECT_EMPTY_STATUSES(build_diagnostics);
 
   MUST_ASSIGN_LOOKUP_SYMBOL(p_pkg, root_symbol, "p");
   EXPECT_EQ(p_pkg_info.metatype, SymbolMetaType::kPackage);
@@ -2072,8 +2029,6 @@ TEST(BuildSymbolTableTest, ReferenceOneParameterFromRootToPackageNoSuchMember) {
   ASSERT_NE(mint_info.declared_type.syntax_origin, nullptr);
   EXPECT_EQ(verible::StringSpanOfSymbol(*mint_info.declared_type.syntax_origin),
             "int");
-  EXPECT_TRUE(build_diagnostics.empty()) << "Unexpected diagnostic:\n"
-                                         << build_diagnostics.front().message();
 
   // resolving twice should not change results
   for (int i = 0; i < 2; ++i) {  // resolve symbols
@@ -2100,14 +2055,13 @@ TEST(BuildSymbolTableTest, ModuleDeclarationWithParameters) {
   const SymbolTableNode& root_symbol(symbol_table.Root());
 
   const auto build_diagnostics = BuildSymbolTable(src, &symbol_table);
+  EXPECT_EMPTY_STATUSES(build_diagnostics);
 
   MUST_ASSIGN_LOOKUP_SYMBOL(module_node, root_symbol, "m");
   EXPECT_EQ(module_node_info.metatype, SymbolMetaType::kModule);
   EXPECT_EQ(module_node_info.file_origin, &src);
   EXPECT_EQ(module_node_info.declared_type.syntax_origin,
             nullptr);  // there is no module meta-type
-  EXPECT_TRUE(build_diagnostics.empty()) << "Unexpected diagnostic:\n"
-                                         << build_diagnostics.front().message();
 
   MUST_ASSIGN_LOOKUP_SYMBOL(w_param, module_node, "W");
   EXPECT_EQ(w_param_info.metatype, SymbolMetaType::kParameter);
@@ -2170,14 +2124,13 @@ TEST(BuildSymbolTableTest, ModuleDeclarationLocalsDependOnParameter) {
   const SymbolTableNode& root_symbol(symbol_table.Root());
 
   const auto build_diagnostics = BuildSymbolTable(src, &symbol_table);
+  EXPECT_EMPTY_STATUSES(build_diagnostics);
 
   MUST_ASSIGN_LOOKUP_SYMBOL(module_m, root_symbol, "m");
   EXPECT_EQ(module_m_info.metatype, SymbolMetaType::kModule);
   EXPECT_EQ(module_m_info.file_origin, &src);
   EXPECT_EQ(module_m_info.declared_type.syntax_origin,
             nullptr);  // there is no module meta-type
-  EXPECT_TRUE(build_diagnostics.empty()) << "Unexpected diagnostic:\n"
-                                         << build_diagnostics.front().message();
 
   MUST_ASSIGN_LOOKUP_SYMBOL(n_param, module_m, "N");
   EXPECT_EQ(n_param_info.metatype, SymbolMetaType::kParameter);
@@ -2201,8 +2154,7 @@ TEST(BuildSymbolTableTest, ModuleDeclarationLocalsDependOnParameter) {
   {
     std::vector<absl::Status> resolve_diagnostics;
     symbol_table.Resolve(&resolve_diagnostics);
-    EXPECT_TRUE(resolve_diagnostics.empty())
-        << "Unexpected diagnostic: " << resolve_diagnostics.front().message();
+    EXPECT_EMPTY_STATUSES(resolve_diagnostics);
 
     // All references to "N" resolved.
     for (const auto& n_ref : n_refs) {
@@ -2220,19 +2172,18 @@ TEST(BuildSymbolTableTest, ClassDeclarationSingle) {
   const SymbolTableNode& root_symbol(symbol_table.Root());
 
   const auto build_diagnostics = BuildSymbolTable(src, &symbol_table);
+  EXPECT_EMPTY_STATUSES(build_diagnostics);
 
   MUST_ASSIGN_LOOKUP_SYMBOL(ccc, root_symbol, "ccc");
   EXPECT_EQ(ccc_info.metatype, SymbolMetaType::kClass);
   EXPECT_EQ(ccc_info.file_origin, &src);
   EXPECT_EQ(ccc_info.declared_type.syntax_origin,
             nullptr);  // there is no module meta-type
-  EXPECT_TRUE(build_diagnostics.empty()) << "Unexpected diagnostic:\n"
-                                         << build_diagnostics.front().message();
 
   {
     std::vector<absl::Status> resolve_diagnostics;
     symbol_table.Resolve(&resolve_diagnostics);  // nothing to resolve
-    EXPECT_TRUE(resolve_diagnostics.empty());
+    EXPECT_EMPTY_STATUSES(resolve_diagnostics);
   }
 }
 
@@ -2250,9 +2201,7 @@ TEST(BuildSymbolTableTest, ClassDeclarationNested) {
   const SymbolTableNode& root_symbol(symbol_table.Root());
 
   const auto build_diagnostics = BuildSymbolTable(src, &symbol_table);
-
-  EXPECT_TRUE(build_diagnostics.empty()) << "Unexpected diagnostic:\n"
-                                         << build_diagnostics.front().message();
+  EXPECT_EMPTY_STATUSES(build_diagnostics);
 
   MUST_ASSIGN_LOOKUP_SYMBOL(pp, root_symbol, "pp");
   EXPECT_EQ(pp_info.metatype, SymbolMetaType::kPackage);
@@ -2276,7 +2225,7 @@ TEST(BuildSymbolTableTest, ClassDeclarationNested) {
   {
     std::vector<absl::Status> resolve_diagnostics;
     symbol_table.Resolve(&resolve_diagnostics);  // nothing to resolve
-    EXPECT_TRUE(resolve_diagnostics.empty());
+    EXPECT_EMPTY_STATUSES(resolve_diagnostics);
   }
 }
 
@@ -2292,14 +2241,13 @@ TEST(BuildSymbolTableTest, ClassDeclarationWithParameter) {
   const SymbolTableNode& root_symbol(symbol_table.Root());
 
   const auto build_diagnostics = BuildSymbolTable(src, &symbol_table);
+  EXPECT_EMPTY_STATUSES(build_diagnostics);
 
   MUST_ASSIGN_LOOKUP_SYMBOL(class_cc, root_symbol, "cc");
   EXPECT_EQ(class_cc_info.metatype, SymbolMetaType::kClass);
   EXPECT_EQ(class_cc_info.file_origin, &src);
   EXPECT_EQ(class_cc_info.declared_type.syntax_origin,
             nullptr);  // there is no class meta-type
-  EXPECT_TRUE(build_diagnostics.empty()) << "Unexpected diagnostic:\n"
-                                         << build_diagnostics.front().message();
 
   MUST_ASSIGN_LOOKUP_SYMBOL(n_param, class_cc, "N");
   EXPECT_EQ(n_param_info.metatype, SymbolMetaType::kParameter);
@@ -2312,7 +2260,7 @@ TEST(BuildSymbolTableTest, ClassDeclarationWithParameter) {
   {
     std::vector<absl::Status> resolve_diagnostics;
     symbol_table.Resolve(&resolve_diagnostics);
-    EXPECT_TRUE(resolve_diagnostics.empty());
+    EXPECT_EMPTY_STATUSES(resolve_diagnostics);
   }
 }
 
@@ -2328,8 +2276,7 @@ TEST(BuildSymbolTableTest, ClassDeclarationDataMember) {
   const SymbolTableNode& root_symbol(symbol_table.Root());
 
   const auto build_diagnostics = BuildSymbolTable(src, &symbol_table);
-  EXPECT_TRUE(build_diagnostics.empty()) << "Unexpected diagnostic:\n"
-                                         << build_diagnostics.front().message();
+  EXPECT_EMPTY_STATUSES(build_diagnostics);
 
   MUST_ASSIGN_LOOKUP_SYMBOL(class_cc, root_symbol, "cc");
   EXPECT_EQ(class_cc_info.metatype, SymbolMetaType::kClass);
@@ -2360,7 +2307,7 @@ TEST(BuildSymbolTableTest, ClassDeclarationDataMember) {
   {  // No references.
     std::vector<absl::Status> resolve_diagnostics;
     symbol_table.Resolve(&resolve_diagnostics);
-    EXPECT_TRUE(resolve_diagnostics.empty());
+    EXPECT_EMPTY_STATUSES(resolve_diagnostics);
   }
 }
 
@@ -2375,8 +2322,7 @@ TEST(BuildSymbolTableTest, ClassDeclarationDataMemberMultiDeclaration) {
   const SymbolTableNode& root_symbol(symbol_table.Root());
 
   const auto build_diagnostics = BuildSymbolTable(src, &symbol_table);
-  EXPECT_TRUE(build_diagnostics.empty()) << "Unexpected diagnostic:\n"
-                                         << build_diagnostics.front().message();
+  EXPECT_EMPTY_STATUSES(build_diagnostics);
 
   MUST_ASSIGN_LOOKUP_SYMBOL(class_cc, root_symbol, "cc");
   EXPECT_EQ(class_cc_info.metatype, SymbolMetaType::kClass);
@@ -2408,7 +2354,7 @@ TEST(BuildSymbolTableTest, ClassDeclarationDataMemberMultiDeclaration) {
   {  // No references.
     std::vector<absl::Status> resolve_diagnostics;
     symbol_table.Resolve(&resolve_diagnostics);
-    EXPECT_TRUE(resolve_diagnostics.empty());
+    EXPECT_EMPTY_STATUSES(resolve_diagnostics);
   }
 }
 
@@ -2426,8 +2372,7 @@ TEST(BuildSymbolTableTest, ClassDeclarationDataMemberAccessedFromMethod) {
   const SymbolTableNode& root_symbol(symbol_table.Root());
 
   const auto build_diagnostics = BuildSymbolTable(src, &symbol_table);
-  EXPECT_TRUE(build_diagnostics.empty()) << "Unexpected diagnostic:\n"
-                                         << build_diagnostics.front().message();
+  EXPECT_EMPTY_STATUSES(build_diagnostics);
 
   MUST_ASSIGN_LOOKUP_SYMBOL(class_cc, root_symbol, "cc");
   EXPECT_EQ(class_cc_info.metatype, SymbolMetaType::kClass);
@@ -2457,9 +2402,7 @@ TEST(BuildSymbolTableTest, ClassDeclarationDataMemberAccessedFromMethod) {
   {
     std::vector<absl::Status> resolve_diagnostics;
     symbol_table.Resolve(&resolve_diagnostics);
-    EXPECT_TRUE(resolve_diagnostics.empty())
-        << "Unexpected diagnostic:\n"
-        << resolve_diagnostics.front().message();
+    EXPECT_EMPTY_STATUSES(resolve_diagnostics);
 
     // "size" resolved to class data member
     EXPECT_EQ(size_ref_comp.resolved_symbol, &size_field);
@@ -2481,8 +2424,7 @@ TEST(BuildSymbolTableTest, ClassDataMemberAccessedDirectly) {
   const SymbolTableNode& root_symbol(symbol_table.Root());
 
   const auto build_diagnostics = BuildSymbolTable(src, &symbol_table);
-  EXPECT_TRUE(build_diagnostics.empty()) << "Unexpected diagnostic:\n"
-                                         << build_diagnostics.front().message();
+  EXPECT_EMPTY_STATUSES(build_diagnostics);
 
   MUST_ASSIGN_LOOKUP_SYMBOL(class_cc, root_symbol, "cc");
   EXPECT_EQ(class_cc_info.metatype, SymbolMetaType::kClass);
@@ -2523,9 +2465,7 @@ TEST(BuildSymbolTableTest, ClassDataMemberAccessedDirectly) {
   {
     std::vector<absl::Status> resolve_diagnostics;
     symbol_table.Resolve(&resolve_diagnostics);
-    EXPECT_TRUE(resolve_diagnostics.empty())
-        << "Unexpected diagnostic:\n"
-        << resolve_diagnostics.front().message();
+    EXPECT_EMPTY_STATUSES(resolve_diagnostics);
 
     // "size" resolved to class data member
     EXPECT_EQ(size_ref_comp.resolved_symbol, &size_field);
@@ -2544,8 +2484,7 @@ TEST(BuildSymbolTableTest, ClassDeclarationSingleInheritance) {
   const SymbolTableNode& root_symbol(symbol_table.Root());
 
   const auto build_diagnostics = BuildSymbolTable(src, &symbol_table);
-  EXPECT_TRUE(build_diagnostics.empty()) << "Unexpected diagnostic:\n"
-                                         << build_diagnostics.front().message();
+  EXPECT_EMPTY_STATUSES(build_diagnostics);
 
   MUST_ASSIGN_LOOKUP_SYMBOL(base_class, root_symbol, "base");
   EXPECT_EQ(base_class_info.metatype, SymbolMetaType::kClass);
@@ -2576,9 +2515,7 @@ TEST(BuildSymbolTableTest, ClassDeclarationSingleInheritance) {
   {
     std::vector<absl::Status> resolve_diagnostics;
     symbol_table.Resolve(&resolve_diagnostics);
-    EXPECT_TRUE(resolve_diagnostics.empty())
-        << "Unexpected diagnostic:\n"
-        << resolve_diagnostics.front().message();
+    EXPECT_EMPTY_STATUSES(resolve_diagnostics);
 
     // Resolve the "base" type reference to the "base" class.
     EXPECT_EQ(derived_class_info.parent_type.user_defined_type->Value()
@@ -2601,8 +2538,7 @@ TEST(BuildSymbolTableTest, ClassDeclarationSingleInheritanceAcrossPackage) {
   const SymbolTableNode& root_symbol(symbol_table.Root());
 
   const auto build_diagnostics = BuildSymbolTable(src, &symbol_table);
-  EXPECT_TRUE(build_diagnostics.empty()) << "Unexpected diagnostic:\n"
-                                         << build_diagnostics.front().message();
+  EXPECT_EMPTY_STATUSES(build_diagnostics);
 
   MUST_ASSIGN_LOOKUP_SYMBOL(package_pp, root_symbol, "pp");
   EXPECT_EQ(package_pp_info.metatype, SymbolMetaType::kPackage);
@@ -2645,9 +2581,7 @@ TEST(BuildSymbolTableTest, ClassDeclarationSingleInheritanceAcrossPackage) {
   {
     std::vector<absl::Status> resolve_diagnostics;
     symbol_table.Resolve(&resolve_diagnostics);
-    EXPECT_TRUE(resolve_diagnostics.empty())
-        << "Unexpected diagnostic:\n"
-        << resolve_diagnostics.front().message();
+    EXPECT_EMPTY_STATUSES(resolve_diagnostics);
 
     // Resolve the "pp::base" type reference to the "pp::base" class.
     EXPECT_EQ(pp_ref_comp.resolved_symbol, &package_pp);
@@ -2674,8 +2608,7 @@ TEST(BuildSymbolTableTest, ClassDeclarationSingleInheritancePackageToPackage) {
   const SymbolTableNode& root_symbol(symbol_table.Root());
 
   const auto build_diagnostics = BuildSymbolTable(src, &symbol_table);
-  EXPECT_TRUE(build_diagnostics.empty()) << "Unexpected diagnostic:\n"
-                                         << build_diagnostics.front().message();
+  EXPECT_EMPTY_STATUSES(build_diagnostics);
 
   MUST_ASSIGN_LOOKUP_SYMBOL(package_pp, root_symbol, "pp");
   EXPECT_EQ(package_pp_info.metatype, SymbolMetaType::kPackage);
@@ -2722,9 +2655,7 @@ TEST(BuildSymbolTableTest, ClassDeclarationSingleInheritancePackageToPackage) {
   {
     std::vector<absl::Status> resolve_diagnostics;
     symbol_table.Resolve(&resolve_diagnostics);
-    EXPECT_TRUE(resolve_diagnostics.empty())
-        << "Unexpected diagnostic:\n"
-        << resolve_diagnostics.front().message();
+    EXPECT_EMPTY_STATUSES(resolve_diagnostics);
 
     // Resolve the "pp::base" type reference to the "pp::base" class.
     EXPECT_EQ(pp_ref_comp.resolved_symbol, &package_pp);
@@ -2751,8 +2682,7 @@ TEST(BuildSymbolTableTest, ClassDeclarationInheritanceFromNestedClass) {
   const SymbolTableNode& root_symbol(symbol_table.Root());
 
   const auto build_diagnostics = BuildSymbolTable(src, &symbol_table);
-  EXPECT_TRUE(build_diagnostics.empty()) << "Unexpected diagnostic:\n"
-                                         << build_diagnostics.front().message();
+  EXPECT_EMPTY_STATUSES(build_diagnostics);
 
   MUST_ASSIGN_LOOKUP_SYMBOL(class_pp, root_symbol, "pp");
   EXPECT_EQ(class_pp_info.metatype, SymbolMetaType::kClass);
@@ -2799,9 +2729,7 @@ TEST(BuildSymbolTableTest, ClassDeclarationInheritanceFromNestedClass) {
   {
     std::vector<absl::Status> resolve_diagnostics;
     symbol_table.Resolve(&resolve_diagnostics);
-    EXPECT_TRUE(resolve_diagnostics.empty())
-        << "Unexpected diagnostic:\n"
-        << resolve_diagnostics.front().message();
+    EXPECT_EMPTY_STATUSES(resolve_diagnostics);
 
     // Resolve the "pp::base" type reference to the "pp::base" class.
     EXPECT_EQ(pp_ref_comp.resolved_symbol, &class_pp);
@@ -2828,8 +2756,7 @@ TEST(BuildSymbolTableTest, ClassDeclarationReferenceInheritedMemberFromMethod) {
   const SymbolTableNode& root_symbol(symbol_table.Root());
 
   const auto build_diagnostics = BuildSymbolTable(src, &symbol_table);
-  EXPECT_TRUE(build_diagnostics.empty()) << "Unexpected diagnostic:\n"
-                                         << build_diagnostics.front().message();
+  EXPECT_EMPTY_STATUSES(build_diagnostics);
 
   MUST_ASSIGN_LOOKUP_SYMBOL(base_class, root_symbol, "base");
   EXPECT_EQ(base_class_info.metatype, SymbolMetaType::kClass);
@@ -2868,9 +2795,7 @@ TEST(BuildSymbolTableTest, ClassDeclarationReferenceInheritedMemberFromMethod) {
   {
     std::vector<absl::Status> resolve_diagnostics;
     symbol_table.Resolve(&resolve_diagnostics);
-    EXPECT_TRUE(resolve_diagnostics.empty())
-        << "Unexpected diagnostic:\n"
-        << resolve_diagnostics.front().message();
+    EXPECT_EMPTY_STATUSES(resolve_diagnostics);
 
     // Resolve the "base" type reference to the "base" class.
     EXPECT_EQ(derived_class_info.parent_type.user_defined_type->Value()
@@ -2898,8 +2823,7 @@ TEST(BuildSymbolTableTest,
   const SymbolTableNode& root_symbol(symbol_table.Root());
 
   const auto build_diagnostics = BuildSymbolTable(src, &symbol_table);
-  EXPECT_TRUE(build_diagnostics.empty()) << "Unexpected diagnostic:\n"
-                                         << build_diagnostics.front().message();
+  EXPECT_EMPTY_STATUSES(build_diagnostics);
 
   MUST_ASSIGN_LOOKUP_SYMBOL(base_class, root_symbol, "base");
   EXPECT_EQ(base_class_info.metatype, SymbolMetaType::kClass);
@@ -2969,9 +2893,7 @@ TEST(BuildSymbolTableTest,
   {
     std::vector<absl::Status> resolve_diagnostics;
     symbol_table.Resolve(&resolve_diagnostics);
-    EXPECT_TRUE(resolve_diagnostics.empty())
-        << "Unexpected diagnostic:\n"
-        << resolve_diagnostics.front().message();
+    EXPECT_EMPTY_STATUSES(resolve_diagnostics);
 
     // Resolve the "base" type reference to the "base" class.
     EXPECT_EQ(derived_class_info.parent_type.user_defined_type->Value()
@@ -2998,8 +2920,7 @@ TEST(BuildSymbolTableTest, FunctionDeclarationNoReturnType) {
   const SymbolTableNode& root_symbol(symbol_table.Root());
 
   const auto build_diagnostics = BuildSymbolTable(src, &symbol_table);
-  EXPECT_TRUE(build_diagnostics.empty()) << "Unexpected diagnostic:\n"
-                                         << build_diagnostics.front().message();
+  EXPECT_EMPTY_STATUSES(build_diagnostics);
 
   MUST_ASSIGN_LOOKUP_SYMBOL(function_ff, root_symbol, "ff");
   EXPECT_EQ(function_ff_info.metatype, SymbolMetaType::kFunction);
@@ -3012,7 +2933,7 @@ TEST(BuildSymbolTableTest, FunctionDeclarationNoReturnType) {
   {
     std::vector<absl::Status> resolve_diagnostics;
     symbol_table.Resolve(&resolve_diagnostics);
-    EXPECT_TRUE(resolve_diagnostics.empty());
+    EXPECT_EMPTY_STATUSES(resolve_diagnostics);
   }
 }
 
@@ -3027,8 +2948,7 @@ TEST(BuildSymbolTableTest, FunctionDeclarationWithPort) {
   const SymbolTableNode& root_symbol(symbol_table.Root());
 
   const auto build_diagnostics = BuildSymbolTable(src, &symbol_table);
-  EXPECT_TRUE(build_diagnostics.empty()) << "Unexpected diagnostic:\n"
-                                         << build_diagnostics.front().message();
+  EXPECT_EMPTY_STATUSES(build_diagnostics);
 
   MUST_ASSIGN_LOOKUP_SYMBOL(function_ff, root_symbol, "ff");
   EXPECT_EQ(function_ff_info.metatype, SymbolMetaType::kFunction);
@@ -3050,7 +2970,7 @@ TEST(BuildSymbolTableTest, FunctionDeclarationWithPort) {
   {
     std::vector<absl::Status> resolve_diagnostics;
     symbol_table.Resolve(&resolve_diagnostics);
-    EXPECT_TRUE(resolve_diagnostics.empty());
+    EXPECT_EMPTY_STATUSES(resolve_diagnostics);
   }
 }
 
@@ -3066,8 +2986,7 @@ TEST(BuildSymbolTableTest, FunctionDeclarationWithLocalVariable) {
   const SymbolTableNode& root_symbol(symbol_table.Root());
 
   const auto build_diagnostics = BuildSymbolTable(src, &symbol_table);
-  EXPECT_TRUE(build_diagnostics.empty()) << "Unexpected diagnostic:\n"
-                                         << build_diagnostics.front().message();
+  EXPECT_EMPTY_STATUSES(build_diagnostics);
 
   MUST_ASSIGN_LOOKUP_SYMBOL(function_ff, root_symbol, "ff");
   EXPECT_EQ(function_ff_info.metatype, SymbolMetaType::kFunction);
@@ -3089,7 +3008,7 @@ TEST(BuildSymbolTableTest, FunctionDeclarationWithLocalVariable) {
   {
     std::vector<absl::Status> resolve_diagnostics;
     symbol_table.Resolve(&resolve_diagnostics);
-    EXPECT_TRUE(resolve_diagnostics.empty());
+    EXPECT_EMPTY_STATUSES(resolve_diagnostics);
   }
 }
 
@@ -3103,8 +3022,7 @@ TEST(BuildSymbolTableTest, FunctionDeclarationVoidReturnType) {
   const SymbolTableNode& root_symbol(symbol_table.Root());
 
   const auto build_diagnostics = BuildSymbolTable(src, &symbol_table);
-  EXPECT_TRUE(build_diagnostics.empty()) << "Unexpected diagnostic:\n"
-                                         << build_diagnostics.front().message();
+  EXPECT_EMPTY_STATUSES(build_diagnostics);
 
   MUST_ASSIGN_LOOKUP_SYMBOL(function_ff, root_symbol, "ff");
   EXPECT_EQ(function_ff_info.metatype, SymbolMetaType::kFunction);
@@ -3119,7 +3037,7 @@ TEST(BuildSymbolTableTest, FunctionDeclarationVoidReturnType) {
   {
     std::vector<absl::Status> resolve_diagnostics;
     symbol_table.Resolve(&resolve_diagnostics);
-    EXPECT_TRUE(resolve_diagnostics.empty());
+    EXPECT_EMPTY_STATUSES(resolve_diagnostics);
   }
 }
 
@@ -3135,8 +3053,7 @@ TEST(BuildSymbolTableTest, FunctionDeclarationClassReturnType) {
   const SymbolTableNode& root_symbol(symbol_table.Root());
 
   const auto build_diagnostics = BuildSymbolTable(src, &symbol_table);
-  EXPECT_TRUE(build_diagnostics.empty()) << "Unexpected diagnostic:\n"
-                                         << build_diagnostics.front().message();
+  EXPECT_EMPTY_STATUSES(build_diagnostics);
 
   MUST_ASSIGN_LOOKUP_SYMBOL(class_cc, root_symbol, "cc");
   MUST_ASSIGN_LOOKUP_SYMBOL(function_ff, root_symbol, "ff");
@@ -3161,7 +3078,7 @@ TEST(BuildSymbolTableTest, FunctionDeclarationClassReturnType) {
   {
     std::vector<absl::Status> resolve_diagnostics;
     symbol_table.Resolve(&resolve_diagnostics);
-    EXPECT_TRUE(resolve_diagnostics.empty());
+    EXPECT_EMPTY_STATUSES(resolve_diagnostics);
 
     // Expect "cc" return type to resolve to class declaration.
     EXPECT_EQ(cc_ref_comp.resolved_symbol, &class_cc);
@@ -3180,8 +3097,7 @@ TEST(BuildSymbolTableTest, FunctionDeclarationInModule) {
   const SymbolTableNode& root_symbol(symbol_table.Root());
 
   const auto build_diagnostics = BuildSymbolTable(src, &symbol_table);
-  EXPECT_TRUE(build_diagnostics.empty()) << "Unexpected diagnostic:\n"
-                                         << build_diagnostics.front().message();
+  EXPECT_EMPTY_STATUSES(build_diagnostics);
 
   MUST_ASSIGN_LOOKUP_SYMBOL(module_mm, root_symbol, "mm");
   MUST_ASSIGN_LOOKUP_SYMBOL(function_ff, module_mm, "ff");
@@ -3203,7 +3119,7 @@ TEST(BuildSymbolTableTest, FunctionDeclarationInModule) {
   {
     std::vector<absl::Status> resolve_diagnostics;
     symbol_table.Resolve(&resolve_diagnostics);
-    EXPECT_TRUE(resolve_diagnostics.empty());
+    EXPECT_EMPTY_STATUSES(resolve_diagnostics);
   }
 }
 
@@ -3219,8 +3135,7 @@ TEST(BuildSymbolTableTest, ClassMethodFunctionDeclaration) {
   const SymbolTableNode& root_symbol(symbol_table.Root());
 
   const auto build_diagnostics = BuildSymbolTable(src, &symbol_table);
-  EXPECT_TRUE(build_diagnostics.empty()) << "Unexpected diagnostic:\n"
-                                         << build_diagnostics.front().message();
+  EXPECT_EMPTY_STATUSES(build_diagnostics);
 
   MUST_ASSIGN_LOOKUP_SYMBOL(class_cc, root_symbol, "cc");
   MUST_ASSIGN_LOOKUP_SYMBOL(function_ff, class_cc, "ff");
@@ -3242,7 +3157,7 @@ TEST(BuildSymbolTableTest, ClassMethodFunctionDeclaration) {
   {
     std::vector<absl::Status> resolve_diagnostics;
     symbol_table.Resolve(&resolve_diagnostics);
-    EXPECT_TRUE(resolve_diagnostics.empty());
+    EXPECT_EMPTY_STATUSES(resolve_diagnostics);
   }
 }
 
@@ -3265,8 +3180,7 @@ TEST(BuildSymbolTableTest,
   const SymbolTableNode& root_symbol(symbol_table.Root());
 
   const auto build_diagnostics = BuildSymbolTable(src, &symbol_table);
-  EXPECT_TRUE(build_diagnostics.empty()) << "Unexpected diagnostic:\n"
-                                         << build_diagnostics.front().message();
+  EXPECT_EMPTY_STATUSES(build_diagnostics);
 
   MUST_ASSIGN_LOOKUP_SYMBOL(package_aa, root_symbol, "aa");
   MUST_ASSIGN_LOOKUP_SYMBOL(package_bb, root_symbol, "bb");
@@ -3310,7 +3224,7 @@ TEST(BuildSymbolTableTest,
   {
     std::vector<absl::Status> resolve_diagnostics;
     symbol_table.Resolve(&resolve_diagnostics);
-    EXPECT_TRUE(resolve_diagnostics.empty());
+    EXPECT_EMPTY_STATUSES(resolve_diagnostics);
 
     // Expect to resolve type reference chain "aa:vv"
     EXPECT_EQ(aa_ref_comp.resolved_symbol, &package_aa);
@@ -3329,8 +3243,7 @@ TEST(BuildSymbolTableTest, FunctionDeclarationOutOfLineMissingOuterClass) {
 
   const auto build_diagnostics = BuildSymbolTable(src, &symbol_table);
   {
-    ASSERT_EQ(build_diagnostics.size(), 1);
-    const auto err = build_diagnostics.front();
+    ASSIGN_MUST_HAVE_UNIQUE(err, build_diagnostics);
     EXPECT_EQ(err.code(), absl::StatusCode::kNotFound);
     EXPECT_THAT(
         err.message(),
@@ -3343,10 +3256,9 @@ TEST(BuildSymbolTableTest, FunctionDeclarationOutOfLineMissingOuterClass) {
   {
     std::vector<absl::Status> resolve_diagnostics;
     symbol_table.Resolve(&resolve_diagnostics);
-    ASSERT_EQ(resolve_diagnostics.size(), 1);
 
     // Same diagnostic as before.
-    const auto err = resolve_diagnostics.front();
+    ASSIGN_MUST_HAVE_UNIQUE(err, resolve_diagnostics);
     EXPECT_EQ(err.code(), absl::StatusCode::kNotFound);
     EXPECT_THAT(
         err.message(),
@@ -3369,8 +3281,7 @@ TEST(BuildSymbolTableTest, FunctionDeclarationOutOfLineInvalidModuleInjection) {
   {
     // Expect that "tt" will not injected into "mm" because it is a module,
     // not a class.
-    ASSERT_EQ(build_diagnostics.size(), 1);
-    const auto err = build_diagnostics.front();
+    ASSIGN_MUST_HAVE_UNIQUE(err, build_diagnostics);
     EXPECT_EQ(err.code(), absl::StatusCode::kInvalidArgument);
     EXPECT_THAT(err.message(),
                 HasSubstr("Expecting reference \"mm\" to resolve to a class, "
@@ -3420,8 +3331,7 @@ TEST(BuildSymbolTableTest, FunctionDeclarationOutOfLineMissingPrototype) {
     // This diagnostic is non-fatal.
     // Expect that "ff" will be injected into "cc" when its method prototype is
     // missing.
-    ASSERT_EQ(build_diagnostics.size(), 1);
-    const auto err = build_diagnostics.front();
+    ASSIGN_MUST_HAVE_UNIQUE(err, build_diagnostics);
     EXPECT_EQ(err.code(), absl::StatusCode::kNotFound);
     EXPECT_THAT(
         err.message(),
@@ -3447,7 +3357,7 @@ TEST(BuildSymbolTableTest, FunctionDeclarationOutOfLineMissingPrototype) {
   {
     std::vector<absl::Status> resolve_diagnostics;
     symbol_table.Resolve(&resolve_diagnostics);
-    EXPECT_TRUE(resolve_diagnostics.empty());
+    EXPECT_EMPTY_STATUSES(resolve_diagnostics);
 
     // Already resolved before, still remains resolved.
     EXPECT_EQ(cc_ref->components->Value().resolved_symbol, &class_cc);
@@ -3466,8 +3376,7 @@ TEST(BuildSymbolTableTest, FunctionDeclarationMethodPrototypeOnly) {
   const SymbolTableNode& root_symbol(symbol_table.Root());
 
   const auto build_diagnostics = BuildSymbolTable(src, &symbol_table);
-  EXPECT_TRUE(build_diagnostics.empty()) << "Unexpected diagnostic:\n"
-                                         << build_diagnostics.front().message();
+  EXPECT_EMPTY_STATUSES(build_diagnostics);
 
   MUST_ASSIGN_LOOKUP_SYMBOL(class_cc, root_symbol, "cc");
   MUST_ASSIGN_LOOKUP_SYMBOL(method_ff, class_cc, "ff");
@@ -3492,7 +3401,7 @@ TEST(BuildSymbolTableTest, FunctionDeclarationMethodPrototypeOnly) {
   {
     std::vector<absl::Status> resolve_diagnostics;
     symbol_table.Resolve(&resolve_diagnostics);
-    EXPECT_TRUE(resolve_diagnostics.empty());
+    EXPECT_EMPTY_STATUSES(resolve_diagnostics);
   }
 }
 
@@ -3511,8 +3420,7 @@ TEST(BuildSymbolTableTest, FunctionDeclarationOutOfLineWithMethodPrototype) {
   const SymbolTableNode& root_symbol(symbol_table.Root());
 
   const auto build_diagnostics = BuildSymbolTable(src, &symbol_table);
-  EXPECT_TRUE(build_diagnostics.empty()) << "Unexpected diagnostic:\n"
-                                         << build_diagnostics.front().message();
+  EXPECT_EMPTY_STATUSES(build_diagnostics);
 
   MUST_ASSIGN_LOOKUP_SYMBOL(class_cc, root_symbol, "cc");
   MUST_ASSIGN_LOOKUP_SYMBOL(method_ff, class_cc, "ff");
@@ -3555,7 +3463,7 @@ TEST(BuildSymbolTableTest, FunctionDeclarationOutOfLineWithMethodPrototype) {
   {
     std::vector<absl::Status> resolve_diagnostics;
     symbol_table.Resolve(&resolve_diagnostics);
-    EXPECT_TRUE(resolve_diagnostics.empty());
+    EXPECT_EMPTY_STATUSES(resolve_diagnostics);
 
     // Already resolved.
     EXPECT_EQ(cc_ref->components->Value().resolved_symbol, &class_cc);
@@ -3573,8 +3481,7 @@ TEST(BuildSymbolTableTest, TaskDeclaration) {
   const SymbolTableNode& root_symbol(symbol_table.Root());
 
   const auto build_diagnostics = BuildSymbolTable(src, &symbol_table);
-  EXPECT_TRUE(build_diagnostics.empty()) << "Unexpected diagnostic:\n"
-                                         << build_diagnostics.front().message();
+  EXPECT_EMPTY_STATUSES(build_diagnostics);
 
   MUST_ASSIGN_LOOKUP_SYMBOL(task_tt, root_symbol, "tt");
   EXPECT_EQ(task_tt_info.metatype, SymbolMetaType::kTask);
@@ -3587,7 +3494,7 @@ TEST(BuildSymbolTableTest, TaskDeclaration) {
   {
     std::vector<absl::Status> resolve_diagnostics;
     symbol_table.Resolve(&resolve_diagnostics);
-    EXPECT_TRUE(resolve_diagnostics.empty());
+    EXPECT_EMPTY_STATUSES(resolve_diagnostics);
   }
 }
 
@@ -3603,8 +3510,7 @@ TEST(BuildSymbolTableTest, TaskDeclarationInPackage) {
   const SymbolTableNode& root_symbol(symbol_table.Root());
 
   const auto build_diagnostics = BuildSymbolTable(src, &symbol_table);
-  EXPECT_TRUE(build_diagnostics.empty()) << "Unexpected diagnostic:\n"
-                                         << build_diagnostics.front().message();
+  EXPECT_EMPTY_STATUSES(build_diagnostics);
 
   MUST_ASSIGN_LOOKUP_SYMBOL(package_pp, root_symbol, "pp");
   MUST_ASSIGN_LOOKUP_SYMBOL(task_tt, package_pp, "tt");
@@ -3618,7 +3524,7 @@ TEST(BuildSymbolTableTest, TaskDeclarationInPackage) {
   {
     std::vector<absl::Status> resolve_diagnostics;
     symbol_table.Resolve(&resolve_diagnostics);
-    EXPECT_TRUE(resolve_diagnostics.empty());
+    EXPECT_EMPTY_STATUSES(resolve_diagnostics);
   }
 }
 
@@ -3634,8 +3540,7 @@ TEST(BuildSymbolTableTest, TaskDeclarationInModule) {
   const SymbolTableNode& root_symbol(symbol_table.Root());
 
   const auto build_diagnostics = BuildSymbolTable(src, &symbol_table);
-  EXPECT_TRUE(build_diagnostics.empty()) << "Unexpected diagnostic:\n"
-                                         << build_diagnostics.front().message();
+  EXPECT_EMPTY_STATUSES(build_diagnostics);
 
   MUST_ASSIGN_LOOKUP_SYMBOL(module_mm, root_symbol, "mm");
   MUST_ASSIGN_LOOKUP_SYMBOL(task_tt, module_mm, "tt");
@@ -3649,7 +3554,7 @@ TEST(BuildSymbolTableTest, TaskDeclarationInModule) {
   {
     std::vector<absl::Status> resolve_diagnostics;
     symbol_table.Resolve(&resolve_diagnostics);
-    EXPECT_TRUE(resolve_diagnostics.empty());
+    EXPECT_EMPTY_STATUSES(resolve_diagnostics);
   }
 }
 
@@ -3665,8 +3570,7 @@ TEST(BuildSymbolTableTest, TaskDeclarationInClass) {
   const SymbolTableNode& root_symbol(symbol_table.Root());
 
   const auto build_diagnostics = BuildSymbolTable(src, &symbol_table);
-  EXPECT_TRUE(build_diagnostics.empty()) << "Unexpected diagnostic:\n"
-                                         << build_diagnostics.front().message();
+  EXPECT_EMPTY_STATUSES(build_diagnostics);
 
   MUST_ASSIGN_LOOKUP_SYMBOL(class_cc, root_symbol, "cc");
   MUST_ASSIGN_LOOKUP_SYMBOL(task_tt, class_cc, "tt");
@@ -3680,7 +3584,7 @@ TEST(BuildSymbolTableTest, TaskDeclarationInClass) {
   {
     std::vector<absl::Status> resolve_diagnostics;
     symbol_table.Resolve(&resolve_diagnostics);
-    EXPECT_TRUE(resolve_diagnostics.empty());
+    EXPECT_EMPTY_STATUSES(resolve_diagnostics);
   }
 }
 
@@ -3694,8 +3598,7 @@ TEST(BuildSymbolTableTest, TaskDeclarationWithPorts) {
   const SymbolTableNode& root_symbol(symbol_table.Root());
 
   const auto build_diagnostics = BuildSymbolTable(src, &symbol_table);
-  EXPECT_TRUE(build_diagnostics.empty()) << "Unexpected diagnostic:\n"
-                                         << build_diagnostics.front().message();
+  EXPECT_EMPTY_STATUSES(build_diagnostics);
 
   MUST_ASSIGN_LOOKUP_SYMBOL(task_tt, root_symbol, "tt");
   EXPECT_EQ(task_tt_info.metatype, SymbolMetaType::kTask);
@@ -3717,7 +3620,7 @@ TEST(BuildSymbolTableTest, TaskDeclarationWithPorts) {
   {
     std::vector<absl::Status> resolve_diagnostics;
     symbol_table.Resolve(&resolve_diagnostics);
-    EXPECT_TRUE(resolve_diagnostics.empty());
+    EXPECT_EMPTY_STATUSES(resolve_diagnostics);
   }
 }
 
@@ -3732,8 +3635,7 @@ TEST(BuildSymbolTableTest, TaskDeclarationOutOfLineMissingOuterClass) {
 
   const auto build_diagnostics = BuildSymbolTable(src, &symbol_table);
   {
-    ASSERT_EQ(build_diagnostics.size(), 1);
-    const auto err = build_diagnostics.front();
+    ASSIGN_MUST_HAVE_UNIQUE(err, build_diagnostics);
     EXPECT_EQ(err.code(), absl::StatusCode::kNotFound);
     EXPECT_THAT(
         err.message(),
@@ -3746,10 +3648,9 @@ TEST(BuildSymbolTableTest, TaskDeclarationOutOfLineMissingOuterClass) {
   {
     std::vector<absl::Status> resolve_diagnostics;
     symbol_table.Resolve(&resolve_diagnostics);
-    ASSERT_EQ(resolve_diagnostics.size(), 1);
 
     // Same diagnostic as before.
-    const auto err = resolve_diagnostics.front();
+    ASSIGN_MUST_HAVE_UNIQUE(err, resolve_diagnostics);
     EXPECT_EQ(err.code(), absl::StatusCode::kNotFound);
     EXPECT_THAT(
         err.message(),
@@ -3774,8 +3675,7 @@ TEST(BuildSymbolTableTest, TaskDeclarationOutOfLineMissingPrototype) {
     // This diagnostic is non-fatal.
     // Expect that "tt" will be injected into "cc" when its method prototype is
     // missing.
-    ASSERT_EQ(build_diagnostics.size(), 1);
-    const auto err = build_diagnostics.front();
+    ASSIGN_MUST_HAVE_UNIQUE(err, build_diagnostics);
     EXPECT_EQ(err.code(), absl::StatusCode::kNotFound);
     EXPECT_THAT(
         err.message(),
@@ -3801,7 +3701,7 @@ TEST(BuildSymbolTableTest, TaskDeclarationOutOfLineMissingPrototype) {
   {
     std::vector<absl::Status> resolve_diagnostics;
     symbol_table.Resolve(&resolve_diagnostics);
-    EXPECT_TRUE(resolve_diagnostics.empty());
+    EXPECT_EMPTY_STATUSES(resolve_diagnostics);
 
     // Already resolved before, still remains resolved.
     EXPECT_EQ(cc_ref->components->Value().resolved_symbol, &class_cc);
@@ -3824,8 +3724,7 @@ TEST(BuildSymbolTableTest, TaskDeclarationOutOfLineInvalidPackageInjection) {
   {
     // Expect that "tt" will not injected into "pp" because it is a package,
     // not a class.
-    ASSERT_EQ(build_diagnostics.size(), 1);
-    const auto err = build_diagnostics.front();
+    ASSIGN_MUST_HAVE_UNIQUE(err, build_diagnostics);
     EXPECT_EQ(err.code(), absl::StatusCode::kInvalidArgument);
     EXPECT_THAT(err.message(),
                 HasSubstr("Expecting reference \"pp\" to resolve to a class, "
@@ -3869,8 +3768,7 @@ TEST(BuildSymbolTableTest, TaskDeclarationMethodPrototypeOnly) {
   const SymbolTableNode& root_symbol(symbol_table.Root());
 
   const auto build_diagnostics = BuildSymbolTable(src, &symbol_table);
-  EXPECT_TRUE(build_diagnostics.empty()) << "Unexpected diagnostic:\n"
-                                         << build_diagnostics.front().message();
+  EXPECT_EMPTY_STATUSES(build_diagnostics);
 
   MUST_ASSIGN_LOOKUP_SYMBOL(class_cc, root_symbol, "cc");
   MUST_ASSIGN_LOOKUP_SYMBOL(method_tt, class_cc, "tt");
@@ -3892,7 +3790,7 @@ TEST(BuildSymbolTableTest, TaskDeclarationMethodPrototypeOnly) {
   {
     std::vector<absl::Status> resolve_diagnostics;
     symbol_table.Resolve(&resolve_diagnostics);
-    EXPECT_TRUE(resolve_diagnostics.empty());
+    EXPECT_EMPTY_STATUSES(resolve_diagnostics);
   }
 }
 
@@ -3910,8 +3808,7 @@ TEST(BuildSymbolTableTest, TaskDeclarationOutOfLineWithMethodPrototype) {
   const SymbolTableNode& root_symbol(symbol_table.Root());
 
   const auto build_diagnostics = BuildSymbolTable(src, &symbol_table);
-  EXPECT_TRUE(build_diagnostics.empty()) << "Unexpected diagnostic:\n"
-                                         << build_diagnostics.front().message();
+  EXPECT_EMPTY_STATUSES(build_diagnostics);
 
   MUST_ASSIGN_LOOKUP_SYMBOL(class_cc, root_symbol, "cc");
   MUST_ASSIGN_LOOKUP_SYMBOL(method_tt, class_cc, "tt");
@@ -3951,7 +3848,7 @@ TEST(BuildSymbolTableTest, TaskDeclarationOutOfLineWithMethodPrototype) {
   {
     std::vector<absl::Status> resolve_diagnostics;
     symbol_table.Resolve(&resolve_diagnostics);
-    EXPECT_TRUE(resolve_diagnostics.empty());
+    EXPECT_EMPTY_STATUSES(resolve_diagnostics);
 
     // Already resolved.
     EXPECT_EQ(cc_ref->components->Value().resolved_symbol, &class_cc);
@@ -3973,8 +3870,7 @@ TEST(BuildSymbolTableTest, OutOfLineDefinitionMismatchesPrototype) {
   const SymbolTableNode& root_symbol(symbol_table.Root());
 
   const auto build_diagnostics = BuildSymbolTable(src, &symbol_table);
-  ASSERT_EQ(build_diagnostics.size(), 1);
-  const auto err = build_diagnostics.front();
+  ASSIGN_MUST_HAVE_UNIQUE(err, build_diagnostics);
   EXPECT_EQ(err.code(), absl::StatusCode::kAlreadyExists);
   EXPECT_THAT(
       err.message(),
@@ -4011,8 +3907,7 @@ TEST(BuildSymbolTableTest, OutOfLineDefinitionMismatchesPrototype) {
   {
     std::vector<absl::Status> resolve_diagnostics;
     symbol_table.Resolve(&resolve_diagnostics);
-    EXPECT_EQ(resolve_diagnostics.size(), 1);
-    const auto err = resolve_diagnostics.front();
+    ASSIGN_MUST_HAVE_UNIQUE(err, resolve_diagnostics);
     EXPECT_EQ(err.code(), absl::StatusCode::kInvalidArgument);
     EXPECT_THAT(err.message(),
                 HasSubstr("Expecting reference \"tt\" to resolve to a "
@@ -4037,8 +3932,7 @@ TEST(BuildSymbolTableTest, FunctionCallResolvedSameScope) {
   const SymbolTableNode& root_symbol(symbol_table.Root());
 
   const auto build_diagnostics = BuildSymbolTable(src, &symbol_table);
-  EXPECT_TRUE(build_diagnostics.empty()) << "Unexpected diagnostic:\n"
-                                         << build_diagnostics.front().message();
+  EXPECT_EMPTY_STATUSES(build_diagnostics);
 
   MUST_ASSIGN_LOOKUP_SYMBOL(function_tt, root_symbol, "tt");
   MUST_ASSIGN_LOOKUP_SYMBOL(function_vv, root_symbol, "vv");
@@ -4057,9 +3951,7 @@ TEST(BuildSymbolTableTest, FunctionCallResolvedSameScope) {
   {
     std::vector<absl::Status> resolve_diagnostics;
     symbol_table.Resolve(&resolve_diagnostics);
-    EXPECT_TRUE(resolve_diagnostics.empty())
-        << "Unexpected diagnostic:\n"
-        << resolve_diagnostics.front().message();
+    EXPECT_EMPTY_STATUSES(resolve_diagnostics);
 
     // Call to "tt" is resolved.
     EXPECT_EQ(tt_ref_comp.resolved_symbol, &function_tt);
@@ -4077,8 +3969,7 @@ TEST(BuildSymbolTableTest, FunctionCallUnresolved) {
   const SymbolTableNode& root_symbol(symbol_table.Root());
 
   const auto build_diagnostics = BuildSymbolTable(src, &symbol_table);
-  EXPECT_TRUE(build_diagnostics.empty()) << "Unexpected diagnostic:\n"
-                                         << build_diagnostics.front().message();
+  EXPECT_EMPTY_STATUSES(build_diagnostics);
 
   MUST_ASSIGN_LOOKUP_SYMBOL(function_vv, root_symbol, "vv");
   EXPECT_EQ(function_vv_info.metatype, SymbolMetaType::kFunction);
@@ -4094,8 +3985,7 @@ TEST(BuildSymbolTableTest, FunctionCallUnresolved) {
   {
     std::vector<absl::Status> resolve_diagnostics;
     symbol_table.Resolve(&resolve_diagnostics);
-    ASSERT_EQ(resolve_diagnostics.size(), 1);
-    const auto& err = resolve_diagnostics.front();
+    ASSIGN_MUST_HAVE_UNIQUE(err, resolve_diagnostics);
     EXPECT_EQ(err.code(), absl::StatusCode::kNotFound);
     EXPECT_THAT(
         err.message(),
@@ -4119,8 +4009,7 @@ TEST(BuildSymbolTableTest, CallNonFunction) {
   const SymbolTableNode& root_symbol(symbol_table.Root());
 
   const auto build_diagnostics = BuildSymbolTable(src, &symbol_table);
-  EXPECT_TRUE(build_diagnostics.empty()) << "Unexpected diagnostic:\n"
-                                         << build_diagnostics.front().message();
+  EXPECT_EMPTY_STATUSES(build_diagnostics);
 
   MUST_ASSIGN_LOOKUP_SYMBOL(module_tt, root_symbol, "tt");
   MUST_ASSIGN_LOOKUP_SYMBOL(function_vv, root_symbol, "vv");
@@ -4139,8 +4028,7 @@ TEST(BuildSymbolTableTest, CallNonFunction) {
   {
     std::vector<absl::Status> resolve_diagnostics;
     symbol_table.Resolve(&resolve_diagnostics);
-    ASSERT_EQ(resolve_diagnostics.size(), 1);
-    const auto& err = resolve_diagnostics.front();
+    ASSIGN_MUST_HAVE_UNIQUE(err, resolve_diagnostics);
     EXPECT_EQ(err.code(), absl::StatusCode::kInvalidArgument);
     EXPECT_THAT(err.message(),
                 HasSubstr("Expecting reference \"tt\" to resolve to a "
@@ -4164,8 +4052,7 @@ TEST(BuildSymbolTableTest, NestedCallsArguments) {
   const SymbolTableNode& root_symbol(symbol_table.Root());
 
   const auto build_diagnostics = BuildSymbolTable(src, &symbol_table);
-  EXPECT_TRUE(build_diagnostics.empty()) << "Unexpected diagnostic:\n"
-                                         << build_diagnostics.front().message();
+  EXPECT_EMPTY_STATUSES(build_diagnostics);
 
   MUST_ASSIGN_LOOKUP_SYMBOL(function_tt, root_symbol, "tt");
   MUST_ASSIGN_LOOKUP_SYMBOL(function_vv, root_symbol, "vv");
@@ -4197,9 +4084,7 @@ TEST(BuildSymbolTableTest, NestedCallsArguments) {
   {
     std::vector<absl::Status> resolve_diagnostics;
     symbol_table.Resolve(&resolve_diagnostics);
-    EXPECT_TRUE(resolve_diagnostics.empty())
-        << "Unexpected diagnostic:\n"
-        << resolve_diagnostics.front().message();
+    EXPECT_EMPTY_STATUSES(resolve_diagnostics);
 
     EXPECT_EQ(aa_ref_comp.resolved_symbol, &arg_aa);
 
@@ -4222,8 +4107,7 @@ TEST(BuildSymbolTableTest, SelfRecursion) {
   const SymbolTableNode& root_symbol(symbol_table.Root());
 
   const auto build_diagnostics = BuildSymbolTable(src, &symbol_table);
-  EXPECT_TRUE(build_diagnostics.empty()) << "Unexpected diagnostic:\n"
-                                         << build_diagnostics.front().message();
+  EXPECT_EMPTY_STATUSES(build_diagnostics);
 
   MUST_ASSIGN_LOOKUP_SYMBOL(function_tt, root_symbol, "tt");
   EXPECT_EQ(function_tt_info.metatype, SymbolMetaType::kFunction);
@@ -4239,9 +4123,7 @@ TEST(BuildSymbolTableTest, SelfRecursion) {
   {
     std::vector<absl::Status> resolve_diagnostics;
     symbol_table.Resolve(&resolve_diagnostics);
-    EXPECT_TRUE(resolve_diagnostics.empty())
-        << "Unexpected diagnostic:\n"
-        << resolve_diagnostics.front().message();
+    EXPECT_EMPTY_STATUSES(resolve_diagnostics);
 
     // Call to "tt" (recursive) is resolved.
     EXPECT_EQ(tt_ref_comp.resolved_symbol, &function_tt);
@@ -4262,8 +4144,7 @@ TEST(BuildSymbolTableTest, MutualRecursion) {
   const SymbolTableNode& root_symbol(symbol_table.Root());
 
   const auto build_diagnostics = BuildSymbolTable(src, &symbol_table);
-  EXPECT_TRUE(build_diagnostics.empty()) << "Unexpected diagnostic:\n"
-                                         << build_diagnostics.front().message();
+  EXPECT_EMPTY_STATUSES(build_diagnostics);
 
   MUST_ASSIGN_LOOKUP_SYMBOL(function_tt, root_symbol, "tt");
   MUST_ASSIGN_LOOKUP_SYMBOL(function_vv, root_symbol, "vv");
@@ -4289,9 +4170,7 @@ TEST(BuildSymbolTableTest, MutualRecursion) {
   {
     std::vector<absl::Status> resolve_diagnostics;
     symbol_table.Resolve(&resolve_diagnostics);
-    EXPECT_TRUE(resolve_diagnostics.empty())
-        << "Unexpected diagnostic:\n"
-        << resolve_diagnostics.front().message();
+    EXPECT_EMPTY_STATUSES(resolve_diagnostics);
 
     // Calls to "tt" and "vv" are all resolved.
     EXPECT_EQ(vv_ref_comp.resolved_symbol, &function_vv);
@@ -4315,8 +4194,7 @@ TEST(BuildSymbolTableTest, PackageQualifiedFunctionCall) {
   const SymbolTableNode& root_symbol(symbol_table.Root());
 
   const auto build_diagnostics = BuildSymbolTable(src, &symbol_table);
-  EXPECT_TRUE(build_diagnostics.empty()) << "Unexpected diagnostic:\n"
-                                         << build_diagnostics.front().message();
+  EXPECT_EMPTY_STATUSES(build_diagnostics);
 
   MUST_ASSIGN_LOOKUP_SYMBOL(package_pp, root_symbol, "pp");
   MUST_ASSIGN_LOOKUP_SYMBOL(function_tt, package_pp, "tt");
@@ -4346,9 +4224,7 @@ TEST(BuildSymbolTableTest, PackageQualifiedFunctionCall) {
   {
     std::vector<absl::Status> resolve_diagnostics;
     symbol_table.Resolve(&resolve_diagnostics);
-    EXPECT_TRUE(resolve_diagnostics.empty())
-        << "Unexpected diagnostic:\n"
-        << resolve_diagnostics.front().message();
+    EXPECT_EMPTY_STATUSES(resolve_diagnostics);
 
     // Call to "tt" is resolved.
     EXPECT_EQ(pp_ref_comp.resolved_symbol, &package_pp);
@@ -4372,8 +4248,7 @@ TEST(BuildSymbolTableTest, ClassQualifiedFunctionCall) {
   const SymbolTableNode& root_symbol(symbol_table.Root());
 
   const auto build_diagnostics = BuildSymbolTable(src, &symbol_table);
-  EXPECT_TRUE(build_diagnostics.empty()) << "Unexpected diagnostic:\n"
-                                         << build_diagnostics.front().message();
+  EXPECT_EMPTY_STATUSES(build_diagnostics);
 
   MUST_ASSIGN_LOOKUP_SYMBOL(class_cc, root_symbol, "cc");
   MUST_ASSIGN_LOOKUP_SYMBOL(function_tt, class_cc, "tt");
@@ -4403,9 +4278,7 @@ TEST(BuildSymbolTableTest, ClassQualifiedFunctionCall) {
   {
     std::vector<absl::Status> resolve_diagnostics;
     symbol_table.Resolve(&resolve_diagnostics);
-    EXPECT_TRUE(resolve_diagnostics.empty())
-        << "Unexpected diagnostic:\n"
-        << resolve_diagnostics.front().message();
+    EXPECT_EMPTY_STATUSES(resolve_diagnostics);
 
     // Call to "tt" is resolved.
     EXPECT_EQ(cc_ref_comp.resolved_symbol, &class_cc);
@@ -4426,8 +4299,7 @@ TEST(BuildSymbolTableTest, ClassQualifiedFunctionCallUnresolved) {
   const SymbolTableNode& root_symbol(symbol_table.Root());
 
   const auto build_diagnostics = BuildSymbolTable(src, &symbol_table);
-  EXPECT_TRUE(build_diagnostics.empty()) << "Unexpected diagnostic:\n"
-                                         << build_diagnostics.front().message();
+  EXPECT_EMPTY_STATUSES(build_diagnostics);
 
   MUST_ASSIGN_LOOKUP_SYMBOL(class_cc, root_symbol, "cc");
   EXPECT_EQ(class_cc_info.metatype, SymbolMetaType::kClass);
@@ -4454,8 +4326,7 @@ TEST(BuildSymbolTableTest, ClassQualifiedFunctionCallUnresolved) {
   {
     std::vector<absl::Status> resolve_diagnostics;
     symbol_table.Resolve(&resolve_diagnostics);
-    ASSERT_EQ(resolve_diagnostics.size(), 1);
-    const auto& err = resolve_diagnostics.front();
+    ASSIGN_MUST_HAVE_UNIQUE(err, resolve_diagnostics);
     EXPECT_EQ(err.code(), absl::StatusCode::kNotFound);
 
     EXPECT_EQ(cc_ref_comp.resolved_symbol, &class_cc);
@@ -4480,8 +4351,7 @@ TEST(BuildSymbolTableTest, ClassMethodCall) {
   const SymbolTableNode& root_symbol(symbol_table.Root());
 
   const auto build_diagnostics = BuildSymbolTable(src, &symbol_table);
-  EXPECT_TRUE(build_diagnostics.empty()) << "Unexpected diagnostic:\n"
-                                         << build_diagnostics.front().message();
+  EXPECT_EMPTY_STATUSES(build_diagnostics);
 
   MUST_ASSIGN_LOOKUP_SYMBOL(class_cc, root_symbol, "cc");
   MUST_ASSIGN_LOOKUP_SYMBOL(function_tt, class_cc, "tt");
@@ -4519,9 +4389,7 @@ TEST(BuildSymbolTableTest, ClassMethodCall) {
   {
     std::vector<absl::Status> resolve_diagnostics;
     symbol_table.Resolve(&resolve_diagnostics);
-    EXPECT_TRUE(resolve_diagnostics.empty())
-        << "Unexpected diagnostic:\n"
-        << resolve_diagnostics.front().message();
+    EXPECT_EMPTY_STATUSES(resolve_diagnostics);
 
     // Call to ".tt" is resolved.
     EXPECT_EQ(cc_type_ref_comp.resolved_symbol, &class_cc);
@@ -4544,8 +4412,7 @@ TEST(BuildSymbolTableTest, ClassMethodCallUnresolved) {
   const SymbolTableNode& root_symbol(symbol_table.Root());
 
   const auto build_diagnostics = BuildSymbolTable(src, &symbol_table);
-  EXPECT_TRUE(build_diagnostics.empty()) << "Unexpected diagnostic:\n"
-                                         << build_diagnostics.front().message();
+  EXPECT_EMPTY_STATUSES(build_diagnostics);
 
   MUST_ASSIGN_LOOKUP_SYMBOL(class_cc, root_symbol, "cc");
   EXPECT_EQ(class_cc_info.metatype, SymbolMetaType::kClass);
@@ -4580,8 +4447,7 @@ TEST(BuildSymbolTableTest, ClassMethodCallUnresolved) {
   {
     std::vector<absl::Status> resolve_diagnostics;
     symbol_table.Resolve(&resolve_diagnostics);
-    ASSERT_EQ(resolve_diagnostics.size(), 1);
-    const auto& err = resolve_diagnostics.front();
+    ASSIGN_MUST_HAVE_UNIQUE(err, resolve_diagnostics);
     EXPECT_EQ(err.code(), absl::StatusCode::kNotFound);
 
     EXPECT_EQ(cc_type_ref_comp.resolved_symbol, &class_cc);
@@ -4612,8 +4478,7 @@ TEST(BuildSymbolTableTest, ChainedMethodCall) {
   const SymbolTableNode& root_symbol(symbol_table.Root());
 
   const auto build_diagnostics = BuildSymbolTable(src, &symbol_table);
-  EXPECT_TRUE(build_diagnostics.empty()) << "Unexpected diagnostic:\n"
-                                         << build_diagnostics.front().message();
+  EXPECT_EMPTY_STATUSES(build_diagnostics);
 
   MUST_ASSIGN_LOOKUP_SYMBOL(class_cc, root_symbol, "cc");
   EXPECT_EQ(class_cc_info.metatype, SymbolMetaType::kClass);
@@ -4672,9 +4537,7 @@ TEST(BuildSymbolTableTest, ChainedMethodCall) {
   {
     std::vector<absl::Status> resolve_diagnostics;
     symbol_table.Resolve(&resolve_diagnostics);
-    EXPECT_TRUE(resolve_diagnostics.empty())
-        << "Unexpected diagnostic:\n"
-        << resolve_diagnostics.front().message();
+    EXPECT_EMPTY_STATUSES(resolve_diagnostics);
 
     // Return types of methods are resolved.
     EXPECT_EQ(function_tt_info.declared_type.user_defined_type->Value()
@@ -4715,8 +4578,7 @@ TEST(BuildSymbolTableTest, ChainedMethodCallReturnTypeNotAClass) {
   const SymbolTableNode& root_symbol(symbol_table.Root());
 
   const auto build_diagnostics = BuildSymbolTable(src, &symbol_table);
-  EXPECT_TRUE(build_diagnostics.empty()) << "Unexpected diagnostic:\n"
-                                         << build_diagnostics.front().message();
+  EXPECT_EMPTY_STATUSES(build_diagnostics);
 
   MUST_ASSIGN_LOOKUP_SYMBOL(class_cc, root_symbol, "cc");
   EXPECT_EQ(class_cc_info.metatype, SymbolMetaType::kClass);
@@ -4775,8 +4637,7 @@ TEST(BuildSymbolTableTest, ChainedMethodCallReturnTypeNotAClass) {
   {
     std::vector<absl::Status> resolve_diagnostics;
     symbol_table.Resolve(&resolve_diagnostics);
-    ASSERT_EQ(resolve_diagnostics.size(), 1);
-    const auto& err = resolve_diagnostics.front();
+    ASSIGN_MUST_HAVE_UNIQUE(err, resolve_diagnostics);
     EXPECT_EQ(err.code(), absl::StatusCode::kInvalidArgument);
     EXPECT_THAT(err.message(), HasSubstr("Type of parent reference"));
     // reference text in diagnostic looks like: "@dd_obj.gg[<callable>]"
@@ -4850,9 +4711,7 @@ TEST(BuildSymbolTableTest, MultiFileModuleInstance) {
 
     for (const auto* src : ordering) {
       const auto build_diagnostics = BuildSymbolTable(*src, &symbol_table);
-      EXPECT_TRUE(build_diagnostics.empty())
-          << "Unexpected diagnostic:\n"
-          << build_diagnostics.front().message();
+      EXPECT_EMPTY_STATUSES(build_diagnostics);
     }
 
     // Goal: resolve the reference of "pp" to this definition node.
@@ -4946,8 +4805,8 @@ TEST(BuildSymbolTableTest, MultiFileModuleInstance) {
     // Resolve symbols.
     std::vector<absl::Status> resolve_diagnostics;
     symbol_table.Resolve(&resolve_diagnostics);
+    EXPECT_EMPTY_STATUSES(resolve_diagnostics);
 
-    EXPECT_TRUE(resolve_diagnostics.empty());
     // Verify that typeof(pp_inst) successfully resolved to module pp.
     EXPECT_EQ(
         pp_inst_info.declared_type.user_defined_type->Value().resolved_symbol,
@@ -5002,9 +4861,7 @@ TEST(BuildSymbolTableTest, ModuleInstancesFromProjectOneFileAtATime) {
   for (const auto* file : {&file3, &file2, &file1}) {
     symbol_table.BuildSingleTranslationUnit(Basename(file->filename()),
                                             &build_diagnostics);
-    ASSERT_TRUE(build_diagnostics.empty())
-        << "Unexpected diagnostic:\n"
-        << build_diagnostics.front().message();
+    EXPECT_EMPTY_STATUSES(build_diagnostics);
   }
 
   const SymbolTableNode& root_symbol(symbol_table.Root());
@@ -5091,8 +4948,8 @@ TEST(BuildSymbolTableTest, ModuleInstancesFromProjectOneFileAtATime) {
   // Resolve symbols.
   std::vector<absl::Status> resolve_diagnostics;
   symbol_table.Resolve(&resolve_diagnostics);
+  EXPECT_EMPTY_STATUSES(resolve_diagnostics);
 
-  EXPECT_TRUE(resolve_diagnostics.empty());
   // Verify that typeof(pp_inst) successfully resolved to module pp.
   EXPECT_EQ(
       pp_inst_info.declared_type.user_defined_type->Value().resolved_symbol,
@@ -5155,8 +5012,7 @@ TEST(BuildSymbolTableTest, ModuleInstancesFromProjectFilesGood) {
 
   std::vector<absl::Status> build_diagnostics;
   symbol_table.Build(&build_diagnostics);
-  ASSERT_TRUE(build_diagnostics.empty()) << "Unexpected diagnostic:\n"
-                                         << build_diagnostics.front().message();
+  EXPECT_EMPTY_STATUSES(build_diagnostics);
 
   const SymbolTableNode& root_symbol(symbol_table.Root());
 
@@ -5242,8 +5098,8 @@ TEST(BuildSymbolTableTest, ModuleInstancesFromProjectFilesGood) {
   // Resolve symbols.
   std::vector<absl::Status> resolve_diagnostics;
   symbol_table.Resolve(&resolve_diagnostics);
+  EXPECT_EMPTY_STATUSES(resolve_diagnostics);
 
-  EXPECT_TRUE(resolve_diagnostics.empty());
   // Verify that typeof(pp_inst) successfully resolved to module pp.
   EXPECT_EQ(
       pp_inst_info.declared_type.user_defined_type->Value().resolved_symbol,
@@ -5277,8 +5133,7 @@ TEST(BuildSymbolTableTest, SingleFileModuleInstanceCyclicDependencies) {
   const SymbolTableNode& root_symbol(symbol_table.Root());
 
   const auto build_diagnostics = BuildSymbolTable(src, &symbol_table);
-  EXPECT_TRUE(build_diagnostics.empty()) << "Unexpected diagnostic:\n"
-                                         << build_diagnostics.front().message();
+  EXPECT_EMPTY_STATUSES(build_diagnostics);
 
   // Goal: resolve the reference of "pp" to this definition node.
   MUST_ASSIGN_LOOKUP_SYMBOL(pp, root_symbol, "pp");
@@ -5409,8 +5264,8 @@ TEST(BuildSymbolTableTest, SingleFileModuleInstanceCyclicDependencies) {
   // Resolve symbols.
   std::vector<absl::Status> resolve_diagnostics;
   symbol_table.Resolve(&resolve_diagnostics);
+  EXPECT_EMPTY_STATUSES(resolve_diagnostics);
 
-  EXPECT_TRUE(resolve_diagnostics.empty());
   // Verify that typeof(ss_inst) successfully resolved to module ss.
   EXPECT_EQ(
       ss_inst_info.declared_type.user_defined_type->Value().resolved_symbol,
@@ -5467,9 +5322,7 @@ TEST(BuildSymbolTableTest, MultiFileModuleInstanceCyclicDependencies) {
 
     for (const auto* src : ordering) {
       const auto build_diagnostics = BuildSymbolTable(*src, &symbol_table);
-      EXPECT_TRUE(build_diagnostics.empty())
-          << "Unexpected diagnostic:\n"
-          << build_diagnostics.front().message();
+      EXPECT_EMPTY_STATUSES(build_diagnostics);
     }
 
     // Goal: resolve the reference of "pp" to this definition node.
@@ -5601,8 +5454,8 @@ TEST(BuildSymbolTableTest, MultiFileModuleInstanceCyclicDependencies) {
     // Resolve symbols.
     std::vector<absl::Status> resolve_diagnostics;
     symbol_table.Resolve(&resolve_diagnostics);
+    EXPECT_EMPTY_STATUSES(resolve_diagnostics);
 
-    EXPECT_TRUE(resolve_diagnostics.empty());
     // Verify that typeof(ss_inst) successfully resolved to module ss.
     EXPECT_EQ(
         ss_inst_info.declared_type.user_defined_type->Value().resolved_symbol,
@@ -5642,8 +5495,7 @@ TEST(BuildSymbolTableTest, IncludeModuleDefinition) {
 
   std::vector<absl::Status> build_diagnostics;
   symbol_table.Build(&build_diagnostics);
-  EXPECT_TRUE(build_diagnostics.empty()) << "Unexpected diagnostic:\n"
-                                         << build_diagnostics.front().message();
+  EXPECT_EMPTY_STATUSES(build_diagnostics);
 
   MUST_ASSIGN_LOOKUP_SYMBOL(pp, root_symbol, "pp");
 
@@ -5654,7 +5506,7 @@ TEST(BuildSymbolTableTest, IncludeModuleDefinition) {
   // Resolve symbols.  Nothing to resolve.
   std::vector<absl::Status> resolve_diagnostics;
   symbol_table.Resolve(&resolve_diagnostics);
-  EXPECT_TRUE(resolve_diagnostics.empty());
+  EXPECT_EMPTY_STATUSES(resolve_diagnostics);
 }
 
 TEST(BuildSymbolTableTest, IncludeWithoutProject) {
@@ -5673,13 +5525,12 @@ TEST(BuildSymbolTableTest, IncludeWithoutProject) {
 
   const auto build_diagnostics = BuildSymbolTable(pp_src, nullptr);
   // include files are ignored.
-  EXPECT_TRUE(build_diagnostics.empty()) << "Unexpected diagnostic:\n"
-                                         << build_diagnostics.front().message();
+  EXPECT_EMPTY_STATUSES(build_diagnostics);
 
   // Resolve symbols.  Nothing to resolve.
   std::vector<absl::Status> resolve_diagnostics;
   symbol_table.Resolve(&resolve_diagnostics);
-  EXPECT_TRUE(resolve_diagnostics.empty());
+  EXPECT_EMPTY_STATUSES(resolve_diagnostics);
 }
 
 TEST(BuildSymbolTableTest, IncludeFileNotFound) {
@@ -5708,7 +5559,7 @@ TEST(BuildSymbolTableTest, IncludeFileNotFound) {
   // Resolve symbols.  Nothing to resolve.
   std::vector<absl::Status> resolve_diagnostics;
   symbol_table.Resolve(&resolve_diagnostics);
-  EXPECT_TRUE(resolve_diagnostics.empty());
+  EXPECT_EMPTY_STATUSES(resolve_diagnostics);
 }
 
 TEST(BuildSymbolTableTest, IncludeFileParseError) {
@@ -5739,7 +5590,7 @@ TEST(BuildSymbolTableTest, IncludeFileParseError) {
   // Resolve symbols.  Nothing to resolve.
   std::vector<absl::Status> resolve_diagnostics;
   symbol_table.Resolve(&resolve_diagnostics);
-  EXPECT_TRUE(resolve_diagnostics.empty());
+  EXPECT_EMPTY_STATUSES(resolve_diagnostics);
 }
 
 TEST(BuildSymbolTableTest, IncludeFileEmpty) {
@@ -5762,13 +5613,12 @@ TEST(BuildSymbolTableTest, IncludeFileEmpty) {
 
   std::vector<absl::Status> build_diagnostics;
   symbol_table.Build(&build_diagnostics);
-  EXPECT_TRUE(build_diagnostics.empty()) << "Unexpected diagnostic:\n"
-                                         << build_diagnostics.front().message();
+  EXPECT_EMPTY_STATUSES(build_diagnostics);
 
   // Resolve symbols.  Nothing to resolve.
   std::vector<absl::Status> resolve_diagnostics;
   symbol_table.Resolve(&resolve_diagnostics);
-  EXPECT_TRUE(resolve_diagnostics.empty());
+  EXPECT_EMPTY_STATUSES(resolve_diagnostics);
 }
 
 TEST(BuildSymbolTableTest, IncludedTwiceFromOneFile) {
@@ -5802,8 +5652,7 @@ TEST(BuildSymbolTableTest, IncludedTwiceFromOneFile) {
 
   std::vector<absl::Status> build_diagnostics;
   symbol_table.Build(&build_diagnostics);
-  EXPECT_TRUE(build_diagnostics.empty()) << "Unexpected diagnostic:\n"
-                                         << build_diagnostics.front().message();
+  EXPECT_EMPTY_STATUSES(build_diagnostics);
 
   MUST_ASSIGN_LOOKUP_SYMBOL(pp, root_symbol, "pp");
   MUST_ASSIGN_LOOKUP_SYMBOL(qq, root_symbol, "qq");
@@ -5820,7 +5669,7 @@ TEST(BuildSymbolTableTest, IncludedTwiceFromOneFile) {
   // Resolve symbols.  Nothing to resolve.
   std::vector<absl::Status> resolve_diagnostics;
   symbol_table.Resolve(&resolve_diagnostics);
-  EXPECT_TRUE(resolve_diagnostics.empty());
+  EXPECT_EMPTY_STATUSES(resolve_diagnostics);
 }
 
 TEST(BuildSymbolTableTest, IncludedTwiceFromDifferentFiles) {
@@ -5863,8 +5712,7 @@ TEST(BuildSymbolTableTest, IncludedTwiceFromDifferentFiles) {
 
   std::vector<absl::Status> build_diagnostics;
   symbol_table.Build(&build_diagnostics);
-  EXPECT_TRUE(build_diagnostics.empty()) << "Unexpected diagnostic:\n"
-                                         << build_diagnostics.front().message();
+  EXPECT_EMPTY_STATUSES(build_diagnostics);
 
   MUST_ASSIGN_LOOKUP_SYMBOL(pp, root_symbol, "pp");
   MUST_ASSIGN_LOOKUP_SYMBOL(qq, root_symbol, "qq");
@@ -5881,7 +5729,7 @@ TEST(BuildSymbolTableTest, IncludedTwiceFromDifferentFiles) {
   // Resolve symbols.  Nothing to resolve.
   std::vector<absl::Status> resolve_diagnostics;
   symbol_table.Resolve(&resolve_diagnostics);
-  EXPECT_TRUE(resolve_diagnostics.empty());
+  EXPECT_EMPTY_STATUSES(resolve_diagnostics);
 }
 
 struct FileListTestCase {
