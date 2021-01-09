@@ -63,3 +63,67 @@ sh_binary(
     name = "triage_formatter",
     srcs = ["triage_formatter.sh"],
 )
+
+sh_test(
+    name = "format_file_test",
+    size = "small",
+    srcs = ["format_file_test.sh"],
+    args = ["$(location :verible-verilog-format)"],
+    data = [":verible-verilog-format"],
+)
+
+sh_test(
+    name = "format_file_lex_error_test",
+    size = "small",
+    srcs = ["format_file_lex_error_test.sh"],
+    args = ["$(location :verible-verilog-format)"],
+    data = [":verible-verilog-format"],
+)
+
+sh_test(
+    name = "format_file_syntax_error_test",
+    size = "small",
+    srcs = ["format_file_syntax_error_test.sh"],
+    args = ["$(location :verible-verilog-format)"],
+    data = [":verible-verilog-format"],
+)
+
+sh_test(
+    name = "format_file_lines_test",
+    size = "small",
+    srcs = ["format_file_lines_test.sh"],
+    args = ["$(location :verible-verilog-format)"],
+    data = [":verible-verilog-format"],
+)
+
+sh_test(
+    name = "format_file_badlines_test",
+    size = "small",
+    srcs = ["format_file_badlines_test.sh"],
+    args = ["$(location :verible-verilog-format)"],
+    data = [":verible-verilog-format"],
+)
+
+sh_test(
+    name = "format_inplace_test",
+    size = "small",
+    srcs = ["format_inplace_test.sh"],
+    args = ["$(location :verible-verilog-format)"],
+    data = [":verible-verilog-format"],
+)
+
+sh_test(
+    name = "format_stdin_test",
+    size = "small",
+    srcs = ["format_stdin_test.sh"],
+    args = ["$(location :verible-verilog-format)"],
+    data = [":verible-verilog-format"],
+)
+
+sh_test(
+    name = "format_stdin_inplace_test",
+    size = "small",
+    srcs = ["format_stdin_inplace_test.sh"],
+    args = ["$(location :verible-verilog-format)"],
+    data = [":verible-verilog-format"],
+)
