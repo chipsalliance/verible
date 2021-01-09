@@ -2806,6 +2806,103 @@ TEST(BuildSymbolTableTest, ClassDeclarationReferenceInheritedMemberFromMethod) {
   }
 }
 
+TEST(BuildSymbolTableTest, ClassDeclarationReferenceGrandparentMember) {
+  TestVerilogSourceFile src("member_from_parent.sv",
+                            "class base;\n"
+                            "  int count;\n"
+                            "endclass\n"
+                            "class derived extends base;\n"
+                            "endclass\n"
+                            "class more_derived extends derived;\n"
+                            "  function int get_count();\n"
+                            "    return count;\n"
+                            "  endfunction\n"
+                            "endclass\n");
+  const auto status = src.Parse();
+  ASSERT_TRUE(status.ok()) << status.message();
+  SymbolTable symbol_table(nullptr);
+  const SymbolTableNode& root_symbol(symbol_table.Root());
+
+  const auto build_diagnostics = BuildSymbolTable(src, &symbol_table);
+  EXPECT_EMPTY_STATUSES(build_diagnostics);
+
+  MUST_ASSIGN_LOOKUP_SYMBOL(base_class, root_symbol, "base");
+  EXPECT_EQ(base_class_info.metatype, SymbolMetaType::kClass);
+  EXPECT_EQ(base_class_info.file_origin, &src);
+  EXPECT_EQ(base_class_info.declared_type.syntax_origin, nullptr);
+  EXPECT_TRUE(base_class_info.local_references_to_bind.empty());
+
+  MUST_ASSIGN_LOOKUP_SYMBOL(int_count, base_class, "count");
+  EXPECT_EQ(int_count_info.metatype, SymbolMetaType::kDataNetVariableInstance);
+  EXPECT_EQ(int_count_info.file_origin, &src);
+
+  MUST_ASSIGN_LOOKUP_SYMBOL(derived_class, root_symbol, "derived");
+  EXPECT_EQ(derived_class_info.metatype, SymbolMetaType::kClass);
+  EXPECT_EQ(derived_class_info.file_origin, &src);
+  EXPECT_EQ(derived_class_info.declared_type.syntax_origin, nullptr);
+  EXPECT_TRUE(derived_class_info.local_references_to_bind.empty());
+
+  MUST_ASSIGN_LOOKUP_SYMBOL(more_derived_class, root_symbol, "more_derived");
+  EXPECT_EQ(more_derived_class_info.metatype, SymbolMetaType::kClass);
+  EXPECT_EQ(more_derived_class_info.file_origin, &src);
+  EXPECT_EQ(more_derived_class_info.declared_type.syntax_origin, nullptr);
+  EXPECT_TRUE(more_derived_class_info.local_references_to_bind.empty());
+
+  MUST_ASSIGN_LOOKUP_SYMBOL(get_count, more_derived_class, "get_count");
+  EXPECT_EQ(get_count_info.metatype, SymbolMetaType::kFunction);
+  ASSERT_EQ(get_count_info.local_references_to_bind.size(), 1);
+
+  // "base::count" is referenced from the "more_derived::get_count" method
+  EXPECT_EQ(get_count_info.local_references_to_bind.size(), 1);
+  const auto ref_map(get_count_info.LocalReferencesMapViewForTesting());
+  ASSIGN_MUST_FIND_EXACTLY_ONE_REF(count_ref, ref_map, "count");
+  const ReferenceComponent& count_ref_comp(count_ref->components->Value());
+  EXPECT_EQ(count_ref_comp.identifier, "count");
+  EXPECT_EQ(count_ref_comp.ref_type, ReferenceType::kUnqualified);
+  EXPECT_EQ(count_ref_comp.required_metatype, SymbolMetaType::kUnspecified);
+  EXPECT_EQ(count_ref_comp.resolved_symbol, nullptr);
+
+  // Make sure the "base" reference is linked from the "derived" class.
+  // Make sure the "derived" reference is linked from the "more_derived" class.
+  const auto root_refs = root_symbol.Value().LocalReferencesMapViewForTesting();
+  ASSIGN_MUST_FIND_EXACTLY_ONE_REF(base_ref, root_refs, "base");
+  const ReferenceComponent& base_ref_comp(base_ref->components->Value());
+  EXPECT_EQ(base_ref_comp.identifier, "base");
+  EXPECT_EQ(base_ref_comp.ref_type, ReferenceType::kUnqualified);
+  EXPECT_EQ(base_ref_comp.required_metatype, SymbolMetaType::kClass);
+  EXPECT_EQ(base_ref_comp.resolved_symbol, nullptr);
+
+  ASSIGN_MUST_FIND_EXACTLY_ONE_REF(derived_ref, root_refs, "derived");
+  const ReferenceComponent& derived_ref_comp(derived_ref->components->Value());
+  EXPECT_EQ(derived_ref_comp.identifier, "derived");
+  EXPECT_EQ(derived_ref_comp.ref_type, ReferenceType::kUnqualified);
+  EXPECT_EQ(derived_ref_comp.required_metatype, SymbolMetaType::kClass);
+  EXPECT_EQ(derived_ref_comp.resolved_symbol, nullptr);
+
+  EXPECT_EQ(derived_class_info.parent_type.user_defined_type,
+            base_ref->LastLeaf());
+  EXPECT_EQ(more_derived_class_info.parent_type.user_defined_type,
+            derived_ref->LastLeaf());
+
+  {
+    std::vector<absl::Status> resolve_diagnostics;
+    symbol_table.Resolve(&resolve_diagnostics);
+    EXPECT_EMPTY_STATUSES(resolve_diagnostics);
+
+    // Resolve the "base" and "derived" type references
+    EXPECT_EQ(base_ref_comp.resolved_symbol, &base_class);
+    EXPECT_EQ(derived_class_info.parent_type.user_defined_type->Value()
+                  .resolved_symbol,
+              &base_class);
+    EXPECT_EQ(derived_ref_comp.resolved_symbol, &derived_class);
+    EXPECT_EQ(more_derived_class_info.parent_type.user_defined_type->Value()
+                  .resolved_symbol,
+              &derived_class);
+    // "count" in "more_derived::get_count" resolved to "base::count"
+    EXPECT_EQ(count_ref_comp.resolved_symbol, &int_count);
+  }
+}
+
 TEST(BuildSymbolTableTest,
      ClassDeclarationReferenceInheritedMemberDirectAccess) {
   TestVerilogSourceFile src("member_from_parent.sv",
@@ -2906,6 +3003,178 @@ TEST(BuildSymbolTableTest,
     // "dd" references function parameter
     EXPECT_EQ(dd_ref_comp.resolved_symbol, &dd_arg);
     // "count" in "dd.count" resolved to "base::count"
+    EXPECT_EQ(dd_count_ref_comp.resolved_symbol, &int_count);
+  }
+}
+
+TEST(BuildSymbolTableTest, ClassDeclarationReferenceInheritedBaseClassMethod) {
+  TestVerilogSourceFile src("member_from_parent.sv",
+                            "class base;\n"
+                            "  function int count();\n"
+                            "  endfunction\n"
+                            "endclass\n"
+                            "class derived extends base;\n"
+                            "  function int get_count();\n"
+                            "    return count();\n"
+                            "  endfunction\n"
+                            "endclass\n");
+  const auto status = src.Parse();
+  ASSERT_TRUE(status.ok()) << status.message();
+  SymbolTable symbol_table(nullptr);
+  const SymbolTableNode& root_symbol(symbol_table.Root());
+
+  const auto build_diagnostics = BuildSymbolTable(src, &symbol_table);
+  EXPECT_EMPTY_STATUSES(build_diagnostics);
+
+  MUST_ASSIGN_LOOKUP_SYMBOL(base_class, root_symbol, "base");
+  EXPECT_EQ(base_class_info.metatype, SymbolMetaType::kClass);
+  EXPECT_EQ(base_class_info.file_origin, &src);
+  EXPECT_EQ(base_class_info.declared_type.syntax_origin, nullptr);
+  EXPECT_TRUE(base_class_info.local_references_to_bind.empty());
+
+  MUST_ASSIGN_LOOKUP_SYMBOL(int_count, base_class, "count");
+  EXPECT_EQ(int_count_info.metatype, SymbolMetaType::kFunction);
+  EXPECT_EQ(int_count_info.file_origin, &src);
+
+  MUST_ASSIGN_LOOKUP_SYMBOL(derived_class, root_symbol, "derived");
+  EXPECT_EQ(derived_class_info.metatype, SymbolMetaType::kClass);
+  EXPECT_EQ(derived_class_info.file_origin, &src);
+  EXPECT_EQ(derived_class_info.declared_type.syntax_origin, nullptr);
+  EXPECT_TRUE(derived_class_info.local_references_to_bind.empty());
+
+  MUST_ASSIGN_LOOKUP_SYMBOL(get_count, derived_class, "get_count");
+  EXPECT_EQ(get_count_info.metatype, SymbolMetaType::kFunction);
+  ASSERT_EQ(get_count_info.local_references_to_bind.size(), 1);
+
+  // "base::count" is referenced from the "derived::get_count" method
+  EXPECT_EQ(get_count_info.local_references_to_bind.size(), 1);
+  const auto ref_map(get_count_info.LocalReferencesMapViewForTesting());
+  ASSIGN_MUST_FIND_EXACTLY_ONE_REF(count_ref, ref_map, "count");
+  const ReferenceComponent& count_ref_comp(count_ref->components->Value());
+  EXPECT_EQ(count_ref_comp.identifier, "count");
+  EXPECT_EQ(count_ref_comp.ref_type, ReferenceType::kUnqualified);
+  EXPECT_EQ(count_ref_comp.required_metatype, SymbolMetaType::kCallable);
+  EXPECT_EQ(count_ref_comp.resolved_symbol, nullptr);
+
+  // Make sure the "base" reference is linked from the "derived" class.
+  ASSERT_EQ(derived_class_info.parent_type.user_defined_type,
+            root_symbol.Value().local_references_to_bind.front().LastLeaf());
+
+  {
+    std::vector<absl::Status> resolve_diagnostics;
+    symbol_table.Resolve(&resolve_diagnostics);
+    EXPECT_EMPTY_STATUSES(resolve_diagnostics);
+
+    // Resolve the "base" type reference to the "base" class.
+    EXPECT_EQ(derived_class_info.parent_type.user_defined_type->Value()
+                  .resolved_symbol,
+              &base_class);
+    // "count" in "get_count" resolved to "base::count"
+    EXPECT_EQ(count_ref_comp.resolved_symbol, &int_count);
+  }
+}
+
+TEST(BuildSymbolTableTest,
+     ClassDeclarationReferenceInheritedBaseMethodFromObject) {
+  TestVerilogSourceFile src("member_from_parent.sv",
+                            "class base;\n"
+                            "  function int count();\n"
+                            "  endfunction\n"
+                            "endclass\n"
+                            "class derived extends base;\n"
+                            "endclass\n"
+                            "function int get_count(derived dd);\n"
+                            "  return dd.count();\n"  // method call
+                            "endfunction\n");
+  const auto status = src.Parse();
+  ASSERT_TRUE(status.ok()) << status.message();
+  SymbolTable symbol_table(nullptr);
+  const SymbolTableNode& root_symbol(symbol_table.Root());
+
+  const auto build_diagnostics = BuildSymbolTable(src, &symbol_table);
+  EXPECT_EMPTY_STATUSES(build_diagnostics);
+
+  MUST_ASSIGN_LOOKUP_SYMBOL(base_class, root_symbol, "base");
+  EXPECT_EQ(base_class_info.metatype, SymbolMetaType::kClass);
+  EXPECT_EQ(base_class_info.file_origin, &src);
+  EXPECT_EQ(base_class_info.declared_type.syntax_origin, nullptr);
+  EXPECT_TRUE(base_class_info.local_references_to_bind.empty());
+
+  MUST_ASSIGN_LOOKUP_SYMBOL(int_count, base_class, "count");
+  EXPECT_EQ(int_count_info.metatype, SymbolMetaType::kFunction);
+  EXPECT_EQ(int_count_info.file_origin, &src);
+
+  MUST_ASSIGN_LOOKUP_SYMBOL(derived_class, root_symbol, "derived");
+  EXPECT_EQ(derived_class_info.metatype, SymbolMetaType::kClass);
+  EXPECT_EQ(derived_class_info.file_origin, &src);
+  EXPECT_EQ(derived_class_info.declared_type.syntax_origin, nullptr);
+  EXPECT_TRUE(derived_class_info.local_references_to_bind.empty());
+
+  MUST_ASSIGN_LOOKUP_SYMBOL(get_count, root_symbol, "get_count");
+  EXPECT_EQ(get_count_info.metatype, SymbolMetaType::kFunction);
+  // references "derived" as a type and "dd" as an argument
+  ASSERT_EQ(get_count_info.local_references_to_bind.size(), 2);
+
+  MUST_ASSIGN_LOOKUP_SYMBOL(dd_arg, get_count, "dd");
+  EXPECT_EQ(dd_arg_info.metatype, SymbolMetaType::kDataNetVariableInstance);
+  ASSERT_NE(dd_arg_info.declared_type.user_defined_type, nullptr);
+  EXPECT_EQ(dd_arg_info.declared_type.user_defined_type->Value().identifier,
+            "derived");
+  EXPECT_EQ(
+      dd_arg_info.declared_type.user_defined_type->Value().resolved_symbol,
+      nullptr);
+
+  // "base::count" is referenced from the "dd.count"
+  const auto ref_map(get_count_info.LocalReferencesMapViewForTesting());
+
+  ASSIGN_MUST_FIND_EXACTLY_ONE_REF(derived_type_ref, ref_map, "derived");
+  const ReferenceComponent& derived_type_ref_comp(
+      derived_type_ref->components->Value());
+  EXPECT_EQ(derived_type_ref_comp.ref_type, ReferenceType::kUnqualified);
+  EXPECT_EQ(derived_type_ref_comp.required_metatype,
+            SymbolMetaType::kUnspecified);
+  EXPECT_EQ(derived_type_ref_comp.identifier, "derived");
+  EXPECT_EQ(derived_type_ref_comp.resolved_symbol, nullptr);
+  // Make sure "derived dd"'s type uses this type reference.
+  EXPECT_EQ(dd_arg_info.declared_type.user_defined_type,
+            derived_type_ref->components.get());
+
+  ASSIGN_MUST_FIND_EXACTLY_ONE_REF(dd_ref, ref_map, "dd");
+  const ReferenceComponent& dd_ref_comp(dd_ref->components->Value());
+  EXPECT_EQ(dd_ref_comp.identifier, "dd");
+  EXPECT_EQ(dd_ref_comp.ref_type, ReferenceType::kUnqualified);
+  EXPECT_EQ(dd_ref_comp.required_metatype, SymbolMetaType::kUnspecified);
+  EXPECT_EQ(dd_ref_comp.resolved_symbol, nullptr);
+
+  ASSERT_EQ(dd_ref->components->Children().size(), 1);
+  const ReferenceComponentNode& dd_count_ref(
+      dd_ref->components->Children().front());
+  const ReferenceComponent& dd_count_ref_comp(dd_count_ref.Value());
+  EXPECT_EQ(dd_count_ref_comp.identifier, "count");
+  EXPECT_EQ(dd_count_ref_comp.ref_type, ReferenceType::kMemberOfTypeOfParent);
+  EXPECT_EQ(dd_count_ref_comp.required_metatype, SymbolMetaType::kCallable);
+  EXPECT_EQ(dd_count_ref_comp.resolved_symbol, nullptr);
+
+  // Make sure the "base" reference is linked from the "derived" class.
+  ASSERT_EQ(derived_class_info.parent_type.user_defined_type,
+            root_symbol.Value().local_references_to_bind.front().LastLeaf());
+
+  {
+    std::vector<absl::Status> resolve_diagnostics;
+    symbol_table.Resolve(&resolve_diagnostics);
+    EXPECT_EMPTY_STATUSES(resolve_diagnostics);
+
+    // Resolve the "base" type reference to the "base" class.
+    EXPECT_EQ(derived_class_info.parent_type.user_defined_type->Value()
+                  .resolved_symbol,
+              &base_class);
+    // "dd"'s type resolved to "derived"
+    EXPECT_EQ(
+        dd_arg_info.declared_type.user_defined_type->Value().resolved_symbol,
+        &derived_class);
+    // "dd" references function parameter
+    EXPECT_EQ(dd_ref_comp.resolved_symbol, &dd_arg);
+    // "count()" in "dd.count()" resolved to "base::count()"
     EXPECT_EQ(dd_count_ref_comp.resolved_symbol, &int_count);
   }
 }
