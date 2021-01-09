@@ -124,6 +124,16 @@ static std::string ReferenceNodeFullPathString(
   return stream.str();
 }
 
+static std::ostream& operator<<(std::ostream& stream,
+                                const ReferenceComponentNode& ref_node) {
+  ref_node.PrintTree(
+      &stream,
+      [](std::ostream& s, const ReferenceComponent& ref_comp) -> std::ostream& {
+        return s << ref_comp;
+      });
+  return stream;
+}
+
 // Validates iterator/pointer stability when calling VectorTree::NewChild.
 // Detects unwanted reallocation.
 static void CheckedNewChildReferenceNode(ReferenceComponentNode* parent,
@@ -133,8 +143,8 @@ static void CheckedNewChildReferenceNode(ReferenceComponentNode* parent,
   if (parent->Children().size() > 1) {
     // Check that iterators/pointers were not invalidated by a reallocation.
     CHECK_EQ(parent->Children().data(), saved_begin)
-        << "Reallocation invalidated pointers to reference nodes at " << *parent
-        << ".  Fix: pre-allocate child nodes.";
+        << "\nReallocation invalidated pointers to reference nodes at:\n"
+        << *parent << "\nFix: pre-allocate child nodes.";
   }
   // Otherwise, this first node had no prior siblings, so no need to check.
 }
@@ -321,7 +331,8 @@ class SymbolTable::Builder : public TreeContextVisitor {
     // declared.
     const DependentReferences& recent_ref =
         current_scope_->Parent()->Value().local_references_to_bind.back();
-    const ReferenceComponentNode* base_type_ref = recent_ref.LastLeaf();
+    const ReferenceComponentNode* base_type_ref =
+        recent_ref.LastTypeComponent();
     SymbolInfo& current_declared_class_info = current_scope_->Value();
     current_declared_class_info.parent_type.user_defined_type = base_type_ref;
   }
@@ -348,13 +359,6 @@ class SymbolTable::Builder : public TreeContextVisitor {
     const CaptureDependentReference capture(this);
 
     {
-      // Clearing declaration_type_info_ prevents nested types from being
-      // captured.  e.g. in "A_type#(B_type)", "B_type" will beget a chain of
-      // DependentReferences in the current context, but will not be involved
-      // with the current declaration.
-      const ValueSaver<DeclarationTypeInfo*> not_decl_type(
-          &declaration_type_info_, nullptr);
-
       // Inform that named parameter identifiers will yield parallel children
       // from this reference branch point.  Start this out as nullptr, and set
       // it once an unqualified identifier is encountered that starts a
@@ -373,10 +377,14 @@ class SymbolTable::Builder : public TreeContextVisitor {
         // Otherwise, if the type subtree contains no leaves (e.g. implicit or
         // void), then do not assign a syntax origin.
       }
-      if (!capture.Ref()
-               .Empty()) {  // then some user-defined type was referenced
-        declaration_type_info_->user_defined_type = capture.Ref().LastLeaf();
+
+      const DependentReferences& type_ref(capture.Ref());
+      if (!type_ref.Empty()) {
+        // then some user-defined type was referenced
+        declaration_type_info_->user_defined_type =
+            type_ref.LastTypeComponent();
       }
+      VLOG(2) << "declared type: " << *declaration_type_info_;
     }
 
     // In all cases, a type is being referenced from the current scope, so add
@@ -409,9 +417,15 @@ class SymbolTable::Builder : public TreeContextVisitor {
   void HandleIdentifier(const SyntaxTreeLeaf& leaf) {
     const absl::string_view text = leaf.get().text();
     VLOG(2) << __FUNCTION__ << ": " << text;
+    VLOG(2) << "current context: " << CurrentScopeFullPath();
     if (Context().DirectParentIs(NodeEnum::kParamType)) {
-      // This identifier declares a parameter.
+      // This identifier declares a value parameter.
       EmplaceTypedElementInCurrentScope(leaf, text, SymbolMetaType::kParameter);
+      return;
+    }
+    if (Context().DirectParentIs(NodeEnum::kTypeAssignment)) {
+      // This identifier declares a type parameter.
+      EmplaceElementInCurrentScope(leaf, text, SymbolMetaType::kParameter);
       return;
     }
     if (Context().DirectParentsAre(
@@ -1182,19 +1196,55 @@ const ReferenceComponentNode* DependentReferences::LastLeaf() const {
   return node;
 }
 
+// RefType can be ReferenceComponentNode or const ReferenceComponentNode.
+template <typename RefType>
+static RefType* ReferenceLastTypeComponent(RefType* node) {
+  // This references a type that may be nested and have name parameters.
+  // From A#(.B())::C#(.D()), we want C as the desired type component.
+  while (!node->is_leaf()) {
+    // There should be at most one non-parameter at each branch point,
+    // so stop at the first one found.
+    // In the above example, this would find "C" among {"B", "C"} inside "A".
+    auto& branches(node->Children());
+    const auto found = std::find_if(
+        branches.begin(), branches.end(), [](const ReferenceComponentNode& n) {
+          return n.Value().required_metatype != SymbolMetaType::kParameter;
+        });
+    // If there are only parameters referenced, then this code is the last
+    // component we want.
+    if (found == branches.end()) return node;
+    // Otherwise, continue searching along the non-parameter branch.
+    node = &*found;
+  }
+  return node;
+}
+
+const ReferenceComponentNode* DependentReferences::LastTypeComponent() const {
+  // This references a type that may be nested and have name parameters.
+  // From A#(.B())::C#(.D()), we want C as the desired type component.
+  if (components == nullptr) return nullptr;
+  const ReferenceComponentNode* node = components.get();
+  return ReferenceLastTypeComponent(node);
+}
+
+ReferenceComponentNode* DependentReferences::LastTypeComponent() {
+  if (components == nullptr) return nullptr;
+  ReferenceComponentNode* node = components.get();
+  return ReferenceLastTypeComponent(node);
+}
+
 void DependentReferences::PushReferenceComponent(
     const ReferenceComponent& component) {
   VLOG(3) << __FUNCTION__ << ", id: " << component.identifier;
   if (Empty()) {
     components = absl::make_unique<ReferenceComponentNode>(component);  // copy
   } else {
-    // Find the deepest leaf node, and grow a new child from that.
-    ReferenceComponentNode* node = components.get();
-    while (!node->is_leaf()) node = &node->Children().front();
+    // TODO: track correct node to append in the Builder internal state.
+    ReferenceComponentNode* node = LastTypeComponent();
     // This is a leaf node, and this is the first child.
     CheckedNewChildReferenceNode(node, component);
   }
-  VLOG(3) << "end of " << __FUNCTION__;
+  VLOG(3) << "end of " << __FUNCTION__ << ":\n" << *this;
 }
 
 void DependentReferences::VerifySymbolTableRoot(
@@ -1209,12 +1259,7 @@ void DependentReferences::VerifySymbolTableRoot(
 std::ostream& operator<<(std::ostream& stream,
                          const DependentReferences& dep_refs) {
   if (dep_refs.components == nullptr) return stream << "(empty-ref)";
-  dep_refs.components->PrintTree(
-      &stream,
-      [](std::ostream& s, const ReferenceComponent& ref_comp) -> std::ostream& {
-        return s << ref_comp;
-      });
-  return stream;
+  return stream << *dep_refs.components;
 }
 
 // Search through base class's scopes for a symbol.

@@ -3179,6 +3179,361 @@ TEST(BuildSymbolTableTest,
   }
 }
 
+TEST(BuildSymbolTableTest, TypeParameterizedModuleDeclaration) {
+  TestVerilogSourceFile src("camelot_param_alot.sv",
+                            "module mm #(parameter type T = bit);\n"
+                            "endmodule\n");
+  const auto status = src.Parse();
+  ASSERT_TRUE(status.ok()) << status.message();
+  SymbolTable symbol_table(nullptr);
+  const SymbolTableNode& root_symbol(symbol_table.Root());
+
+  const auto build_diagnostics = BuildSymbolTable(src, &symbol_table);
+  EXPECT_EMPTY_STATUSES(build_diagnostics);
+
+  MUST_ASSIGN_LOOKUP_SYMBOL(mm_module, root_symbol, "mm");
+  EXPECT_EQ(mm_module_info.metatype, SymbolMetaType::kModule);
+  EXPECT_EQ(mm_module_info.file_origin, &src);
+  EXPECT_EQ(mm_module_info.declared_type.syntax_origin, nullptr);
+  EXPECT_TRUE(mm_module_info.local_references_to_bind.empty());
+
+  MUST_ASSIGN_LOOKUP_SYMBOL(t_type_param, mm_module, "T");
+  EXPECT_EQ(t_type_param_info.metatype, SymbolMetaType::kParameter);
+  EXPECT_EQ(t_type_param_info.file_origin, &src);
+
+  EXPECT_TRUE(root_symbol.Value().local_references_to_bind.empty());
+
+  {  // No references.
+    std::vector<absl::Status> resolve_diagnostics;
+    symbol_table.Resolve(&resolve_diagnostics);
+    EXPECT_EMPTY_STATUSES(resolve_diagnostics);
+  }
+}
+
+TEST(BuildSymbolTableTest, TypeParameterizedClassDataDeclarations) {
+  TestVerilogSourceFile src("i_push_the_param_alot.sv",
+                            "class cc #(parameter type T = bit);\n"
+                            "endclass\n"
+                            "cc#(cc#(int)) data;\n");
+  const auto status = src.Parse();
+  ASSERT_TRUE(status.ok()) << status.message();
+  SymbolTable symbol_table(nullptr);
+  const SymbolTableNode& root_symbol(symbol_table.Root());
+
+  const auto build_diagnostics = BuildSymbolTable(src, &symbol_table);
+  EXPECT_EMPTY_STATUSES(build_diagnostics);
+
+  MUST_ASSIGN_LOOKUP_SYMBOL(cc_class, root_symbol, "cc");
+  EXPECT_EQ(cc_class_info.metatype, SymbolMetaType::kClass);
+  EXPECT_EQ(cc_class_info.file_origin, &src);
+  EXPECT_EQ(cc_class_info.declared_type.syntax_origin, nullptr);
+  EXPECT_TRUE(cc_class_info.local_references_to_bind.empty());
+
+  MUST_ASSIGN_LOOKUP_SYMBOL(t_type_param, cc_class, "T");
+  EXPECT_EQ(t_type_param_info.metatype, SymbolMetaType::kParameter);
+  EXPECT_EQ(t_type_param_info.file_origin, &src);
+
+  MUST_ASSIGN_LOOKUP_SYMBOL(data, root_symbol, "data");
+  EXPECT_EQ(data_info.metatype, SymbolMetaType::kDataNetVariableInstance);
+  EXPECT_EQ(data_info.file_origin, &src);
+
+  ASSERT_EQ(root_symbol.Value().local_references_to_bind.size(), 2);
+
+  const auto ref_map(root_symbol.Value().LocalReferencesMapViewForTesting());
+  ASSIGN_MUST_FIND(cc_refs, ref_map, "cc");
+  EXPECT_EQ(cc_refs.size(), 2);
+
+  for (const auto& cc_ref : cc_refs) {
+    const ReferenceComponent& cc_ref_comp(cc_ref->components->Value());
+    EXPECT_EQ(cc_ref_comp.ref_type, ReferenceType::kUnqualified);
+    EXPECT_EQ(cc_ref_comp.required_metatype, SymbolMetaType::kUnspecified);
+    EXPECT_EQ(cc_ref_comp.identifier, "cc");
+    EXPECT_EQ(cc_ref_comp.resolved_symbol, nullptr);
+  }
+
+  // Of the two "cc" type refs, the outer one is the first one, by ordering of
+  // textual position among references that start with the same identifier.
+  const DependentReferences& data_cc_type(**cc_refs.begin());
+  EXPECT_EQ(data_info.declared_type.user_defined_type, data_cc_type.LastLeaf());
+
+  {
+    std::vector<absl::Status> resolve_diagnostics;
+    symbol_table.Resolve(&resolve_diagnostics);
+    EXPECT_EMPTY_STATUSES(resolve_diagnostics);
+
+    for (const auto& cc_ref : cc_refs) {
+      const ReferenceComponent& cc_ref_comp(cc_ref->components->Value());
+      EXPECT_EQ(cc_ref_comp.resolved_symbol, &cc_class);
+    }
+    // type of "data" is resolved
+    EXPECT_EQ(
+        data_info.declared_type.user_defined_type->Value().resolved_symbol,
+        &cc_class);
+  }
+}
+
+TEST(BuildSymbolTableTest,
+     TypeParameterizedClassDataDeclarationsPackageQualifiedTwoParams) {
+  TestVerilogSourceFile src(
+      "i_eat_ham_and_jam_and_spam_alot.sv",
+      "package pp;\n"
+      "  class cc #(\n"
+      "    parameter type T1 = bit,\n"
+      "    parameter type T2 = bit\n"
+      "  );\n"
+      "  endclass\n"
+      "endpackage\n"
+      "pp::cc#(pp::cc#(int, bit), pp::cc#(bit, int)) data;\n");
+  const auto status = src.Parse();
+  ASSERT_TRUE(status.ok()) << status.message();
+  SymbolTable symbol_table(nullptr);
+  const SymbolTableNode& root_symbol(symbol_table.Root());
+
+  const auto build_diagnostics = BuildSymbolTable(src, &symbol_table);
+  EXPECT_EMPTY_STATUSES(build_diagnostics);
+
+  MUST_ASSIGN_LOOKUP_SYMBOL(pp_package, root_symbol, "pp");
+  EXPECT_EQ(pp_package_info.metatype, SymbolMetaType::kPackage);
+
+  MUST_ASSIGN_LOOKUP_SYMBOL(cc_class, pp_package, "cc");
+  EXPECT_EQ(cc_class_info.metatype, SymbolMetaType::kClass);
+  EXPECT_EQ(cc_class_info.file_origin, &src);
+  EXPECT_EQ(cc_class_info.declared_type.syntax_origin, nullptr);
+  EXPECT_TRUE(cc_class_info.local_references_to_bind.empty());
+
+  MUST_ASSIGN_LOOKUP_SYMBOL(t1_type_param, cc_class, "T1");
+  EXPECT_EQ(t1_type_param_info.metatype, SymbolMetaType::kParameter);
+  EXPECT_EQ(t1_type_param_info.file_origin, &src);
+
+  MUST_ASSIGN_LOOKUP_SYMBOL(t2_type_param, cc_class, "T2");
+  EXPECT_EQ(t2_type_param_info.metatype, SymbolMetaType::kParameter);
+  EXPECT_EQ(t2_type_param_info.file_origin, &src);
+
+  MUST_ASSIGN_LOOKUP_SYMBOL(data, root_symbol, "data");
+  EXPECT_EQ(data_info.metatype, SymbolMetaType::kDataNetVariableInstance);
+  EXPECT_EQ(data_info.file_origin, &src);
+
+  ASSERT_EQ(root_symbol.Value().local_references_to_bind.size(), 3);
+
+  const auto ref_map(root_symbol.Value().LocalReferencesMapViewForTesting());
+  ASSIGN_MUST_FIND(pp_refs, ref_map, "pp");
+  EXPECT_EQ(pp_refs.size(), 3);
+
+  // all "pp::cc" references have the same structure
+  for (const auto& pp_ref : pp_refs) {
+    const ReferenceComponent& pp_ref_comp(pp_ref->components->Value());
+    EXPECT_EQ(pp_ref_comp.identifier, "pp");
+    EXPECT_EQ(pp_ref_comp.ref_type, ReferenceType::kUnqualified);
+    EXPECT_EQ(pp_ref_comp.required_metatype, SymbolMetaType::kUnspecified);
+    EXPECT_EQ(pp_ref_comp.resolved_symbol, nullptr);
+
+    ASSERT_EQ(pp_ref->components->Children().size(), 1);
+    const ReferenceComponentNode& cc_ref(
+        pp_ref->components->Children().front());
+    const ReferenceComponent& cc_ref_comp(cc_ref.Value());
+    EXPECT_EQ(cc_ref_comp.ref_type, ReferenceType::kDirectMember);
+    EXPECT_EQ(cc_ref_comp.required_metatype, SymbolMetaType::kUnspecified);
+    EXPECT_EQ(cc_ref_comp.identifier, "cc");
+    EXPECT_EQ(cc_ref_comp.resolved_symbol, nullptr);
+  }
+
+  // Of all the "pp::cc" type refs, the outer one is the first one, by ordering
+  // of textual position among references that start with the same identifier.
+  const DependentReferences& data_cc_type(**pp_refs.begin());
+  EXPECT_EQ(data_info.declared_type.user_defined_type, data_cc_type.LastLeaf());
+
+  {
+    std::vector<absl::Status> resolve_diagnostics;
+    symbol_table.Resolve(&resolve_diagnostics);
+    EXPECT_EMPTY_STATUSES(resolve_diagnostics);
+
+    for (const auto& pp_ref : pp_refs) {
+      const ReferenceComponent& pp_ref_comp(pp_ref->components->Value());
+      EXPECT_EQ(pp_ref_comp.resolved_symbol, &pp_package);
+
+      const ReferenceComponentNode& cc_ref(
+          pp_ref->components->Children().front());
+      const ReferenceComponent& cc_ref_comp(cc_ref.Value());
+      EXPECT_EQ(cc_ref_comp.resolved_symbol, &cc_class);
+    }
+    // type of "data" is resolved
+    EXPECT_EQ(
+        data_info.declared_type.user_defined_type->Value().resolved_symbol,
+        &cc_class);
+  }
+}
+
+TEST(BuildSymbolTableTest, NestedTypeParameterizedClassDataDeclaration) {
+  TestVerilogSourceFile src(
+      "its_fun_down_here_in_Camelot.sv",
+      "class outer #(parameter type S = int);\n"
+      "  class cc #(parameter type T = bit);\n"
+      "  endclass\n"
+      "endclass\n"
+      "outer#(outer#(int)::cc#(int))::cc#(outer#(bit)::cc#(bit)) data;\n");
+  const auto status = src.Parse();
+  ASSERT_TRUE(status.ok()) << status.message();
+  SymbolTable symbol_table(nullptr);
+  const SymbolTableNode& root_symbol(symbol_table.Root());
+
+  const auto build_diagnostics = BuildSymbolTable(src, &symbol_table);
+  EXPECT_EMPTY_STATUSES(build_diagnostics);
+
+  MUST_ASSIGN_LOOKUP_SYMBOL(outer_class, root_symbol, "outer");
+  EXPECT_EQ(outer_class_info.metatype, SymbolMetaType::kClass);
+  EXPECT_EQ(outer_class_info.file_origin, &src);
+  EXPECT_EQ(outer_class_info.declared_type.syntax_origin, nullptr);
+  EXPECT_TRUE(outer_class_info.local_references_to_bind.empty());
+
+  MUST_ASSIGN_LOOKUP_SYMBOL(s_type_param, outer_class, "S");
+  EXPECT_EQ(s_type_param_info.metatype, SymbolMetaType::kParameter);
+  EXPECT_EQ(s_type_param_info.file_origin, &src);
+
+  MUST_ASSIGN_LOOKUP_SYMBOL(cc_class, outer_class, "cc");
+  EXPECT_EQ(cc_class_info.metatype, SymbolMetaType::kClass);
+  EXPECT_EQ(cc_class_info.file_origin, &src);
+  EXPECT_EQ(cc_class_info.declared_type.syntax_origin, nullptr);
+  EXPECT_TRUE(cc_class_info.local_references_to_bind.empty());
+
+  MUST_ASSIGN_LOOKUP_SYMBOL(t_type_param, cc_class, "T");
+  EXPECT_EQ(t_type_param_info.metatype, SymbolMetaType::kParameter);
+  EXPECT_EQ(t_type_param_info.file_origin, &src);
+
+  MUST_ASSIGN_LOOKUP_SYMBOL(data, root_symbol, "data");
+  EXPECT_EQ(data_info.metatype, SymbolMetaType::kDataNetVariableInstance);
+  EXPECT_EQ(data_info.file_origin, &src);
+
+  ASSERT_EQ(root_symbol.Value().local_references_to_bind.size(), 3);
+
+  const auto ref_map(root_symbol.Value().LocalReferencesMapViewForTesting());
+  ASSIGN_MUST_FIND(outer_refs, ref_map, "outer");
+  EXPECT_EQ(outer_refs.size(), 3);
+
+  // all "pp::cc" references have the same structure
+  for (const auto& outer_ref : outer_refs) {
+    const ReferenceComponent& outer_ref_comp(outer_ref->components->Value());
+    EXPECT_EQ(outer_ref_comp.identifier, "outer");
+    EXPECT_EQ(outer_ref_comp.ref_type, ReferenceType::kUnqualified);
+    EXPECT_EQ(outer_ref_comp.required_metatype, SymbolMetaType::kUnspecified);
+    EXPECT_EQ(outer_ref_comp.resolved_symbol, nullptr);
+
+    ASSERT_EQ(outer_ref->components->Children().size(), 1);
+    const ReferenceComponentNode& cc_ref(
+        outer_ref->components->Children().front());
+    const ReferenceComponent& cc_ref_comp(cc_ref.Value());
+    EXPECT_EQ(cc_ref_comp.ref_type, ReferenceType::kDirectMember);
+    EXPECT_EQ(cc_ref_comp.required_metatype, SymbolMetaType::kUnspecified);
+    EXPECT_EQ(cc_ref_comp.identifier, "cc");
+    EXPECT_EQ(cc_ref_comp.resolved_symbol, nullptr);
+  }
+
+  // Of all the "outer::cc" type refs, the outer one is the first one, by
+  // ordering of textual position among references that start with the same
+  // identifier.
+  const DependentReferences& data_cc_type(**outer_refs.begin());
+  EXPECT_EQ(data_info.declared_type.user_defined_type, data_cc_type.LastLeaf());
+
+  {
+    std::vector<absl::Status> resolve_diagnostics;
+    symbol_table.Resolve(&resolve_diagnostics);
+    EXPECT_EMPTY_STATUSES(resolve_diagnostics);
+
+    for (const auto& outer_ref : outer_refs) {
+      const ReferenceComponent& outer_ref_comp(outer_ref->components->Value());
+      EXPECT_EQ(outer_ref_comp.resolved_symbol, &outer_class);
+
+      const ReferenceComponentNode& cc_ref(
+          outer_ref->components->Children().front());
+      const ReferenceComponent& cc_ref_comp(cc_ref.Value());
+      EXPECT_EQ(cc_ref_comp.resolved_symbol, &cc_class);
+    }
+    // type of "data" is resolved
+    EXPECT_EQ(
+        data_info.declared_type.user_defined_type->Value().resolved_symbol,
+        &cc_class);
+  }
+}
+
+TEST(BuildSymbolTableTest,
+     TypeParameterizedClassDataDeclarationNamedParameters) {
+  TestVerilogSourceFile src("its_fun_down_here_in_Camelot.sv",
+                            "class cc #(\n"
+                            "  parameter type S = int,\n"
+                            "  parameter type T = bit\n"
+                            ");\n"
+                            "endclass\n"
+                            "cc#(.S(int), .T(int)) data;\n");
+  const auto status = src.Parse();
+  ASSERT_TRUE(status.ok()) << status.message();
+  SymbolTable symbol_table(nullptr);
+  const SymbolTableNode& root_symbol(symbol_table.Root());
+
+  const auto build_diagnostics = BuildSymbolTable(src, &symbol_table);
+  EXPECT_EMPTY_STATUSES(build_diagnostics);
+
+  MUST_ASSIGN_LOOKUP_SYMBOL(cc_class, root_symbol, "cc");
+  EXPECT_EQ(cc_class_info.metatype, SymbolMetaType::kClass);
+  EXPECT_EQ(cc_class_info.file_origin, &src);
+  EXPECT_EQ(cc_class_info.declared_type.syntax_origin, nullptr);
+  EXPECT_TRUE(cc_class_info.local_references_to_bind.empty());
+
+  MUST_ASSIGN_LOOKUP_SYMBOL(s_type_param, cc_class, "S");
+  EXPECT_EQ(s_type_param_info.metatype, SymbolMetaType::kParameter);
+  EXPECT_EQ(s_type_param_info.file_origin, &src);
+
+  MUST_ASSIGN_LOOKUP_SYMBOL(t_type_param, cc_class, "T");
+  EXPECT_EQ(t_type_param_info.metatype, SymbolMetaType::kParameter);
+  EXPECT_EQ(t_type_param_info.file_origin, &src);
+
+  MUST_ASSIGN_LOOKUP_SYMBOL(data, root_symbol, "data");
+  EXPECT_EQ(data_info.metatype, SymbolMetaType::kDataNetVariableInstance);
+  EXPECT_EQ(data_info.file_origin, &src);
+
+  ASSERT_EQ(root_symbol.Value().local_references_to_bind.size(), 1);
+  const auto ref_map(root_symbol.Value().LocalReferencesMapViewForTesting());
+  ASSIGN_MUST_FIND(cc_refs, ref_map, "cc");
+  ASSIGN_MUST_HAVE_UNIQUE(cc_ref, cc_refs);
+  const ReferenceComponent& cc_ref_comp(cc_ref->components->Value());
+  EXPECT_EQ(cc_ref_comp.identifier, "cc");
+  EXPECT_EQ(cc_ref_comp.ref_type, ReferenceType::kUnqualified);
+  EXPECT_EQ(cc_ref_comp.required_metatype, SymbolMetaType::kUnspecified);
+  EXPECT_EQ(cc_ref_comp.resolved_symbol, nullptr);
+
+  const ReferenceComponentMap param_ref_map(
+      ReferenceComponentNodeMapView(*cc_ref->components));
+  ASSIGN_MUST_FIND(s_ref, param_ref_map, "S");
+  const ReferenceComponent& s_ref_comp(s_ref->Value());
+  EXPECT_EQ(s_ref_comp.identifier, "S");
+  EXPECT_EQ(s_ref_comp.ref_type, ReferenceType::kDirectMember);
+  EXPECT_EQ(s_ref_comp.required_metatype, SymbolMetaType::kParameter);
+  EXPECT_EQ(s_ref_comp.resolved_symbol, nullptr);
+
+  ASSIGN_MUST_FIND(t_ref, param_ref_map, "T");
+  const ReferenceComponent& t_ref_comp(t_ref->Value());
+  EXPECT_EQ(t_ref_comp.identifier, "T");
+  EXPECT_EQ(t_ref_comp.ref_type, ReferenceType::kDirectMember);
+  EXPECT_EQ(t_ref_comp.required_metatype, SymbolMetaType::kParameter);
+  EXPECT_EQ(t_ref_comp.resolved_symbol, nullptr);
+
+  const DependentReferences& data_cc_type(*cc_ref);
+  EXPECT_EQ(data_info.declared_type.user_defined_type,
+            data_cc_type.components.get());
+
+  {
+    std::vector<absl::Status> resolve_diagnostics;
+    symbol_table.Resolve(&resolve_diagnostics);
+    EXPECT_EMPTY_STATUSES(resolve_diagnostics);
+
+    EXPECT_EQ(cc_ref_comp.resolved_symbol, &cc_class);
+    EXPECT_EQ(s_ref_comp.resolved_symbol, &s_type_param);
+    EXPECT_EQ(t_ref_comp.resolved_symbol, &t_type_param);
+    // type of "data" is resolved
+    EXPECT_EQ(
+        data_info.declared_type.user_defined_type->Value().resolved_symbol,
+        &cc_class);
+  }
+}
+
 TEST(BuildSymbolTableTest, FunctionDeclarationNoReturnType) {
   TestVerilogSourceFile src("funkytown.sv",
                             "function ff;\n"

@@ -194,6 +194,12 @@ struct DependentReferences {
   // Returns the current terminal descendant.
   const ReferenceComponentNode* LastLeaf() const;
 
+  // Returns the last type component of a reference tree.
+  // e.g. from "A#(.B())::C#(.D())" -> "C"
+  const ReferenceComponentNode* LastTypeComponent() const;
+  ReferenceComponentNode* LastTypeComponent();
+
+  // Structural consistency check.
   // When traversing an unqualified or qualified reference, use this to grow a
   // new leaf node in the reference tree.
   void PushReferenceComponent(const ReferenceComponent& component);
