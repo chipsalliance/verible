@@ -320,7 +320,7 @@ class SymbolTable::Builder : public TreeContextVisitor {
     // declared.
     const DependentReferences& recent_ref =
         current_scope_->Parent()->Value().local_references_to_bind.back();
-    const ReferenceComponentNode* base_type_ref = recent_ref.components.get();
+    const ReferenceComponentNode* base_type_ref = recent_ref.LastLeaf();
     SymbolInfo& current_declared_class_info = current_scope_->Value();
     current_declared_class_info.parent_type.user_defined_type = base_type_ref;
   }
@@ -571,6 +571,15 @@ class SymbolTable::Builder : public TreeContextVisitor {
                : ReferenceType::kDirectMember;
   }
 
+  bool QualifiedIdComponentInLastPosition() const {
+    const SyntaxTreeNode* qualified_id =
+        Context().NearestParentWithTag(NodeEnum::kQualifiedId);
+    const SyntaxTreeNode* unqualified_id =
+        Context().NearestParentWithTag(NodeEnum::kUnqualifiedId);
+    return ABSL_DIE_IF_NULL(qualified_id)->children().back().get() ==
+           unqualified_id;
+  }
+
   // Does the context necessitate that the symbol being referenced have a
   // particular metatype?
   SymbolMetaType InferMetaType() const {
@@ -612,11 +621,7 @@ class SymbolTable::Builder : public TreeContextVisitor {
              NodeEnum::kLocalRoot, NodeEnum::kFunctionCall})) {
       // qualified call like "pkg_or_class::function_name(...)"
       // Only the last component needs to be callable.
-      const SyntaxTreeNode* qualified_id =
-          Context().NearestParentWithTag(NodeEnum::kQualifiedId);
-      const SyntaxTreeNode* unqualified_id =
-          Context().NearestParentWithTag(NodeEnum::kUnqualifiedId);
-      if (qualified_id->children().back().get() == unqualified_id) {
+      if (QualifiedIdComponentInLastPosition()) {
         return SymbolMetaType::kCallable;
       }
       // TODO(fangism): could require parents to be kPackage or kClass
@@ -634,9 +639,16 @@ class SymbolTable::Builder : public TreeContextVisitor {
       // e.g. "base" in "class derived extends base;"
       return SymbolMetaType::kClass;
     }
-    // TODO(fangism): .DirectParentsAre({NodeEnum::kUnqualifiedId,
-    //                                   NodeEnum::kQualifiedId,
-    //                                   NodeEnum::kExtendsList}))
+    if (Context().DirectParentsAre({NodeEnum::kUnqualifiedId,
+                                    NodeEnum::kQualifiedId,
+                                    NodeEnum::kExtendsList})) {
+      // base class is a qualified type like "pkg_or_class::class_name"
+      // Only the last component needs to be a type.
+      if (QualifiedIdComponentInLastPosition()) {
+        return SymbolMetaType::kClass;
+      }
+      // TODO(fangism): could require parents to be kPackage or kClass
+    }
 
     // Default: no specific metatype.
     return SymbolMetaType::kUnspecified;

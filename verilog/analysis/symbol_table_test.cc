@@ -2540,9 +2540,8 @@ TEST(BuildSymbolTableTest, ClassDeclarationSingleInheritance) {
   EXPECT_EQ(base_ref_comp.resolved_symbol, nullptr);
 
   // Make sure the "base" reference is linked from the "derived" class.
-  ASSERT_EQ(
-      derived_class_info.parent_type.user_defined_type,
-      root_symbol.Value().local_references_to_bind.front().components.get());
+  ASSERT_EQ(derived_class_info.parent_type.user_defined_type,
+            root_symbol.Value().local_references_to_bind.front().LastLeaf());
 
   {
     std::vector<absl::Status> resolve_diagnostics;
@@ -2552,6 +2551,231 @@ TEST(BuildSymbolTableTest, ClassDeclarationSingleInheritance) {
         << resolve_diagnostics.front().message();
 
     // Resolve the "base" type reference to the "base" class.
+    EXPECT_EQ(derived_class_info.parent_type.user_defined_type->Value()
+                  .resolved_symbol,
+              &base_class);
+  }
+}
+
+TEST(BuildSymbolTableTest, ClassDeclarationSingleInheritanceAcrossPackage) {
+  TestVerilogSourceFile src("member_accessor.sv",
+                            "package pp;\n"
+                            "  class base;\n"
+                            "  endclass\n"
+                            "endpackage\n"
+                            "class derived extends pp::base;\n"
+                            "endclass\n");
+  const auto status = src.Parse();
+  ASSERT_TRUE(status.ok()) << status.message();
+  SymbolTable symbol_table(nullptr);
+  const SymbolTableNode& root_symbol(symbol_table.Root());
+
+  const auto build_diagnostics = BuildSymbolTable(src, &symbol_table);
+  EXPECT_TRUE(build_diagnostics.empty()) << "Unexpected diagnostic:\n"
+                                         << build_diagnostics.front().message();
+
+  MUST_ASSIGN_LOOKUP_SYMBOL(package_pp, root_symbol, "pp");
+  EXPECT_EQ(package_pp_info.type, SymbolMetaType::kPackage);
+
+  MUST_ASSIGN_LOOKUP_SYMBOL(base_class, package_pp, "base");
+  EXPECT_EQ(base_class_info.type, SymbolMetaType::kClass);
+  EXPECT_EQ(base_class_info.file_origin, &src);
+  EXPECT_EQ(base_class_info.declared_type.syntax_origin, nullptr);
+  EXPECT_TRUE(base_class_info.local_references_to_bind.empty());
+
+  MUST_ASSIGN_LOOKUP_SYMBOL(derived_class, root_symbol, "derived");
+  EXPECT_EQ(derived_class_info.type, SymbolMetaType::kClass);
+  EXPECT_EQ(derived_class_info.file_origin, &src);
+  EXPECT_EQ(derived_class_info.declared_type.syntax_origin, nullptr);
+  EXPECT_TRUE(derived_class_info.local_references_to_bind.empty());
+
+  // "pp::base" is referenced from the scope that contains "derived"
+  EXPECT_EQ(root_symbol.Value().local_references_to_bind.size(), 1);
+  const auto ref_map(root_symbol.Value().LocalReferencesMapViewForTesting());
+  ASSIGN_MUST_FIND_EXACTLY_ONE_REF(pp_ref, ref_map, "pp");
+  const ReferenceComponent& pp_ref_comp(pp_ref->components->Value());
+  EXPECT_EQ(pp_ref_comp.identifier, "pp");
+  EXPECT_EQ(pp_ref_comp.ref_type, ReferenceType::kUnqualified);
+  EXPECT_EQ(pp_ref_comp.metatype, SymbolMetaType::kUnspecified);
+  EXPECT_EQ(pp_ref_comp.resolved_symbol, nullptr);
+
+  ASSERT_EQ(pp_ref->components->Children().size(), 1);
+  const ReferenceComponentNode& base_ref(
+      pp_ref->components->Children().front());
+  const ReferenceComponent& base_ref_comp(base_ref.Value());
+  EXPECT_EQ(base_ref_comp.identifier, "base");
+  EXPECT_EQ(base_ref_comp.ref_type, ReferenceType::kDirectMember);
+  EXPECT_EQ(base_ref_comp.metatype, SymbolMetaType::kClass);
+  EXPECT_EQ(base_ref_comp.resolved_symbol, nullptr);
+
+  // Make sure the "pp::base" reference is linked from the "derived" class.
+  ASSERT_EQ(derived_class_info.parent_type.user_defined_type,
+            root_symbol.Value().local_references_to_bind.front().LastLeaf());
+
+  {
+    std::vector<absl::Status> resolve_diagnostics;
+    symbol_table.Resolve(&resolve_diagnostics);
+    EXPECT_TRUE(resolve_diagnostics.empty())
+        << "Unexpected diagnostic:\n"
+        << resolve_diagnostics.front().message();
+
+    // Resolve the "pp::base" type reference to the "pp::base" class.
+    EXPECT_EQ(pp_ref_comp.resolved_symbol, &package_pp);
+    EXPECT_EQ(base_ref_comp.resolved_symbol, &base_class);
+    EXPECT_EQ(derived_class_info.parent_type.user_defined_type->Value()
+                  .resolved_symbol,
+              &base_class);
+  }
+}
+
+TEST(BuildSymbolTableTest, ClassDeclarationSingleInheritancePackageToPackage) {
+  TestVerilogSourceFile src("member_accessor.sv",
+                            "package pp;\n"
+                            "  class base;\n"
+                            "  endclass\n"
+                            "endpackage\n"
+                            "package qq;\n"
+                            "  class derived extends pp::base;\n"
+                            "  endclass\n"
+                            "endpackage\n");
+  const auto status = src.Parse();
+  ASSERT_TRUE(status.ok()) << status.message();
+  SymbolTable symbol_table(nullptr);
+  const SymbolTableNode& root_symbol(symbol_table.Root());
+
+  const auto build_diagnostics = BuildSymbolTable(src, &symbol_table);
+  EXPECT_TRUE(build_diagnostics.empty()) << "Unexpected diagnostic:\n"
+                                         << build_diagnostics.front().message();
+
+  MUST_ASSIGN_LOOKUP_SYMBOL(package_pp, root_symbol, "pp");
+  EXPECT_EQ(package_pp_info.type, SymbolMetaType::kPackage);
+
+  MUST_ASSIGN_LOOKUP_SYMBOL(base_class, package_pp, "base");
+  EXPECT_EQ(base_class_info.type, SymbolMetaType::kClass);
+  EXPECT_EQ(base_class_info.file_origin, &src);
+  EXPECT_EQ(base_class_info.declared_type.syntax_origin, nullptr);
+  EXPECT_TRUE(base_class_info.local_references_to_bind.empty());
+
+  MUST_ASSIGN_LOOKUP_SYMBOL(package_qq, root_symbol, "qq");
+  EXPECT_EQ(package_qq_info.type, SymbolMetaType::kPackage);
+
+  MUST_ASSIGN_LOOKUP_SYMBOL(derived_class, package_qq, "derived");
+  EXPECT_EQ(derived_class_info.type, SymbolMetaType::kClass);
+  EXPECT_EQ(derived_class_info.file_origin, &src);
+  EXPECT_EQ(derived_class_info.declared_type.syntax_origin, nullptr);
+  EXPECT_TRUE(derived_class_info.local_references_to_bind.empty());
+
+  // "pp::base" is referenced from the scope that contains "derived",
+  // which is package "qq".
+  EXPECT_EQ(package_qq_info.local_references_to_bind.size(), 1);
+  const auto ref_map(package_qq_info.LocalReferencesMapViewForTesting());
+  ASSIGN_MUST_FIND_EXACTLY_ONE_REF(pp_ref, ref_map, "pp");
+  const ReferenceComponent& pp_ref_comp(pp_ref->components->Value());
+  EXPECT_EQ(pp_ref_comp.identifier, "pp");
+  EXPECT_EQ(pp_ref_comp.ref_type, ReferenceType::kUnqualified);
+  EXPECT_EQ(pp_ref_comp.metatype, SymbolMetaType::kUnspecified);
+  EXPECT_EQ(pp_ref_comp.resolved_symbol, nullptr);
+
+  ASSERT_EQ(pp_ref->components->Children().size(), 1);
+  const ReferenceComponentNode& base_ref(
+      pp_ref->components->Children().front());
+  const ReferenceComponent& base_ref_comp(base_ref.Value());
+  EXPECT_EQ(base_ref_comp.identifier, "base");
+  EXPECT_EQ(base_ref_comp.ref_type, ReferenceType::kDirectMember);
+  EXPECT_EQ(base_ref_comp.metatype, SymbolMetaType::kClass);
+  EXPECT_EQ(base_ref_comp.resolved_symbol, nullptr);
+
+  // Make sure the "pp::base" reference is linked from the "qq::derived" class.
+  ASSERT_EQ(derived_class_info.parent_type.user_defined_type,
+            package_qq_info.local_references_to_bind.front().LastLeaf());
+
+  {
+    std::vector<absl::Status> resolve_diagnostics;
+    symbol_table.Resolve(&resolve_diagnostics);
+    EXPECT_TRUE(resolve_diagnostics.empty())
+        << "Unexpected diagnostic:\n"
+        << resolve_diagnostics.front().message();
+
+    // Resolve the "pp::base" type reference to the "pp::base" class.
+    EXPECT_EQ(pp_ref_comp.resolved_symbol, &package_pp);
+    EXPECT_EQ(base_ref_comp.resolved_symbol, &base_class);
+    EXPECT_EQ(derived_class_info.parent_type.user_defined_type->Value()
+                  .resolved_symbol,
+              &base_class);
+  }
+}
+
+TEST(BuildSymbolTableTest, ClassDeclarationInheritanceFromNestedClass) {
+  TestVerilogSourceFile src("classilicious.sv",
+                            "class pp;\n"
+                            "  class base;\n"
+                            "  endclass\n"
+                            "endclass\n"
+                            "class qq;\n"
+                            "  class derived extends pp::base;\n"
+                            "  endclass\n"
+                            "endclass\n");
+  const auto status = src.Parse();
+  ASSERT_TRUE(status.ok()) << status.message();
+  SymbolTable symbol_table(nullptr);
+  const SymbolTableNode& root_symbol(symbol_table.Root());
+
+  const auto build_diagnostics = BuildSymbolTable(src, &symbol_table);
+  EXPECT_TRUE(build_diagnostics.empty()) << "Unexpected diagnostic:\n"
+                                         << build_diagnostics.front().message();
+
+  MUST_ASSIGN_LOOKUP_SYMBOL(class_pp, root_symbol, "pp");
+  EXPECT_EQ(class_pp_info.type, SymbolMetaType::kClass);
+
+  MUST_ASSIGN_LOOKUP_SYMBOL(base_class, class_pp, "base");
+  EXPECT_EQ(base_class_info.type, SymbolMetaType::kClass);
+  EXPECT_EQ(base_class_info.file_origin, &src);
+  EXPECT_EQ(base_class_info.declared_type.syntax_origin, nullptr);
+  EXPECT_TRUE(base_class_info.local_references_to_bind.empty());
+
+  MUST_ASSIGN_LOOKUP_SYMBOL(class_qq, root_symbol, "qq");
+  EXPECT_EQ(class_qq_info.type, SymbolMetaType::kClass);
+
+  MUST_ASSIGN_LOOKUP_SYMBOL(derived_class, class_qq, "derived");
+  EXPECT_EQ(derived_class_info.type, SymbolMetaType::kClass);
+  EXPECT_EQ(derived_class_info.file_origin, &src);
+  EXPECT_EQ(derived_class_info.declared_type.syntax_origin, nullptr);
+  EXPECT_TRUE(derived_class_info.local_references_to_bind.empty());
+
+  // "pp::base" is referenced from the scope that contains "derived",
+  // which is package "qq".
+  EXPECT_EQ(class_qq_info.local_references_to_bind.size(), 1);
+  const auto ref_map(class_qq_info.LocalReferencesMapViewForTesting());
+  ASSIGN_MUST_FIND_EXACTLY_ONE_REF(pp_ref, ref_map, "pp");
+  const ReferenceComponent& pp_ref_comp(pp_ref->components->Value());
+  EXPECT_EQ(pp_ref_comp.identifier, "pp");
+  EXPECT_EQ(pp_ref_comp.ref_type, ReferenceType::kUnqualified);
+  EXPECT_EQ(pp_ref_comp.metatype, SymbolMetaType::kUnspecified);
+  EXPECT_EQ(pp_ref_comp.resolved_symbol, nullptr);
+
+  ASSERT_EQ(pp_ref->components->Children().size(), 1);
+  const ReferenceComponentNode& base_ref(
+      pp_ref->components->Children().front());
+  const ReferenceComponent& base_ref_comp(base_ref.Value());
+  EXPECT_EQ(base_ref_comp.identifier, "base");
+  EXPECT_EQ(base_ref_comp.ref_type, ReferenceType::kDirectMember);
+  EXPECT_EQ(base_ref_comp.metatype, SymbolMetaType::kClass);
+  EXPECT_EQ(base_ref_comp.resolved_symbol, nullptr);
+
+  // Make sure the "pp::base" reference is linked from the "qq::derived" class.
+  ASSERT_EQ(derived_class_info.parent_type.user_defined_type,
+            class_qq_info.local_references_to_bind.front().LastLeaf());
+
+  {
+    std::vector<absl::Status> resolve_diagnostics;
+    symbol_table.Resolve(&resolve_diagnostics);
+    EXPECT_TRUE(resolve_diagnostics.empty())
+        << "Unexpected diagnostic:\n"
+        << resolve_diagnostics.front().message();
+
+    // Resolve the "pp::base" type reference to the "pp::base" class.
+    EXPECT_EQ(pp_ref_comp.resolved_symbol, &class_pp);
+    EXPECT_EQ(base_ref_comp.resolved_symbol, &base_class);
     EXPECT_EQ(derived_class_info.parent_type.user_defined_type->Value()
                   .resolved_symbol,
               &base_class);
