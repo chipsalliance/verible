@@ -236,15 +236,3 @@ sh_test(
     data = [":verible-verilog-lint"],
     deps = [],
 )
-
-# For a limited time, we provide the old name to be compatible with the
-# old installation. At some point, this script will print a deprecation warning
-# and be removed entirely later. Use verible-verilog-lint instead.
-filegroup(
-    name = "verilog_lint-deprecated",
-    srcs = [
-        "verilog_lint",
-        ":verible-verilog-lint",
-    ],
-    visibility = ["//visibility:public"],
-)

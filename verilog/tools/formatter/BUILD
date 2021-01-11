@@ -23,18 +23,6 @@ cc_binary(
     ],
 )
 
-# For a limited time, we provide the old name to be compatible with the
-# old installation. At some point, this script will print a deprecation warning
-# and be removed entirely later.
-filegroup(
-    name = "verilog_format-deprecated",
-    srcs = [
-        "verilog_format",
-        ":verible-verilog-format",
-    ],
-    visibility = ["//visibility:public"],
-)
-
 # This script is intended to run post-install and expect to be co-located with:
 #   //verilog/tools/formatter:verible-verilog-format
 #   //common/tools:verible-patch-tool

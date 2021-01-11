@@ -28,18 +28,6 @@ cc_binary(
     ],
 )
 
-# For a limited time, we provide the old name to be compatible with the
-# old installation. At some point, this script will print a deprecation warning
-# and be removed entirely later.
-filegroup(
-    name = "verilog_syntax-deprecated",
-    srcs = [
-        "verilog_syntax",
-        ":verible-verilog-syntax",
-    ],
-    visibility = ["//visibility:public"],
-)
-
 sh_binary(
     name = "triage_parser",
     srcs = ["triage_parser.sh"],

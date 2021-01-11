@@ -19,18 +19,6 @@ cc_binary(
     ],
 )
 
-# For a limited time, we provide the old name to be compatible with the
-# old installation. At some point, this script will print a deprecation warning
-# and be removed entirely later.
-filegroup(
-    name = "verilog_obfuscate-deprecated",
-    srcs = [
-        "verilog_obfuscate",
-        ":verible-verilog-obfuscate",
-    ],
-    visibility = ["//visibility:public"],
-)
-
 sh_test(
     name = "obfuscate_test",
     size = "small",
