@@ -11,8 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-"""Wrapper for verible-verilog-syntax --export_json
-"""
+"""Wrapper for ``verible-verilog-syntax --export_json``"""
 
 import subprocess
 import json
@@ -92,23 +91,32 @@ class LevelOrderTreeIterator(_TreeIteratorBase):
 
 
 class Node(anytree.NodeMixin):
+  """Base VeribleVerilogSyntax syntax tree node.
+
+  Attributes:
+    parent (Optional[Node]): Parent node.
+  """
   def __init__(self, parent: Optional["Node"] = None):
     self.parent = parent
 
   @property
   def syntax_data(self) -> Optional["SyntaxData"]:
+    """Parent SyntaxData"""
     return self.parent.syntax_data if self.parent else None
 
   @property
   def start(self) -> Optional[int]:
+    """Byte offset of node's first character in source text"""
     raise NotImplementedError("Subclass must implement 'start' property")
 
   @property
   def end(self) -> Optional[int]:
+    """Byte offset of a character just past the node in source text."""
     raise NotImplementedError("Subclass must implement 'end' property")
 
   @property
   def text(self) -> str:
+    """Source code fragment spanning all tokens in a node."""
     start = self.start
     end = self.end
     sd = self.syntax_data
@@ -121,10 +129,17 @@ class Node(anytree.NodeMixin):
     return _CSI_SEQUENCE.sub("", self.to_formatted_string())
 
   def to_formatted_string(self) -> str:
+    """Print node representation formatted for printing in terminal."""
     return super().__repr__()
 
 
 class BranchNode(Node):
+  """Syntax tree branch node
+
+  Attributes:
+    tag (str): Node tag.
+    children (Optional[Node]): Child nodes.
+  """
   def __init__(self, tag: str, parent: Optional[Node] = None,
                children: Optional[List[Node]] = None):
     super().__init__(parent)
@@ -147,6 +162,20 @@ class BranchNode(Node):
                     max_count: int = 0,
                     iter_: TreeIterator = LevelOrderTreeIterator,
                     **kwargs) -> Iterable[Node]:
+    """Iterate all nodes matching specified filter.
+
+    Args:
+      filter_: Describes what to search for. Might be:
+        * Callable taking Node as an argument and returning True for accepted
+          nodes.
+        * Dict mapping Node attribute names to searched value or list of
+          searched values.
+      max_count: Stop searching after finding that many matching nodes.
+      iter_: Tree iterator. Decides in what order nodes are visited.
+
+    Yelds:
+      Nodes matching specified filter.
+    """
     def as_list(v):
       return v if isinstance(v, list) else [v]
 
@@ -170,12 +199,39 @@ class BranchNode(Node):
   def find(self, filter_: Union[CallableFilter, KeyValueFilter, None],
            iter_: TreeIterator = LevelOrderTreeIterator, **kwargs) \
            -> Optional[Node]:
+    """Find node matching specified filter.
+
+    Args:
+      filter_: Describes what to search for. Might be:
+        * Callable taking Node as an argument and returning True for accepted
+          node.
+        * Dict mapping Node attribute names to searched value or list of
+          searched values.
+      iter_: Tree iterator. Decides in what order nodes are visited.
+
+    Returns:
+      First Node matching filter.
+    """
     return next(self.iter_find_all(filter_, max_count=1, iter_=iter_,
                 **kwargs), None)
 
   def find_all(self, filter_: Union[CallableFilter, KeyValueFilter, None],
                max_count: int = 0, iter_: TreeIterator = LevelOrderTreeIterator,
                **kwargs) -> List[Node]:
+    """Find all nodes matching specified filter.
+
+    Args:
+      filter_: Describes what to search for. Might be:
+        * Callable taking Node as an argument and returning True for accepted
+          nodes.
+        * Dict mapping Node attribute names to searched value or list of
+          searched values.
+      max_count: Stop searching after finding that many matching nodes.
+      iter_: Tree iterator. Decides in what order nodes are visited.
+
+    Returns:
+      List of nodes matching specified filter.
+    """
     return list(self.iter_find_all(filter_, max_count=max_count, iter_=iter_,
                 **kwargs))
 
@@ -185,6 +241,7 @@ class BranchNode(Node):
 
 
 class RootNode(BranchNode):
+  """Syntax tree root node."""
   def __init__(self, tag: str, syntax_data: Optional["SyntaxData"] = None,
                children: Optional[List[Node]] = None):
     super().__init__(tag, None, children)
@@ -196,12 +253,18 @@ class RootNode(BranchNode):
 
 
 class LeafNode(Node):
+  """Syntax tree leaf node.
+
+  This specific class is used for null nodes.
+  """
   @property
   def start(self) -> None:
+    """Byte offset of token's first character in source text"""
     return None
 
   @property
   def end(self) -> None:
+    """Byte offset of a character just past the token in source text."""
     return None
 
   def to_formatted_string(self) -> str:
@@ -209,6 +272,14 @@ class LeafNode(Node):
 
 
 class TokenNode(LeafNode):
+  """Tree node with token data
+
+  Represents single token in a syntax tree.
+
+  Attributes:
+    tag (str): Token tag.
+  """
+
   def __init__(self, tag: str, start: int, end: int,
                parent: Optional[Node] = None):
     super().__init__(parent)
@@ -237,6 +308,17 @@ class TokenNode(LeafNode):
 
 
 class Token:
+  """Token data
+
+  Represents single token in tokens and rawtokens lists.
+
+  Attributes:
+    tag (str): Token tag.
+    start (int): Byte offset of token's first character in source text.
+    end (int): Byte offset of a character just past the token in source text.
+    syntax_data (Optional["SyntaxData"]): Parent SyntaxData.
+  """
+
   def __init__(self, tag: str, start: int, end: int,
                syntax_data: Optional["SyntaxData"] = None):
     self.tag = tag
@@ -246,6 +328,7 @@ class Token:
 
   @property
   def text(self) -> str:
+    """Token text in source code."""
     sd = self.syntax_data
     if sd and sd.source_code and self.end <= len(sd.source_code):
       return sd.source_code[self.start:self.end].decode("utf-8")
@@ -282,6 +365,15 @@ class SyntaxData:
 
 
 class VeribleVerilogSyntax:
+  """``verible-verilog-syntax`` wrapper.
+
+  This class provides methods for running ``verible-verilog-syntax`` and
+  transforming its output into Python data structures.
+
+  Args:
+    executable: path to ``verible-verilog-syntax`` binary.
+  """
+
   def __init__(self, executable: str = "verible-verilog-syntax"):
     self.executable = executable
 
@@ -327,6 +419,7 @@ class VeribleVerilogSyntax:
 
   def _parse(self, paths: List[str], input_: str = None,
              options: Dict[str, Any] = None) -> Dict[str, SyntaxData]:
+    """Common implementation of parse_* methods"""
     options = {
       "gen_tree": True,
       "skip_null": False,
@@ -382,12 +475,57 @@ class VeribleVerilogSyntax:
 
   def parse_files(self, paths: List[str], options: Dict[str, Any] = None) \
                   -> Dict[str, SyntaxData]:
+    """Parse multiple SystemVerilog files.
+
+    Args:
+      paths: list of paths to files to parse.
+      options: dict with parsing options.
+        Available options:
+          gen_tree (boolean): whether to generate syntax tree.
+          skip_null (boolean): null nodes won't be stored in a tree if True.
+          gen_tokens (boolean): whether to generate tokens list.
+          gen_rawtokens (boolean): whether to generate raw token list.
+        By default only ``gen_tree`` is True.
+
+    Returns:
+      A dict that maps file names to their parsing results in SyntaxData object.
+    """
     return self._parse(paths, options = options)
 
   def parse_file(self, path: str, options: Dict[str, Any] = None) \
                  -> Optional[SyntaxData]:
+    """Parse single SystemVerilog file.
+
+    Args:
+      paths: list of paths to files to parse.
+      options: dict with parsing options.
+        Available options:
+          gen_tree (boolean): whether to generate syntax tree.
+          skip_null (boolean): null nodes won't be stored in a tree if True.
+          gen_tokens (boolean): whether to generate tokens list.
+          gen_rawtokens (boolean): whether to generate raw token list.
+        By default only ``gen_tree`` is True.
+
+    Returns:
+      Parsing results in SyntaxData object.
+    """
     return self._parse([path], options = options).get(path, None)
 
   def parse_string(self, string: str, options: Dict[str, Any] = None) \
                    -> Optional[SyntaxData]:
+    """Parse a string with SystemVerilog code.
+
+    Args:
+      paths: list of paths to files to parse.
+      options: dict with parsing options.
+        Available options:
+          gen_tree (boolean): whether to generate syntax tree.
+          skip_null (boolean): null nodes won't be stored in a tree if True.
+          gen_tokens (boolean): whether to generate tokens list.
+          gen_rawtokens (boolean): whether to generate raw token list.
+        By default only ``gen_tree`` is True.
+
+    Returns:
+      Parsing results in SyntaxData object.
+    """
     return self._parse(["-"], input_=string, options=options).get("-", None)

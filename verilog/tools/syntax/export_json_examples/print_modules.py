@@ -17,8 +17,8 @@
 Usage: print_modules.py PATH_TO_VERIBLE_VERILOG_SYNTAX \\
                         VERILOG_FILE [VERILOG_FILE [...]]
 
-This example shows how to use `verible-verilog-syntax --export_json ...` output
-to extract information about module declarations found in System Verilog
+This example shows how to use ``verible-verilog-syntax --export_json ...``
+output to extract information about module declarations found in System Verilog
 source files. Extracted information:
 
 * module name
@@ -35,6 +35,22 @@ import verible_verilog_syntax
 
 
 def process_file_data(path, data):
+  """Print information about modules found in SystemVerilog file.
+
+  This function uses verible_verilog_syntax.Node methods to find module
+  declarations and specific tokens containing following information:
+
+  * module name
+  * module port names
+  * module parameter names
+  * module imports
+  * module header code
+
+  Args:
+    path: Path to source file (used only for informational purposes)
+    data: Parsing results returned by one of VeribleVerilogSyntax' parse_*
+          methods.
+  """
   if not data.tree:
     return
 
