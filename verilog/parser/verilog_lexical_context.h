@@ -26,24 +26,28 @@
 
 namespace verilog {
 
+// TODO(fangism): move all of these _classes into an internal namespace.
+
 // Helper state machine to parse optional labels after certain keywords.
 class _KeywordLabelStateMachine {
  public:
   // Updates the state machine, by looking ahead at the next token's enum.
   void UpdateState(int);
 
-  // Returns true if lexical stream is not in any of the internal keyword-label
-  // states.
-  bool Done() const { return state_ != kGotColonExpectingLabel; }
+  // Returns true if a statement or item could start in this state.
+  bool ItemMayStart() const {
+    return state_ == kItemStart || state_ == kGotLabelableKeyword;
+  }
 
  private:
   enum State {
-    kNone,        // Not looking at any keyword that can accept a label.
-    kGotKeyword,  // Seen a keyword that can accept a label.
+    kItemStart,            // Could be the start of an item.
+    kItemMiddle,           // After the start of an item.
+    kGotLabelableKeyword,  // Seen a keyword that can accept a label.
     kGotColonExpectingLabel,
   };
 
-  State state_ = kNone;
+  State state_ = kItemStart;
 };
 
 // Helper state machine for tracking constraint_block and constraint_set in the
@@ -277,6 +281,11 @@ class LexicalContext {
   }
   bool InAnyDeclaration() const;
   bool InAnyDeclarationHeader() const;
+
+  bool InStatementContext() const {
+    return in_function_body_ || in_task_body_ ||
+           in_initial_always_final_construct_;
+  }
 
   const verible::TokenInfo* previous_token_ = nullptr;
 

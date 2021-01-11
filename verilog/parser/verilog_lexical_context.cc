@@ -32,6 +32,7 @@ using verible::WithReason;
 
 // Returns true for begin/end-like tokens that can be followed with an optional
 // label.
+// TODO(fangism): move this to verilog_token_classifications.cc
 static bool KeywordAcceptsOptionalLabel(int token_enum) {
   static const auto* keywords = new std::set<int>(
       {// begin-like keywords
@@ -49,24 +50,27 @@ static bool KeywordAcceptsOptionalLabel(int token_enum) {
 void _KeywordLabelStateMachine::UpdateState(int token_enum) {
   // In any state, reset on encountering keyword.
   if (KeywordAcceptsOptionalLabel(token_enum)) {
-    state_ = kGotKeyword;
+    state_ = kGotLabelableKeyword;
     return;
   }
   // Scan for optional : label.
   switch (state_) {
-    case kNone:
+    case kItemStart:
+      state_ = kItemMiddle;
       break;
-    case kGotKeyword:
+    case kItemMiddle:
+      break;
+    case kGotLabelableKeyword:
       if (token_enum == ':') {
         state_ = kGotColonExpectingLabel;
       } else {
-        state_ = kNone;
+        state_ = kItemStart;
       }
       break;
     case kGotColonExpectingLabel:
       // Expect a SymbolIdentifier as a label, but don't really care if it
       // actually is or not.
-      state_ = kNone;
+      state_ = kItemStart;
       break;
   }
 }
@@ -455,7 +459,8 @@ void LexicalContext::_AdvanceToken(TokenInfo* token) {
   // encountered; it may have to be bookmarked to be returned to later after
   // looking ahead.
 
-  _MutateToken(token);   // only modifies token, not *this
+  _MutateToken(token);  // only modifies token, not *this
+
   _UpdateState(*token);  // only modifies *this, not token
 
   // The following state machines require a mutable token reference:
@@ -688,11 +693,10 @@ bool LexicalContext::InAnyDeclarationHeader() const {
 }
 
 bool LexicalContext::ExpectingStatement() const {
-  if (in_function_body_ || in_task_body_ ||
-      in_initial_always_final_construct_) {
+  if (InStatementContext()) {
     // Exclude states that are partially into a statement.
     const auto state = ExpectingBodyItemStart();
-    VLOG(2) << state.reason;
+    VLOG(2) << __FUNCTION__ << ": " << state.value << ", " << state.reason;
     return state.value;
   }
   // TODO(fangism): There are many more contexts that expect statements, add
@@ -716,15 +720,26 @@ WithReason<bool> LexicalContext::ExpectingBodyItemStart() const {
   if (InAnyDeclaration() && previous_token_finished_header_) {
     return {true, "inside declaration, and reached end of header"};
   }
-  if (keyword_label_tracker_.Done()) {
-    return {true, "keyword label is in done state"};
-  }
   switch (previous_token_->token_enum()) {
     case ';':
       return {true, "immediately following ';'"};
+    // Procedural control blocks:
+    case TK_initial:       // fall-through
+    case TK_always:        // fall-through
+    case TK_always_comb:   // fall-through
+    case TK_always_ff:     // fall-through
+    case TK_always_latch:  // fall-through
+    case TK_final:
+      return {true, "immediately following 'always/initial/final'"};
     default:
       break;
   }
+  // if (InStatementContext()) {
+  if (keyword_label_tracker_.ItemMayStart()) {
+    return {true, "item may start"};
+  }
+  // return {true, "inside 'always/initial/final'"};
+  // }
   return {false, "all other cases (default)"};
 }
 

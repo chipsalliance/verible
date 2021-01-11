@@ -1289,6 +1289,44 @@ static const ParserTestCaseArray kTaskTests = {
     "task net_type_decls;\n"
     "  nettype foo::bar[1:0] analog_wire with fire;\n"
     "endtask\n",
+    // event trigger and logical implication expressions '->'
+    "task trigger_happy;\n"
+    "  ->e1;\n"
+    "endtask\n",
+    "task trigger_happy;\n"
+    "  ;\n"  // null
+    "  ->e1;\n"
+    "endtask\n",
+    "task trigger_happy;\n"
+    "  ->e1;\n"
+    "  ->e2;\n"
+    "endtask\n",
+    "task trigger_happy;\n"
+    "  ->e1;\n"
+    "  g();\n"
+    "  ->e2;\n"
+    "endtask\n",
+    "task logical_happy;\n"
+    "  a = f->g;\n"
+    "endtask\n",
+    "task mixed_happy;\n"
+    "  ->bb;\n"
+    "  a = f->g;\n"
+    "  ->cc;\n"
+    "endtask\n",
+    "task mixed_happy;\n"
+    "  a = f->g;\n"
+    "  ->bb;\n"
+    "  p = q->r;\n"
+    "endtask\n",
+    "task mixed_happy;\n"
+    "  if (x)\n"
+    "    ->bb;\n"
+    "endtask\n",
+    "task mixed_happy;\n"
+    "  for (int i=0; i<N; ++i)\n"
+    "    ->bb;\n"
+    "endtask\n",
 };
 
 static const ParserTestCaseArray kModuleTests = {
@@ -2074,6 +2112,46 @@ static const ParserTestCaseArray kModuleTests = {
     "  end\n"
     "endmodule\n",
     "module triggerer;\n"
+    "  initial\n"
+    "    ->a;\n"  // blocking event trigger
+    "endmodule\n",
+    "module triggerer;\n"
+    "  final\n"
+    "    ->a;\n"  // blocking event trigger
+    "endmodule\n",
+    "module triggerer;\n"
+    "  always\n"
+    "    ->a;\n"  // blocking event trigger
+    "endmodule\n",
+    "module triggerer;\n"
+    "  always_ff\n"
+    "    ->a;\n"  // blocking event trigger
+    "endmodule\n",
+    "module triggerer;\n"
+    "  always_comb\n"
+    "    ->a;\n"  // blocking event trigger
+    "endmodule\n",
+    "module triggerer;\n"
+    "  always_latch\n"
+    "    ->a;\n"  // blocking event trigger
+    "endmodule\n",
+#if 0
+    // TODO(b/171362636): lexical context needs to understand event_control
+    "module triggerer;\n"
+    "  always @*\n"
+    "    ->a;\n"  // blocking event trigger
+    "endmodule\n",
+    "module triggerer;\n"
+    "  always @(posedge clk)\n"
+    "    ->a;\n"  // blocking event trigger
+    "endmodule\n",
+#endif
+    "module triggerer;\n"
+    "  always @(posedge clk) begin\n"
+    "    ->a;\n"  // blocking event trigger
+    "  end\n"
+    "endmodule\n",
+    "module triggerer;\n"
     "  always @* begin\n"
     "    ->a;\n"  // blocking event trigger
     "    x = 0;\n"
@@ -2118,6 +2196,46 @@ static const ParserTestCaseArray kModuleTests = {
     "module logical_implication;\n"
     "logic a, b, c;\n"
     "assign a = b -> c;\n"
+    "endmodule",
+    "module logical_implication;\n"
+    "  initial\n"
+    "    a = b -> c;\n"
+    "endmodule",
+    "module logical_implication;\n"
+    "  initial begin\n"
+    "    a = b -> c;\n"
+    "  end\n"
+    "endmodule",
+    "module logical_implication;\n"
+    "  initial\n"
+    "    a = (b -> c);\n"
+    "endmodule",
+    "module logical_implication;\n"
+    "  initial\n"
+    "    a = (b -> c) & (d -> e);\n"
+    "endmodule",
+    "module logical_implication;\n"
+    "  initial\n"
+    "    {x, y} = {b -> c, d -> e};\n"
+    "endmodule",
+    "module logical_implication;\n"
+    "  final\n"
+    "    a = (b -> c) & (d -> e);\n"
+    "endmodule",
+    "module logical_implication;\n"
+    "  final begin\n"
+    "    a = (b -> c) & (d -> e);\n"
+    "  end\n"
+    "endmodule",
+    "module logical_implication;\n"
+    "  always @* begin\n"
+    "    a <= b -> c;\n"
+    "  end\n"
+    "endmodule",
+    "module logical_implication;\n"
+    "  always @* begin\n"
+    "    a <= b -> c || (f->g);\n"
+    "  end\n"
     "endmodule",
     // if-else
     "module ifelsey ();\n"

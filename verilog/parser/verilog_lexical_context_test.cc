@@ -79,13 +79,16 @@ void ExpectStateMachineTokenSequence(
     std::initializer_list<int> expect_token_enums) {
   int i = 0;
   for (int expect_token_enum : expect_token_enums) {
-    const int token_enum = (**token_iter)->token_enum();
+    const TokenInfo& token(***token_iter);
+    const int token_enum = token.token_enum();
     const int interpreted_enum = sm.InterpretToken(token_enum);
-    VLOG(1) << "token[" << i << "] enum: " << verilog_symbol_name(token_enum)
-            << " -> " << verilog_symbol_name(interpreted_enum);
+    const char* raw_symbol = verilog_symbol_name(token_enum);
+    const char* interpreted_symbol = verilog_symbol_name(interpreted_enum);
+    const char* expected_symbol = verilog_symbol_name(expect_token_enum);
+    VLOG(1) << "token[" << i << "] enum: " << raw_symbol << " -> "
+            << interpreted_symbol;
     EXPECT_EQ(interpreted_enum, expect_token_enum)
-        << " (" << verilog_symbol_name(interpreted_enum) << " vs. "
-        << verilog_symbol_name(expect_token_enum) << ')';
+        << " (" << interpreted_symbol << " vs. " << expected_symbol << ')';
     sm.UpdateState(token_enum);
     ++*token_iter;
     ++i;
@@ -101,11 +104,12 @@ TEST(KeywordLabelStateMachineTest, NoKeywords) {
   EXPECT_EQ(tokens_view.size(), 7);  // including EOF
 
   _KeywordLabelStateMachine b;
-  EXPECT_TRUE(b.Done());
+  EXPECT_TRUE(b.ItemMayStart());
   int i = 0;
   for (auto iter : tokens_view) {
     b.UpdateState(iter->token_enum());
-    EXPECT_TRUE(b.Done()) << "Error at index " << i << ", after: " << *iter;
+    EXPECT_FALSE(b.ItemMayStart())
+        << "Error at index " << i << ", after: " << *iter;
     ++i;
   }
 }
@@ -114,21 +118,22 @@ TEST(KeywordLabelStateMachineTest, NoKeywords) {
 TEST(KeywordLabelStateMachineTest, KeywordsWithoutLabels) {
   VerilogAnalyzer analyzer("1 2 begin end begin end 3 begin 4 5 end 6", "",
                            false);
-  const std::array<bool, 13> expect_done{{true, true, true, true, true, true,
-                                          true, true, true, true, true, true,
-                                          true}};
+  const std::array<bool, 13> expect_item_may_start{
+      {false, false, true, true, true, true, true, true, true, false, true,
+       true, false}};
   EXPECT_OK(analyzer.Tokenize());
   analyzer.FilterTokensForSyntaxTree();
   const auto& tokens_view = analyzer.Data().GetTokenStreamView();
-  EXPECT_EQ(tokens_view.size(), expect_done.size());
+  EXPECT_EQ(tokens_view.size(), expect_item_may_start.size());
 
   _KeywordLabelStateMachine b;
-  EXPECT_TRUE(b.Done());
-  auto expect_iter = expect_done.begin();
+  EXPECT_TRUE(b.ItemMayStart());
+  auto expect_iter = expect_item_may_start.begin();
   for (auto iter : tokens_view) {
     b.UpdateState(iter->token_enum());
-    EXPECT_EQ(b.Done(), *expect_iter)
-        << "Error at index " << std::distance(expect_done.begin(), expect_iter)
+    EXPECT_EQ(b.ItemMayStart(), *expect_iter)
+        << "Error at index "
+        << std::distance(expect_item_may_start.begin(), expect_iter)
         << ", after: " << *iter;
     ++expect_iter;
   }
@@ -137,21 +142,22 @@ TEST(KeywordLabelStateMachineTest, KeywordsWithoutLabels) {
 // Test for state transitions of state machine, with labels.
 TEST(KeywordLabelStateMachineTest, KeywordsWithLabels) {
   VerilogAnalyzer analyzer("1 begin:a end:a begin:b end:b 2", "", false);
-  const std::array<bool, 15> expect_done{{true, true, false, true, true, false,
-                                          true, true, false, true, true, false,
-                                          true, true, true}};
+  const std::array<bool, 15> expect_item_may_start{
+      {false, true, false, true, true, false, true, true, false, true, true,
+       false, true, false, false}};
   EXPECT_OK(analyzer.Tokenize());
   analyzer.FilterTokensForSyntaxTree();
   const auto& tokens_view = analyzer.Data().GetTokenStreamView();
-  EXPECT_EQ(tokens_view.size(), expect_done.size());  // including EOF
+  EXPECT_EQ(tokens_view.size(), expect_item_may_start.size());  // including EOF
 
   _KeywordLabelStateMachine b;
-  EXPECT_TRUE(b.Done());
-  auto expect_iter = expect_done.cbegin();
+  EXPECT_TRUE(b.ItemMayStart());
+  auto expect_iter = expect_item_may_start.cbegin();
   for (auto iter : tokens_view) {
     b.UpdateState(iter->token_enum());
-    EXPECT_EQ(b.Done(), *expect_iter)
-        << "Error at index " << std::distance(expect_done.begin(), expect_iter)
+    EXPECT_EQ(b.ItemMayStart(), *expect_iter)
+        << "Error at index "
+        << std::distance(expect_item_may_start.begin(), expect_iter)
         << ", after: " << *iter;
     ++expect_iter;
   }
@@ -160,20 +166,22 @@ TEST(KeywordLabelStateMachineTest, KeywordsWithLabels) {
 // Test for state transitions of state machine, with some labels, some items.
 TEST(KeywordLabelStateMachineTest, ItemsInsideBlocks) {
   VerilogAnalyzer analyzer("begin:a 1 end:a 2 begin 3 end", "", false);
-  const std::array<bool, 12> expect_done{{true, false, true, true, true, false,
-                                          true, true, true, true, true, true}};
+  const std::array<bool, 12> expect_item_may_start{{true, false, true, false,
+                                                    true, false, true, false,
+                                                    true, true, true, true}};
   EXPECT_OK(analyzer.Tokenize());
   analyzer.FilterTokensForSyntaxTree();
   const auto& tokens_view = analyzer.Data().GetTokenStreamView();
-  EXPECT_EQ(tokens_view.size(), expect_done.size());  // including EOF
+  EXPECT_EQ(tokens_view.size(), expect_item_may_start.size());  // including EOF
 
   _KeywordLabelStateMachine b;
-  EXPECT_TRUE(b.Done());
-  auto expect_iter = expect_done.cbegin();
+  EXPECT_TRUE(b.ItemMayStart());
+  auto expect_iter = expect_item_may_start.cbegin();
   for (auto iter : tokens_view) {
     b.UpdateState(iter->token_enum());
-    EXPECT_EQ(b.Done(), *expect_iter)
-        << "Error at index " << std::distance(expect_done.begin(), expect_iter)
+    EXPECT_EQ(b.ItemMayStart(), *expect_iter)
+        << "Error at index "
+        << std::distance(expect_item_may_start.begin(), expect_iter)
         << ", after: " << *iter;
     ++expect_iter;
   }
@@ -1156,7 +1164,7 @@ class LexicalContextTest : public ::testing::Test, public LexicalContext {
     EXPECT_FALSE(InAnyDeclaration());
     EXPECT_FALSE(InAnyDeclarationHeader());
     EXPECT_TRUE(flow_control_stack_.empty());
-    EXPECT_TRUE(keyword_label_tracker_.Done());
+    EXPECT_TRUE(keyword_label_tracker_.ItemMayStart());
     EXPECT_TRUE(balance_stack_.empty());
     EXPECT_TRUE(block_stack_.empty());
     EXPECT_EQ_REASON(ExpectingBodyItemStart(), true, "first token");
@@ -1271,7 +1279,7 @@ TEST_F(LexicalContextTest, ScanEmptyFunctionDeclaration) {
   ExpectTokenSequence({TK_endfunction});
   EXPECT_FALSE(in_function_declaration_);
   EXPECT_FALSE(in_function_body_);
-  EXPECT_EQ_REASON(ExpectingBodyItemStart(), true, "keyword label is in done");
+  EXPECT_EQ_REASON(ExpectingBodyItemStart(), true, "item may start");
   EXPECT_FALSE(ExpectingStatement());
 }
 
@@ -1324,8 +1332,6 @@ TEST_F(LexicalContextTest, ScanFunctionDeclarationEmptyPorts) {
   ExpectTokenSequence({TK_endfunction});
   EXPECT_FALSE(in_function_declaration_);
   EXPECT_FALSE(in_function_body_);
-  EXPECT_EQ_REASON(ExpectingBodyItemStart(), true,
-                   "keyword label is in done state");
   EXPECT_FALSE(ExpectingStatement());
 }
 
@@ -1413,7 +1419,7 @@ TEST_F(LexicalContextTest, ScanFunctionDeclarationWithPorts) {
   ExpectTokenSequence({TK_endfunction});
   EXPECT_FALSE(in_function_declaration_);
   EXPECT_FALSE(in_function_body_);
-  EXPECT_EQ_REASON(ExpectingBodyItemStart(), true, "keyword label is in done");
+  EXPECT_EQ_REASON(ExpectingBodyItemStart(), true, "item may start");
   EXPECT_FALSE(ExpectingStatement());
 }
 
@@ -1478,7 +1484,7 @@ TEST_F(LexicalContextTest, ScanFunctionDeclarationWithRightArrows) {
   EXPECT_TRUE(ExpectingStatement());
 
   ExpectTokenSequence({TK_begin});
-  EXPECT_EQ_REASON(ExpectingBodyItemStart(), true, "keyword label is in done");
+  EXPECT_EQ_REASON(ExpectingBodyItemStart(), true, "item may start");
   EXPECT_TRUE(ExpectingStatement());
 
   ExpectTransformedToken(_TK_RARROW, TK_TRIGGER);
@@ -1795,7 +1801,7 @@ TEST_F(LexicalContextTest, ScanTaskDeclarationWithRightArrows) {
   EXPECT_TRUE(ExpectingStatement());
 
   ExpectTokenSequence({TK_begin});
-  EXPECT_EQ_REASON(ExpectingBodyItemStart(), true, "keyword label is in done");
+  EXPECT_EQ_REASON(ExpectingBodyItemStart(), true, "item may start");
   EXPECT_TRUE(ExpectingStatement());
 
   ExpectTransformedToken(_TK_RARROW, TK_TRIGGER);
@@ -1854,7 +1860,7 @@ TEST_F(LexicalContextTest, ScanTaskDeclarationWithRightArrowsControlLabels) {
 TEST_F(LexicalContextTest, ScanInitialStatementEventTrigger) {
   const char code[] = R"(
   module foo;
-  initial -> x;
+  initial -> x;  // -> should be event trigger
   endmodule
   )";
   Tokenize(code);
@@ -1910,6 +1916,55 @@ TEST_F(LexicalContextTest, AssignmentToLogcalImplicationExpression) {
   ExpectTransformedToken(_TK_RARROW, TK_LOGICAL_IMPLIES);
 
   ExpectTokenSequence({SymbolIdentifier /* x */, ';'});
+  EXPECT_FALSE(in_initial_always_final_construct_);
+
+  ExpectTokenSequence({TK_endmodule});
+  EXPECT_FALSE(in_module_declaration_);
+  EXPECT_FALSE(in_module_body_);
+}
+
+// Test that '->' is correctly interpreted as a logical implication.
+TEST_F(LexicalContextTest, AssignmentToLogcalImplicationExpressionInSeqBlock) {
+  const char code[] = R"(
+  module foo;
+    initial begin
+      a = b -> x;
+    end
+  endmodule
+  )";
+  Tokenize(code);
+  CheckInitialState();
+  EXPECT_EQ(token_refs_.size(), 14);  // including EOF token
+
+  ExpectTokenSequence({TK_module});
+  EXPECT_TRUE(in_module_declaration_);
+  EXPECT_FALSE(in_module_body_);
+
+  ExpectTokenSequence({SymbolIdentifier, ';'});
+  EXPECT_TRUE(in_module_declaration_);
+  EXPECT_TRUE(in_module_body_);
+
+  ExpectTokenSequence({TK_initial});
+  EXPECT_TRUE(ExpectingStatement());
+  EXPECT_EQ_REASON(ExpectingBodyItemStart(), true, "initial");
+  EXPECT_TRUE(in_initial_always_final_construct_);
+
+  ExpectTokenSequence({TK_begin});
+  EXPECT_TRUE(ExpectingStatement());
+  EXPECT_EQ_REASON(ExpectingBodyItemStart(), true, "item may start");
+
+  ExpectTokenSequence({SymbolIdentifier /* a */});
+  ExpectTokenSequence({'='});
+  ExpectTokenSequence({SymbolIdentifier /* b */});
+
+  EXPECT_FALSE(ExpectingStatement());
+  EXPECT_EQ_REASON(ExpectingBodyItemStart(), false, "(default)");
+  ExpectTransformedToken(_TK_RARROW, TK_LOGICAL_IMPLIES);
+
+  ExpectTokenSequence({SymbolIdentifier /* x */, ';'});
+  EXPECT_TRUE(in_initial_always_final_construct_);
+
+  ExpectTokenSequence({TK_end});
   EXPECT_FALSE(in_initial_always_final_construct_);
 
   ExpectTokenSequence({TK_endmodule});
@@ -2105,7 +2160,7 @@ endmodule
   EXPECT_TRUE(in_task_body_);
   ExpectTokenSequence({TK_begin});
   EXPECT_TRUE(in_task_body_);
-  EXPECT_EQ_REASON(ExpectingBodyItemStart(), true, "keyword label is in done");
+  EXPECT_EQ_REASON(ExpectingBodyItemStart(), true, "item may start");
   EXPECT_TRUE(ExpectingStatement());
   ExpectTransformedToken(_TK_RARROW, TK_TRIGGER);
   ExpectTokenSequence({SymbolIdentifier, ';'});
