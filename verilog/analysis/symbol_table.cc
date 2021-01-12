@@ -207,10 +207,10 @@ class SymbolTable::Builder : public TreeContextVisitor {
       case NodeEnum::kPortList:
         DeclarePorts(node);
         break;
-      case NodeEnum::kPortItem:         // fall-through
-                                        // for function/task parameters
-      case NodeEnum::kPortDeclaration:  // fall-through
-      case NodeEnum::kNetDeclaration:   // fall-through
+      case NodeEnum::kPortItem:           // fall-through
+                                          // for function/task parameters
+      case NodeEnum::kPortDeclaration:    // fall-through
+      case NodeEnum::kNetDeclaration:     // fall-through
       case NodeEnum::kStructUnionMember:  // fall-through
       case NodeEnum::kTypeDeclaration:    // fall-through
       case NodeEnum::kDataDeclaration:
@@ -1228,6 +1228,13 @@ absl::Status ReferenceComponent::MatchesMetatype(
         return absl::OkStatus();
       }
       break;
+    case SymbolMetaType::kClass:
+      if (found_metatype == SymbolMetaType::kClass ||
+          found_metatype == SymbolMetaType::kTypeAlias) {
+        // Where a class is expected, a typedef could be accepted.
+        return absl::OkStatus();
+      }
+      break;
     default:
       if (required_metatype == found_metatype) return absl::OkStatus();
       break;
@@ -1329,6 +1336,30 @@ std::ostream& operator<<(std::ostream& stream,
   return stream << *dep_refs.components;
 }
 
+// Follow type aliases through canonical type.
+static const SymbolTableNode* CanonicalizeTypeForMemberLookup(
+    const SymbolTableNode& context) {
+  VLOG(2) << __FUNCTION__;
+  const SymbolTableNode* current_context = &context;
+  do {
+    VLOG(2) << "  -> " << ContextFullPath(*current_context);
+    if (current_context->Value().metatype != SymbolMetaType::kTypeAlias) break;
+    const ReferenceComponentNode* ref_type =
+        current_context->Value().declared_type.user_defined_type;
+    if (ref_type == nullptr) {
+      // Could be a primitive type.
+      return nullptr;
+    }
+    current_context = ref_type->Value().resolved_symbol;
+    // TODO: We haven't guaranteed that typedefs have been resolved in order,
+    // so these will need to be resolved on-demand in the future.
+  } while (current_context != nullptr);
+  // TODO: the return value currently does not distinguish between a failed
+  // resolution of a dependent symbol and a primitive referenced type;
+  // both yield a nullptr.
+  return current_context;
+}
+
 // Search through base class's scopes for a symbol.
 static const SymbolTableNode* LookupSymbolThroughInheritedScopes(
     const SymbolTableNode& context, absl::string_view symbol) {
@@ -1336,14 +1367,23 @@ static const SymbolTableNode* LookupSymbolThroughInheritedScopes(
   do {
     // Look directly in current scope.
     const auto found = current_context->Find(symbol);
-    if (found != current_context->end()) return &found->second;
+    if (found != current_context->end()) {
+      return &found->second;
+    }
     // TODO: lookup imported namespaces and symbols
 
     // Point to next inherited scope.
     const auto* base_type =
         current_context->Value().parent_type.user_defined_type;
     if (base_type == nullptr) break;
-    current_context = base_type->Value().resolved_symbol;
+
+    const SymbolTableNode* resolved_base = base_type->Value().resolved_symbol;
+    // TODO: attempt to resolve on-demand because resolve ordering is not
+    // guaranteed.
+    if (resolved_base == nullptr) return nullptr;
+
+    // base type could be a typedef, so canonicalize
+    current_context = CanonicalizeTypeForMemberLookup(*resolved_base);
   } while (current_context != nullptr);
   return nullptr;  // resolution failed
 }
@@ -1435,11 +1475,24 @@ static void ResolveDirectMember(ReferenceComponent& component,
                                 const SymbolTableNode& context,
                                 std::vector<absl::Status>* diagnostics) {
   VLOG(2) << __FUNCTION__ << ": " << component;
+
+  // Canonicalize context if it an alias.
+  const SymbolTableNode* canonical_context =
+      CanonicalizeTypeForMemberLookup(context);
+  if (canonical_context == nullptr) {
+    // TODO: diagnostic could be improved by following each typedef indirection.
+    diagnostics->push_back(absl::InvalidArgumentError(
+        absl::StrCat("Canonical type of ", ContextFullPath(context),
+                     " does not have any members.")));
+    return;
+  }
+
   const absl::string_view key(component.identifier);
-  const auto* found = LookupSymbolThroughInheritedScopes(context, key);
+  const auto* found =
+      LookupSymbolThroughInheritedScopes(*canonical_context, key);
   if (found == nullptr) {
     diagnostics->emplace_back(
-        DiagnoseMemberSymbolResolutionFailure(key, context));
+        DiagnoseMemberSymbolResolutionFailure(key, *canonical_context));
     return;
   }
 
