@@ -6122,6 +6122,425 @@ TEST(BuildSymbolTableTest, AnonymousStructTypeNestedMemberReference) {
   }
 }
 
+TEST(BuildSymbolTableTest, TypedefPrimitive) {
+  TestVerilogSourceFile src("typedef.sv",
+                            "typedef int number;\n"
+                            "number one = 1;\n");
+  const auto status = src.Parse();
+  ASSERT_TRUE(status.ok()) << status.message();
+  SymbolTable symbol_table(nullptr);
+  const SymbolTableNode& root_symbol(symbol_table.Root());
+
+  const auto build_diagnostics = BuildSymbolTable(src, &symbol_table);
+  EXPECT_EMPTY_STATUSES(build_diagnostics);
+
+  MUST_ASSIGN_LOOKUP_SYMBOL(number_typedef, root_symbol, "number");
+  EXPECT_EQ(number_typedef_info.metatype, SymbolMetaType::kTypeAlias);
+  EXPECT_EQ(number_typedef_info.file_origin, &src);
+
+  MUST_ASSIGN_LOOKUP_SYMBOL(one_var, root_symbol, "one");
+  EXPECT_EQ(one_var_info.metatype, SymbolMetaType::kDataNetVariableInstance);
+  EXPECT_EQ(one_var_info.file_origin, &src);
+
+  // Expect one type reference to "number".
+  ASSIGN_MUST_HAVE_UNIQUE(number_ref,
+                          root_symbol.Value().local_references_to_bind);
+  const ReferenceComponent& number_ref_comp(number_ref.components->Value());
+  EXPECT_EQ(number_ref_comp.identifier, "number");
+  EXPECT_EQ(number_ref_comp.ref_type, ReferenceType::kUnqualified);
+  EXPECT_EQ(number_ref_comp.required_metatype, SymbolMetaType::kUnspecified);
+  EXPECT_EQ(number_ref_comp.resolved_symbol, nullptr);
+
+  EXPECT_EQ(one_var_info.declared_type.user_defined_type,
+            number_ref.components.get());
+
+  {
+    std::vector<absl::Status> resolve_diagnostics;
+    symbol_table.Resolve(&resolve_diagnostics);
+    EXPECT_EMPTY_STATUSES(resolve_diagnostics);
+
+    // Resolve type "number" to the typedef.
+    EXPECT_EQ(number_ref_comp.resolved_symbol, &number_typedef);
+  }
+}
+
+TEST(BuildSymbolTableTest, TypedefClass) {
+  TestVerilogSourceFile src("typedef.sv",
+                            "class cc;\n"
+                            "endclass\n"
+                            "typedef cc number;\n"
+                            "number foo;\n");
+  const auto status = src.Parse();
+  ASSERT_TRUE(status.ok()) << status.message();
+  SymbolTable symbol_table(nullptr);
+  const SymbolTableNode& root_symbol(symbol_table.Root());
+
+  const auto build_diagnostics = BuildSymbolTable(src, &symbol_table);
+  EXPECT_EMPTY_STATUSES(build_diagnostics);
+
+  MUST_ASSIGN_LOOKUP_SYMBOL(cc_class, root_symbol, "cc");
+  EXPECT_EQ(cc_class_info.metatype, SymbolMetaType::kClass);
+  EXPECT_EQ(cc_class_info.file_origin, &src);
+
+  MUST_ASSIGN_LOOKUP_SYMBOL(number_typedef, root_symbol, "number");
+  EXPECT_EQ(number_typedef_info.metatype, SymbolMetaType::kTypeAlias);
+  EXPECT_EQ(number_typedef_info.file_origin, &src);
+
+  MUST_ASSIGN_LOOKUP_SYMBOL(foo_var, root_symbol, "foo");
+  EXPECT_EQ(foo_var_info.metatype, SymbolMetaType::kDataNetVariableInstance);
+  EXPECT_EQ(foo_var_info.file_origin, &src);
+
+  // Expect one type reference to "number", and one to "cc".
+  const auto& ref_map(root_symbol.Value().LocalReferencesMapViewForTesting());
+
+  ASSIGN_MUST_FIND(cc_type_refs, ref_map, "cc");
+  ASSIGN_MUST_HAVE_UNIQUE(cc_type_ref, cc_type_refs);
+  const ReferenceComponent& cc_type_ref_comp(cc_type_ref->components->Value());
+  EXPECT_EQ(cc_type_ref_comp.identifier, "cc");
+  EXPECT_EQ(cc_type_ref_comp.ref_type, ReferenceType::kUnqualified);
+  EXPECT_EQ(cc_type_ref_comp.required_metatype, SymbolMetaType::kUnspecified);
+  EXPECT_EQ(cc_type_ref_comp.resolved_symbol, nullptr);
+
+  ASSIGN_MUST_FIND(number_refs, ref_map, "number");
+  ASSIGN_MUST_HAVE_UNIQUE(number_ref, number_refs);
+  const ReferenceComponent& number_ref_comp(number_ref->components->Value());
+  EXPECT_EQ(number_ref_comp.identifier, "number");
+  EXPECT_EQ(number_ref_comp.ref_type, ReferenceType::kUnqualified);
+  EXPECT_EQ(number_ref_comp.required_metatype, SymbolMetaType::kUnspecified);
+  EXPECT_EQ(number_ref_comp.resolved_symbol, nullptr);
+
+  EXPECT_EQ(foo_var_info.declared_type.user_defined_type,
+            number_ref->components.get());
+
+  {
+    std::vector<absl::Status> resolve_diagnostics;
+    symbol_table.Resolve(&resolve_diagnostics);
+    EXPECT_EMPTY_STATUSES(resolve_diagnostics);
+
+    EXPECT_EQ(cc_type_ref_comp.resolved_symbol, &cc_class);
+    EXPECT_EQ(number_ref_comp.resolved_symbol, &number_typedef);
+  }
+}
+
+TEST(BuildSymbolTableTest, TypedefClassPackageQualified) {
+  TestVerilogSourceFile src("typedef.sv",
+                            "package pp;\n"
+                            "  class cc;\n"
+                            "  endclass\n"
+                            "endpackage\n"
+                            "typedef pp::cc number;\n"
+                            "number foo;\n");
+  const auto status = src.Parse();
+  ASSERT_TRUE(status.ok()) << status.message();
+  SymbolTable symbol_table(nullptr);
+  const SymbolTableNode& root_symbol(symbol_table.Root());
+
+  const auto build_diagnostics = BuildSymbolTable(src, &symbol_table);
+  EXPECT_EMPTY_STATUSES(build_diagnostics);
+
+  MUST_ASSIGN_LOOKUP_SYMBOL(pp_package, root_symbol, "pp");
+  EXPECT_EQ(pp_package_info.metatype, SymbolMetaType::kPackage);
+  EXPECT_EQ(pp_package_info.file_origin, &src);
+
+  MUST_ASSIGN_LOOKUP_SYMBOL(cc_class, pp_package, "cc");
+  EXPECT_EQ(cc_class_info.metatype, SymbolMetaType::kClass);
+  EXPECT_EQ(cc_class_info.file_origin, &src);
+
+  MUST_ASSIGN_LOOKUP_SYMBOL(number_typedef, root_symbol, "number");
+  EXPECT_EQ(number_typedef_info.metatype, SymbolMetaType::kTypeAlias);
+  EXPECT_EQ(number_typedef_info.file_origin, &src);
+
+  MUST_ASSIGN_LOOKUP_SYMBOL(foo_var, root_symbol, "foo");
+  EXPECT_EQ(foo_var_info.metatype, SymbolMetaType::kDataNetVariableInstance);
+  EXPECT_EQ(foo_var_info.file_origin, &src);
+
+  const auto& ref_map(root_symbol.Value().LocalReferencesMapViewForTesting());
+
+  // Expect one type reference to "pp::cc".
+  ASSIGN_MUST_FIND(pp_type_refs, ref_map, "pp");
+  ASSIGN_MUST_HAVE_UNIQUE(pp_type_ref, pp_type_refs);
+  const ReferenceComponent& pp_type_ref_comp(pp_type_ref->components->Value());
+  EXPECT_EQ(pp_type_ref_comp.identifier, "pp");
+  EXPECT_EQ(pp_type_ref_comp.ref_type, ReferenceType::kUnqualified);
+  EXPECT_EQ(pp_type_ref_comp.required_metatype, SymbolMetaType::kUnspecified);
+  EXPECT_EQ(pp_type_ref_comp.resolved_symbol, nullptr);
+
+  ASSIGN_MUST_HAVE_UNIQUE(cc_type_ref, pp_type_ref->components->Children());
+  const ReferenceComponent& cc_type_ref_comp(cc_type_ref.Value());
+  EXPECT_EQ(cc_type_ref_comp.identifier, "cc");
+  EXPECT_EQ(cc_type_ref_comp.ref_type, ReferenceType::kDirectMember);
+  EXPECT_EQ(cc_type_ref_comp.required_metatype, SymbolMetaType::kUnspecified);
+  EXPECT_EQ(cc_type_ref_comp.resolved_symbol, nullptr);
+
+  // Expect one type reference to "number".
+  ASSIGN_MUST_FIND(number_refs, ref_map, "number");
+  ASSIGN_MUST_HAVE_UNIQUE(number_ref, number_refs);
+  const ReferenceComponent& number_ref_comp(number_ref->components->Value());
+  EXPECT_EQ(number_ref_comp.identifier, "number");
+  EXPECT_EQ(number_ref_comp.ref_type, ReferenceType::kUnqualified);
+  EXPECT_EQ(number_ref_comp.required_metatype, SymbolMetaType::kUnspecified);
+  EXPECT_EQ(number_ref_comp.resolved_symbol, nullptr);
+
+  EXPECT_EQ(foo_var_info.declared_type.user_defined_type,
+            number_ref->components.get());
+
+  {
+    std::vector<absl::Status> resolve_diagnostics;
+    symbol_table.Resolve(&resolve_diagnostics);
+    EXPECT_EMPTY_STATUSES(resolve_diagnostics);
+
+    EXPECT_EQ(pp_type_ref_comp.resolved_symbol, &pp_package);
+    EXPECT_EQ(cc_type_ref_comp.resolved_symbol, &cc_class);
+    EXPECT_EQ(number_ref_comp.resolved_symbol, &number_typedef);
+  }
+}
+
+TEST(BuildSymbolTableTest, TypedefOfClassTypeParameter) {
+  TestVerilogSourceFile src("typedef.sv",
+                            "class cc #(parameter type T = int);\n"
+                            "  typedef T number;\n"
+                            "  number foo;\n"
+                            "endclass\n");
+  const auto status = src.Parse();
+  ASSERT_TRUE(status.ok()) << status.message();
+  SymbolTable symbol_table(nullptr);
+  const SymbolTableNode& root_symbol(symbol_table.Root());
+
+  const auto build_diagnostics = BuildSymbolTable(src, &symbol_table);
+  EXPECT_EMPTY_STATUSES(build_diagnostics);
+
+  MUST_ASSIGN_LOOKUP_SYMBOL(cc_class, root_symbol, "cc");
+  EXPECT_EQ(cc_class_info.metatype, SymbolMetaType::kClass);
+  EXPECT_EQ(cc_class_info.file_origin, &src);
+
+  MUST_ASSIGN_LOOKUP_SYMBOL(t_type_param, cc_class, "T");
+  EXPECT_EQ(t_type_param_info.metatype, SymbolMetaType::kParameter);
+  EXPECT_EQ(t_type_param_info.file_origin, &src);
+
+  MUST_ASSIGN_LOOKUP_SYMBOL(number_typedef, cc_class, "number");
+  EXPECT_EQ(number_typedef_info.metatype, SymbolMetaType::kTypeAlias);
+  EXPECT_EQ(number_typedef_info.file_origin, &src);
+
+  MUST_ASSIGN_LOOKUP_SYMBOL(foo_var, cc_class, "foo");
+  EXPECT_EQ(foo_var_info.metatype, SymbolMetaType::kDataNetVariableInstance);
+  EXPECT_EQ(foo_var_info.file_origin, &src);
+
+  // Expect one type reference to "number", and one to "T".
+  const auto& ref_map(cc_class_info.LocalReferencesMapViewForTesting());
+
+  ASSIGN_MUST_FIND(t_type_refs, ref_map, "T");
+  ASSIGN_MUST_HAVE_UNIQUE(t_type_ref, t_type_refs);
+  const ReferenceComponent& t_type_ref_comp(t_type_ref->components->Value());
+  EXPECT_EQ(t_type_ref_comp.identifier, "T");
+  EXPECT_EQ(t_type_ref_comp.ref_type, ReferenceType::kUnqualified);
+  EXPECT_EQ(t_type_ref_comp.required_metatype, SymbolMetaType::kUnspecified);
+  EXPECT_EQ(t_type_ref_comp.resolved_symbol, nullptr);
+
+  ASSIGN_MUST_FIND(number_refs, ref_map, "number");
+  ASSIGN_MUST_HAVE_UNIQUE(number_ref, number_refs);
+  const ReferenceComponent& number_ref_comp(number_ref->components->Value());
+  EXPECT_EQ(number_ref_comp.identifier, "number");
+  EXPECT_EQ(number_ref_comp.ref_type, ReferenceType::kUnqualified);
+  EXPECT_EQ(number_ref_comp.required_metatype, SymbolMetaType::kUnspecified);
+  EXPECT_EQ(number_ref_comp.resolved_symbol, nullptr);
+
+  EXPECT_EQ(foo_var_info.declared_type.user_defined_type,
+            number_ref->components.get());
+
+  {
+    std::vector<absl::Status> resolve_diagnostics;
+    symbol_table.Resolve(&resolve_diagnostics);
+    EXPECT_EMPTY_STATUSES(resolve_diagnostics);
+
+    // "number" is type-aliased to "T"
+    EXPECT_EQ(t_type_ref_comp.resolved_symbol, &t_type_param);
+    EXPECT_EQ(number_ref_comp.resolved_symbol, &number_typedef);
+  }
+}
+
+TEST(BuildSymbolTableTest, TypedefOfParameterizedClassPositionalParams) {
+  TestVerilogSourceFile src("typedef.sv",
+                            "package pp;\n"
+                            "  class cc #(parameter type T = int);\n"
+                            "  endclass\n"
+                            "endpackage\n"
+                            "typedef pp::cc#(pp::cc#(int)) number;\n"
+                            "number foo;\n");
+  const auto status = src.Parse();
+  ASSERT_TRUE(status.ok()) << status.message();
+  SymbolTable symbol_table(nullptr);
+  const SymbolTableNode& root_symbol(symbol_table.Root());
+
+  const auto build_diagnostics = BuildSymbolTable(src, &symbol_table);
+  EXPECT_EMPTY_STATUSES(build_diagnostics);
+
+  MUST_ASSIGN_LOOKUP_SYMBOL(pp_package, root_symbol, "pp");
+  EXPECT_EQ(pp_package_info.metatype, SymbolMetaType::kPackage);
+  EXPECT_EQ(pp_package_info.file_origin, &src);
+
+  MUST_ASSIGN_LOOKUP_SYMBOL(cc_class, pp_package, "cc");
+  EXPECT_EQ(cc_class_info.metatype, SymbolMetaType::kClass);
+  EXPECT_EQ(cc_class_info.file_origin, &src);
+
+  MUST_ASSIGN_LOOKUP_SYMBOL(t_type_param, cc_class, "T");
+  EXPECT_EQ(t_type_param_info.metatype, SymbolMetaType::kParameter);
+  EXPECT_EQ(t_type_param_info.file_origin, &src);
+
+  MUST_ASSIGN_LOOKUP_SYMBOL(number_typedef, root_symbol, "number");
+  EXPECT_EQ(number_typedef_info.metatype, SymbolMetaType::kTypeAlias);
+  EXPECT_EQ(number_typedef_info.file_origin, &src);
+
+  MUST_ASSIGN_LOOKUP_SYMBOL(foo_var, root_symbol, "foo");
+  EXPECT_EQ(foo_var_info.metatype, SymbolMetaType::kDataNetVariableInstance);
+  EXPECT_EQ(foo_var_info.file_origin, &src);
+
+  const auto& ref_map(root_symbol.Value().LocalReferencesMapViewForTesting());
+  // Expect one type reference to "number".
+  ASSIGN_MUST_FIND(number_refs, ref_map, "number");
+  ASSIGN_MUST_HAVE_UNIQUE(number_ref, number_refs);
+  const ReferenceComponent& number_ref_comp(number_ref->components->Value());
+  EXPECT_EQ(number_ref_comp.identifier, "number");
+  EXPECT_EQ(number_ref_comp.ref_type, ReferenceType::kUnqualified);
+  EXPECT_EQ(number_ref_comp.required_metatype, SymbolMetaType::kUnspecified);
+  EXPECT_EQ(number_ref_comp.resolved_symbol, nullptr);
+
+  // Expect two type references to "pp::cc".
+  ASSIGN_MUST_FIND(pp_refs, ref_map, "pp");
+  EXPECT_EQ(pp_refs.size(), 2);
+  for (const auto& pp_ref_iter : pp_refs) {
+    const ReferenceComponent& pp_ref_comp(pp_ref_iter->components->Value());
+    EXPECT_EQ(pp_ref_comp.identifier, "pp");
+    EXPECT_EQ(pp_ref_comp.ref_type, ReferenceType::kUnqualified);
+    EXPECT_EQ(pp_ref_comp.required_metatype, SymbolMetaType::kUnspecified);
+    EXPECT_EQ(pp_ref_comp.resolved_symbol, nullptr);
+
+    ASSIGN_MUST_HAVE_UNIQUE(cc_ref, pp_ref_iter->components->Children());
+    const ReferenceComponent& cc_ref_comp(cc_ref.Value());
+    EXPECT_EQ(cc_ref_comp.identifier, "cc");
+    EXPECT_EQ(cc_ref_comp.ref_type, ReferenceType::kDirectMember);
+    EXPECT_EQ(cc_ref_comp.required_metatype, SymbolMetaType::kUnspecified);
+    EXPECT_EQ(cc_ref_comp.resolved_symbol, nullptr);
+  }
+
+  EXPECT_EQ(foo_var_info.declared_type.user_defined_type,
+            number_ref->components.get());
+
+  {
+    std::vector<absl::Status> resolve_diagnostics;
+    symbol_table.Resolve(&resolve_diagnostics);
+    EXPECT_EMPTY_STATUSES(resolve_diagnostics);
+
+    // Resolve "pp::cc" type references
+    for (const auto& pp_ref_iter : pp_refs) {
+      const ReferenceComponent& pp_ref_comp(pp_ref_iter->components->Value());
+      EXPECT_EQ(pp_ref_comp.resolved_symbol, &pp_package);
+
+      ASSIGN_MUST_HAVE_UNIQUE(cc_ref, pp_ref_iter->components->Children());
+      const ReferenceComponent& cc_ref_comp(cc_ref.Value());
+      EXPECT_EQ(cc_ref_comp.resolved_symbol, &cc_class);
+    }
+    // Resolve "number" type reference.
+    EXPECT_EQ(number_ref_comp.resolved_symbol, &number_typedef);
+  }
+}
+
+TEST(BuildSymbolTableTest, TypedefOfParameterizedClassNamedParams) {
+  TestVerilogSourceFile src("typedef.sv",
+                            "package pp;\n"
+                            "  class cc #(parameter type T = int);\n"
+                            "  endclass\n"
+                            "endpackage\n"
+                            "typedef pp::cc#(.T(pp::cc#(.T(int)))) number;\n"
+                            "number foo;\n");
+  const auto status = src.Parse();
+  ASSERT_TRUE(status.ok()) << status.message();
+  SymbolTable symbol_table(nullptr);
+  const SymbolTableNode& root_symbol(symbol_table.Root());
+
+  const auto build_diagnostics = BuildSymbolTable(src, &symbol_table);
+  EXPECT_EMPTY_STATUSES(build_diagnostics);
+
+  MUST_ASSIGN_LOOKUP_SYMBOL(pp_package, root_symbol, "pp");
+  EXPECT_EQ(pp_package_info.metatype, SymbolMetaType::kPackage);
+  EXPECT_EQ(pp_package_info.file_origin, &src);
+
+  MUST_ASSIGN_LOOKUP_SYMBOL(cc_class, pp_package, "cc");
+  EXPECT_EQ(cc_class_info.metatype, SymbolMetaType::kClass);
+  EXPECT_EQ(cc_class_info.file_origin, &src);
+
+  MUST_ASSIGN_LOOKUP_SYMBOL(t_type_param, cc_class, "T");
+  EXPECT_EQ(t_type_param_info.metatype, SymbolMetaType::kParameter);
+  EXPECT_EQ(t_type_param_info.file_origin, &src);
+
+  MUST_ASSIGN_LOOKUP_SYMBOL(number_typedef, root_symbol, "number");
+  EXPECT_EQ(number_typedef_info.metatype, SymbolMetaType::kTypeAlias);
+  EXPECT_EQ(number_typedef_info.file_origin, &src);
+
+  MUST_ASSIGN_LOOKUP_SYMBOL(foo_var, root_symbol, "foo");
+  EXPECT_EQ(foo_var_info.metatype, SymbolMetaType::kDataNetVariableInstance);
+  EXPECT_EQ(foo_var_info.file_origin, &src);
+
+  const auto& ref_map(root_symbol.Value().LocalReferencesMapViewForTesting());
+  // Expect one type reference to "number".
+  ASSIGN_MUST_FIND(number_refs, ref_map, "number");
+  ASSIGN_MUST_HAVE_UNIQUE(number_ref, number_refs);
+  const ReferenceComponent& number_ref_comp(number_ref->components->Value());
+  EXPECT_EQ(number_ref_comp.identifier, "number");
+  EXPECT_EQ(number_ref_comp.ref_type, ReferenceType::kUnqualified);
+  EXPECT_EQ(number_ref_comp.required_metatype, SymbolMetaType::kUnspecified);
+  EXPECT_EQ(number_ref_comp.resolved_symbol, nullptr);
+
+  // Expect two type references to "pp::cc#(.T(...))".
+  ASSIGN_MUST_FIND(pp_refs, ref_map, "pp");
+  EXPECT_EQ(pp_refs.size(), 2);
+  for (const auto& pp_ref_iter : pp_refs) {
+    const ReferenceComponent& pp_ref_comp(pp_ref_iter->components->Value());
+    EXPECT_EQ(pp_ref_comp.identifier, "pp");
+    EXPECT_EQ(pp_ref_comp.ref_type, ReferenceType::kUnqualified);
+    EXPECT_EQ(pp_ref_comp.required_metatype, SymbolMetaType::kUnspecified);
+    EXPECT_EQ(pp_ref_comp.resolved_symbol, nullptr);
+
+    ASSIGN_MUST_HAVE_UNIQUE(cc_ref, pp_ref_iter->components->Children());
+    const ReferenceComponent& cc_ref_comp(cc_ref.Value());
+    EXPECT_EQ(cc_ref_comp.identifier, "cc");
+    EXPECT_EQ(cc_ref_comp.ref_type, ReferenceType::kDirectMember);
+    EXPECT_EQ(cc_ref_comp.required_metatype, SymbolMetaType::kUnspecified);
+    EXPECT_EQ(cc_ref_comp.resolved_symbol, nullptr);
+
+    ASSIGN_MUST_HAVE_UNIQUE(t_param_ref, cc_ref.Children());
+    const ReferenceComponent& t_param_ref_comp(t_param_ref.Value());
+    EXPECT_EQ(t_param_ref_comp.identifier, "T");
+    EXPECT_EQ(t_param_ref_comp.ref_type, ReferenceType::kDirectMember);
+    EXPECT_EQ(t_param_ref_comp.required_metatype, SymbolMetaType::kParameter);
+    EXPECT_EQ(t_param_ref_comp.resolved_symbol, nullptr);
+  }
+
+  EXPECT_EQ(foo_var_info.declared_type.user_defined_type,
+            number_ref->components.get());
+
+  {
+    std::vector<absl::Status> resolve_diagnostics;
+    symbol_table.Resolve(&resolve_diagnostics);
+    EXPECT_EMPTY_STATUSES(resolve_diagnostics);
+
+    // Resolve "pp::cc#(.T(...))" type references
+    for (const auto& pp_ref_iter : pp_refs) {
+      const ReferenceComponent& pp_ref_comp(pp_ref_iter->components->Value());
+      EXPECT_EQ(pp_ref_comp.resolved_symbol, &pp_package);
+
+      ASSIGN_MUST_HAVE_UNIQUE(cc_ref, pp_ref_iter->components->Children());
+      const ReferenceComponent& cc_ref_comp(cc_ref.Value());
+      EXPECT_EQ(cc_ref_comp.resolved_symbol, &cc_class);
+
+      ASSIGN_MUST_HAVE_UNIQUE(t_param_ref, cc_ref.Children());
+      const ReferenceComponent& t_param_ref_comp(t_param_ref.Value());
+      EXPECT_EQ(t_param_ref_comp.resolved_symbol, &t_type_param);
+    }
+    // Resolve "number" type reference.
+    EXPECT_EQ(number_ref_comp.resolved_symbol, &number_typedef);
+  }
+}
+
 static bool SourceFileLess(const TestVerilogSourceFile* left,
                            const TestVerilogSourceFile* right) {
   return left->ReferencedPath() < right->ReferencedPath();

@@ -49,7 +49,7 @@ enum class SymbolMetaType {
   kGenerate,  // loop or conditional generate block
   kPackage,
   kParameter,
-  kTypeAlias,
+  kTypeAlias,  // typedef
   kDataNetVariableInstance,
   kFunction,
   kTask,
@@ -284,7 +284,8 @@ struct SymbolInfo {
   const verible::Symbol* syntax_origin = nullptr;
 
   // What is the type associated with this symbol?
-  // Only applicable to typed elements: variables, nets, instances, etc.
+  // Only applicable to typed elements: variables, nets, instances,
+  // typedefs, etc.
   // This is only set after resolving type references.
   DeclarationTypeInfo declared_type;
 

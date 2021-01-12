@@ -212,6 +212,7 @@ class SymbolTable::Builder : public TreeContextVisitor {
       case NodeEnum::kPortDeclaration:  // fall-through
       case NodeEnum::kNetDeclaration:   // fall-through
       case NodeEnum::kStructUnionMember:  // fall-through
+      case NodeEnum::kTypeDeclaration:    // fall-through
       case NodeEnum::kDataDeclaration:
         DeclareData(node);
         break;
@@ -548,6 +549,12 @@ class SymbolTable::Builder : public TreeContextVisitor {
     // In DeclareInstance(), we already planted a self-reference that is
     // resolved to the instance being declared.
     if (Context().DirectParentIs(NodeEnum::kGateInstance)) return;
+
+    if (Context().DirectParentIs(NodeEnum::kTypeDeclaration)) {
+      // This identifier declares a type alias (typedef).
+      EmplaceTypedElementInCurrentScope(leaf, text, SymbolMetaType::kTypeAlias);
+      return;
+    }
 
     // Capture only referencing identifiers, omit declarative identifiers.
     // This is set up when traversing references, e.g. types, expressions.
