@@ -14,6 +14,8 @@
 
 #include "common/text/token_info_json.h"
 
+#include <memory>
+
 #include "gtest/gtest.h"
 
 #include "common/text/token_info.h"

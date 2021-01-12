@@ -14,6 +14,8 @@
 
 #include "verilog/CST/verilog_tree_json.h"
 
+#include <memory>
+
 #include "gtest/gtest.h"
 #include "absl/strings/string_view.h"
 #include "verilog/analysis/verilog_analyzer.h"
