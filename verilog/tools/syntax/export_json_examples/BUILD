@@ -1,10 +1,12 @@
 load("@rules_python//python:defs.bzl", "py_test", "py_library")
+load("@pip//:requirements.bzl", "requirement")
 
 py_library(
     name = "verible_verilog_syntax_py",
     srcs = ["verible_verilog_syntax.py"],
     srcs_version = "PY3",
     data = ["//verilog/tools/syntax:verible-verilog-syntax"],
+    deps = [requirement("anytree")],
 )
 
 py_test(
