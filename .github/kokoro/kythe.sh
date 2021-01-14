@@ -41,6 +41,8 @@ which wget
 which unzip
 which tar
 which "$BAZEL" && "$BAZEL" version
+which gcc && gcc -v
+which g++ && g++ -v
 echo "... done."
 
 cd "${TMPDIR}"
@@ -85,35 +87,7 @@ cd "${KOKORO_ARTIFACTS_DIR}/github/verible"
 # or: "$BAZEL" clean
 rm -rf "$HOME/.cache/bazel"
 
-# TODO(hzeller): bazelisk section looks dead/unused.
-# Clean-up in favor of installing a versioned release,
-# like in steps/hostsetup.sh.
-#
-# https://github.com/bazelbuild/bazelisk
-# Downloads bazelisk to ~/bin as `bazel`.
-function set_bazel_outdir {
-  mkdir -p /tmpfs/bazel_output
-  export TEST_TMPDIR=/tmpfs/bazel_output
-}
-
-function install_bazelisk {
-  date
-  case "$(uname -s)" in
-    Darwin) local name=bazelisk-darwin-amd64 ;;
-    Linux)  local name=bazelisk-linux-amd64  ;;
-    *) die "Unknown OS: $(uname -s)" ;;
-  esac
-  mkdir -p "$HOME/bin"
-  wget --no-verbose -O "$HOME/bin/bazel" \
-      "https://github.com/bazelbuild/bazelisk/releases/download/v1.3.0/$name"
-  chmod u+x "$HOME/bin/bazel"
-  if [[ ! ":$PATH:" =~ :"$HOME"/bin/?: ]]; then
-    PATH="$HOME/bin:$PATH"
-  fi
-  set_bazel_outdir
-  date
-}
-
+# Testing
 # Create the kythe output directory
 KYTHE_OUTPUT_DIRECTORY="${KOKORO_ARTIFACTS_DIR}/kythe_output"
 mkdir -p "${KYTHE_OUTPUT_DIRECTORY}"
