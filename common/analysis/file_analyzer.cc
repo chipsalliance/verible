@@ -47,10 +47,6 @@ static const char* AnalysisPhaseName(const AnalysisPhase& phase) {
   }
 }
 
-static std::string GetHelpTopicUrl(absl::string_view topic) {
-  return "https://github.com/google/verible";
-}
-
 std::ostream& operator<<(std::ostream& stream, const AnalysisPhase& phase) {
   return stream << AnalysisPhaseName(phase);
 }
@@ -147,14 +143,12 @@ std::string FileAnalyzer::LinterTokenErrorMessage(
   if (!error_token.token_info.isEOF()) {
     const auto left = line_column_map(error_token.token_info.left(base_text));
     output_stream << left << ": " << error_token.phase << " error, rejected \""
-                  << error_token.token_info.text() << "\" ("
-                  << GetHelpTopicUrl("syntax-error") << ").";
+                  << error_token.token_info.text() << "\" (syntax-error).";
   } else {
     const int file_size = base_text.length();
     const auto end = line_column_map(file_size);
     output_stream << end << ": " << error_token.phase
-                  << " error (unexpected EOF) ("
-                  << GetHelpTopicUrl("syntax-error") << ").";
+                  << " error (unexpected EOF) (syntax-error).";
   }
   // TODO(b/63893567): Explain syntax errors by inspecting state stack.
   if (!error_token.explanation.empty()) {

@@ -30,8 +30,8 @@ syntax_checker="$1"
 
 echo "=== Testing executable: $syntax_checker"
 
-function strip_link() {
-  sed -e 's| (go''/.*||' -e 's| (http.*||'
+function strip_error() {
+  sed -e 's| (syntax-error).||'
 }
 
 ################################################################################
@@ -83,7 +83,7 @@ status="$?"
   exit 1
 }
 
-strip_link < "$MY_OUTPUT_FILE" > "$MY_OUTPUT_FILE".filtered
+strip_error < "$MY_OUTPUT_FILE" > "$MY_OUTPUT_FILE".filtered
 
 cat > "$MY_EXPECT_FILE" <<EOF
 -:1:8: syntax error, rejected "1"
@@ -110,7 +110,7 @@ status="$?"
   exit 1
 }
 
-strip_link < "$MY_OUTPUT_FILE" > "$MY_OUTPUT_FILE".filtered
+strip_error < "$MY_OUTPUT_FILE" > "$MY_OUTPUT_FILE".filtered
 
 cat > "$MY_EXPECT_FILE" <<EOF
 -:1:8: syntax error, rejected "1"
