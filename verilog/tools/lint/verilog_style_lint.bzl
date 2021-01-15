@@ -274,7 +274,6 @@ def _package_style_lint_test(
     )
 
 # Load these modules to access public functions as its members.
-
 verilog_syntax = struct(
     test = _syntax_test,
 )
