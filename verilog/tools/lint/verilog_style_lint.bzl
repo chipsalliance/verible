@@ -53,8 +53,10 @@ def has_verilog_extension(filename):
             return True
     return False
 
-_style_lint_fail_message = ("Expected clean report but found style diagnostics." +
-                            "")
+_style_lint_fail_message = """
+Expected clean report but found style diagnostics.
+To proceed, fix or waive violation.
+"""
 
 _syntax_test_attrs = {
     "expect_fail": attr.bool(),
