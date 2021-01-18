@@ -43,7 +43,7 @@ TEST(UndersizedBinaryLiteralTest, FunctionFailures) {
       {"localparam x = 3'b", {kToken, "00"}, ";"},  // only 2 0s for 3 bits
       {"localparam x = 32'b0;"},                    // exception granted for 0
       {"localparam x = 2'b", {kToken, "1"}, ";"},
-      {"localparam x = 2'b", {kToken, "?"}, ";"},
+      {"localparam x = 2'b?;"},                     // exception granted for ?
       {"localparam x = 2'b", {kToken, "x"}, ";"},
       {"localparam x = 2'b", {kToken, "z"}, ";"},
       {"localparam x = 2'b ", {kToken, "1"}, ";"},    // with space after base
@@ -62,6 +62,9 @@ TEST(UndersizedBinaryLiteralTest, FunctionFailures) {
       {"localparam x = 0 + 2'b", {kToken, "1"}, ";"},
       {"localparam x = 3'b", {kToken, "10"}, " + 3'b", {kToken, "1"}, ";"},
       {"localparam x = 2'b ", {kToken, "x"}, " & 2'b ", {kToken, "1"}, ";"},
+      {"localparam x = 5'b?????;"},
+      {"localparam x = 5'b?;"},                    // exception granted for ?
+      {"localparam x = 5'b", {kToken, "??"}, ";"}, // only 2 ?s for 5 bits
   };
 
   RunLintTestCases<VerilogAnalyzer, UndersizedBinaryLiteralRule>(kTestCases);
