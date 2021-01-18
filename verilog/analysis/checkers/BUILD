@@ -40,6 +40,7 @@ cc_library(
         ":legacy_generate_region_rule",
         ":line_length_rule",
         ":macro_name_style_rule",
+        ":macro_string_concatenation_rule",
         ":mismatched_labels_rule",
         ":module_begin_block_rule",
         ":module_filename_rule",
@@ -1430,6 +1431,39 @@ cc_test(
     srcs = ["macro_name_style_rule_test.cc"],
     deps = [
         ":macro_name_style_rule",
+        "//common/analysis:linter_test_utils",
+        "//common/analysis:token_stream_linter_test_utils",
+        "//common/text:symbol",
+        "//verilog/analysis:verilog_analyzer",
+        "//verilog/parser:verilog_token_enum",
+        "@com_google_googletest//:gtest_main",
+    ],
+)
+
+cc_library(
+    name = "macro_string_concatenation_rule",
+    srcs = ["macro_string_concatenation_rule.cc"],
+    hdrs = ["macro_string_concatenation_rule.h"],
+    deps = [
+        "//common/analysis:citation",
+        "//common/analysis:lint_rule_status",
+        "//common/analysis:token_stream_lint_rule",
+        "//common/text:token_info",
+        "//verilog/analysis:descriptions",
+        "//verilog/analysis:lint_rule_registry",
+        "//verilog/parser:verilog_lexer",
+        "//verilog/parser:verilog_token_classifications",
+        "//verilog/parser:verilog_token_enum",
+        "@com_google_absl//absl/strings",
+    ],
+    alwayslink = 1,
+)
+
+cc_test(
+    name = "macro_string_concatenation_rule_test",
+    srcs = ["macro_string_concatenation_rule_test.cc"],
+    deps = [
+        ":macro_string_concatenation_rule",
         "//common/analysis:linter_test_utils",
         "//common/analysis:token_stream_linter_test_utils",
         "//common/text:symbol",

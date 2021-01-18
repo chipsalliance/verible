@@ -38,6 +38,7 @@ _linter_test_configs = [
     ("legacy-genvar-declaration", "legacy_genvar_declaration", False),
     ("legacy-generate-region", "legacy_generate_region", False),
     ("macro-name-style", "macro_name_style", True),
+    ("macro-string-concatenation", "macro_string_concatenation", False),
     ("mismatched-labels", "mismatched_labels", False),
     ("module-begin-block", "module_begin_block", True),
     ("module-filename", "module_filename", True),
