@@ -33,6 +33,7 @@ constexpr const char* kDefaultRuleSet[] = {
     "generate-label",
     "generate-label-prefix",
     "always-comb",
+    "disable-statement",
     "v2001-generate-begin",
     "forbidden-macro",
     "create-object-name-match",
