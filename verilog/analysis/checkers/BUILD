@@ -1804,6 +1804,7 @@ cc_library(
         "//common/analysis/matcher",
         "//common/analysis/matcher:bound_symbol_manager",
         "//common/strings:naming_utils",
+        "//common/text:config_utils",
         "//common/text:symbol",
         "//common/text:syntax_tree_context",
         "//verilog/CST:type",

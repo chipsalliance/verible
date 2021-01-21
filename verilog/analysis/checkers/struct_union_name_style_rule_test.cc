@@ -29,7 +29,16 @@ namespace analysis {
 namespace {
 
 using verible::LintTestCase;
+using verible::RunConfiguredLintTestCases;
 using verible::RunLintTestCases;
+
+TEST(StructUnionNameStyleRuleTest, Configuration) {
+  StructUnionNameStyleRule rule;
+  absl::Status status;
+  EXPECT_TRUE((status = rule.Configure("")).ok()) << status.message();
+  EXPECT_TRUE((status = rule.Configure("exceptions:12B,121GW")).ok())
+      << status.message();
+}
 
 TEST(StructUnionNameStyleRuleTest, ValidStructNames) {
   const std::initializer_list<LintTestCase> kTestCases = {
@@ -42,6 +51,39 @@ TEST(StructUnionNameStyleRuleTest, ValidStructNames) {
       {"typedef struct {logic foo; logic bar;} b_a_z_t;"},
   };
   RunLintTestCases<VerilogAnalyzer, StructUnionNameStyleRule>(kTestCases);
+}
+
+TEST(StructUnionNameStyleRuleTestConfigured, ValidStructNames) {
+  const absl::string_view exceptions = "exceptions:12B,11GB,14kJ";
+  const std::initializer_list<LintTestCase> kTestCases = {
+      {""},
+      {"typedef struct baz_t;"},
+      {"typedef struct good_name_t;"},
+      {"typedef struct b_a_z_t;"},
+      {"typedef struct {logic foo; logic bar;} baz_12B_t;"},
+      {"typedef struct {logic foo; logic bar;} good_14kJ_name_t;"},
+      {"typedef struct {logic foo; logic bar;} b_a_11GB_z_t;"},
+  };
+  RunConfiguredLintTestCases<VerilogAnalyzer, StructUnionNameStyleRule>(
+      kTestCases, exceptions);
+}
+
+TEST(StructUnionNameStyleRuleTestConfigured, InvalidStructNames) {
+  const absl::string_view exceptions = "exceptions:12b,11,14Kj";
+  constexpr int kToken = SymbolIdentifier;
+  const std::initializer_list<LintTestCase> kTestCases = {
+      {""},
+      {"typedef struct baz_t;"},
+      {"typedef struct good_name_t;"},
+      {"typedef struct b_a_z_t;"},
+      {"typedef struct {logic foo; logic bar;}", {kToken, "baz_12B_t"}, ";"},
+      {"typedef struct {logic foo; logic bar;}",
+       {kToken, "good_14kJ_name_t"},
+       ";"},
+      {"typedef struct {logic foo; logic bar;}", {kToken, "b_a_11GB_z_t"}, ";"},
+  };
+  RunConfiguredLintTestCases<VerilogAnalyzer, StructUnionNameStyleRule>(
+      kTestCases, exceptions);
 }
 
 TEST(StructUnionNameStyleRuleTest, InvalidStructNames) {
@@ -90,6 +132,21 @@ TEST(StructUnionNameStyleRuleTest, ValidUnionNames) {
   RunLintTestCases<VerilogAnalyzer, StructUnionNameStyleRule>(kTestCases);
 }
 
+TEST(StructUnionNameStyleRuleTestConfigured, ValidUnionNames) {
+  const absl::string_view exceptions = "exceptions:12B,11GB,14kJ";
+  const std::initializer_list<LintTestCase> kTestCases = {
+      {""},
+      {"typedef union baz_t;"},
+      {"typedef union good_name_t;"},
+      {"typedef union b_a_z_t;"},
+      {"typedef union {logic foo; logic bar;} baz_12B_t;"},
+      {"typedef union {logic foo; logic bar;} good_14kJ_name_t;"},
+      {"typedef union {logic foo; logic bar;} b_a_11GB_z_t;"},
+  };
+  RunConfiguredLintTestCases<VerilogAnalyzer, StructUnionNameStyleRule>(
+      kTestCases, exceptions);
+}
+
 TEST(StructUnionNameStyleRuleTest, InvalidUnionNames) {
   constexpr int kToken = SymbolIdentifier;
   const std::initializer_list<LintTestCase> kTestCases = {
@@ -123,6 +180,24 @@ TEST(StructUnionNameStyleRuleTest, InvalidUnionNames) {
       {"typedef union {logic [8:0] foo; int bar;} ", {kToken, "foo_"}, ";"},
   };
   RunLintTestCases<VerilogAnalyzer, StructUnionNameStyleRule>(kTestCases);
+}
+
+TEST(StructUnionNameStyleRuleTestConfigured, InvalidUnionNames) {
+  const absl::string_view exceptions = "exceptions:12b,11,14Kj";
+  constexpr int kToken = SymbolIdentifier;
+  const std::initializer_list<LintTestCase> kTestCases = {
+      {""},
+      {"typedef union baz_t;"},
+      {"typedef union good_name_t;"},
+      {"typedef union b_a_z_t;"},
+      {"typedef union {logic foo; logic bar;}", {kToken, "baz_12B_t"}, ";"},
+      {"typedef union {logic foo; logic bar;}",
+       {kToken, "good_14kJ_name_t"},
+       ";"},
+      {"typedef union {logic foo; logic bar;}", {kToken, "b_a_11GB_z_t"}, ";"},
+  };
+  RunConfiguredLintTestCases<VerilogAnalyzer, StructUnionNameStyleRule>(
+      kTestCases, exceptions);
 }
 
 }  // namespace
