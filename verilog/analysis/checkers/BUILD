@@ -36,6 +36,7 @@ cc_library(
         ":generate_label_prefix_rule",
         ":generate_label_rule",
         ":interface_name_style_rule",
+        ":legacy_genvar_declaration_rule",
         ":line_length_rule",
         ":macro_name_style_rule",
         ":mismatched_labels_rule",
@@ -1816,6 +1817,43 @@ cc_test(
     srcs = ["interface_name_style_rule_test.cc"],
     deps = [
         ":interface_name_style_rule",
+        "//common/analysis:linter_test_utils",
+        "//common/analysis:syntax_tree_linter_test_utils",
+        "//common/text:symbol",
+        "//verilog/CST:verilog_nonterminals",
+        "//verilog/analysis:verilog_analyzer",
+        "//verilog/parser:verilog_token_enum",
+        "@com_google_googletest//:gtest_main",
+    ],
+)
+
+cc_library(
+    name = "legacy_genvar_declaration_rule",
+    srcs = ["legacy_genvar_declaration_rule.cc"],
+    hdrs = ["legacy_genvar_declaration_rule.h"],
+    deps = [
+        "//common/analysis:citation",
+        "//common/analysis:lint_rule_status",
+        "//common/analysis:syntax_tree_lint_rule",
+        "//common/analysis/matcher",
+        "//common/analysis/matcher:bound_symbol_manager",
+        "//common/strings:naming_utils",
+        "//common/text:symbol",
+        "//common/text:syntax_tree_context",
+        "//verilog/CST:type",
+        "//verilog/CST:verilog_matchers",
+        "//verilog/analysis:descriptions",
+        "//verilog/analysis:lint_rule_registry",
+        "@com_google_absl//absl/strings",
+    ],
+    alwayslink = 1,
+)
+
+cc_test(
+    name = "legacy_genvar_declaration_rule_test",
+    srcs = ["legacy_genvar_declaration_rule_test.cc"],
+    deps = [
+        ":legacy_genvar_declaration_rule",
         "//common/analysis:linter_test_utils",
         "//common/analysis:syntax_tree_linter_test_utils",
         "//common/text:symbol",
