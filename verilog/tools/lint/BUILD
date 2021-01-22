@@ -36,6 +36,7 @@ _linter_test_configs = [
     ("invalid-system-task-function", "psprintf", True),
     ("interface-name-style", "interface_type_name_style", True),
     ("legacy-genvar-declaration", "legacy_genvar_declaration", False),
+    ("legacy-generate-region", "legacy_generate_region", False),
     ("macro-name-style", "macro_name_style", True),
     ("mismatched-labels", "mismatched_labels", False),
     ("module-begin-block", "module_begin_block", True),
