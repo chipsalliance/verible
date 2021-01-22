@@ -27,6 +27,9 @@ fi
 export GIT_VERSION=${GIT_VERSION:-$(git describe --match=v*)}
 
 export BAZEL_VERSION=3.7.0
+# Without following environment variable set, Bazel updates itself to the
+# latest version
+export USE_BAZEL_VERSION=$BAZEL_VERSION
 
 # TODO(b/171679296): re-enable c++11 support
 #   by downgrading kythe build requirements.
