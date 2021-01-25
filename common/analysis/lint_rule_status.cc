@@ -28,6 +28,7 @@
 #include "common/text/syntax_tree_context.h"
 #include "common/text/token_info.h"
 #include "common/text/tree_utils.h"
+#include "common/util/spacer.h"
 
 namespace verible {
 
@@ -71,9 +72,8 @@ struct LintViolationWithStatus {
   }
 };
 
-void LintStatusFormatter::FormatLintRuleStatuses(
-    std::ostream* stream, const std::vector<LintRuleStatus>& statuses,
-    absl::string_view base, absl::string_view path) const {
+static std::set<LintViolationWithStatus> PrepareViolations(
+    const std::vector<LintRuleStatus>& statuses) {
   std::set<LintViolationWithStatus> violations;
 
   // TODO(fangism): rewrite as a linear time merge of pre-ordered sub-sequences
@@ -82,11 +82,33 @@ void LintStatusFormatter::FormatLintRuleStatuses(
       violations.insert(LintViolationWithStatus(&violation, &status));
     }
   }
+  return violations;
+}
+
+void LintStatusFormatter::FormatLintRuleStatuses(
+    std::ostream* stream, const std::vector<LintRuleStatus>& statuses,
+    absl::string_view base, absl::string_view path) const {
+  auto violations = PrepareViolations(statuses);
+  for (auto violation : violations) {
+    FormatViolation(stream, *violation.violation, base, path,
+                    violation.status->url, violation.status->lint_rule_name);
+    *stream << std::endl;
+  }
+}
+
+void LintStatusFormatter::FormatLintRuleStatuses(
+    std::ostream* stream, const std::vector<LintRuleStatus>& statuses,
+    absl::string_view base, absl::string_view path,
+    const std::vector<absl::string_view>& lines) const {
+  auto violations = PrepareViolations(statuses);
 
   for (auto violation : violations) {
     FormatViolation(stream, *violation.violation, base, path,
                     violation.status->url, violation.status->lint_rule_name);
     *stream << std::endl;
+    auto cursor = line_column_map_(violation.violation->token.left(base));
+    *stream << lines[cursor.line] << std::endl;
+    *stream << verible::Spacer(cursor.column) << "^" << std::endl;
   }
 }
 

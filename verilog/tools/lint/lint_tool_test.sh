@@ -96,6 +96,15 @@ status="$?"
   exit 1
 }
 
+echo "=== Test --show_diagnostic_context"
+"$lint_tool" "$TEST_FILE" --show_diagnostic_context > /dev/null 2> "${MY_OUTPUT_FILE}.err"
+
+status="$?"
+[[ $status == 1 ]] || {
+  echo "Expected exit code 1, but got $status"
+  exit 1
+}
+
 echo "=== Test --parse_fatal"
 "$lint_tool" "$TEST_FILE" --parse_fatal > /dev/null 2> "${MY_OUTPUT_FILE}.err"
 

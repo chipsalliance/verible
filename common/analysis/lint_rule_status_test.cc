@@ -144,7 +144,7 @@ TEST(LintRuleStatusFormatterTest, NoOutput) {
   RunLintStatusTest(test);
 }
 
-void RunLintStatusesTest(const LintStatusTest& test) {
+void RunLintStatusesTest(const LintStatusTest& test, bool show_context) {
   // Dummy tree so we have something for test cases to point at
   SymbolPtr root = Node();
 
@@ -172,8 +172,21 @@ void RunLintStatusesTest(const LintStatusTest& test) {
   std::ostringstream ss;
 
   LintStatusFormatter formatter(test.text);
-  formatter.FormatLintRuleStatuses(&ss, statuses, test.text, test.path);
-  auto result_parts = absl::StrSplit(ss.str(), '\n');
+  const std::vector<absl::string_view> lines;
+  if (!show_context) {
+    formatter.FormatLintRuleStatuses(&ss, statuses, test.text, test.path);
+  } else {
+    formatter.FormatLintRuleStatuses(&ss, statuses, test.text, test.path,
+                                     absl::StrSplit(test.text, '\n'));
+    std::cout << ss.str() << std::endl;
+  }
+  std::vector<std::string> result_parts;
+  if (!show_context)
+    result_parts = absl::StrSplit(ss.str(), '\n');
+  else {
+    result_parts = absl::StrSplit(ss.str(), "^\n");
+  }
+
   auto part_iterator = result_parts.begin();
 
   for (const auto& violation_test : test.violations) {
@@ -200,7 +213,29 @@ TEST(LintRuleStatusFormatterTest, MultipleStatusesSimpleOutput) {
        {"reason2", TokenInfo(dont_care_tag, text.substr(21, 4)),
         "some/path/to/somewhere.fvg:2:4: reason2 http://foobar [test-rule]"}}};
 
-  RunLintStatusesTest(test);
+  RunLintStatusesTest(test, false);
+}
+
+TEST(LintRuleStatusFormatterTestWithContext, MultipleStatusesSimpleOutput) {
+  SymbolPtr root = Node();
+  static const int dont_care_tag = 0;
+  constexpr absl::string_view text(
+      "This is some code\n"
+      "That you are looking at right now\n"
+      "It is nice code, make no mistake\n"
+      "Very nice");
+  LintStatusTest test = {
+      "test-rule",
+      "http://foobar",
+      "some/path/to/somewhere.fvg",
+      text,
+      {{"reason1", TokenInfo(dont_care_tag, text.substr(0, 5)),
+        "some/path/to/somewhere.fvg:1:1: reason1 http://foobar "
+        "[test-rule]\nThis is some code\n"},
+       {"reason2", TokenInfo(dont_care_tag, text.substr(21, 4)),
+        "some/path/to/somewhere.fvg:2:4: reason2 http://foobar "
+        "[test-rule]\nThat you are looking at right now\n   "}}};
+  RunLintStatusesTest(test, true);
 }
 
 }  // namespace
