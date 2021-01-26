@@ -265,4 +265,4 @@ Enabled by default: true
 
 ## Version
 
-Generated on 2021-01-25 17:59:19 -0800 from [d4fa18a](https://github.com/google/verible/commit/d4fa18afaccc2b20e5feceb52a2f1488fd605478)
+Generated on 2021-01-25 17:59:07 -0800 from [87ad365](https://github.com/google/verible/commit/87ad3655ae89ebaae5fa5684d99b70210fcd3333)
