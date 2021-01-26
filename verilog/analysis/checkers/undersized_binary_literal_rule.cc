@@ -92,10 +92,11 @@ void UndersizedBinaryLiteralRule::HandleSymbol(
                 << digits_text;
             // Detect binary values, whose literal width is shorter than the
             // declared width.
-            // Allow 'b0 as an exception.
+            // Allow 'b0 and 'b? as an exception.
             CHECK_EQ(number.base,
                      'b');  // guaranteed by matching TK_BinBase
-            if (width > number.literal.length() && number.literal != "0") {
+            if (width > number.literal.length() && number.literal != "0" &&
+                number.literal != "?") {
               violations_.insert(LintViolation(
                   digits_leaf->get(),
                   FormatReason(width_text, base_text, digits_text), context));
