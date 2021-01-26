@@ -69,9 +69,11 @@ http_archive(
 ###
 http_archive(
     name = "rules_foreign_cc",
-    sha256 = "ab266a13f5f695c898052271af860bf4928fb2ef6a333f7b63076b81271e4342",
-    strip_prefix = "rules_foreign_cc-6bb0536452eaca3bad20c21ba6e7968d2eda004d",
-    urls = ["https://github.com/bazelbuild/rules_foreign_cc/archive/6bb0536452eaca3bad20c21ba6e7968d2eda004d.zip"],
+    sha256 = "4d6798f368e23b9bf8ddab53beb57518b1960bd57549cca50e1ac61f4beb810b",
+    strip_prefix = "rules_foreign_cc-4d4acaa112ae646a21e3766182b21882ad9df921",
+    # There are no releases yet, so retrieve particular git version.
+    # This is from 2021-01-25
+    urls = ["https://github.com/bazelbuild/rules_foreign_cc/archive/4d4acaa112ae646a21e3766182b21882ad9df921.zip"],
 )
 
 load("@rules_foreign_cc//:workspace_definitions.bzl", "rules_foreign_cc_dependencies")
@@ -139,7 +141,7 @@ http_archive(
 # externally.
 http_archive(
     name = "io_bazel",
-    #sha256 = "882fecfc88d3dc528f5c5681d95d730e213e39099abff2e637688a91a9619395",
+    sha256 = "4822ac0f365210932803d324d1b0e08dbd451242720017c5b7f70716c2e3e059",
     strip_prefix = "bazel-3.7.0",
     urls = [
         "https://github.com/bazelbuild/bazel/archive/3.7.0.tar.gz",
