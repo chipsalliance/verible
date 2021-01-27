@@ -173,6 +173,16 @@ Checks that no forbidden system tasks or functions are used. These consist of th
 
 Enabled by default: true
 
+### legacy-generate-region
+Checks that there are no generate regions. See [Style: generate-constructs].
+
+Enabled by default: false
+
+### legacy-genvar-declaration
+Checks that there are no separate `genvar` declarations. See [Style: generate-constructs].
+
+Enabled by default: false
+
 ### line-length
 Checks that all lines do not exceed the maximum allowed length. See [Style: line-length].
 ##### Parameters
@@ -335,4 +345,4 @@ Enabled by default: true
 
 ## Version
 
-Generated on 2021-01-26 19:52:05 -0800 from [b343939](https://github.com/google/verible/commit/b343939bb233786cca3469134c414ca40312fdfc)
+Generated on 2021-01-27 09:44:58 -0800 from [7c65904](https://github.com/google/verible/commit/7c659040dd24889a4da159f4d26d978374d00fac)
