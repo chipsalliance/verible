@@ -34,13 +34,12 @@ namespace analysis {
 
 VERILOG_REGISTER_LINT_RULE(LegacyGenerateRegionRule);
 
+using verible::FindFirstSubtree;
 using verible::GetStyleGuideCitation;
 using verible::LintRuleStatus;
 using verible::LintViolation;
 using verible::SyntaxTreeContext;
-using verible::matcher::Matcher;
 using verible::matcher::EqualTagPredicate;
-using verible::FindFirstSubtree;
 
 absl::string_view LegacyGenerateRegionRule::Name() {
   return "legacy-generate-region";
@@ -58,12 +57,11 @@ std::string LegacyGenerateRegionRule::GetDescription(
 void LegacyGenerateRegionRule::HandleNode(
     const verible::SyntaxTreeNode& node,
     const verible::SyntaxTreeContext& context) {
-
   const auto tag = static_cast<verilog::NodeEnum>(node.Tag().tag);
   if (tag == NodeEnum::kGenerateRegion) {
-    const auto* generate_keyword = ABSL_DIE_IF_NULL(FindFirstSubtree(&node,
-        EqualTagPredicate<verible::SymbolKind::kLeaf, verilog_tokentype,
-                          verilog_tokentype::TK_generate>));
+    const auto* generate_keyword = ABSL_DIE_IF_NULL(FindFirstSubtree(
+        &node, EqualTagPredicate<verible::SymbolKind::kLeaf, verilog_tokentype,
+                                 verilog_tokentype::TK_generate>));
     const auto& leaf = verible::SymbolCastToLeaf(*generate_keyword);
     violations_.insert(LintViolation(leaf.get(), kMessage));
   }

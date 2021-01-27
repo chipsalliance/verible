@@ -39,7 +39,6 @@ using verible::GetStyleGuideCitation;
 using verible::LintRuleStatus;
 using verible::LintViolation;
 using verible::SyntaxTreeContext;
-using verible::matcher::Matcher;
 
 absl::string_view LegacyGenvarDeclarationRule::Name() {
   return "legacy-genvar-declaration";
@@ -58,11 +57,10 @@ std::string LegacyGenvarDeclarationRule::GetDescription(
 void LegacyGenvarDeclarationRule::HandleNode(
     const verible::SyntaxTreeNode& node,
     const verible::SyntaxTreeContext& context) {
-
   const auto tag = static_cast<verilog::NodeEnum>(node.Tag().tag);
   if (tag == NodeEnum::kGenvarDeclaration) {
     const auto identifier_matches = FindAllSymbolIdentifierLeafs(node);
-    for (const auto& match: identifier_matches) {
+    for (const auto& match : identifier_matches) {
       const auto& leaf = verible::SymbolCastToLeaf(*match.match);
       violations_.insert(LintViolation(leaf.get(), kMessage));
     }
