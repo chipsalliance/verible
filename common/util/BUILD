@@ -80,7 +80,7 @@ cc_library(
 #  bazel build --workspace_status_command=bazel/build-version.sh
 genrule(
     name = "version_header",
-    outs = ["verible_build_version.h"],
+    outs = ["generated_verible_build_version.h"],
     cmd = "./$(location create_version_header.sh) > $@",
     stamp = 1,  # Tell bazel that we really are interested in the status file
     tools = ["create_version_header.sh"],
@@ -89,7 +89,7 @@ genrule(
 
 cc_library(
     name = "build_version",
-    hdrs = ["verible_build_version.h"],
+    hdrs = ["generated_verible_build_version.h"],
     visibility = ["//visibility:private"],
 )
 

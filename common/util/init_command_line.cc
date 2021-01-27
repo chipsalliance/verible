@@ -21,8 +21,8 @@
 #include "absl/flags/usage.h"
 #include "absl/flags/usage_config.h"
 #include "absl/time/time.h"
+#include "common/util/generated_verible_build_version.h"
 #include "common/util/logging.h"
-#include "common/util/verible_build_version.h"
 
 namespace verible {
 
