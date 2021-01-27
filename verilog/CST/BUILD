@@ -123,7 +123,7 @@ cc_library(
         "//common/text:text_structure",
         "//verilog/analysis:verilog_analyzer",
         "@com_google_absl//absl/strings",
-        "@com_google_googletest//:gtest",
+        "@com_google_googletest//:gtest",  # for library testonly
     ],
 )
 
