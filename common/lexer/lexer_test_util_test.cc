@@ -18,12 +18,12 @@
 #include <iterator>
 #include <vector>
 
-#include "gtest/gtest.h"
 #include "absl/strings/match.h"
 #include "absl/strings/string_view.h"
 #include "common/text/constants.h"
 #include "common/text/token_info.h"
 #include "common/util/logging.h"
+#include "gtest/gtest.h"
 
 namespace verible {
 namespace {

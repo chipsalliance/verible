@@ -18,11 +18,11 @@
 #include <iterator>
 #include <vector>
 
-#include "gtest/gtest.h"
 #include "common/text/text_structure.h"
 #include "common/text/text_structure_test_utils.h"
 #include "common/text/token_info.h"
 #include "common/util/iterator_range.h"
+#include "gtest/gtest.h"
 
 namespace verible {
 

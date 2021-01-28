@@ -14,12 +14,12 @@
 
 #include "verilog/CST/context_functions.h"
 
-#include "gtest/gtest.h"
 #include "common/text/concrete_syntax_tree.h"
 #include "common/text/symbol.h"
 #include "common/text/syntax_tree_context.h"
 #include "common/text/tree_builder_test_util.h"
 #include "common/util/casts.h"
+#include "gtest/gtest.h"
 #include "verilog/CST/verilog_nonterminals.h"
 
 namespace verilog {

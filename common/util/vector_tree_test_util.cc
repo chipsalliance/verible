@@ -17,9 +17,9 @@
 #include <iostream>
 #include <vector>
 
-#include "gtest/gtest.h"
 #include "absl/strings/string_view.h"
 #include "common/util/vector_tree.h"
+#include "gtest/gtest.h"
 
 namespace verible {
 namespace testing {

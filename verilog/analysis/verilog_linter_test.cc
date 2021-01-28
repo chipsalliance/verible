@@ -27,14 +27,14 @@
 #include <utility>
 #include <vector>
 
-#include "gmock/gmock.h"
-#include "gtest/gtest.h"
 #include "absl/memory/memory.h"
 #include "absl/status/status.h"
 #include "absl/strings/match.h"
 #include "absl/strings/string_view.h"
 #include "common/util/file_util.h"
 #include "common/util/logging.h"
+#include "gmock/gmock.h"
+#include "gtest/gtest.h"
 #include "verilog/analysis/default_rules.h"
 #include "verilog/analysis/verilog_analyzer.h"
 #include "verilog/analysis/verilog_linter_configuration.h"

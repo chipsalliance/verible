@@ -97,8 +97,7 @@ namespace diff_impl {
  * @param edits Cumulative vector of edits (inout).
  */
 inline void AppendEdit(Operation op, int64_t start, int64_t end, Edits *edits) {
-  if (!edits->empty() &&
-      edits->back().operation == op &&
+  if (!edits->empty() && edits->back().operation == op &&
       edits->back().end == start) {
     // Merge into previous edit operation.
     edits->back().end = end;
@@ -121,8 +120,7 @@ inline void InsertEditAt(int64_t index, Operation op, int64_t start,
                          int64_t end, Edits *edits) {
   if (index > 0) {
     Edit &prev_edit = (*edits)[index - 1];
-    if (prev_edit.operation == op &&
-        prev_edit.end == start) {
+    if (prev_edit.operation == op && prev_edit.end == start) {
       // Merge into previous edit operation.
       prev_edit.end = end;
       return;
@@ -130,8 +128,7 @@ inline void InsertEditAt(int64_t index, Operation op, int64_t start,
   }
   if (index < static_cast<int64_t>(edits->size())) {
     Edit &next_edit = (*edits)[index];
-    if (next_edit.operation == op &&
-        next_edit.end == start) {
+    if (next_edit.operation == op && next_edit.end == start) {
       // Merge into subsequent edit operation.
       next_edit.end = end;
       return;
@@ -184,9 +181,8 @@ inline int64_t CommonAffix(TokenIter span1_begin, TokenIter span1_end,
 template <typename TokenIter>
 class Diff {
  private:
-  friend Edits
-  GetTokenDiffs<>(TokenIter tokens1_begin, TokenIter tokens1_end,
-                  TokenIter tokens2_begin, TokenIter tokens2_end);
+  friend Edits GetTokenDiffs<>(TokenIter tokens1_begin, TokenIter tokens1_end,
+                               TokenIter tokens2_begin, TokenIter tokens2_end);
 
   /**
    * Finds the differences between two vectors of tokens, returning edits
@@ -236,8 +232,7 @@ class Diff {
       }
 
       // Find longest common prefix and suffix.
-      prefix_size =
-          CommonAffix(span1_begin, span1_end, span2_begin, span2_end);
+      prefix_size = CommonAffix(span1_begin, span1_end, span2_begin, span2_end);
       suffix_size =
           CommonAffix(Reverse(span1_end), Reverse(span1_begin + prefix_size),
                       Reverse(span2_end), Reverse(span2_begin + prefix_size));
@@ -247,9 +242,8 @@ class Diff {
     }
 
     // Compute the diff on the middle block.
-    Compute(b1 + prefix_size, e1 - suffix_size,
-            b2 + prefix_size, e2 - suffix_size,
-            edits);
+    Compute(b1 + prefix_size, e1 - suffix_size, b2 + prefix_size,
+            e2 - suffix_size, edits);
 
     // Restore the prefix and suffix.
     if (prefix_size != 0) {
@@ -423,7 +417,7 @@ class Diff {
         int64_t y2 = x2 - k2;
         while (x2 < length1 && y2 < length2 &&
                *(tokens1_begin_ + (b1 + length1 - x2 - 1)) ==
-               *(tokens2_begin_ + (b2 + length2 - y2 - 1))) {
+                   *(tokens2_begin_ + (b2 + length2 - y2 - 1))) {
           x2++;
           y2++;
         }
@@ -490,9 +484,8 @@ inline Edits GetTokenDiffs(TokenIter tokens1_begin, TokenIter tokens1_end,
                            TokenIter tokens2_begin, TokenIter tokens2_end) {
   Edits token_edits;
   diff_impl::Diff<TokenIter>(tokens1_begin, tokens2_begin)
-      .Generate(0, std::distance(tokens1_begin, tokens1_end),
-                0, std::distance(tokens2_begin, tokens2_end),
-                &token_edits);
+      .Generate(0, std::distance(tokens1_begin, tokens1_end), 0,
+                std::distance(tokens2_begin, tokens2_end), &token_edits);
   return token_edits;  // efficient: uses named return value optimization
 }
 

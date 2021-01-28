@@ -19,9 +19,9 @@
 #include <sstream>  // IWYU pragma: keep  // for ostringstream
 #include <vector>
 
-#include "gtest/gtest.h"
 #include "absl/strings/str_split.h"
 #include "absl/strings/string_view.h"
+#include "gtest/gtest.h"
 
 namespace verible {
 namespace {

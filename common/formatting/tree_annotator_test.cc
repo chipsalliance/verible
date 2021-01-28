@@ -14,13 +14,13 @@
 
 #include "common/formatting/tree_annotator.h"
 
-#include "gmock/gmock.h"
-#include "gtest/gtest.h"
 #include "common/formatting/format_token.h"
 #include "common/text/constants.h"
 #include "common/text/token_info.h"
 #include "common/text/tree_builder_test_util.h"
 #include "common/util/iterator_range.h"
+#include "gmock/gmock.h"
+#include "gtest/gtest.h"
 
 namespace verible {
 namespace {

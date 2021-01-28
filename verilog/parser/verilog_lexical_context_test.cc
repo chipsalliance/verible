@@ -32,8 +32,6 @@
 #include <string>
 #include <vector>
 
-#include "gmock/gmock.h"
-#include "gtest/gtest.h"
 #include "absl/memory/memory.h"
 #include "absl/strings/match.h"
 #include "absl/strings/string_view.h"
@@ -41,8 +39,10 @@
 #include "common/text/token_info.h"
 #include "common/text/token_stream_view.h"
 #include "common/util/logging.h"
+#include "gmock/gmock.h"
+#include "gtest/gtest.h"
 #include "verilog/analysis/verilog_analyzer.h"  // only used for lexing
-#include "verilog/parser/verilog_parser.h"  // only used for diagnostics
+#include "verilog/parser/verilog_parser.h"      // only used for diagnostics
 #include "verilog/parser/verilog_token_enum.h"
 
 #undef EXPECT_OK

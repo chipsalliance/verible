@@ -22,8 +22,6 @@
 #include <utility>
 #include <vector>
 
-#include "gmock/gmock.h"
-#include "gtest/gtest.h"
 #include "absl/memory/memory.h"
 #include "absl/status/status.h"
 #include "absl/strings/str_join.h"
@@ -37,6 +35,8 @@
 #include "common/util/logging.h"
 #include "common/util/spacer.h"
 #include "common/util/vector_tree.h"
+#include "gmock/gmock.h"
+#include "gtest/gtest.h"
 #include "verilog/analysis/verilog_analyzer.h"
 
 #undef EXPECT_OK

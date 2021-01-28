@@ -18,10 +18,10 @@
 #include <string>
 #include <vector>
 
-#include "gtest/gtest.h"
 #include "absl/status/status.h"
 #include "absl/strings/match.h"
 #include "absl/strings/string_view.h"
+#include "gtest/gtest.h"
 
 namespace verible {
 namespace config {

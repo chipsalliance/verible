@@ -19,10 +19,10 @@
 #include <string>
 #include <vector>
 
-#include "gmock/gmock.h"
-#include "gtest/gtest.h"
 #include "absl/strings/string_view.h"
 #include "common/util/iterator_range.h"
+#include "gmock/gmock.h"
+#include "gtest/gtest.h"
 
 namespace verible {
 namespace {

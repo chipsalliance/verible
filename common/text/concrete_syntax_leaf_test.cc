@@ -16,8 +16,8 @@
 
 #include "common/text/concrete_syntax_leaf.h"
 
-#include "gtest/gtest.h"
 #include "common/text/token_info.h"
+#include "gtest/gtest.h"
 
 namespace verible {
 namespace {

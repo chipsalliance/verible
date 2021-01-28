@@ -17,12 +17,12 @@
 #include <map>
 #include <vector>
 
-#include "gmock/gmock.h"
-#include "gtest/gtest.h"
 #include "absl/status/status.h"
 #include "common/text/macro_definition.h"
 #include "common/text/token_info.h"
 #include "common/util/container_util.h"
+#include "gmock/gmock.h"
+#include "gtest/gtest.h"
 #include "verilog/analysis/verilog_analyzer.h"
 
 namespace verilog {

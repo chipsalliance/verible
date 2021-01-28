@@ -18,9 +18,9 @@
 #include <sstream>  // IWYU pragma: keep  // for ostringstream
 #include <string>
 
-#include "gtest/gtest.h"
 #include "absl/memory/memory.h"
 #include "common/text/symbol.h"
+#include "gtest/gtest.h"
 #include "verilog/analysis/verilog_analyzer.h"
 
 namespace verilog {

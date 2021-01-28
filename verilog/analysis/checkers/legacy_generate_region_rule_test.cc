@@ -16,9 +16,9 @@
 
 #include <initializer_list>
 
-#include "gtest/gtest.h"
 #include "common/analysis/linter_test_utils.h"
 #include "common/analysis/syntax_tree_linter_test_utils.h"
+#include "gtest/gtest.h"
 #include "verilog/CST/verilog_nonterminals.h"
 #include "verilog/analysis/verilog_analyzer.h"
 #include "verilog/parser/verilog_token_enum.h"
@@ -32,27 +32,26 @@ using verible::RunLintTestCases;
 
 TEST(LegacyGenerateRegionRuleTest, ValidCases) {
   const std::initializer_list<LintTestCase> kTestCases = {
-    {""},
-    {"module M;\n"
-     "for (genvar k = 0; k < FooParam; k++) begin : gen_loop\n"
-     "  // code\n"
-     "end\n"
-     "endmodule\n"}
-  };
+      {""},
+      {"module M;\n"
+       "for (genvar k = 0; k < FooParam; k++) begin : gen_loop\n"
+       "  // code\n"
+       "end\n"
+       "endmodule\n"}};
   RunLintTestCases<VerilogAnalyzer, LegacyGenerateRegionRule>(kTestCases);
 }
 
 TEST(LegacyGenerateRegionRuleTest, InvalidCases) {
   constexpr int kToken = TK_generate;
   const std::initializer_list<LintTestCase> kTestCases = {
-    {"module M;\n",
-     {kToken, "generate"}, "\n"
-     "  for (genvar k = 0; k < FooParam; k++) begin : gen_loop\n"
-     "    // code\n"
-     "  end\n"
-     "endgenerate\n"
-     "endmodule\n"}
-  };
+      {"module M;\n",
+       {kToken, "generate"},
+       "\n"
+       "  for (genvar k = 0; k < FooParam; k++) begin : gen_loop\n"
+       "    // code\n"
+       "  end\n"
+       "endgenerate\n"
+       "endmodule\n"}};
   RunLintTestCases<VerilogAnalyzer, LegacyGenerateRegionRule>(kTestCases);
 }
 

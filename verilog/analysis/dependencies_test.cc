@@ -14,10 +14,10 @@
 
 #include "verilog/analysis/dependencies.h"
 
-#include "gmock/gmock.h"
-#include "gtest/gtest.h"
 #include "absl/status/status.h"
 #include "common/util/file_util.h"
+#include "gmock/gmock.h"
+#include "gtest/gtest.h"
 
 namespace verilog {
 namespace {

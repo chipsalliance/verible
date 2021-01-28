@@ -18,10 +18,10 @@
 #include <tuple>
 #include <vector>
 
-#include "gmock/gmock.h"
-#include "gtest/gtest.h"
 #include "absl/memory/memory.h"
 #include "common/util/range.h"
+#include "gmock/gmock.h"
+#include "gtest/gtest.h"
 
 namespace verible {
 namespace {

@@ -22,8 +22,6 @@
 #include <utility>
 #include <vector>
 
-#include "gmock/gmock.h"
-#include "gtest/gtest.h"
 #include "absl/memory/memory.h"
 #include "absl/status/status.h"
 #include "absl/strings/string_view.h"
@@ -39,6 +37,8 @@
 #include "common/util/logging.h"
 #include "common/util/range.h"
 #include "common/util/value_saver.h"
+#include "gmock/gmock.h"
+#include "gtest/gtest.h"
 
 #undef EXPECT_OK
 #define EXPECT_OK(value) EXPECT_TRUE((value).ok())

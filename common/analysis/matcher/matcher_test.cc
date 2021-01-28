@@ -17,7 +17,6 @@
 #include <memory>
 #include <vector>
 
-#include "gtest/gtest.h"
 #include "common/analysis/matcher/bound_symbol_manager.h"
 #include "common/analysis/matcher/inner_match_handlers.h"
 #include "common/analysis/matcher/matcher_builders.h"
@@ -25,6 +24,7 @@
 #include "common/text/concrete_syntax_tree.h"
 #include "common/text/symbol.h"
 #include "common/text/tree_builder_test_util.h"
+#include "gtest/gtest.h"
 
 namespace verible {
 namespace matcher {

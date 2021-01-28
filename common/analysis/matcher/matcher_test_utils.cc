@@ -17,7 +17,6 @@
 #include <map>
 #include <utility>
 
-#include "gtest/gtest.h"
 #include "absl/strings/string_view.h"
 #include "common/analysis/matcher/bound_symbol_manager.h"
 #include "common/analysis/matcher/matcher.h"
@@ -25,6 +24,7 @@
 #include "common/text/concrete_syntax_tree.h"
 #include "common/text/symbol.h"
 #include "common/text/visitors.h"
+#include "gtest/gtest.h"
 
 namespace verible {
 namespace matcher {

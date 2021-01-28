@@ -17,9 +17,9 @@
 #include <initializer_list>
 #include <sstream>
 
+#include "absl/strings/string_view.h"
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
-#include "absl/strings/string_view.h"
 
 namespace diff {
 // Print functions copied from external_libs/editscript_test.cc

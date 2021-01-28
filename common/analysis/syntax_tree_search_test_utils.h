@@ -21,10 +21,10 @@
 #include <string>
 #include <vector>
 
-#include "gtest/gtest.h"
 #include "absl/strings/string_view.h"
 #include "common/analysis/syntax_tree_search.h"
 #include "common/lexer/lexer_test_util.h"
+#include "gtest/gtest.h"
 
 namespace verible {
 

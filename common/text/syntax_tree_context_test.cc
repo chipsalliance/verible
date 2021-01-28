@@ -14,10 +14,10 @@
 
 #include "common/text/syntax_tree_context.h"
 
-#include "gmock/gmock.h"
-#include "gtest/gtest.h"
 #include "common/text/concrete_syntax_tree.h"
 #include "common/util/iterator_range.h"
+#include "gmock/gmock.h"
+#include "gtest/gtest.h"
 
 namespace verible {
 namespace {

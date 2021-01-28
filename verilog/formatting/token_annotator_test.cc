@@ -20,7 +20,6 @@
 #include <ostream>
 #include <vector>
 
-#include "gtest/gtest.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
 #include "common/formatting/format_token.h"
@@ -31,6 +30,7 @@
 #include "common/text/tree_builder_test_util.h"
 #include "common/util/casts.h"
 #include "common/util/iterator_adaptors.h"
+#include "gtest/gtest.h"
 #include "verilog/CST/verilog_nonterminals.h"
 #include "verilog/formatting/format_style.h"
 #include "verilog/formatting/verilog_token.h"

@@ -20,13 +20,13 @@
 #include <string>  // for string
 #include <vector>
 
-#include "gtest/gtest.h"
 #include "absl/status/status.h"
 #include "common/analysis/matcher/descent_path.h"
 #include "common/text/parser_verifier.h"
 #include "common/text/symbol.h"
 #include "common/text/token_info.h"
 #include "common/text/token_info_test_util.h"
+#include "gtest/gtest.h"
 
 namespace verible {
 

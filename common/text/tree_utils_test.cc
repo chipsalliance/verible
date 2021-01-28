@@ -19,7 +19,6 @@
 #include <string>
 #include <vector>
 
-#include "gtest/gtest.h"
 #include "common/text/concrete_syntax_leaf.h"
 #include "common/text/concrete_syntax_tree.h"
 #include "common/text/symbol.h"
@@ -28,6 +27,7 @@
 #include "common/text/tree_compare.h"
 #include "common/util/logging.h"
 #include "common/util/range.h"
+#include "gtest/gtest.h"
 
 namespace verible {
 namespace {

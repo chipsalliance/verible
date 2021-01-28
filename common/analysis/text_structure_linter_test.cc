@@ -17,14 +17,14 @@
 #include <memory>
 #include <vector>
 
-#include "gmock/gmock.h"
-#include "gtest/gtest.h"
 #include "absl/strings/match.h"
 #include "absl/strings/string_view.h"
 #include "common/analysis/lint_rule_status.h"
 #include "common/analysis/text_structure_lint_rule.h"
 #include "common/text/text_structure.h"
 #include "common/text/token_info.h"
+#include "gmock/gmock.h"
+#include "gtest/gtest.h"
 
 namespace verible {
 namespace {

@@ -14,14 +14,14 @@
 
 #include "verilog/analysis/verilog_project.h"
 
-#include "gmock/gmock.h"
-#include "gtest/gtest.h"
 #include "absl/memory/memory.h"
 #include "absl/strings/match.h"
 #include "common/text/text_structure.h"
 #include "common/util/file_util.h"
 #include "common/util/logging.h"
 #include "common/util/range.h"
+#include "gmock/gmock.h"
+#include "gtest/gtest.h"
 #include "verilog/CST/module.h"
 
 namespace verilog {

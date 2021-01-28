@@ -17,12 +17,12 @@
 #include <sstream>
 #include <vector>
 
-#include "gmock/gmock.h"
-#include "gtest/gtest.h"
 #include "absl/strings/str_join.h"
 #include "absl/strings/string_view.h"
 #include "common/util/vector_tree.h"
 #include "common/util/vector_tree_test_util.h"
+#include "gmock/gmock.h"
+#include "gtest/gtest.h"
 
 namespace verible {
 namespace {

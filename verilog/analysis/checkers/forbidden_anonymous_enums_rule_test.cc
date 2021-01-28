@@ -16,9 +16,9 @@
 
 #include <initializer_list>
 
-#include "gtest/gtest.h"
 #include "common/analysis/syntax_tree_linter_test_utils.h"
 #include "common/text/symbol.h"
+#include "gtest/gtest.h"
 #include "verilog/analysis/verilog_analyzer.h"
 #include "verilog/parser/verilog_token_enum.h"
 

@@ -19,7 +19,6 @@
 #include <memory>
 #include <vector>
 
-#include "gtest/gtest.h"
 #include "absl/strings/ascii.h"
 #include "absl/strings/string_view.h"
 #include "common/formatting/format_token.h"
@@ -32,6 +31,7 @@
 #include "common/text/token_stream_view.h"
 #include "common/util/container_iterator_range.h"
 #include "common/util/range.h"
+#include "gtest/gtest.h"
 
 namespace verible {
 

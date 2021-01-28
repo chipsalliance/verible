@@ -18,10 +18,10 @@
 
 #include <string>
 
-#include "gtest/gtest.h"
 #include "absl/base/macros.h"
 #include "absl/strings/string_view.h"
 #include "common/util/range.h"
+#include "gtest/gtest.h"
 
 namespace verible {
 namespace {
