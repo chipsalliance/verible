@@ -19,7 +19,6 @@
 #include <utility>
 #include <vector>
 
-#include "gtest/gtest.h"
 #include "absl/strings/string_view.h"
 #include "common/analysis/lint_rule_status.h"
 #include "common/analysis/linter_test_utils.h"
@@ -27,6 +26,7 @@
 #include "common/analysis/syntax_tree_linter.h"
 #include "common/text/text_structure.h"
 #include "common/util/logging.h"
+#include "gtest/gtest.h"
 
 namespace verible {
 

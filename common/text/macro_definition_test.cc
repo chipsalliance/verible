@@ -18,10 +18,10 @@
 
 #include <vector>
 
-#include "gtest/gtest.h"
 #include "absl/status/status.h"
 #include "common/text/token_info.h"
 #include "common/util/container_util.h"
+#include "gtest/gtest.h"
 
 namespace verible {
 namespace {

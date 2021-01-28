@@ -17,9 +17,9 @@
 #include <sstream>
 #include <string>
 
+#include "common/util/spacer.h"
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
-#include "common/util/spacer.h"
 
 namespace verible {
 namespace {

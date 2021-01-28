@@ -18,7 +18,6 @@
 
 #include <memory>
 
-#include "gtest/gtest.h"
 #include "absl/strings/string_view.h"
 #include "common/lexer/lexer.h"
 #include "common/lexer/token_stream_adapter.h"
@@ -27,6 +26,7 @@
 #include "common/text/concrete_syntax_tree.h"
 #include "common/text/symbol.h"
 #include "common/text/token_info.h"
+#include "gtest/gtest.h"
 
 namespace verible {
 namespace {

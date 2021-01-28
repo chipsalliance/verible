@@ -431,7 +431,7 @@ absl::Status FilePatch::PickApply(std::istream& ins, std::ostream& outs,
   // Needs own copy of string due to potential splitting into temporary hunks.
   std::vector<std::string> output_lines;
 
-  int last_consumed_line = 0;  // 0-indexed
+  int last_consumed_line = 0;                                     // 0-indexed
   std::deque<Hunk> hunks_worklist(hunks_.begin(), hunks_.end());  // copy-fill
   while (!hunks_worklist.empty()) {
     VLOG(1) << "hunks remaining: " << hunks_worklist.size();

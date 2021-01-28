@@ -14,9 +14,9 @@
 
 #include "common/util/auto_pop_stack.h"
 
+#include "common/util/iterator_range.h"
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
-#include "common/util/iterator_range.h"
 
 namespace verible {
 namespace {

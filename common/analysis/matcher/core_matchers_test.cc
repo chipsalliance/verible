@@ -16,13 +16,13 @@
 
 #include <memory>
 
-#include "gtest/gtest.h"
 #include "common/analysis/matcher/bound_symbol_manager.h"
 #include "common/analysis/matcher/matcher.h"
 #include "common/analysis/matcher/matcher_builders.h"
 #include "common/analysis/matcher/matcher_test_utils.h"
 #include "common/text/symbol.h"
 #include "common/text/tree_builder_test_util.h"
+#include "gtest/gtest.h"
 
 namespace verible {
 namespace matcher {

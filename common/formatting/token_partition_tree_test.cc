@@ -19,8 +19,6 @@
 #include <string>
 #include <vector>
 
-#include "gmock/gmock.h"
-#include "gtest/gtest.h"
 #include "absl/strings/str_split.h"
 #include "absl/strings/string_view.h"
 #include "common/formatting/format_token.h"
@@ -28,6 +26,8 @@
 #include "common/formatting/unwrapped_line_test_utils.h"
 #include "common/util/container_iterator_range.h"
 #include "common/util/vector_tree.h"
+#include "gmock/gmock.h"
+#include "gtest/gtest.h"
 
 namespace verible {
 namespace {

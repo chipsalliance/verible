@@ -20,9 +20,9 @@
 #include <utility>
 #include <vector>
 
+#include "common/util/range.h"
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
-#include "common/util/range.h"
 
 namespace verible {
 namespace {

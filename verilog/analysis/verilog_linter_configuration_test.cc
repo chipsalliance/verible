@@ -22,8 +22,6 @@
 #include <utility>
 #include <vector>
 
-#include "gmock/gmock.h"
-#include "gtest/gtest.h"
 #include "absl/strings/string_view.h"
 #include "common/analysis/line_lint_rule.h"
 #include "common/analysis/lint_rule_status.h"
@@ -37,6 +35,8 @@
 #include "common/text/text_structure.h"
 #include "common/text/token_info.h"
 #include "common/text/tree_builder_test_util.h"
+#include "gmock/gmock.h"
+#include "gtest/gtest.h"
 #include "verilog/analysis/default_rules.h"
 #include "verilog/analysis/descriptions.h"
 #include "verilog/analysis/lint_rule_registry.h"

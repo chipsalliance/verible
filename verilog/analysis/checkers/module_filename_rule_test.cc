@@ -17,10 +17,10 @@
 #include <initializer_list>
 #include <string>
 
-#include "gtest/gtest.h"
 #include "common/analysis/linter_test_utils.h"
 #include "common/analysis/text_structure_linter_test_utils.h"
 #include "common/text/symbol.h"
+#include "gtest/gtest.h"
 #include "verilog/analysis/verilog_analyzer.h"
 #include "verilog/parser/verilog_token_enum.h"
 

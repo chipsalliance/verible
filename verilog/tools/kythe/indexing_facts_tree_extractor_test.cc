@@ -16,12 +16,12 @@
 
 #include <functional>
 
-#include "gtest/gtest.h"
 #include "absl/status/status.h"
 #include "common/analysis/syntax_tree_search_test_utils.h"
 #include "common/text/concrete_syntax_tree.h"
 #include "common/util/file_util.h"
 #include "common/util/range.h"
+#include "gtest/gtest.h"
 #include "verilog/analysis/verilog_analyzer.h"
 #include "verilog/analysis/verilog_project.h"
 #include "verilog/tools/kythe/indexing_facts_tree.h"

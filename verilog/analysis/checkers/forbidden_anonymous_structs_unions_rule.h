@@ -87,4 +87,4 @@ class ForbiddenAnonymousStructsUnionsRule : public verible::SyntaxTreeLintRule {
 }  // namespace analysis
 }  // namespace verilog
 
-#endif  // VERIBLE_VERILOG_ANALYSIS_CHECKERS_FORBIDDEN_ANONYMOUS_STRUCTS_UNIONS_RULE_H_ // NOLINT
+#endif  // VERIBLE_VERILOG_ANALYSIS_CHECKERS_FORBIDDEN_ANONYMOUS_STRUCTS_UNIONS_RULE_H_

@@ -16,9 +16,9 @@
 
 #include <sstream>
 
+#include "common/strings/obfuscator.h"
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
-#include "common/strings/obfuscator.h"
 
 namespace verilog {
 namespace {

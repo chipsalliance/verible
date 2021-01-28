@@ -21,7 +21,6 @@
 #include <string>
 #include <utility>
 
-#include "gtest/gtest.h"
 #include "absl/strings/match.h"
 #include "absl/strings/string_view.h"
 #include "common/analysis/line_lint_rule.h"
@@ -34,6 +33,7 @@
 #include "common/text/syntax_tree_context.h"
 #include "common/text/text_structure.h"
 #include "common/text/token_info.h"
+#include "gtest/gtest.h"
 #include "verilog/analysis/descriptions.h"
 
 namespace verilog {

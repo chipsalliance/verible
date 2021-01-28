@@ -18,12 +18,12 @@
 #include <map>
 #include <string>
 
-#include "gtest/gtest.h"
 #include "absl/status/status.h"
 #include "absl/strings/string_view.h"
 #include "common/analysis/matcher/matcher.h"
 #include "common/text/concrete_syntax_tree.h"
 #include "common/text/symbol.h"
+#include "gtest/gtest.h"
 
 namespace verible {
 namespace matcher {

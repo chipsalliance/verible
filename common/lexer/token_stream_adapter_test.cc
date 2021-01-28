@@ -14,12 +14,12 @@
 
 #include "common/lexer/token_stream_adapter.h"
 
-#include "gmock/gmock.h"
-#include "gtest/gtest.h"
 #include "absl/status/status.h"
 #include "common/lexer/lexer.h"
 #include "common/lexer/lexer_test_util.h"
 #include "common/text/token_info.h"
+#include "gmock/gmock.h"
+#include "gtest/gtest.h"
 
 namespace verible {
 namespace {

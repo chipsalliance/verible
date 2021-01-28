@@ -16,10 +16,10 @@
 
 #include <initializer_list>
 
-#include "gtest/gtest.h"
 #include "common/analysis/linter_test_utils.h"
 #include "common/analysis/syntax_tree_linter_test_utils.h"
 #include "common/text/symbol.h"
+#include "gtest/gtest.h"
 #include "verilog/CST/verilog_nonterminals.h"
 #include "verilog/analysis/verilog_analyzer.h"
 #include "verilog/parser/verilog_token_enum.h"
@@ -33,28 +33,28 @@ using verible::RunLintTestCases;
 
 TEST(LegacyGenvarDeclarationRuleTest, ValidCases) {
   const std::initializer_list<LintTestCase> kTestCases = {
-    {""},
-    {"module M;\n"
-     "for (genvar k = 0; k < FooParam; k++) begin : gen_loop\n"
-     "  // code\n"
-     "end\n"
-     "endmodule\n"}
-  };
+      {""},
+      {"module M;\n"
+       "for (genvar k = 0; k < FooParam; k++) begin : gen_loop\n"
+       "  // code\n"
+       "end\n"
+       "endmodule\n"}};
   RunLintTestCases<VerilogAnalyzer, LegacyGenvarDeclarationRule>(kTestCases);
 }
 
 TEST(LegacyGenvarDeclarationRuleTest, InvalidCases) {
   constexpr int kToken = SymbolIdentifier;
   const std::initializer_list<LintTestCase> kTestCases = {
-    {"module M;\n",
-     "genvar ", {kToken, "k"}, ";\n"
-     "generate\n"
-     "  for (k = 0; k < FooParam; k++) begin : gen_loop\n"
-     "    // code\n"
-     "  end\n"
-     "endgenerate\n"
-     "endmodule\n"}
-  };
+      {"module M;\n",
+       "genvar ",
+       {kToken, "k"},
+       ";\n"
+       "generate\n"
+       "  for (k = 0; k < FooParam; k++) begin : gen_loop\n"
+       "    // code\n"
+       "  end\n"
+       "endgenerate\n"
+       "endmodule\n"}};
   RunLintTestCases<VerilogAnalyzer, LegacyGenvarDeclarationRule>(kTestCases);
 }
 

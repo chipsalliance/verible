@@ -18,11 +18,11 @@
 #include <initializer_list>
 #include <utility>
 
-#include "gmock/gmock.h"
-#include "gtest/gtest.h"
 #include "absl/strings/string_view.h"
 #include "common/lexer/lexer_test_util.h"
 #include "common/text/token_info.h"
+#include "gmock/gmock.h"
+#include "gtest/gtest.h"
 #include "verilog/parser/verilog_token_enum.h"
 
 namespace verilog {

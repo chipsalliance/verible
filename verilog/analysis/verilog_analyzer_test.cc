@@ -20,8 +20,6 @@
 #include <utility>
 #include <vector>
 
-#include "gmock/gmock.h"
-#include "gtest/gtest.h"
 #include "absl/base/casts.h"
 #include "absl/memory/memory.h"
 #include "absl/status/status.h"
@@ -41,6 +39,8 @@
 #include "common/text/tree_utils.h"
 #include "common/util/casts.h"
 #include "common/util/logging.h"
+#include "gmock/gmock.h"
+#include "gtest/gtest.h"
 #include "verilog/analysis/verilog_excerpt_parse.h"
 #include "verilog/parser/verilog_token_enum.h"
 

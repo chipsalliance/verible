@@ -17,10 +17,10 @@
 #include <initializer_list>
 #include <utility>
 
-#include "gtest/gtest.h"
 #include "absl/strings/string_view.h"
 #include "common/lexer/lexer_test_util.h"
 #include "common/text/token_info.h"
+#include "gtest/gtest.h"
 
 namespace verible {
 namespace {

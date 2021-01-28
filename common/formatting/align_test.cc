@@ -19,8 +19,6 @@
 #include <utility>
 #include <vector>
 
-#include "gmock/gmock.h"
-#include "gtest/gtest.h"
 #include "absl/strings/str_split.h"
 #include "common/formatting/format_token.h"
 #include "common/formatting/token_partition_tree.h"
@@ -28,6 +26,8 @@
 #include "common/text/tree_builder_test_util.h"
 #include "common/util/range.h"
 #include "common/util/spacer.h"
+#include "gmock/gmock.h"
+#include "gtest/gtest.h"
 
 namespace verible {
 namespace {
@@ -35,10 +35,10 @@ namespace {
 using ::testing::ElementsAre;
 
 TEST(AlignmentPolicyTest, StringRepresentation) {
-    std::ostringstream stream;
-    stream << AlignmentPolicy::kAlign;
-    EXPECT_EQ(stream.str(), "align");
-    EXPECT_EQ(AbslUnparseFlag(AlignmentPolicy::kAlign), "align");
+  std::ostringstream stream;
+  stream << AlignmentPolicy::kAlign;
+  EXPECT_EQ(stream.str(), "align");
+  EXPECT_EQ(AbslUnparseFlag(AlignmentPolicy::kAlign), "align");
 }
 
 TEST(AlignmentPolicyTest, InvalidEnum) {

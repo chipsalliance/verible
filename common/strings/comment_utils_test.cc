@@ -14,9 +14,9 @@
 
 #include "common/strings/comment_utils.h"
 
-#include "gtest/gtest.h"
 #include "absl/strings/string_view.h"
 #include "common/util/range.h"
+#include "gtest/gtest.h"
 
 namespace verible {
 namespace {

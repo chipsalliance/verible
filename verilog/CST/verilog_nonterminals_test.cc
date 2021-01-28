@@ -17,8 +17,8 @@
 #include <sstream>
 #include <string>
 
-#include "gtest/gtest.h"
 #include "common/text/constants.h"
+#include "gtest/gtest.h"
 
 namespace verilog {
 namespace {

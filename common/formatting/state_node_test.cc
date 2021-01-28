@@ -19,7 +19,6 @@
 #include <string>
 #include <vector>
 
-#include "gtest/gtest.h"
 #include "absl/memory/memory.h"
 #include "absl/strings/string_view.h"
 #include "common/formatting/basic_format_style.h"
@@ -27,6 +26,7 @@
 #include "common/formatting/unwrapped_line.h"
 #include "common/formatting/unwrapped_line_test_utils.h"
 #include "common/util/logging.h"
+#include "gtest/gtest.h"
 
 namespace verible {
 namespace {

@@ -14,9 +14,9 @@
 
 #include "verilog/formatting/verilog_token.h"
 
-#include "gtest/gtest.h"
 #include "common/formatting/format_token.h"
 #include "common/text/token_info.h"
+#include "gtest/gtest.h"
 #include "verilog/parser/verilog_token_enum.h"
 
 namespace verilog {

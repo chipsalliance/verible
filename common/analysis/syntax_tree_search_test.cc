@@ -17,13 +17,13 @@
 #include <memory>
 #include <vector>
 
-#include "gtest/gtest.h"
 #include "common/analysis/matcher/matcher.h"
 #include "common/analysis/matcher/matcher_builders.h"
 #include "common/text/symbol.h"
 #include "common/text/syntax_tree_context.h"
 #include "common/text/tree_builder_test_util.h"
 #include "common/text/tree_utils.h"
+#include "gtest/gtest.h"
 
 namespace verible {
 namespace {

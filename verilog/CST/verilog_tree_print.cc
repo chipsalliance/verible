@@ -28,7 +28,7 @@
 #include "common/text/token_info.h"
 #include "common/util/value_saver.h"
 #include "verilog/CST/verilog_nonterminals.h"  // for NodeEnumToString
-#include "verilog/parser/verilog_parser.h"  // for verilog_symbol_name
+#include "verilog/parser/verilog_parser.h"     // for verilog_symbol_name
 
 namespace verilog {
 

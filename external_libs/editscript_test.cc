@@ -20,9 +20,9 @@
 #include <sstream>
 #include <vector>
 
-#include "gtest/gtest.h"
 #include "absl/strings/str_join.h"
 #include "absl/strings/string_view.h"
+#include "gtest/gtest.h"
 
 namespace diff {
 namespace {
