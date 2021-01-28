@@ -345,4 +345,4 @@ Enabled by default: true
 
 ## Version
 
-Generated on 2021-01-27 09:44:58 -0800 from [7c65904](https://github.com/google/verible/commit/7c659040dd24889a4da159f4d26d978374d00fac)
+Generated on 2021-01-27 15:39:21 -0800 from [f26c96d](https://github.com/google/verible/commit/f26c96da7bf65edf37cc06232bfdedf4866e85e6)
