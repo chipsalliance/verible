@@ -311,7 +311,7 @@ absl::Status LinterConfiguration::ConfigureFromOptions(
   // migrate these into hosted project configurations.
   UseRuleSet(options.ruleset);
 
-  if (options.config_file_is_custom) {
+  if (!options.config_file.empty()) {
     const absl::Status config_read_status = AppendFromFile(options.config_file);
 
     if (!config_read_status.ok()) {
@@ -320,6 +320,10 @@ absl::Status LinterConfiguration::ConfigureFromOptions(
                    << config_read_status << std::endl;
     }
 
+    if (options.rules_config_search) {
+      LOG(WARNING) << "Explicit config file " << options.config_file
+                   << " disables --rules_config_search";
+    }
   } else if (options.rules_config_search) {
     // Search upward if search is enabled and no configuration file is
     // specified
