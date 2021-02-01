@@ -34,6 +34,7 @@
 namespace verilog {
 namespace analysis {
 
+using verible::AutoFix;
 using verible::GetStyleGuideCitation;
 using verible::LintRuleStatus;
 using verible::LintViolation;
@@ -65,7 +66,9 @@ void NoTrailingSpacesRule::HandleLine(absl::string_view line) {
     if (trailing != 0) {
       const int column = line.length() - trailing;
       const TokenInfo token(TK_SPACE, line.substr(column));
-      violations_.insert(LintViolation(token, kMessage));
+
+      violations_.insert(
+          LintViolation(token, kMessage, {AutoFix({token, ""})}));
     }
   }
 }

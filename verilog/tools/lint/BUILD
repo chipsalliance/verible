@@ -225,6 +225,8 @@ cc_binary(
     srcs = ["verilog_lint.cc"],
     visibility = ["//visibility:public"],
     deps = [
+        "//common/util:enum_flags",
+        "//common/util:file_util",
         "//common/util:init_command_line",
         "//common/util:logging",
         "//verilog/analysis:verilog_linter",

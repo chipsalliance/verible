@@ -32,4 +32,27 @@ std::vector<absl::string_view> SplitLines(absl::string_view text) {
   return lines;
 }
 
+// An zero-length absl::StrSplit delimiter that will match just after a
+// specified character.
+class AfterCharDelimiter {
+ public:
+  explicit AfterCharDelimiter(char delimiter) : delimiter_(delimiter) {}
+
+  absl::string_view Find(absl::string_view text, size_t pos) const {
+    const size_t found_pos = text.find(delimiter_, pos);
+    if (found_pos == absl::string_view::npos)
+      return absl::string_view(text.data() + text.size(), 0);
+    return text.substr(found_pos + 1, 0);
+  }
+
+ private:
+  const char delimiter_;
+};
+
+std::vector<absl::string_view> SplitLinesKeepLineTerminator(
+    absl::string_view text) {
+  if (text.empty()) return std::vector<absl::string_view>();
+  return absl::StrSplit(text, AfterCharDelimiter('\n'));
+}
+
 }  // namespace verible

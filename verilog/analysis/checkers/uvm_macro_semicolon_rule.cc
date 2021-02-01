@@ -32,6 +32,7 @@
 namespace verilog {
 namespace analysis {
 
+using verible::AutoFix;
 using verible::GetVerificationCitation;
 using verible::LintViolation;
 
@@ -83,8 +84,9 @@ void UvmMacroSemicolonRule::HandleLeaf(
 
       case State::kCheckMacro: {
         if (leaf.Tag().tag == ';') {
-          violations_.insert(
-              LintViolation(leaf, FormatReason(macro_id_), context));
+          violations_.insert(LintViolation(leaf, FormatReason(macro_id_),
+                                           context,
+                                           {AutoFix({leaf.get(), ""})}));
           state_ = State::kNormal;
         } else if (leaf.Tag().tag ==
                    verilog_tokentype::MacroCallCloseToEndLine) {

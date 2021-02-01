@@ -33,6 +33,7 @@
 namespace verilog {
 namespace analysis {
 
+using verible::AutoFix;
 using verible::GetStyleGuideCitation;
 using verible::LintRuleStatus;
 using verible::LintViolation;
@@ -115,13 +116,23 @@ void EndifCommentRule::HandleToken(const TokenInfo& token) {
           state_ = State::kNormal;
           break;
         }
-        default:
+        default: {
+          auto endif_end =
+              last_endif_.text().substr(last_endif_.text().size(), 0);
+
           // includes TK_NEWLINE and TK_EOF.
           violations_.insert(LintViolation(
-              last_endif_, absl::StrCat(kMessage, " (", expect, ")")));
+              last_endif_, absl::StrCat(kMessage, " (", expect, ")"),
+              {
+                  AutoFix("Insert // comment",
+                          {endif_end, absl::StrCat(" // ", expect)}),
+                  AutoFix("Insert /* comment */",
+                          {endif_end, absl::StrCat(" /* ", expect, " */")}),
+              }));
           conditional_scopes_.pop();
           state_ = State::kNormal;
           break;
+        }
       }
     }
   }  // switch (state_)

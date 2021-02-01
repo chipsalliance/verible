@@ -95,6 +95,10 @@ TEST(LineDiffsTest, Various) {
        "-bar\n"
        "+Foo\n"
        "+Bar\n"},
+      {"foo\nbar", "foo\nbar\n",  // end \n added
+       " foo\n"
+       "-bar\n"
+       "+bar\n"},
       {"frodo\nsam\nmerry\npippin\n",  //
        "frodo\nmerry\npippin\n",       //
        " frodo\n"
@@ -510,6 +514,299 @@ TEST(DiffEditsToPatchHunksTest, Various) {
   for (const auto& test : kTestCases) {
     EXPECT_THAT(DiffEditsToPatchHunks(test.whole_edits, test.common_context),
                 ElementsAreArray(test.expected_hunks));
+  }
+}
+
+struct LineDiffsToUnifiedDiffTestCase {
+  absl::string_view before_text;
+  absl::string_view after_text;
+  absl::string_view file_a;
+  absl::string_view file_b;
+  int common_context;
+  absl::string_view expected_diff_text;
+};
+
+TEST(LineDiffsToUnifiedDiffTest, Various) {
+  const LineDiffsToUnifiedDiffTestCase kTestCases[] = {
+      // No changes
+      {
+          "a\nb\nc\n",
+          "a\nb\nc\n",
+          {},
+          {},
+          1,
+          "",
+      },
+      {
+          "a\nb\nc\n",
+          "a\nb\nc\n",
+          "file.txt",
+          {},
+          1,
+          "",
+      },
+      {
+          "a\nb\nc\n",
+          "a\nb\nc\n",
+          "old_file.txt",
+          "new_file.txt",
+          1,
+          "",
+      },
+      // Single change
+      {
+          "a\nb\nc\n",
+          "a\nb\nC\n",
+          {},
+          {},
+          1,
+          "@@ -2,2 +2,2 @@\n"
+          " b\n"
+          "-c\n"
+          "+C\n",
+      },
+      {
+          "a\nb\nc\n",
+          "a\nb\nC\n",
+          "file.txt",
+          {},
+          1,
+          "--- a/file.txt\n"
+          "+++ b/file.txt\n"
+          "@@ -2,2 +2,2 @@\n"
+          " b\n"
+          "-c\n"
+          "+C\n",
+      },
+      {
+          "a\nb\nc\n",
+          "a\nb\nC\n",
+          "old_file.txt",
+          "new_file.txt",
+          1,
+          "--- old_file.txt\n"
+          "+++ new_file.txt\n"
+          "@@ -2,2 +2,2 @@\n"
+          " b\n"
+          "-c\n"
+          "+C\n",
+      },
+      // Multiple chunks
+      {
+          "a\nb\nc\nd\ne\nf\nh\n",
+          "A\nb\nc\nd\ne\nf\ng\nh\n",
+          {},
+          {},
+          1,
+          "@@ -1,2 +1,2 @@\n"
+          "-a\n"
+          "+A\n"
+          " b\n"
+          "@@ -6,2 +6,3 @@\n"
+          " f\n"
+          "+g\n"
+          " h\n",
+      },
+      {
+          "a\nb\nc\nd\ne\nf\nh\n",
+          "A\nb\nc\nd\ne\nf\ng\nh\n",
+          "file.txt",
+          {},
+          1,
+          "--- a/file.txt\n"
+          "+++ b/file.txt\n"
+          "@@ -1,2 +1,2 @@\n"
+          "-a\n"
+          "+A\n"
+          " b\n"
+          "@@ -6,2 +6,3 @@\n"
+          " f\n"
+          "+g\n"
+          " h\n",
+      },
+      {
+          "a\nb\nc\nd\ne\nf\nh\n",
+          "A\nb\nc\nd\ne\nf\ng\nh\n",
+          "old_file.txt",
+          "new_file.txt",
+          1,
+          "--- old_file.txt\n"
+          "+++ new_file.txt\n"
+          "@@ -1,2 +1,2 @@\n"
+          "-a\n"
+          "+A\n"
+          " b\n"
+          "@@ -6,2 +6,3 @@\n"
+          " f\n"
+          "+g\n"
+          " h\n",
+      },
+      // Large context
+      {
+          "a\nb\nc\nd\ne\nf\nh\n",
+          "A\nb\nc\nd\ne\nf\ng\nh\n",
+          "file.txt",
+          {},
+          99,
+          "--- a/file.txt\n"
+          "+++ b/file.txt\n"
+          "@@ -1,7 +1,8 @@\n"
+          "-a\n"
+          "+A\n"
+          " b\n"
+          " c\n"
+          " d\n"
+          " e\n"
+          " f\n"
+          "+g\n"
+          " h\n",
+      },
+      // No context
+      {
+          "a\nb\nc\nd\ne\nf\nh\n",
+          "A\nb\nc\nd\ne\nf\ng\nh\n",
+          "file.txt",
+          {},
+          0,
+          "--- a/file.txt\n"
+          "+++ b/file.txt\n"
+          "@@ -1 +1 @@\n"
+          "-a\n"
+          "+A\n"
+          "@@ -7 +7 @@\n"
+          "+g\n",
+      },
+      // Multiple inserts and deletions
+      {
+          "a\nb\nc\nh\ni\nj\nk\nm\nn\no\np\nq\nx\ny\nz\nr\ns\n",
+          "a\nb\nc\nd\ne\nf\ng\nh\ni\nj\nk\nl\nm\nn\no\np\nq\nr\ns\n",
+          "file.txt",
+          {},
+          1,
+          "--- a/file.txt\n"
+          "+++ b/file.txt\n"
+          "@@ -3,2 +3,6 @@\n"
+          " c\n"
+          "+d\n"
+          "+e\n"
+          "+f\n"
+          "+g\n"
+          " h\n"
+          "@@ -7,2 +11,3 @@\n"
+          " k\n"
+          "+l\n"
+          " m\n"
+          "@@ -12,5 +17,2 @@\n"
+          " q\n"
+          "-x\n"
+          "-y\n"
+          "-z\n"
+          " r\n",
+      },
+      // Missing \n in the last line of "before" text
+      {
+          "a\nb\nc\nd\ne\nf\nh",
+          "A\nb\nc\nd\ne\nf\ng\nh\n",
+          "file.txt",
+          {},
+          1,
+          "--- a/file.txt\n"
+          "+++ b/file.txt\n"
+          "@@ -1,2 +1,2 @@\n"
+          "-a\n"
+          "+A\n"
+          " b\n"
+          "@@ -6,2 +6,3 @@\n"
+          " f\n"
+          "+g\n"
+          "-h\n"
+          "\\ No newline at end of file\n"
+          "+h\n",
+      },
+      // Missing \n in the last line of "after" text
+      {
+          "a\nb\nc\nd\ne\nf\nh\n",
+          "A\nb\nc\nd\ne\nf\ng\nh",
+          "file.txt",
+          {},
+          1,
+          "--- a/file.txt\n"
+          "+++ b/file.txt\n"
+          "@@ -1,2 +1,2 @@\n"
+          "-a\n"
+          "+A\n"
+          " b\n"
+          "@@ -6,2 +6,3 @@\n"
+          " f\n"
+          "+g\n"
+          "-h\n"
+          "+h\n"
+          "\\ No newline at end of file\n",
+      },
+      // Missing \n in the last lines of both texts
+      {
+          "a\nb\nc\nd\ne\nf\nh",
+          "A\nb\nc\nd\ne\nf\ng\nh",
+          "file.txt",
+          {},
+          1,
+          "--- a/file.txt\n"
+          "+++ b/file.txt\n"
+          "@@ -1,2 +1,2 @@\n"
+          "-a\n"
+          "+A\n"
+          " b\n"
+          "@@ -6,2 +6,3 @@\n"
+          " f\n"
+          "+g\n"
+          " h\n"
+          "\\ No newline at end of file\n",
+      },
+      // File created
+      {
+          "",
+          "A\nb\nc\nd\ne\nf\ng\nh\n",
+          "/dev/null",
+          "file.txt",
+          1,
+          "--- /dev/null\n"
+          "+++ file.txt\n"
+          "@@ -1 +1,8 @@\n"
+          "+A\n"
+          "+b\n"
+          "+c\n"
+          "+d\n"
+          "+e\n"
+          "+f\n"
+          "+g\n"
+          "+h\n",
+      },
+      // File removed
+      {
+          "a\nb\nc\nd\ne\nf\nh\n",
+          "",
+          "file.txt",
+          "/dev/null",
+          1,
+          "--- file.txt\n"
+          "+++ /dev/null\n"
+          "@@ -1,7 +1 @@\n"
+          "-a\n"
+          "-b\n"
+          "-c\n"
+          "-d\n"
+          "-e\n"
+          "-f\n"
+          "-h\n",
+      },
+  };
+
+  for (const auto& test : kTestCases) {
+    LineDiffs linediffs(test.before_text, test.after_text);
+    std::ostringstream stream;
+    LineDiffsToUnifiedDiff(stream, linediffs, test.common_context, test.file_a,
+                           test.file_b);
+    EXPECT_EQ(stream.str(), test.expected_diff_text);
   }
 }
 

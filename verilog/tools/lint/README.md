@@ -47,6 +47,10 @@ usage: verible-verilog-lint [options] <file> [<file>...]
       default: default;
 
   Flags from verilog/tools/lint/verilog_lint.cc:
+    --autofix ([yes|no|interactive], autofix mode.); default: no;
+    --autofix_output_file (File to write a patch with autofixes to. If not set
+      autofixes are applied directly to the analyzed file. Relevant only when
+      --autofix option is enabled.); default: "";
     --generate_markdown (If true, print the description of every rule formatted
       for the markdown and exit immediately. Intended for the output to be
       written to a snippet of markdown.); default: false;
@@ -180,6 +184,50 @@ to treat the code as a snippet by selecting a
 [parsing mode](../../analysis/README.md#alternative-parsing-modes), which looks
 like a comment near the top-of-file like `// verilog_syntax:
 parse-as-module-body`.
+
+## Automatically fixing trivial violations
+
+Some trivial violations (e.g. trailing spaces or repeated semicolons) can be fixed automatically.
+
+When `--autofix=yes` option is specified, the linter applies all possible fixes. To get more control on what to do with each fixable violation, `--autofix=interactive` option can be used. Interactive mode offers following actions for each fix:
+
+* `y` - apply fix
+* `n` - reject fix
+* `a` - apply this and all remaining fixes for violations of this rule
+* `d` - reject this and all remaining fixes for violations of this rule
+* `A` - apply this and all remaining fixes
+* `D` - reject this and all remaining fixes
+* `p` - show fix
+* `P` - show fixes applied so far
+* `?` - print this help and prompt again
+
+By default, accepted fixes are applied directly to linted source files. To generate a patch file instead, specify its name using `--autofix_output_file=` option.
+
+Example interactive session:
+
+```
+autofixtest.sv:3:1: Remove trailing spaces. [Style: trailing-spaces] [no-trailing-spaces]
+Autofix is available. Apply? [y,n,a,d,A,D,p,P,?] a
+(fixed)
+autofixtest.sv:6:31: Parenthesize condition expressions that appear in the true-clause of another condition expression. [Style: parentheses] [suggest-parentheses]
+Autofix is available. Apply? [y,n,a,d,A,D,p,P,?] p
+@@ -5,3 +5,3 @@
+
+-    assign foo = condition_a? condition_b ? condition_c ? a : b : c : d;
++    assign foo = condition_a? (condition_b ? condition_c ? a : b : c) : d;
+
+Autofix is available. Apply? [y,n,a,d,A,D,p,P,?] y
+(fixed)
+autofixtest.sv:6:45: Parenthesize condition expressions that appear in the true-clause of another condition expression. [Style: parentheses] [suggest-parentheses]
+Autofix is available. Apply? [y,n,a,d,A,D,p,P,?] p
+@@ -5,3 +5,3 @@
+
+-    assign foo = condition_a? condition_b ? condition_c ? a : b : c : d;
++    assign foo = condition_a? condition_b ? (condition_c ? a : b) : c : d;
+
+Autofix is available. Apply? [y,n,a,d,A,D,p,P,?] y
+(fixed)
+```
 
 <!-- reference links -->
 

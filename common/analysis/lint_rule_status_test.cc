@@ -238,5 +238,115 @@ TEST(LintRuleStatusFormatterTestWithContext, MultipleStatusesSimpleOutput) {
   RunLintStatusesTest(test, true);
 }
 
+TEST(AutoFixTest, ValidUseCases) {
+  //                                       0123456789abcdef
+  static constexpr absl::string_view text("This is an image");
+
+  // AutoFix(ReplacementEdit)
+  const AutoFix singleEdit({text.substr(5, 2), "isn't"});
+  EXPECT_EQ(singleEdit.Apply(text), "This isn't an image");
+
+  const AutoFix singleInsert({text.substr(16, 0), "."});
+  EXPECT_EQ(singleInsert.Apply(text), "This is an image.");
+
+  // AutoFix()
+  AutoFix fixesCollection;
+  EXPECT_TRUE(fixesCollection.AddEdits(singleEdit.Edits()));
+  EXPECT_TRUE(fixesCollection.AddEdits(singleInsert.Edits()));
+  EXPECT_EQ(fixesCollection.Apply(text), "This isn't an image.");
+  EXPECT_TRUE(fixesCollection.AddEdits({{text.substr(0, 0), "Hello. "}}));
+  EXPECT_EQ(fixesCollection.Apply(text), "Hello. This isn't an image.");
+
+  static const int dont_care_tag = 0;
+  TokenInfo image_token(dont_care_tag, text.substr(11, 5));
+
+  // AutoFix(ReplacementEdit),
+  // ReplacementEdit(const TokenInfo&, const std::string&)
+  AutoFix otherCollection({image_token, "🖼"});
+  EXPECT_TRUE(otherCollection.AddEdits(fixesCollection.Edits()));
+  EXPECT_EQ(otherCollection.Apply(text), "Hello. This isn't an 🖼.");
+
+  // AutoFix(std::initializer_list<ReplacementEdit>)
+  const AutoFix multipleEdits({
+      {text.substr(11, 5), "text"},
+      {text.substr(8, 2), "a"},
+  });
+  EXPECT_EQ(multipleEdits.Apply(text), "This is a text");
+
+  // AutoFix(const AutoFix& other)
+  AutoFix copyFix(multipleEdits);
+  EXPECT_EQ(copyFix.Apply(text), "This is a text");
+  EXPECT_TRUE(copyFix.AddEdits(singleInsert.Edits()));
+  EXPECT_EQ(copyFix.Apply(text), "This is a text.");
+
+  // AutoFix(const AutoFix&& other)
+  AutoFix moveFix(std::move(copyFix));
+  EXPECT_EQ(moveFix.Apply(text), "This is a text.");
+
+  // AutoFix(const std::string&, ReplacementEdit)
+  const AutoFix singleInsertWithDescription("Add dot",
+                                            {text.substr(16, 0), "."});
+  EXPECT_EQ(singleInsertWithDescription.Apply(text), "This is an image.");
+  EXPECT_EQ(singleInsertWithDescription.Description(), "Add dot");
+
+  // AutoFix(const std::string&, std::initializer_list<ReplacementEdit>)
+  const AutoFix multipleEditsWithDescription("Stop lying",
+                                             {
+                                                 {text.substr(11, 5), "text"},
+                                                 {text.substr(8, 2), "a"},
+                                             });
+  EXPECT_EQ(multipleEditsWithDescription.Apply(text), "This is a text");
+  EXPECT_EQ(multipleEditsWithDescription.Description(), "Stop lying");
+}
+
+TEST(AutoFixTest, ConflictingEdits) {
+  //                                       0123456789abcdef
+  static constexpr absl::string_view text("This is an image");
+
+  AutoFix fixesCollection;
+  EXPECT_TRUE(fixesCollection.AddEdits({{text.substr(8, 8), "a text"}}));
+  EXPECT_FALSE(fixesCollection.AddEdits({{text.substr(11, 5), "IMAGE"}}));
+  EXPECT_FALSE(fixesCollection.AddEdits({{text.substr(8, 1), "A"}}));
+  EXPECT_FALSE(fixesCollection.AddEdits({{text.substr(15, 1), "ination"}}));
+  EXPECT_EQ(fixesCollection.Apply(text), "This is a text");
+
+  EXPECT_DEATH(AutoFix({{text.substr(8, 8), "a text"},  //
+                        {text.substr(11, 5), "IMAGE"}}),
+               "Edits must not overlap");
+
+  EXPECT_DEATH(AutoFix({{text.substr(8, 8), "a text"},  //
+                        {text.substr(8, 1), "A"}}),
+               "Edits must not overlap");
+
+  EXPECT_DEATH(AutoFix({{text.substr(8, 8), "a text"},  //
+                        {text.substr(15, 1), "ination"}}),
+               "Edits must not overlap");
+}
+
+TEST(LintViolationTest, ViolationWithAutoFix) {
+  static constexpr absl::string_view text("This is an image");
+  static const int dont_care_tag = 0;
+  const TokenInfo an_image_token(dont_care_tag, text.substr(8, 5));
+
+  const LintViolation no_fixes(an_image_token, "No, it's not.");
+  EXPECT_TRUE(no_fixes.autofixes.empty());
+
+  const LintViolation single_fix(
+      an_image_token, "No, it's not.",
+      {
+          AutoFix("Replace with 'a text'", {an_image_token, "a text"}),
+      });
+  EXPECT_EQ(single_fix.autofixes.size(), 1);
+
+  const LintViolation multiple_fixes(
+      an_image_token, "No, it's not.",
+      {
+          AutoFix("Replace with 'a text'", {an_image_token, "a text"}),
+          AutoFix("Add waiver comment",
+                  {text.substr(0, 0), "// verilog_lint: waive no-lying\n"}),
+      });
+  EXPECT_EQ(multiple_fixes.autofixes.size(), 2);
+}
+
 }  // namespace
 }  // namespace verible

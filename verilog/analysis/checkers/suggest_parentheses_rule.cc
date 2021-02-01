@@ -25,6 +25,7 @@ namespace analysis {
 
 VERILOG_REGISTER_LINT_RULE(SuggestParenthesesRule);
 
+using verible::AutoFix;
 using verible::GetStyleGuideCitation;
 using verible::LintRuleStatus;
 using verible::LintViolation;
@@ -64,7 +65,10 @@ void SuggestParenthesesRule::HandleNode(
         const verible::TokenInfo token(SymbolIdentifier,
                                        verible::StringSpanOfSymbol(*trueCase));
 
-        violations_.insert(LintViolation(token, kMessage, context));
+        violations_.insert(LintViolation(
+            token, kMessage, context,
+            {AutoFix({{token.text().substr(0, 0), "("},
+                      {token.text().substr(token.text().length(), 0), ")"}})}));
       }
       break;
     }

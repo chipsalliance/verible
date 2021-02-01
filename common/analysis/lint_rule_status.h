@@ -28,27 +28,101 @@
 #include "common/text/symbol.h"
 #include "common/text/syntax_tree_context.h"
 #include "common/text/token_info.h"
+#include "common/util/logging.h"
 
 namespace verible {
+
+// Represents a single replace operation on a text fragment.
+//
+// Either fragment or replacement can be strings with zero width, providing a
+// way for, respectively, inserting and removing text.
+//
+// ReplacementEdit differs from editscript's Edit in that it stores a
+// replacement string, so it doesn't need the "after" text to be useful.
+struct ReplacementEdit {
+  ReplacementEdit(absl::string_view fragment, const std::string& replacement)
+      : fragment(fragment), replacement(replacement) {}
+
+  ReplacementEdit(const TokenInfo& token, const std::string& replacement)
+      : fragment(token.text()), replacement(replacement) {}
+
+  bool operator<(const ReplacementEdit& other) const {
+    // Check that the fragment is located before the other's fragment. When they
+    // overlap, `this<other` and `other<this` return false, which makes them
+    // equivalent in std::set.
+    return (fragment.data() + fragment.size()) <= other.fragment.data();
+  }
+
+  absl::string_view fragment;
+  std::string replacement;
+};
+
+// Collection of ReplacementEdits performing single violation fix.
+class AutoFix {
+ public:
+  AutoFix() : description(), edits() {}
+  AutoFix(const AutoFix& other)
+      : description(other.description), edits(other.edits) {}
+  AutoFix(const AutoFix&& other)
+      : description(std::move(other.description)),
+        edits(std::move(other.edits)) {}
+
+  AutoFix(const std::string& description,
+          std::initializer_list<ReplacementEdit> edits)
+      : description(description), edits(edits) {
+    CHECK_EQ(this->edits.size(), edits.size()) << "Edits must not overlap.";
+  }
+
+  AutoFix(std::initializer_list<ReplacementEdit> edits)
+      : AutoFix("Fix", edits) {}
+
+  AutoFix(const std::string& description, ReplacementEdit edit)
+      : AutoFix(description, {edit}) {}
+
+  AutoFix(ReplacementEdit edit) : AutoFix({edit}) {}
+
+  // Applies the fix on a `base` and returns modified text.
+  std::string Apply(const absl::string_view base) const;
+
+  bool AddEdits(const std::set<ReplacementEdit>& new_edits);
+
+  const std::set<ReplacementEdit>& Edits() const { return edits; }
+  const std::string& Description() const { return description; }
+
+ private:
+  std::string description;
+  std::set<ReplacementEdit> edits;
+};
 
 // LintViolation is a class that represents a single rule violation.
 struct LintViolation {
   // This construct records a token stream lint violation.
-  LintViolation(const TokenInfo& token, const std::string& reason)
-      : root(nullptr), token(token), reason(reason), context() {}
+  LintViolation(const TokenInfo& token, const std::string& reason,
+                std::initializer_list<AutoFix> autofixes = {})
+      : root(nullptr),
+        token(token),
+        reason(reason),
+        context(),
+        autofixes(autofixes) {}
 
   // This construct records a syntax tree lint violation.
   // Use this variation when the violation can be localized to a single token.
   LintViolation(const TokenInfo& token, const std::string& reason,
-                const SyntaxTreeContext& context)
-      : root(nullptr), token(token), reason(reason), context(context) {}
+                const SyntaxTreeContext& context,
+                std::initializer_list<AutoFix> autofixes = {})
+      : root(nullptr),
+        token(token),
+        reason(reason),
+        context(context),
+        autofixes(autofixes) {}
 
   // This construct records a syntax tree lint violation.
   // Use this variation when the range of violation is a subtree that spans
   // multiple tokens.  The violation will be reported at the location of
   // the left-most leaf of the subtree.
   LintViolation(const Symbol& root, const std::string& reason,
-                const SyntaxTreeContext& context);
+                const SyntaxTreeContext& context,
+                std::initializer_list<AutoFix> autofixes = {});
 
   // root is a reference into original ConcreteSyntaxTree that
   // linter was run against. LintViolations should not outlive this tree.
@@ -64,6 +138,8 @@ struct LintViolation {
   // The context (list of ancestors) of the offending token.
   // For non-syntax-tree analyses, leave this blank.
   const SyntaxTreeContext context;
+
+  const std::vector<AutoFix> autofixes;
 
   bool operator<(const LintViolation& r) const {
     // compares addresses of violations, which correspond to substring

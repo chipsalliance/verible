@@ -35,8 +35,8 @@ namespace verible {
 struct LineDiffs {
   const absl::string_view before_text;
   const absl::string_view after_text;
-  const std::vector<absl::string_view> before_lines;  // lines (excluding \n)
-  const std::vector<absl::string_view> after_lines;   // lines (excluding \n)
+  const std::vector<absl::string_view> before_lines;  // lines
+  const std::vector<absl::string_view> after_lines;   // lines
   const diff::Edits edits;  // line difference/edit-sequence between texts.
 
   // Computes the line-difference between before_text and after_text.
@@ -77,6 +77,11 @@ LineNumberSet DiffEditsToAddedLineNumbers(const diff::Edits&);
 // agnostic to the type being diff-ed.
 std::vector<diff::Edits> DiffEditsToPatchHunks(const diff::Edits& edits,
                                                int common_context);
+
+void LineDiffsToUnifiedDiff(std::ostream& stream, const LineDiffs& linediffs,
+                            unsigned common_context,
+                            absl::string_view file_a = {},
+                            absl::string_view file_b = {});
 
 }  // namespace verible
 

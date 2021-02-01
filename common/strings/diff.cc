@@ -44,8 +44,8 @@ static char EditOperationToLineMarker(Operation op) {
 LineDiffs::LineDiffs(absl::string_view before, absl::string_view after)
     : before_text(before),
       after_text(after),
-      before_lines(SplitLines(before_text)),
-      after_lines(SplitLines(after_text)),
+      before_lines(SplitLinesKeepLineTerminator(before_text)),
+      after_lines(SplitLinesKeepLineTerminator(after_text)),
       edits(diff::GetTokenDiffs(before_lines.begin(), before_lines.end(),
                                 after_lines.begin(), after_lines.end())) {}
 
@@ -53,7 +53,7 @@ template <typename Iter>
 static std::ostream& PrintLineRange(std::ostream& stream, char op, Iter start,
                                     Iter end) {
   for (const auto& line : make_range(start, end)) {
-    stream << op << line << std::endl;
+    stream << op << line;
   }
   return stream;
 }
@@ -64,10 +64,13 @@ std::ostream& LineDiffs::PrintEdit(std::ostream& stream,
   if (edit.operation == Operation::INSERT) {
     PrintLineRange(stream, op, after_lines.begin() + edit.start,
                    after_lines.begin() + edit.end);
+    if (after_lines[edit.end - 1].back() != '\n') stream << "\n";
   } else {
     PrintLineRange(stream, op, before_lines.begin() + edit.start,
                    before_lines.begin() + edit.end);
+    if (before_lines[edit.end - 1].back() != '\n') stream << "\n";
   }
+  stream << std::flush;
   return stream;
 }
 
@@ -150,6 +153,71 @@ std::vector<diff::Edits> DiffEditsToPatchHunks(const diff::Edits& edits,
     }
   }
   return hunks;
+}
+
+void LineDiffsToUnifiedDiff(std::ostream& stream, const LineDiffs& linediffs,
+                            unsigned common_context, absl::string_view file_a,
+                            absl::string_view file_b) {
+  const std::vector<diff::Edits> chunks =
+      DiffEditsToPatchHunks(linediffs.edits, common_context);
+
+  if (chunks.size() == 0) {
+    return;
+  }
+
+  if (!file_a.empty()) {
+    if (file_b.empty()) {
+      stream << "--- a/" << file_a << std::endl;
+      stream << "+++ b/" << file_a << std::endl;
+    } else {
+      stream << "--- " << file_a << std::endl;
+      stream << "+++ " << file_b << std::endl;
+    }
+  }
+
+  int added_lines_count = 0;
+  for (const auto& chunk : chunks) {
+    int chunk_before_lines_count = 0;
+    int chunk_added_lines_count = 0;
+
+    for (size_t i = 0; i < chunk.size(); ++i) {
+      auto& edit = chunk[i];
+
+      if (edit.operation == Operation::INSERT) {
+        chunk_added_lines_count += edit.end - edit.start;
+      } else if (edit.operation == Operation::DELETE) {
+        chunk_before_lines_count += edit.end - edit.start;
+        chunk_added_lines_count -= edit.end - edit.start;
+      } else {
+        chunk_before_lines_count += edit.end - edit.start;
+      }
+    }
+    const int chunk_after_lines_count =
+        chunk_before_lines_count + chunk_added_lines_count;
+
+    // Chunk header
+    stream << "@@ -" << (chunk.front().start + 1);
+    if (chunk_before_lines_count > 1) stream << "," << chunk_before_lines_count;
+    stream << " +" << (chunk.front().start + added_lines_count + 1);
+    if (chunk_after_lines_count > 1) stream << "," << chunk_after_lines_count;
+    stream << " @@" << std::endl;
+
+    added_lines_count += chunk_added_lines_count;
+
+    for (const auto& edit : chunk) {
+      linediffs.PrintEdit(stream, edit);
+
+      // Last line from either original or new text, and final '\n' is missing?
+      if ((edit.operation != Operation::INSERT &&
+           size_t(edit.end) == linediffs.before_lines.size() &&
+           linediffs.before_text.back() != '\n') ||
+          (edit.operation == Operation::INSERT &&
+           size_t(edit.end) == linediffs.after_lines.size() &&
+           linediffs.after_text.back() != '\n')) {
+        stream << "\\ No newline at end of file" << std::endl;
+      }
+    }
+  }
 }
 
 }  // namespace verible

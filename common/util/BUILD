@@ -273,6 +273,15 @@ cc_library(
     hdrs = ["with_reason.h"],
 )
 
+cc_library(
+    name = "user_interaction",
+    srcs = ["user_interaction.cc"],
+    hdrs = ["user_interaction.h"],
+    deps = [
+        "@com_google_absl//absl/strings",
+    ],
+)
+
 cc_test(
     name = "algorithm_test",
     srcs = ["algorithm_test.cc"],
@@ -501,6 +510,16 @@ cc_test(
     srcs = ["with_reason_test.cc"],
     deps = [
         ":with_reason",
+        "@com_google_googletest//:gtest_main",
+    ],
+)
+
+cc_test(
+    name = "user_interaction_test",
+    srcs = ["user_interaction_test.cc"],
+    deps = [
+        ":user_interaction",
+        "@com_google_absl//absl/strings",
         "@com_google_googletest//:gtest_main",
     ],
 )
