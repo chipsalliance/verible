@@ -57,12 +57,11 @@ ABSL_FLAG(verilog::RuleBundle, rules, {},
           "Comma-separated of lint rules to enable.  "
           "No prefix or a '+' prefix enables it, '-' disable it. "
           "Configuration values for each rules placed after '=' character.");
-static const char kDefaultRulesConfig[] = ".rules.verible_lint";
-ABSL_FLAG(std::string, rules_config, kDefaultRulesConfig,
+ABSL_FLAG(std::string, rules_config, "",
           "Path to lint rules configuration file. "
-          "Disables --rule_config_search.");
+          "Disables --rule_config_search if set.");
 ABSL_FLAG(bool, rules_config_search, false,
-          "Look for lint rules configuration file, "
+          "Look for lint rules configuration file '.rules.verible_lint' "
           "searching upward from the location of each analyzed file.");
 ABSL_FLAG(verilog::RuleSet, ruleset, verilog::RuleSet::kDefault,
           "[default|all|none], the base set of rules used by linter");
@@ -256,8 +255,6 @@ LinterConfiguration LinterConfigurationFromFlags(
       .ruleset = absl::GetFlag(FLAGS_ruleset),
       .rules = absl::GetFlag(FLAGS_rules),
       .config_file = absl::GetFlag(FLAGS_rules_config),
-      .config_file_is_custom =
-          absl::GetFlag(FLAGS_rules_config) != kDefaultRulesConfig,
       .rules_config_search = absl::GetFlag(FLAGS_rules_config_search),
       .linting_start_file = std::string(linting_start_file),
       .waiver_files = absl::GetFlag(FLAGS_waiver_files)};

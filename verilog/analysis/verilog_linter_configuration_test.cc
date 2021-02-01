@@ -781,8 +781,7 @@ TEST(ConfigureFromOptionsTest, Basic) {
 
   LinterOptions options = {.ruleset = RuleSet::kAll,
                            .rules = RuleBundle(),
-                           .config_file = "-",
-                           .config_file_is_custom = false,
+                           .config_file = "",
                            .rules_config_search = false,
                            .linting_start_file = "filename",
                            .waiver_files = "filename"};
@@ -796,8 +795,7 @@ TEST(ConfigureFromOptionsTest, RulesNumber) {
 
   LinterOptions options = {.ruleset = RuleSet::kAll,
                            .rules = RuleBundle(),
-                           .config_file = "-",
-                           .config_file_is_custom = false,
+                           .config_file = "",
                            .rules_config_search = false,
                            .linting_start_file = "filename",
                            .waiver_files = "filename"};
@@ -821,8 +819,7 @@ TEST(ConfigureFromOptionsTest, RulesSelective) {
 
   LinterOptions options = {.ruleset = RuleSet::kAll,
                            .rules = bundle,
-                           .config_file = "-",
-                           .config_file_is_custom = false,
+                           .config_file = "",
                            .rules_config_search = false,
                            .linting_start_file = "filename",
                            .waiver_files = "filename"};

@@ -142,9 +142,6 @@ struct LinterOptions {
   // Path to a file with extra linter configuration, applied on top of the
   // base 'ruleset' and extra 'rules'
   std::string config_file;
-  // Indicates whether the 'config_file' is the default config file or a custom
-  // one
-  bool config_file_is_custom;
   // Enables upward config file search
   bool rules_config_search;
   // Defines the starting point for the upward config search algorithm,
