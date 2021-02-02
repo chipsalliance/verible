@@ -36,9 +36,15 @@ information on using pull requests.
 
 ### Style
 
-Our C++ code mostly follows [Google's C++ style guide][google-cpp-style]. We can
-take care of automatic code formatting for you when we import your pull
-requests.
+Our C++ code mostly follows [Google's C++ style guide][google-cpp-style].
+
+The github actions on a pull request will verify this style, so to make
+this smooth, run `clang-format` on your modified files before submitting
+a pull request:
+
+```
+clang-format --style=file -i <your-modified-c++-files>
+```
 
 ### Testing
 
