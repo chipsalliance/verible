@@ -67,6 +67,49 @@ subproblem: _Given a box width constraint, what are the best ways to format a
 region of text?_ Leaf partitions of the [TokenPartitionTree] represents a unit
 of work that is currently handled by the line-wrapping optimization phase.
 
+### Tree unwrapping
+
+The implemention of [TreeUnwrapper] is split into
+[language-agnostic library functions](https://cs.opensource.google/verible/verible/+/master:common/formatting/tree_unwrapper.cc)
+and [Verilog-specific](https://cs.opensource.google/verible/verible/+/master:verilog/formatting/formatter.cc) code.
+
+Simplified class inheritance diagram is shown below:
+![Inheritance diagram](./formatter_simplified_class_diagram.png)
+<!-- class diagram can be regenerated with yEd tool https://www.yworks.com/products/yed -->
+
+[TreeUnwrapper] class exploits
+the [Visitor](https://cs.opensource.google/verible/verible/+/master:common/text/visitors.h?q=class:SymbolVisitor&ss=verible%2Fverible)
+pattern to recursively process the input CST tree:
+```cpp
+// SymbolVisitor is an abstract visitor class from which visitors can be derived
+// SymbolVisitor only visits a single Symbol, and does not recurse on nodes
+//
+// Usage:
+//  SymbolPtr tree = ...
+//  SymbolVisitorSubclass visitor;
+//  tree->Accept(visitor);
+//
+class SymbolVisitor {
+ public:
+  virtual ~SymbolVisitor() {}
+  virtual void Visit(const SyntaxTreeLeaf& leaf) = 0;
+  virtual void Visit(const SyntaxTreeNode& node) = 0;
+};
+```
+
+It builds the [TokenPartitionTree] (i.e. `VectorTree<UnwrappedLine>`) with a set of helper methods to simplify the process:
+* [`TraverseChildren()`](https://cs.opensource.google/verible/verible/+/master:common/formatting/tree_unwrapper.cc?q=function:TraverseChildren&ss=verible%2Fverible) - only traverses the CST
+* [`VisitIndentedSection()`](https://cs.opensource.google/verible/verible/+/master:common/formatting/tree_unwrapper.cc?q=function:VisitIndentedSection&ss=verible%2Fverible) - creates indented section and traverses the CST
+* [`VisitNewUnwrappedLine()`](https://cs.opensource.google/verible/verible/+/master:verilog/formatting/tree_unwrapper.cc?q=function:VisitNewUnwrappedLine&ss=verible%2Fverible) - begins a new partition of tokens and traverses the CST
+
+### Custom policies application
+
+The next stage of code formatting is to apply custom functions that would
+reshape the partition tree according to the selected policy.
+An example of that are the [kTabularAlignment](#alignment) and the
+[kAppendFittingSubPartitions](https://cs.opensource.google/verible/verible/+/master:common/formatting/unwrapped_line.h?q=kAppendFittingSubpartitions&ss=verible)
+policies.
+
 ### Wrapping
 
 Line wrapping optimization is currently done as a Dijsktra shortest-path search
@@ -92,7 +135,7 @@ InterTokenInfo before each token.
 
 A lot of other details are traced by running with `-v=4 --alsologtostderr`.
 
-Selective output from Verible modules can be controled via [glog] environment
+Selective output from Verible modules can be controlled via [glog] environment
 variable `GLOG_vmodule`, for example output from `tree_unwrapper` might be enabled
 with `GLOG_vmodule="tree_unwrapper=4"`. Real world [TreeUnwrapper] example:
 ```
