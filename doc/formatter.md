@@ -92,6 +92,16 @@ InterTokenInfo before each token.
 
 A lot of other details are traced by running with `-v=4 --alsologtostderr`.
 
+Selective output from Verible modules can be controled via [glog] environment
+variable `GLOG_vmodule`, for example output from `tree_unwrapper` might be enabled
+with `GLOG_vmodule="tree_unwrapper=4"`. Real world [TreeUnwrapper] example:
+```
+echo 'module m; initial a = b + c; endmodule' | \
+  GLOG_vmodule='tree_unwrapper=3' \
+  GLOG_logtostderr=1 \
+  bazel run //verilog/tools/formatter:verible-verilog-format -- -show_token_partition_tree -
+```
+
 ### Alignment
 
 The tabular alignment feature can be summarized as: _Given a block of code with
@@ -167,3 +177,4 @@ non-aligned formatting.
 [TreeUnwrapper]: https://cs.opensource.google/verible/verible/+/master:verilog/formatting/tree_unwrapper.h
 [TokenPartitionTree]: https://cs.opensource.google/verible/verible/+/master:common/formatting/token_partition_tree.h
 [AlignablePartitionGroup]: https://cs.opensource.google/verible/verible/+/master:common/formatting/align.h?q=file:align.h%20class:AlignablePartitionGroup&ss=verible%2Fverible
+[glog]: https://github.com/google/glog
