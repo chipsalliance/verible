@@ -38,8 +38,8 @@ information on using pull requests.
 
 Our C++ code mostly follows [Google's C++ style guide][google-cpp-style].
 
-The github actions on a pull request will verify this style, so to make
-this smooth, run `clang-format` on your modified files before submitting
+On a pull request, the Continuous Integration (CI) will verify this style, so
+to make this smooth, run `clang-format` on your modified files before submitting
 a pull request:
 
 ```
