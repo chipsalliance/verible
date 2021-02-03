@@ -5,6 +5,7 @@ on:
   pull_request:
 
 jobs:
+
   VerifyFormatting:
     runs-on: ubuntu-20.04
 
@@ -15,7 +16,7 @@ jobs:
           fetch-depth: 0
 
       - name: Install Dependencies
-        run:
+        run: |
           sudo apt-get install clang-format
           clang-format --version
 
