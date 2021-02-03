@@ -15,8 +15,8 @@
 
 FORMAT_OUT=${TMPDIR:-/tmp}/clang-format-diff.out
 
-# TODO(hzeller): only run on the files that are checked out
-clang-format -i --style=Google $(find . -name "*.h" -o -name "*.cc")
+# Run on all the files that are affected
+clang-format -i --style=Google $(git diff --name-only --diff-filter=AM -r origin/master | grep '\(\.cc\|\.h\)$')
 
 # Check if we got any diff
 git diff > ${FORMAT_OUT}
