@@ -17,7 +17,7 @@ set -e
 
 matrix='['
 for item in releasing/*/; do
-  matrix+='{"OS": "'"`echo $(basename $item) | cut -d- -f1`"'", "OS_VERSION": "'"`echo $(basename $item) | cut -d- -f2`"'"},'
+  matrix+='{"os": "'"`echo $(basename $item) | cut -d- -f1`"'", "version": "'"`echo $(basename $item) | cut -d- -f2`"'"},'
 done
 matrix+=']'
 
