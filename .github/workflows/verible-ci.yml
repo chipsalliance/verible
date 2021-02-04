@@ -29,9 +29,9 @@ jobs:
       fail-fast: false
       matrix:
         env:
-        - MODE: test
-        - MODE: compile
-        - MODE: clean
+          - MODE: test
+          - MODE: compile
+          - MODE: clean
     env: ${{ matrix.env}}
     name: Check · ${{ matrix.env.MODE}}
 
