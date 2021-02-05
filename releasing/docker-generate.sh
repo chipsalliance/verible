@@ -47,25 +47,7 @@ fi
 for UBUNTU_VERSION in xenial bionic focal groovy; do
     # Install basic tools
     # --------------------------------------------------------------
-    cat > ubuntu-${UBUNTU_VERSION}/Dockerfile <<EOF
-FROM ubuntu:$UBUNTU_VERSION
-
-ENV DEBIAN_FRONTEND noninteractive
-ENV TZ UTC
-
-RUN apt-get update
-
-# Install basic tools
-RUN apt-get install -y          \\
-    curl                        \\
-    file                        \\
-    git                         \\
-    gnupg                       \\
-    lsb-release                 \\
-    software-properties-common  \\
-    wget
-
-EOF
+    sed "s#ubuntu:VERSION#ubuntu:${UBUNTU_VERSION}#g" $(dirname "$0")/ubuntu.dockerfile > ubuntu-${UBUNTU_VERSION}/Dockerfile
 
     # Install compiler
     # --------------------------------------------------------------
@@ -124,18 +106,7 @@ done
 for CENTOS_VERSION in 7 8; do
     # Install basic tools
     # --------------------------------------------------------------
-    cat > centos-${CENTOS_VERSION}/Dockerfile <<EOF
-FROM centos:$CENTOS_VERSION
-
-# Install basic tools
-RUN yum install -y  \\
-    file            \\
-    git             \\
-    redhat-lsb      \\
-    tar             \\
-    wget
-
-EOF
+    sed "s#centos:VERSION#centos:${CENTOS_VERSION}#g" $(dirname "$0")/centos.dockerfile > centos-${CENTOS_VERSION}/Dockerfile
 
     # Install compiler
     # --------------------------------------------------------------
