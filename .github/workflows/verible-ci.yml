@@ -165,7 +165,7 @@ jobs:
 
   Release:
     if: github.ref == 'refs/heads/master' && github.event_name != 'pull_request'
-    needs: [ Check, Build]
+    needs: [ Check, Build ]
     runs-on: ubuntu-20.04
     name: 📦 Release
     steps:
