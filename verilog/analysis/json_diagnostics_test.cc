@@ -14,18 +14,18 @@
 
 #include "verilog/analysis/json_diagnostics.h"
 
-#include "gtest/gtest.h"
 #include "absl/memory/memory.h"
 #include "absl/strings/string_view.h"
-#include "verilog/analysis/verilog_analyzer.h"
 #include "common/util/logging.h"
-
+#include "gtest/gtest.h"
 #include "json/json.h"
+#include "verilog/analysis/verilog_analyzer.h"
 
 namespace verilog {
 namespace {
 
-static void CheckJsonErrorItem(const Json::Value& json, const char* phase, const char* text) {
+static void CheckJsonErrorItem(const Json::Value& json, const char* phase,
+                               const char* text) {
   EXPECT_TRUE(json["column"].isIntegral());
   EXPECT_TRUE(json["line"].isIntegral());
   ASSERT_TRUE(json["phase"].isString());
@@ -41,19 +41,21 @@ TEST(JsonDiagnosticsTest, LexError) {
   EXPECT_FALSE(status.ok());
   EXPECT_FALSE(analyzer_ptr->LexStatus().ok());
 
-  const Json::Value json = verilog::GetLinterTokenErrorsAsJson(analyzer_ptr.get());
+  const Json::Value json =
+      verilog::GetLinterTokenErrorsAsJson(analyzer_ptr.get());
   EXPECT_EQ(json.size(), 1);
   CheckJsonErrorItem(json[0], "lex", "321foo");
 }
 
 TEST(JsonDiagnosticsTest, ParseError) {
-  const auto analyzer_ptr = absl::make_unique<VerilogAnalyzer>(
-      "a+", "<noname>");
+  const auto analyzer_ptr =
+      absl::make_unique<VerilogAnalyzer>("a+", "<noname>");
   const auto status = ABSL_DIE_IF_NULL(analyzer_ptr)->Analyze();
   EXPECT_FALSE(status.ok());
   EXPECT_FALSE(analyzer_ptr->ParseStatus().ok());
 
-  const Json::Value json = verilog::GetLinterTokenErrorsAsJson(analyzer_ptr.get());
+  const Json::Value json =
+      verilog::GetLinterTokenErrorsAsJson(analyzer_ptr.get());
   EXPECT_EQ(json.size(), 1);
   CheckJsonErrorItem(json[0], "parse", "+");
 }

@@ -16,19 +16,20 @@
 
 #include <memory>
 
-#include "gtest/gtest.h"
 #include "absl/strings/string_view.h"
-#include "verilog/analysis/verilog_analyzer.h"
 #include "common/text/symbol.h"
 #include "common/util/logging.h"
+#include "gtest/gtest.h"
 #include "json/value.h"
+#include "verilog/analysis/verilog_analyzer.h"
 
 namespace verilog {
 namespace {
 
 static Json::Value ParseJson(absl::string_view text) {
   Json::Value json;
-  std::unique_ptr<Json::CharReader> reader(Json::CharReaderBuilder().newCharReader());
+  std::unique_ptr<Json::CharReader> reader(
+      Json::CharReaderBuilder().newCharReader());
   reader->parse(text.begin(), text.end(), &json, nullptr);
   return json;
 }
@@ -41,8 +42,8 @@ TEST(VerilogTreeJsonTest, GeneratesGoodJsonTree) {
   const std::unique_ptr<verible::Symbol>& tree_ptr = analyzer_ptr->SyntaxTree();
   ASSERT_NE(tree_ptr, nullptr);
 
-  const Json::Value json(verilog::ConvertVerilogTreeToJson(*tree_ptr,
-                               analyzer_ptr->Data().Contents()));
+  const Json::Value json(verilog::ConvertVerilogTreeToJson(
+      *tree_ptr, analyzer_ptr->Data().Contents()));
 
   const Json::Value expected_json = ParseJson(R"({
     "tag": "kDescriptionList",

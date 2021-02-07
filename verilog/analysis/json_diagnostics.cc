@@ -14,19 +14,20 @@
 
 #include "verilog/analysis/json_diagnostics.h"
 
-#include <vector>
 #include <string>
+#include <vector>
 
 #include "absl/strings/string_view.h"
 #include "common/analysis/file_analyzer.h"
 #include "common/strings/line_column_map.h"
-#include "verilog/analysis/verilog_analyzer.h"
 #include "json/value.h"
+#include "verilog/analysis/verilog_analyzer.h"
 
 namespace verilog {
 
 // Returns AnalysisPhase as JSON value.
-// Try not to change. External tools may use these values as a constant phase IDs.
+// Try not to change. External tools may use these values as a constant phase
+// IDs.
 static Json::Value analysis_phase_to_json(const verible::AnalysisPhase& phase) {
   switch (phase) {
     case verible::AnalysisPhase::kLexPhase:
@@ -40,17 +41,21 @@ static Json::Value analysis_phase_to_json(const verible::AnalysisPhase& phase) {
   }
 }
 
-Json::Value GetLinterTokenErrorsAsJson(const verilog::VerilogAnalyzer* analyzer) {
+Json::Value GetLinterTokenErrorsAsJson(
+    const verilog::VerilogAnalyzer* analyzer) {
   Json::Value syntax_errors = Json::arrayValue;
 
-  const std::vector<verible::RejectedToken>& rejected_tokens = analyzer->GetRejectedTokens();
+  const std::vector<verible::RejectedToken>& rejected_tokens =
+      analyzer->GetRejectedTokens();
   for (const auto& rejected_token : rejected_tokens) {
     Json::Value& error = syntax_errors.append(Json::objectValue);
 
     const absl::string_view base_text = analyzer->Data().Contents();
-    const verible::LineColumnMap& line_column_map = analyzer->Data().GetLineColumnMap();
+    const verible::LineColumnMap& line_column_map =
+        analyzer->Data().GetLineColumnMap();
     if (!rejected_token.token_info.isEOF()) {
-      const auto pos = line_column_map(rejected_token.token_info.left(base_text));
+      const auto pos =
+          line_column_map(rejected_token.token_info.left(base_text));
       error["line"] = pos.line;
       error["column"] = pos.column;
       error["text"] = std::string(rejected_token.token_info.text());

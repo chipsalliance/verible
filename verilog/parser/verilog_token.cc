@@ -16,8 +16,8 @@
 
 #include <string>
 
-#include "verilog/parser/verilog_parser.h"
 #include "absl/strings/string_view.h"
+#include "verilog/parser/verilog_parser.h"
 
 namespace verilog {
 
@@ -27,9 +27,10 @@ namespace verilog {
 
 absl::string_view TokenTypeToString(size_t tokentype) {
   switch (tokentype) {
-    // Returns stringified symbol name
-    #define CASE_STRINGIFY(val) \
-        case verilog_tokentype::val: return #val;
+// Returns stringified symbol name
+#define CASE_STRINGIFY(val)    \
+  case verilog_tokentype::val: \
+    return #val;
 
     // Tokens with verbose or unusual aliases
     CASE_STRINGIFY(TK_COMMENT_BLOCK)
@@ -43,7 +44,7 @@ absl::string_view TokenTypeToString(size_t tokentype) {
     CASE_STRINGIFY(PP_define_body)
     CASE_STRINGIFY(PP_default_text)
 
-    #undef CASE_STRINGIFY
+#undef CASE_STRINGIFY
 
     // The string returned by verilog_symbol_name() for single quote character
     // ("'\\''") contains backslash. This is the only such case, so generic
@@ -54,8 +55,8 @@ absl::string_view TokenTypeToString(size_t tokentype) {
     // Returns token type name or its alias (if available) as used in verilog.y
     default: {
       absl::string_view symbol_name(verilog_symbol_name(tokentype));
-      if (symbol_name.size() >= 2 && (symbol_name[0] == '"'
-                                      || symbol_name[0] == '\'')) {
+      if (symbol_name.size() >= 2 &&
+          (symbol_name[0] == '"' || symbol_name[0] == '\'')) {
         // Strip quotes
         return symbol_name.substr(1, symbol_name.size() - 2);
       }

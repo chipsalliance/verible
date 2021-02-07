@@ -16,11 +16,10 @@
 
 #include <memory>
 
-#include "gtest/gtest.h"
-
-#include "common/text/token_info.h"
 #include "absl/strings/string_view.h"
 #include "common/text/constants.h"
+#include "common/text/token_info.h"
+#include "gtest/gtest.h"
 #include "json/value.h"
 
 namespace verible {
@@ -28,7 +27,8 @@ namespace {
 
 static Json::Value ParseJson(absl::string_view text) {
   Json::Value json;
-  std::unique_ptr<Json::CharReader> reader(Json::CharReaderBuilder().newCharReader());
+  std::unique_ptr<Json::CharReader> reader(
+      Json::CharReaderBuilder().newCharReader());
   reader->parse(text.begin(), text.end(), &json, nullptr);
   return json;
 }
@@ -66,9 +66,7 @@ TEST(TokenInfoToJsonTest, ToJsonWithTokenEnumTranslator) {
   const TokenInfo token_info(143, text);
 
   const verible::TokenInfo::Context context(
-      text, [](std::ostream& stream, int e) {
-        stream << "token enum " << e;
-      });
+      text, [](std::ostream& stream, int e) { stream << "token enum " << e; });
 
   const Json::Value json(ToJson(token_info, context));
   const Json::Value expected_json = ParseJson(R"({

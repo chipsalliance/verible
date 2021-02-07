@@ -42,14 +42,14 @@
 #include "common/util/file_util.h"
 #include "common/util/init_command_line.h"
 #include "common/util/logging.h"  // for operator<<, LOG, LogMessage, etc
-#include "verilog/CST/verilog_tree_print.h"
+#include "json/json.h"
 #include "verilog/CST/verilog_tree_json.h"
+#include "verilog/CST/verilog_tree_print.h"
+#include "verilog/analysis/json_diagnostics.h"
 #include "verilog/analysis/verilog_analyzer.h"
 #include "verilog/analysis/verilog_excerpt_parse.h"
-#include "verilog/analysis/json_diagnostics.h"
 #include "verilog/parser/verilog_parser.h"
 #include "verilog/parser/verilog_token.h"
-#include "json/json.h"
 
 // Controls parser selection behavior
 enum class LanguageMode {
@@ -89,7 +89,9 @@ ABSL_FLAG(
     "  sv: strict SystemVerilog-2017, with explicit alternate parsing modes\n"
     "  lib: Verilog library map language (LRM Ch. 33)\n");
 
-ABSL_FLAG(bool, export_json, false, "Uses JSON for output. Intended to be used as an input for other tools.");
+ABSL_FLAG(
+    bool, export_json, false,
+    "Uses JSON for output. Intended to be used as an input for other tools.");
 ABSL_FLAG(bool, printtree, false, "Whether or not to print the tree");
 ABSL_FLAG(bool, printtokens, false, "Prints all lexed and filtered tokens");
 ABSL_FLAG(bool, printrawtokens, false,
@@ -141,8 +143,7 @@ static void VerifyParseTree(const TextStructureView& text_structure) {
   }
 }
 
-static int AnalyzeOneFile(absl::string_view content,
-                          absl::string_view filename,
+static int AnalyzeOneFile(absl::string_view content, absl::string_view filename,
                           Json::Value& json) {
   int exit_status = 0;
   const auto analyzer = ParseWithLanguageMode(content, filename);
@@ -161,7 +162,8 @@ static int AnalyzeOneFile(absl::string_view content,
         if (error_limit != 0 && error_count >= error_limit) break;
       }
     } else {
-      Json::Value& errors = json["errors"] = verilog::GetLinterTokenErrorsAsJson(analyzer.get());
+      Json::Value& errors = json["errors"] =
+          verilog::GetLinterTokenErrorsAsJson(analyzer.get());
       if (error_limit > 0 && errors.size() > unsigned(error_limit)) {
         errors.resize(error_limit);
       }
@@ -180,8 +182,8 @@ static int AnalyzeOneFile(absl::string_view content,
       stream << verilog::TokenTypeToString(static_cast<verilog_tokentype>(e));
     };
   }
-  const verible::TokenInfo::Context context(
-      analyzer->Data().Contents(), token_translator);
+  const verible::TokenInfo::Context context(analyzer->Data().Contents(),
+                                            token_translator);
   // Check for printtokens flag, print all filtered tokens if on.
   if (absl::GetFlag(FLAGS_printtokens)) {
     if (!absl::GetFlag(FLAGS_export_json)) {
@@ -225,7 +227,7 @@ static int AnalyzeOneFile(absl::string_view content,
 
   // check for printtree flag, and print tree if on
   if (absl::GetFlag(FLAGS_printtree) && syntax_tree != nullptr) {
-    if(!absl::GetFlag(FLAGS_export_json)) {
+    if (!absl::GetFlag(FLAGS_export_json)) {
       std::cout << std::endl
                 << "Parse Tree"
                 << (!parse_ok ? " (incomplete due to syntax errors):" : ":")
@@ -233,8 +235,8 @@ static int AnalyzeOneFile(absl::string_view content,
       verilog::PrettyPrintVerilogTree(*syntax_tree, analyzer->Data().Contents(),
                                       &std::cout);
     } else {
-      json["tree"] = std::move(verilog::ConvertVerilogTreeToJson(*syntax_tree,
-                                   analyzer->Data().Contents()));
+      json["tree"] = std::move(verilog::ConvertVerilogTreeToJson(
+          *syntax_tree, analyzer->Data().Contents()));
     }
   }
 
@@ -272,12 +274,12 @@ int main(int argc, char** argv) {
     Json::Value file_json;
     int file_status = AnalyzeOneFile(content, filename, file_json);
     exit_status = std::max(exit_status, file_status);
-    if(absl::GetFlag(FLAGS_export_json)) {
+    if (absl::GetFlag(FLAGS_export_json)) {
       json[filename] = std::move(file_json);
     }
   }
 
-  if(absl::GetFlag(FLAGS_export_json)) {
+  if (absl::GetFlag(FLAGS_export_json)) {
     Json::StreamWriterBuilder builder;
     // Disable extra space before ':'
     builder["enableYAMLCompatibility"] = true;

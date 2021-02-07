@@ -15,13 +15,14 @@
 #ifndef VERIBLE_VERILOG_ANALYSIS_JSON_DIAGNOSTICS_H_
 #define VERIBLE_VERILOG_ANALYSIS_JSON_DIAGNOSTICS_H_
 
-#include "verilog/analysis/verilog_analyzer.h"
 #include "json/value.h"
+#include "verilog/analysis/verilog_analyzer.h"
 
 namespace verilog {
 
 // Returns JSON list with information about errors.
-Json::Value GetLinterTokenErrorsAsJson(const verilog::VerilogAnalyzer* analyzer);
+Json::Value GetLinterTokenErrorsAsJson(
+    const verilog::VerilogAnalyzer* analyzer);
 
 }  // namespace verilog
 
