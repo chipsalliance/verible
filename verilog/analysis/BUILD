@@ -69,6 +69,7 @@ cc_library(
         ":verilog_analyzer",
         "//common/analysis:file_analyzer",
         "//common/strings:line_column_map",
+        "@com_google_absl//absl/strings",
         "@jsoncpp_git//:jsoncpp",
     ],
 )
