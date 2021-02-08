@@ -26,6 +26,7 @@
 #include "common/analysis/syntax_tree_search.h"
 #include "common/text/symbol.h"
 #include "common/text/syntax_tree_context.h"
+#include "common/util/casts.h"
 #include "verilog/CST/verilog_matchers.h"  // IWYU pragma: keep
 #include "verilog/analysis/descriptions.h"
 #include "verilog/analysis/lint_rule_registry.h"
@@ -46,9 +47,9 @@ VERILOG_REGISTER_LINT_RULE(AlwaysFFOnlyLocalBlockingRule);
 absl::string_view AlwaysFFOnlyLocalBlockingRule::Name() {
   return "always-ff-only-local-blocking";
 }
-const char AlwaysFFOnlyLocalBlockingRule::kTopic[] = "sequential-logic";
-const char AlwaysFFOnlyLocalBlockingRule::kMessage[] =
-    "Use blocking assignments only for locals inside \'always_ff\' sequential "
+char const AlwaysFFOnlyLocalBlockingRule::kTopic[] = "sequential-logic";
+char const AlwaysFFOnlyLocalBlockingRule::kMessage[] =
+    "Use blocking assignments only for locals inside 'always_ff' sequential "
     "blocks.";
 
 std::string AlwaysFFOnlyLocalBlockingRule::GetDescription(
@@ -58,18 +59,18 @@ std::string AlwaysFFOnlyLocalBlockingRule::GetDescription(
 }
 
 void AlwaysFFOnlyLocalBlockingRule::HandleSymbol(
-    verible::Symbol const &symbol, SyntaxTreeContext const &context) {
-  static Matcher const always_ff_matcher{NodekAlwaysStatement(AlwaysFFKeyword())};
-  static Matcher const block_matcher{NodekBlockItemStatementList()};
-  static Matcher const decl_matcher{NodekDataDeclaration()};
-  static Matcher const var_matcher{NodekRegisterVariable()};
-  static Matcher const asgn_blocking_matcher{NodekNetVariableAssignment()};
-  static Matcher const asgn_modify_matcher{NodekAssignModifyStatement()};
-  static Matcher const asgn_incdec_matcher{NodekIncrementDecrementExpression()};
-  static Matcher const ident_matcher{NodekUnqualifiedId()};
+    const verible::Symbol &symbol, const SyntaxTreeContext &context) {
+  static const Matcher always_ff_matcher{NodekAlwaysStatement(AlwaysFFKeyword())};
+  static const Matcher block_matcher{NodekBlockItemStatementList()};
+  static const Matcher decl_matcher{NodekDataDeclaration()};
+  static const Matcher var_matcher{NodekRegisterVariable()};
+  static const Matcher asgn_blocking_matcher{NodekNetVariableAssignment()};
+  static const Matcher asgn_modify_matcher{NodekAssignModifyStatement()};
+  static const Matcher asgn_incdec_matcher{NodekIncrementDecrementExpression()};
+  static const Matcher ident_matcher{NodekUnqualifiedId()};
 
   // Determine depth in syntax tree and discard state from branches already left
-  int const depth = context.size();
+  const int depth = context.size();
   if (depth <= this->inside) this->inside = 0;
   while (depth <= scopes.top().first) {
     scopes.pop();
@@ -80,8 +81,8 @@ void AlwaysFFOnlyLocalBlockingRule::HandleSymbol(
 
   verible::matcher::BoundSymbolManager symbol_man;
 
-  // Check for entering an always_ff block
   if (always_ff_matcher.Matches(symbol, &symbol_man)) {
+    // Check for entering an always_ff block
     VLOG(4) << "always_ff @DEPTH=" << depth << std::endl;
     this->inside = depth;
   } else if (this->inside) {
@@ -90,33 +91,31 @@ void AlwaysFFOnlyLocalBlockingRule::HandleSymbol(
       VLOG(4) << "PUSHing scope: DEPTH=" << depth
               << "; #LOCALs inherited=" << locals.size() << std::endl;
       scopes.emplace(depth, locals.size());
-    }
-    // Collect local variable declarations
-    else if (decl_matcher.Matches(symbol, &symbol_man)) {
-      auto &cnt = scopes.top().second;
-      for (auto const &var : SearchSyntaxTree(symbol, var_matcher)) {
-        if (auto const *const node =
-                dynamic_cast<verible::SyntaxTreeNode const *>(var.match)) {
-          if (auto const *const ident =
-                  dynamic_cast<verible::SyntaxTreeLeaf const *>(
+    } else if (decl_matcher.Matches(symbol, &symbol_man)) {
+      // Collect local variable declarations
+      auto &count = scopes.top().second;
+      for (const auto &var : SearchSyntaxTree(symbol, var_matcher)) {
+        if (const auto *const node =
+                verible::down_cast<const verible::SyntaxTreeNode *>(var.match)) {
+          if (const auto *const ident =
+                  verible::down_cast<const verible::SyntaxTreeLeaf *>(
                       node->children()[0].get())) {
-            absl::string_view const name = ident->get().text();
+            const absl::string_view name = ident->get().text();
             VLOG(4) << "Registering '" << name << '\'' << std::endl;
             locals.emplace_back(name);
-            cnt++;
+            count++;
           }
         }
       }
-    }
-    // Check for blocking assignments of various kinds outside loop headers
-    else if (!context.IsInside(NodeEnum::kLoopHeader)) {
-      verible::Symbol const *check_root = nullptr;
+    } else if (!context.IsInside(NodeEnum::kLoopHeader)) {
+      // Check for blocking assignments of various kinds outside loop headers
+      const verible::Symbol *check_root = nullptr;
       if (asgn_blocking_matcher.Matches(symbol, &symbol_man) ||
           asgn_modify_matcher.Matches(symbol, &symbol_man)) {
-        if (auto const *const node =
-                dynamic_cast<verible::SyntaxTreeNode const *>(&symbol)) {
+        if (const auto *const node =
+                dynamic_cast<const verible::SyntaxTreeNode *>(&symbol)) {
           // Check all left-hand-side variables to potentially waive the rule
-          check_root = /* lhs */ dynamic_cast<verible::SyntaxTreeNode const *>(
+          check_root = /* lhs */ verible::down_cast<const verible::SyntaxTreeNode *>(
               node->children()[0].get());
         }
       } else if (asgn_incdec_matcher.Matches(symbol, &symbol_man)) {
@@ -132,16 +131,16 @@ void AlwaysFFOnlyLocalBlockingRule::HandleSymbol(
       bool waived = false;
       if (check_root) {
         waived = true;
-        for (auto const &var : SearchSyntaxTree(*check_root, ident_matcher)) {
+        for (const auto &var : SearchSyntaxTree(*check_root, ident_matcher)) {
           if (var.context.IsInside(NodeEnum::kDimensionScalar)) continue;
           if (var.context.IsInside(NodeEnum::kDimensionSlice)) continue;
           if (var.context.IsInside(NodeEnum::kHierarchyExtension)) continue;
 
           bool found = false;
-          if (auto const *const varn =
-                  dynamic_cast<verible::SyntaxTreeNode const *>(var.match)) {
-            if (auto const *const ident =
-                    dynamic_cast<verible::SyntaxTreeLeaf const *>(
+          if (const auto *const varn =
+                  verible::down_cast<const verible::SyntaxTreeNode *>(var.match)) {
+            if (const auto *const ident =
+                    verible::down_cast<const verible::SyntaxTreeLeaf *>(
                         varn->children()[0].get())) {
               found = std::find(locals.begin(), locals.end(),
                                 ident->get().text()) != locals.end();
