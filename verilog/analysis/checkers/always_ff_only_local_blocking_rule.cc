@@ -73,10 +73,9 @@ absl::Status AlwaysFFOnlyLocalBlockingRule::Configure(
   using verible::config::SetBool;
   return
     verible::ParseNameValues(configuration, {
-        {"catch_modifying_assigns", SetBool(&catch_modifying_assigns_)},
-        {"waive_for_locals",        SetBool(&waive_for_locals_)},
-      }
-    );
+      {"catch_modifying_assignments", SetBool(&catch_modifying_assignments_)},
+      {"waive_for_locals",            SetBool(&waive_for_locals_)},
+    });
 }
 
 //- Processing --------------------------------------------------------------
@@ -131,27 +130,41 @@ void AlwaysFFOnlyLocalBlockingRule::HandleSymbol(
       }
     } else if (!context.IsInside(NodeEnum::kLoopHeader)) {
       // Check for blocking assignments of various kinds outside loop headers
+
+      // Rule may be waived if complete lhs consists of local variables
       const verible::Symbol *check_root = nullptr;
-      if (asgn_blocking_matcher.Matches(symbol, &symbol_man) ||
-          asgn_modify_matcher.Matches(symbol, &symbol_man)) {
+
+      if (asgn_blocking_matcher.Matches(symbol, &symbol_man)) {
         if (const auto *const node =
                 dynamic_cast<const verible::SyntaxTreeNode *>(&symbol)) {
           // Check all left-hand-side variables to potentially waive the rule
           check_root = /* lhs */ verible::down_cast<const verible::SyntaxTreeNode *>(
               node->children()[0].get());
         }
-      } else if (asgn_incdec_matcher.Matches(symbol, &symbol_man)) {
-        // Check all mentioned variables to potentially waive the rule
-        check_root = &symbol;
       } else {
-        // No blocking assignment
-        return;
+        // Not interested in any other blocking assignments unless flagged
+        if(!catch_modifying_assignments_)  return;
+
+        if (asgn_modify_matcher.Matches(symbol, &symbol_man)) {
+          if (const auto *const node =
+                  dynamic_cast<const verible::SyntaxTreeNode *>(&symbol)) {
+            // Check all left-hand-side variables to potentially waive the rule
+            check_root = /* lhs */ verible::down_cast<const verible::SyntaxTreeNode *>(
+                node->children()[0].get());
+          }
+        } else if (asgn_incdec_matcher.Matches(symbol, &symbol_man)) {
+          // Check all mentioned variables to potentially waive the rule
+          check_root = &symbol;
+        } else {
+          // Not a blocking assignment
+          return;
+        }
       }
 
       // Waive rule if syntax subtree containing relevant variables was found
       // and all turn out to be local
       bool waived = false;
-      if (check_root) {
+      if (waive_for_locals_ && check_root) {
         waived = true;
         for (const auto &var : SearchSyntaxTree(*check_root, ident_matcher)) {
           if (var.context.IsInside(NodeEnum::kDimensionScalar)) continue;

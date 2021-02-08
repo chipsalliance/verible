@@ -30,7 +30,7 @@ namespace analysis {
 namespace {
 
 using verible::LintTestCase;
-using verible::RunLintTestCases;
+using verible::RunConfiguredLintTestCases;
 
 TEST(AlwaysFFOnlyLocalBlockingRule, FunctionFailures) {
   int constexpr  kToken = SymbolIdentifier;
@@ -61,8 +61,9 @@ TEST(AlwaysFFOnlyLocalBlockingRule, FunctionFailures) {
        "end\nend\nendmodule"},
   };
 
-  RunLintTestCases<VerilogAnalyzer, AlwaysFFOnlyLocalBlockingRule>(
-      kAlwaysFFOnlyLocalBlockingTestCases);
+  RunConfiguredLintTestCases<VerilogAnalyzer, AlwaysFFOnlyLocalBlockingRule>(
+    kAlwaysFFOnlyLocalBlockingTestCases, "catch_modifying_assignments:on;waive_for_locals:on"
+  );
 }
 
 }  // namespace

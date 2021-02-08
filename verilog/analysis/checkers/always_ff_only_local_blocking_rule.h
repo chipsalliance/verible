@@ -54,8 +54,8 @@ class AlwaysFFOnlyLocalBlockingRule : public verible::SyntaxTreeLintRule {
   std::set<verible::LintViolation> violations_;
 
   //- Configuration ---------------------
-  bool catch_modifying_assigns_ = false;
-  bool waive_for_locals_        = false;
+  bool catch_modifying_assignments_ = false;
+  bool waive_for_locals_ = false;
 
   //- Processing State ------------------
   // Inside an always_ff block
