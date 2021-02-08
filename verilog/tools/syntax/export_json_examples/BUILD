@@ -7,6 +7,7 @@ py_library(
     name = "verible_verilog_syntax_py",
     srcs = ["verible_verilog_syntax.py"],
     srcs_version = "PY3",
+    imports = ["."],
     data = ["//verilog/tools/syntax:verible-verilog-syntax"],
     deps = [requirement("anytree")],
 )
