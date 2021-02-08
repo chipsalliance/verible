@@ -235,8 +235,8 @@ static int AnalyzeOneFile(absl::string_view content, absl::string_view filename,
       verilog::PrettyPrintVerilogTree(*syntax_tree, analyzer->Data().Contents(),
                                       &std::cout);
     } else {
-      json["tree"] = std::move(verilog::ConvertVerilogTreeToJson(
-          *syntax_tree, analyzer->Data().Contents()));
+      json["tree"] = verilog::ConvertVerilogTreeToJson(
+          *syntax_tree, analyzer->Data().Contents());
     }
   }
 
