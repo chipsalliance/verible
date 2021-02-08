@@ -29,7 +29,6 @@ compile|clean)
 
 bin)
     cd releasing
-    ./docker-generate.sh ${OS}-${OS_VERSION}
     ./docker-run.sh ${OS}-${OS_VERSION}
     mkdir -p /tmp/releases
     cp out/*.tar.gz /tmp/releases/
