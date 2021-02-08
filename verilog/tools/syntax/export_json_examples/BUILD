@@ -16,6 +16,7 @@ py_test(
     size = "small",
     srcs = ["verible_verilog_syntax_test.py"],
     srcs_version = "PY3",
+    python_version = "PY3",
     main = "verible_verilog_syntax_test.py",
     deps = [":verible_verilog_syntax_py"],
     data = ["//verilog/tools/syntax:verible-verilog-syntax"],
