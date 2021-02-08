@@ -56,9 +56,8 @@ const char AlwaysFFNonBlockingRule::kMessage[] =
 
 std::string AlwaysFFNonBlockingRule::GetDescription(
     DescriptionType description_type) {
-  return
-    "Checks that blocking assignments are, at most, targeting "
-    "locals in sequential logic.";
+  return "Checks that blocking assignments are, at most, targeting "
+         "locals in sequential logic.";
 }
 
 LintRuleStatus AlwaysFFNonBlockingRule::Report() const {
@@ -68,19 +67,20 @@ LintRuleStatus AlwaysFFNonBlockingRule::Report() const {
 //- Configuration -----------------------------------------------------------
 absl::Status AlwaysFFNonBlockingRule::Configure(
     const absl::string_view configuration) {
-
   using verible::config::SetBool;
-  return
-    verible::ParseNameValues(configuration, {
-      {"catch_modifying_assignments", SetBool(&catch_modifying_assignments_)},
-      {"waive_for_locals",            SetBool(&waive_for_locals_)},
-    });
+  return verible::ParseNameValues(
+      configuration, {
+                         {"catch_modifying_assignments",
+                          SetBool(&catch_modifying_assignments_)},
+                         {"waive_for_locals", SetBool(&waive_for_locals_)},
+                     });
 }
 
 //- Processing --------------------------------------------------------------
-void AlwaysFFNonBlockingRule::HandleSymbol(
-    const verible::Symbol &symbol, const SyntaxTreeContext &context) {
-  static const Matcher always_ff_matcher{NodekAlwaysStatement(AlwaysFFKeyword())};
+void AlwaysFFNonBlockingRule::HandleSymbol(const verible::Symbol &symbol,
+                                           const SyntaxTreeContext &context) {
+  static const Matcher always_ff_matcher{
+      NodekAlwaysStatement(AlwaysFFKeyword())};
   static const Matcher block_matcher{NodekBlockItemStatementList()};
   static const Matcher decl_matcher{NodekDataDeclaration()};
   static const Matcher var_matcher{NodekRegisterVariable()};
@@ -116,7 +116,8 @@ void AlwaysFFNonBlockingRule::HandleSymbol(
       auto &count = scopes_.top().second;
       for (const auto &var : SearchSyntaxTree(symbol, var_matcher)) {
         if (const auto *const node =
-                verible::down_cast<const verible::SyntaxTreeNode *>(var.match)) {
+                verible::down_cast<const verible::SyntaxTreeNode *>(
+                    var.match)) {
           if (const auto *const ident =
                   verible::down_cast<const verible::SyntaxTreeLeaf *>(
                       node->children()[0].get())) {
@@ -137,19 +138,21 @@ void AlwaysFFNonBlockingRule::HandleSymbol(
         if (const auto *const node =
                 dynamic_cast<const verible::SyntaxTreeNode *>(&symbol)) {
           // Check all left-hand-side variables to potentially waive the rule
-          check_root = /* lhs */ verible::down_cast<const verible::SyntaxTreeNode *>(
-              node->children()[0].get());
+          check_root =
+              /* lhs */ verible::down_cast<const verible::SyntaxTreeNode *>(
+                  node->children()[0].get());
         }
       } else {
         // Not interested in any other blocking assignments unless flagged
-        if(!catch_modifying_assignments_)  return;
+        if (!catch_modifying_assignments_) return;
 
         if (asgn_modify_matcher.Matches(symbol, &symbol_man)) {
           if (const auto *const node =
                   dynamic_cast<const verible::SyntaxTreeNode *>(&symbol)) {
             // Check all left-hand-side variables to potentially waive the rule
-            check_root = /* lhs */ verible::down_cast<const verible::SyntaxTreeNode *>(
-                node->children()[0].get());
+            check_root =
+                /* lhs */ verible::down_cast<const verible::SyntaxTreeNode *>(
+                    node->children()[0].get());
           }
         } else if (asgn_incdec_matcher.Matches(symbol, &symbol_man)) {
           // Check all mentioned variables to potentially waive the rule
@@ -172,7 +175,8 @@ void AlwaysFFNonBlockingRule::HandleSymbol(
 
           bool found = false;
           if (const auto *const varn =
-                  verible::down_cast<const verible::SyntaxTreeNode *>(var.match)) {
+                  verible::down_cast<const verible::SyntaxTreeNode *>(
+                      var.match)) {
             if (const auto *const ident =
                     verible::down_cast<const verible::SyntaxTreeLeaf *>(
                         varn->children()[0].get())) {
