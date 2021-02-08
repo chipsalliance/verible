@@ -59,17 +59,17 @@ class AlwaysFFOnlyLocalBlockingRule : public verible::SyntaxTreeLintRule {
 
   //- Processing State ------------------
   // Inside an always_ff block
-  int inside = 0;
+  int inside_ = 0;
 
   // Stack of inner begin-end scopes
-  using scope_t =
+  using Scope =
       std::pair<int, int>;  // depth in syntax tree, number of inherited locals
-  std::stack<scope_t, std::vector<scope_t>> scopes{
+  std::stack<Scope, std::vector<Scope>> scopes_ {
       {{-1, 0}}  // bottom element -> never empty
   };
 
   // In-order stack of local variable names
-  std::vector<absl::string_view> locals;
+  std::vector<absl::string_view> locals_;
 };
 
 }  // namespace analysis

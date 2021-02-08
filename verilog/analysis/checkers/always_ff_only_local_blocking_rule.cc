@@ -93,29 +93,29 @@ void AlwaysFFOnlyLocalBlockingRule::HandleSymbol(
 
   // Determine depth in syntax tree and discard state from branches already left
   const int depth = context.size();
-  if (depth <= this->inside) this->inside = 0;
-  while (depth <= scopes.top().first) {
-    scopes.pop();
-    VLOG(4) << "POPped to scope DEPTH=" << scopes.top().first
-            << "; #LOCALS=" << scopes.top().second << std::endl;
+  if (depth <= inside_) inside_ = 0;
+  while (depth <= scopes_.top().first) {
+    scopes_.pop();
+    VLOG(4) << "POPped to scope DEPTH=" << scopes_.top().first
+            << "; #locals_=" << scopes_.top().second << std::endl;
   }
-  locals.resize(scopes.top().second);
+  locals_.resize(scopes_.top().second);
 
   verible::matcher::BoundSymbolManager symbol_man;
 
   if (always_ff_matcher.Matches(symbol, &symbol_man)) {
     // Check for entering an always_ff block
     VLOG(4) << "always_ff @DEPTH=" << depth << std::endl;
-    this->inside = depth;
-  } else if (this->inside) {
+    inside_ = depth;
+  } else if (inside_) {
     // Open up begin-end block
     if (block_matcher.Matches(symbol, &symbol_man)) {
       VLOG(4) << "PUSHing scope: DEPTH=" << depth
-              << "; #LOCALs inherited=" << locals.size() << std::endl;
-      scopes.emplace(depth, locals.size());
+              << "; #locals_ inherited=" << locals_.size() << std::endl;
+      scopes_.emplace(depth, locals_.size());
     } else if (decl_matcher.Matches(symbol, &symbol_man)) {
       // Collect local variable declarations
-      auto &count = scopes.top().second;
+      auto &count = scopes_.top().second;
       for (const auto &var : SearchSyntaxTree(symbol, var_matcher)) {
         if (const auto *const node =
                 verible::down_cast<const verible::SyntaxTreeNode *>(var.match)) {
@@ -124,7 +124,7 @@ void AlwaysFFOnlyLocalBlockingRule::HandleSymbol(
                       node->children()[0].get())) {
             const absl::string_view name = ident->get().text();
             VLOG(4) << "Registering '" << name << '\'' << std::endl;
-            locals.emplace_back(name);
+            locals_.emplace_back(name);
             count++;
           }
         }
@@ -164,8 +164,8 @@ void AlwaysFFOnlyLocalBlockingRule::HandleSymbol(
             if (const auto *const ident =
                     verible::down_cast<const verible::SyntaxTreeLeaf *>(
                         varn->children()[0].get())) {
-              found = std::find(locals.begin(), locals.end(),
-                                ident->get().text()) != locals.end();
+              found = std::find(locals_.begin(), locals_.end(),
+                                ident->get().text()) != locals_.end();
               VLOG(4) << "LHS='" << ident->get().text() << "' FOUND=" << found
                       << std::endl;
             }
