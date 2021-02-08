@@ -24,6 +24,7 @@
 #include "common/analysis/matcher/bound_symbol_manager.h"
 #include "common/analysis/matcher/matcher.h"
 #include "common/analysis/syntax_tree_search.h"
+#include "common/text/config_utils.h"
 #include "common/text/symbol.h"
 #include "common/text/syntax_tree_context.h"
 #include "common/util/casts.h"
@@ -41,6 +42,8 @@ using verible::SearchSyntaxTree;
 using verible::SyntaxTreeContext;
 using verible::matcher::Matcher;
 
+//- Info --------------------------------------------------------------------
+
 // Register AlwaysFFOnlyLocalBlockingRule
 VERILOG_REGISTER_LINT_RULE(AlwaysFFOnlyLocalBlockingRule);
 
@@ -49,15 +52,34 @@ absl::string_view AlwaysFFOnlyLocalBlockingRule::Name() {
 }
 char const AlwaysFFOnlyLocalBlockingRule::kTopic[] = "sequential-logic";
 char const AlwaysFFOnlyLocalBlockingRule::kMessage[] =
-    "Use blocking assignments only for locals inside 'always_ff' sequential "
-    "blocks.";
+    "Use blocking assignments only for locals inside "
+    "'always_ff' sequential blocks.";
 
 std::string AlwaysFFOnlyLocalBlockingRule::GetDescription(
     DescriptionType description_type) {
-  return absl::StrCat("Checks that there are no occurrences of ",
-                      "blocking assignment to non-locals in sequential logic.");
+  return
+    "Checks that there are no occurrences of "
+    "blocking assignment to non-locals in sequential logic.";
 }
 
+LintRuleStatus AlwaysFFOnlyLocalBlockingRule::Report() const {
+  return LintRuleStatus(violations_, Name(), GetStyleGuideCitation(kTopic));
+}
+
+//- Configuration -----------------------------------------------------------
+absl::Status AlwaysFFOnlyLocalBlockingRule::Configure(
+    const absl::string_view configuration) {
+
+  using verible::config::SetBool;
+  return
+    verible::ParseNameValues(configuration, {
+        {"catch_modifying_assigns", SetBool(&catch_modifying_assigns_)},
+        {"waive_for_locals",        SetBool(&waive_for_locals_)},
+      }
+    );
+}
+
+//- Processing --------------------------------------------------------------
 void AlwaysFFOnlyLocalBlockingRule::HandleSymbol(
     const verible::Symbol &symbol, const SyntaxTreeContext &context) {
   static const Matcher always_ff_matcher{NodekAlwaysStatement(AlwaysFFKeyword())};
@@ -156,10 +178,6 @@ void AlwaysFFOnlyLocalBlockingRule::HandleSymbol(
       if (!waived) violations_.insert(LintViolation(symbol, kMessage, context));
     }
   }
-}
-
-LintRuleStatus AlwaysFFOnlyLocalBlockingRule::Report() const {
-  return LintRuleStatus(violations_, Name(), GetStyleGuideCitation(kTopic));
 }
 
 }  // namespace analysis

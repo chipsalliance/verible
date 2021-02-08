@@ -1183,6 +1183,7 @@ cc_library(
         "//common/analysis:syntax_tree_search",
         "//common/analysis/matcher",
         "//common/analysis/matcher:bound_symbol_manager",
+        "//common/text:config_utils",
         "//common/text:symbol",
         "//common/text:syntax_tree_context",
         "//verilog/CST:verilog_matchers",
@@ -1204,6 +1205,7 @@ cc_test(
         "//verilog/CST:verilog_nonterminals",
         "//verilog/CST:verilog_treebuilder_utils",
         "//verilog/analysis:verilog_analyzer",
+        "//verilog/parser:verilog_token_enum",
         "@com_google_googletest//:gtest_main",
     ],
 )

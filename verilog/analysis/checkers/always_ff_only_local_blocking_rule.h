@@ -37,6 +37,7 @@ class AlwaysFFOnlyLocalBlockingRule : public verible::SyntaxTreeLintRule {
   // helper flag or markdown depending on the parameter type.
   static std::string GetDescription(DescriptionType);
 
+  absl::Status Configure(const absl::string_view configuration) override;
   void HandleSymbol(const verible::Symbol& symbol,
                     const verible::SyntaxTreeContext& context) override;
 
@@ -49,8 +50,14 @@ class AlwaysFFOnlyLocalBlockingRule : public verible::SyntaxTreeLintRule {
   // Diagnostic message.
   static const char kMessage[];
 
+  // Collected violations.
   std::set<verible::LintViolation> violations_;
 
+  //- Configuration ---------------------
+  bool catch_modifying_assigns_ = false;
+  bool waive_for_locals_        = false;
+
+  //- Processing State ------------------
   // Inside an always_ff block
   int inside = 0;
 
@@ -58,7 +65,8 @@ class AlwaysFFOnlyLocalBlockingRule : public verible::SyntaxTreeLintRule {
   using scope_t =
       std::pair<int, int>;  // depth in syntax tree, number of inherited locals
   std::stack<scope_t, std::vector<scope_t>> scopes{
-      {{-1, 0}}};  // bottom element -> never empty
+      {{-1, 0}}  // bottom element -> never empty
+  };
 
   // In-order stack of local variable names
   std::vector<absl::string_view> locals;
