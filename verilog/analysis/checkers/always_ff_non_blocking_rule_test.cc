@@ -23,6 +23,7 @@
 #include "verilog/CST/verilog_nonterminals.h"
 #include "verilog/CST/verilog_treebuilder_utils.h"
 #include "verilog/analysis/verilog_analyzer.h"
+#include "verilog/parser/verilog_token_enum.h"
 
 namespace verilog {
 namespace analysis {
@@ -30,28 +31,21 @@ namespace {
 
 using verible::LintTestCase;
 using verible::RunLintTestCases;
+using verible::RunConfiguredLintTestCases;
 
-TEST(AlwaysFFNonBlockingRule, FunctionFailures) {
-  constexpr int kToken = '=';
+TEST(AlwaysFFNonBlockingRule, LegacyFailures) {
+  int constexpr  kToken = SymbolIdentifier;
   const std::initializer_list<LintTestCase> kAlwaysFFNonBlockingTestCases = {
       {""},
       {"module m;\nendmodule\n"},
       {"module m;\ninitial begin end\nendmodule"},
-      {"module m;\nalways_ff @(posedge c) a ", {kToken, "="}, " b;\nendmodule"},
-      {"module m;\nalways_ff @(posedge c) begin a ",
-       {kToken, "="},
-       " b; end\nendmodule"},
-      {"module m;\nalways_ff @(posedge c)  begin if (sel == 0) a ",
-       {kToken, "="},
-       " b; "
-       "else a ",
-       {kToken, "="},
-       " 1'b0; end\nendmodule"},
-      {"module m;\nalways_ff @(posedge c) begin\n`ifdef RST\nf ",
-       {kToken, "="},
-       " g;\n`else\nf ",
-       {kToken, "="},
-       " 1'b1;\n`endif\nend\nendmodule"},
+      {"module m;\nalways_ff @(posedge c) ", {kToken, "a"}, " = b;\nendmodule"},
+      {"module m;\nalways_ff @(posedge c) begin ", {kToken, "a"}, " = b; end\nendmodule"},
+      {"module m;\nalways_ff @(posedge c) begin if(sel == 0) ", {kToken, "a"}, "= b; "
+       "else ", {kToken, "a"}, "= 1'b0; end\nendmodule"},
+      {"module m;\nalways_ff @(posedge c) begin\n`ifdef RST\n", {kToken, "f"},
+       "= g;\n`else\n", {kToken, "f"},
+       "= 1'b1;\n`endif\nend\nendmodule"},
       {"module m;\nalways_ff @(posedge c) a <= b;\nendmodule"},
       {"module m;\nalways_ff @(posedge c) begin a <= b; end\nendmodule"},
       {"module m;\nalways_comb a = b;\nendmodule"},
@@ -61,13 +55,50 @@ TEST(AlwaysFFNonBlockingRule, FunctionFailures) {
        "    a <= b;\nend\nend\nendmodule"},
       {"module m;\nalways_ff @(posedge c) begin\n  for (int i=0 ; i<3 ; i=i+1) "
        "begin\n"
-       "    a ",
-       {kToken, "="},
-       " b;\n  end\nend\nendmodule"},
+       "    ", {kToken, "a"}, "= b;\n"
+       "end\nend\nendmodule"},
+      // Legacy behavior: Do NOT waive on locals
+      {"module m;\nalways_ff @(posedge c) begin static type(b) a; ", {kToken, "a"} ," = b; end\nendmodule"},
+      // Legacy behavior: Miss modifying operators
+      {"module m;\nalways_ff @(posedge c) begin if(sel == 0) a++; else a &= b; end\nendmodule"},
   };
 
   RunLintTestCases<VerilogAnalyzer, AlwaysFFNonBlockingRule>(
       kAlwaysFFNonBlockingTestCases);
+}
+
+TEST(AlwaysFFNonBlockingRule, LocalWaiving) {
+  int constexpr  kToken = SymbolIdentifier;
+  std::initializer_list<LintTestCase> const  kAlwaysFFNonBlockingTestCases = {
+      {""},
+      {"module m;\nendmodule\n"},
+      {"module m;\ninitial begin end\nendmodule"},
+      {"module m;\nalways_ff @(posedge c) ", {kToken, "a"}, " = b;\nendmodule"},
+      {"module m;\nalways_ff @(posedge c) begin ", {kToken, "a"}, " = b; end\nendmodule"},
+      {"module m;\nalways_ff @(posedge c) begin automatic logic a = b; end\nendmodule"},
+      {"module m;\nalways_ff @(posedge c) begin static logic a; a = b; end\nendmodule"},
+      {"module m;\nalways_ff @(posedge c) begin static type(b) a; a = b; end\nendmodule"},
+      {"module m;\nalways_ff @(posedge c) begin if(sel == 0) ", {kToken, "a"}, "++; "
+       "else ", {kToken, "a"}, "&= b; end\nendmodule"},
+      {"module m;\nalways_ff @(posedge c) begin\n`ifdef RST\n", {kToken, "f"},
+       "= g;\n`else\n", {kToken, "f"},
+       "= 1'b1;\n`endif\nend\nendmodule"},
+      {"module m;\nalways_ff @(posedge c) a <= b;\nendmodule"},
+      {"module m;\nalways_ff @(posedge c) begin a <= b; end\nendmodule"},
+      {"module m;\nalways_comb a = b;\nendmodule"},
+      {"module m;\nalways_comb begin a = b; end\nendmodule"},
+      {"module m;\nalways_ff @(posedge c) begin\n  for (int i=0 ; i<3 ; i=i+1) "
+       "begin\n"
+       "    a <= b;\nend\nend\nendmodule"},
+      {"module m;\nalways_ff @(posedge c) begin\n  for (int i=0 ; i<3 ; i=i+1) "
+       "begin\n"
+       "    ", {kToken, "a"}, "= b;\n"
+       "end\nend\nendmodule"},
+  };
+
+  RunConfiguredLintTestCases<VerilogAnalyzer, AlwaysFFNonBlockingRule>(
+    kAlwaysFFNonBlockingTestCases, "catch_modifying_assignments:on;waive_for_locals:on"
+  );
 }
 
 }  // namespace
