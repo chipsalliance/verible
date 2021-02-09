@@ -30,6 +30,7 @@ constexpr const char* kDefaultRuleSet[] = {
     "module-filename",
     "package-filename",
     "void-cast",
+    "forbid-line-continuations",
     "generate-label",
     "generate-label-prefix",
     "always-comb",

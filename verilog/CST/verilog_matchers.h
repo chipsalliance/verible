@@ -298,6 +298,12 @@ static const auto AlwaysCombKeyword =
 static const auto AlwaysFFKeyword =
     verible::matcher::MakePathMatcher({L(TK_always_ff)});
 
+// Matches occurrence of the 'always' keyword.
+// This is needed to distinguish between various kAlwaysStatement's.
+// This matches 'always', but not 'always_ff', nor 'always_comb'.
+static const auto StringLiteralKeyword =
+    verible::matcher::MakePathMatcher({L(TK_StringLiteral)});
+
 // Matches legacy-style begin-block inside generate region.
 //
 // For instance, matches:
