@@ -10,6 +10,7 @@ py_library(
     data = ["//verilog/tools/syntax:verible-verilog-syntax"],
     deps = [
         "@python_anytree//:anytree",
+        "//third_party/py/dataclasses",
     ],
 )
 
