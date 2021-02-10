@@ -1,5 +1,4 @@
 load("@rules_python//python:defs.bzl", "py_test", "py_library")
-load("@pip//:requirements.bzl", "requirement")
 
 licenses(["notice"])
 
@@ -9,7 +8,9 @@ py_library(
     srcs_version = "PY3",
     imports = ["."],
     data = ["//verilog/tools/syntax:verible-verilog-syntax"],
-    deps = [requirement("anytree")],
+    deps = [
+        "@python_anytree//:anytree",
+    ],
 )
 
 py_test(
