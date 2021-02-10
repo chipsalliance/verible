@@ -57,7 +57,7 @@ void MacroStringConcatenationRule::HandleToken(const TokenInfo& token) {
 
   // Search only in `define tokens. Ignore state as `defines can be nested.
   if (token_enum == PP_define_body) {
-    if (IsUnlexed(verilog_tokentype(token.token_enum()))) {
+    if (IsUnlexed(verilog_tokentype(token_enum))) {
       verible::ValueSaver<State> state_saver(&state_, State::kInsideDefineBody);
       RecursiveLexText(
           text, [this](const TokenInfo& subtoken) { HandleToken(subtoken); });
