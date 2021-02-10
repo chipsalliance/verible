@@ -45,7 +45,7 @@ absl::string_view TokenStreamLintRule::Name() { return "forbid-line-continuation
 const char TokenStreamLintRule::kTopic[] = "forbid-line-continuations";
 const char TokenStreamLintRule::kMessage[] =
     "The lines can't be continued with \'\\\', use C-style multiline "
-    "cocatenation";
+    "concatenation";
 
 std::string TokenStreamLintRule::GetDescription(
     DescriptionType description_type) {

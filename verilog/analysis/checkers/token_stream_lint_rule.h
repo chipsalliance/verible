@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef VERIBLE_VERILOG_ANALYSIS_CHECKERS_ALWAYS_COMB_RULE_H_
-#define VERIBLE_VERILOG_ANALYSIS_CHECKERS_ALWAYS_COMB_RULE_H_
+#ifndef VERIBLE_VERILOG_ANALYSIS_CHECKERS_TOKEN_STREAM_LINT_RULE_H_
+#define VERIBLE_VERILOG_ANALYSIS_CHECKERS_TOKEN_STREAM_LINT_RULE_H_
 
 #include <set>
 #include <string>
@@ -27,9 +27,7 @@
 namespace verilog {
 namespace analysis {
 
-// AlwaysCombRule finds occurrences of "always @*" or "always @(*)".
-// TODO(fangism): broaden this check or create a separate check to identify
-// explicitly named sensitivity lists.
+// TokenStreamLintRule finds occurrences of any string literal.
 class TokenStreamLintRule : public verible::SyntaxTreeLintRule {
  public:
   using rule_type = verible::SyntaxTreeLintRule;
@@ -57,4 +55,4 @@ class TokenStreamLintRule : public verible::SyntaxTreeLintRule {
 }  // namespace analysis
 }  // namespace verilog
 
-#endif  // VERIBLE_VERILOG_ANALYSIS_CHECKERS_ALWAYS_COMB_RULE_H_
+#endif  // VERIBLE_VERILOG_ANALYSIS_CHECKERS_TOKEN_STREAM_LINT_RULE_H_
