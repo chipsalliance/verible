@@ -1,4 +1,4 @@
-load("@rules_python//python:defs.bzl", "py_test", "py_library")
+load("@rules_python//python:defs.bzl", "py_test", "py_library", "py_binary")
 
 licenses(["notice"])
 
@@ -21,6 +21,28 @@ py_test(
     srcs_version = "PY3",
     python_version = "PY3",
     main = "verible_verilog_syntax_test.py",
+    deps = [":verible_verilog_syntax_py"],
+    data = ["//verilog/tools/syntax:verible-verilog-syntax"],
+    args = ["$(location //verilog/tools/syntax:verible-verilog-syntax)"],
+)
+
+py_binary(
+    name = "print_modules",
+    srcs = ["print_modules.py"],
+    srcs_version = "PY3",
+    python_version = "PY3",
+    main = "print_modules.py",
+    deps = [":verible_verilog_syntax_py"],
+    data = ["//verilog/tools/syntax:verible-verilog-syntax"],
+    args = ["$(location //verilog/tools/syntax:verible-verilog-syntax)"],
+)
+
+py_binary(
+    name = "print_tree",
+    srcs = ["print_tree.py"],
+    srcs_version = "PY3",
+    python_version = "PY3",
+    main = "print_tree.py",
     deps = [":verible_verilog_syntax_py"],
     data = ["//verilog/tools/syntax:verible-verilog-syntax"],
     args = ["$(location //verilog/tools/syntax:verible-verilog-syntax)"],
