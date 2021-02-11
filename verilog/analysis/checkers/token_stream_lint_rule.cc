@@ -41,18 +41,20 @@ using verible::matcher::Matcher;
 // Register TokenStreamLintRule
 VERILOG_REGISTER_LINT_RULE(TokenStreamLintRule);
 
-absl::string_view TokenStreamLintRule::Name() { return "forbid-line-continuations"; }
+absl::string_view TokenStreamLintRule::Name() {
+  return "forbid-line-continuations";
+}
 const char TokenStreamLintRule::kTopic[] = "forbid-line-continuations";
 const char TokenStreamLintRule::kMessage[] =
-    "The lines can't be continued with \'\\\', use C-style multiline "
-    "concatenation";
+    "The lines can't be continued with \'\\\', use concatenation operator with "
+    "braces";
 
 std::string TokenStreamLintRule::GetDescription(
     DescriptionType description_type) {
   return absl::StrCat("Checks that there are no occurrences of ",
                       Codify("\'\\\'", description_type),
-                      " when creating the string literal.",
-                      "Use C-style string concatenation instead. See ",
+                      " when breaking the string literal line.",
+                      "Use concatenation operator with braces instead. See ",
                       GetStyleGuideCitation(kTopic), ".");
 }
 
