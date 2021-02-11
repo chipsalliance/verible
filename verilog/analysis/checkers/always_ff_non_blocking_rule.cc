@@ -57,21 +57,18 @@ const char AlwaysFFNonBlockingRule::kMessage[] =
 std::string AlwaysFFNonBlockingRule::GetDescription(
     DescriptionType description_type) {
   static const std::string basic_desc = absl::StrCat(
-    "Checks that blocking assignments are, at most, targeting "
-    "locals in sequential logic. See ",
-    GetStyleGuideCitation(kTopic), ".\n"
-  );
+      "Checks that blocking assignments are, at most, targeting "
+      "locals in sequential logic. See ",
+      GetStyleGuideCitation(kTopic), ".\n");
 
-  return absl::StrCat(basic_desc,
-    description_type == DescriptionType::kHelpRulesFlag?
-      "Parameters: "
-      "catch_modifying_assignments: false; "
-      "waive_for_locals: false" :
-
-      "##### Parameters\n"
-      "  * `catch_modifying_assignments` Default: `false`\n"
-      "  * `waive_for_locals` Default: `false`"
-  );
+  return absl::StrCat(
+      basic_desc, description_type == DescriptionType::kHelpRulesFlag
+                      ? "Parameters: "
+                        "catch_modifying_assignments: false; "
+                        "waive_for_locals: false"
+                      : "##### Parameters\n"
+                        "  * `catch_modifying_assignments` Default: `false`\n"
+                        "  * `waive_for_locals` Default: `false`");
 }
 
 LintRuleStatus AlwaysFFNonBlockingRule::Report() const {
@@ -93,17 +90,16 @@ absl::Status AlwaysFFNonBlockingRule::Configure(
 //- Processing --------------------------------------------------------------
 void AlwaysFFNonBlockingRule::HandleSymbol(const verible::Symbol &symbol,
                                            const SyntaxTreeContext &context) {
-
   //- Process and filter context before locating blocking assigments --------
 
   // Detect entering and leaving of always_ff blocks
-  if (!InsideBlock(symbol, context.size()))  return;
+  if (!InsideBlock(symbol, context.size())) return;
 
   // Collect local variable declarations
-  if (LocalDeclaration(symbol))  return;
+  if (LocalDeclaration(symbol)) return;
 
   // Drop out if inside a loop header
-  if (context.IsInside(NodeEnum::kLoopHeader))  return;
+  if (context.IsInside(NodeEnum::kLoopHeader)) return;
 
   //- Check for blocking assignments of various kinds -----------------------
   static const Matcher asgn_blocking_matcher{NodekNetVariableAssignment()};
@@ -154,8 +150,7 @@ void AlwaysFFNonBlockingRule::HandleSymbol(const verible::Symbol &symbol,
 
       bool found = false;
       if (const auto *const varn =
-              verible::down_cast<const verible::SyntaxTreeNode *>(
-                  var.match)) {
+              verible::down_cast<const verible::SyntaxTreeNode *>(var.match)) {
         if (const auto *const ident =
                 verible::down_cast<const verible::SyntaxTreeLeaf *>(
                     varn->children()[0].get())) {
@@ -172,9 +167,10 @@ void AlwaysFFNonBlockingRule::HandleSymbol(const verible::Symbol &symbol,
   // Enqueue detected violation unless waived
   if (!waived) violations_.insert(LintViolation(symbol, kMessage, context));
 
-} // HandleSymbol()
+}  // HandleSymbol()
 
-bool AlwaysFFNonBlockingRule::InsideBlock(const verible::Symbol &symbol, const int depth) {
+bool AlwaysFFNonBlockingRule::InsideBlock(const verible::Symbol &symbol,
+                                          const int depth) {
   static const Matcher always_ff_matcher{
       NodekAlwaysStatement(AlwaysFFKeyword())};
   static const Matcher block_matcher{NodekBlockItemStatementList()};
@@ -184,7 +180,8 @@ bool AlwaysFFNonBlockingRule::InsideBlock(const verible::Symbol &symbol, const i
   while (depth <= scopes_.top().syntax_tree_depth_) {
     scopes_.pop();
     VLOG(4) << "POPped to scope DEPTH=" << scopes_.top().syntax_tree_depth_
-            << "; #locals_=" << scopes_.top().inherited_local_count_ << std::endl;
+            << "; #locals_=" << scopes_.top().inherited_local_count_
+            << std::endl;
   }
   locals_.resize(scopes_.top().inherited_local_count_);
 
@@ -210,7 +207,7 @@ bool AlwaysFFNonBlockingRule::InsideBlock(const verible::Symbol &symbol, const i
 
   return true;
 
-} // InsideBlock()
+}  // InsideBlock()
 
 bool AlwaysFFNonBlockingRule::LocalDeclaration(const verible::Symbol &symbol) {
   static const Matcher decl_matcher{NodekDataDeclaration()};
@@ -221,8 +218,7 @@ bool AlwaysFFNonBlockingRule::LocalDeclaration(const verible::Symbol &symbol) {
     auto &count = scopes_.top().inherited_local_count_;
     for (const auto &var : SearchSyntaxTree(symbol, var_matcher)) {
       if (const auto *const node =
-              verible::down_cast<const verible::SyntaxTreeNode *>(
-                  var.match)) {
+              verible::down_cast<const verible::SyntaxTreeNode *>(var.match)) {
         if (const auto *const ident =
                 verible::down_cast<const verible::SyntaxTreeLeaf *>(
                     node->children()[0].get())) {
@@ -233,12 +229,11 @@ bool AlwaysFFNonBlockingRule::LocalDeclaration(const verible::Symbol &symbol) {
         }
       }
     }
-    return  true;
+    return true;
   }
-  return  false;
+  return false;
 
-} // LocalDeclaration()
-
+}  // LocalDeclaration()
 
 }  // namespace analysis
 }  // namespace verilog

@@ -45,9 +45,9 @@ class AlwaysFFNonBlockingRule : public verible::SyntaxTreeLintRule {
 
  private:
   // Detects entering and leaving relevant code inside always_ff
-  bool InsideBlock(const verible::Symbol &symbol, const int depth);
+  bool InsideBlock(const verible::Symbol& symbol, const int depth);
   // Processes local declarations
-  bool LocalDeclaration(const verible::Symbol &symbol);
+  bool LocalDeclaration(const verible::Symbol& symbol);
 
  private:
   // Link to style guide rule.
@@ -73,8 +73,8 @@ class AlwaysFFNonBlockingRule : public verible::SyntaxTreeLintRule {
     int inherited_local_count_;
 
     Scope(int syntax_tree_depth, int inherited_local_count)
-      : syntax_tree_depth_(syntax_tree_depth),
-        inherited_local_count_(inherited_local_count) {}
+        : syntax_tree_depth_(syntax_tree_depth),
+          inherited_local_count_(inherited_local_count) {}
   };
   std::stack<Scope, std::vector<Scope>> scopes_{
       {{-1, 0}}  // bottom element -> the stack is never empty
