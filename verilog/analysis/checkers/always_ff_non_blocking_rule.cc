@@ -56,8 +56,22 @@ const char AlwaysFFNonBlockingRule::kMessage[] =
 
 std::string AlwaysFFNonBlockingRule::GetDescription(
     DescriptionType description_type) {
-  return "Checks that blocking assignments are, at most, targeting "
-         "locals in sequential logic.";
+  static const std::string basic_desc = absl::StrCat(
+    "Checks that blocking assignments are, at most, targeting "
+    "locals in sequential logic. See ",
+    GetStyleGuideCitation(kTopic), ".\n"
+  );
+
+  return absl::StrCat(basic_desc,
+    description_type == DescriptionType::kHelpRulesFlag?
+      "Parameters: "
+      "catch_modifying_assignments: false; "
+      "waive_for_locals: false" :
+
+      "##### Parameters\n"
+      "  * `catch_modifying_assignments` Default: `false`\n"
+      "  * `waive_for_locals` Default: `false`"
+  );
 }
 
 LintRuleStatus AlwaysFFNonBlockingRule::Report() const {
