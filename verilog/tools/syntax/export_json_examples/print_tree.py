@@ -24,6 +24,7 @@ is not the same as its tag, the text is printed in single quotes.
 """
 
 import sys
+
 import anytree
 
 import verible_verilog_syntax

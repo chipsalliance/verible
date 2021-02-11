@@ -15,10 +15,11 @@
 """VeribleVerilogSyntax test"""
 
 
-import unittest
-import verible_verilog_syntax
 import sys
 import tempfile
+import unittest
+
+import verible_verilog_syntax
 
 
 class VeribleVerilogSyntaxTest(unittest.TestCase):
@@ -268,4 +269,4 @@ class TestTokens(VeribleVerilogSyntaxTest):
 
 
 if __name__ == "__main__":
-    unittest.main(argv=sys.argv[0:1], verbosity=2)
+  unittest.main(argv=sys.argv[0:1], verbosity=2)

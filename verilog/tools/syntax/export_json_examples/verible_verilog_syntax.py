@@ -13,14 +13,14 @@
 # limitations under the License.
 """Wrapper for ``verible-verilog-syntax --export_json``"""
 
-import subprocess
-import json
-import anytree
-import re
-import dataclasses
 import collections
+import json
+import re
+import subprocess
 from typing import Any, Callable, Dict, Iterable, List, Optional, Union
 
+import anytree
+import dataclasses
 
 _CSI_SEQUENCE = re.compile("\033\\[.*?m")
 
@@ -173,7 +173,7 @@ class BranchNode(Node):
       max_count: Stop searching after finding that many matching nodes.
       iter_: Tree iterator. Decides in what order nodes are visited.
 
-    Yelds:
+    Yields:
       Nodes matching specified filter.
     """
     def as_list(v):
@@ -497,7 +497,7 @@ class VeribleVerilogSyntax:
     """Parse single SystemVerilog file.
 
     Args:
-      paths: list of paths to files to parse.
+      path: path to a file to parse.
       options: dict with parsing options.
         Available options:
           gen_tree (boolean): whether to generate syntax tree.
@@ -516,7 +516,7 @@ class VeribleVerilogSyntax:
     """Parse a string with SystemVerilog code.
 
     Args:
-      paths: list of paths to files to parse.
+      string: SystemVerilog code to parse.
       options: dict with parsing options.
         Available options:
           gen_tree (boolean): whether to generate syntax tree.

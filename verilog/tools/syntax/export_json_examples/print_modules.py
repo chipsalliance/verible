@@ -29,12 +29,13 @@ source files. Extracted information:
 """
 
 import sys
+
 import anytree
 
 import verible_verilog_syntax
 
 
-def process_file_data(path, data):
+def process_file_data(path: str, data: verible_verilog_syntax.SyntaxData):
   """Print information about modules found in SystemVerilog file.
 
   This function uses verible_verilog_syntax.Node methods to find module
