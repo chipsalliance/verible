@@ -44,6 +44,12 @@ class AlwaysFFNonBlockingRule : public verible::SyntaxTreeLintRule {
   verible::LintRuleStatus Report() const override;
 
  private:
+  // Detects entering and leaving relevant code inside always_ff
+  bool InsideBlock(const verible::Symbol &symbol, const int depth);
+  // Processes local declarations
+  bool LocalDeclaration(const verible::Symbol &symbol);
+
+ private:
   // Link to style guide rule.
   static const char kTopic[];
 

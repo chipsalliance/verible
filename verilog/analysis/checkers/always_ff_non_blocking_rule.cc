@@ -79,78 +79,32 @@ absl::Status AlwaysFFNonBlockingRule::Configure(
 //- Processing --------------------------------------------------------------
 void AlwaysFFNonBlockingRule::HandleSymbol(const verible::Symbol &symbol,
                                            const SyntaxTreeContext &context) {
-  static const Matcher always_ff_matcher{
-      NodekAlwaysStatement(AlwaysFFKeyword())};
-  static const Matcher block_matcher{NodekBlockItemStatementList()};
-  static const Matcher decl_matcher{NodekDataDeclaration()};
-  static const Matcher var_matcher{NodekRegisterVariable()};
+
+  //- Process and filter context before locating blocking assigments --------
+
+  // Detect entering and leaving of always_ff blocks
+  if (!InsideBlock(symbol, context.size()))  return;
+
+  // Collect local variable declarations
+  if (LocalDeclaration(symbol))  return;
+
+  // Drop out if inside a loop header
+  if (context.IsInside(NodeEnum::kLoopHeader))  return;
+
+  //- Check for blocking assignments of various kinds -----------------------
   static const Matcher asgn_blocking_matcher{NodekNetVariableAssignment()};
   static const Matcher asgn_modify_matcher{NodekAssignModifyStatement()};
   static const Matcher asgn_incdec_matcher{NodekIncrementDecrementExpression()};
   static const Matcher ident_matcher{NodekUnqualifiedId()};
 
-  // Determine depth in syntax tree and discard state from branches already left
-  const int depth = context.size();
-  if (depth <= inside_) inside_ = 0;
-  while (depth <= scopes_.top().syntax_tree_depth_) {
-    scopes_.pop();
-    VLOG(4) << "POPped to scope DEPTH=" << scopes_.top().syntax_tree_depth_
-            << "; #locals_=" << scopes_.top().inherited_local_count_ << std::endl;
-  }
-  locals_.resize(scopes_.top().inherited_local_count_);
-
-  verible::matcher::BoundSymbolManager symbol_man;
-  if (!inside_) {
-    // Not analyzing an always_ff block. Entering a new one?
-    if (always_ff_matcher.Matches(symbol, &symbol_man)) {
-      VLOG(4) << "always_ff @DEPTH=" << depth << std::endl;
-      inside_ = depth;
-    }
-    return;
-  }
-
-  // We are inside an always_ff block
-
-  // Opening a begin-end block
-  if (block_matcher.Matches(symbol, &symbol_man)) {
-    VLOG(4) << "PUSHing scope: DEPTH=" << depth
-            << "; #locals_ inherited=" << locals_.size() << std::endl;
-    scopes_.emplace(depth, locals_.size());
-    return;
-  }
-
-  // Collect local variable declarations
-  if (decl_matcher.Matches(symbol, &symbol_man)) {
-    auto &count = scopes_.top().inherited_local_count_;
-    for (const auto &var : SearchSyntaxTree(symbol, var_matcher)) {
-      if (const auto *const node =
-              verible::down_cast<const verible::SyntaxTreeNode *>(
-                  var.match)) {
-        if (const auto *const ident =
-                verible::down_cast<const verible::SyntaxTreeLeaf *>(
-                    node->children()[0].get())) {
-          const absl::string_view name = ident->get().text();
-          VLOG(4) << "Registering '" << name << '\'' << std::endl;
-          locals_.emplace_back(name);
-          count++;
-        }
-      }
-    }
-    return;
-  }
-
-  // Drop out if inside a loop header
-  if (context.IsInside(NodeEnum::kLoopHeader))  return;
-
-  // Check for blocking assignments of various kinds
-
   // Rule may be waived if complete lhs consists of local variables
+  //  -> determine root of lhs
   const verible::Symbol *check_root = nullptr;
 
+  verible::matcher::BoundSymbolManager symbol_man;
   if (asgn_blocking_matcher.Matches(symbol, &symbol_man)) {
     if (const auto *const node =
             dynamic_cast<const verible::SyntaxTreeNode *>(&symbol)) {
-      // Check all left-hand-side variables to potentially waive the rule
       check_root =
           /* lhs */ verible::down_cast<const verible::SyntaxTreeNode *>(
               node->children()[0].get());
@@ -162,13 +116,11 @@ void AlwaysFFNonBlockingRule::HandleSymbol(const verible::Symbol &symbol,
     if (asgn_modify_matcher.Matches(symbol, &symbol_man)) {
       if (const auto *const node =
               dynamic_cast<const verible::SyntaxTreeNode *>(&symbol)) {
-        // Check all left-hand-side variables to potentially waive the rule
         check_root =
             /* lhs */ verible::down_cast<const verible::SyntaxTreeNode *>(
                 node->children()[0].get());
       }
     } else if (asgn_incdec_matcher.Matches(symbol, &symbol_man)) {
-      // Check all mentioned variables to potentially waive the rule
       check_root = &symbol;
     } else {
       // Not a blocking assignment
@@ -205,7 +157,74 @@ void AlwaysFFNonBlockingRule::HandleSymbol(const verible::Symbol &symbol,
 
   // Enqueue detected violation unless waived
   if (!waived) violations_.insert(LintViolation(symbol, kMessage, context));
-}
+
+} // HandleSymbol()
+
+bool AlwaysFFNonBlockingRule::InsideBlock(const verible::Symbol &symbol, const int depth) {
+  static const Matcher always_ff_matcher{
+      NodekAlwaysStatement(AlwaysFFKeyword())};
+  static const Matcher block_matcher{NodekBlockItemStatementList()};
+
+  // Discard state from branches already left
+  if (depth <= inside_) inside_ = 0;
+  while (depth <= scopes_.top().syntax_tree_depth_) {
+    scopes_.pop();
+    VLOG(4) << "POPped to scope DEPTH=" << scopes_.top().syntax_tree_depth_
+            << "; #locals_=" << scopes_.top().inherited_local_count_ << std::endl;
+  }
+  locals_.resize(scopes_.top().inherited_local_count_);
+
+  verible::matcher::BoundSymbolManager symbol_man;
+  if (!inside_) {
+    // Not analyzing an always_ff block. Entering a new one?
+    if (always_ff_matcher.Matches(symbol, &symbol_man)) {
+      VLOG(4) << "always_ff @DEPTH=" << depth << std::endl;
+      inside_ = depth;
+    }
+    return false;
+  }
+
+  // We are inside an always_ff block
+
+  // Opening a begin-end block
+  if (block_matcher.Matches(symbol, &symbol_man)) {
+    VLOG(4) << "PUSHing scope: DEPTH=" << depth
+            << "; #locals_ inherited=" << locals_.size() << std::endl;
+    scopes_.emplace(depth, locals_.size());
+    return false;
+  }
+
+  return true;
+
+} // InsideBlock()
+
+bool AlwaysFFNonBlockingRule::LocalDeclaration(const verible::Symbol &symbol) {
+  static const Matcher decl_matcher{NodekDataDeclaration()};
+  static const Matcher var_matcher{NodekRegisterVariable()};
+
+  verible::matcher::BoundSymbolManager symbol_man;
+  if (decl_matcher.Matches(symbol, &symbol_man)) {
+    auto &count = scopes_.top().inherited_local_count_;
+    for (const auto &var : SearchSyntaxTree(symbol, var_matcher)) {
+      if (const auto *const node =
+              verible::down_cast<const verible::SyntaxTreeNode *>(
+                  var.match)) {
+        if (const auto *const ident =
+                verible::down_cast<const verible::SyntaxTreeLeaf *>(
+                    node->children()[0].get())) {
+          const absl::string_view name = ident->get().text();
+          VLOG(4) << "Registering '" << name << '\'' << std::endl;
+          locals_.emplace_back(name);
+          count++;
+        }
+      }
+    }
+    return  true;
+  }
+  return  false;
+
+} // LocalDeclaration()
+
 
 }  // namespace analysis
 }  // namespace verilog
