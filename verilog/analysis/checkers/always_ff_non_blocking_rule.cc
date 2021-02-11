@@ -100,100 +100,111 @@ void AlwaysFFNonBlockingRule::HandleSymbol(const verible::Symbol &symbol,
   locals_.resize(scopes_.top().second);
 
   verible::matcher::BoundSymbolManager symbol_man;
+  if (!inside_) {
+    // Not analyzing an always_ff block. Entering a new one?
+    if (always_ff_matcher.Matches(symbol, &symbol_man)) {
+      VLOG(4) << "always_ff @DEPTH=" << depth << std::endl;
+      inside_ = depth;
+    }
+    return;
+  }
 
-  if (always_ff_matcher.Matches(symbol, &symbol_man)) {
-    // Check for entering an always_ff block
-    VLOG(4) << "always_ff @DEPTH=" << depth << std::endl;
-    inside_ = depth;
-  } else if (inside_) {
-    // Open up begin-end block
-    if (block_matcher.Matches(symbol, &symbol_man)) {
-      VLOG(4) << "PUSHing scope: DEPTH=" << depth
-              << "; #locals_ inherited=" << locals_.size() << std::endl;
-      scopes_.emplace(depth, locals_.size());
-    } else if (decl_matcher.Matches(symbol, &symbol_man)) {
-      // Collect local variable declarations
-      auto &count = scopes_.top().second;
-      for (const auto &var : SearchSyntaxTree(symbol, var_matcher)) {
-        if (const auto *const node =
-                verible::down_cast<const verible::SyntaxTreeNode *>(
-                    var.match)) {
-          if (const auto *const ident =
-                  verible::down_cast<const verible::SyntaxTreeLeaf *>(
-                      node->children()[0].get())) {
-            const absl::string_view name = ident->get().text();
-            VLOG(4) << "Registering '" << name << '\'' << std::endl;
-            locals_.emplace_back(name);
-            count++;
-          }
+  // We are inside an always_ff block
+
+  // Opening a begin-end block
+  if (block_matcher.Matches(symbol, &symbol_man)) {
+    VLOG(4) << "PUSHing scope: DEPTH=" << depth
+            << "; #locals_ inherited=" << locals_.size() << std::endl;
+    scopes_.emplace(depth, locals_.size());
+    return;
+  }
+
+  // Collect local variable declarations
+  if (decl_matcher.Matches(symbol, &symbol_man)) {
+    auto &count = scopes_.top().second;
+    for (const auto &var : SearchSyntaxTree(symbol, var_matcher)) {
+      if (const auto *const node =
+              verible::down_cast<const verible::SyntaxTreeNode *>(
+                  var.match)) {
+        if (const auto *const ident =
+                verible::down_cast<const verible::SyntaxTreeLeaf *>(
+                    node->children()[0].get())) {
+          const absl::string_view name = ident->get().text();
+          VLOG(4) << "Registering '" << name << '\'' << std::endl;
+          locals_.emplace_back(name);
+          count++;
         }
       }
-    } else if (!context.IsInside(NodeEnum::kLoopHeader)) {
-      // Check for blocking assignments of various kinds outside loop headers
+    }
+    return;
+  }
 
-      // Rule may be waived if complete lhs consists of local variables
-      const verible::Symbol *check_root = nullptr;
+  // Drop out if inside a loop header
+  if (context.IsInside(NodeEnum::kLoopHeader))  return;
 
-      if (asgn_blocking_matcher.Matches(symbol, &symbol_man)) {
-        if (const auto *const node =
-                dynamic_cast<const verible::SyntaxTreeNode *>(&symbol)) {
-          // Check all left-hand-side variables to potentially waive the rule
-          check_root =
-              /* lhs */ verible::down_cast<const verible::SyntaxTreeNode *>(
-                  node->children()[0].get());
-        }
-      } else {
-        // Not interested in any other blocking assignments unless flagged
-        if (!catch_modifying_assignments_) return;
+  // Check for blocking assignments of various kinds
 
-        if (asgn_modify_matcher.Matches(symbol, &symbol_man)) {
-          if (const auto *const node =
-                  dynamic_cast<const verible::SyntaxTreeNode *>(&symbol)) {
-            // Check all left-hand-side variables to potentially waive the rule
-            check_root =
-                /* lhs */ verible::down_cast<const verible::SyntaxTreeNode *>(
-                    node->children()[0].get());
-          }
-        } else if (asgn_incdec_matcher.Matches(symbol, &symbol_man)) {
-          // Check all mentioned variables to potentially waive the rule
-          check_root = &symbol;
-        } else {
-          // Not a blocking assignment
-          return;
-        }
+  // Rule may be waived if complete lhs consists of local variables
+  const verible::Symbol *check_root = nullptr;
+
+  if (asgn_blocking_matcher.Matches(symbol, &symbol_man)) {
+    if (const auto *const node =
+            dynamic_cast<const verible::SyntaxTreeNode *>(&symbol)) {
+      // Check all left-hand-side variables to potentially waive the rule
+      check_root =
+          /* lhs */ verible::down_cast<const verible::SyntaxTreeNode *>(
+              node->children()[0].get());
+    }
+  } else {
+    // Not interested in any other blocking assignments unless flagged
+    if (!catch_modifying_assignments_) return;
+
+    if (asgn_modify_matcher.Matches(symbol, &symbol_man)) {
+      if (const auto *const node =
+              dynamic_cast<const verible::SyntaxTreeNode *>(&symbol)) {
+        // Check all left-hand-side variables to potentially waive the rule
+        check_root =
+            /* lhs */ verible::down_cast<const verible::SyntaxTreeNode *>(
+                node->children()[0].get());
       }
-
-      // Waive rule if syntax subtree containing relevant variables was found
-      // and all turn out to be local
-      bool waived = false;
-      if (waive_for_locals_ && check_root) {
-        waived = true;
-        for (const auto &var : SearchSyntaxTree(*check_root, ident_matcher)) {
-          if (var.context.IsInside(NodeEnum::kDimensionScalar)) continue;
-          if (var.context.IsInside(NodeEnum::kDimensionSlice)) continue;
-          if (var.context.IsInside(NodeEnum::kHierarchyExtension)) continue;
-
-          bool found = false;
-          if (const auto *const varn =
-                  verible::down_cast<const verible::SyntaxTreeNode *>(
-                      var.match)) {
-            if (const auto *const ident =
-                    verible::down_cast<const verible::SyntaxTreeLeaf *>(
-                        varn->children()[0].get())) {
-              found = std::find(locals_.begin(), locals_.end(),
-                                ident->get().text()) != locals_.end();
-              VLOG(4) << "LHS='" << ident->get().text() << "' FOUND=" << found
-                      << std::endl;
-            }
-          }
-          waived &= found;
-        }
-      }
-
-      // Enqueue detected violation unless waived
-      if (!waived) violations_.insert(LintViolation(symbol, kMessage, context));
+    } else if (asgn_incdec_matcher.Matches(symbol, &symbol_man)) {
+      // Check all mentioned variables to potentially waive the rule
+      check_root = &symbol;
+    } else {
+      // Not a blocking assignment
+      return;
     }
   }
+
+  // Waive rule if syntax subtree containing relevant variables was found
+  // and all turn out to be local
+  bool waived = false;
+  if (waive_for_locals_ && check_root) {
+    waived = true;
+    for (const auto &var : SearchSyntaxTree(*check_root, ident_matcher)) {
+      if (var.context.IsInside(NodeEnum::kDimensionScalar)) continue;
+      if (var.context.IsInside(NodeEnum::kDimensionSlice)) continue;
+      if (var.context.IsInside(NodeEnum::kHierarchyExtension)) continue;
+
+      bool found = false;
+      if (const auto *const varn =
+              verible::down_cast<const verible::SyntaxTreeNode *>(
+                  var.match)) {
+        if (const auto *const ident =
+                verible::down_cast<const verible::SyntaxTreeLeaf *>(
+                    varn->children()[0].get())) {
+          found = std::find(locals_.begin(), locals_.end(),
+                            ident->get().text()) != locals_.end();
+          VLOG(4) << "LHS='" << ident->get().text() << "' FOUND=" << found
+                  << std::endl;
+        }
+      }
+      waived &= found;
+    }
+  }
+
+  // Enqueue detected violation unless waived
+  if (!waived) violations_.insert(LintViolation(symbol, kMessage, context));
 }
 
 }  // namespace analysis
