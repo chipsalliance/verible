@@ -114,7 +114,7 @@ void AlwaysFFNonBlockingRule::HandleSymbol(const verible::Symbol &symbol,
   verible::matcher::BoundSymbolManager symbol_man;
   if (asgn_blocking_matcher.Matches(symbol, &symbol_man)) {
     if (const auto *const node =
-            dynamic_cast<const verible::SyntaxTreeNode *>(&symbol)) {
+            verible::down_cast<const verible::SyntaxTreeNode *>(&symbol)) {
       check_root =
           /* lhs */ verible::down_cast<const verible::SyntaxTreeNode *>(
               node->children()[0].get());
@@ -125,7 +125,7 @@ void AlwaysFFNonBlockingRule::HandleSymbol(const verible::Symbol &symbol,
 
     if (asgn_modify_matcher.Matches(symbol, &symbol_man)) {
       if (const auto *const node =
-              dynamic_cast<const verible::SyntaxTreeNode *>(&symbol)) {
+              verible::down_cast<const verible::SyntaxTreeNode *>(&symbol)) {
         check_root =
             /* lhs */ verible::down_cast<const verible::SyntaxTreeNode *>(
                 node->children()[0].get());
@@ -177,13 +177,13 @@ bool AlwaysFFNonBlockingRule::InsideBlock(const verible::Symbol &symbol,
 
   // Discard state from branches already left
   if (depth <= inside_) inside_ = 0;
-  while (depth <= scopes_.top().syntax_tree_depth_) {
+  while (depth <= scopes_.top().syntax_tree_depth) {
     scopes_.pop();
-    VLOG(4) << "POPped to scope DEPTH=" << scopes_.top().syntax_tree_depth_
-            << "; #locals_=" << scopes_.top().inherited_local_count_
+    VLOG(4) << "POPped to scope DEPTH=" << scopes_.top().syntax_tree_depth
+            << "; #locals_=" << scopes_.top().inherited_local_count
             << std::endl;
   }
-  locals_.resize(scopes_.top().inherited_local_count_);
+  locals_.resize(scopes_.top().inherited_local_count);
 
   verible::matcher::BoundSymbolManager symbol_man;
   if (!inside_) {
@@ -201,7 +201,7 @@ bool AlwaysFFNonBlockingRule::InsideBlock(const verible::Symbol &symbol,
   if (block_matcher.Matches(symbol, &symbol_man)) {
     VLOG(4) << "PUSHing scope: DEPTH=" << depth
             << "; #locals_ inherited=" << locals_.size() << std::endl;
-    scopes_.emplace(depth, locals_.size());
+    scopes_.emplace(Scope{depth, locals_.size()});
     return false;
   }
 
@@ -215,7 +215,7 @@ bool AlwaysFFNonBlockingRule::LocalDeclaration(const verible::Symbol &symbol) {
 
   verible::matcher::BoundSymbolManager symbol_man;
   if (decl_matcher.Matches(symbol, &symbol_man)) {
-    auto &count = scopes_.top().inherited_local_count_;
+    auto &count = scopes_.top().inherited_local_count;
     for (const auto &var : SearchSyntaxTree(symbol, var_matcher)) {
       if (const auto *const node =
               verible::down_cast<const verible::SyntaxTreeNode *>(var.match)) {

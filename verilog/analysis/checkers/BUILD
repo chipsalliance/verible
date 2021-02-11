@@ -1149,6 +1149,7 @@ cc_library(
         "//common/text:config_utils",
         "//common/text:symbol",
         "//common/text:syntax_tree_context",
+        "//common/util:casts",
         "//verilog/CST:verilog_matchers",
         "//verilog/analysis:descriptions",
         "//verilog/analysis:lint_rule_registry",

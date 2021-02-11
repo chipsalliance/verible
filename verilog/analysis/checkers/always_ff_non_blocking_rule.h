@@ -69,12 +69,8 @@ class AlwaysFFNonBlockingRule : public verible::SyntaxTreeLintRule {
 
   // Stack of inner begin-end scopes
   struct Scope {
-    int syntax_tree_depth_;
-    int inherited_local_count_;
-
-    Scope(int syntax_tree_depth, int inherited_local_count)
-        : syntax_tree_depth_(syntax_tree_depth),
-          inherited_local_count_(inherited_local_count) {}
+    int syntax_tree_depth;
+    int inherited_local_count;
   };
   std::stack<Scope, std::vector<Scope>> scopes_{
       {{-1, 0}}  // bottom element -> the stack is never empty
