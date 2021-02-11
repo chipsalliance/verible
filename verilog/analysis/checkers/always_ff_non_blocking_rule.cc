@@ -92,12 +92,12 @@ void AlwaysFFNonBlockingRule::HandleSymbol(const verible::Symbol &symbol,
   // Determine depth in syntax tree and discard state from branches already left
   const int depth = context.size();
   if (depth <= inside_) inside_ = 0;
-  while (depth <= scopes_.top().first) {
+  while (depth <= scopes_.top().syntax_tree_depth_) {
     scopes_.pop();
-    VLOG(4) << "POPped to scope DEPTH=" << scopes_.top().first
-            << "; #locals_=" << scopes_.top().second << std::endl;
+    VLOG(4) << "POPped to scope DEPTH=" << scopes_.top().syntax_tree_depth_
+            << "; #locals_=" << scopes_.top().inherited_local_count_ << std::endl;
   }
-  locals_.resize(scopes_.top().second);
+  locals_.resize(scopes_.top().inherited_local_count_);
 
   verible::matcher::BoundSymbolManager symbol_man;
   if (!inside_) {
@@ -121,7 +121,7 @@ void AlwaysFFNonBlockingRule::HandleSymbol(const verible::Symbol &symbol,
 
   // Collect local variable declarations
   if (decl_matcher.Matches(symbol, &symbol_man)) {
-    auto &count = scopes_.top().second;
+    auto &count = scopes_.top().inherited_local_count_;
     for (const auto &var : SearchSyntaxTree(symbol, var_matcher)) {
       if (const auto *const node =
               verible::down_cast<const verible::SyntaxTreeNode *>(
