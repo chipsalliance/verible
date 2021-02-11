@@ -78,6 +78,11 @@ Do not use defparam. See:[Style: defparam].
 
 Enabled by default: true
 
+### forbid-line-continuations
+Checks that there are no occurrences of `'\'` when breaking the string literal line.Use concatenation operator with braces instead. See [Style: forbid-line-continuations].
+
+Enabled by default: true
+
 ### forbidden-macro
 Checks that no forbidden macro calls are used. See [Verification-Style: logging].
 
@@ -275,4 +280,4 @@ Enabled by default: true
 
 ## Version
 
-Generated on 2021-02-05 09:05:37 +0100 from [f07e2e8](https://github.com/google/verible/commit/f07e2e80a29d5bc3eb1057b4ab232541a1a2334e)
+Generated on 2021-02-11 12:14:30 -0800 from [9d63188](https://github.com/google/verible/commit/9d63188af613f1306cad2782b0c75269f2a816d0)
