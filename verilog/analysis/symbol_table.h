@@ -54,6 +54,8 @@ enum class SymbolMetaType {
   kFunction,
   kTask,
   kStruct,
+  kEnumType,
+  kEnumConstant,
   kInterface,
 
   // The following enums represent classes/groups of the above types,

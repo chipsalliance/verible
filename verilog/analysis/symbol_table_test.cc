@@ -6132,6 +6132,121 @@ TEST(BuildSymbolTableTest, AnonymousStructTypeNestedMemberReference) {
   }
 }
 
+TEST(BuildSymbolTableTest, AnonymousEnumTypeData) {
+  TestVerilogSourceFile src("simple_enum.sv",
+                            "enum {\n"
+                            "  idle, busy\n"
+                            "} data;\n");
+  const auto status = src.Parse();
+  ASSERT_TRUE(status.ok()) << status.message();
+  SymbolTable symbol_table(nullptr);
+  const SymbolTableNode& root_symbol(symbol_table.Root());
+
+  const auto build_diagnostics = BuildSymbolTable(src, &symbol_table);
+  EXPECT_EMPTY_STATUSES(build_diagnostics);
+
+  // Expect one anonymous enum definition and reference.
+  EXPECT_EQ(root_symbol.Value().anonymous_scope_names.size(), 1);
+
+  // Expect four symbols (enum, data, idle, busy)
+  ASSERT_EQ(root_symbol.Children().size(), 4);
+
+  // Find the symbol that is a enum (anon)
+  const auto found = std::find_if(
+      root_symbol.Children().begin(), root_symbol.Children().end(),
+      [](const SymbolTableNode::key_value_type& p) {
+        return p.first != "data" && p.first != "idle" && p.first != "busy";
+      });
+  ASSERT_NE(found, root_symbol.Children().end());
+  const SymbolTableNode& anon_enum(found->second);
+  const SymbolInfo& anon_enum_info(anon_enum.Value());
+  EXPECT_EQ(anon_enum_info.metatype, SymbolMetaType::kEnumType);
+  EXPECT_TRUE(anon_enum_info.local_references_to_bind.empty());
+
+  // Enum has two members.
+  EXPECT_EQ(anon_enum.Children().size(), 2);
+
+  MUST_ASSIGN_LOOKUP_SYMBOL(idle, anon_enum, "idle");
+  EXPECT_EQ(idle_info.metatype, SymbolMetaType::kEnumConstant);
+  EXPECT_EQ(idle_info.file_origin, &src);
+  EXPECT_EQ(idle_info.declared_type.user_defined_type, nullptr);
+
+  MUST_ASSIGN_LOOKUP_SYMBOL(busy, anon_enum, "busy");
+  EXPECT_EQ(busy_info.metatype, SymbolMetaType::kEnumConstant);
+  EXPECT_EQ(busy_info.file_origin, &src);
+  EXPECT_EQ(busy_info.declared_type.user_defined_type, nullptr);
+
+  // Find idle symbol
+  const auto found_enum_idle =
+      std::find_if(root_symbol.Children().begin(), root_symbol.Children().end(),
+                   [](const SymbolTableNode::key_value_type& p) {
+                     return p.first == "idle";
+                   });
+  ASSERT_NE(found_enum_idle, root_symbol.Children().end());
+  const SymbolTableNode& enum_idle(found_enum_idle->second);
+  const SymbolInfo& enum_idle_info(enum_idle.Value());
+  EXPECT_EQ(enum_idle_info.metatype, SymbolMetaType::kTypeAlias);
+  EXPECT_TRUE(enum_idle_info.local_references_to_bind.empty());
+
+  // Find busy symbol
+  const auto found_enum_busy =
+      std::find_if(root_symbol.Children().begin(), root_symbol.Children().end(),
+                   [](const SymbolTableNode::key_value_type& p) {
+                     return p.first == "busy";
+                   });
+  ASSERT_NE(found_enum_busy, root_symbol.Children().end());
+  const SymbolTableNode& enum_busy(found_enum_busy->second);
+  const SymbolInfo& enum_busy_info(enum_busy.Value());
+  EXPECT_EQ(enum_busy_info.metatype, SymbolMetaType::kTypeAlias);
+  EXPECT_TRUE(enum_busy_info.local_references_to_bind.empty());
+
+  // Three references: data and two enum constants
+  ASSERT_EQ(root_symbol.Value().local_references_to_bind.size(), 3);
+
+  // Expect them to bind immediately.
+
+  const ReferenceComponent& anon_enum_ref_comp(
+      root_symbol.Value().local_references_to_bind[2].LastLeaf()->Value());
+  EXPECT_EQ(anon_enum_ref_comp.ref_type, ReferenceType::kImmediate);
+  EXPECT_EQ(anon_enum_ref_comp.required_metatype, SymbolMetaType::kEnumType);
+  EXPECT_EQ(anon_enum_ref_comp.resolved_symbol, &anon_enum);
+
+  const ReferenceComponent& enum_idle_ref_comp(
+      root_symbol.Value().local_references_to_bind[0].LastLeaf()->Value());
+  EXPECT_EQ(enum_idle_ref_comp.ref_type, ReferenceType::kImmediate);
+  EXPECT_EQ(enum_idle_ref_comp.required_metatype,
+            SymbolMetaType::kEnumConstant);
+  EXPECT_EQ(enum_idle_ref_comp.resolved_symbol, &busy);
+
+  const ReferenceComponent& enum_busy_ref_comp(
+      root_symbol.Value().local_references_to_bind[1].LastLeaf()->Value());
+  EXPECT_EQ(enum_busy_ref_comp.ref_type, ReferenceType::kImmediate);
+  EXPECT_EQ(enum_busy_ref_comp.required_metatype,
+            SymbolMetaType::kEnumConstant);
+  EXPECT_EQ(enum_busy_ref_comp.resolved_symbol, &idle);
+
+  // "data"'s type is the (internal) anonymous enum type reference.
+  MUST_ASSIGN_LOOKUP_SYMBOL(data, root_symbol, "data");
+  EXPECT_EQ(data_info.metatype, SymbolMetaType::kDataNetVariableInstance);
+  EXPECT_EQ(data_info.file_origin, &src);
+
+  const DependentReferences& anon_enum_ref(
+      root_symbol.Value().local_references_to_bind[2]);
+  EXPECT_EQ(data_info.declared_type.user_defined_type,
+            anon_enum_ref.LastLeaf());
+
+  {
+    std::vector<absl::Status> resolve_diagnostics;
+    symbol_table.Resolve(&resolve_diagnostics);
+    EXPECT_EMPTY_STATUSES(resolve_diagnostics);
+
+    // Make sure that resolve doesn't change/break anything
+    EXPECT_EQ(anon_enum_ref_comp.resolved_symbol, &anon_enum);
+    EXPECT_EQ(enum_idle_ref_comp.resolved_symbol, &busy);
+    EXPECT_EQ(enum_busy_ref_comp.resolved_symbol, &idle);
+  }
+}
+
 TEST(BuildSymbolTableTest, TypedefPrimitive) {
   TestVerilogSourceFile src("typedef.sv",
                             "typedef int number;\n"
