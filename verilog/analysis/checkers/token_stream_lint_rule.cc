@@ -17,6 +17,7 @@
 #include <set>
 #include <string>
 
+#include "absl/strings/match.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
 #include "common/analysis/citation.h"
@@ -69,7 +70,7 @@ void TokenStreamLintRule::HandleSymbol(const verible::Symbol& symbol,
   if (StringLiteralMatcher().Matches(symbol, &manager)) {
     const auto& string_node = SymbolCastToNode(symbol);
     const auto& string_literal = SymbolCastToLeaf(*string_node.children()[0]);
-    if (string_literal.get().text().find("\\\n") != std::string::npos) {
+    if (absl::StrContains(string_literal.get().text(), "\\\n")) {
       violations_.insert(LintViolation(symbol, kMessage, context));
     }
   }
