@@ -15,7 +15,7 @@
 
 set -e
 
-DIRS=${1:-$(find -mindepth 1 -maxdepth 1 -type d)}
+DIRS=$( echo ${1:-$(find -mindepth 1 -maxdepth 1 -type d)} | sed 's#:#-#')
 export TAG=${TAG:-$(git describe --match=v*)}
 
 ./docker-generate.sh $DIRS
