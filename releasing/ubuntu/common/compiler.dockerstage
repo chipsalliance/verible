@@ -1,5 +1,0 @@
-# Install compiler
-RUN apt-get install -y  \
-    build-essential     \
-    g++                 \
-    gcc
