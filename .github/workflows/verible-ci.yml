@@ -161,8 +161,7 @@ jobs:
       run: |
         set -x
         source ./.github/settings.sh
-        cd releasing
-        ./docker-run.sh $MATRIX_OS
+        ./releasing/docker-run.sh $MATRIX_OS
 
     - name: 📤 Upload artifact
       uses: actions/upload-artifact@v2

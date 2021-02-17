@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # Copyright 2020 The Verible Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -15,7 +15,20 @@
 
 set -e
 
-DIRS=$( echo ${1:-$(find -mindepth 1 -maxdepth 1 -type d)} | sed 's#:#-#')
+cd $(dirname "$0")
+
+# Get target OS and version
+
+if [ -z "${1}" ]; then
+  echo "Make sure that \$1 ($1) is set."
+  exit 1
+fi
+
+export TARGET=`echo "$1" | sed 's#:#-#g'`
+
+TARGET_VERSION=`echo $TARGET | cut -d- -f2`
+TARGET_OS=`echo $TARGET | cut -d- -f1`
+
 export TAG=${TAG:-$(git describe --match=v*)}
 
 REPO_SLUG=${GITHUB_REPOSITORY_SLUG:-google/verible}
@@ -46,7 +59,7 @@ for UBUNTU_VERSION in xenial bionic focal groovy; do
     # Install basic tools
     # --------------------------------------------------------------
     mkdir -p ubuntu-${UBUNTU_VERSION}
-    sed "s#ubuntu:VERSION#ubuntu:${UBUNTU_VERSION}#g" $(dirname "$0")/ubuntu.dockerfile > ubuntu-${UBUNTU_VERSION}/Dockerfile
+    sed "s#ubuntu:VERSION#ubuntu:${UBUNTU_VERSION}#g" ubuntu.dockerfile > ubuntu-${UBUNTU_VERSION}/Dockerfile
 
     # Install compiler
     # --------------------------------------------------------------
@@ -106,7 +119,7 @@ for CENTOS_VERSION in 7 8; do
     # Install basic tools
     # --------------------------------------------------------------
     mkdir -p centos-${CENTOS_VERSION}
-    sed "s#centos:VERSION#centos:${CENTOS_VERSION}#g" $(dirname "$0")/centos.dockerfile > centos-${CENTOS_VERSION}/Dockerfile
+    sed "s#centos:VERSION#centos:${CENTOS_VERSION}#g" centos.dockerfile > centos-${CENTOS_VERSION}/Dockerfile
 
     # Install compiler
     # --------------------------------------------------------------
@@ -210,11 +223,9 @@ EOF
 done
 # ==================================================================
 
-for DFILE in $(find -name Dockerfile); do
-    # Install gflags2man
-    # --------------------------------------------------------------
-    cat >> $DFILE <<EOF
-
+# Install gflags2man and build Verible
+# --------------------------------------------------------------
+cat >> ${TARGET_OS}-${TARGET_VERSION}/Dockerfile <<EOF
 # Install gflags2man
 RUN \\
     wget --no-verbose https://repo.anaconda.com/miniconda/Miniconda2-latest-Linux-x86_64.sh; \\
@@ -226,11 +237,6 @@ RUN /usr/local/bin/pip install python-gflags
 RUN chmod a+x /usr/local/bin/gflags2man.py
 RUN ln -s /usr/local/bin/gflags2man.py /usr/bin/gflags2man
 RUN gflags2man
-EOF
-
-    # Build Verible
-    # ==================================================================
-    cat >> $DFILE <<EOF
 
 ENV BAZEL_OPTS "${BAZEL_OPTS}"
 ENV BAZEL_CXXOPTS "${BAZEL_CXXOPTS}"
@@ -246,6 +252,7 @@ RUN bazel --version
 ADD verible-$GIT_VERSION.tar.gz /src/verible
 WORKDIR /src/verible/verible-$GIT_VERSION
 RUN bazel build --workspace_status_command=bazel/build-version.sh $BAZEL_OPTS //...
+
 RUN echo $REPO_SLUG
 RUN echo $GIT_DATE
 RUN echo $GIT_HASH
@@ -254,36 +261,29 @@ RUN echo $GIT_VERSION
 RUN ./.github/workflows/github-pages-setup.sh
 RUN ./.github/workflows/github-releases-setup.sh /out/
 EOF
-done
 
-# Create archive for each Docker directory
-# ==================================================================
-for DIR in $DIRS; do
-    (cd .. ; git archive --prefix verible-$GIT_VERSION/ --output releasing/$DIR/verible-$GIT_VERSION.tar.gz HEAD)
-done
+(cd .. ; git archive --prefix verible-$GIT_VERSION/ --output releasing/$TARGET/verible-$GIT_VERSION.tar.gz HEAD)
 
+IMAGE="verible:$TARGET-$TAG"
+echo
+echo "Docker file for $IMAGE"
+echo "--------------------------------"
+cat $TARGET/Dockerfile
+echo "--------------------------------"
+echo
+echo "Docker build for $IMAGE"
+echo "--------------------------------"
+docker build --tag $IMAGE $TARGET
+echo "--------------------------------"
+echo
+echo "Build extraction for $IMAGE"
+echo "--------------------------------"
+DOCKER_ID=$(docker create $IMAGE)
+docker cp $DOCKER_ID:/out - | tar xvf -
+echo "--------------------------------"
+echo
+echo "Cleanup for $IMAGE"
+echo "--------------------------------"
+docker rm -v $DOCKER_ID
+echo "--------------------------------"
 
-for DIR in $DIRS; do
-    IMAGE="verible:$DIR-$TAG"
-    echo
-    echo "Docker file for $IMAGE"
-    echo "--------------------------------"
-    cat $DIR/Dockerfile
-    echo "--------------------------------"
-    echo
-    echo "Docker build for $IMAGE"
-    echo "--------------------------------"
-    docker build --tag $IMAGE $DIR
-    echo "--------------------------------"
-    echo
-    echo "Build extraction for $IMAGE"
-    echo "--------------------------------"
-    DOCKER_ID=$(docker create $IMAGE)
-    docker cp $DOCKER_ID:/out - | tar xvf -
-    echo "--------------------------------"
-    echo
-    echo "Cleanup for $IMAGE"
-    echo "--------------------------------"
-    docker rm -v $DOCKER_ID
-    echo "--------------------------------"
-done
