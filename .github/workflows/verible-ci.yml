@@ -5,6 +5,7 @@ on:
   pull_request:
 
 env:
+  DOCKER_BUILDKIT: 1
   BOT_USER: "Deployment Bot"
   BOT_EMAIL: "verible-dev@googlegroups.com"
 
