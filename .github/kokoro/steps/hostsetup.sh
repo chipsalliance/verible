@@ -24,6 +24,7 @@ echo
 echo "========================================"
 echo "Host updating packages"
 echo "----------------------------------------"
+sudo add-apt-repository ppa:deadsnakes/ppa
 sudo apt-get update
 echo "----------------------------------------"
 
@@ -41,7 +42,7 @@ sudo apt-get install -y \
             m4 \
             make \
             psmisc \
-            python3.7 \
+            python3.8 \
             wget
 echo "----------------------------------------"
 
