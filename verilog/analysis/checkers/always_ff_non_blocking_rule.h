@@ -16,6 +16,7 @@
 #define VERIBLE_VERILOG_ANALYSIS_CHECKERS_ALWAYS_FF_NON_BLOCKING_RULE_H_
 
 #include <set>
+#include <stack>
 #include <string>
 
 #include "common/analysis/lint_rule_status.h"
@@ -36,10 +37,17 @@ class AlwaysFFNonBlockingRule : public verible::SyntaxTreeLintRule {
   // helper flag or markdown depending on the parameter type.
   static std::string GetDescription(DescriptionType);
 
+  absl::Status Configure(const absl::string_view configuration) override;
   void HandleSymbol(const verible::Symbol& symbol,
                     const verible::SyntaxTreeContext& context) override;
 
   verible::LintRuleStatus Report() const override;
+
+ private:
+  // Detects entering and leaving relevant code inside always_ff
+  bool InsideBlock(const verible::Symbol& symbol, const int depth);
+  // Processes local declarations
+  bool LocalDeclaration(const verible::Symbol& symbol);
 
  private:
   // Link to style guide rule.
@@ -48,7 +56,28 @@ class AlwaysFFNonBlockingRule : public verible::SyntaxTreeLintRule {
   // Diagnostic message.
   static const char kMessage[];
 
+  // Collected violations.
   std::set<verible::LintViolation> violations_;
+
+  //- Configuration ---------------------
+  bool catch_modifying_assignments_ = false;
+  bool waive_for_locals_ = false;
+
+  //- Processing State ------------------
+  // Inside an always_ff block
+  int inside_ = 0;
+
+  // Stack of inner begin-end scopes
+  struct Scope {
+    int syntax_tree_depth;
+    size_t inherited_local_count;
+  };
+  std::stack<Scope, std::vector<Scope>> scopes_{
+      {{-1, 0}}  // bottom element -> the stack is never empty
+  };
+
+  // In-order stack of local variable names
+  std::vector<absl::string_view> locals_;
 };
 
 }  // namespace analysis
