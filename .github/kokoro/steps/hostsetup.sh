@@ -41,7 +41,7 @@ sudo apt-get install -y \
             m4 \
             make \
             psmisc \
-            python3.8 \
+            python3.7 \
             wget
 echo "----------------------------------------"
 
