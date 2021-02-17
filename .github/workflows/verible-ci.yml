@@ -14,8 +14,8 @@ jobs:
 
   VerifyFormatting:
     runs-on: ubuntu-20.04
-
     steps:
+
     - name: Checkout code
       uses: actions/checkout@v2
       with:
@@ -43,6 +43,7 @@ jobs:
       MODE: ${{ matrix.mode }}
     name: Check · ${{ matrix.mode }}
     steps:
+
     - name: Checkout code
       uses: actions/checkout@v2
       with:
@@ -83,8 +84,8 @@ jobs:
 
   Kythe:
     runs-on: ubuntu-20.04
-
     steps:
+
     - name: Checkout code
       uses: actions/checkout@v2
       with:
@@ -117,20 +118,23 @@ jobs:
         source ./.github/settings.sh
         ./.github/workflows/run-kythe.sh
 
-    - name: Upload Kythe output
+    - name: 📤 Upload Kythe output
       uses: actions/upload-artifact@v2
       with:
-        name: verible-kythe-index
         path: kythe_output/*.kzip
 
 
   Matrix:
     runs-on: ubuntu-latest
+    name: Generate Build matrix
     outputs:
       matrix: ${{ steps.generate.outputs.matrix }}
     steps:
+
     - uses: actions/checkout@v2
+
     - id: generate
+      name: Run 'generate_matrix.sh'
       run: ./.github/workflows/generate_matrix.sh
 
 
@@ -178,7 +182,7 @@ jobs:
     - name: 📥 Download artifacts
       uses: actions/download-artifact@v2
 
-    - name: After success
+    - name: Generate and apply TAG
       run: |
         git config --local user.name "$BOT_USER"
         git config --local user.email "$BOT_EMAIL"
@@ -191,7 +195,7 @@ jobs:
 
         ls -lah artifact
 
-    - name: Deployment
+    - name: Deploy release and assets
       if: github.ref == 'refs/heads/master' && github.event_name != 'pull_request'
       uses: svenstaro/upload-release-action@v2
       with:
