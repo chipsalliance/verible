@@ -47,6 +47,7 @@ fi
 for UBUNTU_VERSION in xenial bionic focal groovy; do
     # Install basic tools
     # --------------------------------------------------------------
+    mkdir -p ubuntu-${UBUNTU_VERSION}
     sed "s#ubuntu:VERSION#ubuntu:${UBUNTU_VERSION}#g" $(dirname "$0")/ubuntu.dockerfile > ubuntu-${UBUNTU_VERSION}/Dockerfile
 
     # Install compiler
@@ -106,6 +107,7 @@ done
 for CENTOS_VERSION in 7 8; do
     # Install basic tools
     # --------------------------------------------------------------
+    mkdir -p centos-${CENTOS_VERSION}
     sed "s#centos:VERSION#centos:${CENTOS_VERSION}#g" $(dirname "$0")/centos.dockerfile > centos-${CENTOS_VERSION}/Dockerfile
 
     # Install compiler

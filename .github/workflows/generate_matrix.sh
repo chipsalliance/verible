@@ -16,9 +16,9 @@
 set -e
 
 matrix='['
-for item in releasing/*/; do
+for item in $(cat $(dirname "$0")/../../releasing/supported_bases.txt); do
   _name="$(basename $item)"
-  matrix+="{\"os\": \"$(echo "$_name" | cut -d- -f1)\", \"ver\": \"$(echo "$_name" | cut -d- -f2)\"},"
+  matrix+="{\"os\": \"$(echo "$_name" | cut -d: -f1)\", \"ver\": \"$(echo "$_name" | cut -d: -f2)\"},"
 done
 matrix+=']'
 
