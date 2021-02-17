@@ -4,6 +4,10 @@ on:
   push:
   pull_request:
 
+env:
+  BOT_USER: "Deployment Bot"
+  BOT_EMAIL: "verible-dev@googlegroups.com"
+
 jobs:
 
 
@@ -52,13 +56,18 @@ jobs:
         key: bazel-${{ matrix.mode }}
 
     - name: Install Dependencies
-      run: ./.github/workflows/install.sh
+      run: |
+        set -x
+        source ./.github/settings.sh
+        ./.github/workflows/set-compiler.sh 9
+        ./.github/workflows/install-bazel.sh
 
     - name: ${{ matrix.env.mode }} Verible
       run: ./.github/workflows/script.sh
 
-    - name: After success
-      run: ./.github/workflows/success.sh
+    - name: Set up things for GitHub Pages deployment
+      if: matrix.mode == 'compile'
+      run: ./.github/workflows/github-pages-setup.sh
 
     - name: Deployment
       if: github.ref == 'refs/heads/master' && github.event_name != 'pull_request' && matrix.mode == 'compile'
@@ -123,47 +132,70 @@ jobs:
       run: ./.github/workflows/generate_matrix.sh
 
 
-  Release:
+  Build:
     needs: Matrix
     runs-on: ubuntu-20.04
     strategy:
       fail-fast: false
       matrix:
         include: ${{ fromJson(needs.Matrix.outputs.matrix) }}
-    name: Release · ${{ matrix.os }} ${{ matrix.version }}
-    env:
-      MODE: bin
-      OS: ${{ matrix.os }}
-      OS_VERSION: ${{ matrix.version }}
+    name: Build · ${{ matrix.os }} ${{ matrix.version }}
     steps:
 
-    - name: Checkout code
-      uses: actions/checkout@v2
+    - uses: actions/checkout@v2
       with:
        # Download complete repository + tags
        fetch-depth: 0
 
-    - name: Before Install
-      run: ./.github/workflows/install.sh
+    - run: docker pull ${{ matrix.os }}:${{ matrix.version }}
 
     - name: Main script
-      run: ./.github/workflows/script.sh
+      run: |
+        set -x
+        source ./.github/settings.sh
+        cd releasing
+        ./docker-run.sh ${{ matrix.os }}-${{ matrix.version }}
 
-    - name: Upload binary
+    - name: 📤 Upload artifact
       uses: actions/upload-artifact@v2
       with:
         name: verible-binary-${{ matrix.OS }}-${{ matrix.OS_VERSION }}
-        path: /tmp/releases/verible-*.tar.gz
+        path: releasing/out/verible-*.tar.gz
+
+
+  Release:
+    if: github.ref == 'refs/heads/master' && github.event_name != 'pull_request'
+    needs: [ Check, Build ]
+    runs-on: ubuntu-20.04
+    name: 📦 Release
+    steps:
+
+    - name: 📥 Download artifacts
+      uses: actions/download-artifact@v2
+
+    - uses: actions/checkout@v2
+      with:
+       # Download complete repository + tags
+       fetch-depth: 0
 
     - name: After success
-      run: ./.github/workflows/success.sh
+      run: |
+        git config --local user.name "$BOT_USER"
+        git config --local user.email "$BOT_EMAIL"
+
+        # Create a tag of form v0.0-183-gdf2b162-20191112132344
+        TAG="${TAG:-$(git describe --match=v*)}"
+
+        git tag "$TAG" || true
+        echo "TAG=$TAG" >> $GITHUB_ENV
+
+        ls -l artifact
 
     - name: Deployment
-      if: github.ref == 'refs/heads/master' && github.event_name != 'pull_request'
       uses: svenstaro/upload-release-action@v2
       with:
         repo_token: ${{ secrets.GITHUB_TOKEN }}
-        file: /tmp/releases/verible-*.tar.gz
+        file: artifact/verible-*.tar.gz
         tag: ${{ env.TAG }}
         overwrite: true
         file_glob: true
