@@ -31,11 +31,6 @@ TARGET_OS=`echo $TARGET | cut -d- -f1`
 
 export TAG=${TAG:-$(git describe --match=v*)}
 
-REPO_SLUG=${GITHUB_REPOSITORY_SLUG:-google/verible}
-GIT_DATE=${GIT_DATE:-$(git show -s --format=%ci)}
-GIT_VERSION=${GIT_VERSION:-$(git describe --match=v*)}
-GIT_HASH=${GIT_HASH:-$(git rev-parse HEAD)}
-
 if [ -z "${BAZEL_VERSION}" ]; then
   echo "Make sure that \$BAZEL_VERSION ($BAZEL_VERSION) is set."
   echo " (try 'source ../.github/settings.sh')"
@@ -222,6 +217,11 @@ fi
 
 # ==================================================================
 
+REPO_SLUG=${GITHUB_REPOSITORY_SLUG:-google/verible}
+GIT_DATE=${GIT_DATE:-$(git show -s --format=%ci)}
+GIT_VERSION=${GIT_VERSION:-$(git describe --match=v*)}
+GIT_HASH=${GIT_HASH:-$(git rev-parse HEAD)}
+
 # Install gflags2man and build Verible
 # --------------------------------------------------------------
 cat >> ${TARGET_OS}-${TARGET_VERSION}/Dockerfile <<EOF
@@ -250,39 +250,32 @@ RUN bazel --version
 
 ADD verible-$GIT_VERSION.tar.gz /src/verible
 WORKDIR /src/verible/verible-$GIT_VERSION
+
 RUN bazel build --workspace_status_command=bazel/build-version.sh $BAZEL_OPTS //...
-
-RUN echo $REPO_SLUG
-RUN echo $GIT_DATE
-RUN echo $GIT_HASH
-RUN echo $GIT_VERSION
-
-RUN ./.github/workflows/github-pages-setup.sh
-RUN ./.github/workflows/github-releases-setup.sh /out/
 EOF
 
 (cd .. ; git archive --prefix verible-$GIT_VERSION/ --output releasing/$TARGET/verible-$GIT_VERSION.tar.gz HEAD)
 
 IMAGE="verible:$TARGET-$TAG"
-echo
-echo "Docker file for $IMAGE"
-echo "--------------------------------"
-cat $TARGET/Dockerfile
-echo "--------------------------------"
-echo
-echo "Docker build for $IMAGE"
-echo "--------------------------------"
-docker build --tag $IMAGE $TARGET
-echo "--------------------------------"
-echo
-echo "Build extraction for $IMAGE"
-echo "--------------------------------"
-DOCKER_ID=$(docker create $IMAGE)
-docker cp $DOCKER_ID:/out - | tar xvf -
-echo "--------------------------------"
-echo
-echo "Cleanup for $IMAGE"
-echo "--------------------------------"
-docker rm -v $DOCKER_ID
-echo "--------------------------------"
 
+echo "::group::Docker file for $IMAGE"
+cat $TARGET/Dockerfile
+echo '::endgroup::'
+
+echo "::group::Docker build $IMAGE"
+docker build --tag $IMAGE $TARGET
+echo '::endgroup::'
+
+echo "::group::Build in container"
+mkdir -p out
+docker run --rm \
+  -e BAZEL_OPTS="${BAZEL_OPTS}" \
+  -e BAZEL_CXXOPTS="${BAZEL_CXXOPTS}" \
+  -e REPO_SLUG="${GITHUB_REPOSITORY_SLUG:-google/verible}" \
+  -e GIT_VERSION="${GIT_VERSION:-$(git describe --match=v*)}" \
+  -e GIT_DATE="${GIT_DATE:-$(git show -s --format=%ci)}" \
+  -e GIT_HASH="${GIT_HASH:-$(git rev-parse HEAD)}" \
+  -v $(pwd)/out:/out \
+  $IMAGE \
+  ./releasing/build.sh
+echo '::endgroup::'
