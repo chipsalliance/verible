@@ -6,4 +6,5 @@ RUN yum install -y \
     git            \
     redhat-lsb     \
     tar            \
-    wget
+    wget           \
+    python3

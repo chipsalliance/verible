@@ -61,6 +61,7 @@ jobs:
         source ./.github/settings.sh
         ./.github/workflows/set-compiler.sh 9
         ./.github/workflows/install-bazel.sh
+        ./.github/workflows/install-python.sh
 
     - name: ${{ matrix.env.mode }} Verible
       run: ./.github/workflows/script.sh
