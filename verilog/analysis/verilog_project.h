@@ -35,8 +35,10 @@ class VerilogProject;
 class VerilogSourceFile {
  public:
   VerilogSourceFile(absl::string_view referenced_path,
-                    absl::string_view resolved_path)
-      : referenced_path_(referenced_path), resolved_path_(resolved_path) {}
+                    absl::string_view resolved_path, absl::string_view corpus)
+      : referenced_path_(referenced_path),
+        resolved_path_(resolved_path),
+        corpus_(corpus) {}
 
   VerilogSourceFile(const VerilogSourceFile&) = delete;
   VerilogSourceFile& operator=(const VerilogSourceFile&) = delete;
@@ -66,6 +68,10 @@ class VerilogSourceFile {
 
   // Returns the name used to reference the file.
   absl::string_view ReferencedPath() const { return referenced_path_; }
+
+  // Returns the corpus to which this file belongs (e.g.,
+  // github.com/google/verible).
+  absl::string_view Corpus() const { return corpus_; }
 
   // Returns a (possibly more qualified) path to the file.
   absl::string_view ResolvedPath() const { return resolved_path_; }
@@ -124,6 +130,9 @@ class VerilogSourceFile {
   // such so this class can have a default move constructor.
   std::string resolved_path_;
 
+  // The corpus to which this file belongs to (e.g., github.com/google/verible).
+  absl::string_view corpus_;
+
   // State of this file.
   State state_ = State::kInitialized;
 
@@ -144,8 +153,10 @@ class InMemoryVerilogSourceFile : public VerilogSourceFile {
  public:
   // filename can be fake, it is not used to open any file.
   InMemoryVerilogSourceFile(absl::string_view filename,
-                            absl::string_view contents)
-      : VerilogSourceFile(filename, filename), contents_for_open_(contents) {}
+                            absl::string_view contents,
+                            absl::string_view corpus = "")
+      : VerilogSourceFile(filename, filename, corpus),
+        contents_for_open_(contents) {}
 
   // Load text into analyzer structure without actually opening a file.
   absl::Status Open() override;
@@ -171,8 +182,11 @@ class VerilogProject {
 
  public:
   VerilogProject(absl::string_view root,
-                 const std::vector<std::string>& include_paths)
-      : translation_unit_root_(root), include_paths_(include_paths) {}
+                 const std::vector<std::string>& include_paths,
+                 absl::string_view corpus = "")
+      : translation_unit_root_(root),
+        include_paths_(include_paths),
+        corpus_(corpus) {}
 
   VerilogProject(const VerilogProject&) = delete;
   VerilogProject(VerilogProject&&) = delete;
@@ -188,6 +202,9 @@ class VerilogProject {
   absl::string_view TranslationUnitRoot() const {
     return translation_unit_root_;
   }
+
+  // Returns the corpus to which this project belongs to.
+  absl::string_view Corpus() const { return corpus_; }
 
   // Opens a single top-level file, known as a "translation unit".
   // This uses translation_unit_root_ directory to calculate the file's path.
@@ -227,7 +244,7 @@ class VerilogProject {
  private:
   absl::StatusOr<VerilogSourceFile*> OpenFile(
       absl::string_view referenced_filename,
-      absl::string_view resolved_filename);
+      absl::string_view resolved_filename, absl::string_view corpus);
 
   // Error status factory, when include file is not found.
   absl::Status IncludeFileNotFoundError(
@@ -242,6 +259,10 @@ class VerilogProject {
   // The sequence of directories from which to search for `included files.
   // These can be absolute, or relative to the process's working directory.
   const std::vector<std::string> include_paths_;
+
+  // The corpus to which this project belongs (e.g.,
+  // 'github.com/google/verible').
+  const std::string corpus_;
 
   // Set of opened files, keyed by referenced (not resolved) filename.
   file_set_type files_;

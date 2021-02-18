@@ -24,6 +24,8 @@
 namespace verilog {
 namespace kythe {
 
+inline constexpr absl::string_view kDefaultKytheLanguage = "verilog";
+
 // Unique identifier for Kythe facts.
 class Signature {
  public:
@@ -67,38 +69,25 @@ class Signature {
 
 // Node vector name for kythe facts.
 struct VName {
-  explicit VName(absl::string_view path = "",
-                 const Signature& signature = Signature(),
-                 absl::string_view root = "",
-                 absl::string_view language = "verilog",
-                 // TODO(minatoma): change the corpus if needed.
-                 absl::string_view corpus = "")
-      : signature(signature),
-        path(path),
-        language(language),
-        corpus(corpus),
-        root(root) {}
-
   bool operator==(const VName& other) const;
   bool operator<(const VName& other) const;
 
   std::ostream& FormatJSON(std::ostream&, bool debug,
                            int indentation = 0) const;
+  // Path for the file the VName is extracted from.
+  absl::string_view path;
+
+  // A directory path or project identifier inside the Corpus.
+  absl::string_view root;
 
   // Unique identifier for this VName.
   Signature signature;
 
-  // Path for the file the VName is extracted from.
-  absl::string_view path;
-
-  // The language this VName belongs to.
-  absl::string_view language;
-
   // The corpus of source code this VName belongs to.
   absl::string_view corpus;
 
-  // A directory path or project identifier inside the Corpus.
-  absl::string_view root;
+  // The language this VName belongs to.
+  absl::string_view language = kDefaultKytheLanguage;
 };
 
 std::ostream& operator<<(std::ostream&, const VName&);
