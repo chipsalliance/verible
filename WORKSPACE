@@ -176,3 +176,23 @@ kythe_rule_repositories()
 load("@io_kythe//:external.bzl", "kythe_dependencies")
 
 kythe_dependencies()
+
+http_archive(
+    name = "jsoncpp_git",
+    sha256 = "77a402fb577b2e0e5d0bdc1cf9c65278915cdb25171e3452c68b6da8a561f8f0",
+    build_file = "//bazel:jsoncpp.BUILD",
+    strip_prefix = "jsoncpp-1.9.2",
+    urls = [
+        "https://github.com/open-source-parsers/jsoncpp/archive/1.9.2.tar.gz",
+    ],
+)
+
+http_archive(
+    name = "python_anytree",
+    sha256 = "79ee0cc74456950003287b0b5c7b76b7d09435563a31d9e553da484325043e1f",
+    build_file = "//bazel:python_anytree.BUILD",
+    strip_prefix = "anytree-2.8.0",
+    urls = [
+        "https://github.com/c0fec0de/anytree/archive/2.8.0.tar.gz",
+    ],
+)

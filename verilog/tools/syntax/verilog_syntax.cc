@@ -36,15 +36,20 @@
 #include "common/text/parser_verifier.h"
 #include "common/text/text_structure.h"
 #include "common/text/token_info.h"
+#include "common/text/token_info_json.h"
 #include "common/util/bijective_map.h"
 #include "common/util/enum_flags.h"
 #include "common/util/file_util.h"
 #include "common/util/init_command_line.h"
 #include "common/util/logging.h"  // for operator<<, LOG, LogMessage, etc
+#include "json/json.h"
+#include "verilog/CST/verilog_tree_json.h"
 #include "verilog/CST/verilog_tree_print.h"
+#include "verilog/analysis/json_diagnostics.h"
 #include "verilog/analysis/verilog_analyzer.h"
 #include "verilog/analysis/verilog_excerpt_parse.h"
 #include "verilog/parser/verilog_parser.h"
+#include "verilog/parser/verilog_token.h"
 
 // Controls parser selection behavior
 enum class LanguageMode {
@@ -84,6 +89,9 @@ ABSL_FLAG(
     "  sv: strict SystemVerilog-2017, with explicit alternate parsing modes\n"
     "  lib: Verilog library map language (LRM Ch. 33)\n");
 
+ABSL_FLAG(
+    bool, export_json, false,
+    "Uses JSON for output. Intended to be used as an input for other tools.");
 ABSL_FLAG(bool, printtree, false, "Whether or not to print the tree");
 ABSL_FLAG(bool, printtokens, false, "Prints all lexed and filtered tokens");
 ABSL_FLAG(bool, printrawtokens, false,
@@ -135,43 +143,82 @@ static void VerifyParseTree(const TextStructureView& text_structure) {
   }
 }
 
-static int AnalyzeOneFile(absl::string_view content,
-                          absl::string_view filename) {
+static int AnalyzeOneFile(absl::string_view content, absl::string_view filename,
+                          Json::Value& json) {
   int exit_status = 0;
   const auto analyzer = ParseWithLanguageMode(content, filename);
   const auto lex_status = ABSL_DIE_IF_NULL(analyzer)->LexStatus();
   const auto parse_status = analyzer->ParseStatus();
+
   if (!lex_status.ok() || !parse_status.ok()) {
-    const std::vector<std::string> syntax_error_messages(
-        analyzer->LinterTokenErrorMessages());
     const int error_limit = absl::GetFlag(FLAGS_error_limit);
     int error_count = 0;
-    for (const auto& message : syntax_error_messages) {
-      std::cout << message << std::endl;
-      ++error_count;
-      if (error_limit != 0 && error_count >= error_limit) break;
+    if (!absl::GetFlag(FLAGS_export_json)) {
+      const std::vector<std::string> syntax_error_messages(
+          analyzer->LinterTokenErrorMessages());
+      for (const auto& message : syntax_error_messages) {
+        std::cout << message << std::endl;
+        ++error_count;
+        if (error_limit != 0 && error_count >= error_limit) break;
+      }
+    } else {
+      Json::Value& errors = json["errors"] =
+          verilog::GetLinterTokenErrorsAsJson(analyzer.get());
+      if (error_limit > 0 && errors.size() > unsigned(error_limit)) {
+        errors.resize(error_limit);
+      }
     }
     exit_status = 1;
   }
   const bool parse_ok = parse_status.ok();
 
-  const verible::TokenInfo::Context context(
-      analyzer->Data().Contents(), [](std::ostream& stream, int e) {
-        stream << verilog::verilog_symbol_name(e);
-      });
+  std::function<void(std::ostream&, int)> token_translator;
+  if (!absl::GetFlag(FLAGS_export_json)) {
+    token_translator = [](std::ostream& stream, int e) {
+      stream << verilog::verilog_symbol_name(e);
+    };
+  } else {
+    token_translator = [](std::ostream& stream, int e) {
+      stream << verilog::TokenTypeToString(static_cast<verilog_tokentype>(e));
+    };
+  }
+  const verible::TokenInfo::Context context(analyzer->Data().Contents(),
+                                            token_translator);
   // Check for printtokens flag, print all filtered tokens if on.
   if (absl::GetFlag(FLAGS_printtokens)) {
-    std::cout << std::endl << "Lexed and filtered tokens:" << std::endl;
-    for (const auto& t : analyzer->Data().GetTokenStreamView()) {
-      t->ToStream(std::cout, context) << std::endl;
+    if (!absl::GetFlag(FLAGS_export_json)) {
+      std::cout << std::endl << "Lexed and filtered tokens:" << std::endl;
+      for (const auto& t : analyzer->Data().GetTokenStreamView()) {
+        t->ToStream(std::cout, context) << std::endl;
+      }
+    } else {
+      Json::Value& tokens = json["tokens"] = Json::arrayValue;
+      const auto& token_stream = analyzer->Data().GetTokenStreamView();
+      tokens.resize(token_stream.size());
+      Json::ArrayIndex token_index = 0;
+      for (const auto& t : token_stream) {
+        tokens[token_index] = verible::ToJson(*t, context);
+        ++token_index;
+      }
     }
   }
 
   // Check for printrawtokens flag, print all tokens if on.
   if (absl::GetFlag(FLAGS_printrawtokens)) {
-    std::cout << std::endl << "All lexed tokens:" << std::endl;
-    for (const auto& t : analyzer->Data().TokenStream()) {
-      t.ToStream(std::cout, context) << std::endl;
+    if (!absl::GetFlag(FLAGS_export_json)) {
+      std::cout << std::endl << "All lexed tokens:" << std::endl;
+      for (const auto& t : analyzer->Data().TokenStream()) {
+        t.ToStream(std::cout, context) << std::endl;
+      }
+    } else {
+      Json::Value& tokens = json["rawtokens"] = Json::arrayValue;
+      const auto& token_stream = analyzer->Data().TokenStream();
+      tokens.resize(token_stream.size());
+      Json::ArrayIndex token_index = 0;
+      for (const auto& t : token_stream) {
+        tokens[token_index] = verible::ToJson(t, context);
+        ++token_index;
+      }
     }
   }
 
@@ -180,12 +227,17 @@ static int AnalyzeOneFile(absl::string_view content,
 
   // check for printtree flag, and print tree if on
   if (absl::GetFlag(FLAGS_printtree) && syntax_tree != nullptr) {
-    std::cout << std::endl
-              << "Parse Tree"
-              << (!parse_ok ? " (incomplete due to syntax errors):" : ":")
-              << std::endl;
-    verilog::PrettyPrintVerilogTree(*syntax_tree, analyzer->Data().Contents(),
-                                    &std::cout);
+    if (!absl::GetFlag(FLAGS_export_json)) {
+      std::cout << std::endl
+                << "Parse Tree"
+                << (!parse_ok ? " (incomplete due to syntax errors):" : ":")
+                << std::endl;
+      verilog::PrettyPrintVerilogTree(*syntax_tree, analyzer->Data().Contents(),
+                                      &std::cout);
+    } else {
+      json["tree"] = verilog::ConvertVerilogTreeToJson(
+          *syntax_tree, analyzer->Data().Contents());
+    }
   }
 
   // Check for verifytree, verify tree and print unmatched if on.
@@ -207,6 +259,8 @@ int main(int argc, char** argv) {
       absl::StrCat("usage: ", argv[0], " [options] <file> [<file>...]");
   const auto args = verible::InitCommandLine(usage, &argc, &argv);
 
+  Json::Value json;
+
   int exit_status = 0;
   // All positional arguments are file names.  Exclude program name.
   for (const auto filename :
@@ -217,8 +271,22 @@ int main(int argc, char** argv) {
       continue;
     }
 
-    int file_status = AnalyzeOneFile(content, filename);
+    Json::Value file_json;
+    int file_status = AnalyzeOneFile(content, filename, file_json);
     exit_status = std::max(exit_status, file_status);
+    if (absl::GetFlag(FLAGS_export_json)) {
+      json[filename] = std::move(file_json);
+    }
   }
+
+  if (absl::GetFlag(FLAGS_export_json)) {
+    Json::StreamWriterBuilder builder;
+    // Disable extra space before ':'
+    builder["enableYAMLCompatibility"] = true;
+    std::unique_ptr<Json::StreamWriter> writer(builder.newStreamWriter());
+    writer->write(json, &std::cout);
+    std::cout << std::endl;
+  }
+
   return exit_status;
 }

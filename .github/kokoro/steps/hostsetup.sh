@@ -44,6 +44,8 @@ sudo apt-get install -y \
             psmisc \
             python3.8 \
             wget
+
+sudo ln -sf /usr/bin/python3.8 /usr/bin/python3
 echo "----------------------------------------"
 
 echo

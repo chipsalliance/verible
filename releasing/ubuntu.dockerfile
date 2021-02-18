@@ -13,4 +13,5 @@ RUN apt-get install -y         \
     gnupg                      \
     lsb-release                \
     software-properties-common \
-    wget
+    wget                       \
+    python3

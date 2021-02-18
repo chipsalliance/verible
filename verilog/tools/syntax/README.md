@@ -18,9 +18,11 @@ usage: verible-verilog-syntax [options] <file(s)...>
   Flags from verilog/tools/syntax/verilog_syntax.cc:
     --error_limit (Limit the number of syntax errors reported. (0: unlimited));
       default: 0;
+    --export_json (Uses JSON for output. Intended to be used as an input for
+      other tools.); default: false;
     --lang (Selects language variant to parse. Options:
       auto: SystemVerilog-2017, but may auto-detect alternate parsing modes
-      sv: strict SystemVerilog-2017
+      sv: strict SystemVerilog-2017, with explicit alternate parsing modes
       lib: Verilog library map language (LRM Ch. 33)
       ); default: auto;
     --printrawtokens (Prints all lexed tokens, including filtered ones.);
@@ -180,6 +182,9 @@ nodes are tagged with
 encapsulates a token and is shown with its corresponding byte-offsets in the
 original text (as `@left-right`). Null nodes are not shown.
 
+When `--export_json` flag is set, concrete syntax tree is printed as JSON
+object. See [Parser tree object](#Parser-tree-object) below for details.
+
 The exact structure of the SystemVerilog CST is fragile, and should not be
 considered stable; at any time, node enumerations can be created or removed, and
 subtree structures can be re-shaped. In the above example, `kModuleHeader` is an
@@ -187,6 +192,73 @@ implementation detail of a module definition's composition, and doesn't map
 directly to a named grammar construct in the [SV-LRM]. The
 [`verilog/CST`](../../CST) library provides functions that abstract away
 internal structure.
+
+## JSON output description
+
+JSON root is an object which maps each input file name to an object containing
+parsing result for that file.
+
+### Parsing result object
+
+| Key         | Type   | Description                                              |
+|-------------|--------|----------------------------------------------------------|
+| `tokens`    | array  | List of [Token](#Token-object) objects, with whitespace tokens filtered out. Present only when `--printtokens` flag is specified. |
+| `rawtokens` | array  | List of [Token](#Token-object) objects. Present only when `--printrawtokens` flag is specified. |
+| `tree`      | object | [Parser tree](#Parser-tree). Present only when `--printtree` flag is specified and parsing errors didn't prevent tree creation. |
+| `errors`    | array  | List of [Error](#Error-object) objects. Present only when there were any errors. |
+
+#### Parser tree
+
+The tree consist of [Node](#Node-object) and [Token](#Token-object) objects. The tree root is a Node object.
+
+#### Node object
+
+| Key        | Type   | Description                                            |
+|------------|--------|--------------------------------------------------------|
+| `tag`      | string | Node tag. See `NodeEnum` in [verilog\_nonterminals.h](../../CST/verilog_nonterminals.h) for available values. |
+| `children` | array  | List of children ([Node](#Node-object) and [Token](#Token-object), or `null`). |
+
+#### Token object
+
+| Key            | Type   | Description                                        |
+|----------------|--------|----------------------------------------------------|
+| `start`, `end` | int    | Byte offset of token's first character and a character just past the symbol in source text. |
+| `tag`          | string | Token tag. See [Possible token tag values](#possible-token-tag-values) below for details. |
+
+To get token text, read source file from byte `start` (included) to byte `end` (excluded). Example in Python:
+
+```python
+start = token["start"]
+end = token["end"]
+
+# Read source file contents as bytes
+with open(source_file_path, "rb") as f:
+    source = f.read()
+
+# Get token text from source file contents
+text = source[start:end].decode("utf-8")
+```
+
+##### Possible token `tag` values
+
+Token tag enumerations come from the [parser generator](../../parser/verilog.y), with a few overrides specified in [`verilog_token.cc`](../../parser/verilog_token.cc). There are 3 types of values:
+
+* Named tokens (e.g. `SymbolIdentifier`, `TK_DecNumber`), which come from `%token TOKEN_TAG` lines.
+* String literals (e.g. `module`, `==`), which come from `%token SOME_ID "token_tag"` lines.
+* Single characters (e.g. `;`, `=`). They can be found using `'.'` regular expression.
+
+#### Error object
+
+| Key              | Type   | Description                                      |
+|------------------|--------|--------------------------------------------------|
+| `line`, `column` | int    | Line and column in source text. 0-based.         |
+| `text`           | string | Character sequence which caused the error.       |
+| `phase`          | string | Phase during which the error occured. One of: `lex`, `parse`, `preprocess`, `unknown`. |
+| `message`        | string | (optional) Error explanation.                    |
+
+### Python examples and helper code
+
+[`export_json_examples`](./export_json_examples) directory contains Python wrappers for `verible-verilog-syntax --export_json` ([`verible_verilog_syntax.py`](./export_json_examples/verible_verilog_syntax.py) file) and some examples.
 
 <!-- reference links -->
 

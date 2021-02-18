@@ -31,6 +31,17 @@ cc_library(
 )
 
 cc_library(
+    name = "token_info_json",
+    srcs = ["token_info_json.cc"],
+    hdrs = ["token_info_json.h"],
+    deps = [
+        ":token_info",
+        "@jsoncpp_git//:jsoncpp",
+    ],
+)
+
+
+cc_library(
     name = "token_info_test_util",
     testonly = 1,
     srcs = ["token_info_test_util.cc"],
@@ -346,6 +357,19 @@ cc_test(
         "@com_google_absl//absl/base:core_headers",
         "@com_google_absl//absl/strings",
         "@com_google_googletest//:gtest_main",
+    ],
+)
+
+cc_test(
+    name = "token_info_json_test",
+    srcs = ["token_info_json_test.cc"],
+    deps = [
+        ":constants",
+        ":token_info",
+        ":token_info_json",
+        "@com_google_absl//absl/strings",
+        "@com_google_googletest//:gtest_main",
+        "@jsoncpp_git//:jsoncpp",
     ],
 )
 

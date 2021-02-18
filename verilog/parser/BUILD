@@ -225,3 +225,14 @@ cc_test(
         "@com_google_googletest//:gtest_main",
     ],
 )
+
+cc_library(
+    name = "verilog_token",
+    srcs = ["verilog_token.cc"],
+    hdrs = ["verilog_token.h"],
+    deps = [
+        ":verilog_parser",
+        ":verilog_token_enum",
+        "@com_google_absl//absl/strings",
+    ],
+)

@@ -62,6 +62,19 @@ cc_test(
 )
 
 cc_library(
+    name = "json_diagnostics",
+    srcs = ["json_diagnostics.cc"],
+    hdrs = ["json_diagnostics.h"],
+    deps = [
+        ":verilog_analyzer",
+        "//common/analysis:file_analyzer",
+        "//common/strings:line_column_map",
+        "@com_google_absl//absl/strings",
+        "@jsoncpp_git//:jsoncpp",
+    ],
+)
+
+cc_library(
     name = "lint_rule_registry",
     srcs = ["lint_rule_registry.cc"],
     hdrs = ["lint_rule_registry.h"],
@@ -86,6 +99,20 @@ cc_test(
         ":descriptions",
         "@com_google_absl//absl/strings",
         "@com_google_googletest//:gtest_main",
+    ],
+)
+
+cc_test(
+    name = "json_diagnostics_test",
+    srcs = ["json_diagnostics_test.cc"],
+    deps = [
+        ":json_diagnostics",
+        ":verilog_analyzer",
+        "//common/util:logging",
+        "@com_google_absl//absl/memory",
+        "@com_google_absl//absl/strings",
+        "@com_google_googletest//:gtest_main",
+        "@jsoncpp_git//:jsoncpp",
     ],
 )
 
