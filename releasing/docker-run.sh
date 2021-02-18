@@ -55,17 +55,17 @@ fi
 # ==================================================================
 # Generate the Docker files for ubuntu versions
 # ==================================================================
-for UBUNTU_VERSION in xenial bionic focal groovy; do
+if [ "$TARGET_OS" = "ubuntu" ]; then
     # Install basic tools
     # --------------------------------------------------------------
-    mkdir -p ubuntu-${UBUNTU_VERSION}
-    sed "s#ubuntu:VERSION#ubuntu:${UBUNTU_VERSION}#g" ubuntu.dockerfile > ubuntu-${UBUNTU_VERSION}/Dockerfile
+    mkdir -p ubuntu-${TARGET_VERSION}
+    sed "s#ubuntu:VERSION#ubuntu:${TARGET_VERSION}#g" ubuntu.dockerfile > ubuntu-${TARGET_VERSION}/Dockerfile
 
     # Install compiler
     # --------------------------------------------------------------
-    case $UBUNTU_VERSION in
+    case $TARGET_VERSION in
         xenial)
-            cat >> ubuntu-${UBUNTU_VERSION}/Dockerfile <<EOF
+            cat >> ubuntu-${TARGET_VERSION}/Dockerfile <<EOF
 # Get a newer GCC and flex version
 RUN add-apt-repository ppa:ubuntu-toolchain-r/test; apt-get update
 RUN apt-get install -y  \\
@@ -84,7 +84,7 @@ ENV BAZEL_LINKLIBS "-l%:libstdc++.a"
 EOF
             ;;
         *)
-            cat >> ubuntu-${UBUNTU_VERSION}/Dockerfile <<EOF
+            cat >> ubuntu-${TARGET_VERSION}/Dockerfile <<EOF
 
 # Install compiler
 RUN apt-get install -y  \\
@@ -100,7 +100,7 @@ EOF
 
     # Install Bazel
     # --------------------------------------------------------------
-    cat >> ubuntu-${UBUNTU_VERSION}/Dockerfile <<EOF
+    cat >> ubuntu-${TARGET_VERSION}/Dockerfile <<EOF
 
 # Install bazel
 RUN \\
@@ -109,23 +109,22 @@ RUN \\
     apt-get -f install -y
 
 EOF
-
-done
+fi
 
 # ==================================================================
 # Generate the Docker files for centos versions
 # ==================================================================
-for CENTOS_VERSION in 7 8; do
+if [ "$TARGET_OS" = "centos" ]; then
     # Install basic tools
     # --------------------------------------------------------------
-    mkdir -p centos-${CENTOS_VERSION}
-    sed "s#centos:VERSION#centos:${CENTOS_VERSION}#g" centos.dockerfile > centos-${CENTOS_VERSION}/Dockerfile
+    mkdir -p centos-${TARGET_VERSION}
+    sed "s#centos:VERSION#centos:${TARGET_VERSION}#g" centos.dockerfile > centos-${TARGET_VERSION}/Dockerfile
 
     # Install compiler
     # --------------------------------------------------------------
-    case $CENTOS_VERSION in
+    case $TARGET_VERSION in
         6|7)
-            cat >> centos-${CENTOS_VERSION}/Dockerfile <<EOF
+            cat >> centos-${TARGET_VERSION}/Dockerfile <<EOF
 # Link libstdc++ statically so people don't have to install devtoolset-8
 # just to use verible.
 ENV BAZEL_LINKOPTS "-static-libstdc++:-lm -static-libstdc++:-lrt"
@@ -153,7 +152,7 @@ SHELL [ "scl", "enable", "devtoolset-8" ]
 EOF
             ;;
         8)
-            cat >> centos-${CENTOS_VERSION}/Dockerfile <<EOF
+            cat >> centos-${TARGET_VERSION}/Dockerfile <<EOF
 # Install C++ compiler
 RUN \\
     yum -y group install --nogpgcheck "Development Tools" || \\
@@ -166,14 +165,14 @@ RUN g++ --version
 EOF
             ;;
         *)
-            echo "Unknown Centos version ${CENTOS_VERSION} when installing compiler."
+            echo "Unknown Centos version ${TARGET_VERSION} when installing compiler."
             exit 1
             ;;
     esac
 
     # Install Bazel
     # --------------------------------------------------------------
-    cat >> centos-${CENTOS_VERSION}/Dockerfile <<EOF
+    cat >> centos-${TARGET_VERSION}/Dockerfile <<EOF
 
 # Install bazel
 RUN yum install -y --nogpgcheck \\
@@ -185,9 +184,9 @@ RUN java -version
 RUN javac -version
 EOF
 
-    case $CENTOS_VERSION in
+    case $TARGET_VERSION in
         6)
-            cat >> centos-${CENTOS_VERSION}/Dockerfile <<EOF
+            cat >> centos-${TARGET_VERSION}/Dockerfile <<EOF
 RUN yum install -y --nogpgcheck rh-python36
 SHELL [ "scl", "enable", "rh-python36", "devtoolset-8" ]
 
@@ -206,21 +205,21 @@ SHELL [ "scl", "enable", "devtoolset-8" ]
 EOF
             ;;
         7|8)
-            cat >> centos-${CENTOS_VERSION}/Dockerfile <<EOF
-ADD https://copr.fedorainfracloud.org/coprs/vbatts/bazel/repo/epel-${CENTOS_VERSION}/vbatts-bazel-epel-${CENTOS_VERSION}.repo /etc/yum.repos.d
+            cat >> centos-${TARGET_VERSION}/Dockerfile <<EOF
+ADD https://copr.fedorainfracloud.org/coprs/vbatts/bazel/repo/epel-${TARGET_VERSION}/vbatts-bazel-epel-${TARGET_VERSION}.repo /etc/yum.repos.d
 RUN yum install -y --nogpgcheck bazel3
 EOF
             ;;
         *)
-            echo "Unknown Centos version ${CENTOS_VERSION} when installing bazel"
+            echo "Unknown Centos version ${TARGET_VERSION} when installing bazel"
             exit 1
             ;;
     esac
-    cat >> centos-${CENTOS_VERSION}/Dockerfile <<EOF
+    cat >> centos-${TARGET_VERSION}/Dockerfile <<EOF
 RUN bazel --version
 EOF
+fi
 
-done
 # ==================================================================
 
 # Install gflags2man and build Verible
