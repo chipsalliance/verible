@@ -104,8 +104,11 @@ class KytheFactsExtractor {
     const VName& top() const { return *ABSL_DIE_IF_NULL(base_type::top()); }
   };
 
-  // Returns the path-resolved name of the current source file.
-  absl::string_view FileName() const;
+  // Returns the full path of the current source file.
+  absl::string_view FilePath() { return source_->ResolvedPath(); }
+
+  // Returns the corpus to which this file belongs;
+  absl::string_view Corpus() const { return source_->Corpus(); }
 
   // Returns the string_view that spans the source file's entire text.
   absl::string_view SourceText() const;
@@ -325,10 +328,6 @@ KytheIndexingData ExtractKytheFacts(const IndexingFactNode& file_list,
 
   VLOG(1) << "end of " << __FUNCTION__;
   return aggregated_indexing_facts;
-}
-
-absl::string_view KytheFactsExtractor::FileName() const {
-  return source_->ResolvedPath();
 }
 
 absl::string_view KytheFactsExtractor::SourceText() const {
@@ -668,7 +667,10 @@ void KytheFactsExtractor::Visit(const IndexingFactNode& node) {
 }
 
 VName KytheFactsExtractor::DeclareFile(const IndexingFactNode& file_fact_node) {
-  VName file_vname(FileName(), Signature(""), "", "");
+  VName file_vname = {.path = FilePath(),
+                      .root = "",
+                      .signature = Signature(""),
+                      .corpus = Corpus()};
   const auto& anchors(file_fact_node.Value().Anchors());
   CHECK_GE(anchors.size(), 2);
   const absl::string_view code_text =
@@ -679,7 +681,7 @@ VName KytheFactsExtractor::DeclareFile(const IndexingFactNode& file_fact_node) {
 
   // Update the signature of the file to be the global signature.
   // Used in scopes and makes signatures unique.
-  file_vname.signature = CreateGlobalSignature(FileName());
+  file_vname.signature = CreateGlobalSignature(FilePath());
   return file_vname;
 }
 
@@ -687,9 +689,11 @@ VName KytheFactsExtractor::DeclareModule(
     const IndexingFactNode& module_fact_node) {
   const auto& anchors = module_fact_node.Value().Anchors();
   const Anchor& module_name = anchors[0];
-
-  const VName module_vname(FileName(),
-                           CreateScopeRelativeSignature(module_name.Text()));
+  const VName module_vname = {
+      .path = FilePath(),
+      .root = "",
+      .signature = CreateScopeRelativeSignature(module_name.Text()),
+      .corpus = Corpus()};
   const VName module_name_anchor = CreateAnchor(module_name);
 
   CreateFact(module_vname, kFactNodeKind, kNodeRecord);
@@ -711,8 +715,11 @@ VName KytheFactsExtractor::DeclareProgram(
   const auto& anchors = program_fact_node.Value().Anchors();
   const Anchor& program_name = anchors[0];
 
-  const VName program_vname(FileName(),
-                            CreateScopeRelativeSignature(program_name.Text()));
+  const VName program_vname = {
+      .path = FilePath(),
+      .root = "",
+      .signature = CreateScopeRelativeSignature(program_name.Text()),
+      .corpus = Corpus()};
   const VName program_name_anchor = CreateAnchor(program_name);
 
   CreateFact(program_vname, kFactNodeKind, kNodeRecord);
@@ -733,8 +740,11 @@ VName KytheFactsExtractor::DeclareInterface(
   const auto& anchors = interface_fact_node.Value().Anchors();
   const Anchor& interface_name = anchors[0];
 
-  const VName interface_vname(
-      FileName(), CreateScopeRelativeSignature(interface_name.Text()));
+  const VName interface_vname = {
+      .path = FilePath(),
+      .root = "",
+      .signature = CreateScopeRelativeSignature(interface_name.Text()),
+      .corpus = Corpus()};
   const VName interface_name_anchor = CreateAnchor(interface_name);
 
   CreateFact(interface_vname, kFactNodeKind, kNodeInterface);
@@ -763,8 +773,11 @@ void KytheFactsExtractor::ReferenceDataType(
 VName KytheFactsExtractor::DeclareTypedef(
     const IndexingFactNode& type_declaration) {
   const auto& anchor = type_declaration.Value().Anchors()[0];
-  const VName type_vname(FileName(),
-                         CreateScopeRelativeSignature(anchor.Text()));
+  const VName type_vname = {
+      .path = FilePath(),
+      .root = "",
+      .signature = CreateScopeRelativeSignature(anchor.Text()),
+      .corpus = Corpus()};
   const VName type_vname_anchor = CreateAnchor(anchor);
 
   CreateFact(type_vname, kFactNodeKind, kNodeTAlias);
@@ -834,8 +847,11 @@ VName KytheFactsExtractor::DeclareVariable(
   const auto& anchors = variable_definition_node.Value().Anchors();
   CHECK(!anchors.empty());
   const Anchor& anchor = anchors[0];
-  const VName variable_vname(FileName(),
-                             CreateScopeRelativeSignature(anchor.Text()));
+  const VName variable_vname = {
+      .path = FilePath(),
+      .root = "",
+      .signature = CreateScopeRelativeSignature(anchor.Text()),
+      .corpus = Corpus()};
   const VName variable_vname_anchor = CreateAnchor(anchor);
 
   CreateFact(variable_vname, kFactNodeKind, kNodeVariable);
@@ -861,8 +877,11 @@ VName KytheFactsExtractor::DeclarePackage(
   const auto& anchors = package_declaration_node.Value().Anchors();
   const Anchor& package_name = anchors[0];
 
-  const VName package_vname(FileName(),
-                            CreateScopeRelativeSignature(package_name.Text()));
+  const VName package_vname = {
+      .path = FilePath(),
+      .root = "",
+      .signature = CreateScopeRelativeSignature(package_name.Text()),
+      .corpus = Corpus()};
   const VName package_name_anchor = CreateAnchor(package_name);
 
   CreateFact(package_vname, kFactNodeKind, kNodePackage);
@@ -883,7 +902,10 @@ VName KytheFactsExtractor::DeclareMacroDefinition(
 
   // The signature is relative to the global scope so no relative signature
   // created here.
-  const VName macro_vname(FileName(), Signature(macro_name.Text()));
+  const VName macro_vname = {.path = FilePath(),
+                             .root = "",
+                             .signature = Signature(macro_name.Text()),
+                             .corpus = Corpus()};
   const VName module_name_anchor = CreateAnchor(macro_name);
 
   CreateFact(macro_vname, kFactNodeKind, kNodeMacro);
@@ -899,8 +921,11 @@ void KytheFactsExtractor::ReferenceMacroCall(
 
   // The signature is relative to the global scope so no relative signature
   // created here.
-  const VName variable_definition_vname(FileName(),
-                                        Signature(macro_name.Text()));
+  const VName variable_definition_vname = {
+      .path = FilePath(),
+      .root = "",
+      .signature = Signature(macro_name.Text()),
+      .corpus = Corpus()};
 
   CreateEdge(macro_vname_anchor, kEdgeRefExpands, variable_definition_vname);
 }
@@ -909,8 +934,11 @@ VName KytheFactsExtractor::DeclareFunctionOrTask(
     const IndexingFactNode& function_fact_node) {
   const auto& function_name = function_fact_node.Value().Anchors()[0];
 
-  const VName function_vname(
-      FileName(), CreateScopeRelativeSignature(function_name.Text()));
+  const VName function_vname = {
+      .path = FilePath(),
+      .root = "",
+      .signature = CreateScopeRelativeSignature(function_name.Text()),
+      .corpus = Corpus()};
 
   const VName function_vname_anchor = CreateAnchor(function_name);
 
@@ -983,8 +1011,11 @@ VName KytheFactsExtractor::DeclareClass(
   const auto& anchors = class_fact_node.Value().Anchors();
   const Anchor& class_name = anchors[0];
 
-  const VName class_vname(FileName(),
-                          CreateScopeRelativeSignature(class_name.Text()));
+  const VName class_vname = {
+      .path = FilePath(),
+      .root = "",
+      .signature = CreateScopeRelativeSignature(class_name.Text()),
+      .corpus = Corpus()};
   const VName class_name_anchor = CreateAnchor(class_name);
 
   CreateFact(class_vname, kFactNodeKind, kNodeRecord);
@@ -1105,7 +1136,10 @@ void KytheFactsExtractor::ReferenceIncludeFile(
   const Anchor& file_name = anchors[0];
   const Anchor& file_path = anchors[1];
 
-  const VName file_vname(file_path.Text(), Signature(""), "", "");
+  const VName file_vname = {.path = file_path.Text(),
+                            .root = "",
+                            .signature = Signature(""),
+                            .corpus = Corpus()};
   const VName file_anchor = CreateAnchor(file_name);
 
   CreateEdge(file_anchor, kEdgeRefIncludes, file_vname);
@@ -1130,13 +1164,20 @@ void KytheFactsExtractor::ReferenceIncludeFile(
 VName KytheFactsExtractor::DeclareAnonymousScope(
     const IndexingFactNode& temp_scope) {
   const auto& scope_id = temp_scope.Value().Anchors()[0];
-  return VName(FileName(), CreateScopeRelativeSignature(scope_id.Text()));
+  VName vname = {.path = FilePath(),
+                 .root = "",
+                 .signature = CreateScopeRelativeSignature(scope_id.Text()),
+                 .corpus = Corpus()};
+  return vname;
 }
 
 VName KytheFactsExtractor::DeclareConstant(const IndexingFactNode& constant) {
   const auto& anchor = constant.Value().Anchors()[0];
-  const VName constant_vname(FileName(),
-                             CreateScopeRelativeSignature(anchor.Text()));
+  const VName constant_vname = {
+      .path = FilePath(),
+      .root = "",
+      .signature = CreateScopeRelativeSignature(anchor.Text()),
+      .corpus = Corpus()};
   const VName variable_vname_anchor = CreateAnchor(anchor);
 
   CreateFact(constant_vname, kFactNodeKind, kNodeConstant);
@@ -1150,8 +1191,11 @@ VName KytheFactsExtractor::DeclareStructOrUnion(
   const auto& anchors = struct_node.Value().Anchors();
   const Anchor& struct_name = anchors[0];
 
-  const VName struct_vname(FileName(),
-                           CreateScopeRelativeSignature(struct_name.Text()));
+  const VName struct_vname = {
+      .path = FilePath(),
+      .root = "",
+      .signature = CreateScopeRelativeSignature(struct_name.Text()),
+      .corpus = Corpus()};
   const VName struct_name_anchor = CreateAnchor(struct_name);
 
   CreateFact(struct_vname, kFactNodeKind, kNodeRecord);
@@ -1175,11 +1219,11 @@ VName KytheFactsExtractor::CreateAnchor(const Anchor& anchor) {
   const int start_location =
       std::distance(source_text.begin(), anchor.Text().begin());
   const int end_location = start_location + anchor.Text().length();
-  const VName anchor_vname(
-      FileName(),
-      // This is one of the few places that generates a std::string&&
-      // and constructs a signature from it, everywhere else is string_view.
-      Signature(absl::StrCat("@", start_location, ":", end_location)));
+  const VName anchor_vname = {.path = FilePath(),
+                              .root = "",
+                              .signature = Signature(absl::StrCat(
+                                  "@", start_location, ":", end_location)),
+                              .corpus = Corpus()};
 
   CreateFact(anchor_vname, kFactNodeKind, kNodeAnchor);
   // This is one of the only locations that passes a std::string&& to

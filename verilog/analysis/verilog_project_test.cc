@@ -40,7 +40,7 @@ class TempDirFile : public ScopedTestFile {
 };
 
 TEST(VerilogSourceFileTest, Initialization) {
-  const VerilogSourceFile file("a.sv", "x/y/a.sv");
+  const VerilogSourceFile file("a.sv", "x/y/a.sv", "");
   // no attempt to open this file yet
   EXPECT_EQ(file.ReferencedPath(), "a.sv");
   EXPECT_EQ(file.ResolvedPath(), "x/y/a.sv");
@@ -52,7 +52,7 @@ TEST(VerilogSourceFileTest, OpenExistingFile) {
   constexpr absl::string_view text("localparam int p = 1;\n");
   TempDirFile tf(text);
   const absl::string_view basename(Basename(tf.filename()));
-  VerilogSourceFile file(basename, tf.filename());
+  VerilogSourceFile file(basename, tf.filename(), "");
   EXPECT_TRUE(file.Open().ok());
   EXPECT_TRUE(file.Status().ok());
   EXPECT_EQ(file.ReferencedPath(), basename);
@@ -71,7 +71,7 @@ TEST(VerilogSourceFileTest, OpenExistingFile) {
 }
 
 TEST(VerilogSourceFileTest, NonExistingFile) {
-  VerilogSourceFile file("aa.sv", "/does/not/exist/aa.sv");
+  VerilogSourceFile file("aa.sv", "/does/not/exist/aa.sv", "");
   EXPECT_FALSE(file.Open().ok());
   EXPECT_FALSE(file.Status().ok());
   EXPECT_EQ(file.GetTextStructure(), nullptr);
@@ -85,7 +85,7 @@ TEST(VerilogSourceFileTest, ParseValidFile) {
   constexpr absl::string_view text("localparam int p = 1;\n");
   TempDirFile tf(text);
   const absl::string_view basename(Basename(tf.filename()));
-  VerilogSourceFile file(basename, tf.filename());
+  VerilogSourceFile file(basename, tf.filename(), "");
   // Parse automatically opens.
   EXPECT_TRUE(file.Parse().ok());
   EXPECT_TRUE(file.Status().ok());
@@ -110,7 +110,7 @@ TEST(VerilogSourceFileTest, ParseInvalidFile) {
   constexpr absl::string_view text("localparam 1 = p;\n");
   TempDirFile tf(text);
   const absl::string_view basename(Basename(tf.filename()));
-  VerilogSourceFile file(basename, tf.filename());
+  VerilogSourceFile file(basename, tf.filename(), "");
   // Parse automatically opens.
   EXPECT_FALSE(file.Parse().ok());
   EXPECT_FALSE(file.Status().ok());
@@ -136,7 +136,7 @@ TEST(VerilogSourceFileTest, StreamPrint) {
   constexpr absl::string_view text("localparam 1 = p;\n");
   TempDirFile tf(text);
   const absl::string_view basename(Basename(tf.filename()));
-  VerilogSourceFile file(basename, tf.filename());
+  VerilogSourceFile file(basename, tf.filename(), "");
   std::ostringstream stream;
 
   stream << file;

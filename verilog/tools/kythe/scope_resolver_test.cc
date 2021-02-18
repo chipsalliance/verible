@@ -41,10 +41,14 @@ static const std::vector<Signature> signatures{
 };
 
 static const std::vector<VName> vnames{
-    VName("", signatures[0]), VName("", signatures[1]),
-    VName("", signatures[2]), VName("", signatures[3]),
-    VName("", signatures[4]), VName("", signatures[5]),
-    VName("", signatures[6]), VName("", signatures[7]),
+    {.path = "", .root = "", .signature = signatures[0], .corpus = ""},
+    {.path = "", .root = "", .signature = signatures[1], .corpus = ""},
+    {.path = "", .root = "", .signature = signatures[2], .corpus = ""},
+    {.path = "", .root = "", .signature = signatures[3], .corpus = ""},
+    {.path = "", .root = "", .signature = signatures[4], .corpus = ""},
+    {.path = "", .root = "", .signature = signatures[5], .corpus = ""},
+    {.path = "", .root = "", .signature = signatures[6], .corpus = ""},
+    {.path = "", .root = "", .signature = signatures[7], .corpus = ""},
 };
 
 TEST(ScopeResolverTests, ScopeResolverLinkedList) {

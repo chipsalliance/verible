@@ -74,6 +74,7 @@ std::ostream& operator<<(std::ostream& stream,
                          const VerilogSourceFile& source) {
   stream << "referenced path: " << source.ReferencedPath() << std::endl;
   stream << "resolved path: " << source.ResolvedPath() << std::endl;
+  stream << "corpus: " << source.Corpus() << std::endl;
   const auto status = source.Status();
   stream << "status: " << (status.ok() ? "ok" : status.message()) << std::endl;
   const auto* text_structure = source.GetTextStructure();
@@ -91,11 +92,11 @@ absl::Status InMemoryVerilogSourceFile::Open() {
 }
 
 absl::StatusOr<VerilogSourceFile*> VerilogProject::OpenFile(
-    absl::string_view referenced_filename,
-    absl::string_view resolved_filename) {
-  const auto inserted =
-      files_.emplace(referenced_filename,
-                     VerilogSourceFile(referenced_filename, resolved_filename));
+    absl::string_view referenced_filename, absl::string_view resolved_filename,
+    absl::string_view corpus) {
+  const auto inserted = files_.emplace(
+      referenced_filename,
+      VerilogSourceFile(referenced_filename, resolved_filename, corpus));
   CHECK(inserted.second);  // otherwise, would have already returned above
   const auto file_iter = inserted.first;
   VerilogSourceFile& file(file_iter->second);
@@ -134,7 +135,7 @@ absl::StatusOr<VerilogSourceFile*> VerilogProject::OpenTranslationUnit(
   const std::string resolved_filename =
       verible::file::JoinPath(TranslationUnitRoot(), referenced_filename);
 
-  return OpenFile(referenced_filename, resolved_filename);
+  return OpenFile(referenced_filename, resolved_filename, Corpus());
 }
 
 absl::Status VerilogProject::IncludeFileNotFoundError(
@@ -163,7 +164,7 @@ absl::StatusOr<VerilogSourceFile*> VerilogProject::OpenIncludedFile(
         verible::file::JoinPath(include_path, referenced_filename);
     if (verible::file::FileExists(resolved_filename).ok()) {
       VLOG(2) << "File'" << resolved_filename << "' exists.";
-      return OpenFile(referenced_filename, resolved_filename);
+      return OpenFile(referenced_filename, resolved_filename, Corpus());
     }
     VLOG(2) << "Checked for file'" << resolved_filename << "', but not found.";
   }

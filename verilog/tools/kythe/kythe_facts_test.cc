@@ -89,15 +89,17 @@ TEST(VNameTest, DefaultCtor) {
 
 TEST(VNameTest, FilledCtor) {
   const Signature s("s");
-  const VName vname("/path/to/nowhere.lol", s, "root", "LOLCode",
-                    "http://corpus.code/corpus/");
+  const VName vname{.path = "/path/to/nowhere.lol",
+                    .root = "root",
+                    .signature = s,
+                    .corpus = "http://corpus.code/corpus/"};
   {
     std::ostringstream stream;
     stream << vname;
     EXPECT_EQ(stream.str(), R"({
   "signature": "s#",
   "path": "/path/to/nowhere.lol",
-  "language": "LOLCode",
+  "language": "verilog",
   "root": "root",
   "corpus": "http://corpus.code/corpus/"
 })");
@@ -114,7 +116,7 @@ TEST(VNameTest, FilledCtor) {
 
 TEST(FactTest, FormatJSON) {
   const Signature s("sss");
-  const VName v("/path", s);
+  const VName v{.path = "/path", .root = "", .signature = s, .corpus = ""};
   const Fact fact(v, "FactName", "FactValue");
   std::ostringstream stream;
   stream << fact;
@@ -133,7 +135,7 @@ TEST(FactTest, FormatJSON) {
 
 TEST(FactTest, Equality) {
   const Signature s("sss");
-  const VName v("/path", s);
+  const VName v{.path = "/path", .root = "", .signature = s, .corpus = ""};
   const Fact fact1(v, "FactName", "FactValueA");
   const Fact fact2(v, "FactName", "FactValueB");
   EXPECT_EQ(fact1, fact1);
@@ -145,7 +147,8 @@ TEST(FactTest, Equality) {
 
 TEST(EdgeTest, FormatJSON) {
   const Signature s1("sss"), s2("ttt");
-  const VName v1("/path", s1), v2("/path", s2);
+  const VName v1{.path = "/path", .root = "", .signature = s1, .corpus = ""};
+  const VName v2{.path = "/path", .root = "", .signature = s2, .corpus = ""};
   const Edge edge(v1, "EdgeName", v2);
   std::ostringstream stream;
   stream << edge;
@@ -171,7 +174,8 @@ TEST(EdgeTest, FormatJSON) {
 
 TEST(EdgeTest, Equality) {
   const Signature s1("sss"), s2("ttt");
-  const VName v1("/path", s1), v2("/path", s2);
+  const VName v1{.path = "/path", .root = "", .signature = s1, .corpus = ""};
+  const VName v2{.path = "/path", .root = "", .signature = s2, .corpus = ""};
   const Edge edge1(v1, "EdgeName", v2), edge2(v2, "Reverse", v1);
   EXPECT_EQ(edge1, edge1);
   EXPECT_EQ(edge2, edge2);
