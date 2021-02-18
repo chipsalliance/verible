@@ -159,24 +159,22 @@ jobs:
     - name: 📤 Upload artifact
       uses: actions/upload-artifact@v2
       with:
-        name: verible-binary-${{ matrix.OS }}-${{ matrix.OS_VERSION }}
         path: releasing/out/verible-*.tar.gz
 
 
   Release:
-    if: github.ref == 'refs/heads/master' && github.event_name != 'pull_request'
     needs: [ Check, Build ]
     runs-on: ubuntu-20.04
     name: 📦 Release
     steps:
 
-    - name: 📥 Download artifacts
-      uses: actions/download-artifact@v2
-
     - uses: actions/checkout@v2
       with:
        # Download complete repository + tags
        fetch-depth: 0
+
+    - name: 📥 Download artifacts
+      uses: actions/download-artifact@v2
 
     - name: After success
       run: |
@@ -189,9 +187,10 @@ jobs:
         git tag "$TAG" || true
         echo "TAG=$TAG" >> $GITHUB_ENV
 
-        ls -l artifact
+        ls -lah artifact
 
     - name: Deployment
+      if: github.ref == 'refs/heads/master' && github.event_name != 'pull_request'
       uses: svenstaro/upload-release-action@v2
       with:
         repo_token: ${{ secrets.GITHUB_TOKEN }}
