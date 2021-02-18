@@ -96,6 +96,10 @@ to help with visualizing the syntax structure as understood by the lexer and
 parser. This is very useful tor troubleshooting and understand the internal
 representations seen by the other tools.
 
+The tool has an ability of exporting a concrete syntax tree in JSON format,
+making use of it in external tools easy. There is also a
+[Python wrapper module and a few example scripts](./verilog/tools/syntax/export_json_examples).
+
 ### Style Linter
 
 [`verible-verilog-lint`](./verilog/tools/lint) identifies constructs or patterns

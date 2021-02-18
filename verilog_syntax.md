@@ -43,6 +43,8 @@ verible-verilog-syntax: usage: bazel-bin/verilog/tools/syntax/verible-verilog-sy
   Flags from verilog/tools/syntax/verilog_syntax.cc:
     --error_limit (Limit the number of syntax errors reported. (0: unlimited));
       default: 0;
+    --export_json (Uses JSON for output. Intended to be used as an input for
+      other tools.); default: false;
     --lang (Selects language variant to parse. Options:
       auto: SystemVerilog-2017, but may auto-detect alternate parsing modes
       sv: strict SystemVerilog-2017, with explicit alternate parsing modes
@@ -58,4 +60,4 @@ verible-verilog-syntax: usage: bazel-bin/verilog/tools/syntax/verible-verilog-sy
 
 ## Version
 
-Generated on 2021-02-18 08:21:49 -0800 from [aaa60b5](https://github.com/google/verible/commit/aaa60b5ec41ac189e7ef7cd709b432fd2a223340)
+Generated on 2021-02-18 15:20:30 -0800 from [e454942](https://github.com/google/verible/commit/e4549424f1a83461ddde91d302bd96d7d4153e6d)
