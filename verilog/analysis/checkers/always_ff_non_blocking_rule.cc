@@ -166,7 +166,6 @@ void AlwaysFFNonBlockingRule::HandleSymbol(const verible::Symbol &symbol,
 
   // Enqueue detected violation unless waived
   if (!waived) violations_.insert(LintViolation(symbol, kMessage, context));
-
 }  // HandleSymbol()
 
 bool AlwaysFFNonBlockingRule::InsideBlock(const verible::Symbol &symbol,
@@ -206,7 +205,6 @@ bool AlwaysFFNonBlockingRule::InsideBlock(const verible::Symbol &symbol,
   }
 
   return true;
-
 }  // InsideBlock()
 
 bool AlwaysFFNonBlockingRule::LocalDeclaration(const verible::Symbol &symbol) {
@@ -232,7 +230,6 @@ bool AlwaysFFNonBlockingRule::LocalDeclaration(const verible::Symbol &symbol) {
     return true;
   }
   return false;
-
 }  // LocalDeclaration()
 
 }  // namespace analysis
