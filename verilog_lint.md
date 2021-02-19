@@ -354,4 +354,4 @@ Enabled by default: true
 
 ## Version
 
-Generated on 2021-02-19 10:10:32 -0800 from [ebac844](https://github.com/google/verible/commit/ebac844a7e3a8898d509963f1caa6f7c57cea501)
+Generated on 2021-02-19 14:12:53 -0800 from [f698155](https://github.com/google/verible/commit/f698155f93b0d8daae01ca6d48b9cf1703b09c30)
