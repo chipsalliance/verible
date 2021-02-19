@@ -30,7 +30,7 @@ cd github/$KOKORO_DIR
 . $SCRIPT_DIR/steps/hostsetup.sh
 . $SCRIPT_DIR/steps/hostinfo.sh
 . $SCRIPT_DIR/steps/compiler.sh
-
+. $SCRIPT_DIR/steps/link-python.sh
 set +e
 
 echo

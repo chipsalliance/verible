@@ -45,10 +45,8 @@ sudo apt-get install -y \
             python3.8 \
             wget
 
-ls -l /usr/bin/python*
-realpath /usr/bin/python3
-
-#sudo ln -sf /usr/bin/python3.8 /usr/bin/python3
+# We later link python3.8 as default python in link-python.sh,
+# but can't do this now as ubuntu scripts start failing.
 
 echo "----------------------------------------"
 
