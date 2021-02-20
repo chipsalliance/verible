@@ -130,12 +130,9 @@ jobs:
     outputs:
       matrix: ${{ steps.generate.outputs.matrix }}
     steps:
-
     - uses: actions/checkout@v2
-
     - id: generate
-      name: Run 'generate_matrix.sh'
-      run: ./.github/workflows/generate_matrix.sh
+      run: ./.github/workflows/generate-matrix.py
 
 
   Build:

@@ -1,5 +1,6 @@
-#!/usr/bin/env bash
-# Copyright 2020 The Verible Authors.
+#!/usr/bin/env python3
+
+# Copyright 2021 The Verible Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -13,15 +14,15 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-set -e
+from pathlib import Path
 
-matrix='['
-for item in $(cat $(dirname "$0")/../../releasing/supported_bases.txt); do
-  _name="$(basename $item)"
-  matrix+="{\"os\": \"$(echo "$_name" | cut -d: -f1)\", \"ver\": \"$(echo "$_name" | cut -d: -f2)\"},"
-done
-matrix+=']'
+matrix = []
 
-echo "$matrix"
+with (Path(__file__).parent.resolve().parent.parent / 'releasing' / 'supported_bases.txt').open('r') as fptr:
+    for items in [line.strip().split(':') for line in fptr.readlines()]:
+        matrix.append({
+            'os': items[0],
+            'ver': items[1]
+        })
 
-echo "::set-output name=matrix::$matrix"
+print('::set-output name=matrix::' + str(matrix))
