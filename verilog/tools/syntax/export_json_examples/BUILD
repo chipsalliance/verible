@@ -32,7 +32,10 @@ py_binary(
     srcs_version = "PY3",
     python_version = "PY3",
     main = "print_modules.py",
-    deps = [":verible_verilog_syntax_py"],
+    deps = [
+         ":verible_verilog_syntax_py",
+         "@python_anytree//:anytree",
+    ],
     data = ["//verilog/tools/syntax:verible-verilog-syntax"],
     args = ["$(location //verilog/tools/syntax:verible-verilog-syntax)"],
 )
@@ -43,7 +46,10 @@ py_binary(
     srcs_version = "PY3",
     python_version = "PY3",
     main = "print_tree.py",
-    deps = [":verible_verilog_syntax_py"],
+    deps = [
+         ":verible_verilog_syntax_py",
+         "@python_anytree//:anytree",
+    ],
     data = ["//verilog/tools/syntax:verible-verilog-syntax"],
     args = ["$(location //verilog/tools/syntax:verible-verilog-syntax)"],
 )
