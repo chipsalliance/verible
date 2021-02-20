@@ -117,19 +117,11 @@ jobs:
         path: "/home/runner/.cache/bazel"
         key: bazel-kythe
 
-    - name: Setting compiler
+    - name: Install Dependencies
       run: |
         source ./.github/settings.sh
         ./.github/workflows/set-compiler.sh 9
-
-    - name: Install Bazel
-      run: |
-        source ./.github/settings.sh
         ./.github/workflows/install-bazel.sh
-
-    - name: Install Kythe
-      run: |
-        source ./.github/settings.sh
         ./.github/workflows/install-kythe.sh
 
     - name: Run Kythe
