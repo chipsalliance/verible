@@ -54,7 +54,7 @@ std::string TokenStreamLintRule::GetDescription(
     DescriptionType description_type) {
   return absl::StrCat("Checks that there are no occurrences of ",
                       Codify("\'\\\'", description_type),
-                      " when breaking the string literal line.",
+                      " when breaking the string literal line. ",
                       "Use concatenation operator with braces instead. See ",
                       GetStyleGuideCitation(kTopic), ".");
 }
