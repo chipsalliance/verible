@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
-# Copyright 2020 The Verible Authors.
+
+# Copyright 2021 The Verible Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -15,12 +16,7 @@
 
 set -e
 
-matrix='['
-for item in releasing/*/; do
-  matrix+='{"os": "'"`echo $(basename $item) | cut -d- -f1`"'", "version": "'"`echo $(basename $item) | cut -d- -f2`"'"},'
-done
-matrix+=']'
+cd $(dirname "$0")/..
 
-echo "$matrix"
-
-echo "::set-output name=matrix::$matrix"
+./.github/workflows/github-pages-setup.sh
+./.github/workflows/github-releases-setup.sh /out

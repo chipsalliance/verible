@@ -5,6 +5,7 @@ on:
   pull_request:
 
 env:
+  DOCKER_BUILDKIT: 1
   BOT_USER: "Deployment Bot"
   BOT_EMAIL: "verible-dev@googlegroups.com"
 
@@ -15,6 +16,7 @@ jobs:
     runs-on: ubuntu-20.04
 
     steps:
+
     - name: Checkout code
       uses: actions/checkout@v2
       with:
@@ -41,7 +43,9 @@ jobs:
     env:
       MODE: ${{ matrix.mode }}
     name: Check · ${{ matrix.mode }}
+
     steps:
+
     - name: Checkout code
       uses: actions/checkout@v2
       with:
@@ -84,6 +88,7 @@ jobs:
     runs-on: ubuntu-20.04
 
     steps:
+
     - name: Checkout code
       uses: actions/checkout@v2
       with:
@@ -116,21 +121,24 @@ jobs:
         source ./.github/settings.sh
         ./.github/workflows/run-kythe.sh
 
-    - name: Upload Kythe output
+    - name: 📤 Upload Kythe output
       uses: actions/upload-artifact@v2
       with:
-        name: verible-kythe-index
         path: kythe_output/*.kzip
 
 
   Matrix:
     runs-on: ubuntu-latest
+    name: Generate Build matrix
     outputs:
       matrix: ${{ steps.generate.outputs.matrix }}
+
     steps:
+
     - uses: actions/checkout@v2
+
     - id: generate
-      run: ./.github/workflows/generate_matrix.sh
+      run: ./.github/workflows/generate-matrix.py
 
 
   Build:
@@ -140,7 +148,10 @@ jobs:
       fail-fast: false
       matrix:
         include: ${{ fromJson(needs.Matrix.outputs.matrix) }}
-    name: Build · ${{ matrix.os }} ${{ matrix.version }}
+    env:
+      MATRIX_OS: '${{ matrix.os }}:${{ matrix.ver }}'
+    name: 'Build · ${{ matrix.os }}:${{ matrix.ver }}'
+
     steps:
 
     - uses: actions/checkout@v2
@@ -148,14 +159,13 @@ jobs:
        # Download complete repository + tags
        fetch-depth: 0
 
-    - run: docker pull ${{ matrix.os }}:${{ matrix.version }}
+    - run: docker pull $MATRIX_OS
 
     - name: Main script
       run: |
         set -x
         source ./.github/settings.sh
-        cd releasing
-        ./docker-run.sh ${{ matrix.os }}-${{ matrix.version }}
+        ./releasing/docker-run.sh $MATRIX_OS
 
     - name: 📤 Upload artifact
       uses: actions/upload-artifact@v2
@@ -167,6 +177,7 @@ jobs:
     needs: [ Check, Build ]
     runs-on: ubuntu-20.04
     name: 📦 Release
+
     steps:
 
     - uses: actions/checkout@v2
@@ -177,7 +188,7 @@ jobs:
     - name: 📥 Download artifacts
       uses: actions/download-artifact@v2
 
-    - name: After success
+    - name: Generate and apply TAG
       run: |
         git config --local user.name "$BOT_USER"
         git config --local user.email "$BOT_EMAIL"
@@ -190,7 +201,7 @@ jobs:
 
         ls -lah artifact
 
-    - name: Deployment
+    - name: Deploy release and assets
       if: github.ref == 'refs/heads/master' && github.event_name != 'pull_request'
       uses: svenstaro/upload-release-action@v2
       with:
