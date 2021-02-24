@@ -14,6 +14,7 @@ jobs:
 
   VerifyFormatting:
     runs-on: ubuntu-20.04
+
     steps:
 
     - name: Checkout code
@@ -42,6 +43,7 @@ jobs:
     env:
       MODE: ${{ matrix.mode }}
     name: Check · ${{ matrix.mode }}
+
     steps:
 
     - name: Checkout code
@@ -84,6 +86,7 @@ jobs:
 
   Kythe:
     runs-on: ubuntu-20.04
+
     steps:
 
     - name: Checkout code
@@ -129,8 +132,11 @@ jobs:
     name: Generate Build matrix
     outputs:
       matrix: ${{ steps.generate.outputs.matrix }}
+
     steps:
+
     - uses: actions/checkout@v2
+
     - id: generate
       run: ./.github/workflows/generate-matrix.py
 
@@ -145,6 +151,7 @@ jobs:
     env:
       MATRIX_OS: '${{ matrix.os }}:${{ matrix.ver }}'
     name: 'Build · ${{ matrix.os }}:${{ matrix.ver }}'
+
     steps:
 
     - uses: actions/checkout@v2
@@ -170,6 +177,7 @@ jobs:
     needs: [ Check, Build ]
     runs-on: ubuntu-20.04
     name: 📦 Release
+
     steps:
 
     - uses: actions/checkout@v2
