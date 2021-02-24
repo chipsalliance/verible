@@ -54,7 +54,7 @@ class StructUnionNameStyleRule : public verible::SyntaxTreeLintRule {
   static const char kMessageStruct[];
   static const char kMessageUnion[];
 
-  std::vector<std::string> exceptions_;
+  std::set<std::string> exceptions_;
 
   std::set<verible::LintViolation> violations_;
 };

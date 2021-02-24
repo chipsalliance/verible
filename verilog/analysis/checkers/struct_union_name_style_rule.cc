@@ -52,8 +52,8 @@ const char StructUnionNameStyleRule::kMessageStruct[] =
 const char StructUnionNameStyleRule::kMessageUnion[] =
     "Union names must use lower_snake_case naming convention and end with _t.";
 
-std::string StructUnionNameStyleRule::GetDescription(
-    DescriptionType description_type) {
+std::string
+StructUnionNameStyleRule::GetDescription(DescriptionType description_type) {
   return absl::StrCat(
       "Checks that ", Codify("struct", description_type), " and ",
       Codify("union", description_type),
@@ -61,16 +61,16 @@ std::string StructUnionNameStyleRule::GetDescription(
       GetStyleGuideCitation(kTopic), ".");
 }
 
-static const Matcher& TypedefMatcher() {
+static const Matcher &TypedefMatcher() {
   static const Matcher matcher(NodekTypeDeclaration());
   return matcher;
 }
 
-void StructUnionNameStyleRule::HandleSymbol(const verible::Symbol& symbol,
-                                            const SyntaxTreeContext& context) {
+void StructUnionNameStyleRule::HandleSymbol(const verible::Symbol &symbol,
+                                            const SyntaxTreeContext &context) {
   verible::matcher::BoundSymbolManager manager;
   if (TypedefMatcher().Matches(symbol, &manager)) {
-    const char* msg;
+    const char *msg;
     // TODO: This can be changed to checking type of child (by index) when we
     // have consistent shape for all kTypeDeclaration nodes.
     if (!FindAllStructTypes(symbol).empty()) {
@@ -81,30 +81,36 @@ void StructUnionNameStyleRule::HandleSymbol(const verible::Symbol& symbol,
       // Neither a struct nor union definition
       return;
     }
-    const auto* identifier_leaf = GetIdentifierFromTypeDeclaration(symbol);
+    const auto *identifier_leaf = GetIdentifierFromTypeDeclaration(symbol);
     const auto name = ABSL_DIE_IF_NULL(identifier_leaf)->get().text();
     // get rid of the exceptions specified by user
     std::string name_filtered;
-    if (exceptions_.size()) {
+    if (!exceptions_.empty()) {
       name_filtered.reserve(name.length());
-      const auto& name_split = absl::StrSplit(name, '_');
-      for (const auto& ns : name_split) {
-        if (std::find(exceptions_.begin(), exceptions_.end(), ns) ==
-            exceptions_.end()) {
-          name_filtered.append(ns);
+      const auto &underscore_separated_parts = absl::StrSplit(name, '_');
+      const bool starts_with_underscore = underscore_separated_parts.begin()->empty();
+      if (!starts_with_underscore) {
+        for (const auto &ns : underscore_separated_parts) {
+          if (std::find(exceptions_.begin(), exceptions_.end(), ns) ==
+              exceptions_.end()) {
+            name_filtered.append(ns);
+          }
         }
+      } else {
+        name_filtered.append("_");
       }
     }
-    if (!verible::IsLowerSnakeCaseWithDigits(
-            name_filtered.length() ? name_filtered : name) ||
+    const absl::string_view relevant_name =
+        exceptions_.empty() ? name : name_filtered;
+    if (!verible::IsLowerSnakeCaseWithDigits(relevant_name) ||
         !absl::EndsWith(name, "_t")) {
       violations_.insert(LintViolation(identifier_leaf->get(), msg, context));
     }
   }
 }
 
-absl::Status StructUnionNameStyleRule::Configure(
-    absl::string_view configuration) {
+absl::Status
+StructUnionNameStyleRule::Configure(absl::string_view configuration) {
   using verible::config::SetString;
   std::string raw_tokens;
   auto status = verible::ParseNameValues(
@@ -119,5 +125,5 @@ LintRuleStatus StructUnionNameStyleRule::Report() const {
   return LintRuleStatus(violations_, Name(), GetStyleGuideCitation(kTopic));
 }
 
-}  // namespace analysis
-}  // namespace verilog
+} // namespace analysis
+} // namespace verilog
