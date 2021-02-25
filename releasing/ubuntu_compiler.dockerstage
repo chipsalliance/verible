@@ -1,0 +1,7 @@
+# Install compiler
+RUN apt-get install -y  \
+    bison               \
+    build-essential     \
+    flex                \
+    g++                 \
+    gcc

@@ -1,0 +1,25 @@
+# Install bazel
+RUN yum install -y --nogpgcheck \
+    java-1.8.0-openjdk-devel \
+    unzip \
+    zip
+
+RUN java -version
+RUN javac -version
+
+RUN yum install -y --nogpgcheck rh-python36
+SHELL [ "scl", "enable", "rh-python36", "devtoolset-8" ]
+
+RUN python --version
+RUN python3 --version
+
+# Build bazel
+RUN wget --no-verbose https://github.com/bazelbuild/bazel/releases/download/${BAZEL_VERSION}/bazel-${BAZEL_VERSION}-dist.zip
+RUN unzip bazel-${BAZEL_VERSION}-dist.zip -d bazel-${BAZEL_VERSION}-dist
+RUN cd bazel-${BAZEL_VERSION}-dist; \\
+    EXTRA_BAZEL_ARGS="--copt=-D__STDC_FORMAT_MACROS --host_copt=-D__STDC_FORMAT_MACROS" ./compile.sh
+RUN cp bazel-${BAZEL_VERSION}-dist/output/bazel /usr/local/bin
+
+RUN bazel --version
+
+SHELL [ "scl", "enable", "devtoolset-8" ]
