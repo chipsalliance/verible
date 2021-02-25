@@ -1,6 +1,4 @@
 *~
 /bazel-*
 tags
-releasing/centos*
-releasing/ubuntu*
 releasing/out
