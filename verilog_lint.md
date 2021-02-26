@@ -155,7 +155,7 @@ Enabled by default: true
 ### forbid-line-continuations
 Checks that there are no occurrences of `'\'` when breaking the string literal line.Use concatenation operator with braces instead. See [Style: forbid-line-continuations].
 
-Enabled by default: true
+Enabled by default: false
 
 ### forbidden-macro
 Checks that no forbidden macro calls are used. See [Verification-Style: logging].
@@ -354,4 +354,4 @@ Enabled by default: true
 
 ## Version
 
-Generated on 2021-02-24 12:04:02 -0800 from [6a222b2](https://github.com/google/verible/commit/6a222b22a6cfd3ea473a0fd7c33e0bf712602390)
+Generated on 2021-02-25 16:06:13 -0800 from [101e6cd](https://github.com/google/verible/commit/101e6cdff625f7cec0d12f44a8b9f152d9bfe059)
