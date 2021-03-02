@@ -54,6 +54,12 @@ struct FitResult {
 FitResult FitsOnLine(const UnwrappedLine& uwline,
                      const BasicFormatStyle& style);
 
+
+// Calculates UnwrappedLine length.
+// Unlike FitsOnLine it ignores column_limit
+int UnwrappedLineLength(const UnwrappedLine& uwline,
+                        const BasicFormatStyle& style);
+
 }  // namespace verible
 
 #endif  // VERIBLE_COMMON_FORMATTING_LINE_WRAP_SEARCHER_H_

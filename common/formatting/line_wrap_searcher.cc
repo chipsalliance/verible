@@ -209,4 +209,27 @@ FitResult FitsOnLine(const UnwrappedLine& uwline,
   return {true, state->current_column};
 }
 
+int UnwrappedLineLength(const UnwrappedLine& uwline,
+                        const BasicFormatStyle& style) {
+  VLOG(3) << __FUNCTION__;
+  // Leverage search functionality to compute effective line length of a slice
+  // of tokens, taking into account minimum spacing requirements.
+  // Similar to SearchLineWraps, but only calculates by appending tokens until
+  // a line break is required.
+
+  if (uwline.TokensRange().empty()) return 0;
+
+  // Initialize on first token.
+  // This accounts for space consumed by left-indentation.
+  auto state = std::make_shared<const StateNode>(uwline, style);
+
+  while (!state->Done()) {
+    // Append token onto same line (ignore column_limit unlike FitsOnLine does)
+    state = std::make_shared<StateNode>(state, style, SpacingDecision::Append);
+  }  // while (!state->Done())
+
+  // Reached the end of token-range, thus, it fits.
+  return state->current_column;
+}
+
 }  // namespace verible
