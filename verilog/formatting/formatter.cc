@@ -24,6 +24,7 @@
 #include "common/formatting/format_token.h"
 #include "common/formatting/line_wrap_searcher.h"
 #include "common/formatting/token_partition_tree.h"
+#include "common/formatting/tree_reshaper.h"
 #include "common/formatting/unwrapped_line.h"
 #include "common/formatting/verification.h"
 #include "common/strings/diff.h"
@@ -354,6 +355,14 @@ static void DeterminePartitionExpansion(
       LOG(FATAL) << "Got an uninitialized partition policy at: " << uwline;
       break;
     }
+    // Should not happen
+    case PartitionPolicyEnum::kApplyOptimalLayout:
+    case PartitionPolicyEnum::kWrapSubPartitions: {
+      LOG(FATAL) << "Got a partition policy that should be replaced in " <<
+                    " earlier stages of formatting process. Prolematic " <<
+                    " line: " << uwline;
+      break;
+    }
     // Always view tabular aligned partitions in expanded form.
     case PartitionPolicyEnum::kTabularAlignment:
     case PartitionPolicyEnum::kAlwaysExpand: {
@@ -540,6 +549,17 @@ Status Formatter::Format(const ExecutionControl& control) {
                                       &unwrapper_data.preformatted_tokens,
                                       full_text, disabled_ranges_, style_);
           break;
+        case PartitionPolicyEnum::kWrapSubPartitions:
+        case PartitionPolicyEnum::kApplyOptimalLayout: {
+          if (style_.enable_experimental_tree_reshaper) {
+            verible::TreeReshaper::ReshapeTokenPartitionTree(&node, style_);
+          } else {
+            LOG(FATAL) << "Found a partition policy that must not be used  " <<
+                          "without enable_experimental_tree_reshaper switch. " <<
+                          "Problematic node: " << verible::TokenPartitionTreePrinter(node);
+          }
+          break;
+        }
         default:
           break;
       }

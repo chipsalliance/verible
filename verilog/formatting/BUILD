@@ -137,6 +137,7 @@ cc_library(
         "//common/formatting:format_token",
         "//common/formatting:line_wrap_searcher",
         "//common/formatting:token_partition_tree",
+        "//common/formatting:tree_reshaper",
         "//common/formatting:unwrapped_line",
         "//common/formatting:verification",
         "//common/strings:diff",

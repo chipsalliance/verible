@@ -63,6 +63,13 @@ enum class PartitionPolicyEnum {
   // element It uses first subpartition length to compute indentation spaces or
   // FormatStyle.wrap_spaces when wrapping.
   kAppendFittingSubPartitions,
+
+  // Related to TreeReshaper
+  // FIXME(ldk): Write more about below policies
+  kApplyOptimalLayout,
+
+  // FIXME(ldk): Check if this policy is really needed
+  kWrapSubPartitions,
 };
 
 std::ostream& operator<<(std::ostream&, PartitionPolicyEnum);

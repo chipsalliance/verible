@@ -120,6 +120,10 @@ ABSL_FLAG(int, max_search_states, 100000,
           "Limits the number of search states explored during "
           "line wrap optimization.");
 
+ABSL_FLAG(bool, enable_experimental_tree_reshaper, false,
+          "Enable experimental tree reshaping code that is using "
+          "dynamic programming to find optimal layout for formatted code.");
+
 // These flags exist in the short term to disable formatting of some regions.
 // Do not expect to be able to use these in the long term, once they find
 // a better home in a configuration struct.
@@ -222,6 +226,9 @@ static bool formatOneFile(absl::string_view filename,
 
     // formatting style flags
     format_style.try_wrap_long_lines = absl::GetFlag(FLAGS_try_wrap_long_lines);
+
+    format_style.enable_experimental_tree_reshaper =
+        absl::GetFlag(FLAGS_enable_experimental_tree_reshaper);
 
     // various indentation control
     format_style.port_declarations_indentation =

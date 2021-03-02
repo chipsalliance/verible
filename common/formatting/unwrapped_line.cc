@@ -46,6 +46,10 @@ std::ostream& operator<<(std::ostream& stream, PartitionPolicyEnum p) {
       return stream << "aligned-success";
     case PartitionPolicyEnum::kAppendFittingSubPartitions:
       return stream << "append-fitting-sub-partitions";
+    case PartitionPolicyEnum::kApplyOptimalLayout:
+      return stream << "apply-optimal-layout";
+    case PartitionPolicyEnum::kWrapSubPartitions:
+      return stream << "wrap-sub-partitions";
   }
   LOG(FATAL) << "Unknown partition policy " << int(p);
 }

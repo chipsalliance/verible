@@ -41,6 +41,9 @@ struct BasicFormatStyle {
   int over_column_limit_penalty = 100;
 
   int line_break_penalty = 2;
+
+  // Enable experimental tree shaping
+  bool enable_experimental_tree_reshaper = false;
 };
 
 // Control how a section of code is indented.
