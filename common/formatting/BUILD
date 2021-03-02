@@ -214,6 +214,32 @@ cc_test(
 )
 
 cc_library(
+    name = "tree_reshaper",
+    srcs = ["tree_reshaper.cc"],
+    hdrs = [
+        "tree_reshaper.h",
+    ],
+    deps = [
+        ":basic_format_style",
+        ":line_wrap_searcher",
+        ":token_partition_tree",
+        ":unwrapped_line",
+        "//common/util:vector_tree",
+    ],
+)
+
+cc_test(
+    name = "tree_reshaper_test",
+    srcs = ["tree_reshaper_test.cc"],
+    deps = [
+        ":line_wrap_searcher",
+        ":tree_reshaper",
+        ":unwrapped_line_test_utils",
+        "@com_google_googletest//:gtest_main",
+    ],
+)
+
+cc_library(
     name = "tree_unwrapper",
     srcs = ["tree_unwrapper.cc"],
     hdrs = [
