@@ -239,9 +239,9 @@ class TreeUnwrapperTest : public ::testing::Test {
     // Since source code is required to be valid, this error-handling is just
     // to help debug the test case construction
     if (!status.ok()) {
-      constexpr bool with_diagnostic_contex = false;
+      constexpr bool with_diagnostic_context = false;
       const std::vector<std::string> syntax_error_messages(
-          analyzer_->LinterTokenErrorMessages(with_diagnostic_contex));
+          analyzer_->LinterTokenErrorMessages(with_diagnostic_context));
       for (const auto& message : syntax_error_messages) {
         std::cout << message << std::endl;
       }
