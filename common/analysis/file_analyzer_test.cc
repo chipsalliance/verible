@@ -71,6 +71,26 @@ TEST(FileAnalyzerTest, TokenErrorMessageSameLine) {
   }
 }
 
+// Verify that an error token on one line is reported correctly.
+TEST(FileAnalyzerTest, TokenErrorMessageSameLineWithContext) {
+  const std::string text("hello, world\nbye w0rld\n");
+  FakeFileAnalyzer analyzer(text, "hello.txt");
+  const TokenInfo error_token(1, analyzer.Data().Contents().substr(17, 5));
+  {
+    const auto message = analyzer.TokenErrorMessage(error_token);
+    EXPECT_EQ(message, "token: \"w0rld\" at 2:5-9");
+  }
+  {
+    constexpr bool with_diagnostic_contex = true;
+    const auto message = analyzer.LinterTokenErrorMessage(
+        {error_token, AnalysisPhase::kParsePhase}, with_diagnostic_contex);
+    EXPECT_TRUE(
+        absl::StrContains(message,
+                          "hello.txt:2:5: syntax error, rejected \"w0rld\" "
+                          "(syntax-error).\nbye w0rld\n    ^"));
+  }
+}
+
 // Verify that an error token on one character is reported correctly.
 TEST(FileAnalyzerTest, TokenErrorMessageOneChar) {
   const std::string text("hello, world\nbye w0rld\n");
@@ -86,6 +106,25 @@ TEST(FileAnalyzerTest, TokenErrorMessageOneChar) {
         {error_token, AnalysisPhase::kParsePhase}, with_diagnostic_contex);
     EXPECT_TRUE(absl::StrContains(
         message, "hello.txt:1:6: syntax error, rejected \",\""));
+  }
+}
+
+// Verify that an error token on one character is reported correctly.
+TEST(FileAnalyzerTest, TokenErrorMessageOneCharWithContext) {
+  const std::string text("hello, world\nbye w0rld\n");
+  FakeFileAnalyzer analyzer(text, "hello.txt");
+  const TokenInfo error_token(1, analyzer.Data().Contents().substr(5, 1));
+  {
+    const auto message = analyzer.TokenErrorMessage(error_token);
+    EXPECT_EQ(message, "token: \",\" at 1:6");
+  }
+  {
+    constexpr bool with_diagnostic_contex = true;
+    const auto message = analyzer.LinterTokenErrorMessage(
+        {error_token, AnalysisPhase::kParsePhase}, with_diagnostic_contex);
+    EXPECT_TRUE(absl::StrContains(message,
+                                  "hello.txt:1:6: syntax error, rejected \",\" "
+                                  "(syntax-error).\nhello, world\n     ^"));
   }
 }
 
@@ -106,6 +145,27 @@ TEST(FileAnalyzerTest, TokenErrorMessageDifferentLine) {
         message, "hello.txt:1:8: syntax error, rejected \"world\nbye\""));
   }
 }
+
+// Verify that an error token spanning multiple lines is reported correctly.
+TEST(FileAnalyzerTest, TokenErrorMessageDifferentLineWithContext) {
+  const std::string text("hello, world\nbye w0rld\n");
+  FakeFileAnalyzer analyzer(text, "hello.txt");
+  const TokenInfo error_token(1, analyzer.Data().Contents().substr(7, 9));
+  {
+    const auto message = analyzer.TokenErrorMessage(error_token);
+    EXPECT_EQ(message, "token: \"world\nbye\" at 1:8-2:3");
+  }
+  {
+    constexpr bool with_diagnostic_contex = true;
+    const auto message = analyzer.LinterTokenErrorMessage(
+        {error_token, AnalysisPhase::kParsePhase}, with_diagnostic_contex);
+    EXPECT_TRUE(absl::StrContains(
+        message,
+        "hello.txt:1:8: syntax error, rejected \"world\nbye\" "
+        "(syntax-error).\nhello, world\n       ^"));
+  }
+}
+
 //
 // Verify that an error at EOF reported correctly.
 TEST(FileAnalyzerTest, TokenErrorMessageEOF) {
@@ -118,6 +178,25 @@ TEST(FileAnalyzerTest, TokenErrorMessageEOF) {
   }
   {
     constexpr bool with_diagnostic_contex = false;
+    const auto message = analyzer.LinterTokenErrorMessage(
+        {error_token, AnalysisPhase::kParsePhase}, with_diagnostic_contex);
+    EXPECT_TRUE(absl::StrContains(
+        message, "unbalanced.txt:3:1: syntax error (unexpected EOF)"));
+  }
+}
+
+//
+// Verify that an error at EOF reported correctly.
+TEST(FileAnalyzerTest, TokenErrorMessageEOFWithContext) {
+  const std::string text("hello, world\nbye w0rld (\n");
+  const TokenInfo error_token(TokenInfo::EOFToken());
+  FakeFileAnalyzer analyzer(text, "unbalanced.txt");
+  {
+    const auto message = analyzer.TokenErrorMessage(error_token);
+    EXPECT_EQ(message, "token: <<EOF>> at 3:1");
+  }
+  {
+    constexpr bool with_diagnostic_contex = true;
     const auto message = analyzer.LinterTokenErrorMessage(
         {error_token, AnalysisPhase::kParsePhase}, with_diagnostic_contex);
     EXPECT_TRUE(absl::StrContains(

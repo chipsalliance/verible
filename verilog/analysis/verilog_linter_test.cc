@@ -178,10 +178,17 @@ class VerilogLinterTest : public DefaultLinterConfigTestFixture,
     const absl::Status status = ABSL_DIE_IF_NULL(analyzer)->Analyze();
     std::ostringstream diagnostics;
     if (!status.ok()) {
-      constexpr bool with_diagnostic_contex = false;
+      bool with_diagnostic_contex = false;
       const std::vector<std::string> syntax_error_messages(
           analyzer->LinterTokenErrorMessages(with_diagnostic_contex));
       for (const auto& message : syntax_error_messages) {
+        diagnostics << message << std::endl;
+      }
+
+      with_diagnostic_contex = true;
+      const std::vector<std::string> syntax_error_messages_with_context(
+          analyzer->LinterTokenErrorMessages(with_diagnostic_contex));
+      for (const auto& message : syntax_error_messages_with_context) {
         diagnostics << message << std::endl;
       }
     }
