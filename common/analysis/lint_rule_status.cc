@@ -91,7 +91,7 @@ void LintStatusFormatter::FormatLintRuleStatuses(
                     violation.status->url, violation.status->lint_rule_name);
     *stream << std::endl;
     auto cursor = line_column_map_(violation.violation->token.left(base));
-    if (cursor.line < lines.size()) {
+    if (cursor.line < static_cast<int>(lines.size())) {
       *stream << lines[cursor.line] << std::endl;
       *stream << verible::Spacer(cursor.column) << "^" << std::endl;
     }

@@ -75,8 +75,9 @@ bool TreeContainsToken(const ConcreteSyntaxTree& tree, const TokenInfo& token) {
 
 void DiagnosticMessagesContainFilename(const VerilogAnalyzer& analyzer,
                                        absl::string_view filename) {
+  constexpr bool with_diagnostic_contex = false;
   const std::vector<std::string> syntax_error_messages(
-      analyzer.LinterTokenErrorMessages());
+      analyzer.LinterTokenErrorMessages(with_diagnostic_contex));
   for (const auto& message : syntax_error_messages) {
     EXPECT_TRUE(absl::StrContains(message, filename));
   }

@@ -205,8 +205,9 @@ Status FormatVerilog(absl::string_view text, absl::string_view filename,
     const auto parse_status = analyzer->ParseStatus();
     if (!lex_status.ok() || !parse_status.ok()) {
       std::ostringstream errstream;
+      constexpr bool with_diagnostic_context = false;
       const std::vector<std::string> syntax_error_messages(
-          analyzer->LinterTokenErrorMessages());
+          analyzer->LinterTokenErrorMessages(with_diagnostic_context));
       for (const auto& message : syntax_error_messages) {
         errstream << message << std::endl;
       }

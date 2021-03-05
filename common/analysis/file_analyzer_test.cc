@@ -63,8 +63,9 @@ TEST(FileAnalyzerTest, TokenErrorMessageSameLine) {
     EXPECT_EQ(message, "token: \"w0rld\" at 2:5-9");
   }
   {
+    constexpr bool with_diagnostic_contex = false;
     const auto message = analyzer.LinterTokenErrorMessage(
-        {error_token, AnalysisPhase::kParsePhase});
+        {error_token, AnalysisPhase::kParsePhase}, with_diagnostic_contex);
     EXPECT_TRUE(absl::StrContains(
         message, "hello.txt:2:5: syntax error, rejected \"w0rld\""));
   }
@@ -80,8 +81,9 @@ TEST(FileAnalyzerTest, TokenErrorMessageOneChar) {
     EXPECT_EQ(message, "token: \",\" at 1:6");
   }
   {
+    constexpr bool with_diagnostic_contex = false;
     const auto message = analyzer.LinterTokenErrorMessage(
-        {error_token, AnalysisPhase::kParsePhase});
+        {error_token, AnalysisPhase::kParsePhase}, with_diagnostic_contex);
     EXPECT_TRUE(absl::StrContains(
         message, "hello.txt:1:6: syntax error, rejected \",\""));
   }
@@ -97,8 +99,9 @@ TEST(FileAnalyzerTest, TokenErrorMessageDifferentLine) {
     EXPECT_EQ(message, "token: \"world\nbye\" at 1:8-2:3");
   }
   {
+    constexpr bool with_diagnostic_contex = false;
     const auto message = analyzer.LinterTokenErrorMessage(
-        {error_token, AnalysisPhase::kParsePhase});
+        {error_token, AnalysisPhase::kParsePhase}, with_diagnostic_contex);
     EXPECT_TRUE(absl::StrContains(
         message, "hello.txt:1:8: syntax error, rejected \"world\nbye\""));
   }
@@ -114,8 +117,9 @@ TEST(FileAnalyzerTest, TokenErrorMessageEOF) {
     EXPECT_EQ(message, "token: <<EOF>> at 3:1");
   }
   {
+    constexpr bool with_diagnostic_contex = false;
     const auto message = analyzer.LinterTokenErrorMessage(
-        {error_token, AnalysisPhase::kParsePhase});
+        {error_token, AnalysisPhase::kParsePhase}, with_diagnostic_contex);
     EXPECT_TRUE(absl::StrContains(
         message, "unbalanced.txt:3:1: syntax error (unexpected EOF)"));
   }
