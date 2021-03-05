@@ -16,6 +16,7 @@
 
 #include <algorithm>
 #include <functional>
+#include <iostream>
 #include <iterator>
 #include <ostream>
 #include <string>
@@ -72,8 +73,10 @@ struct LintViolationWithStatus {
   }
 };
 
-static std::set<LintViolationWithStatus> PrepareViolations(
-    const std::vector<LintRuleStatus>& statuses) {
+void LintStatusFormatter::FormatLintRuleStatuses(
+    std::ostream* stream, const std::vector<LintRuleStatus>& statuses,
+    absl::string_view base, absl::string_view path,
+    const std::vector<absl::string_view>& lines) const {
   std::set<LintViolationWithStatus> violations;
 
   // TODO(fangism): rewrite as a linear time merge of pre-ordered sub-sequences
@@ -82,33 +85,16 @@ static std::set<LintViolationWithStatus> PrepareViolations(
       violations.insert(LintViolationWithStatus(&violation, &status));
     }
   }
-  return violations;
-}
-
-void LintStatusFormatter::FormatLintRuleStatuses(
-    std::ostream* stream, const std::vector<LintRuleStatus>& statuses,
-    absl::string_view base, absl::string_view path) const {
-  auto violations = PrepareViolations(statuses);
-  for (auto violation : violations) {
-    FormatViolation(stream, *violation.violation, base, path,
-                    violation.status->url, violation.status->lint_rule_name);
-    *stream << std::endl;
-  }
-}
-
-void LintStatusFormatter::FormatLintRuleStatuses(
-    std::ostream* stream, const std::vector<LintRuleStatus>& statuses,
-    absl::string_view base, absl::string_view path,
-    const std::vector<absl::string_view>& lines) const {
-  auto violations = PrepareViolations(statuses);
 
   for (auto violation : violations) {
     FormatViolation(stream, *violation.violation, base, path,
                     violation.status->url, violation.status->lint_rule_name);
     *stream << std::endl;
     auto cursor = line_column_map_(violation.violation->token.left(base));
-    *stream << lines[cursor.line] << std::endl;
-    *stream << verible::Spacer(cursor.column) << "^" << std::endl;
+    if (cursor.line < lines.size()) {
+      *stream << lines[cursor.line] << std::endl;
+      *stream << verible::Spacer(cursor.column) << "^" << std::endl;
+    }
   }
 }
 

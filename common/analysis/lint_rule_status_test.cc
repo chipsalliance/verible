@@ -174,7 +174,7 @@ void RunLintStatusesTest(const LintStatusTest& test, bool show_context) {
   LintStatusFormatter formatter(test.text);
   const std::vector<absl::string_view> lines;
   if (!show_context) {
-    formatter.FormatLintRuleStatuses(&ss, statuses, test.text, test.path);
+    formatter.FormatLintRuleStatuses(&ss, statuses, test.text, test.path, {});
   } else {
     formatter.FormatLintRuleStatuses(&ss, statuses, test.text, test.path,
                                      absl::StrSplit(test.text, '\n'));

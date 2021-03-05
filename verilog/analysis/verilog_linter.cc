@@ -300,7 +300,7 @@ absl::Status VerilogLintTextStructure(std::ostream* stream,
     verible::LintStatusFormatter formatter(contents);
     if (!show_context) {
       formatter.FormatLintRuleStatuses(stream, linter_statuses, text_base,
-                                       filename);
+                                       filename, {});
     } else {
       formatter.FormatLintRuleStatuses(stream, linter_statuses, text_base,
                                        filename, text_structure.Lines());
