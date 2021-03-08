@@ -3217,12 +3217,12 @@ block_item_or_statement_or_null_list_opt
   | /* empty */
     { $$ = MakeTaggedNode(N::kBlockItemStatementList); }
   ;
+
 stream_expression
   : expression
     { $$ = move($1); }
-  /* TODO(fangism):
+/* #693:enabling */
   | expression TK_with select_variable_dimension
-   */
   ;
 stream_expression_list
   : stream_expression_list ',' stream_expression
@@ -3236,6 +3236,7 @@ stream_operator
   | TK_RS
     { $$ = move($1); }
   ;
+
 streaming_concatenation
   : '{' stream_operator slice_size_opt '{' stream_expression_list '}' '}'
     { $$ = MakeTaggedNode(N::kStreamingConcatenation, $1, $2, $3,
@@ -4811,9 +4812,9 @@ identifier_list
     { $$ = MakeTaggedNode(N::kIdentifierList, $1); }
   ;
 with_constraint_block_opt
-  : with_constraint_block
+  : /* #693:conflicts with_constraint_block
     { $$ = move($1); }
-  | /* empty */
+  | */ /* empty */
     { $$ = nullptr; }
   ;
 with_constraint_block
@@ -5101,9 +5102,9 @@ array_reduction_method
     { $$ = move($1); }
   ;
 array_method_with_predicate_opt
-  : TK_with '(' expression ')'
+  : /* #693:conflicts TK_with '(' expression ')'
     { $$ = MakeTaggedNode(N::kArrayWithPredicate, $1, MakeParenGroup($2, $3, $4)); }
-  | /* empty */
+  |*/ /* empty */
     { $$ = nullptr; }
   ;
 
