@@ -635,24 +635,46 @@ void TreeUnwrapper::SetIndentationsAndCreatePartitions(
     // Indent only when applying kAppendFittingSubPartitions in parents
     case NodeEnum::kArgumentList:
     case NodeEnum::kIdentifierList: {
-      if (Context().DirectParentsAre(
-              {NodeEnum::kParenGroup, NodeEnum::kRandomizeFunctionCall}) ||
-          Context().DirectParentsAre(
-              {NodeEnum::kParenGroup, NodeEnum::kFunctionCall}) ||
-          Context().DirectParentsAre(
-              {NodeEnum::kParenGroup,
-               NodeEnum::kRandomizeMethodCallExtension}) ||
-          Context().DirectParentsAre(
-              {NodeEnum::kParenGroup, NodeEnum::kSystemTFCall}) ||
-          Context().DirectParentsAre(
-              {NodeEnum::kParenGroup, NodeEnum::kMethodCallExtension})) {
-        // TODO(fangism): Using wrap_spaces because of poor support of
-        //     function/system/method/random calls inside trailing assignments,
-        //     if headers, ternary operators and so on
-        VisitIndentedSection(node, style_.wrap_spaces,
-                             PartitionPolicyEnum::kFitOnLineElseExpand);
+      if (style_.enable_experimental_tree_reshaper) {
+        if (Context().DirectParentsAre(
+                {NodeEnum::kParenGroup, NodeEnum::kRandomizeFunctionCall}) ||
+            Context().DirectParentsAre(
+                {NodeEnum::kParenGroup, NodeEnum::kFunctionCall}) ||
+            Context().DirectParentsAre(
+                {NodeEnum::kParenGroup,
+                 NodeEnum::kRandomizeMethodCallExtension}) ||
+            Context().DirectParentsAre(
+                {NodeEnum::kParenGroup, NodeEnum::kSystemTFCall}) ||
+            Context().DirectParentsAre(
+                {NodeEnum::kParenGroup, NodeEnum::kMethodCallExtension})) {
+          // TODO(fangism): Using wrap_spaces because of poor support of
+          //     function/system/method/random calls inside trailing assignments,
+          //     if headers, ternary operators and so on
+          VisitIndentedSection(node, 0,
+                               PartitionPolicyEnum::kWrapSubPartitions);
+        } else {
+          TraverseChildren(node);
+        }
       } else {
-        TraverseChildren(node);
+        if (Context().DirectParentsAre(
+                {NodeEnum::kParenGroup, NodeEnum::kRandomizeFunctionCall}) ||
+            Context().DirectParentsAre(
+                {NodeEnum::kParenGroup, NodeEnum::kFunctionCall}) ||
+            Context().DirectParentsAre(
+                {NodeEnum::kParenGroup,
+                 NodeEnum::kRandomizeMethodCallExtension}) ||
+            Context().DirectParentsAre(
+                {NodeEnum::kParenGroup, NodeEnum::kSystemTFCall}) ||
+            Context().DirectParentsAre(
+                {NodeEnum::kParenGroup, NodeEnum::kMethodCallExtension})) {
+          // TODO(fangism): Using wrap_spaces because of poor support of
+          //     function/system/method/random calls inside trailing assignments,
+          //     if headers, ternary operators and so on
+          VisitIndentedSection(node, style_.wrap_spaces,
+                               PartitionPolicyEnum::kFitOnLineElseExpand);
+        } else {
+          TraverseChildren(node);
+        }
       }
       break;
     }
@@ -860,31 +882,40 @@ void TreeUnwrapper::SetIndentationsAndCreatePartitions(
       const int indent = ShouldIndentRelativeToDirectParent(Context())
                              ? style_.indentation_spaces
                              : 0;
-      VisitIndentedSection(node, indent,
-                           PartitionPolicyEnum::kFitOnLineElseExpand);
+      if (style_.enable_experimental_tree_reshaper) {
+        VisitIndentedSection(node, indent,
+                             PartitionPolicyEnum::kApplyOptimalLayout);
+      } else {
+        VisitIndentedSection(node, indent,
+                             PartitionPolicyEnum::kFitOnLineElseExpand);
+      }
       break;
     }
 
     case NodeEnum::kReferenceCallBase: {
-      // TODO(fangism): Create own section only for standalone calls
-      if (Context().DirectParentIs(NodeEnum::kStatement)) {
-        const auto& subnode = verible::SymbolCastToNode(
-            *ABSL_DIE_IF_NULL(node.children().back()));
-        if (subnode.MatchesTag(NodeEnum::kRandomizeMethodCallExtension) &&
-            subnode.children().back() != nullptr) {
-          // TODO(fangism): Handle constriants
-          VisitIndentedSection(node, 0, PartitionPolicyEnum::kAlwaysExpand);
-        } else if (subnode.MatchesTagAnyOf(
-                       {NodeEnum::kMethodCallExtension,
-                        NodeEnum::kRandomizeMethodCallExtension,
-                        NodeEnum::kFunctionCall})) {
-          VisitIndentedSection(
-              node, 0, PartitionPolicyEnum::kAppendFittingSubPartitions);
+      if (style_.enable_experimental_tree_reshaper) {
+        VisitIndentedSection(node, 0, PartitionPolicyEnum::kApplyOptimalLayout);
+      } else {
+        // TODO(fangism): Create own section only for standalone calls
+        if (Context().DirectParentIs(NodeEnum::kStatement)) {
+          const auto& subnode = verible::SymbolCastToNode(
+              *ABSL_DIE_IF_NULL(node.children().back()));
+          if (subnode.MatchesTag(NodeEnum::kRandomizeMethodCallExtension) &&
+              subnode.children().back() != nullptr) {
+            // TODO(fangism): Handle constriants
+            VisitIndentedSection(node, 0, PartitionPolicyEnum::kAlwaysExpand);
+          } else if (subnode.MatchesTagAnyOf(
+                         {NodeEnum::kMethodCallExtension,
+                          NodeEnum::kRandomizeMethodCallExtension,
+                          NodeEnum::kFunctionCall})) {
+            VisitIndentedSection(
+                node, 0, PartitionPolicyEnum::kAppendFittingSubPartitions);
+          } else {
+            TraverseChildren(node);
+          }
         } else {
           TraverseChildren(node);
         }
-      } else {
-        TraverseChildren(node);
       }
       break;
     }
@@ -1016,6 +1047,35 @@ void TreeUnwrapper::SetIndentationsAndCreatePartitions(
       break;
     }
 
+    case NodeEnum::kBinaryExpression: {
+      if (style_.enable_experimental_tree_reshaper) {
+        if (Context().DirectParentIs(NodeEnum::kBinaryExpression) == false) {
+          VisitIndentedSection(node, 0,
+                               PartitionPolicyEnum::kWrapSubPartitions);
+        } else {
+          TraverseChildren(node);
+        }
+      } else {
+        TraverseChildren(node);
+      }
+      break;
+    }
+
+    case NodeEnum::kParenGroup: {
+      if (style_.enable_experimental_tree_reshaper) {
+        if (Context().DirectParentIsOneOf({NodeEnum::kExpression,
+                                           NodeEnum::kBinaryExpression})) {
+          VisitIndentedSection(node, style_.indentation_spaces,
+                               PartitionPolicyEnum::kWrapSubPartitions);
+        } else {
+          TraverseChildren(node);
+        }
+      } else {
+        TraverseChildren(node);
+      }
+      break;
+    }
+
       // module instantiations (which look like data declarations) want to
       // expand one parameter/port per line.
     case NodeEnum::kActualParameterByNameList: {
@@ -1105,17 +1165,26 @@ void TreeUnwrapper::SetIndentationsAndCreatePartitions(
     // and kExpression can be found in kArgumentList & kMacroArgList
     case NodeEnum::kReference:
     case NodeEnum::kExpression: {
-      if (Context().DirectParentIsOneOf({NodeEnum::kMacroArgList,
-                                         NodeEnum::kArgumentList,
-                                         NodeEnum::kIdentifierList})) {
-        // original un-lexed macro argument was successfully expanded
-        VisitNewUnwrappedLine(node);
-      } else if (Context().DirectParentIs(NodeEnum::kOpenRangeList) &&
-                 Context().IsInside(NodeEnum::kConcatenationExpression)) {
-        VisitIndentedSection(node, 0,
-                             PartitionPolicyEnum::kFitOnLineElseExpand);
+      if (style_.enable_experimental_tree_reshaper) {
+        if (Context().DirectParentIsOneOf({NodeEnum::kNetVariableAssignment})) {
+          VisitIndentedSection(node, style_.indentation_spaces,
+                               PartitionPolicyEnum::kWrapSubPartitions);
+        } else {
+          TraverseChildren(node);
+        }
       } else {
-        TraverseChildren(node);
+        if (Context().DirectParentIsOneOf({NodeEnum::kMacroArgList,
+                                           NodeEnum::kArgumentList,
+                                           NodeEnum::kIdentifierList})) {
+          // original un-lexed macro argument was successfully expanded
+          VisitNewUnwrappedLine(node);
+        } else if (Context().DirectParentIs(NodeEnum::kOpenRangeList) &&
+                   Context().IsInside(NodeEnum::kConcatenationExpression)) {
+          VisitIndentedSection(node, 0,
+                               PartitionPolicyEnum::kFitOnLineElseExpand);
+        } else {
+          TraverseChildren(node);
+        }
       }
       break;
     }
@@ -1545,16 +1614,24 @@ void TreeUnwrapper::ReshapeTokenPartitions(
       break;
     }
     case NodeEnum::kReferenceCallBase: {
-      const auto& subnode = verible::SymbolCastToNode(*node.children().back());
-      if (subnode.MatchesTagAnyOf({NodeEnum::kMethodCallExtension,
-                                   NodeEnum::kFunctionCall,
-                                   NodeEnum::kRandomizeMethodCallExtension})) {
-        if (partition.Value().PartitionPolicy() ==
-            PartitionPolicyEnum::kAppendFittingSubPartitions) {
-          auto& last = *ABSL_DIE_IF_NULL(partition.RightmostDescendant());
-          if (PartitionStartsWithCloseParen(last) ||
-              PartitionStartsWithSemicolon(last)) {
-            verible::MergeLeafIntoPreviousLeaf(&last);
+      if (style.enable_experimental_tree_reshaper) {
+        auto& last = *ABSL_DIE_IF_NULL(partition.RightmostDescendant());
+        if (PartitionStartsWithCloseParen(last) ||
+            PartitionStartsWithSemicolon(last)) {
+          verible::MergeLeafIntoPreviousLeaf(&last);
+        }
+      } else {
+        const auto& subnode = verible::SymbolCastToNode(*node.children().back());
+        if (subnode.MatchesTagAnyOf({NodeEnum::kMethodCallExtension,
+                                     NodeEnum::kFunctionCall,
+                                     NodeEnum::kRandomizeMethodCallExtension})) {
+          if (partition.Value().PartitionPolicy() ==
+              PartitionPolicyEnum::kAppendFittingSubPartitions) {
+            auto& last = *ABSL_DIE_IF_NULL(partition.RightmostDescendant());
+            if (PartitionStartsWithCloseParen(last) ||
+                PartitionStartsWithSemicolon(last)) {
+              verible::MergeLeafIntoPreviousLeaf(&last);
+            }
           }
         }
       }
@@ -1569,6 +1646,20 @@ void TreeUnwrapper::ReshapeTokenPartitions(
         if (PartitionStartsWithCloseParen(last) ||
             PartitionStartsWithSemicolon(last)) {
           verible::MergeLeafIntoPreviousLeaf(&last);
+        }
+      }
+      break;
+    }
+
+    case NodeEnum::kParenGroup: {
+      if (style.enable_experimental_tree_reshaper) {
+        if (partition.Value().PartitionPolicy() ==
+            PartitionPolicyEnum::kWrapSubPartitions) {
+          auto& last = *ABSL_DIE_IF_NULL(partition.RightmostDescendant());
+          if (PartitionStartsWithCloseParen(last) ||
+              PartitionStartsWithSemicolon(last)) {
+            verible::MergeLeafIntoPreviousLeaf(&last);
+          }
         }
       }
       break;
@@ -1681,11 +1772,13 @@ void TreeUnwrapper::ReshapeTokenPartitions(
     {
       VLOG(4) << "before moving semicolon:\n" << partition;
       AttachTrailingSemicolonToPreviousPartition(&partition);
-      // RHS may have been further partitioned, e.g. a macro call.
-      auto& children = partition.Children();
-      if (children.size() == 2 && children.front().is_leaf() /* left side */) {
-        verible::MergeLeafIntoNextLeaf(&children.front());
-        VLOG(4) << "after merge leaf (left-into-right):\n" << partition;
+      if (style.enable_experimental_tree_reshaper == false) {
+        // RHS may have been further partitioned, e.g. a macro call.
+        auto& children = partition.Children();
+        if (children.size() == 2 && children.front().is_leaf() /* left side */) {
+          verible::MergeLeafIntoNextLeaf(&children.front());
+          VLOG(4) << "after merge leaf (left-into-right):\n" << partition;
+        }
       }
       break;
     }
@@ -1713,8 +1806,10 @@ void TreeUnwrapper::ReshapeTokenPartitions(
       // TODO(fangism): reshape for multiple assignments.
       verible::MergeConsecutiveSiblings(&partition, 0);
       VLOG(4) << "after merging 'assign':\n" << partition;
-      AdjustSubsequentPartitionsIndentation(&partition, style.wrap_spaces);
-      VLOG(4) << "after adjusting partitions indentation:\n" << partition;
+      if (style.enable_experimental_tree_reshaper == false) {
+        AdjustSubsequentPartitionsIndentation(&partition, style.wrap_spaces);
+        VLOG(4) << "after adjusting partitions indentation:\n" << partition;
+      }
       break;
     }
     case NodeEnum::kForSpec: {
@@ -1912,6 +2007,18 @@ void TreeUnwrapper::Visit(const verible::SyntaxTreeLeaf& leaf) {
         // Partition would begin with a comma,
         // instead add this token to previous partition
         MergeLastTwoPartitions();
+      }
+      break;
+    }
+    case '+':
+    case '=': {
+      if (style_.enable_experimental_tree_reshaper) {
+        if (current_context_.DirectParentIsOneOf({
+                NodeEnum::kNetVariableAssignment,
+                NodeEnum::kBinaryExpression,
+            })) {
+          MergeLastTwoPartitions();
+        }
       }
       break;
     }
