@@ -480,6 +480,7 @@ is not locally defined, so the grammar here uses only generic identifiers.
 %token TK_wait_order "wait_order"
 %token TK_wildcard "wildcard"
 %token TK_with "with"
+%token TK_with_followed_by_bracket
 %token TK_with__covergroup "with(covergroup)"
 %token TK_within "within"
 /* Fake tokens that are passed once we have an initial token. */
@@ -3218,11 +3219,17 @@ block_item_or_statement_or_null_list_opt
     { $$ = MakeTaggedNode(N::kBlockItemStatementList); }
   ;
 
+array_range_expression  /* TODO: fill in $$ */
+  : expression
+  | expression ':' expression
+  | expression TK_PO_POS expression
+  | expression TK_PO_NEG expression
+  ;
+
 stream_expression
   : expression
     { $$ = move($1); }
-/* #693:enabling */
-  | expression TK_with select_variable_dimension
+  | expression TK_with_followed_by_bracket array_range_expression ']'
   ;
 stream_expression_list
   : stream_expression_list ',' stream_expression
@@ -4812,9 +4819,9 @@ identifier_list
     { $$ = MakeTaggedNode(N::kIdentifierList, $1); }
   ;
 with_constraint_block_opt
-  : /* #693:conflicts with_constraint_block
+  : with_constraint_block
     { $$ = move($1); }
-  | */ /* empty */
+  | /* empty */
     { $$ = nullptr; }
   ;
 with_constraint_block
@@ -5102,9 +5109,9 @@ array_reduction_method
     { $$ = move($1); }
   ;
 array_method_with_predicate_opt
-  : /* #693:conflicts TK_with '(' expression ')'
+  : TK_with '(' expression ')'
     { $$ = MakeTaggedNode(N::kArrayWithPredicate, $1, MakeParenGroup($2, $3, $4)); }
-  |*/ /* empty */
+  | /* empty */
     { $$ = nullptr; }
   ;
 
