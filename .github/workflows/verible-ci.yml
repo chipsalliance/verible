@@ -2,7 +2,13 @@ name: verible-ci
 
 on:
   push:
+    branches:
+    - master
+    - main
   pull_request:
+    branches:
+    - master
+    - main
 
 env:
   DOCKER_BUILDKIT: 1
@@ -16,6 +22,11 @@ jobs:
     runs-on: ubuntu-20.04
 
     steps:
+
+    - name: Cancel previous
+      uses: styfle/cancel-workflow-action@0.8.0
+      with:
+        access_token: ${{ github.token }}
 
     - name: Checkout code
       uses: actions/checkout@v2
@@ -45,6 +56,11 @@ jobs:
     name: Check · ${{ matrix.mode }}
 
     steps:
+    
+    - name: Cancel previous
+      uses: styfle/cancel-workflow-action@0.8.0
+      with:
+        access_token: ${{ github.token }}
 
     - name: Checkout code
       uses: actions/checkout@v2
@@ -177,6 +193,7 @@ jobs:
     needs: [ Check, Build ]
     runs-on: ubuntu-20.04
     name: 📦 Release
+    if: ${{github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/head/master')}}
 
     steps:
 
@@ -202,7 +219,6 @@ jobs:
         ls -lah artifact
 
     - name: Deploy release and assets
-      if: github.ref == 'refs/heads/master' && github.event_name != 'pull_request'
       uses: svenstaro/upload-release-action@v2
       with:
         repo_token: ${{ secrets.GITHUB_TOKEN }}
