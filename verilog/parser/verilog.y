@@ -3243,7 +3243,6 @@ stream_operator
   | TK_RS
     { $$ = move($1); }
   ;
-
 streaming_concatenation
   : '{' stream_operator slice_size_opt '{' stream_expression_list '}' '}'
     { $$ = MakeTaggedNode(N::kStreamingConcatenation, $1, $2, $3,
