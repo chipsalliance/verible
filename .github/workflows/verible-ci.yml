@@ -24,7 +24,7 @@ jobs:
     steps:
 
     - name: Cancel previous
-      uses: styfle/cancel-workflow-action@0.7.0
+      uses: styfle/cancel-workflow-action@0.8.0
       with:
         access_token: ${{ github.token }}
 
@@ -58,7 +58,7 @@ jobs:
     steps:
     
     - name: Cancel previous
-      uses: styfle/cancel-workflow-action@0.7.0
+      uses: styfle/cancel-workflow-action@0.8.0
       with:
         access_token: ${{ github.token }}
 
@@ -193,6 +193,7 @@ jobs:
     needs: [ Check, Build ]
     runs-on: ubuntu-20.04
     name: 📦 Release
+    if: ${{github.ref == 'refs/heads/main' || github.ref == 'refs/head/master'}}
 
     steps:
 
