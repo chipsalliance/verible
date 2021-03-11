@@ -298,6 +298,7 @@ static const auto* FormatTokenTypeMap =
         {verilog_tokentype::TK_wait_order, FTT::keyword},
         {verilog_tokentype::TK_wildcard, FTT::keyword},
         {verilog_tokentype::TK_with, FTT::keyword},
+        {verilog_tokentype::TK_with__followed_by_bracket, FTT::keyword},
         {verilog_tokentype::TK_with__covergroup, FTT::keyword},
         {verilog_tokentype::TK_within, FTT::keyword},
         {verilog_tokentype::TK_timeprecision_check, FTT::keyword},

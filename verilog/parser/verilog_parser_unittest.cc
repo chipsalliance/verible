@@ -623,6 +623,9 @@ static const ParserTestCaseArray kFunctionTests = {
     "function void unpack_id(utils_pkg::bytestream_t bytes);\n"
     "{<< byte {this.reserved, this.id}} = bytes;\n"
     "endfunction",
+    "function void unpack_id_with(int nums);\n"
+    "{>>8 {foo, bar with [ a +: b]}} = nums;\n"
+    "endfunction",
     // concatenation lvalue
     "module foo;\n"
     "  initial begin\n"

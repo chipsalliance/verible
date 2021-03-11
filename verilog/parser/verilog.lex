@@ -672,6 +672,12 @@ wait_order { UpdateLocation(); return TK_wait_order; }
 wildcard { UpdateLocation(); return TK_wildcard; }
 <COVERGROUP>with { UpdateLocation(); return TK_with__covergroup; }
 with { UpdateLocation(); return TK_with; }
+"with"[ \t]*"[" {
+  /* TODO: formulate the ws sequence as any whitespace+comment sequence*/
+  yyless(4);
+  UpdateLocation();
+  return TK_with__followed_by_bracket;
+}
 within { UpdateLocation(); return TK_within; }
 timeprecision_check { UpdateLocation(); return TK_timeprecision_check; }
 timeunit_check { UpdateLocation(); return TK_timeunit_check; }
