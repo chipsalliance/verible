@@ -56,7 +56,7 @@ jobs:
     name: Check · ${{ matrix.mode }}
 
     steps:
-    
+
     - name: Cancel previous
       uses: styfle/cancel-workflow-action@0.8.0
       with:
@@ -160,6 +160,9 @@ jobs:
   Build:
     needs: Matrix
     runs-on: ubuntu-20.04
+    # Reduce Actions workload for now, by only building all artifacts on push.
+    if: ${{github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')}}
+
     strategy:
       fail-fast: false
       matrix:
@@ -193,7 +196,6 @@ jobs:
     needs: [ Check, Build ]
     runs-on: ubuntu-20.04
     name: 📦 Release
-    if: ${{github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/head/master')}}
 
     steps:
 
