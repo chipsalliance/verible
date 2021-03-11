@@ -480,7 +480,7 @@ is not locally defined, so the grammar here uses only generic identifiers.
 %token TK_wait_order "wait_order"
 %token TK_wildcard "wildcard"
 %token TK_with "with"
-%token TK_with_followed_by_bracket
+%token TK_with__followed_by_bracket "with ["
 %token TK_with__covergroup "with(covergroup)"
 %token TK_within "within"
 /* Fake tokens that are passed once we have an initial token. */
@@ -3219,17 +3219,11 @@ block_item_or_statement_or_null_list_opt
     { $$ = MakeTaggedNode(N::kBlockItemStatementList); }
   ;
 
-array_range_expression  /* TODO: fill in $$ */
-  : expression
-  | expression ':' expression
-  | expression TK_PO_POS expression
-  | expression TK_PO_NEG expression
-  ;
-
 stream_expression
   : expression
     { $$ = move($1); }
-  | expression TK_with_followed_by_bracket array_range_expression ']'
+  | expression TK_with__followed_by_bracket select_variable_dimension
+    { $$ = ExtendNode($1, $2, $3); }
   ;
 stream_expression_list
   : stream_expression_list ',' stream_expression
