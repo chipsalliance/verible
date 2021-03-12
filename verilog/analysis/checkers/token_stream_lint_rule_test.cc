@@ -41,6 +41,7 @@ TEST(StringLiteralConcatenationTest, FunctionFailures) {
        "\"Humpty Dumpty had a great fall.\"};", "\nendmodule"},
       {"module m;\n", "string tmp = {\"Humpty Dumpty \\ sat on a wall.\",",
        "\"Humpty Dumpty had a great fall.\"};", "\nendmodule"},
+      {"module a();\nstring x = 1 ? \"foo\" : \"bar\";\nendmodule"},
       {"module m;\n",
        "string tmp=",
        {kToken,
