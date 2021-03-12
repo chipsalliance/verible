@@ -624,7 +624,14 @@ static const ParserTestCaseArray kFunctionTests = {
     "{<< byte {this.reserved, this.id}} = bytes;\n"
     "endfunction",
     "function void unpack_id_with(int nums);\n"
-    "{>>8 {foo, bar with [ a +: b]}} = nums;\n"
+    "{>>8 {foo, bar with \t [ a +: b]}} = nums;\n"
+    "endfunction",
+    "function void unpack_id_with(int nums);\n"
+    "{>>8 {foo, bar with /* some comment */ [ a +: b]}} = nums;\n"
+    "endfunction",
+    "function void unpack_id_with(int nums);\n"
+    "{>>8 {foo, bar with // eol comment\n"
+    "      [ a +: b]}} = nums;\n"
     "endfunction",
     // concatenation lvalue
     "module foo;\n"

@@ -672,9 +672,8 @@ wait_order { UpdateLocation(); return TK_wait_order; }
 wildcard { UpdateLocation(); return TK_wildcard; }
 <COVERGROUP>with { UpdateLocation(); return TK_with__covergroup; }
 with { UpdateLocation(); return TK_with; }
-"with"[ \t]*"[" {
-  /* TODO: formulate the ws sequence as any whitespace+comment sequence*/
-  yyless(4);
+"with"({TraditionalCommentOrSpace}|{EndOfLineComment})*"[" {
+  yyless(4);    // only consume 'with', push rest back to input
   UpdateLocation();
   return TK_with__followed_by_bracket;
 }
