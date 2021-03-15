@@ -1470,6 +1470,9 @@ static std::initializer_list<LexerTestData> kSequenceTests = {
 
 static std::initializer_list<LexerTestData> kContextKeywordTests = {
     {{SymbolIdentifier, "option"}},
+    {{TK_with__followed_by_bracket, "with"},
+     " // hello\n"
+     " /* this bracket is the context we're looking for -> */["},
     {{TK_covergroup, "covergroup"},
      " ",
      {SymbolIdentifier, "blah1"},

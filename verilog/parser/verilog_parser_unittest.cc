@@ -627,7 +627,8 @@ static const ParserTestCaseArray kFunctionTests = {
     "{>>8 {foo, bar with \t [ a +: b]}} = nums;\n"
     "endfunction",
     "function void unpack_id_with(int nums);\n"
-    "{>>8 {foo, bar with /* some comment */ [ a +: b]}} = nums;\n"
+    "{>>8 {foo, bar with /* some comment */ /* another one */ // more\n"
+    "[ a +: b]}} = nums;\n"
     "endfunction",
     "function void unpack_id_with(int nums);\n"
     "{>>8 {foo, bar with // eol comment\n"
