@@ -208,6 +208,9 @@ static WithReason<int> SpacesRequiredBetween(
   if (right_context.IsInsideFirst({NodeEnum::kStreamingConcatenation}, {})) {
     if (left.TokenEnum() == TK_LS || left.TokenEnum() == TK_RS) {
       return {0, "No space around streaming operators"};
+    } else if (left.TokenEnum() == TK_with__followed_by_bracket ||
+               right.TokenEnum() == TK_with__followed_by_bracket) {
+      return {1, "Space around 'with' keyword in streaming concatenation."};
     } else if (left.format_token_enum == FormatTokenType::numeric_literal ||
                left.format_token_enum == FormatTokenType::identifier ||
                left.format_token_enum == FormatTokenType::keyword) {
