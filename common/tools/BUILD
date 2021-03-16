@@ -7,9 +7,7 @@ cc_binary(
     srcs = ["patch_tool.cc"],
     visibility = ["//:__subpackages__"],
     deps = [
-        "//common/strings:compare",
         "//common/strings:patch",
-        "//common/util:container_iterator_range",
         "//common/util:file_util",
         "//common/util:init_command_line",
         "//common/util:subcommand",
