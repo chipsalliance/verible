@@ -60,12 +60,12 @@ class VerilogSourceFile {
   // Attempts to lex and parse the file (without preprocessing).
   // Will Open() if the file is not already opened.
   // Depending on context, not all files are suitable for standalone parsing.
-  absl::Status Parse();
+  virtual absl::Status Parse();
 
   // After Open(), the underlying text structure contains at least the file's
   // contents.  After Parse(), it may contain other analyzed structural forms.
   // Before Open(), this returns nullptr.
-  const verible::TextStructureView* GetTextStructure() const;
+  virtual const verible::TextStructureView* GetTextStructure() const;
 
   // Returns the first non-Ok status if there is one, else OkStatus().
   absl::Status Status() const { return status_; }
@@ -163,6 +163,34 @@ class InMemoryVerilogSourceFile : public VerilogSourceFile {
 
  private:
   const absl::string_view contents_for_open_;
+};
+
+// Source file that was already parsed and got its own TextStructure.
+// Doesn't require file-system access, nor create temporary files.
+class ParsedVerilogSourceFile final : public VerilogSourceFile {
+ public:
+  // filename can be fake, it is not used to open any file.
+  // text_structure is a pointer to a TextStructureView object of
+  //     already parsed file. Current implementation does _not_ make a
+  //     copy of it and expects it will be available for the lifetime of
+  //     object of this class.
+  ParsedVerilogSourceFile(absl::string_view filename,
+                          const verible::TextStructureView* text_structure,
+                          absl::string_view corpus = "")
+      : VerilogSourceFile(filename, filename, corpus),
+        text_structure_(text_structure) {}
+
+  // Do nothing (file contents already loaded)
+  absl::Status Open() override;
+
+  // Do nothing (contents already parsed)
+  absl::Status Parse() override;
+
+  // Return TextStructureView provided previously in constructor
+  const verible::TextStructureView* GetTextStructure() const override;
+
+ private:
+  const verible::TextStructureView* text_structure_;
 };
 
 // VerilogProject represents a set of files as a cohesive unit of compilation.
