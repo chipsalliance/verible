@@ -100,9 +100,8 @@ int LintOneFile(std::ostream* stream, absl::string_view filename,
     const auto lex_status = ABSL_DIE_IF_NULL(analyzer)->LexStatus();
     const auto parse_status = analyzer->ParseStatus();
     if (!lex_status.ok() || !parse_status.ok()) {
-      constexpr bool with_diagnostic_context = false;
       const std::vector<std::string> syntax_error_messages(
-          analyzer->LinterTokenErrorMessages(with_diagnostic_context));
+          analyzer->LinterTokenErrorMessages(show_context));
       for (const auto& message : syntax_error_messages) {
         *stream << message << std::endl;
       }
