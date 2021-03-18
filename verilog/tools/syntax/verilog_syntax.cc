@@ -157,12 +157,14 @@ static int AnalyzeOneFile(absl::string_view content, absl::string_view filename,
 
   if (!lex_status.ok() || !parse_status.ok()) {
     const std::vector<std::string> syntax_error_messages(
-        analyzer->LinterTokenErrorMessages(absl::GetFlag(FLAGS_show_diagnostic_context)));
+        analyzer->LinterTokenErrorMessages(
+            absl::GetFlag(FLAGS_show_diagnostic_context)));
     const int error_limit = absl::GetFlag(FLAGS_error_limit);
     int error_count = 0;
     if (!absl::GetFlag(FLAGS_export_json)) {
       const std::vector<std::string> syntax_error_messages(
-          analyzer->LinterTokenErrorMessages());
+          analyzer->LinterTokenErrorMessages(
+              absl::GetFlag(FLAGS_show_diagnostic_context)));
       for (const auto& message : syntax_error_messages) {
         std::cout << message << std::endl;
         ++error_count;
