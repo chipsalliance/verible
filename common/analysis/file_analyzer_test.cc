@@ -87,7 +87,9 @@ TEST(FileAnalyzerTest, TokenErrorMessageSameLineWithContext) {
     EXPECT_TRUE(
         absl::StrContains(message,
                           "hello.txt:2:5: syntax error, rejected \"w0rld\" "
-                          "(syntax-error).\nbye w0rld\n    ^"));
+                          "(syntax-error).\n"
+                          "bye w0rld\n"
+                          "    ^"));
   }
 }
 
@@ -124,7 +126,9 @@ TEST(FileAnalyzerTest, TokenErrorMessageOneCharWithContext) {
         {error_token, AnalysisPhase::kParsePhase}, with_diagnostic_context);
     EXPECT_TRUE(absl::StrContains(message,
                                   "hello.txt:1:6: syntax error, rejected \",\" "
-                                  "(syntax-error).\nhello, world\n     ^"));
+                                  "(syntax-error).\n"
+                                  "hello, world\n"
+                                  "     ^"));
   }
 }
 
@@ -162,7 +166,9 @@ TEST(FileAnalyzerTest, TokenErrorMessageDifferentLineWithContext) {
     EXPECT_TRUE(absl::StrContains(
         message,
         "hello.txt:1:8: syntax error, rejected \"world\nbye\" "
-        "(syntax-error).\nhello, world\n       ^"));
+        "(syntax-error).\n"
+        "hello, world\n"
+        "       ^"));
   }
 }
 

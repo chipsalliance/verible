@@ -94,8 +94,14 @@ class FileAnalyzer : public TextStructure {
   std::vector<std::string> TokenErrorMessages() const;
 
   // Diagnostic message for rejected tokens for linter.
+  // Second argument is the show_context option. When enabled
+  // additional diagnostic line is concatenated to an error message 
+  // with marker that points to vulnerable token
   std::string LinterTokenErrorMessage(const RejectedToken&, bool) const;
 
+  // First argument is the show_context option. When enabled
+  // additional diagnostic line is concatenated to an error message 
+  // with marker that points to vulnerable token
   std::vector<std::string> LinterTokenErrorMessages(bool) const;
 
   const std::vector<RejectedToken>& GetRejectedTokens() const {
