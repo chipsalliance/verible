@@ -104,6 +104,8 @@ ABSL_FLAG(bool, verify_convergence, true,
           "verify that re-formatting the formatted output yields "
           "no further changes, i.e. formatting is convergent.");
 
+ABSL_FLAG(bool, verbose, false, "Be more verbose.");
+
 ABSL_FLAG(int, show_largest_token_partitions, 0,
           "If > 0, print token partitioning and then "
           "exit without formatting output.");
@@ -292,7 +294,7 @@ static bool formatOneFile(absl::string_view filename,
         FileMsg(filename) << "error writing result " << status << std::endl;
         return false;
       }
-    } else {
+    } else if (absl::GetFlag(FLAGS_verbose)) {
       FileMsg(filename) << "Already formatted, no change." << std::endl;
     }
   } else {
