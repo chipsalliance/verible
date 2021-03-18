@@ -68,21 +68,19 @@ static const Matcher& StringLiteralMatcher() {
 void TokenStreamLintRule::HandleSymbol(const verible::Symbol& symbol,
                                        const SyntaxTreeContext& context) {
   verible::matcher::BoundSymbolManager manager;
-  if (StringLiteralMatcher().Matches(symbol, &manager)) {
-    const auto& string_node = SymbolCastToNode(symbol);
-    const auto& node_children = string_node.children();
-    const auto& literal =
-        std::find_if(node_children.begin(), node_children.end(),
-                     [](const verible::SymbolPtr& p) {
-                       return p.get()->Tag().tag == TK_StringLiteral;
-                     });
-    if (literal == node_children.end()) {
-      return;
-    }
-    const auto& string_literal = SymbolCastToLeaf(*literal->get());
-    if (absl::StrContains(string_literal.get().text(), "\\\n")) {
-      violations_.insert(LintViolation(symbol, kMessage, context));
-    }
+  if (!StringLiteralMatcher().Matches(symbol, &manager)) {
+    return;
+  }
+  const auto& string_node = SymbolCastToNode(symbol);
+  const auto& node_children = string_node.children();
+  const auto& literal =
+      std::find_if(node_children.begin(), node_children.end(),
+                   [](const verible::SymbolPtr& p) {
+                     return p.get()->Tag().tag == TK_StringLiteral;
+                   });
+  const auto& string_literal = SymbolCastToLeaf(*literal->get());
+  if (absl::StrContains(string_literal.get().text(), "\\\n")) {
+    violations_.insert(LintViolation(symbol, kMessage, context));
   }
 }
 
