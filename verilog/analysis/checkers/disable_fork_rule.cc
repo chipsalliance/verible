@@ -47,20 +47,20 @@ VERILOG_REGISTER_LINT_RULE(DisableForkNoLabelsRule);
 absl::string_view DisableForkNoLabelsRule::Name() {
   return "disable-statement";
 }
-const char DisableForkNoLabelsRule::kTopic[] = "disable-statement";
+const char DisableForkNoLabelsRule::kTopic[] =
+    "disable-labelled-fork-statement";
 const char DisableForkNoLabelsRule::kMessage[] =
     "Invalid usage of disable statement. Allowed construction is: disable "
     "fork;";
 
 std::string DisableForkNoLabelsRule::GetDescription(
     DescriptionType description_type) {
-  return absl::StrCat("Checks that there are no occurrences of ",
-                      Codify("disable some_label", description_type), ". The ",
-                      Codify("disable some_label", description_type),
-                      " can point to the labels created with begin keyword "
-                      "without initial/final/always specifier",
-                      ". Use ", Codify("disable fork", description_type),
-                      " instead. See ", GetStyleGuideCitation(kTopic), ".");
+  return absl::StrCat(
+      "Checks that there are no occurrences of ",
+      Codify("disable some_label", description_type),
+      " if label is referring to a fork or other none sequential block label.",
+      ". Use ", Codify("disable fork", description_type), " instead. See ",
+      GetStyleGuideCitation(kTopic), ".");
 }
 
 static const Matcher& DisableMatcher() {
@@ -78,32 +78,40 @@ void DisableForkNoLabelsRule::HandleSymbol(const verible::Symbol& symbol,
     if (disableLabels.size() == 0) {
       return;
     }
-    // validate all kBegin parents
-    // if there is matching label return
+    // look for every kBegin node starting from kDisableLabel token
+    // the kDisableLabel can be nested in some kBegin nodes
+    // so I'm looking for the kBegin node that direct parent
+    // is not one of the initial/final/always statemnts since such blocks are 
+    // considered to be invalid. If the label for diable statment is not
+    // found, it means that there is no appropriate label or the label
+    // points to the illegal node such as forked label
     const auto& rcontext = reversed_view(context);
-    for (size_t i = 0; i < context.size() - 1; i++) {
-      const auto& node = *(rcontext.begin() + i);
-      if (node->Tag().tag == static_cast<int>(NodeEnum::kSeqBlock)) {
-        for (const auto& ch : node->children()) {
-          if (ch.get()->Tag().tag == static_cast<int>(NodeEnum::kBegin)) {
-            const auto beginLabels = FindAllSymbolIdentifierLeafs(*ch);
-            if (beginLabels.size() == 0) {
-              continue;
-            }
-            const auto& beginLabel = SymbolCastToLeaf(*beginLabels[0].match);
-            const auto& disableLabel =
-                SymbolCastToLeaf(*disableLabels[0].match);
-            const auto& pnode = *(rcontext.begin() + i + 1);
-            const auto& ptag = pnode->Tag().tag;
-            if (ptag == static_cast<int>(NodeEnum::kInitialStatement) ||
-                ptag == static_cast<int>(NodeEnum::kFinalStatement) ||
-                ptag == static_cast<int>(NodeEnum::kAlwaysStatement)) {
-              break;
-            }
-            if (beginLabel.get().text() == disableLabel.get().text()) {
-              return;
-            }
-          }
+    for(auto rc = rcontext.begin(); rc != rcontext.end(); rc++)
+    {
+      const auto& node = *rc;
+      if (node->Tag().tag != static_cast<int>(NodeEnum::kSeqBlock)){
+        continue;
+      }
+      for (const auto& ch : node->children()) {
+        if (ch.get()->Tag().tag != static_cast<int>(NodeEnum::kBegin)){
+          continue;
+        }
+        const auto& beginLabels = FindAllSymbolIdentifierLeafs(*ch);
+        if (beginLabels.size() == 0){
+          continue;
+        }
+        const auto& beginLabel = SymbolCastToLeaf(*beginLabels[0].match);
+        const auto& disableLabel =
+            SymbolCastToLeaf(*disableLabels[0].match);
+        const auto& pnode = *std::next(rc);
+        const auto& ptag = pnode->Tag().tag;
+        if (ptag == static_cast<int>(NodeEnum::kInitialStatement) ||
+            ptag == static_cast<int>(NodeEnum::kFinalStatement) ||
+            ptag == static_cast<int>(NodeEnum::kAlwaysStatement)) {
+          break;
+        }
+        if (beginLabel.get().text() == disableLabel.get().text()) {
+          return;
         }
       }
     }

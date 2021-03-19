@@ -267,7 +267,7 @@ static const auto GateInstanceHasPortList =
 static const auto HasBeginLabel =
     verible::matcher::MakePathMatcher({N(kBegin), N(kLabel)});
 
-// Matches against a disbale node's child tagged with kRefrence if one exists.
+// Matches against a disbale node's child tagged with kReference if one exists.
 static const auto DisableStatementHasLabel =
     verible::matcher::MakePathMatcher({N(kReference)});
 

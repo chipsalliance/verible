@@ -32,7 +32,7 @@ namespace {
 using verible::LintTestCase;
 using verible::RunLintTestCases;
 
-TEST(DisableStatementTest, FunctionFailures) {
+TEST(DisableStatementTest, FunctionPass) {
   constexpr int kToken = TK_disable;
   const std::initializer_list<LintTestCase> kDisableStatementTestCases = {
       {""},
@@ -46,6 +46,14 @@ TEST(DisableStatementTest, FunctionFailures) {
        "disable foo_2;\n", "end\n", "end\n", "join_any\n", "end\nendmodule"},
       {"module m;\ninitial begin\n fork\n", "begin : foo\n", "begin : foo_2\n",
        "disable foo;\n", "end\n", "end\n", "join_any\n", "end\nendmodule"},
+  };
+  RunLintTestCases<VerilogAnalyzer, DisableForkNoLabelsRule>(
+      kDisableStatementTestCases);
+}
+
+TEST(DisableStatementTest, FunctionFailures) {
+  constexpr int kToken = TK_disable;
+  const std::initializer_list<LintTestCase> kDisableStatementTestCases = {
       {"module m;\ninitial begin fork\n",
        "begin\n#6;\nend\n",
        "begin\n#3;\nend\n",
