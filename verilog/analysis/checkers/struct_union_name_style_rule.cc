@@ -14,6 +14,7 @@
 
 #include "verilog/analysis/checkers/struct_union_name_style_rule.h"
 
+#include <algorithm>
 #include <set>
 #include <string>
 
@@ -52,8 +53,8 @@ const char StructUnionNameStyleRule::kMessageStruct[] =
 const char StructUnionNameStyleRule::kMessageUnion[] =
     "Union names must use lower_snake_case naming convention and end with _t.";
 
-std::string
-StructUnionNameStyleRule::GetDescription(DescriptionType description_type) {
+std::string StructUnionNameStyleRule::GetDescription(
+    DescriptionType description_type) {
   return absl::StrCat(
       "Checks that ", Codify("struct", description_type), " and ",
       Codify("union", description_type),
@@ -88,7 +89,8 @@ void StructUnionNameStyleRule::HandleSymbol(const verible::Symbol &symbol,
     if (!exceptions_.empty()) {
       name_filtered.reserve(name.length());
       const auto &underscore_separated_parts = absl::StrSplit(name, '_');
-      const bool starts_with_underscore = underscore_separated_parts.begin()->empty();
+      const bool starts_with_underscore =
+          underscore_separated_parts.begin()->empty();
       if (!starts_with_underscore) {
         for (const auto &ns : underscore_separated_parts) {
           if (std::find(exceptions_.begin(), exceptions_.end(), ns) ==
@@ -109,14 +111,34 @@ void StructUnionNameStyleRule::HandleSymbol(const verible::Symbol &symbol,
   }
 }
 
-absl::Status
-StructUnionNameStyleRule::Configure(absl::string_view configuration) {
+absl::Status StructUnionNameStyleRule::Configure(
+    absl::string_view configuration) {
   using verible::config::SetString;
   std::string raw_tokens;
   auto status = verible::ParseNameValues(
       configuration, {{"exceptions", SetString(&raw_tokens)}});
+
   if (!raw_tokens.empty()) {
-    exceptions_ = absl::StrSplit(raw_tokens, ',');
+    const auto &exceptions = absl::StrSplit(raw_tokens, ',');
+    for (const auto &ex : exceptions) {
+      const auto &e =
+          std::find_if_not(ex.begin(), ex.end(), absl::ascii_isalnum);
+      // eliminate exceptions with invalid characters
+      if (e != ex.end()) continue;
+
+      const auto &alpha =
+          std::find_if(ex.begin(), ex.end(), absl::ascii_isalpha);
+      // find first alpha sign
+      // check if string do not start with alpha sign
+      // and if there are any alpha signs
+      if (alpha == ex.begin() || alpha == ex.end()) continue;
+
+      const auto &digit =
+          std::find_if(alpha, ex.end(), absl::ascii_isdigit);
+      // check there are no more digits till end
+      if (digit != ex.end()) continue;
+      exceptions_.emplace(ex);
+    }
   }
   return status;
 }
@@ -125,5 +147,5 @@ LintRuleStatus StructUnionNameStyleRule::Report() const {
   return LintRuleStatus(violations_, Name(), GetStyleGuideCitation(kTopic));
 }
 
-} // namespace analysis
-} // namespace verilog
+}  // namespace analysis
+}  // namespace verilog
