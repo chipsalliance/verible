@@ -89,9 +89,7 @@ void StructUnionNameStyleRule::HandleSymbol(const verible::Symbol &symbol,
     if (!exceptions_.empty()) {
       name_filtered.reserve(name.length());
       const auto &underscore_separated_parts = absl::StrSplit(name, '_');
-      const bool starts_with_underscore =
-          underscore_separated_parts.begin()->empty();
-      if (!starts_with_underscore) {
+      if (name[0] != '_') {
         for (const auto &ns : underscore_separated_parts) {
           if (std::find(exceptions_.begin(), exceptions_.end(), ns) ==
               exceptions_.end()) {
