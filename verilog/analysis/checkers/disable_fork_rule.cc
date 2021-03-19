@@ -80,29 +80,27 @@ void DisableForkNoLabelsRule::HandleSymbol(const verible::Symbol& symbol,
     }
     // look for every kBegin node starting from kDisableLabel token
     // the kDisableLabel can be nested in some kBegin nodes
-    // so I'm looking for the kBegin node that direct parent
-    // is not one of the initial/final/always statemnts since such blocks are 
+    // so we're looking for the kBegin node that direct parent
+    // is not one of the initial/final/always statemnts since such blocks are
     // considered to be invalid. If the label for diable statment is not
     // found, it means that there is no appropriate label or the label
     // points to the illegal node such as forked label
     const auto& rcontext = reversed_view(context);
-    for(auto rc = rcontext.begin(); rc != rcontext.end(); rc++)
-    {
+    for (auto rc = rcontext.begin(); rc != rcontext.end(); rc++) {
       const auto& node = *rc;
-      if (node->Tag().tag != static_cast<int>(NodeEnum::kSeqBlock)){
+      if (node->Tag().tag != static_cast<int>(NodeEnum::kSeqBlock)) {
         continue;
       }
       for (const auto& ch : node->children()) {
-        if (ch.get()->Tag().tag != static_cast<int>(NodeEnum::kBegin)){
+        if (ch.get()->Tag().tag != static_cast<int>(NodeEnum::kBegin)) {
           continue;
         }
         const auto& beginLabels = FindAllSymbolIdentifierLeafs(*ch);
-        if (beginLabels.size() == 0){
+        if (beginLabels.size() == 0) {
           continue;
         }
         const auto& beginLabel = SymbolCastToLeaf(*beginLabels[0].match);
-        const auto& disableLabel =
-            SymbolCastToLeaf(*disableLabels[0].match);
+        const auto& disableLabel = SymbolCastToLeaf(*disableLabels[0].match);
         const auto& pnode = *std::next(rc);
         const auto& ptag = pnode->Tag().tag;
         if (ptag == static_cast<int>(NodeEnum::kInitialStatement) ||
