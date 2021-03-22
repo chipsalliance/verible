@@ -34,7 +34,6 @@ cc_library(
         ":verilog_token_enum",
         "//bazel:flex",
         "//common/lexer:flex_lexer_adapter",
-        "//common/parser:parser_param",
         "//common/text:token_info",
         "@com_google_absl//absl/strings",
     ],
