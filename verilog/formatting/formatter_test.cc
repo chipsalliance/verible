@@ -3325,7 +3325,9 @@ static constexpr FormatterTestCase kFormatterTestCases[] = {
         "class Foo; constraint if_c { if (z) { soft x == y; } } endclass\n",
         "class Foo;\n"
         "  constraint if_c {\n"
-        "    if (z) {soft x == y;}\n"  // TODO(fangism): always expand?
+        "    if (z) {\n"
+        "      soft x == y;\n"
+        "    }\n"
         "  }\n"
         "endclass\n",
     },
@@ -9155,6 +9157,101 @@ TEST(FormatterEndToEndTest, FormatElseStatements) {
     std::ostringstream stream;
     const auto status =
         FormatVerilog(test_case.input, "<filename>", style, stream);
+    EXPECT_OK(status) << status.message();
+    EXPECT_EQ(stream.str(), test_case.expected) << "code:\n" << test_case.input;
+  }
+}
+
+TEST(FormatterEndToEndTest, ConstraintExpressions) {
+  static constexpr FormatterTestCase kTestCases[] = {
+      {"", ""},
+
+      // class members
+      {"class Foo; constraint if_c { if (zzzzzzzzzzzzzzzzzzzzz)"
+       "{ soft xxxxxxxxxxxxxxxxxxxxxx == yyyyyyyyyyyyyyyyyyy; } } endclass",
+       "class Foo;\n"
+       "  constraint if_c {\n"
+       "    if (zzzzzzzzzzzzzzzzzzzzz) {\n"
+       "      soft xxxxxxxxxxxxxxxxxxxxxx == yyyyyyyyyyyyyyyyyyy;\n"
+       "    }\n"
+       "  }\n"
+       "endclass\n"},
+
+      // constraints with if-constraint expressions
+      {"constraint xx { if (a) b; }\n",
+       "constraint xx {if (a) b;}\n"},
+
+      {"constraint xx { if (a) {b;} }\n",
+       "constraint xx {\n"
+       "  if (a) {\n"
+       "    b;\n"
+       "  }\n"
+       "}\n"},
+
+      // multi item constraint
+      {"constraint yy { a == b;c==d;}",
+       "constraint yy {\n"
+       "  a == b;\n"
+       "  c == d;\n"
+       "}\n"},
+
+      // one-line constraints
+      {"constraint only_vec_instr_c {soft only_vec_instr == 0;}",
+       "constraint only_vec_instr_c {soft only_vec_instr == 0;}\n"},
+
+      {"constraint\nnum_trans_c\n\n\n{\n\n\nnum_trans inside{[800:1000]};}",
+       "constraint num_trans_c {num_trans inside {[800 : 1000]};}\n"},
+
+      // if-vs-concatenation expression
+      {"constraint c_operation{  if(fixed_operation_en){"
+       "aes_operation == fixed_operation"
+       ";}}",
+       "constraint c_operation {\n"
+       "  if (fixed_operation_en) {\n"
+       "    aes_operation == fixed_operation;\n"
+       "  }\n"
+       "}\n"},
+
+      {"constraint c_operation{  if(fixed_operation_en){"
+       "aes_operation == fixed_operation"
+       "};}",
+       "constraint c_operation {\n"
+       "  if (fixed_operation_en)\n"
+       "  {aes_operation == fixed_operation};\n"  // FIXME(hzeller): Wrong indentation?
+       "}\n"},
+
+
+      // concatenation expression
+      {"constraint c_iv {if (fixed_iv_en) {aes_iv == fixed_iv};}",
+       "constraint c_iv {\n"
+       "  if (fixed_iv_en)\n"
+       "  {aes_iv == fixed_iv};\n"  // FIXME(hzeller): Wrong indenation?
+       "}\n"},
+
+
+      // looooong test
+      {"constraint xx {"
+       "if (aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa)"
+       "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa=="
+       "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb;"
+       "ccccccccccccccccccccccc==dddddddddddddddddddddd;}",
+       "constraint xx {\n"
+       "  if (aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa)\n"
+       "  aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa == bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb;\n"
+       "  ccccccccccccccccccccccc == dddddddddddddddddddddd;\n"  // FIXME(hzeller): indentation?
+       "}\n"},
+  };
+  FormatStyle style;
+  style.column_limit = 100;  // smaller column_limit forces expansion of constraint blocks
+  style.indentation_spaces = 2;
+  style.wrap_spaces = 4;
+  style.port_declarations_alignment = verible::AlignmentPolicy::kPreserve;
+  for (const auto& test_case : kTestCases) {
+    VLOG(1) << "code-to-format:\n" << test_case.input << "<EOF>";
+    std::ostringstream stream;
+    const auto status =
+        FormatVerilog(test_case.input, "<filename>", style, stream);
+    // Require these test cases to be valid.
     EXPECT_OK(status) << status.message();
     EXPECT_EQ(stream.str(), test_case.expected) << "code:\n" << test_case.input;
   }
