@@ -74,9 +74,10 @@ bool TreeContainsToken(const ConcreteSyntaxTree& tree, const TokenInfo& token) {
 }
 
 void DiagnosticMessagesContainFilename(const VerilogAnalyzer& analyzer,
-                                       absl::string_view filename) {
+                                       absl::string_view filename,
+                                       bool with_diagnostic_context) {
   const std::vector<std::string> syntax_error_messages(
-      analyzer.LinterTokenErrorMessages());
+      analyzer.LinterTokenErrorMessages(with_diagnostic_context));
   for (const auto& message : syntax_error_messages) {
     EXPECT_TRUE(absl::StrContains(message, filename));
   }
@@ -102,7 +103,8 @@ TEST(AnalyzeVerilogLexerTest, RejectsBadId) {
   const auto& rejects = analyzer_ptr->GetRejectedTokens();
   EXPECT_THAT(rejects, SizeIs(1));
   EXPECT_EQ(rejects.front().phase, AnalysisPhase::kLexPhase);
-  DiagnosticMessagesContainFilename(*analyzer_ptr, "<noname>");
+  DiagnosticMessagesContainFilename(*analyzer_ptr, "<noname>", false);
+  DiagnosticMessagesContainFilename(*analyzer_ptr, "<noname>", true);
 }
 
 // Tests that invalid macro identifier is rejected.
@@ -115,7 +117,8 @@ TEST(AnalyzeVerilogLexerTest, RejectsMacroBadId) {
   const auto& rejects = analyzer_ptr->GetRejectedTokens();
   EXPECT_THAT(rejects, SizeIs(1));
   EXPECT_EQ(rejects.front().phase, AnalysisPhase::kLexPhase);
-  DiagnosticMessagesContainFilename(*analyzer_ptr, "<noname>");
+  DiagnosticMessagesContainFilename(*analyzer_ptr, "<noname>", false);
+  DiagnosticMessagesContainFilename(*analyzer_ptr, "<noname>", true);
 }
 
 // The following tests check that standalone Verilog expression parsing work.
@@ -159,7 +162,8 @@ TEST(AnalyzeVerilogExpressionTest, ParsesUnfinishedOp) {
   const auto& rejects = analyzer_ptr->GetRejectedTokens();
   EXPECT_THAT(rejects, SizeIs(1));
   EXPECT_EQ(rejects.front().phase, AnalysisPhase::kParsePhase);
-  DiagnosticMessagesContainFilename(*analyzer_ptr, "<file>");
+  DiagnosticMessagesContainFilename(*analyzer_ptr, "<file>", false);
+  DiagnosticMessagesContainFilename(*analyzer_ptr, "<file>", true);
 }
 
 TEST(AnalyzeVerilogExpressionTest, Unbalanced) {
@@ -170,7 +174,8 @@ TEST(AnalyzeVerilogExpressionTest, Unbalanced) {
   const auto& rejects = analyzer_ptr->GetRejectedTokens();
   EXPECT_THAT(rejects, SizeIs(1));
   EXPECT_EQ(rejects.front().phase, AnalysisPhase::kParsePhase);
-  DiagnosticMessagesContainFilename(*analyzer_ptr, "<file>");
+  DiagnosticMessagesContainFilename(*analyzer_ptr, "<file>", false);
+  DiagnosticMessagesContainFilename(*analyzer_ptr, "<file>", true);
 }
 
 TEST(AnalyzeVerilogExpressionTest, ParsesConcat) {
@@ -207,7 +212,8 @@ TEST(AnalyzeVerilogExpressionTest, RejectsModuleItemAttack) {
       << "got: [\n"
       << verible::SequenceFormatter(rejects, "\n") << "\n]";
   EXPECT_EQ(rejects.front().phase, AnalysisPhase::kParsePhase);
-  DiagnosticMessagesContainFilename(*analyzer_ptr, "<file>");
+  DiagnosticMessagesContainFilename(*analyzer_ptr, "<file>", false);
+  DiagnosticMessagesContainFilename(*analyzer_ptr, "<file>", true);
 }
 
 // The following tests check that standalone Verilog module-body parsing works.
@@ -284,7 +290,8 @@ TEST(AnalyzeVerilogClassBodyTest, RejectsModuleItem) {
   const auto& first_reject = rejects.front();
   EXPECT_EQ(first_reject.phase, AnalysisPhase::kParsePhase);
   EXPECT_EQ(first_reject.token_info.text(), "initial");
-  DiagnosticMessagesContainFilename(*analyzer_ptr, "<file>");
+  DiagnosticMessagesContainFilename(*analyzer_ptr, "<file>", false);
+  DiagnosticMessagesContainFilename(*analyzer_ptr, "<file>", true);
 }
 
 // The following tests check for package-body parsing.
@@ -314,7 +321,8 @@ TEST(AnalyzeVerilogClassBodyTest, RejectsWireDeclaration) {
   const auto& rejects = analyzer_ptr->GetRejectedTokens();
   EXPECT_THAT(rejects, SizeIs(1));
   EXPECT_EQ(rejects.front().phase, AnalysisPhase::kParsePhase);
-  DiagnosticMessagesContainFilename(*analyzer_ptr, "<file>");
+  DiagnosticMessagesContainFilename(*analyzer_ptr, "<file>", false);
+  DiagnosticMessagesContainFilename(*analyzer_ptr, "<file>", true);
 }
 
 TEST(AnalyzeVerilogLibraryMapTest, ParsesLibraryDeclaration) {
@@ -385,7 +393,8 @@ TEST(AnalyzeVerilogAutomaticMode, ModuleBodyModeSyntaxError) {
           filename);
   const auto status = ABSL_DIE_IF_NULL(analyzer_ptr)->ParseStatus();
   EXPECT_FALSE(status.ok());
-  DiagnosticMessagesContainFilename(*analyzer_ptr, filename);
+  DiagnosticMessagesContainFilename(*analyzer_ptr, filename, false);
+  DiagnosticMessagesContainFilename(*analyzer_ptr, filename, true);
 }
 
 TEST(AnalyzeVerilogAutomaticMode, ClassBodyMode) {

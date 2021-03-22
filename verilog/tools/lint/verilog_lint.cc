@@ -50,6 +50,10 @@ ABSL_FLAG(
     "Markdown and exit immediately. Intended for the output to be written "
     "to a snippet of Markdown.");
 
+ABSL_FLAG(bool, show_diagnostic_context, false,
+          "prints an additional "
+          "line on which the diagnostic was found,"
+          "followed by a line with a position marker");
 // LINT.ThenChange(README.md)
 
 using verilog::LinterConfiguration;
@@ -83,7 +87,8 @@ int main(int argc, char** argv) {
     const int lint_status = verilog::LintOneFile(
         &std::cout, filename, config,  //
         absl::GetFlag(FLAGS_check_syntax), absl::GetFlag(FLAGS_parse_fatal),
-        absl::GetFlag(FLAGS_lint_fatal));
+        absl::GetFlag(FLAGS_lint_fatal),
+        absl::GetFlag(FLAGS_show_diagnostic_context));
     exit_status = std::max(lint_status, exit_status);
   }  // for each file
 

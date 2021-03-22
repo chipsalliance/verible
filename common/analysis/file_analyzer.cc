@@ -30,6 +30,7 @@
 #include "common/text/text_structure.h"
 #include "common/text/token_info.h"
 #include "common/text/token_stream_view.h"
+#include "common/util/spacer.h"
 
 namespace verible {
 
@@ -135,15 +136,23 @@ std::vector<std::string> FileAnalyzer::TokenErrorMessages() const {
 }
 
 std::string FileAnalyzer::LinterTokenErrorMessage(
-    const RejectedToken& error_token) const {
+    const RejectedToken& error_token, bool diagnostic_context) const {
   const LineColumnMap& line_column_map = Data().GetLineColumnMap();
   const absl::string_view base_text = Data().Contents();
+
   std::ostringstream output_stream;
   output_stream << filename_ << ':';
   if (!error_token.token_info.isEOF()) {
     const auto left = line_column_map(error_token.token_info.left(base_text));
     output_stream << left << ": " << error_token.phase << " error, rejected \""
                   << error_token.token_info.text() << "\" (syntax-error).";
+    if (diagnostic_context) {
+      const auto& lines = Data().Lines();
+      if (left.line < static_cast<int>(lines.size())) {
+        output_stream << "\n" << lines[left.line] << std::endl;
+        output_stream << verible::Spacer(left.column) << "^";
+      }
+    }
   } else {
     const int file_size = base_text.length();
     const auto end = line_column_map(file_size);
@@ -157,11 +166,13 @@ std::string FileAnalyzer::LinterTokenErrorMessage(
   return output_stream.str();
 }
 
-std::vector<std::string> FileAnalyzer::LinterTokenErrorMessages() const {
+std::vector<std::string> FileAnalyzer::LinterTokenErrorMessages(
+    bool diagnostic_context) const {
   std::vector<std::string> messages;
   messages.reserve(rejected_tokens_.size());
   for (const auto& rejected_token : rejected_tokens_) {
-    messages.push_back(LinterTokenErrorMessage(rejected_token));
+    messages.push_back(
+        LinterTokenErrorMessage(rejected_token, diagnostic_context));
   }
   return messages;
 }

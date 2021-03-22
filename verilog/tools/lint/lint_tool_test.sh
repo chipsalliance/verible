@@ -96,6 +96,44 @@ status="$?"
   exit 1
 }
 
+echo "=== Test --show_diagnostic_context"
+"$lint_tool" "$TEST_FILE" --show_diagnostic_context > /dev/null 2> "${MY_OUTPUT_FILE}.err"
+
+status="$?"
+[[ $status == 1 ]] || {
+  echo "Expected exit code 1, but got $status"
+  exit 1
+}
+
+DIAGNOSTIC_OUTPUT="${TEST_TMPDIR}/expected-diagnostic.out"
+cat > "${DIAGNOSTIC_OUTPUT}" <<EOF
+${TEST_TMPDIR}/syntax-error.sv:2:1: syntax error, rejected "endclass" (syntax-error).
+endclass
+^
+EOF
+
+"$lint_tool" "$TEST_FILE" --show_diagnostic_context > "${MY_OUTPUT_FILE}.out"
+
+diff "${DIAGNOSTIC_OUTPUT}" "${MY_OUTPUT_FILE}.out"
+status="$?"
+[[ $status == 0 ]] || {
+  echo "Expected exit code 0, but got $status"
+  exit 1
+}
+
+cat > "${DIAGNOSTIC_OUTPUT}" <<EOF
+${TEST_TMPDIR}/syntax-error.sv:2:1: syntax error, rejected "endclass" (syntax-error).
+EOF
+
+"$lint_tool" "$TEST_FILE" > "${MY_OUTPUT_FILE}.out"
+
+diff "${DIAGNOSTIC_OUTPUT}" "${MY_OUTPUT_FILE}.out"
+status="$?"
+[[ $status == 0 ]] || {
+  echo "Expected exit code 0, but got $status"
+  exit 1
+}
+
 echo "=== Test --parse_fatal"
 "$lint_tool" "$TEST_FILE" --parse_fatal > /dev/null 2> "${MY_OUTPUT_FILE}.err"
 

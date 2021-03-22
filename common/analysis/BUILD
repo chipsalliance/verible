@@ -128,6 +128,7 @@ cc_library(
         "//common/text:text_structure",
         "//common/text:token_info",
         "//common/text:token_stream_view",
+        "//common/util:spacer",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/strings",
     ],

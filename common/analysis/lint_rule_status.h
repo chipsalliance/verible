@@ -122,7 +122,8 @@ class LintStatusFormatter {
                             absl::string_view base,
                             absl::string_view path) const;
 
-  // Formats, sorts and outputs status to stream.
+  // Formats, sorts and outputs status to stream with additional vulnerable code
+  // line printed when enabled.
   // The violations contained in the statuses are sorted by their occurrence
   // in the code and are not grouped by the status object.
   // Path is the file path of original file. This is needed because it is not
@@ -132,7 +133,8 @@ class LintStatusFormatter {
   void FormatLintRuleStatuses(std::ostream* stream,
                               const std::vector<LintRuleStatus>& statuses,
                               absl::string_view base,
-                              absl::string_view path) const;
+                              absl::string_view path,
+                              const std::vector<absl::string_view>& lines) const;
 
   // Formats and outputs violation on stream.
   // Path is file path of original file and url is a link to the ratified rule

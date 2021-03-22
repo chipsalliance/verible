@@ -83,7 +83,7 @@ using verible::TokenInfo;
 //  2..: other fatal issues such as file not found.
 int LintOneFile(std::ostream* stream, absl::string_view filename,
                 const LinterConfiguration& config, bool check_syntax,
-                bool parse_fatal, bool lint_fatal) {
+                bool parse_fatal, bool lint_fatal, bool show_context) {
   std::string content;
   const absl::Status content_status =
       verible::file::GetContents(filename, &content);
@@ -101,7 +101,7 @@ int LintOneFile(std::ostream* stream, absl::string_view filename,
     const auto parse_status = analyzer->ParseStatus();
     if (!lex_status.ok() || !parse_status.ok()) {
       const std::vector<std::string> syntax_error_messages(
-          analyzer->LinterTokenErrorMessages());
+          analyzer->LinterTokenErrorMessages(show_context));
       for (const auto& message : syntax_error_messages) {
         *stream << message << std::endl;
       }
@@ -115,8 +115,9 @@ int LintOneFile(std::ostream* stream, absl::string_view filename,
 
   // Analyze the parsed structure for lint violations.
   std::ostringstream lint_stream;
-  const absl::Status lint_status = VerilogLintTextStructure(
-      &lint_stream, std::string(filename), content, config, analyzer->Data());
+  const absl::Status lint_status =
+      VerilogLintTextStructure(&lint_stream, std::string(filename), content,
+                               config, analyzer->Data(), show_context);
   if (!lint_status.ok()) {
     // Something went wrong with running the lint analysis itself.
     LOG(ERROR) << "Fatal error: " << lint_status.message();
@@ -271,7 +272,8 @@ absl::Status VerilogLintTextStructure(std::ostream* stream,
                                       const std::string& filename,
                                       const std::string& contents,
                                       const LinterConfiguration& config,
-                                      const TextStructureView& text_structure) {
+                                      const TextStructureView& text_structure,
+                                      bool show_context) {
   // Create the linter, add rules, and run it.
   VerilogLinter linter;
   const absl::Status configuration_status = linter.Configure(config, filename);
@@ -296,8 +298,13 @@ absl::Status VerilogLintTextStructure(std::ostream* stream,
     VLOG(1) << "Lint Violations (" << total_violations << "): " << std::endl;
     // Output results to stream using formatter.
     verible::LintStatusFormatter formatter(contents);
-    formatter.FormatLintRuleStatuses(stream, linter_statuses, text_base,
-                                     filename);
+    if (!show_context) {
+      formatter.FormatLintRuleStatuses(stream, linter_statuses, text_base,
+                                       filename, {});
+    } else {
+      formatter.FormatLintRuleStatuses(stream, linter_statuses, text_base,
+                                       filename, text_structure.Lines());
+    }
   }
   return absl::OkStatus();
 }
