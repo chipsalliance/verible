@@ -3379,7 +3379,7 @@ static constexpr FormatterTestCase kFormatterTestCases[] = {
      "endclass\n"},
     // class extends from type with named parameters
     {"class foo extends bar #(.N(N), .M(M)); endclass",
-     "class foo extends bar#(\n"
+     "class foo extends bar #(\n"
      "    .N(N),\n"
      "    .M(M)\n"
      ");\n"

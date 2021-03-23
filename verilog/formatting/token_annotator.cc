@@ -504,7 +504,7 @@ static WithReason<int> SpacesRequiredBetween(
     //   type#(params...)::method(...);
     if (left_context.DirectParentIs(NodeEnum::kUnqualifiedId) &&
         !left_context.IsInsideFirst(
-            {NodeEnum::kInstantiationType, NodeEnum::kBindTargetInstance},
+            {NodeEnum::kInstantiationType, NodeEnum::kBindTargetInstance, NodeEnum::kExtendsList},
             {})) {
       return {0, "No space before # when direct parent is kUnqualifiedId."};
     } else {
