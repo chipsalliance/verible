@@ -130,11 +130,10 @@ class LintStatusFormatter {
   // contained in status.
   // Base is the string_view of the entire contents, used only for byte offset
   // calculation.
-  void FormatLintRuleStatuses(std::ostream* stream,
-                              const std::vector<LintRuleStatus>& statuses,
-                              absl::string_view base,
-                              absl::string_view path,
-                              const std::vector<absl::string_view>& lines) const;
+  void FormatLintRuleStatuses(
+      std::ostream* stream, const std::vector<LintRuleStatus>& statuses,
+      absl::string_view base, absl::string_view path,
+      const std::vector<absl::string_view>& lines) const;
 
   // Formats and outputs violation on stream.
   // Path is file path of original file and url is a link to the ratified rule

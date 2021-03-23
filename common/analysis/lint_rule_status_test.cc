@@ -181,9 +181,9 @@ void RunLintStatusesTest(const LintStatusTest& test, bool show_context) {
     std::cout << ss.str() << std::endl;
   }
   std::vector<std::string> result_parts;
-  if (!show_context)
+  if (!show_context) {
     result_parts = absl::StrSplit(ss.str(), '\n');
-  else {
+  } else {
     result_parts = absl::StrSplit(ss.str(), "^\n");
   }
 
