@@ -47,7 +47,7 @@ namespace verilog {
 // errors were found (syntax, lint), and anything else is a fatal error.
 int LintOneFile(std::ostream* stream, absl::string_view filename,
                 const LinterConfiguration& config, bool check_syntax,
-                bool parse_fatal, bool lint_fatal, bool show_context);
+                bool parse_fatal, bool lint_fatal, bool show_context = false);
 
 // VerilogLinter analyzes a TextStructureView of Verilog source code.
 // This uses syntax-tree based analyses and lexical token-stream analyses.
@@ -116,7 +116,8 @@ absl::Status AppendLinterConfigurationFromFile(
 absl::Status VerilogLintTextStructure(
     std::ostream* stream, const std::string& filename,
     const std::string& contents, const LinterConfiguration& config,
-    const verible::TextStructureView& text_structure, bool show_context);
+    const verible::TextStructureView& text_structure,
+    bool show_context = false);
 
 // Prints the rule, description and default_enabled.
 absl::Status PrintRuleInfo(std::ostream*,
