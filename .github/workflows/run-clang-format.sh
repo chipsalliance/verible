@@ -27,8 +27,9 @@ git diff --name-only --diff-filter=AM -r origin/master | grep '\(\.cc\|\.h\)$' |
 
 for f in $(cat "${FILE_LIST_OUT}") ; do
   cp ${f} ${f}.before-clang-format
-  strace -eopen clang-format --verbose -i --style=file ${f} 2> /dev/null
+  strace -ostrace-out -eopen clang-format --verbose -i --style=file ${f} 2> /dev/null
   diff -u ${f}.before-clang-format ${f} >> ${FORMAT_OUT}
+  cat strace-out
   echo "Exit code diff $?"
 done
 
