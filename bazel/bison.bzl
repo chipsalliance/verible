@@ -36,11 +36,11 @@ def _genyacc_impl(ctx):
     ctx.actions.run(
         executable = ctx.executable._bison,
         env = {
-            "M4": ctx.executable._m4.path,
+            #"M4": ctx.executable._m4.path,
         },
         arguments = [args],
         inputs = ctx.files.src,
-        tools = [ctx.executable._m4],
+        #tools = [ctx.executable._m4],
         outputs = outputs,
         mnemonic = "Yacc",
         progress_message = "Generating %s and %s from %s" %
@@ -87,11 +87,11 @@ genyacc = rule(
             executable = True,
             cfg = "host",
         ),
-        "_m4": attr.label(
-            default = Label("//bazel:m4_bin"),
-            executable = True,
-            cfg = "host",
-        ),
+        #"_m4": attr.label(
+        #    default = Label("//bazel:m4_bin"),
+        #    executable = True,
+        #    cfg = "host",
+        #),
     },
     doc = "Generate C/C++-language sources from a Yacc file using Bison.",
     output_to_genfiles = True,
