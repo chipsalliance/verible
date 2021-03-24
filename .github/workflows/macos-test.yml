@@ -16,7 +16,7 @@ jobs:
     steps:
     - name: Install dependencies
       run: |
-        brew install flex
+        brew install flex libtool
     - name: Checkout code
       uses: actions/checkout@v2
       with:
