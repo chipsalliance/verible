@@ -22,10 +22,11 @@ FORMAT_OUT=${TMPDIR:-/tmp}/clang-format-diff.out
 # Finding all affected files and list them for inspection in the log output
 git diff --name-only --diff-filter=AM -r origin/master | grep '\(\.cc\|\.h\)$' | tee "${FILE_LIST_OUT}"
 
-clang-format -i --style=file $(cat "${FILE_LIST_OUT}") 2> /dev/null
-
-# Check if we got any diff
-git diff > "${FORMAT_OUT}"
+for f in $(cat "${FILE_LIST_OUT}") ; do
+  cp ${f} ${f}.before
+  clang-format -i --style=file ${f} 2> /dev/null
+  diff ${f}.before ${f} >> ${FORMAT_OUT}
+fi
 
 if [ -s "${FORMAT_OUT}" ]; then
    echo "Style not matching (see https://github.com/google/verible/blob/master/CONTRIBUTING.md#style)"
