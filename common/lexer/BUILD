@@ -42,6 +42,10 @@ cc_library(
         "//common/util:logging",
         "@com_google_absl//absl/strings",
     ],
+    # On MacOS, this is where brew installs flex, because
+    # the system provided is out-of-date.
+    includes = [ "-I/usr/local/opt/flex/include" ],
+    linkopts = [ "-L/usr/local/opt/flex/lib" ],
 )
 
 cc_library(

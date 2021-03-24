@@ -25,5 +25,5 @@ jobs:
       run: |
         export PATH=$(brew --prefix flex)/bin:$PATH
         export LDFLAGS="-L$(brew --prefix flex)/lib"
-        export CPPFLAGS="-L$(brew --prefix flex)/include"
+        export CXXFLAGS="-L$(brew --prefix flex)/include"
         bazel build --sandbox_debug ...
