@@ -129,7 +129,24 @@ class FlexLexerAdapter : private CodeStreamHolder, protected L, public Lexer {
   }
 
   // Overrides yyFlexLexer's implementation to handle unrecognized chars.
-  void LexerOutput(const char* buf, int size) override {
+  // Depending on the version of yyFlexLexer, this can either be called with
+  // an int or a size_t. override both of them (without using the 'override'
+  // keyword, as we don't know which) and just delegate between.
+  void LexerOutput(const char* buf, int size) /*override?*/ {
+    LexerOutputInternal(buf, size);
+  }
+  void LexerOutput(const char* buf, size_t size) /*override?*/ {
+    LexerOutputInternal(buf, size);
+  }
+
+  // Overrides yyFlexLexer's implementation to do proper error handling.
+  void LexerError(const char* msg) override {
+    std::cerr << "Fatal LexerError: " << msg;
+    abort();
+  }
+
+ private:
+  void LexerOutputInternal(const char* buf, size_t size) {
     VLOG(1) << "LexerOutput: rejected text: \"" << std::string(buf, size)
             << '\"';
 
@@ -142,13 +159,6 @@ class FlexLexerAdapter : private CodeStreamHolder, protected L, public Lexer {
     // TODO(fangism): Communicate some sort of error token to the consumer.
   }
 
-  // Overrides yyFlexLexer's implementation to do proper error handling.
-  void LexerError(const char* msg) override {
-    std::cerr << "Fatal LexerError: " << msg;
-    abort();
-  }
-
- private:
   // A read-only view of the entire text to be scanned.
   absl::string_view code_;
 
