@@ -50,7 +50,7 @@ absl::string_view TokenTypeToString(size_t tokentype) {
     // ("'\\''") contains backslash. This is the only such case, so generic
     // unescaping code in `default` section below would be superfluous.
     case '\'':
-      return "'";
+      return "'";  
 
     // Returns token type name or its alias (if available) as used in verilog.y
     default: {
