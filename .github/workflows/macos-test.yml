@@ -16,7 +16,7 @@ jobs:
     steps:
     - name: Install dependencies
       run: |
-        brew install flex
+        brew install flex bazel
     - name: Checkout code
       uses: actions/checkout@v2
       with:
@@ -26,4 +26,4 @@ jobs:
         export PATH=$(brew --prefix flex)/bin:$PATH
         export LDFLAGS="-L$(brew --prefix flex)/lib"
         export CPPFLAGS="-L$(brew --prefix flex)/include"
-        bazel build ...
+        bazel build --sandbox_debug ...
