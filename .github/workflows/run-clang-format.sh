@@ -12,8 +12,13 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-FILE_LIST_OUT=${TMPDIR:-/tmp}/file-list.txt
-FORMAT_OUT=${TMPDIR:-/tmp}/clang-format-diff.out
+FILE_LIST_OUT=${TMPDIR:-/tmp}/file-list.$$.txt
+FORMAT_OUT=${TMPDIR:-/tmp}/clang-format-diff.$$.out
+
+function cleanup {
+  rm -f ${FORMAT_OUT} ${FORMAT_LIST_OUT}
+}
+trap cleanup EXIT
 
 # Run on all the files that are affected
 
@@ -23,7 +28,7 @@ git diff --name-only --diff-filter=AM -r origin/master | grep '\(\.cc\|\.h\)$' |
 for f in $(cat "${FILE_LIST_OUT}") ; do
   cp ${f} ${f}.before-clang-format
   clang-format -i --style=file ${f} 2> /dev/null
-  diff ${f}.before-clang-format ${f} >> ${FORMAT_OUT}
+  diff -u ${f}.before-clang-format ${f} >> ${FORMAT_OUT}
 done
 
 if [ -s "${FORMAT_OUT}" ]; then
