@@ -14,10 +14,10 @@
 # limitations under the License.
 
 FORMAT_OUT=${TMPDIR:-/tmp}/clang-format-diff.out
-BASE_BRANCH=${GITHUB_BASE_REF:-origin/master}
+BASE_BRANCH=origin/${GITHUB_BASE_REF:-master}
 
 # Run on all the files that are affected
-clang-format -i --style=Google --verbose $(git diff --name-only --diff-filter=AM -r ${BASE_BRANCH} | grep '\(\.cc\|\.h\)$') 2> /dev/null
+clang-format -i --style=Google $(git diff --name-only --diff-filter=AM -r ${BASE_BRANCH} | grep '\(\.cc\|\.h\)$') 2> /dev/null
 
 # Check if we got any diff
 git diff > ${FORMAT_OUT}
