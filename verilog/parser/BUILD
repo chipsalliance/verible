@@ -1,7 +1,9 @@
 # This package implements a SystemVerilog lexer and parser.
 
 load("//bazel:bison.bzl", "genyacc")
-load("//bazel:flex.bzl", "genlex")
+#load("//bazel:flex.bzl", "genlex")
+load("@io_kythe//tools/build_rules/lexyacc:lexyacc.bzl", "genlex")
+
 load(
     "//common/parser:yacc.bzl",
     "record_recovered_syntax_errors",
@@ -32,7 +34,7 @@ cc_library(
     copts = ["-Wno-implicit-fallthrough"],
     deps = [
         ":verilog_token_enum",
-        "//bazel:flex",
+#        "//bazel:flex",
         "//common/lexer:flex_lexer_adapter",
         "//common/text:token_info",
         "@com_google_absl//absl/strings",

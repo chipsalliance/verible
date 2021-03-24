@@ -1,6 +1,7 @@
 # This package contains functions and classes for analyzing text structures.
 
-load("//bazel:flex.bzl", "genlex")
+#load("//bazel:flex.bzl", "genlex")
+load("@io_kythe//tools/build_rules/lexyacc:lexyacc.bzl", "genlex")
 
 licenses(["notice"])
 
@@ -65,7 +66,7 @@ cc_library(
     ],
     copts = ["-Wno-implicit-fallthrough"],
     deps = [
-        "//bazel:flex",
+        #"//bazel:flex",
         "//common/lexer:flex_lexer_adapter",
         "//common/lexer:token_stream_adapter",
         "//common/strings:position",
