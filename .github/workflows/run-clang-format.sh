@@ -26,7 +26,7 @@ for f in $(cat "${FILE_LIST_OUT}") ; do
   cp ${f} ${f}.before
   clang-format -i --style=file ${f} 2> /dev/null
   diff ${f}.before ${f} >> ${FORMAT_OUT}
-fi
+done
 
 if [ -s "${FORMAT_OUT}" ]; then
    echo "Style not matching (see https://github.com/google/verible/blob/master/CONTRIBUTING.md#style)"
