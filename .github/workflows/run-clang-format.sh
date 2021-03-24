@@ -31,6 +31,7 @@ for f in $(cat "${FILE_LIST_OUT}") ; do
   cp ${f} ${f}.before-clang-format
   clang-format --verbose -i --style=file ${f} 2> /dev/null
   diff -u ${f}.before-clang-format ${f} >> ${FORMAT_OUT}
+  echo "Exit code diff $?"
 done
 
 if [ -s "${FORMAT_OUT}" ]; then
