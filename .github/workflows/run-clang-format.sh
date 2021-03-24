@@ -16,7 +16,7 @@
 FORMAT_OUT=${TMPDIR:-/tmp}/clang-format-diff.out
 
 # Run on all the files that are affected
-clang-format -i --style=Google --verbose $(git diff --name-only --diff-filter=AM -r origin/master | grep '\(\.cc\|\.h\)$') 2> /dev/null
+clang-format -i --style=Google --verbose $(git diff --name-only --diff-filter=AM -r ${GITHUB_BASE_REF} | grep '\(\.cc\|\.h\)$') 2> /dev/null
 
 # Check if we got any diff
 git diff > ${FORMAT_OUT}
