@@ -36,8 +36,7 @@ using verible::container::FindOrNull;
 // Function template to create any mini-parser for Verilog.
 // 'prolog' and 'epilog' are text that wrap around the 'text' argument to
 // form a whole Verilog source.
-// The returned analyzer's text structure will discard parsed information
-// about the prolog and epilog, leaving only the substructure of interest.
+// The returned analyzer's text structure will discard parsed information about the prolog and epilog, leaving only the substructure of interest.
 static std::unique_ptr<VerilogAnalyzer> AnalyzeVerilogConstruct(
     absl::string_view prolog, absl::string_view text, absl::string_view epilog,
     absl::string_view filename) {
