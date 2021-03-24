@@ -1,0 +1,26 @@
+name: macos-test
+
+on:
+  push:
+    branches:
+    - master
+    - main
+  pull_request:
+    branches:
+    - master
+    - main
+
+jobs:
+  MacOsBuild:
+    runs-on: macos-latest
+    steps:
+    - name: Install dependencies
+      run: |
+        brew install bazel
+    - name: Checkout code
+      uses: actions/checkout@v2
+      with:
+        fetch-depth: 0
+    - name: Build
+      run: |
+        bazel build ...
