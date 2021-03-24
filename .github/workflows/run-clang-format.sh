@@ -23,9 +23,9 @@ FORMAT_OUT=${TMPDIR:-/tmp}/clang-format-diff.out
 git diff --name-only --diff-filter=AM -r origin/master | grep '\(\.cc\|\.h\)$' | tee "${FILE_LIST_OUT}"
 
 for f in $(cat "${FILE_LIST_OUT}") ; do
-  cp ${f} ${f}.before
+  cp ${f} ${f}.before-clang-format
   clang-format -i --style=file ${f} 2> /dev/null
-  diff ${f}.before ${f} >> ${FORMAT_OUT}
+  diff ${f}.before-clang-format ${f} >> ${FORMAT_OUT}
 done
 
 if [ -s "${FORMAT_OUT}" ]; then
