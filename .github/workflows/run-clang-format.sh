@@ -12,7 +12,6 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-set -x
 FILE_LIST_OUT=${TMPDIR:-/tmp}/file-list.$$.txt
 FORMAT_OUT=${TMPDIR:-/tmp}/clang-format-diff.$$.out
 
@@ -21,13 +20,14 @@ function cleanup {
 }
 trap cleanup EXIT
 
+clang-format --help
+
 # Run on all the files that are affected
 
 # Finding all affected files and list them for inspection in the log output
 git diff --name-only --diff-filter=AM -r origin/master | grep '\(\.cc\|\.h\)$' | tee "${FILE_LIST_OUT}"
 
 for f in $(cat "${FILE_LIST_OUT}") ; do
-  echo "Format-test ${f}"
   cp ${f} ${f}.before-clang-format
   clang-format --verbose -i --style=Google ${f} 2> /dev/null
   diff -u ${f}.before-clang-format ${f} >> ${FORMAT_OUT}
