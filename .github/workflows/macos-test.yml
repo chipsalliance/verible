@@ -29,4 +29,4 @@ jobs:
         export LIBTOOL=glibtool
         which glibtool
         which flex
-        bazel build --sandbox_debug ...
+        bazel build --sandbox_debug bazel:m4_bin

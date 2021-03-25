@@ -17,22 +17,22 @@ exports_files([
     #"flex.bzl",
 ])
 
-#configure_make(
-#    name = "m4",
-#    binaries = [
-#        "m4",
-#    ],
-#    configure_options = [
-#        "--disable-nls",
-#    ],
-#    lib_source = "@m4//:all",
-#)
+configure_make(
+    name = "m4",
+    binaries = [
+        "m4",
+    ],
+    configure_options = [
+        "--disable-nls",
+    ],
+    lib_source = "@m4//:all",
+)
 
-#filegroup(
-#    name = "m4_bin",
-#    srcs = [":m4"],
-#    output_group = "m4",
-#)
+filegroup(
+    name = "m4_bin",
+    srcs = [":m4"],
+    output_group = "m4",
+)
 
 configure_make(
     name = "bison",
