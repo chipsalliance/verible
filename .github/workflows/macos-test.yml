@@ -26,4 +26,5 @@ jobs:
         export PATH=$(brew --prefix flex)/bin:$PATH
         export LDFLAGS="-L$(brew --prefix flex)/lib"
         export CXXFLAGS="-L$(brew --prefix flex)/include"
+        expxort LIBTOOL=glibtool
         bazel build --sandbox_debug ...
