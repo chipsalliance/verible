@@ -71,6 +71,7 @@ constexpr const char* kDefaultRuleSet[] = {
     // TODO(b/120784977): "numeric-format-string-style",
     // TODO: "one-module-per-file",
     // TODO: "banned-declared-name-patterns",
+    // TODO: "port-name-suffix",
     // "endif-comment",
 };
 // LINT.ThenChange(../tools/lint/BUILD)

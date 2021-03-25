@@ -52,6 +52,7 @@ _linter_test_configs = [
     ("parameter-type-name-style", "parameter_type_name_style", False),
     ("parameter-type-name-style", "localparam_type_name_style", False),
     ("plusarg-assignment", "plusarg_assignment", True),
+    ("port-name-suffix", "port_name_suffix", False),
     ("positive-meaning-parameter-name", "positive_meaning_parameter_name", True),
     ("proper-parameter-declaration", "proper_parameter_declaration", False),
     ("proper-parameter-declaration", "proper_localparam_declaration", False),

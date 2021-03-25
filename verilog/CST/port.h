@@ -45,6 +45,11 @@ std::vector<verible::TreeSearchMatch> FindAllActualNamedPort(
 const verible::SyntaxTreeLeaf* GetIdentifierFromModulePortDeclaration(
     const verible::Symbol&);
 
+// Extract the direction from a port declaration.
+// Can return nullptr if the direction is not explicitly specified.
+const verible::SyntaxTreeLeaf* GetDirectionFromModulePortDeclaration(
+    const verible::Symbol&);
+
 // Extract the name of the module port identifier from a port reference.
 // For Non-ANSI style ports e.g module m(a, b);
 const verible::SyntaxTreeLeaf* GetIdentifierFromPortReference(

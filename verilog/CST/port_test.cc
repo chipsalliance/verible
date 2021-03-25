@@ -398,5 +398,44 @@ TEST(FunctionPort, GetUnpackedDimensions) {
   }
 }
 
+TEST(FunctionPort, GetDirection) {
+  constexpr int kTag = 1;  // value doesn't matter
+  const SyntaxTreeSearchTestCase kTestCases[] = {
+      {""},
+      {"module m(", {kTag, "input"}, " name); endmodule;"},
+      {"module m(", {kTag, "output"}, " name); endmodule;"},
+      {"module m(", {kTag, "inout"}, " name); endmodule;"},
+      {"module m(name); endmodule;"},
+      {"module m(", {kTag, "input"}, "  logic name); endmodule;"},
+      {"module m(", {kTag, "output"}, " logic name); endmodule;"},
+      {"module m(", {kTag, "inout"}, " logic name); endmodule;"},
+      {"module m(logic name); endmodule;"},
+      {"module m(", {kTag, "input"}, " logic name, logic second); endmodule;"},
+      {"module m(",
+       {kTag, "output"},
+       " a, ",
+       {kTag, "input"},
+       " b); endmodule;"},
+  };
+
+  for (const auto& test : kTestCases) {
+    TestVerilogSyntaxRangeMatches(
+        __FUNCTION__, test, [](const TextStructureView& text_structure) {
+          const auto& root = text_structure.SyntaxTree();
+          const auto& ports =
+              FindAllModulePortDeclarations(*ABSL_DIE_IF_NULL(root));
+
+          std::vector<TreeSearchMatch> directions;
+          for (const auto& port : ports) {
+            const auto* direction =
+                GetDirectionFromModulePortDeclaration(*port.match);
+            directions.emplace_back(
+                TreeSearchMatch{(const verible::Symbol*)direction, {}});
+          }
+          return directions;
+        });
+  }
+}
+
 }  // namespace
 }  // namespace verilog
