@@ -31,7 +31,6 @@ cc_library(
         "verilog_lexer.cc",
     ],
     hdrs = ["verilog_lexer.h"],
-    copts = ["-Wno-implicit-fallthrough"],
     deps = [
         ":verilog_token_enum",
 #        "//bazel:flex",
@@ -41,7 +40,7 @@ cc_library(
     ],
     # On MacOS, this is where brew installs flex, because
     # the system provided is out-of-date.
-    copts = [ "-I/usr/local/opt/flex/include" ],
+    copts = [ "-I/usr/local/opt/flex/include", "-Wno-implicit-fallthrough" ],
     linkopts = [ "-L/usr/local/opt/flex/lib" ],
 )
 
