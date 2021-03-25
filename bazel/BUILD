@@ -25,6 +25,10 @@ configure_make(
     configure_options = [
         "--disable-nls",
     ],
+    configure_env_vars = {
+       "LIBTOOLIZE": "glibtoolize",
+       "LIBTOOL": "glibtool"
+    },
     lib_source = "@m4//:all",
 )
 
