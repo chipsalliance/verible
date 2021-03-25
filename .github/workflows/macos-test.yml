@@ -26,7 +26,8 @@ jobs:
         export PATH=$(brew --prefix flex)/bin:$PATH
         export LDFLAGS="-L$(brew --prefix flex)/lib"
         export CXXFLAGS="-L$(brew --prefix flex)/include"
-        export LIBTOOL=glibtool
-        which glibtool
+        export LIBTOOL=$(which glibtool)
+        export LIBTOOLIZE=$(which glibtoolize)
+        echo "$LIBTOOL ; $LIBTOOLIZE}
         which flex
         bazel build --sandbox_debug bazel:m4_bin
