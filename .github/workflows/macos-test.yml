@@ -27,4 +27,6 @@ jobs:
         export LDFLAGS="-L$(brew --prefix flex)/lib"
         export CXXFLAGS="-L$(brew --prefix flex)/include"
         export LIBTOOL=glibtool
+        which glibtool
+        which flex
         bazel build --sandbox_debug ...
