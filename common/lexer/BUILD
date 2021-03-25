@@ -44,7 +44,7 @@ cc_library(
     ],
     # On MacOS, this is where brew installs flex, because
     # the system provided is out-of-date.
-    includes = [ "-I/usr/local/opt/flex/include" ],
+    includes = [ " -isystem /usr/local/opt/flex/include" ],
     linkopts = [ "-L/usr/local/opt/flex/lib" ],
 )
 
