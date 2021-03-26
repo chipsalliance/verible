@@ -121,20 +121,22 @@ absl::Status StructUnionNameStyleRule::Configure(
     for (const auto &ex : exceptions) {
       const auto &e =
           std::find_if_not(ex.begin(), ex.end(), absl::ascii_isalnum);
-      // eliminate exceptions with invalid characters
-      if (e != ex.end()) continue;
-
+      if (e != ex.end())
+        return absl::Status(absl::StatusCode::kInvalidArgument,
+                            "The exception can be composed of digits and "
+                            "alphabetic characters only");
       const auto &alpha =
           std::find_if(ex.begin(), ex.end(), absl::ascii_isalpha);
-      // find first alpha sign
-      // check if string do not start with alpha sign
-      // and if there are any alpha signs
-      if (alpha == ex.begin() || alpha == ex.end()) continue;
+      if (alpha == ex.end())
+        return absl::Status(
+            absl::StatusCode::kInvalidArgument,
+            "The exception have to contain at least one alphabetic character");
 
-      const auto &digit =
-          std::find_if(alpha, ex.end(), absl::ascii_isdigit);
-      // check there are no more digits till end
-      if (digit != ex.end()) continue;
+      const auto &digit = std::find_if(alpha, ex.end(), absl::ascii_isdigit);
+      if (digit != ex.end())
+        return absl::Status(absl::StatusCode::kInvalidArgument,
+                            "Digits are forbidden when specifying the unit");
+
       exceptions_.emplace(ex);
     }
   }
