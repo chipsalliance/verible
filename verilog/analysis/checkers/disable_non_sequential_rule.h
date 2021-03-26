@@ -27,7 +27,7 @@
 namespace verilog {
 namespace analysis {
 
-// DisableForkNoLabelsRule finds occurrences of "dsiable fork_label"
+// DisableForkNoLabelsRule finds occurrences of "disable fork_label"
 class DisableForkNoLabelsRule : public verible::SyntaxTreeLintRule {
  public:
   using rule_type = verible::SyntaxTreeLintRule;

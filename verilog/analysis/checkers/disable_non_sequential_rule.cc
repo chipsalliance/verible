@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "verilog/analysis/checkers/disable_fork_rule.h"
+#include "verilog/analysis/checkers/disable_non_sequential_rule.h"
 
 #include <set>
 #include <string>
@@ -45,12 +45,12 @@ using verible::matcher::Matcher;
 VERILOG_REGISTER_LINT_RULE(DisableForkNoLabelsRule);
 
 absl::string_view DisableForkNoLabelsRule::Name() {
-  return "disable-statement";
+  return "disable-non-sequential";
 }
 const char DisableForkNoLabelsRule::kTopic[] =
-    "disable-labelled-fork-statement";
+    "disable-invalid-in-non-sequential";
 const char DisableForkNoLabelsRule::kMessage[] =
-    "Invalid usage of disable statement. Allowed construction is: disable "
+    "Invalid usage of disable statement. Preferred construction is: disable "
     "fork;";
 
 std::string DisableForkNoLabelsRule::GetDescription(
@@ -81,8 +81,8 @@ void DisableForkNoLabelsRule::HandleSymbol(const verible::Symbol& symbol,
     // look for every kBegin node starting from kDisableLabel token
     // the kDisableLabel can be nested in some kBegin nodes
     // so we're looking for the kBegin node that direct parent
-    // is not one of the initial/final/always statemnts since such blocks are
-    // considered to be invalid. If the label for diable statment is not
+    // is not one of the initial/final/always statements since such blocks are
+    // considered to be invalid. If the label for disable statements is not
     // found, it means that there is no appropriate label or the label
     // points to the illegal node such as forked label
     const auto& rcontext = reversed_view(context);
@@ -99,8 +99,6 @@ void DisableForkNoLabelsRule::HandleSymbol(const verible::Symbol& symbol,
         if (beginLabels.size() == 0) {
           continue;
         }
-        const auto& beginLabel = SymbolCastToLeaf(*beginLabels[0].match);
-        const auto& disableLabel = SymbolCastToLeaf(*disableLabels[0].match);
         const auto& pnode = *std::next(rc);
         const auto& ptag = pnode->Tag().tag;
         if (ptag == static_cast<int>(NodeEnum::kInitialStatement) ||
@@ -108,6 +106,8 @@ void DisableForkNoLabelsRule::HandleSymbol(const verible::Symbol& symbol,
             ptag == static_cast<int>(NodeEnum::kAlwaysStatement)) {
           break;
         }
+        const auto& beginLabel = SymbolCastToLeaf(*beginLabels[0].match);
+        const auto& disableLabel = SymbolCastToLeaf(*disableLabels[0].match);
         if (beginLabel.get().text() == disableLabel.get().text()) {
           return;
         }

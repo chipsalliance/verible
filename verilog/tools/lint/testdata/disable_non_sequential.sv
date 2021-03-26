@@ -1,4 +1,4 @@
-module disable_statement;
+module disable_non_sequential;
   initial begin
     fork
       begin
