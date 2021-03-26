@@ -80,7 +80,7 @@ void TokenStreamLintRule::HandleSymbol(const verible::Symbol& symbol,
                    });
   const auto& string_literal = SymbolCastToLeaf(*literal->get());
   if (absl::StrContains(string_literal.get().text(), "\\\n")) {
-    violations_.insert(LintViolation(symbol, kMessage, context));
+    violations_.insert(LintViolation(string_literal, kMessage, context));
   }
 }
 
