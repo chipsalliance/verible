@@ -48,6 +48,7 @@ class DisableForkNoLabelsRule : public verible::SyntaxTreeLintRule {
 
   // Diagnostic message.
   static const char kMessage[];
+  static const char kMessageSeqBlock[];
 
   std::set<verible::LintViolation> violations_;
 };

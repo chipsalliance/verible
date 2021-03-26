@@ -52,6 +52,9 @@ const char DisableForkNoLabelsRule::kTopic[] =
 const char DisableForkNoLabelsRule::kMessage[] =
     "Invalid usage of disable statement. Preferred construction is: disable "
     "fork;";
+const char DisableForkNoLabelsRule::kMessageSeqBlock[] =
+    "Invalid usage of disable statement. Preferred construction is: disable "
+    "label_of_seq_block;";
 
 std::string DisableForkNoLabelsRule::GetDescription(
     DescriptionType description_type) {
@@ -73,6 +76,7 @@ void DisableForkNoLabelsRule::HandleSymbol(const verible::Symbol& symbol,
                                            const SyntaxTreeContext& context) {
   verible::matcher::BoundSymbolManager manager;
   if (DisableMatcher().Matches(symbol, &manager)) {
+    const char* kMessageFinal = DisableForkNoLabelsRule::kMessage;
     // if no kDisable label, return, nothing to be checked
     const auto disableLabels = FindAllSymbolIdentifierLeafs(symbol);
     if (disableLabels.size() == 0) {
@@ -104,6 +108,7 @@ void DisableForkNoLabelsRule::HandleSymbol(const verible::Symbol& symbol,
         if (ptag == static_cast<int>(NodeEnum::kInitialStatement) ||
             ptag == static_cast<int>(NodeEnum::kFinalStatement) ||
             ptag == static_cast<int>(NodeEnum::kAlwaysStatement)) {
+          kMessageFinal = DisableForkNoLabelsRule::kMessageSeqBlock;
           break;
         }
         const auto& beginLabel = SymbolCastToLeaf(*beginLabels[0].match);
@@ -113,7 +118,7 @@ void DisableForkNoLabelsRule::HandleSymbol(const verible::Symbol& symbol,
         }
       }
     }
-    violations_.insert(LintViolation(symbol, kMessage, context));
+    violations_.insert(LintViolation(symbol, kMessageFinal, context));
   }
 }
 
