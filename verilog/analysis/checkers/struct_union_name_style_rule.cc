@@ -48,10 +48,8 @@ absl::string_view StructUnionNameStyleRule::Name() {
   return "struct-union-name-style";
 }
 const char StructUnionNameStyleRule::kTopic[] = "struct-union-conventions";
-const char StructUnionNameStyleRule::kMessageStruct[] =
-    "Struct names must use lower_snake_case naming convention and end with _t.";
-const char StructUnionNameStyleRule::kMessageUnion[] =
-    "Union names must use lower_snake_case naming convention and end with _t.";
+const char StructUnionNameStyleRule::kMessageStruct[] = "Struct names";
+const char StructUnionNameStyleRule::kMessageUnion[] = "Union names";
 
 std::string StructUnionNameStyleRule::GetDescription(
     DescriptionType description_type) {
@@ -84,27 +82,45 @@ void StructUnionNameStyleRule::HandleSymbol(const verible::Symbol &symbol,
     }
     const auto *identifier_leaf = GetIdentifierFromTypeDeclaration(symbol);
     const auto name = ABSL_DIE_IF_NULL(identifier_leaf)->get().text();
-    // get rid of the exceptions specified by user
-    std::string name_filtered;
-    if (!exceptions_.empty()) {
-      name_filtered.reserve(name.length());
-      const auto &underscore_separated_parts = absl::StrSplit(name, '_');
-      if (name[0] != '_') {
-        for (const auto &ns : underscore_separated_parts) {
-          if (std::find(exceptions_.begin(), exceptions_.end(), ns) ==
-              exceptions_.end()) {
-            name_filtered.append(ns);
-          }
-        }
-      } else {
-        name_filtered.append("_");
-      }
+
+    if (!absl::EndsWith(name, "_t")) {
+      violations_.insert(
+          LintViolation(identifier_leaf->get(),
+                        absl::StrCat(msg, " have to ends with _t"), context));
+      return;
     }
-    const absl::string_view relevant_name =
-        exceptions_.empty() ? name : name_filtered;
-    if (!verible::IsLowerSnakeCaseWithDigits(relevant_name) ||
-        !absl::EndsWith(name, "_t")) {
-      violations_.insert(LintViolation(identifier_leaf->get(), msg, context));
+    if (name[0] == '_') {
+      violations_.insert(LintViolation(identifier_leaf->get(),
+                                       absl::StrCat(msg, " can't start with _"),
+                                       context));
+      return;
+    }
+
+    for (const auto &ns : absl::StrSplit(name, '_')) {
+      if (std::all_of(ns.begin(), ns.end(), [](char c) {
+            return absl::ascii_islower(c) || absl::ascii_isdigit(c);
+          })) {
+        continue;
+      }
+      if (!absl::ascii_isdigit(*ns.begin())) {
+        violations_.insert(LintViolation(
+            identifier_leaf->get(),
+            "Section with unit names need to start with digit", context));
+        return;
+      }
+      if (exceptions_.find(std::string(ns)) != exceptions_.end()) {
+        continue;
+      }
+      const auto &alpha =
+          std::find_if(ns.begin(), ns.end(), absl::ascii_isalpha);
+      const auto ns_substr = std::string(alpha, std::end(ns));
+      if (exceptions_.find(ns_substr) == exceptions_.end()) {
+        violations_.insert(LintViolation(identifier_leaf->get(),
+                                         "found digit followed by unit that is "
+                                         "not configured as allowed exception",
+                                         context));
+        return;
+      }
     }
   }
 }

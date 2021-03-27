@@ -55,7 +55,7 @@ TEST(StructUnionNameStyleRuleTest, ConfigurationFail) {
       << status.message();
   EXPECT_FALSE((status = rule.Configure("exceptions:12_B")).ok())
       << status.message();
-  EXPECT_FALSE((status = rule.Configure("exceptions:12,Gw")).ok())
+  EXPECT_FALSE((status = rule.Configure("exceptions:Gw,12")).ok())
       << status.message();
 }
 
@@ -73,39 +73,37 @@ TEST(StructUnionNameStyleRuleTest, ValidStructNames) {
 }
 
 TEST(StructUnionNameStyleRuleTestConfigured, ValidStructNames) {
- // const absl::string_view exceptions = "exceptions:12B,11GB,14kJ,t";
- // const std::initializer_list<LintTestCase> kTestCases = {
- //     {""},
- //     {"typedef struct baz_t;"},
- //     {"typedef struct good_name_t;"},
- //     {"typedef struct b_a_z_t;"},
- //     {"typedef struct {logic foo; logic bar;} baz_12_t;"},
- //     {"typedef struct {logic foo; logic bar;} baz_12B_t;"},
- //     {"typedef struct {logic foo; logic bar;} good_14kJ_name_t;"},
- //     {"typedef struct {logic foo; logic bar;} b_a_11GB_z_t;"},
- // };
- // RunConfiguredLintTestCases<VerilogAnalyzer, StructUnionNameStyleRule>(
- //     kTestCases, exceptions);
+  const absl::string_view exceptions = "exceptions:12B,11GiB,KJ,Kg";
+  const std::initializer_list<LintTestCase> kTestCases = {
+      {""},
+      {"typedef struct {logic foo; logic bar;} b_a_z_t;"},
+      {"typedef struct {logic foo; logic bar;} b_a_11gb_z_t;"},
+      {"typedef struct {logic foo; logic bar;} baz_12_t;"},
+      {"typedef struct {logic foo; logic bar;} baz_12B_t;"},
+      {"typedef struct {logic foo; logic bar;} baz_11GiB_t;"},
+      {"typedef struct {logic foo; logic bar;} good_14KJ_name_t;"},
+      {"typedef struct {logic foo; logic bar;} good_10Kg_name_t;"},
+  };
+  RunConfiguredLintTestCases<VerilogAnalyzer, StructUnionNameStyleRule>(
+      kTestCases, exceptions);
 }
 
 TEST(StructUnionNameStyleRuleTestConfigured, InvalidStructNames) {
- // const absl::string_view exceptions = "exceptions:B12,BG,14Kj,10B,t,1A2";
- // constexpr int kToken = SymbolIdentifier;
- // const std::initializer_list<LintTestCase> kTestCases = {
- //     {""},
- //     {"typedef struct baz_t;"},
- //     {"typedef struct good_name_t;"},
- //     {"typedef struct b_a_z_t;"},
- //     {"typedef struct {logic foo; logic bar;}", {kToken, "baz_B12_t"}, ";"},
- //     {"typedef union {logic foo; logic bar;}", {kToken, "_14Kj_t"}, ";"},
- //     {"typedef struct {logic foo; logic bar;}",
- //      {kToken, "bad_14kJ_name_t"},
- //      ";"},
- //     {"typedef struct {logic foo; logic bar;}", {kToken, "b_a_BG_z_t"}, ";"},
- //     {"typedef struct {logic foo; logic bar;}", {kToken, "b_a_1A2_z_t"}, ";"},
- // };
- // RunConfiguredLintTestCases<VerilogAnalyzer, StructUnionNameStyleRule>(
- //     kTestCases, exceptions);
+  const absl::string_view exceptions = "exceptions:12B,KJ,Kg,t";
+  constexpr int kToken = SymbolIdentifier;
+  const std::initializer_list<LintTestCase> kTestCases = {
+      {""},
+      {"typedef struct {logic foo; logic bar;}", {kToken, "baz_12B_"}, ";"},
+      {"typedef struct {logic foo; logic bar;}", {kToken, "_baz_12B_t"}, ";"},
+      {"typedef struct {logic foo; logic bar;}", {kToken, "baz_B12_t"}, ";"},
+      {"typedef struct {logic foo; logic bar;}", {kToken, "b_a_KJ_z_t"}, ";"},
+      {"typedef struct {logic foo; logic bar;}", {kToken, "b_a_10KG_z_t"}, ";"},
+      {"typedef struct {logic foo; logic bar;}",
+       {kToken, "b_a_10Kg10_z_t"},
+       ";"},
+  };
+  RunConfiguredLintTestCases<VerilogAnalyzer, StructUnionNameStyleRule>(
+      kTestCases, exceptions);
 }
 
 TEST(StructUnionNameStyleRuleTest, InvalidStructNames) {
@@ -155,19 +153,19 @@ TEST(StructUnionNameStyleRuleTest, ValidUnionNames) {
 }
 
 TEST(StructUnionNameStyleRuleTestConfigured, ValidUnionNames) {
- // const absl::string_view exceptions = "exceptions:12B,11GB,14kJ,t";
- // const std::initializer_list<LintTestCase> kTestCases = {
- //     {""},
- //     {"typedef union baz_t;"},
- //     {"typedef union good_name_t;"},
- //     {"typedef union b_a_z_t;"},
- //     {"typedef union {logic foo; logic bar;} baz_12_t;"},
- //     {"typedef union {logic foo; logic bar;} baz_12B_t;"},
- //     {"typedef union {logic foo; logic bar;} good_14kJ_name_t;"},
- //     {"typedef union {logic foo; logic bar;} b_a_11GB_z_t;"},
- // };
- // RunConfiguredLintTestCases<VerilogAnalyzer, StructUnionNameStyleRule>(
- //     kTestCases, exceptions);
+  const absl::string_view exceptions = "exceptions:12B,11GiB,KJ,Kg";
+  const std::initializer_list<LintTestCase> kTestCases = {
+      {""},
+      {"typedef union {logic foo; logic bar;} b_a_z_t;"},
+      {"typedef union {logic foo; logic bar;} b_a_11gb_z_t;"},
+      {"typedef union {logic foo; logic bar;} baz_12_t;"},
+      {"typedef union {logic foo; logic bar;} baz_12B_t;"},
+      {"typedef union {logic foo; logic bar;} baz_11GiB_t;"},
+      {"typedef union {logic foo; logic bar;} good_14KJ_name_t;"},
+      {"typedef union {logic foo; logic bar;} good_10Kg_name_t;"},
+  };
+  RunConfiguredLintTestCases<VerilogAnalyzer, StructUnionNameStyleRule>(
+      kTestCases, exceptions);
 }
 
 TEST(StructUnionNameStyleRuleTest, InvalidUnionNames) {
@@ -206,23 +204,21 @@ TEST(StructUnionNameStyleRuleTest, InvalidUnionNames) {
 }
 
 TEST(StructUnionNameStyleRuleTestConfigured, InvalidUnionNames) {
- // const absl::string_view exceptions = "exceptions:B12,GB,14Kj,t,1A2";
- // constexpr int kToken = SymbolIdentifier;
- // const std::initializer_list<LintTestCase> kTestCases = {
- //     {""},
- //     {"typedef union baz_t;"},
- //     {"typedef union good_name_t;"},
- //     {"typedef union b_a_z_t;"},
- //     {"typedef union {logic foo; logic bar;}", {kToken, "baz_B12_t"}, ";"},
- //     {"typedef union {logic foo; logic bar;}", {kToken, "_14Kj_t"}, ";"},
- //     {"typedef union {logic foo; logic bar;}",
- //      {kToken, "bad_14kJ_name_t"},
- //      ";"},
- //     {"typedef union {logic foo; logic bar;}", {kToken, "b_a_GB_z_t"}, ";"},
- //     {"typedef union {logic foo; logic bar;}", {kToken, "b_a_1A2_z_t"}, ";"},
- // };
- // RunConfiguredLintTestCases<VerilogAnalyzer, StructUnionNameStyleRule>(
- //     kTestCases, exceptions);
+  const absl::string_view exceptions = "exceptions:12B,KJ,Kg,t";
+  constexpr int kToken = SymbolIdentifier;
+  const std::initializer_list<LintTestCase> kTestCases = {
+      {""},
+      {"typedef union {logic foo; logic bar;}", {kToken, "baz_12B_"}, ";"},
+      {"typedef union {logic foo; logic bar;}", {kToken, "_baz_12B_t"}, ";"},
+      {"typedef union {logic foo; logic bar;}", {kToken, "baz_B12_t"}, ";"},
+      {"typedef union {logic foo; logic bar;}", {kToken, "b_a_KJ_z_t"}, ";"},
+      {"typedef union {logic foo; logic bar;}", {kToken, "b_a_10KG_z_t"}, ";"},
+      {"typedef union {logic foo; logic bar;}",
+       {kToken, "b_a_10Kg10_z_t"},
+       ";"},
+  };
+  RunConfiguredLintTestCases<VerilogAnalyzer, StructUnionNameStyleRule>(
+      kTestCases, exceptions);
 }
 
 }  // namespace
