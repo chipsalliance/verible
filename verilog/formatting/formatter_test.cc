@@ -9178,8 +9178,7 @@ TEST(FormatterEndToEndTest, ConstraintExpressions) {
        "endclass\n"},
 
       // constraints with if-constraint expressions
-      {"constraint xx { if (a) b; }\n",
-       "constraint xx {if (a) b;}\n"},
+      {"constraint xx { if (a) b; }\n", "constraint xx {if (a) b;}\n"},
 
       {"constraint xx { if (a) {b;} }\n",
        "constraint xx {\n"
@@ -9217,17 +9216,15 @@ TEST(FormatterEndToEndTest, ConstraintExpressions) {
        "};}",
        "constraint c_operation {\n"
        "  if (fixed_operation_en)\n"
-       "  {aes_operation == fixed_operation};\n"  // FIXME(hzeller): Wrong indentation?
+       "  {aes_operation == fixed_operation};\n"
        "}\n"},
-
 
       // concatenation expression
       {"constraint c_iv {if (fixed_iv_en) {aes_iv == fixed_iv};}",
        "constraint c_iv {\n"
        "  if (fixed_iv_en)\n"
-       "  {aes_iv == fixed_iv};\n"  // FIXME(hzeller): Wrong indenation?
+       "  {aes_iv == fixed_iv};\n"
        "}\n"},
-
 
       // looooong test
       {"constraint xx {"
@@ -9237,12 +9234,14 @@ TEST(FormatterEndToEndTest, ConstraintExpressions) {
        "ccccccccccccccccccccccc==dddddddddddddddddddddd;}",
        "constraint xx {\n"
        "  if (aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa)\n"
-       "  aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa == bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb;\n"
-       "  ccccccccccccccccccccccc == dddddddddddddddddddddd;\n"  // FIXME(hzeller): indentation?
+       "  aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa == "
+       "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb;\n"
+       "  ccccccccccccccccccccccc == dddddddddddddddddddddd;\n"
        "}\n"},
   };
   FormatStyle style;
-  style.column_limit = 100;  // smaller column_limit forces expansion of constraint blocks
+  style.column_limit =
+      100;  // smaller column_limit forces expansion of constraint blocks
   style.indentation_spaces = 2;
   style.wrap_spaces = 4;
   style.port_declarations_alignment = verible::AlignmentPolicy::kPreserve;
