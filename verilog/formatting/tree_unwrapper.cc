@@ -1671,6 +1671,23 @@ void TreeUnwrapper::ReshapeTokenPartitions(
       break;
     }
 
+    case NodeEnum::kConstraintBlockItemList: {
+      HoistOnlyChildPartition(&partition);
+
+      // Alwyas expand constraint(s) blocks with braces inside them
+      const auto& uwline = partition.Value();
+      const auto& ftokens = uwline.TokensRange();
+      auto found = std::find_if(ftokens.begin(), ftokens.end(),
+                                [](const verible::PreFormatToken& token) {
+                                  return token.TokenEnum() == '{';
+                                });
+      if (found != ftokens.end()) {
+        VLOG(4) << "Found brace group, forcing expansion";
+        partition.Value().SetPartitionPolicy(PartitionPolicyEnum::kAlwaysExpand);
+      }
+      break;
+    }
+
       // This group of cases is temporary: simplify these during the
       // rewrite/refactor of this function.
       // See search-anchor: STATEMENT_TYPES
