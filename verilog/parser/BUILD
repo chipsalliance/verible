@@ -118,7 +118,10 @@ cc_library(
     name = "verilog_y_cc",
     srcs = ["verilog-final.tab.cc"],
     hdrs = ["verilog_parse_interface.h"],
-    copts = ["-Wno-implicit-fallthrough"],
+    copts = [
+        "-Wno-implicit-fallthrough",
+        "-Wno-type-limits",
+    ],
     deps = [
         ":verilog_token_enum",
         "//common/parser:bison_parser_common",
