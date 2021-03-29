@@ -32,7 +32,7 @@ namespace {
 using verible::LintTestCase;
 using verible::RunLintTestCases;
 
-TEST(StringLiteralConcatenationTest, FunctionFailures) {
+TEST(StringLiteralConcatenationTest, FunctionPass) {
   constexpr int kToken = TK_StringLiteral;
   const std::initializer_list<LintTestCase> kStringLiteralTestCases = {
       {""},
@@ -41,6 +41,19 @@ TEST(StringLiteralConcatenationTest, FunctionFailures) {
        "\"Humpty Dumpty had a great fall.\"};", "\nendmodule"},
       {"module m;\n", "string tmp = {\"Humpty Dumpty \\ sat on a wall.\",",
        "\"Humpty Dumpty had a great fall.\"};", "\nendmodule"},
+      {"module m;\nstring x = 1 ? \"foo\" : \"bar\";\nendmodule"},
+      {"module m;\n initial begin\n", "if(\"foo\" == \"foo\") begin\n",
+       "$display(\"%s %s\", \"Correct\", \"string\");\n", "end\n",
+       "end\nendmodule"},
+  };
+
+  RunLintTestCases<VerilogAnalyzer, TokenStreamLintRule>(
+      kStringLiteralTestCases);
+}
+
+TEST(StringLiteralConcatenationTest, FunctionFailures) {
+  constexpr int kToken = TK_StringLiteral;
+  const std::initializer_list<LintTestCase> kStringLiteralTestCases = {
       {"module m;\n",
        "string tmp=",
        {kToken,
@@ -54,6 +67,18 @@ TEST(StringLiteralConcatenationTest, FunctionFailures) {
         "fall.\""},
        ";",
        "\nendmodule"},
+      {"module m;\nstring x = 1 ?",
+       {kToken, "\"foo\\\nincorrect\""},
+       " : \"bar\";\nendmodule"},
+      {"module m;\nstring x = 1 ? \"foo\" : ",
+       {kToken, "\"bar\\\nincorrect\""},
+       ";\nendmodule"},
+      {"module m;\n initial begin\n",
+       "if(\"foo\" == \"foo\") begin\n",
+       "$display(\"%s %s\", \"Incorrect\",",
+       {kToken, "\"string\\\nspotted\""},
+       ");\nend\n",
+       "end\nendmodule"},
   };
 
   RunLintTestCases<VerilogAnalyzer, TokenStreamLintRule>(
