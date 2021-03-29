@@ -14,11 +14,10 @@
 # limitations under the License.
 
 FORMAT_OUT=${TMPDIR:-/tmp}/clang-format-diff.out
-BASE_BRANCH=origin/${GITHUB_BASE_REF:-master}
 
-# Run on all the files that are affected
-FORK_POINT=$(git merge-base --fork-point ${BASE_BRANCH})
-clang-format -i --style=Google $(git diff --name-only --diff-filter=AM -r ${FORK_POINT} | grep '\(\.cc\|\.h\)$') 2> /dev/null
+# Run on all files.
+find . -name "*.h" -o -name "*.cc" -print0 \
+     | xargs -0 -P 2 clang-format --style=Google -i
 
 # Check if we got any diff
 git diff > ${FORMAT_OUT}
