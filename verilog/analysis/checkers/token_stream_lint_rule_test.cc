@@ -33,7 +33,6 @@ using verible::LintTestCase;
 using verible::RunLintTestCases;
 
 TEST(StringLiteralConcatenationTest, FunctionPass) {
-  constexpr int kToken = TK_StringLiteral;
   const std::initializer_list<LintTestCase> kStringLiteralTestCases = {
       {""},
       {"module m;\nendmodule\n"},
