@@ -1683,7 +1683,8 @@ void TreeUnwrapper::ReshapeTokenPartitions(
                                 });
       if (found != ftokens.end()) {
         VLOG(4) << "Found brace group, forcing expansion";
-        partition.Value().SetPartitionPolicy(PartitionPolicyEnum::kAlwaysExpand);
+        partition.Value().SetPartitionPolicy(
+            PartitionPolicyEnum::kAlwaysExpand);
       }
       break;
     }
