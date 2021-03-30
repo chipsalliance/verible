@@ -46,6 +46,7 @@ BAZEL_OPTS="${BAZEL_OPTS} --cxxopt=-Wno-implicit-fallthrough"     # gflags
 BAZEL_OPTS="${BAZEL_OPTS} --cxxopt=-Wno-cast-function-type"       # gflags
 BAZEL_OPTS="${BAZEL_OPTS} --cxxopt=-Wno-sign-compare"             # glog
 BAZEL_OPTS="${BAZEL_OPTS} --cxxopt=-Wno-stringop-truncation"      # memcache
+BAZEL_OPTS="${BAZEL_OPTS} --cxxopt=-Wno-int-in-bool-context"      # memcache
 BAZEL_OPTS="${BAZEL_OPTS} --cxxopt=-Wno-deprecated-declarations"  # jsconcpp
 BAZEL_OPTS="${BAZEL_OPTS} --cxxopt=-Wno-unused-but-set-variable"  # kythe
 BAZEL_OPTS="${BAZEL_OPTS} --cxxopt=-Wno-array-bounds"             # kythe
