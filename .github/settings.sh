@@ -31,13 +31,6 @@ export BAZEL_VERSION=3.7.0
 # latest version
 export USE_BAZEL_VERSION=$BAZEL_VERSION
 
-# TODO(b/171679296): re-enable c++11 support
-#   by downgrading kythe build requirements.
-export BAZEL_CXXOPTS="-std=c++17"
-
-# Reduce the verbosity of progress output on CI
-export BAZEL_OPTS="-c opt --show_progress_rate_limit=10.0"
-
 # TODO(b/171989992): revert to using release version after upgrading system
 #   libraries/image (need: GLIBCXX_3.4.26, CXXABI_1.3.11, GLIBC_2.29).
 # KYTHE_VERSION=master
