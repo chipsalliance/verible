@@ -20,7 +20,7 @@ source ./.github/settings.sh
 
 # TODO(b/171679296): re-enable c++11 support
 #   by downgrading kythe build requirements.
-BAZEL_CXXOPTS="-std=c++17"
+export BAZEL_CXXOPTS="-std=c++17"
 
 # Reduce the verbosity of progress output on CI
 BAZEL_OPTS="-c opt --show_progress_rate_limit=10.0"
