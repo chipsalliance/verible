@@ -18,13 +18,6 @@ set -e
 
 source ./.github/settings.sh
 
-# TODO(b/171679296): re-enable c++11 support
-#   by downgrading kythe build requirements.
-export BAZEL_CXXOPTS="-std=c++17"
-
-# Reduce the verbosity of progress output on CI
-BAZEL_OPTS="-c opt --show_progress_rate_limit=10.0"
-
 # Turn warnings to 11. And fail compliation if we encounter one.
 BAZEL_OPTS="${BAZEL_OPTS} --cxxopt=-Werror"  # Always want bail on warning
 BAZEL_OPTS="${BAZEL_OPTS} --cxxopt=-Wall --cxxopt=-Wextra"

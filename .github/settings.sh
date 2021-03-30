@@ -26,6 +26,13 @@ fi
 
 export GIT_VERSION=${GIT_VERSION:-$(git describe --match=v*)}
 
+# TODO(b/171679296): re-enable c++11 support
+#   by downgrading kythe build requirements.
+export BAZEL_CXXOPTS="-std=c++17"
+
+# Reduce the verbosity of progress output on CI
+export BAZEL_OPTS="-c opt --show_progress_rate_limit=10.0"
+
 export BAZEL_VERSION=3.7.0
 # Without following environment variable set, Bazel updates itself to the
 # latest version
