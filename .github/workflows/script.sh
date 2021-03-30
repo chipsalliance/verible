@@ -48,6 +48,7 @@ BAZEL_OPTS="${BAZEL_OPTS} --cxxopt=-Wno-sign-compare"             # glog
 BAZEL_OPTS="${BAZEL_OPTS} --cxxopt=-Wno-stringop-truncation"      # memcache
 BAZEL_OPTS="${BAZEL_OPTS} --cxxopt=-Wno-deprecated-declarations"  # jsconcpp
 BAZEL_OPTS="${BAZEL_OPTS} --cxxopt=-Wno-unused-but-set-variable"  # kythe
+BAZEL_OPTS="${BAZEL_OPTS} --cxxopt=-Wno-array-bounds"             # kythe
 
 case "$MODE" in
 test)
