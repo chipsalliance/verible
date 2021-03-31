@@ -1,10 +1,10 @@
 module disable_non_sequential;
   initial begin
-    fork
+    fork : foo
       begin
         #6;
       end
     join_any
-    disable fork_invalid;
+    disable foo;
   end
 endmodule

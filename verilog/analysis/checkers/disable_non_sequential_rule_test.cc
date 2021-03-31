@@ -33,7 +33,6 @@ using verible::LintTestCase;
 using verible::RunLintTestCases;
 
 TEST(DisableStatementTest, FunctionPass) {
-  constexpr int kToken = TK_disable;
   const std::initializer_list<LintTestCase> kDisableStatementTestCases = {
       {""},
       {"module m;\ninitial begin;\n", "fork\n", "begin\n#6;\nend\n",
@@ -80,31 +79,32 @@ TEST(DisableStatementTest, FunctionFailures) {
        "join_any\n",
        "end\nendmodule"},
       {"module m;\n",
+       "initial begin:foo\n",
+       "end\n",
+       "initial begin:boo\n",
+       {kToken, "disable"},
+       " foo;\n",
+       "end\nendmodule"},
+      {"module m;\n",
        "initial begin:foo;\n",
-       "fork\n",
        "begin : fo\n",
        {kToken, "disable"},
        " foo;\n",
        "end\n",
-       "join_any\n",
        "end\nendmodule"},
       {"module m;\n",
        "final begin:foo;\n",
-       "fork\n",
        "begin : fo\n",
        {kToken, "disable"},
        " foo;\n",
        "end\n",
-       "join_any\n",
        "end\nendmodule"},
       {"module m;\n",
        "always_comb begin:foo;\n",
-       "fork\n",
        "begin : fo\n",
        {kToken, "disable"},
        " foo;\n",
        "end\n",
-       "join_any\n",
        "end\nendmodule"},
   };
   RunLintTestCases<VerilogAnalyzer, DisableForkNoLabelsRule>(
