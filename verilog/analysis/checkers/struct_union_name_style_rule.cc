@@ -53,11 +53,19 @@ const char StructUnionNameStyleRule::kMessageUnion[] = "Union names";
 
 std::string StructUnionNameStyleRule::GetDescription(
     DescriptionType description_type) {
-  return absl::StrCat(
+  static std::string basic_desc = absl::StrCat(
       "Checks that ", Codify("struct", description_type), " and ",
       Codify("union", description_type),
       " names use lower_snake_case naming convention and end with '_t'. See ",
       GetStyleGuideCitation(kTopic), ".");
+  if (description_type == DescriptionType::kHelpRulesFlag) {
+    return absl::StrCat(basic_desc, "exceptions:String with exceptions");
+  } else {
+    return absl::StrCat(basic_desc,
+                        "\n##### Parameters\n"
+                        " * `exceptions` (`String` with exceptions divided by "
+                        "`,`, Default: Empty\n");
+  }
 }
 
 static const Matcher &TypedefMatcher() {
@@ -69,30 +77,24 @@ void StructUnionNameStyleRule::HandleSymbol(const verible::Symbol &symbol,
                                             const SyntaxTreeContext &context) {
   verible::matcher::BoundSymbolManager manager;
   if (TypedefMatcher().Matches(symbol, &manager)) {
-    const char *msg;
     // TODO: This can be changed to checking type of child (by index) when we
     // have consistent shape for all kTypeDeclaration nodes.
-    if (!FindAllStructTypes(symbol).empty()) {
-      msg = kMessageStruct;
-    } else if (!FindAllUnionTypes(symbol).empty()) {
-      msg = kMessageUnion;
-    } else {
-      // Neither a struct nor union definition
-      return;
-    }
+    const bool is_struct = !FindAllStructTypes(symbol).empty();
+    if (!is_struct && FindAllUnionTypes(symbol).empty()) return;
+    const char *const msg = is_struct ? kMessageStruct : kMessageUnion;
+
     const auto *identifier_leaf = GetIdentifierFromTypeDeclaration(symbol);
     const auto name = ABSL_DIE_IF_NULL(identifier_leaf)->get().text();
 
     if (!absl::EndsWith(name, "_t")) {
       violations_.insert(
-          LintViolation(identifier_leaf->get(),
+          LintViolation(*identifier_leaf,
                         absl::StrCat(msg, " have to ends with _t"), context));
       return;
     }
     if (name[0] == '_') {
-      violations_.insert(LintViolation(identifier_leaf->get(),
-                                       absl::StrCat(msg, " can't start with _"),
-                                       context));
+      violations_.insert(LintViolation(
+          *identifier_leaf, absl::StrCat(msg, " can't start with _"), context));
       return;
     }
 
@@ -104,18 +106,18 @@ void StructUnionNameStyleRule::HandleSymbol(const verible::Symbol &symbol,
       }
       if (!absl::ascii_isdigit(*ns.begin())) {
         violations_.insert(LintViolation(
-            identifier_leaf->get(),
+            *identifier_leaf,
             "Section with unit names need to start with digit", context));
         return;
       }
       if (exceptions_.find(std::string(ns)) != exceptions_.end()) {
-        continue;
+        continue;  // number + unit exception found
       }
       const auto &alpha =
           std::find_if(ns.begin(), ns.end(), absl::ascii_isalpha);
-      const auto ns_substr = std::string(alpha, std::end(ns));
+      const auto ns_substr = std::string(alpha, ns.end());
       if (exceptions_.find(ns_substr) == exceptions_.end()) {
-        violations_.insert(LintViolation(identifier_leaf->get(),
+        violations_.insert(LintViolation(*identifier_leaf,
                                          "found digit followed by unit that is "
                                          "not configured as allowed exception",
                                          context));
@@ -131,32 +133,34 @@ absl::Status StructUnionNameStyleRule::Configure(
   std::string raw_tokens;
   auto status = verible::ParseNameValues(
       configuration, {{"exceptions", SetString(&raw_tokens)}});
+  if (!status.ok()) return status;
 
   if (!raw_tokens.empty()) {
     const auto &exceptions = absl::StrSplit(raw_tokens, ',');
     for (const auto &ex : exceptions) {
       const auto &e =
           std::find_if_not(ex.begin(), ex.end(), absl::ascii_isalnum);
-      if (e != ex.end())
+      if (e != ex.end()) {
         return absl::Status(absl::StatusCode::kInvalidArgument,
                             "The exception can be composed of digits and "
                             "alphabetic characters only");
+      }
       const auto &alpha =
           std::find_if(ex.begin(), ex.end(), absl::ascii_isalpha);
-      if (alpha == ex.end())
+      if (alpha == ex.end()) {
         return absl::Status(
             absl::StatusCode::kInvalidArgument,
             "The exception have to contain at least one alphabetic character");
-
+      }
       const auto &digit = std::find_if(alpha, ex.end(), absl::ascii_isdigit);
-      if (digit != ex.end())
+      if (digit != ex.end()) {
         return absl::Status(absl::StatusCode::kInvalidArgument,
-                            "Digits are forbidden when specifying the unit");
-
+                            "Digits after the unit are not allowed");
+      }
       exceptions_.emplace(ex);
     }
   }
-  return status;
+  return absl::OkStatus();
 }
 
 LintRuleStatus StructUnionNameStyleRule::Report() const {

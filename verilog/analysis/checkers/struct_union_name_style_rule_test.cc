@@ -16,6 +16,7 @@
 
 #include <initializer_list>
 
+#include "absl/strings/match.h"
 #include "common/analysis/linter_test_utils.h"
 #include "common/analysis/syntax_tree_linter_test_utils.h"
 #include "common/text/symbol.h"
@@ -45,18 +46,33 @@ TEST(StructUnionNameStyleRuleTest, ConfigurationPass) {
 TEST(StructUnionNameStyleRuleTest, ConfigurationFail) {
   StructUnionNameStyleRule rule;
   absl::Status status;
+  EXPECT_FALSE((status = rule.Configure("bad_exceptions:,")).ok())
+      << status.message();
+
   EXPECT_FALSE((status = rule.Configure("exceptions:,")).ok())
       << status.message();
+  EXPECT_TRUE(
+      absl::StrContains(status.message(), "at least one alphabetic character"));
   EXPECT_FALSE((status = rule.Configure("exceptions: 12B")).ok())
       << status.message();
+  EXPECT_TRUE(absl::StrContains(status.message(),
+                                "digits and alphabetic characters only"));
   EXPECT_FALSE((status = rule.Configure("exceptions:12")).ok())
       << status.message();
+  EXPECT_TRUE(
+      absl::StrContains(status.message(), "at least one alphabetic character"));
   EXPECT_FALSE((status = rule.Configure("exceptions:GB12")).ok())
       << status.message();
+  EXPECT_TRUE(
+      absl::StrContains(status.message(), "after the unit are not allowed"));
   EXPECT_FALSE((status = rule.Configure("exceptions:12_B")).ok())
       << status.message();
+  EXPECT_TRUE(absl::StrContains(status.message(),
+                                "digits and alphabetic characters only"));
   EXPECT_FALSE((status = rule.Configure("exceptions:Gw,12")).ok())
       << status.message();
+  EXPECT_TRUE(
+      absl::StrContains(status.message(), "at least one alphabetic character"));
 }
 
 TEST(StructUnionNameStyleRuleTest, ValidStructNames) {
