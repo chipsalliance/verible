@@ -73,12 +73,11 @@ void TokenStreamLintRule::HandleSymbol(const verible::Symbol& symbol,
   }
   const auto& string_node = SymbolCastToNode(symbol);
   const auto& node_children = string_node.children();
-  const auto& literal =
-      std::find_if(node_children.begin(), node_children.end(),
-                   [](const verible::SymbolPtr& p) {
-                     return p.get()->Tag().tag == TK_StringLiteral;
-                   });
-  const auto& string_literal = SymbolCastToLeaf(*literal->get());
+  const auto& literal = std::find_if(node_children.begin(), node_children.end(),
+                                     [](const verible::SymbolPtr& p) {
+                                       return p->Tag().tag == TK_StringLiteral;
+                                     });
+  const auto& string_literal = SymbolCastToLeaf(**literal);
   if (absl::StrContains(string_literal.get().text(), "\\\n")) {
     violations_.insert(LintViolation(string_literal, kMessage, context));
   }
