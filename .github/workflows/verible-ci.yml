@@ -39,7 +39,7 @@ jobs:
         clang-format --version
 
     - name: Run formatting style check
-      run: ./.github/workflows/run-clang-format.sh
+      run: ./.github/bin/run-clang-format.sh
 
 
   Check:
@@ -79,16 +79,16 @@ jobs:
       run: |
         set -x
         source ./.github/settings.sh
-        ./.github/workflows/set-compiler.sh 9
-        ./.github/workflows/install-bazel.sh
-        ./.github/workflows/install-python.sh
+        ./.github/bin/set-compiler.sh 9
+        ./.github/bin/install-bazel.sh
+        ./.github/bin/install-python.sh
 
     - name: ${{ matrix.env.mode }} Verible
-      run: ./.github/workflows/script.sh
+      run: ./.github/bin/script.sh
 
     - name: Set up things for GitHub Pages deployment
       if: matrix.mode == 'compile'
-      run: ./.github/workflows/github-pages-setup.sh
+      run: ./.github/bin/github-pages-setup.sh
 
     - name: Deployment
       if: github.ref == 'refs/heads/master' && github.event_name != 'pull_request' && matrix.mode == 'compile'
@@ -117,25 +117,17 @@ jobs:
         path: "/home/runner/.cache/bazel"
         key: bazel-kythe
 
-    - name: Setting compiler
+    - name: Install Dependencies
       run: |
         source ./.github/settings.sh
-        ./.github/workflows/set-compiler.sh 9
-
-    - name: Install Bazel
-      run: |
-        source ./.github/settings.sh
-        ./.github/workflows/install-bazel.sh
-
-    - name: Install Kythe
-      run: |
-        source ./.github/settings.sh
-        ./.github/workflows/install-kythe.sh
+        ./.github/bin/set-compiler.sh 9
+        ./.github/bin/install-bazel.sh
+        ./.github/bin/install-kythe.sh
 
     - name: Run Kythe
       run: |
         source ./.github/settings.sh
-        ./.github/workflows/run-kythe.sh
+        ./.github/bin/run-kythe.sh
 
     - name: 📤 Upload Kythe output
       uses: actions/upload-artifact@v2
@@ -154,7 +146,7 @@ jobs:
     - uses: actions/checkout@v2
 
     - id: generate
-      run: ./.github/workflows/generate-matrix.py
+      run: ./.github/bin/generate-matrix.py
 
 
   Build:

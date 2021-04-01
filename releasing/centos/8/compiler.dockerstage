@@ -1,0 +1,8 @@
+# Install C++ compiler
+RUN yum -y group install --nogpgcheck "Development Tools" || \
+    yum -y groupinstall --nogpgcheck "Development Tools"
+
+RUN yum install -y bison flex
+
+RUN gcc --version
+RUN g++ --version

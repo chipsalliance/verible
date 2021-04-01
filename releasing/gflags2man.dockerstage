@@ -1,0 +1,10 @@
+# Install gflags2man
+RUN wget --no-verbose https://repo.anaconda.com/miniconda/Miniconda2-latest-Linux-x86_64.sh \
+ && chmod a+x Miniconda2-latest-Linux-x86_64.sh \
+ && ./Miniconda2-latest-Linux-x86_64.sh -p /usr/local -b -f \
+ && conda --version
+RUN which pip
+RUN /usr/local/bin/pip install python-gflags
+RUN chmod a+x /usr/local/bin/gflags2man.py
+RUN ln -s /usr/local/bin/gflags2man.py /usr/bin/gflags2man
+RUN gflags2man
