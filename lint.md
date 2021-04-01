@@ -213,6 +213,11 @@ Checks that plusargs are always assigned a value, by ensuring that plusargs are 
 
 Enabled by default: true
 
+### port-name-suffix
+Check that port names end with _i for inputs, _o for outputs and _io for inouts. Alternatively, for active-low signals use _n[io], for differential pairs use _n[io] and _p[io]. See [Style: suffixes-for-signals-and-types].
+
+Enabled by default: false
+
 ### positive-meaning-parameter-name
 Checks that no parameter name starts with 'disable', using positive naming (starting with 'enable') is recommended. See [Style: binary-parameters].
 
@@ -283,4 +288,4 @@ Enabled by default: true
 
 ## Version
 
-Generated on 2021-03-31 17:08:05 +0200 from [19d0bf0](https://github.com/google/verible/commit/19d0bf0ac33e6fa2ebbd0f5e50671fcaa280cfa6)
+Generated on 2021-04-01 12:01:16 +0200 from [6e678c4](https://github.com/google/verible/commit/6e678c4e94cf14b56d97a8dd98de64996660f478)
