@@ -670,7 +670,8 @@ VName KytheFactsExtractor::DeclareFile(const IndexingFactNode& file_fact_node) {
   VName file_vname = {.path = FilePath(),
                       .root = "",
                       .signature = Signature(""),
-                      .corpus = Corpus()};
+                      .corpus = Corpus(),
+                      .language = kEmptyKytheLanguage};
   const auto& anchors(file_fact_node.Value().Anchors());
   CHECK_GE(anchors.size(), 2);
   const absl::string_view code_text =
@@ -1139,7 +1140,8 @@ void KytheFactsExtractor::ReferenceIncludeFile(
   const VName file_vname = {.path = file_path.Text(),
                             .root = "",
                             .signature = Signature(""),
-                            .corpus = Corpus()};
+                            .corpus = Corpus(),
+                            .language = kEmptyKytheLanguage};
   const VName file_anchor = CreateAnchor(file_name);
 
   CreateEdge(file_anchor, kEdgeRefIncludes, file_vname);

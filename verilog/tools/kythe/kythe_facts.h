@@ -25,6 +25,7 @@ namespace verilog {
 namespace kythe {
 
 inline constexpr absl::string_view kDefaultKytheLanguage = "verilog";
+inline constexpr absl::string_view kEmptyKytheLanguage = "";
 
 // Unique identifier for Kythe facts.
 class Signature {
