@@ -86,6 +86,13 @@ void StructUnionNameStyleRule::HandleSymbol(const verible::Symbol &symbol,
 
     const auto *identifier_leaf = GetIdentifierFromTypeDeclaration(symbol);
     const auto name = ABSL_DIE_IF_NULL(identifier_leaf)->get().text();
+    if(base_regex_.has_value())
+    {
+      if(std::regex_search(std::string(name), *base_regex_))
+      {
+        return;
+      }
+    }
 
     if (!absl::EndsWith(name, "_t")) {
       violations_.insert(
@@ -131,9 +138,22 @@ void StructUnionNameStyleRule::HandleSymbol(const verible::Symbol &symbol,
 absl::Status StructUnionNameStyleRule::Configure(
     absl::string_view configuration) {
   using verible::config::SetString;
-  std::string raw_tokens;
+  std::string raw_tokens, base_regex;
   auto status = verible::ParseNameValues(
-      configuration, {{"exceptions", SetString(&raw_tokens)}});
+      configuration, {
+      {"exceptions", SetString(&raw_tokens)},
+      {"name_regex", SetString(&base_regex)}
+    });
+  if(!base_regex.empty())
+  {
+    try {
+      base_regex_ = base_regex;
+    } catch (const std::regex_error& e) {
+        return absl::Status(absl::StatusCode::kInvalidArgument,
+                            "Invalid regex specified");
+    }
+  }
+
   if (!status.ok()) return status;
 
   if (!raw_tokens.empty()) {

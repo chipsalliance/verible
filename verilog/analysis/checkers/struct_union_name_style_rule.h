@@ -17,6 +17,8 @@
 
 #include <set>
 #include <string>
+#include <regex>
+#include <optional>
 
 #include "absl/strings/string_view.h"
 #include "common/analysis/lint_rule_status.h"
@@ -55,6 +57,7 @@ class StructUnionNameStyleRule : public verible::SyntaxTreeLintRule {
   static const char kMessageUnion[];
 
   std::set<std::string> exceptions_;
+  std::optional<std::regex> base_regex_;
 
   std::set<verible::LintViolation> violations_;
 };
