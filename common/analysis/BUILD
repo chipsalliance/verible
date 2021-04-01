@@ -1,6 +1,6 @@
 # This package contains functions and classes for analyzing text structures.
 
-load("//bazel:flex.bzl", "genlex")
+load("@rules_flex//flex:flex.bzl", "flex")
 
 licenses(["notice"])
 
@@ -47,10 +47,15 @@ cc_library(
     ],
 )
 
-genlex(
+genrule(
     name = "command_file_lex",
-    src = "command_file.lex",
-    out = "command_file.yy.cc",
+    srcs  = ["command_file.lex"],
+    outs = ["command_file.yy.cc"],
+    cmd = "M4=$(M4) $(FLEX) --outfile=$@ $<",
+    toolchains = [
+        "@rules_flex//flex:current_flex_toolchain",
+        "@rules_m4//m4:current_m4_toolchain",
+    ],
 )
 
 cc_library(
@@ -65,7 +70,6 @@ cc_library(
     ],
     copts = ["-Wno-implicit-fallthrough"],
     deps = [
-        "//bazel:flex",
         "//common/lexer:flex_lexer_adapter",
         "//common/lexer:token_stream_adapter",
         "//common/strings:position",

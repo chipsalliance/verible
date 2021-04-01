@@ -99,6 +99,23 @@ install_rules_setup()
 all_content = """filegroup(name = "all", srcs = glob(["**"]), visibility = ["//visibility:public"])"""
 
 http_archive(
+    name = "rules_m4",
+    urls = ["https://github.com/jmillikin/rules_m4/releases/download/v0.2/rules_m4-v0.2.tar.xz"],
+    sha256 = "c67fa9891bb19e9e6c1050003ba648d35383b8cb3c9572f397ad24040fb7f0eb",
+)
+
+load("@rules_m4//m4:m4.bzl", "m4_register_toolchains")
+m4_register_toolchains()
+
+http_archive(
+    name = "rules_flex",
+    urls = ["https://github.com/jmillikin/rules_flex/releases/download/v0.2/rules_flex-v0.2.tar.xz"],
+    sha256 = "f1685512937c2e33a7ebc4d5c6cf38ed282c2ce3b7a9c7c0b542db7e5db59d52",
+)
+load("@rules_flex//flex:flex.bzl", "flex_register_toolchains")
+flex_register_toolchains()
+
+http_archive(
     name = "bison",
     build_file_content = all_content,
     sha256 = "e28ed3aad934de2d1df68be209ac0b454f7b6d3c3d6d01126e5cd2cbadba089a",
@@ -106,16 +123,7 @@ http_archive(
     urls = ["https://ftp.gnu.org/gnu/bison/bison-3.6.2.tar.gz"],
 )
 
-http_archive(
-    name = "flex",
-    build_file_content = all_content,
-    patch_args = ["-p1"],
-    patches = ["@com_google_verible//bazel:flex.patch"],
-    sha256 = "e87aae032bf07c26f85ac0ed3250998c37621d95f8bd748b31f15b33c45ee995",
-    strip_prefix = "flex-2.6.4",
-    urls = ["https://github.com/westes/flex/releases/download/v2.6.4/flex-2.6.4.tar.gz"],
-)
-
+# Still need this until we are replacing bazel.
 http_archive(
     name = "m4",
     build_file_content = all_content,

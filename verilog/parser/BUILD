@@ -1,7 +1,7 @@
 # This package implements a SystemVerilog lexer and parser.
 
+load("@rules_flex//flex:flex.bzl", "flex")
 load("//bazel:bison.bzl", "genyacc")
-load("//bazel:flex.bzl", "genlex")
 load(
     "//common/parser:yacc.bzl",
     "record_recovered_syntax_errors",
@@ -16,10 +16,15 @@ package(
     ],
 )
 
-genlex(
+genrule(
     name = "verilog_lex",
-    src = "verilog.lex",
-    out = "verilog.yy.cc",
+    srcs  = ["verilog.lex"],
+    outs = ["verilog.yy.cc"],
+    cmd = "M4=$(M4) $(FLEX) --outfile=$@ $<",
+    toolchains = [
+        "@rules_flex//flex:current_flex_toolchain",
+        "@rules_m4//m4:current_m4_toolchain",
+    ],
 )
 
 cc_library(
@@ -32,7 +37,6 @@ cc_library(
     copts = ["-Wno-implicit-fallthrough"],
     deps = [
         ":verilog_token_enum",
-        "//bazel:flex",
         "//common/lexer:flex_lexer_adapter",
         "//common/text:token_info",
         "@com_google_absl//absl/strings",

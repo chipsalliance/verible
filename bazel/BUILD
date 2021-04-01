@@ -54,22 +54,3 @@ filegroup(
     srcs = [":bison"],
     output_group = "bison",
 )
-
-configure_make(
-    name = "flex",
-    binaries = [
-        "flex",
-    ],
-    # This seems to be necessary (using tools_dep and weird path) because unlike
-    # bison, flex needs to invoke m4 during build (whereas bison needs it only
-    # during `configure`).
-    configure_env_vars = {"M4": "$$EXT_BUILD_DEPS$$/m4/bin/m4"},
-    lib_source = "@flex//:all",
-    deps = [":m4"],
-)
-
-filegroup(
-    name = "flex_bin",
-    srcs = [":flex"],
-    output_group = "flex",
-)
