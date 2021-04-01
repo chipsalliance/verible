@@ -94,6 +94,9 @@ bool PortNameSuffixRule::IsSuffixCorrect(const absl::string_view suffix,
                   {"output", {"o", "no", "po"}},
                   {"inout", {"io", "nio", "pio"}}};
 
+  // At this point it is guaranteed that the direction will be set to
+  // one of the expected values (used as keys in the map above).
+  // Therefore checking the suffix like this is safe
   return suffixes.at(direction).count(suffix) == 1;
 }
 
