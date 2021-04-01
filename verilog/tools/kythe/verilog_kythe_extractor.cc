@@ -97,53 +97,16 @@ if "A.sv" exists in both "directory1" and "directory2" the one in "directory1" i
 namespace verilog {
 namespace kythe {
 
-using ::kythe::EdgeRef;
-using ::kythe::FactRef;
-using ::kythe::VNameRef;
-
-// Returns VNameRef based on Verible's VName.
-static VNameRef ConvertToVnameRef(const VName& vname,
-                                  std::deque<std::string>* signatures) {
-  VNameRef vname_ref;
-  signatures->push_back(vname.signature.ToString());
-  vname_ref.set_signature(signatures->back());
-  vname_ref.set_corpus(vname.corpus);
-  vname_ref.set_root(vname.root);
-  vname_ref.set_path(vname.path);
-  vname_ref.set_language(vname.language);
-  return vname_ref;
-}
-
 // Prints Kythe facts in proto format to stdout.
 static void PrintKytheFactsProtoEntries(
     const IndexingFactNode& file_list_facts_tree,
     const VerilogProject& project) {
-  const auto indexing_data = ExtractKytheFacts(file_list_facts_tree, project);
   google::protobuf::io::FileOutputStream file_output(STDOUT_FILENO);
   file_output.SetCloseOnDelete(true);
   ::kythe::FileOutputStream kythe_output(&file_output);
   kythe_output.set_flush_after_each_entry(true);
 
-  // Keep signatures alive. VNameRef takes a view. Note that we need pointer
-  // stability, can't use a vector here!
-  std::deque<std::string> signatures;
-  for (const Fact& fact : indexing_data.facts) {
-    FactRef fact_ref;
-    VNameRef source = ConvertToVnameRef(fact.node_vname, &signatures);
-    fact_ref.fact_name = fact.fact_name;
-    fact_ref.fact_value = fact.fact_value;
-    fact_ref.source = &source;
-    kythe_output.Emit(fact_ref);
-  }
-  for (const Edge& edge : indexing_data.edges) {
-    EdgeRef edge_ref;
-    VNameRef source = ConvertToVnameRef(edge.source_node, &signatures);
-    VNameRef target = ConvertToVnameRef(edge.target_node, &signatures);
-    edge_ref.edge_kind = edge.edge_name;
-    edge_ref.source = &source;
-    edge_ref.target = &target;
-    kythe_output.Emit(edge_ref);
-  }
+  StreamKytheFactsProtoEntries(&kythe_output, file_list_facts_tree, project);
 }
 
 static std::vector<absl::Status> ExtractTranslationUnits(

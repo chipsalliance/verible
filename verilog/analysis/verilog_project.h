@@ -40,6 +40,10 @@ class VerilogSourceFile {
         resolved_path_(resolved_path),
         corpus_(corpus) {}
 
+  // When a file is not found among a set of paths, remember it with an
+  // error status.
+  VerilogSourceFile(absl::string_view referenced_path, absl::Status status);
+
   VerilogSourceFile(const VerilogSourceFile&) = delete;
   VerilogSourceFile& operator=(const VerilogSourceFile&) = delete;
 
@@ -100,10 +104,6 @@ class VerilogSourceFile {
 
  private:
   friend class VerilogProject;
-
-  // When a file is not found among a set of paths, remember it with an
-  // error status.
-  VerilogSourceFile(absl::string_view referenced_path, absl::Status status);
 
  protected:
   // Tracking state for linear progression of analysis, which allows
@@ -172,8 +172,8 @@ class InMemoryVerilogSourceFile : public VerilogSourceFile {
 class VerilogProject {
   // Collection of per-file metadata and analyzer objects
   // key: referenced file name (as opposed to resolved filename)
-  // A std::map is important for iterator stability for buffer_to_analyzer_map_.
-  typedef std::map<std::string, VerilogSourceFile, VerilogSourceFile::Less>
+  typedef std::map<std::string, std::unique_ptr<VerilogSourceFile>,
+                   VerilogSourceFile::Less>
       file_set_type;
 
  public:
@@ -217,6 +217,10 @@ class VerilogProject {
   absl::StatusOr<VerilogSourceFile*> OpenIncludedFile(
       absl::string_view referenced_filename);
 
+  // Adds an already opened file by directly passing its content.
+  void AddVirtualFile(absl::string_view referenced_filename,
+                      absl::string_view content);
+
   // Returns a collection of non-ok diagnostics for the entire project.
   std::vector<absl::Status> GetErrorStatuses() const;
 
@@ -225,7 +229,7 @@ class VerilogProject {
       absl::string_view referenced_filename) {
     const auto found = files_.find(referenced_filename);
     if (found == files_.end()) return nullptr;
-    return &found->second;
+    return found->second.get();
   }
 
   // Non-modifying variant of lookup.
@@ -233,7 +237,7 @@ class VerilogProject {
       absl::string_view referenced_filename) const {
     const auto found = files_.find(referenced_filename);
     if (found == files_.end()) return nullptr;
-    return &found->second;
+    return found->second.get();
   }
 
   // Find the source file that a particular string_view came from.
