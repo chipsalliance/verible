@@ -49,32 +49,32 @@ fi
 
 # Generate the Dockerfile
 
+OUT_DIR=${TARGET_OS}-${TARGET_VERSION}
+
+# Basic tools
+mkdir -p "${OUT_DIR}"
+sed "s#${TARGET_OS}:VERSION#${TARGET_OS}:${TARGET_VERSION}#g" ${TARGET_OS}.dockerfile > ${OUT_DIR}/Dockerfile
+
 case "$TARGET_OS" in
   ubuntu)
-    # Basic tools
-    mkdir -p ubuntu-${TARGET_VERSION}
-    sed "s#ubuntu:VERSION#ubuntu:${TARGET_VERSION}#g" ubuntu.dockerfile > ubuntu-${TARGET_VERSION}/Dockerfile
     # Compiler
-    [ "$TARGET_VERSION" = xenial ] && _version="_$TARGET_VERSION" || _version=""
-    cat ubuntu${_version}_compiler.dockerstage >> ubuntu-${TARGET_VERSION}/Dockerfile
+    [ "$TARGET_VERSION" = xenial ] && _version="$TARGET_VERSION" || _version="common"
+    cat ${TARGET_OS}/${_version}/compiler.dockerstage >> ${OUT_DIR}/Dockerfile
     # Bazel
-    cat ubuntu_bazel.dockerstage >> ubuntu-${TARGET_VERSION}/Dockerfile
+    cat ${TARGET_OS}/common/bazel.dockerstage >> ${OUT_DIR}/Dockerfile
   ;;
   centos)
-    # Basic tools
-    mkdir -p centos-${TARGET_VERSION}
-    sed "s#centos:VERSION#centos:${TARGET_VERSION}#g" centos.dockerfile > centos-${TARGET_VERSION}/Dockerfile
     # Compiler
-    [ "$TARGET_VERSION" = 8 ] && _version="_$TARGET_VERSION" || _version=""
-    cat centos${_version}_compiler.dockerstage >> centos-${TARGET_VERSION}/Dockerfile
+    [ "$TARGET_VERSION" = 8 ] && _version="$TARGET_VERSION" || _version="common"
+    cat ${TARGET_OS}/${_version}/compiler.dockerstage >> ${OUT_DIR}/Dockerfile
     # Bazel
-    [ "$TARGET_VERSION" = 6 ] && _version="_$TARGET_VERSION" || _version=""
-    cat centos${_version}_bazel.dockerstage >> centos-${TARGET_VERSION}/Dockerfile
+    [ "$TARGET_VERSION" = 6 ] && _version="$TARGET_VERSION" || _version="common"
+    cat ${TARGET_OS}/${_version}/bazel.dockerstage >> ${OUT_DIR}/Dockerfile
   ;;
 esac
 
 # gflags2man
-cat gflags2man.dockerstage >> ${TARGET_OS}-${TARGET_VERSION}/Dockerfile
+cat gflags2man.dockerstage >> ${OUT_DIR}/Dockerfile
 
 # ==================================================================
 
@@ -85,7 +85,7 @@ GIT_HASH=${GIT_HASH:-$(git rev-parse HEAD)}
 
 # Build Verible
 
-cat >> ${TARGET_OS}-${TARGET_VERSION}/Dockerfile <<EOF
+cat >> ${OUT_DIR}/Dockerfile <<EOF
 ENV BAZEL_OPTS "${BAZEL_OPTS}"
 ENV BAZEL_CXXOPTS "${BAZEL_CXXOPTS}"
 
