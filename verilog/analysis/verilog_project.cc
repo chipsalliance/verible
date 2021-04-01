@@ -144,6 +144,7 @@ absl::Status VerilogProject::IncludeFileNotFoundError(
       "Unable to find '", referenced_filename,
       "' among the included paths: ", absl::StrJoin(include_paths_, ", ")));
 }
+
 absl::StatusOr<VerilogSourceFile*> VerilogProject::OpenIncludedFile(
     absl::string_view referenced_filename) {
   VLOG(1) << __FUNCTION__ << ", referenced: " << referenced_filename;
