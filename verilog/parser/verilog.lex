@@ -54,15 +54,16 @@
 %}
 
 %option 8bit
+%option c++
 %option case-sensitive
 %option never-interactive
+%option nounistd
 %option nounput
 %option noyywrap
 %option prefix="verilog"
-%option c++
-%option yyclass="verilog::VerilogLexer"
 /* to enable stack of initial condition states: */
 %option stack
+%option yyclass="verilog::VerilogLexer"
 
 /* various lexer states, INITIAL = 0 */
 %x TIMESCALE_DIRECTIVE

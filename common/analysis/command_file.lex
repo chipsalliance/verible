@@ -20,12 +20,14 @@
 #define yy_set_top_state(state)  { yy_pop_state(); yy_push_state(state); }
 %}
 
+%option c++
+%option never-interactive
 %option nodefault
+%option nounistd
 %option noyywrap
 %option prefix="veribleCommandFile"
-%option c++
-%option yylineno
 %option yyclass="verible::CommandFileLexer"
+%option yylineno
 
 LineTerminator \r|\n|\r\n
 InputCharacter [^\r\n\0]
