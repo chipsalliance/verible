@@ -16,9 +16,9 @@
 
 #include <initializer_list>
 
-#include "gtest/gtest.h"
 #include "common/analysis/linter_test_utils.h"
 #include "common/analysis/token_stream_linter_test_utils.h"
+#include "gtest/gtest.h"
 #include "verilog/analysis/verilog_analyzer.h"
 #include "verilog/parser/verilog_token_enum.h"
 
@@ -33,34 +33,59 @@ TEST(MacroStringConcatenationRuleTest, BasicTests) {
   constexpr int kToken = TK_StringLiteral;
   const std::initializer_list<LintTestCase> kTestCases = {
       // Non rule violation cases
-      {R"(`define FOO(arg) `"foo``arg``foo`")" "\n"},
-      {R"(`define FOO(arg) `define BAR `define BAZ `"foobar``arg``baz`")" "\n"},
-      {
-        R"(`define FOO "foo")" "\n",
-        R"(`define BAR(arg) `"bar``arg``bar`")" "\n",
-        R"(`define BAZ(a, b) `"baz``a``baz``b``baz`")" "\n"
-      },
+      {R"(`define FOO(arg) `"foo``arg``foo`")"
+       "\n"},
+      {R"(`define FOO(arg) `define BAR `define BAZ `"foobar``arg``baz`")"
+       "\n"},
+      {R"(`define FOO "foo")"
+       "\n",
+       R"(`define BAR(arg) `"bar``arg``bar`")"
+       "\n",
+       R"(`define BAZ(a, b) `"baz``a``baz``b``baz`")"
+       "\n"},
 
-      {R"(`define FOO(arg) "foo foo")" "\n"},
-      {R"(`define FOO(arg) `define BAR `define BAZ "foobar baz")" "\n"},
-      {
-        R"(`define FOO "foo")" "\n",
-        R"(`define BAR(arg) "bar bar")" "\n",
-        R"(`define BAZ(a, b) "baz baz baz")" "\n"
-      },
+      {R"(`define FOO(arg) "foo foo")"
+       "\n"},
+      {R"(`define FOO(arg) `define BAR `define BAZ "foobar baz")"
+       "\n"},
+      {R"(`define FOO "foo")"
+       "\n",
+       R"(`define BAR(arg) "bar bar")"
+       "\n",
+       R"(`define BAZ(a, b) "baz baz baz")"
+       "\n"},
 
       // Rule Violation cases
-      {R"(`define FOO(arg) "foo)", {kToken, "``"}, R"(arg)",
-          {kToken, "``"}, R"(foo")" "\n"},
-      {R"(`define FOO(arg) `define BAR `define BAZ "foobar)", {kToken, "``"},
-          R"(arg)", {kToken, "``"}, R"(baz")" "\n"},
-      {
-        R"(`define FOO "foo")" "\n",
-        R"(`define BAR(arg) "bar)", {kToken, "``"}, R"(arg)", {kToken, "``"},
-            R"(bar")" "\n",
-        R"(`define BAZ(a, b) "baz)", {kToken, "``"}, R"(a)", {kToken, "``"},
-            R"(baz)", {kToken, "``"}, R"(b)", {kToken, "``"}, R"(baz")" "\n"
-      },
+      {R"(`define FOO(arg) "foo)",
+       {kToken, "``"},
+       R"(arg)",
+       {kToken, "``"},
+       R"(foo")"
+       "\n"},
+      {R"(`define FOO(arg) `define BAR `define BAZ "foobar)",
+       {kToken, "``"},
+       R"(arg)",
+       {kToken, "``"},
+       R"(baz")"
+       "\n"},
+      {R"(`define FOO "foo")"
+       "\n",
+       R"(`define BAR(arg) "bar)",
+       {kToken, "``"},
+       R"(arg)",
+       {kToken, "``"},
+       R"(bar")"
+       "\n",
+       R"(`define BAZ(a, b) "baz)",
+       {kToken, "``"},
+       R"(a)",
+       {kToken, "``"},
+       R"(baz)",
+       {kToken, "``"},
+       R"(b)",
+       {kToken, "``"},
+       R"(baz")"
+       "\n"},
   };
   RunLintTestCases<VerilogAnalyzer, MacroStringConcatenationRule>(kTestCases);
 }

@@ -47,8 +47,8 @@ const char MacroStringConcatenationRule::kMessage[] =
 std::string MacroStringConcatenationRule::GetDescription(
     DescriptionType description_type) {
   return absl::StrCat(
-      "Concatenation will not be evaluated here. Use `\"...`\" instead. "
-      "See ", GetStyleGuideCitation(kTopic), ".");
+      "Concatenation will not be evaluated here. Use `\"...`\" instead. See ",
+      GetStyleGuideCitation(kTopic), ".");
 }
 
 void MacroStringConcatenationRule::HandleToken(const TokenInfo& token) {
@@ -62,11 +62,12 @@ void MacroStringConcatenationRule::HandleToken(const TokenInfo& token) {
       RecursiveLexText(
           text, [this](const TokenInfo& subtoken) { HandleToken(subtoken); });
     }
-  } else if (state_ == State::kInsideDefineBody && token_enum == TK_StringLiteral) {
+  } else if (state_ == State::kInsideDefineBody &&
+             token_enum == TK_StringLiteral) {
     size_t pos = 0;
-    while((pos = text.find("``", pos)) != absl::string_view::npos) {
-      violations_.insert(LintViolation(
-          TokenInfo(token_enum, text.substr(pos, 2)), kMessage));
+    while ((pos = text.find("``", pos)) != absl::string_view::npos) {
+      violations_.insert(
+          LintViolation(TokenInfo(token_enum, text.substr(pos, 2)), kMessage));
       pos += 2;
     }
   }
