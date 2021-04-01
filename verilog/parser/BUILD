@@ -40,6 +40,7 @@ cc_library(
         "//common/lexer:flex_lexer_adapter",
         "//common/text:token_info",
         "@com_google_absl//absl/strings",
+        "@rules_flex//flex:current_flex_toolchain",
     ],
 )
 

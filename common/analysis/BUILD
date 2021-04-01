@@ -80,6 +80,7 @@ cc_library(
         "//common/util:interval_set",
         "//common/util:logging",
         "@com_google_absl//absl/strings",
+        "@rules_flex//flex:current_flex_toolchain",
     ],
 )
 
