@@ -1252,24 +1252,54 @@ void KytheFactsExtractor::CreateEdge(const VName& source_node,
   kythe_data_.edges.insert(Edge(source_node, edge_name, target_node));
 }
 
-std::ostream& KytheFactsPrinter::Print(std::ostream& stream) const {
+std::ostream& KytheFactsPrinter::PrintJsonStream(std::ostream& stream) const {
   // TODO(fangism): Print function should not be doing extraction work.
   const auto indexing_data =
       ExtractKytheFacts(file_list_facts_tree_, *project_);
 
   for (const Fact& fact : indexing_data.facts) {
-    fact.FormatJSON(stream, debug_) << std::endl;
+    fact.FormatJSON(stream, /*debug=*/false) << std::endl;
   }
   for (const Edge& edge : indexing_data.edges) {
-    edge.FormatJSON(stream, debug_) << std::endl;
+    edge.FormatJSON(stream, /*debug=*/false) << std::endl;
   }
+
+  return stream;
+}
+
+std::ostream& KytheFactsPrinter::PrintJson(std::ostream& stream) const {
+  // TODO(fangism): Print function should not be doing extraction work.
+  const auto indexing_data =
+      ExtractKytheFacts(file_list_facts_tree_, *project_);
+
+  stream << "[";
+  bool should_separate_entries = false;
+  for (const Fact& fact : indexing_data.facts) {
+    if (should_separate_entries) {
+      stream << "," << std::endl;
+    }
+    fact.FormatJSON(stream, /*debug=*/true);
+    should_separate_entries = true;
+  }
+  for (const Edge& edge : indexing_data.edges) {
+    if (should_separate_entries) {
+      stream << "," << std::endl;
+    }
+    edge.FormatJSON(stream, /*debug=*/true);
+    should_separate_entries = true;
+  }
+  stream << "]" << std::endl;
 
   return stream;
 }
 
 std::ostream& operator<<(std::ostream& stream,
                          const KytheFactsPrinter& kythe_facts_printer) {
-  kythe_facts_printer.Print(stream);
+  if (kythe_facts_printer.debug_) {
+    kythe_facts_printer.PrintJson(stream);
+  } else {
+    kythe_facts_printer.PrintJsonStream(stream);
+  }
   return stream;
 }
 
