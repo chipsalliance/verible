@@ -92,19 +92,17 @@ genrule(
           "sed -e '/#ifndef YYTOKENTYPE/,/#endif/d' $< ;} > $@",
 )
 
-genyacc(
+genrule(
     name = "verilog_y",
-    src = "verilog.y",
-    extra_options = [
-        "--report-file=$(location verilog.output)",
-        "--graph=$(location verilog.dot)",
+    srcs = ["verilog.y"],
+    outs = ["verilog.tab.cc",
+            "verilog.tab.hh",  # Do not use directly, see next comment.
+           ],
+    cmd = "M4=$(M4) $(BISON) --defines=$(location verilog.tab.hh) --output-file=$(location verilog.tab.cc) $<",
+    toolchains = [
+        "@rules_bison//bison:current_bison_toolchain",
+        "@rules_m4//m4:current_m4_toolchain",
     ],
-    extra_outs = [
-        "verilog.output",
-        "verilog.dot",
-    ],
-    header_out = "verilog.tab.hh",  # Do not use directly, see next comment.
-    source_out = "verilog.tab.cc",
 )
 
 std_move_parser_symbols(

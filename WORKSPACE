@@ -62,24 +62,6 @@ http_archive(
 # External tools needed
 #
 
-###
-# Setup `rules_foreign_cc`
-# This package allows us to take source-dependencies on non-bazelified packages.
-# In particular, it supports `./configure && make` style packages.
-###
-http_archive(
-    name = "rules_foreign_cc",
-    sha256 = "4d6798f368e23b9bf8ddab53beb57518b1960bd57549cca50e1ac61f4beb810b",
-    strip_prefix = "rules_foreign_cc-4d4acaa112ae646a21e3766182b21882ad9df921",
-    # There are no releases yet, so retrieve particular git version.
-    # This is from 2021-01-25
-    urls = ["https://github.com/bazelbuild/rules_foreign_cc/archive/4d4acaa112ae646a21e3766182b21882ad9df921.zip"],
-)
-
-load("@rules_foreign_cc//:workspace_definitions.bzl", "rules_foreign_cc_dependencies")
-
-rules_foreign_cc_dependencies()
-
 # 'make install' equivalent rule
 http_archive(
     name = "com_github_google_rules_install",
@@ -116,23 +98,12 @@ load("@rules_flex//flex:flex.bzl", "flex_register_toolchains")
 flex_register_toolchains()
 
 http_archive(
-    name = "bison",
-    build_file_content = all_content,
-    sha256 = "e28ed3aad934de2d1df68be209ac0b454f7b6d3c3d6d01126e5cd2cbadba089a",
-    strip_prefix = "bison-3.6.2",
-    urls = ["https://ftp.gnu.org/gnu/bison/bison-3.6.2.tar.gz"],
+    name = "rules_bison",
+    urls = ["https://github.com/jmillikin/rules_bison/releases/download/v0.2/rules_bison-v0.2.tar.xz"],
+    sha256 = "6ee9b396f450ca9753c3283944f9a6015b61227f8386893fb59d593455141481",
 )
-
-# Still need this until we are replacing bazel.
-http_archive(
-    name = "m4",
-    build_file_content = all_content,
-    patch_args = ["-p1"],
-    patches = ["@com_google_verible//bazel:m4.patch"],
-    sha256 = "ab2633921a5cd38e48797bf5521ad259bdc4b979078034a3b790d7fec5493fab",
-    strip_prefix = "m4-1.4.18",
-    urls = ["https://ftp.gnu.org/gnu/m4/m4-1.4.18.tar.gz"],
-)
+load("@rules_bison//bison:bison.bzl", "bison_register_toolchains")
+bison_register_toolchains()
 
 http_archive(
     name = "bazel_toolchains",

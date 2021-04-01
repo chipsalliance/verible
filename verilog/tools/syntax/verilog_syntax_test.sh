@@ -140,7 +140,7 @@ Lexed and filtered tokens:
 (#SymbolIdentifier @7-9: "mm")
 (#';' @9-10: ";")
 (#"endmodule" @11-20: "endmodule")
-(#"end of file" @21-21: "")
+(#\$end @21-21: "")
 EOF
 
 diff -u "$MY_EXPECT_FILE" "$MY_OUTPUT_FILE" || { echo "stdout differs." ; exit 1 ;}
@@ -171,7 +171,7 @@ All lexed tokens:
 (#"endmodule" @11-20: "endmodule")
 (#"<<\\\\n>>" @20-21: "
 ")
-(#"end of file" @21-21: "")
+(#\$end @21-21: "")
 EOF
 
 diff -u "$MY_EXPECT_FILE" "$MY_OUTPUT_FILE" || { echo "stdout differs." ; exit 1 ;}
