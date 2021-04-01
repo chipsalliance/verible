@@ -1,4 +1,5 @@
-//- _FileNode.node/kind file
+// File node require empty language & signature.
+//- _FileNode=vname("", "", _, _, "").node/kind file
 
 //- @my_pkg defines/binding MyPkg
 //- MyPkg.node/kind package

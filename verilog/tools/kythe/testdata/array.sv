@@ -1,6 +1,9 @@
 // Copyright 2020 Google LLC.
 // SPDX-License-Identifier: Apache-2.0
 
+// File node require empty language & signature.
+//- _FileNode=vname("", "", _, _, "").node/kind file
+
 //- @array defines/binding _
 module array (
     //- @arr1 defines/binding Arr1
