@@ -63,8 +63,9 @@ std::string StructUnionNameStyleRule::GetDescription(
   } else {
     return absl::StrCat(basic_desc,
                         "\n##### Parameters\n"
-                        " * `exceptions` (`String` with exceptions divided by "
-                        "`,`, Default: Empty\n");
+                        " * `exceptions` (Comma-separated list of allowed "
+                        "upper-case elements, such as unit-names"
+                        ". Default: Empty)\n");
   }
 }
 
