@@ -1411,6 +1411,7 @@ cc_library(
     deps = [
         "//common/analysis:citation",
         "//common/analysis:lint_rule_status",
+        "//common/analysis:syntax_tree_lint_rule",
         "//common/analysis/matcher",
         "//common/analysis/matcher:bound_symbol_manager",
         "//common/analysis/matcher:core_matchers",

@@ -78,8 +78,8 @@ void DisableForkNoLabelsRule::HandleSymbol(const verible::Symbol& symbol,
   if (DisableMatcher().Matches(symbol, &manager)) {
     const char* kMessageFinal = DisableForkNoLabelsRule::kMessage;
     // if no kDisable label, return, nothing to be checked
-    const auto disableLabels = FindAllSymbolIdentifierLeafs(symbol);
-    if (disableLabels.size() == 0) {
+    const auto& disableLabels = FindAllSymbolIdentifierLeafs(symbol);
+    if (disableLabels.empty()) {
       return;
     }
     // look for every kBegin node starting from kDisableLabel token
@@ -96,11 +96,11 @@ void DisableForkNoLabelsRule::HandleSymbol(const verible::Symbol& symbol,
         continue;
       }
       for (const auto& ch : node->children()) {
-        if (ch.get()->Tag().tag != static_cast<int>(NodeEnum::kBegin)) {
+        if (ch->Tag().tag != static_cast<int>(NodeEnum::kBegin)) {
           continue;
         }
         const auto& beginLabels = FindAllSymbolIdentifierLeafs(*ch);
-        if (beginLabels.size() == 0) {
+        if (beginLabels.empty()) {
           continue;
         }
         const auto& pnode = *std::next(rc);
