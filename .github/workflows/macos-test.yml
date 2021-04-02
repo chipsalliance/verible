@@ -25,4 +25,5 @@ jobs:
       run: |
         export PATH=$(brew --prefix flex)/bin:$PATH
         export PATH=$(brew --prefix bison)/bin:$PATH
-        bazel test ...
+        bazel test --cxxopt=-Wno-range-loop-analysis --test_output=streamed //common/tools:verible-transform-interactive-test
+        bazel test --cxxopt=-Wno-range-loop-analysis --test_output=streamed //verilog/tools/syntax/export_json_examples:verible_verilog_syntax_py
