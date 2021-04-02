@@ -58,10 +58,18 @@ const char ParameterTypeNameStyleRule::kMessage[] =
 
 std::string ParameterTypeNameStyleRule::GetDescription(
     DescriptionType description_type) {
-  return absl::StrCat(
+  static std::string basic_desc = absl::StrCat(
       "Checks that parameter type names follow the lower_snake_case naming "
       "convention and end with _t. See ",
       GetStyleGuideCitation(kTopic), ".");
+  if (description_type == DescriptionType::kHelpRulesFlag) {
+    return absl::StrCat(basic_desc, "Paramteres: name_regex:regex rule");
+  } else {
+    return absl::StrCat(
+        basic_desc,
+        "\n##### Parameters\n"
+        "* `name_regex` (The regex rule validating the names. Default: Empty)");
+  }
 }
 
 static const Matcher& ParamDeclMatcher() {

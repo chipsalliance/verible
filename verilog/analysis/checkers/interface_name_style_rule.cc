@@ -53,10 +53,18 @@ const char InterfaceNameStyleRule::kMessage[] =
 
 std::string InterfaceNameStyleRule::GetDescription(
     DescriptionType description_type) {
-  return absl::StrCat(
+  static std::string basic_desc = absl::StrCat(
       "Checks that ", Codify("interface", description_type),
       " names use lower_snake_case naming convention and end with '_if'. See ",
       GetStyleGuideCitation(kTopic), ".");
+  if (description_type == DescriptionType::kHelpRulesFlag) {
+    return absl::StrCat(basic_desc, "Paramteres: name_regex:regex rule");
+  } else {
+    return absl::StrCat(
+        basic_desc,
+        "\n##### Parameters\n"
+        "* `name_regex` (The regex rule validating the names. Default: Empty)");
+  }
 }
 
 static const Matcher& InterfaceMatcher() {

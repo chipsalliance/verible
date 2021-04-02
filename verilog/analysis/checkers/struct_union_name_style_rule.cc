@@ -59,13 +59,17 @@ std::string StructUnionNameStyleRule::GetDescription(
       " names use lower_snake_case naming convention and end with '_t'. See ",
       GetStyleGuideCitation(kTopic), ".");
   if (description_type == DescriptionType::kHelpRulesFlag) {
-    return absl::StrCat(basic_desc, "exceptions:String with exceptions");
-  } else {
     return absl::StrCat(basic_desc,
-                        "\n##### Parameters\n"
-                        " * `exceptions` (Comma-separated list of allowed "
-                        "upper-case elements, such as unit-names"
-                        ". Default: Empty)\n");
+                        "Paramteres: exceptions:String with exceptions;"
+                        "name_regex:regex rule");
+  } else {
+    return absl::StrCat(
+        basic_desc,
+        "\n##### Parameters\n"
+        " * `exceptions` (Comma-separated list of allowed "
+        "upper-case elements, such as unit-names"
+        ". Default: Empty)\n"
+        "* `name_regex` (The regex rule validating the names. Default: Empty)");
   }
 }
 
@@ -142,6 +146,8 @@ absl::Status StructUnionNameStyleRule::Configure(
   auto status = verible::ParseNameValues(
       configuration, {{"exceptions", SetString(&raw_tokens)},
                       {"name_regex", SetString(&name_regex)}});
+  if (!status.ok()) return status;
+
   if (!name_regex.empty()) {
     try {
       name_regex_ = name_regex;
@@ -150,8 +156,6 @@ absl::Status StructUnionNameStyleRule::Configure(
                           "Invalid regex specified");
     }
   }
-
-  if (!status.ok()) return status;
 
   if (!raw_tokens.empty()) {
     const auto &exceptions = absl::StrSplit(raw_tokens, ',');
