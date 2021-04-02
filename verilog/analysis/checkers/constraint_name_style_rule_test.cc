@@ -16,6 +16,7 @@
 
 #include <initializer_list>
 
+#include "absl/strings/match.h"
 #include "common/analysis/linter_test_utils.h"
 #include "common/analysis/syntax_tree_linter_test_utils.h"
 #include "common/text/symbol.h"
@@ -29,7 +30,64 @@ namespace analysis {
 namespace {
 
 using verible::LintTestCase;
+using verible::RunConfiguredLintTestCases;
 using verible::RunLintTestCases;
+
+TEST(ConstraintNameStyleRuleTest, ConfigurationPass) {
+  ConstraintNameStyleRule rule;
+  absl::Status status;
+  EXPECT_TRUE((status = rule.Configure("name_regex:[a-z]")).ok())
+      << status.message();
+}
+
+TEST(ConstraintNameStyleRuleTest, ConfigurationFail) {
+  ConstraintNameStyleRule rule;
+  absl::Status status;
+  EXPECT_FALSE((status = rule.Configure("bad_name_regex:")).ok())
+      << status.message();
+
+  EXPECT_FALSE((status = rule.Configure("name_regex:[a-z")).ok())
+      << status.message();
+  EXPECT_TRUE(absl::StrContains(status.message(), "Invalid regex specified"));
+}
+
+TEST(ConstraintNameStyleRuleTestConfiguredRegex,
+     ValidInterfaceDeclarationNames) {
+  const absl::string_view regex = "name_regex:.*_i";
+  const std::initializer_list<LintTestCase> kTestCases = {
+      {""},
+      {"module foo; logic a; endmodule"},
+      {"class foo; logic a; endclass"},
+      {"class foo; rand logic a; constraint _foo_i { a < 16; } endclass"},
+      {"class foo; rand logic a; constraint foo_i { a < 16; } endclass"},
+      {"class foo; rand logic a; constraint bar_i { a >= 16; } endclass"},
+      {"class foo; rand logic a; constraint foo_bar_i { a == 16; } endclass"},
+      {"class foo; rand logic a; constraint foo2_i { a == 16; } endclass"},
+      {"class foo; rand logic a; constraint foo_2_bar_i { a == 16; } endclass"},
+
+      /* Ignore out of line definitions */
+      {"constraint classname::constraint_i { a <= b; }"},
+      {"constraint classname::MY_CONSTRAINT { a <= b; }"},
+      {"constraint classname::MyConstraint { a <= b; }"},
+  };
+  RunConfiguredLintTestCases<VerilogAnalyzer, ConstraintNameStyleRule>(
+      kTestCases, regex);
+}
+
+TEST(ConstraintNameStyleRuleTestConfiguredRegex, RejectTests) {
+  const absl::string_view regex = "name_regex:[a-zA-Z]*_i";
+  constexpr int kToken = SymbolIdentifier;
+  const std::initializer_list<LintTestCase> kTestCases = {
+      {"class foo; rand logic a; constraint ",
+       {kToken, "foo_c"},
+       " { a == 16; } endclass"},
+      {"class foo; rand logic a; constraint ",
+       {kToken, "foo12_i"},
+       " { a == 16; } endclass"},
+  };
+  RunConfiguredLintTestCases<VerilogAnalyzer, ConstraintNameStyleRule>(
+      kTestCases, regex);
+}
 
 // Tests that ConstraintNameStyleRule correctly accepts valid names.
 TEST(ConstraintNameStyleRuleTest, AcceptTests) {

@@ -51,8 +51,7 @@ TEST(ParameterTypeNameStyleRuleTest, ConfigurationFail) {
   EXPECT_TRUE(absl::StrContains(status.message(), "Invalid regex specified"));
 }
 
-TEST(ParameterTypeNameStyleRuleTestConfiguredRegex,
-     ValidInterfaceDeclarationNames) {
+TEST(ParameterTypeNameStyleRuleTestConfiguredRegex, AcceptTests) {
   const absl::string_view regex = "name_regex:.*_i";
   const std::initializer_list<LintTestCase> kTestCases = {
       {""},
@@ -67,8 +66,7 @@ TEST(ParameterTypeNameStyleRuleTestConfiguredRegex,
       kTestCases, regex);
 }
 
-TEST(ParameterTypeNameStyleRuleTestConfiguredRegex,
-     InvalidInterfaceDeclarationNames) {
+TEST(ParameterTypeNameStyleRuleTestConfiguredRegex, RejectTests) {
   const absl::string_view regex = "name_regex:[a-zA-Z]*_i";
   constexpr int kToken = SymbolIdentifier;
   const std::initializer_list<LintTestCase> kTestCases = {
