@@ -23,4 +23,6 @@ jobs:
         fetch-depth: 0
     - name: Build
       run: |
+        export PATH=$(brew --prefix flex)/bin:$PATH
+        export PATH=$(brew --prefix bison)/bin:$PATH
         bazel build ...
