@@ -70,6 +70,7 @@ constexpr const char* kDefaultRuleSet[] = {
     // TODO(b/117131903): "proper-parameter-declaration",
     // TODO(b/131637160): "signal-name-style",
     // TODO(b/120784977): "numeric-format-string-style",
+    // TODO(b/138353038): "forbid-implicit-declaration",
     // TODO: "one-module-per-file",
     // TODO: "banned-declared-name-patterns",
     // TODO: "port-name-suffix",

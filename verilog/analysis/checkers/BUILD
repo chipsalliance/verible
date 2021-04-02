@@ -30,6 +30,7 @@ cc_library(
         ":explicit_task_lifetime_rule",
         ":forbid_consecutive_null_statements_rule",
         ":forbid_defparam_rule",
+        ":forbid_implicit_declarations_rule",
         ":forbidden_anonymous_enums_rule",
         ":forbidden_anonymous_structs_unions_rule",
         ":forbidden_macro_rule",
@@ -353,6 +354,47 @@ cc_test(
         "//verilog/CST:verilog_nonterminals",
         "//verilog/analysis:verilog_analyzer",
         "//verilog/parser:verilog_token_enum",
+        "@com_google_googletest//:gtest_main",
+    ],
+)
+
+cc_library(
+    name = "forbid_implicit_declarations_rule",
+    srcs = ["forbid_implicit_declarations_rule.cc"],
+    hdrs = ["forbid_implicit_declarations_rule.h"],
+    deps = [
+        "//common/analysis:citation",
+        "//common/analysis:lint_rule_status",
+        "//common/analysis:text_structure_lint_rule",
+        "//common/analysis/matcher",
+        "//common/analysis/matcher:bound_symbol_manager",
+        "//common/analysis/matcher:core_matchers",
+        "//common/analysis/matcher:matcher_builders",
+        "//common/text:symbol",
+        "//common/text:tree_context_visitor",
+        "//common/util:auto_pop_stack",
+        "//verilog/CST:identifier",
+        "//verilog/CST:verilog_matchers",
+        "//verilog/analysis:descriptions",
+        "//verilog/analysis:lint_rule_registry",
+        "//verilog/analysis:symbol_table",
+        "//verilog/analysis:verilog_project",
+        "@com_google_absl//absl/strings",
+    ],
+    alwayslink = 1,
+)
+
+cc_test(
+    name = "forbid_implicit_declarations_rule_test",
+    srcs = ["forbid_implicit_declarations_rule_test.cc"],
+    deps = [
+        ":forbid_implicit_declarations_rule",
+        "//common/analysis:linter_test_utils",
+        "//common/analysis:text_structure_linter_test_utils",
+        "//common/text:symbol",
+        "//verilog/CST:verilog_nonterminals",
+        "//verilog/CST:verilog_treebuilder_utils",
+        "//verilog/analysis:verilog_analyzer",
         "@com_google_googletest//:gtest_main",
     ],
 )
