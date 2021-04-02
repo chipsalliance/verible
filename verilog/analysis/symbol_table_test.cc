@@ -2183,6 +2183,395 @@ TEST(BuildSymbolTableTest, ModuleDeclarationLocalsDependOnParameter) {
   }
 }
 
+TEST(BuildSymbolTableTest, ModuleSingleImplicitDeclaration) {
+  TestVerilogSourceFile src("foo.sv",
+                            "module m;"
+                            "assign a = 1'b0;"
+                            "endmodule\n");
+  const auto status = src.Parse();
+  ASSERT_TRUE(status.ok()) << status.message();
+  SymbolTable symbol_table(nullptr);
+  const SymbolTableNode& root_symbol(symbol_table.Root());
+
+  const auto build_diagnostics = BuildSymbolTable(src, &symbol_table);
+  EXPECT_EMPTY_STATUSES(build_diagnostics);
+
+  MUST_ASSIGN_LOOKUP_SYMBOL(module_m, root_symbol, "m");
+  EXPECT_EQ(module_m_info.metatype, SymbolMetaType::kModule);
+  EXPECT_EQ(module_m_info.file_origin, &src);
+  EXPECT_EQ(module_m_info.declared_type.syntax_origin,
+            nullptr);  // there is no module meta-type
+
+  MUST_ASSIGN_LOOKUP_SYMBOL(a_variable, module_m, "a");
+  EXPECT_EQ(a_variable_info.metatype, SymbolMetaType::kDataNetVariableInstance);
+  const ReferenceComponentNode* a_type_ref =
+      a_variable_info.declared_type.user_defined_type;
+  EXPECT_EQ(a_type_ref, nullptr);  // implicit type is primitive type
+  EXPECT_TRUE(a_variable_info.declared_type.implicit);
+
+  EXPECT_EQ(module_m_info.local_references_to_bind.size(), 1);
+  const auto ref_map(module_m_info.LocalReferencesMapViewForTesting());
+
+  ASSIGN_MUST_FIND(a_refs, ref_map, "a");
+  ASSERT_EQ(a_refs.size(), 1);  // all references to "a" parameter
+  for (const auto& a_ref : a_refs) {
+    const ReferenceComponent& a_ref_comp(a_ref->components->Value());
+    EXPECT_EQ(a_ref_comp.ref_type, ReferenceType::kUnqualified);
+    EXPECT_EQ(a_ref_comp.required_metatype, SymbolMetaType::kUnspecified);
+    EXPECT_EQ(a_ref_comp.identifier, "a");
+    EXPECT_EQ(a_ref_comp.resolved_symbol, &a_variable);  // pre-resolved
+  }
+
+  {
+    std::vector<absl::Status> resolve_diagnostics;
+    // Resolve mustn't break anything
+    symbol_table.Resolve(&resolve_diagnostics);
+    EXPECT_EMPTY_STATUSES(resolve_diagnostics);
+
+    // All references to "a" resolved.
+    for (const auto& a_ref : a_refs) {
+      const ReferenceComponent& a_ref_comp(a_ref->components->Value());
+      EXPECT_EQ(a_ref_comp.resolved_symbol,
+                &a_variable);  // resolved successfully
+    }
+  }
+}
+
+TEST(BuildSymbolTableTest, ModuleReferenceToImplicitDeclaration) {
+  TestVerilogSourceFile src("foo.sv",
+                            "module m;"
+                            "assign a = 1'b0;"
+                            "assign a = 1'b1;"
+                            "endmodule\n");
+  const auto status = src.Parse();
+  ASSERT_TRUE(status.ok()) << status.message();
+  SymbolTable symbol_table(nullptr);
+  const SymbolTableNode& root_symbol(symbol_table.Root());
+
+  const auto build_diagnostics = BuildSymbolTable(src, &symbol_table);
+  EXPECT_EMPTY_STATUSES(build_diagnostics);
+
+  MUST_ASSIGN_LOOKUP_SYMBOL(module_m, root_symbol, "m");
+  EXPECT_EQ(module_m_info.metatype, SymbolMetaType::kModule);
+  EXPECT_EQ(module_m_info.file_origin, &src);
+  EXPECT_EQ(module_m_info.declared_type.syntax_origin,
+            nullptr);  // there is no module meta-type
+
+  MUST_ASSIGN_LOOKUP_SYMBOL(a_variable, module_m, "a");
+  EXPECT_EQ(a_variable_info.metatype, SymbolMetaType::kDataNetVariableInstance);
+  const ReferenceComponentNode* a_type_ref =
+      a_variable_info.declared_type.user_defined_type;
+  EXPECT_EQ(a_type_ref, nullptr);  // implicit type is primitive type
+  EXPECT_TRUE(a_variable_info.declared_type.implicit);
+
+  EXPECT_EQ(module_m_info.local_references_to_bind.size(), 2);
+  const auto ref_map(module_m_info.LocalReferencesMapViewForTesting());
+
+  ASSIGN_MUST_FIND(a_refs, ref_map, "a");
+  ASSERT_EQ(a_refs.size(), 2);  // all references to "a" parameter
+  {
+    const auto& a_ref = *a_refs.begin();
+    const ReferenceComponent& a_ref_comp(a_ref->components->Value());
+    EXPECT_EQ(a_ref_comp.ref_type, ReferenceType::kUnqualified);
+    EXPECT_EQ(a_ref_comp.required_metatype, SymbolMetaType::kUnspecified);
+    EXPECT_EQ(a_ref_comp.identifier, "a");
+    EXPECT_EQ(a_ref_comp.resolved_symbol, &a_variable);  // pre-resolved
+  }
+  {
+    const auto& a_ref = *std::next(a_refs.begin());
+    const ReferenceComponent& a_ref_comp(a_ref->components->Value());
+    EXPECT_EQ(a_ref_comp.ref_type, ReferenceType::kUnqualified);
+    EXPECT_EQ(a_ref_comp.required_metatype, SymbolMetaType::kUnspecified);
+    EXPECT_EQ(a_ref_comp.identifier, "a");
+    EXPECT_EQ(a_ref_comp.resolved_symbol, nullptr);  // pre-resolved
+  }
+
+  {
+    std::vector<absl::Status> resolve_diagnostics;
+    symbol_table.Resolve(&resolve_diagnostics);
+    EXPECT_EMPTY_STATUSES(resolve_diagnostics);
+
+    // All references to "a" resolved.
+    for (const auto& a_ref : a_refs) {
+      const ReferenceComponent& a_ref_comp(a_ref->components->Value());
+      EXPECT_EQ(a_ref_comp.resolved_symbol,
+                &a_variable);  // resolved successfully
+    }
+  }
+}
+
+TEST(BuildSymbolTableTest, ModuleReferenceToImplicitDeclarationInSubScope) {
+  TestVerilogSourceFile src("foo.sv",
+                            "module m;"
+                            " assign a = 1'b0;"
+                            " module n;"
+                            "  assign a = 1'b1;"
+                            " endmodule;"
+                            "endmodule\n");
+  const auto status = src.Parse();
+  ASSERT_TRUE(status.ok()) << status.message();
+  SymbolTable symbol_table(nullptr);
+  const SymbolTableNode& root_symbol(symbol_table.Root());
+
+  const auto build_diagnostics = BuildSymbolTable(src, &symbol_table);
+  EXPECT_EMPTY_STATUSES(build_diagnostics);
+
+  MUST_ASSIGN_LOOKUP_SYMBOL(module_m, root_symbol, "m");
+  EXPECT_EQ(module_m_info.metatype, SymbolMetaType::kModule);
+  EXPECT_EQ(module_m_info.file_origin, &src);
+  EXPECT_EQ(module_m_info.declared_type.syntax_origin,
+            nullptr);  // there is no module meta-type
+
+  MUST_ASSIGN_LOOKUP_SYMBOL(a_variable, module_m, "a");
+  EXPECT_EQ(a_variable_info.metatype, SymbolMetaType::kDataNetVariableInstance);
+  const ReferenceComponentNode* a_type_ref =
+      a_variable_info.declared_type.user_defined_type;
+  EXPECT_EQ(a_type_ref, nullptr);  // implicit type is primitive type
+  EXPECT_TRUE(a_variable_info.declared_type.implicit);
+
+  EXPECT_EQ(module_m_info.local_references_to_bind.size(), 1);
+  const auto ref_map(module_m_info.LocalReferencesMapViewForTesting());
+
+  ASSIGN_MUST_FIND(a_refs, ref_map, "a");
+  ASSERT_EQ(a_refs.size(), 1);  // all references to "a" parameter
+  for (const auto& a_ref : a_refs) {
+    const ReferenceComponent& a_ref_comp(a_ref->components->Value());
+    EXPECT_EQ(a_ref_comp.ref_type, ReferenceType::kUnqualified);
+    EXPECT_EQ(a_ref_comp.required_metatype, SymbolMetaType::kUnspecified);
+    EXPECT_EQ(a_ref_comp.identifier, "a");
+    EXPECT_EQ(a_ref_comp.resolved_symbol, &a_variable);  // pre-resolved
+  }
+
+  // Submodule "n"
+  MUST_ASSIGN_LOOKUP_SYMBOL(module_n, module_m, "n");
+  EXPECT_EQ(module_n_info.metatype, SymbolMetaType::kModule);
+  EXPECT_EQ(module_n_info.file_origin, &src);
+  EXPECT_EQ(module_n_info.declared_type.syntax_origin, nullptr);
+
+  EXPECT_EQ(module_n_info.local_references_to_bind.size(), 1);
+  const auto n_ref_map(module_n_info.LocalReferencesMapViewForTesting());
+
+  ASSIGN_MUST_FIND(n_a_refs, n_ref_map, "a");
+  ASSERT_EQ(n_a_refs.size(), 1);  // references to "a" net in "n" module
+  for (const auto& n_a_ref : n_a_refs) {
+    const ReferenceComponent& n_a_ref_comp(n_a_ref->components->Value());
+    EXPECT_EQ(n_a_ref_comp.ref_type, ReferenceType::kUnqualified);
+    EXPECT_EQ(n_a_ref_comp.required_metatype, SymbolMetaType::kUnspecified);
+    EXPECT_EQ(n_a_ref_comp.identifier, "a");
+    EXPECT_EQ(n_a_ref_comp.resolved_symbol,
+              nullptr);  // resolving only in same scope
+  }
+
+  {
+    std::vector<absl::Status> resolve_diagnostics;
+    // Resolve mustn't break anything
+    symbol_table.Resolve(&resolve_diagnostics);
+    EXPECT_EMPTY_STATUSES(resolve_diagnostics);
+
+    // All references to "a" resolved.
+    for (const auto& a_ref : a_refs) {
+      const ReferenceComponent& a_ref_comp(a_ref->components->Value());
+      EXPECT_EQ(a_ref_comp.resolved_symbol,
+                &a_variable);  // resolved successfully
+    }
+
+    for (const auto& n_a_ref : n_a_refs) {
+      const ReferenceComponent& n_a_ref_comp(n_a_ref->components->Value());
+      EXPECT_EQ(n_a_ref_comp.resolved_symbol,
+                &a_variable);  // resolved successfully
+    }
+  }
+}
+
+TEST(BuildSymbolTableTest, ModuleExplicitDeclarationInSubScope) {
+  TestVerilogSourceFile src("foo.sv",
+                            "module m;"
+                            " assign a = 1'b0;"
+                            " module n;"
+                            "  wire a;"
+                            "  assign a = 1'b1;"
+                            " endmodule;"
+                            "endmodule\n");
+  const auto status = src.Parse();
+  ASSERT_TRUE(status.ok()) << status.message();
+  SymbolTable symbol_table(nullptr);
+  const SymbolTableNode& root_symbol(symbol_table.Root());
+
+  const auto build_diagnostics = BuildSymbolTable(src, &symbol_table);
+  EXPECT_EMPTY_STATUSES(build_diagnostics);
+
+  MUST_ASSIGN_LOOKUP_SYMBOL(module_m, root_symbol, "m");
+  EXPECT_EQ(module_m_info.metatype, SymbolMetaType::kModule);
+  EXPECT_EQ(module_m_info.file_origin, &src);
+  EXPECT_EQ(module_m_info.declared_type.syntax_origin,
+            nullptr);  // there is no module meta-type
+
+  MUST_ASSIGN_LOOKUP_SYMBOL(a_variable, module_m, "a");
+  EXPECT_EQ(a_variable_info.metatype, SymbolMetaType::kDataNetVariableInstance);
+  const ReferenceComponentNode* a_type_ref =
+      a_variable_info.declared_type.user_defined_type;
+  EXPECT_EQ(a_type_ref, nullptr);  // implicit type is primitive type
+  EXPECT_TRUE(a_variable_info.declared_type.implicit);
+
+  EXPECT_EQ(module_m_info.local_references_to_bind.size(), 1);
+  const auto ref_map(module_m_info.LocalReferencesMapViewForTesting());
+
+  ASSIGN_MUST_FIND(a_refs, ref_map, "a");
+  ASSERT_EQ(a_refs.size(), 1);  // all references to "a" parameter
+  for (const auto& a_ref : a_refs) {
+    const ReferenceComponent& a_ref_comp(a_ref->components->Value());
+    EXPECT_EQ(a_ref_comp.ref_type, ReferenceType::kUnqualified);
+    EXPECT_EQ(a_ref_comp.required_metatype, SymbolMetaType::kUnspecified);
+    EXPECT_EQ(a_ref_comp.identifier, "a");
+    EXPECT_EQ(a_ref_comp.resolved_symbol, &a_variable);  // pre-resolved
+  }
+
+  // Submodule "n"
+  MUST_ASSIGN_LOOKUP_SYMBOL(module_n, module_m, "n");
+  EXPECT_EQ(module_n_info.metatype, SymbolMetaType::kModule);
+  EXPECT_EQ(module_n_info.file_origin, &src);
+  EXPECT_EQ(module_n_info.declared_type.syntax_origin, nullptr);
+
+  MUST_ASSIGN_LOOKUP_SYMBOL(n_a_variable, module_n, "a");
+  EXPECT_EQ(n_a_variable_info.metatype,
+            SymbolMetaType::kDataNetVariableInstance);
+  const ReferenceComponentNode* n_a_type_ref =
+      n_a_variable_info.declared_type.user_defined_type;
+  EXPECT_EQ(n_a_type_ref, nullptr);
+  EXPECT_FALSE(n_a_variable_info.declared_type.implicit);
+
+  EXPECT_EQ(module_n_info.local_references_to_bind.size(), 1);
+  const auto n_ref_map(module_n_info.LocalReferencesMapViewForTesting());
+
+  ASSIGN_MUST_FIND(n_a_refs, n_ref_map, "a");
+  ASSERT_EQ(n_a_refs.size(), 1);  // references to "a" net in "n" module
+  for (const auto& n_a_ref : n_a_refs) {
+    const ReferenceComponent& n_a_ref_comp(n_a_ref->components->Value());
+    EXPECT_EQ(n_a_ref_comp.ref_type, ReferenceType::kUnqualified);
+    EXPECT_EQ(n_a_ref_comp.required_metatype, SymbolMetaType::kUnspecified);
+    EXPECT_EQ(n_a_ref_comp.identifier, "a");
+    EXPECT_EQ(n_a_ref_comp.resolved_symbol,
+              nullptr);  // resolving only in same scope
+  }
+
+  {
+    std::vector<absl::Status> resolve_diagnostics;
+    // Resolve mustn't break anything
+    symbol_table.Resolve(&resolve_diagnostics);
+    EXPECT_EMPTY_STATUSES(resolve_diagnostics);
+
+    // All references to "a" resolved.
+    for (const auto& a_ref : a_refs) {
+      const ReferenceComponent& a_ref_comp(a_ref->components->Value());
+      EXPECT_EQ(a_ref_comp.resolved_symbol,
+                &a_variable);  // resolved successfully
+    }
+
+    for (const auto& n_a_ref : n_a_refs) {
+      const ReferenceComponent& n_a_ref_comp(n_a_ref->components->Value());
+      EXPECT_EQ(n_a_ref_comp.resolved_symbol,
+                &n_a_variable);  // resolved successfully
+    }
+  }
+}
+
+TEST(BuildSymbolTableTest, ModuleExplicitAndImplicitDeclarations) {
+  TestVerilogSourceFile src("foo.sv",
+                            "module m;"
+                            "wire b;"
+                            "assign a = 1'b0;"
+                            "assign b = 1'b1;"
+                            "endmodule\n");
+  const auto status = src.Parse();
+  ASSERT_TRUE(status.ok()) << status.message();
+  SymbolTable symbol_table(nullptr);
+  const SymbolTableNode& root_symbol(symbol_table.Root());
+
+  const auto build_diagnostics = BuildSymbolTable(src, &symbol_table);
+  EXPECT_EMPTY_STATUSES(build_diagnostics);
+
+  MUST_ASSIGN_LOOKUP_SYMBOL(module_m, root_symbol, "m");
+  EXPECT_EQ(module_m_info.metatype, SymbolMetaType::kModule);
+  EXPECT_EQ(module_m_info.file_origin, &src);
+  EXPECT_EQ(module_m_info.declared_type.syntax_origin,
+            nullptr);  // there is no module meta-type
+
+  MUST_ASSIGN_LOOKUP_SYMBOL(a_variable, module_m, "a");
+  EXPECT_EQ(a_variable_info.metatype, SymbolMetaType::kDataNetVariableInstance);
+  const ReferenceComponentNode* a_type_ref =
+      a_variable_info.declared_type.user_defined_type;
+  EXPECT_EQ(a_type_ref, nullptr);  // implicit type is primitive type
+  EXPECT_TRUE(a_variable_info.declared_type.implicit);
+
+  MUST_ASSIGN_LOOKUP_SYMBOL(b_variable, module_m, "b");
+  EXPECT_EQ(b_variable_info.metatype, SymbolMetaType::kDataNetVariableInstance);
+  const ReferenceComponentNode* b_type_ref =
+      b_variable_info.declared_type.user_defined_type;
+  EXPECT_EQ(b_type_ref, nullptr);
+  EXPECT_FALSE(b_variable_info.declared_type.implicit);
+
+  EXPECT_EQ(module_m_info.local_references_to_bind.size(), 2);
+  const auto ref_map(module_m_info.LocalReferencesMapViewForTesting());
+
+  ASSIGN_MUST_FIND(a_refs, ref_map, "a");
+  ASSERT_EQ(a_refs.size(), 1);  // all references to "a" parameter
+  for (const auto& a_ref : a_refs) {
+    const ReferenceComponent& a_ref_comp(a_ref->components->Value());
+    EXPECT_EQ(a_ref_comp.ref_type, ReferenceType::kUnqualified);
+    EXPECT_EQ(a_ref_comp.required_metatype, SymbolMetaType::kUnspecified);
+    EXPECT_EQ(a_ref_comp.identifier, "a");
+    EXPECT_EQ(a_ref_comp.resolved_symbol, &a_variable);  // pre-resolved
+  }
+
+  ASSIGN_MUST_FIND(b_refs, ref_map, "b");
+  ASSERT_EQ(b_refs.size(), 1);
+  for (const auto& b_ref : b_refs) {
+    const ReferenceComponent& b_ref_comp(b_ref->components->Value());
+    EXPECT_EQ(b_ref_comp.ref_type, ReferenceType::kUnqualified);
+    EXPECT_EQ(b_ref_comp.required_metatype, SymbolMetaType::kUnspecified);
+    EXPECT_EQ(b_ref_comp.identifier, "b");
+    EXPECT_EQ(b_ref_comp.resolved_symbol, nullptr);
+  }
+
+  {
+    std::vector<absl::Status> resolve_diagnostics;
+    // Resolve mustn't break anything
+    symbol_table.Resolve(&resolve_diagnostics);
+    EXPECT_EMPTY_STATUSES(resolve_diagnostics);
+
+    // All references to "a" resolved.
+    for (const auto& a_ref : a_refs) {
+      const ReferenceComponent& a_ref_comp(a_ref->components->Value());
+      EXPECT_EQ(a_ref_comp.resolved_symbol,
+                &a_variable);  // resolved successfully
+    }
+
+    // All references to "b" resolved.
+    for (const auto& b_ref : b_refs) {
+      const ReferenceComponent& b_ref_comp(b_ref->components->Value());
+      EXPECT_EQ(b_ref_comp.resolved_symbol,
+                &b_variable);  // resolved successfully
+    }
+  }
+}
+
+TEST(BuildSymbolTableTest, ModuleImplicitRedeclared) {
+  TestVerilogSourceFile src("foo.sv",
+                            "module m;"
+                            "assign a = 1'b0;"
+                            "wire a;"
+                            "endmodule\n");
+  const auto status = src.Parse();
+  ASSERT_TRUE(status.ok()) << status.message();
+  SymbolTable symbol_table(nullptr);
+
+  const auto build_diagnostics = BuildSymbolTable(src, &symbol_table);
+  EXPECT_EQ(build_diagnostics.size(), 1);
+  EXPECT_FALSE(build_diagnostics.front().ok());
+  EXPECT_EQ(build_diagnostics.front().message(),
+            "Symbol \"a\" is already defined in the $root::m scope.");
+}
+
 TEST(BuildSymbolTableTest, ClassDeclarationSingle) {
   TestVerilogSourceFile src("foobar.sv", "class ccc;\nendclass\n");
   const auto status = src.Parse();
