@@ -24,6 +24,7 @@
 #include "common/analysis/matcher/bound_symbol_manager.h"
 #include "common/analysis/matcher/matcher.h"
 #include "common/strings/naming_utils.h"
+#include "common/text/config_utils.h"
 #include "common/text/symbol.h"
 #include "common/text/syntax_tree_context.h"
 #include "verilog/CST/module.h"
@@ -72,6 +73,14 @@ void InterfaceNameStyleRule::HandleSymbol(const verible::Symbol& symbol,
     identifier_token = &GetInterfaceNameToken(symbol);
     name = identifier_token->text();
 
+    if (name_regex_.has_value()) {
+      if (!std::regex_match(std::string(name), *name_regex_)) {
+        violations_.insert(LintViolation(*identifier_token,
+                                         "Regex rule does not match", context));
+      }
+      return;
+    }
+
     if (!verible::IsLowerSnakeCaseWithDigits(name) ||
         !absl::EndsWith(name, "_if")) {
       violations_.insert(LintViolation(*identifier_token, kMessage, context));
@@ -79,6 +88,25 @@ void InterfaceNameStyleRule::HandleSymbol(const verible::Symbol& symbol,
   }
 }
 
+absl::Status InterfaceNameStyleRule::Configure(
+    absl::string_view configuration) {
+  using verible::config::SetString;
+  std::string name_regex;
+  auto status = verible::ParseNameValues(
+      configuration, {{"name_regex", SetString(&name_regex)}});
+
+  if (!status.ok()) return status;
+
+  if (!name_regex.empty()) {
+    try {
+      name_regex_ = name_regex;
+    } catch (const std::regex_error& e) {
+      return absl::Status(absl::StatusCode::kInvalidArgument,
+                          "Invalid regex specified");
+    }
+  }
+  return absl::OkStatus();
+}
 LintRuleStatus InterfaceNameStyleRule::Report() const {
   return LintRuleStatus(violations_, Name(), GetStyleGuideCitation(kTopic));
 }

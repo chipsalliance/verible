@@ -17,6 +17,8 @@
 
 #include <set>
 #include <string>
+#include <regex>
+#include <optional>
 
 #include "common/analysis/lint_rule_status.h"
 #include "common/analysis/syntax_tree_lint_rule.h"
@@ -40,6 +42,8 @@ class InterfaceNameStyleRule : public verible::SyntaxTreeLintRule {
 
   void HandleSymbol(const verible::Symbol& symbol,
                     const verible::SyntaxTreeContext& context) override;
+  
+  absl::Status Configure(absl::string_view configuration) override;
 
   verible::LintRuleStatus Report() const override;
 
@@ -49,6 +53,8 @@ class InterfaceNameStyleRule : public verible::SyntaxTreeLintRule {
 
   // Diagnostic message.
   static const char kMessage[];
+
+  std::optional<std::regex> name_regex_;
 
   std::set<verible::LintViolation> violations_;
 };
