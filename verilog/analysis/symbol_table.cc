@@ -1815,7 +1815,7 @@ static void ParseFileAndBuildSymbolTable(
 
 void SymbolTable::Build(std::vector<absl::Status>* diagnostics) {
   for (auto& translation_unit : *project_) {
-    ParseFileAndBuildSymbolTable(&translation_unit.second, this, project_,
+    ParseFileAndBuildSymbolTable(translation_unit.second.get(), this, project_,
                                  diagnostics);
   }
 }

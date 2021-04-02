@@ -14,6 +14,7 @@
 
 #include "verilog/tools/kythe/kythe_facts_extractor.h"
 
+#include <deque>
 #include <iostream>
 #include <map>
 #include <memory>
@@ -26,6 +27,7 @@
 #include "absl/strings/str_cat.h"
 #include "common/strings/compare.h"
 #include "common/util/logging.h"
+#include "kythe/cxx/common/indexing/KytheOutputStream.h"
 #include "verilog/tools/kythe/kythe_schema_constants.h"
 #include "verilog/tools/kythe/scope_resolver.h"
 #include "verilog/tools/kythe/verilog_extractor_indexing_fact_type.h"
@@ -34,6 +36,10 @@ namespace verilog {
 namespace kythe {
 
 namespace {
+
+using ::kythe::EdgeRef;
+using ::kythe::FactRef;
+using ::kythe::VNameRef;
 
 // Returns the file path of the file from the given indexing facts tree node
 // tagged with kFile.
@@ -68,7 +74,46 @@ std::vector<absl::string_view> ConcatenateReferences(
   return references;
 }
 
+// Returns VNameRef based on Verible's VName.
+VNameRef ConvertToVnameRef(const VName& vname,
+                           std::deque<std::string>* signatures) {
+  VNameRef vname_ref;
+  signatures->push_back(vname.signature.ToString());
+  vname_ref.set_signature(signatures->back());
+  vname_ref.set_corpus(vname.corpus);
+  vname_ref.set_root(vname.root);
+  vname_ref.set_path(vname.path);
+  vname_ref.set_language(vname.language);
+  return vname_ref;
+}
+
 }  // namespace
+
+void StreamKytheFactsProtoEntries(::kythe::KytheOutputStream* kythe_output,
+                                  const IndexingFactNode& file_list_facts_tree,
+                                  const VerilogProject& project) {
+  const auto indexing_data = ExtractKytheFacts(file_list_facts_tree, project);
+  // Keep signatures alive. VNameRef takes a view. Note that we need pointer
+  // stability, can't use a vector here!
+  std::deque<std::string> signatures;
+  for (const Fact& fact : indexing_data.facts) {
+    FactRef fact_ref;
+    VNameRef source = ConvertToVnameRef(fact.node_vname, &signatures);
+    fact_ref.fact_name = fact.fact_name;
+    fact_ref.fact_value = fact.fact_value;
+    fact_ref.source = &source;
+    kythe_output->Emit(fact_ref);
+  }
+  for (const Edge& edge : indexing_data.edges) {
+    EdgeRef edge_ref;
+    VNameRef source = ConvertToVnameRef(edge.source_node, &signatures);
+    VNameRef target = ConvertToVnameRef(edge.target_node, &signatures);
+    edge_ref.edge_kind = edge.edge_name;
+    edge_ref.source = &source;
+    edge_ref.target = &target;
+    kythe_output->Emit(edge_ref);
+  }
+}
 
 // KytheFactsExtractor processes indexing facts for a single file.
 // Responsible for traversing IndexingFactsTree and processing its different
@@ -290,7 +335,7 @@ KytheIndexingData ExtractKytheFacts(const IndexingFactNode& file_list,
   std::map<absl::string_view, absl::string_view, verible::StringViewCompare>
       file_path_reverse_map;
   for (const auto& file_entry : project) {
-    const VerilogSourceFile& source(file_entry.second);
+    const VerilogSourceFile& source(*file_entry.second);
     if (source.Status().ok()) {
       file_path_reverse_map[source.ResolvedPath()] = file_entry.first;
     }

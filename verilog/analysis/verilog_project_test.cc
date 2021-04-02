@@ -364,10 +364,10 @@ TEST(VerilogProjectTest, ValidTranslationUnit) {
 
   // Testing begin/end iteration.
   for (auto& file : project) {
-    EXPECT_TRUE(file.second.Parse().ok());
+    EXPECT_TRUE(file.second->Parse().ok());
   }
   for (const auto& file : project) {
-    EXPECT_TRUE(file.second.Status().ok());
+    EXPECT_TRUE(file.second->Status().ok());
   }
 }
 
@@ -467,6 +467,26 @@ TEST(VerilogProjectTest, IncludeFileNotFound) {
     EXPECT_FALSE(status_or_file.ok());
   }
   EXPECT_EQ(project.GetErrorStatuses().size(), 1);
+}
+
+TEST(VerilogProjecTest, AddVirtualFile) {
+  const auto tempdir = ::testing::TempDir();
+  const std::string sources_dir = JoinPath(tempdir, "srcs");
+  const std::string includes_dir = JoinPath(tempdir, "includes");
+  EXPECT_TRUE(CreateDir(sources_dir).ok());
+  EXPECT_TRUE(CreateDir(includes_dir).ok());
+  VerilogProject project(sources_dir, {includes_dir});
+
+  const std::string file_path = "/some/file";
+  const std::string file_content = "virtual file content";
+  project.AddVirtualFile(file_path, file_content);
+
+  auto* stored_file = project.LookupRegisteredFile(file_path);
+  ASSERT_NE(stored_file, nullptr);
+  EXPECT_TRUE(stored_file->Open().ok());
+  EXPECT_TRUE(stored_file->Status().ok());
+  ASSERT_NE(stored_file->GetTextStructure(), nullptr);
+  EXPECT_EQ(stored_file->GetTextStructure()->Contents(), file_content);
 }
 
 }  // namespace

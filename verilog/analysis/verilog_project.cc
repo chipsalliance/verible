@@ -95,11 +95,11 @@ absl::StatusOr<VerilogSourceFile*> VerilogProject::OpenFile(
     absl::string_view referenced_filename, absl::string_view resolved_filename,
     absl::string_view corpus) {
   const auto inserted = files_.emplace(
-      referenced_filename,
-      VerilogSourceFile(referenced_filename, resolved_filename, corpus));
+      referenced_filename, absl::make_unique<VerilogSourceFile>(
+                               referenced_filename, resolved_filename, corpus));
   CHECK(inserted.second);  // otherwise, would have already returned above
   const auto file_iter = inserted.first;
-  VerilogSourceFile& file(file_iter->second);
+  VerilogSourceFile& file(*file_iter->second);
 
   // Read the file's contents.
   const absl::Status status = file.Open();
@@ -125,9 +125,9 @@ absl::StatusOr<VerilogSourceFile*> VerilogProject::OpenTranslationUnit(
   {
     const auto found = files_.find(referenced_filename);
     if (found != files_.end()) {
-      const auto status = found->second.Status();
+      const auto status = found->second->Status();
       if (!status.ok()) return status;
-      return &found->second;
+      return found->second.get();
     }
   }
 
@@ -152,9 +152,9 @@ absl::StatusOr<VerilogSourceFile*> VerilogProject::OpenIncludedFile(
   {
     const auto found = files_.find(referenced_filename);
     if (found != files_.end()) {
-      const auto status = found->second.Status();
+      const auto status = found->second->Status();
       if (!status.ok()) return status;
-      return &found->second;
+      return found->second.get();
     }
   }
 
@@ -172,16 +172,34 @@ absl::StatusOr<VerilogSourceFile*> VerilogProject::OpenIncludedFile(
   // Not found in any path.  Cache this status.
   const auto inserted = files_.emplace(
       referenced_filename,
-      VerilogSourceFile(referenced_filename,
-                        IncludeFileNotFoundError(referenced_filename)));
+      absl::make_unique<VerilogSourceFile>(
+          referenced_filename, IncludeFileNotFoundError(referenced_filename)));
   CHECK(inserted.second) << "Not-found file should have been recorded as such.";
-  return inserted.first->second.Status();
+  return inserted.first->second->Status();
+}
+
+void VerilogProject::AddVirtualFile(absl::string_view referenced_filename,
+                                    absl::string_view content) {
+  const auto inserted = files_.emplace(
+      referenced_filename, absl::make_unique<InMemoryVerilogSourceFile>(
+                               referenced_filename, content));
+  CHECK(inserted.second);
+  const auto file_iter = inserted.first;
+
+  // Register the file's contents range in string_view_map_.
+  string_view_map_.must_emplace(content);
+
+  // Map the start of the file's contents to its corresponding owner
+  // VerilogSourceFile.
+  const auto map_inserted =
+      buffer_to_analyzer_map_.emplace(content.begin(), file_iter);
+  CHECK(map_inserted.second);
 }
 
 std::vector<absl::Status> VerilogProject::GetErrorStatuses() const {
   std::vector<absl::Status> statuses;
   for (const auto& file : files_) {
-    const auto status = file.second.Status();
+    const auto status = file.second->Status();
     if (!status.ok()) {
       statuses.push_back(status);
     }
@@ -201,7 +219,7 @@ const VerilogSourceFile* VerilogProject::LookupFileOrigin(
   const auto found_file = buffer_to_analyzer_map_.find(buffer_start);
   if (found_file == buffer_to_analyzer_map_.end()) return nullptr;
 
-  const VerilogSourceFile* file = &found_file->second->second;
+  const VerilogSourceFile* file = found_file->second->second.get();
   return file;
 }
 
