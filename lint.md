@@ -288,4 +288,4 @@ Enabled by default: true
 
 ## Version
 
-Generated on 2021-04-01 13:00:54 -0700 from [eea40a0](https://github.com/google/verible/commit/eea40a00e566e766ffafc6f768657ba32b2c4f2e)
+Generated on 2021-04-01 19:04:57 -0700 from [72faf90](https://github.com/google/verible/commit/72faf902bd283a780b51052deab60de25bda4e36)
