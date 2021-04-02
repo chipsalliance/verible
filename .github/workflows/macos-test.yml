@@ -14,6 +14,9 @@ jobs:
   MacOsBuild:
     runs-on: macos-latest
     steps:
+    - name: Install deps
+      run: |
+        brew install flex bison
     - name: Checkout code
       uses: actions/checkout@v2
       with:
