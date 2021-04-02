@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef VERIBLE_VERILOG_ANALYSIS_CHECKERS_DISABLE_STATEMENT_H_
-#define VERIBLE_VERILOG_ANALYSIS_CHECKERS_DISABLE_STATEMENT_H_
+#ifndef VERIBLE_VERILOG_ANALYSIS_CHECKERS_DISABLE_NON_SEQ_STATEMENT_H_
+#define VERIBLE_VERILOG_ANALYSIS_CHECKERS_DISABLE_NON_SEQ_STATEMENT_H_
 
 #include <set>
 #include <string>
@@ -56,4 +56,4 @@ class DisableForkNoLabelsRule : public verible::SyntaxTreeLintRule {
 }  // namespace analysis
 }  // namespace verilog
 
-#endif  // VERIBLE_VERILOG_ANALYSIS_CHECKERS_ALWAYS_COMB_RULE_H_
+#endif  // VERIBLE_VERILOG_ANALYSIS_CHECKERS_DISABLE_NON_SEQ_RULE_H_
