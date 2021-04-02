@@ -14,9 +14,6 @@ jobs:
   MacOsBuild:
     runs-on: macos-latest
     steps:
-    - name: Install dependencies
-      run: |
-        brew install bazel
     - name: Checkout code
       uses: actions/checkout@v2
       with:
