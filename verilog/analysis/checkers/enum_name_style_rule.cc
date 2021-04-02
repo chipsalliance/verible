@@ -24,6 +24,7 @@
 #include "common/analysis/matcher/bound_symbol_manager.h"
 #include "common/analysis/matcher/matcher.h"
 #include "common/strings/naming_utils.h"
+#include "common/text/config_utils.h"
 #include "common/text/symbol.h"
 #include "common/text/syntax_tree_context.h"
 #include "verilog/CST/type.h"
@@ -69,6 +70,13 @@ void EnumNameStyleRule::HandleSymbol(const verible::Symbol& symbol,
     if (!FindAllEnumTypes(symbol).empty()) {
       const auto* identifier_leaf = GetIdentifierFromTypeDeclaration(symbol);
       const auto name = ABSL_DIE_IF_NULL(identifier_leaf)->get().text();
+      if (name_regex_.has_value()) {
+        if (!std::regex_match(std::string(name), *name_regex_)) {
+          violations_.insert(LintViolation(
+              *identifier_leaf, "Regex rule does not match", context));
+        }
+        return;
+      }
       if (!verible::IsLowerSnakeCaseWithDigits(name) ||
           !(absl::EndsWith(name, "_t") || absl::EndsWith(name, "_e"))) {
         violations_.insert(
@@ -79,6 +87,25 @@ void EnumNameStyleRule::HandleSymbol(const verible::Symbol& symbol,
       return;
     }
   }
+}
+
+absl::Status EnumNameStyleRule::Configure(absl::string_view configuration) {
+  using verible::config::SetString;
+  std::string name_regex;
+  auto status = verible::ParseNameValues(
+      configuration, {{"name_regex", SetString(&name_regex)}});
+
+  if (!status.ok()) return status;
+
+  if (!name_regex.empty()) {
+    try {
+      name_regex_ = name_regex;
+    } catch (const std::regex_error& e) {
+      return absl::Status(absl::StatusCode::kInvalidArgument,
+                          "Invalid regex specified");
+    }
+  }
+  return absl::OkStatus();
 }
 
 LintRuleStatus EnumNameStyleRule::Report() const {

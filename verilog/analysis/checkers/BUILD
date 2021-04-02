@@ -658,6 +658,7 @@ cc_library(
         "//common/analysis/matcher",
         "//common/analysis/matcher:bound_symbol_manager",
         "//common/strings:naming_utils",
+        "//common/text:config_utils",
         "//common/text:symbol",
         "//common/text:syntax_tree_context",
         "//verilog/CST:type",
@@ -681,6 +682,7 @@ cc_test(
         "//verilog/analysis:verilog_analyzer",
         "//verilog/parser:verilog_token_enum",
         "@com_google_googletest//:gtest_main",
+        "@com_google_absl//absl/strings",
     ],
 )
 
