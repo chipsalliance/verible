@@ -1568,6 +1568,7 @@ cc_library(
         "//common/text:symbol",
         "//common/text:syntax_tree_context",
         "//common/text:token_info",
+        "//common/text:config_utils",
         "//verilog/CST:parameters",
         "//verilog/CST:verilog_matchers",
         "//verilog/analysis:descriptions",
@@ -1590,6 +1591,7 @@ cc_test(
         "//verilog/analysis:verilog_analyzer",
         "//verilog/parser:verilog_token_enum",
         "@com_google_googletest//:gtest_main",
+        "@com_google_absl//absl/strings",
     ],
 )
 

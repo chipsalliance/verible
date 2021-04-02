@@ -51,11 +51,15 @@ TEST(InterfaceNameStyleRuleTestRegex, ConfigurationFail) {
   EXPECT_TRUE(absl::StrContains(status.message(), "Invalid regex specified"));
 }
 
-TEST(InterfaceNameStyleRuleTestRegex, ValidInterfaceDeclarationNames) {
+TEST(InterfaceNameStyleRuleTestConfiguredRegex,
+     ValidInterfaceDeclarationNames) {
   const absl::string_view regex = "name_regex:.*_i";
   const std::initializer_list<LintTestCase> kTestCases = {
       {""},
       {"interface foo_i; endinterface"},
+      {"interface _foo_i; endinterface"},
+      {"interface foo12_i; endinterface"},
+      {"interface good_12W_name_i; endinterface"},
       {"typedef virtual interface foo foo_i;"},
       {"typedef virtual interface foo fOO_i;"},
   };
@@ -63,12 +67,14 @@ TEST(InterfaceNameStyleRuleTestRegex, ValidInterfaceDeclarationNames) {
       kTestCases, regex);
 }
 
-TEST(InterfaceNameStyleRuleTestRegex, InvalidInterfaceDeclarationNames) {
+TEST(InterfaceNameStyleRuleTestConfiguredRegex,
+     InvalidInterfaceDeclarationNames) {
   const absl::string_view regex = "name_regex:[a-zA-Z_]*_i";
   constexpr int kToken = SymbolIdentifier;
   const std::initializer_list<LintTestCase> kTestCases = {
       {""},
       {"interface ", {kToken, "baz_12_fOo_i"}, "; endinterface"},
+      {"interface ", {kToken, "baz_fOo_t"}, "; endinterface"},
   };
   RunConfiguredLintTestCases<VerilogAnalyzer, InterfaceNameStyleRule>(
       kTestCases, regex);

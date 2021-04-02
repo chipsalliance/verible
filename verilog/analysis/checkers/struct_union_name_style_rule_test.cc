@@ -30,8 +30,8 @@ namespace analysis {
 namespace {
 
 using verible::LintTestCase;
-using verible::RunLintTestCases;
 using verible::RunConfiguredLintTestCases;
+using verible::RunLintTestCases;
 
 TEST(StructUnionNameStyleRuleTest, ConfigurationPass) {
   StructUnionNameStyleRule rule;
@@ -113,7 +113,7 @@ TEST(StructUnionNameStyleRuleTestConfigured, ValidStructNames) {
 }
 
 TEST(StructUnionNameStyleRuleTestConfiguredRegex, ValidStructNames) {
-  const absl::string_view regex= "name_regex:.*_i";
+  const absl::string_view regex = "name_regex:.*_i";
   const std::initializer_list<LintTestCase> kTestCases = {
       {""},
       {"typedef struct {logic foo; logic bar;} b_a_z_t_i;"},
@@ -123,10 +123,11 @@ TEST(StructUnionNameStyleRuleTestConfiguredRegex, ValidStructNames) {
 }
 
 TEST(StructUnionNameStyleRuleTestConfiguredRegex, InvalidStructNames) {
-  const absl::string_view  regex= "name_regex:[a-zA-Z_]*_i";
+  const absl::string_view regex = "name_regex:[a-zA-Z_]*_i";
   constexpr int kToken = SymbolIdentifier;
   const std::initializer_list<LintTestCase> kTestCases = {
       {""},
+      {"typedef struct {logic foo; logic bar;}", {kToken, "foo_t"}, ";"},
       {"typedef struct {logic foo; logic bar;}", {kToken, "baz_12_fOo_i"}, ";"},
   };
   RunConfiguredLintTestCases<VerilogAnalyzer, StructUnionNameStyleRule>(
@@ -213,7 +214,7 @@ TEST(StructUnionNameStyleRuleTestConfigured, ValidUnionNames) {
       kTestCases, exceptions);
 }
 TEST(StructUnionNameStyleRuleTestConfiguredRegex, ValidUnionNames) {
-  const absl::string_view regex= "name_regex:.*_i";
+  const absl::string_view regex = "name_regex:.*_i";
   const std::initializer_list<LintTestCase> kTestCases = {
       {""},
       {"typedef union {logic foo; logic bar;} b_a_z_t_i;"},
@@ -223,7 +224,7 @@ TEST(StructUnionNameStyleRuleTestConfiguredRegex, ValidUnionNames) {
 }
 
 TEST(StructUnionNameStyleRuleTestConfiguredRegex, InvalidUnionNames) {
-  const absl::string_view  regex= "name_regex:[a-zA-Z_]*_i";
+  const absl::string_view regex = "name_regex:[a-zA-Z_]*_i";
   constexpr int kToken = SymbolIdentifier;
   const std::initializer_list<LintTestCase> kTestCases = {
       {""},
