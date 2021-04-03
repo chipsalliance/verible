@@ -240,6 +240,9 @@ Enabled by default: false
 
 ### struct-union-name-style
 Checks that `struct` and `union` names use lower_snake_case naming convention and end with '_t'. See [Style: struct-union-conventions].
+##### Parameters
+ * `exceptions` (Comma-separated list of allowed upper-case elements, such as unit-names. Default: Empty)
+
 
 Enabled by default: true
 
@@ -288,4 +291,4 @@ Enabled by default: true
 
 ## Version
 
-Generated on 2021-04-02 18:48:38 -0700 from [7c994b1](https://github.com/google/verible/commit/7c994b1af0ef6c83439d00186abdb0c36c2320ef)
+Generated on 2021-04-02 20:44:14 -0700 from [dbdcf2e](https://github.com/google/verible/commit/dbdcf2e4180111a64b804ba7f56438319203a236)
