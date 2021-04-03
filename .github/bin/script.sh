@@ -21,7 +21,9 @@ source ./.github/settings.sh
 # Make sure we don't have cc_library rules that use exceptions but do not
 # declare copts = ["-fexceptions"] in the rule. We want to make it as simple
 # as possible to compile without exceptions.
-BAZEL_OPTS="${BAZEL_OPTS} --cxxopt=-fno-exceptions"
+# ... and unfortunately we have to disable this for now as the external
+# kythe dependency does use exceptions.
+#BAZEL_OPTS="${BAZEL_OPTS} --cxxopt=-fno-exceptions"
 
 # Turn warnings to 11. And fail compliation if we encounter one.
 BAZEL_OPTS="${BAZEL_OPTS} --cxxopt=-Werror"  # Always want bail on warning
