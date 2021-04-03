@@ -167,7 +167,7 @@ msg "Transformation: ${transform_command[@]}"
 # Remaining arguments "$@" are files.
 files=("$@")
 
-tempdir="$(mktemp -d --tmpdir "tmp.$script_name.XXXXXXX")"
+tempdir="$(mktemp -d -t "tmp.$script_name.XXXXXXX")"
 msg "Temporary files in: $tempdir"
 
 # These messages are only intended for debugging and tracing.
@@ -208,4 +208,3 @@ msg "Cumulative patch (affects ${#files[@]} files): $tempdir/interactive.patch"
 # Interactively prompt user to select changes to keep.
 # Only in this step will any files be modified in-place.
 exec "$patch_tool" apply-pick "$tempdir"/interactive.patch
-
