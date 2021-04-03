@@ -18,6 +18,7 @@
 #include <set>
 #include <string>
 
+#include "absl/strings/string_view.h"
 #include "common/analysis/lint_rule_status.h"
 #include "common/analysis/syntax_tree_lint_rule.h"
 #include "common/text/symbol.h"
@@ -41,6 +42,8 @@ class StructUnionNameStyleRule : public verible::SyntaxTreeLintRule {
   void HandleSymbol(const verible::Symbol& symbol,
                     const verible::SyntaxTreeContext& context) override;
 
+  absl::Status Configure(absl::string_view configuration) override;
+
   verible::LintRuleStatus Report() const override;
 
  private:
@@ -50,6 +53,8 @@ class StructUnionNameStyleRule : public verible::SyntaxTreeLintRule {
   // Diagnostic message.
   static const char kMessageStruct[];
   static const char kMessageUnion[];
+
+  std::set<std::string> exceptions_;
 
   std::set<verible::LintViolation> violations_;
 };

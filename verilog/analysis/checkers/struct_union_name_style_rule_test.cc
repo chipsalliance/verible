@@ -16,6 +16,7 @@
 
 #include <initializer_list>
 
+#include "absl/strings/match.h"
 #include "common/analysis/linter_test_utils.h"
 #include "common/analysis/syntax_tree_linter_test_utils.h"
 #include "common/text/symbol.h"
@@ -29,7 +30,50 @@ namespace analysis {
 namespace {
 
 using verible::LintTestCase;
+using verible::RunConfiguredLintTestCases;
 using verible::RunLintTestCases;
+
+TEST(StructUnionNameStyleRuleTest, ConfigurationPass) {
+  StructUnionNameStyleRule rule;
+  absl::Status status;
+  EXPECT_TRUE((status = rule.Configure("")).ok()) << status.message();
+  EXPECT_TRUE((status = rule.Configure("exceptions:12B,121GW")).ok())
+      << status.message();
+  EXPECT_TRUE((status = rule.Configure("exceptions:B,GiW")).ok())
+      << status.message();
+}
+
+TEST(StructUnionNameStyleRuleTest, ConfigurationFail) {
+  StructUnionNameStyleRule rule;
+  absl::Status status;
+  EXPECT_FALSE((status = rule.Configure("bad_exceptions:,")).ok())
+      << status.message();
+
+  EXPECT_FALSE((status = rule.Configure("exceptions:,")).ok())
+      << status.message();
+  EXPECT_TRUE(
+      absl::StrContains(status.message(), "at least one alphabetic character"));
+  EXPECT_FALSE((status = rule.Configure("exceptions: 12B")).ok())
+      << status.message();
+  EXPECT_TRUE(absl::StrContains(status.message(),
+                                "digits and alphabetic characters only"));
+  EXPECT_FALSE((status = rule.Configure("exceptions:12")).ok())
+      << status.message();
+  EXPECT_TRUE(
+      absl::StrContains(status.message(), "at least one alphabetic character"));
+  EXPECT_FALSE((status = rule.Configure("exceptions:GB12")).ok())
+      << status.message();
+  EXPECT_TRUE(
+      absl::StrContains(status.message(), "after the unit are not allowed"));
+  EXPECT_FALSE((status = rule.Configure("exceptions:12_B")).ok())
+      << status.message();
+  EXPECT_TRUE(absl::StrContains(status.message(),
+                                "digits and alphabetic characters only"));
+  EXPECT_FALSE((status = rule.Configure("exceptions:Gw,12")).ok())
+      << status.message();
+  EXPECT_TRUE(
+      absl::StrContains(status.message(), "at least one alphabetic character"));
+}
 
 TEST(StructUnionNameStyleRuleTest, ValidStructNames) {
   const std::initializer_list<LintTestCase> kTestCases = {
@@ -42,6 +86,40 @@ TEST(StructUnionNameStyleRuleTest, ValidStructNames) {
       {"typedef struct {logic foo; logic bar;} b_a_z_t;"},
   };
   RunLintTestCases<VerilogAnalyzer, StructUnionNameStyleRule>(kTestCases);
+}
+
+TEST(StructUnionNameStyleRuleTestConfigured, ValidStructNames) {
+  const absl::string_view exceptions = "exceptions:12B,11GiB,KJ,Kg";
+  const std::initializer_list<LintTestCase> kTestCases = {
+      {""},
+      {"typedef struct {logic foo; logic bar;} b_a_z_t;"},
+      {"typedef struct {logic foo; logic bar;} b_a_11gb_z_t;"},
+      {"typedef struct {logic foo; logic bar;} baz_12_t;"},
+      {"typedef struct {logic foo; logic bar;} baz_12B_t;"},
+      {"typedef struct {logic foo; logic bar;} baz_11GiB_t;"},
+      {"typedef struct {logic foo; logic bar;} good_14KJ_name_t;"},
+      {"typedef struct {logic foo; logic bar;} good_10Kg_name_t;"},
+  };
+  RunConfiguredLintTestCases<VerilogAnalyzer, StructUnionNameStyleRule>(
+      kTestCases, exceptions);
+}
+
+TEST(StructUnionNameStyleRuleTestConfigured, InvalidStructNames) {
+  const absl::string_view exceptions = "exceptions:12B,KJ,Kg,t";
+  constexpr int kToken = SymbolIdentifier;
+  const std::initializer_list<LintTestCase> kTestCases = {
+      {""},
+      {"typedef struct {logic foo; logic bar;}", {kToken, "baz_12B_"}, ";"},
+      {"typedef struct {logic foo; logic bar;}", {kToken, "_baz_12B_t"}, ";"},
+      {"typedef struct {logic foo; logic bar;}", {kToken, "baz_B12_t"}, ";"},
+      {"typedef struct {logic foo; logic bar;}", {kToken, "b_a_KJ_z_t"}, ";"},
+      {"typedef struct {logic foo; logic bar;}", {kToken, "b_a_10KG_z_t"}, ";"},
+      {"typedef struct {logic foo; logic bar;}",
+       {kToken, "b_a_10Kg10_z_t"},
+       ";"},
+  };
+  RunConfiguredLintTestCases<VerilogAnalyzer, StructUnionNameStyleRule>(
+      kTestCases, exceptions);
 }
 
 TEST(StructUnionNameStyleRuleTest, InvalidStructNames) {
@@ -90,6 +168,22 @@ TEST(StructUnionNameStyleRuleTest, ValidUnionNames) {
   RunLintTestCases<VerilogAnalyzer, StructUnionNameStyleRule>(kTestCases);
 }
 
+TEST(StructUnionNameStyleRuleTestConfigured, ValidUnionNames) {
+  const absl::string_view exceptions = "exceptions:12B,11GiB,KJ,Kg";
+  const std::initializer_list<LintTestCase> kTestCases = {
+      {""},
+      {"typedef union {logic foo; logic bar;} b_a_z_t;"},
+      {"typedef union {logic foo; logic bar;} b_a_11gb_z_t;"},
+      {"typedef union {logic foo; logic bar;} baz_12_t;"},
+      {"typedef union {logic foo; logic bar;} baz_12B_t;"},
+      {"typedef union {logic foo; logic bar;} baz_11GiB_t;"},
+      {"typedef union {logic foo; logic bar;} good_14KJ_name_t;"},
+      {"typedef union {logic foo; logic bar;} good_10Kg_name_t;"},
+  };
+  RunConfiguredLintTestCases<VerilogAnalyzer, StructUnionNameStyleRule>(
+      kTestCases, exceptions);
+}
+
 TEST(StructUnionNameStyleRuleTest, InvalidUnionNames) {
   constexpr int kToken = SymbolIdentifier;
   const std::initializer_list<LintTestCase> kTestCases = {
@@ -123,6 +217,24 @@ TEST(StructUnionNameStyleRuleTest, InvalidUnionNames) {
       {"typedef union {logic [8:0] foo; int bar;} ", {kToken, "foo_"}, ";"},
   };
   RunLintTestCases<VerilogAnalyzer, StructUnionNameStyleRule>(kTestCases);
+}
+
+TEST(StructUnionNameStyleRuleTestConfigured, InvalidUnionNames) {
+  const absl::string_view exceptions = "exceptions:12B,KJ,Kg,t";
+  constexpr int kToken = SymbolIdentifier;
+  const std::initializer_list<LintTestCase> kTestCases = {
+      {""},
+      {"typedef union {logic foo; logic bar;}", {kToken, "baz_12B_"}, ";"},
+      {"typedef union {logic foo; logic bar;}", {kToken, "_baz_12B_t"}, ";"},
+      {"typedef union {logic foo; logic bar;}", {kToken, "baz_B12_t"}, ";"},
+      {"typedef union {logic foo; logic bar;}", {kToken, "b_a_KJ_z_t"}, ";"},
+      {"typedef union {logic foo; logic bar;}", {kToken, "b_a_10KG_z_t"}, ";"},
+      {"typedef union {logic foo; logic bar;}",
+       {kToken, "b_a_10Kg10_z_t"},
+       ";"},
+  };
+  RunConfiguredLintTestCases<VerilogAnalyzer, StructUnionNameStyleRule>(
+      kTestCases, exceptions);
 }
 
 }  // namespace

@@ -14,16 +14,19 @@
 
 #include "verilog/analysis/checkers/struct_union_name_style_rule.h"
 
+#include <algorithm>
 #include <set>
 #include <string>
 
 #include "absl/strings/match.h"
 #include "absl/strings/str_cat.h"
+#include "absl/strings/str_split.h"
 #include "common/analysis/citation.h"
 #include "common/analysis/lint_rule_status.h"
 #include "common/analysis/matcher/bound_symbol_manager.h"
 #include "common/analysis/matcher/matcher.h"
 #include "common/strings/naming_utils.h"
+#include "common/text/config_utils.h"
 #include "common/text/symbol.h"
 #include "common/text/syntax_tree_context.h"
 #include "verilog/CST/type.h"
@@ -45,47 +48,120 @@ absl::string_view StructUnionNameStyleRule::Name() {
   return "struct-union-name-style";
 }
 const char StructUnionNameStyleRule::kTopic[] = "struct-union-conventions";
-const char StructUnionNameStyleRule::kMessageStruct[] =
-    "Struct names must use lower_snake_case naming convention and end with _t.";
-const char StructUnionNameStyleRule::kMessageUnion[] =
-    "Union names must use lower_snake_case naming convention and end with _t.";
+const char StructUnionNameStyleRule::kMessageStruct[] = "Struct names";
+const char StructUnionNameStyleRule::kMessageUnion[] = "Union names";
 
 std::string StructUnionNameStyleRule::GetDescription(
     DescriptionType description_type) {
-  return absl::StrCat(
+  static std::string basic_desc = absl::StrCat(
       "Checks that ", Codify("struct", description_type), " and ",
       Codify("union", description_type),
       " names use lower_snake_case naming convention and end with '_t'. See ",
       GetStyleGuideCitation(kTopic), ".");
+  if (description_type == DescriptionType::kHelpRulesFlag) {
+    return absl::StrCat(basic_desc, "exceptions:String with exceptions");
+  } else {
+    return absl::StrCat(basic_desc,
+                        "\n##### Parameters\n"
+                        " * `exceptions` (Comma-separated list of allowed "
+                        "upper-case elements, such as unit-names"
+                        ". Default: Empty)\n");
+  }
 }
 
-static const Matcher& TypedefMatcher() {
+static const Matcher &TypedefMatcher() {
   static const Matcher matcher(NodekTypeDeclaration());
   return matcher;
 }
 
-void StructUnionNameStyleRule::HandleSymbol(const verible::Symbol& symbol,
-                                            const SyntaxTreeContext& context) {
+void StructUnionNameStyleRule::HandleSymbol(const verible::Symbol &symbol,
+                                            const SyntaxTreeContext &context) {
   verible::matcher::BoundSymbolManager manager;
   if (TypedefMatcher().Matches(symbol, &manager)) {
-    const char* msg;
     // TODO: This can be changed to checking type of child (by index) when we
     // have consistent shape for all kTypeDeclaration nodes.
-    if (!FindAllStructTypes(symbol).empty()) {
-      msg = kMessageStruct;
-    } else if (!FindAllUnionTypes(symbol).empty()) {
-      msg = kMessageUnion;
-    } else {
-      // Neither a struct nor union definition
+    const bool is_struct = !FindAllStructTypes(symbol).empty();
+    if (!is_struct && FindAllUnionTypes(symbol).empty()) return;
+    const char *const msg = is_struct ? kMessageStruct : kMessageUnion;
+
+    const auto *identifier_leaf = GetIdentifierFromTypeDeclaration(symbol);
+    const auto name = ABSL_DIE_IF_NULL(identifier_leaf)->get().text();
+
+    if (!absl::EndsWith(name, "_t")) {
+      violations_.insert(
+          LintViolation(*identifier_leaf,
+                        absl::StrCat(msg, " have to ends with _t"), context));
       return;
     }
-    const auto* identifier_leaf = GetIdentifierFromTypeDeclaration(symbol);
-    const auto name = ABSL_DIE_IF_NULL(identifier_leaf)->get().text();
-    if (!verible::IsLowerSnakeCaseWithDigits(name) ||
-        !absl::EndsWith(name, "_t")) {
-      violations_.insert(LintViolation(identifier_leaf->get(), msg, context));
+    if (name[0] == '_') {
+      violations_.insert(LintViolation(
+          *identifier_leaf, absl::StrCat(msg, " can't start with _"), context));
+      return;
+    }
+
+    for (const auto &ns : absl::StrSplit(name, '_')) {
+      if (std::all_of(ns.begin(), ns.end(), [](char c) {
+            return absl::ascii_islower(c) || absl::ascii_isdigit(c);
+          })) {
+        continue;
+      }
+      if (!absl::ascii_isdigit(*ns.begin())) {
+        violations_.insert(LintViolation(
+            *identifier_leaf,
+            "Section with unit names need to start with digit", context));
+        return;
+      }
+      if (exceptions_.find(std::string(ns)) != exceptions_.end()) {
+        continue;  // number + unit exception found
+      }
+      const auto &alpha =
+          std::find_if(ns.begin(), ns.end(), absl::ascii_isalpha);
+      const auto ns_substr = std::string(alpha, ns.end());
+      if (exceptions_.find(ns_substr) == exceptions_.end()) {
+        violations_.insert(LintViolation(*identifier_leaf,
+                                         "found digit followed by unit that is "
+                                         "not configured as allowed exception",
+                                         context));
+        return;
+      }
     }
   }
+}
+
+absl::Status StructUnionNameStyleRule::Configure(
+    absl::string_view configuration) {
+  using verible::config::SetString;
+  std::string raw_tokens;
+  auto status = verible::ParseNameValues(
+      configuration, {{"exceptions", SetString(&raw_tokens)}});
+  if (!status.ok()) return status;
+
+  if (!raw_tokens.empty()) {
+    const auto &exceptions = absl::StrSplit(raw_tokens, ',');
+    for (const auto &ex : exceptions) {
+      const auto &e =
+          std::find_if_not(ex.begin(), ex.end(), absl::ascii_isalnum);
+      if (e != ex.end()) {
+        return absl::Status(absl::StatusCode::kInvalidArgument,
+                            "The exception can be composed of digits and "
+                            "alphabetic characters only");
+      }
+      const auto &alpha =
+          std::find_if(ex.begin(), ex.end(), absl::ascii_isalpha);
+      if (alpha == ex.end()) {
+        return absl::Status(
+            absl::StatusCode::kInvalidArgument,
+            "The exception have to contain at least one alphabetic character");
+      }
+      const auto &digit = std::find_if(alpha, ex.end(), absl::ascii_isdigit);
+      if (digit != ex.end()) {
+        return absl::Status(absl::StatusCode::kInvalidArgument,
+                            "Digits after the unit are not allowed");
+      }
+      exceptions_.emplace(ex);
+    }
+  }
+  return absl::OkStatus();
 }
 
 LintRuleStatus StructUnionNameStyleRule::Report() const {
