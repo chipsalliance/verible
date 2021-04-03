@@ -361,4 +361,4 @@ Enabled by default: true
 
 ## Version
 
-Generated on 2021-04-01 21:29:44 -0700 from [262a980](https://github.com/google/verible/commit/262a980aa289130e36bbeb8fe8786125f857733c)
+Generated on 2021-04-02 18:48:38 -0700 from [7c994b1](https://github.com/google/verible/commit/7c994b1af0ef6c83439d00186abdb0c36c2320ef)
