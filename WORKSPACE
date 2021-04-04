@@ -188,6 +188,16 @@ http_archive(
 )
 
 http_archive(
+    name = "python_six",
+    sha256 = "30639c035cdb23534cd4aa2dd52c3bf48f06e5f4a941509c8bafd8ce11080259",
+    build_file = "//bazel:python_six.BUILD",
+    strip_prefix = "six-1.15.0",
+    urls = [
+        "https://files.pythonhosted.org/packages/6b/34/415834bfdafca3c5f451532e8a8d9ba89a21c9743a0c59fbd0205c7f9426/six-1.15.0.tar.gz",
+    ],
+)
+
+http_archive(
     name = "python_anytree",
     sha256 = "79ee0cc74456950003287b0b5c7b76b7d09435563a31d9e553da484325043e1f",
     build_file = "//bazel:python_anytree.BUILD",

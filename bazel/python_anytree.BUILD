@@ -39,5 +39,7 @@ py_library(
     visibility = ["//visibility:public"],
     srcs_version = "PY3",
     imports = ["."],
-    deps = []
+    deps = [
+        "@python_six//:six",
+    ]
 )
