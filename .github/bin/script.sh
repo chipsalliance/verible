@@ -23,7 +23,7 @@ source ./.github/settings.sh
 # as possible to compile without exceptions.
 # ... and unfortunately we have to disable this for now as the external
 # kythe dependency does use exceptions.
-# TODO(hzeller): Uncomment after  #747 is flying (excuse the pun)
+# TODO(hzeller): Uncomment after https://github.com/google/verible/issues/747 is fixed.
 #BAZEL_OPTS="${BAZEL_OPTS} --cxxopt=-fno-exceptions"
 
 # Turn warnings to 11. And fail compliation if we encounter one.
