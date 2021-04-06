@@ -59,7 +59,7 @@ absl::string_view Stem(absl::string_view filename);
 absl::Status UpwardFileSearch(absl::string_view start,
                               absl::string_view filename, std::string* result);
 
-// Determines whether the given filename exists or not.
+// Determines whether the given filename exists and is a regular file.
 absl::Status FileExists(const std::string& filename);
 
 // Read file "filename" and store its content in "content"
