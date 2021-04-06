@@ -128,9 +128,9 @@ absl::Status UpwardFileSearch(absl::string_view start,
 absl::Status FileExists(const std::string &filename) {
   struct stat file_info;
   if (stat(filename.c_str(), &file_info) != 0) {
-    return absl::NotFoundError(absl::StrCat(filename, ": file does not exist"));
+    return absl::NotFoundError(absl::StrCat(filename, ": No such file."));
   }
-  if (S_ISREG(file_info.st_mode)) {
+  if (S_ISREG(file_info.st_mode) || S_ISFIFO(file_info.st_mode)) {
     return absl::OkStatus();
   }
   if (S_ISDIR(file_info.st_mode)) {
