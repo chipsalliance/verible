@@ -20,7 +20,10 @@
 
 #include "absl/status/status.h"
 #include "absl/strings/string_view.h"
+#include "gmock/gmock.h"
 #include "gtest/gtest.h"
+
+using testing::HasSubstr;
 
 #undef EXPECT_OK
 #define EXPECT_OK(value) EXPECT_TRUE((value).ok())
@@ -140,6 +143,13 @@ TEST(FileUtil, ScopedTestFileEmplace) {
   for (const auto& name : names) {
     EXPECT_FALSE(file::FileExists(name).ok());
   }
+}
+
+TEST(FileUtil, FileExistsDirectoryErrorMessage) {
+  absl::Status s;
+  s = file::FileExists(testing::TempDir());
+  EXPECT_FALSE(s.ok());
+  EXPECT_THAT(s.message(), HasSubstr("is a directory"));
 }
 
 TEST(FileUtil, ReadEmptyDirectory) {

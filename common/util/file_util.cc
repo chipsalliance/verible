@@ -127,11 +127,18 @@ absl::Status UpwardFileSearch(absl::string_view start,
 
 absl::Status FileExists(const std::string &filename) {
   struct stat file_info;
-  if (stat(filename.c_str(), &file_info) == 0 && S_ISREG(file_info.st_mode)) {
+  if (stat(filename.c_str(), &file_info) != 0) {
+    return absl::NotFoundError(absl::StrCat(filename, ": No such file."));
+  }
+  if (S_ISREG(file_info.st_mode) || S_ISFIFO(file_info.st_mode)) {
     return absl::OkStatus();
   }
-  return absl::NotFoundError(
-      absl::StrCat("file : ", filename, " does not exist"));
+  if (S_ISDIR(file_info.st_mode)) {
+    return absl::InvalidArgumentError(
+        absl::StrCat(filename, ": is a directory, not a file"));
+  }
+  return absl::InvalidArgumentError(
+      absl::StrCat(filename, ": not a regular file."));
 }
 
 absl::Status GetContents(absl::string_view filename, std::string *content) {
@@ -143,7 +150,10 @@ absl::Status GetContents(absl::string_view filename, std::string *content) {
     stream = &std::cin;
     if (isatty(0)) std::cerr << "Enter input (terminate with Ctrl-D):\n";
   } else {
-    fs.open(std::string(filename).c_str());
+    const std::string filename_str = std::string(filename);
+    absl::Status usable_file = FileExists(filename_str);
+    if (!usable_file.ok()) return usable_file;  // Bail
+    fs.open(filename_str.c_str());
     stream = &fs;
   }
   if (!stream->good()) return CreateErrorStatusFromErrno("can't read");
