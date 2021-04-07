@@ -613,6 +613,10 @@ static WithReason<int> BreakPenaltyBetweenTokens(
   // TODO(fangism): ... except when () is used as precedence.
   if (right.format_token_enum == FormatTokenType::open_group)
     return {5, "right is open-group"};
+  // Prefer to keep ')' with whatever is on the left.
+  if (right.format_token_enum == FormatTokenType::close_group ||
+      right.TokenEnum() == verilog_tokentype::MacroCallCloseToEndLine)
+    return {10, "right is close-group"};
 
   if (left.TokenEnum() == TK_DecNumber &&
       right.TokenEnum() == TK_UnBasedNumber) {

@@ -385,6 +385,22 @@ static constexpr FormatterTestCase kFormatterTestCases[] = {
      "`FOO(bar)\n"},
     {// multiple argument macro call
      "  `FOO( bar , baz )\n", "`FOO(bar, baz)\n"},
+    {// long macro call breaking
+     " `ASSERT_INIT(S, (D == 4 && K inside {0, 1}) ||"
+     " (D == 3 && K== 4))\n",
+     "`ASSERT_INIT(S,\n"
+     "             (D == 4 && K inside {0, 1})\n"
+     "                 || (D == 3 && K == 4))\n"},
+    {// long macro call breaking
+     " `AINIT(S, (D == 4 && K inside {0, 1}) ||"
+     " (D == 3 && K== 4))\n",
+     "`AINIT(S,\n"
+     "       (D == 4 && K inside {0, 1}) || (\n"
+     "           D == 3 && K == 4))\n"},
+    {// long macro call breaking
+     " `ASSERT_INIT(S, D == 4 && K inside {0, 1})\n",
+     "`ASSERT_INIT(S,\n"
+     "             D == 4 && K inside {0, 1})\n"},
     {// macro call in function
      "function void foo( );   foo=`FOO( bar , baz ) ; endfunction\n",
      "function void foo();\n"
