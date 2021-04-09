@@ -24,6 +24,7 @@ namespace analysis {
 // LINT.IfChange
 inline constexpr const char* kDefaultRuleSet[] = {
     "invalid-system-task-function",
+    "instance-shadowing",
     "module-begin-block",
     "module-parameter",
     "module-port",

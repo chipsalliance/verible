@@ -69,6 +69,8 @@ cc_library(
         ":uvm-macro-semicolon-rule",
         ":v2001-generate-begin-rule",
         ":void-cast-rule",
+        ":instance-shadow-rule",
+        ":legacy-genvar-declaration-rule",
     ],
 )
 
@@ -2015,6 +2017,46 @@ cc_test(
         "@com_google_googletest//:gtest_main",
     ],
 )
+cc_library(
+    name = "instance-shadow-rule",
+    srcs = ["instance_shadow_rule.cc"],
+    hdrs = ["instance_shadow_rule.h"],
+    deps = [
+        "//common/analysis:citation",
+        "//common/analysis:lint-rule-status",
+        "//common/analysis:syntax-tree-lint-rule",
+        "//common/analysis/matcher",
+        "//common/analysis/matcher:bound-symbol-manager",
+        "//common/analysis/matcher:core-matchers",
+        "//common/text:symbol",
+        "//common/text:syntax-tree-context",
+        "//verilog/CST:verilog-matchers",
+        "//verilog/CST:verilog-nonterminals",
+        "//verilog/CST:identifier",
+        "//verilog/analysis:descriptions",
+        "//verilog/analysis:lint-rule-registry",
+        "@com_google_absl//absl/strings",
+    ],
+    alwayslink = 1,
+)
+
+cc_test(
+    name = "instance-shadow-rule-test",
+    srcs = ["instance_shadow_rule_test.cc"],
+    deps = [
+        ":instance-shadow-rule",
+        "//common/analysis:linter-test-utils",
+        "//common/analysis:syntax-tree-linter-test-utils",
+        "//common/text:symbol",
+        "//verilog/CST:verilog-nonterminals",
+        "//verilog/CST:verilog-treebuilder-utils",
+        "//verilog/analysis:verilog-analyzer",
+        "//verilog/parser:verilog-token-enum",
+        "@com_google_googletest//:gtest_main",
+    ],
+)
+
+
 
 cc_library(
     name = "legacy-genvar-declaration-rule",

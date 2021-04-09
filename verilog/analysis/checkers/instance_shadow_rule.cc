@@ -44,74 +44,67 @@ using verible::matcher::Matcher;
 // Register InstanceShadowRule
 VERILOG_REGISTER_LINT_RULE(InstanceShadowRule);
 
-absl::string_view InstanceShadowRule::Name() {
-  return "instance-shadow-violation";
-}
-const char InstanceShadowRule::kTopic[] =
-    "mark-shadowed-instances";
+absl::string_view InstanceShadowRule::Name() { return "instance-shadowing"; }
+const char InstanceShadowRule::kTopic[] = "mark-shadowed-instances";
 const char InstanceShadowRule::kMessage[] =
     "Instance shadows the already declared variable";
 
 std::string InstanceShadowRule::GetDescription(
     DescriptionType description_type) {
   return absl::StrCat(
-      "Checks that any defined variable does not shadow other variable in the same scope",
+      "Checks that any defined variable does not shadow other variable in the "
+      "same scope",
       GetStyleGuideCitation(kTopic), ".");
 }
 
-static const Matcher& DisableMatcher() {
-  static const Matcher matcher(
-      NodekDisableStatement(DisableStatementHasLabel()));
+static const Matcher& InstanceShadowMatcher() {
+  static const Matcher matcher(SymbolIdentifierLeaf());
   return matcher;
 }
 
 void InstanceShadowRule::HandleSymbol(const verible::Symbol& symbol,
-                                           const SyntaxTreeContext& context) {
+                                      const SyntaxTreeContext& context) {
   verible::matcher::BoundSymbolManager manager;
-  if (DisableMatcher().Matches(symbol, &manager)) {
-    const char* kMessageFinal = InstanceShadowRule::kMessage;
-    // if no kDisable label, return, nothing to be checked
-    const auto& disableLabels = FindAllSymbolIdentifierLeafs(symbol);
-    if (disableLabels.empty()) {
-      return;
-    }
-    // look for every kBegin node starting from kDisableLabel token
-    // the kDisableLabel can be nested in some kBegin nodes
-    // so we're looking for the kBegin node that direct parent
-    // is not one of the initial/final/always statements since such blocks are
-    // considered to be invalid. If the label for disable statements is not
-    // found, it means that there is no appropriate label or the label
-    // points to the illegal node such as forked label
+  if (InstanceShadowMatcher().Matches(symbol, &manager)) {
+    const auto& labels = FindAllSymbolIdentifierLeafs(symbol);
+    if (labels.empty()) return;
+    if(context.IsInside(NodeEnum::kReference)) return;
+
     const auto& rcontext = reversed_view(context);
+    const auto& directParent = *std::next(rcontext.begin());
     for (auto rc = rcontext.begin(); rc != rcontext.end(); rc++) {
       const auto& node = *rc;
-      if (node->Tag().tag != static_cast<int>(NodeEnum::kSeqBlock)) {
-        continue;
-      }
+
       for (const auto& ch : node->children()) {
-        if (ch->Tag().tag != static_cast<int>(NodeEnum::kBegin)) {
+        if (!ch) {
           continue;
         }
-        const auto& beginLabels = FindAllSymbolIdentifierLeafs(*ch);
-        if (beginLabels.empty()) {
+        const auto& overlappingLabels = FindAllSymbolIdentifierLeafs(*ch);
+        if (overlappingLabels.empty()) {
           continue;
         }
-        const auto& pnode = *std::next(rc);
-        const auto& ptag = pnode->Tag().tag;
-        if (ptag == static_cast<int>(NodeEnum::kInitialStatement) ||
-            ptag == static_cast<int>(NodeEnum::kFinalStatement) ||
-            ptag == static_cast<int>(NodeEnum::kAlwaysStatement)) {
-          kMessageFinal = InstanceShadowRule::kMessageSeqBlock;
+        const auto& overlappingLabel =
+            SymbolCastToLeaf(*overlappingLabels[0].match);
+        const auto& label = SymbolCastToLeaf(*labels[0].match);
+        // if found label has the same adress as considered label
+        // we probably found the same node so we don't
+        // want to look further
+        if (&label == &overlappingLabel or
+            directParent == overlappingLabels[0].match) {
           break;
         }
-        const auto& beginLabel = SymbolCastToLeaf(*beginLabels[0].match);
-        const auto& disableLabel = SymbolCastToLeaf(*disableLabels[0].match);
-        if (beginLabel.get().text() == disableLabel.get().text()) {
+        // if considered node is the last node this
+        // it probably containes the ending label
+        if (directParent->children().back().get() ==
+            node->children().back().get()) {
+          return;
+        }
+        if (overlappingLabel.get().text() == label.get().text()) {
+          violations_.insert(LintViolation(symbol, kMessage, context));
           return;
         }
       }
     }
-    violations_.insert(LintViolation(symbol, kMessageFinal, context));
   }
 }
 

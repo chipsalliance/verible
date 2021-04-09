@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "verilog/analysis/checkers/disable_non_sequential_rule.h"
+#include "verilog/analysis/checkers/instance_shadow_rule.h"
 
 #include <initializer_list>
 
@@ -32,83 +32,19 @@ namespace {
 using verible::LintTestCase;
 using verible::RunLintTestCases;
 
-TEST(DisableStatementTest, FunctionPass) {
-  const std::initializer_list<LintTestCase> kDisableStatementTestCases = {
+TEST(InstanceShadowingTest, FunctionPass) {
+  const std::initializer_list<LintTestCase> kInstanceShadowingTestCases = {
       {""},
-      {"module m;\ninitial begin;\n", "fork\n", "begin\n#6;\nend\n",
-       "begin\n#3;\nend\n", "join_any\n", "disable fork;\n", "end\nendmodule"},
-      {"module m;\ninitial begin\n", "fork\n", "begin : foo\n",
-       "disable foo;\n", "end\n", "join_any\n", "end\nendmodule"},
-      {"module m;\ninitial begin\n", "fork\n", "begin : foo\n",
-       "begin : foo_2\n", "disable foo_2;\n", "end\n", "end\n", "join_any\n",
-       "end\nendmodule"},
-      {"module m;\ninitial begin\n", "fork\n", "begin : foo\n",
-       "begin : foo_2\n", "disable foo;\n", "end\n", "end\n", "join_any\n",
-       "end\nendmodule"},
+      {"module foo; logic a; endmodule"},
   };
-  RunLintTestCases<VerilogAnalyzer, DisableForkNoLabelsRule>(
-      kDisableStatementTestCases);
+  RunLintTestCases<VerilogAnalyzer, InstanceShadowRule>(
+      kInstanceShadowingTestCases);
 }
 
-TEST(DisableStatementTest, FunctionFailures) {
-  constexpr int kToken = TK_disable;
-  const std::initializer_list<LintTestCase> kDisableStatementTestCases = {
-      {"module m;\ninitial begin\n",
-       "fork\n",
-       "begin\n#6;\nend\n",
-       "begin\n#3;\nend\n",
-       "join_any\n",
-       {kToken, "disable"},
-       " fork_invalid;\n",
-       "end\nendmodule"},
-      {"module m;\ninitial begin\n",
-       "fork:fork_label\n",
-       "begin\n#6;\nend\n",
-       "begin\n#3;\nend\n",
-       "join_any\n",
-       {kToken, "disable"},
-       " fork_label;\n",
-       "end\nendmodule"},
-      {"module m;\n",
-       "initial begin;\n",
-       "fork\n",
-       "begin : foo\n",
-       "end\n",
-       {kToken, "disable"},
-       " foo;\n",
-       "join_any\n",
-       "end\nendmodule"},
-      {"module m;\n",
-       "initial begin:foo\n",
-       "end\n",
-       "initial begin:boo\n",
-       {kToken, "disable"},
-       " foo;\n",
-       "end\nendmodule"},
-      {"module m;\n",
-       "initial begin:foo;\n",
-       "begin : fo\n",
-       {kToken, "disable"},
-       " foo;\n",
-       "end\n",
-       "end\nendmodule"},
-      {"module m;\n",
-       "final begin:foo;\n",
-       "begin : fo\n",
-       {kToken, "disable"},
-       " foo;\n",
-       "end\n",
-       "end\nendmodule"},
-      {"module m;\n",
-       "always_comb begin:foo;\n",
-       "begin : fo\n",
-       {kToken, "disable"},
-       " foo;\n",
-       "end\n",
-       "end\nendmodule"},
-  };
-  RunLintTestCases<VerilogAnalyzer, DisableForkNoLabelsRule>(
-      kDisableStatementTestCases);
+TEST(InstanceShadowingTest, FunctionFailures) {
+  const std::initializer_list<LintTestCase> kInstanceShadowingTestCases = {};
+  RunLintTestCases<VerilogAnalyzer, InstanceShadowRule>(
+      kInstanceShadowingTestCases);
 }
 
 }  // namespace
