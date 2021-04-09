@@ -68,7 +68,7 @@ void InstanceShadowRule::HandleSymbol(const verible::Symbol& symbol,
   if (InstanceShadowMatcher().Matches(symbol, &manager)) {
     const auto& labels = FindAllSymbolIdentifierLeafs(symbol);
     if (labels.empty()) return;
-    if(context.IsInside(NodeEnum::kReference)) return;
+    if (context.IsInside(NodeEnum::kReference)) return;
 
     const auto& rcontext = reversed_view(context);
     const auto& directParent = *std::next(rcontext.begin());
@@ -76,8 +76,11 @@ void InstanceShadowRule::HandleSymbol(const verible::Symbol& symbol,
       const auto& node = *rc;
 
       for (const auto& ch : node->children()) {
-        if (!ch) {
+        if (ch == nullptr) {
           continue;
+        }
+        if (ch->Tag().tag == static_cast<int>(NodeEnum::kGenvarDeclaration)) {
+          break;
         }
         const auto& overlappingLabels = FindAllSymbolIdentifierLeafs(*ch);
         if (overlappingLabels.empty()) {
@@ -89,20 +92,22 @@ void InstanceShadowRule::HandleSymbol(const verible::Symbol& symbol,
         // if found label has the same adress as considered label
         // we probably found the same node so we don't
         // want to look further
-        if (&label == &overlappingLabel or
-            directParent == overlappingLabels[0].match) {
+        if (overlappingLabels[0].match == labels[0].match) {
           break;
         }
-        // if considered node is the last node this
-        // it probably containes the ending label
+        // if considered node is the last node
+        // it is probably a ending node with label
         if (directParent->children().back().get() ==
             node->children().back().get()) {
           return;
         }
+
         if (overlappingLabel.get().text() == label.get().text()) {
           violations_.insert(LintViolation(symbol, kMessage, context));
           return;
         }
+        // TODO this break is ugly, should be verifed in other way
+        break;
       }
     }
   }
