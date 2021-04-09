@@ -15,11 +15,11 @@
 #ifndef VERIBLE_VERILOG_ANALYSIS_CHECKERS_CONSTRAINT_NAME_STYLE_RULE_H_
 #define VERIBLE_VERILOG_ANALYSIS_CHECKERS_CONSTRAINT_NAME_STYLE_RULE_H_
 
-#include <optional>
 #include <regex>
 #include <set>
 #include <string>
 
+#include "absl/types/optional.h"
 #include "common/analysis/lint_rule_status.h"
 #include "common/analysis/syntax_tree_lint_rule.h"
 #include "common/text/symbol.h"
@@ -55,7 +55,7 @@ class ConstraintNameStyleRule : public verible::SyntaxTreeLintRule {
   // Diagnostic message for constraint name violations.
   static const char kMessage[];
 
-  std::optional<std::regex> name_regex_;
+  absl::optional<std::regex> name_regex_;
 
   std::set<verible::LintViolation> violations_;
 };
