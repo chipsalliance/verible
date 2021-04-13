@@ -1,7 +1,8 @@
 # This package implements a SystemVerilog lexer and parser.
 
-load("@rules_flex//flex:flex.bzl", "flex")
+load("//bazel:flex.bzl", "genlex")
 load("//bazel:bison.bzl", "genyacc")
+
 load(
     "//common/parser:yacc.bzl",
     "record_recovered_syntax_errors",
@@ -16,15 +17,10 @@ package(
     ],
 )
 
-genrule(
+genlex(
     name = "verilog_lex",
-    srcs  = ["verilog.lex"],
-    outs = ["verilog.yy.cc"],
-    cmd = "M4=$(M4) $(FLEX) --outfile=$@ $<",
-    toolchains = [
-        "@rules_flex//flex:current_flex_toolchain",
-        "@rules_m4//m4:current_m4_toolchain",
-    ],
+    src  = "verilog.lex",
+    out = "verilog.yy.cc",
 )
 
 cc_library(
@@ -40,7 +36,7 @@ cc_library(
         "//common/lexer:flex_lexer_adapter",
         "//common/text:token_info",
         "@com_google_absl//absl/strings",
-        "@rules_flex//flex:current_flex_toolchain",
+        "@rules_flex//flex:current_flex_toolchain",  # For FlexLexer.h
     ],
 )
 
@@ -92,17 +88,19 @@ genrule(
           "sed -e '/#ifndef YYTOKENTYPE/,/#endif/d' $< ;} > $@",
 )
 
-genrule(
+genyacc(
     name = "verilog_y",
-    srcs = ["verilog.y"],
-    outs = ["verilog.tab.cc",
-            "verilog.tab.hh",  # Do not use directly, see next comment.
-           ],
-    cmd = "M4=$(M4) $(BISON) --defines=$(location verilog.tab.hh) --output-file=$(location verilog.tab.cc) $<",
-    toolchains = [
-        "@rules_bison//bison:current_bison_toolchain",
-        "@rules_m4//m4:current_m4_toolchain",
+    src = "verilog.y",
+    extra_options = [
+       "--report-file=$(location verilog.output)",
+       "--graph=$(location verilog.dot)",
     ],
+    extra_outs = [
+        "verilog.output",
+        "verilog.dot",
+    ],
+    header_out = "verilog.tab.hh",  # Do not use directly, see next comment
+    source_out = "verilog.tab.cc",
 )
 
 std_move_parser_symbols(

@@ -1,6 +1,6 @@
 # This package contains functions and classes for analyzing text structures.
 
-load("@rules_flex//flex:flex.bzl", "flex")
+load("//bazel:flex.bzl", "genlex")
 
 licenses(["notice"])
 
@@ -47,15 +47,10 @@ cc_library(
     ],
 )
 
-genrule(
+genlex(
     name = "command_file_lex",
-    srcs  = ["command_file.lex"],
-    outs = ["command_file.yy.cc"],
-    cmd = "M4=$(M4) $(FLEX) --outfile=$@ $<",
-    toolchains = [
-        "@rules_flex//flex:current_flex_toolchain",
-        "@rules_m4//m4:current_m4_toolchain",
-    ],
+    src  = "command_file.lex",
+    out = "command_file.yy.cc",
 )
 
 cc_library(
@@ -80,7 +75,7 @@ cc_library(
         "//common/util:interval_set",
         "//common/util:logging",
         "@com_google_absl//absl/strings",
-        "@rules_flex//flex:current_flex_toolchain",
+        "@rules_flex//flex:current_flex_toolchain",  # For FlexLexer.h
     ],
 )
 

@@ -13,24 +13,18 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# Adapter rule around the @rules_bison toolchain.
+# Adapter rule around the @rules_flex toolchain.
 
-def genyacc(
-        name,
-        src,
-        header_out,
-        source_out,
-        extra_options = [],
-        extra_outs = []):
-    """Build rule for generating C or C++ sources with Bison.
+def genlex(name, src, out):
+    """Generate C/C++ language source from lex file using Flex
     """
     native.genrule(
         name = name,
         srcs = [src],
-        outs = [header_out, source_out] + extra_outs,
-        cmd = "M4=$(M4) $(BISON) --defines=$(location " + header_out + ") --output-file=$(location " + source_out + ") " + " ".join(extra_options) + " $<",
+        outs = [out],
+        cmd = "M4=$(M4) $(FLEX) --outfile=$@ $<",
         toolchains = [
-            "@rules_bison//bison:current_bison_toolchain",
+            "@rules_flex//flex:current_flex_toolchain",
             "@rules_m4//m4:current_m4_toolchain",
         ],
     )
