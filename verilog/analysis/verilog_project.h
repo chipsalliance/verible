@@ -149,7 +149,7 @@ std::ostream& operator<<(std::ostream&, const VerilogSourceFile&);
 
 // An in-memory source file that doesn't require file-system access,
 // nor create temporary files.
-class InMemoryVerilogSourceFile : public VerilogSourceFile {
+class InMemoryVerilogSourceFile final : public VerilogSourceFile {
  public:
   // filename can be fake, it is not used to open any file.
   InMemoryVerilogSourceFile(absl::string_view filename,
