@@ -13,8 +13,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# Adapter rule around the @rules_flex toolchain.
+"""Bazel rule to run flex toolchain
+"""
 
+# Adapter rule around the @rules_flex toolchain.
 def genlex(name, src, out):
     """Generate C/C++ language source from lex file using Flex
     """

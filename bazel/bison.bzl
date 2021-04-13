@@ -13,8 +13,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# Adapter rule around the @rules_bison toolchain.
+"""Bazel rule to run bison toolchain
+"""
 
+# Adapter rule around the @rules_bison toolchain.
 def genyacc(
         name,
         src,
