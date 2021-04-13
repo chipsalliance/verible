@@ -197,6 +197,36 @@ TEST(InMemoryVerilogSourceFileTest, ParseInvalidFile) {
   EXPECT_EQ(&text_structure->SyntaxTree(), tree);
 }
 
+TEST(ParsedVerilogSourceFileTest, ParseValidFile) {
+  constexpr absl::string_view text("localparam int p = 1;\n");
+  std::unique_ptr<VerilogAnalyzer> analyzed_structure =
+      absl::make_unique<VerilogAnalyzer>(text, "internal");
+  absl::Status status = analyzed_structure->Analyze();
+  EXPECT_TRUE(status.ok());
+  const TextStructureView& input_text_structure = analyzed_structure->Data();
+
+  ParsedVerilogSourceFile file("internal", &input_text_structure);
+  // Parse automatically opens.
+  EXPECT_TRUE(file.Parse().ok());
+  EXPECT_TRUE(file.Status().ok());
+  const TextStructureView* text_structure =
+      ABSL_DIE_IF_NULL(file.GetTextStructure());
+  EXPECT_EQ(&input_text_structure, text_structure);
+  const absl::string_view owned_string_range(text_structure->Contents());
+  EXPECT_EQ(owned_string_range, text);
+  const auto* tokens = &text_structure->TokenStream();
+  EXPECT_NE(tokens, nullptr);
+  const auto* tree = &text_structure->SyntaxTree();
+  EXPECT_NE(tree, nullptr);
+
+  // Re-parsing doesn't change anything
+  EXPECT_TRUE(file.Parse().ok());
+  EXPECT_TRUE(file.Status().ok());
+  EXPECT_EQ(file.GetTextStructure(), text_structure);
+  EXPECT_EQ(&text_structure->TokenStream(), tokens);
+  EXPECT_EQ(&text_structure->SyntaxTree(), tree);
+}
+
 TEST(VerilogProjectTest, Initialization) {
   const auto tempdir = ::testing::TempDir();
   VerilogProject project(tempdir, {tempdir});

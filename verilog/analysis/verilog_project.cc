@@ -91,6 +91,23 @@ absl::Status InMemoryVerilogSourceFile::Open() {
   return status_;
 }
 
+absl::Status ParsedVerilogSourceFile::Open() {
+  state_ = State::kOpened;
+  status_ = absl::OkStatus();
+  return status_;
+}
+
+absl::Status ParsedVerilogSourceFile::Parse() {
+  state_ = State::kParsed;
+  status_ = absl::OkStatus();
+  return status_;
+}
+
+const verible::TextStructureView* ParsedVerilogSourceFile::GetTextStructure()
+    const {
+  return text_structure_;
+}
+
 absl::StatusOr<VerilogSourceFile*> VerilogProject::OpenFile(
     absl::string_view referenced_filename, absl::string_view resolved_filename,
     absl::string_view corpus) {
