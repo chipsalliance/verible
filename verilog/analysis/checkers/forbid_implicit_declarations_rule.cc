@@ -25,9 +25,9 @@
 #include "common/text/symbol.h"
 #include "common/text/syntax_tree_context.h"
 #include "common/text/tree_context_visitor.h"
+#include "verilog/CST/identifier.h"
 #include "verilog/analysis/descriptions.h"
 #include "verilog/analysis/lint_rule_registry.h"
-#include "verilog/CST/identifier.h"
 #include "verilog/analysis/symbol_table.h"
 
 namespace verilog {
@@ -49,20 +49,23 @@ const char ForbidImplicitDeclarationsRule::kTopic[] = "implicit-declarations";
 const char ForbidImplicitDeclarationsRule::kMessage[] =
     "Nets must be declared explicitly.";
 
-std::string ForbidImplicitDeclarationsRule::GetDescription(DescriptionType description_type) {
-  return absl::StrCat("Checks that there are no occurrences of "
-                      "implicitly declared nets.");
+std::string ForbidImplicitDeclarationsRule::GetDescription(
+    DescriptionType description_type) {
+  return absl::StrCat(
+      "Checks that there are no occurrences of "
+      "implicitly declared nets.");
 }
 
-void ForbidImplicitDeclarationsRule::Lint(const verible::TextStructureView& text_structure,
-                                          absl::string_view filename) {
+void ForbidImplicitDeclarationsRule::Lint(
+    const verible::TextStructureView& text_structure,
+    absl::string_view filename) {
   SymbolTable symbol_table(nullptr);
 
   ParsedVerilogSourceFile* src =
       new ParsedVerilogSourceFile("internal", &text_structure);
   // Already parsed, calling to ensure that VerilogSourceFile internals are in
   // correct state
-  const auto status =src->Parse();
+  const auto status = src->Parse();
   CHECK_EQ(status.ok(), true);
 
   auto diagnostics = BuildSymbolTable(*src, &symbol_table);
@@ -73,42 +76,43 @@ void ForbidImplicitDeclarationsRule::Lint(const verible::TextStructureView& text
   // during symbol table building stage
 
   auto& violations = this->violations_;
-  symbol_table.Root().ApplyPreOrder(
-      [&violations, &text_structure](const SymbolTableNode& node) {
-        for (const auto& itr : node.Value().local_references_to_bind) {
-          ABSL_DIE_IF_NULL(itr.LastLeaf())->ApplyPreOrder(
-              [&violations, &text_structure](const ReferenceComponent& node) {
-                // Skip unresolved symbols (implicit declarations are pre-resolved)
-                if (node.resolved_symbol == nullptr) {
-                  return;
-                }
+  symbol_table.Root().ApplyPreOrder([&violations, &text_structure](
+                                        const SymbolTableNode& node) {
+    for (const auto& itr : node.Value().local_references_to_bind) {
+      ABSL_DIE_IF_NULL(itr.LastLeaf())
+          ->ApplyPreOrder([&violations,
+                           &text_structure](const ReferenceComponent& node) {
+            // Skip unresolved symbols (implicit declarations are pre-resolved)
+            if (node.resolved_symbol == nullptr) {
+              return;
+            }
 
-                const auto& resolved_symbol_node =
-                    *ABSL_DIE_IF_NULL(node.resolved_symbol);
-                const auto& resolved_symbol =
-                    resolved_symbol_node.Value();
-                const auto& resolved_symbol_identifier =
-                    *ABSL_DIE_IF_NULL(resolved_symbol_node.Key());
+            const auto& resolved_symbol_node =
+                *ABSL_DIE_IF_NULL(node.resolved_symbol);
+            const auto& resolved_symbol = resolved_symbol_node.Value();
+            const auto& resolved_symbol_identifier =
+                *ABSL_DIE_IF_NULL(resolved_symbol_node.Key());
 
-                // Skip pre-resolved symbols that have explicit declarations
-                if (resolved_symbol.declared_type.implicit == false) {
-                  return;
-                }
+            // Skip pre-resolved symbols that have explicit declarations
+            if (resolved_symbol.declared_type.implicit == false) {
+              return;
+            }
 
-                // Only report reference that caused implicit declarations
-                if (node.identifier.begin() == resolved_symbol_identifier.begin()) {
-                  const auto offset = std::distance(text_structure.Contents().begin(),
-                                                    node.identifier.begin());
-                  CHECK_GE(offset, 0);
-                  auto range = text_structure.TokenRangeSpanningOffsets(offset, offset);
-                  auto token = range.begin();
-                  CHECK(token != text_structure.TokenStream().end());
-                  const auto& token_info = *token;
-                  violations.insert(LintViolation(token_info, kMessage));
-                }
-              });
-        }
-      });
+            // Only report reference that caused implicit declarations
+            if (node.identifier.begin() == resolved_symbol_identifier.begin()) {
+              const auto offset = std::distance(
+                  text_structure.Contents().begin(), node.identifier.begin());
+              CHECK_GE(offset, 0);
+              auto range =
+                  text_structure.TokenRangeSpanningOffsets(offset, offset);
+              auto token = range.begin();
+              CHECK(token != text_structure.TokenStream().end());
+              const auto& token_info = *token;
+              violations.insert(LintViolation(token_info, kMessage));
+            }
+          });
+    }
+  });
 }
 
 LintRuleStatus ForbidImplicitDeclarationsRule::Report() const {
