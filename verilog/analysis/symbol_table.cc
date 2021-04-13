@@ -78,6 +78,8 @@ static const verible::EnumNameMap<SymbolMetaType> kSymbolMetaTypeNames({
     {"function", SymbolMetaType::kFunction},
     {"task", SymbolMetaType::kTask},
     {"struct", SymbolMetaType::kStruct},
+    {"enum", SymbolMetaType::kEnumType},
+    {"<enum constant>", SymbolMetaType::kEnumConstant},
     {"interface", SymbolMetaType::kInterface},
     {"<unspecified>", SymbolMetaType::kUnspecified},
     {"<callable>", SymbolMetaType::kCallable},
@@ -260,6 +262,9 @@ class SymbolTable::Builder : public TreeContextVisitor {
         break;
       case NodeEnum::kStructType:
         DescendStructType(node);
+        break;
+      case NodeEnum::kEnumType:
+        DescendEnumType(node);
         break;
       default:
         Descend(node);
@@ -455,6 +460,67 @@ class SymbolTable::Builder : public TreeContextVisitor {
     }
   }
 
+  void DescendEnumType(const SyntaxTreeNode& enum_type) {
+    CHECK(enum_type.MatchesTag(NodeEnum::kEnumType));
+    const absl::string_view anon_name =
+        current_scope_->Value().CreateAnonymousScope("enum");
+    SymbolTableNode& new_enum = DeclareScopedElementAndDescend(
+        enum_type, anon_name, SymbolMetaType::kEnumType);
+
+    const ReferenceComponent anon_type_ref{
+        .identifier = anon_name,
+        .ref_type = ReferenceType::kImmediate,
+        .required_metatype = SymbolMetaType::kEnumType,
+        // pre-resolve this symbol immediately
+        .resolved_symbol = &new_enum,
+    };
+
+    const CaptureDependentReference capture(this);
+    capture.Ref().PushReferenceComponent(anon_type_ref);
+
+    if (declaration_type_info_ != nullptr) {
+      declaration_type_info_->user_defined_type = capture.Ref().LastLeaf();
+    }
+
+    // Iterate over enumeration constants
+    for (const auto& itr : new_enum) {
+      const auto enum_constant_name = itr.first;
+      const auto& symbol = itr.second;
+      const auto& syntax_origin =
+          *ABSL_DIE_IF_NULL(symbol.Value().syntax_origin);
+
+      const ReferenceComponent itr_ref{
+          .identifier = enum_constant_name,
+          .ref_type = ReferenceType::kImmediate,
+          .required_metatype = SymbolMetaType::kEnumConstant,
+          // pre-resolve this symbol immediately
+          .resolved_symbol = &symbol,
+      };
+
+      // CaptureDependentReference class doesn't support
+      // copy constructor
+      const CaptureDependentReference cap(this);
+      cap.Ref().PushReferenceComponent(anon_type_ref);
+      cap.Ref().PushReferenceComponent(itr_ref);
+
+      // Create default DeclarationTypeInfo
+      DeclarationTypeInfo decl_type_info;
+      const ValueSaver<DeclarationTypeInfo*> save_type(&declaration_type_info_,
+                                                       &decl_type_info);
+      declaration_type_info_->syntax_origin = &syntax_origin;
+      declaration_type_info_->user_defined_type = cap.Ref().LastLeaf();
+
+      // Constants should be visible in current scope so we create
+      // variable instances with references to enum constants
+      //
+      // Consider using something different than kTypeAlias here
+      // (which is technically an alias for a type and not for a data/variable)
+      // e.g. kConstantAlias or even kGenericAlias.
+      EmplaceTypedElementInCurrentScope(syntax_origin, enum_constant_name,
+                                        SymbolMetaType::kTypeAlias);
+    }
+  }
+
   void HandleIdentifier(const SyntaxTreeLeaf& leaf) {
     const absl::string_view text = leaf.get().text();
     VLOG(2) << __FUNCTION__ << ": " << text;
@@ -543,6 +609,13 @@ class SymbolTable::Builder : public TreeContextVisitor {
       // This is part of a declaration covered by kVariableDeclarationAssignment
       // already, so do not interpret this as a reference.
       // e.g. "z" in "struct { int y, z; }"
+      return;
+    }
+
+    if (Context().DirectParentsAre(
+            {NodeEnum::kEnumName, NodeEnum::kEnumNameList})) {
+      EmplaceTypedElementInCurrentScope(leaf, text,
+                                        SymbolMetaType::kEnumConstant);
       return;
     }
 
