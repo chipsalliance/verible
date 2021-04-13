@@ -49,7 +49,7 @@ cc_library(
 
 genlex(
     name = "command_file_lex",
-    src  = "command_file.lex",
+    src = "command_file.lex",
     out = "command_file.yy.cc",
 )
 
@@ -65,6 +65,7 @@ cc_library(
     ],
     copts = ["-Wno-implicit-fallthrough"],
     deps = [
+        "//bazel:flex",
         "//common/lexer:flex_lexer_adapter",
         "//common/lexer:token_stream_adapter",
         "//common/strings:position",
@@ -75,7 +76,6 @@ cc_library(
         "//common/util:interval_set",
         "//common/util:logging",
         "@com_google_absl//absl/strings",
-        "@rules_flex//flex:current_flex_toolchain",  # For FlexLexer.h
     ],
 )
 

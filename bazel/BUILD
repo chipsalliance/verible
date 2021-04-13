@@ -10,6 +10,13 @@ package(
     ],
 )
 
+cc_library(
+    name = "flex",
+    deps = [
+        "@rules_flex//flex:current_flex_toolchain",  # For FlexLexer.h
+    ],
+)
+
 exports_files([
     "bison.bzl",
     "flex.bzl",
