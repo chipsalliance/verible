@@ -942,6 +942,19 @@ void TreeUnwrapper::SetIndentationsAndCreatePartitions(
       break;
     }
 
+    case NodeEnum::kExpressionList: {
+      // This allows for indenting initializer lists
+      if (Context().DirectParentIs(NodeEnum::kAssignmentPattern)) {
+        // Do not further indent preprocessor clauses.
+        const int indent = suppress_indentation ? 0 : style_.wrap_spaces;
+        VisitIndentedSection(node, indent, PartitionPolicyEnum::kAlwaysExpand);
+      } else {
+        // Default handling
+        TraverseChildren(node);
+        break;
+      }
+      break;
+    }
     // For the following constructs, always expand the view to subpartitions.
     // Add a level of indentation.
     case NodeEnum::kPackageImportList:

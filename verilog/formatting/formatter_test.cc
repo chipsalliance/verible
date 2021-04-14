@@ -1576,6 +1576,32 @@ static constexpr FormatterTestCase kFormatterTestCases[] = {
      "    localparam baz = 2  //comment\n"
      ") ();\n"
      "endmodule\n"},
+    {"module foo;"
+     "localparam logic [63:0] RC[24] = '{\n"
+     "64'h 1,\n"
+     "64'h 2,\n"
+     "64'h 3\n"
+     "};\n"
+     "endmodule",
+     "module foo;\n"
+     "  localparam logic [63:0] RC[24] = '{\n"
+     "      64'h1, 64'h2, 64'h3\n"
+     "  };\n"
+     "endmodule\n"},
+    {"module foo;"
+     "localparam logic [63:0] RC[24] = '{\n"
+     "64'h 0000_0000_0000_0001, // 0\n"
+     "64'h 0000_0000_0000_8082, // 1\n"
+     "64'h 8000_0000_8000_8008 // 23\n"
+     "};\n"
+     "endmodule",
+     "module foo;\n"
+     "  localparam logic [63:0] RC[24] = '{\n"
+     "      64'h0000_0000_0000_0001,  // 0\n"
+     "      64'h0000_0000_0000_8082,  // 1\n"
+     "      64'h8000_0000_8000_8008  // 23\n"
+     "  };\n"
+     "endmodule\n"},
     {"module    top;"
      "foo#(  \"test\"  ) foo(  );"
      "bar#(  \"test\"  ,5) bar(  );"

@@ -703,6 +703,45 @@ const TreeUnwrapperTestData kUnwrapModuleTestCases[] = {
     },
 
     {
+        "module with parameters and initializer list",
+        "module foo;"
+        "localparam logic [63:0] baz[24] = '{"
+        "64'h1,"
+        "64'h2,"
+        "64'h3"
+        "};"
+        "endmodule",
+        ModuleDeclaration(0, L(0, {"module", "foo", ";"}),
+                          N(1,
+                            L(1, {"localparam", "logic", "[", "63", ":", "0",
+                                  "]", "baz", "[", "24", "]", "=", "'{"}),
+                            L(3, {"64", "'h", "1", ",", "64", "'h", "2", ",",
+                                  "64", "'h", "3"}),
+                            L(1, {"}", ";"})),
+                          L(0, {"endmodule"})),
+    },
+
+    {
+        "module with parameters, initializer list and comments",
+        "module foo;"
+        "localparam logic [63:0] baz[24] = '{"
+        "64'h0, // comment 0\n"
+        "64'h1, // comment 1\n"
+        "64'h3 // comment 3\n"
+        "};"
+        "endmodule",
+        ModuleDeclaration(0, L(0, {"module", "foo", ";"}),
+                          N(1,
+                            L(1, {"localparam", "logic", "[", "63", ":", "0",
+                                  "]", "baz", "[", "24", "]", "=", "'{"}),
+                            N(3, L(3, {"64", "'h", "0", ",", "// comment 0"}),
+                              L(3, {"64", "'h", "1", ",", "// comment 1"}),
+                              L(3, {"64", "'h", "3", "// comment 3"})),
+                            L(1, {"}", ";"})),
+                          L(0, {"endmodule"})),
+    },
+
+    {
         "module with header import",
         "module foo import p_pkg::*;\n"
         "(qux);"
