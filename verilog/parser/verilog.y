@@ -146,6 +146,10 @@ static SymbolPtr MakeUnpackedDimensionsNode(SymbolPtr& arg) {
 %define api.prefix {verilog_}
 %define api.value.type {::verible::SymbolPtr}
 
+// The string representation of this token changes between bison versions.
+// Fix it to keep unit tests happy that look for this string.
+%token yyToken_EOF 0 "end of file"
+
 // LINT.IfChange
 %token PP_Identifier
 %token PP_include "`include"
