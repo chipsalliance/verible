@@ -20,7 +20,6 @@
 #include <iterator>
 #include <string>
 
-#include "absl/strings/match.h"
 #include "absl/strings/string_view.h"
 #include "absl/strings/strip.h"
 #include "common/util/logging.h"
@@ -51,7 +50,7 @@ BasedNumber::BasedNumber(absl::string_view base_sign, absl::string_view digits)
   CHECK_EQ(base_sign.length(), 1);
   base = std::tolower(base_sign[0]);
   static const absl::string_view valid_bases("bdho");
-  if (!absl::StrContains(valid_bases, base)) return;
+  if (valid_bases.find(base) == absl::string_view::npos) return;
 
   // Filter out underscores.
   literal.reserve(digits.length());
