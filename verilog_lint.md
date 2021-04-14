@@ -22,6 +22,21 @@ verible-verilog-lint: usage: bazel-bin/verilog/tools/lint/verible-verilog-lint [
       name); default: ;
 
 
+  Flags from external/com_google_absl/absl/flags/internal/usage.cc:
+    --help (show help on important flags for this binary [tip: all flags can
+      have two dashes]); default: false;
+    --helpfull (show help on all flags); default: false; currently: true;
+    --helpmatch (show help on modules whose name contains the specified substr);
+      default: "";
+    --helpon (show help on the modules named by this flag value); default: "";
+    --helppackage (show help on all modules in the main package);
+      default: false;
+    --helpshort (show help on only the main module for this program);
+      default: false;
+    --only_check_args (exit after checking all flags); default: false;
+    --version (show version and build info and exit); default: false;
+
+
   Flags from verilog/analysis/verilog_linter.cc:
     --rules (Comma-separated of lint rules to enable. No prefix or a '+' prefix
       enables it, '-' disable it. Configuration values for each rules placed
@@ -55,10 +70,6 @@ verible-verilog-lint: usage: bazel-bin/verilog/tools/lint/verible-verilog-lint [
       default: true;
     --show_diagnostic_context (prints an additional line on which the diagnostic
       was found,followed by a line with a position marker); default: false;
-
-Try --helpfull to get a list of all flags or --help=substring shows help for
-flags which include specified substring in either in the name, or description or
-path.
 ```
 
 ## Lint Rules
@@ -358,4 +369,4 @@ Enabled by default: true
 
 ## Version
 
-Generated on 2021-04-14 11:08:51 -0700 from [9d45497](https://github.com/google/verible/commit/9d4549719d1dd7604e84ff460431f1b6008e7564)
+Generated on 2021-04-14 12:26:30 -0700 from [47fbcbb](https://github.com/google/verible/commit/47fbcbb96a51d07e393716817b1d0ca373eaa15b)
