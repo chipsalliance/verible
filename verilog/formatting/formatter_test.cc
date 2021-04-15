@@ -9240,8 +9240,24 @@ TEST(FormatterEndToEndTest, ConstraintExpressions) {
       {"constraint only_vec_instr_c {soft only_vec_instr == 0;}",
        "constraint only_vec_instr_c {soft only_vec_instr == 0;}\n"},
 
-      {"constraint\nnum_trans_c\n\n\n{\n\n\nnum_trans inside{[800:1000]};}",
-       "constraint num_trans_c {num_trans inside {[800 : 1000]};}\n"},
+      // constraint with brackets inside block item list
+      {"constraint\nnum_trans_c\n\n\n{num_trans inside{[800:1000]};}",
+       "constraint num_trans_c {\n"
+       "  num_trans inside {[800 : 1000]};\n"
+       "}\n"},
+
+      {"constraint data_size_c {data.size() inside {[1 : 65536]};}",
+       "constraint data_size_c {\n"
+       "  data.size() inside {[1 : 65536]};\n"
+       "}\n"},
+
+      {"constraint data_size_c {data.size() inside {[1 : 65536]};a==b;"
+       "num_trans inside{[800:1000]};}\n",
+       "constraint data_size_c {\n"
+       "  data.size() inside {[1 : 65536]};\n"
+       "  a == b;\n"
+       "  num_trans inside {[800 : 1000]};\n"
+       "}\n"},
 
       // if-vs-concatenation expression
       {"constraint c_operation{  if(fixed_operation_en){"
@@ -9279,6 +9295,15 @@ TEST(FormatterEndToEndTest, ConstraintExpressions) {
        "  aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa == "
        "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb;\n"
        "  ccccccccccccccccccccccc == dddddddddddddddddddddd;\n"
+       "}\n"},
+
+      // FIXME: Find-out why formatter is preserving those newlines in
+      // constraint block
+      {"constraint\nnum_trans_c\n\n\n{\n\n\nnum_trans inside{[800:1000]};}",
+       "constraint num_trans_c {\n"
+       "\n"
+       "\n"
+       "  num_trans inside {[800 : 1000]};\n"
        "}\n"},
   };
   FormatStyle style;

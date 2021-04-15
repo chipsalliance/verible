@@ -1680,6 +1680,17 @@ void TreeUnwrapper::ReshapeTokenPartitions(
         if (PartitionIsCloseBrace(last)) {
           verible::MergeLeafIntoPreviousLeaf(&last);
         }
+      } else if (partition.Children().size() == 3) {
+        // Propagate partition expansion on flattened partitions
+        const auto& block_partition = partition.Children()[1];
+        const auto block_partition_policy =
+            block_partition.Value().PartitionPolicy();
+
+        if (block_partition.Children().size() == 0 &&
+            block_partition_policy == PartitionPolicyEnum::kAlwaysExpand) {
+          auto& uwline = partition.Value();
+          uwline.SetPartitionPolicy(PartitionPolicyEnum::kAlwaysExpand);
+        }
       }
       break;
     }
