@@ -67,13 +67,13 @@ ABSL_FLAG(bool, printextraction, false,
           "Whether or not to print the extracted general indexing facts tree "
           "from the middle layer)");
 
-ABSL_FLAG(
-    PrintMode, print_kythe_facts, PrintMode::kJSON,
-    "Determines how to print Kythe indexing facts.  Options:\n"
-    "  json: Outputs Kythe facts in JSON format (one per line)\n"
-    "  json_debug: Outputs Kythe facts in JSON format (without encoding, all in one JSON object)\n"
-    "  proto: Outputs Kythe facts in proto format\n"
-    "Default: json\n");
+ABSL_FLAG(PrintMode, print_kythe_facts, PrintMode::kJSON,
+          "Determines how to print Kythe indexing facts.  Options:\n"
+          "  json: Outputs Kythe facts in JSON format (one per line)\n"
+          "  json_debug: Outputs Kythe facts in JSON format (without encoding, "
+          "all in one JSON object)\n"
+          "  proto: Outputs Kythe facts in proto format\n"
+          "Default: json\n");
 
 ABSL_FLAG(
     std::string, file_list_path, "",
