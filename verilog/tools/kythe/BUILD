@@ -236,11 +236,9 @@ sh_test(
         "testdata/**",
     ]) + [
         ":verible-verilog-kythe-extractor",
-        "@io_kythe//kythe/cxx/verifier",
     ],
-    shard_count = 4,
+    tags = ["manual"],
     deps = [
         "@bazel_tools//tools/bash/runfiles",
-        "@io_bazel//src/test/shell:bashunit",
     ],
 )
