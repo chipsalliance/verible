@@ -127,6 +127,7 @@ jobs:
     - name: Run Kythe
       run: |
         source ./.github/settings.sh
+        ./.github/bin/verify-kythe-extraction.sh
         ./.github/bin/run-kythe.sh
 
     - name: 📤 Upload Kythe output

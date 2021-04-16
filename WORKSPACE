@@ -82,27 +82,32 @@ all_content = """filegroup(name = "all", srcs = glob(["**"]), visibility = ["//v
 
 http_archive(
     name = "rules_m4",
-    urls = ["https://github.com/jmillikin/rules_m4/releases/download/v0.2/rules_m4-v0.2.tar.xz"],
     sha256 = "c67fa9891bb19e9e6c1050003ba648d35383b8cb3c9572f397ad24040fb7f0eb",
+    urls = ["https://github.com/jmillikin/rules_m4/releases/download/v0.2/rules_m4-v0.2.tar.xz"],
 )
 
 load("@rules_m4//m4:m4.bzl", "m4_register_toolchains")
+
 m4_register_toolchains()
 
 http_archive(
     name = "rules_flex",
-    urls = ["https://github.com/jmillikin/rules_flex/releases/download/v0.2/rules_flex-v0.2.tar.xz"],
     sha256 = "f1685512937c2e33a7ebc4d5c6cf38ed282c2ce3b7a9c7c0b542db7e5db59d52",
+    urls = ["https://github.com/jmillikin/rules_flex/releases/download/v0.2/rules_flex-v0.2.tar.xz"],
 )
+
 load("@rules_flex//flex:flex.bzl", "flex_register_toolchains")
+
 flex_register_toolchains()
 
 http_archive(
     name = "rules_bison",
-    urls = ["https://github.com/jmillikin/rules_bison/releases/download/v0.2/rules_bison-v0.2.tar.xz"],
     sha256 = "6ee9b396f450ca9753c3283944f9a6015b61227f8386893fb59d593455141481",
+    urls = ["https://github.com/jmillikin/rules_bison/releases/download/v0.2/rules_bison-v0.2.tar.xz"],
 )
+
 load("@rules_bison//bison:bison.bzl", "bison_register_toolchains")
+
 bison_register_toolchains()
 
 http_archive(
@@ -112,18 +117,6 @@ http_archive(
     urls = [
         "https://github.com/bazelbuild/bazel-toolchains/releases/download/3.4.0/bazel-toolchains-3.4.0.tar.gz",
         "https://mirror.bazel.build/github.com/bazelbuild/bazel-toolchains/releases/download/3.4.0/bazel-toolchains-3.4.0.tar.gz",
-    ],
-)
-
-# TODO(ikr): This is a huge dependency pulled in only for bash unit test
-# framework. Find a smaller alternative that works both internally and
-# externally.
-http_archive(
-    name = "io_bazel",
-    sha256 = "4822ac0f365210932803d324d1b0e08dbd451242720017c5b7f70716c2e3e059",
-    strip_prefix = "bazel-3.7.0",
-    urls = [
-        "https://github.com/bazelbuild/bazel/archive/3.7.0.tar.gz",
     ],
 )
 
@@ -158,8 +151,8 @@ kythe_dependencies()
 
 http_archive(
     name = "jsoncpp_git",
-    sha256 = "77a402fb577b2e0e5d0bdc1cf9c65278915cdb25171e3452c68b6da8a561f8f0",
     build_file = "//bazel:jsoncpp.BUILD",
+    sha256 = "77a402fb577b2e0e5d0bdc1cf9c65278915cdb25171e3452c68b6da8a561f8f0",
     strip_prefix = "jsoncpp-1.9.2",
     urls = [
         "https://github.com/open-source-parsers/jsoncpp/archive/1.9.2.tar.gz",
@@ -168,8 +161,8 @@ http_archive(
 
 http_archive(
     name = "python_six",
-    sha256 = "30639c035cdb23534cd4aa2dd52c3bf48f06e5f4a941509c8bafd8ce11080259",
     build_file = "//bazel:python_six.BUILD",
+    sha256 = "30639c035cdb23534cd4aa2dd52c3bf48f06e5f4a941509c8bafd8ce11080259",
     strip_prefix = "six-1.15.0",
     urls = [
         "https://files.pythonhosted.org/packages/6b/34/415834bfdafca3c5f451532e8a8d9ba89a21c9743a0c59fbd0205c7f9426/six-1.15.0.tar.gz",
@@ -178,8 +171,8 @@ http_archive(
 
 http_archive(
     name = "python_anytree",
-    sha256 = "79ee0cc74456950003287b0b5c7b76b7d09435563a31d9e553da484325043e1f",
     build_file = "//bazel:python_anytree.BUILD",
+    sha256 = "79ee0cc74456950003287b0b5c7b76b7d09435563a31d9e553da484325043e1f",
     strip_prefix = "anytree-2.8.0",
     urls = [
         "https://github.com/c0fec0de/anytree/archive/2.8.0.tar.gz",
