@@ -69,15 +69,15 @@ bool VName::operator<(const VName& other) const {
 std::ostream& VName::FormatJSON(std::ostream& stream, bool debug,
                                 int indentation) const {
   // Output new line only in debug mode.
-  const std::string new_line = debug ? "\n" : "";
-  stream << "{" << new_line;
+  const std::string separator = debug ? "\n" : "";
+  stream << "{" << separator;
   const verible::Spacer idt(indentation + 2);
   stream << idt << "\"signature\": \""
          << (debug ? signature.ToString() : signature.ToBase64()) << "\","
-         << new_line << idt << "\"path\": \"" << path << "\"," << new_line
-         << idt << "\"language\": \"" << language << "\"," << new_line << idt
-         << "\"root\": \"" << root << "\"," << new_line << idt
-         << "\"corpus\": \"" << corpus << "\"" << new_line
+         << separator << idt << "\"path\": \"" << path << "\"," << separator
+         << idt << "\"language\": \"" << language << "\"," << separator << idt
+         << "\"root\": \"" << root << "\"," << separator << idt
+         << "\"corpus\": \"" << corpus << "\"" << separator
          << verible::Spacer(indentation) << "}";
   return stream;
 }
@@ -99,19 +99,19 @@ bool Fact::operator<(const Fact& other) const {
 std::ostream& Fact::FormatJSON(std::ostream& stream, bool debug,
                                int indentation) const {
   // Output new line only in debug mode.
-  const std::string new_line = debug ? "\n" : "";
+  const std::string separator = debug ? "\n" : "";
   // Indent entries in debug mode
   const int indent_more = debug ? indentation + 2 : 0;
   const verible::Spacer idt(indent_more);
-  stream << "{" << new_line;
+  stream << "{" << separator;
   {
     stream << idt << "\"source\": ";
-    node_vname.FormatJSON(stream, debug, indent_more) << "," << new_line;
+    node_vname.FormatJSON(stream, debug, indent_more) << "," << separator;
   }
-  stream << idt << "\"fact_name\": \"" << fact_name << "\"," << new_line  //
+  stream << idt << "\"fact_name\": \"" << fact_name << "\"," << separator  //
          << idt << "\"fact_value\": \""
          << (debug ? fact_value : absl::Base64Escape(fact_value)) << "\""
-         << new_line  //
+         << separator  //
          << verible::Spacer(indentation) << "}";
   return stream;
 }
@@ -133,21 +133,21 @@ bool Edge::operator<(const Edge& other) const {
 std::ostream& Edge::FormatJSON(std::ostream& stream, bool debug,
                                int indentation) const {
   // Output new line only in debug mode.
-  const std::string new_line = debug ? "\n" : "";
+  const std::string separator = debug ? "\n" : "";
   // Indent entries in debug mode
   const int indent_more = debug ? indentation + 2 : 0;
   const verible::Spacer idt(indent_more);
-  stream << "{" << new_line;
+  stream << "{" << separator;
   {
     stream << idt << "\"source\": ";
-    source_node.FormatJSON(stream, debug, indent_more) << "," << new_line;
+    source_node.FormatJSON(stream, debug, indent_more) << "," << separator;
   }
-  { stream << idt << "\"edge_kind\": \"" << edge_name << "\"," << new_line; }
+  { stream << idt << "\"edge_kind\": \"" << edge_name << "\"," << separator; }
   {
     stream << idt << "\"target\": ";
-    target_node.FormatJSON(stream, debug, indent_more) << "," << new_line;
+    target_node.FormatJSON(stream, debug, indent_more) << "," << separator;
   }
-  { stream << idt << "\"fact_name\": \"/\"" << new_line; }
+  { stream << idt << "\"fact_name\": \"/\"" << separator; }
   return stream << verible::Spacer(indentation) << "}";
 }
 
