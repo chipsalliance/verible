@@ -41,7 +41,6 @@ using verible::LintViolation;
 using verible::SyntaxTreeContext;
 using verible::matcher::Matcher;
 
-// Register DisableStatementNoLabelsRule
 VERILOG_REGISTER_LINT_RULE(DisableStatementNoLabelsRule);
 
 absl::string_view DisableStatementNoLabelsRule::Name() {
