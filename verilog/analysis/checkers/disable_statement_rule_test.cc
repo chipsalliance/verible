@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "verilog/analysis/checkers/disable_non_sequential_rule.h"
+#include "verilog/analysis/checkers/disable_statement_rule.h"
 
 #include <initializer_list>
 

@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "verilog/analysis/checkers/disable_non_sequential_rule.h"
+#include "verilog/analysis/checkers/disable_statement_rule.h"
 
 #include <set>
 #include <string>
@@ -45,7 +45,7 @@ using verible::matcher::Matcher;
 VERILOG_REGISTER_LINT_RULE(DisableForkNoLabelsRule);
 
 absl::string_view DisableForkNoLabelsRule::Name() {
-  return "disable-non-sequential";
+  return "disable-statement";
 }
 const char DisableForkNoLabelsRule::kTopic[] =
     "disable-invalid-in-non-sequential";

@@ -21,7 +21,7 @@ cc_library(
         ":case_missing_default_rule",
         ":constraint_name_style_rule",
         ":create_object_name_match_rule",
-        ":disable_non_sequential_rule",
+        ":disable_statement_rule",
         ":endif_comment_rule",
         ":enum_name_style_rule",
         ":explicit_function_lifetime_rule",
@@ -1405,9 +1405,9 @@ cc_test(
 )
 
 cc_library(
-    name = "disable_non_sequential_rule",
-    srcs = ["disable_non_sequential_rule.cc"],
-    hdrs = ["disable_non_sequential_rule.h"],
+    name = "disable_statement_rule",
+    srcs = ["disable_statement_rule.cc"],
+    hdrs = ["disable_statement_rule.h"],
     deps = [
         "//common/analysis:citation",
         "//common/analysis:lint_rule_status",
@@ -1428,10 +1428,10 @@ cc_library(
 )
 
 cc_test(
-    name = "disable_non_sequential_rule_test",
-    srcs = ["disable_non_sequential_rule_test.cc"],
+    name = "disable_statement_rule_test",
+    srcs = ["disable_statement_rule_test.cc"],
     deps = [
-        ":disable_non_sequential_rule",
+        ":disable_statement_rule",
         "//common/analysis:linter_test_utils",
         "//common/analysis:syntax_tree_linter_test_utils",
         "//common/text:symbol",

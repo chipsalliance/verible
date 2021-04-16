@@ -22,7 +22,7 @@ _linter_test_configs = [
     ("always-ff-non-blocking", "always_ff_non_blocking", True),
     ("case-missing-default", "case_missing_default", True),
     ("constraint-name-style", "constraint_name_style", True),
-    ("disable-non-sequential", "disable_non_sequential", False),
+    ("disable-statement", "disable_statement", False),
     ("endif-comment", "endif_comment", False),
     ("enum-name-style", "enum_name_style", True),
     ("explicit-function-lifetime", "explicit_function_lifetime", True),
