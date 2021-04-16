@@ -70,8 +70,8 @@ ABSL_FLAG(bool, printextraction, false,
 ABSL_FLAG(
     PrintMode, print_kythe_facts, PrintMode::kJSON,
     "Determines how to print Kythe indexing facts.  Options:\n"
-    "  json: Outputs Kythe facts in JSON format\n"
-    "  json_debug: Outputs Kythe facts in JSON format (without encoding)\n"
+    "  json: Outputs Kythe facts in JSON format (one per line)\n"
+    "  json_debug: Outputs Kythe facts in JSON format (without encoding, all in one JSON object)\n"
     "  proto: Outputs Kythe facts in proto format\n"
     "Default: json\n");
 
@@ -130,7 +130,7 @@ static std::vector<absl::Status> ExtractTranslationUnits(
     }
     case PrintMode::kJSONDebug: {
       std::cout << KytheFactsPrinter(file_list_facts_tree, *project,
-                                     /* debug= */ true)
+                                     /*debug=*/true)
                 << std::endl;
       break;
     }

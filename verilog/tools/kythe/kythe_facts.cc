@@ -68,20 +68,22 @@ bool VName::operator<(const VName& other) const {
 
 std::ostream& VName::FormatJSON(std::ostream& stream, bool debug,
                                 int indentation) const {
-  stream << "{\n";
+  // Output new line only in debug mode.
+  const std::string new_line = debug ? "\n" : "";
+  stream << "{" << new_line;
   const verible::Spacer idt(indentation + 2);
   stream << idt << "\"signature\": \""
-         << (debug ? signature.ToString() : signature.ToBase64()) << "\",\n"  //
-         << idt << "\"path\": \"" << path << "\",\n"                          //
-         << idt << "\"language\": \"" << language << "\",\n"                  //
-         << idt << "\"root\": \"" << root << "\",\n"                          //
-         << idt << "\"corpus\": \"" << corpus << "\"\n"                       //
+         << (debug ? signature.ToString() : signature.ToBase64()) << "\","
+         << new_line << idt << "\"path\": \"" << path << "\"," << new_line
+         << idt << "\"language\": \"" << language << "\"," << new_line << idt
+         << "\"root\": \"" << root << "\"," << new_line << idt
+         << "\"corpus\": \"" << corpus << "\"" << new_line
          << verible::Spacer(indentation) << "}";
   return stream;
 }
 
 std::ostream& operator<<(std::ostream& stream, const VName& vname) {
-  return vname.FormatJSON(stream, true);
+  return vname.FormatJSON(stream, /*debug=*/true);
 }
 
 bool Fact::operator==(const Fact& other) const {
@@ -96,22 +98,26 @@ bool Fact::operator<(const Fact& other) const {
 
 std::ostream& Fact::FormatJSON(std::ostream& stream, bool debug,
                                int indentation) const {
-  const int indent_more = indentation + 2;
+  // Output new line only in debug mode.
+  const std::string new_line = debug ? "\n" : "";
+  // Indent entries in debug mode
+  const int indent_more = debug ? indentation + 2 : 0;
   const verible::Spacer idt(indent_more);
-  stream << "{\n";
+  stream << "{" << new_line;
   {
     stream << idt << "\"source\": ";
-    node_vname.FormatJSON(stream, debug, indent_more) << ",\n";
+    node_vname.FormatJSON(stream, debug, indent_more) << "," << new_line;
   }
-  stream << idt << "\"fact_name\": \"" << fact_name << "\",\n"  //
+  stream << idt << "\"fact_name\": \"" << fact_name << "\"," << new_line  //
          << idt << "\"fact_value\": \""
-         << (debug ? fact_value : absl::Base64Escape(fact_value)) << "\"\n"  //
+         << (debug ? fact_value : absl::Base64Escape(fact_value)) << "\""
+         << new_line  //
          << verible::Spacer(indentation) << "}";
   return stream;
 }
 
 std::ostream& operator<<(std::ostream& stream, const Fact& fact) {
-  return fact.FormatJSON(stream, true);
+  return fact.FormatJSON(stream, /*debug=*/true);
 }
 
 bool Edge::operator==(const Edge& other) const {
@@ -126,24 +132,27 @@ bool Edge::operator<(const Edge& other) const {
 
 std::ostream& Edge::FormatJSON(std::ostream& stream, bool debug,
                                int indentation) const {
-  const int indent_more = indentation + 2;
+  // Output new line only in debug mode.
+  const std::string new_line = debug ? "\n" : "";
+  // Indent entries in debug mode
+  const int indent_more = debug ? indentation + 2 : 0;
   const verible::Spacer idt(indent_more);
-  stream << "{\n";
+  stream << "{" << new_line;
   {
     stream << idt << "\"source\": ";
-    source_node.FormatJSON(stream, debug, indent_more) << ",\n";
+    source_node.FormatJSON(stream, debug, indent_more) << "," << new_line;
   }
-  { stream << idt << "\"edge_kind\": \"" << edge_name << "\",\n"; }
+  { stream << idt << "\"edge_kind\": \"" << edge_name << "\"," << new_line; }
   {
     stream << idt << "\"target\": ";
-    target_node.FormatJSON(stream, debug, indent_more) << ",\n";
+    target_node.FormatJSON(stream, debug, indent_more) << "," << new_line;
   }
-  { stream << idt << "\"fact_name\": \"/\"\n"; }
+  { stream << idt << "\"fact_name\": \"/\"" << new_line; }
   return stream << verible::Spacer(indentation) << "}";
 }
 
 std::ostream& operator<<(std::ostream& stream, const Edge& edge) {
-  return edge.FormatJSON(stream, true);
+  return edge.FormatJSON(stream, /*debug=*/true);
 }
 
 }  // namespace kythe
