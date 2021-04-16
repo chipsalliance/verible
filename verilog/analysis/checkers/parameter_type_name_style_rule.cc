@@ -60,10 +60,11 @@ std::string ParameterTypeNameStyleRule::GetDescription(
     DescriptionType description_type) {
   static std::string basic_desc = absl::StrCat(
       "Checks that parameter type names follow the lower_snake_case naming "
-      "convention and end with _t. See ",
+      "convention and end with _t or match the optional regular expression "
+      "format.. See ",
       GetStyleGuideCitation(kTopic), ".");
   if (description_type == DescriptionType::kHelpRulesFlag) {
-    return absl::StrCat(basic_desc, "Paramteres: name_regex:regex rule");
+    return absl::StrCat(basic_desc, "Parameters: name_regex:regex rule");
   } else {
     return absl::StrCat(
         basic_desc,

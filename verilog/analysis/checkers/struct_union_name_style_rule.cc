@@ -56,11 +56,12 @@ std::string StructUnionNameStyleRule::GetDescription(
   static std::string basic_desc = absl::StrCat(
       "Checks that ", Codify("struct", description_type), " and ",
       Codify("union", description_type),
-      " names use lower_snake_case naming convention and end with '_t'. See ",
+      " names use lower_snake_case naming convention and end with '_t', or "
+      "match the optional regular expression format. See ",
       GetStyleGuideCitation(kTopic), ".");
   if (description_type == DescriptionType::kHelpRulesFlag) {
     return absl::StrCat(basic_desc,
-                        "Paramteres: exceptions:String with exceptions;"
+                        "Parameters: exceptions:String with exceptions;"
                         "name_regex:regex rule");
   } else {
     return absl::StrCat(

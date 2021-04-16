@@ -58,10 +58,10 @@ std::string ConstraintNameStyleRule::GetDescription(
     DescriptionType description_type) {
   static std::string basic_desc = absl::StrCat(
       "Check that constraint names follow the lower_snake_case convention and"
-      " end with _c. See ",
+      " end with _c or match the optional regular expression format. See ",
       GetStyleGuideCitation(kTopic), ".");
   if (description_type == DescriptionType::kHelpRulesFlag) {
-    return absl::StrCat(basic_desc, "Paramteres: name_regex:regex rule");
+    return absl::StrCat(basic_desc, "Parameters: name_regex:regex rule");
   } else {
     return absl::StrCat(
         basic_desc,

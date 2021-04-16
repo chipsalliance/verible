@@ -53,12 +53,13 @@ const char InterfaceNameStyleRule::kMessage[] =
 
 std::string InterfaceNameStyleRule::GetDescription(
     DescriptionType description_type) {
-  static std::string basic_desc = absl::StrCat(
-      "Checks that ", Codify("interface", description_type),
-      " names use lower_snake_case naming convention and end with '_if'. See ",
-      GetStyleGuideCitation(kTopic), ".");
+  static std::string basic_desc =
+      absl::StrCat("Checks that ", Codify("interface", description_type),
+                   " names use lower_snake_case naming convention and end with "
+                   "'_if' or match the optional regular expression format. See ",
+                   GetStyleGuideCitation(kTopic), ".");
   if (description_type == DescriptionType::kHelpRulesFlag) {
-    return absl::StrCat(basic_desc, "Paramteres: name_regex:regex rule");
+    return absl::StrCat(basic_desc, "Parameters: name_regex:regex rule");
   } else {
     return absl::StrCat(
         basic_desc,
