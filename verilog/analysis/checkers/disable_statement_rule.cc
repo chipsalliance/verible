@@ -72,8 +72,8 @@ static const Matcher& DisableMatcher() {
   return matcher;
 }
 
-void DisableStatementNoLabelsRule::HandleSymbol(const verible::Symbol& symbol,
-                                           const SyntaxTreeContext& context) {
+void DisableStatementNoLabelsRule::HandleSymbol(
+    const verible::Symbol& symbol, const SyntaxTreeContext& context) {
   verible::matcher::BoundSymbolManager manager;
   if (DisableMatcher().Matches(symbol, &manager)) {
     const char* kMessageFinal = DisableStatementNoLabelsRule::kMessage;

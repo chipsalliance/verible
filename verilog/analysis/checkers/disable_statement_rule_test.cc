@@ -50,7 +50,7 @@ TEST(DisableStatementTest, FunctionPass) {
       kDisableStatementTestCases);
 }
 
-TEST(DisableStatementTest, FunctionFailures) {
+TEST(DisableStatementTest, ForkDisableStatementsFail) {
   constexpr int kToken = TK_disable;
   const std::initializer_list<LintTestCase> kDisableStatementTestCases = {
       {"module m;\ninitial begin\n",
@@ -69,6 +69,14 @@ TEST(DisableStatementTest, FunctionFailures) {
        {kToken, "disable"},
        " fork_label;\n",
        "end\nendmodule"},
+  };
+  RunLintTestCases<VerilogAnalyzer, DisableStatementNoLabelsRule>(
+      kDisableStatementTestCases);
+}
+
+TEST(DisableStatementTest, NonSequentialDisableStatementsFail) {
+  constexpr int kToken = TK_disable;
+  const std::initializer_list<LintTestCase> kDisableStatementTestCases = {
       {"module m;\n",
        "initial begin;\n",
        "fork\n",
@@ -87,21 +95,21 @@ TEST(DisableStatementTest, FunctionFailures) {
        "end\nendmodule"},
       {"module m;\n",
        "initial begin:foo;\n",
-       "begin : fo\n",
+       "begin : bar\n",
        {kToken, "disable"},
        " foo;\n",
        "end\n",
        "end\nendmodule"},
       {"module m;\n",
        "final begin:foo;\n",
-       "begin : fo\n",
+       "begin : bar\n",
        {kToken, "disable"},
        " foo;\n",
        "end\n",
        "end\nendmodule"},
       {"module m;\n",
        "always_comb begin:foo;\n",
-       "begin : fo\n",
+       "begin : bar\n",
        {kToken, "disable"},
        " foo;\n",
        "end\n",
