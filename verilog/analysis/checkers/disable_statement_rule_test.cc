@@ -46,7 +46,7 @@ TEST(DisableStatementTest, FunctionPass) {
        "begin : foo_2\n", "disable foo;\n", "end\n", "end\n", "join_any\n",
        "end\nendmodule"},
   };
-  RunLintTestCases<VerilogAnalyzer, DisableForkNoLabelsRule>(
+  RunLintTestCases<VerilogAnalyzer, DisableStatementNoLabelsRule>(
       kDisableStatementTestCases);
 }
 
@@ -107,7 +107,7 @@ TEST(DisableStatementTest, FunctionFailures) {
        "end\n",
        "end\nendmodule"},
   };
-  RunLintTestCases<VerilogAnalyzer, DisableForkNoLabelsRule>(
+  RunLintTestCases<VerilogAnalyzer, DisableStatementNoLabelsRule>(
       kDisableStatementTestCases);
 }
 

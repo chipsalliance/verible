@@ -41,22 +41,22 @@ using verible::LintViolation;
 using verible::SyntaxTreeContext;
 using verible::matcher::Matcher;
 
-// Register DisableForkNoLabelsRule
-VERILOG_REGISTER_LINT_RULE(DisableForkNoLabelsRule);
+// Register DisableStatementNoLabelsRule
+VERILOG_REGISTER_LINT_RULE(DisableStatementNoLabelsRule);
 
-absl::string_view DisableForkNoLabelsRule::Name() {
+absl::string_view DisableStatementNoLabelsRule::Name() {
   return "disable-statement";
 }
-const char DisableForkNoLabelsRule::kTopic[] =
+const char DisableStatementNoLabelsRule::kTopic[] =
     "disable-invalid-in-non-sequential";
-const char DisableForkNoLabelsRule::kMessage[] =
+const char DisableStatementNoLabelsRule::kMessage[] =
     "Invalid usage of disable statement. Preferred construction is: disable "
     "fork;";
-const char DisableForkNoLabelsRule::kMessageSeqBlock[] =
+const char DisableStatementNoLabelsRule::kMessageSeqBlock[] =
     "Invalid usage of disable statement. Preferred construction is: disable "
     "label_of_seq_block;";
 
-std::string DisableForkNoLabelsRule::GetDescription(
+std::string DisableStatementNoLabelsRule::GetDescription(
     DescriptionType description_type) {
   return absl::StrCat(
       "Checks that there are no occurrences of ",
@@ -72,11 +72,11 @@ static const Matcher& DisableMatcher() {
   return matcher;
 }
 
-void DisableForkNoLabelsRule::HandleSymbol(const verible::Symbol& symbol,
+void DisableStatementNoLabelsRule::HandleSymbol(const verible::Symbol& symbol,
                                            const SyntaxTreeContext& context) {
   verible::matcher::BoundSymbolManager manager;
   if (DisableMatcher().Matches(symbol, &manager)) {
-    const char* kMessageFinal = DisableForkNoLabelsRule::kMessage;
+    const char* kMessageFinal = DisableStatementNoLabelsRule::kMessage;
     // if no kDisable label, return, nothing to be checked
     const auto& disableLabels = FindAllSymbolIdentifierLeafs(symbol);
     if (disableLabels.empty()) {
@@ -108,7 +108,7 @@ void DisableForkNoLabelsRule::HandleSymbol(const verible::Symbol& symbol,
         if (ptag == static_cast<int>(NodeEnum::kInitialStatement) ||
             ptag == static_cast<int>(NodeEnum::kFinalStatement) ||
             ptag == static_cast<int>(NodeEnum::kAlwaysStatement)) {
-          kMessageFinal = DisableForkNoLabelsRule::kMessageSeqBlock;
+          kMessageFinal = DisableStatementNoLabelsRule::kMessageSeqBlock;
           break;
         }
         const auto& beginLabel = SymbolCastToLeaf(*beginLabels[0].match);
@@ -122,7 +122,7 @@ void DisableForkNoLabelsRule::HandleSymbol(const verible::Symbol& symbol,
   }
 }
 
-LintRuleStatus DisableForkNoLabelsRule::Report() const {
+LintRuleStatus DisableStatementNoLabelsRule::Report() const {
   return LintRuleStatus(violations_, Name(), GetStyleGuideCitation(kTopic));
 }
 }  // namespace analysis
