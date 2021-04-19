@@ -331,7 +331,7 @@ TEST(GetTaskIdTest, QualifiedIds) {
           for (const auto& decl : task_declarations) {
             const auto& task_node = verible::SymbolCastToNode(*decl.match);
             const auto* task_id = GetTaskId(task_node);
-            for (const auto id : FindAllQualifiedIds(*task_id)) {
+            for (const auto& id : FindAllQualifiedIds(*task_id)) {
               ids.push_back(id);
             }
           }
