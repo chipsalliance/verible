@@ -48,9 +48,8 @@ static std::unique_ptr<VerilogAnalyzer> AnalyzeVerilogConstruct(
   const std::string analyze_text = absl::StrCat(prolog, text, epilog);
   // Disable parser directive comments because a specific parser
   // is already being selected.
-  auto analyzer_ptr = absl::make_unique<VerilogAnalyzer>(
-      analyze_text, filename,
-      /* use_parser_directive_comments_ */ false);
+  auto analyzer_ptr =
+      absl::make_unique<VerilogAnalyzer>(analyze_text, filename);
 
   if (!ABSL_DIE_IF_NULL(analyzer_ptr)->Analyze().ok()) {
     VLOG(2) << __FUNCTION__ << ": Analyze() failed.  code:\n" << analyze_text;
