@@ -62,7 +62,7 @@ compile|clean)
     ;;
 
 *)
-    echo "script.sh: Unknown mode $MODE"
+    echo "$0: Unknown value in MODE environment variable: $MODE"
     exit 1
     ;;
 esac
