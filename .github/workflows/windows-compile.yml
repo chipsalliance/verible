@@ -28,8 +28,8 @@ jobs:
     # fully compiled on Windows (yet!)
     - name: Build flex/bison files
       run: |
-        $env:FLEX = 'C:/ProgramData/Chocolatey/lib/winflexbison/tools/win_flex.exe'
-        $env:BISON = 'C:/ProgramData/Chocolatey/lib/winflexbison/tools/win_bison.exe'
+        $env:FLEX = ($env:ChocolateyInstall + '/lib/winflexbison/tools/win_flex.exe') -replace '\\', '/'
+        $env:BISON = ($env:ChocolateyInstall + '/lib/winflexbison/tools/win_bison.exe') -replace '\\', '/'
         bazel build //common/analysis:command_file_lex
         bazel build //verilog/parser:verilog_y
         bazel build //verilog/parser:verilog_lex
