@@ -44,6 +44,7 @@ using ::kythe::proto::Entry;
 // Returns the Fact representation in Kythe's storage proto format.
 Entry ConvertEdgeToEntry(const Edge& edge) {
   Entry entry;
+  entry.set_fact_name("/");
   *entry.mutable_edge_kind() = edge.edge_name;
   *entry.mutable_source() = ConvertVnameToProto(edge.source_node);
   *entry.mutable_target() = ConvertVnameToProto(edge.target_node);
