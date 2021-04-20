@@ -23,8 +23,6 @@ namespace kythe {
 
 class KytheProtoOutput : public KytheOutput {
  public:
-  KytheProtoOutput() = default;
-
   // Output all Kythe facts from the indexing data in proto format.
   void Emit(const KytheIndexingData& indexing_data);
 };
