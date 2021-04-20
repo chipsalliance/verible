@@ -18,18 +18,12 @@
 #include <iosfwd>
 #include <set>
 
-#include "kythe/cxx/common/indexing/KytheOutputStream.h"
 #include "verilog/analysis/verilog_project.h"
 #include "verilog/tools/kythe/indexing_facts_tree.h"
 #include "verilog/tools/kythe/kythe_facts.h"
 
 namespace verilog {
 namespace kythe {
-
-// Populate the Kythe output stream with Kythe facts in proto format.
-void StreamKytheFactsProtoEntries(::kythe::KytheOutputStream* kythe_output,
-                                  const IndexingFactNode& file_list_facts_tree,
-                                  const VerilogProject& project);
 
 // Streamable printing class for kythe facts.
 // Usage: stream << KytheFactsPrinter(IndexingFactNode);
@@ -80,6 +74,19 @@ struct KytheIndexingData {
 // than references to those symbols.
 KytheIndexingData ExtractKytheFacts(const IndexingFactNode& file_list,
                                     const VerilogProject& project);
+
+// Interface for producing the Kythe output.
+class KytheOutput {
+ public:
+  // Output all Kythe facts from the indexing data.
+  virtual void Emit(const KytheIndexingData& indexing_data) = 0;
+  virtual ~KytheOutput() {}
+};
+
+// Populate the Kythe output stream with Kythe facts.
+void StreamKytheFactsEntries(KytheOutput* kythe_output,
+                             const IndexingFactNode& file_list_facts_tree,
+                             const VerilogProject& project);
 
 }  // namespace kythe
 }  // namespace verilog

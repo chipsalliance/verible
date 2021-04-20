@@ -91,7 +91,6 @@ cc_library(
         "//verilog/analysis:verilog_project",
         "@com_google_absl//absl/memory",
         "@com_google_absl//absl/strings",
-        "@io_kythe//kythe/cxx/common/indexing:output",
     ],
 )
 
@@ -190,6 +189,18 @@ cc_test(
     ],
 )
 
+cc_library(
+    name = "kythe_proto_output",
+    srcs = ["kythe_proto_output.cc"],
+    hdrs = ["kythe_proto_output.h"],
+    deps = [
+        ":kythe_facts",
+        ":kythe_facts_extractor",
+        "//third_party/proto/kythe:storage_cc_proto",
+        "@com_google_protobuf//:protobuf",
+    ],
+)
+
 cc_binary(
     name = "verible-verilog-kythe-extractor",
     srcs = [
@@ -201,6 +212,7 @@ cc_binary(
     deps = [
         ":indexing_facts_tree_extractor",
         ":kythe_facts_extractor",
+        ":kythe_proto_output",
         "//common/util:bijective_map",
         "//common/util:enum_flags",
         "//common/util:file_util",
@@ -214,9 +226,6 @@ cc_binary(
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/strings",
         "@com_google_absl//absl/types:span",
-        "@com_google_protobuf//:protobuf",
-        "@io_kythe//kythe/cxx/common/indexing:caching_output",
-        "@io_kythe//kythe/proto:storage_cc_proto",
     ],
 )
 
