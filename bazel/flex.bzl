@@ -1,5 +1,5 @@
 # -*- Python -*-
-# Copyright 2017-2020 The Verible Authors.
+# Copyright 2017-2021 The Verible Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -24,9 +24,15 @@ def genlex(name, src, out):
         name = name,
         srcs = [src],
         outs = [out],
-        cmd = "M4=$(M4) $(FLEX) --outfile=$@ $<",
-        toolchains = [
-            "@rules_flex//flex:current_flex_toolchain",
-            "@rules_m4//m4:current_m4_toolchain",
-        ],
+        cmd = select({
+            "@platforms//os:windows": "$(FLEX) --outfile=$@ $<",
+            "//conditions:default": "M4=$(M4) $(FLEX) --outfile=$@ $<",
+        }),
+        toolchains = select({
+            "@platforms//os:windows": ["@rules_flex//flex:current_flex_toolchain"],
+            "//conditions:default": [
+                "@rules_flex//flex:current_flex_toolchain",
+                "@rules_m4//m4:current_m4_toolchain",
+            ],
+        }),
     )
