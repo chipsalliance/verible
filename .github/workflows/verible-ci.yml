@@ -84,7 +84,7 @@ jobs:
         ./.github/bin/install-python.sh
 
     - name: ${{ matrix.env.mode }} Verible
-      run: ./.github/bin/script.sh
+      run: ./.github/bin/build-and-test.sh
 
     - name: Set up things for GitHub Pages deployment
       if: matrix.mode == 'compile'
