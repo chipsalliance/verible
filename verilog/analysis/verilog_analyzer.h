@@ -31,11 +31,9 @@ namespace verilog {
 // VerilogAnalyzer analyzes Verilog and SystemVerilog code syntax.
 class VerilogAnalyzer : public verible::FileAnalyzer {
  public:
-  VerilogAnalyzer(absl::string_view text, absl::string_view name,
-                  bool use_parser_directive_comments = true)
+  VerilogAnalyzer(absl::string_view text, absl::string_view name)
       : verible::FileAnalyzer(text, name),
-        max_used_stack_size_(0),
-        use_parser_directive_comments_(use_parser_directive_comments) {}
+        max_used_stack_size_(0) {}
 
   // Lex-es the input text into tokens.
   absl::Status Tokenize() override;
@@ -98,9 +96,6 @@ class VerilogAnalyzer : public verible::FileAnalyzer {
 
   // Preprocessor.
   VerilogPreprocessData preprocessor_data_;
-
-  // If true, let comments control the parsing mode.
-  bool use_parser_directive_comments_ = true;
 
   // Status of lexing.
   absl::Status lex_status_;

@@ -97,7 +97,7 @@ void ExpectStateMachineTokenSequence(
 
 // Tests for null state of state machine.
 TEST(KeywordLabelStateMachineTest, NoKeywords) {
-  VerilogAnalyzer analyzer("1, 2; 3;", "", false);
+  VerilogAnalyzer analyzer("1, 2; 3;", "");
   EXPECT_OK(analyzer.Tokenize());
   analyzer.FilterTokensForSyntaxTree();
   const auto& tokens_view = analyzer.Data().GetTokenStreamView();
@@ -116,8 +116,7 @@ TEST(KeywordLabelStateMachineTest, NoKeywords) {
 
 // Test for state transitions of state machine, no labels.
 TEST(KeywordLabelStateMachineTest, KeywordsWithoutLabels) {
-  VerilogAnalyzer analyzer("1 2 begin end begin end 3 begin 4 5 end 6", "",
-                           false);
+  VerilogAnalyzer analyzer("1 2 begin end begin end 3 begin 4 5 end 6", "");
   const std::array<bool, 13> expect_item_may_start{
       {false, false, true, true, true, true, true, true, true, false, true,
        true, false}};
@@ -141,7 +140,7 @@ TEST(KeywordLabelStateMachineTest, KeywordsWithoutLabels) {
 
 // Test for state transitions of state machine, with labels.
 TEST(KeywordLabelStateMachineTest, KeywordsWithLabels) {
-  VerilogAnalyzer analyzer("1 begin:a end:a begin:b end:b 2", "", false);
+  VerilogAnalyzer analyzer("1 begin:a end:a begin:b end:b 2", "");
   const std::array<bool, 15> expect_item_may_start{
       {false, true, false, true, true, false, true, true, false, true, true,
        false, true, false, false}};
@@ -165,7 +164,7 @@ TEST(KeywordLabelStateMachineTest, KeywordsWithLabels) {
 
 // Test for state transitions of state machine, with some labels, some items.
 TEST(KeywordLabelStateMachineTest, ItemsInsideBlocks) {
-  VerilogAnalyzer analyzer("begin:a 1 end:a 2 begin 3 end", "", false);
+  VerilogAnalyzer analyzer("begin:a 1 end:a 2 begin 3 end", "");
   const std::array<bool, 12> expect_item_may_start{{true, false, true, false,
                                                     true, false, true, false,
                                                     true, true, true, true}};
@@ -316,7 +315,7 @@ TEST_F(LastSemicolonStateMachineTest, LifeCycleFinalSemicolon) {
 struct StateMachineTestBase : public ::testing::Test {
   // Lexes code and initializes token_iter to point to the first token.
   void Tokenize(const std::string& code) {
-    analyzer = absl::make_unique<VerilogAnalyzer>(code, "", false);
+    analyzer = absl::make_unique<VerilogAnalyzer>(code, "");
     EXPECT_OK(analyzer->Tokenize());
     analyzer->FilterTokensForSyntaxTree();
     token_iter = analyzer->Data().GetTokenStreamView().cbegin();
@@ -1214,7 +1213,7 @@ class LexicalContextTest : public ::testing::Test, public LexicalContext {
 
   // Lexes code and initializes token_iter to point to the first token.
   void Tokenize(const std::string& code) {
-    analyzer_ = absl::make_unique<VerilogAnalyzer>(code, "", false);
+    analyzer_ = absl::make_unique<VerilogAnalyzer>(code, "");
     EXPECT_OK(analyzer_->Tokenize());
     analyzer_->FilterTokensForSyntaxTree();
     token_refs_ = analyzer_->MutableData().MakeTokenStreamReferenceView();
