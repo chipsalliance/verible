@@ -369,4 +369,4 @@ Enabled by default: true
 
 ## Version
 
-Generated on 2021-04-16 12:59:27 -0700 from [6ef4938](https://github.com/google/verible/commit/6ef4938d0a800b93ebf9fa7fdf692c4ed06c0471)
+Generated on 2021-04-19 17:13:18 -0700 from [a15e8b7](https://github.com/google/verible/commit/a15e8b7a2a27862da60fe5efbfcc66020125a334)
