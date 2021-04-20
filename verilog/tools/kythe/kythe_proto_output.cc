@@ -59,6 +59,7 @@ Entry ConvertFactToEntry(const Fact& fact) {
   return entry;
 }
 
+// Output entry to the stream.
 void OutputProto(const Entry& entry, FileOutputStream* stream) {
   CodedOutputStream coded_stream(stream);
   coded_stream.WriteVarint32(entry.ByteSizeLong());
