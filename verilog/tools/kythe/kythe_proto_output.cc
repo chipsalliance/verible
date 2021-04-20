@@ -33,10 +33,10 @@ using ::kythe::proto::Entry;
 // Returns the VName representation in Kythe's storage proto format.
 ::kythe::proto::VName ConvertVnameToProto(const VName& vname) {
   ::kythe::proto::VName proto_vname;
-  //proto_vname.set_signature(vname.signature.ToString());
-  //proto_vname.set_corpus(vname.corpus);
-  //proto_vname.set_root(vname.root);
-  //proto_vname.set_path(vname.path);
+  *proto_vname.mutable_signature() = vname.signature.ToString();
+  *proto_vname.mutable_corpus() = vname.corpus;
+  *proto_vname.mutable_root() = vname.root;
+  *proto_vname.mutable_path() = vname.path;
   *proto_vname.mutable_language() = vname.language;
   return proto_vname;
 }
@@ -44,7 +44,7 @@ using ::kythe::proto::Entry;
 // Returns the Fact representation in Kythe's storage proto format.
 Entry ConvertEdgeToEntry(const Edge& edge) {
   Entry entry;
-  //entry.set_edge_kind(edge.edge_name);
+  *entry.mutable_edge_kind() = edge.edge_name;
   *entry.mutable_source() = ConvertVnameToProto(edge.source_node);
   *entry.mutable_target() = ConvertVnameToProto(edge.target_node);
   return entry;
@@ -53,8 +53,8 @@ Entry ConvertEdgeToEntry(const Edge& edge) {
 // Returns the Fact representation in Kythe's storage proto format.
 Entry ConvertFactToEntry(const Fact& fact) {
   Entry entry;
-  //entry.set_fact_name(fact.fact_name);
-  //entry.set_fact_value(fact.fact_value);
+  *entry.mutable_fact_name() = fact.fact_name;
+  *entry.mutable_fact_value() = fact.fact_value;
   *entry.mutable_source() = ConvertVnameToProto(fact.node_vname);
   return entry;
 }
