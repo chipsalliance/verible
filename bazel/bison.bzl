@@ -1,5 +1,5 @@
 # -*- Python -*-
-# Copyright 2017-2020 The Verible Authors.
+# Copyright 2017-2021 The Verible Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -30,9 +30,15 @@ def genyacc(
         name = name,
         srcs = [src],
         outs = [header_out, source_out] + extra_outs,
-        cmd = "M4=$(M4) $(BISON) --defines=$(location " + header_out + ") --output-file=$(location " + source_out + ") " + " ".join(extra_options) + " $<",
-        toolchains = [
-            "@rules_bison//bison:current_bison_toolchain",
-            "@rules_m4//m4:current_m4_toolchain",
-        ],
+        cmd = select({
+            "@platforms//os:windows": "$(BISON) --defines=$(location " + header_out + ") --output-file=$(location " + source_out + ") " + " ".join(extra_options) + " $<",
+            "//conditions:default": "M4=$(M4) $(BISON) --defines=$(location " + header_out + ") --output-file=$(location " + source_out + ") " + " ".join(extra_options) + " $<",
+        }),
+        toolchains = select({
+            "@platforms//os:windows": ["@rules_bison//bison:current_bison_toolchain"],
+            "//conditions:default": [
+                "@rules_bison//bison:current_bison_toolchain",
+                "@rules_m4//m4:current_m4_toolchain",
+            ],
+        }),
     )
