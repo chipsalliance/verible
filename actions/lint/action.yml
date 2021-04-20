@@ -1,0 +1,36 @@
+# Copyright (C) 2021  The SymbiFlow Authors.
+#
+# Use of this source code is governed by a ISC-style
+# license that can be found in the LICENSE file or at
+# https://opensource.org/licenses/ISC
+#
+# SPDX-License-Identifier:	ISC
+
+name: Verible SV Linter
+description: Verible SystemVerilog Linter.
+
+inputs:
+
+  debug:
+    description: Output extra debug information
+    default: false
+
+  annotations:
+    description: Should the script output annotations?
+    default: true
+
+  third_party:
+    description: List of directory patterns to consider third_party resources.
+    default: >
+      third_party
+
+  exclude:
+    description: List of dir/file patterns to exclude from the Python checks
+    default: >
+      */.*
+      */__pycache__/*
+      */.pytest_*/*
+
+runs:
+  using: 'docker'
+  image: 'Dockerfile'

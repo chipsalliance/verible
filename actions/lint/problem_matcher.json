@@ -1,0 +1,17 @@
+{
+    "problemMatcher": [
+        {
+            "owner": "symbiflow-checks",
+            "pattern": [
+                {
+                    "regexp": "^:([^ ]+) file=([^,]+),line=([^,]),col=([^:]+):(.*)$",
+		    "severity": 1,
+                    "file": 2,
+                    "line": 3,
+                    "column": 4,
+		    "message": 5
+                }
+            ]
+        }
+    ]
+}
