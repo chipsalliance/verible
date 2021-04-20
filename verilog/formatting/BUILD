@@ -5,6 +5,7 @@ licenses(["notice"])
 package(
     default_visibility = [
         "//verilog/tools/formatter:__pkg__",
+        "//verilog/tools/style_tester:__pkg__",
     ],
 )
 
@@ -234,6 +235,68 @@ cc_library(
         "//common/formatting:align",
         "//common/formatting:basic_format_style",
         "@com_google_absl//absl/strings",
+    ],
+)
+
+cc_library(
+    name = "lowrisc_format_style",
+    hdrs = ["lowrisc_format_style.h"],
+    deps = [
+        ":format_style"
+    ],
+)
+
+cc_library(
+    name = "formatter_lowrisc_style_test_cases",
+    srcs = ["formatter_lowrisc_style_test_cases.cc"],
+    hdrs = ["formatter_lowrisc_style_test_cases.h"],
+    deps = [
+      ":lowrisc_format_style",
+    ],
+)
+
+cc_test(
+    name = "formatter_lowrisc_style_test",
+    srcs = ["formatter_lowrisc_style_test.cc"],
+    deps = [
+        ":format_style",
+        ":lowrisc_format_style",
+        ":formatter",
+        ":style_compliance_report",
+        ":formatter_lowrisc_style_test_cases",
+        "//common/formatting:align",
+        "//common/strings:position",
+        "//common/text:text_structure",
+        "//common/util:logging",
+        "//verilog/analysis:verilog_analyzer",
+        "@com_google_absl//absl/status",
+        "@com_google_absl//absl/strings",
+        "@com_google_googletest//:gtest_main",
+    ],
+)
+
+cc_library(
+    name = "style_compliance_report",
+    srcs = ["style_compliance_report.cc"],
+    hdrs = ["style_compliance_report.h"],
+    deps = [
+        "//common/util:logging",
+        "//common/formatting:basic_format_style",
+        "//common/util:spacer",
+        "//verilog/formatting:formatter",
+        "//verilog/formatting:lowrisc_format_style",
+        "@com_google_absl//absl/status",
+        "@com_google_absl//absl/strings",
+    ],
+)
+
+cc_test(
+    name = "style_compliance_report_test",
+    srcs = ["style_compliance_report_test.cc"],
+    deps = [
+        ":style_compliance_report",
+        "//common/util:logging",
+        "@com_google_googletest//:gtest_main",
     ],
 )
 
