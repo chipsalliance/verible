@@ -1,7 +1,6 @@
 workspace(name = "com_google_verible")
 
 load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
-load("@bazel_tools//tools/build_defs/repo:git.bzl", "git_repository")
 
 http_archive(
     name = "com_google_absl",
@@ -23,22 +22,6 @@ http_archive(
     strip_prefix = "rules_cc-e7c97c3af74e279a5db516a19f642e862ff58548",
     urls = ["https://github.com/bazelbuild/rules_cc/archive/e7c97c3af74e279a5db516a19f642e862ff58548.zip"],
 )
-
-# Needed for Kythe
-http_archive(
-    name = "io_bazel_rules_go",
-    sha256 = "ac03931e56c3b229c145f1a8b2a2ad3e8d8f1af57e43ef28a26123362a1e3c7e",
-    urls = [
-        "https://mirror.bazel.build/github.com/bazelbuild/rules_go/releases/download/v0.24.4/rules_go-v0.24.4.tar.gz",
-        "https://github.com/bazelbuild/rules_go/releases/download/v0.24.4/rules_go-v0.24.4.tar.gz",
-    ],
-)
-
-load("@io_bazel_rules_go//go:deps.bzl", "go_register_toolchains", "go_rules_dependencies")
-
-go_rules_dependencies()
-
-go_register_toolchains()
 
 # Google logging. Hopefully, this functionality makes it to absl so that we can drop this
 # extra dependency.
@@ -128,6 +111,17 @@ http_archive(
     ],
 )
 
+# We have to import zlib directly ourselves, because protobuf_deps.bzl isn't
+# part of the protobuf release yet
+# (https://github.com/protocolbuffers/protobuf/issues/5918).
+http_archive(
+    name = "net_zlib",
+    build_file = "@com_google_protobuf//:third_party/zlib.BUILD",
+    sha256 = "c3e5e9fdd5004dcb542feda5ee4f0ff0744628baf8ed2dd5d66f8ca1197cb1a1",
+    strip_prefix = "zlib-1.2.11",
+    urls = ["https://zlib.net/zlib-1.2.11.tar.gz"],
+)
+
 http_archive(
     name = "com_google_protobuf",
     repo_mapping = {"@zlib": "@net_zlib"},
@@ -139,23 +133,27 @@ http_archive(
     ],
 )
 
-# TODO(ikr): Replace with a Kythe release once it moves beyond 0.48
-git_repository(
-    name = "io_kythe",
-    # branch = "master",
-    # commit = "bee43a5908ce99cb9cf5a2cd42dc2da2972707f8", # broke issue #625
-    # the last working commit on "master" between 0.48 and 0.49:
-    commit = "410f69c5bcb69fabcb78a5200b7631a1bffabd31",
-    remote = "https://github.com/kythe/kythe",
+http_archive(
+    name = "rules_proto",
+    sha256 = "e4fe70af52135d2ee592a07f916e6e1fc7c94cf8786c15e8c0d0f08b1fe5ea16",
+    strip_prefix = "rules_proto-97d8af4dc474595af3900dd85cb3a29ad28cc313",
+    url = "https://github.com/bazelbuild/rules_proto/archive/97d8af4dc474595af3900dd85cb3a29ad28cc313.zip",
 )
 
-load("@io_kythe//:setup.bzl", "kythe_rule_repositories")
+load("@rules_proto//proto:repositories.bzl", "rules_proto_dependencies", "rules_proto_toolchains")
 
-kythe_rule_repositories()
+rules_proto_dependencies()
 
-load("@io_kythe//:external.bzl", "kythe_dependencies")
+rules_proto_toolchains()
 
-kythe_dependencies()
+http_archive(
+    name = "rules_python",
+    sha256 = "778197e26c5fbeb07ac2a2c5ae405b30f6cb7ad1f5510ea6fdac03bded96cc6f",
+    urls = [
+        "https://mirror.bazel.build/github.com/bazelbuild/rules_python/releases/download/0.2.0/rules_python-0.2.0.tar.gz",
+        "https://github.com/bazelbuild/rules_python/releases/download/0.2.0/rules_python-0.2.0.tar.gz",
+    ],
+)
 
 http_archive(
     name = "jsoncpp_git",

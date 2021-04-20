@@ -26,13 +26,11 @@
 #include "common/util/enum_flags.h"
 #include "common/util/file_util.h"
 #include "common/util/init_command_line.h"
-#include "google/protobuf/io/zero_copy_stream_impl.h"
-#include "kythe/cxx/common/indexing/KytheCachingOutput.h"
-#include "kythe/proto/storage.pb.h"
 #include "verilog/analysis/verilog_analyzer.h"
 #include "verilog/analysis/verilog_project.h"
 #include "verilog/tools/kythe/indexing_facts_tree_extractor.h"
 #include "verilog/tools/kythe/kythe_facts_extractor.h"
+#include "verilog/tools/kythe/kythe_proto_output.h"
 
 // for --print_kythe_facts flag
 enum class PrintMode {
@@ -101,12 +99,8 @@ namespace kythe {
 static void PrintKytheFactsProtoEntries(
     const IndexingFactNode& file_list_facts_tree,
     const VerilogProject& project) {
-  google::protobuf::io::FileOutputStream file_output(STDOUT_FILENO);
-  file_output.SetCloseOnDelete(true);
-  ::kythe::FileOutputStream kythe_output(&file_output);
-  kythe_output.set_flush_after_each_entry(true);
-
-  StreamKytheFactsProtoEntries(&kythe_output, file_list_facts_tree, project);
+  KytheProtoOutput proto_output;
+  StreamKytheFactsEntries(&proto_output, file_list_facts_tree, project);
 }
 
 static std::vector<absl::Status> ExtractTranslationUnits(
