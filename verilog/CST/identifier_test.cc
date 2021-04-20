@@ -50,7 +50,7 @@ TEST(IdIsQualifiedTest, VariousIds) {
       {"task goo(); endtask", 0 /* goo */},
       {"task fff::goo(); endtask", 1 /* fff::goo */},
   };
-  for (const auto test : kTestCases) {
+  for (const auto& test : kTestCases) {
     VerilogAnalyzer analyzer(test.first, "");
     ASSERT_OK(analyzer.Analyze());
     const auto& root = analyzer.Data().SyntaxTree();
