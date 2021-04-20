@@ -24,6 +24,8 @@ jobs:
       uses: actions/checkout@v2
       with:
         fetch-depth: 0
+    # Only check flex/bison targets at the moment, since Verible cannot be
+    # fully compiled on Windows (yet!)
     - name: Build flex/bison files
       run: |
         $env:FLEX = 'C:/ProgramData/Chocolatey/lib/winflexbison/tools/win_flex.exe'
