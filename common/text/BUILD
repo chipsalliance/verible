@@ -40,7 +40,6 @@ cc_library(
     ],
 )
 
-
 cc_library(
     name = "token_info_test_util",
     testonly = 1,
