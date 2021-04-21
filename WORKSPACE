@@ -9,11 +9,15 @@ http_archive(
     urls = ["https://github.com/abseil/abseil-cpp/archive/20200923.3.zip"],
 )
 
+# Intermediate version of googletest. The last published release v1.10.0 does
+# not obey TEST_TMPDIR environment variable and sets testing::TempDir() to
+# /tmp which is problematic for consecuitve tests.
+# (on Linux. On Mac, it still writes to /tmp which hopefully is fixed soon)
 http_archive(
     name = "com_google_googletest",
-    sha256 = "94c634d499558a76fa649edb13721dce6e98fb1e7018dfaeba3cd7a083945e91",
-    strip_prefix = "googletest-release-1.10.0",
-    urls = ["https://github.com/google/googletest/archive/release-1.10.0.zip"],
+    sha256 = "065be63080da17335f680bca846e7c298895ca5bb6d241d0ee28ff3c3aa29e7c",
+    strip_prefix = "googletest-23ef29555ef4789f555f1ba8c51b4c52975f0907",
+    urls = ["https://github.com/google/googletest/archive/23ef29555ef4789f555f1ba8c51b4c52975f0907.zip"],
 )
 
 http_archive(
