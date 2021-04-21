@@ -54,7 +54,7 @@ BAZEL_OPTS="${BAZEL_OPTS} --cxxopt=-Wno-array-bounds"             # kythe
 
 case "$MODE" in
 test)
-    bazel test $BAZEL_OPTS //...
+    bazel test --test_output=errors $BAZEL_OPTS //...
     ;;
 
 compile|clean)
