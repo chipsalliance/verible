@@ -19,6 +19,7 @@
 #include <vector>
 
 #include "absl/status/status.h"
+#include "absl/strings/match.h"
 #include "absl/strings/string_view.h"
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
@@ -59,6 +60,16 @@ TEST(FileUtil, Stem) {
   EXPECT_EQ(file::Stem("foo/bar.baz"), "foo/bar");
   EXPECT_EQ(file::Stem("/foo/bar."), "/foo/bar");
   EXPECT_EQ(file::Stem("/foo/bar"), "/foo/bar");
+}
+
+TEST(FileUtil, JoinPath) {
+  EXPECT_EQ(file::JoinPath("foo", ""), "foo/");
+  EXPECT_EQ(file::JoinPath("", "bar"), "/bar");
+  EXPECT_EQ(file::JoinPath("foo", "bar"), "foo/bar");
+
+  // Lightly canonicalize multiple consecutive slashes
+  EXPECT_EQ(file::JoinPath("foo/", "bar"), "foo/bar");
+  EXPECT_EQ(file::JoinPath("foo/", "/bar"), "foo/bar");
 }
 
 TEST(FileUtil, CreateDir) {
@@ -150,6 +161,51 @@ TEST(FileUtil, FileExistsDirectoryErrorMessage) {
   s = file::FileExists(testing::TempDir());
   EXPECT_FALSE(s.ok());
   EXPECT_THAT(s.message(), HasSubstr("is a directory"));
+}
+
+static bool CreateFsStructure(std::string_view base_dir,
+                              const std::vector<absl::string_view> &tree) {
+  for (absl::string_view path : tree) {
+    const std::string full_path = file::JoinPath(base_dir, path);
+    if (absl::EndsWith(path, "/")) {
+      if (!file::CreateDir(full_path).ok()) return false;
+    } else {
+      if (!file::SetContents(full_path, "(content)").ok()) return false;
+    }
+  }
+  return true;
+}
+
+TEST(FileUtil, UpwardFileSearchTest) {
+  const std::string root_dir = testing::TempDir();
+  ASSERT_TRUE(CreateFsStructure(root_dir, {
+        "toplevel-file",
+        "foo/",
+        "foo/foo-file",
+        "foo/bar/",
+        "foo/bar/baz/",
+        "foo/bar/baz/baz-file",
+      }));
+  std::string result;
+  // Same directory
+  EXPECT_OK(file::UpwardFileSearch(file::JoinPath(root_dir, "foo"),
+                                   "foo-file", &result));
+  EXPECT_EQ(result, file::JoinPath(root_dir, "foo/foo-file"));
+
+  // Somewhere below
+  EXPECT_OK(file::UpwardFileSearch(file::JoinPath(root_dir, "foo/bar/baz"),
+                                   "foo-file", &result));
+  EXPECT_EQ(result, file::JoinPath(root_dir, "foo/foo-file"));
+
+  // Find toplevel file
+  EXPECT_OK(file::UpwardFileSearch(file::JoinPath(root_dir, "foo/bar/baz"),
+                                   "toplevel-file", &result));
+  EXPECT_EQ(result, file::JoinPath(root_dir, "toplevel-file"));
+
+  // Negativ etest.
+  auto status = file::UpwardFileSearch(file::JoinPath(root_dir, "foo/bar/baz"),
+                                       "unknownfile", &result);
+  EXPECT_FALSE(status.ok());
 }
 
 TEST(FileUtil, ReadEmptyDirectory) {
