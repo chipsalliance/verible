@@ -150,7 +150,6 @@ cc_library(
         "//common/util:interval",
         "//common/util:iterator_range",
         "//common/util:logging",
-        "//common/util:process",
         "//common/util:range",
         "//common/util:spacer",
         "//common/util:vector_tree",
