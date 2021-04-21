@@ -164,7 +164,7 @@ TEST(FileUtil, FileExistsDirectoryErrorMessage) {
 }
 
 static bool CreateFsStructure(std::string_view base_dir,
-                              const std::vector<absl::string_view> &tree) {
+                              const std::vector<absl::string_view>& tree) {
   for (absl::string_view path : tree) {
     const std::string full_path = file::JoinPath(base_dir, path);
     if (absl::EndsWith(path, "/")) {
@@ -179,17 +179,17 @@ static bool CreateFsStructure(std::string_view base_dir,
 TEST(FileUtil, UpwardFileSearchTest) {
   const std::string root_dir = testing::TempDir();
   ASSERT_TRUE(CreateFsStructure(root_dir, {
-        "toplevel-file",
-        "foo/",
-        "foo/foo-file",
-        "foo/bar/",
-        "foo/bar/baz/",
-        "foo/bar/baz/baz-file",
-      }));
+                                              "toplevel-file",
+                                              "foo/",
+                                              "foo/foo-file",
+                                              "foo/bar/",
+                                              "foo/bar/baz/",
+                                              "foo/bar/baz/baz-file",
+                                          }));
   std::string result;
   // Same directory
-  EXPECT_OK(file::UpwardFileSearch(file::JoinPath(root_dir, "foo"),
-                                   "foo-file", &result));
+  EXPECT_OK(file::UpwardFileSearch(file::JoinPath(root_dir, "foo"), "foo-file",
+                                   &result));
   EXPECT_EQ(result, file::JoinPath(root_dir, "foo/foo-file"));
 
   // Somewhere below
@@ -202,7 +202,7 @@ TEST(FileUtil, UpwardFileSearchTest) {
                                    "toplevel-file", &result));
   EXPECT_EQ(result, file::JoinPath(root_dir, "toplevel-file"));
 
-  // Negativ etest.
+  // Negative test.
   auto status = file::UpwardFileSearch(file::JoinPath(root_dir, "foo/bar/baz"),
                                        "unknownfile", &result);
   EXPECT_FALSE(status.ok());
