@@ -15,11 +15,6 @@ jobs:
   WindowsBuild:
     runs-on: windows-latest
     steps:
-    # Need winflexbison for Kythe, bazel fails if environment
-    # FLEX/BISON is not set to a valid program
-    - name: Install deps
-      run: |
-        choco install winflexbison
     - name: Checkout code
       uses: actions/checkout@v2
       with:
@@ -28,8 +23,6 @@ jobs:
     # fully compiled on Windows (yet!)
     - name: Build flex/bison files
       run: |
-        $env:FLEX = ($env:ChocolateyInstall + '/lib/winflexbison/tools/win_flex.exe') -replace '\\', '/'
-        $env:BISON = ($env:ChocolateyInstall + '/lib/winflexbison/tools/win_bison.exe') -replace '\\', '/'
         bazel build //common/analysis:command_file_lex
         bazel build //verilog/parser:verilog_y
         bazel build //verilog/parser:verilog_lex
