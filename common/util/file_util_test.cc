@@ -69,7 +69,9 @@ TEST(FileUtil, JoinPath) {
 
   // Lightly canonicalize multiple consecutive slashes
   EXPECT_EQ(file::JoinPath("foo/", "bar"), "foo/bar");
+  EXPECT_EQ(file::JoinPath("foo///", "bar"), "foo/bar");
   EXPECT_EQ(file::JoinPath("foo/", "/bar"), "foo/bar");
+  EXPECT_EQ(file::JoinPath("foo/", "///bar"), "foo/bar");
 }
 
 TEST(FileUtil, CreateDir) {
