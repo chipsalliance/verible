@@ -21,12 +21,12 @@ installer(
         "//verilog/tools/formatter:git-verilog-format",
         "//verilog/tools/formatter:verible-verilog-format",
         "//verilog/tools/formatter:verible-verilog-format-changed-lines-interactive",
+        "//verilog/tools/kythe:verible-verilog-kythe-extractor",
         "//verilog/tools/lint:verible-verilog-lint",
         "//verilog/tools/obfuscator:verible-verilog-obfuscate",
         "//verilog/tools/preprocessor:verible-verilog-preprocessor",
         "//verilog/tools/project:verible-verilog-project",
         "//verilog/tools/syntax:verible-verilog-syntax",
-        "//verilog/tools/kythe:verible-verilog-kythe-extractor",
     ],
 )
 
