@@ -28,6 +28,8 @@ using testing::HasSubstr;
 
 #undef EXPECT_OK
 #define EXPECT_OK(value) EXPECT_TRUE((value).ok())
+#undef ASSERT_OK
+#define ASSERT_OK(value) ASSERT_TRUE((value).ok())
 
 namespace verible {
 namespace util {
@@ -179,7 +181,8 @@ static bool CreateFsStructure(std::string_view base_dir,
 }
 
 TEST(FileUtil, UpwardFileSearchTest) {
-  const std::string root_dir = testing::TempDir();
+  const std::string root_dir = file::JoinPath(testing::TempDir(), "up-search");
+  ASSERT_OK(file::CreateDir(root_dir));
   ASSERT_TRUE(CreateFsStructure(root_dir, {
                                               "toplevel-file",
                                               "foo/",
