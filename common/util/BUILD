@@ -30,13 +30,6 @@ cc_library(
 )
 
 cc_library(
-    name = "process",
-    srcs = ["process.cc"],
-    hdrs = ["process.h"],
-    deps = [],
-)
-
-cc_library(
     name = "range",
     hdrs = ["range.h"],
     deps = [":logging"],
@@ -356,15 +349,6 @@ cc_test(
     deps = [
         ":forward",
         "@com_google_absl//absl/strings",
-        "@com_google_googletest//:gtest_main",
-    ],
-)
-
-cc_test(
-    name = "process_test",
-    srcs = ["process_test.cc"],
-    deps = [
-        ":process",
         "@com_google_googletest//:gtest_main",
     ],
 )
