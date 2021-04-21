@@ -1,9 +1,6 @@
-# Get a newer GCC and flex version
 RUN add-apt-repository ppa:ubuntu-toolchain-r/test; apt-get update
 RUN apt-get install -y  \
-    bison               \
     build-essential     \
-    flex                \
     g++-7               \
     gcc-7
 

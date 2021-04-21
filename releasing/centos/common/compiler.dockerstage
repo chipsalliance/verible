@@ -7,17 +7,4 @@ ENV BAZEL_LINKLIBS "-l%:libstdc++.a"
 RUN yum install -y --nogpgcheck centos-release-scl
 RUN yum install -y --nogpgcheck devtoolset-8
 
-RUN yum install -y bison flex
-
-# Build a newer version of flex
-RUN wget --no-verbose "https://github.com/westes/flex/files/981163/flex-2.6.4.tar.gz" \
- && tar -xvf flex-2.6.4.tar.gz \
- && cd flex-2.6.4 \
- && ./configure --prefix=/usr \
- && make -j \
- && make install \
- && cd .. \
- && rm -rf flex-*
-RUN flex --version
-
 SHELL [ "scl", "enable", "devtoolset-8" ]
