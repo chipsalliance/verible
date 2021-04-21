@@ -195,17 +195,20 @@ TEST(FileUtil, UpwardFileSearchTest) {
   // Same directory
   EXPECT_OK(file::UpwardFileSearch(file::JoinPath(root_dir, "foo"), "foo-file",
                                    &result));
-  EXPECT_EQ(result, file::JoinPath(root_dir, "foo/foo-file"));
+  // We don't compare the full path, as the UpwardFileSearch() makes it an
+  // realpath which might not entirely match our root_dir prefix anymore; but
+  // we do know that the suffix should be the same.
+  EXPECT_TRUE(absl::EndsWith(result, "up-search/foo/foo-file"));
 
   // Somewhere below
   EXPECT_OK(file::UpwardFileSearch(file::JoinPath(root_dir, "foo/bar/baz"),
                                    "foo-file", &result));
-  EXPECT_EQ(result, file::JoinPath(root_dir, "foo/foo-file"));
+  EXPECT_TRUE(absl::EndsWith(result, "up-search/foo/foo-file"));
 
   // Find toplevel file
   EXPECT_OK(file::UpwardFileSearch(file::JoinPath(root_dir, "foo/bar/baz"),
                                    "toplevel-file", &result));
-  EXPECT_EQ(result, file::JoinPath(root_dir, "toplevel-file"));
+  EXPECT_TRUE(absl::EndsWith(result, "up-search/toplevel-file"));
 
   // Negative test.
   auto status = file::UpwardFileSearch(file::JoinPath(root_dir, "foo/bar/baz"),
