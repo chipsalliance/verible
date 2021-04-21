@@ -485,7 +485,10 @@ cc_test(
 cc_test(
     name = "map_tree_test",
     srcs = ["map_tree_test.cc"],
-    copts = ["-Wno-array-bounds"],
+    copts = select({
+        "@platforms//os:windows": [],
+        "//conditions:default": ["-Wno-array-bounds"],
+    }),
     deps = [
         ":map_tree",
         ":spacer",

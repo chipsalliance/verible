@@ -63,7 +63,10 @@ cc_library(
         "command_file_lexer.h",
         "lint_waiver.h",
     ],
-    copts = ["-Wno-implicit-fallthrough"],
+    copts = select({
+        "@platforms//os:windows": [],
+        "//conditions:default": ["-Wno-implicit-fallthrough"],
+    }),
     deps = [
         "//bazel:flex",
         "//common/lexer:flex_lexer_adapter",
@@ -96,7 +99,10 @@ cc_library(
     name = "lint_waiver",
     srcs = ["lint_waiver.cc"],
     hdrs = ["lint_waiver.h"],
-    copts = ["-fexceptions"],
+    copts = select({
+        "@platforms//os:windows": [],
+        "//conditions:default": ["-fexceptions"],
+    }),
     features = ["-use_header_modules"],  # precompiled headers incompatible with -fexceptions.
     deps = [
         ":command_file_lexer",
