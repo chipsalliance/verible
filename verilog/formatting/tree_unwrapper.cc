@@ -673,7 +673,6 @@ void TreeUnwrapper::SetIndentationsAndCreatePartitions(
     case NodeEnum::kLoopGenerateConstruct:
     case NodeEnum::kClassConstructor:
     case NodeEnum::kPackageImportDeclaration:
-    // TODO(fangism): case NodeEnum::kDPIExportItem:
     case NodeEnum::kPreprocessorInclude:
     case NodeEnum::kPreprocessorUndef:
     case NodeEnum::kTFPortDeclaration:
@@ -936,6 +935,7 @@ void TreeUnwrapper::SetIndentationsAndCreatePartitions(
     case NodeEnum::kFunctionHeader:
     case NodeEnum::kTaskPrototype:
     case NodeEnum::kFunctionPrototype:
+    case NodeEnum::kDPIExportItem:
     case NodeEnum::kDPIImportItem: {
       VisitIndentedSection(node, 0,
                            PartitionPolicyEnum::kAppendFittingSubPartitions);
@@ -1484,6 +1484,7 @@ void TreeUnwrapper::ReshapeTokenPartitions(
       //   [pure virtual]
       //   [task ... ] (task header/prototype)
       // Push the qualifiers down.
+    case NodeEnum::kDPIExportItem:
     case NodeEnum::kDPIImportItem:
       // partition consists of (example):
       //   [import "DPI-C"]

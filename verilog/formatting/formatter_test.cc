@@ -2824,7 +2824,17 @@ static constexpr FormatterTestCase kFormatterTestCases[] = {
         "      input int secs);\n"
         "endmodule\n",
     },
-
+    {
+        // DPI export declarations in modules
+        "module m;"
+        "export \"DPI-C\" function get;"
+        "export \"DPI-C\" function mhpmcounter_get; endmodule",
+        "module m;\n"
+        "  export \"DPI-C\" function get;\n"
+        "  export \"DPI-C\"\n"
+        "      function mhpmcounter_get;\n"  // doesn't fit in 40-col
+        "endmodule\n",
+    },
     {// module with system task call
      "module m; initial begin #10 $display(\"foo\"); $display(\"bar\");"
      "end endmodule",

@@ -2737,7 +2737,7 @@ dpi_export_item
   : TK_export dpi_spec_string GenericIdentifier '=' modport_tf_port ';'
     { $$ = MakeTaggedNode(N::kDPIExportItem, $1, $2, $3, $4, $5, $6); }
   | TK_export dpi_spec_string modport_tf_port ';'
-    { $$ = MakeTaggedNode(N::kDPIExportItem, $1, $2, nullptr, nullptr, $3, $4); }
+    { $$ = MakeTaggedNode(N::kDPIExportItem, $1, $2, nullptr, nullptr, ExtendLastSublist($3, $4)); }
   ;
 import_export
   : TK_export
