@@ -69,6 +69,11 @@ TEST(FileUtil, JoinPath) {
   EXPECT_EQ(file::JoinPath("", "bar"), "/bar");
   EXPECT_EQ(file::JoinPath("foo", "bar"), "foo/bar");
 
+  // Assemble an absolute path
+  EXPECT_EQ(file::JoinPath("", "bar"), "/bar");
+  EXPECT_EQ(file::JoinPath("/", "bar"), "/bar");
+  EXPECT_EQ(file::JoinPath("///", "///bar"), "/bar");
+
   // Lightly canonicalize multiple consecutive slashes
   EXPECT_EQ(file::JoinPath("foo/", "bar"), "foo/bar");
   EXPECT_EQ(file::JoinPath("foo///", "bar"), "foo/bar");
