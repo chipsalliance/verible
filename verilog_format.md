@@ -22,21 +22,6 @@ To pipe from stdin, use '-' as <file>.
       name); default: ;
 
 
-  Flags from external/com_google_absl/absl/flags/internal/usage.cc:
-    --help (show help on important flags for this binary [tip: all flags can
-      have two dashes]); default: false;
-    --helpfull (show help on all flags); default: false; currently: true;
-    --helpmatch (show help on modules whose name contains the specified substr);
-      default: "";
-    --helpon (show help on the modules named by this flag value); default: "";
-    --helppackage (show help on all modules in the main package);
-      default: false;
-    --helpshort (show help on only the main module for this program);
-      default: false;
-    --only_check_args (exit after checking all flags); default: false;
-    --version (show version and build info and exit); default: false;
-
-
   Flags from verilog/parser/verilog_parser.cc:
     --verilog_trace_parser (Trace verilog parser); default: false;
 
@@ -97,8 +82,12 @@ To pipe from stdin, use '-' as <file>.
     --verify_convergence (If true, and not incrementally formatting with
       --lines, verify that re-formatting the formatted output yields no further
       changes, i.e. formatting is convergent.); default: true;
+
+Try --helpfull to get a list of all flags or --help=substring shows help for
+flags which include specified substring in either in the name, or description or
+path.
 ```
 
 ## Version
 
-Generated on 2021-04-22 10:45:07 -0700 from [bdaa5bd](https://github.com/google/verible/commit/bdaa5bd66f557841c77e7e871a6b122ac62caf69)
+Generated on 2021-04-22 16:16:27 -0700 from [7eae750](https://github.com/google/verible/commit/7eae750fdccbecf3a26207719ce0adb1cf28b9c1)
