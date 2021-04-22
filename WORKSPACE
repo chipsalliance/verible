@@ -38,11 +38,9 @@ http_archive(
 
 http_archive(
     name = "com_github_google_glog",
-    # Using the same version as in kythe
-    # https://github.com/kythe/kythe/blob/410f69c5bcb69fabcb78a5200b7631a1bffabd31/external.bzl#L155
-    sha256 = "9b4867ab66c33c41e2672b5de7e3133d38411cdb75eeb0d2b72c88bb10375c71",
-    strip_prefix = "glog-ba8a9f6952d04d1403b97df24e6836227751454e",
-    urls = ["https://github.com/google/glog/archive/ba8a9f6952d04d1403b97df24e6836227751454e.zip"],
+    sha256 = "087a3de2eccce54a597fbb9d1530d4b8c1bae6ff6083511c19fe56b01a1f4f05",
+    strip_prefix = "glog-0.5.0-rc2",
+    urls = ["https://github.com/google/glog/archive/v0.5.0-rc2.tar.gz"],
 )
 
 #
