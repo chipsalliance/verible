@@ -21,6 +21,9 @@ build:macos --cxxopt=-std=c++17 --host_cxxopt=-std=c++17 --client_env=BAZEL_CXXO
 run:macos --cxxopt=-std=c++17 --host_cxxopt=-std=c++17 --client_env=BAZEL_CXXOPTS=-std=c++17
 test:macos --cxxopt=-std=c++17 --host_cxxopt=-std=c++17 --client_env=BAZEL_CXXOPTS=-std=c++17
 
+# Force the use clang-cl on Windows instead of MSVC. MSVC has some issues with
+# the codebase, so we focus the effort for now is to have a Windows Verible
+# compiled with clang-cl before fixing the issues unique to MSVC.
 build:windows --compiler=clang-cl --cxxopt=/std:c++17 --host_cxxopt=/std:c++17 --client_env=BAZEL_CXXOPTS=/std:c++17
 run:windows --compiler=clang-cl --cxxopt=/std:c++17 --host_cxxopt=/std:c++17 --client_env=BAZEL_CXXOPTS=/std:c++17
 test:windows --compiler=clang-cl --cxxopt=/std:c++17 --host_cxxopt=/std:c++17 --client_env=BAZEL_CXXOPTS=/std:c++17
