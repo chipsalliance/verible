@@ -29,7 +29,12 @@ cc_library(
         "verilog_lexer.cc",
     ],
     hdrs = ["verilog_lexer.h"],
-    copts = ["-Wno-implicit-fallthrough"],
+    copts = select({
+        "@platforms//os:windows": [],
+        "//conditions:default": [
+            "-Wno-implicit-fallthrough",
+        ],
+    }),
     deps = [
         ":verilog_token_enum",
         "//bazel:flex",
@@ -118,10 +123,13 @@ cc_library(
     name = "verilog_y_cc",
     srcs = ["verilog-final.tab.cc"],
     hdrs = ["verilog_parse_interface.h"],
-    copts = [
-        "-Wno-implicit-fallthrough",
-        "-Wno-type-limits",
-    ],
+    copts = select({
+        "@platforms//os:windows": [],
+        "//conditions:default": [
+            "-Wno-implicit-fallthrough",
+            "-Wno-type-limits",
+        ],
+    }),
     deps = [
         ":verilog_token_enum",
         "//common/parser:bison_parser_common",
