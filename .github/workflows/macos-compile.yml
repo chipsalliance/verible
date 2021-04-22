@@ -21,4 +21,4 @@ jobs:
         fetch-depth: 0
     - name: Build
       run: |
-        bazel test --test_output=errors --cxxopt=-Wno-range-loop-analysis --sandbox_debug //verilog/analysis:verilog_analyzer_test
+        bazel test --test_output=errors --cxxopt=-Wno-range-loop-analysis ...
