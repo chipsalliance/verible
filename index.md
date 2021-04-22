@@ -55,4 +55,4 @@ See the [README file for further information.](README.md)
 
 ## Version
 
-Generated on 2021-04-21 17:00:24 -0700 from [713e510](https://github.com/google/verible/commit/713e510250ba0f18e3fd634e27c7c4a182647411)
+Generated on 2021-04-21 20:09:00 -0700 from [fc4574e](https://github.com/google/verible/commit/fc4574ee582438800d7b9328cbe4dd99cfc84171)
