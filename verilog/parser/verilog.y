@@ -6427,7 +6427,7 @@ port_named
   | '.' member_name
     { $$ = MakeTaggedNode(N::kActualNamedPort, $1, $2, nullptr); }
   | TK_DOTSTAR
-    { $$ = move($1); }
+    { $$ = MakeTaggedNode(N::kActualNamedPort, $1, nullptr); }
   ;
 
 member_name

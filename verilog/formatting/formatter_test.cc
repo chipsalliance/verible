@@ -6166,19 +6166,17 @@ static constexpr FormatterTestCase kFormatterTestCases[] = {
      "      .*\n"
      "  );\n"
      "endmodule\n"},
-    //{
-    //    "module m;\n"
-    //    "foo bar(.a(a), .aa(aa), .* , .aaa(aaa));\n"
-    //    "endmodule\n",
-    //    "module m;\n"
-    //    "  foo bar (\n"
-    //    "      .a  (a),\n"
-    //    "      .aa (aa),\n"
-    //    "      .*,\n"
-    //    "      .aaa(aaa)\n"
-    //    "  );\n"
-    //    "endmodule\n"
-    //},
+    {"module m;\n"
+     "foo bar(.a(a), .aa(aa), .* , .aaa(aaa));\n"
+     "endmodule\n",
+     "module m;\n"
+     "  foo bar (\n"
+     "      .a  (a),\n"
+     "      .aa (aa),\n"
+     "      .*,\n"
+     "      .aaa(aaa)\n"
+     "  );\n"
+     "endmodule\n"},
 
     // Parameterized data types, declarations inside #() tabular alignment
     {// parameterized module with 'list_of_param_assignments'
