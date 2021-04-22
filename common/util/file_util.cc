@@ -175,7 +175,7 @@ absl::Status SetContents(absl::string_view filename,
 
 std::string JoinPath(absl::string_view base, absl::string_view name) {
   // TODO: this will certainly be different on Windows
-  static constexpr std::string_view kFileSeparator = "/";
+  static constexpr absl::string_view kFileSeparator = "/";
 
   // Make sure that we don't concatenation multiple superfluous separators.
   // Note, since we're using string_view, the substr() operations are cheap.

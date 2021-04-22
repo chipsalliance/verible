@@ -167,7 +167,7 @@ TEST(FileUtil, FileExistsDirectoryErrorMessage) {
   EXPECT_THAT(s.message(), HasSubstr("is a directory"));
 }
 
-static bool CreateFsStructure(std::string_view base_dir,
+static bool CreateFsStructure(absl::string_view base_dir,
                               const std::vector<absl::string_view>& tree) {
   for (absl::string_view path : tree) {
     const std::string full_path = file::JoinPath(base_dir, path);
