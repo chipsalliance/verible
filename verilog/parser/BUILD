@@ -122,10 +122,7 @@ record_recovered_syntax_errors(
 cc_library(
     name = "verilog_y_cc",
     srcs = ["verilog-final.tab.cc"],
-    hdrs = ["verilog_parse_interface.h"] + select({
-        "@platforms//os:windows": ["verilog.tab.hh"],
-        "//conditions:default": [],
-    }),
+    hdrs = ["verilog_parse_interface.h"],
     copts = select({
         "@platforms//os:windows": [],
         "//conditions:default": [
