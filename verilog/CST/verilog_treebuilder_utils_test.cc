@@ -52,7 +52,7 @@ TEST(MakeParenGroupTest, WrongOpen) {
 
 TEST(MakeParenGroupTest, WrongClose) {
   EXPECT_DEATH(MakeParenGroup(Leaf('(', "("), Leaf(1, "1"), Leaf('}', "}")),
-               "}");
+               "\\}");
 }
 
 }  // namespace

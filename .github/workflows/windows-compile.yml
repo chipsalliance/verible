@@ -150,31 +150,7 @@ jobs:
                     //verilog/analysis/checkers:uvm_macro_semicolon_rule_test `
                     //verilog/analysis/checkers:v2001_generate_begin_rule_test `
                     //verilog/analysis/checkers:void_cast_rule_test `
-                    //verilog/CST:DPI_test `
-                    //verilog/CST:class_test `
-                    //verilog/CST:constraints_test `
-                    //verilog/CST:context_functions_test `
-                    //verilog/CST:data_test `
-                    //verilog/CST:declaration_test `
-                    //verilog/CST:dimensions_test `
-                    //verilog/CST:expression_test `
-                    //verilog/CST:functions_test `
-                    //verilog/CST:identifier_test `
-                    //verilog/CST:macro_test `
-                    //verilog/CST:module_test `
-                    //verilog/CST:net_test `
-                    //verilog/CST:numbers_test `
-                    //verilog/CST:package_test `
-                    //verilog/CST:parameters_test `
-                    //verilog/CST:port_test `
-                    //verilog/CST:seq_block_test `
-                    //verilog/CST:statement_test `
-                    //verilog/CST:tasks_test `
-                    //verilog/CST:type_test `
-                    //verilog/CST:verilog_matchers_test `
-                    //verilog/CST:verilog_nonterminals_test `
-                    //verilog/CST:verilog_tree_json_test `
-                    //verilog/CST:verilog_tree_print_test `
+                    //verilog/CST/... `
                     //verilog/formatting:comment_controls_test `
                     //verilog/formatting:verilog_token_test `
                     //verilog/parser/... `
