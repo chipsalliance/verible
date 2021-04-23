@@ -50,20 +50,7 @@ jobs:
                     //common/formatting/... `
                     //common/lexer/... `
                     //common/parser/... `
-                    //common/strings:comment_utils_test `
-                    //common/strings:compare_test `
-                    //common/strings:diff_test `
-                    //common/strings:display_utils_test `
-                    //common/strings:line_column_map_test `
-                    //common/strings:naming_utils_test `
-                    //common/strings:obfuscator_test `
-                    //common/strings:position_test `
-                    //common/strings:random_test `
-                    //common/strings:range_test `
-                    //common/strings:rebase_test `
-                    //common/strings:split_test `
-                    //common/strings:string_memory_map_test `
-                    //common/strings:utf8_test `
+                    //common/strings/... `
                     //common/text/... `
                     //common/util:algorithm_test `
                     //common/util:auto_iterator_test `

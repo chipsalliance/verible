@@ -14,7 +14,13 @@
 
 #include "common/strings/patch.h"
 
-#include <unistd.h>
+#ifndef _WIN32
+#include <unistd.h>  // for isatty
+#else
+#include <io.h>
+// MSVC recommends to use _isatty...
+#define isatty _isatty
+#endif
 
 #include <deque>
 #include <iostream>
