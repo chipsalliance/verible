@@ -33,66 +33,16 @@ jobs:
       run: |
         bazel test  --test_output=errors `
                     //common/... `
-                    //external_libs:editscript_test `
+                    //external_libs/... `
                     //verilog/analysis:descriptions_test `
                     //verilog/analysis:extractors_test `
                     //verilog/analysis:json_diagnostics_test `
                     //verilog/analysis:lint_rule_registry_test `
                     //verilog/analysis:verilog_analyzer_test `
                     //verilog/analysis:verilog_equivalence_test `
-                    //verilog/analysis/checkers:always_comb_blocking_rule_test `
-                    //verilog/analysis/checkers:always_comb_rule_test `
-                    //verilog/analysis/checkers:always_ff_non_blocking_rule_test `
-                    //verilog/analysis/checkers:banned_declared_name_patterns_rule_test `
-                    //verilog/analysis/checkers:case_missing_default_rule_test `
-                    //verilog/analysis/checkers:constraint_name_style_rule_test `
-                    //verilog/analysis/checkers:create_object_name_match_rule_test `
-                    //verilog/analysis/checkers:endif_comment_rule_test `
-                    //verilog/analysis/checkers:enum_name_style_rule_test `
-                    //verilog/analysis/checkers:explicit_function_lifetime_rule_test `
-                    //verilog/analysis/checkers:explicit_function_task_parameter_type_rule_test `
-                    //verilog/analysis/checkers:explicit_parameter_storage_type_rule_test `
-                    //verilog/analysis/checkers:explicit_task_lifetime_rule_test `
-                    //verilog/analysis/checkers:forbid_consecutive_null_statements_rule_test `
-                    //verilog/analysis/checkers:forbid_defparam_rule_test `
-                    //verilog/analysis/checkers:forbidden_anonymous_enums_rule_test `
-                    //verilog/analysis/checkers:forbidden_anonymous_structs_unions_rule_test `
-                    //verilog/analysis/checkers:forbidden_macro_rule_test `
-                    //verilog/analysis/checkers:forbidden_symbol_rule_test `
-                    //verilog/analysis/checkers:generate_label_prefix_rule_test `
-                    //verilog/analysis/checkers:generate_label_rule_test `
-                    //verilog/analysis/checkers:interface_name_style_rule_test `
-                    //verilog/analysis/checkers:legacy_generate_region_rule_test `
-                    //verilog/analysis/checkers:legacy_genvar_declaration_rule_test `
-                    //verilog/analysis/checkers:line_length_rule_test `
-                    //verilog/analysis/checkers:macro_name_style_rule_test `
-                    //verilog/analysis/checkers:macro_string_concatenation_rule_test `
-                    //verilog/analysis/checkers:mismatched_labels_rule_test `
-                    //verilog/analysis/checkers:module_begin_block_rule_test `
-                    //verilog/analysis/checkers:module_instantiation_rules_test `
-                    //verilog/analysis/checkers:no_tabs_rule_test `
-                    //verilog/analysis/checkers:no_trailing_spaces_rule_test `
-                    //verilog/analysis/checkers:numeric_format_string_style_rule_test `
-                    //verilog/analysis/checkers:packed_dimensions_rule_test `
-                    //verilog/analysis/checkers:parameter_name_style_rule_test `
-                    //verilog/analysis/checkers:parameter_type_name_style_rule_test `
-                    //verilog/analysis/checkers:plusarg_assignment_rule_test `
-                    //verilog/analysis/checkers:port_name_suffix_rule_test `
-                    //verilog/analysis/checkers:positive_meaning_parameter_name_rule_test `
-                    //verilog/analysis/checkers:posix_eof_rule_test `
-                    //verilog/analysis/checkers:proper_parameter_declaration_rule_test `
-                    //verilog/analysis/checkers:signal_name_style_rule_test `
-                    //verilog/analysis/checkers:struct_union_name_style_rule_test `
-                    //verilog/analysis/checkers:suggest_parentheses_rule_test `
-                    //verilog/analysis/checkers:token_stream_lint_rule_test `
-                    //verilog/analysis/checkers:undersized_binary_literal_rule_test `
-                    //verilog/analysis/checkers:unpacked_dimensions_rule_test `
-                    //verilog/analysis/checkers:uvm_macro_semicolon_rule_test `
-                    //verilog/analysis/checkers:v2001_generate_begin_rule_test `
-                    //verilog/analysis/checkers:void_cast_rule_test `
+                    //verilog/analysis/checkers/... `
                     //verilog/CST/... `
-                    //verilog/formatting:comment_controls_test `
-                    //verilog/formatting:verilog_token_test `
+                    //verilog/formatting/... `
                     //verilog/parser/... `
                     //verilog/preprocessor/... `
                     //verilog/tools/kythe:indexing_facts_tree_test `
