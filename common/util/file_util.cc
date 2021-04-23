@@ -136,11 +136,9 @@ absl::Status FileExists(const std::string &filename) {
 absl::Status GetContents(absl::string_view filename, std::string *content) {
   std::ifstream fs;
   std::istream *stream = nullptr;
-  const bool use_stdin = filename == "-";
+  const bool use_stdin = filename == "-";  // convention: honor "-" as stdin
   if (use_stdin) {
-    // convention: honor "-" as stdin
     stream = &std::cin;
-    if (isatty(0)) std::cerr << "Enter input (terminate with Ctrl-D):\n";
   } else {
     const std::string filename_str = std::string(filename);
     absl::Status usable_file = FileExists(filename_str);
@@ -200,7 +198,7 @@ absl::StatusOr<Directory> ListDir(absl::string_view dir) {
   }
 
   for (const fs::directory_entry entry : fs::directory_iterator(d.path)) {
-    const std::string entry_name = entry.path();
+    const std::string entry_name = entry.path().string();
     if (entry.is_directory()) {
       d.directories.push_back(entry_name);
     } else {
@@ -216,7 +214,7 @@ absl::StatusOr<Directory> ListDir(absl::string_view dir) {
 namespace testing {
 
 std::string RandomFileBasename(absl::string_view prefix) {
-  return absl::StrCat(prefix, "-", getpid(), "-", random());
+  return absl::StrCat(prefix, "-", rand());
 }
 
 ScopedTestFile::ScopedTestFile(absl::string_view base_dir,
