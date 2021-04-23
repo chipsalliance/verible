@@ -61,17 +61,27 @@ static const Matcher& InstanceShadowMatcher() {
   static const Matcher matcher(SymbolIdentifierLeaf());
   return matcher;
 }
+static bool isInAllowedNode(const SyntaxTreeContext& ctx) {
+  return ctx.IsInside(NodeEnum::kSeqBlock) ||
+         ctx.IsInside(NodeEnum::kGenvarDeclaration) ||
+         ctx.IsInside(NodeEnum::kReference);
+}
 
 void InstanceShadowRule::HandleSymbol(const verible::Symbol& symbol,
                                       const SyntaxTreeContext& context) {
   verible::matcher::BoundSymbolManager manager;
+  bool omit_node = false;
   if (InstanceShadowMatcher().Matches(symbol, &manager)) {
     const auto& labels = FindAllSymbolIdentifierLeafs(symbol);
     if (labels.empty()) return;
+    // if the considered symbol name is not a declaration
     if (context.IsInside(NodeEnum::kReference)) return;
 
     const auto& rcontext = reversed_view(context);
-    const auto& directParent = *std::next(rcontext.begin());
+    const auto& rdirectParent = *std::next(rcontext.begin());
+    // we are looking for the potential labels that might overlap the considered
+    // declaration. We are searching all the labels within the visible scope
+    // until we find the node or we reach the top of the scope
     for (auto rc = rcontext.begin(); rc != rcontext.end(); rc++) {
       const auto& node = *rc;
 
@@ -79,35 +89,39 @@ void InstanceShadowRule::HandleSymbol(const verible::Symbol& symbol,
         if (ch == nullptr) {
           continue;
         }
-        if (ch->Tag().tag == static_cast<int>(NodeEnum::kGenvarDeclaration)) {
-          break;
-        }
         const auto& overlappingLabels = FindAllSymbolIdentifierLeafs(*ch);
-        if (overlappingLabels.empty()) {
-          continue;
+        for (auto& omatch : overlappingLabels) {
+          const auto& overlappingLabel = SymbolCastToLeaf(*omatch.match);
+          // variable in different scopes or this is not a
+          // vulnerable declaration
+          if (isInAllowedNode(omatch.context)) {
+            omit_node = true;
+            break;
+          }
+          const auto& label = SymbolCastToLeaf(*labels[0].match);
+          // if found label has the same adress as considered label
+          // we found the same node so we don't
+          // want to look further
+          if (omatch.match == labels[0].match) {
+            omit_node = true;
+            break;
+          }
+          // if considered label is the last node
+          // this is the ending node with label
+          if (rdirectParent->children().back().get() ==
+              node->children().back().get()) {
+            return;
+          }
+
+          if (overlappingLabel.get().text() == label.get().text()) {
+            violations_.insert(LintViolation(symbol, kMessage, context));
+            return;
+          }
         }
-        const auto& overlappingLabel =
-            SymbolCastToLeaf(*overlappingLabels[0].match);
-        const auto& label = SymbolCastToLeaf(*labels[0].match);
-        // if found label has the same adress as considered label
-        // we probably found the same node so we don't
-        // want to look further
-        if (overlappingLabels[0].match == labels[0].match) {
+        if (omit_node) {
+          omit_node = false;
           break;
         }
-        // if considered node is the last node
-        // it is probably a ending node with label
-        if (directParent->children().back().get() ==
-            node->children().back().get()) {
-          return;
-        }
-
-        if (overlappingLabel.get().text() == label.get().text()) {
-          violations_.insert(LintViolation(symbol, kMessage, context));
-          return;
-        }
-        // TODO this break is ugly, should be verifed in other way
-        break;
       }
     }
   }
