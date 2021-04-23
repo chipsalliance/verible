@@ -21,10 +21,7 @@ source ./.github/settings.sh
 # Make sure we don't have cc_library rules that use exceptions but do not
 # declare copts = ["-fexceptions"] in the rule. We want to make it as simple
 # as possible to compile without exceptions.
-# ... and unfortunately we have to disable this for now as the external
-# kythe dependency does use exceptions.
-# TODO(hzeller): Uncomment after https://github.com/google/verible/issues/747 is fixed.
-#BAZEL_OPTS="${BAZEL_OPTS} --cxxopt=-fno-exceptions"
+BAZEL_OPTS="${BAZEL_OPTS} --cxxopt=-fno-exceptions"
 
 # Turn warnings to 11. And fail compliation if we encounter one.
 BAZEL_OPTS="${BAZEL_OPTS} --cxxopt=-Werror"  # Always want bail on warning
@@ -39,18 +36,18 @@ BAZEL_OPTS="${BAZEL_OPTS} --cxxopt=-Wno-missing-field-initializers"
 # Warnings in our code-base, that we might consider removing.
 BAZEL_OPTS="${BAZEL_OPTS} --cxxopt=-Wno-redundant-move"
 
+# This is generated (only on CI?) when compiling storage.pb.cc;
+# some memset is out of range ?
+BAZEL_OPTS="${BAZEL_OPTS} --cxxopt=-Wno-array-bounds"
+
 # Warnings that come from other external parts that we compile.
 # Ideally, we would separate them out to ignore only there, while we keep
 # tight warnings on for 'our' code-base.
-# TODO(hzeller): figure out if bazel allows for that; WORKSPACE file ?
+# TODO(hzeller): Remove after https://github.com/google/verible/issues/747
+#                is figure out
 BAZEL_OPTS="${BAZEL_OPTS} --cxxopt=-Wno-implicit-fallthrough"     # gflags
 BAZEL_OPTS="${BAZEL_OPTS} --cxxopt=-Wno-cast-function-type"       # gflags
-BAZEL_OPTS="${BAZEL_OPTS} --cxxopt=-Wno-sign-compare"             # glog
-BAZEL_OPTS="${BAZEL_OPTS} --cxxopt=-Wno-stringop-truncation"      # memcache
-BAZEL_OPTS="${BAZEL_OPTS} --cxxopt=-Wno-int-in-bool-context"      # memcache
 BAZEL_OPTS="${BAZEL_OPTS} --cxxopt=-Wno-deprecated-declarations"  # jsconcpp
-BAZEL_OPTS="${BAZEL_OPTS} --cxxopt=-Wno-unused-but-set-variable"  # kythe
-BAZEL_OPTS="${BAZEL_OPTS} --cxxopt=-Wno-array-bounds"             # kythe
 
 case "$MODE" in
 test)
