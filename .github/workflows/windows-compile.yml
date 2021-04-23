@@ -39,7 +39,5 @@ jobs:
                     //verilog/formatting/... `
                     //verilog/parser/... `
                     //verilog/preprocessor/... `
-                    //verilog/tools/kythe:indexing_facts_tree_test `
-                    //verilog/tools/kythe:kythe_facts_test `
-                    //verilog/tools/kythe:scope_resolver_test `
+                    //verilog/tools/kythe/... `
                     //verilog/transform/...

@@ -235,7 +235,7 @@ sh_test(
     srcs = ["verilog_kythe_extractor_test.sh"],
     args = ["$(location :verible-verilog-kythe-extractor)"],
     data = [":verible-verilog-kythe-extractor"],
-    deps = [],
+    deps = ["@bazel_tools//tools/bash/runfiles"],
 )
 
 sh_test(
