@@ -21,13 +21,9 @@ jobs:
         fetch-depth: 0
     - name: Install dependencies
       run: choco install llvm
-    # Only check flex/bison targets at the moment, since Verible cannot be
-    # fully compiled on Windows (yet!)
-    - name: Build flex/bison files
+    - name: Build Verible
       run: |
-        bazel build //common/analysis:command_file_lex
-        bazel build //verilog/parser:verilog_y
-        bazel build //verilog/parser:verilog_lex
+        bazel build -c opt //...
     # Windows support is in progress, only run "working" tests
     - name: Run known-to-work tests
       run: |
