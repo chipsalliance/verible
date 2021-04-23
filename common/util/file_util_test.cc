@@ -27,9 +27,17 @@
 using testing::HasSubstr;
 
 #undef EXPECT_OK
-#define EXPECT_OK(value) { auto s = (value); EXPECT_TRUE(s.ok()) << s; }
+#define EXPECT_OK(value)      \
+  {                           \
+    auto s = (value);         \
+    EXPECT_TRUE(s.ok()) << s; \
+  }
 #undef ASSERT_OK
-#define ASSERT_OK(value) { auto s = (value); ASSERT_TRUE(s.ok()) << s; }
+#define ASSERT_OK(value)      \
+  {                           \
+    auto s = (value);         \
+    ASSERT_TRUE(s.ok()) << s; \
+  }
 
 namespace verible {
 namespace util {
@@ -122,17 +130,6 @@ TEST(FileUtil, ScopedTestFile) {
   ScopedTestFile test_file(testing::TempDir(), test_content);
   std::string read_back_content;
   EXPECT_OK(file::GetContents(test_file.filename(), &read_back_content));
-  EXPECT_EQ(test_content, read_back_content);
-}
-
-TEST(FileUtil, ScopedTestFileStdin) {
-  // When running interactively, skip this test to avoid waiting for stdin.
-  if (isatty(STDIN_FILENO)) return;
-  // Testing is non-interactive, so reading from stdin will be immediately
-  // closed, resulting in an empty string.
-  const absl::string_view test_content = "";
-  std::string read_back_content;
-  EXPECT_OK(file::GetContents("-", &read_back_content));
   EXPECT_EQ(test_content, read_back_content);
 }
 

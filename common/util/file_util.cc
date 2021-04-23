@@ -67,8 +67,8 @@ absl::string_view Stem(absl::string_view filename) {
 static absl::Status CreateErrorStatusFromSysError(const char *fallback_msg,
                                                   int sys_error) {
   using absl::StatusCode;
-  const char *const system_msg = sys_error == 0
-    ? fallback_msg : strerror(sys_error);
+  const char *const system_msg =
+      sys_error == 0 ? fallback_msg : strerror(sys_error);
   switch (sys_error) {
     case EPERM:
     case EACCES:
@@ -88,7 +88,7 @@ static absl::Status CreateErrorStatusFromErrno(const char *fallback_msg) {
   return CreateErrorStatusFromSysError(fallback_msg, errno);
 }
 static absl::Status CreateErrorStatusFromErr(const char *fallback_msg,
-                                             const std::error_code& err) {
+                                             const std::error_code &err) {
   // TODO: this assumes that err.value() returns errno-like values. Might not
   // always be the case.
   return CreateErrorStatusFromSysError(fallback_msg, err.value());
@@ -105,8 +105,7 @@ absl::Status UpwardFileSearch(absl::string_view start,
   fs::path probe_dir = absolute_path;
   for (;;) {
     *result = (probe_dir / search_file).string();
-    if (FileExists(*result).ok())
-      return absl::OkStatus();
+    if (FileExists(*result).ok()) return absl::OkStatus();
     fs::path one_up = probe_dir.parent_path();
     if (one_up == probe_dir) break;
     probe_dir = one_up;
