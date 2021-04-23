@@ -15,6 +15,7 @@
 #include "common/util/file_util.h"
 
 #include <algorithm>
+#include <filesystem>
 #include <string>
 #include <vector>
 
@@ -72,20 +73,25 @@ TEST(FileUtil, Stem) {
   EXPECT_EQ(file::Stem("/foo/bar"), "/foo/bar");
 }
 
+// Returns the forward-slashed path in platform-specific notation.
+static std::string PlatformPath(const std::string& path) {
+  return std::filesystem::path(path).lexically_normal().string();
+}
+
 TEST(FileUtil, JoinPath) {
-  EXPECT_EQ(file::JoinPath("foo", ""), "foo/");
+  EXPECT_EQ(file::JoinPath("foo", ""), PlatformPath("foo/"));
   EXPECT_EQ(file::JoinPath("", "bar"), "bar");
-  EXPECT_EQ(file::JoinPath("foo", "bar"), "foo/bar");
+  EXPECT_EQ(file::JoinPath("foo", "bar"), PlatformPath("foo/bar"));
 
   // Assemble an absolute path
   EXPECT_EQ(file::JoinPath("", "bar"), "bar");
-  EXPECT_EQ(file::JoinPath("/", "bar"), "/bar");
+  EXPECT_EQ(file::JoinPath("/", "bar"), PlatformPath("/bar"));
 
   // Lightly canonicalize multiple consecutive slashes
-  EXPECT_EQ(file::JoinPath("foo/", "bar"), "foo/bar");
-  EXPECT_EQ(file::JoinPath("foo///", "bar"), "foo/bar");
-  EXPECT_EQ(file::JoinPath("foo/", "/bar"), "foo/bar");
-  EXPECT_EQ(file::JoinPath("foo/", "///bar"), "foo/bar");
+  EXPECT_EQ(file::JoinPath("foo/", "bar"), PlatformPath("foo/bar"));
+  EXPECT_EQ(file::JoinPath("foo///", "bar"), PlatformPath("foo/bar"));
+  EXPECT_EQ(file::JoinPath("foo/", "/bar"), PlatformPath("foo/bar"));
+  EXPECT_EQ(file::JoinPath("foo/", "///bar"), PlatformPath("foo/bar"));
 
 #ifdef _WIN32
   EXPECT_EQ(file::JoinPath("C:\\foo", "bar"), "C:\\foo\\bar");
@@ -204,17 +210,17 @@ TEST(FileUtil, UpwardFileSearchTest) {
   // We don't compare the full path, as the UpwardFileSearch() makes it an
   // realpath which might not entirely match our root_dir prefix anymore; but
   // we do know that the suffix should be the same.
-  EXPECT_TRUE(absl::EndsWith(result, "up-search/foo/foo-file"));
+  EXPECT_TRUE(absl::EndsWith(result, PlatformPath("up-search/foo/foo-file")));
 
   // Somewhere below
   EXPECT_OK(file::UpwardFileSearch(file::JoinPath(root_dir, "foo/bar/baz"),
                                    "foo-file", &result));
-  EXPECT_TRUE(absl::EndsWith(result, "up-search/foo/foo-file"));
+  EXPECT_TRUE(absl::EndsWith(result, PlatformPath("up-search/foo/foo-file")));
 
   // Find toplevel file
   EXPECT_OK(file::UpwardFileSearch(file::JoinPath(root_dir, "foo/bar/baz"),
                                    "toplevel-file", &result));
-  EXPECT_TRUE(absl::EndsWith(result, "up-search/toplevel-file"));
+  EXPECT_TRUE(absl::EndsWith(result, PlatformPath("up-search/toplevel-file")));
 
   // Negative test.
   auto status = file::UpwardFileSearch(file::JoinPath(root_dir, "foo/bar/baz"),
