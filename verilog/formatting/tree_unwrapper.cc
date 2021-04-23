@@ -964,8 +964,8 @@ void TreeUnwrapper::SetIndentationsAndCreatePartitions(
       // This allows for indenting initializer lists
       if (Context().DirectParentIs(NodeEnum::kAssignmentPattern)) {
         // Do not further indent preprocessor clauses.
-        const int indent = suppress_indentation ? 0 : style_.wrap_spaces;
-        VisitIndentedSection(node, indent, PartitionPolicyEnum::kAlwaysExpand);
+        const int indent = suppress_indentation ? 0 : style_.indentation_spaces;
+        VisitIndentedSection(node, indent, PartitionPolicyEnum::kFitOnLineElseExpand);
       } else {
         // Default handling
         TraverseChildren(node);
@@ -1145,6 +1145,9 @@ void TreeUnwrapper::SetIndentationsAndCreatePartitions(
       } else if (Context().DirectParentIs(NodeEnum::kOpenRangeList) &&
                  Context().IsInside(NodeEnum::kConcatenationExpression)) {
         VisitIndentedSection(node, 0,
+                             PartitionPolicyEnum::kFitOnLineElseExpand);
+      } else if (Context().DirectParentIs(NodeEnum::kAssignmentPattern)) {
+        VisitIndentedSection(node, style_.wrap_spaces,
                              PartitionPolicyEnum::kFitOnLineElseExpand);
       } else {
         TraverseChildren(node);
