@@ -46,5 +46,5 @@ sh_test(
         ":verible-patch-tool",
         ":verible-transform-interactive",
     ],
-    deps = [],
+    deps = ["@bazel_tools//tools/bash/runfiles"],
 )

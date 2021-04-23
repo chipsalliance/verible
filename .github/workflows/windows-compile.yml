@@ -32,49 +32,7 @@ jobs:
     - name: Run known-to-work tests
       run: |
         bazel test  --test_output=errors `
-                    //common/util:file_util_test `
-                    //common/analysis:command_file_lexer_test `
-                    //common/analysis:file_analyzer_test `
-                    //common/analysis:line_linter_test `
-                    //common/analysis:lint_rule_status_test `
-                    //common/analysis:linter_test_utils_test `
-                    //common/analysis:syntax_tree_linter_test `
-                    //common/analysis:syntax_tree_search_test `
-                    //common/analysis:syntax_tree_search_test_utils_test `
-                    //common/analysis:text_structure_linter_test `
-                    //common/analysis:token_stream_linter_test `
-                    //common/analysis/matcher:core_matchers_test `
-                    //common/analysis/matcher:descent_path_test `
-                    //common/analysis/matcher:matcher_builders_test `
-                    //common/analysis/matcher:matcher_test `
-                    //common/formatting/... `
-                    //common/lexer/... `
-                    //common/parser/... `
-                    //common/strings/... `
-                    //common/text/... `
-                    //common/tools:patch_tool_test
-                    //common/util:algorithm_test `
-                    //common/util:auto_iterator_test `
-                    //common/util:auto_pop_stack_test `
-                    //common/util:bijective_map_test `
-                    //common/util:container_iterator_range_test `
-                    //common/util:enum_flags_test `
-                    //common/util:expandable_tree_view_test `
-                    //common/util:forward_test `
-                    //common/util:interval_map_test `
-                    //common/util:interval_set_test `
-                    //common/util:interval_test `
-                    //common/util:iterator_adaptors_test `
-                    //common/util:iterator_range_test `
-                    //common/util:map_tree_test `
-                    //common/util:range_test `
-                    //common/util:spacer_test `
-                    //common/util:subcommand_test `
-                    //common/util:top_n_test `
-                    //common/util:type_traits_test `
-                    //common/util:value_saver_test `
-                    //common/util:vector_tree_test `
-                    //common/util:with_reason_test `
+                    //common/... `
                     //external_libs:editscript_test `
                     //verilog/analysis:descriptions_test `
                     //verilog/analysis:extractors_test `
