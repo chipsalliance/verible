@@ -19,13 +19,12 @@
 #define STDOUT_FILENO _fileno(stdout)
 #endif
 
-#include "verilog/tools/kythe/kythe_proto_output.h"
-
 #include "google/protobuf/io/coded_stream.h"
 #include "google/protobuf/io/zero_copy_stream_impl.h"
 #include "third_party/proto/kythe/storage.pb.h"
 #include "verilog/tools/kythe/kythe_facts.h"
 #include "verilog/tools/kythe/kythe_facts_extractor.h"
+#include "verilog/tools/kythe/kythe_proto_output.h"
 
 namespace verilog {
 namespace kythe {

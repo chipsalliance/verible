@@ -7598,7 +7598,8 @@ TEST(BuildSymbolTableTest, ModuleInstancesFromProjectMissingFile) {
                                           &build_diagnostics);
   ASSERT_FALSE(build_diagnostics.empty());
 #ifdef _WIN32
-  EXPECT_THAT(build_diagnostics.front().message(), HasSubstr("The system cannot find the path specified."));
+  EXPECT_THAT(build_diagnostics.front().message(),
+              HasSubstr("The system cannot find the path specified."));
 #else
   EXPECT_THAT(build_diagnostics.front().message(), HasSubstr("No such file"));
 #endif
