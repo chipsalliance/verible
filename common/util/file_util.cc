@@ -41,18 +41,18 @@
  *                issues have been resolved.
  */
 #ifdef _WIN32
-#  define USE_CPP_17_FILESYSTEM 1
+#define USE_CPP_17_FILESYSTEM 1
 #endif
 
 #ifdef USE_CPP_17_FILESYSTEM
-#  include <filesystem>
-#  include <system_error>
+#include <filesystem>
+#include <system_error>
 namespace fs = std::filesystem;
 #else
-#  include <dirent.h>
-#  include <sys/stat.h>
-#  include <sys/types.h>
-#  include <unistd.h>
+#include <dirent.h>
+#include <sys/stat.h>
+#include <sys/types.h>
+#include <unistd.h>
 #endif
 
 namespace verible {

@@ -26,11 +26,11 @@
 
 // Temporary until we have all platforms on C++17, see comment in file_util.cc
 #ifdef _WIN32
-#  define USE_CPP_17_FILESYSTEM 1
+#define USE_CPP_17_FILESYSTEM 1
 #endif
 
 #ifdef USE_CPP_17_FILESYSTEM
-#  include <filesystem>
+#include <filesystem>
 #endif
 
 #undef EXPECT_OK
