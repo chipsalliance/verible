@@ -595,7 +595,7 @@ AlignablePartitionGroup::CalculateAlignmentSpacings(
   {
     // Total width does not include initial left-indentation.
     // Assume indentation is the same for all partitions in each group.
-    const int indentation = rows.front().base()->Value().IndentationSpaces();
+    const int indentation = rows.front()->Value().IndentationSpaces();
     const int total_column_width = std::accumulate(
         column_configs.begin(), column_configs.end(), indentation,
         [](int total_width, const AlignedColumnConfiguration& c) {
