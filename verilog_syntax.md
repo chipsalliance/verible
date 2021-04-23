@@ -51,4 +51,4 @@ path.
 
 ## Version
 
-Generated on 2021-04-23 11:33:58 -0700 from [cd868d9](https://github.com/google/verible/commit/cd868d94d6e1ad024c0761b96fe655ca7a0f4f23)
+Generated on 2021-04-23 13:13:16 -0700 from [9f6badf](https://github.com/google/verible/commit/9f6badff5384eee93e4a7ea5f31061c68c9fd21b)
