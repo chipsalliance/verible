@@ -23,7 +23,7 @@ sh_test(
     srcs = ["patch_tool_test.sh"],
     args = ["$(location :verible-patch-tool)"],
     data = [":verible-patch-tool"],
-    deps = [],
+    deps = ["@bazel_tools//tools/bash/runfiles"],
 )
 
 # This script is intended to run post-install and expect to be co-located with:

@@ -52,6 +52,7 @@ jobs:
                     //common/parser/... `
                     //common/strings/... `
                     //common/text/... `
+                    //common/tools:patch_tool_test
                     //common/util:algorithm_test `
                     //common/util:auto_iterator_test `
                     //common/util:auto_pop_stack_test `

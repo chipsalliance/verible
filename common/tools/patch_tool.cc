@@ -12,7 +12,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#ifndef _WIN32
 #include <unistd.h>  // for isatty
+#else
+#include <io.h>
+// MSVC recommends to use _isatty...
+#define isatty _isatty
+#endif
 
 #include <functional>
 #include <iostream>
