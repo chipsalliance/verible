@@ -34,13 +34,7 @@ jobs:
         bazel test  --test_output=errors `
                     //common/... `
                     //external_libs/... `
-                    //verilog/analysis:descriptions_test `
-                    //verilog/analysis:extractors_test `
-                    //verilog/analysis:json_diagnostics_test `
-                    //verilog/analysis:lint_rule_registry_test `
-                    //verilog/analysis:verilog_analyzer_test `
-                    //verilog/analysis:verilog_equivalence_test `
-                    //verilog/analysis/checkers/... `
+                    //verilog/analysis/... `
                     //verilog/CST/... `
                     //verilog/formatting/... `
                     //verilog/parser/... `
