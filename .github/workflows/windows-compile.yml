@@ -39,5 +39,6 @@ jobs:
                     //verilog/formatting/... `
                     //verilog/parser/... `
                     //verilog/preprocessor/... `
+                    //verilog/tools/diff/... `
                     //verilog/tools/kythe/... `
                     //verilog/transform/...

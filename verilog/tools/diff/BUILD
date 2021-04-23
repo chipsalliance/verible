@@ -25,6 +25,7 @@ sh_test(
     srcs = ["diff_user_errors_test.sh"],
     args = ["$(location :verible-verilog-diff)"],
     data = [":verible-verilog-diff"],
+    deps = ["@bazel_tools//tools/bash/runfiles"],
 )
 
 sh_test(
@@ -33,6 +34,7 @@ sh_test(
     srcs = ["diff_format_match_test.sh"],
     args = ["$(location :verible-verilog-diff)"],
     data = [":verible-verilog-diff"],
+    deps = ["@bazel_tools//tools/bash/runfiles"],
 )
 
 sh_test(
@@ -41,6 +43,7 @@ sh_test(
     srcs = ["diff_format_mismatch_test.sh"],
     args = ["$(location :verible-verilog-diff)"],
     data = [":verible-verilog-diff"],
+    deps = ["@bazel_tools//tools/bash/runfiles"],
 )
 
 sh_test(
@@ -49,6 +52,7 @@ sh_test(
     srcs = ["diff_format_lex_error_test.sh"],
     args = ["$(location :verible-verilog-diff)"],
     data = [":verible-verilog-diff"],
+    deps = ["@bazel_tools//tools/bash/runfiles"],
 )
 
 sh_test(
@@ -57,6 +61,7 @@ sh_test(
     srcs = ["diff_obfuscate_match_test.sh"],
     args = ["$(location :verible-verilog-diff)"],
     data = [":verible-verilog-diff"],
+    deps = ["@bazel_tools//tools/bash/runfiles"],
 )
 
 sh_test(
@@ -65,4 +70,5 @@ sh_test(
     srcs = ["diff_obfuscate_mismatch_test.sh"],
     args = ["$(location :verible-verilog-diff)"],
     data = [":verible-verilog-diff"],
+    deps = ["@bazel_tools//tools/bash/runfiles"],
 )
