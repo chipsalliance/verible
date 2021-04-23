@@ -125,10 +125,15 @@ TEST(FileUtil, StatusErrorReporting) {
   EXPECT_OK(file::GetContents(test_file, &content));
   EXPECT_EQ(content, "foo");
 
+#ifndef _WIN32
+  // The following chmod() is not working on Win32. So let's not use
+  // this test here.
+  // TODO: Can we make permission-denied test that works on Windows ?
   chmod(test_file.c_str(), 0);  // Enforce a permission denied situation
   status = file::GetContents(test_file, &content);
   EXPECT_FALSE(status.ok());
   EXPECT_EQ(status.code(), absl::StatusCode::kPermissionDenied) << status;
+#endif
 }
 
 TEST(FileUtil, ScopedTestFile) {
