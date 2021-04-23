@@ -70,7 +70,6 @@ cc_library(
         ":v2001-generate-begin-rule",
         ":void-cast-rule",
         ":instance-shadow-rule",
-        ":legacy-genvar-declaration-rule",
     ],
 )
 
