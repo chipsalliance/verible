@@ -155,7 +155,7 @@ jobs:
     runs-on: ubuntu-20.04
     # Github actions resources are limited; don't build artifacts for all
     # platforms on every pull request, only on push.
-    if: ${{github.event_name == 'push'}}
+    #if: ${{github.event_name == 'push'}}
     strategy:
       fail-fast: false
       matrix:
