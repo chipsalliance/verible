@@ -45,15 +45,7 @@ jobs:
                     //common/analysis/matcher:descent_path_test `
                     //common/analysis/matcher:matcher_builders_test `
                     //common/analysis/matcher:matcher_test `
-                    //common/formatting:basic_format_style_test `
-                    //common/formatting:format_token_test `
-                    //common/formatting:line_wrap_searcher_test `
-                    //common/formatting:state_node_test `
-                    //common/formatting:token_partition_tree_test `
-                    //common/formatting:tree_annotator_test `
-                    //common/formatting:tree_unwrapper_test `
-                    //common/formatting:unwrapped_line_test `
-                    //common/formatting:verification_test `
+                    //common/formatting/... `
                     //common/lexer/... `
                     //common/parser/... `
                     //common/strings:comment_utils_test `
