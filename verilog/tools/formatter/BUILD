@@ -58,6 +58,7 @@ sh_test(
     srcs = ["format_file_test.sh"],
     args = ["$(location :verible-verilog-format)"],
     data = [":verible-verilog-format"],
+    deps = ["@bazel_tools//tools/bash/runfiles"],
 )
 
 sh_test(
@@ -66,6 +67,7 @@ sh_test(
     srcs = ["format_file_lex_error_test.sh"],
     args = ["$(location :verible-verilog-format)"],
     data = [":verible-verilog-format"],
+    deps = ["@bazel_tools//tools/bash/runfiles"],
 )
 
 sh_test(
@@ -74,6 +76,7 @@ sh_test(
     srcs = ["format_file_syntax_error_test.sh"],
     args = ["$(location :verible-verilog-format)"],
     data = [":verible-verilog-format"],
+    deps = ["@bazel_tools//tools/bash/runfiles"],
 )
 
 sh_test(
@@ -82,6 +85,7 @@ sh_test(
     srcs = ["format_file_lines_test.sh"],
     args = ["$(location :verible-verilog-format)"],
     data = [":verible-verilog-format"],
+    deps = ["@bazel_tools//tools/bash/runfiles"],
 )
 
 sh_test(
@@ -90,6 +94,7 @@ sh_test(
     srcs = ["format_file_badlines_test.sh"],
     args = ["$(location :verible-verilog-format)"],
     data = [":verible-verilog-format"],
+    deps = ["@bazel_tools//tools/bash/runfiles"],
 )
 
 sh_test(
@@ -98,6 +103,7 @@ sh_test(
     srcs = ["format_inplace_test.sh"],
     args = ["$(location :verible-verilog-format)"],
     data = [":verible-verilog-format"],
+    deps = ["@bazel_tools//tools/bash/runfiles"],
 )
 
 sh_test(
@@ -106,6 +112,7 @@ sh_test(
     srcs = ["format_stdin_test.sh"],
     args = ["$(location :verible-verilog-format)"],
     data = [":verible-verilog-format"],
+    deps = ["@bazel_tools//tools/bash/runfiles"],
 )
 
 sh_test(
@@ -114,4 +121,5 @@ sh_test(
     srcs = ["format_stdin_inplace_test.sh"],
     args = ["$(location :verible-verilog-format)"],
     data = [":verible-verilog-format"],
+    deps = ["@bazel_tools//tools/bash/runfiles"],
 )
