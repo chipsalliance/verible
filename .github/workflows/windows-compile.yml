@@ -31,7 +31,9 @@ jobs:
     # Windows support is in progress, only run "working" tests
     - name: Run known-to-work tests
       run: |
-        bazel test  //common/analysis:command_file_lexer_test `
+        bazel test  --test_output=errors `
+                    //common/util:file_util_test `
+                    //common/analysis:command_file_lexer_test `
                     //common/analysis:file_analyzer_test `
                     //common/analysis:line_linter_test `
                     //common/analysis:lint_rule_status_test `

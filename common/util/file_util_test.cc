@@ -24,12 +24,29 @@
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 
-using testing::HasSubstr;
+// Temporary until we have all platforms on C++17, see comment in file_util.cc
+#ifdef _WIN32
+#define USE_CPP_17_FILESYSTEM 1
+#endif
+
+#ifdef USE_CPP_17_FILESYSTEM
+#include <filesystem>
+#endif
 
 #undef EXPECT_OK
-#define EXPECT_OK(value) EXPECT_TRUE((value).ok())
+#define EXPECT_OK(value)      \
+  {                           \
+    auto s = (value);         \
+    EXPECT_TRUE(s.ok()) << s; \
+  }
 #undef ASSERT_OK
-#define ASSERT_OK(value) ASSERT_TRUE((value).ok())
+#define ASSERT_OK(value)      \
+  {                           \
+    auto s = (value);         \
+    ASSERT_TRUE(s.ok()) << s; \
+  }
+
+using testing::HasSubstr;
 
 namespace verible {
 namespace util {
@@ -64,21 +81,33 @@ TEST(FileUtil, Stem) {
   EXPECT_EQ(file::Stem("/foo/bar"), "/foo/bar");
 }
 
+// Returns the forward-slashed path in platform-specific notation.
+static std::string PlatformPath(const std::string& path) {
+#ifdef USE_CPP_17_FILESYSTEM
+  return std::filesystem::path(path).lexically_normal().string();
+#else
+  return path;
+#endif
+}
+
 TEST(FileUtil, JoinPath) {
-  EXPECT_EQ(file::JoinPath("foo", ""), "foo/");
-  EXPECT_EQ(file::JoinPath("", "bar"), "/bar");
-  EXPECT_EQ(file::JoinPath("foo", "bar"), "foo/bar");
+  EXPECT_EQ(file::JoinPath("foo", ""), PlatformPath("foo/"));
+  EXPECT_EQ(file::JoinPath("", "bar"), "bar");
+  EXPECT_EQ(file::JoinPath("foo", "bar"), PlatformPath("foo/bar"));
 
   // Assemble an absolute path
-  EXPECT_EQ(file::JoinPath("", "bar"), "/bar");
-  EXPECT_EQ(file::JoinPath("/", "bar"), "/bar");
-  EXPECT_EQ(file::JoinPath("///", "///bar"), "/bar");
+  EXPECT_EQ(file::JoinPath("", "bar"), "bar");
+  EXPECT_EQ(file::JoinPath("/", "bar"), PlatformPath("/bar"));
 
   // Lightly canonicalize multiple consecutive slashes
-  EXPECT_EQ(file::JoinPath("foo/", "bar"), "foo/bar");
-  EXPECT_EQ(file::JoinPath("foo///", "bar"), "foo/bar");
-  EXPECT_EQ(file::JoinPath("foo/", "/bar"), "foo/bar");
-  EXPECT_EQ(file::JoinPath("foo/", "///bar"), "foo/bar");
+  EXPECT_EQ(file::JoinPath("foo/", "bar"), PlatformPath("foo/bar"));
+  EXPECT_EQ(file::JoinPath("foo///", "bar"), PlatformPath("foo/bar"));
+  EXPECT_EQ(file::JoinPath("foo/", "/bar"), PlatformPath("foo/bar"));
+  EXPECT_EQ(file::JoinPath("foo/", "///bar"), PlatformPath("foo/bar"));
+
+#ifdef _WIN32
+  EXPECT_EQ(file::JoinPath("C:\\foo", "bar"), "C:\\foo\\bar");
+#endif
 }
 
 TEST(FileUtil, CreateDir) {
@@ -87,6 +116,7 @@ TEST(FileUtil, CreateDir) {
   const absl::string_view test_content = "directory create test";
 
   EXPECT_OK(file::CreateDir(test_dir));
+  EXPECT_OK(file::CreateDir(test_dir));  // Creating twice should succeed
 
   EXPECT_OK(file::SetContents(test_file, test_content));
   std::string read_back_content;
@@ -107,10 +137,15 @@ TEST(FileUtil, StatusErrorReporting) {
   EXPECT_OK(file::GetContents(test_file, &content));
   EXPECT_EQ(content, "foo");
 
+#ifndef _WIN32
+  // The following chmod() is not working on Win32. So let's not use
+  // this test here.
+  // TODO: Can we make permission-denied test that works on Windows ?
   chmod(test_file.c_str(), 0);  // Enforce a permission denied situation
   status = file::GetContents(test_file, &content);
   EXPECT_FALSE(status.ok());
   EXPECT_EQ(status.code(), absl::StatusCode::kPermissionDenied) << status;
+#endif
 }
 
 TEST(FileUtil, ScopedTestFile) {
@@ -118,17 +153,6 @@ TEST(FileUtil, ScopedTestFile) {
   ScopedTestFile test_file(testing::TempDir(), test_content);
   std::string read_back_content;
   EXPECT_OK(file::GetContents(test_file.filename(), &read_back_content));
-  EXPECT_EQ(test_content, read_back_content);
-}
-
-TEST(FileUtil, ScopedTestFileStdin) {
-  // When running interactively, skip this test to avoid waiting for stdin.
-  if (isatty(STDIN_FILENO)) return;
-  // Testing is non-interactive, so reading from stdin will be immediately
-  // closed, resulting in an empty string.
-  const absl::string_view test_content = "";
-  std::string read_back_content;
-  EXPECT_OK(file::GetContents("-", &read_back_content));
   EXPECT_EQ(test_content, read_back_content);
 }
 
@@ -203,17 +227,17 @@ TEST(FileUtil, UpwardFileSearchTest) {
   // We don't compare the full path, as the UpwardFileSearch() makes it an
   // realpath which might not entirely match our root_dir prefix anymore; but
   // we do know that the suffix should be the same.
-  EXPECT_TRUE(absl::EndsWith(result, "up-search/foo/foo-file"));
+  EXPECT_TRUE(absl::EndsWith(result, PlatformPath("up-search/foo/foo-file")));
 
   // Somewhere below
   EXPECT_OK(file::UpwardFileSearch(file::JoinPath(root_dir, "foo/bar/baz"),
                                    "foo-file", &result));
-  EXPECT_TRUE(absl::EndsWith(result, "up-search/foo/foo-file"));
+  EXPECT_TRUE(absl::EndsWith(result, PlatformPath("up-search/foo/foo-file")));
 
   // Find toplevel file
   EXPECT_OK(file::UpwardFileSearch(file::JoinPath(root_dir, "foo/bar/baz"),
                                    "toplevel-file", &result));
-  EXPECT_TRUE(absl::EndsWith(result, "up-search/toplevel-file"));
+  EXPECT_TRUE(absl::EndsWith(result, PlatformPath("up-search/toplevel-file")));
 
   // Negative test.
   auto status = file::UpwardFileSearch(file::JoinPath(root_dir, "foo/bar/baz"),
@@ -240,7 +264,7 @@ TEST(FileUtil, ReadNonexistentDirectory) {
 
   auto dir_or = file::ListDir(test_dir);
   EXPECT_FALSE(dir_or.ok());
-  EXPECT_EQ(dir_or.status().code(), absl::StatusCode::kInternal);
+  EXPECT_EQ(dir_or.status().code(), absl::StatusCode::kNotFound);
 }
 
 TEST(FileUtil, ListNotADirectory) {
@@ -248,7 +272,7 @@ TEST(FileUtil, ListNotADirectory) {
 
   auto dir_or = file::ListDir(tempfile.filename());
   EXPECT_FALSE(dir_or.ok());
-  EXPECT_EQ(dir_or.status().code(), absl::StatusCode::kNotFound);
+  EXPECT_EQ(dir_or.status().code(), absl::StatusCode::kInvalidArgument);
 }
 
 TEST(FileUtil, ReadDirectory) {
@@ -276,7 +300,11 @@ TEST(FileUtil, ReadDirectory) {
 
   const auto& dir = *dir_or;
   EXPECT_EQ(dir.path, test_dir);
+
+  EXPECT_EQ(dir.directories.size(), test_directories.size());
   EXPECT_EQ(dir.directories, test_directories);
+
+  EXPECT_EQ(dir.files.size(), test_files.size());
   EXPECT_EQ(dir.files, test_files);
 }
 
