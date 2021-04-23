@@ -14,19 +14,17 @@
 
 #include "common/util/file_util.h"
 
-#include <dirent.h>
 #include <errno.h>
 #include <stdlib.h>
 #include <string.h>
-#include <sys/stat.h>
-#include <sys/types.h>
-#include <unistd.h>
 
 #include <algorithm>
+#include <filesystem>
 #include <fstream>
 #include <iostream>
 #include <streambuf>
 #include <string>
+#include <system_error>
 
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"
@@ -35,6 +33,8 @@
 #include "absl/strings/str_split.h"
 #include "absl/strings/string_view.h"
 #include "common/util/logging.h"
+
+namespace fs = std::filesystem;
 
 namespace verible {
 namespace file {
@@ -64,10 +64,12 @@ absl::string_view Stem(absl::string_view filename) {
 
 // This will always return an error, even if we can't determine anything
 // from errno. Returns "fallback_msg" in that case.
-static absl::Status CreateErrorStatusFromErrno(const char *fallback_msg) {
+static absl::Status CreateErrorStatusFromSysError(const char *fallback_msg,
+                                                  int sys_error) {
   using absl::StatusCode;
-  const char *const system_msg = errno == 0 ? fallback_msg : strerror(errno);
-  switch (errno) {
+  const char *const system_msg = sys_error == 0
+    ? fallback_msg : strerror(sys_error);
+  switch (sys_error) {
     case EPERM:
     case EACCES:
       return absl::Status(StatusCode::kPermissionDenied, system_msg);
@@ -82,58 +84,49 @@ static absl::Status CreateErrorStatusFromErrno(const char *fallback_msg) {
   }
 }
 
-// TODO (after bump to c++17) rewrite this function to use std::filesystem
+static absl::Status CreateErrorStatusFromErrno(const char *fallback_msg) {
+  return CreateErrorStatusFromSysError(fallback_msg, errno);
+}
+static absl::Status CreateErrorStatusFromErr(const char *fallback_msg,
+                                             const std::error_code& err) {
+  // TODO: this assumes that err.value() returns errno-like values. Might not
+  // always be the case.
+  return CreateErrorStatusFromSysError(fallback_msg, err.value());
+}
+
 absl::Status UpwardFileSearch(absl::string_view start,
                               absl::string_view filename, std::string *result) {
-  static constexpr char dir_separator[] = "/";
+  std::error_code err;
+  const std::string search_file(filename);
+  fs::path absolute_path = fs::absolute(std::string(start), err);
+  if (err.value() != 0)
+    return CreateErrorStatusFromErr("invalid config path specified.", err);
 
-  /* Convert to absolute path */
-  char absolute_path[PATH_MAX];
-  if (realpath(std::string(start).c_str(), absolute_path) == nullptr) {
-    return absl::InvalidArgumentError("Invalid config path specified.");
-  }
-
-  /* Add trailing slash */
-  const std::string full_path = absl::StrCat(absolute_path, dir_separator);
-
-  VLOG(1) << "Upward search for " << filename << ", starting in " << start;
-
-  size_t search_up_to = full_path.length();
+  fs::path probe_dir = absolute_path;
   for (;;) {
-    const size_t separator_pos = full_path.rfind(dir_separator, search_up_to);
-
-    if (separator_pos == search_up_to || separator_pos == std::string::npos) {
-      break;
-    }
-
-    const std::string candidate =
-        absl::StrCat(full_path.substr(0, separator_pos + 1), filename);
-
-    if (access(candidate.c_str(), R_OK) != -1) {
-      *result = candidate;
-      VLOG(1) << "Found: " << *result;
+    *result = (probe_dir / search_file).string();
+    if (FileExists(*result).ok())
       return absl::OkStatus();
-    }
-
-    search_up_to = separator_pos - 1;
-
-    if (separator_pos == 0) {
-      break;
-    }
+    fs::path one_up = probe_dir.parent_path();
+    if (one_up == probe_dir) break;
+    probe_dir = one_up;
   }
-
   return absl::NotFoundError("No matching file found.");
 }
 
 absl::Status FileExists(const std::string &filename) {
-  struct stat file_info;
-  if (stat(filename.c_str(), &file_info) != 0) {
-    return absl::NotFoundError(absl::StrCat(filename, ": No such file."));
+  std::error_code err;
+  fs::file_status stat = fs::status(filename, err);
+
+  if (err.value() != 0) {
+    return absl::NotFoundError(absl::StrCat(filename, ":", err.message()));
   }
-  if (S_ISREG(file_info.st_mode) || S_ISFIFO(file_info.st_mode)) {
+
+  if (fs::is_regular_file(stat) || fs::is_fifo(stat)) {
     return absl::OkStatus();
   }
-  if (S_ISDIR(file_info.st_mode)) {
+
+  if (fs::is_directory(stat)) {
     return absl::InvalidArgumentError(
         absl::StrCat(filename, ": is a directory, not a file"));
   }
@@ -174,83 +167,48 @@ absl::Status SetContents(absl::string_view filename,
 }
 
 std::string JoinPath(absl::string_view base, absl::string_view name) {
-  // TODO: this will certainly be different on Windows
-  static constexpr absl::string_view kFileSeparator = "/";
-
-  // Make sure that we don't concatenate multiple superfluous separators.
-  // Note, since we're using string_view, the substr() operations are cheap.
-  while (!base.empty() && base[base.length() - 1] == kFileSeparator[0]) {
-    base = base.substr(0, base.length() - 1);
-  }
-  while (!name.empty() && name[0] == kFileSeparator[0]) {
+  // Make sure the second element is not already absolute, otherwise
+  // the fs::path() uses this as toplevel path. This is only an issue with
+  // Unix paths. Windows paths will have a c:\ for explicit full-pathness
+  while (!name.empty() && name[0] == '/') {
     name = name.substr(1);
   }
-  return absl::StrCat(base, kFileSeparator, name);
+
+  fs::path p = fs::path(std::string(base)) / fs::path(std::string(name));
+  return p.lexically_normal().string();
 }
 
 absl::Status CreateDir(absl::string_view dir) {
   const std::string path(dir);
-  int ret = mkdir(path.c_str(), 0755);
-  if (ret == 0 || errno == EEXIST) return absl::OkStatus();
-  return CreateErrorStatusFromErrno("can't create directory");
+  std::error_code err;
+  if (fs::create_directory(path, err) || err.value() == 0)
+    return absl::OkStatus();
+
+  return CreateErrorStatusFromErr("can't create directory", err);
 }
 
 absl::StatusOr<Directory> ListDir(absl::string_view dir) {
+  std::error_code err;
   Directory d;
+
   d.path = dir.empty() ? "." : std::string(dir);
 
-  // Reset the errno and open the directory
-  errno = 0;
-  DIR *handle = opendir(d.path.c_str());
-  if (handle == nullptr) {
-    if (errno == ENOTDIR) return absl::NotFoundError(d.path);
-    return absl::InternalError(absl::StrCat("Failed to open the directory '",
-                                            d.path, "'. Got error: ", errno));
+  fs::file_status stat = fs::status(d.path, err);
+  if (err.value() != 0)
+    return CreateErrorStatusFromErr("Opening directory", err);
+  if (!fs::is_directory(stat)) {
+    return absl::InvalidArgumentError(absl::StrCat(dir, ": not a directory"));
   }
-  struct stat statbuf;
-  while (true) {
-    errno = 0;
-    auto *entry = readdir(handle);
-    if (errno) {
-      closedir(handle);
-      return absl::InternalError(
-          absl::StrCat("Failed to read the contents of directory '", d.path,
-                       "'. Got error: ", errno));
-    }
-    // Finished listing the directory.
-    if (entry == nullptr) {
-      break;
-    }
-    absl::string_view d_name(entry->d_name);
-    // Skip '.' and '..' directory links
-    if (d_name == "." || d_name == "..") {
-      continue;
-    }
 
-    std::string full_path = verible::file::JoinPath(d.path, d_name);
-    auto d_type = entry->d_type;
-    if (d_type == DT_LNK || d_type == DT_UNKNOWN) {
-      // Try to resolve symlinks and unknown nodes.
-      if (stat(full_path.c_str(), &statbuf) == -1) {
-        LOG(WARNING) << "Stat failed. Ignoring " << d_name;
-        continue;
-      }
-      if (S_ISDIR(statbuf.st_mode)) {
-        d.directories.push_back(full_path);
-      } else if (S_ISREG(statbuf.st_mode)) {
-        d.files.push_back(full_path);
-      } else {
-        LOG(INFO) << "Ignoring " << d_name
-                  << " because st_mode == " << statbuf.st_mode;
-        continue;
-      }
-    } else if (d_type == DT_DIR) {
-      d.directories.push_back(full_path);
+  for (const fs::directory_entry entry : fs::directory_iterator(d.path)) {
+    const std::string entry_name = entry.path();
+    if (entry.is_directory()) {
+      d.directories.push_back(entry_name);
     } else {
-      d.files.push_back(full_path);
+      d.files.push_back(entry_name);
     }
   }
-  closedir(handle);
+
   std::sort(d.files.begin(), d.files.end());
   std::sort(d.directories.begin(), d.directories.end());
   return d;

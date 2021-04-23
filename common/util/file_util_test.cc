@@ -27,9 +27,9 @@
 using testing::HasSubstr;
 
 #undef EXPECT_OK
-#define EXPECT_OK(value) EXPECT_TRUE((value).ok())
+#define EXPECT_OK(value) { auto s = (value); EXPECT_TRUE(s.ok()) << s; }
 #undef ASSERT_OK
-#define ASSERT_OK(value) ASSERT_TRUE((value).ok())
+#define ASSERT_OK(value) { auto s = (value); ASSERT_TRUE(s.ok()) << s; }
 
 namespace verible {
 namespace util {
@@ -66,19 +66,22 @@ TEST(FileUtil, Stem) {
 
 TEST(FileUtil, JoinPath) {
   EXPECT_EQ(file::JoinPath("foo", ""), "foo/");
-  EXPECT_EQ(file::JoinPath("", "bar"), "/bar");
+  EXPECT_EQ(file::JoinPath("", "bar"), "bar");
   EXPECT_EQ(file::JoinPath("foo", "bar"), "foo/bar");
 
   // Assemble an absolute path
-  EXPECT_EQ(file::JoinPath("", "bar"), "/bar");
+  EXPECT_EQ(file::JoinPath("", "bar"), "bar");
   EXPECT_EQ(file::JoinPath("/", "bar"), "/bar");
-  EXPECT_EQ(file::JoinPath("///", "///bar"), "/bar");
 
   // Lightly canonicalize multiple consecutive slashes
   EXPECT_EQ(file::JoinPath("foo/", "bar"), "foo/bar");
   EXPECT_EQ(file::JoinPath("foo///", "bar"), "foo/bar");
   EXPECT_EQ(file::JoinPath("foo/", "/bar"), "foo/bar");
   EXPECT_EQ(file::JoinPath("foo/", "///bar"), "foo/bar");
+
+#ifdef _WIN32
+  EXPECT_EQ(file::JoinPath("C:\\foo", "bar"), "C:\\foo\\bar");
+#endif
 }
 
 TEST(FileUtil, CreateDir) {
@@ -87,6 +90,7 @@ TEST(FileUtil, CreateDir) {
   const absl::string_view test_content = "directory create test";
 
   EXPECT_OK(file::CreateDir(test_dir));
+  EXPECT_OK(file::CreateDir(test_dir));  // Creating twice should succeed
 
   EXPECT_OK(file::SetContents(test_file, test_content));
   std::string read_back_content;
@@ -240,7 +244,7 @@ TEST(FileUtil, ReadNonexistentDirectory) {
 
   auto dir_or = file::ListDir(test_dir);
   EXPECT_FALSE(dir_or.ok());
-  EXPECT_EQ(dir_or.status().code(), absl::StatusCode::kInternal);
+  EXPECT_EQ(dir_or.status().code(), absl::StatusCode::kNotFound);
 }
 
 TEST(FileUtil, ListNotADirectory) {
@@ -248,7 +252,7 @@ TEST(FileUtil, ListNotADirectory) {
 
   auto dir_or = file::ListDir(tempfile.filename());
   EXPECT_FALSE(dir_or.ok());
-  EXPECT_EQ(dir_or.status().code(), absl::StatusCode::kNotFound);
+  EXPECT_EQ(dir_or.status().code(), absl::StatusCode::kInvalidArgument);
 }
 
 TEST(FileUtil, ReadDirectory) {
@@ -276,7 +280,11 @@ TEST(FileUtil, ReadDirectory) {
 
   const auto& dir = *dir_or;
   EXPECT_EQ(dir.path, test_dir);
+
+  EXPECT_EQ(dir.directories.size(), test_directories.size());
   EXPECT_EQ(dir.directories, test_directories);
+
+  EXPECT_EQ(dir.files.size(), test_files.size());
   EXPECT_EQ(dir.files, test_files);
 }
 
