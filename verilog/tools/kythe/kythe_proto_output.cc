@@ -12,6 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include "verilog/tools/kythe/kythe_proto_output.h"
+
 #ifndef _WIN32
 #include <unistd.h>  // for STDOUT_FILENO
 #else
@@ -24,7 +26,6 @@
 #include "third_party/proto/kythe/storage.pb.h"
 #include "verilog/tools/kythe/kythe_facts.h"
 #include "verilog/tools/kythe/kythe_facts_extractor.h"
-#include "verilog/tools/kythe/kythe_proto_output.h"
 
 namespace verilog {
 namespace kythe {
