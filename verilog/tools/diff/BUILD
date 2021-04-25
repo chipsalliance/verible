@@ -1,6 +1,8 @@
 """Tool for comparing Verilog source code.
 """
 
+load("//bazel:sh_test_with_runfiles_lib.bzl", "sh_test_with_runfiles_lib")
+
 licenses(["notice"])
 
 cc_binary(
@@ -19,56 +21,50 @@ cc_binary(
     ],
 )
 
-sh_test(
+sh_test_with_runfiles_lib(
     name = "diff_user_errors_test",
     size = "small",
     srcs = ["diff_user_errors_test.sh"],
     args = ["$(location :verible-verilog-diff)"],
     data = [":verible-verilog-diff"],
-    deps = ["@bazel_tools//tools/bash/runfiles"],
 )
 
-sh_test(
+sh_test_with_runfiles_lib(
     name = "diff_format_match_test",
     size = "small",
     srcs = ["diff_format_match_test.sh"],
     args = ["$(location :verible-verilog-diff)"],
     data = [":verible-verilog-diff"],
-    deps = ["@bazel_tools//tools/bash/runfiles"],
 )
 
-sh_test(
+sh_test_with_runfiles_lib(
     name = "diff_format_mismatch_test",
     size = "small",
     srcs = ["diff_format_mismatch_test.sh"],
     args = ["$(location :verible-verilog-diff)"],
     data = [":verible-verilog-diff"],
-    deps = ["@bazel_tools//tools/bash/runfiles"],
 )
 
-sh_test(
+sh_test_with_runfiles_lib(
     name = "diff_format_lex_error_test",
     size = "small",
     srcs = ["diff_format_lex_error_test.sh"],
     args = ["$(location :verible-verilog-diff)"],
     data = [":verible-verilog-diff"],
-    deps = ["@bazel_tools//tools/bash/runfiles"],
 )
 
-sh_test(
+sh_test_with_runfiles_lib(
     name = "diff_obfuscate_match_test",
     size = "small",
     srcs = ["diff_obfuscate_match_test.sh"],
     args = ["$(location :verible-verilog-diff)"],
     data = [":verible-verilog-diff"],
-    deps = ["@bazel_tools//tools/bash/runfiles"],
 )
 
-sh_test(
+sh_test_with_runfiles_lib(
     name = "diff_obfuscate_mismatch_test",
     size = "small",
     srcs = ["diff_obfuscate_mismatch_test.sh"],
     args = ["$(location :verible-verilog-diff)"],
     data = [":verible-verilog-diff"],
-    deps = ["@bazel_tools//tools/bash/runfiles"],
 )
