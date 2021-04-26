@@ -14,14 +14,6 @@
 
 #include "common/strings/patch.h"
 
-#ifndef _WIN32
-#include <unistd.h>  // for isatty
-#else
-#include <io.h>
-// MSVC recommends to use _isatty...
-#define isatty _isatty
-#endif
-
 #include <deque>
 #include <iostream>
 #include <iterator>
@@ -378,7 +370,9 @@ LineNumberSet FilePatch::AddedLines() const {
 
 static char PromptHunkAction(std::istream& ins, std::ostream& outs) {
   // Suppress prompt in noninteractive mode.
-  if (isatty(0)) outs << "Apply this hunk? [y,n,a,d,s,q,?] ";
+  if (file::IsInteractiveTerminalSession()) {
+    outs << "Apply this hunk? [y,n,a,d,s,q,?] ";
+  }
   char c;
   ins >> c;  // user will need to hit <enter> after the character
   if (ins.eof()) {

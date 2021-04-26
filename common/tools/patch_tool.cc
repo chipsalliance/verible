@@ -12,14 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef _WIN32
-#include <unistd.h>  // for isatty
-#else
-#include <io.h>
-// MSVC recommends to use _isatty...
-#define isatty _isatty
-#endif
-
 #include <functional>
 #include <iostream>
 #include <string>
@@ -101,7 +93,7 @@ static absl::Status StdinTest(const SubcommandArgsRange& args,
   for (; file_count < kOpenLimit; ++file_count) {
     outs << "==== file " << file_count << " ====" << std::endl;
     while (ins) {
-      if (isatty(0)) outs << "enter text: ";
+      if (verible::file::IsInteractiveTerminalSession()) outs << "enter text: ";
       std::getline(ins, line);
       outs << "echo: " << line << std::endl;
     }
