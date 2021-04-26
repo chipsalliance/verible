@@ -942,6 +942,7 @@ void TreeUnwrapper::SetIndentationsAndCreatePartitions(
       break;
     }
 
+#if 0  // Disabled for now, see https://github.com/google/verible/pull/755
     case NodeEnum::kExpressionList: {
       // This allows for indenting initializer lists
       if (Context().DirectParentIs(NodeEnum::kAssignmentPattern)) {
@@ -955,6 +956,7 @@ void TreeUnwrapper::SetIndentationsAndCreatePartitions(
       }
       break;
     }
+#endif
     // For the following constructs, always expand the view to subpartitions.
     // Add a level of indentation.
     case NodeEnum::kPackageImportList:
