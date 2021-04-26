@@ -702,6 +702,7 @@ const TreeUnwrapperTestData kUnwrapModuleTestCases[] = {
             L(0, {"endmodule"})),
     },
 
+#if 0  // Disabled for now, see https://github.com/google/verible/pull/755
     {
         "module with parameters and initializer list",
         "module foo;"
@@ -740,6 +741,7 @@ const TreeUnwrapperTestData kUnwrapModuleTestCases[] = {
                             L(1, {"}", ";"})),
                           L(0, {"endmodule"})),
     },
+#endif
 
     {
         "module with header import",

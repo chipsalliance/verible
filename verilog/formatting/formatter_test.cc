@@ -1576,6 +1576,7 @@ static constexpr FormatterTestCase kFormatterTestCases[] = {
      "    localparam baz = 2  //comment\n"
      ") ();\n"
      "endmodule\n"},
+#if 0  // Disabled for now, see https://github.com/google/verible/pull/755
     {"module foo;"
      "localparam logic [63:0] RC[24] = '{\n"
      "64'h 1,\n"
@@ -1602,6 +1603,7 @@ static constexpr FormatterTestCase kFormatterTestCases[] = {
      "      64'h8000_0000_8000_8008  // 23\n"
      "  };\n"
      "endmodule\n"},
+#endif
     {"module    top;"
      "foo#(  \"test\"  ) foo(  );"
      "bar#(  \"test\"  ,5) bar(  );"
