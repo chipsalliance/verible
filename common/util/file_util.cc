@@ -32,6 +32,14 @@
 #include "absl/strings/string_view.h"
 #include "common/util/logging.h"
 
+#ifndef _WIN32
+#include <unistd.h>  // for isatty
+#else
+#include <io.h>
+// MSVC recommends to use _isatty...
+#define isatty _isatty
+#endif
+
 /*
  * We're in the transition to use std::filesystem for all file operations.
  * However some ancient compilers in releasing/ can't handle that yet. Until
@@ -369,6 +377,10 @@ absl::StatusOr<Directory> ListDir(absl::string_view dir) {
   std::sort(d.files.begin(), d.files.end());
   std::sort(d.directories.begin(), d.directories.end());
   return d;
+}
+
+bool IsInteractiveTerminalSession() {
+  return isatty(0);  // Unix: STDIN_FILENO; windows: _fileno( stdin )
 }
 
 namespace testing {
