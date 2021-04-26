@@ -26,7 +26,7 @@ readonly MY_EXPECT_FILE
   echo "Expecting 1 positional argument, verible-patch-tool path."
   exit 1
 }
-patch_tool="$1"
+patch_tool="$(rlocation ${TEST_WORKSPACE}/${1})"
 
 ################################################################################
 # Test no command.
@@ -123,7 +123,7 @@ status="$?"
   exit 1
 }
 
-diff -u "$MY_EXPECT_FILE" "$MY_OUTPUT_FILE" || {
+diff -u --strip-trailing-cr "$MY_EXPECT_FILE" "$MY_OUTPUT_FILE" || {
   exit 1
 }
 
@@ -137,7 +137,7 @@ status="$?"
   exit 1
 }
 
-diff -u "$MY_EXPECT_FILE" "$MY_OUTPUT_FILE" || {
+diff -u --strip-trailing-cr "$MY_EXPECT_FILE" "$MY_OUTPUT_FILE" || {
   exit 1
 }
 
@@ -372,7 +372,7 @@ status="$?"
   exit 1
 }
 
-diff -u "$MY_INPUT_FILE".bkp "$MY_INPUT_FILE".orig || {
+diff -u --strip-trailing-cr "$MY_INPUT_FILE".bkp "$MY_INPUT_FILE".orig || {
   echo "Expected these files to match, but got the above diff."
   exit 1
 }
@@ -389,7 +389,7 @@ status="$?"
   exit 1
 }
 
-diff -u "$MY_INPUT_FILE".bkp "$MY_INPUT_FILE".orig || {
+diff -u --strip-trailing-cr "$MY_INPUT_FILE".bkp "$MY_INPUT_FILE".orig || {
   echo "Expected these files to match, but got the above diff."
   exit 1
 }
@@ -421,7 +421,7 @@ h
 EOF
 
 # Expect original file to have been modified in-place.
-diff -u "$MY_EXPECT_FILE" "$MY_INPUT_FILE".orig || {
+diff -u --strip-trailing-cr "$MY_EXPECT_FILE" "$MY_INPUT_FILE".orig || {
   echo "Expected these files to match, but got the above diff."
   exit 1
 }
@@ -456,7 +456,7 @@ h
 EOF
 
 # Expect original file to have been modified in-place.
-diff -u "$MY_EXPECT_FILE" "$MY_INPUT_FILE".orig || {
+diff -u --strip-trailing-cr "$MY_EXPECT_FILE" "$MY_INPUT_FILE".orig || {
   echo "Expected these files to match, but got the above diff."
   exit 1
 }
@@ -490,7 +490,7 @@ h
 EOF
 
 # Expect original file to have been modified in-place.
-diff -u "$MY_EXPECT_FILE" "$MY_INPUT_FILE".orig || {
+diff -u --strip-trailing-cr "$MY_EXPECT_FILE" "$MY_INPUT_FILE".orig || {
   echo "Expected these files to match, but got the above diff."
   exit 1
 }

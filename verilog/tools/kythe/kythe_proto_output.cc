@@ -14,7 +14,12 @@
 
 #include "verilog/tools/kythe/kythe_proto_output.h"
 
-#include <unistd.h>
+#ifndef _WIN32
+#include <unistd.h>  // for STDOUT_FILENO
+#else
+#include <stdio.h>
+#define STDOUT_FILENO _fileno(stdout)
+#endif
 
 #include "google/protobuf/io/coded_stream.h"
 #include "google/protobuf/io/zero_copy_stream_impl.h"

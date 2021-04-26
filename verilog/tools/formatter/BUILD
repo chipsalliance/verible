@@ -1,6 +1,8 @@
 # 'verilog_format' is a SystemVerilog source code formatter.
 #
 
+load("//bazel:sh_test_with_runfiles_lib.bzl", "sh_test_with_runfiles_lib")
+
 licenses(["notice"])
 
 cc_binary(
@@ -52,7 +54,7 @@ sh_binary(
     srcs = ["triage_formatter.sh"],
 )
 
-sh_test(
+sh_test_with_runfiles_lib(
     name = "format_file_test",
     size = "small",
     srcs = ["format_file_test.sh"],
@@ -60,7 +62,7 @@ sh_test(
     data = [":verible-verilog-format"],
 )
 
-sh_test(
+sh_test_with_runfiles_lib(
     name = "format_file_lex_error_test",
     size = "small",
     srcs = ["format_file_lex_error_test.sh"],
@@ -68,7 +70,7 @@ sh_test(
     data = [":verible-verilog-format"],
 )
 
-sh_test(
+sh_test_with_runfiles_lib(
     name = "format_file_syntax_error_test",
     size = "small",
     srcs = ["format_file_syntax_error_test.sh"],
@@ -76,7 +78,7 @@ sh_test(
     data = [":verible-verilog-format"],
 )
 
-sh_test(
+sh_test_with_runfiles_lib(
     name = "format_file_lines_test",
     size = "small",
     srcs = ["format_file_lines_test.sh"],
@@ -84,7 +86,7 @@ sh_test(
     data = [":verible-verilog-format"],
 )
 
-sh_test(
+sh_test_with_runfiles_lib(
     name = "format_file_badlines_test",
     size = "small",
     srcs = ["format_file_badlines_test.sh"],
@@ -92,7 +94,7 @@ sh_test(
     data = [":verible-verilog-format"],
 )
 
-sh_test(
+sh_test_with_runfiles_lib(
     name = "format_inplace_test",
     size = "small",
     srcs = ["format_inplace_test.sh"],
@@ -100,7 +102,7 @@ sh_test(
     data = [":verible-verilog-format"],
 )
 
-sh_test(
+sh_test_with_runfiles_lib(
     name = "format_stdin_test",
     size = "small",
     srcs = ["format_stdin_test.sh"],
@@ -108,7 +110,7 @@ sh_test(
     data = [":verible-verilog-format"],
 )
 
-sh_test(
+sh_test_with_runfiles_lib(
     name = "format_stdin_inplace_test",
     size = "small",
     srcs = ["format_stdin_inplace_test.sh"],

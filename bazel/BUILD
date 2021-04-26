@@ -20,4 +20,6 @@ cc_library(
 exports_files([
     "bison.bzl",
     "flex.bzl",
+    "sh_test_with_runfiles_lib.bzl",
+    "sh_test_with_runfiles_lib.sh",
 ])

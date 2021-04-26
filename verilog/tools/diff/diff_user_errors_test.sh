@@ -23,7 +23,7 @@ declare -r MY_INPUT_FILE2="${TEST_TMPDIR}/does_not_exist.txt"
   echo "Expecting 1 positional argument, verible-verilog-diff path."
   exit 1
 }
-difftool="$1"
+difftool="$(rlocation ${TEST_WORKSPACE}/${1})"
 
 cat >${MY_INPUT_FILE1} <<EOF
   module    m   ;endmodule
@@ -43,4 +43,3 @@ EOF
 [[ $? -eq 2 ]] || exit 3
 
 echo "PASS"
-

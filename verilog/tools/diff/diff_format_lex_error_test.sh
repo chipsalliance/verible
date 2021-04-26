@@ -23,7 +23,7 @@ declare -r MY_INPUT_FILE2="${TEST_TMPDIR}/myinput2.txt"
   echo "Expecting 1 positional argument, verible-verilog-diff path."
   exit 1
 }
-difftool="$1"
+difftool="$(rlocation ${TEST_WORKSPACE}/${1})"
 
 # contains lexical error token "1mm"
 cat >${MY_INPUT_FILE1} <<EOF
@@ -47,4 +47,3 @@ EOF
 [[ $? -eq 1 ]] || exit 2
 
 echo "PASS"
-

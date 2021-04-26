@@ -23,7 +23,7 @@ declare -r MY_OUTPUT_FILE="${TEST_TMPDIR}/myoutput.txt"
   echo "Expecting 1 positional argument, verible-verilog-format path."
   exit 1
 }
-formatter="$1"
+formatter="$(rlocation ${TEST_WORKSPACE}/${1})"
 
 cat >${MY_INPUT_FILE} <<EOF
    parameter   int  var_line_1  =  1  ;

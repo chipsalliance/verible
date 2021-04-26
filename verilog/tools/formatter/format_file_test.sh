@@ -24,7 +24,7 @@ declare -r MY_EXPECT_FILE="${TEST_TMPDIR}/myexpect.txt"
   echo "Expecting 1 positional argument, verible-verilog-format path."
   exit 1
 }
-formatter="$1"
+formatter="$(rlocation ${TEST_WORKSPACE}/${1})"
 
 cat >${MY_INPUT_FILE} <<EOF
   module    m   ;endmodule
@@ -37,6 +37,6 @@ EOF
 
 # Run formatter.
 ${formatter} ${MY_INPUT_FILE} > ${MY_OUTPUT_FILE} || exit 1
-diff "${MY_OUTPUT_FILE}" "${MY_EXPECT_FILE}" || exit 2
+diff --strip-trailing-cr "${MY_OUTPUT_FILE}" "${MY_EXPECT_FILE}" || exit 2
 
 echo "PASS"

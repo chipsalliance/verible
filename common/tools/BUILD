@@ -1,5 +1,7 @@
 """This package contains language-agnostic tools in the Verible project."""
 
+load("//bazel:sh_test_with_runfiles_lib.bzl", "sh_test_with_runfiles_lib")
+
 licenses(["notice"])
 
 cc_binary(
@@ -17,7 +19,7 @@ cc_binary(
     ],
 )
 
-sh_test(
+sh_test_with_runfiles_lib(
     name = "patch_tool_test",
     size = "small",
     srcs = ["patch_tool_test.sh"],
@@ -34,7 +36,7 @@ filegroup(
     visibility = ["//:__pkg__"],  # for release
 )
 
-sh_test(
+sh_test_with_runfiles_lib(
     name = "verible-transform-interactive-test",
     size = "small",
     srcs = ["verible-transform-interactive-test.sh"],

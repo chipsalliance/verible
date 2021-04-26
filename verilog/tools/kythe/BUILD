@@ -1,5 +1,7 @@
 # 'verible-verilog-kythe-extractor' is a program for extracting Verilog/SystemVerilog to kythe facts.
 
+load("//bazel:sh_test_with_runfiles_lib.bzl", "sh_test_with_runfiles_lib")
+
 licenses(["notice"])
 
 package(
@@ -229,7 +231,7 @@ cc_binary(
     ],
 )
 
-sh_test(
+sh_test_with_runfiles_lib(
     name = "verilog_kythe_extractor_test",
     size = "small",
     srcs = ["verilog_kythe_extractor_test.sh"],

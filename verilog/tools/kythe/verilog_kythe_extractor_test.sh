@@ -26,7 +26,7 @@ readonly MY_EXPECT_FILE
   echo "Expecting 1 positional argument, verible-verilog-kythe-extractor path."
   exit 1
 }
-extractor="$1"
+extractor="$(rlocation ${TEST_WORKSPACE}/${1})"
 
 ################################################################################
 echo "=== Test no arguments."
@@ -75,9 +75,10 @@ status="$?"
 ################################################################################
 echo "=== Expect failure on nonexistent file listed in the file list"
 
- # Construct a file-list on-the-fly as a file-descriptor
+# Construct a file-list
+echo "nonexistent.sv" > "${TEST_TMPDIR}/file_list"
 "$extractor" \
-  --file_list_path <(echo "nonexistent.sv") \
+  --file_list_path "${TEST_TMPDIR}/file_list" \
   --file_list_root "$(dirname "$MY_INPUT_FILE")" \
   --print_kythe_facts=json \
   > "$MY_OUTPUT_FILE" 2>&1
@@ -104,9 +105,10 @@ localparam int fooo = 1;
 localparam int barr = fooo;
 EOF
 
- # Construct a file-list on-the-fly as a file-descriptor
+# Construct a file-list
+echo "myinput.txt" > "${TEST_TMPDIR}/file_list"
 "$extractor" \
-  --file_list_path <(echo myinput.txt) \
+  --file_list_path "${TEST_TMPDIR}/file_list" \
   --file_list_root "$(dirname "$MY_INPUT_FILE")" \
   --print_kythe_facts=json \
   > "$MY_OUTPUT_FILE" 2>&1
@@ -131,9 +133,10 @@ localparam int fooo = 1;
 localparam int barr = fooo;
 EOF
 
- # Construct a file-list on-the-fly as a file-descriptor
+# Construct a file-list
+echo "myinput.txt" > "${TEST_TMPDIR}/file_list"
 "$extractor" \
-  --file_list_path <(echo myinput.txt) \
+  --file_list_path "${TEST_TMPDIR}/file_list" \
   --file_list_root "$(dirname "$MY_INPUT_FILE")" \
   --print_kythe_facts=json_debug \
   > "$MY_OUTPUT_FILE" 2>&1

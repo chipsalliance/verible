@@ -24,7 +24,7 @@ declare -r MY_OUTPUT_FILE="${TEST_TMPDIR}/myoutput.txt"
   echo "Expecting 1 positional argument, verible-verilog-format path."
   exit 1
 }
-formatter="$1"
+formatter="$(rlocation ${TEST_WORKSPACE}/${1})"
 
 cat >${MY_INPUT_FILE} <<EOF
   module    777m   endmodule
@@ -33,16 +33,16 @@ EOF
 # Run formatter.  Expect error, but that redirected output matches input.
 "${formatter}" --nofailsafe_success "${MY_INPUT_FILE}" > "${MY_OUTPUT_FILE}"
 [[ "$?" -eq 1 ]] || exit 1
-diff "${MY_OUTPUT_FILE}" "${MY_INPUT_FILE}" || exit 2
+diff --strip-trailing-cr "${MY_OUTPUT_FILE}" "${MY_INPUT_FILE}" || exit 2
 
 # Want 0 exit code, even on input error.
 "${formatter}" --failsafe_success "${MY_INPUT_FILE}" > "${MY_OUTPUT_FILE}"
 [[ "$?" -eq 0 ]] || exit 3
-diff "${MY_OUTPUT_FILE}" "${MY_INPUT_FILE}" || exit 4
+diff --strip-trailing-cr "${MY_OUTPUT_FILE}" "${MY_INPUT_FILE}" || exit 4
 
 # Default is failsafe_success=true.
 "${formatter}" "${MY_INPUT_FILE}" > "${MY_OUTPUT_FILE}"
 [[ "$?" -eq 0 ]] || exit 5
-diff "${MY_OUTPUT_FILE}" "${MY_INPUT_FILE}" || exit 6
+diff --strip-trailing-cr "${MY_OUTPUT_FILE}" "${MY_INPUT_FILE}" || exit 6
 
 echo "PASS"

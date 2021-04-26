@@ -21,135 +21,21 @@ jobs:
         fetch-depth: 0
     - name: Install dependencies
       run: choco install llvm
-    # Only check flex/bison targets at the moment, since Verible cannot be
-    # fully compiled on Windows (yet!)
-    - name: Build flex/bison files
+    - name: Build Verible
       run: |
-        bazel build //common/analysis:command_file_lex
-        bazel build //verilog/parser:verilog_y
-        bazel build //verilog/parser:verilog_lex
+        bazel build -c opt //...
     # Windows support is in progress, only run "working" tests
     - name: Run known-to-work tests
       run: |
         bazel test  --test_output=errors `
-                    //common/util:file_util_test `
-                    //common/analysis:command_file_lexer_test `
-                    //common/analysis:file_analyzer_test `
-                    //common/analysis:line_linter_test `
-                    //common/analysis:lint_rule_status_test `
-                    //common/analysis:linter_test_utils_test `
-                    //common/analysis:syntax_tree_linter_test `
-                    //common/analysis:syntax_tree_search_test `
-                    //common/analysis:syntax_tree_search_test_utils_test `
-                    //common/analysis:text_structure_linter_test `
-                    //common/analysis:token_stream_linter_test `
-                    //common/analysis/matcher:core_matchers_test `
-                    //common/analysis/matcher:descent_path_test `
-                    //common/analysis/matcher:matcher_builders_test `
-                    //common/analysis/matcher:matcher_test `
-                    //common/formatting/... `
-                    //common/lexer/... `
-                    //common/parser/... `
-                    //common/strings:comment_utils_test `
-                    //common/strings:compare_test `
-                    //common/strings:diff_test `
-                    //common/strings:display_utils_test `
-                    //common/strings:line_column_map_test `
-                    //common/strings:naming_utils_test `
-                    //common/strings:obfuscator_test `
-                    //common/strings:position_test `
-                    //common/strings:random_test `
-                    //common/strings:range_test `
-                    //common/strings:rebase_test `
-                    //common/strings:split_test `
-                    //common/strings:string_memory_map_test `
-                    //common/strings:utf8_test `
-                    //common/text/... `
-                    //common/util:algorithm_test `
-                    //common/util:auto_iterator_test `
-                    //common/util:auto_pop_stack_test `
-                    //common/util:bijective_map_test `
-                    //common/util:container_iterator_range_test `
-                    //common/util:enum_flags_test `
-                    //common/util:expandable_tree_view_test `
-                    //common/util:forward_test `
-                    //common/util:interval_map_test `
-                    //common/util:interval_set_test `
-                    //common/util:interval_test `
-                    //common/util:iterator_adaptors_test `
-                    //common/util:iterator_range_test `
-                    //common/util:map_tree_test `
-                    //common/util:range_test `
-                    //common/util:spacer_test `
-                    //common/util:subcommand_test `
-                    //common/util:top_n_test `
-                    //common/util:type_traits_test `
-                    //common/util:value_saver_test `
-                    //common/util:vector_tree_test `
-                    //common/util:with_reason_test `
-                    //external_libs:editscript_test `
-                    //verilog/analysis:descriptions_test `
-                    //verilog/analysis:extractors_test `
-                    //verilog/analysis:json_diagnostics_test `
-                    //verilog/analysis:lint_rule_registry_test `
-                    //verilog/analysis:verilog_analyzer_test `
-                    //verilog/analysis:verilog_equivalence_test `
-                    //verilog/analysis/checkers:always_comb_blocking_rule_test `
-                    //verilog/analysis/checkers:always_comb_rule_test `
-                    //verilog/analysis/checkers:always_ff_non_blocking_rule_test `
-                    //verilog/analysis/checkers:banned_declared_name_patterns_rule_test `
-                    //verilog/analysis/checkers:case_missing_default_rule_test `
-                    //verilog/analysis/checkers:constraint_name_style_rule_test `
-                    //verilog/analysis/checkers:create_object_name_match_rule_test `
-                    //verilog/analysis/checkers:endif_comment_rule_test `
-                    //verilog/analysis/checkers:enum_name_style_rule_test `
-                    //verilog/analysis/checkers:explicit_function_lifetime_rule_test `
-                    //verilog/analysis/checkers:explicit_function_task_parameter_type_rule_test `
-                    //verilog/analysis/checkers:explicit_parameter_storage_type_rule_test `
-                    //verilog/analysis/checkers:explicit_task_lifetime_rule_test `
-                    //verilog/analysis/checkers:forbid_consecutive_null_statements_rule_test `
-                    //verilog/analysis/checkers:forbid_defparam_rule_test `
-                    //verilog/analysis/checkers:forbidden_anonymous_enums_rule_test `
-                    //verilog/analysis/checkers:forbidden_anonymous_structs_unions_rule_test `
-                    //verilog/analysis/checkers:forbidden_macro_rule_test `
-                    //verilog/analysis/checkers:forbidden_symbol_rule_test `
-                    //verilog/analysis/checkers:generate_label_prefix_rule_test `
-                    //verilog/analysis/checkers:generate_label_rule_test `
-                    //verilog/analysis/checkers:interface_name_style_rule_test `
-                    //verilog/analysis/checkers:legacy_generate_region_rule_test `
-                    //verilog/analysis/checkers:legacy_genvar_declaration_rule_test `
-                    //verilog/analysis/checkers:line_length_rule_test `
-                    //verilog/analysis/checkers:macro_name_style_rule_test `
-                    //verilog/analysis/checkers:macro_string_concatenation_rule_test `
-                    //verilog/analysis/checkers:mismatched_labels_rule_test `
-                    //verilog/analysis/checkers:module_begin_block_rule_test `
-                    //verilog/analysis/checkers:module_instantiation_rules_test `
-                    //verilog/analysis/checkers:no_tabs_rule_test `
-                    //verilog/analysis/checkers:no_trailing_spaces_rule_test `
-                    //verilog/analysis/checkers:numeric_format_string_style_rule_test `
-                    //verilog/analysis/checkers:packed_dimensions_rule_test `
-                    //verilog/analysis/checkers:parameter_name_style_rule_test `
-                    //verilog/analysis/checkers:parameter_type_name_style_rule_test `
-                    //verilog/analysis/checkers:plusarg_assignment_rule_test `
-                    //verilog/analysis/checkers:port_name_suffix_rule_test `
-                    //verilog/analysis/checkers:positive_meaning_parameter_name_rule_test `
-                    //verilog/analysis/checkers:posix_eof_rule_test `
-                    //verilog/analysis/checkers:proper_parameter_declaration_rule_test `
-                    //verilog/analysis/checkers:signal_name_style_rule_test `
-                    //verilog/analysis/checkers:struct_union_name_style_rule_test `
-                    //verilog/analysis/checkers:suggest_parentheses_rule_test `
-                    //verilog/analysis/checkers:token_stream_lint_rule_test `
-                    //verilog/analysis/checkers:undersized_binary_literal_rule_test `
-                    //verilog/analysis/checkers:unpacked_dimensions_rule_test `
-                    //verilog/analysis/checkers:uvm_macro_semicolon_rule_test `
-                    //verilog/analysis/checkers:v2001_generate_begin_rule_test `
-                    //verilog/analysis/checkers:void_cast_rule_test `
+                    //common/... `
+                    //external_libs/... `
+                    //verilog/analysis/... `
                     //verilog/CST/... `
-                    //verilog/formatting:comment_controls_test `
-                    //verilog/formatting:verilog_token_test `
+                    //verilog/formatting/... `
                     //verilog/parser/... `
                     //verilog/preprocessor/... `
-                    //verilog/tools/kythe:indexing_facts_tree_test `
-                    //verilog/tools/kythe:kythe_facts_test `
-                    //verilog/tools/kythe:scope_resolver_test `
+                    //verilog/tools/diff/... `
+                    //verilog/tools/formatter/... `
+                    //verilog/tools/kythe/... `
                     //verilog/transform/...
