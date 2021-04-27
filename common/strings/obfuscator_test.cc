@@ -146,6 +146,12 @@ TEST(ObfuscatorTest, LoadMap) {
   }
   {
     Obfuscator ob(RotateGenerator);
+    const auto status = ob.load("  cat dog  \r\n");
+    EXPECT_TRUE(status.ok()) << status.message();
+    EXPECT_EQ(ob("cat"), "dog");
+  }
+  {
+    Obfuscator ob(RotateGenerator);
     const auto status = ob.load("cat\n");  // malformed line
     EXPECT_FALSE(status.ok());
     EXPECT_EQ(status.code(), absl::StatusCode::kInvalidArgument);

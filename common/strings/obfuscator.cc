@@ -22,6 +22,7 @@
 #include "absl/strings/str_cat.h"
 #include "absl/strings/str_split.h"
 #include "absl/strings/string_view.h"
+#include "absl/strings/strip.h"
 #include "common/util/logging.h"
 
 namespace verible {
@@ -46,7 +47,7 @@ constexpr char kPairSeparator = ' ';
 std::string Obfuscator::save() const {
   std::ostringstream stream;
   for (const auto& pair : translator_.forward_view()) {
-    stream << pair.first << kPairSeparator << *pair.second << std::endl;
+    stream << pair.first << kPairSeparator << *pair.second << "\n";
   }
   return stream.str();
 }
@@ -56,7 +57,7 @@ absl::Status Obfuscator::load(absl::string_view mapping) {
       absl::StrSplit(mapping, '\n', absl::SkipEmpty());
   for (const auto& line : lines) {
     const std::vector<absl::string_view> elements =
-        absl::StrSplit(line, kPairSeparator);
+        absl::StrSplit(absl::StripAsciiWhitespace(line), kPairSeparator);
     if (elements.size() < 2) {
       return absl::InvalidArgumentError(
           absl::StrCat("Failed to parse line:\n", line));
