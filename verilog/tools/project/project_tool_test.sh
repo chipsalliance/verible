@@ -249,7 +249,7 @@ cat > "$MY_EXPECT_FILE" <<EOF
 "myinput.txt.A" depends on "myinput.txt.B" for symbols { fooo }
 EOF
 
-diff -u "$MY_EXPECT_FILE" "$MY_OUTPUT_FILE" || { exit 1; }
+diff --strip-trailing-cr -u "$MY_EXPECT_FILE" "$MY_OUTPUT_FILE" || { exit 1; }
 
 ################################################################################
 echo "=== Show dependencies between two files (modules)"
@@ -286,7 +286,7 @@ cat > "$MY_EXPECT_FILE" <<EOF
 "myinput.txt.B" depends on "myinput.txt.A" for symbols { mm }
 EOF
 
-diff -u "$MY_EXPECT_FILE" "$MY_OUTPUT_FILE" || { exit 1; }
+diff --strip-trailing-cr -u "$MY_EXPECT_FILE" "$MY_OUTPUT_FILE" || { exit 1; }
 
 ################################################################################
 echo "PASS"

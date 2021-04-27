@@ -94,7 +94,7 @@ status="$?"
   exit 1
 }
 
-diff -u "${MY_OUTPUT_FILE}" "${MY_EXPECT_FILE}" || exit 1
+diff --strip-trailing-cr -u "${MY_OUTPUT_FILE}" "${MY_EXPECT_FILE}" || exit 1
 
 ###############################################################################
 echo "### Testing reading malformed map file."
@@ -172,7 +172,7 @@ status="$?"
   exit 1
 }
 
-diff -u "${MY_OUTPUT_FILE2}" "${MY_EXPECT_FILE}" || exit 1
+diff --strip-trailing-cr -u "${MY_OUTPUT_FILE2}" "${MY_EXPECT_FILE}" || exit 1
 
 ###############################################################################
 echo "Test obfuscate with --save_map to a bad path"
@@ -217,7 +217,7 @@ status="$?"
   exit 1
 }
 
-diff -u "${MY_OUTPUT_FILE2}" "${MY_INPUT_FILE}" || exit 1
+diff --strip-trailing-cr -u "${MY_OUTPUT_FILE2}" "${MY_INPUT_FILE}" || exit 1
 
 ###############################################################################
 echo "Test obfuscate --preserve_interface mode"

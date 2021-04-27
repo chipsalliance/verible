@@ -126,7 +126,7 @@ status="$?"
   exit 1
 }
 
-diff -u "$MY_EXPECT_FILE" "$MY_OUTPUT_FILE" || {
+diff --strip-trailing-cr -u "$MY_EXPECT_FILE" "$MY_OUTPUT_FILE" || {
   exit 1
 }
 
@@ -140,7 +140,7 @@ status="$?"
   exit 1
 }
 
-diff -u "$MY_EXPECT_FILE" "$MY_OUTPUT_FILE" || {
+diff --strip-trailing-cr -u "$MY_EXPECT_FILE" "$MY_OUTPUT_FILE" || {
   exit 1
 }
 
@@ -163,7 +163,7 @@ status="$?"
   exit 0
 }
 
-diff -u "$MY_EXPECT_FILE" "$MY_OUTPUT_FILE" || {
+diff --strip-trailing-cr -u "$MY_EXPECT_FILE" "$MY_OUTPUT_FILE" || {
   exit 1
 }
 

@@ -114,7 +114,7 @@ EOF
 
 "$lint_tool" "$TEST_FILE" --show_diagnostic_context > "${MY_OUTPUT_FILE}.out"
 
-diff "${DIAGNOSTIC_OUTPUT}" "${MY_OUTPUT_FILE}.out"
+diff --strip-trailing-cr "${DIAGNOSTIC_OUTPUT}" "${MY_OUTPUT_FILE}.out"
 status="$?"
 [[ $status == 0 ]] || {
   echo "Expected exit code 0, but got $status"
@@ -127,7 +127,7 @@ EOF
 
 "$lint_tool" "$TEST_FILE" > "${MY_OUTPUT_FILE}.out"
 
-diff "${DIAGNOSTIC_OUTPUT}" "${MY_OUTPUT_FILE}.out"
+diff --strip-trailing-cr "${DIAGNOSTIC_OUTPUT}" "${MY_OUTPUT_FILE}.out"
 status="$?"
 [[ $status == 0 ]] || {
   echo "Expected exit code 0, but got $status"

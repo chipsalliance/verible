@@ -27,4 +27,20 @@ jobs:
     # Windows support is in progress, only run "working" tests
     - name: Run known-to-work tests
       run: |
-        bazel test  --test_output=errors --keep_going ...
+        bazel test  --test_output=errors `
+                    //common/... `
+                    //external_libs/... `
+                    //verilog/analysis/... `
+                    //verilog/CST/... `
+                    //verilog/formatting/... `
+                    //verilog/parser/... `
+                    //verilog/preprocessor/... `
+                    //verilog/tools/diff/... `
+                    //verilog/tools/formatter/... `
+                    //verilog/tools/kythe/... `
+                    //verilog/transform/... `
+                    //verilog/tools/lint:tool_test `
+                    //verilog/tools/obfuscator:obfuscate_test `
+                    //verilog/tools/project:project_tool_test `
+                    //verilog/tools/syntax:verilog_syntax_test `
+                    //verilog/tools/preprocessor:verilog_preprocessor_test

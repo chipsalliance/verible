@@ -91,7 +91,7 @@ cat > "$MY_EXPECT_FILE" <<EOF
 -:4:1: syntax error, rejected "endmodule"
 EOF
 
-diff -u "$MY_EXPECT_FILE" "$MY_OUTPUT_FILE".filtered || \
+diff --strip-trailing-cr -u "$MY_EXPECT_FILE" "$MY_OUTPUT_FILE".filtered || \
   { echo "stderr differs." ; exit 1 ;}
 
 ################################################################################
@@ -116,7 +116,7 @@ cat > "$MY_EXPECT_FILE" <<EOF
 -:1:8: syntax error, rejected "1"
 EOF
 
-diff -u "$MY_EXPECT_FILE" "$MY_OUTPUT_FILE".filtered || \
+diff --strip-trailing-cr -u "$MY_EXPECT_FILE" "$MY_OUTPUT_FILE".filtered || \
   { echo "stderr differs." ; exit 1 ;}
 
 ################################################################################
@@ -143,7 +143,7 @@ Lexed and filtered tokens:
 (#"end of file" @21-21: "")
 EOF
 
-diff -u "$MY_EXPECT_FILE" "$MY_OUTPUT_FILE" || { echo "stdout differs." ; exit 1 ;}
+diff --strip-trailing-cr -u "$MY_EXPECT_FILE" "$MY_OUTPUT_FILE" || { echo "stdout differs." ; exit 1 ;}
 
 ################################################################################
 echo "=== Test --printrawtokens"
@@ -174,7 +174,7 @@ All lexed tokens:
 (#"end of file" @21-21: "")
 EOF
 
-diff -u "$MY_EXPECT_FILE" "$MY_OUTPUT_FILE" || { echo "stdout differs." ; exit 1 ;}
+diff --strip-trailing-cr -u "$MY_EXPECT_FILE" "$MY_OUTPUT_FILE" || { echo "stdout differs." ; exit 1 ;}
 
 ################################################################################
 echo "=== Test --printtree"
@@ -207,7 +207,7 @@ Node @0 (tag: kDescriptionList) {
 }
 EOF
 
-diff -u "$MY_EXPECT_FILE" "$MY_OUTPUT_FILE" || { echo "stdout differs." ; exit 1 ;}
+diff --strip-trailing-cr -u "$MY_EXPECT_FILE" "$MY_OUTPUT_FILE" || { echo "stdout differs." ; exit 1 ;}
 
 ################################################################################
 echo "=== Test --verifytree"
