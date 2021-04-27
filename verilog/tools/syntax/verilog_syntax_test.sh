@@ -26,7 +26,7 @@ readonly MY_EXPECT_FILE
   echo "Expecting 1 positional argument, verible-verilog-syntax path."
   exit 1
 }
-syntax_checker="$1"
+syntax_checker="$(rlocation ${TEST_WORKSPACE}/$1)"
 
 echo "=== Testing executable: $syntax_checker"
 

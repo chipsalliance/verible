@@ -21,7 +21,7 @@ readonly MY_OUTPUT_FILE
   echo "Expecting 1 positional argument, verible-verilog-lint path."
   exit 1
 }
-lint_tool="$1"
+lint_tool="$(rlocation ${TEST_WORKSPACE}/$1)"
 
 ################################################################################
 echo "=== Test no file"
@@ -269,8 +269,8 @@ grep -q "ERROR: Missing the value for the flag 'waiver_files'" "${MY_OUTPUT_FILE
   exit 1
 }
 
-echo "=== Test --waiver_files $WAIVER_FILE with one rule"
 WAIVER_FILE="${TEST_TMPDIR}/waive_module-parameter.vlt"
+echo "=== Test --waiver_files $WAIVER_FILE with one rule"
 cat > ${WAIVER_FILE} <<EOF
 waive --rule=module-parameter
 EOF
@@ -283,8 +283,8 @@ status="$?"
   exit 1
 }
 
-echo "=== Test --waiver_files $WAIVER_FILE with one rule on one line"
 WAIVER_FILE="${TEST_TMPDIR}/waive_module-parameter_line.vlt"
+echo "=== Test --waiver_files $WAIVER_FILE with one rule on one line"
 cat > ${WAIVER_FILE} <<EOF
 waive --rule=module-parameter --line=1
 EOF

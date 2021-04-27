@@ -26,7 +26,7 @@ readonly MY_EXPECT_FILE
   echo "Expecting 1 positional argument, verible-verilog-preprocessor path."
   exit 1
 }
-preprocessor="$1"
+preprocessor="$(rlocation ${TEST_WORKSPACE}/$1)"
 
 ################################################################################
 echo "=== Test no command."

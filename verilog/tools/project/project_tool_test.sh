@@ -26,7 +26,7 @@ readonly MY_EXPECT_FILE
   echo "Expecting 1 positional argument, verible-verilog-project path."
   exit 1
 }
-project_tool="$1"
+project_tool="$(rlocation ${TEST_WORKSPACE}/$1)"
 
 ################################################################################
 echo "=== Test no arguments."

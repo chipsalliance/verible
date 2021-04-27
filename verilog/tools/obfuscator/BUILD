@@ -3,6 +3,8 @@
 
 licenses(["notice"])
 
+load("//bazel:sh_test_with_runfiles_lib.bzl", "sh_test_with_runfiles_lib")
+
 cc_binary(
     name = "verible-verilog-obfuscate",
     srcs = ["verilog_obfuscate.cc"],
@@ -19,7 +21,7 @@ cc_binary(
     ],
 )
 
-sh_test(
+sh_test_with_runfiles_lib(
     name = "obfuscate_test",
     size = "small",
     srcs = ["obfuscate_test.sh"],

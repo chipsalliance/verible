@@ -22,8 +22,8 @@ declare -r MY_OUTPUT_FILE2="${TEST_TMPDIR}/myoutput2.txt"
 declare -r MY_SAVEMAP_FILE="${TEST_TMPDIR}/save.map"
 declare -r MY_EXPECT_FILE="${TEST_TMPDIR}/myexpect.txt"
 
-obfuscator="$1"
-difftool="$2"
+obfuscator="$(rlocation ${TEST_WORKSPACE}/$1)"
+difftool="$(rlocation ${TEST_WORKSPACE}/$2)"
 
 ###############################################################################
 echo "### Simple obfuscation test."
@@ -250,4 +250,3 @@ done
 
 ###############################################################################
 echo "PASS"
-

@@ -6,6 +6,8 @@ load(
     "verilog_syntax",
 )
 
+load("//bazel:sh_test_with_runfiles_lib.bzl", "sh_test_with_runfiles_lib")
+
 licenses(["notice"])
 
 # Integration tests for different flags and configurations
@@ -233,7 +235,7 @@ cc_binary(
     ],
 )
 
-sh_test(
+sh_test_with_runfiles_lib(
     name = "tool_test",
     size = "small",
     srcs = ["lint_tool_test.sh"],
