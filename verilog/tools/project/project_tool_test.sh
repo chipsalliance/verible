@@ -95,10 +95,12 @@ status="$?"
 ################################################################################
 echo "=== Expect failure on nonexistent file listed in the file list"
 
- # Construct a file-list on-the-fly as a file-descriptor
+# Construct a file-list on-the-fly as a file-descriptor
+FILE_LIST_INPUT="${TEST_TMPDIR}/nonexist.txt"
+echo "nonexistent.sv" > "$FILE_LIST_INPUT"
 "$project_tool" \
   symbol-table-refs \
-  --file_list_path <(echo "nonexistent.sv") \
+  --file_list_path "$FILE_LIST_INPUT" \
   --file_list_root "$(dirname "$MY_INPUT_FILE")" \
   > "$MY_OUTPUT_FILE" 2>&1
 
@@ -123,10 +125,12 @@ localparam int fooo = 1;
 localparam int barr = fooo;
 EOF
 
- # Construct a file-list on-the-fly as a file-descriptor
+# Construct a file-list on-the-fly as a file-descriptor
+FILE_LIST_INPUT="${TEST_TMPDIR}/myinputlist.txt"
+echo "myinput.txt" > "$FILE_LIST_INPUT"
 "$project_tool" \
   symbol-table-defs \
-  --file_list_path <(echo myinput.txt) \
+  --file_list_path "$FILE_LIST_INPUT" \
   --file_list_root "$(dirname "$MY_INPUT_FILE")" \
   > "$MY_OUTPUT_FILE" 2>&1
 
@@ -149,10 +153,12 @@ cat > "$MY_INPUT_FILE" <<EOF
 localparam 777;
 EOF
 
- # Construct a file-list on-the-fly as a file-descriptor
+# Construct a file-list on-the-fly as a file-descriptor
+FILE_LIST_INPUT="${TEST_TMPDIR}/myinputlist.txt"
+echo "myinput.txt" > "$FILE_LIST_INPUT"
 "$project_tool" \
   symbol-table-defs \
-  --file_list_path <(echo myinput.txt) \
+  --file_list_path "$FILE_LIST_INPUT" \
   --file_list_root "$(dirname "$MY_INPUT_FILE")" \
   > "$MY_OUTPUT_FILE" 2>&1
 
@@ -176,10 +182,12 @@ localparam int fooo = 1;
 localparam int barr = fooo;
 EOF
 
- # Construct a file-list on-the-fly as a file-descriptor
+# Construct a file-list on-the-fly as a file-descriptor
+FILE_LIST_INPUT="${TEST_TMPDIR}/myinputlist.txt"
+echo "myinput.txt" > "$FILE_LIST_INPUT"
 "$project_tool" \
   symbol-table-refs \
-  --file_list_path <(echo myinput.txt) \
+  --file_list_path "$FILE_LIST_INPUT" \
   --file_list_root "$(dirname "$MY_INPUT_FILE")" \
   > "$MY_OUTPUT_FILE" 2>&1
 
@@ -202,10 +210,12 @@ cat > "$MY_INPUT_FILE" <<EOF
 localparam 777;
 EOF
 
- # Construct a file-list on-the-fly as a file-descriptor
+# Construct a file-list on-the-fly as a file-descriptor
+FILE_LIST_INPUT="${TEST_TMPDIR}/myinputlist.txt"
+echo "myinput.txt" > "$FILE_LIST_INPUT"
 "$project_tool" \
   symbol-table-refs \
-  --file_list_path <(echo myinput.txt) \
+  --file_list_path "$FILE_LIST_INPUT" \
   --file_list_root "$(dirname "$MY_INPUT_FILE")" \
   > "$MY_OUTPUT_FILE" 2>&1
 
@@ -232,10 +242,13 @@ cat > "$MY_INPUT_FILE".B <<EOF
 localparam int fooo = 1;
 EOF
 
- # Construct a file-list on-the-fly as a file-descriptor
+# Construct a file-list on-the-fly as a file-descriptor
+FILE_LIST_INPUT="${TEST_TMPDIR}/myinputlist.txt"
+echo "myinput.txt.A" > "$FILE_LIST_INPUT"
+echo "myinput.txt.B" >> "$FILE_LIST_INPUT"
 "$project_tool" \
   file-deps \
-  --file_list_path <(echo myinput.txt.A ; echo myinput.txt.B ) \
+  --file_list_path "$FILE_LIST_INPUT" \
   --file_list_root "$(dirname "$MY_INPUT_FILE".A)" \
   > "$MY_OUTPUT_FILE" 2>&1
 
@@ -269,10 +282,13 @@ module qq;
 endmodule
 EOF
 
- # Construct a file-list on-the-fly as a file-descriptor
+# Construct a file-list on-the-fly as a file-descriptor
+FILE_LIST_INPUT="${TEST_TMPDIR}/myinputlist.txt"
+echo "myinput.txt.A" > "$FILE_LIST_INPUT"
+echo "myinput.txt.B" >> "$FILE_LIST_INPUT"
 "$project_tool" \
   file-deps \
-  --file_list_path <(echo myinput.txt.A ; echo myinput.txt.B ) \
+  --file_list_path "$FILE_LIST_INPUT" \
   --file_list_root "$(dirname "$MY_INPUT_FILE".A)" \
   > "$MY_OUTPUT_FILE" 2>&1
 
