@@ -111,7 +111,8 @@ status="$?"
 }
 
 # Make sure we see some diagnostic message about missing files.
-grep -q "No such file" "$MY_OUTPUT_FILE" || {
+# System message is different in Unix vs. Windows, but they both contain 'file'
+grep -q "file" "$MY_OUTPUT_FILE" || {
   echo "Expected \"No such file\" in $MY_OUTPUT_FILE but didn't find it.  Got:"
   cat "$MY_OUTPUT_FILE"
   exit 1

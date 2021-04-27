@@ -240,10 +240,11 @@ status="$?"
 intact_names=(foo_bar clk)
 echo "Verify the saved map does not change interface names."
 for intact_name in ${intact_names[@]}; do
-  grep "^${intact_name} ${intact_name}\$" ${MY_SAVEMAP_FILE} > /dev/null
+  grep "^${intact_name} ${intact_name}[[:space:]]*\$" "${MY_SAVEMAP_FILE}" > /dev/null
   status="$?"
   [[ $status == 0 ]] || {
     echo "Failed to check mapping for name: ${intact_name}"
+    cat "${MY_SAVEMAP_FILE}"
     exit 1
   }
 done
