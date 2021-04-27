@@ -908,20 +908,20 @@ VectorTreeNodePair<LT, RT> DeepEqual(
   // The iterators returned by std::mismatch() do not propagate the
   // deep children nodes that differ, so we must use a lambda with capture.
   result_type first_diff;  // initially nullptrs
-  std::mismatch(left_children.begin(), left_children.end(),
-                right_children.begin(),
-                [&comp, &first_diff](const LT& l, const RT& r) -> bool {
-                  const auto result = DeepEqual(l, r, comp);
-                  if (result.left == nullptr) {
-                    return true;
-                  } else {
-                    first_diff = result;  // Capture first difference.
-                    return false;
-                  }
-                  // When this returns true, no further comparisons will be
-                  // called, so the assignment to first_diff will contain the
-                  // desired result.
-                });
+  (void) std::mismatch(left_children.begin(), left_children.end(),
+                       right_children.begin(),
+                       [&comp, &first_diff](const LT& l, const RT& r) -> bool {
+                         const auto result = DeepEqual(l, r, comp);
+                         if (result.left == nullptr) {
+                           return true;
+                         } else {
+                           first_diff = result;  // Capture first difference.
+                           return false;
+                         }
+                         // When this returns true, no further comparisons will
+                         // be called, so the assignment to first_diff will
+                         // contain the desired result.
+                       });
   // When every subtree matches, first_diff will hold nullptrs.
   // Otherwise it will point to the first mismatched nodes.
   return first_diff;
