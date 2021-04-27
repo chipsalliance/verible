@@ -355,22 +355,78 @@ static void DeterminePartitionExpansion(
       break;
     }
     // Always view tabular aligned partitions in expanded form.
-    case PartitionPolicyEnum::kTabularAlignment:
     case PartitionPolicyEnum::kAlwaysExpand: {
       if (children.size() > 1) {
         node_view.Expand();
       }
       break;
     }
+    case PartitionPolicyEnum::kTabularAlignment: {
+      if (uwline.Origin()->Tag().tag == (int)NodeEnum::kArgumentList) {
+        // Check whether the whole function call fits on one line. If possible,
+        // unexpand and fit into one line. Otherwise expand argument list with
+        // tabular alignment.
+        auto& node_view_parent = node->Parent()->Value();
+        const UnwrappedLine& uwline_parent = node_view_parent.Value();
+        if (verible::FitsOnLine(uwline_parent, style).fits) {
+          node_view.Unexpand();
+          break;
+        }
+      }
+
+      if (children.size() > 1) {
+        node_view.Expand();
+      }
+      break;
+    }
+
     case PartitionPolicyEnum::kSuccessfullyAligned:
       VLOG(3) << "Aligned fits, un-expanding.";
       node_view.Unexpand();
       break;
     // Try to fit kAppendFittingSubPartitions partition into single line.
     // If it doesn't fit expand to grouped nodes.
-    case PartitionPolicyEnum::kAppendFittingSubPartitions:
-    case PartitionPolicyEnum::kFitOnLineElseExpand: {
+    case PartitionPolicyEnum::kAppendFittingSubPartitions: {
       // !style.try_wrap_long_lines was already handled above
+      if (verible::FitsOnLine(uwline, style).fits) {
+        VLOG(3) << "Fits, un-expanding.";
+        node_view.Unexpand();
+      } else {
+        VLOG(3) << "Does not fit, expanding.";
+        node_view.Expand();
+      }
+    }
+
+    case PartitionPolicyEnum::kFitOnLineElseExpand: {
+      if (uwline.Origin() && uwline.Origin()->Tag().tag ==
+                                 (int)NodeEnum::kBlockItemStatementList) {
+        // Align unnamed parameters in function call. Example:
+        // always_comb begin
+        //   value = function_name(8'hA, signal,
+        //                         signal_1234);
+        // end
+        const auto& children_tmp = node->Children();
+        auto look_for_arglist = [](const partition_node_type& child) {
+          auto& node_view_child = child.Value();
+          const UnwrappedLine& uwline_child = node_view_child.Value();
+          if (uwline_child.Origin() &&
+              uwline_child.Origin()->Kind() == verible::SymbolKind::kNode &&
+              verible::SymbolCastToNode(*uwline_child.Origin())
+                  .MatchesTag(NodeEnum::kArgumentList)) {
+            return true;
+          } else {
+            return false;
+          }
+        };
+
+        // Check if kBlockItemStatementList contains kArgumentList node
+        if (std::any_of(children_tmp.begin(), children_tmp.end(),
+                        look_for_arglist)) {
+          node_view.Unexpand();
+          break;
+        }
+      }
+
       if (verible::FitsOnLine(uwline, style).fits) {
         VLOG(3) << "Fits, un-expanding.";
         node_view.Unexpand();

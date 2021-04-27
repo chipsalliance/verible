@@ -636,16 +636,33 @@ void TreeUnwrapper::SetIndentationsAndCreatePartitions(
     case NodeEnum::kArgumentList:
     case NodeEnum::kIdentifierList: {
       if (Context().DirectParentsAre(
-              {NodeEnum::kParenGroup, NodeEnum::kRandomizeFunctionCall}) ||
-          Context().DirectParentsAre(
-              {NodeEnum::kParenGroup, NodeEnum::kFunctionCall}) ||
-          Context().DirectParentsAre(
-              {NodeEnum::kParenGroup,
-               NodeEnum::kRandomizeMethodCallExtension}) ||
-          Context().DirectParentsAre(
-              {NodeEnum::kParenGroup, NodeEnum::kSystemTFCall}) ||
-          Context().DirectParentsAre(
-              {NodeEnum::kParenGroup, NodeEnum::kMethodCallExtension})) {
+              {NodeEnum::kParenGroup, NodeEnum::kFunctionCall}) &&
+          Context().IsInside(NodeEnum::kAlwaysStatement) &&
+          Context().IsInside(NodeEnum::kNetVariableAssignment)) {
+        if (any_of(node.children().begin(), node.children().end(),
+                   [](const verible::SymbolPtr& p) {
+                     return p->Tag().tag == (int)NodeEnum::kParamByName;
+                   })) {
+          // Indentation of named arguments of functions
+          VisitIndentedSection(node, style_.indentation_spaces,
+                               PartitionPolicyEnum::kTabularAlignment);
+        } else {
+          VisitIndentedSection(node, style_.indentation_spaces,
+                               PartitionPolicyEnum::kFitOnLineElseExpand);
+        }
+
+      } else if (Context().DirectParentsAre(
+                     {NodeEnum::kParenGroup,
+                      NodeEnum::kRandomizeFunctionCall}) ||
+                 (Context().DirectParentsAre(
+                     {NodeEnum::kParenGroup, NodeEnum::kFunctionCall})) ||
+                 Context().DirectParentsAre(
+                     {NodeEnum::kParenGroup,
+                      NodeEnum::kRandomizeMethodCallExtension}) ||
+                 Context().DirectParentsAre(
+                     {NodeEnum::kParenGroup, NodeEnum::kSystemTFCall}) ||
+                 Context().DirectParentsAre(
+                     {NodeEnum::kParenGroup, NodeEnum::kMethodCallExtension})) {
         // TODO(fangism): Using wrap_spaces because of poor support of
         //     function/system/method/random calls inside trailing assignments,
         //     if headers, ternary operators and so on
