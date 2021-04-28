@@ -26,7 +26,7 @@ readonly MY_EXPECT_FILE
   echo "Expecting 1 positional argument, verible-verilog-project path."
   exit 1
 }
-project_tool="$1"
+project_tool="$(rlocation ${TEST_WORKSPACE}/$1)"
 
 ################################################################################
 echo "=== Test no arguments."
@@ -95,10 +95,12 @@ status="$?"
 ################################################################################
 echo "=== Expect failure on nonexistent file listed in the file list"
 
- # Construct a file-list on-the-fly as a file-descriptor
+# Construct a file-list on-the-fly as a file-descriptor
+FILE_LIST_INPUT="${TEST_TMPDIR}/nonexist.txt"
+echo "nonexistent.sv" > "$FILE_LIST_INPUT"
 "$project_tool" \
   symbol-table-refs \
-  --file_list_path <(echo "nonexistent.sv") \
+  --file_list_path "$FILE_LIST_INPUT" \
   --file_list_root "$(dirname "$MY_INPUT_FILE")" \
   > "$MY_OUTPUT_FILE" 2>&1
 
@@ -109,7 +111,8 @@ status="$?"
 }
 
 # Make sure we see some diagnostic message about missing files.
-grep -q "No such file" "$MY_OUTPUT_FILE" || {
+# System message is different in Unix vs. Windows, but they both contain 'file'
+grep -q "file" "$MY_OUTPUT_FILE" || {
   echo "Expected \"No such file\" in $MY_OUTPUT_FILE but didn't find it.  Got:"
   cat "$MY_OUTPUT_FILE"
   exit 1
@@ -123,10 +126,12 @@ localparam int fooo = 1;
 localparam int barr = fooo;
 EOF
 
- # Construct a file-list on-the-fly as a file-descriptor
+# Construct a file-list on-the-fly as a file-descriptor
+FILE_LIST_INPUT="${TEST_TMPDIR}/myinputlist.txt"
+echo "myinput.txt" > "$FILE_LIST_INPUT"
 "$project_tool" \
   symbol-table-defs \
-  --file_list_path <(echo myinput.txt) \
+  --file_list_path "$FILE_LIST_INPUT" \
   --file_list_root "$(dirname "$MY_INPUT_FILE")" \
   > "$MY_OUTPUT_FILE" 2>&1
 
@@ -149,10 +154,12 @@ cat > "$MY_INPUT_FILE" <<EOF
 localparam 777;
 EOF
 
- # Construct a file-list on-the-fly as a file-descriptor
+# Construct a file-list on-the-fly as a file-descriptor
+FILE_LIST_INPUT="${TEST_TMPDIR}/myinputlist.txt"
+echo "myinput.txt" > "$FILE_LIST_INPUT"
 "$project_tool" \
   symbol-table-defs \
-  --file_list_path <(echo myinput.txt) \
+  --file_list_path "$FILE_LIST_INPUT" \
   --file_list_root "$(dirname "$MY_INPUT_FILE")" \
   > "$MY_OUTPUT_FILE" 2>&1
 
@@ -176,10 +183,12 @@ localparam int fooo = 1;
 localparam int barr = fooo;
 EOF
 
- # Construct a file-list on-the-fly as a file-descriptor
+# Construct a file-list on-the-fly as a file-descriptor
+FILE_LIST_INPUT="${TEST_TMPDIR}/myinputlist.txt"
+echo "myinput.txt" > "$FILE_LIST_INPUT"
 "$project_tool" \
   symbol-table-refs \
-  --file_list_path <(echo myinput.txt) \
+  --file_list_path "$FILE_LIST_INPUT" \
   --file_list_root "$(dirname "$MY_INPUT_FILE")" \
   > "$MY_OUTPUT_FILE" 2>&1
 
@@ -202,10 +211,12 @@ cat > "$MY_INPUT_FILE" <<EOF
 localparam 777;
 EOF
 
- # Construct a file-list on-the-fly as a file-descriptor
+# Construct a file-list on-the-fly as a file-descriptor
+FILE_LIST_INPUT="${TEST_TMPDIR}/myinputlist.txt"
+echo "myinput.txt" > "$FILE_LIST_INPUT"
 "$project_tool" \
   symbol-table-refs \
-  --file_list_path <(echo myinput.txt) \
+  --file_list_path "$FILE_LIST_INPUT" \
   --file_list_root "$(dirname "$MY_INPUT_FILE")" \
   > "$MY_OUTPUT_FILE" 2>&1
 
@@ -232,10 +243,13 @@ cat > "$MY_INPUT_FILE".B <<EOF
 localparam int fooo = 1;
 EOF
 
- # Construct a file-list on-the-fly as a file-descriptor
+# Construct a file-list on-the-fly as a file-descriptor
+FILE_LIST_INPUT="${TEST_TMPDIR}/myinputlist.txt"
+echo "myinput.txt.A" > "$FILE_LIST_INPUT"
+echo "myinput.txt.B" >> "$FILE_LIST_INPUT"
 "$project_tool" \
   file-deps \
-  --file_list_path <(echo myinput.txt.A ; echo myinput.txt.B ) \
+  --file_list_path "$FILE_LIST_INPUT" \
   --file_list_root "$(dirname "$MY_INPUT_FILE".A)" \
   > "$MY_OUTPUT_FILE" 2>&1
 
@@ -249,7 +263,7 @@ cat > "$MY_EXPECT_FILE" <<EOF
 "myinput.txt.A" depends on "myinput.txt.B" for symbols { fooo }
 EOF
 
-diff -u "$MY_EXPECT_FILE" "$MY_OUTPUT_FILE" || { exit 1; }
+diff --strip-trailing-cr -u "$MY_EXPECT_FILE" "$MY_OUTPUT_FILE" || { exit 1; }
 
 ################################################################################
 echo "=== Show dependencies between two files (modules)"
@@ -269,10 +283,13 @@ module qq;
 endmodule
 EOF
 
- # Construct a file-list on-the-fly as a file-descriptor
+# Construct a file-list on-the-fly as a file-descriptor
+FILE_LIST_INPUT="${TEST_TMPDIR}/myinputlist.txt"
+echo "myinput.txt.A" > "$FILE_LIST_INPUT"
+echo "myinput.txt.B" >> "$FILE_LIST_INPUT"
 "$project_tool" \
   file-deps \
-  --file_list_path <(echo myinput.txt.A ; echo myinput.txt.B ) \
+  --file_list_path "$FILE_LIST_INPUT" \
   --file_list_root "$(dirname "$MY_INPUT_FILE".A)" \
   > "$MY_OUTPUT_FILE" 2>&1
 
@@ -286,7 +303,7 @@ cat > "$MY_EXPECT_FILE" <<EOF
 "myinput.txt.B" depends on "myinput.txt.A" for symbols { mm }
 EOF
 
-diff -u "$MY_EXPECT_FILE" "$MY_OUTPUT_FILE" || { exit 1; }
+diff --strip-trailing-cr -u "$MY_EXPECT_FILE" "$MY_OUTPUT_FILE" || { exit 1; }
 
 ################################################################################
 echo "PASS"

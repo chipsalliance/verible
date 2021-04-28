@@ -26,7 +26,7 @@ readonly MY_EXPECT_FILE
   echo "Expecting 1 positional argument, verible-verilog-preprocessor path."
   exit 1
 }
-preprocessor="$1"
+preprocessor="$(rlocation ${TEST_WORKSPACE}/$1)"
 
 ################################################################################
 echo "=== Test no command."
@@ -126,7 +126,7 @@ status="$?"
   exit 1
 }
 
-diff -u "$MY_EXPECT_FILE" "$MY_OUTPUT_FILE" || {
+diff --strip-trailing-cr -u "$MY_EXPECT_FILE" "$MY_OUTPUT_FILE" || {
   exit 1
 }
 
@@ -140,7 +140,7 @@ status="$?"
   exit 1
 }
 
-diff -u "$MY_EXPECT_FILE" "$MY_OUTPUT_FILE" || {
+diff --strip-trailing-cr -u "$MY_EXPECT_FILE" "$MY_OUTPUT_FILE" || {
   exit 1
 }
 
@@ -163,7 +163,7 @@ status="$?"
   exit 0
 }
 
-diff -u "$MY_EXPECT_FILE" "$MY_OUTPUT_FILE" || {
+diff --strip-trailing-cr -u "$MY_EXPECT_FILE" "$MY_OUTPUT_FILE" || {
   exit 1
 }
 

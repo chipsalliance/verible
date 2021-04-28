@@ -3,6 +3,8 @@
 
 licenses(["notice"])
 
+load("//bazel:sh_test_with_runfiles_lib.bzl", "sh_test_with_runfiles_lib")
+
 cc_binary(
     name = "verible-verilog-preprocessor",
     srcs = ["verilog_preprocessor.cc"],
@@ -18,7 +20,7 @@ cc_binary(
     ],
 )
 
-sh_test(
+sh_test_with_runfiles_lib(
     name = "verilog_preprocessor_test",
     size = "small",
     srcs = ["verilog_preprocessor_test.sh"],

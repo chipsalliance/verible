@@ -2,6 +2,8 @@
 
 licenses(["notice"])
 
+load("//bazel:sh_test_with_runfiles_lib.bzl", "sh_test_with_runfiles_lib")
+
 cc_binary(
     name = "verible-verilog-syntax",
     srcs = ["verilog_syntax.cc"],
@@ -38,7 +40,7 @@ sh_binary(
     srcs = ["triage_parser.sh"],
 )
 
-sh_test(
+sh_test_with_runfiles_lib(
     name = "verilog_syntax_test",
     size = "small",
     srcs = ["verilog_syntax_test.sh"],

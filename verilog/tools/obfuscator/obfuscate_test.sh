@@ -22,8 +22,8 @@ declare -r MY_OUTPUT_FILE2="${TEST_TMPDIR}/myoutput2.txt"
 declare -r MY_SAVEMAP_FILE="${TEST_TMPDIR}/save.map"
 declare -r MY_EXPECT_FILE="${TEST_TMPDIR}/myexpect.txt"
 
-obfuscator="$1"
-difftool="$2"
+obfuscator="$(rlocation ${TEST_WORKSPACE}/$1)"
+difftool="$(rlocation ${TEST_WORKSPACE}/$2)"
 
 ###############################################################################
 echo "### Simple obfuscation test."
@@ -94,7 +94,7 @@ status="$?"
   exit 1
 }
 
-diff -u "${MY_OUTPUT_FILE}" "${MY_EXPECT_FILE}" || exit 1
+diff --strip-trailing-cr -u "${MY_OUTPUT_FILE}" "${MY_EXPECT_FILE}" || exit 1
 
 ###############################################################################
 echo "### Testing reading malformed map file."
@@ -172,7 +172,7 @@ status="$?"
   exit 1
 }
 
-diff -u "${MY_OUTPUT_FILE2}" "${MY_EXPECT_FILE}" || exit 1
+diff --strip-trailing-cr -u "${MY_OUTPUT_FILE2}" "${MY_EXPECT_FILE}" || exit 1
 
 ###############################################################################
 echo "Test obfuscate with --save_map to a bad path"
@@ -217,7 +217,7 @@ status="$?"
   exit 1
 }
 
-diff -u "${MY_OUTPUT_FILE2}" "${MY_INPUT_FILE}" || exit 1
+diff --strip-trailing-cr -u "${MY_OUTPUT_FILE2}" "${MY_INPUT_FILE}" || exit 1
 
 ###############################################################################
 echo "Test obfuscate --preserve_interface mode"
@@ -240,14 +240,14 @@ status="$?"
 intact_names=(foo_bar clk)
 echo "Verify the saved map does not change interface names."
 for intact_name in ${intact_names[@]}; do
-  grep "^${intact_name} ${intact_name}\$" ${MY_SAVEMAP_FILE} > /dev/null
+  grep "^${intact_name} ${intact_name}[[:space:]]*\$" "${MY_SAVEMAP_FILE}" > /dev/null
   status="$?"
   [[ $status == 0 ]] || {
     echo "Failed to check mapping for name: ${intact_name}"
+    cat "${MY_SAVEMAP_FILE}"
     exit 1
   }
 done
 
 ###############################################################################
 echo "PASS"
-
