@@ -21,26 +21,29 @@ jobs:
         fetch-depth: 0
     - name: Install dependencies
       run: choco install llvm
-    - name: Build Verible
-      run: |
-        bazel build -c opt //...
     # Windows support is in progress, only run "working" tests
+    # Remaining not working
+    #  - verilog/tool/lint : generated linter tests. Need adaption of bzl file
+    #  - verilog/tools/syntax/export_json_examples : python tests
     - name: Run known-to-work tests
       run: |
-        bazel test  --test_output=errors `
+        bazel test  --test_output=errors -- `
                     //common/... `
                     //external_libs/... `
-                    //verilog/analysis/... `
                     //verilog/CST/... `
+                    //verilog/analysis/... `
                     //verilog/formatting/... `
                     //verilog/parser/... `
                     //verilog/preprocessor/... `
                     //verilog/tools/diff/... `
                     //verilog/tools/formatter/... `
                     //verilog/tools/kythe/... `
-                    //verilog/transform/... `
                     //verilog/tools/lint:tool_test `
-                    //verilog/tools/obfuscator:obfuscate_test `
-                    //verilog/tools/project:project_tool_test `
+                    //verilog/tools/obfuscator/... `
+                    //verilog/tools/preprocessor/... `
+                    //verilog/tools/project/... `
                     //verilog/tools/syntax:verilog_syntax_test `
-                    //verilog/tools/preprocessor:verilog_preprocessor_test
+                    //verilog/transform/...
+    - name: Build Verible
+      run: |
+        bazel build -c opt //...
