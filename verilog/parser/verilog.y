@@ -4679,11 +4679,10 @@ expr_primary_braces
   | range_list_in_braces
     /* Reshape to use kConcatenationExpression instead of kBraceGroup */
     { auto& node = SymbolCastToNode(*$1);
-      $$ = MakeTaggedNode(N::kExpression,
-                          MakeTaggedNode(N::kConcatenationExpression,
+      $$ = MakeTaggedNode(N::kConcatenationExpression,
                                          node[0],
                                          node[1],
-                                         node[2])); }
+                                         node[2]); }
   | streaming_concatenation
     { $$ = MakeTaggedNode(N::kExpression, $1); }
 
