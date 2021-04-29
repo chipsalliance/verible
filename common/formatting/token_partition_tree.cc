@@ -492,40 +492,45 @@ class TokenPartitionTreeWrapper {
 using partition_iterator = std::vector<TokenPartitionTree>::const_iterator;
 using partition_range = verible::container_iterator_range<partition_iterator>;
 
-// Reshapes unfitted_partitions and returns result via fitted_partitions.
-// Function creates VectorTree<> with additional level of grouping.
-// Function expects two partitions: first used for computing indentation
-// second with subpartitions, e.g.
-// { (>>[<auto>]) @{1,0} // tree root
-//   { (>>[function fffffffffff (]) } // first subpartition 'header'
-//   { (>>>>>>[<auto>]) @{1,0,1}, // root node with subpartitions 'args'
-//     { (>>>>>>[type_a aaaa ,]) }
-//     { (>>>>>>[type_b bbbbb ,]) }
-//     { (>>>>>>[type_c cccccc ,]) }
-//     { (>>>>>>[type_d dddddddd ,]) }
-//     { (>>>>>>[type_e eeeeeeee ,]) }
-//     { (>>>>>>[type_f ffff ) ;]) }
-//   }
-// }
-// Function is iterating over subpartitions and tries to append
-// them if fits in line. Parameter wrap_first_subpartition is used to determine
-// whether wrap first subpartition or not.
-// Return value signalise whether first subpartition was wrapped.
-static bool AppendFittingSubpartitions(
+struct AppendFittingSubpartitionsResult {
+  // Indicates that wrapped style has been used.
+  bool wrapped;
+  // Length of longest line (including indent) in resulting tree. Might be
+  // inaccurate when passed subpartitions contain forced line breaks.
+  int longest_line_len;
+};
+
+// Builds new tree from passed partitions in one of two styles described below.
+// The tree is built on `fitted_partitions` node. `header` and at least one
+// partition in `subpartitions` are required; `trailer` partition is optional.
+// `one_per_line` flag forces line break after each subpartition.
+//
+// Unwrapped style:
+// Used when the header and the first subpartition fit on one line and
+// `wrap_first_subpartiton` is false.
+//
+// All but first line use indent equal to `header` width. `trailer` is appended
+// to the last subpartition.
+//
+// <HEADER><SUBPARTITION 0><SUBPARTITION 1>
+//         <SUBPARTITION 2><SUBPARTITION 3>
+//         <SUBPARTITION 3><TRAILER>
+//
+// Wrapped style:
+// Line break is forced before first and after last partition. Lines with
+// subpartitions use subpartition's existing indent.
+//
+// <HEADER>
+//     <SUBPARTITION 0><SUBPARTITION 1><SUBPARTITION 2>
+//     <SUBPARTITION 3><SUBPARTITION 3>
+// <TRAILER>
+static AppendFittingSubpartitionsResult AppendFittingSubpartitions(
     VectorTree<TokenPartitionTreeWrapper>* fitted_partitions,
-    const TokenPartitionTree& unfitted_partitions_header,
-    const partition_range& unfitted_partitions_args,
-    const BasicFormatStyle& style, bool wrap_first_subpartition) {
-  bool wrapped_first_subpartition;
-
-  // first with header
-  const auto& header = unfitted_partitions_header;
-
-  // arguments
-  const auto& args = unfitted_partitions_args;
-
+    const TokenPartitionTree& header, const partition_range& subpartitions,
+    const TokenPartitionTree* trailer, const BasicFormatStyle& style,
+    bool one_per_line, bool wrap_first_subpartition) {
   // at least one argument
-  CHECK_GE(args.size(), 1);
+  CHECK_GE(subpartitions.size(), 1);
 
   // Create first partition group
   // and populate it with function name (e.g. { [function foo (] })
@@ -535,65 +540,126 @@ static bool AppendFittingSubpartitions(
   int indent;
 
   // Try appending first argument
-  const auto& first_arg = args[0];
-  auto group_value_arg = group->Value().Value(first_arg);
-  if (wrap_first_subpartition ||
-      (FitsOnLine(group_value_arg, style).fits == false)) {
-    // Use wrap indentation
-    indent = style.wrap_spaces + group_value_arg.IndentationSpaces();
 
+  const TokenPartitionTree& first_arg = subpartitions.front();
+  verible::UnwrappedLine first_line = group->Value().Value(first_arg);
+  if (trailer && subpartitions.size() == 1) {
+    first_line.SpanUpToToken(trailer->Value().TokensRange().end());
+  }
+
+  bool wrapped_first_subpartition;
+  int longest_line_len = 0;
+
+  verible::FitResult fit_result;
+  if (!wrap_first_subpartition &&
+      (fit_result = FitsOnLine(first_line, style)).fits == true) {
+    // Compute new indentation level based on first partition
+    const UnwrappedLine& uwline = group->Value().Value();
+    indent = FitsOnLine(uwline, style).final_column;
+
+    // Append first argument to current group
+    child = group->NewChild(subpartitions.front());
+    group->Value().Update(child);
+    // keep group indentation
+
+    longest_line_len = fit_result.final_column;
+    // Appended first argument
+    wrapped_first_subpartition = false;
+  } else {
+    // Measure header
+    fit_result = FitsOnLine(group->Value().Value(), style);
+    longest_line_len = std::max(longest_line_len, fit_result.final_column);
+
+    // Use original indentation of the subpartition
+    indent = first_arg.Value().IndentationSpaces();
     // wrap line
     group = group->NewSibling(first_arg.Value());  // start new group
     child = group->NewChild(first_arg);  // append not fitting 1st argument
     group->Value().SetIndentationSpaces(indent);
 
+    // Measure first wrapped line
+    fit_result = FitsOnLine(group->Value().Value(), style);
+    longest_line_len = std::max(longest_line_len, fit_result.final_column);
+
     // Wrapped first argument
     wrapped_first_subpartition = true;
-  } else {
-    // Compute new indentation level based on first partition
-    const auto& group_value = group->Value().Value();
-    const UnwrappedLine& uwline = group_value;
-    indent = FitsOnLine(uwline, style).final_column;
-
-    // Append first argument to current group
-    child = group->NewChild(args[0]);
-    group->Value().Update(child);
-    // keep group indentation
-
-    // Appended first argument
-    wrapped_first_subpartition = false;
   }
 
   const auto remaining_args =
-      make_container_range(args.begin() + 1, args.end());
+      make_container_range(subpartitions.begin() + 1, subpartitions.end());
   for (const auto& arg : remaining_args) {
     // Every group should have at least one child
     CHECK_GT(group->Children().size(), 0);
 
-    // Try appending current argument to current line
-    UnwrappedLine uwline = group->Value().Value(arg);
-    if (FitsOnLine(uwline, style).fits) {
-      // Fits, appending child
-      child = group->NewChild(arg);
-      group->Value().Update(child);
-    } else {
-      // Does not fit, start new group with current child
-      group = group->NewSibling(arg.Value());
-      child = group->NewChild(arg);
-      // no need to update because group was created
-      // with current child value
+    if (!one_per_line) {
+      // Try appending current argument to current line
+      UnwrappedLine uwline = group->Value().Value(arg);
+      if (trailer && !wrapped_first_subpartition &&
+          (&arg == &remaining_args.back())) {
+        uwline.SpanUpToToken(trailer->Value().TokensRange().end());
+      }
 
-      // Fix group indentation
-      group->Value().SetIndentationSpaces(indent);
+      fit_result = FitsOnLine(uwline, style);
+      if (fit_result.fits) {
+        // Fits, appending child
+        child = group->NewChild(arg);
+        group->Value().Update(child);
+        longest_line_len = std::max(longest_line_len, fit_result.final_column);
+        continue;
+      }
     }
+
+    // Forced one per line or does not fit, start new group with current child
+    group = group->NewSibling(arg.Value());
+    child = group->NewChild(arg);
+    // no need to update because group was created
+    // with current child value
+
+    // Fix group indentation
+    group->Value().SetIndentationSpaces(indent);
+
+    fit_result = FitsOnLine(group->Value().Value(), style);
+    longest_line_len = std::max(longest_line_len, fit_result.final_column);
+  }
+  if (trailer) {
+    if (wrapped_first_subpartition) {
+      group = group->NewSibling(trailer->Value());
+      child = group->NewChild(*trailer);
+      group->Value().SetIndentationSpaces(first_line.IndentationSpaces());
+    } else {
+      child = group->NewChild(*trailer);
+      group->Value().Update(child);
+    }
+    fit_result = FitsOnLine(group->Value().Value(), style);
+    longest_line_len = std::max(longest_line_len, fit_result.final_column);
   }
 
-  return wrapped_first_subpartition;
+  return {wrapped_first_subpartition, longest_line_len};
 }
 
+// Reshapes the tree pointed to by `node` using `AppendFittingSubpartitions()`
+// function. Function creates VectorTree<> with additional level of grouping for
+// each created line. Function expects at least two partitions: first one
+// ("header") is used for computing indentation, the second ("subpartitions")
+// should contain subpartitions to be appended and aligned. Optional third
+// partition ("trailer") is appended to the last subpartition or placed in a new
+// line with the same indent as the header. Example input tree:
+//
+// { (>>[...], policy: append-fitting-sub-partitions)  // `node` tree
+//   { (>>[string seq_names [ ] = {]) }                // header
+//   { (>>>>[...], policy: always-expand)              // subpartitions
+//     { (>>>>["uart_sanity_vseq" ,]) }
+//     ...
+//     { (>>>>["uart_loopback_vseq"]) }
+//   }
+//   { (>>[} ;]) }                                     // trailer
+// }
+//
+// When "subpartitions" group has kAlwaysExpand policy, line break is forced
+// between each subpartition from the group.
 void ReshapeFittingSubpartitions(TokenPartitionTree* node,
                                  const BasicFormatStyle& style) {
-  VLOG(4) << __FUNCTION__ << ", partition:\n" << *node;
+  VLOG(4) << __FUNCTION__ << ", before:\n" << *node;
   VectorTree<TokenPartitionTreeWrapper>* fitted_tree = nullptr;
 
   // Leaf or simple node, e.g. '[function foo ( ) ;]'
@@ -605,24 +671,32 @@ void ReshapeFittingSubpartitions(TokenPartitionTree* node,
   // Partition with arguments should have at least one argument
   const auto& children = node->Children();
   const auto& header = children[0];
-  const auto& args = children[1].Children();
+  const auto& args_partition = children[1];
+  const auto& subpartitions = args_partition.Children();
+  const auto* trailer = children.size() > 2 ? &children[2] : nullptr;
+
+  const bool one_per_line = args_partition.Value().PartitionPolicy() ==
+                            PartitionPolicyEnum::kAlwaysExpand;
+
   partition_range args_range;
-  if (args.empty()) {
+  if (subpartitions.empty()) {
     // Partitions with one argument may have been flattened one level.
-    args_range = make_container_range(children.begin() + 1, children.end());
+    args_range =
+        make_container_range(children.begin() + 1, children.begin() + 2);
   } else {
     // Arguments exist in a nested subpartition.
-    args_range = make_container_range(args.begin(), args.end());
+    args_range =
+        make_container_range(subpartitions.begin(), subpartitions.end());
   }
 
   VectorTree<TokenPartitionTreeWrapper> unwrapped_tree(node->Value());
   VectorTree<TokenPartitionTreeWrapper> wrapped_tree(node->Value());
 
   // Format unwrapped_lines. At first without forced wrap after first line
-  bool wrapped_first_token = AppendFittingSubpartitions(
-      &unwrapped_tree, header, args_range, style, false);
+  const auto result = AppendFittingSubpartitions(
+      &unwrapped_tree, header, args_range, trailer, style, one_per_line, false);
 
-  if (wrapped_first_token) {
+  if (result.wrapped && result.longest_line_len < style.column_limit) {
     // First token was forced to wrap so there's no need to
     // generate wrapped version (it has to be wrapped)
     fitted_tree = &unwrapped_tree;
@@ -633,14 +707,21 @@ void ReshapeFittingSubpartitions(TokenPartitionTree* node,
     // and leaves optimization to line_wrap_searcher.
     // In this approach generated result may not be
     // exactly correct beacause of additional line break done later.
-    AppendFittingSubpartitions(&wrapped_tree, header, args_range, style, true);
+    const auto wrapped_result = AppendFittingSubpartitions(
+        &wrapped_tree, header, args_range, trailer, style, one_per_line, true);
 
-    // Compare number of grouping nodes
-    // If number of grouped node is equal then prefer unwrapped result
-    if (unwrapped_tree.Children().size() <= wrapped_tree.Children().size()) {
-      fitted_tree = &unwrapped_tree;
-    } else {
+    // Avoid exceeding column limit if possible
+    if (result.longest_line_len > style.column_limit &&
+        wrapped_result.longest_line_len <= style.column_limit) {
       fitted_tree = &wrapped_tree;
+    } else {
+      // Compare number of grouping nodes
+      // If number of grouped node is equal then prefer unwrapped result
+      if (unwrapped_tree.Children().size() <= wrapped_tree.Children().size()) {
+        fitted_tree = &unwrapped_tree;
+      } else {
+        fitted_tree = &wrapped_tree;
+      }
     }
   }
 
@@ -680,6 +761,7 @@ void ReshapeFittingSubpartitions(TokenPartitionTree* node,
 
   // Move back from temporary tree
   node->AdoptSubtreesFrom(&temporary_tree);
+  VLOG(4) << __FUNCTION__ << ", after:\n" << *node;
 }
 
 }  // namespace verible
