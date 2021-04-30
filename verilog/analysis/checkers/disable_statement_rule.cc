@@ -74,51 +74,52 @@ static const Matcher& DisableMatcher() {
 void DisableStatementNoLabelsRule::HandleSymbol(
     const verible::Symbol& symbol, const SyntaxTreeContext& context) {
   verible::matcher::BoundSymbolManager manager;
-  if (DisableMatcher().Matches(symbol, &manager)) {
-    const char* kMessageFinal = DisableStatementNoLabelsRule::kMessage;
-    // if no kDisable label, return, nothing to be checked
-    const auto& disableLabels = FindAllSymbolIdentifierLeafs(symbol);
-    if (disableLabels.empty()) {
-      return;
+  if (!DisableMatcher().Matches(symbol, &manager)) {
+    return;
+  }
+  const char* kMessageFinal = DisableStatementNoLabelsRule::kMessage;
+  // if no kDisable label, return, nothing to be checked
+  const auto& disableLabels = FindAllSymbolIdentifierLeafs(symbol);
+  if (disableLabels.empty()) {
+    return;
+  }
+  // look for every kBegin node starting from kDisableLabel token
+  // the kDisableLabel can be nested in some kBegin nodes
+  // so we're looking for the kBegin node that direct parent
+  // is not one of the initial/final/always statements since such blocks are
+  // considered to be invalid. If the label for disable statements is not
+  // found, it means that there is no appropriate label or the label
+  // points to the illegal node such as forked label
+  const auto& rcontext = reversed_view(context);
+  for (auto rc = rcontext.begin(); rc != rcontext.end(); rc++) {
+    const auto& node = *rc;
+    if (node->Tag().tag != static_cast<int>(NodeEnum::kSeqBlock)) {
+      continue;
     }
-    // look for every kBegin node starting from kDisableLabel token
-    // the kDisableLabel can be nested in some kBegin nodes
-    // so we're looking for the kBegin node that direct parent
-    // is not one of the initial/final/always statements since such blocks are
-    // considered to be invalid. If the label for disable statements is not
-    // found, it means that there is no appropriate label or the label
-    // points to the illegal node such as forked label
-    const auto& rcontext = reversed_view(context);
-    for (auto rc = rcontext.begin(); rc != rcontext.end(); rc++) {
-      const auto& node = *rc;
-      if (node->Tag().tag != static_cast<int>(NodeEnum::kSeqBlock)) {
+    for (const auto& ch : node->children()) {
+      if (ch->Tag().tag != static_cast<int>(NodeEnum::kBegin)) {
         continue;
       }
-      for (const auto& ch : node->children()) {
-        if (ch->Tag().tag != static_cast<int>(NodeEnum::kBegin)) {
-          continue;
-        }
-        const auto& beginLabels = FindAllSymbolIdentifierLeafs(*ch);
-        if (beginLabels.empty()) {
-          continue;
-        }
-        const auto& pnode = *std::next(rc);
-        const auto& ptag = pnode->Tag().tag;
-        if (ptag == static_cast<int>(NodeEnum::kInitialStatement) ||
-            ptag == static_cast<int>(NodeEnum::kFinalStatement) ||
-            ptag == static_cast<int>(NodeEnum::kAlwaysStatement)) {
-          kMessageFinal = DisableStatementNoLabelsRule::kMessageSeqBlock;
-          break;
-        }
-        const auto& beginLabel = SymbolCastToLeaf(*beginLabels[0].match);
-        const auto& disableLabel = SymbolCastToLeaf(*disableLabels[0].match);
-        if (beginLabel.get().text() == disableLabel.get().text()) {
-          return;
-        }
+      const auto& beginLabels = FindAllSymbolIdentifierLeafs(*ch);
+      if (beginLabels.empty()) {
+        continue;
+      }
+      const auto& pnode = *std::next(rc);
+      const auto& ptag = pnode->Tag().tag;
+      if (ptag == static_cast<int>(NodeEnum::kInitialStatement) ||
+          ptag == static_cast<int>(NodeEnum::kFinalStatement) ||
+          ptag == static_cast<int>(NodeEnum::kAlwaysStatement)) {
+        kMessageFinal = DisableStatementNoLabelsRule::kMessageSeqBlock;
+        break;
+      }
+      const auto& beginLabel = SymbolCastToLeaf(*beginLabels[0].match);
+      const auto& disableLabel = SymbolCastToLeaf(*disableLabels[0].match);
+      if (beginLabel.get().text() == disableLabel.get().text()) {
+        return;
       }
     }
-    violations_.insert(LintViolation(symbol, kMessageFinal, context));
   }
+  violations_.insert(LintViolation(symbol, kMessageFinal, context));
 }
 
 LintRuleStatus DisableStatementNoLabelsRule::Report() const {
