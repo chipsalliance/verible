@@ -27,23 +27,7 @@ jobs:
     #  - verilog/tools/syntax/export_json_examples : python tests
     - name: Run known-to-work tests
       run: |
-        bazel test  --test_output=errors -- `
-                    //common/... `
-                    //external_libs/... `
-                    //verilog/CST/... `
-                    //verilog/analysis/... `
-                    //verilog/formatting/... `
-                    //verilog/parser/... `
-                    //verilog/preprocessor/... `
-                    //verilog/tools/diff/... `
-                    //verilog/tools/formatter/... `
-                    //verilog/tools/kythe/... `
-                    //verilog/tools/lint/... `
-                    //verilog/tools/obfuscator/... `
-                    //verilog/tools/preprocessor/... `
-                    //verilog/tools/project/... `
-                    //verilog/tools/syntax:verilog_syntax_test `
-                    //verilog/transform/...
+        bazel test  --test_output=errors ...
     - name: Build Verible
       run: |
         bazel build -c opt //...
