@@ -34,6 +34,8 @@ or if you want to manually list files to scan:
 
 """
 
+load("//bazel:sh_test_with_runfiles_lib.bzl", "sh_test_with_runfiles_lib")
+
 _syntax_tool = "//verilog/tools/syntax:verible-verilog-syntax"
 
 _linter_tool = "//verilog/tools/lint:verible-verilog-lint"
@@ -64,6 +66,7 @@ _syntax_test_attrs = {
         allow_files = True,
         mandatory = True,
     ),
+    "output": attr.output(),
     "_compiler": attr.label(
         allow_files = True,
         default = Label(_syntax_tool),
@@ -72,8 +75,8 @@ _syntax_test_attrs = {
     ),
 }
 
-def _syntax_test_impl(ctx):
-    """Checks inputs files for valid Verilog syntax.
+def _syntax_test_script_impl(ctx):
+    """Generate bash script to check input files for valid Verilog syntax.
 
     Automatically filters out and ignores non-verilog files.
 
@@ -97,19 +100,36 @@ def _syntax_test_impl(ctx):
     script = "#!/bin/bash\n" + " ".join(command) + "\n"
     ctx.actions.write(
         content = script,
-        output = ctx.outputs.executable,
-        is_executable = True,
+        output = ctx.outputs.output,
     )
-    exec_inputs = [ctx.executable._compiler] if verilog_srcs else []
-    runfiles = ctx.runfiles(files = exec_inputs + verilog_srcs)
-    return [DefaultInfo(runfiles = runfiles)]
+    return [DefaultInfo()]
 
-_syntax_test = rule(
+_syntax_test_script = rule(
     attrs = _syntax_test_attrs,
-    executable = True,
-    test = True,
-    implementation = _syntax_test_impl,
+    implementation = _syntax_test_script_impl,
 )
+
+def _syntax_test(name, srcs, expect_fail = None):
+    """Macro for running Verilog syntax tests in the silo.
+
+    Args:
+      name: name of test.
+      srcs: list of source files to scan (e.g. can use glob()).
+      expect_fail: if True, expect to find errors (invert status).
+    """
+    _syntax_test_script(
+        name = name + "-script",
+        srcs = srcs,
+        output = name + "-script.sh",
+        expect_fail = expect_fail,
+    )
+    sh_test_with_runfiles_lib(
+        name = name,
+        srcs = [name + "-script.sh"],
+        size = "small",
+        args = [],
+        data = srcs,
+    )
 
 def _verilog_style_lint_report(name, srcs, flags = None):
     """Rule for producing a lint report on a collection of sources.
@@ -166,16 +186,16 @@ def _check_empty_script(filename, message, expect_fail):
     """
     if expect_fail:
         return """
-test -s {} ||
+test -s "$(rlocation ${{TEST_WORKSPACE}}/{})" ||
   {{ echo Expected diagnostics, but found none. ; exit 1 ;}}
 """.format(filename)
     else:
         return """
-test ! -s {filename} ||
+test ! -s "$(rlocation ${{TEST_WORKSPACE}}/{filename})" ||
   {{ cat <<EOF
 {message}
 EOF
-     cat {filename} ;
+     cat "$(rlocation ${{TEST_WORKSPACE}}/{filename})" ;
      exit 1 ;}}
 """.format(filename = filename, message = message)
 
@@ -191,25 +211,25 @@ _test_diagnostics_attrs = {
         mandatory = True,
         allow_single_file = True,
     ),
+    # output is the bash script that executes the test
+    "output": attr.output(),
 }
 
 def _style_lint_test_diagnostics_impl(ctx):
     """Checks a report for diagnostics.  Fails if report contains any text."""
     report = ctx.file.report
     ctx.actions.write(
-        output = ctx.outputs.executable,
+        output = ctx.outputs.output,
         content = _check_empty_script(
             expect_fail = ctx.attr.expect_fail,
             filename = report.short_path,
             message = _style_lint_fail_message,
         ),
     )
-    runfiles = ctx.runfiles(files = [report])
-    return [DefaultInfo(runfiles = runfiles)]
+    return [DefaultInfo()]
 
-_verilog_style_lint_diagnostics_test = rule(
+_verilog_style_lint_diagnostics_script = rule(
     attrs = _test_diagnostics_attrs,
-    test = True,
     implementation = _style_lint_test_diagnostics_impl,
 )
 
@@ -231,10 +251,18 @@ def _verilog_style_lint_test(name, srcs, flags = None, expect_fail = None):
         srcs = srcs,
         flags = (flags or []) + forced_flags,
     )
-    _verilog_style_lint_diagnostics_test(
-        name = name,
+    _verilog_style_lint_diagnostics_script(
+        name = name + "-script",
         expect_fail = expect_fail,
         report = name + "-report",
+        output = name + "-script.sh",
+    )
+    sh_test_with_runfiles_lib(
+        name = name,
+        srcs = [name + "-script.sh"],
+        size = "small",
+        args = [],
+        data = [name + "-report"],
     )
 
 def _package_style_lint_test(

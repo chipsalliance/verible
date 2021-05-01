@@ -15,6 +15,7 @@
 """VeribleVerilogSyntax test"""
 
 
+import os
 import sys
 import tempfile
 import unittest
@@ -23,6 +24,10 @@ import verible_verilog_syntax
 
 
 class VeribleVerilogSyntaxTest(unittest.TestCase):
+  def __init__(self, *args, **kwargs):
+    super().__init__(*args, **kwargs)
+    self.tmp = None
+
   def setUp(self):
     if len(sys.argv) > 1:
       self.parser = verible_verilog_syntax.VeribleVerilogSyntax(
@@ -32,11 +37,18 @@ class VeribleVerilogSyntaxTest(unittest.TestCase):
 
     self.assertIsNotNone(self.parser)
 
+  def tearDown(self):
+    if self.tmp is not None:
+      os.unlink(self.tmp.name)
+    self.tmp = None
+
   def create_temp_file(self, content):
-    tmp = tempfile.NamedTemporaryFile(mode="w", suffix=".sv")
-    tmp.write(content)
-    tmp.flush()
-    return tmp
+    # On Windows, a file can't be opened twice, so use delete=False and
+    # logic to cleanup in teardown
+    self.tmp = tempfile.NamedTemporaryFile(mode="w", suffix=".sv", delete=False)
+    self.tmp.write(content)
+    self.tmp.close()
+    return self.tmp
 
 
 class TestParseMethods(VeribleVerilogSyntaxTest):
