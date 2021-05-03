@@ -19,10 +19,12 @@
 #include <string.h>
 
 #include <algorithm>
+#include <filesystem>
 #include <fstream>
 #include <iostream>
 #include <streambuf>
 #include <string>
+#include <system_error>
 
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"
@@ -40,28 +42,7 @@
 #define isatty _isatty
 #endif
 
-/*
- * We're in the transition to use std::filesystem for all file operations.
- * However some ancient compilers in releasing/ can't handle that yet. Until
- * that is figured out, have a dual implementation.
- * For now, only enable the std::filesystem implementation on Windows
- * TODO(hzeller): remove the non-std::filesystem implementation once the release
- *                issues have been resolved.
- */
-#ifdef _WIN32
-#define USE_CPP_17_FILESYSTEM 1
-#endif
-
-#ifdef USE_CPP_17_FILESYSTEM
-#include <filesystem>
-#include <system_error>
 namespace fs = std::filesystem;
-#else
-#include <dirent.h>
-#include <sys/stat.h>
-#include <sys/types.h>
-#include <unistd.h>
-#endif
 
 namespace verible {
 namespace file {
@@ -114,19 +95,15 @@ static absl::Status CreateErrorStatusFromSysError(const char *fallback_msg,
 static absl::Status CreateErrorStatusFromErrno(const char *fallback_msg) {
   return CreateErrorStatusFromSysError(fallback_msg, errno);
 }
-
-#ifdef USE_CPP_17_FILESYSTEM
 static absl::Status CreateErrorStatusFromErr(const char *fallback_msg,
                                              const std::error_code &err) {
   // TODO: this assumes that err.value() returns errno-like values. Might not
   // always be the case.
   return CreateErrorStatusFromSysError(fallback_msg, err.value());
 }
-#endif
 
 absl::Status UpwardFileSearch(absl::string_view start,
                               absl::string_view filename, std::string *result) {
-#if USE_CPP_17_FILESYSTEM
   std::error_code err;
   const std::string search_file(filename);
   fs::path absolute_path = fs::absolute(std::string(start), err);
@@ -142,51 +119,9 @@ absl::Status UpwardFileSearch(absl::string_view start,
     probe_dir = one_up;
   }
   return absl::NotFoundError("No matching file found.");
-#else
-  // Unix specific implementation.
-  static constexpr char dir_separator[] = "/";
-
-  /* Convert to absolute path */
-  char absolute_path[PATH_MAX];
-  if (realpath(std::string(start).c_str(), absolute_path) == nullptr) {
-    return absl::InvalidArgumentError("Invalid config path specified.");
-  }
-
-  /* Add trailing slash */
-  const std::string full_path = absl::StrCat(absolute_path, dir_separator);
-
-  VLOG(1) << "Upward search for " << filename << ", starting in " << start;
-
-  size_t search_up_to = full_path.length();
-  for (;;) {
-    const size_t separator_pos = full_path.rfind(dir_separator, search_up_to);
-
-    if (separator_pos == search_up_to || separator_pos == std::string::npos) {
-      break;
-    }
-
-    const std::string candidate =
-        absl::StrCat(full_path.substr(0, separator_pos + 1), filename);
-
-    if (access(candidate.c_str(), R_OK) != -1) {
-      *result = candidate;
-      VLOG(1) << "Found: " << *result;
-      return absl::OkStatus();
-    }
-
-    search_up_to = separator_pos - 1;
-
-    if (separator_pos == 0) {
-      break;
-    }
-  }
-
-  return absl::NotFoundError("No matching file found.");
-#endif
 }
 
 absl::Status FileExists(const std::string &filename) {
-#if USE_CPP_17_FILESYSTEM
   std::error_code err;
   fs::file_status stat = fs::status(filename, err);
 
@@ -202,20 +137,6 @@ absl::Status FileExists(const std::string &filename) {
     return absl::InvalidArgumentError(
         absl::StrCat(filename, ": is a directory, not a file"));
   }
-#else
-  // Unix specific implementation.
-  struct stat file_info;
-  if (stat(filename.c_str(), &file_info) != 0) {
-    return absl::NotFoundError(absl::StrCat(filename, ": No such file."));
-  }
-  if (S_ISREG(file_info.st_mode) || S_ISFIFO(file_info.st_mode)) {
-    return absl::OkStatus();
-  }
-  if (S_ISDIR(file_info.st_mode)) {
-    return absl::InvalidArgumentError(
-        absl::StrCat(filename, ": is a directory, not a file"));
-  }
-#endif
   return absl::InvalidArgumentError(
       absl::StrCat(filename, ": not a regular file."));
 }
@@ -251,7 +172,6 @@ absl::Status SetContents(absl::string_view filename,
 }
 
 std::string JoinPath(absl::string_view base, absl::string_view name) {
-#if USE_CPP_17_FILESYSTEM
   // Make sure the second element is not already absolute, otherwise
   // the fs::path() uses this as toplevel path. This is only an issue with
   // Unix paths. Windows paths will have a c:\ for explicit full-pathness
@@ -261,42 +181,18 @@ std::string JoinPath(absl::string_view base, absl::string_view name) {
 
   fs::path p = fs::path(std::string(base)) / fs::path(std::string(name));
   return p.lexically_normal().string();
-#else
-  // Unix specific implementation
-  static constexpr absl::string_view kFileSeparator = "/";
-
-  if (base.empty()) return std::string(name);
-
-  // Make sure that we don't concatenate multiple superfluous separators.
-  // Note, since we're using string_view, the substr() operations are cheap.
-  while (!base.empty() && base[base.length() - 1] == kFileSeparator[0]) {
-    base = base.substr(0, base.length() - 1);
-  }
-  while (!name.empty() && name[0] == kFileSeparator[0]) {
-    name = name.substr(1);
-  }
-  return absl::StrCat(base, kFileSeparator, name);
-#endif
 }
 
 absl::Status CreateDir(absl::string_view dir) {
-#if USE_CPP_17_FILESYSTEM
   const std::string path(dir);
   std::error_code err;
   if (fs::create_directory(path, err) || err.value() == 0)
     return absl::OkStatus();
 
   return CreateErrorStatusFromErr("can't create directory", err);
-#else
-  const std::string path(dir);
-  int ret = mkdir(path.c_str(), 0755);
-  if (ret == 0 || errno == EEXIST) return absl::OkStatus();
-  return CreateErrorStatusFromErrno("can't create directory");
-#endif
 }
 
 absl::StatusOr<Directory> ListDir(absl::string_view dir) {
-#if USE_CPP_17_FILESYSTEM
   std::error_code err;
   Directory d;
 
@@ -317,62 +213,6 @@ absl::StatusOr<Directory> ListDir(absl::string_view dir) {
       d.files.push_back(entry_name);
     }
   }
-#else
-  Directory d;
-  d.path = dir.empty() ? "." : std::string(dir);
-
-  // Reset the errno and open the directory
-  errno = 0;
-  DIR *handle = opendir(d.path.c_str());
-  if (handle == nullptr) {
-    if (errno == ENOTDIR) return absl::InvalidArgumentError(d.path);
-    return CreateErrorStatusFromErrno("Failure to open directory");
-  }
-  struct stat statbuf;
-  while (true) {
-    errno = 0;
-    auto *entry = readdir(handle);
-    if (errno) {
-      closedir(handle);
-      return absl::InternalError(
-          absl::StrCat("Failed to read the contents of directory '", d.path,
-                       "'. Got error: ", errno));
-    }
-    // Finished listing the directory.
-    if (entry == nullptr) {
-      break;
-    }
-    absl::string_view d_name(entry->d_name);
-    // Skip '.' and '..' directory links
-    if (d_name == "." || d_name == "..") {
-      continue;
-    }
-
-    std::string full_path = verible::file::JoinPath(d.path, d_name);
-    auto d_type = entry->d_type;
-    if (d_type == DT_LNK || d_type == DT_UNKNOWN) {
-      // Try to resolve symlinks and unknown nodes.
-      if (stat(full_path.c_str(), &statbuf) == -1) {
-        LOG(WARNING) << "Stat failed. Ignoring " << d_name;
-        continue;
-      }
-      if (S_ISDIR(statbuf.st_mode)) {
-        d.directories.push_back(full_path);
-      } else if (S_ISREG(statbuf.st_mode)) {
-        d.files.push_back(full_path);
-      } else {
-        LOG(INFO) << "Ignoring " << d_name
-                  << " because st_mode == " << statbuf.st_mode;
-        continue;
-      }
-    } else if (d_type == DT_DIR) {
-      d.directories.push_back(full_path);
-    } else {
-      d.files.push_back(full_path);
-    }
-  }
-  closedir(handle);
-#endif
 
   std::sort(d.files.begin(), d.files.end());
   std::sort(d.directories.begin(), d.directories.end());

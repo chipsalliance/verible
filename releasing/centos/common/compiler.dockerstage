@@ -5,6 +5,6 @@ ENV BAZEL_LINKLIBS "-l%:libstdc++.a"
 
 # Get a newer GCC version
 RUN yum install -y --nogpgcheck centos-release-scl
-RUN yum install -y --nogpgcheck devtoolset-8
+RUN yum install -y --nogpgcheck devtoolset-9
 
-SHELL [ "scl", "enable", "devtoolset-8" ]
+SHELL [ "scl", "enable", "devtoolset-9" ]

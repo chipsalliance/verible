@@ -58,7 +58,7 @@ sed "s#${TARGET_OS}:VERSION#${TARGET_OS}:${TARGET_VERSION}#g" ${TARGET_OS}.docke
 case "$TARGET_OS" in
   ubuntu)
     # Compiler
-    [ "$TARGET_VERSION" = xenial ] && _version="$TARGET_VERSION" || _version="common"
+    [ "$TARGET_VERSION" = xenial ] || [ "$TARGET_VERSION" = bionic ] && _version="$TARGET_VERSION" || _version="common"
     cat ${TARGET_OS}/${_version}/compiler.dockerstage >> ${OUT_DIR}/Dockerfile
     # Bazel
     cat ${TARGET_OS}/common/bazel.dockerstage >> ${OUT_DIR}/Dockerfile

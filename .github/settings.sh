@@ -26,8 +26,6 @@ fi
 
 export GIT_VERSION=${GIT_VERSION:-$(git describe --match=v*)}
 
-# TODO(b/171679296): re-enable c++11 support
-#   by downgrading kythe build requirements.
 export BAZEL_CXXOPTS="-std=c++17"
 
 # Reduce the verbosity of progress output on CI

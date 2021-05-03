@@ -39,8 +39,8 @@ guide and the [development resources](./doc/development.md).
 
 Verible's code base is written in C++.
 
-To build, you need the [bazel] build system and a C++11 compatible compiler
-(e.g. >= g++-7; Using clang currently fails to compile the m4 dependency).
+To build, you need the [bazel] build system and a C++17 compatible compiler
+(e.g. >= g++-9).
 
 ```bash
 # Build all tools and libraries

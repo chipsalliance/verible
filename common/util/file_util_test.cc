@@ -15,6 +15,7 @@
 #include "common/util/file_util.h"
 
 #include <algorithm>
+#include <filesystem>
 #include <string>
 #include <vector>
 
@@ -24,14 +25,7 @@
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 
-// Temporary until we have all platforms on C++17, see comment in file_util.cc
-#ifdef _WIN32
-#define USE_CPP_17_FILESYSTEM 1
-#endif
-
-#ifdef USE_CPP_17_FILESYSTEM
-#include <filesystem>
-#endif
+using testing::HasSubstr;
 
 #undef EXPECT_OK
 #define EXPECT_OK(value)      \
@@ -45,8 +39,6 @@
     auto s = (value);         \
     ASSERT_TRUE(s.ok()) << s; \
   }
-
-using testing::HasSubstr;
 
 namespace verible {
 namespace util {
@@ -83,11 +75,7 @@ TEST(FileUtil, Stem) {
 
 // Returns the forward-slashed path in platform-specific notation.
 static std::string PlatformPath(const std::string& path) {
-#ifdef USE_CPP_17_FILESYSTEM
   return std::filesystem::path(path).lexically_normal().string();
-#else
-  return path;
-#endif
 }
 
 TEST(FileUtil, JoinPath) {

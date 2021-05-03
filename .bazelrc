@@ -11,8 +11,6 @@ test --workspace_status_command=bazel/build-version.sh
 
 build --enable_platform_specific_config
 
-# Use C++17 (bazel defaults to C++0x (pre-C++11))
-# TODO(b/171679296): Lower the requirement, go back to c++11
 common:linux --cxxopt=-std=c++17 --host_cxxopt=-std=c++17 --client_env=BAZEL_CXXOPTS=-std=c++17
 
 # https://github.com/abseil/abseil-cpp/issues/848
