@@ -14,9 +14,8 @@
 
 #include "verilog/CST/dimensions.h"
 
-#include <stddef.h>
-
 #include <algorithm>
+#include <cstddef>
 #include <memory>
 #include <vector>
 

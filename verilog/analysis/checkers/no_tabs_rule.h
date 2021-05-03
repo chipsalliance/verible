@@ -15,8 +15,7 @@
 #ifndef VERIBLE_VERILOG_ANALYSIS_CHECKERS_NO_TABS_RULE_H_
 #define VERIBLE_VERILOG_ANALYSIS_CHECKERS_NO_TABS_RULE_H_
 
-#include <stddef.h>
-
+#include <cstddef>
 #include <set>
 #include <string>
 
