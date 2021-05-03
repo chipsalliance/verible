@@ -79,7 +79,7 @@ jobs:
       run: |
         set -x
         source ./.github/settings.sh
-        ./.github/bin/set-compiler.sh 9
+        sudo apt install clang-9 libstdc++-9-dev
         ./.github/bin/install-bazel.sh
         ./.github/bin/install-python.sh
 
