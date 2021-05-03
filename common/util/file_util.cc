@@ -205,7 +205,7 @@ absl::StatusOr<Directory> ListDir(absl::string_view dir) {
     return absl::InvalidArgumentError(absl::StrCat(dir, ": not a directory"));
   }
 
-  for (const fs::directory_entry entry : fs::directory_iterator(d.path)) {
+  for (const fs::directory_entry& entry : fs::directory_iterator(d.path)) {
     const std::string entry_name = entry.path().string();
     if (entry.is_directory()) {
       d.directories.push_back(entry_name);

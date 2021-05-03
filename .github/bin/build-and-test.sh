@@ -16,6 +16,8 @@
 set -x
 set -e
 
+COMPILER=clang
+
 source ./.github/settings.sh
 
 # Make sure we don't have cc_library rules that use exceptions but do not
@@ -26,6 +28,10 @@ BAZEL_OPTS="${BAZEL_OPTS} --cxxopt=-fno-exceptions"
 # Turn warnings to 11. And fail compliation if we encounter one.
 BAZEL_OPTS="${BAZEL_OPTS} --cxxopt=-Werror"  # Always want bail on warning
 BAZEL_OPTS="${BAZEL_OPTS} --cxxopt=-Wall --cxxopt=-Wextra"
+
+# Warning options are different between compilers. Don't complain about the
+# others' compiler warnings.
+BAZEL_OPTS="${BAZEL_OPTS} --cxxopt=-Wno-unknown-warning-option"
 
 # -- now disable some of the warnings that happen, so that the compile finishes.
 
@@ -49,13 +55,24 @@ BAZEL_OPTS="${BAZEL_OPTS} --cxxopt=-Wno-implicit-fallthrough"     # gflags
 BAZEL_OPTS="${BAZEL_OPTS} --cxxopt=-Wno-cast-function-type"       # gflags
 BAZEL_OPTS="${BAZEL_OPTS} --cxxopt=-Wno-deprecated-declarations"  # jsconcpp
 
+# Layering check (only works with clang) provides a simple check that
+# cc targets depend on everything the header inclusion implies.
+# Currently disabled, it seems to get hang up on gtest/ gmock/ includes.
+# BAZEL_OPTS="${BAZEL_OPTS} --features=layering_check"
+
+export CC="${COMPILER}"
+export CXX="${COMPILER}++"
+if [ "$COMPILER" == "gcc" ] ; then
+  export CXX="g++"
+fi
+
 case "$MODE" in
 test)
-    bazel test --test_output=errors $BAZEL_OPTS //...
+    bazel test --keep_going --test_output=errors $BAZEL_OPTS //...
     ;;
 
 compile|clean)
-    bazel build $BAZEL_OPTS //...
+    bazel build --keep_going $BAZEL_OPTS //...
     ;;
 
 *)
