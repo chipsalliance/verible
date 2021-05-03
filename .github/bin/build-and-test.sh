@@ -66,6 +66,8 @@ if [ "$COMPILER" == "gcc" ] ; then
   export CXX="g++"
 fi
 
+bazel clean --expunge
+
 case "$MODE" in
 test)
     bazel test --keep_going --test_output=errors $BAZEL_OPTS //...
