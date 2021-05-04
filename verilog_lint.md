@@ -358,4 +358,4 @@ Enabled by default: true
 
 ## Version
 
-Generated on 2021-05-03 10:55:29 -0700 from [a152f6f](https://github.com/google/verible/commit/a152f6f52f726f67cb2c3010bcd924c7755b7669)
+Generated on 2021-05-04 14:15:32 -0700 from [9e5c085](https://github.com/google/verible/commit/9e5c085b9563f496f2b8b08e75e9a02007da18e3)
