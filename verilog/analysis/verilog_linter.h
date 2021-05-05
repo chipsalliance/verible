@@ -35,27 +35,40 @@
 
 namespace verilog {
 
-// Base class of LintRuleStatus handlers
-class LintStatusHandler {
+struct LintViolationWithStatus {
+  const verible::LintViolation* violation;
+  const verible::LintRuleStatus* status;
+
+  LintViolationWithStatus(const verible::LintViolation* v,
+                          const verible::LintRuleStatus* s)
+      : violation(v), status(s) {}
+
+  bool operator<(const LintViolationWithStatus& r) const {
+    // compares addresses which correspond to locations within the same string
+    return violation->token.text().data() < r.violation->token.text().data();
+  }
+};
+
+// Returns violations from multiple `LintRuleStatus`es sorted by position
+// of their occurence in source code.
+std::set<LintViolationWithStatus> GetSortedViolations(
+    const std::vector<verible::LintRuleStatus>& statuses);
+
+// Interface for implementing violation handlers.
+//
+// The linting process produces a list of violations found in source code. Those
+// violations are then sorted and passed to `HandleViolations()` method of an
+// instance passed to LintOneFile().
+class ViolationHandler {
  public:
-  LintStatusHandler() {}
-  virtual ~LintStatusHandler() {}
+  virtual ~ViolationHandler() = default;
 
-  // Handles LintRuleStatuses. By default sorts all violations by position of
-  // their occurence in source file and passes them to HandleViolation() method
-  // in a loop.
-  // This method can be called multiple times with statuses generated from
-  // different files.
-  virtual void HandleLintRuleStatuses(
-      const std::vector<verible::LintRuleStatus>& statuses,
-      absl::string_view base, absl::string_view path);
-
- protected:
-  // Handles single violation.
-  virtual void HandleViolation(const verible::LintViolation& violation,
-                               absl::string_view base, absl::string_view path,
-                               absl::string_view url,
-                               absl::string_view rule_name) {}
+  // This method is called with a list of sorted violations found in file
+  // located at `path`. It can be called multiple times with statuses generated
+  // from different files. `base` contains source code from the file.
+  virtual void HandleViolations(
+      const std::set<LintViolationWithStatus>& violations,
+      absl::string_view base, absl::string_view path) = 0;
 };
 
 // Checks a single file for Verilog style lint violations.
@@ -64,7 +77,7 @@ class LintStatusHandler {
 // true).
 // 'filename' is the path to the file to analyze.
 // 'config' controls lint rules for analysis.
-// 'lint_status_handler' controls what to do with violations.
+// 'violation_handler' controls what to do with violations.
 // If 'check_syntax' is true, report lexical and syntax errors.
 // If 'parse_fatal' is true, abort after encountering syntax errors, else
 // continue to analyze the salvaged code structure.
@@ -73,7 +86,7 @@ class LintStatusHandler {
 // errors were found (syntax, lint), and anything else is a fatal error.
 int LintOneFile(std::ostream* stream, absl::string_view filename,
                 const LinterConfiguration& config,
-                LintStatusHandler* lint_status_handler, bool check_syntax,
+                ViolationHandler* violation_handler, bool check_syntax,
                 bool parse_fatal, bool lint_fatal, bool show_context = false);
 
 // VerilogLinter analyzes a TextStructureView of Verilog source code.
@@ -121,28 +134,23 @@ LinterConfiguration LinterConfigurationFromFlags(
 absl::Status AppendLinterConfigurationFromFile(
     LinterConfiguration* config, absl::string_view config_filename);
 
-// LintStatusHandler that prints all violations in a form of user-friendly
+// ViolationHandler that prints all violations in a form of user-friendly
 // messages.
-class ViolationPrinter : public LintStatusHandler {
+class ViolationPrinter : public ViolationHandler {
  public:
   ViolationPrinter(std::ostream* stream)
       : stream_(stream), formatter_(nullptr) {}
 
-  void HandleLintRuleStatuses(
-      const std::vector<verible::LintRuleStatus>& statuses,
-      absl::string_view base, absl::string_view path) override;
+  void HandleViolations(const std::set<LintViolationWithStatus>& violations,
+                        absl::string_view base,
+                        absl::string_view path) final override;
 
  protected:
-  void HandleViolation(const verible::LintViolation& violation,
-                       absl::string_view base, absl::string_view path,
-                       absl::string_view url,
-                       absl::string_view rule_name) override;
-
   std::ostream* const stream_;
   verible::LintStatusFormatter* formatter_;
 };
 
-// LintStatusHandler that prints all violations and gives an option to fix those
+// ViolationHandler that prints all violations and gives an option to fix those
 // that have autofixes available.
 //
 // By default, when violation has an autofix available, ViolationFixer asks an
@@ -159,7 +167,7 @@ class ViolationPrinter : public LintStatusHandler {
 // The HandleLintRuleStatuses method can be called multiple times with statuses
 // generated from different files. The state of answers like "apply all for
 // rule" or "apply all" is kept between the calls.
-class ViolationFixer : public ViolationPrinter {
+class ViolationFixer : public ViolationHandler {
  public:
   enum class AnswerChoice {
     kUnknown,
@@ -180,22 +188,22 @@ class ViolationFixer : public ViolationPrinter {
 
   ViolationFixer(std::ostream* stream, std::ostream* patch_stream = nullptr,
                  AnswerChooser answer_chooser = InteractiveAnswerChooser)
-      : ViolationPrinter(stream),
+      : stream_(stream),
         patch_stream_(patch_stream),
-        fix_(nullptr),
         ultimate_answer_(AnswerChoice::kUnknown),
         rule_answers_(),
         answer_chooser_(answer_chooser) {}
 
-  void HandleLintRuleStatuses(
-      const std::vector<verible::LintRuleStatus>& statuses,
-      absl::string_view base, absl::string_view path) final override;
+  void HandleViolations(const std::set<LintViolationWithStatus>& violations,
+                        absl::string_view base,
+                        absl::string_view path) final override;
 
  protected:
   void HandleViolation(const verible::LintViolation& violation,
                        absl::string_view base, absl::string_view path,
-                       absl::string_view url,
-                       absl::string_view rule_name) final override;
+                       absl::string_view url, absl::string_view rule_name,
+                       const verible::LintStatusFormatter& formatter,
+                       verible::AutoFix* fix);
 
   static AnswerChoice InteractiveAnswerChooser(
       const verible::LintViolation& violation, absl::string_view rule_name);
@@ -204,8 +212,8 @@ class ViolationFixer : public ViolationPrinter {
                    absl::string_view source_path,
                    const verible::AutoFix& fix) const;
 
+  std::ostream* const stream_;
   std::ostream* const patch_stream_;
-  verible::AutoFix* fix_;
   AnswerChoice ultimate_answer_;
   std::map<absl::string_view, AnswerChoice> rule_answers_;
   const AnswerChooser answer_chooser_;

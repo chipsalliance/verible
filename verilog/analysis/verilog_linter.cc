@@ -83,23 +83,8 @@ using verible::LintWaiver;
 using verible::TextStructureView;
 using verible::TokenInfo;
 
-struct LintViolationWithStatus {
-  const verible::LintViolation* violation;
-  const verible::LintRuleStatus* status;
-
-  LintViolationWithStatus(const verible::LintViolation* v,
-                          const verible::LintRuleStatus* s)
-      : violation(v), status(s) {}
-
-  bool operator<(const LintViolationWithStatus& r) const {
-    // compares addresses which correspond to locations within the same string
-    return violation->token.text().data() < r.violation->token.text().data();
-  }
-};
-
-void LintStatusHandler::HandleLintRuleStatuses(
-    const std::vector<LintRuleStatus>& statuses, absl::string_view base,
-    absl::string_view path) {
+std::set<LintViolationWithStatus> GetSortedViolations(
+    const std::vector<LintRuleStatus>& statuses) {
   std::set<LintViolationWithStatus> violations;
 
   for (auto& status : statuses) {
@@ -108,29 +93,19 @@ void LintStatusHandler::HandleLintRuleStatuses(
     }
   }
 
-  for (auto violation : violations) {
-    HandleViolation(*violation.violation, base, path, violation.status->url,
-                    violation.status->lint_rule_name);
-  }
+  return violations;
 }
 
-void ViolationPrinter::HandleLintRuleStatuses(
-    const std::vector<verible::LintRuleStatus>& statuses,
-    absl::string_view base, absl::string_view path) {
+void ViolationPrinter::HandleViolations(
+    const std::set<LintViolationWithStatus>& violations, absl::string_view base,
+    absl::string_view path) {
   verible::LintStatusFormatter formatter(base);
-
-  formatter_ = &formatter;
-  LintStatusHandler::HandleLintRuleStatuses(statuses, base, path);
-  formatter_ = nullptr;
-}
-
-void ViolationPrinter::HandleViolation(const verible::LintViolation& violation,
-                                       absl::string_view base,
-                                       absl::string_view path,
-                                       absl::string_view url,
-                                       absl::string_view rule_name) {
-  formatter_->FormatViolation(stream_, violation, base, path, url, rule_name);
-  (*stream_) << std::endl;
+  for (auto violation : violations) {
+    formatter.FormatViolation(stream_, *violation.violation, base, path,
+                              violation.status->url,
+                              violation.status->lint_rule_name);
+    (*stream_) << std::endl;
+  }
 }
 
 static void PrintFix(std::ostream& stream, absl::string_view text,
@@ -163,26 +138,26 @@ void ViolationFixer::CommitFixes(absl::string_view source_content,
   }
 }
 
-void ViolationFixer::HandleLintRuleStatuses(
-    const std::vector<LintRuleStatus>& statuses, absl::string_view base,
+void ViolationFixer::HandleViolations(
+    const std::set<LintViolationWithStatus>& violations, absl::string_view base,
     absl::string_view path) {
   verible::AutoFix fix;
-
-  fix_ = &fix;
-  ViolationPrinter::HandleLintRuleStatuses(statuses, base, path);
-  fix_ = nullptr;
+  verible::LintStatusFormatter formatter(base);
+  for (auto violation : violations) {
+    HandleViolation(*violation.violation, base, path, violation.status->url,
+                    violation.status->lint_rule_name, formatter, &fix);
+  }
 
   CommitFixes(base, path, fix);
 }
 
-void ViolationFixer::HandleViolation(const verible::LintViolation& violation,
-                                     absl::string_view base,
-                                     absl::string_view path,
-                                     absl::string_view url,
-                                     absl::string_view rule_name) {
+void ViolationFixer::HandleViolation(
+    const verible::LintViolation& violation, absl::string_view base,
+    absl::string_view path, absl::string_view url, absl::string_view rule_name,
+    const verible::LintStatusFormatter& formatter, verible::AutoFix* fix) {
   std::stringstream violation_message;
-  formatter_->FormatViolation(&violation_message, violation, base, path, url,
-                              rule_name);
+  formatter.FormatViolation(&violation_message, violation, base, path, url,
+                            rule_name);
   (*stream_) << violation_message.str() << std::endl;
 
   if (violation.autofixes.empty()) {
@@ -209,7 +184,7 @@ void ViolationFixer::HandleViolation(const verible::LintViolation& violation,
         [[fallthrough]];
       case AnswerChoice::kApply:
         // Apply first available fix
-        if (!fix_->AddEdits(violation.autofixes[0].Edits())) {
+        if (!fix->AddEdits(violation.autofixes[0].Edits())) {
           VLOG(2) << "The fix conflicts with previously applied fixes, "
                      "rejecting.";
         } else {
@@ -231,7 +206,7 @@ void ViolationFixer::HandleViolation(const verible::LintViolation& violation,
         PrintFix(*stream_, base, violation.autofixes[0]);
         continue;
       case AnswerChoice::kPrintAppliedFixes:
-        PrintFix(*stream_, base, *fix_);
+        PrintFix(*stream_, base, *fix);
         continue;
 
       default:
@@ -305,7 +280,7 @@ ViolationFixer::AnswerChoice ViolationFixer::InteractiveAnswerChooser(
 //  2..: other fatal issues such as file not found.
 int LintOneFile(std::ostream* stream, absl::string_view filename,
                 const LinterConfiguration& config,
-                LintStatusHandler* lint_status_handler, bool check_syntax,
+                ViolationHandler* violation_handler, bool check_syntax,
                 bool parse_fatal, bool lint_fatal, bool show_context) {
   std::string content;
   const absl::Status content_status =
@@ -361,8 +336,9 @@ int LintOneFile(std::ostream* stream, absl::string_view filename,
 
     absl::string_view text_base = text_structure.Contents();
 
-    lint_status_handler->HandleLintRuleStatuses(linter_statuses, text_base,
-                                                filename);
+    const std::set<LintViolationWithStatus> violations =
+        GetSortedViolations(linter_statuses);
+    violation_handler->HandleViolations(violations, text_base, filename);
     if (lint_fatal) {
       return 1;
     }

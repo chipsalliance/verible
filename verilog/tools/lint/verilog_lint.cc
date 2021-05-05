@@ -136,20 +136,20 @@ int main(int argc, char** argv) {
     }
   }
 
-  std::unique_ptr<verilog::LintStatusHandler> status_handler;
+  std::unique_ptr<verilog::ViolationHandler> violation_handler;
   switch (autofix_mode) {
     case AutofixMode::kNo:
-      status_handler.reset(new verilog::ViolationPrinter(&std::cout));
+      violation_handler.reset(new verilog::ViolationPrinter(&std::cout));
       break;
     case AutofixMode::kYes:
-      status_handler.reset(new verilog::ViolationFixer(
+      violation_handler.reset(new verilog::ViolationFixer(
           &std::cout, autofix_output_stream.get(),
           [](const verible::LintViolation&, absl::string_view) {
             return verilog::ViolationFixer::AnswerChoice::kApplyAll;
           }));
       break;
     case AutofixMode::kInteractive:
-      status_handler.reset(
+      violation_handler.reset(
           new verilog::ViolationFixer(&std::cout, autofix_output_stream.get()));
       break;
   }
@@ -162,7 +162,7 @@ int main(int argc, char** argv) {
         verilog::LinterConfigurationFromFlags(filename));
 
     const int lint_status = verilog::LintOneFile(
-        &std::cout, filename, config, status_handler.get(),
+        &std::cout, filename, config, violation_handler.get(),
         absl::GetFlag(FLAGS_check_syntax), absl::GetFlag(FLAGS_parse_fatal),
         absl::GetFlag(FLAGS_lint_fatal),
         absl::GetFlag(FLAGS_show_diagnostic_context));
