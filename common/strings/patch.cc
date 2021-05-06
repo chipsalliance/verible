@@ -32,6 +32,7 @@
 #include "common/util/file_util.h"
 #include "common/util/iterator_adaptors.h"
 #include "common/util/iterator_range.h"
+#include "common/util/user_interaction.h"
 
 namespace verible {
 
@@ -370,7 +371,7 @@ LineNumberSet FilePatch::AddedLines() const {
 
 static char PromptHunkAction(std::istream& ins, std::ostream& outs) {
   // Suppress prompt in noninteractive mode.
-  if (file::IsInteractiveTerminalSession()) {
+  if (IsInteractiveTerminalSession()) {
     outs << "Apply this hunk? [y,n,a,d,s,q,?] ";
   }
   char c;

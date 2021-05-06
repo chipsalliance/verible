@@ -19,7 +19,19 @@
 
 #include "absl/strings/string_view.h"
 
+#ifndef _WIN32
+#include <unistd.h>  // for isatty
+#else
+#include <io.h>
+// MSVC recommends to use _isatty...
+#define isatty _isatty
+#endif
+
 namespace verible {
+
+bool IsInteractiveTerminalSession() {
+  return isatty(0);  // Unix: STDIN_FILENO; windows: _fileno( stdin )
+}
 
 char ReadCharFromUser(std::istream& input, std::ostream& output,
                       bool input_is_terminal, absl::string_view prompt) {

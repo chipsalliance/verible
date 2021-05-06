@@ -140,6 +140,7 @@ cc_library(
         "//common/util:algorithm",
         "//common/util:container_iterator_range",
         "//common/util:file_util",
+        "//common/util:user_interaction",
         "//common/util:iterator_adaptors",
         "//common/util:iterator_range",
         "//common/util:logging",

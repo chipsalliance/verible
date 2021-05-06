@@ -21,6 +21,10 @@
 
 namespace verible {
 
+// Returns if this is likely a terminal session (tests if stdin filedescriptor
+// is a terminal).
+bool IsInteractiveTerminalSession();
+
 // Reads single character from user.
 //
 // When `input_is_terminal` is set to true, it is assumed the input is
@@ -35,9 +39,8 @@ namespace verible {
 //
 // Typical use:
 //
-//   #include <unistd.h> // for isatty and STDIN_FILENO
-//   ...
-//   const char ch = ReadCharFromUser(std::cin, std::cout, isatty(STDIN_FILENO),
+//   const char ch = ReadCharFromUser(std::cin, std::cout,
+//                                    IsInteractiveTerminalSession(),
 //                                    "Type a letter and confirm with ENTER: ");
 char ReadCharFromUser(std::istream& input, std::ostream& output,
                       bool input_is_terminal, absl::string_view prompt);
