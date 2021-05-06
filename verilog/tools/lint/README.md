@@ -37,29 +37,51 @@ Currrent limitations:
 ```
 usage: verible-verilog-lint [options] <file> [<file>...]
 
+  Flags from external/com_google_absl/absl/flags/parse.cc:
+    --flagfile (comma-separated list of files to load flags from); default: ;
+    --fromenv (comma-separated list of flags to set from the environment [use
+      'export FLAGS_flag1=value']); default: ;
+    --tryfromenv (comma-separated list of flags to try to set from the
+      environment if present); default: ;
+    --undefok (comma-separated list of flag names that it is okay to specify on
+      the command line even if the program does not define a flag with that
+      name); default: ;
+
   Flags from verilog/analysis/verilog_linter.cc:
     --rules (Comma-separated of lint rules to enable. No prefix or a '+' prefix
       enables it, '-' disable it. Configuration values for each rules placed
       after '=' character.); default: ;
-    --rules_config (Path to lint rules configuration file.);
-      default: ".rules.verible_lint";
+    --rules_config (Path to lint rules configuration file. Disables
+      --rule_config_search if set.); default: "";
+    --rules_config_search (Look for lint rules configuration file
+      '.rules.verible_lint' searching upward from the location of each analyzed
+      file.); default: false;
     --ruleset ([default|all|none], the base set of rules used by linter);
       default: default;
+    --waiver_files (Path to waiver config files (comma-separated). Please refer
+      to the README file for information about its format.); default: "";
+
+  Flags from verilog/parser/verilog_parser.cc:
+    --verilog_trace_parser (Trace verilog parser); default: false;
 
   Flags from verilog/tools/lint/verilog_lint.cc:
     --autofix ([yes|no|interactive], autofix mode.); default: no;
     --autofix_output_file (File to write a patch with autofixes to. If not set
       autofixes are applied directly to the analyzed file. Relevant only when
       --autofix option is enabled.); default: "";
+    --check_syntax (If true, check for lexical and syntax errors, otherwise
+      ignore.); default: true;
     --generate_markdown (If true, print the description of every rule formatted
-      for the markdown and exit immediately. Intended for the output to be
-      written to a snippet of markdown.); default: false;
+      for the Markdown and exit immediately. Intended for the output to be
+      written to a snippet of Markdown.); default: false;
     --help_rules ([all|<rule-name>], print the description of one rule/all rules
       and exit immediately.); default: "";
     --lint_fatal (If true, exit nonzero if linter finds violations.);
-      default: false;
+      default: true;
     --parse_fatal (If true, exit nonzero if there are any syntax errors.);
-      default: false;
+      default: true;
+    --show_diagnostic_context (prints an additional line on which the diagnostic
+      was found,followed by a line with a position marker); default: false;
 ```
 
 We recommend each project maintain its own configuration file for convenience
@@ -187,9 +209,13 @@ parse-as-module-body`.
 
 ## Automatically fixing trivial violations
 
-Some trivial violations (e.g. trailing spaces or repeated semicolons) can be fixed automatically.
+Some trivial violations (e.g. trailing spaces or repeated semicolons) can be
+fixed automatically.
 
-When `--autofix=yes` option is specified, the linter applies all possible fixes. To get more control on what to do with each fixable violation, `--autofix=interactive` option can be used. Interactive mode offers following actions for each fix:
+When `--autofix=yes` option is specified, the linter applies all possible fixes.
+To get more control on what to do with each fixable violation,
+`--autofix=interactive` option can be used. Interactive mode offers following
+actions for each fix:
 
 * `y` - apply fix
 * `n` - reject fix
@@ -201,7 +227,9 @@ When `--autofix=yes` option is specified, the linter applies all possible fixes.
 * `P` - show fixes applied so far
 * `?` - print this help and prompt again
 
-By default, accepted fixes are applied directly to linted source files. To generate a patch file instead, specify its name using `--autofix_output_file=` option.
+By default, accepted fixes are applied directly to linted source files. To
+generate a patch file instead, specify its name using `--autofix_output_file=`
+option.
 
 Example interactive session:
 
