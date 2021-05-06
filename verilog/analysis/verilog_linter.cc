@@ -14,8 +14,6 @@
 
 #include "verilog/analysis/verilog_linter.h"
 
-#include <unistd.h>  // isatty
-
 #include <cstddef>
 #include <fstream>
 #include <iomanip>
@@ -232,7 +230,7 @@ ViolationFixer::AnswerChoice ViolationFixer::InteractiveAnswerChooser(
 
   for (;;) {
     const char c = verible::ReadCharFromUser(
-        std::cin, std::cerr, (isatty(STDIN_FILENO) == 1),
+        std::cin, std::cerr, verible::IsInteractiveTerminalSession(),
         "Autofix is available. Apply? [y,n,a,d,A,D,p,P,?] ");
 
     switch (c) {
