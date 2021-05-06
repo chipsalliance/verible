@@ -354,7 +354,15 @@ check_diff() {
   local diff_file_="$3"
   local err_message_="$4"
 
-  diff -u "${reference_file_}" "${test_file_}" >"${diff_file_}"
+  local vis_reference_file_="${reference_file_}.vis"
+  local vis_test_file_="${test_file_}.vis"
+
+  # Show invisible characters
+  local invisible_chars_re_='s/ /·/g;s/\t/├───/g;s/\r/⁋/g;s/\n/¶\n/g'
+  sed -z "$invisible_chars_re_" "$reference_file_" > "$vis_reference_file_"
+  sed -z "$invisible_chars_re_" "$test_file_" > "$vis_test_file_"
+
+  diff -u "${vis_reference_file_}" "${vis_test_file_}" >"${diff_file_}"
   status="$?"
   (( $status )) && {
     echo "${err_message_}:"
@@ -450,10 +458,12 @@ check_diff "${ORIGINAL_TEST_FILE}" "${TEST_FILE}" "${DIFF_FILE}" \
 
 # Patch source file with generated patch file
 
-patch "${TEST_FILE}" "${PATCH_FILE}" >/dev/null
+patch_out="$(patch "${TEST_FILE}" "${PATCH_FILE}" 2>&1)"
 status="$?"
 (( $status )) && {
   echo "Expected exit code 0 from 'patch' tool, but got $status"
+  echo "--- 'patch' output ---"
+  echo "$patch_out"
   exit 1
 }
 
@@ -474,9 +484,18 @@ cp "${ORIGINAL_TEST_FILE}"   "${TEST_FILE}"
 cp "${ORIGINAL_TEST_FILE_2}" "${TEST_FILE_2}"
 cp "${ORIGINAL_TEST_FILE_3}" "${TEST_FILE_3}"
 
-"$lint_tool" --ruleset=none --rules_config="${RULES_CONFIG_FILE}" --autofix=yes \
-    --autofix_output_file="${PATCH_FILE}" \
-    "${TEST_FILE}" "${TEST_FILE_2}" "${TEST_FILE_3}" > /dev/null 2>&1
+# `patch` doesn't like absolute paths
+
+REL_TEST_FILE="$(basename ${TEST_FILE})"
+REL_TEST_FILE_2="$(basename ${TEST_FILE_2})"
+REL_TEST_FILE_3="$(basename ${TEST_FILE_3})"
+
+(
+  cd $TEST_TMPDIR
+  "$lint_tool" --ruleset=none --rules_config="${RULES_CONFIG_FILE}" --autofix=yes \
+      --autofix_output_file="${PATCH_FILE}" \
+      "${REL_TEST_FILE}" "${REL_TEST_FILE_2}" "${REL_TEST_FILE_3}" > /dev/null 2>&1
+)
 
 failure=0
 
@@ -498,14 +517,12 @@ check_diff "${ORIGINAL_TEST_FILE_3}" "${TEST_FILE_3}" "${DIFF_FILE_3}" \
 
 # Patch sources with generated patch file
 
-(
-  # Since used paths are absolute, the patch tool requires CWD = /
-  cd /
-  patch -p1 < "${PATCH_FILE}" > /dev/null 2>&1
-)
+patch_out="$(cd $TEST_TMPDIR; patch -p1 < "${PATCH_FILE}" 2>&1)"
 status="$?"
 (( $status )) && {
   echo "Expected exit code 0 from 'patch' tool, but got $status"
+  echo "--- 'patch' output ---"
+  echo "$patch_out"
   exit 1
 }
 
