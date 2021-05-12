@@ -1140,8 +1140,8 @@ void TreeUnwrapper::SetIndentationsAndCreatePartitions(
       break;
     }
     case NodeEnum::kPatternExpression: {
-        VisitIndentedSection(node, style_.wrap_spaces,
-                             PartitionPolicyEnum::kFitOnLineElseExpand);
+      VisitIndentedSection(node, style_.wrap_spaces,
+                           PartitionPolicyEnum::kFitOnLineElseExpand);
       break;
     }
 
@@ -1958,12 +1958,9 @@ void TreeUnwrapper::Visit(const verible::SyntaxTreeLeaf& leaf) {
               NodeEnum::kVariableDeclarationAssignmentList  // due to element:
               // kVariableDeclarationAssignment
           }) ||
-          (current_context_.DirectParentIsOneOf({
-              NodeEnum::kUntagged,
-              NodeEnum::kExpressionList
-           }) &&
-           current_context_.IsInside(NodeEnum::kAssignmentPattern)
-          ) ||
+          (current_context_.DirectParentIsOneOf(
+               {NodeEnum::kUntagged, NodeEnum::kExpressionList}) &&
+           current_context_.IsInside(NodeEnum::kAssignmentPattern)) ||
           (current_context_.DirectParentIs(NodeEnum::kOpenRangeList) &&
            current_context_.IsInside(NodeEnum::kConcatenationExpression))) {
         MergeLastTwoPartitions();
