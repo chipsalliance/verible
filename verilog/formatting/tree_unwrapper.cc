@@ -959,21 +959,6 @@ void TreeUnwrapper::SetIndentationsAndCreatePartitions(
       break;
     }
 
-#if 0  // Disabled for now, see https://github.com/google/verible/pull/755
-    case NodeEnum::kExpressionList: {
-      // This allows for indenting initializer lists
-      if (Context().DirectParentIs(NodeEnum::kAssignmentPattern)) {
-        // Do not further indent preprocessor clauses.
-        const int indent = suppress_indentation ? 0 : style_.indentation_spaces;
-        VisitIndentedSection(node, indent, PartitionPolicyEnum::kFitOnLineElseExpand);
-      } else {
-        // Default handling
-        TraverseChildren(node);
-        break;
-      }
-      break;
-    }
-#endif
     // For the following constructs, always expand the view to subpartitions.
     // Add a level of indentation.
     case NodeEnum::kPackageImportList:
@@ -1146,12 +1131,17 @@ void TreeUnwrapper::SetIndentationsAndCreatePartitions(
                  Context().IsInside(NodeEnum::kConcatenationExpression)) {
         VisitIndentedSection(node, 0,
                              PartitionPolicyEnum::kFitOnLineElseExpand);
-      } else if (Context().DirectParentIs(NodeEnum::kAssignmentPattern)) {
+      } else if (Context().IsInside(NodeEnum::kAssignmentPattern)) {
         VisitIndentedSection(node, style_.wrap_spaces,
                              PartitionPolicyEnum::kFitOnLineElseExpand);
       } else {
         TraverseChildren(node);
       }
+      break;
+    }
+    case NodeEnum::kPatternExpression: {
+        VisitIndentedSection(node, style_.wrap_spaces,
+                             PartitionPolicyEnum::kFitOnLineElseExpand);
       break;
     }
 
@@ -1968,6 +1958,12 @@ void TreeUnwrapper::Visit(const verible::SyntaxTreeLeaf& leaf) {
               NodeEnum::kVariableDeclarationAssignmentList  // due to element:
               // kVariableDeclarationAssignment
           }) ||
+          (current_context_.DirectParentIsOneOf({
+              NodeEnum::kUntagged,
+              NodeEnum::kExpressionList
+           }) &&
+           current_context_.IsInside(NodeEnum::kAssignmentPattern)
+          ) ||
           (current_context_.DirectParentIs(NodeEnum::kOpenRangeList) &&
            current_context_.IsInside(NodeEnum::kConcatenationExpression))) {
         MergeLastTwoPartitions();
