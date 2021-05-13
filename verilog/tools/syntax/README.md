@@ -220,12 +220,13 @@ The tree consist of [Node](#Node-object) and [Token](#Token-object) objects. The
 
 #### Token object
 
-| Key            | Type   | Description                                        |
-|----------------|--------|----------------------------------------------------|
-| `start`, `end` | int    | Byte offset of token's first character and a character just past the symbol in source text. |
-| `tag`          | string | Token tag. See [Possible token tag values](#possible-token-tag-values) below for details. |
+| Key               | Type   | Description                                        |
+|-------------------|--------|----------------------------------------------------|
+| `start`, `end`    | int    | Byte offset of token's first character and a character just past the symbol in source text. |
+| `tag`             | string | Token tag. See [Possible token tag values](#possible-token-tag-values) below for details. |
+| `text` (optional) | string | Token text. Not present in operator and keyword token objects. |
 
-To get token text, read source file from byte `start` (included) to byte `end` (excluded). Example in Python:
+To get token text, either use `text` value (if present), or read source file from byte `start` (included) to byte `end` (excluded). Example in Python:
 
 ```python
 start = token["start"]

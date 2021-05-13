@@ -38,13 +38,18 @@ TEST(TokenInfoToJsonTest, ToJsonEOF) {
   const TokenInfo::Context context(base);
   const TokenInfo token_info(TK_EOF, base);
 
-  const Json::Value json(ToJson(token_info, context));
-  const Json::Value expected_json = ParseJson(R"({
+  EXPECT_EQ(ToJson(token_info, context), ParseJson(R"({
     "start": 0,
     "end": 0,
     "tag": "0"
-  })");
-  EXPECT_EQ(json, expected_json);
+  })"));
+
+  EXPECT_EQ(ToJson(token_info, context, true), ParseJson(R"({
+    "start": 0,
+    "end": 0,
+    "tag": "0",
+    "text": ""
+  })"));
 }
 
 TEST(TokenInfoToJsonTest, ToJsonWithBase) {
@@ -52,13 +57,18 @@ TEST(TokenInfoToJsonTest, ToJsonWithBase) {
   const TokenInfo::Context context(base);
   const TokenInfo token_info(7, base.substr(9, 3));
 
-  const Json::Value json(ToJson(token_info, context));
-  const Json::Value expected_json = ParseJson(R"({
+  EXPECT_EQ(ToJson(token_info, context), ParseJson(R"({
     "start": 9,
     "end": 12,
     "tag": "7"
-  })");
-  EXPECT_EQ(json, expected_json);
+  })"));
+
+  EXPECT_EQ(ToJson(token_info, context, true), ParseJson(R"({
+    "start": 9,
+    "end": 12,
+    "tag": "7",
+    "text": "cat"
+  })"));
 }
 
 TEST(TokenInfoToJsonTest, ToJsonWithTokenEnumTranslator) {
@@ -68,13 +78,18 @@ TEST(TokenInfoToJsonTest, ToJsonWithTokenEnumTranslator) {
   const verible::TokenInfo::Context context(
       text, [](std::ostream& stream, int e) { stream << "token enum " << e; });
 
-  const Json::Value json(ToJson(token_info, context));
-  const Json::Value expected_json = ParseJson(R"({
+  EXPECT_EQ(ToJson(token_info, context), ParseJson(R"({
     "start": 0,
     "end": 19,
     "tag": "token enum 143"
-  })");
-  EXPECT_EQ(json, expected_json);
+  })"));
+
+  EXPECT_EQ(ToJson(token_info, context, true), ParseJson(R"({
+    "start": 0,
+    "end": 19,
+    "tag": "token enum 143",
+    "text": "string of length 19"
+  })"));
 }
 
 }  // namespace

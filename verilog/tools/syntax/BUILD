@@ -27,6 +27,7 @@ cc_binary(
         "//verilog/analysis/checkers:verilog_lint_rules",
         "//verilog/parser:verilog_parser",
         "//verilog/parser:verilog_token",
+        "//verilog/parser:verilog_token_classifications",
         "@com_google_absl//absl/flags:flag",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/strings",

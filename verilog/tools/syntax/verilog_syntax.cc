@@ -50,6 +50,7 @@
 #include "verilog/analysis/verilog_excerpt_parse.h"
 #include "verilog/parser/verilog_parser.h"
 #include "verilog/parser/verilog_token.h"
+#include "verilog/parser/verilog_token_classifications.h"
 
 // Controls parser selection behavior
 enum class LanguageMode {
@@ -148,6 +149,18 @@ static void VerifyParseTree(const TextStructureView& text_structure) {
   }
 }
 
+static bool ShouldIncludeTokenText(const verible::TokenInfo& token) {
+  const verilog_tokentype tokentype =
+      static_cast<verilog_tokentype>(token.token_enum());
+  absl::string_view type_str = verilog::TokenTypeToString(tokentype);
+  // Don't include token's text for operators, keywords, or anything that is a
+  // part of Verilog syntax. For such types, TokenTypeToString() is equal to
+  // token's text. Exception has to be made for identifiers, because things like
+  // "PP_Identifier" or "SymbolIdentifier" (which are values returned by
+  // TokenTypeToString()) could be used as Verilog identifier.
+  return verilog::IsIdentifierLike(tokentype) || (token.text() != type_str);
+}
+
 static int AnalyzeOneFile(absl::string_view content, absl::string_view filename,
                           Json::Value& json) {
   int exit_status = 0;
@@ -206,7 +219,8 @@ static int AnalyzeOneFile(absl::string_view content, absl::string_view filename,
       tokens.resize(token_stream.size());
       Json::ArrayIndex token_index = 0;
       for (const auto& t : token_stream) {
-        tokens[token_index] = verible::ToJson(*t, context);
+        tokens[token_index] =
+            verible::ToJson(*t, context, ShouldIncludeTokenText(*t));
         ++token_index;
       }
     }
@@ -225,7 +239,8 @@ static int AnalyzeOneFile(absl::string_view content, absl::string_view filename,
       tokens.resize(token_stream.size());
       Json::ArrayIndex token_index = 0;
       for (const auto& t : token_stream) {
-        tokens[token_index] = verible::ToJson(t, context);
+        tokens[token_index] =
+            verible::ToJson(t, context, ShouldIncludeTokenText(t));
         ++token_index;
       }
     }

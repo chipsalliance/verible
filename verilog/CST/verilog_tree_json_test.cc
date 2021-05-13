@@ -56,7 +56,7 @@ TEST(VerilogTreeJsonTest, GeneratesGoodJsonTree) {
            "children": [
              { "start": 0, "end": 6, "tag": "module" },
              null,
-             { "start": 7, "end": 10, "tag": "SymbolIdentifier" },
+             { "start": 7, "end": 10, "tag": "SymbolIdentifier", "text": "foo" },
              null,
              null,
              null,
