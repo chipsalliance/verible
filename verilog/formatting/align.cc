@@ -286,7 +286,10 @@ class PortDeclarationColumnSchemaScanner : public ColumnSchemaScanner {
         ReserveNewColumn(node, FlushLeft);
         break;
       case NodeEnum::kUnqualifiedId:
-        if (Context().DirectParentIs(NodeEnum::kPortDeclaration)) {
+        if (Context().DirectParentIs(NodeEnum::kPortDeclaration) ||
+            Context().DirectParentsAre(
+                {NodeEnum::kDataTypeImplicitBasicIdDimensions,
+                 NodeEnum::kPortItem})) {
           ReserveNewColumn(node, FlushLeft);
         }
         break;
@@ -1237,6 +1240,7 @@ void TabularAlignTokenPartitions(TokenPartitionTree* partition_ptr,
   static const auto* const kAlignHandlers =
       new std::map<NodeEnum, AlignSyntaxGroupsFunction>{
           {NodeEnum::kPortDeclarationList, &AlignPortDeclarations},
+          {NodeEnum::kPortList, &AlignPortDeclarations},
           {NodeEnum::kActualParameterByNameList, &AlignActualNamedParameters},
           {NodeEnum::kPortActualList, &AlignActualNamedPorts},
           {NodeEnum::kModuleItemList, &AlignModuleItems},

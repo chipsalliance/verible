@@ -2737,7 +2737,7 @@ dpi_export_item
   : TK_export dpi_spec_string GenericIdentifier '=' modport_tf_port ';'
     { $$ = MakeTaggedNode(N::kDPIExportItem, $1, $2, $3, $4, $5, $6); }
   | TK_export dpi_spec_string modport_tf_port ';'
-    { $$ = MakeTaggedNode(N::kDPIExportItem, $1, $2, nullptr, nullptr, ExtendLastSublist($3, $4)); }
+    { $$ = MakeTaggedNode(N::kDPIExportItem, $1, $2, nullptr, nullptr, $3, $4); }
   ;
 import_export
   : TK_export
@@ -2754,7 +2754,7 @@ dpi_import_item
     GenericIdentifier '=' method_prototype ';'
     { $$ = MakeDPIImport($1, $2, $3, $4, $5, ExtendLastSublist($6, $7)); }
   | TK_import dpi_spec_string dpi_import_property_opt method_prototype ';'
-    { $$ = MakeDPIImport($1, $2, $3, nullptr, nullptr, ExtendLastSublist($4, $5)); }
+    { $$ = MakeDPIImport($1, $2, $3, nullptr, nullptr, $4, $5); }
   ;
 
 modport_ports_declaration_trailing_comma

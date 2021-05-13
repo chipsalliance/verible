@@ -86,24 +86,28 @@ TEST(GetDPIImportPrototypeTest, Various) {
       // each of these test cases should match exactly one DPI import
       {"module m;\n"
        "  import \"DPI-C\" ",
-       {kTag, "function void foo;"},
+       {kTag, "function void foo"},
+       ";",
        "\n"
        "endmodule\n"},
       {"module m;\n"
        "  wire w;\n"
        "  import \"DPI-C\" ",
-       {kTag, "function void foo;"},
+       {kTag, "function void foo"},
+       ";",
        "\n"
        "  logic l;\n"
        "endmodule\n"},
       {"module m;\n"
        "  import \"DPI-C\" ",
-       {kTag, "function int add();"},
+       {kTag, "function int add()"},
+       ";",
        "\n"
        "endmodule\n"},
       {"module m;\n"
        "  import   \"DPI-C\" ",
-       {kTag, "function   int   add( input int x , y);"},
+       {kTag, "function   int   add( input int x , y)"},
+       ";",
        "\n"
        "endmodule\n"},
   };
