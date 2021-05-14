@@ -96,6 +96,7 @@ ABSL_FLAG(std::string, lint_rule_citations, "",
           "Please refer to the README file for information about its format.");
 // LINT.ThenChange(README.md)
 
+using verilog::CustomCitationMap;
 using verilog::LinterConfiguration;
 
 // LintOneFile returns 0, 1, or 2
@@ -108,14 +109,16 @@ int main(int argc, char** argv) {
 
   std::string help_flag = absl::GetFlag(FLAGS_help_rules);
   std::string custom_citations_file = absl::GetFlag(FLAGS_lint_rule_citations);
+  CustomCitationMap citations;
   if (!help_flag.empty()) {
     std::string content;
     if (!custom_citations_file.empty()) {
       const absl::Status config_read_status =
           verible::file::GetContents(custom_citations_file, &content);
       if (!config_read_status.ok()) return -1;
+      citations = verilog::ParseCitations(content);
     }
-    verilog::GetLintRuleDescriptionsHelpFlag(&std::cout, help_flag, content);
+    verilog::GetLintRuleDescriptionsHelpFlag(&std::cout, help_flag, citations);
     return 0;
   }
 

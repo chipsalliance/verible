@@ -413,9 +413,24 @@ TEST_F(VerilogLinterTest, MultiByteUTF8CharactersAreOnlyCountedOnce) {
   EXPECT_EQ(diagnostics.second, "");
 }
 
+TEST(VerilogLinterDocumentationTest, ParseCustomCitations) {
+  absl::string_view citations_raw =
+      "struct-union-name-style:one line citation is ok\n"
+      "signal-name-style:multi line citation\\\n"
+      "is also\\\n"
+      "correct\n";
+
+  auto citations = verilog::ParseCitations(citations_raw);
+  ASSERT_TRUE(!citations.empty());
+  EXPECT_TRUE(absl::StrContains(citations["struct-union-name-style"],
+                                "one line citation is ok"));
+  EXPECT_TRUE(
+      absl::StrContains(citations["signal-name-style"], "\nis also\ncorrect"));
+}
+
 TEST(VerilogLinterDocumentationTest, AllRulesHelpDescriptions) {
   std::ostringstream stream;
-  verilog::GetLintRuleDescriptionsHelpFlag(&stream, "all", "");
+  verilog::GetLintRuleDescriptionsHelpFlag(&stream, "all", {});
   // Spot-check a few patterns, must mostly make sure generation
   // works without any fatal errors.
   EXPECT_TRUE(absl::StrContains(stream.str(), "line-length"));
@@ -426,11 +441,10 @@ TEST(VerilogLinterDocumentationTest, AllRulesHelpDescriptions) {
 TEST(VerilogLinterDocumentationTest,
      AllRulesHelpDescriptionsWithCustomCitations) {
   std::ostringstream stream;
-  absl::string_view citations =
-      "struct-union-name-style:one line citation is ok\n"
-      "signal-name-style:multi line citation\\\n"
-      "is also\\\n"
-      "correct\n";
+  verilog::CustomCitationMap citations = {
+      {"struct-union-name-style", "one line citation is ok"},
+      {"signal-name-style", "multi line citation\nis also\ncorrect"}};
+
   verilog::GetLintRuleDescriptionsHelpFlag(&stream, "all", citations);
   // Spot-check a few patterns, must mostly make sure generation
   // works without any fatal errors.

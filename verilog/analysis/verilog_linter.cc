@@ -526,7 +526,6 @@ absl::Status PrintRuleInfo(std::ostream* os,
   return absl::OkStatus();
 }
 
-using CustomCitationMap = std::map<absl::string_view, std::string>;
 static void appendCitation(CustomCitationMap& citations,
                            absl::string_view rule_raw) {
   const size_t eq_pos = rule_raw.find(':');
@@ -542,7 +541,7 @@ static void appendCitation(CustomCitationMap& citations,
   citations[rule_id] = std::move(filtered_citation);
 }
 
-static CustomCitationMap parseCitations(absl::string_view text) {
+CustomCitationMap ParseCitations(absl::string_view text) {
   CustomCitationMap citations;
   size_t rule_begin = 0;
   size_t rule_end = text.find('\n');
@@ -561,11 +560,10 @@ static CustomCitationMap parseCitations(absl::string_view text) {
 
 void GetLintRuleDescriptionsHelpFlag(std::ostream* os,
                                      absl::string_view flag_value,
-                                     absl::string_view citations_text) {
+                                     const CustomCitationMap& citations) {
   // Set up the map.
   auto rule_map = analysis::GetAllRuleDescriptionsHelpFlag();
-  if (!citations_text.empty()) {
-    auto citations = parseCitations(citations_text);
+  if (!citations.empty()) {
     for (const auto& [rule_id, citation] : citations) {
       auto rule = rule_map.find(rule_id);
       if (rule != rule_map.end()) {
