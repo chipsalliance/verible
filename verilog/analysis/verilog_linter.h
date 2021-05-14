@@ -246,7 +246,8 @@ absl::Status PrintRuleInfo(std::ostream*,
                            absl::string_view);
 
 // Outputs the descriptions for every rule for the --help_rules flag.
-void GetLintRuleDescriptionsHelpFlag(std::ostream*, absl::string_view);
+void GetLintRuleDescriptionsHelpFlag(std::ostream*, absl::string_view,
+                                     absl::string_view);
 
 // Outputs the descriptions for every rule, formatted for markdown.
 void GetLintRuleDescriptionsMarkdown(std::ostream*);

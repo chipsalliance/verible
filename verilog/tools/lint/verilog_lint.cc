@@ -91,7 +91,9 @@ ABSL_FLAG(std::string, autofix_output_file, "",
           "File to write a patch with autofixes to. If not set autofixes are "
           "applied directly to the analyzed file. Relevant only when "
           "--autofix option is enabled.");
-
+ABSL_FLAG(std::string, lint_rule_citations, "",
+          "Path to lint rule citations to overwrite. "
+          "Please refer to the README file for information about its format.");
 // LINT.ThenChange(README.md)
 
 using verilog::LinterConfiguration;
@@ -105,8 +107,15 @@ int main(int argc, char** argv) {
   const auto args = verible::InitCommandLine(usage, &argc, &argv);
 
   std::string help_flag = absl::GetFlag(FLAGS_help_rules);
+  std::string custom_citations_file = absl::GetFlag(FLAGS_lint_rule_citations);
   if (!help_flag.empty()) {
-    verilog::GetLintRuleDescriptionsHelpFlag(&std::cout, help_flag);
+    std::string content;
+    if (!custom_citations_file.empty()) {
+      const absl::Status config_read_status =
+          verible::file::GetContents(custom_citations_file, &content);
+      if (!config_read_status.ok()) return -1;
+    }
+    verilog::GetLintRuleDescriptionsHelpFlag(&std::cout, help_flag, content);
     return 0;
   }
 

@@ -415,11 +415,27 @@ TEST_F(VerilogLinterTest, MultiByteUTF8CharactersAreOnlyCountedOnce) {
 
 TEST(VerilogLinterDocumentationTest, AllRulesHelpDescriptions) {
   std::ostringstream stream;
-  verilog::GetLintRuleDescriptionsHelpFlag(&stream, "all");
+  verilog::GetLintRuleDescriptionsHelpFlag(&stream, "all", "");
   // Spot-check a few patterns, must mostly make sure generation
   // works without any fatal errors.
   EXPECT_TRUE(absl::StrContains(stream.str(), "line-length"));
   EXPECT_TRUE(absl::StrContains(stream.str(), "posix-eof"));
+  EXPECT_TRUE(absl::StrContains(stream.str(), "Enabled by default:"));
+}
+
+TEST(VerilogLinterDocumentationTest,
+     AllRulesHelpDescriptionsWithCustomCitations) {
+  std::ostringstream stream;
+  absl::string_view citations =
+      "struct-union-name-style:one line citation is ok\n"
+      "signal-name-style:multi line citation\\\n"
+      "is also\\\n"
+      "correct\n";
+  verilog::GetLintRuleDescriptionsHelpFlag(&stream, "all", citations);
+  // Spot-check a few patterns, must mostly make sure generation
+  // works without any fatal errors.
+  EXPECT_TRUE(absl::StrContains(stream.str(), "one line citation is ok"));
+  EXPECT_TRUE(absl::StrContains(stream.str(), "is also\ncorrect"));
   EXPECT_TRUE(absl::StrContains(stream.str(), "Enabled by default:"));
 }
 
