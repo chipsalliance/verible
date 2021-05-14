@@ -254,7 +254,9 @@ void GetLintRuleDescriptionsHelpFlag(std::ostream*, absl::string_view,
                                      const CustomCitationMap&);
 
 // Outputs the descriptions for every rule, formatted for markdown.
-void GetLintRuleDescriptionsMarkdown(std::ostream*);
+// When custom citations are delivered substitute chosen rule description
+// with citations specified by user
+void GetLintRuleDescriptionsMarkdown(std::ostream*, const CustomCitationMap&);
 
 // Parse the file with custom citations
 CustomCitationMap ParseCitations(absl::string_view);

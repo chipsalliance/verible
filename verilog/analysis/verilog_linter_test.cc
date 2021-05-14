@@ -455,7 +455,7 @@ TEST(VerilogLinterDocumentationTest,
 
 TEST(VerilogLinterDocumentationTest, AllRulesMarkdown) {
   std::ostringstream stream;
-  verilog::GetLintRuleDescriptionsMarkdown(&stream);
+  verilog::GetLintRuleDescriptionsMarkdown(&stream, {});
   // Spot-check a few patterns, must mostly make sure generation
   // works without any fatal errors.
   EXPECT_TRUE(absl::StrContains(stream.str(), "line-length"));
@@ -934,6 +934,19 @@ TEST_F(ViolationFixerTest, PrintAppliedFixes) {
           "  wire a;   \n"
           "endmodule\n",
       });
+
+TEST(VerilogLinterDocumentationTest, AllRulesMarkdownWithCustomCitations) {
+  std::ostringstream stream;
+  verilog::CustomCitationMap citations = {
+      {"struct-union-name-style", "one line citation is ok"},
+      {"signal-name-style", "multi line citation\nis also\ncorrect"}};
+
+  verilog::GetLintRuleDescriptionsMarkdown(&stream, citations);
+  // Spot-check a few patterns, must mostly make sure generation
+  // works without any fatal errors.
+  EXPECT_TRUE(absl::StrContains(stream.str(), "one line citation is ok"));
+  EXPECT_TRUE(absl::StrContains(stream.str(), "is also\ncorrect"));
+  EXPECT_TRUE(absl::StrContains(stream.str(), "Enabled by default:"));
 }
 
 }  // namespace

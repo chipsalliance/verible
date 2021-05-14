@@ -567,6 +567,8 @@ void GetLintRuleDescriptionsHelpFlag(std::ostream* os,
     for (const auto& [rule_id, citation] : citations) {
       auto rule = rule_map.find(rule_id);
       if (rule != rule_map.end()) {
+        // we can move here, cause process
+        // exits after this function
         rule->second.description = std::move(citation);
       }
     }
@@ -591,10 +593,22 @@ void GetLintRuleDescriptionsHelpFlag(std::ostream* os,
   }
 }
 
-void GetLintRuleDescriptionsMarkdown(std::ostream* os) {
+void GetLintRuleDescriptionsMarkdown(std::ostream* os,
+                                     const CustomCitationMap& citations) {
   auto rule_map = analysis::GetAllRuleDescriptionsMarkdown();
   for (const auto& rule_id : analysis::kDefaultRuleSet) {
     rule_map[rule_id].default_enabled = true;
+  }
+
+  if (!citations.empty()) {
+    for (const auto& [rule_id, citation] : citations) {
+      auto rule = rule_map.find(rule_id);
+      if (rule != rule_map.end()) {
+        // we can move here, cause process
+        // exits after this function
+        rule->second.description = std::move(citation);
+      }
+    }
   }
 
   for (const auto& rule : rule_map) {

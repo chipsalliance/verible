@@ -107,17 +107,18 @@ int main(int argc, char** argv) {
       absl::StrCat("usage: ", argv[0], " [options] <file> [<file>...]");
   const auto args = verible::InitCommandLine(usage, &argc, &argv);
 
-  std::string help_flag = absl::GetFlag(FLAGS_help_rules);
   std::string custom_citations_file = absl::GetFlag(FLAGS_lint_rule_citations);
+  std::string content;
   CustomCitationMap citations;
+  if (!custom_citations_file.empty()) {
+    const absl::Status config_read_status =
+        verible::file::GetContents(custom_citations_file, &content);
+    if (!config_read_status.ok()) return -1;
+    citations = verilog::ParseCitations(content);
+  }
+
+  std::string help_flag = absl::GetFlag(FLAGS_help_rules);
   if (!help_flag.empty()) {
-    std::string content;
-    if (!custom_citations_file.empty()) {
-      const absl::Status config_read_status =
-          verible::file::GetContents(custom_citations_file, &content);
-      if (!config_read_status.ok()) return -1;
-      citations = verilog::ParseCitations(content);
-    }
     verilog::GetLintRuleDescriptionsHelpFlag(&std::cout, help_flag, citations);
     return 0;
   }
@@ -125,7 +126,7 @@ int main(int argc, char** argv) {
   // In documentation generation mode, print documentation and exit immediately.
   bool generate_markdown_flag = absl::GetFlag(FLAGS_generate_markdown);
   if (generate_markdown_flag) {
-    verilog::GetLintRuleDescriptionsMarkdown(&std::cout);
+    verilog::GetLintRuleDescriptionsMarkdown(&std::cout, citations);
     return 0;
   }
 
