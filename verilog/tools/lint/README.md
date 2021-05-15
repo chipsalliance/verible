@@ -139,6 +139,22 @@ Additionally, the `--rules_config` flag can be used to read configuration stored
 in a file. The syntax is the same as above, except the rules can be also
 separated with the newline character.
 
+## Custom citations
+
+The `--lint_rule_citations` flag allows to load custom description for specified rules.
+It accepts the path to file with prepared configuration.
+The file should contain the rule set with appropriate description.
+The rules are separeted with newline sign. When new lines are desired, just escape them with `\` sign.
+
+### Example file configuration:
+
+```
+struct-union-name-style:multi\
+line\
+example
+signal-name-style:single line example
+```
+
 ## Waiving Lint Violations {#lint-waiver}
 
 ### In-file waiver comments

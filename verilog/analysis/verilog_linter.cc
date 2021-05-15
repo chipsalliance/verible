@@ -21,7 +21,6 @@
 #include <memory>
 #include <sstream>
 #include <string>
-#include <string_view>
 #include <utility>
 #include <vector>
 
@@ -526,8 +525,8 @@ absl::Status PrintRuleInfo(std::ostream* os,
   return absl::OkStatus();
 }
 
-static void appendCitation(CustomCitationMap& citations,
-                           absl::string_view rule_raw) {
+static void AppendCitation(CustomCitationMap& citations,
+                           const absl::string_view& rule_raw) {
   const size_t eq_pos = rule_raw.find(':');
   if (!eq_pos || eq_pos == absl::string_view::npos) return;
   const size_t rule_id_end = eq_pos;
@@ -535,10 +534,8 @@ static void appendCitation(CustomCitationMap& citations,
   absl::string_view rule_id = rule_raw.substr(0, rule_id_end);
   absl::string_view citation =
       rule_raw.substr(rule_citation_beg, rule_raw.size() - rule_citation_beg);
-  std::string filtered_citation =
-      absl::StrReplaceAll(citation, {{"\\\n", "\n"}});
 
-  citations[rule_id] = std::move(filtered_citation);
+  citations[rule_id] = absl::StrReplaceAll(citation, {{"\\\n", "\n"}});
 }
 
 CustomCitationMap ParseCitations(absl::string_view text) {
@@ -551,7 +548,7 @@ CustomCitationMap ParseCitations(absl::string_view text) {
       continue;
     }
     auto rule_subs = text.substr(rule_begin, rule_end - rule_begin);
-    appendCitation(citations, rule_subs);
+    AppendCitation(citations, rule_subs);
     rule_begin = rule_end + 1;
     rule_end = text.find('\n', rule_begin);
   }
