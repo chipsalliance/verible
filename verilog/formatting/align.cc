@@ -1044,6 +1044,40 @@ std::function<MemberType(const StructType&)> function_from_pointer_to_member(
 using AlignmentHandlerMapType =
     std::map<AlignableSyntaxSubtype, AlignmentGroupHandlers>;
 
+std::vector<verible::ColumnPositionEntry> non_tree_column_scanner(
+    verible::TokenRange token_range, const verible::SyntaxTreeNode& node,
+    long unsigned int max_children_size) {
+  std::vector<verible::ColumnPositionEntry> trailing_column_entries;
+  auto tag = NodeEnum(node.Tag().tag);
+  VLOG(2) << __FUNCTION__ << ", node: " << tag;
+
+  for (auto token : token_range) {
+    switch (token.token_enum()) {
+      case ',': {
+        SyntaxTreePath path{max_children_size};
+        VLOG(2) << "at " << TreePathFormatter(path);
+        AlignmentColumnProperties prop;
+        prop.contains_delimiter = true;
+        verible::ColumnPositionEntry test{path, token, prop};
+        trailing_column_entries.push_back(test);
+        break;
+      }
+      case TK_COMMENT_BLOCK:
+      case TK_EOL_COMMENT: {
+        SyntaxTreePath path{max_children_size + 1};
+        VLOG(2) << "at " << TreePathFormatter(path);
+        verible::ColumnPositionEntry test{path, token, FlushLeft};
+        trailing_column_entries.push_back(test);
+        break;
+      }
+      default:
+        break;
+    }
+  }
+
+  return trailing_column_entries;
+}
+
 // Global registry of all known alignment handlers for Verilog.
 // This organization lets the same handlers be re-used in multiple syntactic
 // contexts, e.g. data declarations can be module items and generate items and
@@ -1068,7 +1102,8 @@ static const AlignmentHandlerMapType& AlignmentHandlerLibrary() {
         function_from_pointer_to_member(
             &FormatStyle::formal_parameters_alignment)}},
       {AlignableSyntaxSubtype::kPortDeclaration,
-       {AlignmentCellScannerGenerator<PortDeclarationColumnSchemaScanner>(),
+       {AlignmentCellScannerGenerator<PortDeclarationColumnSchemaScanner>(
+            non_tree_column_scanner),
         function_from_pointer_to_member(
             &FormatStyle::port_declarations_alignment)}},
       {AlignableSyntaxSubtype::kClassMemberVariables,
@@ -1091,7 +1126,8 @@ static const AlignmentHandlerMapType& AlignmentHandlerLibrary() {
         function_from_pointer_to_member(
             &FormatStyle::assignment_statement_alignment)}},
       {AlignableSyntaxSubtype::kEnumListAssignment,
-       {AlignmentCellScannerGenerator<EnumWithAssignmentsColumnSchemaScanner>(),
+       {AlignmentCellScannerGenerator<EnumWithAssignmentsColumnSchemaScanner>(
+            non_tree_column_scanner),
         function_from_pointer_to_member(
             &FormatStyle::enum_assignment_statement_alignment)}},
       {AlignableSyntaxSubtype::kDistItem,

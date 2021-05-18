@@ -878,10 +878,48 @@ static constexpr FormatterTestCase kFormatterTestCases[] = {
      "output reg yyy //c2\n"
      " ) ;endmodule:foo\n",
      "module foo (\n"
-     "    input  wire x,  //c1\n"   // aligned
-     "    output reg  yyy  //c2\n"  // trailing comments not aligned
+     "    input  wire x,   //c1\n"  // aligned
+     "    output reg  yyy  //c2\n"  // aligned
      ");\n"
      "endmodule : foo\n"},
+    {"module foo(  input wire x  ,/* c1 */\n"
+     "output reg yyy /* c2 */\n"
+     " ) ;endmodule:foo\n",
+     "module foo (\n"
+     "    input  wire x,   /* c1 */\n"  // aligned
+     "    output reg  yyy  /* c2 */\n"  // aligned
+     ");\n"
+     "endmodule : foo\n"},
+    {"module foo(  input wire x  ,/* c1\n"
+     "c2\n"
+     "c3 */\n"
+     "output reg yyy /* c4 */\n"
+     " ) ;endmodule:foo\n",
+     "module foo (\n"
+     "    input  wire x,   /* c1\n"
+     "c2\n"
+     "c3 */\n"  // TODO: align multiline comments
+     "    output reg  yyy  /* c4 */\n"
+     ");\n"
+     "endmodule : foo\n"},
+    {"module foo(  input wire x  ,/* c1 */\n"
+     "output reg yyy,\n"
+     "output z // c2\n"
+     " ) ;endmodule:foo\n",
+     "module foo (\n"
+     "    input  wire x,    /* c1 */\n"  // aligned
+     "    output reg  yyy,\n"
+     "    output      z     // c2\n"  // aligned
+     ");\n"
+     "endmodule : foo\n"},
+    {"module m(input logic [4:0] foo,  // comment\n"
+     "input logic bar // comment\n"
+     " ) ;endmodule:m\n",
+     "module m (\n"
+     "    input logic [4:0] foo,  // comment\n"  // aligned
+     "    input logic       bar   // comment\n"  // aligned
+     ");\n"
+     "endmodule : m\n"},
     {"module foo(  input wire x  , output yy ) ;endmodule:foo\n",
      "module foo (\n"
      "    input  wire x,\n"  // aligned
@@ -3521,12 +3559,12 @@ static constexpr FormatterTestCase kFormatterTestCases[] = {
      "D=3    // baz\n"
      "}foo_t;",
      "typedef enum logic {\n"
-     "  A = 0,  // foo\n"
-     "  B,  // bar\n"
+     "  A = 0,   // foo\n"
+     "  B,       // bar\n"
      "`ifndef DO_PANIC\n"
      "  C = 42,  // answer\n"
      "`endif\n"
-     "  D = 3  // baz\n"
+     "  D = 3    // baz\n"
      "} foo_t;\n"},
     {// with scalar dimensions
      "typedef enum logic[2]\t{ A=0, B=1 }foo_t;",
@@ -9359,7 +9397,17 @@ static constexpr FormatterTestCase kFormatterTestCasesEnumDeclarations[] = {
      "  kA   = 1,  // value kA\n"
      "  // hello world\n"
      "  kAB  = 2,  // value kAB\n"
-     "  kABC = 3  // value kABC"
+     "  kABC = 3   // value kABC"
+     "\n} x;\n"},
+
+    {"typedef enum { kA=1,// value kA\n"
+     "kAB=2,\n"
+     "kABC=3// value kABC\n"
+     "} x;",
+     "typedef enum {\n"
+     "  kA   = 1,  // value kA\n"
+     "  kAB  = 2,\n"
+     "  kABC = 3   // value kABC"
      "\n} x;\n"},
 
     // Numeric constants are currently flushed left, but maybe todo
