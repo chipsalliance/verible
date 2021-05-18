@@ -358,9 +358,9 @@ check_diff() {
   local vis_test_file_="${test_file_}.vis"
 
   # Show invisible characters
-  local invisible_chars_re_='s/ /·/g;s/\t/├───/g;s/\r/⁋/g;s/\n/¶\n/g'
-  sed -z "$invisible_chars_re_" "$reference_file_" > "$vis_reference_file_"
-  sed -z "$invisible_chars_re_" "$test_file_" > "$vis_test_file_"
+  local invisible_chars_expr_=':join;N;$!b join; s/ /·/g;s/'$'\t''/├───/g;s/'$'\r''/⁋/g;s/\n/¶\n/g'
+  sed "$invisible_chars_expr_" "$reference_file_" > "$vis_reference_file_"
+  sed "$invisible_chars_expr_" "$test_file_"      > "$vis_test_file_"
 
   diff -u "${vis_reference_file_}" "${vis_test_file_}" >"${diff_file_}"
   status="$?"
