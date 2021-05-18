@@ -22,6 +22,7 @@
 #include <string>
 #include <vector>
 
+#include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
 #include "common/strings/line_column_map.h"
 #include "common/text/concrete_syntax_leaf.h"
@@ -34,23 +35,21 @@
 namespace verible {
 
 std::string AutoFix::Apply(const absl::string_view base) const {
-  std::ostringstream result;
-
+  std::string result;
   auto prev_start = base.cbegin();
   for (const auto& edit : edits) {
     CHECK_LE(base.cbegin(), edit.fragment.cbegin());
     CHECK_GE(base.cend(), edit.fragment.cend());
 
-    absl::string_view text_before = absl::string_view(
+    const absl::string_view text_before(
         prev_start, std::distance(prev_start, edit.fragment.cbegin()));
+    absl::StrAppend(&result, text_before, edit.replacement);
 
-    result << text_before << edit.replacement;
     prev_start = edit.fragment.cend();
   }
-  absl::string_view text_after =
-      absl::string_view(prev_start, std::distance(prev_start, base.cend()));
-  result << text_after;
-  return result.str();
+  const absl::string_view text_after(prev_start,
+                                     std::distance(prev_start, base.cend()));
+  return absl::StrCat(result, text_after);
 }
 
 bool AutoFix::AddEdits(const std::set<ReplacementEdit>& new_edits) {
