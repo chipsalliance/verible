@@ -101,6 +101,11 @@ Checks that the 'name' argument of `type_id::create()` matches the name of the v
 
 Enabled by default: true
 
+### disable-statement
+Checks that there are no occurrences of `disable some_label` if label is referring to a fork or other none sequential block label.. Use `disable fork` instead. See [Style: disable-invalid-in-non-sequential].
+
+Enabled by default: false
+
 ### endif-comment
 Checks that a Verilog `` `endif`` directive is followed by a comment that matches the name of the opening `` `ifdef`` or `` `ifndef``. See [Style: endif-comment].
 
@@ -358,4 +363,4 @@ Enabled by default: true
 
 ## Version
 
-Generated on 2021-05-04 14:15:32 -0700 from [9e5c085](https://github.com/google/verible/commit/9e5c085b9563f496f2b8b08e75e9a02007da18e3)
+Generated on 2021-05-17 17:55:01 -0700 from [ac21e8b](https://github.com/google/verible/commit/ac21e8b15286155dea1355d4837cbf3f5143f6c0)
