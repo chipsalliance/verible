@@ -250,6 +250,11 @@ struct DeclarationTypeInfo {
   // advance, and only ever moving ReferenceComponents, never copying them.
   const ReferenceComponentNode* user_defined_type = nullptr;
 
+  // Indicates that this is implicit declaration.
+  // FIXME(ldk): Check if this could be replaced by user_defined_type pointing
+  //    to default implicit type.
+  bool implicit = false;
+
  public:
   DeclarationTypeInfo() = default;
 
