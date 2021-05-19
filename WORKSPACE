@@ -36,9 +36,9 @@ http_archive(
 # extra dependency.
 http_archive(
     name = "com_github_gflags_gflags",
-    sha256 = "34af2f15cf7367513b352bdcd2493ab14ce43692d2dcd9dfc499492966c64dcf",
-    strip_prefix = "gflags-2.2.2",
-    urls = ["https://github.com/gflags/gflags/archive/v2.2.2.tar.gz"],
+    sha256 = "cfdba0f2f17e8b1ff75c98113d5080d8ec016148426abcc19130864e2952d7bd",
+    strip_prefix = "gflags-827c769e5fc98e0f2a34c47cef953cc6328abced",
+    urls = ["https://github.com/gflags/gflags/archive/827c769e5fc98e0f2a34c47cef953cc6328abced.zip" ],
 )
 
 http_archive(
