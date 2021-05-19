@@ -354,7 +354,6 @@ static void DeterminePartitionExpansion(
       LOG(FATAL) << "Got an uninitialized partition policy at: " << uwline;
       break;
     }
-    // Always view tabular aligned partitions in expanded form.
     case PartitionPolicyEnum::kAlwaysExpand: {
       if (children.size() > 1) {
         node_view.Expand();
@@ -395,6 +394,7 @@ static void DeterminePartitionExpansion(
         VLOG(3) << "Does not fit, expanding.";
         node_view.Expand();
       }
+      break;
     }
 
     case PartitionPolicyEnum::kFitOnLineElseExpand: {
