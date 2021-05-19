@@ -33,9 +33,6 @@ BAZEL_OPTS="${BAZEL_OPTS} --cxxopt=-Wall --cxxopt=-Wextra"
 BAZEL_OPTS="${BAZEL_OPTS} --cxxopt=-Wno-unused-parameter"
 BAZEL_OPTS="${BAZEL_OPTS} --cxxopt=-Wno-missing-field-initializers"
 
-# Currently there is a break missing introduced in #802
-BAZEL_OPTS="${BAZEL_OPTS} --cxxopt=-Wno-implicit-fallthrough"
-
 # Warnings in our code-base, that we might consider removing.
 BAZEL_OPTS="${BAZEL_OPTS} --cxxopt=-Wno-redundant-move"
 
