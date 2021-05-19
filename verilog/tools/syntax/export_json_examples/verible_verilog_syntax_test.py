@@ -16,9 +16,11 @@
 
 
 import os
+import stat
 import sys
 import tempfile
 import unittest
+import platform
 
 import verible_verilog_syntax
 
@@ -278,6 +280,139 @@ class TestTokens(VeribleVerilogSyntaxTest):
 
     texts = [t.text for t in identifiers]
     self.assertSequenceEqual(texts, ["X", "portIn", "portOut"])
+
+
+class TestVersionCheck(unittest.TestCase):
+  def setUp(self):
+    tmp_file = tempfile.NamedTemporaryFile(mode="w",
+        suffix="_verible_verilog_syntax.py", delete=False)
+    tmp_file.close()
+
+    self.executable_file = os.path.abspath(tmp_file.name)
+    os.chmod(self.executable_file, stat.S_IRUSR | stat.S_IWUSR | stat.S_IXUSR)
+
+    if platform.system() == "Windows":
+      self.executable_cmd = [sys.executable, self.executable_file]
+    else:
+      self.executable_cmd = self.executable_file
+
+  def tearDown(self):
+    os.unlink(self.executable_file)
+
+  def test_version_getter(self):
+    parser = verible_verilog_syntax.VeribleVerilogSyntax(
+        executable=sys.argv[1])
+
+    import subprocess
+    v = subprocess.run([sys.argv[1], "--version"], capture_output=True, encoding="UTF_8")
+
+    assert parser.version.startswith("v")
+
+  def test_version_check(self):
+    py_code_template = "\n".join((
+      r"#!/usr/bin/env python3",
+      r"import sys",
+      r"if sys.argv[1] == '--version':",
+      r"  print({version!r})",
+      r"  exit(0)",
+      r"elif sys.argv[1] == '--helpfull':",
+      r"  print({help!r})",
+      r"  exit(1)",
+      "",
+    ))
+    compatible_help = "\n".join((
+      r"  Flags from verilog/tools/syntax/verilog_syntax.cc:",
+      r"    --error_limit (Limit the number of syntax errors reported.",
+      r"      (0: unlimited)); default: 0;",
+      r"    --export_json (Uses JSON for output. Intended to be used as an",
+      r"      input for other tools.); default: false;",
+      r"    --printrawtokens (Prints all lexed tokens, including filtered",
+      r"      ones.); default: false;",
+      r"    --printtokens (Prints all lexed and filtered tokens);",
+      r"      default: false;",
+      r"    --printtree (Whether or not to print the tree); default: false;",
+    ))
+    incompatible_help = "\n".join((
+      r"  Flags from verilog/tools/syntax/verilog_syntax.cc:",
+      r"    --error_limit (Limit the number of syntax errors reported.",
+      r"      (0: unlimited)); default: 0;",
+      r"    --printrawtokens (Prints all lexed tokens, including filtered",
+      r"      ones.); default: false;",
+      r"    --printtokens (Prints all lexed and filtered tokens);",
+      r"      default: false;",
+      r"    --printtree (Whether or not to print the tree); default: false;",
+    ))
+    # minimum version = "v0.0-925-gc1a388a"
+
+    # Compatible version
+    built_commit_lines = ("Commit\t2021-05-19", "Built\t2021-05-19T20:13:51Z")
+    versions = (
+      "v0.0-925-gc1a388a",
+      "v0.0-925-g000",
+      "v0.0-1000-g1234567",
+      "v0.1-0-gabcdef",
+      "v0.1-900-gabcdef",
+      "v1.0-0-gabcdef",
+      "v2.0-80-gabcdef",
+    )
+    for version in versions:
+      with open(self.executable_file, "w") as f:
+        f.write(py_code_template.format(
+            version="\n".join([version, *built_commit_lines]),
+            help=compatible_help))
+
+      parser = verible_verilog_syntax.VeribleVerilogSyntax(
+          executable=self.executable_cmd)
+      assert parser.version == version
+
+    # Compatible version without correct `--version` message
+    version_msgs = (
+      "",
+      "Built\t2021-05-19T20:13:51Z",
+      "v0.0-1000",
+      "0.0-1000",
+    )
+    for version_msg in version_msgs:
+      with open(self.executable_file, "w") as f:
+        f.write(py_code_template.format(version=version_msg,
+            help=compatible_help))
+
+      verible_verilog_syntax.VeribleVerilogSyntax(
+          executable=self.executable_cmd)
+
+    # Incompatible version
+    versions = (
+      "v0.0-924-gc1a388a",
+      "v0.0-924-g000",
+      "v0.0-93-gffffff",
+      "v0.0-9-gabcdef",
+      "v0.0-0-gabcdef",
+    )
+    for version in versions:
+      with open(self.executable_file, "w") as f:
+        f.write(py_code_template.format(
+            version="\n".join([version, *built_commit_lines]),
+            help=incompatible_help))
+
+      with self.assertRaises(Exception):
+        verible_verilog_syntax.VeribleVerilogSyntax(
+            executable=self.executable_cmd)
+
+    # Incompatible version without correct `--version` message
+    version_msgs = (
+      "",
+      "Built\t2021-05-19T20:13:51Z",
+      "v0.0-100",
+      "0.0-100",
+    )
+    for version_msg in version_msgs:
+      with open(self.executable_file, "w") as f:
+        f.write(py_code_template.format(version=version_msg,
+            help=incompatible_help))
+
+      with self.assertRaises(Exception):
+        verible_verilog_syntax.VeribleVerilogSyntax(
+            executable=self.executable_cmd)
 
 
 if __name__ == "__main__":
