@@ -33,6 +33,9 @@ BAZEL_OPTS="${BAZEL_OPTS} --cxxopt=-Wall --cxxopt=-Wextra"
 BAZEL_OPTS="${BAZEL_OPTS} --cxxopt=-Wno-unused-parameter"
 BAZEL_OPTS="${BAZEL_OPTS} --cxxopt=-Wno-missing-field-initializers"
 
+# Currently there is a break missing introduced in #802
+BAZEL_OPTS="${BAZEL_OPTS} --cxxopt=-Wno-implicit-fallthrough"
+
 # Warnings in our code-base, that we might consider removing.
 BAZEL_OPTS="${BAZEL_OPTS} --cxxopt=-Wno-redundant-move"
 
@@ -45,7 +48,6 @@ BAZEL_OPTS="${BAZEL_OPTS} --cxxopt=-Wno-array-bounds"
 # tight warnings on for 'our' code-base.
 # TODO(hzeller): Remove after https://github.com/google/verible/issues/747
 #                is figure out
-BAZEL_OPTS="${BAZEL_OPTS} --cxxopt=-Wno-implicit-fallthrough"     # gflags
 BAZEL_OPTS="${BAZEL_OPTS} --cxxopt=-Wno-cast-function-type"       # gflags
 BAZEL_OPTS="${BAZEL_OPTS} --cxxopt=-Wno-deprecated-declarations"  # jsconcpp
 
