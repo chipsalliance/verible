@@ -1297,6 +1297,33 @@ static constexpr FormatterTestCase kFormatterTestCases[] = {
      ");\n"
      "endmodule : foo\n"},
 
+    {// align null-statement (issue #824)
+     "class sample;"
+     "bit a;;"
+     "bit b;"
+     "endclass",
+     "class sample;\n"
+     "  bit a;\n"
+     "  ;\n"
+     "  bit b;\n"
+     "endclass\n"},
+    {"class sample;"
+     "bit a;;"
+     "endclass",
+     "class sample;\n"
+     "  bit a;\n"
+     "  ;\n"
+     "endclass\n"},
+    {"class sample;"
+     "bit a;"
+     "bit b;;"
+     "endclass",
+     "class sample;\n"
+     "  bit a;\n"
+     "  bit b;\n"
+     "  ;\n"
+     "endclass\n"},
+
     {// aligning here just barely fits in the 40col limit
      "module foo(  input int signed x [a:b],"
      "output reg [mm:nn] yy) ;endmodule:foo\n",

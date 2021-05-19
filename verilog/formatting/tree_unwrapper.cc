@@ -1923,6 +1923,15 @@ void TreeUnwrapper::Visit(const verible::SyntaxTreeLeaf& leaf) {
   // Should be equivalent to AdvanceNextUnfilteredToken().
   AddTokenToCurrentUnwrappedLine();
 
+  // Make sure that newly extended unwrapped line has origin symbol
+  // FIXME: Pretty sure that this should be handled in an other way,
+  //    e.g. in common/formatting/tree_unwrapper.cc similary
+  //    to StartNewUnwrappedLine()
+  if (CurrentUnwrappedLine().Origin() == nullptr &&
+      CurrentUnwrappedLine().TokensRange().size() == 1) {
+    CurrentUnwrappedLine().SetOrigin(&leaf);
+  }
+
   // Look-ahead to any trailing comments that are associated with this leaf,
   // up to a newline.
   LookAheadBeyondCurrentLeaf();
