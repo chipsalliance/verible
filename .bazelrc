@@ -5,9 +5,9 @@ test --define="absl=1"
 # Cannot use 'common' because 'bazel version' fails with this.
 
 # Gather build version information
-build --workspace_status_command=bazel/build-version.sh
-run --workspace_status_command=bazel/build-version.sh
-test --workspace_status_command=bazel/build-version.sh
+build --workspace_status_command=bazel/build-version.py
+run --workspace_status_command=bazel/build-version.py
+test --workspace_status_command=bazel/build-version.py
 
 build --enable_platform_specific_config
 
