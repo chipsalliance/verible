@@ -42,6 +42,10 @@ verible-verilog-lint: usage: bazel-bin/verilog/tools/lint/verible-verilog-lint [
 
 
   Flags from verilog/tools/lint/verilog_lint.cc:
+    --autofix ([yes|no|interactive], autofix mode.); default: no;
+    --autofix_output_file (File to write a patch with autofixes to. If not set
+      autofixes are applied directly to the analyzed file. Relevant only when
+      --autofix option is enabled.); default: "";
     --check_syntax (If true, check for lexical and syntax errors, otherwise
       ignore.); default: true;
     --generate_markdown (If true, print the description of every rule formatted
@@ -363,4 +367,4 @@ Enabled by default: true
 
 ## Version
 
-Generated on 2021-05-19 13:27:53 -0700 from [ff866d8](https://github.com/google/verible/commit/ff866d835ef89138af6b7b24b69f151232472f44)
+Generated on 2021-05-20 11:57:56 +0200 from [a35c83f](https://github.com/google/verible/commit/a35c83f076e48e0340beda46309434c7bd35bb49)
