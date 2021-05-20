@@ -108,7 +108,8 @@ struct LintViolation {
   // the left-most leaf of the subtree.
   LintViolation(const Symbol& root, absl::string_view reason,
                 const SyntaxTreeContext& context,
-                const std::vector<AutoFix>& autofixes = {});
+                const std::vector<AutoFix>& autofixes = {},
+                const std::vector<TokenInfo>& tokens = {});
 
   // root is a reference into original ConcreteSyntaxTree that
   // linter was run against. LintViolations should not outlive this tree.
@@ -126,6 +127,9 @@ struct LintViolation {
   const SyntaxTreeContext context;
 
   const std::vector<AutoFix> autofixes;
+  // additional tokens that interact somehow with
+  // vulnerable token
+  const std::vector<TokenInfo> related_tokens;
 
   bool operator<(const LintViolation& r) const {
     // compares addresses of violations, which correspond to substring
@@ -238,6 +242,14 @@ class LintStatusFormatter {
                              const LintViolation& violation,
                              absl::string_view base, absl::string_view path,
                              absl::string_view rule_name) const;
+  // substitute the markers \@ with tokens location
+  // this allows us to create custom reason msg
+  // with different token location that are related to found
+  // vulnerable token
+  std::string ReplaceWithHelperTokens(const std::vector<TokenInfo>& tokens,
+                                      absl::string_view reason,
+                                      absl::string_view path,
+                                      absl::string_view base) const;
 
  private:
   // Translates byte offsets, which are supplied by LintViolations via

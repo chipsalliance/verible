@@ -74,12 +74,14 @@ static TokenInfo SymbolToToken(const Symbol& root) {
 
 LintViolation::LintViolation(const Symbol& root, absl::string_view reason,
                              const SyntaxTreeContext& context,
-                             const std::vector<AutoFix>& autofixes)
+                             const std::vector<AutoFix>& autofixes,
+                             const std::vector<TokenInfo>& tokens)
     : root(&root),
       token(SymbolToToken(root)),
       reason(reason),
       context(context),
-      autofixes(autofixes) {}
+      autofixes(autofixes),
+      related_tokens(tokens) {}
 
 void LintStatusFormatter::FormatLintRuleStatus(std::ostream* stream,
                                                const LintRuleStatus& status,
@@ -90,6 +92,30 @@ void LintStatusFormatter::FormatLintRuleStatus(std::ostream* stream,
                     status.lint_rule_name);
     (*stream) << std::endl;
   }
+}
+
+std::string LintStatusFormatter::ReplaceWithHelperTokens(
+    const std::vector<verible::TokenInfo>& tokens, absl::string_view reason,
+    absl::string_view path, absl::string_view base) const {
+  size_t end_pos = reason.find("\\@", 0), beg_pos = 0;
+  std::ostringstream s;
+  if (tokens.empty()) {
+    return reason.data();
+  }
+
+  for (const auto& token : tokens) {
+    if (end_pos == std::string_view::npos) {
+      s << reason.substr(beg_pos);
+      break;
+    }
+    s << reason.substr(beg_pos, end_pos - beg_pos);
+    s << path << ":";
+    s << line_column_map_.GetLineColAtOffset(base, token.left(base));
+    beg_pos = end_pos + 2;
+    end_pos = reason.find("\\@", beg_pos);
+  }
+
+  return s.str();
 }
 
 void LintStatusFormatter::FormatLintRuleStatuses(
@@ -136,7 +162,11 @@ void LintStatusFormatter::FormatViolation(std::ostream* stream,
       line_column_map_.GetLineColAtOffset(base, violation.token.right(base))};
 
   (*stream) << path << ':' << range << ' ' << violation.reason << ' ' << url
-            << " [" << rule_name << ']';
+            << ": "
+            << ReplaceWithHelperTokens(violation.related_tokens,
+                                       violation.reason, path, base)
+            << ' ' << url << " [" << rule_name << ']';
+
 }
 
 // Formats and outputs violation to a file stream in a syntax accepted by
