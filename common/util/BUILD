@@ -70,7 +70,7 @@ cc_library(
 # offers.
 # https://docs.bazel.build/versions/master/user-manual.html#workspace_status
 # to contain a proper git timestamp, bazel has to be invoked with
-#  bazel build --workspace_status_command=bazel/build-version.sh
+#  bazel build --workspace_status_command=bazel/build-version.py
 genrule(
     name = "version_header",
     outs = ["generated_verible_build_version.h"],

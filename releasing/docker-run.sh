@@ -100,7 +100,7 @@ RUN bazel --version
 ADD verible-$GIT_VERSION.tar.gz /src/verible
 WORKDIR /src/verible/verible-$GIT_VERSION
 
-RUN bazel build --workspace_status_command=bazel/build-version.sh $BAZEL_OPTS //...
+RUN bazel build --workspace_status_command=bazel/build-version.py $BAZEL_OPTS //...
 EOF
 
 (cd .. ; git archive --prefix verible-$GIT_VERSION/ --output releasing/$TARGET/verible-$GIT_VERSION.tar.gz HEAD)
