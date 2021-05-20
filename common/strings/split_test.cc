@@ -169,5 +169,58 @@ TEST(SplitLinesTest, NonBlankLinesUnterminated) {
               ElementsAre(IntPair(0, 3), IntPair(4, 6), IntPair(7, 8)));
 }
 
+static std::vector<IntPair> SplitLinesKeepLineTerminatorToOffsets(
+    absl::string_view text) {
+  std::vector<IntPair> offsets;
+  for (const auto& line : SplitLinesKeepLineTerminator(text)) {
+    offsets.push_back(SubstringOffsets(line, text));
+  }
+  return offsets;
+}
+
+TEST(SplitLinesKeepLineTerminatorTest, Empty) {
+  constexpr absl::string_view text("");
+  const auto lines = SplitLinesKeepLineTerminator(text);
+  EXPECT_TRUE(lines.empty());
+}
+
+TEST(SplitLinesKeepLineTerminatorTest, OneSpace) {
+  constexpr absl::string_view text(" ");
+  EXPECT_THAT(SplitLinesKeepLineTerminator(text), ElementsAre(" "));
+  EXPECT_THAT(SplitLinesKeepLineTerminatorToOffsets(text),
+              ElementsAre(IntPair(0, 1)));
+}
+
+TEST(SplitLinesKeepLineTerminatorTest, OneBlankLine) {
+  constexpr absl::string_view text("\n");
+  EXPECT_THAT(SplitLinesKeepLineTerminator(text), ElementsAre("\n"));
+  EXPECT_THAT(SplitLinesKeepLineTerminatorToOffsets(text),
+              ElementsAre(IntPair(0, 1)));
+}
+
+TEST(SplitLinesKeepLineTerminatorTest, BlankLines) {
+  constexpr absl::string_view text("\n\n\n");
+  EXPECT_THAT(SplitLinesKeepLineTerminator(text),
+              ElementsAre("\n", "\n", "\n"));
+  EXPECT_THAT(SplitLinesKeepLineTerminatorToOffsets(text),
+              ElementsAre(IntPair(0, 1), IntPair(1, 2), IntPair(2, 3)));
+}
+
+TEST(SplitLinesKeepLineTerminatorTest, NonBlankLines) {
+  constexpr absl::string_view text("a\nbc\ndef\n");
+  EXPECT_THAT(SplitLinesKeepLineTerminator(text),
+              ElementsAre("a\n", "bc\n", "def\n"));
+  EXPECT_THAT(SplitLinesKeepLineTerminatorToOffsets(text),
+              ElementsAre(IntPair(0, 2), IntPair(2, 5), IntPair(5, 9)));
+}
+
+TEST(SplitLinesKeepLineTerminatorTest, NonBlankLinesUnterminated) {
+  constexpr absl::string_view text("abc\nde\nf");  // no \n at the end
+  EXPECT_THAT(SplitLinesKeepLineTerminator(text),
+              ElementsAre("abc\n", "de\n", "f"));
+  EXPECT_THAT(SplitLinesKeepLineTerminatorToOffsets(text),
+              ElementsAre(IntPair(0, 4), IntPair(4, 7), IntPair(7, 8)));
+}
+
 }  // namespace
 }  // namespace verible

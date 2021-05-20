@@ -22,6 +22,7 @@
 #include <string>
 #include <vector>
 
+#include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
 #include "common/strings/line_column_map.h"
 #include "common/text/concrete_syntax_leaf.h"
@@ -33,6 +34,35 @@
 
 namespace verible {
 
+std::string AutoFix::Apply(const absl::string_view base) const {
+  std::string result;
+  auto prev_start = base.cbegin();
+  for (const auto& edit : edits) {
+    CHECK_LE(base.cbegin(), edit.fragment.cbegin());
+    CHECK_GE(base.cend(), edit.fragment.cend());
+
+    const absl::string_view text_before(
+        prev_start, std::distance(prev_start, edit.fragment.cbegin()));
+    absl::StrAppend(&result, text_before, edit.replacement);
+
+    prev_start = edit.fragment.cend();
+  }
+  const absl::string_view text_after(prev_start,
+                                     std::distance(prev_start, base.cend()));
+  return absl::StrCat(result, text_after);
+}
+
+bool AutoFix::AddEdits(const std::set<ReplacementEdit>& new_edits) {
+  // Check for conflicts
+  for (const auto& edit : new_edits) {
+    if (edits.find(edit) != edits.end()) {
+      return false;
+    }
+  }
+  edits.insert(new_edits.cbegin(), new_edits.cend());
+  return true;
+}
+
 static TokenInfo SymbolToToken(const Symbol& root) {
   const auto* leaf = GetLeftmostLeaf(root);
   if (leaf) {
@@ -43,11 +73,13 @@ static TokenInfo SymbolToToken(const Symbol& root) {
 }
 
 LintViolation::LintViolation(const Symbol& root, const std::string& reason,
-                             const SyntaxTreeContext& context)
+                             const SyntaxTreeContext& context,
+                             std::initializer_list<AutoFix> autofixes)
     : root(&root),
       token(SymbolToToken(root)),
       reason(reason),
-      context(context) {}
+      context(context),
+      autofixes(autofixes) {}
 
 void LintStatusFormatter::FormatLintRuleStatus(std::ostream* stream,
                                                const LintRuleStatus& status,
@@ -89,6 +121,9 @@ void LintStatusFormatter::FormatLintRuleStatuses(
   for (auto violation : violations) {
     FormatViolation(stream, *violation.violation, base, path,
                     violation.status->url, violation.status->lint_rule_name);
+    if (violation.violation->autofixes.size() > 0) {
+      *stream << " (autofix available)";
+    }
     *stream << std::endl;
     auto cursor = line_column_map_(violation.violation->token.left(base));
     if (cursor.line < static_cast<int>(lines.size())) {

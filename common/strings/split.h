@@ -115,6 +115,13 @@ std::function<absl::string_view()> MakeStringSpliterator(
 // line as a whole line.
 std::vector<absl::string_view> SplitLines(absl::string_view text);
 
+// Returns line-based view of original text. Keeps the trailing \n.
+// Lines in the returned vector include the trailing \n.
+// If original text did not terminate with a \n, interpret the final partial
+// line as a whole line.
+std::vector<absl::string_view> SplitLinesKeepLineTerminator(
+    absl::string_view text);
+
 }  // namespace verible
 
 #endif  // VERIBLE_COMMON_STRINGS_SPLIT_H_

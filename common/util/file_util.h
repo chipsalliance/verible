@@ -81,10 +81,6 @@ absl::Status CreateDir(absl::string_view dir);
 // TODO (after bump to c++17) rewrite this function to use std::filesystem
 absl::StatusOr<Directory> ListDir(absl::string_view dir);
 
-// Returns if this is likely a terminal session (tests if stdin filedescriptor
-// is a terminal).
-bool IsInteractiveTerminalSession();
-
 namespace testing {
 
 // Generate a random file name (no directory).  This does not create any file.

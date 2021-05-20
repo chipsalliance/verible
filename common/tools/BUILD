@@ -11,6 +11,7 @@ cc_binary(
     deps = [
         "//common/strings:patch",
         "//common/util:file_util",
+        "//common/util:user_interaction",
         "//common/util:init_command_line",
         "//common/util:subcommand",
         "@com_google_absl//absl/flags:usage",

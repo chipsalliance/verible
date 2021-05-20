@@ -30,6 +30,7 @@
 namespace verilog {
 namespace analysis {
 
+using verible::AutoFix;
 using verible::GetStyleGuideCitation;
 using verible::LintRuleStatus;
 using verible::LintViolation;
@@ -69,7 +70,8 @@ void ForbidConsecutiveNullStatementsRule::HandleLeaf(
 
       case State::kExpectNonSemicolon: {
         if (leaf.Tag().tag == ';') {
-          violations_.insert(LintViolation(leaf, kMessage, context));
+          violations_.insert(LintViolation(leaf, kMessage, context,
+                                           {AutoFix({leaf.get(), ""})}));
         } else {
           state_ = State::kNormal;
         }

@@ -18,6 +18,7 @@
 // Example usage:
 // verilog_lint files...
 
+#include <fstream>
 #include <iostream>
 #include <memory>
 #include <sstream>  // IWYU pragma: keep  // for ostringstream
@@ -28,10 +29,39 @@
 #include "absl/status/status.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
+#include "common/util/enum_flags.h"
+#include "common/util/file_util.h"
 #include "common/util/init_command_line.h"
 #include "common/util/logging.h"  // for operator<<, LOG, LogMessage, etc
 #include "verilog/analysis/verilog_linter.h"
 #include "verilog/analysis/verilog_linter_configuration.h"
+
+// Autofix mode
+//   kNo           disable autofixes
+//   kYes          apply all autofixes
+//   kInteractive  ask what to do on each violation with autofix available
+enum class AutofixMode { kNo, kYes, kInteractive };
+
+static const verible::EnumNameMap<AutofixMode> kAutofixModeEnumStringMap = {
+    {"no", AutofixMode::kNo},
+    {"yes", AutofixMode::kYes},
+    {"interactive", AutofixMode::kInteractive},
+};
+
+std::ostream& operator<<(std::ostream& stream, AutofixMode mode) {
+  return kAutofixModeEnumStringMap.Unparse(mode, stream);
+}
+
+std::string AbslUnparseFlag(const AutofixMode& mode) {
+  std::ostringstream stream;
+  kAutofixModeEnumStringMap.Unparse(mode, stream);
+  return stream.str();
+}
+
+bool AbslParseFlag(absl::string_view text, AutofixMode* mode,
+                   std::string* error) {
+  return kAutofixModeEnumStringMap.Parse(text, mode, error, "--autofix value");
+}
 
 // LINT.IfChange
 
@@ -54,9 +84,20 @@ ABSL_FLAG(bool, show_diagnostic_context, false,
           "prints an additional "
           "line on which the diagnostic was found,"
           "followed by a line with a position marker");
+
+ABSL_FLAG(AutofixMode, autofix, AutofixMode::kNo,
+          "[yes|no|interactive], autofix mode.");
+ABSL_FLAG(std::string, autofix_output_file, "",
+          "File to write a patch with autofixes to. If not set autofixes are "
+          "applied directly to the analyzed file. Relevant only when "
+          "--autofix option is enabled.");
+
 // LINT.ThenChange(README.md)
 
 using verilog::LinterConfiguration;
+
+// LintOneFile returns 0, 1, or 2
+static const int kAutofixErrorExitStatus = 3;
 
 int main(int argc, char** argv) {
   const auto usage =
@@ -77,6 +118,42 @@ int main(int argc, char** argv) {
   }
 
   int exit_status = 0;
+
+  AutofixMode autofix_mode = absl::GetFlag(FLAGS_autofix);
+  const std::string autofix_output_file =
+      absl::GetFlag(FLAGS_autofix_output_file);
+
+  std::unique_ptr<std::ostream> autofix_output_stream;
+  if (autofix_mode != AutofixMode::kNo && !autofix_output_file.empty()) {
+    autofix_output_stream.reset(new std::ofstream(autofix_output_file));
+    if (!autofix_output_stream->good()) {
+      LOG(ERROR) << "Failed to create/open output patch file: "
+                 << autofix_output_file;
+      LOG(WARNING) << "Disabling autofixing.";
+      autofix_output_stream.reset();
+      autofix_mode = AutofixMode::kNo;
+      exit_status = kAutofixErrorExitStatus;
+    }
+  }
+
+  std::unique_ptr<verilog::ViolationHandler> violation_handler;
+  switch (autofix_mode) {
+    case AutofixMode::kNo:
+      violation_handler.reset(new verilog::ViolationPrinter(&std::cout));
+      break;
+    case AutofixMode::kYes:
+      violation_handler.reset(new verilog::ViolationFixer(
+          &std::cout, autofix_output_stream.get(),
+          [](const verible::LintViolation&, absl::string_view) {
+            return verilog::ViolationFixer::AnswerChoice::kApplyAll;
+          }));
+      break;
+    case AutofixMode::kInteractive:
+      violation_handler.reset(
+          new verilog::ViolationFixer(&std::cout, autofix_output_stream.get()));
+      break;
+  }
+
   // All positional arguments are file names.  Exclude program name.
   for (const auto filename :
        verible::make_range(args.begin() + 1, args.end())) {
@@ -85,7 +162,7 @@ int main(int argc, char** argv) {
         verilog::LinterConfigurationFromFlags(filename));
 
     const int lint_status = verilog::LintOneFile(
-        &std::cout, filename, config,  //
+        &std::cout, filename, config, violation_handler.get(),
         absl::GetFlag(FLAGS_check_syntax), absl::GetFlag(FLAGS_parse_fatal),
         absl::GetFlag(FLAGS_lint_fatal),
         absl::GetFlag(FLAGS_show_diagnostic_context));

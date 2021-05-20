@@ -24,6 +24,7 @@
 #include "common/util/file_util.h"
 #include "common/util/init_command_line.h"
 #include "common/util/subcommand.h"
+#include "common/util/user_interaction.h"
 
 using verible::SubcommandArgsRange;
 using verible::SubcommandEntry;
@@ -93,7 +94,7 @@ static absl::Status StdinTest(const SubcommandArgsRange& args,
   for (; file_count < kOpenLimit; ++file_count) {
     outs << "==== file " << file_count << " ====" << std::endl;
     while (ins) {
-      if (verible::file::IsInteractiveTerminalSession()) outs << "enter text: ";
+      if (verible::IsInteractiveTerminalSession()) outs << "enter text: ";
       std::getline(ins, line);
       outs << "echo: " << line << std::endl;
     }
