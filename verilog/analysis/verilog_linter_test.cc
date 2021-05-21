@@ -414,11 +414,16 @@ TEST_F(VerilogLinterTest, MultiByteUTF8CharactersAreOnlyCountedOnce) {
 }
 
 TEST(VerilogLinterDocumentationTest, ParseCustomCitations) {
+#ifdef __WIN32
+#define NEWLINE "\r\n"
+#elif __linux__
+#define NEWLINE "\n"
+#endif
   absl::string_view citations_raw =
-      "struct-union-name-style:one line citation is ok\n"
-      "signal-name-style:multi line citation\\\n"
-      "is also\\\n"
-      "correct\n";
+      "struct-union-name-style:one line citation is ok" NEWLINE
+      "signal-name-style:multi line citation\\" NEWLINE "is also\\" NEWLINE
+      "correct" NEWLINE "stripping-left :the spaces" NEWLINE
+      "stripping-right: the spaces" NEWLINE;
 
   auto citations = verilog::ParseCitations(citations_raw);
   ASSERT_TRUE(!citations.empty());
@@ -426,6 +431,8 @@ TEST(VerilogLinterDocumentationTest, ParseCustomCitations) {
                                 "one line citation is ok"));
   EXPECT_TRUE(
       absl::StrContains(citations["signal-name-style"], "\nis also\ncorrect"));
+  EXPECT_TRUE(absl::StrContains(citations["stripping-left"], "the spaces"));
+  EXPECT_TRUE(citations["stripping-right"] == "the spaces");
 }
 
 TEST(VerilogLinterDocumentationTest, AllRulesHelpDescriptions) {

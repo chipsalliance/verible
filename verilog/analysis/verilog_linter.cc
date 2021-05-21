@@ -525,32 +525,41 @@ absl::Status PrintRuleInfo(std::ostream* os,
   return absl::OkStatus();
 }
 
-static void AppendCitation(CustomCitationMap& citations,
-                           const absl::string_view& rule_raw) {
-  const size_t eq_pos = rule_raw.find(':');
-  if (!eq_pos || eq_pos == absl::string_view::npos) return;
-  const size_t rule_id_end = eq_pos;
-  const size_t rule_citation_beg = eq_pos + 1;
+static void AppendCitation(const absl::string_view& rule_raw,
+                           CustomCitationMap& citations) {
+  const size_t colon_pos = rule_raw.find(':');
+  if (!colon_pos || colon_pos == absl::string_view::npos) return;
+  const size_t rule_id_end = colon_pos;
+  const size_t rule_citation_beg = colon_pos + 1;
   absl::string_view rule_id = rule_raw.substr(0, rule_id_end);
   absl::string_view citation =
       rule_raw.substr(rule_citation_beg, rule_raw.size() - rule_citation_beg);
+  rule_id = absl::StripAsciiWhitespace(rule_id);
+  citation = absl::StripAsciiWhitespace(citation);
 
   citations[rule_id] = absl::StrReplaceAll(citation, {{"\\\n", "\n"}});
 }
 
-CustomCitationMap ParseCitations(absl::string_view text) {
+CustomCitationMap ParseCitations(absl::string_view content) {
+#ifdef __WIN32
+  const char* newline = "\r\n";
+  constexpr size_t step = 2;
+#elif __linux__
+  const char* newline = "\n";
+  constexpr size_t step = 1;
+#endif
   CustomCitationMap citations;
   size_t rule_begin = 0;
-  size_t rule_end = text.find('\n');
+  size_t rule_end = content.find(newline);
   while (rule_end != std::string::npos) {
-    if (!rule_end || text[rule_end - 1] == '\\') {
-      rule_end = text.find('\n', rule_end + 1);
+    if (rule_end == 0 || content[rule_end - 1] == '\\') {
+      rule_end = content.find(newline, rule_end + step);
       continue;
     }
-    auto rule_subs = text.substr(rule_begin, rule_end - rule_begin);
-    AppendCitation(citations, rule_subs);
-    rule_begin = rule_end + 1;
-    rule_end = text.find('\n', rule_begin);
+    auto rule_subs = content.substr(rule_begin, rule_end - rule_begin);
+    AppendCitation(rule_subs, citations);
+    rule_begin = rule_end + step;
+    rule_end = content.find(newline, rule_begin);
   }
   return citations;
 }
@@ -560,16 +569,13 @@ void GetLintRuleDescriptionsHelpFlag(std::ostream* os,
                                      const CustomCitationMap& citations) {
   // Set up the map.
   auto rule_map = analysis::GetAllRuleDescriptionsHelpFlag();
-  if (!citations.empty()) {
-    for (const auto& [rule_id, citation] : citations) {
-      auto rule = rule_map.find(rule_id);
-      if (rule != rule_map.end()) {
-        // we can move here, cause process
-        // exits after this function
-        rule->second.description = std::move(citation);
-      }
+  for (const auto& [rule_id, citation] : citations) {
+    auto rule = rule_map.find(rule_id);
+    if (rule != rule_map.end()) {
+      rule->second.description = citation;
     }
   }
+
   for (const auto& rule_id : analysis::kDefaultRuleSet) {
     rule_map[rule_id].default_enabled = true;
   }
@@ -597,14 +603,10 @@ void GetLintRuleDescriptionsMarkdown(std::ostream* os,
     rule_map[rule_id].default_enabled = true;
   }
 
-  if (!citations.empty()) {
-    for (const auto& [rule_id, citation] : citations) {
-      auto rule = rule_map.find(rule_id);
-      if (rule != rule_map.end()) {
-        // we can move here, cause process
-        // exits after this function
-        rule->second.description = std::move(citation);
-      }
+  for (const auto& [rule_id, citation] : citations) {
+    auto rule = rule_map.find(rule_id);
+    if (rule != rule_map.end()) {
+      rule->second.description = citation;
     }
   }
 

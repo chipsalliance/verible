@@ -259,7 +259,7 @@ void GetLintRuleDescriptionsHelpFlag(std::ostream*, absl::string_view,
 void GetLintRuleDescriptionsMarkdown(std::ostream*, const CustomCitationMap&);
 
 // Parse the file with custom citations
-CustomCitationMap ParseCitations(absl::string_view);
+CustomCitationMap ParseCitations(absl::string_view content);
 
 }  // namespace verilog
 
