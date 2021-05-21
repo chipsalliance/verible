@@ -94,7 +94,7 @@ void RunLintStatusTest(const LintStatusTest& test) {
   status.lint_rule_name = test.rule_name;
   for (const auto& violation_test : test.violations) {
     status.violations.insert(LintViolation(violation_test.token,
-                                           violation_test.reason,
+                                           violation_test.reason, {},
                                            violation_test.related_tokens));
   }
 

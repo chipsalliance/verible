@@ -120,7 +120,7 @@ void InstanceShadowRule::HandleSymbol(const verible::Symbol& symbol,
           ss << "Symbol `" << overlappingLabel.get().text()
              << "` is shadowing symbol `" << label.get().text()
              << "` defined at \\@";
-          violations_.insert(LintViolation(symbol, ss.str(), context,
+          violations_.insert(LintViolation(symbol, ss.str(), context, {},
                                            {overlappingLabel.get()}));
           return;
         }

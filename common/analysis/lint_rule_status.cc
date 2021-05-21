@@ -166,7 +166,6 @@ void LintStatusFormatter::FormatViolation(std::ostream* stream,
             << ReplaceWithHelperTokens(violation.related_tokens,
                                        violation.reason, path, base)
             << ' ' << url << " [" << rule_name << ']';
-
 }
 
 // Formats and outputs violation to a file stream in a syntax accepted by
