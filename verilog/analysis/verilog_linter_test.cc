@@ -941,6 +941,7 @@ TEST_F(ViolationFixerTest, PrintAppliedFixes) {
           "  wire a;   \n"
           "endmodule\n",
       });
+}
 
 TEST(VerilogLinterDocumentationTest, AllRulesMarkdownWithCustomCitations) {
   std::ostringstream stream;
