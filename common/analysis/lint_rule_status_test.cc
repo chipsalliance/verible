@@ -71,6 +71,7 @@ struct LintViolationTest {
   std::string reason;
   TokenInfo token;
   std::string expected_output;
+  std::vector<TokenInfo> related_tokens;
 };
 
 // Struct for checking expected formatting of a LintRuleStatus
@@ -92,8 +93,9 @@ void RunLintStatusTest(const LintStatusTest& test) {
   status.url = test.url;
   status.lint_rule_name = test.rule_name;
   for (const auto& violation_test : test.violations) {
-    status.violations.insert(
-        LintViolation(violation_test.token, violation_test.reason));
+    status.violations.insert(LintViolation(violation_test.token,
+                                           violation_test.reason,
+                                           violation_test.related_tokens));
   }
 
   std::ostringstream ss;
@@ -127,6 +129,42 @@ TEST(LintRuleStatusFormatterTest, SimpleOutput) {
        {"reason2", TokenInfo(dont_care_tag, text.substr(21, 4)),
         "some/path/to/somewhere.fvg:2:4-7: reason2 http://foobar "
         "[test-rule]"}}};
+
+  RunLintStatusTest(test);
+}
+
+TEST(LintRuleStatusFormatterTest, HelperTokensReplacmentWithTokensLocation) {
+  SymbolPtr root = Node();
+  static const int dont_care_tag = 0;
+  constexpr absl::string_view text(
+      "This is some code\n"
+      "That you are looking at right now\n"
+      "It is nice code, make no mistake\n"
+      "Very nice");
+  LintStatusTest test = {
+      "test-rule",
+      "http://foobar",
+      "some/path/to/somewhere.fvg",
+      text,
+      {{"reason1 \\@",
+        TokenInfo(dont_care_tag, text.substr(0, 5)),
+        "some/path/to/somewhere.fvg:1:1: reason1 \\@ http://foobar [test-rule]",
+        {}},
+       {"reason2",
+        TokenInfo(dont_care_tag, text.substr(6, 2)),
+        "some/path/to/somewhere.fvg:1:7: reason2 http://foobar [test-rule]",
+        {TokenInfo(dont_care_tag, text.substr(0, 5))}},
+       {"reason3 \\@",
+        TokenInfo(dont_care_tag, text.substr(8, 2)),
+        "some/path/to/somewhere.fvg:1:9: reason3 "
+        "some/path/to/somewhere.fvg:1:1 http://foobar [test-rule]",
+        {TokenInfo(dont_care_tag, text.substr(0, 5))}},
+       {"\\@ reason4 \\@",
+        TokenInfo(dont_care_tag, text.substr(21, 4)),
+        "some/path/to/somewhere.fvg:2:4: some/path/to/somewhere.fvg:1:10 "
+        "reason4 some/path/to/somewhere.fvg:2:4 http://foobar [test-rule]",
+        {TokenInfo(dont_care_tag, text.substr(9, 4)),
+         TokenInfo(dont_care_tag, text.substr(21, 4))}}}};
 
   RunLintStatusTest(test);
 }

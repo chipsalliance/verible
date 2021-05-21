@@ -95,6 +95,16 @@ struct LintViolation {
                 const std::vector<AutoFix>& autofixes = {})
       : token(token), reason(reason), context(), autofixes(autofixes) {}
 
+  // This construct records a token stream lint violation.
+  // with additional tokens that might be related somehow with vulnerable token
+  LintViolation(const TokenInfo& token, const std::string& reason,
+                const std::vector<TokenInfo>& tokens)
+      : root(nullptr),
+        token(token),
+        reason(reason),
+        context(),
+        related_tokens(tokens) {}
+
   // This construct records a syntax tree lint violation.
   // Use this variation when the violation can be localized to a single token.
   LintViolation(const TokenInfo& token, absl::string_view reason,
@@ -127,7 +137,9 @@ struct LintViolation {
   const SyntaxTreeContext context;
 
   const std::vector<AutoFix> autofixes;
+
   // additional tokens that interact somehow with
+  // Additional tokens that are related somehow to
   // vulnerable token
   const std::vector<TokenInfo> related_tokens;
 
@@ -242,7 +254,7 @@ class LintStatusFormatter {
                              const LintViolation& violation,
                              absl::string_view base, absl::string_view path,
                              absl::string_view rule_name) const;
-  // substitute the markers \@ with tokens location
+  // Substitute the markers \@ with tokens location
   // this allows us to create custom reason msg
   // with different token location that are related to found
   // vulnerable token

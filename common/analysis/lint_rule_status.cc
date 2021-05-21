@@ -97,12 +97,12 @@ void LintStatusFormatter::FormatLintRuleStatus(std::ostream* stream,
 std::string LintStatusFormatter::ReplaceWithHelperTokens(
     const std::vector<verible::TokenInfo>& tokens, absl::string_view reason,
     absl::string_view path, absl::string_view base) const {
-  size_t end_pos = reason.find("\\@", 0), beg_pos = 0;
-  std::ostringstream s;
   if (tokens.empty()) {
-    return reason.data();
+    return std::string(reason);
   }
 
+  size_t end_pos = reason.find("\\@", 0), beg_pos = 0;
+  std::ostringstream s;
   for (const auto& token : tokens) {
     if (end_pos == std::string_view::npos) {
       s << reason.substr(beg_pos);
