@@ -23,6 +23,7 @@
 #include <vector>
 
 #include "absl/strings/str_cat.h"
+#include "absl/strings/str_replace.h"
 #include "absl/strings/string_view.h"
 #include "common/strings/line_column_map.h"
 #include "common/text/concrete_syntax_leaf.h"
@@ -101,21 +102,26 @@ std::string LintStatusFormatter::ReplaceWithHelperTokens(
     return std::string(reason);
   }
 
-  size_t end_pos = reason.find("\\@", 0), beg_pos = 0;
+  size_t end_pos = reason.find("@", 0), beg_pos = 0;
   std::ostringstream s;
   for (const auto& token : tokens) {
     if (end_pos == std::string_view::npos) {
       s << reason.substr(beg_pos);
       break;
     }
-    s << reason.substr(beg_pos, end_pos - beg_pos);
-    s << path << ":";
-    s << line_column_map_.GetLineColAtOffset(base, token.left(base));
-    beg_pos = end_pos + 2;
-    end_pos = reason.find("\\@", beg_pos);
+    if (!(end_pos != 0 && reason[end_pos - 1] == '\\')) {
+      s << reason.substr(beg_pos, end_pos - beg_pos);
+      s << path << ":";
+      s << line_column_map_.GetLineColAtOffset(base, token.left(base));
+    } else {
+      s << reason.substr(beg_pos, end_pos - beg_pos + 1);
+    }
+
+    beg_pos = end_pos + 1;
+    end_pos = reason.find("@", beg_pos);
   }
 
-  return s.str();
+  return absl::StrReplaceAll(s.str(), {{"\\@", "@"}});
 }
 
 void LintStatusFormatter::FormatLintRuleStatuses(

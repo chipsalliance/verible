@@ -146,9 +146,9 @@ TEST(LintRuleStatusFormatterTest, HelperTokensReplacmentWithTokensLocation) {
       "http://foobar",
       "some/path/to/somewhere.fvg",
       text,
-      {{"reason1 \\@",
+      {{"reason1 @",
         TokenInfo(dont_care_tag, text.substr(0, 5)),
-        "some/path/to/somewhere.fvg:1:1: reason1 \\@ http://foobar [test-rule]",
+        "some/path/to/somewhere.fvg:1:1: reason1 @ http://foobar [test-rule]",
         {}},
        {"reason2",
         TokenInfo(dont_care_tag, text.substr(6, 2)),
@@ -156,13 +156,17 @@ TEST(LintRuleStatusFormatterTest, HelperTokensReplacmentWithTokensLocation) {
         {TokenInfo(dont_care_tag, text.substr(0, 5))}},
        {"reason3 \\@",
         TokenInfo(dont_care_tag, text.substr(8, 2)),
-        "some/path/to/somewhere.fvg:1:9: reason3 "
+        "some/path/to/somewhere.fvg:1:9: reason3 @ http://foobar [test-rule]",
+        {TokenInfo(dont_care_tag, text.substr(0, 5))}},
+       {"reason4 @",
+        TokenInfo(dont_care_tag, text.substr(15, 4)),
+        "some/path/to/somewhere.fvg:1:16: reason4 "
         "some/path/to/somewhere.fvg:1:1 http://foobar [test-rule]",
         {TokenInfo(dont_care_tag, text.substr(0, 5))}},
-       {"\\@ reason4 \\@",
+       {"@ reason5 @",
         TokenInfo(dont_care_tag, text.substr(21, 4)),
         "some/path/to/somewhere.fvg:2:4: some/path/to/somewhere.fvg:1:10 "
-        "reason4 some/path/to/somewhere.fvg:2:4 http://foobar [test-rule]",
+        "reason5 some/path/to/somewhere.fvg:2:4 http://foobar [test-rule]",
         {TokenInfo(dont_care_tag, text.substr(9, 4)),
          TokenInfo(dont_care_tag, text.substr(21, 4))}}}};
 
