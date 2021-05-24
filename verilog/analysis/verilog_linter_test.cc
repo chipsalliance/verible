@@ -413,17 +413,12 @@ TEST_F(VerilogLinterTest, MultiByteUTF8CharactersAreOnlyCountedOnce) {
   EXPECT_EQ(diagnostics.second, "");
 }
 
-TEST(VerilogLinterDocumentationTest, ParseCustomCitations) {
-#ifdef __WIN32
-#define NEWLINE "\r\n"
-#elif __linux__
-#define NEWLINE "\n"
-#endif
+TEST(VerilogLinterDocumentationTest, ParseCustomCitationsLinuxNewlineStyle) {
   absl::string_view citations_raw =
-      "struct-union-name-style:one line citation is ok" NEWLINE
-      "signal-name-style:multi line citation\\" NEWLINE "is also\\" NEWLINE
-      "correct" NEWLINE "stripping-left :the spaces" NEWLINE
-      "stripping-right: the spaces" NEWLINE;
+      "struct-union-name-style:one line citation is ok \n"
+      "signal-name-style:multi line citation\\\nis also\\\n"
+      "correct\nstripping-left :the spaces\n"
+      "stripping-right: the spaces\n";
 
   auto citations = verilog::ParseCitations(citations_raw);
   ASSERT_TRUE(!citations.empty());
@@ -431,7 +426,24 @@ TEST(VerilogLinterDocumentationTest, ParseCustomCitations) {
                                 "one line citation is ok"));
   EXPECT_TRUE(
       absl::StrContains(citations["signal-name-style"], "\nis also\ncorrect"));
-  EXPECT_TRUE(absl::StrContains(citations["stripping-left"], "the spaces"));
+  EXPECT_TRUE(citations["stripping-left"] == "the spaces");
+  EXPECT_TRUE(citations["stripping-right"] == "the spaces");
+}
+
+TEST(VerilogLinterDocumentationTest, ParseCustomCitationsWindowsNewlineStyle) {
+  absl::string_view citations_raw =
+      "struct-union-name-style:one line citation is ok \r\n"
+      "signal-name-style:multi line citation\\\r\nis also\\\r\n"
+      "correct\r\nstripping-left :the spaces\r\n"
+      "stripping-right: the spaces\r\n";
+
+  auto citations = verilog::ParseCitations(citations_raw);
+  ASSERT_TRUE(!citations.empty());
+  EXPECT_TRUE(absl::StrContains(citations["struct-union-name-style"],
+                                "one line citation is ok"));
+  EXPECT_TRUE(absl::StrContains(citations["signal-name-style"],
+                                "\r\nis also\r\ncorrect"));
+  EXPECT_TRUE(citations["stripping-left"] == "the spaces");
   EXPECT_TRUE(citations["stripping-right"] == "the spaces");
 }
 

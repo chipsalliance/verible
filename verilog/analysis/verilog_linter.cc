@@ -537,29 +537,32 @@ static void AppendCitation(const absl::string_view& rule_raw,
   rule_id = absl::StripAsciiWhitespace(rule_id);
   citation = absl::StripAsciiWhitespace(citation);
 
-  citations[rule_id] = absl::StrReplaceAll(citation, {{"\\\n", "\n"}});
+  citations[rule_id] =
+      absl::StrReplaceAll(citation, {{"\\\r\n", "\r\n"}, {"\\\n", "\n"}});
 }
 
 CustomCitationMap ParseCitations(absl::string_view content) {
-#ifdef __WIN32
-  const char* newline = "\r\n";
-  constexpr size_t step = 2;
-#elif __linux__
-  const char* newline = "\n";
-  constexpr size_t step = 1;
-#endif
   CustomCitationMap citations;
   size_t rule_begin = 0;
-  size_t rule_end = content.find(newline);
+  size_t rule_end = content.find("\n");
   while (rule_end != std::string::npos) {
+    // check unix like escape seq
     if (rule_end == 0 || content[rule_end - 1] == '\\') {
-      rule_end = content.find(newline, rule_end + step);
+      rule_end = content.find("\n", rule_end + 1);
       continue;
     }
+    // check windows like escape seq
+    if (rule_end == 1 ||
+        (content[rule_end - 2] == '\\' && content[rule_end - 1] == '\r')) {
+      rule_end = content.find("\n", rule_end + 1);
+      continue;
+    }
+
     auto rule_subs = content.substr(rule_begin, rule_end - rule_begin);
     AppendCitation(rule_subs, citations);
-    rule_begin = rule_end + step;
-    rule_end = content.find(newline, rule_begin);
+    rule_begin = rule_end + 1;
+
+    rule_end = content.find("\n", rule_begin);
   }
   return citations;
 }
