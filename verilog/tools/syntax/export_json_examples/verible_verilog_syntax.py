@@ -17,7 +17,7 @@ import collections
 import json
 import re
 import subprocess
-from typing import Any, Callable, Dict, Iterable, List, Optional, Union
+from typing import Any, Callable, Dict, Iterable, List, Optional, Sequence, Union
 
 import anytree
 import dataclasses
@@ -374,7 +374,10 @@ class VeribleVerilogSyntax:
     executable: path to ``verible-verilog-syntax`` binary.
   """
 
-  def __init__(self, executable: str = "verible-verilog-syntax"):
+  def __init__(self, executable: Union[str, List[str]] = "verible-verilog-syntax"):
+    if isinstance(executable, str):
+      executable = [executable]
+
     self.executable = executable
 
   @staticmethod
@@ -436,7 +439,7 @@ class VeribleVerilogSyntax:
     if options["gen_rawtokens"]:
       args.append("-printrawtokens")
 
-    proc = subprocess.run([self.executable, *args , *paths],
+    proc = subprocess.run([*self.executable, *args , *paths],
         stdout=subprocess.PIPE,
         input=input_,
         encoding="utf-8",
