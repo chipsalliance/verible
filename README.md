@@ -4,7 +4,7 @@
 # Verible
 
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
-[![Continuous Integration](../../workflows/verible-ci/badge.svg)](../../actions/workflows/verible-ci.yml)
+[![Continuous Integration](https://github.com/google/verible/workflows/verible-ci/badge.svg)](https://github.com/google/verible/actions/workflows/verible-ci.yml)
 
 <!--*
 freshness: { owner: 'fangism' reviewed: '2020-10-08' }

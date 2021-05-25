@@ -301,4 +301,4 @@ Enabled by default: true
 
 ## Version
 
-Generated on 2021-05-25 15:27:37 +0200 from [f804061](https://github.com/google/verible/commit/f8040612ad388bf248d31618b16912fc936c9398)
+Generated on 2021-05-25 22:14:57 +0200 from [7087267](https://github.com/google/verible/commit/70872676a3ec7a7fbaefacead376392e39ad4b3e)
