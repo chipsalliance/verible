@@ -656,6 +656,8 @@ void TreeUnwrapper::SetIndentationsAndCreatePartitions(
                       NodeEnum::kRandomizeFunctionCall}) ||
                  (Context().DirectParentsAre(
                      {NodeEnum::kParenGroup, NodeEnum::kFunctionCall})) ||
+                 (Context().DirectParentsAre(
+                     {NodeEnum::kParenGroup, NodeEnum::kClassNew})) ||
                  Context().DirectParentsAre(
                      {NodeEnum::kParenGroup,
                       NodeEnum::kRandomizeMethodCallExtension}) ||
