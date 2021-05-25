@@ -1425,6 +1425,9 @@ TEST_F(ReshapeFittingSubpartitionsTest, NoneOneFits) {
   UnwrappedLine all(0, header.TokensRange().begin());
   all.SpanUpToToken(arg5.TokensRange().end());
 
+  verible::BasicFormatStyle style;  // default
+  style.column_limit = 2;
+
   using tree_type = TokenPartitionTree;
   tree_type tree{
       all,
@@ -1439,6 +1442,11 @@ TEST_F(ReshapeFittingSubpartitionsTest, NoneOneFits) {
       },
   };
 
+  tree.Children()[1].ApplyPreOrder([&style](TokenPartitionTree& node) {
+    auto& uwline = node.Value();
+    uwline.SetIndentationSpaces(style.wrap_spaces);
+  });
+
   const tree_type tree_expected{
       all,
       tree_type{header, tree_type{header}},
@@ -1449,8 +1457,6 @@ TEST_F(ReshapeFittingSubpartitionsTest, NoneOneFits) {
       tree_type{arg5, tree_type{arg5}},
   };
 
-  verible::BasicFormatStyle style;  // default
-  style.column_limit = 2;
   ReshapeFittingSubpartitions(&tree, style);
 
   const auto diff = DeepEqual(tree, tree_expected, TokenRangeEqual);
@@ -1707,6 +1713,14 @@ TEST_F(ReshapeFittingSubpartitionsFunctionTest,
       },
   };
 
+  verible::BasicFormatStyle style;
+  style.column_limit = 20;
+
+  tree.Children()[1].ApplyPreOrder([&style](TokenPartitionTree& node) {
+    auto& uwline = node.Value();
+    uwline.SetIndentationSpaces(style.wrap_spaces);
+  });
+
   // Expect each subpartition in its own partition...
   const tree_type tree_expected{
       all,
@@ -1719,8 +1733,6 @@ TEST_F(ReshapeFittingSubpartitionsFunctionTest,
       tree_type{arg6, tree_type{arg6}},
   };
 
-  verible::BasicFormatStyle style;
-  style.column_limit = 20;
   ReshapeFittingSubpartitions(&tree, style);
 
   const auto diff = DeepEqual(tree, tree_expected, TokenRangeEqual);
@@ -1781,6 +1793,14 @@ TEST_F(ReshapeFittingSubpartitionsFunctionTest,
       },
   };
 
+  verible::BasicFormatStyle style;
+  style.column_limit = 40;
+
+  tree.Children()[1].ApplyPreOrder([&style](TokenPartitionTree& node) {
+    auto& uwline = node.Value();
+    uwline.SetIndentationSpaces(style.wrap_spaces);
+  });
+
   UnwrappedLine group1(0, begin);
   group1.SpanUpToToken(header.TokensRange().end());
   UnwrappedLine group2(0, arg1.TokensRange().begin());
@@ -1811,8 +1831,6 @@ TEST_F(ReshapeFittingSubpartitionsFunctionTest,
                                     tree_type{arg6},
                                 }};
 
-  verible::BasicFormatStyle style;
-  style.column_limit = 40;
   ReshapeFittingSubpartitions(&tree, style);
 
   const auto diff = DeepEqual(tree, tree_expected, TokenRangeEqual);
