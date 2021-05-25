@@ -24,6 +24,7 @@
 #include "json/json.h"
 #include "verilog/CST/verilog_nonterminals.h"  // for NodeEnumToString
 #include "verilog/parser/verilog_token.h"
+#include "verilog/parser/verilog_token_classifications.h"
 
 namespace verilog {
 
@@ -57,7 +58,17 @@ VerilogTreeToJsonConverter::VerilogTreeToJsonConverter(absl::string_view base)
       value_(&json_) {}
 
 void VerilogTreeToJsonConverter::Visit(const verible::SyntaxTreeLeaf& leaf) {
-  *value_ = verible::ToJson(leaf.get(), context_);
+  const verilog_tokentype tokentype =
+      static_cast<verilog_tokentype>(leaf.Tag().tag);
+  absl::string_view type_str = TokenTypeToString(tokentype);
+  // Don't include token's text for operators, keywords, or anything that is a
+  // part of Verilog syntax. For such types, TokenTypeToString() is equal to
+  // token's text. Exception has to be made for identifiers, because things like
+  // "PP_Identifier" or "SymbolIdentifier" (which are values returned by
+  // TokenTypeToString()) could be used as Verilog identifier.
+  const bool include_text =
+      verilog::IsIdentifierLike(tokentype) || (leaf.get().text() != type_str);
+  *value_ = verible::ToJson(leaf.get(), context_, include_text);
 }
 
 void VerilogTreeToJsonConverter::Visit(const verible::SyntaxTreeNode& node) {

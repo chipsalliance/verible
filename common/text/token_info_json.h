@@ -22,7 +22,8 @@ namespace verible {
 
 // Returns JSON representation of TokenInfo
 Json::Value ToJson(const TokenInfo& token_info,
-                   const TokenInfo::Context& context);
+                   const TokenInfo::Context& context,
+                   bool include_text = false);
 
 }  // namespace verible
 

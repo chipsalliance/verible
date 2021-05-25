@@ -22,13 +22,18 @@
 namespace verible {
 
 Json::Value ToJson(const TokenInfo& token_info,
-                   const TokenInfo::Context& context) {
+                   const TokenInfo::Context& context, bool include_text) {
   Json::Value json(Json::objectValue);
   std::ostringstream stream;
   context.token_enum_translator(stream, token_info.token_enum());
   json["start"] = token_info.left(context.base);
   json["end"] = token_info.right(context.base);
   json["tag"] = stream.str();
+
+  if (include_text) {
+    json["text"] = std::string(token_info.text());
+  }
+
   return json;
 }
 
