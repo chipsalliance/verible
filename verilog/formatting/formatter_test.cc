@@ -9218,6 +9218,19 @@ static constexpr FormatterTestCase kFormatterTestCasesElseStatements[] = {
      "    value = function_name(8'hA, foobar);\n"
      "  end\n"
      "endmodule : foo\n"},
+    {"module foo ();\n"
+     "always_comb begin\n"
+     "value = function_name(8'hA, foobar, signal_1234);\n"
+     "value = function_name(8'hA, foobar, signal_1234); end\n"
+     "endmodule : foo\n",
+     "module foo ();\n"
+     "  always_comb begin\n"
+     "    value = function_name(8'hA, foobar,\n"
+     "                          signal_1234);\n"
+     "    value = function_name(8'hA, foobar,\n"
+     "                          signal_1234);\n"
+     "  end\n"
+     "endmodule : foo\n"},
     {"always_comb begin\n"
      "value = "
      "f(long_parameter_exceeding_col_limit, foo, bar); end\n",
@@ -9258,6 +9271,20 @@ static constexpr FormatterTestCase kFormatterTestCasesElseStatements[] = {
      "    );\n"
      "  end\n"
      "endmodule : foo\n"},
+    {"class dv_base_mem; function void configure(); \nbegin\n"
+     "value = func(8'hA, foobar, signal_1234);\n"
+     "value = new(8'hA, foobar, signal_1234); end\n"
+     "endfunction : configure endclass\n",
+     "class dv_base_mem;\n"
+     "  function void configure();\n"
+     "    begin\n"
+     "      value = func(8'hA, foobar,\n"
+     "                   signal_1234);\n"
+     "      value = new(8'hA, foobar,\n"
+     "                  signal_1234);\n"
+     "    end\n"
+     "  endfunction : configure\n"
+     "endclass\n"},
     {"module m; initial begin\n"
      "        if     (a||b)        c         = 1'b1;\n"
      "d =        1'b1; if         (e)\n"

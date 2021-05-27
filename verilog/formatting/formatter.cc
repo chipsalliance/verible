@@ -398,8 +398,13 @@ static void DeterminePartitionExpansion(
     }
 
     case PartitionPolicyEnum::kFitOnLineElseExpand: {
-      if (uwline.Origin() && uwline.Origin()->Tag().tag ==
-                                 (int)NodeEnum::kBlockItemStatementList) {
+      if (uwline.Origin() &&
+          (uwline.Origin()->Tag().tag ==
+               (int)NodeEnum::kNetVariableAssignment ||
+           uwline.Origin()->Tag().tag ==
+               (int)NodeEnum::kBlockItemStatementList ||
+           uwline.Origin()->Tag().tag ==
+               (int)NodeEnum::kBlockingAssignmentStatement)) {
         // Align unnamed parameters in function call. Example:
         // always_comb begin
         //   value = function_name(8'hA, signal,
@@ -419,7 +424,8 @@ static void DeterminePartitionExpansion(
           }
         };
 
-        // Check if kBlockItemStatementList contains kArgumentList node
+        // Check if kNetVariableAssignment or kBlockItemStatementList contains
+        // kArgumentList node
         if (std::any_of(children_tmp.begin(), children_tmp.end(),
                         look_for_arglist)) {
           node_view.Unexpand();
