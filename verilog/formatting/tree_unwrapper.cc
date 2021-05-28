@@ -953,11 +953,21 @@ void TreeUnwrapper::SetIndentationsAndCreatePartitions(
     case NodeEnum::kTaskHeader:
     case NodeEnum::kFunctionHeader:
     case NodeEnum::kTaskPrototype:
-    case NodeEnum::kFunctionPrototype:
+    case NodeEnum::kFunctionPrototype: {
+      if (Context().IsInside(NodeEnum::kDPIExportItem) ||
+          Context().IsInside(NodeEnum::kDPIImportItem)) {
+        VisitIndentedSection(node, 0,
+                             PartitionPolicyEnum::kFitOnLineElseExpand);
+      } else {
+        VisitIndentedSection(node, 0,
+                             PartitionPolicyEnum::kAppendFittingSubPartitions);
+      }
+      break;
+    }
+
     case NodeEnum::kDPIExportItem:
     case NodeEnum::kDPIImportItem: {
-      VisitIndentedSection(node, 0,
-                           PartitionPolicyEnum::kAppendFittingSubPartitions);
+      VisitIndentedSection(node, 0, PartitionPolicyEnum::kAlwaysExpand);
       break;
     }
 
@@ -1011,8 +1021,7 @@ void TreeUnwrapper::SetIndentationsAndCreatePartitions(
     case NodeEnum::kModportSimplePortsDeclaration:
     case NodeEnum::kModportTFPortsDeclaration:
     case NodeEnum::kGateInstanceRegisterVariableList:
-    case NodeEnum::kVariableDeclarationAssignmentList:
-    case NodeEnum::kPortList: {
+    case NodeEnum::kVariableDeclarationAssignmentList: {
       // Do not further indent preprocessor clauses.
       const int indent = suppress_indentation ? 0 : style_.wrap_spaces;
       VisitIndentedSection(node, indent,
@@ -1031,6 +1040,20 @@ void TreeUnwrapper::SetIndentationsAndCreatePartitions(
         TraverseChildren(node);
         break;
       }
+    }
+
+    case NodeEnum::kPortList: {
+      if (Context().IsInside(NodeEnum::kDPIExportItem) ||
+          Context().IsInside(NodeEnum::kDPIImportItem)) {
+        const int indent = suppress_indentation ? 0 : style_.indentation_spaces;
+        VisitIndentedSection(node, indent,
+                             PartitionPolicyEnum::kTabularAlignment);
+      } else {
+        const int indent = suppress_indentation ? 0 : style_.wrap_spaces;
+        VisitIndentedSection(node, indent,
+                             PartitionPolicyEnum::kFitOnLineElseExpand);
+      }
+      break;
     }
 
     case NodeEnum::kBlockItemStatementList:
@@ -1513,6 +1536,7 @@ void TreeUnwrapper::ReshapeTokenPartitions(
       // Push the "import..." down.
       {
         verible::MergeLeafIntoNextLeaf(&partition.Children().front());
+        AttachTrailingSemicolonToPreviousPartition(&partition);
         break;
       }
     case NodeEnum::kBindDirective: {

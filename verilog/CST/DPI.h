@@ -57,10 +57,10 @@ verible::SymbolPtr MakeDPIImport(T0&& keyword, T1&& spec, T2&& property,
 // Partial specialization provided as a workaround to passing nullptr
 // in positions 3 and 4 (optional symbols).  Compiler is not guaranteed
 // to deduce to that some paths are not reachble/applicable.
-template <typename T0, typename T1, typename T2, typename T3>
+template <typename T0, typename T1, typename T2, typename T3, typename T4>
 verible::SymbolPtr MakeDPIImport(T0&& keyword, T1&& spec, T2&& property,
                                  std::nullptr_t id, std::nullptr_t equals,
-                                 T3&& proto) {
+                                 T3&& proto, T4&& semi) {
   verible::CheckSymbolAsLeaf(*keyword, verilog_tokentype::TK_import);
   verible::CheckSymbolAsLeaf(*spec, verilog_tokentype::TK_StringLiteral);
   CHECK(verible::SymbolCastToNode(*proto).MatchesTagAnyOf(
@@ -68,7 +68,7 @@ verible::SymbolPtr MakeDPIImport(T0&& keyword, T1&& spec, T2&& property,
   return verible::MakeTaggedNode(
       NodeEnum::kDPIImportItem, std::forward<T0>(keyword),
       std::forward<T1>(spec), std::forward<T2>(property), id, equals,
-      std::forward<T3>(proto));
+      std::forward<T3>(proto), std::forward<T4>(semi));
 }
 
 // Find all DPI imports.

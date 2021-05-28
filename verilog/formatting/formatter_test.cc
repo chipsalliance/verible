@@ -2884,24 +2884,57 @@ static constexpr FormatterTestCase kFormatterTestCases[] = {
         "module mdi;"
         "import   \"DPI-C\" function  int add(\n) ;"
         "import \"DPI-C\"\t\tfunction int\nsleep( input int secs );"
+        "import \"DPI-C\"\t\tfunction int\nwake( input int secs, output bit "
+        "[2:0] z);"
         "endmodule",
         "module mdi;\n"
         "  import \"DPI-C\" function int add();\n"
-        "  import \"DPI-C\" function int sleep(\n"  // doesn't fit in 40-col
-        "      input int secs);\n"
+        "  import \"DPI-C\" function int sleep(\n"
+        "    input int secs\n"
+        "  );\n"
+        "  import \"DPI-C\" function int wake(\n"
+        "    input  int       secs,\n"
+        "    output bit [2:0] z\n"
+        "  );\n"
         "endmodule\n",
     },
     {
         // DPI export declarations in modules
         "module m;"
         "export \"DPI-C\" function get;"
-        "export \"DPI-C\" function mhpmcounter_get; endmodule",
+        "export \"DPI-C\" function mhpmcounter_get;\n"
+        "export \"DPI-C\"\t\tfunction int\nwake( input int secs, output bit "
+        "[2:0] z);"
+        "endmodule",
         "module m;\n"
         "  export \"DPI-C\" function get;\n"
         "  export \"DPI-C\"\n"
         "      function mhpmcounter_get;\n"  // doesn't fit in 40-col
+        "  export \"DPI-C\" function int wake(\n"
+        "    input  int       secs,\n"
+        "    output bit [2:0] z\n"
+        "  );\n"
         "endmodule\n",
     },
+    {"import \"DPI-C\" context function void func(input bit impl_i,"
+     "input bit op_i,"
+     "input bit [5:0] mode_i,"
+     "input bit [3:0][31:0] iv_i,"
+     "input bit [2:0] key_len_i,"
+     "input bit [7:0][31:0] key_i,"
+     "input bit [7:0] data_i[],"
+     "output bit [7:0] data_o[]);",
+     "import \"DPI-C\" context\n"
+     "    function void func(\n"
+     "  input  bit             impl_i,\n"
+     "  input  bit             op_i,\n"
+     "  input  bit [5:0]       mode_i,\n"
+     "  input  bit [3:0][31:0] iv_i,\n"
+     "  input  bit [2:0]       key_len_i,\n"
+     "  input  bit [7:0][31:0] key_i,\n"
+     "  input  bit [7:0]       data_i   [],\n"
+     "  output bit [7:0]       data_o   []\n"
+     ");\n"},
     {// module with system task call
      "module m; initial begin #10 $display(\"foo\"); $display(\"bar\");"
      "end endmodule",

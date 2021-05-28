@@ -2402,7 +2402,7 @@ const TreeUnwrapperTestData kUnwrapModuleTestCases[] = {
                            N(1,  //
                              L(1, {"import", "\"DPI-C\"", "function", "int",
                                    "sleep", "("}),
-                             L(3, {"input", "int", "secs", ")", ";"}))),
+                             L(2, {"input", "int", "secs"}), L(1, {")", ";"}))),
             L(0, {"endmodule"})),
     },
 
