@@ -1087,7 +1087,8 @@ void TreeUnwrapper::SetIndentationsAndCreatePartitions(
     {
       const int indent =
           suppress_indentation ? 0 : style_.NamedPortIndentation();
-      const auto policy = Context().IsInside(NodeEnum::kDataDeclaration)
+      const auto policy = Context().IsInside(NodeEnum::kDataDeclaration) ||
+                                  Context().IsInside(NodeEnum::kBindDirective)
                               ? PartitionPolicyEnum::kTabularAlignment
                               : PartitionPolicyEnum::kFitOnLineElseExpand;
       VisitIndentedSection(node, indent, policy);
