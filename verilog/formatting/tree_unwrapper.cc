@@ -533,6 +533,7 @@ void TreeUnwrapper::InterChildNodeHook(const SyntaxTreeNode& node) {
     case NodeEnum::kConstraintExpressionList:
     case NodeEnum::kConstraintBlockItemList:
     case NodeEnum::kDistributionItemList:
+    case NodeEnum::kStructUnionMemberList:
       LookAheadBeyondCurrentNode();
       break;
     default: {
@@ -992,7 +993,6 @@ void TreeUnwrapper::SetIndentationsAndCreatePartitions(
     case NodeEnum::kPackageItemList:
     case NodeEnum::kInterfaceClassDeclaration:
     case NodeEnum::kCasePatternItemList:
-    case NodeEnum::kStructUnionMemberList:
     case NodeEnum::kConstraintBlockItemList:
     case NodeEnum::kConstraintExpressionList:
     case NodeEnum::kAssertionVariableDeclarationList:
@@ -1066,7 +1066,8 @@ void TreeUnwrapper::SetIndentationsAndCreatePartitions(
     case NodeEnum::kModuleItemList:
     case NodeEnum::kGenerateItemList:
     case NodeEnum::kDistributionItemList:
-    case NodeEnum::kEnumNameList: {
+    case NodeEnum::kEnumNameList:
+    case NodeEnum::kStructUnionMemberList: {
       const int indent = suppress_indentation ? 0 : style_.indentation_spaces;
       VisitIndentedSection(node, indent,
                            PartitionPolicyEnum::kTabularAlignment);

@@ -43,6 +43,9 @@ struct FormatStyle : public verible::BasicFormatStyle {
   // formatted.  Internal tests assume these are forced to kAlign.
   AlignmentPolicy port_declarations_alignment = AlignmentPolicy::kAlign;
 
+  // Control how struct and union members are formatted.
+  AlignmentPolicy struct_union_members_alignment = AlignmentPolicy::kAlign;
+
   // Control indentation amount for named parameter assignments.
   IndentationStyle named_parameter_indentation = IndentationStyle::kWrap;
 
