@@ -95,6 +95,7 @@ struct FormatStyle : public verible::BasicFormatStyle {
   // attempt to do line wrap optimization.  By doing nothing in those cases, we
   // reduce the risk of harming already decent code.
   bool try_wrap_long_lines = true;
+  bool expand_coverpoints = true;
 
   // Compact binary expressions inside indexing / bit selection operators
   bool compact_indexing_and_selections = true;
