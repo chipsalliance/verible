@@ -701,7 +701,6 @@ void TreeUnwrapper::SetIndentationsAndCreatePartitions(
     case NodeEnum::kCovergroupDeclaration:
     case NodeEnum::kCoverageOption:
     case NodeEnum::kCoverageBin:
-    case NodeEnum::kCoverPoint:
     case NodeEnum::kCoverCross:
     case NodeEnum::kBinsSelection:
     case NodeEnum::kDistributionItem:
@@ -988,7 +987,6 @@ void TreeUnwrapper::SetIndentationsAndCreatePartitions(
     // level as the kAssertionVariableDeclarationList that precedes it.
     case NodeEnum::kSequenceDeclarationFinalExpr:
     case NodeEnum::kCoverageSpecOptionList:
-    case NodeEnum::kBinOptionList:
     case NodeEnum::kCrossBodyItemList:
     case NodeEnum::kUdpBody:
     case NodeEnum::kUdpPortDeclaration:
@@ -1002,6 +1000,23 @@ void TreeUnwrapper::SetIndentationsAndCreatePartitions(
       break;
     }
 
+    case NodeEnum::kBinOptionList: {
+      PartitionPolicyEnum shouldExpand =
+        style_.expand_coverpoints ? PartitionPolicyEnum::kAlwaysExpand
+                                  : PartitionPolicyEnum::kFitOnLineElseExpand;
+      // Do not further indent preprocessor clauses.
+      const int indent = suppress_indentation ? 0 : style_.indentation_spaces;
+      VisitIndentedSection(node, indent, shouldExpand);
+      break;
+    }
+
+    case NodeEnum::kCoverPoint: {
+      if (style_.expand_coverpoints) {
+        VisitIndentedSection(node, 0, PartitionPolicyEnum::kAlwaysExpand);
+      } else
+        VisitIndentedSection(node, 0, PartitionPolicyEnum::kFitOnLineElseExpand);
+      break;
+    }
       // Add a level of grouping that is treated as wrapping.
     case NodeEnum::kMacroFormalParameterList:
     case NodeEnum::kMacroArgList:
@@ -1018,7 +1033,8 @@ void TreeUnwrapper::SetIndentationsAndCreatePartitions(
       break;
     }
     case NodeEnum::kOpenRangeList: {
-      if (Context().DirectParentIs(NodeEnum::kConcatenationExpression)) {
+      if (Context().DirectParentIs(NodeEnum::kConcatenationExpression) &&
+          !Context().IsInside(NodeEnum::kCoverageBin)) {
         // Do not further indent preprocessor clauses.
         const int indent = suppress_indentation ? 0 : style_.indentation_spaces;
         VisitIndentedSection(node, indent,
@@ -1143,7 +1159,8 @@ void TreeUnwrapper::SetIndentationsAndCreatePartitions(
         // original un-lexed macro argument was successfully expanded
         VisitNewUnwrappedLine(node);
       } else if (Context().DirectParentIs(NodeEnum::kOpenRangeList) &&
-                 Context().IsInside(NodeEnum::kConcatenationExpression)) {
+                 Context().IsInside(NodeEnum::kConcatenationExpression) &&
+                 !(Context().IsInside(NodeEnum::kCoverageBin))) {
         VisitIndentedSection(node, 0,
                              PartitionPolicyEnum::kFitOnLineElseExpand);
       } else {
@@ -1966,7 +1983,8 @@ void TreeUnwrapper::Visit(const verible::SyntaxTreeLeaf& leaf) {
               // kVariableDeclarationAssignment
           }) ||
           (current_context_.DirectParentIs(NodeEnum::kOpenRangeList) &&
-           current_context_.IsInside(NodeEnum::kConcatenationExpression))) {
+           current_context_.IsInside(NodeEnum::kConcatenationExpression) &&
+           !current_context_.IsInside(NodeEnum::kCoverageBin))) {
         MergeLastTwoPartitions();
       } else if (CurrentUnwrappedLine().Size() == 1) {
         // Partition would begin with a comma,
