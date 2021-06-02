@@ -155,7 +155,7 @@ int main(int argc, char** argv) {
   }
 
   // All positional arguments are file names.  Exclude program name.
-  for (const auto filename :
+  for (const absl::string_view filename :
        verible::make_range(args.begin() + 1, args.end())) {
     // Copy configuration, so that it can be locally modified per file.
     const LinterConfiguration config(
