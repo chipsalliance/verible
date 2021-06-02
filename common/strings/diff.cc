@@ -161,9 +161,7 @@ void LineDiffsToUnifiedDiff(std::ostream& stream, const LineDiffs& linediffs,
   const std::vector<diff::Edits> chunks =
       DiffEditsToPatchHunks(linediffs.edits, common_context);
 
-  if (chunks.size() == 0) {
-    return;
-  }
+  if (chunks.empty()) return;
 
   if (!file_a.empty()) {
     if (file_b.empty()) {

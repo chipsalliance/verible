@@ -121,7 +121,7 @@ void LintStatusFormatter::FormatLintRuleStatuses(
   for (auto violation : violations) {
     FormatViolation(stream, *violation.violation, base, path,
                     violation.status->url, violation.status->lint_rule_name);
-    if (violation.violation->autofixes.size() > 0) {
+    if (!violation.violation->autofixes.empty()) {
       *stream << " (autofix available)";
     }
     *stream << std::endl;
