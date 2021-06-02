@@ -8,9 +8,8 @@ end_of_line = lf
 insert_final_newline = true
 trim_trailing_whitespace = true
 
-[*.{h,cc,sv,sh,yml}]
+[*.{h,cc,sv,sh,yml,py}]
 indent_size = 2
 
 [BUILD]
 indent_size = 4
-

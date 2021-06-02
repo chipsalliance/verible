@@ -32,8 +32,7 @@ namespace verilog {
 class VerilogAnalyzer : public verible::FileAnalyzer {
  public:
   VerilogAnalyzer(absl::string_view text, absl::string_view name)
-      : verible::FileAnalyzer(text, name),
-        max_used_stack_size_(0) {}
+      : verible::FileAnalyzer(text, name), max_used_stack_size_(0) {}
 
   // Lex-es the input text into tokens.
   absl::Status Tokenize() override;

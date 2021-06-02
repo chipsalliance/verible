@@ -23,10 +23,10 @@
 #include "common/formatting/token_partition_tree.h"
 #include "common/strings/position.h"  // for ByteOffsetSet
 #include "common/text/token_info.h"
+#include "common/text/token_stream_view.h"  // for TokenRange
 #include "common/text/tree_context_visitor.h"
+#include "common/text/tree_utils.h"  // for GetRightmostLeaf
 #include "common/util/logging.h"
-#include "common/text/tree_utils.h" // for GetRightmostLeaf
-#include "common/text/token_stream_view.h" // for TokenRange
 
 namespace verible {
 
@@ -324,14 +324,14 @@ std::vector<ColumnPositionEntry> ScanPartitionForAlignmentCells(
 // purposes.
 template <class ScannerType>
 std::vector<ColumnPositionEntry>
-  ScanPartitionForAlignmentCells_WithNonTreeTokens(
+ScanPartitionForAlignmentCells_WithNonTreeTokens(
     const TokenPartitionTree& row,
-    const std::function<
-      std::vector<ColumnPositionEntry>
-      (TokenRange, const SyntaxTreeNode&, long unsigned int)> non_tree_column_scanner) {
+    const std::function<std::vector<ColumnPositionEntry>(
+        TokenRange, const SyntaxTreeNode&, long unsigned int)>
+        non_tree_column_scanner) {
   // re-use existing scanner
   auto column_entries_from_syntax_tree =
-    ScanPartitionForAlignmentCells<ScannerType>(row);
+      ScanPartitionForAlignmentCells<ScannerType>(row);
   const UnwrappedLine& unwrapped_line = row.Value();
   const Symbol* origin = ABSL_DIE_IF_NULL(unwrapped_line.Origin());
   // Identify the last token covered by the origin tree.
@@ -344,41 +344,37 @@ std::vector<ColumnPositionEntry>
   static int max_children_size;
   if (row.IsFirstChild()) {
     max_children_size = 0;
-    const TokenPartitionTree *row_tmp = &row;
+    const TokenPartitionTree* row_tmp = &row;
     do {
-      int children_size = SymbolCastToNode(*row.Value().Origin()).children().size();
-      if (children_size > max_children_size)
-        max_children_size = children_size;
+      int children_size =
+          SymbolCastToNode(*row.Value().Origin()).children().size();
+      if (children_size > max_children_size) max_children_size = children_size;
 
       row_tmp = row_tmp->NextSibling();
-    } while(row_tmp);
+    } while (row_tmp);
   }
 
   // Collect tokens excluded from SyntaxTree (delimiters and comments)
   TokenSequence non_tree_tokens;
   bool non_tree_flag = false;
   for (auto i : unwrapped_line.TokensRange()) {
+    if (non_tree_flag) non_tree_tokens.push_back(*i.token);
 
-    if (non_tree_flag)
-      non_tree_tokens.push_back(*i.token);
-
-    if (*i.token == last_tree_token)
-      non_tree_flag = true;
+    if (*i.token == last_tree_token) non_tree_flag = true;
   }
 
   auto remainder = make_range<TokenSequence::const_iterator>(
-		     non_tree_tokens.begin(), non_tree_tokens.end());
+      non_tree_tokens.begin(), non_tree_tokens.end());
   const SyntaxTreeNode& node = SymbolCastToNode(*origin);
-  auto trailing_column_entries = non_tree_column_scanner(remainder, node, max_children_size);
+  auto trailing_column_entries =
+      non_tree_column_scanner(remainder, node, max_children_size);
   std::vector<ColumnPositionEntry> all_column_entries;
-  all_column_entries.insert(
-    all_column_entries.begin(),
-    column_entries_from_syntax_tree.begin(),
-    column_entries_from_syntax_tree.end());
-  all_column_entries.insert(
-    all_column_entries.end(),
-    trailing_column_entries.begin(),
-    trailing_column_entries.end());
+  all_column_entries.insert(all_column_entries.begin(),
+                            column_entries_from_syntax_tree.begin(),
+                            column_entries_from_syntax_tree.end());
+  all_column_entries.insert(all_column_entries.end(),
+                            trailing_column_entries.begin(),
+                            trailing_column_entries.end());
 
   return all_column_entries;
 }
@@ -407,11 +403,12 @@ AlignmentCellScannerFunction AlignmentCellScannerGenerator() {
 // comments.
 template <class ScannerType>
 AlignmentCellScannerFunction AlignmentCellScannerGenerator(
-  const std::function<
-    std::vector<ColumnPositionEntry>
-    (TokenRange, const SyntaxTreeNode&, long unsigned int)> non_tree_column_scanner) {
+    const std::function<std::vector<ColumnPositionEntry>(
+        TokenRange, const SyntaxTreeNode&, long unsigned int)>
+        non_tree_column_scanner) {
   return [non_tree_column_scanner](const TokenPartitionTree& row) {
-    return ScanPartitionForAlignmentCells_WithNonTreeTokens<ScannerType>(row, non_tree_column_scanner);
+    return ScanPartitionForAlignmentCells_WithNonTreeTokens<ScannerType>(
+        row, non_tree_column_scanner);
   };
 }
 
