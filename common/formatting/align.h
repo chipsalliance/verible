@@ -326,33 +326,17 @@ template <class ScannerType>
 std::vector<ColumnPositionEntry>
 ScanPartitionForAlignmentCells_WithNonTreeTokens(
     const TokenPartitionTree& row,
-    const std::function<std::vector<ColumnPositionEntry>(
-        TokenRange, const SyntaxTreeNode&, long unsigned int)>
+    const std::function<void(TokenRange, std::vector<ColumnPositionEntry>*)>
         non_tree_column_scanner) {
   // re-use existing scanner
-  auto column_entries_from_syntax_tree =
+  std::vector<ColumnPositionEntry> column_entries =
       ScanPartitionForAlignmentCells<ScannerType>(row);
+
   const UnwrappedLine& unwrapped_line = row.Value();
   const Symbol* origin = ABSL_DIE_IF_NULL(unwrapped_line.Origin());
   // Identify the last token covered by the origin tree.
   const SyntaxTreeLeaf* last_leaf = GetRightmostLeaf(*origin);
   const TokenInfo last_tree_token = last_leaf->get();
-
-  // Find maximum number of children amongst every row for
-  // non_tree_column_scanner to set correct SyntaxTreePath for delimiter
-  // and comments
-  static int max_children_size;
-  if (row.IsFirstChild()) {
-    max_children_size = 0;
-    const TokenPartitionTree* row_tmp = &row;
-    do {
-      int children_size =
-          SymbolCastToNode(*row.Value().Origin()).children().size();
-      if (children_size > max_children_size) max_children_size = children_size;
-
-      row_tmp = row_tmp->NextSibling();
-    } while (row_tmp);
-  }
 
   // Collect tokens excluded from SyntaxTree (delimiters and comments)
   TokenSequence non_tree_tokens;
@@ -365,18 +349,9 @@ ScanPartitionForAlignmentCells_WithNonTreeTokens(
 
   auto remainder = make_range<TokenSequence::const_iterator>(
       non_tree_tokens.begin(), non_tree_tokens.end());
-  const SyntaxTreeNode& node = SymbolCastToNode(*origin);
-  auto trailing_column_entries =
-      non_tree_column_scanner(remainder, node, max_children_size);
-  std::vector<ColumnPositionEntry> all_column_entries;
-  all_column_entries.insert(all_column_entries.begin(),
-                            column_entries_from_syntax_tree.begin(),
-                            column_entries_from_syntax_tree.end());
-  all_column_entries.insert(all_column_entries.end(),
-                            trailing_column_entries.begin(),
-                            trailing_column_entries.end());
+  non_tree_column_scanner(remainder, &column_entries);
 
-  return all_column_entries;
+  return column_entries;
 }
 
 // Convenience function for generating alignment cell scanners.
@@ -403,8 +378,7 @@ AlignmentCellScannerFunction AlignmentCellScannerGenerator() {
 // comments.
 template <class ScannerType>
 AlignmentCellScannerFunction AlignmentCellScannerGenerator(
-    const std::function<std::vector<ColumnPositionEntry>(
-        TokenRange, const SyntaxTreeNode&, long unsigned int)>
+    const std::function<void(TokenRange, std::vector<ColumnPositionEntry>*)>
         non_tree_column_scanner) {
   return [non_tree_column_scanner](const TokenPartitionTree& row) {
     return ScanPartitionForAlignmentCells_WithNonTreeTokens<ScannerType>(

@@ -1047,38 +1047,32 @@ std::function<MemberType(const StructType&)> function_from_pointer_to_member(
 using AlignmentHandlerMapType =
     std::map<AlignableSyntaxSubtype, AlignmentGroupHandlers>;
 
-static std::vector<verible::ColumnPositionEntry> non_tree_column_scanner(
-    verible::TokenRange token_range, const verible::SyntaxTreeNode& node,
-    size_t max_children_size) {
-  std::vector<verible::ColumnPositionEntry> trailing_column_entries;
-  auto tag = NodeEnum(node.Tag().tag);
-  VLOG(2) << __FUNCTION__ << ", node: " << tag;
+static void non_tree_column_scanner(
+    verible::TokenRange token_range,
+    std::vector<verible::ColumnPositionEntry>* column_entries) {
+  static const size_t kLargestPathIndex = std::numeric_limits<size_t>::max();
 
   for (auto token : token_range) {
     switch (token.token_enum()) {
       case ',': {
-        SyntaxTreePath path{max_children_size};
-        VLOG(2) << "at " << TreePathFormatter(path);
+        SyntaxTreePath path{kLargestPathIndex - 1};
         AlignmentColumnProperties prop;
         prop.contains_delimiter = true;
         verible::ColumnPositionEntry test{path, token, prop};
-        trailing_column_entries.push_back(test);
+        column_entries->push_back(test);
         break;
       }
       case TK_COMMENT_BLOCK:
       case TK_EOL_COMMENT: {
-        SyntaxTreePath path{max_children_size + 1};
-        VLOG(2) << "at " << TreePathFormatter(path);
+        SyntaxTreePath path{kLargestPathIndex};
         verible::ColumnPositionEntry test{path, token, FlushLeft};
-        trailing_column_entries.push_back(test);
+        column_entries->push_back(test);
         break;
       }
       default:
         break;
     }
   }
-
-  return trailing_column_entries;
 }
 
 // Global registry of all known alignment handlers for Verilog.

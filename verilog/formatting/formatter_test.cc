@@ -861,6 +861,15 @@ static constexpr FormatterTestCase kFormatterTestCases[] = {
      "    output y\n"
      ");\n"
      "endmodule : foo\n"},
+    {"module foo(\n"
+     "// comment\n"
+     "  input x  , output y ) ;endmodule:foo\n",
+     "module foo (\n"
+     "    // comment\n"
+     "    input  x,\n"  // aligned
+     "    output y\n"
+     ");\n"
+     "endmodule : foo\n"},
     {"module foo(  input[2:0]x  , output y [3:0] ) ;endmodule:foo\n",
      // each port item should be on its own line
      "module foo (\n"
@@ -886,6 +895,28 @@ static constexpr FormatterTestCase kFormatterTestCases[] = {
      "output reg yyy /* c2 */\n"
      " ) ;endmodule:foo\n",
      "module foo (\n"
+     "    input  wire x,   /* c1 */\n"  // aligned
+     "    output reg  yyy  /* c2 */\n"  // aligned
+     ");\n"
+     "endmodule : foo\n"},
+    {"module foo(\n"
+     "// comment\n"
+     "input wire x  ,//c1\n"
+     "output reg yyy //c2\n"
+     " ) ;endmodule:foo\n",
+     "module foo (\n"
+     "    // comment\n"
+     "    input  wire x,   //c1\n"  // aligned
+     "    output reg  yyy  //c2\n"  // aligned
+     ");\n"
+     "endmodule : foo\n"},
+    {"module foo(\n"
+     "/* comment */\n"
+     "input wire x  ,/* c1 */\n"
+     "output reg yyy /* c2 */\n"
+     " ) ;endmodule:foo\n",
+     "module foo (\n"
+     "    /* comment */\n"
      "    input  wire x,   /* c1 */\n"  // aligned
      "    output reg  yyy  /* c2 */\n"  // aligned
      ");\n"
