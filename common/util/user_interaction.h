@@ -30,7 +30,7 @@ bool IsInteractiveTerminalSession();
 // When `input_is_terminal` is set to true, it is assumed the input is
 // interactive. In this mode:
 // * `prompt` is printed to `output` before reading anything.
-// * The input must be confirmed with the Enter key. If an user typed more than
+// * The input must be confirmed with the Enter key. If a user typed more than
 //   one character, first one is returned and the rest is dropped.
 // In non-interactive mode (input_is_terminal=false):
 // * `prompt` is not printed.

@@ -50,7 +50,7 @@ struct LintViolationWithStatus {
 };
 
 // Returns violations from multiple `LintRuleStatus`es sorted by position
-// of their occurence in source code.
+// of their occurrence in source code.
 std::set<LintViolationWithStatus> GetSortedViolations(
     const std::vector<verible::LintRuleStatus>& statuses);
 
