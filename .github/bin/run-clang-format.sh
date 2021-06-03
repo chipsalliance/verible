@@ -16,8 +16,7 @@
 FORMAT_OUT=${TMPDIR:-/tmp}/clang-format-diff.out
 
 # Run on all files.
-find . -name "*.h" -o -name "*.cc" -print0 \
-     | xargs -0 -P 2 clang-format --style=Google -i
+find . -name "*.h" -o -name "*.cc" | xargs -P2 clang-format --style=Google -i
 
 # Check if we got any diff
 git diff > ${FORMAT_OUT}

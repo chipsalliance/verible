@@ -12,9 +12,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-"""
-Invoke bazel with --workspace_status_command=bazel/build-version.py to
-get this invoked and populate bazel-out/volatile-status.txt
+"""Invoke bazel with --workspace_status_command=bazel/build-version.py to get this invoked and populate bazel-out/volatile-status.txt
 """
 
 import os
@@ -23,32 +21,32 @@ from subprocess import Popen, PIPE
 
 
 def run(*cmd):
-    process = Popen(cmd, stdout=PIPE)
-    output, _ = process.communicate()
+  process = Popen(cmd, stdout=PIPE)
+  output, _ = process.communicate()
 
-    return output.strip().decode()
+  return output.strip().decode()
 
 
 def main():
-    try:
-        date = run("git", "log", "-n1", "--date=short", "--format=%cd")
-    except:
-        date = ""
+  try:
+    date = run("git", "log", "-n1", "--date=short", "--format=%cd")
+  except:
+    date = ""
 
-    try:
-        version = run("git", "describe")
-    except:
-        version = ""
+  try:
+    version = run("git", "describe")
+  except:
+    version = ""
 
-    if not date:
-        date = os.environ["GIT_DATE"]
+  if not date:
+    date = os.environ["GIT_DATE"]
 
-    if not version:
-        version = os.environ["GIT_VERSION"]
+  if not version:
+    version = os.environ["GIT_VERSION"]
 
-    print("GIT_DATE", '"{}"'.format(date))
-    print("GIT_DESCRIBE", '"{}"'.format(version))
+  print("GIT_DATE", '"{}"'.format(date))
+  print("GIT_DESCRIBE", '"{}"'.format(version))
 
 
 if __name__ == "__main__":
-    main()
+  main()

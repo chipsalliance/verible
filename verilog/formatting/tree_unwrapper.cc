@@ -1951,7 +1951,7 @@ void TreeUnwrapper::Visit(const verible::SyntaxTreeLeaf& leaf) {
 
   // Make sure that newly extended unwrapped line has origin symbol
   // FIXME: Pretty sure that this should be handled in an other way,
-  //    e.g. in common/formatting/tree_unwrapper.cc similary
+  //    e.g. in common/formatting/tree_unwrapper.cc similarly
   //    to StartNewUnwrappedLine()
   if (CurrentUnwrappedLine().Origin() == nullptr &&
       CurrentUnwrappedLine().TokensRange().size() == 1) {
