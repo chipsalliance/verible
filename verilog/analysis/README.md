@@ -1,7 +1,7 @@
 # SystemVerilog Analysis Library
 
 <!--*
-freshness: { owner: 'fangism' reviewed: '2020-10-15' }
+freshness: { owner: 'hzeller' reviewed: '2020-10-15' }
 *-->
 
 This directory contains libraries for analyzing SystemVerilog code. Analysis is

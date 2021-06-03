@@ -4,7 +4,7 @@
 [![Continuous Integration](https://github.com/google/verible/workflows/verible-ci/badge.svg)](https://github.com/google/verible/actions/workflows/verible-ci.yml)
 
 <!--*
-freshness: { owner: 'fangism' reviewed: '2020-10-08' }
+freshness: { owner: 'hzeller' reviewed: '2020-10-08' }
 *-->
 
 The Verible project's main mission is to parse SystemVerilog (IEEE 1800-2017)

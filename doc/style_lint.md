@@ -1,7 +1,7 @@
 # SV Style Linter Developer Guide
 
 <!--*
-freshness: { owner: 'fangism' reviewed: '2020-10-28' }
+freshness: { owner: 'hzeller' reviewed: '2020-10-28' }
 *-->
 
 This document describes how to implement style lint rules.

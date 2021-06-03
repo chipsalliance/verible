@@ -1,7 +1,7 @@
 # Lint Rules
 
 <!--*
-freshness: { owner: 'fangism' reviewed: '2020-10-07' }
+freshness: { owner: 'hzeller' reviewed: '2020-10-07' }
 *-->
 
 This directory provides implementations of all lint rules. Lint rules make

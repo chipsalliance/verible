@@ -1,7 +1,7 @@
 # Parser Library
 
 <!--*
-freshness: { owner: 'fangism' reviewed: '2020-10-04' }
+freshness: { owner: 'hzeller' reviewed: '2020-10-04' }
 *-->
 
 This language-agnostic library contains adapters and helpers for working with

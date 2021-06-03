@@ -1,7 +1,7 @@
 # String Libraries
 
 <!--*
-freshness: { owner: 'fangism' reviewed: '2020-10-04' }
+freshness: { owner: 'hzeller' reviewed: '2020-10-04' }
 *-->
 
 This directory is a home to functions that work with text-as-strings. The

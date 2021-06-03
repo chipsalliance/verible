@@ -1,7 +1,7 @@
 # SystemVerilog Lexer and Parser
 
 <!--*
-freshness: { owner: 'fangism' reviewed: '2020-10-07' }
+freshness: { owner: 'hzeller' reviewed: '2020-10-07' }
 *-->
 
 This directory contains the SystemVerilog lexer and parser implementations. The

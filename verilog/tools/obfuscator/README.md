@@ -1,7 +1,7 @@
 # SystemVerilog Source Code Obfuscator
 
 <!--*
-freshness: { owner: 'fangism' reviewed: '2020-10-05' }
+freshness: { owner: 'hzeller' reviewed: '2020-10-05' }
 *-->
 
 Obfuscation is useful for preparing test cases that may have sensitive content

@@ -1,7 +1,7 @@
 # Lexer Library
 
 <!--*
-freshness: { owner: 'fangism' reviewed: '2020-10-04' }
+freshness: { owner: 'hzeller' reviewed: '2020-10-04' }
 *-->
 
 This directory contains language-agnostic support libraries for working with

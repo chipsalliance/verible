@@ -1,7 +1,7 @@
 # SystemVerilog Concrete Syntax Tree
 
 <!--*
-freshness: { owner: 'fangism' reviewed: '2020-10-04' }
+freshness: { owner: 'hzeller' reviewed: '2020-10-04' }
 *-->
 
 The SystemVerilog concrete syntax tree (CST) uses the language-agnostic syntax

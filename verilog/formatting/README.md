@@ -1,7 +1,7 @@
 # SystemVerilog Formatting
 
 <!--*
-freshness: { owner: 'fangism' reviewed: '2020-10-16' }
+freshness: { owner: 'hzeller' reviewed: '2020-10-16' }
 *-->
 
 This directory contains all of the SystemVerilog-specific formatter

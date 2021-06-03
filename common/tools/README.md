@@ -1,7 +1,7 @@
 # Generic Programs
 
 <!--*
-freshness: { owner: 'fangism' reviewed: '2020-10-04' }
+freshness: { owner: 'hzeller' reviewed: '2020-10-04' }
 *-->
 
 This directory contains application-agnostic tools that support the Verible

@@ -1,7 +1,7 @@
 # SystemVerilog Formatter Developer Guide
 
 <!--*
-freshness: { owner: 'fangism' reviewed: '2020-10-16' }
+freshness: { owner: 'hzeller' reviewed: '2020-10-16' }
 *-->
 
 ## Design
