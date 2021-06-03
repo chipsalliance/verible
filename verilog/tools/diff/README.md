@@ -1,7 +1,7 @@
 # SystemVerilog Lexical Diff Tool
 
 <!--*
-freshness: { owner: 'fangism' reviewed: '2020-10-04' }
+freshness: { owner: 'hzeller' reviewed: '2020-10-04' }
 *-->
 
 `verible-verilog-diff` compares two SystemVerilog source files and reports the

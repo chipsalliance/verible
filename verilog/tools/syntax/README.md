@@ -1,7 +1,7 @@
 # SystemVerilog Syntax Tool
 
 <!--*
-freshness: { owner: 'fangism' reviewed: '2020-10-15' }
+freshness: { owner: 'hzeller' reviewed: '2020-10-15' }
 *-->
 
 `verible-verilog-syntax` checks SystemVerilog syntax, and provides some useful

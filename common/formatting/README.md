@@ -1,7 +1,7 @@
 # Formatting Library
 
 <!--*
-freshness: { owner: 'fangism' reviewed: '2020-10-04' }
+freshness: { owner: 'hzeller' reviewed: '2020-10-04' }
 *-->
 
 This library contains language-agnostic formatting capabilities, including

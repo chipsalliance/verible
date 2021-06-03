@@ -1,7 +1,7 @@
 # SystemVerilog Style Linter
 
 <!--*
-freshness: { owner: 'fangism' reviewed: '2020-10-07' }
+freshness: { owner: 'hzeller' reviewed: '2020-10-07' }
 *-->
 
 The `verible-verilog-lint` SV style linter analyzes code for patterns and

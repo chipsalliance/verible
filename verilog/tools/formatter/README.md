@@ -1,7 +1,7 @@
 # SystemVerilog Formatter
 
 <!--*
-freshness: { owner: 'fangism' reviewed: '2020-10-07' }
+freshness: { owner: 'hzeller' reviewed: '2020-10-07' }
 *-->
 
 `verible-verilog-format` is the SystemVerilog formatter tool.

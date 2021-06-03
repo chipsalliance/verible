@@ -1,7 +1,7 @@
 # Text Structural Representation Libraries
 
 <!--*
-freshness: { owner: 'fangism' reviewed: '2020-10-04' }
+freshness: { owner: 'hzeller' reviewed: '2020-10-04' }
 *-->
 
 At the heart of language-tooling libraries and applications lie various

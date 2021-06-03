@@ -1,7 +1,7 @@
 # SystemVerilog Source Code Indexing
 
 <!--*
-freshness: { owner: 'fangism' reviewed: '2020-10-07' }
+freshness: { owner: 'hzeller' reviewed: '2020-10-07' }
 *-->
 
 `verible-verilog-kythe-extractor` extracts indexing facts from a collection of

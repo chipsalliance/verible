@@ -1,7 +1,7 @@
 # SystemVerilog Project Multi-tool
 
 <!--*
-freshness: { owner: 'fangism' reviewed: '2020-12-21' }
+freshness: { owner: 'hzeller' reviewed: '2020-12-21' }
 *-->
 
 `verible-verilog-project` is a multi-tool that operates on whole Verilog

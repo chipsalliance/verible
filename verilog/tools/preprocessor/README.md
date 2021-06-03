@@ -1,7 +1,7 @@
 # SystemVerilog (Pseudo) Preprocessor
 
 <!--*
-freshness: { owner: 'fangism' reviewed: '2020-10-04' }
+freshness: { owner: 'hzeller' reviewed: '2020-10-04' }
 *-->
 
 `verible-verilog-preprocessor` is a collection of preprocessor-like tools, (but

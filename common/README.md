@@ -1,7 +1,7 @@
 # Verible's Language-Agnostic Core Library
 
 <!--*
-freshness: { owner: 'fangism' reviewed: '2020-10-04' }
+freshness: { owner: 'hzeller' reviewed: '2020-10-04' }
 *-->
 
 The libraries provided herein are _language-agnostic_ and have nothing to do

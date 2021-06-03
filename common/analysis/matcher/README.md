@@ -1,7 +1,7 @@
 # Matcher Library
 
 <!--*
-freshness: { owner: 'fangism' reviewed: '2020-10-04' }
+freshness: { owner: 'hzeller' reviewed: '2020-10-04' }
 *-->
 
 This library provides means of matching prescribed syntax-tree patterns.
