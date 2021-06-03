@@ -142,8 +142,7 @@ class ViolationPrinter : public ViolationHandler {
       : stream_(stream), formatter_(nullptr) {}
 
   void HandleViolations(const std::set<LintViolationWithStatus>& violations,
-                        absl::string_view base,
-                        absl::string_view path) final override;
+                        absl::string_view base, absl::string_view path) final;
 
  protected:
   std::ostream* const stream_;
@@ -195,8 +194,7 @@ class ViolationFixer : public ViolationHandler {
         answer_chooser_(answer_chooser) {}
 
   void HandleViolations(const std::set<LintViolationWithStatus>& violations,
-                        absl::string_view base,
-                        absl::string_view path) final override;
+                        absl::string_view base, absl::string_view path) final;
 
  protected:
   void HandleViolation(const verible::LintViolation& violation,

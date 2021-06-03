@@ -1047,9 +1047,9 @@ std::function<MemberType(const StructType&)> function_from_pointer_to_member(
 using AlignmentHandlerMapType =
     std::map<AlignableSyntaxSubtype, AlignmentGroupHandlers>;
 
-std::vector<verible::ColumnPositionEntry> non_tree_column_scanner(
+static std::vector<verible::ColumnPositionEntry> non_tree_column_scanner(
     verible::TokenRange token_range, const verible::SyntaxTreeNode& node,
-    long unsigned int max_children_size) {
+    size_t max_children_size) {
   std::vector<verible::ColumnPositionEntry> trailing_column_entries;
   auto tag = NodeEnum(node.Tag().tag);
   VLOG(2) << __FUNCTION__ << ", node: " << tag;
