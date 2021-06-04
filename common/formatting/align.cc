@@ -335,10 +335,12 @@ static AlignedFormattingColumnSchema ComputeColumnWidths(
   // must be set to 0
   int longest_cell_before_delimiter = 0;
   bool align_to_last_row = false;
-  for (const auto& row : matrix) {
+  for (const AlignmentRow& row : matrix) {
     auto column_prop_iter = column_properties.begin();
-    for (const auto& cell : row) {
-      if (std::next(column_prop_iter, 1)->contains_delimiter) {
+    for (const AlignmentCell& cell : row) {
+      const auto next_prop = std::next(column_prop_iter, 1);
+      if (next_prop != column_properties.end() &&
+          next_prop->contains_delimiter) {
         if (longest_cell_before_delimiter < cell.TotalWidth()) {
           longest_cell_before_delimiter = cell.TotalWidth();
           if (&row == &matrix.back()) align_to_last_row = true;
@@ -349,10 +351,10 @@ static AlignedFormattingColumnSchema ComputeColumnWidths(
     }
   }
 
-  for (const auto& row : matrix) {
+  for (const AlignmentRow& row : matrix) {
     auto column_iter = column_configs.begin();
     auto column_prop_iter = column_properties.begin();
-    for (const auto& cell : row) {
+    for (const AlignmentCell& cell : row) {
       if (column_prop_iter->contains_delimiter && align_to_last_row) {
         column_iter->width = 0;
         column_iter->left_border = 0;

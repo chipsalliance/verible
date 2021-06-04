@@ -18,3 +18,13 @@ common:macos --features=-supports_dynamic_linker --cxxopt=-std=c++17 --host_cxxo
 # the codebase, so we focus the effort for now is to have a Windows Verible
 # compiled with clang-cl before fixing the issues unique to MSVC.
 common:windows --compiler=clang-cl --cxxopt=/std:c++17 --host_cxxopt=/std:c++17 --client_env=BAZEL_CXXOPTS=/std:c++17
+
+# Address sanitizer settings.
+build:asan --strip=never
+build:asan --copt -fsanitize=address
+build:asan --copt -DADDRESS_SANITIZER
+build:asan --copt -O1
+build:asan --copt -g
+build:asan --copt -fno-omit-frame-pointer
+build:asan --linkopt -fsanitize=address
+
