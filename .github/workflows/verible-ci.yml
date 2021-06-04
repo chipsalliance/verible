@@ -49,6 +49,7 @@ jobs:
       matrix:
         mode:
         - test
+        - asan
         - compile
         - clean
     env:

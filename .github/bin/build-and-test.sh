@@ -53,6 +53,10 @@ test)
     bazel test --test_output=errors $BAZEL_OPTS //...
     ;;
 
+asan)
+    bazel test --config=asan $BAZEL_OPTS //...
+    ;;
+
 compile|clean)
     bazel build $BAZEL_OPTS //...
     ;;
