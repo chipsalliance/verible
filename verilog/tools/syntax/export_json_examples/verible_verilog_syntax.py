@@ -387,8 +387,8 @@ class VeribleVerilogSyntax:
     if isinstance(executable, str):
       executable = [executable]
 
-    proc = subprocess.run([*executable, "--version"], capture_output=True,
-        encoding="utf-8")
+    proc = subprocess.run([*executable, "--version"], stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT, encoding="utf-8")
 
     ver_match = self._VERSION_RE.match(proc.stdout)
     if ver_match:
@@ -413,10 +413,10 @@ class VeribleVerilogSyntax:
 
     else:
       # Version not available; check help message for `--export_json` flag
-      proc = subprocess.run([*executable, "--helpfull"], capture_output=True,
-          encoding="utf-8")
+      proc = subprocess.run([*executable, "--helpfull"], stdout=subprocess.PIPE,
+          stderr=subprocess.STDOUT, encoding="utf-8")
 
-      if not self._EXPORT_JSON_RE.search(proc.stdout + proc.stderr):
+      if not self._EXPORT_JSON_RE.search(proc.stdout):
         raise Exception("Unsupported verible-verilog-syntax version."
             f"Minimum required version: {self._MIN_VERSION}.")
 
