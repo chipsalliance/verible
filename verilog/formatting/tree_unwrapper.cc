@@ -1002,8 +1002,8 @@ void TreeUnwrapper::SetIndentationsAndCreatePartitions(
 
     case NodeEnum::kBinOptionList: {
       PartitionPolicyEnum shouldExpand =
-        style_.expand_coverpoints ? PartitionPolicyEnum::kAlwaysExpand
-                                  : PartitionPolicyEnum::kFitOnLineElseExpand;
+          style_.expand_coverpoints ? PartitionPolicyEnum::kAlwaysExpand
+                                    : PartitionPolicyEnum::kFitOnLineElseExpand;
       // Do not further indent preprocessor clauses.
       const int indent = suppress_indentation ? 0 : style_.indentation_spaces;
       VisitIndentedSection(node, indent, shouldExpand);
@@ -1014,7 +1014,8 @@ void TreeUnwrapper::SetIndentationsAndCreatePartitions(
       if (style_.expand_coverpoints) {
         VisitIndentedSection(node, 0, PartitionPolicyEnum::kAlwaysExpand);
       } else
-        VisitIndentedSection(node, 0, PartitionPolicyEnum::kFitOnLineElseExpand);
+        VisitIndentedSection(node, 0,
+                             PartitionPolicyEnum::kFitOnLineElseExpand);
       break;
     }
       // Add a level of grouping that is treated as wrapping.
