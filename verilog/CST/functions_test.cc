@@ -187,7 +187,7 @@ TEST(FunctionPrototypesReturnTypesTest, Various) {
       {// forward declaration is a prototype, explicit return type
        "class bar;\n"
        "extern function ",
-       {kTag, "bar#(int)"},
+       {kTag, "bar #(int)"},
        " foo();\n"
        "endclass\n"},
       {// pure virtual is a prototype, implicit return type
@@ -232,7 +232,7 @@ TEST(FunctionPrototypesIdsTest, Various) {
        "endclass\n"},
       {// forward declaration is a prototype, explicit return type
        "class bar;\n"
-       "extern function bar#(int) ",
+       "extern function bar #(int) ",
        {kTag, "gooo"},
        "();\n"
        "endclass\n"},
@@ -477,7 +477,7 @@ TEST(GetFunctionReturnTypeTest, VariousReturnTypes) {
        {kTag, "foo_pkg::bar_t"},
        " f;\nendfunction\nendclass\n"},
       {"module m;\nfunction ",
-       {kTag, "foo#(bar)"},
+       {kTag, "foo #(bar)"},
        " f;\nendfunction\nendmodule\n"},
   };
   for (const auto& test : kTestCases) {
@@ -687,7 +687,7 @@ TEST(FunctionCallTest, GetFunctionCallName) {
       {"module m;\ninitial begin\n", {kTag, "f1"}, "();\nend\nendmodule"},
       {"module m;\ninitial begin\n", {kTag, "pkg::f1"}, "();\nend\nendmodule"},
       {"module m;\ninitial begin\n",
-       {kTag, "class_name#(1)::f1"},
+       {kTag, "class_name #(1)::f1"},
        "(a, b, c);\nend\nendmodule"},
       {"r=this();"},
   };

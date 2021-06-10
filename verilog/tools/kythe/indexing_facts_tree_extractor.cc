@@ -264,7 +264,7 @@ class IndexingFactsTreeExtractor : public verible::TreeContextVisitor {
   void ExtractForInitialization(const SyntaxTreeNode& for_initialization);
 
   // Extracts param references and the actual references names.
-  // e.g from "counter #(.N(r))" extracts "N".
+  // e.g from "counter  #(.N(r))" extracts "N".
   void ExtractParamByName(const SyntaxTreeNode& param_by_name);
 
   // Extracts new scope and assign unique id to it.
@@ -1567,7 +1567,7 @@ void IndexingFactsTreeExtractor::ExtractQualifiedId(
   IndexingNodeData member_reference_data(IndexingFactType::kMemberReference);
 
   // Get all the variable names in the qualified id.
-  // e.g. split "A#(...)::B#(...)" into components "A#(...)" and "B#(...)"
+  // e.g. split "A #(...)::B #(...)" into components "A #(...)" and "B #(...)"
   for (const auto& child : qualified_id.children()) {
     if (child == nullptr ||
         NodeEnum(child->Tag().tag) != NodeEnum::kUnqualifiedId) {

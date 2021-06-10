@@ -66,7 +66,7 @@ TEST(GenerateLabelRuleTest, Various) {
        "  for (ii = 0; ii < NumberOfBuses; ii++) ",
        {kToken, "begin"},
        "\n"
-       "    my_bus #(.index(ii)) i_my_bus (.foo(foo), .bar(bar[ii]));\n"
+       "    my_bus  #(.index(ii)) i_my_bus (.foo(foo), .bar(bar[ii]));\n"
        "end\n"
        "endgenerate\nendmodule\n"},
 
@@ -89,7 +89,7 @@ TEST(GenerateLabelRuleTest, Various) {
        "genvar ii;\n"
        "generate\n"
        "for (ii = 0; ii < NumberOfBuses; ii++) begin : label\n"
-       "  my_bus #(.index(ii)) i_my_bus (.foo(foo), .bar(bar[ii]));\n"
+       "  my_bus  #(.index(ii)) i_my_bus (.foo(foo), .bar(bar[ii]));\n"
        "end\n"
        "endgenerate\nendmodule\n"},
   };

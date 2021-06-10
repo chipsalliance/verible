@@ -239,9 +239,9 @@ TEST(VerilogMatchers, NumberHasBinaryDigitsTests) {
 // Tests for NodekActualParameterList matching
 TEST(VerilogMatchers, ActualParameterListNodeTests) {
   const RawMatcherTestCase tests[] = {
-      {NodekActualParameterList(), EmbedInModule("foo #(1, 2) bar;"), 1},
+      {NodekActualParameterList(), EmbedInModule("foo  #(1, 2) bar;"), 1},
       {NodekActualParameterList(),
-       EmbedInModule("foo #(.foo(1), .bar(5)) bar;"), 1},
+       EmbedInModule("foo  #(.foo(1), .bar(5)) bar;"), 1},
       {NodekActualParameterList(), EmbedInModule("foo bar;"), 0},
       {NodekActualParameterList(), EmbedInModule(""), 0},
       {NodekActualParameterList(), "", 0},
@@ -254,9 +254,9 @@ TEST(VerilogMatchers, ActualParameterListNodeTests) {
 TEST(VerilogMatchers, ActualParameterListHasPositionalParameterListTests) {
   const RawMatcherTestCase tests[] = {
       {ActualParameterListHasPositionalParameterList(),
-       EmbedInModule("foo #(1, 2) bar;"), 1},
+       EmbedInModule("foo  #(1, 2) bar;"), 1},
       {ActualParameterListHasPositionalParameterList(),
-       EmbedInModule("foo #(.foo(1), .bar(5)) bar;"), 0},
+       EmbedInModule("foo  #(.foo(1), .bar(5)) bar;"), 0},
       {ActualParameterListHasPositionalParameterList(), EmbedInModule(""), 0},
       {ActualParameterListHasPositionalParameterList(), "", 0},
   };

@@ -180,13 +180,13 @@ TEST(FindAllModuleDeclarationTest, FindClassParameters) {
   const SyntaxTreeSearchTestCase kTestCases[] = {
       {""},
       {"class m;\nendclass\n"},
-      {"class m", {kTag, "#(parameter x = 3, parameter y = 4)"}, ";\nendclass"},
-      {"class m", {kTag, "#()"}, ";\nendclass"},
+      {"class m", {kTag, " #(parameter x = 3, parameter y = 4)"}, ";\nendclass"},
+      {"class m", {kTag, " #()"}, ";\nendclass"},
       {"class m",
-       {kTag, "#(parameter int x = 3,\n parameter logic y = 4)"},
+       {kTag, " #(parameter int x = 3,\n parameter logic y = 4)"},
        ";\nendclass"},
       {"class m",
-       {kTag, "#(parameter type x = 3,\n parameter logic y = 4)"},
+       {kTag, " #(parameter type x = 3,\n parameter logic y = 4)"},
        ";\nendclass"},
   };
   for (const auto& test : kTestCases) {

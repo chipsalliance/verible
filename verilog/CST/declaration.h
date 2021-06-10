@@ -106,15 +106,15 @@ const verible::SyntaxTreeNode* GetQualifiersOfDataDeclaration(
     const verible::Symbol& data_declaration);
 
 // For a given data declaration (includes module instantiation), returns the
-// subtree containing the type.  e.g. from "foo #(...) bar..., baz...;",
-// this returns the subtree spanning "foo #(...)".
+// subtree containing the type.  e.g. from "foo  #(...) bar..., baz...;",
+// this returns the subtree spanning "foo  #(...)".
 // It is possible for type to be implicit, in which case, the node
 // will be an empty subtree.
 const verible::SyntaxTreeNode& GetInstantiationTypeOfDataDeclaration(
     const verible::Symbol& data_declaration);
 
 // For a given data declaration returns the node spanning param declaration
-// list. e.g "module_type #(N)" return the node for "#(N)".
+// list. e.g "module_type  #(N)" return the node for " #(N)".
 const verible::SyntaxTreeNode* GetParamListFromDataDeclaration(
     const verible::Symbol&);
 

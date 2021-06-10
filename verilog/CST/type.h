@@ -177,7 +177,7 @@ const verible::Symbol* GetBaseTypeFromInstantiationType(
 
 // For a given unqualified id node returns the node spanning param
 // declaration.
-// e.g from "class_name#(x, y)" returns returns the node spanning "#(x, y)".
+// e.g from "class_name #(x, y)" returns returns the node spanning " #(x, y)".
 const verible::SyntaxTreeNode* GetParamListFromUnqualifiedId(
     const verible::Symbol& unqualified_id);
 const verible::SyntaxTreeNode* GetParamListFromBaseType(

@@ -1,5 +1,5 @@
  //- @foo defines/binding Foo
- module foo #(
+ module foo  #(
     //- @baz defines/binding Baz
     parameter int baz = 2
   ) ();
@@ -12,7 +12,7 @@ module m1();
     int baz, x;
 
     //- @foo ref Foo
-    foo #(
+    foo  #(
         //- @#0baz ref Baz
         //- @#1baz ref Baz1
         .baz(baz))
@@ -22,7 +22,7 @@ module m1();
     //- @x ref X
     if (x) begin
         //- @foo ref Foo
-        foo #(
+        foo  #(
             //- @#0baz ref Baz
             //- @#1baz ref Baz1
             .baz(baz)
@@ -36,7 +36,7 @@ module m1();
         assign bar.baz = baz;
     end else if(x) begin
         //- @foo ref Foo
-        foo #(
+        foo  #(
             //- @#0baz ref Baz
             //- @#1baz ref Baz1
             .baz(baz)
@@ -50,7 +50,7 @@ module m1();
         assign bar.baz = baz;
     end else begin
        //- @foo ref Foo
-        foo #(
+        foo  #(
             //- @#0baz ref Baz
             //- @#1baz ref Baz1
             .baz(baz)

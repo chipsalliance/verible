@@ -35,25 +35,25 @@ using verible::RunLintTestCases;
 TEST(ModuleInstantiationTests, Parameters) {
   const std::initializer_list<LintTestCase> kTestCases = {
       // Test incorrect code
-      {"module m; foo #(",
+      {"module m; foo  #(",
        {SymbolIdentifier, "fizz"},
        ", buzz) bar; endmodule"},
       // Note: The following cases are already syntactically rejected:
-      // {"module m; foo #(.fizz(bang), buzz) bar;"},
-      // {"module m; foo #(fizz, .buzz(pop)) bar;"},
+      // {"module m; foo  #(.fizz(bang), buzz) bar;"},
+      // {"module m; foo  #(fizz, .buzz(pop)) bar;"},
 
-      {"module m; foo #(", {TK_DecNumber, "1"}, ", 2, 3) bar; endmodule"},
-      {"module m; foo #(", {TK_DecNumber, "1"}, ", \n2, \n3) bar; endmodule"},
+      {"module m; foo  #(", {TK_DecNumber, "1"}, ", 2, 3) bar; endmodule"},
+      {"module m; foo  #(", {TK_DecNumber, "1"}, ", \n2, \n3) bar; endmodule"},
       {
-          "module m; foo #(",
+          "module m; foo  #(",
           {TK_DecNumber, "3"},
           ", 1) bar; endmodule\n"
-          "function f; beep #(1, 2) boop; endfunction"  // inside function does
+          "function f; beep  #(1, 2) boop; endfunction"  // inside function does
                                                         // not trigger
       },
 
       // TODO(fangism): determine how to handle conditionals
-      // {"module m; foo #(\n`ifdef FOO\n2,\n`endif\n4) bar; endmodule"},
+      // {"module m; foo  #(\n`ifdef FOO\n2,\n`endif\n4) bar; endmodule"},
 
       // Test correct code
       {""},
@@ -63,28 +63,28 @@ TEST(ModuleInstantiationTests, Parameters) {
       {"function f; endfunction"},
       {"class c; endclass"},
       {
-          "function f; beep #(5, 2) boop; endfunction"
+          "function f; beep  #(5, 2) boop; endfunction"
           // inside function does not trigger
       },
       {
-          "class c; beep #(5, 2) boop; endclass"
+          "class c; beep  #(5, 2) boop; endclass"
           // inside class does not trigger
       },
       {
-          "class c; function f; beep #(5, 2) boop; endfunction endclass"
+          "class c; function f; beep  #(5, 2) boop; endfunction endclass"
           // inside method does not trigger
       },
-      {"module m; foo #(1) bar; endmodule"},
+      {"module m; foo  #(1) bar; endmodule"},
       {"module m; foo bar; endmodule"},
       {"module m; foo bar (merp, la, derp); endmodule"},
       {"module m; foo bar (.he(ooo)); endmodule"},
-      {"module m; foo #(.roo(ra)) bar; endmodule"},
-      {"module m; foo #(.roo(ra), .bing(bong)) bar; endmodule"},
-      {"module m; foo #(.roo, .bing) bar; endmodule"},
-      {"module m; foo #(.roo(ra), \n.bing(bong)) bar; endmodule"},
-      {"module m; foo #(.roo, \n.bing) bar; endmodule"},
-      {"module m; foo #(.roo) bar; endmodule"},
-      {"class c; uvm_analysis_imp_ingress_pe #(seqitem_t, scoreboard_t) "
+      {"module m; foo  #(.roo(ra)) bar; endmodule"},
+      {"module m; foo  #(.roo(ra), .bing(bong)) bar; endmodule"},
+      {"module m; foo  #(.roo, .bing) bar; endmodule"},
+      {"module m; foo  #(.roo(ra), \n.bing(bong)) bar; endmodule"},
+      {"module m; foo  #(.roo, \n.bing) bar; endmodule"},
+      {"module m; foo  #(.roo) bar; endmodule"},
+      {"class c; uvm_analysis_imp_ingress_pe  #(seqitem_t, scoreboard_t) "
        "ingress_pe_port; endclass"},
   };
 
@@ -134,12 +134,12 @@ TEST(ModuleInstantiationTests, Ports) {
       {"module m; foo bar(1); endmodule"},
       {"module m; foo bar(1,); endmodule"},
       {"module m; foo bar; endmodule"},
-      {"module m; foo #(merp, la, derp) bar; endmodule"},
+      {"module m; foo  #(merp, la, derp) bar; endmodule"},
       {"module m; foo bar (.he(ooo)); endmodule"},
-      {"module m; foo #(.roo(ra)) bar; endmodule"},
+      {"module m; foo  #(.roo(ra)) bar; endmodule"},
       {"module m; foo bar (.roo(ra), .bing(bong)); endmodule"},
       {"module m; foo bar (.roo, .bing); endmodule"},
-      {"module m; foo #(.roo(ra)) \n bar; endmodule"},
+      {"module m; foo  #(.roo(ra)) \n bar; endmodule"},
       {"module m; foo bar (.roo(ra), \n.bing(bong)); endmodule"},
       {"module m; foo bar (.roo,\n.bing); endmodule"},
       {"module m; foo bar (.roo); endmodule"},

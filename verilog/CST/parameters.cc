@@ -52,7 +52,7 @@ verilog_tokentype GetParamKeyword(const verible::Symbol& symbol) {
   // declared, see example below. As such, if it's not declared, we will treat
   // it as a parameter.
   //
-  // module foo #(int Bar = 1); endmodule
+  // module foo  #(int Bar = 1); endmodule
   //
   const auto* param_keyword_symbol =
       verible::GetSubtreeAsSymbol(symbol, NodeEnum::kParamDeclaration, 0);

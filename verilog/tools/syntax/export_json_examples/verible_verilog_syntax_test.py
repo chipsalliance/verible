@@ -150,7 +150,7 @@ class TestTree(VeribleVerilogSyntaxTest):
   def setUp(self):
     super().setUp()
     data = self.parser.parse_string(
-        "module ModuleName#(parameter PARAM_NAME=42)\n" +
+        "module ModuleName #(parameter PARAM_NAME=42)\n" +
         "    (input portIn, output portOut);\n" +
         "  import import_pkg_name::*;\n" +
         "  wire wireName;\n" +

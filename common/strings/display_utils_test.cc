@@ -39,10 +39,10 @@ TEST(AutoTruncateTest, Various) {
       {"abcdefghij", 9, "abc...hij"},
       {"abcdefghijk", 9, "abc...ijk"},
       {"abcdefghijk", 10, "abcd...ijk"},  // more head than tail
-      {"123!(@*#&)!#$!@#(*xyz", 9, "123...xyz"},
-      {"123!(@*#&)!#$!@#(*xyz", 10, "123!...xyz"},
-      {"123!(@*#&)!#$!@#(*xyz", 11, "123!...*xyz"},
-      {"123!(@*#&)!#$!@#(*xyz", 12, "123!(...*xyz"},
+      {"123!(@*#&)!#$!@ #(*xyz", 9, "123...xyz"},
+      {"123!(@*#&)!#$!@ #(*xyz", 10, "123!...xyz"},
+      {"123!(@*#&)!#$!@ #(*xyz", 11, "123!...*xyz"},
+      {"123!(@*#&)!#$!@ #(*xyz", 12, "123!(...*xyz"},
   };
   for (const auto& test : kTestCases) {
     std::ostringstream stream;

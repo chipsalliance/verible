@@ -1142,7 +1142,7 @@ void TreeUnwrapper::SetIndentationsAndCreatePartitions(
       // Since NodeEnum::kActualParameterPositionalList consists of a
       // comma-separated list of expressions, we let those default to appending
       // to current token partition, and let the line-wrap-optimizer handle the
-      // enclosing construct, such as a parameterized type like "foo #(1, 2)".
+      // enclosing construct, such as a parameterized type like "foo  #(1, 2)".
 
       // Special cases:
     case NodeEnum::kPropertySpec: {
@@ -1580,7 +1580,7 @@ void TreeUnwrapper::ReshapeTokenPartitions(
     }
 
     case NodeEnum::kClassHeader: {
-      // Allow empty parameters to appear as "#();"
+      // Allow empty parameters to appear as " #();"
       if (partition.Children().size() >= 2) {
         auto& last = partition.Children().back();
         auto& last_prev = *ABSL_DIE_IF_NULL(last.PreviousSibling());

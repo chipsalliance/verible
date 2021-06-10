@@ -1,6 +1,6 @@
 //- @S defines/binding S
 //- @T defines/binding T
-class S #(parameter type T);
+class S  #(parameter type T);
     //- @T ref T
     //- @foo defines/binding _
     T::member_type foo;
@@ -13,12 +13,12 @@ endclass
 //- @S ref S
 //- @some_type ref SomeType
 //- @bar defines/binding _
-S#(logic)::some_type bar;
+S #(logic)::some_type bar;
 
 //- @m1 defines/binding _
 module m1();
     //- @S ref S
     //- @some_type ref SomeType
     //- @bar defines/binding _
-    S#(logic)::some_type bar;
+    S #(logic)::some_type bar;
 endmodule

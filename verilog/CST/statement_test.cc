@@ -99,7 +99,7 @@ TEST(GetAnyControlStatementBodyTest, Various) {
         "  if (expr)\n"
         "   foo bar;\n"
         "  else \n",
-        {kTag, "bar#(1)   foo;"},
+        {kTag, "bar #(1)   foo;"},
         "\n"
         "endmodule\n"}},
       {NodeEnum::kGenerateElseClause,
@@ -107,7 +107,7 @@ TEST(GetAnyControlStatementBodyTest, Various) {
         "  if (expr)\n"
         "   foo bar;\n"
         "  else \n",
-        {kTag, "begin \nbar#(1)   foo; baz bam();\nend"},
+        {kTag, "begin \nbar #(1)   foo; baz bam();\nend"},
         "\n"
         "endmodule\n"}},
 
@@ -122,14 +122,14 @@ TEST(GetAnyControlStatementBodyTest, Various) {
        {"module m;\n"
         "  for (genvar i=0; i<N; ++i)\n"
         "   ",
-        {kTag, "foo#(.N(i)) bar;"},
+        {kTag, "foo #(.N(i)) bar;"},
         "\n"
         "endmodule\n"}},
       {NodeEnum::kLoopGenerateConstruct,
        {"module m;\n"
         "  for (genvar i=0; i<N; ++i)\n"
         "   ",
-        {kTag, "begin:l1\n      foo#(.N(i)) bar;\n  end : l1"},
+        {kTag, "begin:l1\n      foo #(.N(i)) bar;\n  end : l1"},
         "\n"
         "endmodule\n"}},
 

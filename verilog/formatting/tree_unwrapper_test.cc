@@ -573,7 +573,7 @@ const TreeUnwrapperTestData kUnwrapModuleTestCases[] = {
 
     {
         "module with parameters",
-        "module foo #("
+        "module foo  #("
         "parameter bar =1,"
         "localparam baz =2"
         ");"
@@ -590,7 +590,7 @@ const TreeUnwrapperTestData kUnwrapModuleTestCases[] = {
 
     {
         "module with conditional parameters",
-        "module foo #("
+        "module foo  #("
         "`ifdef FOO\n"
         "parameter bar =1,"
         "`endif\n"
@@ -611,7 +611,7 @@ const TreeUnwrapperTestData kUnwrapModuleTestCases[] = {
 
     {
         "module with parameters and ports",
-        "module foo #("
+        "module foo  #("
         "parameter bar =1,"
         "localparam baz =2"
         ") ("
@@ -634,7 +634,7 @@ const TreeUnwrapperTestData kUnwrapModuleTestCases[] = {
 
     {
         "module with parameters and empty ports",
-        "module foo #("
+        "module foo  #("
         "parameter bar =1,"
         "localparam baz =2"
         ") ();"
@@ -651,7 +651,7 @@ const TreeUnwrapperTestData kUnwrapModuleTestCases[] = {
 
     {
         "module with parameters and EOL comment before first param",
-        "module foo #(//comment\n"
+        "module foo  #(//comment\n"
         "parameter bar =1,"
         "localparam baz =2"
         ") ();"
@@ -668,7 +668,7 @@ const TreeUnwrapperTestData kUnwrapModuleTestCases[] = {
 
     {
         "module with parameters and EOL comment after first param",
-        "module foo #("
+        "module foo  #("
         "parameter bar =1,//comment\n"
         "localparam baz =2"
         ") ();"
@@ -686,7 +686,7 @@ const TreeUnwrapperTestData kUnwrapModuleTestCases[] = {
 
     {
         "module with parameters and EOL comment after first param",
-        "module foo #("
+        "module foo  #("
         "parameter bar =1,"
         "localparam baz =2//comment\n"
         ") ();"
@@ -796,7 +796,7 @@ const TreeUnwrapperTestData kUnwrapModuleTestCases[] = {
     {
         "module with header import before parameters",
         "module foo import p_pkg::*;\n"
-        "#(int w = 2)"
+        " #(int w = 2)"
         "(qux);"
         "endmodule",
         ModuleDeclaration(
@@ -1115,8 +1115,8 @@ const TreeUnwrapperTestData kUnwrapModuleTestCases[] = {
     {
         "module with instantiations with parameterized types (positional)",
         "module tryme;"
-        "foo #(1) a;"
-        "bar #(2, 3) b();"
+        "foo  #(1) a;"
+        "bar  #(2, 3) b();"
         "endmodule",
         ModuleDeclaration(
             0, L(0, {"module", "tryme", ";"}),
@@ -1133,8 +1133,8 @@ const TreeUnwrapperTestData kUnwrapModuleTestCases[] = {
     {
         "module with instantiations with single-parameterized types (named)",
         "module tryme;"
-        "foo #(.N(1)) a;"
-        "bar #(.M(2)) b();"
+        "foo  #(.N(1)) a;"
+        "bar  #(.M(2)) b();"
         "endmodule",
         ModuleDeclaration(
             0, L(0, {"module", "tryme", ";"}),
@@ -1155,7 +1155,7 @@ const TreeUnwrapperTestData kUnwrapModuleTestCases[] = {
     {
         "module with instantiations with multi-parameterized types (named)",
         "module tryme;"
-        "foo #(.N(1), .M(4)) a;"
+        "foo  #(.N(1), .M(4)) a;"
         "endmodule",
         ModuleDeclaration(
             0, L(0, {"module", "tryme", ";"}),
@@ -1173,7 +1173,7 @@ const TreeUnwrapperTestData kUnwrapModuleTestCases[] = {
         "module with parameterized instantiations with comment before first "
         "param",
         "module tryme;"
-        "foo #(//comment\n.N(5),.M(6)) a;"
+        "foo  #(//comment\n.N(5),.M(6)) a;"
         "endmodule",
         ModuleDeclaration(0, L(0, {"module", "tryme", ";"}),
                           Instantiation(1, L(1, {"foo", "#", "(", "//comment"}),
@@ -1187,7 +1187,7 @@ const TreeUnwrapperTestData kUnwrapModuleTestCases[] = {
     {
         "module with parameterized instantiations with parameter EOL comment",
         "module tryme;"
-        "foo #(.N(5), //comment\n.M(6)) a;"
+        "foo  #(.N(5), //comment\n.M(6)) a;"
         "endmodule",
         ModuleDeclaration(
             0, L(0, {"module", "tryme", ";"}),
@@ -1203,7 +1203,7 @@ const TreeUnwrapperTestData kUnwrapModuleTestCases[] = {
         "module with parameterized instantiations with EOL comment (last "
         "param)",
         "module tryme;"
-        "foo #(.N(5),.M(6)//comment\n) a;"
+        "foo  #(.N(5),.M(6)//comment\n) a;"
         "endmodule",
         ModuleDeclaration(
             0, L(0, {"module", "tryme", ";"}),
@@ -1218,7 +1218,7 @@ const TreeUnwrapperTestData kUnwrapModuleTestCases[] = {
     {
         "module instance with named parameter interleaved among EOL comments",
         "module tryme;"
-        "foo #(//c1\n//c2\n.N(5), //c3\n//c4\n.M(6)//c5\n//c6\n) a;"
+        "foo  #(//c1\n//c2\n.N(5), //c3\n//c4\n.M(6)//c5\n//c6\n) a;"
         "endmodule",
         ModuleDeclaration(
             0, L(0, {"module", "tryme", ";"}),
@@ -3302,7 +3302,7 @@ const TreeUnwrapperTestData kClassTestCases[] = {
 
     {
         "extends class",
-        "class Foo extends Bar #(x,y,z); endclass",
+        "class Foo extends Bar  #(x,y,z); endclass",
         ClassDeclaration(0,
                          L(0, {"class", "Foo", "extends", "Bar", "#", "(", "x",
                                ",", "y", ",", "z", ")", ";"}),
@@ -3310,7 +3310,7 @@ const TreeUnwrapperTestData kClassTestCases[] = {
     },
     {
         "extends class with type parameters",
-        "class Foo extends Bar #(.x(x),.y(y)); endclass",
+        "class Foo extends Bar  #(.x(x),.y(y)); endclass",
         ClassDeclaration(
             0,
             ClassHeader(0,  //
@@ -3925,14 +3925,14 @@ const TreeUnwrapperTestData kClassTestCases[] = {
 
     {
         "class with empty parameter list",
-        "class Foo #(); endclass",
+        "class Foo  #(); endclass",
         ClassDeclaration(0, L(0, {"class", "Foo", "#", "(", ")", ";"}),
                          L(0, {"endclass"})),
     },
 
     {
         "class with one parameter list",
-        "class Foo #(type a = b); endclass",
+        "class Foo  #(type a = b); endclass",
         ClassDeclaration(
             0,
             ClassHeader(0, L(0, {"class", "Foo", "#", "("}),
@@ -3942,7 +3942,7 @@ const TreeUnwrapperTestData kClassTestCases[] = {
 
     {
         "class with multiple parameter list",
-        "class Foo #(type a = b, type c = d, type e = f); endclass",
+        "class Foo  #(type a = b, type c = d, type e = f); endclass",
         ClassDeclaration(0,
                          ClassHeader(0, L(0, {"class", "Foo", "#", "("}),
                                      ClassParameterList(
@@ -4056,7 +4056,7 @@ const TreeUnwrapperTestData kUnwrapPackageTestCases[] = {
     {
         "package with typedef declaration on type with named parameters",
         "package foo_pkg;"
-        "typedef goo_pkg::baz_t #(.X(X),.Y(Y)) bar_t;"
+        "typedef goo_pkg::baz_t  #(.X(X),.Y(Y)) bar_t;"
         "endpackage",
         PackageDeclaration(
             0,  //
@@ -4188,7 +4188,7 @@ const TreeUnwrapperTestData kDescriptionTestCases[] = {
     },
     {
         "one bind declaration",
-        "bind foo bar#(.x(y)) baz(.clk(clk));",
+        "bind foo bar #(.x(y)) baz(.clk(clk));",
         N(0,  // kBindDeclaration
           L(0, {"bind", "foo", "bar", "#", "("}),
           L(2, {".", "x", "(", "y", ")"}),
@@ -4906,7 +4906,7 @@ const TreeUnwrapperTestData kUnwrapInterfaceTestCases[] = {
 
     {
         "empty interface, empty params",
-        "interface foo_if#( );"
+        "interface foo_if #( );"
         "endinterface",
         InterfaceDeclaration(0,
                              L(0, {"interface", "foo_if", "#", "(", ")", ";"}),
@@ -4915,7 +4915,7 @@ const TreeUnwrapperTestData kUnwrapInterfaceTestCases[] = {
 
     {
         "empty interface, empty params, with comment",
-        "interface foo_if#(\n"
+        "interface foo_if #(\n"
         "//comment\n"
         ");"
         "endinterface",
@@ -4936,7 +4936,7 @@ const TreeUnwrapperTestData kUnwrapInterfaceTestCases[] = {
 
     {
         "empty interface, empty params with comment, empty ports",
-        "interface foo_if#(\n"
+        "interface foo_if #(\n"
         "//comment\n"
         ")( );"
         "endinterface",
@@ -4949,7 +4949,7 @@ const TreeUnwrapperTestData kUnwrapInterfaceTestCases[] = {
 
     {
         "empty interface, one param type, empty ports",
-        "interface foo_if#(\n"
+        "interface foo_if #(\n"
         "parameter type T = bit\n"
         ")( );"
         "endinterface",

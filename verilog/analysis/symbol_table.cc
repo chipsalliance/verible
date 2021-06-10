@@ -362,7 +362,7 @@ class SymbolTable::Builder : public TreeContextVisitor {
   // The state/stack management here is intended to accommodate type references
   // of arbitrary complexity.
   // A generalized type could look like:
-  //   "A#(.B(1))::C#(.D(E#(.F(0))))::G"
+  //   "A #(.B(1))::C #(.D(E #(.F(0))))::G"
   // This should produce the following reference trees:
   //   A -+- ::B
   //      |
@@ -416,7 +416,7 @@ class SymbolTable::Builder : public TreeContextVisitor {
       // conditionals.
       const size_t num_params = FindAllNamedParams(node).size();
       // +1 to accommodate the slot needed for a nested type reference
-      // e.g. for "B" in "A#(.X(), .Y(), ...)::B"
+      // e.g. for "B" in "A #(.X(), .Y(), ...)::B"
       reference_branch_point_->Children().reserve(num_params + 1);
     }
     Descend(node);
@@ -660,7 +660,7 @@ class SymbolTable::Builder : public TreeContextVisitor {
     // when encountering the first unqualified reference, establish its
     // reference node as the point from which named parameter references
     // get added as siblings.
-    // e.g. "A#(.B(...), .C(...))" would result in a reference tree:
+    // e.g. "A #(.B(...), .C(...))" would result in a reference tree:
     //   A -+- ::B
     //      |
     //      \- ::C
@@ -1257,7 +1257,7 @@ class SymbolTable::Builder : public TreeContextVisitor {
   SymbolTableNode* current_scope_;
 
   // Stack of references.
-  // A stack is needed to support nested type references like "A#(B(#(C)))",
+  // A stack is needed to support nested type references like "A #(B( #(C)))",
   // and nested expressions like "f(g(h))"
   std::stack<DependentReferences> reference_builders_;
 
@@ -1344,7 +1344,7 @@ const ReferenceComponentNode* DependentReferences::LastLeaf() const {
 template <typename RefType>
 static RefType* ReferenceLastTypeComponent(RefType* node) {
   // This references a type that may be nested and have name parameters.
-  // From A#(.B())::C#(.D()), we want C as the desired type component.
+  // From A #(.B())::C #(.D()), we want C as the desired type component.
   while (!node->is_leaf()) {
     // There should be at most one non-parameter at each branch point,
     // so stop at the first one found.
@@ -1365,7 +1365,7 @@ static RefType* ReferenceLastTypeComponent(RefType* node) {
 
 const ReferenceComponentNode* DependentReferences::LastTypeComponent() const {
   // This references a type that may be nested and have name parameters.
-  // From A#(.B())::C#(.D()), we want C as the desired type component.
+  // From A #(.B())::C #(.D()), we want C as the desired type component.
   if (components == nullptr) return nullptr;
   const ReferenceComponentNode* node = components.get();
   return ReferenceLastTypeComponent(node);

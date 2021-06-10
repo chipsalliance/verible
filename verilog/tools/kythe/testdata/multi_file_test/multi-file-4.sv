@@ -4,7 +4,7 @@ module my_module2(
     input in2);
 
     //- @my_module ref MyModule
-    my_module #(
+    my_module  #(
             //- @ADDR_WIDTH ref ADDR_WIDTH
             //- @pkg1 ref Pkg1
             //- @PARAM ref Param

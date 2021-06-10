@@ -63,16 +63,16 @@ TEST(ExplicitParameterStorageTypeRuleTest, AcceptTests) {
       {"package foo; parameter type Bar = 1; endpackage"},
       {"module foo; localparam bit Bar = 1; endmodule"},
       {"module foo; localparam int signed Bar = 1; endmodule"},
-      {"module foo #(parameter int Bar = 1); endmodule"},
-      {"module foo #(parameter signed Bar = 1); endmodule"},
-      {"module foo #(parameter int signed Bar = 1); endmodule"},
-      {"module foo #(parameter Other_t Bar = 1); endmodule"},
-      {"module foo #(parameter mypkg::Other_t Bar = mypkg::N); endmodule"},
+      {"module foo  #(parameter int Bar = 1); endmodule"},
+      {"module foo  #(parameter signed Bar = 1); endmodule"},
+      {"module foo  #(parameter int signed Bar = 1); endmodule"},
+      {"module foo  #(parameter Other_t Bar = 1); endmodule"},
+      {"module foo  #(parameter mypkg::Other_t Bar = mypkg::N); endmodule"},
       {"class foo; localparam logic Bar = 1; endclass"},
       {"class foo; parameter string Bar = \"Bar\"; endclass"},
-      {"class foo #(parameter int Bar = 1); endclass"},
-      {"class foo #(parameter Other_t Bar = 1); endclass"},
-      {"class foo #(parameter mypkg::Other_t Bar = mypkg::N); endclass"},
+      {"class foo  #(parameter int Bar = 1); endclass"},
+      {"class foo  #(parameter Other_t Bar = 1); endclass"},
+      {"class foo  #(parameter mypkg::Other_t Bar = mypkg::N); endclass"},
   };
   RunLintTestCases<VerilogAnalyzer, ExplicitParameterStorageTypeRule>(
       kTestCases);
@@ -88,7 +88,7 @@ TEST(ExplicitParameterStorageTypeRuleTest, RejectTests) {
       {"module foo; localparam ", {kToken, "Bar"}, " = 1; endmodule"},
       {"class foo; localparam ", {kToken, "Bar"}, " = 1; endclass"},
       {"class foo; parameter ", {kToken, "Bar"}, " = 1; endclass"},
-      {"module foo #(parameter ", {kToken, "Bar"}, " = 1); endmodule"},
+      {"module foo  #(parameter ", {kToken, "Bar"}, " = 1); endmodule"},
   };
   RunLintTestCases<VerilogAnalyzer, ExplicitParameterStorageTypeRule>(
       kTestCases);

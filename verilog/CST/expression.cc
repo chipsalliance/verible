@@ -120,7 +120,7 @@ static const verible::TokenInfo* ReferenceBaseIsSimple(
   }
   // Expect to hit kUnqualifiedId, which has two children.
   // child[0] should be a SymbolIdentifier (or similar) token.
-  // child[1] are optional #(parameters), which would imply child[0] is
+  // child[1] are optional  #(parameters), which would imply child[0] is
   // referring to a parameterized type.
   const auto& unqualified_id(
       verible::CheckSymbolAsNode(bottom, NodeEnum::kUnqualifiedId));

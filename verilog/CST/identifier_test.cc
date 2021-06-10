@@ -93,7 +93,7 @@ TEST(GetIdentifierTest, UnqualifiedIds) {
       {"wire branch;"},            // branch is an AMS keyword
       {{kTag, "tree"}, " ", {kTag, "bark"}, ";"},
       {{kTag, "p_pkg"}, "::", {kTag, "tree"}, " ", {kTag, "bark"}, ";"},
-      {{kTag, "p_pkg"}, "::", {kTag, "tree"}, "#(11) ", {kTag, "bark"}, ";"},
+      {{kTag, "p_pkg"}, "::", {kTag, "tree"}, " #(11) ", {kTag, "bark"}, ";"},
   };
   // Test GetIdentifier
   for (const auto& test : kTestCases) {

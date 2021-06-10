@@ -1345,12 +1345,12 @@ TEST(BuildSymbolTableTest,
 
 TEST(BuildSymbolTableTest, ModuleInstancePositionalParameterAssignment) {
   TestVerilogSourceFile src("foobar.sv",
-                            "module m #(\n"
+                            "module m  #(\n"
                             "  int N = 1\n"
                             ");\n"
                             "endmodule\n"
                             "module rr;\n"
-                            "  m #(3) m_inst();"
+                            "  m  #(3) m_inst();"
                             // one type reference to "m"
                             // one instance self-reference
                             "endmodule\n");
@@ -1399,13 +1399,13 @@ TEST(BuildSymbolTableTest, ModuleInstancePositionalParameterAssignment) {
 
 TEST(BuildSymbolTableTest, ModuleInstanceNamedParameterAssignment) {
   TestVerilogSourceFile src("foobar.sv",
-                            "module m #(\n"
+                            "module m  #(\n"
                             "  int N = 0,\n"
                             "  int P = 1\n"
                             ");\n"
                             "endmodule\n"
                             "module rr;\n"
-                            "  m #(.N(2), .P(3)) m_inst();"
+                            "  m  #(.N(2), .P(3)) m_inst();"
                             // one type reference, one instance self-reference
                             // two named param rereference
                             "endmodule\n");
@@ -1471,14 +1471,14 @@ TEST(BuildSymbolTableTest, ModuleInstanceNamedParameterAssignment) {
 
 TEST(BuildSymbolTableTest, ModuleInstanceNamedPortIsParameter) {
   TestVerilogSourceFile src("foobar.sv",
-                            "module m #(\n"
+                            "module m  #(\n"
                             "  int N = 0\n"
                             ") (\n"
                             "  input wire clk\n"
                             ");\n"
                             "endmodule\n"
                             "module rr;\n"
-                            "  m #(.clk(2)) m_inst();"
+                            "  m  #(.clk(2)) m_inst();"
                             // error: clk is a net-port, not parameter
                             "endmodule\n");
   const auto status = src.Parse();
@@ -1539,7 +1539,7 @@ TEST(BuildSymbolTableTest, ModuleInstanceNamedPortIsParameter) {
 
 TEST(BuildSymbolTableTest, ModuleInstanceNamedParameterIsPort) {
   TestVerilogSourceFile src("foobar.sv",
-                            "module m #(\n"
+                            "module m  #(\n"
                             "  int N = 0\n"
                             ") (\n"
                             "  input wire clk\n"
@@ -1681,13 +1681,13 @@ TEST(BuildSymbolTableTest, ModuleInstanceNamedPortConnectionNonexistentPort) {
 
 TEST(BuildSymbolTableTest, ModuleInstanceNamedParameterNonexistentError) {
   TestVerilogSourceFile src("foobar.sv",
-                            "module m #(\n"
+                            "module m  #(\n"
                             "  int N = 0,\n"
                             "  int P = 1\n"
                             ");\n"
                             "endmodule\n"
                             "module rr;\n"
-                            "  m #(.N(2), .Q(3)) m_inst();"
+                            "  m  #(.N(2), .Q(3)) m_inst();"
                             // one type reference, one instance self-reference
                             // two named param rereference (one error)
                             "endmodule\n");
@@ -2063,7 +2063,7 @@ TEST(BuildSymbolTableTest, ReferenceOneParameterFromRootToPackageNoSuchMember) {
 
 TEST(BuildSymbolTableTest, ModuleDeclarationWithParameters) {
   TestVerilogSourceFile src("foobar.sv",
-                            "module m #(\n"
+                            "module m  #(\n"
                             "  int W = 2,\n"
                             "  bar B = W\n"
                             ");\n"
@@ -2129,7 +2129,7 @@ TEST(BuildSymbolTableTest, ModuleDeclarationWithParameters) {
 
 TEST(BuildSymbolTableTest, ModuleDeclarationLocalsDependOnParameter) {
   TestVerilogSourceFile src("foobar.sv",
-                            "module m #(\n"
+                            "module m  #(\n"
                             "  parameter int N = 2\n"
                             ") (\n"
                             "  input logic [N-1:0] ins,\n"  // ref
@@ -2250,7 +2250,7 @@ TEST(BuildSymbolTableTest, ClassDeclarationNested) {
 
 TEST(BuildSymbolTableTest, ClassDeclarationWithParameter) {
   TestVerilogSourceFile src("foobar.sv",
-                            "class cc #(\n"
+                            "class cc  #(\n"
                             "  int N = 2\n"
                             ");\n"
                             "endclass\n");
@@ -3207,7 +3207,7 @@ TEST(BuildSymbolTableTest,
 
 TEST(BuildSymbolTableTest, TypeParameterizedModuleDeclaration) {
   TestVerilogSourceFile src("camelot_param_alot.sv",
-                            "module mm #(parameter type T = bit);\n"
+                            "module mm  #(parameter type T = bit);\n"
                             "endmodule\n");
   const auto status = src.Parse();
   ASSERT_TRUE(status.ok()) << status.message();
@@ -3238,9 +3238,9 @@ TEST(BuildSymbolTableTest, TypeParameterizedModuleDeclaration) {
 
 TEST(BuildSymbolTableTest, TypeParameterizedClassDataDeclarations) {
   TestVerilogSourceFile src("i_push_the_param_alot.sv",
-                            "class cc #(parameter type T = bit);\n"
+                            "class cc  #(parameter type T = bit);\n"
                             "endclass\n"
-                            "cc#(cc#(int)) data;\n");
+                            "cc #(cc #(int)) data;\n");
   const auto status = src.Parse();
   ASSERT_TRUE(status.ok()) << status.message();
   SymbolTable symbol_table(nullptr);
@@ -3304,13 +3304,13 @@ TEST(BuildSymbolTableTest,
   TestVerilogSourceFile src(
       "i_eat_ham_and_jam_and_spam_alot.sv",
       "package pp;\n"
-      "  class cc #(\n"
+      "  class cc  #(\n"
       "    parameter type T1 = bit,\n"
       "    parameter type T2 = bit\n"
       "  );\n"
       "  endclass\n"
       "endpackage\n"
-      "pp::cc#(pp::cc#(int, bit), pp::cc#(bit, int)) data;\n");
+      "pp::cc #(pp::cc #(int, bit), pp::cc #(bit, int)) data;\n");
   const auto status = src.Parse();
   ASSERT_TRUE(status.ok()) << status.message();
   SymbolTable symbol_table(nullptr);
@@ -3394,11 +3394,11 @@ TEST(BuildSymbolTableTest,
 TEST(BuildSymbolTableTest, NestedTypeParameterizedClassDataDeclaration) {
   TestVerilogSourceFile src(
       "its_fun_down_here_in_Camelot.sv",
-      "class outer #(parameter type S = int);\n"
-      "  class cc #(parameter type T = bit);\n"
+      "class outer  #(parameter type S = int);\n"
+      "  class cc  #(parameter type T = bit);\n"
       "  endclass\n"
       "endclass\n"
-      "outer#(outer#(int)::cc#(int))::cc#(outer#(bit)::cc#(bit)) data;\n");
+      "outer #(outer #(int)::cc #(int))::cc #(outer #(bit)::cc #(bit)) data;\n");
   const auto status = src.Parse();
   ASSERT_TRUE(status.ok()) << status.message();
   SymbolTable symbol_table(nullptr);
@@ -3486,12 +3486,12 @@ TEST(BuildSymbolTableTest, NestedTypeParameterizedClassDataDeclaration) {
 TEST(BuildSymbolTableTest,
      TypeParameterizedClassDataDeclarationNamedParameters) {
   TestVerilogSourceFile src("its_fun_down_here_in_Camelot.sv",
-                            "class cc #(\n"
+                            "class cc  #(\n"
                             "  parameter type S = int,\n"
                             "  parameter type T = bit\n"
                             ");\n"
                             "endclass\n"
-                            "cc#(.S(int), .T(int)) data;\n");
+                            "cc #(.S(int), .T(int)) data;\n");
   const auto status = src.Parse();
   ASSERT_TRUE(status.ok()) << status.message();
   SymbolTable symbol_table(nullptr);
@@ -3567,12 +3567,12 @@ TEST(BuildSymbolTableTest,
      NestedTypeParameterizedClassDataDeclarationNamedParameters) {
   TestVerilogSourceFile src(
       "i_need_to_upgrade_my_RAM_alot.sv",
-      "class outer #(parameter type S = int);\n"
-      "  class cc #(parameter type T = bit);\n"
+      "class outer  #(parameter type S = int);\n"
+      "  class cc  #(parameter type T = bit);\n"
       "  endclass\n"
       "endclass\n"
-      "outer#(.S(outer#(.S(int))::cc#(.T(int))))\n"
-      "    ::cc#(.T(outer#(.S(bit))::cc#(.T(bit)))) data;\n");
+      "outer #(.S(outer #(.S(int))::cc #(.T(int))))\n"
+      "    ::cc #(.T(outer #(.S(bit))::cc #(.T(bit)))) data;\n");
   const auto status = src.Parse();
   ASSERT_TRUE(status.ok()) << status.message();
   SymbolTable symbol_table(nullptr);
@@ -6620,7 +6620,7 @@ TEST(BuildSymbolTableTest, TypedefClassPartiallyResolvedQualifiedReference) {
 
 TEST(BuildSymbolTableTest, TypedefOfClassTypeParameter) {
   TestVerilogSourceFile src("typedef.sv",
-                            "class cc #(parameter type T = int);\n"
+                            "class cc  #(parameter type T = int);\n"
                             "  typedef T number;\n"
                             "  number foo;\n"
                             "endclass\n");
@@ -6684,10 +6684,10 @@ TEST(BuildSymbolTableTest, TypedefOfClassTypeParameter) {
 TEST(BuildSymbolTableTest, TypedefOfParameterizedClassPositionalParams) {
   TestVerilogSourceFile src("typedef.sv",
                             "package pp;\n"
-                            "  class cc #(parameter type T = int);\n"
+                            "  class cc  #(parameter type T = int);\n"
                             "  endclass\n"
                             "endpackage\n"
-                            "typedef pp::cc#(pp::cc#(int)) number;\n"
+                            "typedef pp::cc #(pp::cc #(int)) number;\n"
                             "number foo;\n");
   const auto status = src.Parse();
   ASSERT_TRUE(status.ok()) << status.message();
@@ -6770,10 +6770,10 @@ TEST(BuildSymbolTableTest, TypedefOfParameterizedClassPositionalParams) {
 TEST(BuildSymbolTableTest, TypedefOfParameterizedClassNamedParams) {
   TestVerilogSourceFile src("typedef.sv",
                             "package pp;\n"
-                            "  class cc #(parameter type T = int);\n"
+                            "  class cc  #(parameter type T = int);\n"
                             "  endclass\n"
                             "endpackage\n"
-                            "typedef pp::cc#(.T(pp::cc#(.T(int)))) number;\n"
+                            "typedef pp::cc #(.T(pp::cc #(.T(int)))) number;\n"
                             "number foo;\n");
   const auto status = src.Parse();
   ASSERT_TRUE(status.ok()) << status.message();
@@ -6813,7 +6813,7 @@ TEST(BuildSymbolTableTest, TypedefOfParameterizedClassNamedParams) {
   EXPECT_EQ(number_ref_comp.required_metatype, SymbolMetaType::kUnspecified);
   EXPECT_EQ(number_ref_comp.resolved_symbol, nullptr);
 
-  // Expect two type references to "pp::cc#(.T(...))".
+  // Expect two type references to "pp::cc #(.T(...))".
   ASSIGN_MUST_FIND(pp_refs, ref_map, "pp");
   EXPECT_EQ(pp_refs.size(), 2);
   for (const auto& pp_ref_iter : pp_refs) {
@@ -6846,7 +6846,7 @@ TEST(BuildSymbolTableTest, TypedefOfParameterizedClassNamedParams) {
     symbol_table.Resolve(&resolve_diagnostics);
     EXPECT_EMPTY_STATUSES(resolve_diagnostics);
 
-    // Resolve "pp::cc#(.T(...))" type references
+    // Resolve "pp::cc #(.T(...))" type references
     for (const auto& pp_ref_iter : pp_refs) {
       const ReferenceComponent& pp_ref_comp(pp_ref_iter->components->Value());
       EXPECT_EQ(pp_ref_comp.resolved_symbol, &pp_package);

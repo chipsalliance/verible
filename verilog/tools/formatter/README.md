@@ -74,8 +74,7 @@ These directives take precedence over `--lines` specifications.
 
 For files that are included as snippets in other contexts, e.g. only statements,
 or only module body items, adding a
-[parsing mode directive](../../analysis#alternative-parsing-modes) (such as `//
-verilog_syntax: parse-as-module-body`) will let the formatter parse and format
+[parsing mode directive](../../analysis#alternative-parsing-modes) (such as `// verilog_syntax: parse-as-module-body`) will let the formatter parse and format
 such files successfully.
 
 ## Interactive Formatting
@@ -179,7 +178,7 @@ make some judgment.
 Consider the following example (module formal parameters):
 
 ```
-module m #(
+module m  #(
   int W,
   type T
 );
@@ -190,7 +189,7 @@ endmodule
 With alignment, this formats to:
 
 ```
-module m #(
+module m  #(
   int  W,
   type T
 );
@@ -207,7 +206,7 @@ In contrast, aligning the following example _could_ be considered less readable.
 original:
 
 ```systemverilog
-module m #(
+module m  #(
   int  W,
   some_long_name T
 );
@@ -218,7 +217,7 @@ endmodule
 aligned:
 
 ```systemverilog
-module m #(
+module m  #(
   int            W,
   some_long_name T
 );
@@ -237,7 +236,7 @@ fall under indentation, not alignment). In this example, spaces are deliberately
 injected before `W` (but after `W` would work too):
 
 ```systemverilog
-module m #(
+module m  #(
   int      W,
   some_long_name T
 );
@@ -248,7 +247,7 @@ endmodule
 formatted with alignment:
 
 ```
-module m #(
+module m  #(
   int            W,
   some_long_name T
 );
@@ -279,18 +278,18 @@ tree to work with.
 
 Before outputting the formatted result, several properties are checked:
 
-*   **Equivalence**: The output is lexically equivalent to the input, meaning
-    that only whitespaces may have changed, but all other tokens are equal. For
-    example, if two identifiers accidentally got merged together into one (by
-    removing spaces between them), this check would fail. Lexical equivalence
-    also implies that the output is still parseable.
-*   **Convergence**: Re-formatting the _output_ results in no further changes.
-    This property is particularly important when the formatter is used to
-    _check_ that a file is formatted properly. Without convergence, such a check
-    would fail after formatting, potentially asking the user to run formatting
-    two or more times. Note that this requirement is stricter than _eventual
-    convergence_, which allows multiple iterations before reaching a
-    fixed-point.
+- **Equivalence**: The output is lexically equivalent to the input, meaning
+  that only whitespaces may have changed, but all other tokens are equal. For
+  example, if two identifiers accidentally got merged together into one (by
+  removing spaces between them), this check would fail. Lexical equivalence
+  also implies that the output is still parseable.
+- **Convergence**: Re-formatting the _output_ results in no further changes.
+  This property is particularly important when the formatter is used to
+  _check_ that a file is formatted properly. Without convergence, such a check
+  would fail after formatting, potentially asking the user to run formatting
+  two or more times. Note that this requirement is stricter than _eventual
+  convergence_, which allows multiple iterations before reaching a
+  fixed-point.
 
 ### Internal Limits
 

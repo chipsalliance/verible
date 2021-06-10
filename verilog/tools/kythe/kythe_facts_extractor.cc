@@ -183,7 +183,7 @@ class KytheFactsExtractor {
   void ReferenceModuleNamedPort(const IndexingFactNode&);
 
   // Extracts kythe facts from named param
-  // e.g module_type #(.N(x)) extracts "N";
+  // e.g module_type  #(.N(x)) extracts "N";
   void ReferenceNamedParam(const IndexingFactNode&);
 
   // Extracts kythe facts from module node and returns it VName.

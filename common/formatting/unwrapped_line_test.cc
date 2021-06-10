@@ -422,12 +422,12 @@ TEST_F(UnwrappedLineTest, AsCodeOneTokenNoIndent) {
 
 // Testing AsCode() with tokens and no indentation
 TEST_F(UnwrappedLineTest, AsCodeTextNoIndent) {
-  const std::vector<TokenInfo> tokens = {{0, "module"}, {1, "foo"}, {2, "#("}};
+  const std::vector<TokenInfo> tokens = {{0, "module"}, {1, "foo"}, {2, " #("}};
   CreateTokenInfos(tokens);
   UnwrappedLine uwline(0, pre_format_tokens_.begin(),
                        PartitionPolicyEnum::kAlwaysExpand);
   AddFormatTokens(&uwline);
-  const char expected[] = "[module foo #(], policy: always-expand";
+  const char expected[] = "[module foo  #(], policy: always-expand";
   std::ostringstream stream;
   stream << uwline;
   EXPECT_EQ(stream.str(), expected);

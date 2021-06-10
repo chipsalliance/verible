@@ -113,8 +113,8 @@ static const LeafMatcher<SymbolIdentifier> SymbolIdentifierLeaf;
 // NodekActualParameterList matches against the parameter list provided
 // to a parameterized module during instantiation.
 //
-// For instance, matches "#(1, 2, 3) in
-//   foo #(1, 2, 3) bar;
+// For instance, matches " #(1, 2, 3) in
+//   foo  #(1, 2, 3) bar;
 //
 
 // NodekGateInstance matches against the gate list for instantiated modules.
@@ -239,7 +239,7 @@ static const auto NumberHasBasedLiteral =
 // For instance,
 //   ActualParameterListNode(ActualParameterListHasPositionalParameterList());
 // matches
-//   foo #(1, 2) bar;
+//   foo  #(1, 2) bar;
 // and does not match
 //   foo $(.param(1), .param2(2));
 //

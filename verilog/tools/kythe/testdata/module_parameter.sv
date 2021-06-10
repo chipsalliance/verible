@@ -14,7 +14,7 @@ module  my_module2 ();
     parameter int var1 = 3;
 
     //- @my_module3 ref MyModule3
-    my_module3 #(
+    my_module3  #(
         //- @var1 ref Var1
         //- @DATA_WIDTH ref DATA_WIDTH2
        .DATA_WIDTH(var1), 
@@ -53,7 +53,7 @@ endmodule
 //- MyModule.subkind module
 //- MyModule.complete definition
 module my_module 
-  #(
+   #(
     //- @ADDR_WIDTH defines/binding ADDR_WIDTH2
     //- ADDR_WIDTH2 childof MyModule
     parameter ADDR_WIDTH=8,
@@ -77,7 +77,7 @@ module my_module
  endmodule
 
  //- @my_module4 defines/binding _
- module my_module4 #(
+ module my_module4  #(
     //- @a_param defines/binding AParam
     parameter int a_param = 2,
     //- @a_param ref AParam

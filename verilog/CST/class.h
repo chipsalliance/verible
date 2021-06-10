@@ -60,7 +60,7 @@ const verible::SyntaxTreeLeaf& GetUnqualifiedIdFromHierarchyExtension(
     const verible::Symbol&);
 
 // Extract the subnode of a param declaration list from class decalration.
-// e.g from "class m#(parameter x = 2)" return the node spanning "#(parameter x
+// e.g from "class m #(parameter x = 2)" return the node spanning " #(parameter x
 // = 2)".
 const verible::SyntaxTreeNode* GetParamDeclarationListFromClassDeclaration(
     const verible::Symbol&);

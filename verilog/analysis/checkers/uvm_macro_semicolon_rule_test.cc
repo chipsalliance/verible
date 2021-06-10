@@ -105,7 +105,7 @@ TEST(UvmMacroSemicolonRule, AcceptedUvmMacroCallTests) {
        "endmodule\n"},
       {"module top;"
        "initial begin\n"
-       "`uvm_config_db#(virtual top_if)::set(\"uvm_test_top\", \" \",  \"if\", "
+       "`uvm_config_db #(virtual top_if)::set(\"uvm_test_top\", \" \",  \"if\", "
        "if);"
        "end\n"
        "endmodule\n"},

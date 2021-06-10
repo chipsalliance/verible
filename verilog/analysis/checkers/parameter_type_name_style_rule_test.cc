@@ -35,8 +35,8 @@ using verible::RunLintTestCases;
 TEST(ParameterTypeNameStyleRuleTest, AcceptTests) {
   const std::initializer_list<LintTestCase> kTestCases = {
       {""},
-      {"module foo #(parameter type foo_bar_t); endmodule"},
-      {"module foo #(parameter type foo_bar_t = logic); endmodule"},
+      {"module foo  #(parameter type foo_bar_t); endmodule"},
+      {"module foo  #(parameter type foo_bar_t = logic); endmodule"},
       {"module foo; localparam type foo_bar_t; endmodule"},
       {"module foo; localparam type foo_bar_t = logic; endmodule"},
       {"parameter type foo_bar_t;"},
@@ -46,14 +46,14 @@ TEST(ParameterTypeNameStyleRuleTest, AcceptTests) {
       {"module foo; localparam Bar_Hello = 1; endmodule"},
       {"module foo; localparam int Bar_Hello = 1; endmodule"},
       {"module foo; parameter int __Bar = 1; endmodule"},
-      {"module foo #(parameter int Bar_1_Hello = 1); endmodule"},
-      {"module foo #(int Bar_1_Two); endmodule"},
+      {"module foo  #(parameter int Bar_1_Hello = 1); endmodule"},
+      {"module foo  #(int Bar_1_Two); endmodule"},
       {"module foo; localparam int bar = 1; "
        "localparam int BarSecond = 2; endmodule"},
       {"module foo; localparam int bar = 1; "
        "localparam int Bar_Second = 2; endmodule"},
       {"class foo; localparam int helloWorld = 1; endclass"},
-      {"class foo #(parameter int hello_world = 1); endclass"},
+      {"class foo  #(parameter int hello_world = 1); endclass"},
       {"package foo; parameter hello__1 = 1; endpackage"},
       {"package foo; parameter HELLO_WORLd = 1; endpackage"},
       {"package foo; parameter int _1Bar = 1; endpackage"},
@@ -69,15 +69,15 @@ TEST(ParameterTypeNameStyleRuleTest, AcceptTests) {
 TEST(ParameterTypeNameStyleRuleTest, RejectTests) {
   constexpr int kToken = SymbolIdentifier;
   const std::initializer_list<LintTestCase> kTestCases = {
-      {"module foo #(parameter type ", {kToken, "FooBar"}, "); endmodule"},
-      {"module foo #(parameter type ",
+      {"module foo  #(parameter type ", {kToken, "FooBar"}, "); endmodule"},
+      {"module foo  #(parameter type ",
        {kToken, "FooBar"},
        " = logic); endmodule"},
-      {"module foo #(parameter type ",
+      {"module foo  #(parameter type ",
        {kToken, "FooBar_t"},
        " = logic); endmodule"},
-      {"module foo #(parameter type ", {kToken, "foobar"}, "); endmodule"},
-      {"module foo #(parameter type ", {kToken, "_t"}, "); endmodule"},
+      {"module foo  #(parameter type ", {kToken, "foobar"}, "); endmodule"},
+      {"module foo  #(parameter type ", {kToken, "_t"}, "); endmodule"},
 
       {"module foo; localparam type ",
        {kToken, "FooBar"},

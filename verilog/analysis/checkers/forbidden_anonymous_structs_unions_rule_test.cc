@@ -64,10 +64,10 @@ TEST(ForbiddenAnonymousStructsUnionsTest, RejectsAnonymousStructs) {
   const std::initializer_list<LintTestCase> kTestCases = {
       {{TK_struct, "struct"}, " {bit [8:0] op, arg1, arg2;} cmd;"},
       {{TK_struct, "struct"}, " {byte a; reg b;} custom;\ncustom a_struct;"},
-      {"module m #(parameter type T = ",
+      {"module m  #(parameter type T = ",
        {TK_struct, "struct"},
        " packed { int i; }) (); endmodule\n"},
-      {"module nn; m #(.T(",
+      {"module nn; m  #(.T(",
        {TK_struct, "struct"},
        " packed { int i;})) mm; endmodule\n"},
   };
@@ -141,10 +141,10 @@ TEST(ForbiddenAnonymousStructsUnionsTest, AcceptsTypedefedUnions) {
 TEST(ForbiddenAnonymousStructsUnionsTest, RejectsAnonymousUnions) {
   const std::initializer_list<LintTestCase> kTestCases = {
       {{TK_union, "union"}, " {bit [8:0] flags; int val;} result;"},
-      {"module m #(parameter type T = ",
+      {"module m  #(parameter type T = ",
        {TK_union, "union"},
        " packed { int i; }) (); endmodule\n"},
-      {"module nn; m #(.T(",
+      {"module nn; m  #(.T(",
        {TK_union, "union"},
        " packed { int i;})) mm; endmodule\n"},
   };

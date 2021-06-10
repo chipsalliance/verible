@@ -50,10 +50,10 @@ TEST(ProperParameterDeclarationRuleTest, ParameterTests) {
       {"package foo; parameter int Bar = 1; endpackage"},
       {"package foo; parameter int Bar = 1; parameter int Bar2 = 2; "
        "endpackage"},
-      {"module foo #(parameter int Bar = 1); endmodule"},
-      {"module foo #(int Bar = 1); endmodule"},
-      {"class foo #(parameter int Bar = 1); endclass"},
-      {"module foo #(parameter type Foo); endmodule"},
+      {"module foo  #(parameter int Bar = 1); endmodule"},
+      {"module foo  #(int Bar = 1); endmodule"},
+      {"class foo  #(parameter int Bar = 1); endclass"},
+      {"module foo  #(parameter type Foo); endmodule"},
       {"module foo; ", {TK_parameter, "parameter"}, " int Bar = 1; endmodule"},
       {"class foo; ", {TK_parameter, "parameter"}, " int Bar = 1; endclass"},
       {"package foo; class bar; endclass parameter int HelloWorld = 1; "
@@ -62,13 +62,13 @@ TEST(ProperParameterDeclarationRuleTest, ParameterTests) {
        {TK_parameter, "parameter"},
        " int HelloWorld = 1; endclass "
        "endpackage"},
-      {"module foo #(parameter int Bar = 1); ",
+      {"module foo  #(parameter int Bar = 1); ",
        {TK_parameter, "parameter"},
        " int HelloWorld = 1; "
        "endmodule"},
-      {"module foo #(parameter type Foo, parameter int Bar = 1); "
+      {"module foo  #(parameter type Foo, parameter int Bar = 1); "
        "endmodule"},
-      {"module foo #(parameter type Bar); ",
+      {"module foo  #(parameter type Bar); ",
        {TK_parameter, "parameter"},
        " type Bar2; endmodule"},
   };
@@ -82,9 +82,9 @@ TEST(ProperParameterDeclarationRuleTest, LocalParamTests) {
       {"class foo; localparam int Bar = 1; endclass"},
       {"module foo; localparam int Bar = 1; localparam int Bar2 = 2; "
        "endmodule"},
-      {"module foo #(localparam int Bar = 1); endmodule"},
-      {"module foo #(localparam type Bar); endmodule"},
-      {"class foo #(localparam int Bar = 1); endclass"},
+      {"module foo  #(localparam int Bar = 1); endmodule"},
+      {"module foo  #(localparam type Bar); endmodule"},
+      {"class foo  #(localparam int Bar = 1); endclass"},
       {{TK_localparam, "localparam"}, " int Bar = 1;"},
       {"package foo; ",
        {TK_localparam, "localparam"},
@@ -110,10 +110,10 @@ TEST(ProperParameterDeclarationRuleTest, CombinationParametersTest) {
        {TK_localparam, "localparam"},
        " int Bar2 = 2; "
        "endpackage"},
-      {"module foo #(parameter int Bar = 1); localparam int Bar2 = 2; "
+      {"module foo  #(parameter int Bar = 1); localparam int Bar2 = 2; "
        "endmodule"},
-      {"module foo #(parameter type Bar); localparam type Bar2; endmodule"},
-      {"module foo #(localparam int Bar = 1); ",
+      {"module foo  #(parameter type Bar); localparam type Bar2; endmodule"},
+      {"module foo  #(localparam int Bar = 1); ",
        {TK_parameter, "parameter"},
        " int Bar2 = 2; "
        "endmodule"},

@@ -1,5 +1,5 @@
 //- @my_module defines/binding MyModule
-module my_module#(
+module my_module #(
     //- @ADDR_WIDTH defines/binding ADDR_WIDTH
     parameter ADDR_WIDTH=8
     )

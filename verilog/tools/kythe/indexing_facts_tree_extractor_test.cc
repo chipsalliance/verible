@@ -814,7 +814,7 @@ TEST(FactsTreeExtractor, ClassParams) {
   const verible::SyntaxTreeSearchTestCase kTestCase = {
       {"class ",
        {kTag, "my_class"},
-       " #(parameter ",
+       "  #(parameter ",
        {kTag, "x"},
        " = 4, ",
        {kTag, "y"},
@@ -921,7 +921,7 @@ TEST(FactsTreeExtractor, ClassTypeParams) {
   const verible::SyntaxTreeSearchTestCase kTestCase = {
       {"class ",
        {kTag, "my_class"},
-       " #(type ",
+       "  #(type ",
        {kTag, "x"},
        " = int, ",
        {kTag, "y"},
@@ -2787,7 +2787,7 @@ TEST(PackageImportTest, ClassInstanceWithMultiParams) {
           {kTag, "m"},
           "();\n",
           {kTag, "foo"},
-          "#(.",
+          " #(.",
           {kTag, "A"},
           "(",
           {kTag, "var1"},
@@ -2797,7 +2797,7 @@ TEST(PackageImportTest, ClassInstanceWithMultiParams) {
           {kTag, "var2"},
           "))::",
           {kTag, "barc"},
-          "#(.",
+          " #(.",
           {kTag, "X"},
           "(",
           {kTag, "var1"},
@@ -2989,7 +2989,7 @@ TEST(PackageImportTest, ClassParameterType) {
   const verible::SyntaxTreeSearchTestCase kTestCase = {
       {"class ",
        {kTag, "Stack"},
-       " #(parameter type ",
+       "  #(parameter type ",
        {kTag, "T"},
        "=int);\nendclass"},
   };
@@ -3028,7 +3028,7 @@ TEST(PackageImportTest, ClassInstanceWithParams) {
           {kTag, "m"},
           "();\n",
           {kTag, "clt"},
-          "#(",
+          " #(",
           {kTag, "x"},
           ") ",
           {kTag, "v1"},
@@ -3048,7 +3048,7 @@ TEST(PackageImportTest, ClassInstanceWithParams) {
                     IndexingFactType::kModule,
                     Anchor(kTestCase.expected_tokens[1]),
                 },
-                // refers to clt#(x) v1.
+                // refers to clt #(x) v1.
                 T(
                     D{
                         IndexingFactType::kDataTypeReference,
@@ -3270,7 +3270,7 @@ TEST(FactsTreeExtractor, ParameterExtraction) {
   const verible::SyntaxTreeSearchTestCase kTestCase = {
       {"module ",
        {kTag, "m"},
-       "#(parameter ",
+       " #(parameter ",
        {kTag, "x"},
        " = 1, parameter ",
        {kTag, "y"},
@@ -3278,7 +3278,7 @@ TEST(FactsTreeExtractor, ParameterExtraction) {
        {kTag, "z"},
        ");\n ",
        {kTag, "bar"},
-       " #(.",
+       "  #(.",
        {kTag, "p1"},
        "(",
        {kTag, "x"},
@@ -3373,7 +3373,7 @@ TEST(FactsTreeExtractor, InterfaceParameterExtraction) {
   const verible::SyntaxTreeSearchTestCase kTestCase = {
       {"interface ",
        {kTag, "m"},
-       "#(parameter ",
+       " #(parameter ",
        {kTag, "x"},
        " = 1, parameter ",
        {kTag, "y"},
@@ -3381,7 +3381,7 @@ TEST(FactsTreeExtractor, InterfaceParameterExtraction) {
        {kTag, "z"},
        ");\n ",
        {kTag, "bar"},
-       " #(.",
+       "  #(.",
        {kTag, "p1"},
        "(",
        {kTag, "x"},
@@ -3520,7 +3520,7 @@ TEST(FactsTreeExtractor, ProgramParameterExtraction) {
   const verible::SyntaxTreeSearchTestCase kTestCase = {
       {"program ",
        {kTag, "m"},
-       "#(parameter ",
+       " #(parameter ",
        {kTag, "x"},
        " = 1, parameter ",
        {kTag, "y"},
@@ -3528,7 +3528,7 @@ TEST(FactsTreeExtractor, ProgramParameterExtraction) {
        {kTag, "z"},
        ");\n ",
        {kTag, "bar"},
-       " #(.",
+       "  #(.",
        {kTag, "p1"},
        "(",
        {kTag, "x"},

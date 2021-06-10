@@ -221,11 +221,11 @@ TEST(FindAllModuleDeclarationTest, FindModuleParameters) {
       {""},
       {"module m;\nendmodule\n"},
       {"module m",
-       {kTag, "#(parameter x = 3, parameter y = 4)"},
+       {kTag, " #(parameter x = 3, parameter y = 4)"},
        "();\nendmodule"},
-      {"module m", {kTag, "#()"}, "();\nendmodule"},
+      {"module m", {kTag, " #()"}, "();\nendmodule"},
       {"module m",
-       {kTag, "#(parameter int x = 3,\n parameter logic y = 4)"},
+       {kTag, " #(parameter int x = 3,\n parameter logic y = 4)"},
        "();\nendmodule"},
   };
   for (const auto& test : kTestCases) {
@@ -255,11 +255,11 @@ TEST(FindAllInterfaceDeclarationTest, FindInterfaceParameters) {
       {""},
       {"interface m;\nendinterface"},
       {"interface m",
-       {kTag, "#(parameter x = 3, parameter y = 4)"},
+       {kTag, " #(parameter x = 3, parameter y = 4)"},
        "();\nendinterface"},
-      {"interface m", {kTag, "#()"}, "();\nendinterface"},
+      {"interface m", {kTag, " #()"}, "();\nendinterface"},
       {"interface m",
-       {kTag, "#(parameter int x = 3,\n parameter logic y = 4)"},
+       {kTag, " #(parameter int x = 3,\n parameter logic y = 4)"},
        "();\nendinterface"},
   };
   for (const auto& test : kTestCases) {

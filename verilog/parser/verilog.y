@@ -4736,7 +4736,7 @@ expr_primary_no_groups
   | TK_RealTime
     { $$ = move($1); }
   // allow time literals in delay1 expressions,
-  //   e.g. #(10ps) or #(N *5ps)
+  //   e.g.  #(10ps) or  #(N *5ps)
   | TK_TimeLiteral
     { $$ = move($1); }
   | string_literal

@@ -35,21 +35,21 @@ TEST(ForbidDefparamRuleTests, Various) {
   constexpr int kToken = TK_defparam;
   const std::initializer_list<LintTestCase> kTestCases = {
       {""},
-      {"module parameterized #(parameter int MY_PARAM = 0); endmodule; "
+      {"module parameterized  #(parameter int MY_PARAM = 0); endmodule; "
        "module foo; parameterized p0(); endmodule"},
 
-      {"module parameterized #(parameter int MY_PARAM = 0); endmodule; "
+      {"module parameterized  #(parameter int MY_PARAM = 0); endmodule; "
        "module foo; ",
        {kToken, "defparam"},
        " p0.MY_PARAM = 1; "
        "parameterized p0(); endmodule"},
 
-      {"module parameterized #(parameter int MY_PARAM = 0); endmodule; "
+      {"module parameterized  #(parameter int MY_PARAM = 0); endmodule; "
        "module foo; ",
        "/* defparam p0.MY_PARAM = 1; */"
        "parameterized p0(); endmodule"},
 
-      {"module parameterized #("
+      {"module parameterized  #("
        "parameter int MY_PARAM = 0, parameter int SECOND_PARAM = 0);"
        "endmodule; "
        "module foo; ",

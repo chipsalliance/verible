@@ -210,36 +210,36 @@ static const ParserTestCaseArray kClassTests = {
     "virtual class automatic Foo; endclass",
     "class Foo extends Bar; endclass",
     "class Foo extends Package::Bar; endclass",
-    "class Foo extends Bar #(x,y,z); endclass",
-    "class Foo #(int N);\n"  // parameter without default value
+    "class Foo extends Bar  #(x,y,z); endclass",
+    "class Foo  #(int N);\n"  // parameter without default value
     "endclass",
-    "class Foo #(int N, P);\n"
+    "class Foo  #(int N, P);\n"
     "endclass",
-    "class Foo #(int N, int P);\n"
+    "class Foo  #(int N, int P);\n"
     "endclass",
-    "class Foo #(int N=1, int P=2) extends Bar #(x,y,z);\n"
+    "class Foo  #(int N=1, int P=2) extends Bar  #(x,y,z);\n"
     "endclass",
-    "class Foo #(int W=8, type Int=int) extends Bar #(x,y,z);\n"
+    "class Foo  #(int W=8, type Int=int) extends Bar  #(x,y,z);\n"
     "endclass",
-    "class Foo #(T=int);\n"  // default type
+    "class Foo  #(T=int);\n"  // default type
     "endclass",
-    "class Foo #(type KeyType=int, Int=int);\n"  // default type
+    "class Foo  #(type KeyType=int, Int=int);\n"  // default type
     "endclass",
-    "class Foo #(IFType=virtual x_if);\n"  // interface type
+    "class Foo  #(IFType=virtual x_if);\n"  // interface type
     "endclass",
-    "class Foo #(type IFType=virtual x_if);\n"  // interface type
+    "class Foo  #(type IFType=virtual x_if);\n"  // interface type
     "endclass",
-    "class Foo #(type IFType=virtual interface x_if);\n"
+    "class Foo  #(type IFType=virtual interface x_if);\n"
     "endclass",
-    "class Foo extends Package::Bar #(x,y,z); endclass",
-    "class Foo extends Package::Bar #(.v1(x),.v2(y)); endclass",
-    "class Foo extends Package::Bar #(x,y,z); endclass",
-    "class Foo extends Package::Bar #(.v1(x),.v2(y)); endclass",
+    "class Foo extends Package::Bar  #(x,y,z); endclass",
+    "class Foo extends Package::Bar  #(.v1(x),.v2(y)); endclass",
+    "class Foo extends Package::Bar  #(x,y,z); endclass",
+    "class Foo extends Package::Bar  #(.v1(x),.v2(y)); endclass",
     "class Foo implements Bar; endclass",
     "class Foo implements Bar, Blah, Baz; endclass",
     "class Foo implements Package::Bar; endclass",
-    "class Foo implements Bar#(N); endclass",
-    "class Foo implements Package::Bar#(1, 2); endclass",
+    "class Foo implements Bar #(N); endclass",
+    "class Foo implements Package::Bar #(1, 2); endclass",
     "class Foo extends Base implements Bar; endclass",
     "class Foo extends Base implements Pkg::Bar, Baz; endclass",
     "class Foo;\n"
@@ -257,13 +257,13 @@ static const ParserTestCaseArray kClassTests = {
     "endclass",
     "typedef class myclass_fwd;",
     "class zzxx;\n"
-    "extern function void set_port(analysis_port #(1) ap);\n"
+    "extern function void set_port(analysis_port  #(1) ap);\n"
     "endclass",
     "class zzxy;\n"
     "extern function void set_port(dbg_pkg::analysis_port app);\n"
     "endclass",
     "class zzyyy;\n"
-    "extern function void set_port(dbg_pkg::analysis_port #(1,N) apb);\n"
+    "extern function void set_port(dbg_pkg::analysis_port  #(1,N) apb);\n"
     "endclass",
     "class zzxx;\n"
     "extern function automatic void set_port(int ap);\n"
@@ -359,7 +359,7 @@ static const ParserTestCaseArray kClassTests = {
     "class how_wide;\n"
     "  localparam Max_int = {$bits(int) - 1{1'b1}};\n"
     "endclass",
-    "class how_wide #(type DT=int) extends uvm_sequence_item;\n"
+    "class how_wide  #(type DT=int) extends uvm_sequence_item;\n"
     "  localparam Max_int = {$bits(DT) - 1{1'b1}};\n"
     "  localparam Min_int = {$bits(int) - $bits(DT){1'b1}};\n"
     "endclass",
@@ -368,7 +368,7 @@ static const ParserTestCaseArray kClassTests = {
     "  parameter type BT = BrickType;\n"
     "  parameter type CT1 = Ctype1, CT2 = Ctype2;\n"
     "  localparam type GT = mypkg::GlueType, GT2;\n"
-    "  localparam type HT1, HT2 = mypkg::ModuleType#(N+M);\n"
+    "  localparam type HT1, HT2 = mypkg::ModuleType #(N+M);\n"
     "endclass",
     // event declaration
     "class event_calendar;\n"
@@ -394,13 +394,13 @@ static const ParserTestCaseArray kClassTests = {
     "  protected int count;\n"
     "endclass\n",
     "class c;\n"
-    "  foo #(.baz) bar;\n"
+    "  foo  #(.baz) bar;\n"
     "endclass\n",
     "class c;\n"
-    "  foo #(.baz(bah)) bar;\n"
+    "  foo  #(.baz(bah)) bar;\n"
     "endclass\n",
     "class c;\n"
-    "  foo #(.baz) bar1, bar2;\n"
+    "  foo  #(.baz) bar1, bar2;\n"
     "endclass\n",
     "class Driver;\n"
     "  data_type_or_module_type foo1;\n"
@@ -520,7 +520,7 @@ static const ParserTestCaseArray kFunctionTests = {
     "input a, b;\n"
     "mini_me = (a<b) ? a:b;\n"
     "endfunction",
-    "function myclass::numtype #(W) mini_me;\n"
+    "function myclass::numtype  #(W) mini_me;\n"
     "input a, b;\n"
     "mini_me = (a<b) ? a:b;\n"
     "endfunction",
@@ -613,7 +613,7 @@ static const ParserTestCaseArray kFunctionTests = {
     "function scope_name::type_name[n:0] twiddle;\n"
     "input integer a[n:0];\n"
     "endfunction",
-    "function scope_name::type_name #(M) [n:0] twiddle;\n"
+    "function scope_name::type_name  #(M) [n:0] twiddle;\n"
     "input integer a[n:0];\n"
     "endfunction",
     // streaming concatenation lvalue
@@ -919,8 +919,8 @@ static const ParserTestCaseArray kTaskTests = {
     "output string [7:0] outtake [3:0];\n"
     "endtask",
     "task spindle;\n"
-    "input spkg::StringN#(N) intake;\n"
-    "output spkg::StringN#(K) [7:0] outtake [3:0];\n"
+    "input spkg::StringN #(N) intake;\n"
+    "output spkg::StringN #(K) [7:0] outtake [3:0];\n"
     "endtask",
     "task spindle;\n"
     "const ref StringType intake;\n"         // const ref
@@ -928,9 +928,9 @@ static const ParserTestCaseArray kTaskTests = {
     "endtask",
     "task t(virtual foo_if vif);\n"
     "endtask\n",
-    "task t(virtual foo_if#(12) vif);\n"
+    "task t(virtual foo_if #(12) vif);\n"
     "endtask\n",
-    "task t(virtual foo_if#(.W(12)) vif);\n"
+    "task t(virtual foo_if #(.W(12)) vif);\n"
     "endtask\n",
     "task t(virtual interface foo_if vif);\n"
     "endtask\n",
@@ -944,7 +944,7 @@ static const ParserTestCaseArray kTaskTests = {
     "endtask\n",
     "task t(ref virtual foo_if vifs[N:M][X:Y]);\n"
     "endtask\n",
-    "task t(ref virtual interface foo_if#(P,Q,R) vifs[N:M][X:Y]);\n"
+    "task t(ref virtual interface foo_if #(P,Q,R) vifs[N:M][X:Y]);\n"
     "endtask\n",
     // macro
     "task stringer;\n"
@@ -1136,7 +1136,7 @@ static const ParserTestCaseArray kTaskTests = {
     "  virtual blah_if blah_if_inst[3:0];\n"
     "  virtual blah_if blah_if_inst1, blah_if_inst2;\n"
     "  virtual interface blah_if2 blah_if2_inst;\n"
-    "  virtual blah_if3 #(N, M) blah_if3_inst;\n"
+    "  virtual blah_if3  #(N, M) blah_if3_inst;\n"
     "endtask",
     // copy (class-new)
     "task copy;\n"
@@ -1278,7 +1278,7 @@ static const ParserTestCaseArray kTaskTests = {
     "begin\n"
     "  z0 <= y;\n"           // clocking_drive or nonblocking assignment
     "  z1 <= ##value yy;\n"  // clocking_drive with cycle_delay
-    "  z2 <= ##(value) xx;\n"
+    "  z2 <= # #(value) xx;\n"
     "  z3 <= ##50 yy;\n"
     "  z4.dfg[0] <= ##50 ww[1].xx;\n"
     "end\n"
@@ -1383,8 +1383,8 @@ static const ParserTestCaseArray kModuleTests = {
     "output somepkg::bus_type [3:0] co;\n"
     "endmodule",
     "module zoomzoom (a, co);\n"
-    "input somepkg::bus_type #(2*W) a;\n"
-    "output somepkg::bus_type #(W) [3:0] co;\n"
+    "input somepkg::bus_type  #(2*W) a;\n"
+    "output somepkg::bus_type  #(W) [3:0] co;\n"
     "endmodule",
     "module nonansi_ports_unpacked_array(a, b, c);\n"
     "output a;\n"
@@ -1849,7 +1849,7 @@ static const ParserTestCaseArray kModuleTests = {
     "end\n"
     "endmodule",
     "module mon;\n"
-    "scoreboard #(.MAX(nf::sliced * nf::depth_c))\n"
+    "scoreboard  #(.MAX(nf::sliced * nf::depth_c))\n"
     "  blah2blah (.ivld({rdv,\n"
     "    $past(rdv, 1, 1'b1, @(posedge clk))}));\n"  // $past, event control
     "endmodule",
@@ -2075,10 +2075,10 @@ static const ParserTestCaseArray kModuleTests = {
     "always @*\n"
     "begin\n"
     "  z1 <= #value y;\n"
-    "  z2 <= #(value) x;\n"
+    "  z2 <=  #(value) x;\n"
     "  z3 <= #50 y;\n"
     "  z4 <= #20ps x;\n"
-    "  z5 <= #(20ps) y;\n"
+    "  z5 <=  #(20ps) y;\n"
     "end\n"
     "endmodule",
     "module assigner;\n"
@@ -2291,10 +2291,10 @@ static const ParserTestCaseArray kModuleTests = {
     "endmodule",
     "module funkier ();\n"
     "initial begin\n"
-    "  cls #(Z)::func1(a, b, c);\n"
-    "  pkg::cls #(Z)::func2(1, 2, 3);\n"
-    "  cls #(virtual t_if)::func3(a, b, c);\n"  // interface parameter type
-    "  cls #(virtual interface t_if.mp)::func4(a, b, c);\n"  // with modport
+    "  cls  #(Z)::func1(a, b, c);\n"
+    "  pkg::cls  #(Z)::func2(1, 2, 3);\n"
+    "  cls  #(virtual t_if)::func3(a, b, c);\n"  // interface parameter type
+    "  cls  #(virtual interface t_if.mp)::func4(a, b, c);\n"  // with modport
     "end\n"
     "endmodule",
     "module preprocessor_revenge ();\n"
@@ -2409,12 +2409,12 @@ static const ParserTestCaseArray kModuleTests = {
     "end\n"
     "endmodule",
     /* FIXME:
-     // seen this "pkg#(N)::func()" construct in our verilog source code,
+     // seen this "pkg #(N)::func()" construct in our verilog source code,
      // but having difficulty supporting it without causing grammar conflicts.
      // This *looks* like a package parameter, but I haven't found an
      // official description.
     "module ifelsey ();\n"
-    "  if (pkg #(42)::func()) begin\n"
+    "  if (pkg  #(42)::func()) begin\n"
     "  end else begin\n"
     "  end\n"
     "endmodule",
@@ -2612,7 +2612,7 @@ static const ParserTestCaseArray kModuleTests = {
     "xor y2(ci, p, s);\n"
     "endmodule",
     // with localparam in parameter ports
-    "module foo #(\n"
+    "module foo  #(\n"
     "localparam bar = 2\n"
     ") (\n"
     "output reg zzz[bar-1:0]);\n"
@@ -2632,21 +2632,21 @@ static const ParserTestCaseArray kModuleTests = {
     "parameter int signed O = 6;\n"
     "parameter int unsigned [M-1:0] P = {0,1,2,3};\n"
     "endmodule",
-    "module paramtest #();\n"  // empty parameters
+    "module paramtest  #();\n"  // empty parameters
     "endmodule",
-    "module paramtest #(int M);\n"  // without default value
+    "module paramtest  #(int M);\n"  // without default value
     "endmodule",
-    "module paramtest #(int M, N);\n"
+    "module paramtest  #(int M, N);\n"
     "endmodule",
-    "module paramtest #(int M, int N);\n"
+    "module paramtest  #(int M, int N);\n"
     "endmodule",
-    "module paramtest #(int M=4);\n"
+    "module paramtest  #(int M=4);\n"
     "endmodule",
-    "module paramtest #() ();\n"  // empty parameter, empty ports
+    "module paramtest  #() ();\n"  // empty parameter, empty ports
     "endmodule",
-    "module paramtest #(int M=4) ();\n"
+    "module paramtest  #(int M=4) ();\n"
     "endmodule",
-    "module signerer #(\n"
+    "module signerer  #(\n"
     "parameter int M = 4,\n"
     "parameter int unsigned N = 5,\n"
     "parameter int signed O = 6,\n"
@@ -2671,33 +2671,33 @@ static const ParserTestCaseArray kModuleTests = {
     // type parameters
     "module rotator ();\n"
     "localparam type Foo;\n"
-    "localparam type Goo = Zoo#(V, W, X);\n"
+    "localparam type Goo = Zoo #(V, W, X);\n"
     "localparam type Koo, Loo, Moo;\n"
     "parameter type Woo;\n"
     "parameter type Yoo = MMM::TPP, Xoo = JJJ::KKK::LLL;\n"
-    "parameter type Zoo = Zoo#(V, W, X)::BusType;\n"
+    "parameter type Zoo = Zoo #(V, W, X)::BusType;\n"
     "endmodule",
     // with parameter (keyword and type optional)
-    "module rotator #(parameter width=8) (\n"
+    "module rotator  #(parameter width=8) (\n"
     "input clk,\n"
     "output reg [width-1:0] out);\n"
     "always @(posedge clk)\n"
     "  out <= {out[0], out[width-1:1]};\n"
     "endmodule",
-    "module rotator #(width=8) (\n"
+    "module rotator  #(width=8) (\n"
     "input clk,\n"
     "output reg [width-1:0] out);\n"
     "endmodule",
-    "module rotator #(integer width=8) (\n"
+    "module rotator  #(integer width=8) (\n"
     "input clk,\n"
     "output reg [width-1:0] out);\n"
     "endmodule",
-    "module rotator #(parameter integer width=8) (\n"
+    "module rotator  #(parameter integer width=8) (\n"
     "input clk,\n"
     "output reg [width-1:0] out);\n"
     "endmodule",
     // with parameters
-    "module rotator #(\n"
+    "module rotator  #(\n"
     "parameter width=8, dir=0\n"
     ") (\n"
     "input clk,\n"
@@ -2707,33 +2707,33 @@ static const ParserTestCaseArray kModuleTests = {
     "  else out <= {out[width-2:0], out[width-1]};\n"
     "endmodule",
     // with user-defined type parameter
-    "module biggerinter #(parameter SomeEnumType mode=DefaultMode) (\n"
+    "module biggerinter  #(parameter SomeEnumType mode=DefaultMode) (\n"
     "input clk,\n"
     "output reg out);\n"
     "endmodule",
     "module biggerinter\n"
-    "  #(parameter yourpkg::EnumType mode=DefaultMode) (\n"
+    "   #(parameter yourpkg::EnumType mode=DefaultMode) (\n"
     "  input clk,\n"
     "  output reg out);\n"
     "endmodule",
     // type parameters
-    "module typer #(\n"
+    "module typer  #(\n"
     "  parameter type Mtype\n"
     ") ();\n"
     "endmodule",
-    "module typer #(\n"
+    "module typer  #(\n"
     "  parameter type Mtype = X::Y,\n"
-    "  parameter type Qtype = X::ZZ #(NA, NB),\n"
+    "  parameter type Qtype = X::ZZ  #(NA, NB),\n"
     "  parameter type Ztype = integer\n"
     ") ();\n"
     "endmodule",
-    "module typer #(\n"
+    "module typer  #(\n"
     "  type Mtype = X::Y,\n"
-    "  type Qtype = ZZ #(.NA(A), .NB(B)),\n"
+    "  type Qtype = ZZ  #(.NA(A), .NB(B)),\n"
     "  type Ztype = bit\n"
     ") ();\n"
     "endmodule",
-    "module typer #(\n"
+    "module typer  #(\n"
     "  parameter type Mtype = type(Xtype)\n"
     ") ();\n"
     "endmodule",
@@ -2768,21 +2768,21 @@ static const ParserTestCaseArray kModuleTests = {
     "module type_reffer;\n"
     "type(type(a)) c;\n"
     "endmodule\n",
-    "module preprocessor_in_parameters #(\n"
+    "module preprocessor_in_parameters  #(\n"
     "  parameter int M = 4\n"
     "`ifdef MORE_PARAMS\n"  // preprocessor directive
     "  , parameter int N = 8\n"
     "`endif  // MORE_PARAMS\n"
     ") ();\n"
     "endmodule",
-    "module preprocessor_in_parameters #(\n"
+    "module preprocessor_in_parameters  #(\n"
     "`ifdef MORE_PARAMS\n"  // preprocessor directive
     "  parameter int M = 4,\n"
     "`endif  // MORE_PARAMS\n"
     "  parameter int N = 8\n"
     ") ();\n"
     "endmodule",
-    "module preprocessor_in_parameters #(\n"
+    "module preprocessor_in_parameters  #(\n"
     "`ifdef MORE_PARAMS\n"  // preprocessor directive
     "  parameter int M = 4,\n"
     "  parameter int N = 8\n"
@@ -2790,36 +2790,36 @@ static const ParserTestCaseArray kModuleTests = {
     ") ();\n"
     "endmodule",
     // passing subinstance parameter
-    "module rotator #(parameter width=8) (\n"
+    "module rotator  #(parameter width=8) (\n"
     "input clk,\n"
     "output reg [width-1:0] out);\n"
-    "foo #(.WIDTH(width)) bar(clk, out);\n"
+    "foo  #(.WIDTH(width)) bar(clk, out);\n"
     "endmodule",
     "module spammer;\n"
-    "foo #(.clk) bar;\n"
-    "foo #(bit) bar0();\n"
-    "foo #(.ValType(integer)) bar1();\n"
-    "foo #(.ValType(virtual t_if)) barif1();\n"  // interface type
-    "foo #(virtual interface t_if) barif2();\n"  // interface type
-    "foo #(logic[N:0][k:0], integer[1:0]) bar2();\n"
-    "foo #(.ValType(logic[N:0][k:0]), .Val2Type(bit[2:0])) bar3();\n"
-    "foo #($, $) bar4();\n"
-    "foo #(.XYZ($), .ABC($)) bar5();\n"
+    "foo  #(.clk) bar;\n"
+    "foo  #(bit) bar0();\n"
+    "foo  #(.ValType(integer)) bar1();\n"
+    "foo  #(.ValType(virtual t_if)) barif1();\n"  // interface type
+    "foo  #(virtual interface t_if) barif2();\n"  // interface type
+    "foo  #(logic[N:0][k:0], integer[1:0]) bar2();\n"
+    "foo  #(.ValType(logic[N:0][k:0]), .Val2Type(bit[2:0])) bar3();\n"
+    "foo  #($, $) bar4();\n"
+    "foo  #(.XYZ($), .ABC($)) bar5();\n"
     "endmodule",
     "module spammer;\n"
-    "foo #(`VALUE1,\n"  // macro-id expression
+    "foo  #(`VALUE1,\n"  // macro-id expression
     "      `VALUE2,\n"  // macro-id expression
     "      `VALUE3\n"   // macro-id expression (MacroGenericItem)
     ") bar_x0();\n"
     "endmodule",
     "module splammer;\n"
-    "foo #(`FUNC(a, 1),\n"  // macro-call expression
+    "foo  #(`FUNC(a, 1),\n"  // macro-call expression
     "      `FUNC(b, 2),\n"  // macro-call expression
     "      `FUNC(c, 4)\n"   // macro-call expression (MacroGenericItem)
     ") bar_y0();\n"
     "endmodule",
     "module parameter_conditioner;\n"
-    "foo #(.A(1),\n"
+    "foo  #(.A(1),\n"
     "`ifdef HAVE_B\n"  // preprocessing directive
     "      .B(2),\n"
     "`endif\n"
@@ -2827,7 +2827,7 @@ static const ParserTestCaseArray kModuleTests = {
     "  bar_y0();\n"
     "endmodule",
     "module parameter_conditioner;\n"
-    "foo #(\n"
+    "foo  #(\n"
     "`ifdef HAVE_B\n"  // preprocessing directive
     "      .B(2),\n"
     "      .C(8)\n"
@@ -2847,11 +2847,11 @@ static const ParserTestCaseArray kModuleTests = {
     ");\n"
     "endmodule",
     "module hoobar (\n"
-    "mypackage::type1 #(1,2) ins,\n"  // parameterized type
+    "mypackage::type1  #(1,2) ins,\n"  // parameterized type
     "mypackage::type2 outs\n"
     ");\n"
     "module goobar (\n"
-    "mypackage::myclass #(4)::type1 ins, ctrls,\n"  // template class member
+    "mypackage::myclass  #(4)::type1 ins, ctrls,\n"  // template class member
     "mypackage::myclass::type2 outs\n"
     ");\n"
     "endmodule\n"
@@ -2878,7 +2878,7 @@ static const ParserTestCaseArray kModuleTests = {
     "endmodule",
     "module import_tax\n"
     "  import thatpkg::thing;\n"
-    "#() ();\n"  // empty parameters and empty ports
+    " #() ();\n"  // empty parameters and empty ports
     "endmodule",
     "module import_tax\n"
     "  import thatpkg::*;\n"  // wildcard
@@ -2896,7 +2896,7 @@ static const ParserTestCaseArray kModuleTests = {
     "module import_tax\n"
     "  import thispkg::blah, baz::*;\n"
     "  import thatpkg::*, another_one::foobar;\n"
-    "#(int p = 4) (input clk);\n"
+    " #(int p = 4) (input clk);\n"
     "endmodule",
     "import thatpkg::*;\n"
     "module import_tax;\n"
@@ -3433,17 +3433,17 @@ static const ParserTestCaseArray kModuleTests = {
     "endgenerate\n"
     "endmodule",
     // Test for +: and -: operators in declarations:
-    "module gen #(parameter width = 3) ();\n"
+    "module gen  #(parameter width = 3) ();\n"
     "  wire   [base +: width] x;\n"
     "  wire   [base -: width] y;\n"
     "  wire   [base : width]  z;\n"
     "endmodule",
-    "module gen #(parameter width = 3)\n"
+    "module gen  #(parameter width = 3)\n"
     "            (out, in1, in2);\n"
     "  output [0  +: width] out;\n"
     "  input  [2  -: width] in1, in2;\n"
     "endmodule",
-    "module gen #(parameter width = 3) (\n"
+    "module gen  #(parameter width = 3) (\n"
     "    output [0  +: width] out,\n"
     "    input  [2  -: width] in1, in2\n"
     ");\n"
@@ -3540,7 +3540,7 @@ static const ParserTestCaseArray kInterfaceTests = {
     "modport test_if(input addr, input data);\n"
     "endinterface",
     "interface harness_if\n"
-    "  #(string name = \"anon\");\n"  // string parameter
+    "   #(string name = \"anon\");\n"  // string parameter
     "endinterface",
     "interface blah_if(\n"
     "  input bit clk,\n"
@@ -3548,7 +3548,7 @@ static const ParserTestCaseArray kInterfaceTests = {
     "  edge_init = 0,\n"  // initial value
     "  rst);\n"
     "endinterface",
-    "interface state_if #(parameter W=2)\n"
+    "interface state_if  #(parameter W=2)\n"
     "  (input wire clk, inout wire state);\n"
     "endinterface",
     // modport declarations
@@ -3593,7 +3593,7 @@ endinterface : conduit_if
     // TODO(b/115654078): module declarations with preprocessing directives
 
     // clocking declarations
-    "interface state_if #(parameter W=2)\n"
+    "interface state_if  #(parameter W=2)\n"
     "  (input wire clk, inout wire state);\n"
     "clocking mst @(posedge clk);\n"
     "  output state = ~foo;\n"
@@ -3602,7 +3602,7 @@ endinterface : conduit_if
     "  input state;\n"
     "endclocking : pss\n"
     "endinterface",
-    "interface state_if #(parameter W=2)\n"
+    "interface state_if  #(parameter W=2)\n"
     "  (input wire clk, inout wire state);\n"
     "clocking @(posedge clk);\n"  // anonymous clocking block
     "  output state = ~foo;\n"
@@ -3679,7 +3679,7 @@ static const ParserTestCaseArray kTypedefTests = {
     "  logic [4:0] some_member;\n"
     "} mystruct_t;",
     "typedef struct packed {\n"
-    "  apkg::type_member #(N, M) [P:0] some_member;\n"
+    "  apkg::type_member  #(N, M) [P:0] some_member;\n"
     "} mystruct_t;",
     "typedef struct {\n"
     "  rand bit i;\n"
@@ -3898,7 +3898,7 @@ static const ParserTestCaseArray kPackageTests = {
     "package bindme;\nendpackage\n",
     "bind module_scope : inst_x type_y::a inst_z(.*);\n"
     "package bindme;\nendpackage\n",
-    "bind module_scope : inst_x type_y::a#(4,3) inst_z(.*);\n"
+    "bind module_scope : inst_x type_y::a #(4,3) inst_z(.*);\n"
     "package bindme;\nendpackage\n",
     "bind module_scope : inst_x1, inst_x2 type_y inst_z(.*);\n"
     "package bindme;\nendpackage\n",
@@ -4005,13 +4005,13 @@ static const ParserTestCaseArray kPackageTests = {
     "  nettype foo_pkg::bar_t baz_wire;\n"
     "endpackage\n",
     "package p;\n"
-    "  nettype foo#(x,y,z)::bar_t baz_wire;\n"
+    "  nettype foo #(x,y,z)::bar_t baz_wire;\n"
     "endpackage\n",
     "package p;\n"
-    "  nettype foo#(x,y,z)::bar_t[2:0] baz_wire;\n"
+    "  nettype foo #(x,y,z)::bar_t[2:0] baz_wire;\n"
     "endpackage\n",
     "package p;\n"
-    "  nettype foo#(x,y,z)::bar_t baz_wire with quux;\n"
+    "  nettype foo #(x,y,z)::bar_t baz_wire with quux;\n"
     "endpackage\n",
 };
 
@@ -4135,7 +4135,7 @@ static const ParserTestCaseArray kSequenceTests = {
     "  local type_b b,\n"
     "  local inout type_z z,\n"
     "  local input pkgf::type_y y,\n"
-    "  local output pkgf::type_g#(H) gg\n"
+    "  local output pkgf::type_g #(H) gg\n"
     ");\n"
     "  a == b\n"
     "endsequence\n",
@@ -4350,14 +4350,14 @@ static const ParserTestCaseArray kModuleMemberTests = {
     "endfunction\n"
     "endmodule",
     "module mymodule;\n"
-    "function bclass::inttype #(16) subroutine;\n"
+    "function bclass::inttype  #(16) subroutine;\n"
     "  input a;\n"
     "  subroutine = a+42;\n"
     "endfunction\n"
     "endmodule",
     "module mymodule;\n"
-    "function automatic bclass::inttype #(16) subroutine;\n"
-    "  input foo::bar #(N) a;\n"
+    "function automatic bclass::inttype  #(16) subroutine;\n"
+    "  input foo::bar  #(N) a;\n"
     "  input b;\n"
     "  subroutine = a+41;\n"
     "endfunction\n"
@@ -4719,7 +4719,7 @@ static const ParserTestCaseArray kClassMemberTests = {
     "  foo_pkg::uint [x:y] g = 2;\n"  // user-defined type, packed dimensions
     "endclass\n",
     "class c;\n"
-    "  bar#(foo)::uint [x:y] g = 2;\n"  // user-defined type, packed dimensions
+    "  bar #(foo)::uint [x:y] g = 2;\n"  // user-defined type, packed dimensions
     "endclass\n",
     // member functions
     "class myclass;\n"
@@ -4735,7 +4735,7 @@ static const ParserTestCaseArray kClassMemberTests = {
     "extern function automatic void subroutine;\n"
     "endclass",
     "class myclass;\n"
-    "extern function yourpkg::classy::xtype #(p,q) subr;\n"
+    "extern function yourpkg::classy::xtype  #(p,q) subr;\n"
     "endclass",
     "class myclass;\n"
     "extern function void subroutine(input bool x);\n"
@@ -4744,20 +4744,20 @@ static const ParserTestCaseArray kClassMemberTests = {
     "extern function void subr(bool x[N]);\n"
     "endclass",
     "class myclass;\n"
-    "extern function void subr(ducktype #(3) x);\n"
+    "extern function void subr(ducktype  #(3) x);\n"
     "endclass",
     "class myclass;\n"
-    "extern function sometype #(N+1) subr(ducktype #(3) x);\n"
+    "extern function sometype  #(N+1) subr(ducktype  #(3) x);\n"
     "endclass",
     "class myclass;\n"
-    "extern function sometype #(N+1)[N:0]"
-    "subr(ducktype #(3) x);\n"
+    "extern function sometype  #(N+1)[N:0]"
+    "subr(ducktype  #(3) x);\n"
     "endclass",
     "class myclass;\n"
     "extern function void subr(mypkg::foo y[M]);\n"
     "endclass",
     "class myclass;\n"
-    "extern function void subr(mypkg::foo #(4) x[N]);\n"
+    "extern function void subr(mypkg::foo  #(4) x[N]);\n"
     "endclass",
     "class myclass;\n"
     "extern virtual function integer subroutine;\n"
@@ -4862,7 +4862,7 @@ static const ParserTestCaseArray kClassMemberTests = {
     "class constructible;\n"
     "function new (foo::bar name,\n"
     "    virtual interface time_if vif,\n"
-    "    baz#(M,N)::foo bar, bit [K:0] b);\n"
+    "    baz #(M,N)::foo bar, bit [K:0] b);\n"
     "  this.name = name;\n"
     "endfunction\n"
     "endclass",
@@ -4881,8 +4881,8 @@ static const ParserTestCaseArray kClassMemberTests = {
     "typedef enum { RED, GREEN, BLUE } colors;\n"
     "typedef virtual blah_if harness_if;\n"
     "typedef virtual interface blah_if harness_if;\n"
-    "typedef virtual blah_if#(N) foo_if;\n"
-    "typedef virtual blah_if#(N).modport_id foo_if;\n"
+    "typedef virtual blah_if #(N) foo_if;\n"
+    "typedef virtual blah_if #(N).modport_id foo_if;\n"
     "endclass",
     // interface
     "class myclass;\n"
@@ -4895,8 +4895,8 @@ static const ParserTestCaseArray kClassMemberTests = {
     "endclass",
     "class myclass;\n"
     "virtual hinterface.some_mod_port winterface;\n"
-    "virtual interface foo_if #(J,K) bar_if, baz_if;\n"
-    "virtual disinterface#(.N(N)).some_mod_port blinterface;\n"
+    "virtual interface foo_if  #(J,K) bar_if, baz_if;\n"
+    "virtual disinterface #(.N(N)).some_mod_port blinterface;\n"
     "endclass",
     // foreach
     "class myclass;\n"
@@ -4965,13 +4965,13 @@ static const ParserTestCaseArray kClassMemberTests = {
     "  nettype foo_pkg::bar_t baz_wire;\n"
     "endclass\n",
     "class c;\n"
-    "  nettype foo#(x,y,z)::bar_t baz_wire;\n"
+    "  nettype foo #(x,y,z)::bar_t baz_wire;\n"
     "endclass\n",
     "class c;\n"
-    "  nettype foo#(x,y,z)::bar_t[2:0] baz_wire;\n"
+    "  nettype foo #(x,y,z)::bar_t[2:0] baz_wire;\n"
     "endclass\n",
     "class c;\n"
-    "  nettype foo#(x,y,z)::bar_t baz_wire with quux;\n"
+    "  nettype foo #(x,y,z)::bar_t baz_wire with quux;\n"
     "endclass\n",
 };
 
@@ -4980,14 +4980,14 @@ static const ParserTestCaseArray kInterfaceClassTests = {
     "endclass",
     "interface class base_ic;\n"
     "endclass : base_ic",  // end label
-    "interface class base_ic #(int N = 8, type T = string);\n"
+    "interface class base_ic  #(int N = 8, type T = string);\n"
     "endclass",
     "interface class base_ic extends basebase;\n"  // inheritance
     "endclass",
     "interface class base_ic extends base1, base2, base3;\n"  // multiple
     "endclass",
-    "interface class base_ic #(int N = 8) extends pkg1::base1, "
-    "base2#(N);\n"
+    "interface class base_ic  #(int N = 8) extends pkg1::base1, "
+    "base2 #(N);\n"
     "endclass",
     "interface class base_ic;\n"
     "typedef int[3:0] quartet;\n"
@@ -4997,7 +4997,7 @@ static const ParserTestCaseArray kInterfaceClassTests = {
     "typedef struct { int i; bool b; } mystruct;\n"
     "typedef enum { RED, GREEN, BLUE } colors;\n"
     "typedef virtual blah_if harness_if;\n"
-    "typedef some_class#(3, 2, 1) car_type;\n"
+    "typedef some_class #(3, 2, 1) car_type;\n"
     "endclass",
     "interface class base_ic;\n"
     "parameter N = 2;\n"
@@ -5014,7 +5014,7 @@ static const ParserTestCaseArray kInterfaceClassTests = {
     "endclass",
     "interface class base_ic;\n"
     "parameter N = 2;\n"
-    "typedef some_class#(N) car_type;\n"
+    "typedef some_class #(N) car_type;\n"
     "pure virtual task pure_task1;\n"
     "pure virtual function void pure_task1;\n"
     "endclass",
@@ -5779,13 +5779,13 @@ static const std::initializer_list<ParserTestData> kInvalidCodeTests = {
     {{TK_StringLiteral, "\"class\""}, " foo;\n"},
     // cannot mix positional and named parameter arguments:
     {"class foo;\n"
-     "fizz #(buzz, ",
+     "fizz  #(buzz, ",
      '.',  // expect error on '.'
      "pop(1)) bar;\n"
      "endclass\n"},
     // cannot mix positional and named parameter arguments:
     {"class foo;\n"
-     "fizz #(.buzz(\"bzz\"), ",
+     "fizz  #(.buzz(\"bzz\"), ",
      {TK_DecNumber, "1"},
      ") bar;\n"
      "endclass\n"},
@@ -5799,10 +5799,10 @@ static const std::initializer_list<ParserTestData> kInvalidCodeTests = {
     {"module foo(",
      ',',  // unexpected ,
      "bbb);\nendmodule\n"},
-    {"module foo #(int aaa=7, ",
+    {"module foo  #(int aaa=7, ",
      ')',  // trailing comma, unexpected )
      ";\nendmodule\n"},
-    {"module foo #(",
+    {"module foo  #(",
      ',',  // unexpected ,
      " int bbb);\nendmodule\n"},
     {"function void bar(",
@@ -6169,7 +6169,7 @@ static const verible::ErrorRecoveryTestCase kErrorRecoveryTests[] = {
      // recovered from here onward
      "    static function bit r();\n"
      "    if (m == null) m = new();\n"
-     "    uvm_resource#(T)::m_set_converter(m_singleton);\n"
+     "    uvm_resource #(T)::m_set_converter(m_singleton);\n"
      "  endfunction\n"
      "endclass\n",
      {NodeTag(kClassDeclaration), NodeTag(kClassItems),

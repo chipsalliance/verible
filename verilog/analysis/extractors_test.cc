@@ -47,7 +47,7 @@ TEST(CollectInterfaceNamesTest, MinimalistModuleTests) {
       {"module mod2(input foo);\nendmodule", {"mod2", "foo"}},
       {"module top\nimport pkg::*;\n(input a);\nendmodule",
        {"top", "pkg", "a"}},
-      {"module mod #(parameter N = 0);\nendmodule: mod", {"mod", "N"}},
+      {"module mod  #(parameter N = 0);\nendmodule: mod", {"mod", "N"}},
       {"module a;\nendmodule\nmodule b;\nendmodule", {"a", "b"}},
   };
   for (const auto& test : kTestCases) {

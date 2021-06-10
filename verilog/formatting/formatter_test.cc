@@ -809,11 +809,11 @@ static constexpr FormatterTestCase kFormatterTestCases[] = {
     {"module foo;/* foo */endmodule:foo\n",
      "module foo;  /* foo */\n"
      "endmodule : foo\n"},
-    {"module pm #(\n"
+    {"module pm  #(\n"
      "//comment\n"
      ") (wire ww);\n"
      "endmodule\n",
-     "module pm #(\n"
+     "module pm  #(\n"
      "    //comment\n"  // comment indented
      ") (\n"
      "    wire ww\n"
@@ -823,11 +823,11 @@ static constexpr FormatterTestCase kFormatterTestCases[] = {
      "endmodule\n",
      "module pm ();\n"
      "endmodule\n"},
-    {"module pm #(\n"
+    {"module pm  #(\n"
      "//comment\n"
      ") ( );\n"
      "endmodule\n",
-     "module pm #(\n"
+     "module pm  #(\n"
      "    //comment\n"  // comment indented
      ") ();\n"          // (); grouped together
      "endmodule\n"},
@@ -1082,9 +1082,9 @@ static constexpr FormatterTestCase kFormatterTestCases[] = {
      "    output pkg::bar_t yy\n"
      ");\n"
      "endmodule : foo\n"},
-    {"module foo(  input pkg::bar_t#(1)  x , output reg  yy) ;endmodule:foo\n",
+    {"module foo(  input pkg::bar_t #(1)  x , output reg  yy) ;endmodule:foo\n",
      "module foo (\n"  // with parameterized port type
-     "    input  pkg::bar_t#(1) x,\n"
+     "    input  pkg::bar_t #(1) x,\n"
      "    output reg            yy\n"  // aligned
      ");\n"
      "endmodule : foo\n"},
@@ -1540,11 +1540,11 @@ static constexpr FormatterTestCase kFormatterTestCases[] = {
      "  wire     [pp:qq] w;\n"
      "endmodule\n"},
     {"module m;\n"
-     "qqq#(rr) s;\n"     // parameterized type
+     "qqq #(rr) s;\n"     // parameterized type
      "wire [pp:qq]w;\n"  // packed dimensions
      "endmodule\n",
      "module m;\n"
-     "  qqq #(rr)         s;\n"
+     "  qqq  #(rr)         s;\n"
      "  wire      [pp:qq] w;\n"
      "endmodule\n"},
     {"module m;\n"
@@ -1606,11 +1606,11 @@ static constexpr FormatterTestCase kFormatterTestCases[] = {
      "  );\n"
      "endmodule\n"},
     {"module test;\n"
-     "bind entropy_src tlul_assert #(.EndpointType(\"Device\"))\n"
+     "bind entropy_src tlul_assert  #(.EndpointType(\"Device\"))\n"
      "tlul_assert_device (.clk_i, .rst_ni, .h2d(tl_i), .d2h(tl_o));\n"
      "endmodule\n",
      "module test;\n"
-     "  bind entropy_src tlul_assert #(\n"
+     "  bind entropy_src tlul_assert  #(\n"
      "      .EndpointType(\"Device\")\n"
      "  ) tlul_assert_device (\n"
      "      .clk_i,\n"
@@ -1620,11 +1620,11 @@ static constexpr FormatterTestCase kFormatterTestCases[] = {
      "  );\n"
      "endmodule\n"},
     {"module test;\n"
-     "bind entropy_src tlul_assert #(.EndpointType(\"Device\"))\n"
+     "bind entropy_src tlul_assert  #(.EndpointType(\"Device\"))\n"
      "tlul_assert_device (.clk_i, .rst_ni,\n\n .h2d(tl_i),\n\n .d2h(tl_o));\n"
      "endmodule\n",
      "module test;\n"
-     "  bind entropy_src tlul_assert #(\n"
+     "  bind entropy_src tlul_assert  #(\n"
      "      .EndpointType(\"Device\")\n"
      "  ) tlul_assert_device (\n"
      "      .clk_i,\n"
@@ -1635,10 +1635,10 @@ static constexpr FormatterTestCase kFormatterTestCases[] = {
      "      .d2h(tl_o)\n"
      "  );\n"
      "endmodule\n"},
-    {"bind expand_me long_name #(.W(W_CONST), .D(D_CONST)) instaaance_name ("
+    {"bind expand_me long_name  #(.W(W_CONST), .D(D_CONST)) instaaance_name ("
      ".in(iiiiiiiin),\n\n .out(ooooooout),\n .clk(ccccccclk),\n\n"
      ".in1234 (in),\n //c1\n .out1234(out),\n .clk1234(clk),);",
-     "bind expand_me long_name #(\n"
+     "bind expand_me long_name  #(\n"
      "    .W(W_CONST),\n"
      "    .D(D_CONST)\n"
      ") instaaance_name (\n"
@@ -1652,68 +1652,68 @@ static constexpr FormatterTestCase kFormatterTestCases[] = {
      "    .out1234(out),\n"
      "    .clk1234(clk),\n"
      ");\n"},
-    {"module foo #(int x,int y) ;endmodule:foo\n",  // parameters
-     "module foo #(\n"
+    {"module foo  #(int x,int y) ;endmodule:foo\n",  // parameters
+     "module foo  #(\n"
      "    int x,\n"
      "    int y\n"
      ");\n"  // each parameter on its own line
      "endmodule : foo\n"},
-    {"module foo #(int x)(input y) ;endmodule:foo\n",
+    {"module foo  #(int x)(input y) ;endmodule:foo\n",
      // parameter and port
-     "module foo #(\n"
+     "module foo  #(\n"
      "    int x\n"
      ") (\n"
      "    input y\n"
      ");\n"  // each paramater and port item should be on its own line
      "endmodule : foo\n"},
-    {"module foo #(parameter int x,parameter int y) ;endmodule:foo\n",
+    {"module foo  #(parameter int x,parameter int y) ;endmodule:foo\n",
      // parameters don't fit (also should be on its own line)
-     "module foo #(\n"
+     "module foo  #(\n"
      "    parameter int x,\n"
      "    parameter int y\n"
      ");\n"
      "endmodule : foo\n"},
-    {"module foo #(parameter int xxxx,parameter int yyyy) ;endmodule:foo\n",
+    {"module foo  #(parameter int xxxx,parameter int yyyy) ;endmodule:foo\n",
      // parameters don't fit
-     "module foo #(\n"
+     "module foo  #(\n"
      "    parameter int xxxx,\n"
      "    parameter int yyyy\n"
      ");\n"
      "endmodule : foo\n"},
-    {"module foo #(parameter int x = $clog2  (N) ,parameter int y ) "
+    {"module foo  #(parameter int x = $clog2  (N) ,parameter int y ) "
      ";endmodule:foo\n",
      // parameters don't fit
-     "module foo #(\n"
+     "module foo  #(\n"
      "    parameter int x = $clog2(N),\n"  // no space after $clog2
      "    parameter int y\n"
      ");\n"
      "endmodule : foo\n"},
-    {"module foo #(//comment\n"
+    {"module foo  #(//comment\n"
      "parameter bar =1,\n"
      "localparam baz =2"
      ") ();"
      "endmodule",
-     "module foo #(  //comment\n"
+     "module foo  #(  //comment\n"
      "    parameter  bar = 1,\n"
      "    localparam baz = 2\n"
      ") ();\n"
      "endmodule\n"},
-    {"module foo #("
+    {"module foo  #("
      "parameter  bar =1,//comment\n"
      "localparam baz =2"
      ") ();"
      "endmodule",
-     "module foo #(\n"
+     "module foo  #(\n"
      "    parameter  bar = 1,  //comment\n"
      "    localparam baz = 2\n"
      ") ();\n"
      "endmodule\n"},
-    {"module foo #("
+    {"module foo  #("
      "parameter  bar =1,"
      "localparam baz =2//comment\n"
      ") ();"
      "endmodule",
-     "module foo #(\n"
+     "module foo  #(\n"
      "    parameter  bar = 1,\n"
      "    localparam baz = 2  //comment\n"
      ") ();\n"
@@ -1747,20 +1747,20 @@ static constexpr FormatterTestCase kFormatterTestCases[] = {
      "endmodule\n"},
 #endif
     {"module    top;"
-     "foo#(  \"test\"  ) foo(  );"
-     "bar#(  \"test\"  ,5) bar(  );"
+     "foo #(  \"test\"  ) foo(  );"
+     "bar #(  \"test\"  ,5) bar(  );"
      "endmodule\n",
      "module top;\n"
-     "  foo #(\"test\") foo ();\n"  // module instantiation, string arg
-     "  bar #(\"test\", 5) bar ();\n"
+     "  foo  #(\"test\") foo ();\n"  // module instantiation, string arg
+     "  bar  #(\"test\", 5) bar ();\n"
      "endmodule\n"},
     {"module    top;"
-     "foo#(  `\"test`\"  ) foo(  );"
-     "bar#(  `\"test`\"  ,5) bar(  );"
+     "foo #(  `\"test`\"  ) foo(  );"
+     "bar #(  `\"test`\"  ,5) bar(  );"
      "endmodule\n",
      "module top;\n"
-     "  foo #(`\"test`\") foo ();\n"  // module instantiation, eval string arg
-     "  bar #(`\"test`\", 5) bar ();\n"
+     "  foo  #(`\"test`\") foo ();\n"  // module instantiation, eval string arg
+     "  bar  #(`\"test`\", 5) bar ();\n"
      "endmodule\n"},
     {"`ifdef FOO\n"
      "  module bar;endmodule\n"
@@ -3038,8 +3038,8 @@ static constexpr FormatterTestCase kFormatterTestCases[] = {
      "interface if2;\n"
      "endinterface : if2\n"},
     {// interface declaration with parameters
-     " interface if1#( parameter int W= 8 );endinterface\t\t",
-     "interface if1 #(\n"
+     " interface if1 #( parameter int W= 8 );endinterface\t\t",
+     "interface if1  #(\n"
      "    parameter int W = 8\n"
      ");\n"
      "endinterface\n"},
@@ -3048,16 +3048,16 @@ static constexpr FormatterTestCase kFormatterTestCases[] = {
      "interface if1 ();\n"
      "endinterface\n"},
     {// interface declaration with parameter comment only, empty ports
-     " interface if1#( \n"
+     " interface if1 #( \n"
      "//param\n"
      ")();endinterface\t\t",
-     "interface if1 #(\n"
+     "interface if1  #(\n"
      "    //param\n"
      ") ();\n"
      "endinterface\n"},
     {// interface declaration with parameter, empty ports
-     " interface if1#( parameter int W= 8 )();endinterface\t\t",
-     "interface if1 #(\n"
+     " interface if1 #( parameter int W= 8 )();endinterface\t\t",
+     "interface if1  #(\n"
      "    parameter int W = 8\n"
      ") ();\n"
      "endinterface\n"},
@@ -3075,9 +3075,9 @@ static constexpr FormatterTestCase kFormatterTestCases[] = {
      ");\n"
      "endinterface\n"},
     {// interface declaration with parameters and ports
-     " interface if1#( parameter int W= 8 )(input logic z);endinterface\t\t",
+     " interface if1 #( parameter int W= 8 )(input logic z);endinterface\t\t",
      // doesn't fit on one line
-     "interface if1 #(\n"
+     "interface if1  #(\n"
      "    parameter int W = 8\n"
      ") (\n"
      "    input logic z\n"
@@ -3593,39 +3593,39 @@ static constexpr FormatterTestCase kFormatterTestCases[] = {
     },
 
     // class with empty parameter list
-    {"class foo #(); endclass",
-     "class foo #();\n"
+    {"class foo  #(); endclass",
+     "class foo  #();\n"
      "endclass\n"},
     // class with empty parameter list, with comment
-    {"class foo #(  \n"
+    {"class foo  #(  \n"
      "// comment\n"
      "); endclass",
-     "class foo #(\n"
+     "class foo  #(\n"
      "    // comment\n"
      ");\n"
      "endclass\n"},
     // class with empty parameter list, extends
-    {"class foo #()extends bar ; endclass",
-     "class foo #() extends bar;\n"
+    {"class foo  #()extends bar ; endclass",
+     "class foo  #() extends bar;\n"
      "endclass\n"},
     // class extends from type with named parameters
-    {"class foo extends bar #(.N(N), .M(M)); endclass",
-     "class foo extends bar #(\n"
+    {"class foo extends bar  #(.N(N), .M(M)); endclass",
+     "class foo extends bar  #(\n"
      "    .N(N),\n"
      "    .M(M)\n"
      ");\n"
      "endclass\n"},
 
     // class with one parameter list
-    {"class foo #(type a = b); endclass",
-     "class foo #(\n"
+    {"class foo  #(type a = b); endclass",
+     "class foo  #(\n"
      "    type a = b\n"
      ");\n"
      "endclass\n"},
 
     // class with multiple paramter list
-    {"class foo #(type a = b, type c = d, type e = f); endclass",
-     "class foo #(\n"
+    {"class foo  #(type a = b, type c = d, type e = f); endclass",
+     "class foo  #(\n"
      "    type a = b,\n"
      "    type c = d,\n"
      "    type e = f\n"
@@ -3650,30 +3650,30 @@ static constexpr FormatterTestCase kFormatterTestCases[] = {
      "  int counter;\n"
      "  int countess;\n"
      "endclass\n"},
-    {"class  i_love_params ;foo#( . bar)  baz\t;endclass",
+    {"class  i_love_params ;foo #( . bar)  baz\t;endclass",
      "class i_love_params;\n"
-     "  foo #(.bar) baz;\n"
+     "  foo  #(.bar) baz;\n"
      "endclass\n"},
-    {"class  i_love_params ;foo#( . bar ( bah ))  baz\t;endclass",
+    {"class  i_love_params ;foo #( . bar ( bah ))  baz\t;endclass",
      "class i_love_params;\n"
-     "  foo #(.bar(bah)) baz;\n"
+     "  foo  #(.bar(bah)) baz;\n"
      "endclass\n"},
-    {"class  i_love_params ;foo#( . bar ( bah\n),"
+    {"class  i_love_params ;foo #( . bar ( bah\n),"
      ".\ncat( dog) )  baz\t;endclass",
      "class i_love_params;\n"
-     "  foo #(\n"
+     "  foo  #(\n"
      "      .bar(bah),\n"
      "      .cat(dog)\n"
      "  ) baz;\n"
      "endclass\n"},
-    {"class  i_love_params ;foo#( . bar)  baz1,baz2\t;endclass",
+    {"class  i_love_params ;foo #( . bar)  baz1,baz2\t;endclass",
      "class i_love_params;\n"
-     "  foo #(.bar) baz1, baz2;\n"
+     "  foo  #(.bar) baz1, baz2;\n"
      "endclass\n"},
-    {"class  i_love_params ;foo#( . bar)  baz\t;baz#(.foo)bar;endclass",
+    {"class  i_love_params ;foo #( . bar)  baz\t;baz #(.foo)bar;endclass",
      "class i_love_params;\n"
-     "  foo #(.bar) baz;\n"
-     "  baz #(.foo) bar;\n"
+     "  foo  #(.bar) baz;\n"
+     "  baz  #(.foo) bar;\n"
      "endclass\n"},
 
     // typedef test cases
@@ -3715,8 +3715,8 @@ static constexpr FormatterTestCase kFormatterTestCases[] = {
      "  A = 0,\n"
      "  B = 1\n"
      "} foo_t;\n"},
-    {"typedef foo_pkg::baz_t#(.L(L), .W(W)) bar_t;\n",
-     "typedef foo_pkg::baz_t#(\n"
+    {"typedef foo_pkg::baz_t #(.L(L), .W(W)) bar_t;\n",
+     "typedef foo_pkg::baz_t #(\n"
      "    .L(L),\n"
      "    .W(W)\n"
      ") bar_t;\n"},
@@ -4034,7 +4034,7 @@ static constexpr FormatterTestCase kFormatterTestCases[] = {
      "endtask\n"},
     {"task t; ## (1+1) ;endtask",  // delay expression
      "task t;\n"
-     "  ##(1 + 1);\n"
+     "  # #(1 + 1);\n"
      "endtask\n"},
     {"task t; ## delay_value ;endtask",
      "task t;\n"
@@ -4693,35 +4693,35 @@ static constexpr FormatterTestCase kFormatterTestCases[] = {
      "module foo;\n"
      "  bar bq (), bq2 ();\n"  // multiple instances, still fitting on one line
      "endmodule\n"},
-    {"module foo; bar #(.N(N)) bq (.bus(bus));endmodule\n",
+    {"module foo; bar  #(.N(N)) bq (.bus(bus));endmodule\n",
      // instance parameter and port fits on line
      "module foo;\n"
-     "  bar #(.N(N)) bq (.bus(bus));\n"
+     "  bar  #(.N(N)) bq (.bus(bus));\n"
      "endmodule\n"},
-    {"module foo; bar #(.N(N),.M(M)) bq ();endmodule\n",  // two named params
+    {"module foo; bar  #(.N(N),.M(M)) bq ();endmodule\n",  // two named params
      "module foo;\n"
-     "  bar #(\n"
+     "  bar  #(\n"
      "      .N(N),\n"
      "      .M(M)\n"
      "  ) bq ();\n"
      "endmodule\n"},
-    {"module foo; bar #(//comment\n.N(N),.M(M)) bq ();endmodule\n",
+    {"module foo; bar  #(//comment\n.N(N),.M(M)) bq ();endmodule\n",
      "module foo;\n"
-     "  bar #(  //comment\n"  // EOL comment before first param
+     "  bar  #(  //comment\n"  // EOL comment before first param
      "      .N(N),\n"
      "      .M(M)\n"
      "  ) bq ();\n"
      "endmodule\n"},
-    {"module foo; bar #(.N(N),//comment\n.M(M)) bq ();endmodule\n",
+    {"module foo; bar  #(.N(N),//comment\n.M(M)) bq ();endmodule\n",
      "module foo;\n"
-     "  bar #(\n"
+     "  bar  #(\n"
      "      .N(N),  //comment\n"  // EOL comment after first param
      "      .M(M)\n"
      "  ) bq ();\n"
      "endmodule\n"},
-    {"module foo; bar #(.N(N),.M(M)//comment\n) bq ();endmodule\n",
+    {"module foo; bar  #(.N(N),.M(M)//comment\n) bq ();endmodule\n",
      "module foo;\n"
-     "  bar #(\n"
+     "  bar  #(\n"
      "      .N(N),\n"
      "      .M(M)  //comment\n"  // EOL comment after last param
      "  ) bq ();\n"
@@ -4781,10 +4781,10 @@ static constexpr FormatterTestCase kFormatterTestCases[] = {
      "      .bb(bb)\n"
      "  );\n"  // multiple named ports, one per line
      "endmodule\n"},
-    {"  module foo   ; bar#(NNNNNNNN)"
+    {"  module foo   ; bar #(NNNNNNNN)"
      "bq(.aa(aaaaaa),.bb(bbbbbb));endmodule\n",
      "module foo;\n"
-     "  bar #(NNNNNNNN) bq (\n"
+     "  bar  #(NNNNNNNN) bq (\n"
      "      .aa(aaaaaa),\n"
      "      .bb(bbbbbb)\n"
      "  );\n"
@@ -4797,24 +4797,24 @@ static constexpr FormatterTestCase kFormatterTestCases[] = {
      "      .bbbbbb(bbbbbb)\n"
      "  );\n"
      "endmodule\n"},
-    {"module foo; bar #(.NNNNN(NNNNN)) bq (.bussss(bussss));endmodule\n",
+    {"module foo; bar  #(.NNNNN(NNNNN)) bq (.bussss(bussss));endmodule\n",
      // instance parameter and port does not fit on line
      "module foo;\n"
-     "  bar #(\n"
+     "  bar  #(\n"
      "      .NNNNN(NNNNN)\n"
      "  ) bq (\n"
      "      .bussss(bussss)\n"
      "  );\n"
      "endmodule\n"},
-    {"module foo; bar #(//\n.N(N)) bq (.bus(bus));endmodule\n",
+    {"module foo; bar  #(//\n.N(N)) bq (.bus(bus));endmodule\n",
      "module foo;\n"
-     "  bar #(  //\n"  // would fit on one line, but forced to expand by //
+     "  bar  #(  //\n"  // would fit on one line, but forced to expand by //
      "      .N(N)\n"
      "  ) bq (\n"
      "      .bus(bus)\n"
      "  );\n"
      "endmodule\n"},
-    {"module foo; bar #(\n"
+    {"module foo; bar  #(\n"
      "`ifdef MM\n"
      ".M(M)\n"
      "`else\n"
@@ -4822,7 +4822,7 @@ static constexpr FormatterTestCase kFormatterTestCases[] = {
      "`endif\n"
      ") bq (.bus(bus));endmodule\n",
      "module foo;\n"
-     "  bar #(\n"
+     "  bar  #(\n"
      "`ifdef MM\n"
      "      .M(M)\n"
      "`else\n"
@@ -4832,25 +4832,25 @@ static constexpr FormatterTestCase kFormatterTestCases[] = {
      "      .bus(bus)\n"
      "  );\n"
      "endmodule\n"},
-    {"module foo; bar #(.N(N)//\n) bq (.bus(bus));endmodule\n",
+    {"module foo; bar  #(.N(N)//\n) bq (.bus(bus));endmodule\n",
      "module foo;\n"
-     "  bar #(\n"  // would fit on one line, but forced to expand by //
+     "  bar  #(\n"  // would fit on one line, but forced to expand by //
      "      .N(N)  //\n"
      "  ) bq (\n"
      "      .bus(bus)\n"
      "  );\n"
      "endmodule\n"},
-    {"module foo; bar #(.N(N)) bq (//\n.bus(bus));endmodule\n",
+    {"module foo; bar  #(.N(N)) bq (//\n.bus(bus));endmodule\n",
      "module foo;\n"
-     "  bar #(\n"  // would fit on one line, but forced to expand by //
+     "  bar  #(\n"  // would fit on one line, but forced to expand by //
      "      .N(N)\n"
      "  ) bq (  //\n"
      "      .bus(bus)\n"
      "  );\n"
      "endmodule\n"},
-    {"module foo; bar #(.N(N)) bq (.bus(bus)//\n);endmodule\n",
+    {"module foo; bar  #(.N(N)) bq (.bus(bus)//\n);endmodule\n",
      "module foo;\n"
-     "  bar #(\n"  // would fit on one line, but forced to expand by //
+     "  bar  #(\n"  // would fit on one line, but forced to expand by //
      "      .N(N)\n"
      "  ) bq (\n"
      "      .bus(bus)  //\n"
@@ -5068,16 +5068,16 @@ static constexpr FormatterTestCase kFormatterTestCases[] = {
      "bind foo bar baz (.clk(clk));\n"},
     {// tests bind declaration, with type params
      "bind   foo   bar# ( . W ( W ) ) baz  ( . clk ( clk  ) ) ;",
-     "bind foo bar #(.W(W)) baz (.clk(clk));\n"},
+     "bind foo bar  #(.W(W)) baz (.clk(clk));\n"},
     {// tests bind declarations
      "bind   foo   bar baz  ( ) ;"
      "bind goo  car  caz (   );",
      "bind foo bar baz ();\n"
      "bind goo car caz ();\n"},
 
-    {"bind blah foo #( .MaxCount(MaxCount), .MaxDelta(MaxDelta)) bar ("
+    {"bind blah foo  #( .MaxCount(MaxCount), .MaxDelta(MaxDelta)) bar ("
      "    .clk(clk), .rst(rst), .value(value) );",
-     "bind blah foo #(\n"
+     "bind blah foo  #(\n"
      "    .MaxCount(MaxCount),\n"
      "    .MaxDelta(MaxDelta)\n"
      ") bar (\n"
@@ -5090,7 +5090,7 @@ static constexpr FormatterTestCase kFormatterTestCases[] = {
         ".W(W_CONST), .H(H_CONST), .D(D_CONST)  )"
         "instaaance_name (.in(iiiiiiiin), .out(ooooooout), .clk(ccccccclk));",
         "bind expaaaaaaaaaaand_meeee\n"
-        "    looooooooong_name #(\n"
+        "    looooooooong_name  #(\n"
         "    .W(W_CONST),\n"
         "    .H(H_CONST),\n"
         "    .D(D_CONST)\n"
@@ -5105,7 +5105,7 @@ static constexpr FormatterTestCase kFormatterTestCases[] = {
         "bind expand_inst name# ("
         ".W(W_CONST), .H(H_CONST), .D(D_CONST)  )"
         "instaaance_name (.in(iiiiiiiin), .out(ooooooout), .clk(ccccccclk));",
-        "bind expand_inst name #(\n"
+        "bind expand_inst name  #(\n"
         "    .W(W_CONST),\n"
         "    .H(H_CONST),\n"
         "    .D(D_CONST)\n"
@@ -6367,46 +6367,46 @@ static constexpr FormatterTestCase kFormatterTestCases[] = {
      "  );\n"
      "endmodule\n"},
 
-    // Parameterized data types, declarations inside #() tabular alignment
+    // Parameterized data types, declarations inside  #() tabular alignment
     {// parameterized module with 'list_of_param_assignments'
-     "module foo #(A = 2, AA = 22, AAA = 222);\n"
+     "module foo  #(A = 2, AA = 22, AAA = 222);\n"
      "endmodule\n",
-     "module foo #(\n"
+     "module foo  #(\n"
      "    A   = 2,\n"
      "    AA  = 22,\n"
      "    AAA = 222\n"
      ");\n"
      "endmodule\n"},
     {// parameterized module with 'parameter_declaration'
-     "module foo #(parameter int a = 2, parameter int aa = 22);\n"
+     "module foo  #(parameter int a = 2, parameter int aa = 22);\n"
      "endmodule\n",
-     "module foo #(\n"
+     "module foo  #(\n"
      "    parameter int a  = 2,\n"
      "    parameter int aa = 22\n"
      ");\n"
      "endmodule\n"},
     {// parameterized module with 'parameter_declaration' and comments
-     "module foo #(//comment\nparameter int a = 2, parameter int aa = 22);\n"
+     "module foo  #(//comment\nparameter int a = 2, parameter int aa = 22);\n"
      "endmodule\n",
-     "module foo #(  //comment\n"
+     "module foo  #(  //comment\n"
      "    parameter int a  = 2,\n"
      "    parameter int aa = 22\n"
      ");\n"
      "endmodule\n"},
     {// parameterized module with 'parameter_declaration' and trailing comments
-     "module foo #(parameter int a = 2,//comment\n parameter int aa = 22);\n"
+     "module foo  #(parameter int a = 2,//comment\n parameter int aa = 22);\n"
      "endmodule\n",
-     "module foo #(\n"
+     "module foo  #(\n"
      "    parameter int a  = 2,  //comment\n"
      "    parameter int aa = 22\n"
      ");\n"
      "endmodule\n"},
     {// parameterized module with 'parameter_declaration' and pre-proc
-     "module foo #(parameter int a = 2,\n"
+     "module foo  #(parameter int a = 2,\n"
      "`ifdef MACRO parameter int aa = 22, `endif\n"
      "parameter int aaa = 222);\n"
      "endmodule\n",
-     "module foo #(\n"
+     "module foo  #(\n"
      "    parameter int a   = 2,\n"
      "`ifdef MACRO\n"
      "    parameter int aa  = 22,\n"
@@ -6415,56 +6415,56 @@ static constexpr FormatterTestCase kFormatterTestCases[] = {
      ");\n"
      "endmodule\n"},
     {// parameterized module with 'parameter_declaration' and packed dimensions
-     "module foo #(parameter logic [3:0] a = 2, parameter logic [30:0] aa = "
+     "module foo  #(parameter logic [3:0] a = 2, parameter logic [30:0] aa = "
      "22);\n"
      "endmodule\n",
-     "module foo #(\n"
+     "module foo  #(\n"
      "    parameter logic [ 3:0] a  = 2,\n"
      "    parameter logic [30:0] aa = 22\n"
      ");\n"
      "endmodule\n"},
     {// parameterized module with 'parameter_declaration' and unpacked
      // dimensions
-     "module foo #(parameter logic a[3:0] = 2, parameter logic  aa [30:0] = "
+     "module foo  #(parameter logic a[3:0] = 2, parameter logic  aa [30:0] = "
      "22);\n"
      "endmodule\n",
-     "module foo #(\n"
+     "module foo  #(\n"
      "    parameter logic a [ 3:0] = 2,\n"
      "    parameter logic aa[30:0] = 22\n"
      ");\n"
      "endmodule\n"},
 
     {// parameterized module with 'local_parameter_declaration'
-     "module foo #(localparam int a = 2, localparam int aa = 22);\n"
+     "module foo  #(localparam int a = 2, localparam int aa = 22);\n"
      "endmodule\n",
-     "module foo #(\n"
+     "module foo  #(\n"
      "    localparam int a  = 2,\n"
      "    localparam int aa = 22\n"
      ");\n"
      "endmodule\n"},
     {// parameterized module with 'local_parameter_declaration' and comments
-     "module foo #(//comment\nlocalparam int a = 2, localparam int aa = 22);\n"
+     "module foo  #(//comment\nlocalparam int a = 2, localparam int aa = 22);\n"
      "endmodule\n",
-     "module foo #(  //comment\n"
+     "module foo  #(  //comment\n"
      "    localparam int a  = 2,\n"
      "    localparam int aa = 22\n"
      ");\n"
      "endmodule\n"},
     {// parameterized module with 'local_parameter_declaration' and trailing
      // comments
-     "module foo #(localparam int a = 2,//comment\n localparam int aa = 22);\n"
+     "module foo  #(localparam int a = 2,//comment\n localparam int aa = 22);\n"
      "endmodule\n",
-     "module foo #(\n"
+     "module foo  #(\n"
      "    localparam int a  = 2,  //comment\n"
      "    localparam int aa = 22\n"
      ");\n"
      "endmodule\n"},
     {// parameterized module with 'local_parameter_declaration' and pre-proc
-     "module foo #(localparam int a = 2,\n"
+     "module foo  #(localparam int a = 2,\n"
      "`ifdef MACRO localparam int aa = 22, `endif\n"
      "localparam int aaa = 222);\n"
      "endmodule\n",
-     "module foo #(\n"
+     "module foo  #(\n"
      "    localparam int a   = 2,\n"
      "`ifdef MACRO\n"
      "    localparam int aa  = 22,\n"
@@ -6474,29 +6474,29 @@ static constexpr FormatterTestCase kFormatterTestCases[] = {
      "endmodule\n"},
     {// parameterized module with 'local_parameter_declaration' and packed
      // dimensions
-     "module foo #(localparam logic [3:0] a = 2, localparam logic [30:0] aa = "
+     "module foo  #(localparam logic [3:0] a = 2, localparam logic [30:0] aa = "
      "22);\n"
      "endmodule\n",
-     "module foo #(\n"
+     "module foo  #(\n"
      "    localparam logic [ 3:0] a  = 2,\n"
      "    localparam logic [30:0] aa = 22\n"
      ");\n"
      "endmodule\n"},
     {// parameterized module with 'local_parameter_declaration' and unpacked
      // dimensions
-     "module foo #(localparam logic a[3:0] = 2, localparam logic  aa [30:0] = "
+     "module foo  #(localparam logic a[3:0] = 2, localparam logic  aa [30:0] = "
      "22);\n"
      "endmodule\n",
-     "module foo #(\n"
+     "module foo  #(\n"
      "    localparam logic a [ 3:0] = 2,\n"
      "    localparam logic aa[30:0] = 22\n"
      ");\n"
      "endmodule\n"},
 
     {// parameterized module with 'data_type list_of_param_assignments'
-     "module foo #( int a = 2,  real aa = 22, longint aaa = 222);\n"
+     "module foo  #( int a = 2,  real aa = 22, longint aaa = 222);\n"
      "endmodule\n",
-     "module foo #(\n"
+     "module foo  #(\n"
      "    int     a   = 2,\n"
      "    real    aa  = 22,\n"
      "    longint aaa = 222\n"
@@ -6504,10 +6504,10 @@ static constexpr FormatterTestCase kFormatterTestCases[] = {
      "endmodule\n"},
     {// parameterized module with 'data_type list_of_param_assignments' and
      // comments
-     "module foo #(//comment\nint a = 2,  shortreal aa = 22, longint aaa = "
+     "module foo  #(//comment\nint a = 2,  shortreal aa = 22, longint aaa = "
      "222);\n"
      "endmodule\n",
-     "module foo #(  //comment\n"
+     "module foo  #(  //comment\n"
      "    int       a   = 2,\n"
      "    shortreal aa  = 22,\n"
      "    longint   aaa = 222\n"
@@ -6515,10 +6515,10 @@ static constexpr FormatterTestCase kFormatterTestCases[] = {
      "endmodule\n"},
     {// parameterized module with 'data_type list_of_param_assignments' and
      // trailing comments
-     "module foo #(int a = 2,  shortreal aa = 22,//comment\n longint aaa = "
+     "module foo  #(int a = 2,  shortreal aa = 22,//comment\n longint aaa = "
      "222);\n"
      "endmodule\n",
-     "module foo #(\n"
+     "module foo  #(\n"
      "    int       a   = 2,\n"
      "    shortreal aa  = 22,  //comment\n"
      "    longint   aaa = 222\n"
@@ -6526,11 +6526,11 @@ static constexpr FormatterTestCase kFormatterTestCases[] = {
      "endmodule\n"},
     {// parameterized module with 'data_type list_of_param_assignments' and
      // pre-proc
-     "module foo #(int a = 2,\n"
+     "module foo  #(int a = 2,\n"
      "`ifdef MACRO shortreal aa = 22, `endif\n"
      " longint aaa = 222);\n"
      "endmodule\n",
-     "module foo #(\n"
+     "module foo  #(\n"
      "    int       a   = 2,\n"
      "`ifdef MACRO\n"
      "    shortreal aa  = 22,\n"
@@ -6540,10 +6540,10 @@ static constexpr FormatterTestCase kFormatterTestCases[] = {
      "endmodule\n"},
     {// parameterized module with 'data_type list_of_param_assignments' and
      // packed dimensions
-     "module foo #(bit [1:0] a = 2,  reg [12:0] aa = 22, logic [123:0] aaa = "
+     "module foo  #(bit [1:0] a = 2,  reg [12:0] aa = 22, logic [123:0] aaa = "
      "222);\n"
      "endmodule\n",
-     "module foo #(\n"
+     "module foo  #(\n"
      "    bit   [  1:0] a   = 2,\n"
      "    reg   [ 12:0] aa  = 22,\n"
      "    logic [123:0] aaa = 222\n"
@@ -6551,74 +6551,74 @@ static constexpr FormatterTestCase kFormatterTestCases[] = {
      "endmodule\n"},
     {// parameterized module with 'data_type list_of_param_assignments' and
      // unpacked dimensions
-     "module foo #(bit  a[1:0] = 2,  reg  aa[12:0] = 22, logic aaa [123:0]  = "
+     "module foo  #(bit  a[1:0] = 2,  reg  aa[12:0] = 22, logic aaa [123:0]  = "
      "222);\n"
      "endmodule\n",
-     "module foo #(\n"
+     "module foo  #(\n"
      "    bit   a  [  1:0] = 2,\n"
      "    reg   aa [ 12:0] = 22,\n"
      "    logic aaa[123:0] = 222\n"
      ");\n"
      "endmodule\n"},
     {// parameterized module with 'type list_of_type_assignments'
-     "module foo #(type T = int, type TT = bit, type TTT= C#(logic) );\n"
+     "module foo  #(type T = int, type TT = bit, type TTT= C #(logic) );\n"
      "endmodule\n",
-     "module foo #(\n"
+     "module foo  #(\n"
      "    type T   = int,\n"
      "    type TT  = bit,\n"
-     "    type TTT = C#(logic)\n"
+     "    type TTT = C #(logic)\n"
      ");\n"
      "endmodule\n"},
     {// parameterized module with 'type list_of_type_assignments' and comments
-     "module foo #(//comment\ntype T = int, type TT = bit, type TTT= C#(logic) "
+     "module foo  #(//comment\ntype T = int, type TT = bit, type TTT= C #(logic) "
      ");\n"
      "endmodule\n",
-     "module foo #(  //comment\n"
+     "module foo  #(  //comment\n"
      "    type T   = int,\n"
      "    type TT  = bit,\n"
-     "    type TTT = C#(logic)\n"
+     "    type TTT = C #(logic)\n"
      ");\n"
      "endmodule\n"},
     {// parameterized module with 'data_type list_of_param_assignments' and
      // trailing comments
-     "module foo #(type T = int, type TT = bit, //comment\n type TTT= "
-     "C#(logic) );\n"
+     "module foo  #(type T = int, type TT = bit, //comment\n type TTT= "
+     "C #(logic) );\n"
      "endmodule\n",
-     "module foo #(\n"
+     "module foo  #(\n"
      "    type T   = int,\n"
      "    type TT  = bit,  //comment\n"
-     "    type TTT = C#(logic)\n"
+     "    type TTT = C #(logic)\n"
      ");\n"
      "endmodule\n"},
     {// parameterized module with 'data_type list_of_param_assignments' and
      // pre-proc
-     "module foo #(type T = int,\n"
+     "module foo  #(type T = int,\n"
      "`ifdef MACRO type TT = bit, `endif\n"
-     " type TTT= C#(logic));\n"
+     " type TTT= C #(logic));\n"
      "endmodule\n",
-     "module foo #(\n"
+     "module foo  #(\n"
      "    type T   = int,\n"
      "`ifdef MACRO\n"
      "    type TT  = bit,\n"
      "`endif\n"
-     "    type TTT = C#(logic)\n"
+     "    type TTT = C #(logic)\n"
      ");\n"
      "endmodule\n"},
     {// parameterized module with 'data_type list_of_param_assignments' and
      // packed dimensions
-     "module foo #(type T = int [3:0], type TT = bit [250:0]);\n"
+     "module foo  #(type T = int [3:0], type TT = bit [250:0]);\n"
      "endmodule\n",
-     "module foo #(\n"
+     "module foo  #(\n"
      "    type T  = int [  3:0],\n"
      "    type TT = bit [250:0]\n"
      ");\n"
      "endmodule\n"},
-    {"module foo #(type T = int, "
+    {"module foo  #(type T = int, "
      "A = 2, int AA = 22, parameter AAA = 222, parameter longint AAAA = 2222, "
      "localparam AAAAA = 22222, localparam real AAAAAA = 222222"
      ");\n"
      "endmodule\n",
-     "module foo #(\n"
+     "module foo  #(\n"
      "               type    T      = int,\n"
      "                       A      = 2,\n"
      "               int     AA     = 22,\n"
@@ -6629,25 +6629,25 @@ static constexpr FormatterTestCase kFormatterTestCases[] = {
      ");\n"
      "endmodule\n"},
     {// parameterized module with built-in data type
-     "module foo #(int a = 2, real abc = 2234);\n"
+     "module foo  #(int a = 2, real abc = 2234);\n"
      "endmodule\n",
-     "module foo #(\n"
+     "module foo  #(\n"
      "    int  a   = 2,\n"
      "    real abc = 2234\n"
      ");\n"
      "endmodule\n"},
     {// parameterized module with type
-     "module foo #(type TYPE1 = int, type TYPE2 = boo);\n"
+     "module foo  #(type TYPE1 = int, type TYPE2 = boo);\n"
      "endmodule\n",
-     "module foo #(\n"
+     "module foo  #(\n"
      "    type TYPE1 = int,\n"
      "    type TYPE2 = boo\n"
      ");\n"
      "endmodule\n"},
-    {"module foo#(localparam type TYPE1 = int, type TYPE22 = bool, parameter   "
+    {"module foo #(localparam type TYPE1 = int, type TYPE22 = bool, parameter   "
      " type TYPE333 = real);\n"
      "endmodule\n",
-     "module foo #(\n"
+     "module foo  #(\n"
      "    localparam type TYPE1   = int,\n"
      "               type TYPE22  = bool,\n"
      "    parameter  type TYPE333 = real\n"
@@ -6655,70 +6655,70 @@ static constexpr FormatterTestCase kFormatterTestCases[] = {
      "endmodule\n"},
     {// parameterized module with 'data_type list_of_param_assignments' and 1D
      // packed dimensions
-     "module foo #(parameter type T = int [3:0], type TT = bit [123:0]);\n"
+     "module foo  #(parameter type T = int [3:0], type TT = bit [123:0]);\n"
      "endmodule\n",
-     "module foo #(\n"
+     "module foo  #(\n"
      "    parameter type T  = int [  3:0],\n"
      "              type TT = bit [123:0]\n"
      ");\n"
      "endmodule\n"},
     {// parameterized module with 'data_type list_of_param_assignments' and 2D
      // packed dimensions
-     "module foo #(type T = int [3:0][123:0], type TT = bit [123:0][1:0]);\n"
+     "module foo  #(type T = int [3:0][123:0], type TT = bit [123:0][1:0]);\n"
      "endmodule\n",
-     "module foo #(\n"
+     "module foo  #(\n"
      "    type T  = int [  3:0][123:0],\n"
      "    type TT = bit [123:0][  1:0]\n"
      ");\n"
      "endmodule\n"},
     {// parametrized module with user defined data types
-     "module foo #(type T = my_type1_t, type TT = my_pkg::my_type2_t);\n"
+     "module foo  #(type T = my_type1_t, type TT = my_pkg::my_type2_t);\n"
      "endmodule\n",
-     "module foo #(\n"
+     "module foo  #(\n"
      "    type T  = my_type1_t,\n"
      "    type TT = my_pkg::my_type2_t\n"
      ");\n"
      "endmodule\n"},
 
     {// parameterized class with 'list_of_param_assignments'
-     "class foo #(A = 2, AA = 22, AAA = 222);\n"
+     "class foo  #(A = 2, AA = 22, AAA = 222);\n"
      "endclass\n",
-     "class foo #(\n"
+     "class foo  #(\n"
      "    A   = 2,\n"
      "    AA  = 22,\n"
      "    AAA = 222\n"
      ");\n"
      "endclass\n"},
     {// parameterized class with 'parameter_declaration'
-     "class foo #(parameter int a = 2, parameter int aa = 22);\n"
+     "class foo  #(parameter int a = 2, parameter int aa = 22);\n"
      "endclass\n",
-     "class foo #(\n"
+     "class foo  #(\n"
      "    parameter int a  = 2,\n"
      "    parameter int aa = 22\n"
      ");\n"
      "endclass\n"},
     {// parameterized class with 'parameter_declaration' and comments
-     "class foo #(//comment\nparameter int a = 2, parameter int aa = 22);\n"
+     "class foo  #(//comment\nparameter int a = 2, parameter int aa = 22);\n"
      "endclass\n",
-     "class foo #(  //comment\n"
+     "class foo  #(  //comment\n"
      "    parameter int a  = 2,\n"
      "    parameter int aa = 22\n"
      ");\n"
      "endclass\n"},
     {// parameterized class with 'parameter_declaration' and trailing comments
-     "class foo #(parameter int a = 2,//comment\n parameter int aa = 22);\n"
+     "class foo  #(parameter int a = 2,//comment\n parameter int aa = 22);\n"
      "endclass\n",
-     "class foo #(\n"
+     "class foo  #(\n"
      "    parameter int a  = 2,  //comment\n"
      "    parameter int aa = 22\n"
      ");\n"
      "endclass\n"},
     {// parameterized class with 'parameter_declaration' and pre-proc
-     "class foo #(parameter int a = 2,\n"
+     "class foo  #(parameter int a = 2,\n"
      "`ifdef MACRO parameter int aa = 22, `endif\n"
      "parameter int aaa = 222);\n"
      "endclass\n",
-     "class foo #(\n"
+     "class foo  #(\n"
      "    parameter int a   = 2,\n"
      "`ifdef MACRO\n"
      "    parameter int aa  = 22,\n"
@@ -6727,55 +6727,55 @@ static constexpr FormatterTestCase kFormatterTestCases[] = {
      ");\n"
      "endclass\n"},
     {// parameterized class with 'parameter_declaration' and packed dimensions
-     "class foo #(parameter logic [3:0] a = 2, parameter logic [30:0] aa = "
+     "class foo  #(parameter logic [3:0] a = 2, parameter logic [30:0] aa = "
      "22);\n"
      "endclass\n",
-     "class foo #(\n"
+     "class foo  #(\n"
      "    parameter logic [ 3:0] a  = 2,\n"
      "    parameter logic [30:0] aa = 22\n"
      ");\n"
      "endclass\n"},
     {// parameterized class with 'parameter_declaration' and unpacked dimensions
-     "class foo #(parameter logic a[3:0] = 2, parameter logic  aa [30:0] = "
+     "class foo  #(parameter logic a[3:0] = 2, parameter logic  aa [30:0] = "
      "22);\n"
      "endclass\n",
-     "class foo #(\n"
+     "class foo  #(\n"
      "    parameter logic a [ 3:0] = 2,\n"
      "    parameter logic aa[30:0] = 22\n"
      ");\n"
      "endclass\n"},
 
     {// parameterized class with 'local_parameter_declaration'
-     "class foo #(localparam int a = 2, localparam int aa = 22);\n"
+     "class foo  #(localparam int a = 2, localparam int aa = 22);\n"
      "endclass\n",
-     "class foo #(\n"
+     "class foo  #(\n"
      "    localparam int a  = 2,\n"
      "    localparam int aa = 22\n"
      ");\n"
      "endclass\n"},
     {// parameterized class with 'local_parameter_declaration' and comments
-     "class foo #(//comment\nlocalparam int a = 2, localparam int aa = 22);\n"
+     "class foo  #(//comment\nlocalparam int a = 2, localparam int aa = 22);\n"
      "endclass\n",
-     "class foo #(  //comment\n"
+     "class foo  #(  //comment\n"
      "    localparam int a  = 2,\n"
      "    localparam int aa = 22\n"
      ");\n"
      "endclass\n"},
     {// parameterized class with 'local_parameter_declaration' and trailing
      // comments
-     "class foo #(localparam int a = 2,//comment\n localparam int aa = 22);\n"
+     "class foo  #(localparam int a = 2,//comment\n localparam int aa = 22);\n"
      "endclass\n",
-     "class foo #(\n"
+     "class foo  #(\n"
      "    localparam int a  = 2,  //comment\n"
      "    localparam int aa = 22\n"
      ");\n"
      "endclass\n"},
     {// parameterized class with 'local_parameter_declaration' and pre-proc
-     "class foo #(localparam int a = 2,\n"
+     "class foo  #(localparam int a = 2,\n"
      "`ifdef MACRO localparam int aa = 22, `endif\n"
      "localparam int aaa = 222);\n"
      "endclass\n",
-     "class foo #(\n"
+     "class foo  #(\n"
      "    localparam int a   = 2,\n"
      "`ifdef MACRO\n"
      "    localparam int aa  = 22,\n"
@@ -6785,28 +6785,28 @@ static constexpr FormatterTestCase kFormatterTestCases[] = {
      "endclass\n"},
     {// parameterized class with 'local_parameter_declaration' and packed
      // dimensions
-     "class foo #(localparam logic [3:0] a = 2, localparam logic [30:0] aa = "
+     "class foo  #(localparam logic [3:0] a = 2, localparam logic [30:0] aa = "
      "22);\n"
      "endclass\n",
-     "class foo #(\n"
+     "class foo  #(\n"
      "    localparam logic [ 3:0] a  = 2,\n"
      "    localparam logic [30:0] aa = 22\n"
      ");\n"
      "endclass\n"},
     {// parameterized class with 'local_parameter_declaration' and unpacked
      // dimensions
-     "class foo #(localparam logic a[3:0] = 2, localparam logic  aa [30:0] = "
+     "class foo  #(localparam logic a[3:0] = 2, localparam logic  aa [30:0] = "
      "22);\n"
      "endclass\n",
-     "class foo #(\n"
+     "class foo  #(\n"
      "    localparam logic a [ 3:0] = 2,\n"
      "    localparam logic aa[30:0] = 22\n"
      ");\n"
      "endclass\n"},
     {// parameterized class with 'data_type list_of_param_assignments'
-     "class foo #( int a = 2,  real aa = 22, longint aaa = 222);\n"
+     "class foo  #( int a = 2,  real aa = 22, longint aaa = 222);\n"
      "endclass\n",
-     "class foo #(\n"
+     "class foo  #(\n"
      "    int     a   = 2,\n"
      "    real    aa  = 22,\n"
      "    longint aaa = 222\n"
@@ -6814,10 +6814,10 @@ static constexpr FormatterTestCase kFormatterTestCases[] = {
      "endclass\n"},
     {// parameterized class with 'data_type list_of_param_assignments' and
      // comments
-     "class foo #(//comment\nint a = 2,  shortreal aa = 22, longint aaa = "
+     "class foo  #(//comment\nint a = 2,  shortreal aa = 22, longint aaa = "
      "222);\n"
      "endclass\n",
-     "class foo #(  //comment\n"
+     "class foo  #(  //comment\n"
      "    int       a   = 2,\n"
      "    shortreal aa  = 22,\n"
      "    longint   aaa = 222\n"
@@ -6825,10 +6825,10 @@ static constexpr FormatterTestCase kFormatterTestCases[] = {
      "endclass\n"},
     {// parameterized class with 'data_type list_of_param_assignments' and
      // trailing comments
-     "class foo #(int a = 2,  shortreal aa = 22,//comment\n longint aaa = "
+     "class foo  #(int a = 2,  shortreal aa = 22,//comment\n longint aaa = "
      "222);\n"
      "endclass\n",
-     "class foo #(\n"
+     "class foo  #(\n"
      "    int       a   = 2,\n"
      "    shortreal aa  = 22,  //comment\n"
      "    longint   aaa = 222\n"
@@ -6836,11 +6836,11 @@ static constexpr FormatterTestCase kFormatterTestCases[] = {
      "endclass\n"},
     {// parameterized class with 'data_type list_of_param_assignments' and
      // pre-proc
-     "class foo #(int a = 2,\n"
+     "class foo  #(int a = 2,\n"
      "`ifdef MACRO shortreal aa = 22, `endif\n"
      " longint aaa = 222);\n"
      "endclass\n",
-     "class foo #(\n"
+     "class foo  #(\n"
      "    int       a   = 2,\n"
      "`ifdef MACRO\n"
      "    shortreal aa  = 22,\n"
@@ -6850,10 +6850,10 @@ static constexpr FormatterTestCase kFormatterTestCases[] = {
      "endclass\n"},
     {// parameterized class with 'data_type list_of_param_assignments' and
      // packed dimensions
-     "class foo #(bit [1:0] a = 2,  reg [12:0] aa = 22, logic [123:0] aaa = "
+     "class foo  #(bit [1:0] a = 2,  reg [12:0] aa = 22, logic [123:0] aaa = "
      "222);\n"
      "endclass\n",
-     "class foo #(\n"
+     "class foo  #(\n"
      "    bit   [  1:0] a   = 2,\n"
      "    reg   [ 12:0] aa  = 22,\n"
      "    logic [123:0] aaa = 222\n"
@@ -6861,74 +6861,74 @@ static constexpr FormatterTestCase kFormatterTestCases[] = {
      "endclass\n"},
     {// parameterized class with 'data_type list_of_param_assignments' and
      // unpacked dimensions
-     "class foo #(bit  a[1:0] = 2,  reg  aa[12:0] = 22, logic aaa [123:0]  = "
+     "class foo  #(bit  a[1:0] = 2,  reg  aa[12:0] = 22, logic aaa [123:0]  = "
      "222);\n"
      "endclass\n",
-     "class foo #(\n"
+     "class foo  #(\n"
      "    bit   a  [  1:0] = 2,\n"
      "    reg   aa [ 12:0] = 22,\n"
      "    logic aaa[123:0] = 222\n"
      ");\n"
      "endclass\n"},
     {// parameterized class with 'type list_of_type_assignments'
-     "class foo #(type T = int, type TT = bit, type TTT= C#(logic) );\n"
+     "class foo  #(type T = int, type TT = bit, type TTT= C #(logic) );\n"
      "endclass\n",
-     "class foo #(\n"
+     "class foo  #(\n"
      "    type T   = int,\n"
      "    type TT  = bit,\n"
-     "    type TTT = C#(logic)\n"
+     "    type TTT = C #(logic)\n"
      ");\n"
      "endclass\n"},
     {// parameterized class with 'type list_of_type_assignments' and comments
-     "class foo #(//comment\ntype T = int, type TT = bit, type TTT= C#(logic) "
+     "class foo  #(//comment\ntype T = int, type TT = bit, type TTT= C #(logic) "
      ");\n"
      "endclass\n",
-     "class foo #(  //comment\n"
+     "class foo  #(  //comment\n"
      "    type T   = int,\n"
      "    type TT  = bit,\n"
-     "    type TTT = C#(logic)\n"
+     "    type TTT = C #(logic)\n"
      ");\n"
      "endclass\n"},
     {// parameterized class with 'data_type list_of_param_assignments' and
      // trailing comments
-     "class foo #(type T = int, type TT = bit, //comment\n type TTT= C#(logic) "
+     "class foo  #(type T = int, type TT = bit, //comment\n type TTT= C #(logic) "
      ");\n"
      "endclass\n",
-     "class foo #(\n"
+     "class foo  #(\n"
      "    type T   = int,\n"
      "    type TT  = bit,  //comment\n"
-     "    type TTT = C#(logic)\n"
+     "    type TTT = C #(logic)\n"
      ");\n"
      "endclass\n"},
     {// parameterized class with 'data_type list_of_param_assignments' and
      // pre-proc
-     "class foo #(type T = int,\n"
+     "class foo  #(type T = int,\n"
      "`ifdef MACRO type TT = bit, `endif\n"
-     " type TTT= C#(logic));\n"
+     " type TTT= C #(logic));\n"
      "endclass\n",
-     "class foo #(\n"
+     "class foo  #(\n"
      "    type T   = int,\n"
      "`ifdef MACRO\n"
      "    type TT  = bit,\n"
      "`endif\n"
-     "    type TTT = C#(logic)\n"
+     "    type TTT = C #(logic)\n"
      ");\n"
      "endclass\n"},
     {// parameterized class with 'data_type list_of_param_assignments' and
      // packed dimensions
-     "class foo #(type T = int [3:0], type TT = bit [250:0]);\n"
+     "class foo  #(type T = int [3:0], type TT = bit [250:0]);\n"
      "endclass\n",
-     "class foo #(\n"
+     "class foo  #(\n"
      "    type T  = int [  3:0],\n"
      "    type TT = bit [250:0]\n"
      ");\n"
      "endclass\n"},
-    {"class foo #(type T = int, "
+    {"class foo  #(type T = int, "
      "A = 2, int AA = 22, parameter AAA = 222, parameter longint AAAA = 2222, "
      "localparam AAAAA = 22222, localparam real AAAAAA = 222222"
      ");\n"
      "endclass\n",
-     "class foo #(\n"
+     "class foo  #(\n"
      "               type    T      = int,\n"
      "                       A      = 2,\n"
      "               int     AA     = 22,\n"
@@ -6939,25 +6939,25 @@ static constexpr FormatterTestCase kFormatterTestCases[] = {
      ");\n"
      "endclass\n"},
     {// parameterized class with built-in data type
-     "class foo #(int a = 2, real abc = 2234);\n"
+     "class foo  #(int a = 2, real abc = 2234);\n"
      "endclass\n",
-     "class foo #(\n"
+     "class foo  #(\n"
      "    int  a   = 2,\n"
      "    real abc = 2234\n"
      ");\n"
      "endclass\n"},
     {// parameterized class with type
-     "class foo #(type TYPE1 = int, type TYPE2 = boo);\n"
+     "class foo  #(type TYPE1 = int, type TYPE2 = boo);\n"
      "endclass\n",
-     "class foo #(\n"
+     "class foo  #(\n"
      "    type TYPE1 = int,\n"
      "    type TYPE2 = boo\n"
      ");\n"
      "endclass\n"},
-    {"class foo#(localparam type TYPE1 = int, type TYPE22 = bool, parameter    "
+    {"class foo #(localparam type TYPE1 = int, type TYPE22 = bool, parameter    "
      "type TYPE333 = real);\n"
      "endclass\n",
-     "class foo #(\n"
+     "class foo  #(\n"
      "    localparam type TYPE1   = int,\n"
      "               type TYPE22  = bool,\n"
      "    parameter  type TYPE333 = real\n"
@@ -6965,64 +6965,64 @@ static constexpr FormatterTestCase kFormatterTestCases[] = {
      "endclass\n"},
     {// parameterized class with 'data_type list_of_param_assignments' and 1D
      // packed dimensions
-     "class foo #(parameter type T = int [3:0], type TT = bit [123:0]);\n"
+     "class foo  #(parameter type T = int [3:0], type TT = bit [123:0]);\n"
      "endclass\n",
-     "class foo #(\n"
+     "class foo  #(\n"
      "    parameter type T  = int [  3:0],\n"
      "              type TT = bit [123:0]\n"
      ");\n"
      "endclass\n"},
     {// parameterized class with 'data_type list_of_param_assignments' and 2D
      // packed dimensions
-     "class foo #(type T = int [3:0][123:0], type TT = bit [123:0][1:0]);\n"
+     "class foo  #(type T = int [3:0][123:0], type TT = bit [123:0][1:0]);\n"
      "endclass\n",
-     "class foo #(\n"
+     "class foo  #(\n"
      "    type T  = int [  3:0][123:0],\n"
      "    type TT = bit [123:0][  1:0]\n"
      ");\n"
      "endclass\n"},
     {// parametrized class with user defined data types
-     "class foo #(type T = my_type1_t, type TT = my_pkg::my_type2_t);\n"
+     "class foo  #(type T = my_type1_t, type TT = my_pkg::my_type2_t);\n"
      "endclass\n",
-     "class foo #(\n"
+     "class foo  #(\n"
      "    type T  = my_type1_t,\n"
      "    type TT = my_pkg::my_type2_t\n"
      ");\n"
      "endclass\n"},
 
     {// parameterized interface with 'local_parameter_declaration'
-     "interface foo #(localparam int a = 2, localparam int aa = 22);\n"
+     "interface foo  #(localparam int a = 2, localparam int aa = 22);\n"
      "endinterface\n",
-     "interface foo #(\n"
+     "interface foo  #(\n"
      "    localparam int a  = 2,\n"
      "    localparam int aa = 22\n"
      ");\n"
      "endinterface\n"},
     {// parameterized interface with 'local_parameter_declaration' and comments
-     "interface foo #(//comment\nlocalparam int a = 2, localparam int aa = "
+     "interface foo  #(//comment\nlocalparam int a = 2, localparam int aa = "
      "22);\n"
      "endinterface\n",
-     "interface foo #(  //comment\n"
+     "interface foo  #(  //comment\n"
      "    localparam int a  = 2,\n"
      "    localparam int aa = 22\n"
      ");\n"
      "endinterface\n"},
     {// parameterized interface with 'local_parameter_declaration' and trailing
      // comments
-     "interface foo #(localparam int a = 2,//comment\n localparam int aa = "
+     "interface foo  #(localparam int a = 2,//comment\n localparam int aa = "
      "22);\n"
      "endinterface\n",
-     "interface foo #(\n"
+     "interface foo  #(\n"
      "    localparam int a  = 2,  //comment\n"
      "    localparam int aa = 22\n"
      ");\n"
      "endinterface\n"},
     {// parameterized interface with 'local_parameter_declaration' and pre-proc
-     "interface foo #(localparam int a = 2,\n"
+     "interface foo  #(localparam int a = 2,\n"
      "`ifdef MACRO localparam int aa = 22, `endif\n"
      "localparam int aaa = 222);\n"
      "endinterface\n",
-     "interface foo #(\n"
+     "interface foo  #(\n"
      "    localparam int a   = 2,\n"
      "`ifdef MACRO\n"
      "    localparam int aa  = 22,\n"
@@ -7032,28 +7032,28 @@ static constexpr FormatterTestCase kFormatterTestCases[] = {
      "endinterface\n"},
     {// parameterized interface with 'local_parameter_declaration' and packed
      // dimensions
-     "interface foo #(localparam logic [3:0] a = 2, localparam logic [30:0] aa "
+     "interface foo  #(localparam logic [3:0] a = 2, localparam logic [30:0] aa "
      "= 22);\n"
      "endinterface\n",
-     "interface foo #(\n"
+     "interface foo  #(\n"
      "    localparam logic [ 3:0] a  = 2,\n"
      "    localparam logic [30:0] aa = 22\n"
      ");\n"
      "endinterface\n"},
     {// parameterized interface with 'local_parameter_declaration' and unpacked
      // dimensions
-     "interface foo #(localparam logic a[3:0] = 2, localparam logic  aa [30:0] "
+     "interface foo  #(localparam logic a[3:0] = 2, localparam logic  aa [30:0] "
      "= 22);\n"
      "endinterface\n",
-     "interface foo #(\n"
+     "interface foo  #(\n"
      "    localparam logic a [ 3:0] = 2,\n"
      "    localparam logic aa[30:0] = 22\n"
      ");\n"
      "endinterface\n"},
     {// parameterized interface with 'data_type list_of_param_assignments'
-     "interface foo #( int a = 2,  real aa = 22, longint aaa = 222);\n"
+     "interface foo  #( int a = 2,  real aa = 22, longint aaa = 222);\n"
      "endinterface\n",
-     "interface foo #(\n"
+     "interface foo  #(\n"
      "    int     a   = 2,\n"
      "    real    aa  = 22,\n"
      "    longint aaa = 222\n"
@@ -7061,10 +7061,10 @@ static constexpr FormatterTestCase kFormatterTestCases[] = {
      "endinterface\n"},
     {// parameterized interface with 'data_type list_of_param_assignments' and
      // comments
-     "interface foo #(//comment\nint a = 2,  shortreal aa = 22, longint aaa = "
+     "interface foo  #(//comment\nint a = 2,  shortreal aa = 22, longint aaa = "
      "222);\n"
      "endinterface\n",
-     "interface foo #(  //comment\n"
+     "interface foo  #(  //comment\n"
      "    int       a   = 2,\n"
      "    shortreal aa  = 22,\n"
      "    longint   aaa = 222\n"
@@ -7072,10 +7072,10 @@ static constexpr FormatterTestCase kFormatterTestCases[] = {
      "endinterface\n"},
     {// parameterized interface with 'data_type list_of_param_assignments' and
      // trailing comments
-     "interface foo #(int a = 2,  shortreal aa = 22,//comment\n longint aaa = "
+     "interface foo  #(int a = 2,  shortreal aa = 22,//comment\n longint aaa = "
      "222);\n"
      "endinterface\n",
-     "interface foo #(\n"
+     "interface foo  #(\n"
      "    int       a   = 2,\n"
      "    shortreal aa  = 22,  //comment\n"
      "    longint   aaa = 222\n"
@@ -7083,11 +7083,11 @@ static constexpr FormatterTestCase kFormatterTestCases[] = {
      "endinterface\n"},
     {// parameterized interface with 'data_type list_of_param_assignments' and
      // pre-proc
-     "interface foo #(int a = 2,\n"
+     "interface foo  #(int a = 2,\n"
      "`ifdef MACRO shortreal aa = 22, `endif\n"
      " longint aaa = 222);\n"
      "endinterface\n",
-     "interface foo #(\n"
+     "interface foo  #(\n"
      "    int       a   = 2,\n"
      "`ifdef MACRO\n"
      "    shortreal aa  = 22,\n"
@@ -7097,10 +7097,10 @@ static constexpr FormatterTestCase kFormatterTestCases[] = {
      "endinterface\n"},
     {// parameterized interface with 'data_type list_of_param_assignments' and
      // packed dimensions
-     "interface foo #(bit [1:0] a = 2,  reg [12:0] aa = 22, logic [123:0] aaa "
+     "interface foo  #(bit [1:0] a = 2,  reg [12:0] aa = 22, logic [123:0] aaa "
      "= 222);\n"
      "endinterface\n",
-     "interface foo #(\n"
+     "interface foo  #(\n"
      "    bit   [  1:0] a   = 2,\n"
      "    reg   [ 12:0] aa  = 22,\n"
      "    logic [123:0] aaa = 222\n"
@@ -7108,75 +7108,75 @@ static constexpr FormatterTestCase kFormatterTestCases[] = {
      "endinterface\n"},
     {// parameterized interface with 'data_type list_of_param_assignments' and
      // unpacked dimensions
-     "interface foo #(bit  a[1:0] = 2,  reg  aa[12:0] = 22, logic aaa [123:0]  "
+     "interface foo  #(bit  a[1:0] = 2,  reg  aa[12:0] = 22, logic aaa [123:0]  "
      "= 222);\n"
      "endinterface\n",
-     "interface foo #(\n"
+     "interface foo  #(\n"
      "    bit   a  [  1:0] = 2,\n"
      "    reg   aa [ 12:0] = 22,\n"
      "    logic aaa[123:0] = 222\n"
      ");\n"
      "endinterface\n"},
     {// parameterized interface with 'type list_of_type_assignments'
-     "interface foo #(type T = int, type TT = bit, type TTT= C#(logic) );\n"
+     "interface foo  #(type T = int, type TT = bit, type TTT= C #(logic) );\n"
      "endinterface\n",
-     "interface foo #(\n"
+     "interface foo  #(\n"
      "    type T   = int,\n"
      "    type TT  = bit,\n"
-     "    type TTT = C#(logic)\n"
+     "    type TTT = C #(logic)\n"
      ");\n"
      "endinterface\n"},
     {// parameterized interface with 'type list_of_type_assignments' and
      // comments
-     "interface foo #(//comment\ntype T = int, type TT = bit, type TTT= "
-     "C#(logic) );\n"
+     "interface foo  #(//comment\ntype T = int, type TT = bit, type TTT= "
+     "C #(logic) );\n"
      "endinterface\n",
-     "interface foo #(  //comment\n"
+     "interface foo  #(  //comment\n"
      "    type T   = int,\n"
      "    type TT  = bit,\n"
-     "    type TTT = C#(logic)\n"
+     "    type TTT = C #(logic)\n"
      ");\n"
      "endinterface\n"},
     {// parameterized interface with 'data_type list_of_param_assignments' and
      // trailing comments
-     "interface foo #(type T = int, type TT = bit, //comment\n type TTT= "
-     "C#(logic) );\n"
+     "interface foo  #(type T = int, type TT = bit, //comment\n type TTT= "
+     "C #(logic) );\n"
      "endinterface\n",
-     "interface foo #(\n"
+     "interface foo  #(\n"
      "    type T   = int,\n"
      "    type TT  = bit,  //comment\n"
-     "    type TTT = C#(logic)\n"
+     "    type TTT = C #(logic)\n"
      ");\n"
      "endinterface\n"},
     {// parameterized interface with 'data_type list_of_param_assignments' and
      // pre-proc
-     "interface foo #(type T = int,\n"
+     "interface foo  #(type T = int,\n"
      "`ifdef MACRO type TT = bit, `endif\n"
-     " type TTT= C#(logic));\n"
+     " type TTT= C #(logic));\n"
      "endinterface\n",
-     "interface foo #(\n"
+     "interface foo  #(\n"
      "    type T   = int,\n"
      "`ifdef MACRO\n"
      "    type TT  = bit,\n"
      "`endif\n"
-     "    type TTT = C#(logic)\n"
+     "    type TTT = C #(logic)\n"
      ");\n"
      "endinterface\n"},
     {// parameterized interface with 'data_type list_of_param_assignments' and
      // packed dimensions
-     "interface foo #(type T = int [3:0], type TT = bit [250:0]);\n"
+     "interface foo  #(type T = int [3:0], type TT = bit [250:0]);\n"
      "endinterface\n",
-     "interface foo #(\n"
+     "interface foo  #(\n"
      "    type T  = int [  3:0],\n"
      "    type TT = bit [250:0]\n"
      ");\n"
      "endinterface\n"},
-    {"interface foo #(type T = int, "
+    {"interface foo  #(type T = int, "
      "A = 2, int AA = 22, parameter AAA = 222, parameter longint AAAA = 2222, "
      "localparam AAAAA = 22222, localparam real AAAAAA = 222222"
      ");\n"
      "endinterface\n",
-     "interface foo #(\n"
+     "interface foo  #(\n"
      "               type    T      = int,\n"
      "                       A      = 2,\n"
      "               int     AA     = 22,\n"
@@ -7187,25 +7187,25 @@ static constexpr FormatterTestCase kFormatterTestCases[] = {
      ");\n"
      "endinterface\n"},
     {// parameterized interface with built-in data type
-     "interface foo #(int a = 2, real abc = 2234);\n"
+     "interface foo  #(int a = 2, real abc = 2234);\n"
      "endinterface\n",
-     "interface foo #(\n"
+     "interface foo  #(\n"
      "    int  a   = 2,\n"
      "    real abc = 2234\n"
      ");\n"
      "endinterface\n"},
     {// parameterized interface with type
-     "interface foo #(type TYPE1 = int, type TYPE2 = boo);\n"
+     "interface foo  #(type TYPE1 = int, type TYPE2 = boo);\n"
      "endinterface\n",
-     "interface foo #(\n"
+     "interface foo  #(\n"
      "    type TYPE1 = int,\n"
      "    type TYPE2 = boo\n"
      ");\n"
      "endinterface\n"},
-    {"interface foo#(localparam type TYPE1 = int, type TYPE22 = bool, "
+    {"interface foo #(localparam type TYPE1 = int, type TYPE22 = bool, "
      "parameter    type TYPE333 = real);\n"
      "endinterface\n",
-     "interface foo #(\n"
+     "interface foo  #(\n"
      "    localparam type TYPE1   = int,\n"
      "               type TYPE22  = bool,\n"
      "    parameter  type TYPE333 = real\n"
@@ -7213,26 +7213,26 @@ static constexpr FormatterTestCase kFormatterTestCases[] = {
      "endinterface\n"},
     {// parameterized interface with 'data_type list_of_param_assignments' and
      // 1D packed dimensions
-     "interface foo #(parameter type T = int [3:0], type TT = bit [123:0]);\n"
+     "interface foo  #(parameter type T = int [3:0], type TT = bit [123:0]);\n"
      "endinterface\n",
-     "interface foo #(\n"
+     "interface foo  #(\n"
      "    parameter type T  = int [  3:0],\n"
      "              type TT = bit [123:0]\n"
      ");\n"
      "endinterface\n"},
     {// parameterized interface with 'data_type list_of_param_assignments' and
      // 2D packed dimensions
-     "interface foo #(type T = int [3:0][123:0], type TT = bit [123:0][1:0]);\n"
+     "interface foo  #(type T = int [3:0][123:0], type TT = bit [123:0][1:0]);\n"
      "endinterface\n",
-     "interface foo #(\n"
+     "interface foo  #(\n"
      "    type T  = int [  3:0][123:0],\n"
      "    type TT = bit [123:0][  1:0]\n"
      ");\n"
      "endinterface\n"},
     {// parametrized interface with user defined data types
-     "interface foo #(type T = my_type1_t, type TT = my_pkg::my_type2_t);\n"
+     "interface foo  #(type T = my_type1_t, type TT = my_pkg::my_type2_t);\n"
      "endinterface\n",
-     "interface foo #(\n"
+     "interface foo  #(\n"
      "    type T  = my_type1_t,\n"
      "    type TT = my_pkg::my_type2_t\n"
      ");\n"
@@ -7271,10 +7271,10 @@ static constexpr FormatterTestCase kFormatterTestCases[] = {
      ");\n"
      "endmodule\n"},
     {// import package at module header
-     "module foo import bar::baz; #(int p = 3)(qux); endmodule\n",
+     "module foo import bar::baz;  #(int p = 3)(qux); endmodule\n",
      "module foo\n"
      "  import bar::baz;\n"
-     "#(\n"
+     " #(\n"
      "    int p = 3\n"
      ") (\n"
      "    qux\n"
@@ -7306,10 +7306,10 @@ static constexpr FormatterTestCase kFormatterTestCases[] = {
      "  return $x;\n"
      "endfunction\n"},
     //{   // parameterized class with 'parameter_declaration' and MACRO
-    //    "class foo #(parameter int a = 2,\n"
+    //    "class foo  #(parameter int a = 2,\n"
     //    "parameter int aaa = `MACRO);\n"
     //    "endclass\n",
-    //    "class foo #(\n"
+    //    "class foo  #(\n"
     //    "    parameter int a   = 2,\n"
     //    "    parameter int aaa = `MACRO\n"
     //    ");\n"
@@ -7366,7 +7366,7 @@ static constexpr FormatterTestCase kFormatterTestCases[] = {
      "int a;\n"
      "int aa = 0;\n"
      "int aaa = 1; // comment\n"
-     "foo#(bar) z;\n"
+     "foo #(bar) z;\n"
      "int [x:y] zz; // comment\n"
      "int zzz[a:b];\n"
      "} type_t;",
@@ -7376,7 +7376,7 @@ static constexpr FormatterTestCase kFormatterTestCases[] = {
      "  int        a;\n"
      "  int        aa        = 0;\n"
      "  int        aaa       = 1;  // comment\n"
-     "  foo #(bar) z;\n"
+     "  foo  #(bar) z;\n"
      "  int [x:y]  zz;             // comment\n"
      "  int        zzz[a:b];\n"
      "} type_t;\n"},
@@ -7572,54 +7572,54 @@ TEST(FormatterEndToEndTest, AutoInferAlignment) {
       {// used-defined data declarations in ports
        "module m(\n"
        "a::bb [x:y]a    ,\n"       // packed dimensions, induce alignment
-       "c#(d,e) [pp:qq] [e:f]b\n"  // packed dimensions, 2D
+       "c #(d,e) [pp:qq] [e:f]b\n"  // packed dimensions, 2D
        ") ;\n"
        "endmodule\n",
        "module m (\n"
        "    a::bb    [  x:y]      a,\n"
-       "    c#(d, e) [pp:qq][e:f] b\n"
+       "    c #(d, e) [pp:qq][e:f] b\n"
        ");\n"
        "endmodule\n"},
 
       // named parameter arguments
       {"module  mm ;\n"
-       "foo #(\n"
+       "foo  #(\n"
        ".a(a),\n"
        ".bb(bb)\n"
        ")bar( );\n"
        "endmodule:mm\n",
        "module mm;\n"
-       "  foo #(\n"
+       "  foo  #(\n"
        "      .a (a),\n"  // align doesn't add too many spaces, so align
        "      .bb(bb)\n"
        "  ) bar ();\n"
        "endmodule : mm\n"},
       {"module  mm ;\n"
-       "foo #(\n"
+       "foo  #(\n"
        ".a(a),\n"
        ".bbcccc(bb)\n"
        ")bar( );\n"
        "endmodule:mm\n",
        "module mm;\n"
-       "  foo #(\n"
+       "  foo  #(\n"
        "      .a(a),\n"  // align would add too many spaces, so flush-left
        "      .bbcccc(bb)\n"
        "  ) bar ();\n"
        "endmodule : mm\n"},
       {"module  mm ;\n"
-       "foo #(\n"
+       "foo  #(\n"
        ".a(a    ),\n"  // user manually triggers alignment with excess spaces
        ".bbcccc(bb)\n"
        ")bar( );\n"
        "endmodule:mm\n",
        "module mm;\n"
-       "  foo #(\n"
+       "  foo  #(\n"
        "      .a     (a),\n"  // induced alignment
        "      .bbcccc(bb)\n"
        "  ) bar ();\n"
        "endmodule : mm\n"},
       {"module  mm ;\n"
-       "foo #(\n"
+       "foo  #(\n"
        "//c1\n"        // with comments (indented but not aligned)
        ".a(a    ),\n"  // user manually triggers alignment with excess spaces
        "//c2\n"
@@ -7628,7 +7628,7 @@ TEST(FormatterEndToEndTest, AutoInferAlignment) {
        ")bar( );\n"
        "endmodule:mm\n",
        "module mm;\n"
-       "  foo #(\n"
+       "  foo  #(\n"
        "      //c1\n"
        "      .a     (a),\n"  // induced alignment
        "      //c2\n"
@@ -7637,13 +7637,13 @@ TEST(FormatterEndToEndTest, AutoInferAlignment) {
        "  ) bar ();\n"
        "endmodule : mm\n"},
       {"module  mm ;\n"
-       "foo #(\n"
+       "foo  #(\n"
        ".a( (1     +2)),\n"  // excess spaces, testing extra parentheses
        ".bbcccc((c*d)+(e*f))\n"
        ")bar( );\n"
        "endmodule:mm\n",
        "module mm;\n"
-       "  foo #(\n"
+       "  foo  #(\n"
        "      .a     ((1 + 2)),\n"  // induced alignment
        "      .bbcccc((c * d) + (e * f))\n"
        "  ) bar ();\n"
@@ -8049,32 +8049,32 @@ TEST(FormatterEndToEndTest, AutoInferAlignment) {
        "endfunction\n"},
 
       // formal parameters
-      {"module pp #(\n"
+      {"module pp  #(\n"
        "int W,\n"
        "type T\n"
        ") ();\n"
        "endmodule : pp\n",
-       "module pp #(\n"
+       "module pp  #(\n"
        "    int  W,\n"  // alignment adds few spaces, so do it
        "    type T\n"
        ") ();\n"
        "endmodule : pp\n"},
-      {"module pp #(\n"
+      {"module pp  #(\n"
        "int W,\n"
        "int[xx:yy] T\n"
        ") ();\n"
        "endmodule : pp\n",
-       "module pp #(\n"
+       "module pp  #(\n"
        "    int W,\n"  // alignment adds many spaces, so flush-left
        "    int [xx:yy] T\n"
        ") ();\n"
        "endmodule : pp\n"},
-      {"module pp #(\n"
+      {"module pp  #(\n"
        "int W,\n"
        "int[xx:yy]     T\n"  // user injected spaces intentionally
        ") ();\n"
        "endmodule : pp\n",
-       "module pp #(\n"
+       "module pp  #(\n"
        "    int         W,\n"  // ... trigger alignment
        "    int [xx:yy] T\n"
        ") ();\n"
@@ -8609,19 +8609,19 @@ TEST(FormatterEndToEndTest, DisableModuleInstantiations) {
        "  );\n"                  // this indentation is fixed
        "endmodule\n"},
       {"module  m  ;\t\n"
-       "foo  #(   .baz(baz)   ) bar();"  // named parameters
+       "foo   #(   .baz(baz)   ) bar();"  // named parameters
        "  endmodule\n",
        "module m;\n"
-       "  foo #(.baz(baz)) bar ();\n"  // indentation still takes effect
+       "  foo  #(.baz(baz)) bar ();\n"  // indentation still takes effect
        "endmodule\n"},
       {"module  m  ;\t\n"
-       "foo  #(\n"
+       "foo   #(\n"
        "        .baz  (baz  ),\n"  // example of user-manual alignment
        "        .blaaa(blaaa)\n"
        ")  bar( );"
        "  endmodule\n",
        "module m;\n"
-       "  foo #(\n"              // indentation still takes effect
+       "  foo  #(\n"              // indentation still takes effect
        "      .baz  (baz  ),\n"  // named parameter arguments preserved
        "      .blaaa(blaaa)\n"   // named parameter arguments preserved
        "  ) bar ();\n"           // this indentation is fixed
@@ -8871,46 +8871,46 @@ TEST(FormatterEndToEndTest, FormalParametersIndentNotWrap) {
        "  endmodule\n",
        "module m;\n"
        "endmodule\n"},
-      {"module  m #(   ) ;\n"  // empty parameters
+      {"module  m  #(   ) ;\n"  // empty parameters
        "  endmodule\n",
-       "module m #();\n"
+       "module m  #();\n"
        "endmodule\n"},
       {// single parameter example
-       "module  m   #( int W = 2)\t;\n"
+       "module  m    #( int W = 2)\t;\n"
        "  endmodule\n",
-       "module m #(\n"
+       "module m  #(\n"
        "  int W = 2\n"  // indented 2 spaces
        ");\n"
        "endmodule\n"},
       {// module with two parameters
-       "module  m   #(\n"
+       "module  m    #(\n"
        "int W = 2,\n"
        "int L = 4\n"
        ")\t;\n"
        "  endmodule\n",
-       "module m #(\n"
+       "module m  #(\n"
        "  int W = 2,\n"  // indented 2 spaces
        "  int L = 4\n"
        ");\n"
        "endmodule\n"},
       {// interface with two parameters
-       "interface  m   #(\n"
+       "interface  m    #(\n"
        "int W = 2,\n"
        "int L = 4\n"
        ")\t;\n"
        "  endinterface\n",
-       "interface m #(\n"
+       "interface m  #(\n"
        "  int W = 2,\n"  // indented 2 spaces
        "  int L = 4\n"
        ");\n"
        "endinterface\n"},
       {// class with two parameters
-       "class  c   #(\n"
+       "class  c    #(\n"
        "int W = 2,\n"
        "int L = 4\n"
        ")\t;\n"
        "  endclass\n",
-       "class c #(\n"
+       "class c  #(\n"
        "  int W = 2,\n"  // indented 2 spaces
        "  int L = 4\n"
        ");\n"
@@ -8942,51 +8942,51 @@ TEST(FormatterEndToEndTest, NamedParametersIndentNotWrap) {
        "  endmodule\n",
        "module m;\n"
        "endmodule\n"},
-      {"module  m #(   ) ;\n"  // empty parameters
+      {"module  m  #(   ) ;\n"  // empty parameters
        "  endmodule\n",
-       "module m #();\n"
+       "module m  #();\n"
        "endmodule\n"},
       {"module  m  ;\t\n"
-       " foo #()bar();\n"
+       " foo  #()bar();\n"
        "  endmodule\n",
        "module m;\n"
-       "  foo #() bar ();\n"
+       "  foo  #() bar ();\n"
        "endmodule\n"},
       {// one named parameter
        "module  m ;\n"
-       "foo #(.W(1)) bar();\n"
+       "foo  #(.W(1)) bar();\n"
        "  endmodule\n",
        "module m;\n"
-       "  foo #(.W(1)) bar ();\n"
+       "  foo  #(.W(1)) bar ();\n"
        "endmodule\n"},
       {// two named parameters
        "module  m ;\n"
-       "foo #(.W(1), .L(2)) bar();\n"
+       "foo  #(.W(1), .L(2)) bar();\n"
        "  endmodule\n",
        "module m;\n"
-       "  foo #(\n"
+       "  foo  #(\n"
        "    .W(1),\n"  // indent +2 spaces only
        "    .L(2)\n"
        "  ) bar ();\n"
        "endmodule\n"},
       {// class data member with two parameters
        "class  c  ;\n"
-       " foo_pkg::bar_t#(\n"
+       " foo_pkg::bar_t #(\n"
        ".W(2),.L(4)"
        ") baz;\n"
        "  endclass\n",
        "class c;\n"
-       "  foo_pkg::bar_t #(\n"
+       "  foo_pkg::bar_t  #(\n"
        "    .W(2),\n"  // indent +2 spaces only
        "    .L(4)\n"
        "  ) baz;\n"
        "endclass\n"},
       {// typedef with two parameters
        "typedef \n"
-       " foo_pkg::bar_t  #("
+       " foo_pkg::bar_t   #("
        ".W(2),.L(4)"
        ") baz;\n",
-       "typedef foo_pkg::bar_t#(\n"
+       "typedef foo_pkg::bar_t #(\n"
        "  .W(2),\n"  // indent +2 spaces only
        "  .L(4)\n"
        ") baz;\n"},

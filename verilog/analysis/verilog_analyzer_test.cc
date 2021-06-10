@@ -232,7 +232,7 @@ TEST(AnalyzeVerilogModuleBodyTest, ParsesWireDeclarations) {
 
 TEST(AnalyzeVerilogModuleBodyTest, ParsesInstance) {
   std::unique_ptr<VerilogAnalyzer> analyzer_ptr =
-      AnalyzeVerilogModuleBody("type_of_thing #(16) foo(a, b);", "<file>");
+      AnalyzeVerilogModuleBody("type_of_thing  #(16) foo(a, b);", "<file>");
   EXPECT_OK(ABSL_DIE_IF_NULL(analyzer_ptr)->ParseStatus());
 }
 

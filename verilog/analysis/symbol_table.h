@@ -198,7 +198,7 @@ struct DependentReferences {
   const ReferenceComponentNode* LastLeaf() const;
 
   // Returns the last type component of a reference tree.
-  // e.g. from "A#(.B())::C#(.D())" -> "C"
+  // e.g. from "A #(.B())::C #(.D())" -> "C"
   const ReferenceComponentNode* LastTypeComponent() const;
   ReferenceComponentNode* LastTypeComponent();
 

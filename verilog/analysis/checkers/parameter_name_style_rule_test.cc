@@ -42,13 +42,13 @@ TEST(ParameterNameStyleRuleTest, AcceptTests) {
       {"module foo; localparam Bar = 1; endmodule"},
       {"module foo; localparam int Bar = 1; endmodule"},
       {"module foo; parameter int HelloWorld = 1; endmodule"},
-      {"module foo #(parameter int HelloWorld_1 = 1); endmodule"},
-      {"module foo #(parameter type Foo); endmodule"},
-      {"module foo #(int Foo = 8); endmodule"},
+      {"module foo  #(parameter int HelloWorld_1 = 1); endmodule"},
+      {"module foo  #(parameter type Foo); endmodule"},
+      {"module foo  #(int Foo = 8); endmodule"},
       {"module foo; localparam int Bar = 1; localparam int BarSecond = 2; "
        "endmodule"},
       {"class foo; localparam int Bar = 1; endclass"},
-      {"class foo #(parameter int Bar = 1); endclass"},
+      {"class foo  #(parameter int Bar = 1); endclass"},
       {"package foo; parameter Bar = 1; endpackage"},
       {"package foo; parameter int HELLO_WORLD = 1; endpackage"},
       {"package foo; parameter int Bar = 1; endpackage"},
@@ -58,7 +58,7 @@ TEST(ParameterNameStyleRuleTest, AcceptTests) {
 
       // Make sure parameter type triggers no violation
       {"module foo; localparam type Bar_Hello_1 = 1; endmodule"},
-      {"module foo #(parameter type Bar_1_Hello__); endmodule"},
+      {"module foo  #(parameter type Bar_1_Hello__); endmodule"},
       {"package foo; parameter type Hello_world; endpackage"},
   };
   RunLintTestCases<VerilogAnalyzer, ParameterNameStyleRule>(kTestCases);
@@ -83,10 +83,10 @@ TEST(ParameterNameStyleRuleTest, RejectTests) {
        {kToken, "__Bar"},
        " = 1; "
        "endmodule"},
-      {"module foo #(parameter int ",
+      {"module foo  #(parameter int ",
        {kToken, "Bar_1_Hello"},
        " = 1); endmodule"},
-      {"module foo #(int ", {kToken, "Bar_1_Two"}, "); endmodule"},
+      {"module foo  #(int ", {kToken, "Bar_1_Two"}, "); endmodule"},
       {"module foo; localparam int ",
        {kToken, "bar"},
        " = 1; localparam int BarSecond = 2; "
@@ -98,7 +98,7 @@ TEST(ParameterNameStyleRuleTest, RejectTests) {
        " = 2; "
        "endmodule"},
       {"class foo; localparam int ", {kToken, "helloWorld"}, " = 1; endclass"},
-      {"class foo #(parameter int ",
+      {"class foo  #(parameter int ",
        {kToken, "hello_world"},
        " = 1); endclass"},
       {"package foo; parameter ", {kToken, "hello__1"}, " = 1; endpackage"},

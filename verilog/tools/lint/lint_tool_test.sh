@@ -251,7 +251,7 @@ TEST_FILE="${TEST_TMPDIR}/instance_parameters.sv"
 
 cat > "${TEST_FILE}" <<EOF
 module instance_parameters;
-  bar #(4, 8) baz;
+  bar  #(4, 8) baz;
 endmodule
 EOF
 

@@ -1,6 +1,6 @@
 
 //- @A defines/binding _
-interface A #(
+interface A  #(
     //- @DATA_WIDTH defines/binding DATA_WIDTH2
     parameter DATA_WIDTH = 32
 ) ();

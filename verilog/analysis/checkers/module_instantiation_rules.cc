@@ -81,7 +81,7 @@ static const Matcher& InstanceMatcher() {
 
 // Matches against a parameter list that has positional parameters
 // For examples:
-//   foo #(1, 2) bar;
+//   foo  #(1, 2) bar;
 // Here, the node representing "1, 2" will be bound to "list".
 static const Matcher& ParamsMatcher() {
   static const Matcher matcher(NodekActualParameterList(

@@ -279,7 +279,7 @@ TEST(TokenAnnotatorTest, AnnotateFormattingInfoTest) {
         {')', ")"},
         {';', ";"}}},
 
-      // module with_params #() ();
+      // module with_params  #() ();
       {DefaultStyle,
        0,
        {{0, SpacingOptions::Undecided},

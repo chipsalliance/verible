@@ -298,8 +298,8 @@ static WithReason<int> SpacesRequiredBetween(
   }
 
   if (right.TokenEnum() == '(') {
-    // "#(" vs. "# (" for parameter formals and arguments
-    if (left.TokenEnum() == '#') return {0, "Fuse \"#(\""};
+    // " #(" vs. "# (" for parameter formals and arguments
+    if (left.TokenEnum() == '#') return {0, "Fuse \" #(\""};
 
     // ") (" vs. ")(" for between parameter and port formals
     if (left.TokenEnum() == ')') {
@@ -501,7 +501,7 @@ static WithReason<int> SpacesRequiredBetween(
   if (right.TokenEnum() == '#') {
     // This may be controversial or context-dependent, as parameterized
     // classes often appear with method calls like:
-    //   type#(params...)::method(...);
+    //   type #(params...)::method(...);
     if (left_context.DirectParentIs(NodeEnum::kUnqualifiedId) &&
         !left_context.IsInsideFirst(
             {NodeEnum::kInstantiationType, NodeEnum::kBindTargetInstance,
