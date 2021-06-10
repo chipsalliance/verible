@@ -143,6 +143,9 @@ ABSL_FLAG(IndentationStyle, named_port_indentation, IndentationStyle::kWrap,
 ABSL_FLAG(AlignmentPolicy, port_declarations_alignment,
           AlignmentPolicy::kInferUserIntent,
           "Format port declarations: {align,flush-left,preserve,infer}");
+ABSL_FLAG(AlignmentPolicy, struct_union_members_alignment,
+          AlignmentPolicy::kInferUserIntent,
+          "Format struct/union members: {align,flush-left,preserve,infer}");
 ABSL_FLAG(AlignmentPolicy, named_parameter_alignment,
           AlignmentPolicy::kInferUserIntent,
           "Format named actual parameters: {align,flush-left,preserve,infer}");
@@ -238,6 +241,8 @@ static bool formatOneFile(absl::string_view filename,
     // various alignment control
     format_style.port_declarations_alignment =
         absl::GetFlag(FLAGS_port_declarations_alignment);
+    format_style.struct_union_members_alignment =
+        absl::GetFlag(FLAGS_struct_union_members_alignment);
     format_style.named_parameter_alignment =
         absl::GetFlag(FLAGS_named_parameter_alignment);
     format_style.named_port_alignment =

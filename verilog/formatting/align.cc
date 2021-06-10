@@ -106,6 +106,34 @@ static bool IgnoreWithinPortDeclarationPartitionGroup(
   return false;
 }
 
+static bool IgnoreWithinStructUnionMemberPartitionGroup(
+    const TokenPartitionTree& partition) {
+  const auto& uwline = partition.Value();
+  const auto token_range = uwline.TokensRange();
+  CHECK(!token_range.empty());
+  // ignore lines containing only comments
+  if (TokensAreAllCommentsOrAttributes(token_range)) {
+    return true;
+  }
+
+  // ignore partitions belonging to preprocessing directives
+  if (IsPreprocessorKeyword(
+          verilog_tokentype(token_range.front().TokenEnum()))) {
+    return true;
+  }
+
+  // ignore nested structs/unions
+  if (verible::FindFirstSubtree(
+          partition.Value().Origin(), [](const Symbol& symbol) {
+            return symbol.Tag() ==
+                   verible::NodeTag(NodeEnum::kStructUnionMemberList);
+          }) != nullptr) {
+    return true;
+  }
+
+  return false;
+}
+
 static bool IgnoreCommentsAndPreprocessingDirectives(
     const TokenPartitionTree& partition) {
   const auto& uwline = partition.Value();
@@ -381,6 +409,60 @@ class PortDeclarationColumnSchemaScanner : public ColumnSchemaScanner {
   bool new_column_after_open_bracket_ = false;
 };
 
+// This class marks up token-subranges in struct/union members for alignment.
+// e.g. bit [31:0] member_name;
+class StructUnionMemberColumnSchemaScanner : public ColumnSchemaScanner {
+ public:
+  StructUnionMemberColumnSchemaScanner() = default;
+
+  void Visit(const SyntaxTreeNode& node) override {
+    auto tag = NodeEnum(node.Tag().tag);
+    VLOG(2) << __FUNCTION__ << ", node: " << tag << " at "
+            << TreePathFormatter(Path());
+    switch (tag) {
+      case NodeEnum::kStructUnionMember: {
+        ReserveNewColumn(node, FlushLeft);
+        break;
+      }
+      case NodeEnum::kTrailingAssign: {
+        ReserveNewColumn(node, FlushLeft);
+        break;
+      }
+      case NodeEnum::kVariableDeclarationAssignmentList:
+      case NodeEnum::kVariableDeclarationAssignment:
+      case NodeEnum::kDataTypeImplicitIdDimensions:
+        break;
+
+      default:
+        return;
+    }
+    // recursive visitation
+    TreeContextPathVisitor::Visit(node);
+    VLOG(2) << __FUNCTION__ << ", leaving node: " << tag;
+  }
+
+  void Visit(const SyntaxTreeLeaf& leaf) override {
+    VLOG(2) << __FUNCTION__ << ", leaf: " << leaf.get() << " at "
+            << TreePathFormatter(Path());
+    const int tag = leaf.get().token_enum();
+    switch (tag) {
+      case verilog_tokentype::SymbolIdentifier:
+      case verilog_tokentype::EscapedIdentifier: {
+        // Member ID in kDataTypeImplicitIdDimensions can be at [1] or [2].
+        if (current_path_ == SyntaxTreePath{1, 1}) {
+          SyntaxTreePath new_path{1, 2};
+          const ValueSaver<SyntaxTreePath> path_saver(&current_path_, new_path);
+          ReserveNewColumn(leaf, FlushLeft);
+        } else {
+          ReserveNewColumn(leaf, FlushLeft);
+        }
+        break;
+      }
+    }
+    VLOG(2) << __FUNCTION__ << ", leaving leaf: " << leaf.get();
+  }
+};
+
 static bool IsAlignableDeclaration(const SyntaxTreeNode& node) {
   // A data/net/variable declaration is alignable if:
   // * it is not a module instance
@@ -411,6 +493,7 @@ enum class AlignableSyntaxSubtype {
   kNamedActualPorts,
   kParameterDeclaration,
   kPortDeclaration,
+  kStructUnionMember,
   kDataDeclaration,  // net/variable declarations
   kClassMemberVariables,
   kCaseLikeItems,
@@ -1103,6 +1186,11 @@ static const AlignmentHandlerMapType& AlignmentHandlerLibrary() {
             non_tree_column_scanner),
         function_from_pointer_to_member(
             &FormatStyle::port_declarations_alignment)}},
+      {AlignableSyntaxSubtype::kStructUnionMember,
+       {AlignmentCellScannerGenerator<StructUnionMemberColumnSchemaScanner>(
+            non_tree_column_scanner),
+        function_from_pointer_to_member(
+            &FormatStyle::struct_union_members_alignment)}},
       {AlignableSyntaxSubtype::kClassMemberVariables,
        {AlignmentCellScannerGenerator<ClassPropertyColumnSchemaScanner>(),
         function_from_pointer_to_member(
@@ -1182,6 +1270,13 @@ static std::vector<AlignablePartitionGroup> AlignPortDeclarations(
   return ExtractAlignablePartitionGroups(
       PartitionBetweenBlankLines(AlignableSyntaxSubtype::kPortDeclaration),
       &IgnoreWithinPortDeclarationPartitionGroup, full_range, vstyle);
+}
+
+static std::vector<AlignablePartitionGroup> AlignStructUnionMembers(
+    const TokenPartitionRange& full_range, const FormatStyle& vstyle) {
+  return ExtractAlignablePartitionGroups(
+      PartitionBetweenBlankLines(AlignableSyntaxSubtype::kStructUnionMember),
+      &IgnoreWithinStructUnionMemberPartitionGroup, full_range, vstyle);
 }
 
 static std::vector<AlignablePartitionGroup> AlignActualNamedParameters(
@@ -1271,6 +1366,7 @@ void TabularAlignTokenPartitions(TokenPartitionTree* partition_ptr,
       new std::map<NodeEnum, AlignSyntaxGroupsFunction>{
           {NodeEnum::kPortDeclarationList, &AlignPortDeclarations},
           {NodeEnum::kPortList, &AlignPortDeclarations},
+          {NodeEnum::kStructUnionMemberList, &AlignStructUnionMembers},
           {NodeEnum::kActualParameterByNameList, &AlignActualNamedParameters},
           {NodeEnum::kPortActualList, &AlignActualNamedPorts},
           {NodeEnum::kModuleItemList, &AlignModuleItems},
