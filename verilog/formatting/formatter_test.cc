@@ -1605,7 +1605,53 @@ static constexpr FormatterTestCase kFormatterTestCases[] = {
      "      .in (ex_input_pins.in)\n"  // aligned
      "  );\n"
      "endmodule\n"},
-
+    {"module test;\n"
+     "bind entropy_src tlul_assert #(.EndpointType(\"Device\"))\n"
+     "tlul_assert_device (.clk_i, .rst_ni, .h2d(tl_i), .d2h(tl_o));\n"
+     "endmodule\n",
+     "module test;\n"
+     "  bind entropy_src tlul_assert #(\n"
+     "      .EndpointType(\"Device\")\n"
+     "  ) tlul_assert_device (\n"
+     "      .clk_i,\n"
+     "      .rst_ni,\n"
+     "      .h2d(tl_i),\n"
+     "      .d2h(tl_o)\n"
+     "  );\n"
+     "endmodule\n"},
+    {"module test;\n"
+     "bind entropy_src tlul_assert #(.EndpointType(\"Device\"))\n"
+     "tlul_assert_device (.clk_i, .rst_ni,\n\n .h2d(tl_i),\n\n .d2h(tl_o));\n"
+     "endmodule\n",
+     "module test;\n"
+     "  bind entropy_src tlul_assert #(\n"
+     "      .EndpointType(\"Device\")\n"
+     "  ) tlul_assert_device (\n"
+     "      .clk_i,\n"
+     "      .rst_ni,\n"
+     "\n"
+     "      .h2d(tl_i),\n"
+     "\n"
+     "      .d2h(tl_o)\n"
+     "  );\n"
+     "endmodule\n"},
+    {"bind expand_me long_name #(.W(W_CONST), .D(D_CONST)) instaaance_name ("
+     ".in(iiiiiiiin),\n\n .out(ooooooout),\n .clk(ccccccclk),\n\n"
+     ".in1234 (in),\n //c1\n .out1234(out),\n .clk1234(clk),);",
+     "bind expand_me long_name #(\n"
+     "    .W(W_CONST),\n"
+     "    .D(D_CONST)\n"
+     ") instaaance_name (\n"
+     "    .in(iiiiiiiin),\n"
+     "\n"
+     "    .out(ooooooout),\n"
+     "    .clk(ccccccclk),\n"
+     "\n"
+     "    .in1234 (in),\n"
+     "    //c1\n"
+     "    .out1234(out),\n"
+     "    .clk1234(clk),\n"
+     ");\n"},
     {"module foo #(int x,int y) ;endmodule:foo\n",  // parameters
      "module foo #(\n"
      "    int x,\n"
@@ -5035,7 +5081,9 @@ static constexpr FormatterTestCase kFormatterTestCases[] = {
      "    .MaxCount(MaxCount),\n"
      "    .MaxDelta(MaxDelta)\n"
      ") bar (\n"
-     "    .clk(clk), .rst(rst), .value(value)\n"
+     "    .clk  (clk),\n"
+     "    .rst  (rst),\n"
+     "    .value(value)\n"
      ");\n"},
     {
         "bind expaaaaaaaaaaand_meeee looooooooong_name# ("
@@ -5047,7 +5095,7 @@ static constexpr FormatterTestCase kFormatterTestCases[] = {
         "    .H(H_CONST),\n"
         "    .D(D_CONST)\n"
         ") instaaance_name (\n"
-        "    .in(iiiiiiiin),\n"
+        "    .in (iiiiiiiin),\n"
         "    .out(ooooooout),\n"
         "    .clk(ccccccclk)\n"
         ");\n",
@@ -5062,7 +5110,7 @@ static constexpr FormatterTestCase kFormatterTestCases[] = {
         "    .H(H_CONST),\n"
         "    .D(D_CONST)\n"
         ") instaaance_name (\n"
-        "    .in(iiiiiiiin),\n"
+        "    .in (iiiiiiiin),\n"
         "    .out(ooooooout),\n"
         "    .clk(ccccccclk)\n"
         ");\n",
