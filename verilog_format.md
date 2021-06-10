@@ -75,6 +75,8 @@ To pipe from stdin, use '-' as <file>.
     --stdin_name (When using '-' to read from stdin, this gives an alternate
       name for diagnostic purposes. Otherwise this is ignored.);
       default: "<stdin>";
+    --struct_union_members_alignment (Format struct/union members:
+      {align,flush-left,preserve,infer}); default: infer;
     --try_wrap_long_lines (If true, let the formatter attempt to optimize line
       wrapping decisions where wrapping is needed, else leave them unformatted.
       This is a short-term measure to reduce risk-of-harm.); default: false;
@@ -90,4 +92,4 @@ path.
 
 ## Version
 
-Generated on 2021-06-04 09:51:03 -0700 from [660b3d5](https://github.com/google/verible/commit/660b3d5f6d6e61489c67f8d8efe11e31fb96535b)
+Generated on 2021-06-09 17:37:50 -0700 from [ad7bcac](https://github.com/google/verible/commit/ad7bcac15a1e2fa9649aedec7261d218272fc5e7)
