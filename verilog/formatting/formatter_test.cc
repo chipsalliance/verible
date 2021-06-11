@@ -7420,6 +7420,18 @@ static constexpr FormatterTestCase kFormatterTestCases[] = {
      "  int  q;\n"
      "  uint qq;\n"
      "} nested_qs_t;\n"},
+    {"typedef struct {bit [3:0] first;\n"
+     "`ifdef MACRO\n"
+     "bit [31:0] second; generic_type_name_t third;\n"
+     "`endif\n"
+     "} type_t;\n",
+     "typedef struct {\n"
+     "  bit [3:0]           first;\n"
+     "`ifdef MACRO\n"
+     "  bit [31:0]          second;\n"
+     "  generic_type_name_t third;\n"
+     "`endif\n"
+     "} type_t;\n"},
 };
 
 // Tests that formatter produces expected results, end-to-end.
