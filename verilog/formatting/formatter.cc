@@ -527,6 +527,118 @@ static void DisableSyntaxBasedRanges(ByteOffsetSet* disabled_ranges,
   **/
 }
 
+class ContinuationCommentAligner {
+ public:
+  ContinuationCommentAligner(const verible::LineColumnMap& line_column_map,
+                             const absl::string_view base_text)
+      : line_column_map_(line_column_map),
+        base_text_(base_text),
+        original_column_(-1),
+        column_(-1) {}
+
+  bool HandleLine(
+      const UnwrappedLine& uwline,
+      std::vector<verible::FormattedExcerpt>& already_formatted_lines) {
+    VLOG(4) << __FUNCTION__ << ": " << uwline;
+    if (already_formatted_lines.empty()) {
+      VLOG(4) << "Not a continuation comment";
+      return false;
+    }
+
+    if (uwline.Size() != 1 || uwline.TokensRange().back().TokenEnum() !=
+                                  verilog_tokentype::TK_EOL_COMMENT) {
+      VLOG(4) << "Not a continuation comment";
+      column_ = -1;
+      original_column_ = -1;
+      return false;
+    }
+
+    const auto& previous_line = already_formatted_lines.back();
+    VLOG(4) << __FUNCTION__ << ": previous line: " << previous_line;
+    if (original_column_ < 0) {
+      if (previous_line.Tokens().size() <= 1 ||
+          previous_line.Tokens().back().token->token_enum() !=
+              verilog_tokentype::TK_EOL_COMMENT) {
+        VLOG(4) << "Not a continuation comment";
+        return false;
+      }
+
+      original_column_ =
+          line_column_map_(
+              previous_line.Tokens().back().token->left(base_text_))
+              .column;
+    }
+
+    const int cont_column =
+        line_column_map_(uwline.TokensRange().back().token->left(base_text_))
+            .column;
+
+    VLOG(4) << "Original column: " << original_column_ << " vs. "
+            << cont_column;
+
+    if (original_column_ != cont_column) {
+      VLOG(4) << "Not a continuation comment";
+      original_column_ = -1;
+      return false;
+    }
+
+    if (column_ < 0) column_ = CalculateEolCommentColumn(previous_line);
+
+    UnwrappedLine aligned_uwline(uwline);
+    aligned_uwline.SetIndentationSpaces(column_);
+    already_formatted_lines.emplace_back(aligned_uwline);
+
+    return true;
+  }
+
+ private:
+  static void AdjustColumnUsingTokenSpacing(
+      const verible::FormattedToken& token, int* column) {
+    switch (token.before.action) {
+      case verible::SpacingDecision::Preserve: {
+        if (token.before.preserved_space_start != nullptr)
+          *column += token.OriginalLeadingSpaces().length();
+        else
+          *column += token.before.spaces;
+        break;
+      }
+      case verible::SpacingDecision::Wrap:
+        *column = 0;
+        ABSL_FALLTHROUGH_INTENDED;
+      case verible::SpacingDecision::Align:
+      case verible::SpacingDecision::Append:
+        *column += token.before.spaces;
+        break;
+    }
+  }
+
+  static int CalculateEolCommentColumn(const verible::FormattedExcerpt& line) {
+    int column = 0;
+    const auto& front = line.Tokens().front();
+
+    if (front.before.action != verible::SpacingDecision::Preserve)
+      column += line.IndentationSpaces();
+    if (front.before.action == verible::SpacingDecision::Align)
+      column += front.before.spaces;
+    column += front.token->text().length();
+
+    for (const auto& ftoken : verible::make_range(line.Tokens().begin() + 1,
+                                                  line.Tokens().end() - 1)) {
+      AdjustColumnUsingTokenSpacing(ftoken, &column);
+      column += ftoken.token->text().length();
+    }
+    AdjustColumnUsingTokenSpacing(line.Tokens().back(), &column);
+
+    return column;
+  }
+
+  const verible::LineColumnMap& line_column_map_;
+  const absl::string_view base_text_;
+
+  int original_column_;
+  int column_;
+};
+
 Status Formatter::Format(const ExecutionControl& control) {
   const absl::string_view full_text(text_structure_.Contents());
   const auto& token_stream(text_structure_.TokenStream());
@@ -620,10 +732,14 @@ Status Formatter::Format(const ExecutionControl& control) {
   // to their own 'slots'.
   std::vector<const UnwrappedLine*> partially_formatted_lines;
   formatted_lines_.reserve(unwrapped_lines.size());
+  ContinuationCommentAligner continuation_comment_aligner(
+      text_structure_.GetLineColumnMap(), text_structure_.Contents());
   for (const auto& uwline : unwrapped_lines) {
     // TODO(fangism): Use different formatting strategies depending on
     // uwline.PartitionPolicy().
-    if (uwline.PartitionPolicy() == PartitionPolicyEnum::kSuccessfullyAligned) {
+    if (continuation_comment_aligner.HandleLine(uwline, formatted_lines_)) {
+    } else if (uwline.PartitionPolicy() ==
+               PartitionPolicyEnum::kSuccessfullyAligned) {
       // For partitions that were successfully aligned, do not search
       // line-wrapping, but instead accept the adjusted padded spacing.
       formatted_lines_.emplace_back(uwline);
