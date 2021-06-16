@@ -1652,6 +1652,15 @@ static constexpr FormatterTestCase kFormatterTestCases[] = {
      "    .out1234(out),\n"
      "    .clk1234(clk),\n"
      ");\n"},
+    {"initial // clock generation\n begin\n clk = 0;\n forever begin\n"
+     "#4ns clk = !clk;\n end\n end\n",
+     "initial  // clock generation\n"
+     "  begin\n"
+     "    clk = 0;\n"
+     "    forever begin\n"
+     "      #4ns clk = !clk;\n"
+     "    end\n"
+     "  end\n"},
     {"module foo #(int x,int y) ;endmodule:foo\n",  // parameters
      "module foo #(\n"
      "    int x,\n"

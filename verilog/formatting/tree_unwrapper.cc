@@ -1835,6 +1835,20 @@ void TreeUnwrapper::ReshapeTokenPartitions(
     // TODO(fangism): always,initial,final should be handled the same way
     case NodeEnum::kInitialStatement:
     case NodeEnum::kFinalStatement: {
+      // Check if 'initial' is separated from 'begin' by EOL_COMMENT. If so,
+      // adjust indentation and do not merge leaf into previous leaf.
+      const verible::UnwrappedLine& unwrapped_line = partition.Value();
+      verible::FormatTokenRange tokenrange = unwrapped_line.TokensRange();
+      auto token_tmp = tokenrange.begin();
+      if (token_tmp->TokenEnum() == TK_initial &&
+          (++token_tmp)->TokenEnum() == TK_EOL_COMMENT &&
+          (++token_tmp)->TokenEnum() == TK_begin) {
+        AdjustIndentationRelative(
+            &partition.Children()[(partition.Children().size() - 1)],
+            style.indentation_spaces);
+        break;
+      }
+
       // In these cases, merge the 'begin' partition of the statement block
       // with the preceding keyword or header partition.
       if (NodeIsBeginEndBlock(
