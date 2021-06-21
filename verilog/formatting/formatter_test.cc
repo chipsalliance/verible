@@ -1727,8 +1727,19 @@ static constexpr FormatterTestCase kFormatterTestCases[] = {
      "    localparam baz = 2  //comment\n"
      ") ();\n"
      "endmodule\n"},
-#if 0  // Disabled for now, see https://github.com/google/verible/pull/755
     {"module foo;"
+     // fit in one line
+     "parameter int i = '{\n"
+     "1,\n"
+     "2,\n"
+     "3\n"
+     "};\n"
+     "endmodule",
+     "module foo;\n"
+     "  parameter int i = '{1, 2, 3};\n"
+     "endmodule\n"},
+    {"module foo;"
+     // too long for one line, expand
      "localparam logic [63:0] RC[24] = '{\n"
      "64'h 1,\n"
      "64'h 2,\n"
@@ -1737,7 +1748,24 @@ static constexpr FormatterTestCase kFormatterTestCases[] = {
      "endmodule",
      "module foo;\n"
      "  localparam logic [63:0] RC[24] = '{\n"
-     "      64'h1, 64'h2, 64'h3\n"
+     "      64'h1,\n"
+     "      64'h2,\n"
+     "      64'h3\n"
+     "  };\n"
+     "endmodule\n"},
+    {"module foo;"
+     "parameter int i = '{\n"
+     // force expansion
+     "1, //\n"
+     "2,\n"
+     "3\n"
+     "};\n"
+     "endmodule",
+     "module foo;\n"
+     "  parameter int i = '{\n"
+     "      1,  //\n"
+     "      2,\n"
+     "      3\n"
      "  };\n"
      "endmodule\n"},
     {"module foo;"
@@ -1754,7 +1782,99 @@ static constexpr FormatterTestCase kFormatterTestCases[] = {
      "      64'h8000_0000_8000_8008  // 23\n"
      "  };\n"
      "endmodule\n"},
-#endif
+    {"module foo;"
+     // nest two patterns
+     "parameter logic [11:0] i = '{\n"
+     "'{1,2,3},\n"
+     "'{1,2,3}\n"
+     "};\n"
+     "endmodule",
+     "module foo;\n"
+     "  parameter logic [11:0] i = '{\n"
+     "      '{1, 2, 3},\n"
+     "      '{1, 2, 3}\n"
+     "  };\n"
+     "endmodule\n"},
+    {"module foo;"
+     // nest two patterns, expand interior
+     "parameter logic [11:0] i = '{\n"
+     "'{1, //\n"
+     " 2,3},\n"
+     "'{1,2,3}\n"
+     "};\n"
+     "endmodule",
+     "module foo;\n"
+     "  parameter logic [11:0] i = '{\n"
+     "      '{\n"
+     "          1,  //\n"
+     "          2,\n"
+     "          3\n"
+     "      },\n"
+     "      '{1, 2, 3}\n"
+     "  };\n"
+     "endmodule\n"},
+    {"module foo;"
+     // nest two patterns, expand both
+     "parameter nest [2] i = '{\n"
+     "'{first : 32'h0000_0001,\n"
+     "  second : 32'h0000_0011,\n"
+     "  third: 32'h0000_0111},\n"
+     "'{first : 32'h1000_0001,\n"
+     "  second : 32'h1000_0011,\n"
+     "  third: 32'h1000_0111}\n"
+     "};\n"
+     "endmodule",
+     "module foo;\n"
+     "  parameter nest [2] i = '{\n"
+     "      '{\n"
+     "          first : 32'h0000_0001,\n"
+     "          second : 32'h0000_0011,\n"
+     "          third: 32'h0000_0111\n"
+     "      },\n"
+     "      '{\n"
+     "          first : 32'h1000_0001,\n"
+     "          second : 32'h1000_0011,\n"
+     "          third: 32'h1000_0111\n"
+     "      }\n"
+     "  };\n"
+     "endmodule\n"},
+    {"module foo;"
+     // nest three patterns
+     "parameter logic [11:0] i = '{\n"
+     "'{'{1,2,3},4}\n"
+     "};\n"
+     "endmodule",
+     "module foo;\n"
+     "  parameter logic [11:0] i = '{\n"
+     "      '{'{1, 2, 3}, 4}\n"
+     "  };\n"
+     "endmodule\n"},
+    {"module foo;"
+     // nest three patterns, expand interior
+     "parameter logic [11:0] i = '{\n"
+     "'{\n"
+     "'{first : 32'h0000_0001,\n"
+     "  second : 32'h0000_0011,\n"
+     "  third: 32'h0000_0111},\n"
+     "  4},\n"
+     "  5,\n"
+     "  '{1,2,3}\n"
+     "};\n"
+     "endmodule",
+     "module foo;\n"
+     "  parameter logic [11:0] i = '{\n"
+     "      '{\n"
+     "          '{\n"
+     "              first : 32'h0000_0001,\n"
+     "              second : 32'h0000_0011,\n"
+     "              third: 32'h0000_0111\n"
+     "          },\n"
+     "          4\n"
+     "      },\n"
+     "      5,\n"
+     "      '{1, 2, 3}\n"
+     "  };\n"
+     "endmodule\n"},
     {"module    top;"
      "foo#(  \"test\"  ) foo(  );"
      "bar#(  \"test\"  ,5) bar(  );"

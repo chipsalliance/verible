@@ -702,7 +702,6 @@ const TreeUnwrapperTestData kUnwrapModuleTestCases[] = {
             L(0, {"endmodule"})),
     },
 
-#if 0  // Disabled for now, see https://github.com/google/verible/pull/755
     {
         "module with parameters and initializer list",
         "module foo;"
@@ -712,14 +711,14 @@ const TreeUnwrapperTestData kUnwrapModuleTestCases[] = {
         "64'h3"
         "};"
         "endmodule",
-        ModuleDeclaration(0, L(0, {"module", "foo", ";"}),
-                          N(1,
-                            L(1, {"localparam", "logic", "[", "63", ":", "0",
-                                  "]", "baz", "[", "24", "]", "=", "'{"}),
-                            L(3, {"64", "'h", "1", ",", "64", "'h", "2", ",",
-                                  "64", "'h", "3"}),
-                            L(1, {"}", ";"})),
-                          L(0, {"endmodule"})),
+        ModuleDeclaration(
+            0, L(0, {"module", "foo", ";"}),
+            N(1,
+              L(1, {"localparam", "logic", "[", "63", ":", "0", "]", "baz", "[",
+                    "24", "]", "=", "'{"}),
+              L(3, {"64", "'h", "1", ","}), L(3, {"64", "'h", "2", ","}),
+              L(3, {"64", "'h", "3"}), L(1, {"}", ";"})),
+            L(0, {"endmodule"})),
     },
 
     {
@@ -731,17 +730,16 @@ const TreeUnwrapperTestData kUnwrapModuleTestCases[] = {
         "64'h3 // comment 3\n"
         "};"
         "endmodule",
-        ModuleDeclaration(0, L(0, {"module", "foo", ";"}),
-                          N(1,
-                            L(1, {"localparam", "logic", "[", "63", ":", "0",
-                                  "]", "baz", "[", "24", "]", "=", "'{"}),
-                            N(3, L(3, {"64", "'h", "0", ",", "// comment 0"}),
-                              L(3, {"64", "'h", "1", ",", "// comment 1"}),
-                              L(3, {"64", "'h", "3", "// comment 3"})),
-                            L(1, {"}", ";"})),
-                          L(0, {"endmodule"})),
+        ModuleDeclaration(
+            0, L(0, {"module", "foo", ";"}),
+            N(1,
+              L(1, {"localparam", "logic", "[", "63", ":", "0", "]", "baz", "[",
+                    "24", "]", "=", "'{"}),
+              L(3, {"64", "'h", "0", ",", "// comment 0"}),
+              L(3, {"64", "'h", "1", ",", "// comment 1"}),
+              L(3, {"64", "'h", "3", "// comment 3"}), L(1, {"}", ";"})),
+            L(0, {"endmodule"})),
     },
-#endif
 
     {
         "module with header import",
