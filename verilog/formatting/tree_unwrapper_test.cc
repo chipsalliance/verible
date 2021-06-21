@@ -8022,11 +8022,9 @@ const TreeUnwrapperTestData kUnwrapCovergroupTestCases[] = {
                              L(2, {"string", "s"}), L(0, {")", ";"})),
             CovergroupItemList(
                 1, L(1, {"q_cp", ":", "coverpoint", "cp", "{"}),
-                CoverpointItemList(2,
-                                   N(2, L(2, {"bins", "foo", "=", "{"}),
-                                     L(3, {"bar"}), L(2, {"}", ";"})),
-                                   N(2, L(2, {"bins", "zoo", "=", "{"}),
-                                     L(3, {"pig"}), L(2, {"}", ";"}))),
+                CoverpointItemList(
+                    2, L(2, {"bins", "foo", "=", "{", "bar", "}", ";"}),
+                    L(2, {"bins", "zoo", "=", "{", "pig", "}", ";"})),
                 L(1, {"}"})),
             L(0, {"endgroup"})),
     },

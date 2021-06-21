@@ -169,6 +169,9 @@ ABSL_FLAG(AlignmentPolicy, assignment_statement_alignment,
           AlignmentPolicy::kInferUserIntent,
           "Format various assignments: {align,flush-left,preserve,infer}");
 
+ABSL_FLAG(bool, expand_coverpoints, false,
+          "If true, always expand coverpoints.");
+
 ABSL_FLAG(bool, try_wrap_long_lines, false,
           "If true, let the formatter attempt to optimize line wrapping "
           "decisions where wrapping is needed, else leave them unformatted.  "
@@ -227,6 +230,7 @@ static bool formatOneFile(absl::string_view filename,
 
     // formatting style flags
     format_style.try_wrap_long_lines = absl::GetFlag(FLAGS_try_wrap_long_lines);
+    format_style.expand_coverpoints = absl::GetFlag(FLAGS_expand_coverpoints);
 
     // various indentation control
     format_style.port_declarations_indentation =

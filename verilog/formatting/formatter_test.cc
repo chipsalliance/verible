@@ -10005,6 +10005,164 @@ TEST(FormatterEndToEndTest, UnfinishedLineWrapSearching) {
   EXPECT_TRUE(absl::StartsWith(status.message(), "***"));
 }
 
+static constexpr FormatterTestCase kOnelineFormatBaselineTestCases[] = {
+    // Reference - following test cases should not be affected by the switch
+    {// Minimal useful case
+     "covergroup c @ (posedge clk); coverpoint a; endgroup\n",
+     "covergroup c @(posedge clk);\n"
+     "  coverpoint a;\n"
+     "endgroup\n"},
+    {// Multiple coverpoints
+     "covergroup foo @(posedge clk); coverpoint a; coverpoint b; "
+     "coverpoint c; coverpoint d; endgroup\n",
+     "covergroup foo @(posedge clk);\n"
+     "  coverpoint a;\n"
+     "  coverpoint b;\n"
+     "  coverpoint c;\n"
+     "  coverpoint d;\n"
+     "endgroup\n"},
+    {// Multiple bins
+     "covergroup memory @ (posedge ce); address  :coverpoint addr {"
+     "bins low={LOW}; bins high={HIGH};} endgroup\n",
+     "covergroup memory @(posedge ce);\n"
+     "  address: coverpoint addr {\n"
+     "    bins low = {LOW};\n"
+     "    bins high = {HIGH};\n"
+     "  }\n"
+     "endgroup\n"},
+    {// Multiple bins with multiple elements
+     "covergroup memory @ (posedge ce); address  :coverpoint addr {"
+     "bins low={0,127}; bins high={128,255};} endgroup\n",
+     "covergroup memory @(posedge ce);\n"
+     "  address: coverpoint addr {\n"
+     "    bins low = {0, 127};\n"
+     "    bins high = {128, 255};\n"
+     "  }\n"
+     "endgroup\n"},
+};
+
+// Tests that constructs that could be formatted as one-liners are formatted
+// correctly. This is the baseline test with default style, test cases should
+// not be affected by the setting.
+TEST(FormatterEndToEndTest, OnelineFormatBaselineTest) {
+  // Use a fixed style.
+  FormatStyle style;
+  style.column_limit = 40;
+  style.indentation_spaces = 2;
+  style.wrap_spaces = 4;
+  style.expand_coverpoints = false;
+  for (const auto& test_case : kOnelineFormatBaselineTestCases) {
+    VLOG(1) << "code-to-format:\n" << test_case.input << "<EOF>";
+    std::ostringstream stream;
+    const auto status =
+        FormatVerilog(test_case.input, "<filename>", style, stream);
+    // Require these test cases to be valid.
+    EXPECT_OK(status) << status.message();
+    EXPECT_EQ(stream.str(), test_case.expected) << "code:\n" << test_case.input;
+  }
+  // Test again with the switch, should not affect formatting
+  style.expand_coverpoints = true;
+  for (const auto& test_case : kOnelineFormatBaselineTestCases) {
+    VLOG(1) << "code-to-format:\n" << test_case.input << "<EOF>";
+    std::ostringstream stream;
+    const auto status =
+        FormatVerilog(test_case.input, "<filename>", style, stream);
+    // Require these test cases to be valid.
+    EXPECT_OK(status) << status.message();
+    EXPECT_EQ(stream.str(), test_case.expected) << "code:\n" << test_case.input;
+  }
+}
+
+// Following two test sets are affected by the expand_coverponits switch
+// They should contain corresponding test cases
+static constexpr FormatterTestCase kOnelineFormatReferenceTestCases[] = {
+    {// Coverpoint that could fit on one line
+     "covergroup memory @ (posedge ce); a :coverpoint d {"
+     "bins l={0};} endgroup\n",
+     "covergroup memory @(posedge ce);\n"
+     "  a: coverpoint d {bins l = {0};}\n"
+     "endgroup\n"},
+    {// Fit with a reference
+     "covergroup memory @ (posedge ce); a :coverpoint d {"
+     "bins l={LOW};} endgroup\n",
+     "covergroup memory @(posedge ce);\n"
+     "  a: coverpoint d {bins l = {LOW};}\n"
+     "endgroup\n"},
+    {// Fit with multiple elements
+     "covergroup memory @ (posedge ce); a :coverpoint d {"
+     "bins l={0,8};} endgroup\n",
+     "covergroup memory @(posedge ce);\n"
+     "  a: coverpoint d {bins l = {0, 8};}\n"
+     "endgroup\n"},
+};
+
+static constexpr FormatterTestCase kOnelineFormatExpandTestCases[] = {
+    {// Coverpoint that could fit on one line
+     "covergroup memory @ (posedge ce); a :coverpoint d {"
+     "bins l={0};} endgroup\n",
+     "covergroup memory @(posedge ce);\n"
+     "  a: coverpoint d {\n"
+     "    bins l = {0};\n"
+     "  }\n"
+     "endgroup\n"},
+    {// Fit with a reference
+     "covergroup memory @ (posedge ce); a :coverpoint d {"
+     "bins l={LOW};} endgroup\n",
+     "covergroup memory @(posedge ce);\n"
+     "  a: coverpoint d {\n"
+     "    bins l = {LOW};\n"
+     "  }\n"
+     "endgroup\n"},
+    {// Fit with multiple elements
+     "covergroup memory @ (posedge ce); a :coverpoint d {"
+     "bins l={0,8};} endgroup\n",
+     "covergroup memory @(posedge ce);\n"
+     "  a: coverpoint d {\n"
+     "    bins l = {0, 8};\n"
+     "  }\n"
+     "endgroup\n"},
+};
+
+TEST(FormatterEndToEndTest, OnelineFormatReferenceTest) {
+  // Use a fixed style.
+  FormatStyle style;
+  style.column_limit = 40;
+  style.indentation_spaces = 2;
+  style.wrap_spaces = 4;
+  style.expand_coverpoints = false;
+
+  for (const auto& test_case : kOnelineFormatReferenceTestCases) {
+    VLOG(1) << "code-to-format:\n" << test_case.input << "<EOF>";
+    std::ostringstream stream;
+    const auto status =
+        FormatVerilog(test_case.input, "<filename>", style, stream);
+    // Require these test cases to be valid.
+    EXPECT_OK(status) << status.message();
+    EXPECT_EQ(stream.str(), test_case.expected) << "code:\n" << test_case.input;
+  }
+}
+
+// Tests that constructs that could be formatted as one-liners are expanded
+// correctly. This is the baseline test with default style
+TEST(FormatterEndToEndTest, OnelineFormatExpandTest) {
+  // Use a fixed style.
+  FormatStyle style;
+  style.column_limit = 40;
+  style.indentation_spaces = 2;
+  style.wrap_spaces = 4;
+  style.expand_coverpoints = true;
+
+  for (const auto& test_case : kOnelineFormatExpandTestCases) {
+    VLOG(1) << "code-to-format:\n" << test_case.input << "<EOF>";
+    std::ostringstream stream;
+    const auto status =
+        FormatVerilog(test_case.input, "<filename>", style, stream);
+    // Require these test cases to be valid.
+    EXPECT_OK(status) << status.message();
+    EXPECT_EQ(stream.str(), test_case.expected) << "code:\n" << test_case.input;
+  }
+}
+
 // TODO(fangism): directed tests using style variations
 
 }  // namespace
