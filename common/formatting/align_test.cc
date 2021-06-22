@@ -26,6 +26,7 @@
 #include "common/text/tree_builder_test_util.h"
 #include "common/util/range.h"
 #include "common/util/spacer.h"
+#include "common/util/value_saver.h"
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 
@@ -973,6 +974,352 @@ TEST_F(InferAmbiguousAlignIntentTest, DifferenceSufficientlySmall) {
   EXPECT_EQ(Render(),    //
             "one two\n"  //
             "threeeee    four\n");
+}
+
+// Creates columns tree with the same layout as the syntax tree
+template <const AlignmentColumnProperties& props>
+class SyntaxTreeColumnizer : public ColumnSchemaScanner {
+ public:
+  SyntaxTreeColumnizer() = default;
+
+  void Visit(const SyntaxTreeNode& node) override {
+    ColumnPositionTree* column;
+    if (!current_column_)
+      column = ReserveNewColumn(node, props);
+    else
+      column = ReserveNewColumn(*current_column_, node, props);
+
+    ValueSaver current_column_saver(&current_column_, column);
+    ColumnSchemaScanner::Visit(node);
+  }
+  void Visit(const SyntaxTreeLeaf& leaf) override {
+    if (!current_column_)
+      ReserveNewColumn(leaf, props);
+    else
+      ReserveNewColumn(*current_column_, leaf, props);
+  }
+
+ protected:
+  ColumnPositionTree* current_column_ = nullptr;
+};
+
+class SubcolumnsTreeAlignmentTest : public MatrixTreeAlignmentTestFixture {
+ public:
+  SubcolumnsTreeAlignmentTest(absl::string_view text =
+                                  "zero\n"
+                                  "( one two three )\n"
+                                  "( four ( five six ) seven )\n"
+                                  "( eight ( ( nine ) ten ) )\n"
+                                  "( eleven nineteen-ninety-nine 2k )\n")
+      : MatrixTreeAlignmentTestFixture(text) {
+    //  Columns tree:
+    //
+    //  ┃┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┃
+    //  ┃┄┃┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┃┄┃
+    //  ┊ ┃┄┄┄┄┄┄┃┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┃┄┄┄┄┄┃ ┊
+    //  ┊ ┊      ┃┄┃┄┄┄┄┄┄┄┄┄┄┄┄┃┄┃   ┊     ┊ ┊
+    //  ┊ ┊      ┊ ┃┄┄┄┄┄┄┄┄┃┄┄┄┃ ┊   ┊     ┊ ┊
+    //  ┊ ┊      ┊ ┃┄┃┄┄┄┄┃┄┃   ┊ ┊   ┊     ┊ ┊
+    //  ┊ ┊      ┊ ┊ ┃┄┄┄┄┃ ┊   ┊ ┊   ┊     ┊ ┊
+    //  ┃zero    ┊ ┊ ┊    ┊ ┊   ┊ ┊   ┊     ┊ ┃
+    //  ┃(┃one   ┃two┊    ┊ ┊   ┊ ┊   ┃three┃)┃
+    //  ┃(┃four  ┃(┃five  ┊ ┃six┃)┃   ┃seven┃)┃
+    //  ┃(┃eight ┃(┃(┃nine┃)┃ten┃)┃   ┃     ┃)┃
+    //  ┃(┃eleven┃nineteen-ninety-nine┃2k   ┃)┃
+    //  ╵ ╵      ╵ ╵ ╵    ╵ ╵   ╵ ╵   ╵     ╵ ╵
+
+    syntax_tree_ = TNode(0);
+
+    UnwrappedLine all(0, pre_format_tokens_.begin());
+    all.SpanUpToToken(pre_format_tokens_.end());
+    all.SetOrigin(syntax_tree_.get());
+    partition_ = TokenPartitionTree{all};
+
+    auto token_iter = pre_format_tokens_.begin();
+    while (true) {
+      UnwrappedLine uwline(0, token_iter);
+      SymbolPtr item = ParseItem(token_iter, pre_format_tokens_.end());
+      if (!item.get()) {
+        break;
+      }
+      uwline.SpanUpToToken(token_iter);
+      uwline.SetOrigin(item.get());
+      partition_.NewChild(uwline);
+      SymbolCastToNode(*syntax_tree_).AppendChild(std::move(item));
+    }
+  }
+
+ private:
+  SymbolPtr ParseList(
+      std::vector<verible::PreFormatToken>::iterator& it,
+      const std::vector<verible::PreFormatToken>::iterator& end) {
+    SymbolPtr list = TNode(0);
+    SymbolPtr item;
+    while ((item = ParseItem(it, end)).get() != nullptr) {
+      SymbolCastToNode(*list).AppendChild(std::move(item));
+    }
+    return list;
+  }
+
+  SymbolPtr ParseItem(
+      std::vector<verible::PreFormatToken>::iterator& it,
+      const std::vector<verible::PreFormatToken>::iterator& end) {
+    if (it == end) return SymbolPtr(nullptr);
+
+    if (it->Text() == "(") {
+      SymbolPtr lp = Leaf(1, it->Text());
+      ++it;
+      CHECK(it != end);
+      SymbolPtr list = ParseList(it, end);
+      CHECK(it != end);
+      CHECK_EQ(it->Text(), ")");
+      SymbolPtr rp = Leaf(1, it->Text());
+      ++it;
+      return TNode(1, std::move(lp), std::move(list), std::move(rp));
+    } else if (it->Text() == ")") {
+      return SymbolPtr(nullptr);
+    } else {
+      SymbolPtr leaf = Leaf(0, it->Text());
+      ++it;
+      return leaf;
+    }
+  }
+};
+
+static const ExtractAlignmentGroupsFunction kLeftAligningTreeAlignmentHandler =
+    ExtractAlignmentGroupsAdapter(
+        &PartitionBetweenBlankLines, &IgnoreNone,
+        AlignmentCellScannerGenerator<SyntaxTreeColumnizer<FlushLeft>>(),
+        AlignmentPolicy::kAlign);
+
+static const ExtractAlignmentGroupsFunction kRightAligningTreeAlignmentHandler =
+    ExtractAlignmentGroupsAdapter(
+        &PartitionBetweenBlankLines, &IgnoreNone,
+        AlignmentCellScannerGenerator<SyntaxTreeColumnizer<FlushRight>>(),
+        AlignmentPolicy::kAlign);
+
+static const ExtractAlignmentGroupsFunction kFlushLeftTreeAlignmentHandler =
+    ExtractAlignmentGroupsAdapter(
+        &PartitionBetweenBlankLines, &IgnoreNone,
+        AlignmentCellScannerGenerator<SyntaxTreeColumnizer<FlushLeft>>(),
+        AlignmentPolicy::kFlushLeft);
+
+static const ExtractAlignmentGroupsFunction kPreserveTreeAlignmentHandler =
+    ExtractAlignmentGroupsAdapter(
+        &PartitionBetweenBlankLines, &IgnoreNone,
+        AlignmentCellScannerGenerator<SyntaxTreeColumnizer<FlushLeft>>(),
+        AlignmentPolicy::kPreserve);
+
+TEST_F(SubcolumnsTreeAlignmentTest, ZeroInterTokenPadding) {
+  TabularAlignTokens(&partition_, kLeftAligningTreeAlignmentHandler,
+                     &pre_format_tokens_, sample_, ByteOffsetSet(), 40);
+
+  EXPECT_EQ(Render(),  //
+            "zero\n"
+            "(one   two                 three)\n"
+            "(four  (five  six)         seven)\n"
+            "(eight ((nine)ten)              )\n"
+            "(elevennineteen-ninety-nine2k   )\n");
+}
+
+TEST_F(SubcolumnsTreeAlignmentTest, AlignmentPolicyFlushLeft) {
+  TabularAlignTokens(&partition_, kFlushLeftTreeAlignmentHandler,
+                     &pre_format_tokens_, sample_, ByteOffsetSet(), 40);
+
+  EXPECT_EQ(Render(),  //
+            "zero\n"
+            "(onetwothree)\n"
+            "(four(fivesix)seven)\n"
+            "(eight((nine)ten))\n"
+            "(elevennineteen-ninety-nine2k)\n");
+}
+
+TEST_F(SubcolumnsTreeAlignmentTest, AlignmentPolicyPreserve) {
+  ConnectPreFormatTokensPreservedSpaceStarts(sample_.data(),
+                                             &pre_format_tokens_);
+
+  TabularAlignTokens(&partition_, kPreserveTreeAlignmentHandler,
+                     &pre_format_tokens_, sample_, ByteOffsetSet(), 40);
+
+  EXPECT_EQ(Render(),  //
+            "zero\n"
+            "( one two three )\n"
+            "( four ( five six ) seven )\n"
+            "( eight ( ( nine ) ten ) )\n"
+            "( eleven nineteen-ninety-nine 2k )\n");
+}
+
+TEST_F(SubcolumnsTreeAlignmentTest, OneInterTokenPadding) {
+  for (auto& ftoken : pre_format_tokens_) {
+    ftoken.before.spaces_required = 1;
+  }
+
+  TabularAlignTokens(&partition_, kLeftAligningTreeAlignmentHandler,
+                     &pre_format_tokens_, sample_, ByteOffsetSet(), 40);
+
+  EXPECT_EQ(Render(),  //
+            "zero\n"
+            "( one    two                  three )\n"
+            "( four   ( five     six )     seven )\n"
+            "( eight  ( ( nine ) ten )           )\n"
+            "( eleven nineteen-ninety-nine 2k    )\n");
+}
+
+TEST_F(SubcolumnsTreeAlignmentTest, OneInterTokenPaddingExceptFront) {
+  for (auto& ftoken : pre_format_tokens_) {
+    ftoken.before.spaces_required = 1;
+  }
+  // Find first token of each line and require 0 spaces before them.
+  for (auto& line : partition_.Children()) {
+    const auto tokens = line.Value().TokensRange();
+    if (!tokens.empty()) {
+      const PreFormatToken& front = tokens.front();
+      auto mutable_token =
+          std::find_if(pre_format_tokens_.begin(), pre_format_tokens_.end(),
+                       [&](const PreFormatToken& ftoken) {
+                         return BoundsEqual(ftoken.Text(), front.Text());
+                       });
+      if (mutable_token != pre_format_tokens_.end()) {
+        mutable_token->before.spaces_required = 0;
+      }
+    }
+  }
+
+  TabularAlignTokens(&partition_, kLeftAligningTreeAlignmentHandler,
+                     &pre_format_tokens_, sample_, ByteOffsetSet(), 40);
+
+  EXPECT_EQ(Render(),  //
+            "zero\n"
+            "( one    two                  three )\n"
+            "( four   ( five     six )     seven )\n"
+            "( eight  ( ( nine ) ten )           )\n"
+            "( eleven nineteen-ninety-nine 2k    )\n");
+}
+
+TEST_F(SubcolumnsTreeAlignmentTest, RightFlushed) {
+  for (auto& ftoken : pre_format_tokens_) {
+    ftoken.before.spaces_required = 1;
+  }
+
+  TabularAlignTokens(&partition_, kRightAligningTreeAlignmentHandler,
+                     &pre_format_tokens_, sample_, ByteOffsetSet(), 40);
+
+  EXPECT_EQ(Render(),  //
+            "                                 zero\n"
+            "(    one                  two three )\n"
+            "(   four     (     five six ) seven )\n"
+            "(  eight     ( ( nine ) ten )       )\n"
+            "( eleven nineteen-ninety-nine    2k )\n");
+}
+
+TEST_F(SubcolumnsTreeAlignmentTest,
+       RightFlushedOneInterTokenPaddingWithIndent) {
+  for (auto& ftoken : pre_format_tokens_) {
+    ftoken.before.spaces_required = 1;
+  }
+  for (auto& line : partition_.Children()) {
+    line.Value().SetIndentationSpaces(2);
+  }
+
+  TabularAlignTokens(&partition_, kRightAligningTreeAlignmentHandler,
+                     &pre_format_tokens_, sample_, ByteOffsetSet(), 40);
+
+  EXPECT_EQ(Render(),  //
+            "                                   zero\n"
+            "  (    one                  two three )\n"
+            "  (   four     (     five six ) seven )\n"
+            "  (  eight     ( ( nine ) ten )       )\n"
+            "  ( eleven nineteen-ninety-nine    2k )\n");
+}
+
+class MultiSubcolumnsTreeAlignmentTest : public SubcolumnsTreeAlignmentTest {
+ public:
+  MultiSubcolumnsTreeAlignmentTest(absl::string_view text =
+                                       "zero\n"
+                                       "( one two three )\n"
+                                       "( four ( five six ) seven )\n"
+                                       "\n"
+                                       "( eight ( ( nine ) ten ) )\n"
+                                       "( eleven nineteen-ninety-nine 2k )\n")
+      : SubcolumnsTreeAlignmentTest(text) {}
+
+  std::string Render() const {
+    std::ostringstream stream;
+    int position = 0;
+    const absl::string_view text(sample_);
+    for (const auto& child : partition_.Children()) {
+      // emulate preserving vertical spacing
+      const auto tokens_range = child.Value().TokensRange();
+      const auto front_offset = tokens_range.front().token->left(text);
+      const absl::string_view spaces =
+          text.substr(position, front_offset - position);
+      const auto newlines =
+          std::max<int>(std::count(spaces.begin(), spaces.end(), '\n') - 1, 0);
+      stream << Spacer(newlines, '\n');
+      stream << FormattedExcerpt(child.Value()) << std::endl;
+      position = tokens_range.back().token->right(text);
+    }
+    return stream.str();
+  }
+};
+
+TEST_F(MultiSubcolumnsTreeAlignmentTest, BlankLineSeparatedGroups) {
+  for (auto& ftoken : pre_format_tokens_) {
+    ftoken.before.spaces_required = 1;
+  }
+
+  TabularAlignTokens(&partition_, kLeftAligningTreeAlignmentHandler,
+                     &pre_format_tokens_, sample_, ByteOffsetSet(), 40);
+
+  EXPECT_EQ(Render(),  //
+            "zero\n"
+            "( one  two          three )\n"
+            "( four ( five six ) seven )\n"
+            "\n"
+            "( eight  ( ( nine ) ten )        )\n"
+            "( eleven nineteen-ninety-nine 2k )\n");
+}
+
+class InferSubcolumnsTreeAlignmentTest : public SubcolumnsTreeAlignmentTest {
+ public:
+  InferSubcolumnsTreeAlignmentTest(
+      absl::string_view text =
+          "zero\n"
+          "( one     two                   three )\n"
+          "( four    ( five     six )      seven )\n"
+          "( eight   ( ( nine ) ten )      )\n"
+          "( eleven  nineteen-ninety-nine  2k    )\n")
+      : SubcolumnsTreeAlignmentTest(text) {
+    // Need to know original spacing to be able to infer user-intent.
+    ConnectPreFormatTokensPreservedSpaceStarts(sample_.data(),
+                                               &pre_format_tokens_);
+
+    // Require 1 space between tokens.
+    for (auto& ftoken : pre_format_tokens_) {
+      ftoken.before.spaces_required = 1;
+      // Default to append, so we can see the effect of falling-back to
+      // preserve-spacing behavior.
+      ftoken.before.break_decision = SpacingOptions::MustAppend;
+    }
+  }
+};
+
+static const ExtractAlignmentGroupsFunction kInferTreeAlignmentHandler =
+    ExtractAlignmentGroupsAdapter(
+        &PartitionBetweenBlankLines, &IgnoreNone,
+        AlignmentCellScannerGenerator<SyntaxTreeColumnizer<FlushLeft>>(),
+        AlignmentPolicy::kInferUserIntent);
+
+TEST_F(InferSubcolumnsTreeAlignmentTest, InferUserIntent) {
+  TabularAlignTokens(&partition_, kInferTreeAlignmentHandler,
+                     &pre_format_tokens_, sample_, ByteOffsetSet(), 40);
+
+  EXPECT_EQ(Render(),  //
+            "zero\n"
+            "( one    two                  three )\n"
+            "( four   ( five     six )     seven )\n"
+            "( eight  ( ( nine ) ten )           )\n"
+            "( eleven nineteen-ninety-nine 2k    )\n");
 }
 
 }  // namespace

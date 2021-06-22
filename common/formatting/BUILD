@@ -28,7 +28,10 @@ cc_library(
         "//common/util:algorithm",
         "//common/util:container_iterator_range",
         "//common/util:enum_flags",
+        "//common/util:iterator_range",
         "//common/util:logging",
+        "//common/util:vector_tree",
+        "//common/util:vector_tree_iterators",
         "@com_google_absl//absl/strings",
     ],
 )
@@ -44,6 +47,7 @@ cc_test(
         "//common/text:tree_builder_test_util",
         "//common/util:range",
         "//common/util:spacer",
+        "//common/util:value_saver",
         "@com_google_absl//absl/strings",
         "@com_google_googletest//:gtest_main",
     ],

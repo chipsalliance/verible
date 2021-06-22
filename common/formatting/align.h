@@ -27,6 +27,7 @@
 #include "common/text/tree_context_visitor.h"
 #include "common/text/tree_utils.h"  // for GetRightmostLeaf
 #include "common/util/logging.h"
+#include "common/util/vector_tree.h"
 
 namespace verible {
 
@@ -55,7 +56,9 @@ struct ColumnPositionEntry {
   AlignmentColumnProperties properties;
 };
 
-// TODO(fangism): support column groups (VectorTree)
+using ColumnPositionTree = VectorTree<ColumnPositionEntry>;
+
+std::ostream& operator<<(std::ostream&, const ColumnPositionTree&);
 
 // ColumnSchemaScanner traverses syntax subtrees of similar types and
 // collects the positions that wish to register columns for alignment
@@ -66,32 +69,56 @@ struct ColumnPositionEntry {
 // and call ReserveNewColumn() in locations that want a new columns.
 class ColumnSchemaScanner : public TreeContextPathVisitor {
  public:
-  ColumnSchemaScanner() = default;
+  ColumnSchemaScanner()
+      : sparse_columns_(ColumnPositionTree({{}, TokenInfo::EOFToken(), {}})) {}
 
   // Returns the collection of column position entries.
-  const std::vector<ColumnPositionEntry>& SparseColumns() const {
-    return sparse_columns_;
-  }
+  const ColumnPositionTree& SparseColumns() const { return sparse_columns_; }
 
  protected:
+  // Returns subpath relative to base_path
+  static SyntaxTreePath GetSubpath(
+      const SyntaxTreePath& base_path,
+      std::initializer_list<SyntaxTreePath::value_type> subpositions) {
+    auto subpath = base_path;
+    subpath.insert(subpath.end(), subpositions);
+    return subpath;
+  }
+
   // Mark the start of a new column for alignment.
+  // 'parent_column' is a reference to the parent column.
   // 'symbol' is a reference to the original source syntax subtree.
   // 'properties' contains alignment configuration for the column.
   // 'path' represents relative position within the enclosing syntax subtree,
   // and is used as a key for ordering and matching columns.
-  void ReserveNewColumn(const Symbol& symbol,
-                        const AlignmentColumnProperties& properties,
-                        const SyntaxTreePath& path);
+  ColumnPositionTree* ReserveNewColumn(
+      ColumnPositionTree& parent_column, const Symbol& symbol,
+      const AlignmentColumnProperties& properties, const SyntaxTreePath& path);
+  ColumnPositionTree* ReserveNewColumn(
+      const Symbol& symbol, const AlignmentColumnProperties& properties,
+      const SyntaxTreePath& path) {
+    return ReserveNewColumn(sparse_columns_, symbol, properties, path);
+  }
 
   // Reserve a column using the current path as the key.
-  void ReserveNewColumn(const Symbol& symbol,
-                        const AlignmentColumnProperties& properties) {
-    ReserveNewColumn(symbol, properties, Path());
+  ColumnPositionTree* ReserveNewColumn(
+      const Symbol& symbol, const AlignmentColumnProperties& properties) {
+    return ReserveNewColumn(sparse_columns_, symbol, properties, Path());
+  }
+  // Reserve a subcolumn using subcolumn number appended to the parent's path
+  // as the key.
+  ColumnPositionTree* ReserveNewColumn(
+      ColumnPositionTree& parent_column, const Symbol& symbol,
+      const AlignmentColumnProperties& properties) {
+    auto subpath = GetSubpath(parent_column.Value().path,
+                              {parent_column.Children().size()});
+    return ReserveNewColumn(parent_column, symbol, properties, subpath);
   }
 
  private:
   // Keeps track of unique positions where new columns are desired.
-  std::vector<ColumnPositionEntry> sparse_columns_;
+  // This is a tree root and its value is not actually used.
+  ColumnPositionTree sparse_columns_;
 };
 
 // This enum signals to the GetPartitionAlignmentSubranges() function
@@ -183,7 +210,7 @@ std::vector<TaggedTokenPartitionRange> GetPartitionAlignmentSubranges(
 // This is the interface used to extract alignment cells from ranges of tokens.
 // Note that it is not required to use a ColumnSchemaScanner.
 using AlignmentCellScannerFunction =
-    std::function<std::vector<ColumnPositionEntry>(const TokenPartitionTree&)>;
+    std::function<ColumnPositionTree(const TokenPartitionTree&)>;
 
 // For sections of code that are deemed alignable, this enum controls
 // the formatter behavior.
@@ -297,7 +324,7 @@ ExtractAlignmentGroupsFunction ExtractAlignmentGroupsAdapter(
 // Returns a sequence of column entries that will be uniquified and ordered
 // for alignment purposes.
 template <class ScannerType>
-std::vector<ColumnPositionEntry> ScanPartitionForAlignmentCells(
+ColumnPositionTree ScanPartitionForAlignmentCells(
     const TokenPartitionTree& row) {
   const UnwrappedLine& unwrapped_line = row.Value();
   // Walk the original syntax tree that spans a subset of the tokens spanned by
@@ -323,13 +350,12 @@ std::vector<ColumnPositionEntry> ScanPartitionForAlignmentCells(
 // and TokenPartitionTree that will be uniquified and ordered for alignment
 // purposes.
 template <class ScannerType>
-std::vector<ColumnPositionEntry>
-ScanPartitionForAlignmentCells_WithNonTreeTokens(
+ColumnPositionTree ScanPartitionForAlignmentCells_WithNonTreeTokens(
     const TokenPartitionTree& row,
-    const std::function<void(TokenRange, std::vector<ColumnPositionEntry>*)>
+    const std::function<void(TokenRange, ColumnPositionTree*)>
         non_tree_column_scanner) {
   // re-use existing scanner
-  std::vector<ColumnPositionEntry> column_entries =
+  ColumnPositionTree column_entries =
       ScanPartitionForAlignmentCells<ScannerType>(row);
 
   const UnwrappedLine& unwrapped_line = row.Value();
@@ -378,7 +404,7 @@ AlignmentCellScannerFunction AlignmentCellScannerGenerator() {
 // comments.
 template <class ScannerType>
 AlignmentCellScannerFunction AlignmentCellScannerGenerator(
-    const std::function<void(TokenRange, std::vector<ColumnPositionEntry>*)>
+    const std::function<void(TokenRange, ColumnPositionTree*)>
         non_tree_column_scanner) {
   return [non_tree_column_scanner](const TokenPartitionTree& row) {
     return ScanPartitionForAlignmentCells_WithNonTreeTokens<ScannerType>(

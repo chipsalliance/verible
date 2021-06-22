@@ -1132,7 +1132,7 @@ using AlignmentHandlerMapType =
 
 static void non_tree_column_scanner(
     verible::TokenRange token_range,
-    std::vector<verible::ColumnPositionEntry>* column_entries) {
+    verible::ColumnPositionTree* column_entries) {
   static const size_t kLargestPathIndex = std::numeric_limits<size_t>::max();
 
   for (auto token : token_range) {
@@ -1141,15 +1141,15 @@ static void non_tree_column_scanner(
         SyntaxTreePath path{kLargestPathIndex - 1};
         AlignmentColumnProperties prop;
         prop.contains_delimiter = true;
-        verible::ColumnPositionEntry test{path, token, prop};
-        column_entries->push_back(test);
+        const verible::ColumnPositionTree column({path, token, prop});
+        column_entries->NewChild(column);
         break;
       }
       case TK_COMMENT_BLOCK:
       case TK_EOL_COMMENT: {
         SyntaxTreePath path{kLargestPathIndex};
-        verible::ColumnPositionEntry test{path, token, FlushLeft};
-        column_entries->push_back(test);
+        const verible::ColumnPositionTree column({path, token, FlushLeft});
+        column_entries->NewChild(column);
         break;
       }
       default:
