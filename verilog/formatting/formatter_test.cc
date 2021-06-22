@@ -734,6 +734,53 @@ static constexpr FormatterTestCase kFormatterTestCases[] = {
         "  parameter  int   ternary={a}?{b}:{c};",
         "parameter int ternary = {a} ? {b} : {c};\n",
     },
+    {
+        "  parameter  int   long_ternary=cond?long_option_t:long_option_f;",
+        "parameter int long_ternary = cond ?\n"
+        "    long_option_t : long_option_f;\n",
+    },
+    {
+        "  parameter  int   break_two=cond\n"
+        "? a_really_long_option_number_one:a_really_long_option_number_two;",
+        "parameter int break_two = cond ?\n"
+        "    a_really_long_option_number_one :\n"
+        "    a_really_long_option_number_two;\n",
+    },
+    {
+        "  assign   ternary=1?2:3;",
+        "assign ternary = 1 ? 2 : 3;\n",
+    },
+    {
+        "  assign   ternary=a?b:c;",
+        "assign ternary = a ? b : c;\n",
+    },
+    {
+        "  assign   ternary={a}?{b}:{c};",
+        "assign ternary = {a} ? {b} : {c};\n",
+    },
+    {
+        "  assign   break_two=cond\n"
+        "? a_really_long_option_number_one:a_really_long_option_number_two;",
+        "assign break_two = cond ?\n"
+        "    a_really_long_option_number_one :\n"
+        "    a_really_long_option_number_two;\n",
+    },
+    {
+        "assign prefetch_d     =\n"
+        "lookup_grant_ic0 ? (lookup_addr_aligned + ADDR) :\n"
+        "                   addr_i;",
+        "assign prefetch_d = lookup_grant_ic0 ?\n"
+        "    (lookup_addr_aligned + ADDR) :\n"
+        "    addr_i;\n",
+    },
+    {
+        "assign prefetch_d     =\n"
+        "lookup_grant_ic0 ? (lookup_addr + 1) :\n"
+        "                   addr_i;",
+        "assign prefetch_d = lookup_grant_ic0 ?\n"
+        "    (lookup_addr + 1) : addr_i;\n",
+    },
+
     // streaming operators
     {
         "   parameter  int  b={ >>   { a } } ;",
