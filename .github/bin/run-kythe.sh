@@ -32,7 +32,7 @@ then
   bazel \
     build \
     --experimental_action_listener=":extract_cxx" \
-    --define="kythe_corpus=github.com/google/verible" \
+    --define="kythe_corpus=github.com/chipsalliance/verible" \
     -- \
     //...
 else
@@ -42,7 +42,7 @@ else
     --bazelrc="${KYTHE_DIR_ABS}/extractors.bazelrc" \
     build \
     --override_repository kythe_release="${KYTHE_DIR_ABS}" \
-    --define="kythe_corpus=github.com/google/verible" \
+    --define="kythe_corpus=github.com/chipsalliance/verible" \
     -- \
     //...
 fi

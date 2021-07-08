@@ -16,9 +16,9 @@ Before you begin, familiarize yourself with:
 *   Join the developer's mailing list: verible-dev@googlegroups.com
     ([join](https://groups.google.com/forum/#!forum/verible-dev/join))
 *   Use the github issue tracker, discuss and comment:
-    *   [existing lint rule issues](https://github.com/google/verible/issues?q=is%3Aissue+is%3Aopen+label%3Astyle-linter)
-    *   [file new issue about existing rule](https://github.com/google/verible/issues/new?assignees=&labels=style-linter&template=style-linter-bug.md&title=)
-    *   [file new issue about a new rule](https://github.com/google/verible/issues/new?assignees=&labels=enhancement%2C+style-linter&template=style-linter-feature-request.md&title=)
+    *   [existing lint rule issues](https://github.com/chipsalliance/verible/issues?q=is%3Aissue+is%3Aopen+label%3Astyle-linter)
+    *   [file new issue about existing rule](https://github.com/chipsalliance/verible/issues/new?assignees=&labels=style-linter&template=style-linter-bug.md&title=)
+    *   [file new issue about a new rule](https://github.com/chipsalliance/verible/issues/new?assignees=&labels=enhancement%2C+style-linter&template=style-linter-feature-request.md&title=)
 
 ## Whose Style Guide?
 

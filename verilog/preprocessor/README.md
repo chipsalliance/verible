@@ -21,12 +21,12 @@ the limitations of preprocessing support in the parser, which in turn improves
 the outreach of tools like the linter and formatter.
 
 Most of these are not yet implemented, but
-[help is wanted](https://github.com/google/verible/issues/183).
+[help is wanted](https://github.com/chipsalliance/verible/issues/183).
 
 ## Standard-Compliant SV Preprocessor
 
 ... does not exist in this codebase yet. See
-https://github.com/google/verible/issues/183.
+https://github.com/chipsalliance/verible/issues/183.
 
 SystemVerilog preprocessing is in many ways
 [more complicated than C/C++ preprocessing](https://www.veripool.org/papers/Preproc_Good_Evil_SNUGBos10_paper.pdf).

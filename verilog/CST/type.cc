@@ -320,7 +320,7 @@ const verible::SyntaxTreeNode* GetTypeIdentifierFromDataType(
   //   x = 1;
   // This is the whole test case.
   // This is a global, implicit-type data declaration, initialized.
-  // See https://github.com/google/verible/issues/549
+  // See https://github.com/chipsalliance/verible/issues/549
   if (data_type_node.children().empty()) {
     return nullptr;
   }

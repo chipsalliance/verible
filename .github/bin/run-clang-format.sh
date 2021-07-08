@@ -22,7 +22,7 @@ find . -name "*.h" -o -name "*.cc" | xargs -P2 clang-format --style=Google -i
 git diff > ${FORMAT_OUT}
 
 if [ -s ${FORMAT_OUT} ]; then
-   echo "Style not matching (see https://github.com/google/verible/blob/master/CONTRIBUTING.md#style)"
+   echo "Style not matching (see https://github.com/chipsalliance/verible/blob/master/CONTRIBUTING.md#style)"
    echo "On your *.h, *.cc files, please run clang-format -i --style=file <your changed files>"
    cat ${FORMAT_OUT}
    exit 1
