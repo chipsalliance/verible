@@ -4,7 +4,7 @@
 # Verible
 
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
-[![Continuous Integration](https://github.com/google/verible/workflows/verible-ci/badge.svg)](https://github.com/google/verible/actions/workflows/verible-ci.yml)
+[![Continuous Integration](https://github.com/chipsalliance/verible/workflows/verible-ci/badge.svg)](https://github.com/chipsalliance/verible/actions/workflows/verible-ci.yml)
 
 <!--*
 freshness: { owner: 'hzeller' reviewed: '2020-10-08' }
@@ -55,4 +55,4 @@ See the [README file for further information.](README.md)
 
 ## Version
 
-Generated on 2021-06-21 09:52:31 +0200 from [fce34d2](https://github.com/google/verible/commit/fce34d2b0e6bbf815169121d127a26aa73d0d6c7)
+Generated on 2021-07-08 15:25:19 -0700 from [27add07](https://github.com/google/verible/commit/27add072b540542946910f148aca51991336b1d1)
