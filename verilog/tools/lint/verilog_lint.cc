@@ -117,7 +117,7 @@ int main(int argc, char** argv) {
     return 0;
   }
 
-  int exit_status = 0;
+  int exit_status = 0;  // Just a test comment for a test pull request
 
   AutofixMode autofix_mode = absl::GetFlag(FLAGS_autofix);
   const std::string autofix_output_file =
