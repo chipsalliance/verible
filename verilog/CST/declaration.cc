@@ -147,7 +147,7 @@ GetUnqualifiedIdFromVariableDeclarationAssignment(
     // This is a workaround for the below:
     // TODO(fangism): remove this condition after fixing the issue for "branch".
     // "riscv_instr          branch;"
-    // issue on github: https://github.com/google/verible/issues/547
+    // issue on github: https://github.com/chipsalliance/verible/issues/547
     return verible::SymbolCastToLeaf(*identifier);
   }
   return *AutoUnwrapIdentifier(*identifier);

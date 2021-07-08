@@ -6,7 +6,7 @@ Verible. Collecting development aids and design concepts.
 ## Searching and Navigating Verible's Source Code
 
 https://cs.opensource.google/verible/verible is a search-indexed mirror of
-[Verible's source code](https://github.com/google/verible). Expect to spend a
+[Verible's source code](https://github.com/chipsalliance/verible). Expect to spend a
 lot of time here as you familiarize yourself with the codebase.
 
 https://developers.google.com/code-search/reference provides a reference for

@@ -74,7 +74,7 @@ class VerilogSourceFile {
   absl::string_view ReferencedPath() const { return referenced_path_; }
 
   // Returns the corpus to which this file belongs (e.g.,
-  // github.com/google/verible).
+  // github.com/chipsalliance/verible).
   absl::string_view Corpus() const { return corpus_; }
 
   // Returns a (possibly more qualified) path to the file.
@@ -130,7 +130,8 @@ class VerilogSourceFile {
   // such so this class can have a default move constructor.
   std::string resolved_path_;
 
-  // The corpus to which this file belongs to (e.g., github.com/google/verible).
+  // The corpus to which this file belongs to (e.g.,
+  // github.com/chipsalliance/verible).
   absl::string_view corpus_;
 
   // State of this file.
@@ -293,7 +294,7 @@ class VerilogProject {
   const std::vector<std::string> include_paths_;
 
   // The corpus to which this project belongs (e.g.,
-  // 'github.com/google/verible').
+  // 'github.com/chipsalliance/verible').
   const std::string corpus_;
 
   // Set of opened files, keyed by referenced (not resolved) filename.
