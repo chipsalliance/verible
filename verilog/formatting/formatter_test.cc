@@ -3755,9 +3755,38 @@ static constexpr FormatterTestCase kFormatterTestCases[] = {
      "int foo_bar ;\n"
      "endclass : c\n",
      "class c;\n"
-     "  int foo[$];\n"
+     "  int foo     [$];\n"
      "  int foo_bar;\n"
      "endclass : c\n"},
+    {// subcolumns
+     "class cc;\n"
+     "rand bit [A-1:0] foo;\n"
+     "rand bit [A-1:0][2] bar;\n"
+     "int foobar[X+1:Y];\n"
+     "int baz[42];\n"
+     "rand bit qux[Z];\n"
+     "rand bit [1:0] quux[3:0];\n"
+     "rand bit [A:BB][42] quuz[7];\n"
+     "endclass\n",
+     "class cc;\n"
+     "  rand bit [A-1:0 ]     foo;\n"
+     "  rand bit [A-1:0 ][ 2] bar;\n"
+     "  int                   foobar[X+1:Y];\n"
+     "  int                   baz   [   42];\n"
+     "  rand bit              qux   [    Z];\n"
+     "  rand bit [  1:0 ]     quux  [  3:0];\n"
+     "  rand bit [  A:BB][42] quuz  [    7];\n"
+     "endclass\n"},
+    {"class cc;\n"
+     "int qux[2];\n"
+     "int quux[SIZE-1+SHIFT:SHIFT];\n"
+     "int quuz[SOME_CONSTANT];\n"
+     "endclass\n",
+     "class cc;\n"
+     "  int qux [                 2];\n"
+     "  int quux[SIZE-1+SHIFT:SHIFT];\n"
+     "  int quuz[     SOME_CONSTANT];\n"
+     "endclass\n"},
     {// aligns over comments (ignored)
      "class c;\n"
      "// foo is...\n"
@@ -3796,14 +3825,13 @@ static constexpr FormatterTestCase kFormatterTestCases[] = {
      "  // llama is...\n"
      "  logic     llama;\n"
      "endclass : c\n"},
-    {// array dimensions do not have their own columns
-     "class c;\n"
+    {"class c;\n"
      "rand logic l;\n"
      "int [1:0] foo;\n"
      "endclass : c\n",
      "class c;\n"
-     "  rand logic l;\n"
-     "  int [1:0]  foo;\n"
+     "  rand logic       l;\n"
+     "  int        [1:0] foo;\n"
      "endclass : c\n"},
     {// non-data-declarations break up groups
      "class c;\n"
@@ -3947,7 +3975,54 @@ static constexpr FormatterTestCase kFormatterTestCases[] = {
         "  }\n"
         "endclass\n",
     },
-
+    // distributions: colon alignment
+    {"class c;\n"
+     "constraint co {\n"
+     "d dist {\n"
+     "[1:2]:/2,\n"
+     "[11:33]:/22,\n"
+     "[111:444]:/8,\n"
+     "[1:42]:/10,\n"
+     "[11:12]:/3\n"
+     "};\n"
+     "}\n"
+     "endclass\n",
+     "class c;\n"
+     "  constraint co {\n"
+     "    d dist {\n"
+     "      [  1 : 2  ] :/ 2,\n"
+     "      [ 11 : 33 ] :/ 22,\n"
+     "      [111 : 444] :/ 8,\n"
+     "      [  1 : 42 ] :/ 10,\n"
+     "      [ 11 : 12 ] :/ 3\n"
+     "    };\n"
+     "  }\n"
+     "endclass\n"},
+    // distributions: subcolumns
+    {"class foo;\n"
+     "constraint bar {\n"
+     "baz dist {\n"
+     "[1:2]:/2,\n"
+     "QUX[3:0]:/10,\n"
+     "[11:33]:/22,\n"
+     "ID_LONGER_THAN_RANGES:/3,\n"
+     "[111:QUUZ[Z]]:/8,\n"
+     "[X[4:0]:Y[8:Z-2]]:/8\n"
+     "};\n"
+     "}\n"
+     "endclass\n",
+     "class foo;\n"
+     "  constraint bar {\n"
+     "    baz dist {\n"
+     "      [     1 : 2       ]   :/ 2,\n"
+     "      QUX[3:0]              :/ 10,\n"
+     "      [    11 : 33      ]   :/ 22,\n"
+     "      ID_LONGER_THAN_RANGES :/ 3,\n"
+     "      [   111 : QUUZ[Z] ]   :/ 8,\n"
+     "      [X[4:0] : Y[8:Z-2]]   :/ 8\n"
+     "    };\n"
+     "  }\n"
+     "endclass\n"},
     // class with empty parameter list
     {"class foo #(); endclass",
      "class foo #();\n"

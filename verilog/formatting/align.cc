@@ -745,6 +745,31 @@ class ClassPropertyColumnSchemaScanner : public ColumnSchemaScanner {
         ReserveNewColumn(node, FlushLeft);
         break;
       }
+      case NodeEnum::kDimensionScalar: {
+        CHECK_EQ(node.children().size(), 3);
+        auto* column = ABSL_DIE_IF_NULL(ReserveNewColumn(node, FlushLeft));
+
+        ReserveNewColumn(*column, *node[0], FlushLeft);   // '['
+        ReserveNewColumn(*column, *node[1], FlushRight);  // value
+        ReserveNewColumn(*column, *node[2], FlushLeft);   // ']'
+        return;
+      }
+      case NodeEnum::kDimensionRange: {
+        CHECK_EQ(node.children().size(), 5);
+        auto* column = ABSL_DIE_IF_NULL(ReserveNewColumn(node, FlushLeft));
+
+        SyntaxTreePath np;
+        ReserveNewColumn(*column, *node[0], FlushLeft);  // '['
+
+        auto* value_subcolumn =
+            ABSL_DIE_IF_NULL(ReserveNewColumn(*column, *node[1], FlushRight));
+        ReserveNewColumn(*value_subcolumn, *node[1], FlushRight);  // LHS value
+        ReserveNewColumn(*value_subcolumn, *node[2], FlushLeft);   // ':'
+        ReserveNewColumn(*value_subcolumn, *node[3], FlushLeft);   // RHS value
+
+        ReserveNewColumn(*column, *node[4], FlushLeft);  // ']'
+        return;
+      }
       default:
         break;
     }
@@ -1077,11 +1102,27 @@ class DistItemColumnSchemaScanner : public ColumnSchemaScanner {
     switch (tag) {
       case NodeEnum::kDistributionItem:
         // Start first column right away.
-        ReserveNewColumn(node, FlushLeft);
+        item_column_ = ReserveNewColumn(node, FlushLeft);
         break;
-
-        // TODO(fangism): the left-hand-side may contain [x:y] ranges that could
-        // be further aligned.
+      case NodeEnum::kValueRange: {
+        if (!Context().DirectParentIs(NodeEnum::kDistributionItem)) {
+          break;
+        }
+        CHECK_EQ(node.children().size(), 5);
+        CHECK_NOTNULL(item_column_);
+        ReserveNewColumn(*item_column_, *node[0], FlushLeft,
+                         GetSubpath(Path(), {0}));  // '['
+        ReserveNewColumn(*item_column_, *node[1], FlushRight,
+                         GetSubpath(Path(), {1}));  // LHS value
+        ReserveNewColumn(*item_column_, *node[2], FlushLeft,
+                         GetSubpath(Path(), {2}));  // ':'
+        ReserveNewColumn(*item_column_, *node[3], FlushLeft,
+                         GetSubpath(Path(), {3}));  // RHS value
+        ReserveNewColumn(*item_column_, *node[4], FlushLeft,
+                         GetSubpath(Path(), {4}));  // ']'
+        item_column_ = nullptr;
+        return;
+      }
       default:
         break;
     }
@@ -1100,6 +1141,9 @@ class DistItemColumnSchemaScanner : public ColumnSchemaScanner {
         break;
     }
   }
+
+ private:
+  verible::ColumnPositionTree* item_column_ = nullptr;
 };
 
 static std::function<
