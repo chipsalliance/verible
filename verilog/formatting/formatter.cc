@@ -527,71 +527,104 @@ static void DisableSyntaxBasedRanges(ByteOffsetSet* disabled_ranges,
   **/
 }
 
+// Keeps multi-line EOL comments aligned to the same column.
+//
+// When a line containing nothing else than a single EOL comment follows a line
+// containing any tokens and an EOL comment, starting columns (from original,
+// unformatted source code) of both comments are compared. If the columns differ
+// no more than kMaxColumnDifference, the comment in the comment-only line is
+// considered to be a continuation comment. The same check is performed on all
+// following comment-only lines. The process of continuation detection ends when
+// currently handled line has any tokens other than EOL comment, or when the
+// comment's starting column differs too much from the first comment's column.
+// All continuation comments are placed in the same column as their starting
+// comment's column in formatted output.
 class ContinuationCommentAligner {
+  // Maximum accepted difference between continuation and starting comments'
+  // starting columns
+  static constexpr std::size_t kMaxColumnDifference = 1;
+
  public:
   ContinuationCommentAligner(const verible::LineColumnMap& line_column_map,
                              const absl::string_view base_text)
-      : line_column_map_(line_column_map),
-        base_text_(base_text),
-        original_column_(-1),
-        column_(-1) {}
+      : line_column_map_(line_column_map), base_text_(base_text) {}
 
+  // Takes the next line that has to be formatted and a vector of already
+  // formatted lines.
+  //
+  // Continuation comment lines are formatted and appended to
+  // already_formatted_lines. In case of all other lines neither the line nor
+  // already_formatted_lines are modified.
+  // Return value informs whether the line has been formatted and added
+  // to already_formatted_lines.
   bool HandleLine(
       const UnwrappedLine& uwline,
-      std::vector<verible::FormattedExcerpt>& already_formatted_lines) {
+      std::vector<verible::FormattedExcerpt>* already_formatted_lines) {
     VLOG(4) << __FUNCTION__ << ": " << uwline;
-    if (already_formatted_lines.empty()) {
-      VLOG(4) << "Not a continuation comment";
+
+    if (already_formatted_lines->empty()) {
+      VLOG(4) << "Not a continuation comment line: first line";
       return false;
     }
 
     if (uwline.Size() != 1 || uwline.TokensRange().back().TokenEnum() !=
                                   verilog_tokentype::TK_EOL_COMMENT) {
-      VLOG(4) << "Not a continuation comment";
-      column_ = -1;
-      original_column_ = -1;
+      VLOG(4) << "Not a continuation comment line: "
+              << "does not consist of a single EOL comment.";
+      formatted_column_ = kInvalidColumn;
+      original_column_ = kInvalidColumn;
       return false;
     }
 
-    const auto& previous_line = already_formatted_lines.back();
+    const auto& previous_line = already_formatted_lines->back();
     VLOG(4) << __FUNCTION__ << ": previous line: " << previous_line;
-    if (original_column_ < 0) {
-      if (previous_line.Tokens().size() <= 1 ||
-          previous_line.Tokens().back().token->token_enum() !=
-              verilog_tokentype::TK_EOL_COMMENT) {
-        VLOG(4) << "Not a continuation comment";
+    if (original_column_ == kInvalidColumn) {
+      if (previous_line.Tokens().size() <= 1) {
+        VLOG(4) << "Not a continuation comment line: "
+                << "too few tokens in previous line.";
         return false;
       }
-
-      original_column_ =
-          line_column_map_(
-              previous_line.Tokens().back().token->left(base_text_))
-              .column;
+      const auto* previous_comment = previous_line.Tokens().back().token;
+      if (previous_comment->token_enum() != verilog_tokentype::TK_EOL_COMMENT) {
+        VLOG(4) << "Not a continuation comment line: "
+                << "no EOL comment in previous line.";
+        return false;
+      }
+      original_column_ = GetTokenColumn(previous_comment);
     }
 
-    const int cont_column =
-        line_column_map_(uwline.TokensRange().back().token->left(base_text_))
-            .column;
+    const auto* comment = uwline.TokensRange().back().token;
+    const int comment_column = GetTokenColumn(comment);
 
     VLOG(4) << "Original column: " << original_column_ << " vs. "
-            << cont_column;
+            << comment_column;
 
-    if (original_column_ != cont_column) {
-      VLOG(4) << "Not a continuation comment";
-      original_column_ = -1;
+    if (std::abs(original_column_ - comment_column) > kMaxColumnDifference) {
+      VLOG(4) << "Not a continuation comment line: "
+              << "starting column difference is too big";
+      original_column_ = kInvalidColumn;
       return false;
     }
 
-    if (column_ < 0) column_ = CalculateEolCommentColumn(previous_line);
+    VLOG(4) << "Continuation comment line - finalizing formatting";
+    if (formatted_column_ == kInvalidColumn)
+      formatted_column_ = CalculateEolCommentColumn(previous_line);
 
     UnwrappedLine aligned_uwline(uwline);
-    aligned_uwline.SetIndentationSpaces(column_);
-    already_formatted_lines.emplace_back(aligned_uwline);
+    aligned_uwline.SetIndentationSpaces(formatted_column_);
+    already_formatted_lines->emplace_back(aligned_uwline);
 
     return true;
   }
 
  private:
+  int GetTokenColumn(const verible::TokenInfo* token) {
+    CHECK_NOTNULL(token);
+    const int column = line_column_map_(token->left(base_text_)).column;
+    CHECK_GE(column, 0);
+    return column;
+  }
+
   static void AdjustColumnUsingTokenSpacing(
       const verible::FormattedToken& token, int* column) {
     switch (token.before.action) {
@@ -629,14 +662,20 @@ class ContinuationCommentAligner {
     }
     AdjustColumnUsingTokenSpacing(line.Tokens().back(), &column);
 
+    CHECK_GE(column, 0);
     return column;
   }
 
   const verible::LineColumnMap& line_column_map_;
   const absl::string_view base_text_;
 
-  int original_column_;
-  int column_;
+  // Used when the most recenly handled line can't have a continuation comment.
+  static constexpr int kInvalidColumn = -1;
+
+  // Starting column of current comment group in original source code.
+  int original_column_ = kInvalidColumn;
+  // Starting column of current comment group in formatted source code.
+  int formatted_column_ = kInvalidColumn;
 };
 
 Status Formatter::Format(const ExecutionControl& control) {
@@ -737,7 +776,7 @@ Status Formatter::Format(const ExecutionControl& control) {
   for (const auto& uwline : unwrapped_lines) {
     // TODO(fangism): Use different formatting strategies depending on
     // uwline.PartitionPolicy().
-    if (continuation_comment_aligner.HandleLine(uwline, formatted_lines_)) {
+    if (continuation_comment_aligner.HandleLine(uwline, &formatted_lines_)) {
     } else if (uwline.PartitionPolicy() ==
                PartitionPolicyEnum::kSuccessfullyAligned) {
       // For partitions that were successfully aligned, do not search

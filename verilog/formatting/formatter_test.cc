@@ -7523,18 +7523,46 @@ static constexpr FormatterTestCase kFormatterTestCases[] = {
      "                   // D.1\n"
      ");\n"
      "endmodule : foo\n"},
-
-    {"               // comment1\n"
-     "module foo();  // A\n"
-     "                // comment2\n"
-     "              // comment3\n"
+    // Continuation comment's original starting column is allowed to differ from
+    // starting comment's original starting column at most by 1.
+    // Starting column of comments B and C will change after formatting.
+    {"module foo ();  // A\n"     // Starting comment; already on correct column
+     "                 // A.1\n"  // A's column + 1
+     "               // A.2\n"    // A's column - 1
+     "wire baz;      // B\n"      // Starting comment; will be moved left
+     "              // B.1\n"     // B's column - 1
+     "                // B.2\n"   // B's column + 1
+     "               // B.3\n"    // B's column
+     "endmodule:foo // C\n"       // Starting comment; will be moved right
+     "               // C.1\n"    // C's column + 1
+     "             // C.2\n",     // C's column - 1
+     "module foo ();  // A\n"
+     "                // A.1\n"
+     "                // A.2\n"
+     "  wire baz;  // B\n"
+     "             // B.1\n"
+     "             // B.2\n"
+     "             // B.3\n"
+     "endmodule : foo  // C\n"
+     "                 // C.1\n"
+     "                 // C.2\n"},
+    // Check that comments with too large starting column difference are not
+    // aligned as continuation comments.
+    // Check that starting comments are not linked with a comment in
+    // comment-only line above them, even when the starting column is the same.
+    // All comments in this test case are aligned independently, i.e. none are
+    // "continuation comments".
+    {"                // comment1\n"  // A's column, but is above it
+     "module foo ();  // A\n"
+     "                  // comment2\n"  // A's column + 2
+     "              // comment3\n"      // A's column - 2
      "wire baz;     // B\n"
-     "             // comment4\n"
-     "               // comment5\n"
-     "              // comment6\n"
+     "            // comment4\n"      // B's column - 2
+     "                // comment5\n"  // B's column + 2
+     "              // comment6\n"    // B's column, but not directly under B
      "endmodule:foo // C\n"
-     "               // comment7\n"
-     "              // comment8\n",
+     "                // comment7\n"  // C's column + 2
+     "              // comment8\n",   // C's column, but not directly under B
      "// comment1\n"
      "module foo ();  // A\n"
      "  // comment2\n"
@@ -7546,6 +7574,8 @@ static constexpr FormatterTestCase kFormatterTestCases[] = {
      "endmodule : foo  // C\n"
      "// comment7\n"
      "// comment8\n"},
+    // Continuation comment alignment when a line with the starting comment is
+    // wrapped.
     {"module foo(output logic very_very_very_very_long_name // A\n"
      "                                                      // A.1\n"
      "); endmodule\n",
