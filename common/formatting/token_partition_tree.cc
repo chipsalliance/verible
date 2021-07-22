@@ -547,12 +547,12 @@ static AppendFittingSubpartitionsResult AppendFittingSubpartitions(
     first_line.SpanUpToToken(trailer->Value().TokensRange().end());
   }
 
-  bool wrapped_first_subpartition;
   int longest_line_len = 0;
 
-  verible::FitResult fit_result;
-  if (!wrap_first_subpartition &&
-      (fit_result = FitsOnLine(first_line, style)).fits == true) {
+  verible::FitResult fit_result = FitsOnLine(first_line, style);
+  const bool wrapped_first_subpartition =
+      wrap_first_subpartition || !fit_result.fits;
+  if (!wrapped_first_subpartition) {
     // Compute new indentation level based on first partition
     const UnwrappedLine& uwline = group->Value().Value();
     indent = FitsOnLine(uwline, style).final_column;
@@ -563,8 +563,6 @@ static AppendFittingSubpartitionsResult AppendFittingSubpartitions(
     // keep group indentation
 
     longest_line_len = fit_result.final_column;
-    // Appended first argument
-    wrapped_first_subpartition = false;
   } else {
     // Measure header
     fit_result = FitsOnLine(group->Value().Value(), style);
@@ -580,9 +578,6 @@ static AppendFittingSubpartitionsResult AppendFittingSubpartitions(
     // Measure first wrapped line
     fit_result = FitsOnLine(group->Value().Value(), style);
     longest_line_len = std::max(longest_line_len, fit_result.final_column);
-
-    // Wrapped first argument
-    wrapped_first_subpartition = true;
   }
 
   const auto remaining_args =
