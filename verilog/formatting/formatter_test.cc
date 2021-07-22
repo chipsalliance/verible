@@ -7526,6 +7526,8 @@ static constexpr FormatterTestCase kFormatterTestCases[] = {
     // Continuation comment's original starting column is allowed to differ from
     // starting comment's original starting column at most by 1.
     // Starting column of comments B and C will change after formatting.
+    // TODO: refine the column alignment depending on current vs previous line.
+    // https://github.com/chipsalliance/verible/pull/858#discussion_r672844015
     {"module foo ();  // A\n"     // Starting comment; already on correct column
      "                 // A.1\n"  // A's column + 1
      "               // A.2\n"    // A's column - 1
