@@ -1443,6 +1443,19 @@ static void IndentBetweenUVMBeginEndMacros(TokenPartitionTree* partition_ptr,
   }
 }
 
+static const SyntaxTreeNode* GetAssignedExpressionFromDataDeclaration(
+    const verible::Symbol& data_declaration) {
+  const auto* trailing_assign_symbol = verible::FindFirstSubtree(
+      &data_declaration, [](const verible::Symbol& sym) {
+        return sym.Tag() == verible::NodeTag(NodeEnum::kTrailingAssign);
+      });
+
+  if (trailing_assign_symbol == nullptr) return nullptr;
+  return &verible::GetSubtreeAsNode(*trailing_assign_symbol,
+                                    NodeEnum::kTrailingAssign, 1,
+                                    NodeEnum::kExpression);
+}
+
 // This phase is strictly concerned with reshaping token partitions,
 // and occurs on the return path of partition tree construction.
 void TreeUnwrapper::ReshapeTokenPartitions(
@@ -1530,6 +1543,48 @@ void TreeUnwrapper::ReshapeTokenPartitions(
       } else {
         VLOG(4) << "None of the special cases apply.";
       }
+
+      // Handle variable declaration with string concatenation assignment
+
+      const auto* assigned_expr =
+          GetAssignedExpressionFromDataDeclaration(node);
+      if (!assigned_expr || assigned_expr->children().empty()) break;
+
+      const auto* concat_expr_symbol = assigned_expr->children().front().get();
+      if (concat_expr_symbol->Tag() !=
+          verible::NodeTag(NodeEnum::kConcatenationExpression))
+        break;
+
+      const auto* open_range_list_symbol =
+          verible::SymbolCastToNode(*concat_expr_symbol).children()[1].get();
+      if (open_range_list_symbol->Tag() !=
+          verible::NodeTag(NodeEnum::kOpenRangeList))
+        break;
+
+      const auto& open_range_list =
+          verible::SymbolCastToNode(*open_range_list_symbol);
+
+      if (std::all_of(
+              open_range_list.children().cbegin(),
+              open_range_list.children().cend(),
+              [](const verible::SymbolPtr& sym) {
+                if (sym->Tag() == verible::NodeTag(NodeEnum::kExpression)) {
+                  const auto& expr = verible::SymbolCastToNode(*sym.get());
+                  return !expr.children().empty() &&
+                         expr.children().front()->Tag() ==
+                             verible::LeafTag(
+                                 verilog_tokentype::TK_StringLiteral);
+                }
+                return (sym->Kind() == verible::SymbolKind::kLeaf);
+              })) {
+        auto& assigned_value_partition =
+            data_declaration_partition.Children()[1];
+        partition.Value().SetPartitionPolicy(
+            PartitionPolicyEnum::kAppendFittingSubPartitions);
+        assigned_value_partition.Value().SetPartitionPolicy(
+            PartitionPolicyEnum::kAlwaysExpand);
+      }
+
       break;
     }
 

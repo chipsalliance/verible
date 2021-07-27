@@ -7434,6 +7434,85 @@ static constexpr FormatterTestCase kFormatterTestCases[] = {
      "function int f;\n"
      "  return $x;\n"
      "endfunction\n"},
+    // String initializers
+    {"string a[] = {\n\"a\"\n};\n", "string a[] = {\"a\"};\n"},
+    {"string abc[] = {\n\"a\",\n\"b\",\n\"c\"\n};\n",
+     "string abc[] = {\"a\", \"b\", \"c\"};\n"},
+    {"string abc[] = {\n"
+     "\"a\",//\n"
+     "\"b\", \"c\"\n"
+     "};\n",
+     "string abc[] = {\"a\",  //\n"
+     "                \"b\",\n"
+     "                \"c\"};\n"},
+    {"string abc[] = {//\n"
+     "\"a\", \"b\", \"c\""
+     "};\n",
+     "string abc[] = {  //\n"
+     "  \"a\",\n"
+     "  \"b\",\n"
+     "  \"c\"\n"
+     "};\n"},
+    {"string abc[] = {\n"
+     "\"a\", \"b\", \"c\"//\n"
+     "};\n",
+     "string abc[] = {\"a\",\n"
+     "                \"b\",\n"
+     "                \"c\"  //\n"
+     "                };\n"},
+    {"string abc[] = {//\n"
+     "\"a\",//\n"
+     "\"b\", \"c\"//\n"
+     "};\n",
+     "string abc[] = {  //\n"
+     "  \"a\",  //\n"
+     "  \"b\",\n"
+     "  \"c\"  //\n"
+     "};\n"},
+    {"string abc[] = {\n"
+     "\"a\",\n"
+     "// comment\n"
+     "// comment\n"
+     "\"b\",\n"
+     "\"c\"\n"
+     "};\n",
+     "string abc[] = {\"a\",\n"
+     "                // comment\n"
+     "                // comment\n"
+     "                \"b\",\n"
+     "                \"c\"};\n"},
+    {"string numbers[] = {\"one\", \"two\", \"three\", \"four\"};\n",
+     "string numbers[] = {\"one\",\n"
+     "                    \"two\",\n"
+     "                    \"three\",\n"
+     "                    \"four\"};\n"},
+    {"string numbers[] = {\"one\", \"two\", THREE, \"four\"};\n",
+     "string numbers[] = {\n"
+     "  \"one\", \"two\", THREE, \"four\"\n"
+     "};\n"},
+    {"string numbers[] = {\"one\", {\"two\", \"three\"}, \"four\"};\n",
+     "string numbers[] = {\n"
+     "  \"one\", {\"two\", \"three\"}, \"four\"\n"
+     "};\n"},
+    {"string numbers[] = {\"one\", {\"two\", //\n"
+     "\"three\"}, \"four\"};\n",
+     "string numbers[] = {\n"
+     "  \"one\",\n"
+     "  {\n"
+     "    \"two\",  //\n"
+     "    \"three\"\n"
+     "  },\n"
+     "  \"four\"\n"
+     "};\n"},
+    {"string years[] = {\"two_thousand_nineteen\", \"two_thousand_twenty\",\n"
+     "\"two_thousand_twenty_one\"};\n",
+     // line with 3rd string would exceed column limit in unwrapped style
+     "string years[] = {\n"
+     "  \"two_thousand_nineteen\",\n"
+     "  \"two_thousand_twenty\",\n"
+     "  \"two_thousand_twenty_one\"\n"
+     "};\n"},
+
     //{   // parameterized class with 'parameter_declaration' and MACRO
     //    "class foo #(parameter int a = 2,\n"
     //    "parameter int aaa = `MACRO);\n"
