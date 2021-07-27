@@ -105,6 +105,20 @@ cc_test(
 )
 
 cc_library(
+    name = "layout_optimizer",
+    srcs = ["layout_optimizer.cc"],
+    hdrs = [
+        "layout_optimizer.h",
+    ],
+    deps = [
+        ":basic_format_style",
+        ":token_partition_tree",
+        ":unwrapped_line",
+        "//common/util:vector_tree",
+    ],
+)
+
+cc_library(
     name = "token_partition_tree",
     srcs = ["token_partition_tree.cc"],
     hdrs = [
