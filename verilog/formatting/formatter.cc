@@ -22,6 +22,7 @@
 
 #include "absl/status/status.h"
 #include "common/formatting/format_token.h"
+#include "common/formatting/layout_optimizer.h"
 #include "common/formatting/line_wrap_searcher.h"
 #include "common/formatting/token_partition_tree.h"
 #include "common/formatting/unwrapped_line.h"
@@ -357,6 +358,7 @@ static void DeterminePartitionExpansion(
       LOG(FATAL) << "Got an uninitialized partition policy at: " << uwline;
       break;
     }
+    case PartitionPolicyEnum::kOptimalLayout:
     case PartitionPolicyEnum::kAlwaysExpand: {
       if (children.size() > 1) {
         node_view.Expand();
@@ -745,6 +747,10 @@ Status Formatter::Format(const ExecutionControl& control) {
           // Reshape partition tree with kAppendFittingSubPartitions policy
           verible::ReshapeFittingSubpartitions(&node, style_);
           break;
+        case PartitionPolicyEnum::kOptimalLayout: {
+          verible::OptimizeTokenPartitionTree(&node, style_);
+          break;
+        }
         case PartitionPolicyEnum::kTabularAlignment:
           // TODO(b/145170750): Adjust inter-token spacing to achieve alignment,
           // but leave partitioning intact.
