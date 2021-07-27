@@ -11,11 +11,10 @@ RedHat Enterprise Linux support).
 
 Currently supported Linux distributions are:
 
- - [x] CentOS 6
- - [x] CentOS 7
- - [x] CentOS 8
- - [x] Ubuntu Xenial (16.04 LTS)
- - [x] Ubuntu Bionic (18.04 LTS)
- - [x] Ubuntu Eoan (19.10)
- - [x] Ubuntu Focal (20.04 LTS)
- - [x] Ubuntu Groovy (20.10)
+- CentOS 7
+- CentOS 8
+- Ubuntu Xenial (16.04 LTS)
+- Ubuntu Bionic (18.04 LTS)
+- Ubuntu Eoan (19.10)
+- Ubuntu Focal (20.04 LTS)
+- Ubuntu Groovy (20.10)

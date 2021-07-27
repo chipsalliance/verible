@@ -68,8 +68,7 @@ case "$TARGET_OS" in
     [ "$TARGET_VERSION" = 8 ] && _version="$TARGET_VERSION" || _version="common"
     cat ${TARGET_OS}/${_version}/compiler.dockerstage >> ${OUT_DIR}/Dockerfile
     # Bazel
-    [ "$TARGET_VERSION" = 6 ] && _version="$TARGET_VERSION" || _version="common"
-    cat ${TARGET_OS}/${_version}/bazel.dockerstage >> ${OUT_DIR}/Dockerfile
+    cat ${TARGET_OS}/common/bazel.dockerstage >> ${OUT_DIR}/Dockerfile
   ;;
 esac
 
