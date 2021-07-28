@@ -68,6 +68,11 @@ using verible::ValueSaver;
 static const AlignmentColumnProperties FlushLeft(true);
 static const AlignmentColumnProperties FlushRight(false);
 
+// Special SyntaxTreePath index used for non-tree tokens
+static const size_t kNonTreeTokenPathIndex = std::numeric_limits<size_t>::max();
+// Maximum SyntaxTreePath index available for tree tokens
+static const size_t kMaxPathIndex = std::numeric_limits<size_t>::max() - 1;
+
 template <class T>
 static bool TokensAreAllCommentsOrAttributes(const T& tokens) {
   return std::all_of(
@@ -1217,22 +1222,22 @@ using AlignmentHandlerMapType =
 static void non_tree_column_scanner(
     verible::TokenRange token_range,
     verible::ColumnPositionTree* column_entries) {
-  static const size_t kLargestPathIndex = std::numeric_limits<size_t>::max();
+  static const SyntaxTreePath kCommaPath = {kNonTreeTokenPathIndex, 0};
+  static const SyntaxTreePath kCommentPath = {kNonTreeTokenPathIndex, 1};
 
   for (auto token : token_range) {
     switch (token.token_enum()) {
       case ',': {
-        SyntaxTreePath path{kLargestPathIndex - 1};
         AlignmentColumnProperties prop;
         prop.contains_delimiter = true;
-        const verible::ColumnPositionTree column({path, token, prop});
+        const verible::ColumnPositionTree column({kCommaPath, token, prop});
         column_entries->NewChild(column);
         break;
       }
       case TK_COMMENT_BLOCK:
       case TK_EOL_COMMENT: {
-        SyntaxTreePath path{kLargestPathIndex};
-        const verible::ColumnPositionTree column({path, token, FlushLeft});
+        const verible::ColumnPositionTree column(
+            {kCommentPath, token, FlushLeft});
         column_entries->NewChild(column);
         break;
       }
