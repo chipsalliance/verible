@@ -208,11 +208,41 @@ static bool IgnoreMultilineCaseStatements(const TokenPartitionTree& partition) {
                      &TokenForcesLineBreak);
 }
 
+class VerilogColumnSchemaScanner : public ColumnSchemaScanner {
+ public:
+  VerilogColumnSchemaScanner(const FormatStyle& style) : style_(style) {}
+
+ protected:
+  const FormatStyle& style_;
+};
+
+template <class ScannerType>
+std::function<verible::AlignmentCellScannerFunction(const FormatStyle&)>
+UnstyledAlignmentCellScannerGenerator() {
+  return [](const FormatStyle& vstyle) {
+    return AlignmentCellScannerGenerator<ScannerType>(
+        [vstyle] { return ScannerType(vstyle); });
+  };
+}
+
+template <class ScannerType>
+std::function<verible::AlignmentCellScannerFunction(const FormatStyle&)>
+UnstyledAlignmentCellScannerGenerator(
+    const std::function<void(verible::TokenRange, verible::ColumnPositionTree*)>
+        non_tree_column_scanner) {
+  return [non_tree_column_scanner](const FormatStyle& vstyle) {
+    return AlignmentCellScannerGenerator<ScannerType>(
+        [vstyle] { return ScannerType(vstyle); }, non_tree_column_scanner);
+  };
+}
+
 // This class marks up token-subranges in named parameter assignments for
 // alignment. e.g. ".parameter_name(value_expression)"
-class ActualNamedParameterColumnSchemaScanner : public ColumnSchemaScanner {
+class ActualNamedParameterColumnSchemaScanner
+    : public VerilogColumnSchemaScanner {
  public:
-  ActualNamedParameterColumnSchemaScanner() = default;
+  ActualNamedParameterColumnSchemaScanner(const FormatStyle& style)
+      : VerilogColumnSchemaScanner(style) {}
 
   void Visit(const SyntaxTreeNode& node) override {
     auto tag = NodeEnum(node.Tag().tag);
@@ -240,9 +270,10 @@ class ActualNamedParameterColumnSchemaScanner : public ColumnSchemaScanner {
 
 // This class marks up token-subranges in named port connections for alignment.
 // e.g. ".port_name(net_name)"
-class ActualNamedPortColumnSchemaScanner : public ColumnSchemaScanner {
+class ActualNamedPortColumnSchemaScanner : public VerilogColumnSchemaScanner {
  public:
-  ActualNamedPortColumnSchemaScanner() = default;
+  ActualNamedPortColumnSchemaScanner(const FormatStyle& style)
+      : VerilogColumnSchemaScanner(style) {}
 
   void Visit(const SyntaxTreeNode& node) override {
     auto tag = NodeEnum(node.Tag().tag);
@@ -270,9 +301,10 @@ class ActualNamedPortColumnSchemaScanner : public ColumnSchemaScanner {
 
 // This class marks up token-subranges in port declarations for alignment.
 // e.g. "input wire clk,"
-class PortDeclarationColumnSchemaScanner : public ColumnSchemaScanner {
+class PortDeclarationColumnSchemaScanner : public VerilogColumnSchemaScanner {
  public:
-  PortDeclarationColumnSchemaScanner() = default;
+  PortDeclarationColumnSchemaScanner(const FormatStyle& style)
+      : VerilogColumnSchemaScanner(style) {}
 
   void Visit(const SyntaxTreeNode& node) override {
     auto tag = NodeEnum(node.Tag().tag);
@@ -403,13 +435,16 @@ class PortDeclarationColumnSchemaScanner : public ColumnSchemaScanner {
   // Set this to force the next syntax tree node/leaf to start a new column.
   // This is useful for aligning after punctation marks.
   bool new_column_after_open_bracket_ = false;
+
+  verible::ColumnPositionTree* packed_dimensions_column_ = nullptr;
 };
 
 // This class marks up token-subranges in struct/union members for alignment.
 // e.g. bit [31:0] member_name;
-class StructUnionMemberColumnSchemaScanner : public ColumnSchemaScanner {
+class StructUnionMemberColumnSchemaScanner : public VerilogColumnSchemaScanner {
  public:
-  StructUnionMemberColumnSchemaScanner() = default;
+  StructUnionMemberColumnSchemaScanner(const FormatStyle& style)
+      : VerilogColumnSchemaScanner(style) {}
 
   void Visit(const SyntaxTreeNode& node) override {
     auto tag = NodeEnum(node.Tag().tag);
@@ -596,9 +631,10 @@ static std::vector<TaggedTokenPartitionRange> GetAlignableStatementGroups(
 //   * here, there are no port directions to worry about.
 //   * need to handle both kDataDeclaration and kNetDeclaration.
 // TODO(fangism): refactor out common logic
-class DataDeclarationColumnSchemaScanner : public ColumnSchemaScanner {
+class DataDeclarationColumnSchemaScanner : public VerilogColumnSchemaScanner {
  public:
-  DataDeclarationColumnSchemaScanner() = default;
+  DataDeclarationColumnSchemaScanner(const FormatStyle& style)
+      : VerilogColumnSchemaScanner(style) {}
 
   void Visit(const SyntaxTreeNode& node) override {
     auto tag = NodeEnum(node.Tag().tag);
@@ -724,9 +760,10 @@ class DataDeclarationColumnSchemaScanner : public ColumnSchemaScanner {
 // This class marks up token-subranges in class member variable (data
 // declarations) for alignment. e.g. "const int [3:0] member_name;" For now,
 // re-use the same column scanner as data/variable/net declarations.
-class ClassPropertyColumnSchemaScanner : public ColumnSchemaScanner {
+class ClassPropertyColumnSchemaScanner : public VerilogColumnSchemaScanner {
  public:
-  ClassPropertyColumnSchemaScanner() = default;
+  ClassPropertyColumnSchemaScanner(const FormatStyle& style)
+      : VerilogColumnSchemaScanner(style) {}
 
   void Visit(const SyntaxTreeNode& node) override {
     auto tag = NodeEnum(node.Tag().tag);
@@ -789,9 +826,11 @@ class ClassPropertyColumnSchemaScanner : public ColumnSchemaScanner {
 // This class marks up token-subranges in formal parameter declarations for
 // alignment.
 // e.g. "localparam int Width = 5;"
-class ParameterDeclarationColumnSchemaScanner : public ColumnSchemaScanner {
+class ParameterDeclarationColumnSchemaScanner
+    : public VerilogColumnSchemaScanner {
  public:
-  ParameterDeclarationColumnSchemaScanner() = default;
+  ParameterDeclarationColumnSchemaScanner(const FormatStyle& style)
+      : VerilogColumnSchemaScanner(style) {}
 
   void Visit(const SyntaxTreeNode& node) override {
     auto tag = NodeEnum(node.Tag().tag);
@@ -922,9 +961,10 @@ class ParameterDeclarationColumnSchemaScanner : public ColumnSchemaScanner {
 // e.g. "value1, value2: x = f(y);"
 // This is suitable for a variety of case-like items: statements, generate
 // items.
-class CaseItemColumnSchemaScanner : public ColumnSchemaScanner {
+class CaseItemColumnSchemaScanner : public VerilogColumnSchemaScanner {
  public:
-  CaseItemColumnSchemaScanner() = default;
+  CaseItemColumnSchemaScanner(const FormatStyle& style)
+      : VerilogColumnSchemaScanner(style) {}
 
   bool ParentContextIsCaseItem() const {
     return Context().DirectParentIsOneOf(
@@ -988,9 +1028,10 @@ class CaseItemColumnSchemaScanner : public ColumnSchemaScanner {
 // * assign foo = bar;
 // * foo = bar;
 // * foo <= bar;
-class AssignmentColumnSchemaScanner : public ColumnSchemaScanner {
+class AssignmentColumnSchemaScanner : public VerilogColumnSchemaScanner {
  public:
-  AssignmentColumnSchemaScanner() = default;
+  AssignmentColumnSchemaScanner(const FormatStyle& style)
+      : VerilogColumnSchemaScanner(style) {}
 
   void Visit(const SyntaxTreeNode& node) override {
     auto tag = NodeEnum(node.Tag().tag);
@@ -1044,9 +1085,11 @@ class AssignmentColumnSchemaScanner : public ColumnSchemaScanner {
 // enum {       // cols:
 //   foo = 42   // foo: flush left | =: left | ...: (default left)
 // }
-class EnumWithAssignmentsColumnSchemaScanner : public ColumnSchemaScanner {
+class EnumWithAssignmentsColumnSchemaScanner
+    : public VerilogColumnSchemaScanner {
  public:
-  EnumWithAssignmentsColumnSchemaScanner() = default;
+  EnumWithAssignmentsColumnSchemaScanner(const FormatStyle& style)
+      : VerilogColumnSchemaScanner(style) {}
 
   void Visit(const SyntaxTreeNode& node) final {
     auto tag = NodeEnum(node.Tag().tag);
@@ -1087,9 +1130,10 @@ class EnumWithAssignmentsColumnSchemaScanner : public ColumnSchemaScanner {
 };
 
 // Distribution items should align on the :/ and := operators.
-class DistItemColumnSchemaScanner : public ColumnSchemaScanner {
+class DistItemColumnSchemaScanner : public VerilogColumnSchemaScanner {
  public:
-  DistItemColumnSchemaScanner() = default;
+  DistItemColumnSchemaScanner(const FormatStyle& style)
+      : VerilogColumnSchemaScanner(style) {}
 
   void Visit(const SyntaxTreeNode& node) final {
     const auto tag = NodeEnum(node.Tag().tag);
@@ -1151,7 +1195,9 @@ PartitionBetweenBlankLines(AlignableSyntaxSubtype subtype) {
 
 // Each alignment group subtype maps to a set of functions.
 struct AlignmentGroupHandlers {
-  verible::AlignmentCellScannerFunction column_scanner;
+  std::function<verible::AlignmentCellScannerFunction(
+      const FormatStyle& vstyle)>
+      column_scanner_func;
   std::function<verible::AlignmentPolicy(const FormatStyle& vstyle)>
       policy_func;
 };
@@ -1197,64 +1243,67 @@ static void non_tree_column_scanner(
 }
 
 // Global registry of all known alignment handlers for Verilog.
-// This organization lets the same handlers be re-used in multiple syntactic
-// contexts, e.g. data declarations can be module items and generate items and
-// block statement items.
+// This organization lets the same handlers be re-used in multiple
+// syntactic contexts, e.g. data declarations can be module items and
+// generate items and block statement items.
 static const AlignmentHandlerMapType& AlignmentHandlerLibrary() {
   static const auto* handler_map = new AlignmentHandlerMapType{
       {AlignableSyntaxSubtype::kDataDeclaration,
-       {AlignmentCellScannerGenerator<DataDeclarationColumnSchemaScanner>(),
+       {UnstyledAlignmentCellScannerGenerator<
+            DataDeclarationColumnSchemaScanner>(),
         function_from_pointer_to_member(
             &FormatStyle::module_net_variable_alignment)}},
       {AlignableSyntaxSubtype::kNamedActualParameters,
-       {AlignmentCellScannerGenerator<
+       {UnstyledAlignmentCellScannerGenerator<
             ActualNamedParameterColumnSchemaScanner>(),
         function_from_pointer_to_member(
             &FormatStyle::named_parameter_alignment)}},
       {AlignableSyntaxSubtype::kNamedActualPorts,
-       {AlignmentCellScannerGenerator<ActualNamedPortColumnSchemaScanner>(),
+       {UnstyledAlignmentCellScannerGenerator<
+            ActualNamedPortColumnSchemaScanner>(),
         function_from_pointer_to_member(&FormatStyle::named_port_alignment)}},
       {AlignableSyntaxSubtype::kParameterDeclaration,
-       {AlignmentCellScannerGenerator<
+       {UnstyledAlignmentCellScannerGenerator<
             ParameterDeclarationColumnSchemaScanner>(),
         function_from_pointer_to_member(
             &FormatStyle::formal_parameters_alignment)}},
       {AlignableSyntaxSubtype::kPortDeclaration,
-       {AlignmentCellScannerGenerator<PortDeclarationColumnSchemaScanner>(
-            non_tree_column_scanner),
+       {UnstyledAlignmentCellScannerGenerator<
+            PortDeclarationColumnSchemaScanner>(non_tree_column_scanner),
         function_from_pointer_to_member(
             &FormatStyle::port_declarations_alignment)}},
       {AlignableSyntaxSubtype::kStructUnionMember,
-       {AlignmentCellScannerGenerator<StructUnionMemberColumnSchemaScanner>(
-            non_tree_column_scanner),
+       {UnstyledAlignmentCellScannerGenerator<
+            StructUnionMemberColumnSchemaScanner>(non_tree_column_scanner),
         function_from_pointer_to_member(
             &FormatStyle::struct_union_members_alignment)}},
       {AlignableSyntaxSubtype::kClassMemberVariables,
-       {AlignmentCellScannerGenerator<ClassPropertyColumnSchemaScanner>(),
+       {UnstyledAlignmentCellScannerGenerator<
+            ClassPropertyColumnSchemaScanner>(),
         function_from_pointer_to_member(
             &FormatStyle::class_member_variable_alignment)}},
       {AlignableSyntaxSubtype::kCaseLikeItems,
-       {AlignmentCellScannerGenerator<CaseItemColumnSchemaScanner>(),
+       {UnstyledAlignmentCellScannerGenerator<CaseItemColumnSchemaScanner>(),
         function_from_pointer_to_member(&FormatStyle::case_items_alignment)}},
       {AlignableSyntaxSubtype::kContinuousAssignment,
-       {AlignmentCellScannerGenerator<AssignmentColumnSchemaScanner>(),
+       {UnstyledAlignmentCellScannerGenerator<AssignmentColumnSchemaScanner>(),
         function_from_pointer_to_member(
             &FormatStyle::assignment_statement_alignment)}},
       {AlignableSyntaxSubtype::kBlockingAssignment,
-       {AlignmentCellScannerGenerator<AssignmentColumnSchemaScanner>(),
+       {UnstyledAlignmentCellScannerGenerator<AssignmentColumnSchemaScanner>(),
         function_from_pointer_to_member(
             &FormatStyle::assignment_statement_alignment)}},
       {AlignableSyntaxSubtype::kNonBlockingAssignment,
-       {AlignmentCellScannerGenerator<AssignmentColumnSchemaScanner>(),
+       {UnstyledAlignmentCellScannerGenerator<AssignmentColumnSchemaScanner>(),
         function_from_pointer_to_member(
             &FormatStyle::assignment_statement_alignment)}},
       {AlignableSyntaxSubtype::kEnumListAssignment,
-       {AlignmentCellScannerGenerator<EnumWithAssignmentsColumnSchemaScanner>(
-            non_tree_column_scanner),
+       {UnstyledAlignmentCellScannerGenerator<
+            EnumWithAssignmentsColumnSchemaScanner>(non_tree_column_scanner),
         function_from_pointer_to_member(
             &FormatStyle::enum_assignment_statement_alignment)}},
       {AlignableSyntaxSubtype::kDistItem,
-       {AlignmentCellScannerGenerator<DistItemColumnSchemaScanner>(),
+       {UnstyledAlignmentCellScannerGenerator<DistItemColumnSchemaScanner>(),
         function_from_pointer_to_member(
             &FormatStyle::distribution_items_alignment)}},
   };
@@ -1262,11 +1311,11 @@ static const AlignmentHandlerMapType& AlignmentHandlerLibrary() {
 }
 
 static verible::AlignmentCellScannerFunction AlignmentColumnScannerSelector(
-    int subtype) {
+    const FormatStyle& vstyle, int subtype) {
   static const auto& handler_map = AlignmentHandlerLibrary();
   const auto iter = handler_map.find(AlignableSyntaxSubtype(subtype));
   CHECK(iter != handler_map.end()) << "subtype: " << subtype;
-  return iter->second.column_scanner;
+  return iter->second.column_scanner_func(vstyle);
 }
 
 static verible::AlignmentPolicy AlignmentPolicySelector(
@@ -1292,7 +1341,7 @@ static std::vector<AlignablePartitionGroup> ExtractAlignablePartitionGroups(
     // alignable partition groups from the same parent partition (full_range).
     groups.emplace_back(AlignablePartitionGroup{
         FilterAlignablePartitions(range.range, ignore_group_predicate),
-        AlignmentColumnScannerSelector(range.match_subtype),
+        AlignmentColumnScannerSelector(vstyle, range.match_subtype),
         AlignmentPolicySelector(vstyle, range.match_subtype)});
     if (groups.back().IsEmpty()) groups.pop_back();
   }
