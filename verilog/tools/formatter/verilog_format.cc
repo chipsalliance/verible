@@ -169,6 +169,14 @@ ABSL_FLAG(AlignmentPolicy, assignment_statement_alignment,
           AlignmentPolicy::kInferUserIntent,
           "Format various assignments: {align,flush-left,preserve,infer}");
 
+ABSL_FLAG(bool, port_declarations_right_align_packed_dimensions, false,
+          "If true, packed dimensions in contexts with enabled alignment are "
+          "aligned to the right.");
+
+ABSL_FLAG(bool, port_declarations_right_align_unpacked_dimensions, false,
+          "If true, unpacked dimensions in contexts with enabled alignment are "
+          "aligned to the right.");
+
 ABSL_FLAG(bool, expand_coverpoints, false,
           "If true, always expand coverpoints.");
 
@@ -261,6 +269,11 @@ static bool formatOneFile(absl::string_view filename,
         absl::GetFlag(FLAGS_case_items_alignment);
     format_style.assignment_statement_alignment =
         absl::GetFlag(FLAGS_assignment_statement_alignment);
+
+    format_style.port_declarations_right_align_packed_dimensions =
+        absl::GetFlag(FLAGS_port_declarations_right_align_packed_dimensions);
+    format_style.port_declarations_right_align_unpacked_dimensions =
+        absl::GetFlag(FLAGS_port_declarations_right_align_unpacked_dimensions);
   }
 
   std::ostringstream stream;

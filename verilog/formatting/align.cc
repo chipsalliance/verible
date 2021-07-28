@@ -315,37 +315,102 @@ class PortDeclarationColumnSchemaScanner : public VerilogColumnSchemaScanner {
     auto tag = NodeEnum(node.Tag().tag);
     VLOG(2) << __FUNCTION__ << ", node: " << tag << " at "
             << TreePathFormatter(Path());
-    if (new_column_after_open_bracket_) {
-      ReserveNewColumn(node, FlushRight);
-      new_column_after_open_bracket_ = false;
-      TreeContextPathVisitor::Visit(node);
-      return;
-    }
     switch (tag) {
       case NodeEnum::kPackedDimensions: {
         // Kludge: kPackedDimensions can appear in paths
         //   [1,0,3] inside a kNetDeclaration and at
         //   [1,0,0,3] inside a kDataDeclaration,
         // but we want them to line up in the same column.  Make it so.
-        if (current_path_ == SyntaxTreePath{1, 0, 3}) {
-          SyntaxTreePath new_path{1, 0, 0, 3};
-          const ValueSaver<SyntaxTreePath> path_saver(&current_path_, new_path);
-          // TODO(fangism): a swap-based saver would be more efficient
-          // for vectors.
-          TreeContextPathVisitor::Visit(node);
-          return;
-        }
-        break;
+        // TODO(fangism): a swap-based saver would be more efficient
+        // for vectors.
+
+        SyntaxTreePath new_path;
+        if (current_path_ == SyntaxTreePath{1, 0, 3})
+          new_path = {1, 0, 0, 3};
+        else
+          new_path = Path();
+
+        const ValueSaver<SyntaxTreePath> path_saver(&current_path_, new_path);
+
+        // Left border is removed from each dimension subcolumn.
+        // Adding it here creates one space before first column.
+        static const verible::AlignmentColumnProperties single_left_border(true,
+                                                                           1);
+
+        current_dimensions_group_ = ReserveNewColumn(node, single_left_border);
+        TreeContextPathVisitor::Visit(node);
+        current_dimensions_group_ = nullptr;
+        return;
       }
+      case NodeEnum::kUnpackedDimensions: {
+        current_dimensions_group_ = ReserveNewColumn(node, FlushLeft);
+        TreeContextPathVisitor::Visit(node);
+        current_dimensions_group_ = nullptr;
+        return;
+      }
+      case NodeEnum::kDimensionRange:
+      case NodeEnum::kDimensionSlice: {
+        CHECK_NOTNULL(current_dimensions_group_);
+        CHECK_EQ(node.children().size(), 5);
+
+        SyntaxTreePath dimension_path = Path();
+        const bool right_align =
+            Context().IsInside(NodeEnum::kPackedDimensions)
+                ? style_.port_declarations_right_align_packed_dimensions
+                : style_.port_declarations_right_align_unpacked_dimensions;
+        if (right_align) {
+          dimension_path.back() +=
+              kMaxPathIndex - Context().top().children().size();
+        }
+
+        const verible::AlignmentColumnProperties no_border(false, 0);
+        auto* column = ABSL_DIE_IF_NULL(ReserveNewColumn(
+            *current_dimensions_group_, node,
+            right_align ? no_border : FlushLeft, dimension_path));
+
+        ReserveNewColumn(*column, *node[0],
+                         right_align ? no_border : FlushLeft);  // '['
+        ReserveNewColumn(*column, *node[1], FlushRight);        // value
+        ReserveNewColumn(*column, *node[4], FlushLeft);         // ']'
+        return;
+      }
+      case NodeEnum::kDimensionScalar:
+      case NodeEnum::kDimensionAssociativeType: {
+        CHECK_NOTNULL(current_dimensions_group_);
+        CHECK_EQ(node.children().size(), 3);
+
+        SyntaxTreePath dimension_path = Path();
+        const bool right_align =
+            Context().IsInside(NodeEnum::kPackedDimensions)
+                ? style_.port_declarations_right_align_packed_dimensions
+                : style_.port_declarations_right_align_unpacked_dimensions;
+        if (right_align) {
+          dimension_path.back() +=
+              kMaxPathIndex - Context().top().children().size();
+        }
+
+        const verible::AlignmentColumnProperties no_border(false, 0);
+
+        auto* column = ABSL_DIE_IF_NULL(ReserveNewColumn(
+            *current_dimensions_group_, node,
+            right_align ? no_border : FlushLeft, dimension_path));
+
+        const auto& column_path = column->Value().path;
+        // Value can be empty - set paths explicitly
+        ReserveNewColumn(*column, *node[0], right_align ? no_border : FlushLeft,
+                         GetSubpath(column_path, {0}));  // '['
+        ReserveNewColumn(*column, *node[1], FlushRight,
+                         GetSubpath(column_path, {1}));  // value
+        ReserveNewColumn(*column, *node[2], FlushLeft,
+                         GetSubpath(column_path, {2}));  // ']'
+        return;
+      }
+
       case NodeEnum::kDataType:
         // appears in path [2,0]
-      case NodeEnum::kDimensionRange:
-      case NodeEnum::kDimensionScalar:
-      case NodeEnum::kDimensionSlice:
-      case NodeEnum::kDimensionAssociativeType:
-        // all of these cases cover packed and unpacked
         ReserveNewColumn(node, FlushLeft);
         break;
+
       case NodeEnum::kUnqualifiedId:
         if (Context().DirectParentIs(NodeEnum::kPortDeclaration) ||
             Context().DirectParentsAre(
@@ -371,11 +436,6 @@ class PortDeclarationColumnSchemaScanner : public VerilogColumnSchemaScanner {
   void Visit(const SyntaxTreeLeaf& leaf) override {
     VLOG(2) << __FUNCTION__ << ", leaf: " << leaf.get() << " at "
             << TreePathFormatter(Path());
-    if (new_column_after_open_bracket_) {
-      ReserveNewColumn(leaf, FlushRight);
-      new_column_after_open_bracket_ = false;
-      return;
-    }
     const int tag = leaf.get().token_enum();
     switch (tag) {
       // port directions
@@ -387,7 +447,7 @@ class PortDeclarationColumnSchemaScanner : public VerilogColumnSchemaScanner {
         break;
       }
 
-        // net types
+      // net types
       case verilog_tokentype::TK_wire:
       case verilog_tokentype::TK_tri:
       case verilog_tokentype::TK_tri1:
@@ -408,24 +468,6 @@ class PortDeclarationColumnSchemaScanner : public VerilogColumnSchemaScanner {
         ReserveNewColumn(leaf, FlushLeft, verible::NextSiblingPath(Path()));
         break;
       }
-      // For now, treat [...] as a single column per dimension.
-      case '[': {
-        if (verilog::analysis::ContextIsInsideDeclarationDimensions(
-                Context())) {
-          // FlushLeft vs. Right doesn't matter, this is a single character.
-          ReserveNewColumn(leaf, FlushLeft);
-          new_column_after_open_bracket_ = true;
-        }
-        break;
-      }
-      case ']': {
-        if (verilog::analysis::ContextIsInsideDeclarationDimensions(
-                Context())) {
-          // FlushLeft vs. Right doesn't matter, this is a single character.
-          ReserveNewColumn(leaf, FlushLeft);
-        }
-        break;
-      }
       // TODO(b/70310743): Treat "[...:...]" as 5 columns.
       // Treat "[...]" (scalar) as 3 columns.
       // TODO(b/70310743): Treat the ... as a multi-column cell w.r.t.
@@ -437,11 +479,7 @@ class PortDeclarationColumnSchemaScanner : public VerilogColumnSchemaScanner {
   }
 
  private:
-  // Set this to force the next syntax tree node/leaf to start a new column.
-  // This is useful for aligning after punctation marks.
-  bool new_column_after_open_bracket_ = false;
-
-  verible::ColumnPositionTree* packed_dimensions_column_ = nullptr;
+  verible::ColumnPositionTree* current_dimensions_group_ = nullptr;
 };
 
 // This class marks up token-subranges in struct/union members for alignment.
