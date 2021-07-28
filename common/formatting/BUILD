@@ -118,6 +118,16 @@ cc_library(
     ],
 )
 
+cc_test(
+    name = "layout_optimizer_test",
+    srcs = ["layout_optimizer_test.cc"],
+    deps = [
+        ":layout_optimizer",
+        ":unwrapped_line_test_utils",
+        "@com_google_googletest//:gtest_main",
+    ],
+)
+
 cc_library(
     name = "token_partition_tree",
     srcs = ["token_partition_tree.cc"],
