@@ -412,9 +412,6 @@ class ColumnSchemaAggregator {
 template <typename T>
 static std::pair<std::string, char> GetColumnDataCellLabel(
     const VectorTree<T>& node) {
-  const absl::string_view arrow =
-      node.Value().properties.flush_left ? "<" : ">";
-
   std::ostringstream label;
   const auto& path = node.Value().path;
   auto begin = path.begin();
@@ -428,12 +425,12 @@ static std::pair<std::string, char> GetColumnDataCellLabel(
       ++parent_begin;
     }
   }
-  label << " " << arrow << "\t";
+  label << " \t ";
   if (begin != path.begin() && begin != path.end()) label << ".";
   label << SequenceFormatter(iterator_range(begin, path.end()), ".");
-  label << "\t" << arrow << " ";
+  label << " \t ";
 
-  return {label.str(), '-'};
+  return {label.str(), node.Value().properties.flush_left ? '<' : '>'};
 }
 
 std::ostream& operator<<(std::ostream& stream,
@@ -619,7 +616,7 @@ static AlignedFormattingColumnSchema ComputeColumnWidths(
             return width + node.Value().TotalWidth();
           });
       cell.Value().left_border =
-          std::max(cell.Value().left_border,
+          std::min(cell.Value().left_border,
                    cell.Children().front().Value().left_border);
       cell.Value().width = std::max(cell.Value().width,
                                     children_width - cell.Value().left_border);
