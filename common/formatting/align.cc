@@ -608,18 +608,19 @@ static AlignedFormattingColumnSchema ComputeColumnWidths(
     }
   }
 
-  for (auto& cell : VectorTreePostOrderTraversal(column_configs)) {
-    if (!cell.is_leaf()) {
+  for (auto& column_iter : VectorTreePostOrderTraversal(column_configs)) {
+    if (!column_iter.is_leaf()) {
       int children_width = std::accumulate(
-          cell.Children().begin(), cell.Children().end(), 0,
+          column_iter.Children().begin(), column_iter.Children().end(), 0,
           [](int width, const AlignedFormattingColumnSchema& node) {
             return width + node.Value().TotalWidth();
           });
-      cell.Value().left_border =
-          std::min(cell.Value().left_border,
-                   cell.Children().front().Value().left_border);
-      cell.Value().width = std::max(cell.Value().width,
-                                    children_width - cell.Value().left_border);
+      column_iter.Value().left_border =
+          std::max(column_iter.Value().left_border,
+                   column_iter.Children().front().Value().left_border);
+      column_iter.Value().width =
+          std::max(column_iter.Value().width,
+                   children_width - column_iter.Value().left_border);
     }
   }
 
