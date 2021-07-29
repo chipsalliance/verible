@@ -7640,6 +7640,152 @@ static constexpr FormatterTestCase kFormatterTestCases[] = {
      "  generic_type_name_t third;\n"
      "`endif\n"
      "} type_t;\n"},
+    // Continuation comment alignment
+    {"`define BAR 1 // A\n"
+     "module foo(); // B\n"
+     "wire baz;     // C\n"
+     "endmodule:foo // D\n",
+     "`define BAR 1 // A\n"
+     "module foo ();  // B\n"
+     "  wire baz;  // C\n"
+     "endmodule : foo  // D\n"},
+    {"`define BAR 1 // A\n"
+     "module foo(); // B\n"
+     "              // B.1\n"
+     "              // B.2\n"
+     "wire baz;     // C\n"
+     "              // C.1\n"
+     "              // C.2\n"
+     "endmodule:foo // D\n"
+     "              // D.1\n"
+     "              // D.2\n",
+     "`define BAR 1 // A\n"
+     "module foo ();  // B\n"
+     "                // B.1\n"
+     "                // B.2\n"
+     "  wire baz;  // C\n"
+     "             // C.1\n"
+     "             // C.2\n"
+     "endmodule : foo  // D\n"
+     "                 // D.1\n"
+     "                 // D.2\n"},
+    {"// W\n"
+     "`define BAR 1 // A\n"
+     "   // X\n"
+     "module foo(); // B\n"
+     "              // B.1\n"
+     "              // B.2\n"
+     " // Y\n"
+     "wire baz;     // C\n"
+     "              // C.1\n"
+     "              // C.2\n"
+     "    // Z\n"
+     "endmodule:foo // D\n"
+     "              // D.1\n"
+     "              // D.2\n",
+     "// W\n"
+     "`define BAR 1 // A\n"
+     "// X\n"
+     "module foo ();  // B\n"
+     "                // B.1\n"
+     "                // B.2\n"
+     "  // Y\n"
+     "  wire baz;  // C\n"
+     "             // C.1\n"
+     "             // C.2\n"
+     "  // Z\n"
+     "endmodule : foo  // D\n"
+     "                 // D.1\n"
+     "                 // D.2\n"},
+    {"module foo( // A\n"
+     "            // A.1\n"
+     "// X\n"
+     "input wire i1 [a:b], // B\n"
+     "                     // B.1\n"
+     "input [c:d] i2, // C\n"
+     "                // C.1\n"
+     "\n"
+     "// Y\n"
+     "output reg o1 // D\n"
+     "              // D.1\n"
+     ");endmodule:foo\n",
+     "module foo (  // A\n"
+     "              // A.1\n"
+     "    // X\n"
+     "    input wire       i1[a:b],  // B\n"
+     "                               // B.1\n"
+     "    input      [c:d] i2,       // C\n"
+     "                               // C.1\n"
+     "\n"
+     "    // Y\n"
+     "    output reg o1  // D\n"
+     "                   // D.1\n"
+     ");\n"
+     "endmodule : foo\n"},
+    // Continuation comment's original starting column is allowed to differ from
+    // starting comment's original starting column at most by 1.
+    // Starting column of comments B and C will change after formatting.
+    // TODO: refine the column alignment depending on current vs previous line.
+    // https://github.com/chipsalliance/verible/pull/858#discussion_r672844015
+    {"module foo ();  // A\n"     // Starting comment; already on correct column
+     "                 // A.1\n"  // A's column + 1
+     "               // A.2\n"    // A's column - 1
+     "wire baz;      // B\n"      // Starting comment; will be moved left
+     "              // B.1\n"     // B's column - 1
+     "                // B.2\n"   // B's column + 1
+     "               // B.3\n"    // B's column
+     "endmodule:foo // C\n"       // Starting comment; will be moved right
+     "               // C.1\n"    // C's column + 1
+     "             // C.2\n",     // C's column - 1
+     "module foo ();  // A\n"
+     "                // A.1\n"
+     "                // A.2\n"
+     "  wire baz;  // B\n"
+     "             // B.1\n"
+     "             // B.2\n"
+     "             // B.3\n"
+     "endmodule : foo  // C\n"
+     "                 // C.1\n"
+     "                 // C.2\n"},
+    // Check that comments with too large starting column difference are not
+    // aligned as continuation comments.
+    // Check that starting comments are not linked with a comment in
+    // comment-only line above them, even when the starting column is the same.
+    // All comments in this test case are aligned independently, i.e. none are
+    // "continuation comments".
+    {"                // comment1\n"  // A's column, but is above it
+     "module foo ();  // A\n"
+     "                  // comment2\n"  // A's column + 2
+     "              // comment3\n"      // A's column - 2
+     "wire baz;     // B\n"
+     "            // comment4\n"      // B's column - 2
+     "                // comment5\n"  // B's column + 2
+     "              // comment6\n"    // B's column, but not directly under B
+     "endmodule:foo // C\n"
+     "                // comment7\n"  // C's column + 2
+     "              // comment8\n",   // C's column, but not directly under B
+     "// comment1\n"
+     "module foo ();  // A\n"
+     "  // comment2\n"
+     "  // comment3\n"
+     "  wire baz;  // B\n"
+     "  // comment4\n"
+     "  // comment5\n"
+     "  // comment6\n"
+     "endmodule : foo  // C\n"
+     "// comment7\n"
+     "// comment8\n"},
+    // Continuation comment alignment when a line with the starting comment is
+    // wrapped.
+    {"module foo(output logic very_very_very_very_long_name // A\n"
+     "                                                      // A.1\n"
+     "); endmodule\n",
+     "module foo (\n"
+     "    output logic\n"
+     "        very_very_very_very_long_name  // A\n"
+     "                                       // A.1\n"
+     ");\n"
+     "endmodule\n"},
 };
 
 // Tests that formatter produces expected results, end-to-end.
