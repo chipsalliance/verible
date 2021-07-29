@@ -191,8 +191,8 @@ abstract syntax tree (AST). If you are interested in collaborating, contact us.
 
 [bazel]: https://bazel.build/
 [SV-LRM]: https://ieeexplore.ieee.org/document/8299595
-[lint-rule-list]: https://google.github.io/verible/lint.html
-[lint-rule-list_enum-name-style]: https://google.github.io/verible/lint.html#enum-name-style
-[lint-rule-list_line-length]: https://google.github.io/verible/lint.html#line-length
-[lint-rule-list_no-tabs]: https://google.github.io/verible/lint.html#no-tabs
+[lint-rule-list]: https://chipsalliance.github.io/verible/lint.html
+[lint-rule-list_enum-name-style]: https://chipsalliance.github.io/verible/lint.html#enum-name-style
+[lint-rule-list_line-length]: https://chipsalliance.github.io/verible/lint.html#line-length
+[lint-rule-list_no-tabs]: https://chipsalliance.github.io/verible/lint.html#no-tabs
 [binary releases]: https://github.com/chipsalliance/verible/releases

@@ -106,7 +106,7 @@ path/to/bad-dimensions.sv:114:43: Packed dimension range must be in decreasing o
 ## Lint Rules
 
 User documentation for the lint rules is generated dynamically, and can be found
-at https://google.github.io/verible/verilog_lint.html, or by running
+at https://chipsalliance.github.io/verible/verilog_lint.html, or by running
 `verible-verilog-lint --help_rules` for text or `--generate_markdown`. We also
 provide a Bazel build rule:
 
@@ -259,7 +259,7 @@ Autofix is available. Apply? [y,n,a,d,A,D,p,P,?] y
 
 <!-- reference links -->
 
-[lint-rule-list]: https://google.github.io/verible/lint.html
-[lint-rule-list_enum-name-style]: https://google.github.io/verible/lint.html#enum-name-style
-[lint-rule-list_line-length]: https://google.github.io/verible/lint.html#line-length
-[lint-rule-list_no-tabs]: https://google.github.io/verible/lint.html#no-tabs
+[lint-rule-list]: https://chipsalliance.github.io/verible/lint.html
+[lint-rule-list_enum-name-style]: https://chipsalliance.github.io/verible/lint.html#enum-name-style
+[lint-rule-list_line-length]: https://chipsalliance.github.io/verible/lint.html#line-length
+[lint-rule-list_no-tabs]: https://chipsalliance.github.io/verible/lint.html#no-tabs
