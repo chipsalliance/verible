@@ -9,6 +9,7 @@ on:
     branches:
     - master
     - main
+  workflow_dispatch:
 
 env:
   DOCKER_BUILDKIT: 1
