@@ -33,14 +33,25 @@ namespace verible {
 
 // Attributes of columns of text alignment (controlled by developer).
 struct AlignmentColumnProperties {
+  static constexpr int kNoBorderOverride = -1;
+
   // If true format cell with padding to the right: |text   |
   // else format cell with padding to the left:     |   text|
   bool flush_left = true;
+  // When set, ignores tokens' left_border and uses this value instead.
+  // This is propagated to a leftmost subcolumn if the subcolumn's
+  // left_border_override is lower.
+  int left_border_override = kNoBorderOverride;
+
   bool contains_delimiter = false;
 
   AlignmentColumnProperties() = default;
+
   explicit AlignmentColumnProperties(bool flush_left)
       : flush_left(flush_left) {}
+
+  explicit AlignmentColumnProperties(bool flush_left, int left_border_override)
+      : flush_left(flush_left), left_border_override(left_border_override) {}
 };
 
 // This object represents a bid for a new column as a row of tokens is scanned.

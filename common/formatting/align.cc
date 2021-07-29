@@ -393,6 +393,11 @@ class ColumnSchemaAggregator {
                   [](const auto& a, const auto& b) {
                     return a.Value().path < b.Value().path;
                   });
+        // Propagate left_border_override property to the left subcolumn
+        auto& left_child_data = node.Children().front().Value();
+        left_child_data.properties.left_border_override =
+            std::max(left_child_data.properties.left_border_override,
+                     node.Value().properties.left_border_override);
       }
     }
   }
@@ -645,6 +650,11 @@ static AlignedFormattingColumnSchema ComputeColumnWidths(
         column_iter->Value().left_border = 0;
       } else {
         column_iter->Value().UpdateFromCell(node.Value());
+        if (column_prop_iter->Value().left_border_override !=
+            verible::AlignmentColumnProperties::kNoBorderOverride) {
+          column_iter->Value().left_border =
+              column_prop_iter->Value().left_border_override;
+        }
       }
       ++column_iter;
       ++column_prop_iter;
