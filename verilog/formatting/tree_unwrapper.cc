@@ -1445,15 +1445,28 @@ static void IndentBetweenUVMBeginEndMacros(TokenPartitionTree* partition_ptr,
 
 static const SyntaxTreeNode* GetAssignedExpressionFromDataDeclaration(
     const verible::Symbol& data_declaration) {
-  const auto* trailing_assign_symbol = verible::FindFirstSubtree(
-      &data_declaration, [](const verible::Symbol& sym) {
-        return sym.Tag() == verible::NodeTag(NodeEnum::kTrailingAssign);
-      });
+  const auto& instance_list =
+      GetInstanceListFromDataDeclaration(data_declaration);
+  if (instance_list.children().empty()) return nullptr;
 
-  if (trailing_assign_symbol == nullptr) return nullptr;
-  return &verible::GetSubtreeAsNode(*trailing_assign_symbol,
-                                    NodeEnum::kTrailingAssign, 1,
-                                    NodeEnum::kExpression);
+  const auto& variable_or_gate = *instance_list.children().front();
+  if (variable_or_gate.Tag().kind != verible::SymbolKind::kNode) return nullptr;
+
+  const verible::Symbol* trailing_assign;
+  if (variable_or_gate.Tag() == verible::NodeTag(NodeEnum::kRegisterVariable)) {
+    trailing_assign =
+        GetTrailingExpressionFromRegisterVariable(variable_or_gate);
+  } else if (variable_or_gate.Tag() ==
+             verible::NodeTag(NodeEnum::kVariableDeclarationAssignment)) {
+    trailing_assign =
+        GetTrailingExpressionFromVariableDeclarationAssign(variable_or_gate);
+  } else {
+    return nullptr;
+  }
+  if (!trailing_assign) return nullptr;
+
+  return &verible::GetSubtreeAsNode(*trailing_assign, NodeEnum::kTrailingAssign,
+                                    1, NodeEnum::kExpression);
 }
 
 // This phase is strictly concerned with reshaping token partitions,
