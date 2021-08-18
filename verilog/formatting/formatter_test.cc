@@ -734,6 +734,233 @@ static constexpr FormatterTestCase kFormatterTestCases[] = {
         "  parameter  int   ternary={a}?{b}:{c};",
         "parameter int ternary = {a} ? {b} : {c};\n",
     },
+    {
+        "  parameter  int   long_ternary=cond?long_option_t:long_option_f;",
+        "parameter int long_ternary = cond ?\n"
+        "    long_option_t : long_option_f;\n",
+    },
+    {
+        "  parameter  int   break_two=cond\n"
+        "? a_really_long_option_number_one:a_really_long_option_number_two;",
+        "parameter int break_two = cond ?\n"
+        "    a_really_long_option_number_one :\n"
+        "    a_really_long_option_number_two;\n",
+    },
+    {
+        "  assign   ternary=1?2:3;",
+        "assign ternary = 1 ? 2 : 3;\n",
+    },
+    {
+        "  assign   ternary=a?b:c;",
+        "assign ternary = a ? b : c;\n",
+    },
+    {
+        "  assign   ternary={a}?{b}:{c};",
+        "assign ternary = {a} ? {b} : {c};\n",
+    },
+    {
+        "  assign   break_two=cond\n"
+        "? a_really_long_option_number_one:a_really_long_option_number_two;",
+        "assign break_two = cond ?\n"
+        "    a_really_long_option_number_one :\n"
+        "    a_really_long_option_number_two;\n",
+    },
+    {
+        "assign prefetch_d     =\n"
+        "lookup_grant_ic0 ? (lookup_addr_aligned + ADDR) :\n"
+        "                   addr_i;",
+        "assign prefetch_d = lookup_grant_ic0 ?\n"
+        "    (lookup_addr_aligned + ADDR) :\n"
+        "    addr_i;\n",
+    },
+    {
+        "assign prefetch_d     =\n"
+        "lookup_grant_ic0 ? (lookup_addr + 1) :\n"
+        "                   addr_i;",
+        "assign prefetch_d = lookup_grant_ic0 ?\n"
+        "    (lookup_addr + 1) : addr_i;\n",
+    },
+    {
+        "module test;\n"
+        " assign next = // EOL\n"
+        "  foo ? '0 :\n"
+        "  cnt;\n"
+        "endmodule\n",
+        "module test;\n"
+        "  assign next =  // EOL\n"
+        "      foo ? '0 : cnt;\n"
+        "endmodule\n",
+    },
+    {
+        "module test;\n"
+        " assign next = foo // EOL\n"
+        "  ? '0 :\n"
+        "  cnt;\n"
+        "endmodule\n",
+        "module test;\n"
+        "  assign next = foo  // EOL\n"
+        "      ? '0 : cnt;\n"
+        "endmodule\n",
+    },
+    {
+        "module test;\n"
+        " assign next = foo ? // EOL\n"
+        "  '0 :\n"
+        "  cnt;\n"
+        "endmodule\n",
+        "module test;\n"
+        "  assign next = foo ?  // EOL\n"
+        "      '0 : cnt;\n"
+        "endmodule\n",
+    },
+    {
+        "module test;\n"
+        " assign next = foo ? '0 // EOL\n"
+        "  :\n"
+        "  cnt;\n"
+        "endmodule\n",
+        "module test;\n"
+        "  assign next = foo ? '0  // EOL\n"
+        "      : cnt;\n"
+        "endmodule\n",
+    },
+    {
+        "module test;\n"
+        " assign next = foo ? '0 : // EOL\n"
+        "  cnt;\n"
+        "endmodule\n",
+        "module test;\n"
+        "  assign next = foo ? '0 :  // EOL\n"
+        "      cnt;\n"
+        "endmodule\n",
+    },
+    {
+        "module test;\n"
+        " assign next = foo ? '0 : // EOL\n"
+        "  bar ? '1 : '0;\n"
+        "endmodule\n",
+        "module test;\n"
+        "  assign next = foo ? '0 :  // EOL\n"
+        "      bar ? '1 : '0;\n"
+        "endmodule\n",
+    },
+    {
+        "module test;\n"
+        " assign next = foo ? '0 : // EOL\n"
+        "  bar // EOL2\n"
+        " ? '1 : '0;\n"
+        "endmodule\n",
+        "module test;\n"
+        "  assign next = foo ? '0 :  // EOL\n"
+        "      bar  // EOL2\n"
+        "      ? '1 : '0;\n"
+        "endmodule\n",
+    },
+    {
+        "module test;\n"
+        " assign next = foo ? '0 : // EOL\n"
+        "  bar ? // EOL2\n"
+        "  '1 : '0;\n"
+        "endmodule\n",
+        "module test;\n"
+        "  assign next = foo ? '0 :  // EOL\n"
+        "      bar ?  // EOL2\n"
+        "      '1 : '0;\n"
+        "endmodule\n",
+    },
+    {
+        "module test;\n"
+        " assign next = foo ? '0 : // EOL\n"
+        "  bar ? '1 // EOL2\n"
+        "  : '0;\n"
+        "endmodule\n",
+        "module test;\n"
+        "  assign next = foo ? '0 :  // EOL\n"
+        "      bar ? '1  // EOL2\n"
+        "      : '0;\n"
+        "endmodule\n",
+    },
+    {
+        "module test;\n"
+        " assign next = foo ? '0 : // EOL\n"
+        "  bar ? '1 : // EOL2\n"
+        "  '0;\n"
+        "endmodule\n",
+        "module test;\n"
+        "  assign next = foo ? '0 :  // EOL\n"
+        "      bar ? '1 :  // EOL2\n"
+        "      '0;\n"
+        "endmodule\n",
+    },
+    {
+        "assign prefetch_d     =\n"
+        "lookup_ic0 ? // EOL\n"
+        " (lookup_addr + 1) :// BOO\n"
+        "                   addr_i;",
+        "assign prefetch_d = lookup_ic0 ?  // EOL\n"
+        "    (lookup_addr + 1) :  // BOO\n"
+        "    addr_i;\n",
+    },
+    {
+        "module test;\n"
+        " assign next = (foo) ? '0          : // clear \n"
+        "           (bar) ? cnt + 1'b1  : // count \n"
+        "                   cnt;\n"
+        "endmodule\n",
+        "module test;\n"
+        "  assign next = (foo) ? '0 :  // clear \n"
+        "      (bar) ? cnt + 1'b1 :  // count \n"
+        "      cnt;\n"
+        "endmodule\n",
+    },
+    {
+        "module test;\n"
+        " assign next = // FOO\n"
+        "  (foo) ? '0          : // clear \n"
+        "           (bar) ? cnt + 1'b1  : // count \n"
+        "                   cnt;\n"
+        "endmodule\n",
+        "module test;\n"
+        "  assign next =  // FOO\n"
+        "      (foo) ? '0 :  // clear \n"
+        "      (bar) ? cnt + 1'b1 :  // count \n"
+        "      cnt;\n"
+        "endmodule\n",
+    },
+    {
+        "module test;\n"
+        " assign next = foo ? a_really_long_identifier : // EOL\n"
+        "  cnt;\n"
+        "endmodule\n",
+        "module test;\n"
+        "  assign next = foo ?\n"
+        "      a_really_long_identifier :  // EOL\n"
+        "      cnt;\n"
+        "endmodule\n",
+    },
+    {
+        "module test;\n"
+        " assign next = foo ? a_really_long_identifier : // EOL\n"
+        "  another_really_long_identifier;\n"
+        "endmodule\n",
+        "module test;\n"
+        "  assign next = foo ?\n"
+        "      a_really_long_identifier :  // EOL\n"
+        "      another_really_long_identifier;\n"
+        "endmodule\n",
+    },
+    {
+        "module test;\n"
+        " assign next = foo ? a_really_long_identifier : "
+        "another_really_long_identifier;\n"
+        "endmodule\n",
+        "module test;\n"
+        "  assign next = foo ?\n"
+        "      a_really_long_identifier :\n"
+        "      another_really_long_identifier;\n"
+        "endmodule\n",
+    },
+
     // streaming operators
     {
         "   parameter  int  b={ >>   { a } } ;",
