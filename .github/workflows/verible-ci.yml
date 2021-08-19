@@ -92,7 +92,14 @@ jobs:
       if: matrix.mode == 'compile'
       run: ./.github/bin/github-pages-setup.sh
 
-    # TODO: pass coverage up to to codecov
+    - name: Upload coverage
+      # will show up under https://app.codecov.io/gh/chipsalliance/verible
+      if: matrix.mode == 'coverage'
+      uses: codecov/codecov-action@v2
+      with:
+        files: bazel-out/_coverage/_coverage_report.dat
+        fail_ci_if_error: true
+        verbose: true
 
     - name: Deployment
       if: github.ref == 'refs/heads/master' && github.event_name != 'pull_request' && matrix.mode == 'compile'
