@@ -57,6 +57,14 @@ asan)
     bazel test --config=asan $BAZEL_OPTS //...
     ;;
 
+coverage)
+  bazel coverage \
+        --combined_report=lcov \
+        --coverage_report_generator=@bazel_tools//tools/test/CoverageOutputGenerator/java/com/google/devtools/coverageoutputgenerator:Main \
+        //...
+  # output will be in bazel-out/_coverage/_coverage_report.dat
+  ;;
+
 compile|clean)
     bazel build $BAZEL_OPTS //...
     ;;
