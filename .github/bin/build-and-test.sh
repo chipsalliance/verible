@@ -63,6 +63,8 @@ coverage)
         --coverage_report_generator=@bazel_tools//tools/test/CoverageOutputGenerator/java/com/google/devtools/coverageoutputgenerator:Main \
         //...
   # output will be in bazel-out/_coverage/_coverage_report.dat
+  ls -l bazel-out/_coverage/_coverage_report.dat
+  grep SF: bazel-out/_coverage/_coverage_report.dat  | head
   ;;
 
 compile|clean)
