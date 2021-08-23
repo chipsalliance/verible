@@ -999,7 +999,7 @@ class SyntaxTreeColumnizer : public ColumnSchemaScanner {
       ReserveNewColumn(current_column_, leaf, props);
   }
 
- protected:
+ private:
   ColumnPositionTree* current_column_ = nullptr;
 };
 
