@@ -23,12 +23,14 @@
 
 namespace verible {
 
+namespace internal {
+
 // Class implementing common VectorTree*Iterator members using CRTP polymorphic
 // chaining. Derived class must implement following methods:
 // - `static VectorTreeType* _NextNode(VectorTreeType* node)` - returns pointer
 //   to a next node
 template <typename ImplType, typename VectorTreeType>
-class _VectorTreeIteratorBase {
+class VectorTreeIteratorBase {
  public:
   using iterator_category = std::forward_iterator_tag;
   using difference_type = std::ptrdiff_t;
@@ -36,8 +38,8 @@ class _VectorTreeIteratorBase {
   using pointer = VectorTreeType*;
   using reference = VectorTreeType&;
 
-  _VectorTreeIteratorBase() : node_(nullptr) {}
-  _VectorTreeIteratorBase(pointer node) : node_(node) {}
+  VectorTreeIteratorBase() : node_(nullptr) {}
+  VectorTreeIteratorBase(pointer node) : node_(node) {}
 
   reference operator*() const {
     CHECK_NOTNULL(node_);
@@ -71,12 +73,14 @@ class _VectorTreeIteratorBase {
   pointer node_;
 };
 
+}  // namespace internal
+
 template <typename VectorTreeType>
 class VectorTreeLeavesIterator
-    : public _VectorTreeIteratorBase<VectorTreeLeavesIterator<VectorTreeType>,
-                                     VectorTreeType> {
+    : public internal::VectorTreeIteratorBase<
+          VectorTreeLeavesIterator<VectorTreeType>, VectorTreeType> {
   using this_type = VectorTreeLeavesIterator<VectorTreeType>;
-  using base_type = _VectorTreeIteratorBase<this_type, VectorTreeType>;
+  using base_type = internal::VectorTreeIteratorBase<this_type, VectorTreeType>;
 
  public:
   VectorTreeLeavesIterator() : base_type() {}
@@ -103,10 +107,10 @@ VectorTreeLeavesTraversal(VectorTreeType& tree) {
 
 template <typename VectorTreeType>
 class VectorTreePreOrderIterator
-    : public _VectorTreeIteratorBase<VectorTreePreOrderIterator<VectorTreeType>,
-                                     VectorTreeType> {
+    : public internal::VectorTreeIteratorBase<
+          VectorTreePreOrderIterator<VectorTreeType>, VectorTreeType> {
   using this_type = VectorTreePreOrderIterator<VectorTreeType>;
-  using base_type = _VectorTreeIteratorBase<this_type, VectorTreeType>;
+  using base_type = internal::VectorTreeIteratorBase<this_type, VectorTreeType>;
 
  public:
   VectorTreePreOrderIterator() : base_type() {}
@@ -140,10 +144,10 @@ VectorTreePreOrderTraversal(VectorTreeType& tree) {
 
 template <typename VectorTreeType>
 class VectorTreePostOrderIterator
-    : public _VectorTreeIteratorBase<
+    : public internal::VectorTreeIteratorBase<
           VectorTreePostOrderIterator<VectorTreeType>, VectorTreeType> {
   using this_type = VectorTreePostOrderIterator<VectorTreeType>;
-  using base_type = _VectorTreeIteratorBase<this_type, VectorTreeType>;
+  using base_type = internal::VectorTreeIteratorBase<this_type, VectorTreeType>;
 
  public:
   VectorTreePostOrderIterator() : base_type() {}
