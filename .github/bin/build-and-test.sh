@@ -49,27 +49,27 @@ BAZEL_OPTS="${BAZEL_OPTS} --cxxopt=-Wno-cast-function-type"       # gflags
 BAZEL_OPTS="${BAZEL_OPTS} --cxxopt=-Wno-deprecated-declarations"  # jsconcpp
 
 case "$MODE" in
-test)
+  test)
     bazel test --test_output=errors $BAZEL_OPTS //...
     ;;
 
-asan)
+  asan)
     bazel test --config=asan $BAZEL_OPTS //...
     ;;
 
-coverage)
-  bazel coverage \
-        --combined_report=lcov \
-        --coverage_report_generator=@bazel_tools//tools/test/CoverageOutputGenerator/java/com/google/devtools/coverageoutputgenerator:Main \
-        //...
-  # output will be in bazel-out/_coverage/_coverage_report.dat
-  ;;
+  coverage)
+    bazel coverage \
+          --combined_report=lcov \
+          --coverage_report_generator=@bazel_tools//tools/test/CoverageOutputGenerator/java/com/google/devtools/coverageoutputgenerator:Main \
+          //...
+    # output will be in bazel-out/_coverage/_coverage_report.dat
+    ;;
 
-compile|clean)
+  compile|clean)
     bazel build $BAZEL_OPTS //...
     ;;
 
-*)
+  *)
     echo "$0: Unknown value in MODE environment variable: $MODE"
     exit 1
     ;;
