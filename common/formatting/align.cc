@@ -271,33 +271,34 @@ struct AlignedColumnConfiguration {
 };
 
 ColumnPositionTree* ColumnSchemaScanner::ReserveNewColumn(
-    ColumnPositionTree& parent_column, const Symbol& symbol,
+    ColumnPositionTree* parent_column, const Symbol& symbol,
     const AlignmentColumnProperties& properties, const SyntaxTreePath& path) {
+  CHECK_NOTNULL(parent_column);
   // The path helps establish a total ordering among all desired alignment
   // points, given that they may come from optional or repeated language
   // constructs.
   const SyntaxTreeLeaf* leaf = GetLeftmostLeaf(symbol);
   // It is possible for a node to be empty, in which case, ignore.
   if (leaf == nullptr) return nullptr;
-  if (parent_column.Parent() != nullptr && parent_column.Children().empty()) {
+  if (parent_column->Parent() != nullptr && parent_column->Children().empty()) {
     // Starting token of a column and its first subcolumn must be the same.
     // (subcolumns overlap their parent column).
-    CHECK_EQ(parent_column.Value().starting_token, leaf->get());
+    CHECK_EQ(parent_column->Value().starting_token, leaf->get());
   }
   // It's possible the previous cell's path was intentionally altered
   // to effectively fuse it with the cell that is about to be added.
   // When this occurs, take the (previous) leftmost token, and suppress
   // adding a new column.
-  if (parent_column.Children().empty() ||
-      parent_column.Children().back().Value().path != path) {
-    const auto* column = parent_column.NewChild(
+  if (parent_column->Children().empty() ||
+      parent_column->Children().back().Value().path != path) {
+    const auto* column = parent_column->NewChild(
         ColumnPositionEntry{path, leaf->get(), properties});
     ColumnsTreePath column_path;
     column->Path(column_path);
     VLOG(2) << "reserving new column for " << TreePathFormatter(path) << " at "
             << TreePathFormatter(column_path);
   }
-  return &parent_column.Children().back();
+  return &parent_column->Children().back();
 }
 
 struct AggregateColumnData {

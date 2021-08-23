@@ -987,7 +987,7 @@ class SyntaxTreeColumnizer : public ColumnSchemaScanner {
     if (!current_column_)
       column = ReserveNewColumn(node, props);
     else
-      column = ReserveNewColumn(*current_column_, node, props);
+      column = ReserveNewColumn(current_column_, node, props);
 
     ValueSaver current_column_saver(&current_column_, column);
     ColumnSchemaScanner::Visit(node);
@@ -996,7 +996,7 @@ class SyntaxTreeColumnizer : public ColumnSchemaScanner {
     if (!current_column_)
       ReserveNewColumn(leaf, props);
     else
-      ReserveNewColumn(*current_column_, leaf, props);
+      ReserveNewColumn(current_column_, leaf, props);
   }
 
  protected:
@@ -1038,7 +1038,7 @@ class SubcolumnsTreeAlignmentTest : public MatrixTreeAlignmentTestFixture {
     auto token_iter = pre_format_tokens_.begin();
     while (true) {
       UnwrappedLine uwline(0, token_iter);
-      SymbolPtr item = ParseItem(token_iter, pre_format_tokens_.end());
+      SymbolPtr item = ParseItem(&token_iter, pre_format_tokens_.end());
       if (!item.get()) {
         break;
       }
@@ -1051,7 +1051,7 @@ class SubcolumnsTreeAlignmentTest : public MatrixTreeAlignmentTestFixture {
 
  private:
   SymbolPtr ParseList(
-      std::vector<verible::PreFormatToken>::iterator& it,
+      std::vector<verible::PreFormatToken>::iterator* it,
       const std::vector<verible::PreFormatToken>::iterator& end) {
     SymbolPtr list = TNode(0);
     SymbolPtr item;
@@ -1062,25 +1062,26 @@ class SubcolumnsTreeAlignmentTest : public MatrixTreeAlignmentTestFixture {
   }
 
   SymbolPtr ParseItem(
-      std::vector<verible::PreFormatToken>::iterator& it,
+      std::vector<verible::PreFormatToken>::iterator* it,
       const std::vector<verible::PreFormatToken>::iterator& end) {
-    if (it == end) return SymbolPtr(nullptr);
+    CHECK_NOTNULL(it);
+    if (*it == end) return SymbolPtr(nullptr);
 
-    if (it->Text() == "(") {
-      SymbolPtr lp = Leaf(1, it->Text());
-      ++it;
-      CHECK(it != end);
+    if ((*it)->Text() == "(") {
+      SymbolPtr lp = Leaf(1, (*it)->Text());
+      ++*it;
+      CHECK(*it != end);
       SymbolPtr list = ParseList(it, end);
-      CHECK(it != end);
-      CHECK_EQ(it->Text(), ")");
-      SymbolPtr rp = Leaf(1, it->Text());
-      ++it;
+      CHECK(*it != end);
+      CHECK_EQ((*it)->Text(), ")");
+      SymbolPtr rp = Leaf(1, (*it)->Text());
+      ++*it;
       return TNode(1, std::move(lp), std::move(list), std::move(rp));
-    } else if (it->Text() == ")") {
+    } else if ((*it)->Text() == ")") {
       return SymbolPtr(nullptr);
     } else {
-      SymbolPtr leaf = Leaf(0, it->Text());
-      ++it;
+      SymbolPtr leaf = Leaf(0, (*it)->Text());
+      ++*it;
       return leaf;
     }
   }

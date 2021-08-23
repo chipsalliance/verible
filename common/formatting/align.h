@@ -92,26 +92,27 @@ class ColumnSchemaScanner : public TreeContextPathVisitor {
   // 'path' represents relative position within the enclosing syntax subtree,
   // and is used as a key for ordering and matching columns.
   ColumnPositionTree* ReserveNewColumn(
-      ColumnPositionTree& parent_column, const Symbol& symbol,
+      ColumnPositionTree* parent_column, const Symbol& symbol,
       const AlignmentColumnProperties& properties, const SyntaxTreePath& path);
   ColumnPositionTree* ReserveNewColumn(
       const Symbol& symbol, const AlignmentColumnProperties& properties,
       const SyntaxTreePath& path) {
-    return ReserveNewColumn(sparse_columns_, symbol, properties, path);
+    return ReserveNewColumn(&sparse_columns_, symbol, properties, path);
   }
 
   // Reserve a column using the current path as the key.
   ColumnPositionTree* ReserveNewColumn(
       const Symbol& symbol, const AlignmentColumnProperties& properties) {
-    return ReserveNewColumn(sparse_columns_, symbol, properties, Path());
+    return ReserveNewColumn(&sparse_columns_, symbol, properties, Path());
   }
   // Reserve a subcolumn using subcolumn number appended to the parent's path
   // as the key.
   ColumnPositionTree* ReserveNewColumn(
-      ColumnPositionTree& parent_column, const Symbol& symbol,
+      ColumnPositionTree* parent_column, const Symbol& symbol,
       const AlignmentColumnProperties& properties) {
-    auto subpath = GetSubpath(parent_column.Value().path,
-                              {parent_column.Children().size()});
+    CHECK_NOTNULL(parent_column);
+    auto subpath = GetSubpath(parent_column->Value().path,
+                              {parent_column->Children().size()});
     return ReserveNewColumn(parent_column, symbol, properties, subpath);
   }
 
