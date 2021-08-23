@@ -17,6 +17,10 @@ VERSION=$1
 
 sudo dpkg --list | grep gcc
 sudo dpkg --list | grep libstdc++
+
 sudo ln -sf /usr/bin/gcc-$VERSION /usr/bin/gcc
 sudo ln -sf /usr/bin/g++-$VERSION /usr/bin/g++
+sudo ln -sf /usr/bin/gcov-$VERSION /usr/bin/gcov
+
 gcc --version || true
+gcov --version
