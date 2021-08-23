@@ -130,11 +130,14 @@ std::ostream& operator<<(std::ostream& stream, const AlignmentCell& cell) {
   return stream;
 }
 
+template <typename ValueType>
+using CellLabelGetterFunc =
+    std::function<std::pair<std::string, char>(const VectorTree<ValueType>&)>;
+
 template <typename ValueType, typename Cell>
 static std::size_t CreateTextNodes(
     const VectorTree<ValueType>& src_node, VectorTree<Cell>* dst_node,
-    const std::function<std::pair<std::string, char>(
-        const VectorTree<ValueType>&)>& get_cell_label) {
+    const CellLabelGetterFunc<ValueType>& get_cell_label) {
   static constexpr std::size_t kMinCellWidth = 2;
 
   std::size_t depth = 0;
@@ -158,8 +161,7 @@ static std::size_t CreateTextNodes(
 template <typename ValueType>
 static void ColumnsTreeFormatter(
     std::ostream& stream, const VectorTree<ValueType>& root,
-    const std::function<std::pair<std::string, char>(
-        const VectorTree<ValueType>&)>& get_cell_label) {
+    const CellLabelGetterFunc<ValueType>& get_cell_label) {
   if (root.Children().empty()) return;
 
   static constexpr absl::string_view kCellSeparator = "|";
