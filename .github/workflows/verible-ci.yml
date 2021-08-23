@@ -72,7 +72,7 @@ jobs:
 
     - name: Mount bazel cache
       uses: actions/cache@v1
-      if: matrix.mode != 'clean'
+      if: matrix.mode != 'clean' && matrix.mode != 'coverage'
       with:
         path: "/home/runner/.cache/bazel"
         key: bazel-${{ matrix.mode }}
