@@ -86,11 +86,12 @@ class ColumnSchemaScanner : public TreeContextPathVisitor {
   }
 
   // Mark the start of a new column for alignment.
-  // 'parent_column' is a reference to the parent column.
+  // 'parent_column' is a pointer to the parent column.
   // 'symbol' is a reference to the original source syntax subtree.
   // 'properties' contains alignment configuration for the column.
   // 'path' represents relative position within the enclosing syntax subtree,
   // and is used as a key for ordering and matching columns.
+  // Returns pointer to a created column or nullptr if column was not created.
   ColumnPositionTree* ReserveNewColumn(
       ColumnPositionTree* parent_column, const Symbol& symbol,
       const AlignmentColumnProperties& properties, const SyntaxTreePath& path);
