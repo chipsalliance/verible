@@ -235,23 +235,30 @@ static void ColumnsTreeFormatter(
 
     const auto width = cell.width - kCellSeparator.size();
 
-    if (parts.size() == 1) {
-      const std::string pad(width - parts[0].size(), cell.filler);
-      absl::StrAppend(&lines[level], kCellSeparator, parts[0], pad);
-    } else if (parts.size() == 2) {
-      const std::string pad(width - parts[0].size() - parts[1].size(),
-                            cell.filler);
-      absl::StrAppend(&lines[level], kCellSeparator, parts[0], pad,
-                      parts.back());
-    } else if (parts.size() == 3) {
-      std::size_t pos =
-          std::clamp((width - parts[1].size()) / 2, parts[0].size() + 1,
-                     width - parts[2].size() - parts[1].size() - 1);
-      const std::string left_pad(pos - parts[0].size(), cell.filler);
-      const std::string right_pad(
-          width - parts[2].size() - (pos + parts[1].size()), cell.filler);
-      absl::StrAppend(&lines[level], kCellSeparator, parts[0], left_pad,
-                      parts[1], right_pad, parts[2]);
+    switch (parts.size()) {
+      case 1: {
+        const std::string pad(width - parts[0].size(), cell.filler);
+        absl::StrAppend(&lines[level], kCellSeparator, parts[0], pad);
+        break;
+      }
+      case 2: {
+        const std::string pad(width - parts[0].size() - parts[1].size(),
+                              cell.filler);
+        absl::StrAppend(&lines[level], kCellSeparator, parts[0], pad,
+                        parts.back());
+        break;
+      }
+      case 3: {
+        std::size_t pos =
+            std::clamp((width - parts[1].size()) / 2, parts[0].size() + 1,
+                       width - parts[2].size() - parts[1].size() - 1);
+        const std::string left_pad(pos - parts[0].size(), cell.filler);
+        const std::string right_pad(
+            width - parts[2].size() - (pos + parts[1].size()), cell.filler);
+        absl::StrAppend(&lines[level], kCellSeparator, parts[0], left_pad,
+                        parts[1], right_pad, parts[2]);
+        break;
+      }
     }
   }
   for (const auto& line : lines) {
