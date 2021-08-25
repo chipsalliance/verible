@@ -365,13 +365,13 @@ class PortDeclarationColumnSchemaScanner : public VerilogColumnSchemaScanner {
 
         const verible::AlignmentColumnProperties no_border(false, 0);
         auto* column = ABSL_DIE_IF_NULL(ReserveNewColumn(
-            *current_dimensions_group_, node,
+            current_dimensions_group_, node,
             right_align ? no_border : FlushLeft, dimension_path));
 
-        ReserveNewColumn(*column, *node[0],
+        ReserveNewColumn(column, *node[0],
                          right_align ? no_border : FlushLeft);  // '['
-        ReserveNewColumn(*column, *node[1], FlushRight);        // value
-        ReserveNewColumn(*column, *node[4], FlushLeft);         // ']'
+        ReserveNewColumn(column, *node[1], FlushRight);         // value
+        ReserveNewColumn(column, *node[4], FlushLeft);          // ']'
         return;
       }
       case NodeEnum::kDimensionScalar:
@@ -392,16 +392,16 @@ class PortDeclarationColumnSchemaScanner : public VerilogColumnSchemaScanner {
         const verible::AlignmentColumnProperties no_border(false, 0);
 
         auto* column = ABSL_DIE_IF_NULL(ReserveNewColumn(
-            *current_dimensions_group_, node,
+            current_dimensions_group_, node,
             right_align ? no_border : FlushLeft, dimension_path));
 
         const auto& column_path = column->Value().path;
         // Value can be empty - set paths explicitly
-        ReserveNewColumn(*column, *node[0], right_align ? no_border : FlushLeft,
+        ReserveNewColumn(column, *node[0], right_align ? no_border : FlushLeft,
                          GetSubpath(column_path, {0}));  // '['
-        ReserveNewColumn(*column, *node[1], FlushRight,
+        ReserveNewColumn(column, *node[1], FlushRight,
                          GetSubpath(column_path, {1}));  // value
-        ReserveNewColumn(*column, *node[2], FlushLeft,
+        ReserveNewColumn(column, *node[2], FlushLeft,
                          GetSubpath(column_path, {2}));  // ']'
         return;
       }
