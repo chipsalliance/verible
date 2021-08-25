@@ -69,6 +69,10 @@ case "$MODE" in
     bazel build $BAZEL_OPTS //...
     ;;
 
+  smoke-test)
+    $(dirname $0)/smoke-test.sh
+    ;;
+
   *)
     echo "$0: Unknown value in MODE environment variable: $MODE"
     exit 1
