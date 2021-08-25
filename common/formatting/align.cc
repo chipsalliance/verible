@@ -130,10 +130,18 @@ std::ostream& operator<<(std::ostream& stream, const AlignmentCell& cell) {
   return stream;
 }
 
+// Type of functions used to generate textual node representations that are
+// suitable for use in rectangular cell.
+// The function is called with a tree node as its only argument. It should
+// return a string containing the cell's text and a single character used as
+// a filler for cell's empty space.
 template <typename ValueType>
 using CellLabelGetterFunc =
     std::function<std::pair<std::string, char>(const VectorTree<ValueType>&)>;
 
+// Recursively creates a tree with cells textual data. Its main purpose is to
+// split multi-line cell labels and calculate how many lines have to be printed.
+// This is a helper function used in ColumsTreeFormatter.
 template <typename ValueType, typename Cell>
 static std::size_t CreateTextNodes(
     const VectorTree<ValueType>& src_node, VectorTree<Cell>* dst_node,
@@ -158,6 +166,15 @@ static std::size_t CreateTextNodes(
   return depth + subtree_depth;
 }
 
+// Prints visualization of columns tree 'root' to a 'stream'. The 'root' node
+// itself is not visualized. The 'get_cell_label' callback is used to get the
+// cell label printed for each node.
+//
+// The label's text can contain multiple lines. Each line can contain up to 3
+// fields separated by tab character ('\t'). The first field is aligned to the
+// left. The second field is either aligned to the right (when there are
+// 2 fields) or centered (when there are 3 fields). The third field is aligned
+// to the right. Empty space is filled with label's filler character.
 template <typename ValueType>
 static void ColumnsTreeFormatter(
     std::ostream& stream, const VectorTree<ValueType>& root,
@@ -333,6 +350,9 @@ struct AggregateColumnData {
   }
 };
 
+// Creates 'dst_tree' tree with the same structure as 'src_tree'. Value of each
+// created node is obtained by calling 'converter' function with corresponding
+// node from 'src_tree'.
 template <typename SrcValueType, typename DstValueType>
 static void CopyTreeStructure(
     const VectorTree<SrcValueType>& src_tree,
@@ -419,6 +439,9 @@ class ColumnSchemaAggregator {
   std::map<SyntaxTreePath, ColumnsTreePath> syntax_to_columns_map_;
 };
 
+// CellLabelGetterFunc which creates a label with column's path relative to
+// its parent column and either '<' or '>' filler characters indicating whether
+// the column flushes to the left or the right.
 template <typename T>
 static std::pair<std::string, char> GetColumnDataCellLabel(
     const VectorTree<T>& node) {
@@ -532,6 +555,8 @@ static void FillAlignmentRow(
   }
 }
 
+// Recursively calculates widths of each cell's subcells and, if needed, updates
+// cell's width to fit all subcells.
 static void UpdateAndPropagateRowCellWidths(AlignmentRow* node) {
   node->Value().UpdateWidths();
 
@@ -618,6 +643,7 @@ static AlignedFormattingColumnSchema ComputeColumnWidths(
     }
   }
 
+  // Make sure columns are wide enough to fit all their subcolumns
   for (auto& column_iter : VectorTreePostOrderTraversal(column_configs)) {
     if (!column_iter.is_leaf()) {
       int children_width = std::accumulate(
