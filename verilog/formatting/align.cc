@@ -765,7 +765,7 @@ class ClassPropertyColumnSchemaScanner : public ColumnSchemaScanner {
             ABSL_DIE_IF_NULL(ReserveNewColumn(column, *node[1], FlushRight));
         ReserveNewColumn(value_subcolumn, *node[1], FlushRight);  // LHS value
         ReserveNewColumn(value_subcolumn, *node[2], FlushLeft);   // ':'
-        ReserveNewColumn(value_subcolumn, *node[3], FlushLeft);   // RHS value
+        ReserveNewColumn(value_subcolumn, *node[3], FlushRight);  // RHS value
 
         ReserveNewColumn(column, *node[4], FlushLeft);  // ']'
         return;
@@ -1116,7 +1116,7 @@ class DistItemColumnSchemaScanner : public ColumnSchemaScanner {
                          GetSubpath(Path(), {1}));  // LHS value
         ReserveNewColumn(item_column_, *node[2], FlushLeft,
                          GetSubpath(Path(), {2}));  // ':'
-        ReserveNewColumn(item_column_, *node[3], FlushLeft,
+        ReserveNewColumn(item_column_, *node[3], FlushRight,
                          GetSubpath(Path(), {3}));  // RHS value
         ReserveNewColumn(item_column_, *node[4], FlushLeft,
                          GetSubpath(Path(), {4}));  // ']'
