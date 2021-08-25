@@ -1465,8 +1465,13 @@ static const SyntaxTreeNode* GetAssignedExpressionFromDataDeclaration(
   }
   if (!trailing_assign) return nullptr;
 
-  return &verible::GetSubtreeAsNode(*trailing_assign, NodeEnum::kTrailingAssign,
-                                    1, NodeEnum::kExpression);
+  const verible::Symbol* expression = verible::GetSubtreeAsSymbol(
+      *trailing_assign, NodeEnum::kTrailingAssign, 1);
+  if (!expression ||
+      expression->Tag() != verible::NodeTag(NodeEnum::kExpression))
+    return nullptr;
+
+  return &verible::SymbolCastToNode(*expression);
 }
 
 // This phase is strictly concerned with reshaping token partitions,
