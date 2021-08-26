@@ -93,4 +93,4 @@ path.
 
 ## Version
 
-Generated on 2021-08-23 17:06:14 -0700 from [a719aad](https://github.com/google/verible/commit/a719aadb654e10caac3281edbbae30bf8f3aea77)
+Generated on 2021-08-25 16:58:40 -0700 from [ae75a31](https://github.com/google/verible/commit/ae75a31d5812718568b4773a2ff9144cb8c3435f)
