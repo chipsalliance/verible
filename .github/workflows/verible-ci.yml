@@ -49,6 +49,7 @@ jobs:
       matrix:
         mode:
         - test
+        - smoke-test
         - asan
         - compile
         - coverage
