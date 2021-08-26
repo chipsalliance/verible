@@ -7739,6 +7739,12 @@ static constexpr FormatterTestCase kFormatterTestCases[] = {
      "  \"two_thousand_twenty\",\n"
      "  \"two_thousand_twenty_one\"\n"
      "};\n"},
+    {"class class_name;\n"
+     "var_type var_name = new(\"the_string\");\n"
+     "endclass\n",
+     "class class_name;\n"
+     "  var_type var_name = new(\"the_string\");\n"
+     "endclass\n"},
 
     //{   // parameterized class with 'parameter_declaration' and MACRO
     //    "class foo #(parameter int a = 2,\n"
