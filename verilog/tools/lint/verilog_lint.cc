@@ -91,9 +91,12 @@ ABSL_FLAG(std::string, autofix_output_file, "",
           "File to write a patch with autofixes to. If not set autofixes are "
           "applied directly to the analyzed file. Relevant only when "
           "--autofix option is enabled.");
-
+ABSL_FLAG(std::string, lint_rule_citations, "",
+          "Path to lint rule citations to overwrite. "
+          "Please refer to the README file for information about its format.");
 // LINT.ThenChange(README.md)
 
+using verilog::CustomCitationMap;
 using verilog::LinterConfiguration;
 
 // LintOneFile returns 0, 1, or 2
@@ -104,16 +107,26 @@ int main(int argc, char** argv) {
       absl::StrCat("usage: ", argv[0], " [options] <file> [<file>...]");
   const auto args = verible::InitCommandLine(usage, &argc, &argv);
 
+  std::string custom_citations_file = absl::GetFlag(FLAGS_lint_rule_citations);
+  std::string content;
+  CustomCitationMap citations;
+  if (!custom_citations_file.empty()) {
+    const absl::Status config_read_status =
+        verible::file::GetContents(custom_citations_file, &content);
+    if (!config_read_status.ok()) return -1;
+    citations = verilog::ParseCitations(content);
+  }
+
   std::string help_flag = absl::GetFlag(FLAGS_help_rules);
   if (!help_flag.empty()) {
-    verilog::GetLintRuleDescriptionsHelpFlag(&std::cout, help_flag);
+    verilog::GetLintRuleDescriptionsHelpFlag(&std::cout, help_flag, citations);
     return 0;
   }
 
   // In documentation generation mode, print documentation and exit immediately.
   bool generate_markdown_flag = absl::GetFlag(FLAGS_generate_markdown);
   if (generate_markdown_flag) {
-    verilog::GetLintRuleDescriptionsMarkdown(&std::cout);
+    verilog::GetLintRuleDescriptionsMarkdown(&std::cout, citations);
     return 0;
   }
 

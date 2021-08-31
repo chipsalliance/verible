@@ -28,6 +28,7 @@
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"
 #include "absl/strings/str_cat.h"
+#include "absl/strings/str_replace.h"
 #include "absl/strings/string_view.h"
 #include "common/analysis/line_lint_rule.h"
 #include "common/analysis/line_linter.h"
@@ -524,10 +525,60 @@ absl::Status PrintRuleInfo(std::ostream* os,
   return absl::OkStatus();
 }
 
+static void AppendCitation(const absl::string_view& rule_raw,
+                           CustomCitationMap& citations) {
+  const size_t colon_pos = rule_raw.find(':');
+  if (!colon_pos || colon_pos == absl::string_view::npos) return;
+  const size_t rule_id_end = colon_pos;
+  const size_t rule_citation_beg = colon_pos + 1;
+  absl::string_view rule_id = rule_raw.substr(0, rule_id_end);
+  absl::string_view citation =
+      rule_raw.substr(rule_citation_beg, rule_raw.size() - rule_citation_beg);
+  rule_id = absl::StripAsciiWhitespace(rule_id);
+  citation = absl::StripAsciiWhitespace(citation);
+
+  citations[rule_id] =
+      absl::StrReplaceAll(citation, {{"\\\r\n", "\r\n"}, {"\\\n", "\n"}});
+}
+
+CustomCitationMap ParseCitations(absl::string_view content) {
+  CustomCitationMap citations;
+  size_t rule_begin = 0;
+  size_t rule_end = content.find("\n");
+  while (rule_end != std::string::npos) {
+    // check unix like escape seq
+    if (rule_end == 0 || content[rule_end - 1] == '\\') {
+      rule_end = content.find("\n", rule_end + 1);
+      continue;
+    }
+    // check windows like escape seq
+    if (rule_end == 1 ||
+        (content[rule_end - 2] == '\\' && content[rule_end - 1] == '\r')) {
+      rule_end = content.find("\n", rule_end + 1);
+      continue;
+    }
+
+    auto rule_subs = content.substr(rule_begin, rule_end - rule_begin);
+    AppendCitation(rule_subs, citations);
+    rule_begin = rule_end + 1;
+
+    rule_end = content.find("\n", rule_begin);
+  }
+  return citations;
+}
+
 void GetLintRuleDescriptionsHelpFlag(std::ostream* os,
-                                     absl::string_view flag_value) {
+                                     absl::string_view flag_value,
+                                     const CustomCitationMap& citations) {
   // Set up the map.
   auto rule_map = analysis::GetAllRuleDescriptionsHelpFlag();
+  for (const auto& [rule_id, citation] : citations) {
+    auto rule = rule_map.find(rule_id);
+    if (rule != rule_map.end()) {
+      rule->second.description = citation;
+    }
+  }
+
   for (const auto& rule_id : analysis::kDefaultRuleSet) {
     rule_map[rule_id].default_enabled = true;
   }
@@ -548,10 +599,18 @@ void GetLintRuleDescriptionsHelpFlag(std::ostream* os,
   }
 }
 
-void GetLintRuleDescriptionsMarkdown(std::ostream* os) {
+void GetLintRuleDescriptionsMarkdown(std::ostream* os,
+                                     const CustomCitationMap& citations) {
   auto rule_map = analysis::GetAllRuleDescriptionsMarkdown();
   for (const auto& rule_id : analysis::kDefaultRuleSet) {
     rule_map[rule_id].default_enabled = true;
+  }
+
+  for (const auto& [rule_id, citation] : citations) {
+    auto rule = rule_map.find(rule_id);
+    if (rule != rule_map.end()) {
+      rule->second.description = citation;
+    }
   }
 
   for (const auto& rule : rule_map) {

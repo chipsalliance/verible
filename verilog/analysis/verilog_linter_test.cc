@@ -413,9 +413,43 @@ TEST_F(VerilogLinterTest, MultiByteUTF8CharactersAreOnlyCountedOnce) {
   EXPECT_EQ(diagnostics.second, "");
 }
 
+TEST(VerilogLinterDocumentationTest, ParseCustomCitationsLinuxNewlineStyle) {
+  absl::string_view citations_raw =
+      "struct-union-name-style:one line citation is ok \n"
+      "signal-name-style:multi line citation\\\nis also\\\n"
+      "correct\nstripping-left :the spaces\n"
+      "stripping-right: the spaces\n";
+
+  auto citations = verilog::ParseCitations(citations_raw);
+  ASSERT_TRUE(!citations.empty());
+  EXPECT_TRUE(absl::StrContains(citations["struct-union-name-style"],
+                                "one line citation is ok"));
+  EXPECT_TRUE(
+      absl::StrContains(citations["signal-name-style"], "\nis also\ncorrect"));
+  EXPECT_TRUE(citations["stripping-left"] == "the spaces");
+  EXPECT_TRUE(citations["stripping-right"] == "the spaces");
+}
+
+TEST(VerilogLinterDocumentationTest, ParseCustomCitationsWindowsNewlineStyle) {
+  absl::string_view citations_raw =
+      "struct-union-name-style:one line citation is ok \r\n"
+      "signal-name-style:multi line citation\\\r\nis also\\\r\n"
+      "correct\r\nstripping-left :the spaces\r\n"
+      "stripping-right: the spaces\r\n";
+
+  auto citations = verilog::ParseCitations(citations_raw);
+  ASSERT_TRUE(!citations.empty());
+  EXPECT_TRUE(absl::StrContains(citations["struct-union-name-style"],
+                                "one line citation is ok"));
+  EXPECT_TRUE(absl::StrContains(citations["signal-name-style"],
+                                "\r\nis also\r\ncorrect"));
+  EXPECT_TRUE(citations["stripping-left"] == "the spaces");
+  EXPECT_TRUE(citations["stripping-right"] == "the spaces");
+}
+
 TEST(VerilogLinterDocumentationTest, AllRulesHelpDescriptions) {
   std::ostringstream stream;
-  verilog::GetLintRuleDescriptionsHelpFlag(&stream, "all");
+  verilog::GetLintRuleDescriptionsHelpFlag(&stream, "all", {});
   // Spot-check a few patterns, must mostly make sure generation
   // works without any fatal errors.
   EXPECT_TRUE(absl::StrContains(stream.str(), "line-length"));
@@ -423,9 +457,24 @@ TEST(VerilogLinterDocumentationTest, AllRulesHelpDescriptions) {
   EXPECT_TRUE(absl::StrContains(stream.str(), "Enabled by default:"));
 }
 
+TEST(VerilogLinterDocumentationTest,
+     AllRulesHelpDescriptionsWithCustomCitations) {
+  std::ostringstream stream;
+  verilog::CustomCitationMap citations = {
+      {"struct-union-name-style", "one line citation is ok"},
+      {"signal-name-style", "multi line citation\nis also\ncorrect"}};
+
+  verilog::GetLintRuleDescriptionsHelpFlag(&stream, "all", citations);
+  // Spot-check a few patterns, must mostly make sure generation
+  // works without any fatal errors.
+  EXPECT_TRUE(absl::StrContains(stream.str(), "one line citation is ok"));
+  EXPECT_TRUE(absl::StrContains(stream.str(), "is also\ncorrect"));
+  EXPECT_TRUE(absl::StrContains(stream.str(), "Enabled by default:"));
+}
+
 TEST(VerilogLinterDocumentationTest, AllRulesMarkdown) {
   std::ostringstream stream;
-  verilog::GetLintRuleDescriptionsMarkdown(&stream);
+  verilog::GetLintRuleDescriptionsMarkdown(&stream, {});
   // Spot-check a few patterns, must mostly make sure generation
   // works without any fatal errors.
   EXPECT_TRUE(absl::StrContains(stream.str(), "line-length"));
@@ -904,6 +953,20 @@ TEST_F(ViolationFixerTest, PrintAppliedFixes) {
           "  wire a;   \n"
           "endmodule\n",
       });
+}
+
+TEST(VerilogLinterDocumentationTest, AllRulesMarkdownWithCustomCitations) {
+  std::ostringstream stream;
+  verilog::CustomCitationMap citations = {
+      {"struct-union-name-style", "one line citation is ok"},
+      {"signal-name-style", "multi line citation\nis also\ncorrect"}};
+
+  verilog::GetLintRuleDescriptionsMarkdown(&stream, citations);
+  // Spot-check a few patterns, must mostly make sure generation
+  // works without any fatal errors.
+  EXPECT_TRUE(absl::StrContains(stream.str(), "one line citation is ok"));
+  EXPECT_TRUE(absl::StrContains(stream.str(), "is also\ncorrect"));
+  EXPECT_TRUE(absl::StrContains(stream.str(), "Enabled by default:"));
 }
 
 }  // namespace

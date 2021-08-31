@@ -34,6 +34,8 @@
 #include "verilog/analysis/verilog_linter_configuration.h"
 
 namespace verilog {
+// the structure used for custom citation
+using CustomCitationMap = std::map<absl::string_view, std::string>;
 
 struct LintViolationWithStatus {
   const verible::LintViolation* violation;
@@ -244,10 +246,18 @@ absl::Status PrintRuleInfo(std::ostream*,
                            absl::string_view);
 
 // Outputs the descriptions for every rule for the --help_rules flag.
-void GetLintRuleDescriptionsHelpFlag(std::ostream*, absl::string_view);
+// When custom citations are delivered substitute chosen rule description
+// with citations specified by user
+void GetLintRuleDescriptionsHelpFlag(std::ostream*, absl::string_view,
+                                     const CustomCitationMap&);
 
 // Outputs the descriptions for every rule, formatted for markdown.
-void GetLintRuleDescriptionsMarkdown(std::ostream*);
+// When custom citations are delivered substitute chosen rule description
+// with citations specified by user
+void GetLintRuleDescriptionsMarkdown(std::ostream*, const CustomCitationMap&);
+
+// Parse the file with custom citations
+CustomCitationMap ParseCitations(absl::string_view content);
 
 }  // namespace verilog
 
