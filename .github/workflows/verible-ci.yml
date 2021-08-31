@@ -9,6 +9,7 @@ on:
     branches:
     - master
     - main
+  workflow_dispatch:
 
 env:
   DOCKER_BUILDKIT: 1
@@ -234,3 +235,33 @@ jobs:
         tag: ${{ env.TAG }}
         overwrite: true
         file_glob: true
+
+
+  MacOsBuild:
+    runs-on: macos-latest
+    steps:
+
+    - uses: actions/checkout@v2
+      with:
+        fetch-depth: 0
+
+    - name: Tests
+      run: bazel test --test_output=errors --cxxopt=-Wno-range-loop-analysis ...
+
+
+  WindowsBuild:
+    runs-on: windows-latest
+    steps:
+
+    - uses: actions/checkout@v2
+      with:
+        fetch-depth: 0
+
+    - name: Install dependencies
+      run: choco install llvm
+
+    - name: Tests
+      run: bazel test --test_output=errors ...
+
+    - name: Build Verible
+      run: bazel build -c opt //...
