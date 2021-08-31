@@ -1,4 +1,4 @@
-name: verible-ci
+name: ci
 
 on:
   push:
@@ -57,7 +57,7 @@ jobs:
         - clean
     env:
       MODE: ${{ matrix.mode }}
-    name: Check · ${{ matrix.mode }}
+    name: ${{ matrix.mode }}
 
     steps:
 
