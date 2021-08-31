@@ -960,6 +960,24 @@ static constexpr FormatterTestCase kFormatterTestCases[] = {
         "      another_really_long_identifier;\n"
         "endmodule\n",
     },
+    {
+        "assign m = check                ? {10'b0, foo} :\n"
+        "           (bar && (baz == '0)) ? hello        :\n"
+        "           world                ? temp1        : temp2;\n",
+        "assign m = check ? {10'b0, foo} :\n"
+        "    (bar && (baz == '0)) ? hello :\n"
+        "    world ? temp1 : temp2;\n",
+    },
+    {
+        "assign {a, b} = !(c == d) ? {1'b0, e} :\n"
+        "                ((e == f) && g) ?\n"
+        "                {1'b0, f} : (h) ?\n"
+        "                {1'b0, e} - 1'b1 :\n"
+        "                {1'b0, e} + 1'b1;\n",
+        "assign {a, b} = !(c == d) ? {1'b0, e} :\n"
+        "    ((e == f) && g) ? {1'b0, f} : (h) ?\n"
+        "    {1'b0, e} - 1'b1 : {1'b0, e} + 1'b1;\n",
+    },
 
     // streaming operators
     {
