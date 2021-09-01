@@ -965,6 +965,7 @@ cc_library(
         "//common/analysis/matcher",
         "//common/analysis/matcher:bound_symbol_manager",
         "//common/text:concrete_syntax_leaf",
+        "//common/text:config_utils",
         "//common/text:symbol",
         "//common/text:syntax_tree_context",
         "//common/text:token_info",

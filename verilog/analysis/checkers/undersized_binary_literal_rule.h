@@ -42,18 +42,24 @@ class UndersizedBinaryLiteralRule : public verible::SyntaxTreeLintRule {
   static std::string GetDescription(DescriptionType);
 
   void HandleSymbol(const verible::Symbol& symbol,
-                    const verible::SyntaxTreeContext& context) override;
+                    const verible::SyntaxTreeContext& context) final;
 
-  verible::LintRuleStatus Report() const override;
+  verible::LintRuleStatus Report() const final;
+
+  absl::Status Configure(absl::string_view configuration) final;
 
  private:
   // Generate string representation of why lint error occurred at leaf
   static std::string FormatReason(absl::string_view width,
-                                  absl::string_view base,
+                                  absl::string_view base_text, char base,
                                   absl::string_view literal);
 
   // Link to style guide rule.
   static const char kTopic[];
+
+  bool check_bin_numbers_ = true;
+  bool check_hex_numbers_ = false;
+  bool check_oct_numbers_ = false;
 
   std::set<verible::LintViolation> violations_;
 };

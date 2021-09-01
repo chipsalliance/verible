@@ -1,4 +1,4 @@
-// Copyright 2017-2020 The Verible Authors.
+// Copyright 2017-2021 The Verible Authors.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -29,9 +29,17 @@ namespace analysis {
 namespace {
 
 using verible::LintTestCase;
-using verible::RunLintTestCases;
+using verible::RunConfiguredLintTestCases;
 
-TEST(UndersizedBinaryLiteralTest, FunctionFailures) {
+TEST(UndersizedBinaryLiteralTest, ConfigurationPass) {
+  UndersizedBinaryLiteralRule rule;
+  absl::Status status;
+  EXPECT_TRUE((status = rule.Configure("")).ok()) << status.message();
+  EXPECT_TRUE((status = rule.Configure("bin:true;oct:true;hex:true")).ok())
+      << status.message();
+}
+
+TEST(UndersizedBinaryLiteralTest, TooShortBinaryNumbers) {
   constexpr int kToken = TK_BinDigits;
   const std::initializer_list<LintTestCase> kTestCases = {
       {""},
@@ -50,10 +58,7 @@ TEST(UndersizedBinaryLiteralTest, FunctionFailures) {
       {"localparam x = 2'b ", {kToken, "_1_"}, ";"},  // with underscores
       {"localparam x = 1'b0;"},
       {"localparam x = 1'b1;"},
-      {"localparam x = 2'h1;"},
-      {"localparam x = 2'habcd;"},
-      {"localparam x = 32'd20;"},
-      {"localparam x = 16'o7;"},
+      {"localparam x = 32'd20;"},  // decimal numbers not treated
       {"localparam x = 8'b 0001_1000;"},
       {"localparam x = 8'b ", {kToken, "001_1000"}, ";"},
       {"localparam x = 8'b ", {kToken, "0001_100"}, ";"},
@@ -67,7 +72,101 @@ TEST(UndersizedBinaryLiteralTest, FunctionFailures) {
       {"localparam x = 5'b", {kToken, "??"}, ";"},  // only 2 ?s for 5 bits
   };
 
-  RunLintTestCases<VerilogAnalyzer, UndersizedBinaryLiteralRule>(kTestCases);
+  RunConfiguredLintTestCases<VerilogAnalyzer, UndersizedBinaryLiteralRule>(
+      kTestCases, "bin:true");
+}
+
+TEST(UndersizedBinaryLiteralTest, BinaryNumbersConfiguredDontCare) {
+  const std::initializer_list<LintTestCase> kTestCases = {
+      {"localparam x = 0;"},
+      {"localparam x = 1;"},
+      {"localparam x = 3'b00;"},
+      {"localparam x = 32'b000;"},
+  };
+
+  RunConfiguredLintTestCases<VerilogAnalyzer, UndersizedBinaryLiteralRule>(
+      kTestCases, "bin:false");
+}
+
+TEST(UndersizedBinaryLiteralTest, TooShortHexNumbers) {
+  constexpr int kToken = TK_HexDigits;
+  const std::initializer_list<LintTestCase> kTestCases = {
+      {"localparam x = 16'h0;"},  // Exception granted for single 0 and ?
+      {"localparam x = 16'h?;"},
+
+      {"localparam x = 16'h", {kToken, "00"}, ";"},
+      {"localparam x = 16'h", {kToken, "??"}, ";"},
+
+      {"localparam x = 1'h1;"},
+      {"localparam x = 4'hf;"},
+      {"localparam x = 5'h", {kToken, "f"}, ";"},
+      {"localparam x = 5'h1f;"},
+      {"localparam x = 16'h0001;"},
+      {"localparam x = 16'h00_01;"},
+      {"localparam x = 16'h", {kToken, "001"}, ";"},
+      {"localparam x = 16'h", {kToken, "0_01"}, ";"},
+      {"localparam x = 2'habcd;"},  // Note: truncated values are ok for this
+                                    // rule
+  };
+
+  RunConfiguredLintTestCases<VerilogAnalyzer, UndersizedBinaryLiteralRule>(
+      kTestCases, "hex:true");
+}
+
+TEST(UndersizedBinaryLiteralTest, HexNumbersConfiguredDontCare) {
+  const std::initializer_list<LintTestCase> kTestCases = {
+      {"localparam x = 16'h0;"},
+      {"localparam x = 16'h?;"},
+      {"localparam x = 5'hf;"},
+      {"localparam x = 16'h001;"},
+  };
+
+  RunConfiguredLintTestCases<VerilogAnalyzer, UndersizedBinaryLiteralRule>(
+      kTestCases, "hex:false");
+}
+
+TEST(UndersizedBinaryLiteralTest, TooShortOctalNumbers) {
+  constexpr int kToken = TK_OctDigits;
+  const std::initializer_list<LintTestCase> kTestCases = {
+      {"localparam x = 12'o0;"},  // Exception granted for 0 and ?
+      {"localparam x = 12'o?;"},
+
+      {"localparam x = 12'o", {kToken, "00"}, ";"},
+      {"localparam x = 12'o", {kToken, "??"}, ";"},
+
+      {"localparam x = 1'o1;"},
+      {"localparam x = 3'o7;"},
+      {"localparam x = 8'o777;"},  // Note: truncated values are ok for this
+                                   // rule
+      {"localparam x = 9'o777;"},
+      {"localparam x = 9'o7_7_7;"},
+      {"localparam x = 9'o", {kToken, "77"}, ";"},
+      {"localparam x = 9'o", {kToken, "7_7"}, ";"},
+      {"localparam x = 4'o17;"},
+  };
+
+  RunConfiguredLintTestCases<VerilogAnalyzer, UndersizedBinaryLiteralRule>(
+      kTestCases, "oct:true");
+}
+
+TEST(UndersizedBinaryLiteralTest, OctalNumbersConfiguredDontCare) {
+  const std::initializer_list<LintTestCase> kTestCases = {
+      {"localparam x = 9'o77;"},
+      {"localparam x = 12'o77;"},
+  };
+
+  RunConfiguredLintTestCases<VerilogAnalyzer, UndersizedBinaryLiteralRule>(
+      kTestCases, "oct:false");
+}
+
+TEST(UndersizedBinaryLiteralTest, DecimalNumbersNeverCare) {
+  const std::initializer_list<LintTestCase> kTestCases = {
+      {"localparam x = 32'd42;"},
+      {"localparam x = 32'd123456789;"},
+  };
+
+  RunConfiguredLintTestCases<VerilogAnalyzer, UndersizedBinaryLiteralRule>(
+      kTestCases, "");
 }
 
 }  // namespace
