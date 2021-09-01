@@ -447,7 +447,7 @@ template <typename T>
 static std::pair<std::string, char> GetColumnDataCellLabel(
     const VectorTree<T>& node) {
   std::ostringstream label;
-  const auto& path = node.Value().path;
+  const SyntaxTreePath& path = node.Value().path;
   auto begin = path.begin();
   if (node.Parent()) {
     // Find and skip common prefix
@@ -461,7 +461,8 @@ static std::pair<std::string, char> GetColumnDataCellLabel(
   }
   label << " \t ";
   if (begin != path.begin() && begin != path.end()) label << ".";
-  label << SequenceFormatter(iterator_range(begin, path.end()), ".");
+  label << SequenceFormatter(
+      iterator_range<SyntaxTreePath::const_iterator>(begin, path.end()), ".");
   label << " \t ";
 
   return {label.str(), node.Value().properties.flush_left ? '<' : '>'};

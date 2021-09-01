@@ -989,7 +989,8 @@ class SyntaxTreeColumnizer : public ColumnSchemaScanner {
     else
       column = ReserveNewColumn(current_column_, node, props);
 
-    ValueSaver current_column_saver(&current_column_, column);
+    ValueSaver<ColumnPositionTree*> current_column_saver(&current_column_,
+                                                         column);
     ColumnSchemaScanner::Visit(node);
   }
   void Visit(const SyntaxTreeLeaf& leaf) override {
