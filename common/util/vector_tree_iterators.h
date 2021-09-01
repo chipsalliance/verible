@@ -95,6 +95,10 @@ class VectorTreeLeavesIterator
   }
 };
 
+template <typename VectorTreeType>
+VectorTreeLeavesIterator(VectorTreeType*)
+    -> VectorTreeLeavesIterator<VectorTreeType>;
+
 // Returns VectorTreeLeavesIterator range that spans all leaves of a tree.
 // Note that when the node passed as a tree is a leaf, the returned range spans
 // this node.
@@ -135,6 +139,10 @@ class VectorTreePreOrderIterator
   }
 };
 
+template <typename VectorTreeType>
+VectorTreePreOrderIterator(VectorTreeType*)
+    -> VectorTreePreOrderIterator<VectorTreeType>;
+
 // Returns VectorTreePreOrderIterator range that spans all nodes of a tree
 // (including the tree's root).
 template <typename VectorTreeType>
@@ -169,6 +177,10 @@ class VectorTreePostOrderIterator
   }
   this_type end() const { return this_type(_NextNode(this->node_)); }
 };
+
+template <typename VectorTreeType>
+VectorTreePostOrderIterator(VectorTreeType*)
+    -> VectorTreePostOrderIterator<VectorTreeType>;
 
 // Returns VectorTreePostOrderIterator range that spans all nodes of a tree
 // (including the tree's root).
