@@ -155,7 +155,7 @@ static std::size_t CreateTextNodes(
     const auto [text, filler] = get_cell_label(src_child);
     const std::vector<std::string> lines = absl::StrSplit(text, '\n');
     auto* dst_child = dst_node;
-    for (const auto line : lines) {
+    for (const auto& line : lines) {
       dst_child = dst_child->NewChild(
           Cell{line, filler, std::max(line.size(), kMinCellWidth)});
     }
