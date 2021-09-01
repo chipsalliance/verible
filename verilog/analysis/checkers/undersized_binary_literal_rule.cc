@@ -39,6 +39,7 @@
 namespace verilog {
 namespace analysis {
 
+using verible::AutoFix;
 using verible::down_cast;
 using verible::GetStyleGuideCitation;
 using verible::LintRuleStatus;
@@ -123,13 +124,14 @@ void UndersizedBinaryLiteralRule::HandleSymbol(
       LOG(FATAL) << "Unexpected base '" << base_text << "'";  // Lexer issue ?
   }
 
+  const int missing_bits = width - number.literal.length() * bits_per_digit;
   // Allow literals with single "0" or "?" as an exception
-  if (width > number.literal.length() * bits_per_digit &&
-      number.literal != "0" && number.literal != "?") {
+  if (missing_bits > 0 && number.literal != "0" && number.literal != "?") {
+    const int leading_0 = (missing_bits + bits_per_digit - 1) / bits_per_digit;
     violations_.insert(LintViolation(
         digits_leaf->get(),
-        FormatReason(width_text, base_text, number.base, digits_text),
-        context));
+        FormatReason(width_text, base_text, number.base, digits_text), context,
+        {AutoFix({{digits_text.substr(0, 0), std::string(leading_0, '0')}})}));
   }
 }
 

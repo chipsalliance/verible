@@ -169,6 +169,46 @@ TEST(UndersizedBinaryLiteralTest, DecimalNumbersNeverCare) {
       kTestCases, "");
 }
 
+// There is no good auto-fix test infrastructure in place, so this is
+// somewhat manual.
+// TODO(hzeller): add test infrastructure in linter_test_utils.h
+
+static std::unique_ptr<UndersizedBinaryLiteralRule> CreateConfiguredRule() {
+  auto result = std::make_unique<UndersizedBinaryLiteralRule>();
+  CHECK(result->Configure("bin:true;hex:true;oct:true").ok());
+  return result;
+}
+
+static std::string UndersizeApplyFix(absl::string_view input) {
+  VerilogAnalyzer analyzer(input, "");
+  CHECK(analyzer.Analyze().ok()) << "Parse issue " << input;
+  using verible::LintRunner;
+  LintRunner<verible::SyntaxTreeLintRule> runner(CreateConfiguredRule());
+  const verible::LintRuleStatus rule_status = runner.Run(analyzer.Data(), "");
+  CHECK_EQ(rule_status.violations.size(), 1);
+  CHECK_EQ(rule_status.violations.begin()->autofixes.size(), 1);
+  const verible::AutoFix &fix = rule_status.violations.begin()->autofixes[0];
+
+  // The analyzer created a copy (class TextStructure), so we need to apply
+  // the fix relative to that Data()
+  return fix.Apply(analyzer.Data().Contents());
+}
+
+TEST(UndersizedBinaryLiteralTest, ApplyAutoFix) {
+  using InExpectedFixOut = std::pair<absl::string_view, absl::string_view>;
+  const std::initializer_list<InExpectedFixOut> kTestCases = {
+      {"localparam x = 32'hAB;", "localparam x = 32'h000000AB;"},
+      {"localparam x = 16'hAB;", "localparam x = 16'h00AB;"},
+      {"localparam x = 9'hAB;", "localparam x = 9'h0AB;"},
+      {"localparam x = 8'b101;", "localparam x = 8'b00000101;"},
+      {"localparam x = 9'o7;", "localparam x = 9'o007;"},
+      {"localparam x = 8'o7;", "localparam x = 8'o007;"},
+  };
+  for (const auto &t : kTestCases) {
+    EXPECT_EQ(UndersizeApplyFix(t.first), t.second) << "For input " << t.first;
+  }
+}
+
 }  // namespace
 }  // namespace analysis
 }  // namespace verilog
