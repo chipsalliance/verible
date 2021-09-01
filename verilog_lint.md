@@ -340,7 +340,11 @@ Checks that a Verilog `struct` or `union` declaration is named using `typedef`. 
 Enabled by default: true
 
 ### undersized-binary-literal
-Checks that the digits of binary literals match their declared width. See [Style: number-literals].
+Checks that the digits of binary literals for the configured bases match their declared width. See [Style: number-literals].
+##### Parameters
+  * `bin` Default: `true`
+  * `oct` Default: `false`
+  * `hex` Default: `false`
 
 Enabled by default: true
 
@@ -367,4 +371,4 @@ Enabled by default: true
 
 ## Version
 
-Generated on 2021-08-31 11:59:13 -0700 from [1243b90](https://github.com/google/verible/commit/1243b90c3f4a8193dba19bfc99d7a1119eced959)
+Generated on 2021-09-01 11:17:08 -0700 from [53a1ca3](https://github.com/google/verible/commit/53a1ca310813a7dd3c390731e38cc0dfc5ad9766)
