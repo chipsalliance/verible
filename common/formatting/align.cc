@@ -442,6 +442,7 @@ class ColumnSchemaAggregator {
 // CellLabelGetterFunc which creates a label with column's path relative to
 // its parent column and either '<' or '>' filler characters indicating whether
 // the column flushes to the left or the right.
+// `T` should be either AggregateColumnData or ColumnPositionEntry.
 template <typename T>
 static std::pair<std::string, char> GetColumnDataCellLabel(
     const VectorTree<T>& node) {
