@@ -150,7 +150,7 @@ std::string UndersizedBinaryLiteralRule::FormatReason(
       break;
   }
   return absl::StrCat(base_describe, " literal ", width, base_text, literal,
-                      " is shorter than its declared width: ", width, ".");
+                      " has less digits than expected for ", width, " bits.");
 }
 
 absl::Status UndersizedBinaryLiteralRule::Configure(
