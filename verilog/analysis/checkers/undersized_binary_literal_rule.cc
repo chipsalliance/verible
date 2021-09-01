@@ -1,4 +1,4 @@
-// Copyright 2017-2020 The Verible Authors.
+// Copyright 2017-2021 The Verible Authors.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -26,6 +26,7 @@
 #include "common/analysis/matcher/bound_symbol_manager.h"
 #include "common/analysis/matcher/matcher.h"
 #include "common/text/concrete_syntax_leaf.h"
+#include "common/text/config_utils.h"
 #include "common/text/symbol.h"
 #include "common/text/syntax_tree_context.h"
 #include "common/text/token_info.h"
@@ -38,11 +39,13 @@
 namespace verilog {
 namespace analysis {
 
+using verible::down_cast;
 using verible::GetStyleGuideCitation;
 using verible::LintRuleStatus;
 using verible::LintViolation;
 using verible::SyntaxTreeContext;
 using verible::SyntaxTreeLeaf;
+using verible::SyntaxTreeNode;
 using verible::matcher::Matcher;
 
 // Register UndersizedBinaryLiteralRule
@@ -55,65 +58,108 @@ const char UndersizedBinaryLiteralRule::kTopic[] = "number-literals";
 
 std::string UndersizedBinaryLiteralRule::GetDescription(
     DescriptionType description_type) {
-  return absl::StrCat(
-      "Checks that the digits of binary literals match their declared "
-      "width. See ",
-      GetStyleGuideCitation(kTopic), ".");
+  static const std::string basic_desc = absl::StrCat(
+      "Checks that the digits of binary literals for the configured bases "
+      "match their declared width. See ",
+      GetStyleGuideCitation(kTopic), ".\n");
+
+  return absl::StrCat(basic_desc,
+                      description_type == DescriptionType::kHelpRulesFlag
+                          ? "Parameters: "
+                            "bin:true;oct:false;hex:false;"
+                          : "##### Parameters\n"
+                            "  * `bin` Default: `true`\n"
+                            "  * `oct` Default: `false`\n"
+                            "  * `hex` Default: `false`");
 }
 
 // Broadly, start by matching all number nodes with a
 // constant width and based literal.
-// TODO(fangism): If more precision is needed than what the inner matcher
-// provides, pass a more specific predicate matching function instead.
 
 static const Matcher& NumberMatcher() {
-  static const Matcher matcher(NodekNumber(
-      NumberHasConstantWidth().Bind("width"),
-      NumberHasBasedLiteral(NumberIsBinary().Bind("base"),
-                            NumberHasBinaryDigits().Bind("digits"))));
+  static const Matcher matcher(
+      NodekNumber(NumberHasConstantWidth().Bind("width"),
+                  NumberHasBasedLiteral().Bind("literal")));
   return matcher;
 }
 
 void UndersizedBinaryLiteralRule::HandleSymbol(
     const verible::Symbol& symbol, const SyntaxTreeContext& context) {
   verible::matcher::BoundSymbolManager manager;
-  if (NumberMatcher().Matches(symbol, &manager)) {
-    if (auto width_leaf = manager.GetAs<SyntaxTreeLeaf>("width")) {
-      if (auto base_leaf = manager.GetAs<SyntaxTreeLeaf>("base")) {
-        if (auto digits_leaf = manager.GetAs<SyntaxTreeLeaf>("digits")) {
-          auto width_text = width_leaf->get().text();
-          auto base_text = base_leaf->get().text();
-          auto digits_text = digits_leaf->get().text();
-          size_t width;
-          if (absl::SimpleAtoi(width_text, &width)) {
-            const BasedNumber number(base_text, digits_text);
-            CHECK(number.ok)
-                << "Expecting valid numeric literal from lexer, but got: "
-                << digits_text;
-            // Detect binary values, whose literal width is shorter than the
-            // declared width.
-            // Allow 'b0 and 'b? as an exception.
-            CHECK_EQ(number.base,
-                     'b');  // guaranteed by matching TK_BinBase
-            if (width > number.literal.length() && number.literal != "0" &&
-                number.literal != "?") {
-              violations_.insert(LintViolation(
-                  digits_leaf->get(),
-                  FormatReason(width_text, base_text, digits_text), context));
-            }
-          }  // else width is not constant, so ignore
-        }
-      }
-    }
+  if (!NumberMatcher().Matches(symbol, &manager)) return;
+  const auto width_leaf = manager.GetAs<SyntaxTreeLeaf>("width");
+  const auto literal_node = manager.GetAs<SyntaxTreeNode>("literal");
+  if (!width_leaf || !literal_node) return;
+
+  const auto width_text = width_leaf->get().text();
+  size_t width;
+  if (!absl::SimpleAtoi(width_text, &width)) return;
+
+  const auto& base_digit_part = literal_node->children();
+  auto base_leaf = down_cast<const SyntaxTreeLeaf*>(base_digit_part[0].get());
+  auto digits_leaf = down_cast<const SyntaxTreeLeaf*>(base_digit_part[1].get());
+
+  const auto base_text = base_leaf->get().text();
+  const auto digits_text = digits_leaf->get().text();
+
+  const BasedNumber number(base_text, digits_text);
+  int bits_per_digit = 1;
+  switch (number.base) {
+    case 'd':
+      return;  // Don't care about decimal values.
+    case 'b':
+      if (!check_bin_numbers_) return;
+      bits_per_digit = 1;
+      break;
+    case 'o':
+      if (!check_oct_numbers_) return;
+      bits_per_digit = 3;
+      break;
+    case 'h':
+      if (!check_hex_numbers_) return;
+      bits_per_digit = 4;
+      break;
+    default:
+      LOG(FATAL) << "Unexpected base '" << base_text << "'";  // Lexer issue ?
+  }
+
+  // Allow literals with single "0" or "?" as an exception
+  if (width > number.literal.length() * bits_per_digit &&
+      number.literal != "0" && number.literal != "?") {
+    violations_.insert(LintViolation(
+        digits_leaf->get(),
+        FormatReason(width_text, base_text, number.base, digits_text),
+        context));
   }
 }
 
 // Generate string representation of why lint error occurred at leaf
 std::string UndersizedBinaryLiteralRule::FormatReason(
-    absl::string_view width, absl::string_view base,
+    absl::string_view width, absl::string_view base_text, char base,
     absl::string_view literal) {
-  return absl::StrCat("Binary literal ", width, base, literal,
-                      " is shorter than its declared width: ", width, ".");
+  absl::string_view base_describe;
+  switch (base) {
+    case 'b':
+      base_describe = "Binary";
+      break;
+    case 'h':
+      base_describe = "Hex";
+      break;
+    case 'o':
+      base_describe = "Octal";
+      break;
+  }
+  return absl::StrCat(base_describe, " literal ", width, base_text, literal,
+                      " has less digits than expected for ", width, " bits.");
+}
+
+absl::Status UndersizedBinaryLiteralRule::Configure(
+    absl::string_view configuration) {
+  using verible::config::SetBool;
+  return verible::ParseNameValues(configuration,
+                                  {{"bin", SetBool(&check_bin_numbers_)},
+                                   {"hex", SetBool(&check_hex_numbers_)},
+                                   {"oct", SetBool(&check_oct_numbers_)}});
 }
 
 LintRuleStatus UndersizedBinaryLiteralRule::Report() const {
