@@ -108,6 +108,47 @@ void RunLintTestCases(std::initializer_list<LintTestCase> tests,
                       absl::string_view filename = "<<inline-test>>") {
   RunConfiguredLintTestCases<AnalyzerType, RuleClass>(tests, "", filename);
 }
+
+using AutoFixInOut = std::pair<absl::string_view, absl::string_view>;
+
+// Tests that LintTestCase test has expected violations under make_rule
+// Expects test.code to be accepted by AnalyzerType.
+template <class AnalyzerType, class RuleType>
+void RunLintAutoFixCase(const AutoFixInOut& test,
+                        const LintRuleGenerator<RuleType>& make_rule) {
+  // All linters start by parsing to yield a TextStructure.
+  AnalyzerType analyzer(test.first, "");
+  absl::Status unused_parser_status = analyzer.Analyze();
+
+  // Instantiate a linter that runs a single rule to analyze text.
+  LintRunner<RuleType> lint_runner(make_rule());
+  const LintRuleStatus rule_status = lint_runner.Run(analyzer.Data(), "");
+  const auto& violations(rule_status.violations);
+
+  // TODO(hzeller) refine expected sizes when needed
+  CHECK_EQ(violations.size(), 1);
+  CHECK_EQ(violations.begin()->autofixes.size(), 1);
+  const verible::AutoFix& fix = rule_status.violations.begin()->autofixes[0];
+  std::string fix_out = fix.Apply(analyzer.Data().Contents());
+
+  EXPECT_EQ(fix_out, test.second) << "For input " << test.first;
+}
+
+template <class AnalyzerType, class RuleClass>
+void RunApplyFixCases(std::initializer_list<AutoFixInOut> tests,
+                      absl::string_view configuration) {
+  typedef typename RuleClass::rule_type rule_type;
+  auto rule_generator = [&configuration]() -> std::unique_ptr<rule_type> {
+    std::unique_ptr<rule_type> instance(new RuleClass());
+    absl::Status config_status = instance->Configure(configuration);
+    CHECK(config_status.ok()) << config_status.message();
+    return instance;
+  };
+  for (const auto& test : tests) {
+    RunLintAutoFixCase<AnalyzerType, rule_type>(test, rule_generator);
+  }
+}
+
 }  // namespace verible
 
 #endif  // VERIBLE_COMMON_ANALYSIS_LINTER_TEST_UTILS_H_
