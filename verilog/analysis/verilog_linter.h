@@ -185,9 +185,10 @@ class ViolationFixer : public ViolationHandler {
   using AnswerChooser = std::function<AnswerChoice(
       const verible::LintViolation&, absl::string_view)>;
 
-  ViolationFixer(std::ostream* stream, std::ostream* patch_stream = nullptr,
+  ViolationFixer(std::ostream* message_stream,
+                 std::ostream* patch_stream = nullptr,
                  AnswerChooser answer_chooser = InteractiveAnswerChooser)
-      : stream_(stream),
+      : message_stream_(message_stream),
         patch_stream_(patch_stream),
         ultimate_answer_(AnswerChoice::kUnknown),
         rule_answers_(),
@@ -210,7 +211,7 @@ class ViolationFixer : public ViolationHandler {
                    absl::string_view source_path,
                    const verible::AutoFix& fix) const;
 
-  std::ostream* const stream_;
+  std::ostream* const message_stream_;
   std::ostream* const patch_stream_;
   AnswerChoice ultimate_answer_;
   std::map<absl::string_view, AnswerChoice> rule_answers_;

@@ -65,10 +65,10 @@ usage: verible-verilog-lint [options] <file> [<file>...]
     --verilog_trace_parser (Trace verilog parser); default: false;
 
   Flags from verilog/tools/lint/verilog_lint.cc:
-    --autofix ([yes|no|interactive], autofix mode.); default: no;
-    --autofix_output_file (File to write a patch with autofixes to. If not set
-      autofixes are applied directly to the analyzed file. Relevant only when
-      --autofix option is enabled.); default: "";
+    --autofix (autofix mode; one of
+      [no|patch-interactive|patch|inplace-interactive|inplace]); default: no;
+    --autofix_output_file (File to write a patch with autofixes to if
+      --autofix=patch or --autofix=patch-interactive); default: "";
     --check_syntax (If true, check for lexical and syntax errors, otherwise
       ignore.); default: true;
     --generate_markdown (If true, print the description of every rule formatted
@@ -210,12 +210,21 @@ parse-as-module-body`.
 ## Automatically fixing trivial violations
 
 Some trivial violations (e.g. trailing spaces or repeated semicolons) can be
-fixed automatically.
+fixed automatically. The `--autofix` flag controls the mode in which fixes
+are presented or applied.
 
-When `--autofix=yes` option is specified, the linter applies all possible fixes.
-To get more control on what to do with each fixable violation,
-`--autofix=interactive` option can be used. Interactive mode offers following
-actions for each fix:
+|--autofix value       | Description
+:----------------------|:---------------------------------------------------
+| no                   | No fix is is shown or applied.
+| patch-interactive    | Interactive choice of fixes that are written as unified diff to `--autofix_output_file`.  |
+| inplace-interactive  | Interacive choice of fixes that are applied to the original file in place. **(modifies input)**
+| patch                | _All_ available fixes are written as unified diff.
+| inplace              | _All_ available fixes are applied to the original file in place. **(modifies input)**
+
+If `--autofix_output_file` is not given, patch output is written to stdout.
+
+The interactive modes `--autofix=patch-interactive` and
+`--autofix=inplace-interactive` offer the following actions for each fix:
 
 * `y` - apply fix
 * `n` - reject fix
@@ -227,12 +236,7 @@ actions for each fix:
 * `P` - show fixes applied so far
 * `?` - print this help and prompt again
 
-By default, accepted fixes are applied directly to linted source files. To
-generate a patch file instead, specify its name using `--autofix_output_file=`
-option.
-
-Example interactive session:
-
+Example interactive session (`--autofix=inplace-interactive`):
 ```
 autofixtest.sv:3:1: Remove trailing spaces. [Style: trailing-spaces] [no-trailing-spaces]
 Autofix is available. Apply? [y,n,a,d,A,D,p,P,?] a

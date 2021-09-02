@@ -306,7 +306,7 @@ grep -q "module-parameter" "${MY_OUTPUT_FILE}.err" || {
 }
 
 ################################################################################
-echo "=== Test --autofix=yes"
+echo "=== Test --autofix=inplace"
 
 ORIGINAL_TEST_FILE="${TEST_TMPDIR}/autofix_original.sv"
 REFERENCE_TEST_FILE="${TEST_TMPDIR}/autofix_reference.sv"
@@ -345,7 +345,7 @@ no-trailing-spaces
 posix-eof
 EOF
 
-"$lint_tool" --ruleset=none --rules_config="${RULES_CONFIG_FILE}" --autofix=yes \
+"$lint_tool" --ruleset=none --rules_config="${RULES_CONFIG_FILE}" --autofix=inplace \
     "${TEST_FILE}" > /dev/null 2>&1
 
 check_diff() {
@@ -379,7 +379,7 @@ check_diff "${REFERENCE_TEST_FILE}" "${TEST_FILE}" "${DIFF_FILE}" \
     "${FILES_DIFFER_ERR_MESSAGE}"|| exit 1
 
 ################################################################################
-echo "=== Test --autofix=yes (multiple source files)"
+echo "=== Test --autofix=inplace (multiple source files)"
 
 # using same ${RULES_CONFIG_FILE}, ${ORIGINAL_TEST_FILE}, ${REFERENCE_TEST_FILE}
 
@@ -414,7 +414,7 @@ cp "${ORIGINAL_TEST_FILE}"   "${TEST_FILE}"
 cp "${ORIGINAL_TEST_FILE_2}" "${TEST_FILE_2}"
 cp "${ORIGINAL_TEST_FILE_3}" "${TEST_FILE_3}"
 
-"$lint_tool" --ruleset=none --rules_config="${RULES_CONFIG_FILE}" --autofix=yes \
+"$lint_tool" --ruleset=none --rules_config="${RULES_CONFIG_FILE}" --autofix=inplace \
     "${TEST_FILE}" "${TEST_FILE_2}" "${TEST_FILE_3}" > /dev/null 2>&1
 
 DIFF_FILE_2="${TEST_TMPDIR}/autofix_2.diff"
@@ -437,17 +437,50 @@ check_diff "${REFERENCE_TEST_FILE_3}" "${TEST_FILE_3}" "${DIFF_FILE_3}" \
 (( $failure )) && exit 1
 
 ################################################################################
-echo "=== Test --autofix=yes --autofix_output_file=..."
+echo "=== Test --autofix=no --autofix_output_file=somefilename"
+
+# if we've not chosen any autofix, then it doesn't matter if the output file
+# is bogus.
+"$lint_tool" --ruleset=none --rules_config="${RULES_CONFIG_FILE}" \
+             --autofix=no \
+             --autofix_output_file="/" "${TEST_FILE}" > /dev/null 2>&1
+
+(( $? )) && exit 1
+
+################################################################################
+echo "=== Test --autofix=patch --autofix_output_file=<invalidlocation>"
+
+"$lint_tool" --ruleset=none --rules_config="${RULES_CONFIG_FILE}" \
+             --autofix=patch \
+             --autofix_output_file="/" "${TEST_FILE}" > /dev/null 2>&1
+
+if [ $? -ne 3 ] ; then
+  echo "Expected unwritable output patch file to result in exit-code 3"
+  exit 1
+fi
+
+################################################################################
+echo "=== Test --autofix=patch --autofix_output_file=..."
 
 # using same ${RULES_CONFIG_FILE}, ${ORIGINAL_TEST_FILE}, ${REFERENCE_TEST_FILE}
 
 PATCH_FILE="${TEST_TMPDIR}/autofix.patch"
+REDIRECT_PATCH_FILE="${TEST_TMPDIR}/redirect-autofix.patch"
 
 cp "${ORIGINAL_TEST_FILE}" "${TEST_FILE}"
 
-"$lint_tool" --ruleset=none --rules_config="${RULES_CONFIG_FILE}" --autofix=yes \
-    --autofix_output_file="${PATCH_FILE}" \
-    "${TEST_FILE}" > /dev/null 2>&1
+"$lint_tool" --ruleset=none --rules_config="${RULES_CONFIG_FILE}" \
+             --autofix=patch \
+             --autofix_output_file="${PATCH_FILE}" \
+             "${TEST_FILE}" > /dev/null 2>&1
+
+# if filename is not given directly we expect output to stdout
+"$lint_tool" --ruleset=none --rules_config="${RULES_CONFIG_FILE}" \
+             --autofix=patch \
+             "${TEST_FILE}" > ${REDIRECT_PATCH_FILE} 2>/dev/null
+
+check_diff "${PATCH_FILE}" "${REDIRECT_PATCH_FILE}" "${DIFF_FILE}" \
+           "Patch difference on --autofix_output_file and stdout" || exit 1
 
 NO_CHANGES_ERR_MESSAGE="Expected no changes in input file. Actual changes"
 
@@ -473,7 +506,7 @@ check_diff "${REFERENCE_TEST_FILE}" "${TEST_FILE}" "${DIFF_FILE}" \
     "${FILES_DIFFER_ERR_MESSAGE}" || exit 1
 
 ################################################################################
-echo "=== Test --autofix=yes --autofix_output_file=... (multiple source files)"
+echo "=== Test --autofix=patch --autofix_output_file=... (multiple source files)"
 
 # using same ${ORIGINAL_TEST_FILE}, ${REFERENCE_TEST_FILE},
 #            ${ORIGINAL_TEST_FILE_2}, ${REFERENCE_TEST_FILE_2},
@@ -485,14 +518,13 @@ cp "${ORIGINAL_TEST_FILE_2}" "${TEST_FILE_2}"
 cp "${ORIGINAL_TEST_FILE_3}" "${TEST_FILE_3}"
 
 # `patch` doesn't like absolute paths
-
 REL_TEST_FILE="$(basename ${TEST_FILE})"
 REL_TEST_FILE_2="$(basename ${TEST_FILE_2})"
 REL_TEST_FILE_3="$(basename ${TEST_FILE_3})"
 
 (
   cd $TEST_TMPDIR
-  "$lint_tool" --ruleset=none --rules_config="${RULES_CONFIG_FILE}" --autofix=yes \
+  "$lint_tool" --ruleset=none --rules_config="${RULES_CONFIG_FILE}" --autofix=patch \
       --autofix_output_file="${PATCH_FILE}" \
       "${REL_TEST_FILE}" "${REL_TEST_FILE_2}" "${REL_TEST_FILE_3}" > /dev/null 2>&1
 )
@@ -543,7 +575,7 @@ check_diff "${REFERENCE_TEST_FILE_3}" "${TEST_FILE_3}" "${DIFF_FILE_3}" \
 (( $failure )) && exit 1
 
 ################################################################################
-echo "=== Test --autofix=interactive"
+echo "=== Test --autofix=inplace-interactive"
 # using same ${ORIGINAL_TEST_FILE}, ${ORIGINAL_TEST_FILE_2},
 #            ${ORIGINAL_TEST_FILE_3}, ${RULES_CONFIG_FILE},
 
@@ -585,8 +617,65 @@ interactive_autofix_test() {
   echo -en "${expected_fixes_[1]:-}" > "${REFERENCE_TEST_FILE_2}"
   echo -en "${expected_fixes_[2]:-}" > "${REFERENCE_TEST_FILE_3}"
 
+  # Checking two ways to interact: with patch-interactive and
+  # with inplace-interactive
+
+  # In patch interactive mode, we record the patch, check that original
+  # files are not modified, and that the output is as expected after
+  # application of the patch.
+
+  # `patch` doesn't like absolute paths
+  REL_TEST_FILE="$(basename ${TEST_FILE})"
+  REL_TEST_FILE_2="$(basename ${TEST_FILE_2})"
+  REL_TEST_FILE_3="$(basename ${TEST_FILE_3})"
+  ( cd $TEST_TMPDIR
+    "$lint_tool" --ruleset=none --rules_config="${RULES_CONFIG_FILE}" \
+                 --autofix=patch-interactive --autofix_output_file="${PATCH_FILE}" \
+                 "${REL_TEST_FILE}" "${REL_TEST_FILE_2}" "${REL_TEST_FILE_3}" \
+                 > /dev/null 2>&1 \
+                 <<< "$keys_"
+    )
+
+  # Making sure that the original files were not touched
+  check_diff "${ORIGINAL_TEST_FILE}" "${TEST_FILE}" "${DIFF_FILE}" \
+    "${NO_CHANGES_ERR_MESSAGE}"
+  (( failure|="$?" ))
+  check_diff "${ORIGINAL_TEST_FILE_2}" "${TEST_FILE_2}" "${DIFF_FILE}" \
+    "${NO_CHANGES_ERR_MESSAGE}"
+  (( failure|="$?" ))
+  check_diff "${ORIGINAL_TEST_FILE_3}" "${TEST_FILE_3}" "${DIFF_FILE}" \
+    "${NO_CHANGES_ERR_MESSAGE}"
+  (( failure|="$?" ))
+
+  patch_out="$(cd $TEST_TMPDIR; patch -p1 < "${PATCH_FILE}" 2>&1)"
+  status="$?"
+  (( $status )) && {
+    echo "Expected exit code 0 from 'patch' tool, but got $status"
+    echo "--- 'patch' output ---"
+    echo "$patch_out"
+    exit 1
+  }
+
+  # Check patched sources
+  check_diff "${REFERENCE_TEST_FILE}" "${TEST_FILE}" "${DIFF_FILE}" \
+             "Patching - ${FILES_DIFFER_ERR_MESSAGE}"
+  (( failure|="$?" ))
+
+  check_diff "${REFERENCE_TEST_FILE_2}" "${TEST_FILE_2}" "${DIFF_FILE_2}" \
+             "Patching - ${FILES_DIFFER_ERR_MESSAGE}"
+  (( failure|="$?" ))
+
+  check_diff "${REFERENCE_TEST_FILE_3}" "${TEST_FILE_3}" "${DIFF_FILE_3}" \
+             "Patching - ${FILES_DIFFER_ERR_MESSAGE}"
+  (( failure|="$?" ))
+
+  # Testing interactive modification of the file directly
+  cp "${ORIGINAL_TEST_FILE}"   "${TEST_FILE}"
+  cp "${ORIGINAL_TEST_FILE_2}" "${TEST_FILE_2}"
+  cp "${ORIGINAL_TEST_FILE_3}" "${TEST_FILE_3}"
+
   "$lint_tool" --ruleset=none --rules_config="${RULES_CONFIG_FILE}" \
-      --autofix=interactive \
+      --autofix=inplace-interactive \
       "${TEST_FILE}" "${TEST_FILE_2}" "${TEST_FILE_3}" \
       > /dev/null 2>&1 \
       <<< "$keys_"
@@ -594,21 +683,21 @@ interactive_autofix_test() {
   failure=0
 
   check_diff "${REFERENCE_TEST_FILE}" "${TEST_FILE}" "${DIFF_FILE}" \
-    "${FILES_DIFFER_ERR_MESSAGE}"
+             "Inplace - ${FILES_DIFFER_ERR_MESSAGE}"
   (( failure|="$?" ))
 
   check_diff "${REFERENCE_TEST_FILE_2}" "${TEST_FILE_2}" "${DIFF_FILE_2}" \
-      "${FILES_DIFFER_ERR_MESSAGE}"
+             "Inplace - ${FILES_DIFFER_ERR_MESSAGE}"
   (( failure|="$?" ))
 
   check_diff "${REFERENCE_TEST_FILE_3}" "${TEST_FILE_3}" "${DIFF_FILE_3}" \
-      "${FILES_DIFFER_ERR_MESSAGE}"
+             "Inplace - ${FILES_DIFFER_ERR_MESSAGE}"
   (( failure|="$?" ))
 
   (( $failure )) && exit 1
 }
 
-echo "=== Test --autofix=interactive: Apply All"
+echo "=== Test --autofix=inplace-interactive: Apply All"
 
 interactive_autofix_test "A" \
     'module Autofix;\n' \
@@ -625,7 +714,7 @@ interactive_autofix_test "A" \
     '  wire a;\n'            \
     'endmodule\n'
 
-echo "=== Test --autofix=interactive: Reject All"
+echo "=== Test --autofix=inplace-interactive: Reject All"
 
 interactive_autofix_test "D" \
     'module Autofix;    \n' \
@@ -642,7 +731,7 @@ interactive_autofix_test "D" \
     '  wire a;   \n'          \
     'endmodule\n'
 
-echo "=== Test --autofix=interactive: Reject"
+echo "=== Test --autofix=inplace-interactive: Reject"
 
 interactive_autofix_test "nA" \
     'module Autofix;    \n' \
@@ -659,7 +748,7 @@ interactive_autofix_test "nA" \
     '  wire a;\n'            \
     'endmodule\n'
 
-echo "=== Test --autofix=interactive: Apply"
+echo "=== Test --autofix=inplace-interactive: Apply"
 
 interactive_autofix_test "yD" \
     'module Autofix;\n'    \
@@ -676,7 +765,7 @@ interactive_autofix_test "yD" \
     '  wire a;   \n'          \
     'endmodule\n'
 
-echo "=== Test --autofix=interactive: Apply All For Rule"
+echo "=== Test --autofix=inplace-interactive: Apply All For Rule"
 
 interactive_autofix_test "annnnnn" \
     'module Autofix;\n'  \
@@ -693,7 +782,7 @@ interactive_autofix_test "annnnnn" \
     '  wire a;\n'             \
     'endmodule\n'
 
-echo "=== Test --autofix=interactive: Reject All For Rule"
+echo "=== Test --autofix=inplace-interactive: Reject All For Rule"
 
 interactive_autofix_test "dyyyyyy" \
     'module Autofix;    \n' \
@@ -710,7 +799,7 @@ interactive_autofix_test "dyyyyyy" \
     '  wire a;   \n'         \
     'endmodule\n'
 
-echo "=== Test --autofix=interactive: Reject All For Rule, Apply All For Rule"
+echo "=== Test --autofix=inplace-interactive: Reject All For Rule, Apply All For Rule"
 
 interactive_autofix_test "dan" \
     'module Autofix;    \n' \
@@ -727,7 +816,7 @@ interactive_autofix_test "dan" \
     '  wire a;   \n'         \
     'endmodule\n'
 
-echo "=== Test --autofix=interactive: Show Fix"
+echo "=== Test --autofix=inplace-interactive: Show Fix"
 
 interactive_autofix_test "yppnnpypyyppynpypn" \
     'module Autofix;\n'  \
@@ -744,7 +833,7 @@ interactive_autofix_test "yppnnpypyyppynpypn" \
     '  wire a;   \n'         \
     'endmodule\n'
 
-echo "=== Test --autofix=interactive: Show Applied Fixes"
+echo "=== Test --autofix=inplace-interactive: Show Applied Fixes"
 
 interactive_autofix_test "yPPnnPyPyyPPynPyPn" \
     'module Autofix;\n'  \
@@ -761,7 +850,7 @@ interactive_autofix_test "yPPnnPyPyyPPynPyPn" \
     '  wire a;   \n'         \
     'endmodule\n'
 
-echo "=== Test --autofix=interactive: EOF too early"
+echo "=== Test --autofix=inplace-interactive: EOF too early"
 
 interactive_autofix_test "y" \
     'module Autofix;\n'    \
@@ -778,7 +867,7 @@ interactive_autofix_test "y" \
     '  wire a;   \n'          \
     'endmodule\n'
 
-echo "=== Test --autofix=interactive: Unknown keys"
+echo "=== Test --autofix=inplace-interactive: Unknown keys"
 
 # Only "y" and "D" are valid
 interactive_autofix_test "@^(y***D" \
