@@ -152,7 +152,7 @@ def _verilog_style_lint_report(name, srcs, flags = None):
             srcs = srcs,
         )
 
-        lint_cmd = "$(location {tool}) {flags} $(SRCS) > $@".format(
+        lint_cmd = "$(location {tool}) {flags} $(SRCS) > $@ 2>&1".format(
             tool = _linter_tool,
             flags = " ".join(use_flags),
         )

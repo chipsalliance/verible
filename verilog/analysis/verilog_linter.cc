@@ -156,7 +156,7 @@ void ViolationFixer::HandleViolation(
   std::stringstream violation_message;
   formatter.FormatViolation(&violation_message, violation, base, path, url,
                             rule_name);
-  (*stream_) << violation_message.str() << std::endl;
+  (*message_stream_) << violation_message.str() << std::endl;
 
   if (violation.autofixes.empty()) {
     return;
@@ -186,7 +186,7 @@ void ViolationFixer::HandleViolation(
           VLOG(2) << "The fix conflicts with previously applied fixes, "
                      "rejecting.";
         } else {
-          (*stream_) << "(fixed)" << std::endl;
+          (*message_stream_) << "(fixed)" << std::endl;
         }
         break;
 
@@ -201,10 +201,10 @@ void ViolationFixer::HandleViolation(
 
       case AnswerChoice::kPrintFix:
         // Print first available fix
-        PrintFix(*stream_, base, violation.autofixes[0]);
+        PrintFix(*message_stream_, base, violation.autofixes[0]);
         continue;
       case AnswerChoice::kPrintAppliedFixes:
-        PrintFix(*stream_, base, *fix);
+        PrintFix(*message_stream_, base, *fix);
         continue;
 
       default:

@@ -36,16 +36,21 @@
 #include "verilog/analysis/verilog_linter.h"
 #include "verilog/analysis/verilog_linter_configuration.h"
 
-// Autofix mode
-//   kNo           disable autofixes
-//   kYes          apply all autofixes
-//   kInteractive  ask what to do on each violation with autofix available
-enum class AutofixMode { kNo, kYes, kInteractive };
+// From least to most disruptive
+enum class AutofixMode {
+  kNo,                  // No Autofixes
+  kPatchInteractive,    // Interactively choose fixes, generate patch
+  kPatch,               // Emit a patch
+  kInplaceInteractive,  // Interactively choose fixes, apply inplace
+  kInplace,             // Automatically apply patch in-place.
+};
 
 static const verible::EnumNameMap<AutofixMode> kAutofixModeEnumStringMap = {
     {"no", AutofixMode::kNo},
-    {"yes", AutofixMode::kYes},
-    {"interactive", AutofixMode::kInteractive},
+    {"patch-interactive", AutofixMode::kPatchInteractive},
+    {"patch", AutofixMode::kPatch},
+    {"inplace-interactive", AutofixMode::kInplaceInteractive},
+    {"inplace", AutofixMode::kInplace},
 };
 
 std::ostream& operator<<(std::ostream& stream, AutofixMode mode) {
@@ -86,11 +91,11 @@ ABSL_FLAG(bool, show_diagnostic_context, false,
           "followed by a line with a position marker");
 
 ABSL_FLAG(AutofixMode, autofix, AutofixMode::kNo,
-          "[yes|no|interactive], autofix mode.");
+          "autofix mode; one of "
+          "[no|patch-interactive|patch|inplace-interactive|inplace]");
 ABSL_FLAG(std::string, autofix_output_file, "",
-          "File to write a patch with autofixes to. If not set autofixes are "
-          "applied directly to the analyzed file. Relevant only when "
-          "--autofix option is enabled.");
+          "File to write a patch with autofixes to if "
+          "--autofix=patch or --autofix=patch-interactive");
 
 // LINT.ThenChange(README.md)
 
@@ -123,34 +128,58 @@ int main(int argc, char** argv) {
   const std::string autofix_output_file =
       absl::GetFlag(FLAGS_autofix_output_file);
 
-  std::unique_ptr<std::ostream> autofix_output_stream;
-  if (autofix_mode != AutofixMode::kNo && !autofix_output_file.empty()) {
-    autofix_output_stream.reset(new std::ofstream(autofix_output_file));
-    if (!autofix_output_stream->good()) {
-      LOG(ERROR) << "Failed to create/open output patch file: "
-                 << autofix_output_file;
-      LOG(WARNING) << "Disabling autofixing.";
-      autofix_output_stream.reset();
+  std::unique_ptr<std::ostream> stream_closer;
+  std::ostream* autofix_output_stream = nullptr;
+
+  if (autofix_mode == AutofixMode::kPatch ||
+      autofix_mode == AutofixMode::kPatchInteractive) {
+    if (autofix_output_file.empty() || autofix_output_file == "-") {
+      autofix_output_stream = &std::cout;
+    } else {
+      stream_closer.reset(new std::ofstream(autofix_output_file));
+      if (stream_closer->good()) {
+        autofix_output_stream = stream_closer.get();
+      } else {
+        LOG(ERROR) << "Failed to create/open output patch file: "
+                   << autofix_output_file;
+      }
+    }
+    if (!autofix_output_stream) {
+      LOG(WARNING) << "--autofix=patch needs --autofix_output_file";
       autofix_mode = AutofixMode::kNo;
       exit_status = kAutofixErrorExitStatus;
     }
+  } else if (!autofix_output_file.empty()) {
+    LOG(WARNING) << "--autofix_output_file has no effect for --autofix="
+                 << autofix_mode;
   }
+
+  const verilog::ViolationFixer::AnswerChooser applyAllFixes =
+      [](const verible::LintViolation&, absl::string_view) {
+        return verilog::ViolationFixer::AnswerChoice::kApplyAll;
+      };
 
   std::unique_ptr<verilog::ViolationHandler> violation_handler;
   switch (autofix_mode) {
     case AutofixMode::kNo:
-      violation_handler.reset(new verilog::ViolationPrinter(&std::cout));
+      violation_handler.reset(new verilog::ViolationPrinter(&std::cerr));
       break;
-    case AutofixMode::kYes:
-      violation_handler.reset(new verilog::ViolationFixer(
-          &std::cout, autofix_output_stream.get(),
-          [](const verible::LintViolation&, absl::string_view) {
-            return verilog::ViolationFixer::AnswerChoice::kApplyAll;
-          }));
-      break;
-    case AutofixMode::kInteractive:
+    case AutofixMode::kPatchInteractive:
+      CHECK(autofix_output_stream);
       violation_handler.reset(
-          new verilog::ViolationFixer(&std::cout, autofix_output_stream.get()));
+          new verilog::ViolationFixer(&std::cerr, autofix_output_stream));
+      break;
+    case AutofixMode::kPatch:
+      CHECK(autofix_output_stream);
+      violation_handler.reset(new verilog::ViolationFixer(
+          &std::cerr, autofix_output_stream, applyAllFixes));
+      break;
+    case AutofixMode::kInplaceInteractive:
+      violation_handler.reset(new verilog::ViolationFixer(&std::cerr, nullptr));
+      break;
+    case AutofixMode::kInplace:
+      violation_handler.reset(
+          new verilog::ViolationFixer(&std::cerr, nullptr, applyAllFixes));
       break;
   }
 
