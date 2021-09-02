@@ -28,6 +28,7 @@ namespace analysis {
 namespace {
 
 using verible::LintTestCase;
+using verible::RunApplyFixCases;
 using verible::RunLintTestCases;
 
 // Tests that space-only text passes.
@@ -104,6 +105,19 @@ TEST(EndifCommentRuleTest, RejectsEndifWithoutComment) {
        " // BAR\n"},
   };
   RunLintTestCases<VerilogAnalyzer, EndifCommentRule>(kTestCases);
+}
+
+TEST(EndifCommentRuleTest, ApplyAutoFix) {
+  // Alternatives the auto fix offers
+  constexpr int kEOLComment = 0;
+  constexpr int kBlkComment = 1;
+  const std::initializer_list<verible::AutoFixInOut> kTestCases = {
+      {"`ifdef FOO\n`endif\n", "`ifdef FOO\n`endif  // FOO\n", kEOLComment},
+      {"`ifdef FOO  /*xyz*/\n`endif\n", "`ifdef FOO  /*xyz*/\n`endif  // FOO\n",
+       kEOLComment},
+      {"`ifdef FOO\n`endif\n", "`ifdef FOO\n`endif  /* FOO */\n", kBlkComment},
+  };
+  RunApplyFixCases<VerilogAnalyzer, EndifCommentRule>(kTestCases, "");
 }
 
 }  // namespace

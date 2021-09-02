@@ -109,7 +109,11 @@ void RunLintTestCases(std::initializer_list<LintTestCase> tests,
   RunConfiguredLintTestCases<AnalyzerType, RuleClass>(tests, "", filename);
 }
 
-using AutoFixInOut = std::pair<absl::string_view, absl::string_view>;
+struct AutoFixInOut {
+  absl::string_view code;
+  absl::string_view expected_output;
+  int fix_alternative = 0;  // Some rules provide alternative fixes
+};
 
 // Tests that LintTestCase test has expected violations under make_rule
 // Expects test.code to be accepted by AnalyzerType.
@@ -117,7 +121,7 @@ template <class AnalyzerType, class RuleType>
 void RunLintAutoFixCase(const AutoFixInOut& test,
                         const LintRuleGenerator<RuleType>& make_rule) {
   // All linters start by parsing to yield a TextStructure.
-  AnalyzerType analyzer(test.first, "");
+  AnalyzerType analyzer(test.code, "");
   absl::Status unused_parser_status = analyzer.Analyze();
 
   // Instantiate a linter that runs a single rule to analyze text.
@@ -125,13 +129,13 @@ void RunLintAutoFixCase(const AutoFixInOut& test,
   const LintRuleStatus rule_status = lint_runner.Run(analyzer.Data(), "");
   const auto& violations(rule_status.violations);
 
-  // TODO(hzeller) refine expected sizes when needed
-  CHECK_EQ(violations.size(), 1);
-  CHECK_EQ(violations.begin()->autofixes.size(), 1);
-  const verible::AutoFix& fix = rule_status.violations.begin()->autofixes[0];
+  CHECK_EQ(violations.size(), 1) << "TODO: apply multi-violation fixes";
+  CHECK_GT(violations.begin()->autofixes.size(), test.fix_alternative);
+  const verible::AutoFix& fix =
+      rule_status.violations.begin()->autofixes[test.fix_alternative];
   std::string fix_out = fix.Apply(analyzer.Data().Contents());
 
-  EXPECT_EQ(fix_out, test.second) << "For input " << test.first;
+  EXPECT_EQ(test.expected_output, fix_out) << "For input " << test.code;
 }
 
 template <class AnalyzerType, class RuleClass>
