@@ -29,9 +29,10 @@ namespace analysis {
 namespace {
 
 using verible::LintTestCase;
+using verible::RunApplyFixCases;
 using verible::RunLintTestCases;
 
-TEST(ForbidConsecutiveNullStatementsRule, FunctionFailures) {
+TEST(ForbidConsecutiveNullStatementsRuleTest, FunctionFailures) {
   auto kToken = ';';
   const std::initializer_list<LintTestCase> kTestCases = {
       {""},
@@ -224,6 +225,24 @@ TEST(ForbidConsecutiveNullStatementsRule, FunctionFailures) {
 
   RunLintTestCases<VerilogAnalyzer, ForbidConsecutiveNullStatementsRule>(
       kTestCases);
+}
+
+TEST(ForbidConsecutiveNullStatementsRuleTest, ApplyAutoFix) {
+  const std::initializer_list<verible::AutoFixInOut> kTestCases = {
+    {"module m;\ninitial begin ;; end\nendmodule",
+     "module m;\ninitial begin ; end\nendmodule"},
+    {"module m;\ninitial begin ;  ; end\nendmodule",
+     "module m;\ninitial begin ;   end\nendmodule"},
+    {"module m;\ninitial begin ;  /*  */; end\nendmodule",
+     "module m;\ninitial begin ;  /*  */ end\nendmodule"},
+#if 0
+      // TODO: apply multi-violation fixes in linter_test_utils.
+      { "module m;\ninitial begin; ; ; ; end\nendmodule",
+        "module m;\ninitial begin ; end\nendmodule" }
+#endif
+  };
+  RunApplyFixCases<VerilogAnalyzer, ForbidConsecutiveNullStatementsRule>(
+      kTestCases, "");
 }
 
 }  // namespace

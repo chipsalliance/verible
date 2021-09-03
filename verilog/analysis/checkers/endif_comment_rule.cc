@@ -120,14 +120,35 @@ void EndifCommentRule::HandleToken(const TokenInfo& token) {
           auto endif_end =
               last_endif_.text().substr(last_endif_.text().size(), 0);
 
+          // The whitespace before the comment is something that should come
+          // from the formatter configuration so that we don't emit code that
+          // then would be complained about by the formatter.
+          // Or, make this a configuration option in the lint rule (probably
+          // best, as we don't intermingle formatter/linter).
+          // TODO(hzeller) Until that is happening just comment here.
+          constexpr int kSpacesBeforeComment = 2;
+          std::string ws(kSpacesBeforeComment, ' ');
+
+          // TOOD(hzeller): rethink the 'alternative fixes' thing. Problem is,
+          // that it makes it impossible to run this unattended as that choice
+          // would've to be made at apply time (and the chooser doesn't provide
+          // that yet, and it would probably complicate the UI a lot when it
+          // will be added).
+          //
+          // Maybe better: only have _one_ alternative and pre-configure the
+          // rule to do that.
+          // So with the above our rule needs two configurations.
+          //   autofix_whitespace
+          //   autofix_block_comment
+
           // includes TK_NEWLINE and TK_EOF.
           violations_.insert(LintViolation(
               last_endif_, absl::StrCat(kMessage, " (", expect, ")"),
               {
                   AutoFix("Insert // comment",
-                          {endif_end, absl::StrCat(" // ", expect)}),
+                          {endif_end, absl::StrCat(ws, "// ", expect)}),
                   AutoFix("Insert /* comment */",
-                          {endif_end, absl::StrCat(" /* ", expect, " */")}),
+                          {endif_end, absl::StrCat(ws, "/* ", expect, " */")}),
               }));
           conditional_scopes_.pop();
           state_ = State::kNormal;

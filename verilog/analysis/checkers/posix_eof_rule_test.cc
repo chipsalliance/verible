@@ -28,6 +28,7 @@ namespace analysis {
 namespace {
 
 using verible::LintTestCase;
+using verible::RunApplyFixCases;
 using verible::RunLintTestCases;
 
 // Tests that compliant files are accepted.
@@ -48,6 +49,13 @@ TEST(PosixEOFRuleTest, RejectsText) {
       {"foo\nbar", {TK_OTHER, ""}},
   };
   RunLintTestCases<VerilogAnalyzer, PosixEOFRule>(kTestCases);
+}
+
+TEST(PosixEOFRuleTest, ApplyAutoFix) {
+  const std::initializer_list<verible::AutoFixInOut> kTestCases = {
+      {"module m;\nendmodule", "module m;\nendmodule\n"},
+  };
+  RunApplyFixCases<VerilogAnalyzer, PosixEOFRule>(kTestCases, "");
 }
 
 }  // namespace

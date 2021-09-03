@@ -22,9 +22,10 @@ namespace analysis {
 namespace {
 
 using verible::LintTestCase;
+using verible::RunApplyFixCases;
 using verible::RunLintTestCases;
 
-TEST(SuggestParenthesesTest, Various) {
+TEST(SuggestParenthesesRuleTest, Various) {
   constexpr int kTag = 293;  // don't care
 
   const std::initializer_list<LintTestCase> kSuggestParenthesesTestCases = {
@@ -95,6 +96,18 @@ TEST(SuggestParenthesesTest, Various) {
 
   RunLintTestCases<VerilogAnalyzer, SuggestParenthesesRule>(
       kSuggestParenthesesTestCases);
+}
+
+TEST(SuggestParenthesesRuleTest, ApplyAutoFix) {
+  const std::initializer_list<verible::AutoFixInOut> kTestCases = {
+      {"module m;\n"
+       "assign a = condition_a? condition_b ? b : c : d;"
+       "endmodule",
+       "module m;\n"
+       "assign a = condition_a? (condition_b ? b : c) : d;"
+       "endmodule"},
+  };
+  RunApplyFixCases<VerilogAnalyzer, SuggestParenthesesRule>(kTestCases, "");
 }
 
 }  // namespace

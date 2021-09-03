@@ -28,9 +28,10 @@ namespace analysis {
 namespace {
 
 using verible::LintTestCase;
+using verible::RunApplyFixCases;
 using verible::RunLintTestCases;
 
-TEST(UvmMacroSemicolonRule, BaseTests) {
+TEST(UvmMacroSemicolonRuleTest, BaseTests) {
   const std::initializer_list<LintTestCase> kTestCases = {
       {""},
       {"function void f();\nendfunction\n"},
@@ -42,7 +43,7 @@ TEST(UvmMacroSemicolonRule, BaseTests) {
   RunLintTestCases<VerilogAnalyzer, UvmMacroSemicolonRule>(kTestCases);
 }
 
-TEST(UvmMacroSemicolonRule, AcceptedUvmMacroCallTests) {
+TEST(UvmMacroSemicolonRuleTest, AcceptedUvmMacroCallTests) {
   const std::initializer_list<LintTestCase> kTestCases = {
       // Function/Task scope
       {"function void f();"
@@ -314,6 +315,13 @@ TEST(UvmMacroSemicolonRule, WrongUvmMacroTest) {
        "end\n"
        "endtask\n"}};
   RunLintTestCases<VerilogAnalyzer, UvmMacroSemicolonRule>(kTestCases);
+}
+
+TEST(UvmMacroSemicolonRuleTest, ApplyAutoFix) {
+  const std::initializer_list<verible::AutoFixInOut> kTestCases = {
+      {"`uvm_foo(abc);\n", "`uvm_foo(abc)\n"},
+  };
+  RunApplyFixCases<VerilogAnalyzer, UvmMacroSemicolonRule>(kTestCases, "");
 }
 
 }  // namespace

@@ -28,6 +28,7 @@ namespace analysis {
 namespace {
 
 using verible::LintTestCase;
+using verible::RunApplyFixCases;
 using verible::RunLintTestCases;
 
 // Tests that compliant text passes trailing-spaces check.
@@ -64,6 +65,14 @@ TEST(NoTrailingSpacesRuleTest, RejectsTrailingSpaces) {
       {"`define\tIGNORANCE\t\"strength\"", {kToken, " "}, "\n"},
   };
   RunLintTestCases<VerilogAnalyzer, NoTrailingSpacesRule>(kTestCases);
+}
+
+TEST(NoTrailingSpacesRuleTest, ApplyAutoFix) {
+  const std::initializer_list<verible::AutoFixInOut> kTestCases = {
+      {"module m;   \nendmodule\n", "module m;\nendmodule\n"},
+      {"module m;\t \t\nendmodule\n", "module m;\nendmodule\n"},
+  };
+  RunApplyFixCases<VerilogAnalyzer, NoTrailingSpacesRule>(kTestCases, "");
 }
 
 }  // namespace
