@@ -86,9 +86,9 @@ TEST(LintTestCaseExactMatchFindingsTest, MultipleMatchingViolations) {
 }
 
 constexpr absl::string_view kFoundNotExpectedMessage(
-    "found violations did not match the expected");
+    "FOUND these violations, but did not match the expected ones");
 constexpr absl::string_view kExpectedNotFoundMessage(
-    "expected violations did not match the ones found");
+    "EXPECTED these violations, but did not match the ones found");
 
 TEST(LintTestCaseExactMatchFindingsTest, OneFoundNotExpected) {
   constexpr int kToken = 42;
