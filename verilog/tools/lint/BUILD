@@ -80,6 +80,7 @@ _linter_test_configs = [
     ("typedef-enums", "typedef_enums", True),
     ("typedef-structs-unions", "typedef_structs", True),
     ("typedef-structs-unions", "typedef_unions", True),
+    ("truncated-numeric-literal", "truncated_numeric_literal", True),
     ("one-module-per-file", "one_module_per_file", False),
     ("uvm-macro-semicolon", "uvm_macro_semicolon", False),
     ("banned-declared-name-patterns", "banned_declared_name_patterns", False),
